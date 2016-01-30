@@ -2264,7 +2264,7 @@ generate a tag.
 
 @item
 In Ruby code, @code{def} or @code{class} or @code{module} at the
-beginning of a line generate a tag.
+beginning of a line generate a tag.  Constants also generate tags.
 @end itemize
 
   You can also generate tags based on regexp matching (@pxref{Etags

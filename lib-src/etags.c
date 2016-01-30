@@ -4550,17 +4550,67 @@ Ruby_functions (FILE *inf)
 
   LOOP_ON_INPUT_LINES (inf, lb, cp)
     {
+      bool is_class = false;
+      bool is_method = false;
+      char *name;
+
       cp = skip_spaces (cp);
-      if (LOOKING_AT (cp, "def")
-	  || LOOKING_AT (cp, "class")
-	  || LOOKING_AT (cp, "module"))
+      if (c_isalpha (*cp) && c_isupper (*cp)) /* constants */
 	{
-	  char *name = cp;
+	  char *bp, *colon = NULL;
+
+	  name = cp;
+
+	  for (cp++; c_isalnum (*cp) || *cp == '_' || *cp == ':'; cp++)
+	    {
+	      if (*cp == ':')
+		colon = cp;
+	    }
+	  if (cp > name + 1)
+	    {
+	      bp = skip_spaces (cp);
+	      if (*bp == '=' && c_isspace (bp[1]))
+		{
+		  if (colon && !c_isspace (colon[1]))
+		    name = colon + 1;
+		  make_tag (name, cp - name, false,
+			    lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
+		}
+	    }
+	}
+      else if ((is_method = LOOKING_AT (cp, "def")) /* module/class/method */
+	       || (is_class = LOOKING_AT (cp, "class"))
+	       || LOOKING_AT (cp, "module"))
+	{
+	  const char self_name[] = "self.";
+	  const size_t self_size1 = sizeof ("self.") - 1;
+
+	  name = cp;
 
 	 /* Ruby method names can end in a '='.  Also, operator overloading can
 	    define operators whose names include '='.  */
 	  while (!notinname (*cp) || *cp == '=')
 	    cp++;
+
+	  /* Remove "self." from the method name.  */
+	  if (cp - name > self_size1
+	      && strneq (name, self_name, self_size1))
+	    name += self_size1;
+
+	  /* Remove the class/module qualifiers from method names.  */
+	  if (is_method)
+	    {
+	      char *q;
+
+	      for (q = name; q < cp && *q != '.'; q++)
+		;
+	      if (q < cp - 1)	/* punt if we see just "FOO." */
+		name = q + 1;
+	    }
+
+	  /* Don't tag singleton classes.  */
+	  if (is_class && strneq (name, "<<", 2) && cp == name + 2)
+	    continue;
 
 	  make_tag (name, cp - name, true,
 		    lb.buffer, cp - lb.buffer + 1, lineno, linecharno);

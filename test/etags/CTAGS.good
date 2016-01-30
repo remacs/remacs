@@ -227,6 +227,8 @@ A	cp-src/c.C	117
 A	cp-src/fail.C	7
 A	cp-src/fail.C	23
 A	ruby-src/test1.ruby	/^class A$/
+A	ruby-src/test1.ruby	/^module A$/
+ABC	ruby-src/test1.ruby	11
 ADDRESS	c-src/emacs/src/gmalloc.c	/^#define ADDRESS(B)	((void *) (((B) - 1) * BLOCKSIZ/
 ALIGNOF_STRUCT_LISP_VECTOR	c-src/emacs/src/lisp.h	1378
 ALLOCATED_BEFORE_DUMPING	c-src/emacs/src/gmalloc.c	/^#define ALLOCATED_BEFORE_DUMPING(P) \\$/
@@ -289,6 +291,7 @@ B	cp-src/c.C	/^void B::B() {}$/
 B	cp-src/c.C	122
 B	cp-src/fail.C	8
 B	cp-src/fail.C	24
+B	ruby-src/test1.ruby	/^  class B$/
 BE_Node	cp-src/c.C	/^void BE_Node::BE_Node() {}$/
 BE_Node	cp-src/c.C	77
 BITS_PER_BITS_WORD	c-src/emacs/src/lisp.h	125
@@ -438,7 +441,6 @@ Cjava_entries	c-src/etags.c	/^Cjava_entries (FILE *inf)$/
 Cjava_help	c-src/etags.c	551
 Cjava_suffixes	c-src/etags.c	549
 ClassExample	ruby-src/test.rb	/^    class ClassExample$/
-ClassExample.class_method	ruby-src/test.rb	/^        def ClassExample.class_method$/
 Clear/p	ada-src/2ataspri.adb	/^   procedure Clear (Cell : in out TAS_Cell) is$/
 Clear/p	ada-src/2ataspri.ads	/^   procedure Clear        (Cell : in out TAS_Cell)/
 Cobol_help	c-src/etags.c	558
@@ -458,6 +460,7 @@ Condition_Variable/t	ada-src/2ataspri.ads	/^   type Condition_Variable is privat
 Condition_Variable/t	ada-src/2ataspri.ads	/^   type Condition_Variable is$/
 Configure	pyt-src/server.py	/^class Configure(Frame, ControlEdit):$/
 ConfirmQuit	pyt-src/server.py	/^def ConfirmQuit(frame, context):$/
+Constant	ruby-src/test1.ruby	26
 ControlEdit	pyt-src/server.py	/^class ControlEdit(Frame):$/
 Controls	pyt-src/server.py	/^class Controls:$/
 CopyTextString	pas-src/common.pas	/^function CopyTextString;(*($/
@@ -939,7 +942,6 @@ Metags	c-src/etags.c	/^main (int argc, char **argv)$/
 Mfail	cp-src/fail.C	/^main()$/
 Mkai-test.pl	perl-src/kai-test.pl	/^package main;$/
 ModuleExample	ruby-src/test.rb	/^module ModuleExample$/
-ModuleExample.module_class_method	ruby-src/test.rb	/^    def ModuleExample.module_class_method$/
 More_Lisp_Bits	c-src/emacs/src/lisp.h	801
 MoveLayerAfter	lua-src/allegro.lua	/^function MoveLayerAfter (this_one)$/
 MoveLayerBefore	lua-src/allegro.lua	/^function MoveLayerBefore (this_one)$/
@@ -2351,6 +2353,7 @@ __str__	pyt-src/server.py	/^    def __str__(self):$/
 __up	c.c	160
 _aligned_blocks	c-src/emacs/src/gmalloc.c	1004
 _aligned_blocks_mutex	c-src/emacs/src/gmalloc.c	518
+_bar?	ruby-src/test1.ruby	/^    def self._bar?(abc)$/
 _bytes_free	c-src/emacs/src/gmalloc.c	376
 _bytes_used	c-src/emacs/src/gmalloc.c	374
 _chunks_free	c-src/emacs/src/gmalloc.c	375
@@ -2620,6 +2623,7 @@ childDidExit	objc-src/Subprocess.m	/^- childDidExit$/
 chunks_free	c-src/emacs/src/gmalloc.c	313
 chunks_used	c-src/emacs/src/gmalloc.c	311
 cjava	c-src/etags.c	2936
+class_method	ruby-src/test.rb	/^        def ClassExample.class_method$/
 classifyLine	php-src/lce_functions.php	/^      function classifyLine($line)$/
 clear	cp-src/conway.hpp	/^    void clear(void) { alive = 0; }$/
 clear-abbrev-table	c-src/abbrev.c	/^DEFUN ("clear-abbrev-table", Fclear_abbrev_table, /
@@ -2952,6 +2956,7 @@ foo	f-src/entry.for	/^       character*(*) function foo()$/
 foo	f-src/entry.strange_suffix	/^       character*(*) function foo()$/
 foo	f-src/entry.strange	/^       character*(*) function foo()$/
 foo	php-src/ptest.php	/^foo()$/
+foo!	ruby-src/test1.ruby	/^    def foo!$/
 foobar	c-src/c.c	/^int foobar() {;}$/
 foobar	c.c	/^extern void foobar (void) __attribute__ ((section /
 foobar2	c-src/h.h	20
@@ -3450,6 +3455,7 @@ miti	html-src/softwarelibero.html	/^Sfatiamo alcuni miti$/
 modifier_names	c-src/emacs/src/keyboard.c	6319
 modifier_symbols	c-src/emacs/src/keyboard.c	6327
 modify_event_symbol	c-src/emacs/src/keyboard.c	/^modify_event_symbol (ptrdiff_t symbol_num, int mod/
+module_class_method	ruby-src/test.rb	/^    def ModuleExample.module_class_method$/
 module_instance_method	ruby-src/test.rb	/^    def module_instance_method$/
 more_aligned_int	c.c	165
 morecore_nolock	c-src/emacs/src/gmalloc.c	/^morecore_nolock (size_t size)$/
@@ -3812,6 +3818,7 @@ quantizing	html-src/algrthms.html	/^Quantizing the Received$/
 questo	../c/c.web	34
 quit_char	c-src/emacs/src/keyboard.c	192
 quit_throw_to_read_char	c-src/emacs/src/keyboard.c	/^quit_throw_to_read_char (bool from_signal)$/
+qux=	ruby-src/test1.ruby	/^      def qux=(tee)$/
 r0	c-src/sysdep.h	54
 r1	c-src/sysdep.h	55
 r_alloc	c-src/emacs/src/lisp.h	/^extern void *r_alloc (void **, size_t) ATTRIBUTE_A/

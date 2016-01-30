@@ -1830,8 +1830,8 @@ qualified names by hand.
 +++
 *** New language Ruby
 
-Names of modules, classes, methods, and functions are tagged.
-Overloaded operators are also tagged.
+Names of modules, classes, methods, functions, and constants are
+tagged.  Overloaded operators are also tagged.
 
 +++
 *** Improved support for Lua
