@@ -4084,20 +4084,28 @@ xg_page_setup_dialog (void)
 Lisp_Object
 xg_get_page_setup (void)
 {
-  GtkPageOrientation orientation;
   Lisp_Object orientation_symbol;
 
   if (page_setup == NULL)
     page_setup = gtk_page_setup_new ();
-  orientation = gtk_page_setup_get_orientation (page_setup);
-  if (orientation == GTK_PAGE_ORIENTATION_PORTRAIT)
-    orientation_symbol = Qportrait;
-  else if (orientation == GTK_PAGE_ORIENTATION_LANDSCAPE)
-    orientation_symbol = Qlandscape;
-  else if (orientation == GTK_PAGE_ORIENTATION_REVERSE_PORTRAIT)
-    orientation_symbol = Qreverse_portrait;
-  else if (orientation == GTK_PAGE_ORIENTATION_REVERSE_LANDSCAPE)
-    orientation_symbol = Qreverse_landscape;
+
+  switch (gtk_page_setup_get_orientation (page_setup))
+    {
+    case GTK_PAGE_ORIENTATION_PORTRAIT:
+      orientation_symbol = Qportrait;
+      break;
+    case GTK_PAGE_ORIENTATION_LANDSCAPE:
+      orientation_symbol = Qlandscape;
+      break;
+    case GTK_PAGE_ORIENTATION_REVERSE_PORTRAIT:
+      orientation_symbol = Qreverse_portrait;
+      break;
+    case GTK_PAGE_ORIENTATION_REVERSE_LANDSCAPE:
+      orientation_symbol = Qreverse_landscape;
+      break;
+    default:
+      eassume (false);
+    }
 
   return listn (CONSTYPE_HEAP, 7,
 		Fcons (Qorientation, orientation_symbol),

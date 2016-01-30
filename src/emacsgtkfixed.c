@@ -23,9 +23,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "frame.h"
 #include "xterm.h"
-#ifdef HAVE_XWIDGETS
-# include "xwidget.h"
-#endif
+#include "xwidget.h"
 #include "emacsgtkfixed.h"
 
 /* Silence a bogus diagnostic; see GNOME bug 683906.  */
@@ -50,7 +48,6 @@ static void emacs_fixed_get_preferred_width  (GtkWidget *widget,
 static void emacs_fixed_get_preferred_height (GtkWidget *widget,
                                               gint      *minimum,
                                               gint      *natural);
-
 static GType emacs_fixed_get_type (void);
 G_DEFINE_TYPE (EmacsFixed, emacs_fixed, GTK_TYPE_FIXED)
 
@@ -75,28 +72,28 @@ struct GtkFixedPrivateL
   GList *children;
 };
 
-static void emacs_fixed_gtk_widget_size_allocate (GtkWidget *widget,
-                                                  GtkAllocation *allocation)
+static void
+emacs_fixed_gtk_widget_size_allocate (GtkWidget *widget,
+				      GtkAllocation *allocation)
 {
-  // For xwidgets.
+  /* For xwidgets.
 
-  // This basically re-implements the base class method and adds an
-  // additional case for an xwidget view.
+     This basically re-implements the base class method and adds an
+     additional case for an xwidget view.
 
-  // It would be nicer if the bse class method could be called first,
-  // and the the xview modification only would remain here. It wasn't
-  // possible to solve it that way yet.
+     It would be nicer if the bse class method could be called first,
+     and the the xview modification only would remain here. It wasn't
+     possible to solve it that way yet.  */
   EmacsFixedClass *klass;
   GtkWidgetClass *parent_class;
-  struct GtkFixedPrivateL* priv;
+  struct GtkFixedPrivateL *priv;
 
   klass = EMACS_FIXED_GET_CLASS (widget);
   parent_class = g_type_class_peek_parent (klass);
   parent_class->size_allocate (widget, allocation);
 
-  priv = G_TYPE_INSTANCE_GET_PRIVATE (widget,
-                               GTK_TYPE_FIXED,
-                               struct GtkFixedPrivateL);
+  priv = G_TYPE_INSTANCE_GET_PRIVATE (widget, GTK_TYPE_FIXED,
+				      struct GtkFixedPrivateL);
 
   gtk_widget_set_allocation (widget, allocation);
 
@@ -154,7 +151,6 @@ emacs_fixed_class_init (EmacsFixedClass *klass)
 
   widget_class = (GtkWidgetClass*) klass;
 
-
   widget_class->get_preferred_width = emacs_fixed_get_preferred_width;
   widget_class->get_preferred_height = emacs_fixed_get_preferred_height;
 #ifdef HAVE_XWIDGETS
@@ -162,7 +158,6 @@ emacs_fixed_class_init (EmacsFixedClass *klass)
 #endif
   g_type_class_add_private (klass, sizeof (EmacsFixedPrivate));
 }
-
 
 static void
 emacs_fixed_init (EmacsFixed *fixed)
@@ -172,14 +167,7 @@ emacs_fixed_init (EmacsFixed *fixed)
   fixed->priv->f = 0;
 }
 
-/**
- * emacs_fixed_new:
- *
- * Creates a new #EmacsFixed.
- *
- * Returns: a new #EmacsFixed.
- */
-GtkWidget*
+GtkWidget *
 emacs_fixed_new (struct frame *f)
 {
   EmacsFixed *fixed = g_object_new (emacs_fixed_get_type (), NULL);

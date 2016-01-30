@@ -90,6 +90,8 @@ by setting `autoload-timestamps' to nil.
 ** New configure option --with-cairo.
 This builds Emacs with Cairo drawing.  As a side effect, it provides
 support for built-in printing, when Emacs was built with GTK+.
+Cairo drawing is an experimental feature in Emacs, and subject to
+change in future releases.
 
 +++
 ** New configure option --with-modules.
@@ -577,9 +579,12 @@ If you need your objects to be named, do it by inheriting from `eieio-named'.
 *** The <class> variables are declared obsolete.
 +++
 *** The <initarg> variables are declared obsolete.
++++
 *** defgeneric and defmethod are declared obsolete.
+Use the equivalent facilities from cl-generic.el instead.
 +++
 *** `constructor' is now an obsolete alias for `make-instance'.
+--- `pcase' accepts a new UPattern `eieio'.
 
 ** ido
 
@@ -771,6 +776,9 @@ prepending it.
 ** cl-lib
 +++
 *** New functions `cl-fresh-line', `cl-digit-char-p', and `cl-parse-integer'.
+
+---
+*** `pcase' accepts the new UPattern `cl-struct'.
 
 ** Calendar and diary
 
@@ -1073,6 +1081,10 @@ As a result of this, the following commands are now obsolete:
 replacements yet.
 
 +++
+*** Variants of `tags-search' and `tags-query-replace' in Dired were also
+replaced by xref-style commands, see the "Dired" section below.
+
++++
 *** New variables
 
 `find-tag-marker-ring-length' is now an obsolete alias for
@@ -1216,6 +1228,17 @@ compression command is determined from the new
 *** `W' is now bound to `browse-url-of-dired-file', and is useful for
 viewing HTML files and the like.
 
+*** New user interface for the `A' and `Q' commands.
+These keys, now bound to `dired-do-find-regexp' and
+`dired-do-find-regexp-and-replace', work similarly to
+`xref-find-apropos' and `xref-query-replace': they present the matches
+in the `*xref*' buffer and let you move through the matches.  No need
+to use `tags-loop-continue' to resume the search or replace loop.  The
+previous commands, `dired-do-search' and
+`dired-do-query-replace-regexp', are still available, but not bound to
+keys; rebind `A' and `Q' to invoke them if you want the old behavior
+back.  We intend to obsolete the old commands in a future release.
+
 ** Tabulated List Mode
 
 +++
@@ -1246,7 +1269,10 @@ command is called from Emacs (i.e., INSIDE_EMACS environment variable
 is set).  This feature requires newer versions of GnuPG (2.1.5 or
 later) and Pinentry (0.9.5 or later).
 
++++
 ** cl-generic.el provides CLOS-style multiple-dispatch generic functions.
+The main entry points are `cl-defgeneric' and `cl-defmethod'.  See the
+node "Generic Functions" in the Emacs Lisp manual for more details.
 
 ---
 ** scss-mode (a minor variant of css-mode)
@@ -1266,11 +1292,12 @@ a typographically-correct documents.
 ** The `seq' library adds sequence manipulation functions and macros
 that complement basic functions provided by subr.el.  All functions
 are prefixed with `seq-' and work on lists, strings and vectors.
+`pcase' accepts a new Upattern `seq'.
 
 ---
 ** The `map' library provides map-manipulation functions that work on
 alists, hash-table and arrays.  All functions are prefixed with
-`map-'.
+`map-'.  `pcase' accepts a new UPattern `map'.
 
 ---
 ** The `thunk' library provides functions and macros to control the
@@ -1441,7 +1468,9 @@ that happen, `unhandled-file-name-directory' now defaults to calling
 * Lisp Changes in Emacs 25.1
 
 ** pcase
-*** New UPatterns `quote', `app', `cl-struct', `eieio', `seq', and `map'.
++++
+*** New UPatterns `quote', `app'.
++++
 *** New UPatterns can be defined with `pcase-defmacro'.
 +++
 *** New vector QPattern.

@@ -18,6 +18,7 @@ define them.
 * Calling Functions::           How to use an existing function.
 * Mapping Functions::           Applying a function to each element of a list, etc.
 * Anonymous Functions::         Lambda expressions are functions with no names.
+* Generic Functions::           Polymorphism, Emacs-style.
 * Function Cells::              Accessing or setting the function definition
                             of a symbol.
 * Closures::                    Functions that enclose a lexical environment.
@@ -1091,6 +1092,230 @@ In that case, the anonymous function is kept as a lambda expression in
 the compiled code.  The byte-compiler cannot assume this list is a
 function, even though it looks like one, since it does not know that
 @code{change-property} intends to use it as a function.
+
+@node Generic Functions
+@section Generic Functions
+@cindex generic functions
+@cindex polymorphism
+
+  Functions defined using @code{defun} have a hard-coded set of
+assumptions about the types and expected values of their arguments.
+For example, a function that was designed to handle values of its
+argument that are either numbers or lists of numbers will fail or
+signal an error if called with a value of any other type, such as a
+vector or a string.  This happens because the implementation of the
+function is not prepared to deal with types other than those assumed
+during the design.
+
+  By contrast, object-oriented programs use @dfn{polymorphic
+functions}: a set of specialized functions having the same name, each
+one of which was written for a certain specific set of argument types.
+Which of the functions is actually called is decided at run time based
+on the types of the actual arguments.
+
+@cindex CLOS
+  Emacs provides support for polymorphism.  Like other Lisp
+environments, notably Common Lisp and its Common Lisp Object System
+(@acronym{CLOS}), this support is based on @dfn{generic functions}.
+The Emacs generic functions closely follow @acronym{CLOS}, including
+use of similar names, so if you have experience with @acronym{CLOS},
+the rest of this section will sound very familiar.
+
+  A generic function specifies an abstract operation, by defining its
+name and list of arguments, but (usually) no implementation.  The
+actual implementation for several specific classes of arguments is
+provided by @dfn{methods}, which should be defined separately.  Each
+method that implements a generic function has the same name as the
+generic function, but the method's definition indicates what kinds of
+arguments it can handle by @dfn{specializing} the arguments defined by
+the generic function.  These @dfn{argument specializers} can be more
+or less specific; for example, a @code{string} type is more specific
+than a more general type, such as @code{sequence}.
+
+  Note that, unlike in message-based OO languages, such as C@t{++} and
+Simula, methods that implement generic functions don't belong to a
+class, they belong to the generic function they implement.
+
+  When a generic function is invoked, it selects the applicable
+methods by comparing the actual arguments passed by the caller with
+the argument specializers of each method.  A method is applicable if
+the actual arguments of the call are compatible with the method's
+specializers.  If more than one method is applicable, they are
+combined using certain rules, described below, and the combination
+then handles the call.
+
+@defmac cl-defgeneric name arguments [documentation] [options-and-methods@dots{}] &rest body
+This macro defines a generic function with the specified @var{name}
+and @var{arguments}.  If @var{body} is present, it provides the
+default implementation.  If @var{documentation} is present (it should
+always be), it specifies the documentation string for the generic
+function, in the form @code{(:documentation @var{docstring})}.  The
+optional @var{options-and-methods} can be one of the following forms:
+
+@table @code
+@item (declare @var{declarations})
+A declare form, as described in @ref{Declare Form}.
+@item (:argument-precedence-order &rest @var{args})
+This form affects the sorting order for combining applicable methods.
+Normally, when two methods are compared during combination, method
+arguments are examined left to right, and the first method whose
+argument specializer is more specific will come before the other one.
+The order defined by this form overrides that, and the arguments are
+examined according to their order in this form, and not left to right.
+@item (:method [@var{qualifiers}@dots{}] args &rest body)
+This form defines a method like @code{cl-defmethod} does.
+@end table
+@end defmac
+
+@defmac cl-defmethod name [qualifier] arguments &rest [docstring] body
+This macro defines a particular implementation for the generic
+function called @var{name}.  The implementation code is given by
+@var{body}.  If present, @var{docstring} is the documentation string
+for the method.  The @var{arguments} list, which must be identical in
+all the methods that implement a generic function, and must match the
+argument list of that function, provides argument specializers of the
+form @code{(@var{arg} @var{spec})}, where @var{arg} is the argument
+name as specified in the @code{cl-defgeneric} call, and @var{spec} is
+one of the following specializer forms:
+
+@table @code
+@item @var{type}
+This specializer requires the argument to be of the given @var{type},
+one of the types from the type hierarchy described below.
+@item (eql @var{object})
+This specializer requires the argument be @code{eql} to the given
+@var{object}.
+@item (head @var{object})
+The argument must be a cons cell whose @code{car} is @code{eql} to
+@var{object}.
+@item @var{struct-tag}
+The argument must be an instance of a class named @var{struct-tag}
+defined with @code{cl-defstruct} (@pxref{Structures,,, cl, Common Lisp
+Extensions for GNU Emacs Lisp}), or of one of its parent classes.
+@end table
+
+Alternatively, the argument specializer can be of the form
+@code{&context (@var{expr} @var{spec})}, in which case the value of
+@var{expr} must be compatible with the specializer provided by
+@var{spec}; @var{spec} can be any of the forms described above.  In
+other words, this form of specializer uses the value of @var{expr}
+instead of arguments for the decision whether the method is
+applicable.  For example, @code{&context (overwrite-mode (eql t))}
+will make the method compatible only when @code{overwrite-mode} is
+turned on.
+
+The type specializer, @code{(@var{arg} @var{type})}, can specify one
+of the @dfn{system types} in the following list.  When a parent type
+is specified, an argument whose type is any of its more specific child
+types, as well as grand-children, grand-grand-children, etc. will also
+be compatible.
+
+@table @code
+@item integer
+Parent type: @code{number}.
+@item number
+@item null
+Parent type: @code{symbol}
+@item symbol
+@item string
+Parent type: @code{array}.
+@item array
+Parent type: @code{sequence}.
+@item cons
+Parent type: @code{list}.
+@item list
+Parent type: @code{sequence}.
+@item marker
+@item overlay
+@item float
+Parent type: @code{number}.
+@item window-configuration
+@item process
+@item window
+@item subr
+@item compiled-function
+@item buffer
+@item char-table
+Parent type: @code{array}.
+@item bool-vector
+Parent type: @code{array}.
+@item vector
+Parent type: @code{array}.
+@item frame
+@item hash-table
+@item font-spec
+@item font-entity
+@item font-object
+@end table
+
+The optional @var{qualifier} allows to combine several applicable
+methods.  If it is not present, the defined method is a @dfn{primary}
+method, responsible for providing the primary implementation of the
+generic function for the specialized arguments.  You can also define
+@dfn{auxiliary methods}, by using one of the following values as
+@var{qualifier}:
+
+@table @code
+@item :before
+This auxiliary method will run before the primary method.  More
+accurately, all the @code{:before} methods will run before the
+primary, in the most-specific-first order.
+@item :after
+This auxiliary method will run after the primary method.  More
+accurately, all such methods will run after the primary, in the
+most-specific-last order.
+@item :around
+This auxiliary method will run @emph{instead} of the primary method.
+The most specific of such methods will be run before any other method.
+Such methods normally use @code{cl-call-next-method}, described below,
+to invoke the other auxiliary or primary methods.
+@item :extra @var{string}
+This allows to add more methods, distinguished by @var{string}, for
+the same specializers and qualifiers.
+@end table
+@end defmac
+
+@cindex dispatch of methods for generic function
+@cindex multiple-dispatch methods
+Each time a generic function is called, it builds the @dfn{effective
+method} which will handle this invocation by combining the applicable
+methods defined for the function.  The process of finding the
+applicable methods and producing the effective method is called
+@dfn{dispatch}.  The applicable methods are those all of whose
+specializers are compatible with the actual arguments of the call.
+Since all of the arguments must be compatible with the specializers,
+they all determine whether a method is applicable.  Methods that
+explicitly specialize more than one argument are called
+@dfn{multiple-dispatch methods}.
+
+The applicable methods are sorted into the order in which they will be
+combined.  The method whose left-most argument specializer is the most
+specific one will come first in the order.  (Specifying
+@code{:argument-precedence-order} as part of @code{cl-defmethod}
+overrides that, as described above.)  If the method body calls
+@code{cl-call-next-method}, the next most-specific method will run.
+If there are applicable @code{:around} methods, the most-specific of
+them will run first; it should call @code{cl-call-next-method} to run
+any of the less specific @code{:around} methods.  Next, the
+@code{:before} methods run in the order of their specificity, followed
+by the primary method, and lastly the @code{:after} methods in the
+reverse order of their specificity.
+
+@defun cl-call-next-method &rest args
+When invoked from within the lexical body of a primary or an
+@code{:around} auxiliary method, call the next applicable method for
+the same generic function.  Normally, it is called with no arguments,
+which means to call the next applicable method with the same arguments
+that the calling method was invoked.  Otherwise, the specified
+arguments are used instead.
+@end defun
+
+@defun cl-next-method-p
+This function, when called from within the lexical body of a primary
+or an @code{:around} auxiliary method, returns non-@code{nil} if there
+is a next method to call.
+@end defun
+
 
 @node Function Cells
 @section Accessing Function Cell Contents

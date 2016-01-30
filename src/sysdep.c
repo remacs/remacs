@@ -100,6 +100,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "cm.h"
 
 #include "gnutls.h"
+/* MS-Windows loads GnuTLS at run time, if available; we don't want to
+   do that during startup just to call gnutls_rnd.  */
 #if 0x020c00 <= GNUTLS_VERSION_NUMBER && !defined WINDOWSNT
 # include <gnutls/crypto.h>
 #else

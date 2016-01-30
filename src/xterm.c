@@ -62,9 +62,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "composite.h"
 #include "frame.h"
 #include "dispextern.h"
-#ifdef HAVE_XWIDGETS
-# include "xwidget.h"
-#endif
+#include "xwidget.h"
 #include "fontset.h"
 #include "termhooks.h"
 #include "termopts.h"
@@ -1315,7 +1313,6 @@ x_draw_fringe_bitmap (struct window *w, struct glyph_row *row, struct draw_fring
 {
   struct frame *f = XFRAME (WINDOW_FRAME (w));
   Display *display = FRAME_X_DISPLAY (f);
-  Window window = FRAME_X_WINDOW (f);
   GC gc = f->output_data.x->normal_gc;
   struct face *face = p->face;
 
@@ -1358,6 +1355,7 @@ x_draw_fringe_bitmap (struct window *w, struct glyph_row *row, struct draw_fring
 #else  /* not USE_CAIRO */
   if (p->which)
     {
+      Window window = FRAME_X_WINDOW (f);
       char *bits;
       Pixmap pixmap, clipmask = (Pixmap) 0;
       int depth = DefaultDepthOfScreen (FRAME_X_SCREEN (f));
@@ -3514,11 +3512,9 @@ x_draw_glyph_string (struct glyph_string *s)
       x_draw_image_glyph_string (s);
       break;
 
-#ifdef HAVE_XWIDGETS
     case XWIDGET_GLYPH:
       x_draw_xwidget_glyph_string (s);
       break;
-#endif
 
     case STRETCH_GLYPH:
       x_draw_stretch_glyph_string (s);
@@ -3762,14 +3758,13 @@ x_delete_glyphs (struct frame *f, register int n)
 /* Like XClearArea, but check that WIDTH and HEIGHT are reasonable.
    If they are <= 0, this is probably an error.  */
 
-static void
+static ATTRIBUTE_UNUSED void
 x_clear_area1 (Display *dpy, Window window,
                int x, int y, int width, int height, int exposures)
 {
   eassert (width > 0 && height > 0);
   XClearArea (dpy, window, x, y, width, height, exposures);
 }
-
 
 void
 x_clear_area (struct frame *f, int x, int y, int width, int height)
@@ -8929,10 +8924,9 @@ x_draw_bar_cursor (struct window *w, struct glyph_row *row, int width, enum text
   if (cursor_glyph == NULL)
     return;
 
-#ifdef HAVE_XWIDGETS
+  /* Experimental avoidance of cursor on xwidget.  */
   if (cursor_glyph->type == XWIDGET_GLYPH)
-    return; // Experimental avoidance of cursor on xwidget.
-#endif
+    return;
 
   /* If on an image, draw like a normal cursor.  That's usually better
      visible than drawing a bar, esp. if the image is large so that
