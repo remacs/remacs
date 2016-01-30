@@ -191,7 +191,7 @@ in Lisp programs also.
   In contexts where a truth value is expected, any non-@code{nil} value
 is considered to be @var{true}.  However, @code{t} is the preferred way
 to represent the truth value @var{true}.  When you need to choose a
-value which represents @var{true}, and there is no other basis for
+value that represents @var{true}, and there is no other basis for
 choosing, use @code{t}.  The symbol @code{t} always has the value
 @code{t}.
 

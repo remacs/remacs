@@ -2714,7 +2714,7 @@ with the command \\[tags-loop-continue]."
 		      '(dired-get-marked-files nil nil 'dired-nondirectory-p)))
 
 (declare-function xref--show-xrefs "xref")
-(declare-function xref-query-replace "xref")
+(declare-function xref-query-replace-in-results "xref")
 
 ;;;###autoload
 (defun dired-do-find-regexp (regexp)
@@ -2746,7 +2746,7 @@ with the command \\[tags-loop-continue]."
            "Query replace regexp in marked files" t t)))
      (list (nth 0 common) (nth 1 common))))
   (with-current-buffer (dired-do-find-regexp from)
-    (xref-query-replace from to)))
+    (xref-query-replace-in-results from to)))
 
 (defun dired-nondirectory-p (file)
   (not (file-directory-p file)))

@@ -1161,11 +1161,24 @@ ns_clip_to_row (struct window *w, struct glyph_row *row,
 
 - (id)init;
 {
+  NSTRACE ("[EmacsBell init]");
   if ((self = [super init]))
     {
       nestCount = 0;
       isAttached = false;
+#ifdef NS_IMPL_GNUSTEP
+      // GNUstep doesn't provide named images.  This was reported in
+      // 2011, see https://savannah.gnu.org/bugs/?33396
+      //
+      // As a drop in replacment, a semi tranparent gray square is used.
+      self.image = [[NSImage alloc] initWithSize:NSMakeSize(32, 32)];
+      [self.image lockFocus];
+      [[NSColor colorForEmacsRed:0.5 green:0.5 blue:0.5 alpha:0.5] set];
+      NSRectFill(NSMakeRect(0, 0, 32, 32));
+      [self.image unlockFocus];
+#else
       self.image = [NSImage imageNamed:NSImageNameCaution];
+#endif
     }
   return self;
 }
@@ -1572,7 +1585,6 @@ x_set_window_size (struct frame *f,
   NSRect wr = [window frame];
   int tb = FRAME_EXTERNAL_TOOL_BAR (f);
   int pixelwidth, pixelheight;
-  int rows, cols;
   int orig_height = wr.size.height;
 
   NSTRACE ("x_set_window_size");
@@ -1590,15 +1602,11 @@ x_set_window_size (struct frame *f,
     {
       pixelwidth = FRAME_TEXT_TO_PIXEL_WIDTH (f, width);
       pixelheight = FRAME_TEXT_TO_PIXEL_HEIGHT (f, height);
-      cols = FRAME_PIXEL_WIDTH_TO_TEXT_COLS (f, pixelwidth);
-      rows = FRAME_PIXEL_HEIGHT_TO_TEXT_LINES (f, pixelheight);
     }
   else
     {
       pixelwidth =  FRAME_TEXT_COLS_TO_PIXEL_WIDTH   (f, width);
       pixelheight = FRAME_TEXT_LINES_TO_PIXEL_HEIGHT (f, height);
-      cols = width;
-      rows = height;
     }
 
   /* If we have a toolbar, take its height into account. */
@@ -2631,13 +2639,13 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
         [img setXBMColor: bm_color];
       }
 
+#ifdef NS_IMPL_COCOA
       // Note: For periodic images, the full image height is "h + hd".
       // By using the height h, a suitable part of the image is used.
       NSRect fromRect = NSMakeRect(0, 0, p->wd, p->h);
 
       NSTRACE_RECT ("fromRect", fromRect);
 
-#ifdef NS_IMPL_COCOA
       [img drawInRect: r
               fromRect: fromRect
              operation: NSCompositeSourceOver
@@ -6357,7 +6365,6 @@ not_in_argv (NSString *arg)
   if (oldr != rows || oldc != cols || neww != oldw || newh != oldh)
     {
       NSView *view = FRAME_NS_VIEW (emacsframe);
-      NSWindow *win = [view window];
 
       change_frame_size (emacsframe,
                          FRAME_PIXEL_TO_TEXT_WIDTH (emacsframe, neww),
@@ -7778,8 +7785,6 @@ not_in_argv (NSString *arg)
 
 - (void)zoom:(id)sender
 {
-  struct frame * f = SELECTED_FRAME ();
-
   NSTRACE ("[EmacsWindow zoom:]");
 
   ns_update_auto_hide_menu_bar();

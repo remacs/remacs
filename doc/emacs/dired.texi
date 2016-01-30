@@ -797,8 +797,8 @@ Perform @code{query-replace-regexp} on each of the specified files,
 replacing matches for @var{regexp} with the string
 @var{to} (@code{dired-do-find-regexp-and-replace}).
 
-This command is a variant of @code{xref-query-replace}.  It presents
-an @file{*xref*} buffer that lists all the matches of @var{regexp},
+This command is a variant of @code{xref-query-replace-in-results}.  It
+presents an @file{*xref*} buffer that lists all the matches of @var{regexp},
 and you can use the special commands in that buffer (@pxref{Xref
 Commands}).  In particular, if you exit the query replace loop, you
 can use @kbd{r} in that buffer to replace more matches.

@@ -6084,16 +6084,19 @@ Value is t if tooltip was open, nil otherwise.  */)
 	 items is unmapped.  Redisplay the menu manually...  */
       {
         Widget w;
-	struct frame *f = SELECTED_FRAME ();
-	w = f->output_data.x->menubar_widget;
+        struct frame *f = SELECTED_FRAME ();
+        if (FRAME_X_P (f) && FRAME_LIVE_P (f))
+          {
+          w = f->output_data.x->menubar_widget;
 
-	if (!DoesSaveUnders (FRAME_DISPLAY_INFO (f)->screen)
-	    && w != NULL)
-	  {
-	    block_input ();
-	    xlwmenu_redisplay (w);
-	    unblock_input ();
-	  }
+          if (!DoesSaveUnders (FRAME_DISPLAY_INFO (f)->screen)
+              && w != NULL)
+            {
+              block_input ();
+              xlwmenu_redisplay (w);
+              unblock_input ();
+            }
+        }
       }
 #endif /* USE_LUCID */
     }
