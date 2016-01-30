@@ -3573,7 +3573,13 @@ usage: (make-network-process &rest ARGS)  */)
 
   /* :host HOST -- hostname, ip address, or 'local for localhost.  */
   host = Fplist_get (contact, QChost);
-  if (!NILP (host))
+  if (NILP (host))
+    {
+      /* The "connection" function gets it bind info from the address we're
+	 given, so use this dummy address if nothing is specified. */
+      host = build_string ("127.0.0.1");
+    }
+  else
     {
       if (EQ (host, Qlocal))
 	/* Depending on setup, "localhost" may map to different IPv4 and/or
@@ -3810,7 +3816,7 @@ usage: (make-network-process &rest ARGS)  */)
 
   /* If we're doing async address resolution, the list of addresses
      here will be nil, so we postpone connecting to the server. */
-  if (NILP (ip_addresses))
+  if (!p->is_server && NILP (ip_addresses))
     {
       int channel;
 
