@@ -3471,12 +3471,11 @@ usage: (make-network-process &rest ARGS)  */)
   Lisp_Object proc;
   Lisp_Object contact;
   struct Lisp_Process *p;
-#ifdef HAVE_GETADDRINFO
-  struct addrinfo ai, *res, *lres;
+#if defined(HAVE_GETADDRINFO) || defined(HAVE_GETADDRINFO_A)
   struct addrinfo *hints;
   const char *portstring;
   char portbuf[128];
-#endif /* HAVE_GETADDRINFO */
+#endif
 #ifdef HAVE_LOCAL_SOCKETS
   struct sockaddr_un address_un;
 #endif
@@ -3526,12 +3525,6 @@ usage: (make-network-process &rest ARGS)  */)
   sentinel = Fplist_get (contact, QCsentinel);
 
   CHECK_STRING (name);
-
-  /* Initialize addrinfo structure in case we don't use getaddrinfo.  */
-  ai.ai_socktype = socktype;
-  ai.ai_protocol = 0;
-  ai.ai_next = NULL;
-  res = &ai;
 
   /* :local ADDRESS or :remote ADDRESS */
   tem = Fplist_get (contact, QCserver);
@@ -3652,6 +3645,7 @@ usage: (make-network-process &rest ARGS)  */)
     {
       struct gaicb **reqs = xmalloc (sizeof (struct gaicb*));
 
+      printf("Async DNS for '%s'\n", SSDATA (host));
       dns_request = xmalloc (sizeof (struct gaicb));
       reqs[0] = dns_request;
       dns_request->ar_name = strdup (SSDATA (host));
@@ -3673,6 +3667,8 @@ usage: (make-network-process &rest ARGS)  */)
 
   if (!NILP (host))
     {
+      struct addrinfo *res, *lres;
+
       immediate_quit = 1;
       QUIT;
 
@@ -3699,6 +3695,8 @@ usage: (make-network-process &rest ARGS)  */)
 	}
 
       ip_addresses = Fnreverse (ip_addresses);
+
+      freeaddrinfo (res);
       xfree (hints);
 
       goto open_socket;
