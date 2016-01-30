@@ -374,9 +374,10 @@ recognized."
 (defun project--completing-read-strict (prompt
                                         collection &optional predicate
                                         hist default inherit-input-method)
-  (when (and default (not (test-completion default collection predicate)))
-    (setq default (car (completion-try-completion
-                        default collection predicate (length default)))))
+  ;; Tried both expanding the default before showing the prompt, and
+  ;; removing it when it has no matches.  Neither seems natural
+  ;; enough.  Removal is confusing; early expansion makes the prompt
+  ;; too long.
   (let* ((new-prompt (if default
                          (format "%s (default %s): " prompt default)
                        (format "%s: " prompt)))
