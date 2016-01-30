@@ -41,6 +41,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef MSDOS
 #include "msdos.h"
 #endif
+#ifdef HAVE_XWIDGETS
+# include "xwidget.h"
+#endif
 
 static ptrdiff_t count_windows (struct window *);
 static ptrdiff_t get_leaf_windows (struct window *, struct window **,
@@ -4368,6 +4371,9 @@ Signal an error when WINDOW is the only window on its frame.  */)
 
       /* Block input.  */
       block_input ();
+#ifdef HAVE_XWIDGETS
+      xwidget_view_delete_all_in_window (w);
+#endif
       window_resize_apply (p, horflag);
       /* If this window is referred to by the dpyinfo's mouse
 	 highlight, invalidate that slot to be safe (Bug#9904).  */

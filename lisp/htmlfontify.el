@@ -1001,7 +1001,7 @@ merged by the user - `hfy-flatten-style' should do this."
                   (append
                    parent
                    (hfy-face-to-style-i
-                    (hfy-face-attr-for-class v hfy-display-class)) ))))
+                    (hfy-face-attr-for-class v hfy-display-class))))))
         (setq this
               (if val (case key
                        (:family         (hfy-family    val))
@@ -1020,7 +1020,7 @@ merged by the user - `hfy-flatten-style' should do this."
                        (:italic         (hfy-slant 'italic))))))
       (setq that (hfy-face-to-style-i next))
       ;;(lwarn t :warning "%S => %S" fn (nconc this that parent))
-      (nconc this that parent))) )
+      (nconc this parent that))) )
 
 (defun hfy-size-to-int (spec)
   "Convert SPEC, a CSS font-size specifier, to an Emacs :height attribute value.
@@ -1058,13 +1058,19 @@ haven't encountered them yet.  Returns a `hfy-style-assoc'."
     (nconc r (hfy-size (if x (round n) (* n 1.0)))) ))
 
 (defun hfy-face-resolve-face (fn)
+  "For FN return a face specification.
+FN may be either a face or a face specification. If the latter,
+then the specification is returned unchanged."
   (cond
    ((facep fn)
     (hfy-face-attr-for-class fn hfy-display-class))
+   ;; FIXME: is this necessary? Faces can be symbols, but
+   ;; not symbols refering to other symbols?
    ((and (symbolp fn)
          (facep (symbol-value fn)))
-    (hfy-face-attr-for-class (symbol-value fn) hfy-display-class))
-   (t nil)))
+    (hfy-face-attr-for-class
+     (symbol-value fn) hfy-display-class))
+   (t fn)))
 
 
 (defun hfy-face-to-style (fn)

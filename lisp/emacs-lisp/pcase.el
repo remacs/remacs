@@ -107,12 +107,36 @@
 
 ;;;###autoload
 (defmacro pcase (exp &rest cases)
-  "Eval EXP and perform ML-style pattern matching on that value.
+  "Evaluate EXP and attempt to match it against structural patterns.
 CASES is a list of elements of the form (PATTERN CODE...).
 
-Patterns can take the following forms:
+A structural PATTERN describes a template that identifies a class
+of values.  For example, the pattern `(,foo ,bar) matches any
+two element list, binding its elements to symbols named `foo' and
+`bar' -- in much the same way that `cl-destructuring-bind' would.
+
+A significant difference from `cl-destructuring-bind' is that, if
+a pattern match fails, the next case is tried until either a
+succesful match is found or there are no more cases.
+
+Another difference is that pattern elements may be backquoted,
+meaning they must match exactly: The pattern \\='(foo bar)
+matches only against two element lists containing the symbols
+`foo' and `bar' in that order.  (As a short-hand, atoms always
+match themselves, such as numbers or strings, and need not be
+quoted).
+
+Lastly, a pattern can be logical, such as (pred numberp), that
+matches any number-like element; or the symbol `_', that matches
+anything.  Also, when patterns are backquoted, a comma may be
+used to introduce logical patterns inside backquoted patterns.
+
+The complete list of standard patterns is as follows:
+
   _		matches anything.
   SYMBOL	matches anything and binds it to SYMBOL.
+                If a SYMBOL is used twice in the same pattern
+                the second occurrence becomes an `eq'uality test.
   (or PAT...)	matches if any of the patterns matches.
   (and PAT...)	matches if all the patterns match.
   \\='VAL		matches if the object is `equal' to VAL.
@@ -122,23 +146,18 @@ Patterns can take the following forms:
   (guard BOOLEXP)	matches if BOOLEXP evaluates to non-nil.
   (let PAT EXP)	matches if EXP matches PAT.
   (app FUN PAT)	matches if FUN applied to the object matches PAT.
-If a SYMBOL is used twice in the same pattern (i.e. the pattern is
-\"non-linear\"), then the second occurrence is turned into an `eq'uality test.
 
-FUN can take the form
+Additional patterns can be defined using `pcase-defmacro'.
+
+The FUN argument in the `app' pattern may have the following forms:
   SYMBOL or (lambda ARGS BODY)  in which case it's called with one argument.
   (F ARG1 .. ARGn) in which case F gets called with an n+1'th argument
                         which is the value being matched.
-So a FUN of the form SYMBOL is equivalent to one of the form (FUN).
+So a FUN of the form SYMBOL is equivalent to (FUN).
 FUN can refer to variables bound earlier in the pattern.
-E.g. you can match pairs where the cdr is larger than the car with a pattern
-like \\=`(,a . ,(pred (< a))) or, with more checks:
-\\=`(,(and a (pred numberp)) . ,(and (pred numberp) (pred (< a))))
-FUN is assumed to be pure, i.e. it can be dropped if its result is not used,
-and two identical calls can be merged into one.
 
-Additional patterns can be defined via `pcase-defmacro'.
-Currently, the following patterns are provided this way:"
+See Info node `(elisp) Pattern matching case statement' in the
+Emacs Lisp manual for more information and examples."
   (declare (indent 1) (debug (form &rest (pcase-PAT body))))
   ;; We want to use a weak hash table as a cache, but the key will unavoidably
   ;; be based on `exp' and `cases', yet `cases' is a fresh new list each time

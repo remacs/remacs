@@ -822,8 +822,10 @@ skips all prompting."
 (deffoo nnir-request-update-mark (group article mark)
   (let ((artgroup (nnir-article-group article))
 	(artnumber (nnir-article-number article)))
-    (when (and artgroup artnumber)
-      (gnus-request-update-mark artgroup artnumber mark))))
+    (or (and artgroup
+	     artnumber
+	     (gnus-request-update-mark artgroup artnumber mark))
+	mark)))
 
 (deffoo nnir-request-set-mark (group actions &optional server)
   (nnir-possibly-change-group group server)

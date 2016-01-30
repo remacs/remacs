@@ -318,6 +318,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
+#ifdef HAVE_XWIDGETS
+# include "xwidget.h"
+#endif
 #ifndef FRAME_X_OUTPUT
 #define FRAME_X_OUTPUT(f) ((f)->output_data.x)
 #endif
@@ -854,6 +857,9 @@ static bool next_element_from_buffer (struct it *);
 static bool next_element_from_composition (struct it *);
 static bool next_element_from_image (struct it *);
 static bool next_element_from_stretch (struct it *);
+#ifdef HAVE_XWIDGETS
+static bool next_element_from_xwidget (struct it *);
+#endif
 static void load_overlay_strings (struct it *, ptrdiff_t);
 static bool get_next_display_element (struct it *);
 static enum move_it_result
@@ -4690,6 +4696,9 @@ handle_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
   if (CONSP (spec)
       /* Simple specifications.  */
       && !EQ (XCAR (spec), Qimage)
+#ifdef HAVE_XWIDGETS
+      && !EQ (XCAR (spec), Qxwidget)
+#endif
       && !EQ (XCAR (spec), Qspace)
       && !EQ (XCAR (spec), Qwhen)
       && !EQ (XCAR (spec), Qslice)
@@ -5137,7 +5146,12 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		  || ((it ? FRAME_WINDOW_P (it->f) : frame_window_p)
 		      && valid_image_p (value))
 #endif /* not HAVE_WINDOW_SYSTEM */
-		  || (CONSP (value) && EQ (XCAR (value), Qspace)));
+             || (CONSP (value) && EQ (XCAR (value), Qspace))
+#ifdef HAVE_XWIDGETS
+             || ((it ? FRAME_WINDOW_P (it->f) : frame_window_p)
+		 && valid_xwidget_spec_p (value))
+#endif
+             );
 
   if (valid_p && display_replaced == 0)
     {
@@ -5212,6 +5226,17 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	  *position = it->position = start_pos;
 	  retval = 1 + (it->area == TEXT_AREA);
 	}
+#ifdef HAVE_XWIDGETS
+      else if (valid_xwidget_spec_p(value))
+	{
+          it->what = IT_XWIDGET;
+          it->method = GET_FROM_XWIDGET;
+          it->position = start_pos;
+	  it->object = NILP (object) ? it->w->contents : object;
+	  *position = start_pos;
+          it->xwidget = lookup_xwidget(value);
+	}
+#endif
 #ifdef HAVE_WINDOW_SYSTEM
       else
 	{
@@ -5964,6 +5989,11 @@ push_it (struct it *it, struct text_pos *position)
     case GET_FROM_STRETCH:
       p->u.stretch.object = it->object;
       break;
+#ifdef HAVE_XWIDGETS
+    case GET_FROM_XWIDGET:
+      p->u.xwidget.object = it->object;
+      break;
+#endif
     case GET_FROM_BUFFER:
     case GET_FROM_DISPLAY_VECTOR:
     case GET_FROM_STRING:
@@ -6065,6 +6095,11 @@ pop_it (struct it *it)
       it->object = p->u.image.object;
       it->slice = p->u.image.slice;
       break;
+#ifdef HAVE_XWIDGETS
+    case GET_FROM_XWIDGET:
+      it->object = p->u.xwidget.object;
+      break;
+#endif
     case GET_FROM_STRETCH:
       it->object = p->u.stretch.object;
       break;
@@ -6739,7 +6774,10 @@ static next_element_function const get_next_element[NUM_IT_METHODS] =
   next_element_from_string,
   next_element_from_c_string,
   next_element_from_image,
-  next_element_from_stretch
+  next_element_from_stretch,
+#ifdef HAVE_XWIDGETS
+  next_element_from_xwidget,
+#endif
 };
 
 #define GET_NEXT_DISPLAY_ELEMENT(it) (*get_next_element[(it)->method]) (it)
@@ -7600,6 +7638,10 @@ set_iterator_to_next (struct it *it, bool reseat_p)
 
     case GET_FROM_IMAGE:
     case GET_FROM_STRETCH:
+#ifdef HAVE_XWIDGETS
+    case GET_FROM_XWIDGET:
+#endif
+
       /* The position etc with which we have to proceed are on
 	 the stack.  The position may be at the end of a string,
          if the `display' property takes up the whole string.  */
@@ -8060,6 +8102,15 @@ next_element_from_image (struct it *it)
   it->what = IT_IMAGE;
   return true;
 }
+
+#ifdef HAVE_XWIDGETS
+static bool
+next_element_from_xwidget (struct it *it)
+{
+  it->what = IT_XWIDGET;
+  return true;
+}
+#endif
 
 
 /* Fill iterator IT with next display element from a stretch glyph
@@ -18793,6 +18844,28 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 	       glyph->left_box_line_p,
 	       glyph->right_box_line_p);
     }
+#ifdef HAVE_XWIDGETS
+  else if (glyph->type == XWIDGET_GLYPH)
+    {
+      fprintf (stderr,
+	       "  %5d %4c %6d %c %3d 0x%05x %c %4d %1.1d%1.1d\n",
+	       glyph - row->glyphs[TEXT_AREA],
+	       'X',
+	       glyph->charpos,
+	       (BUFFERP (glyph->object)
+		? 'B'
+		: (STRINGP (glyph->object)
+		   ? 'S'
+		   : '-')),
+	       glyph->pixel_width,
+	       glyph->u.xwidget,
+	       '.',
+	       glyph->face_id,
+	       glyph->left_box_line_p,
+	       glyph->right_box_line_p);
+
+    }
+#endif
 }
 
 
@@ -24291,6 +24364,13 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 
 	      return OK_PIXELS (width_p ? img->width : img->height);
 	    }
+# ifdef HAVE_XWIDGETS
+	  if (FRAME_WINDOW_P (it->f) && valid_xwidget_spec_p (prop))
+	    {
+              // TODO: Don't return dummy size.
+              return OK_PIXELS (100);
+            }
+# endif
 #endif
 	  if (EQ (car, Qplus) || EQ (car, Qminus))
 	    {
@@ -24796,6 +24876,18 @@ fill_image_glyph_string (struct glyph_string *s)
 }
 
 
+#ifdef HAVE_XWIDGETS
+static void
+fill_xwidget_glyph_string (struct glyph_string *s)
+{
+  eassert (s->first_glyph->type == XWIDGET_GLYPH);
+  s->face = FACE_FROM_ID (s->f, s->first_glyph->face_id);
+  s->font = s->face->font;
+  s->width = s->first_glyph->pixel_width;
+  s->ybase += s->first_glyph->voffset;
+  s->xwidget = s->first_glyph->u.xwidget;
+}
+#endif
 /* Fill glyph string S from a sequence of stretch glyphs.
 
    START is the index of the first glyph to consider,
@@ -25181,6 +25273,20 @@ compute_overhangs_and_x (struct glyph_string *s, int x, bool backward_p)
        }								\
      while (false)
 
+#ifdef HAVE_XWIDGETS
+#define BUILD_XWIDGET_GLYPH_STRING(START, END, HEAD, TAIL, HL, X, LAST_X) \
+     do									\
+       {								\
+	 s = alloca (sizeof *s);					\
+	 INIT_GLYPH_STRING (s, NULL, w, row, area, START, HL);		\
+	 fill_xwidget_glyph_string (s);					\
+	 append_glyph_string (&(HEAD), &(TAIL), s);			\
+	 ++(START);							\
+         s->x = (X);							\
+       }								\
+     while (false)
+#endif
+
 
 /* Add a glyph string for a sequence of character glyphs to the list
    of strings between HEAD and TAIL.  START is the index of the first
@@ -25302,7 +25408,7 @@ compute_overhangs_and_x (struct glyph_string *s, int x, bool backward_p)
    to allocate glyph strings (because draw_glyphs can be called
    asynchronously).  */
 
-#define BUILD_GLYPH_STRINGS(START, END, HEAD, TAIL, HL, X, LAST_X)	\
+#define BUILD_GLYPH_STRINGS_1(START, END, HEAD, TAIL, HL, X, LAST_X)	\
   do									\
     {									\
       HEAD = TAIL = NULL;						\
@@ -25333,8 +25439,17 @@ compute_overhangs_and_x (struct glyph_string *s, int x, bool backward_p)
 	    case IMAGE_GLYPH:						\
 	      BUILD_IMAGE_GLYPH_STRING (START, END, HEAD, TAIL,		\
 					HL, X, LAST_X);			\
-	      break;							\
-									\
+	      break;
+
+#ifdef HAVE_XWIDGETS
+# define BUILD_GLYPH_STRINGS_XW(START, END, HEAD, TAIL, HL, X, LAST_X)	\
+            case XWIDGET_GLYPH:                                         \
+              BUILD_XWIDGET_GLYPH_STRING (START, END, HEAD, TAIL,       \
+                                          HL, X, LAST_X);               \
+              break;
+#endif
+
+#define BUILD_GLYPH_STRINGS_2(START, END, HEAD, TAIL, HL, X, LAST_X)	\
 	    case GLYPHLESS_GLYPH:					\
 	      BUILD_GLYPHLESS_GLYPH_STRING (START, END, HEAD, TAIL,	\
 					    HL, X, LAST_X);		\
@@ -25351,6 +25466,18 @@ compute_overhangs_and_x (struct glyph_string *s, int x, bool backward_p)
 	    }								\
 	}								\
     } while (false)
+
+
+#ifdef HAVE_XWIDGETS
+# define BUILD_GLYPH_STRINGS(START, END, HEAD, TAIL, HL, X, LAST_X)	\
+    BUILD_GLYPH_STRINGS_1(START, END, HEAD, TAIL, HL, X, LAST_X)	\
+    BUILD_GLYPH_STRINGS_XW(START, END, HEAD, TAIL, HL, X, LAST_X)	\
+    BUILD_GLYPH_STRINGS_2(START, END, HEAD, TAIL, HL, X, LAST_X)
+#else
+# define BUILD_GLYPH_STRINGS(START, END, HEAD, TAIL, HL, X, LAST_X)	\
+    BUILD_GLYPH_STRINGS_1(START, END, HEAD, TAIL, HL, X, LAST_X)	\
+    BUILD_GLYPH_STRINGS_2(START, END, HEAD, TAIL, HL, X, LAST_X)
+#endif
 
 
 /* Draw glyphs between START and END in AREA of ROW on window W,
@@ -25991,6 +26118,109 @@ produce_image_glyph (struct it *it)
     }
 }
 
+#ifdef HAVE_XWIDGETS
+static void
+produce_xwidget_glyph (struct it *it)
+{
+  struct xwidget *xw;
+  int glyph_ascent, crop;
+  eassert (it->what == IT_XWIDGET);
+
+  struct face *face = FACE_FROM_ID (it->f, it->face_id);
+  eassert (face);
+  /* Make sure X resources of the face is loaded.  */
+  prepare_face_for_display (it->f, face);
+
+  xw = it->xwidget;
+  it->ascent = it->phys_ascent = glyph_ascent = xw->height/2;
+  it->descent = xw->height/2;
+  it->phys_descent = it->descent;
+  it->pixel_width = xw->width;
+  /* It's quite possible for images to have an ascent greater than
+     their height, so don't get confused in that case.  */
+  if (it->descent < 0)
+    it->descent = 0;
+
+  it->nglyphs = 1;
+
+  if (face->box != FACE_NO_BOX)
+    {
+      if (face->box_line_width > 0)
+	{
+	  it->ascent += face->box_line_width;
+	  it->descent += face->box_line_width;
+	}
+
+      if (it->start_of_box_run_p)
+	it->pixel_width += eabs (face->box_line_width);
+      it->pixel_width += eabs (face->box_line_width);
+    }
+
+  take_vertical_position_into_account (it);
+
+  /* Automatically crop wide image glyphs at right edge so we can
+     draw the cursor on same display row.  */
+  crop = it->pixel_width - (it->last_visible_x - it->current_x);
+  if (crop > 0 && (it->hpos == 0 || it->pixel_width > it->last_visible_x / 4))
+    it->pixel_width -= crop;
+
+  if (it->glyph_row)
+    {
+      enum glyph_row_area area = it->area;
+      struct glyph *glyph
+	= it->glyph_row->glyphs[area] + it->glyph_row->used[area];
+
+      if (it->glyph_row->reversed_p)
+	{
+	  struct glyph *g;
+
+	  /* Make room for the new glyph.  */
+	  for (g = glyph - 1; g >= it->glyph_row->glyphs[it->area]; g--)
+	    g[1] = *g;
+	  glyph = it->glyph_row->glyphs[it->area];
+	}
+      if (glyph < it->glyph_row->glyphs[area + 1])
+	{
+	  glyph->charpos = CHARPOS (it->position);
+	  glyph->object = it->object;
+	  glyph->pixel_width = it->pixel_width;
+	  glyph->ascent = glyph_ascent;
+	  glyph->descent = it->descent;
+	  glyph->voffset = it->voffset;
+	  glyph->type = XWIDGET_GLYPH;
+	  glyph->avoid_cursor_p = it->avoid_cursor_p;
+	  glyph->multibyte_p = it->multibyte_p;
+	  if (it->glyph_row->reversed_p && area == TEXT_AREA)
+	    {
+	      /* In R2L rows, the left and the right box edges need to be
+		 drawn in reverse direction.  */
+	      glyph->right_box_line_p = it->start_of_box_run_p;
+	      glyph->left_box_line_p = it->end_of_box_run_p;
+	    }
+	  else
+	    {
+	      glyph->left_box_line_p = it->start_of_box_run_p;
+	      glyph->right_box_line_p = it->end_of_box_run_p;
+	    }
+          glyph->overlaps_vertically_p = 0;
+          glyph->padding_p = 0;
+	  glyph->glyph_not_available_p = 0;
+	  glyph->face_id = it->face_id;
+          glyph->u.xwidget = it->xwidget;
+	  glyph->font_type = FONT_TYPE_UNKNOWN;
+	  if (it->bidi_p)
+	    {
+	      glyph->resolved_level = it->bidi_it.resolved_level;
+	      eassert ((it->bidi_it.type & 7) == it->bidi_it.type);
+	      glyph->bidi_type = it->bidi_it.type;
+	    }
+	  ++it->glyph_row->used[area];
+	}
+      else
+	IT_EXPAND_MATRIX_WIDTH (it, area);
+    }
+}
+#endif
 
 /* Append a stretch glyph to IT->glyph_row.  OBJECT is the source
    of the glyph, WIDTH and HEIGHT are the width and height of the
@@ -27401,6 +27631,10 @@ x_produce_glyphs (struct it *it)
     produce_image_glyph (it);
   else if (it->what == IT_STRETCH)
     produce_stretch_glyph (it);
+#ifdef HAVE_XWIDGETS
+  else if (it->what == IT_XWIDGET)
+    produce_xwidget_glyph (it);
+#endif
 
  done:
   /* Accumulate dimensions.  Note: can't assume that it->descent > 0
@@ -27770,6 +28004,10 @@ get_window_cursor_type (struct window *w, struct glyph *glyph, int *width,
   /* Use normal cursor if not blinked off.  */
   if (!w->cursor_off_p)
     {
+#ifdef HAVE_XWIDGETS
+      if (glyph != NULL && glyph->type == XWIDGET_GLYPH)
+        return NO_CURSOR;
+#endif
       if (glyph != NULL && glyph->type == IMAGE_GLYPH)
 	{
 	  if (cursor_type == FILLED_BOX_CURSOR)

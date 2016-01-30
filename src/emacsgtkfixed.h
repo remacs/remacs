@@ -27,6 +27,26 @@ struct frame;
 
 G_BEGIN_DECLS
 
+struct frame;
+
+//typedef struct _EmacsFixed              EmacsFixed;
+typedef struct _EmacsFixedPrivate       EmacsFixedPrivate;
+typedef struct _EmacsFixedClass         EmacsFixedClass;
+
+struct _EmacsFixed
+{
+  GtkFixed container;
+
+  /*< private >*/
+  EmacsFixedPrivate *priv;
+};
+
+
+struct _EmacsFixedClass
+{
+  GtkFixedClass parent_class;
+};
+
 extern GtkWidget *emacs_fixed_new (struct frame *f);
 
 G_END_DECLS

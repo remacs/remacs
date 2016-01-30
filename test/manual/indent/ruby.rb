@@ -4,6 +4,10 @@ if something_wrong?             # ruby-move-to-block-skips-heredoc
   end
   eowarn
   foo
+
+  foo(<<~squiggly)
+  end
+  squiggly
 end
 
 def foo

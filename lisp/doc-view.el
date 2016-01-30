@@ -1714,7 +1714,8 @@ If BACKWARD is non-nil, jump to the previous match."
       ;; window-parameters in the window-state(s) and then restoring this
       ;; window-state should call us back (to interpret/use those parameters).
       (doc-view-goto-page page)
-      (when slice (apply 'doc-view-set-slice slice)))))
+      (when slice (apply 'doc-view-set-slice slice))
+      (current-buffer))))
 
 (add-to-list 'desktop-buffer-mode-handlers
 	     '(doc-view-mode . doc-view-restore-desktop-buffer))
@@ -1788,9 +1789,7 @@ toggle between displaying the document or editing it as text.
 	      nil t)
     (add-hook 'clone-indirect-buffer-hook 'doc-view-clone-buffer-hook nil t)
     (add-hook 'kill-buffer-hook 'doc-view-kill-proc nil t)
-    (when (and (boundp 'desktop-save-mode)
-	       desktop-save-mode)
-      (setq-local desktop-save-buffer 'doc-view-desktop-save-buffer))
+    (setq-local desktop-save-buffer 'doc-view-desktop-save-buffer)
 
     (remove-overlays (point-min) (point-max) 'doc-view t) ;Just in case.
     ;; Keep track of display info ([vh]scroll, page number, overlay,

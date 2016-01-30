@@ -4654,13 +4654,15 @@ name in `todo-directory'.  See also the documentation string of
 		    (goto-char (match-beginning 0))
 		  (goto-char (point-max)))
 		(backward-char)
-		(when (looking-back "\\[\\([^][]+\\)\\]")
+		(when (looking-back "\\[\\([^][]+\\)\\]"
+                                    (line-beginning-position))
 		  (setq cat (match-string 1))
 		  (goto-char (match-beginning 0))
 		  (replace-match ""))
 		;; If the item ends with a non-comment parenthesis not
 		;; followed by a period, we lose (but we inherit that
 		;; problem from the legacy code).
+                ;; FIXME: fails on multiline comment
 		(when (looking-back "(\\(.*\\)) " (line-beginning-position))
 		  (setq comment (match-string 1))
 		  (replace-match "")
@@ -5230,7 +5232,8 @@ Also preserve category display, if applicable."
   (with-current-buffer buffer
     (widen)
     (let ((todo-category-number (cdr (assq 'catnum misc))))
-      (todo-category-select))))
+      (todo-category-select)
+      (current-buffer))))
 
 (add-to-list 'desktop-buffer-mode-handlers
 	     '(todo-mode . todo-restore-desktop-buffer))
@@ -6579,8 +6582,7 @@ Added to `window-configuration-change-hook' in Todo mode."
   "Make some settings that apply to multiple Todo modes."
   (add-to-invisibility-spec 'todo)
   (setq buffer-read-only t)
-  (when (and (boundp 'desktop-save-mode) desktop-save-mode)
-    (setq-local desktop-save-buffer 'todo-desktop-save-buffer))
+  (setq-local desktop-save-buffer 'todo-desktop-save-buffer)
   (when (boundp 'hl-line-range-function)
     (setq-local hl-line-range-function
 		(lambda() (save-excursion

@@ -2647,10 +2647,11 @@ the word mode."
   "Non-default value overrides the behavior of `isearch-search-fun-default'.
 This variable's value should be a function, which will be called
 with no arguments, and should return a function that takes three
-arguments: STRING, BOUND, and NOERROR.
+arguments: STRING, BOUND, and NOERROR.  See `re-search-forward'
+for the meaning of BOUND and NOERROR arguments.
 
 This returned function will be used by `isearch-search-string' to
-search for the first occurrence of STRING or its translation.")
+search for the first occurrence of STRING.")
 
 (defun isearch-search-fun ()
   "Return the function to use for the search.
@@ -2695,8 +2696,14 @@ Can be changed via `isearch-search-fun-function' for special needs."
 
 (defun isearch-search-string (string bound noerror)
   "Search for the first occurrence of STRING or its translation.
+STRING's characters are translated using `translation-table-for-input'
+if that is non-nil.
 If found, move point to the end of the occurrence,
-update the match data, and return point."
+update the match data, and return point.
+An optional second argument bounds the search; it is a buffer position.
+The match found must not extend after that position.
+Optional third argument, if t, means if fail just return nil (no error).
+  If not nil and not t, move to limit of search and return nil."
   (let* ((func (isearch-search-fun))
          (pos1 (save-excursion (funcall func string bound noerror)))
          pos2)

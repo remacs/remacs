@@ -1619,7 +1619,7 @@ The preference is a float determined from `shr-prefer-media-type'."
 (defun shr-table-body (dom)
   (let ((tbodies (seq-filter (lambda (child)
                                (eq (dom-tag child) 'tbody))
-                             (dom-children dom))))
+                             (dom-non-text-children dom))))
     (cond
      ((null tbodies)
       dom)

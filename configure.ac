@@ -374,6 +374,9 @@ otherwise for the first of 'inotify', 'kqueue' or 'gfile' that is usable.])
  ],
  [with_file_notification=$with_features])
 
+OPTION_DEFAULT_OFF([xwidgets],
+  [enable use of some gtk widgets in Emacs buffers (requires gtk3)])
+
 ## For the times when you want to build Emacs but don't have
 ## a suitable makeinfo, and can live without the manuals.
 dnl http://lists.gnu.org/archive/html/emacs-devel/2008-04/msg01844.html
@@ -2563,6 +2566,26 @@ if test "${HAVE_GTK}" = "yes"; then
  term_header=gtkutil.h
 fi
 
+
+dnl Enable xwidgets if GTK3 and WebKitGTK+ are available.
+HAVE_XWIDGETS=no
+XWIDGETS_OBJ=
+if test "$with_xwidgets" != "no"; then
+  test "$USE_GTK_TOOLKIT" = "GTK3" && test "$window_system" != "none" ||
+    AC_MSG_ERROR([xwidgets requested but gtk3 not used.])
+
+  WEBKIT_REQUIRED=1.4.0
+  WEBKIT_MODULES="webkitgtk-3.0 >= $WEBKIT_REQUIRED"
+  EMACS_CHECK_MODULES([WEBKIT], [$WEBKIT_MODULES])
+  HAVE_XWIDGETS=$HAVE_WEBKIT
+  test $HAVE_XWIDGETS = yes ||
+    AC_MSG_ERROR([xwidgets requested but WebKitGTK+ not found.])
+
+  XWIDGETS_OBJ=xwidget.o
+  AC_DEFINE([HAVE_XWIDGETS], 1, [Define to 1 if you have xwidgets support.])
+fi
+AC_SUBST(XWIDGETS_OBJ)
+
 CFLAGS=$OLD_CFLAGS
 LIBS=$OLD_LIBS
 
@@ -3123,7 +3146,7 @@ if test "${HAVE_X11}" = "yes"; then
   if test "${with_cairo}" != "no"; then
     CAIRO_REQUIRED=1.12.0
     CAIRO_MODULE="cairo >= $CAIRO_REQUIRED"
-    PKG_CHECK_MODULES(CAIRO, $CAIRO_MODULE, USE_CAIRO=yes, :)
+    EMACS_CHECK_MODULES(CAIRO, $CAIRO_MODULE, USE_CAIRO=yes, :)
     if test $USE_CAIRO = yes; then
       AC_DEFINE(USE_CAIRO, 1, [Define to 1 if using cairo.])
     else
@@ -4948,6 +4971,9 @@ case "$USE_X_TOOLKIT" in
   LUCID) TOOLKIT_LIBW="$LUCID_LIBW" ;;
   none) test "x$HAVE_GTK" = "xyes" && TOOLKIT_LIBW="$GTK_LIBS" ;;
 esac
+if test "$HAVE_XWIDGETS" = "yes"; then
+  TOOLKIT_LIBW="$TOOLKIT_LIBW -lXcomposite"
+fi
 AC_SUBST(TOOLKIT_LIBW)
 
 if test "${opsys}" != "mingw32"; then
@@ -5237,7 +5263,8 @@ optsep=
 emacs_config_features=
 for opt in XAW3D XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
   GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
-  LIBOTF XFT ZLIB TOOLKIT_SCROLL_BARS X_TOOLKIT X11 NS MODULES; do
+  LIBOTF XFT ZLIB TOOLKIT_SCROLL_BARS X_TOOLKIT X11 NS MODULES \
+  XWIDGETS; do
 
     case $opt in
       NOTIFY|ACL) eval val=\${${opt}_SUMMARY} ;;
@@ -5287,6 +5314,7 @@ AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D
   Does Emacs directly use zlib?                           ${HAVE_ZLIB}
   Does Emacs have dynamic modules support?                ${HAVE_MODULES}
   Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SCROLL_BARS}
+  Does Emacs support Xwidgets (requires gtk3)?            ${HAVE_XWIDGETS}
 "])
 
 if test -n "${EMACSDATA}"; then

@@ -2119,7 +2119,7 @@ See `set-language-info-alist' for use in programs."
       (with-current-buffer standard-output
 	(insert language-name " language environment\n\n")
 	(if (stringp doc)
-	    (insert doc "\n\n"))
+	    (insert (substitute-command-keys doc) "\n\n"))
 	(condition-case nil
 	    (let ((str (eval (get-language-info language-name 'sample-text))))
 	      (if (stringp str)
