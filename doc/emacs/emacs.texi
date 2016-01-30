@@ -192,6 +192,7 @@ Advanced Features
 * Network Security::    Managing the network security.
 * Document View::       Viewing PDF, PS and DVI files.
 * EWW::                 A web browser in Emacs.
+* Embedded WebKit Widgets:: Embedding browser widgets in Emacs buffers.
 * Shell::               Executing shell commands from Emacs.
 * Emacs Server::        Using Emacs as an editing server.
 * Printing::            Printing hardcopies of buffers or regions.
