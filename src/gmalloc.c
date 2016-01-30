@@ -87,6 +87,20 @@ extern "C"
 
 #include <stddef.h>
 
+#ifdef emacs
+extern void emacs_abort (void);
+#endif
+
+/* Underlying allocation function; successive calls should
+   return contiguous pieces of memory.  */
+extern void *(*__morecore) (ptrdiff_t size);
+
+/* Default value of `__morecore'.  */
+extern void *__default_morecore (ptrdiff_t size);
+
+#ifdef HYBRID_MALLOC
+#define extern static
+#endif
 
 /* Allocate SIZE bytes of memory.  */
 extern void *malloc (size_t size) ATTRIBUTE_MALLOC_SIZE ((1));
@@ -99,8 +113,8 @@ extern void *calloc (size_t nmemb, size_t size) ATTRIBUTE_MALLOC_SIZE ((1,2));
 extern void free (void *ptr);
 
 /* Allocate SIZE bytes allocated to ALIGNMENT bytes.  */
-#ifdef MSDOS
 extern void *aligned_alloc (size_t, size_t);
+#ifdef MSDOS
 extern void *memalign (size_t, size_t);
 extern int posix_memalign (void **, size_t, size_t);
 #endif
@@ -108,10 +122,6 @@ extern int posix_memalign (void **, size_t, size_t);
 #ifdef USE_PTHREAD
 /* Set up mutexes and make malloc etc. thread-safe.  */
 extern void malloc_enable_thread (void);
-#endif
-
-#ifdef emacs
-extern void emacs_abort (void);
 #endif
 
 /* The allocator divides the heap into blocks of fixed size; large
@@ -249,13 +259,6 @@ extern int _malloc_thread_enabled_p;
    return the address of the beginning of the object.  */
 extern void *malloc_find_object_address (void *ptr);
 
-/* Underlying allocation function; successive calls should
-   return contiguous pieces of memory.  */
-extern void *(*__morecore) (ptrdiff_t size);
-
-/* Default value of `__morecore'.  */
-extern void *__default_morecore (ptrdiff_t size);
-
 /* If not NULL, this function is called after each time
    `__morecore' is called to increase the data size.  */
 extern void (*__after_morecore_hook) (void);
@@ -318,6 +321,8 @@ extern struct mstats mstats (void);
 /* Call WARNFUN with a warning message when memory usage is high.  */
 extern void memory_warnings (void *start, void (*warnfun) (const char *));
 
+#undef extern
+
 #ifdef	__cplusplus
 }
 #endif
@@ -346,6 +351,8 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
 void *(*__morecore) (ptrdiff_t size) = __default_morecore;
 
+#ifndef HYBRID_MALLOC
+
 /* Debugging hook for `malloc'.  */
 void *(*__malloc_hook) (size_t size);
 
@@ -354,9 +361,6 @@ char *_heapbase;
 
 /* Block information table.  Allocated with align/__free (not malloc/free).  */
 malloc_info *_heapinfo;
-
-/* Number of info entries.  */
-static size_t heapsize;
 
 /* Search index in the info table.  */
 size_t _heapindex;
@@ -380,6 +384,15 @@ size_t __malloc_extra_blocks;
 
 void (*__malloc_initialize_hook) (void);
 void (*__after_morecore_hook) (void);
+
+#else
+
+static struct list _fraghead[BLOCKLOG];
+
+#endif /* HYBRID_MALLOC */
+
+/* Number of info entries.  */
+static size_t heapsize;
 
 #if defined GC_MALLOC_CHECK && defined GC_PROTECT_MALLOC_STATE
 
@@ -946,7 +959,7 @@ malloc (size_t size)
   return (hook != NULL ? *hook : _malloc_internal) (size);
 }
 
-#ifndef _LIBC
+#if !(defined (_LIBC) || defined (HYBRID_MALLOC))
 
 /* On some ANSI C systems, some libc functions call _malloc, _free
    and _realloc.  Make them use the GNU functions.  */
@@ -995,11 +1008,13 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
    or (US mail) as Mike Haertel c/o Free Software Foundation.  */
 
 
+#ifndef HYBRID_MALLOC
 /* Debugging hook for free.  */
 void (*__free_hook) (void *__ptr);
 
 /* List of blocks allocated by aligned_alloc.  */
 struct alignlist *_aligned_blocks = NULL;
+#endif
 
 /* Return memory to the heap.
    Like `_free_internal' but don't lock mutex.  */
@@ -1270,6 +1285,7 @@ free (void *ptr)
     _free_internal (ptr);
 }
 
+#ifndef HYBRID_MALLOC
 /* Define the `cfree' alias for `free'.  */
 #ifdef weak_alias
 weak_alias (free, cfree)
@@ -1279,6 +1295,7 @@ cfree (void *ptr)
 {
   free (ptr);
 }
+#endif
 #endif
 /* Change the size of a block allocated by `malloc'.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
@@ -1304,8 +1321,10 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
+#ifndef HYBRID_MALLOC
 /* Debugging hook for realloc.  */
 void *(*__realloc_hook) (void *ptr, size_t size);
+#endif
 
 /* Resize the given region to the new size, returning a pointer
    to the (possibly moved) region.  This is optimized for speed;
@@ -1549,7 +1568,9 @@ General Public License for more details.
 You should have received a copy of the GNU General Public
 License along with this library.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef HYBRID_MALLOC
 void *(*__memalign_hook) (size_t size, size_t alignment);
+#endif
 
 void *
 aligned_alloc (size_t alignment, size_t size)
@@ -1638,6 +1659,8 @@ aligned_alloc (size_t alignment, size_t size)
   return result;
 }
 
+/* Note that memalign and posix_memalign are not used in Emacs.  */
+#ifndef HYBRID_MALLOC
 /* An obsolete alias for aligned_alloc, for any old libraries that use
    this alias.  */
 
@@ -1649,7 +1672,6 @@ memalign (size_t alignment, size_t size)
 
 /* If HYBRID_MALLOC is defined, we may want to use the system
    posix_memalign below.  */
-#ifndef HYBRID_MALLOC
 int
 posix_memalign (void **memptr, size_t alignment, size_t size)
 {
@@ -1689,6 +1711,7 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
    The author may be reached (Email) at the address mike@ai.mit.edu,
    or (US mail) as Mike Haertel c/o Free Software Foundation.  */
 
+#ifndef HYBRID_MALLOC
 /* Allocate SIZE bytes on a page boundary.  */
 extern void *valloc (size_t);
 
@@ -1708,6 +1731,7 @@ valloc (size_t size)
 
   return aligned_alloc (pagesize, size);
 }
+#endif /* HYBRID_MALLOC */
 
 #undef malloc
 #undef realloc
