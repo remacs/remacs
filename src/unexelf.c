@@ -211,10 +211,6 @@ entry_address (void *section_h, ptrdiff_t idx, ptrdiff_t entsize)
 
 typedef unsigned char byte;
 
-#ifdef HYBRID_MALLOC
-extern int bss_sbrk_did_unexec;
-#endif
-
 /* ****************************************************************
  * unexec
  *
@@ -230,10 +226,6 @@ unexec (const char *new_name, const char *old_name)
   int new_file, old_file;
   off_t new_file_size;
   void *new_break;
-
-#ifdef HYBRID_MALLOC
-  bss_sbrk_did_unexec = 1;
-#endif
 
   /* Pointers to the base of the image of the two files.  */
   caddr_t old_base, new_base;

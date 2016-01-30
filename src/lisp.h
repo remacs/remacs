@@ -3602,13 +3602,8 @@ extern void mark_object (Lisp_Object);
 #if defined REL_ALLOC && !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC
 extern void refill_memory_reserve (void);
 #endif
-#ifdef DOUG_LEA_MALLOC
 extern void alloc_unexec_pre (void);
 extern void alloc_unexec_post (void);
-#else
-INLINE void alloc_unexec_pre (void) {}
-INLINE void alloc_unexec_post (void) {}
-#endif
 extern const char *pending_malloc_warning;
 extern Lisp_Object zero_vector;
 extern Lisp_Object *stack_base;

@@ -35,6 +35,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "dispextern.h"
 #include "intervals.h"
 #include "puresize.h"
+#include "sheap.h"
 #include "systime.h"
 #include "character.h"
 #include "buffer.h"
@@ -117,18 +118,6 @@ my_heap_start (void)
    inside glibc's malloc.  */
 static void *malloc_state_ptr;
 
-/* Get and free this pointer; useful around unexec.  */
-void
-alloc_unexec_pre (void)
-{
-  malloc_state_ptr = malloc_get_state ();
-}
-void
-alloc_unexec_post (void)
-{
-  free (malloc_state_ptr);
-}
-
 /* Restore the dumped malloc state.  Because malloc can be invoked
    even before main (e.g. by the dynamic linker), the dumped malloc
    state must be restored as early as possible using this special hook.  */
@@ -176,6 +165,30 @@ voidfuncptr __MALLOC_HOOK_VOLATILE __malloc_initialize_hook
   = malloc_initialize_hook;
 
 #endif
+
+/* Allocator-related actions to do just before and after unexec.  */
+
+void
+alloc_unexec_pre (void)
+{
+#ifdef DOUG_LEA_MALLOC
+  malloc_state_ptr = malloc_get_state ();
+#endif
+#ifdef HYBRID_MALLOC
+  bss_sbrk_did_unexec = true;
+#endif
+}
+
+void
+alloc_unexec_post (void)
+{
+#ifdef DOUG_LEA_MALLOC
+  free (malloc_state_ptr);
+#endif
+#ifdef HYBRID_MALLOC
+  bss_sbrk_did_unexec = false;
+#endif
+}
 
 /* Mark, unmark, query mark bit of a Lisp string.  S must be a pointer
    to a struct Lisp_String.  */
