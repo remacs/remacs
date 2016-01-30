@@ -576,7 +576,7 @@ globals.h: gl-stamp; @true
 
 $(ALLOBJS): globals.h
 
-$(lib)/libgnu.a: $(config_h)
+$(lib)/libegnu.a: $(config_h)
 	$(MAKE) -C $(lib) all
 
 ## We have to create $(etc) here because init_cmdargs tests its
@@ -584,9 +584,9 @@ $(lib)/libgnu.a: $(config_h)
 ## This goes on to affect various things, and the emacs binary fails
 ## to start if Vinstallation_directory has the wrong value.
 temacs$(EXEEXT): $(LIBXMENU) $(ALLOBJS) \
-	         $(lib)/libgnu.a $(EMACSRES) ${charsets} ${charscript}
+	         $(lib)/libegnu.a $(EMACSRES) ${charsets} ${charscript}
 	$(AM_V_CCLD)$(CC) $(ALL_CFLAGS) $(TEMACS_LDFLAGS) $(LDFLAGS) \
-	  -o temacs $(ALLOBJS) $(lib)/libgnu.a $(W32_RES_LINK) $(LIBES)
+	  -o temacs $(ALLOBJS) $(lib)/libegnu.a $(W32_RES_LINK) $(LIBES)
 	$(MKDIR_P) $(etc)
 ifneq ($(CANNOT_DUMP),yes)
 	$(PAXCTL_if_present) -r $@
