@@ -30,8 +30,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define DOTEXE ".exe"
 
-extern void report_sheap_usage (int);
-
 extern int bss_sbrk_did_unexec;
 
 /*
@@ -275,8 +273,6 @@ unexec (const char *outfile, const char *infile)
   int fd_out;
   int ret;
   int ret2;
-
-  report_sheap_usage (1);
 
   infile = add_exe_suffix_if_necessary (infile, infile_buffer);
   outfile = add_exe_suffix_if_necessary (outfile, outfile_buffer);

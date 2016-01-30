@@ -134,6 +134,7 @@ extern void unexec_init_emacs_zone (void);
 #endif
 
 extern void malloc_enable_thread (void);
+extern void report_sheap_usage (int);
 
 /* If true, Emacs should not attempt to use a window-specific code,
    but instead should use the virtual terminal under which it was started.  */
@@ -2072,6 +2073,10 @@ You must run Emacs in batch mode in order to dump it.  */)
 
   tem = Vpurify_flag;
   Vpurify_flag = Qnil;
+
+#ifdef HYBRID_MALLOC
+  report_sheap_usage (1);
+#endif
 
   fflush (stdout);
   /* Tell malloc where start of impure now is.  */
