@@ -2218,6 +2218,9 @@ in the file.
 In Fortran code, functions, subroutines and block data are tags.
 
 @item
+In Go code, packages, functions, and types are tags.
+
+@item
 In HTML input files, the tags are the @code{title} and the @code{h1},
 @code{h2}, @code{h3} headers.  Also, tags are @code{name=} in anchors
 and all occurrences of @code{id=}.
@@ -2264,7 +2267,7 @@ generate a tag.
 
 @item
 In Ruby code, @code{def} or @code{class} or @code{module} at the
-beginning of a line generate a tag.
+beginning of a line generate a tag.  Constants also generate tags.
 @end itemize
 
   You can also generate tags based on regexp matching (@pxref{Etags

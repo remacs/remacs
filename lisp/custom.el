@@ -224,6 +224,7 @@ The remaining arguments to `defcustom' should have the form
 The following keywords are meaningful:
 
 :type	VALUE should be a widget type for editing the symbol's value.
+	Every `defcustom' should specify a value for this keyword.
 :options VALUE should be a list of valid members of the widget type.
 :initialize
 	VALUE should be a function used to initialize the

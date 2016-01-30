@@ -227,6 +227,8 @@ A	cp-src/c.C	117
 A	cp-src/fail.C	7
 A	cp-src/fail.C	23
 A	ruby-src/test1.ruby	/^class A$/
+A	ruby-src/test1.ruby	/^module A$/
+ABC	ruby-src/test1.ruby	11
 ADDRESS	c-src/emacs/src/gmalloc.c	/^#define ADDRESS(B)	((void *) (((B) - 1) * BLOCKSIZ/
 ALIGNOF_STRUCT_LISP_VECTOR	c-src/emacs/src/lisp.h	1378
 ALLOCATED_BEFORE_DUMPING	c-src/emacs/src/gmalloc.c	/^#define ALLOCATED_BEFORE_DUMPING(P) \\$/
@@ -289,6 +291,7 @@ B	cp-src/c.C	/^void B::B() {}$/
 B	cp-src/c.C	122
 B	cp-src/fail.C	8
 B	cp-src/fail.C	24
+B	ruby-src/test1.ruby	/^  class B$/
 BE_Node	cp-src/c.C	/^void BE_Node::BE_Node() {}$/
 BE_Node	cp-src/c.C	77
 BITS_PER_BITS_WORD	c-src/emacs/src/lisp.h	125
@@ -438,7 +441,6 @@ Cjava_entries	c-src/etags.c	/^Cjava_entries (FILE *inf)$/
 Cjava_help	c-src/etags.c	551
 Cjava_suffixes	c-src/etags.c	549
 ClassExample	ruby-src/test.rb	/^    class ClassExample$/
-ClassExample.class_method	ruby-src/test.rb	/^        def ClassExample.class_method$/
 Clear/p	ada-src/2ataspri.adb	/^   procedure Clear (Cell : in out TAS_Cell) is$/
 Clear/p	ada-src/2ataspri.ads	/^   procedure Clear        (Cell : in out TAS_Cell)/
 Cobol_help	c-src/etags.c	558
@@ -458,6 +460,7 @@ Condition_Variable/t	ada-src/2ataspri.ads	/^   type Condition_Variable is privat
 Condition_Variable/t	ada-src/2ataspri.ads	/^   type Condition_Variable is$/
 Configure	pyt-src/server.py	/^class Configure(Frame, ControlEdit):$/
 ConfirmQuit	pyt-src/server.py	/^def ConfirmQuit(frame, context):$/
+Constant	ruby-src/test1.ruby	26
 ControlEdit	pyt-src/server.py	/^class ControlEdit(Frame):$/
 Controls	pyt-src/server.py	/^class Controls:$/
 CopyTextString	pas-src/common.pas	/^function CopyTextString;(*($/
@@ -939,12 +942,15 @@ Metags	c-src/etags.c	/^main (int argc, char **argv)$/
 Mfail	cp-src/fail.C	/^main()$/
 Mkai-test.pl	perl-src/kai-test.pl	/^package main;$/
 ModuleExample	ruby-src/test.rb	/^module ModuleExample$/
-ModuleExample.module_class_method	ruby-src/test.rb	/^    def ModuleExample.module_class_method$/
 More_Lisp_Bits	c-src/emacs/src/lisp.h	801
 MoveLayerAfter	lua-src/allegro.lua	/^function MoveLayerAfter (this_one)$/
 MoveLayerBefore	lua-src/allegro.lua	/^function MoveLayerBefore (this_one)$/
 MoveLayerBottom	lua-src/allegro.lua	/^function MoveLayerBottom ()$/
 MoveLayerTop	lua-src/allegro.lua	/^function MoveLayerTop ()$/
+Mtest.go	go-src/test.go	1
+Mtest.go	go-src/test.go	/^func main() {$/
+Mtest1.go	go-src/test1.go	1
+Mtest1.go	go-src/test1.go	/^func main() {$/
 Mx.cc	cp-src/x.cc	/^main(int argc, char *argv[])$/
 NAME	y-src/cccp.c	8
 NATNUMP	c-src/emacs/src/lisp.h	/^NATNUMP (Lisp_Object x)$/
@@ -1075,6 +1081,8 @@ Pkg1_Proc2/p	ada-src/waroquiers.ada	/^  procedure Pkg1_Proc2 (I : Integer);$/
 Pkg1_Proc2/p	ada-src/waroquiers.ada	/^  procedure Pkg1_Proc2 (I : Integer) is$/
 PostControls	pyt-src/server.py	/^    def PostControls(self):$/
 Pre_Call_State/t	ada-src/2ataspri.ads	/^   type Pre_Call_State is new System.Address;$/
+PrintAdd	go-src/test1.go	/^func (s str) PrintAdd() {$/
+PrintAdd	go-src/test1.go	/^func (n intNumber) PrintAdd() {$/
 Private	objc-src/Subprocess.m	/^@interface Subprocess(Private)$/
 Private_T/b	ada-src/etags-test-for.ada	/^    task body Private_T is$/
 Private_T/b	ada-src/waroquiers.ada	/^    task body Private_T is$/
@@ -1100,7 +1108,7 @@ Python_help	c-src/etags.c	660
 Python_suffixes	c-src/etags.c	658
 QUIT	c-src/emacs/src/lisp.h	3101
 QUITP	c-src/emacs/src/lisp.h	3112
-Qpre_abbrev_expand_hook	c-src/abbrev.c	82
+Qpre_abbrev_expand_hook	c-src/abbrev.c	83
 RANGED_INTEGERP	c-src/emacs/src/lisp.h	/^RANGED_INTEGERP (intmax_t lo, Lisp_Object x, intma/
 RCSid	objc-src/PackInsp.m	30
 READABLE_EVENTS_DO_TIMERS_NOW	c-src/emacs/src/keyboard.c	346
@@ -1425,16 +1433,16 @@ VECTORP	c-src/emacs/src/lisp.h	/^VECTORP (Lisp_Object x)$/
 VERSION	c-src/etags.c	789
 VERSION	erl-src/gs_dialog.erl	/^-define(VERSION, '2001.1101').$/
 VERSION	objc-src/PackInsp.m	34
-Vabbrev_start_location	c-src/abbrev.c	62
-Vabbrev_start_location_buffer	c-src/abbrev.c	65
-Vabbrev_table_name_list	c-src/abbrev.c	42
+Vabbrev_start_location	c-src/abbrev.c	63
+Vabbrev_start_location_buffer	c-src/abbrev.c	66
+Vabbrev_table_name_list	c-src/abbrev.c	43
 ValToNmStr	pas-src/common.pas	/^function ValToNmStr; (*($/
-Vfundamental_mode_abbrev_table	c-src/abbrev.c	51
-Vglobal_abbrev_table	c-src/abbrev.c	47
-Vlast_abbrev	c-src/abbrev.c	69
-Vlast_abbrev_text	c-src/abbrev.c	74
+Vfundamental_mode_abbrev_table	c-src/abbrev.c	52
+Vglobal_abbrev_table	c-src/abbrev.c	48
+Vlast_abbrev	c-src/abbrev.c	70
+Vlast_abbrev_text	c-src/abbrev.c	75
 Vlispy_mouse_stem	c-src/emacs/src/keyboard.c	5172
-Vpre_abbrev_expand_hook	c-src/abbrev.c	82
+Vpre_abbrev_expand_hook	c-src/abbrev.c	83
 WAIT_READING_MAX	c-src/emacs/src/lisp.h	4281
 WAIT_READING_MAX	c-src/emacs/src/lisp.h	4283
 WCHAR_TYPE_SIZE	cccp.y	99
@@ -1530,9 +1538,9 @@ Y	c-src/h.h	100
 YACC	c-src/etags.c	2199
 YELLOW	cp-src/screen.hpp	26
 YYABORT	/usr/share/bison/bison.simple	153
-YYABORT	/usr/share/bison/bison.simple	153
+YYABORT	/usr/share/bison/bison.simple	154
 YYACCEPT	/usr/share/bison/bison.simple	152
-YYACCEPT	/usr/share/bison/bison.simple	152
+YYACCEPT	/usr/share/bison/bison.simple	153
 YYBACKUP	/usr/share/bison/bison.simple	/^#define YYBACKUP(Token, Value)					\\$/
 YYBACKUP	/usr/share/bison/bison.simple	/^#define YYBACKUP(Token, Value)					\\$/
 YYBISON	y-src/parse.c	4
@@ -1544,23 +1552,23 @@ YYDPRINTF	/usr/share/bison/bison.simple	/^# define YYDPRINTF(Args)$/
 YYDPRINTF	/usr/share/bison/bison.simple	/^# define YYDPRINTF(Args)			\\$/
 YYDPRINTF	/usr/share/bison/bison.simple	/^# define YYDPRINTF(Args)$/
 YYEMPTY	/usr/share/bison/bison.simple	150
-YYEMPTY	/usr/share/bison/bison.simple	150
+YYEMPTY	/usr/share/bison/bison.simple	151
 YYEOF	/usr/share/bison/bison.simple	151
-YYEOF	/usr/share/bison/bison.simple	151
+YYEOF	/usr/share/bison/bison.simple	152
 YYERRCODE	/usr/share/bison/bison.simple	178
-YYERRCODE	/usr/share/bison/bison.simple	178
+YYERRCODE	/usr/share/bison/bison.simple	179
 YYERROR	/usr/share/bison/bison.simple	154
-YYERROR	/usr/share/bison/bison.simple	154
+YYERROR	/usr/share/bison/bison.simple	155
 YYFAIL	/usr/share/bison/bison.simple	158
-YYFAIL	/usr/share/bison/bison.simple	158
+YYFAIL	/usr/share/bison/bison.simple	159
 YYFINAL	parse.y	93
 YYFINAL	cccp.y	127
 YYFLAG	parse.y	94
 YYFLAG	cccp.y	128
 YYFPRINTF	/usr/share/bison/bison.simple	225
-YYFPRINTF	/usr/share/bison/bison.simple	225
+YYFPRINTF	/usr/share/bison/bison.simple	226
 YYINITDEPTH	/usr/share/bison/bison.simple	244
-YYINITDEPTH	/usr/share/bison/bison.simple	244
+YYINITDEPTH	/usr/share/bison/bison.simple	245
 YYLAST	parse.y	266
 YYLAST	cccp.y	274
 YYLEX	/usr/share/bison/bison.simple	200
@@ -1568,17 +1576,17 @@ YYLEX	/usr/share/bison/bison.simple	202
 YYLEX	/usr/share/bison/bison.simple	206
 YYLEX	/usr/share/bison/bison.simple	208
 YYLEX	/usr/share/bison/bison.simple	212
-YYLEX	/usr/share/bison/bison.simple	200
-YYLEX	/usr/share/bison/bison.simple	202
-YYLEX	/usr/share/bison/bison.simple	206
-YYLEX	/usr/share/bison/bison.simple	208
-YYLEX	/usr/share/bison/bison.simple	212
+YYLEX	/usr/share/bison/bison.simple	201
+YYLEX	/usr/share/bison/bison.simple	203
+YYLEX	/usr/share/bison/bison.simple	207
+YYLEX	/usr/share/bison/bison.simple	209
+YYLEX	/usr/share/bison/bison.simple	213
 YYLLOC_DEFAULT	/usr/share/bison/bison.simple	/^# define YYLLOC_DEFAULT(Current, Rhs, N)       	\\$/
 YYLLOC_DEFAULT	/usr/share/bison/bison.simple	/^# define YYLLOC_DEFAULT(Current, Rhs, N)       	\\$/
 YYMAXDEPTH	/usr/share/bison/bison.simple	255
 YYMAXDEPTH	/usr/share/bison/bison.simple	259
-YYMAXDEPTH	/usr/share/bison/bison.simple	255
-YYMAXDEPTH	/usr/share/bison/bison.simple	259
+YYMAXDEPTH	/usr/share/bison/bison.simple	256
+YYMAXDEPTH	/usr/share/bison/bison.simple	260
 YYNTBASE	parse.y	95
 YYNTBASE	cccp.y	129
 YYPARSE_PARAM_ARG	/usr/share/bison/bison.simple	351
@@ -1608,23 +1616,23 @@ YYSIZE_T	/usr/share/bison/bison.simple	131
 YYSIZE_T	/usr/share/bison/bison.simple	136
 YYSIZE_T	/usr/share/bison/bison.simple	140
 YYSIZE_T	/usr/share/bison/bison.simple	145
-YYSIZE_T	/usr/share/bison/bison.simple	51
-YYSIZE_T	/usr/share/bison/bison.simple	56
-YYSIZE_T	/usr/share/bison/bison.simple	71
-YYSIZE_T	/usr/share/bison/bison.simple	75
-YYSIZE_T	/usr/share/bison/bison.simple	128
-YYSIZE_T	/usr/share/bison/bison.simple	131
-YYSIZE_T	/usr/share/bison/bison.simple	136
-YYSIZE_T	/usr/share/bison/bison.simple	140
-YYSIZE_T	/usr/share/bison/bison.simple	145
+YYSIZE_T	/usr/share/bison/bison.simple	52
+YYSIZE_T	/usr/share/bison/bison.simple	57
+YYSIZE_T	/usr/share/bison/bison.simple	72
+YYSIZE_T	/usr/share/bison/bison.simple	76
+YYSIZE_T	/usr/share/bison/bison.simple	129
+YYSIZE_T	/usr/share/bison/bison.simple	132
+YYSIZE_T	/usr/share/bison/bison.simple	137
+YYSIZE_T	/usr/share/bison/bison.simple	141
+YYSIZE_T	/usr/share/bison/bison.simple	146
 YYSTACK_ALLOC	/usr/share/bison/bison.simple	50
 YYSTACK_ALLOC	/usr/share/bison/bison.simple	55
 YYSTACK_ALLOC	/usr/share/bison/bison.simple	59
 YYSTACK_ALLOC	/usr/share/bison/bison.simple	78
-YYSTACK_ALLOC	/usr/share/bison/bison.simple	50
-YYSTACK_ALLOC	/usr/share/bison/bison.simple	55
-YYSTACK_ALLOC	/usr/share/bison/bison.simple	59
-YYSTACK_ALLOC	/usr/share/bison/bison.simple	78
+YYSTACK_ALLOC	/usr/share/bison/bison.simple	51
+YYSTACK_ALLOC	/usr/share/bison/bison.simple	56
+YYSTACK_ALLOC	/usr/share/bison/bison.simple	60
+YYSTACK_ALLOC	/usr/share/bison/bison.simple	79
 YYSTACK_BYTES	/usr/share/bison/bison.simple	/^#  define YYSTACK_BYTES(N) \\$/
 YYSTACK_BYTES	/usr/share/bison/bison.simple	/^#  define YYSTACK_BYTES(N) \\$/
 YYSTACK_BYTES	/usr/share/bison/bison.simple	/^#  define YYSTACK_BYTES(N) \\$/
@@ -1632,9 +1640,9 @@ YYSTACK_BYTES	/usr/share/bison/bison.simple	/^#  define YYSTACK_BYTES(N) \\$/
 YYSTACK_FREE	/usr/share/bison/bison.simple	/^#  define YYSTACK_FREE(Ptr) do { \/* empty *\/; } wh/
 YYSTACK_FREE	/usr/share/bison/bison.simple	79
 YYSTACK_FREE	/usr/share/bison/bison.simple	/^#  define YYSTACK_FREE(Ptr) do { \/* empty *\/; } wh/
-YYSTACK_FREE	/usr/share/bison/bison.simple	79
+YYSTACK_FREE	/usr/share/bison/bison.simple	80
 YYSTACK_GAP_MAX	/usr/share/bison/bison.simple	93
-YYSTACK_GAP_MAX	/usr/share/bison/bison.simple	93
+YYSTACK_GAP_MAX	/usr/share/bison/bison.simple	94
 YYSTACK_RELOCATE	/usr/share/bison/bison.simple	/^# define YYSTACK_RELOCATE(Type, Stack)					\\$/
 YYSTACK_RELOCATE	/usr/share/bison/bison.simple	548
 YYSTACK_RELOCATE	/usr/share/bison/bison.simple	/^# define YYSTACK_RELOCATE(Type, Stack)					\\$/
@@ -1650,7 +1658,7 @@ YYSTYPE	parse.y	72
 YYSTYPE	parse.y	85
 YYSTYPE	cccp.y	119
 YYTERROR	/usr/share/bison/bison.simple	177
-YYTERROR	/usr/share/bison/bison.simple	177
+YYTERROR	/usr/share/bison/bison.simple	178
 YYTRANSLATE	parse.y	/^#define YYTRANSLATE(x) ((unsigned)(x) <= 278 ? yyt/
 YYTRANSLATE	cccp.y	/^#define YYTRANSLATE(x) ((unsigned)(x) <= 269 ? yyt/
 YY_DECL_NON_LSP_VARIABLES	/usr/share/bison/bison.simple	374
@@ -2351,6 +2359,7 @@ __str__	pyt-src/server.py	/^    def __str__(self):$/
 __up	c.c	160
 _aligned_blocks	c-src/emacs/src/gmalloc.c	1004
 _aligned_blocks_mutex	c-src/emacs/src/gmalloc.c	518
+_bar?	ruby-src/test1.ruby	/^    def self._bar?(abc)$/
 _bytes_free	c-src/emacs/src/gmalloc.c	376
 _bytes_used	c-src/emacs/src/gmalloc.c	374
 _chunks_free	c-src/emacs/src/gmalloc.c	375
@@ -2402,8 +2411,8 @@ aaa	c.c	269
 aaaaaa	c-src/h.h	111
 abbrev-expansion	c-src/abbrev.c	/^DEFUN ("abbrev-expansion", Fabbrev_expansion, Sabb/
 abbrev-symbol	c-src/abbrev.c	/^DEFUN ("abbrev-symbol", Fabbrev_symbol, Sabbrev_sy/
-abbrev_all_caps	c-src/abbrev.c	57
-abbrevs_changed	c-src/abbrev.c	55
+abbrev_all_caps	c-src/abbrev.c	58
+abbrevs_changed	c-src/abbrev.c	56
 abc	c-src/h.h	33
 abc	c-src/h.h	37
 abort-recursive-edit	c-src/emacs/src/keyboard.c	/^DEFUN ("abort-recursive-edit", Fabort_recursive_ed/
@@ -2620,10 +2629,7 @@ childDidExit	objc-src/Subprocess.m	/^- childDidExit$/
 chunks_free	c-src/emacs/src/gmalloc.c	313
 chunks_used	c-src/emacs/src/gmalloc.c	311
 cjava	c-src/etags.c	2936
-instance_method	ruby-src/test.rb	/^        def instance_method$/
-instance_method_equals=	ruby-src/test.rb	/^        def instance_method_equals=$/
-instance_method_exclamation!	ruby-src/test.rb	/^        def instance_method_exclamation!$/
-instance_method_question?	ruby-src/test.rb	/^        def instance_method_question?$/
+class_method	ruby-src/test.rb	/^        def ClassExample.class_method$/
 classifyLine	php-src/lce_functions.php	/^      function classifyLine($line)$/
 clear	cp-src/conway.hpp	/^    void clear(void) { alive = 0; }$/
 clear-abbrev-table	c-src/abbrev.c	/^DEFUN ("clear-abbrev-table", Fclear_abbrev_table, /
@@ -2956,6 +2962,7 @@ foo	f-src/entry.for	/^       character*(*) function foo()$/
 foo	f-src/entry.strange_suffix	/^       character*(*) function foo()$/
 foo	f-src/entry.strange	/^       character*(*) function foo()$/
 foo	php-src/ptest.php	/^foo()$/
+foo!	ruby-src/test1.ruby	/^    def foo!$/
 foobar	c-src/c.c	/^int foobar() {;}$/
 foobar	c.c	/^extern void foobar (void) __attribute__ ((section /
 foobar2	c-src/h.h	20
@@ -3127,9 +3134,14 @@ input_polling_used	c-src/emacs/src/keyboard.c	/^input_polling_used (void)$/
 input_was_pending	c-src/emacs/src/keyboard.c	287
 insert-abbrev-table-description	c-src/abbrev.c	/^DEFUN ("insert-abbrev-table-description", Finsert_/
 insertname	pas-src/common.pas	/^function insertname;(*($/
+instance_method	ruby-src/test.rb	/^        def instance_method$/
+instance_method_equals=	ruby-src/test.rb	/^        def instance_method_equals=$/
+instance_method_exclamation!	ruby-src/test.rb	/^        def instance_method_exclamation!$/
+instance_method_question?	ruby-src/test.rb	/^        def instance_method_question?$/
 instr	y-src/parse.y	80
 instr	parse.y	80
 instruct	c-src/etags.c	2527
+intNumber	go-src/test1.go	13
 integer	c-src/emacs/src/lisp.h	2127
 integer	cccp.y	113
 integer	y-src/cccp.y	112
@@ -3223,7 +3235,7 @@ lang	c-src/etags.c	259
 lang_names	c-src/etags.c	718
 language	c-src/etags.c	199
 last-tag	el-src/emacs/lisp/progmodes/etags.el	/^(defvar last-tag nil$/
-last_abbrev_point	c-src/abbrev.c	78
+last_abbrev_point	c-src/abbrev.c	79
 last_auto_save	c-src/emacs/src/keyboard.c	214
 last_heapinfo	c-src/emacs/src/gmalloc.c	402
 last_mouse_button	c-src/emacs/src/keyboard.c	5215
@@ -3450,6 +3462,7 @@ miti	html-src/softwarelibero.html	/^Sfatiamo alcuni miti$/
 modifier_names	c-src/emacs/src/keyboard.c	6319
 modifier_symbols	c-src/emacs/src/keyboard.c	6327
 modify_event_symbol	c-src/emacs/src/keyboard.c	/^modify_event_symbol (ptrdiff_t symbol_num, int mod/
+module_class_method	ruby-src/test.rb	/^    def ModuleExample.module_class_method$/
 module_instance_method	ruby-src/test.rb	/^    def module_instance_method$/
 more_aligned_int	c.c	165
 morecore_nolock	c-src/emacs/src/gmalloc.c	/^morecore_nolock (size_t size)$/
@@ -3732,6 +3745,7 @@ plain_C_suffixes	c-src/etags.c	643
 plainc	c-src/etags.c	2934
 plist	c-src/emacs/src/lisp.h	697
 plus	cp-src/functions.cpp	/^void Date::plus ( int days , int month , int year /
+plus	go-src/test1.go	5
 plusvalseq	prol-src/natded.prolog	/^plusvalseq([]) --> [].$/
 pointer	c-src/emacs/src/lisp.h	2125
 poll_for_input	c-src/emacs/src/keyboard.c	/^poll_for_input (struct atimer *timer)$/
@@ -3812,6 +3826,7 @@ quantizing	html-src/algrthms.html	/^Quantizing the Received$/
 questo	../c/c.web	34
 quit_char	c-src/emacs/src/keyboard.c	192
 quit_throw_to_read_char	c-src/emacs/src/keyboard.c	/^quit_throw_to_read_char (bool from_signal)$/
+qux=	ruby-src/test1.ruby	/^      def qux=(tee)$/
 r0	c-src/sysdep.h	54
 r1	c-src/sysdep.h	55
 r_alloc	c-src/emacs/src/lisp.h	/^extern void *r_alloc (void **, size_t) ATTRIBUTE_A/
@@ -3943,6 +3958,7 @@ save_getcjmp	c-src/emacs/src/keyboard.c	/^save_getcjmp (sys_jmp_buf temp)$/
 save_type	c-src/emacs/src/lisp.h	/^save_type (struct Lisp_Save_Value *v, int n)$/
 savenstr	c-src/etags.c	/^savenstr (const char *cp, int len)$/
 savestr	c-src/etags.c	/^savestr (const char *cp)$/
+say	go-src/test.go	/^func say(msg string) {$/
 scan_separators	c-src/etags.c	/^scan_separators (char *name)$/
 scolonseen	c-src/etags.c	2447
 scratch	c-src/sysdep.h	56
@@ -4068,6 +4084,7 @@ step	cp-src/clheir.hpp	/^    virtual void step(void) { }$/
 step_everybody	cp-src/clheir.cpp	/^void step_everybody(void)$/
 stop_polling	c-src/emacs/src/keyboard.c	/^stop_polling (void)$/
 store_user_signal_events	c-src/emacs/src/keyboard.c	/^store_user_signal_events (void)$/
+str	go-src/test1.go	9
 strcaseeq	c-src/etags.c	/^#define strcaseeq(s,t)	(assert ((s)!=NULL && (t)!=/
 streq	c-src/etags.c	/^#define streq(s,t)	(assert ((s)!=NULL || (t)!=NULL/
 string_intervals	c-src/emacs/src/lisp.h	/^string_intervals (Lisp_Object s)$/
@@ -4210,6 +4227,7 @@ terminateInput	objc-src/Subprocess.m	/^- terminateInput$/
 test	c-src/emacs/src/lisp.h	1871
 test	cp-src/c.C	86
 test	erl-src/gs_dialog.erl	/^test() ->$/
+test	go-src/test1.go	/^func test(p plus) {$/
 test	php-src/ptest.php	/^test $/
 test.me22b	lua-src/test.lua	/^   local function test.me22b (one)$/
 test.me_22a	lua-src/test.lua	/^   function test.me_22a(one, two)$/
@@ -4415,13 +4433,13 @@ y	cp-src/clheir.hpp	49
 y	cp-src/clheir.hpp	58
 y-get-selection-internal	c.c	/^      Fy_get_selection_internal, Sy_get_selection_/
 yyalloc	/usr/share/bison/bison.simple	83
-yyalloc	/usr/share/bison/bison.simple	83
+yyalloc	/usr/share/bison/bison.simple	84
 yycheck	parse.y	330
 yycheck	cccp.y	301
 yyclearin	/usr/share/bison/bison.simple	149
-yyclearin	/usr/share/bison/bison.simple	149
+yyclearin	/usr/share/bison/bison.simple	150
 yydebug	/usr/share/bison/bison.simple	237
-yydebug	/usr/share/bison/bison.simple	237
+yydebug	/usr/share/bison/bison.simple	238
 yydefact	parse.y	219
 yydefact	cccp.y	239
 yydefgoto	parse.y	237
@@ -4431,7 +4449,7 @@ yyerrhandle	/usr/share/bison/bison.simple	848
 yyerrlab1	/usr/share/bison/bison.simple	823
 yyerrlab1	/usr/share/bison/bison.simple	823
 yyerrok	/usr/share/bison/bison.simple	148
-yyerrok	/usr/share/bison/bison.simple	148
+yyerrok	/usr/share/bison/bison.simple	149
 yyerror	cccp.y	/^yyerror (s)$/
 yyerror	y-src/cccp.y	/^yyerror (s)$/
 yyerrstatus	/usr/share/bison/bison.simple	846
@@ -4439,14 +4457,14 @@ yyerrstatus	/usr/share/bison/bison.simple	846
 yylex	cccp.y	/^yylex ()$/
 yylex	y-src/cccp.y	/^yylex ()$/
 yyls	/usr/share/bison/bison.simple	88
-yyls	/usr/share/bison/bison.simple	88
+yyls	/usr/share/bison/bison.simple	89
 yylsp	/usr/share/bison/bison.simple	748
 yylsp	/usr/share/bison/bison.simple	921
 yylsp	/usr/share/bison/bison.simple	748
 yylsp	/usr/share/bison/bison.simple	921
 yymemcpy	/usr/share/bison/bison.simple	264
 yymemcpy	/usr/share/bison/bison.simple	/^yymemcpy (char *yyto, const char *yyfrom, YYSIZE_T/
-yymemcpy	/usr/share/bison/bison.simple	264
+yymemcpy	/usr/share/bison/bison.simple	265
 yymemcpy	/usr/share/bison/bison.simple	/^yymemcpy (char *yyto, const char *yyfrom, YYSIZE_T/
 yyn	/usr/share/bison/bison.simple	755
 yyn	/usr/share/bison/bison.simple	861
@@ -4487,7 +4505,7 @@ yyrhs	cccp.y	174
 yyrline	parse.y	171
 yyrline	cccp.y	195
 yyss	/usr/share/bison/bison.simple	85
-yyss	/usr/share/bison/bison.simple	85
+yyss	/usr/share/bison/bison.simple	86
 yystate	/usr/share/bison/bison.simple	757
 yystate	/usr/share/bison/bison.simple	761
 yystate	/usr/share/bison/bison.simple	875
@@ -4498,11 +4516,11 @@ yystate	/usr/share/bison/bison.simple	875
 yystate	/usr/share/bison/bison.simple	924
 yystpcpy	/usr/share/bison/bison.simple	316
 yystpcpy	/usr/share/bison/bison.simple	/^yystpcpy (char *yydest, const char *yysrc)$/
-yystpcpy	/usr/share/bison/bison.simple	316
+yystpcpy	/usr/share/bison/bison.simple	317
 yystpcpy	/usr/share/bison/bison.simple	/^yystpcpy (char *yydest, const char *yysrc)$/
 yystrlen	/usr/share/bison/bison.simple	293
 yystrlen	/usr/share/bison/bison.simple	/^yystrlen (const char *yystr)$/
-yystrlen	/usr/share/bison/bison.simple	293
+yystrlen	/usr/share/bison/bison.simple	294
 yystrlen	/usr/share/bison/bison.simple	/^yystrlen (const char *yystr)$/
 yystype	cccp.y	118
 yytable	parse.y	269
@@ -4512,7 +4530,7 @@ yytname	cccp.y	208
 yytranslate	parse.y	101
 yytranslate	cccp.y	135
 yyvs	/usr/share/bison/bison.simple	86
-yyvs	/usr/share/bison/bison.simple	86
+yyvs	/usr/share/bison/bison.simple	87
 yyvsp	/usr/share/bison/bison.simple	746
 yyvsp	/usr/share/bison/bison.simple	919
 yyvsp	/usr/share/bison/bison.simple	746

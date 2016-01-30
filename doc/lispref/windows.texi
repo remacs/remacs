@@ -371,14 +371,14 @@ means to use the left or top edge of @var{window} as reference position.
 If the optional argument @var{wrap} is non-@code{nil}, this means to
 wrap @var{direction} around frame borders.  For example, if @var{window}
 is at the top of the frame and @var{direction} is @code{above}, then
-return the minibuffer window provided the frame has one, and a window at
-the bottom of the frame otherwise.
+this function usually returns the frame's minibuffer window if it's
+active and a window at the bottom of the frame otherwise.
 
 If the optional argument @var{mini} is @code{nil}, this means to return
 the minibuffer window if and only if it is currently active.  If
-@var{mini} is non-@code{nil}, it returns the minibuffer window even when
-it's not active.  However, if @var{wrap} non-@code{nil}, it always acts
-as if @var{mini} were @code{nil}.
+@var{mini} is non-@code{nil}, this function may return the minibuffer
+window even when it's not active.  However, if @var{wrap} is
+non-@code{nil}, it always acts as if @var{mini} were @code{nil}.
 
 If it doesn't find a suitable window, this function returns @code{nil}.
 @end defun
@@ -664,15 +664,17 @@ following function useful:
 
 @defun window-max-chars-per-line &optional window face
 This function returns the number of characters displayed in the
-specified @var{face} in the specified @var{window} (which must be a
-live window).  If @var{face} was remapped (@pxref{Face Remapping}),
-the information is returned for the remapped face.  If omitted or
-@code{nil}, @var{face} defaults to the default face, and @var{window}
-defaults to the selected window.  Unlike @code{window-body-width},
-this function accounts for the actual size of the @var{face}'s font,
-instead of working in units of frame's canonical character width.  It
-also accounts for space used by the continuation glyph, if
-@var{window} lacks one or both of its fringes.
+specified face @var{face} in the specified window @var{window} (which
+must be a live window).  If @var{face} was remapped (@pxref{Face
+Remapping}), the information is returned for the remapped face.  If
+omitted or @code{nil}, @var{face} defaults to the default face, and
+@var{window} defaults to the selected window.
+
+Unlike @code{window-body-width}, this function accounts for the actual
+size of @var{face}'s font, instead of working in units of the canonical
+character width of @var{window}'s frame (@pxref{Frame Font}).  It also
+accounts for space used by the continuation glyph, if @var{window} lacks
+one or both of its fringes.
 @end defun
 
 @cindex fixed-size window
@@ -701,7 +703,7 @@ margins, fringes, a scroll bar and a right divider, if present.
 The following function tells how small a specific window can get taking
 into account the sizes of its areas and the values of
 @code{window-min-height}, @code{window-min-width} and
-@code{window-size-fixed}.
+@code{window-size-fixed} (@pxref{Preserving Window Sizes}).
 
 @defun window-min-size &optional window horizontal ignore pixelwise
 This function returns the minimum size of @var{window}.  @var{window}
@@ -713,10 +715,9 @@ of @var{window}'s lines.
 The return value makes sure that all components of @var{window} remain
 fully visible if @var{window}'s size were actually set to it.  With
 @var{horizontal} @code{nil} it includes the mode and header line, the
-horizontal scroll bar and the bottom divider.  With @var{horizontal}
-non-@code{nil} it includes the fringes, a scroll bar, and a right
-divider, if present.  It does not, however, include the space reserved
-for the margins.
+horizontal scroll bar and the bottom divider, if present.  With
+@var{horizontal} non-@code{nil} it includes the margins and fringes, the
+vertical scroll bar and the right divider, if present.
 
 The optional argument @var{ignore}, if non-@code{nil}, means ignore
 restrictions imposed by fixed size windows, @code{window-min-height} or
@@ -1263,8 +1264,8 @@ frame), an error is signaled.
 By default, the space taken up by @var{window} is given to one of its
 adjacent sibling windows, if any.  However, if the variable
 @code{window-combination-resize} is non-@code{nil}, the space is
-proportionally distributed among any remaining windows in the window
-combination.  @xref{Recombining Windows}.
+proportionally distributed among any remaining windows in the same
+window combination.  @xref{Recombining Windows}.
 
 The behavior of this function may be altered by the window parameters
 of @var{window}, so long as the variable
@@ -1771,11 +1772,13 @@ nor the buffer list.
 @defun window-use-time &optional window
 This functions returns the use time of window @var{window}.
 @var{window} must be a live window and defaults to the selected one.
-The @dfn{use time} of a window is not really a time value, but it does
-increase monotonically with each window selection, so the window with
-the lowest use time is the least recently selected one, and the
-window with the highest use time is the most recently selected
-one.
+
+The @dfn{use time} of a window is not really a time value, but an
+integer that does increase monotonically with each call of
+@code{select-window} with a @code{nil} @var{norecord} argument.  The
+window with the lowest use time is usually called the least recently
+used window while the window with the highest use time is called the
+most recently used one (@pxref{Cyclic Window Ordering}).
 @end defun
 
 
@@ -1790,11 +1793,11 @@ some other window, it moves through live windows in a specific order.
 For any given configuration of windows, this order never varies.  It
 is called the @dfn{cyclic ordering of windows}.
 
-  The ordering is determined by a depth-first traversal of the frame's
-window tree, retrieving the live windows which are the leaf nodes of
-the tree (@pxref{Windows and Frames}).  If the minibuffer is active,
-the minibuffer window is included too.  The ordering is cyclic, so the
-last window in the sequence is followed by the first one.
+  The ordering is determined by a depth-first traversal of each frame's
+window tree, retrieving the live windows which are the leaf nodes of the
+tree (@pxref{Windows and Frames}).  If the minibuffer is active, the
+minibuffer window is included too.  The ordering is cyclic, so the last
+window in the sequence is followed by the first one.
 
 @defun next-window &optional window minibuf all-frames
 @cindex minibuffer window, and @code{next-window}
@@ -2146,9 +2149,8 @@ Invokes @code{pop-to-buffer} to proceed.
 Marks the selected window as non-dedicated and proceeds.
 @end table
 
-When called non-interactively, @code{switch-to-buffer} always signals an
-error when the selected window is dedicated to its buffer and
-@var{force-same-window} is non-@code{nil}.
+This option does not affect non-interactive calls of
+@code{switch-to-buffer}.
 @end defopt
 
 By default, @code{switch-to-buffer} shows the buffer at its position of
@@ -2209,7 +2211,7 @@ for the documentation of @code{display-buffer}.
 
 @deffn Command pop-to-buffer buffer-or-name &optional action norecord
 This function makes @var{buffer-or-name} the current buffer and
-displays it in some window, preferably not the window previously
+displays it in some window, preferably not the window currently
 selected.  It then selects the displaying window.  If that window is
 on a different graphical frame, that frame is given input focus if
 possible (@pxref{Input Focus}).  The return value is the buffer that
@@ -2420,7 +2422,6 @@ frame is a candidate; this function replaces the default predicate.
 If @var{alist} has a non-@code{nil} @code{inhibit-same-window} entry,
 the selected window is used; thus if the selected frame has a single
 window, it is not used.
-
 @end defun
 
 @defun display-buffer-pop-up-window buffer alist

@@ -1228,7 +1228,10 @@ connection if a previous connection has died for some reason."
 		;; Read the expression.
 		(goto-char (point-min))
 		(read (current-buffer)))
-	      ":" 'omit))))))))
+	      ":" 'omit))
+
+	    ;; Mark it as connected.
+	    (tramp-set-connection-property p "connected" t)))))))
 
 (add-hook 'tramp-unload-hook
 	  (lambda ()

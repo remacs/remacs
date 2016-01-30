@@ -231,7 +231,7 @@ variable `cedet-global-command'.")
   (let* ((default-directory (oref loc root))
 	 (root (cedet-gnu-global-root)))
     (when (not root)
-      (error "Cannot use GNU Global in %s"
+      (error "No GNU Global project found for %s"
 	     (oref loc root))))
   )
 

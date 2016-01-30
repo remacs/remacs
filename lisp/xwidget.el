@@ -57,6 +57,7 @@ The possible values are: `native' or `image'."
 (declare-function xwidget-view-model "xwidget.c" (xwidget-view))
 (declare-function delete-xwidget-view "xwidget.c" (xwidget-view))
 (declare-function get-buffer-xwidgets "xwidget.c" (buffer))
+(declare-function xwidget-query-on-exit-flag "xwidget.c" (xwidget))
 
 (defun xwidget-insert (pos type title width height &optional args)
   "Insert an xwidget at position POS.
@@ -97,6 +98,8 @@ Interactively, URL defaults to the string looking like a url around point."
                  (browse-url-interactive-arg "xwidget-webkit URL: "
                                              ;;(xwidget-webkit-current-url)
                                              )))
+  (or (featurep 'xwidget-internal)
+      (user-error "Your Emacs was not compiled with xwidgets support"))
   (when (stringp url)
     (if new-session
         (xwidget-webkit-new-session url)

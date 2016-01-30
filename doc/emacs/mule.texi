@@ -225,11 +225,12 @@ code point in charset: 0xEA
                syntax: w        which means: word
              category: .:Base, L:Left-to-right (strong), c:Chinese,
                        j:Japanese, l:Latin, v:Viet
-             to input: type "C-x 8 RET HEX-CODEPOINT" or "C-x 8 RET NAME"
+             to input: type "C-x 8 RET ea" or
+                       "C-x 8 RET LATIN SMALL LETTER E WITH CIRCUMFLEX"
           buffer code: #xC3 #xAA
             file code: #xC3 #xAA (encoded by coding system utf-8-unix)
               display: by this font (glyph code)
-    xft:-unknown-DejaVu Sans Mono-normal-normal-
+    xft:-PfEd-DejaVu Sans Mono-normal-normal-
         normal-*-15-*-*-*-m-0-iso10646-1 (#xAC)
 
 Character code properties: customize what to show

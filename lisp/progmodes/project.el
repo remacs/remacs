@@ -154,6 +154,34 @@ end it with `/'.  DIR must be one of `project-roots' or
     vc-directory-exclusion-list)
    grep-find-ignored-files))
 
+(cl-defgeneric project-file-completion-table (project dirs)
+  "Return a completion table for files in directories DIRS in PROJECT.
+DIRS is a list of absolute directories; it should be some
+subset of the project roots and external roots.
+
+The default implementation uses `find-program'.  PROJECT is used
+to find the list of ignores for each directory."
+  ;; FIXME: Uniquely abbreviate the roots?
+  (require 'xref)
+  (let ((all-files
+	 (cl-mapcan
+	  (lambda (dir)
+	    (let ((command
+		   (format "%s %s %s -type f -print0"
+			   find-program
+			   dir
+			   (xref--find-ignores-arguments
+			    (project-ignores project dir)
+			    (expand-file-name dir)))))
+	      (split-string (shell-command-to-string command) "\0" t)))
+	  dirs)))
+    (lambda (string pred action)
+      (cond
+       ((eq action 'metadata)
+	'(metadata . ((category . project-file))))
+       (t
+	(complete-with-action action all-files string pred))))))
+
 (defgroup project-vc nil
   "Project implementation using the VC package."
   :version "25.1"
@@ -313,51 +341,55 @@ pattern to search for."
 
 ;;;###autoload
 (defun project-find-file ()
-  "Visit a file in the current project's roots.
-
-This is like `find-file', but it limits the file-name completion
-candidates to the files within the current project roots."
+  "Visit a file (with completion) in the current project's roots.
+The completion default is the filename at point, if one is
+recognized."
   (interactive)
   (let* ((pr (project-current t))
          (dirs (project-roots pr)))
-    (project--find-file-in dirs pr)))
+    (project-find-file-in (thing-at-point 'filename) dirs pr)))
 
 ;;;###autoload
 (defun project-or-external-find-file ()
-  "Visit a file in the current project's roots or external roots.
-
-This is like `find-file', but it limits the file-name completion
-candidates to the files within the current project roots and external roots."
+  "Visit a file (with completion) in the current project's roots or external roots.
+The completion default is the filename at point, if one is
+recognized."
   (interactive)
   (let* ((pr (project-current t))
          (dirs (append
                 (project-roots pr)
                 (project-external-roots pr))))
-    (project--find-file-in dirs pr)))
+    (project-find-file-in (thing-at-point 'filename) dirs pr)))
 
-;; FIXME: Uniquely abbreviate the roots?
-(defun project--find-file-in (dirs project)
-  (require 'xref)
-  (let* ((all-files
-          (cl-mapcan
-           (lambda (dir)
-             (let ((command
-                    (format "%s %s %s -type f -print0"
-                            find-program
-                            dir
-                            (xref--find-ignores-arguments
-                             (project-ignores project dir)
-                             (expand-file-name dir)))))
-               (split-string (shell-command-to-string command) "\0" t)))
-           dirs))
-         (table (lambda (string pred action)
-                  (cond
-                   ((eq action 'metadata)
-                    '(metadata . ((category . project-file))))
-                   (t
-                    (complete-with-action action all-files string pred))))))
-    (find-file
-     (completing-read "Find file: " table nil t))))
+(defun project-find-file-in (filename dirs project)
+  "Complete FILENAME in DIRS in PROJECT and visit the result."
+  (let* ((table (project-file-completion-table project dirs))
+         (file (project--completing-read-strict
+                "Find file" table nil nil
+                filename)))
+    (if (string= file "")
+        (user-error "You didn't specify the file")
+      (find-file file))))
+
+(defun project--completing-read-strict (prompt
+                                        collection &optional predicate
+                                        hist default inherit-input-method)
+  ;; Tried both expanding the default before showing the prompt, and
+  ;; removing it when it has no matches.  Neither seems natural
+  ;; enough.  Removal is confusing; early expansion makes the prompt
+  ;; too long.
+  (let* ((new-prompt (if default
+                         (format "%s (default %s): " prompt default)
+                       (format "%s: " prompt)))
+         (res (completing-read new-prompt
+                               collection predicate t
+                               nil hist default inherit-input-method)))
+    (if (and (equal res default)
+             (not (test-completion res collection predicate)))
+        (completing-read (format "%s: " prompt)
+                         collection predicate t res hist nil
+                         inherit-input-method)
+      res)))
 
 (provide 'project)
 ;;; project.el ends here

@@ -102,6 +102,10 @@ switches."
   "Return the administrative directory of FILE."
   (expand-file-name vc-mtn-admin-dir (vc-mtn-root file)))
 
+(defun vc-mtn-find-ignore-file (file)
+  "Return the mtn ignore file that controls FILE."
+  (expand-file-name ".mtnignore" (vc-mtn-root file)))
+
 (defun vc-mtn-registered (file)
   (let ((root (vc-mtn-root file)))
     (when root

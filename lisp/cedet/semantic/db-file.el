@@ -67,7 +67,8 @@ disable any saving anywhere, `always', which enables saving
 everywhere, or `project', which enables saving in any directory that
 passes a list of predicates in `semanticdb-project-predicate-functions'."
   :group 'semanticdb
-  :type nil)
+  :type '(repeat (choice (string :tag "Directory") (const never) (const always)
+                         (const project))))
 
 (define-obsolete-variable-alias 'semanticdb-save-database-hooks
   'semanticdb-save-database-functions "24.3")

@@ -334,7 +334,8 @@ macro accepts the following keywords:
 @item :type @var{type}
 Use @var{type} as the data type for this option.  It specifies which
 values are legitimate, and how to display the value
-(@pxref{Customization Types}).
+(@pxref{Customization Types}).  Every @code{defcustom} should specify
+a value for this keyword.
 
 @item :options @var{value-list}
 @kindex options@r{, @code{defcustom} keyword}

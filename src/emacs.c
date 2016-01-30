@@ -133,20 +133,7 @@ bool might_dump;
 extern void unexec_init_emacs_zone (void);
 #endif
 
-#ifdef DOUG_LEA_MALLOC
-/* Preserves a pointer to the memory allocated that copies that
-   static data inside glibc's malloc.  */
-static void *malloc_state_ptr;
-/* From glibc, a routine that returns a copy of the malloc internal state.  */
-extern void *malloc_get_state (void);
-/* From glibc, a routine that overwrites the malloc internal state.  */
-extern int malloc_set_state (void *);
-/* True if the MALLOC_CHECK_ environment variable was set while
-   dumping.  Used to work around a bug in glibc's malloc.  */
-static bool malloc_using_checking;
-#elif defined HAVE_PTHREAD && !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC
 extern void malloc_enable_thread (void);
-#endif
 
 /* If true, Emacs should not attempt to use a window-specific code,
    but instead should use the virtual terminal under which it was started.  */
@@ -164,11 +151,6 @@ bool display_arg;
 /* An address near the bottom of the stack.
    Tells GC how to save a copy of the stack.  */
 char *stack_bottom;
-
-#if defined (DOUG_LEA_MALLOC) || defined (GNU_LINUX)
-/* The address where the heap starts (from the first sbrk (0) call).  */
-static void *my_heap_start;
-#endif
 
 #ifdef GNU_LINUX
 /* The gap between BSS end and heap start as far as we can tell.  */
@@ -654,51 +636,6 @@ argmatch (char **argv, int argc, const char *sstr, const char *lstr,
     }
 }
 
-#ifdef DOUG_LEA_MALLOC
-
-/* malloc can be invoked even before main (e.g. by the dynamic
-   linker), so the dumped malloc state must be restored as early as
-   possible using this special hook.  */
-
-static void
-malloc_initialize_hook (void)
-{
-  if (initialized)
-    {
-      if (!malloc_using_checking)
-	/* Work around a bug in glibc's malloc.  MALLOC_CHECK_ must be
-	   ignored if the heap to be restored was constructed without
-	   malloc checking.  Can't use unsetenv, since that calls malloc.  */
-	{
-	  char **p;
-
-	  for (p = environ; p && *p; p++)
-	    if (strncmp (*p, "MALLOC_CHECK_=", 14) == 0)
-	      {
-		do
-		  *p = p[1];
-		while (*++p);
-		break;
-	      }
-	}
-
-      malloc_set_state (malloc_state_ptr);
-#ifndef XMALLOC_OVERRUN_CHECK
-      free (malloc_state_ptr);
-#endif
-    }
-  else
-    {
-      if (my_heap_start == 0)
-        my_heap_start = sbrk (0);
-      malloc_using_checking = getenv ("MALLOC_CHECK_") != NULL;
-    }
-}
-
-void (*__malloc_initialize_hook) (void) EXTERNALLY_VISIBLE = malloc_initialize_hook;
-
-#endif /* DOUG_LEA_MALLOC */
-
 /* Close standard output and standard error, reporting any write
    errors as best we can.  This is intended for use with atexit.  */
 static void
@@ -746,10 +683,8 @@ main (int argc, char **argv)
 #ifdef GNU_LINUX
   if (!initialized)
     {
-      if (my_heap_start == 0)
-        my_heap_start = sbrk (0);
-
-      heap_bss_diff = (char *)my_heap_start - max (my_endbss, my_endbss_static);
+      char *heap_start = my_heap_start ();
+      heap_bss_diff = heap_start - max (my_endbss, my_endbss_static);
     }
 #endif
 
@@ -2148,15 +2083,12 @@ You must run Emacs in batch mode in order to dump it.  */)
   memory_warnings (my_edata, malloc_warning);
 #endif /* not WINDOWSNT */
 #endif /* not SYSTEM_MALLOC and not HYBRID_MALLOC */
-#ifdef DOUG_LEA_MALLOC
-  malloc_state_ptr = malloc_get_state ();
-#endif
+
+  alloc_unexec_pre ();
 
   unexec (SSDATA (filename), !NILP (symfile) ? SSDATA (symfile) : 0);
 
-#ifdef DOUG_LEA_MALLOC
-  free (malloc_state_ptr);
-#endif
+  alloc_unexec_post ();
 
 #ifdef WINDOWSNT
   Vlibrary_cache = Qnil;

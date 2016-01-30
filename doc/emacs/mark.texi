@@ -286,12 +286,13 @@ instead signal an error if the mark is inactive.
 @findex delete-selection-mode
   By default, text insertion occurs normally even if the mark is
 active---for example, typing @kbd{a} inserts the character @samp{a},
-then deactivates the mark.  If you enable Delete Selection mode, a
-minor mode, then inserting text while the mark is active causes the
-text in the region to be deleted first.  Also, commands that normally
-delete just one character, such as @kbd{C-d} or @kbd{@key{DEL}}, will
-delete the entire region instead.  To toggle Delete Selection
-mode on or off, type @kbd{M-x delete-selection-mode}.
+then deactivates the mark.  Delete Selection mode, a minor mode,
+modifies this behavior: if you enable that mode, then inserting text
+while the mark is active causes the text in the region to be deleted
+first.  Also, commands that normally delete just one character, such
+as @kbd{C-d} or @kbd{@key{DEL}}, will delete the entire region
+instead.  To toggle Delete Selection mode on or off, type @kbd{M-x
+delete-selection-mode}.
 
 @node Mark Ring
 @section The Mark Ring

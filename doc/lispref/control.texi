@@ -304,15 +304,15 @@ is useful to select alternatives based on more general conditions that
 distinguish between broad classes of values.  The @code{pcase} macro
 allows you to choose between alternatives based on matching the value
 of an expression against a series of patterns.  A pattern can be a
-literal value (comparison to literal values is what @code{cond} does),
-or it can be a more general description of the expected structure of
-the expression's value.
+literal value (for comparisons to literal values you'd use
+@code{cond}), or it can be a more general description of the expected
+structure of the expression's value.
 
 @defmac pcase expression &rest clauses
 Evaluate @var{expression} and choose among an arbitrary number of
 alternatives based on the value of @var{expression}.  The possible
 alternatives are specified by @var{clauses}, each of which must be a
-list of the form @code{(@var{pattern} @var{body-forms})}.
+list of the form @code{(@var{pattern} @var{body-forms}@dots{})}.
 @code{pcase} tries to match the value of @var{expression} to the
 @var{pattern} of each clause, in textual order.  If the value matches,
 the clause succeeds; @code{pcase} then evaluates its @var{body-forms},
@@ -328,7 +328,7 @@ Note: In the description of the patterns below, we use ``the value
 being matched'' to refer to the value of the @var{expression} that is
 the first argument of @code{pcase}.
 
-A UPattern can have one of the following forms:
+A UPattern can have the following forms:
 
 @table @code
 
@@ -337,7 +337,8 @@ Matches if the value being matched is @code{equal} to @var{val}.
 @item @var{atom}
 Matches any @var{atom}, which can be a keyword, a number, or a string.
 (These are self-quoting, so this kind of UPattern is actually a
-shorthand for @code{'@var{atom}}.)
+shorthand for @code{'@var{atom}}.)  Note that a string or a float
+matches any string or float with the same contents/value.
 @item _
 Matches any value.  This is known as @dfn{don't care} or @dfn{wildcard}.
 @item @var{symbol}
@@ -362,7 +363,8 @@ Matches if the specified @var{expression} matches the specified
 an @emph{arbitrary} expression, not just the expression that is the
 first argument to @code{pcase}.  (It is called @code{let} because
 @var{upattern} can bind symbols to values using the @var{symbol}
-UPattern.)
+UPattern.  For example:
+@w{@code{((or `(key . ,val) (let val 5)) val)}}.)
 @item (app @var{function} @var{upattern})
 Matches if @var{function} applied to the value being matched returns a
 value that matches @var{upattern}.  This is like the @code{pred}
@@ -407,24 +409,27 @@ Here's an illustrative example of using UPatterns:
   (code           (message "Unknown return code %S" code)))
 @end example
 
-The QPatterns are more powerful.  They allow matching the value of the
-@var{expression} that is the first argument of @code{pcase} against
-specifications of its @emph{structure}.  For example, you can specify
-that the value must be a list of 2 elements whose first element is a
-string and the second element is a number.  QPatterns can have one of
-the following forms:
+In addition, you can use backquoted patterns that are more powerful.
+They allow matching the value of the @var{expression} that is the
+first argument of @code{pcase} against specifications of its
+@emph{structure}.  For example, you can specify that the value must be
+a list of 2 elements whose first element is a specific string and the
+second element is any value with a backquoted pattern like
+@code{`("first" ,second-elem)}.
+
+Backquoted patterns have the form @code{`@var{qpattern}} where
+@var{qpattern} can have the following forms:
 
 @table @code
-@item `(@var{qpattern1} . @var{qpattern2})
+@item (@var{qpattern1} . @var{qpattern2})
 Matches if the value being matched is a cons cell whose @code{car}
 matches @var{qpattern1} and whose @code{cdr} matches @var{qpattern2}.
-@item `[@var{qpattern1} @var{qpattern2} @dots{} @var{qpatternm}]
+This readily generalizes to backquoted lists as in
+@w{@code{(@var{qpattern1} @var{qpattern2} @dots{})}}.
+@item [@var{qpattern1} @var{qpattern2} @dots{} @var{qpatternm}]
 Matches if the value being matched is a vector of length @var{m} whose
 @code{0}..@code{(@var{m}-1)}th elements match @var{qpattern1},
 @var{qpattern2} @dots{} @var{qpatternm}, respectively.
-@item `(,@var{upattern1} ,@var{upattern2} @dots{})
-Matches if the value being matched is a list whose elements match the
-corresponding @var{upattern1}, @var{upattern2}, etc.
 @item @var{atom}
 Matches if corresponding element of the value being matched is
 @code{equal} to the specified @var{atom}.
@@ -432,6 +437,13 @@ Matches if corresponding element of the value being matched is
 Matches if the corresponding element of the value being matched
 matches the specified @var{upattern}.
 @end table
+
+Note that uses of QPatterns can be expressed using only UPatterns, as
+QPatterns are implemented on top of UPatterns using
+@code{pcase-defmacro}, described below.  However, using QPatterns will
+in many cases lead to a more readable code.
+@c FIXME: There should be an example here showing how a 'pcase' that
+@c uses QPatterns can be rewritten using UPatterns.
 
 @end defmac
 
@@ -476,8 +488,11 @@ Additional UPatterns can be defined using the @code{pcase-defmacro}
 macro.
 
 @defmac pcase-defmacro name args &rest body
-Define a new UPattern for @code{pcase}.  The UPattern will have the
-form @code{(@var{name} @var{args})}.
+Define a new kind of UPattern for @code{pcase}.  The new UPattern will
+be invoked as @code{(@var{name} @var{actual-args})}.  The @var{body}
+should describe how to rewrite the UPattern @var{name} into some other
+UPattern.  The rewriting will be the result of evaluating @var{body}
+in an environment where @var{args} are bound to @var{actual-args}.
 @end defmac
 
 @node Combining Conditions

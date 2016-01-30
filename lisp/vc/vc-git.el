@@ -714,7 +714,7 @@ It is based on `log-edit-mode', and has Git-specific extensions.")
      "cat-file" "blob" (concat (if rev rev "HEAD") ":" fullname))))
 
 (defun vc-git-find-ignore-file (file)
-  "Return the root directory of the repository of FILE."
+  "Return the git ignore file that controls FILE."
   (expand-file-name ".gitignore"
 		    (vc-git-root file)))
 

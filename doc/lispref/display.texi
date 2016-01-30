@@ -27,6 +27,7 @@ that Emacs presents to the user.
 * Window Dividers::     Separating windows visually.
 * Display Property::    Enabling special display features.
 * Images::              Displaying images in Emacs buffers.
+* Xwidgets::            Displaying native widgets in Emacs buffers.
 * Buttons::             Adding clickable buttons to Emacs buffers.
 * Abstract Display::    Emacs's Widget for Object Collections.
 * Blinking::            How Emacs shows the matching open parenthesis.
@@ -5611,6 +5612,118 @@ If the value is @code{nil}, Emacs does not remove images from the cache
 except when you explicitly clear it.  This mode can be useful for
 debugging.
 @end defvar
+
+@node Xwidgets
+@section Embedded Native Widgets
+@cindex xwidget
+@cindex embedded widgets
+@cindex webkit browser widget
+
+  Emacs is able to display native widgets, such as GTK WebKit widgets,
+in Emacs buffers when it was built with the necessary support
+libraries and is running on a graphical terminal.  To test whether
+Emacs supports display of embedded widgets, check that the
+@code{xwidget-internal} feature is available (@pxref{Named Features}).
+
+  To display an embedded widget in a buffer, you must first create an
+xwidget object, and then use that object as the display specifier
+in a @code{display} text or overlay property (@pxref{Display
+Property}).
+
+@defun make-xwidget beg end type title width height arguments &optional buffer
+This creates an xwidget object between @var{beg} and @var{end}, buffer
+positions in @var{buffer}, and returns the new object.  If
+@var{buffer} is omitted or @code{nil}, it defaults to the current
+buffer.  If @var{buffer} names a buffer that doesn't exist, it will be
+created.  The @var{type} identifies the type of the xwidget component,
+it can be one of the following:
+
+@table @code
+@item webkit-osr
+The WebKit OSR (@dfn{on-stack replacement}) component.
+@end table
+
+The @var{width} and @var{height} arguments specify the widget size in
+pixels, and @var{title}, a string, specifies its title.
+@end defun
+
+@defun xwidgetp object
+This function returns @code{t} if @var{object} is an xwidget,
+@code{nil} otherwise.
+@end defun
+
+@defun xwidget-plist xwidget
+This function returns the property list of @var{xwidget}.
+@end defun
+
+@defun set-xwidget-plist xwidget plist
+This function replaces the property list of @var{xwidget} with a new
+property list given by @var{plist}.
+@end defun
+
+@defun xwidget-buffer xwidget
+This function returns the buffer of @var{xwidget}.
+@end defun
+
+@defun get-buffer-xwidgets buffer
+This function returns a list of xwidget objects associated with the
+@var{buffer}, which can be specified as a buffer object or a name of
+an existing buffer, a string.  The value is @code{nil} if @var{buffer}
+contains no xwidgets.
+@end defun
+
+@defun xwidget-webkit-goto-uri xwidget uri
+This function browses the specified @var{uri} in the given
+@var{xwidget}.  The @var{uri} is a string that specifies the name of a
+file or a URL.  @c FIXME: What else can a URI specify in this context?
+@end defun
+
+@defun xwidget-webkit-execute-script xwidget script
+This function causes the browser widget specified by @var{xwidget} to
+execute the specified JavaScript @code{script}.
+@end defun
+
+@defun xwidget-webkit-execute-script-rv xwidget script &optional default
+This function executes the specified @var{script} like
+@code{xwidget-webkit-execute-script} does, but it also returns the
+script's return value as a string.  If @var{script} doesn't return a
+value, this function returns @var{default}, or @code{nil} if
+@var{default} was omitted.
+@end defun
+
+@defun xwidget-webkit-get-title xwidget
+This function returns the title of @var{xwidget} as a string.
+@end defun
+
+@defun xwidget-resize xwidget width height
+This function resizes the specified @var{xwidget} to the size
+@var{width}x@var{height} pixels.
+@end defun
+
+@defun xwidget-size-request xwidget
+This function returns the desired size of @var{xwidget} as a list of
+the form @code{(@var{width} @var{height})}.  The dimensions are in
+pixels.
+@end defun
+
+@defun xwidget-info xwidget
+This function returns the attributes of @var{xwidget} as a vector of
+the form @code{[@var{type} @var{title} @var{width} @var{height}]}.
+The attributes are usually determined by @code{make-xwidget} when the
+xwidget is created.
+@end defun
+
+@defun set-xwidget-query-on-exit-flag xwidget flag
+This function allows you to arrange that Emacs will ask the user for
+confirmation before exiting or before killing a buffer that has
+@var{xwidget} associated with it.  If @var{flag} is non-@code{nil},
+Emacs will query the user, otherwise it will not.
+@end defun
+
+@defun xwidget-query-on-exit-flag xwidget
+This function returns the current setting of @var{xwidget}s
+query-on-exit flag, either @code{t} or @code{nil}.
+@end defun
 
 @node Buttons
 @section Buttons

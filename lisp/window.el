@@ -2034,7 +2034,7 @@ has one, and a window at the bottom of the frame otherwise.
 Optional argument MINI nil means to return the minibuffer window
 if and only if it is currently active.  MINI non-nil means to
 return the minibuffer window even when it's not active.  However,
-if WRAP non-nil, always act as if MINI were nil.
+if WRAP is non-nil, always act as if MINI were nil.
 
 Return nil if no suitable window can be found."
   (setq window (window-normalize-window window t))

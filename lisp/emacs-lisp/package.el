@@ -183,7 +183,13 @@ If VERSION is a string, only that version is ever loaded.
  Any other version, even if newer, is silently ignored.
  Hence, the package is \"held\" at that version.
 If VERSION is nil, the package is not loaded (it is \"disabled\")."
-  :type '(repeat symbol)
+  :type '(repeat (choice (const all)
+                         (list :tag "Specific package"
+                               (symbol :tag "Package name")
+                               (choice :tag "Version"
+                                (const :tag "disable" nil)
+                                (const :tag "most recent" t)
+                                (string :tag "specific version")))))
   :risky t
   :version "24.1")
 

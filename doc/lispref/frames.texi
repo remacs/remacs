@@ -714,9 +714,12 @@ Sizes}) or splitting (@pxref{Splitting Windows}) windows.
 
 @cindex line height
 @cindex column width
-The term @dfn{line height} is sometimes used instead of ``default
-character height''.  Similarly, the term @dfn{column width} is used as
-shorthand for ``default character width''.
+@cindex canonical character height
+@cindex canonical character width
+The terms @dfn{line height} and @dfn{canonical character height} are
+sometimes used instead of ``default character height''.  Similarly, the
+terms @dfn{column width} and @dfn{canonical character width} are used
+instead of ``default character width''.
 
 @defun frame-char-height &optional frame
 @defunx frame-char-width &optional frame

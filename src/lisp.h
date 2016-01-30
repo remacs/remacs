@@ -3590,6 +3590,7 @@ extern void parse_str_as_multibyte (const unsigned char *, ptrdiff_t,
 				    ptrdiff_t *, ptrdiff_t *);
 
 /* Defined in alloc.c.  */
+extern void *my_heap_start (void);
 extern void check_pure_size (void);
 extern void free_misc (Lisp_Object);
 extern void allocate_string_data (struct Lisp_String *, EMACS_INT, EMACS_INT);
@@ -3600,6 +3601,13 @@ extern bool survives_gc_p (Lisp_Object);
 extern void mark_object (Lisp_Object);
 #if defined REL_ALLOC && !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC
 extern void refill_memory_reserve (void);
+#endif
+#ifdef DOUG_LEA_MALLOC
+extern void alloc_unexec_pre (void);
+extern void alloc_unexec_post (void);
+#else
+INLINE void alloc_unexec_pre (void) {}
+INLINE void alloc_unexec_post (void) {}
 #endif
 extern const char *pending_malloc_warning;
 extern Lisp_Object zero_vector;

@@ -181,13 +181,15 @@ and can contain escape sequences for command keys, quotes, and the like.
 
 * Changes in Emacs 25.1
 
++++
 ** Xwidgets: a new feature for embedding native widgets inside Emacs buffers.
-If you have gtk3 and webkitgtk3 installed, you can access the
-embedded webkit browser with `M-x xwidget-webkit-browse-url'.  This
-opens a new buffer with the embedded browser.  The buffer will
-have a new mode, `xwidget-webkit-mode' (similar to `image-mode'),
-which supports the webkit widget.
+If you have gtk3 and webkitgtk3 installed, and Emacs was built with
+xwidget support, you can access the embedded webkit browser with `M-x
+xwidget-webkit-browse-url'.  This opens a new buffer with the embedded
+browser.  The buffer will have a new mode, `xwidget-webkit-mode'
+(similar to `image-mode'), which supports the webkit widget.
 
++++
 *** New functions for xwidget-webkit mode `xwidget-webkit-insert-string',
 `xwidget-webkit-adjust-size-dispatch', `xwidget-webkit-back',
 `xwidget-webkit-browse-url', `xwidget-webkit-reload',
@@ -1896,8 +1898,12 @@ qualified names by hand.
 +++
 *** New language Ruby
 
-Names of modules, classes, methods, and functions are tagged.
-Overloaded operators are also tagged.
+Names of modules, classes, methods, functions, and constants are
+tagged.  Overloaded operators are also tagged.
+
++++
+*** New language Go
+Names of packages, functions, and types are tagged.
 
 +++
 *** Improved support for Lua
