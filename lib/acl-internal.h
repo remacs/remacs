@@ -255,7 +255,7 @@ extern int acl_nontrivial (int count, struct acl *entries);
 
 struct permission_context {
   mode_t mode;
-#ifdef USE_ACL
+#if USE_ACL
 # if HAVE_ACL_GET_FILE /* Linux, FreeBSD, Mac OS X, IRIX, Tru64 */
   acl_t acl;
 #  if !HAVE_ACL_TYPE_EXTENDED

@@ -60,7 +60,7 @@ set_binary_mode (int fd, int mode)
 
 /* SET_BINARY (fd);
    changes the file descriptor fd to perform binary I/O.  */
-#ifdef __DJGPP__
+#if defined __DJGPP__ || defined __EMX__
 # include <unistd.h> /* declares isatty() */
   /* Avoid putting stdin/stdout in binary mode if it is connected to
      the console, because that would make it impossible for the user

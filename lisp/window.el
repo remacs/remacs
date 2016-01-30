@@ -2005,7 +2005,7 @@ SIDE can be any of the symbols `left', `top', `right' or
 
 ;; Predecessors to the below have been devised by Julian Assange in
 ;; change-windows-intuitively.el and Hovav Shacham in windmove.el.
-;; Neither of these allow to selectively ignore specific windows
+;; Neither of these allow one to selectively ignore specific windows
 ;; (windows whose `no-other-window' parameter is non-nil) as targets of
 ;; the movement.
 (defun window-in-direction (direction &optional window ignore sign wrap mini)

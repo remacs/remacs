@@ -3616,8 +3616,8 @@ w32_set_horizontal_scroll_bar_thumb (struct scroll_bar *bar,
   si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE;
   si.nMin = 0;
   si.nMax = whole;
-  /* Allow nPage to be one larger than nPos so we don't allow to scroll
-     an already fully visible buffer.  */
+  /* Allow nPage to be one larger than nPos so we don't allow the scrolling
+     of an already fully visible buffer.  */
   si.nPage = min (portion, si.nMax) + 1;
   si.nPos = min (position, si.nMax);
   SetScrollInfo (w, SB_CTL, &si, TRUE);

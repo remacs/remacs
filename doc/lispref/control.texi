@@ -302,8 +302,8 @@ predicate conditions that compare values of expressions against
 specific values known and written in advance.  However, sometimes it
 is useful to select alternatives based on more general conditions that
 distinguish between broad classes of values.  The @code{pcase} macro
-allows to choose between alternatives based on matching the value of
-an expression against a series of patterns.  A pattern can be a
+allows you to choose between alternatives based on matching the value
+of an expression against a series of patterns.  A pattern can be a
 literal value (comparison to literal values is what @code{cond} does),
 or it can be a more general description of the expected structure of
 the expression's value.
@@ -350,7 +350,7 @@ when called with the value being matched as its argument.
 @var{predfun} can be one of the possible forms described below.
 @item (guard @var{boolean-expression})
 Matches if @var{boolean-expression} evaluates to non-@code{nil}.  This
-allows to include in a UPattern boolean conditions that refer to
+allows you to include in a UPattern boolean conditions that refer to
 symbols bound to values (including the value being matched) by
 previous UPatterns.  Typically used inside an @code{and} UPattern, see
 below.  For example, @w{@code{(and x (guard (< x 10)))}} is a pattern
@@ -358,7 +358,7 @@ which matches any number smaller than 10 and let-binds the variable
 @code{x} to that number.
 @item (let @var{upattern} @var{expression})
 Matches if the specified @var{expression} matches the specified
-@var{upattern}.  This allows to match a pattern against the value of
+@var{upattern}.  This allows matching a pattern against the value of
 an @emph{arbitrary} expression, not just the expression that is the
 first argument to @code{pcase}.  (It is called @code{let} because
 @var{upattern} can bind symbols to values using the @var{symbol}
@@ -407,7 +407,7 @@ Here's an illustrative example of using UPatterns:
   (code           (message "Unknown return code %S" code)))
 @end example
 
-The QPatterns are more powerful.  They allow to match the value of the
+The QPatterns are more powerful.  They allow matching the value of the
 @var{expression} that is the first argument of @code{pcase} against
 specifications of its @emph{structure}.  For example, you can specify
 that the value must be a list of 2 elements whose first element is a

@@ -537,8 +537,8 @@ corresponding kind, i.e., looks like \(OPTION-DEF...).
 Each OPTION-DEF looks like \(OPTION-NAME EXTRA-FN VALUE-SPEC...) which
 defines a file/grammar/rule/subrule option with name OPTION-NAME.  The
 OPTION-NAMEs are used for the creation of the \"Insert XXX Option\"
-submenus, see `antlr-options-use-submenus', and to allow to insert the
-option name with completion when using \\[antlr-insert-option].
+submenus, see `antlr-options-use-submenus', and to allow the insertion
+of the option name with completion when using \\[antlr-insert-option].
 
 If EXTRA-FN is a function, it is called at different phases of the
 insertion with arguments \(PHASE OPTION-NAME).  PHASE can have the

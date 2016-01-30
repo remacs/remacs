@@ -2403,8 +2403,8 @@ The resulting mouse position is not constrained to the native frame of
 The return value is not significant.
 @end defun
 
-On a graphical terminal the following two functions allow to retrieve
-and set the absolute position of the mouse cursor.
+On a graphical terminal the following two functions allow the absolute
+position of the mouse cursor to be retrieved and set.
 
 @defun mouse-absolute-pixel-position
 This function returns a cons cell (@var{x} . @var{y}) of the coordinates
@@ -2426,7 +2426,7 @@ This predicate function returns non-@code{nil} if the mouse pointer
 displayed on @var{frame} is visible; otherwise it returns @code{nil}.
 @var{frame} omitted or @code{nil} means the selected frame.  This is
 useful when @code{make-pointer-invisible} is set to @code{t}: it
-allows to know if the pointer has been hidden.
+allows you to know if the pointer has been hidden.
 @xref{Mouse Avoidance,,,emacs, The Emacs Manual}.
 @end defun
 

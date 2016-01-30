@@ -680,7 +680,7 @@ minor mode in all Gnus buffers."
 
 (defun gnus-agent-queue-setup (&optional group-name)
   "Make sure the queue group exists.
-Optional arg GROUP-NAME allows to specify another group."
+Optional arg GROUP-NAME allows another group to be specified."
   (unless (gnus-gethash (format "nndraft:%s" (or group-name "queue"))
 			gnus-newsrc-hashtb)
     (gnus-request-create-group (or group-name "queue") '(nndraft ""))

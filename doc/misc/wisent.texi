@@ -1155,8 +1155,8 @@ It defaults to the start symbol defined in the grammar
 @end table
 @end defun
 
-The following two normal hooks permit to do some useful processing
-respectively before to start parsing, and after the parser terminated.
+The following two normal hooks permit doing some useful processing
+respectively before starting parsing, and after the parser terminated.
 
 @vindex wisent-pre-parse-hook
 @defvar wisent-pre-parse-hook

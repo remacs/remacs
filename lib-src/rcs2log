@@ -403,8 +403,8 @@ case $rlogfile in
 	esac
 
 	case $datearg in
-	?*) $rlog $rlog_options "$datearg" ${1+"$@"} >$rlogfile;;
-	'') $rlog $rlog_options ${1+"$@"} >$rlogfile;;
+	?*) $rlog $rlog_options "$datearg" "$@" >$rlogfile;;
+	'') $rlog $rlog_options "$@" >$rlogfile;;
 	esac || exit;;
 esac
 

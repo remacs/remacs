@@ -393,7 +393,7 @@ webkit_mime_type_policy_typedecision_requested_cb
 {
   /* This function makes webkit send a download signal for all unknown
      mime types.  TODO: Defer the decision to Lisp, so that it's
-     possible to make Emacs handle teext mime for instance.xs.  */
+     possible to make Emacs handle mime text for instance.  */
   if (!webkit_web_view_can_show_mime_type (webView, mimetype))
     {
       webkit_web_policy_decision_download (policy_decision);
@@ -530,7 +530,7 @@ xwidget_init_view (struct xwidget *xww,
      container later.  Drawing should crop container window if necessary
      to handle case where xwidget is partially obscured by other Emacs
      windows.  Other containers than gtk_fixed where explored, but
-     gtk_fixed had the most predictable behaviour so far.  */
+     gtk_fixed had the most predictable behavior so far.  */
 
   xv->emacswindow = FRAME_GTK_WIDGET (s->f);
   xv->widgetwindow = gtk_fixed_new ();
@@ -594,7 +594,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
          WINDOW_BOTTOM_EDGE_Y (s->w) - WINDOW_MODE_LINE_HEIGHT (s->w) - y);
   clip_top = max (0, WINDOW_TOP_EDGE_Y (s->w) - y);
 
-  /* We are conserned with movement of the onscreen area.  The area
+  /* We are concerned with movement of the onscreen area.  The area
      might sit still when the widget actually moves.  This happens
      when an Emacs window border moves across a widget window.  So, if
      any corner of the outer widget clipping window moves, that counts
@@ -615,7 +615,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   /* Clip the widget window if some parts happen to be outside
      drawable area.  An Emacs window is not a gtk window.  A gtk window
      covers the entire frame.  Clipping might have changed even if we
-     havent actualy moved, we try figure out when we need to reclip
+     haven't actually moved; try to figure out when we need to reclip
      for real.  */
   if (xv->clip_right != clip_right
       || xv->clip_bottom != clip_bottom
@@ -753,7 +753,7 @@ DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0,
 DEFUN ("xwidget-set-adjustment",
        Fxwidget_set_adjustment, Sxwidget_set_adjustment, 4, 4, 0,
        doc: /* Set native scrolling for XWIDGET.
-AXIS can be 'vertical or 'horizontal.
+AXIS can be `vertical' or `horizontal'.
 If RELATIVE is t, scroll relative, otherwise absolutely.
 VALUE is the amount to scroll, either relatively or absolutely.  */)
   (Lisp_Object xwidget, Lisp_Object axis, Lisp_Object relative,
@@ -1132,7 +1132,7 @@ xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix)
      not in the desired matrix.
 
      This only takes care of xwidgets in active windows.  If a window
-     goes away from screen xwidget views wust be deleted.
+     goes away from the screen, xwidget views must be deleted.
 
      dump_glyph_matrix (matrix, 2);  */
   for (i = 0; i < matrix->nrows; ++i)

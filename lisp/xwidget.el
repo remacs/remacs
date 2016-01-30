@@ -25,7 +25,8 @@
 ;;
 ;; See xwidget.c for more api functions.
 
-;; TODO this breaks compilation when we don't have xwidgets.
+;; This breaks compilation when we don't have xwidgets.
+;; And is pointless when we do, since it's in C and so preloaded.
 ;;(require 'xwidget-internal)
 
 ;;; Code:
@@ -33,9 +34,9 @@
 (require 'cl-lib)
 (require 'bookmark)
 
-(defcustom xwidget-webkit-scroll-behaviour 'native
-  "Scroll behaviour of the webkit instance.
-'native or 'image."
+(defcustom xwidget-webkit-scroll-behavior 'native
+  "Scrolling behavior of the webkit instance.
+The possible values are: `native' or `image'."
   :version "25.1"
   :group 'frames   ; TODO add xwidgets group if more options are added
   :type '(choice (const native) (const image)))
@@ -58,14 +59,11 @@
 (declare-function get-buffer-xwidgets "xwidget.c" (buffer))
 
 (defun xwidget-insert (pos type title width height &optional args)
-  "Insert an xwidget at POS.
-given ID, TYPE, TITLE WIDTH and
-HEIGHT in the current buffer.
-
-Return ID
-
-see `make-xwidget' for types suitable for TYPE.
-Optional argument ARGS usage depends on the xwidget."
+  "Insert an xwidget at position POS.
+Supply the xwidget's TYPE, TITLE, WIDTH, and HEIGHT.
+See `make-xwidget' for the possible TYPE values.
+The usage of optional argument ARGS depends on the xwidget.
+This returns the result of `make-xwidget'."
   (goto-char pos)
   (let ((id (make-xwidget (point) (point)
                           type title width height args)))
@@ -92,8 +90,8 @@ Optional argument ARGS usage depends on the xwidget."
 ;;;###autoload
 (defun xwidget-webkit-browse-url (url &optional new-session)
   "Ask xwidget-webkit to browse URL.
-NEW-SESSION specifies whether to create a new xwidget-webkit session.  URL
-defaults to the string looking like a url around the cursor position."
+NEW-SESSION specifies whether to create a new xwidget-webkit session.
+Interactively, URL defaults to the string looking like a url around point."
   (interactive (progn
                  (require 'browse-url)
                  (browse-url-interactive-arg "xwidget-webkit URL: "
@@ -141,32 +139,40 @@ defaults to the string looking like a url around the cursor position."
   "Keymap for `xwidget-webkit-mode'.")
 
 (defun xwidget-webkit-scroll-up ()
-  "Scroll webkit up,either native or like image mode."
+  "Scroll webkit up.
+Depending on the value of `xwidget-webkit-scroll-behavior',
+this scrolls in 'native' fashion, or like `image-mode' would."
   (interactive)
-  (if (eq xwidget-webkit-scroll-behaviour 'native)
+  (if (eq xwidget-webkit-scroll-behavior 'native)
       (xwidget-set-adjustment (xwidget-webkit-last-session) 'vertical t 50)
     (image-scroll-up)))
 
 (defun xwidget-webkit-scroll-down ()
-  "Scroll webkit down,either native or like image mode."
+  "Scroll webkit down.
+Depending on the value of `xwidget-webkit-scroll-behavior',
+this scrolls in 'native' fashion, or like `image-mode' would."
   (interactive)
-  (if (eq xwidget-webkit-scroll-behaviour 'native)
+  (if (eq xwidget-webkit-scroll-behavior 'native)
       (xwidget-set-adjustment (xwidget-webkit-last-session) 'vertical t -50)
     (image-scroll-down)))
 
 (defun xwidget-webkit-scroll-forward ()
-  "Scroll webkit forward,either native or like image mode."
+  "Scroll webkit forwards.
+Depending on the value of `xwidget-webkit-scroll-behavior',
+this scrolls in 'native' fashion, or like `image-mode' would."
   (interactive)
-  (if (eq xwidget-webkit-scroll-behaviour 'native)
+  (if (eq xwidget-webkit-scroll-behavior 'native)
       (xwidget-set-adjustment (xwidget-webkit-last-session) 'horizontal t 50)
-    (xwidget-webkit-scroll-forward)))
+    (xwidget-webkit-scroll-forward)))   ; FIXME infloop!
 
 (defun xwidget-webkit-scroll-backward ()
-  "Scroll webkit backward,either native or like image mode."
+  "Scroll webkit backwards.
+Depending on the value of `xwidget-webkit-scroll-behavior',
+this scrolls in 'native' fashion, or like `image-mode' would."
   (interactive)
-  (if (eq xwidget-webkit-scroll-behaviour 'native)
+  (if (eq xwidget-webkit-scroll-behavior 'native)
       (xwidget-set-adjustment (xwidget-webkit-last-session) 'horizontal t -50)
-    (xwidget-webkit-scroll-backward)))
+    (xwidget-webkit-scroll-backward))) ; FIXME infloop!
 
 
 ;; The xwidget event needs to go into a higher level handler
@@ -292,9 +298,7 @@ function findactiveelement(doc){
   )
 
 (defun xwidget-webkit-insert-string (xw str)
-  "Insert string in the active field in the webkit.
-Argument XW webkit.
-Argument STR string."
+  "Insert string STR in the active field in the webkit XW."
   ;; Read out the string in the field first and provide for edit.
   (interactive
    (let* ((xww (xwidget-webkit-current-session))
@@ -310,9 +314,9 @@ Argument STR string."
                        "findactiveelement(document).type;")))
      (list xww
            (cond ((equal "text" field-type)
-                  (read-string "text:" field-value))
+                  (read-string "Text: " field-value))
                  ((equal "password" field-type)
-                  (read-passwd "password:" nil field-value))
+                  (read-passwd "Password: " nil field-value))
                  ((equal "textarea" field-type)
                   (xwidget-webkit-begin-edit-textarea xww field-value))))))
   (xwidget-webkit-execute-script
@@ -325,7 +329,6 @@ Argument STR string."
 XW is the xwidget identifier, TEXT is retrieved from the webkit."
   (switch-to-buffer
    (generate-new-buffer "textarea"))
-
   (set (make-local-variable 'xwidget-xwbl) xw)
   (insert text))
 
@@ -343,11 +346,10 @@ XW is the xwidget identifier, TEXT is retrieved from the webkit."
   )
 
 (defun xwidget-webkit-show-named-element (xw element-name)
-  "Make named-element show.  for instance an anchor.
-Argument XW is the xwidget.
-Argument ELEMENT-NAME is the element name to display in the webkit xwidget."
+  "Make webkit xwidget XW show a named element ELEMENT-NAME.
+For example, use this to display an anchor."
   (interactive (list (xwidget-webkit-current-session)
-                     (read-string "element name:")))
+                     (read-string "Element name: ")))
   ;;TODO since an xwidget is an Emacs object, it is not trivial to do
   ;; some things that are taken for granted in a normal browser.
   ;; scrolling an anchor/named-element into view is one such thing.
@@ -371,11 +373,10 @@ Argument ELEMENT-NAME is the element name to display in the webkit xwidget."
     (set-window-vscroll (selected-window) y t)))
 
 (defun xwidget-webkit-show-id-element (xw element-id)
-  "Make id-element show.  for instance an anchor.
-Argument XW is the webkit xwidget.
-Argument ELEMENT-ID is the id of the element to show."
+  "Make webkit xwidget XW show an id-element ELEMENT-ID.
+For example, use this to display an anchor."
   (interactive (list (xwidget-webkit-current-session)
-                     (read-string "element id:")))
+                     (read-string "Element id: ")))
   (let ((y (string-to-number
             (xwidget-webkit-execute-script-rv
              xw
@@ -387,11 +388,10 @@ Argument ELEMENT-ID is the id of the element to show."
     (set-window-vscroll (selected-window) y t)))
 
 (defun xwidget-webkit-show-id-or-named-element (xw element-id)
-  "Make id-element show.  for instance an anchor.
-Argument XW is the webkit xwidget.
-Argument ELEMENT-ID is either a name or an element id."
+   "Make webkit xwidget XW show a name or element id ELEMENT-ID.
+For example, use this to display an anchor."
   (interactive (list (xwidget-webkit-current-session)
-                     (read-string "element id:")))
+                     (read-string "Name or element id: ")))
   (let* ((y1 (string-to-number
               (xwidget-webkit-execute-script-rv
                xw
@@ -415,15 +415,14 @@ Argument ELEMENT-ID is either a name or an element id."
 (defun xwidget-webkit-adjust-size-dispatch ()
   "Adjust size according to mode."
   (interactive)
-  (if (eq xwidget-webkit-scroll-behaviour 'native)
+  (if (eq xwidget-webkit-scroll-behavior 'native)
       (xwidget-webkit-adjust-size-to-window)
     (xwidget-webkit-adjust-size-to-content))
   ;; The recenter is intended to correct a visual glitch.
   ;; It errors out if the buffer isn't visible, but then we don't get
   ;; the glitch, so silence errors.
   (ignore-errors
-    (recenter-top-bottom))
-  )
+    (recenter-top-bottom)))
 
 (defun xwidget-webkit-adjust-size-to-window ()
   "Adjust webkit to window."
@@ -432,9 +431,7 @@ Argument ELEMENT-ID is either a name or an element id."
                   (window-pixel-height)))
 
 (defun xwidget-webkit-adjust-size (w h)
-  "Manually set webkit size.
-Argument W width.
-Argument H height."
+  "Manually set webkit size to width W, height H."
   ;; TODO shouldn't be tied to the webkit xwidget
   (interactive "nWidth:\nnHeight:\n")
   (xwidget-resize (xwidget-webkit-current-session) w h))
@@ -468,7 +465,7 @@ Argument H height."
     (xwidget-webkit-new-session url)))
 
 (defun xwidget-webkit-back ()
-  "Back in history."
+  "Go back in history."
   (interactive)
   (xwidget-webkit-execute-script (xwidget-webkit-current-session)
                                  "history.go(-1);"))
@@ -480,7 +477,7 @@ Argument H height."
                                  "history.go(0);"))
 
 (defun xwidget-webkit-current-url ()
-  "Get the webkit url.  place it on kill ring."
+  "Get the webkit url and place it on the kill-ring."
   (interactive)
   (let* ((rv (xwidget-webkit-execute-script-rv (xwidget-webkit-current-session)
                                                "document.URL"))
@@ -489,9 +486,9 @@ Argument H height."
     url))
 
 (defun xwidget-webkit-execute-script-rv (xw script &optional default)
-  "Same as 'xwidget-webkit-execute-script' but but with return value.
+  "Same as `xwidget-webkit-execute-script' but with return value.
 XW is the webkit instance.  SCRIPT is the script to execute.
-DEFAULT is the defaultreturn value."
+DEFAULT is the default return value."
   ;; Notice the ugly "title" hack.  It is needed because the Webkit
   ;; API at the time of writing didn't support returning values.  This
   ;; is a wrapper for the title hack so it's easy to remove should
@@ -518,7 +515,7 @@ DEFAULT is the defaultreturn value."
                                     "window.getSelection().toString();"))
 
 (defun xwidget-webkit-copy-selection-as-kill ()
-  "Get the webkit selection and put it on the kill ring."
+  "Get the webkit selection and put it on the kill-ring."
   (interactive)
   (kill-new (xwidget-webkit-get-selection)))
 
@@ -527,13 +524,15 @@ DEFAULT is the defaultreturn value."
 ;; Xwidget plist management (similar to the process plist functions)
 
 (defun xwidget-get (xwidget propname)
-  "Return the value of XWIDGET' PROPNAME property.
-This is the last value stored with `(xwidget-put XWIDGET PROPNAME VALUE)'."
+  "Get an xwidget's property value.
+XWIDGET is an xwidget, PROPNAME a property.
+Returns the last value stored with `xwidget-put'."
   (plist-get (xwidget-plist xwidget) propname))
 
 (defun xwidget-put (xwidget propname value)
-  "Change XWIDGET' PROPNAME property to VALUE.
-It can be retrieved with `(xwidget-get XWIDGET PROPNAME)'."
+  "Set an xwidget's property value.
+XWIDGET is an xwidget, PROPNAME a property to be set to specified VALUE.
+You can retrieve the value with `xwidget-get'."
   (set-xwidget-plist xwidget
                      (plist-put (xwidget-plist xwidget) propname value)))
 

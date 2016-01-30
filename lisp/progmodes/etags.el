@@ -2100,7 +2100,7 @@ for \\[find-tag] (which see)."
   (etags--xref-find-definitions symbol t))
 
 (defun etags--xref-find-definitions (pattern &optional regexp?)
-  ;; This emulates the behaviour of `find-tag-in-order' but instead of
+  ;; This emulates the behavior of `find-tag-in-order' but instead of
   ;; returning one match at a time all matches are returned as list.
   ;; NOTE: find-tag-tag-order is typically a buffer-local variable.
   (let* ((xrefs '())

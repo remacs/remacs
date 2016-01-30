@@ -3001,7 +3001,7 @@ bidi_resolve_neutral (struct bidi_it *bidi_it)
 	{
 	  /* Arrrgh!!  The UAX#9 algorithm is too deeply entrenched in
 	     the assumption of batch-style processing; see clauses W4,
-	     W5, and especially N1, which require to look far forward
+	     W5, and especially N1, which require looking far forward
 	     (as well as back) in the buffer/string.  May the fleas of
 	     a thousand camels infest the armpits of those who design
 	     supposedly general-purpose algorithms by looking at their

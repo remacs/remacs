@@ -87,7 +87,7 @@ against previous connections.  If the function determines that
 there is something odd about the connection, the user will be
 queried about what to do about it.
 
-The process it returned if everything is OK, and otherwise, the
+The process is returned if everything is OK, and otherwise, the
 process will be deleted and nil is returned.
 
 If SAVE-FINGERPRINT, always save the fingerprint of the

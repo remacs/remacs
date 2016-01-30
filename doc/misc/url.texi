@@ -423,7 +423,7 @@ the directory specified by @code{url-configuration-directory}.
 @end defopt
 
 @defopt url-cookie-confirmation
-Specifies whether confirmation is require to accept cookies.
+Specifies whether confirmation is required to accept cookies.
 @end defopt
 
 @defopt url-cookie-multiple-line

@@ -664,7 +664,7 @@ This hook should be local in the buffer setup to display widgets.")
          (flags  (widget-get tree :tree-widget--guide-flags))
          (indent (widget-get tree :indent))
          ;; Setup widget's image support.  Looking up for images, and
-         ;; setting widgets' :tag-glyph is done here, to allow to
+         ;; setting widgets' :tag-glyph is done here, to allow us to
          ;; dynamically change the image theme.
          (widget-image-enable (tree-widget-use-image-p))     ; Emacs
          (widget-glyph-enable widget-image-enable)           ; XEmacs

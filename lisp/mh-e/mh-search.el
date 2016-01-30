@@ -1262,7 +1262,7 @@ is used to search."
     (forward-line)))
 
 ;; All implementations of pick have special options -cc, -date, -from and
-;; -subject that allow to search for corresponding components. Any other
+;; -subject that allow searching for corresponding components. Any other
 ;; component is searched using option --COMPNAME, for example: `pick
 ;; --x-mailer mh-e'. Mailutils "pick" supports this option using a certain
 ;; kludge, but it prefers the following syntax for this purpose:

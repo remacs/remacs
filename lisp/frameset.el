@@ -354,12 +354,12 @@ Properties can be set with
 ;; Now, what about the filter alist variables? There are three of them,
 ;; though only two sets of parameters:
 ;;
-;; - `frameset-session-filter-alist' contains these filters that allow to
-;;   save and restore framesets in-session, without the need to serialize
-;;   the frameset or save it to disk (for example, to save a frameset in a
-;;   register and restore it later).  Filters in this list do not remove
-;;   live objects, except in `minibuffer', which is dealt especially by
-;;   `frameset-save' / `frameset-restore'.
+;; - `frameset-session-filter-alist' contains these filters that allow
+;;   saving and restoring framesets in-session, without the need to
+;;   serialize the frameset or save it to disk (for example, to save a
+;;   frameset in a register and restore it later).  Filters in this
+;;   list do not remove live objects, except in `minibuffer', which is
+;;   dealt especially by `frameset-save' / `frameset-restore'.
 ;;
 ;; - `frameset-persistent-filter-alist' is the whole deal.  It does all
 ;;   the filtering described above, and the result is ready to be saved on
@@ -1072,7 +1072,7 @@ FORCE-ONSCREEN can be:
 	   - a list (LEFT TOP WIDTH HEIGHT), describing the workarea.
 	   It must return non-nil to force the frame onscreen, nil otherwise.
 
-CLEANUP-FRAMES allows to \"clean up\" the frame list after restoring a frameset:
+CLEANUP-FRAMES allows \"cleaning up\" the frame list after restoring a frameset:
   t        Delete all frames that were not created or restored upon.
   nil      Keep all frames.
   FUNC     A function called with two arguments:

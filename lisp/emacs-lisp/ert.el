@@ -2128,12 +2128,12 @@ To be used in the ERT results buffer."
   "Move point from NODE to the previous or next node.
 
 EWOC-FN specifies the direction and should be either `ewoc-prev'
-or `ewoc-next'.  If there are no more nodes in that direction, an
-error is signaled with the message ERROR-MESSAGE."
+or `ewoc-next'.  If there are no more nodes in that direction, a
+user-error is signaled with the message ERROR-MESSAGE."
   (cl-loop
    (setq node (funcall ewoc-fn ert--results-ewoc node))
    (when (null node)
-     (error "%s" error-message))
+     (user-error "%s" error-message))
    (unless (ert--ewoc-entry-hidden-p (ewoc-data node))
      (goto-char (ewoc-location node))
      (cl-return))))

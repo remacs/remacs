@@ -24,7 +24,7 @@
 ;;
 ;;; Commentary:
 ;;
-;;  This module allows to create and change entries in an Org-mode
+;;  This module allows entries to be created and changed in an Org-mode
 ;;  file triggered by items in an RSS feed.  The basic functionality is
 ;;  geared toward simply adding new items found in a feed as outline nodes
 ;;  to an Org file.  Using hooks, arbitrary actions can be triggered for

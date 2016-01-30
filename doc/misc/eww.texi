@@ -168,8 +168,8 @@ You can view stored bookmarks with @kbd{B}
 @kindex S
 @cindex Multiple Buffers
   To get summary of currently opened EWW buffers, press @kbd{S}
-(@code{eww-list-buffers}).  The @file{*eww buffers*} buffer allows to
-quickly kill, flip through and switch to specific EWW buffer.
+(@code{eww-list-buffers}).  The @file{*eww buffers*} buffer allows you
+to quickly kill, flip through and switch to specific EWW buffer.
 
 @findex eww-browse-with-external-browser
 @vindex shr-external-browser

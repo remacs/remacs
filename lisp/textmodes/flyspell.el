@@ -393,6 +393,9 @@ like <img alt=\"Some thing.\">."
   (let ((f (get-text-property (- (point) 1) 'face)))
     (memq f flyspell-prog-text-faces)))
 
+;; Records the binding of M-TAB in effect before flyspell was activated.
+(defvar flyspell--prev-meta-tab-binding)
+
 ;;;###autoload
 (defun flyspell-prog-mode ()
   "Turn on `flyspell-mode' for comments and strings."

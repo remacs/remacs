@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2016-01-11.19}
+\def\texinfoversion{2016-01-20.20}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -4737,11 +4737,10 @@ end
   \def\_{\normalunderscore}%
   \def\-{}% @- shouldn't affect sorting
   %
-  \def\lbracechar{{\indexlbrace}}%
-  \def\rbracechar{{\indexrbrace}}%
-  \let\{=\lbracechar
-  \let\}=\rbracechar
-  %
+  \uccode`\1=`\{ \uppercase{\def\{{1}}%
+  \uccode`\1=`\} \uppercase{\def\}{1}}%
+  \let\lbracechar\{
+  \let\rbracechar\}
   %
   % Non-English letters.
   \def\AA{AA}%
@@ -4901,9 +4900,15 @@ end
   \indexdummies % Must do this here, since \bf, etc expand at this stage
   \useindexbackslash % \indexbackslash isn't defined now so it will be output 
                      % as is; and it will print as backslash.
+  % The braces around \indexbrace are recognized by texindex.
+  %
   % Get the string to sort by, by processing the index entry with all
   % font commands turned off.
   {\indexnofonts
+   \def\lbracechar{{\indexlbrace}}%
+   \def\rbracechar{{\indexrbrace}}%
+   \let\{=\lbracechar
+   \let\}=\rbracechar
    \indexnonalnumdisappear
    \xdef\indexsortkey{}%
    \let\sortas=\indexwritesortas
@@ -8526,10 +8531,6 @@ end
     }%
     \setcolor{\linkcolor}%
   \fi
-  %
-  % Float references are printed completely differently: "Figure 1.2"
-  % instead of "[somenode], p.3".  We distinguish them by the
-  % LABEL-title being set to a magic string.
   {%
     % Have to otherify everything special to allow the \csname to
     % include an _ in the xref name, etc.
@@ -8538,6 +8539,10 @@ end
     \expandafter\global\expandafter\let\expandafter\Xthisreftitle
       \csname XR#1-title\endcsname
   }%
+  %
+  % Float references are printed completely differently: "Figure 1.2"
+  % instead of "[somenode], p.3".  \iffloat distinguishes them by
+  % \Xthisreftitle being set to a magic string.
   \iffloat\Xthisreftitle
     % If the user specified the print name (third arg) to the ref,
     % print it instead of our usual "Figure 1.2".

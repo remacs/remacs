@@ -4303,7 +4303,7 @@ divider ends above the bottom divider.
    Dividers can be dragged with the mouse and are therefore useful for
 adjusting the sizes of adjacent windows with the mouse.  They also serve
 to visually set apart adjacent windows when no scroll bars or mode lines
-are present.  The following three faces allow to customize the
+are present.  The following three faces allow the customization of the
 appearance of dividers:
 
 @table @code

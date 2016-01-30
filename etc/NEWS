@@ -142,7 +142,7 @@ and silent rules are now quieter.  To get the old behavior where
 build with 'make V=1'.
 
 ---
-** The configure option '--with-gameuser' now allows to specify a
+** The configure option '--with-gameuser' now allows you to specify a
 group instead of a user if its argument is prefixed by ':' (a colon).
 This will cause the game score files in ${localstatedir}/games/emacs
 to be owned by that group, and the helper program for updating them to
@@ -234,9 +234,8 @@ by default, and must be enabled by using the `--with-modules' option
 at configure time.
 
 +++
-** Any file of the form .dir-locals*.el is now considered a dir-local
-file, and multiple such files can be used in the same directory.  See
-the variable `dir-locals-file' for more information.
+** A second dir-local file (.dir-locals-2.el) is now accepted.
+See the variable `dir-locals-file-2' for more information.
 
 +++
 ** Network security (TLS/SSL certificate validity and the like) is
@@ -263,9 +262,9 @@ select-enable-primary is ineffective since the system doesn't
 have the equivalent of a primary selection.
 
 +++
-** New option `switch-to-buffer-in-dedicated-window' allows to customize
-how `switch-to-buffer' proceeds interactively when the selected window
-is strongly dedicated to its buffer.
+** New option `switch-to-buffer-in-dedicated-window' allows you to
+customize how `switch-to-buffer' proceeds interactively when the
+selected window is strongly dedicated to its buffer.
 
 +++
 ** The option `even-window-heights' has been renamed to
@@ -920,11 +919,12 @@ plist will contain a :peer element that has the output of
 ** Tramp
 
 +++
-*** New connection method "afp", which allows to access Mac OS X
+*** New connection method "afp", which allows you to access Mac OS X
 volumes via the Apple Filing Protocol.
 
 +++
-*** New connection method "nc", which allows to access dumb busyboxes.
+*** New connection method "nc", which allows you to access dumb
+busyboxes.
 
 +++
 *** Method-specific parameters can be overwritten now with variable
@@ -1288,7 +1288,7 @@ node "Generic Functions" in the Emacs Lisp manual for more details.
 let-bind the values stored in an alist.
 
 ---
-** `tildify-mode' allows to automatically insert hard spaces as one
+** `tildify-mode' allows automatic insertion of hard spaces as one
 types the text.  Breaking line after a single-character words is
 forbidden by Czech and Polish typography (and may be discouraged in
 other languages), so `auto-tildify-mode' makes it easier to create
@@ -1492,7 +1492,7 @@ commands other than the predefined `C-u'.
 
 +++
 ** New functions `filepos-to-bufferpos' and `bufferpos-to-filepos'.
-These allow to convert between buffer positions and the corresponding
+These allow conversion between buffer positions and the corresponding
 file byte offsets, given the file's encoding.
 
 +++
@@ -1615,14 +1615,14 @@ called interactively.
 ** New function `function-put' to use instead of `put' for function properties.
 
 +++
-** The new function `bidi-find-overridden-directionality' allows to
+** The new function `bidi-find-overridden-directionality' allows you to
 find characters whose directionality was, perhaps maliciously,
 overridden by directional override control characters.  Lisp programs
 can use this to detect potential phishing of URLs and other links that
 exploits bidirectional display reordering.
 
 +++
-** The new function `buffer-substring-with-bidi-context' allows to
+** The new function `buffer-substring-with-bidi-context' allows you to
 copy a portion of a buffer into a different location while preserving
 the visual appearance both of the copied text and the text at
 destination, even when the copied text includes mixed bidirectional
@@ -1745,7 +1745,7 @@ undocumented integer-pair format.  Instead, they return a list of two
 integers.
 
 +++
-** New function `set-binary-mode' allows to switch a standard stream
+** New function `set-binary-mode' allows switching a standard stream
 of the Emacs process to binary I/O mode.
 
 +++
@@ -1856,8 +1856,8 @@ fullwidth frames, the behavior may depend on the toolkit used.
    number of columns or lines it displays.
 
 +++
-*** New function `window-preserve-size' allows to preserve the size of
-windows without "fixing" it.  It's supported by `fit-window-to-buffer',
+*** New function `window-preserve-size' allows you to preserve the size of
+a window without "fixing" it.  It's supported by `fit-window-to-buffer',
 `temp-buffer-resize-mode' and `display-buffer'.
 
 +++

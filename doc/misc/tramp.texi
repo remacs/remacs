@@ -815,11 +815,9 @@ capable of servicing requests from @value{tramp}.
 @cindex method smb
 @cindex smb method
 
-This is another non-native @value{tramp} method.  @command{smbclient}
-connects to any host with SMB/CIFS protocol, such as MS Windows and
-Samba Servers running on Unixes.  Tests show this @value{tramp} method
-works with MS Windows NT, MS Windows 2000, MS Windows XP, MS Windows
-Vista, and MS Windows 7.
+This non-native @value{tramp} method connects via the Server Message
+Block (SMB) networking protocol to hosts running file servers that are
+typically based on @url{https://www.samba.org/,,Samba} or MS Windows.
 
 Using @command{smbclient} requires a few tweaks when working with
 @value{tramp}:
@@ -827,7 +825,7 @@ Using @command{smbclient} requires a few tweaks when working with
 The first directory in the localname must be a share name on the
 remote host.
 
-Since smb shares end in the @code{$} character, @value{tramp} must use
+Since SMB shares end in the @code{$} character, @value{tramp} must use
 @code{$$} when specifying those shares to avoid environment variable
 substitutions.
 
@@ -871,16 +869,17 @@ uses the anonymous user (without prompting for password).  This
 behavior is unlike other @value{tramp} methods, where local user name
 is substituted.
 
-@option{smb} method is unavailable if Emacs is run under a local user
-authentication context in MS Windows.  However such users can still
-access remote files using UNC file names instead of @value{tramp}:
+The @option{smb} method is unavailable if Emacs is run under a
+local user authentication context in MS Windows.  However such users
+can still access remote files using UNC file names instead of @value{tramp}:
 
 @example
 //melancholia/daniel$$/.emacs
 @end example
 
-UNC file name specification does not allow to specify a different user
-name for authentication like the @command{smbclient} can.
+UNC file name specification does not allow the specification of a
+different user name for authentication like the @command{smbclient}
+can.
 
 @item @option{adb}
 @cindex method adb
@@ -2830,7 +2829,7 @@ open.  That is why @value{tramp} prompts for the password again even
 if there is an @command{ssh} already open.
 
 Some @command{ssh} versions support a @code{ControlPersist} option,
-which allows to set the @code{ControlPath} provided the variable
+which allows you to set the @code{ControlPath} provided the variable
 @code{tramp-ssh-controlmaster-options} is customized as follows:
 
 @lisp

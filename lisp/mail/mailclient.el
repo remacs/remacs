@@ -22,7 +22,7 @@
 
 ;;; Commentary:
 
-;; This package allows to hand over a buffer to be sent off
+;; This package allows handing over a buffer to be sent off
 ;; via the system's designated e-mail client.
 ;; Note that the e-mail client will display the contents of the buffer
 ;; again for editing.

@@ -2737,7 +2737,7 @@ killed."
                  (process (get-buffer-process buffer))
                  ;; Users can override the interpreter and args
                  ;; interactively when calling `run-python', let-binding
-                 ;; these allows to have the new right values in all
+                 ;; these allows having the new right values in all
                  ;; setup code that is done in `inferior-python-mode',
                  ;; which is important, especially for prompt detection.
                  (python-shell--interpreter interpreter)
@@ -3351,7 +3351,7 @@ def __PYTHON_EL_native_completion_setup():
                 if not completion:
                     if self.last_completion != '1__dummy_completion__':
                         # When no more completions are available, returning a
-                        # dummy with non-sharing prefix allow to ensure output
+                        # dummy with non-sharing prefix allow ensuring output
                         # while preventing changes to current input.
                         # Coincidentally it's also the end of output.
                         completion = '1__dummy_completion__'

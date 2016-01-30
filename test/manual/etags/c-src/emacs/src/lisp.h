@@ -2005,7 +2005,7 @@ struct Lisp_Marker
   /* For markers that point somewhere,
      this is used to chain of all the markers in a given buffer.  */
   /* We could remove it and use an array in buffer_text instead.
-     That would also allow to preserve it ordered.  */
+     That would also allow us to preserve it ordered.  */
   struct Lisp_Marker *next;
   /* This is the char position where the marker points.  */
   ptrdiff_t charpos;

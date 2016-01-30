@@ -100,8 +100,8 @@ typedef struct _RTL_HEAP_PARAMETERS {
    special segment to the executable.  In order to be able to do this
    without losing too much space, we need to create a Windows heap at
    the specific address of the static array.  The RtlCreateHeap
-   available inside the NT kernel since XP will do this.  It allows to
-   create a non-growable heap at a specific address.  So before
+   available inside the NT kernel since XP will do this.  It allows the
+   creation of a non-growable heap at a specific address.  So before
    dumping, we create a non-growable heap at the address of the
    dumped_data[] array.  After dumping, we reuse memory allocated
    there without being able to free it (but most of it is not meant to

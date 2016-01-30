@@ -209,7 +209,7 @@ Before reproducing the bug, you might apply
 
   M-x tramp-cleanup-all-connections
 
-This allows to investigate from a clean environment.  Another
+This allows us to investigate from a clean environment.  Another
 useful thing to do is to put
 
   (setq tramp-verbose 9)

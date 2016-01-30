@@ -80,7 +80,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    specs overwrite the font-spec in the 14th attribute.
 
 
-   Faces are frame-local by nature because Emacs allows to define the
+   Faces are frame-local by nature because Emacs allows you to define the
    same named face (face names are symbols) differently for different
    frames.  Each frame has an alist of face definitions for all named
    faces.  The value of a named face in such an alist is a Lisp vector

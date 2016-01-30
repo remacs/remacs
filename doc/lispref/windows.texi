@@ -383,8 +383,8 @@ as if @var{mini} were @code{nil}.
 If it doesn't find a suitable window, this function returns @code{nil}.
 @end defun
 
-The following function allows to retrieve the entire window tree of a
-frame:
+The following function allows the entire window tree of a frame to be
+retrieved:
 
 @defun window-tree &optional frame
 This function returns a list representing the window tree for frame
@@ -1476,7 +1476,7 @@ displaying a buffer only temporarily (@pxref{Temporary Displays}), and
 you want to continue working with the initial layout.
 
 The behavior can be fixed by making a new parent window when splitting
-@var{W2}.  The variable described next allows to do that.
+@var{W2}.  The variable described next allows that to be done.
 
 @defopt window-combination-limit
 This variable controls whether splitting a window shall make a new
@@ -1579,7 +1579,7 @@ combination limit of @var{W4} (the parent window of @var{W6} and
 
 Alternatively, the problems sketched above can be avoided by always
 resizing all windows in the same combination whenever one of its windows
-is split or deleted.  This also permits to split windows that would be
+is split or deleted.  This also permits splitting windows that would be
 otherwise too small for such an operation.
 
 @defopt window-combination-resize
@@ -2522,11 +2522,11 @@ windows are dedicated to another buffer (@pxref{Dedicated Windows}).
 
 @defun display-buffer-no-window buffer alist
 If @var{alist} has a non-@code{nil} @code{allow-no-window} entry, then
-this function does not display @code{buffer}.  This allows to override
-the default action and avoid displaying the buffer.  It is assumed that
-when the caller specifies a non-@code{nil} @code{allow-no-window} value
-it can handle a @code{nil} value returned from @code{display-buffer} in
-this case.
+this function does not display @code{buffer}.  This allows you to
+override the default action and avoid displaying the buffer.  It is
+assumed that when the caller specifies a non-@code{nil}
+@code{allow-no-window} value it can handle a @code{nil} value returned
+from @code{display-buffer} in this case.
 @end defun
 
 To illustrate the use of action functions, consider the following

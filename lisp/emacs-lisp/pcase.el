@@ -117,7 +117,7 @@ two element list, binding its elements to symbols named `foo' and
 
 A significant difference from `cl-destructuring-bind' is that, if
 a pattern match fails, the next case is tried until either a
-succesful match is found or there are no more cases.
+successful match is found or there are no more cases.
 
 Another difference is that pattern elements may be backquoted,
 meaning they must match exactly: The pattern \\='(foo bar)
