@@ -4542,6 +4542,11 @@ check_for_dns (Lisp_Object proc)
   struct Lisp_Process *p = XPROCESS (proc);
   Lisp_Object ip_addresses = Qnil;
   int ret = 0;
+  int connect = 0;
+
+  /* Sanity check. */
+  if (! p->dns_requests)
+    return 1;
 
   ret = gai_error (p->dns_requests[0]);
   if (ret == EAI_INPROGRESS)
@@ -4561,7 +4566,7 @@ check_for_dns (Lisp_Object proc)
 
       ip_addresses = Fnreverse (ip_addresses);
       freeaddrinfo (p->dns_requests[0]->ar_result);
-      connect_network_socket (proc, ip_addresses);
+      connect = 1;
     }
   else
     pset_status (p, Qfailed);
@@ -4571,6 +4576,11 @@ check_for_dns (Lisp_Object proc)
   xfree ((void *)p->dns_requests[0]->ar_service);
   xfree (p->dns_requests[0]);
   xfree (p->dns_requests);
+  p->dns_requests = NULL;
+
+  if (connect)
+    connect_network_socket (proc, ip_addresses);
+
   return 1;
 }
 #endif /* HAVE_GETADDRINFO_A */
