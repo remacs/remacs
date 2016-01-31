@@ -4948,8 +4948,8 @@ Try to set `comint-output-filter-functions' like this:
       ;; Return the list of table names (public schema name can be omitted)
       (mapcar #'(lambda (tbl)
                   (if (string= (car tbl) "public")
-                      (cadr tbl)
-                    (format "%s.%s" (car tbl) (cadr tbl))))
+                      (format "\"%s\"" (cadr tbl))
+                    (format "\"%s\".\"%s\"" (car tbl) (cadr tbl))))
               cl))))
 
 
