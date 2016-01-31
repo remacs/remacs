@@ -752,8 +752,9 @@ sure of changing the value of `foo'."
                    (lambda (capabilities)
                      (when (string-match-p "STARTTLS" capabilities)
                        "1 STARTTLS\r\n"))))
-         (done (and process
-                    (memq (process-status process) '(open run)))))
+         (done (if (and process
+                        (memq (process-status process) '(open run)))
+                   process)))
     (message "imap: Connecting with STARTTLS...%s" (if done "done" "failed"))
     done))
 
