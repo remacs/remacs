@@ -210,6 +210,12 @@ pset_childp (struct Lisp_Process *p, Lisp_Object val)
   p->childp = val;
 }
 
+INLINE void
+pset_status (struct Lisp_Process *p, Lisp_Object val)
+{
+  p->status = val;
+}
+
 #ifdef HAVE_GNUTLS
 INLINE void
 pset_gnutls_cred_type (struct Lisp_Process *p, Lisp_Object val)

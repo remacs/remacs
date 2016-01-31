@@ -385,11 +385,6 @@ pset_sentinel (struct Lisp_Process *p, Lisp_Object val)
   p->sentinel = NILP (val) ? Qinternal_default_process_sentinel : val;
 }
 static void
-pset_status (struct Lisp_Process *p, Lisp_Object val)
-{
-  p->status = val;
-}
-static void
 pset_tty_name (struct Lisp_Process *p, Lisp_Object val)
 {
   p->tty_name = val;
@@ -3309,11 +3304,17 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 
 #ifdef HAVE_GNUTLS
   if (!NILP (p->gnutls_async_parameters) && p->is_non_blocking_client) {
-    Fgnutls_boot (proc, Fcar (p->gnutls_async_parameters),
-		  Fcdr (p->gnutls_async_parameters));
+    Lisp_Object params = p->gnutls_async_parameters, boot = Qnil;
+
     p->gnutls_async_parameters = Qnil;
+    boot = Fgnutls_boot (proc, Fcar (params), Fcdr (params));
+    if (STRINGP (boot)) {
+      pset_status (p, Qfailed);
+      deactivate_process (proc);
+    }
   }
 #endif
+
 }
 
 
@@ -3797,6 +3798,9 @@ usage: (make-network-process &rest ARGS)  */)
   p->ai_protocol = ai_protocol;
 #ifdef HAVE_GETADDRINFO_A
   p->dns_requests = NULL;
+#endif
+#ifdef HAVE_GNUTLS
+  p->gnutls_async_parameters = Qnil;
 #endif
 
   unbind_to (count, Qnil);
@@ -4545,13 +4549,12 @@ server_accept_connection (Lisp_Object server, int channel)
 }
 
 #ifdef HAVE_GETADDRINFO_A
-static int
+static Lisp_Object
 check_for_dns (Lisp_Object proc)
 {
   struct Lisp_Process *p = XPROCESS (proc);
   Lisp_Object ip_addresses = Qnil;
   int ret = 0;
-  int connect = 0;
 
   /* Sanity check. */
   if (! p->dns_requests)
@@ -4559,7 +4562,7 @@ check_for_dns (Lisp_Object proc)
 
   ret = gai_error (p->dns_requests[0]);
   if (ret == EAI_INPROGRESS)
-    return 0;
+    return Qt;
 
   /* We got a response. */
   if (ret == 0)
@@ -4575,10 +4578,13 @@ check_for_dns (Lisp_Object proc)
 
       ip_addresses = Fnreverse (ip_addresses);
       freeaddrinfo (p->dns_requests[0]->ar_result);
-      connect = 1;
     }
+  /* The DNS lookup failed. */
   else
-    pset_status (p, Qfailed);
+    {
+      pset_status (p, Qfailed);
+      deactivate_process (proc);
+    }
 
   xfree ((void *)p->dns_requests[0]->ar_request);
   xfree ((void *)p->dns_requests[0]->ar_name);
@@ -4587,10 +4593,7 @@ check_for_dns (Lisp_Object proc)
   xfree (p->dns_requests);
   p->dns_requests = NULL;
 
-  if (connect)
-    connect_network_socket (proc, ip_addresses);
-
-  return 1;
+  return ip_addresses;
 }
 #endif /* HAVE_GETADDRINFO_A */
 
@@ -4722,18 +4725,47 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 #ifdef HAVE_GETADDRINFO_A
       if (!NILP (dns_processes))
 	{
-	  Lisp_Object dns_list = dns_processes, dns;
+	  Lisp_Object dns_list = dns_processes, dns, ip_addresses,
+	    answers = Qnil, answer, new = Qnil;
 	  struct Lisp_Process *p;
 
+	  /* This is programmed in a somewhat awkward fashion because
+	  calling connect_network_socket might make us end up back
+	  here again, and we would have a race condition with
+	  segfaults.  So first go through all pending requests and see
+	  whether we got any answers. */
 	  while (!NILP (dns_list))
 	    {
 	      dns = Fcar (dns_list);
 	      dns_list = Fcdr (dns_list);
 	      p = XPROCESS (dns);
-	      if (p && p->dns_requests &&
-		  (! wait_proc || p == wait_proc) &&
-		  check_for_dns (dns))
-		dns_processes = Fdelq (dns, dns_processes);
+	      if (p && p->dns_requests)
+		{
+		  if (! wait_proc || p == wait_proc)
+		    {
+		      ip_addresses = check_for_dns (dns);
+		      if (EQ (ip_addresses, Qt))
+			new = Fcons (dns, new);
+		      else
+			answers = Fcons (Fcons (dns, ip_addresses), answers);
+		    }
+		  else
+		    new = Fcons (dns, new);
+		}
+	    }
+
+	  /* Replace with the list of DNS requests still not responded
+	     to. */
+	  dns_processes = new;
+
+	  /* Then continue the connection for the successful
+	     requests. */
+	  while (!NILP (answers))
+	    {
+	      answer = Fcar (answers);
+	      answers = Fcdr (answers);
+	      if (!NILP (Fcdr (answer)))
+		connect_network_socket (Fcar (answer), Fcdr (answer));
 	    }
 	}
 #endif /* HAVE_GETADDRINFO_A */
@@ -7685,6 +7717,7 @@ syms_of_process (void)
 
   staticpro (&Vprocess_alist);
   staticpro (&deleted_pid_list);
+  staticpro (&dns_processes);
 
 #endif	/* subprocesses */
 

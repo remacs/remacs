@@ -1167,6 +1167,19 @@ emacs_gnutls_global_deinit (void)
 }
 #endif
 
+/* VARARGS 1 */
+static void
+boot_error (struct Lisp_Process *p, const char *m, ...)
+{
+  va_list ap;
+  va_start (ap, m);
+  if (p->is_non_blocking_client)
+    pset_status (p, Qfailed);
+  else
+    verror (m, ap);
+}
+
+
 DEFUN ("gnutls-boot", Fgnutls_boot, Sgnutls_boot, 3, 3, 0,
        doc: /* Initialize GnuTLS client for process PROC with TYPE+PROPLIST.
 Currently only client mode is supported.  Return a success/failure
@@ -1246,16 +1259,23 @@ one trustfile (usually a CA bundle).  */)
   Lisp_Object verify_error;
   Lisp_Object prime_bits;
   Lisp_Object warnings;
+  struct Lisp_Process *p = XPROCESS (proc);
 
   CHECK_PROCESS (proc);
   CHECK_SYMBOL (type);
   CHECK_LIST (proplist);
 
   if (NILP (Fgnutls_available_p ()))
-    error ("GnuTLS not available");
+    {
+      boot_error (p, "GnuTLS not available");
+      return Qnil;
+    }
 
   if (!EQ (type, Qgnutls_x509pki) && !EQ (type, Qgnutls_anon))
-    error ("Invalid GnuTLS credential type");
+    {
+      boot_error (p, "Invalid GnuTLS credential type");
+      return Qnil;
+    }
 
   hostname              = Fplist_get (proplist, QCgnutls_bootprop_hostname);
   priority_string       = Fplist_get (proplist, QCgnutls_bootprop_priority);
@@ -1272,11 +1292,15 @@ one trustfile (usually a CA bundle).  */)
     }
   else if (NILP (Flistp (verify_error)))
     {
-      error ("gnutls-boot: invalid :verify_error parameter (not a list)");
+      boot_error (p, "gnutls-boot: invalid :verify_error parameter (not a list)");
+      return Qnil;
     }
 
   if (!STRINGP (hostname))
-    error ("gnutls-boot: invalid :hostname parameter (not a string)");
+    {
+      boot_error (p, "gnutls-boot: invalid :hostname parameter (not a string)");
+      return Qnil;
+    }
   c_hostname = SSDATA (hostname);
 
   state = XPROCESS (proc)->gnutls_state;
@@ -1384,7 +1408,8 @@ one trustfile (usually a CA bundle).  */)
 	  else
 	    {
 	      emacs_gnutls_deinit (proc);
-	      error ("Invalid trustfile");
+	      boot_error (p, "Invalid trustfile");
+	      return Qnil;
 	    }
 	}
 
@@ -1408,7 +1433,8 @@ one trustfile (usually a CA bundle).  */)
 	  else
 	    {
 	      emacs_gnutls_deinit (proc);
-	      error ("Invalid CRL file");
+	      boot_error (p, "Invalid CRL file");
+	      return Qnil;
 	    }
 	}
 
@@ -1437,8 +1463,9 @@ one trustfile (usually a CA bundle).  */)
 	  else
 	    {
 	      emacs_gnutls_deinit (proc);
-	      error (STRINGP (keyfile) ? "Invalid client cert file"
-		     : "Invalid client key file");
+	      boot_error (p, STRINGP (keyfile) ? "Invalid client cert file"
+			  : "Invalid client key file");
+	      return Qnil;
 	    }
 	}
     }
@@ -1528,8 +1555,9 @@ one trustfile (usually a CA bundle).  */)
           || !NILP (Fmember (QCgnutls_bootprop_trustfiles, verify_error)))
         {
 	  emacs_gnutls_deinit (proc);
-	  error ("Certificate validation failed %s, verification code %x",
-		 c_hostname, peer_verification);
+	  boot_error (p, "Certificate validation failed %s, verification code %x",
+		      c_hostname, peer_verification);
+	  return Qnil;
         }
       else
 	{
@@ -1558,7 +1586,8 @@ one trustfile (usually a CA bundle).  */)
 	{
 	  gnutls_x509_crt_deinit (gnutls_verify_cert);
 	  emacs_gnutls_deinit (proc);
-	  error ("No x509 certificate was found\n");
+	  boot_error (p, "No x509 certificate was found\n");
+	  return Qnil;
 	}
 
       /* We only check the first certificate in the given chain.  */
@@ -1586,7 +1615,8 @@ one trustfile (usually a CA bundle).  */)
             {
 	      gnutls_x509_crt_deinit (gnutls_verify_cert);
 	      emacs_gnutls_deinit (proc);
-	      error ("The x509 certificate does not match \"%s\"", c_hostname);
+	      boot_error (p, "The x509 certificate does not match \"%s\"", c_hostname);
+	      return Qnil;
             }
 	  else
 	    {
