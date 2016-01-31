@@ -138,13 +138,6 @@ trust and key files, and priority string."
                         :type 'gnutls-x509pki
                         :hostname host))))
 
-(defun gnutls-async-sentinel (process change)
-  (when (string-match "open" change)
-    (gnutls-negotiate :process process
-                      :type 'gnutls-x509pki
-                      :hostname (car (process-contact process)))
-    (gnutls-mark-process process nil)))
-
 (define-error 'gnutls-error "GnuTLS error")
 
 (declare-function gnutls-boot "gnutls.c" (proc type proplist))
