@@ -724,24 +724,18 @@ Optional arg BUFFER-FILE overrides `buffer-file-name'."
 	  ;; for several related directories.
 	  (setq file-name (file-chase-links file-name))
 	  (setq file-name (expand-file-name file-name))
-	  ;; Move up in the dir hierarchy till we find a change log file.
-	  (let ((file1 file-name)
-		parent-dir)
-	    (while (and (not (or (get-file-buffer file1) (file-exists-p file1)))
-			(progn (setq parent-dir
-				     (file-name-directory
-				      (directory-file-name
-				       (file-name-directory file1))))
-			       ;; Give up if we are already at the root dir.
-			       (not (string= (file-name-directory file1)
-					     parent-dir))))
-	      ;; Move up to the parent dir and try again.
-	      (setq file1 (expand-file-name
-			   (file-name-nondirectory (change-log-name))
-			   parent-dir)))
-	    ;; If we found a change log in a parent, use that.
-	    (if (or (get-file-buffer file1) (file-exists-p file1))
-		(setq file-name file1)))))
+	  (let* ((cbase (file-name-nondirectory (change-log-name)))
+		 (root
+		  ;; TODO stopping at VCS root dir (if present) is appropriate
+		  ;; for Emacs these days (we used to have per-directory
+		  ;; ChangeLogs), and probably most others too.
+		  ;; But it could be optional behavior.
+		  (locate-dominating-file
+		   file-name
+		   (lambda (dir)
+		     (let ((clog (expand-file-name cbase dir)))
+		       (or (get-file-buffer clog) (file-exists-p clog)))))))
+	    (if root (setq file-name (expand-file-name cbase root))))))
     ;; Make a local variable in this buffer so we needn't search again.
     (set (make-local-variable 'change-log-default-name) file-name))
   file-name)
