@@ -2192,7 +2192,7 @@ fi
 
 use_mmap_for_buffers=no
 case "$opsys" in
-  cygwin|mingw32|freebsd|irix6-5) use_mmap_for_buffers=yes ;;
+  cygwin|mingw32|irix6-5) use_mmap_for_buffers=yes ;;
 esac
 
 AC_FUNC_MMAP
