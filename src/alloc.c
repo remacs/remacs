@@ -1108,7 +1108,7 @@ lisp_free (void *block)
    clang 3.3 anyway.  Aligned allocation is incompatible with
    unexmacosx.c, so don't use it on Darwin.  */
 
-#if ! ADDRESS_SANITIZER && ! DARWIN_OS
+#if ! ADDRESS_SANITIZER && !defined DARWIN_OS
 # if !defined SYSTEM_MALLOC && !defined DOUG_LEA_MALLOC && !defined HYBRID_MALLOC
 #  define USE_ALIGNED_ALLOC 1
 #  ifndef HAVE_ALIGNED_ALLOC
