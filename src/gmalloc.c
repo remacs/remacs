@@ -321,6 +321,13 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
 /* Debugging hook for 'malloc'.  */
 static void *(*__MALLOC_HOOK_VOLATILE gmalloc_hook) (size_t);
 
+/* Replacements for traditional glibc malloc hooks, for platforms that
+   do not already have these hooks.  Platforms with these hooks all
+   used relaxed ref/def, so it is OK to define them here too.  */
+void (*__MALLOC_HOOK_VOLATILE __malloc_initialize_hook) (void);
+void (*__MALLOC_HOOK_VOLATILE __after_morecore_hook) (void);
+void *(*__morecore) (ptrdiff_t);
+
 #ifndef HYBRID_MALLOC
 
 /* Pointer to the base of the first block.  */
@@ -346,10 +353,6 @@ size_t _bytes_free;
 
 /* Are you experienced?  */
 int __malloc_initialized;
-
-void (*__MALLOC_HOOK_VOLATILE __malloc_initialize_hook) (void);
-void (*__MALLOC_HOOK_VOLATILE __after_morecore_hook) (void);
-void *(*__morecore) (ptrdiff_t);
 
 #else
 
