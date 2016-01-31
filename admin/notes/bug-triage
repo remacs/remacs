@@ -20,7 +20,7 @@ the ones that are not reproducible on the current release.
      reproducible.  A bug can and should stay open as long as it is
      still a bug and no one has fixed it.  The following is a
      suggested checklist to follow for handling these bugs, along with
-     example replies.  The various closings, taggings, etc, are done
+     example replies.  Closing, tagging, etc., are done
      with debbugs control messages, which in debbugs-gnu is initiated
      with a "C".
      [ ] Read the mail thread for the bug.  Find out if anyone has

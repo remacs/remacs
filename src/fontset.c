@@ -498,7 +498,7 @@ fontset_get_font_group (Lisp_Object fontset, int c)
       font_group = make_number (0);
       if (c >= 0)
 	/* Record that FONTSET does not specify fonts for C.  As
-	   there's a possiblity that a font is found in a fallback
+	   there's a possibility that a font is found in a fallback
 	   font group, we set 0 at the moment.  */
 	char_table_set_range (fontset, from, to, font_group);
       return font_group;
@@ -541,7 +541,7 @@ fontset_get_font_group (Lisp_Object fontset, int c)
    If FALLBACK, search only fallback fonts.  */
 
 static Lisp_Object
-fontset_find_font (Lisp_Object fontset, int c, struct face *face, 
+fontset_find_font (Lisp_Object fontset, int c, struct face *face,
 		   int charset_id, bool fallback)
 {
   Lisp_Object vec, font_group;
@@ -585,7 +585,7 @@ fontset_find_font (Lisp_Object fontset, int c, struct face *face,
     }
 
   /* Find the first available font in the vector of RFONT-DEF.  If
-     CHARSET_MATCHED > 0, try the correspoing RFONT-DEF first, then
+     CHARSET_MATCHED > 0, try the corresponding RFONT-DEF first, then
      try the rest.  */
   for (i = 0; i < ASIZE (vec); i++)
     {
