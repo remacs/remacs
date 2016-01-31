@@ -359,10 +359,10 @@ asynchronously, if possible."
   (with-current-buffer buffer
     (let* ((start (point-max))
 	   (stream
-	    (funcall (if (gnutls-available-p)
-			 'open-gnutls-stream
-		       'open-tls-stream)
-		     name buffer host service))
+            (if (gnutls-available-p)
+                (open-gnutls-stream name buffer host service
+                                    (plist-get parameters :nowait))
+              (open-tls-stream name buffer host service)))
 	   (eoc (plist-get parameters :end-of-command)))
       ;; Check certificate validity etc.
       (when (and (gnutls-available-p) stream)

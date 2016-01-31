@@ -5806,6 +5806,11 @@ send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
   if (p->outfd < 0)
     error ("Output file descriptor of %s is closed", SDATA (p->name));
 
+#ifdef HAVE_GNUTLS
+  if (p->gnutls_wait_p)
+    return;
+#endif
+
   coding = proc_encode_coding_system[p->outfd];
   Vlast_coding_system_used = CODING_ID_NAME (coding->id);
 

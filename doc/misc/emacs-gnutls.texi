@@ -173,13 +173,16 @@ Just use @code{open-protocol-stream} or @code{open-network-stream}
 You should not have to use the @file{gnutls.el} functions directly.
 But you can test them with @code{open-gnutls-stream}.
 
-@defun open-gnutls-stream name buffer host service
+@defun open-gnutls-stream name buffer host service &optional nowait
 This function creates a buffer connected to a specific @var{host} and
 @var{service} (port number or service name).  The parameters and their
 syntax are the same as those given to @code{open-network-stream}
 (@pxref{Network,, Network Connections, elisp, The Emacs Lisp Reference
 Manual}).  The connection process is called @var{name} (made unique if
 necessary).  This function returns the connection process.
+
+If called with @var{nowait}, the process is returned immediately
+(before connecting to the server).
 
 @lisp
 ;; open a HTTPS connection

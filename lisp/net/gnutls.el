@@ -95,7 +95,7 @@ A value of nil says to use the default GnuTLS value."
                  (integer :tag "Number of bits" 512))
   :group 'gnutls)
 
-(defun open-gnutls-stream (name buffer host service)
+(defun open-gnutls-stream (name buffer host service &optional nowait)
   "Open a SSL/TLS connection for a service to a host.
 Returns a subprocess-object to represent the connection.
 Input and output work as for subprocesses; `delete-process' closes it.
@@ -109,6 +109,8 @@ BUFFER is the buffer (or `buffer-name') to associate with the process.
 Third arg is name of the host to connect to, or its IP address.
 Fourth arg SERVICE is name of the service desired, or an integer
 specifying a port number to connect to.
+Fifth arg NOWAIT (which is optional) means that the socket should
+be opened asynchronously.
 
 Usage example:
 
@@ -122,9 +124,24 @@ This is a very simple wrapper around `gnutls-negotiate'.  See its
 documentation for the specific parameters you can use to open a
 GnuTLS connection, including specifying the credential type,
 trust and key files, and priority string."
-  (gnutls-negotiate :process (open-network-stream name buffer host service)
-                    :type 'gnutls-x509pki
-                    :hostname host))
+  (let ((process (open-network-stream name buffer host service
+                                      :nowait nowait)))
+    (if nowait
+        (progn
+          (gnutls-mark-process process t)
+          (set-process-sentinel process 'gnutls-async-sentinel)
+          process)
+      (gnutls-negotiate :process (open-network-stream name buffer host service)
+                        :type 'gnutls-x509pki
+                        :hostname host))))
+
+(defun gnutls-async-sentinel (process change)
+  (message "change: %S %s" change (car (process-contact process)))
+  (when (string-match "open" change)
+    (gnutls-negotiate :process process
+                      :type 'gnutls-x509pki
+                      :hostname (car (process-contact process)))
+    (gnutls-mark-process process nil)))
 
 (define-error 'gnutls-error "GnuTLS error")
 

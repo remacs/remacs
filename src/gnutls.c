@@ -686,6 +686,16 @@ emacs_gnutls_deinit (Lisp_Object proc)
   return Qt;
 }
 
+DEFUN ("gnutls-mark-process", Fgnutls_mark_process, Sgnutls_mark_process, 2, 2, 0,
+       doc: /* Mark this process as being a pre-init GnuTLS process.  */)
+  (Lisp_Object proc, Lisp_Object state)
+{
+  CHECK_PROCESS (proc);
+
+  XPROCESS (proc)->gnutls_wait_p = !NILP (state);
+  return Qnil;
+}
+
 DEFUN ("gnutls-get-initstage", Fgnutls_get_initstage, Sgnutls_get_initstage, 1, 1, 0,
        doc: /* Return the GnuTLS init stage of process PROC.
 See also `gnutls-boot'.  */)
@@ -1693,6 +1703,7 @@ syms_of_gnutls (void)
 	make_number (GNUTLS_E_APPLICATION_ERROR_MIN));
 
   defsubr (&Sgnutls_get_initstage);
+  defsubr (&Sgnutls_mark_process);
   defsubr (&Sgnutls_errorp);
   defsubr (&Sgnutls_error_fatalp);
   defsubr (&Sgnutls_error_string);
