@@ -18,11 +18,6 @@
 @c Formatting of the tramp program name consistent.
 @set tramp @sc{Tramp}
 
-@c Whether or not describe GVFS integration.
-@ifclear noemacsgvfs
-@set emacsgvfs
-@end ifclear
-
 @c Some flags which define the remote file name syntax.
 @ifclear unified
 @ifclear separate

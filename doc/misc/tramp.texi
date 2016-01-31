@@ -17,9 +17,9 @@
 
 @include trampver.texi
 
-@c Macro for formatting a file name according to the respective syntax.
-@c Macro arguments should not have any leading or
-@c trailing whitespace.  Not very elegant, but I don't know it better.
+@c Macro for formatting a file name according to the respective
+@c syntax.  Macro arguments should not have any leading or trailing
+@c whitespace.  Not very elegant, but I don't know it better.
 
 @macro trampfn {method, userhost, localname}
 @value{prefix}@c
@@ -68,10 +68,10 @@ copy and modify this GNU manual.''
 @contents
 
 
-@ifnottex
 @node Top, Overview, (dir), (dir)
 @top @value{tramp} version @value{trampver} User Manual
 
+@ifnottex
 This file documents @value{tramp} version @value{trampver}, a remote file
 editing package for Emacs.
 
@@ -112,7 +112,6 @@ The Mail Archive}.
 @end ifhtml
 
 @insertcopying
-
 @end ifnottex
 
 @menu
@@ -414,15 +413,12 @@ April 2000 was the first time when multi-hop methods were added.  In
 July 2002, @value{tramp} unified file names with Ange-FTP@.  In July
 2004, proxy hosts replaced multi-hop methods.  Running commands on
 remote hosts was introduced in December 2005.  Support for gateways
-since April 2007.
-@ifset emacsgvfs
-GVFS integration started in February 2009.
-@end ifset
-Remote commands on Windows hosts since September 2011.  Ad-hoc
-multi-hop methods (with a changed syntax) re-enabled in November 2011.
+since April 2007.  GVFS integration started in February 2009.  Remote
+commands on Windows hosts since September 2011.  Ad-hoc multi-hop
+methods (with a changed syntax) re-enabled in November 2011.  In
+November 2012, added Juergen Hoetzel's @file{tramp-adb.el}.
 
-In November 2012, added Juergen Hoetzel's @file{tramp-adb.el}.
-
+XEmacs support has been stopped in January 2016.
 
 @c Installation chapter is necessary only in case of standalone
 @c installation.  Text taken from trampinst.texi.
@@ -438,8 +434,8 @@ In November 2012, added Juergen Hoetzel's @file{tramp-adb.el}.
 
 @value{tramp} is initially configured to use the @command{scp} program
 to connect to the remote host.  Just type @kbd{C-x C-f} and then enter
-file name @file{@trampf{user@@host,/path/to.file}}.  For details,
-see @xref{Default Method}.
+file name @file{@trampf{user@@host,/path/to.file}}.  For details, see
+@xref{Default Method}.
 
 For problems related to the behavior of remote shell, see @ref{Remote
 shell setup} for details.
@@ -869,9 +865,9 @@ uses the anonymous user (without prompting for password).  This
 behavior is unlike other @value{tramp} methods, where local user name
 is substituted.
 
-The @option{smb} method is unavailable if Emacs is run under a
-local user authentication context in MS Windows.  However such users
-can still access remote files using UNC file names instead of @value{tramp}:
+The @option{smb} method is unavailable if Emacs is run under a local
+user authentication context in MS Windows.  However such users can
+still access remote files using UNC file names instead of @value{tramp}:
 
 @example
 //melancholia/daniel$$/.emacs
@@ -880,6 +876,7 @@ can still access remote files using UNC file names instead of @value{tramp}:
 UNC file name specification does not allow the specification of a
 different user name for authentication like the @command{smbclient}
 can.
+
 
 @item @option{adb}
 @cindex method adb
@@ -900,17 +897,17 @@ Emacs.
 
 @value{tramp} does not require a host name part of the remote file
 name when a single Android device is connected to @command{adb}.
-@value{tramp} instead uses @file{@trampfn{adb,,}} as the default
-name.  @command{adb devices} shows available host names.
+@value{tramp} instead uses @file{@trampfn{adb,,}} as the default name.
+@command{adb devices} shows available host names.
 
 @option{adb} method normally does not need user name to authenticate
-on the Andriod device because it runs under the @command{adbd}
+on the Android device because it runs under the @command{adbd}
 process.  But when a user name is specified, however, @value{tramp}
 applies an @command{su} in the syntax.  When authentication does not
 succeed, especially on un-rooted Android devices, @value{tramp}
 displays login errors.
 
-For Andriod devices connected through TCP/IP, a port number can be
+For Android devices connected through TCP/IP, a port number can be
 specified using @file{device#42} host name syntax or @value{tramp} can
 use the default value as declared in @command{adb} command.  Port
 numbers are not applicable to Android devices connected through USB@.
@@ -918,7 +915,6 @@ numbers are not applicable to Android devices connected through USB@.
 @end table
 
 
-@ifset emacsgvfs
 @node GVFS based methods
 @section GVFS based external methods
 @cindex methods, gvfs
@@ -987,7 +983,6 @@ default, this list includes @option{afp}, @option{dav}, @option{davs},
 @option{obex}, @option{sftp} and @option{synce}.  Other methods to
 include are: @option{ftp} and @option{smb}.
 @end defopt
-@end ifset
 
 
 @node Gateway methods
@@ -1274,9 +1269,9 @@ access, then use this alist entry:
              '("\\.your\\.domain\\'" "\\`root\\'" "@trampfn{ssh,%h,}"))
 @end lisp
 
-Opening @file{@trampfn{sudo,randomhost.your.domain,}} first
-connects to @samp{randomhost.your.domain} via @code{ssh} under your
-account name, and then perform @code{sudo -u root} on that host.
+Opening @file{@trampfn{sudo,randomhost.your.domain,}} first connects
+to @samp{randomhost.your.domain} via @code{ssh} under your account
+name, and then perform @code{sudo -u root} on that host.
 
 It is key for the sudo method in the above example to be applied on
 the host after reaching it and not on the local host.
@@ -1879,7 +1874,7 @@ where @samp{192.168.0.1} is the remote host IP address
 
 @value{tramp} uses the @option{adb} method to access Android
 devices.  Android devices provide a restricted shell access through an
-USB connection.  The local host must have Andriod SDK installed.
+USB connection.  The local host must have the Android SDK installed.
 
 Applications such as @code{SSHDroid} that run @command{sshd} process
 on the Android device can accept any @option{ssh}-based methods
@@ -1917,8 +1912,8 @@ directory for temporary files:
 
 @noindent
 Open a remote connection with the command @kbd{C-x C-f
-@trampfn{ssh,192.168.0.26#2222,}}, where @command{sshd} is listening on port
-@samp{2222}.
+@trampfn{ssh,192.168.0.26#2222,}}, where @command{sshd} is listening
+on port @samp{2222}.
 
 To add a corresponding entry to the @file{~/.ssh/config} file
 (recommended), use this:
@@ -1950,8 +1945,8 @@ Open a remote connection with a more concise command @kbd{C-x C-f
 @cindex backup
 @vindex backup-directory-alist
 
-To avoid @value{tramp} from saving backup files owned by root to
-locations accessible to others, default backup settings in
+To avoid @value{tramp} from saving backup files owned by @samp{root}
+to locations accessible to others, default backup settings in
 @code{backup-directory-alist} have to be altered.
 
 Here's a scenario where files could be inadvertently exposed.  Emacs
@@ -1959,9 +1954,9 @@ by default writes backup files to the same directory as the original
 files unless changed to another location, such as
 @file{~/.emacs.d/backups/}.  Such a directory will also be used by
 default by @value{tramp} when using, say, a restricted file
-@file{@trampfn{su,root@@localhost,/etc/secretfile}}.  The backup
-file of the secretfile is now owned by the user logged in from tramp
-and not root.
+@file{@trampfn{su,root@@localhost,/etc/secretfile}}.  The backup file
+of the secretfile is now owned by the user logged in from
+@value{tramp} and not @samp{root}.
 
 When @code{backup-directory-alist} is @code{nil} (the default), such
 problems do not occur.
@@ -1975,7 +1970,7 @@ To ``turns off'' the backup feature for @value{tramp} files and stop
 @end lisp
 
 @noindent
-Disabling backups can be targetted to just @option{su} and
+Disabling backups can be targeted to just the @option{su} and
 @option{sudo} methods:
 
 @lisp
@@ -2011,7 +2006,12 @@ Example:
 @noindent
 The backup file name of
 @file{@trampfn{su,root@@localhost,/etc/secretfile}} would be
-@file{@trampfn{su,root@@localhost,~/.emacs.d/backups/!su:root@@localhost:!etc!secretfile~}}.
+@ifset unified
+@file{@trampfn{su,root@@localhost,~/.emacs.d/backups/!su:root@@localhost:!etc!secretfile~}}
+@end ifset
+@ifset separate
+@file{@trampfn{su,root@@localhost,~/.emacs.d/backups/![su!root@@localhost]!etc!secretfile~}}
+@end ifset
 
 Just as for backup files, similar issues of file naming affect
 auto-saving @value{tramp} files.  Auto-saved files are saved in the
@@ -2038,7 +2038,7 @@ This section is incomplete.  Please share your solutions.
 
 Cygwin's @command{ssh} works only with a Cygwin version of Emacs.  To
 check for compatibility: type @kbd{M-x eshell}, and start @kbd{ssh
-test.host}.  Incompatbilities trigger this message:
+test.host}.  Incompatibilities trigger this message:
 
 @example
 Pseudo-terminal will not be allocated because stdin is not a terminal.
@@ -2090,7 +2090,7 @@ syntax.
 
 Unlike opening local files in Emacs, which are instantaneous, opening
 remote files in @value{tramp} is slower at first.  Sometimes there is
-a noticable delay before the prompts for passwords or authentication
+a noticeable delay before the prompts for passwords or authentication
 appear in the minibuffer.  Hitting @kbd{@key{RET}} or other keys
 during this gap will be processed by Emacs.  This type-ahead facility
 is a feature of Emacs that may cause missed prompts when using
@@ -2110,9 +2110,9 @@ is a feature of Emacs that may cause missed prompts when using
 @cindex file name syntax
 @cindex file name examples
 
-@file{@trampf{host,localfilename}}
-opens file @var{localfilename} on the remote host @var{host}, using
-the default method.  @xref{Default Method}.
+@file{@trampf{host,localfilename}} opens file @var{localfilename} on
+the remote host @var{host}, using the default method.  @xref{Default
+Method}.
 
 @table @file
 @item @value{prefix}melancholia@value{postfix}.emacs
@@ -2139,8 +2139,10 @@ For the file @file{/etc/squid.conf} on the host @code{melancholia}.
 @var{host} can take IPv4 or IPv6 address, as in
 @file{@trampf{127.0.0.1,.emacs}} or
 @file{@trampf{@value{ipv6prefix}::1@value{ipv6postfix},.emacs}}.
+@ifset unified
 For syntactical reasons, IPv6 addresses must be embedded in square
 brackets @file{@value{ipv6prefix}} and @file{@value{ipv6postfix}}.
+@end ifset
 
 By default, @value{tramp} will use the current local user name as the
 remote user name for log in to the remote host.  Specifying a different
@@ -2150,16 +2152,15 @@ name using the proper syntax will override this default behavior:
 @trampf{user@@host,path/to.file}
 @end example
 
-@file{@trampf{daniel@@melancholia,.emacs}} is for file
-@file{.emacs} in @code{daniel}'s home directory on the host,
-@code{melancholia}.
+@file{@trampf{daniel@@melancholia,.emacs}} is for file @file{.emacs}
+in @code{daniel}'s home directory on the host, @code{melancholia}.
 
 Specify other file access methods (@pxref{Inline methods},
 @pxref{External methods}) as part of the file name.
 
 Method name comes before user name, as in
 @file{@value{prefix}@var{method}@value{postfixhop}} (Note the trailing
-colon).  The syntax specificaton for user, host, and file do not
+colon).  The syntax specifications for user, host, and file do not
 change.
 
 To connect to the host @code{melancholia} as @code{daniel}, using
@@ -2212,8 +2213,7 @@ shows host names @value{tramp} from @file{/etc/hosts} file, for example.
 @multitable @columnfractions .5 .5
 @c @multitable {@trampfn{telnet,melancholia.danann.net,}} {@trampfn{telnet,192.168.0.1,}}
 @item @trampfn{telnet,127.0.0.1,} @tab @trampfn{telnet,192.168.0.1,}
-@c @item @trampfn{telnet,@value{ipv6prefix}::1@value{ipv6postfix},} @tab @trampfn{telnet,localhost,}
-@item @value{prefix}telnet@value{postfixhop}@value{ipv6prefix}::1@value{ipv6postfix}@value{postfix} @tab @trampfn{telnet,localhost,}
+@item @trampfn{telnet,@value{ipv6prefix}::1@value{ipv6postfix},} @tab @trampfn{telnet,localhost,}
 @item @trampfn{telnet,melancholia.danann.net,} @tab @trampfn{telnet,melancholia,}
 @end multitable
 @end example
@@ -2229,8 +2229,8 @@ persistently (@pxref{Connection caching}) will be included in the
 completion lists.
 
 After remote host name completion comes completion of file names on
-the remote host.  It works the same as on loal host file completion
-except when killing with double-slash @file{//} kills only the file
+the remote host.  It works the same as with local host file completion
+except that killing with double-slash @file{//} kills only the file
 name part of the @value{tramp} file name syntax.  A triple-slash
 stands for the default behavior.
 @ifinfo
@@ -2327,12 +2327,9 @@ host when the variable @code{default-directory} is remote:
                       "/bin/sh" "-c" "grep -e tramp *"))
 @end lisp
 
-
-@ifset emacsgvfs
 Remote processes do not apply to GVFS (see @ref{GVFS based methods})
 because the remote file system is mounted on the local host and
 @value{tramp} just accesses by changing the @code{default-directory}.
-@end ifset
 
 @value{tramp} starts a remote process when a command is executed in a
 remote file or directory buffer.  As of now, these packages have been
@@ -2513,8 +2510,8 @@ with a remote file name:
 @end example
 
 Relative file names are based on the remote default directory.  When
-@file{myprog.pl} exists in @file{@trampfn{ssh,host,/home/user}},
-valid calls include:
+@file{myprog.pl} exists in @file{@trampfn{ssh,host,/home/user}}, valid
+calls include:
 
 @example
 @kbd{M-x perldb @key{RET}}
@@ -2570,9 +2567,8 @@ the internal representation of a remote connection.  When called
 interactively, this command lists active remote connections in the
 minibuffer.  Each connection is of the format
 @file{@trampfn{method,user@@host,}}.  Flushing remote connections also
-cleans the password
-cache (@pxref{Password handling}), file cache, connection cache
-(@pxref{Connection caching}), and connection buffers.
+cleans the password cache (@pxref{Password handling}), file cache,
+connection cache (@pxref{Connection caching}), and connection buffers.
 @end deffn
 
 @deffn Command tramp-cleanup-this-connection
