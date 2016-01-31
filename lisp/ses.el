@@ -446,10 +446,8 @@ is nil if SYM is not a symbol that names a cell."
 		       (ses-get-cell (car rowcol) (cdr rowcol)))))))
 
 (defun ses-plist-delq (plist prop)
-  "Return PLIST after deletion of proprerty/value pair.
-
-PROP is the symbol identifying the property/value pair. PLIST may
-be modified by border effect."
+  "Return PLIST after deleting the first pair (if any) with symbol PROP.
+This can alter PLIST."
   (cond
    ((null plist) nil)
    ((eq (car plist) prop) (cddr plist))

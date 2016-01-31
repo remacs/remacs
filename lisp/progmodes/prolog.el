@@ -1036,7 +1036,7 @@ VERSION is of the format (Major . Minor)"
 
 (define-abbrev-table 'prolog-mode-abbrev-table ())
 
-;; Becauses this can `eval' its arguments, any variable that gets
+;; Because this can `eval' its arguments, any variable that gets
 ;; processed by it should be marked as :risky.
 (defun prolog-find-value-by-system (alist)
   "Get value from ALIST according to `prolog-system'."
