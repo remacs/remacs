@@ -220,6 +220,11 @@ echo timestamp > src/stamp-h.in || exit
 ## Configure Git, if using Git.
 if test -d .git && (git status -s) >/dev/null 2>&1; then
 
+    # Check hashes when transferring objects among repositories.
+
+    git config transfer.fsckObjects true || exit
+
+
     # Configure 'git diff' hunk header format.
 
     git config 'diff.elisp.xfuncname' \
