@@ -181,9 +181,6 @@ syntax are the same as those given to @code{open-network-stream}
 Manual}).  The connection process is called @var{name} (made unique if
 necessary).  This function returns the connection process.
 
-If called with @var{nowait}, the process is returned immediately
-(before connecting to the server).
-
 @lisp
 ;; open a HTTPS connection
 (open-gnutls-stream "tls" "tls-buffer" "yourserver.com" "https")
@@ -193,6 +190,12 @@ If called with @var{nowait}, the process is returned immediately
 @end lisp
 
 @end defun
+
+@findex gnutls-asynchronous-parameters
+If called with @var{nowait}, the process is returned immediately
+(before connecting to the server).  In that case, the process object
+is told what parameters to use when negotiating the connection
+by using the @code{gnutls-asynchronous-parameters} function.
 
 The function @code{gnutls-negotiate} is not generally useful and it
 may change as needed, so please see @file{gnutls.el} for the details.

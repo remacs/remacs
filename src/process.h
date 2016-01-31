@@ -191,8 +191,8 @@ struct Lisp_Process
     unsigned int gnutls_extra_peer_verification;
     int gnutls_log_level;
     int gnutls_handshakes_tried;
+    Lisp_Object gnutls_async_parameters;
     bool_bf gnutls_p : 1;
-    bool_bf gnutls_wait_p : 1;
 #endif
 };
 

@@ -1277,17 +1277,7 @@ The return value of this function is the retrieval buffer."
 	(pcase (process-status connection)
           (`connect
            ;; Asynchronous connection
-           (if (not (process-sentinel connection))
-               (set-process-sentinel connection 'url-http-async-sentinel)
-             ;; If we already have a sentinel on this process (for
-             ;; instance on TLS connections), then chain them
-             ;; together.
-             (let ((old (process-sentinel connection)))
-               (set-process-sentinel
-                connection
-                `(lambda (proc why)
-                   (funcall ',old proc why)
-                   (url-http-async-sentinel proc why))))))
+           (set-process-sentinel connection 'url-http-async-sentinel))
           (`failed
            ;; Asynchronous connection failed
            (error "Could not create connection to %s:%d" host port))

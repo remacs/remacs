@@ -128,8 +128,11 @@ trust and key files, and priority string."
                                       :nowait nowait)))
     (if nowait
         (progn
-          (gnutls-mark-process process t)
-          (set-process-sentinel process 'gnutls-async-sentinel)
+          (gnutls-asynchronous-parameters
+           process
+           (gnutls-negotiate :type 'gnutls-x509pki
+                             :return-keywords t
+                             :hostname host))
           process)
       (gnutls-negotiate :process (open-network-stream name buffer host service)
                         :type 'gnutls-x509pki
@@ -153,6 +156,7 @@ trust and key files, and priority string."
            &key process type hostname priority-string
            trustfiles crlfiles keylist min-prime-bits
            verify-flags verify-error verify-hostname-error
+           return-keywords
            &allow-other-keys)
   "Negotiate a SSL/TLS connection.  Returns proc.  Signals gnutls-error.
 
@@ -204,7 +208,13 @@ here's a recent version of the list.
     GNUTLS_VERIFY_DO_NOT_ALLOW_X509_V1_CA_CRT = 256
 
 It must be omitted, a number, or nil; if omitted or nil it
-defaults to GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT."
+defaults to GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT.
+
+If RETURN-KEYWORDS, don't connect to anything, but just return
+the computed parameters that we otherwise would be calling
+gnutls-boot with.  The return value will be a list where the
+first element is the TLS type, and the rest of the list consists
+of the keywords."
   (let* ((type (or type 'gnutls-x509pki))
 	 ;; The gnutls library doesn't understand files delivered via
 	 ;; the special handlers, so ignore all files found via those.
@@ -252,15 +262,17 @@ defaults to GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT."
                              :verify-error ,verify-error
                              :callbacks nil))
 
-    (gnutls-message-maybe
-     (setq ret (gnutls-boot process type params))
-     "boot: %s" params)
+    (if return-keywords
+        (cons type params)
+      (gnutls-message-maybe
+       (setq ret (gnutls-boot process type params))
+       "boot: %s" params)
 
-    (when (gnutls-errorp ret)
-      ;; This is a error from the underlying C code.
-      (signal 'gnutls-error (list process ret)))
+      (when (gnutls-errorp ret)
+        ;; This is a error from the underlying C code.
+        (signal 'gnutls-error (list process ret)))
 
-    process))
+      process)))
 
 (defun gnutls-trustfiles ()
   "Return a list of usable trustfiles."

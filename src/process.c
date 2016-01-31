@@ -715,6 +715,7 @@ make_process (Lisp_Object name)
 
 #ifdef HAVE_GNUTLS
   p->gnutls_initstage = GNUTLS_STAGE_EMPTY;
+  p->gnutls_async_parameters = Qnil;
 #endif
 
   /* If name is already in use, modify it until it is unused.  */
@@ -3305,6 +3306,14 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
     max_process_desc = inch;
 
   set_network_socket_coding_system (proc);
+
+#ifdef HAVE_GNUTLS
+  if (!NILP (p->gnutls_async_parameters) && p->is_non_blocking_client) {
+    Fgnutls_boot (proc, Fcar (p->gnutls_async_parameters),
+		  Fcdr (p->gnutls_async_parameters));
+    p->gnutls_async_parameters = Qnil;
+  }
+#endif
 }
 
 
@@ -5817,7 +5826,9 @@ send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
     error ("Output file descriptor of %s is closed", SDATA (p->name));
 
 #ifdef HAVE_GNUTLS
-  if (p->gnutls_wait_p)
+  /* The TLS connection hasn't been set up yet, so we can't write
+     anything on the socket. */
+  if (p->gnutls_async_parameters)
     return;
 #endif
 

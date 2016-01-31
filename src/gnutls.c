@@ -686,13 +686,16 @@ emacs_gnutls_deinit (Lisp_Object proc)
   return Qt;
 }
 
-DEFUN ("gnutls-mark-process", Fgnutls_mark_process, Sgnutls_mark_process, 2, 2, 0,
-       doc: /* Mark this process as being a pre-init GnuTLS process.  */)
-  (Lisp_Object proc, Lisp_Object state)
+DEFUN ("gnutls-asynchronous-parameters", Fgnutls_asynchronous_parameters,
+       Sgnutls_asynchronous_parameters, 2, 2, 0,
+       doc: /* Mark this process as being a pre-init GnuTLS process.
+The second parameter is the list of parameters to feed to gnutls-boot
+to finish setting up the connection. */)
+  (Lisp_Object proc, Lisp_Object params)
 {
   CHECK_PROCESS (proc);
 
-  XPROCESS (proc)->gnutls_wait_p = !NILP (state);
+  XPROCESS (proc)->gnutls_async_parameters = params;
   return Qnil;
 }
 
@@ -1703,7 +1706,7 @@ syms_of_gnutls (void)
 	make_number (GNUTLS_E_APPLICATION_ERROR_MIN));
 
   defsubr (&Sgnutls_get_initstage);
-  defsubr (&Sgnutls_mark_process);
+  defsubr (&Sgnutls_asynchronous_parameters);
   defsubr (&Sgnutls_errorp);
   defsubr (&Sgnutls_error_fatalp);
   defsubr (&Sgnutls_error_string);
