@@ -136,7 +136,6 @@ trust and key files, and priority string."
                         :hostname host))))
 
 (defun gnutls-async-sentinel (process change)
-  (message "change: %S %s" change (car (process-contact process)))
   (when (string-match "open" change)
     (gnutls-negotiate :process process
                       :type 'gnutls-x509pki
