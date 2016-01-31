@@ -320,7 +320,7 @@ xwidget_show_view (struct xwidget_view *xv)
                   xv->y + xv->clip_top);
 }
 
-/* Hide an xvidget view.  */
+/* Hide an xwidget view.  */
 static void
 xwidget_hide_view (struct xwidget_view *xv)
 {
