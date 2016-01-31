@@ -3806,14 +3806,8 @@ getpwent endpwent getgrent endgrent \
 cfmakeraw cfsetspeed copysign __executable_start log2)
 LIBS=$OLD_LIBS
 
-dnl No need to check for aligned_alloc and posix_memalign if using
-dnl gmalloc.o, as it supplies them, unless we're using hybrid_malloc.
-dnl Don't use these functions on Darwin as they are incompatible with
-dnl unexmacosx.c.
-if (test -z "$GMALLOC_OBJ" || test "$hybrid_malloc" = yes) \
-  && test "$opsys" != darwin; then
-  AC_CHECK_FUNCS([aligned_alloc posix_memalign], [break])
-fi
+dnl No need to check for posix_memalign if aligned_alloc works.
+AC_CHECK_FUNCS([aligned_alloc posix_memalign], [break])
 
 dnl Cannot use AC_CHECK_FUNCS
 AC_CACHE_CHECK([for __builtin_unwind_init],
