@@ -3018,8 +3018,8 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 
   while (!NILP (ip_addresses))
     {
-      ip_address = Fcar (ip_addresses);
-      ip_addresses = Fcdr (ip_addresses);
+      ip_address = XCAR (ip_addresses);
+      ip_addresses = XCDR (ip_addresses);
 
 #ifdef WINDOWSNT
     retry_connect:
@@ -3067,10 +3067,10 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 	Lisp_Object params = contact, key, val;
 
 	while (!NILP (params)) {
-	  key = Fcar (params);
-	  params = Fcdr (params);
-	  val = Fcar (params);
-	  params = Fcdr (params);
+	  key = XCAR (params);
+	  params = XCDR (params);
+	  val = XCAR (params);
+	  params = XCDR (params);
 	  optbits |= set_socket_option (s, key, val);
 	}
       }
@@ -3307,7 +3307,7 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
     Lisp_Object params = p->gnutls_async_parameters, boot = Qnil;
 
     p->gnutls_async_parameters = Qnil;
-    boot = Fgnutls_boot (proc, Fcar (params), Fcdr (params));
+    boot = Fgnutls_boot (proc, XCAR (params), XCDR (params));
     if (STRINGP (boot)) {
       pset_status (p, Qfailed);
       deactivate_process (proc);
@@ -4736,8 +4736,8 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  whether we got any answers. */
 	  while (!NILP (dns_list))
 	    {
-	      dns = Fcar (dns_list);
-	      dns_list = Fcdr (dns_list);
+	      dns = XCAR (dns_list);
+	      dns_list = XCDR (dns_list);
 	      p = XPROCESS (dns);
 	      if (p && p->dns_requests)
 		{
@@ -4762,10 +4762,10 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	     requests. */
 	  while (!NILP (answers))
 	    {
-	      answer = Fcar (answers);
-	      answers = Fcdr (answers);
-	      if (!NILP (Fcdr (answer)))
-		connect_network_socket (Fcar (answer), Fcdr (answer));
+	      answer = XCAR (answers);
+	      answers = XCDR (answers);
+	      if (!NILP (XCDR (answer)))
+		connect_network_socket (XCAR (answer), XCDR (answer));
 	    }
 	}
 #endif /* HAVE_GETADDRINFO_A */
