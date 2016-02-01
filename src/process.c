@@ -3104,6 +3104,9 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 		  Lisp_Object service;
 		  service = make_number (ntohs (sa1.sin_port));
 		  contact = Fplist_put (contact, QCservice, service);
+		  // Save the port number so that we can stash it in
+		  // the process object later.
+		  ((struct sockaddr_in *)sa)->sin_port = sa1.sin_port;
 		}
 	    }
 #endif
