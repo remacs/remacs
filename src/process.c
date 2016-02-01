@@ -3066,13 +3066,14 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
       {
 	Lisp_Object params = contact, key, val;
 
-	while (!NILP (params)) {
-	  key = XCAR (params);
-	  params = XCDR (params);
-	  val = XCAR (params);
-	  params = XCDR (params);
-	  optbits |= set_socket_option (s, key, val);
-	}
+	while (!NILP (params))
+	  {
+	    key = XCAR (params);
+	    params = XCDR (params);
+	    val = XCAR (params);
+	    params = XCDR (params);
+	    optbits |= set_socket_option (s, key, val);
+	  }
       }
 
       if (p->is_server)
