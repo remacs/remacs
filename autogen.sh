@@ -220,17 +220,32 @@ echo timestamp > src/stamp-h.in || exit
 ## Configure Git, if using Git.
 if test -d .git && (git status -s) >/dev/null 2>&1; then
 
+    # Like 'git config NAME VALUE', but verbose on change and exit on failure.
+
+    git_config ()
+    {
+	name=$1
+	value=$2
+	ovalue=`git config --get "$name"` && test "$ovalue" = "$value" || {
+	    echo "${Configuring_git}git config $name '$value'"
+	    Configuring_git=
+	    git config "$name" "$value" || exit
+	}
+    }
+    Configuring_git='Configuring git...
+'
+
     # Check hashes when transferring objects among repositories.
 
-    git config transfer.fsckObjects true || exit
+    git_config transfer.fsckObjects true
 
 
     # Configure 'git diff' hunk header format.
 
-    git config 'diff.elisp.xfuncname' \
-	'^\(def[^[:space:]]+[[:space:]]+([^()[:space:]]+)' || exit
-    git config 'diff.texinfo.xfuncname' \
-	'^@node[[:space:]]+([^,[:space:]][^,]+)' || exit
+    git_config 'diff.elisp.xfuncname' \
+	'^\(def[^[:space:]]+[[:space:]]+([^()[:space:]]+)'
+    git_config 'diff.texinfo.xfuncname' \
+	'^@node[[:space:]]+([^,[:space:]][^,]+)'
 
 
     # Install Git hooks.
