@@ -3318,6 +3318,7 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 
 }
 
+#ifndef HAVE_GETADDRINFO
 static Lisp_Object
 conv_numerical_to_lisp (unsigned char *number, unsigned int length, int port)
 {
@@ -3331,6 +3332,7 @@ conv_numerical_to_lisp (unsigned char *number, unsigned int length, int port)
 
   return address;
 }
+#endif
 
 /* Create a network stream/datagram client/server process.  Treated
    exactly like a normal process when reading and writing.  Primary
@@ -3699,6 +3701,7 @@ usage: (make-network-process &rest ARGS)  */)
   if (!NILP (host))
     {
       struct addrinfo *res, *lres;
+      int ret;
 
       immediate_quit = 1;
       QUIT;
