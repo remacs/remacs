@@ -2421,7 +2421,8 @@ has succeeded or failed.
 @item :tls-parameters
 When opening a TLS connection, this should be where the first element
 is the TLS type, and the remaining elements should form a keyword list
-acceptable for @code{gnutls-boot}.
+acceptable for @code{gnutls-boot}.  The TLS connection will then be
+negotiated after completing the connection to the host.
 
 @item :stop @var{stopped}
 If @var{stopped} is non-@code{nil}, start the network connection or
