@@ -1987,13 +1987,13 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 		(tramp-replace-environment-variables
 		 (apply 'tramp-file-name-for-operation operation args)))
 	       (completion (tramp-completion-mode-p))
-	       (foreign (tramp-find-foreign-file-name-handler filename)))
+	       (foreign (tramp-find-foreign-file-name-handler filename))
+	       result)
 	  (with-parsed-tramp-file-name filename nil
 	    ;; Call the backend function.
 	    (if foreign
 		(tramp-condition-case-unless-debug err
-		    (let ((sf (symbol-function foreign))
-			  result)
+		    (let ((sf (symbol-function foreign)))
 		      ;; Some packages set the default directory to a
 		      ;; remote path, before respective Tramp packages
 		      ;; are already loaded.  This results in
@@ -2057,8 +2057,13 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 		    ;; Propagate the error.
 		    (t (signal (car err) (cdr err))))))
 
-	      ;; Nothing to do for us.
-	      (tramp-run-real-handler operation args)))))
+	      ;; Nothing to do for us.  However, since we are in
+	      ;; `tramp-mode', we must suppress the volume letter on
+	      ;; MS Windows.
+	      (setq result (tramp-run-real-handler operation args))
+	      (if (stringp result)
+		  (tramp-drop-volume-letter result)
+		result)))))
 
     ;; When `tramp-mode' is not enabled, we don't do anything.
     (tramp-run-real-handler operation args)))

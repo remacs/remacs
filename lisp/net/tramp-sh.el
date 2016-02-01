@@ -497,7 +497,7 @@ The string is used in `tramp-methods'.")
 ;; "getconf PATH" yields:
 ;; HP-UX: /usr/bin:/usr/ccs/bin:/opt/ansic/bin:/opt/langtools/bin:/opt/fortran/bin
 ;; Solaris: /usr/xpg4/bin:/usr/ccs/bin:/usr/bin:/opt/SUNWspro/bin
-;; GNU/Linux (Debian, Suse): /bin:/usr/bin
+;; GNU/Linux (Debian, Suse, RHEL): /bin:/usr/bin
 ;; FreeBSD: /usr/bin:/bin:/usr/sbin:/sbin: - beware trailing ":"!
 ;; Darwin: /usr/bin:/bin:/usr/sbin:/sbin
 ;; IRIX64: /usr/bin
@@ -2797,7 +2797,7 @@ The method used must be an out-of-band method."
 	  (narrow-to-region (point) (point))
 	  ;; We cannot use `insert-buffer-substring' because the Tramp
 	  ;; buffer changes its contents before insertion due to calling
-	  ;; `expand-file' and alike.
+	  ;; `expand-file-name' and alike.
 	  (insert
 	   (with-current-buffer (tramp-get-buffer v)
 	     (buffer-string)))
@@ -2860,9 +2860,10 @@ the result will be a local, non-Tramp, file name."
   ;; Unless NAME is absolute, concat DIR and NAME.
   (unless (file-name-absolute-p name)
     (setq name (concat (file-name-as-directory dir) name)))
-  ;; If NAME is not a Tramp file, run the real handler.
+  ;; If connection is not established yet, run the real handler.
   (if (not (tramp-connectable-p name))
-      (tramp-run-real-handler 'expand-file-name (list name nil))
+      (tramp-drop-volume-letter
+       (tramp-run-real-handler 'expand-file-name (list name nil)))
     ;; Dissect NAME.
     (with-parsed-tramp-file-name name nil
       (unless (tramp-run-real-handler 'file-name-absolute-p (list localname))
