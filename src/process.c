@@ -3444,6 +3444,10 @@ and MESSAGE is a string.
 
 :plist PLIST -- Install PLIST as the new process's initial plist.
 
+:tls-parameters LIST -- is a list that should be supplied if you're
+opening a TLS connection.  The first element is the TLS type, and the
+remaining elements should be a keyword list accepted by gnutls-boot.
+
 :server QLEN -- if QLEN is non-nil, create a server process for the
 specified FAMILY, SERVICE, and connection type (stream or datagram).
 If QLEN is an integer, it is used as the max. length of the server's

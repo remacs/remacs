@@ -2418,6 +2418,11 @@ second argument matching @code{"open"} (if successful) or
 @code{make-network-process} does not return until the connection
 has succeeded or failed.
 
+@item :tls-parameters
+When opening a TLS connection, this should be where the first element
+is the TLS type, and the remaining elements should form a keyword list
+acceptable for @code{gnutls-boot}.
+
 @item :stop @var{stopped}
 If @var{stopped} is non-@code{nil}, start the network connection or
 server in the stopped state.
