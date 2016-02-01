@@ -3311,8 +3311,12 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
       p->gnutls_boot_parameters = Qnil;
       boot = Fgnutls_boot (proc, XCAR (params), XCDR (params));
       if (NILP (boot) || STRINGP (boot)) {
-	pset_status (p, Qfailed);
 	deactivate_process (proc);
+	if (NILP (boot))
+	  pset_status (p, list2 (Qfailed,
+				 build_string ("TLS negotiation failed")));
+	else
+	  pset_status (p, list2 (Qfailed, boot));
       }
     }
 #endif
@@ -4614,8 +4618,12 @@ check_for_dns (Lisp_Object proc)
   /* The DNS lookup failed. */
   else
     {
-      pset_status (p, Qfailed);
       deactivate_process (proc);
+      pset_status (p, (list2
+		       (Qfailed,
+			concat3 (build_string ("Name lookup of "),
+				 build_string (p->dns_requests[0]->ar_name),
+				 build_string (" failed")))));
     }
 
   xfree ((void *)p->dns_requests[0]->ar_request);
