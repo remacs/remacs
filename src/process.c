@@ -3303,12 +3303,13 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
   set_network_socket_coding_system (proc);
 
 #ifdef HAVE_GNUTLS
+  /* Continue the asynchronous connection. */
   if (!NILP (p->gnutls_async_parameters) && p->is_non_blocking_client) {
-    Lisp_Object params = p->gnutls_async_parameters, boot = Qnil;
+    Lisp_Object boot, params = p->gnutls_async_parameters;
 
-    p->gnutls_async_parameters = Qnil;
+   p->gnutls_async_parameters = Qnil;
     boot = Fgnutls_boot (proc, XCAR (params), XCDR (params));
-    if (STRINGP (boot)) {
+    if (NILP (boot) || STRINGP (boot)) {
       pset_status (p, Qfailed);
       deactivate_process (proc);
     }
@@ -3317,6 +3318,19 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 
 }
 
+static Lisp_Object
+conv_numerical_to_lisp (unsigned char *number, unsigned int length, int port)
+{
+  Lisp_Object address = Fmake_vector (make_number (length + 1), Qnil);
+  register struct Lisp_Vector *p = XVECTOR (address);
+  int i;
+
+  p->contents[length] = make_number (port);
+  for (i = 0; i < length; i++)
+    p->contents[i] = make_number (*(number + i));
+
+  return address;
+}
 
 /* Create a network stream/datagram client/server process.  Treated
    exactly like a normal process when reading and writing.  Primary
@@ -3490,7 +3504,6 @@ usage: (make-network-process &rest ARGS)  */)
   struct sockaddr_un address_un;
 #endif
   int port = 0;
-  int ret = 0;
   Lisp_Object tem;
   Lisp_Object name, buffer, host, service, address;
   Lisp_Object filter, sentinel;
@@ -3661,6 +3674,8 @@ usage: (make-network-process &rest ARGS)  */)
   if (!NILP (Fplist_get (contact, QCnowait)) &&
       !NILP (host))
     {
+      int ret;
+
       printf("Async DNS for '%s'\n", SSDATA (host));
       dns_requests = xmalloc (sizeof (struct gaicb*));
       dns_requests[0] = xmalloc (sizeof (struct gaicb));
@@ -3724,7 +3739,7 @@ usage: (make-network-process &rest ARGS)  */)
   if (EQ (service, Qt))
     port = 0;
   else if (INTEGERP (service))
-    port = htons ((unsigned short) XINT (service));
+    port = (unsigned short) XINT (service);
   else
     {
       struct servent *svc_info;
@@ -3733,7 +3748,7 @@ usage: (make-network-process &rest ARGS)  */)
 				(socktype == SOCK_DGRAM ? "udp" : "tcp"));
       if (svc_info == 0)
 	error ("Unknown service: %s", SDATA (service));
-      port = svc_info->s_port;
+      port = ntohs (svc_info->s_port);
     }
 
 #ifndef HAVE_GETADDRINFO
@@ -3750,24 +3765,29 @@ usage: (make-network-process &rest ARGS)  */)
       res_init ();
 #endif
 
-      host_info_ptr = gethostbyname (SDATA (host));
+      host_info_ptr = gethostbyname ((const char *) SDATA (host));
       immediate_quit = 0;
 
       if (host_info_ptr)
 	{
-	  ip_addresses = Ncons (make_number (host_info_ptr->h_addr,
-					     host_info_ptr->h_length),
+	  ip_addresses = Fcons (conv_numerical_to_lisp
+				((unsigned char *) host_info_ptr->h_addr,
+				 host_info_ptr->h_length,
+				 port),
 				Qnil);
 	}
       else
-	/* Attempt to interpret host as numeric inet address.  */
+	/* Attempt to interpret host as numeric inet address.  This
+	   only works for IPv4 addresses. */
 	{
-	  unsigned long numeric_addr;
-	  numeric_addr = inet_addr (SSDATA (host));
+	  unsigned long numeric_addr = inet_addr (SSDATA (host));
+
 	  if (numeric_addr == -1)
 	    error ("Unknown host \"%s\"", SDATA (host));
 
-	  ip_addresses = Ncons (make_number (numeric_addr), Qnil);
+	  ip_addresses = Fcons (conv_numerical_to_lisp
+				((unsigned char *) &numeric_addr, 4, port),
+				Qnil);
 	}
 
     }
@@ -3802,7 +3822,9 @@ usage: (make-network-process &rest ARGS)  */)
   p->dns_requests = NULL;
 #endif
 #ifdef HAVE_GNUTLS
-  p->gnutls_async_parameters = Qnil;
+  tem = Fplist_get (contact, QCtls_parameters);
+  CHECK_LIST (tem);
+  p->gnutls_async_parameters = tem;
 #endif
 
   unbind_to (count, Qnil);
@@ -7705,6 +7727,7 @@ syms_of_process (void)
   DEFSYM (QCserver, ":server");
   DEFSYM (QCnowait, ":nowait");
   DEFSYM (QCsentinel, ":sentinel");
+  DEFSYM (QCtls_parameters, ":tls-parameters");
   DEFSYM (QClog, ":log");
   DEFSYM (QCnoquery, ":noquery");
   DEFSYM (QCstop, ":stop");
@@ -7719,7 +7742,9 @@ syms_of_process (void)
 
   staticpro (&Vprocess_alist);
   staticpro (&deleted_pid_list);
+#ifdef HAVE_GETADDRINFO_A
   staticpro (&dns_processes);
+#endif
 
 #endif	/* subprocesses */
 

@@ -137,7 +137,12 @@ non-nil, is used warn the user if the connection isn't encrypted.
 a greeting from the server.
 
 :nowait is a boolean that says the connection should be made
-asynchronously, if possible."
+asynchronously, if possible.
+
+:tls-parameters is a list that should be supplied if you're
+opening a TLS connection.  The first element is the TLS type, and
+the remaining elements should be a keyword list accepted by
+gnutls-boot."
   (unless (featurep 'make-network-process)
     (error "Emacs was compiled without networking support"))
   (let ((type (plist-get parameters :type))
@@ -150,7 +155,9 @@ asynchronously, if possible."
 	;; The simplest case: wrapper around `make-network-process'.
 	(make-network-process :name name :buffer buffer
 			      :host (puny-encode-domain host) :service service
-			      :nowait (plist-get parameters :nowait))
+			      :nowait (plist-get parameters :nowait)
+                              :tls-parameters
+                              (plist-get parameters :tls-parameters))
       (let ((work-buffer (or buffer
 			     (generate-new-buffer " *stream buffer*")))
 	    (fun (cond ((and (eq type 'plain)

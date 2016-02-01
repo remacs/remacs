@@ -124,16 +124,16 @@ This is a very simple wrapper around `gnutls-negotiate'.  See its
 documentation for the specific parameters you can use to open a
 GnuTLS connection, including specifying the credential type,
 trust and key files, and priority string."
-  (let ((process (open-network-stream name buffer host service
-                                      :nowait nowait)))
+  (let ((process (open-network-stream
+                  name buffer host service
+                  :nowait nowait
+                  :tls-parameters
+                  (and nowait
+                       (gnutls-negotiate :type 'gnutls-x509pki
+                                         :return-keywords t
+                                         :hostname host)))))
     (if nowait
-        (progn
-          (gnutls-asynchronous-parameters
-           process
-           (gnutls-negotiate :type 'gnutls-x509pki
-                             :return-keywords t
-                             :hostname host))
-          process)
+        process
       (gnutls-negotiate :process (open-network-stream name buffer host service)
                         :type 'gnutls-x509pki
                         :hostname host))))
