@@ -3587,7 +3587,9 @@ usage: (make-network-process &rest ARGS)  */)
     {
       /* The "connection" function gets it bind info from the address we're
 	 given, so use this dummy address if nothing is specified. */
+#ifdef HAVE_LOCAL_SOCKETS
       if (family != AF_LOCAL)
+#endif
 	host = build_string ("127.0.0.1");
     }
   else
