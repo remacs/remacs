@@ -479,9 +479,9 @@ LIMIT."
       (not (null pos)))))
 
 (defalias 'org-font-lock-ensure
-  (if (fboundp 'org-font-lock-ensure)
+  (if (fboundp 'font-lock-ensure)
       #'font-lock-ensure
-    (lambda (_beg _end) (font-lock-fontify-buffer))))
+    (lambda (&optional _beg _end) (font-lock-fontify-buffer))))
 
 (defun org-floor* (x &optional y)
   "Return a list of the floor of X and the fractional part of X.
