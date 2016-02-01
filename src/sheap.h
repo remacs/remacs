@@ -21,9 +21,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 
 /* Size of the static heap.  Guess a value that is probably too large,
-   by up to a factor of two or so.  Typically the unused part is not
+   by up to a factor of four or so.  Typically the unused part is not
    paged in and so does not cost much.  */
-enum { STATIC_HEAP_SIZE = sizeof (Lisp_Object) << 21 };
+enum { STATIC_HEAP_SIZE = sizeof (Lisp_Object) << 22 };
 
 extern char bss_sbrk_buffer[STATIC_HEAP_SIZE];
 extern char *max_bss_sbrk_ptr;
