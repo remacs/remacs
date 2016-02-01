@@ -106,7 +106,7 @@ struct Lisp_Process
 
 #ifdef HAVE_GNUTLS
     Lisp_Object gnutls_cred_type;
-    Lisp_Object gnutls_async_parameters;
+    Lisp_Object gnutls_boot_parameters;
 #endif
 
     /* Pipe process attached to the standard error of this process.  */

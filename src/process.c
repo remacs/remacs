@@ -710,7 +710,7 @@ make_process (Lisp_Object name)
 
 #ifdef HAVE_GNUTLS
   p->gnutls_initstage = GNUTLS_STAGE_EMPTY;
-  p->gnutls_async_parameters = Qnil;
+  p->gnutls_boot_parameters = Qnil;
 #endif
 
   /* If name is already in use, modify it until it is unused.  */
@@ -3304,16 +3304,17 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 
 #ifdef HAVE_GNUTLS
   /* Continue the asynchronous connection. */
-  if (!NILP (p->gnutls_async_parameters) && p->is_non_blocking_client) {
-    Lisp_Object boot, params = p->gnutls_async_parameters;
+  if (!NILP (p->gnutls_boot_parameters))
+    {
+      Lisp_Object boot, params = p->gnutls_boot_parameters;
 
-   p->gnutls_async_parameters = Qnil;
-    boot = Fgnutls_boot (proc, XCAR (params), XCDR (params));
-    if (NILP (boot) || STRINGP (boot)) {
-      pset_status (p, Qfailed);
-      deactivate_process (proc);
+      p->gnutls_boot_parameters = Qnil;
+      boot = Fgnutls_boot (proc, XCAR (params), XCDR (params));
+      if (NILP (boot) || STRINGP (boot)) {
+	pset_status (p, Qfailed);
+	deactivate_process (proc);
+      }
     }
-  }
 #endif
 
 }
@@ -3831,7 +3832,7 @@ usage: (make-network-process &rest ARGS)  */)
 #ifdef HAVE_GNUTLS
   tem = Fplist_get (contact, QCtls_parameters);
   CHECK_LIST (tem);
-  p->gnutls_async_parameters = tem;
+  p->gnutls_boot_parameters = tem;
 #endif
 
   unbind_to (count, Qnil);
@@ -5891,7 +5892,7 @@ send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
 #ifdef HAVE_GNUTLS
   /* The TLS connection hasn't been set up yet, so we can't write
      anything on the socket. */
-  if (p->gnutls_async_parameters)
+  if (p->gnutls_boot_parameters)
     return;
 #endif
 

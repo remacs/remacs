@@ -695,7 +695,7 @@ to finish setting up the connection. */)
 {
   CHECK_PROCESS (proc);
 
-  XPROCESS (proc)->gnutls_async_parameters = params;
+  XPROCESS (proc)->gnutls_boot_parameters = params;
   return Qnil;
 }
 
