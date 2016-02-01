@@ -141,7 +141,7 @@ If @code{eval-expression-debug-on-error} is @code{nil}, then the value
 of @code{debug-on-error} is not changed during @code{eval-expression}.
 @end defopt
 
-@defvar debug-on-signal
+@defopt debug-on-signal
 Normally, errors caught by @code{condition-case} never invoke the
 debugger.  The @code{condition-case} gets a chance to handle the error
 before the debugger gets a chance.
@@ -158,7 +158,7 @@ course of affairs, and you may not even realize that errors happen
 there.  If you need to debug code wrapped in @code{condition-case},
 consider using @code{condition-case-unless-debug} (@pxref{Handling
 Errors}).
-@end defvar
+@end defopt
 
 @defopt debug-on-event
 If you set @code{debug-on-event} to a special event (@pxref{Special

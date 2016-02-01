@@ -2415,9 +2415,10 @@ If this function chooses a window on another frame, it makes that frame
 visible and, unless @var{alist} contains an @code{inhibit-switch-frame}
 entry (@pxref{Choosing Window Options}), raises that frame if necessary.
 
-If @var{alist} has a non-nil @code{frame-predicate} entry, its value is a
-function taking one argument (a frame), returning non-nil if the
-frame is a candidate; this function replaces the default predicate.
+If @var{alist} has a non-@code{nil} @code{frame-predicate} entry, its
+value is a function taking one argument (a frame), returning
+non-@code{nil} if the frame is a candidate; this function replaces the
+default predicate.
 
 If @var{alist} has a non-@code{nil} @code{inhibit-same-window} entry,
 the selected window is used; thus if the selected frame has a single
@@ -2637,10 +2638,11 @@ and return either a new window (which will be used to display the
 desired buffer) or @code{nil} (which means the splitting failed).
 @end defopt
 
-@defun split-window-sensibly window
-This function tries to split @var{window}, and return the newly
-created window.  If @var{window} cannot be split, it returns
-@code{nil}.
+@defun split-window-sensibly &optional window
+This function tries to split @var{window}, and return the newly created
+window.  If @var{window} cannot be split, it returns @code{nil}.  If
+@var{window} is omitted or @code{nil}, it defaults to the selected
+window.
 
 This function obeys the usual rules that determine when a window may
 be split (@pxref{Splitting Windows}).  It first tries to split by
@@ -2671,9 +2673,9 @@ to split this way.
 @end defopt
 
 @defopt even-window-sizes
-This variable, if non-nil, causes @code{display-buffer} to even window
-sizes whenever it reuses an existing window and that window is adjacent
-to the selected one.
+This variable, if non-@code{nil}, causes @code{display-buffer} to even
+window sizes whenever it reuses an existing window and that window is
+adjacent to the selected one.
 
 If its value is @code{width-only}, sizes are evened only if the reused
 window is on the left or right of the selected one and the selected
@@ -3161,7 +3163,7 @@ text will end if scrolling is not required.
 @end defun
 
 @vindex window-group-end-function
-@defun window-group-end window update
+@defun window-group-end &optional window update
 This function is like @code{window-end}, except that when @var{window}
 is a part of a group of windows (@pxref{Window Group}),
 @code{window-group-end} returns the end position of the entire group.

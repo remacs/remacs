@@ -47,8 +47,9 @@ that Emacs presents to the user.
 contents of a given frame (@pxref{Frames}).  This is useful if the
 screen is corrupted.
 
-@defun redraw-frame frame
-This function clears and redisplays frame @var{frame}.
+@defun redraw-frame &optional frame
+This function clears and redisplays frame @var{frame}.  If @var{frame}
+is omitted or nil, it redraws the selected frame.
 @end defun
 
   Even more powerful is @code{redraw-display}:
@@ -2686,8 +2687,14 @@ considered, until a specified attribute is found.  To ensure that the
 return value is always specified, use a value of @code{default} for
 @var{inherit}.
 
-@defun face-font face &optional frame
+@defun face-font face &optional frame character
 This function returns the name of the font of face @var{face}.
+
+If the optional argument @var{frame} is specified, it returns the name
+of the font of @var{face} for that frame.  If @var{frame} is omitted or
+@code{nil}, the selected frame is used.  And, in this case, if the
+optional third argument @var{character} is supplied, it returns the font
+name used for @var{character}.
 @end defun
 
 @defun face-foreground face &optional frame inherit
@@ -5324,7 +5331,7 @@ returned.  If no specification is satisfied, @code{nil} is returned.
 The image is looked for in @code{image-load-path}.
 @end defun
 
-@defvar image-load-path
+@defopt image-load-path
 This variable's value is a list of locations in which to search for
 image files.  If an element is a string or a variable symbol whose
 value is a string, the string is taken to be the name of a directory
@@ -5343,7 +5350,7 @@ should specify the image as follows:
 @example
 (defimage foo-image '((:type xpm :file "foo/bar.xpm")))
 @end example
-@end defvar
+@end defopt
 
 @defun image-load-path-for-library library image &optional path no-error
 This function returns a suitable search path for images used by the
@@ -6899,12 +6906,12 @@ provided the terminal's Termcap entry defines the visible bell
 capability (@samp{vb}).
 @end defopt
 
-@defvar ring-bell-function
+@defopt ring-bell-function
 If this is non-@code{nil}, it specifies how Emacs should ring the
 bell.  Its value should be a function of no arguments.  If this is
 non-@code{nil}, it takes precedence over the @code{visible-bell}
 variable.
-@end defvar
+@end defopt
 
 @node Window Systems
 @section Window Systems

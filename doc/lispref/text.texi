@@ -303,13 +303,16 @@ there, the function returns @code{nil}.  Otherwise, a nearby symbol or
 word on the same line is acceptable.
 @end defun
 
-@defun thing-at-point thing
+@defun thing-at-point thing &optional no-properties
 Return the @var{thing} around or next to point, as a string.
 
 The argument @var{thing} is a symbol which specifies a kind of syntactic
 entity.  Possibilities include @code{symbol}, @code{list}, @code{sexp},
 @code{defun}, @code{filename}, @code{url}, @code{word}, @code{sentence},
 @code{whitespace}, @code{line}, @code{page}, and others.
+
+When the optional argument @var{no-properties} is non-@code{nil}, this
+function strips text properties from the return value.
 
 @example
 ---------- Buffer: foo ----------
@@ -804,7 +807,7 @@ A blank line is defined as a line containing only tabs and spaces.
 @code{delete-blank-lines} returns @code{nil}.
 @end deffn
 
-@deffn Command delete-trailing-whitespace start end
+@deffn Command delete-trailing-whitespace &optional start end
 Delete trailing whitespace in the region defined by @var{start} and
 @var{end}.
 
@@ -1763,7 +1766,7 @@ is value of @code{indent-line-function} in Paragraph-Indent Text mode.
 
 @defopt left-margin
 This variable specifies the base left margin column.  In Fundamental
-mode, @kbd{RET} indents to this column.  This variable automatically
+mode, @key{RET} indents to this column.  This variable automatically
 becomes buffer-local when set in any fashion.
 @end defopt
 
