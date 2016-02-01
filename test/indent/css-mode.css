@@ -9,7 +9,7 @@ article[role="main"] {
 }
 
 a, b:hover, c {
-    color: black;
+    color: black !important;
 }
 
 a, b:hover {                    /* bug:20282 */

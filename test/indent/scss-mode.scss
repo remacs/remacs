@@ -40,9 +40,18 @@ p.#{$name} var
 }
 article[role="main"] {
     $toto: 500 !global;
-    float: left;
+    $var-with-default: 300 !default;
+    float: left !important;
     width: 600px / 888px * 100%;
     height: 100px / 888px * 100%;
+}
+
+%placeholder {
+    color: #f0f0f0;
+}
+
+button {
+    @extend %placeholder !optional;
 }
 
 @import 'reset';
