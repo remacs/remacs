@@ -171,6 +171,14 @@ Note: The search is conducted only within 10%, at the beginning of the file."
   :type '(repeat regexp)
   :group 'change-log)
 
+(defcustom change-log-directory-files '(".bzr" ".git" ".hg" ".svn")
+  "List of files that cause ChangeLog search to stop in containing directory.
+This applies if no pre-existing ChangeLog is found.  If nil, then in such
+a case simply use the directory containing the changed file."
+  :version "25.2"
+  :type '(repeat file)
+  :group 'change-log)
+
 (defface change-log-date
   '((t (:inherit font-lock-string-face)))
   "Face used to highlight dates in date lines."
@@ -726,15 +734,24 @@ Optional arg BUFFER-FILE overrides `buffer-file-name'."
 	  (setq file-name (expand-file-name file-name))
 	  (let* ((cbase (file-name-nondirectory (change-log-name)))
 		 (root
-		  ;; TODO stopping at VCS root dir (if present) is appropriate
-		  ;; for Emacs these days (we used to have per-directory
-		  ;; ChangeLogs), and probably most others too.
-		  ;; But it could be optional behavior.
 		  (locate-dominating-file
 		   file-name
 		   (lambda (dir)
-		     (let ((clog (expand-file-name cbase dir)))
-		       (or (get-file-buffer clog) (file-exists-p clog)))))))
+		     (or
+		      (let ((clog (expand-file-name cbase dir)))
+			(or (get-file-buffer clog) (file-exists-p clog)))
+		      ;; Stop at VCS root?
+		      (and change-log-directory-files
+			   (let ((files change-log-directory-files)
+				 found)
+			     (while
+				 (and
+				  (not
+				   (setq found
+					 (file-exists-p
+					  (expand-file-name (car files) dir))))
+				  (setq files (cdr files))))
+			     found)))))))
 	    (if root (setq file-name (expand-file-name cbase root))))))
     ;; Make a local variable in this buffer so we needn't search again.
     (set (make-local-variable 'change-log-default-name) file-name))

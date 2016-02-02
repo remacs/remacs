@@ -1590,6 +1590,13 @@ also creates a new item for the current file.  For many languages, it
 can even guess the name of the function or other object that was
 changed.
 
+@c Not worth it.
+@c @vindex change-log-directory-files
+To find the change log file, Emacs searches up the directory tree from
+the file you are editing.  By default, it stops if it finds a
+directory that seems to be the root of a version-control repository.
+To change this, customize @code{change-log-directory-files}.
+
 @vindex add-log-keep-changes-together
   When the variable @code{add-log-keep-changes-together} is
 non-@code{nil}, @kbd{C-x 4 a} adds to any existing item for the file

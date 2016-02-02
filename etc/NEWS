@@ -52,6 +52,11 @@ in these situations.
 
 * Changes in Specialized Modes and Packages in Emacs 25.2
 
++++
+** The commands that add ChangeLog entries now prefer a VCS root directory
+for the ChangeLog file, if none already exists.  Customize
+`change-log-directory-files' to nil for the old behavior.
+
 ---
 ** Support for non-string values of `time-stamp-format' has been removed.
 
