@@ -4598,7 +4598,7 @@ check_for_dns (Lisp_Object proc)
 
   /* Sanity check. */
   if (! p->dns_requests)
-    return 1;
+    return Qnil;
 
   ret = gai_error (p->dns_requests[0]);
   if (ret == EAI_INPROGRESS)
