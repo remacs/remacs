@@ -157,10 +157,12 @@ malloc_initialize_hook (void)
     }
 }
 
+/* Declare the malloc initialization hook, which runs before 'main' starts.
+   EXTERNALLY_VISIBLE works around Bug#22522.  */
 # ifndef __MALLOC_HOOK_VOLATILE
 #  define __MALLOC_HOOK_VOLATILE
 # endif
-voidfuncptr __MALLOC_HOOK_VOLATILE __malloc_initialize_hook
+voidfuncptr __MALLOC_HOOK_VOLATILE __malloc_initialize_hook EXTERNALLY_VISIBLE
   = malloc_initialize_hook;
 
 #endif
