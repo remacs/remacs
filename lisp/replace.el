@@ -85,7 +85,7 @@ from Isearch by using a key sequence like `C-s C-s M-%'." "24.3")
   ;; while preparing to dump, also stops customize-rogue listing this.
   :initialize 'custom-initialize-delay
   :group 'matching
-  :type 'sexp
+  :type '(choice string (sexp :tag "Display specification"))
   :version "25.1")
 
 (defcustom query-replace-from-history-variable 'query-replace-history

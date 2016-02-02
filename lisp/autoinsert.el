@@ -305,7 +305,17 @@ ACTION may be a skeleton to insert (see `skeleton-insert'), an absolute
 file-name or one relative to `auto-insert-directory' or a function to call.
 ACTION may also be a vector containing several successive single actions as
 described above, e.g. [\"header.insert\" date-and-author-update]."
-  :type 'sexp
+  :type '(alist :key-type
+                (choice (regexp :tag "Regexp matching file name")
+                        (symbol :tag "Major mode")
+                        (cons :tag "Condition and description"
+                              (choice :tag "Condition"
+                               (regexp :tag "Regexp matching file name")
+                               (symbol :tag "Major mode"))
+                              (string :tag "Description")))
+                ;; There's no custom equivalent of "repeat" for vectors.
+                :value-type (choice file function
+                                    (sexp :tag "Skeleton or vector")))
   :version "25.1"
   :group 'auto-insert)
 

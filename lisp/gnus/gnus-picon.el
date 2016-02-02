@@ -73,7 +73,7 @@ Some people may want to add \"unknown\" to this list."
 
 (defcustom gnus-picon-properties '(:color-symbols (("None" . "white")))
   "List of image properties applied to picons."
-  :type 'sexp
+  :type 'plist
   :version "24.3"
   :group 'gnus-picon)
 

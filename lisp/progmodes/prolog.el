@@ -272,9 +272,6 @@
 ;; Version 0.1.35:
 ;;  o  Minor font-lock bug fixes.
 
-;;; TODO:
-
-;; Replace ":type 'sexp" with more precise Custom types.
 
 ;;; Code:
 
@@ -441,7 +438,12 @@ Legal values:
   "Alist of Prolog keywords which is used for font locking of directives."
   :version "24.1"
   :group 'prolog-font-lock
-  :type 'sexp
+  ;; Note that "(repeat string)" also allows "nil" (repeat-count 0).
+  ;; This gets processed by prolog-find-value-by-system, which
+  ;; allows both the car and the cdr to be a list to eval.
+  ;; Though the latter must have the form '(eval ...)'.
+  ;; Of course, none of this is documented...
+  :type '(repeat (list (choice symbol sexp) (choice (repeat string) sexp)))
   :risky t)
 
 (defcustom prolog-types
@@ -451,7 +453,7 @@ Legal values:
   "Alist of Prolog types used by font locking."
   :version "24.1"
   :group 'prolog-font-lock
-  :type 'sexp
+  :type '(repeat (list (choice symbol sexp) (choice (repeat string) sexp)))
   :risky t)
 
 (defcustom prolog-mode-specificators
@@ -461,7 +463,7 @@ Legal values:
   "Alist of Prolog mode specificators used by font locking."
   :version "24.1"
   :group 'prolog-font-lock
-  :type 'sexp
+  :type '(repeat (list (choice symbol sexp) (choice (repeat string) sexp)))
   :risky t)
 
 (defcustom prolog-determinism-specificators
@@ -472,7 +474,7 @@ Legal values:
   "Alist of Prolog determinism specificators used by font locking."
   :version "24.1"
   :group 'prolog-font-lock
-  :type 'sexp
+  :type '(repeat (list (choice symbol sexp) (choice (repeat string) sexp)))
   :risky t)
 
 (defcustom prolog-directives
@@ -482,7 +484,7 @@ Legal values:
   "Alist of Prolog source code directives used by font locking."
   :version "24.1"
   :group 'prolog-font-lock
-  :type 'sexp
+  :type '(repeat (list (choice symbol sexp) (choice (repeat string) sexp)))
   :risky t)
 
 
@@ -569,7 +571,8 @@ the first column (i.e., DCG heads) inserts ` -->' and newline."
  	  (or (car names) "prolog"))))
   "Alist of program names for invoking an inferior Prolog with `run-prolog'."
   :group 'prolog-inferior
-  :type 'sexp
+  :type '(alist :key-type (choice symbol sexp)
+                :value-type (group (choice string (const nil) sexp)))
   :risky t)
 (defun prolog-program-name ()
   (prolog-find-value-by-system prolog-program-name))
@@ -580,7 +583,7 @@ the first column (i.e., DCG heads) inserts ` -->' and newline."
   "Alist of switches given to inferior Prolog run with `run-prolog'."
   :version "24.1"
   :group 'prolog-inferior
-  :type 'sexp
+  :type '(repeat (list (choice symbol sexp) (choice (repeat string) sexp)))
   :risky t)
 (defun prolog-program-switches ()
   (prolog-find-value-by-system prolog-program-switches))
@@ -604,7 +607,8 @@ Some parts of the string are replaced:
      region of a buffer, in which case it is the number of lines before
      the region."
   :group 'prolog-inferior
-  :type 'sexp
+  :type '(alist :key-type (choice symbol sexp)
+                :value-type (group (choice string (const nil) sexp)))
   :risky t)
 
 (defun prolog-consult-string ()
@@ -631,17 +635,21 @@ Some parts of the string are replaced:
 If `prolog-program-name' is non-nil, it is a string sent to a Prolog process.
 If `prolog-program-name' is nil, it is an argument to the `compile' function."
   :group 'prolog-inferior
-  :type 'sexp
+  :type '(alist :key-type (choice symbol sexp)
+                :value-type (group (choice string (const nil) sexp)))
   :risky t)
 
 (defun prolog-compile-string ()
   (prolog-find-value-by-system prolog-compile-string))
 
 (defcustom prolog-eof-string "end_of_file.\n"
-  "Alist of strings that represent end of file for prolog.
-nil means send actual operating system end of file."
+  "String or alist of strings that represent end of file for prolog.
+If nil, send actual operating system end of file."
   :group 'prolog-inferior
-  :type 'sexp
+  :type '(choice string
+                 (const nil)
+                 (alist :key-type (choice symbol sexp)
+                        :value-type (group (choice string (const nil) sexp))))
   :risky t)
 
 (defcustom prolog-prompt-regexp
@@ -653,7 +661,8 @@ nil means send actual operating system end of file."
   "Alist of prompts of the prolog system command line."
   :version "24.1"
   :group 'prolog-inferior
-  :type 'sexp
+  :type '(alist :key-type (choice symbol sexp)
+                :value-type (group (choice string (const nil) sexp)))
   :risky t)
 
 (defun prolog-prompt-regexp ()
@@ -664,7 +673,8 @@ nil means send actual operating system end of file."
 ;;     (t "^|: +"))
 ;;   "Alist of regexps matching the prompt when consulting `user'."
 ;;   :group 'prolog-inferior
-;;   :type 'sexp
+;;   :type '(alist :key-type (choice symbol sexp)
+;;                :value-type (group (choice string (const nil) sexp)))
 ;;   :risky t)
 
 (defcustom prolog-debug-on-string "debug.\n"

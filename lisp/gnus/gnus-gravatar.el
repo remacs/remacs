@@ -41,7 +41,7 @@ If nil, default to `gravatar-size'."
 
 (defcustom gnus-gravatar-properties '(:ascent center :relief 1)
   "List of image properties applied to Gravatar images."
-  :type 'sexp
+  :type 'plist
   :version "24.1"
   :group 'gnus-gravatar)
 
