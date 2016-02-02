@@ -729,7 +729,9 @@ static const char Python_help [] =
 generate a tag.";
 
 static const char *Ruby_suffixes [] =
-  { "rb", "ruby", NULL };
+  { "rb", "ru", "rbw", NULL };
+static const char *Ruby_filenames [] =
+  { "Rakefile", "Thorfile", NULL };
 static const char Ruby_help [] =
   "In Ruby code, 'def' or 'class' or 'module' at the beginning of\n\
 a line generate a tag.  Constants also generate a tag.";
@@ -813,7 +815,7 @@ static language lang_names [] =
   { "proc",      no_lang_help,   plain_C_entries,   plain_C_suffixes   },
   { "prolog",    Prolog_help,    Prolog_functions,  Prolog_suffixes    },
   { "python",    Python_help,    Python_functions,  Python_suffixes    },
-  { "ruby",      Ruby_help,      Ruby_functions,    Ruby_suffixes      },
+  { "ruby",      Ruby_help,Ruby_functions,Ruby_suffixes,Ruby_filenames },
   { "scheme",    Scheme_help,    Scheme_functions,  Scheme_suffixes    },
   { "tex",       TeX_help,       TeX_commands,      TeX_suffixes       },
   { "texinfo",   Texinfo_help,   Texinfo_nodes,     Texinfo_suffixes   },
