@@ -274,7 +274,7 @@ word(s) will be searched for via `eww-search-prefix'."
                  (setq url (concat url "/"))))
            (setq url (concat eww-search-prefix
                              (replace-regexp-in-string " " "+" url))))))
-  (switch-to-buffer
+  (pop-to-buffer-same-window
    (if (eq major-mode 'eww-mode)
        (current-buffer)
      (get-buffer-create "*eww*")))
