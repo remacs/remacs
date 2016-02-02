@@ -171,15 +171,6 @@ ${CHECKOBJS}	make-src/Makefile	/^${CHECKOBJS}: CFLAGS=-g3 -DNULLFREECHECK=0$/
 /wh	ps-src/rfc1245.ps	/^\/wh { $/
 /yen	ps-src/rfc1245.ps	/^\/yen \/.notdef \/.notdef \/.notdef \/.notdef \/.notdef /
 :a-forth-dictionary-entry	forth-src/test-forth.fth	/^create :a-forth-dictionary-entry$/
-:bar=	ruby-src/test1.ru	/^      attr_writer :bar$/
-:foo	ruby-src/test1.ru	/^      attr_reader :foo$/
-:qux	ruby-src/test1.ru	/^      alias_method :qux, :tee$/
-:read1	ruby-src/test1.ru	/^      attr_reader :read1, :read2; attr_writer :wri/
-:read2	ruby-src/test1.ru	/^      attr_reader :read1, :read2; attr_writer :wri/
-:tee	ruby-src/test1.ru	/^      attr_accessor :tee$/
-:tee=	ruby-src/test1.ru	/^      attr_accessor :tee$/
-:write1=	ruby-src/test1.ru	/^      attr_reader :read1, :read2; attr_writer :wri/
-:write2=	ruby-src/test1.ru	/^      attr_reader :read1, :read2; attr_writer :wri/
 <	tex-src/texinfo.tex	/^\\def<{{\\tt \\less}}$/
 <<	ruby-src/test.rb	/^        def <<(y)$/
 <=	ruby-src/test.rb	/^        def <=(y)$/
@@ -2565,6 +2556,7 @@ bar	c-src/c.c	/^void bar() {while(0) {}}$/
 bar	c.c	143
 bar	c-src/h.h	19
 bar	cp-src/x.cc	/^XX::bar()$/
+bar=	ruby-src/test1.ru	/^      attr_writer :bar$/
 bas_syn	prol-src/natded.prolog	/^bas_syn(n(_)).$/
 base	c-src/emacs/src/lisp.h	2188
 base	cp-src/c.C	/^double base (void) const { return rng_base;  }$/
@@ -3014,6 +3006,7 @@ foo	f-src/entry.for	/^       character*(*) function foo()$/
 foo	f-src/entry.strange_suffix	/^       character*(*) function foo()$/
 foo	f-src/entry.strange	/^       character*(*) function foo()$/
 foo	php-src/ptest.php	/^foo()$/
+foo	ruby-src/test1.ru	/^      attr_reader :foo$/
 foo!	ruby-src/test1.ru	/^    def foo!$/
 foobar	c-src/c.c	/^int foobar() {;}$/
 foobar	c.c	/^extern void foobar (void) __attribute__ ((section /
@@ -3886,6 +3879,7 @@ questo	../c/c.web	34
 quiettest	make-src/Makefile	/^quiettest:$/
 quit_char	c-src/emacs/src/keyboard.c	192
 quit_throw_to_read_char	c-src/emacs/src/keyboard.c	/^quit_throw_to_read_char (bool from_signal)$/
+qux	ruby-src/test1.ru	/^      alias_method :qux, :tee$/
 qux=	ruby-src/test1.ru	/^      def qux=(tee)$/
 r0	c-src/sysdep.h	54
 r1	c-src/sysdep.h	55
@@ -3910,6 +3904,8 @@ read	cp-src/conway.hpp	/^    char read() { return alive; }$/
 read	php-src/lce_functions.php	/^      function read()$/
 read-key-sequence	c-src/emacs/src/keyboard.c	/^DEFUN ("read-key-sequence", Fread_key_sequence, Sr/
 read-key-sequence-vector	c-src/emacs/src/keyboard.c	/^DEFUN ("read-key-sequence-vector", Fread_key_seque/
+read1	ruby-src/test1.ru	/^      attr_reader :read1, :read2; attr_writer :wri/
+read2	ruby-src/test1.ru	/^      attr_reader :read1, :read2; attr_writer :wri/
 read_char	c-src/emacs/src/keyboard.c	/^read_char (int commandflag, Lisp_Object map,$/
 read_char_help_form_unwind	c-src/emacs/src/keyboard.c	/^read_char_help_form_unwind (void)$/
 read_char_minibuf_menu_prompt	c-src/emacs/src/keyboard.c	/^read_char_minibuf_menu_prompt (int commandflag,$/
@@ -4284,6 +4280,8 @@ tags-with-face	el-src/emacs/lisp/progmodes/etags.el	/^(defmacro tags-with-face (
 target_multibyte	c-src/emacs/src/regex.h	407
 tcpdump	html-src/software.html	/^tcpdump$/
 teats	cp-src/c.C	127
+tee	ruby-src/test1.ru	/^      attr_accessor :tee$/
+tee=	ruby-src/test1.ru	/^      attr_accessor :tee$/
 temporarily_switch_to_single_kboard	c-src/emacs/src/keyboard.c	/^temporarily_switch_to_single_kboard (struct frame /
 tend	c-src/etags.c	2432
 terminate	objc-src/Subprocess.m	/^- terminate:sender$/
@@ -4452,6 +4450,8 @@ womboid	c-src/h.h	75
 word_size	c-src/emacs/src/lisp.h	1473
 write	php-src/lce_functions.php	/^      function write()$/
 write	php-src/lce_functions.php	/^      function write($save="yes")$/
+write1=	ruby-src/test1.ru	/^      attr_reader :read1, :read2; attr_writer :wri/
+write2=	ruby-src/test1.ru	/^      attr_reader :read1, :read2; attr_writer :wri/
 write_abbrev	c-src/abbrev.c	/^write_abbrev (sym, stream)$/
 write_classname	c-src/etags.c	/^write_classname (linebuffer *cn, const char *quali/
 write_lex	prol-src/natded.prolog	/^write_lex(File):-$/

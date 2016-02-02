@@ -4142,7 +4142,7 @@ module ModuleExample1,0
     def module_instance_method46,1051
     def ModuleExample.module_class_methodmodule_class_method49,1131
 
-ruby-src/test1.ru,635
+ruby-src/test1.ru,655
 class A1,0
  def a(2,8
  def b(5,38
@@ -4155,15 +4155,15 @@ module A9,57
     def self._bar?(_bar?18,143
       def qux=(qux=22,194
     def X25,232
-      attr_reader :foo26,242
-      attr_reader :read1,27,265
-      attr_reader :read1, :read2;27,265
-      attr_reader :read1, :read2; attr_writer :write1,:write1=27,265
-      attr_reader :read1, :read2; attr_writer :write1, :write2:write2=27,265
-      attr_writer :bar:bar=28,328
-      attr_accessor :tee29,351
-      attr_accessor :tee:tee=29,351
-      alias_method :qux,30,376
+      attr_reader :foofoo26,242
+      attr_reader :read1,read127,265
+      attr_reader :read1, :read2;read227,265
+      attr_reader :read1, :read2; attr_writer :write1,write1=27,265
+      attr_reader :read1, :read2; attr_writer :write1, :write2write2=27,265
+      attr_writer :barbar=28,328
+      attr_accessor :teetee29,351
+      attr_accessor :teetee=29,351
+      alias_method :qux,qux30,376
 A::Constant Constant35,425
 
 tex-src/testenv.tex,52
