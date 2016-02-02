@@ -744,9 +744,9 @@ the like."
 
 ;;;###autoload
 (defun eww-browse-url (url &optional new-window)
-  (cond (new-window
-	 (switch-to-buffer (generate-new-buffer "*eww*"))
-         (eww-mode)))
+  (when new-window
+    (switch-to-buffer (generate-new-buffer "*eww*"))
+    (eww-mode))
   (eww url))
 
 (defun eww-back-url ()
