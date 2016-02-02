@@ -53,34 +53,16 @@
 ;; all the bells and whistles one would expect, including syntax
 ;; highlighting and auto indentation.  It can also send regions to an
 ;; inferior Prolog process.
-;;
-;; The code requires the comint, easymenu, info, imenu, and font-lock
-;; libraries.  These are normally distributed with GNU Emacs and
-;; XEmacs.
 
-;;; Installation:
-;;
-;; Insert the following lines in your init file:
-;;
-;; (setq load-path (cons "/usr/lib/xemacs/site-lisp" load-path))
-;; (autoload 'run-prolog "prolog" "Start a Prolog sub-process." t)
-;; (autoload 'prolog-mode "prolog" "Major mode for editing Prolog programs." t)
-;; (autoload 'mercury-mode "prolog" "Major mode for editing Mercury programs." t)
+;; Some settings you may wish to use:
+
 ;; (setq prolog-system 'swi)  ; optional, the system you are using;
 ;;                            ; see `prolog-system' below for possible values
-;; (setq auto-mode-alist (append '(("\\.pl$" . prolog-mode)
-;;                                 ("\\.m$" . mercury-mode))
+;; (setq auto-mode-alist (append '(("\\.pl\\'" . prolog-mode)
+;;                                 ("\\.m\\'" . mercury-mode))
 ;;                                auto-mode-alist))
 ;;
-;; where the path in the first line is the file system path to this file.
-;; MSDOS paths can be written like "d:/programs/emacs-19.34/site-lisp".
-;; Note: In XEmacs, either `/usr/lib/xemacs/site-lisp' (RPM default in
-;; Red Hat-based distributions) or `/usr/local/lib/xemacs/site-lisp'
-;; (default when compiling from sources) are automatically added to
-;; `load-path', so the first line is not necessary provided that you
-;; put this file in the appropriate place.
-;;
-;; The last s-expression above makes sure that files ending with .pl
+;; The last expression above makes sure that files ending with .pl
 ;; are assumed to be Prolog files and not Perl, which is the default
 ;; Emacs setting.  If this is not wanted, remove this line.  It is then
 ;; necessary to either
@@ -98,8 +80,8 @@
 ;; If the command to start the prolog process ('sicstus', 'pl' or
 ;; 'swipl' for SWI prolog, etc.) is not available in the default path,
 ;; then it is necessary to set the value of the environment variable
-;; EPROLOG to a shell command to invoke the prolog process.  In XEmacs
-;; and Emacs 20+ you can also customize the variable
+;; EPROLOG to a shell command to invoke the prolog process.
+;; You can also customize the variable
 ;; `prolog-program-name' (in the group `prolog-inferior') and provide
 ;; a full path for your Prolog system (swi, scitus, etc.).
 ;;
@@ -109,6 +91,7 @@
 ;;   to keep the GNU Emacs compatibility.  So if you work under Emacs
 ;;   and see something that does not work do drop me a line, as I have
 ;;   a smaller chance to notice this kind of bugs otherwise.
+;  [The above comment dates from 2011.]
 
 ;; Changelog:
 
