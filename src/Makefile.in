@@ -501,6 +501,11 @@ $(srcdir)/macuvs.h $(lispsource)/international/charprop.el: \
 $(lispsource)/international/ucs-normalize.elc: | \
   $(lispsource)/international/charprop.el
 
+## ns-win.el loads ucs-normalize, so it also needs the above-mentioned
+## 2 uni-*.el files to exist.
+$(lispsource)/term/ns-win.elc: | \
+  $(lispsource)/international/charprop.el
+
 lispintdir = ${lispsource}/international
 ${lispintdir}/cp51932.el ${lispintdir}/eucjp-ms.el: FORCE
 	${MAKE} -C ../admin/charsets $(notdir $@)
