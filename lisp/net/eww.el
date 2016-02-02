@@ -274,6 +274,10 @@ word(s) will be searched for via `eww-search-prefix'."
                  (setq url (concat url "/"))))
            (setq url (concat eww-search-prefix
                              (replace-regexp-in-string " " "+" url))))))
+  (switch-to-buffer
+   (if (eq major-mode 'eww-mode)
+       (current-buffer)
+     (get-buffer-create "*eww*")))
   (eww-setup-buffer)
   (plist-put eww-data :url url)
   (plist-put eww-data :title "")
@@ -556,7 +560,6 @@ Currently this means either text/html or application/xhtml+xml."
   (goto-char (point-min)))
 
 (defun eww-setup-buffer ()
-  (switch-to-buffer (get-buffer-create "*eww*"))
   (when (or (plist-get eww-data :url)
             (plist-get eww-data :dom))
     (eww-save-history))
