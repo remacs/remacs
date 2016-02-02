@@ -104,6 +104,21 @@ check_version ()
 }
 
 
+git_config=true
+
+for arg
+do
+    case $arg in
+	--git-config=false) git_config=false;;
+	--git-config=true)  git_config=true ;;
+	--help)
+	    exec echo "$0: usage: $0 [--help|--git-config=[false|true]]";;
+	*)
+	    echo >&2 "$0: $arg: unknown option"; exit 1;;
+    esac
+done
+
+
 cat <<EOF
 Checking whether you have the necessary tools...
 (Read INSTALL.REPO for more details on building Emacs)
@@ -220,17 +235,21 @@ echo timestamp > src/stamp-h.in || exit
 ## Configure Git, if using Git.
 if test -d .git && (git status -s) >/dev/null 2>&1; then
 
-    # Like 'git config NAME VALUE', but verbose on change and exit on failure.
+    # Like 'git config NAME VALUE', but conditional on --git-config,
+    # verbose on change, and exiting on failure.
 
     git_config ()
     {
 	name=$1
 	value=$2
-	ovalue=`git config --get "$name"` && test "$ovalue" = "$value" || {
+
+	if $git_config; then
+	  ovalue=`git config --get "$name"` && test "$ovalue" = "$value" || {
 	    echo "${Configuring_git}git config $name '$value'"
 	    Configuring_git=
 	    git config "$name" "$value" || exit
-	}
+	  }
+	fi
     }
     Configuring_git='Configuring git...
 '
