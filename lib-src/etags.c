@@ -4642,7 +4642,7 @@ Ruby_functions (FILE *inf)
 	  if (cp > name + 1)
 	    {
 	      bp = skip_spaces (cp);
-	      if (*bp == '=' && c_isspace (bp[1]))
+	      if (*bp == '=' && !(bp[1] == '=' || bp[1] == '>'))
 		{
 		  if (colon && !c_isspace (colon[1]))
 		    name = colon + 1;
@@ -4656,7 +4656,7 @@ Ruby_functions (FILE *inf)
 	       || LOOKING_AT (cp, "module"))
 	{
 	  const char self_name[] = "self.";
-	  const size_t self_size1 = sizeof ("self.") - 1;
+	  const size_t self_size1 = sizeof (self_name) - 1;
 
 	  name = cp;
 
@@ -4687,6 +4687,60 @@ Ruby_functions (FILE *inf)
 
 	  make_tag (name, cp - name, true,
 		    lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
+	}
+      else
+	{
+	  /* Tag accessors and aliases.  */
+	  while (*cp && *cp != '#')
+	    {
+	      bool reader = false, writer = false, alias = false;
+
+	      if (LOOKING_AT (cp, "attr_reader"))
+		reader = true;
+	      else if (LOOKING_AT (cp, "attr_writer"))
+		writer = true;
+	      else if (LOOKING_AT (cp, "attr_accessor"))
+		{
+		  reader = true;
+		  writer = true;
+		}
+	      else if (LOOKING_AT (cp, "alias_method"))
+		alias = true;
+	      if (reader || writer || alias)
+		{
+		  do {
+		    char *np = cp;
+
+		    cp = skip_name (cp);
+		    if (reader)
+		      make_tag (np, cp - np, true,
+				lb.buffer, cp - lb.buffer + 1,
+				lineno, linecharno);
+		    if (writer)
+		      {
+			size_t name_len = cp - np + 1;
+			char *wr_name = xnew (name_len + 1, char);
+
+			memcpy (wr_name, np, name_len - 1);
+			memcpy (wr_name + name_len - 1, "=", 2);
+			pfnote (wr_name, true, lb.buffer, cp - lb.buffer + 1,
+				lineno, linecharno);
+		      }
+		    if (alias)
+		      {
+			make_tag (np, cp - np, true,
+				  lb.buffer, cp - lb.buffer + 1,
+				  lineno, linecharno);
+			while (*cp && *cp != '#' && *cp != ';')
+			  cp++;
+		      }
+		  } while (*cp == ','
+			   && (cp = skip_spaces (cp + 1), *cp && *cp != '#'));
+		}
+	      cp = skip_name (cp);
+	      while (*cp && *cp != '#' && notinname (*cp))
+		cp++;
+	    }
 	}
     }
 }

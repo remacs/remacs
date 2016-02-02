@@ -3009,17 +3009,29 @@ module ModuleExample1,0
     def module_instance_method46,1051
     def ModuleExample.module_class_methodmodule_class_method49,1131
 
-ruby-src/test1.ruby,191
+ruby-src/test1.ruby,635
 class A1,0
  def a(2,8
  def b(5,38
 module A9,57
   class B10,66
     ABC 11,76
-    def foo!13,89
-    def self._bar?(_bar?16,111
-      def qux=(qux=20,162
-A::Constant Constant26,211
+    Def_ 12,88
+    Xyzzy 13,106
+    def foo!15,121
+    def self._bar?(_bar?18,143
+      def qux=(qux=22,194
+    def X25,232
+      attr_reader :foo26,242
+      attr_reader :read1,27,265
+      attr_reader :read1, :read2;27,265
+      attr_reader :read1, :read2; attr_writer :write1,:write1=27,265
+      attr_reader :read1, :read2; attr_writer :write1, :write2:write2=27,265
+      attr_writer :bar:bar=28,328
+      attr_accessor :tee29,351
+      attr_accessor :tee:tee=29,351
+      alias_method :qux,30,376
+A::Constant Constant35,425
 
 tex-src/testenv.tex,52
 \newcommand{\nm}\nm4,77

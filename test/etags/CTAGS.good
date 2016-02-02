@@ -177,6 +177,15 @@ $user_comment_lc	php-src/lce_functions.php	115
 /wh	ps-src/rfc1245.ps	/^\/wh { $/
 /yen	ps-src/rfc1245.ps	/^\/yen \/.notdef \/.notdef \/.notdef \/.notdef \/.notdef /
 :a-forth-dictionary-entry	forth-src/test-forth.fth	/^create :a-forth-dictionary-entry$/
+:bar=	ruby-src/test1.ruby	/^      attr_writer :bar$/
+:foo	ruby-src/test1.ruby	/^      attr_reader :foo$/
+:qux	ruby-src/test1.ruby	/^      alias_method :qux, :tee$/
+:read1	ruby-src/test1.ruby	/^      attr_reader :read1, :read2; attr_writer :wri/
+:read2	ruby-src/test1.ruby	/^      attr_reader :read1, :read2; attr_writer :wri/
+:tee	ruby-src/test1.ruby	/^      attr_accessor :tee$/
+:tee=	ruby-src/test1.ruby	/^      attr_accessor :tee$/
+:write1=	ruby-src/test1.ruby	/^      attr_reader :read1, :read2; attr_writer :wri/
+:write2=	ruby-src/test1.ruby	/^      attr_reader :read1, :read2; attr_writer :wri/
 <	tex-src/texinfo.tex	/^\\def<{{\\tt \\less}}$/
 <<	ruby-src/test.rb	/^        def <<(y)$/
 <=	ruby-src/test.rb	/^        def <=(y)$/
@@ -460,7 +469,7 @@ Condition_Variable/t	ada-src/2ataspri.ads	/^   type Condition_Variable is privat
 Condition_Variable/t	ada-src/2ataspri.ads	/^   type Condition_Variable is$/
 Configure	pyt-src/server.py	/^class Configure(Frame, ControlEdit):$/
 ConfirmQuit	pyt-src/server.py	/^def ConfirmQuit(frame, context):$/
-Constant	ruby-src/test1.ruby	26
+Constant	ruby-src/test1.ruby	35
 ControlEdit	pyt-src/server.py	/^class ControlEdit(Frame):$/
 Controls	pyt-src/server.py	/^class Controls:$/
 CopyTextString	pas-src/common.pas	/^function CopyTextString;(*($/
@@ -522,6 +531,7 @@ DOS_NT	c-src/etags.c	117
 DOS_NT	c-src/etags.c	118
 DUMPED	c-src/emacs/src/gmalloc.c	80
 Debug	cp-src/functions.cpp	/^void Debug ( int lineno, int level, char* func , c/
+Def_	ruby-src/test1.ruby	12
 DisposeANameList	pas-src/common.pas	/^procedure DisposeANameList( $/
 DisposeNameList	pas-src/common.pas	/^procedure DisposeNameList;$/
 ELEM_I	c-src/h.h	3
@@ -1457,6 +1467,7 @@ WorkingDays	cp-src/functions.cpp	/^int WorkingDays(Date a, Date b){$/
 Write_Lock/p	ada-src/2ataspri.adb	/^   procedure Write_Lock (L : in out Lock; Ceiling_/
 Write_Lock/p	ada-src/2ataspri.ads	/^   procedure Write_Lock (L : in out Lock; Ceiling_/
 X	c-src/h.h	100
+X	ruby-src/test1.ruby	/^    def X$/
 XBOOL_VECTOR	c-src/emacs/src/lisp.h	/^XBOOL_VECTOR (Lisp_Object a)$/
 XBUFFER	c-src/emacs/src/lisp.h	/^XBUFFER (Lisp_Object a)$/
 XBUFFER_OBJFWD	c-src/emacs/src/lisp.h	/^XBUFFER_OBJFWD (union Lisp_Fwd *a)$/
@@ -1534,6 +1545,7 @@ XUNTAG	c-src/emacs/src/lisp.h	/^#  define XUNTAG(a, type) lisp_h_XUNTAG (a, type
 XUNTAG	c-src/emacs/src/lisp.h	/^XUNTAG (Lisp_Object a, int type)$/
 XWINDOW	c-src/emacs/src/lisp.h	/^XWINDOW (Lisp_Object a)$/
 XX	cp-src/x.cc	1
+Xyzzy	ruby-src/test1.ruby	13
 Y	c-src/h.h	100
 YACC	c-src/etags.c	2199
 YELLOW	cp-src/screen.hpp	26

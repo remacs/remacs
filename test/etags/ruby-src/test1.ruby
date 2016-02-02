@@ -9,6 +9,8 @@ end
 module A
   class B
     ABC = 4
+    Def_ = 'blah'
+    Xyzzy =10
 
     def foo!
     end
@@ -19,6 +21,13 @@ module A
     class << self
       def qux=(tee)
       end
+    end
+    def X
+      attr_reader :foo
+      attr_reader :read1, :read2; attr_writer :write1, :write2
+      attr_writer :bar
+      attr_accessor :tee
+      alias_method :qux, :tee
     end
   end
 end
