@@ -362,7 +362,7 @@ echo "Making links to 'build-aux'"
  ln gitlog-to-changelog gitlog-to-emacslog ../${tempdir}/build-aux
  ln install-sh missing move-if-change ../${tempdir}/build-aux
  ln update-copyright update-subdirs ../${tempdir}/build-aux
- ln dir_top make-info-dir ../${tempdir}/build-aux)
+ ln dir_top make-info-dir ar-lib ../${tempdir}/build-aux)
 
 echo "Making links to 'build-aux/snippet'"
 (cd build-aux/snippet
@@ -421,9 +421,9 @@ echo "Making links to 'modules'"
 echo "Making links to 'nt'"
 (cd nt
  ln emacs-x86.manifest emacs-x64.manifest ../${tempdir}/nt
- ln subdirs.el [a-z]*.bat [a-z]*.[ch] ../${tempdir}/nt
+ ln [a-z]*.bat [a-z]*.[ch] ../${tempdir}/nt
  ln *.in gnulib.mk ../${tempdir}/nt
- ln mingw-cfg.site epaths.nt INSTALL.OLD ../${tempdir}/nt
+ ln mingw-cfg.site epaths.nt INSTALL.W64 ../${tempdir}/nt
  ln ChangeLog.*[0-9] INSTALL README README.W32 ../${tempdir}/nt)
 
 echo "Making links to 'nt/inc' and its subdirectories"
