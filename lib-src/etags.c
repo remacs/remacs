@@ -1485,8 +1485,16 @@ get_language_from_filename (char *file, int case_sensitive)
 {
   language *lang;
   const char **name, **ext, *suffix;
+  char *slash;
 
   /* Try whole file name first. */
+  slash = strrchr (file, '/');
+  if (slash != NULL)
+    file = slash + 1;
+#ifdef DOS_NT
+  else if (file[0] && file[1] == ':')
+    file += 2;
+#endif
   for (lang = lang_names; lang->name != NULL; lang++)
     if (lang->filenames != NULL)
       for (name = lang->filenames; *name != NULL; name++)

@@ -2682,49 +2682,101 @@ function Square.something:Bar Bar14,148
    local function test.me22b 25,297
    local function test.me22b me22b25,297
 
-make-src/Makefile,1133
+make-src/Makefile,2175
 LATEST=1,0
+RELEASELIST=2,10
+ADASRC=4,104
+ASRC=5,171
+CSRC=6,197
+CPSRC=10,423
+ELSRC=13,614
+ERLSRC=14,661
+FORTHSRC=15,702
+FSRC=16,726
+HTMLSRC=17,776
+JAVASRC=18,844
+LUASRC=19,907
+MAKESRC=20,926
+OBJCSRC=21,943
+OBJCPPSRC=22,999
+PASSRC=23,1035
+PERLSRC=24,1053
+PHPSRC=25,1108
+PSSRC=26,1156
+PROLSRC=27,1173
+PYTSRC=28,1210
+TEXSRC=29,1227
+YSRC=30,1282
+SRCS=31,1325
 NONSRCS=35,1577
+VHDLFLAGS=37,1624
+COBOLFLAGS=38,1827
+POSTSCRIPTFLAGS=39,1889
+TCLFLAGS=40,1943
+GETOPTOBJS=42,2002
+RXINCLUDE=43,2034
+REGEXOBJS=44,2056
+CHECKOBJS=46,2075
+CHECKFLAGS=47,2105
+OBJS=48,2145
 CPPFLAGS=49,2190
 LDFLAGS=50,2259
+WARNINGS=51,2282
+CFLAGS=52,2466
 FASTCFLAGS=55,2530
+FASTCFLAGSWARN=56,2591
 FILTER=58,2641
-	@-$($72,3063
-	@-$($73,3112
-	@-$($74,3176
-	@-$($75,3222
-	@-$($76,3290
-	@-$($77,3382
-	@$(81,3465
-	@$(82,3513
-	@$(83,3576
-	@$(84,3621
-	@$(85,3688
-	@$(86,3779
-${CHECKOBJS}: CFLAGS=88,3805
-	@env CHECKEROPTS=92,3921
-	@$(98,4093
-	@$(106,4249
-	@$(110,4373
-	@$(114,4499
-	@for i in $(SRCS); do echo $$i;140,5320
-	$(160,6058
-	$(163,6119
-	$(166,6182
-	$(169,6233
-	$(172,6322
-	sdiff --suppress-common-lines --width=width186,6619
-	sdiff --suppress-common-lines --width=width189,6708
-	sdiff --suppress-common-lines --width=width192,6796
-	sdiff --suppress-common-lines --width=width195,6885
-	TEXTAGS=204,7127
-	TEXTAGS=def:newcommand:newenvironment ${RUN} etags$* --regex=regex204,7127
-	${RUN} etags12 --members -o $@ --regex=regex207,7244
-	${RUN} ./ctags -o $@ --regex=regex213,7393
-	${RUN} ctags$* -wtTd --globals --members -o $@ --regex=regex216,7469
-	TEXTAGS=219,7588
-	TEXTAGS=def:newcommand:newenvironment ${RUN} ctags$* -wt -o $@ --regex=regex219,7588
-	${RUN} ./extags -e --regex-c=c222,7715
+REGEX=59,2695
+xx=60,2741
+MAKE:MAKE62,2790
+RUN=63,2825
+RUN=64,2865
+OPTIONS=65,2870
+ARGS=66,2922
+infiles 68,2940
+quiettest:quiettest70,3002
+test:test79,3409
+${CHECKOBJS}:${CHECKOBJS}88,3805
+checker:checker90,3849
+standalone:standalone96,4062
+prof:prof101,4168
+fastetags:fastetags104,4198
+fastctags:fastctags108,4322
+staticetags:staticetags112,4446
+rsynctofly:rsynctofly116,4608
+rsyncfromfly:rsyncfromfly119,4698
+web ftp publish:web ftp publish122,4794
+release distrib:release distrib129,5115
+tags:tags134,5255
+clean:clean136,5267
+srclist:srclist139,5302
+regexfile:regexfile143,5391
+/home/www/pub/etags.c.gz:/home/www/pub/etags.c.gz149,5566
+/home/www/pub/software/unix/etags.tar.gz:/home/www/pub/software/unix/etags.tar.gz156,5825
+regex.o:regex.o159,6031
+getopt.o:getopt.o162,6086
+getopt1.o:getopt1.o165,6147
+etags:etags168,6210
+ctags:ctags171,6299
+man manpage:man manpage174,6396
+etags.1.man:etags.1.man176,6422
+maintaining.info:maintaining.info179,6475
+TAGS:TAGS182,6557
+%ediff:%ediff185,6587
+oediff:oediff188,6677
+%cdiff:%cdiff191,6764
+xdiff:xdiff194,6854
+ETAGS:ETAGS197,6942
+ETAGS%:ETAGS%200,7012
+ETAGS13 ETAGS14 ETAGS15:ETAGS13 ETAGS14 ETAGS15203,7084
+ETAGS12:ETAGS12206,7216
+OTAGS:OTAGS209,7304
+CTAGS:CTAGS212,7369
+CTAGS%:CTAGS%215,7443
+CTAGS13 CTAGS14 CTAGS15:CTAGS13 CTAGS14 CTAGS15218,7545
+EXTAGS:EXTAGS221,7680
+.PRECIOUS:.PRECIOUS224,7838
+FRC:FRC226,7894
 
 objc-src/Subprocess.h,98
 #define Subprocess 41,1217
@@ -3356,7 +3408,7 @@ module ModuleExample1,0
     def module_instance_method46,1051
     def ModuleExample.module_class_methodmodule_class_method49,1131
 
-ruby-src/test1.ruby,635
+ruby-src/test1.ru,635
 class A1,0
  def a(2,8
  def b(5,38
