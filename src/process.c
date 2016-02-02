@@ -5904,7 +5904,7 @@ send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
 #ifdef HAVE_GNUTLS
   /* The TLS connection hasn't been set up yet, so we can't write
      anything on the socket. */
-  if (p->gnutls_boot_parameters)
+  if (!NILP (p->gnutls_boot_parameters))
     return;
 #endif
 
