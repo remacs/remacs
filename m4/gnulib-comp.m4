@@ -126,6 +126,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module ssize_t:
   # Code from module stat:
   # Code from module stat-time:
+  # Code from module std-gnu11:
   # Code from module stdalign:
   # Code from module stddef:
   # Code from module stdint:
@@ -1052,6 +1053,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/st_dm_mode.m4
   m4/stat-time.m4
   m4/stat.m4
+  m4/std-gnu11.m4
   m4/stdalign.m4
   m4/stddef_h.m4
   m4/stdint.m4
