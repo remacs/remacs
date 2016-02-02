@@ -172,7 +172,7 @@ Note: The search is conducted only within 10%, at the beginning of the file."
   :group 'change-log)
 
 (defcustom change-log-directory-files '(".bzr" ".git" ".hg" ".svn")
-  "List of files that cause ChangeLog search to stop in containing directory.
+  "List of files that cause `find-change-log' to stop in containing directory.
 This applies if no pre-existing ChangeLog is found.  If nil, then in such
 a case simply use the directory containing the changed file."
   :version "25.2"
@@ -699,7 +699,11 @@ If `change-log-default-name' is nil, behave as though it were \"ChangeLog\"
 
 If `change-log-default-name' contains a leading directory component, then
 simply find it in the current directory.  Otherwise, search in the current
-directory and its successive parents for a file so named.
+directory and its successive parents for a file so named.  Stop at the first
+such file that exists (or has a buffer visiting it), or the first directory
+that contains any of `change-log-directory-files'.  If no match is found,
+use the current directory.  To override the choice of this function,
+simply create an empty ChangeLog file first by hand in the desired place.
 
 Once a file is found, `change-log-default-name' is set locally in the
 current buffer to the complete file name.
