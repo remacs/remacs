@@ -70,6 +70,7 @@ For example, the form
 
 would give military-style times like `21:07 (UTC)'."
   :type 'sexp
+  :risky t
   :group 'calendar)
 
 (defcustom calendar-latitude nil
@@ -131,6 +132,7 @@ variable `calendar-latitude' paired with the variable `calendar-longitude'.
 
 This variable should be set in `site-start'.el."
   :type 'sexp
+  :risky t
   :group 'calendar)
 
 (defcustom solar-error 0.5

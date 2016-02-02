@@ -296,6 +296,7 @@ Used by the function `diary-remind', a pseudo-pattern is a list of
 expressions that can involve the keywords `days' (a number), `date'
 \(a list of month, day, year), and `diary-entry' (a string)."
   :type 'sexp
+  :risky t
   :group 'diary)
 
 (defcustom diary-abbreviated-year-flag t
@@ -412,6 +413,7 @@ The format of the header is specified by `diary-header-line-format'."
 Only used if `diary-header-line-flag' is non-nil."
   :group 'diary
   :type 'sexp
+  :risky t
   :initialize 'custom-initialize-default
   :set 'diary-set-header
   :version "23.3")                      ; frame-width -> window-width
