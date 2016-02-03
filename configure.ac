@@ -3824,6 +3824,7 @@ if (test -z "$GMALLOC_OBJ" || test "$hybrid_malloc" = yes) \
   && test "$opsys" != darwin; then
   AC_CHECK_FUNCS([aligned_alloc posix_memalign], [break])
 fi
+AC_CHECK_DECLS([aligned_alloc], [], [], [[#include <stdlib.h>]])
 
 dnl Cannot use AC_CHECK_FUNCS
 AC_CACHE_CHECK([for __builtin_unwind_init],
