@@ -1751,9 +1751,9 @@ find_handler_clause (Lisp_Object handlers, Lisp_Object conditions)
 }
 
 
-/* Dump an error message; called like vprintf.  */
-void
-verror (const char *m, va_list ap)
+/* Format and return a string; called like vprintf.  */
+Lisp_Object
+vformat_string (const char *m, va_list ap)
 {
   char buf[4000];
   ptrdiff_t size = sizeof buf;
@@ -1767,7 +1767,14 @@ verror (const char *m, va_list ap)
   if (buffer != buf)
     xfree (buffer);
 
-  xsignal1 (Qerror, string);
+  return string;
+}
+
+/* Dump an error message; called like vprintf.  */
+void
+verror (const char *m, va_list ap)
+{
+  xsignal1 (Qerror, vformat_string (m, ap));
 }
 
 

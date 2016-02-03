@@ -140,9 +140,10 @@ a greeting from the server.
 asynchronously, if possible.
 
 :tls-parameters is a list that should be supplied if you're
-opening a TLS connection.  The first element is the TLS type, and
-the remaining elements should be a keyword list accepted by
-gnutls-boot."
+opening a TLS connection.  The first element is the TLS
+type (either `gnutls-x509pki' or `gnutls-anon'), and the
+remaining elements should be a keyword list accepted by
+gnutls-boot (as returned by `gnutls-boot-parameters')."
   (unless (featurep 'make-network-process)
     (error "Emacs was compiled without networking support"))
   (let ((type (plist-get parameters :type))

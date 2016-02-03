@@ -1174,7 +1174,7 @@ boot_error (struct Lisp_Process *p, const char *m, ...)
   va_list ap;
   va_start (ap, m);
   if (p->is_non_blocking_client)
-    pset_status (p, Qfailed);
+    pset_status (p, list2 (Qfailed, vformat_string (m, ap)));
   else
     verror (m, ap);
 }
