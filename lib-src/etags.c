@@ -4630,6 +4630,7 @@ static void
 Ruby_functions (FILE *inf)
 {
   char *cp = NULL;
+  bool reader = false, writer = false, alias = false, continuation = false;
 
   LOOP_ON_INPUT_LINES (inf, lb, cp)
     {
@@ -4638,7 +4639,9 @@ Ruby_functions (FILE *inf)
       char *name;
 
       cp = skip_spaces (cp);
-      if (c_isalpha (*cp) && c_isupper (*cp)) /* constants */
+      if (!continuation
+	  /* Constants.  */
+	  && c_isalpha (*cp) && c_isupper (*cp))
 	{
 	  char *bp, *colon = NULL;
 
@@ -4661,9 +4664,11 @@ Ruby_functions (FILE *inf)
 		}
 	    }
 	}
-      else if ((is_method = LOOKING_AT (cp, "def")) /* module/class/method */
-	       || (is_class = LOOKING_AT (cp, "class"))
-	       || LOOKING_AT (cp, "module"))
+      else if (!continuation
+	       /* Modules, classes, methods.  */
+	       && ((is_method = LOOKING_AT (cp, "def"))
+		   || (is_class = LOOKING_AT (cp, "class"))
+		   || LOOKING_AT (cp, "module")))
 	{
 	  const char self_name[] = "self.";
 	  const size_t self_size1 = sizeof (self_name) - 1;
@@ -4701,21 +4706,27 @@ Ruby_functions (FILE *inf)
       else
 	{
 	  /* Tag accessors and aliases.  */
+
+	  if (!continuation)
+	    reader = writer = alias = false;
+
 	  while (*cp && *cp != '#')
 	    {
-	      bool reader = false, writer = false, alias = false;
-
-	      if (LOOKING_AT (cp, "attr_reader"))
-		reader = true;
-	      else if (LOOKING_AT (cp, "attr_writer"))
-		writer = true;
-	      else if (LOOKING_AT (cp, "attr_accessor"))
+	      if (!continuation)
 		{
-		  reader = true;
-		  writer = true;
+		  reader = writer = alias = false;
+		  if (LOOKING_AT (cp, "attr_reader"))
+		    reader = true;
+		  else if (LOOKING_AT (cp, "attr_writer"))
+		    writer = true;
+		  else if (LOOKING_AT (cp, "attr_accessor"))
+		    {
+		      reader = true;
+		      writer = true;
+		    }
+		  else if (LOOKING_AT (cp, "alias_method"))
+		    alias = true;
 		}
-	      else if (LOOKING_AT (cp, "alias_method"))
-		alias = true;
 	      if (reader || writer || alias)
 		{
 		  do {
@@ -4725,9 +4736,12 @@ Ruby_functions (FILE *inf)
 		      np++;
 		    cp = skip_name (cp);
 		    if (reader)
-		      make_tag (np, cp - np, true,
-				lb.buffer, cp - lb.buffer + 1,
-				lineno, linecharno);
+		      {
+			make_tag (np, cp - np, true,
+				  lb.buffer, cp - lb.buffer + 1,
+				  lineno, linecharno);
+			continuation = false;
+		      }
 		    if (writer)
 		      {
 			size_t name_len = cp - np + 1;
@@ -4737,19 +4751,34 @@ Ruby_functions (FILE *inf)
 			memcpy (wr_name + name_len - 1, "=", 2);
 			pfnote (wr_name, true, lb.buffer, cp - lb.buffer + 1,
 				lineno, linecharno);
+			continuation = false;
 		      }
 		    if (alias)
 		      {
-			make_tag (np, cp - np, true,
-				  lb.buffer, cp - lb.buffer + 1,
-				  lineno, linecharno);
+			if (!continuation)
+			  make_tag (np, cp - np, true,
+				    lb.buffer, cp - lb.buffer + 1,
+				    lineno, linecharno);
+			continuation = false;
 			while (*cp && *cp != '#' && *cp != ';')
-			  cp++;
+			  {
+			    if (*cp == ',')
+			      continuation = true;
+			    else if (!c_isspace (*cp))
+			      continuation = false;
+			    cp++;
+			  }
+			if (*cp == ';')
+			  continuation = false;
 		      }
-		  } while (*cp == ','
+		    cp = skip_spaces (cp);
+		  } while ((alias
+			    ? (*cp == ',')
+			    : (continuation = (*cp == ',')))
 			   && (cp = skip_spaces (cp + 1), *cp && *cp != '#'));
 		}
-	      cp = skip_name (cp);
+	      if (*cp != '#')
+		cp = skip_name (cp);
 	      while (*cp && *cp != '#' && notinname (*cp))
 		cp++;
 	    }
