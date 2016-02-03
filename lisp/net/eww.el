@@ -551,7 +551,7 @@ Currently this means either text/html or application/xhtml+xml."
 (declare-function mailcap-view-mime "mailcap" (type))
 (defun eww-display-pdf ()
   (let ((data (buffer-substring (point) (point-max))))
-    (switch-to-buffer (get-buffer-create "*eww pdf*"))
+    (pop-to-buffer-same-window (get-buffer-create "*eww pdf*"))
     (let ((coding-system-for-write 'raw-text)
 	  (inhibit-read-only t))
       (erase-buffer)
@@ -748,7 +748,7 @@ the like."
 ;;;###autoload
 (defun eww-browse-url (url &optional new-window)
   (when new-window
-    (switch-to-buffer (generate-new-buffer "*eww*"))
+    (pop-to-buffer-same-window (generate-new-buffer "*eww*"))
     (eww-mode))
   (eww url))
 
@@ -1728,7 +1728,7 @@ If CHARSET is nil then use UTF-8."
     (let ((buffer eww-current-buffer))
       (quit-window)
       (when buffer
-	(switch-to-buffer buffer)))
+	(pop-to-buffer-same-window buffer)))
     (eww-restore-history history)))
 
 (defvar eww-history-mode-map
@@ -1809,7 +1809,7 @@ If CHARSET is nil then use UTF-8."
     (unless buffer
       (error "No buffer on current line"))
     (quit-window)
-    (switch-to-buffer buffer)))
+    (pop-to-buffer-same-window buffer)))
 
 (defun eww-buffer-show ()
   "Display buffer under point in eww buffer list."
@@ -1818,7 +1818,7 @@ If CHARSET is nil then use UTF-8."
     (unless buffer
       (error "No buffer on current line"))
     (other-window -1)
-    (switch-to-buffer buffer)
+    (pop-to-buffer-same-window buffer)
     (other-window 1)))
 
 (defun eww-buffer-show-next ()
