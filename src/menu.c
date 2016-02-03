@@ -1236,6 +1236,9 @@ no quit occurs and `x-popup-menu' returns nil.  */)
       {
 	/* Use the mouse's current position.  */
 	struct frame *new_f = SELECTED_FRAME ();
+
+	XSETFASTINT (x, 0);
+	XSETFASTINT (y, 0);
 #ifdef HAVE_X_WINDOWS
 	if (FRAME_X_P (new_f))
 	  {
