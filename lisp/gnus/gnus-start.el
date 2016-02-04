@@ -122,7 +122,6 @@ This variable can be a list of select methods which Gnus will query with
 the `ask-server' method in addition to the primary, secondary, and archive
 servers.
 
-
 E.g.:
   (setq gnus-check-new-newsgroups
 	\\='((nntp \"some.server\") (nntp \"other.server\")))
@@ -1673,10 +1672,11 @@ backend check whether the group actually exists."
 	(push (setq method-group-list (list method method-type nil nil))
 	      type-cache))
       ;; Only add groups that need updating.
-      (if (funcall (if one-level #'= #'<=) (gnus-info-level info)
-	      (if (eq (cadr method-group-list) 'foreign)
-		  foreign-level
-		alevel))
+      (if (or (and foreign-level (null (numberp foreign-level)))
+	   (funcall (if one-level #'= #'<=) (gnus-info-level info)
+		    (if (eq (cadr method-group-list) 'foreign)
+			foreign-level
+		      alevel)))
 	  (setcar (nthcdr 2 method-group-list)
 		  (cons info (nth 2 method-group-list)))
 	;; The group is inactive, so we nix out the number of unread articles.
