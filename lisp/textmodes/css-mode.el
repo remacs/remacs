@@ -54,6 +54,14 @@
   '("charset" "font-face" "import" "media" "namespace" "page")
   "Identifiers that appear in the form @foo.")
 
+(defconst css-bang-ids
+  '("important")
+  "Identifiers that appear in the form !foo.")
+
+(defconst scss-bang-ids
+  '("default" "global" "optional")
+  "Additional identifiers that appear in the form !foo in SCSS.")
+
 (defconst css-descriptor-ids
   '("ascent" "baseline" "bbox" "cap-height" "centerline" "definition-src"
     "descent" "font-family" "font-size" "font-stretch" "font-style"
@@ -236,8 +244,8 @@
 
 (defun css--font-lock-keywords (&optional sassy)
   `((,(concat "!\\s-*"
-              (regexp-opt (append (if sassy '("global"))
-                                  '("important"))))
+              (regexp-opt (append (if sassy scss-bang-ids)
+                                  css-bang-ids)))
      (0 font-lock-builtin-face))
     ;; Atrules keywords.  IDs not in css-at-ids are valid (ignored).
     ;; In fact the regexp should probably be

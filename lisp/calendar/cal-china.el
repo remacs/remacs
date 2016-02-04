@@ -71,9 +71,6 @@ Default is for Beijing.  This is an expression in `year' since it changed at
 ;; It gets eval'd.
 ;;;###autoload
 (put 'calendar-chinese-time-zone 'risky-local-variable t)
-;;;###autoload
-(put 'chinese-calendar-time-zone 'risky-local-variable t)
-
 
 ;; FIXME unused.
 (defcustom calendar-chinese-location-name "Beijing"
@@ -98,6 +95,7 @@ Default is for no daylight saving time."
 This is an expression depending on `year' because it changed
 at 1928-01-01 00:00:00 from `PMT' to `CST'."
   :type 'sexp
+  :risky t
   :group 'calendar-chinese)
 
 (defcustom calendar-chinese-daylight-time-zone-name "CDT"
@@ -115,6 +113,7 @@ at 1928-01-01 00:00:00 from `PMT' to `CST'."
 Default is for no daylight saving time.  See documentation of
 `calendar-daylight-savings-starts'."
   :type 'sexp
+  :risky t
   :group 'calendar-chinese)
 
 (defcustom calendar-chinese-daylight-saving-end nil
@@ -125,6 +124,7 @@ Default is for no daylight saving time.  See documentation of
 Default is for no daylight saving time.  See documentation of
 `calendar-daylight-savings-ends'."
   :type 'sexp
+  :risky t
   :group 'calendar-chinese)
 
 (defcustom calendar-chinese-daylight-saving-start-time 0

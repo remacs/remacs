@@ -1943,11 +1943,11 @@ Its default value displays the buffer name, padded with spaces to at
 least 12 columns.
 @end defvar
 
-@defopt mode-line-position
+@defvar mode-line-position
 This variable indicates the position in the buffer.  Its default value
 displays the buffer percentage and, optionally, the buffer size, the
 line number and the column number.
-@end defopt
+@end defvar
 
 @defvar vc-mode
 The variable @code{vc-mode}, buffer-local in each buffer, records
@@ -1956,11 +1956,11 @@ and, if so, which kind.  Its value is a string that appears in the mode
 line, or @code{nil} for no version control.
 @end defvar
 
-@defopt mode-line-modes
+@defvar mode-line-modes
 This variable displays the buffer's major and minor modes.  Its
 default value also displays the recursive editing level, information
 on the process status, and whether narrowing is in effect.
-@end defopt
+@end defvar
 
 @defvar mode-line-remote
 This variable is used to show whether @code{default-directory} for the

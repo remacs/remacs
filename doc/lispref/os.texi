@@ -2959,34 +2959,40 @@ Buffers}.
 
 @item Authentication
 Emacs has several functions that deal with passwords, e.g.,
-@code{password-read}.  Although these functions do not attempt to
+@code{read-passwd}.  @xref{Reading a Password}.
+Although these functions do not attempt to
 broadcast passwords to the world, their implementations are not proof
 against determined attackers with access to Emacs internals.  For
-example, even if Elisp code attempts to scrub a password from
+example, even if Elisp code uses @code{clear-string} to scrub a password from
 its memory after using it, remnants of the password may still reside
-in the garbage-collected free list.
+in the garbage-collected free list.  @xref{Modifying Strings}.
 
 @item Code injection
 Emacs can send commands to many other applications, and applications
 should take care that strings sent as operands of these commands are
-not misinterpreted as directives.  For example, when sending a shell
+not misinterpreted as directives.  For example, when using a shell
 command to rename a file @var{a} to @var{b}, do not simply use the
 string @code{mv @var{a} @var{b}}, because either file name might start
 with @samp{-}, or might contain shell metacharacters like @samp{;}.
 Although functions like @code{shell-quote-argument} can help avoid
 this sort of problem, they are not panaceas; for example, on a POSIX
 platform @code{shell-quote-argument} quotes shell metacharacters but
-not leading @samp{-}.  @xref{Shell Arguments}.
+not leading @samp{-}.  @xref{Shell Arguments}.  Typically it is safer
+to use @code{call-process} than a subshell.  @xref{Synchronous
+Processes}.  And it is safer yet to use builtin Emacs functions; for
+example, use @code{(rename-file "@var{a}" "@var{b}" t)} instead of
+invoking @command{mv}.  @xref{Changing Files}.
 
 @item Coding systems
 Emacs attempts to infer the coding systems of the files and network
-connections it accesses.  If it makes a mistake, or if the other
-parties to the network connection disagree with Emacs's deductions,
+connections it accesses.  @xref{Coding Systems}.
+If Emacs infers incorrectly, or if the other
+parties to the network connection disagree with Emacs's inferences,
 the resulting system could be unreliable.  Also, even when it infers
 correctly, Emacs often can use bytes that other programs cannot.  For
-example, although to Emacs the NUL (all bits zero) byte is just a
+example, although to Emacs the null byte is just a
 character like any other, many other applications treat it as a string
-terminator and mishandle strings or files containing NUL bytes.
+terminator and mishandle strings or files containing null bytes.
 
 @item Environment and configuration variables
 POSIX specifies several environment variables that can affect how
@@ -2998,7 +3004,7 @@ environment variables (e.g., @env{PATH}, @env{POSIXLY_CORRECT},
 @env{SHELL}, @env{TMPDIR}) need to have properly-configured values in
 order to get standard behavior for any utility Emacs might invoke.
 Even seemingly-benign variables like @env{TZ} may have security
-implications.
+implications.  @xref{System Environment}.
 
 Emacs has customization and other variables with similar
 considerations.  For example, if the variable @code{shell-file-name}
@@ -3025,6 +3031,7 @@ other applications do.  For example, even when
 @code{(file-readable-p "foo.txt")} returns @code{t}, it could be that
 @file{foo.txt} is unreadable because some other program changed the
 file's permissions between the call to @code{file-readable-p} and now.
+@xref{Testing Accessibility}.
 
 @item Resource limits
 When Emacs exhausts memory or other operating system resources, its

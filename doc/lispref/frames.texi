@@ -847,7 +847,7 @@ With some window managers you may have to set this to non-@code{nil} in
 order to make a frame appear truly maximized or full-screen.
 @end defopt
 
-@defun set-frame-size frame width height pixelwise
+@defun set-frame-size frame width height &optional pixelwise
 This function sets the size of the text area of @var{frame}, measured in
 terms of the canonical height and width of a character on @var{frame}
 (@pxref{Frame Font}).
@@ -2236,7 +2236,7 @@ parameters.  @xref{Management Parameters}.
 terminal frames.  On each text terminal, only the top frame is
 displayed at any one time.
 
-@defun tty-top-frame terminal
+@defun tty-top-frame &optional terminal
 This function returns the top frame on @var{terminal}.  @var{terminal}
 should be a terminal object, a frame (meaning that frame's terminal),
 or @code{nil} (meaning the selected frame's terminal).  If it does not

@@ -4309,37 +4309,17 @@ documentation, an optional interactive declaration, and the body of
 the definition.
 
 @need 1250
-For example, in an early version of Emacs, the function definition was
-as follows.  (It is slightly more complex now that it seeks the first
-non-whitespace character rather than the first visible character.)
+For example, in Emacs the function definition of
+@code{dired-unmark-all-marks} is as follows.
 
 @smallexample
 @group
-(defun back-to-indentation ()
-  "Move point to first visible character on line."
+(defun dired-unmark-all-marks ()
+  "Remove all marks from all files in the Dired buffer."
   (interactive)
-  (beginning-of-line 1)
-  (skip-chars-forward " \t"))
+  (dired-unmark-all-files ?\r))
 @end group
 @end smallexample
-
-@ignore
-In GNU Emacs 22,
-
-(defun backward-to-indentation (&optional arg)
-  "Move backward ARG lines and position at first nonblank character."
-  (interactive "p")
-  (forward-line (- (or arg 1)))
-  (skip-chars-forward " \t"))
-
-(defun back-to-indentation ()
-  "Move point to the first non-whitespace character on this line."
-  (interactive)
-  (beginning-of-line 1)
-  (skip-syntax-forward " " (line-end-position))
-  ;; Move back over chars that have whitespace syntax but have the p flag.
-  (backward-prefix-chars))
-@end ignore
 
 @item interactive
 Declare to the interpreter that the function can be used
@@ -9123,13 +9103,12 @@ deleted@footnote{More precisely, and requiring more expert knowledge
 to understand, the two integers are of type @code{Lisp_Object}, which can
 also be a C union instead of an integer type.}.
 
-In early versions of Emacs, these two numbers were thirty-two bits
-long, but the code is slowly being generalized to handle other
-lengths.  Three of the available bits are used to specify the type of
-information; the remaining bits are used as content.
+Integer widths depend on the machine, and are typically 32 or 64 bits.
+A few of the bits are used to specify the type of information; the
+remaining bits are used as content.
 
 @samp{XINT} is a C macro that extracts the relevant number from the
-longer collection of bits; the three other bits are discarded.
+longer collection of bits; the type bits are discarded.
 
 @need 800
 The command in @code{delete-and-extract-region} looks like this:
@@ -18724,10 +18703,7 @@ Even though it is short, @code{split-line} contains  expressions
 we have not studied: @code{skip-chars-forward}, @code{indent-to},
 @code{current-column} and @code{insert-and-inherit}.
 
-Consider the @code{skip-chars-forward} function.  (It is part of the
-function definition for @code{back-to-indentation}, which is shown in
-@ref{Review, , Review}.)
-
+Consider the @code{skip-chars-forward} function.
 In GNU Emacs, you can find out more about @code{skip-chars-forward} by
 typing @kbd{C-h f} (@code{describe-function}) and the name of the
 function.  This gives you the function documentation.

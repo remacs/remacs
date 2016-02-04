@@ -971,7 +971,8 @@ is in `erc-mode'."
   "Return a list of all faces used in STR."
   (let ((i 0)
 	(m (length str))
-	(faces (erc-list (get-text-property 0 'face str)))
+	(faces (let ((face1 (get-text-property 0 'face str)))
+		 (when face1 (list face1))))
 	cur)
     (while (and (setq i (next-single-property-change i 'face str m))
 		(not (= i m)))

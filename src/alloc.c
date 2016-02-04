@@ -1122,10 +1122,17 @@ lisp_free (void *block)
 
 /* Use aligned_alloc if it or a simple substitute is available.
    Address sanitization breaks aligned allocation, as of gcc 4.8.2 and
-   clang 3.3 anyway.  */
+   clang 3.3 anyway.  Aligned allocation is incompatible with
+   unexmacosx.c, so don't use it on Darwin.  */
 
-#if ! ADDRESS_SANITIZER
-# if defined HYBRID_MALLOC
+#if ! ADDRESS_SANITIZER && !defined DARWIN_OS
+# if !defined SYSTEM_MALLOC && !defined DOUG_LEA_MALLOC && !defined HYBRID_MALLOC
+#  define USE_ALIGNED_ALLOC 1
+#  ifndef HAVE_ALIGNED_ALLOC
+/* Defined in gmalloc.c.  */
+void *aligned_alloc (size_t, size_t);
+#  endif
+# elif defined HYBRID_MALLOC
 #  if defined HAVE_ALIGNED_ALLOC || defined HAVE_POSIX_MEMALIGN
 #   define USE_ALIGNED_ALLOC 1
 #  endif

@@ -950,22 +950,25 @@ are used before @code{minor-mode-map-alist} and
 @end defvar
 
 @cindex transient keymap
-@defun set-transient-map keymap &optional keep
+@defun set-transient-map keymap &optional keep-pred on-exit
 This function adds @var{keymap} as a @dfn{transient} keymap, which
 takes precedence over other keymaps for one (or more) subsequent keys.
 
-Normally, @var{keymap} is used just once, to look up the very next
-key.  If the optional argument @var{pred} is @code{t}, the map stays
-active as long as the user types keys defined in @var{keymap}; when
-the user types a key that is not in @var{keymap}, the transient keymap
-is deactivated and normal key lookup continues for that key.
+Normally, @var{keymap} is used just once, to look up the very next key.
+If the optional argument @var{keep-pred} is @code{t}, the map stays
+active as long as the user types keys defined in @var{keymap}; when the
+user types a key that is not in @var{keymap}, the transient keymap is
+deactivated and normal key lookup continues for that key.
 
-The @var{pred} argument can also be a function.  In that case, the
+The @var{keep-pred} argument can also be a function.  In that case, the
 function is called with no arguments, prior to running each command,
 while @var{keymap} is active; it should return non-@code{nil} if
 @var{keymap} should stay active.
 
-This function works by adding and removing @code{keymap} from the
+The optional argument @var{on-exit}, if non-nil, specifies a function
+that is called, with no arguments, after @var{keymap} is deactivated.
+
+This function works by adding and removing @var{keymap} from the
 variable @code{overriding-terminal-local-map}, which takes precedence
 over all other active keymaps (@pxref{Searching Keymaps}).
 @end defun

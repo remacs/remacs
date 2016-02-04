@@ -729,7 +729,9 @@ static const char Python_help [] =
 generate a tag.";
 
 static const char *Ruby_suffixes [] =
-  { "rb", "ruby", NULL };
+  { "rb", "ru", "rbw", NULL };
+static const char *Ruby_filenames [] =
+  { "Rakefile", "Thorfile", NULL };
 static const char Ruby_help [] =
   "In Ruby code, 'def' or 'class' or 'module' at the beginning of\n\
 a line generate a tag.  Constants also generate a tag.";
@@ -813,7 +815,7 @@ static language lang_names [] =
   { "proc",      no_lang_help,   plain_C_entries,   plain_C_suffixes   },
   { "prolog",    Prolog_help,    Prolog_functions,  Prolog_suffixes    },
   { "python",    Python_help,    Python_functions,  Python_suffixes    },
-  { "ruby",      Ruby_help,      Ruby_functions,    Ruby_suffixes      },
+  { "ruby",      Ruby_help,Ruby_functions,Ruby_suffixes,Ruby_filenames },
   { "scheme",    Scheme_help,    Scheme_functions,  Scheme_suffixes    },
   { "tex",       TeX_help,       TeX_commands,      TeX_suffixes       },
   { "texinfo",   Texinfo_help,   Texinfo_nodes,     Texinfo_suffixes   },
@@ -1484,8 +1486,16 @@ get_language_from_filename (char *file, int case_sensitive)
 {
   language *lang;
   const char **name, **ext, *suffix;
+  char *slash;
 
   /* Try whole file name first. */
+  slash = strrchr (file, '/');
+  if (slash != NULL)
+    file = slash + 1;
+#ifdef DOS_NT
+  else if (file[0] && file[1] == ':')
+    file += 2;
+#endif
   for (lang = lang_names; lang->name != NULL; lang++)
     if (lang->filenames != NULL)
       for (name = lang->filenames; *name != NULL; name++)
@@ -4621,6 +4631,7 @@ static void
 Ruby_functions (FILE *inf)
 {
   char *cp = NULL;
+  bool reader = false, writer = false, alias = false, continuation = false;
 
   LOOP_ON_INPUT_LINES (inf, lb, cp)
     {
@@ -4629,7 +4640,9 @@ Ruby_functions (FILE *inf)
       char *name;
 
       cp = skip_spaces (cp);
-      if (c_isalpha (*cp) && c_isupper (*cp)) /* constants */
+      if (!continuation
+	  /* Constants.  */
+	  && c_isalpha (*cp) && c_isupper (*cp))
 	{
 	  char *bp, *colon = NULL;
 
@@ -4643,7 +4656,7 @@ Ruby_functions (FILE *inf)
 	  if (cp > name + 1)
 	    {
 	      bp = skip_spaces (cp);
-	      if (*bp == '=' && c_isspace (bp[1]))
+	      if (*bp == '=' && !(bp[1] == '=' || bp[1] == '>'))
 		{
 		  if (colon && !c_isspace (colon[1]))
 		    name = colon + 1;
@@ -4652,12 +4665,14 @@ Ruby_functions (FILE *inf)
 		}
 	    }
 	}
-      else if ((is_method = LOOKING_AT (cp, "def")) /* module/class/method */
-	       || (is_class = LOOKING_AT (cp, "class"))
-	       || LOOKING_AT (cp, "module"))
+      else if (!continuation
+	       /* Modules, classes, methods.  */
+	       && ((is_method = LOOKING_AT (cp, "def"))
+		   || (is_class = LOOKING_AT (cp, "class"))
+		   || LOOKING_AT (cp, "module")))
 	{
 	  const char self_name[] = "self.";
-	  const size_t self_size1 = sizeof ("self.") - 1;
+	  const size_t self_size1 = sizeof (self_name) - 1;
 
 	  name = cp;
 
@@ -4688,6 +4703,86 @@ Ruby_functions (FILE *inf)
 
 	  make_tag (name, cp - name, true,
 		    lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
+	}
+      else
+	{
+	  /* Tag accessors and aliases.  */
+
+	  if (!continuation)
+	    reader = writer = alias = false;
+
+	  while (*cp && *cp != '#')
+	    {
+	      if (!continuation)
+		{
+		  reader = writer = alias = false;
+		  if (LOOKING_AT (cp, "attr_reader"))
+		    reader = true;
+		  else if (LOOKING_AT (cp, "attr_writer"))
+		    writer = true;
+		  else if (LOOKING_AT (cp, "attr_accessor"))
+		    {
+		      reader = true;
+		      writer = true;
+		    }
+		  else if (LOOKING_AT (cp, "alias_method"))
+		    alias = true;
+		}
+	      if (reader || writer || alias)
+		{
+		  do {
+		    char *np = cp;
+
+		    if (*np == ':')
+		      np++;
+		    cp = skip_name (cp);
+		    if (reader)
+		      {
+			make_tag (np, cp - np, true,
+				  lb.buffer, cp - lb.buffer + 1,
+				  lineno, linecharno);
+			continuation = false;
+		      }
+		    if (writer)
+		      {
+			size_t name_len = cp - np + 1;
+			char *wr_name = xnew (name_len + 1, char);
+
+			memcpy (wr_name, np, name_len - 1);
+			memcpy (wr_name + name_len - 1, "=", 2);
+			pfnote (wr_name, true, lb.buffer, cp - lb.buffer + 1,
+				lineno, linecharno);
+			continuation = false;
+		      }
+		    if (alias)
+		      {
+			if (!continuation)
+			  make_tag (np, cp - np, true,
+				    lb.buffer, cp - lb.buffer + 1,
+				    lineno, linecharno);
+			continuation = false;
+			while (*cp && *cp != '#' && *cp != ';')
+			  {
+			    if (*cp == ',')
+			      continuation = true;
+			    else if (!c_isspace (*cp))
+			      continuation = false;
+			    cp++;
+			  }
+			if (*cp == ';')
+			  continuation = false;
+		      }
+		    cp = skip_spaces (cp);
+		  } while ((alias
+			    ? (*cp == ',')
+			    : (continuation = (*cp == ',')))
+			   && (cp = skip_spaces (cp + 1), *cp && *cp != '#'));
+		}
+	      if (*cp != '#')
+		cp = skip_name (cp);
+	      while (*cp && *cp != '#' && notinname (*cp))
+		cp++;
+	    }
 	}
     }
 }

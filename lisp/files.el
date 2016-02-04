@@ -3426,7 +3426,11 @@ local variables, but directory-local variables may still be applied."
                                   (format-message
                                    "%s: `lexical-binding' at end of file unreliable"
                                    (file-name-nondirectory
-                                    (or buffer-file-name ""))))))
+                                    ;; We are called from
+                                    ;; 'with-temp-buffer', so we need
+                                    ;; to use 'thisbuf's name in the
+                                    ;; warning message.
+                                    (or (buffer-file-name thisbuf) ""))))))
 			      (t
 			       (ignore-errors
 				 (push (cons (if (eq var 'eval)

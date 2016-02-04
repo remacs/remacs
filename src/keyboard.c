@@ -10304,7 +10304,7 @@ handle_interrupt (bool in_signal_handler)
 	{
 	  write_stdout ("Auto-save? (y or n) ");
 	  c = read_stdin ();
-	  if ((c & 040) == 'Y')
+	  if (c == 'y' || c == 'Y')
 	    {
 	      Fdo_auto_save (Qt, Qnil);
 #ifdef MSDOS
@@ -10336,7 +10336,7 @@ handle_interrupt (bool in_signal_handler)
       write_stdout ("Abort (and dump core)? (y or n) ");
 #endif
       c = read_stdin ();
-      if ((c & ~040) == 'Y')
+      if (c == 'y' || c == 'Y')
 	emacs_abort ();
       while (c != '\n')
 	c = read_stdin ();

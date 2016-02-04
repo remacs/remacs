@@ -47,17 +47,18 @@
 (pcase-defmacro map (&rest args)
   "Build a `pcase' pattern matching map elements.
 
-The `pcase' pattern will match each element of PATTERN against
-the corresponding elements of the map.
+ARGS is a list of elements to be matched in the map.
 
-Extra elements of the map are ignored if fewer ARGS are
-given, and the match does not fail.
+Each element of ARGS can be of the form (KEY PAT), in which case KEY is
+evaluated and searched for in the map.  The match fails if for any KEY
+found in the map, the corresponding PAT doesn't match the value
+associated to the KEY.
 
-ARGS can be a list of the form (KEY PAT), in which case KEY in an
-unquoted form.
+Each element can also be a SYMBOL, which is an abbreviation of a (KEY
+PAT) tuple of the form (\\='SYMBOL SYMBOL).
 
-ARGS can also be a list of symbols, which stands for ('SYMBOL
-SYMBOL)."
+Keys in ARGS not found in the map are ignored, and the match doesn't
+fail."
   `(and (pred mapp)
         ,@(map--make-pcase-bindings args)))
 

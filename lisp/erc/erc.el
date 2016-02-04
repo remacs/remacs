@@ -1141,7 +1141,7 @@ which the local user typed."
     (define-key map "\C-c\C-u" 'erc-kill-input)
     (define-key map "\C-c\C-x" 'erc-quit-server)
     (define-key map "\M-\t" 'ispell-complete-word)
-    (define-key map "\t" 'completion-at-point)
+    (define-key map "\t" 'erc-completion-at-point)
 
     ;; Suppress `font-lock-fontify-block' key binding since it
     ;; destroys face properties.
@@ -3996,6 +3996,13 @@ Prompt for one if called interactively."
                          (format "MODE %s +k %s" tgt key)
                        (format "MODE %s -k" tgt)))))
 
+(defun erc-completion-at-point ()
+  "Perform complection on the text around point case-insentitively.
+See `completion-at-point'."
+  (interactive)
+  (let ((completion-ignore-case t))
+    (completion-at-point)))
+
 (defun erc-quit-server (reason)
   "Disconnect from current server after prompting for REASON.
 `erc-quit-reason' works with this just like with `erc-cmd-QUIT'."
@@ -6088,13 +6095,15 @@ If it doesn't exist, create it."
   (or (file-accessible-directory-p dir) (error "Cannot access %s" dir)))
 
 (defun erc-kill-query-buffers (process)
-  "Kill all buffers of PROCESS."
+  "Kill all buffers of PROCESS.
+Does nothing if PROCESS is not a process object."
   ;; here, we only want to match the channel buffers, to avoid
   ;; "selecting killed buffers" b0rkage.
-  (erc-with-all-buffers-of-server process
-    (lambda ()
-      (not (erc-server-buffer-p)))
-    (kill-buffer (current-buffer))))
+  (when (processp process)
+    (erc-with-all-buffers-of-server process
+      (lambda ()
+	(not (erc-server-buffer-p)))
+      (kill-buffer (current-buffer)))))
 
 (defun erc-nick-at-point ()
   "Give information about the nickname at `point'.

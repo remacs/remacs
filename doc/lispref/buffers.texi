@@ -755,10 +755,14 @@ When disabling Read Only mode, it disables View mode if View mode was
 enabled.
 @end deffn
 
-@defun barf-if-buffer-read-only
+@defun barf-if-buffer-read-only &optional position
 This function signals a @code{buffer-read-only} error if the current
-buffer is read-only.  @xref{Using Interactive}, for another way to
-signal an error if the current buffer is read-only.
+buffer is read-only.  If the text at @var{position} (which defaults to
+point) has the @code{inhibit-read-only} text property set, the error
+will not be raised.
+
+@xref{Using Interactive}, for another way to signal an error if the
+current buffer is read-only.
 @end defun
 
 @node Buffer List

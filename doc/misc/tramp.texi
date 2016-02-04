@@ -1961,7 +1961,7 @@ of the secretfile is now owned by the user logged in from
 When @code{backup-directory-alist} is @code{nil} (the default), such
 problems do not occur.
 
-To ``turns off'' the backup feature for @value{tramp} files and stop
+To ``turn off'' the backup feature for @value{tramp} files and stop
 @value{tramp} from saving to the backup directory, use this:
 
 @lisp

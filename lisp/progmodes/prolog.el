@@ -53,34 +53,16 @@
 ;; all the bells and whistles one would expect, including syntax
 ;; highlighting and auto indentation.  It can also send regions to an
 ;; inferior Prolog process.
-;;
-;; The code requires the comint, easymenu, info, imenu, and font-lock
-;; libraries.  These are normally distributed with GNU Emacs and
-;; XEmacs.
 
-;;; Installation:
-;;
-;; Insert the following lines in your init file:
-;;
-;; (setq load-path (cons "/usr/lib/xemacs/site-lisp" load-path))
-;; (autoload 'run-prolog "prolog" "Start a Prolog sub-process." t)
-;; (autoload 'prolog-mode "prolog" "Major mode for editing Prolog programs." t)
-;; (autoload 'mercury-mode "prolog" "Major mode for editing Mercury programs." t)
+;; Some settings you may wish to use:
+
 ;; (setq prolog-system 'swi)  ; optional, the system you are using;
 ;;                            ; see `prolog-system' below for possible values
-;; (setq auto-mode-alist (append '(("\\.pl$" . prolog-mode)
-;;                                 ("\\.m$" . mercury-mode))
+;; (setq auto-mode-alist (append '(("\\.pl\\'" . prolog-mode)
+;;                                 ("\\.m\\'" . mercury-mode))
 ;;                                auto-mode-alist))
 ;;
-;; where the path in the first line is the file system path to this file.
-;; MSDOS paths can be written like "d:/programs/emacs-19.34/site-lisp".
-;; Note: In XEmacs, either `/usr/lib/xemacs/site-lisp' (RPM default in
-;; Red Hat-based distributions) or `/usr/local/lib/xemacs/site-lisp'
-;; (default when compiling from sources) are automatically added to
-;; `load-path', so the first line is not necessary provided that you
-;; put this file in the appropriate place.
-;;
-;; The last s-expression above makes sure that files ending with .pl
+;; The last expression above makes sure that files ending with .pl
 ;; are assumed to be Prolog files and not Perl, which is the default
 ;; Emacs setting.  If this is not wanted, remove this line.  It is then
 ;; necessary to either
@@ -98,8 +80,8 @@
 ;; If the command to start the prolog process ('sicstus', 'pl' or
 ;; 'swipl' for SWI prolog, etc.) is not available in the default path,
 ;; then it is necessary to set the value of the environment variable
-;; EPROLOG to a shell command to invoke the prolog process.  In XEmacs
-;; and Emacs 20+ you can also customize the variable
+;; EPROLOG to a shell command to invoke the prolog process.
+;; You can also customize the variable
 ;; `prolog-program-name' (in the group `prolog-inferior') and provide
 ;; a full path for your Prolog system (swi, scitus, etc.).
 ;;
@@ -109,6 +91,7 @@
 ;;   to keep the GNU Emacs compatibility.  So if you work under Emacs
 ;;   and see something that does not work do drop me a line, as I have
 ;;   a smaller chance to notice this kind of bugs otherwise.
+;  [The above comment dates from 2011.]
 
 ;; Changelog:
 
@@ -272,9 +255,6 @@
 ;; Version 0.1.35:
 ;;  o  Minor font-lock bug fixes.
 
-;;; TODO:
-
-;; Replace ":type 'sexp" with more precise Custom types.
 
 ;;; Code:
 
@@ -441,7 +421,12 @@ Legal values:
   "Alist of Prolog keywords which is used for font locking of directives."
   :version "24.1"
   :group 'prolog-font-lock
-  :type 'sexp
+  ;; Note that "(repeat string)" also allows "nil" (repeat-count 0).
+  ;; This gets processed by prolog-find-value-by-system, which
+  ;; allows both the car and the cdr to be a list to eval.
+  ;; Though the latter must have the form '(eval ...)'.
+  ;; Of course, none of this is documented...
+  :type '(repeat (list (choice symbol sexp) (choice (repeat string) sexp)))
   :risky t)
 
 (defcustom prolog-types
@@ -451,7 +436,7 @@ Legal values:
   "Alist of Prolog types used by font locking."
   :version "24.1"
   :group 'prolog-font-lock
-  :type 'sexp
+  :type '(repeat (list (choice symbol sexp) (choice (repeat string) sexp)))
   :risky t)
 
 (defcustom prolog-mode-specificators
@@ -461,7 +446,7 @@ Legal values:
   "Alist of Prolog mode specificators used by font locking."
   :version "24.1"
   :group 'prolog-font-lock
-  :type 'sexp
+  :type '(repeat (list (choice symbol sexp) (choice (repeat string) sexp)))
   :risky t)
 
 (defcustom prolog-determinism-specificators
@@ -472,7 +457,7 @@ Legal values:
   "Alist of Prolog determinism specificators used by font locking."
   :version "24.1"
   :group 'prolog-font-lock
-  :type 'sexp
+  :type '(repeat (list (choice symbol sexp) (choice (repeat string) sexp)))
   :risky t)
 
 (defcustom prolog-directives
@@ -482,7 +467,7 @@ Legal values:
   "Alist of Prolog source code directives used by font locking."
   :version "24.1"
   :group 'prolog-font-lock
-  :type 'sexp
+  :type '(repeat (list (choice symbol sexp) (choice (repeat string) sexp)))
   :risky t)
 
 
@@ -569,7 +554,8 @@ the first column (i.e., DCG heads) inserts ` -->' and newline."
  	  (or (car names) "prolog"))))
   "Alist of program names for invoking an inferior Prolog with `run-prolog'."
   :group 'prolog-inferior
-  :type 'sexp
+  :type '(alist :key-type (choice symbol sexp)
+                :value-type (group (choice string (const nil) sexp)))
   :risky t)
 (defun prolog-program-name ()
   (prolog-find-value-by-system prolog-program-name))
@@ -580,7 +566,7 @@ the first column (i.e., DCG heads) inserts ` -->' and newline."
   "Alist of switches given to inferior Prolog run with `run-prolog'."
   :version "24.1"
   :group 'prolog-inferior
-  :type 'sexp
+  :type '(repeat (list (choice symbol sexp) (choice (repeat string) sexp)))
   :risky t)
 (defun prolog-program-switches ()
   (prolog-find-value-by-system prolog-program-switches))
@@ -604,7 +590,8 @@ Some parts of the string are replaced:
      region of a buffer, in which case it is the number of lines before
      the region."
   :group 'prolog-inferior
-  :type 'sexp
+  :type '(alist :key-type (choice symbol sexp)
+                :value-type (group (choice string (const nil) sexp)))
   :risky t)
 
 (defun prolog-consult-string ()
@@ -631,17 +618,21 @@ Some parts of the string are replaced:
 If `prolog-program-name' is non-nil, it is a string sent to a Prolog process.
 If `prolog-program-name' is nil, it is an argument to the `compile' function."
   :group 'prolog-inferior
-  :type 'sexp
+  :type '(alist :key-type (choice symbol sexp)
+                :value-type (group (choice string (const nil) sexp)))
   :risky t)
 
 (defun prolog-compile-string ()
   (prolog-find-value-by-system prolog-compile-string))
 
 (defcustom prolog-eof-string "end_of_file.\n"
-  "Alist of strings that represent end of file for prolog.
-nil means send actual operating system end of file."
+  "String or alist of strings that represent end of file for prolog.
+If nil, send actual operating system end of file."
   :group 'prolog-inferior
-  :type 'sexp
+  :type '(choice string
+                 (const nil)
+                 (alist :key-type (choice symbol sexp)
+                        :value-type (group (choice string (const nil) sexp))))
   :risky t)
 
 (defcustom prolog-prompt-regexp
@@ -653,7 +644,8 @@ nil means send actual operating system end of file."
   "Alist of prompts of the prolog system command line."
   :version "24.1"
   :group 'prolog-inferior
-  :type 'sexp
+  :type '(alist :key-type (choice symbol sexp)
+                :value-type (group (choice string (const nil) sexp)))
   :risky t)
 
 (defun prolog-prompt-regexp ()
@@ -664,7 +656,8 @@ nil means send actual operating system end of file."
 ;;     (t "^|: +"))
 ;;   "Alist of regexps matching the prompt when consulting `user'."
 ;;   :group 'prolog-inferior
-;;   :type 'sexp
+;;   :type '(alist :key-type (choice symbol sexp)
+;;                :value-type (group (choice string (const nil) sexp)))
 ;;   :risky t)
 
 (defcustom prolog-debug-on-string "debug.\n"
@@ -1036,7 +1029,7 @@ VERSION is of the format (Major . Minor)"
 
 (define-abbrev-table 'prolog-mode-abbrev-table ())
 
-;; Becauses this can `eval' its arguments, any variable that gets
+;; Because this can `eval' its arguments, any variable that gets
 ;; processed by it should be marked as :risky.
 (defun prolog-find-value-by-system (alist)
   "Get value from ALIST according to `prolog-system'."

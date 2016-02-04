@@ -747,13 +747,19 @@ sure of changing the value of `foo'."
                    :capability-command "1 CAPABILITY\r\n"
                    :always-query-capabilities t
                    :end-of-command "\r\n"
-                   :success " OK "
+                   :success "^1 OK "
                    :starttls-function
-                   (lambda (capabilities)
-                     (when (string-match-p "STARTTLS" capabilities)
-                       "1 STARTTLS\r\n"))))
-         (done (and process
-                    (memq (process-status process) '(open run)))))
+                   #'(lambda (capabilities)
+                       (when (string-match-p "STARTTLS" capabilities)
+                         "1 STARTTLS\r\n"))))
+         done)
+    (when process
+      (imap-log buffer)
+      (when (memq (process-status process) '(open run))
+        (setq done process)
+        (with-current-buffer buffer
+          (goto-char (point-min))
+          (imap-parse-greeting))))
     (message "imap: Connecting with STARTTLS...%s" (if done "done" "failed"))
     done))
 

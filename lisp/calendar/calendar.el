@@ -850,6 +850,7 @@ For examples of three common styles, see `diary-american-date-forms',
 Normally you should not customize this, but `calendar-date-display-form'
 \(which see)."
   :type 'sexp
+  :risky t
   :version "23.1"
   :group 'calendar)
 
@@ -859,6 +860,7 @@ Normally you should not customize this, but `calendar-date-display-form'
 Normally you should not customize this, but `calendar-date-display-form'
 \(which see)."
   :type 'sexp
+  :risky t
   :group 'calendar)
 
 (defcustom calendar-american-date-display-form
@@ -867,6 +869,7 @@ Normally you should not customize this, but `calendar-date-display-form'
 Normally you should not customize this, but `calendar-date-display-form'
 \(which see)."
   :type 'sexp
+  :risky t
   :group 'calendar)
 
 (defcustom calendar-date-display-form
@@ -892,6 +895,7 @@ would give the usual American style in fixed-length fields.  The variables
 `calendar-american-date-display-form' provide some defaults for three common
 styles."
   :type 'sexp
+  :risky t
   :set-after '(calendar-date-style calendar-iso-date-display-form
                                    calendar-european-date-display-form
                                    calendar-american-date-display-form)

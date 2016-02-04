@@ -111,7 +111,7 @@
 CASES is a list of elements of the form (PATTERN CODE...).
 
 A structural PATTERN describes a template that identifies a class
-of values.  For example, the pattern `(,foo ,bar) matches any
+of values.  For example, the pattern \\=`(,foo ,bar) matches any
 two element list, binding its elements to symbols named `foo' and
 `bar' -- in much the same way that `cl-destructuring-bind' would.
 
@@ -119,12 +119,12 @@ A significant difference from `cl-destructuring-bind' is that, if
 a pattern match fails, the next case is tried until either a
 successful match is found or there are no more cases.
 
-Another difference is that pattern elements may be backquoted,
+Another difference is that pattern elements may be quoted,
 meaning they must match exactly: The pattern \\='(foo bar)
 matches only against two element lists containing the symbols
 `foo' and `bar' in that order.  (As a short-hand, atoms always
 match themselves, such as numbers or strings, and need not be
-quoted).
+quoted.)
 
 Lastly, a pattern can be logical, such as (pred numberp), that
 matches any number-like element; or the symbol `_', that matches

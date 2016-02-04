@@ -7234,14 +7234,23 @@ get_next_display_element (struct it *it)
 		     buffer position is stored in the 'position'
 		     member of the iteration stack slot below the
 		     current one, see handle_single_display_spec.  By
-		     contrast, it->current.pos was is not yet updated
+		     contrast, it->current.pos was not yet updated
 		     to point to that buffer position; that will
 		     happen in pop_it, after we finish displaying the
 		     current string.  Note that we already checked
 		     above that it->sp is positive, so subtracting one
 		     from it is safe.  */
 		  if (it->from_disp_prop_p)
-		    pos = (it->stack + it->sp - 1)->position;
+		    {
+		      int stackp = it->sp - 1;
+
+		      /* Find the stack level with data from buffer.  */
+		      while (stackp >= 0
+			     && STRINGP ((it->stack + stackp)->string))
+			stackp--;
+		      eassert (stackp >= 0);
+		      pos = (it->stack + stackp)->position;
+		    }
 		  else
 		    INC_TEXT_POS (pos, it->multibyte_p);
 

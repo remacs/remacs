@@ -260,7 +260,7 @@ This can also be a list of the above values."
   ;; needed there.  And XEmacs doesn't handle `intangible' anyway.
   '(invisible t)
   "Property list to use for hiding text."
-  :type 'sexp
+  :type 'plist
   :group 'gnus-article-hiding)
 
 ;; Fixme: This isn't the right thing for mixed graphical and non-graphical

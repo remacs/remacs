@@ -263,7 +263,7 @@ Emacs uses ERT, Emacs Lisp Regression Testing, for testing.  See (info
 for more information on writing and running tests.
 
 If your test lasts longer than some few seconds, mark it in its
-`ert-deftest' definition with ":tags '(:expensive-test)".
+'ert-deftest' definition with ":tags '(:expensive-test)".
 
 To run tests on the entire Emacs tree, run "make check" from the
 top-level directory.  Most tests are in the directory

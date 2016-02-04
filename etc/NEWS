@@ -500,6 +500,10 @@ servers.
 ---
 *** Reconnection is now asynchronous.
 
+---
+*** Nick completion is now case-insentive again after inadvertently
+being made case-sensitive in Emacs 24.2.
+
 ** Midnight-mode
 
 ---
@@ -564,7 +568,7 @@ which were installed by the user (as opposed to installed as
 dependencies).  This variable can also be manually customized.
 
 ---
-*** New command `package-install-user-selected-packages' installs all
+*** New command `package-install-selected-packages' installs all
 packages from `package-selected-packages' which are currently missing.
 
 ---

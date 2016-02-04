@@ -272,7 +272,7 @@ History}).  If it is omitted or @code{nil}, the history list defaults
 to @code{regexp-history}.
 @end defun
 
-@defvar read-regexp-defaults-function
+@defopt read-regexp-defaults-function
 The function @code{read-regexp} may use the value of this variable to
 determine its list of default regular expressions.  If non-@code{nil},
 the value of this variable should be either:
@@ -288,7 +288,7 @@ or a list of strings.
 
 @noindent
 See @code{read-regexp} above for details of how these values are used.
-@end defvar
+@end defopt
 
 @defvar minibuffer-allow-text-properties
 If this variable is @code{nil}, then @code{read-from-minibuffer}
@@ -2336,11 +2336,11 @@ This is like @code{minibuffer-contents}, except that it does not copy text
 properties, just the characters themselves.  @xref{Text Properties}.
 @end defun
 
-@defun delete-minibuffer-contents
-This function erases the editable contents of the minibuffer (that is,
+@deffn Command delete-minibuffer-contents
+This command erases the editable contents of the minibuffer (that is,
 everything except the prompt), if a minibuffer is current.  Otherwise,
 it erases the entire current buffer.
-@end defun
+@end deffn
 
 @node Recursive Mini
 @section Recursive Minibuffers
