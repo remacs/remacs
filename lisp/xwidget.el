@@ -144,7 +144,7 @@ Interactively, URL defaults to the string looking like a url around point."
 (defun xwidget-webkit-scroll-up ()
   "Scroll webkit up.
 Depending on the value of `xwidget-webkit-scroll-behavior',
-this scrolls in 'native' fashion, or like `image-mode' would."
+this scrolls in `native' fashion, or like `image-mode' would."
   (interactive)
   (if (eq xwidget-webkit-scroll-behavior 'native)
       (xwidget-set-adjustment (xwidget-webkit-last-session) 'vertical t 50)
@@ -153,7 +153,7 @@ this scrolls in 'native' fashion, or like `image-mode' would."
 (defun xwidget-webkit-scroll-down ()
   "Scroll webkit down.
 Depending on the value of `xwidget-webkit-scroll-behavior',
-this scrolls in 'native' fashion, or like `image-mode' would."
+this scrolls in `native' fashion, or like `image-mode' would."
   (interactive)
   (if (eq xwidget-webkit-scroll-behavior 'native)
       (xwidget-set-adjustment (xwidget-webkit-last-session) 'vertical t -50)
@@ -162,7 +162,7 @@ this scrolls in 'native' fashion, or like `image-mode' would."
 (defun xwidget-webkit-scroll-forward ()
   "Scroll webkit forwards.
 Depending on the value of `xwidget-webkit-scroll-behavior',
-this scrolls in 'native' fashion, or like `image-mode' would."
+this scrolls in `native' fashion, or like `image-mode' would."
   (interactive)
   (if (eq xwidget-webkit-scroll-behavior 'native)
       (xwidget-set-adjustment (xwidget-webkit-last-session) 'horizontal t 50)
@@ -171,7 +171,7 @@ this scrolls in 'native' fashion, or like `image-mode' would."
 (defun xwidget-webkit-scroll-backward ()
   "Scroll webkit backwards.
 Depending on the value of `xwidget-webkit-scroll-behavior',
-this scrolls in 'native' fashion, or like `image-mode' would."
+this scrolls in `native' fashion, or like `image-mode' would."
   (interactive)
   (if (eq xwidget-webkit-scroll-behavior 'native)
       (xwidget-set-adjustment (xwidget-webkit-last-session) 'horizontal t -50)

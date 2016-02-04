@@ -216,7 +216,7 @@ Whether the passphrase is cached at all is controlled by
 					"")))))
 	  (if (setq cert (smime-cert-by-dns who))
 	      (setq result (list 'certfile (buffer-name cert)))
-	    (setq bad (format "`%s' not found. " who))))
+	    (setq bad (gnus-format-message "`%s' not found. " who))))
       (quit))
     result))
 
@@ -235,7 +235,7 @@ Whether the passphrase is cached at all is controlled by
 					"")))))
 	  (if (setq cert (smime-cert-by-ldap who))
 	      (setq result (list 'certfile (buffer-name cert)))
-	    (setq bad (format "`%s' not found. " who))))
+	    (setq bad (gnus-format-message "`%s' not found. " who))))
       (quit))
     result))
 

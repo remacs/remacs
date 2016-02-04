@@ -1169,7 +1169,7 @@ Each function's symbol gets added to `byte-compile-noruntime-functions'."
     (display-warning 'bytecomp string level byte-compile-log-buffer)))
 
 (defun byte-compile-warn (format &rest args)
-  "Issue a byte compiler warning; use (format FORMAT ARGS...) for message."
+  "Issue a byte compiler warning; use (format-message FORMAT ARGS...) for message."
   (setq format (apply #'format-message format args))
   (if byte-compile-error-on-warn
       (error "%s" format)		; byte-compile-file catches and logs it
@@ -3746,7 +3746,8 @@ discarding."
     (if (= (logand len 1) 1)
         (progn
           (byte-compile-log-warning
-           (format "missing value for `%S' at end of setq" (car (last args)))
+           (format-message
+            "missing value for `%S' at end of setq" (car (last args)))
            nil :error)
           (byte-compile-form
            `(signal 'wrong-number-of-arguments '(setq ,len))
@@ -4017,7 +4018,8 @@ that suppresses all warnings during execution of BODY."
       (progn
         (mapc 'byte-compile-form (cdr form))
         (byte-compile-out 'byte-call (length (cdr (cdr form)))))
-    (byte-compile-log-warning "`funcall' called with no arguments" nil :error)
+    (byte-compile-log-warning
+     (format-message "`funcall' called with no arguments") nil :error)
     (byte-compile-form '(signal 'wrong-number-of-arguments '(funcall 0))
                        byte-compile--for-effect)))
 

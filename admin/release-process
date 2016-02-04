@@ -7,7 +7,7 @@ Each release cycle will be split into two periods.
 ** Phase one: development
 
 The first phase of the release schedule is the "heads-down" working
-period for new features, on the `master' branch and several feature
+period for new features, on the 'master' branch and several feature
 branches.
 
 ** Phase two: fixing and stabilizing the release branch
@@ -23,11 +23,11 @@ new features.
 
 At the beginning of this phase, a release branch called "emacs-NN"
 ("NN" represents the major version number of the new Emacs release)
-will be cut from `master'.  When that happens, the version number on
-`master' should be incremented; use admin/admin.el's `set-version'
+will be cut from 'master'.  When that happens, the version number on
+'master' should be incremented; use admin/admin.el's 'set-version'
 command to do that, then commit the changes it made and push to
-`master'.  For major releases, also update the value of
-`customize-changed-options-previous-release'.
+'master'.  For major releases, also update the value of
+'customize-changed-options-previous-release'.
 
 The 2 main manuals, the User Manual and the Emacs Lisp Manual, need to
 be proofread, preferably by at least 2 different persons, and any
@@ -35,7 +35,7 @@ uncovered problems fixed.  This is a lot of work, so it is advisable
 to divide the job between several people (see the checklist near the
 end of this file).
 
-In parallel to this phase, `master' can receive new features, to be
+In parallel to this phase, 'master' can receive new features, to be
 released in the next release cycle.  From time to time, the master
 branches merges bugfix commits from the "emacs-NN" branch.
 
@@ -55,7 +55,7 @@ Change "block" to "unblock" to unblock the bug.
 * TO BE DONE SHORTLY BEFORE RELEASE
 
 ** Make sure the Copyright date reflects the current year in the source
-files.  See `admin/notes/years' for information about maintaining
+files.  See 'admin/notes/years' for information about maintaining
 copyright years for GNU Emacs.
 
 ** Make sure the necessary sources and scripts for any generated files
@@ -344,10 +344,10 @@ windows.texi
 
 * OTHER INFORMATION
 
-For Emacs's versioning scheme, see `admin/notes/versioning'.
+For Emacs's versioning scheme, see 'admin/notes/versioning'.
 
 For instructions to create pretest or release tarballs, announcements,
-etc., see `admin/make-tarball.txt'.
+etc., see 'admin/make-tarball.txt'.
 
 
 Local variables:

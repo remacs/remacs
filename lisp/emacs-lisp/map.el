@@ -55,7 +55,7 @@ found in the map, the corresponding PAT doesn't match the value
 associated to the KEY.
 
 Each element can also be a SYMBOL, which is an abbreviation of a (KEY
-PAT) tuple of the form ('SYMBOL SYMBOL).
+PAT) tuple of the form (\\='SYMBOL SYMBOL).
 
 Keys in ARGS not found in the map are ignored, and the match doesn't
 fail."
