@@ -4830,7 +4830,7 @@ channel."
 			((pred (eq op-ch))    op)
 			((pred (eq adm-ch))   admin)
 			((pred (eq own-ch))   owner)
-			(_ (error "Unknown prefix char `%S'" ch) voice))
+			(_ (message "Unknown prefix char `%S'" ch) voice))
 		      'on)))
           (when updatep
 	    ;; If we didn't issue the NAMES request (consider two clients
