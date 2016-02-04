@@ -966,7 +966,7 @@ element is the data blob and the second element is the content-type."
                             (image-animated-p image))))
             (image-animate image nil 60)))
 	image)
-    (insert alt)))
+    (insert (or alt ""))))
 
 (defun shr-rescale-image (data &optional content-type)
   "Rescale DATA, if too big, to fit the current buffer."
