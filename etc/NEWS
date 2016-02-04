@@ -429,7 +429,7 @@ specified message types for the respective specified targets.
 *** Reconnection is now asynchronous.
 
 ---
-*** Nick completion is now case-insentive again after inadvertently
+*** Nick completion is now case-insensitive again after inadvertently
 being made case-sensitive in Emacs 24.2.
 
 ** Midnight-mode
