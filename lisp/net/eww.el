@@ -1515,7 +1515,7 @@ If CHARSET is nil then use UTF-8."
          '(:annotation-function (lambda (buf)
                                   (with-current-buffer buf
                                     (format " %s" (eww-current-url)))))))
-    (switch-to-buffer
+    (pop-to-buffer-same-window
      (read-buffer "Switch to EWW buffer: "
                   (cl-loop for buf in (nreverse (buffer-list))
                            if (with-current-buffer buf (derived-mode-p 'eww-mode))
