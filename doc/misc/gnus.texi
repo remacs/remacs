@@ -14325,7 +14325,7 @@ Here's a complete example @code{nnimap} backend with a client-side
 @example
 (nnimap "imap.example.com"
         (nnimap-inbox "INBOX")
-        (nnimap-split-methods
+        (nnimap-split-fancy
          (| ("MailScanner-SpamCheck" "spam" "spam.detected")
             (to "foo@@bar.com" "foo")
             "undecided")))
