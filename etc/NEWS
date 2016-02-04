@@ -283,6 +283,10 @@ selected window is strongly dedicated to its buffer.
 `even-window-sizes' and now handles window widths as well.
 
 +++
+** New function `read-multiple-choice' use to prompt for
+multiple-choice questions, with a handy way to display help texts.
+
++++
 ** terpri gets an optional arg ENSURE to conditionally output a newline.
 
 +++

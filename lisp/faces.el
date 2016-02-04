@@ -2670,6 +2670,12 @@ It is used for characters of no fonts too."
   :version "24.1"
   :group 'basic-faces)
 
+(defface read-multiple-choice-face
+  '((t (:inherit bold)))
+  "Face for the symbol name in Apropos output."
+  :group 'basic-faces
+  :version "25.2")
+
 ;; Faces for TTY menus.
 (defface tty-menu-enabled-face
   '((t

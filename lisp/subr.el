@@ -2233,6 +2233,120 @@ keyboard-quit events while waiting for a valid input."
     (message "%s%s" prompt (char-to-string char))
     char))
 
+(defun read-multiple-choice (prompt choices)
+  "Ask user a multiple choice question.
+PROMPT should be a string that will be displayed as the prompt.
+
+CHOICES is an alist where the first element in each entry is a
+character to be entered, the second element is a short name for
+the entry to be displayed while prompting (if there's room, it
+might be shortened), and the third, optional entry is a longer
+explanation that will be displayed in a help buffer if the user
+requests more help.
+
+The return value is the matching entry from the CHOICES list.
+
+Usage example:
+
+\(read-multiple-choice \"Continue connecting?\"
+                      '((?a \"always\")
+                        (?s \"session only\")
+                        (?n \"no\")))"
+  (let* ((altered-names nil)
+         (full-prompt
+          (format
+           "%s (%s, ?): "
+           prompt
+           (mapconcat
+            (lambda (elem)
+              (let* ((name (cadr elem))
+                     (pos (seq-position name (car elem)))
+                     (altered-name
+                      (cond
+                       ;; Not in the name string.
+                       ((not pos)
+                        (format "[%c] %s" (car elem) name))
+                       ;; The prompt character is in the name, so highlight
+                       ;; it on graphical terminals...
+                       ((display-graphic-p)
+                        (setq name (copy-sequence name))
+                        (put-text-property pos (1+ pos)
+                                           'face 'read-multiple-choice-face
+                                           name)
+                        name)
+                       ;; And put it in [bracket] on non-graphical terminals.
+                       (t
+                        (concat
+                         (substring name 0 pos)
+                         "["
+                         (upcase (substring name pos (1+ pos)))
+                         "]"
+                         (substring name (1+ pos)))))))
+                (push (cons (car elem) altered-name)
+                      altered-names)
+                altered-name))
+            choices ", ")))
+         tchar buf)
+    (save-window-excursion
+      (save-excursion
+	(while (not tchar)
+	  (message "%s" full-prompt)
+	  (setq tchar (condition-case nil
+                          (read-char)
+                        (error nil)))
+          ;; The user has entered an invalid choice, so display the
+          ;; help messages.
+	  (when (not (assq tchar choices))
+	    (setq tchar nil)
+            (with-help-window (setq buf (get-buffer-create
+                                         "*Multiple Choice Help*"))
+              (with-current-buffer buf
+                (erase-buffer)
+                (pop-to-buffer buf)
+                (insert prompt "\n\n")
+                (let* ((columns (/ (window-width) 25))
+                       (fill-column 21)
+                       (times 0)
+                       (start (point)))
+                  (dolist (elem choices)
+                    (goto-char start)
+                    (unless (zerop times)
+                      (if (zerop (mod times columns))
+                          ;; Go to the next "line".
+                          (goto-char (setq start (point-max)))
+                        ;; Add padding.
+                        (while (not (eobp))
+                          (end-of-line)
+                          (insert (make-string (- (* (mod times columns)
+                                                     (+ fill-column 4))
+                                                  (current-column))
+                                               ?\s))
+                          (forward-line 1))))
+                    (setq times (1+ times))
+                    (let ((text
+                           (with-temp-buffer
+                             (insert (format
+                                      "%c: %s\n"
+                                      (car elem)
+                                      (cdr (assq (car elem) altered-names))))
+                             (fill-region (point-min) (point-max))
+                             (when (nth 2 elem)
+                               (insert (nth 2 elem))
+                               (unless (bolp)
+                                 (insert "\n"))
+                               (fill-region start (point-max)))
+                             (buffer-string))))
+                      (goto-char start)
+                      (dolist (line (split-string text "\n"))
+                        (end-of-line)
+                        (if (bolp)
+                            (insert line "\n")
+                          (insert line))
+                        (forward-line 1)))))))))))
+    (when (buffer-live-p buf)
+      (kill-buffer buf))
+    (assq tchar choices)))
+
 (defun sit-for (seconds &optional nodisp obsolete)
   "Redisplay, then wait for SECONDS seconds.  Stop when input is available.
 SECONDS may be a floating-point value.
