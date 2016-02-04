@@ -77,7 +77,7 @@
   :group 'newsticker-treeview)
 
 (defface newsticker-treeview-selection-face
-  '((((class color) (background dark))  :background "#bbbbff")
+  '((((class color) (background dark))  :background "#4444aa")
     (((class color) (background light)) :background "#bbbbff"))
   "Face for newsticker selection."
   :group 'newsticker-treeview)
