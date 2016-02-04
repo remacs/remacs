@@ -1409,9 +1409,7 @@ The preference is a float determined from `shr-prefer-media-type'."
 	      (and shr-blocked-images
 		   (string-match shr-blocked-images url)))
 	  (setq shr-start (point))
-	  (if (> (string-width alt) 8)
-	      (shr-insert (truncate-string-to-width alt 8))
-	    (shr-insert alt)))
+          (shr-insert alt))
 	 ((and (not shr-ignore-cache)
 	       (url-is-cached (shr-encode-url url)))
 	  (funcall shr-put-image-function (shr-get-image-data url) alt))
