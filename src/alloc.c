@@ -1126,21 +1126,12 @@ lisp_free (void *block)
    unexmacosx.c, so don't use it on Darwin.  */
 
 #if ! ADDRESS_SANITIZER && !defined DARWIN_OS
-# if !defined SYSTEM_MALLOC && !defined DOUG_LEA_MALLOC && !defined HYBRID_MALLOC
+# if (defined HAVE_ALIGNED_ALLOC					\
+      || (defined HYBRID_MALLOC						\
+	  ? defined HAVE_POSIX_MEMALIGN					\
+	  : !defined SYSTEM_MALLOC && !defined DOUG_LEA_MALLOC))
 #  define USE_ALIGNED_ALLOC 1
-#  ifndef HAVE_ALIGNED_ALLOC
-/* Defined in gmalloc.c.  */
-void *aligned_alloc (size_t, size_t);
-#  endif
-# elif defined HYBRID_MALLOC
-#  if defined HAVE_ALIGNED_ALLOC || defined HAVE_POSIX_MEMALIGN
-#   define USE_ALIGNED_ALLOC 1
-#  endif
-# elif !defined SYSTEM_MALLOC && !defined DOUG_LEA_MALLOC
-#  define USE_ALIGNED_ALLOC 1
-# elif defined HAVE_ALIGNED_ALLOC
-#  define USE_ALIGNED_ALLOC 1
-# elif defined HAVE_POSIX_MEMALIGN
+# elif !defined HYBRID_MALLOC && defined HAVE_POSIX_MEMALIGN
 #  define USE_ALIGNED_ALLOC 1
 static void *
 aligned_alloc (size_t alignment, size_t size)
