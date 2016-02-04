@@ -1136,7 +1136,9 @@ See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
      (t
       (eww-form-text dom)))
     (unless (= start (point))
-      (put-text-property start (1+ start) 'help-echo "Input field"))))
+      (put-text-property start (1+ start) 'help-echo "Input field")
+      ;; Mark this as an element we can TAB to.
+      (put-text-property start (1+ start) 'shr-url dom))))
 
 (defun eww-tag-select (dom)
   (shr-ensure-paragraph)
