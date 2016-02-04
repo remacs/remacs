@@ -6083,13 +6083,15 @@ If it doesn't exist, create it."
   (or (file-accessible-directory-p dir) (error "Cannot access %s" dir)))
 
 (defun erc-kill-query-buffers (process)
-  "Kill all buffers of PROCESS."
+  "Kill all buffers of PROCESS.
+Does nothing if PROCESS is not a process object."
   ;; here, we only want to match the channel buffers, to avoid
   ;; "selecting killed buffers" b0rkage.
-  (erc-with-all-buffers-of-server process
-    (lambda ()
-      (not (erc-server-buffer-p)))
-    (kill-buffer (current-buffer))))
+  (when (processp process)
+    (erc-with-all-buffers-of-server process
+      (lambda ()
+	(not (erc-server-buffer-p)))
+      (kill-buffer (current-buffer)))))
 
 (defun erc-nick-at-point ()
   "Give information about the nickname at `point'.
