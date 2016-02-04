@@ -1139,7 +1139,7 @@ See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
 	  (nconc eww-form (list
 			   (list 'hidden
 				 :name name
-				 :value (dom-attr dom 'value)))))))
+				 :value (or (dom-attr dom 'value) "")))))))
      (t
       (eww-form-text dom)))
     (unless (= start (point))
