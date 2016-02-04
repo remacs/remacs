@@ -87,9 +87,15 @@ If the return value is a number, it is used as the timer period."
 
 (defcustom tetris-x-colors
   [[0 0 1] [0.7 0 1] [1 1 0] [1 0 1] [0 1 1] [0 1 0] [1 0 0]]
-  "Vector of colors of the various shapes."
+  "Vector of RGB colors of the various shapes."
   :group 'tetris
-  :type 'sexp)
+  :type '(vector (vector :tag "Shape 1" number number number)
+                 (vector :tag "Shape 2" number number number)
+                 (vector :tag "Shape 3" number number number)
+                 (vector :tag "Shape 4" number number number)
+                 (vector :tag "Shape 5" number number number)
+                 (vector :tag "Shape 6" number number number)
+                 (vector :tag "Shape 7" number number number)))
 
 (defcustom tetris-buffer-name "*Tetris*"
   "Name used for Tetris buffer."

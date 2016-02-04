@@ -154,10 +154,8 @@ viper-insert-basic-map.  Not recommended, except for novice users.")
 ;; Some important keys used in viper
 (defcustom viper-toggle-key [(control ?z)]  ; "\C-z"
   "The key used to change states from Emacs to Vi and back.
-In insert mode, this key also functions as Meta.
-
-Enter as a sexp.  Examples: \"\\C-z\", [(control ?z)]."
-  :type 'sexp
+In insert mode, this key also functions as Meta."
+  :type 'key-sequence
   :group 'viper
   :set (lambda (symbol value)
 	 (let ((old-value (if (boundp 'viper-toggle-key)

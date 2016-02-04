@@ -8369,7 +8369,17 @@ sys_read (int fd, char * buffer, unsigned int count)
 
 	    case STATUS_READ_READY:
 	    case STATUS_READ_IN_PROGRESS:
-	      DebPrint (("sys_read called when read is in progress\n"));
+#if 0
+	      /* This happens all the time during GnuTLS handshake
+		 with the remote, evidently because GnuTLS waits for
+		 the read to complete by retrying the read operation
+		 upon EAGAIN.  So I'm disabling the DebPrint to avoid
+		 wasting cycles on something that is not a real
+		 problem.  Enable if you need to debug something that
+		 bumps into this.  */
+	      DebPrint (("sys_read called when read is in progress %d\n",
+			 current_status));
+#endif
 	      errno = EWOULDBLOCK;
 	      return -1;
 

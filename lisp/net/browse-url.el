@@ -920,7 +920,6 @@ instead of `browse-url-new-window-flag'."
     ((browse-url-can-use-xdg-open) 'browse-url-xdg-open)
 ;;;    ((executable-find browse-url-gnome-moz-program) 'browse-url-gnome-moz)
     ((executable-find browse-url-mozilla-program) 'browse-url-mozilla)
-    ((executable-find browse-url-chrome-program) 'browse-url-chrome)
     ((executable-find browse-url-firefox-program) 'browse-url-firefox)
     ((executable-find browse-url-chromium-program) 'browse-url-chromium)
 ;;;    ((executable-find browse-url-galeon-program) 'browse-url-galeon)
@@ -928,6 +927,7 @@ instead of `browse-url-new-window-flag'."
 ;;;    ((executable-find browse-url-netscape-program) 'browse-url-netscape)
 ;;;    ((executable-find browse-url-mosaic-program) 'browse-url-mosaic)
     ((executable-find browse-url-conkeror-program) 'browse-url-conkeror)
+    ((executable-find browse-url-chrome-program) 'browse-url-chrome)
     ((executable-find browse-url-xterm-program) 'browse-url-text-xterm)
     ((locate-library "w3") 'browse-url-w3)
     (t

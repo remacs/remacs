@@ -443,7 +443,15 @@ NET is a symbol indicating to which network from `erc-networks-alist' this
 HOST is the servers hostname and
 PORTS is either a number, a list of numbers, or a list of port ranges."
   :group 'erc-networks
-  :type 'sexp)
+  :type '(alist :key-type (string :tag "Name")
+		:value-type
+		(group symbol (string :tag "Hostname")
+		       (choice :tag "Ports"
+			       (integer :tag "Port number")
+			       (repeat :tag "List of ports or ranges"
+				       (choice (integer :tag "Port number")
+					       (list :tag "Port range"
+						     integer integer)))))))
 
 (defcustom erc-networks-alist
   '((4-irc "4-irc.com")

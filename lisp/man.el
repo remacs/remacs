@@ -184,7 +184,9 @@ The value also can be a positive integer for a fixed width."
 
 (defcustom Man-frame-parameters nil
   "Frame parameter list for creating a new frame for a manual page."
-  :type 'sexp
+  :type '(repeat (cons :format "%v"
+		       (symbol :tag "Parameter")
+		       (sexp :tag "Value")))
   :group 'man)
 
 (defcustom Man-downcase-section-letters-flag t

@@ -208,9 +208,11 @@ icon widgets used to draw the tree.  By default these images are used:
 
 (defcustom tree-widget-space-width 0.5
   "Amount of space between an icon image and a node widget.
-Must be a valid space :width display property."
+Must be a valid space :width display property.
+See Info node `(elisp)Specified Space'."
   :group 'tree-widget
-  :type 'sexp)
+  :type '(choice (number :tag "Multiple of normal character width")
+                 sexp))
 
 ;;; Image support
 ;;

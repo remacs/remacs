@@ -3406,7 +3406,7 @@ it if ARG is omitted or nil."
 (defcustom gud-tooltip-modes '(gud-mode c-mode c++-mode fortran-mode
 					python-mode)
   "List of modes for which to enable GUD tooltips."
-  :type 'sexp
+  :type '(repeat (symbol :tag "Major mode"))
   :group 'gud
   :group 'tooltip)
 
@@ -3421,6 +3421,7 @@ it if ARG is omitted or nil."
 Forms in the list are combined with AND.  The default is to display
 only tooltips in the buffer containing the overlay arrow."
   :type 'sexp
+  :risky t
   :group 'gud
   :group 'tooltip)
 
