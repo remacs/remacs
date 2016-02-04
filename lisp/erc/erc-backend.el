@@ -474,13 +474,39 @@ Currently this is called by `erc-send-input'."
                      nil t))
       (split-string (buffer-string) "\n"))))
 
+(defun erc-forward-word ()
+  "Moves forward one word, ignoring any subword settings.  If no
+subword-mode is active, then this is (forward-word)."
+  (skip-syntax-forward "^w")
+  (> (skip-syntax-forward "w") 0))
+
+(defun erc-word-at-arg-p (pos)
+  "Reports whether the char after a given POS has word syntax.
+If POS is out of range, the value is nil."
+  (let ((c (char-after pos)))
+    (if c
+        (eq ?w (char-syntax c))
+      nil)))
+
+(defun erc-bounds-of-word-at-point ()
+  "Returns the bounds of a word at point, or nil if we're not at
+a word.  If no subword-mode is active, then this
+is (bounds-of-thing-at-point 'word)."
+  (if (or (erc-word-at-arg-p (point))
+          (erc-word-at-arg-p (1- (point))))
+      (save-excursion
+        (let* ((start (progn (skip-syntax-backward "w") (point)))
+               (end   (progn (skip-syntax-forward  "w") (point))))
+          (cons start end)))
+    nil))
+
 ;; Used by CTCP functions
 (defun erc-upcase-first-word (str)
   "Upcase the first word in STR."
   (with-temp-buffer
     (insert str)
     (goto-char (point-min))
-    (upcase-word 1)
+    (upcase-region (point) (progn (erc-forward-word) (point)))
     (buffer-string)))
 
 (defun erc-server-setup-periodical-ping (buffer)
