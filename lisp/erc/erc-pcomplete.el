@@ -238,10 +238,12 @@ If optional argument IGNORE-SELF is non-nil, don't return the current nick."
   "Returns a list of all nicks on the current server."
   (let (nicks)
     (erc-with-server-buffer
-      (maphash (lambda (nick _user)
-                 (setq nicks (cons (concat nick postfix) nicks)))
+      (maphash (lambda (_nick user)
+                 (setq nicks (cons
+                              (concat (erc-server-user-nickname user) postfix)
+                              nicks)))
                erc-server-users))
-      nicks))
+    nicks))
 
 (defun pcomplete-erc-channels ()
   "Returns a list of channels associated with the current server."
