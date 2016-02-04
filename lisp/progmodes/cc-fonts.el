@@ -1008,7 +1008,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
       ((pos (point)) next-pos id-start id-end
        decl-res
        paren-depth
-       id-face got-init
+       id-face got-type got-init
        c-last-identifier-range
        (separator-prop (if types 'c-decl-type-start 'c-decl-id-start))
        brackets-after-id)
@@ -1020,7 +1020,28 @@ casts and declarations are fontified.  Used on level 2 and higher."
       (setq next-pos (point)
 	    id-start (car decl-res)
 	    id-face (if (and (eq (char-after) ?\()
-			     (not (car (cddr decl-res)))) ; brackets-after-id
+			     (not (car (cddr decl-res))) ; brackets-after-id
+			     (or (not (c-major-mode-is 'c++-mode))
+				 (save-excursion
+				   (let (c-last-identifier-range)
+				     (forward-char)
+				     (c-forward-syntactic-ws)
+				     (catch 'is-function
+				       (while
+					   (progn
+					     (if (eq (char-after) ?\))
+						 (throw 'is-function t))
+					     (setq got-type (c-forward-type))
+					     (cond
+					      ((null got-type)
+					       (throw 'is-function nil))
+					      ((not (eq got-type 'maybe))
+					       (throw 'is-function t)))
+					     (c-forward-declarator limit t)
+					     (eq (char-after) ?,))
+					 (forward-char)
+					 (c-forward-syntactic-ws))
+				       t)))))
 			'font-lock-function-name-face
 		      'font-lock-variable-name-face)
 	    got-init (and (cadr (cddr decl-res)) ; got-init

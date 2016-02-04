@@ -6808,7 +6808,7 @@ comment at the start of cc-engine.el for more info."
 	;; This identifier is bound only in the inner let.
 	'(setq start id-start))))
 
-(defun c-forward-declarator (&optional limit)
+(defun c-forward-declarator (&optional limit accept-anon)
   ;; Assuming point is at the start of a declarator, move forward over it,
   ;; leaving point at the next token after it (e.g. a ) or a ; or a ,).
   ;;
@@ -6816,6 +6816,11 @@ comment at the start of cc-engine.el for more info."
   ;; ID-END are the bounds of the declarator's identifier, and
   ;; BRACKETS-AFTER-ID is non-nil if a [...] pair is present after the id.
   ;; GOT-INIT is non-nil when the declarator is followed by "=" or "(".
+  ;;
+  ;; If ACCEPT-ANON is non-nil, move forward over any "anonymous declarator",
+  ;; i.e. something like the (*) in int (*), such as might be found in a
+  ;; declaration.  In such a case ID-START and ID-END in the return value are
+  ;; both set to nil.  A "null" "anonymous declarator" gives a non-nil result.
   ;;
   ;; If no declarator is found, leave point unmoved and return nil.  LIMIT is
   ;; an optional limit for forward searching.
@@ -6871,13 +6876,17 @@ comment at the start of cc-engine.el for more info."
 
 	   ;; If we haven't passed the identifier already, do it now.
 	   (unless got-identifier
-	     (setq id-start (point))
-	     (c-forward-name))
-	   (prog1
-	       (/= (point) here)
+	     (setq id-start (point)))
+	   (cond
+	    ((or got-identifier
+		 (c-forward-name))
 	     (save-excursion
 	       (c-backward-syntactic-ws)
-	       (setq id-end (point)))))
+	       (setq id-end (point))))
+	    (accept-anon
+	     (setq id-start nil id-end nil)
+	     t)
+	    (t (/= (point) here))))
 
 	 ;; Skip out of the parens surrounding the identifier.  If closing
 	 ;; parens are missing, this form returns nil.
@@ -7266,7 +7275,7 @@ comment at the start of cc-engine.el for more info."
       (goto-char id-start)
 
       ;; Skip over type decl prefix operators.  (Note similar code in
-      ;; `c-font-lock-declarators'.)
+      ;; `c-forward-declarator'.)
       (if (and c-recognize-typeless-decls
 	       (equal c-type-decl-prefix-key "\\<\\>"))
 	  (when (eq (char-after) ?\()
