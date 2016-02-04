@@ -52,6 +52,11 @@ in these situations.
 
 * Changes in Specialized Modes and Packages in Emacs 25.2
 
+** eww
+
++++
+*** A new `s' command for switching to another eww buffer via the minibuffer.
+
 +++
 ** The commands that add ChangeLog entries now prefer a VCS root directory
 for the ChangeLog file, if none already exists.  Customize

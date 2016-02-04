@@ -689,6 +689,7 @@ the like."
     (define-key map "R" 'eww-readable)
     (define-key map "H" 'eww-list-histories)
     (define-key map "E" 'eww-set-character-encoding)
+    (define-key map "s" 'eww-switch-to-buffer)
     (define-key map "S" 'eww-list-buffers)
     (define-key map "F" 'eww-toggle-fonts)
     (define-key map [(meta C)] 'eww-toggle-colors)
@@ -712,6 +713,7 @@ the like."
 	["View page source" eww-view-source]
 	["Copy page URL" eww-copy-page-url t]
 	["List histories" eww-list-histories t]
+	["Switch to buffer" eww-switch-to-buffer t]
 	["List buffers" eww-list-buffers t]
 	["Add bookmark" eww-add-bookmark t]
 	["List bookmarks" eww-list-bookmarks t]
@@ -1497,6 +1499,24 @@ If CHARSET is nil then use UTF-8."
   (if (null charset)
       (eww-reload nil 'utf-8)
     (eww-reload nil charset)))
+
+(defun eww-switch-to-buffer ()
+  "Prompt for an EWW buffer to display in the selected window."
+  (interactive)
+  (let ((completion-extra-properties
+         '(:annotation-function (lambda (buf)
+                                  (with-current-buffer buf
+                                    (format " %s" (eww-current-url)))))))
+    (switch-to-buffer
+     (read-buffer "Switch to EWW buffer: "
+                  (cl-loop for buf in (nreverse (buffer-list))
+                           if (with-current-buffer buf (derived-mode-p 'eww-mode))
+                           return buf)
+                  t
+                  (lambda (bufn)
+                    (with-current-buffer
+                        (if (consp bufn) (cdr bufn) (get-buffer bufn))
+                      (derived-mode-p 'eww-mode)))))))
 
 (defun eww-toggle-fonts ()
   "Toggle whether to use monospaced or font-enabled layouts."
