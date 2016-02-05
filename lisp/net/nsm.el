@@ -307,7 +307,13 @@ unencrypted."
 	     (quit 'no)
 	     (error 'no))))
       (if (eq response 'no)
-	  nil
+          (progn
+            (message "Aborting connection to %s:%s" host port)
+            nil)
+        (message (if (eq response 'session)
+                     "Accepting certificate for %s:%s this session only"
+                   "Permanently accepting certificate for %s:%s")
+                 host port)
 	(nsm-save-host host port status what response)
 	t))))
 
