@@ -2296,10 +2296,23 @@ Usage example:
                        "Invalid choice.  "
                      "")
                    full-prompt)
-	  (setq tchar (condition-case nil
-                          (let ((cursor-in-echo-area t))
-                            (read-char))
-                        (error nil)))
+          (setq tchar
+                (if (and (display-popup-menus-p)
+                         last-input-event ; not during startup
+                         (listp last-nonmenu-event)
+                         use-dialog-box)
+                    (x-popup-dialog
+                     t
+                     (cons prompt
+                           (mapcar
+                            (lambda (elem)
+                              (cons (capitalize (cadr elem))
+                                    (car elem)))
+                            choices)))
+                  (condition-case nil
+                      (let ((cursor-in-echo-area t))
+                        (read-char))
+                    (error nil))))
           ;; The user has entered an invalid choice, so display the
           ;; help messages.
 	  (when (not (assq tchar choices))
