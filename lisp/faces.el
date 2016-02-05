@@ -2671,7 +2671,8 @@ It is used for characters of no fonts too."
   :group 'basic-faces)
 
 (defface read-multiple-choice-face
-  '((t (:inherit bold)))
+  '((t (:inherit underline
+        :weight bold)))
   "Face for the symbol name in Apropos output."
   :group 'basic-faces
   :version "25.2")
