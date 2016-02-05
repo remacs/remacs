@@ -590,6 +590,12 @@ the host returned by the function @command{(system-name)}.  See
 Similar to @option{su} method, @option{sudo} uses @command{sudo}.
 @command{sudo} must have sufficient rights to start a shell.
 
+@item @option{doas}
+@cindex method doas
+@cindex doas method
+
+This method is used on OpenBSD like the @command{sudo} command.
+
 @item @option{sg}
 @cindex method sg
 @cindex sg method

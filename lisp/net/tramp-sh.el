@@ -312,6 +312,7 @@ The string is used in `tramp-methods'.")
     (tramp-login-program        "doas")
     (tramp-login-args           (("-u" "%u") ("-s")))
     (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-args    ("-c"))
     (tramp-connection-timeout   10)))
 ;;;###tramp-autoload
 (add-to-list 'tramp-methods
@@ -415,7 +416,7 @@ The string is used in `tramp-methods'.")
 
 ;;;###tramp-autoload
 (add-to-list 'tramp-default-user-alist
-	     `(,(concat "\\`" (regexp-opt '("su" "sudo" "ksu" "doas")) "\\'")
+	     `(,(concat "\\`" (regexp-opt '("su" "sudo" "doas" "ksu")) "\\'")
 	       nil "root"))
 ;; Do not add "ssh" based methods, otherwise ~/.ssh/config would be ignored.
 ;; Do not add "plink" based methods, they ask interactively for the user.

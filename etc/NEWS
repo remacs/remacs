@@ -67,8 +67,12 @@ for the ChangeLog file, if none already exists.  Customize
 
 ** Tramp
 
++++
 *** New connection method "sg", which allows to edit files under
 different group ID.
+
++++
+*** New connection method "doas" for OpenBSD hosts.
 
 
 * New Modes and Packages in Emacs 25.2
