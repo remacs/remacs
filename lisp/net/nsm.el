@@ -313,27 +313,28 @@ unencrypted."
 
 (defun nsm-query-user (message args cert)
   (let ((buffer (get-buffer-create "*Network Security Manager*")))
-    ;; First format the certificate and warnings.
-    (with-help-window buffer
-      (with-current-buffer buffer
-	(erase-buffer)
-	(when (> (length cert) 0)
-	  (insert cert "\n"))
-	(let ((start (point)))
-	  (insert (apply #'format-message message args))
-	  (goto-char start)
-	  ;; Fill the first line of the message, which usually
-	  ;; contains lots of explanatory text.
-	  (fill-region (point) (line-end-position)))))
-    ;; Then ask the user what to do about it.
-    (unwind-protect
-        (cadr
-         (read-multiple-choice
-          "Continue connecting?"
-          '((?a "always" "Accept this certificate this session and for all future sessions.")
-            (?s "session only" "Accept this certificate this session only.")
-            (?n "no" "Refuse to use this certificate, and close the connection."))))
-      (kill-buffer buffer))))
+    (save-window-excursion
+      ;; First format the certificate and warnings.
+      (with-help-window buffer
+        (with-current-buffer buffer
+          (erase-buffer)
+          (when (> (length cert) 0)
+            (insert cert "\n"))
+          (let ((start (point)))
+            (insert (apply #'format-message message args))
+            (goto-char start)
+            ;; Fill the first line of the message, which usually
+            ;; contains lots of explanatory text.
+            (fill-region (point) (line-end-position)))))
+      ;; Then ask the user what to do about it.
+      (unwind-protect
+          (cadr
+           (read-multiple-choice
+            "Continue connecting?"
+            '((?a "always" "Accept this certificate this session and for all future sessions.")
+              (?s "session only" "Accept this certificate this session only.")
+              (?n "no" "Refuse to use this certificate, and close the connection."))))
+        (kill-buffer buffer)))))
 
 (defun nsm-save-host (host port status what permanency)
   (let* ((id (nsm-id host port))
