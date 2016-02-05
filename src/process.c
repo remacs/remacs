@@ -4602,6 +4602,10 @@ check_for_dns (Lisp_Object proc)
   if (! p->dns_requests)
     return Qnil;
 
+  /* This process should not already be connected (or killed). */
+  if (p->infd != 0)
+    return Qnil;
+
   ret = gai_error (p->dns_requests[0]);
   if (ret == EAI_INPROGRESS)
     return Qt;
