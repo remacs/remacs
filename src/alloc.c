@@ -3321,14 +3321,9 @@ See also the function `vector'.  */)
   (Lisp_Object length, Lisp_Object init)
 {
   CHECK_NATNUM (length);
-
   struct Lisp_Vector *p = allocate_vector (XFASTINT (length));
-  if (XLI (init) == 0)
-    memset (p->contents, 0, XFASTINT (length) * sizeof p->contents[0]);
-  else
-    for (ptrdiff_t i = 0; i < XFASTINT (length); i++)
-      p->contents[i] = init;
-
+  for (ptrdiff_t i = 0; i < XFASTINT (length); i++)
+    p->contents[i] = init;
   return make_lisp_ptr (p, Lisp_Vectorlike);
 }
 
