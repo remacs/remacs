@@ -7921,6 +7921,9 @@ The variable takes effect when `start-process' is called.  */);
 
 #ifdef NON_BLOCKING_CONNECT
    ADD_SUBFEATURE (QCnowait, Qt);
+#ifdef HAVE_GETADDRINFO_A
+   ADD_SUBFEATURE (QCnowait, Qdns);
+#endif
 #endif
 #ifdef DATAGRAM_SOCKETS
    ADD_SUBFEATURE (QCtype, Qdatagram);
