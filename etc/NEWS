@@ -1242,7 +1242,8 @@ The main entry points are `cl-defgeneric' and `cl-defmethod'.  See the
 node "Generic Functions" in the Emacs Lisp manual for more details.
 
 ---
-** scss-mode (a minor variant of css-mode)
+** scss-mode (a minor variant of css-mode) is a major mode for editing
+SCSS (Sassy CSS) files.
 
 ---
 ** let-alist is a new macro (and a package) that allows one to easily
