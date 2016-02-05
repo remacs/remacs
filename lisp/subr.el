@@ -2297,13 +2297,16 @@ Usage example:
                      "")
                    full-prompt)
 	  (setq tchar (condition-case nil
-                          (read-char)
+                          (let ((cursor-in-echo-area t))
+                            (read-char))
                         (error nil)))
           ;; The user has entered an invalid choice, so display the
           ;; help messages.
 	  (when (not (assq tchar choices))
 	    (setq wrong-char (not (memq tchar '(?? ?\C-h)))
                   tchar nil)
+            (when wrong-char
+              (ding))
             (with-help-window (setq buf (get-buffer-create
                                          "*Multiple Choice Help*"))
               (with-current-buffer buf
