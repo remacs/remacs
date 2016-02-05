@@ -308,6 +308,13 @@ The string is used in `tramp-methods'.")
     (tramp-connection-timeout   10)))
 ;;;###tramp-autoload
 (add-to-list 'tramp-methods
+  '("doas"
+    (tramp-login-program        "doas")
+    (tramp-login-args           (("-u" "%u") ("-s")))
+    (tramp-remote-shell         "/bin/sh")
+    (tramp-connection-timeout   10)))
+;;;###tramp-autoload
+(add-to-list 'tramp-methods
   '("ksu"
     (tramp-login-program        "ksu")
     (tramp-login-args           (("%u") ("-q")))
@@ -408,7 +415,7 @@ The string is used in `tramp-methods'.")
 
 ;;;###tramp-autoload
 (add-to-list 'tramp-default-user-alist
-	     `(,(concat "\\`" (regexp-opt '("su" "sudo" "ksu")) "\\'")
+	     `(,(concat "\\`" (regexp-opt '("su" "sudo" "ksu" "doas")) "\\'")
 	       nil "root"))
 ;; Do not add "ssh" based methods, otherwise ~/.ssh/config would be ignored.
 ;; Do not add "plink" based methods, they ask interactively for the user.
@@ -483,6 +490,7 @@ The string is used in `tramp-methods'.")
      (tramp-set-completion-function "nc" tramp-completion-function-alist-telnet)
      (tramp-set-completion-function "su" tramp-completion-function-alist-su)
      (tramp-set-completion-function "sudo" tramp-completion-function-alist-su)
+     (tramp-set-completion-function "doas" tramp-completion-function-alist-su)
      (tramp-set-completion-function "ksu" tramp-completion-function-alist-su)
      (tramp-set-completion-function "sg" tramp-completion-function-alist-sg)
      (tramp-set-completion-function
