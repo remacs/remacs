@@ -104,9 +104,10 @@ check_version ()
 }
 
 do_autoconf=false
+test $# -eq 0 && do_autoconf=true
 do_git=false
 
-for arg in ${*-autoconf}; do
+for arg; do
     case $arg in
       --help)
 	exec echo "$0: usage: $0 [all|autoconf|git]";;
