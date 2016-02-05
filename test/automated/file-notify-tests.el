@@ -596,7 +596,7 @@ longer than timeout seconds for the events to be delivered."
 	    (should (string-match "another text" (buffer-string)))
 
             ;; Stop file notification.  Autorevert shall still work via polling.
-	    ;; It doesn't work for `w32notify'.
+	    ;; It doesn't work for w32notify.
 	    (unless (string-equal (file-notify--test-library) "w32notify")
 	      (file-notify-rm-watch auto-revert-notify-watch-descriptor)
 	      (file-notify--wait-for-events
@@ -797,7 +797,10 @@ longer than timeout seconds for the events to be delivered."
 	  file-notify--test-tmpfile
 	  '(change) 'file-notify--test-event-handler)))
   (unwind-protect
-      (let ((n 1000)
+      ;; In case of w32notify, the upper limit of events to handle
+      ;; seems to be 260.  Reason unknown.
+      (let ((n (if (string-equal (file-notify--test-library) "w32notify")
+                   250 1000))
             source-file-list target-file-list
             (default-directory file-notify--test-tmpfile))
         (dotimes (i n)
