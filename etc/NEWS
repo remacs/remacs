@@ -432,6 +432,33 @@ specified message types for the respective specified targets.
 *** Nick completion is now case-insensitive again after inadvertently
 being made case-sensitive in Emacs 24.2.
 
+** MPC
+
+---
+*** New commands, key binds, and menu items.
+
+**** `<' and `>' for navigating previous and next tracks in playlist
+
+**** New play/pause command `mpc-toggle-play' bound to `s'
+
+**** `g' bound to new command `mpc-seek-current' will navigate current
+     track.
+
+**** New commands `mpc-toggle-{consume,repeat,single,shuffle}' for
+     toggling playback modes.
+
+---
+*** Now supports connecting to a UNIX domain socket.
+
+---
+*** Looks at more image file names to use as album art.
+Case-insensitively tries for .folder.png (freedesktop) and folder.jpg
+(XP) in addition to cover.jpg.
+
+---
+*** Searches in more locations for MPD configuration files.
+MPD supports the XDG base directory specification since version 0.17.6.
+
 ** Midnight-mode
 
 ---
