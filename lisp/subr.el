@@ -2255,7 +2255,7 @@ Usage example:
   (let* ((altered-names nil)
          (full-prompt
           (format
-           "%s (%s, ?): "
+           "%s (%s): "
            prompt
            (mapconcat
             (lambda (elem)
@@ -2285,19 +2285,25 @@ Usage example:
                 (push (cons (car elem) altered-name)
                       altered-names)
                 altered-name))
-            choices ", ")))
-         tchar buf)
+            (append choices '((?? "?")))
+            ", ")))
+         tchar buf wrong-char)
     (save-window-excursion
       (save-excursion
 	(while (not tchar)
-	  (message "%s" full-prompt)
+	  (message "%s%s"
+                   (if wrong-char
+                       "Invalid choice.  "
+                     "")
+                   full-prompt)
 	  (setq tchar (condition-case nil
                           (read-char)
                         (error nil)))
           ;; The user has entered an invalid choice, so display the
           ;; help messages.
 	  (when (not (assq tchar choices))
-	    (setq tchar nil)
+	    (setq wrong-char (not (memq tchar '(?? ?\C-h)))
+                  tchar nil)
             (with-help-window (setq buf (get-buffer-create
                                          "*Multiple Choice Help*"))
               (with-current-buffer buf

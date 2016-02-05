@@ -2618,7 +2618,7 @@ then continues to wait for a valid input character, or keyboard-quit.
 @end defun
 
 @defun read-multiple-choice prompt choices
-Ask user a multiple choice question. @var{prompt} should be a string
+Ask user a multiple choice question.  @var{prompt} should be a string
 that will be displayed as the prompt.
 
 @var{choices} is an alist where the first element in each entry is a
@@ -2636,6 +2636,10 @@ The return value is the matching value from @var{choices}.
    (?s "session only" "Accept this certificate this session only.")
    (?n "no" "Refuse to use this certificate, and close the connection.")))
 @end lisp
+
+The @code{read-multiple-choice-face} face is used to highlight the
+matching characters in the name string on graphical terminals.
+
 @end defun
 
 @node Event Mod
