@@ -82,7 +82,8 @@ and `gnutls-cli' (version 2.0.1) output."
     "openssl s_client -connect %h:%p -no_ssl2 -ign_eof")
   "List of strings containing commands to start TLS stream to a host.
 Each entry in the list is tried until a connection is successful.
-%h is replaced with server hostname, %p with port to connect to.
+%h is replaced with the server hostname, %p with the port to
+connect to, and %t with a file name containing trusted certificates.
 The program should read input on stdin and write output to stdout.
 
 See `tls-checktrust' on how to check trusted root certs.
