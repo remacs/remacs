@@ -3421,11 +3421,16 @@ system used for both reading and writing for this process.  If CODING
 is a cons (DECODING . ENCODING), DECODING is used for reading, and
 ENCODING is used for writing.
 
-:nowait BOOL -- If BOOL is non-nil for a stream type client process,
-return without waiting for the connection to complete; instead, the
-sentinel function will be called with second arg matching "open" (if
-successful) or "failed" when the connect completes.  Default is to use
-a blocking connect (i.e. wait) for stream type connections.
+:nowait NOWAIT -- If NOWAIT is non-nil for a stream type client
+process, return without waiting for the connection to complete;
+instead, the sentinel function will be called with second arg matching
+"open" (if successful) or "failed" when the connect completes.
+Default is to use a blocking connect (i.e. wait) for stream type
+connections.  If NOWAIT is `dns', also do the DNS lookup
+asynchronously, if supported.  In that case, the process is returned
+before a connection has been made, and the client should not try
+communicating with the process until it has changed status to
+"connected".
 
 :noquery BOOL -- Query the user unless BOOL is non-nil, and process is
 running when Emacs is exited.
@@ -3688,7 +3693,7 @@ usage: (make-network-process &rest ARGS)  */)
 #endif
 
 #ifdef HAVE_GETADDRINFO_A
-  if (!NILP (Fplist_get (contact, QCnowait)) &&
+  if (EQ (Fplist_get (contact, QCnowait), Qdns) &&
       !NILP (host))
     {
       int ret;
@@ -4603,7 +4608,7 @@ check_for_dns (Lisp_Object proc)
     return Qnil;
 
   /* This process should not already be connected (or killed). */
-  if (p->infd != 0)
+  if (!EQ (p->status, Qconnect))
     return Qnil;
 
   ret = gai_error (p->dns_requests[0]);
@@ -7752,6 +7757,7 @@ syms_of_process (void)
   DEFSYM (QCcoding, ":coding");
   DEFSYM (QCserver, ":server");
   DEFSYM (QCnowait, ":nowait");
+  DEFSYM (Qdns, "dns");
   DEFSYM (QCsentinel, ":sentinel");
   DEFSYM (QCtls_parameters, ":tls-parameters");
   DEFSYM (QClog, ":log");
