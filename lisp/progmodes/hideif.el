@@ -1828,7 +1828,7 @@ This allows #ifdef VAR to be hidden."
    (let* ((default (save-excursion
                      (beginning-of-line)
                      (cond ((looking-at hif-ifx-else-endif-regexp)
-                            (forward-word 2)
+                            (forward-word-strictly 2)
                             (current-word 'strict))
                            (t
                             nil))))

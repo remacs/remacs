@@ -391,7 +391,7 @@ Subexpression 1 is what goes into the corresponding `@end' statement.")
 	(unless (get-char-property start 'text-clones)
 	  (if endp
 	      (texinfo-last-unended-begin)
-	    (forward-word 1)
+	    (forward-word-strictly 1)
 	    (texinfo-next-unmatched-end))
 	  (skip-syntax-forward "^w")
 	  (when (looking-at
@@ -736,7 +736,7 @@ With prefix argument or inside @code or @example, inserts a plain \"."
   "Insert the matching `@end' for the last Texinfo command that needs one."
 	 (ignore-errors
 	   (save-excursion
-      (backward-word 1)
+             (backward-word-strictly 1)
 	     (texinfo-last-unended-begin)
       (or (match-string 1) '-)))
   \n "@end " str \n \n)

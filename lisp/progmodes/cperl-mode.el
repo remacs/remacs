@@ -2304,7 +2304,7 @@ to nil."
 		     (memq this-command '(self-insert-command newline))))
 	head1 notlast name p really-delete over)
     (and (save-excursion
-	   (forward-word -1)
+	   (forward-word-strictly -1)
 	   (and
 	    (eq (preceding-char) ?=)
 	    (progn
@@ -2327,7 +2327,7 @@ to nil."
 	       (progn
 		 (insert "\n\n=cut")
 		 (cperl-ensure-newlines 2)
-		 (forward-word -2)
+		 (forward-word-strictly -2)
 		 (if (and head1
 			  (not
 			   (save-excursion
@@ -2335,7 +2335,7 @@ to nil."
 			     (re-search-backward "\\(\\`\n?\\|\n\n\\)=head1\\>"
 						 nil t)))) ; Only one
 		     (progn
-		       (forward-word 1)
+		       (forward-word-strictly 1)
 		       (setq name (file-name-base)
 			     p (point))
 		       (insert " NAME\n\n" name
@@ -2343,10 +2343,10 @@ to nil."
 			       "=head1 DESCRIPTION")
 		       (cperl-ensure-newlines 4)
 		       (goto-char p)
-		       (forward-word 2)
+		       (forward-word-strictly 2)
 		       (end-of-line)
 		       (setq really-delete t))
-		   (forward-word 1))))
+		   (forward-word-strictly 1))))
 	   (if over
 	       (progn
 		 (setq p (point))
@@ -2354,7 +2354,7 @@ to nil."
 			 "=back")
 		 (cperl-ensure-newlines 2)
 		 (goto-char p)
-		 (forward-word 1)
+		 (forward-word-strictly 1)
 		 (end-of-line)
 		 (setq really-delete t)))
 	   (if (and delete really-delete)
@@ -2480,7 +2480,7 @@ If in POD, insert appropriate lines."
 	(if (and over
 		 (progn
 		   (forward-paragraph -1)
-		   (forward-word 1)
+		   (forward-word-strictly 1)
 		   (setq pos (point))
 		   (setq cut (buffer-substring (point) (point-at-eol)))
 		   (delete-char (- (point-at-eol) (point)))
@@ -2531,7 +2531,7 @@ If in POD, insert appropriate lines."
 		     ;; and do no indentation for them.
 		     (and (eq last-command-event ?:)
 			  (save-excursion
-			    (forward-word 1)
+			    (forward-word-strictly 1)
 			    (skip-chars-forward " \t")
 			    (and (< (point) end)
 				 (progn (goto-char (- end 1))
@@ -4309,7 +4309,7 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
 		  ;; Now: tail: if the second part is non-matching without ///e
 		  (if (eq (char-syntax (following-char)) ?w)
 		      (progn
-			(forward-word 1) ; skip modifiers s///s
+			(forward-word-strictly 1) ; skip modifiers s///s
 			(if tail (cperl-commentify tail (point) t))
 			(cperl-postpone-fontification
 			 e1 (point) 'face my-cperl-REx-modifiers-face)))
@@ -5110,7 +5110,7 @@ Returns some position at the last line."
 	(if (looking-at
 	     "[ \t]*}?[ \t]*\\<\\(\\els\\(e\\|if\\)\\|continue\\|unless\\|if\\|while\\|for\\(each\\)?\\|until\\)\\>\\(\t*\\|[ \t][ \t]+\\)[^ \t\n#]")
 	    (progn
-	      (forward-word 1)
+	      (forward-word-strictly 1)
 	      (delete-horizontal-space)
 	      (insert (make-string cperl-indent-region-fix-constructs ?\s))
 	      (beginning-of-line)))
@@ -5119,7 +5119,7 @@ Returns some position at the last line."
 	(if (looking-at
 	     "[ \t]*\\<for\\(each\\)?[ \t]+\\(my\\|local\\|our\\)\\(\t*\\|[ \t][ \t]+\\)[^ \t\n]")
 	    (progn
-	      (forward-word 2)
+	      (forward-word-strictly 2)
 	      (delete-horizontal-space)
 	      (insert (make-string cperl-indent-region-fix-constructs ?\s))
 	      (beginning-of-line)))
@@ -8502,7 +8502,7 @@ the appropriate statement modifier."
 		    (insert B " ")
 		    (and B-comment (insert B-comment " "))
 		    (just-one-space)
-		    (forward-word 1)
+		    (forward-word-strictly 1)
 		    (setq pre-A (point))
 		    (insert " " A ";")
 		    (delete-horizontal-space)

@@ -1088,7 +1088,7 @@ The value is (START END NAME-START NAME-END) of the function."
   (save-excursion
     (goto-char (point-min))
     (when (equal (funcall smie-forward-token-function) "function")
-      (forward-word -1)
+      (forward-word-strictly -1)
       (let* ((start (point))
              (end (progn (forward-sexp 1) (point)))
              (name (when (progn

@@ -296,14 +296,14 @@ KEYWORD is the keyword expected."
           (unless (char-equal char (json-peek))
             (signal 'json-unknown-keyword
                     (list (save-excursion
-                            (backward-word 1)
+                            (backward-word-strictly 1)
                             (thing-at-point 'word)))))
           (json-advance))
         keyword)
   (unless (looking-at "\\(\\s-\\|[],}]\\|$\\)")
     (signal 'json-unknown-keyword
             (list (save-excursion
-                    (backward-word 1)
+                    (backward-word-strictly 1)
                     (thing-at-point 'word)))))
   (cond ((string-equal keyword "true") t)
         ((string-equal keyword "false") json-false)

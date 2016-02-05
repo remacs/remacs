@@ -1580,7 +1580,7 @@ mouse-[0-3]\\)\\)\\>"))
 	     (if (and sym (boundp sym) (fboundp sym)
 		      (save-excursion
 			(goto-char mb)
-			(forward-word -1)
+			(forward-word-strictly -1)
 			(not (looking-at
 			      "variable\\|option\\|function\\|command\\|symbol"))))
 		 (if (checkdoc-autofix-ask-replace
@@ -1596,7 +1596,7 @@ mouse-[0-3]\\)\\)\\>"))
 			     nil t nil nil "variable")))
 		       (goto-char (1- mb))
 		       (insert disambiguate " ")
-		       (forward-word 1))
+		       (forward-word-strictly 1))
 		   (setq ret
 			 (format "Disambiguate %s by preceding w/ \
 function,command,variable,option or symbol." ms1))))))

@@ -838,7 +838,7 @@ return the name of the function, or t if the name could not be
 determined.  Otherwise, return nil."
   (cl-assert (looking-at "\\_<function\\_>"))
   (let ((name t))
-    (forward-word)
+    (forward-word-strictly)
     (forward-comment most-positive-fixnum)
     (when (eq (char-after) ?*)
       (forward-char)

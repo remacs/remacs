@@ -1404,7 +1404,7 @@ just append to the file, in Babyl format if necessary."
 	(insert "\nFrom " (user-login-name) " " (current-time-string time) "\n")
 	;; Insert the time zone before the year.
 	(forward-char -1)
-	(forward-word -1)
+	(forward-word-strictly -1)
 	(require 'mail-utils)
 	(insert (mail-rfc822-time-zone time) " ")
 	(goto-char (point-max))
