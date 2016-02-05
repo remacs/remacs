@@ -1050,8 +1050,8 @@ usage: (define-charset-internal ...)  */)
       /* Here, we just copy the parent's fast_map.  It's not accurate,
 	 but at least it works for quickly detecting which character
 	 DOESN'T belong to this charset.  */
-      for (i = 0; i < 190; i++)
-	charset.fast_map[i] = parent_charset->fast_map[i];
+      memcpy (charset.fast_map, parent_charset->fast_map,
+	      sizeof charset.fast_map);
 
       /* We also copy these for parents.  */
       charset.min_char = parent_charset->min_char;
