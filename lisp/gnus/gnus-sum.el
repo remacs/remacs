@@ -6084,9 +6084,6 @@ If SELECT-ARTICLES, only select those articles from GROUP."
 		(setq arts (cdr arts)))
 	      (setq list (cdr all)))))
 
-	(when (eq (cdr type) 'seen)
-	  (setq list (gnus-range-add list gnus-newsgroup-unseen)))
-
 	(when (eq (gnus-article-mark-to-type (cdr type)) 'list)
 	  (setq list (gnus-compress-sequence (set symbol (sort list '<)) t)))
 
