@@ -144,8 +144,9 @@ send_notifications (BYTE *info, DWORD info_size, void *desc,
       if (!notification_buffer_in_use)
 	{
 	  if (info_size)
-	    memcpy (file_notifications, info, info_size);
-	  notifications_size = info_size;
+	    memcpy (file_notifications, info,
+		    min (info_size, sizeof (file_notifications)));
+	  notifications_size = min (info_size, sizeof (file_notifications));
 	  notifications_desc = desc;
 	  /* If PostMessage fails, the message queue is full.  If that
 	     happens, the last thing they will worry about is file
