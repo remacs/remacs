@@ -4730,8 +4730,12 @@ Ruby_functions (FILE *inf)
 	      if (reader || writer || alias)
 		{
 		  do {
-		    char *np = cp;
+		    char *np;
 
+		    cp = skip_spaces (cp);
+		    if (*cp == '(')
+		      cp = skip_spaces (cp + 1);
+		    np = cp;
 		    cp = skip_name (cp);
 		    if (*np != ':')
 		      continue;

@@ -29,9 +29,13 @@ module A
                 :baz,
                 :more
     attr_accessor :tee
-    alias_method :qux, :tee, attr_accessor :bogus
+    alias_method :qux, :tee, attr_accessor(:bogus)
     alias_method :xyz,
                  :tee ; attr_reader :subtle
+    attr_reader(:foo1, :bar1, # comment
+                :qux1)
+    alias_method ( :foo2, #cmmt
+                   :bar2)
   end
 end
 
