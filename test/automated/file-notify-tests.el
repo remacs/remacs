@@ -66,7 +66,7 @@
   "Timeout to wait for arriving events, in seconds."
   (cond
    ((file-remote-p temporary-file-directory) 6)
-   ((string-equal (file-notify--test-library) "w32notify") 20)
+   ((string-equal (file-notify--test-library) "w32notify") 10)
    ((eq system-type 'cygwin) 10)
    (t 3)))
 
@@ -797,10 +797,7 @@ longer than timeout seconds for the events to be delivered."
 	  file-notify--test-tmpfile
 	  '(change) 'file-notify--test-event-handler)))
   (unwind-protect
-      ;; In case of w32notify, the upper limit of events to handle
-      ;; seems to be 260.  Reason unknown.
-      (let ((n (if (string-equal (file-notify--test-library) "w32notify")
-                   250 1000))
+      (let ((n 1000)
             source-file-list target-file-list
             (default-directory file-notify--test-tmpfile))
         (dotimes (i n)
@@ -832,10 +829,11 @@ longer than timeout seconds for the events to be delivered."
           (let ((source-file-list source-file-list)
                 (target-file-list target-file-list))
             (while (and source-file-list target-file-list)
-              (rename-file (pop source-file-list) (pop target-file-list) t))))
+              (rename-file (pop source-file-list) (pop target-file-list) t)
+              (read-event nil nil 0.02))))
         (file-notify--test-with-events (make-list n 'deleted)
           (dolist (file target-file-list)
-            (delete-file file))))
+            (prog1 (delete-file file) (read-event nil nil 0.02)))))
     (file-notify--test-cleanup)))
 
 (file-notify--deftest-remote file-notify-test06-many-events
