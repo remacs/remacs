@@ -244,7 +244,7 @@
   (setq menu-bar-last-search-type 'string)
   ;; Ideally, this whole command would be equivalent to `C-s RET'.
   (let ((isearch-forward (not backward))
-        (isearch-regexp-function search-default-regexp-mode)
+        (isearch-regexp-function search-default-mode)
         (isearch-regexp nil))
     (if (or (equal string "") (not string))
         (funcall (isearch-search-fun-default) (car search-ring))

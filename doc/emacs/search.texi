@@ -1268,7 +1268,7 @@ character sequences}.
   Generally, search commands in Emacs by default perform character
 folding, thus matching equivalent character sequences.  You can
 disable this behavior by customizing the variable
-@code{search-default-regexp-mode} to @code{nil}.  @xref{Search
+@code{search-default-mode} to @code{nil}.  @xref{Search
 Customizations}.  Within an incremental search, typing @kbd{M-s '}
 (@code{isearch-toggle-character-fold}) toggles character folding, but
 only for that search.  (Replace commands have a different default,
@@ -1800,7 +1800,7 @@ not described elsewhere.
 @cindex default search mode
 @cindex search mode, default
   The default search mode for the incremental search is specified by
-the variable @code{search-default-regexp-mode}.  It can be @code{nil},
+the variable @code{search-default-mode}.  It can be @code{nil},
 @code{t}, or a function.  If it is @code{nil}, the default mode is to
 do literal searches without character folding, but with case folding
 and lax-whitespace matches as determined by @code{case-fold-search}
