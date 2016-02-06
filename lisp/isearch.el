@@ -234,9 +234,9 @@ If t, default to regexp searches (as if typing `\\[isearch-toggle-regexp]' durin
 isearch).
 
 If a function, use that function as an `isearch-regexp-function'.
-Example functions are `word-search-regexp' \(`\\[isearch-toggle-word]'),
-`isearch-symbol-regexp' \(`\\[isearch-toggle-symbol]'), and
-`character-fold-to-regexp' \(`\\[isearch-toggle-character-fold]')."
+Example functions (and the keys to toggle them during isearch)
+are `word-search-regexp' \(`\\[isearch-toggle-word]'), `isearch-symbol-regexp'
+\(`\\[isearch-toggle-symbol]'), and `character-fold-to-regexp' \(`\\[isearch-toggle-character-fold]')."
   ;; :type is set below by `isearch-define-mode-toggle'.
   :type '(choice (const :tag "Literal search" nil)
                  (const :tag "Regexp search" t)
@@ -558,7 +558,11 @@ If the value is a function (e.g. `isearch-symbol-regexp'), it is
 called to convert a plain search string to a regexp used by
 regexp search functions.
 The symbol property `isearch-message-prefix' put on this function
-specifies the prefix string displayed in the search message.")
+specifies the prefix string displayed in the search message.
+
+This variable is set and changed during isearch.  To change the
+default behaviour used for searches, see `search-default-mode'
+instead.")
 ;; We still support setting this to t for backwards compatibility.
 (define-obsolete-variable-alias 'isearch-word
   'isearch-regexp-function "25.1")
