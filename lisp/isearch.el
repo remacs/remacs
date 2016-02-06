@@ -1528,15 +1528,13 @@ The command then executes BODY and updates the isearch prompt."
                   (if docstring (concat "\n" docstring) ""))
          (interactive)
          ,@(when function
-             `((setq isearch-regexp-function
-                     (unless (eq isearch-regexp-function #',function)
-                       #',function))
-               (when isearch-regexp-function (setq isearch-regexp nil))))
+             `((setq isearch-regexp-function #',function)
+               (setq isearch-regexp nil)))
          ,@body
          (setq isearch-success t isearch-adjusted t)
          (isearch-update))
        (define-key isearch-mode-map ,key #',command-name)
-       ,@(when (symbolp function)
+       ,@(when (and function (symbolp function))
            `((put ',function 'isearch-message-prefix ,(format "%s " mode))
              (put ',function :advertised-binding ,key)
              (cl-callf (lambda (types) (cons 'choice
