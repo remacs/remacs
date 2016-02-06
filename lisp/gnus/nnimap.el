@@ -113,6 +113,12 @@ some servers.")
 
 (defvoo nnimap-current-infos nil)
 
+(defun nnimap-decode-gnus-group (group)
+  (decode-coding-string group 'utf-8))
+
+(defun nnimap-encode-gnus-group (group)
+  (encode-coding-string group 'utf-8))
+
 (defvoo nnimap-fetch-partial-articles nil
   "If non-nil, Gnus will fetch partial articles.
 If t, Gnus will fetch only the first part.  If a string, it
@@ -794,9 +800,6 @@ textual parts.")
 	(incf num)))
     (nreverse parts)))
 
-(defun nnimap-decode-gnus-group (group)
-  (decode-coding-string group 'utf-8))
-
 (deffoo nnimap-request-group (group &optional server dont-check info)
   (setq group (nnimap-decode-gnus-group group))
   (let ((result (nnimap-change-group
@@ -825,7 +828,7 @@ textual parts.")
 			(- (cdr active) (car active))
 			(car active)
 			(cdr active)
-			group))
+			(nnimap-encode-gnus-group group)))
 	t))))
 
 (deffoo nnimap-request-group-scan (group &optional server info)
@@ -860,7 +863,8 @@ textual parts.")
 	(erase-buffer)
 	(insert
 	 (format
-	  "211 %d %d %d %S\n" (1+ (- high low)) low high group))
+	  "211 %d %d %d %S\n" (1+ (- high low)) low high
+	  (nnimap-encode-gnus-group group)))
 	t))))
 
 (deffoo nnimap-request-create-group (group &optional server _args)
@@ -1323,7 +1327,7 @@ If LIMIT, first try to limit the search to the N last articles."
 	    (let* ((sequence (car response))
 		   (response (cadr response))
 		   (group (cadr (assoc sequence sequences)))
-		   (egroup (encode-coding-string group 'utf-8)))
+		   (egroup (nnimap-encode-gnus-group group)))
 	      (when (and group
 			 (equal (caar response) "OK"))
 		(let ((uidnext (nnimap-find-parameter "UIDNEXT" response))
@@ -1354,7 +1358,7 @@ If LIMIT, first try to limit the search to the N last articles."
 		       (nnimap-get-groups)))
 	(unless (assoc group nnimap-current-infos)
 	  ;; Insert dummy numbers here -- they don't matter.
-	  (insert (format "%S 0 1 y\n" (encode-coding-string group 'utf-8)))))
+	  (insert (format "%S 0 1 y\n" (nnimap-encode-gnus-group group)))))
       t)))
 
 (deffoo nnimap-retrieve-group-data-early (server infos)
@@ -1453,8 +1457,9 @@ If LIMIT, first try to limit the search to the N last articles."
 		     (active (gnus-active group)))
 		(when active
 		  (insert (format "%S %d %d y\n"
-				  (decode-coding-string
-				   (gnus-group-real-name group) 'utf-8)
+				  (nnimap-encode-gnus-group
+				   (nnimap-decode-gnus-group
+				    (gnus-group-real-name group)))
 				  (cdr active)
 				  (car active))))))))))))
 
@@ -1672,7 +1677,8 @@ If LIMIT, first try to limit the search to the N last articles."
       (nreverse result))))
 
 (defun nnimap-store-info (info active)
-  (let* ((group (gnus-group-real-name (gnus-info-group info)))
+  (let* ((group (nnimap-decode-gnus-group
+		 (gnus-group-real-name (gnus-info-group info))))
 	 (entry (assoc group nnimap-current-infos)))
     (if entry
 	(setcdr entry (list info active))
