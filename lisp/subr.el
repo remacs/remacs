@@ -2268,7 +2268,8 @@ Usage example:
                         (format "[%c] %s" (car elem) name))
                        ;; The prompt character is in the name, so highlight
                        ;; it on graphical terminals...
-                       ((display-graphic-p)
+                       ((display-supports-face-attributes-p
+                         '(:underline t) (window-frame))
                         (setq name (copy-sequence name))
                         (put-text-property pos (1+ pos)
                                            'face 'read-multiple-choice-face
