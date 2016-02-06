@@ -862,7 +862,9 @@ If REGEXP is given, lines that match it will be deleted."
 	    (goto-char (match-beginning 0))
 	    (delete-region (point-at-bol) end))))
       (goto-char (point-max))
-      (insert string "\n")
+      ;; Make sure that each dribble entry is a single line, so that
+      ;; the "remove" code above works.
+      (insert (replace-regexp-in-string "\n" "\\\\n" string) "\n")
       ;; This has been commented by Josh Huber <huber@alum.wpi.edu>
       ;; It causes problems with both XEmacs and Emacs 21, and doesn't
       ;; seem to be of much value. (FIXME: remove this after we make sure
