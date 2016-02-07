@@ -7452,10 +7452,9 @@ groups."
   :group 'gnus-article-buttons
   :type 'regexp)
 
-(defcustom gnus-button-valid-fqdn-regexp
-  message-valid-fqdn-regexp
+(defcustom gnus-button-valid-fqdn-regexp "\\([-A-Za-z0-9]+\\.\\a)+[A-Za-z]+"
   "Regular expression that matches a valid FQDN."
-  :version "22.1"
+  :version "25.2"
   :group 'gnus-article-buttons
   :type 'regexp)
 
