@@ -1,3 +1,1058 @@
+2016-02-06  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	message-valid-fqdn-regexp no longer exists
+
+	* lisp/gnus/gnus-art.el (gnus-button-valid-fqdn-regexp): Don't use
+	the no-longer-existing message-valid-fqdn-regexp variable.
+
+2016-02-06  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Remove message-valid-fqdn-regexp, since it changes too much now
+
+	* lisp/gnus/message.el (message-valid-fqdn-regexp): Remove.
+	(message-bogus-recipient-p): Don't use it any more.
+	(message-make-fqdn): Ditto.  Suggested by Lars-Johan Liman.
+
+2016-02-06  Paul van der Walt  <paul@denknerd.org>
+
+	Match "Re :" as a "Re:" prefix
+
+	* lisp/gnus/message.el (message-subject-re-regexp): Also match
+	"Re :" as a "Re:" prefix (commonly used in France).
+
+2016-02-06  Adam Sjøgren  <asjo@koldfront.dk>
+
+	lisp/net/shr.el (shr-tag-del, shr-tag-ins): New functions.
+
+	* lisp/net/shr.el (shr-tag-del, shr-tag-ins): New functions.
+
+2016-02-06  David Edmondson  <dme@dme.org>
+
+	src/process.c Correctly convert AF_INET6 addresses
+
+	* src/process.c (conv_lisp_to_sockaddr): AF_INET6 addresses are
+	converted to a list of 16 bit quantities by
+	conv_sockaddr_to_lisp(). conv_lisp_to_sockaddr() should follow the
+	same scheme rather than expecting a (longer) list of 8 bit
+	quantities.
+
+2016-02-06  Martin Jesper Low Madsen  <martin@martinjlowm.dk>
+
+	Search for host/port combinations in auth-source on OS X
+
+	* lisp/gnus/auth-source.el (auth-source-macos-keychain-search):
+	Search for all host/port (or protocol) combinations for a match in
+	the OS X keychain.
+
+2016-02-06  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Remove nonsensical setting of gnus-newsgroup-unseen
+
+	* lisp/gnus/gnus-sum.el (gnus-update-marks): Remove nonsensical
+	setting of gnus-newsgroup-unseen.
+
+2016-02-05  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Use underline on all terminals that support it
+
+	* lisp/subr.el (read-multiple-choice): Use
+	display-supports-face-attributes-p instead of
+	display-graphic-p to determine whether we can use underlining.
+
+2016-02-05  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Make the nsm query say what it did after the user interaction
+
+	* lisp/net/nsm.el (nsm-query): Issue a message about
+	aborting/accepting messages (suggested by N. Jackson)
+	(bug#22531).
+
+2016-02-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Omit XLI (init) == 0 optimization in make-vector
+
+	* src/alloc.c (Fmake_vector): Simplify by omitting the (XLI (init)
+	== 0) case, as this optimization is probably not worth the hassle.
+	Just for the record, the test for that case could have been
+	(XLI (init) % ((EMACS_UINT) -1 / UCHAR_MAX) == 0) (!),
+	assuming the typical platform with no padding bits and where
+	conversion to int omits the most significant bits.
+
+2016-02-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* autogen.sh: Port to dash (Bug#22556).
+
+2016-02-05  Michael Albinus  <michael.albinus@gmx.de>
+
+	Minor cleanup for Tramp "doas".
+
+	* doc/misc/tramp.texi (Inline methods): Add "doas" method.
+
+	* etc/NEWS: Add Tramp connection method "doas".
+
+	* lisp/net/tramp-sh.el (tramp-methods) <doas>:
+	Add `tramp-remote-shell-args'.
+
+2016-02-05  Xi Lu  <lx@shellcodes.org>
+
+	* lisp/net/tramp-sh.el (tramp-methods) <doas>: Add.  (Bug#22542)
+
+	(tramp-default-user-alist): Add rule for "doas".
+	(top): Completion function for "doas" is
+	`tramp-completion-function-alist-su'.
+
+2016-02-05  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Restore the window configuration
+
+	* lisp/net/nsm.el (nsm-query-user): Restore the window
+	configuration (bug#22532).
+
+2016-02-04  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Use an X popup in read-multiple-choice if running from a mouse command
+
+	* lisp/subr.el (read-multiple-choice): Use an X popup if
+	called from a mouse action (bug#19368).
+
+2016-02-04  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Display cursor in echo area when prompting
+
+	* lisp/subr.el (read-multiple-choice): Display the cursor in
+	the echo area when prompting (bug#19368).
+
+2016-02-04  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Make NSM prompting clearer
+
+	* lisp/net/nsm.el (nsm-query-user): Use read-multiple-choice
+	to prompt in a nicer way (bug#19368).
+
+2016-02-04  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Underline read-multiple-choice-face
+
+	* lisp/faces.el (read-multiple-choice-face): Also underline
+	the choice.
+
+2016-02-04  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Make the read-multiple-choice prompt a bit prettier
+
+	* doc/lispref/commands.texi (Reading One Event): Mention
+	read-multiple-choice-face.
+
+	* lisp/subr.el (read-multiple-choice): Make the prompting a bit
+	prettier.
+
+2016-02-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Prefer memcpy and memset to doing it by hand
+
+	* src/alloc.c (Fmake_vector):
+	* src/ccl.c (setup_ccl_program):
+	Use memset to clear array.
+	* src/alloc.c (Fvector, Fmake_byte_code):
+	* src/charset.c (Fdefine_charset_internal):
+	Use memcpy to copy array.
+
+2016-02-04  Nicolas Petton  <nicolas@petton.fr>
+
+	Do not ignore redirections of 301, 302 and 307 status codes
+
+	The current version of HTTP/1.1 (RFC 7231) no longer requires
+	confirmation on 301, 302 or 307 status codes, therefore we do not have
+	to ignore redirects for other requests than GET and HEAD.
+
+	* lisp/url/url-http.el (url-http-parse-headers): Do not ignore 301, 302
+	and 307 redirects for other requests than GET and HEAD.
+
+2016-02-04  Mark Oteiza  <mvoteiza@udel.edu>
+
+	* lisp/net/eww.el (eww-switch-to-buffer): Use pop-to-buffer-same-window instead.
+
+2016-02-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify USE_ALIGNED_ALLOC
+
+	* src/alloc.c (USE_ALIGNED_ALLOC): Simplify, now that we’ve merged
+	in the emacs-25 changes.  Omit no-longer-needed decl for aligned_alloc.
+
+2016-02-04  Eric Abrahamsen  <eric@ericabrahamsen.net>
+
+	Honor docstring of gnus-group-get-new-news
+
+	* lisp/gnus/gnus-start.el (gnus-get-unread-articles): If the prefix arg
+	is t, but non-numeric, unconditionally consider all groups to need
+	updating.
+
+2016-02-04  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	New function read-multiple-choice
+
+	* doc/lispref/commands.texi (Reading One Event): Document
+	read-multiple-choice.
+
+	* lisp/faces.el (read-multiple-choice-face): New face.
+
+	* lisp/subr.el (read-multiple-choice): New function.
+
+2016-02-04  John Wiegley  <johnw@newartisans.com>
+
+	Merge from origin/emacs-25
+
+	ee73997 Make erc work better when encountering unknown prefix chars
+	b99141d Make erc completion case-insensitive again
+	66c4620 Make complection in erc use consistent casing
+	8c562b2 Make /QUIT in erc more robust
+	d93d2c5 Make tracking faces in Emacs work more reliably
+	af6ab7e Make shr not bug out on images on non-graphical displays
+	3311f40 Fix bookmark display widths
+	d90ab1e Fix typo in eww-make-unique-file-name
+	7f81825 Make it possible to TAB to input fields
+	a43a1dc Insert complete alt texts when images are disabled
+	56ed4e1 Allow eww text fields to grow
+	66b315c Make erc work when subword-mode is switched on
+	255b68f Fix IMAP doc example
+	91557f5 Quoting fixes in doc strings and diagnostics
+	2c0dc9f Fix warning message in hack-local-variables
+	504696d Etags: yet another improvement in Ruby tags
+	8784ebf Fix x-popup-menu on TTYs without a mouse
+	8b87ecb * lisp/emacs-lisp/map.el: Improvements to the docstring of the
+	        pcase macro
+	6191003 Use pop-to-buffer-same-window in eww
+	fe321fd * autogen.sh: Revert all recent changes.
+	74ebd4a * make-dist: Updates related to nt/.
+	737193a * make-dist: Add modules/.
+	3696bf2 * make-dist: Update for super-special file that can't live in etc/.
+	a4278e2 Fix failure to compile ns-win.el in parallel builds
+	860da4d Fix names of tags generated for Ruby accessors
+	f6213ce Fix file-name recognition in 'etags'
+	e42e662 Change Ruby file names and extensions recognized by 'etags'
+	58bfb6a More improvements for Ruby support in 'etags'
+	c04e911 Add --git-config option to autogen.sh
+	5713466 Fix editing undo changes in eww fields
+	51362d6 Allow the user more control of popping up the eww window
+	ee0fbd8 Make eww-browse-url with new-window parameter work again
+	9c3142d Clean up eww code slightly
+	cb035f3 Don't insert nil faces in shr
+	4c3fae3 ; * lisp/progmodes/prolog.el: Remove some obsolete commentary.
+	93f2153 Improve the custom type of some user options.
+	9f60d7e Mark some risky calendar variables.
+	1d07dcd Highlight two additional SCSS keywords
+	ee8b466 Recommend enabling integrity-checking in git
+	e639e10 Some corrections in Elisp manual
+	d766ca8 Chatter when autogen.sh changes Git configuration
+	3b734e1 * org/org-compat.el (org-font-lock-ensure): Fix bogus test (bug#22399)
+	43cb9f8 Omit unnecessary history from Lisp intro
+	2fbd1da * etc/HISTORY: Add some more history, plus git tags.
+	c90e1b4 Improve elisp “Security Considerations” doc
+	cedd7ca autogen.sh now arranges for git to check hashes
+	86ce76b ; Fix ChangeLog.2 commit ID.
+	7b1d2b1 Fix (c & 040) typo in emergency escapes
+	a8273da Fix display of overlay strings with 'display' and 'box' property
+	fc48106 Fix imap-starttls-open
+	cdecbed Fix return value of imap-starttls-open
+	20c7e34 ; * etc/NEWS: Fix renamed command name
+	98bdbdb Correct reference to DARWIN_OS preprocessor symbol
+	b250d29 Spelling fix
+	b920a0e Spelling fixes
+	93b144b Pacify GCC on C library without glibc API
+
+2016-02-04  John Wiegley  <johnw@newartisans.com>
+
+	Merge from origin/emacs-25
+
+	ea26c8a * lisp/net/browse-url.el (browse-url-default-browser): Lower
+	        priority of non-free Chrome.
+	0fac75f Improve the custom type of some user options.
+	2df0e04 Highlight CSS variables with variable name face
+	3cf5e81 * lisp/gnus/gnus-kill.el (gnus-winconf-kill-file): Not
+	        user-serviceable.
+	2a5233c Mark some user options that can get evalled as risky.
+	39b166f Disable DebPrint in sys_read on MS-Windows
+	9fd0189 ;Fix ChangeLog entry
+	4bb7233 Fix typos in Introduction to Emacs Lisp manual
+
+2016-02-04  Vasilij Schneidermann  <v.schneidermann@gmail.com>  (tiny change)
+
+	Allow sending empty hidden values in eww
+
+	* lisp/net/eww.el (eww-tag-input): Allow sending empty hidden
+	values (bug#22388).
+
+	(cherry picked from commit 5898da8210af7953e638ddf7821c05260979c3f0)
+
+	Backport:
+
+2016-02-04  David Edmondson  <dme@dme.org>
+
+	Make erc work better when encountering unknown prefix chars
+
+	* lisp/erc/erc.el (erc-channel-receive-names): Output a warning
+	instead of erroring out on unknown prefix chars (bug#22380).
+
+2016-02-04  Mark Oteiza  <mvoteiza@udel.edu>
+
+	Add a new command to switch between erc buffers
+
+	* doc/misc/eww.texi: Document eww-switch-to-buffer and its keybinding
+	* etc/NEWS: Mention new command
+	* lisp/net/eww.el (eww-mode-map): Bind eww-switch-to-buffer to "s"
+	(eww-mode-map): Add menu item
+	(eww-switch-to-buffer): New command
+
+2016-02-04  David Edmondson  <dme@dme.org>
+
+	Make erc work better when encountering unknown prefix chars
+
+	* lisp/erc/erc.el (erc-channel-receive-names): Output a warning
+	instead of erroring out on unknown prefix chars (bug#22380).
+
+2016-02-04  Vasilij Schneidermann  <v.schneidermann@gmail.com>  (tiny change)
+
+	Allow sending empty hidden values in eww
+
+	* lisp/net/eww.el (eww-tag-input): Allow sending empty hidden
+	values (bug#22388).
+
+2016-02-04  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Make erc completion case-insensitive again
+
+	* lisp/erc/erc.el (erc-completion-at-point): Make erc completion
+	case-insensitive again (bug#11360).
+
+2016-02-04  Carlos Pita  <carlosjosepita@gmail.com>  (tiny change)
+
+	Make complection in erc use consistent casing
+
+	* lisp/erc/erc-pcomplete.el (pcomplete-erc-all-nicks): Make
+	case in the complection consistent (bug#18509).
+
+2016-02-04  Francis Litterio  <flitterio@gmail.com>
+
+	Make /QUIT in erc more robust
+
+	* lisp/erc/erc.el (erc-kill-query-buffers): Don't bug out if we're
+	issuing /QUIT to disconnected servers (bug#22099).
+
+2016-02-04  Kevin Brubeck Unhammer  <unhammer@fsfe.org>  (tiny change)
+
+	Make tracking faces in Emacs work more reliably
+
+	* lisp/erc/erc-track.el (erc-faces-in): Always return lists of
+	faces to avoid later ambiguity (bug#22424).
+
+2016-02-04  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Make shr not bug out on images on non-graphical displays
+
+	* lisp/net/shr.el (shr-put-image): Don't bug out on alt-less
+	images on non-graphical displays (bug#22327).
+
+2016-02-04  Andrew Hyatt  <ahyatt@gmail.com>
+
+	Remove packages obsoleted before Emacs 24.
+
+	In accordance with the policy discussed in the emacs-devel list,
+	packages that have been obsoleted for a full major release cycle are up
+	for deletion.
+
+	This removes almost all packages that are now eligible for deletion,
+	with the exception of "cl-compat", which seems it is likely to still be
+	used, and "optional", which offers some functionality that doesn't have
+	a replacement yet.
+
+2016-02-04  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Fix bookmark display widths
+
+	* lisp/net/eww.el (eww-list-bookmarks): Pop to the buffer before
+	preparing it so that the widths are computed correctly (bug#22328).
+
+2016-02-04  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Fix typo in eww-make-unique-file-name
+
+	* lisp/net/eww.el (eww-make-unique-file-name): Make this function
+	actually work.
+
+2016-02-03  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Make it possible to TAB to input fields
+
+	* lisp/net/eww.el (eww-tag-input): Make it possible to TAB to
+	input fields (bug#22540).
+
+2016-02-03  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Insert complete alt texts when images are disabled
+
+	* lisp/net/shr.el (shr-tag-img): When images are disabled, insert
+	the complete alt/title string (bug#22293).
+
+2016-02-03  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Allow eww text fields to grow
+
+	* lisp/net/eww.el (eww-process-text-input): Allow text fields to
+	grow when typing in stuff that's longer than the original width.
+
+2016-02-03  Dima Kogan  <dima@secretsauce.net>
+
+	Make erc work when subword-mode is switched on
+
+	* lisp/erc/erc-backend.el (erc-forward-word, erc-word-at-arg-p)
+	(erc-bounds-of-word-at-point): New functions to do word-based
+	things when subword-mode is switched on.
+
+	* lisp/erc/erc-button.el (erc-button-add-nickname-buttons): Use them
+	(bug#17558).
+
+2016-02-03  Teemu Likonen  <tlikonen@iki.fi>
+
+	Fix IMAP doc example
+
+	* doc/misc/gnus.texi (Client-Side IMAP Splitting): Fix example.
+
+2016-02-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Quoting fixes in doc strings and diagnostics
+
+	* lisp/emacs-lisp/bytecomp.el (byte-compile-setq, byte-compile-funcall):
+	* lisp/gnus/mml-smime.el (mml-smime-get-dns-cert)
+	(mml-smime-get-ldap-cert):
+	Follow user style preference when quoting diagnostics.
+
+2016-02-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Mention context when resume from emergency escape
+
+	That way, if the user has been doing something else for a while,
+	they are reminded of the situation when restarting Emacs,
+	and are more likely to understand the two questions.
+	* doc/emacs/trouble.texi (Emergency Escape): Document this.
+	* src/keyboard.c (handle_interrupt): Implement this.
+
+2016-02-03  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix warning message in hack-local-variables
+
+	* lisp/files.el (hack-local-variables): use 'thisbuf' to reference
+	the original buffer name in the warning message.  (Bug#21681)
+
+2016-02-03  Eli Zaretskii  <eliz@gnu.org>
+
+	Etags: yet another improvement in Ruby tags
+
+	* lib-src/etags.c (Ruby_functions): Handle continuation lines in
+	Ruby accessor definitions.  (Bug#22241)
+
+	* test/etags/ruby-src/test1.ru (A::B#X): Add some more tests for
+	accessors and multiline definitions.
+	* test/etags/ETAGS.good_1:
+	* test/etags/ETAGS.good_2:
+	* test/etags/ETAGS.good_3:
+	* test/etags/ETAGS.good_4:
+	* test/etags/ETAGS.good_5:
+	* test/etags/ETAGS.good_6:
+	* test/etags/CTAGS.good: Adapt to changes in Ruby tags.
+
+2016-02-03  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix x-popup-menu on TTYs without a mouse
+
+	* src/menu.c (Fx_popup_menu): Be sure to initialize 'x' and 'y'
+	for the TTY case without a mouse.  (Bug#22538)
+
+2016-02-03  Nicolas Petton  <nicolas@petton.fr>
+
+	* lisp/emacs-lisp/map.el: Improvements to the docstring of the pcase macro
+
+2016-02-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port aligned_alloc decl to Cygwin.
+
+	Problem reported by Ken Brown (Bug#22522#38).
+	* configure.ac (aligned_alloc): Check for decl too.
+	* src/lisp.h (aligned_alloc): Declare if not already declared.
+
+2016-02-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	autogen.sh now configures git only on request
+
+	* autogen.sh (do_autoconf, do_git): New vars.
+	Support new arguments --help, all, autoconf, git.
+	By default, just do autoconf-related configuration, not git.
+	Prefer 'echo' to 'cat <<EOF ...', as this tends to avoid temp files.
+	If GNU cp is available, use it to backup .git/config before
+	changing it.  When configuring git, chatter about what is being
+	done, and configure git to check hashes.  Avoid some duplicate
+	file name specification when creating git hooks.
+
+	* GNUmakefile (ALL_IF_GIT): New macro.
+	(configure): Use it.
+	* INSTALL.REPO: Suggest './autogen.sh all'.
+
+2016-02-02  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Use pop-to-buffer-same-window in eww
+
+	* lisp/net/eww.el: pop-to-buffer-same-window throughout instead of
+	switch-to-buffer (bug#22244).
+
+2016-02-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* autogen.sh: Revert all recent changes.
+
+2016-02-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Build with C11 if available
+
+	* admin/merge-gnulib (GNULIB_MODULES): Add std-gnu11.
+	* m4/std-gnu11.m4: New file, from gnulib.
+	* lib/gnulib.mk, m4/gnulib-comp.m4: Regenerate.
+
+2016-02-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Update gnulib copy
+
+	* doc/misc/texinfo.tex: Copy from gnulib.
+
+2016-02-02  Glenn Morris  <rgm@gnu.org>
+
+	* make-dist: Updates related to nt/.
+
+	* make-dist: Add modules/.
+
+	* make-dist: Update for super-special file that can't live in etc/.
+
+2016-02-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix failure to compile ns-win.el in parallel builds
+
+	* src/Makefile.in ($(lispsource)/term/ns-win.elc): Add order-only
+	dependency on $(lispsource)/international/charprop.el.
+	(Bug#22501)
+
+2016-02-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix names of tags generated for Ruby accessors
+
+	* lib-src/etags.c (Ruby_functions): Don't include the leading
+	colon ':' in tags for Ruby accessors and aliases.  (Bug#22241)
+
+	* test/etags/ETAGS.good_1:
+	* test/etags/ETAGS.good_2:
+	* test/etags/ETAGS.good_3:
+	* test/etags/ETAGS.good_4:
+	* test/etags/ETAGS.good_5:
+	* test/etags/ETAGS.good_6:
+	* test/etags/CTAGS.good: Adapt to changes in Ruby tags.
+
+2016-02-02  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/vc/add-log.el (change-log-directory-files, find-change-log):
+	Doc tweaks.
+
+2016-02-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix file-name recognition in 'etags'
+
+	* lib-src/etags.c (get_language_from_filename): If FILE includes a
+	leading directory, compare only its basename to the known file
+	names in lang_names[].
+
+	* test/etags/Makefile (RBSRC): Adapt to recent test1.ruby
+	renaming.
+	* test/etags/ETAGS.good_1:
+	* test/etags/ETAGS.good_2:
+	* test/etags/ETAGS.good_3:
+	* test/etags/ETAGS.good_4:
+	* test/etags/ETAGS.good_5:
+	* test/etags/ETAGS.good_6:
+	* test/etags/CTAGS.good: Adapt to changes in Ruby file names and
+	to the results in Makefile due to the above etags.c fix.
+
+2016-02-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Change Ruby file names and extensions recognized by 'etags'
+
+	* lib-src/etags.c <Ruby_filenames>: New variable, holds names
+	of Ruby files.
+	<Ruby_suffixes>: Treat .rb, .ru, and .rbw as Ruby extensions.
+	<lang_names>: Add Ruby_filenames to the Ruby entry.
+	* test/etags/ruby-src/test1.ru: Renamed from test1.ruby.
+	(Bug#22241)
+
+2016-02-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port better to platforms lacking aligned_alloc
+
+	Problem reported by Ken Brown (Bug#22522).
+	* src/lisp.h (hybrid_aligned_alloc)
+	[HYBRID_MALLOC && !HAVE_ALIGNED_ALLOC]: New decl.
+
+2016-02-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port malloc.h hygiene fix to LTO
+
+	* src/alloc.c (__malloc_initialize_hook):
+	Make it externally visible (Bug#22522).
+
+2016-02-02  Eli Zaretskii  <eliz@gnu.org>
+
+	More improvements for Ruby support in 'etags'
+
+	* lib-src/etags.c (Ruby_functions): Tag Ruby accessors and
+	alias_method.  Identify constants even if the assignment is not
+	followed by whitespace.  (Bug#22241)
+
+	* test/etags/ruby-src/test1.ruby: Add tests for constants,
+	accessors, and alias_method.
+	* test/etags/ETAGS.good_1:
+	* test/etags/ETAGS.good_2:
+	* test/etags/ETAGS.good_3:
+	* test/etags/ETAGS.good_4:
+	* test/etags/ETAGS.good_5:
+	* test/etags/ETAGS.good_6:
+	* test/etags/CTAGS.good: Adapt to changes in Ruby tests.
+
+2016-02-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Add --git-config option to autogen.sh
+
+	* autogen.sh: New options --git-config, --help.
+	(git_config): New shell var.  Alter function to respect this var.
+
+2016-02-02  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Fix editing undo changes in eww fields
+
+	* eww.el (eww-tag-form): Don't overwrite initial form data in text
+	fields.
+	(eww-process-text-input): Make `M-t' at the end of text fields work
+	better (bug#19085).
+
+2016-02-01  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Allow the user more control of popping up the eww window
+
+	* eww.el (eww): Use pop-to-buffer-same-window (suggested by
+	Michael Heerdegen) (bug#22244).
+
+2016-02-01  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Make eww-browse-url with new-window parameter work again
+
+	* eww.el (eww-browse-url): Stay in the same buffer if we're
+	already in a eww mode buffer so that eww-browse-url with a
+	new-window parameter works (bug#22244).
+
+2016-02-01  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Clean up eww code slightly
+
+	* eww.el (eww-browse-url): Clean up code slightly.
+
+2016-02-01  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Don't insert nil faces in shr
+
+	* shr.el (shr-insert-table): Don't add nil faces, because that
+	will show up in *Messages* as "Invalid face reference: nil [32
+	times]".
+
+2016-02-01  Glenn Morris  <rgm@gnu.org>
+
+	Make find-change-log prefer a VCS root, if no ChangeLog exists.
+
+	* lisp/vc/add-log.el (change-log-directory-files): New option.
+	(find-change-log): Respect change-log-directory-files.
+	* doc/emacs/maintaining.texi (Change Log Commands):
+	Mention change-log-directory-files.
+
+2016-02-01  Glenn Morris  <rgm@gnu.org>
+
+	Improve the custom type of some user options.
+
+	* lisp/autoinsert.el (auto-insert-alist):
+	* lisp/replace.el (query-replace-from-to-separator):
+	* lisp/gnus/gnus-art.el (gnus-hidden-properties):
+	* lisp/gnus/gnus-gravatar.el (gnus-gravatar-properties):
+	* lisp/gnus/gnus-picon.el (gnus-picon-properties):
+	* lisp/progmodes/prolog.el (prolog-keywords, prolog-types)
+	(prolog-mode-specificators, prolog-determinism-specificators)
+	(prolog-directives, prolog-program-name, prolog-program-switches)
+	(prolog-consult-string, prolog-compile-string, prolog-eof-string)
+	(prolog-prompt-regexp): Improve custom type.
+
+2016-02-01  Glenn Morris  <rgm@gnu.org>
+
+	Mark some risky calendar variables.
+
+	* lisp/calendar/cal-china.el (chinese-calendar-time-zone):
+	Remove risky setting for deleted obsolete alias.
+	(calendar-chinese-standard-time-zone-name)
+	(calendar-chinese-daylight-saving-start)
+	(calendar-chinese-daylight-saving-end):
+	* lisp/calendar/calendar.el (calendar-iso-date-display-form)
+	(calendar-european-date-display-form)
+	(calendar-american-date-display-form, calendar-date-display-form):
+	* lisp/calendar/diary-lib.el (diary-remind-message)
+	(diary-header-line-format):
+	* lisp/calendar/solar.el (calendar-time-display-form)
+	(calendar-location-name): Mark as risky.
+
+2016-02-01  Simen Heggestøyl  <simenheg@gmail.com>
+
+	Highlight two additional SCSS keywords
+
+	* lisp/textmodes/css-mode.el (css-bang-ids): New defconst holding CSS
+	identifiers on the form !foo.
+	(scss-bang-ids): New defconst holding SCSS identifiers on the form
+	!foo.
+	(css--font-lock-keywords): Highlight the new SCSS bang identifiers in
+	`font-lock-builtin-face'.
+
+	* test/indent/css-mode.css: Add bang rule test case.
+
+	* test/indent/scss-mode.css: Add test cases for the introduced bang
+	rules.
+
+2016-02-01  Karl Fogel  <kfogel@red-bean.com>
+
+	Recommend enabling integrity-checking in git
+
+	* admin/notes/git-workflow:  Recommend setting transfer.fsckObjects.
+
+	This is related to the autogen.sh changes made by Paul Eggert in
+	commit d766ca8f (2016-02-01) and commit cedd7cad (2016-02-01), and to
+	my edits today to http://www.emacswiki.org/emacs/GitForEmacsDevs and
+	to emacswiki.org/emacs/GitQuickStartForEmacsDevs.  See also the thread
+	"Recommend these .gitconfig settings for git integrity." at
+	https://lists.gnu.org/archive/html/emacs-devel/2016-01/threads.html#01802.
+
+2016-02-01  Martin Rudalics  <rudalics@gmx.at>
+
+	Some corrections in Elisp manual
+
+	* doc/lispref/buffers.texi (Read Only Buffers): Describe optional
+	argument POSITION.
+	* doc/lispref/debugging.texi (Error Debugging): `debug-on-signal'
+	is an option.
+	* doc/lispref/display.texi (Refresh Screen): Describe optional
+	argument FRAME of `redraw-frame'.
+	(Attribute Functions): Describe optional argument CHARACTER of
+	`face-font'.
+	(Defining Images): `image-load-path' is an option.
+	(Beeping): `ring-bell-function' is an option.
+	* doc/lispref/frames.texi (Size and Position): The PIXELWISE
+	argument of `set-frame-size' is optional.
+	(Raising and Lowering): The TERMINAL argument of `tty-top-frame'
+	is optional.
+	* doc/lispref/keymaps.texi (Controlling Active Maps): Fix doc of
+	`set-transient-map'.
+	* doc/lispref/minibuf.texi (Text from Minibuffer):
+	`read-regexp-defaults-function' is an option.
+	(Minibuffer Contents): `delete-minibuffer-contents' is a command.
+	* doc/lispref/modes.texi (Mode Line Variables):
+	`mode-line-position' and `mode-line-modes' are variables, not
+	options.
+	* doc/lispref/strings.texi (Creating Strings): The START argument
+	of `substring' is optional.
+	* doc/lispref/text.texi (Buffer Contents): Describe optional
+	argument NO-PROPERTIES of `thing-at-point'.
+	(User-Level Deletion): Both arguments of
+	`delete-trailing-whitespace' are optional.
+	(Margins): Use @key{RET} instead of @kbd{RET}.
+	* doc/lispref/windows.texi (Display Action Functions): Write
+	non-@code{nil} instead of non-nil.
+	(Choosing Window Options): The WINDOW arg of
+	`split-window-sensibly' is optional.
+	(Choosing Window Options): Write non-@code{nil} instead of
+	non-nil.
+	(Window Start and End): Both args of `window-group-end' are
+	optional.
+
+	* src/buffer.c (Fbarf_if_buffer_read_only): Rename argument POS
+	to POSITION to keep consisteny with doc-string.
+
+2016-02-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Double static heap size.
+
+	* src/sheap.h (STATIC_HEAP_SIZE): Double it, since it was too
+	small on FreeBSD (Bug#22086).
+
+2016-02-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Chatter when autogen.sh changes Git configuration
+
+	* autogen.sh (git_config): New function.  Use it instead of ‘git config’.
+
+2016-02-01  Kyle Meyer  <kyle@kyleam.com>
+
+	* org/org-compat.el (org-font-lock-ensure): Fix bogus test (bug#22399)
+
+2016-02-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix Bug#20821
+
+	* lisp/net/tramp.el (tramp-file-name-handler):
+	* lisp/net/tramp-sh.el (tramp-sh-handle-expand-file-name):
+	Use `tramp-drop-volume-letter'.  (Bug#20821)
+
+2016-01-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Omit unnecessary history from Lisp intro
+
+	* doc/lispintro/emacs-lisp-intro.texi (Review, Digression into C)
+	(Conclusion): Reword so as not to talk about earlier versions
+	of Emacs in what should be an intro.
+
+2016-01-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* etc/HISTORY: Add some more history, plus git tags.
+
+2016-01-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve elisp “Security Considerations” doc
+
+	* doc/lispref/os.texi (Security Considerations):
+	Mention call-process and rename-file as opposed to shell commands.
+	Add some more cross-references.
+
+2016-01-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	autogen.sh now arranges for git to check hashes
+
+	Suggested by Karl Fogel in:
+	http://lists.gnu.org/archive/html/emacs-devel/2016-01/msg01802.html
+	* autogen.sh: Do "git config transfer.fsckObjects true".
+
+2016-01-31  Dave Barker  <kzar@kzar.co.uk>
+
+	Add ability to give rcirc servers an alias name
+
+	* lisp/net/rcirc.el (rcirc-server-alist): Add :server-alias
+	customization option.
+	(rcirc, rcirc-connect): Take server alias into account.
+
+2016-01-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix (c & 040) typo in emergency escapes
+
+	* src/keyboard.c (handle_interrupt): Fix recently-introduced
+	typo (040 should have been ~040) that silently suppressed
+	auto-saves after emergency escapes.  Redo comparison to avoid
+	similar problems.
+
+2016-01-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port new hybrid malloc to FreeBSD
+
+	Problem reported by Wolfgang Jenkner in: http://bugs.gnu.org/22086#118
+	* src/gmalloc.c (__malloc_initialize_hook, __after_morecore_hook)
+	(__morecore) [HYBRID_MALLOC]: Define in this case too.
+
+2016-01-31  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	* configure.ac: Stop using mmap for buffers for FreeBSD.
+
+2016-01-31  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix display of overlay strings with 'display' and 'box' property
+
+	* src/xdisp.c (get_next_display_element): Take the box face from
+	display stack level that comes from a buffer, not an overlay
+	string.  (Bug#22499)
+
+2016-01-31  Andreas Schwab  <schwab@linux-m68k.org>
+
+	Fix imap-starttls-open
+
+	* lisp/net/imap.el (imap-starttls-open): Log imap process
+	output.  Call imap-parse-greeting.  (Bug#22500)
+
+2016-01-31  Michael Albinus  <michael.albinus@gmx.de>
+
+	Merge changes from Tramp repository
+
+	* doc/misc/Makefile.in (${buildinfodir}/tramp.info tramp.html):
+	No EXTRA_OPTS needed.
+
+	* doc/misc/tramp.texi: Merge changes from Emacsemacs-25
+	branch, especially for @trampfn{}.
+	(Top): Move @ifnottex down.
+	(History): XEmacs support has been removed.
+	(GVFS based methods, Remote processes): Do not use emacsgvfs flag.
+	(Auto-save and Backup): Use both syntax versions.
+	(File name Syntax): Remark on IPv6 adresses is valid for
+	unified syntax only.
+
+	* doc/misc/trampver.texi: Do not set emacsgvfs flag.
+
+2016-01-31  Andreas Schwab  <schwab@linux-m68k.org>
+
+	Fix return value of imap-starttls-open
+
+	* lisp/net/imap.el (imap-starttls-open): Fix return value.
+
+2016-01-31  John Wiegley  <johnw@newartisans.com>
+
+	Correct reference to DARWIN_OS preprocessor symbol
+
+	* src/alloc.c: Correct a preprocessor reference to DARWIN_OS, which may
+	  not be defined.
+
+2016-01-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Spelling fixes
+
+	Spelling fix
+
+	Spelling fixes
+
+2016-01-30  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/vc/add-log.el (find-change-log): Use locate-dominating-file.
+
+2016-01-30  Matthew Carter  <m@ahungry.com>
+
+	Quote table names for postgres listings (sql-mode)
+
+	* lisp/progmodes/sql.el (sql-postgres-completion-object): Avoid passing
+	  unquoted table names to the completion list.
+
+2016-01-30  Glenn Morris  <rgm@gnu.org>
+
+	Change Smerge "Mine" and "Other" for "Upper" and "Lower.  (Bug#20878)
+
+	* lisp/vc/smerge-mode.el (smerge-diff-switches)
+	(smerge-context-menu, smerge-match-conflict, smerge-swap): Doc fixes.
+	(smerge-upper, smerge-upper-face, smerge-keep-upper)
+	(smerge-diff-base-upper): Rename from smerge-mine, smerge-mine-face,
+	smerge-keep-mine, smerge-diff-base-mine.  Update all uses.
+	(smerge-mine-face, smerge-other-face): Remove obsolete face aliases.
+	(smerge-lower, smerge-lower-face, smerge-lower-re, smerge-keep-lower)
+	(smerge-diff-base-lower): Rename from smerge-other, smerge-other-face,
+	smerge-other-re, smerge-keep-other, smerge-diff-base-lower.
+	Update all uses.
+	(smerge-basic-map): Add "l" and "u" bindings.
+	(smerge-mode-menu): Update menu bindings for renaming.
+	(smerge-font-lock-keywords): Update face names.
+	(smerge-match-names): Update names.
+	(smerge-diff-upper-lower): Rename from smerge-diff-mine-other.
+	(smerge-match-conflict, smerge-ediff): Rename local variables.
+	(smerge-makeup-conflict): Relabel markers.
+	(smerge-parsep-re): Use renamed variables.
+
+2016-01-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port recent my_edata change to MS-Windows
+
+	* src/lastfile.c (my_edata): Also define if WINDOWSNT.
+
+2016-01-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Pacify GCC on C library without glibc API
+
+	Without this change, with --enable-gcc-warnings GCC would complain
+	“error: redundant redeclaration of ‘aligned_alloc’”.
+	* configure.ac: Simplify aligned_alloc testing.
+	* src/alloc.c (aligned_alloc): Don’t use if DARWIN_OS,
+	since the simplified configure.ac no longer checks for that.
+	Don’t declare if HAVE_ALIGNED_ALLOC.
+	Correct misspelling of HAVE_ALIGNED_ALLOC in ifdef.
+
+2016-01-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Tell Automake the new lib/Makefile.am is OK
+
+	* lib/Makefile.am (AUTOMAKE_OPTIONS): Add -Wno-portability.
+
+2016-01-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Make it easy to override preferred-branch test
+
+	* Makefile.in (preferred-branch-is-current):
+	Rename from emacs-25-branch-is-current.  All uses changed.
+	(PREFERRED_BRANCH): New macro.
+
+2016-01-30  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/net/browse-url.el (browse-url-default-browser):
+	Lower priority of non-free Chrome.
+
+2016-01-30  Glenn Morris  <rgm@gnu.org>
+
+	Improve the custom type of some user options.
+
+	* lisp/desktop.el (desktop-minor-mode-table):
+	* lisp/man.el (Man-frame-parameters):
+	* lisp/midnight.el (midnight-delay):
+	* lisp/speedbar.el (speedbar-select-frame-method):
+	* lisp/tooltip.el (tooltip-frame-parameters):
+	* lisp/tree-widget.el (tree-widget-space-width):
+	* lisp/type-break.el (type-break-keystroke-threshold):
+	* lisp/woman.el (woman-imenu-generic-expression):
+	* lisp/cedet/ede.el (ede-debug-program-function):
+	* lisp/cedet/ede/project-am.el (project-am-debug-target-function):
+	* lisp/emulation/viper-keym.el (viper-toggle-key):
+	* lisp/erc/erc-networks.el (erc-server-alist):
+	* lisp/gnus/message.el (message-deletable-headers, message-signature):
+	* lisp/mail/mailalias.el (mail-directory-stream):
+	* lisp/play/tetris.el (tetris-x-colors):
+	* lisp/progmodes/gud.el (gud-tooltip-modes): Improve custom type.
+
+2016-01-30  Simen Heggestøyl  <simenheg@gmail.com>
+
+	Highlight CSS variables with variable name face
+
+	* lisp/textmodes/css-mode.el (css-nmstart-re): Don't match variables.
+	(css--font-lock-keywords): Highlight variables in
+	`font-lock-variable-name-face'.
+
+2016-01-30  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/gnus/gnus-kill.el (gnus-winconf-kill-file): Not user-serviceable.
+
+2016-01-30  Glenn Morris  <rgm@gnu.org>
+
+	Mark some user options that can get evalled as risky.
+
+	* lisp/allout.el (allout-title):
+	* lisp/emacs-lisp/edebug.el (edebug-global-break-condition):
+	* lisp/gnus/message.el (message-mailer-swallows-blank-line):
+	* lisp/progmodes/gud.el (gud-tooltip-display):
+	* lisp/vc/ediff-mult.el (ediff-default-filtering-regexp):
+	Mark as risky.
+
+2016-01-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Disable DebPrint in sys_read on MS-Windows
+
+	* src/w32.c (sys_read): Disable a debugging print that is normal
+	when non-blocking reads are retried.
+
+2016-01-30  Martin Rudalics  <rudalics@gmx.at>
+
+	;Fix ChangeLog entry
+
+2016-01-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix typos in Introduction to Emacs Lisp manual
+
+	* doc/lispintro/emacs-lisp-intro.texi (Emacs Initialization)
+	(kill-new function, Digression into C)
+	(Complete forward-sentence, Divide and Conquer, Find a File)
+	(lengths-list-many-files, Columns of a graph, defcustom)
+	(recursive-count-words): Fix typos.  Reported by Daniel Bastos
+	<dbastos@toledo.com>.
+
 2016-01-30  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Shrink static heap a bit
@@ -28564,7 +29619,7 @@
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
 2016-02-04b6d89ff9288a49099f041752908b5eb9613e (inclusive).
-commit ffbf163ab5ced1bc464a0034e6abc9a41f5e09c4 (inclusive).
+commit 3a2b6aa33109dc40b2c1bcc621a624d38fe814fc (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
