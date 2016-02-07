@@ -3360,7 +3360,7 @@ if test "${with_modules}" != "no"; then
   else
     SAVE_LIBS=$LIBS
     LIBS="$LIBS $LIBMODULES"
-    AC_CHECK_FUNCS([dlfunc])
+    AC_CHECK_FUNCS([dladdr dlfunc])
     LIBS=$SAVE_LIBS
   fi
 fi
@@ -3373,7 +3373,6 @@ if test "${HAVE_MODULES}" = yes; then
 fi
 AC_SUBST(MODULES_OBJ)
 AC_SUBST(LIBMODULES)
-AC_CHECK_FUNCS(dladdr)
 
 ### Use -lpng if available, unless '--with-png=no'.
 HAVE_PNG=no
