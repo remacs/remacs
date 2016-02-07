@@ -1829,9 +1829,7 @@ Return the server's response to the SELECT or EXAMINE command."
   (let ((open-result t))
     (when (and server
 	       (not (nnimap-server-opened server)))
-      (let ((method (gnus-server-to-method server)))
-	(setq open-result (nnimap-open-server (nth 1 method) (nthcdr 2 method)
-					      no-reconnect))))
+      (setq open-result (nnimap-open-server server nil no-reconnect)))
     (cond
      ((not open-result)
       nil)
