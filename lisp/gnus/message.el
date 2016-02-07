@@ -296,7 +296,7 @@ any confusion."
 		 regexp))
 
 (defcustom message-subject-re-regexp
-  "^[ \t]*\\([Rr][Ee]\\(\\[[0-9]*\\]\\)*:[ \t]*\\)*[ \t]*"
+  "^[ \t]*\\([Rr][Ee]\\(\\[[0-9]*\\]\\)* ?:[ \t]*\\)*[ \t]*"
   "*Regexp matching \"Re: \" in the subject line."
   :group 'message-various
   :link '(custom-manual "(message)Message Headers")
