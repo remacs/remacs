@@ -2372,7 +2372,7 @@ conv_lisp_to_sockaddr (int family, Lisp_Object address, struct sockaddr *sa, int
 	{
 	  struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) sa;
 	  uint16_t *ip6 = (uint16_t *)&sin6->sin6_addr;
-	  len = sizeof (sin6->sin6_addr) + 1;
+	  len = sizeof (sin6->sin6_addr) / 2 + 1;
 	  hostport = XINT (p->contents[--len]);
 	  sin6->sin6_port = htons (hostport);
 	  for (i = 0; i < len; i++)
