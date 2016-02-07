@@ -1230,9 +1230,6 @@ ones, in case fg and bg are nil."
 (defun shr-tag-s (dom)
   (shr-fontize-dom dom 'shr-strike-through))
 
-(defun shr-tag-del (dom)
-  (shr-fontize-dom dom 'shr-strike-through))
-
 (defun shr-tag-b (dom)
   (shr-fontize-dom dom 'bold))
 
@@ -1251,6 +1248,24 @@ ones, in case fg and bg are nil."
 (defun shr-tag-tt (dom)
   (let ((shr-current-font 'default))
     (shr-generic dom)))
+
+(defun shr-tag-ins (cont)
+  (let* ((start (point))
+         (color "green")
+         (shr-stylesheet (nconc (list (cons 'color color))
+				shr-stylesheet)))
+    (shr-generic cont)
+    (shr-colorize-region start (point) color
+                         (cdr (assq 'background-color shr-stylesheet)))))
+
+(defun shr-tag-del (cont)
+  (let* ((start (point))
+         (color "red")
+         (shr-stylesheet (nconc (list (cons 'color color))
+				shr-stylesheet)))
+    (shr-fontize-dom cont 'shr-strike-through)
+    (shr-colorize-region start (point) color
+                         (cdr (assq 'background-color shr-stylesheet)))))
 
 (defun shr-parse-style (style)
   (when style
