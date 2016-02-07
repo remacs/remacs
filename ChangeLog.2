@@ -1,3 +1,926 @@
+2016-02-07  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/comint.el (comint-prompt-read-only): Clean tabs in docstring
+
+	While tabs in code are mostly fine because the Emacs sources have a
+	.dir-locals file specifying tab-width, the same is not true of tabs in
+	code examples inside docstrings.  The docstring is printed on a *Help*
+	buffer, which can be created on any directory and won't necessarily have
+	the same tab-width set.
+
+2016-02-07  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Don't inloop gnus-uu-mark-thread on the last thread
+
+	* lisp/gnus/gnus-uu.el (gnus-uu-mark-thread): Don't infloop on the
+	final thread in the summary buffer (bug#16666).
+
+2016-02-06  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Display non-ASCII group names better in prompts
+
+	* lisp/gnus/gnus-sum.el (gnus-articles-to-read): To decode the
+	group name, we have to do that before we remove the prefix.
+
+2016-02-06  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Default to gpg2 instead of gpg
+
+	* lisp/epg-config.el (epg-gpg-program): Prefer gpg2 over gpg, if
+	it exists.  This fixes many problems with using the GPG
+	authentication agent.
+
+2016-02-06  David Edmondson  <dme@dme.org>
+
+	src/process.c Correctly convert AF_INET6 addresses
+
+	* src/process.c (conv_lisp_to_sockaddr): AF_INET6 addresses are
+	converted to a list of 16 bit quantities by
+	conv_sockaddr_to_lisp(). conv_lisp_to_sockaddr() should follow the
+	same scheme rather than expecting a (longer) list of 8 bit
+	quantities.
+
+	Backport:
+
+	(cherry picked from commit 55ce3c30d617c38eb086d5ad4ffbd881c20c559c)
+
+2016-02-06  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/isearch.el (isearch-define-mode-toggle): Improve logic
+
+2016-02-06  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/menu-bar.el (menu-bar-options-menu): New search submenu
+
+	(menu-bar-search-options-menu): New variable
+
+2016-02-06  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/isearch.el (search-default-mode)
+
+	(isearch-regexp-function): Improve docstrings.
+
+2016-02-06  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/isearch.el: Rename search-default-regexp-mode to search-default-mode
+
+	(search-default-mode): New variable.
+	(isearch-mode, isearch-define-mode-toggle)
+	(isearch--describe-regexp-mode): Update accordingly.
+	* lisp/menu-bar.el (nonincremental-search-forward): Update accordingly.
+	* etc/NEWS: Update accordingly.
+	* doc/emacs/search.texi: Update accordingly.
+
+2016-02-06  Oscar Fuentes  <ofv@wanadoo.es>
+
+	Use monitor's resolution for positioning tooltips
+
+	* src/xfns.c (compute_tip_xy): Use the resolution of the monitor where
+	  the mouse pointer is to avoid placing the tooltip over the border of
+	  the monitor on multi-head displays. Fixes bug#22549.
+
+2016-02-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix file-notify-test on MS-Windows
+
+	* test/automated/file-notify-tests.el (file-notify--test-timeout):
+	Reduce w32notify timeout to 10 sec.
+	(file-notify-test06-many-events): Call read-event after each
+	rename, to keep the w32notify backend happy in batch mode.
+	(Bug#22534)
+
+2016-02-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix issues found by auditing w32notify code
+
+	* src/w32inevt.c (handle_file_notifications): Count the number of
+	events to be returned.
+	* src/w32notify.c (send_notifications): Don't copy to the file
+	notification buffer more than it can hold.  (Bug#22534)
+
+2016-02-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Extend etags Ruby support for accessors
+
+	* lib-src/etags.c (Ruby_functions): Support accessors defined with
+	parentheses.  (Bug#22563)
+
+	* test/etags/ruby-src/test1.ru (A::B): Add tests for accessors
+	defined with parentheses.
+	* test/etags/ETAGS.good_1:
+	* test/etags/ETAGS.good_2:
+	* test/etags/ETAGS.good_3:
+	* test/etags/ETAGS.good_4:
+	* test/etags/ETAGS.good_5:
+	* test/etags/ETAGS.good_6:
+	* test/etags/CTAGS.good: Adapt to changes in Ruby tests.
+
+2016-02-06  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Update publicsuffix.txt.
+
+	* etc/publicsuffix.txt: Updated from
+	https://publicsuffix.org/list/public_suffix_list.dat.
+
+2016-02-06  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Ensure that Gnus dribble handling allows removing entries
+
+	* lisp/gnus/gnus-start.el (gnus-dribble-enter): Ensure that each
+	entry is on a single line.
+
+2016-02-05  OGAWA Hirofumi  <hirofumi@mail.parknet.co.jp>  (tiny change)
+
+	Be consistent when using encoded strings in nnimap data
+
+	* lisp/gnus/nnimap.el (nnimap-encode-gnus-group): New function
+	(nnimap-request-list): Use it.
+	(nnimap-request-newgroups): Ditto.
+
+2016-02-05  OGAWA Hirofumi  <hirofumi@mail.parknet.co.jp>  (tiny change)
+
+	Display the decoded Gnus group name
+
+	* lisp/gnus/gnus-sum.el (gnus-summary-read-group-1): Use the
+	decoded group name in the message.
+
+2016-02-05  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Use completion-ignore-case instead of defining command
+
+	* lisp/erc/erc.el (erc-mode): Set completion-ignore-case so
+	that we get case-insensitive completion.
+	(erc-completion-at-point): Remove.
+
+2016-02-05  Eli Zaretskii  <eliz@gnu.org>
+
+	Merge branch 'emacs-25' of git.savannah.gnu.org:/srv/git/emacs into emacs-25
+
+2016-02-05  Michael Albinus  <michael.albinus@gmx.de>
+
+	* test/automated/file-notify-tests.el (file-notify-test06-many-events):
+
+	Reduce the number of iterations to 250 in case of w32notify.
+
+2016-02-05  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix problems caused by new implementation of sub-word mode
+
+	* lisp/subr.el (forward-word-strictly, backward-word-strictly):
+	New functions.
+	(word-move-empty-char-table): New variable.
+
+	* etc/NEWS: Mention 'forward-word-strictly' and
+	'backward-word-strictly'.
+
+	* doc/lispref/positions.texi (Word Motion): Document
+	'find-word-boundary-function-table', 'forward-word-strictly', and
+	'backward-word-strictly'.  (Bug#22560)
+
+	* src/syntax.c (syms_of_syntax)
+	<find-word-boundary-function-table>: Doc fix.
+
+	* lisp/wdired.el (wdired-xcase-word):
+	* lisp/textmodes/texnfo-upd.el (texinfo-copy-node-name)
+	(texinfo-copy-section-title, texinfo-start-menu-description)
+	(texinfo-copy-menu-title, texinfo-specific-section-type)
+	(texinfo-insert-node-lines, texinfo-copy-next-section-title):
+	* lisp/textmodes/texinfo.el (texinfo-clone-environment)
+	(texinfo-insert-@end):
+	* lisp/textmodes/texinfmt.el (texinfo-format-scan)
+	(texinfo-anchor, texinfo-multitable-widths)
+	(texinfo-multitable-item):
+	* lisp/textmodes/tex-mode.el (latex-env-before-change):
+	* lisp/textmodes/flyspell.el (texinfo-mode-flyspell-verify):
+	* lisp/skeleton.el (skeleton-insert):
+	* lisp/simple.el (count-words):
+	* lisp/progmodes/vhdl-mode.el (vhdl-beginning-of-libunit)
+	(vhdl-beginning-of-defun, vhdl-beginning-of-statement-1)
+	(vhdl-update-sensitivity-list, vhdl-template-block)
+	(vhdl-template-break, vhdl-template-case, vhdl-template-default)
+	(vhdl-template-default-indent, vhdl-template-for-loop)
+	(vhdl-template-if-then-use, vhdl-template-bare-loop)
+	(vhdl-template-nature, vhdl-template-procedural)
+	(vhdl-template-process, vhdl-template-selected-signal-asst)
+	(vhdl-template-type, vhdl-template-variable)
+	(vhdl-template-while-loop, vhdl-beginning-of-block)
+	(vhdl-hooked-abbrev, vhdl-port-copy, vhdl-hs-forward-sexp-func):
+	* lisp/progmodes/verilog-mode.el (verilog-backward-sexp)
+	(verilog-forward-sexp, verilog-beg-of-statement)
+	(verilog-set-auto-endcomments, verilog-backward-token)
+	(verilog-do-indent):
+	* lisp/progmodes/vera-mode.el (vera-guess-basic-syntax)
+	(vera-indent-block-closing):
+	* lisp/progmodes/simula.el (simula-context)
+	(simula-backward-up-level, simula-forward-down-level)
+	(simula-previous-statement, simula-next-statement)
+	(simula-skip-comment-backward, simula-calculate-indent)
+	(simula-find-if, simula-electric-keyword):
+	* lisp/progmodes/sh-script.el (sh-smie--rc-newline-semi-p):
+	* lisp/progmodes/ruby-mode.el (ruby-smie--redundant-do-p)
+	(ruby-smie--forward-token, ruby-smie--backward-token)
+	(ruby-singleton-class-p, ruby-calculate-indent)
+	(ruby-forward-sexp, ruby-backward-sexp):
+	* lisp/progmodes/ps-mode.el (ps-run-goto-error):
+	* lisp/progmodes/perl-mode.el (perl-syntax-propertize-function)
+	(perl-syntax-propertize-special-constructs)
+	(perl-backward-to-start-of-continued-exp):
+	* lisp/progmodes/pascal.el (pascal-indent-declaration):
+	* lisp/progmodes/octave.el (octave-function-file-p):
+	* lisp/progmodes/mantemp.el (mantemp-insert-cxx-syntax):
+	* lisp/progmodes/js.el (js--forward-function-decl):
+	* lisp/progmodes/idlwave.el (idlwave-show-begin-check)
+	(idlwave-beginning-of-block, idlwave-end-of-block)
+	(idlwave-block-jump-out, idlwave-determine-class):
+	* lisp/progmodes/icon.el (icon-is-continuation-line)
+	(icon-backward-to-start-of-continued-exp, end-of-icon-defun):
+	* lisp/progmodes/hideif.el (hide-ifdef-define):
+	* lisp/progmodes/f90.el (f90-change-keywords):
+	* lisp/progmodes/cperl-mode.el (cperl-electric-pod)
+	(cperl-linefeed, cperl-electric-terminator)
+	(cperl-find-pods-heres, cperl-fix-line-spacing)
+	(cperl-invert-if-unless):
+	* lisp/progmodes/cc-engine.el (c-forward-<>-arglist-recur):
+	* lisp/progmodes/cc-align.el (c-lineup-java-inher):
+	* lisp/progmodes/ada-mode.el (ada-compile-goto-error)
+	(ada-adjust-case-skeleton, ada-create-case-exception)
+	(ada-create-case-exception-substring)
+	(ada-case-read-exceptions-from-file, ada-after-keyword-p)
+	(ada-scan-paramlist, ada-get-current-indent, ada-get-indent-end)
+	(ada-get-indent-if, ada-get-indent-block-start)
+	(ada-get-indent-loop, ada-get-indent-type)
+	(ada-search-prev-end-stmt, ada-check-defun-name)
+	(ada-goto-decl-start, ada-goto-matching-start)
+	(ada-goto-matching-end, ada-looking-at-semi-or)
+	(ada-looking-at-semi-private, ada-in-paramlist-p)
+	(ada-search-ignore-complex-boolean, ada-move-to-start)
+	(ada-move-to-end, ada-which-function, ada-gen-treat-proc):
+	* lisp/net/quickurl.el (quickurl-grab-url):
+	* lisp/mail/sendmail.el (mail-do-fcc):
+	* lisp/mail/rmail.el (rmail-resend):
+	* lisp/mail/mailabbrev.el (mail-abbrev-complete-alias):
+	* lisp/mail/mail-extr.el (mail-extract-address-components):
+	* lisp/json.el (json-read-keyword):
+	* lisp/files.el (insert-directory):
+	* lisp/emacs-lisp/checkdoc.el (checkdoc-this-string-valid-engine):
+	* lisp/completion.el (symbol-under-point, symbol-before-point)
+	(symbol-before-point-for-complete, next-cdabbrev)
+	(add-completions-from-c-buffer):
+	* lisp/cedet/semantic/texi.el (semantic-up-context)
+	(semantic-beginning-of-context):
+	* lisp/cedet/semantic/bovine/el.el (semantic-get-local-variables):
+	use 'forward-word-strictly' and 'backward-word-strictly' instead
+	of 'forward-word' and 'backward-word'.
+
+2016-02-05  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Fix doc string of tls-program
+
+	* lisp/net/tls.el (tls-program): Document the %t parameter (bug#22559).
+
+2016-02-05  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Restore window conf in nsm
+
+	* lisp/net/nsm.el (nsm-query-user): Restore the window configuration.
+
+	Backport:
+
+2016-02-05  Mark Oteiza  <mvoteiza@udel.edu>
+
+	* etc/NEWS: Document new mpc.el features
+
+2016-02-04  Leo Liu  <sdl.web@gmail.com>
+
+	* lisp/custom.el (defface): Revert indentation change.  (Bug#22524)
+
+2016-02-04  Alan Mackenzie  <acm@muc.de>
+
+	Correctly fontify C++ initializations which "look like" functions.
+
+	Fixes bug#7579.
+
+	lisp/progmodes/cc-engine.el (c-forward-declarator): Add extra optional
+	parameter to enable handling of "anonymous" declarators in declarations.
+
+	lisp/progmodes/cc-fonts.el (c-font-lock-declarators): Check more rigorously
+	whether a "(" opens a parameter list of a function, or an initialization of a
+	variable.
+
+2016-02-04  Ulf Jasper  <ulf.jasper@web.de>
+
+	Improve newsticker-treeview-selection-face
+
+	* newst-treeview.el (newsticker-treeview-selection-face): Improve
+	readability for dark background.
+
+2016-02-04  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor fix in tagging Ruby accessors by etags
+
+	* lib-src/etags.c (Ruby_functions): Don't tag accessors whose
+	names are not literal symbols.  (Bug#22241)
+
+2016-02-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Spelling fixes
+
+2016-02-04  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Remove 'def X' from the example
+
+	* test/etags/ruby-src/test1.ru (A::B): Remove 'def X'
+	(http://lists.gnu.org/archive/html/emacs-devel/2016-02/msg00167.html).
+	* test/etags/CTAGS.good:
+	* test/etags/ETAGS.good_1:
+	* test/etags/ETAGS.good_2:
+	* test/etags/ETAGS.good_3:
+	* test/etags/ETAGS.good_4:
+	* test/etags/ETAGS.good_5:
+	* test/etags/ETAGS.good_6: Adjust accordingly.
+
+2016-02-04  Vasilij Schneidermann  <v.schneidermann@gmail.com>  (tiny change)
+
+	Allow sending empty hidden values in eww
+
+	* lisp/net/eww.el (eww-tag-input): Allow sending empty hidden
+	values (bug#22388).
+
+	(cherry picked from commit 5898da8210af7953e638ddf7821c05260979c3f0)
+
+	Backport:
+
+2016-02-04  David Edmondson  <dme@dme.org>
+
+	Make erc work better when encountering unknown prefix chars
+
+	* lisp/erc/erc.el (erc-channel-receive-names): Output a warning
+	instead of erroring out on unknown prefix chars (bug#22380).
+
+2016-02-04  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Make erc completion case-insensitive again
+
+	* lisp/erc/erc.el (erc-completion-at-point): Make erc completion
+	case-insensitive again (bug#11360).
+
+2016-02-04  Carlos Pita  <carlosjosepita@gmail.com>  (tiny change)
+
+	Make complection in erc use consistent casing
+
+	* lisp/erc/erc-pcomplete.el (pcomplete-erc-all-nicks): Make
+	case in the complection consistent (bug#18509).
+
+2016-02-04  Francis Litterio  <flitterio@gmail.com>
+
+	Make /QUIT in erc more robust
+
+	* lisp/erc/erc.el (erc-kill-query-buffers): Don't bug out if we're
+	issuing /QUIT to disconnected servers (bug#22099).
+
+2016-02-04  Kevin Brubeck Unhammer  <unhammer@fsfe.org>  (tiny change)
+
+	Make tracking faces in Emacs work more reliably
+
+	* lisp/erc/erc-track.el (erc-faces-in): Always return lists of
+	faces to avoid later ambiguity (bug#22424).
+
+2016-02-04  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Make shr not bug out on images on non-graphical displays
+
+	* lisp/net/shr.el (shr-put-image): Don't bug out on alt-less
+	images on non-graphical displays (bug#22327).
+
+2016-02-04  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Fix bookmark display widths
+
+	* lisp/net/eww.el (eww-list-bookmarks): Pop to the buffer before
+	preparing it so that the widths are computed correctly (bug#22328).
+
+2016-02-04  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Fix typo in eww-make-unique-file-name
+
+	* lisp/net/eww.el (eww-make-unique-file-name): Make this function
+	actually work.
+
+2016-02-03  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Make it possible to TAB to input fields
+
+	* lisp/net/eww.el (eww-tag-input): Make it possible to TAB to
+	input fields (bug#22540).
+
+2016-02-03  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Insert complete alt texts when images are disabled
+
+	* lisp/net/shr.el (shr-tag-img): When images are disabled, insert
+	the complete alt/title string (bug#22293).
+
+2016-02-03  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Allow eww text fields to grow
+
+	* lisp/net/eww.el (eww-process-text-input): Allow text fields to
+	grow when typing in stuff that's longer than the original width.
+
+2016-02-03  Dima Kogan  <dima@secretsauce.net>
+
+	Make erc work when subword-mode is switched on
+
+	* lisp/erc/erc-backend.el (erc-forward-word, erc-word-at-arg-p)
+	(erc-bounds-of-word-at-point): New functions to do word-based
+	things when subword-mode is switched on.
+
+	* lisp/erc/erc-button.el (erc-button-add-nickname-buttons): Use them
+	(bug#17558).
+
+2016-02-03  Teemu Likonen  <tlikonen@iki.fi>
+
+	Fix IMAP doc example
+
+	* doc/misc/gnus.texi (Client-Side IMAP Splitting): Fix example.
+
+2016-02-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Quoting fixes in doc strings and diagnostics
+
+	* lisp/emacs-lisp/bytecomp.el (byte-compile-setq, byte-compile-funcall):
+	* lisp/gnus/mml-smime.el (mml-smime-get-dns-cert)
+	(mml-smime-get-ldap-cert):
+	Follow user style preference when quoting diagnostics.
+
+2016-02-03  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix warning message in hack-local-variables
+
+	* lisp/files.el (hack-local-variables): use 'thisbuf' to reference
+	the original buffer name in the warning message.  (Bug#21681)
+
+2016-02-03  Eli Zaretskii  <eliz@gnu.org>
+
+	Etags: yet another improvement in Ruby tags
+
+	* lib-src/etags.c (Ruby_functions): Handle continuation lines in
+	Ruby accessor definitions.  (Bug#22241)
+
+	* test/etags/ruby-src/test1.ru (A::B#X): Add some more tests for
+	accessors and multiline definitions.
+	* test/etags/ETAGS.good_1:
+	* test/etags/ETAGS.good_2:
+	* test/etags/ETAGS.good_3:
+	* test/etags/ETAGS.good_4:
+	* test/etags/ETAGS.good_5:
+	* test/etags/ETAGS.good_6:
+	* test/etags/CTAGS.good: Adapt to changes in Ruby tags.
+
+2016-02-03  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix x-popup-menu on TTYs without a mouse
+
+	* src/menu.c (Fx_popup_menu): Be sure to initialize 'x' and 'y'
+	for the TTY case without a mouse.  (Bug#22538)
+
+2016-02-03  Nicolas Petton  <nicolas@petton.fr>
+
+	* lisp/emacs-lisp/map.el: Improvements to the docstring of the pcase macro
+
+2016-02-02  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Use pop-to-buffer-same-window in eww
+
+	* lisp/net/eww.el: pop-to-buffer-same-window throughout instead of
+	switch-to-buffer (bug#22244).
+
+2016-02-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* autogen.sh: Revert all recent changes.
+
+2016-02-02  Glenn Morris  <rgm@gnu.org>
+
+	* make-dist: Updates related to nt/.
+
+	* make-dist: Add modules/.
+
+	* make-dist: Update for super-special file that can't live in etc/.
+
+2016-02-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix failure to compile ns-win.el in parallel builds
+
+	* src/Makefile.in ($(lispsource)/term/ns-win.elc): Add order-only
+	dependency on $(lispsource)/international/charprop.el.
+	(Bug#22501)
+
+2016-02-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix names of tags generated for Ruby accessors
+
+	* lib-src/etags.c (Ruby_functions): Don't include the leading
+	colon ':' in tags for Ruby accessors and aliases.  (Bug#22241)
+
+	* test/etags/ETAGS.good_1:
+	* test/etags/ETAGS.good_2:
+	* test/etags/ETAGS.good_3:
+	* test/etags/ETAGS.good_4:
+	* test/etags/ETAGS.good_5:
+	* test/etags/ETAGS.good_6:
+	* test/etags/CTAGS.good: Adapt to changes in Ruby tags.
+
+2016-02-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix file-name recognition in 'etags'
+
+	* lib-src/etags.c (get_language_from_filename): If FILE includes a
+	leading directory, compare only its basename to the known file
+	names in lang_names[].
+
+	* test/etags/Makefile (RBSRC): Adapt to recent test1.ruby
+	renaming.
+	* test/etags/ETAGS.good_1:
+	* test/etags/ETAGS.good_2:
+	* test/etags/ETAGS.good_3:
+	* test/etags/ETAGS.good_4:
+	* test/etags/ETAGS.good_5:
+	* test/etags/ETAGS.good_6:
+	* test/etags/CTAGS.good: Adapt to changes in Ruby file names and
+	to the results in Makefile due to the above etags.c fix.
+
+2016-02-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Change Ruby file names and extensions recognized by 'etags'
+
+	* lib-src/etags.c <Ruby_filenames>: New variable, holds names
+	of Ruby files.
+	<Ruby_suffixes>: Treat .rb, .ru, and .rbw as Ruby extensions.
+	<lang_names>: Add Ruby_filenames to the Ruby entry.
+	* test/etags/ruby-src/test1.ru: Renamed from test1.ruby.
+	(Bug#22241)
+
+2016-02-02  Eli Zaretskii  <eliz@gnu.org>
+
+	More improvements for Ruby support in 'etags'
+
+	* lib-src/etags.c (Ruby_functions): Tag Ruby accessors and
+	alias_method.  Identify constants even if the assignment is not
+	followed by whitespace.  (Bug#22241)
+
+	* test/etags/ruby-src/test1.ruby: Add tests for constants,
+	accessors, and alias_method.
+	* test/etags/ETAGS.good_1:
+	* test/etags/ETAGS.good_2:
+	* test/etags/ETAGS.good_3:
+	* test/etags/ETAGS.good_4:
+	* test/etags/ETAGS.good_5:
+	* test/etags/ETAGS.good_6:
+	* test/etags/CTAGS.good: Adapt to changes in Ruby tests.
+
+2016-02-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Add --git-config option to autogen.sh
+
+	* autogen.sh: New options --git-config, --help.
+	(git_config): New shell var.  Alter function to respect this var.
+
+2016-02-02  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Fix editing undo changes in eww fields
+
+	* eww.el (eww-tag-form): Don't overwrite initial form data in text
+	fields.
+	(eww-process-text-input): Make `M-t' at the end of text fields work
+	better (bug#19085).
+
+2016-02-01  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Allow the user more control of popping up the eww window
+
+	* eww.el (eww): Use pop-to-buffer-same-window (suggested by
+	Michael Heerdegen) (bug#22244).
+
+2016-02-01  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Make eww-browse-url with new-window parameter work again
+
+	* eww.el (eww-browse-url): Stay in the same buffer if we're
+	already in a eww mode buffer so that eww-browse-url with a
+	new-window parameter works (bug#22244).
+
+2016-02-01  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Clean up eww code slightly
+
+	* eww.el (eww-browse-url): Clean up code slightly.
+
+2016-02-01  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Don't insert nil faces in shr
+
+	* shr.el (shr-insert-table): Don't add nil faces, because that
+	will show up in *Messages* as "Invalid face reference: nil [32
+	times]".
+
+2016-02-01  Glenn Morris  <rgm@gnu.org>
+
+	Improve the custom type of some user options.
+
+	* lisp/autoinsert.el (auto-insert-alist):
+	* lisp/replace.el (query-replace-from-to-separator):
+	* lisp/gnus/gnus-art.el (gnus-hidden-properties):
+	* lisp/gnus/gnus-gravatar.el (gnus-gravatar-properties):
+	* lisp/gnus/gnus-picon.el (gnus-picon-properties):
+	* lisp/progmodes/prolog.el (prolog-keywords, prolog-types)
+	(prolog-mode-specificators, prolog-determinism-specificators)
+	(prolog-directives, prolog-program-name, prolog-program-switches)
+	(prolog-consult-string, prolog-compile-string, prolog-eof-string)
+	(prolog-prompt-regexp): Improve custom type.
+
+2016-02-01  Glenn Morris  <rgm@gnu.org>
+
+	Mark some risky calendar variables.
+
+	* lisp/calendar/cal-china.el (chinese-calendar-time-zone):
+	Remove risky setting for deleted obsolete alias.
+	(calendar-chinese-standard-time-zone-name)
+	(calendar-chinese-daylight-saving-start)
+	(calendar-chinese-daylight-saving-end):
+	* lisp/calendar/calendar.el (calendar-iso-date-display-form)
+	(calendar-european-date-display-form)
+	(calendar-american-date-display-form, calendar-date-display-form):
+	* lisp/calendar/diary-lib.el (diary-remind-message)
+	(diary-header-line-format):
+	* lisp/calendar/solar.el (calendar-time-display-form)
+	(calendar-location-name): Mark as risky.
+
+2016-02-01  Simen Heggestøyl  <simenheg@gmail.com>
+
+	Highlight two additional SCSS keywords
+
+	* lisp/textmodes/css-mode.el (css-bang-ids): New defconst holding CSS
+	identifiers on the form !foo.
+	(scss-bang-ids): New defconst holding SCSS identifiers on the form
+	!foo.
+	(css--font-lock-keywords): Highlight the new SCSS bang identifiers in
+	`font-lock-builtin-face'.
+
+	* test/indent/css-mode.css: Add bang rule test case.
+
+	* test/indent/scss-mode.css: Add test cases for the introduced bang
+	rules.
+
+2016-02-01  Karl Fogel  <kfogel@red-bean.com>
+
+	Recommend enabling integrity-checking in git
+
+	* admin/notes/git-workflow:  Recommend setting transfer.fsckObjects.
+
+	This is related to the autogen.sh changes made by Paul Eggert in
+	commit d766ca8f (2016-02-01) and commit cedd7cad (2016-02-01), and to
+	my edits today to http://www.emacswiki.org/emacs/GitForEmacsDevs and
+	to emacswiki.org/emacs/GitQuickStartForEmacsDevs.  See also the thread
+	"Recommend these .gitconfig settings for git integrity." at
+	https://lists.gnu.org/archive/html/emacs-devel/2016-01/threads.html#01802.
+
+2016-02-01  Martin Rudalics  <rudalics@gmx.at>
+
+	Some corrections in Elisp manual
+
+	* doc/lispref/buffers.texi (Read Only Buffers): Describe optional
+	argument POSITION.
+	* doc/lispref/debugging.texi (Error Debugging): `debug-on-signal'
+	is an option.
+	* doc/lispref/display.texi (Refresh Screen): Describe optional
+	argument FRAME of `redraw-frame'.
+	(Attribute Functions): Describe optional argument CHARACTER of
+	`face-font'.
+	(Defining Images): `image-load-path' is an option.
+	(Beeping): `ring-bell-function' is an option.
+	* doc/lispref/frames.texi (Size and Position): The PIXELWISE
+	argument of `set-frame-size' is optional.
+	(Raising and Lowering): The TERMINAL argument of `tty-top-frame'
+	is optional.
+	* doc/lispref/keymaps.texi (Controlling Active Maps): Fix doc of
+	`set-transient-map'.
+	* doc/lispref/minibuf.texi (Text from Minibuffer):
+	`read-regexp-defaults-function' is an option.
+	(Minibuffer Contents): `delete-minibuffer-contents' is a command.
+	* doc/lispref/modes.texi (Mode Line Variables):
+	`mode-line-position' and `mode-line-modes' are variables, not
+	options.
+	* doc/lispref/strings.texi (Creating Strings): The START argument
+	of `substring' is optional.
+	* doc/lispref/text.texi (Buffer Contents): Describe optional
+	argument NO-PROPERTIES of `thing-at-point'.
+	(User-Level Deletion): Both arguments of
+	`delete-trailing-whitespace' are optional.
+	(Margins): Use @key{RET} instead of @kbd{RET}.
+	* doc/lispref/windows.texi (Display Action Functions): Write
+	non-@code{nil} instead of non-nil.
+	(Choosing Window Options): The WINDOW arg of
+	`split-window-sensibly' is optional.
+	(Choosing Window Options): Write non-@code{nil} instead of
+	non-nil.
+	(Window Start and End): Both args of `window-group-end' are
+	optional.
+
+	* src/buffer.c (Fbarf_if_buffer_read_only): Rename argument POS
+	to POSITION to keep consisteny with doc-string.
+
+2016-02-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Chatter when autogen.sh changes Git configuration
+
+	* autogen.sh (git_config): New function.  Use it instead of ‘git config’.
+
+2016-02-01  Kyle Meyer  <kyle@kyleam.com>
+
+	* org/org-compat.el (org-font-lock-ensure): Fix bogus test (bug#22399)
+
+2016-01-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Omit unnecessary history from Lisp intro
+
+	* doc/lispintro/emacs-lisp-intro.texi (Review, Digression into C)
+	(Conclusion): Reword so as not to talk about earlier versions
+	of Emacs in what should be an intro.
+
+2016-01-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* etc/HISTORY: Add some more history, plus git tags.
+
+2016-01-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve elisp “Security Considerations” doc
+
+	* doc/lispref/os.texi (Security Considerations):
+	Mention call-process and rename-file as opposed to shell commands.
+	Add some more cross-references.
+
+2016-01-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	autogen.sh now arranges for git to check hashes
+
+	Suggested by Karl Fogel in:
+	http://lists.gnu.org/archive/html/emacs-devel/2016-01/msg01802.html
+	* autogen.sh: Do "git config transfer.fsckObjects true".
+
+2016-01-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix (c & 040) typo in emergency escapes
+
+	* src/keyboard.c (handle_interrupt): Fix recently-introduced
+	typo (040 should have been ~040) that silently suppressed
+	auto-saves after emergency escapes.  Redo comparison to avoid
+	similar problems.
+
+2016-01-31  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix display of overlay strings with 'display' and 'box' property
+
+	* src/xdisp.c (get_next_display_element): Take the box face from
+	display stack level that comes from a buffer, not an overlay
+	string.  (Bug#22499)
+
+2016-01-31  Andreas Schwab  <schwab@linux-m68k.org>
+
+	Fix imap-starttls-open
+
+	* lisp/net/imap.el (imap-starttls-open): Log imap process
+	output.  Call imap-parse-greeting.  (Bug#22500)
+
+2016-01-31  Andreas Schwab  <schwab@linux-m68k.org>
+
+	Fix return value of imap-starttls-open
+
+	* lisp/net/imap.el (imap-starttls-open): Fix return value.
+
+2016-01-31  John Wiegley  <johnw@newartisans.com>
+
+	Correct reference to DARWIN_OS preprocessor symbol
+
+	* src/alloc.c: Correct a preprocessor reference to DARWIN_OS, which may
+	  not be defined.
+
+2016-01-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Spelling fix
+
+	Spelling fixes
+
+2016-01-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Pacify GCC on C library without glibc API
+
+	Without this change, with --enable-gcc-warnings GCC would complain
+	“error: redundant redeclaration of ‘aligned_alloc’”.
+	* configure.ac: Simplify aligned_alloc testing.
+	* src/alloc.c (aligned_alloc): Don’t use if DARWIN_OS,
+	since the simplified configure.ac no longer checks for that.
+	Don’t declare if HAVE_ALIGNED_ALLOC.
+	Correct misspelling of HAVE_ALIGNED_ALLOC in ifdef.
+
+2016-01-30  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	Backport: * lisp/files.el: Remove support for extra .dir-locals file
+
+	(dir-locals-file-2, dir-locals--all-files): Remove.
+	(dir-locals-collect-variables, dir-locals-file, dir-locals-find-file)
+	(dir-locals-read-from-file, hack-dir-local-variables): Revert changes.
+
+	* lisp/files-x.el (modify-dir-local-variable): Revert changes.
+
+	* lisp/help-fns.el (describe-variable): Revert changes.
+
+	* doc/emacs/custom.texi (Directory Variables): Revert changes.
+
+	* etc/NEWS: Revert changes.
+
+2016-01-30  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/net/browse-url.el (browse-url-default-browser):
+	Lower priority of non-free Chrome.
+
+2016-01-30  Glenn Morris  <rgm@gnu.org>
+
+	Improve the custom type of some user options.
+
+	* lisp/desktop.el (desktop-minor-mode-table):
+	* lisp/man.el (Man-frame-parameters):
+	* lisp/midnight.el (midnight-delay):
+	* lisp/speedbar.el (speedbar-select-frame-method):
+	* lisp/tooltip.el (tooltip-frame-parameters):
+	* lisp/tree-widget.el (tree-widget-space-width):
+	* lisp/type-break.el (type-break-keystroke-threshold):
+	* lisp/woman.el (woman-imenu-generic-expression):
+	* lisp/cedet/ede.el (ede-debug-program-function):
+	* lisp/cedet/ede/project-am.el (project-am-debug-target-function):
+	* lisp/emulation/viper-keym.el (viper-toggle-key):
+	* lisp/erc/erc-networks.el (erc-server-alist):
+	* lisp/gnus/message.el (message-deletable-headers, message-signature):
+	* lisp/mail/mailalias.el (mail-directory-stream):
+	* lisp/play/tetris.el (tetris-x-colors):
+	* lisp/progmodes/gud.el (gud-tooltip-modes): Improve custom type.
+
+2016-01-30  Simen Heggestøyl  <simenheg@gmail.com>
+
+	Highlight CSS variables with variable name face
+
+	* lisp/textmodes/css-mode.el (css-nmstart-re): Don't match variables.
+	(css--font-lock-keywords): Highlight variables in
+	`font-lock-variable-name-face'.
+
+2016-01-30  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/gnus/gnus-kill.el (gnus-winconf-kill-file): Not user-serviceable.
+
+2016-01-30  Glenn Morris  <rgm@gnu.org>
+
+	Mark some user options that can get evalled as risky.
+
+	* lisp/allout.el (allout-title):
+	* lisp/emacs-lisp/edebug.el (edebug-global-break-condition):
+	* lisp/gnus/message.el (message-mailer-swallows-blank-line):
+	* lisp/progmodes/gud.el (gud-tooltip-display):
+	* lisp/vc/ediff-mult.el (ediff-default-filtering-regexp):
+	Mark as risky.
+
+2016-01-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Disable DebPrint in sys_read on MS-Windows
+
+	* src/w32.c (sys_read): Disable a debugging print that is normal
+	when non-blocking reads are retried.
+
+2016-01-30  Martin Rudalics  <rudalics@gmx.at>
+
+	;Fix ChangeLog entry
+
+2016-01-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix typos in Introduction to Emacs Lisp manual
+
+	* doc/lispintro/emacs-lisp-intro.texi (Emacs Initialization)
+	(kill-new function, Digression into C)
+	(Complete forward-sentence, Divide and Conquer, Find a File)
+	(lengths-list-many-files, Columns of a graph, defcustom)
+	(recursive-count-words): Fix typos.  Reported by Daniel Bastos
+	<dbastos@toledo.com>.
+
+2016-01-30  Nicolas Petton  <nicolas@petton.fr>
+
+	Bump version to 25.0.90
+
+	* README:
+	* configure.ac:
+	* msdos/sed2v2.inp: Bump version to 25.0.90.
+
+2016-01-30  Nicolas Petton  <nicolas@petton.fr>
+
+	* etc/AUTHORS: Update the AUTHORS file
+
 2016-01-30  Nicolas Petton  <nicolas@petton.fr>
 
 	Bump version to 25.0.90
@@ -26338,7 +27261,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit e6b7b6d89ff9288a49099f041752908b5eb9613e (inclusive).
+commit 4feb9621980f9534e920a8438e5776e98eefb752 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
