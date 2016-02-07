@@ -1923,63 +1923,6 @@ You must have the \"hashcash\" binary installed, see `hashcash-path'."
 (defvar message-bogus-system-names "\\`localhost\\.\\|\\.local\\'"
   "The regexp of bogus system names.")
 
-(defcustom message-valid-fqdn-regexp
-  (concat "[a-z0-9][-.a-z0-9]+\\." ;; [hostname.subdomain.]domain.
-	  ;; valid TLDs:
-	  "\\([a-z][a-z]\\|" ;; two letter country TDLs
-	  "aero\\|arpa\\|asia\\|bitnet\\|biz\\|bofh\\|"
-	  "cat\\|com\\|coop\\|edu\\|gov\\|"
-	  "info\\|int\\|jobs\\|"
-	  "mil\\|mobi\\|museum\\|name\\|net\\|"
-	  "org\\|pro\\|tel\\|travel\\|uucp\\|"
-          ;; ICANN-era generic top-level domains
-          "academy\\|actor\\|agency\\|airforce\\|archi\\|associates\\|axa\\|"
-          "bar\\|bargains\\|bayern\\|beer\\|berlin\\|best\\|bid\\|bike\\|"
-          "biz\\|black\\|blackfriday\\|blue\\|boutique\\|build\\|builders\\|"
-          "buzz\\|cab\\|camera\\|camp\\|capital\\|cards\\|care\\|career\\|"
-          "careers\\|cash\\|catering\\|center\\|ceo\\|cheap\\|christmas\\|"
-          "church\\|citic\\|cleaning\\|clinic\\|clothing\\|club\\|codes\\|"
-          "coffee\\|college\\|cologne\\|com\\|community\\|company\\|computer\\|"
-          "construction\\|contractors\\|cooking\\|cool\\|country\\|creditcard\\|"
-          "cruises\\|dance\\|dating\\|democrat\\|dental\\|desi\\|design\\|"
-          "diamonds\\|directory\\|discount\\|domains\\|education\\|email\\|"
-          "engineering\\|enterprises\\|equipment\\|estate\\|eus\\|events\\|"
-          "exchange\\|expert\\|exposed\\|fail\\|farm\\|feedback\\|finance\\|"
-          "financial\\|fish\\|fishing\\|fitness\\|flights\\|florist\\|foo\\|"
-          "foundation\\|frogans\\|fund\\|furniture\\|futbol\\|gal\\|"
-          "gallery\\|gift\\|glass\\|globo\\|gmo\\|gop\\|graphics\\|gratis\\|"
-          "gripe\\|guide\\|guitars\\|guru\\|hamburg\\|haus\\|hiphop\\|"
-          "holdings\\|holiday\\|homes\\|horse\\|house\\|immobilien\\|"
-          "industries\\|info\\|ink\\|institute\\|insure\\|international\\|"
-          "investments\\|jetzt\\|juegos\\|kaufen\\|kim\\|kitchen\\|kiwi\\|"
-          "koeln\\|kred\\|land\\|lat\\|latino\\|lease\\|life\\|lighting\\|"
-          "limited\\|limo\\|link\\|loans\\|london\\|luxe\\|luxury\\|"
-          "management\\|mango\\|marketing\\|media\\|meet\\|menu\\|miami\\|"
-          "moda\\|moe\\|monash\\|moscow\\|motorcycles\\|nagoya\\|name\\|"
-          "net\\|neustar\\|ninja\\|nyc\\|okinawa\\|onl\\|org\\|paris\\|"
-          "partners\\|parts\\|photo\\|photography\\|photos\\|pics\\|"
-          "pictures\\|pink\\|plumbing\\|pro\\|productions\\|properties\\|"
-          "pub\\|qpon\\|quebec\\|recipes\\|red\\|reisen\\|ren\\|rentals\\|"
-          "repair\\|report\\|rest\\|reviews\\|rich\\|rocks\\|rodeo\\|"
-          "ruhr\\|ryukyu\\|saarland\\|schule\\|scot\\|services\\|sexy\\|"
-          "shiksha\\|shoes\\|singles\\|social\\|sohu\\|solar\\|solutions\\|"
-          "soy\\|supplies\\|supply\\|support\\|surgery\\|systems\\|tattoo\\|"
-          "tax\\|technology\\|tienda\\|tips\\|today\\|tokyo\\|tools\\|"
-          "town\\|toys\\|trade\\|training\\|university\\|uno\\|vacations\\|"
-          "vegas\\|ventures\\|viajes\\|villas\\|vision\\|vodka\\|vote\\|"
-          "voting\\|voto\\|voyage\\|wang\\|watch\\|webcam\\|wed\\|wien\\|"
-          "wiki\\|works\\|wtc\\|wtf\\|xyz\\|yachts\\|yokohama\\|you\\|"
-          "zone\\)")
-  ;; http://en.wikipedia.org/wiki/List_of_Internet_top-level_domains
-  ;; http://en.wikipedia.org/wiki/GTLD
-  ;; `approved, but not yet in operation': .xxx
-  ;; "dead" nato bitnet uucp
-  "Regular expression that matches a valid FQDN."
-  ;; see also: gnus-button-valid-fqdn-regexp
-  :version "25.1"
-  :group 'message-headers
-  :type 'regexp)
-
 (autoload 'gnus-alive-p "gnus-util")
 (autoload 'gnus-delay-article "gnus-delay")
 (autoload 'gnus-extract-address-components "gnus-util")
@@ -4369,8 +4312,7 @@ conformance."
 		(const "invalid")
 		(const :tag "duplicate @" "@@")
 		(const :tag "non-ascii local part" "[^[:ascii:]].*@")
-		;; Already caught by `message-valid-fqdn-regexp'
-		;; (const :tag "`_' in domain part" "@.*_")
+		(const :tag "`_' in domain part" "@.*_")
 		(const :tag "whitespace" "[ \t]"))
 	   (repeat :inline t
 		   :tag "Other"
@@ -4476,31 +4418,24 @@ conformance."
 RECIPIENTS is a mail header.  Return a list of potentially bogus
 addresses.  If none is found, return nil.
 
-An address might be bogus if the domain part is not fully
-qualified, see `message-valid-fqdn-regexp', or if there's a
-matching entry in `message-bogus-addresses'."
+An address might be bogus if if there's a matching entry in
+`message-bogus-addresses'."
   ;; FIXME: How about "foo@subdomain", when the MTA adds ".domain.tld"?
   (let (found)
     (mapc (lambda (address)
 	    (setq address (or (cadr address) ""))
-	    (when
-		(or (string= "" address)
-                    (not
-		     (or
+	    (when (or (string= "" address)
 		      (not (string-match "@" address))
-		      (string-match
-		       (concat ".@.*\\("
-			       message-valid-fqdn-regexp "\\)\\'") address)))
-		    (and message-bogus-addresses
-			 (let ((re
-				(if (listp message-bogus-addresses)
-				    (mapconcat 'identity
-					       message-bogus-addresses
-					       "\\|")
-				  message-bogus-addresses)))
-			   (string-match re address))))
+		      (string-match "@.*@" address)
+		      (and message-bogus-addresses
+			   (let ((re
+				  (if (listp message-bogus-addresses)
+				      (mapconcat 'identity
+						 message-bogus-addresses
+						 "\\|")
+				    message-bogus-addresses)))
+			     (string-match re address))))
               (push address found)))
-	  ;;
 	  (mail-extract-address-components recipients t))
     found))
 
@@ -5912,24 +5847,20 @@ give as trustworthy answer as possible."
     (cond
      ((and message-user-fqdn
 	   (stringp message-user-fqdn)
-	   (string-match message-valid-fqdn-regexp message-user-fqdn)
 	   (not (string-match message-bogus-system-names message-user-fqdn)))
       ;; `message-user-fqdn' seems to be valid
       message-user-fqdn)
-     ((and (string-match message-valid-fqdn-regexp sysname)
-	   (not (string-match message-bogus-system-names sysname)))
+     ((and (string-match message-bogus-system-names sysname))
       ;; `system-name' returned the right result.
       sysname)
      ;; Try `mail-host-address'.
      ((and (boundp 'mail-host-address)
 	   (stringp mail-host-address)
-	   (string-match message-valid-fqdn-regexp mail-host-address)
 	   (not (string-match message-bogus-system-names mail-host-address)))
       mail-host-address)
      ;; We try `user-mail-address' as a backup.
      ((and user-domain
 	   (stringp user-domain)
-	   (string-match message-valid-fqdn-regexp user-domain)
 	   (not (string-match message-bogus-system-names user-domain)))
       user-domain)
      ;; Default to this bogus thing.
