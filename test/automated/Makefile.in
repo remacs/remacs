@@ -89,10 +89,14 @@ WRITE_LOG = > $@ 2>&1 || { stat=ERROR; cat $@; }; echo $$stat: $@
 ## Beware: it approximates 'no-byte-compile', so watch out for false-positives!
 SELECTOR_DEFAULT = (quote (not (tag :expensive-test)))
 SELECTOR_EXPENSIVE = nil
-ifndef SELECTOR
+ifdef SELECTOR
+SELECTOR_ACTUAL=$(SELECTOR)
+else ifeq ($(MAKECMDGOALS),check)
+SELECTOR_ACTUAL=$(SELECTOR_DEFAULT)
+else ifeq ($(MAKECMDGOALS),check-maybe)
 SELECTOR_ACTUAL=$(SELECTOR_DEFAULT)
 else
-SELECTOR_ACTUAL=$(SELECTOR)
+SELECTOR_ACTUAL=$(SELECTOR_EXPENSIVE)
 endif
 
 

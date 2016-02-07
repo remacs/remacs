@@ -242,10 +242,14 @@ EVENT is the cadr of the event in `file-notify-handle-event'
           (and
            (memq action '(deleted renamed))
            (= (length (cdr registered)) 1)
+           ;; Not, when a file is backed up.
+           (not (and (stringp file1) (backup-file-name-p file1)))
            (or
+            ;; Watched file or directory is concerned.
             (string-equal
              (file-name-nondirectory file)
 	     (file-name-nondirectory (car registered)))
+            ;; File inside a watched directory is concerned.
             (string-equal
              (file-name-nondirectory file)
              (car (cadr registered)))))))
