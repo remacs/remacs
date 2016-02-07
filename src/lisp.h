@@ -73,8 +73,9 @@ DEFINE_GDB_SYMBOL_END (GCTYPEBITS)
    2.  We know malloc returns a multiple of 8.  */
 #if (defined alignas \
      && (defined GNU_MALLOC || defined DOUG_LEA_MALLOC || defined __GLIBC__ \
-	 || defined DARWIN_OS || defined __sun || defined __MINGW32__ \
-	 || defined CYGWIN))
+	 || defined CYGWIN || defined __MINGW32__ \
+	 || defined DARWIN_OS || defined __FreeBSD__ \
+	 || defined __sun))
 # define NONPOINTER_BITS 0
 #else
 # define NONPOINTER_BITS GCTYPEBITS
