@@ -22,6 +22,8 @@
 
 ;;; Code:
 
+(require 'gnutls)
+
 (ert-deftest make-local-unix-server ()
   (let* ((file (make-temp-name "/tmp/server-test"))
          (server
@@ -101,7 +103,7 @@
                                      :buffer (generate-new-buffer "*foo*")
                                      :host (system-name)
                                      :service port)))
-    (with-current-buffer "*foo*"
+    (with-current-buffer (process-buffer proc)
       (process-send-string proc "echo foo")
       (sleep-for 0.1)
       (should (equal (buffer-string) "foo\n")))
@@ -114,7 +116,7 @@
                                      :buffer (generate-new-buffer "*foo*")
                                      :host "localhost"
                                      :service port)))
-    (with-current-buffer "*foo*"
+    (with-current-buffer (process-buffer proc)
       (process-send-string proc "echo foo")
       (sleep-for 0.1)
       (should (equal (buffer-string) "foo\n")))
@@ -127,7 +129,7 @@
                                      :buffer (generate-new-buffer "*foo*")
                                      :host "127.0.0.1"
                                      :service port)))
-    (with-current-buffer "*foo*"
+    (with-current-buffer (process-buffer proc)
       (process-send-string proc "echo foo")
       (sleep-for 0.1)
       (should (equal (buffer-string) "foo\n")))
@@ -147,10 +149,47 @@
                     t)))
     (while (eq (process-status proc) 'connect)
       (sit-for 0.1))
-    (with-current-buffer "*foo*"
+    (with-current-buffer (process-buffer proc)
       (process-send-string proc "echo foo")
       (sleep-for 0.1)
       (should (equal (buffer-string) "foo\n")))
     (delete-process server)))
+
+(defun make-tls-server ()
+  (start-process "openssl" (generate-new-buffer "*tls*") "openssl"
+                 "s_server" "-key" "lisp/net/key.pem"
+                 "-cert" "lisp/net/cert.pem"
+                 "-accept" "44330"
+                 "-www"))
+
+(ert-deftest connect-to-tls ()
+  (let ((server (make-tls-server))
+        (times 0)
+        proc status)
+    (sleep-for 1)
+    (with-current-buffer (process-buffer server)
+      (message "openssl: %s" (buffer-string)))
+
+    ;; It takes a while for openssl to start.
+    (while (and (null (ignore-errors
+                        (setq proc (make-network-process
+                                    :name "bar"
+                                    :buffer (generate-new-buffer "*foo*")
+                                    :host "localhost"
+                                    :service 44330))))
+                (< (setq times (1+ times)) 10))
+      (sit-for 0.1))
+    (should proc)
+    (gnutls-negotiate :process proc
+                      :type 'gnutls-x509pki
+                      :hostname "localhost")
+    (delete-process server)
+    (setq status (gnutls-peer-status proc))
+    (should (consp status))
+    (delete-process proc)
+    (let ((issuer (plist-get (plist-get status :certificate) :issuer)))
+      (should (stringp issuer))
+      (setq issuer (split-string issuer ","))
+      (should (equal (nth 3 issuer) "O=Emacs Test Servicess LLC")))))
 
 ;;; network-stream-tests.el ends here
