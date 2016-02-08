@@ -158,23 +158,23 @@
     (delete-process server)))
 
 (defun make-tls-server ()
-  (start-process "openssl" (generate-new-buffer "*tls*") "openssl"
-                 "s_server" "-key" "lisp/net/key.pem"
-                 "-cert" "lisp/net/cert.pem"
-                 "-accept" "44330"
-                 "-www"))
+  (start-process "gnutls" (generate-new-buffer "*tls*")
+                 "gnutls-serv" "--http"
+                 "--x509keyfile" "lisp/net/key.pem"
+                 "--x509certfile" "lisp/net/cert.pem"
+                 "--port" "44330"))
 
 (ert-deftest connect-to-tls ()
-  (skip-unless (executable-find "openssl"))
+  (skip-unless (executable-find "gnutls-serv"))
   (skip-unless (gnutls-available-p))
   (let ((server (make-tls-server))
         (times 0)
         proc status)
     (sleep-for 1)
     (with-current-buffer (process-buffer server)
-      (message "openssl: %s" (buffer-string)))
+      (message "gnutls-serv: %s" (buffer-string)))
 
-    ;; It takes a while for openssl to start.
+    ;; It takes a while for gnutls-serv to start.
     (while (and (null (ignore-errors
                         (setq proc (make-network-process
                                     :name "bar"
