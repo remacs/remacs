@@ -162,7 +162,7 @@
                  "--x509certfile" "lisp/net/cert.pem"
                  "--port" "44330"))
 
-(ert-deftest connect-to-tls ()
+(ert-deftest connect-to-tls-ipv4-wait ()
   (skip-unless (executable-find "gnutls-serv"))
   (skip-unless (gnutls-available-p))
   (let ((server (make-tls-server))
@@ -178,6 +178,40 @@
                                     :name "bar"
                                     :buffer (generate-new-buffer "*foo*")
                                     :host "localhost"
+                                    :service 44330))))
+                (< (setq times (1+ times)) 10))
+      (sit-for 0.1))
+    (should proc)
+    (gnutls-negotiate :process proc
+                      :type 'gnutls-x509pki
+                      :hostname "localhost")
+    (delete-process server)
+    (setq status (gnutls-peer-status proc))
+    (should (consp status))
+    (delete-process proc)
+    (let ((issuer (plist-get (plist-get status :certificate) :issuer)))
+      (should (stringp issuer))
+      (setq issuer (split-string issuer ","))
+      (should (equal (nth 3 issuer) "O=Emacs Test Servicess LLC")))))
+
+(ert-deftest connect-to-tls-ipv6-nowait ()
+  (skip-unless (executable-find "gnutls-serv"))
+  (skip-unless (gnutls-available-p))
+  (let ((server (make-tls-server))
+        (times 0)
+        proc status)
+    (sleep-for 1)
+    (with-current-buffer (process-buffer server)
+      (message "gnutls-serv: %s" (buffer-string)))
+
+    ;; It takes a while for gnutls-serv to start.
+    (while (and (null (ignore-errors
+                        (setq proc (make-network-process
+                                    :name "bar"
+                                    :buffer (generate-new-buffer "*foo*")
+                                    :family 'ipv6
+                                    :nowait t
+                                    :host "::1"
                                     :service 44330))))
                 (< (setq times (1+ times)) 10))
       (sit-for 0.1))
