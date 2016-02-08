@@ -762,6 +762,12 @@ invalid certificates are marked in red.
 *** text/html messages that contain inline image parts will be
 transformed into multipart/related messages before sending.
 
+---
+*** The `message-valid-fqdn-regexp' variable has been removed, since
+there are now top-level domains added all the time.  Message will no
+longer warn about sending emails to top-level domains it hasn't heard
+about.
+
 +++
 ** In Show Paren Mode, a parenthesis can be highlighted when point
 stands inside it, and certain parens can be highlighted when point is
