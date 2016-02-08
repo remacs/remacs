@@ -807,15 +807,15 @@ In the latter case, VC mode is deactivated for this buffer."
     (add-hook 'vc-mode-line-hook 'vc-mode-line nil t)
     (let (backend)
       (cond
-       ((setq backend (with-demoted-errors (vc-backend buffer-file-name)))
+        ((setq backend (with-demoted-errors (vc-backend buffer-file-name)))
+         ;; Let the backend setup any buffer-local things he needs.
+         (vc-call-backend backend 'find-file-hook)
 	;; Compute the state and put it in the mode line.
 	(vc-mode-line buffer-file-name backend)
 	(unless vc-make-backup-files
 	  ;; Use this variable, not make-backup-files,
 	  ;; because this is for things that depend on the file name.
-	  (set (make-local-variable 'backup-inhibited) t))
-	;; Let the backend setup any buffer-local things he needs.
-	(vc-call-backend backend 'find-file-hook))
+          (set (make-local-variable 'backup-inhibited) t)))
        ((let* ((truename (and buffer-file-truename
 			      (expand-file-name buffer-file-truename)))
 	       (link-type (and truename
