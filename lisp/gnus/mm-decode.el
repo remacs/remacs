@@ -552,7 +552,7 @@ into
 
 \(a 1 b 2 c 3)
 
-The original alist is not modified.  See also `destructive-alist-to-plist'."
+The original alist is not modified."
   (let (plist)
     (while alist
       (let ((el (car alist)))
