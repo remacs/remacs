@@ -2467,6 +2467,8 @@ With prefix-argument just set Follow-Up, don't cross-post."
 		     nil nil '("poster" . 0)
 		     (if (boundp 'gnus-group-history)
 			 'gnus-group-history))))
+  (when (fboundp 'gnus-group-real-name)
+    (setq target-group (gnus-group-real-name target-group)))
   (cond ((not (or (null target-group) ; new subject not empty
 		  (zerop (string-width target-group))
 		  (string-match "^[ \t]*$" target-group)))
