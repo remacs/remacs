@@ -5198,6 +5198,14 @@ and if @code{:height} is set it will have precedence over
 wish.  @code{:max-width} and @code{:max-height} will always preserve
 the aspect ratio.
 
+@item :scale @var{scale}
+This should be a number, where values higher than 1 means to increase
+the size, and lower means to decrease the size.  For instance, a value
+of 0.25 will make the image a quarter size of what it originally was.
+If the scaling makes the image larger than specified by
+@code{:max-width} or @code{:max-height}, the resulting size will not
+exceed those two values.
+
 @item :format @var{type}
 The value, @var{type}, should be a symbol specifying the type of the
 image data, as found in @code{image-format-suffixes}.  This is used
@@ -5383,6 +5391,13 @@ Here is an example of using @code{image-load-path-for-library}:
   (mh-tool-bar-folder-buttons-init))
 @end example
 @end defun
+
+@vindex image-scaling-factor
+Images are automatically scaled when created based on the
+@code{image-scaling-factor} variable.  The value is either a floating
+point number (where numbers higher than 1 means to increase the size
+and lower means to shrink the size), or the symbol @code{auto}, which
+will compute a scaling factor based on the font pixel size.
 
 @node Showing Images
 @subsection Showing Images

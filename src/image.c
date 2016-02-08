@@ -8073,6 +8073,7 @@ compute_image_size (size_t width, size_t height,
 {
   Lisp_Object value;
   int desired_width, desired_height;
+  double scale = 1;
 
   /* If width and/or height is set in the display spec assume we want
      to scale to those values.  If either h or w is unspecified, the
@@ -8082,6 +8083,12 @@ compute_image_size (size_t width, size_t height,
   desired_width = NATNUMP (value) ? min (XFASTINT (value), INT_MAX) : -1;
   value = image_spec_value (spec, QCheight, NULL);
   desired_height = NATNUMP (value) ? min (XFASTINT (value), INT_MAX) : -1;
+
+  value = image_spec_value (spec, QCscale, NULL);
+  if (NATNUMP (value))
+    scale = extract_float (value);
+  width = width * scale;
+  height = height * scale;
 
   if (desired_width == -1)
     {
@@ -8131,6 +8138,13 @@ compute_image_size (size_t width, size_t height,
   if (desired_width == -1 && desired_height != -1)
     /* h known, calculate w.  */
     desired_width = scale_image_size (desired_height, height, width);
+
+  /* We have no width/height settings, so just apply the scale. */
+  if (desired_width == -1 && desired_height == -1)
+    {
+      desired_width = width;
+      desired_height = height;
+    }
 
   *d_width = desired_width;
   *d_height = desired_height;
@@ -9795,6 +9809,7 @@ non-numeric, there is no explicit limit on the size of images.  */);
   DEFSYM (QCcrop, ":crop");
   DEFSYM (QCrotation, ":rotation");
   DEFSYM (QCmatrix, ":matrix");
+  DEFSYM (QCscale, ":scale");
   DEFSYM (QCcolor_adjustment, ":color-adjustment");
   DEFSYM (QCmask, ":mask");
 

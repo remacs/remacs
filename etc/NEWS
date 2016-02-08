@@ -769,6 +769,11 @@ longer warn about sending emails to top-level domains it hasn't heard
 about.
 
 +++
+** Images are automatically scaled before displaying based on the
+`image-scaling-factor' variable (if Emacs supports scaling the images
+in question).
+
++++
 ** In Show Paren Mode, a parenthesis can be highlighted when point
 stands inside it, and certain parens can be highlighted when point is
 at BOL or EOL, or in whitespace there.  To enable these, customize,

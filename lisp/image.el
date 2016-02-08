@@ -126,6 +126,18 @@ Subdirectories are not automatically included in the search."
   :type '(repeat (choice directory variable))
   :initialize 'custom-initialize-delay)
 
+(defcustom image-scaling-factor 'auto
+  "When displaying images, apply this scaling factor before displaying.
+This is not supported for all image types, and is mostly useful
+when you have a high-resolution monitor.
+The value is either a floating point number (where numbers higher
+than 1 means to increase the size and lower means to shrink the
+size), or the symbol `auto', which will compute a scaling factor
+based on the font pixel size."
+  :type '(choice number
+                 (const :tag "Automatically compute" auto))
+  :group 'image
+  :version "25.2")
 
 (defun image-load-path-for-library (library image &optional path no-error)
   "Return a suitable search path for images used by LIBRARY.
@@ -409,8 +421,25 @@ Image file names that are not absolute are searched for in the
   (setq type (image-type file-or-data type data-p))
   (when (image-type-available-p type)
     (append (list 'image :type type (if data-p :data :file) file-or-data)
+            (and (not (plist-get props :scale))
+                 (list :scale
+                       (image-compute-scaling-factor image-scaling-factor)))
 	    props)))
 
+(defun image-compute-scaling-factor (scaling)
+  (cond
+   ((numberp image-scaling-factor)
+    image-scaling-factor)
+   ((eq image-scaling-factor 'auto)
+    (let ((width (/ (float (window-width nil t)) (window-width))))
+      ;; If we assume that a typical character is 10 pixels in width,
+      ;; then we should scale all images according to how wide they
+      ;; are.  But don't scale images down.
+      (if (< width 10)
+          1
+        (/ (float width) 10))))
+   (t
+    (error "Invalid scaling factor %s" image-scaling-factor))))
 
 ;;;###autoload
 (defun put-image (image pos &optional string area)
