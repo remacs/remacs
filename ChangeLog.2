@@ -1,44 +1,34 @@
 2016-02-06  Lars Ingebrigtsen  <larsi@gnus.org>
 
-	message-valid-fqdn-regexp no longer exists
-
 	* lisp/gnus/gnus-art.el (gnus-button-valid-fqdn-regexp): Don't use
 	the no-longer-existing message-valid-fqdn-regexp variable.
 
 2016-02-06  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	Remove message-valid-fqdn-regexp, since it changes too much now
-
 	* lisp/gnus/message.el (message-valid-fqdn-regexp): Remove.
 	(message-bogus-recipient-p): Don't use it any more.
 	(message-make-fqdn): Ditto.  Suggested by Lars-Johan Liman.
 
-2016-02-06  Paul van der Walt  <paul@denknerd.org>
-
-	Match "Re :" as a "Re:" prefix
+2016-02-06  Paul van der Walt  <paul@denknerd.org>  (tiny change)
 
 	* lisp/gnus/message.el (message-subject-re-regexp): Also match
 	"Re :" as a "Re:" prefix (commonly used in France).
 
 2016-02-06  Adam Sjøgren  <asjo@koldfront.dk>
 
-	lisp/net/shr.el (shr-tag-del, shr-tag-ins): New functions.
-
 	* lisp/net/shr.el (shr-tag-del, shr-tag-ins): New functions.
 
 2016-02-06  David Edmondson  <dme@dme.org>
 
 	src/process.c Correctly convert AF_INET6 addresses
-
 	* src/process.c (conv_lisp_to_sockaddr): AF_INET6 addresses are
 	converted to a list of 16 bit quantities by
-	conv_sockaddr_to_lisp(). conv_lisp_to_sockaddr() should follow the
+	conv_sockaddr_to_lisp().  conv_lisp_to_sockaddr() should follow the
 	same scheme rather than expecting a (longer) list of 8 bit
 	quantities.
 
-2016-02-06  Martin Jesper Low Madsen  <martin@martinjlowm.dk>
-
-	Search for host/port combinations in auth-source on OS X
+2016-02-06  Martin Jesper Low Madsen  <martin@martinjlowm.dk>  (tiny change)
 
 	* lisp/gnus/auth-source.el (auth-source-macos-keychain-search):
 	Search for all host/port (or protocol) combinations for a match in
