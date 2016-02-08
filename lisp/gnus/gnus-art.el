@@ -2258,8 +2258,7 @@ This only works if the article in question is HTML."
     (save-restriction
       (widen)
       (if (eq mm-text-html-renderer 'w3m)
-	  (let ((mm-inline-text-html-with-images nil))
-	    (w3m-toggle-inline-images))
+	  (w3m-toggle-inline-images)
 	(dolist (region (gnus-find-text-property-region (point-min) (point-max)
 							'image-displayer))
 	  (destructuring-bind (start end function) region
@@ -4929,25 +4928,30 @@ General format specifiers can also be used.  See Info node
 		(vector (caddr c) (car c) :active t))
 	      gnus-url-button-commands)))
 
-(defmacro gnus-bind-safe-url-regexp (&rest body)
-  "Bind `mm-w3m-safe-url-regexp' according to `gnus-safe-html-newsgroups'."
-  `(let ((mm-w3m-safe-url-regexp
-	  (let ((group (if (and (derived-mode-p 'gnus-article-mode)
-				(gnus-buffer-live-p
-				 gnus-article-current-summary))
-			   (with-current-buffer gnus-article-current-summary
-			     gnus-newsgroup-name)
-			 gnus-newsgroup-name)))
-	    (if (cond ((not group)
-		       ;; Maybe we're in a mml-preview buffer
-		       ;; and no group is selected.
-		       t)
-		      ((stringp gnus-safe-html-newsgroups)
-		       (string-match gnus-safe-html-newsgroups group))
-		      ((consp gnus-safe-html-newsgroups)
-		       (member group gnus-safe-html-newsgroups)))
-		nil
-	      mm-w3m-safe-url-regexp))))
+(defmacro gnus-bind-mm-vars (&rest body)
+  "Bind some mm-* variables and execute BODY."
+  `(let (mm-html-inhibit-images
+	 mm-html-blocked-images
+	 (mm-w3m-safe-url-regexp mm-w3m-safe-url-regexp))
+     (with-current-buffer
+	 (cond ((derived-mode-p 'gnus-article-mode)
+		(if (gnus-buffer-live-p gnus-article-current-summary)
+		    gnus-article-current-summary
+		  ;; Maybe we're in a mml-preview buffer
+		  ;; and no group is selected.
+		  (current-buffer)))
+	       ((gnus-buffer-live-p gnus-summary-buffer)
+		gnus-summary-buffer)
+	       (t (current-buffer)))
+       (setq mm-html-inhibit-images gnus-inhibit-images
+	     mm-html-blocked-images (gnus-blocked-images))
+       (when (or (not gnus-newsgroup-name)
+		 (and (stringp gnus-safe-html-newsgroups)
+		      (string-match gnus-safe-html-newsgroups
+				    gnus-newsgroup-name))
+		 (and (consp gnus-safe-html-newsgroups)
+		      (member gnus-newsgroup-name gnus-safe-html-newsgroups)))
+	 (setq mm-w3m-safe-url-regexp nil)))
      ,@body))
 
 (defun gnus-mime-button-menu (event prefix)
@@ -4975,7 +4979,7 @@ General format specifiers can also be used.  See Info node
 	(or (search-forward "\n\n") (goto-char (point-max)))
 	(let ((inhibit-read-only t))
 	  (delete-region (point) (point-max))
-	  (gnus-bind-safe-url-regexp (mm-display-parts handles)))))))
+	  (gnus-bind-mm-vars (mm-display-parts handles)))))))
 
 (defun gnus-article-jump-to-part (n)
   "Jump to MIME part N."
@@ -5514,8 +5518,7 @@ If no internal viewer is available, use an external viewer."
         (gnus-mime-view-part-as-type
          nil (lambda (type) (mm-inlinable-p handle type)))
       (when handle
-	(gnus-bind-safe-url-regexp
-	 (mm-display-part handle nil t))))))
+	(gnus-bind-mm-vars (mm-display-part handle nil t))))))
 
 (defun gnus-mime-action-on-part (&optional action)
   "Do something with the MIME attachment at (point)."
@@ -5745,7 +5748,7 @@ all parts."
 				 (mm-inlined-p handle)
 				 t)
 			    (with-temp-buffer
-			      (gnus-bind-safe-url-regexp
+			      (gnus-bind-mm-vars
 			       (setq retval (mm-display-part handle)))
 			      (unless (zerop (buffer-size))
 				(buffer-string))))))
@@ -6106,7 +6109,7 @@ If nil, don't show those extra buttons."
 				       (set-buffer gnus-summary-buffer)
 				     (error))
 				   gnus-newsgroup-ignored-charsets)))
-	      (gnus-bind-safe-url-regexp (mm-display-part handle t))))
+	      (gnus-bind-mm-vars (mm-display-part handle t))))
 	   ((and text not-attachment)
 	    (mm-display-inline handle)))
 	  (goto-char (point-max))
@@ -6236,7 +6239,7 @@ If nil, don't show those extra buttons."
 		  (mail-parse-ignored-charsets
 		   (with-current-buffer gnus-summary-buffer
 		     gnus-newsgroup-ignored-charsets)))
-	      (gnus-bind-safe-url-regexp (mm-display-part preferred))
+	      (gnus-bind-mm-vars (mm-display-part preferred))
 	      ;; Do highlighting.
 	      (save-excursion
 		(save-restriction

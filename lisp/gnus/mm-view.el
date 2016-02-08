@@ -141,7 +141,7 @@
       (push (cons 'gnus-article-mode 'mm-w3m-cid-retrieve)
 	    w3m-cid-retrieve-function-alist))
     (setq mm-w3m-setup t))
-  (setq w3m-display-inline-images mm-inline-text-html-with-images))
+  (setq w3m-display-inline-images (not mm-html-inhibit-images)))
 
 (defun mm-w3m-cid-retrieve-1 (url handle)
   (dolist (elem handle)
