@@ -163,6 +163,8 @@
                  "-www"))
 
 (ert-deftest connect-to-tls ()
+  (skip-unless (executable-find "openssl"))
+  (skip-unless (gnutls-available-p))
   (let ((server (make-tls-server))
         (times 0)
         proc status)
