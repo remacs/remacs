@@ -5042,11 +5042,12 @@ access the @code{X-Newsreader} header:
 
 @item
 @vindex gnus-ignored-from-addresses
-The @code{gnus-ignored-from-addresses} variable says when the @samp{%f}
-summary line spec returns the @code{To}, @code{Newsreader} or
-@code{From} header.  If this regexp matches the contents of the
-@code{From} header, the value of the @code{To} or @code{Newsreader}
-headers are used instead.
+The @code{gnus-ignored-from-addresses} variable says when the
+@samp{%f} summary line spec returns the @code{To}, @code{Newsreader}
+or @code{From} header.  The variable may be a regexp or a predicate
+function.  If this matches the contents of the @code{From}
+header, the value of the @code{To} or @code{Newsreader} headers are
+used instead.
 
 To distinguish regular articles from those where the @code{From} field
 has been swapped, a string is prefixed to the @code{To} or

@@ -702,12 +702,14 @@ only makes sense to define names or email addresses."
 
 These will be used to retrieve the RSVP information from ical events."
   (apply #'append
-         (mapcar (lambda (x) (if (listp x) x (list x)))
-                 (list user-full-name (regexp-quote user-mail-address)
-                       ; NOTE: these can be lists
-                       gnus-ignored-from-addresses ; already regexp-quoted
-                       message-alternative-emails  ;
-                       (mapcar #'regexp-quote gnus-icalendar-additional-identities)))))
+         (mapcar
+	  (lambda (x) (if (listp x) x (list x)))
+	  (list user-full-name (regexp-quote user-mail-address)
+		;; NOTE: these can be lists
+		gnus-ignored-from-addresses ; already regexp-quoted
+		(unless (functionp message-alternative-emails) ; String or function.
+		  message-alternative-emails)
+		(mapcar #'regexp-quote gnus-icalendar-additional-identities)))))
 
 ;; TODO: make the template customizable
 (defmethod gnus-icalendar-event->gnus-calendar ((event gnus-icalendar-event) &optional reply-status)

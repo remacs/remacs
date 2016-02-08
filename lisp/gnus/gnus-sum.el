@@ -1171,14 +1171,19 @@ which it may alter in any way."
        (not (string= user-mail-address ""))
        (regexp-quote user-mail-address))
   "*From headers that may be suppressed in favor of To headers.
-This can be a regexp or a list of regexps."
+This can be a regexp, a list of regexps or a function.
+
+If a function, an email string is passed as the argument."
   :version "21.1"
   :group 'gnus-summary
   :type '(choice regexp
-		 (repeat :tag "Regexp List" regexp)))
+		 (repeat :tag "Regexp List" regexp)
+                 function))
 
 (defsubst gnus-ignored-from-addresses ()
-  (gmm-regexp-concat gnus-ignored-from-addresses))
+  (cond ((functionp gnus-ignored-from-addresses)
+         gnus-ignored-from-addresses)
+        (t (gmm-regexp-concat gnus-ignored-from-addresses))))
 
 (defcustom gnus-summary-to-prefix "-> "
   "*String prefixed to the To field in the summary line when
@@ -3686,15 +3691,17 @@ buffer that was in action when the last article was fetched."
 
 (defun gnus-summary-from-or-to-or-newsgroups (header gnus-tmp-from)
   (let ((mail-parse-charset gnus-newsgroup-charset)
-	(ignored-from-addresses (gnus-ignored-from-addresses))
 	;; Is it really necessary to do this next part for each summary line?
 	;; Luckily, doesn't seem to slow things down much.
 	(mail-parse-ignored-charsets
 	 (with-current-buffer gnus-summary-buffer
 	   gnus-newsgroup-ignored-charsets)))
     (or
-     (and ignored-from-addresses
-	  (string-match ignored-from-addresses gnus-tmp-from)
+     (and gnus-ignored-from-addresses
+          (cond ((functionp gnus-ignored-from-addresses)
+                 (funcall gnus-ignored-from-addresses
+                          (mail-strip-quoted-names gnus-tmp-from)))
+                (t (string-match (gnus-ignored-from-addresses) gnus-tmp-from)))
 	  (let ((extra-headers (mail-header-extra header))
 		to
 		newsgroups)

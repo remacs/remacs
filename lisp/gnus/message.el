@@ -1358,8 +1358,10 @@ If nil, you might be asked to input the charset."
 (defcustom message-dont-reply-to-names
   (and (boundp 'mail-dont-reply-to-names) mail-dont-reply-to-names)
   "*Addresses to prune when doing wide replies.
-This can be a regexp or a list of regexps.  Also, a value of nil means
-exclude your own user name only."
+This can be a regexp, a list of regexps or a predicate function.
+Also, a value of nil means exclude your own user name only.
+
+If a function email is passed as the argument."
   :version "24.3"
   :group 'message
   :link '(custom-manual "(message)Wide Reply")
@@ -1368,7 +1370,10 @@ exclude your own user name only."
 		 (repeat :tag "Regexp List" regexp)))
 
 (defsubst message-dont-reply-to-names ()
-  (gmm-regexp-concat message-dont-reply-to-names))
+  (cond ((functionp message-dont-reply-to-names)
+         message-dont-reply-to-names)
+        ((stringp message-dont-reply-to-names)
+         (gmm-regexp-concat message-dont-reply-to-names))))
 
 (defvar message-shoot-gnksa-feet nil
   "*A list of GNKSA feet you are allowed to shoot.
@@ -1694,17 +1699,20 @@ should be sent in several parts.  If it is nil, the size is unlimited."
 		 (integer 1000000)))
 
 (defcustom message-alternative-emails nil
-  "*Regexp matching alternative email addresses.
+  "*Regexp or predicate function matching alternative email addresses.
 The first address in the To, Cc or From headers of the original
 article matching this variable is used as the From field of
 outgoing messages.
+
+If a function, an email string is passed as the argument.
 
 This variable has precedence over posting styles and anything that runs
 off `message-setup-hook'."
   :group 'message-headers
   :link '(custom-manual "(message)Message Headers")
   :type '(choice (const :tag "Always use primary" nil)
-		 regexp))
+		 regexp
+                 function))
 
 (defcustom message-hierarchical-addresses nil
   "A list of hierarchical mail address definitions.
@@ -6867,9 +6875,20 @@ want to get rid of this query permanently.")))
       ;; Squeeze whitespace.
       (while (string-match "[ \t][ \t]+" recipients)
 	(setq recipients (replace-match " " t t recipients)))
-      ;; Remove addresses that match `mail-dont-reply-to-names'.
-      (let ((mail-dont-reply-to-names (message-dont-reply-to-names)))
-	(setq recipients (mail-dont-reply-to recipients)))
+      ;; Remove addresses that match `message-dont-reply-to-names'.
+      (setq recipients
+            (cond ((functionp message-dont-reply-to-names)
+                   (mapconcat
+                    'identity
+                    (delq nil
+                          (mapcar (lambda (mail)
+                                    (unless (funcall message-dont-reply-to-names
+                                                     (mail-strip-quoted-names mail))
+                                      mail))
+                                  (message-tokenize-header recipients)))
+                    ", "))
+                  (t (let ((mail-dont-reply-to-names (message-dont-reply-to-names)))
+                       (mail-dont-reply-to recipients)))))
       ;; Perhaps "Mail-Copies-To: never" removed the only address?
       (if (string-equal recipients "")
 	  (setq recipients author))
@@ -7151,7 +7170,7 @@ want to get rid of this query permanently."))
 If you have added `cancel-messages' to `message-shoot-gnksa-feet', all articles
 are yours except those that have Cancel-Lock header not belonging to you.
 Instead of shooting GNKSA feet, you should modify `message-alternative-emails'
-regexp to match all of yours addresses."
+to match all of yours addresses."
   ;; Canlock-logic as suggested by Per Abrahamsen
   ;; <abraham@dina.kvl.dk>
   ;;
@@ -7183,12 +7202,14 @@ regexp to match all of yours addresses."
 		 (downcase (car (mail-header-parse-address
 				 (message-make-from))))))
 	   ;; Email address in From field matches
-	   ;; 'message-alternative-emails' regexp
+	   ;; 'message-alternative-emails' regexp or function.
 	   (and from
 		message-alternative-emails
-		(string-match
-		 message-alternative-emails
-		 (car (mail-header-parse-address from))))))))))
+                (cond ((functionp message-alternative-emails)
+                       (funcall message-alternative-emails
+                                (mail-header-parse-address from)))
+                      (t (string-match message-alternative-emails
+                                       (car (mail-header-parse-address from))))))))))))
 
 ;;;###autoload
 (defun message-cancel-news (&optional arg)
@@ -8214,16 +8235,14 @@ From headers in the original article."
   (require 'mail-utils)
   (let* ((fields '("To" "Cc" "From"))
 	 (emails
-	  (split-string
+	  (message-tokenize-header
 	   (mail-strip-quoted-names
-	    (mapconcat 'message-fetch-reply-field fields ","))
-	   "[ \f\t\n\r\v,]+"))
-	 email)
-    (while emails
-      (if (string-match message-alternative-emails (car emails))
-	  (setq email (car emails)
-		emails nil))
-      (pop emails))
+	    (mapconcat 'message-fetch-reply-field fields ","))))
+	 (email (cond ((functionp message-alternative-emails)
+                       (car (cl-remove-if-not message-alternative-emails emails)))
+                      (t (loop for email in emails
+                               if (string-match-p message-alternative-emails email)
+                               return email)))))
     (unless (or (not email) (equal email user-mail-address))
       (message-remove-header "From")
       (goto-char (point-max))

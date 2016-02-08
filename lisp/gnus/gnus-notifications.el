@@ -180,8 +180,10 @@ This is typically a function to add in
                   ;; Ignore mails from ourselves
                   (unless (and gnus-ignored-from-addresses
                                address
-                               (gnus-string-match-p gnus-ignored-from-addresses
-                                                    address))
+                               (cond ((functionp gnus-ignored-from-addresses)
+                                      (funcall gnus-ignored-from-addresses address))
+                                     (t (gnus-string-match-p (gnus-ignored-from-addresses)
+                                                             address))))
                     (let* ((photo-file (gnus-notifications-get-photo-file address))
                            (notification-id (gnus-notifications-notify
                                              (or (car address-components) address)

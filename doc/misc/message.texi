@@ -185,8 +185,9 @@ but you can change the behavior to suit your needs by fiddling with the
 
 @vindex message-dont-reply-to-names
 Addresses that match the @code{message-dont-reply-to-names} regular
-expression (or list of regular expressions) will be removed from the
-@code{Cc} header. A value of @code{nil} means exclude your name only.
+expression (or list of regular expressions or a predicate function)
+will be removed from the @code{Cc} header. A value of @code{nil} means
+exclude your name only.
 
 @vindex message-prune-recipient-rules
 @code{message-prune-recipient-rules} is used to prune the addresses
@@ -1672,10 +1673,10 @@ trailing old subject.  In this case,
 
 @item message-alternative-emails
 @vindex message-alternative-emails
-Regexp matching alternative email addresses.  The first address in the
-To, Cc or From headers of the original article matching this variable is
-used as the From field of outgoing messages, replacing the default From
-value.
+Regexp or predicate function matching alternative email addresses.
+The first address in the To, Cc or From headers of the original
+article matching this variable is used as the From field of outgoing
+messages, replacing the default From value.
 
 For example, if you have two secondary email addresses john@@home.net
 and john.doe@@work.com and want to use them in the From field when
