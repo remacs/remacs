@@ -75,7 +75,7 @@
    :filter 'server-process-filter
    :host host))
 
-(defun server-sentinel (proc msg)
+(defun server-sentinel (_proc _msg)
   )
 
 (defun server-process-filter (proc string)
@@ -95,7 +95,7 @@
       ))))
 
 (ert-deftest echo-server-with-dns ()
-  (let* ((server (make-server "mouse"))
+  (let* ((server (make-server (system-name)))
          (port (aref (process-contact server :local) 4))
          (proc (make-network-process :name "foo"
                                      :buffer (generate-new-buffer "*foo*")
@@ -104,7 +104,8 @@
     (with-current-buffer "*foo*"
       (process-send-string proc "echo foo")
       (sleep-for 0.1)
-      (should (equal (buffer-string) "foo\n")))))
+      (should (equal (buffer-string) "foo\n")))
+    (delete-process server)))
 
 (ert-deftest echo-server-with-localhost ()
   (let* ((server (make-server 'local))
@@ -116,7 +117,8 @@
     (with-current-buffer "*foo*"
       (process-send-string proc "echo foo")
       (sleep-for 0.1)
-      (should (equal (buffer-string) "foo\n")))))
+      (should (equal (buffer-string) "foo\n")))
+    (delete-process server)))
 
 (ert-deftest echo-server-with-ip ()
   (let* ((server (make-server 'local))
@@ -128,6 +130,27 @@
     (with-current-buffer "*foo*"
       (process-send-string proc "echo foo")
       (sleep-for 0.1)
-      (should (equal (buffer-string) "foo\n")))))
+      (should (equal (buffer-string) "foo\n")))
+    (delete-process server)))
+
+(ert-deftest echo-server-nowait ()
+  (let* ((server (make-server 'local))
+         (port (aref (process-contact server :local) 4))
+         (proc (make-network-process :name "foo"
+                                     :buffer (generate-new-buffer "*foo*")
+                                     :host "localhost"
+                                     :nowait t
+                                     :service port)))
+    (should (eq (process-status proc) 'connect))
+    (should (null (ignore-errors
+                    (process-send-string proc "echo bar")
+                    t)))
+    (while (eq (process-status proc) 'connect)
+      (sit-for 0.1))
+    (with-current-buffer "*foo*"
+      (process-send-string proc "echo foo")
+      (sleep-for 0.1)
+      (should (equal (buffer-string) "foo\n")))
+    (delete-process server)))
 
 ;;; network-stream-tests.el ends here
