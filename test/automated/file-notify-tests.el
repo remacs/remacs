@@ -293,6 +293,26 @@ TIMEOUT is the maximum time to wait for, in seconds."
      (while (null ,until)
        (read-event nil nil file-notify--test-read-event-timeout))))
 
+(defun file-notify--test-with-events-check (events)
+  "Check whether received events match one of the EVENTS alternatives."
+  (let (result)
+    (dolist (elt events result)
+      (setq result
+            (or result
+                (equal elt (mapcar #'cadr file-notify--test-events)))))))
+
+(defun file-notify--test-with-events-explainer (events)
+  "Explain why `file-notify--test-with-events-check' fails."
+  (if (null (cdr events))
+      (format "Received events `%s' do not match expected events `%s'"
+              (mapcar #'cadr file-notify--test-events) (car events))
+    (format
+     "Received events `%s' do not match any sequence of expected events `%s'"
+     (mapcar #'cadr file-notify--test-events) events)))
+
+(put 'file-notify--test-with-events-check 'ert-explainer
+     'file-notify--test-with-events-explainer)
+
 (defmacro file-notify--test-with-events (events &rest body)
   "Run BODY collecting events and then compare with EVENTS.
 EVENTS is either a simple list of events, or a list of lists of
@@ -303,7 +323,7 @@ longer than timeout seconds for the events to be delivered."
     `(let* ((,outer file-notify--test-events)
             (events (if (consp (car ,events)) ,events (list ,events)))
             (max-length (apply 'max (mapcar 'length events)))
-            create-lockfiles result)
+            create-lockfiles)
        ;; Flush pending events.
        (file-notify--wait-for-events
         (file-notify--test-timeout)
@@ -315,11 +335,7 @@ longer than timeout seconds for the events to be delivered."
           (* (ceiling max-length 100) (file-notify--test-timeout))
           (= max-length (length file-notify--test-events)))
          ;; One of the possible results shall match.
-         (should
-          (dolist (elt events result)
-            (setq result
-                  (or result
-                      (equal elt (mapcar #'cadr file-notify--test-events))))))
+         (should (file-notify--test-with-events-check events))
          (setq ,outer (append ,outer file-notify--test-events)))
        (setq file-notify--test-events ,outer))))
 
@@ -849,7 +865,7 @@ longer than timeout seconds for the events to be delivered."
    "Check that events are not dropped for remote directories.")
 
 (ert-deftest file-notify-test07-backup ()
-  "Check that backup keeps file supervision."
+  "Check that backup keeps file notification."
   (skip-unless (file-notify--test-local-enabled))
 
   (unwind-protect
@@ -862,7 +878,14 @@ longer than timeout seconds for the events to be delivered."
 		file-notify--test-tmpfile
 		'(change) #'file-notify--test-event-handler)))
         (should (file-notify-valid-p file-notify--test-desc))
-        (file-notify--test-with-events '(changed)
+        (file-notify--test-with-events
+	    (cond
+             ;; For w32notify and in the remote case, there are two
+             ;; `changed' events.
+             ((or (string-equal (file-notify--test-library) "w32notify")
+                  (file-remote-p temporary-file-directory))
+              '(changed changed))
+             (t '(changed)))
           ;; There shouldn't be any problem, because the file is kept.
           (with-temp-buffer
             (let ((buffer-file-name file-notify--test-tmpfile)
@@ -881,35 +904,39 @@ longer than timeout seconds for the events to be delivered."
 
   (unwind-protect
       (progn
-        (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
-	(write-region "any text" nil file-notify--test-tmpfile nil 'no-message)
-	(should
-	 (setq file-notify--test-desc
-	       (file-notify-add-watch
-		file-notify--test-tmpfile
-		'(change) #'file-notify--test-event-handler)))
-        (should (file-notify-valid-p file-notify--test-desc))
-        (file-notify--test-with-events '(renamed created changed)
-          ;; The file is renamed when creating a backup.  It shall
-          ;; still be watched.
-          (with-temp-buffer
-            (let ((buffer-file-name file-notify--test-tmpfile)
-                  (make-backup-files t)
-                  (backup-by-copying nil)
-                  (backup-by-copying-when-mismatch nil)
-                  (kept-new-versions 1)
-                  (delete-old-versions t))
-              (insert "another text")
-              (save-buffer))))
-        ;; After saving the buffer, the descriptor is still valid.
-        (should (file-notify-valid-p file-notify--test-desc))
-	(delete-file file-notify--test-tmpfile))
+        ;; It doesn't work for kqueue, because we don't use an
+        ;; implicit directory monitor.
+        (unless (string-equal (file-notify--test-library) "kqueue")
+	  (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
+	  (write-region
+	   "any text" nil file-notify--test-tmpfile nil 'no-message)
+	  (should
+	   (setq file-notify--test-desc
+		 (file-notify-add-watch
+		  file-notify--test-tmpfile
+		  '(change) #'file-notify--test-event-handler)))
+	  (should (file-notify-valid-p file-notify--test-desc))
+	  (file-notify--test-with-events '(renamed created changed)
+	    ;; The file is renamed when creating a backup.  It shall
+	    ;; still be watched.
+	    (with-temp-buffer
+	      (let ((buffer-file-name file-notify--test-tmpfile)
+		    (make-backup-files t)
+		    (backup-by-copying nil)
+		    (backup-by-copying-when-mismatch nil)
+		    (kept-new-versions 1)
+		    (delete-old-versions t))
+		(insert "another text")
+		(save-buffer))))
+	  ;; After saving the buffer, the descriptor is still valid.
+	  (should (file-notify-valid-p file-notify--test-desc))
+	  (delete-file file-notify--test-tmpfile)))
 
     ;; Cleanup.
     (file-notify--test-cleanup)))
 
 (file-notify--deftest-remote file-notify-test07-backup
-  "Check that backup keeps file supervision for remote files.")
+  "Check that backup keeps file notification for remote files.")
 
 (defun file-notify-test-all (&optional interactive)
   "Run all tests for \\[file-notify]."
