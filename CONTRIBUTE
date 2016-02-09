@@ -267,6 +267,17 @@ you run "make check-expensive" from the top-level directory.  "make
 line. So "make check SELECTOR=nil" is equivalent to "make
 check-expensive".
 
+You could also use predefined selectors of the Makefile. "make
+<filename> SELECTOR='$(SELECTOR_DEFAULT)'" runs all tests for
+<filename>.el(c) except the tests tagged as expensive.
+
+Selectors can be defined with different methods, see (info "(ert)Test
+Selectors") or
+https://www.gnu.org/software/emacs/manual/html_node/ert/Test-Selectors.html
+If your test file contains the tests "test-foo", "test2-foo" and
+"test-foo-remote", and you want to run only the former two tests, you
+could use a regexp: "make <filename> SELECTOR='\"foo$$\"'" .
+
 ** Understanding Emacs Internals.
 
 The best way to understand Emacs Internals is to read the code,
