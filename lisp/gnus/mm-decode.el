@@ -145,16 +145,13 @@ nil    : use external viewer (default web browser)."
 		 (function))
   :group 'mime-display)
 
-(defcustom mm-html-inhibit-images
-  (if (boundp 'mm-inline-text-html-with-images)
-      (not (symbol-value 'mm-inline-text-html-with-images))
-    t)
+(defcustom mm-html-inhibit-images nil
   "Non-nil means inhibit displaying of images inline in the article body."
   :version "25.1"
   :type 'boolean
   :group 'mime-display)
 
-(defcustom mm-html-blocked-images ""
+(defcustom mm-html-blocked-images nil
   "Regexp matching image URLs to be blocked, or nil meaning not to block.
 Note that cid images that are embedded in a message won't be blocked."
   :version "25.1"

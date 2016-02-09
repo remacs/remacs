@@ -1818,13 +1818,15 @@ The preference is a float determined from `shr-prefer-media-type'."
 
 (defun shr-face-background (face)
   (and (consp face)
-       (let ((background nil))
-	 (dolist (elem face)
-	   (when (and (consp elem)
-		      (eq (car elem) :background))
-	     (setq background (cadr elem))))
-	 (and background
-	      (list :background background)))))
+       (or (and (plist-get face :background)
+                (list :background (plist-get face :background)))
+           (let ((background nil))
+             (dolist (elem face)
+               (when (and (consp elem)
+                          (eq (car elem) :background))
+                 (setq background (cadr elem))))
+             (and background
+                  (list :background background))))))
 
 (defun shr-expand-alignments (start end)
   (while (< (setq start (next-single-property-change
