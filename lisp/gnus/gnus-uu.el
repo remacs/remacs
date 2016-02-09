@@ -641,9 +641,9 @@ When called interactively, prompt for REGEXP."
   (interactive)
   (gnus-save-hidden-threads
     (let ((level (gnus-summary-thread-level)))
-      (while (and (gnus-summary-set-process-mark
-		   (gnus-summary-article-number))
+      (while (and (gnus-summary-set-process-mark (gnus-summary-article-number))
 		  (zerop (forward-line 1))
+		  (not (eobp))
 		  (> (gnus-summary-thread-level) level)))))
   (gnus-summary-position-point))
 

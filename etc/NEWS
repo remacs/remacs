@@ -816,6 +816,10 @@ at BOL or EOL, or in whitespace there.  To enable these, customize,
 respectively, `show-paren-when-point-inside-paren' or
 `show-paren-when-point-in-periphery'.
 
+---
+** If gpg2 exists on the system, it is now used as the default value
+of `epg-gpg-program' (instead of gpg).
+
 ** Lisp mode
 
 ---
