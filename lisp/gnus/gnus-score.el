@@ -739,6 +739,8 @@ current score file."
       (with-current-buffer gnus-summary-buffer
 	(gnus-score-load-file current-score-file)))))
 
+(autoload 'appt-select-lowest-window "appt")
+
 (defun gnus-score-insert-help (string alist idx)
   (setq gnus-score-help-winconf (current-window-configuration))
   (with-current-buffer (gnus-get-buffer-create "*Score Help*")
@@ -773,7 +775,7 @@ current score file."
 	(setq i (1+ i))))
     (goto-char (point-min))
     ;; display ourselves in a small window at the bottom
-    (gnus-select-lowest-window)
+    (appt-select-lowest-window)
     (if (< (/ (window-height) 2) window-min-height)
 	(switch-to-buffer "*Score Help*")
       (split-window)

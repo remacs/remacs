@@ -86,9 +86,6 @@
 
 (defun gnus-ems-redefine ()
   (cond
-   ((featurep 'xemacs)
-    (gnus-xmas-redefine))
-
    ((featurep 'mule)
     ;; Mule and new Emacs definitions
 
@@ -108,10 +105,6 @@
     ;; (featurep 'xemacs).  In this case, the implementation for
     ;; XEmacs/mule may be shareable between XEmacs and XEmacs/mule.
 
-    (defvar gnus-summary-display-table nil
-      "Display table used in summary mode buffers.")
-    (defalias 'gnus-max-width-function 'gnus-mule-max-width-function)
-
     (when (boundp 'gnus-check-before-posting)
       (setq gnus-check-before-posting
 	    (delq 'long-lines
@@ -121,7 +114,7 @@
       (insert gnus-tmp-unread gnus-tmp-replied
 	      gnus-tmp-score-char gnus-tmp-indentation)
       (put-text-property
-       (point)
+g       (point)
        (progn
 	 (insert
 	  gnus-tmp-opening-bracket
@@ -134,29 +127,6 @@
 	 (point))
        gnus-mouse-face-prop gnus-mouse-face)
       (insert " " gnus-tmp-subject-or-nil "\n")))))
-
-;; Clone of `appt-select-lowest-window' in appt.el.
-(defun gnus-select-lowest-window ()
-"Select the lowest window on the frame."
-  (let ((lowest-window (selected-window))
-	(bottom-edge (nth 3 (window-edges))))
-    (walk-windows (lambda (w)
-		    (let ((next-bottom-edge (nth 3 (window-edges w))))
-		      (when (< bottom-edge next-bottom-edge)
-			(setq bottom-edge next-bottom-edge
-			      lowest-window w)))))
-    (select-window lowest-window)))
-
-(defun gnus-region-active-p ()
-  "Say whether the region is active."
-  (and (boundp 'transient-mark-mode)
-       transient-mark-mode
-       (boundp 'mark-active)
-       mark-active))
-
-(defun gnus-mark-active-p ()
-  "Non-nil means the mark and region are currently active in this buffer."
-  mark-active) ; aliased to region-exists-p in XEmacs.
 
 (provide 'gnus-ems)
 

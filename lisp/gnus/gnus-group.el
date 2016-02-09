@@ -905,14 +905,14 @@ simple manner.")
 	      (memq (gnus-group-group-name) gnus-group-marked))]
 	["Unmark all" gnus-group-unmark-all-groups gnus-group-marked]
 	["Mark regexp..." gnus-group-mark-regexp t]
-	["Mark region" gnus-group-mark-region :active (gnus-mark-active-p)]
+	["Mark region" gnus-group-mark-region :active mark-active]
 	["Mark buffer" gnus-group-mark-buffer t]
 	["Execute command" gnus-group-universal-argument
 	 (or gnus-group-marked (gnus-group-group-name))])
        ("Subscribe"
 	["Subscribe to a group..." gnus-group-unsubscribe-group t]
 	["Kill all newsgroups in region" gnus-group-kill-region
-	 :active (gnus-mark-active-p)]
+	 :active mark-active]
 	["Kill all zombie groups" gnus-group-kill-all-zombies
 	 gnus-zombie-list]
 	["Kill all groups on level..." gnus-group-kill-level t])
@@ -2028,7 +2028,7 @@ Take into consideration N (the prefix) and the list of marked groups."
 	  (setq n (1- n))
 	  (gnus-group-next-group way)))
       (nreverse groups)))
-   ((and (gnus-region-active-p) (mark))
+   ((and transient-mark-mode mark-active (mark))
     ;; Work on the region between point and mark.
     (let ((max (max (point) (mark)))
 	  groups)

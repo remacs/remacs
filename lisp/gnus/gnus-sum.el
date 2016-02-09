@@ -2706,8 +2706,7 @@ gnus-summary-show-article-from-menu-as-charset-%s" cs))))
 	 ["Catchup all" gnus-summary-catchup-all t]
 	 ["Catchup to here" gnus-summary-catchup-to-here t]
 	 ["Catchup from here" gnus-summary-catchup-from-here t]
-	 ["Catchup region" gnus-summary-mark-region-as-read
-	  (gnus-mark-active-p)]
+	 ["Catchup region" gnus-summary-mark-region-as-read mark-active]
 	 ["Mark excluded" gnus-summary-limit-mark-excluded-as-read t])
 	("Mark Various"
 	 ["Tick" gnus-summary-tick-article-forward t]
@@ -2746,8 +2745,8 @@ gnus-summary-show-article-from-menu-as-charset-%s" cs))))
 	 ["Invert marks" gnus-uu-invert-processable t]
 	 ["Mark above" gnus-uu-mark-over t]
 	 ["Mark series" gnus-uu-mark-series t]
-	 ["Mark region" gnus-uu-mark-region (gnus-mark-active-p)]
-	 ["Unmark region" gnus-uu-unmark-region (gnus-mark-active-p)]
+	 ["Mark region" gnus-uu-mark-region mark-active]
+	 ["Unmark region" gnus-uu-unmark-region mark-active]
 	 ["Mark by regexp..." gnus-uu-mark-by-regexp t]
 	 ["Unmark by regexp..." gnus-uu-unmark-by-regexp t]
 	 ["Mark all" gnus-uu-mark-all t]
@@ -6681,7 +6680,7 @@ current article will be taken into consideration."
 		     (gnus-summary-find-next nil article)))
 	    (decf n)))
 	(nreverse articles)))
-     ((and (gnus-region-active-p) (mark))
+     ((and (and transient-mark-mode mark-active) (mark))
       (message "region active")
       ;; Work on the region between point and mark.
       (let ((max (max (point) (mark)))
@@ -10834,7 +10833,7 @@ If N is negative, mark backward instead.  If UNMARK is non-nil, remove
 the process mark instead.  The difference between N and the actual
 number of articles marked is returned."
   (interactive "P")
-  (if (and (null n) (gnus-region-active-p))
+  (if (and (null n) (and transient-mark-mode mark-active))
       (gnus-uu-mark-region (region-beginning) (region-end) unmark)
     (setq n (prefix-numeric-value n))
     (let ((backward (< n 0))

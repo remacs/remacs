@@ -6980,7 +6980,7 @@ the entire article will be yanked."
   (interactive)
   (let ((article (cdr gnus-article-current))
 	contents)
-    (if (not (gnus-region-active-p))
+    (if (not (and transient-mark-mode mark-active))
 	(with-current-buffer gnus-summary-buffer
 	  (gnus-summary-reply (list (list article)) wide))
       (setq contents (buffer-substring (point) (mark t)))
@@ -7006,7 +7006,7 @@ the entire article will be yanked."
   (interactive)
   (let ((article (cdr gnus-article-current))
 	contents)
-      (if (not (gnus-region-active-p))
+      (if (not (and transient-mark-mode mark-active))
 	  (with-current-buffer gnus-summary-buffer
 	    (gnus-summary-followup (list (list article))))
 	(setq contents (buffer-substring (point) (mark t)))
