@@ -290,10 +290,11 @@ Sequences consisting of @kbd{C-c} followed by @kbd{@{}, @kbd{@}},
 @kbd{<}, @kbd{>}, @kbd{:} or @kbd{;} are also reserved for major modes.
 
 @item
-Sequences consisting of @kbd{C-c} followed by any other punctuation
-character are allocated for minor modes.  Using them in a major mode is
-not absolutely prohibited, but if you do that, the major mode binding
-may be shadowed from time to time by minor modes.
+Sequences consisting of @kbd{C-c} followed by any other
+@acronym{ASCII} punctuation or symbol character are allocated for
+minor modes.  Using them in a major mode is not absolutely prohibited,
+but if you do that, the major mode binding may be shadowed from time
+to time by minor modes.
 
 @item
 Don't bind @kbd{C-h} following any prefix character (including
