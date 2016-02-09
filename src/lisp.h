@@ -67,20 +67,6 @@ DEFINE_GDB_SYMBOL_BEGIN (int, GCTYPEBITS)
 #define GCTYPEBITS 3
 DEFINE_GDB_SYMBOL_END (GCTYPEBITS)
 
-/* The number of bits needed in an EMACS_INT over and above the number
-   of bits in a pointer.  This is 0 on systems where:
-   1.  We can specify multiple-of-8 alignment on static variables.
-   2.  We know malloc returns a multiple of 8.  */
-#if (defined alignas \
-     && (defined GNU_MALLOC || defined DOUG_LEA_MALLOC || defined __GLIBC__ \
-	 || defined CYGWIN || defined __MINGW32__ \
-	 || defined DARWIN_OS || defined __FreeBSD__ \
-	 || defined __sun))
-# define NONPOINTER_BITS 0
-#else
-# define NONPOINTER_BITS GCTYPEBITS
-#endif
-
 /* EMACS_INT - signed integer wide enough to hold an Emacs value
    EMACS_INT_MAX - maximum value of EMACS_INT; can be used in #if
    pI - printf length modifier for EMACS_INT
@@ -88,18 +74,16 @@ DEFINE_GDB_SYMBOL_END (GCTYPEBITS)
 #ifndef EMACS_INT_MAX
 # if INTPTR_MAX <= 0
 #  error "INTPTR_MAX misconfigured"
-# elif INTPTR_MAX <= INT_MAX >> NONPOINTER_BITS && !defined WIDE_EMACS_INT
+# elif INTPTR_MAX <= INT_MAX && !defined WIDE_EMACS_INT
 typedef int EMACS_INT;
 typedef unsigned int EMACS_UINT;
 #  define EMACS_INT_MAX INT_MAX
 #  define pI ""
-# elif INTPTR_MAX <= LONG_MAX >> NONPOINTER_BITS && !defined WIDE_EMACS_INT
+# elif INTPTR_MAX <= LONG_MAX && !defined WIDE_EMACS_INT
 typedef long int EMACS_INT;
 typedef unsigned long EMACS_UINT;
 #  define EMACS_INT_MAX LONG_MAX
 #  define pI "l"
-/* Check versus LLONG_MAX, not LLONG_MAX >> NONPOINTER_BITS.
-   In theory this is not safe, but in practice it seems to be OK.  */
 # elif INTPTR_MAX <= LLONG_MAX
 typedef long long int EMACS_INT;
 typedef unsigned long long int EMACS_UINT;

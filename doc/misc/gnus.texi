@@ -11790,7 +11790,7 @@ renderer.  If set to @code{gnus-w3m}, it uses @code{w3m}.
 @item gnus-blocked-images
 @vindex gnus-blocked-images
 External images that have @acronym{URL}s that match this regexp won't
-be fetched and displayed.  For instance, do block all @acronym{URL}s
+be fetched and displayed.  For instance, to block all @acronym{URL}s
 that have the string ``ads'' in them, do the following:
 
 @lisp

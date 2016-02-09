@@ -359,12 +359,17 @@ as you type.  See also the new variable ‘text-quoting-style’.
 ** New minor mode global-eldoc-mode is enabled by default.
 
 ---
-** Emacs now supports "bracketed paste mode" when running on a terminal
-that supports it.  This facility allows Emacs to understand pasted
-chunks of text as strings to be inserted, instead of interpreting each
-character in the pasted text as actual user input.  This results in a
-paste experience similar to that under a window system, and significant
-performance improvements when pasting large amounts of text.
+** Emacs now uses "bracketed paste mode" on text terminals that support it.
+Bracketed paste mode causes text terminals to wrap pasted text in special
+escape sequences that allow Emacs to tell the difference between text
+you type and text you paste from other applications.  Emacs then
+avoids interpreting each character in the pasted text as it does with
+keyboard input, which results in a paste experience similar to that
+under a window system, and significant performance improvements when
+pasting large amounts of text.
+
+Bracketed paste mode is disabled by default, so Emacs automatically
+enables it at startup if the terminal supports it.
 
 +++
 ** Emacs now supports the latest version of the UBA.

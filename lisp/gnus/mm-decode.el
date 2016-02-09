@@ -145,12 +145,21 @@ nil    : use external viewer (default web browser)."
 		 (function))
   :group 'mime-display)
 
-(defcustom mm-inline-text-html-with-images nil
-  "If non-nil, Gnus will allow retrieving images in HTML that has <img> tags.
-See also the documentation for the `mm-w3m-safe-url-regexp'
-variable."
-  :version "22.1"
+(defcustom mm-html-inhibit-images
+  (if (boundp 'mm-inline-text-html-with-images)
+      (not (symbol-value 'mm-inline-text-html-with-images))
+    t)
+  "Non-nil means inhibit displaying of images inline in the article body."
+  :version "25.1"
   :type 'boolean
+  :group 'mime-display)
+
+(defcustom mm-html-blocked-images ""
+  "Regexp matching image URLs to be blocked, or nil meaning not to block.
+Note that cid images that are embedded in a message won't be blocked."
+  :version "25.1"
+  :type '(choice (const :tag "Allow all" nil)
+		 (regexp :tag "Regular expression"))
   :group 'mime-display)
 
 (defcustom mm-w3m-safe-url-regexp "\\`cid:"
@@ -543,7 +552,7 @@ into
 
 \(a 1 b 2 c 3)
 
-The original alist is not modified.  See also `destructive-alist-to-plist'."
+The original alist is not modified."
   (let (plist)
     (while alist
       (let ((el (car alist)))
@@ -1828,14 +1837,11 @@ If RECURSIVE, search recursively."
 (declare-function shr-insert-document "shr" (dom))
 (defvar shr-blocked-images)
 (defvar shr-use-fonts)
-(defvar gnus-inhibit-images)
-(autoload 'gnus-blocked-images "gnus-art")
 
 (defun mm-shr (handle)
   ;; Require since we bind its variables.
   (require 'shr)
-  (let ((article-buffer (current-buffer))
-	(shr-width (if (and (boundp 'shr-use-fonts)
+  (let ((shr-width (if (and (boundp 'shr-use-fonts)
 			    shr-use-fonts)
 		       nil
 		     fill-column))
@@ -1844,15 +1850,9 @@ If RECURSIVE, search recursively."
 				  (when handle
 				    (mm-with-part handle
 				      (buffer-string))))))
-	shr-inhibit-images shr-blocked-images charset char)
-    (if (and (boundp 'gnus-summary-buffer)
-	     (bufferp gnus-summary-buffer)
-	     (buffer-name gnus-summary-buffer))
-	(with-current-buffer gnus-summary-buffer
-	  (setq shr-inhibit-images gnus-inhibit-images
-		shr-blocked-images (gnus-blocked-images)))
-      (setq shr-inhibit-images gnus-inhibit-images
-	    shr-blocked-images (gnus-blocked-images)))
+	(shr-inhibit-images mm-html-inhibit-images)
+	(shr-blocked-images mm-html-blocked-images)
+	charset char)
     (unless handle
       (setq handle (mm-dissect-buffer t)))
     (setq charset (mail-content-type-get (mm-handle-type handle) 'charset))
