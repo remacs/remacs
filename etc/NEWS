@@ -353,6 +353,20 @@ to version 206, you can do this with C-u C-u M-x desktop-save.
 It raises an error if a bookmark of that name already exists,
 unlike `bookmark-set' which silently updates an existing bookmark.
 
+** Gnus
+
++++
+*** New user options `mm-html-inhibit-images' and `mm-html-blocked-images'
+now control how mm-* functions fetch and display images in an HTML
+message.  Gnus still uses `gnus-inhibit-images' and `gnus-blocked-images'
+for that purpose, i.e., binds mm-html- variables with those gnus-
+variables, but other packages do not have to bind gnus- variables now.
+
+---
+*** `mm-inline-text-html-with-images' has been removed.
+Use `mm-html-inhibit-images' instead.  Note that the value is opposite
+in meaning.
+
 ** IMAP
 
 ---
