@@ -970,6 +970,11 @@ replace the face `compare-windows', which is now an obsolete alias for
 `compare-windows-added'.
 
 ---
+*** The VC state indicator in the mode line now has different faces
+corresponding to each of the possible states. See the `vc-faces'
+customization group.
+
+---
 *** `log-edit-insert-changelog' converts "(tiny change)" to
 "Copyright-paperwork-exempt: yes".  Set `log-edit-rewrite-tiny-change'
 nil to disable this.
