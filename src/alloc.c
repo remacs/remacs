@@ -1133,6 +1133,7 @@ lisp_free (void *block)
 #  define USE_ALIGNED_ALLOC 1
 # elif !defined HYBRID_MALLOC && defined HAVE_POSIX_MEMALIGN
 #  define USE_ALIGNED_ALLOC 1
+#  define aligned_alloc my_aligned_alloc /* Avoid collision with lisp.h.  */
 static void *
 aligned_alloc (size_t alignment, size_t size)
 {
