@@ -395,7 +395,7 @@ mil.bo
 tv.bo
 
 // br : http://registro.br/dominio/categoria.html
-// Submitted by registry <fneves@registro.br> 2014-08-11
+// Submitted by registry <fneves@registro.br>
 br
 adm.br
 adv.br
@@ -485,7 +485,7 @@ net.bt
 org.bt
 
 // bv : No registrations at this time.
-// Submitted by registry <jarle@uninett.no> 2006-06-16
+// Submitted by registry <jarle@uninett.no>
 bv
 
 // bw : http://en.wikipedia.org/wiki/.bw
@@ -597,7 +597,7 @@ gov.cm
 net.cm
 
 // cn : http://en.wikipedia.org/wiki/.cn
-// Submitted by registry <tanyaling@cnnic.cn> 2008-06-11
+// Submitted by registry <tanyaling@cnnic.cn>
 cn
 ac.cn
 com.cn
@@ -646,7 +646,7 @@ mo.cn
 tw.cn
 
 // co : http://en.wikipedia.org/wiki/.co
-// Submitted by registry <tecnico@uniandes.edu.co> 2008-06-11
+// Submitted by registry <tecnico@uniandes.edu.co>
 co
 arts.co
 com.co
@@ -766,7 +766,7 @@ pol.dz
 art.dz
 
 // ec : http://www.nic.ec/reg/paso1.asp
-// Submitted by registry <vabboud@nic.ec> 2008-07-04
+// Submitted by registry <vabboud@nic.ec>
 ec
 com.ec
 info.ec
@@ -887,7 +887,7 @@ veterinaire.fr
 ga
 
 // gb : This registry is effectively dormant
-// Submitted by registry <Damien.Shaw@ja.net> 2008-06-12
+// Submitted by registry <Damien.Shaw@ja.net>
 gb
 
 // gd : http://en.wikipedia.org/wiki/.gd
@@ -946,7 +946,7 @@ org.gl
 gm
 
 // gn : http://psg.com/dns/gn/gn.txt
-// Submitted by registry <randy@psg.com> 2008-06-17
+// Submitted by registry <randy@psg.com>
 gn
 ac.gn
 com.gn
@@ -971,7 +971,7 @@ asso.gp
 gq
 
 // gr : https://grweb.ics.forth.gr/english/1617-B-2005.html
-// Submitted by registry <segred@ics.forth.gr> 2008-06-09
+// Submitted by registry <segred@ics.forth.gr>
 gr
 com.gr
 edu.gr
@@ -1009,7 +1009,7 @@ net.gy
 org.gy
 
 // hk : https://www.hkdnr.hk
-// Submitted by registry <hk.tech@hkirc.hk> 2008-06-11
+// Submitted by registry <hk.tech@hkirc.hk>
 hk
 com.hk
 edu.hk
@@ -1137,7 +1137,7 @@ net.il
 org.il
 
 // im : https://www.nic.im/
-// Submitted by registry <info@nic.im> 2013-11-15
+// Submitted by registry <info@nic.im>
 im
 ac.im
 co.im
@@ -1618,7 +1618,7 @@ jobs
 
 // jp : http://en.wikipedia.org/wiki/.jp
 // http://jprs.co.jp/en/jpdomain.html
-// Submitted by registry <info@jprs.jp> 2014-10-30
+// Submitted by registry <info@jprs.jp>
 jp
 // jp organizational type names
 ac.jp
@@ -3542,7 +3542,7 @@ mil.kz
 com.kz
 
 // la : http://en.wikipedia.org/wiki/.la
-// Submitted by registry <gavin.brown@nic.la> 2008-06-10
+// Submitted by registry <gavin.brown@nic.la>
 la
 int.la
 net.la
@@ -3554,7 +3554,7 @@ com.la
 org.la
 
 // lb : http://en.wikipedia.org/wiki/.lb
-// Submitted by registry <randy@psg.com> 2008-06-17
+// Submitted by registry <randy@psg.com>
 lb
 com.lb
 edu.lb
@@ -3594,7 +3594,7 @@ hotel.lk
 ac.lk
 
 // lr : http://psg.com/dns/lr/lr.txt
-// Submitted by registry <randy@psg.com> 2008-06-17
+// Submitted by registry <randy@psg.com>
 lr
 com.lr
 edu.lr
@@ -3748,7 +3748,7 @@ net.ms
 org.ms
 
 // mt : https://www.nic.org.mt/go/policy
-// Submitted by registry <help@nic.org.mt> 2013-11-19
+// Submitted by registry <help@nic.org.mt>
 mt
 com.mt
 edu.mt
@@ -4350,7 +4350,7 @@ net.mw
 org.mw
 
 // mx : http://www.nic.mx/
-// Submitted by registry <farias@nic.mx> 2008-06-19
+// Submitted by registry <farias@nic.mx>
 mx
 com.mx
 org.mx
@@ -4419,17 +4419,18 @@ info.nf
 other.nf
 store.nf
 
-// ng : http://psg.com/dns/ng/
+// ng : http://www.nira.org.ng/index.php/join-us/register-ng-domain/189-nira-slds
 ng
 com.ng
 edu.ng
+gov.ng
+i.ng
+mil.ng
+mobi.ng
 name.ng
 net.ng
 org.ng
 sch.ng
-gov.ng
-mil.ng
-mobi.ng
 
 // ni : http://www.nic.ni/
 com.ni
@@ -5226,7 +5227,7 @@ våler.hedmark.no
 *.np
 
 // nr : http://cenpac.net.nr/dns/index.html
-// Confirmed by registry <technician@cenpac.net.nr> 2008-06-17
+// Submitted by registry <technician@cenpac.net.nr>
 nr
 biz.nr
 info.nr
@@ -5240,7 +5241,7 @@ com.nr
 nu
 
 // nz : http://en.wikipedia.org/wiki/.nz
-// Confirmed by registry <jay@nzrs.net.nz> 2014-05-19
+// Submitted by registry <jay@nzrs.net.nz>
 nz
 ac.nz
 co.nz
@@ -5310,7 +5311,7 @@ edu.pf
 *.pg
 
 // ph : http://www.domains.ph/FAQ2.asp
-// Submitted by registry <jed@email.com.ph> 2008-06-13
+// Submitted by registry <jed@email.com.ph>
 ph
 com.ph
 net.ph
@@ -5339,7 +5340,7 @@ gos.pk
 info.pk
 
 // pl http://www.dns.pl/english/index.html
-// updated by .PL registry on 2015-04-28
+// Submitted by registry
 pl
 com.pl
 net.pl
@@ -5618,7 +5619,7 @@ go.pw
 belau.pw
 
 // py : http://www.nic.py/pautas.html#seccion_9
-// Confirmed by registry 2012-10-03
+// Submitted by registry
 py
 com.py
 coop.py
@@ -5641,32 +5642,32 @@ sch.qa
 
 // re : http://www.afnic.re/obtenir/chartes/nommage-re/annexe-descriptifs
 re
-com.re
 asso.re
+com.re
 nom.re
 
 // ro : http://www.rotld.ro/
 ro
-com.ro
-org.ro
-tm.ro
-nt.ro
-nom.ro
-info.ro
-rec.ro
 arts.ro
+com.ro
 firm.ro
+info.ro
+nom.ro
+nt.ro
+org.ro
+rec.ro
 store.ro
+tm.ro
 www.ro
 
-// rs : http://en.wikipedia.org/wiki/.rs
+// rs : https://www.rnids.rs/en/domains/national-domains
 rs
-co.rs
-org.rs
-edu.rs
 ac.rs
+co.rs
+edu.rs
 gov.rs
 in.rs
+org.rs
 
 // ru : http://www.cctld.ru/ru/docs/aktiv_8.php
 // Industry domains
@@ -5831,7 +5832,7 @@ edu.sa
 sch.sa
 
 // sb : http://www.sbnic.net.sb/
-// Submitted by registry <lee.humphries@telekom.com.sb> 2008-06-08
+// Submitted by registry <lee.humphries@telekom.com.sb>
 sb
 com.sb
 edu.sb
@@ -5848,7 +5849,7 @@ org.sc
 edu.sc
 
 // sd : http://www.isoc.sd/sudanic.isoc.sd/billing_pricing.htm
-// Submitted by registry <admin@isoc.sd> 2008-06-17
+// Submitted by registry <admin@isoc.sd>
 sd
 com.sd
 net.sd
@@ -5860,7 +5861,7 @@ gov.sd
 info.sd
 
 // se : http://en.wikipedia.org/wiki/.se
-// Submitted by registry <patrik.wallstrom@iis.se> 2014-03-18
+// Submitted by registry <patrik.wallstrom@iis.se>
 se
 a.se
 ac.se
@@ -5923,7 +5924,7 @@ mil.sh
 si
 
 // sj : No registrations at this time.
-// Submitted by registry <jarle@uninett.no> 2008-06-16
+// Submitted by registry <jarle@uninett.no>
 sj
 
 // sk : http://en.wikipedia.org/wiki/.sk
@@ -5931,7 +5932,7 @@ sj
 sk
 
 // sl : http://www.nic.sl
-// Submitted by registry <adam@neoip.com> 2008-06-12
+// Submitted by registry <adam@neoip.com>
 sl
 com.sl
 net.sl
@@ -6020,7 +6021,7 @@ org.sv
 red.sv
 
 // sx : http://en.wikipedia.org/wiki/.sx
-// Confirmed by registry <jcvignes@openregistry.com> 2012-05-31
+// Submitted by registry <jcvignes@openregistry.com>
 sx
 gov.sx
 
@@ -6059,7 +6060,7 @@ tf
 tg
 
 // th : http://en.wikipedia.org/wiki/.th
-// Submitted by registry <krit@thains.co.th> 2008-06-17
+// Submitted by registry <krit@thains.co.th>
 th
 ac.th
 co.th
@@ -6130,7 +6131,7 @@ defense.tn
 turen.tn
 
 // to : http://en.wikipedia.org/wiki/.to
-// Submitted by registry <egullich@colo.to> 2008-06-17
+// Submitted by registry <egullich@colo.to>
 to
 com.to
 gov.to
@@ -6141,7 +6142,7 @@ mil.to
 
 // subTLDs: https://www.nic.tr/forms/eng/policies.pdf
 //     and: https://www.nic.tr/forms/politikalar.pdf
-// Submitted by <mehmetgurevin@gmail.com> 2014-07-19
+// Submitted by <mehmetgurevin@gmail.com>
 tr
 com.tr
 info.tr
@@ -6215,7 +6216,7 @@ club.tw
 商業.tw
 
 // tz : http://www.tznic.or.tz/index.php/domains
-// Confirmed by registry <manager@tznic.or.tz> 2013-01-22
+// Submitted by registry <manager@tznic.or.tz>
 tz
 ac.tz
 co.tz
@@ -6231,7 +6232,7 @@ sc.tz
 tv.tz
 
 // ua : https://hostmaster.ua/policy/?ua
-// Submitted by registry <dk@cctld.ua> 2012-04-27
+// Submitted by registry <dk@cctld.ua>
 ua
 // ua 2LD
 com.ua
@@ -6601,7 +6602,7 @@ org.uz
 va
 
 // vc : http://en.wikipedia.org/wiki/.vc
-// Submitted by registry <kshah@ca.afilias.info> 2008-06-13
+// Submitted by registry <kshah@ca.afilias.info>
 vc
 com.vc
 net.vc
@@ -6611,8 +6612,7 @@ mil.vc
 edu.vc
 
 // ve : https://registro.nic.ve/
-// Confirmed by registry 2012-10-04
-// Updated 2014-05-20 - Bug 940478
+// Submitted by registry
 ve
 arts.ve
 co.ve
@@ -6826,7 +6826,7 @@ yt
 فلسطين
 
 // xn--90a3ac ("srb", Cyrillic) : RS
-// http://www.rnids.rs/en/the-.срб-domain
+// https://www.rnids.rs/en/domains/national-domains
 срб
 пр.срб
 орг.срб
@@ -6905,7 +6905,7 @@ xxx
 
 // za : http://www.zadna.org.za/content/page/domain-information
 ac.za
-agrica.za
+agric.za
 alt.za
 co.za
 edu.za
@@ -10591,11 +10591,11 @@ zuerich
 // (Note: these are in alphabetical order by company name)
 
 // Amazon CloudFront : https://aws.amazon.com/cloudfront/
-// Submitted by Donavan Miller <donavanm@amazon.com> 2013-03-22
+// Submitted by Donavan Miller <donavanm@amazon.com>
 cloudfront.net
 
 // Amazon Elastic Compute Cloud: https://aws.amazon.com/ec2/
-// Submitted by Osman Surkatty <osmans@amazon.com> 2014-12-16
+// Submitted by Osman Surkatty <osmans@amazon.com>
 ap-northeast-1.compute.amazonaws.com
 ap-southeast-1.compute.amazonaws.com
 ap-southeast-2.compute.amazonaws.com
@@ -10614,15 +10614,15 @@ z-1.compute-1.amazonaws.com
 z-2.compute-1.amazonaws.com
 
 // Amazon Elastic Beanstalk : https://aws.amazon.com/elasticbeanstalk/
-// Submitted by Adam Stein <astein@amazon.com> 2013-04-02
+// Submitted by Adam Stein <astein@amazon.com>
 elasticbeanstalk.com
 
 // Amazon Elastic Load Balancing : https://aws.amazon.com/elasticloadbalancing/
-// Submitted by Scott Vidmar <svidmar@amazon.com> 2013-03-27
+// Submitted by Scott Vidmar <svidmar@amazon.com>
 elb.amazonaws.com
 
 // Amazon S3 : https://aws.amazon.com/s3/
-// Submitted by Eric Kinolik <kilo@amazon.com> 2015-04-08
+// Submitted by Eric Kinolik <kilo@amazon.com>
 s3.amazonaws.com
 s3-ap-northeast-1.amazonaws.com
 s3-ap-southeast-1.amazonaws.com
@@ -10640,11 +10640,11 @@ s3.cn-north-1.amazonaws.com.cn
 s3.eu-central-1.amazonaws.com
 
 // BetaInABox
-// Submitted by adrian@betainabox.com 2012-09-13
+// Submitted by Adrian <adrian@betainabox.com>
 betainabox.com
 
 // CentralNic : http://www.centralnic.com/names/domains
-// Submitted by registry <gavin.brown@centralnic.com> 2012-09-27
+// Submitted by registry <gavin.brown@centralnic.com>
 ae.org
 ar.com
 br.com
@@ -10675,38 +10675,42 @@ za.bz
 za.com
 
 // Africa.com Web Solutions Ltd : https://registry.africa.com
-// Submitted by Gavin Brown <gavin.brown@centralnic.com> 2014-02-04
+// Submitted by Gavin Brown <gavin.brown@centralnic.com>
 africa.com
 
 // iDOT Services Limited : http://www.domain.gr.com
-// Submitted by Gavin Brown <gavin.brown@centralnic.com> 2014-02-04
+// Submitted by Gavin Brown <gavin.brown@centralnic.com>
 gr.com
 
 // Radix FZC : http://domains.in.net
-// Submitted by Gavin Brown <gavin.brown@centralnic.com> 2014-02-04
+// Submitted by Gavin Brown <gavin.brown@centralnic.com>
 in.net
 
 // US REGISTRY LLC : http://us.org
-// Submitted by Gavin Brown <gavin.brown@centralnic.com> 2014-02-04
+// Submitted by Gavin Brown <gavin.brown@centralnic.com>
 us.org
 
 // co.com Registry, LLC : https://registry.co.com
-// Submitted by Gavin Brown <gavin.brown@centralnic.com> 2014-02-04
+// Submitted by Gavin Brown <gavin.brown@centralnic.com>
 co.com
 
 // c.la : http://www.c.la/
 c.la
 
 // cloudControl : https://www.cloudcontrol.com/
-// Submitted by Tobias Wilken <tw@cloudcontrol.com> 2013-07-23
+// Submitted by Tobias Wilken <tw@cloudcontrol.com>
 cloudcontrolled.com
 cloudcontrolapp.com
 
 // co.ca : http://registry.co.ca/
 co.ca
 
+// i-registry s.r.o. : http://www.i-registry.cz/
+// Submitted by Martin Semrad <semrad@i-registry.cz>
+co.cz
+
 // CDN77.com : http://www.cdn77.com
-// Submitted by Jan Krpes <jan.krpes@cdn77.com> 2015-07-13
+// Submitted by Jan Krpes <jan.krpes@cdn77.com>
 c.cdn77.org
 cdn77-ssl.net
 r.cdn77.net
@@ -10718,19 +10722,23 @@ co.nl
 co.no
 
 // Commerce Guys, SAS
-// Submitted by Damien Tournoud <damien@commerceguys.com> 2015-01-22
+// Submitted by Damien Tournoud <damien@commerceguys.com>
 *.platform.sh
 
 // Cupcake : https://cupcake.io/
-// Submitted by Jonathan Rudenberg <jonathan@cupcake.io> 2013-10-08
+// Submitted by Jonathan Rudenberg <jonathan@cupcake.io>
 cupcake.is
 
 // DreamHost : http://www.dreamhost.com/
-// Submitted by Andrew Farmer <andrew.farmer@dreamhost.com> 2012-10-02
+// Submitted by Andrew Farmer <andrew.farmer@dreamhost.com>
 dreamhosters.com
 
+// Drobo : http://www.drobo.com/
+// Submitted by Ricardo Padilha <rpadilha@drobo.com>
+mydrobo.com
+
 // DuckDNS : http://www.duckdns.org/
-// Submitted by Richard Harper <richard@duckdns.org> 2015-05-17
+// Submitted by Richard Harper <richard@duckdns.org>
 duckdns.org
 
 // DynDNS.com : http://www.dyndns.com/services/dns/dyndns/
@@ -11015,8 +11023,7 @@ worse-than.tv
 writesthisblog.com
 
 // EU.org https://eu.org/
-// Submitted by Pierre Beyssac <hostmaster@eu.org> 2015-04-17
-
+// Submitted by Pierre Beyssac <hostmaster@eu.org>
 eu.org
 al.eu.org
 asso.eu.org
@@ -11075,7 +11082,7 @@ uk.eu.org
 us.eu.org
 
 // Fastly Inc. http://www.fastly.com/
-// Submitted by Vladimir Vuksan <vladimir@fastly.com> 2013-05-31
+// Submitted by Vladimir Vuksan <vladimir@fastly.com>
 a.ssl.fastly.net
 b.ssl.fastly.net
 global.ssl.fastly.net
@@ -11083,28 +11090,28 @@ a.prod.fastly.net
 global.prod.fastly.net
 
 // Firebase, Inc.
-// Submitted by Chris Raynor <chris@firebase.com> 2014-01-21
+// Submitted by Chris Raynor <chris@firebase.com>
 firebaseapp.com
 
 // Flynn : https://flynn.io
-// Submitted by Jonathan Rudenberg <jonathan@flynn.io> 2014-07-12
+// Submitted by Jonathan Rudenberg <jonathan@flynn.io>
 flynnhub.com
 
 // GDS : https://www.gov.uk/service-manual/operations/operating-servicegovuk-subdomains
-// Submitted by David Illsley <david.illsley@digital.cabinet-office.gov.uk> 2014-08-28
+// Submitted by David Illsley <david.illsley@digital.cabinet-office.gov.uk>
 service.gov.uk
 
 // GitHub, Inc.
-// Submitted by Ben Toews <btoews@github.com> 2014-02-06
+// Submitted by Ben Toews <btoews@github.com>
 github.io
 githubusercontent.com
 
 // GlobeHosting, Inc.
-// Submitted by Zoltan Egresi <egresi@globehosting.com> 2013-07-12
+// Submitted by Zoltan Egresi <egresi@globehosting.com>
 ro.com
 
 // Google, Inc.
-// Submitted by Eduardo Vela <evn@google.com> 2014-12-19
+// Submitted by Eduardo Vela <evn@google.com>
 appspot.com
 blogspot.ae
 blogspot.al
@@ -11192,12 +11199,12 @@ withyoutube.com
 hashbang.sh
 
 // Heroku : https://www.heroku.com/
-// Submitted by Tom Maher <tmaher@heroku.com> 2013-05-02
+// Submitted by Tom Maher <tmaher@heroku.com>
 herokuapp.com
 herokussl.com
 
 // iki.fi
-// Submitted by Hannu Aronsson <haa@iki.fi> 2009-11-05
+// Submitted by Hannu Aronsson <haa@iki.fi>
 iki.fi
 
 // info.at : http://www.info.at/
@@ -11208,45 +11215,45 @@ info.at
 co.pl
 
 // Microsoft : http://microsoft.com
-// Submitted by Barry Dorrans <bdorrans@microsoft.com> 2014-01-24
+// Submitted by Barry Dorrans <bdorrans@microsoft.com>
 azurewebsites.net
 azure-mobile.net
 cloudapp.net
 
 // Mozilla Foundation : https://mozilla.org/
-// Submited by glob <glob@mozilla.com> 2015-07-06
+// Submitted by glob <glob@mozilla.com>
 bmoattachments.org
 
 // Neustar Inc.
-// Submitted by Trung Tran <Trung.Tran@neustar.biz> 2015-04-23
+// Submitted by Trung Tran <Trung.Tran@neustar.biz>
 4u.com
 
 // ngrok : https://ngrok.com/
-// Submitted by Alan Shreve <alan@ngrok.com> 2015-11-10
+// Submitted by Alan Shreve <alan@ngrok.com>
 ngrok.io
 
 // NFSN, Inc. : https://www.NearlyFreeSpeech.NET/
-// Submitted by Jeff Wheelhouse <support@nearlyfreespeech.net> 2014-02-02
+// Submitted by Jeff Wheelhouse <support@nearlyfreespeech.net>
 nfshost.com
 
 // NYC.mn : http://www.information.nyc.mn
-// Submitted by Matthew Brown <mattbrown@nyc.mn> 2013-03-11
+// Submitted by Matthew Brown <mattbrown@nyc.mn>
 nyc.mn
 
 // One Fold Media : http://www.onefoldmedia.com/
-// Submitted by Eddie Jones <eddie@onefoldmedia.com> 2014-06-10
+// Submitted by Eddie Jones <eddie@onefoldmedia.com>
 nid.io
 
 // Opera Software, A.S.A.
-// Submitted by Yngve Pettersen <yngve@opera.com> 2009-11-26
+// Submitted by Yngve Pettersen <yngve@opera.com>
 operaunite.com
 
 // OutSystems
-// Submitted by Duarte Santos <domain-admin@outsystemscloud.com> 2014-03-11
+// Submitted by Duarte Santos <domain-admin@outsystemscloud.com>
 outsystemscloud.com
 
 // Pagefront : https://www.pagefronthq.com/
-// Submitted by Jason Kriss <jason@pagefronthq.com> 2015-12-02
+// Submitted by Jason Kriss <jason@pagefronthq.com>
 pagefrontapp.com
 
 // .pl domains (grandfathered)
@@ -11258,45 +11265,49 @@ wroc.pl
 zakopane.pl
 
 // Pantheon Systems, Inc. : https://pantheon.io/
-// Submitted by Gary Dylina <gary@pantheon.io> 2015-09-14
+// Submitted by Gary Dylina <gary@pantheon.io>
 pantheon.io
 gotpantheon.com
 
+// prgmr.com : https://prgmr.com/
+// Submitted by Sarah Newman <owner@prgmr.com>
+xen.prgmr.com
+
 // priv.at : http://www.nic.priv.at/
-// Submitted by registry <lendl@nic.at> 2008-06-09
+// Submitted by registry <lendl@nic.at>
 priv.at
 
 // QA2
-// Submitted by Daniel Dent (https://www.danieldent.com/) 2015-07-16
+// Submitted by Daniel Dent (https://www.danieldent.com/)
 qa2.com
 
 // Rackmaze LLC : https://www.rackmaze.com
-// Submitted by Kirill Pertsev <kika@rackmaze.com> 2015-12-02
+// Submitted by Kirill Pertsev <kika@rackmaze.com>
 rackmaze.com
 rackmaze.net
 
 // Red Hat, Inc. OpenShift : https://openshift.redhat.com/
-// Submitted by Tim Kramer <tkramer@rhcloud.com> 2012-10-24
+// Submitted by Tim Kramer <tkramer@rhcloud.com>
 rhcloud.com
 
 // Sandstorm Development Group, Inc. : https://sandcats.io/
-// Submitted by Asheesh Laroia <asheesh@sandstorm.io> 2015-07-21
+// Submitted by Asheesh Laroia <asheesh@sandstorm.io>
 sandcats.io
 
 // Service Online LLC : http://drs.ua/
-// Submitted by Serhii Bulakh <support@drs.ua> 2015-07-30
+// Submitted by Serhii Bulakh <support@drs.ua>
 biz.ua
 co.ua
 pp.ua
 
 // SinaAppEngine : http://sae.sina.com.cn/
-// Submitted by SinaAppEngine <saesupport@sinacloud.com> 2015-02-02
+// Submitted by SinaAppEngine <saesupport@sinacloud.com>
 sinaapp.com
 vipsinaapp.com
 1kapp.com
 
 // Synology, Inc. : https://www.synology.com/
-// Submitted by Rony Weng <ronyweng@synology.com> 2015-12-02
+// Submitted by Rony Weng <ronyweng@synology.com>
 diskstation.me
 dscloud.biz
 dscloud.me
@@ -11319,18 +11330,18 @@ med.pl
 sopot.pl
 
 // UDR Limited : http://www.udr.hk.com
-// Submitted by registry <hostmaster@udr.hk.com> 2014-11-07
+// Submitted by registry <hostmaster@udr.hk.com>
 hk.com
 hk.org
 ltd.hk
 inc.hk
 
 // Yola : https://www.yola.com/
-// Submitted by Stefano Rivera <stefano@yola.com> 2014-07-09
+// Submitted by Stefano Rivera <stefano@yola.com>
 yolasite.com
 
 // ZaNiC : http://www.za.net/
-// Submitted by registry <hostmaster@nic.za.net> 2009-10-03
+// Submitted by registry <hostmaster@nic.za.net>
 za.net
 za.org
 

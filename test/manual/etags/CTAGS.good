@@ -454,7 +454,7 @@ Condition_Variable/t	ada-src/2ataspri.ads	/^   type Condition_Variable is privat
 Condition_Variable/t	ada-src/2ataspri.ads	/^   type Condition_Variable is$/
 Configure	pyt-src/server.py	/^class Configure(Frame, ControlEdit):$/
 ConfirmQuit	pyt-src/server.py	/^def ConfirmQuit(frame, context):$/
-Constant	ruby-src/test1.ru	38
+Constant	ruby-src/test1.ru	42
 ControlEdit	pyt-src/server.py	/^class ControlEdit(Frame):$/
 Controls	pyt-src/server.py	/^class Controls:$/
 CopyTextString	pas-src/common.pas	/^function CopyTextString;(*($/
@@ -2555,6 +2555,7 @@ bar	c-src/c.c	/^void bar() {while(0) {}}$/
 bar	c.c	143
 bar	c-src/h.h	19
 bar	cp-src/x.cc	/^XX::bar()$/
+bar1	ruby-src/test1.ru	/^    attr_reader(:foo1, :bar1, # comment$/
 bar=	ruby-src/test1.ru	/^    attr_writer :bar,$/
 bas_syn	prol-src/natded.prolog	/^bas_syn(n(_)).$/
 base	c-src/emacs/src/lisp.h	2188
@@ -3008,6 +3009,8 @@ foo	f-src/entry.strange	/^       character*(*) function foo()$/
 foo	php-src/ptest.php	/^foo()$/
 foo	ruby-src/test1.ru	/^    attr_reader :foo$/
 foo!	ruby-src/test1.ru	/^    def foo!$/
+foo1	ruby-src/test1.ru	/^    attr_reader(:foo1, :bar1, # comment$/
+foo2	ruby-src/test1.ru	/^    alias_method ( :foo2, #cmmt$/
 foobar	c-src/c.c	/^int foobar() {;}$/
 foobar	c.c	/^extern void foobar (void) __attribute__ ((section /
 foobar2	c-src/h.h	20
@@ -3880,7 +3883,8 @@ questo	../c/c.web	34
 quiettest	make-src/Makefile	/^quiettest:$/
 quit_char	c-src/emacs/src/keyboard.c	192
 quit_throw_to_read_char	c-src/emacs/src/keyboard.c	/^quit_throw_to_read_char (bool from_signal)$/
-qux	ruby-src/test1.ru	/^    alias_method :qux, :tee, attr_accessor :bogus$/
+qux	ruby-src/test1.ru	/^    alias_method :qux, :tee, attr_accessor(:bogus)/
+qux1	ruby-src/test1.ru	/^                :qux1)$/
 qux=	ruby-src/test1.ru	/^      def qux=(tee)$/
 r0	c-src/sysdep.h	54
 r1	c-src/sysdep.h	55

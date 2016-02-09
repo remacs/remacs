@@ -660,6 +660,7 @@ handle_file_notifications (struct input_event *hold_quit)
 	      inev.arg = list3 (make_pointer_integer (notifications_desc),
 				action, fname);
 	      kbd_buffer_store_event_hold (&inev, hold_quit);
+	      nevents++;
 
 	      if (!fni->NextEntryOffset)
 		break;

@@ -4142,7 +4142,7 @@ module ModuleExample1,0
     def module_instance_method46,1051
     def ModuleExample.module_class_methodmodule_class_method49,1131
 
-ruby-src/test1.ru,785
+ruby-src/test1.ru,935
 class A1,0
  def a(2,8
  def b(5,38
@@ -4165,9 +4165,13 @@ module A9,57
     attr_accessor :teetee31,382
     attr_accessor :teetee=31,382
     alias_method :qux,qux32,405
-    alias_method :xyz,xyz33,455
-                 :tee ; attr_reader :subtlesubtle34,478
-A::Constant Constant38,533
+    alias_method :xyz,xyz33,456
+                 :tee ; attr_reader :subtlesubtle34,479
+    attr_reader(:foo1,foo135,523
+    attr_reader(:foo1, :bar1,bar135,523
+                :qux1)qux136,563
+    alias_method ( :foo2,foo237,586
+A::Constant Constant42,655
 
 tex-src/testenv.tex,52
 \newcommand{\nm}\nm4,77

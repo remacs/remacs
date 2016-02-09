@@ -1141,7 +1141,7 @@ which the local user typed."
     (define-key map "\C-c\C-u" 'erc-kill-input)
     (define-key map "\C-c\C-x" 'erc-quit-server)
     (define-key map "\M-\t" 'ispell-complete-word)
-    (define-key map "\t" 'erc-completion-at-point)
+    (define-key map "\t" 'completion-at-point)
 
     ;; Suppress `font-lock-fontify-block' key binding since it
     ;; destroys face properties.
@@ -1463,6 +1463,7 @@ Defaults to the server buffer."
        (concat "\C-l\\|\\(^" (regexp-quote (erc-prompt)) "\\)"))
   (set (make-local-variable 'paragraph-start)
        (concat "\\(" (regexp-quote (erc-prompt)) "\\)"))
+  (setq-local completion-ignore-case t)
   (add-hook 'completion-at-point-functions 'erc-complete-word-at-point nil t))
 
 ;; activation
@@ -3995,13 +3996,6 @@ Prompt for one if called interactively."
     (erc-server-send (if (and key (>= (length key) 1))
                          (format "MODE %s +k %s" tgt key)
                        (format "MODE %s -k" tgt)))))
-
-(defun erc-completion-at-point ()
-  "Perform completion on the text around point case-insensitively.
-See `completion-at-point'."
-  (interactive)
-  (let ((completion-ignore-case t))
-    (completion-at-point)))
 
 (defun erc-quit-server (reason)
   "Disconnect from current server after prompting for REASON.

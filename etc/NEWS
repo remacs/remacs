@@ -670,7 +670,7 @@ item as before.
 ** Search and Replace
 
 +++
-*** New user option `search-default-regexp-mode'
+*** New user option `search-default-mode'
 specifies the default mode for I-search.
 
 +++

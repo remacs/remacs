@@ -5683,6 +5683,7 @@ compute_tip_xy (struct frame *f, Lisp_Object parms, Lisp_Object dx, Lisp_Object 
   int win_x, win_y;
   Window root, child;
   unsigned pmask;
+  int min_x, min_y, max_x, max_y = -1;
 
   /* User-specified position?  */
   left = Fcdr (Fassq (Qleft, parms));
@@ -5695,45 +5696,81 @@ compute_tip_xy (struct frame *f, Lisp_Object parms, Lisp_Object dx, Lisp_Object 
   if ((!INTEGERP (left) && !INTEGERP (right))
       || (!INTEGERP (top) && !INTEGERP (bottom)))
     {
+      Lisp_Object frame, attributes, monitor, geometry;
+
       block_input ();
       XQueryPointer (FRAME_X_DISPLAY (f), FRAME_DISPLAY_INFO (f)->root_window,
 		     &root, &child, root_x, root_y, &win_x, &win_y, &pmask);
       unblock_input ();
+
+      XSETFRAME(frame, f);
+      attributes = Fx_display_monitor_attributes_list (frame);
+
+      /* Try to determine the monitor where the mouse pointer is and
+         its geometry.  See bug#22549.  */
+      while (CONSP (attributes))
+	{
+          monitor = XCAR (attributes);
+          geometry = Fassq (Qgeometry, monitor);
+          if (CONSP (geometry))
+            {
+              min_x = XINT (Fnth (make_number (1), geometry));
+              min_y = XINT (Fnth (make_number (2), geometry));
+              max_x = min_x + XINT (Fnth (make_number (3), geometry));
+              max_y = min_y + XINT (Fnth (make_number (4), geometry));
+              if (min_x <= *root_x && *root_x < max_x
+                  && min_y <= *root_y && *root_y < max_y)
+                {
+                  break;
+                }
+              max_y = -1;
+            }
+
+          attributes = XCDR (attributes);
+	}
+    }
+
+  /* It was not possible to determine the monitor's geometry, so we
+     assign some sane defaults here: */
+  if ( max_y < 0 )
+    {
+      min_x = 0;
+      min_y = 0;
+      max_x = x_display_pixel_width (FRAME_DISPLAY_INFO (f));
+      max_y = x_display_pixel_height (FRAME_DISPLAY_INFO (f));
     }
 
   if (INTEGERP (top))
     *root_y = XINT (top);
   else if (INTEGERP (bottom))
     *root_y = XINT (bottom) - height;
-  else if (*root_y + XINT (dy) <= 0)
-    *root_y = 0; /* Can happen for negative dy */
-  else if (*root_y + XINT (dy) + height
-	   <= x_display_pixel_height (FRAME_DISPLAY_INFO (f)))
+  else if (*root_y + XINT (dy) <= min_y)
+    *root_y = min_y; /* Can happen for negative dy */
+  else if (*root_y + XINT (dy) + height <= max_y)
     /* It fits below the pointer */
     *root_y += XINT (dy);
-  else if (height + XINT (dy) <= *root_y)
+  else if (height + XINT (dy) + min_y <= *root_y)
     /* It fits above the pointer.  */
     *root_y -= height + XINT (dy);
   else
     /* Put it on the top.  */
-    *root_y = 0;
+    *root_y = min_y;
 
   if (INTEGERP (left))
     *root_x = XINT (left);
   else if (INTEGERP (right))
     *root_x = XINT (right) - width;
-  else if (*root_x + XINT (dx) <= 0)
+  else if (*root_x + XINT (dx) <= min_x)
     *root_x = 0; /* Can happen for negative dx */
-  else if (*root_x + XINT (dx) + width
-	   <= x_display_pixel_width (FRAME_DISPLAY_INFO (f)))
+  else if (*root_x + XINT (dx) + width <= max_x)
     /* It fits to the right of the pointer.  */
     *root_x += XINT (dx);
-  else if (width + XINT (dx) <= *root_x)
+  else if (width + XINT (dx) + min_x <= *root_x)
     /* It fits to the left of the pointer.  */
     *root_x -= width + XINT (dx);
   else
-    /* Put it left-justified on the screen--it ought to fit that way.  */
-    *root_x = 0;
+    /* Put it left justified on the screen -- it ought to fit that way.  */
+    *root_x = min_x;
 }
 
 

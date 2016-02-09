@@ -224,7 +224,7 @@ Default value, nil, means edit the string instead."
 
 (autoload 'character-fold-to-regexp "character-fold")
 
-(defcustom search-default-regexp-mode #'character-fold-to-regexp
+(defcustom search-default-mode #'character-fold-to-regexp
   "Default mode to use when starting isearch.
 Value is nil, t, or a function.
 
@@ -234,9 +234,9 @@ If t, default to regexp searches (as if typing `\\[isearch-toggle-regexp]' durin
 isearch).
 
 If a function, use that function as an `isearch-regexp-function'.
-Example functions are `word-search-regexp' \(`\\[isearch-toggle-word]'),
-`isearch-symbol-regexp' \(`\\[isearch-toggle-symbol]'), and
-`character-fold-to-regexp' \(`\\[isearch-toggle-character-fold]')."
+Example functions (and the keys to toggle them during isearch)
+are `word-search-regexp' \(`\\[isearch-toggle-word]'), `isearch-symbol-regexp'
+\(`\\[isearch-toggle-symbol]'), and `character-fold-to-regexp' \(`\\[isearch-toggle-character-fold]')."
   ;; :type is set below by `isearch-define-mode-toggle'.
   :type '(choice (const :tag "Literal search" nil)
                  (const :tag "Regexp search" t)
@@ -558,7 +558,11 @@ If the value is a function (e.g. `isearch-symbol-regexp'), it is
 called to convert a plain search string to a regexp used by
 regexp search functions.
 The symbol property `isearch-message-prefix' put on this function
-specifies the prefix string displayed in the search message.")
+specifies the prefix string displayed in the search message.
+
+This variable is set and changed during isearch.  To change the
+default behaviour used for searches, see `search-default-mode'
+instead.")
 ;; We still support setting this to t for backwards compatibility.
 (define-obsolete-variable-alias 'isearch-word
   'isearch-regexp-function "25.1")
@@ -868,11 +872,11 @@ used to set the value of `isearch-regexp-function'."
   (setq isearch-forward forward
 	isearch-regexp (or regexp
                            (and (not regexp-function)
-                                (eq search-default-regexp-mode t)))
+                                (eq search-default-mode t)))
 	isearch-regexp-function (or regexp-function
-                                    (and (functionp search-default-regexp-mode)
+                                    (and (functionp search-default-mode)
                                          (not regexp)
-                                         search-default-regexp-mode))
+                                         search-default-mode))
 	isearch-op-fun op-fun
 	isearch-last-case-fold-search isearch-case-fold-search
 	isearch-case-fold-search case-fold-search
@@ -1506,7 +1510,7 @@ Use `isearch-exit' to quit without signaling."
   (isearch-repeat 'backward))
 
 
-;;; Toggles for `isearch-regexp-function' and `search-default-regexp-mode'.
+;;; Toggles for `isearch-regexp-function' and `search-default-mode'.
 (defmacro isearch-define-mode-toggle (mode key function &optional docstring &rest body)
   "Define a command called `isearch-toggle-MODE' and bind it to `M-s KEY'.
 The first line of the command's docstring is auto-generated, the
@@ -1524,21 +1528,19 @@ The command then executes BODY and updates the isearch prompt."
                   (if docstring (concat "\n" docstring) ""))
          (interactive)
          ,@(when function
-             `((setq isearch-regexp-function
-                     (unless (eq isearch-regexp-function #',function)
-                       #',function))
-               (when isearch-regexp-function (setq isearch-regexp nil))))
+             `((setq isearch-regexp-function #',function)
+               (setq isearch-regexp nil)))
          ,@body
          (setq isearch-success t isearch-adjusted t)
          (isearch-update))
        (define-key isearch-mode-map ,key #',command-name)
-       ,@(when (symbolp function)
+       ,@(when (and function (symbolp function))
            `((put ',function 'isearch-message-prefix ,(format "%s " mode))
              (put ',function :advertised-binding ,key)
              (cl-callf (lambda (types) (cons 'choice
                                         (cons '(const :tag ,(capitalize (format "%s search" mode)) ,function)
                                               (cdr types))))
-                 (get 'search-default-regexp-mode 'custom-type)))))))
+                 (get 'search-default-mode 'custom-type)))))))
 
 (isearch-define-mode-toggle word "w" word-search-regexp "\
 Turning on word search turns off regexp mode.")
@@ -2571,7 +2573,7 @@ the word mode."
     (setq regexp-function #'word-search-regexp))
   (let ((description
          ;; Don't use a description on the default search mode.
-         (cond ((equal regexp-function search-default-regexp-mode) "")
+         (cond ((equal regexp-function search-default-mode) "")
                (regexp-function
                 (and (symbolp regexp-function)
                      (or (get regexp-function 'isearch-message-prefix)
@@ -2579,7 +2581,7 @@ the word mode."
                (isearch-regexp "regexp ")
                ;; We're in literal mode. If the default mode is not
                ;; literal, then describe it.
-               ((functionp search-default-regexp-mode) "literal "))))
+               ((functionp search-default-mode) "literal "))))
     (if space-before
         ;; Move space from the end to the beginning.
         (replace-regexp-in-string "\\(.*\\) \\'" " \\1" description)
