@@ -111,7 +111,7 @@
 # endif
 #endif
 #if ((defined _Alignas && ! (defined __cplusplus && 201103 <= __cplusplus)) \
-     || (defined __STDC_VERSION && 201112 <= __STDC_VERSION__))
+     || (defined __STDC_VERSION__ && 201112 <= __STDC_VERSION__))
 # define alignas _Alignas
 #endif
 #if defined alignas || (defined __cplusplus && 201103 <= __cplusplus)
