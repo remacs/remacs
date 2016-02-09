@@ -6349,35 +6349,77 @@ they are."
 (defvar visual-line-mode)
 (declare-function beginning-of-visual-line "simple" (&optional n))
 
+(defun message-beginning-of-header (handle-folded)
+  "Move point to beginning of header’s value.
+
+When point is at the first header line, moves it after the colon
+and spaces separating header name and header value.
+
+When point is in a continuation line of a folded header (i.e. the
+line starts with a space), the behaviour depends on HANDLE-FOLDED
+argument.  If it’s nil, function moves the point to the start of
+the header continuation; otherwise, function locates the
+beginning of the header and moves point past the colon as is the
+case of single-line headers.
+
+No check whether point is inside of a header or body of the
+message is performed.
+
+Returns point or nil if beginning of header’s value could not be
+found.  In the latter case, the point is still moved to the
+beginning of line (possibly after attempting to move it to the
+beginning of a folded header)."
+  ;; https://www.rfc-editor.org/rfc/rfc2822.txt, section 2.2.3. says that when
+  ;; unfolding a single WSP should be consumed.  WSP is defined as a space
+  ;; character or a horizontal tab.
+  (beginning-of-line)
+  (when handle-folded
+    (while (and (> (point) (point-min))
+                (or (eq (char-after) ?\s) (eq (char-after) ?\t)))
+      (beginning-of-line 0)))
+  (when (or (eq (char-after) ?\s) (eq (char-after) ?\t)
+            (search-forward ":" (point-at-eol) t))
+    ;; We are a bit more lacks than the RFC and allow any positive number of WSP
+    ;; characters.
+    (skip-chars-forward " \t" (point-at-eol))
+    (point)))
+
 (defun message-beginning-of-line (&optional n)
   "Move point to beginning of header value or to beginning of line.
 The prefix argument N is passed directly to `beginning-of-line'.
 
 This command is identical to `beginning-of-line' if point is
-outside the message header or if the option `message-beginning-of-line'
-is nil.
+outside the message header or if the option
+`message-beginning-of-line' is nil.
 
-If point is in the message header and on a (non-continued) header
-line, move point to the beginning of the header value or the beginning of line,
-whichever is closer.  If point is already at beginning of line, move point to
-beginning of header value.  Therefore, repeated calls will toggle point
-between beginning of field and beginning of line."
+If point is in the message header and on a header line, move
+point to the beginning of the header value or the beginning of
+line, whichever is closer.  If point is already at beginning of
+line, move point to beginning of header value.  Therefore,
+repeated calls will toggle point between beginning of field and
+beginning of line.
+
+When called without a prefix argument, header value spanning
+multiple lines is treated as a single line.  Otherwise, even if
+N is 1, when point is on a continuation header line, it will be
+moved to the beginning "
   (interactive "p")
   (let ((zrs 'zmacs-region-stays))
     (when (and (featurep 'xemacs) (interactive-p) (boundp zrs))
       (set zrs t)))
-  (if (and message-beginning-of-line
-	   (message-point-in-header-p))
-      (let* ((here (point))
-	     (bol (progn (beginning-of-line n) (point)))
-	     (eol (point-at-eol))
-	     (eoh (re-search-forward ": *" eol t)))
-	(goto-char
-	 (if (and eoh (or (< eoh here) (= bol here)))
-	     eoh bol)))
-    (if (and (boundp 'visual-line-mode) visual-line-mode)
-	(beginning-of-visual-line n)
-      (beginning-of-line n))))
+  (cond
+   ;; Go to beginning of header or beginning of line.
+   ((and message-beginning-of-line (message-point-in-header-p))
+    (let* ((point (point))
+           (bol (progn (beginning-of-line n) (point)))
+           (boh (message-beginning-of-header (and (boundp 'visual-line-mode)
+                                                  visual-line-mode))))
+      (goto-char (if (and boh (or (< boh point) (= bol point))) boh bol))))
+   ;; Go to beginning of visual line
+   ((and (boundp 'visual-line-mode) visual-line-mode)
+    (beginning-of-visual-line n))
+   ;; Go to beginning of line.
+   ((beginning-of-line n))))
 
 (defun message-buffer-name (type &optional to group)
   "Return a new (unique) buffer name based on TYPE and TO."

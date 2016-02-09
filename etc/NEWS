@@ -772,6 +772,11 @@ there are now top-level domains added all the time.  Message will no
 longer warn about sending emails to top-level domains it hasn't heard
 about.
 
+*** `message-beginning-of-line' (bound to C-a) understands folded headers.
+In `visual-line-mode' it will look for the true beginning of a header
+while in non-`visual-line-mode' it will move the point to the indented
+header’s value.
+
 +++
 ** Images are automatically scaled before displaying based on the
 `image-scaling-factor' variable (if Emacs supports scaling the images
