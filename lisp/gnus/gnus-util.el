@@ -2021,6 +2021,54 @@ lists of strings."
 	(gnus-setdiff (cdr list1) list2)
       (cons (car list1) (gnus-setdiff (cdr list1) list2)))))
 
+;;; Image functions.
+
+(defun gnus-image-type-available-p (type)
+  (and (fboundp 'image-type-available-p)
+       (if (fboundp 'display-images-p)
+	   (display-images-p)
+	 t)
+       (image-type-available-p type)))
+
+(defun gnus-create-image (file &optional type data-p &rest props)
+  (let ((face (plist-get props :face)))
+    (when face
+      (setq props (plist-put props :foreground (face-foreground face)))
+      (setq props (plist-put props :background (face-background face))))
+    (ignore-errors
+      (apply 'create-image file type data-p props))))
+
+(defun gnus-put-image (glyph &optional string category)
+  (let ((point (point)))
+    (insert-image glyph (or string " "))
+    (put-text-property point (point) 'gnus-image-category category)
+    (unless string
+      (put-text-property (1- (point)) (point)
+			 'gnus-image-text-deletable t))
+    glyph))
+
+(defun gnus-remove-image (image &optional category)
+  "Remove the image matching IMAGE and CATEGORY found first."
+  (let ((start (point-min))
+	val end)
+    (while (and (not end)
+		(or (setq val (get-text-property start 'display))
+		    (and (setq start
+			       (next-single-property-change start 'display))
+			 (setq val (get-text-property start 'display)))))
+      (setq end (or (next-single-property-change start 'display)
+		    (point-max)))
+      (if (and (equal val image)
+	       (equal (get-text-property start 'gnus-image-category)
+		      category))
+	  (progn
+	    (put-text-property start end 'display nil)
+	    (when (get-text-property start 'gnus-image-text-deletable)
+	      (delete-region start end)))
+	(unless (= end (point-max))
+	  (setq start end
+		end nil))))))
+
 (provide 'gnus-util)
 
 ;;; gnus-util.el ends here
