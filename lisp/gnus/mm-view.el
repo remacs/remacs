@@ -31,7 +31,6 @@
 (require 'mml-smime)
 
 (autoload 'gnus-completing-read "gnus-util")
-(autoload 'gnus-window-inside-pixel-edges "gnus-ems")
 (autoload 'gnus-article-prepare-display "gnus-art")
 (autoload 'vcard-parse-string "vcard")
 (autoload 'vcard-format-string "vcard")
@@ -88,7 +87,7 @@
        (if (eq mm-inline-large-images 'resize)
            (gnus-rescale-image
 	    image
-	    (let ((edges (gnus-window-inside-pixel-edges
+	    (let ((edges (window-inside-pixel-edges
 			  (get-buffer-window (current-buffer)))))
 	      (cons (truncate (* mm-inline-large-images-proportion
 				 (- (nth 2 edges) (nth 0 edges))))

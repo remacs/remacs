@@ -209,58 +209,6 @@
 	  (setq start end
 		end nil))))))
 
-(defmacro gnus-string-mark-left-to-right (string)
-  (if (fboundp 'bidi-string-mark-left-to-right)
-      `(bidi-string-mark-left-to-right ,string)
-    string))
-
-(eval-and-compile
-  ;; XEmacs does not have window-inside-pixel-edges
-  (defalias 'gnus-window-inside-pixel-edges
-    (if (fboundp 'window-inside-pixel-edges)
-        'window-inside-pixel-edges
-      'window-pixel-edges))
-
-  (if (or (featurep 'emacs) (fboundp 'set-process-plist))
-      (progn				; these exist since Emacs 22.1
-	(defalias 'gnus-set-process-plist 'set-process-plist)
-	(defalias 'gnus-process-plist 'process-plist)
-	(defalias 'gnus-process-get 'process-get)
-	(defalias 'gnus-process-put 'process-put))
-    (defun gnus-set-process-plist (process plist)
-      "Replace the plist of PROCESS with PLIST.  Returns PLIST."
-      (put 'gnus-process-plist-internal process plist))
-
-    (defun gnus-process-plist (process)
-      "Return the plist of PROCESS."
-      ;; This form works but can't prevent the plist data from
-      ;; growing infinitely.
-      ;;(get 'gnus-process-plist-internal process)
-      (let* ((plist (symbol-plist 'gnus-process-plist-internal))
-	     (tem (memq process plist)))
-	(prog1
-	    (cadr tem)
-	  ;; Remove it from the plist data.
-	  (when tem
-	    (if (eq plist tem)
-		(progn
-		  (setcar plist (caddr plist))
-		  (setcdr plist (or (cdddr plist) '(nil))))
-	      (setcdr (nthcdr (- (length plist) (length tem) 1) plist)
-		      (cddr tem)))))))
-
-    (defun gnus-process-get (process propname)
-      "Return the value of PROCESS' PROPNAME property.
-This is the last value stored with `(gnus-process-put PROCESS PROPNAME VALUE)'."
-      (plist-get (gnus-process-plist process) propname))
-
-    (defun gnus-process-put (process propname value)
-      "Change PROCESS' PROPNAME property to VALUE.
-It can be retrieved with `(gnus-process-get PROCESS PROPNAME)'."
-      (gnus-set-process-plist process
-			      (plist-put (gnus-process-plist process)
-					 propname value)))))
-
 (provide 'gnus-ems)
 
 ;;; gnus-ems.el ends here

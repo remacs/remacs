@@ -427,7 +427,7 @@ Return a string with image data."
 
 (defun gnus-html-maximum-image-size ()
   "Return the maximum size of an image according to `gnus-max-image-proportion'."
-  (let ((edges (gnus-window-inside-pixel-edges
+  (let ((edges (window-inside-pixel-edges
                 (get-buffer-window (current-buffer)))))
     ;; (width . height)
     (cons
