@@ -72,7 +72,7 @@ extern void *(*__morecore) (ptrdiff_t);
 #undef free
 #define malloc gmalloc
 #define realloc grealloc
-#define calloc do_not_call_me /* Emacs never calls calloc.  */
+#define calloc gcalloc
 #define aligned_alloc galigned_alloc
 #define free gfree
 #define malloc_info gmalloc_info
@@ -101,6 +101,8 @@ extern void *malloc (size_t size) ATTRIBUTE_MALLOC_SIZE ((1));
 /* Re-allocate the previously allocated block
    in ptr, making the new block SIZE bytes long.  */
 extern void *realloc (void *ptr, size_t size) ATTRIBUTE_ALLOC_SIZE ((2));
+/* Allocate NMEMB elements of SIZE bytes each, all initialized to 0.  */
+extern void *calloc (size_t nmemb, size_t size) ATTRIBUTE_MALLOC_SIZE ((1,2));
 /* Free a block.  */
 extern void free (void *ptr);
 
@@ -1465,7 +1467,6 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
 /* Allocate an array of NMEMB elements each SIZE bytes long.
    The entire array is initialized to zeros.  */
-#ifndef calloc
 void *
 calloc (size_t nmemb, size_t size)
 {
@@ -1483,7 +1484,6 @@ calloc (size_t nmemb, size_t size)
     return memset (result, 0, bytes);
   return result;
 }
-#endif
 /* Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
 This file is part of the GNU C Library.
 
@@ -1714,6 +1714,7 @@ valloc (size_t size)
 /* Declare system malloc and friends.  */
 extern void *malloc (size_t size);
 extern void *realloc (void *ptr, size_t size);
+extern void *calloc (size_t nmemb, size_t size);
 extern void free (void *ptr);
 #ifdef HAVE_ALIGNED_ALLOC
 extern void *aligned_alloc (size_t alignment, size_t size);
@@ -1730,6 +1731,14 @@ hybrid_malloc (size_t size)
   if (DUMPED)
     return malloc (size);
   return gmalloc (size);
+}
+
+void *
+hybrid_calloc (size_t nmemb, size_t size)
+{
+  if (DUMPED)
+    return calloc (nmemb, size);
+  return gcalloc (nmemb, size);
 }
 
 void

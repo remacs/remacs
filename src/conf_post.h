@@ -100,6 +100,7 @@ typedef bool bool_bf;
 #define malloc hybrid_malloc
 #define realloc hybrid_realloc
 #define aligned_alloc hybrid_aligned_alloc
+#define calloc hybrid_calloc
 #define free hybrid_free
 #endif
 #endif	/* HYBRID_MALLOC */
