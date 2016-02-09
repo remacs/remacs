@@ -8085,7 +8085,7 @@ compute_image_size (size_t width, size_t height,
   desired_height = NATNUMP (value) ? min (XFASTINT (value), INT_MAX) : -1;
 
   value = image_spec_value (spec, QCscale, NULL);
-  if (NATNUMP (value))
+  if (NUMBERP (value))
     scale = extract_float (value);
   width = width * scale;
   height = height * scale;
