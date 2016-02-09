@@ -114,7 +114,7 @@
       (insert gnus-tmp-unread gnus-tmp-replied
 	      gnus-tmp-score-char gnus-tmp-indentation)
       (put-text-property
-g       (point)
+       (point)
        (progn
 	 (insert
 	  gnus-tmp-opening-bracket
