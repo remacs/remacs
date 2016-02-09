@@ -74,6 +74,9 @@
                          'timer timer)
       (insert "\n")))
   (goto-char (point-min)))
+;; This command can be destructive if they don't know what they are
+;; doing.  Kids, don't try this at home!
+;;;###autoload (put 'timer-list 'disabled "Beware: manually canceling timers can ruin your Emacs session.")
 
 (defvar timer-list-mode-map
   (let ((map (make-sparse-keymap)))
