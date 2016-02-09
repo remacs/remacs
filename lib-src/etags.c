@@ -4733,9 +4733,10 @@ Ruby_functions (FILE *inf)
 		  do {
 		    char *np = cp;
 
-		    if (*np == ':')
-		      np++;
 		    cp = skip_name (cp);
+		    if (*np != ':')
+		      continue;
+		    np++;
 		    if (reader)
 		      {
 			make_tag (np, cp - np, true,

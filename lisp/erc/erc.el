@@ -3997,7 +3997,7 @@ Prompt for one if called interactively."
                        (format "MODE %s -k" tgt)))))
 
 (defun erc-completion-at-point ()
-  "Perform complection on the text around point case-insentitively.
+  "Perform completion on the text around point case-insensitively.
 See `completion-at-point'."
   (interactive)
   (let ((completion-ignore-case t))
