@@ -1375,8 +1375,8 @@ lisp_align_free (void *block)
 static bool
 laligned (void *p, size_t size)
 {
-  return (MALLOC_IS_GC_ALIGNED || size % GCALIGNMENT != 0
-	  || (intptr_t) p % GCALIGNMENT == 0);
+  return (MALLOC_IS_GC_ALIGNED || (intptr_t) p % GCALIGNMENT == 0
+	  || size % GCALIGNMENT != 0);
 }
 
 /* Like malloc and realloc except that if SIZE is Lisp-aligned, make
@@ -1385,7 +1385,15 @@ laligned (void *p, size_t size)
    Lisp-aligned pointer.  Code that needs to allocate C heap memory
    for a Lisp object should use one of these functions to obtain a
    pointer P; that way, if T is an enum Lisp_Type value and L ==
-   make_lisp_ptr (P, T), then XPNTR (L) == P and XTYPE (L) == T.  */
+   make_lisp_ptr (P, T), then XPNTR (L) == P and XTYPE (L) == T.
+
+   On typical modern platforms these functions' loops do not iterate.
+   On now-rare (and perhaps nonexistent) platforms, the loops in
+   theory could repeat forever.  If an infinite loop is possible on a
+   platform, a build would surely loop and the builder can then send
+   us a bug report.  Adding a counter to try to detect any such loop
+   would complicate the code (and possibly introduce bugs, in code
+   that's never really exercised) for little benefit.  */
 
 static void *
 lmalloc (size_t size)
