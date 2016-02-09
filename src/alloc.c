@@ -1380,7 +1380,12 @@ laligned (void *p, size_t size)
 }
 
 /* Like malloc and realloc except that if SIZE is Lisp-aligned, make
-   sure the result is too.  */
+   sure the result is too, if necessary by reallocating (typically
+   with larger and larger sizes) until the allocator returns a
+   Lisp-aligned pointer.  Code that needs to allocate C heap memory
+   for a Lisp object should use one of these functions to obtain a
+   pointer P; that way, if T is an enum Lisp_Type value and L ==
+   make_lisp_ptr (P, T), then XPNTR (L) == P and XTYPE (L) == T.  */
 
 static void *
 lmalloc (size_t size)
@@ -1397,6 +1402,9 @@ lmalloc (size_t size)
       if (laligned (p, size))
 	break;
       free (p);
+      size_t bigger;
+      if (! INT_ADD_WRAPV (size, GCALIGNMENT, &bigger))
+	size = bigger;
     }
 
   eassert ((intptr_t) p % GCALIGNMENT == 0);
@@ -1406,9 +1414,15 @@ lmalloc (size_t size)
 static void *
 lrealloc (void *p, size_t size)
 {
-  do
-    p = realloc (p, size);
-  while (! laligned (p, size));
+  while (true)
+    {
+      p = realloc (p, size);
+      if (laligned (p, size))
+	break;
+      size_t bigger;
+      if (! INT_ADD_WRAPV (size, GCALIGNMENT, &bigger))
+	size = bigger;
+    }
 
   eassert ((intptr_t) p % GCALIGNMENT == 0);
   return p;
