@@ -416,12 +416,11 @@ called with a @acronym{MIME} handle as the argument.
 @vindex mm-html-inhibit-images
 @vindex mm-inline-text-html-with-images
 If this is non-@code{nil}, inhibit displaying of images inline in the
-article body.  It is effective to images that are in articles as
-@acronym{MIME} parts, and images in @acronym{HTML} articles rendered
-when @code{mm-text-html-renderer} (@pxref{Display Customization}) is
-@code{shr} or @code{w3m}.  In Gnus, this is overridden by the value
-of @code{gnus-inhibit-images} (@pxref{Misc Article, ,Misc Article, gnus,
-Gnus manual}).
+article body.  It is effective to images in @acronym{HTML} articles
+rendered when @code{mm-text-html-renderer} (@pxref{Display
+Customization}) is @code{shr} or @code{w3m}.  In Gnus, this is
+overridden by the value of @code{gnus-inhibit-images} (@pxref{Misc
+Article, ,Misc Article, gnus, Gnus manual}).
 
 @item mm-html-blocked-images
 @vindex mm-html-blocked-images
