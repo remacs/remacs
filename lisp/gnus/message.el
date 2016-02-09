@@ -3524,12 +3524,12 @@ Message buffers and is not meant to be called directly."
 (defun message-point-in-header-p ()
   "Return t if point is in the header."
   (save-excursion
-    (and
-     (not
-      (re-search-backward
-       (concat "^" (regexp-quote mail-header-separator) "\n") nil t))
-     (re-search-forward
-      (concat "^" (regexp-quote mail-header-separator) "\n") nil t))))
+    (save-restriction
+      (widen)
+      (let ((bound (+ (point-at-eol) 1)) case-fold-search)
+        (goto-char (point-min))
+        (not (search-forward (concat "\n" mail-header-separator "\n")
+                             bound t))))))
 
 (defun message-do-auto-fill ()
   "Like `do-auto-fill', but don't fill in message header."
