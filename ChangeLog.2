@@ -1,3 +1,240 @@
+2016-02-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix network-stream-tests on MS-Windows
+
+	* test/lisp/net/network-stream-tests.el (make-local-unix-server):
+	Skip if local sockets are not supported.
+
+2016-02-09  Michael Albinus  <michael.albinus@gmx.de>
+
+	* admin/notes/bug-triage: Fix bug priorities.  Explain colors in debbugs-gnu.
+
+2016-02-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Disable 'timer-list'
+
+	* lisp/emacs-lisp/timer-list.el: Make 'timer-list' a disabled
+	command.
+
+2016-02-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Avoid aligned_alloc static/extern collision
+
+	* src/alloc.c (aligned_alloc): Define to private name when a
+	static function, to avoid collision with lisp.h extern decl.
+	Reported by John Yates in:
+	http://lists.gnu.org/archive/html/emacs-devel/2016-02/msg00439.html
+
+2016-02-08  Michal Nazarewicz  <mina86@mina86.com>
+
+	Make `message-beginning-of-line' aware of folded headers
+
+	* lisp/gnus/message.pl (message-beginning-of-header): New function which
+	moves point to the beginning of a mail header.  The function is aware of
+	folded headers and with non-nil argument looks for the true beginning of
+	a header while with nil argument moves to the indented text of header's
+	value.
+	(message-beginning-of-line): Function is now aware of folded headers and
+	either moves point to the indention of a header or, in visual-line-mode,
+	searches for the beginning of the header.
+
+2016-02-08  Michal Nazarewicz  <mina86@mina86.com>
+
+	Optimise ‘point in message header’ check
+
+	* lisp/gnus/message.el (message-point-in-header-p): Replace two unbound
+	regular expression matches with a single bound string match thus
+	reducing amount of work the function is doing.
+
+2016-02-08  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Make the `R' command get the correct relative <img>s
+
+	* lisp/net/eww.el (eww-readable): Preserve the base URL so
+	that image expansions are fetched from the right place (bug#22605).
+
+2016-02-08  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Add a mode to list and cancel timers
+
+	* doc/lispref/os.texi (Timers): Menton `timer-list'.
+
+	* lisp/emacs-lisp/timer-list.el: New file.
+
+2016-02-08  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Add new commands to allow changing the size of images
+
+	* lisp/image.el (image-increase-size, image-decrease-size):
+	New commands.
+	(image-change-size): New function.
+
+2016-02-08  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Allow the image scale to be a floating point number
+
+	* src/image.c (compute_image_size): The scale can be a
+	floating point number.
+
+2016-02-08  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Add an IPv6 test
+
+	* test/lisp/net/network-stream-tests.el
+	(connect-to-tls-ipv6-nowait): Add an ipv6 test, too.
+
+2016-02-08  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Use gnutls-serv instead of openssh
+
+	* test/lisp/net/network-stream-tests.el (make-tls-server): Use
+	gnutls-serv instead of openssh.
+
+2016-02-08  Daniel Colascione  <dancol@dancol.org>
+
+	Performance improvements for vc-hg
+
+	Teach vc-hg how to read some Mercurial internal data structures,
+	allowing us to avoid the need to run hg status -A, which is very slow
+	for large repositories.  Fall back to running hg if anything looks
+	funny.  vc-hg now puts the _working directory_ revision in the
+	modeline instead of the file revision, which greatly improves
+	performance and which allows us to again skip running hg in the case
+	that we have an active bookmark.
+
+	* lisp/vc/vc-hg.el (vc-hg-state): Try calling `vc-hg-statefast'
+	(vc-hg-symbolic-revision-styles)
+	(vc-hg-use-file-version-for-mode-line-version)
+	(vc-hg-parse-hg-data-structures): New user preferences
+	(vc-hg--active-bookmark-internal, vc-hg--run-log)
+	(vc-hg--symbolic-revision, vc-hg-mode-line-string)
+	(vc-hg--read-u8, vc-hg--read-u32-be)
+	(vc-hg--raw-dirstate-search, vc-hg--cached-dirstate-search)
+	(vc-hg--parts-to-string, vc-hg--pcre-to-elisp-re)
+	(vc-hg--glob-to-pcre, vc-hg--hgignore-add-pcre)
+	(vc-hg--hgignore-add-glob, vc-hg--hgignore-add-path)
+	(vc-hg--slurp-hgignore-1, vc-hg--slurp-hgignore)
+	(vc-hg--ignore-patterns-valid-p)
+	(vc-hg--ignore-patterns-ignored-p, vc-hg--time-to-fixnum)
+	(vc-hg--file-ignored-p, vc-hg--read-repo-requirements)
+	(vc-hg--requirements-understood-p, vc-hg--dirstate-scan-cache)
+	(vc-hg-state-fast): New functions.
+	(vc-hg--hgignore-patterns, vc-hg--hgignore-filenames)
+	(vc-hg--cached-ignore-patterns, vc-hg--dirstate-scan-cache)
+	(vc-hg--dirstate-scan-cache): New internal variables.
+	* lisp/vc/vc-hooks.el (vc-refresh-state): Invoke vc find-file-hook
+	before updating modeline.
+
+2016-02-07  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Skip TLS tests if we don't have openssl
+
+	* test/lisp/net/network-stream-tests.el (connect-to-tls): Skip
+	TLS tests if we don't have openssl and GnuTLS.
+
+2016-02-07  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Automatically scale images up on high-density screens
+
+	* doc/lispref/display.texi (ImageMagick Images): Mention :scale.
+	(Defining Images): Mention image-scaling-factor.
+
+	* lisp/image.el (image-compute-scaling-factor): New function
+	(bug#22172).
+	(create-image): Use it.
+	(image-scaling-factor): New variable.
+
+	* src/image.c (compute_image_size): Take :scale into account.
+
+2016-02-07  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Ensure progress when fetching from the queue
+
+	* lisp/url/url-queue.el (url-queue-check-progress): Ensure
+	that we have progress when fetching queued requests (bug#22576).
+
+2016-02-07  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Make mail-extract-address-components return the user name more
+
+	* lisp/mail/mail-extr.el (mail-extract-address-components):
+	Return the name even if it's the same as the mailbox name (if
+	`mail-extr-ignore-single-names' isn't set) (bug#22594).
+
+2016-02-07  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Message no longer warns about unknown top level domains
+
+2016-02-07  Jarno Malmari  <jarno@malmari.fi>
+
+	Add tests for url-auth
+
+	* test/lisp/url/url-auth-tests.el: New file.
+
+2016-02-07  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Add a TLS connection test
+
+	* test/lisp/net/network-stream-tests.el (connect-to-tls): Add
+	a TLS connection test.
+
+2016-02-07  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Add more network tests
+
+	* test/lisp/net/network-stream-tests.el (echo-server-nowait):
+	New test.
+
+2016-02-07  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Add network tests
+
+	* test/lisp/net/network-stream-tests.el: New suite of network tests.
+
+2016-02-07  Foo  <rasmus@gmx.us>
+
+	Allow various Gnus and Message address variables to be functions
+
+	* doc/misc/gnus.texi (To From Newsgroups):
+	gnus-ignored-from-addresses can be a function.
+
+	* doc/misc/message.texi (Wide Reply):
+	message-dont-reply-to-names can be a function.
+
+	* lisp/gnus/gnus-icalendar.el (gnus-icalendar-identities):
+	message-alternative-emails can be a function.
+
+	* lisp/gnus/gnus-notifications.el (gnus-notifications):
+	message-alternative-emails can be a function (bug#22315).
+
+	* lisp/gnus/gnus-sum.el
+	(gnus-summary-from-or-to-or-newsgroups):
+	gnus-ignored-from-addresses can be a function (bug#22315).
+
+2016-02-07  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Fix typo in Gnus regexp
+
+	* lisp/gnus/gnus-art.el (gnus-button-valid-fqdn-regexp): Fix
+	typo in last change to this regexp (bug#22592).
+
+2016-02-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port to FreeBSD x86
+
+	Reported by Herbert J. Skuhra in:
+	http://lists.gnu.org/archive/html/emacs-devel/2016-02/msg00336.html
+	* src/lisp.h (NONPOINTER_BITS) [__FreeBSD__]: Zero in this case too,
+	since malloc always returns a multiple of 8 in FreeBSD.
+
+2016-02-07  Alan Mackenzie  <acm@muc.de>
+
+	On leaving CC Mode, clean up by removing character properties.
+
+	* lisp/progmodes/cc-mode.el (c-leave-cc-mode-mode): Remove from the buffer
+	all instances of the text properties/extents category, syntax-table,
+	c-is-sws, c-in-sws, c-type, and c-awk-NL-prop.
+
 2016-02-06  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* lisp/gnus/gnus-art.el (gnus-button-valid-fqdn-regexp): Don't use
@@ -29609,7 +29846,7 @@
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
 2016-02-04b6d89ff9288a49099f041752908b5eb9613e (inclusive).
-commit 3a2b6aa33109dc40b2c1bcc621a624d38fe814fc (inclusive).
+commit 53f3d4a94ac784da3fed3abc72766ecf698ab53c (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
