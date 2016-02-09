@@ -1352,7 +1352,8 @@ The main entry points are `cl-defgeneric' and `cl-defmethod'.  See the
 node "Generic Functions" in the Emacs Lisp manual for more details.
 
 ---
-** scss-mode (a minor variant of css-mode)
+** scss-mode (a minor variant of css-mode) is a major mode for editing
+SCSS (Sassy CSS) files.
 
 ---
 ** let-alist is a new macro (and a package) that allows one to easily
@@ -1663,8 +1664,14 @@ counterparts `string-lessp' and `string-equal'.
 
 ---
 *** The ls-lisp package uses `string-collate-lessp' to sort file names.
-If you want the old, locale-independent sorting, customize the new
-option `ls-lisp-use-string-collate' to a nil value.
+The effect is that, on systems that use ls-lisp for Dired, the default
+sort order of the files in Dired is now different from what it was in
+previous versions of Emacs.  In particular, the file names are sorted
+disregarding punctuation, accents, and diacritics, and letter case is
+ignored.  For example, files whose name begin with a period will no
+longer appear near the beginning of the directory listing.  If you
+want the old, locale-independent sorting, customize the new option
+`ls-lisp-use-string-collate' to the nil value.
 
 +++
 *** The MS-Windows specific variable `w32-collate-ignore-punctuation',
