@@ -27,6 +27,7 @@
 (require 'gnutls)
 
 (ert-deftest make-local-unix-server ()
+  (skip-unless (featurep 'make-network-process '(:family local)))
   (let* ((file (make-temp-name "/tmp/server-test"))
          (server
           (make-network-process
