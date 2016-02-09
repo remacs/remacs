@@ -913,6 +913,35 @@ has no effect."
 
 (imagemagick-register-types)
 
+(defun image-increase-size (n)
+  "Increase the image size by a factor of N.
+If N is 3, then the image size will be increased by 30%.  The
+default is 20%."
+  (interactive "P")
+  (image-change-size (if n
+                         (1+ (/ n 10))
+                       1.2)))
+
+(defun image-decrease-size (n)
+  "Decrease the image size by a factor of N.
+If N is 3, then the image size will be decreased by 30%.  The
+default is 20%."
+  (interactive "P")
+  (image-change-size (if n
+                         (- 1 (/ n 10))
+                       0.8)))
+
+(defun image-change-size (factor)
+  (unless (fboundp 'imagemagick-types)
+    (error "Can't rescale images without ImageMagick support"))
+  (let ((image (get-text-property (point) 'display)))
+    (when (or (not (consp image))
+              (not (eq (car image) 'image)))
+      (error "No image under point"))
+    (plist-put (cdr image) :type 'imagemagick)
+    (plist-put (cdr image) :scale
+               (* (or (plist-get (cdr image) :scale) 1) factor))))
+
 (provide 'image)
 
 ;;; image.el ends here
