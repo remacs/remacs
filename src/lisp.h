@@ -262,10 +262,6 @@ DEFINE_GDB_SYMBOL_END (USE_LSB_TAG)
 error !;
 #endif
 
-#ifndef alignas
-# error "alignas not defined"
-#endif
-
 #ifdef HAVE_STRUCT_ATTRIBUTE_ALIGNED
 # define GCALIGNED __attribute__ ((aligned (GCALIGNMENT)))
 #else
