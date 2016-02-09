@@ -1683,14 +1683,17 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
    or (US mail) as Mike Haertel c/o Free Software Foundation.  */
 
 #ifndef HYBRID_MALLOC
+
+# ifndef HAVE_MALLOC_H
 /* Allocate SIZE bytes on a page boundary.  */
 extern void *valloc (size_t);
+# endif
 
-#if defined _SC_PAGESIZE || !defined HAVE_GETPAGESIZE
-# include "getpagesize.h"
-#elif !defined getpagesize
+# if defined _SC_PAGESIZE || !defined HAVE_GETPAGESIZE
+#  include "getpagesize.h"
+# elif !defined getpagesize
 extern int getpagesize (void);
-#endif
+# endif
 
 static size_t pagesize;
 
