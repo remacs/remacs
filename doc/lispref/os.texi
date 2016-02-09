@@ -1849,6 +1849,12 @@ one of these functions; the arrival of the specified time will not
 cause anything special to happen.
 @end defun
 
+@findex timer-list
+The @code{timer-list} command lists all the currently active timers.
+There's only one command available in the buffer displayed: @kbd{c}
+(@code{timer-list-cancel}) that will cancel the timer on the line
+under point.
+
 @node Idle Timers
 @section Idle Timers
 @cindex idle timers
