@@ -189,6 +189,11 @@ and other things:
     (define-key map "\r" 'shr-browse-url)
     map))
 
+(defvar shr-image-map
+  (let ((map (copy-keymap shr-map)))
+    (set-keymap-parent map image-map)
+    map))
+
 ;; Public functions and commands.
 (declare-function libxml-parse-html-region "xml.c"
 		  (start end &optional base-url discard-comments))
@@ -1076,8 +1081,15 @@ START, and END.  Note that START and END should be markers."
 				   url)))
 		      (if title (format "%s (%s)" iri title) iri))
 	 'follow-link t
-	 'mouse-face 'highlight
-	 'keymap shr-map)))
+	 'mouse-face 'highlight))
+  ;; Don't overwrite any keymaps that are already in the buffer (i.e.,
+  ;; image keymaps).
+  (while (and start
+              (< start (point)))
+    (let ((next (next-single-property-change start 'keymap nil (point))))
+      (if (get-text-property start 'keymap)
+          (setq start next)
+        (put-text-property start (or next (point)) 'keymap shr-map)))))
 
 (defun shr-encode-url (url)
   "Encode URL."
@@ -1457,7 +1469,7 @@ The preference is a float determined from `shr-prefer-media-type'."
 	   (list (current-buffer) start (set-marker (make-marker) (1- (point))))
 	   t t)))
 	(when (zerop shr-table-depth) ;; We are not in a table.
-	  (put-text-property start (point) 'keymap shr-map)
+	  (put-text-property start (point) 'keymap shr-image-map)
 	  (put-text-property start (point) 'shr-alt alt)
 	  (put-text-property start (point) 'image-url url)
 	  (put-text-property start (point) 'image-displayer

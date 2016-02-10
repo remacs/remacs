@@ -1906,7 +1906,8 @@ If RECURSIVE, search recursively."
 	(widget-convert-button
 	 'url-link start end
 	 :help-echo (get-text-property start 'help-echo)
-	 :keymap shr-map
+	 ;;; FIXME Should only use the image map on images.
+	 :keymap shr-image-map
 	 (get-text-property start 'shr-url))
 	(put-text-property start end 'local-map nil)
 	(dolist (overlay (overlays-at start))

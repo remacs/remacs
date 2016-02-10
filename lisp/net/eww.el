@@ -223,7 +223,7 @@ See also `eww-form-checkbox-selected-symbol'."
   "When this regex is found in the URL, it's not a keyword but an address.")
 
 (defvar eww-link-keymap
-  (let ((map (copy-keymap shr-map)))
+  (let ((map (copy-keymap shr-image-map)))
     (define-key map "\r" 'eww-follow-link)
     map))
 
