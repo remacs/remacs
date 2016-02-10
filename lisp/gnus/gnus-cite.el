@@ -24,9 +24,6 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl))
-(eval-when-compile
-  (when (featurep 'xemacs)
-    (require 'easy-mmode))) ; for `define-minor-mode'
 
 (require 'gnus)
 (require 'gnus-range)
@@ -1194,9 +1191,7 @@ Returns nil if there is no such line before LIMIT, t otherwise."
 (defvar font-lock-keywords)
 (defvar font-lock-set-defaults)
 
-(eval-and-compile
-  (unless (featurep 'xemacs)
-    (autoload 'font-lock-set-defaults "font-lock")))
+(autoload 'font-lock-set-defaults "font-lock")
 
 (define-minor-mode gnus-message-citation-mode
   "Minor mode providing more font-lock support for nested citations.
@@ -1206,9 +1201,7 @@ When enabled, it automatically turns on `font-lock-mode'."
   nil ;; keymap
   (when (eq major-mode 'message-mode)   ;FIXME: Use derived-mode-p.
     ;; FIXME: Use font-lock-add-keywords!
-    (let ((defaults (car (if (featurep 'xemacs)
-			     (get 'message-mode 'font-lock-defaults)
-			   font-lock-defaults)))
+    (let ((defaults (car font-lock-defaults))
 	  default keywords)
       (while defaults
 	(setq default (if (consp defaults)
@@ -1227,19 +1220,11 @@ When enabled, it automatically turns on `font-lock-mode'."
 			 gnus-message-citation-keywords))
 	  (kill-local-variable default))))
     ;; Force `font-lock-set-defaults' to update `font-lock-keywords'.
-    (if (featurep 'xemacs)
-	(progn
-	  (require 'font-lock)
-	  (setq font-lock-defaults-computed nil
-		font-lock-keywords nil))
-      (setq font-lock-set-defaults nil))
+    (setq font-lock-set-defaults nil)
     (font-lock-set-defaults)
-    (cond (font-lock-mode
-           (if (fboundp 'font-lock-flush)
-               (font-lock-flush)
-             (font-lock-fontify-buffer)))
-	  (gnus-message-citation-mode
-	   (font-lock-mode 1)))))
+    (if font-lock-mode
+	(font-lock-flush)
+      (gnus-message-citation-mode (font-lock-mode 1)))))
 
 (defun turn-on-gnus-message-citation-mode ()
   "Turn on `gnus-message-citation-mode'."
