@@ -3155,10 +3155,6 @@ Return nil if not defined."
   (setcar (nthcdr 2 (gnus-gethash group gnus-newsrc-hashtb))
 	  info))
 
-;;; Load the compatibility functions.
-
-(require 'gnus-ems)
-
 
 ;;;
 ;;; Shutdown

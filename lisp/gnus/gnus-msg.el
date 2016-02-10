@@ -28,7 +28,6 @@
 (eval-when-compile (require 'cl))
 
 (require 'gnus)
-(require 'gnus-ems)
 (require 'message)
 (require 'gnus-art)
 (require 'gnus-util)

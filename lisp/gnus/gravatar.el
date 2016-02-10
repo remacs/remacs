@@ -95,8 +95,6 @@
   (cond ((featurep 'xemacs)
 	 (require 'gnus-xmas)
 	 (defalias 'gravatar-create-image 'gnus-xmas-create-image))
-	((featurep 'gnus-ems)
-	 (defalias 'gravatar-create-image 'gnus-create-image))
 	(t
 	 (require 'image)
 	 (defalias 'gravatar-create-image 'create-image))))

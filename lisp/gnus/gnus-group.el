@@ -38,7 +38,6 @@
 (require 'gnus-undo)
 (require 'gmm-utils)
 (require 'time-date)
-(require 'gnus-ems)
 
 (eval-when-compile
   (require 'mm-url)

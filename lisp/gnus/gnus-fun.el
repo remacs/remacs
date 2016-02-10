@@ -28,7 +28,6 @@
   (require 'cl))
 
 (require 'mm-util)
-(require 'gnus-ems)
 (require 'gnus-util)
 (require 'gnus)
 
