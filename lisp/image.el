@@ -141,7 +141,7 @@ based on the font pixel size."
 
 ;; Map put into text properties on images.
 (defvar image-map
-  (let ((map (make-keymap)))
+  (let ((map (make-sparse-keymap)))
     (define-key map "-" 'image-decrease-size)
     (define-key map "+" 'image-increase-size)
     (define-key map "r" 'image-rotate)
