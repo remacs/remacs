@@ -31,7 +31,7 @@ Requires the external programs `uncompface', and `icontopbm'.  On a
 GNU/Linux system these might be in packages with names like `compface'
 or `faces-xface' and `netpbm' or `libgr-progs', for instance."
   (with-temp-buffer
-    (unless (featurep 'xemacs) (set-buffer-multibyte nil))
+    (set-buffer-multibyte nil)
     (insert face)
     (let ((coding-system-for-read 'raw-text)
 	  ;; At least "icontopbm" doesn't work with Windows because
@@ -44,17 +44,10 @@ or `faces-xface' and `netpbm' or `libgr-progs', for instance."
 	     (goto-char (point-min))
 	     (insert "/* Format_version=1, Width=48, Height=48, Depth=1,\
  Valid_bits_per_item=16 */\n")
-	     ;; I just can't get "icontopbm" to work correctly on its
-	     ;; own in XEmacs.  And Emacs doesn't understand un-raw pbm
-	     ;; files.
-	     (if (not (featurep 'xemacs))
-		 (eq 0 (call-process-region (point-min) (point-max)
-					    "icontopbm"
-					    'delete '(t nil)))
-	       (shell-command-on-region (point-min) (point-max)
-					"icontopbm | pnmnoraw"
-					(current-buffer) t)
-	       t))
+	     ;; Emacs doesn't understand un-raw pbm files.
+	     (eq 0 (call-process-region (point-min) (point-max)
+					"icontopbm"
+					'delete '(t nil))))
 	   (buffer-string)))))
 
 (provide 'compface)
