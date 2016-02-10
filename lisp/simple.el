@@ -2041,6 +2041,10 @@ next element of the minibuffer history in the minibuffer."
        ;; the end of the line when it fails to go to the next line.
        (goto-char old-point)
        (next-history-element arg)
+       ;; Reset `temporary-goal-column' because a correct value is not
+       ;; calculated when `next-line' above fails by bumping against
+       ;; the bottom of the minibuffer (bug#22544).
+       (setq temporary-goal-column 0)
        ;; Restore the original goal column on the last line
        ;; of possibly multi-line input.
        (goto-char (point-max))
@@ -2071,6 +2075,10 @@ previous element of the minibuffer history in the minibuffer."
        ;; the beginning of the line when it fails to go to the previous line.
        (goto-char old-point)
        (previous-history-element arg)
+       ;; Reset `temporary-goal-column' because a correct value is not
+       ;; calculated when `previous-line' above fails by bumping against
+       ;; the top of the minibuffer (bug#22544).
+       (setq temporary-goal-column 0)
        ;; Restore the original goal column on the first line
        ;; of possibly multi-line input.
        (goto-char (minibuffer-prompt-end))
@@ -2078,7 +2086,15 @@ previous element of the minibuffer history in the minibuffer."
 	   (if (= (line-number-at-pos) 1)
 	       (move-to-column (+ old-column (1- (minibuffer-prompt-end))))
 	     (move-to-column old-column))
-	 (goto-char (line-end-position)))))))
+	 ;; Put the cursor at the end of the visual line instead of the
+	 ;; logical line, so the next `previous-line-or-history-element'
+	 ;; would move to the previous history element, not to a possible upper
+	 ;; visual line from the end of logical line in `line-move-visual' mode.
+	 (end-of-visual-line)
+	 ;; Since `end-of-visual-line' puts the cursor at the beginning
+	 ;; of the next visual line, move it one char back to the end
+	 ;; of the first visual line (bug#22544).
+	 (unless (eolp) (backward-char 1)))))))
 
 (defun next-complete-history-element (n)
   "Get next history element which completes the minibuffer before the point.
