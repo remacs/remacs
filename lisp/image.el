@@ -931,18 +931,18 @@ has no effect."
 If N is 3, then the image size will be increased by 30%.  The
 default is 20%."
   (interactive "P")
-  (image-change-size (if n
-                         (1+ (/ n 10))
-                       1.2)))
+  (image--change-size (if n
+                          (1+ (/ n 10))
+                        1.2)))
 
 (defun image-decrease-size (n)
   "Decrease the image size by a factor of N.
 If N is 3, then the image size will be decreased by 30%.  The
 default is 20%."
   (interactive "P")
-  (image-change-size (if n
-                         (- 1 (/ n 10))
-                       0.8)))
+  (image--change-size (if n
+                          (- 1 (/ n 10))
+                        0.8)))
 
 (defun image--get-image ()
   (let ((image (or (get-text-property (point) 'display)
@@ -964,10 +964,30 @@ default is 20%."
     (plist-put (cdr image) :type 'imagemagick)
     image))
 
-(defun image-change-size (factor)
-  (let ((image (image--get-imagemagick-and-warn)))
-    (plist-put (cdr image) :scale
-               (* (or (plist-get (cdr image) :scale) 1) factor))))
+(defun image--change-size (factor)
+  (let* ((image (image--get-imagemagick-and-warn))
+         (new-image (image--image-without-parameters image))
+         (scale (image--current-scaling image new-image)))
+    (setcdr image (cdr new-image))
+    (plist-put (cdr image) :scale (* scale factor))))
+
+(defun image--image-without-parameters (image)
+  (cons (pop image)
+        (let ((new nil))
+          (while image
+            (let ((key (pop image))
+                  (val (pop image)))
+              (unless (memq key '(:scale :width :height :max-width :max-height))
+              (setq new (nconc new (list key val))))))
+          new)))
+
+(defun image--current-scaling (image new-image)
+  ;; The image may be scaled due to many reasons (:scale, :max-width,
+  ;; etc), so find out what the current scaling is based on the
+  ;; original image size and the displayed size.
+  (let ((image-width (car (image-size new-image t)))
+        (display-width (car (image-size image t))))
+    (/ (float display-width) image-width)))
 
 (defun image-rotate ()
   "Rotate the image under point by 90 degrees clockwise."
