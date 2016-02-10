@@ -30,7 +30,7 @@ modify this GNU manual.''
 @titlepage
 @title EDT Emulation User's Manual
 @author Kevin Gallagher
-@author @email{Kevin.Gallagher@@boeing.com}
+@author @email{kevin.gal@verizon.net}
 @page
 @vskip 0pt plus 1filll
 @insertcopying
@@ -106,7 +106,8 @@ how to customize it to your liking.
 @file{edt.texi}---This manual.
 
 @item
-@file{edt-user.el}---An example customization file.
+@file{edt-user.el}---An example customization file (located in the
+Emacs distribution etc directory).
 
 @item
 @file{edt.el}---EDT emulation functions and default configuration.

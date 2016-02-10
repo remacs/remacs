@@ -3,8 +3,8 @@
 ;; Copyright (C) 1986, 1992-1995, 2000-2016 Free Software Foundation,
 ;; Inc.
 
-;; Author: Kevin Gallagher <Kevin.Gallagher@boeing.com>
-;; Maintainer: Kevin Gallagher <Kevin.Gallagher@boeing.com>
+;; Author: Kevin Gallagher <kevin.gal@verizon.net>
+;; Maintainer: Kevin Gallagher <kevin.gal@verizon.net>
 ;; Keywords: emulations
 
 ;; This file is part of GNU Emacs.
@@ -59,7 +59,8 @@
 ;; The EDT emulation consists of the following files:
 ;;
 ;; edt.texi         - User manual
-;; edt-user.el      - Sample Customization File
+;; edt-user.el      - Sample Customization File (located in Emacs
+;;                      distribution etc directory)
 ;; edt.el           - EDT Emulation Functions and Default Configuration
 ;; edt-lk201.el     - Built-in support for DEC LK-201 Keyboards
 ;; edt-vt100.el     - Built-in support for DEC VT-100 (and above) terminals
