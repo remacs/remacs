@@ -1893,6 +1893,7 @@ If RECURSIVE, search recursively."
 			   ,(point-max-marker))))))))
 
 (defvar shr-map)
+(defvar shr-image-map)
 
 (autoload 'widget-convert-button "wid-edit")
 
