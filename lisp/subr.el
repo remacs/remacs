@@ -4137,7 +4137,8 @@ and the function returns nil.  Field boundaries are not noticed if
 `inhibit-field-text-motion' is non-nil.
 
 This function is like `forward-word', but it is not affected
-by `find-word-boundary-function-table'.  It is also not interactive."
+by `find-word-boundary-function-table' (as set up by
+e.g. `subword-mode').  It is also not interactive."
   (let ((find-word-boundary-function-table
          (if (char-table-p word-move-empty-char-table)
              word-move-empty-char-table
@@ -4150,7 +4151,8 @@ With argument ARG, do this that many times.
 If ARG is omitted or nil, move point backward one word.
 
 This function is like `forward-word', but it is not affected
-by `find-word-boundary-function-table'.  It is also not interactive."
+by `find-word-boundary-function-table' (as set up by
+e.g. `subword-mode').  It is also not interactive."
   (let ((find-word-boundary-function-table
          (if (char-table-p word-move-empty-char-table)
              word-move-empty-char-table
