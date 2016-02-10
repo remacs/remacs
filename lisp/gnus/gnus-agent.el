@@ -30,10 +30,8 @@
 (require 'gnus-score)
 (require 'gnus-srvr)
 (require 'gnus-util)
+(require 'timer)
 (eval-when-compile
-  (if (featurep 'xemacs)
-      (require 'itimer)
-    (require 'timer))
   (require 'cl))
 
 (autoload 'gnus-server-update-server "gnus-srvr")
@@ -82,27 +80,15 @@ If nil, only read articles will be expired."
   :group 'gnus-agent
   :type 'hook)
 
-;; Extracted from gnus-xmas-redefine in order to preserve user settings
-(when (featurep 'xemacs)
-  (add-hook 'gnus-agent-group-mode-hook 'gnus-xmas-agent-group-menu-add))
-
 (defcustom gnus-agent-summary-mode-hook nil
   "Hook run in Agent summary minor modes."
   :group 'gnus-agent
   :type 'hook)
 
-;; Extracted from gnus-xmas-redefine in order to preserve user settings
-(when (featurep 'xemacs)
-  (add-hook 'gnus-agent-summary-mode-hook 'gnus-xmas-agent-summary-menu-add))
-
 (defcustom gnus-agent-server-mode-hook nil
   "Hook run in Agent summary minor modes."
   :group 'gnus-agent
   :type 'hook)
-
-;; Extracted from gnus-xmas-redefine in order to preserve user settings
-(when (featurep 'xemacs)
-  (add-hook 'gnus-agent-server-mode-hook 'gnus-xmas-agent-server-menu-add))
 
 (defcustom gnus-agent-confirmation-function 'y-or-n-p
   "Function to confirm when error happens."
@@ -251,16 +237,6 @@ NOTES:
 ;; Dynamic variables
 (defvar gnus-headers)
 (defvar gnus-score)
-
-;; Added to support XEmacs
-(eval-and-compile
-  (unless (fboundp 'directory-files-and-attributes)
-    (defun directory-files-and-attributes (directory
-					   &optional full match nosort)
-      (let (result)
-	(dolist (file (directory-files directory full match nosort))
-	  (push (cons file (file-attributes file)) result))
-	(nreverse result)))))
 
 ;;;
 ;;; Setup
@@ -575,14 +551,7 @@ manipulated as follows:
 	   (fboundp 'make-mode-line-mouse-map))
       (propertize string 'local-map
 		  (make-mode-line-mouse-map mouse-button mouse-func)
-		  'mouse-face
-		  (if (and (featurep 'xemacs)
-			   ;; XEmacs's `facep' only checks for a face
-			   ;; object, not for a face name, so it's useless
-			   ;; to check with `facep'.
-			   (find-face 'modeline))
-		      'modeline
-		    'mode-line-highlight))
+		  'mouse-face 'mode-line-highlight)
     string))
 
 (defun gnus-agent-toggle-plugged (set-to)

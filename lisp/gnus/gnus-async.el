@@ -148,18 +148,13 @@ that was fetched."
     (with-current-buffer gnus-summary-buffer
       (let ((next (caadr (gnus-data-find-list article))))
 	(when next
-	  (if (not (fboundp 'run-with-idle-timer))
-	      ;; This is either an older Emacs or XEmacs, so we
-	      ;; do this, which leads to slightly slower article
-	      ;; buffer display.
-	      (gnus-async-prefetch-article group next summary)
-	    (when gnus-async-timer
-	      (ignore-errors
-		(nnheader-cancel-timer 'gnus-async-timer)))
-	    (setq gnus-async-timer
-		  (run-with-idle-timer
-		   0.1 nil 'gnus-async-prefetch-article
-		   group next summary))))))))
+	  (when gnus-async-timer
+	    (ignore-errors
+	      (nnheader-cancel-timer 'gnus-async-timer)))
+	  (setq gnus-async-timer
+		(run-with-idle-timer
+		 0.1 nil 'gnus-async-prefetch-article
+		 group next summary)))))))
 
 (defun gnus-async-prefetch-article (group article summary &optional next)
   "Possibly prefetch several articles starting with ARTICLE."

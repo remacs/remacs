@@ -266,18 +266,11 @@ This can also be a list of the above values."
 ;; Fixme: This isn't the right thing for mixed graphical and non-graphical
 ;; frames in a session.
 (defcustom gnus-article-x-face-command
-  (if (featurep 'xemacs)
-      (if (or (gnus-image-type-available-p 'xface)
-	      (gnus-image-type-available-p 'pbm))
-	  'gnus-display-x-face-in-from
-	"{ echo \
+  (if (gnus-image-type-available-p 'pbm)
+      'gnus-display-x-face-in-from
+    "{ echo \
 '/* Format_version=1, Width=48, Height=48, Depth=1, Valid_bits_per_item=16 */'\
-; uncompface; } | icontopbm | ee -")
-    (if (gnus-image-type-available-p 'pbm)
-	'gnus-display-x-face-in-from
-      "{ echo \
-'/* Format_version=1, Width=48, Height=48, Depth=1, Valid_bits_per_item=16 */'\
-; uncompface; } | icontopbm | display -"))
+; uncompface; } | icontopbm | display -")
   "*String or function to be executed to display an X-Face header.
 If it is a string, the command will be executed in a sub-shell
 asynchronously.  The compressed face will be piped to this command."
@@ -484,9 +477,7 @@ and the latter avoids underlining any whitespace at all."
 Example: (_/*word*/_)."
   :group 'gnus-article-emphasis)
 
-(defface gnus-emphasis-strikethru (if (featurep 'xemacs)
-				      '((t (:strikethru t)))
-				    '((t (:strike-through t))))
+(defface gnus-emphasis-strikethru '((t (:strike-through t)))
   "Face used for displaying strike-through text (-word-)."
   :group 'gnus-article-emphasis)
 
@@ -705,13 +696,6 @@ The following additional specs are available:
   :type 'hook
   :group 'gnus-article-various)
 
-(when (featurep 'xemacs)
-  ;; Extracted from gnus-xmas-define in order to preserve user settings
-  (when (fboundp 'turn-off-scroll-in-place)
-    (add-hook 'gnus-article-mode-hook 'turn-off-scroll-in-place))
-  ;; Extracted from gnus-xmas-redefine in order to preserve user settings
-  (add-hook 'gnus-article-mode-hook 'gnus-xmas-article-menu-add))
-
 (defcustom gnus-article-menu-hook nil
   "*Hook run after the creation of the article mode menu."
   :type 'hook
@@ -877,10 +861,8 @@ be displayed by the first non-nil matching CONTENT face."
 			       (item :tag "skip" nil)
 			       (face :value default)))))
 
-(defcustom gnus-face-properties-alist (if (featurep 'xemacs)
-					  '((xface . (:face gnus-x-face)))
-					'((pbm . (:face gnus-x-face))
-					  (png . nil)))
+(defcustom gnus-face-properties-alist '((pbm . (:face gnus-x-face))
+					(png . nil))
   "Alist of image types and properties applied to Face and X-Face images.
 Here are examples:
 
@@ -896,8 +878,7 @@ Here are examples:
 
 See the manual for the valid properties for various image types.
 Currently, `pbm' is used for X-Face images and `png' is used for Face
-images in Emacs.  Only the `:face' property is effective on the `xface'
-image type in XEmacs if it is built with the libcompface library."
+images in Emacs."
   :version "23.1" ;; No Gnus
   :group 'gnus-article-headers
   :type '(repeat (cons :format "%v" (symbol :tag "Image type") plist)))
@@ -1420,14 +1401,12 @@ predicate.  See Info node `(gnus)Customizing Articles'."
 (defcustom gnus-treat-display-x-face
   (and (not noninteractive)
        (gnus-image-type-available-p 'xbm)
-       (if (featurep 'xemacs)
-	   (featurep 'xface)
-	 (condition-case nil
-             (and (string-match "^0x" (shell-command-to-string "uncompface"))
-                  (executable-find "icontopbm"))
-           ;; shell-command-to-string may signal an error, e.g. if
-           ;; shell-file-name is not found.
-           (error nil)))
+       (condition-case nil
+	   (and (string-match "^0x" (shell-command-to-string "uncompface"))
+		(executable-find "icontopbm"))
+	 ;; shell-command-to-string may signal an error, e.g. if
+	 ;; shell-file-name is not found.
+	 (error nil))
        'head)
   "Display X-Face headers.
 Valid values are nil and `head'.
@@ -2111,21 +2090,17 @@ try this wash."
   "Translate many Unicode characters into their ASCII equivalents."
   (interactive)
   (require 'org-entities)
-  (let ((table (make-char-table (if (featurep 'xemacs) 'generic))))
+  (let ((table (make-char-table nil)))
     (dolist (elem org-entities)
       (when (and (listp elem)
 		 (= (length (nth 6 elem)) 1))
-	(if (featurep 'xemacs)
-	    (put-char-table (aref (nth 6 elem) 0) (nth 4 elem) table)
-	  (set-char-table-range table (aref (nth 6 elem) 0) (nth 4 elem)))))
+	(set-char-table-range table (aref (nth 6 elem) 0) (nth 4 elem))))
     (save-excursion
       (when (article-goto-body)
 	(let ((inhibit-read-only t)
 	      replace props)
 	  (while (not (eobp))
-	    (if (not (setq replace (if (featurep 'xemacs)
-				       (get-char-table (following-char) table)
-				     (aref table (following-char)))))
+	    (if (not (setq replace (aref table (following-char))))
 		(forward-char 1)
 	      (if (prog1
 		      (setq props (text-properties-at (point)))
@@ -2323,8 +2298,6 @@ long lines if and only if arg is positive."
 	(insert "X-Boundary: ")
 	(gnus-add-text-properties start (point) gnus-hidden-properties)
        (insert (let (str (max (window-width)))
-                 (if (featurep 'xemacs)
-                     (setq max (1- max)))
                  (while (>= max (length str))
 		    (setq str (concat str gnus-body-boundary-delimiter)))
                  (substring str 0 max))
@@ -4320,8 +4293,6 @@ If variable `gnus-use-long-file-name' is non-nil, it is
 		  (put-text-property (match-end 0) (point-max)
 				     'face eface)))))))))
 
-(autoload 'canlock-verify "canlock" nil t) ;; for XEmacs.
-
 (defun article-verify-cancel-lock ()
   "Verify Cancel-Lock header."
   (interactive)
@@ -4434,13 +4405,9 @@ If variable `gnus-use-long-file-name' is non-nil, it is
  'undefined 'gnus-article-read-summary-keys gnus-article-mode-map)
 
 (defvar gnus-article-send-map)
-
 (gnus-define-keys (gnus-article-send-map "S" gnus-article-mode-map)
-  "W" gnus-article-wide-reply-with-original)
-(if (featurep 'xemacs)
-    (set-keymap-default-binding gnus-article-send-map
-				'gnus-article-read-summary-send-keys)
-  (define-key gnus-article-send-map [t] 'gnus-article-read-summary-send-keys))
+  "W" gnus-article-wide-reply-with-original
+  [t] 'gnus-article-read-summary-send-keys)
 
 (defun gnus-article-make-menu-bar ()
   (unless (boundp 'gnus-article-commands-menu)
@@ -5903,10 +5870,6 @@ all parts."
      :button-keymap gnus-mime-button-map
      :help-echo
      (lambda (widget)
-       ;; Needed to properly clear the message due to a bug in
-       ;; wid-edit (XEmacs only).
-       (if (boundp 'help-echo-owns-message)
-	   (setq help-echo-owns-message t))
        (format
 	"%S: %s the MIME part; %S: more options"
 	'mouse-2
@@ -6604,12 +6567,10 @@ If given a numerical ARG, move forward ARG pages."
 If end of article, return non-nil.  Otherwise return nil.
 Argument LINES specifies lines to be scrolled up."
   (interactive "p")
-  (move-to-window-line (if (featurep 'xemacs) -1 (- -1 scroll-margin)))
+  (move-to-window-line (- -1 scroll-margin))
   (if (and (not (and gnus-article-over-scroll
 		     (> (count-lines (window-start) (point-max))
-			(if (featurep 'xemacs)
-			    (or lines (1- (window-height)))
-			  (+ (or lines (1- (window-height))) scroll-margin)))))
+			(+ (or lines (1- (window-height))) scroll-margin))))
 	   (save-excursion
 	     (end-of-line)
 	     (and (pos-visible-in-window-p)	;Not continuation line.
@@ -6635,18 +6596,16 @@ Argument LINES specifies lines to be scrolled up."
   "Move point to the beginning of the window.
 In Emacs, the point is placed at the line number which `scroll-margin'
 specifies."
-  (if (featurep 'xemacs)
-      (move-to-window-line 0)
-    ;; There is an obscure bug in Emacs that makes it impossible to
-    ;; scroll past big pictures in the article buffer.  Try to fix
-    ;; this by adding a sanity check by counting the lines visible.
-    (when (> (count-lines (window-start) (window-end)) 30)
-      (move-to-window-line
-       (min (max 0 scroll-margin)
-	    (max 1 (- (window-height)
-		      (if mode-line-format 1 0)
-		      (if header-line-format 1 0)
-		      2)))))))
+  ;; There is an obscure bug in Emacs that makes it impossible to
+  ;; scroll past big pictures in the article buffer.  Try to fix
+  ;; this by adding a sanity check by counting the lines visible.
+  (when (> (count-lines (window-start) (window-end)) 30)
+    (move-to-window-line
+     (min (max 0 scroll-margin)
+	  (max 1 (- (window-height)
+		    (if mode-line-format 1 0)
+		    (if header-line-format 1 0)
+		    2))))))
 
 (defvar scroll-in-place)
 
@@ -6673,10 +6632,7 @@ Argument LINES specifies lines to be scrolled down."
 	(goto-char (point-max))
 	(recenter (if gnus-article-over-scroll
 		      (if lines
-			  (max (if (featurep 'xemacs)
-				   lines
-				 (+ lines scroll-margin))
-			       3)
+			  (max (+ lines scroll-margin) 3)
 			(- (window-height) 2))
 		    -1)))
     (prog1
@@ -6757,9 +6713,7 @@ not have a face in `gnus-article-boring-faces'."
       (let (gnus-pick-mode)
 	(setq unread-command-events (nconc unread-command-events
 					   (list (or key last-command-event)))
-	      keys (if (featurep 'xemacs)
-		       (events-to-keys (read-key-sequence nil t))
-		     (read-key-sequence nil t)))))
+	      keys (read-key-sequence nil t))))
 
     (message "")
 
@@ -6873,14 +6827,12 @@ KEY is a string or a vector."
 				  gnus-article-read-summary-send-keys))
       (with-current-buffer gnus-article-current-summary
 	(setq unread-command-events
-	      (if (featurep 'xemacs)
-		  (append key unread-command-events)
-		(nconc
-		 (mapcar (lambda (x) (if (and (integerp x) (>= x 128))
-					 (list 'meta (- x 128))
-				       x))
-			 key)
-		 unread-command-events)))
+	      (nconc
+	       (mapcar (lambda (x) (if (and (integerp x) (>= x 128))
+				       (list 'meta (- x 128))
+				     x))
+		       key)
+	       unread-command-events))
 	(let ((cursor-in-echo-area t)
 	      gnus-pick-mode)
 	  (describe-key (read-key-sequence nil t))))
@@ -6897,14 +6849,12 @@ KEY is a string or a vector."
 				  gnus-article-read-summary-send-keys))
       (with-current-buffer gnus-article-current-summary
 	(setq unread-command-events
-	      (if (featurep 'xemacs)
-		  (append key unread-command-events)
-		(nconc
-		 (mapcar (lambda (x) (if (and (integerp x) (>= x 128))
-					 (list 'meta (- x 128))
-				       x))
-			 key)
-		 unread-command-events)))
+	      (nconc
+	       (mapcar (lambda (x) (if (and (integerp x) (>= x 128))
+				       (list 'meta (- x 128))
+				     x))
+		       key)
+	       unread-command-events))
 	(let ((cursor-in-echo-area t)
 	      gnus-pick-mode)
 	  (describe-key-briefly (read-key-sequence nil t) insert)))
@@ -8962,10 +8912,6 @@ For example:
      :button-keymap gnus-mime-security-button-map
      :help-echo
      (lambda (_widget)
-       ;; Needed to properly clear the message due to a bug in
-       ;; wid-edit (XEmacs only).
-       (when (boundp 'help-echo-owns-message)
-	 (setq help-echo-owns-message t))
        (format
 	"%S: show detail; %S: more options"
 	'mouse-2
