@@ -57,6 +57,10 @@
 #
 # make docs
 #      Make Emacs documentation files from their sources; requires makeinfo.
+#
+# make check  or  make check-expensive
+#      Run Emacs test suite.  check-expensive runs also tests which
+#      take more time to perform.
 
 SHELL = @SHELL@
 
