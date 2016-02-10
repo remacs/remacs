@@ -105,11 +105,6 @@
     ;; (featurep 'xemacs).  In this case, the implementation for
     ;; XEmacs/mule may be shareable between XEmacs and XEmacs/mule.
 
-    (when (boundp 'gnus-check-before-posting)
-      (setq gnus-check-before-posting
-	    (delq 'long-lines
-		  (delq 'control-chars gnus-check-before-posting))))
-
     (defun gnus-summary-line-format-spec ()
       (insert gnus-tmp-unread gnus-tmp-replied
 	      gnus-tmp-score-char gnus-tmp-indentation)
