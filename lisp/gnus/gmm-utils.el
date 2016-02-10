@@ -193,21 +193,6 @@ This is a copy of the `lazy' widget in Emacs 22.1 provided for compatibility."
 			  :tag "Other"
 			  (symbol :tag "Icon item")))))
 
-;; (defun gmm-color-cells (&optional display)
-;;   "Return the number of color cells supported by DISPLAY.
-;; Compatibility function."
-;;   ;; `display-color-cells' doesn't return more than 256 even if color depth is
-;;   ;; > 8 in Emacs 21.
-;;   ;;
-;;   ;; Feel free to add proper XEmacs support.
-;;   (let* ((cells (and (fboundp 'display-color-cells)
-;; 		     (display-color-cells display)))
-;; 	 (plane (and (fboundp 'x-display-planes)
-;; 		     (ash 1 (x-display-planes))))
-;; 	 (none -1))
-;;     (max (if (integerp cells) cells none)
-;; 	 (if (integerp plane) plane none))))
-
 (defcustom gmm-tool-bar-style
   (if (and (boundp 'tool-bar-mode)
 	   tool-bar-mode
@@ -338,7 +323,7 @@ compatibility with versions of Emacs that lack the variable
     (let ((img image)
           (dir (or
                 ;; Images in image-load-path.
-                (gmm-image-search-load-path image) ;; "gmm-" prefix!
+                (image-search-load-path image)
                 ;; Images in load-path.
                 (locate-library image)))
           parent)
@@ -404,30 +389,6 @@ If mode is nil, use `major-mode' of the current buffer."
        (intern (let ((mode (symbol-name major-mode)))
 		 (string-match "^\\(.+\\)-mode$" mode)
 		 (match-string 1 mode))))))
-
-(defun gmm-write-region (start end filename &optional append visit
-			       lockname mustbenew)
-  "Compatibility function for `write-region'.
-
-In XEmacs, the seventh argument of `write-region' specifies the
-coding-system."
-  (if (and mustbenew (featurep 'xemacs))
-      (if (file-exists-p filename)
-	  (signal 'file-already-exists (list "File exists" filename))
-	(write-region start end filename append visit lockname))
-    (write-region start end filename append visit lockname mustbenew)))
-
-;; `interactive-p' is obsolete since Emacs 23.2.
-(defmacro gmm-called-interactively-p (kind)
-  (condition-case nil
-      (progn
-	(eval '(called-interactively-p 'any))
-	;; Emacs >=23.2
-	`(called-interactively-p ,kind))
-    ;; Emacs <23.2
-    (wrong-number-of-arguments '(called-interactively-p))
-    ;; XEmacs
-    (void-function '(interactive-p))))
 
 ;; `labels' is obsolete since Emacs 24.3.
 (defmacro gmm-labels (bindings &rest body)

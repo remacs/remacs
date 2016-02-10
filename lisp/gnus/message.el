@@ -3201,7 +3201,7 @@ M-RET    `message-newline-and-reformat' (break the line and reformat)."
 (defun message-goto-body ()
   "Move point to the beginning of the message body."
   (interactive)
-  (when (and (gmm-called-interactively-p 'any)
+  (when (and (called-interactively-p 'any)
 	     (looking-at "[ \t]*\n"))
     (expand-abbrev))
   (push-mark)

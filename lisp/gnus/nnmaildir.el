@@ -537,8 +537,8 @@ by nnmaildir-request-article.")
 	(prin1 (vector storage-version num msgid nov) (current-buffer))
 	(setq file (concat novfile ":"))
 	(nnmaildir--unlink file)
-	(gmm-write-region (point-min) (point-max) file nil 'no-message nil
-			  'excl))
+	(write-region (point-min) (point-max) file nil 'no-message nil
+		      'excl))
       (rename-file file novfile 'replace)
       (setf (nnmaildir--art-msgid article) msgid)
       nov)))
@@ -1396,8 +1396,8 @@ by nnmaildir-request-article.")
 	      (concat "File exists: " tmpfile))
 	(throw 'return nil))
       (with-current-buffer buffer
-	(gmm-write-region (point-min) (point-max) tmpfile nil 'no-message nil
-			  'excl))
+	(write-region (point-min) (point-max) tmpfile nil 'no-message nil
+		      'excl))
       (unix-sync) ;; no fsync :(
       (rename-file tmpfile (concat (nnmaildir--cur dir) file suffix) 'replace)
       t)))
@@ -1490,8 +1490,8 @@ by nnmaildir-request-article.")
 				  (throw 'return nil))))
       (condition-case nil (add-name-to-file nnmaildir--file tmpfile)
 	(error
-	 (gmm-write-region (point-min) (point-max) tmpfile nil 'no-message nil
-			   'excl)
+	 (write-region (point-min) (point-max) tmpfile nil 'no-message nil
+		       'excl)
 	 (when (fboundp 'unix-sync)
 	   (unix-sync)))) ;; no fsync :(
       (nnheader-cancel-timer 24h)
