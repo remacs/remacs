@@ -727,6 +727,25 @@ If PROPS, insert the result."
 	(symbol-value (intern (format "gnus-%s-line-format-alist" type)))
 	insertable)))
 
+
+    (defun gnus-summary-line-format-spec ()
+      (insert gnus-tmp-unread gnus-tmp-replied
+	      gnus-tmp-score-char gnus-tmp-indentation)
+      (put-text-property
+       (point)
+       (progn
+	 (insert
+	  gnus-tmp-opening-bracket
+	  (format "%4d: %-20s"
+		  gnus-tmp-lines
+		  (if (> (length gnus-tmp-name) 20)
+		      (truncate-string-to-width gnus-tmp-name 20)
+		    gnus-tmp-name))
+	  gnus-tmp-closing-bracket)
+	 (point))
+       gnus-mouse-face-prop gnus-mouse-face)
+      (insert " " gnus-tmp-subject-or-nil "\n"))
+
 (provide 'gnus-spec)
 
 ;; Local Variables:
