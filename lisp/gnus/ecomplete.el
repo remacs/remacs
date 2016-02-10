@@ -27,11 +27,6 @@
 (eval-when-compile
   (require 'cl))
 
-(eval-when-compile
-  (when (featurep 'xemacs)
-    ;; The `kbd' macro requires that the `read-kbd-macro' macro is available.
-    (require 'edmacro)))
-
 (defgroup ecomplete nil
   "Electric completion of email addresses and the like."
   :group 'mail)
