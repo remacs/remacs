@@ -174,17 +174,6 @@ where each BMK is of the form
 
 So the cdr of each bookmark is an alist too.")
 
-(defmacro gnus-bookmark-mouse-available-p ()
-  "Return non-nil if a mouse is available."
-  (if (featurep 'xemacs)
-      '(device-on-window-system-p)
-    '(display-mouse-p)))
-
-(defun gnus-bookmark-remove-properties (string)
-  "Remove all text properties from STRING."
-  (set-text-properties 0 (length string) nil string)
-  string)
-
 ;;;###autoload
 (defun gnus-bookmark-set ()
   "Set a bookmark for this article."
@@ -209,7 +198,7 @@ So the cdr of each bookmark is an alist too.")
       ;; Set the bookmark list
       (setq gnus-bookmark-alist
 	    (cons
-	     (list (gnus-bookmark-remove-properties bmk-name)
+	     (list (substring-no-properties bmk-name)
 		   (gnus-bookmark-make-record
 		    group message-id author date subject annotation))
 	     gnus-bookmark-alist))))
@@ -220,12 +209,12 @@ So the cdr of each bookmark is an alist too.")
   (group message-id author date subject annotation)
   "Return the record part of a new bookmark, given GROUP MESSAGE-ID AUTHOR DATE SUBJECT and ANNOTATION."
   (let ((the-record
-	 `((group . ,(gnus-bookmark-remove-properties group))
-	   (message-id . ,(gnus-bookmark-remove-properties message-id))
-	   (author . ,(gnus-bookmark-remove-properties author))
-	   (date . ,(gnus-bookmark-remove-properties date))
-	   (subject . ,(gnus-bookmark-remove-properties subject))
-	   (annotation . ,(gnus-bookmark-remove-properties annotation)))))
+	 `((group . ,(substring-no-properties group))
+	   (message-id . ,(substring-no-properties message-id))
+	   (author . ,(substring-no-properties author))
+	   (date . ,(substring-no-properties date))
+	   (subject . ,(substring-no-properties subject))
+	   (annotation . ,(substring-no-properties annotation)))))
     the-record))
 
 (defun gnus-bookmark-set-bookmark-name (group author subject)
@@ -387,7 +376,7 @@ deletion, or > if it is flagged for displaying."
       (insert (if (member (gnus-bookmark-get-annotation name) (list nil ""))
 		  "  "
 		" *"))
-      (if (gnus-bookmark-mouse-available-p)
+      (if (display-mouse-p)
 	  (add-text-properties
 	   (prog1
 	       (point)
@@ -536,7 +525,7 @@ Optional argument SHOW means show them unconditionally."
 	      (let ((start (point-at-eol)))
 		(move-to-column gnus-bookmark-bmenu-file-column t)
 		;; Strip off `mouse-face' from the white spaces region.
-		(if (gnus-bookmark-mouse-available-p)
+		(if (display-mouse-p)
 		    (remove-text-properties start (point)
 					    '(mouse-face nil help-echo nil))))
 	      (delete-region (point) (progn (end-of-line) (point)))
@@ -552,7 +541,7 @@ Optional argument SHOW means show them unconditionally."
 	(insert (gnus-bookmark-get-details
 		 bmk-name
 		 gnus-bookmark-bookmark-inline-details))
-      (if (gnus-bookmark-mouse-available-p)
+      (if (display-mouse-p)
 	  (add-text-properties
 	   start
 	   (save-excursion (re-search-backward
@@ -601,7 +590,7 @@ Does not affect the kill ring."
                 (gnus-bookmark-kill-line)
 		(let ((start (point)))
 		  (insert (car gnus-bookmark-bmenu-hidden-bookmarks))
-		  (if (gnus-bookmark-mouse-available-p)
+		  (if (display-mouse-p)
 		      (add-text-properties
 		       start
 		       (save-excursion (re-search-backward
