@@ -227,7 +227,7 @@ Return a list of updated types."
 (defun gnus-mouse-face-function (form type)
   `(gnus-put-text-property
     (point) (progn ,@form (point))
-    mouse-face
+    'mouse-face
     ,(if (equal type 0)
 	 'gnus-mouse-face
        `(quote ,(symbol-value (intern (format "gnus-mouse-face-%d" type)))))))

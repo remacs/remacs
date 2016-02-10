@@ -34,36 +34,6 @@
 (defvar gnus-down-mouse-3 [down-mouse-3])
 (defvar gnus-down-mouse-2 [down-mouse-2])
 (defvar gnus-widget-button-keymap nil)
-(defvar gnus-mode-line-modified
-  (if (featurep 'xemacs)
-      '("--**-" . "-----")
-    '("**" "--")))
-
-(eval-and-compile
-  (autoload 'gnus-xmas-define "gnus-xmas")
-  (autoload 'gnus-xmas-redefine "gnus-xmas"))
-
-(autoload 'gnus-get-buffer-create "gnus")
-(autoload 'nnheader-find-etc-directory "nnheader")
-(autoload 'smiley-region "smiley")
-
-(defun gnus-kill-all-overlays ()
-  "Delete all overlays in the current buffer."
-  (let* ((overlayss (overlay-lists))
-	 (buffer-read-only nil)
-	 (overlays (delq nil (nconc (car overlayss) (cdr overlayss)))))
-    (while overlays
-      (delete-overlay (pop overlays)))))
-
-;;; Mule functions.
-
-(defun gnus-mule-max-width-function (el max-width)
-  `(let* ((val (eval (, el)))
-	  (valstr (if (numberp val)
-		      (int-to-string val) val)))
-     (if (> (length valstr) ,max-width)
-	 (truncate-string-to-width valstr ,max-width)
-       valstr)))
 
 (provide 'gnus-ems)
 

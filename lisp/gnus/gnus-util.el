@@ -2069,6 +2069,14 @@ lists of strings."
 	  (setq start end
 		end nil))))))
 
+(defun gnus-kill-all-overlays ()
+  "Delete all overlays in the current buffer."
+  (let* ((overlayss (overlay-lists))
+	 (buffer-read-only nil)
+	 (overlays (delq nil (nconc (car overlayss) (cdr overlayss)))))
+    (while overlays
+      (delete-overlay (pop overlays)))))
+
 (provide 'gnus-util)
 
 ;;; gnus-util.el ends here

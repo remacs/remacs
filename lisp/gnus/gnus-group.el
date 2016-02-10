@@ -633,7 +633,7 @@ simple manner.")
   "\M-e" gnus-group-edit-group-method
   "^" gnus-group-enter-server-mode
   gnus-mouse-2 gnus-mouse-pick-group
-  [follow-link] mouse-face
+  [follow-link] 'mouse-face
   "<" beginning-of-buffer
   ">" end-of-buffer
   "\C-c\C-b" gnus-bug
@@ -1800,8 +1800,7 @@ already.  If INFO-UNCHANGED is non-nil, dribble buffer is not updated."
 	     (mode-string (eval gformat)))
 	;; Say whether the dribble buffer has been modified.
 	(setq mode-line-modified
-	      (if modified (car gnus-mode-line-modified)
-		(cdr gnus-mode-line-modified)))
+	      (if modified "**" "--"))
 	;; If the line is too long, we chop it off.
 	(when (> (length mode-string) max-len)
 	  (setq mode-string (substring mode-string 0 (- max-len 4))))
