@@ -824,11 +824,6 @@ while in non-`visual-line-mode' it will move the point to the indented
 header’s value.
 
 +++
-** Images are automatically scaled before displaying based on the
-`image-scaling-factor' variable (if Emacs supports scaling the images
-in question).
-
-+++
 ** In Show Paren Mode, a parenthesis can be highlighted when point
 stands inside it, and certain parens can be highlighted when point is
 at BOL or EOL, or in whitespace there.  To enable these, customize,
@@ -838,6 +833,18 @@ respectively, `show-paren-when-point-inside-paren' or
 ---
 ** If gpg2 exists on the system, it is now used as the default value
 of `epg-gpg-program' (instead of gpg).
+
+** Images
+
++++
+*** Images are automatically scaled before displaying based on the
+`image-scaling-factor' variable (if Emacs supports scaling the images
+in question).
+
+*** Images inserted with `insert-image' and related functions get a
+keymap put into the text properties (or overlays) that span the
+image.  This keymap binds keystrokes for manipulating size and
+rotation, as well as saving the image to a file.
 
 ** Lisp mode
 

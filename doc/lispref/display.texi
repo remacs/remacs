@@ -5508,6 +5508,26 @@ cache, it can always be displayed, even if the value of
 @code{max-image-size} is subsequently changed (@pxref{Image Cache}).
 @end defvar
 
+Images inserted with the insertion functions above also get a local
+keymap installed in the text properties (or overlays) that span the
+displayed image.  This keymap defines the following commands:
+
+@table @kbd
+@item +
+Increase the image size (@code{image-increase-size}).  A prefix value
+of @samp{4} means to increase the size by 40%.  The default is 20%.
+
+@item -
+Decrease the image size (@code{image-increase-size}).  A prefix value
+of @samp{4} means to decrease the size by 40%.  The default is 20%.
+
+@item r
+Rotate the image by 90 degrees (@code{image-rotate}).
+
+@item o
+Save the image to a file (@code{image-save}).
+@end table
+
 @node Multi-Frame Images
 @subsection Multi-Frame Images
 @cindex multi-frame images

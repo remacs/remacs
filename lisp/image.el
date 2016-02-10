@@ -139,6 +139,15 @@ based on the font pixel size."
   :group 'image
   :version "25.2")
 
+;; Map put into text properties on images.
+(defvar image-map
+  (let ((map (make-keymap)))
+    (define-key map "-" 'image-decrease-size)
+    (define-key map "+" 'image-increase-size)
+    (define-key map "r" 'image-rotate)
+    (define-key map "o" 'image-save)
+    map))
+
 (defun image-load-path-for-library (library image &optional path no-error)
   "Return a suitable search path for images used by LIBRARY.
 
@@ -466,6 +475,7 @@ means display it in the right marginal area."
       (put-text-property 0 (length string) 'display prop string)
       (overlay-put overlay 'put-image t)
       (overlay-put overlay 'before-string string)
+      (overlay-put overlay 'map image-map)
       overlay)))
 
 
@@ -505,7 +515,9 @@ height of the image; integer values are taken as pixel values."
     (add-text-properties start (point)
 			 `(display ,(if slice
 					(list (cons 'slice slice) image)
-				      image) rear-nonsticky (display)))))
+				      image)
+                                   rear-nonsticky (display)
+                                   keymap ,image-map))))
 
 
 ;;;###autoload
@@ -541,7 +553,8 @@ The image is automatically split into ROWS x COLS slices."
 	  (insert string)
 	  (add-text-properties start (point)
 			       `(display ,(list (list 'slice x y dx dy) image)
-					 rear-nonsticky (display)))
+					 rear-nonsticky (display)
+                                         keymap ,image-map))
 	  (setq x (+ x dx))))
       (setq x 0.0
 	    y (+ y dy))
@@ -931,16 +944,54 @@ default is 20%."
                          (- 1 (/ n 10))
                        0.8)))
 
-(defun image-change-size (factor)
+(defun image--get-image ()
+  (let ((image (or (get-text-property (point) 'display)
+                   ;; `put-image' uses overlays, so find an image in
+                   ;; the overlays.
+                   (seq-find (lambda (overlay)
+                               (overlay-get overlay 'display))
+                             (overlays-at (point))))))
+    (when (or (not (consp image))
+              (not (eq (car image) 'image)))
+      (error "No image under point"))
+    image))
+
+(defun image--get-imagemagick-and-warn ()
   (unless (fboundp 'imagemagick-types)
     (error "Can't rescale images without ImageMagick support"))
+  (let ((image (image--get-image)))
+    (image-flush image)
+    (plist-put (cdr image) :type 'imagemagick)
+    image))
+
+(defun image-change-size (factor)
+  (let ((image (image--get-imagemagick-and-warn)))
+    (plist-put (cdr image) :scale
+               (* (or (plist-get (cdr image) :scale) 1) factor))))
+
+(defun image-rotate ()
+  "Rotate the image under point by 90 degrees clockwise."
+  (interactive)
+  (let ((image (image--get-imagemagick-and-warn)))
+    (plist-put (cdr image) :rotation
+               (float (+ (or (plist-get (cdr image) :rotation) 0) 90)))))
+
+(defun image-save ()
+  "Save the image under point."
+  (interactive)
   (let ((image (get-text-property (point) 'display)))
     (when (or (not (consp image))
               (not (eq (car image) 'image)))
       (error "No image under point"))
-    (plist-put (cdr image) :type 'imagemagick)
-    (plist-put (cdr image) :scale
-               (* (or (plist-get (cdr image) :scale) 1) factor))))
+    (with-temp-buffer
+      (let ((file (plist-get (cdr image) :file)))
+        (if file
+            (if (not (file-exists-p file))
+                (error "File %s no longer exists" file)
+              (insert-file-contents-literally file))
+          (insert (plist-get (cdr image) :data))))
+      (write-region (point-min) (point-max)
+                    (read-file-name "Write image to file: ")))))
 
 (provide 'image)
 
