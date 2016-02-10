@@ -189,6 +189,8 @@ and other things:
     (define-key map "\r" 'shr-browse-url)
     map))
 
+(defvar image-map nil)                  ;in case image.el is not pre-loaded
+
 (defvar shr-image-map
   (let ((map (copy-keymap shr-map)))
     (set-keymap-parent map image-map)
