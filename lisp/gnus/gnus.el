@@ -4435,10 +4435,6 @@ prompt the user for the name of an NNTP server to use."
   (require 'debbugs-gnu)
   (debbugs-gnu nil "gnus"))
 
-;; Allow redefinition of Gnus functions.
-
-(gnus-ems-redefine)
-
 (provide 'gnus)
 
 ;;; gnus.el ends here

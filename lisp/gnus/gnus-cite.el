@@ -1248,8 +1248,6 @@ When enabled, it automatically turns on `font-lock-mode'."
   "Turn off `gnus-message-citation-mode'."
   (gnus-message-citation-mode -1))
 
-(gnus-ems-redefine)
-
 (provide 'gnus-cite)
 
 ;; Local Variables:

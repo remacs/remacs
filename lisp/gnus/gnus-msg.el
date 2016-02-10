@@ -2006,10 +2006,6 @@ this is a reply."
 			 (insert "From: " (message-make-from) "\n"))))
 		  nil 'local)))))
 
-;;; Allow redefinition of functions.
-
-(gnus-ems-redefine)
-
 (provide 'gnus-msg)
 
 ;;; gnus-msg.el ends here

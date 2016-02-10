@@ -6197,7 +6197,7 @@ If nil, don't show those extra buttons."
 	       (gnus-mime-display-alternative
 		',ihandles ',not-pref ',begend ,id))
 	     keymap ,gnus-mime-button-map
-	     ,gnus-mouse-face-prop ,gnus-article-mouse-face
+	     mouse-face ,gnus-article-mouse-face
 	     face ,gnus-article-button-face
 	     gnus-part ,id
 	     article-type multipart
@@ -6222,7 +6222,7 @@ If nil, don't show those extra buttons."
 		 (gnus-mime-display-alternative
 		  ',ihandles ',handle ',begend ,id))
 	       keymap ,gnus-mime-button-map
-	       ,gnus-mouse-face-prop ,gnus-article-mouse-face
+	       mouse-face ,gnus-article-mouse-face
 	       face ,gnus-article-button-face
 	       gnus-part ,id
 	       gnus-data ,handle
@@ -8189,7 +8189,7 @@ url is put as the `gnus-button-url' overlay property on the button."
   (gnus-add-text-properties
    from to
    (nconc (and gnus-article-mouse-face
-	       (list gnus-mouse-face-prop gnus-article-mouse-face))
+	       (list 'mouse-face gnus-article-mouse-face))
 	  (list 'gnus-callback fun)
 	  (and data (list 'gnus-data data))))
   (widget-convert-button 'link from to :action 'gnus-widget-press-button
@@ -9017,8 +9017,6 @@ For example:
   "Pipe the security part under point to a process."
   (interactive)
   (gnus-mime-security-run-function 'mm-pipe-part))
-
-(gnus-ems-redefine)
 
 (provide 'gnus-art)
 

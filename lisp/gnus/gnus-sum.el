@@ -12462,7 +12462,7 @@ If REVERSE, save parts that do not match TYPE."
 	  (forward-line -1)		; back to `b'
 	  (gnus-add-text-properties
 	   b (1- e) (list 'gnus-number gnus-reffed-article-number
-			  gnus-mouse-face-prop gnus-mouse-face))
+			  'mouse-face gnus-mouse-face))
 	  (gnus-data-enter
 	   after-article gnus-reffed-article-number
 	   gnus-unread-mark b (car pslist) 0 (- e b))
@@ -12604,16 +12604,16 @@ If REVERSE, save parts that do not match TYPE."
       (let* ((beg (point-at-bol))
 	     (end (point-at-eol))
 	     ;; Fix by Mike Dugan <dugan@bucrf16.bu.edu>.
-	     (from (if (get-text-property beg gnus-mouse-face-prop)
+	     (from (if (get-text-property beg 'mouse-face)
 		       beg
 		     (or (next-single-property-change
-			  beg gnus-mouse-face-prop nil end)
+			  beg 'mouse-face nil end)
 			 beg)))
 	     (to
 	      (if (= from end)
 		  (- from 2)
 		(or (next-single-property-change
-		     from gnus-mouse-face-prop nil end)
+		     from 'mouse-face nil end)
 		    end))))
 	;; If no mouse-face prop on line we will have to = from = end,
 	;; so we highlight the entire line instead.
@@ -13117,8 +13117,6 @@ BOOKMARK is a bookmark name or a bookmark record."
        . ,(bookmark-get-bookmark-record bookmark)))))
 
 (gnus-summary-make-all-marking-commands)
-
-(gnus-ems-redefine)
 
 (provide 'gnus-sum)
 

@@ -889,9 +889,6 @@ it in the environment specified by BINDINGS."
 	  (set-window-point
 	   (gnus-get-buffer-window (current-buffer) t) (cdr region)))))))
 
-;;; Allow redefinition of functions.
-(gnus-ems-redefine)
-
 (provide 'gnus-salt)
 
 ;;; gnus-salt.el ends here

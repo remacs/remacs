@@ -65,47 +65,6 @@
 	 (truncate-string-to-width valstr ,max-width)
        valstr)))
 
-(eval-and-compile
-  (if (featurep 'xemacs)
-      (gnus-xmas-define)
-    (defvar gnus-mouse-face-prop 'mouse-face
-      "Property used for highlighting mouse regions.")))
-
-(defvar gnus-tmp-unread)
-(defvar gnus-tmp-replied)
-(defvar gnus-tmp-score-char)
-(defvar gnus-tmp-indentation)
-(defvar gnus-tmp-opening-bracket)
-(defvar gnus-tmp-lines)
-(defvar gnus-tmp-name)
-(defvar gnus-tmp-closing-bracket)
-(defvar gnus-tmp-subject-or-nil)
-(defvar gnus-check-before-posting)
-(defvar gnus-mouse-face)
-(defvar gnus-group-buffer)
-
-(defun gnus-ems-redefine ()
-  (cond
-   ((featurep 'mule)
-    ;; Mule and new Emacs definitions
-
-    ;; [Note] Now there are three kinds of mule implementations,
-    ;; original MULE, XEmacs/mule and Emacs 20+ including
-    ;; MULE features.  Unfortunately these APIs are different.  In
-    ;; particular, Emacs (including original Mule) and XEmacs are
-    ;; quite different.  However, this version of Gnus doesn't support
-    ;; anything other than XEmacs 20+ and Emacs 20.3+.
-
-    ;; Predicates to check are following:
-    ;; (boundp 'MULE) is t only if Mule (original; anything older than
-    ;;                     Mule 2.3) is running.
-    ;; (featurep 'mule) is t when other mule variants are running.
-
-    ;; It is possible to detect XEmacs/mule by (featurep 'mule) and
-    ;; (featurep 'xemacs).  In this case, the implementation for
-    ;; XEmacs/mule may be shareable between XEmacs and XEmacs/mule.
-    )))
-
 (provide 'gnus-ems)
 
 ;;; gnus-ems.el ends here

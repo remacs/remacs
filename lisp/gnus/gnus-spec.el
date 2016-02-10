@@ -79,7 +79,6 @@ text properties. This is only needed on XEmacs, as Emacs does this anyway."
 (defvar gnus-tmp-news-method)
 (defvar gnus-tmp-news-server)
 (defvar gnus-mouse-face)
-(defvar gnus-mouse-face-prop)
 (defvar gnus-tmp-header)
 (defvar gnus-tmp-from)
 
@@ -228,7 +227,7 @@ Return a list of updated types."
 (defun gnus-mouse-face-function (form type)
   `(gnus-put-text-property
     (point) (progn ,@form (point))
-    gnus-mouse-face-prop
+    mouse-face
     ,(if (equal type 0)
 	 'gnus-mouse-face
        `(quote ,(symbol-value (intern (format "gnus-mouse-face-%d" type)))))))
@@ -743,7 +742,7 @@ If PROPS, insert the result."
 		    gnus-tmp-name))
 	  gnus-tmp-closing-bracket)
 	 (point))
-       gnus-mouse-face-prop gnus-mouse-face)
+       'mouse-face gnus-mouse-face)
       (insert " " gnus-tmp-subject-or-nil "\n"))
 
 (provide 'gnus-spec)
