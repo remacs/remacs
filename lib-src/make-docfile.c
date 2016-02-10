@@ -37,6 +37,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>   /* config.h unconditionally includes this anyway */
 
@@ -48,6 +50,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif /* WINDOWSNT */
 
 #include <binary-io.h>
+#include <intprops.h>
+#include <min-max.h>
 
 #ifdef DOS_NT
 /* Defined to be sys_chdir in ms-w32.h, but only #ifdef emacs, so this
@@ -97,36 +101,31 @@ fatal (const char *s1, const char *s2)
   exit (EXIT_FAILURE);
 }
 
+static _Noreturn void
+memory_exhausted (void)
+{
+  fatal ("virtual memory exhausted", 0);
+}
+
 /* Like malloc but get fatal error if memory is exhausted.  */
 
 static void *
-xmalloc (unsigned int size)
+xmalloc (ptrdiff_t size)
 {
-  void *result = (void *) malloc (size);
+  void *result = malloc (size);
   if (result == NULL)
-    fatal ("virtual memory exhausted", 0);
-  return result;
-}
-
-/* Like strdup, but get fatal error if memory is exhausted.  */
-
-static char *
-xstrdup (char *s)
-{
-  char *result = strdup (s);
-  if (! result)
-    fatal ("virtual memory exhausted", 0);
+    memory_exhausted ();
   return result;
 }
 
 /* Like realloc but get fatal error if memory is exhausted.  */
 
 static void *
-xrealloc (void *arg, unsigned int size)
+xrealloc (void *arg, ptrdiff_t size)
 {
-  void *result = (void *) realloc (arg, size);
+  void *result = realloc (arg, size);
   if (result == NULL)
-    fatal ("virtual memory exhausted", 0);
+    memory_exhausted ();
   return result;
 }
 
@@ -223,8 +222,7 @@ put_filename (char *filename)
 static int
 scan_file (char *filename)
 {
-
-  size_t len = strlen (filename);
+  ptrdiff_t len = strlen (filename);
 
   if (!generate_globals)
     put_filename (filename);
@@ -250,7 +248,7 @@ static char input_buffer[128];
 struct rcsoc_state
 {
   /* A count of spaces and newlines that have been read, but not output.  */
-  unsigned pending_spaces, pending_newlines;
+  intmax_t pending_spaces, pending_newlines;
 
   /* Where we're reading from.  */
   FILE *in_file;
@@ -468,10 +466,10 @@ read_c_string_or_comment (FILE *infile, int printflag, int comment, int *saw_usa
 static void
 write_c_args (char *func, char *buf, int minargs, int maxargs)
 {
-  register char *p;
+  char *p;
   int in_ident = 0;
   char *ident_start IF_LINT (= NULL);
-  size_t ident_length = 0;
+  ptrdiff_t ident_length = 0;
 
   fputs ("(fn", stdout);
 
@@ -575,34 +573,38 @@ enum { DEFUN_noreturn = 1, DEFUN_const = 2 };
 
 /* All the variable names we saw while scanning C sources in `-g'
    mode.  */
-int num_globals;
-int num_globals_allocated;
+ptrdiff_t num_globals;
+ptrdiff_t num_globals_allocated;
 struct global *globals;
 
 static struct global *
-add_global (enum global_type type, char *name, int value, char const *svalue)
+add_global (enum global_type type, char const *name, int value,
+	    char const *svalue)
 {
   /* Ignore the one non-symbol that can occur.  */
   if (strcmp (name, "..."))
     {
+      if (num_globals == num_globals_allocated)
+	{
+	  ptrdiff_t num_globals_max = (min (PTRDIFF_MAX, SIZE_MAX)
+				       / sizeof *globals);
+	  if (num_globals_allocated == num_globals_max)
+	    memory_exhausted ();
+	  if (num_globals_allocated < num_globals_max / 2)
+	    num_globals_allocated = 2 * num_globals_allocated + 1;
+	  else
+	    num_globals_allocated = num_globals_max;
+	  globals = xrealloc (globals, num_globals_allocated * sizeof *globals);
+	}
+
       ++num_globals;
 
-      if (num_globals_allocated == 0)
-	{
-	  num_globals_allocated = 100;
-	  globals = xmalloc (num_globals_allocated * sizeof (struct global));
-	}
-      else if (num_globals == num_globals_allocated)
-	{
-	  num_globals_allocated *= 2;
-	  globals = xrealloc (globals,
-			      num_globals_allocated * sizeof (struct global));
-	}
-
+      ptrdiff_t namesize = strlen (name) + 1;
+      char *buf = xmalloc (namesize + (svalue ? strlen (svalue) + 1 : 0));
       globals[num_globals - 1].type = type;
-      globals[num_globals - 1].name = name;
+      globals[num_globals - 1].name = strcpy (buf, name);
       if (svalue)
-	globals[num_globals - 1].v.svalue = svalue;
+	globals[num_globals - 1].v.svalue = strcpy (buf + namesize, svalue);
       else
 	globals[num_globals - 1].v.value = value;
       globals[num_globals - 1].flags = 0;
@@ -649,10 +651,10 @@ close_emacs_globals (int num_symbols)
 static void
 write_globals (void)
 {
-  int i, j;
+  ptrdiff_t i, j;
   bool seen_defun = false;
-  int symnum = 0;
-  int num_symbols = 0;
+  ptrdiff_t symnum = 0;
+  ptrdiff_t num_symbols = 0;
   qsort (globals, num_globals, sizeof (struct global), compare_globals);
 
   j = 0;
@@ -665,6 +667,7 @@ write_globals (void)
 	      && globals[i].v.value != globals[i + 1].v.value)
 	    error ("function '%s' defined twice with differing signatures",
 		   globals[i].name);
+	  free (globals[i].name);
 	  i++;
 	}
       num_symbols += globals[i].type == SYMBOL;
@@ -707,7 +710,7 @@ write_globals (void)
 		  globals[i].name, globals[i].name);
 	}
       else if (globals[i].type == SYMBOL)
-	printf (("#define i%s %d\n"
+	printf (("#define i%s %td\n"
 		 "DEFINE_LISP_SYMBOL (%s)\n"),
 		globals[i].name, symnum++, globals[i].name);
       else
@@ -736,7 +739,7 @@ write_globals (void)
 
   puts ("#ifdef DEFINE_SYMBOLS");
   puts ("static char const *const defsym_name[] = {");
-  for (int i = 0; i < num_globals; i++)
+  for (ptrdiff_t i = 0; i < num_globals; i++)
     if (globals[i].type == SYMBOL)
       printf ("\t\"%s\",\n", globals[i].v.svalue);
   puts ("};");
@@ -745,9 +748,9 @@ write_globals (void)
   puts ("#define Qnil builtin_lisp_symbol (0)");
   puts ("#if DEFINE_NON_NIL_Q_SYMBOL_MACROS");
   num_symbols = 0;
-  for (int i = 0; i < num_globals; i++)
+  for (ptrdiff_t i = 0; i < num_globals; i++)
     if (globals[i].type == SYMBOL && num_symbols++ != 0)
-      printf ("# define %s builtin_lisp_symbol (%d)\n",
+      printf ("# define %s builtin_lisp_symbol (%td)\n",
 	      globals[i].name, num_symbols - 1);
   puts ("#endif");
 }
@@ -820,7 +823,8 @@ scan_c_stream (FILE *infile)
       int defvarperbufferflag = 0;
       int defvarflag = 0;
       enum global_type type = INVALID;
-      char *name IF_LINT (= 0);
+      static char *name;
+      static ptrdiff_t name_size;
 
       if (c != '\n' && c != '\r')
 	{
@@ -925,7 +929,7 @@ scan_c_stream (FILE *infile)
 
       if (generate_globals)
 	{
-	  int i = 0;
+	  ptrdiff_t i = 0;
 	  char const *svalue = 0;
 
 	  /* Skip "," and whitespace.  */
@@ -947,7 +951,16 @@ scan_c_stream (FILE *infile)
 		    || c == '\n' || c == '\r'));
 	  input_buffer[i] = '\0';
 
-	  name = xmalloc (i + 1);
+	  if (name_size <= i)
+	    {
+	      free (name);
+	      name_size = i + 1;
+	      ptrdiff_t doubled;
+	      if (! INT_MULTIPLY_WRAPV (name_size, 2, &doubled)
+		  && doubled <= SIZE_MAX)
+		name_size = doubled;
+	      name = xmalloc (name_size);
+	    }
 	  memcpy (name, input_buffer, i + 1);
 
 	  if (type == SYMBOL)
@@ -958,7 +971,7 @@ scan_c_stream (FILE *infile)
 	      if (c != '"')
 		continue;
 	      c = read_c_string_or_comment (infile, -1, 0, 0);
-	      svalue = xstrdup (input_buffer);
+	      svalue = input_buffer;
 	    }
 
 	  if (!defunflag)
@@ -1024,6 +1037,8 @@ scan_c_stream (FILE *infile)
       if (generate_globals)
 	{
 	  struct global *g = add_global (FUNCTION, name, maxargs, 0);
+	  if (!g)
+	    continue;
 
 	  /* The following code tries to recognize function attributes
 	     specified after the docstring, e.g.:
@@ -1278,7 +1293,7 @@ static int
 scan_lisp_file (const char *filename, const char *mode)
 {
   FILE *infile;
-  register int c;
+  int c;
   char *saved_string = 0;
   /* These are the only files that are loaded uncompiled, and must
      follow the conventions of the doc strings expected by this
@@ -1286,7 +1301,7 @@ scan_lisp_file (const char *filename, const char *mode)
      byte compiler when it produces the .elc files.  */
   static struct {
     const char *fn;
-    size_t fl;
+    int fl;
   } const uncompiled[] = {
     DEF_ELISP_FILE (loaddefs.el),
     DEF_ELISP_FILE (loadup.el),
@@ -1295,7 +1310,7 @@ scan_lisp_file (const char *filename, const char *mode)
     DEF_ELISP_FILE (eucjp-ms.el)
   };
   int i, match;
-  size_t flen = strlen (filename);
+  int flen = strlen (filename);
 
   if (generate_globals)
     fatal ("scanning lisp file when -g specified", 0);
@@ -1345,15 +1360,17 @@ scan_lisp_file (const char *filename, const char *mode)
 	  c = getc (infile);
 	  if (c == '@')
 	    {
-	      size_t length = 0;
-	      size_t i;
+	      ptrdiff_t length = 0;
+	      ptrdiff_t i;
 
 	      /* Read the length.  */
 	      while ((c = getc (infile),
 		      c >= '0' && c <= '9'))
 		{
-		  length *= 10;
-		  length += c - '0';
+		  if (INT_MULTIPLY_WRAPV (length, 10, &length)
+		      || INT_ADD_WRAPV (length, c - '0', &length)
+		      || SIZE_MAX < length)
+		    memory_exhausted ();
 		}
 
 	      if (length <= 1)
@@ -1369,7 +1386,7 @@ scan_lisp_file (const char *filename, const char *mode)
 
 	      /* Read in the contents.  */
 	      free (saved_string);
-	      saved_string = (char *) xmalloc (length);
+	      saved_string = xmalloc (length);
 	      for (i = 0; i < length; i++)
 		saved_string[i] = getc (infile);
 	      /* The last character is a ^_.
@@ -1606,6 +1623,7 @@ scan_lisp_file (const char *filename, const char *mode)
       else
 	read_c_string_or_comment (infile, 1, 0, 0);
     }
+  free (saved_string);
   fclose (infile);
   return 0;
 }
