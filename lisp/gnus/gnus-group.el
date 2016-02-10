@@ -632,7 +632,7 @@ simple manner.")
   "\C-c\C-i" gnus-info-find-node
   "\M-e" gnus-group-edit-group-method
   "^" gnus-group-enter-server-mode
-  gnus-mouse-2 gnus-mouse-pick-group
+  [mouse-2] gnus-mouse-pick-group
   [follow-link] 'mouse-face
   "<" beginning-of-buffer
   ">" end-of-buffer

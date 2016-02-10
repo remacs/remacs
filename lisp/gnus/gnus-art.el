@@ -4899,8 +4899,8 @@ General format specifiers can also be used.  See Info node
 
 (defvar gnus-mime-button-map
   (let ((map (make-sparse-keymap)))
-    (define-key map gnus-mouse-2 'gnus-article-push-button)
-    (define-key map gnus-down-mouse-3 'gnus-mime-button-menu)
+    (define-key map [mouse-2] 'gnus-article-push-button)
+    (define-key map [down-mouse-3] 'gnus-mime-button-menu)
     (dolist (c gnus-mime-button-commands)
       (define-key map (cadr c) (car c)))
     map))
@@ -5909,10 +5909,10 @@ all parts."
 	   (setq help-echo-owns-message t))
        (format
 	"%S: %s the MIME part; %S: more options"
-	(aref gnus-mouse-2 0)
+	'mouse-2
 	(if (mm-handle-displayed-p (widget-get widget :mime-handle))
 	    "hide" "show")
-	(aref gnus-down-mouse-3 0))))))
+	'down-mouse-3)))))
 
 (defun gnus-widget-press-button (elems _el)
   (goto-char (widget-get elems :from))
@@ -6203,8 +6203,7 @@ If nil, don't show those extra buttons."
 	     article-type multipart
 	     rear-nonsticky t))
 	  (widget-convert-button 'link from (point)
-				 :action 'gnus-widget-press-button
-				 :button-keymap gnus-widget-button-keymap)
+				 :action 'gnus-widget-press-button)
 	  ;; Do the handles
 	  (while (setq handle (pop handles))
 	    (gnus-add-text-properties
@@ -6228,8 +6227,7 @@ If nil, don't show those extra buttons."
 	       gnus-data ,handle
 	       rear-nonsticky t))
 	    (widget-convert-button 'link from (point)
-				   :action 'gnus-widget-press-button
-				   :button-keymap gnus-widget-button-keymap)
+				   :action 'gnus-widget-press-button)
 	    (insert "  "))
 	  (insert "\n\n"))
 	(when preferred
@@ -8194,8 +8192,7 @@ url is put as the `gnus-button-url' overlay property on the button."
 	  (and data (list 'gnus-data data))))
   (widget-convert-button 'link from to :action 'gnus-widget-press-button
 			 :help-echo (or text "Follow the link")
-			 :keymap gnus-url-button-map
-			 :button-keymap gnus-widget-button-keymap))
+			 :keymap gnus-url-button-map))
 
 (defun gnus-article-copy-string ()
   "Copy the string in the button to the kill ring."
@@ -8500,13 +8497,13 @@ url is put as the `gnus-button-url' overlay property on the button."
 
 (defvar gnus-prev-page-map
   (let ((map (make-sparse-keymap)))
-    (define-key map gnus-mouse-2 'gnus-button-prev-page)
+    (define-key map [mouse-2] 'gnus-button-prev-page)
     (define-key map "\r" 'gnus-button-prev-page)
     map))
 
 (defvar gnus-next-page-map
   (let ((map (make-sparse-keymap)))
-    (define-key map gnus-mouse-2 'gnus-button-next-page)
+    (define-key map [mouse-2] 'gnus-button-next-page)
     (define-key map "\r" 'gnus-button-next-page)
     map))
 
@@ -8820,8 +8817,8 @@ For example:
 
 (defvar gnus-mime-security-button-map
   (let ((map (make-sparse-keymap)))
-    (define-key map gnus-mouse-2 'gnus-article-push-button)
-    (define-key map gnus-down-mouse-3 'gnus-mime-security-button-menu)
+    (define-key map [mouse-2] 'gnus-article-push-button)
+    (define-key map [down-mouse-3] 'gnus-mime-security-button-menu)
     (dolist (c gnus-mime-security-button-commands)
       (define-key map (cadr c) (car c)))
     map))
@@ -8971,8 +8968,8 @@ For example:
 	 (setq help-echo-owns-message t))
        (format
 	"%S: show detail; %S: more options"
-	(aref gnus-mouse-2 0)
-	(aref gnus-down-mouse-3 0))))))
+	'mouse-2
+	'down-mouse-3)))))
 
 (defun gnus-mime-display-security (handle)
   (save-restriction

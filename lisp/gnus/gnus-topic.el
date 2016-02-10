@@ -1065,7 +1065,7 @@ articles in the topic and its subtopics."
     [(meta tab)] gnus-topic-unindent
     "\C-i" gnus-topic-indent
     "\M-\C-i" gnus-topic-unindent
-    gnus-mouse-2 gnus-mouse-pick-topic)
+    [mouse-2] gnus-mouse-pick-topic)
 
   ;; Define a new submap.
   (gnus-define-keys (gnus-group-topic-map "T" gnus-group-mode-map)

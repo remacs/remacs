@@ -28,13 +28,6 @@
   (require 'cl)
   (require 'ring))
 
-;;; Function aliases later to be redefined for XEmacs usage.
-
-(defvar gnus-mouse-2 [mouse-2])
-(defvar gnus-down-mouse-3 [down-mouse-3])
-(defvar gnus-down-mouse-2 [down-mouse-2])
-(defvar gnus-widget-button-keymap nil)
-
 (provide 'gnus-ems)
 
 ;;; gnus-ems.el ends here

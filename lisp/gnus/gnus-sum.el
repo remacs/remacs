@@ -1936,7 +1936,7 @@ increase the score of each group you read."
   "q" gnus-summary-exit
   "Q" gnus-summary-exit-no-update
   "\C-c\C-i" gnus-info-find-node
-  gnus-mouse-2 gnus-mouse-pick-article
+  [mouse-2] gnus-mouse-pick-article
   [follow-link] mouse-face
   "m" gnus-summary-mail-other-window
   "a" gnus-summary-post-news

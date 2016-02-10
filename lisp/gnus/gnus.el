@@ -3026,7 +3026,7 @@ See Info node `(gnus)Formatting Variables'."
 
 (defun gnus-suppress-keymap (keymap)
   (suppress-keymap keymap)
-  (let ((keys `([delete] "\177" "\M-u"))) ;gnus-mouse-2
+  (let ((keys `([delete] "\177" "\M-u"))) ;[mouse-2]
     (while keys
       (define-key keymap (pop keys) 'undefined))))
 

@@ -400,7 +400,7 @@ deletion, or > if it is flagged for displaying."
 	       (insert "\n")))
 	   `(mouse-face highlight follow-link t
 			help-echo ,(format "%s: go to this article"
-					   (aref gnus-mouse-2 0))))
+					   'mouse-2)))
 	(insert name "\n")))
     (goto-char (point-min))
     (forward-line 2)
@@ -463,7 +463,7 @@ That is, all information but the name."
   (define-key gnus-bookmark-bmenu-mode-map "s" 'gnus-bookmark-bmenu-save)
   (define-key gnus-bookmark-bmenu-mode-map "t" 'gnus-bookmark-bmenu-toggle-infos)
   (define-key gnus-bookmark-bmenu-mode-map "a" 'gnus-bookmark-bmenu-show-details)
-  (define-key gnus-bookmark-bmenu-mode-map gnus-mouse-2
+  (define-key gnus-bookmark-bmenu-mode-map [mouse-2]
     'gnus-bookmark-bmenu-select-by-mouse))
 
 ;; Bookmark Buffer Menu mode is suitable only for specially formatted
@@ -561,7 +561,7 @@ Optional argument SHOW means show them unconditionally."
 	   `(mouse-face highlight
 	     follow-link t
 	     help-echo ,(format "%s: go to this article"
-				(aref gnus-mouse-2 0))))))))
+				'mouse-2)))))))
 
 (defun gnus-bookmark-kill-line (&optional newline-too)
   "Kill from point to end of line.
@@ -611,7 +611,7 @@ Does not affect the kill ring."
 			 follow-link t
 			 help-echo
 			 ,(format "%s: go to this bookmark in other window"
-				  (aref gnus-mouse-2 0))))))
+				  'mouse-2)))))
                 (setq gnus-bookmark-bmenu-hidden-bookmarks
                       (cdr gnus-bookmark-bmenu-hidden-bookmarks))
                 (forward-line 1))))))))

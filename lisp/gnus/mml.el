@@ -50,7 +50,6 @@
 (autoload 'message-mail-p         "message")
 
 (defvar gnus-article-mime-handles)
-(defvar gnus-mouse-2)
 (defvar gnus-newsrc-hashtb)
 (defvar message-default-charset)
 (defvar message-deletable-headers)
@@ -1602,7 +1601,7 @@ or the `pop-to-buffer' function."
 		     (lambda ()
 		       (interactive)
 		       (widget-button-press (point))))
-      (local-set-key gnus-mouse-2
+      (local-set-key [mouse-2]
 		     (lambda (event)
 		       (interactive "@e")
 		       (widget-button-press (widget-event-point event) event)))

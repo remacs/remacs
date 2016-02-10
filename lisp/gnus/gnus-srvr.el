@@ -156,7 +156,7 @@ If nil, a faster, but more primitive, buffer is used instead."
   (gnus-define-keys gnus-server-mode-map
     " " gnus-server-read-server-in-server-buffer
     "\r" gnus-server-read-server
-    gnus-mouse-2 gnus-server-pick-server
+    [mouse-2] gnus-server-pick-server
     "q" gnus-server-exit
     "l" gnus-server-list-servers
     "k" gnus-server-kill-server

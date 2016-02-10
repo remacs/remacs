@@ -76,7 +76,7 @@ It accepts the same format specs that `gnus-summary-line-format' does."
       " " gnus-pick-next-page
       "u" gnus-pick-unmark-article-or-thread
       "." gnus-pick-article-or-thread
-      gnus-down-mouse-2 gnus-pick-mouse-pick-region
+      [down-mouse-2] gnus-pick-mouse-pick-region
       "\r" gnus-pick-start-reading)
     map))
 
@@ -458,7 +458,7 @@ Two predefined functions are available:
     (gnus-define-keys
         map
       "\r" gnus-tree-select-article
-      gnus-mouse-2 gnus-tree-pick-article
+      [mouse-2] gnus-tree-pick-article
       "\C-?" gnus-tree-read-summary-keys
       "h" gnus-tree-show-summary
 
