@@ -40,9 +40,7 @@
 ;; This is apparently necessary even though things are autoloaded.
 ;; Because we dynamically bind mail-abbrev-mode-regexp, we'd better
 ;; require mailabbrev here.
-(if (featurep 'xemacs)
-    (require 'mail-abbrevs)
-  (require 'mailabbrev))
+(require 'mailabbrev)
 (require 'mail-parse)
 (require 'mml)
 (require 'rfc822)
@@ -1249,11 +1247,7 @@ called and its result is inserted."
 	  (if (and (boundp 'mail-archive-file-name)
 		   (stringp mail-archive-file-name))
 	      (format "FCC: %s\n" mail-archive-file-name))
-	  ;; Use the value of `mail-default-headers' if available.
-	  ;; Note: as for XEmacs 21.4 and 21.5, it is unavailable
-	  ;; unless sendmail.el is loaded.
-	  (if (boundp 'mail-default-headers)
-	      mail-default-headers))
+	  mail-default-headers)
   "*A string of header lines to be inserted in outgoing mails."
   :version "23.2"
   :group 'message-headers

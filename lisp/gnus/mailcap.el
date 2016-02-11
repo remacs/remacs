@@ -53,12 +53,6 @@
     table)
   "A syntax table for parsing SGML attributes.")
 
-(eval-and-compile
-  (when (featurep 'xemacs)
-    (condition-case nil
-	(require 'lpr)
-      (error nil))))
-
 (defvar mailcap-print-command
   (mapconcat 'identity
 	     (cons (if (boundp 'lpr-command)
