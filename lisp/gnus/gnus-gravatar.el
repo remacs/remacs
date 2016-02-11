@@ -110,8 +110,7 @@ Set image category to CATEGORY."
 		;; another mail with the same someaddress.
 		(unless (memq 'gnus-gravatar (text-properties-at (point)))
 		  (let ((point (point)))
-		    (unless (featurep 'xemacs)
-		      (setq gravatar (append gravatar gnus-gravatar-properties)))
+		    (setq gravatar (append gravatar gnus-gravatar-properties))
 		    (gnus-put-image gravatar (buffer-substring (point) (1+ point)) category)
 		    (put-text-property point (point) 'gnus-gravatar address)
 		    (gnus-add-wash-type category)

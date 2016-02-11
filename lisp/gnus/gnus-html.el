@@ -39,7 +39,7 @@
 (require 'xml)
 (require 'browse-url)
 (require 'mm-util)
-(eval-and-compile (unless (featurep 'xemacs) (require 'help-fns)))
+(require 'help-fns)
 
 (defcustom gnus-html-image-cache-ttl (days-to-time 7)
   "Time used to determine if we should use images from the cache."
@@ -454,10 +454,7 @@ Return a string with image data."
         (let* ((image
                 (ignore-errors
                   (gnus-create-image data nil t)))
-               (size (and image
-                          (if (featurep 'xemacs)
-                              (cons (glyph-width image) (glyph-height image))
-                            (image-size image t)))))
+               (size (and image (image-size image t))))
           (save-excursion
             (goto-char start)
             (let ((alt-text (or alt-text
@@ -466,16 +463,8 @@ Return a string with image data."
               (if (and image
                        ;; Kludge to avoid displaying 30x30 gif images, which
                        ;; seems to be a signal of a broken image.
-                       (not (and (if (featurep 'xemacs)
-                                     (glyphp image)
-                                   (listp image))
-                                 (eq (if (featurep 'xemacs)
-                                         (let ((d (cdadar
-						   (specifier-spec-list
-						    (glyph-image image)))))
-                                           (and (vectorp d)
-                                                (aref d 0)))
-                                       (plist-get (cdr image) :type))
+                       (not (and (listp image)
+                                 (eq (plist-get (cdr image) :type)
                                      'gif)
                                  (= (car size) 30)
                                  (= (cdr size) 30))))

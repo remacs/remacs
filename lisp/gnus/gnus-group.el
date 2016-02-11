@@ -223,11 +223,6 @@ with some simple extensions:
   :group 'gnus-group-visual
   :type 'string)
 
-;; Extracted from gnus-xmas-redefine in order to preserve user settings
-(when (featurep 'xemacs)
-  (add-hook 'gnus-group-mode-hook 'gnus-xmas-group-menu-add)
-  (add-hook 'gnus-group-mode-hook 'gnus-xmas-setup-group-toolbar))
-
 (defcustom gnus-group-menu-hook nil
   "Hook run after the creation of the group mode menu."
   :group 'gnus-group-various
@@ -534,10 +529,7 @@ simple manner.")
     (?O gnus-tmp-moderated-string ?s)
     (?p gnus-tmp-process-marked ?c)
     (?s gnus-tmp-news-server ?s)
-    (?n ,(if (featurep 'xemacs)
-	     '(symbol-name gnus-tmp-news-method)
-	   'gnus-tmp-news-method)
-	?s)
+    (?n gnus-tmp-news-method ?s)
     (?P gnus-group-indentation ?s)
     (?E gnus-tmp-group-icon ?s)
     (?B gnus-tmp-summary-live ?c)
@@ -797,32 +789,26 @@ simple manner.")
        ["Catch up" gnus-group-catchup-current
 	:included (not (gnus-topic-mode-p))
 	:active (gnus-group-group-name)
-	,@(if (featurep 'xemacs) nil
-	    '(:help "Mark unread articles in the current group as read"))]
+	:help "Mark unread articles in the current group as read"]
        ["Catch up " gnus-topic-catchup-articles
 	:included (gnus-topic-mode-p)
-	,@(if (featurep 'xemacs) nil
-	    '(:help "Mark unread articles in the current group or topic as read"))]
+	:help "Mark unread articles in the current group or topic as read"]
        ["Catch up all articles" gnus-group-catchup-current-all
 	(gnus-group-group-name)]
        ["Check for new articles" gnus-group-get-new-news-this-group
 	:included (not (gnus-topic-mode-p))
 	:active (gnus-group-group-name)
-	,@(if (featurep 'xemacs) nil
-	    '(:help "Check for new messages in current group"))]
+	:help "Check for new messages in current group"]
        ["Check for new articles " gnus-topic-get-new-news-this-topic
 	:included (gnus-topic-mode-p)
-	,@(if (featurep 'xemacs) nil
-	    '(:help "Check for new messages in current group or topic"))]
+	:help "Check for new messages in current group or topic"]
        ["Toggle subscription" gnus-group-unsubscribe-current-group
 	(gnus-group-group-name)]
        ["Kill" gnus-group-kill-group :active (gnus-group-group-name)
-	,@(if (featurep 'xemacs) nil
-	      '(:help "Kill (remove) current group"))]
+	:help "Kill (remove) current group"]
        ["Yank" gnus-group-yank-group gnus-list-of-killed-groups]
        ["Describe" gnus-group-describe-group :active (gnus-group-group-name)
-	,@(if (featurep 'xemacs) nil
-	    '(:help "Display description of the current group"))]
+	:help "Display description of the current group"]
        ;; Actually one should check, if any of the marked groups gives t for
        ;; (gnus-check-backend-function 'request-expire-articles ...)
        ["Expire articles" gnus-group-expire-articles
@@ -959,13 +945,9 @@ simple manner.")
        ["Send a message (mail or news)" gnus-group-post-news t]
        ["Create a local message" gnus-group-news t]
        ["Check for new news" gnus-group-get-new-news
-	,@(if (featurep 'xemacs) '(t)
-	    '(:help "Get newly arrived articles"))
-	]
+	:help "Get newly arrived articles"]
        ["Send queued messages" gnus-delay-send-queue
-	,@(if (featurep 'xemacs) '(t)
-	    '(:help "Send all messages that are scheduled to be sent now"))
-	]
+	:help "Send all messages that are scheduled to be sent now"]
        ["Activate all groups" gnus-activate-all-groups t]
        ["Restart Gnus" gnus-group-restart t]
        ["Read init file" gnus-group-read-init-file t]
@@ -980,9 +962,7 @@ simple manner.")
        ["Flush score cache" gnus-score-flush-cache t]
        ["Toggle topics" gnus-topic-mode t]
        ["Send a bug report" gnus-bug t]
-       ["Exit from Gnus" gnus-group-exit
-	,@(if (featurep 'xemacs) '(t)
-	    '(:help "Quit reading news"))]
+       ["Exit from Gnus" gnus-group-exit :help "Quit reading news"]
        ["Exit without saving" gnus-group-quit t]))
 
     (gnus-run-hooks 'gnus-group-menu-hook)))
@@ -1100,8 +1080,7 @@ See `gmm-tool-bar-from-list' for the format of the list."
 (defun gnus-group-make-tool-bar (&optional force)
   "Make a group mode tool bar from `gnus-group-tool-bar'.
 When FORCE, rebuild the tool bar."
-  (when (and (not (featurep 'xemacs))
-	     (boundp 'tool-bar-mode)
+  (when (and (boundp 'tool-bar-mode)
 	     tool-bar-mode
              (display-graphic-p)
 	     (or (not gnus-group-tool-bar-map) force))
@@ -1510,8 +1489,7 @@ if it is a string, only list groups matching REGEXP."
 ;; Message-ID: <v9acdmrcse.fsf@marauder.physik.uni-ulm.de>
 
 (defcustom gnus-group-update-tool-bar
-  (and (not (featurep 'xemacs))
-       (boundp 'tool-bar-mode)
+  (and (boundp 'tool-bar-mode)
        tool-bar-mode
        ;; Using `redraw-frame' (see `gnus-tool-bar-update') in Emacs might
        ;; be confusing, so maybe we shouldn't call it by default.
@@ -4673,14 +4651,10 @@ This command may read the active file."
 	(gnus-group-list-mode gnus-group-list-mode) ;; Save it.
 	func)
     (push last-command-event unread-command-events)
-    (if (featurep 'xemacs)
-	(push (make-event 'key-press '(key ?A)) unread-command-events)
-      (push ?A unread-command-events))
+    (push ?A unread-command-events)
     (let (gnus-pick-mode keys)
-      (setq keys (if (featurep 'xemacs)
-		     (events-to-keys (read-key-sequence nil))
-		   (read-key-sequence nil)))
-      (setq func (lookup-key (current-local-map) keys)))
+      (setq keys (read-key-sequence nil)
+	    func (lookup-key (current-local-map) keys)))
     (if (or (not func)
 	    (numberp func))
 	(ding)
