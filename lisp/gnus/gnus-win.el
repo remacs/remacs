@@ -273,9 +273,7 @@ See the Gnus manual for an explanation of the syntax used.")
 	      (cond
                ((eq buf (window-buffer (selected-window)))
                 (set-buffer buf))
-               ((eq t (window-dedicated-p
-		       ;; XEmacs version of `window-dedicated-p' requires it.
-		       (selected-window)))
+               ((eq t (window-dedicated-p))
                 ;; If the window is hard-dedicated, we have a problem because
                 ;; we just can't do what we're asked.  But signaling an error,
                 ;; like `switch-to-buffer' would do, is not an option because
@@ -417,15 +415,11 @@ See the Gnus manual for an explanation of the syntax used.")
                     (gnus-delete-windows-in-gnusey-frames))
                 ;; Just remove some windows.
                 (gnus-remove-some-windows)
-                (if (featurep 'xemacs)
-                    (switch-to-buffer nntp-server-buffer)
-                  (set-buffer nntp-server-buffer)))
+                (set-buffer nntp-server-buffer))
             (select-frame frame)))
 
         (let (gnus-window-frame-focus)
-          (if (featurep 'xemacs)
-              (switch-to-buffer nntp-server-buffer)
-            (set-buffer nntp-server-buffer))
+          (set-buffer nntp-server-buffer)
           (gnus-configure-frame split)
           (run-hooks 'gnus-configure-windows-hook)
           (when gnus-window-frame-focus
@@ -510,9 +504,7 @@ should have point."
 		  lowest-buf buf))))
       (when lowest-buf
 	(pop-to-buffer lowest-buf)
-	(if (featurep 'xemacs)
-	    (switch-to-buffer nntp-server-buffer)
-	  (set-buffer nntp-server-buffer)))
+	(set-buffer nntp-server-buffer))
       (mapcar (lambda (b) (delete-windows-on b t))
 	      (delq lowest-buf bufs)))))
 
@@ -520,9 +512,6 @@ should have point."
   (cond
    ((fboundp 'frames-on-display-list)
     (defalias 'gnus-frames-on-display-list 'frames-on-display-list))
-   ((and (featurep 'xemacs) (fboundp 'frame-device))
-    (defun gnus-frames-on-display-list ()
-      (apply 'filtered-frame-list 'identity (list (frame-device nil)))))
    (t
     (defalias 'gnus-frames-on-display-list 'frame-list))))
 

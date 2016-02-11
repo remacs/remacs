@@ -876,10 +876,7 @@ When called interactively, prompt for REGEXP."
 	(with-current-buffer buffer
 	  (save-restriction
 	    (let ((inhibit-read-only t))
-	      (set-text-properties (point-min) (point-max) nil)
-	      ;; These two are necessary for XEmacs 19.12 fascism.
-	      (put-text-property (point-min) (point-max) 'invisible nil)
-	      (put-text-property (point-min) (point-max) 'intangible nil))
+	      (set-text-properties (point-min) (point-max) nil))
 	    (when (and message-forward-as-mime
 		       message-forward-show-mml
 		       gnus-uu-digest-buffer)

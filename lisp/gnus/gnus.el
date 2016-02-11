@@ -2503,16 +2503,11 @@ Disabling the agent may result in noticeable loss of performance."
 		 (function-item gnus-slave-no-server)))
 
 (defcustom gnus-other-frame-parameters nil
-  "Frame parameters used by `gnus-other-frame' to create a Gnus frame.
-This should be an alist for Emacs, or a plist for XEmacs."
+  "Frame parameters used by `gnus-other-frame' to create a Gnus frame."
   :group 'gnus-start
-  :type (if (featurep 'xemacs)
-	    '(repeat (list :inline t :format "%v"
-			   (symbol :tag "Property")
-			   (sexp :tag "Value")))
-	  '(repeat (cons :format "%v"
-			 (symbol :tag "Parameter")
-			 (sexp :tag "Value")))))
+  :type '(repeat (cons :format "%v"
+		       (symbol :tag "Parameter")
+		       (sexp :tag "Value"))))
 
 (defcustom gnus-user-agent '(emacs gnus type)
   "Which information should be exposed in the User-Agent header.

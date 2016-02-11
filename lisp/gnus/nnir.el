@@ -1787,7 +1787,7 @@ article came from is also searched."
 	  (list (list (gnus-method-to-server
 	   (gnus-find-method-for-group gnus-newsgroup-name)))))
 	 (registry-group (and
-			  (gnus-bound-and-true-p 'gnus-registry-enabled)
+			  (bound-and-true-p gnus-registry-enabled)
 			  (car (gnus-registry-get-id-key
 				(mail-header-id header) 'group))))
 	 (registry-server
@@ -1859,7 +1859,7 @@ article came from is also searched."
   (when (eq (car (gnus-find-method-for-group gnus-newsgroup-name)) 'nnir)
     (setq gnus-summary-line-format
 	  (or nnir-summary-line-format gnus-summary-line-format))
-    (when (gnus-bound-and-true-p 'gnus-registry-enabled)
+    (when (bound-and-true-p gnus-registry-enabled)
       (remove-hook 'gnus-summary-article-delete-hook 'gnus-registry-action t)
       (remove-hook 'gnus-summary-article-move-hook 'gnus-registry-action t)
       (remove-hook 'gnus-summary-article-expire-hook 'gnus-registry-action t)

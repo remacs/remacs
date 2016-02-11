@@ -4562,7 +4562,7 @@ commands:
 (defun gnus-article-stop-animations ()
   (dolist (timer (and (boundp 'timer-list)
 		      timer-list))
-    (when (eq (gnus-timer--function timer) 'image-animate-timeout)
+    (when (eq (timer--function timer) 'image-animate-timeout)
       (cancel-timer timer))))
 
 (defun gnus-stop-downloads ()

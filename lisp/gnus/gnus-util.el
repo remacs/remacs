@@ -1819,16 +1819,6 @@ to case differences."
 	       (string-equal (downcase str1) (downcase prefix))
 	     (string-equal str1 prefix))))))
 
-;; Simple check: can be a macro but this way, although slow, it's really clear.
-;; We don't use `bound-and-true-p' because it's not in XEmacs.
-(defun gnus-bound-and-true-p (sym)
-  (and (boundp sym) (symbol-value sym)))
-
-(if (fboundp 'timer--function)
-    (defalias 'gnus-timer--function 'timer--function)
-  (defun gnus-timer--function (timer)
-    (elt timer 5)))
-
 (defun gnus-test-list (list predicate)
   "To each element of LIST apply PREDICATE.
 Return nil if LIST is no list or is empty or some test returns nil;
