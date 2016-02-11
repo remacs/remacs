@@ -8560,6 +8560,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
       return 0;
     }
 
+#ifdef HAVE_MAGICKAUTOORIENTIMAGE
   /* If no :rotation is explicitly specified, apply the automatic
      rotation from EXIF. */
   if (NILP (image_spec_value (img->spec, QCrotation, NULL)))
@@ -8569,6 +8570,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
         DestroyMagickWand (image_wand);
         return 0;
       }
+#endif
 
   if (ino < 0 || ino >= MagickGetNumberImages (image_wand))
     {

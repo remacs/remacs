@@ -2414,7 +2414,7 @@ if test "${HAVE_X11}" = "yes" || test "${HAVE_NS}" = "yes" || test "${HAVE_W32}"
       OLD_LIBS=$LIBS
       CFLAGS="$CFLAGS $IMAGEMAGICK_CFLAGS"
       LIBS="$IMAGEMAGICK_LIBS $LIBS"
-      AC_CHECK_FUNCS(MagickExportImagePixels MagickMergeImageLayers)
+      AC_CHECK_FUNCS(MagickExportImagePixels MagickMergeImageLayers MagickAutoOrientImage)
       CFLAGS=$OLD_CFLAGS
       LIBS=$OLD_LIBS
     fi
