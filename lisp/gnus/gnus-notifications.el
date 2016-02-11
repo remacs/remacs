@@ -81,7 +81,7 @@ not get notifications."
             (article (nth 2 group-article)))
         (cond ((string= key "read")
                (gnus-fetch-group group (list article))
-               (gnus-select-frame-set-input-focus (selected-frame)))
+               (select-frame-set-input-focus (selected-frame)))
               ((string= key "mark-read")
                (gnus-update-read-articles
                 group

@@ -4382,12 +4382,12 @@ current display is used."
 				 (with-current-buffer (window-buffer window)
 				   (string-match "\\`gnus-"
 						 (symbol-name major-mode))))
-			(gnus-select-frame-set-input-focus
+			(select-frame-set-input-focus
 			 (setq gnus-other-frame-object (window-frame window)))
 			(select-window window)
 			(throw 'found t)))
 		    'ignore t)))
-      (gnus-select-frame-set-input-focus
+      (select-frame-set-input-focus
        (setq gnus-other-frame-object
 	     (if display
 		 (make-frame-on-display display gnus-other-frame-parameters)

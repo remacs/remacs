@@ -1943,7 +1943,6 @@ You must have the \"hashcash\" binary installed, see `hashcash-path'."
 (autoload 'gnus-output-to-mail "gnus-util")
 (autoload 'gnus-output-to-rmail "gnus-util")
 (autoload 'gnus-request-post "gnus-int")
-(autoload 'gnus-select-frame-set-input-focus "gnus-util")
 (autoload 'gnus-server-string "gnus")
 (autoload 'idna-to-ascii "idna")
 (autoload 'message-setup-toolbar "messagexmas")
@@ -6486,7 +6485,7 @@ moved to the beginning "
 	  (if window
 	      ;; Raise the frame already displaying the message buffer.
 	      (progn
-		(gnus-select-frame-set-input-focus (window-frame window))
+		(select-frame-set-input-focus (window-frame window))
 		(select-window window))
 	    (funcall (or switch-function #'pop-to-buffer) buffer)
 	    (set-buffer buffer))

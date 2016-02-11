@@ -5540,7 +5540,7 @@ If INTERACTIVE, call FUNCTION interactively."
 			     window
 			   (setq window (selected-window))
 			   ;; Article may be displayed in the other frame.
-			   (gnus-select-frame-set-input-focus
+			   (select-frame-set-input-focus
 			    (prog1
 				frame
 			      (setq frame (selected-frame))))))
@@ -5568,7 +5568,7 @@ If INTERACTIVE, call FUNCTION interactively."
 			     (get-text-property (point) 'gnus-data))))
 		(set-marker overlay-arrow-position nil)
 		(unless gnus-auto-select-part
-		  (gnus-select-frame-set-input-focus frame)
+		  (select-frame-set-input-focus frame)
 		  (select-window window))))
 	    t))
       (if gnus-inhibit-mime-unbuttonizing
@@ -6760,7 +6760,7 @@ not have a face in `gnus-article-boring-faces'."
 						(article 1.0)))))))
 		     (gnus-configure-windows 'article))
 		   (setq win (get-buffer-window summary-buffer 'visible)))
-		 (gnus-select-frame-set-input-focus (window-frame win))
+		 (select-frame-set-input-focus (window-frame win))
 		 (select-window win))))
 	(setq in-buffer (current-buffer))
 	;; We disable the pick minor mode commands.

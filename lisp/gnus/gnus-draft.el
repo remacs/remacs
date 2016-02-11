@@ -317,7 +317,7 @@ If DONT-POP is nil, display the buffer after setting it up."
 	(let* ((window (get-buffer-window buff t))
 	       (frame (and window (window-frame window))))
 	  (if frame
-	      (gnus-select-frame-set-input-focus frame)
+	      (select-frame-set-input-focus frame)
 	    (pop-to-buffer buff t)))
 	(error "The draft %s is under edit" file)))))
 

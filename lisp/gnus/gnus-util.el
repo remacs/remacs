@@ -850,18 +850,6 @@ Otherwise, return the value."
 			(overlay-get overlay 'face))
 		      (overlays-at pos))))))
 
-;; Note: the optional 2nd argument has a different meaning between
-;; Emacs and XEmacs.
-;; (next-char-property-change POSITION &optional LIMIT)
-;; (next-extent-change        POS      &optional OBJECT)
-(defalias 'gnus-next-char-property-change
-  (if (fboundp 'next-extent-change)
-      'next-extent-change 'next-char-property-change))
-
-(defalias 'gnus-previous-char-property-change
-  (if (fboundp 'previous-extent-change)
-      'previous-extent-change 'previous-char-property-change))
-
 ;;; Protected and atomic operations.  dmoore@ucsd.edu 21.11.1996
 ;; The primary idea here is to try to protect internal data structures
 ;; from becoming corrupted when the user hits C-g, or if a hook or
@@ -939,16 +927,8 @@ with potentially long computations."
 
 ;;; Functions for saving to babyl/mail files.
 
-(eval-when-compile
-  (if (featurep 'xemacs)
-      ;; Don't load tm and apel XEmacs packages that provide some
-      ;; Emacs emulating functions and variables.
-      (let ((features features))
-	(provide 'tm-view)
-	(unless (fboundp 'set-alist) (defalias 'set-alist 'ignore))
-	(require 'rmail)) ;; It requires tm-view that loads apel.
-    (require 'rmail))
-  (autoload 'rmail-update-summary "rmailsum"))
+(require 'rmail)
+(autoload 'rmail-update-summary "rmailsum")
 
 (defvar mm-text-coding-system)
 
@@ -1387,10 +1367,6 @@ is run."
   "Byte-compile FORM if `gnus-use-byte-compile' is non-nil."
   (if gnus-use-byte-compile
       (progn
-	(condition-case nil
-	    ;; Work around a bug in XEmacs 21.4
-	    (require 'byte-optimize)
-	  (error))
 	(require 'bytecomp)
 	(defalias 'gnus-byte-compile
 	  (lambda (form)
@@ -1493,16 +1469,7 @@ SPEC is a predicate specifier that contains stuff like `or', `and',
                                           initial-input history def)
   "Call standard `completing-read-function'."
   (let ((completion-styles gnus-completion-styles))
-    (completing-read prompt
-		     (if (featurep 'xemacs)
-			 ;; Old XEmacs (at least 21.4) expect an alist,
-			 ;; in which the car of each element is a string,
-			 ;; for collection.
-			 (mapcar
-			  (lambda (elem)
-			    (list (format "%s" (or (car-safe elem) elem))))
-			  collection)
-		       collection)
+    (completing-read prompt collection
                      nil require-match initial-input history def)))
 
 (autoload 'ido-completing-read "ido")
@@ -1542,11 +1509,6 @@ SPEC is a predicate specifier that contains stuff like `or', `and',
           (iswitchb-read-buffer prompt def require-match))
       (or iswitchb-mode
 	  (remove-hook 'minibuffer-setup-hook 'iswitchb-minibuffer-setup)))))
-
-(defun gnus-graphic-display-p ()
-  (if (featurep 'xemacs)
-      (device-on-window-system-p)
-    (display-graphic-p)))
 
 (put 'gnus-parse-without-error 'lisp-indent-function 0)
 (put 'gnus-parse-without-error 'edebug-form-spec '(body))
@@ -1628,31 +1590,18 @@ CHOICE is a list of the choice char and help message at IDX."
 	(kill-buffer buf))
     tchar))
 
-(if (featurep 'emacs)
-    (defalias 'gnus-select-frame-set-input-focus 'select-frame-set-input-focus)
-  (if (fboundp 'select-frame-set-input-focus)
-      (defalias 'gnus-select-frame-set-input-focus 'select-frame-set-input-focus)
-    ;; XEmacs 21.4, SXEmacs
-    (defun gnus-select-frame-set-input-focus (frame)
-      "Select FRAME, raise it, and set input focus, if possible."
-      (raise-frame frame)
-      (select-frame frame)
-      (focus-frame frame))))
-
 (defun gnus-frame-or-window-display-name (object)
   "Given a frame or window, return the associated display name.
 Return nil otherwise."
-  (if (featurep 'xemacs)
-      (device-connection (dfw-device object))
-    (if (or (framep object)
-	    (and (windowp object)
-		 (setq object (window-frame object))))
-	(let ((display (frame-parameter object 'display)))
-	  (if (and (stringp display)
-		   ;; Exclude invalid display names.
-		   (string-match "\\`[^:]*:[0-9]+\\(\\.[0-9]+\\)?\\'"
-				 display))
-	      display)))))
+  (if (or (framep object)
+	  (and (windowp object)
+	       (setq object (window-frame object))))
+      (let ((display (frame-parameter object 'display)))
+	(if (and (stringp display)
+		 ;; Exclude invalid display names.
+		 (string-match "\\`[^:]*:[0-9]+\\(\\.[0-9]+\\)?\\'"
+			       display))
+	    display))))
 
 (defvar tool-bar-mode)
 
@@ -1661,9 +1610,7 @@ Return nil otherwise."
   (when (and (boundp 'tool-bar-mode)
 	     tool-bar-mode)
     (let* ((args nil)
-	   (func (cond ((featurep 'xemacs)
-			'ignore)
-		       ((fboundp 'tool-bar-update)
+	   (func (cond ((fboundp 'tool-bar-update)
 			'tool-bar-update)
 		       ((fboundp 'force-window-update)
 			'force-window-update)
@@ -1723,10 +1670,6 @@ predicate on the elements."
 	  (push (pop list1) res)))
       (nconc (nreverse res) list1 list2))))
 
-(defvar xemacs-codename)
-(defvar sxemacs-codename)
-(defvar emacs-program-version)
-
 (defun gnus-emacs-version ()
   "Stringified Emacs version."
   (let* ((lst (if (listp gnus-user-agent)
@@ -1737,37 +1680,15 @@ predicate on the elements."
 			 ((memq 'type lst)
 			  (symbol-name system-type))
 			 (t nil)))
-	 codename emacsname)
-    (cond ((featurep 'sxemacs)
-	   (setq emacsname "SXEmacs"
-		 codename sxemacs-codename))
-	  ((featurep 'xemacs)
-	   (setq emacsname "XEmacs"
-		 codename xemacs-codename))
-	  (t
-	   (setq emacsname "Emacs")))
+	 codename)
     (cond
      ((not (memq 'emacs lst))
       nil)
      ((string-match "^\\(\\([.0-9]+\\)*\\)\\.[0-9]+$" emacs-version)
-      ;; Emacs:
       (concat "Emacs/" (match-string 1 emacs-version)
 	      (if system-v
 		  (concat " (" system-v ")")
 		"")))
-     ((or (featurep 'sxemacs) (featurep 'xemacs))
-      ;; XEmacs or SXEmacs:
-      (concat emacsname "/" emacs-program-version
-	      (let (plst)
-		(when (memq 'codename lst)
-		  (push codename plst))
-		(when system-v
-		  (push system-v plst))
-		(unless (featurep 'mule)
-		  (push "no MULE" plst))
-		(when (> (length plst) 0)
-		  (concat
-		   " (" (mapconcat 'identity (reverse plst) ", ") ")")))))
      (t emacs-version))))
 
 (defun gnus-rename-file (old-path new-path &optional trim)

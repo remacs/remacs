@@ -179,7 +179,7 @@ regexp to replace with IMAGE.  IMAGE is the name of an image file in
   "Replace in the region `smiley-regexp-alist' matches with corresponding images.
 A list of images is returned."
   (interactive "r")
-  (when (gnus-graphic-display-p)
+  (when (display-graphic-p)
     (unless smiley-cached-regexp-alist
       (smiley-update-cache))
     (save-excursion

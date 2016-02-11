@@ -444,7 +444,7 @@ Return a string with image data."
 
 (defun gnus-html-put-image (data url &optional alt-text)
   "Put an image with DATA from URL and optional ALT-TEXT."
-  (when (gnus-graphic-display-p)
+  (when (display-graphic-p)
     (let* ((start (text-property-any (point-min) (point-max)
 				     'image-url url))
            (end (when start
