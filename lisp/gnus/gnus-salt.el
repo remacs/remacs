@@ -25,9 +25,6 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl))
-(eval-when-compile
-  (when (featurep 'xemacs)
-    (require 'easy-mmode))) ; for `define-minor-mode'
 
 (require 'gnus)
 (require 'gnus-sum)
@@ -46,9 +43,6 @@
   "Hook run in summary pick mode buffers."
   :type 'hook
   :group 'gnus-summary-pick)
-
-(when (featurep 'xemacs)
-  (add-hook 'gnus-pick-mode-hook 'gnus-xmas-pick-menu-add))
 
 (defcustom gnus-mark-unpicked-articles-as-read nil
   "*If non-nil, mark all unpicked articles as read."
@@ -99,11 +93,6 @@ It accepts the same format specs that `gnus-summary-line-format' does."
 	 ["Buffer" gnus-summary-unmark-all-processable t])
 	["Start reading" gnus-pick-start-reading t]
 	["Switch pick mode off" gnus-pick-mode gnus-pick-mode]))))
-
-(eval-when-compile
-  (when (featurep 'xemacs)
-    (defvar gnus-pick-mode-on-hook)
-    (defvar gnus-pick-mode-off-hook)))
 
 (define-minor-mode gnus-pick-mode
   "Minor mode for providing a pick-and-read interface in Gnus summary buffers.
@@ -339,11 +328,6 @@ This must be bound to a button-down mouse event."
       '("Pick"
 	["Switch binary mode off" gnus-binary-mode t]))))
 
-(eval-when-compile
-  (when (featurep 'xemacs)
-    (defvar gnus-binary-mode-on-hook)
-    (defvar gnus-binary-mode-off-hook)))
-
 (define-minor-mode gnus-binary-mode
   "Minor mode for providing a binary group interface in Gnus summary buffers."
   :lighter " Binary" :keymap gnus-binary-mode-map
@@ -418,11 +402,6 @@ Two predefined functions are available:
   "*Hook run in tree mode buffers."
   :type 'hook
   :group 'gnus-summary-tree)
-
-(when (featurep 'xemacs)
-  (add-hook 'gnus-tree-mode-hook 'gnus-xmas-tree-menu-add)
-  (add-hook 'gnus-tree-mode-hook 'gnus-xmas-switch-horizontal-scrollbar-off))
-
 
 ;;; Internal variables.
 
