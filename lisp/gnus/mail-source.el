@@ -612,7 +612,7 @@ If CONFIRM is non-nil, ask for confirmation before removing a file."
 	(when (and (> (- currday fileday) diff)
 		   (if confirm
 		       (y-or-n-p
-			(gnus-format-message "\
+			(format-message "\
 Delete old (> %s day(s)) incoming mail file `%s'? " diff bfile))
 		     (gnus-message 8 "\
 Deleting old (> %s day(s)) incoming mail file `%s'." diff bfile)

@@ -1611,8 +1611,8 @@ If performed on a topic, edit the topic parameters instead."
       (let ((topic (gnus-group-topic-name)))
 	(gnus-edit-form
 	 (gnus-topic-parameters topic)
-	 (gnus-format-message "Editing the topic parameters for `%s'."
-			      (or group topic))
+	 (format-message "Editing the topic parameters for `%s'."
+			 (or group topic))
 	 `(lambda (form)
 	    (gnus-topic-set-parameters ,topic form)))))))
 

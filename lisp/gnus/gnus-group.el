@@ -2927,7 +2927,7 @@ and NEW-NAME will be prompted for."
 	    (gnus-info-params info))
 	   (t info))
      ;; The proper documentation.
-     (gnus-format-message
+     (format-message
       "Editing the %s for `%s'."
       (cond
        ((eq part 'method) "select method")
@@ -3255,7 +3255,7 @@ mail messages or news articles in files that have numeric names."
       (error "%s is not an nnimap group" group))
     (unless (setq acl (nnimap-acl-get mailbox (cadr method)))
       (error "Server does not support ACL's"))
-    (gnus-edit-form acl (gnus-format-message "\
+    (gnus-edit-form acl (format-message "\
 Editing the access control list for `%s'.
 
    An access control list is a list of (identifier . rights) elements.

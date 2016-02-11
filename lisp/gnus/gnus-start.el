@@ -2388,8 +2388,8 @@ If FORCE is non-nil, the .newsrc file is read."
 
               (funcall func convert-to)))
           (gnus-dribble-enter
-           (gnus-format-message ";Converted gnus from version `%s' to `%s'."
-				gnus-newsrc-file-version gnus-version)))))))
+           (format-message ";Converted gnus from version `%s' to `%s'."
+			   gnus-newsrc-file-version gnus-version)))))))
 
 (defun gnus-convert-mark-converter-prompt (converter no-prompt)
   "Indicate whether CONVERTER requires gnus-convert-old-newsrc to

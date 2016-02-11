@@ -3435,13 +3435,13 @@ display only a single character."
 	(i 32))
     ;; Nix out all the control chars...
     (while (>= (setq i (1- i)) 0)
-      (gnus-put-display-table i [??] table))
+      (aset table i [??]))
    ;; ... but not newline and cr, of course.  (cr is necessary for the
     ;; selective display).
-    (gnus-put-display-table ?\n nil table)
-    (gnus-put-display-table ?\r nil table)
+    (aset table ?\n nil)
+    (aset table ?\r nil)
     ;; We keep TAB as well.
-    (gnus-put-display-table ?\t nil table)
+    (aset table ?\t nil)
     ;; We nix out any glyphs 127 through 255, or 127 through 159 in
     ;; Emacs 23 (unicode), that are not set already.
     (let ((i (if (ignore-errors (= (make-char 'latin-iso8859-1 160) 160))
@@ -3449,8 +3449,8 @@ display only a single character."
 	       256)))
       (while (>= (setq i (1- i)) 127)
 	;; Only modify if the entry is nil.
-	(unless (gnus-get-display-table i table)
-	  (gnus-put-display-table i [??] table))))
+	(unless (aref table i)
+	  (aset table i [??]))))
     (setq buffer-display-table table)))
 
 (defun gnus-summary-set-article-display-arrow (pos)

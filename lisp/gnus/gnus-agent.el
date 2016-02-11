@@ -837,7 +837,7 @@ be a select method."
 		      (not (eq gnus-agent-synchronize-flags 'ask)))
 		 (and (eq gnus-agent-synchronize-flags 'ask)
 		      (gnus-y-or-n-p
-		       (gnus-format-message
+		       (format-message
 			"Synchronize flags on server `%s'? "
 			(cadr method))))))
     (gnus-agent-synchronize-flags-server method)))

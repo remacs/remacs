@@ -1726,27 +1726,6 @@ empty directories from OLD-PATH."
 (defalias 'gnus-read-shell-command
   (if (fboundp 'read-shell-command) 'read-shell-command 'read-string))
 
-(defmacro gnus-put-display-table (range value display-table)
-  "Set the value for char RANGE to VALUE in DISPLAY-TABLE.  "
-  (if (featurep 'xemacs)
-      (progn
-        `(if (fboundp 'put-display-table)
-          (put-display-table ,range ,value ,display-table)
-          (if (sequencep ,display-table)
-              (aset ,display-table ,range ,value)
-            (put-char-table ,range ,value ,display-table))))
-    `(aset ,display-table ,range ,value)))
-
-(defmacro gnus-get-display-table (character display-table)
-  "Find value for CHARACTER in DISPLAY-TABLE.  "
-  (if (featurep 'xemacs)
-      `(if (fboundp 'get-display-table)
-          (get-display-table ,character ,display-table)
-          (if (sequencep ,display-table)
-              (aref ,display-table ,character)
-            (get-char-table ,character ,display-table)))
-    `(aref ,display-table ,character)))
-
 (declare-function image-size "image.c" (spec &optional pixels frame))
 
 (defun gnus-rescale-image (image size)
@@ -1839,11 +1818,6 @@ to case differences."
 	   (if ignore-case
 	       (string-equal (downcase str1) (downcase prefix))
 	     (string-equal str1 prefix))))))
-
-(defalias 'gnus-format-message
-  (if (fboundp 'format-message) 'format-message
-    ;; for Emacs < 25, and XEmacs, don't worry about quote translation.
-    'format))
 
 ;; Simple check: can be a macro but this way, although slow, it's really clear.
 ;; We don't use `bound-and-true-p' because it's not in XEmacs.
