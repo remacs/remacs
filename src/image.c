@@ -8546,16 +8546,6 @@ imagemagick_load_image (struct frame *f, struct image *img,
       return 0;
     }
 
-  /* If no :rotation is explicitly specified, apply the automatic
-     rotation from EXIF. */
-  if (NILP (image_spec_value (img->spec, QCrotation, NULL)))
-    if (MagickAutoOrientImage (image_wand) == MagickFalse)
-      {
-        image_error ("Error applying automatic orientation in image `%s'", img->spec);
-        DestroyMagickWand (image_wand);
-        return 0;
-      }
-
   if (ino < 0 || ino >= MagickGetNumberImages (image_wand))
     {
       image_error ("Invalid image number `%s' in image `%s'", image, img->spec);
@@ -8656,7 +8646,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
     image_spec_value (img->spec, QCbackground, NULL); if (!STRINGP
     (specified_bg).  */
   value = image_spec_value (img->spec, QCrotation, NULL);
-  if (FLOATP (value) || INTEGERP (value))
+  if (FLOATP (value))
     {
       rotation = extract_float (value);
       status = MagickRotateImage (image_wand, bg_wand, rotation);
