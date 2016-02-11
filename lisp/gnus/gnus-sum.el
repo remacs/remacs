@@ -6835,7 +6835,7 @@ Like forward-line, but skip over (and don't count) invisible lines."
     (while (and (> n 0) (not done))
       ;; If the following character is currently invisible,
       ;; skip all characters with that same `invisible' property value.
-      (while (gnus-invisible-p (point))
+      (while (invisible-p (point))
 	(goto-char (gnus-next-char-property-change (point))))
       (forward-line 1)
       (if (eobp)
@@ -6845,7 +6845,7 @@ Like forward-line, but skip over (and don't count) invisible lines."
       (forward-line -1)
       (if (bobp) (setq done t)
 	(setq n (1+ n))
-	(while (and (not (bobp)) (gnus-invisible-p (1- (point))))
+	(while (and (not (bobp)) (invisible-p (1- (point))))
 	  (goto-char (gnus-previous-char-property-change (point))))))))
 
 (defun gnus-summary-recenter ()

@@ -306,13 +306,6 @@ Symbols are also allowed; their print names are used instead."
 
 (defmacro gnus-define-keys (keymap &rest plist)
   "Define all keys in PLIST in KEYMAP."
-  ;; Convert the key [?\S-\ ] to [(shift space)] for XEmacs.
-  (when (featurep 'xemacs)
-    (let ((bindings plist))
-      (while bindings
-	(when (equal (car bindings) [?\S-\ ])
-	  (setcar bindings [(shift space)]))
-	(setq bindings (cddr bindings)))))
   `(gnus-define-keys-1 (quote ,keymap) (quote ,plist)))
 
 (defmacro gnus-define-keys-safe (keymap &rest plist)
@@ -445,10 +438,10 @@ jabbering all the time."
 
 (defcustom gnus-add-timestamp-to-message nil
   "Non-nil means add timestamps to messages that Gnus issues.
-If it is `log', add timestamps to only the messages that go into the
-\"*Messages*\" buffer (in XEmacs, it is the \" *Message-Log*\" buffer).
-If it is neither nil nor `log', add timestamps not only to log messages
-but also to the ones displayed in the echo area."
+If it is `log', add timestamps to only the messages that go into
+the \"*Messages*\" buffer.  If it is neither nil nor `log', add
+timestamps not only to log messages but also to the ones
+displayed in the echo area."
   :version "23.1" ;; No Gnus
   :group  'gnus-various
   :type '(choice :format "%{%t%}:\n %[Value Menu%] %v"
@@ -461,56 +454,37 @@ but also to the ones displayed in the echo area."
 (eval-when-compile
   (defmacro gnus-message-with-timestamp-1 (format-string args)
     (let ((timestamp '(format-time-string "%Y%m%dT%H%M%S.%3N> " time)))
-      (if (featurep 'xemacs)
-	  `(let (str time)
-	     (if (or (and (null ,format-string) (null ,args))
-		     (progn
-		       (setq str (apply 'format ,format-string ,args))
-		       (zerop (length str))))
-		 (prog1
-		     (and ,format-string str)
-		   (clear-message nil))
-	       (cond ((eq gnus-add-timestamp-to-message 'log)
-		      (setq time (current-time))
-		      (display-message 'no-log str)
-		      (log-message 'message (concat ,timestamp str)))
-		     (gnus-add-timestamp-to-message
-		      (setq time (current-time))
-		      (display-message 'message (concat ,timestamp str)))
-		     (t
-		      (display-message 'message str))))
-	     str)
-	`(let (str time)
-	   (cond ((eq gnus-add-timestamp-to-message 'log)
-		  (setq str (let (message-log-max)
-			      (apply 'message ,format-string ,args)))
-		  (when (and message-log-max
-			     (> message-log-max 0)
-			     (/= (length str) 0))
-		    (setq time (current-time))
-		    (with-current-buffer (if (fboundp 'messages-buffer)
-					     (messages-buffer)
-					   (get-buffer-create "*Messages*"))
-		      (goto-char (point-max))
-		      (let ((inhibit-read-only t))
-			(insert ,timestamp str "\n")
-			(forward-line (- message-log-max))
-			(delete-region (point-min) (point)))
-		      (goto-char (point-max))))
-		  str)
-		 (gnus-add-timestamp-to-message
-		  (if (or (and (null ,format-string) (null ,args))
-			  (progn
-			    (setq str (apply 'format ,format-string ,args))
-			    (zerop (length str))))
-		      (prog1
-			  (and ,format-string str)
-			(message nil))
-		    (setq time (current-time))
-		    (message "%s" (concat ,timestamp str))
-		    str))
-		 (t
-		  (apply 'message ,format-string ,args))))))))
+      `(let (str time)
+	 (cond ((eq gnus-add-timestamp-to-message 'log)
+		(setq str (let (message-log-max)
+			    (apply 'message ,format-string ,args)))
+		(when (and message-log-max
+			   (> message-log-max 0)
+			   (/= (length str) 0))
+		  (setq time (current-time))
+		  (with-current-buffer (if (fboundp 'messages-buffer)
+					   (messages-buffer)
+					 (get-buffer-create "*Messages*"))
+		    (goto-char (point-max))
+		    (let ((inhibit-read-only t))
+		      (insert ,timestamp str "\n")
+		      (forward-line (- message-log-max))
+		      (delete-region (point-min) (point)))
+		    (goto-char (point-max))))
+		str)
+	       (gnus-add-timestamp-to-message
+		(if (or (and (null ,format-string) (null ,args))
+			(progn
+			  (setq str (apply 'format ,format-string ,args))
+			  (zerop (length str))))
+		    (prog1
+			(and ,format-string str)
+		      (message nil))
+		  (setq time (current-time))
+		  (message "%s" (concat ,timestamp str))
+		  str))
+	       (t
+		(apply 'message ,format-string ,args)))))))
 
 (defvar gnus-action-message-log nil)
 
@@ -626,7 +600,6 @@ If N, return the Nth ancestor instead."
 (defun gnus-read-event-char (&optional prompt)
   "Get the next event."
   (let ((event (read-event prompt)))
-    ;; should be gnus-characterp, but this can't be called in XEmacs anyway
     (cons (and (numberp event) event) event)))
 
 (defun gnus-copy-file (file &optional to)
@@ -870,27 +843,12 @@ Otherwise, return the value."
 
 (defmacro gnus-faces-at (position)
   "Return a list of faces at POSITION."
-  (if (featurep 'xemacs)
-      `(let ((pos ,position))
-	 (mapcar-extents 'extent-face
-			 nil (current-buffer) pos pos nil 'face))
-    `(let ((pos ,position))
-       (delq nil (cons (get-text-property pos 'face)
-		       (mapcar
-			(lambda (overlay)
-			  (overlay-get overlay 'face))
-			(overlays-at pos)))))))
-
-(if (fboundp 'invisible-p)
-    (defalias 'gnus-invisible-p 'invisible-p)
-  ;; for Emacs < 22.2, and XEmacs.
-  (defun gnus-invisible-p (pos)
-    "Return non-nil if the character after POS is currently invisible."
-    (let ((prop (get-char-property pos 'invisible)))
-      (if (eq buffer-invisibility-spec t)
-	  prop
-	(or (memq prop buffer-invisibility-spec)
-	    (assq prop buffer-invisibility-spec))))))
+  `(let ((pos ,position))
+     (delq nil (cons (get-text-property pos 'face)
+		     (mapcar
+		      (lambda (overlay)
+			(overlay-get overlay 'face))
+		      (overlays-at pos))))))
 
 ;; Note: the optional 2nd argument has a different meaning between
 ;; Emacs and XEmacs.
