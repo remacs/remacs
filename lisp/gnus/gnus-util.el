@@ -129,14 +129,6 @@ This is a compatibility function for different Emacsen."
        (funcall (if (stringp buffer) 'get-buffer 'buffer-name)
 		buffer))))
 
-;; The LOCAL arg to `add-hook' is interpreted differently in Emacs and
-;; XEmacs.  In Emacs we don't need to call `make-local-hook' first.
-;; It's harmless, though, so the main purpose of this alias is to shut
-;; up the byte compiler.
-(defalias 'gnus-make-local-hook (if (featurep 'xemacs)
-                                    'make-local-hook
-                                  'ignore))
-
 (defun gnus-delete-first (elt list)
   "Delete by side effect the first occurrence of ELT as a member of LIST."
   (if (equal (car list) elt)

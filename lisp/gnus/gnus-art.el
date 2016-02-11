@@ -5010,7 +5010,6 @@ and `gnus-mime-delete-part', and not provided at run-time normally."
 	  (let ((mbl1 mml-buffer-list))
 	    (setq mml-buffer-list mbl)
 	    (set (make-local-variable 'mml-buffer-list) mbl1))
-	  (gnus-make-local-hook 'kill-buffer-hook)
 	  (add-hook 'kill-buffer-hook 'mml-destroy-buffers t t)))
      `(lambda (no-highlight)
 	(let ((mail-parse-charset (or gnus-article-charset

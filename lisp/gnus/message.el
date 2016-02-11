@@ -1939,7 +1939,6 @@ You must have the \"hashcash\" binary installed, see `hashcash-path'."
 (autoload 'gnus-group-name-charset "gnus-group")
 (autoload 'gnus-group-name-decode "gnus-group")
 (autoload 'gnus-groups-from-server "gnus")
-(autoload 'gnus-make-local-hook "gnus-util")
 (autoload 'gnus-open-server "gnus-int")
 (autoload 'gnus-output-to-mail "gnus-util")
 (autoload 'gnus-output-to-rmail "gnus-util")
@@ -3037,7 +3036,6 @@ M-RET    `message-newline-and-reformat' (break the line and reformat)."
 	(set (make-local-variable 'tool-bar-map) (message-make-tool-bar))))
   (easy-menu-add message-mode-menu message-mode-map)
   (easy-menu-add message-mode-field-menu message-mode-map)
-  (gnus-make-local-hook 'after-change-functions)
   ;; Mmmm... Forbidden properties...
   (add-hook 'after-change-functions 'message-strip-forbidden-properties
 	    nil 'local)

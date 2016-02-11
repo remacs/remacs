@@ -35,7 +35,6 @@
 
 (autoload 'message-make-message-id "message")
 (declare-function gnus-setup-posting-charset "gnus-msg" (group))
-(autoload 'gnus-make-local-hook "gnus-util")
 (autoload 'gnus-completing-read "gnus-util")
 (autoload 'message-fetch-field "message")
 (autoload 'message-mark-active-p "message")
@@ -1590,7 +1589,6 @@ or the `pop-to-buffer' function."
 	    (gnus-article-prepare-display))))
       ;; Disable article-mode-map.
       (use-local-map nil)
-      (gnus-make-local-hook 'kill-buffer-hook)
       (add-hook 'kill-buffer-hook
 		(lambda ()
 		  (mm-destroy-parts gnus-article-mime-handles)) nil t)
