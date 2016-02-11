@@ -73,7 +73,11 @@ the mode if ARG is omitted or nil.
 
 This allows the use of the mouse when operating on a GNU/Linux console,
 in the same way as you can use the mouse under X11.
-It relies on the `gpm' daemon being activated."
+It relies on the `gpm' daemon being activated.
+
+Note that when `gpm-mouse-mode' is enabled, you cannot use the
+mouse to transfer text between Emacs and other programs which use
+GPM.  This is due to limitations in GPM and the Linux kernel."
   :global t :group 'mouse :init-value t
   (dolist (terminal (terminal-list))
     (when (and (eq t (terminal-live-p terminal))
