@@ -1138,7 +1138,7 @@ See the variable `gnus-user-agent'."
 	   (gnus-v
 	    (when (memq 'gnus gnus-user-agent)
 	      (concat "Gnus/"
-		      (gnus-replace-in-string
+		      (replace-regexp-in-string
 		       (format "%1.8f" (gnus-continuum-version gnus-version))
 		       "0+\\'" "")
 		      " (" gnus-version ")")))

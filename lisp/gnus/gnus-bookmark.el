@@ -226,7 +226,7 @@ So the cdr of each bookmark is an alist too.")
 		   "-" (car subject) "-" (cadr subject)))
 	 (default-name-1
 	   ;; Strip "[]" chars from the bookmark name:
-	   (gnus-replace-in-string default-name-0 "[]_[]" ""))
+	   (replace-regexp-in-string default-name-0 "[]_[]" ""))
 	 (name (read-from-minibuffer
 		(format "Set bookmark (%s): " default-name-1)
 		nil nil nil nil

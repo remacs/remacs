@@ -1199,7 +1199,7 @@ Note this has to be fast."
     (if header-content
         (cond
          ((eq header 'X-Spam-Status)
-          (string-to-number (gnus-replace-in-string
+          (string-to-number (replace-regexp-in-string
                              header-content
                              spam-spamassassin-score-regexp
                              "\\1")))
@@ -1207,8 +1207,8 @@ Note this has to be fast."
          ((string-match "( pR: \\([0-9.-]+\\)" header-content)
           (- (string-to-number (match-string 1 header-content))))
          ((eq header 'X-Bogosity)
-          (string-to-number (gnus-replace-in-string
-                             (gnus-replace-in-string
+          (string-to-number (replace-regexp-in-string
+                             (replace-regexp-in-string
                               header-content
                               ".*spamicity=" "")
                              ",.*" "")))

@@ -2218,7 +2218,7 @@ if it is not a list."
       (setq group
 	    (mm-encode-coding-string
 	     group (gnus-group-name-charset nil group))))
-    (gnus-replace-in-string group "\n" "")))
+    (replace-regexp-in-string group "\n" "")))
 
 ;;;###autoload
 (defun gnus-fetch-group (group &optional articles)
@@ -2476,8 +2476,8 @@ the bug number, and browsing the URL must return mbox output."
 	(while (re-search-forward "^To: " nil t)
 	  (end-of-line)
 	  (insert (format ", %s@%s" (car ids)
-			  (gnus-replace-in-string
-			   (gnus-replace-in-string mbox-url "^http://" "")
+			  (replace-regexp-in-string
+			   (replace-regexp-in-string mbox-url "^http://" "")
 			   "/.*$" ""))))))
     (gnus-group-read-ephemeral-group
      (format "nndoc+ephemeral:bug#%s"

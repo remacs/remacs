@@ -8373,8 +8373,8 @@ From headers in the original article."
     (let ((value (message-field-value header)))
       (dolist (string (mail-header-parse-addresses value 'raw))
 	(setq string
-	      (gnus-replace-in-string
-	       (gnus-replace-in-string string "^ +\\| +$" "") "\n" ""))
+	      (replace-regexp-in-string
+	       (replace-regexp-in-string string "^ +\\| +$" "") "\n" ""))
 	(ecomplete-add-item 'mail (car (mail-header-parse-address string))
 			    string))))
   (ecomplete-save))

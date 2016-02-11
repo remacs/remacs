@@ -656,13 +656,13 @@ by nnmaildir-request-article.")
   (if (zerop n) 1 (1- (lsh 1 (1+ (logb n))))))
 
 (defun nnmaildir--system-name ()
-  (gnus-replace-in-string
-   (gnus-replace-in-string
-    (gnus-replace-in-string
+  (replace-regexp-in-string
+   (replace-regexp-in-string
+    (replace-regexp-in-string
      (system-name)
-     "\\\\" "\\134" 'literal)
-    "/" "\\057" 'literal)
-   ":" "\\072" 'literal))
+     "\\\\" "\\134" nil 'literal)
+    "/" "\\057" nil 'literal)
+   ":" "\\072" nil 'literal))
 
 (defun nnmaildir-request-type (_group &optional _article)
   'mail)
@@ -955,8 +955,8 @@ by nnmaildir-request-article.")
 			pgname (nnmaildir--pgname nnmaildir--cur-server pgname)
 			group (symbol-value group)
 			ro (nnmaildir--param pgname 'read-only))
-		  (insert (gnus-replace-in-string
-			   (nnmaildir--grp-name group) " " "\\ " t)
+		  (insert (replace-regexp-in-string
+			   (nnmaildir--grp-name group) " " "\\ " nil t)
 			  " ")
                   (princ (nnmaildir--group-maxnum nnmaildir--cur-server group)
 			 nntp-server-buffer)
@@ -985,7 +985,7 @@ by nnmaildir-request-article.")
 	  (princ (nnmaildir--group-maxnum nnmaildir--cur-server group)
 		 nntp-server-buffer)
 	  (insert " "
-		  (gnus-replace-in-string gname " " "\\ " t)
+		  (replace-regexp-in-string gname " " "\\ " nil t)
 		  "\n")))))
   'group)
 
@@ -1116,7 +1116,7 @@ by nnmaildir-request-article.")
 	(insert " ")
 	(princ (nnmaildir--group-maxnum nnmaildir--cur-server group)
 	       nntp-server-buffer)
-	(insert " " (gnus-replace-in-string gname " " "\\ " t) "\n")
+	(insert " " (replace-regexp-in-string gname " " "\\ " nil t) "\n")
 	t))))
 
 (defun nnmaildir-request-create-group (gname &optional server _args)
@@ -1278,7 +1278,7 @@ by nnmaildir-request-article.")
 	      (insert "\t" (nnmaildir--nov-get-beg nov) "\t"
 		      (nnmaildir--art-msgid article) "\t"
 		      (nnmaildir--nov-get-mid nov) "\tXref: nnmaildir "
-		      (gnus-replace-in-string gname " " "\\ " t) ":")
+		      (replace-regexp-in-string gname " " "\\ " nil t) ":")
 	      (princ num nntp-server-buffer)
 	      (insert "\t" (nnmaildir--nov-get-end nov) "\n"))))
     (catch 'return

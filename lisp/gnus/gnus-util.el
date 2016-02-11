@@ -78,23 +78,14 @@
 (autoload 'nnheader-replace-chars-in-string "nnheader")
 (autoload 'mail-header-remove-comments "mail-parse")
 
-(eval-and-compile
-  (cond
-   ;; Prefer `replace-regexp-in-string' (present in Emacs, XEmacs 21.5,
-   ;; SXEmacs 22.1.4) over `replace-in-string'.  The latter leads to inf-loops
-   ;; on empty matches:
-   ;;   (replace-in-string "foo" "/*$" "/")
-   ;;   (replace-in-string "xe" "\\(x\\)?" "")
-   ((fboundp 'replace-regexp-in-string)
-    (defun gnus-replace-in-string  (string regexp newtext &optional literal)
-      "Replace all matches for REGEXP with NEWTEXT in STRING.
+(defun gnus-replace-in-string  (string regexp newtext &optional literal)
+  "Replace all matches for REGEXP with NEWTEXT in STRING.
 If LITERAL is non-nil, insert NEWTEXT literally.  Return a new
 string containing the replacements.
 
 This is a compatibility function for different Emacsen."
-      (replace-regexp-in-string regexp newtext string nil literal)))
-   ((fboundp 'replace-in-string)
-    (defalias 'gnus-replace-in-string 'replace-in-string))))
+  (declare (obsolete replace-regexp-in-string "25.2"))
+  (replace-regexp-in-string regexp newtext string nil literal))
 
 (defun gnus-boundp (variable)
   "Return non-nil if VARIABLE is bound and non-nil."
@@ -431,7 +422,7 @@ Cache the result as a text property stored in DATE."
 
 (defun gnus-mode-string-quote (string)
   "Quote all \"%\"'s in STRING."
-  (gnus-replace-in-string string "%" "%%"))
+  (replace-regexp-in-string string "%" "%%"))
 
 ;; Make a hash table (default and minimum size is 256).
 ;; Optional argument HASHSIZE specifies the table size.

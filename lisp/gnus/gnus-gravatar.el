@@ -94,7 +94,7 @@ Set image category to CATEGORY."
 		  (mail-address (cadr address)))
 	      (when (if real-name
 			(re-search-forward
-			 (concat (gnus-replace-in-string
+			 (concat (replace-regexp-in-string
 				  (regexp-quote real-name) "[\t ]+" "[\t\n ]+")
 				 "\\|"
 				 (regexp-quote mail-address))

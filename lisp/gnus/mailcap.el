@@ -39,19 +39,6 @@
     (autoload 'mm-delete-duplicates "mm-util")
     'mm-delete-duplicates))
 
-;; `mailcap-replace-in-string' is an alias like `gnus-replace-in-string'.
-(eval-and-compile
-  (cond
-   ((fboundp 'replace-regexp-in-string)
-    (defun mailcap-replace-in-string  (string regexp newtext &optional literal)
-      "Replace all matches for REGEXP with NEWTEXT in STRING.
-If LITERAL is non-nil, insert NEWTEXT literally.  Return a new
-string containing the replacements.
-This is a compatibility function for different Emacsen."
-      (replace-regexp-in-string regexp newtext string nil literal)))
-   ((fboundp 'replace-in-string)
-    (defalias 'mailcap-replace-in-string 'replace-in-string))))
-
 (defgroup mailcap nil
   "Definition of viewers for MIME types."
   :version "21.1"
@@ -1047,16 +1034,18 @@ If FORCE, re-parse even if already parsed."
 	 (commands
 	  ;; Command strings from `viewer' field of the MIME info
 	  (mailcap-delete-duplicates
-	   (delq nil (mapcar (lambda (mime-info)
-			       (let ((command (cdr (assoc 'viewer mime-info))))
-				 (if (stringp command)
-				     (mailcap-replace-in-string
-				      ;; Replace mailcap's `%s' placeholder
-				      ;; with dired's `?' placeholder
-				      (mailcap-replace-in-string
-				       ;; Remove the final filename placeholder
-				       command "[ \t\n]*\\('\\)?%s\\1?[ \t\n]*\\'" "" t)
-				      "%s" "?" t))))
+	   (delq nil (mapcar
+		      (lambda (mime-info)
+			(let ((command (cdr (assoc 'viewer mime-info))))
+			  (if (stringp command)
+			      (replace-regexp-in-string
+			       ;; Replace mailcap's `%s' placeholder
+			       ;; with dired's `?' placeholder
+			       (replace-regexp-in-string
+				;; Remove the final filename placeholder
+				command "[ \t\n]*\\('\\)?%s\\1?[ \t\n]*\\'" ""
+				nil t)
+			       "%s" "?" nil t))))
 			     common-mime-info)))))
     commands))
 

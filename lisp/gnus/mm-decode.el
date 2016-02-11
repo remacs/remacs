@@ -28,7 +28,6 @@
 (eval-when-compile (require 'cl))
 
 (autoload 'gnus-map-function "gnus-util")
-(autoload 'gnus-replace-in-string "gnus-util")
 (autoload 'gnus-read-shell-command "gnus-util")
 
 (autoload 'mm-inline-partial "mm-partial")
@@ -1360,12 +1359,12 @@ string if you do not like underscores."
 
 (defun mm-file-name-delete-control (filename)
   "Delete control characters from FILENAME."
-  (gnus-replace-in-string filename "[\x00-\x1f\x7f]" ""))
+  (replace-regexp-in-string filename "[\x00-\x1f\x7f]" ""))
 
 (defun mm-file-name-delete-gotchas (filename)
   "Delete shell gotchas from FILENAME."
-  (setq filename (gnus-replace-in-string filename "[<>|]" ""))
-  (gnus-replace-in-string filename "^[.-]+" ""))
+  (setq filename (replace-regexp-in-string filename "[<>|]" ""))
+  (replace-regexp-in-string filename "^[.-]+" ""))
 
 (defun mm-save-part (handle &optional prompt)
   "Write HANDLE to a file.

@@ -111,7 +111,7 @@ for decoding when the cdr that the data specify is not available.")
 ;;; Interface functions
 
 (defsubst nnrss-format-string (string)
-  (gnus-replace-in-string string " *\n *" " "))
+  (replace-regexp-in-string string " *\n *" " "))
 
 (defun nnrss-decode-group-name (group)
   (if (and group (mm-coding-system-p 'utf-8))
@@ -292,7 +292,7 @@ for decoding when the cdr that the data specify is not available.")
 			(let ((rfc2047-encoding-type 'mime)
 			      rfc2047-encode-max-chars)
 			  (rfc2047-encode-string
-			   (gnus-replace-in-string group "[\t\n ]+" "_")))))
+			   (replace-regexp-in-string group "[\t\n ]+" "_")))))
 	(when nnrss-content-function
 	  (funcall nnrss-content-function e group article))))
     (cond
@@ -805,8 +805,8 @@ It is useful when `(setq nnrss-use-local t)'."
 		   (nnrss-node-just-text node)
 		 node))
 	 (cleaned-text (if text
-			   (gnus-replace-in-string
-			    (gnus-replace-in-string
+			   (replace-regexp-in-string
+			    (replace-regexp-in-string
 			     text "^[\000-\037\177]+\\|^ +\\| +$" "")
 			    "\r\n" "\n"))))
     (if (string-equal "" cleaned-text)

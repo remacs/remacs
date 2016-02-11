@@ -1077,7 +1077,7 @@ Use the nov database for the current group if available."
 		;; 1/ Move the article to a new file:
 		(let* ((oldfile (nnml-article-to-file old-number))
 		       (newfile
-			(gnus-replace-in-string
+			(replace-regexp-in-string
 			 oldfile
 			 ;; nnml-use-compressed-files might be any string, but
 			 ;; probably it's sufficient to take into account only
