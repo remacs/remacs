@@ -26,6 +26,7 @@
 
 (require 'url)
 (require 'url-cache)
+(require 'image)
 
 (defgroup gravatar nil
   "Gravatar."
@@ -91,20 +92,12 @@
       (when (search-forward "\n\n" nil t)
         (buffer-substring (point) (point-max))))))
 
-(eval-and-compile
-  (cond ((featurep 'xemacs)
-	 (require 'gnus-xmas)
-	 (defalias 'gravatar-create-image 'gnus-xmas-create-image))
-	(t
-	 (require 'image)
-	 (defalias 'gravatar-create-image 'create-image))))
-
 (defun gravatar-data->image ()
   "Get data of current buffer and return an image.
 If no image available, return 'error."
   (let ((data (gravatar-get-data)))
     (if data
-	(gravatar-create-image data nil t)
+	(create-image data nil t)
       'error)))
 
 (autoload 'help-function-arglist "help-fns")
