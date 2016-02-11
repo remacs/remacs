@@ -865,11 +865,6 @@ If REGEXP is given, lines that match it will be deleted."
       ;; Make sure that each dribble entry is a single line, so that
       ;; the "remove" code above works.
       (insert (replace-regexp-in-string "\n" "\\\\n" string) "\n")
-      ;; This has been commented by Josh Huber <huber@alum.wpi.edu>
-      ;; It causes problems with both XEmacs and Emacs 21, and doesn't
-      ;; seem to be of much value. (FIXME: remove this after we make sure
-      ;; it's not needed).
-      ;; (set-window-point (get-buffer-window (current-buffer)) (point-max))
       (bury-buffer gnus-dribble-buffer)
       (with-current-buffer gnus-group-buffer
 	(gnus-group-set-mode-line))

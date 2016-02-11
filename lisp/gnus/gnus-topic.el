@@ -44,9 +44,6 @@
   :type 'hook
   :group 'gnus-topic)
 
-(when (featurep 'xemacs)
-  (add-hook 'gnus-topic-mode-hook 'gnus-xmas-topic-menu-add))
-
 (defcustom gnus-topic-line-format "%i[ %(%{%n%}%) -- %A ]%v\n"
   "Format of topic lines.
 It works along the same lines as a normal formatting string,

@@ -44,9 +44,6 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl))
-(eval-when-compile
-  (when (featurep 'xemacs)
-    (require 'easy-mmode))) ; for `define-minor-mode'
 
 (require 'gnus-util)
 (require 'gnus)

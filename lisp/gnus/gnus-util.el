@@ -44,15 +44,12 @@
   :type `(radio (function-item
                  :doc "Use Emacs standard `completing-read' function."
                  gnus-emacs-completing-read)
-		;; iswitchb.el is very old and ido.el is unavailable
-		;; in XEmacs, so we exclude those function items.
-		,@(unless (featurep 'xemacs)
-		    '((function-item
-		       :doc "Use `ido-completing-read' function."
-		       gnus-ido-completing-read)
-		      (function-item
-		       :doc "Use iswitchb based completing-read function."
-		       gnus-iswitchb-completing-read)))))
+		(function-item
+		 :doc "Use `ido-completing-read' function."
+		 gnus-ido-completing-read)
+		(function-item
+		 :doc "Use iswitchb based completing-read function."
+		 gnus-iswitchb-completing-read)))
 
 (defcustom gnus-completion-styles
   (if (and (boundp 'completion-styles-alist)
