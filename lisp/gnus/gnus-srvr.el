@@ -280,10 +280,8 @@ The following commands are available:
   (buffer-disable-undo)
   (setq truncate-lines t)
   (setq buffer-read-only t)
-  (if (featurep 'xemacs)
-      (put 'gnus-server-mode 'font-lock-defaults '(gnus-server-font-lock-keywords t))
-    (set (make-local-variable 'font-lock-defaults)
-	 '(gnus-server-font-lock-keywords t)))
+  (set (make-local-variable 'font-lock-defaults)
+       '(gnus-server-font-lock-keywords t))
   (gnus-run-mode-hooks 'gnus-server-mode-hook))
 
 (defun gnus-server-insert-server-line (name method)
