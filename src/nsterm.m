@@ -586,6 +586,27 @@ ns_load_path (void)
 
 
 void
+ns_init_locale (void)
+/* OS X doesn't set any environment variables for the locale when run
+   from the GUI. Get the locale from the OS and set LANG. */
+{
+  NSLocale *locale = [NSLocale currentLocale];
+
+  NSTRACE ("ns_init_locale");
+
+  @try
+    {
+      /* Set LANG to locale, but not if LANG is already set. */
+      setenv("LANG", [[locale localeIdentifier] UTF8String], 0);
+    }
+  @catch (NSException *e)
+    {
+      NSLog (@"Locale detection failed: %@: %@", [e name], [e reason]);
+    }
+}
+
+
+void
 ns_release_object (void *obj)
 /* --------------------------------------------------------------------------
     Release an object (callable from C)
