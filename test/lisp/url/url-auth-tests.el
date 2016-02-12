@@ -118,8 +118,7 @@ Essential is how realms and paths are matched."
  (list :url "http://other.com/path" :realm nil :expected-user nil)
 
                   ;; unmatched port
- (list :url "http://example.org:444/path" :realm nil :expected-user
-il)
+ (list :url "http://example.org:444/path" :realm nil :expected-user nil)
 
                   ;; root, no realm
                   (list :url "http://example.org/"
