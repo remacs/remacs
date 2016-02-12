@@ -129,7 +129,7 @@
          :type hash-table
          :documentation "The data hashtable.")))
 
-(defmethod initialize-instance :BEFORE ((this registry-db) slots)
+(cl-defmethod initialize-instance :before ((this registry-db) slots)
   "Check whether a registry object needs to be upgraded."
   ;; Hardcoded upgrade routines.  Version 0.1 to 0.2 requires the
   ;; :max-soft slot to disappear, and the :max-hard slot to be renamed
@@ -146,7 +146,7 @@
       (cl-remf slots :max-hard)
       (cl-remf slots :max-soft))))
 
-(defmethod initialize-instance :AFTER ((this registry-db) slots)
+(cl-defmethod initialize-instance :after ((this registry-db) slots)
   "Set value of data slot of THIS after initialization."
   (with-slots (data tracker) this
     (unless (member :data slots)
