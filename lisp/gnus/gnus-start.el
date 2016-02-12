@@ -3027,7 +3027,7 @@ If FORCE is non-nil, the .newsrc file is read."
 (defun gnus-slave-save-newsrc ()
   (with-current-buffer gnus-dribble-buffer
     (let ((slave-name
-	   (mm-make-temp-file (concat gnus-current-startup-file "-slave-")))
+	   (make-temp-file (concat gnus-current-startup-file "-slave-")))
 	  (modes (ignore-errors
 		   (file-modes (concat gnus-current-startup-file ".eld")))))
       (let ((coding-system-for-write gnus-ding-file-coding-system))
