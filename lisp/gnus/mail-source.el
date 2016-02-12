@@ -639,7 +639,7 @@ Deleting old (> %s day(s)) incoming mail file `%s'." diff bfile)
     (if (eq mail-source-delete-incoming t)
 	(delete-file mail-source-crash-box)
       (let ((incoming
-	     (mm-make-temp-file
+	     (make-temp-file
 	      (expand-file-name
 	       mail-source-incoming-file-prefix
 	       mail-source-directory))))

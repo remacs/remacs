@@ -915,7 +915,7 @@ external if displayed external."
 	;; The function is a string to be executed.
 	(mm-insert-part handle)
 	(mm-add-meta-html-tag handle)
-	(let* ((dir (mm-make-temp-file
+	(let* ((dir (make-temp-file
 		     (expand-file-name "emm." mm-tmp-directory) 'dir))
 	       (filename (or
 			  (mail-content-type-get
@@ -945,8 +945,8 @@ external if displayed external."
 		;; `mailcap-mime-extensions'.
 		(setq suffix (car (rassoc (mm-handle-media-type handle)
 					  mailcap-mime-extensions))))
-	      (setq file (mm-make-temp-file (expand-file-name "mm." dir)
-					    nil suffix))))
+	      (setq file (make-temp-file (expand-file-name "mm." dir)
+					 nil suffix))))
 	  (let ((coding-system-for-write mm-binary-coding-system))
 	    (write-region (point-min) (point-max) file nil 'nomesg))
 	  ;; The file is deleted after the viewer exists.  If the users edits
