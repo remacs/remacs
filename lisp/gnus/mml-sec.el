@@ -27,6 +27,9 @@
 
 (require 'gnus-util)
 (require 'epg)
+(require 'epa)
+(require 'password-cache)
+(require 'mm-encode)
 
 (autoload 'mail-strip-quoted-names "mail-utils")
 (autoload 'mml2015-sign "mml2015")
@@ -43,6 +46,8 @@
 (autoload 'mml-smime-verify "mml-smime")
 (autoload 'mml-smime-verify-test "mml-smime")
 (autoload 'epa--select-keys "epa")
+(autoload 'message-options-get "message")
+(autoload 'message-options-set "message")
 
 (defvar mml-sign-alist
   '(("smime"     mml-smime-sign-buffer     mml-smime-sign-query)
@@ -110,10 +115,7 @@ details."
   :group 'message
   :type 'boolean)
 
-(defcustom mml-secure-cache-passphrase
-  (if (boundp 'password-cache)
-      password-cache
-    t)
+(defcustom mml-secure-cache-passphrase password-cache
   "If t, cache OpenPGP or S/MIME passphrases inside Emacs.
 Passphrase caching in Emacs is NOT recommended.  Use gpg-agent instead.
 See Info node `(message) Security'."
@@ -623,7 +625,7 @@ Passphrase caching in Emacs is NOT recommended.  Use gpg-agent instead."
 The passphrase is read and cached."
   ;; Based on mml2015-epg-passphrase-callback.
   (if (eq key-id 'SYM)
-      (epg-passphrase-callback-function context key-id nil)
+      (epa-passphrase-callback-function context key-id nil)
     (let* ((password-cache-key-id
 	    (if (eq key-id 'PIN)
 		"PIN"
@@ -907,10 +909,10 @@ If no one is selected, symmetric encryption will be performed.  "
 	 cipher signers)
     (when sign
       (setq signers (mml-secure-signers context signer-names))
-      (epg-context-set-signers context signers))
+      (setf (epg-context-signers context) signers))
     (when (eq 'OpenPGP protocol)
-      (epg-context-set-armor context t)
-      (epg-context-set-textmode context t))
+      (setf (epg-context-armor context) t)
+      (setf (epg-context-textmode context) t))
     (when (mml-secure-cache-passphrase-p protocol)
       (epg-context-set-passphrase-callback
        context
@@ -935,9 +937,9 @@ If no one is selected, symmetric encryption will be performed.  "
 	 (signers (mml-secure-signers context signer-names))
 	 signature micalg)
     (when (eq 'OpenPGP protocol)
-      (epg-context-set-armor context t)
-      (epg-context-set-textmode context t))
-    (epg-context-set-signers context signers)
+      (setf (epg-context-armor context) t)
+      (setf (epg-context-textmode context) t))
+    (setf (epg-context-signers context) signers)
     (when (mml-secure-cache-passphrase-p protocol)
       (epg-context-set-passphrase-callback
        context
