@@ -202,11 +202,12 @@ test and cannot be passed by arguments to `url-digest-auth'."
              (list "example.org:80"
                    (cons (or (plist-get challenge :realm) "/")
                          (cons (plist-get challenge :username)
- (url-digest-auth-create-key (plist-get challenge :username)
- (plist-get challenge :password)
- (plist-get challenge :realm)
- (plist-get challenge :method)
- (plist-get challenge :uri)))))))
+                               (url-digest-auth-create-key
+                                (plist-get challenge :username)
+                                (plist-get challenge :password)
+                                (plist-get challenge :realm)
+                                (plist-get challenge :method)
+                                (plist-get challenge :uri)))))))
       (setq auth (url-digest-auth (url-generic-parse-url url) nil nil
                                   (plist-get challenge :realm) attrs))
       (should auth)
@@ -227,7 +228,7 @@ test and cannot be passed by arguments to `url-digest-auth'."
         (should (string-match ".*response=\"\\(.*?\\)\".*" auth))
         (should (string= (match-string 1 auth)
                          (plist-get challenge :expected-response))))
-        )))
+      )))
 
 (ert-deftest url-auth-test-digest-auth-opaque ()
   "Check that `opaque' value is added to result when presented by
