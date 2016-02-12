@@ -335,6 +335,7 @@ there.")
   (save-excursion
     (let* ((process-connection-type nil) ; t bugs out on Solaris
 	   (inews-buffer (generate-new-buffer " *nnspool post*"))
+	   (buf (current-buffer))
 	   (proc
 	    (condition-case err
 		(apply 'start-process "*nnspool inews*" inews-buffer
@@ -346,7 +347,11 @@ there.")
 	  ()
 	(nnheader-report 'nnspool "")
 	(set-process-sentinel proc 'nnspool-inews-sentinel)
-	(mm-with-unibyte-current-buffer
+	(with-temp-buffer
+	  (set-buffer-multibyte nil)
+	  (insert-buffer-substring buf)
+	  (encode-coding-region (point-min) (point-max)
+				nnspool-file-coding-system)
 	  (process-send-region proc (point-min) (point-max)))
 	;; We slap a condition-case around this, because the process may
 	;; have exited already...
