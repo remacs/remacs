@@ -487,14 +487,17 @@ If set, it overrides the setting of `mml2015-sign-with-sender'."
 			(or (y-or-n-p "Sign the message? ")
 			    'not))))
 	     'never)))
-    (mm-with-unibyte-current-buffer
-      (mc-encrypt-generic
-       (or (message-options-get 'message-recipients)
-	   (message-options-set 'message-recipients
-			      (mc-cleanup-recipient-headers
-			       (read-string "Recipients: "))))
-       nil nil nil
-       (message-options-get 'message-sender))))
+    (insert
+     (with-temp-buffer
+       (set-buffer-multibyte nil)
+       (mc-encrypt-generic
+	(or (message-options-get 'message-recipients)
+	    (message-options-set 'message-recipients
+				 (mc-cleanup-recipient-headers
+				  (read-string "Recipients: "))))
+	nil nil nil
+	(message-options-get 'message-sender))
+       (buffer-string))))
   (goto-char (point-min))
   (unless (looking-at "-----BEGIN PGP MESSAGE-----")
     (error "Fail to encrypt the message"))
