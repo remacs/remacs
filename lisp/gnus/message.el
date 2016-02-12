@@ -5945,41 +5945,27 @@ See `message-idna-encode'."
 	(message-idna-to-ascii-rhs-1 "Mail-Followup-To")
 	(message-idna-to-ascii-rhs-1 "Cc")))))
 
-(defvar Date)
-(defvar Message-ID)
-(defvar Organization)
-(defvar From)
-(defvar Path)
-(defvar Subject)
-(defvar Newsgroups)
-(defvar In-Reply-To)
-(defvar References)
-(defvar To)
-(defvar Distribution)
-(defvar Lines)
-(defvar User-Agent)
-(defvar Expires)
-
 (defun message-generate-headers (headers)
   "Prepare article HEADERS.
 Headers already prepared in the buffer are not modified."
   (setq headers (append headers message-required-headers))
   (save-restriction
     (message-narrow-to-headers)
-    (let* ((Date (message-make-date))
-	   (Message-ID (message-make-message-id))
-	   (Organization (message-make-organization))
-	   (From (message-make-from))
-	   (Path (message-make-path))
-	   (Subject nil)
-	   (Newsgroups nil)
-	   (In-Reply-To (message-make-in-reply-to))
-	   (References (message-make-references))
-	   (To nil)
-	   (Distribution (message-make-distribution))
-	   (Lines (message-make-lines))
-	   (User-Agent message-newsreader)
-	   (Expires (message-make-expires))
+    (let* ((header-values
+	    (list 'Date (message-make-date)
+		  'Message-ID (message-make-message-id)
+		  'Organization (message-make-organization)
+		  'From (message-make-from)
+		  'Path (message-make-path)
+		  'Subject nil
+		  'Newsgroups nil
+		  'In-Reply-To (message-make-in-reply-to)
+		  'References (message-make-references)
+		  'To nil
+		  'Distribution (message-make-distribution)
+		  'Lines (message-make-lines)
+		  'User-Agent message-newsreader
+		  'Expires (message-make-expires)))
 	   (case-fold-search t)
 	   (optionalp nil)
 	   header value elem header-string)
@@ -6033,8 +6019,8 @@ Headers already prepared in the buffer are not modified."
 		  (setq header (cdr elem))
 		  (or (and (functionp (cdr elem))
 			   (funcall (cdr elem)))
-		      (and (boundp (cdr elem))
-			   (symbol-value (cdr elem)))))
+		      (and (symbolp (cdr elem))
+			   (plist-get header-values (cdr elem)))))
 		 ((consp elem)
 		  ;; The element is a cons.  Either the cdr is a
 		  ;; string to be inserted verbatim, or it is a
@@ -6044,11 +6030,11 @@ Headers already prepared in the buffer are not modified."
 			   (cdr elem))
 		      (and (functionp (cdr elem))
 			   (funcall (cdr elem)))))
-		 ((and (boundp header)
-		       (symbol-value header))
-		  ;; The element is a symbol.  We insert the value
-		  ;; of this symbol, if any.
-		  (symbol-value header))
+		 ((and (symbolp header)
+		       (plist-member header-values header))
+		  ;; The element is a symbol.  We insert the value of
+		  ;; this symbol, if any.
+		  (plist-get header-values header))
 		 ((not (message-check-element
 			(intern (downcase (symbol-name header)))))
 		  ;; We couldn't generate a value for this header,
