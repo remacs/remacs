@@ -230,7 +230,7 @@
 	((condition-case nil
 	     (let ((coding-system-for-write 'iso-2022-jp)
 		   (coding-system-for-read 'iso-2022-jp)
-		   (str (mm-decode-coding-string "\
+		   (str (decode-coding-string "\
 \e$B#D#o#e#s!!#w#3#m!!#s#u#p#p#o#r#t!!#m#1#7#n!)\e(B" 'iso-2022-jp)))
 	       (mm-with-multibyte-buffer
 		 (insert str)
@@ -282,7 +282,7 @@
     (delete-region (match-beginning 0) (match-end 0))))
 
 (defun mm-inline-wash-with-file (post-func cmd &rest args)
-  (let ((file (mm-make-temp-file
+  (let ((file (make-temp-file
 	       (expand-file-name "mm" mm-tmp-directory))))
     (let ((coding-system-for-write 'binary))
       (write-region (point-min) (point-max) file nil 'silent))
@@ -496,7 +496,7 @@ If MODE is not set, try to find mode automatically."
 		     (with-current-buffer (mm-handle-buffer handle)
 		       (buffer-string)))
 		    (coding-system
-		     (mm-decode-coding-string text coding-system))
+		     (decode-coding-string text coding-system))
 		    (charset
 		     (mm-decode-string text charset))
 		    (t

@@ -458,8 +458,8 @@ system for example was used.")
 			(and (boundp 'default-file-name-coding-system)
 			     default-file-name-coding-system))))
 	(push (cons group decoded) gnus-cache-decoded-group-names)
-	(push (cons (mm-decode-coding-string
-		     (mm-encode-coding-string decoded coding)
+	(push (cons (decode-coding-string
+		     (encode-coding-string decoded coding)
 		     coding)
 		    group)
 	      gnus-cache-unified-group-names)

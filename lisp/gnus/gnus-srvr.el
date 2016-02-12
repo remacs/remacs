@@ -802,7 +802,7 @@ claim them."
 	      (while (not (eobp))
 		(ignore-errors
 		  (push (cons
-			 (mm-string-as-unibyte
+			 (string-as-unibyte
 			  (buffer-substring
 			   (point)
 			   (progn
@@ -815,7 +815,7 @@ claim them."
 	    (while (not (eobp))
 	      (ignore-errors
 		(push (cons
-		       (mm-string-as-unibyte
+		       (string-as-unibyte
 			(if (eq (char-after) ?\")
 			    (read cur)
 			  (let ((p (point)) (name ""))
@@ -883,7 +883,7 @@ claim them."
 			(if (and (fboundp 'detect-coding-string)
 				 (eq (detect-coding-string name t) 'undecided))
 			    name
-			  (mm-decode-coding-string
+			  (decode-coding-string
 			   name
 			   (inline (gnus-group-name-charset method name)))))))
 	     (list 'gnus-group name)

@@ -143,7 +143,7 @@ CHARS is a regexp-like character alternative (e.g., \"[)$]\")."
 				      charset nil t))
 		       (not (eq charset 'ascii)))
 	      (insert (prog1
-			  (mm-decode-coding-string (buffer-string) charset)
+			  (decode-coding-string (buffer-string) charset)
 			(erase-buffer)
 			(mm-enable-multibyte))))
 	    (call-process-region (point-min) (point-max)

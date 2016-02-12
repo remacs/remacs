@@ -1342,7 +1342,7 @@ For the \"inline\" alternatives, also see the variable
   (gnus-inews-insert-gcc)
   (let ((gcc (mapcar
 	      (lambda (group)
-		(mm-encode-coding-string
+		(encode-coding-string
 		 group
 		 (gnus-group-name-charset (gnus-inews-group-method group)
 					  group)))
@@ -1359,7 +1359,7 @@ For the \"inline\" alternatives, also see the variable
 	     (insert "Gcc: \"" gnus-newsgroup-name "\"\n"))
 	    ((stringp self)
 	     (insert "Gcc: "
-		     (mm-encode-coding-string
+		     (encode-coding-string
 		      (if (string-match " " self)
 			  (concat "\"" self "\"")
 			self)
@@ -1398,7 +1398,7 @@ For the \"inline\" alternatives, also see the variable
 	tem)
     (dolist (style styles)
       (when (stringp (cadr style))
-	(setcdr style (list (mm-decode-coding-string (cadr style) 'utf-8)))))
+	(setcdr style (list (decode-coding-string (cadr style) 'utf-8)))))
     (dolist (style (if styles
 		       (append gnus-posting-styles (list (cons ".*" styles)))
 		     gnus-posting-styles))
@@ -1637,7 +1637,7 @@ this is a reply."
 	  ;; Copy the article over to some group(s).
 	  (while (setq group (pop groups))
 	    (setq method (gnus-inews-group-method group)
-		  group (mm-encode-coding-string
+		  group (encode-coding-string
 			 group
 			 (gnus-group-name-charset method group)))
 	    (unless (gnus-check-server method)
@@ -1840,8 +1840,8 @@ this is a reply."
 	  (when tmp-style
 	    (dolist (style tmp-style)
 	      (when (stringp (cadr style))
-		(setcdr style (list (mm-decode-coding-string (cadr style)
-							     'utf-8)))))
+		(setcdr style (list (decode-coding-string (cadr style)
+							  'utf-8)))))
 	    (setq styles (append styles (list (cons ".*" tmp-style)))))))
       ;; Go through all styles and look for matches.
       (dolist (style styles)

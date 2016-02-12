@@ -4446,9 +4446,9 @@ Returns HEADER if it was entered in the DEPENDENCIES.  Returns nil otherwise."
 
 (defsubst gnus-remove-odd-characters (string)
   "Translate STRING into something that doesn't contain weird characters."
-  (mm-subst-char-in-string
+  (subst-char-in-string
    ?\r ?\-
-   (mm-subst-char-in-string ?\n ?\- string t) t))
+   (subst-char-in-string ?\n ?\- string t) t))
 
 ;; This function has to be called with point after the article number
 ;; on the beginning of the line.
@@ -5578,15 +5578,15 @@ If SELECT-ARTICLES, only select those articles from GROUP."
 	    (gnus-kill-buffer (current-buffer)))
 	  (error
 	   "Couldn't activate group %s: %s"
-	   (mm-decode-coding-string group charset)
-	   (mm-decode-coding-string (gnus-status-message group) charset))))
+	   (decode-coding-string group charset)
+	   (decode-coding-string (gnus-status-message group) charset))))
 
     (unless (gnus-request-group group t nil (gnus-get-info group))
       (when (derived-mode-p 'gnus-summary-mode)
 	(gnus-kill-buffer (current-buffer)))
       (error "Couldn't request group %s: %s"
-	     (mm-decode-coding-string group charset)
-	     (mm-decode-coding-string (gnus-status-message group) charset)))
+	     (decode-coding-string group charset)
+	     (decode-coding-string (gnus-status-message group) charset)))
 
     (when (and gnus-agent
 	       (gnus-active group))
@@ -9653,7 +9653,7 @@ C-u g', show the raw article."
     (gnus-summary-show-article t)
     (let ((gnus-newsgroup-charset
 	   (or (cdr (assq arg gnus-summary-show-article-charset-alist))
-	       (mm-read-coding-system
+	       (read-coding-system
 		"View as charset: " ;; actually it is coding system.
 		(with-current-buffer gnus-article-buffer
 		  (mm-detect-coding-region (point) (point-max))))))
@@ -9948,7 +9948,7 @@ ACTION can be either `move' (the default), `crosspost' or `copy'."
 	    encoded to-newsgroup
 	    to-method (gnus-server-to-method (gnus-group-method to-newsgroup)))
       (set (intern (format "gnus-current-%s-group" action))
-	   (mm-decode-coding-string
+	   (decode-coding-string
 	    to-newsgroup
 	    (gnus-group-name-charset to-method to-newsgroup))))
     (unless to-method
@@ -9958,7 +9958,7 @@ ACTION can be either `move' (the default), `crosspost' or `copy'."
     (setq to-newsgroup
 	  (or encoded
 	      (and to-newsgroup
-		   (mm-encode-coding-string
+		   (encode-coding-string
 		    to-newsgroup
 		    (gnus-group-name-charset to-method to-newsgroup)))))
     ;; Check the method we are to move this article to...
@@ -11135,7 +11135,7 @@ If NO-EXPIRE, auto-expiry will be inhibited."
 	(goto-char (+ forward (point)))
 	;; Replace the old mark with the new mark.
         (let ((to-insert
-               (mm-subst-char-in-string
+               (subst-char-in-string
 		(char-after) mark
 		(buffer-substring (point) (1+ (point))))))
           (delete-region (point) (1+ (point)))
@@ -12279,7 +12279,7 @@ save those articles instead."
 	  (setq to-newsgroup default))
       (unless to-newsgroup
 	(error "No group name entered"))
-      (setq encoded (mm-encode-coding-string
+      (setq encoded (encode-coding-string
 		     to-newsgroup
 		     (gnus-group-name-charset to-method to-newsgroup)))
       (or (gnus-active encoded)

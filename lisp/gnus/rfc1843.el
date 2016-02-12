@@ -95,7 +95,7 @@ ftp://ftp.math.psu.edu/pub/simpson/chinese/hzp/hzp.doc"
 			 (match-beginning 1)
 			 (match-end 1)))
 	      (setq firstc (aref str 0))
-	      (insert (mm-decode-coding-string
+	      (insert (decode-coding-string
 		       (rfc1843-decode
 			(prog1
 			    (substring str 1)

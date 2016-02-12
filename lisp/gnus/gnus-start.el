@@ -1992,7 +1992,7 @@ backend check whether the group actually exists."
     (while lists
       (setq killed (car lists))
       (while killed
-	(gnus-sethash (mm-string-as-unibyte (car killed)) nil hashtb)
+	(gnus-sethash (string-as-unibyte (car killed)) nil hashtb)
 	(setq killed (cdr killed)))
       (setq lists (cdr lists)))))
 
@@ -2455,7 +2455,7 @@ If FORCE is non-nil, the .newsrc file is read."
     (dolist (elem gnus-newsrc-alist)
       ;; Protect against broken .newsrc.el files.
       (when (car elem)
-	(setcar elem (mm-string-as-unibyte (car elem)))))
+	(setcar elem (string-as-unibyte (car elem)))))
     (gnus-make-hashtable-from-newsrc-alist)
     (when (file-newer-than-file-p file ding-file)
       ;; Old format quick file
@@ -3160,7 +3160,7 @@ If FORCE is non-nil, the .newsrc file is read."
 			  gnus-default-charset)))
 		;; Fixme: Don't decode in unibyte mode.
 		(when (and str charset (featurep 'mule))
-		  (setq str (mm-decode-coding-string str charset)))
+		  (setq str (decode-coding-string str charset)))
 		(set group str)))
 	    (forward-line 1))))
       (gnus-message 5 "Reading descriptions file...done")

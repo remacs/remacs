@@ -267,7 +267,7 @@ Should be called narrowed to the head of the message."
 			     (mm-coding-system-p
 			      (car message-posting-charset)))
 			;; 8 bit must be decoded.
-			(mm-encode-coding-region
+			(encode-coding-region
 			 (point-min) (point-max)
 			 (mm-charset-to-coding-system
 			  (car message-posting-charset))))
@@ -294,8 +294,8 @@ Should be called narrowed to the head of the message."
 			 (if (boundp 'enable-multibyte-characters)
 			     (default-value 'enable-multibyte-characters))
 			 mail-parse-charset)
-		    (mm-encode-coding-region (point) (point-max)
-					     mail-parse-charset)))
+		    (encode-coding-region (point) (point-max)
+					  mail-parse-charset)))
 	       ;; We get this when CC'ing messages to newsgroups with
 	       ;; 8-bit names.  The group name mail copy just got
 	       ;; unconditionally encoded.  Previously, it would ask
@@ -321,7 +321,7 @@ Should be called narrowed to the head of the message."
 			     (if (boundp 'enable-multibyte-characters)
 				 (default-value 'enable-multibyte-characters)))
 			(featurep 'file-coding))
-		    (mm-encode-coding-region (point) (point-max) method)))
+		    (encode-coding-region (point) (point-max) method)))
 	       ;; Hm.
 	       (t)))
 	    (goto-char (point-max))))))))
@@ -556,7 +556,7 @@ Dynamically bind `rfc2047-encoding-type' to change that."
 	     (if (or debug-on-quit debug-on-error)
 		 (signal (car err) (cdr err))
 	       (error "Invalid data for rfc2047 encoding: %s"
-		      (mm-replace-in-string orig-text "[ \t\n]+" " "))))))))
+		      (replace-regexp-in-string orig-text "[ \t\n]+" " "))))))))
     (unless dont-fold
       (rfc2047-fold-region b (point)))
     (goto-char (point-max))))
@@ -592,7 +592,7 @@ should not change this value.")
 	((not rfc2047-encode-max-chars)
 	 (concat start
 		 (funcall encoder (if cs
-				      (mm-encode-coding-string string cs)
+				      (encode-coding-string string cs)
 				    string))
 		 "?="))
 	((>= column rfc2047-encode-max-chars)
@@ -616,7 +616,7 @@ should not change this value.")
 	     (setq next (concat start
 				(funcall encoder
 					 (if cs
-					     (mm-encode-coding-string
+					     (encode-coding-string
 					      (substring string 0 (1+ index))
 					      cs)
 					   (substring string 0 (1+ index))))
@@ -700,7 +700,7 @@ Point moves to the end of the region."
 	       (setq crest (buffer-substring-no-properties (point) b)))
 	     (setq eword (rfc2047-encode-1
 			  (- b (point-at-bol))
-			  (mm-replace-in-string
+			  (replace-regexp-in-string
 			   (buffer-substring-no-properties b e)
 			   "\n\\([ \t]?\\)" "\\1")
 			  cs
@@ -947,7 +947,7 @@ ENCODED-WORD)."
 				      (rfc2047-pad-base64 (nth 2 word)))))
 			 ((char-equal ?Q (nth 1 word))
 			  (setq text (quoted-printable-decode-string
-				      (mm-subst-char-in-string
+				      (subst-char-in-string
 				       ?_ ?  (nth 2 word) t)))))
 		 (error
 		  (message "%s" (error-message-string code))
@@ -963,7 +963,7 @@ ENCODED-WORD)."
       (setq words (concat
 		   (or (and (setq cs (caar rest))
 			    (condition-case code
-				(mm-decode-coding-string (cdar rest) cs)
+				(decode-coding-string (cdar rest) cs)
 			      (error
 			       (message "%s" (error-message-string code))
 			       nil)))
@@ -1087,13 +1087,13 @@ other than `\"' and `\\' in quoted strings."
 		     mail-parse-charset
 		     (not (eq mail-parse-charset 'us-ascii))
 		     (not (eq mail-parse-charset 'gnus-decoded)))
-	    (mm-decode-coding-region b e mail-parse-charset))
+	    (decode-coding-region b e mail-parse-charset))
 	  (setq b (point)))
 	(when (and (mm-multibyte-p)
 		   mail-parse-charset
 		   (not (eq mail-parse-charset 'us-ascii))
 		   (not (eq mail-parse-charset 'gnus-decoded)))
-	  (mm-decode-coding-region b (point-max) mail-parse-charset))))))
+	  (decode-coding-region b (point-max) mail-parse-charset))))))
 
 (defun rfc2047-decode-address-region (start end)
   "Decode MIME-encoded words in region between START and END.
@@ -1123,7 +1123,7 @@ other than `\"' and `\\' in quoted strings."
       (when address-mime
 	(setq string
 	      (with-temp-buffer
-		(when (mm-multibyte-string-p string)
+		(when (multibyte-string-p string)
 		  (mm-enable-multibyte))
 		(insert string)
 		(rfc2047-strip-backslashes-in-quoted-strings)
@@ -1146,8 +1146,8 @@ other than `\"' and `\\' in quoted strings."
 		   ;; string is purely ASCII
 		   (eq (detect-coding-string string t) 'undecided))
               string
-            (mm-decode-coding-string string mail-parse-charset))
-        (mm-string-to-multibyte string)))) ;; )
+            (decode-coding-string string mail-parse-charset))
+        (string-to-multibyte string)))) ;; )
 
 (defun rfc2047-decode-address-string (string)
   "Decode MIME-encoded STRING and return the result.

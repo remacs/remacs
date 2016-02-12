@@ -1601,9 +1601,9 @@ authentication tokens:
                                           (list k (plist-get spec k))))
                                       search-keys))))
          ;; needed keys (always including host, login, port, and secret)
-         (returned-keys (mm-delete-duplicates (append
-                                               '(:host :login :port :secret)
-                                               search-keys)))
+         (returned-keys (delete-dups (append
+				      '(:host :login :port :secret)
+				      search-keys)))
          (items
           (loop for search-spec in search-specs
                nconc
@@ -1730,9 +1730,9 @@ entries for git.gnus.org:
                                           (list k (plist-get spec k))))
                                       search-keys)))
          ;; needed keys (always including host, login, port, and secret)
-         (returned-keys (mm-delete-duplicates (append
-                                               '(:host :login :port :secret)
-                                               search-keys)))
+         (returned-keys (delete-dups (append
+				      '(:host :login :port :secret)
+				      search-keys)))
          ;; Extract host and port from spec
          (hosts (plist-get spec :host))
          (hosts (if (and hosts (listp hosts)) hosts `(,hosts)))
@@ -1872,9 +1872,9 @@ entries for git.gnus.org:
                                             (list k v))))
                                       search-keys)))
          ;; needed keys (always including host, login, port, and secret)
-         (returned-keys (mm-delete-duplicates (append
-                                               '(:host :login :port :secret)
-                                               search-keys)))
+         (returned-keys (delete-dups (append
+				      '(:host :login :port :secret)
+				      search-keys)))
          (items (plstore-find store search-spec))
          (item-names (mapcar #'car items))
          (items (butlast items (- (length items) max)))

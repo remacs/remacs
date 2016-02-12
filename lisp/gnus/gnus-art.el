@@ -2508,7 +2508,7 @@ If PROMPT (the prefix), prompt for a coding system to use."
 	      ctl (and ct (mail-header-parse-content-type ct))
 	      charset (cond
 		       (prompt
-			(mm-read-coding-system "Charset to decode: "))
+			(read-coding-system "Charset to decode: "))
 		       (ctl
 			(mail-content-type-get ctl 'charset)))
 	      format (and ctl (mail-content-type-get ctl 'format)))
@@ -2629,7 +2629,7 @@ If READ-CHARSET, ask for a coding system."
 	      (if (stringp charset)
 		  (setq charset (intern (downcase charset)))))))
       (if read-charset
-	  (setq charset (mm-read-coding-system "Charset: " charset)))
+	  (setq charset (read-coding-system "Charset: " charset)))
       (unless charset
 	(setq charset gnus-newsgroup-charset))
       (when (or force
@@ -2657,7 +2657,7 @@ If READ-CHARSET, ask for a coding system."
 	      (if (stringp charset)
 		  (setq charset (intern (downcase charset)))))))
       (if read-charset
-	  (setq charset (mm-read-coding-system "Charset: " charset)))
+	  (setq charset (read-coding-system "Charset: " charset)))
       (unless charset
 	(setq charset gnus-newsgroup-charset))
       (when (or force
@@ -2667,7 +2667,7 @@ If READ-CHARSET, ask for a coding system."
 	(save-restriction
 	  (narrow-to-region (point) (point-max))
 	  (base64-decode-region (point-min) (point-max))
-	  (mm-decode-coding-region
+	  (decode-coding-region
 	   (point-min) (point-max)
 	   (mm-charset-to-coding-system charset nil t)))))))
 
@@ -2850,7 +2850,7 @@ message header will be added to the bodies of the \"text/html\" parts."
 <img[\t\n ]+\\(?:[^\t\n >]+[\t\n ]+\\)*src=\"\\(cid:\\([^\"]+\\)\\)\""
 					   nil t)
 		   (unless cid-dir
-		     (setq cid-dir (mm-make-temp-file "cid" t))
+		     (setq cid-dir (make-temp-file "cid" t))
 		     (add-to-list 'gnus-article-browse-html-temp-list cid-dir))
 		   (setq file nil
 			 content nil)
@@ -2863,7 +2863,7 @@ message header will be added to the bodies of the \"text/html\" parts."
 		     (replace-match cid-file nil nil nil 1))))
 	       (unless content (setq content (buffer-string))))
 	     (when (or charset header (not file))
-	       (setq tmp-file (mm-make-temp-file
+	       (setq tmp-file (make-temp-file
 			       ;; Do we need to care for 8.3 filenames?
 			       "mm-" nil ".html")))
 	     ;; Add a meta html tag to specify charset and a header.
@@ -2897,11 +2897,11 @@ message header will be added to the bodies of the \"text/html\" parts."
 		   ;; charset specified in parts might be different.
 		   (if (eq charset 'gnus-decoded)
 		       (setq charset 'utf-8
-			     eheader (mm-encode-coding-string (buffer-string)
-							      charset)
+			     eheader (encode-coding-string (buffer-string)
+							   charset)
 			     title (when title
-				     (mm-encode-coding-string title charset))
-			     body (mm-encode-coding-string content charset))
+				     (encode-coding-string title charset))
+			     body (encode-coding-string content charset))
 		     (setq hcharset (mm-find-mime-charset-region (point-min)
 								 (point-max)))
 		     (cond ((= (length hcharset) 1)
@@ -2918,30 +2918,30 @@ message header will be added to the bodies of the \"text/html\" parts."
 				     (mm-charset-to-coding-system charset
 								  nil t))
 			       (if (eq coding body)
-				   (setq eheader (mm-encode-coding-string
+				   (setq eheader (encode-coding-string
 						  (buffer-string) coding)
 					 title (when title
-						 (mm-encode-coding-string
+						 (encode-coding-string
 						  title coding))
 					 body content)
 				 (setq charset 'utf-8
-				       eheader (mm-encode-coding-string
+				       eheader (encode-coding-string
 						(buffer-string) charset)
 				       title (when title
-					       (mm-encode-coding-string
+					       (encode-coding-string
 						title charset))
-				       body (mm-encode-coding-string
-					     (mm-decode-coding-string
+				       body (encode-coding-string
+					     (decode-coding-string
 					      content body)
 					     charset))))
 			   (setq charset hcharset
-				 eheader (mm-encode-coding-string
+				 eheader (encode-coding-string
 					  (buffer-string) coding)
 				 title (when title
-					 (mm-encode-coding-string
+					 (encode-coding-string
 					  title coding))
 				 body content))
-		       (setq eheader (mm-string-as-unibyte (buffer-string))
+		       (setq eheader (string-as-unibyte (buffer-string))
 			     body content)))
 		   (erase-buffer)
 		   (mm-disable-multibyte)
@@ -2964,8 +2964,8 @@ message header will be added to the bodies of the \"text/html\" parts."
 	      (charset
 	       (mm-with-unibyte-buffer
 		 (insert (if (eq charset 'gnus-decoded)
-			     (mm-encode-coding-string content
-						      (setq charset 'utf-8))
+			     (encode-coding-string content
+						   (setq charset 'utf-8))
 			   content))
 		 (if (or (mm-add-meta-html-tag handle charset)
 			 (not file))
@@ -5253,7 +5253,7 @@ are decompressed."
        ((numberp arg)
 	(setq charset (or (cdr (assq arg
 				     gnus-summary-show-article-charset-alist))
-			  (mm-read-coding-system "Charset: ")))))
+			  (read-coding-system "Charset: ")))))
       (switch-to-buffer (generate-new-buffer filename))
       (if (or coding-system
 	      (and charset
@@ -5262,7 +5262,7 @@ are decompressed."
 		   (not (eq coding-system 'ascii))))
 	  (progn
 	    (mm-enable-multibyte)
-	    (insert (mm-decode-coding-string contents coding-system))
+	    (insert (decode-coding-string contents coding-system))
 	    (setq buffer-file-coding-system
 		  (if (boundp 'last-coding-system-used)
 		      (symbol-value 'last-coding-system-used)
@@ -5284,7 +5284,7 @@ are decompressed."
   (gnus-article-check-buffer)
   (let* ((handle (or handle (get-text-property (point) 'gnus-data)))
 	 (contents (and handle (mm-get-part handle)))
-	 (file (mm-make-temp-file (expand-file-name "mm." mm-tmp-directory)))
+	 (file (make-temp-file (expand-file-name "mm." mm-tmp-directory)))
 	 (printer (mailcap-mime-info (mm-handle-media-type handle) "print")))
     (when contents
 	(if printer
@@ -5425,7 +5425,7 @@ specified charset."
 			   (or (cdr (assq
 				     arg
 				     gnus-summary-show-article-charset-alist))
-			       (mm-read-coding-system "Charset: "))))
+			       (read-coding-system "Charset: "))))
 	      (if (mm-handle-undisplayer handle)
 		  (mm-remove-part handle)))
 	(gnus-mime-set-charset-parameters handle charset)
@@ -7060,7 +7060,7 @@ If given a prefix, show the hidden text instead."
             ;; equivalent of string-make-multibyte which amount to decoding
             ;; with locale-coding-system, causing failure of
             ;; subsequent decoding.
-            (insert (mm-string-to-multibyte
+            (insert (string-to-multibyte
                      (with-current-buffer gnus-original-article-buffer
                        (buffer-substring (point-min) (point-max)))))
 	    'article)
@@ -8280,7 +8280,7 @@ url is put as the `gnus-button-url' overlay property on the button."
 
 (defun gnus-button-handle-info-url (url)
   "Fetch an info URL."
-  (setq url (mm-subst-char-in-string ?+ ?\  url))
+  (setq url (subst-char-in-string ?+ ?\  url))
   (cond
    ((string-match "^\\([^:/]+\\)?/\\(.*\\)" url)
     (gnus-info-find-node
@@ -8296,7 +8296,7 @@ url is put as the `gnus-button-url' overlay property on the button."
 
 (defun gnus-button-handle-info-url-gnome (url)
   "Fetch GNOME style info URL."
-  (setq url (mm-subst-char-in-string ?_ ?\  url))
+  (setq url (subst-char-in-string ?_ ?\  url))
   (if (string-match "\\([^#]+\\)#?\\(.*\\)" url)
       (gnus-info-find-node
        (concat "("

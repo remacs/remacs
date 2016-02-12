@@ -643,7 +643,7 @@ be \"related\" or \"alternate\"."
 	    (mm-with-unibyte-buffer
 	      (cond
 	       ((cdr (assq 'buffer cont))
-		(insert (mm-string-as-unibyte
+		(insert (string-as-unibyte
 			 (with-current-buffer (cdr (assq 'buffer cont))
 			   (buffer-string)))))
 	       ((and filename
@@ -658,7 +658,7 @@ be \"related\" or \"alternate\"."
 		(let ((contents (cdr (assq 'contents cont))))
 		  (if (if (featurep 'xemacs)
 			  (string-match "[^\000-\377]" contents)
-			(mm-multibyte-string-p contents))
+			(multibyte-string-p contents))
 		      (progn
 			(mm-enable-multibyte)
 			(insert contents)
@@ -1377,7 +1377,7 @@ body) or \"attachment\" (separate from the body)."
 			  'type type
 			  ;; icicles redefines read-file-name and returns a
 			  ;; string w/ text properties :-/
-			  'filename (mm-substring-no-properties file)
+			  'filename (substring-no-properties file)
 			  'disposition (or disposition "attachment")
 			  'description description)
     ;; When using Mail mode, make sure it does the mime encoding
@@ -1606,7 +1606,7 @@ or the `pop-to-buffer' function."
       ;; FIXME: Buffer is in article mode, but most tool bar commands won't
       ;; work.  Maybe only keep the following icons: search, print, quit
       (goto-char (point-min))))
-  (if (and (not (mm-special-display-p (buffer-name mml-preview-buffer)))
+  (if (and (not (special-display-p (buffer-name mml-preview-buffer)))
 	   (boundp 'gnus-buffer-configuration)
 	   (assq 'mml-preview gnus-buffer-configuration))
       (let ((gnus-message-buffer (current-buffer)))

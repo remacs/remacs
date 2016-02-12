@@ -947,8 +947,9 @@ If no one is selected, symmetric encryption will be performed.  "
 	      (if (eq 'OpenPGP protocol)
 		  (epg-sign-string context (buffer-string) mode)
 		(epg-sign-string context
-				 (mm-replace-in-string (buffer-string)
-						       "\n" "\r\n") t))
+				 (replace-regexp-in-string (buffer-string)
+							   "\n" "\r\n")
+				 t))
 	      mml-secure-secret-key-id-list nil)
       (error
        (mml-secure-clear-secret-key-id-list)

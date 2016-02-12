@@ -1689,7 +1689,7 @@ actually)."
 	     `(("query" . ,search)
 	       ("HITSPERPAGE" . "999")))))
 	  (unless (featurep 'xemacs) (set-buffer-multibyte t))
-	  (mm-decode-coding-region (point-min) (point-max) 'utf-8)
+	  (decode-coding-region (point-min) (point-max) 'utf-8)
 	  (goto-char (point-min))
 	  (forward-line 1)
 	  (while (not (eobp))
@@ -1705,7 +1705,7 @@ actually)."
 		      (string-to-number (match-string 2 xref)) xscore)
 		     artlist)))))
 	    (forward-line 1)))
-	(apply 'vector (nreverse (mm-delete-duplicates artlist)))))
+	(apply 'vector (nreverse (delete-dups artlist)))))
 
 ;;; Util Code:
 
@@ -1814,18 +1814,19 @@ article came from is also searched."
 	(if (eq (car method) 'nntp)
 	    (while (not (eobp))
 	      (ignore-errors
-		(push (mm-string-as-unibyte
+		(push (string-as-unibyte
 		       (gnus-group-full-name
 			(buffer-substring
 			 (point)
 			 (progn
 			   (skip-chars-forward "^ \t")
-			   (point))) method))
+			   (point)))
+			method))
 		      groups))
 	      (forward-line))
 	  (while (not (eobp))
 	    (ignore-errors
-	      (push (mm-string-as-unibyte
+	      (push (string-as-unibyte
 		     (if (eq (char-after) ?\")
 			 (gnus-group-full-name (read cur) method)
 		       (let ((p (point)) (name ""))

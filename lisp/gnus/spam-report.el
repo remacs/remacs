@@ -297,8 +297,7 @@ symbol `ask', query before flushing the queue file."
 		(re-search-forward
 		 "http://\\([^/]+\\)\\(/.*\\) *$" (point-at-eol) t))
       (let ((spam-report-gmane-wait
-	     (zerop (% (mm-line-number-at-pos)
-		       spam-report-gmane-max-requests))))
+	     (zerop (% (line-number-at-pos) spam-report-gmane-max-requests))))
 	(gnus-message 6 "Reporting %s%s..."
 		      (match-string 1) (match-string 2))
 	(funcall spam-report-url-ping-function

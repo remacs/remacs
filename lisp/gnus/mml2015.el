@@ -619,7 +619,7 @@ If set, it overrides the setting of `mml2015-sign-with-sender'."
 	    (insert "\r"))
 	  (forward-line)
 	  (end-of-line))
-	(with-temp-file (setq signature-file (mm-make-temp-file "pgg"))
+	(with-temp-file (setq signature-file (make-temp-file "pgg"))
 	  (mm-insert-part signature))
 	(if (condition-case err
 		(prog1
@@ -660,7 +660,7 @@ If set, it overrides the setting of `mml2015-sign-with-sender'."
     (if (condition-case err
 	    (prog1
 		(mm-with-unibyte-buffer
-		  (insert (mm-encode-coding-string text coding-system))
+		  (insert (encode-coding-string text coding-system))
 		  (pgg-verify-region (point-min) (point-max) nil t))
 	      (goto-char (point-min))
 	      (while (search-forward "\r\n" nil t)
@@ -783,7 +783,7 @@ If set, it overrides the setting of `mml2015-sign-with-sender'."
 (defun mml2015-epg-key-image (key-id)
   "Return the image of a key, if any"
   (with-temp-buffer
-    (mm-set-buffer-multibyte nil)
+    (set-buffer-multibyte nil)
     (let* ((coding-system-for-write 'binary)
            (coding-system-for-read 'binary)
            (data (shell-command-to-string
@@ -923,7 +923,7 @@ If set, it overrides the setting of `mml2015-sign-with-sender'."
 	(mm-set-handle-multipart-parameter
 	 mm-security-handle 'gnus-info "Corrupted")
 	(throw 'error handle))
-      (setq part (mm-replace-in-string part "\n" "\r\n")
+      (setq part (replace-regexp-in-string part "\n" "\r\n")
 	    signature (mm-get-part signature)
 	    context (epg-make-context))
       (condition-case error
@@ -946,8 +946,8 @@ If set, it overrides the setting of `mml2015-sign-with-sender'."
 (defun mml2015-epg-clear-verify ()
   (let ((inhibit-redisplay t)
 	(context (epg-make-context))
-	(signature (mm-encode-coding-string (buffer-string)
-					    coding-system-for-write))
+	(signature (encode-coding-string (buffer-string)
+					 coding-system-for-write))
 	plain)
     (condition-case error
 	(setq plain (epg-verify-string context signature))
@@ -966,7 +966,7 @@ If set, it overrides the setting of `mml2015-sign-with-sender'."
 	   (mml2015-epg-verify-result-to-string
 	    (epg-context-result-for context 'verify)))
 	  (delete-region (point-min) (point-max))
-	  (insert (mm-decode-coding-string plain coding-system-for-read)))
+	  (insert (decode-coding-string plain coding-system-for-read)))
       (mml2015-extract-cleartext-signature))))
 
 (defun mml2015-epg-sign (cont)

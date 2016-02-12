@@ -1145,7 +1145,7 @@ The following commands are available:
       (goto-char (point-min))
       (setq gnus-group-mark-positions
 	    (list (cons 'process (and (search-forward
-				       (mm-string-to-multibyte "\200") nil t)
+				       (string-to-multibyte "\200") nil t)
 				      (- (point) (point-min) 1))))))))
 
 (defun gnus-mouse-pick-group (e)
@@ -1208,7 +1208,7 @@ The following commands are available:
 (defun gnus-group-name-decode (string charset)
   ;; Fixme: Don't decode in unibyte mode.
   (if (and string charset (featurep 'mule))
-      (mm-decode-coding-string string charset)
+      (decode-coding-string string charset)
     string))
 
 (defun gnus-group-decoded-name (string)
@@ -2216,7 +2216,7 @@ if it is not a list."
 		(member group (mapcar 'symbol-name collection))
 	      (symbol-value (intern-soft group collection)))
       (setq group
-	    (mm-encode-coding-string
+	    (encode-coding-string
 	     group (gnus-group-name-charset nil group))))
     (replace-regexp-in-string group "\n" "")))
 
@@ -2378,7 +2378,7 @@ specified by `gnus-gmane-group-download-format'."
   (unless range (setq range 500))
   (when (< range 1)
     (error "Invalid range: %s" range))
-  (let ((tmpfile (mm-make-temp-file
+  (let ((tmpfile (make-temp-file
 		  (format "%s.start-%s.range-%s." group start range)))
 	(gnus-thread-sort-functions '(gnus-thread-sort-by-number)))
     (with-temp-file tmpfile
@@ -2464,7 +2464,7 @@ the bug number, and browsing the URL must return mbox output."
     (setq ids (string-to-number ids)))
   (unless (listp ids)
     (setq ids (list ids)))
-  (let ((tmpfile (mm-make-temp-file "gnus-temp-group-")))
+  (let ((tmpfile (make-temp-file "gnus-temp-group-")))
     (let ((coding-system-for-write 'binary)
 	  (coding-system-for-read 'binary))
       (with-temp-file tmpfile
@@ -2738,7 +2738,7 @@ server."
   (when (stringp method)
     (setq method (or (gnus-server-to-method method) method)))
   (unless encoded
-    (setq name (mm-encode-coding-string
+    (setq name (encode-coding-string
 		name
 		(gnus-group-name-charset method name))))
   (let* ((meth (gnus-method-simplify
@@ -2856,7 +2856,7 @@ and NEW-NAME will be prompted for."
 		     "Rename group to: "
 		     (gnus-group-real-name (gnus-group-decoded-name group)))
 	   method (gnus-info-method (gnus-get-info group)))
-     (list group (mm-encode-coding-string
+     (list group (encode-coding-string
 		  new-name
 		  (gnus-group-name-charset
 		   method
@@ -3070,9 +3070,9 @@ If called with a prefix argument, ask for the file type."
 		       (list 'nndoc-address file)
 		       (list 'nndoc-article-type (or type 'guess))))
 	 (coding (gnus-group-name-charset method name)))
-    (setcar (cdr method) (mm-encode-coding-string file coding))
+    (setcar (cdr method) (encode-coding-string file coding))
     (gnus-group-make-group
-     (mm-encode-coding-string (gnus-group-real-name name) coding)
+     (encode-coding-string (gnus-group-real-name name) coding)
      method nil nil t)))
 
 (defvar nnweb-type-definition)
@@ -3149,8 +3149,8 @@ If there is, use Gnus to create an nnrss group"
 	       (coding (gnus-group-name-charset '(nnrss "") title)))
 	  (when coding
 	    ;; Unify non-ASCII text.
-	    (setq title (mm-decode-coding-string
-			 (mm-encode-coding-string title coding)
+	    (setq title (decode-coding-string
+			 (encode-coding-string title coding)
 			 coding)))
 	  (gnus-group-make-group title '(nnrss ""))
 	  (push (list title href desc) nnrss-group-alist)

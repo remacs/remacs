@@ -746,8 +746,7 @@ These will be used to retrieve the RSVP information from ical events."
        (with-temp-buffer
          (mm-insert-part ,handle)
          (when (string= ,charset "utf-8")
-           (mm-decode-coding-region (point-min) (point-max) 'utf-8))
-
+           (decode-coding-region (point-min) (point-max) 'utf-8))
          ,@body))))
 
 

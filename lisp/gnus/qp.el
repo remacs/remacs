@@ -59,7 +59,7 @@ them into characters should be done separately."
 	;; which already contains non-ASCII characters which would
 	;; then get doubly-decoded below.
 	(if coding-system
-	    (mm-encode-coding-region (point-min) (point-max) coding-system))
+	    (encode-coding-region (point-min) (point-max) coding-system))
 	(goto-char (point-min))
 	(while (and (skip-chars-forward "^=")
 		    (not (eobp)))
@@ -87,7 +87,7 @@ them into characters should be done separately."
 		 (message "Malformed quoted-printable text")
 		 (forward-char)))))
       (if coding-system
-	  (mm-decode-coding-region (point-min) (point-max) coding-system)))))
+	  (decode-coding-region (point-min) (point-max) coding-system)))))
 
 (defun quoted-printable-decode-string (string &optional coding-system)
   "Decode the quoted-printable encoded STRING and return the result.
@@ -116,7 +116,7 @@ encode lines starting with \"From\"."
     (setq class "\010-\012\014\040-\074\076-\177"))
   (save-excursion
     (goto-char from)
-    (if (re-search-forward (mm-string-to-multibyte "[^\x0-\x7f\x80-\xff]")
+    (if (re-search-forward (string-to-multibyte "[^\x0-\x7f\x80-\xff]")
 			   to t)
 	(error "Multibyte character in QP encoding region"))
     (save-restriction
@@ -127,8 +127,7 @@ encode lines starting with \"From\"."
 		  (not (eobp)))
 	(insert
 	 (prog1
-	     ;; To unibyte in case of Emacs 23 (unicode) eight-bit.
-	     (format "=%02X" (mm-multibyte-char-to-unibyte (char-after)))
+	     (format "=%02X" (char-after))
 	   (delete-char 1))))
       ;; Encode white space at the end of lines.
       (goto-char (point-min))
@@ -167,7 +166,7 @@ encode lines starting with \"From\"."
 (defun quoted-printable-encode-string (string)
   "Encode the STRING as quoted-printable and return the result."
   (with-temp-buffer
-    (if (mm-multibyte-string-p string)
+    (if (multibyte-string-p string)
 	(mm-enable-multibyte)
       (mm-disable-multibyte))
     (insert string)

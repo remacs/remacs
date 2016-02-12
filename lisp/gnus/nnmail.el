@@ -697,7 +697,7 @@ nn*-request-list should have been called before calling this function."
 	      (setq group (symbol-name group)))
 	    (if (and (numberp (setq max (read buffer)))
 		     (numberp (setq min (read buffer))))
-		(push (list (mm-string-as-unibyte group) (cons min max))
+		(push (list (string-as-unibyte group) (cons min max))
 		      group-assoc)))
 	(error nil))
       (widen)
@@ -1173,7 +1173,7 @@ FUNC will be called with the group name to determine the article number."
 			5 "Error in `nnmail-split-methods'; using `bogus' mail group: %S" error-info)
 		       (sit-for 1)
 		       '("bogus")))))
-	      (setq split (mm-delete-duplicates split))
+	      (setq split (delete-dups split))
 	      ;; The article may be "cross-posted" to `junk'.  What
 	      ;; to do?  Just remove the `junk' spec.  Don't really
 	      ;; see anything else to do...
@@ -1281,7 +1281,7 @@ Return the number of characters in the body."
       (insert (if (mm-multibyte-p)
 		  (mm-string-as-multibyte
 		   (format " %s:%d" (caar group-alist) (cdar group-alist)))
-		(mm-string-as-unibyte
+		(string-as-unibyte
 		 (format " %s:%d" (caar group-alist) (cdar group-alist)))))
       (setq group-alist (cdr group-alist)))
     (insert "\n")))

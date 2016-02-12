@@ -364,7 +364,7 @@ If FOLLOW-REFRESH is non-nil, redirect refresh url in META."
 			      (string-to-number (substring entity 1)))))
 		       (setq c (or (cdr (assq c mm-extra-numeric-entities))
 				   (mm-ucs-to-char c)))
-		       (if (mm-char-or-char-int-p c) c ?#))
+		       (if (char-valid-p c) c ?#))
 		   (or (cdr (assq (intern entity)
 				  mm-url-html-entities))
 		       ?#))))
@@ -399,10 +399,10 @@ spaces.  Die Die Die."
 	  ((= char ?  ) "+")
 	  ((memq char mm-url-unreserved-chars) (char-to-string char))
 	  (t (upcase (format "%%%02x" char)))))
-       (mm-encode-coding-string chunk
-				(if (fboundp 'find-coding-systems-string)
-				    (car (find-coding-systems-string chunk))
-				  buffer-file-coding-system))
+       (encode-coding-string chunk
+			     (if (fboundp 'find-coding-systems-string)
+				 (car (find-coding-systems-string chunk))
+			       buffer-file-coding-system))
        "")))
 
 (defun mm-url-encode-www-form-urlencoded (pairs)

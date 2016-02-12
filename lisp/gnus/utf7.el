@@ -185,7 +185,7 @@ Use IMAP modification if FOR-IMAP is non-nil."
 (defun utf7-latin1-u16-char-converter ()
   "Convert latin 1 (ISO-8859.1) characters to 16 bit Unicode.
 Characters are converted to raw byte pairs in narrowed buffer."
-  (mm-encode-coding-region (point-min) (point-max) 'iso-8859-1)
+  (encode-coding-region (point-min) (point-max) 'iso-8859-1)
   (mm-disable-multibyte)
   (goto-char (point-min))
   (while (not (eobp))
@@ -201,7 +201,7 @@ Characters are in raw byte pairs in narrowed buffer."
 	(delete-char 1)
 	(error "Unable to convert from Unicode"))
     (forward-char))
-  (mm-decode-coding-region (point-min) (point-max) 'iso-8859-1)
+  (decode-coding-region (point-min) (point-max) 'iso-8859-1)
   (mm-enable-multibyte))
 
 ;;;###autoload

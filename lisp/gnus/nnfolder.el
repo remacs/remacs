@@ -1061,7 +1061,7 @@ This command does not work if you use short group names."
 (defun nnfolder-group-pathname (group)
   "Make file name for GROUP."
   (setq group
-	(mm-encode-coding-string group nnmail-pathname-coding-system))
+	(encode-coding-string group nnmail-pathname-coding-system))
   (let ((dir (file-name-as-directory (expand-file-name nnfolder-directory))))
     ;; If this file exists, we use it directly.
     (if (or nnmail-use-long-file-names

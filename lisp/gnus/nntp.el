@@ -350,7 +350,7 @@ retried once before actually displaying the error report."
        (with-current-buffer ,buffer
 	 (erase-buffer)
 	 (insert (if enable-multibyte-characters
-		     (mm-string-to-multibyte string)
+		     (string-to-multibyte string)
 		   string))
 	 (goto-char (point-min))
 	 nil))))

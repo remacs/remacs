@@ -621,8 +621,8 @@ the line could be found."
 			(< beg nnheader-max-head-length))))
 	;; Finally decode the contents.
 	(when (mm-coding-system-p nnheader-file-coding-system)
-	  (mm-decode-coding-region start (point-max)
-				   nnheader-file-coding-system))))
+	  (decode-coding-region start (point-max)
+				nnheader-file-coding-system))))
     t))
 
 (defun nnheader-article-p ()
@@ -842,7 +842,7 @@ without formatting."
     t))
 
 (defsubst nnheader-replace-chars-in-string (string from to)
-  (mm-subst-char-in-string from to string))
+  (subst-char-in-string from to string))
 
 (defun nnheader-replace-duplicate-chars-in-string (string from to)
   "Replace characters in STRING from FROM to TO."
@@ -898,7 +898,7 @@ without formatting."
       (if (file-directory-p (concat dir group))
 	  (expand-file-name group dir)
 	;; If not, we translate dots into slashes.
-	(expand-file-name (mm-encode-coding-string
+	(expand-file-name (encode-coding-string
 			   (nnheader-replace-chars-in-string group ?. ?/)
 			   nnheader-pathname-coding-system)
 			  dir))))
@@ -1102,7 +1102,7 @@ See `find-file-noselect' for the arguments."
       `(insert-buffer-substring ,buffer ,start ,end)
     `(if enable-multibyte-characters
 	 (insert (with-current-buffer ,buffer
-		   (mm-string-to-multibyte
+		   (string-to-multibyte
 		    ,(if (or start end)
 			 `(buffer-substring (or ,start (point-min))
 					    (or ,end (point-max)))

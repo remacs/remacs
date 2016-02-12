@@ -3234,8 +3234,7 @@ If ARG, insert string at point."
 			 4.99
 		       (+ 5 (* 0.02
 			       (abs
-				(- (mm-char-int (aref (downcase alpha) 0))
-				   (mm-char-int ?t))))
+				(- (aref (downcase alpha) 0) ?t)))
 			  -0.01))
 		     minor least)
 	 (format "%d.%02d%02d" major minor least))))))

@@ -32,13 +32,6 @@
 (eval-when-compile (require 'cl))
 (autoload 'mail-header-parse-content-type "mail-parse")
 
-;; `mm-delete-duplicates' is an alias for `delete-dups' in Emacs 22.
-(defalias 'mailcap-delete-duplicates
-  (if (fboundp 'delete-dups)
-      'delete-dups
-    (autoload 'mm-delete-duplicates "mm-util")
-    'mm-delete-duplicates))
-
 (defgroup mailcap nil
   "Definition of viewers for MIME types."
   :version "21.1"

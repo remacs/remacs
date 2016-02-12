@@ -514,7 +514,7 @@ Valid types include `google', `dejanews', and `gmane'.")
        ))))
   (setq buffer-file-name nil)
   (unless (featurep 'xemacs) (set-buffer-multibyte t))
-  (mm-decode-coding-region (point-min) (point-max) 'utf-8)
+  (decode-coding-region (point-min) (point-max) 'utf-8)
   t)
 
 (defun nnweb-gmane-identity (url)

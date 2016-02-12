@@ -63,12 +63,13 @@ must never cause a Lisp error."
 	  (let (mod)
 	    (when (and (string-match "\\\\\"" string)
 		       (not (string-match "\\`\"\\|[^\\]\"" string)))
-	      (setq string (mm-replace-in-string string "\\\\\"" "\"")
+	      (setq string (replace-regexp-in-string string "\\\\\"" "\"")
 		    mod t))
 	    (when (and (string-match "\\\\(" string)
 		       (string-match "\\\\)" string)
 		       (not (string-match "\\`(\\|[^\\][()]" string)))
-	      (setq string (mm-replace-in-string string "\\\\\\([()]\\)" "\\1")
+	      (setq string (replace-regexp-in-string string
+						     "\\\\\\([()]\\)" "\\1")
 		    mod t))
 	    (or (and mod
 		     (ignore-errors
@@ -230,7 +231,7 @@ These look like:
       ;; Decode using the charset, if any.
       (if (memq coding-system '(nil ascii))
 	  (buffer-string)
-	(mm-decode-coding-string (buffer-string) coding-system)))))
+	(decode-coding-string (buffer-string) coding-system)))))
 
 (defun rfc2231-encode-string (param value)
   "Return and PARAM=VALUE string encoded according to RFC2231.

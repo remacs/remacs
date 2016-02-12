@@ -773,7 +773,7 @@ MIME-Version header before proceeding."
     (with-current-buffer
           (generate-new-buffer " *mm*")
       ;; Preserve the data's unibyteness (for url-insert-file-contents).
-      (mm-set-buffer-multibyte mb)
+      (set-buffer-multibyte mb)
       (insert-buffer-substring obuf beg)
       (current-buffer))))
 
@@ -888,7 +888,7 @@ external if displayed external."
 		  (select-window win)))
 	      (switch-to-buffer (generate-new-buffer " *mm*")))
 	    (buffer-disable-undo)
-	    (mm-set-buffer-file-coding-system mm-binary-coding-system)
+	    (set-buffer-file-coding-system mm-binary-coding-system)
 	    (insert-buffer-substring cur)
 	    (goto-char (point-min))
 	    (when method
@@ -1307,7 +1307,7 @@ are ignored."
 		     (with-current-buffer (mm-handle-buffer handle)
 		       (buffer-string)))
 		    ((mm-multibyte-p)
-		     (mm-string-to-multibyte (mm-get-part handle no-cache)))
+		     (string-to-multibyte (mm-get-part handle no-cache)))
 		    (t
 		     (mm-get-part handle no-cache)))))
     (save-restriction
@@ -1813,7 +1813,7 @@ If RECURSIVE, search recursively."
 				    (mm-charset-to-coding-system charset
 								 nil t))
 			      (not (eq charset 'ascii)))
-			 (mm-decode-coding-string (buffer-string) charset)
+			 (decode-coding-string (buffer-string) charset)
 		       (mm-string-as-multibyte (buffer-string)))
 		   (erase-buffer)
 		   (mm-enable-multibyte)))

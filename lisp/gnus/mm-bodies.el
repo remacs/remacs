@@ -86,15 +86,15 @@ If no encoding was done, nil is returned."
 		    (message-options-get 'mm-body-charset-encoding-alist)
 		    (message-options-set
 		     'mm-body-charset-encoding-alist
-		     (mm-read-coding-system "Charset used in the article: ")))
+		     (read-coding-system "Charset used in the article: ")))
 	      ;; The logic in `mml-generate-mime-1' confirms that it's OK
 	      ;; to return nil here.
 	      nil)))
     (save-excursion
       (if charset
 	  (progn
-	    (mm-encode-coding-region (point-min) (point-max)
-				     (mm-charset-to-coding-system charset))
+	    (encode-coding-region (point-min) (point-max)
+				  (mm-charset-to-coding-system charset))
 	    charset)
 	(goto-char (point-min))
 	(let ((charsets (mm-find-mime-charset-region (point-min) (point-max)
@@ -110,8 +110,8 @@ If no encoding was done, nil is returned."
 	   (t
 	    (prog1
 		(setq charset (car charsets))
-	      (mm-encode-coding-region (point-min) (point-max)
-				       (mm-charset-to-coding-system charset))))
+	      (encode-coding-region (point-min) (point-max)
+				    (mm-charset-to-coding-system charset))))
 	   ))))))
 
 (defun mm-long-lines-p (length)
@@ -258,8 +258,7 @@ decoding.  If it is nil, default to `mail-parse-charset'."
 		   (mm-multibyte-p)
 		   (or (not (eq coding-system 'ascii))
 		       (setq coding-system mail-parse-charset)))
-	  (mm-decode-coding-region (point-min) (point-max)
-				   coding-system))
+	  (decode-coding-region (point-min) (point-max) coding-system))
 	(setq buffer-file-coding-system
 	      (if (boundp 'last-coding-system-used)
 		  (symbol-value 'last-coding-system-used)
@@ -290,7 +289,7 @@ decoding.  If it is nil, default to `mail-parse-charset'."
 		  (mm-multibyte-p)
 		  (or (not (eq coding-system 'ascii))
 		      (setq coding-system mail-parse-charset)))
-	 (mm-decode-coding-string string coding-system))))
+	 (decode-coding-string string coding-system))))
    string))
 
 (provide 'mm-bodies)

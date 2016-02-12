@@ -2167,7 +2167,7 @@ contains a valid encoded word.  Decode again? "
 	  ;; No double encoded subject? => bogus charset.
 	  (unless cs-coding
 	    (setq cs-coding
-		  (mm-read-coding-system
+		  (read-coding-system
 		   (format-message "\
 Decoded Subject \"%s\"
 contains an encoded word.  The charset `%s' is unknown or invalid.
@@ -4319,7 +4319,7 @@ conformance."
 				 (point) 'no-illegible-text)
 				(point-max))))
 	       (setq char (char-after)))
-	(when (or (< (mm-char-int char) 128)
+	(when (or (< char 128)
 		  (and (mm-multibyte-p)
 		       (memq (char-charset char)
 			     '(eight-bit-control eight-bit-graphic
@@ -4349,7 +4349,7 @@ conformance."
 	(skip-chars-forward mm-7bit-chars)
 	(while (not (eobp))
 	  (when (let ((char (char-after)))
-		  (or (< (mm-char-int char) 128)
+		  (or (< char 128)
 		      (and (mm-multibyte-p)
 			   ;; FIXME: Wrong for Emacs 23 (unicode) and for
 			   ;; things like undecodable utf-8 (in Emacs 21?).
@@ -5346,7 +5346,7 @@ Otherwise, generate and save a value for `canlock-password' first."
    ;; Check for control characters.
    (message-check 'control-chars
      (if (re-search-forward
-	  (mm-string-to-multibyte "[\000-\007\013\015-\032\034-\037\200-\237]")
+	  (string-to-multibyte "[\000-\007\013\015-\032\034-\037\200-\237]")
 	  nil t)
 	 (y-or-n-p
 	  "The article contains control characters.  Really post? ")
@@ -5895,7 +5895,7 @@ subscribed address (and not the additional To and Cc header contents)."
         ace)
     (when field
       (dolist (rhs
-	       (mm-delete-duplicates
+	       (delete-dups
 		(mapcar (lambda (rhs) (or (cadr (split-string rhs "@")) ""))
 			(mapcar 'downcase
 				(mapcar
@@ -7427,7 +7427,7 @@ Optional DIGEST will use digest to forward."
   (let ((b (point))
 	(contents (with-current-buffer forward-buffer (buffer-string)))
 	e)
-    (unless (mm-multibyte-string-p contents)
+    (unless (multibyte-string-p contents)
       (error "Attempt to insert unibyte string from the buffer \"%s\"\
  to the multibyte buffer \"%s\""
 	     (if (bufferp forward-buffer)
@@ -7490,7 +7490,7 @@ Optional DIGEST will use digest to forward."
   (let ((b (point)) e)
     (if (not message-forward-decoded-p)
 	(let ((contents (with-current-buffer forward-buffer (buffer-string))))
-	  (unless (mm-multibyte-string-p contents)
+	  (unless (multibyte-string-p contents)
 	    (error "Attempt to insert unibyte string from the buffer \"%s\"\
  to the multibyte buffer \"%s\""
 		   (if (bufferp forward-buffer)

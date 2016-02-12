@@ -128,13 +128,13 @@ non-nil.")
   "Return a decoded group name of GROUP on SERVER-OR-METHOD."
   (if nnmail-group-names-not-encoded-p
       group
-    (mm-decode-coding-string
+    (decode-coding-string
      group
      (nnml-group-name-charset group server-or-method))))
 
 (defun nnml-encoded-group-name (group &optional server-or-method)
   "Return an encoded group name of GROUP on SERVER-OR-METHOD."
-  (mm-encode-coding-string
+  (encode-coding-string
    group
    (nnml-group-name-charset group server-or-method)))
 

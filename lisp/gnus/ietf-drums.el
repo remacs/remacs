@@ -81,10 +81,10 @@ backslash and doublequote.")
   (let ((i 0)
 	b e c out range)
     (while (< i (length token))
-      (setq c (mm-char-int (aref token i)))
+      (setq c (aref token i))
       (incf i)
       (cond
-       ((eq c (mm-char-int ?-))
+       ((eq c ?-)
 	(if b
 	    (setq range t)
 	  (push c out)))
