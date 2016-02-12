@@ -249,14 +249,7 @@ To disable dissecting shar codes, for instance, add
 (defsubst mm-uu-function-2 (entry)
   (nth 5 entry))
 
-;; In Emacs 22, we could use `min-colors' in the face definition.  But Emacs
-;; 21 and XEmacs don't support it.
-(defcustom mm-uu-hide-markers
-  (< 16 (or (and (fboundp 'defined-colors)
-		 (length (defined-colors)))
-	    (and (fboundp 'device-color-cells)
-		 (device-color-cells))
-	    0))
+(defcustom mm-uu-hide-markers (< 16 (length (defined-colors)))
   "If non-nil, hide verbatim markers.
 The value should be nil on displays where the face
 `mm-uu-extract' isn't distinguishable to the face `default'."
@@ -299,10 +292,7 @@ apply the face `mm-uu-extract'."
   (let ((obuf (current-buffer))
         (multi (and (boundp 'enable-multibyte-characters)
                     enable-multibyte-characters))
-	(coding-system
-         ;; Might not exist in non-MULE XEmacs
-         (when (boundp 'buffer-file-coding-system)
-           buffer-file-coding-system)))
+	(coding-system buffer-file-coding-system))
     (with-current-buffer (generate-new-buffer " *mm-uu*")
       (if multi (mm-enable-multibyte) (mm-disable-multibyte))
       (setq buffer-file-coding-system coding-system)

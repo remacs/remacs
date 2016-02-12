@@ -79,7 +79,7 @@
 
 (autoload 'gnus-rescale-image "gnus-util")
 
-(defun mm-inline-image-emacs (handle)
+(defun mm-inline-image (handle)
   (let ((b (point-marker))
 	(inhibit-read-only t))
     (put-image
@@ -103,27 +103,6 @@
 	      (inhibit-read-only t))
 	  (remove-images b b)
 	  (delete-region b (1+ b)))))))
-
-(defun mm-inline-image-xemacs (handle)
-  (when (featurep 'xemacs)
-    (insert "\n")
-    (forward-char -1)
-    (let ((annot (make-annotation (mm-get-image handle) nil 'text))
-	(inhibit-read-only t))
-      (mm-handle-set-undisplayer
-       handle
-       `(lambda ()
-	  (let ((b ,(point-marker))
-	      (inhibit-read-only t))
-	    (delete-annotation ,annot)
-	    (delete-region (1- b) b))))
-      (set-extent-property annot 'mm t)
-      (set-extent-property annot 'duplicable t))))
-
-(eval-and-compile
-  (if (featurep 'xemacs)
-      (defalias 'mm-inline-image 'mm-inline-image-xemacs)
-    (defalias 'mm-inline-image 'mm-inline-image-emacs)))
 
 (defvar mm-w3m-setup nil
   "Whether gnus-article-mode has been setup to use emacs-w3m.")
@@ -462,11 +441,6 @@
 	 handle
 	 `(lambda ()
 	    (let ((inhibit-read-only t))
-	      (if (fboundp 'remove-specifier)
-		  ;; This is only valid on XEmacs.
-		  (dolist (prop '(background background-pixmap foreground))
-		    (remove-specifier
-		     (face-property 'default prop) (current-buffer))))
 	      (delete-region ,(point-min-marker) ,(point-max-marker)))))))))
 
 ;; Shut up byte-compiler.
@@ -526,14 +500,6 @@ If MODE is not set, try to find mode automatically."
             (if (fboundp 'font-lock-ensure)
                 (font-lock-ensure)
               (font-lock-fontify-buffer)))))
-      ;; By default, XEmacs font-lock uses non-duplicable text
-      ;; properties.  This code forces all the text properties
-      ;; to be copied along with the text.
-      (when (featurep 'xemacs)
-	(map-extents (lambda (ext ignored)
-		       (set-extent-property ext 'duplicable t)
-		       nil)
-		     nil nil nil nil nil 'text-prop))
       (setq text (buffer-string))
       ;; Set buffer unmodified to avoid confirmation when killing the
       ;; buffer.
@@ -542,9 +508,8 @@ If MODE is not set, try to find mode automatically."
     (mm-insert-inline handle text)))
 
 ;; Shouldn't these functions check whether the user even wants to use
-;; font-lock?  At least under XEmacs, this fontification is pretty
-;; much unconditional.  Also, it would be nice to change for the size
-;; of the fontified region.
+;; font-lock?  Also, it would be nice to change for the size of the
+;; fontified region.
 
 (defun mm-display-patch-inline (handle)
   (mm-display-inline-fontify handle 'diff-mode))

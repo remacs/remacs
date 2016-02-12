@@ -240,7 +240,6 @@ for decoding when the cdr that the data specify is not available.")
 			  (max 1 (/ (* (window-width window) 7) 8))))
 		  (fill-region (point) (point-max))
 		  (goto-char (point-max))
-		  ;; XEmacs version of `fill-region' inserts newline.
 		  (unless (bolp)
 		    (insert "\n"))))
 	      (when (or link enclosure)

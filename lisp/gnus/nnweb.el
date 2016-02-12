@@ -513,7 +513,7 @@ Valid types include `google', `dejanews', and `gmane'.")
        ;;("TOPDOC" . "1000")
        ))))
   (setq buffer-file-name nil)
-  (unless (featurep 'xemacs) (set-buffer-multibyte t))
+  (set-buffer-multibyte t)
   (decode-coding-region (point-min) (point-max) 'utf-8)
   t)
 

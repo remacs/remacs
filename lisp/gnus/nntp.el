@@ -244,8 +244,7 @@ server there that you can connect to.  See also
 
 (defvoo nntp-connection-timeout nil
   "*Number of seconds to wait before an nntp connection times out.
-If this variable is nil, which is the default, no timers are set.
-NOTE: This variable is never seen to work in Emacs 20 and XEmacs 21.")
+If this variable is nil, which is the default, no timers are set.")
 
 (defvoo nntp-prepare-post-hook nil
   "*Hook run just before posting an article.  It is supposed to be used
@@ -344,16 +343,14 @@ retried once before actually displaying the error report."
 
 (defmacro nntp-copy-to-buffer (buffer start end)
   "Copy string from unibyte current buffer to multibyte buffer."
-  (if (featurep 'xemacs)
-      `(copy-to-buffer ,buffer ,start ,end)
-    `(let ((string (buffer-substring ,start ,end)))
-       (with-current-buffer ,buffer
-	 (erase-buffer)
-	 (insert (if enable-multibyte-characters
-		     (string-to-multibyte string)
-		   string))
-	 (goto-char (point-min))
-	 nil))))
+  `(let ((string (buffer-substring ,start ,end)))
+     (with-current-buffer ,buffer
+       (erase-buffer)
+       (insert (if enable-multibyte-characters
+		   (string-to-multibyte string)
+		 string))
+       (goto-char (point-min))
+       nil)))
 
 (defsubst nntp-wait-for (process wait-for buffer &optional decode discard)
   "Wait for WAIT-FOR to arrive from PROCESS."
@@ -1301,9 +1298,7 @@ If SEND-IF-FORCE, only send authinfo to the server if the
       (nntp-kill-buffer pbuffer))
     (when (and (buffer-name pbuffer)
 	       process)
-      (when (and (fboundp 'set-network-process-option) ;; Unavailable in XEmacs.
-		 (fboundp 'process-type) ;; Emacs 22 doesn't provide it.
-                 (eq (process-type process) 'network))
+      (when (eq (process-type process) 'network)
         ;; Use TCP-keepalive so that connections that pass through a NAT router
         ;; don't hang when left idle.
         (set-network-process-option process :keepalive t))

@@ -1688,7 +1688,7 @@ actually)."
 	    (mm-url-encode-www-form-urlencoded
 	     `(("query" . ,search)
 	       ("HITSPERPAGE" . "999")))))
-	  (unless (featurep 'xemacs) (set-buffer-multibyte t))
+	  (set-buffer-multibyte t)
 	  (decode-coding-region (point-min) (point-max) 'utf-8)
 	  (goto-char (point-min))
 	  (forward-line 1)

@@ -29,9 +29,6 @@
 (require 'mml-sec)
 (eval-when-compile (require 'cl))
 (eval-when-compile (require 'url))
-(eval-when-compile
-  (when (featurep 'xemacs)
-    (require 'easy-mmode))) ; for `define-minor-mode'
 
 (autoload 'message-make-message-id "message")
 (declare-function gnus-setup-posting-charset "gnus-msg" (group))
@@ -656,9 +653,7 @@ be \"related\" or \"alternate\"."
 				  filename)))))
 	       (t
 		(let ((contents (cdr (assq 'contents cont))))
-		  (if (if (featurep 'xemacs)
-			  (string-match "[^\000-\377]" contents)
-			(multibyte-string-p contents))
+		  (if (multibyte-string-p contents)
 		      (progn
 			(mm-enable-multibyte)
 			(insert contents)
@@ -1107,57 +1102,42 @@ If HANDLES is non-nil, use it instead reparsing the buffer."
 (easy-menu-define
   mml-menu mml-mode-map ""
   `("Attachments"
-    ["Attach File..." mml-attach-file
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Attach a file at point"))]
+    ["Attach File..." mml-attach-file :help "Attach a file at point"]
     ["Attach Buffer..." mml-attach-buffer
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Attach a buffer to the outgoing message"))]
+     :help "Attach a buffer to the outgoing message"]
     ["Attach External..." mml-attach-external
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Attach reference to an external file"))]
+     :help "Attach reference to an external file"]
     ;; FIXME: Is it possible to do this without using
     ;; `gnus-gcc-externalize-attachments'?
     ["Externalize Attachments"
      (lambda ()
        (interactive)
-       (if (not (and (boundp 'gnus-gcc-externalize-attachments)
-		     (memq gnus-gcc-externalize-attachments
-			   '(all t nil))))
-	   ;; Stupid workaround for XEmacs not honoring :visible.
-	   (message "Can't handle this value of `gnus-gcc-externalize-attachments'")
-	 (setq gnus-gcc-externalize-attachments
-	       (not gnus-gcc-externalize-attachments))
-	 (message "gnus-gcc-externalize-attachments is `%s'."
-		  gnus-gcc-externalize-attachments)))
-     ;; XEmacs barfs on :visible.
-     ,@(if (featurep 'xemacs) nil
-	 '(:visible (and (boundp 'gnus-gcc-externalize-attachments)
-			 (memq gnus-gcc-externalize-attachments
-			       '(all t nil)))))
+       (setq gnus-gcc-externalize-attachments
+	     (not gnus-gcc-externalize-attachments))
+       (message "gnus-gcc-externalize-attachments is `%s'."
+		gnus-gcc-externalize-attachments))
+     :visible (and (boundp 'gnus-gcc-externalize-attachments)
+		   (memq gnus-gcc-externalize-attachments
+			 '(all t nil)))
      :style toggle
      :selected gnus-gcc-externalize-attachments
-     ,@(if (featurep 'xemacs) nil
-	 '(:help "Save attachments as external parts in Gcc copies"))]
+     :help "Save attachments as external parts in Gcc copies"]
     "----"
     ;;
     ("Change Security Method"
      ["PGP/MIME"
       (lambda () (interactive) (setq mml-secure-method "pgpmime"))
-      ,@(if (featurep 'xemacs) nil
-	  '(:help "Set Security Method to PGP/MIME"))
+      :help "Set Security Method to PGP/MIME"
       :style radio
       :selected (equal mml-secure-method "pgpmime") ]
      ["S/MIME"
       (lambda () (interactive) (setq mml-secure-method "smime"))
-      ,@(if (featurep 'xemacs) nil
-	  '(:help "Set Security Method to S/MIME"))
+      :help "Set Security Method to S/MIME"
       :style radio
       :selected (equal mml-secure-method "smime") ]
      ["Inline PGP"
       (lambda () (interactive) (setq mml-secure-method "pgp"))
-      ,@(if (featurep 'xemacs) nil
-	  '(:help "Set Security Method to inline PGP"))
+      :help "Set Security Method to inline PGP"
       :style radio
       :selected (equal mml-secure-method "pgp") ] )
     ;;
@@ -1165,8 +1145,7 @@ If HANDLES is non-nil, use it instead reparsing the buffer."
     ["Encrypt Message" mml-secure-message-encrypt t]
     ["Sign and Encrypt Message" mml-secure-message-sign-encrypt t]
     ["Encrypt/Sign off" mml-unsecure-message
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Don't Encrypt/Sign Message"))]
+     :help "Don't Encrypt/Sign Message"]
     ;; Do we have separate encrypt and encrypt/sign commands for parts?
     ["Sign Part" mml-secure-sign t]
     ["Encrypt Part" mml-secure-encrypt t]
@@ -1181,26 +1160,18 @@ If HANDLES is non-nil, use it instead reparsing the buffer."
     ;;["Narrow" mml-narrow-to-part t]
     ["Quote MML in region" mml-quote-region
      :active (message-mark-active-p)
-     ,@(if (featurep 'xemacs) nil
-	 '(:help "Quote MML tags in region"))]
+     :help "Quote MML tags in region"]
     ["Validate MML" mml-validate t]
     ["Preview" mml-preview t]
     "----"
     ["Emacs MIME manual" (lambda () (interactive) (message-info 4))
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Display the Emacs MIME manual"))]
+     :help "Display the Emacs MIME manual"]
     ["PGG manual" (lambda () (interactive) (message-info mml2015-use))
-     ;; XEmacs barfs on :visible.
-     ,@(if (featurep 'xemacs) nil
-	 '(:visible (and (boundp 'mml2015-use) (equal mml2015-use 'pgg))))
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Display the PGG manual"))]
+     :visible (and (boundp 'mml2015-use) (equal mml2015-use 'pgg))
+     :help "Display the PGG manual"]
     ["EasyPG manual" (lambda () (interactive) (require 'mml2015) (message-info mml2015-use))
-     ;; XEmacs barfs on :visible.
-     ,@(if (featurep 'xemacs) nil
-	 '(:visible (and (boundp 'mml2015-use) (equal mml2015-use 'epg))))
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Display the EasyPG manual"))]))
+     :visible (and (boundp 'mml2015-use) (equal mml2015-use 'epg))
+     :help "Display the EasyPG manual"]))
 
 (define-minor-mode mml-mode
   "Minor mode for editing MML.
