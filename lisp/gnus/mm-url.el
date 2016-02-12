@@ -364,7 +364,7 @@ If FOLLOW-REFRESH is non-nil, redirect refresh url in META."
 			      (string-to-number (substring entity 1)))))
 		       (setq c (or (cdr (assq c mm-extra-numeric-entities))
 				   (mm-ucs-to-char c)))
-		       (if (char-valid-p c) c ?#))
+		       (if (characterp c) c ?#))
 		   (or (cdr (assq (intern entity)
 				  mm-url-html-entities))
 		       ?#))))
