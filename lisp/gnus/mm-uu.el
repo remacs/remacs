@@ -312,13 +312,13 @@ apply the face `mm-uu-extract'."
   (interactive)
   (if symbol (set-default symbol value))
   (setq mm-uu-beginning-regexp nil)
-  (mapcar (lambda (entry)
-	     (if (mm-uu-configure-p (mm-uu-type entry) 'disabled)
+  (mapcar (lambda (mm-uu-entry)
+	     (if (mm-uu-configure-p (mm-uu-type mm-uu-entry) 'disabled)
 		 nil
 	       (setq mm-uu-beginning-regexp
 		     (concat mm-uu-beginning-regexp
 			     (if mm-uu-beginning-regexp "\\|")
-			     (mm-uu-beginning-regexp entry)))))
+			     (mm-uu-beginning-regexp mm-uu-entry)))))
 	  mm-uu-type-alist))
 
 (mm-uu-configure)
@@ -326,7 +326,7 @@ apply the face `mm-uu-extract'."
 (defvar file-name)
 (defvar start-point)
 (defvar end-point)
-(defvar entry)
+(defvar mm-uu-entry)
 
 (defun mm-uu-uu-filename ()
   (if (looking-at ".+")
@@ -602,10 +602,10 @@ apply the face `mm-uu-extract'."
 
 (defun mm-uu-gpg-key-skip-to-last ()
   (let ((point (point))
-	(end-regexp (mm-uu-end-regexp entry))
-	(beginning-regexp (mm-uu-beginning-regexp entry)))
+	(end-regexp (mm-uu-end-regexp mm-uu-entry))
+	(beginning-regexp (mm-uu-beginning-regexp mm-uu-entry)))
     (when (and end-regexp
-	       (not (mm-uu-configure-p (mm-uu-type entry) 'disabled)))
+	       (not (mm-uu-configure-p (mm-uu-type mm-uu-entry) 'disabled)))
       (while (re-search-forward end-regexp nil t)
 	(skip-chars-forward " \t\n\r")
 	(if (looking-at beginning-regexp)
