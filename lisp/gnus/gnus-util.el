@@ -407,7 +407,7 @@ Cache the result as a text property stored in DATE."
 
 (defun gnus-mode-string-quote (string)
   "Quote all \"%\"'s in STRING."
-  (replace-regexp-in-string string "%" "%%"))
+  (replace-regexp-in-string "%" "%%" string))
 
 ;; Make a hash table (default and minimum size is 256).
 ;; Optional argument HASHSIZE specifies the table size.

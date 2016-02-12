@@ -603,8 +603,8 @@ If CONFIRM is non-nil, ask for confirmation before removing a file."
 	  currday (+ currday (* low2days (nth 1 (current-time)))))
     (while files
       (let* ((ffile (car files))
-	     (bfile (replace-regexp-in-string
-		     ffile "\\`.*/\\([^/]+\\)\\'" "\\1"))
+	     (bfile (replace-regexp-in-string "\\`.*/\\([^/]+\\)\\'" "\\1"
+					      ffile))
 	     (filetime (nth 5 (file-attributes ffile)))
 	     (fileday (* (car filetime) high2days))
 	     (fileday (+ fileday (* low2days (nth 1 filetime)))))

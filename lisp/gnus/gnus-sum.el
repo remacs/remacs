@@ -9085,7 +9085,7 @@ non-numeric or nil fetch the number specified by the
   (gnus-warp-to-article)
   (when (and (stringp message-id)
 	     (not (zerop (length message-id))))
-    (setq message-id (replace-regexp-in-string message-id " " ""))
+    (setq message-id (replace-regexp-in-string " " "" message-id))
     ;; Construct the correct Message-ID if necessary.
     ;; Suggested by tale@pawl.rpi.edu.
     (unless (string-match "^<" message-id)
@@ -9563,10 +9563,10 @@ article.  If BACKWARD (the prefix) is non-nil, search backward instead."
 
 (defun gnus-summary-print-truncate-and-quote (string &optional len)
   "Truncate to LEN and quote all \"(\"'s in STRING."
-  (replace-regexp-in-string (if (and len (> (length string) len))
+  (replace-regexp-in-string "[()]" "\\\\\\&"
+			    (if (and len (> (length string) len))
 				(substring string 0 len)
-			      string)
-			    "[()]" "\\\\\\&"))
+			      string)))
 
 (defun gnus-summary-print-article (&optional filename n)
   "Generate and print a PostScript image of the process-marked (mail) articles.

@@ -1078,7 +1078,6 @@ Use the nov database for the current group if available."
 		(let* ((oldfile (nnml-article-to-file old-number))
 		       (newfile
 			(replace-regexp-in-string
-			 oldfile
 			 ;; nnml-use-compressed-files might be any string, but
 			 ;; probably it's sufficient to take into account only
 			 ;; "\\.[a-z0-9]+".  Note that we can't only use the
@@ -1087,7 +1086,8 @@ Use the nov database for the current group if available."
 			 ;; value.
 			 (concat
 			  "\\(" old-number-string "\\)\\(\\(\\.[a-z0-9]+\\)?\\)$")
-			 (concat new-number-string "\\2"))))
+			 (concat new-number-string "\\2")
+			 oldfile)))
 		  (with-current-buffer nntp-server-buffer
 		    (nnmail-find-file oldfile)
 		    ;; Update the Xref header in the article itself:

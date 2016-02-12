@@ -929,16 +929,17 @@ ready to be added to the list of search results."
     ;; Set group to dirnam without any leading dots or slashes,
     ;; and with all subsequent slashes replaced by dots
     (let ((group (replace-regexp-in-string
-		  (replace-regexp-in-string dirnam "^[./\\]" "" nil t)
-		  "[/\\]" "." nil t)))
+		  "[/\\]" "."
+		  (replace-regexp-in-string "^[./\\]" "" dirnam nil t)
+		  nil t)))
 
-      (vector (gnus-group-full-name group server)
-	      (if (string-match "\\`nnmaildir:" (gnus-group-server server))
-		  (nnmaildir-base-name-to-article-number
-		   (substring article 0 (string-match ":" article))
-		   group nil)
-		(string-to-number article))
-	      (string-to-number score)))))
+    (vector (gnus-group-full-name group server)
+	    (if (string-match "\\`nnmaildir:" (gnus-group-server server))
+		(nnmaildir-base-name-to-article-number
+		 (substring article 0 (string-match ":" article))
+		 group nil)
+	      (string-to-number article))
+	    (string-to-number score)))))
 
 ;;; Search Engine Interfaces:
 
@@ -1341,9 +1342,9 @@ Tested with swish-e-2.0.1 on Windows NT 4.0."
             (string-match "^[./\\]*\\(.*\\)$" dirnam)
             ;; "/" -> "."
             (setq group (replace-regexp-in-string
-			 (match-string 1 dirnam) "/" "."))
+			 "/" "." (match-string 1 dirnam)))
             ;; Windows "\\" -> "."
-            (setq group (replace-regexp-in-string group "\\\\" "."))
+            (setq group (replace-regexp-in-string "\\\\" "." group))
 
             (push (vector (gnus-group-full-name group server)
                           (string-to-number artno)
@@ -1415,7 +1416,7 @@ Tested with swish-e-2.0.1 on Windows NT 4.0."
 	(when (string-match prefix dirnam)
 	  (setq dirnam (replace-match "" t t dirnam)))
 	(push (vector (gnus-group-full-name
-                       (replace-regexp-in-string dirnam "/" ".") server)
+                       (replace-regexp-in-string "/" "." dirnam) server)
 		      (string-to-number artno)
 		      (string-to-number score))
 	      artlist))
@@ -1614,7 +1615,8 @@ actually)."
 				(if (file-directory-p
 				     (setq group
 					   (replace-regexp-in-string
-					    group "\\." "/" nil t)))
+					    "\\." "/"
+					    group nil t)))
 				    group))))))
 		     (unless group
 		       (error "Cannot locate directory for group"))

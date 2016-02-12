@@ -1200,18 +1200,18 @@ Note this has to be fast."
         (cond
          ((eq header 'X-Spam-Status)
           (string-to-number (replace-regexp-in-string
-                             header-content
                              spam-spamassassin-score-regexp
-                             "\\1")))
+                             "\\1"
+                             header-content)))
          ;; for CRM checking, it's probably faster to just do the string match
          ((string-match "( pR: \\([0-9.-]+\\)" header-content)
           (- (string-to-number (match-string 1 header-content))))
          ((eq header 'X-Bogosity)
           (string-to-number (replace-regexp-in-string
+                             ",.*" ""
                              (replace-regexp-in-string
-                              header-content
-                              ".*spamicity=" "")
-                             ",.*" "")))
+                              ".*spamicity=" ""
+                              header-content))))
          (t nil))
       nil)))
 

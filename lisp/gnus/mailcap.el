@@ -1028,11 +1028,12 @@ If FORCE, re-parse even if already parsed."
 			      (replace-regexp-in-string
 			       ;; Replace mailcap's `%s' placeholder
 			       ;; with dired's `?' placeholder
+			       "%s" "?"
 			       (replace-regexp-in-string
 				;; Remove the final filename placeholder
-				command "[ \t\n]*\\('\\)?%s\\1?[ \t\n]*\\'" ""
-				nil t)
-			       "%s" "?" nil t))))
+				"[ \t\n]*\\('\\)?%s\\1?[ \t\n]*\\'" ""
+				command nil t)
+			       nil t))))
 			     common-mime-info)))))
     commands))
 

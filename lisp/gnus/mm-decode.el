@@ -1353,12 +1353,12 @@ string if you do not like underscores."
 
 (defun mm-file-name-delete-control (filename)
   "Delete control characters from FILENAME."
-  (replace-regexp-in-string filename "[\x00-\x1f\x7f]" ""))
+  (replace-regexp-in-string "[\x00-\x1f\x7f]" "" filename))
 
 (defun mm-file-name-delete-gotchas (filename)
   "Delete shell gotchas from FILENAME."
-  (setq filename (replace-regexp-in-string filename "[<>|]" ""))
-  (replace-regexp-in-string filename "^[.-]+" ""))
+  (setq filename (replace-regexp-in-string "[<>|]" "" filename))
+  (replace-regexp-in-string "^[.-]+" "" filename))
 
 (defun mm-save-part (handle &optional prompt)
   "Write HANDLE to a file.

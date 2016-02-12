@@ -7521,7 +7521,7 @@ address, `ask' if unsure and `invalid' if the string is invalid."
 	(list gnus-button-mid-or-mail-heuristic-alist)
 	(result 0) rate regexp lpartlen elem)
     (setq lpartlen
-	  (length (replace-regexp-in-string mid-or-mail "^\\(.*\\)@.*$" "\\1")))
+	  (length (replace-regexp-in-string "^\\(.*\\)@.*$" "\\1" mid-or-mail)))
     (gnus-message 8 "`%s', length of local part=`%s'." mid-or-mail lpartlen)
     ;; Certain special cases...
     (when (string-match
@@ -7592,7 +7592,7 @@ address, `ask' if unsure and `invalid' if the string is invalid."
       (setq guessed
 	    ;; get rid of surrounding angles...
 	    (funcall pref
-		     (replace-regexp-in-string mid-or-mail "^<\\|>$" "")))
+		     (replace-regexp-in-string "^<\\|>$" "" mid-or-mail)))
       (if (or (eq 'mid guessed) (eq 'mail guessed))
 	  (setq pref guessed)
 	(setq pref 'ask)))
@@ -7624,13 +7624,13 @@ as a symbol to FUN."
   "Call `describe-function' when pushing the corresponding URL button."
   (describe-function
    (intern
-    (replace-regexp-in-string url gnus-button-handle-describe-prefix ""))))
+    (replace-regexp-in-string gnus-button-handle-describe-prefix "" url))))
 
 (defun gnus-button-handle-describe-variable (url)
   "Call `describe-variable' when pushing the corresponding URL button."
   (describe-variable
    (intern
-    (replace-regexp-in-string url gnus-button-handle-describe-prefix ""))))
+    (replace-regexp-in-string gnus-button-handle-describe-prefix "" url))))
 
 (defun gnus-button-handle-symbol (url)
 "Display help on variable or function.
@@ -7644,7 +7644,7 @@ Calls `describe-variable' or `describe-function'."
 (defun gnus-button-handle-describe-key (url)
   "Call `describe-key' when pushing the corresponding URL button."
   (let* ((key-string
-	  (replace-regexp-in-string url gnus-button-handle-describe-prefix ""))
+	  (replace-regexp-in-string gnus-button-handle-describe-prefix "" url))
 	 (keys (ignore-errors (eval `(kbd ,key-string)))))
     (if keys
 	(describe-key keys)
@@ -7652,31 +7652,30 @@ Calls `describe-variable' or `describe-function'."
 
 (defun gnus-button-handle-apropos (url)
   "Call `apropos' when pushing the corresponding URL button."
-  (apropos (replace-regexp-in-string
-	    url gnus-button-handle-describe-prefix "")))
+  (apropos (replace-regexp-in-string gnus-button-handle-describe-prefix "" url)))
 
 (defun gnus-button-handle-apropos-command (url)
   "Call `apropos' when pushing the corresponding URL button."
   (apropos-command
-   (replace-regexp-in-string url gnus-button-handle-describe-prefix "")))
+   (replace-regexp-in-string gnus-button-handle-describe-prefix "" url)))
 
 (defun gnus-button-handle-apropos-variable (url)
   "Call `apropos' when pushing the corresponding URL button."
   (funcall
    (if (fboundp 'apropos-variable) 'apropos-variable 'apropos)
-   (replace-regexp-in-string url gnus-button-handle-describe-prefix "")))
+   (replace-regexp-in-string gnus-button-handle-describe-prefix "" url)))
 
 (defun gnus-button-handle-apropos-documentation (url)
   "Call `apropos' when pushing the corresponding URL button."
   (funcall
    (if (fboundp 'apropos-documentation) 'apropos-documentation 'apropos)
-   (replace-regexp-in-string url gnus-button-handle-describe-prefix "")))
+   (replace-regexp-in-string gnus-button-handle-describe-prefix "" url)))
 
 (defun gnus-button-handle-library (url)
   "Call `locate-library' when pushing the corresponding URL button."
   (gnus-message 9 "url=`%s'" url)
   (let* ((lib (locate-library url))
-	 (file (replace-regexp-in-string (or lib "") "\\.elc" ".el")))
+	 (file (replace-regexp-in-string "\\.elc" ".el" (or lib ""))))
     (if (not lib)
 	(gnus-message 1 "Cannot locale library `%s'." url)
       (find-file-read-only file))))
@@ -8274,7 +8273,7 @@ url is put as the `gnus-button-url' overlay property on the button."
   "Fetch a man page."
   (gnus-message 9 "`%s' `%s'" gnus-button-man-handler url)
   (when (eq gnus-button-man-handler 'woman)
-    (setq url (replace-regexp-in-string url "([1-9][X1a-z]*).*\\'" "")))
+    (setq url (replace-regexp-in-string "([1-9][X1a-z]*).*\\'" "" url)))
   (gnus-message 9 "`%s' `%s'" gnus-button-man-handler url)
   (funcall gnus-button-man-handler url))
 
@@ -8290,7 +8289,7 @@ url is put as the `gnus-button-url' overlay property on the button."
    ((string-match "([^)\"]+)[^\"]+" url)
     (setq url
 	  (replace-regexp-in-string
-	   (replace-regexp-in-string url "[\n\t ]+" " ") "\"" ""))
+	   "\"" "" (replace-regexp-in-string "[\n\t ]+" " " url)))
     (gnus-info-find-node url))
    (t (error "Can't parse %s" url))))
 
@@ -8429,8 +8428,8 @@ url is put as the `gnus-button-url' overlay property on the button."
 	  (funcall func)
 	(message-position-on-field (caar args)))
       (insert (replace-regexp-in-string
-	       (mapconcat 'identity (reverse (cdar args)) ", ")
-	       "\r\n" "\n" t))
+	       "\r\n" "\n"
+	       (mapconcat 'identity (reverse (cdar args)) ", ") nil t))
       (setq args (cdr args)))
     (if subject
 	(message-goto-body)

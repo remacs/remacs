@@ -657,12 +657,12 @@ by nnmaildir-request-article.")
 
 (defun nnmaildir--system-name ()
   (replace-regexp-in-string
+   ":" "\\072"
    (replace-regexp-in-string
-    (replace-regexp-in-string
-     (system-name)
-     "\\\\" "\\134" nil 'literal)
-    "/" "\\057" nil 'literal)
-   ":" "\\072" nil 'literal))
+    "/" "\\057"
+    (replace-regexp-in-string "\\\\" "\\134" (system-name) nil 'literal)
+    nil 'literal)
+   nil 'literal))
 
 (defun nnmaildir-request-type (_group &optional _article)
   'mail)
@@ -956,7 +956,8 @@ by nnmaildir-request-article.")
 			group (symbol-value group)
 			ro (nnmaildir--param pgname 'read-only))
 		  (insert (replace-regexp-in-string
-			   (nnmaildir--grp-name group) " " "\\ " nil t)
+			   " " "\\ "
+			   (nnmaildir--grp-name group) nil t)
 			  " ")
                   (princ (nnmaildir--group-maxnum nnmaildir--cur-server group)
 			 nntp-server-buffer)
@@ -985,7 +986,7 @@ by nnmaildir-request-article.")
 	  (princ (nnmaildir--group-maxnum nnmaildir--cur-server group)
 		 nntp-server-buffer)
 	  (insert " "
-		  (replace-regexp-in-string gname " " "\\ " nil t)
+		  (replace-regexp-in-string " " "\\ " gname nil t)
 		  "\n")))))
   'group)
 
@@ -1116,7 +1117,7 @@ by nnmaildir-request-article.")
 	(insert " ")
 	(princ (nnmaildir--group-maxnum nnmaildir--cur-server group)
 	       nntp-server-buffer)
-	(insert " " (replace-regexp-in-string gname " " "\\ " nil t) "\n")
+	(insert " " (replace-regexp-in-string " " "\\ " gname nil t) "\n")
 	t))))
 
 (defun nnmaildir-request-create-group (gname &optional server _args)
@@ -1278,7 +1279,7 @@ by nnmaildir-request-article.")
 	      (insert "\t" (nnmaildir--nov-get-beg nov) "\t"
 		      (nnmaildir--art-msgid article) "\t"
 		      (nnmaildir--nov-get-mid nov) "\tXref: nnmaildir "
-		      (replace-regexp-in-string gname " " "\\ " nil t) ":")
+		      (replace-regexp-in-string " " "\\ " gname nil t) ":")
 	      (princ num nntp-server-buffer)
 	      (insert "\t" (nnmaildir--nov-get-end nov) "\n"))))
     (catch 'return

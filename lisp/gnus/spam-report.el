@@ -163,12 +163,12 @@ submitted at once.  Internal variable.")
 	 (concat
 	  "/"
 	  (replace-regexp-in-string
+	   "/" ":"
 	   (replace-regexp-in-string
+	    "^.*article.gmane.org/" ""
 	    (replace-regexp-in-string
-	     (mail-header-xref (gnus-summary-article-header article))
-	     "/raw" ":silent")
-	    "^.*article.gmane.org/" "")
-	   "/" ":"))))
+	     "/raw" ":silent"
+	     (mail-header-xref (gnus-summary-article-header article))))))))
        (spam-report-gmane-use-article-number
 	(spam-report-url-ping
 	 rpt-host
@@ -207,8 +207,8 @@ submitted at once.  Internal variable.")
 	    (when host
 	      (when (string-equal "permalink.gmane.org" host)
 		(setq host rpt-host)
-		(setq report (replace-regexp-in-string
-			      report "/\\([0-9]+\\)$" ":\\1")))
+		(setq report (replace-regexp-in-string "/\\([0-9]+\\)$" ":\\1"
+						     report)))
 	      (setq url (format "http://%s%s" host report)))
 	    (if (not (and host report url))
 		(gnus-message
@@ -227,7 +227,7 @@ the function specified by `spam-report-url-ping-function'."
 
 (defcustom spam-report-user-mail-address
   (and (stringp user-mail-address)
-       (replace-regexp-in-string user-mail-address "@" "<at>"))
+       (replace-regexp-in-string "@" "<at>" user-mail-address))
   "Mail address of this user used for spam reports to Gmane.
 This is initialized based on `user-mail-address'."
   :type '(choice string

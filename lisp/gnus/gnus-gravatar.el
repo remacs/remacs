@@ -95,7 +95,8 @@ Set image category to CATEGORY."
 	      (when (if real-name
 			(re-search-forward
 			 (concat (replace-regexp-in-string
-				  (regexp-quote real-name) "[\t ]+" "[\t\n ]+")
+				  "[\t ]+" "[\t\n ]+"
+				  (regexp-quote real-name))
 				 "\\|"
 				 (regexp-quote mail-address))
 			 nil t)
