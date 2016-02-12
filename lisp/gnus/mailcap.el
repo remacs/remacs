@@ -995,14 +995,14 @@ If FORCE, re-parse even if already parsed."
   (mailcap-parse-mimetypes)
   (let* ((all-mime-type
 	  ;; All unique MIME types from file extensions
-	  (mailcap-delete-duplicates
+	  (delete-dups
 	   (mapcar (lambda (file)
 		     (mailcap-extension-to-mime
 		      (file-name-extension file t)))
 		   files)))
 	 (all-mime-info
 	  ;; All MIME info lists
-	  (mailcap-delete-duplicates
+	  (delete-dups
 	   (mapcar (lambda (mime-type)
 		     (mailcap-mime-info mime-type 'all))
 		   all-mime-type)))
@@ -1020,7 +1020,7 @@ If FORCE, re-parse even if already parsed."
 	    (car all-mime-info)))
 	 (commands
 	  ;; Command strings from `viewer' field of the MIME info
-	  (mailcap-delete-duplicates
+	  (delete-dups
 	   (delq nil (mapcar
 		      (lambda (mime-info)
 			(let ((command (cdr (assoc 'viewer mime-info))))
