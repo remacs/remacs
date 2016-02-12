@@ -422,7 +422,7 @@ SECRET-KEYS is a plist containing secret data."
 	      ((listp plstore-encrypt-to) plstore-encrypt-to)
 	      ((stringp plstore-encrypt-to) (list plstore-encrypt-to))))
 	    cipher)
-	(epg-context-set-armor context t)
+	(setf (epg-context-armor context) t)
 	(epg-context-set-passphrase-callback
 	 context
 	 (cons #'plstore-passphrase-callback-function
