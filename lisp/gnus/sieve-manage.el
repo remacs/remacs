@@ -75,10 +75,9 @@
     (require 'password-cache)
   (require 'password))
 
-(eval-when-compile
-  (require 'cl)				; caddr
-  (require 'sasl)
-  (require 'starttls))
+(eval-when-compile (require 'cl))
+(require 'sasl)
+(require 'starttls)
 (autoload 'sasl-find-mechanism "sasl")
 (autoload 'auth-source-search "auth-source")
 
