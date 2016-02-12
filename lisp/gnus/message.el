@@ -46,6 +46,8 @@
 (require 'rfc822)
 (require 'format-spec)
 (require 'dired)
+(require 'mm-util)
+(require 'rfc2047)
 
 (autoload 'mailclient-send-it "mailclient") ;; Emacs 22 or contrib/
 
@@ -3764,7 +3766,7 @@ To use this automatically, you may add this function to
 	  message-yank-prefix
 	  "\\)+ *\n"
 	  )))
-    (gnus-message 8 "removing `%s'" citexp)
+    (message "removing `%s'" citexp)
     (save-excursion
       (message-goto-body)
       (while (re-search-forward citexp nil t)
@@ -4185,7 +4187,7 @@ It should typically alter the sending method in some way or other."
 		    (or (eq message-allow-no-recipients 'always)
 			(and (not (eq message-allow-no-recipients 'never))
 			     (setq dont-barf-on-no-method
-				   (gnus-y-or-n-p
+				   (y-or-n-p
 				    (format "No receiver, perform %s anyway? "
 					    (cond ((and fcc gcc) "Fcc and Gcc")
 						  (fcc "Fcc")
@@ -4333,16 +4335,18 @@ conformance."
 	(forward-char))
       (when found
 	(setq choice
-	      (gnus-multiple-choice
-	       (if nul-chars
-		   "NUL characters found, which may cause problems.  Continue sending?"
-		 "Non-printable characters found.  Continue sending?")
-	       `((?d "Remove non-printable characters and send")
-		 (?r ,(format
-		       "Replace non-printable characters with \"%s\" and send"
-		       message-replacement-char))
-		 (?s "Send as is without removing anything")
-		 (?e "Continue editing"))))
+	      (car
+	       (read-multiple-choice
+		(if nul-chars
+		    "NUL characters found, which may cause problems.  Continue sending?"
+		  "Non-printable characters found.  Continue sending?")
+		`((?d "delete" "Remove non-printable characters and send")
+		  (?r "replace"
+		      ,(format
+			"Replace non-printable characters with \"%s\" and send"
+			message-replacement-char))
+		  (?s "send" "Send as is without removing anything")
+		  (?e "edit" "Continue editing")))))
 	(if (eq choice ?e)
 	  (error "Non-printable characters"))
 	(message-goto-body)
