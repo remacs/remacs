@@ -119,11 +119,17 @@ Use IMAP modification if FOR-IMAP is non-nil."
   "Encode text from START to END in buffer as UTF-7 escape fragment.
 Use IMAP modification if FOR-IMAP is non-nil."
   (save-restriction
-    (narrow-to-region start end)
-    (funcall (utf7-get-u16char-converter 'to-utf-16))
-    (mm-with-unibyte-current-buffer
-      (base64-encode-region start (point-max)))
-    (goto-char start)
+    (let* ((buf (current-buffer))
+	   (base (with-temp-buffer
+		   (set-buffer-multibyte nil)
+		   (insert-buffer-substring buf start end)
+		   (funcall (utf7-get-u16char-converter 'to-utf-16))
+		   (base64-encode-region (point-min) (point-max))
+		   (buffer-string))))
+      (narrow-to-region start end)
+      (delete-region (point-min) (point-max))
+      (insert base))
+    (goto-char (point-min))
     (let ((pm (point-max)))
       (when for-imap
 	(while (search-forward "/" nil t)
@@ -186,7 +192,6 @@ Use IMAP modification if FOR-IMAP is non-nil."
   "Convert latin 1 (ISO-8859.1) characters to 16 bit Unicode.
 Characters are converted to raw byte pairs in narrowed buffer."
   (encode-coding-region (point-min) (point-max) 'iso-8859-1)
-  (mm-disable-multibyte)
   (goto-char (point-min))
   (while (not (eobp))
     (insert 0)
