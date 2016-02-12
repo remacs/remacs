@@ -115,10 +115,12 @@ Essential is how realms and paths are matched."
                   ;; authentication information shouldn't be found.
 
                   ;; non-existent server
- (list :url "http://other.com/path" :realm nil :expected-user nil)
+                  (list :url "http://other.com/path"
+                        :realm nil :expected-user nil)
 
                   ;; unmatched port
- (list :url "http://example.org:444/path" :realm nil :expected-user nil)
+                  (list :url "http://example.org:444/path"
+                        :realm nil :expected-user nil)
 
                   ;; root, no realm
                   (list :url "http://example.org/"
