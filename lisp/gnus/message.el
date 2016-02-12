@@ -1629,11 +1629,6 @@ starting with `not' and followed by regexps."
        (0 'message-mml))))
   "Additional expressions to highlight in Message mode.")
 
-
-;; XEmacs does it like this.  For Emacs, we have to set the
-;; `font-lock-defaults' buffer-local variable.
-(put 'message-mode 'font-lock-defaults '(message-font-lock-keywords t))
-
 (defvar message-face-alist
   '((bold . message-bold-region)
     (underline . underline-region)
@@ -1675,12 +1670,8 @@ news."
 (defvar message-send-coding-system 'binary
   "Coding system to encode outgoing mail.")
 
-(defvar message-draft-coding-system
-  mm-auto-save-coding-system
-  "*Coding system to compose mail.
-If you'd like to make it possible to share draft files between XEmacs
-and Emacs, you may use `iso-2022-7bit' for this value at your own risk.
-Note that the coding-system `iso-2022-7bit' isn't suitable to all data.")
+(defvar message-draft-coding-system mm-auto-save-coding-system
+  "Coding system to compose mail.")
 
 (defcustom message-send-mail-partially-limit nil
   "The limitation of messages sent as message/partial.
@@ -1912,12 +1903,7 @@ You must have the \"hashcash\" binary installed, see `hashcash-path'."
 
 (defvar	message-options nil
   "Some saved answers when sending message.")
-;; FIXME: On XEmacs this causes problems since let-binding like:
-;; (let ((message-options message-options)) ...)
-;; as in `message-send' and `mml-preview' loses to buffer-local
-;; variable initialization.
-(unless (featurep 'xemacs)
-  (make-variable-buffer-local 'message-options))
+(make-variable-buffer-local 'message-options)
 
 (defvar message-send-mail-real-function nil
   "Internal send mail function.")
@@ -2645,19 +2631,17 @@ Prefixed with one \\[universal-argument], display the Emacs MIME
 manual.  With two \\[universal-argument]'s, display the EasyPG or
 PGG manual, depending on the value of `mml2015-use'."
   (interactive "p")
-  ;; Don't use `info' because support for `(filename)nodename' is not
-  ;; available in XEmacs < 21.5.12.
-  (Info-goto-node (format "(%s)Top"
-			  (cond ((eq arg 16)
-				 (require 'mml2015)
-				 mml2015-use)
-				((eq arg  4) 'emacs-mime)
-				;; `booleanp' only available in Emacs 22+
-				((and (not (memq arg '(nil t)))
-				      (symbolp arg))
-				 arg)
-				(t
-				 'message)))))
+  (info (format "(%s)Top"
+		(cond ((eq arg 16)
+		       (require 'mml2015)
+		       mml2015-use)
+		      ((eq arg  4) 'emacs-mime)
+		      ;; `booleanp' only available in Emacs 22+
+		      ((and (not (memq arg '(nil t)))
+			    (symbolp arg))
+		       arg)
+		      (t
+		       'message)))))
 
 
 
@@ -2755,43 +2739,29 @@ PGG manual, depending on the value of `mml2015-use'."
     ["Caesar (rot13) Region" message-caesar-region (message-mark-active-p)]
     ["Elide Region" message-elide-region
      :active (message-mark-active-p)
-     ,@(if (featurep 'xemacs) nil
-	 '(:help "Replace text in region with an ellipsis"))]
+     :help "Replace text in region with an ellipsis"]
     ["Delete Outside Region" message-delete-not-region
      :active (message-mark-active-p)
-     ,@(if (featurep 'xemacs) nil
-	 '(:help "Delete all quoted text outside region"))]
+     :help "Delete all quoted text outside region"]
     ["Kill To Signature" message-kill-to-signature t]
     ["Newline and Reformat" message-newline-and-reformat t]
     ["Rename buffer" message-rename-buffer t]
-    ["Spellcheck" ispell-message
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Spellcheck this message"))]
+    ["Spellcheck" ispell-message :help "Spellcheck this message"]
     "----"
     ["Insert Region Marked" message-mark-inserted-region
-     :active (message-mark-active-p)
-     ,@(if (featurep 'xemacs) nil
-	 '(:help "Mark region with enclosing tags"))]
+     :active (message-mark-active-p) :help "Mark region with enclosing tags"]
     ["Insert File Marked..." message-mark-insert-file
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Insert file at point marked with enclosing tags"))]
+     :help "Insert file at point marked with enclosing tags"]
     "----"
-    ["Send Message" message-send-and-exit
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Send this message"))]
+    ["Send Message" message-send-and-exit :help "Send this message"]
     ["Postpone Message" message-dont-send
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "File this draft message and exit"))]
+     :help "File this draft message and exit"]
     ["Send at Specific Time..." gnus-delay-article
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Ask, then arrange to send message at that time"))]
+     :help "Ask, then arrange to send message at that time"]
     ["Kill Message" message-kill-buffer
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Delete this message without sending"))]
+     :help "Delete this message without sending"]
     "----"
-    ["Message manual" message-info
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Display the Message manual"))]))
+    ["Message manual" message-info :help "Display the Message manual"]))
 
 (easy-menu-define
   message-mode-field-menu message-mode-map ""
@@ -2805,15 +2775,12 @@ PGG manual, depending on the value of `mml2015-use'."
     ["Fcc" message-goto-fcc t]
     ["Reply-To" message-goto-reply-to t]
     ["Flag As Important" message-insert-importance-high
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Mark this message as important"))]
+     :help "Mark this message as important"]
     ["Flag As Unimportant" message-insert-importance-low
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Mark this message as unimportant"))]
+     :help "Mark this message as unimportant"]
     ["Request Receipt"
      message-insert-disposition-notification-to
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Request a receipt notification"))]
+     :help "Request a receipt notification"]
     "----"
     ;; (typical) news stuff
     ["Summary" message-goto-summary t]
@@ -2829,18 +2796,14 @@ PGG manual, depending on the value of `mml2015-use'."
     "----"
     ;; (typical) mailing-lists stuff
     ["Fetch To" message-insert-to
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Insert a To header that points to the author."))]
+     :help "Insert a To header that points to the author."]
     ["Fetch To and Cc" message-insert-wide-reply
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help
-	   "Insert To and Cc headers as if you were doing a wide reply."))]
+     :help "Insert To and Cc headers as if you were doing a wide reply."]
     "----"
     ["Send to list only" message-to-list-only t]
     ["Mail-Followup-To" message-goto-mail-followup-to t]
     ["Unsubscribed list post" message-generate-unsubscribed-mail-followup-to
-     ,@(if (featurep 'xemacs) '(t)
-	 '(:help "Insert a reasonable `Mail-Followup-To:' header."))]
+     :help "Insert a reasonable `Mail-Followup-To:' header."]
     ["Reduce To: to Cc:" message-reduce-to-to-cc t]
     "----"
     ["Sort Headers" message-sort-headers t]
@@ -2886,7 +2849,6 @@ message composition doesn't break too bad."
   ;; category, face, display: probably doesn't do any harm.
   ;; fontified: is used by font-lock.
   ;; syntax-table, local-map: I dunno.
-  ;; We need to add XEmacs names to the list.
   "Property list of with properties forbidden in message buffers.
 The values of the properties are ignored, only the property names are used.")
 
@@ -3021,12 +2983,10 @@ M-RET    `message-newline-and-reformat' (break the line and reformat)."
     (set (make-local-variable 'comment-start) message-yank-prefix)
     (set (make-local-variable 'comment-start-skip)
 	 (concat "^" (regexp-quote message-yank-prefix) "[ \t]*")))
-  (if (featurep 'xemacs)
-      (message-setup-toolbar)
-    (set (make-local-variable 'font-lock-defaults)
-	 '(message-font-lock-keywords t))
-    (if (boundp 'tool-bar-map)
-	(set (make-local-variable 'tool-bar-map) (message-make-tool-bar))))
+  (set (make-local-variable 'font-lock-defaults)
+       '(message-font-lock-keywords t))
+  (if (boundp 'tool-bar-map)
+      (set (make-local-variable 'tool-bar-map) (message-make-tool-bar)))
   (easy-menu-add message-mode-menu message-mode-map)
   (easy-menu-add message-mode-field-menu message-mode-map)
   ;; Mmmm... Forbidden properties...
@@ -6397,9 +6357,6 @@ multiple lines is treated as a single line.  Otherwise, even if
 N is 1, when point is on a continuation header line, it will be
 moved to the beginning "
   (interactive "p")
-  (let ((zrs 'zmacs-region-stays))
-    (when (and (featurep 'xemacs) (interactive-p) (boundp zrs))
-      (set zrs t)))
   (cond
    ;; Go to beginning of header or beginning of line.
    ((and message-beginning-of-line (message-point-in-header-p))
@@ -7470,14 +7427,13 @@ Optional DIGEST will use digest to forward."
   (let ((b (point))
 	(contents (with-current-buffer forward-buffer (buffer-string)))
 	e)
-    (unless (featurep 'xemacs)
-      (unless (mm-multibyte-string-p contents)
-	(error "Attempt to insert unibyte string from the buffer \"%s\"\
+    (unless (mm-multibyte-string-p contents)
+      (error "Attempt to insert unibyte string from the buffer \"%s\"\
  to the multibyte buffer \"%s\""
-	       (if (bufferp forward-buffer)
-		   (buffer-name forward-buffer)
-		 forward-buffer)
-	       (buffer-name))))
+	     (if (bufferp forward-buffer)
+		 (buffer-name forward-buffer)
+	       forward-buffer)
+	     (buffer-name)))
     (insert (mm-with-multibyte-buffer
 	      (insert contents)
 	      (mime-to-mml)
@@ -7534,14 +7490,13 @@ Optional DIGEST will use digest to forward."
   (let ((b (point)) e)
     (if (not message-forward-decoded-p)
 	(let ((contents (with-current-buffer forward-buffer (buffer-string))))
-	  (unless (featurep 'xemacs)
-	    (unless (mm-multibyte-string-p contents)
-	      (error "Attempt to insert unibyte string from the buffer \"%s\"\
+	  (unless (mm-multibyte-string-p contents)
+	    (error "Attempt to insert unibyte string from the buffer \"%s\"\
  to the multibyte buffer \"%s\""
-		     (if (bufferp forward-buffer)
-			 (buffer-name forward-buffer)
-		       forward-buffer)
-		     (buffer-name))))
+		   (if (bufferp forward-buffer)
+		       (buffer-name forward-buffer)
+		     forward-buffer)
+		   (buffer-name)))
 	  (insert (mm-with-multibyte-buffer
 		    (insert contents)
 		    (mime-to-mml)
@@ -7988,8 +7943,7 @@ See `gmm-tool-bar-from-list' for the format of the list."
 (defun message-make-tool-bar (&optional force)
   "Make a message mode tool bar from `message-tool-bar-list'.
 When FORCE, rebuild the tool bar."
-  (when (and (not (featurep 'xemacs))
-	     (boundp 'tool-bar-mode)
+  (when (and (boundp 'tool-bar-mode)
 	     tool-bar-mode
 	     (or (not message-tool-bar-map) force))
     (setq message-tool-bar-map
@@ -8576,10 +8530,6 @@ Used in `message-simplify-recipients'."
 			   (* 0.5 (- (nth 3 edges) (nth 1 edges)))))
 	     (match-beginning 0)
 	     " ")))))))
-
-(when (featurep 'xemacs)
-  (require 'messagexmas)
-  (message-xmas-redefine))
 
 (provide 'message)
 

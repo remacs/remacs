@@ -289,10 +289,7 @@ before the external MIME handler is invoked."
 	      (mm-insert-part handle)
 	      (let ((image
 		     (ignore-errors
-		       (if (fboundp 'create-image)
-			   (create-image (buffer-string) 'imagemagick 'data-p)
-			 (mm-create-image-xemacs
-			  (mm-handle-media-subtype handle))))))
+		       (create-image (buffer-string) 'imagemagick 'data-p))))
 		(when image
 		  (setcar (cdr handle) (list "image/imagemagick"))
 		  (mm-image-fit-p handle)))))))
@@ -1147,9 +1144,6 @@ external if displayed external."
       (ignore-errors
 	(cond
 	 ;; Internally displayed part.
-	 ((mm-annotationp object)
-          (if (featurep 'xemacs)
-              (delete-annotation object)))
 	 ((or (functionp object)
 	      (and (listp object)
 		   (eq (car object) 'lambda)))
@@ -1573,40 +1567,11 @@ be determined."
 	  (prog1
 	      (setq spec
 		    (ignore-errors
-		      ;; Avoid testing `make-glyph' since W3 may define
-		      ;; a bogus version of it.
-		      (if (fboundp 'create-image)
-			  (create-image (buffer-string)
-					(or (mm-image-type-from-buffer)
-					    (intern type))
-					'data-p)
-			(mm-create-image-xemacs type))))
+		      (create-image (buffer-string)
+				    (or (mm-image-type-from-buffer)
+					(intern type))
+				    'data-p)))
 	    (mm-handle-set-cache handle spec))))))
-
-(defun mm-create-image-xemacs (type)
-  (when (featurep 'xemacs)
-    (cond
-     ((equal type "xbm")
-      ;; xbm images require special handling, since
-      ;; the only way to create glyphs from these
-      ;; (without a ton of work) is to write them
-      ;; out to a file, and then create a file
-      ;; specifier.
-      (let ((file (mm-make-temp-file
-		   (expand-file-name "emm" mm-tmp-directory)
-		   nil ".xbm")))
-	(unwind-protect
-	    (progn
-	      (write-region (point-min) (point-max) file)
-	      (make-glyph (list (cons 'x file))))
-	  (ignore-errors
-	    (delete-file file)))))
-     (t
-      (make-glyph
-       (vector
-	(or (mm-image-type-from-buffer)
-	    (intern type))
-	:data (buffer-string)))))))
 
 (declare-function image-size "image.c" (spec &optional pixels frame))
 
@@ -1614,32 +1579,18 @@ be determined."
   "Say whether the image in HANDLE will fit the current window."
   (let ((image (mm-get-image handle)))
     (or (not image)
-	(if (featurep 'xemacs)
-	    ;; XEmacs's glyphs can actually tell us about their width, so
-	    ;; let's be nice and smart about them.
-	    (or mm-inline-large-images
-		(and (<= (glyph-width image) (window-pixel-width))
-		     (<= (glyph-height image) (window-pixel-height))))
-	  (let* ((size (image-size image))
-		 (w (car size))
-		 (h (cdr size)))
-	    (or mm-inline-large-images
-		(and (<= h (1- (window-height))) ; Don't include mode line.
-		     (<= w (window-width)))))))))
+	(let* ((size (image-size image))
+	       (w (car size))
+	       (h (cdr size)))
+	  (or mm-inline-large-images
+	      (and (<= h (1- (window-height))) ; Don't include mode line.
+		   (<= w (window-width))))))))
 
 (defun mm-valid-image-format-p (format)
   "Say whether FORMAT can be displayed natively by Emacs."
-  (cond
-   ;; Handle XEmacs
-   ((fboundp 'valid-image-instantiator-format-p)
-    (valid-image-instantiator-format-p format))
-   ;; Handle Emacs
-   ((fboundp 'image-type-available-p)
-    (and (display-graphic-p)
-	 (image-type-available-p format)))
-   ;; Nobody else can do images yet.
-   (t
-    nil)))
+  (and (fboundp 'image-type-available-p)
+       (display-graphic-p)
+       (image-type-available-p format)))
 
 (defun mm-valid-and-fit-image-p (format handle)
   "Say whether FORMAT can be displayed natively and HANDLE fits the window."

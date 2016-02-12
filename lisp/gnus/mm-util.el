@@ -25,13 +25,7 @@
 
 (eval-when-compile (require 'cl))
 (require 'mail-prsvr)
-
-(eval-and-compile
-  (if (featurep 'xemacs)
-      (unless (ignore-errors
-		(require 'timer-funcs))
-	(require 'timer))
-    (require 'timer)))
+(require 'timer)
 
 (defvar mm-mime-mule-charset-alist )
 ;; Note this is not presently used on Emacs >= 23, which is good,
@@ -57,8 +51,6 @@
      (char-int . identity)
      ;; `coding-system-equal' is an Emacs function, not available in XEmacs.
      (coding-system-equal . equal)
-     ;; `annotationp' is an XEmacs function, not available in Emacs.
-     (annotationp . ignore)
      ;; `set-buffer-file-coding-system' is not available in XEmacs 21.4
      ;; built without the `file-coding' feature.
      (set-buffer-file-coding-system . ignore)

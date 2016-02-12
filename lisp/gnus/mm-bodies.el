@@ -255,9 +255,6 @@ decoding.  If it is nil, default to `mail-parse-charset'."
 	    (setq coding-system
 		  (mm-charset-to-coding-system mail-parse-charset)))
 	(when (and charset coding-system
-		   ;; buffer-file-coding-system
-		   ;;Article buffer is nil coding system
-		   ;;in XEmacs
 		   (mm-multibyte-p)
 		   (or (not (eq coding-system 'ascii))
 		       (setq coding-system mail-parse-charset)))
