@@ -119,17 +119,17 @@
   nil
   "iCalendar class for REPLY events")
 
-(defmethod gnus-icalendar-event:recurring-p ((event gnus-icalendar-event))
+(cl-defmethod gnus-icalendar-event:recurring-p ((event gnus-icalendar-event))
   "Return t if EVENT is recurring."
   (not (null (gnus-icalendar-event:recur event))))
 
-(defmethod gnus-icalendar-event:recurring-freq ((event gnus-icalendar-event))
+(cl-defmethod gnus-icalendar-event:recurring-freq ((event gnus-icalendar-event))
   "Return recurring frequency of EVENT."
   (let ((rrule (gnus-icalendar-event:recur event)))
     (string-match "FREQ=\\([[:alpha:]]+\\)" rrule)
     (match-string 1 rrule)))
 
-(defmethod gnus-icalendar-event:recurring-interval ((event gnus-icalendar-event))
+(cl-defmethod gnus-icalendar-event:recurring-interval ((event gnus-icalendar-event))
   "Return recurring interval of EVENT."
   (let ((rrule (gnus-icalendar-event:recur event))
         (default-interval 1))
@@ -138,7 +138,7 @@
     (or (match-string 1 rrule)
         default-interval)))
 
-(defmethod gnus-icalendar-event:start ((event gnus-icalendar-event))
+(cl-defmethod gnus-icalendar-event:start ((event gnus-icalendar-event))
   (format-time-string "%Y-%m-%d %H:%M" (gnus-icalendar-event:start-time event)))
 
 (defun gnus-icalendar-event--decode-datefield (event field zone-map)
@@ -376,7 +376,7 @@ on the IDENTITIES list."
 (defvar gnus-icalendar-org-enabled-p nil)
 
 
-(defmethod gnus-icalendar-event:org-repeat ((event gnus-icalendar-event))
+(cl-defmethod gnus-icalendar-event:org-repeat ((event gnus-icalendar-event))
   "Return `org-mode' timestamp repeater string for recurring EVENT.
 Return nil for non-recurring EVENT."
   (when (gnus-icalendar-event:recurring-p event)
@@ -390,7 +390,7 @@ Return nil for non-recurring EVENT."
       (when org-freq
         (format "+%s%s" (gnus-icalendar-event:recurring-interval event) org-freq)))))
 
-(defmethod gnus-icalendar-event:org-timestamp ((event gnus-icalendar-event))
+(cl-defmethod gnus-icalendar-event:org-timestamp ((event gnus-icalendar-event))
   "Build `org-mode' timestamp from EVENT start/end dates and recurrence info."
   (let* ((start (gnus-icalendar-event:start-time event))
          (end (gnus-icalendar-event:end-time event))
@@ -447,7 +447,7 @@ Return nil for non-recurring EVENT."
   (mapconcat #'identity participants ", "))
 
 ;; TODO: make the template customizable
-(defmethod gnus-icalendar-event->org-entry ((event gnus-icalendar-event) reply-status)
+(cl-defmethod gnus-icalendar-event->org-entry ((event gnus-icalendar-event) reply-status)
   "Return string with new `org-mode' entry describing EVENT."
   (with-temp-buffer
     (org-mode)
@@ -640,12 +640,12 @@ is searched."
 
     (org-agenda-list nil (gnus-icalendar-event:start event) duration-days)))
 
-(defmethod gnus-icalendar-event:sync-to-org ((event gnus-icalendar-event-request) reply-status)
+(cl-defmethod gnus-icalendar-event:sync-to-org ((event gnus-icalendar-event-request) reply-status)
   (if (gnus-icalendar-find-org-event-file event)
       (gnus-icalendar--update-org-event event reply-status)
     (gnus-icalendar:org-event-save event reply-status)))
 
-(defmethod gnus-icalendar-event:sync-to-org ((event gnus-icalendar-event-cancel) reply-status)
+(cl-defmethod gnus-icalendar-event:sync-to-org ((event gnus-icalendar-event-cancel) reply-status)
   (when (gnus-icalendar-find-org-event-file event)
     (gnus-icalendar--cancel-org-event event)))
 
@@ -712,7 +712,7 @@ These will be used to retrieve the RSVP information from ical events."
 		(mapcar #'regexp-quote gnus-icalendar-additional-identities)))))
 
 ;; TODO: make the template customizable
-(defmethod gnus-icalendar-event->gnus-calendar ((event gnus-icalendar-event) &optional reply-status)
+(cl-defmethod gnus-icalendar-event->gnus-calendar ((event gnus-icalendar-event) &optional reply-status)
   "Format an overview of EVENT details."
   (gmm-labels ((format-header (x)
             (format "%-12s%s"
@@ -818,27 +818,27 @@ These will be used to retrieve the RSVP information from ical events."
 (defun gnus-icalendar-sync-event-to-org (event)
   (gnus-icalendar-event:sync-to-org event gnus-icalendar-reply-status))
 
-(defmethod gnus-icalendar-event:inline-reply-buttons ((event gnus-icalendar-event) handle)
+(cl-defmethod gnus-icalendar-event:inline-reply-buttons ((event gnus-icalendar-event) handle)
   (when (gnus-icalendar-event:rsvp event)
     `(("Accept" gnus-icalendar-reply (,handle accepted ,event))
       ("Tentative" gnus-icalendar-reply (,handle tentative ,event))
       ("Decline" gnus-icalendar-reply (,handle declined ,event)))))
 
-(defmethod gnus-icalendar-event:inline-reply-buttons ((event gnus-icalendar-event-reply) handle)
+(cl-defmethod gnus-icalendar-event:inline-reply-buttons ((event gnus-icalendar-event-reply) handle)
   "No buttons for REPLY events."
   nil)
 
-(defmethod gnus-icalendar-event:inline-reply-status ((event gnus-icalendar-event))
+(cl-defmethod gnus-icalendar-event:inline-reply-status ((event gnus-icalendar-event))
   (or (when gnus-icalendar-org-enabled-p
         (gnus-icalendar--get-org-event-reply-status event))
       "Not replied yet"))
 
-(defmethod gnus-icalendar-event:inline-reply-status ((event gnus-icalendar-event-reply))
+(cl-defmethod gnus-icalendar-event:inline-reply-status ((event gnus-icalendar-event-reply))
   "No reply status for REPLY events."
   nil)
 
 
-(defmethod gnus-icalendar-event:inline-org-buttons ((event gnus-icalendar-event))
+(cl-defmethod gnus-icalendar-event:inline-org-buttons ((event gnus-icalendar-event))
   (let* ((org-entry-exists-p (gnus-icalendar-find-org-event-file event))
          (export-button-text (if org-entry-exists-p "Update Org Entry" "Export to Org")))
 
@@ -850,7 +850,7 @@ These will be used to retrieve the RSVP information from ical events."
                  `("Show Org Entry" gnus-icalendar--show-org-event ,event))))))
 
 
-(defmethod gnus-icalendar-event:inline-org-buttons ((event gnus-icalendar-event-cancel))
+(cl-defmethod gnus-icalendar-event:inline-org-buttons ((event gnus-icalendar-event-cancel))
   (let ((org-entry-exists-p (gnus-icalendar-find-org-event-file event)))
 
     (delq nil (list
