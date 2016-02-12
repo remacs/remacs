@@ -1612,8 +1612,6 @@ if it is a string, only list groups matching REGEXP."
 (defun gnus-group-update-eval-form (group list)
   "Eval `car' of each element of LIST, and return the first that return t.
 Some value are bound so the form can use them."
-  (defvar group-age) (defvar ticked) (defvar score) (defvar level)
-  (defvar mailp) (defvar total) (defvar unread)
   (when list
     (let* ((entry (gnus-group-entry group))
            (unread (if (numberp (car entry)) (car entry) 0))
@@ -1633,25 +1631,6 @@ Some value are bound so the form can use them."
            (score (or (gnus-info-score info) 0))
            (ticked (gnus-range-length (cdr (assq 'tick marked))))
            (group-age (gnus-group-timestamp-delta group)))
-      ;; FIXME: http://thread.gmane.org/gmane.emacs.gnus.general/65451/focus=65465
-      ;; ======================================================================
-      ;; From: Richard Stallman
-      ;; Subject: Re: Rewriting gnus-group-highlight-line (was: [...])
-      ;; Cc: ding@gnus.org
-      ;; Date: Sat, 27 Oct 2007 19:41:20 -0400
-      ;; Message-ID: <E1IlvHM-0006TS-7t@fencepost.gnu.org>
-      ;;
-      ;; [...]
-      ;; The kludge is that the alist elements contain expressions that refer
-      ;; to local variables with short names.  Perhaps write your own tiny
-      ;; evaluator that handles just `and', `or', and numeric comparisons
-      ;; and just a few specific variables.
-      ;; ======================================================================
-      ;;
-      ;; Similar for other evaluated variables.  Grep for risky-local-variable
-      ;; to find them!  -- rsteib
-      ;;
-      ;; Eval the cars of the lists until we find a match.
       (while (and list
                   (not (eval (caar list))))
         (setq list (cdr list)))
@@ -1662,8 +1641,8 @@ Some value are bound so the form can use them."
 GROUP is current group, and the line to highlight starts at BEG
 and ends at END."
   (let ((face (cdar (gnus-group-update-eval-form
-                      group
-                      gnus-group-highlight))))
+		     group
+		     gnus-group-highlight))))
     (unless (eq face (gnus-get-text-property-excluding-characters-with-faces beg 'face))
       (let ((inhibit-read-only t))
         (gnus-put-text-property-excluding-characters-with-faces
