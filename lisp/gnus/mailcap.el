@@ -967,7 +967,7 @@ If FORCE, re-parse even if already parsed."
 (defun mailcap-mime-types ()
   "Return a list of MIME media types."
   (mailcap-parse-mimetypes)
-  (mailcap-delete-duplicates
+  (delete-dups
    (nconc
     (mapcar 'cdr mailcap-mime-extensions)
     (apply
