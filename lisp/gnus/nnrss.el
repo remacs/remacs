@@ -582,12 +582,11 @@ which RSS 2.0 allows."
   "")
 
 (defun nnrss-insert (url)
-  (mm-with-unibyte-current-buffer
-    (condition-case err
-	(mm-url-insert url)
-      (error (if (or debug-on-quit debug-on-error)
-		 (signal (car err) (cdr err))
-	       (message "nnrss: Failed to fetch %s" url))))))
+  (condition-case err
+      (mm-url-insert url)
+    (error (if (or debug-on-quit debug-on-error)
+	       (signal (car err) (cdr err))
+	     (message "nnrss: Failed to fetch %s" url)))))
 
 (defun nnrss-decode-entities-string (string)
   (if string
