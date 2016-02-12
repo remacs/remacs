@@ -204,9 +204,8 @@ Turning on Sieve mode runs `sieve-mode-hook'."
   (set (make-local-variable 'comment-end) "")
   ;;(set (make-local-variable 'comment-start-skip) "\\(^\\|\\s-\\);?#+ *")
   (set (make-local-variable 'comment-start-skip) "#+ *")
-  (unless (featurep 'xemacs)
-    (set (make-local-variable 'font-lock-defaults)
-	 '(sieve-font-lock-keywords nil nil ((?_ . "w")))))
+  (set (make-local-variable 'font-lock-defaults)
+       '(sieve-font-lock-keywords nil nil ((?_ . "w"))))
   (easy-menu-add-item nil nil sieve-mode-menu))
 
 ;; Menu

@@ -644,9 +644,7 @@ If NOW, use that time instead."
      (format " %s "
 	     (capitalize (car (rassoc (nth 4 (decode-time now))
 				      parse-time-months))))
-     (format-time-string "%Y %H:%M:%S " now)
-     ;; We do all of this because XEmacs doesn't have the %z spec.
-     (format "%s%02d%02d" sign (/ zone 3600) (/ (% zone 3600) 60)))))
+     (format-time-string "%Y %H:%M:%S %z" now))))
 
 (defun pop3-munge-message-separator (start end)
   "Check to see if a message separator exists.  If not, generate one."

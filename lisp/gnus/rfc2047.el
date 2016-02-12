@@ -356,9 +356,7 @@ The buffer may be narrowed."
     ;; it appears to be the cleanest way.
     ;; Play safe and don't assume the form of the word syntax entry --
     ;; copy it from ?a.
-    (if (featurep 'xemacs)
-	(put-char-table t (get-char-table ?a (standard-syntax-table)) table)
-      (set-char-table-range table t (aref (standard-syntax-table) ?a)))
+    (set-char-table-range table t (aref (standard-syntax-table) ?a))
     (modify-syntax-entry ?\\ "\\" table)
     (modify-syntax-entry ?\" "\"" table)
     (modify-syntax-entry ?\( "(" table)

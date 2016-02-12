@@ -588,13 +588,9 @@ A string or a list of strings is returned."
   "Get certificate for MAIL from the ldap server at HOST."
   (let ((ldapresult
 	 (funcall
-	  (if (featurep 'xemacs)
-	      (progn
-		(require 'smime-ldap)
-		'smime-ldap-search)
-	    (progn
-	      (require 'ldap)
-	      'ldap-search))
+	  (progn
+	    (require 'ldap)
+	    'ldap-search)
 	  (concat "mail=" mail)
 	  host '("userCertificate") nil))
 	(retbuf (generate-new-buffer (format "*certificate for %s*" mail)))

@@ -90,7 +90,6 @@ ftp://ftp.math.psu.edu/pub/simpson/chinese/hzp/hzp.doc"
 	    (while (re-search-forward (if rfc1843-decode-hzp
 					  rfc1843-hzp-word-regexp
 					rfc1843-word-regexp) (point-max) t)
-	      ;;; Text with extents may cause XEmacs crash
 	      (setq str (buffer-substring-no-properties
 			 (match-beginning 1)
 			 (match-end 1)))
