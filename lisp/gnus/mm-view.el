@@ -497,9 +497,7 @@ If MODE is not set, try to find mode automatically."
 	  ;; Do not fontify if the guess mode is fundamental.
 	  (unless (or font-lock-mode
 		      (eq major-mode 'fundamental-mode))
-            (if (fboundp 'font-lock-ensure)
-                (font-lock-ensure)
-              (font-lock-fontify-buffer)))))
+	    (font-lock-ensure))))
       (setq text (buffer-string))
       ;; Set buffer unmodified to avoid confirmation when killing the
       ;; buffer.
