@@ -35,6 +35,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 ;; We need macros in dired.el to compile properly,
 ;; and we call subroutines in it too.
 (require 'dired)
