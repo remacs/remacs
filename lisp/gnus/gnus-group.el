@@ -1612,48 +1612,32 @@ if it is a string, only list groups matching REGEXP."
 (defun gnus-group-update-eval-form (group list)
   "Eval `car' of each element of LIST, and return the first that return t.
 Some value are bound so the form can use them."
-  (defvar group-age) (defvar ticked) (defvar score) (defvar level)
-  (defvar mailp) (defvar total) (defvar unread)
   (when list
     (let* ((entry (gnus-group-entry group))
-           (unread (if (numberp (car entry)) (car entry) 0))
            (active (gnus-active group))
-           (total (if active (1+ (- (cdr active) (car active))) 0))
            (info (nth 2 entry))
-           (method (inline (gnus-server-get-method group (gnus-info-method info))))
+           (method (inline (gnus-server-get-method
+			    group (gnus-info-method info))))
            (marked (gnus-info-marks info))
-           (mailp (apply 'append
-                         (mapcar
-                          (lambda (x)
-                            (memq x (assoc (symbol-name
-                                            (car (or method gnus-select-method)))
-                                           gnus-valid-select-methods)))
-                          '(mail post-mail))))
-           (level (or (gnus-info-level info) gnus-level-killed))
-           (score (or (gnus-info-score info) 0))
-           (ticked (gnus-range-length (cdr (assq 'tick marked))))
-           (group-age (gnus-group-timestamp-delta group)))
-      ;; FIXME: http://thread.gmane.org/gmane.emacs.gnus.general/65451/focus=65465
-      ;; ======================================================================
-      ;; From: Richard Stallman
-      ;; Subject: Re: Rewriting gnus-group-highlight-line (was: [...])
-      ;; Cc: ding@gnus.org
-      ;; Date: Sat, 27 Oct 2007 19:41:20 -0400
-      ;; Message-ID: <E1IlvHM-0006TS-7t@fencepost.gnu.org>
-      ;;
-      ;; [...]
-      ;; The kludge is that the alist elements contain expressions that refer
-      ;; to local variables with short names.  Perhaps write your own tiny
-      ;; evaluator that handles just `and', `or', and numeric comparisons
-      ;; and just a few specific variables.
-      ;; ======================================================================
-      ;;
-      ;; Similar for other evaluated variables.  Grep for risky-local-variable
-      ;; to find them!  -- rsteib
-      ;;
-      ;; Eval the cars of the lists until we find a match.
+	   (env
+	    (list
+	     (cons 'unread (if (numberp (car entry)) (car entry) 0))
+	     (cons 'total (if active (1+ (- (cdr active) (car active))) 0))
+	     (cons 'mailp (apply
+			   'append
+			   (mapcar
+			    (lambda (x)
+			      (memq x (assoc
+				       (symbol-name
+					(car (or method gnus-select-method)))
+				       gnus-valid-select-methods)))
+			    '(mail post-mail))))
+	     (cons 'level (or (gnus-info-level info) gnus-level-killed))
+	     (cons 'score (or (gnus-info-score info) 0))
+	     (cons 'ticked (gnus-range-length (cdr (assq 'tick marked))))
+	     (cons 'group-age (gnus-group-timestamp-delta group)))))
       (while (and list
-                  (not (eval (caar list))))
+                  (not (eval (caar list) env)))
         (setq list (cdr list)))
       list)))
 
