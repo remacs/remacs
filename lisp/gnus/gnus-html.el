@@ -88,27 +88,9 @@ fit these criteria."
     (define-key map [tab] 'widget-forward)
     map))
 
-(eval-and-compile
-  (defalias 'gnus-html-encode-url-chars
-    (if (fboundp 'browse-url-url-encode-chars)
-	'browse-url-url-encode-chars
-      (lambda (text chars)
-	"URL-encode the chars in TEXT that match CHARS.
-CHARS is a regexp-like character alternative (e.g., \"[)$]\")."
-	(let ((encoded-text (copy-sequence text))
-	      (s 0))
-	  (while (setq s (string-match chars encoded-text s))
-	    (setq encoded-text
-		  (replace-match (format "%%%x"
-					 (string-to-char
-					  (match-string 0 encoded-text)))
-				 t t encoded-text)
-		  s (1+ s)))
-	  encoded-text)))))
-
 (defun gnus-html-encode-url (url)
   "Encode URL."
-  (gnus-html-encode-url-chars url "[)$ ]"))
+  (browse-url-url-encode-chars url "[)$ ]"))
 
 (defun gnus-html-cache-expired (url ttl)
   "Check if URL is cached for more than TTL."
