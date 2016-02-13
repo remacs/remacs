@@ -421,7 +421,7 @@ For example:
   :type '(repeat (cons (sexp :tag "Method") (symbol :tag "Charset"))))
 
 (defcustom gnus-group-name-charset-group-alist
-  (if (or (and (fboundp 'find-coding-system) (find-coding-system 'utf-8))
+  (if (or (find-coding-system 'utf-8)
 	  (mm-coding-system-p 'utf-8))
       '((".*" . utf-8))
     nil)
@@ -1088,9 +1088,7 @@ When FORCE, rebuild the tool bar."
 	    (gmm-image-load-path-for-library "gnus"
 					     "gnus/toggle-subscription.xpm"
 					     nil t))
-           (image-load-path (cons (car load-path)
-                                  (when (boundp 'image-load-path)
-                                    image-load-path)))
+           (image-load-path (cons (car load-path) image-load-path))
 	   (map (gmm-tool-bar-from-list gnus-group-tool-bar
 					gnus-group-tool-bar-zap-list
 					'gnus-group-mode-map)))
@@ -1488,12 +1486,10 @@ if it is a string, only list groups matching REGEXP."
 ;; Date: Mon, 23 Jan 2006 19:59:13 +0100
 ;; Message-ID: <v9acdmrcse.fsf@marauder.physik.uni-ulm.de>
 
-(defcustom gnus-group-update-tool-bar
-  (and (boundp 'tool-bar-mode)
-       tool-bar-mode
-       ;; Using `redraw-frame' (see `gnus-tool-bar-update') in Emacs might
-       ;; be confusing, so maybe we shouldn't call it by default.
-       (fboundp 'force-window-update))
+;; Using `redraw-frame' (see `gnus-tool-bar-update') in Emacs might
+;; be confusing, so maybe we shouldn't call it by default.
+(defcustom gnus-group-update-tool-bar (and (boundp 'tool-bar-mode)
+					   tool-bar-mode)
   "Force updating the group buffer tool bar."
   :group 'gnus-group
   :version "22.1"
