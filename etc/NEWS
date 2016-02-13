@@ -975,7 +975,7 @@ replace the face `compare-windows', which is now an obsolete alias for
 
 ---
 *** The VC state indicator in the mode line now has different faces
-corresponding to each of the possible states. See the `vc-faces'
+corresponding to each of the possible states.  See the `vc-faces'
 customization group.
 
 ---
