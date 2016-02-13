@@ -453,10 +453,8 @@ system for example was used.")
   (or (cdr (assoc group gnus-cache-decoded-group-names))
       (let ((decoded (gnus-group-decoded-name group))
 	    (coding (or nnmail-pathname-coding-system
-			(and (boundp 'file-name-coding-system)
-			     file-name-coding-system)
-			(and (boundp 'default-file-name-coding-system)
-			     default-file-name-coding-system))))
+			file-name-coding-system
+			default-file-name-coding-system)))
 	(push (cons group decoded) gnus-cache-decoded-group-names)
 	(push (cons (decode-coding-string
 		     (encode-coding-string decoded coding)
