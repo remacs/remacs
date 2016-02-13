@@ -5346,18 +5346,9 @@ Compressed files like .gz and .bz2 are decompressed."
       (let ((displayed-p (mm-handle-displayed-p handle)))
 	(gnus-insert-mime-button handle (get-text-property btn 'gnus-part)
 				 (list displayed-p))
-	(if (featurep 'emacs)
-	    (delete-region
-	     (point)
-	     (next-single-property-change (point) 'gnus-data nil (point-max)))
-	  (let* ((end (next-single-property-change (point) 'gnus-data))
-		 (annots (annotations-at (or end (point-max)))))
-	    (delete-region (point)
-			   (if end
-			       (if annots (1+ end) end)
-			     (point-max)))
-	    (dolist (annot annots)
-	      (set-extent-endpoints annot (point) (point)))))
+	(delete-region
+	 (point)
+	 (next-single-property-change (point) 'gnus-data nil (point-max)))
 	(setq start (point))
 	(if (search-backward "\n\n" nil t)
 	    (progn
@@ -5740,18 +5731,9 @@ all parts."
       ;; Toggle the button appearance between `[button]...' and `[button]'.
       (let ((displayed-p (mm-handle-displayed-p handle)))
 	(gnus-insert-mime-button handle id (list displayed-p))
-	(if (featurep 'emacs)
-	    (delete-region
-	     (point)
-	     (next-single-property-change (point) 'gnus-data nil (point-max)))
-	  (let* ((end (next-single-property-change (point) 'gnus-data))
-		 (annots (annotations-at (or end (point-max)))))
-	    (delete-region (point)
-			   (if end
-			       (if annots (1+ end) end)
-			     (point-max)))
-	    (dolist (annot annots)
-	      (set-extent-endpoints annot (point) (point)))))
+	(delete-region
+	 (point)
+	 (next-single-property-change (point) 'gnus-data nil (point-max)))
 	(setq start (point))
 	(if (search-backward "\n\n" nil t)
 	    (progn
