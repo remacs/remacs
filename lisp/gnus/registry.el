@@ -179,7 +179,7 @@ Returns an alist of the key followed by the entry in a list, not a cons cell."
 					 &optional create)
   "Search for TRACKSYM in the registry-db THIS.
 When CREATE is not nil, create the secondary index hashtable if needed."
-  (let ((h (gethash tracksym (oref db :tracker))))
+  (let ((h (gethash tracksym (oref db tracker))))
     (if h
 	h
       (when create
