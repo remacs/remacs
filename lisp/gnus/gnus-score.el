@@ -29,6 +29,7 @@
 
 (require 'gnus)
 (require 'gnus-sum)
+(require 'gnus-art)
 (require 'gnus-range)
 (require 'gnus-win)
 (require 'message)
