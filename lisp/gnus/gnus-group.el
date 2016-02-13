@@ -421,8 +421,7 @@ For example:
   :type '(repeat (cons (sexp :tag "Method") (symbol :tag "Charset"))))
 
 (defcustom gnus-group-name-charset-group-alist
-  (if (or (find-coding-system 'utf-8)
-	  (mm-coding-system-p 'utf-8))
+  (if (mm-coding-system-p 'utf-8)
       '((".*" . utf-8))
     nil)
   "Alist of group regexp and the charset for group names.
