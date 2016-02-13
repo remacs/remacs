@@ -52,13 +52,10 @@
 		 gnus-iswitchb-completing-read)))
 
 (defcustom gnus-completion-styles
-  (if (and (boundp 'completion-styles-alist)
-           (boundp 'completion-styles))
-      (append (when (and (assq 'substring completion-styles-alist)
-                         (not (memq 'substring completion-styles)))
-                (list 'substring))
-              completion-styles)
-    nil)
+  (append (when (and (assq 'substring completion-styles-alist)
+		     (not (memq 'substring completion-styles)))
+	    (list 'substring))
+	  completion-styles)
   "Value of `completion-styles' to use when completing."
   :version "24.1"
   :group 'gnus-meta
@@ -290,13 +287,6 @@ Symbols are also allowed; their print names are used instead."
     (or (> (car fdate) (car date))
 	(and (= (car fdate) (car date))
 	     (> (nth 1 fdate) (nth 1 date))))))
-
-;; Every version of Emacs Gnus supports has built-in float-time.
-;; The featurep test silences an irritating compiler warning.
-(defalias 'gnus-float-time
-  (if (or (featurep 'emacs)
-	  (fboundp 'float-time))
-      'float-time 'time-to-seconds))
 
 ;;; Keymap macros.
 

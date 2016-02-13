@@ -103,10 +103,10 @@ DELAY is a string, giving the length of the time.  Possible values are:
 	   (aset deadline 1 minute)
 	   (aset deadline 2 hour)
 	   ;; Convert to seconds.
-	   (setq deadline (gnus-float-time (apply 'encode-time
-						  (append deadline nil))))
+	   (setq deadline (float-time (apply 'encode-time
+					     (append deadline nil))))
 	   ;; If this time has passed already, add a day.
-	   (when (< deadline (gnus-float-time))
+	   (when (< deadline (float-time))
 	     (setq deadline (+ 86400 deadline))) ; 86400 secs/day
 	   ;; Convert seconds to date header.
 	   (setq deadline (message-make-date
@@ -129,7 +129,7 @@ DELAY is a string, giving the length of the time.  Possible values are:
 		 (t
 		  (setq delay (* num 60))))
 	   (setq deadline (message-make-date
-			   (seconds-to-time (+ (gnus-float-time) delay)))))
+			   (seconds-to-time (+ (float-time) delay)))))
 	  (t (error "Malformed delay `%s'" delay)))
     (message-add-header (format "%s: %s" gnus-delay-header deadline)))
   (set-buffer-modified-p t)

@@ -3848,8 +3848,8 @@ respectively."
 Returns \"  ?  \" if there's bad input or if another error occurs.
 Input should look like this: \"Sun, 14 Oct 2001 13:34:39 +0200\"."
   (condition-case ()
-      (let* ((messy-date (gnus-float-time (gnus-date-get-time messy-date)))
-	     (now (gnus-float-time))
+      (let* ((messy-date (float-time (gnus-date-get-time messy-date)))
+	     (now (float-time))
 	     ;;If we don't find something suitable we'll use this one
 	     (my-format "%b %d '%y"))
 	(let* ((difference (- now messy-date))
@@ -5061,7 +5061,7 @@ Unscored articles will be counted as having a score of zero."
 (defun gnus-thread-latest-date (thread)
   "Return the highest article date in THREAD."
   (apply 'max
-	 (mapcar (lambda (header) (gnus-float-time
+	 (mapcar (lambda (header) (float-time
 				   (gnus-date-get-time
 				    (mail-header-date header))))
 		 (message-flatten-list thread))))

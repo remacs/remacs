@@ -365,7 +365,7 @@ textual parts.")
 	(with-current-buffer buffer
 	  (when (and nnimap-object
 		     (nnimap-last-command-time nnimap-object)
-		     (> (gnus-float-time
+		     (> (float-time
 			 (time-subtract
 			  now
 			  (nnimap-last-command-time nnimap-object)))

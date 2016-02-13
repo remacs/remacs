@@ -629,8 +629,6 @@ Deleting old (> %s day(s)) incoming mail file `%s'." diff bfile)
 	0)
     (funcall callback mail-source-crash-box info)))
 
-(autoload 'gnus-float-time "gnus-util")
-
 (defvar mail-source-incoming-last-checked-time nil)
 
 (defun mail-source-delete-crash-box ()
@@ -651,7 +649,7 @@ Deleting old (> %s day(s)) incoming mail file `%s'." diff bfile)
 	  ;; Don't check for old incoming files more than once per day to
 	  ;; save a lot of file accesses.
 	  (when (or (null mail-source-incoming-last-checked-time)
-		    (> (gnus-float-time
+		    (> (float-time
 			(time-since mail-source-incoming-last-checked-time))
 		       (* 24 60 60)))
 	    (setq mail-source-incoming-last-checked-time (current-time))
