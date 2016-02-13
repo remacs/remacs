@@ -8614,7 +8614,7 @@ fetched for this group."
 	(gnus-agent nil)
 	(gnus-read-all-available-headers t))
     (setq gnus-newsgroup-headers
-	  (gnus-merge
+	  (cl-merge
 	   'list gnus-newsgroup-headers
 	   (gnus-fetch-headers articles nil t)
 	   'gnus-article-sort-by-number))
@@ -9026,7 +9026,7 @@ non-numeric or nil fetch the number specified by the
 	    (gnus-sorted-nunion gnus-newsgroup-unreads new-unreads))
       (setq gnus-newsgroup-headers
             (gnus-delete-duplicate-headers
-             (gnus-merge
+             (cl-merge
               'list gnus-newsgroup-headers new-headers
               'gnus-article-sort-by-number)))
       (setq gnus-newsgroup-articles
@@ -12844,10 +12844,10 @@ returned."
 						(mail-header-number h))
 					      gnus-newsgroup-headers)))
     (setq gnus-newsgroup-headers
-	  (gnus-merge 'list
-		      gnus-newsgroup-headers
-		      (gnus-fetch-headers articles nil t)
-		      'gnus-article-sort-by-number))
+	  (cl-merge 'list
+		    gnus-newsgroup-headers
+		    (gnus-fetch-headers articles nil t)
+		    'gnus-article-sort-by-number))
     (setq gnus-newsgroup-articles
 	  (gnus-sorted-nunion gnus-newsgroup-articles articles))
     ;; Suppress duplicates?
