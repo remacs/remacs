@@ -192,6 +192,10 @@
     (setq status (gnutls-peer-status proc))
     (should (consp status))
     (delete-process proc)
+    ;; This sleep-for is needed for the native MS-Windows build.  If
+    ;; it is removed, the next test mysteriously fails because the
+    ;; initial part of the echo is not received.
+    (sleep-for 0.1)
     (let ((issuer (plist-get (plist-get status :certificate) :issuer)))
       (should (stringp issuer))
       (setq issuer (split-string issuer ","))
@@ -200,6 +204,7 @@
 (ert-deftest connect-to-tls-ipv6-nowait ()
   (skip-unless (executable-find "gnutls-serv"))
   (skip-unless (gnutls-available-p))
+  (skip-unless (not (eq system-type 'windows-nt)))
   (let ((server (make-tls-server))
         (times 0)
         proc status)
