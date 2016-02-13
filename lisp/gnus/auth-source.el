@@ -372,11 +372,7 @@ with \"[a/b/c] \" if CHOICES is \(?a ?b ?c)."
            k)
 
       (while (not (memq k choices))
-        (setq k (cond
-                 ((fboundp 'read-char-choice)
-                  (read-char-choice full-prompt choices))
-                 (t (message "%s" full-prompt)
-                    (setq k (read-char))))))
+        (setq k (read-char-choice full-prompt choices)))
       k)))
 
 ;; (auth-source-pick nil :host "any" :port 'imap :user "joe")
