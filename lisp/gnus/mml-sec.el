@@ -557,7 +557,7 @@ Return keys."
   (let* ((usage-prefs (mml-secure-cust-usage-lookup context usage))
 	 (curr-fprs (cdr (assoc name (cdr usage-prefs))))
 	 (key-fprs (mapcar 'mml-secure-fingerprint keys))
-	 (new-fprs (gnus-union curr-fprs key-fprs :test 'equal)))
+	 (new-fprs (cl-union curr-fprs key-fprs :test 'equal)))
     (if curr-fprs
 	(setcdr (assoc name (cdr usage-prefs)) new-fprs)
       (setcdr usage-prefs (cons (cons name new-fprs) (cdr usage-prefs))))

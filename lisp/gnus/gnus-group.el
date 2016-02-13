@@ -1369,7 +1369,7 @@ if it is a string, only list groups matching REGEXP."
     (when (or gnus-group-listed-groups
 	      (and (>= level gnus-level-killed) (<= lowest gnus-level-killed)))
       (gnus-group-prepare-flat-list-dead
-       (gnus-union
+       (cl-union
 	not-in-list
 	(setq gnus-killed-list (sort gnus-killed-list 'string<))
 	:test 'equal)

@@ -1265,29 +1265,6 @@ If HASH-TABLE-P is non-nil, regards SEQUENCE as a hash table."
 (put 'gnus-with-output-to-file 'lisp-indent-function 1)
 (put 'gnus-with-output-to-file 'edebug-form-spec '(form body))
 
-(if (fboundp 'union)
-    (defalias 'gnus-union 'union)
-  (defun gnus-union (l1 l2 &rest keys)
-    "Set union of lists L1 and L2.
-If KEYS contains the `:test' and `equal' pair, use `equal' to compare
-items in lists, otherwise use `eq'."
-    (cond ((null l1) l2)
-	  ((null l2) l1)
-	  ((equal l1 l2) l1)
-	  (t
-	   (or (>= (length l1) (length l2))
-	       (setq l1 (prog1 l2 (setq l2 l1))))
-	   (if (eq 'equal (plist-get keys :test))
-	       (while l2
-		 (or (member (car l2) l1)
-		     (push (car l2) l1))
-		 (pop l2))
-	     (while l2
-	       (or (memq (car l2) l1)
-		   (push (car l2) l1))
-	       (pop l2)))
-	   l1))))
-
 (declare-function gnus-add-text-properties "gnus"
                   (start end properties &optional object))
 
