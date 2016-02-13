@@ -530,11 +530,16 @@ another from the newly saved contents if you save again.
 
 @node Backup Names
 @subsubsection Single or Numbered Backups
+@cindex backup file names
+@cindex names of backup files
 
+@cindex @file{~}, in names of backup files
+@cindex tilde (@file{~}) at end of backup file name
   When Emacs makes a backup file, its name is normally constructed by
 appending @samp{~} to the file name being edited; thus, the backup
 file for @file{eval.c} would be @file{eval.c~}.
 
+@cindex @file{~/.emacs.d/%backup%~}
   If access control stops Emacs from writing backup files under the
 usual names, it writes the backup file as @file{~/.emacs.d/%backup%~}.
 Only one such file can exist, so only the most recently made such
