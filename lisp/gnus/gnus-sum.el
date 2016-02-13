@@ -3625,7 +3625,7 @@ buffer that was in action when the last article was fetched."
 (defun gnus-summary-insert-dummy-line (gnus-tmp-subject gnus-tmp-number)
   "Insert a dummy root in the summary buffer."
   (beginning-of-line)
-  (gnus-add-text-properties
+  (add-text-properties
    (point) (progn (eval gnus-summary-dummy-line-format-spec) (point))
    (list 'gnus-number gnus-tmp-number 'gnus-intangible gnus-tmp-number)))
 
@@ -3731,7 +3731,7 @@ buffer that was in action when the last article was fetched."
 	(setq gnus-tmp-lines "?")
       (setq gnus-tmp-lines (number-to-string gnus-tmp-lines)))
     (condition-case ()
-	(gnus-put-text-property
+	(put-text-property
 	 (point)
 	 (progn (eval gnus-summary-line-format-spec) (point))
 	 'gnus-number gnus-tmp-number)
@@ -5421,7 +5421,7 @@ or a straight list of headers."
 	    (if (= gnus-tmp-lines -1)
 		(setq gnus-tmp-lines "?")
 	      (setq gnus-tmp-lines (number-to-string gnus-tmp-lines)))
-	    (gnus-put-text-property
+	    (put-text-property
 	     (point)
 	     (progn (eval gnus-summary-line-format-spec) (point))
 	     'gnus-number number)
@@ -7788,7 +7788,7 @@ If BACKWARD, the previous article is selected instead of the next."
 			  "exiting"))
 	  (gnus-summary-next-group nil group backward)))
        (t
-	(when (gnus-key-press-event-p last-input-event)
+	(when (numberp last-input-event)
 	  ;; Somehow or other, we may now have selected a different
 	  ;; window.  Make point go back to the summary buffer.
 	  (when (eq current-summary (current-buffer))
@@ -12387,7 +12387,7 @@ If REVERSE, save parts that do not match TYPE."
 		  ": " (or (cdr (assq 'execute (car pslist))) "") "\n")
 	  (setq e (point))
 	  (forward-line -1)		; back to `b'
-	  (gnus-add-text-properties
+	  (add-text-properties
 	   b (1- e) (list 'gnus-number gnus-reffed-article-number
 			  'mouse-face gnus-mouse-face))
 	  (gnus-data-enter

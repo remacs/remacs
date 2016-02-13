@@ -779,7 +779,7 @@ These will be used to retrieve the RSVP information from ical events."
   ;; FIXME: the gnus-mime-button-map keymap does not make sense for this kind
   ;; of button.
   (let ((start (point)))
-    (gnus-add-text-properties
+    (add-text-properties
      start
      (progn
        (insert "[ " text " ]")

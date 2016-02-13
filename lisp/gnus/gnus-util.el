@@ -782,9 +782,6 @@ If there's no subdirectory, delete DIRECTORY as well."
     (setq string (replace-match "" t t string)))
   string)
 
-(declare-function gnus-put-text-property "gnus"
-                  (start end property value &optional object))
-
 (defsubst gnus-put-text-property-excluding-newlines (beg end prop val)
   "The same as `put-text-property', but don't put this prop on any newlines in the region."
   (save-match-data
@@ -792,9 +789,9 @@ If there's no subdirectory, delete DIRECTORY as well."
       (save-restriction
 	(goto-char beg)
 	(while (re-search-forward gnus-emphasize-whitespace-regexp end 'move)
-	  (gnus-put-text-property beg (match-beginning 0) prop val)
+	  (put-text-property beg (match-beginning 0) prop val)
 	  (setq beg (point)))
-	(gnus-put-text-property beg (point) prop val)))))
+	(put-text-property beg (point) prop val)))))
 
 (defsubst gnus-put-overlay-excluding-newlines (beg end prop val)
   "The same as `put-text-property', but don't put this prop on any newlines in the region."
@@ -818,7 +815,7 @@ Otherwise, do nothing."
 	  (when (eq prop 'face)
 	    (setcar (cdr (get-text-property beg 'face)) (or val 'default)))
 	(inline
-	  (gnus-put-text-property beg stop prop val)))
+	  (put-text-property beg stop prop val)))
       (setq beg stop))))
 
 (defun gnus-get-text-property-excluding-characters-with-faces (pos prop)
@@ -1265,20 +1262,17 @@ If HASH-TABLE-P is non-nil, regards SEQUENCE as a hash table."
 (put 'gnus-with-output-to-file 'lisp-indent-function 1)
 (put 'gnus-with-output-to-file 'edebug-form-spec '(form body))
 
-(declare-function gnus-add-text-properties "gnus"
-                  (start end properties &optional object))
-
 (defun gnus-add-text-properties-when
   (property value start end properties &optional object)
-  "Like `gnus-add-text-properties', only applied on where PROPERTY is VALUE."
+  "Like `add-text-properties', only applied on where PROPERTY is VALUE."
   (let (point)
     (while (and start
 		(< start end) ;; XEmacs will loop for every when start=end.
 		(setq point (text-property-not-all start end property value)))
-      (gnus-add-text-properties start point properties object)
+      (add-text-properties start point properties object)
       (setq start (text-property-any point end property value)))
     (if start
-	(gnus-add-text-properties start end properties object))))
+	(add-text-properties start end properties object))))
 
 (defun gnus-remove-text-properties-when
   (property value start end properties &optional object)

@@ -218,7 +218,7 @@ This must be bound to a button-down mouse event."
 	 (start-point (posn-point start-posn))
          (start-line (1+ (count-lines (point-min) start-point)))
 	 (start-window (posn-window start-posn))
-	 (bounds (gnus-window-edges start-window))
+	 (bounds (window-edges start-window))
 	 (top (nth 1 bounds))
 	 (bottom (if (window-minibuffer-p start-window)
 		     (nth 3 bounds)
@@ -618,7 +618,7 @@ Two predefined functions are available:
 		(t (cdar gnus-tree-brackets))))
 	 (buffer-read-only nil)
 	 beg end)
-    (gnus-add-text-properties
+    (add-text-properties
      (setq beg (point))
      (setq end (progn (eval gnus-tree-line-format-spec) (point)))
      (list 'gnus-number gnus-tmp-number))
@@ -834,8 +834,7 @@ it in the environment specified by BINDINGS."
 	  region)
       (set-buffer gnus-tree-buffer)
       (when (setq region (gnus-tree-article-region article))
-	(when (or (not gnus-selected-tree-overlay)
-		  (gnus-extent-detached-p gnus-selected-tree-overlay))
+	(when (not gnus-selected-tree-overlay)
 	  ;; Create a new overlay.
 	  (overlay-put
 	   (setq gnus-selected-tree-overlay
@@ -864,7 +863,7 @@ it in the environment specified by BINDINGS."
     (with-current-buffer (gnus-get-tree-buffer)
       (let (region)
 	(when (setq region (gnus-tree-article-region article))
-	  (gnus-put-text-property (car region) (cdr region) 'face face)
+	  (put-text-property (car region) (cdr region) 'face face)
 	  (set-window-point
 	   (gnus-get-buffer-window (current-buffer) t) (cdr region)))))))
 

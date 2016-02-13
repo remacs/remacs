@@ -572,7 +572,6 @@ articles in the topic and its subtopics."
 		   (not (zerop unread))	;Non-empty
 		   tick			;Ticked articles
 		   (/= point-max (point-max)))) ;Inactive groups
-      (gnus-extent-start-open (point))
       (gnus-topic-insert-topic-line
        (car type) visiblep
        (not (eq (nth 2 type) 'hidden))
@@ -641,7 +640,7 @@ articles in the topic and its subtopics."
     (beginning-of-line)
     ;; Insert the text.
     (if shownp
-	(gnus-add-text-properties
+	(add-text-properties
 	 (point)
 	 (prog1 (1+ (point))
 	   (eval gnus-topic-line-format-spec))

@@ -1393,7 +1393,7 @@ if it is a string, only list groups matching REGEXP."
 		 (or (not regexp)
 		     (and (stringp regexp) (string-match regexp group))
 		     (and (functionp regexp) (funcall regexp group))))
-	    (gnus-add-text-properties
+	    (add-text-properties
 	     (point) (prog1 (1+ (point))
 		       (insert " " mark "     *: "
 			       (gnus-group-decoded-name group)
@@ -1569,7 +1569,7 @@ if it is a string, only list groups matching REGEXP."
          gnus-tmp-header)	; passed as parameter to user-funcs.
     (beginning-of-line)
     (setq beg (point))
-    (gnus-add-text-properties
+    (add-text-properties
      (point)
      (prog1 (1+ (point))
        ;; Insert the text.
@@ -1597,11 +1597,11 @@ if it is a string, only list groups matching REGEXP."
         (progn
           (unless (bound-and-true-p cursor-sensor-mode)
             (cursor-sensor-mode 1))
-          (gnus-put-text-property beg end 'cursor-sensor-functions
+          (put-text-property beg end 'cursor-sensor-functions
                                   '(gnus-tool-bar-update)))
-      (gnus-put-text-property beg end 'point-entered
+      (put-text-property beg end 'point-entered
                               #'gnus-tool-bar-update)
-      (gnus-put-text-property beg end 'point-left
+      (put-text-property beg end 'point-left
                               #'gnus-tool-bar-update))))
 
 (defun gnus-group-update-eval-form (group list)
@@ -1643,12 +1643,12 @@ and ends at END."
   (let ((face (cdar (gnus-group-update-eval-form
                       group
                       gnus-group-highlight))))
-    (unless (eq face (gnus-get-text-property-excluding-characters-with-faces beg 'face))
+    (unless (eq face (gnus-get-text-property-excluding-characters-with-faces
+		      beg 'face))
       (let ((inhibit-read-only t))
         (gnus-put-text-property-excluding-characters-with-faces
          beg end 'face
-         (if (boundp face) (symbol-value face) face)))
-      (gnus-extent-start-open beg))))
+         (if (boundp face) (symbol-value face) face))))))
 
 (defun gnus-group-get-icon (group)
   "Return an icon for GROUP according to `gnus-group-icon-list'."
@@ -3995,7 +3995,7 @@ entail asking the server for the groups."
     (erase-buffer)
     (while groups
       (setq group (pop groups))
-      (gnus-add-text-properties
+      (add-text-properties
        (point) (prog1 (1+ (point))
 		 (insert "       *: "
 			 (gnus-group-decoded-name group)
@@ -4128,7 +4128,7 @@ If DONT-SCAN is non-nil, scan non-activated groups as well."
 			  (symbol-name group) charset)
 			 (gnus-group-name-decode
 			  (symbol-value group) charset))))
-       (gnus-add-text-properties
+       (add-text-properties
 	b (1+ b) (list 'gnus-group group
 		       'gnus-unread t 'gnus-marked nil
 		       'gnus-level (1+ gnus-level-subscribed))))

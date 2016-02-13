@@ -2679,7 +2679,7 @@ The following commands are available:
   (let* ((gnus-tmp-name (format "%s" (car category)))
 	 (gnus-tmp-groups (length (gnus-agent-cat-groups category))))
     (beginning-of-line)
-    (gnus-add-text-properties
+    (add-text-properties
      (point)
      (prog1 (1+ (point))
        ;; Insert the text.

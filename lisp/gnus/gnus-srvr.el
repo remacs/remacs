@@ -308,7 +308,7 @@ The following commands are available:
 			     " (cloud)"
 			   "")))
     (beginning-of-line)
-    (gnus-add-text-properties
+    (add-text-properties
      (point)
      (prog1 (1+ (point))
        ;; Insert the text.
@@ -863,7 +863,7 @@ claim them."
 	      (prefix (let ((gnus-select-method orig-select-method))
 			(gnus-group-prefixed-name "" method))))
 	  (while (setq group (pop groups))
-	    (gnus-add-text-properties
+	    (add-text-properties
 	     (point)
 	     (prog1 (1+ (point))
 	       (insert

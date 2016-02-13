@@ -1491,7 +1491,7 @@ See `gnus-summary-mail-forward' for ARG."
 	(message-goto-subject)
 	(re-search-forward " *$")
 	(replace-match " (crosspost notification)" t t)
-	(gnus-deactivate-mark)
+	(deactivate-mark)
 	(when (gnus-y-or-n-p "Send this complaint? ")
 	  (message-send-and-exit))))))
 

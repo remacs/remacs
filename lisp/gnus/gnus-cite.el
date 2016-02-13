@@ -1118,7 +1118,7 @@ See also the documentation for `gnus-article-highlight-citation'."
 	      ((assq number gnus-cite-attribution-alist))
 	      (t
 	       (gnus-add-wash-type 'cite)
-	       (gnus-add-text-properties
+	       (add-text-properties
 		(point) (progn (forward-line 1) (point))
 		(nconc (list 'article-type 'cite)
 		       gnus-hidden-properties))))

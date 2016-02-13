@@ -210,7 +210,7 @@ Return a list of updated types."
   :type 'face)
 
 (defun gnus-mouse-face-function (form type)
-  `(gnus-put-text-property
+  `(put-text-property
     (point) (progn ,@form (point))
     'mouse-face
     ,(if (equal type 0)
@@ -243,19 +243,19 @@ Return a list of updated types."
   :type 'face)
 
 (defun gnus-face-face-function (form type)
-  `(gnus-add-text-properties
+  `(add-text-properties
     (point) (progn ,@form (point))
     (cons 'face
 	  (cons
 	   ;; Delay consing the value of the `face' property until
-	   ;; `gnus-add-text-properties' runs, since it will be modified
-	   ;; by `gnus-put-text-property-excluding-characters-with-faces'.
+	   ;; `add-text-properties' runs, since it will be modified
+	   ;; by `put-text-property-excluding-characters-with-faces'.
 	   (list ',(symbol-value (intern (format "gnus-face-%d" type))) 'default)
 	   ;; Redundant now, but still convenient.
 	   '(gnus-face t)))))
 
 (defun gnus-balloon-face-function (form type)
-  `(gnus-put-text-property
+  `(put-text-property
     (point) (progn ,@form (point)) 'help-echo
     ,(intern (format "gnus-balloon-face-%d" type))))
 
@@ -424,7 +424,7 @@ characters when given a pad value."
 	    `(let (gnus-position)
 	       ,@(gnus-complex-form-to-spec form spec-alist)
 	       (if gnus-position
-		   (gnus-put-text-property gnus-position (1+ gnus-position)
+		   (put-text-property gnus-position (1+ gnus-position)
 					   'gnus-position t)))
 	  `(progn
 	     ,@(gnus-complex-form-to-spec form spec-alist)))))))
@@ -630,7 +630,7 @@ characters when given a pad value."
 If PROPS, insert the result."
   (let ((form (gnus-parse-format format alist props)))
     (if props
-	(gnus-add-text-properties (point) (progn (eval form) (point)) props)
+	(add-text-properties (point) (progn (eval form) (point)) props)
       (eval form))))
 
 (defun gnus-set-format (type &optional insertable)

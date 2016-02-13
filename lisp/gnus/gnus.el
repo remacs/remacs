@@ -303,15 +303,9 @@ be set in `.emacs' instead."
   :group 'gnus-start
   :type 'boolean)
 
-(unless (featurep 'gnus-xmas)
-  (defalias 'gnus-extent-detached-p 'ignore)
-  (defalias 'gnus-extent-start-open 'ignore)
-  (defalias 'gnus-mail-strip-quoted-names 'mail-strip-quoted-names)
-  (defalias 'gnus-character-to-event 'identity)
-  (defalias 'gnus-assq-delete-all 'assq-delete-all)
-  (defalias 'gnus-add-text-properties 'add-text-properties)
-  (defalias 'gnus-put-text-property 'put-text-property)
-  (defvar gnus-mode-line-image-cache t)
+(defvar gnus-mode-line-image-cache t)
+
+(eval-and-compile
   (if (fboundp 'find-image)
       (defun gnus-mode-line-buffer-identification (line)
 	(let ((str (car-safe line))
@@ -336,12 +330,7 @@ be set in `.emacs' instead."
 		      str)
 		     (list str))
 	    line)))
-    (defalias 'gnus-mode-line-buffer-identification 'identity))
-  (defalias 'gnus-deactivate-mark 'deactivate-mark)
-  (defalias 'gnus-window-edges 'window-edges)
-  (defalias 'gnus-key-press-event-p 'numberp)
-  ;;(defalias 'gnus-decode-rfc1522 'ignore)
-  )
+    (defalias 'gnus-mode-line-buffer-identification 'identity)))
 
 ;; We define these group faces here to avoid the display
 ;; update forced when creating new faces.

@@ -2060,7 +2060,7 @@ always hide."
 		     (- gnus-article-normalized-header-length column)
 		     ? )))
 	   ((> column gnus-article-normalized-header-length)
-	    (gnus-put-text-property
+	    (put-text-property
 	     (progn
 	       (forward-char gnus-article-normalized-header-length)
 	       (point))
@@ -2296,13 +2296,13 @@ long lines if and only if arg is positive."
       (goto-char (point-max))
       (let ((start (point)))
 	(insert "X-Boundary: ")
-	(gnus-add-text-properties start (point) gnus-hidden-properties)
+	(add-text-properties start (point) gnus-hidden-properties)
        (insert (let (str (max (window-width)))
                  (while (>= max (length str))
 		    (setq str (concat str gnus-body-boundary-delimiter)))
                  (substring str 0 max))
 		"\n")
-	(gnus-put-text-property start (point) 'gnus-decoration 'header)))))
+	(put-text-property start (point) 'gnus-decoration 'header)))))
 
 (defun article-fill-long-lines ()
   "Fill lines that are wider than the window width."
@@ -6112,8 +6112,7 @@ If nil, don't show those extra buttons."
 
 (defun gnus-article-insert-newline ()
   "Insert a newline, but mark it as undeletable."
-  (gnus-put-text-property
-   (point) (progn (insert "\n") (point)) 'gnus-undeletable t))
+  (put-text-property (point) (progn (insert "\n") (point)) 'gnus-undeletable t))
 
 (defun gnus-mime-display-alternative (handles &optional preferred ibegend id)
   (let* ((preferred (or preferred (mm-preferred-alternative handles)))
@@ -6139,7 +6138,7 @@ If nil, don't show those extra buttons."
 		  (not preferred)
 		  (not (gnus-unbuttonized-mime-type-p
 			"multipart/alternative")))
-	  (gnus-add-text-properties
+	  (add-text-properties
 	   (setq from (point))
 	   (progn
 	     (insert (format "%d.  " id))
@@ -6161,7 +6160,7 @@ If nil, don't show those extra buttons."
 				 :action 'gnus-widget-press-button)
 	  ;; Do the handles
 	  (while (setq handle (pop handles))
-	    (gnus-add-text-properties
+	    (add-text-properties
 	     (setq from (point))
 	     (progn
 	       (insert (format "(%c) %-18s"
@@ -6529,14 +6528,14 @@ If given a numerical ARG, move forward ARG pages."
   (interactive)
   (when (gnus-article-next-page)
     (goto-char (point-min))
-    (gnus-article-read-summary-keys nil (gnus-character-to-event ?n))))
+    (gnus-article-read-summary-keys nil ?n)))
 
 
 (defun gnus-article-goto-prev-page ()
   "Show the previous page of the article."
   (interactive)
   (if (save-restriction (widen) (bobp)) ;; Real beginning-of-buffer?
-      (gnus-article-read-summary-keys nil (gnus-character-to-event ?p))
+      (gnus-article-read-summary-keys nil ?p)
     (gnus-article-prev-page nil)))
 
 ;; This is cleaner but currently breaks `gnus-pick-mode':
@@ -6805,7 +6804,7 @@ not have a face in `gnus-article-boring-faces'."
 
 (defun gnus-article-read-summary-send-keys ()
   (interactive)
-  (let ((unread-command-events (list (gnus-character-to-event ?S))))
+  (let ((unread-command-events (list ?S)))
     (gnus-article-read-summary-keys)))
 
 (defun gnus-article-describe-key (key)
@@ -7959,14 +7958,14 @@ do the highlighting.  See the documentation for those functions."
 	  (when (and header-face
 		     (not (memq (point) hpoints)))
 	    (push (point) hpoints)
-	    (gnus-put-text-property from (point) 'face header-face))
+	    (put-text-property from (point) 'face header-face))
 	  (when (and field-face
 		     (not (memq (setq from (point)) fpoints)))
 	    (push from fpoints)
 	    (if (re-search-forward "^[^ \t]" nil t)
 		(forward-char -2)
 	      (goto-char (point-max)))
-	    (gnus-put-text-property from (point) 'face field-face)))))))
+	    (put-text-property from (point) 'face field-face)))))))
 
 (defun gnus-article-highlight-signature ()
   "Highlight the signature in an article.
@@ -8021,7 +8020,7 @@ specified by `gnus-button-alist'."
 			   (gnus-article-extend-url-button from start end))
 		(gnus-article-add-button start end
 					 'gnus-button-push (list from entry))
-		(gnus-put-text-property
+		(put-text-property
 		 start end
 		 'gnus-string (buffer-substring-no-properties
 			       start end))))))))))
@@ -8123,7 +8122,7 @@ url is put as the `gnus-button-url' overlay property on the button."
   (when gnus-article-button-face
     (overlay-put (make-overlay from to nil t)
 		 'face gnus-article-button-face))
-  (gnus-add-text-properties
+  (add-text-properties
    from to
    (nconc (and gnus-article-mouse-face
 	       (list 'mouse-face gnus-article-mouse-face))

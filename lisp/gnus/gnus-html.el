@@ -180,7 +180,7 @@ fit these criteria."
 	      alt-text (when (string-match "\\(alt\\|title\\)=\"\\([^\"]+\\)"
 					   parameters)
 			 (xml-substitute-special (match-string 2 parameters))))
-	(gnus-add-text-properties
+	(add-text-properties
 	 start end
 	 (list 'image-url url
 	       'image-displayer `(lambda (url start end)
@@ -293,7 +293,7 @@ Use ALT-TEXT for the image string."
 	  (let ((overlay (make-overlay start end)))
 	    (overlay-put overlay 'evaporate t)
 	    (overlay-put overlay 'gnus-button-url url)
-	    (gnus-put-text-property start end 'gnus-string url)
+	    (put-text-property start end 'gnus-string url)
 	    (when gnus-article-mouse-face
 	      (overlay-put overlay 'mouse-face gnus-article-mouse-face)))))
        ;; The upper-case IMG_ALT is apparently just an artifact that
@@ -455,10 +455,9 @@ Return a string with image data."
 		     :help-echo alt-text
 		     :keymap gnus-html-displayed-image-map
 		     url)
-                    (gnus-put-text-property start (point)
-					    'gnus-alt-text alt-text)
+                    (put-text-property start (point) 'gnus-alt-text alt-text)
                     (when url
-		      (gnus-add-text-properties
+		      (add-text-properties
 		       start (point)
 		       `(image-url
 			 ,url
