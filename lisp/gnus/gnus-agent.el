@@ -547,12 +547,9 @@ manipulated as follows:
        ["Remove" gnus-agent-remove-server t]))))
 
 (defun gnus-agent-make-mode-line-string (string mouse-button mouse-func)
-  (if (and (fboundp 'propertize)
-	   (fboundp 'make-mode-line-mouse-map))
-      (propertize string 'local-map
-		  (make-mode-line-mouse-map mouse-button mouse-func)
-		  'mouse-face 'mode-line-highlight)
-    string))
+  (propertize string 'local-map
+	      (make-mode-line-mouse-map mouse-button mouse-func)
+	      'mouse-face 'mode-line-highlight))
 
 (defun gnus-agent-toggle-plugged (set-to)
   "Toggle whether Gnus is unplugged or not."
