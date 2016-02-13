@@ -1748,12 +1748,11 @@ Sizes are in pixels."
                    image)))
       image)))
 
-(eval-when-compile (require 'gmm-utils))
 (defun gnus-recursive-directory-files (dir)
   "Return all regular files below DIR.
 The first found will be returned if a file has hard or symbolic links."
   (let (files attr attrs)
-    (gmm-labels
+    (cl-labels
 	((fn (directory)
 	     (dolist (file (directory-files directory t))
 	       (setq attr (file-attributes (file-truename file)))

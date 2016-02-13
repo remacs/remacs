@@ -196,10 +196,9 @@ This is a copy of the `lazy' widget in Emacs 22.1 provided for compatibility."
 (defcustom gmm-tool-bar-style
   (if (and (boundp 'tool-bar-mode)
 	   tool-bar-mode
-	   (and (fboundp 'display-visual-class)
-		(not (memq (display-visual-class)
-			   (list 'static-gray 'gray-scale
-				 'static-color 'pseudo-color)))))
+	   (memq (display-visual-class)
+		 (list 'static-gray 'gray-scale
+		       'static-color 'pseudo-color)))
       'gnome
     'retro)
   "Preferred tool bar style."
@@ -389,20 +388,6 @@ If mode is nil, use `major-mode' of the current buffer."
        (intern (let ((mode (symbol-name major-mode)))
 		 (string-match "^\\(.+\\)-mode$" mode)
 		 (match-string 1 mode))))))
-
-;; `labels' is obsolete since Emacs 24.3.
-(defmacro gmm-labels (bindings &rest body)
-  "Make temporary function bindings.
-The bindings can be recursive and the scoping is lexical, but capturing
-them in closures will only work if `lexical-binding' is in use.  But in
-Emacs 24.2 and older, the lexical scoping is handled via `lexical-let'
-rather than relying on `lexical-binding'.
-
-\(fn ((FUNC ARGLIST BODY...) ...) FORM...)"
-  `(,(progn (require 'cl) (if (fboundp 'cl-labels) 'cl-labels 'labels))
-    ,bindings ,@body))
-(put 'gmm-labels 'lisp-indent-function 1)
-(put 'gmm-labels 'edebug-form-spec '((&rest (sexp sexp &rest form)) &rest form))
 
 (defun gmm-format-time-string (format-string &optional time tz)
   "Use FORMAT-STRING to format the time TIME, or now if omitted.

@@ -1727,7 +1727,7 @@ score in `gnus-newsgroup-scored' by SCORE."
   nil)
 
 (defun gnus-score-decode-text-parts ()
-  (gmm-labels
+  (cl-labels
       ((mm-text-parts
 	(handle)
 	(cond ((stringp (car handle))
@@ -1751,7 +1751,7 @@ score in `gnus-newsgroup-scored' by SCORE."
 	    (mm-display-inline handle)
 	    (goto-char (point-max))))))
 
-    (let (;(mm-text-html-renderer 'w3m-standalone)
+    (let (		      ;(mm-text-html-renderer 'w3m-standalone)
 	  (handles (mm-dissect-buffer t)))
       (save-excursion
 	(article-goto-body)
