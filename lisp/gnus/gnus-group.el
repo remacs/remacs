@@ -4488,7 +4488,7 @@ and the second element is the address."
 	(if force
 	    (if (null articles)
 		(setcar (nthcdr 3 info)
-			(gnus-delete-alist type (car marked)))
+			(assq-delete-all type (car marked)))
 	      (setcdr m (gnus-compress-sequence articles t)))
 	  (setcdr m (gnus-compress-sequence
 		     (sort (nconc (gnus-uncompress-range (cdr m))

@@ -1115,11 +1115,8 @@ ARG is passed to the first function."
     (apply 'run-hook-with-args hook args)))
 
 (defun gnus-run-mode-hooks (&rest funcs)
-  "Run `run-mode-hooks' if it is available, otherwise `run-hooks'.
-This function saves the current buffer."
-  (if (fboundp 'run-mode-hooks)
-      (save-current-buffer (apply 'run-mode-hooks funcs))
-    (save-current-buffer (apply 'run-hooks funcs))))
+  "Run `run-mode-hooks', saving the current buffer."
+  (save-current-buffer (apply 'run-mode-hooks funcs)))
 
 ;;; Various
 
@@ -1166,16 +1163,6 @@ If HASH-TABLE-P is non-nil, regards SEQUENCE as a hash table."
 	  (push (car sequence) out))
 	(setq sequence (cdr sequence))))
     (nreverse out)))
-
-(if (fboundp 'assq-delete-all)
-    (defalias 'gnus-delete-alist 'assq-delete-all)
-  (defun gnus-delete-alist (key alist)
-    "Delete from ALIST all elements whose car is KEY.
-Return the modified alist."
-    (let (entry)
-      (while (setq entry (assq key alist))
-	(setq alist (delq entry alist)))
-      alist)))
 
 (defun gnus-grep-in-list (word list)
   "Find if a WORD matches any regular expression in the given LIST."

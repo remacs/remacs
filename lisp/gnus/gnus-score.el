@@ -1431,7 +1431,7 @@ If FORMAT, also format the current score file."
 		(and (file-exists-p file)
 		     (not (file-writable-p file))))
 	    ()
-	  (setq score (setcdr entry (gnus-delete-alist 'touched score)))
+	  (setq score (setcdr entry (assq-delete-all 'touched score)))
 	  (erase-buffer)
 	  (let (emacs-lisp-mode-hook)
 	    (if (and (not gnus-adaptive-pretty-print)
