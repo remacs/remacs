@@ -73,11 +73,9 @@
                   (header gnus-tmp-from))
 
 (defmacro gnus-lrm-string-p (string)
-  (if (fboundp 'bidi-string-mark-left-to-right)
-      ;; LRM, RLM, PDF characters as integers to avoid breaking Emacs
-      ;; 23.
-      `(memq (aref ,string (1- (length ,string))) '(8206 8207 8236))
-    nil))
+  ;; LRM, RLM, PDF characters as integers to avoid breaking Emacs
+  ;; 23.
+  `(memq (aref ,string (1- (length ,string))) '(8206 8207 8236)))
 
 (defvar gnus-lrm-string (if (ignore-errors (string 8206))
 			    (propertize (string 8206) 'invisible t)
@@ -258,10 +256,7 @@ Return a list of updated types."
 
 (defun gnus-balloon-face-function (form type)
   `(gnus-put-text-property
-    (point) (progn ,@form (point))
-    ,(if (fboundp 'balloon-help-mode)
-	 ''balloon-help
-       ''help-echo)
+    (point) (progn ,@form (point)) 'help-echo
     ,(intern (format "gnus-balloon-face-%d" type))))
 
 (defun gnus-spec-tab (column)
