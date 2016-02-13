@@ -321,6 +321,7 @@ default.
 unsaved customizations and prompts user to customize (if found).  It
 is intended for adding to 'kill-emacs-query-functions'.
 
++++
 ** The old `C-x w' bindings in hi-lock-mode are officially deprecated
 in favor of the global `M-s h' bindings introduced in Emacs-23.1.
 They'll disappear soon.
