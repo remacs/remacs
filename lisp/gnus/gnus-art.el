@@ -2671,13 +2671,11 @@ If READ-CHARSET, ask for a coding system."
 	   (point-min) (point-max)
 	   (mm-charset-to-coding-system charset nil t)))))))
 
-(eval-when-compile
-  (require 'rfc1843))
+(autoload 'rfc1843-decode-region "rfc1843")
 
 (defun article-decode-HZ ()
   "Translate a HZ-encoded article."
   (interactive)
-  (require 'rfc1843)
   (save-excursion
     (let ((inhibit-read-only t))
       (rfc1843-decode-region (point-min) (point-max)))))
@@ -6303,7 +6301,7 @@ Provided for backwards compatibility."
 		 (not (with-current-buffer gnus-summary-buffer
 			gnus-have-all-headers)))
 	     (not gnus-inhibit-hiding))
-    (gnus-article-hide-headers)))
+    (article-hide-headers)))
 
 (declare-function shr-put-image "shr" (data alt &optional flags))
 
@@ -6971,10 +6969,11 @@ This means that signatures, cited text and (some) headers will be
 hidden.
 If given a prefix, show the hidden text instead."
   (interactive (append (gnus-article-hidden-arg) (list 'force)))
-  (gnus-article-hide-headers arg)
-  (gnus-article-hide-list-identifiers arg)
-  (gnus-article-hide-citation-maybe arg force)
-  (gnus-article-hide-signature arg))
+  (gnus-with-article-buffer
+    (article-hide-headers arg)
+    (article-hide-list-identifiers)
+    (gnus-article-hide-citation-maybe arg force)
+    (article-hide-signature arg)))
 
 (defun gnus-check-group-server ()
   ;; Make sure the connection to the server is alive.
@@ -7278,7 +7277,8 @@ groups."
   (when (and (not force)
 	     (gnus-group-read-only-p))
     (error "The current newsgroup does not support article editing"))
-  (gnus-article-date-original)
+  (gnus-with-article-buffer
+    (article-date-original))
   (gnus-article-edit-article
    'ignore
    `(lambda (no-highlight)
