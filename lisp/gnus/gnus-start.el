@@ -3198,26 +3198,7 @@ If this variable is nil, don't do anything."
 
 (defun gnus-check-reasonable-setup ()
   ;; Check whether nnml and nnfolder share a directory.
-  (let ((display-warn
-	 (if (fboundp 'display-warning)
-	     'display-warning
-	   (lambda (type message)
-	     (if noninteractive
-		 (message "Warning (%s): %s" type message)
-	       (let (window)
-		 (with-current-buffer (get-buffer-create "*Warnings*")
-		   (goto-char (point-max))
-		   (unless (bolp)
-		     (insert "\n"))
-		   (insert (format "Warning (%s): %s\n" type message))
-		   (setq window (display-buffer (current-buffer)))
-		   (set-window-start
-		    window
-		    (prog2
-			(forward-line (- 1 (window-height window)))
-			(point)
-		      (goto-char (point-max))))))))))
-	method active actives match)
+  (let (method active actives match)
     (dolist (server gnus-server-alist)
       (setq method (gnus-server-to-method server)
 	    active (intern (format "%s-active-file" (car method))))
@@ -3225,11 +3206,11 @@ If this variable is nil, don't do anything."
 		 (gnus-server-opened method)
 		 (boundp active))
 	(when (setq match (assoc (symbol-value active) actives))
-	  (funcall display-warn 'gnus-server
-		   (format "%s and %s share the same active file %s"
-			   (car method)
-			   (cadr match)
-			   (car match))))
+	  (display-warning 'gnus-server
+			   (format "%s and %s share the same active file %s"
+				   (car method)
+				   (cadr match)
+				   (car match))))
 	(push (list (symbol-value active) method) actives)))))
 
 (provide 'gnus-start)

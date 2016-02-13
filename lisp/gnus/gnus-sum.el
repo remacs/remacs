@@ -1061,9 +1061,7 @@ automatically when it is selected."
   :group 'gnus-summary
   :type 'hook)
 
-(defcustom gnus-summary-display-arrow
-  (and (fboundp 'display-graphic-p)
-       (display-graphic-p))
+(defcustom gnus-summary-display-arrow (display-graphic-p)
   "*If non-nil, display an arrow highlighting the current article."
   :version "22.1"
   :group 'gnus-summary
@@ -2442,10 +2440,7 @@ gnus-summary-show-article-from-menu-as-charset-%s" cs))))
 				       '((1 . ,cs))))
 				  (gnus-summary-show-article 1))))
 		       `[,(symbol-name cs) ,command t]))
-		   (sort (if (fboundp 'coding-system-list)
-			     (coding-system-list)
-			   (mapcar 'car mm-mime-mule-charset-alist))
-			 'string<)))))
+		   (sort (coding-system-list) 'string<)))))
 	     ("Washing"
 	      ("Remove Blanks"
 	       ["Leading" gnus-article-strip-leading-blank-lines t]
@@ -2946,9 +2941,7 @@ When FORCE, rebuild the tool bar."
 	    (gmm-image-load-path-for-library "gnus"
 					     "mail/save.xpm"
 					     nil t))
-           (image-load-path (cons (car load-path)
-                                  (when (boundp 'image-load-path)
-                                    image-load-path)))
+           (image-load-path (cons (car load-path) image-load-path))
 	   (map (gmm-tool-bar-from-list gnus-summary-tool-bar
 					gnus-summary-tool-bar-zap-list
 					'gnus-summary-mode-map)))
@@ -6822,9 +6815,7 @@ Also do horizontal recentering."
   (when (and gnus-auto-center-summary
 	     (not (eq gnus-auto-center-summary 'vertical)))
     (gnus-horizontal-recenter))
-  (if (fboundp 'recenter-top-bottom)
-      (recenter-top-bottom n)
-    (recenter n)))
+  (recenter-top-bottom n))
 
 (put 'gnus-recenter 'isearch-scroll t)
 
@@ -8321,15 +8312,14 @@ in `nnmail-extra-headers'."
       (gnus-summary-position-point))))
 
 (defun gnus-summary-limit-strange-charsets-predicate (header)
-  (when (fboundp 'char-charset)
-    (let ((string (concat (mail-header-subject header)
-			  (mail-header-from header)))
-	  charset found)
-      (dotimes (i (1- (length string)))
-	(setq charset (format "%s" (char-charset (aref string (1+ i)))))
-	(when (string-match "unicode\\|big\\|japanese" charset)
-	  (setq found t)))
-      found)))
+  (let ((string (concat (mail-header-subject header)
+			(mail-header-from header)))
+	charset found)
+    (dotimes (i (1- (length string)))
+      (setq charset (format "%s" (char-charset (aref string (1+ i)))))
+      (when (string-match "unicode\\|big\\|japanese" charset)
+	(setq found t)))
+    found))
 
 (defun gnus-summary-limit-to-predicate (predicate)
   "Limit to articles where PREDICATE returns non-nil.
@@ -11667,15 +11657,7 @@ Returns nil if no thread was there to be shown."
          (end (or (gnus-summary--inv end) (gnus-summary--inv (1- end))))
 	 ;; Leave point at bol
 	 (beg (progn (beginning-of-line) (if (bobp) (point) (1- (point)))))
-	 (eoi (when end
-		(if (fboundp 'next-single-char-property-change)
-		    (next-single-char-property-change end 'invisible)
-		  (while (progn
-			   (end-of-line 2)
-			   (and (not (eobp))
-				(eq (get-char-property (point) 'invisible)
-				    'gnus-sum))))
-		  (point)))))
+	 (eoi (and end (next-single-char-property-change end 'invisible))))
     (when eoi
       (remove-overlays beg eoi 'invisible 'gnus-sum)
       (goto-char orig)

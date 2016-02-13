@@ -880,8 +880,7 @@ claim them."
 			   (t ?K)))
 			(max 0 (- (1+ (cddr group)) (cadr group)))
 			;; Don't decode if name is ASCII
-			(if (and (fboundp 'detect-coding-string)
-				 (eq (detect-coding-string name t) 'undecided))
+			(if (eq (detect-coding-string name t) 'undecided)
 			    name
 			  (decode-coding-string
 			   name
