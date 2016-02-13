@@ -40,6 +40,7 @@
 (require 'browse-url)
 (require 'mm-util)
 (require 'help-fns)
+(require 'url-queue)
 
 (defcustom gnus-html-image-cache-ttl (days-to-time 7)
   "Time used to determine if we should use images from the cache."
@@ -373,14 +374,9 @@ Use ALT-TEXT for the image string."
   "Retrieve IMAGE, and place it into BUFFER on arrival."
   (gnus-message 8 "gnus-html-schedule-image-fetching: buffer %s, image %s"
                 buffer image)
-  (if (fboundp 'url-queue-retrieve)
-      (url-queue-retrieve (car image)
-			  'gnus-html-image-fetched
-			  (list buffer image) t t)
-    (ignore-errors
-      (url-retrieve (car image)
-		    'gnus-html-image-fetched
-		    (list buffer image)))))
+  (url-queue-retrieve (car image)
+		      'gnus-html-image-fetched
+		      (list buffer image) t t))
 
 (defun gnus-html-image-fetched (status buffer image)
   "Callback function called when image has been fetched."
