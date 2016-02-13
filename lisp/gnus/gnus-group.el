@@ -4117,22 +4117,23 @@ If DONT-SCAN is non-nil, scan non-activated groups as well."
 		 (gnus-read-all-descriptions-files)))
     (error "Couldn't request descriptions file"))
   (let ((buffer-read-only nil)
-	b)
-    (erase-buffer)
+	b groups)
     (mapatoms
      (lambda (group)
-       (setq b (point))
-       (let ((charset (gnus-group-name-charset nil (symbol-name group))))
-	 (insert (format "      *: %-20s %s\n"
-			 (gnus-group-name-decode
-			  (symbol-name group) charset)
-			 (gnus-group-name-decode
-			  (symbol-value group) charset))))
-       (add-text-properties
-	b (1+ b) (list 'gnus-group group
-		       'gnus-unread t 'gnus-marked nil
-		       'gnus-level (1+ gnus-level-subscribed))))
+       (push (symbol-name group) groups))
      gnus-description-hashtb)
+    (setq groups (sort groups 'string<))
+    (erase-buffer)
+    (dolist (group groups)
+      (setq b (point))
+      (let ((charset (gnus-group-name-charset nil group)))
+	(insert (format "      *: %-20s %s\n"
+			(gnus-group-name-decode group charset)
+			(gnus-group-name-decode group charset))))
+      (add-text-properties
+       b (1+ b) (list 'gnus-group (intern group gnus-description-hashtb)
+		      'gnus-unread t 'gnus-marked nil
+		      'gnus-level (1+ gnus-level-subscribed))))
     (goto-char (point-min))
     (gnus-group-position-point)))
 
