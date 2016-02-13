@@ -4603,8 +4603,7 @@ If ALL-HEADERS is non-nil, no headers are hidden."
 	(gnus-article-setup-buffer)
 	(set-buffer gnus-article-buffer)
 	;; Deactivate active regions.
-	(when (and (boundp 'transient-mark-mode)
-		   transient-mark-mode)
+	(when transient-mark-mode
 	  (setq mark-active nil))
 	(if (not (setq result (let ((inhibit-read-only t))
 				(gnus-request-article-this-buffer
@@ -5261,10 +5260,7 @@ are decompressed."
 	  (progn
 	    (mm-enable-multibyte)
 	    (insert (decode-coding-string contents coding-system))
-	    (setq buffer-file-coding-system
-		  (if (boundp 'last-coding-system-used)
-		      (symbol-value 'last-coding-system-used)
-		    coding-system)))
+	    (setq buffer-file-coding-system last-coding-system-used))
 	(mm-disable-multibyte)
 	(insert contents)
 	(setq buffer-file-coding-system mm-binary-coding-system))
@@ -6457,14 +6453,13 @@ the coding cookie."
       (when coding
 	;; If the coding system is not suitable to encode the text,
 	;; ask a user for a proper one.
-	(when (fboundp 'select-safe-coding-system)
-	  (setq coding (coding-system-base
-			(save-window-excursion
-			  (select-safe-coding-system (point-min) (point-max)
-						     coding))))
-	  (setq coding-system-for-write
-		(or (cdr (assq coding '((mule-utf-8 . utf-8))))
-		    coding)))
+	(setq coding (coding-system-base
+		      (save-window-excursion
+			(select-safe-coding-system (point-min) (point-max)
+						   coding))))
+	(setq coding-system-for-write
+	      (or (cdr (assq coding '((mule-utf-8 . utf-8))))
+		  coding))
 	(goto-char (point-min))
 	;; Add the coding cookie.
 	(insert (format "X-Gnus-Coding-System: -*- coding: %s; -*-\n\n"
@@ -6930,8 +6925,7 @@ the entire article will be yanked."
 	  (gnus-summary-reply (list (list article)) wide))
       (setq contents (buffer-substring (point) (mark t)))
       ;; Deactivate active regions.
-      (when (and (boundp 'transient-mark-mode)
-		 transient-mark-mode)
+      (when transient-mark-mode
 	(setq mark-active nil))
       (with-current-buffer gnus-summary-buffer
 	(gnus-summary-reply
@@ -6956,8 +6950,7 @@ the entire article will be yanked."
 	    (gnus-summary-followup (list (list article))))
 	(setq contents (buffer-substring (point) (mark t)))
 	;; Deactivate active regions.
-	(when (and (boundp 'transient-mark-mode)
-		   transient-mark-mode)
+	(when transient-mark-mode
 	  (setq mark-active nil))
 	(with-current-buffer gnus-summary-buffer
 	  (gnus-summary-followup
@@ -7661,14 +7654,12 @@ Calls `describe-variable' or `describe-function'."
 
 (defun gnus-button-handle-apropos-variable (url)
   "Call `apropos' when pushing the corresponding URL button."
-  (funcall
-   (if (fboundp 'apropos-variable) 'apropos-variable 'apropos)
+  (apropos-variable
    (replace-regexp-in-string gnus-button-handle-describe-prefix "" url)))
 
 (defun gnus-button-handle-apropos-documentation (url)
   "Call `apropos' when pushing the corresponding URL button."
-  (funcall
-   (if (fboundp 'apropos-documentation) 'apropos-documentation 'apropos)
+  (apropos-documentation
    (replace-regexp-in-string gnus-button-handle-describe-prefix "" url)))
 
 (defun gnus-button-handle-library (url)
