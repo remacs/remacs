@@ -554,7 +554,7 @@ Dynamically bind `rfc2047-encoding-type' to change that."
 	     (if (or debug-on-quit debug-on-error)
 		 (signal (car err) (cdr err))
 	       (error "Invalid data for rfc2047 encoding: %s"
-		      (replace-regexp-in-string orig-text "[ \t\n]+" " "))))))))
+		      (replace-regexp-in-string "[ \t\n]+" " " orig-text))))))))
     (unless dont-fold
       (rfc2047-fold-region b (point)))
     (goto-char (point-max))))
@@ -699,8 +699,8 @@ Point moves to the end of the region."
 	     (setq eword (rfc2047-encode-1
 			  (- b (point-at-bol))
 			  (replace-regexp-in-string
-			   (buffer-substring-no-properties b e)
-			   "\n\\([ \t]?\\)" "\\1")
+			   "\n\\([ \t]?\\)" "\\1"
+			   (buffer-substring-no-properties b e))
 			  cs
 			  (or (cdr (assq encoding
 					 rfc2047-encode-function-alist))

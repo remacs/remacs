@@ -63,13 +63,13 @@ must never cause a Lisp error."
 	  (let (mod)
 	    (when (and (string-match "\\\\\"" string)
 		       (not (string-match "\\`\"\\|[^\\]\"" string)))
-	      (setq string (replace-regexp-in-string string "\\\\\"" "\"")
+	      (setq string (replace-regexp-in-string "\\\\\"" "\"" string)
 		    mod t))
 	    (when (and (string-match "\\\\(" string)
 		       (string-match "\\\\)" string)
 		       (not (string-match "\\`(\\|[^\\][()]" string)))
-	      (setq string (replace-regexp-in-string string
-						     "\\\\\\([()]\\)" "\\1")
+	      (setq string (replace-regexp-in-string
+			    "\\\\\\([()]\\)" "\\1" string)
 		    mod t))
 	    (or (and mod
 		     (ignore-errors

@@ -424,7 +424,7 @@ Content-Disposition: attachment; filename=smime.p7m
 	(mm-set-handle-multipart-parameter
 	 mm-security-handle 'gnus-info "Corrupted")
 	(throw 'error handle))
-      (setq part (replace-regexp-in-string part "\n" "\r\n")
+      (setq part (replace-regexp-in-string "\n" "\r\n" part)
 	    context (epg-make-context 'CMS))
       (condition-case error
 	  (setq plain (epg-verify-string context (mm-get-part signature) part))

@@ -926,7 +926,7 @@ If set, it overrides the setting of `mml2015-sign-with-sender'."
 	(mm-set-handle-multipart-parameter
 	 mm-security-handle 'gnus-info "Corrupted")
 	(throw 'error handle))
-      (setq part (replace-regexp-in-string part "\n" "\r\n")
+      (setq part (replace-regexp-in-string "\n" "\r\n" part)
 	    signature (mm-get-part signature)
 	    context (epg-make-context))
       (condition-case error
