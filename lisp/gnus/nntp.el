@@ -1302,7 +1302,7 @@ If SEND-IF-FORCE, only send authinfo to the server if the
         ;; Use TCP-keepalive so that connections that pass through a NAT router
         ;; don't hang when left idle.
         (set-network-process-option process :keepalive t))
-      (gnus-set-process-query-on-exit-flag process nil)
+      (set-process-query-on-exit-flag process nil)
       (if (and (nntp-wait-for process "^2.*\n" buffer nil t)
 	       (memq (process-status process) '(open run)))
 	  (prog1

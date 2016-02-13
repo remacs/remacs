@@ -97,14 +97,14 @@ See `nnmaildir-flag-mark-mapping'."
 
 (defun nnmaildir--ensure-suffix (filename)
   "Ensure that FILENAME contains the suffix \":2,\"."
-  (if (gnus-string-match-p ":2," filename)
+  (if (string-match-p ":2," filename)
       filename
     (concat filename ":2,")))
 
 (defun nnmaildir--add-flag (flag suffix)
   "Return a copy of SUFFIX where FLAG is set.
 SUFFIX should start with \":2,\"."
-  (unless (gnus-string-match-p "^:2," suffix)
+  (unless (string-match-p "^:2," suffix)
     (error "Invalid suffix `%s'" suffix))
   (let* ((flags (substring suffix 3))
 	 (flags-as-list (append flags nil))
@@ -117,7 +117,7 @@ SUFFIX should start with \":2,\"."
 (defun nnmaildir--remove-flag (flag suffix)
   "Return a copy of SUFFIX where FLAG is cleared.
 SUFFIX should start with \":2,\"."
-  (unless (gnus-string-match-p "^:2," suffix)
+  (unless (string-match-p "^:2," suffix)
     (error "Invalid suffix `%s'" suffix))
   (let* ((flags (substring suffix 3))
 	 (flags-as-list (append flags nil))
@@ -848,11 +848,11 @@ by nnmaildir-request-article.")
 	      (when (or
 		     ;; first look for marks in suffix, if it's valid...
 		     (when (and (stringp suffix)
-				(gnus-string-prefix-p ":2," suffix))
+				(string-prefix-p ":2," suffix))
 		       (or
-			(not (gnus-string-match-p
+			(not (string-match-p
 			      (string (nnmaildir--mark-to-flag 'read)) suffix))
-			(gnus-string-match-p
+			(string-match-p
 			 (string (nnmaildir--mark-to-flag 'tick)) suffix)))
 		     ;; then look in marks directories
 		     (not (file-exists-p (concat cdir prefix)))

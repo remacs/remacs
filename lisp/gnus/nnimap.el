@@ -437,7 +437,7 @@ textual parts.")
 	       :success " OK "
 	       :starttls-function
 	       (lambda (capabilities)
-		 (when (gnus-string-match-p "STARTTLS" capabilities)
+		 (when (string-match-p "STARTTLS" capabilities)
 		   "1 STARTTLS\r\n"))))
 	     (stream (car stream-list))
 	     (props (cdr stream-list))
@@ -459,15 +459,15 @@ textual parts.")
 	      (nnheader-report 'nnimap "Unable to contact %s:%s via %s"
 			       nnimap-address (car ports) nnimap-stream)
 	      'no-connect)
-	  (gnus-set-process-query-on-exit-flag stream nil)
-	  (if (not (gnus-string-match-p "[*.] \\(OK\\|PREAUTH\\)" greeting))
+	  (set-process-query-on-exit-flag stream nil)
+	  (if (not (string-match-p "[*.] \\(OK\\|PREAUTH\\)" greeting))
 	      (nnheader-report 'nnimap "%s" greeting)
 	    ;; Store the greeting (for debugging purposes).
 	    (setf (nnimap-greeting nnimap-object) greeting)
 	    (setf (nnimap-capabilities nnimap-object)
 		  (mapcar #'upcase
 			  (split-string capabilities)))
-	    (unless (gnus-string-match-p "[*.] PREAUTH" greeting)
+	    (unless (string-match-p "[*.] PREAUTH" greeting)
 	      (if (not (setq credentials
 			     (if (eq nnimap-authenticator 'anonymous)
 				 (list "anonymous"

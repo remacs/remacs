@@ -28,7 +28,6 @@
 (eval-when-compile (require 'cl))
 
 (autoload 'gnus-map-function "gnus-util")
-(autoload 'gnus-read-shell-command "gnus-util")
 
 (autoload 'mm-inline-partial "mm-partial")
 (autoload 'mm-inline-external-body "mm-extern")
@@ -1451,7 +1450,7 @@ text/\\(\\sw+\\)\\(?:;\\s-*charset=\\([^\"'>]+\\)\\)?[^>]*>" nil t)
 Use CMD as the process."
   (let ((name (mail-content-type-get (mm-handle-type handle) 'name))
 	(command (or cmd
-		     (gnus-read-shell-command
+		     (read-shell-command
 		      "Shell command on MIME part: " mm-last-shell-command))))
     (mm-with-unibyte-buffer
       (mm-insert-part handle)

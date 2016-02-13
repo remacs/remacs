@@ -182,8 +182,9 @@ This is typically a function to add in
                                address
                                (cond ((functionp gnus-ignored-from-addresses)
                                       (funcall gnus-ignored-from-addresses address))
-                                     (t (gnus-string-match-p (gnus-ignored-from-addresses)
-                                                             address))))
+                                     (t (string-match-p
+					 (gnus-ignored-from-addresses)
+					 address))))
                     (let* ((photo-file (gnus-notifications-get-photo-file address))
                            (notification-id (gnus-notifications-notify
                                              (or (car address-components) address)

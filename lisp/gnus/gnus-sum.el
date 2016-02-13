@@ -12061,7 +12061,7 @@ no matter what the properties `:decode' and `:headers' are."
 	 command result)
     (unless (numberp (car articles))
       (error "No article to pipe"))
-    (setq command (gnus-read-shell-command
+    (setq command (read-shell-command
 		   (concat "Shell command on "
 			   (if (cdr articles)
 			       (format "these %d articles" (length articles))

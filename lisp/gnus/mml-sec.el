@@ -704,9 +704,9 @@ be present in the keyring."
 		       ;; In contrast, signing requires secret key.
 		       (mml-secure-secret-key-exists-p context subkey))
 		   (or (not fingerprint)
-		       (gnus-string-match-p (concat fingerprint "$") fpr)
-		       (gnus-string-match-p (concat fingerprint "$")
-					    (epg-sub-key-fingerprint subkey))))
+		       (string-match-p (concat fingerprint "$") fpr)
+		       (string-match-p (concat fingerprint "$")
+				       (epg-sub-key-fingerprint subkey))))
 	      (throw 'break t)))))))
 
 (defun mml-secure-find-usable-keys (context name usage &optional justone)

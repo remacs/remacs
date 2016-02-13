@@ -1656,15 +1656,6 @@ empty directories from OLD-PATH."
   (ignore-errors
     (set-file-modes filename mode)))
 
-(if (fboundp 'set-process-query-on-exit-flag)
-    (defalias 'gnus-set-process-query-on-exit-flag
-      'set-process-query-on-exit-flag)
-  (defalias 'gnus-set-process-query-on-exit-flag
-    'process-kill-without-query))
-
-(defalias 'gnus-read-shell-command
-  (if (fboundp 'read-shell-command) 'read-shell-command 'read-string))
-
 (declare-function image-size "image.c" (spec &optional pixels frame))
 
 (defun gnus-rescale-image (image size)
@@ -1714,48 +1705,6 @@ The first found will be returned if a file has hard or symbolic links."
       (setq found (or found
 		      (memq elem list))))
     found))
-
-(eval-and-compile
-  (cond
-   ((fboundp 'match-substitute-replacement)
-    (defalias 'gnus-match-substitute-replacement 'match-substitute-replacement))
-   (t
-    (defun gnus-match-substitute-replacement (replacement &optional fixedcase literal string subexp)
-      "Return REPLACEMENT as it will be inserted by `replace-match'.
-In other words, all back-references in the form `\\&' and `\\N'
-are substituted with actual strings matched by the last search.
-Optional FIXEDCASE, LITERAL, STRING and SUBEXP have the same
-meaning as for `replace-match'.
-
-This is the definition of match-substitute-replacement in subr.el from GNU Emacs."
-      (let ((match (match-string 0 string)))
-	(save-match-data
-	  (set-match-data (mapcar (lambda (x)
-				    (if (numberp x)
-					(- x (match-beginning 0))
-				      x))
-				  (match-data t)))
-	  (replace-match replacement fixedcase literal match subexp)))))))
-
-(if (fboundp 'string-match-p)
-    (defalias 'gnus-string-match-p 'string-match-p)
-  (defsubst gnus-string-match-p (regexp string &optional start)
-    "\
-Same as `string-match' except this function does not change the match data."
-    (save-match-data
-      (string-match regexp string start))))
-
-(if (fboundp 'string-prefix-p)
-    (defalias 'gnus-string-prefix-p 'string-prefix-p)
-  (defun gnus-string-prefix-p (str1 str2 &optional ignore-case)
-    "Return non-nil if STR1 is a prefix of STR2.
-If IGNORE-CASE is non-nil, the comparison is done without paying attention
-to case differences."
-    (and (<= (length str1) (length str2))
-	 (let ((prefix (substring str2 0 (length str1))))
-	   (if ignore-case
-	       (string-equal (downcase str1) (downcase prefix))
-	     (string-equal str1 prefix))))))
 
 (defun gnus-test-list (list predicate)
   "To each element of LIST apply PREDICATE.

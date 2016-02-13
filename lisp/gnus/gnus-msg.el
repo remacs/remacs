@@ -1904,10 +1904,10 @@ this is a reply."
 		  (cond
 		   ((stringp value)
 		    (if (and matched-string
-			     (gnus-string-match-p "\\\\[&[:digit:]]" value)
+			     (string-match-p "\\\\[&[:digit:]]" value)
 			     (match-beginning 1))
-			(gnus-match-substitute-replacement value nil nil
-							   matched-string)
+			(match-substitute-replacement value nil nil
+						      matched-string)
 		      value))
 		   ((or (symbolp value)
 			(functionp value))

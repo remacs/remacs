@@ -2459,7 +2459,7 @@ long lines if and only if arg is positive."
 		   ;; The command is a string, so we interpret the command
 		   ;; as a, well, command, and fork it off.
 		   (let ((process-connection-type nil))
-		     (gnus-set-process-query-on-exit-flag
+		     (set-process-query-on-exit-flag
 		      (start-process
 		       "article-x-face" nil shell-file-name
 		       shell-command-switch gnus-article-x-face-command)
@@ -4126,8 +4126,7 @@ and the raw article including all headers will be piped."
       (setq command
 	    (if (and (eq command 'default) default)
 		default
-	      (gnus-read-shell-command "Shell command on this article: "
-				       default))))
+	      (read-shell-command "Shell command on this article: " default))))
     (when (string-equal command "")
       (if default
 	  (setq command default)

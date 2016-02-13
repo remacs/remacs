@@ -1669,7 +1669,7 @@ actually)."
 	     (server (cadr (gnus-server-to-method srv)))
 	     (groupspec (mapconcat
 			 (lambda (x)
-			   (if (gnus-string-match-p "gmane" x)
+			   (if (string-match-p "gmane" x)
 			       (format "group:%s" (gnus-group-short-name x))
 			     (error "Can't search non-gmane groups: %s" x)))
 			   groups " "))
