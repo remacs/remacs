@@ -1936,20 +1936,8 @@ You must have the \"hashcash\" binary installed, see `hashcash-path'."
 (autoload 'rmail-msg-is-pruned "rmail")
 (autoload 'rmail-output "rmailout")
 
-;; Emacs < 24.1 do not have mail-dont-reply-to
-(unless (fboundp 'mail-dont-reply-to)
-  (defalias 'mail-dont-reply-to 'rmail-dont-reply-to))
-
-(eval-and-compile
-  (if (featurep 'emacs)
-      (progn
-	(defun message-kill-all-overlays ()
-	  (mapcar #'delete-overlay (overlays-in (point-min) (point-max))))
-	(defalias 'message-window-inside-pixel-edges
-	  'window-inside-pixel-edges))
-    (defun message-kill-all-overlays ()
-      (map-extents (lambda (extent ignore) (delete-extent extent))))
-    (defalias 'message-window-inside-pixel-edges 'ignore)))
+(defun message-kill-all-overlays ()
+  (mapcar #'delete-overlay (overlays-in (point-min) (point-max))))
 
 
 
@@ -8510,7 +8498,7 @@ Used in `message-simplify-recipients'."
 	(goto-char (point-min))
 	(while (re-search-forward "<img.*src=\"\\([^\"]+\\)" nil t)
 	  (let ((file (match-string 1))
-		(edges (message-window-inside-pixel-edges
+		(edges (window-inside-pixel-edges
 			(get-buffer-window (current-buffer)))))
 	    (put-image
 	     (create-image
