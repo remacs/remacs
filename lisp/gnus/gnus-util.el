@@ -1734,10 +1734,7 @@ lists of strings."
 ;;; Image functions.
 
 (defun gnus-image-type-available-p (type)
-  (and (fboundp 'image-type-available-p)
-       (if (fboundp 'display-images-p)
-	   (display-images-p)
-	 t)
+  (and (display-images-p)
        (image-type-available-p type)))
 
 (defun gnus-create-image (file &optional type data-p &rest props)
