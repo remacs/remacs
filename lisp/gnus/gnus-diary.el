@@ -83,13 +83,10 @@ There are currently two built-in format functions:
 
 ;; Compatibility functions ==================================================
 
-(eval-and-compile
-  (if (fboundp 'kill-entire-line)
-      (defalias 'gnus-diary-kill-entire-line 'kill-entire-line)
-    (defun gnus-diary-kill-entire-line ()
-      (beginning-of-line)
-      (let ((kill-whole-line t))
-	(kill-line)))))
+(defun gnus-diary-kill-entire-line ()
+  (beginning-of-line)
+  (let ((kill-whole-line t))
+    (kill-line)))
 
 
 ;; Summary line format ======================================================
