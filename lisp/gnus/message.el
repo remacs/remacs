@@ -656,10 +656,12 @@ variable should be a regexp or a list of regexps."
 (defun message-send-mail-function ()
   "Return suitable value for the variable `message-send-mail-function'."
   (cond ((and (require 'sendmail)
+	      (boundp 'sendmail-program)
 	      sendmail-program
 	      (executable-find sendmail-program))
 	 'message-send-mail-with-sendmail)
 	((and (locate-library "smtpmail")
+	      (boundp 'smtpmail-default-smtp-server)
 	      smtpmail-default-smtp-server)
 	 'message-smtpmail-send-it)
 	((locate-library "mailclient")

@@ -259,10 +259,7 @@ decoding.  If it is nil, default to `mail-parse-charset'."
 		   (or (not (eq coding-system 'ascii))
 		       (setq coding-system mail-parse-charset)))
 	  (decode-coding-region (point-min) (point-max) coding-system))
-	(setq buffer-file-coding-system
-	      (if (boundp 'last-coding-system-used)
-		  (symbol-value 'last-coding-system-used)
-		coding-system))))))
+	(setq buffer-file-coding-system last-coding-system-used)))))
 
 (defun mm-decode-string (string charset)
   "Decode STRING with CHARSET."

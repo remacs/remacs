@@ -382,12 +382,7 @@ enables you to choose manually one of two types those mails include."
   :type '(repeat regexp) ;; See `mm-preferred-alternative-precedence'.
   :group 'mime-display)
 
-(defcustom mm-tmp-directory
-  (if (fboundp 'temp-directory)
-      (temp-directory)
-    (if (boundp 'temporary-file-directory)
-	temporary-file-directory
-      "/tmp/"))
+(defcustom mm-tmp-directory temporary-file-directory
   "Where mm will store its temporary files."
   :type 'directory
   :group 'mime-display)
@@ -1587,8 +1582,7 @@ be determined."
 
 (defun mm-valid-image-format-p (format)
   "Say whether FORMAT can be displayed natively by Emacs."
-  (and (fboundp 'image-type-available-p)
-       (display-graphic-p)
+  (and (display-graphic-p)
        (image-type-available-p format)))
 
 (defun mm-valid-and-fit-image-p (format handle)
@@ -1787,8 +1781,7 @@ If RECURSIVE, search recursively."
 (defun mm-shr (handle)
   ;; Require since we bind its variables.
   (require 'shr)
-  (let ((shr-width (if (and (boundp 'shr-use-fonts)
-			    shr-use-fonts)
+  (let ((shr-width (if shr-use-fonts
 		       nil
 		     fill-column))
 	(shr-content-function (lambda (id)
