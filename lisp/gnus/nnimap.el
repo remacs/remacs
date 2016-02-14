@@ -26,13 +26,6 @@
 
 ;;; Code:
 
-(eval-and-compile
-  (require 'nnheader)
-  ;; In Emacs 24, `open-protocol-stream' is an autoloaded alias for
-  ;; `make-network-stream'.
-  (unless (fboundp 'open-protocol-stream)
-    (require 'proto-stream)))
-
 (eval-when-compile
   (require 'cl))
 
@@ -424,7 +417,7 @@ textual parts.")
       (when nnimap-server-port
 	(push nnimap-server-port ports))
       (let* ((stream-list
-	      (open-protocol-stream
+	      (open-network-stream
 	       "*nnimap*" (current-buffer) nnimap-address
 	       (nnimap-map-port (car ports))
 	       :type nnimap-stream

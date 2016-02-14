@@ -25,12 +25,6 @@
 
 ;;; Code:
 
-(eval-and-compile
-  ;; In Emacs 24, `open-protocol-stream' is an autoloaded alias for
-  ;; `make-network-stream'.
-  (unless (fboundp 'open-protocol-stream)
-    (require 'proto-stream)))
-
 (require 'nnheader)
 (require 'nnoo)
 (require 'gnus-util)
@@ -1266,7 +1260,7 @@ If SEND-IF-FORCE, only send authinfo to the server if the
 			   (nntp-open-ssl-stream tls)
 			   (nntp-open-tls-stream tls))))
 		(if (assoc nntp-open-connection-function map)
-		    (open-protocol-stream
+		    (open-network-stream
 		     "nntpd" pbuffer nntp-address nntp-port-number
 		     :type (cadr (assoc nntp-open-connection-function map))
 		     :end-of-command "^\\([2345]\\|[.]\\).*\n"

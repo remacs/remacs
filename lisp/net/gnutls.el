@@ -26,7 +26,7 @@
 
 ;; This package provides language bindings for the GnuTLS library
 ;; using the corresponding core functions in gnutls.c.  It should NOT
-;; be used directly, only through open-protocol-stream.
+;; be used directly, only through open-network-stream.
 
 ;; Simple test:
 ;;

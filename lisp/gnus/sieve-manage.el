@@ -201,7 +201,7 @@ Return the buffer associated with the connection."
     (sieve-manage-erase)
     (setq sieve-manage-state 'initial)
     (destructuring-bind (proc . props)
-        (open-protocol-stream
+        (open-network-stream
          "SIEVE" buffer server port
          :type stream
          :capability-command "CAPABILITY\r\n"

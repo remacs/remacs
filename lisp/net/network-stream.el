@@ -195,6 +195,8 @@ asynchronously, if possible."
 
 ;;;###autoload
 (defalias 'open-protocol-stream 'open-network-stream)
+(define-obsolete-function-alias 'open-protocol-stream 'open-network-stream
+  "25.2")
 
 (defun network-stream-open-plain (name buffer host service parameters)
   (let ((start (with-current-buffer buffer (point)))

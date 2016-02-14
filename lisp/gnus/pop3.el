@@ -34,12 +34,6 @@
 
 (eval-when-compile (require 'cl))
 
-(eval-and-compile
-  ;; In Emacs 24, `open-protocol-stream' is an autoloaded alias for
-  ;; `make-network-stream'.
-  (unless (fboundp 'open-protocol-stream)
-    (require 'proto-stream)))
-
 (require 'mail-utils)
 (defvar parse-time-months)
 
@@ -545,7 +539,7 @@ Returns the process associated with the connection."
       (erase-buffer)
       (setq pop3-read-point (point-min))
       (setq result
-	    (open-protocol-stream
+	    (open-network-stream
 	     "POP" (current-buffer) mailhost port
 	     :type (cond
 		    ((or (eq pop3-stream-type 'ssl)
