@@ -2018,13 +2018,13 @@ If TIME is nil, then return the cutoff time for oldness instead."
     (error "No current split history"))
   (with-output-to-temp-buffer "*nnmail split history*"
     (with-current-buffer standard-output
-      (fundamental-mode))		; for Emacs 20.4+
-      (dolist (elem nnmail-split-history)
-	(princ (mapconcat (lambda (ga)
-			    (concat (car ga) ":" (int-to-string (cdr ga))))
-			  elem
-			  ", "))
-	(princ "\n"))))
+      (fundamental-mode))
+    (dolist (elem nnmail-split-history)
+      (princ (mapconcat (lambda (ga)
+			  (concat (car ga) ":" (int-to-string (cdr ga))))
+			elem
+			", "))
+      (princ "\n"))))
 
 (defun nnmail-purge-split-history (group)
   "Remove all instances of GROUP from `nnmail-split-history'."

@@ -777,8 +777,7 @@ If GROUP is nil, all groups on GNUS-COMMAND-METHOD are scanned."
       (message-options-set-recipient)
       (save-restriction
 	(message-narrow-to-head)
-	(let ((mail-parse-charset message-default-charset))
-	  (mail-encode-encoded-word-buffer)))
+	(mail-encode-encoded-word-buffer))
       (message-encode-message-body)))
   (let ((gnus-command-method (or gnus-command-method
 				 (gnus-find-method-for-group group)))
@@ -800,8 +799,7 @@ If GROUP is nil, all groups on GNUS-COMMAND-METHOD are scanned."
       (message-options-set-recipient)
       (save-restriction
 	(message-narrow-to-head)
-	(let ((mail-parse-charset message-default-charset))
-	  (mail-encode-encoded-word-buffer)))
+	(mail-encode-encoded-word-buffer))
       (message-encode-message-body)))
   (let* ((func (car (gnus-group-name-to-method group)))
          (result (funcall (intern (format "%s-request-replace-article" func))

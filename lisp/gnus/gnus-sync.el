@@ -201,27 +201,6 @@ KVDATA must be an alist."
 (defun gnus-sync-lesync-DELETE (url headers &optional data)
   (gnus-sync-lesync-call url "DELETE" headers data))
 
-;; this is not necessary with newer versions of json.el but 1.2 or older
-;; (which are in Emacs 24.1 and earlier) need it
-(defun gnus-sync-json-alist-p (list)
-  "Non-null if and only if LIST is an alist."
-  (while (consp list)
-    (setq list (if (consp (car list))
-                   (cdr list)
-                 'not-alist)))
-  (null list))
-
-;; this is not necessary with newer versions of json.el but 1.2 or older
-;; (which are in Emacs 24.1 and earlier) need it
-(defun gnus-sync-json-plist-p (list)
-  "Non-null if and only if LIST is a plist."
-  (while (consp list)
-    (setq list (if (and (keywordp (car list))
-                        (consp (cdr list)))
-                   (cddr list)
-                 'not-plist)))
-  (null list))
-
 ; (gnus-sync-lesync-setup "http://lesync.info:5984/tzz" "tzzadmin" "mypassword" "mysalt" t t)
 ; (gnus-sync-lesync-setup "http://lesync.info:5984/tzz")
 

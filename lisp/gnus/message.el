@@ -49,7 +49,7 @@
 (require 'mm-util)
 (require 'rfc2047)
 
-(autoload 'mailclient-send-it "mailclient") ;; Emacs 22 or contrib/
+(autoload 'mailclient-send-it "mailclient")
 
 (defvar gnus-message-group-art)
 (defvar gnus-list-identifiers) ; gnus-sum is required where necessary
@@ -1342,14 +1342,16 @@ If nil, Message won't auto-save."
   :link '(custom-manual "(message)Various Message Variables")
   :type '(choice directory (const :tag "Don't auto-save" nil)))
 
-(defcustom message-default-charset
-  (and (not (mm-multibyte-p)) 'iso-8859-1)
+(defcustom message-default-charset (and (not (mm-multibyte-p)) 'iso-8859-1)
   "Default charset used in non-MULE Emacsen.
 If nil, you might be asked to input the charset."
   :version "21.1"
   :group 'message
   :link '(custom-manual "(message)Various Message Variables")
   :type 'symbol)
+(make-obsolete-variable
+ 'message-default-charset
+ "The default charset comes from the language environment" "25.2")
 
 (defcustom message-dont-reply-to-names mail-dont-reply-to-names
   "Addresses to prune when doing wide replies.
@@ -2625,8 +2627,7 @@ PGG manual, depending on the value of `mml2015-use'."
 		       (require 'mml2015)
 		       mml2015-use)
 		      ((eq arg  4) 'emacs-mime)
-		      ;; `booleanp' only available in Emacs 22+
-		      ((and (not (memq arg '(nil t)))
+		      ((and (not (booleanp arg))
 			    (symbolp arg))
 		       arg)
 		      (t
@@ -2873,8 +2874,6 @@ See also `message-forbidden-properties'."
 	  (inhibit-read-only t))
       (remove-text-properties begin end message-forbidden-properties))))
 
-(autoload 'ecomplete-setup "ecomplete") ;; for Emacs <23.
-
 (defvar message-smileys '(":-)" ":)"
                           ":-(" ":("
                           ";-)" ";)")
@@ -3032,20 +3031,8 @@ M-RET    `message-newline-and-reformat' (break the line and reformat)."
     (setq adaptive-fill-first-line-regexp
 	  (concat quote-prefix-regexp "\\|"
 		  adaptive-fill-first-line-regexp)))
-  (make-local-variable 'auto-fill-inhibit-regexp)
-  ;;(setq auto-fill-inhibit-regexp "^[A-Z][^: \n\t]+:")
-  (setq auto-fill-inhibit-regexp nil)
-  (make-local-variable 'normal-auto-fill-function)
-  (setq normal-auto-fill-function 'message-do-auto-fill)
-  ;; KLUDGE: auto fill might already be turned on in `text-mode-hook'.
-  ;; In that case, ensure that it uses the right function.  The real
-  ;; solution would be not to use `define-derived-mode', and run
-  ;; `text-mode-hook' ourself at the end of the mode.
-  ;; -- Per Abrahamsen <abraham@dina.kvl.dk> Date: 2001-10-19.
-  ;; This kludge is unneeded in Emacs>=21 since define-derived-mode is
-  ;; now careful to run parent hooks after the body.  --Stef
-  (when auto-fill-function
-    (setq auto-fill-function normal-auto-fill-function)))
+  (setq-default auto-fill-inhibit-regexp nil)
+  (setq-default normal-auto-fill-function 'message-do-auto-fill))
 
 
 
@@ -6118,10 +6105,7 @@ Headers already prepared in the buffer are not modified."
   "Split current line, moving portion beyond point vertically down.
 If the current line has `message-yank-prefix', insert it on the new line."
   (interactive "*")
-  (condition-case nil
-      (split-line message-yank-prefix) ;; Emacs 22.1+ supports arg.
-    (error
-     (split-line))))
+  (split-line message-yank-prefix))
 
 (defun message-insert-header (header value)
   (insert (capitalize (symbol-name header))
@@ -7239,7 +7223,7 @@ header line with the old Message-ID."
     (cond ((save-window-excursion
 	     (with-output-to-temp-buffer "*Directory*"
 	       (with-current-buffer standard-output
-		 (fundamental-mode))	; for Emacs 20.4+
+		 (fundamental-mode))
 	       (buffer-disable-undo standard-output)
 	       (let ((default-directory "/"))
 		 (call-process
@@ -8031,7 +8015,7 @@ The following arguments may contain lists of values."
       (save-window-excursion
         (with-output-to-temp-buffer " *MESSAGE information message*"
           (with-current-buffer " *MESSAGE information message*"
-	    (fundamental-mode)		; for Emacs 20.4+
+	    (fundamental-mode)
 	    (mapc 'princ text)
 	    (goto-char (point-min))))
 	(funcall ask question))

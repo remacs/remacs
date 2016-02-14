@@ -2283,8 +2283,6 @@ long lines if and only if arg is positive."
       (setq truncate-lines nil))
      ((numberp arg)
       (setq truncate-lines t)))
-    ;; In versions of Emacs 22 (CVS) before 2006-05-26,
-    ;; `toggle-truncate-lines' needs an argument.
     (toggle-truncate-lines)))
 
 (defun gnus-article-treat-body-boundary ()
@@ -4481,8 +4479,8 @@ commands:
   (make-local-variable 'gnus-article-ignored-charsets)
   (set (make-local-variable 'bookmark-make-record-function)
        'gnus-summary-bookmark-make-record)
-  ;; Prevent Emacs 22 from displaying non-break space with `nobreak-space'
-  ;; face.
+  ;; Prevent Emacs from displaying non-break space with
+  ;; `nobreak-space' face.
   (set (make-local-variable 'nobreak-char-display) nil)
   ;; Enable `gnus-article-remove-images' to delete images shr.el renders.
   (set (make-local-variable 'shr-put-image-function) 'gnus-shr-put-image)
@@ -6567,7 +6565,7 @@ Argument LINES specifies lines to be scrolled up."
 
 (defun gnus-article-beginning-of-window ()
   "Move point to the beginning of the window.
-In Emacs, the point is placed at the line number which `scroll-margin'
+The point is placed at the line number which `scroll-margin'
 specifies."
   ;; There is an obscure bug in Emacs that makes it impossible to
   ;; scroll past big pictures in the article buffer.  Try to fix
@@ -6793,7 +6791,7 @@ not have a face in `gnus-article-boring-faces'."
 (defun gnus-article-describe-key (key)
   "Display documentation of the function invoked by KEY.
 KEY is a string or a vector."
-  (interactive (list (let ((cursor-in-echo-area t)) ;; better for XEmacs.
+  (interactive (list (let ((cursor-in-echo-area t))
 		       (read-key-sequence "Describe key: "))))
   (gnus-article-check-buffer)
   (if (memq (key-binding key t) '(gnus-article-read-summary-keys
@@ -6814,7 +6812,7 @@ KEY is a string or a vector."
 (defun gnus-article-describe-key-briefly (key &optional insert)
   "Display documentation of the function invoked by KEY.
 KEY is a string or a vector."
-  (interactive (list (let ((cursor-in-echo-area t)) ;; better for XEmacs.
+  (interactive (list (let ((cursor-in-echo-area t))
 		       (read-key-sequence "Describe key: "))
 		     current-prefix-arg))
   (gnus-article-check-buffer)
@@ -7355,21 +7353,17 @@ groups."
    "\\b\\(\\(www\\.\\|\\(s?https?\\|ftp\\|file\\|gopher\\|"
    "nntp\\|news\\|telnet\\|wais\\|mailto\\|info\\):\\)"
    "\\(//[-a-z0-9_.]+:[0-9]*\\)?"
-   (if (string-match "[[:digit:]]" "1") ;; Support POSIX?
-       (let ((chars "-a-z0-9_=#$@~%&*+\\/[:word:]")
-	     (punct "!?:;.,"))
-	 (concat
-	  "\\(?:"
-	  ;; Match paired parentheses, e.g. in Wikipedia URLs:
-	  ;; http://thread.gmane.org/47B4E3B2.3050402@gmail.com
-	  "[" chars punct "]+" "(" "[" chars punct "]+" "[" chars "]*)"
-	  "\\(?:" "[" chars punct "]+" "[" chars "]" "\\)?"
-	  "\\|"
-	  "[" chars punct "]+" "[" chars "]"
-	  "\\)"))
-     (concat ;; XEmacs 21.4 doesn't support POSIX.
-      "\\([-a-z0-9_=!?#$@~%&*+\\/:;.,]\\|\\w\\)+"
-      "\\([-a-z0-9_=#$@~%&*+\\/]\\|\\w\\)"))
+   (let ((chars "-a-z0-9_=#$@~%&*+\\/[:word:]")
+	 (punct "!?:;.,"))
+     (concat
+      "\\(?:"
+      ;; Match paired parentheses, e.g. in Wikipedia URLs:
+      ;; http://thread.gmane.org/47B4E3B2.3050402@gmail.com
+      "[" chars punct "]+" "(" "[" chars punct "]+" "[" chars "]*)"
+      "\\(?:" "[" chars punct "]+" "[" chars "]" "\\)?"
+      "\\|"
+      "[" chars punct "]+" "[" chars "]"
+      "\\)"))
    "\\)")
   "Regular expression that matches URLs."
   :version "24.4"

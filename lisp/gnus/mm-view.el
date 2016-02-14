@@ -458,11 +458,7 @@ If MODE is not set, try to find mode automatically."
 	(unless charset
 	  (setq coding-system (mm-find-buffer-file-coding-system)))
 	(setq text (buffer-string))))
-    ;; XEmacs @#$@ version of font-lock refuses to fully turn itself
-    ;; on for buffers whose name begins with " ".  That's why we use
-    ;; `with-current-buffer'/`generate-new-buffer' rather than
-    ;; `with-temp-buffer'.
-    (with-current-buffer (generate-new-buffer "*fontification*")
+    (with-temp-buffer
       (buffer-disable-undo)
       (mm-enable-multibyte)
       (insert (cond ((eq charset 'gnus-decoded)
@@ -500,8 +496,7 @@ If MODE is not set, try to find mode automatically."
       (setq text (buffer-string))
       ;; Set buffer unmodified to avoid confirmation when killing the
       ;; buffer.
-      (set-buffer-modified-p nil)
-      (kill-buffer (current-buffer)))
+      (set-buffer-modified-p nil))
     (mm-insert-inline handle text)))
 
 ;; Shouldn't these functions check whether the user even wants to use

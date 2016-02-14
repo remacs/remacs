@@ -1658,8 +1658,7 @@ this is a reply."
 	      (run-hooks 'gnus-gcc-post-body-encode-hook)
 	      (save-restriction
 		(message-narrow-to-headers)
-		(let* ((mail-parse-charset message-default-charset)
-		       (newsgroups-field (save-restriction
+		(let* ((newsgroups-field (save-restriction
 					   (message-narrow-to-headers-or-head)
 					   (message-fetch-field "Newsgroups")))
 		       (followup-field (save-restriction

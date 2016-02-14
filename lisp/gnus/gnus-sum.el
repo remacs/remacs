@@ -2562,7 +2562,7 @@ gnus-summary-show-article-from-menu-as-charset-%s" cs))))
 	  (easy-menu-define
 	    gnus-article-commands-menu gnus-article-mode-map ""
 	    (cons "Commands" innards))
-	;; in Emacs, don't share menu.
+	;; Don't share the menu.
 	(setq gnus-article-commands-menu
 	      (copy-keymap gnus-summary-article-menu))
 	(define-key gnus-article-mode-map [menu-bar commands]

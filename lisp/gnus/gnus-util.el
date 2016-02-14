@@ -1503,7 +1503,7 @@ CHOICE is a list of the choice char and help message at IDX."
 	    (setq tchar nil)
 	    (setq buf (get-buffer-create "*Gnus Help*"))
 	    (pop-to-buffer buf)
-	    (fundamental-mode)		; for Emacs 20.4+
+	    (fundamental-mode)
 	    (buffer-disable-undo)
 	    (erase-buffer)
 	    (insert prompt ":\n\n")
