@@ -86,14 +86,14 @@
     "list-style" "list-style-image" "list-style-position"
     "list-style-type" "margin" "margin-bottom" "margin-left"
     "margin-right" "margin-top" "max-height" "max-width" "min-height"
-    "min-width" "orphans" "padding" "padding-bottom" "padding-left"
+    "min-width" "padding" "padding-bottom" "padding-left"
     "padding-right" "padding-top" "page-break-after"
     "page-break-before" "page-break-inside" "pause" "pause-after"
     "pause-before" "pitch" "pitch-range" "play-during" "position"
     "quotes" "richness" "right" "speak" "speak-header" "speak-numeral"
     "speak-punctuation" "speech-rate" "stress" "table-layout" "top"
     "unicode-bidi" "vertical-align" "visibility" "voice-family" "volume"
-    "widows" "width" "z-index"
+    "width" "z-index"
 
     ;; CSS Animations
     ;; (http://www.w3.org/TR/css3-animations/#property-index)
@@ -143,6 +143,11 @@
     "font-variant-alternates" "font-variant-caps"
     "font-variant-east-asian" "font-variant-ligatures"
     "font-variant-numeric" "font-variant-position" "font-weight"
+
+    ;; CSS Fragmentation Module Level 3
+    ;; (https://www.w3.org/TR/css-break-3/#property-index)
+    "box-decoration-break" "break-after" "break-before" "break-inside"
+    "orphans" "widows"
 
     ;; CSS Overflow Module Level 3
     ;; (http://www.w3.org/TR/css-overflow-3/#property-index)
