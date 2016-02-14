@@ -290,9 +290,7 @@ Should be called narrowed to the head of the message."
 		(let ((rfc2047-encoding-type 'mime))
 		  (rfc2047-encode-region (point) (point-max))))
 	       ((eq method 'default)
-		(if (and (featurep 'mule)
-			 (if (boundp 'enable-multibyte-characters)
-			     (default-value 'enable-multibyte-characters))
+		(if (and (default-value 'enable-multibyte-characters)
 			 mail-parse-charset)
 		    (encode-coding-region (point) (point-max)
 					  mail-parse-charset)))
@@ -317,11 +315,8 @@ Should be called narrowed to the head of the message."
 ;;;		    (rfc2047-encode-region (point-min) (point-max))
 ;;;		  (error "Cannot send unencoded text")))
 	       ((mm-coding-system-p method)
-		(if (or (and (featurep 'mule)
-			     (if (boundp 'enable-multibyte-characters)
-				 (default-value 'enable-multibyte-characters)))
-			(featurep 'file-coding))
-		    (encode-coding-region (point) (point-max) method)))
+		(when (default-value 'enable-multibyte-characters)
+		  (encode-coding-region (point) (point-max) method)))
 	       ;; Hm.
 	       (t)))
 	    (goto-char (point-max))))))))
@@ -1103,49 +1098,47 @@ strings are stripped."
   "Decode MIME-encoded STRING and return the result.
 If ADDRESS-MIME is non-nil, strip backslashes which precede characters
 other than `\"' and `\\' in quoted strings."
-  ;; (let ((m (mm-multibyte-p)))
-    (if (string-match "=\\?" string)
-	(with-temp-buffer
-          ;; We used to only call mm-enable-multibyte if `m' is non-nil,
-          ;; but this can't be the right criterion.  Don't just revert this
-          ;; change if it encounters a bug.  Please help me fix it
-          ;; right instead.  --Stef
-          ;; The string returned should always be multibyte in a multibyte
-	  ;; session, i.e. the buffer should be multibyte before
-	  ;; `buffer-string' is called.
-          (mm-enable-multibyte)
-	  (insert string)
-	  (inline
-	    (rfc2047-decode-region (point-min) (point-max) address-mime))
-	  (buffer-string))
-      (when address-mime
-	(setq string
-	      (with-temp-buffer
-		(when (multibyte-string-p string)
-		  (mm-enable-multibyte))
-		(insert string)
-		(rfc2047-strip-backslashes-in-quoted-strings)
-		(buffer-string))))
-      ;; Fixme: As above, `m' here is inappropriate.
-      (if (and ;; m
-	       mail-parse-charset
-	       (not (eq mail-parse-charset 'us-ascii))
-	       (not (eq mail-parse-charset 'gnus-decoded)))
-	  ;; `decode-coding-string' in Emacs offers a third optional
-	  ;; arg NOCOPY to avoid consing a new string if the decoding
-	  ;; is "trivial".  Unfortunately it currently doesn't
-	  ;; consider anything else than a nil coding system
-	  ;; trivial.
-	  ;; `rfc2047-decode-string' is called multiple times for each
-	  ;; article during summary buffer generation, and we really
-	  ;; want to avoid unnecessary consing.  So we bypass
-	  ;; `decode-coding-string' if the string is purely ASCII.
-	  (if (and (fboundp 'detect-coding-string)
-		   ;; string is purely ASCII
-		   (eq (detect-coding-string string t) 'undecided))
-              string
-            (decode-coding-string string mail-parse-charset))
-        (string-to-multibyte string)))) ;; )
+  (if (string-match "=\\?" string)
+      (with-temp-buffer
+	;; We used to only call mm-enable-multibyte if `m' is non-nil,
+	;; but this can't be the right criterion.  Don't just revert this
+	;; change if it encounters a bug.  Please help me fix it
+	;; right instead.  --Stef
+	;; The string returned should always be multibyte in a multibyte
+	;; session, i.e. the buffer should be multibyte before
+	;; `buffer-string' is called.
+	(mm-enable-multibyte)
+	(insert string)
+	(inline
+	  (rfc2047-decode-region (point-min) (point-max) address-mime))
+	(buffer-string))
+    (when address-mime
+      (setq string
+	    (with-temp-buffer
+	      (when (multibyte-string-p string)
+		(mm-enable-multibyte))
+	      (insert string)
+	      (rfc2047-strip-backslashes-in-quoted-strings)
+	      (buffer-string))))
+    ;; Fixme: As above, `m' here is inappropriate.
+    (if (and ;; m
+	 mail-parse-charset
+	 (not (eq mail-parse-charset 'us-ascii))
+	 (not (eq mail-parse-charset 'gnus-decoded)))
+	;; `decode-coding-string' in Emacs offers a third optional
+	;; arg NOCOPY to avoid consing a new string if the decoding
+	;; is "trivial".  Unfortunately it currently doesn't
+	;; consider anything else than a nil coding system
+	;; trivial.
+	;; `rfc2047-decode-string' is called multiple times for each
+	;; article during summary buffer generation, and we really
+	;; want to avoid unnecessary consing.  So we bypass
+	;; `decode-coding-string' if the string is purely ASCII.
+	(if (eq (detect-coding-string string t) 'undecided)
+	    ;; string is purely ASCII
+	    string
+	  (decode-coding-string string mail-parse-charset))
+      (string-to-multibyte string))))
 
 (defun rfc2047-decode-address-string (string)
   "Decode MIME-encoded STRING and return the result.
