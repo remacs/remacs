@@ -290,8 +290,7 @@ If PROPERTIES is non-nil, PROPERTIES are applied to the buffer,
 see `set-text-properties'.  If PROPERTIES equals t, this means to
 apply the face `mm-uu-extract'."
   (let ((obuf (current-buffer))
-        (multi (and (boundp 'enable-multibyte-characters)
-                    enable-multibyte-characters))
+        (multi enable-multibyte-characters)
 	(coding-system buffer-file-coding-system))
     (with-current-buffer (generate-new-buffer " *mm-uu*")
       (if multi (mm-enable-multibyte) (mm-disable-multibyte))

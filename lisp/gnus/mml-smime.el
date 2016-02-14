@@ -175,15 +175,12 @@ Whether the passphrase is cached at all is controlled by
   (list 'keyfile
 	(if (= (length smime-keys) 1)
 	    (cadar smime-keys)
-	  (or (let ((from (cadr (funcall (if (boundp
-					      'gnus-extract-address-components)
-					     gnus-extract-address-components
-					   'mail-extract-address-components)
-					 (or (save-excursion
-					       (save-restriction
-						 (message-narrow-to-headers)
-						 (message-fetch-field "from")))
-					     "")))))
+	  (or (let ((from (cadr (mail-extract-address-components
+				 (or (save-excursion
+				       (save-restriction
+					 (message-narrow-to-headers)
+					 (message-fetch-field "from")))
+				     "")))))
 		(and from (smime-get-key-by-email from)))
 	      (smime-get-key-by-email
 	       (gnus-completing-read "Sign this part with what signature"
@@ -204,15 +201,12 @@ Whether the passphrase is cached at all is controlled by
 	(while (not result)
 	  (setq who (read-from-minibuffer
 		     (format "%sLookup certificate for: " (or bad ""))
-		     (cadr (funcall (if (boundp
-					 'gnus-extract-address-components)
-					gnus-extract-address-components
-				      'mail-extract-address-components)
-				    (or (save-excursion
-					  (save-restriction
-					    (message-narrow-to-headers)
-					    (message-fetch-field "to")))
-					"")))))
+		     (cadr (mail-extract-address-components
+			    (or (save-excursion
+				  (save-restriction
+				    (message-narrow-to-headers)
+				    (message-fetch-field "to")))
+				"")))))
 	  (if (setq cert (smime-cert-by-dns who))
 	      (setq result (list 'certfile (buffer-name cert)))
 	    (setq bad (format-message "`%s' not found. " who))))

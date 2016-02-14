@@ -1544,12 +1544,11 @@ or the `pop-to-buffer' function."
 	(message-sort-headers)
 	(mml-to-mime))
       (if raw
-	  (when (fboundp 'set-buffer-multibyte)
-	    (let ((s (buffer-string)))
-	      ;; Insert the content into unibyte buffer.
-	      (erase-buffer)
-	      (mm-disable-multibyte)
-	      (insert s)))
+	  (let ((s (buffer-string)))
+	    ;; Insert the content into unibyte buffer.
+	    (erase-buffer)
+	    (mm-disable-multibyte)
+	    (insert s))
 	(let ((gnus-newsgroup-charset (car message-posting-charset))
 	      gnus-article-prepare-hook gnus-original-article-buffer
 	      gnus-displaying-mime)

@@ -122,10 +122,7 @@ See Info node `(message) Security'."
   :group 'message
   :type 'boolean)
 
-(defcustom mml-secure-passphrase-cache-expiry
-  (if (boundp 'password-cache-expiry)
-      password-cache-expiry
-    16)
+(defcustom mml-secure-passphrase-cache-expiry password-cache-expiry
   "How many seconds the passphrase is cached.
 Whether the passphrase is cached at all is controlled by
 `mml-secure-cache-passphrase'."
