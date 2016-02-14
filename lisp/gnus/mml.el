@@ -631,6 +631,7 @@ be \"related\" or \"alternate\"."
 		      (let ((mm-coding-system-priorities
 			     (cons 'utf-8 mm-coding-system-priorities)))
 			(setq charset (mm-encode-body))))
+		    (mm-disable-multibyte)
 		    (setq encoding (mm-body-encoding
 				    charset (cdr (assq 'encoding cont))))))
 		  (setq coded (buffer-string)))
