@@ -198,15 +198,13 @@ item.  When \\[describe-key] <icon> shows \"<tool-bar> <new-file>
 runs the command find-file\", then use `new-file' in ZAP-LIST.
 
 DEFAULT-MAP specifies the default key map for ICON-LIST."
-  (let (;; For Emacs 21, we must let-bind `tool-bar-map'.  In Emacs 22, we
-	;; could use some other local variable.
-	(tool-bar-map (if (eq zap-list t)
-			  (make-sparse-keymap)
-			(copy-keymap tool-bar-map))))
+  (let ((map (if (eq zap-list t)
+		 (make-sparse-keymap)
+	       (copy-keymap tool-bar-map))))
     (when (listp zap-list)
       ;; Zap some items which aren't relevant for this mode and take up space.
       (dolist (key zap-list)
-	(define-key tool-bar-map (vector key) nil)))
+	(define-key map (vector key) nil)))
     (mapc (lambda (el)
 	    (let ((command (car el))
 		  (icon (nth 1 el))
@@ -218,7 +216,7 @@ DEFAULT-MAP specifies the default key map for ICON-LIST."
 		     ;; widget.  Suppress tooltip by adding `:enable nil'.
 		     (if (fboundp 'tool-bar-local-item)
 			 (apply 'tool-bar-local-item icon nil nil
-				tool-bar-map :enable nil props)
+				map :enable nil props)
 		       ;; (tool-bar-local-item ICON DEF KEY MAP &rest PROPS)
 		       ;; (tool-bar-add-item ICON DEF KEY &rest PROPS)
 		       (apply 'tool-bar-add-item icon nil nil :enable nil props)))
@@ -226,18 +224,18 @@ DEFAULT-MAP specifies the default key map for ICON-LIST."
 		     (apply 'tool-bar-local-item
 			    icon command
 			    (intern icon) ;; reuse icon or fmap here?
-			    tool-bar-map props))
+			    map props))
 		    (t ;; A menu command
 		     (apply 'tool-bar-local-item-from-menu
 			    ;; (apply 'tool-bar-local-item icon def key
 			    ;; tool-bar-map props)
-			    command icon tool-bar-map (symbol-value fmap)
+			    command icon map (symbol-value fmap)
 			    props)))
 	      t))
 	  (if (symbolp icon-list)
 	      (eval icon-list)
 	    icon-list))
-    tool-bar-map))
+    map))
 
 (defmacro defun-gmm (name function arg-list &rest body)
   "Create function NAME.
@@ -247,109 +245,6 @@ Otherwise, create function NAME with ARG-LIST and BODY."
     (if defined-p
         `(defalias ',name ',function)
       `(defun ,name ,arg-list ,@body))))
-
-(defun-gmm gmm-image-search-load-path
-  image-search-load-path (file &optional path)
-  "Emacs 21 and XEmacs don't have `image-search-load-path'.
-This function returns nil on those systems."
-  nil)
-
-;; Cf. `mh-image-load-path-for-library' in `mh-compat.el'.
-
-(defun-gmm gmm-image-load-path-for-library
-  image-load-path-for-library (library image &optional path no-error)
-  "Return a suitable search path for images used by LIBRARY.
-
-It searches for IMAGE in `image-load-path' (excluding
-\"`data-directory'/images\") and `load-path', followed by a path
-suitable for LIBRARY, which includes \"../../etc/images\" and
-\"../etc/images\" relative to the library file itself, and then
-in \"`data-directory'/images\".
-
-Then this function returns a list of directories which contains
-first the directory in which IMAGE was found, followed by the
-value of `load-path'.  If PATH is given, it is used instead of
-`load-path'.
-
-If NO-ERROR is non-nil and a suitable path can't be found, don't
-signal an error.  Instead, return a list of directories as before,
-except that nil appears in place of the image directory.
-
-Here is an example that uses a common idiom to provide
-compatibility with versions of Emacs that lack the variable
-`image-load-path':
-
-    ;; Shush compiler.
-    (defvar image-load-path)
-
-    (let* ((load-path (image-load-path-for-library \"mh-e\" \"mh-logo.xpm\"))
-           (image-load-path (cons (car load-path)
-                                  (when (boundp \\='image-load-path)
-                                    image-load-path))))
-      (mh-tool-bar-folder-buttons-init))"
-  (unless library (error "No library specified"))
-  (unless image   (error "No image specified"))
-  (let (image-directory image-directory-load-path)
-    ;; Check for images in image-load-path or load-path.
-    (let ((img image)
-          (dir (or
-                ;; Images in image-load-path.
-                (image-search-load-path image)
-                ;; Images in load-path.
-                (locate-library image)))
-          parent)
-      ;; Since the image might be in a nested directory (for
-      ;; example, mail/attach.pbm), adjust `image-directory'
-      ;; accordingly.
-      (when dir
-        (setq dir (file-name-directory dir))
-        (while (setq parent (file-name-directory img))
-          (setq img (directory-file-name parent)
-                dir (expand-file-name "../" dir))))
-      (setq image-directory-load-path dir))
-
-    ;; If `image-directory-load-path' isn't Emacs's image directory,
-    ;; it's probably a user preference, so use it.  Then use a
-    ;; relative setting if possible; otherwise, use
-    ;; `image-directory-load-path'.
-    (cond
-     ;; User-modified image-load-path?
-     ((and image-directory-load-path
-           (not (equal image-directory-load-path
-                       (file-name-as-directory
-                        (expand-file-name "images" data-directory)))))
-      (setq image-directory image-directory-load-path))
-     ;; Try relative setting.
-     ((let (library-name d1ei d2ei)
-        ;; First, find library in the load-path.
-        (setq library-name (locate-library library))
-        (if (not library-name)
-            (error "Cannot find library %s in load-path" library))
-        ;; And then set image-directory relative to that.
-        (setq
-         ;; Go down 2 levels.
-         d2ei (file-name-as-directory
-               (expand-file-name
-                (concat (file-name-directory library-name) "../../etc/images")))
-         ;; Go down 1 level.
-         d1ei (file-name-as-directory
-               (expand-file-name
-                (concat (file-name-directory library-name) "../etc/images"))))
-        (setq image-directory
-              ;; Set it to nil if image is not found.
-              (cond ((file-exists-p (expand-file-name image d2ei)) d2ei)
-                    ((file-exists-p (expand-file-name image d1ei)) d1ei)))))
-     ;; Use Emacs's image directory.
-     (image-directory-load-path
-      (setq image-directory image-directory-load-path))
-     (no-error
-      (message "Could not find image %s for library %s" image library))
-     (t
-      (error "Could not find image %s for library %s" image library)))
-
-    ;; Return an augmented `path' or `load-path'.
-    (nconc (list image-directory)
-           (delete image-directory (copy-sequence (or path load-path))))))
 
 (defun gmm-customize-mode (&optional mode)
   "Customize customization group for MODE.

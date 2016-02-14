@@ -1084,9 +1084,8 @@ When FORCE, rebuild the tool bar."
              (display-graphic-p)
 	     (or (not gnus-group-tool-bar-map) force))
     (let* ((load-path
-	    (gmm-image-load-path-for-library "gnus"
-					     "gnus/toggle-subscription.xpm"
-					     nil t))
+	    (image-load-path-for-library
+	     "gnus" "gnus/toggle-subscription.xpm" nil t))
            (image-load-path (cons (car load-path) image-load-path))
 	   (map (gmm-tool-bar-from-list gnus-group-tool-bar
 					gnus-group-tool-bar-zap-list
