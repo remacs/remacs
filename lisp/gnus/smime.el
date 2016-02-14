@@ -126,19 +126,6 @@
 
 (eval-when-compile (require 'cl))
 
-(eval-and-compile
-  (cond
-   ((fboundp 'replace-in-string)
-    (defalias 'smime-replace-in-string 'replace-in-string))
-   ((fboundp 'replace-regexp-in-string)
-    (defun smime-replace-in-string  (string regexp newtext &optional literal)
-      "Replace all matches for REGEXP with NEWTEXT in STRING.
-If LITERAL is non-nil, insert NEWTEXT literally.  Return a new
-string containing the replacements.
-
-This is a compatibility function for different Emacsen."
-      (replace-regexp-in-string regexp newtext string nil literal)))))
-
 (defgroup smime nil
   "S/MIME configuration."
   :group 'mime)
@@ -244,18 +231,6 @@ must be set in `ldap-host-parameters-alist'."
 
 (defvar smime-details-buffer "*OpenSSL output*")
 
-;; Use mm-util?
-(eval-and-compile
-  (defalias 'smime-make-temp-file
-    (if (fboundp 'make-temp-file)
-	'make-temp-file
-      (lambda (prefix &optional dir-flag) ;; Simple implementation
-	(expand-file-name
-	 (make-temp-name prefix)
-	 (if (fboundp 'temp-directory)
-	     (temp-directory)
-	   temporary-file-directory))))))
-
 ;; Password dialog function
 (declare-function password-read-and-add "password-cache" (prompt &optional key))
 
@@ -301,7 +276,7 @@ key and certificate itself."
 	 (keyfile (or (car-safe keyfile) keyfile))
 	 (buffer (generate-new-buffer " *smime*"))
 	 (passphrase (smime-ask-passphrase (expand-file-name keyfile)))
-	 (tmpfile (smime-make-temp-file "smime")))
+	 (tmpfile (make-temp-file "smime")))
     (if passphrase
 	(setenv "GNUS_SMIME_PASSPHRASE" passphrase))
     (prog1
@@ -335,7 +310,7 @@ have proper MIME tags.  CERTFILES is a list of filenames, each file
 is expected to contain of a PEM encoded certificate."
   (smime-new-details-buffer)
   (let ((buffer (generate-new-buffer " *smime*"))
-	(tmpfile (smime-make-temp-file "smime")))
+	(tmpfile (make-temp-file "smime")))
     (prog1
 	(when (prog1
 		  (apply 'smime-call-openssl-region b e (list buffer tmpfile)
@@ -431,7 +406,7 @@ in the buffer specified by `smime-details-buffer'."
   (smime-new-details-buffer)
   (let ((buffer (generate-new-buffer " *smime*"))
 	CAs (passphrase (smime-ask-passphrase (expand-file-name keyfile)))
-	(tmpfile (smime-make-temp-file "smime")))
+	(tmpfile (make-temp-file "smime")))
     (if passphrase
 	(setenv "GNUS_SMIME_PASSPHRASE" passphrase))
     (if (prog1
@@ -607,11 +582,11 @@ A string or a list of strings is returned."
 		  (string= (substring (cadaar ldapresult) 0 3)
 			   "MII"))
 	      (setq cert
-		    (smime-replace-in-string
-		     (cadaar ldapresult)
+		    (replace-regexp-in-string
 		     (concat "\\(\n\\|\r\\|-----BEGIN CERTIFICATE-----\\|"
 			     "-----END CERTIFICATE-----\\)")
-		     "" t))
+		     ""
+		     (cadaar ldapresult) nil t))
 	    (setq cert (base64-encode-string (cadaar ldapresult) t)))
 	  (insert "-----BEGIN CERTIFICATE-----\n")
 	  (let ((i 0) (len (length cert)))
