@@ -980,14 +980,8 @@ See `find-file-noselect' for the arguments."
           (enable-local-eval nil)
           (coding-system-for-read nnheader-file-coding-system)
           (version-control 'never)
-          (ffh (if (boundp 'find-file-hook)
-                   'find-file-hook
-                 'find-file-hooks))
-          (val (symbol-value ffh)))
-    (set ffh nil)
-    (unwind-protect
-	(apply 'find-file-noselect args)
-      (set ffh val))))
+	  (find-file-hook nil))
+    (apply 'find-file-noselect args)))
 
 (defun nnheader-directory-regular-files (dir)
   "Return a list of all regular files in DIR."

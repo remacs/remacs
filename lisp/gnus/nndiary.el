@@ -88,16 +88,6 @@
 (require 'gnus-start)
 (require 'gnus-sum)
 
-;; Compatibility Functions  =================================================
-
-(eval-and-compile
-  (if (fboundp 'signal-error)
-      (defun nndiary-error (&rest args)
-	(apply #'signal-error 'nndiary args))
-    (defun nndiary-error (&rest args)
-      (apply #'error args))))
-
-
 ;; Back End behavior customization ===========================================
 
 (defgroup nndiary nil
@@ -1157,12 +1147,12 @@ all.  This may very well take some time.")
   ;; within the specified bounds.
   ;; Signals are caught by `nndiary-schedule'.
   (if (not (string-match "^[ \t]*[0-9]+[ \t]*$" str))
-      (nndiary-error "not an integer value")
+      (error "Not an integer value")
     ;; else
     (let ((val (string-to-number str)))
       (and (or (< val min)
 	       (and max (> val max)))
-	   (nndiary-error "value out of range"))
+	   (error "Value out of range"))
       val)))
 
 (defun nndiary-parse-schedule-value (str min-or-values max)
@@ -1179,7 +1169,7 @@ all.  This may very well take some time.")
 			(match-string 1 str))))
 	  (if (and val (setq val (assoc val min-or-values)))
 	      (list (cadr val))
-	    (nndiary-error "invalid syntax")))
+	    (error "Invalid syntax")))
       ;; min-or-values is min
       (mapcar
        (lambda (val)
@@ -1199,7 +1189,7 @@ all.  This may very well take some time.")
 		     (t
 		      (cons end beg)))))
 	    (t
-	     (nndiary-error "invalid syntax")))
+	     (error "Invalid syntax")))
 	   ))
        (split-string str ",")))
     ))
@@ -1214,7 +1204,7 @@ all.  This may very well take some time.")
   (let ((header (format "^X-Diary-%s: \\(.*\\)$" head)))
     (goto-char (point-min))
     (if (not (re-search-forward header nil t))
-	(nndiary-error "header missing")
+	(error "Header missing")
       ;; else
       (nndiary-parse-schedule-value (match-string 1) min-or-values max))
     ))

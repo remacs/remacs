@@ -1885,9 +1885,7 @@ Return the server's response to the SELECT or EXAMINE command."
   (let ((name "*imap log*"))
     (or (get-buffer name)
         (with-current-buffer (get-buffer-create name)
-          (when (boundp 'window-point-insertion-type)
-            (make-local-variable 'window-point-insertion-type)
-            (setq window-point-insertion-type t))
+	  (setq-local window-point-insertion-type t)
           (current-buffer)))))
 
 (defun nnimap-log-command (command)
