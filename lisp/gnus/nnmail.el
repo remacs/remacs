@@ -368,34 +368,7 @@ messages will be shown to indicate the current status."
   :type '(choice (const :tag "infinite" nil)
                  (number :tag "count")))
 
-(define-widget 'nnmail-lazy 'default
-  "Base widget for recursive data structures.
-
-This is copy of the `lazy' widget in Emacs 22.1 provided for compatibility."
-  :format "%{%t%}: %v"
-  :convert-widget 'widget-value-convert-widget
-  :value-create (lambda (widget)
-                  (let ((value (widget-get widget :value))
-                        (type (widget-get widget :type)))
-                    (widget-put widget :children
-                                (list (widget-create-child-value
-                                       widget (widget-convert type) value)))))
-  :value-delete 'widget-children-value-delete
-  :value-get (lambda (widget)
-               (widget-value (car (widget-get widget :children))))
-  :value-inline (lambda (widget)
-                  (widget-apply (car (widget-get widget :children))
-                                :value-inline))
-  :default-get (lambda (widget)
-                 (widget-default-get
-                  (widget-convert (widget-get widget :type))))
-  :match (lambda (widget value)
-           (widget-apply (widget-convert (widget-get widget :type))
-                         :match value))
-  :validate (lambda (widget)
-              (widget-apply (car (widget-get widget :children)) :validate)))
-
-(define-widget 'nnmail-split-fancy 'nnmail-lazy
+(define-widget 'nnmail-split-fancy 'lazy
   "Widget for customizing splits in the variable of the same name."
   :tag "Split"
   :type '(menu-choice :value (any ".*value.*" "misc")

@@ -97,34 +97,6 @@ ARGS are passed to `message'."
 (autoload 'widget-convert "wid-edit")
 (autoload 'widget-default-get "wid-edit")
 
-;; Copy of the `nnmail-lazy' code from `nnmail.el':
-(define-widget 'gmm-lazy 'default
-  "Base widget for recursive data structures.
-
-This is a copy of the `lazy' widget in Emacs 22.1 provided for compatibility."
-  :format "%{%t%}: %v"
-  :convert-widget 'widget-value-convert-widget
-  :value-create (lambda (widget)
-                  (let ((value (widget-get widget :value))
-                        (type (widget-get widget :type)))
-                    (widget-put widget :children
-                                (list (widget-create-child-value
-                                       widget (widget-convert type) value)))))
-  :value-delete 'widget-children-value-delete
-  :value-get (lambda (widget)
-               (widget-value (car (widget-get widget :children))))
-  :value-inline (lambda (widget)
-                  (widget-apply (car (widget-get widget :children))
-                                :value-inline))
-  :default-get (lambda (widget)
-                 (widget-default-get
-                  (widget-convert (widget-get widget :type))))
-  :match (lambda (widget value)
-           (widget-apply (widget-convert (widget-get widget :type))
-                         :match value))
-  :validate (lambda (widget)
-              (widget-apply (car (widget-get widget :children)) :validate)))
-
 ;; Note: The format of `gmm-tool-bar-item' may change if some future Emacs
 ;; version will provide customizable tool bar buttons using a different
 ;; interface.
@@ -144,7 +116,7 @@ This is a copy of the `lazy' widget in Emacs 22.1 provided for compatibility."
 ;;
 ;; Then use (plist-get rs-command :none), (plist-get rs-command :shift)
 
-(define-widget 'gmm-tool-bar-item (if (gmm-widget-p 'lazy) 'lazy 'gmm-lazy)
+(define-widget 'gmm-tool-bar-item 'lazy
   "Tool bar list item."
   :tag "Tool bar item"
   :type '(choice
@@ -163,7 +135,7 @@ This is a copy of the `lazy' widget in Emacs 22.1 provided for compatibility."
 		(const :tag "No map")
 		(plist :inline t :tag "Properties"))))
 
-(define-widget 'gmm-tool-bar-zap-list (if (gmm-widget-p 'lazy) 'lazy 'gmm-lazy)
+(define-widget 'gmm-tool-bar-zap-list 'lazy
   "Tool bar zap list."
   :tag "Tool bar zap list"
   :type '(choice (const :tag "Zap all" t)
