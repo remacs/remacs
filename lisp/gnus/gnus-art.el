@@ -2671,11 +2671,12 @@ If READ-CHARSET, ask for a coding system."
 	   (point-min) (point-max)
 	   (mm-charset-to-coding-system charset nil t)))))))
 
-(autoload 'rfc1843-decode-region "rfc1843")
+(declare-function rfc1843-decode-region "rfc1843" (from to))
 
 (defun article-decode-HZ ()
   "Translate a HZ-encoded article."
   (interactive)
+  (require 'rfc1843)
   (save-excursion
     (let ((inhibit-read-only t))
       (rfc1843-decode-region (point-min) (point-max)))))
