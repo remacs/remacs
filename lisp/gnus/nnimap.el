@@ -913,7 +913,8 @@ textual parts.")
   t)
 
 (deffoo nnimap-request-move-article (article group server accept-form
-					     &optional _last internal-move-group)
+					     &optional _last
+					     internal-move-group)
   (setq group (nnimap-decode-gnus-group group))
   (when internal-move-group
     (setq internal-move-group (nnimap-decode-gnus-group internal-move-group)))
@@ -923,17 +924,18 @@ textual parts.")
 		       'nnimap-request-head
 		     'nnimap-request-article)
 		   article group server (current-buffer))
-      ;; If the move is internal (on the same server), just do it the easy
-      ;; way.
+      ;; If the move is internal (on the same server), just do it the
+      ;; easy way.
       (let ((message-id (message-field-value "message-id")))
 	(if internal-move-group
             (with-current-buffer (nnimap-buffer)
               (let* ((can-move (nnimap-capability "MOVE"))
-                    (command (if can-move
-                                 "UID MOVE %d %S"
-                               "UID COPY %d %S"))
-                    (result (nnimap-command command article
-                                            (utf7-encode internal-move-group t))))
+		     (command (if can-move
+				  "UID MOVE %d %S"
+				"UID COPY %d %S"))
+		     (result (nnimap-command
+			      command article
+			      (utf7-encode internal-move-group t))))
                 (when (and (car result) (not can-move))
                   (nnimap-delete-article article))
                 (cons internal-move-group
@@ -942,11 +944,10 @@ textual parts.")
                            internal-move-group server message-id
                            nnimap-request-articles-find-limit)))))
 	  ;; Move the article to a different method.
-	  (let ((result (eval accept-form)))
-	    (when result
-	      (nnimap-change-group group server)
-	      (nnimap-delete-article article)
-	      result)))))))
+	  (when-let ((result (eval accept-form)))
+	    (nnimap-change-group group server)
+	    (nnimap-delete-article article)
+	    result))))))
 
 (deffoo nnimap-request-expire-articles (articles group &optional server force)
   (setq group (nnimap-decode-gnus-group group))
