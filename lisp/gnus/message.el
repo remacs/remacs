@@ -656,12 +656,10 @@ variable should be a regexp or a list of regexps."
 (defun message-send-mail-function ()
   "Return suitable value for the variable `message-send-mail-function'."
   (cond ((and (require 'sendmail)
-	      (boundp 'sendmail-program)
 	      sendmail-program
 	      (executable-find sendmail-program))
 	 'message-send-mail-with-sendmail)
 	((and (locate-library "smtpmail")
-	      (boundp 'smtpmail-default-smtp-server)
 	      smtpmail-default-smtp-server)
 	 'message-smtpmail-send-it)
 	((locate-library "mailclient")
@@ -1351,9 +1349,8 @@ If nil, you might be asked to input the charset."
   :link '(custom-manual "(message)Various Message Variables")
   :type 'symbol)
 
-(defcustom message-dont-reply-to-names
-  (and (boundp 'mail-dont-reply-to-names) mail-dont-reply-to-names)
-  "*Addresses to prune when doing wide replies.
+(defcustom message-dont-reply-to-names mail-dont-reply-to-names
+  "Addresses to prune when doing wide replies.
 This can be a regexp, a list of regexps or a predicate function.
 Also, a value of nil means exclude your own user name only.
 
@@ -2985,10 +2982,7 @@ M-RET    `message-newline-and-reformat' (break the line and reformat)."
   ;; Allow mail alias things.
   (cond
    ((message-mail-alias-type-p 'abbrev)
-    (if (fboundp 'mail-abbrevs-setup)
-	(mail-abbrevs-setup)
-      (if (fboundp 'mail-aliases-setup)	; warning avoidance
-	  (mail-aliases-setup))))
+    (mail-abbrevs-setup))
    ((message-mail-alias-type-p 'ecomplete)
     (ecomplete-setup)))
   (add-hook 'completion-at-point-functions 'message-completion-function nil t)
@@ -3014,8 +3008,6 @@ M-RET    `message-newline-and-reformat' (break the line and reformat)."
   (make-local-variable 'paragraph-separate)
   (make-local-variable 'paragraph-start)
   (make-local-variable 'adaptive-fill-regexp)
-  (unless (boundp 'adaptive-fill-first-line-regexp)
-    (setq adaptive-fill-first-line-regexp nil))
   (make-local-variable 'adaptive-fill-first-line-regexp)
   (let ((quote-prefix-regexp
 	 ;; User should change message-cite-prefix-regexp if
@@ -3457,12 +3449,10 @@ Prefix arg means justify as well."
 This function is used as the value of `fill-paragraph-function' in
 Message buffers and is not meant to be called directly."
   (interactive (list (if current-prefix-arg 'full)))
-  (if (if (boundp 'filladapt-mode) filladapt-mode)
-      nil
-    (if (message-point-in-header-p)
-	(message-fill-field)
-      (message-newline-and-reformat arg t))
-    t))
+  (if (message-point-in-header-p)
+      (message-fill-field)
+    (message-newline-and-reformat arg t))
+  t)
 
 (defun message-point-in-header-p ()
   "Return t if point is in the header."
@@ -3746,15 +3736,11 @@ If REMOVE is non-nil, remove newlines, too.
 To use this automatically, you may add this function to
 `gnus-message-setup-hook'."
   (interactive "P")
-  (let ((citexp
-	 (concat
-	  "^\\("
-	  (when (boundp 'message-yank-cited-prefix)
-	    (concat message-yank-cited-prefix "\\|"))
-	  message-yank-prefix
-	  "\\)+ *\n"
-	  )))
-    (message "removing `%s'" citexp)
+  (let ((citexp (concat "^\\("
+			(concat message-yank-cited-prefix "\\|")
+			message-yank-prefix
+			"\\)+ *\n")))
+    (message "Removing `%s'" citexp)
     (save-excursion
       (message-goto-body)
       (while (re-search-forward citexp nil t)
@@ -5704,10 +5690,7 @@ In posting styles use `(\"Expires\" (make-expires-date 30))'."
   "Make a From header."
   (let* ((style message-from-style)
 	 (login (or address (message-make-address)))
-	 (fullname (or name
-		       (and (boundp 'user-full-name)
-			    user-full-name)
-		       (user-full-name))))
+	 (fullname (or name user-full-name (user-full-name))))
     (when (string= fullname "&")
       (setq fullname (user-login-name)))
     (with-temp-buffer
@@ -5807,8 +5790,7 @@ give as trustworthy answer as possible."
       ;; `system-name' returned the right result.
       sysname)
      ;; Try `mail-host-address'.
-     ((and (boundp 'mail-host-address)
-	   (stringp mail-host-address)
+     ((and (stringp mail-host-address)
 	   (not (string-match message-bogus-system-names mail-host-address)))
       mail-host-address)
      ;; We try `user-mail-address' as a backup.
@@ -6340,11 +6322,10 @@ moved to the beginning "
    ((and message-beginning-of-line (message-point-in-header-p))
     (let* ((point (point))
            (bol (progn (beginning-of-line n) (point)))
-           (boh (message-beginning-of-header (and (boundp 'visual-line-mode)
-                                                  visual-line-mode))))
+           (boh (message-beginning-of-header visual-line-mode)))
       (goto-char (if (and boh (or (< boh point) (= bol point))) boh bol))))
    ;; Go to beginning of visual line
-   ((and (boundp 'visual-line-mode) visual-line-mode)
+   (visual-line-mode
     (beginning-of-visual-line n))
    ;; Go to beginning of line.
    ((beginning-of-line n))))
@@ -6424,10 +6405,7 @@ moved to the beginning "
 			       "Message already being composed; erase? ")
 			    (message nil))))
 	    (error "Message being composed")))
-      (funcall (or switch-function
-		   (if (fboundp #'pop-to-buffer-same-window)
-		       #'pop-to-buffer-same-window
-		     #'pop-to-buffer))
+      (funcall (or switch-function 'pop-to-buffer-same-window)
 	       name)
       (set-buffer name))
     (erase-buffer)
@@ -7606,10 +7584,8 @@ is for the internal use."
 (defun message-forward-rmail-make-body (forward-buffer)
   (save-window-excursion
     (set-buffer forward-buffer)
-    (if (rmail-msg-is-pruned)
-	(if (fboundp 'rmail-msg-restore-non-pruned-header)
-	    (rmail-msg-restore-non-pruned-header) ; Emacs 22
-	  (rmail-toggle-header 0))))		  ; Emacs 23
+    (when (rmail-msg-is-pruned)
+      (rmail-toggle-header 0)))
   (message-forward-make-body forward-buffer))
 
 ;; Fixme: Should have defcustom.
@@ -7859,12 +7835,10 @@ Pre-defined symbols include `message-tool-bar-gnome' and
 (defcustom message-tool-bar-gnome
   '((ispell-message "spell" nil
 		    :vert-only t
-		    :visible (or (not (boundp 'flyspell-mode))
-				 (not flyspell-mode)))
+		    :visible (not flyspell-mode))
     (flyspell-buffer "spell" t
 		     :vert-only t
-		     :visible (and (boundp 'flyspell-mode)
-				   flyspell-mode)
+		     :visible flyspell-mode
 		     :help "Flyspell whole buffer")
     (message-send-and-exit "mail/send" t :label "Send")
     (message-dont-send "mail/save-draft")
@@ -7929,9 +7903,7 @@ When FORCE, rebuild the tool bar."
 		  (gmm-image-load-path-for-library "message"
 						   "mail/save-draft.xpm"
 						   nil t))
-		 (image-load-path (cons (car load-path)
-					(when (boundp 'image-load-path)
-					  image-load-path))))
+		 (image-load-path (cons (car load-path) image-load-path)))
 	    (gmm-tool-bar-from-list message-tool-bar
 				    message-tool-bar-zap-list
 				    'message-mode-map))))
@@ -7982,10 +7954,8 @@ not in those headers.  If that variable is nil, indent with the
 regular text mode tabbing command."
   (interactive)
   (cond
-   ((if (and (boundp 'completion-fail-discreetly)
-             (fboundp 'completion-at-point))
-        (let ((completion-fail-discreetly t)) (completion-at-point))
-      (funcall (or (message-completion-function) #'ignore)))
+   ((let ((completion-fail-discreetly t))
+      (completion-at-point))
     ;; Completion was performed; nothing else to do.
     nil)
    (message-tab-body-function (funcall message-tab-body-function))
@@ -8031,41 +8001,7 @@ regular text mode tabbing command."
 		 group)
 	       collection))
        gnus-active-hashtb))
-    (message-completion-in-region b e collection)))
-
-(defalias 'message-completion-in-region
-  (if (fboundp 'completion-in-region)
-      'completion-in-region
-    (lambda (b e hashtb)
-      (let* ((string (buffer-substring b e))
-             (completions (all-completions string hashtb))
-             comp)
-        (delete-region b (point))
-        (cond
-         ((= (length completions) 1)
-          (if (string= (car completions) string)
-              (progn
-                (insert string)
-                (message "Only matching group"))
-            (insert (car completions))))
-         ((and (setq comp (try-completion string hashtb))
-               (not (string= comp string)))
-          (insert comp))
-         (t
-          (insert string)
-          (if (not comp)
-              (message "No matching groups")
-            (save-selected-window
-              (pop-to-buffer "*Completions*")
-              (buffer-disable-undo)
-              (let ((buffer-read-only nil))
-                (erase-buffer)
-                (let ((standard-output (current-buffer)))
-                  (display-completion-list (sort completions 'string<)))
-                (setq buffer-read-only nil)
-                (goto-char (point-min))
-                (delete-region (point)
-                               (progn (forward-line 3) (point))))))))))))
+    (completion-in-region b e collection)))
 
 (defun message-expand-name ()
   (cond ((and (memq 'eudc message-expand-name-databases)
@@ -8187,13 +8123,9 @@ regexp VARSTR."
 
 (defun message-read-from-minibuffer (prompt &optional initial-contents)
   "Read from the minibuffer while providing abbrev expansion."
-  (if (fboundp 'mail-abbrevs-setup)
-      (let ((minibuffer-setup-hook 'mail-abbrevs-setup)
-	    (minibuffer-local-map message-minibuffer-local-map))
-	(read-from-minibuffer prompt initial-contents))
-    (let ((minibuffer-setup-hook 'mail-abbrev-minibuffer-setup-hook)
-	  (minibuffer-local-map message-minibuffer-local-map))
-      (read-string prompt initial-contents))))
+  (let ((minibuffer-setup-hook 'mail-abbrevs-setup)
+	(minibuffer-local-map message-minibuffer-local-map))
+    (read-from-minibuffer prompt initial-contents)))
 
 (defun message-use-alternative-email-as-from ()
   "Set From field of the outgoing message to the first matching
