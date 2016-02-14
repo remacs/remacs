@@ -29,39 +29,6 @@
 
 (defvar mm-mime-mule-charset-alist)
 
-;; Emulate functions that are not available in every (X)Emacs version.
-;; The name of a function is prefixed with mm-, like `mm-char-int' for
-;; `char-int' that is a native XEmacs function, not available in Emacs.
-;; Gnus programs all should use mm- functions, not the original ones.
-(eval-and-compile
-  (mapc
-   (lambda (elem)
-     (let ((nfunc (intern (format "mm-%s" (car elem)))))
-       (if (fboundp (car elem))
-	   (defalias nfunc (car elem))
-	 (defalias nfunc (cdr elem)))))
-   `(
-     ;; string-as-multibyte often doesn't really do what you think it does.
-     ;; Example:
-     ;;    (aref (string-as-multibyte "\201") 0) -> 129 (aka ?\201)
-     ;;    (aref (string-as-multibyte "\300") 0) -> 192 (aka ?\300)
-     ;;    (aref (string-as-multibyte "\300\201") 0) -> 192 (aka ?\300)
-     ;;    (aref (string-as-multibyte "\300\201") 1) -> 129 (aka ?\201)
-     ;; but
-     ;;    (aref (string-as-multibyte "\201\300") 0) -> 2240
-     ;;    (aref (string-as-multibyte "\201\300") 1) -> <error>
-     ;; Better use string-to-multibyte or encode-coding-string.
-     ;; If you really need string-as-multibyte somewhere it's usually
-     ;; because you're using the internal emacs-mule representation (maybe
-     ;; because you're using string-as-unibyte somewhere), which is
-     ;; generally a problem in itself.
-     ;; Here is an approximate equivalence table to help think about it:
-     ;; (string-as-multibyte s)   ~= (decode-coding-string s 'emacs-mule)
-     ;; (string-to-multibyte s)   ~= (decode-coding-string s 'binary)
-     ;; (string-make-multibyte s) ~= (decode-coding-string s locale-coding-system)
-     ;; `string-as-multibyte' is an Emacs function, not available in XEmacs.
-     (string-as-multibyte . identity))))
-
 (defun mm-ucs-to-char (codepoint)
   "Convert Unicode codepoint to character."
   (or (decode-char 'ucs codepoint) ?#))

@@ -1245,7 +1245,7 @@ Return the number of characters in the body."
     (insert (format "Xref: %s" (system-name)))
     (while group-alist
       (insert (if (mm-multibyte-p)
-		  (mm-string-as-multibyte
+		  (string-as-multibyte
 		   (format " %s:%d" (caar group-alist) (cdar group-alist)))
 		(string-as-unibyte
 		 (format " %s:%d" (caar group-alist) (cdar group-alist)))))

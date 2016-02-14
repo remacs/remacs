@@ -1806,7 +1806,7 @@ If RECURSIVE, search recursively."
 								 nil t))
 			      (not (eq charset 'ascii)))
 			 (decode-coding-string (buffer-string) charset)
-		       (mm-string-as-multibyte (buffer-string)))
+		       (string-as-multibyte (buffer-string)))
 		   (erase-buffer)
 		   (mm-enable-multibyte)))
 	 (goto-char (point-min))

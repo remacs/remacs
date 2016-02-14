@@ -664,7 +664,7 @@ be \"related\" or \"alternate\"."
 	      (if (setq encoding (cdr (assq 'encoding cont)))
 		  (setq encoding (intern (downcase encoding))))
 	      (setq encoding (mm-encode-buffer type encoding)
-		    coded (mm-string-as-multibyte (buffer-string))))
+		    coded (string-as-multibyte (buffer-string))))
 	    (mml-insert-mime-headers cont type charset encoding nil)
 	    (insert "\n" coded))))
        ((eq (car cont) 'external)
