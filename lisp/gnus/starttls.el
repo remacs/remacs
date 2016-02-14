@@ -232,13 +232,6 @@ handshake, or nil on failure."
       (starttls-negotiate-gnutls process)
     (signal-process (process-id process) 'SIGALRM)))
 
-(eval-and-compile
-  (if (fboundp 'set-process-query-on-exit-flag)
-      (defalias 'starttls-set-process-query-on-exit-flag
-	'set-process-query-on-exit-flag)
-    (defalias 'starttls-set-process-query-on-exit-flag
-      'process-kill-without-query)))
-
 (defun starttls-open-stream-gnutls (name buffer host port)
   (message "Opening STARTTLS connection to `%s:%s'..." host port)
   (let* (done
@@ -250,7 +243,7 @@ handshake, or nil on failure."
 				  (int-to-string port)
 				port)
 			 starttls-extra-arguments)))
-    (starttls-set-process-query-on-exit-flag process nil)
+    (set-process-query-on-exit-flag process nil)
     (while (and (processp process)
 		(eq (process-status process) 'run)
 		(with-current-buffer buffer
@@ -292,7 +285,7 @@ GnuTLS requires a port number."
 			   name buffer starttls-program
 			   host (format "%s" port)
 			   starttls-extra-args)))
-      (starttls-set-process-query-on-exit-flag process nil)
+      (set-process-query-on-exit-flag process nil)
       process)))
 
 (defun starttls-available-p ()
