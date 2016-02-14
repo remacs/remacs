@@ -189,7 +189,7 @@ Customize or call the function `grep-apply-setting'."
   :group 'grep)
 
 (defcustom grep-files-aliases
-  '(("all" .   "* .*")
+  '(("all" .   "* .[!.]* ..?*") ;; Don't match `..'. See bug#22577
     ("el" .    "*.el")
     ("ch" .    "*.[ch]")
     ("c" .     "*.c")
