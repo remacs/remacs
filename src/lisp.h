@@ -4522,6 +4522,11 @@ extern void *record_xmalloc (size_t) ATTRIBUTE_ALLOC_SIZE ((1));
    This feature is experimental and requires careful debugging.
    Build with CPPFLAGS='-DUSE_STACK_LISP_OBJECTS=0' to disable it.  */
 
+#if (!defined USE_STACK_LISP_OBJECTS && defined __GNUC__ \
+     && !(4 < __GNUC__ + (3 < __GNUC_MINOR__ + (2 <= __GNUC_PATCHLEVEL__))))
+  /* Work around GCC bugs 36584 and 35271, which were fixed in GCC 4.3.2.  */
+# define USE_STACK_LISP_OBJECTS false
+#endif
 #ifndef USE_STACK_LISP_OBJECTS
 # define USE_STACK_LISP_OBJECTS true
 #endif
