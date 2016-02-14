@@ -487,7 +487,7 @@ superset of iso-8859-1."
 ;; Fixme: some of the cars here aren't valid MIME charsets.  That
 ;; should only matter with XEmacs, though.
 (defvar mm-mime-mule-charset-alist
-  `((us-ascii ascii)
+  '((us-ascii ascii)
     (iso-8859-1 latin-iso8859-1)
     (iso-8859-2 latin-iso8859-2)
     (iso-8859-3 latin-iso8859-3)
@@ -537,17 +537,7 @@ superset of iso-8859-1."
     (iso-2022-jp-3 latin-jisx0201 japanese-jisx0208-1978 japanese-jisx0208
 		   japanese-jisx0213-1 japanese-jisx0213-2)
     (shift_jis latin-jisx0201 katakana-jisx0201 japanese-jisx0208)
-    ,(cond ((fboundp 'unicode-precedence-list)
-	    (cons 'utf-8 (delq 'ascii (mapcar 'charset-name
-					      (unicode-precedence-list)))))
-	   ((or (not (fboundp 'charsetp)) ;; non-Mule case
-		(charsetp 'unicode-a)
-		(not (mm-coding-system-p 'mule-utf-8)))
-	    '(utf-8 unicode-a unicode-b unicode-c unicode-d unicode-e))
-	   (t ;; If we have utf-8 we're in Mule 5+.
-	    (append '(utf-8)
-		    (delete 'ascii
-			    (coding-system-get 'mule-utf-8 'safe-charsets))))))
+    (utf-8))
   "Alist of MIME-charset/MULE-charsets.")
 
 ;; Correct by construction, but should be unnecessary for Emacs:
@@ -597,16 +587,11 @@ Valid elements include:
   "A table of the difference character between ISO-8859-X and ISO-8859-15.")
 
 (defcustom mm-coding-system-priorities
-  (let ((lang (if (boundp 'current-language-environment)
-		  (symbol-value 'current-language-environment))))
-    (cond (;; XEmacs without Mule but with `file-coding'.
-	   (not lang) nil)
-	  ;; In XEmacs 21.5 it may be the one like "Japanese (UTF-8)".
-	  ((string-match "\\`Japanese" lang)
-	   ;; Japanese users prefer iso-2022-jp to others usually used
-	   ;; for `buffer-file-coding-system', however iso-8859-1 should
-	   ;; be used when there are only ASCII and Latin-1 characters.
-	   '(iso-8859-1 iso-2022-jp utf-8))))
+  (and (string-match "\\`Japanese" current-language-environment)
+       ;; Japanese users prefer iso-2022-jp to others usually used
+       ;; for `buffer-file-coding-system', however iso-8859-1 should
+       ;; be used when there are only ASCII and Latin-1 characters.
+       '(iso-8859-1 iso-2022-jp utf-8))
   "Preferred coding systems for encoding outgoing messages.
 
 More than one suitable coding system may be found for some text.
@@ -618,8 +603,7 @@ variable is set, it overrides the default priority."
   :group 'mime)
 
 ;; ??
-(defvar mm-use-find-coding-systems-region
-  (fboundp 'find-coding-systems-region)
+(defvar mm-use-find-coding-systems-region t
   "Use `find-coding-systems-region' to find proper coding systems.
 
 Setting it to nil is useful on Emacsen supporting Unicode if sending
@@ -646,29 +630,16 @@ like \"&#128;\" to the euro sign, mainly in html messages.")
 
 (defun mm-mule-charset-to-mime-charset (charset)
   "Return the MIME charset corresponding to the given Mule CHARSET."
-  (if (and (fboundp 'find-coding-systems-for-charsets)
-	   (fboundp 'sort-coding-systems))
-      (let ((css (sort (sort-coding-systems
-			(find-coding-systems-for-charsets (list charset)))
-		       'mm-sort-coding-systems-predicate))
-	    cs mime)
-	(while (and (not mime)
-		    css)
-	  (when (setq cs (pop css))
-	    (setq mime (or (coding-system-get cs :mime-charset)
-			   (coding-system-get cs 'mime-charset)))))
-	mime)
-    (let ((alist (mapcar (lambda (cs)
-			   (assq cs mm-mime-mule-charset-alist))
-			 (sort (mapcar 'car mm-mime-mule-charset-alist)
-			       'mm-sort-coding-systems-predicate)))
-	  out)
-      (while alist
-	(when (memq charset (cdar alist))
-	  (setq out (caar alist)
-		alist nil))
-	(pop alist))
-      out)))
+  (let ((css (sort (sort-coding-systems
+		    (find-coding-systems-for-charsets (list charset)))
+		   'mm-sort-coding-systems-predicate))
+	cs mime)
+    (while (and (not mime)
+		css)
+      (when (setq cs (pop css))
+	(setq mime (or (coding-system-get cs :mime-charset)
+		       (coding-system-get cs 'mime-charset)))))
+    mime))
 
 (defun mm-enable-multibyte ()
   "Set the multibyte flag of the current buffer.
@@ -692,8 +663,7 @@ non-nil."
    mail-parse-mule-charset ;; cached mule-charset
    (progn
      (setq mail-parse-mule-charset
-	   (and (boundp 'current-language-environment)
-		(car (last
+	   (and (car (last
 		      (assq 'charset
 			    (assoc current-language-environment
 				   language-info-alist))))))
@@ -709,38 +679,27 @@ non-nil."
 (defun mm-charset-after (&optional pos)
   "Return charset of a character in current buffer at position POS.
 If POS is nil, it defaults to the current point.
-If POS is out of range, the value is nil.
-If the charset is `composition', return the actual one."
+If POS is out of range, the value is nil."
   (let ((char (char-after pos)) charset)
     (if (< char 128)
 	(setq charset 'ascii)
-      ;; charset-after is fake in some Emacsen.
-      (setq charset (and (fboundp 'char-charset) (char-charset char)))
-      (if (eq charset 'composition)	; Mule 4
-	  (let ((p (or pos (point))))
-	    (cadr (find-charset-region p (1+ p))))
-	(if (and charset (not (memq charset '(ascii eight-bit-control
-						    eight-bit-graphic))))
-	    charset
-	  (mm-guess-charset))))))
+      (setq charset (char-charset char))
+      (if (and charset (not (memq charset '(ascii eight-bit-control
+						  eight-bit-graphic))))
+	  charset
+	(mm-guess-charset)))))
 
 (defun mm-mime-charset (charset)
   "Return the MIME charset corresponding to the given Mule CHARSET."
-  (if (eq charset 'unknown)
-      (error "The message contains non-printable characters, please use attachment"))
-  (if (and (fboundp 'coding-system-get) (fboundp 'get-charset-property))
-      (or
-       (and (mm-preferred-coding-system charset)
-	    (or (coding-system-get
-		 (mm-preferred-coding-system charset) :mime-charset)
-		(coding-system-get
-		 (mm-preferred-coding-system charset) 'mime-charset)))
-       (and (eq charset 'ascii)
-	    'us-ascii)
-       (mm-preferred-coding-system charset)
-       (mm-mule-charset-to-mime-charset charset))
-    ;; This is for XEmacs.
-    (mm-mule-charset-to-mime-charset charset)))
+  (when (eq charset 'unknown)
+    (error "The message contains non-printable characters, please use attachment"))
+  (or
+   (and (mm-preferred-coding-system charset)
+	(coding-system-get (mm-preferred-coding-system charset) 'mime-charset))
+   (and (eq charset 'ascii)
+	'us-ascii)
+   (mm-preferred-coding-system charset)
+   (mm-mule-charset-to-mime-charset charset)))
 
 ;; Fixme:  This is used in places when it should be testing the
 ;; default multibyteness.
@@ -749,25 +708,24 @@ If the charset is `composition', return the actual one."
   enable-multibyte-characters)
 
 (defun mm-iso-8859-x-to-15-region (&optional b e)
-  (if (fboundp 'char-charset)
-      (let (charset item c inconvertible)
-	(save-restriction
-	  (if e (narrow-to-region b e))
-	  (goto-char (point-min))
-	  (skip-chars-forward "\0-\177")
-	  (while (not (eobp))
-	    (cond
-	     ((not (setq item (assq (char-charset (setq c (char-after)))
-				    mm-iso-8859-x-to-15-table)))
-	      (forward-char))
-	     ((memq c (cdr (cdr item)))
-	      (setq inconvertible t)
-	      (forward-char))
-	     (t
-	      (insert-before-markers (prog1 (+ c (car (cdr item)))
-				       (delete-char 1)))))
-	    (skip-chars-forward "\0-\177")))
-	(not inconvertible))))
+  (let (charset item c inconvertible)
+    (save-restriction
+      (if e (narrow-to-region b e))
+      (goto-char (point-min))
+      (skip-chars-forward "\0-\177")
+      (while (not (eobp))
+	(cond
+	 ((not (setq item (assq (char-charset (setq c (char-after)))
+				mm-iso-8859-x-to-15-table)))
+	  (forward-char))
+	 ((memq c (cdr (cdr item)))
+	  (setq inconvertible t)
+	  (forward-char))
+	 (t
+	  (insert-before-markers (prog1 (+ c (car (cdr item)))
+				   (delete-char 1)))))
+	(skip-chars-forward "\0-\177")))
+    (not inconvertible)))
 
 (defun mm-sort-coding-systems-predicate (a b)
   (let ((priorities
@@ -879,15 +837,13 @@ it if any may malfunction."
 (defun mm-find-charset-region (b e)
   "Return a list of Emacs charsets in the region B to E."
   (cond
-   ((and (mm-multibyte-p)
-	 (fboundp 'find-charset-region))
+   ((mm-multibyte-p)
     ;; Remove composition since the base charsets have been included.
     ;; Remove eight-bit-*, treat them as ascii.
     (let ((css (find-charset-region b e)))
-      (dolist (cs
-	       '(composition eight-bit-control eight-bit-graphic control-1)
-	       css)
-	(setq css (delq cs css)))))
+      (dolist (cs '(composition eight-bit-control eight-bit-graphic control-1))
+	(setq css (delq cs css)))
+      css))
    (t
     ;; We are in a unibyte buffer, so we futz around a bit.
     (save-excursion
@@ -898,11 +854,9 @@ it if any may malfunction."
 	(if (eobp)
 	    '(ascii)
 	  (let (charset)
-	    (setq charset
-		  (and (boundp 'current-language-environment)
-		       (car (last (assq 'charset
-					(assoc current-language-environment
-					       language-info-alist))))))
+	    (setq charset (car (last (assq 'charset
+					   (assoc current-language-environment
+						  language-info-alist)))))
 	    (if (eq charset 'ascii) (setq charset nil))
 	    (or charset
 		(setq charset
@@ -929,9 +883,9 @@ it if any may malfunction."
   "Like `insert-file-contents', but only reads in the file.
 A buffer may be modified in several ways after reading into the buffer due
 to advanced Emacs features, such as file-name-handlers, format decoding,
-`find-file-hooks', etc.
+`find-file-hook', etc.
 If INHIBIT is non-nil, inhibit `mm-inhibit-file-name-handlers'.
-  This function ensures that none of these modifications will take place."
+This function ensures that none of these modifications will take place."
   (letf* ((format-alist nil)
           (auto-mode-alist (if inhibit nil (mm-auto-mode-alist)))
           ((default-value 'major-mode) 'fundamental-mode)
@@ -946,14 +900,8 @@ If INHIBIT is non-nil, inhibit `mm-inhibit-file-name-handlers'.
                (append mm-inhibit-file-name-handlers
                        inhibit-file-name-handlers)
              inhibit-file-name-handlers))
-          (ffh (if (boundp 'find-file-hook)
-                   'find-file-hook
-                 'find-file-hooks))
-          (val (symbol-value ffh)))
-    (set ffh nil)
-    (unwind-protect
-	(insert-file-contents filename visit beg end replace)
-      (set ffh val))))
+	  (find-file-hook nil))
+    (insert-file-contents filename visit beg end replace)))
 
 (defun mm-append-to-file (start end filename &optional codesys inhibit)
   "Append the contents of the region to the end of file FILENAME.
@@ -1017,39 +965,23 @@ If INHIBIT is non-nil, inhibit `mm-inhibit-file-name-handlers'."
       result)))
 
 ;; Fixme: This doesn't look useful where it's used.
-(if (fboundp 'detect-coding-region)
-    (defun mm-detect-coding-region (start end)
-      "Like `detect-coding-region' except returning the best one."
-      (let ((coding-systems
-	     (detect-coding-region start end)))
-	(or (car-safe coding-systems)
-	    coding-systems)))
-  (defun mm-detect-coding-region (start end)
-    (let ((point (point)))
-      (goto-char start)
-      (skip-chars-forward "\0-\177" end)
-      (prog1
-	  (if (eq (point) end) 'ascii (mm-guess-charset))
-	(goto-char point)))))
+(defun mm-detect-coding-region (start end)
+  "Like `detect-coding-region' except returning the best one."
+  (let ((coding-systems (detect-coding-region start end)))
+    (or (car-safe coding-systems)
+	coding-systems)))
 
 (declare-function mm-detect-coding-region "mm-util" (start end))
 
-(if (fboundp 'coding-system-get)
-    (defun mm-detect-mime-charset-region (start end)
-      "Detect MIME charset of the text in the region between START and END."
-      (let ((cs (mm-detect-coding-region start end)))
-	(or (coding-system-get cs :mime-charset)
-	    (coding-system-get cs 'mime-charset))))
-  (defun mm-detect-mime-charset-region (start end)
-    "Detect MIME charset of the text in the region between START and END."
-    (let ((cs (mm-detect-coding-region start end)))
-      cs)))
+(defun mm-detect-mime-charset-region (start end)
+  "Detect MIME charset of the text in the region between START and END."
+  (let ((cs (mm-detect-coding-region start end)))
+    (coding-system-get cs 'mime-charset)))
 
 (defun mm-coding-system-to-mime-charset (coding-system)
   "Return the MIME charset corresponding to CODING-SYSTEM."
-  (when coding-system
-    (or (coding-system-get coding-system :mime-charset)
-	(coding-system-get coding-system 'mime-charset))))
+  (and coding-system
+       (coding-system-get coding-system 'mime-charset)))
 
 (defvar jka-compr-acceptable-retval-list)
 (declare-function jka-compr-make-temp-name "jka-compr" (&optional local))
@@ -1117,14 +1049,6 @@ decompressed data.  The buffer's multibyteness must be turned off."
 	    (setq retval nil))
 	  (message "%s" (or err-msg (concat msg "done")))
 	  retval)))))
-
-(eval-when-compile
-  (unless (fboundp 'coding-system-name)
-    (defalias 'coding-system-name 'ignore))
-  (unless (fboundp 'find-file-coding-system-for-read-from-filename)
-    (defalias 'find-file-coding-system-for-read-from-filename 'ignore))
-  (unless (fboundp 'find-operation-coding-system)
-    (defalias 'find-operation-coding-system 'ignore)))
 
 (defun mm-find-buffer-file-coding-system (&optional filename)
   "Find coding system used to decode the contents of the current buffer.
