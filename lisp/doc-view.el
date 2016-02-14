@@ -140,6 +140,7 @@
 (require 'dired)
 (require 'image-mode)
 (require 'jka-compr)
+(require 'subr-x)
 
 ;;;; Customization Options
 
@@ -695,14 +696,18 @@ It's a subdirectory of `doc-view-cache-directory'."
     (setq doc-view--current-cache-dir
 	  (file-name-as-directory
 	   (expand-file-name
-	    (concat (subst-char-in-string ?% ?_ ;; bug#13679
-                     (file-name-nondirectory doc-view--buffer-file-name))
-		    "-"
-		    (let ((file doc-view--buffer-file-name))
-		      (with-temp-buffer
-			(set-buffer-multibyte nil)
-			(insert-file-contents-literally file)
-			(md5 (current-buffer)))))
+	    (concat (thread-last (file-name-nondirectory doc-view--buffer-file-name)
+                      ;; bug#13679
+                      (subst-char-in-string ?% ?_)
+                      ;; arc-mode concats archive name and file name
+                      ;; with colon which is illegal on Windows.
+                      (subst-char-in-string ?: ?_))
+                    "-"
+                    (let ((file doc-view--buffer-file-name))
+                      (with-temp-buffer
+                        (set-buffer-multibyte nil)
+                        (insert-file-contents-literally file)
+                        (md5 (current-buffer)))))
             doc-view-cache-directory)))))
 
 ;;;###autoload
