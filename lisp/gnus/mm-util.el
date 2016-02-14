@@ -27,11 +27,7 @@
 (require 'mail-prsvr)
 (require 'timer)
 
-(defvar mm-mime-mule-charset-alist )
-;; Note this is not presently used on Emacs >= 23, which is good,
-;; since it means standalone message-mode (which requires mml and
-;; hence mml-util) does not load gnus-util.
-(autoload 'gnus-completing-read "gnus-util")
+(defvar mm-mime-mule-charset-alist)
 
 ;; Emulate functions that are not available in every (X)Emacs version.
 ;; The name of a function is prefixed with mm-, like `mm-char-int' for
@@ -125,169 +121,17 @@
 		 (mm-coding-system-p 'iso-8859-1))
 	'((iso_8859-1 . iso-8859-1)))
     )
-  "A mapping from unknown or invalid charset names to the real charset names.
-
-See `mm-codepage-iso-8859-list' and `mm-codepage-ibm-list'.")
-
-(defun mm-codepage-setup (number &optional alias)
-  "Create a coding system cpNUMBER.
-The coding system is created using `codepage-setup'.  If ALIAS is
-non-nil, an alias is created and added to
-`mm-charset-synonym-alist'.  If ALIAS is a string, it's used as
-the alias.  Else windows-NUMBER is used."
-  (interactive
-   (let ((completion-ignore-case t)
-	 (candidates (if (fboundp 'cp-supported-codepages)
-			 (cp-supported-codepages)
-		       ;; Removed in Emacs 23 (unicode), so signal an error:
-		       (error "`codepage-setup' not present in this Emacs version"))))
-     (list (gnus-completing-read "Setup DOS Codepage" candidates
-                                 t nil nil "437"))))
-  (when alias
-    (setq alias (if (stringp alias)
-		    (intern alias)
-		  (intern (format "windows-%s" number)))))
-  (let* ((cp (intern (format "cp%s" number))))
-    (unless (mm-coding-system-p cp)
-      (if (fboundp 'codepage-setup)	; silence compiler
-	  (codepage-setup number)
-	(error "`codepage-setup' not present in this Emacs version")))
-    (when (and alias
-	       ;; Don't add alias if setup of cp failed.
-	       (mm-coding-system-p cp))
-      (add-to-list 'mm-charset-synonym-alist (cons alias cp)))))
-
-(defcustom mm-codepage-iso-8859-list
-  (list 1250 ;; Windows-1250 is a variant of Latin-2 heavily used by Microsoft
-	;; Outlook users in Czech republic.  Use this to allow reading of
-	;; their e-mails.
-	'(1252 . 1) ;; Windows-1252 is a superset of iso-8859-1 (West
-	            ;; Europe).  See also `gnus-article-dumbquotes-map'.
-	'(1254 . 9) ;; Windows-1254 is a superset of iso-8859-9 (Turkish).
-	'(1255 . 8));; Windows-1255 is a superset of iso-8859-8 (Hebrew).
-  "A list of Windows codepage numbers and iso-8859 charset numbers.
-
-If an element is a number corresponding to a supported windows
-codepage, appropriate entries to `mm-charset-synonym-alist' are
-added by `mm-setup-codepage-iso-8859'.  An element may also be a
-cons cell where the car is a codepage number and the cdr is the
-corresponding number of an iso-8859 charset."
-  :type '(list (set :inline t
-		    (const 1250 :tag "Central and East European")
-		    (const (1252 . 1) :tag "West European")
-		    (const (1254 . 9) :tag "Turkish")
-		    (const (1255 . 8) :tag "Hebrew"))
-	       (repeat :inline t
-		       :tag "Other options"
-		       (choice
-			(integer :tag "Windows codepage number")
-			(cons (integer :tag "Windows codepage number")
-			      (integer :tag "iso-8859 charset  number")))))
-  :version "22.1" ;; Gnus 5.10.9
-  :group 'mime)
-
-(defcustom mm-codepage-ibm-list
-  (list 437 ;; (US etc.)
-	860 ;; (Portugal)
-	861 ;; (Iceland)
-	862 ;; (Israel)
-	863 ;; (Canadian French)
-	865 ;; (Nordic)
-	852 ;;
-	850 ;; (Latin 1)
-	855 ;; (Cyrillic)
-	866 ;; (Cyrillic - Russian)
-	857 ;; (Turkish)
-	864 ;; (Arabic)
-	869 ;; (Greek)
-	874);; (Thai)
-  ;; In Emacs 23 (unicode), cp... and ibm... are aliases.
-  ;; Cf. http://thread.gmane.org/v9lkng5nwy.fsf@marauder.physik.uni-ulm.de
-  "List of IBM codepage numbers.
-
-The codepage mappings slightly differ between IBM and other vendors.
-See \"ftp://ftp.unicode.org/Public/MAPPINGS/VENDORS/IBM/README.TXT\".
-
-If an element is a number corresponding to a supported windows
-codepage, appropriate entries to `mm-charset-synonym-alist' are
-added by `mm-setup-codepage-ibm'."
-  :type '(list (set :inline t
-		    (const 437 :tag "US etc.")
-		    (const 860 :tag "Portugal")
-		    (const 861 :tag "Iceland")
-		    (const 862 :tag "Israel")
-		    (const 863 :tag "Canadian French")
-		    (const 865 :tag "Nordic")
-		    (const 852)
-		    (const 850 :tag "Latin 1")
-		    (const 855 :tag "Cyrillic")
-		    (const 866 :tag "Cyrillic - Russian")
-		    (const 857 :tag "Turkish")
-		    (const 864 :tag "Arabic")
-		    (const 869 :tag "Greek")
-		    (const 874 :tag "Thai"))
-	       (repeat :inline t
-		       :tag "Other options"
-		       (integer :tag "Codepage number")))
-  :version "22.1" ;; Gnus 5.10.9
-  :group 'mime)
-
-(defun mm-setup-codepage-iso-8859 (&optional list)
-  "Add appropriate entries to `mm-charset-synonym-alist'.
-Unless LIST is given, `mm-codepage-iso-8859-list' is used."
-  (unless list
-    (setq list mm-codepage-iso-8859-list))
-  (dolist (i list)
-    (let (cp windows iso)
-      (if (consp i)
-	  (setq cp (intern (format "cp%d" (car i)))
-		windows (intern (format "windows-%d" (car i)))
-		iso (intern (format "iso-8859-%d" (cdr i))))
-	(setq cp (intern (format "cp%d" i))
-	      windows (intern (format "windows-%d" i))))
-      (unless (mm-coding-system-p windows)
-	(if (mm-coding-system-p cp)
-	    (add-to-list 'mm-charset-synonym-alist (cons windows cp))
-	  (add-to-list 'mm-charset-synonym-alist (cons windows iso)))))))
-
-(defun mm-setup-codepage-ibm (&optional list)
-  "Add appropriate entries to `mm-charset-synonym-alist'.
-Unless LIST is given, `mm-codepage-ibm-list' is used."
-  (unless list
-    (setq list mm-codepage-ibm-list))
-  (dolist (number list)
-    (let ((ibm (intern (format "ibm%d" number)))
-	  (cp  (intern (format "cp%d" number))))
-      (when (and (not (mm-coding-system-p ibm))
-		 (mm-coding-system-p cp))
-	(add-to-list 'mm-charset-synonym-alist (cons ibm cp))))))
-
-;; Initialize:
-(mm-setup-codepage-iso-8859)
-(mm-setup-codepage-ibm)
+  "A mapping from unknown or invalid charset names to the real charset names.")
 
 ;; Note: this has to be defined before `mm-charset-to-coding-system'.
-(defcustom mm-charset-eval-alist
-  '(
-    ;; Emacs 22 provides autoloads for 1250-1258
-    ;; (i.e. `mm-codepage-setup' does nothing).
-    (windows-1250 . (mm-codepage-setup 1250 t))
-    (windows-1251 . (mm-codepage-setup 1251 t))
-    (windows-1253 . (mm-codepage-setup 1253 t))
-    (windows-1257 . (mm-codepage-setup 1257 t)))
+(defcustom mm-charset-eval-alist nil
   "An alist of (CHARSET . FORM) pairs.
 If an article is encoded in an unknown CHARSET, FORM is
 evaluated.  This allows the loading of additional libraries
 providing charsets on demand.  If supported by your Emacs
 version, you could use `autoload-coding-system' here."
   :version "22.1" ;; Gnus 5.10.9
-  :type '(list (set :inline t
-		    (const (windows-1250 . (mm-codepage-setup 1250 t)))
-		    (const (windows-1251 . (mm-codepage-setup 1251 t)))
-		    (const (windows-1253 . (mm-codepage-setup 1253 t)))
-		    (const (windows-1257 . (mm-codepage-setup 1257 t)))
-		    (const (cp850 . (mm-codepage-setup 850 nil))))
-	       (repeat :inline t
+  :type '(list (repeat :inline t
 		       :tag "Other options"
 		       (cons (symbol :tag "charset")
 			     (symbol :tag "form"))))
