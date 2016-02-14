@@ -3157,7 +3157,7 @@ If FORCE is non-nil, the .newsrc file is read."
 			  (gnus-parameter-charset name)
 			  gnus-default-charset)))
 		;; Fixme: Don't decode in unibyte mode.
-		(when (and str charset (featurep 'mule))
+		(when (and str charset)
 		  (setq str (decode-coding-string str charset)))
 		(set group str)))
 	    (forward-line 1))))

@@ -198,14 +198,13 @@
 	      (delete-region ,(point-min-marker)
 			     ,(point-max-marker)))))))))
 
-(defvar mm-w3m-standalone-supports-m17n-p (if (featurep 'mule) 'undecided)
+(defvar mm-w3m-standalone-supports-m17n-p 'undecided
   "*T means the w3m command supports the m17n feature.")
 
 (defun mm-w3m-standalone-supports-m17n-p ()
   "Say whether the w3m command supports the m17n feature."
   (cond ((eq mm-w3m-standalone-supports-m17n-p t) t)
 	((eq mm-w3m-standalone-supports-m17n-p nil) nil)
-	((not (featurep 'mule)) (setq mm-w3m-standalone-supports-m17n-p nil))
 	((condition-case nil
 	     (let ((coding-system-for-write 'iso-2022-jp)
 		   (coding-system-for-read 'iso-2022-jp)

@@ -1204,7 +1204,7 @@ The following commands are available:
 
 (defun gnus-group-name-decode (string charset)
   ;; Fixme: Don't decode in unibyte mode.
-  (if (and string charset (featurep 'mule))
+  (if (and string charset)
       (decode-coding-string string charset)
     string))
 

@@ -243,8 +243,7 @@ decoding.  If it is nil, default to `mail-parse-charset'."
   (save-excursion
     (when encoding
       (mm-decode-content-transfer-encoding encoding type))
-    (when (and (featurep 'mule) ;; Fixme: Wrong test for unibyte session.
-	       (not (eq charset 'gnus-decoded)))
+    (when (not (eq charset 'gnus-decoded))
       (let ((coding-system (mm-charset-to-coding-system
 			    ;; Allow overwrite using
 			    ;; `mm-charset-override-alist'.
@@ -271,22 +270,21 @@ decoding.  If it is nil, default to `mail-parse-charset'."
 	    (memq charset mail-parse-ignored-charsets))
     (setq charset mail-parse-charset))
   (or
-   (when (featurep 'mule)
-     (let ((coding-system (mm-charset-to-coding-system
-			   charset
-			   ;; Allow overwrite using
-			   ;; `mm-charset-override-alist'.
-			   nil t)))
-       (if (and (not coding-system)
-		(listp mail-parse-ignored-charsets)
-		(memq 'gnus-unknown mail-parse-ignored-charsets))
-	   (setq coding-system
-		 (mm-charset-to-coding-system mail-parse-charset)))
-       (when (and charset coding-system
-		  (mm-multibyte-p)
-		  (or (not (eq coding-system 'ascii))
-		      (setq coding-system mail-parse-charset)))
-	 (decode-coding-string string coding-system))))
+   (let ((coding-system (mm-charset-to-coding-system
+			 charset
+			 ;; Allow overwrite using
+			 ;; `mm-charset-override-alist'.
+			 nil t)))
+     (if (and (not coding-system)
+	      (listp mail-parse-ignored-charsets)
+	      (memq 'gnus-unknown mail-parse-ignored-charsets))
+	 (setq coding-system
+	       (mm-charset-to-coding-system mail-parse-charset)))
+     (when (and charset coding-system
+		(mm-multibyte-p)
+		(or (not (eq coding-system 'ascii))
+		    (setq coding-system mail-parse-charset)))
+       (decode-coding-string string coding-system)))
    string))
 
 (provide 'mm-bodies)
