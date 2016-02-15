@@ -838,6 +838,7 @@ omitted or nil.
 
 For more information on Auto Composition mode, see
 `auto-composition-mode' ."
+  :global t
   :variable (default-value 'auto-composition-mode))
 
 (defalias 'toggle-auto-composition 'auto-composition-mode)
