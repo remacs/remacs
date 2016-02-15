@@ -2418,12 +2418,6 @@ second argument matching @code{"open"} (if successful) or
 @code{make-network-process} does not return until the connection
 has succeeded or failed.
 
-If @var{nowait} is @code{dns}, also do the @acronym{DNS} lookup
-asynchronously, if supported.  In that case, the process is returned
-before a connection has been made, and the client should not try
-communicating with the process until it has changed status to
-@code{"connected"}.
-
 @item :tls-parameters
 When opening a TLS connection, this should be where the first element
 is the TLS type (which should either be @code{gnutls-x509pki} or

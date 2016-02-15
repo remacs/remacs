@@ -137,11 +137,7 @@ non-nil, is used warn the user if the connection isn't encrypted.
 a greeting from the server.
 
 :nowait, if non-nil, says the connection should be made
-asynchronously, if possible.  If it is `dns', also do the DNS
-lookup asynchronously, if supported.  In that case, the process
-is returned before a connection has been made, and the client
-should not try communicating with the process until it has
-changed status to \"connected\".
+asynchronously, if possible.
 
 :tls-parameters is a list that should be supplied if you're
 opening a TLS connection.  The first element is the TLS

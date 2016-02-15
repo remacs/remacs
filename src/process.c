@@ -1031,10 +1031,8 @@ The string argument is normally a multibyte string, except:
 
   CHECK_PROCESS (process);
 
-#ifdef HAVE_GETADDRINFO_A
   if (NETCONN_P (process))
     wait_for_socket_fds (process);
-#endif
 
   p = XPROCESS (process);
 
@@ -1120,10 +1118,8 @@ DEFUN ("set-process-window-size", Fset_process_window_size,
 {
   CHECK_PROCESS (process);
 
-#ifdef HAVE_GETADDRINFO_A
   if (NETCONN_P (process))
     wait_for_socket_fds (process);
-#endif
 
   /* All known platforms store window sizes as 'unsigned short'.  */
   CHECK_RANGED_INTEGER (height, 0, USHRT_MAX);
@@ -1207,10 +1203,8 @@ list of keywords.  */)
 
 #ifdef DATAGRAM_SOCKETS
 
-#ifdef HAVE_GETADDRINFO_A
   if (NETCONN_P (process))
     wait_for_socket_fds (process);
-#endif
 
   if (DATAGRAM_CONN_P (process)
       && (EQ (key, Qt) || EQ (key, QCremote)))
@@ -2441,10 +2435,8 @@ DEFUN ("process-datagram-address", Fprocess_datagram_address, Sprocess_datagram_
 
   CHECK_PROCESS (process);
 
-#ifdef HAVE_GETADDRINFO_A
   if (NETCONN_P (process))
     wait_for_socket_fds (process);
-#endif
 
   if (!DATAGRAM_CONN_P (process))
     return Qnil;
@@ -2465,10 +2457,8 @@ Returns nil upon error setting address, ADDRESS otherwise.  */)
 
   CHECK_PROCESS (process);
 
-#ifdef HAVE_GETADDRINFO_A
   if (NETCONN_P (process))
     wait_for_socket_fds (process);
-#endif
 
   if (!DATAGRAM_CONN_P (process))
     return Qnil;
@@ -2638,9 +2628,7 @@ OPTION is not a supported option, return nil instead; otherwise return t.  */)
   if (!NETCONN1_P (p))
     error ("Process is not a network process");
 
-#ifdef HAVE_GETADDRINFO_A
   wait_for_socket_fds (process);
-#endif
 
   s = p->infd;
   if (s < 0)
@@ -3453,16 +3441,12 @@ system used for both reading and writing for this process.  If CODING
 is a cons (DECODING . ENCODING), DECODING is used for reading, and
 ENCODING is used for writing.
 
-:nowait NOWAIT -- If NOWAIT is non-nil for a stream type client
+:nowait BOOL -- If NOWAIT is non-nil for a stream type client
 process, return without waiting for the connection to complete;
 instead, the sentinel function will be called with second arg matching
 "open" (if successful) or "failed" when the connect completes.
 Default is to use a blocking connect (i.e. wait) for stream type
-connections.  If NOWAIT is `dns', also do the DNS lookup
-asynchronously, if supported.  In that case, the process is returned
-before a connection has been made, and the client should not try
-communicating with the process until it has changed status to
-"connected".
+connections.
 
 :noquery BOOL -- Query the user unless BOOL is non-nil, and process is
 running when Emacs is exited.
@@ -3725,7 +3709,7 @@ usage: (make-network-process &rest ARGS)  */)
 #endif
 
 #ifdef HAVE_GETADDRINFO_A
-  if (EQ (Fplist_get (contact, QCnowait), Qt) &&
+  if (!NILP (Fplist_get (contact, QCnowait)) &&
       !NILP (host))
     {
       int ret;
@@ -4683,24 +4667,32 @@ check_for_dns (Lisp_Object proc)
   return ip_addresses;
 }
 
+#endif /* HAVE_GETADDRINFO_A */
+
 static void
-wait_for_socket_fds(Lisp_Object process)
+wait_for_socket_fds (Lisp_Object process)
 {
-  while (XPROCESS(process)->dns_requests)
-    {
-      wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
-    }
+  while (XPROCESS (process)->infd < 0 &&
+	 EQ (XPROCESS (process)->status, Qconnect))
+    wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
 }
 
 static void
-wait_while_connecting(Lisp_Object process)
+wait_while_connecting (Lisp_Object process)
 {
-  while (EQ (Qconnect, XPROCESS(process)->status))
-    {
-      wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
-    }
+  while (EQ (XPROCESS (process)->status, Qconnect))
+    wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
 }
-#endif /* HAVE_GETADDRINFO_A */
+
+static void
+wait_for_tls_negotiation (Lisp_Object process)
+{
+#ifdef HAVE_GNUTLS
+  while (EQ (XPROCESS (process)->status, Qrun) &&
+	 !NILP (XPROCESS (process)->gnutls_boot_parameters))
+    wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
+#endif
+}
 
 /* This variable is different from waiting_for_input in keyboard.c.
    It is used to communicate to a lisp process-filter/sentinel (via the
@@ -5962,13 +5954,6 @@ send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
   if (p->outfd < 0)
     error ("Output file descriptor of %s is closed", SDATA (p->name));
 
-#ifdef HAVE_GNUTLS
-  /* The TLS connection hasn't been set up yet, so we can't write
-     anything on the socket. */
-  if (!NILP (p->gnutls_boot_parameters))
-    return;
-#endif
-
   coding = proc_encode_coding_system[p->outfd];
   Vlast_coding_system_used = CODING_ID_NAME (coding->id);
 
@@ -6193,10 +6178,8 @@ Output from processes can arrive in between bunches.  */)
   if (XINT (start) < GPT && XINT (end) > GPT)
     move_gap_both (XINT (start), start_byte);
 
-#ifdef HAVE_GETADDRINFO_A
   if (NETCONN_P (proc))
     wait_while_connecting (proc);
-#endif
 
   send_process (proc, (char *) BYTE_POS_ADDR (start_byte),
 		end_byte - start_byte, Fcurrent_buffer ());
@@ -6218,10 +6201,10 @@ Output from processes can arrive in between bunches.  */)
   CHECK_STRING (string);
   proc = get_process (process);
 
-#ifdef HAVE_GETADDRINFO_A
-  if (NETCONN_P (proc))
+  if (NETCONN_P (proc)) {
     wait_while_connecting (proc);
-#endif
+    wait_for_tls_negotiation (proc);
+  }
 
   send_process (proc, SSDATA (string),
 		SBYTES (string), string);
@@ -6639,10 +6622,8 @@ process has been transmitted to the serial port.  */)
 
   proc = get_process (process);
 
-#ifdef HAVE_GETADDRINFO_A
   if (NETCONN_P (proc))
     wait_while_connecting (proc);
-#endif
 
   if (DATAGRAM_CONN_P (proc))
     return process;
@@ -7099,10 +7080,8 @@ encode subprocess input.  */)
 
   CHECK_PROCESS (process);
 
-#ifdef HAVE_GETADDRINFO_A
   if (NETCONN_P (process))
     wait_for_socket_fds (process);
-#endif
 
   p = XPROCESS (process);
 
@@ -7143,10 +7122,8 @@ suppressed.  */)
 
   CHECK_PROCESS (process);
 
-#ifdef HAVE_GETADDRINFO_A
   if (NETCONN_P (process))
     wait_for_socket_fds (process);
-#endif
 
   p = XPROCESS (process);
   if (NILP (flag))
