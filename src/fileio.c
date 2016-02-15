@@ -36,7 +36,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <selinux/context.h>
 #endif
 
-#ifdef HAVE_ACL_SET_FILE
+#if USE_ACL && defined HAVE_ACL_SET_FILE
 #include <sys/acl.h>
 #endif
 
@@ -2937,16 +2937,17 @@ Return nil if file does not exist or is not accessible, or if Emacs
 was unable to determine the ACL entries.  */)
   (Lisp_Object filename)
 {
+#if USE_ACL
   Lisp_Object absname;
   Lisp_Object handler;
-#ifdef HAVE_ACL_SET_FILE
+# ifdef HAVE_ACL_SET_FILE
   acl_t acl;
   Lisp_Object acl_string;
   char *str;
-# ifndef HAVE_ACL_TYPE_EXTENDED
+#  ifndef HAVE_ACL_TYPE_EXTENDED
   acl_type_t ACL_TYPE_EXTENDED = ACL_TYPE_ACCESS;
+#  endif
 # endif
-#endif
 
   absname = expand_and_dir_to_file (filename,
 				    BVAR (current_buffer, directory));
@@ -2957,7 +2958,7 @@ was unable to determine the ACL entries.  */)
   if (!NILP (handler))
     return call2 (handler, Qfile_acl, absname);
 
-#ifdef HAVE_ACL_SET_FILE
+# ifdef HAVE_ACL_SET_FILE
   absname = ENCODE_FILE (absname);
 
   acl = acl_get_file (SSDATA (absname), ACL_TYPE_EXTENDED);
@@ -2976,6 +2977,7 @@ was unable to determine the ACL entries.  */)
   acl_free (acl);
 
   return acl_string;
+# endif
 #endif
 
   return Qnil;
@@ -2993,13 +2995,14 @@ Setting ACL for local files requires Emacs to be built with ACL
 support.  */)
   (Lisp_Object filename, Lisp_Object acl_string)
 {
+#if USE_ACL
   Lisp_Object absname;
   Lisp_Object handler;
-#ifdef HAVE_ACL_SET_FILE
+# ifdef HAVE_ACL_SET_FILE
   Lisp_Object encoded_absname;
   acl_t acl;
   bool fail;
-#endif
+# endif
 
   absname = Fexpand_file_name (filename, BVAR (current_buffer, directory));
 
@@ -3009,7 +3012,7 @@ support.  */)
   if (!NILP (handler))
     return call3 (handler, Qset_file_acl, absname, acl_string);
 
-#ifdef HAVE_ACL_SET_FILE
+# ifdef HAVE_ACL_SET_FILE
   if (STRINGP (acl_string))
     {
       acl = acl_from_text (SSDATA (acl_string));
@@ -3030,6 +3033,7 @@ support.  */)
       acl_free (acl);
       return fail ? Qnil : Qt;
     }
+# endif
 #endif
 
   return Qnil;

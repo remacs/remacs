@@ -436,7 +436,12 @@ It is effective when @code{mm-text-html-renderer} (@pxref{Display
 Customization}) is @code{shr}.  In Gnus, this is overridden by the value
 of @code{gnus-blocked-images} or the return value of the function that
 @code{gnus-blocked-images} is set to (@pxref{HTML, ,HTML, gnus, Gnus
-manual}).  The default is @code{nil}.
+manual}).
+
+Some @acronym{HTML} mails might have the trick of spammers using
+@samp{<img>} tags.  It is likely to be intended to verify whether you
+have read the mail.  You can prevent your personal information from
+leaking by setting this option to @code{""} (which is the default).
 
 @item mm-w3m-safe-url-regexp
 @vindex mm-w3m-safe-url-regexp

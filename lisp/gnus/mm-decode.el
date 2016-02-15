@@ -149,7 +149,7 @@ nil    : use external viewer (default web browser)."
   :type 'boolean
   :group 'mime-display)
 
-(defcustom mm-html-blocked-images nil
+(defcustom mm-html-blocked-images ""
   "Regexp matching image URLs to be blocked, or nil meaning not to block.
 Note that cid images that are embedded in a message won't be blocked."
   :version "25.1"

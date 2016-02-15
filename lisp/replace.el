@@ -1980,13 +1980,15 @@ but coerced to the correct value of INTEGERS."
 		  new)))
       (match-data integers reuse t)))
 
-(defun replace-match-maybe-edit (newtext fixedcase literal noedit match-data backward)
+(defun replace-match-maybe-edit (newtext fixedcase literal noedit match-data
+                                 &optional backward)
   "Make a replacement with `replace-match', editing `\\?'.
 FIXEDCASE, LITERAL are passed to `replace-match' (which see).
 After possibly editing it (if `\\?' is present), NEWTEXT is also
 passed to `replace-match'.  If NOEDIT is true, no check for `\\?'
 is made (to save time).  MATCH-DATA is used for the replacement.
-In case editing is done, it is changed to use markers.
+In case editing is done, it is changed to use markers.  BACKWARD is
+used to reverse the replacement direction.
 
 The return value is non-nil if there has been no `\\?' or NOEDIT was
 passed in.  If LITERAL is set, no checking is done, anyway."
@@ -2027,7 +2029,7 @@ It is called with three arguments, as if it were
 `re-search-forward'.")
 
 (defun replace-search (search-string limit regexp-flag delimited-flag
-				     case-fold-search backward)
+		       case-fold-search &optional backward)
   "Search for the next occurrence of SEARCH-STRING to replace."
   ;; Let-bind global isearch-* variables to values used
   ;; to search the next replacement.  These let-bindings
@@ -2061,7 +2063,7 @@ It is called with three arguments, as if it were
 
 (defun replace-highlight (match-beg match-end range-beg range-end
 			  search-string regexp-flag delimited-flag
-			  case-fold-search backward)
+			  case-fold-search &optional backward)
   (if query-replace-highlight
       (if replace-overlay
 	  (move-overlay replace-overlay match-beg match-end (current-buffer))
