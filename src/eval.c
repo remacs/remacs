@@ -1245,7 +1245,7 @@ internal_lisp_condition_case (volatile Lisp_Object var, Lisp_Object bodyform,
     for (i = 0; i < clausenb; i++)
       {
 	Lisp_Object clause = clauses[i];
-	Lisp_Object condition = XCAR (clause);
+	Lisp_Object condition = CONSP (clause) ? XCAR (clause) : Qnil;
 	if (!CONSP (condition))
 	  condition = Fcons (condition, Qnil);
 	struct handler *c = push_handler (condition, CONDITION_CASE);
