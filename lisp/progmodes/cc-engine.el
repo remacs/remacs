@@ -6056,7 +6056,10 @@ comment at the start of cc-engine.el for more info."
 		   ;; Stop on ',', '|', '&', '+' and '-' to catch
 		   ;; common binary operators that could be between
 		   ;; two comparison expressions "a<b" and "c>d".
-		   "[<;{},|+&-]\\|[>)]"
+		   ;; 2016-02-11: C++11 templates can now contain arithmetic
+		   ;; expressions, so template detection in C++ is now less
+		   ;; robust than it was.
+		   c-<>-notable-chars-re
 		   nil t t))
 
 		(cond
@@ -6064,7 +6067,9 @@ comment at the start of cc-engine.el for more info."
 		  ;; Either an operator starting with '>' or the end of
 		  ;; the angle bracket arglist.
 
-		  (if (looking-at c->-op-without->-cont-regexp)
+		  (if (save-excursion
+			(c-backward-token-2)
+			(looking-at c-multichar->-op-not->>-regexp))
 		      (progn
 			(goto-char (match-end 0))
 			t)		; Continue the loop.
@@ -6133,6 +6138,11 @@ comment at the start of cc-engine.el for more info."
 		      ;; (forward-char) ; NO!  We've already gone over the <.
 		      )))
 		  t)			; carry on looping.
+
+		 ((and
+		   (eq (char-before) ?\()
+		   (c-go-up-list-forward)
+		   (eq (char-before) ?\))))
 
 		 ((and (not c-restricted-<>-arglists)
 		       (or (and (eq (char-before) ?&)
