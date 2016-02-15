@@ -3332,7 +3332,8 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
       boot = Fgnutls_boot (proc, XCAR (params), XCDR (params));
       p->gnutls_boot_parameters = Qnil;
 
-      if (NILP (boot) || STRINGP (boot))
+      if (NILP (boot) || STRINGP (boot) ||
+	  p->gnutls_initstage != GNUTLS_STAGE_READY)
 	{
 	  deactivate_process (proc);
 	  if (NILP (boot))
