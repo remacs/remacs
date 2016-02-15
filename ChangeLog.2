@@ -1594,7 +1594,7 @@
 	that as the same name can be used for different locations in different
 	SES sheets ; 2) use `local-variable-if-set-p' rather than `boundp' and
 	`local-variable-p' to check if cell name is already in use in this
-	sheet or needs initialisation.
+	sheet or needs initialization.
 	(ses-relocate-all): Cell value relocation : 1) like for name
 	relocation use the `ses-cell' property rather than comparing actual
 	name to corresponding standard name. 2) Correct bug introduced in
@@ -9622,7 +9622,7 @@
 	(unexec): Don't search for bss style sections by name.  Instead,
 	use the last PT_LOAD header address range covered by p_memsz
 	but not p_filesz and match any SHT_NOBITS section in that
-	address range.  Simplify initialisation of section header vars.
+	address range.  Simplify initialization of section header vars.
 	Don't assume that section headers are above bss segment.  Move
 	copying of bss area out of section loop.  Align .data2 section
 	to 1, since it now covers the entire bss area.  For SHT_NOBITS
@@ -9680,7 +9680,7 @@
 	Separate out some of the more mechanical changes so following patches
 	are smaller.
 
-	* src/unexelf.c (unexec): Rearrange initialisation of program
+	* src/unexelf.c (unexec): Rearrange initialization of program
 	header vars.  Use pointer vars in loops rather than indexing
 	section header array via macros.  Simplify _OBJC_ sym code
 	and reloc handling code.

@@ -1758,7 +1758,7 @@
 
 	* net/shr.el (shr-insert): Make sure the space inserted has the
 	right font (for width).
-	(shr-fill-line): Preserve background colours when indenting/folding.
+	(shr-fill-line): Preserve background colors when indenting/folding.
 	(shr-ensure-paragraph): Don't insert a new paragraph as the first
 	item in a <li>.
 

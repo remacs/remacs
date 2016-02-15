@@ -699,8 +699,8 @@ It's a subdirectory of `doc-view-cache-directory'."
 	    (concat (thread-last (file-name-nondirectory doc-view--buffer-file-name)
                       ;; bug#13679
                       (subst-char-in-string ?% ?_)
-                      ;; arc-mode concats archive name and file name
-                      ;; with colon which is illegal on Windows.
+                      ;; arc-mode concatenates archive name and file name
+                      ;; with colon, which is illegal on MS-Windows.
                       (subst-char-in-string ?: ?_))
                     "-"
                     (let ((file doc-view--buffer-file-name))
