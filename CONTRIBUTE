@@ -184,15 +184,19 @@ If you are fixing a bug that exists in the current release, be sure to
 commit it to the release branch; it will be merged to the master
 branch later.
 
-However, if you know that the change will be difficult to merge to the
-trunk (eg because the trunk code has changed a lot), you can apply the
-change to both trunk and branch yourself.  It could also happen that a
-change is cherry-picked from master to the release branch, and so
-doesn't need to be merged back.  In these cases, indicate in the
-release branch commit log that there is no need to merge the commit to
-the trunk; start the commit message with "Backport:".  gitmerge.el
-will then exclude that commit from the merge to trunk.
+However, if you know that the change will be difficult to merge to
+master (eg because the code on master has changed a lot), you can
+apply the change to both master and branch yourself.  It could also
+happen that a change is cherry-picked from master to the release
+branch, and so doesn't need to be merged back.  In these cases,
+indicate in the release branch commit log that there is no need to
+merge the commit to master; start the commit message with "Backport:".
+gitmerge.el will then exclude that commit from the merge to trunk.
 
+Some changes should not be merged to master at all, for whatever
+reasons.  These should be marked by including something like "Do not
+merge to master" or anything that matches gitmerge-skip-regexp (see
+gitmerge.el) in the log message.
 
 ** Other process information
 

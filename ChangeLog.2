@@ -1,3 +1,458 @@
+2016-02-15  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/dired-aux.el: Require cl-lib.  (Bug#22613)
+
+2016-02-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Index tilde characters in names of backup files
+
+	* doc/emacs/files.texi (Backup Names): Improve indexing.
+	(Bug#22625)
+
+2016-02-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Document deprecation of hi-lock-mode's 'C-x w' bindings
+
+	* doc/emacs/display.texi (Highlight Interactively): Deprecate the
+	"C-x w" bindings of hi-lock-mode.
+
+	* etc/NEWS: Mark the deprecation entry as documented.
+
+2016-02-15  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Announce that the `C-x w' bindings are deprecated
+
+2016-02-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Suppress GNUstep hardening
+
+	Fedora 23 normally hardens GNUstep applications, which causes
+	‘./configure --with-ns’ to break Emacs’s funky way of undumping.
+	Fix this by eliding the hardening options (Bug#22518).
+	* src/Makefile.in (LIBS_GNUSTEP): Omit options like
+	‘-specs=/usr/lib/rpm/redhat/redhat-hardened-ld’.
+	(GNU_OBJC_CFLAGS): Omit options like
+	‘-specs=/usr/lib/rpm/redhat/redhat-hardened-cc1’.
+
+2016-02-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix redisplay after a large insertion
+
+	* src/xdisp.c (redisplay_internal): Don't accept the results of
+	"optimization 3" if the cursor ends up in a partially visible
+	glyph row.  (Bug22637)
+
+2016-02-15  Andreas Schwab  <schwab@linux-m68k.org>
+
+	Revert "Fix gnus-group-get-new-news-this-group on group with closed server"
+
+	This reverts commit 9dc77e37aa84c6df9b3ddb4609f3c09201b0580e.
+
+		* lisp/gnus/nnimap.el (nnimap-change-group): Revert last
+		change.  (Bug#22634)
+
+2016-02-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lib-src/make-docfile.c: Include stdarg.h.
+
+2016-02-15  Alan Mackenzie  <acm@muc.de>
+
+	Extend gpm-mouse-mode's doc string and doc to point out limitations.
+
+	* lisp/t-mouse.el (gpm-mouse-mode): Extend doc string to indicate the
+	inability to transfer text between Emacs and other programs which use GPM.
+
+	* doc/emacs/frames.texi (Text-Only Mouse): Note the inability to transfer text
+	between Emacs and other progrmas which use GPM.
+
+2016-02-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Revert "Backport: * lisp/isearch.el: Turn char-folding off by default"
+
+	* lisp/isearch.el: Turn char-folding back oon by default.
+
+	This reverts commit 12c50e82c9b432b2fc31f8fb2215f43ceea80822.
+
+2016-02-15  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Revert "Support integer image rotation and respect EXIF rotations"
+
+	This reverts commit 0f600496050bf435f55dc81056e06fcd45992dc8.
+
+	This change does not work on Fedora.
+
+2016-02-15  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Revert "Document EXIF image rotation"
+
+	This reverts commit 10b8ed27ec91ff52f93eb0297dcc3abb214931aa.
+
+	This change does not work on Fedora, for instance.
+
+2016-02-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Document OS X LANG default
+
+	* doc/emacs/cmdargs.texi (General Variables):
+	Document OS X Language and Region system preference.
+	Suggested by Alan Third.
+
+2016-02-15  Alan Third  <alan@idiocy.org>
+
+	Set locale when run from OS X GUI
+
+	* src/emacs.c (main): Call ns_init_locale.
+	* src/nsterm.m (ns_init_locale): Get locale from OS and set LANG.
+	* src/nsterm.h: Include ns_init_locale.
+
+2016-02-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	make-docfile cleanup for I/O, etc.
+
+	* lib-src/make-docfile.c (progname, generate_globals, num_globals)
+	(num_globals_allocated, globals): Now static.
+	(generate_globals, struct rcsoc_state, read_c_string_or_comment):
+	(write_c_args, scan_c_stream, search_lisp_doc_at_eol, scan_lisp_file):
+	Use bool for boolean.
+	(verror): New function.
+	(fatal, error): Use it.  API is now like printf.  All callers changed.
+	(main): Remove err_count local that was always 0.
+	(main, scan_c_stream, scan_lisp_file): Check for I/O error.
+	(scan_file, scan_c_file, scan_c_stream, scan_lisp_file):
+	Return void, not 0.
+	(put_char, scan_keyword_or_put_char, scan_c_file): Use char for byte.
+	(scan_keyword_or_put_char): Check for missing ( and unexpected EOF.
+	(close_emacs_globals): Use ptrdiff_t for index, not int.
+	(scan_c_file, scan_lisp_file): Exit with failure if file cannot be
+	opened, rather than diagnosing but exiting with status 0.
+	(search_lisp_doc_at_eol): Don't worry about ungetc of EOF; it's
+	portable now.
+
+2016-02-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Memory-management cleanup in make-docfile
+
+	I compiled it with -fsanitize=address and fixed the leaks it detected.
+	Also, I changed it to prefer signed to unsigned integer types,
+	and to check for integer overflow.
+	* lib-src/make-docfile.c:
+	Include <stddef.h>, <stdint.h>, <intprops.h>, <min-max.h>.
+	(memory_exhausted): New function.
+	(xmalloc, xrealloc): Use it.
+	(xmalloc, xrealloc, scan_file, struct rcsoc_state, write_c_args)
+	(uncompiled, scan_lisp_file):
+	Prefer signed integer types to unsigned.
+	(xstrdup): Remove.  All uses removed.
+	(num_globals, num_globals_allocated, write_globals, scan_c_stream):
+	Use ptrdiff_t, not int, for indexes that in theory could exceed INT_MAX.
+	(add_global): Use const to pacify --enable-gcc-warnings.
+	Make a copy here, rather than relying on strdup calls later.
+	(add_global, write_globals, scan_c_stream):
+	Avoid integer overflow when calculating sizes.
+	(write_globals, scan_c_stream, scan_lisp_file): Avoid memory leak.
+	(scan_c_stream): Check for add_global failure.
+
+2016-02-15  Kevin Gallagher  <Kevin.Gallagher@boeing.com>
+
+	Kevin Gallagher has new email address
+
+	* lisp/emulation/edt.el:
+	* lisp/emulation/edt-lk201.el:
+	* lisp/emulation/edt-mapper.el:
+	* lisp/emulation/edt-pc.el:
+	* lisp/emulation/edt-vt100.el:
+	* etc/edt-user.el:
+	* doc/misc/edt.texi: Update Kevin Gallagher's email address.
+
+2016-02-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve doc strings of 'forward/backward-word-strictly'
+
+	* lisp/simple.el (backward-word): Refer to 'backward-word-strictly'
+	in the doc string.  Suggested by Glenn Morris <rgm@gnu.org>.
+	* lisp/subr.el (forward-word-strictly, backward-word-strictly):
+	Mention 'subword-mode' in the doc strings.
+
+	* src/syntax.c (Fforward_word): Refer to 'forward-word-strictly'
+	in the doc string.  (Bug#22560)
+
+2016-02-15  Michael Albinus  <michael.albinus@gmx.de>
+
+	Describe Makefile test targets in test/README
+
+	* CONTRIBUTE: Move Makefile test targets to test/README.
+
+	* Makefile.in:
+	* test/README: Describe Makefile test targets.
+
+2016-02-15  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	Backport: * lisp/isearch.el: Turn char-folding off by default
+
+	(search-default-mode): Set default value to nil.
+
+2016-02-15  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Document EXIF image rotation
+
+	* doc/lispref/display.texi (ImageMagick Images): Mention EXIF rotation.
+
+2016-02-15  Dima Kogan  <dima@secretsauce.net>
+
+	Support integer image rotation and respect EXIF rotations
+
+	* src/image.c (imagemagick_load_image): Allow integer rotations in
+	addition to floating point rotations (bug#22591).
+	* src/image.c (imagemagick_load_image): Images that have an
+	orientation given in EXIF and have no explicit :rotation tag are now
+	pre-rotated.  All information such as width/height is reported for the
+	rotated image.
+
+2016-02-15  Matthew Carter  <m@ahungry.com>
+
+	Quote table names for postgres listings (sql-mode)
+
+	* lisp/progmodes/sql.el (sql-postgres-completion-object): Avoid passing
+	  unquoted table names to the completion list.
+
+2016-02-15  Juri Linkov  <juri@linkov.net>
+
+	* lisp/replace.el (replace-match-maybe-edit): Make arg `backward' optional.
+
+	Doc fix.
+	(replace-search, replace-highlight): Make arg `backward' optional.
+	(Bug#18388)
+
+2016-02-15  Juri Linkov  <juri@linkov.net>
+
+	* lisp/simple.el (next-line-or-history-element): Reset temporary-goal-column.
+
+	(previous-line-or-history-element): Reset temporary-goal-column.
+	Use end-of-visual-line instead of line-end-position.  (Bug#22544)
+
+2016-02-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Suppress ACL ops if configured with --disable-acl
+
+	Without this patch, some ACL operations were suppressed, but not all.
+	* src/fileio.c [!USE_ACL]: Do not include sys/acl.h.
+	(Ffile_acl, Fset_file_acl) [!USE_ACL]: Return nil in this case.
+
+2016-02-15  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	Mention web bugs
+
+	* doc/misc/emacs-mime.texi (Display Customization):
+	Mention web bugs in the mm-html-blocked-images section.
+
+2016-02-15  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	Make mm-html-blocked-images default to "" again
+
+	* lisp/gnus/mm-decode.el (mm-html-blocked-images):
+	Default to "" that blocks all external images.
+
+	* doc/misc/emacs-mime.texi (Display Customization):
+	Mention that mm-html-blocked-images defaults to "".
+
+2016-02-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Minor alignas cleanup
+
+	* src/lisp.h (alignas): Remove now-redundant #ifdef that was left
+	over from the old way of doing things, before Bug#20862 was fixed.
+
+2016-02-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Add lmalloc commentary and tweak laligned
+
+	* src/alloc.c (laligned): Help compiler in a tiny way by putting
+	the more-commonly-failing disjunct first.
+
+2016-02-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Clarify documentation of key binding conventions
+
+	* doc/lispref/tips.texi (Key Binding Conventions): Clarify which
+	"punctuation characters" are reserved after "C-c".  (Bug#22604)
+
+2016-02-15  Oscar Fuentes  <ofv@wanadoo.es>
+
+	* etc/NEWS: mention the `vc-faces' customization group
+
+2016-02-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Sync with gnulib
+
+	This incorporates:
+	2016-02-09 stdalign: port to clang 3.7.0
+	2016-02-06 misc: port better to gcc -fsanitize=address
+	* doc/misc/texinfo.tex, lib/stdalign.in.h, m4/acl.m4, m4/getgroups.m4:
+	Copy from gnulib.
+
+2016-02-15  Michael Albinus  <michael.albinus@gmx.de>
+
+	* CONTRIBUTE: Add more examples for $(SELECTOR) make variable.
+
+2016-02-15  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	Make mm-html-inhibit-images and mm-html-blocked-images default to nil
+
+	* lisp/gnus/mm-decode.el (mm-html-inhibit-images)
+	(mm-html-blocked-images): Default to nil.
+
+	* doc/misc/emacs-mime.texi (Display Customization): Mention that
+	mm-html-inhibit-images and mm-html-blocked-images default to nil.
+
+	* etc/NEWS (Gnus): Document mm-html-inhibit-images and
+	mm-html-blocked-images.
+
+2016-02-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Increase success rate of fallback lmalloc
+
+	* src/alloc.c (lmalloc, lrealloc): Reallocate with (typically)
+	larger and larger sizes, to increase the probability that
+	the allocator will return a Lisp-aligned pointer.
+
+2016-02-15  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Make backgrounds extend to the end of the lines in shr
+
+	* lisp/net/shr.el (shr-face-background): Faces can also be on
+	the form `(:background "#fff)' (bug#22547).
+
+2016-02-15  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Make the `R' command get the correct relative <img>s
+
+	* lisp/net/eww.el (eww-readable): Preserve the base URL so
+	that image expansions are fetched from the right place (bug#22605).
+
+	(cherry picked from commit 8722e849f75ceafb82a1c17105e8ab76077a8ebc)
+
+	Backport:
+
+2016-02-15  Mike Kupfer  <m.kupfer@acm.org>
+
+	Fix typos in emacs-mime.texi and gnus.texi
+
+	* doc/misc/emacs-mime.texi (Display Customization):
+	* doc/misc/gnus.texi (HTML): Fix typo.
+
+2016-02-15  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* doc/misc/emacs-mime.texi (Display Customization):
+	Doc fix for mm-html-inhibit-images.
+
+2016-02-15  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Fix message-cross-post-followup-to group names
+
+	* lisp/gnus/message.el (message-cross-post-followup-to): Don't
+	insert group names like "nntp+foo:zot", because those aren't valid.
+
+2016-02-15  David Edmondson  <dme@dme.org>
+
+	Compare recipient and keys case-insensitively
+
+	* lisp/gnus/mml2015.el: (mml-secure-check-user-id): When comparing a
+	recipient address with that from a key, do so in a case insensitive
+	manner (bug#22603).
+
+2016-02-15  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/gnus/mm-decode.el (mm-alist-to-plist): Doc fix.
+
+2016-02-15  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	Refactor HTML images handling of Gnus and mm-* (a part of bug#21650)
+
+	* doc/misc/emacs-mime.texi (Display Customization):
+	Remove mm-inline-text-html-with-images; add documentations for
+	mm-html-inhibit-images and mm-html-blocked-images.
+
+	* lisp/gnus/gnus-art.el (gnus-article-show-images):
+	No need to bind mm-inline-text-html-with-images.
+	(gnus-bind-safe-url-regexp): Rename to gnus-bind-mm-vars.
+	(gnus-bind-mm-vars): Rename from gnus-bind-safe-url-regexp;
+	bind mm-html-inhibit-images and mm-html-blocked-images.
+	(gnus-mime-view-all-parts, gnus-mime-view-part-internally)
+	(gnus-mm-display-part, gnus-mime-display-single)
+	(gnus-mime-display-alternative): Use gnus-bind-mm-vars.
+
+	* lisp/gnus/mm-decode.el (mm-inline-text-html-with-images): Remove.
+	(mm-html-inhibit-images, mm-html-blocked-images): New user options.
+	(mm-shr): Bind shr-inhibit-images and shr-blocked-images with
+	mm-html-inhibit-images and mm-html-blocked-images respectively
+	instead of gnus-inhibit-images and gnus-blocked-images.
+
+	* lisp/gnus/mm-view.el (mm-setup-w3m): Use mm-html-inhibit-images
+	instead of mm-inline-text-html-with-images.
+
+2016-02-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port to FreeBSD 11-CURRENT i386
+
+	Problem reported by Herbert J. Skuhra in:
+	http://lists.gnu.org/archive/html/emacs-devel/2016-02/msg00354.html
+	Instead of trying
+	* src/alloc.c (lmalloc, lrealloc, laligned): New functions.
+	(xmalloc, xzalloc, xrealloc, lisp_malloc): Use them.
+	(__alignof__) [!__GNUC__ && !__alignof__]: New macro.
+	(MALLOC_IS_GC_ALIGNED): New macro.
+	* src/lisp.h (NONPOINTER_BITS): Remove.  All uses removed.
+	No longer needed now that alloc.c uses lmalloc and lrealloc.
+
+2016-02-15  Michael Albinus  <michael.albinus@gmx.de>
+
+	Some fixes in file-notify-tests.el
+
+	* test/automated/file-notify-tests.el
+	(file-notify--test-with-events-check)
+	(file-notify--test-with-events-explainer): New defuns.
+	(file-notify--test-with-events): Use it.
+	(file-notify-test07-backup): Fix docstring.  Some of the
+	backends fire two `changed' events.  Backup by rename doesn't
+	work for kqueue.
+
+2016-02-15  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix Bug#22557
+
+	* lisp/filenotify.el (file-notify-callback): Do not send a
+	`stopped' event in case of backup by renaming.  (Bug#22557)
+
+	* test/automated/Makefile.in: Use $(SELECTOR_EXPENSIVE) for
+	all targets but check and check-maybe.
+
+	* test/automated/file-notify-tests.el
+	(file-notify--test-read-event-timeout): New defconst.
+	(file-notify--deftest-remote, file-notify--wait-for-events)
+	(file-notify-test02-events)
+	(file-notify-test04-file-validity)
+	(file-notify-test06-many-events): Use it.
+	(file-notify--test-cleanup): Make it more robust.  Delete also
+	backup file.
+	(file-notify-test07-backup): New test.
+
+2016-02-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix test for dladdr
+
+	Problem reported by Andreas Schwab in:
+	http://lists.gnu.org/archive/html/emacs-devel/2016-02/msg00327.html
+	* configure.ac (dladdr): Link with LIBMODULES when checking for
+	this function.
+
+2016-02-15  Andreas Schwab  <schwab@linux-m68k.org>
+
+	Fix gnus-group-get-new-news-this-group on group with closed server
+
+	* lisp/gnus/nnimap.el (nnimap-change-group): Lookup server
+	method and pass to nnimap-open-server.
+
+2016-02-15  Artur Malabarba  <bruce.connor.am@gmail.com>
 2016-02-14  Nicolas Petton  <nicolas@petton.fr>
 
 	* doc/lispref/sequences.texi: Add documentation for seq-map-indexed
@@ -31515,6 +31970,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
+2016-02-15decb15e0496cec0c48d980c88a5a9d7cc00da (inclusive).
 2016-02-04b6d89ff9288a49099f041752908b5eb9613e (inclusive).
 commit ba1422e12f80ae1eb2aa9d0ce80c14e3ee4b3950 (inclusive).
 See ChangeLog.1 for earlier changes.

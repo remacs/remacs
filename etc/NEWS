@@ -402,6 +402,11 @@ default.
 unsaved customizations and prompts user to customize (if found).  It
 is intended for adding to 'kill-emacs-query-functions'.
 
++++
+** The old `C-x w' bindings in hi-lock-mode are officially deprecated
+in favor of the global `M-s h' bindings introduced in Emacs-23.1.
+They'll disappear soon.
+
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
 
@@ -1085,7 +1090,7 @@ replace the face `compare-windows', which is now an obsolete alias for
 
 ---
 *** The VC state indicator in the mode line now has different faces
-corresponding to each of the possible states. See the `vc-faces'
+corresponding to each of the possible states.  See the `vc-faces'
 customization group.
 
 ---

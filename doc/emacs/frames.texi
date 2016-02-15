@@ -1275,7 +1275,10 @@ again.
 @findex gpm-mouse-mode
   In the console on GNU/Linux, you can use @kbd{M-x gpm-mouse-mode} to
 enable mouse support.  You must have the gpm server installed and
-running on your system in order for this to work.
+running on your system in order for this to work.  Note that when
+this mode is enabled, you cannot use the mouse to transfer text
+between Emacs and other programs which use GPM.  This is due to
+limitations in GPM and the Linux kernel.
 
 @iftex
 @xref{MS-DOS Mouse,,,emacs-xtra,Specialized Emacs Features},

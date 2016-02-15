@@ -214,8 +214,8 @@ LIBX_OTHER=@LIBX_OTHER@
 ## configure, which should set it to nil in non-X builds.
 LIBX_BASE=$(LIBXMENU) $(LD_SWITCH_X_SITE)
 
-## Only used for GNUstep
-LIBS_GNUSTEP=@LIBS_GNUSTEP@
+## Used only for GNUstep.
+LIBS_GNUSTEP=$(patsubst -specs=%-hardened-ld,,@LIBS_GNUSTEP@)
 
 LIBSOUND= @LIBSOUND@
 CFLAGS_SOUND= @CFLAGS_SOUND@
@@ -270,8 +270,8 @@ MSDOS_X_OBJ =
 NS_OBJ=@NS_OBJ@
 ## nsterm.o nsfns.o nsmenu.o nsselect.o nsimage.o ns_fontfile if HAVE_NS.
 NS_OBJC_OBJ=@NS_OBJC_OBJ@
-## Only set if NS_IMPL_GNUSTEP.
-GNU_OBJC_CFLAGS=@GNU_OBJC_CFLAGS@
+## Used only for GNUstep.
+GNU_OBJC_CFLAGS=$(patsubst -specs=%-hardened-cc1,,@GNU_OBJC_CFLAGS@)
 ## w32fns.o w32menu.c w32reg.o fringe.o fontset.o w32font.o w32term.o
 ## w32xfns.o w32select.o image.o w32uniscribe.o if HAVE_W32, else
 ## empty.

@@ -924,7 +924,10 @@ mode for all buffers, use @kbd{M-x global-hi-lock-mode} or place
 
   Hi Lock mode works like Font Lock mode (@pxref{Font Lock}), except
 that you specify explicitly the regular expressions to highlight.  You
-control them with these commands:
+control them with the commands described below.  (The key bindings
+below that begin with @kbd{C-x w} are deprecated in favor of the
+global @kbd{M-s h} bindings, and will be removed in some future Emacs
+version.)
 
 @table @kbd
 @item M-s h r @var{regexp} @key{RET} @var{face} @key{RET}

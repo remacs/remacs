@@ -126,7 +126,10 @@ gap_left (ptrdiff_t charpos, ptrdiff_t bytepos, bool newgap)
       if (i == 0)
 	break;
       /* If a quit is requested, stop copying now.
-	 Change BYTEPOS to be where we have actually moved the gap to.  */
+	 Change BYTEPOS to be where we have actually moved the gap to.
+	 Note that this cannot happen when we are called to make the
+	 gap larger or smaller, since make_gap_larger and
+	 make_gap_smaller prevent QUIT by setting inhibit-quit.  */
       if (QUITP)
 	{
 	  bytepos = new_s1;
@@ -179,7 +182,10 @@ gap_right (ptrdiff_t charpos, ptrdiff_t bytepos)
       if (i == 0)
 	break;
       /* If a quit is requested, stop copying now.
-	 Change BYTEPOS to be where we have actually moved the gap to.  */
+	 Change BYTEPOS to be where we have actually moved the gap to.
+	 Note that this cannot happen when we are called to make the
+	 gap larger or smaller, since make_gap_larger and
+	 make_gap_smaller prevent QUIT by setting inhibit-quit.  */
       if (QUITP)
 	{
 	  bytepos = new_s1;
@@ -386,7 +392,9 @@ make_gap_larger (ptrdiff_t nbytes_added)
 
   enlarge_buffer_text (current_buffer, nbytes_added);
 
-  /* Prevent quitting in move_gap.  */
+  /* Prevent quitting in gap_left.  We cannot allow a QUIT there,
+     because that would leave the buffer text in an inconsistent
+     state, with 2 gap holes instead of just one.  */
   tem = Vinhibit_quit;
   Vinhibit_quit = Qt;
 
@@ -432,7 +440,9 @@ make_gap_smaller (ptrdiff_t nbytes_removed)
   if (GAP_SIZE - nbytes_removed < GAP_BYTES_MIN)
     nbytes_removed = GAP_SIZE - GAP_BYTES_MIN;
 
-  /* Prevent quitting in move_gap.  */
+  /* Prevent quitting in gap_right.  We cannot allow a QUIT there,
+     because that would leave the buffer text in an inconsistent
+     state, with 2 gap holes instead of just one.  */
   tem = Vinhibit_quit;
   Vinhibit_quit = Qt;
 
