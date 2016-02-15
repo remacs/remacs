@@ -3220,33 +3220,37 @@ record_char (Lisp_Object c)
   else
     store_kbd_macro_char (c);
 
-  if (!recorded)
+  /* recent_keys should not include events from keyboard macros.  */
+  if (NILP (Vexecuting_kbd_macro))
     {
-      total_keys += total_keys < NUM_RECENT_KEYS;
-      ASET (recent_keys, recent_keys_index, c);
-      if (++recent_keys_index >= NUM_RECENT_KEYS)
-	recent_keys_index = 0;
-    }
-  else if (recorded < 0)
-    {
-      /* We need to remove one or two events from recent_keys.
-         To do this, we simply put nil at those events and move the
-	 recent_keys_index backwards over those events.  Usually,
-	 users will never see those nil events, as they will be
-	 overwritten by the command keys entered to see recent_keys
-	 (e.g. C-h l).  */
-
-      while (recorded++ < 0 && total_keys > 0)
+      if (!recorded)
 	{
-	  if (total_keys < NUM_RECENT_KEYS)
-	    total_keys--;
-	  if (--recent_keys_index < 0)
-	    recent_keys_index = NUM_RECENT_KEYS - 1;
-	  ASET (recent_keys, recent_keys_index, Qnil);
+	  total_keys += total_keys < NUM_RECENT_KEYS;
+	  ASET (recent_keys, recent_keys_index, c);
+	  if (++recent_keys_index >= NUM_RECENT_KEYS)
+	    recent_keys_index = 0;
 	}
-    }
+      else if (recorded < 0)
+	{
+	  /* We need to remove one or two events from recent_keys.
+	     To do this, we simply put nil at those events and move the
+	     recent_keys_index backwards over those events.  Usually,
+	     users will never see those nil events, as they will be
+	     overwritten by the command keys entered to see recent_keys
+	     (e.g. C-h l).  */
 
-  num_nonmacro_input_events++;
+	  while (recorded++ < 0 && total_keys > 0)
+	    {
+	      if (total_keys < NUM_RECENT_KEYS)
+		total_keys--;
+	      if (--recent_keys_index < 0)
+		recent_keys_index = NUM_RECENT_KEYS - 1;
+	      ASET (recent_keys, recent_keys_index, Qnil);
+	    }
+	}
+
+      num_nonmacro_input_events++;
+    }
 
   /* Write c to the dribble file.  If c is a lispy event, write
      the event's symbol to the dribble file, in <brackets>.  Bleaugh.
