@@ -284,6 +284,7 @@ static Lisp_Object chan_process[FD_SETSIZE];
 #ifdef HAVE_GETADDRINFO_A
 /* Pending DNS requests. */
 static Lisp_Object dns_processes;
+static void wait_for_socket_fds (Lisp_Object process);
 #endif
 
 /* Alist of elements (NAME . PROCESS).  */
@@ -1029,6 +1030,12 @@ The string argument is normally a multibyte string, except:
   struct Lisp_Process *p;
 
   CHECK_PROCESS (process);
+
+#ifdef HAVE_GETADDRINFO_A
+  if (NETCONN_P (process))
+    wait_for_socket_fds (process);
+#endif
+
   p = XPROCESS (process);
 
   /* Don't signal an error if the process's input file descriptor
@@ -1113,6 +1120,11 @@ DEFUN ("set-process-window-size", Fset_process_window_size,
 {
   CHECK_PROCESS (process);
 
+#ifdef HAVE_GETADDRINFO_A
+  if (NETCONN_P (process))
+    wait_for_socket_fds (process);
+#endif
+
   /* All known platforms store window sizes as 'unsigned short'.  */
   CHECK_RANGED_INTEGER (height, 0, USHRT_MAX);
   CHECK_RANGED_INTEGER (width, 0, USHRT_MAX);
@@ -1194,6 +1206,12 @@ list of keywords.  */)
   contact = XPROCESS (process)->childp;
 
 #ifdef DATAGRAM_SOCKETS
+
+#ifdef HAVE_GETADDRINFO_A
+  if (NETCONN_P (process))
+    wait_for_socket_fds (process);
+#endif
+
   if (DATAGRAM_CONN_P (process)
       && (EQ (key, Qt) || EQ (key, QCremote)))
     contact = Fplist_put (contact, QCremote,
@@ -2423,6 +2441,11 @@ DEFUN ("process-datagram-address", Fprocess_datagram_address, Sprocess_datagram_
 
   CHECK_PROCESS (process);
 
+#ifdef HAVE_GETADDRINFO_A
+  if (NETCONN_P (process))
+    wait_for_socket_fds (process);
+#endif
+
   if (!DATAGRAM_CONN_P (process))
     return Qnil;
 
@@ -2441,6 +2464,11 @@ Returns nil upon error setting address, ADDRESS otherwise.  */)
   int family, len;
 
   CHECK_PROCESS (process);
+
+#ifdef HAVE_GETADDRINFO_A
+  if (NETCONN_P (process))
+    wait_for_socket_fds (process);
+#endif
 
   if (!DATAGRAM_CONN_P (process))
     return Qnil;
@@ -2609,6 +2637,10 @@ OPTION is not a supported option, return nil instead; otherwise return t.  */)
   p = XPROCESS (process);
   if (!NETCONN1_P (p))
     error ("Process is not a network process");
+
+#ifdef HAVE_GETADDRINFO_A
+  wait_for_socket_fds (process);
+#endif
 
   s = p->infd;
   if (s < 0)
@@ -3693,7 +3725,7 @@ usage: (make-network-process &rest ARGS)  */)
 #endif
 
 #ifdef HAVE_GETADDRINFO_A
-  if (EQ (Fplist_get (contact, QCnowait), Qdns) &&
+  if (EQ (Fplist_get (contact, QCnowait), Qt) &&
       !NILP (host))
     {
       int ret;
@@ -4649,6 +4681,24 @@ check_for_dns (Lisp_Object proc)
   p->dns_requests = NULL;
 
   return ip_addresses;
+}
+
+static void
+wait_for_socket_fds(Lisp_Object process)
+{
+  while (XPROCESS(process)->dns_requests)
+    {
+      wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
+    }
+}
+
+static void
+wait_while_connecting(Lisp_Object process)
+{
+  while (EQ (Qconnect, XPROCESS(process)->status))
+    {
+      wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
+    }
 }
 #endif /* HAVE_GETADDRINFO_A */
 
@@ -6143,6 +6193,11 @@ Output from processes can arrive in between bunches.  */)
   if (XINT (start) < GPT && XINT (end) > GPT)
     move_gap_both (XINT (start), start_byte);
 
+#ifdef HAVE_GETADDRINFO_A
+  if (NETCONN_P (proc))
+    wait_while_connecting (proc);
+#endif
+
   send_process (proc, (char *) BYTE_POS_ADDR (start_byte),
 		end_byte - start_byte, Fcurrent_buffer ());
 
@@ -6162,6 +6217,12 @@ Output from processes can arrive in between bunches.  */)
   Lisp_Object proc;
   CHECK_STRING (string);
   proc = get_process (process);
+
+#ifdef HAVE_GETADDRINFO_A
+  if (NETCONN_P (proc))
+    wait_while_connecting (proc);
+#endif
+
   send_process (proc, SSDATA (string),
 		SBYTES (string), string);
   return Qnil;
@@ -6576,10 +6637,17 @@ process has been transmitted to the serial port.  */)
   struct coding_system *coding = NULL;
   int outfd;
 
-  if (DATAGRAM_CONN_P (process))
+  proc = get_process (process);
+
+#ifdef HAVE_GETADDRINFO_A
+  if (NETCONN_P (proc))
+    wait_while_connecting (proc);
+#endif
+
+  if (DATAGRAM_CONN_P (proc))
     return process;
 
-  proc = get_process (process);
+
   outfd = XPROCESS (proc)->outfd;
   if (outfd >= 0)
     coding = proc_encode_coding_system[outfd];
@@ -7030,7 +7098,14 @@ encode subprocess input.  */)
   register struct Lisp_Process *p;
 
   CHECK_PROCESS (process);
+
+#ifdef HAVE_GETADDRINFO_A
+  if (NETCONN_P (process))
+    wait_for_socket_fds (process);
+#endif
+
   p = XPROCESS (process);
+
   if (p->infd < 0)
     error ("Input file descriptor of %s closed", SDATA (p->name));
   if (p->outfd < 0)
@@ -7067,6 +7142,12 @@ suppressed.  */)
   register struct Lisp_Process *p;
 
   CHECK_PROCESS (process);
+
+#ifdef HAVE_GETADDRINFO_A
+  if (NETCONN_P (process))
+    wait_for_socket_fds (process);
+#endif
+
   p = XPROCESS (process);
   if (NILP (flag))
     pset_decode_coding_system
@@ -7757,7 +7838,6 @@ syms_of_process (void)
   DEFSYM (QCcoding, ":coding");
   DEFSYM (QCserver, ":server");
   DEFSYM (QCnowait, ":nowait");
-  DEFSYM (Qdns, "dns");
   DEFSYM (QCsentinel, ":sentinel");
   DEFSYM (QCtls_parameters, ":tls-parameters");
   DEFSYM (QClog, ":log");
@@ -7921,9 +8001,6 @@ The variable takes effect when `start-process' is called.  */);
 
 #ifdef NON_BLOCKING_CONNECT
    ADD_SUBFEATURE (QCnowait, Qt);
-#ifdef HAVE_GETADDRINFO_A
-   ADD_SUBFEATURE (QCnowait, Qdns);
-#endif
 #endif
 #ifdef DATAGRAM_SOCKETS
    ADD_SUBFEATURE (QCtype, Qdatagram);
