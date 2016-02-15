@@ -1,48 +1,51 @@
-This file contains information on Emacs developer processes.
+* How developers contribute to GNU Emacs
 
-For information on contributing to Emacs as a non-developer, see
-(info "(emacs)Contributing") or
+Here is how software developers can contribute to Emacs.  (Non-developers: see
 http://www.gnu.org/software/emacs/manual/html_node/emacs/Contributing.html
+or run the shell command 'info "(emacs)Contributing"'.)
 
-* Information for Emacs Developers.
+** The Emacs repository
 
-An "Emacs Developer" is someone who contributes a lot of code or
-documentation to the Emacs repository.  Generally, they have write
-access to the Emacs git repository on Savannah
-https://savannah.gnu.org/git/?group=emacs.
+Emacs development uses Git on Savannah for its main repository.
+Briefly, the following shell commands build and run Emacs from scratch:
 
-** Write access to the Emacs repository.
+	git config --global user.name 'Your Name'
+	git config --global user.email 'your.name@example.com'
+	git config --global transfer.fsckObjects true
+	git clone git://git.sv.gnu.org/emacs.git
+	cd emacs
+	./autogen.sh
+	./configure
+	make
+	src/emacs
 
-Once you become a frequent contributor to Emacs, we can consider
-giving you write access to the version-control repository.  Request
-access on the emacs-devel@gnu.org mailing list.  Also, be sure to
-subscribe to the emacs-devel@gnu.org mailing list and include the
-"emacs-announce" topic, so that you get the announcements about
-feature freeze and other important events.
+For more details, see
+http://www.emacswiki.org/emacs/GitQuickStartForEmacsDevs and
+http://www.emacswiki.org/emacs/GitForEmacsDevs or see the file
+admin/notes/git-workflow.
 
-** Using the Emacs repository
+** Getting involved with development
 
-Emacs uses Git for the source code repository.
+You can subscribe to the emacs-devel@gnu.org mailing list, paying
+attention to postings with subject lines containing "emacs-announce",
+as these discuss important events like feature freezes.  See
+http://lists.gnu.org/mailman/listinfo/emacs-devel for mailing list
+instructions and archives.  You can develop and commit changes in your
+own copy of the repository, and discuss proposed changes on the
+mailing list.  Frequent contributors to Emacs can request write access
+there.
 
-See http://www.emacswiki.org/emacs/GitQuickStartForEmacsDevs to get
-started, and http://www.emacswiki.org/emacs/GitForEmacsDevs for more
-advanced information.
+** Committing changes by others
 
-Alternately, see admin/notes/git-workflow.
-
-If committing changes written by someone else, make the commit in
-their name, not yours.  Git distinguishes between the author
-and the committer; use the --author option on the commit command to
-specify the actual author; the committer defaults to you.
+If committing changes written by someone else, commit in their name,
+not yours.  You can use 'git commit --author="AUTHOR"' to specify a
+change's author.
 
 ** Commit messages
 
-Emacs development no longer stores descriptions of new changes in
-ChangeLog files.  Instead, a single ChangeLog file is generated from
-the commit messages when a release is prepared.  So changes you commit
-should not touch any of the ChangeLog files in the repository, but
-instead should contain the log entries in the commit message.  Here is
-an example of a commit message (indented):
+Ordinarily, a change you commit should contain a log entry in its
+commit message and should not touch the repository's ChangeLog files.
+Here is an example commit message (indented):
 
 	Deactivate shifted region
 
@@ -53,12 +56,13 @@ an example of a commit message (indented):
 	* src/frame.c (Fhandle_switch_frame, Fselected_frame):
 	Deactivate the mark.
 
-Below are some rules and recommendations for formatting commit
-messages:
+Occasionally, commit messages are collected and prepended to a
+ChangeLog file, where they can be corrected.  It saves time to get
+them right the first time, so here are guidelines for formatting them:
 
 - Start with a single unindented summary line explaining the change;
   do not end this line with a period.  If that line starts with a
-  semi-colon and a space "; ", the log message will be ignored when
+  semicolon and a space "; ", the commit message will be ignored when
   generating the ChangeLog file.  Use this for minor commits that do
   not need separate ChangeLog entries, such as changes in etc/NEWS.
 
@@ -104,19 +108,19 @@ messages:
   the rationale for a change; that can be done in the commit message
   between the summary line and the file entries.
 
-- Emacs generally follows the GNU coding standards when it comes to
-  ChangeLogs:
-  http://www.gnu.org/prep/standards/html_node/Change-Logs.html or
-  "(info (standards)Change Logs").  One exception is that we still
-  sometimes quote `like-this' (as the standards used to recommend)
-  rather than 'like-this' (as they do now), because `...' is so widely
-  used elsewhere in Emacs.
+- Emacs generally follows the GNU coding standards for ChangeLogs: see
+  http://www.gnu.org/prep/standards/html_node/Change-Logs.html
+  or run 'info "(standards)Change Logs"'.  One exception is that
+  commits still sometimes quote `like-this' (as the standards used to
+  recommend) rather than 'like-this' or ‘like this’ (as they do now),
+  as `...' is so widely used elsewhere in Emacs.
 
-- Some of the rules in the GNU coding standards section 5.2
-  "Commenting Your Work" also apply to ChangeLog entries: they must be
-  in English, and be complete sentences starting with a capital and
-  ending with a period (except the summary line should not end in a
-  period).
+- Some commenting rules in the GNU coding standards also apply
+  to ChangeLog entries: they must be in English, and be complete
+  sentences starting with a capital and ending with a period (except
+  the summary line should not end in a period).  See
+  http://www.gnu.org/prep/standards/html_node/Comments.html
+  or run 'info "(standards)Comments"'.
 
   They are preserved indefinitely, and have a reasonable chance of
   being read in the future, so it's better that they have good
@@ -145,15 +149,15 @@ messages:
   will suffice.
 
 - There is no need to mention files such as NEWS and MAINTAINERS, or
-  to indicate regeneration of files such as 'configure', in the
+  to indicate regeneration of files such as 'lib/gnulib.mk', in the
   ChangeLog entry.  "There is no need" means you don't have to, but
   you can if you want to.
 
 ** Generating ChangeLog entries
 
-- You can use various Emacs functions to ease the process of writing
-  ChangeLog entries; see (info "(emacs)Change Log Commands") or
-  http://www.gnu.org/software/emacs/manual/html_node/emacs/Change-Log-Commands.html.
+- You can use Emacs functions to write ChangeLog entries; see
+  http://www.gnu.org/software/emacs/manual/html_node/emacs/Change-Log-Commands.html
+  or run 'info "(emacs)Change Log Commands"'.
 
 - If you use Emacs VC, one way to format ChangeLog entries is to create
   a top-level ChangeLog file manually, and update it with 'C-x 4 a' as
@@ -171,32 +175,33 @@ messages:
 
 ** Branches
 
-Development normally takes places on the trunk.
-Sometimes specialized features are developed on separate branches
-before possibly being merged to the trunk.
-
-Development is discussed on the emacs-devel mailing list.
-
-The trunk branch is named "master" in git; release branches are named
-"emacs-nn" where "nn" is the major version.
+Future development normally takes place on the master branch.
+Sometimes specialized features are developed on other branches before
+possibly being merged to the master.  Release branches are named
+"emacs-NN" where NN is the major version number, and are mainly
+intended for more-conservative changes such as bug fixes.  Typically,
+collective development is active on the master branch and possibly on
+the current release branch.  Periodically, the current release branch
+is merged into the master, using the gitmerge function described in
+admin/notes-git-workflow.
 
 If you are fixing a bug that exists in the current release, be sure to
 commit it to the release branch; it will be merged to the master
-branch later.
+branch later by the gitmerge function.
 
-However, if you know that the change will be difficult to merge to
-master (eg because the code on master has changed a lot), you can
+However, if you know that the change will be difficult to merge to the
+master (e.g., because the code on master has changed a lot), you can
 apply the change to both master and branch yourself.  It could also
 happen that a change is cherry-picked from master to the release
 branch, and so doesn't need to be merged back.  In these cases,
-indicate in the release branch commit log that there is no need to
-merge the commit to master; start the commit message with "Backport:".
-gitmerge.el will then exclude that commit from the merge to trunk.
+say in the release branch commit message that there is no need to merge
+the commit to master, by starting the commit message with "Backport:".
+The gitmerge function excludes these commits from the merge to the master.
 
 Some changes should not be merged to master at all, for whatever
 reasons.  These should be marked by including something like "Do not
 merge to master" or anything that matches gitmerge-skip-regexp (see
-gitmerge.el) in the log message.
+admin/gitmerge.el) in the commit message.
 
 ** Other process information
 
@@ -206,10 +211,11 @@ Discussion about Emacs development takes place on emacs-devel@gnu.org.
 
 Bug reports and fixes, feature requests and implementations should be
 sent to bug-gnu-emacs@gnu.org, the bug/feature list.  This is coupled
-to the tracker at http://debbugs.gnu.org .
+to the http://debbugs.gnu.org tracker.
 
-You can subscribe to the mailing lists, or see the list archives,
-by following links from http://savannah.gnu.org/mail/?group=emacs .
+The Savannah info page http://savannah.gnu.org/mail/?group=emacs
+describes how to subscribe to the mailing lists, or see the list
+archives.
 
 To email a patch you can use a shell command like 'git format-patch -1'
 to create a file, and then attach the file to your email.  This nicely
@@ -219,16 +225,15 @@ such patch without additional remarks, you can use a command like
 
 ** Issue tracker (a.k.a. "bug tracker")
 
-The Emacs issue tracker is at http://debbugs.gnu.org/.  The form
-presented by that page allows to view bug reports and search the
-database for bugs matching several criteria.  Messages posted to the
-bug-gnu-emacs@gnu.org mailing list, mentioned above, are recorded by
-the tracker with the corresponding bugs/issues.
+The Emacs issue tracker at http://debbugs.gnu.org lets you view bug
+reports and search the database for bugs matching several criteria.
+Messages posted to the bug-gnu-emacs@gnu.org mailing list, mentioned
+above, are recorded by the tracker with the corresponding bugs/issues.
 
 GNU ELPA has a 'debbugs' package that allows accessing the tracker
 database from Emacs.
 
-** Document your changes.
+** Documenting your changes
 
 Any change that matters to end-users should have an entry in etc/NEWS.
 
@@ -239,21 +244,21 @@ know it does not, mark the NEWS entry with "---".  If you know
 that *all* the necessary documentation updates have been made, mark
 the entry with "+++".  Otherwise do not mark it.
 
-Please see (info "(elisp)Documentation Tips") or
-https://www.gnu.org/software/emacs/manual/html_node/elisp/Documentation-Tips.html
-for more specific tips on Emacs's doc style.  Use 'checkdoc' to check
-for documentation errors before submitting a patch.
+For more specific tips on Emacs's doc style, see
+http://www.gnu.org/software/emacs/manual/html_node/elisp/Documentation-Tips.html
+Use 'checkdoc' to check for documentation errors before submitting a patch.
 
-** Test your changes.
+** Testing your changes
 
 Please test your changes before committing them or sending them to the
 list.  If possible, add a new test along with any bug fix or new
 functionality you commit (of course, some changes cannot be easily
 tested).
 
-Emacs uses ERT, Emacs Lisp Regression Testing, for testing.  See (info
-"(ert)") or https://www.gnu.org/software/emacs/manual/html_node/ert/
-for more information on writing and running tests.
+Emacs uses ERT, Emacs Lisp Regression Testing, for testing.  See
+http://www.gnu.org/software/emacs/manual/html_node/ert/
+or run 'info "(ert)"' for for more information on writing and running
+tests.
 
 If your test lasts longer than some few seconds, mark it in its
 'ert-deftest' definition with ":tags '(:expensive-test)".
@@ -264,27 +269,26 @@ top-level directory.  Most tests are in the directory
 <filename>" to run the tests for <filename>.el(c).  See "test/README"
 for more information.
 
-** Understanding Emacs Internals.
+** Understanding Emacs internals
 
-The best way to understand Emacs Internals is to read the code,
-but the nodes "Tips" and "GNU Emacs Internals" in the Appendix
-of the Emacs Lisp Reference Manual may also help.  Some source files,
-such as xdisp.c, have large commentaries describing the design and
-implementation in more detail.
+The best way to understand Emacs internals is to read the code.  Some
+source files, such as xdisp.c, have extensive comments describing the
+design and implementation.  The following resources may also help:
+
+http://www.gnu.org/software/emacs/manual/html_node/elisp/Tips.html
+http://www.gnu.org/software/emacs/manual/html_node/elisp/GNU-Emacs-Internals.html
+
+or run 'info "(elisp)Tips"' or 'info "(elisp)GNU Emacs Internals"'.
 
 The file etc/DEBUG describes how to debug Emacs bugs.
 
 *** Non-ASCII characters in Emacs files
 
-If you introduce non-ASCII characters into Emacs source files, it is a
-good idea to add a 'coding' cookie to the file to state its encoding.
-Please use the UTF-8 encoding unless it cannot do the job for some
-good reason.  As of Emacs 24.4, it is no longer necessary to have
-explicit 'coding' cookies in *.el files if they are encoded in UTF-8,
-but other files need them even if encoded in UTF-8.  However, if
-an *.el file is intended for use with older Emacs versions (e.g. if
-it's also distributed via ELPA), having an explicit encoding
-specification is still a good idea.
+If you introduce non-ASCII characters into Emacs source files, use the
+UTF-8 encoding unless it cannot do the job for some good reason.
+Although it is generally a good idea to add 'coding:' cookies to
+non-ASCII source files, cookies are not needed in UTF-8-encoded *.el
+files intended for use only with Emacs version 24.5 and later.
 
 *** Useful files in the admin/ directory
 
@@ -306,15 +310,15 @@ changed heuristic to deduce that a file was renamed.  So if you are
 planning to make extensive changes to a file after renaming it (or
 moving it to another directory), you should:
 
-- create a feature branch
+- Create a feature branch.
 
-- commit the rename without any changes
+- Commit the rename without any changes.
 
-- make other changes
+- Make other changes.
 
-- merge the feature branch to trunk, _not_ squashing the commits into
-  one.  The commit message on this merge should summarize the renames
-  and all the changes.
+- Merge the feature branch to the master branch, instead of squashing
+  the commits into one.  The commit message on this merge should
+  summarize the renames and all the changes.
 
 
 
@@ -336,4 +340,5 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 Local variables:
 mode: outline
 paragraph-separate: "[ 	]*$"
+coding: utf-8
 end:
