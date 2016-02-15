@@ -68,6 +68,7 @@ replacing its case-insensitive matches with the literal string in LIGHTER."
 				     "toggle-\\|-mode\\'" ""
                                      (symbol-name mode))))
 		       " mode")))
+    (setq name (replace-regexp-in-string "\\`Global-" "Global " name))
     (if (not (stringp lighter)) name
       ;; Strip leading and trailing whitespace from LIGHTER.
       (setq lighter (replace-regexp-in-string "\\`\\s-+\\|\\s-+\\'" ""

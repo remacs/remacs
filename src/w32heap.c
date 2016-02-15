@@ -652,15 +652,19 @@ mmap_alloc (void **var, size_t nbytes)
     {
       /* Now, commit pages for NBYTES.  */
       *var = VirtualAlloc (p, nbytes, MEM_COMMIT, PAGE_READWRITE);
+      if (*var == NULL)
+	p = *var;
     }
 
   if (!p)
     {
-      if (GetLastError () == ERROR_NOT_ENOUGH_MEMORY)
+      DWORD e = GetLastError ();
+
+      if (e == ERROR_NOT_ENOUGH_MEMORY)
 	errno = ENOMEM;
       else
 	{
-	  DebPrint (("mmap_alloc: error %ld\n", GetLastError ()));
+	  DebPrint (("mmap_alloc: error %ld\n", e));
 	  errno = EINVAL;
 	}
     }
@@ -683,6 +687,7 @@ void *
 mmap_realloc (void **var, size_t nbytes)
 {
   MEMORY_BASIC_INFORMATION memInfo, m2;
+  void *old_ptr;
 
   if (*var == NULL)
     return mmap_alloc (var, nbytes);
@@ -694,12 +699,14 @@ mmap_realloc (void **var, size_t nbytes)
       return mmap_alloc (var, nbytes);
     }
 
+  memset (&memInfo, 0, sizeof (memInfo));
   if (VirtualQuery (*var, &memInfo, sizeof (memInfo)) == 0)
     DebPrint (("mmap_realloc: VirtualQuery error = %ld\n", GetLastError ()));
 
   /* We need to enlarge the block.  */
   if (memInfo.RegionSize < nbytes)
     {
+      memset (&m2, 0, sizeof (m2));
       if (VirtualQuery (*var + memInfo.RegionSize, &m2, sizeof(m2)) == 0)
         DebPrint (("mmap_realloc: VirtualQuery error = %ld\n",
 		   GetLastError ()));
@@ -715,31 +722,31 @@ mmap_realloc (void **var, size_t nbytes)
 			    MEM_COMMIT, PAGE_READWRITE);
 	  if (!p /* && GetLastError() != ERROR_NOT_ENOUGH_MEMORY */)
 	    {
-	      DebPrint (("realloc enlarge: VirtualAlloc error %ld\n",
+	      DebPrint (("realloc enlarge: VirtualAlloc (%p + %I64x, %I64x) error %ld\n",
+			 *var, (uint64_t)memInfo.RegionSize,
+			 (uint64_t)(nbytes - memInfo.RegionSize),
 			 GetLastError ()));
-	      errno = ENOMEM;
+	      DebPrint (("next region: %p %p %I64x %x\n", m2.BaseAddress,
+			 m2.AllocationBase, m2.RegionSize, m2.AllocationProtect));
 	    }
+	  else
+	    return *var;
+	}
+      /* Else we must actually enlarge the block by allocating a new
+	 one and copying previous contents from the old to the new one.  */
+      old_ptr = *var;
+
+      if (mmap_alloc (var, nbytes))
+	{
+	  CopyMemory (*var, old_ptr, memInfo.RegionSize);
+	  mmap_free (&old_ptr);
 	  return *var;
 	}
       else
 	{
-	  /* Else we must actually enlarge the block by allocating a
-	     new one and copying previous contents from the old to the
-	     new one.  */
-	  void *old_ptr = *var;
-
-	  if (mmap_alloc (var, nbytes))
-	    {
-	      CopyMemory (*var, old_ptr, memInfo.RegionSize);
-	      mmap_free (&old_ptr);
-	      return *var;
-	    }
-	  else
-	    {
-	      /* We failed to enlarge the buffer.  */
-	      *var = old_ptr;
-	      return NULL;
-	    }
+	  /* We failed to reallocate the buffer.  */
+	  *var = old_ptr;
+	  return NULL;
 	}
     }
 
@@ -751,7 +758,7 @@ mmap_realloc (void **var, size_t nbytes)
         {
           /* Let's give some memory back to the system and release
 	     some pages.  */
-          void *old_ptr = *var;
+          old_ptr = *var;
 
 	  if (mmap_alloc (var, nbytes))
             {
