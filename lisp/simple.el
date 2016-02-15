@@ -6736,7 +6736,13 @@ current object."
 (defun backward-word (&optional arg)
   "Move backward until encountering the beginning of a word.
 With argument ARG, do this that many times.
-If ARG is omitted or nil, move point backward one word."
+If ARG is omitted or nil, move point backward one word.
+
+The word boundaries are normally determined by the buffer's syntax
+table, but `find-word-boundary-function-table', such as set up
+by `subword-mode', can change that.  If a Lisp program needs to
+move by words determined strictly by the syntax table, it should
+use `backward-word-strictly' instead."
   (interactive "^p")
   (forward-word (- (or arg 1))))
 

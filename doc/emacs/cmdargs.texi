@@ -550,10 +550,11 @@ variables is not set, the category defaults to the value of the
 @env{LANG} is not set.  But if @env{LC_ALL} is specified, it overrides
 the settings of all the other locale environment variables.
 
-On MS-Windows, if @env{LANG} is not already set in the environment
-when Emacs starts, Emacs sets it based on the system-wide default
-language, which you can set in the @samp{Regional Settings} Control Panel
-on some versions of MS-Windows.
+On MS-Windows and OS X, if @env{LANG} is not already set in the
+environment, Emacs sets it based on the system-wide default.  You can
+set this in the ``Regional Settings'' Control Panel on some versions
+of MS-Windows, and in the ``Language and Region'' System Preference on
+OS X.
 
 The value of the @env{LC_CTYPE} category is
 matched against entries in @code{locale-language-names},

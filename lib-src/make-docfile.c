@@ -37,6 +37,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>   /* config.h unconditionally includes this anyway */
 
@@ -48,6 +50,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif /* WINDOWSNT */
 
 #include <binary-io.h>
+#include <intprops.h>
+#include <min-max.h>
 
 #ifdef DOS_NT
 /* Defined to be sys_chdir in ms-w32.h, but only #ifdef emacs, so this
@@ -61,72 +65,79 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define IS_SLASH(c)  ((c) == '/')
 #endif /* not DOS_NT */
 
-static int scan_file (char *filename);
-static int scan_lisp_file (const char *filename, const char *mode);
-static int scan_c_file (char *filename, const char *mode);
-static int scan_c_stream (FILE *infile);
+static void scan_file (char *filename);
+static void scan_lisp_file (const char *filename, const char *mode);
+static void scan_c_file (char *filename, const char *mode);
+static void scan_c_stream (FILE *infile);
 static void start_globals (void);
 static void write_globals (void);
 
 #include <unistd.h>
 
 /* Name this program was invoked with.  */
-char *progname;
+static char *progname;
 
-/* Nonzero if this invocation is generating globals.h.  */
-int generate_globals;
+/* True if this invocation is generating globals.h.  */
+static bool generate_globals;
 
-/* Print error message.  `s1' is printf control string, `s2' is arg for it.  */
+/* Print error message.  Args are like vprintf.  */
 
-/* VARARGS1 */
-static void
-error (const char *s1, const char *s2)
+static void ATTRIBUTE_FORMAT_PRINTF (1, 0)
+verror (char const *m, va_list ap)
 {
   fprintf (stderr, "%s: ", progname);
-  fprintf (stderr, s1, s2);
+  vfprintf (stderr, m, ap);
   fprintf (stderr, "\n");
 }
 
-/* Print error message and exit.  */
+/* Print error message.  Args are like printf.  */
 
-/* VARARGS1 */
-static _Noreturn void
-fatal (const char *s1, const char *s2)
+static void ATTRIBUTE_FORMAT_PRINTF (1, 2)
+error (char const *m, ...)
 {
-  error (s1, s2);
+  va_list ap;
+  va_start (ap, m);
+  verror (m, ap);
+  va_end (ap);
+}
+
+/* Print error message and exit.  Args are like printf.  */
+
+static _Noreturn void ATTRIBUTE_FORMAT_PRINTF (1, 2)
+fatal (char const *m, ...)
+{
+  va_list ap;
+  va_start (ap, m);
+  verror (m, ap);
+  va_end (ap);
   exit (EXIT_FAILURE);
+}
+
+static _Noreturn void
+memory_exhausted (void)
+{
+  fatal ("virtual memory exhausted");
 }
 
 /* Like malloc but get fatal error if memory is exhausted.  */
 
 static void *
-xmalloc (unsigned int size)
+xmalloc (ptrdiff_t size)
 {
-  void *result = (void *) malloc (size);
+  void *result = malloc (size);
   if (result == NULL)
-    fatal ("virtual memory exhausted", 0);
-  return result;
-}
-
-/* Like strdup, but get fatal error if memory is exhausted.  */
-
-static char *
-xstrdup (char *s)
-{
-  char *result = strdup (s);
-  if (! result)
-    fatal ("virtual memory exhausted", 0);
+    memory_exhausted ();
   return result;
 }
 
 /* Like realloc but get fatal error if memory is exhausted.  */
 
 static void *
-xrealloc (void *arg, unsigned int size)
+xrealloc (void *arg, ptrdiff_t size)
 {
-  void *result = (void *) realloc (arg, size);
+  void *result = realloc (arg, size);
   if (result == NULL)
-    fatal ("virtual memory exhausted", 0);
+    memory_exhausted ();
   return result;
 }
 
@@ -135,7 +146,6 @@ int
 main (int argc, char **argv)
 {
   int i;
-  int err_count = 0;
 
   progname = argv[0];
 
@@ -170,7 +180,7 @@ main (int argc, char **argv)
     }
   if (argc > i && !strcmp (argv[i], "-g"))
     {
-      generate_globals = 1;
+      generate_globals = true;
       ++i;
     }
 
@@ -192,14 +202,17 @@ main (int argc, char **argv)
 	    if (strcmp (argv[i], argv[j]) == 0)
 	      break;
 	  if (j == i)
-	    err_count += scan_file (argv[i]);
+	    scan_file (argv[i]);
 	}
     }
 
-  if (err_count == 0 && generate_globals)
+  if (generate_globals)
     write_globals ();
 
-  return (err_count > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
+  if (ferror (stdout) || fclose (stdout) != 0)
+    fatal ("write error");
+
+  return EXIT_SUCCESS;
 }
 
 /* Add a source file name boundary marker in the output file.  */
@@ -218,22 +231,21 @@ put_filename (char *filename)
 }
 
 /* Read file FILENAME and output its doc strings to stdout.
-   Return 1 if file is not found, 0 if it is found.  */
+   Return true if file is found, false otherwise.  */
 
-static int
+static void
 scan_file (char *filename)
 {
-
-  size_t len = strlen (filename);
+  ptrdiff_t len = strlen (filename);
 
   if (!generate_globals)
     put_filename (filename);
   if (len > 4 && !strcmp (filename + len - 4, ".elc"))
-    return scan_lisp_file (filename, "rb");
+    scan_lisp_file (filename, "rb");
   else if (len > 3 && !strcmp (filename + len - 3, ".el"))
-    return scan_lisp_file (filename, "r");
+    scan_lisp_file (filename, "r");
   else
-    return scan_c_file (filename, "r");
+    scan_c_file (filename, "r");
 }
 
 static void
@@ -250,7 +262,7 @@ static char input_buffer[128];
 struct rcsoc_state
 {
   /* A count of spaces and newlines that have been read, but not output.  */
-  unsigned pending_spaces, pending_newlines;
+  intmax_t pending_spaces, pending_newlines;
 
   /* Where we're reading from.  */
   FILE *in_file;
@@ -267,16 +279,16 @@ struct rcsoc_state
      the input stream.  */
   const char *cur_keyword_ptr;
   /* Set to true if we saw an occurrence of KEYWORD.  */
-  int saw_keyword;
+  bool saw_keyword;
 };
 
 /* Output CH to the file or buffer in STATE.  Any pending newlines or
    spaces are output first.  */
 
 static void
-put_char (int ch, struct rcsoc_state *state)
+put_char (char ch, struct rcsoc_state *state)
 {
-  int out_ch;
+  char out_ch;
   do
     {
       if (state->pending_newlines > 0)
@@ -307,7 +319,7 @@ put_char (int ch, struct rcsoc_state *state)
    keyword, but were in fact not.  */
 
 static void
-scan_keyword_or_put_char (int ch, struct rcsoc_state *state)
+scan_keyword_or_put_char (char ch, struct rcsoc_state *state)
 {
   if (state->keyword
       && *state->cur_keyword_ptr == ch
@@ -319,7 +331,7 @@ scan_keyword_or_put_char (int ch, struct rcsoc_state *state)
       if (*++state->cur_keyword_ptr == '\0')
 	/* Saw the whole keyword.  Set SAW_KEYWORD flag to true.  */
 	{
-	  state->saw_keyword = 1;
+	  state->saw_keyword = true;
 
 	  /* Reset the scanning pointer.  */
 	  state->cur_keyword_ptr = state->keyword;
@@ -330,22 +342,29 @@ scan_keyword_or_put_char (int ch, struct rcsoc_state *state)
 
 	  /* Skip any whitespace between the keyword and the
 	     usage string.  */
+	  int c;
 	  do
-	    ch = getc (state->in_file);
-	  while (ch == ' ' || ch == '\n');
+	    c = getc (state->in_file);
+	  while (c == ' ' || c == '\n');
 
 	  /* Output the open-paren we just read.  */
-	  put_char (ch, state);
+	  if (c != '(')
+	    fatal ("Missing '(' after keyword");
+	  put_char (c, state);
 
 	  /* Skip the function name and replace it with `fn'.  */
 	  do
-	    ch = getc (state->in_file);
-	  while (ch != ' ' && ch != ')');
+	    {
+	      c = getc (state->in_file);
+	      if (c == EOF)
+		fatal ("Unexpected EOF after keyword");
+	    }
+	  while (c != ' ' && c != ')');
 	  put_char ('f', state);
 	  put_char ('n', state);
 
 	  /* Put back the last character.  */
-	  ungetc (ch, state->in_file);
+	  ungetc (c, state->in_file);
 	}
     }
   else
@@ -369,18 +388,19 @@ scan_keyword_or_put_char (int ch, struct rcsoc_state *state)
 
 
 /* Skip a C string or C-style comment from INFILE, and return the
-   character that follows.  COMMENT non-zero means skip a comment.  If
+   byte that follows, or EOF.  COMMENT means skip a comment.  If
    PRINTFLAG is positive, output string contents to stdout.  If it is
    negative, store contents in buf.  Convert escape sequences \n and
    \t to newline and tab; discard \ followed by newline.
-   If SAW_USAGE is non-zero, then any occurrences of the string `usage:'
+   If SAW_USAGE is non-null, then any occurrences of the string "usage:"
    at the beginning of a line will be removed, and *SAW_USAGE set to
    true if any were encountered.  */
 
 static int
-read_c_string_or_comment (FILE *infile, int printflag, int comment, int *saw_usage)
+read_c_string_or_comment (FILE *infile, int printflag, bool comment,
+			  bool *saw_usage)
 {
-  register int c;
+  int c;
   struct rcsoc_state state;
 
   state.in_file = infile;
@@ -390,7 +410,7 @@ read_c_string_or_comment (FILE *infile, int printflag, int comment, int *saw_usa
   state.pending_newlines = 0;
   state.keyword = (saw_usage ? "usage:" : 0);
   state.cur_keyword_ptr = state.keyword;
-  state.saw_keyword = 0;
+  state.saw_keyword = false;
 
   c = getc (infile);
   if (comment)
@@ -468,10 +488,10 @@ read_c_string_or_comment (FILE *infile, int printflag, int comment, int *saw_usa
 static void
 write_c_args (char *func, char *buf, int minargs, int maxargs)
 {
-  register char *p;
-  int in_ident = 0;
+  char *p;
+  bool in_ident = false;
   char *ident_start IF_LINT (= NULL);
-  size_t ident_length = 0;
+  ptrdiff_t ident_length = 0;
 
   fputs ("(fn", stdout);
 
@@ -491,12 +511,12 @@ write_c_args (char *func, char *buf, int minargs, int maxargs)
 	{
 	  if (!in_ident)
 	    {
-	      in_ident = 1;
+	      in_ident = true;
 	      ident_start = p;
 	    }
 	  else
 	    {
-	      in_ident = 0;
+	      in_ident = false;
 	      ident_length = p - ident_start;
 	    }
 	}
@@ -575,34 +595,38 @@ enum { DEFUN_noreturn = 1, DEFUN_const = 2 };
 
 /* All the variable names we saw while scanning C sources in `-g'
    mode.  */
-int num_globals;
-int num_globals_allocated;
-struct global *globals;
+static ptrdiff_t num_globals;
+static ptrdiff_t num_globals_allocated;
+static struct global *globals;
 
 static struct global *
-add_global (enum global_type type, char *name, int value, char const *svalue)
+add_global (enum global_type type, char const *name, int value,
+	    char const *svalue)
 {
   /* Ignore the one non-symbol that can occur.  */
   if (strcmp (name, "..."))
     {
+      if (num_globals == num_globals_allocated)
+	{
+	  ptrdiff_t num_globals_max = (min (PTRDIFF_MAX, SIZE_MAX)
+				       / sizeof *globals);
+	  if (num_globals_allocated == num_globals_max)
+	    memory_exhausted ();
+	  if (num_globals_allocated < num_globals_max / 2)
+	    num_globals_allocated = 2 * num_globals_allocated + 1;
+	  else
+	    num_globals_allocated = num_globals_max;
+	  globals = xrealloc (globals, num_globals_allocated * sizeof *globals);
+	}
+
       ++num_globals;
 
-      if (num_globals_allocated == 0)
-	{
-	  num_globals_allocated = 100;
-	  globals = xmalloc (num_globals_allocated * sizeof (struct global));
-	}
-      else if (num_globals == num_globals_allocated)
-	{
-	  num_globals_allocated *= 2;
-	  globals = xrealloc (globals,
-			      num_globals_allocated * sizeof (struct global));
-	}
-
+      ptrdiff_t namesize = strlen (name) + 1;
+      char *buf = xmalloc (namesize + (svalue ? strlen (svalue) + 1 : 0));
       globals[num_globals - 1].type = type;
-      globals[num_globals - 1].name = name;
+      globals[num_globals - 1].name = strcpy (buf, name);
       if (svalue)
-	globals[num_globals - 1].v.svalue = svalue;
+	globals[num_globals - 1].v.svalue = strcpy (buf + namesize, svalue);
       else
 	globals[num_globals - 1].v.value = value;
       globals[num_globals - 1].flags = 0;
@@ -634,7 +658,7 @@ compare_globals (const void *a, const void *b)
 }
 
 static void
-close_emacs_globals (int num_symbols)
+close_emacs_globals (ptrdiff_t num_symbols)
 {
   printf (("};\n"
 	   "extern struct emacs_globals globals;\n"
@@ -642,17 +666,17 @@ close_emacs_globals (int num_symbols)
 	   "#ifndef DEFINE_SYMBOLS\n"
 	   "extern\n"
 	   "#endif\n"
-	   "struct Lisp_Symbol alignas (GCALIGNMENT) lispsym[%d];\n"),
+	   "struct Lisp_Symbol alignas (GCALIGNMENT) lispsym[%td];\n"),
 	  num_symbols);
 }
 
 static void
 write_globals (void)
 {
-  int i, j;
+  ptrdiff_t i, j;
   bool seen_defun = false;
-  int symnum = 0;
-  int num_symbols = 0;
+  ptrdiff_t symnum = 0;
+  ptrdiff_t num_symbols = 0;
   qsort (globals, num_globals, sizeof (struct global), compare_globals);
 
   j = 0;
@@ -665,6 +689,7 @@ write_globals (void)
 	      && globals[i].v.value != globals[i + 1].v.value)
 	    error ("function '%s' defined twice with differing signatures",
 		   globals[i].name);
+	  free (globals[i].name);
 	  i++;
 	}
       num_symbols += globals[i].type == SYMBOL;
@@ -697,7 +722,7 @@ write_globals (void)
 	    }
 	  break;
 	default:
-	  fatal ("not a recognized DEFVAR_", 0);
+	  fatal ("not a recognized DEFVAR_");
 	}
 
       if (type)
@@ -707,7 +732,7 @@ write_globals (void)
 		  globals[i].name, globals[i].name);
 	}
       else if (globals[i].type == SYMBOL)
-	printf (("#define i%s %d\n"
+	printf (("#define i%s %td\n"
 		 "DEFINE_LISP_SYMBOL (%s)\n"),
 		globals[i].name, symnum++, globals[i].name);
       else
@@ -736,7 +761,7 @@ write_globals (void)
 
   puts ("#ifdef DEFINE_SYMBOLS");
   puts ("static char const *const defsym_name[] = {");
-  for (int i = 0; i < num_globals; i++)
+  for (ptrdiff_t i = 0; i < num_globals; i++)
     if (globals[i].type == SYMBOL)
       printf ("\t\"%s\",\n", globals[i].v.svalue);
   puts ("};");
@@ -745,9 +770,9 @@ write_globals (void)
   puts ("#define Qnil builtin_lisp_symbol (0)");
   puts ("#if DEFINE_NON_NIL_Q_SYMBOL_MACROS");
   num_symbols = 0;
-  for (int i = 0; i < num_globals; i++)
+  for (ptrdiff_t i = 0; i < num_globals; i++)
     if (globals[i].type == SYMBOL && num_symbols++ != 0)
-      printf ("# define %s builtin_lisp_symbol (%d)\n",
+      printf ("# define %s builtin_lisp_symbol (%td)\n",
 	      globals[i].name, num_symbols - 1);
   puts ("#endif");
 }
@@ -758,11 +783,11 @@ write_globals (void)
    Looks for DEFUN constructs such as are defined in ../src/lisp.h.
    Accepts any word starting DEF... so it finds DEFSIMPLE and DEFPRED.  */
 
-static int
+static void
 scan_c_file (char *filename, const char *mode)
 {
   FILE *infile;
-  int extension = filename[strlen (filename) - 1];
+  char extension = filename[strlen (filename) - 1];
 
   if (extension == 'o')
     filename[strlen (filename) - 1] = 'c';
@@ -778,16 +803,15 @@ scan_c_file (char *filename, const char *mode)
         filename[strlen (filename) - 1] = 'c'; /* Don't confuse people.  */
     }
 
-  /* No error if non-ex input file.  */
   if (infile == NULL)
     {
       perror (filename);
-      return 0;
+      exit (EXIT_FAILURE);
     }
 
   /* Reset extension to be able to detect duplicate files.  */
   filename[strlen (filename) - 1] = extension;
-  return scan_c_stream (infile);
+  scan_c_stream (infile);
 }
 
 /* Return 1 if next input from INFILE is equal to P, -1 if EOF,
@@ -807,7 +831,7 @@ stream_match (FILE *infile, const char *p)
   return 1;
 }
 
-static int
+static void
 scan_c_stream (FILE *infile)
 {
   int commas, minargs, maxargs;
@@ -815,12 +839,13 @@ scan_c_stream (FILE *infile)
 
   while (!feof (infile))
     {
-      int doc_keyword = 0;
-      int defunflag = 0;
-      int defvarperbufferflag = 0;
-      int defvarflag = 0;
+      bool doc_keyword = false;
+      bool defunflag = false;
+      bool defvarperbufferflag = false;
+      bool defvarflag = false;
       enum global_type type = INVALID;
-      char *name IF_LINT (= 0);
+      static char *name;
+      static ptrdiff_t name_size;
 
       if (c != '\n' && c != '\r')
 	{
@@ -866,7 +891,7 @@ scan_c_stream (FILE *infile)
 	      if (c != '_')
 		continue;
 
-	      defvarflag = 1;
+	      defvarflag = true;
 
 	      c = getc (infile);
 	      defvarperbufferflag = (c == 'P');
@@ -920,12 +945,12 @@ scan_c_stream (FILE *infile)
 	  c = getc (infile);
 	  if (c != '"')
 	    continue;
-	  c = read_c_string_or_comment (infile, -1, 0, 0);
+	  c = read_c_string_or_comment (infile, -1, false, 0);
 	}
 
       if (generate_globals)
 	{
-	  int i = 0;
+	  ptrdiff_t i = 0;
 	  char const *svalue = 0;
 
 	  /* Skip "," and whitespace.  */
@@ -947,7 +972,16 @@ scan_c_stream (FILE *infile)
 		    || c == '\n' || c == '\r'));
 	  input_buffer[i] = '\0';
 
-	  name = xmalloc (i + 1);
+	  if (name_size <= i)
+	    {
+	      free (name);
+	      name_size = i + 1;
+	      ptrdiff_t doubled;
+	      if (! INT_MULTIPLY_WRAPV (name_size, 2, &doubled)
+		  && doubled <= SIZE_MAX)
+		name_size = doubled;
+	      name = xmalloc (name_size);
+	    }
 	  memcpy (name, input_buffer, i + 1);
 
 	  if (type == SYMBOL)
@@ -957,8 +991,8 @@ scan_c_stream (FILE *infile)
 	      while (c == ' ' || c == '\t' || c == '\n' || c == '\r');
 	      if (c != '"')
 		continue;
-	      c = read_c_string_or_comment (infile, -1, 0, 0);
-	      svalue = xstrdup (input_buffer);
+	      c = read_c_string_or_comment (infile, -1, false, 0);
+	      svalue = input_buffer;
 	    }
 
 	  if (!defunflag)
@@ -1024,6 +1058,8 @@ scan_c_stream (FILE *infile)
       if (generate_globals)
 	{
 	  struct global *g = add_global (FUNCTION, name, maxargs, 0);
+	  if (!g)
+	    continue;
 
 	  /* The following code tries to recognize function attributes
 	     specified after the docstring, e.g.:
@@ -1087,7 +1123,7 @@ scan_c_stream (FILE *infile)
 	c = getc (infile);
 
       if (c == '"')
-	c = read_c_string_or_comment (infile, 0, 0, 0);
+	c = read_c_string_or_comment (infile, 0, false, 0);
 
       while (c != EOF && c != ',' && c != '/')
 	c = getc (infile);
@@ -1100,7 +1136,7 @@ scan_c_stream (FILE *infile)
 	    c = getc (infile);
 	  if (c == ':')
 	    {
-	      doc_keyword = 1;
+	      doc_keyword = true;
 	      c = getc (infile);
 	      while (c == ' ' || c == '\n' || c == '\r' || c == '\t')
 		c = getc (infile);
@@ -1113,8 +1149,8 @@ scan_c_stream (FILE *infile)
 		  ungetc (c, infile),
 		  c == '*')))
 	{
-	  int comment = c != '"';
-	  int saw_usage;
+	  bool comment = c != '"';
+	  bool saw_usage;
 
 	  printf ("\037%c%s\n", defvarflag ? 'V' : 'F', input_buffer);
 
@@ -1168,8 +1204,8 @@ scan_c_stream (FILE *infile)
 	}
     }
  eof:
-  fclose (infile);
-  return 0;
+  if (ferror (infile) || fclose (infile) != 0)
+    fatal ("read error");
 }
 
 /* Read a file of Lisp code, compiled or interpreted.
@@ -1245,7 +1281,7 @@ read_lisp_symbol (FILE *infile, char *buffer)
   skip_white (infile);
 }
 
-static int
+static bool
 search_lisp_doc_at_eol (FILE *infile)
 {
   int c = 0, c1 = 0, c2 = 0;
@@ -1265,20 +1301,19 @@ search_lisp_doc_at_eol (FILE *infile)
 #ifdef DEBUG
       fprintf (stderr, "## non-docstring found\n");
 #endif
-      if (c != EOF)
-	ungetc (c, infile);
-      return 0;
+      ungetc (c, infile);
+      return false;
     }
-  return 1;
+  return true;
 }
 
 #define DEF_ELISP_FILE(fn)  { #fn, sizeof(#fn) - 1 }
 
-static int
+static void
 scan_lisp_file (const char *filename, const char *mode)
 {
   FILE *infile;
-  register int c;
+  int c;
   char *saved_string = 0;
   /* These are the only files that are loaded uncompiled, and must
      follow the conventions of the doc strings expected by this
@@ -1286,7 +1321,7 @@ scan_lisp_file (const char *filename, const char *mode)
      byte compiler when it produces the .elc files.  */
   static struct {
     const char *fn;
-    size_t fl;
+    int fl;
   } const uncompiled[] = {
     DEF_ELISP_FILE (loaddefs.el),
     DEF_ELISP_FILE (loadup.el),
@@ -1294,22 +1329,22 @@ scan_lisp_file (const char *filename, const char *mode)
     DEF_ELISP_FILE (cp51932.el),
     DEF_ELISP_FILE (eucjp-ms.el)
   };
-  int i, match;
-  size_t flen = strlen (filename);
+  int i;
+  int flen = strlen (filename);
 
   if (generate_globals)
-    fatal ("scanning lisp file when -g specified", 0);
+    fatal ("scanning lisp file when -g specified");
   if (flen > 3 && !strcmp (filename + flen - 3, ".el"))
     {
-      for (i = 0, match = 0; i < sizeof (uncompiled) / sizeof (uncompiled[0]);
-	   i++)
+      bool match = false;
+      for (i = 0; i < sizeof (uncompiled) / sizeof (uncompiled[0]); i++)
 	{
 	  if (uncompiled[i].fl <= flen
 	      && !strcmp (filename + flen - uncompiled[i].fl, uncompiled[i].fn)
 	      && (flen == uncompiled[i].fl
 		  || IS_SLASH (filename[flen - uncompiled[i].fl - 1])))
 	    {
-	      match = 1;
+	      match = true;
 	      break;
 	    }
 	}
@@ -1321,7 +1356,7 @@ scan_lisp_file (const char *filename, const char *mode)
   if (infile == NULL)
     {
       perror (filename);
-      return 0;				/* No error.  */
+      exit (EXIT_FAILURE);
     }
 
   c = '\n';
@@ -1345,22 +1380,24 @@ scan_lisp_file (const char *filename, const char *mode)
 	  c = getc (infile);
 	  if (c == '@')
 	    {
-	      size_t length = 0;
-	      size_t i;
+	      ptrdiff_t length = 0;
+	      ptrdiff_t i;
 
 	      /* Read the length.  */
 	      while ((c = getc (infile),
 		      c >= '0' && c <= '9'))
 		{
-		  length *= 10;
-		  length += c - '0';
+		  if (INT_MULTIPLY_WRAPV (length, 10, &length)
+		      || INT_ADD_WRAPV (length, c - '0', &length)
+		      || SIZE_MAX < length)
+		    memory_exhausted ();
 		}
 
 	      if (length <= 1)
-		fatal ("invalid dynamic doc string length", "");
+		fatal ("invalid dynamic doc string length");
 
 	      if (c != ' ')
-		fatal ("space not found after dynamic doc string length", "");
+		fatal ("space not found after dynamic doc string length");
 
 	      /* The next character is a space that is counted in the length
 		 but not part of the doc string.
@@ -1369,7 +1406,7 @@ scan_lisp_file (const char *filename, const char *mode)
 
 	      /* Read in the contents.  */
 	      free (saved_string);
-	      saved_string = (char *) xmalloc (length);
+	      saved_string = xmalloc (length);
 	      for (i = 0; i < length; i++)
 		saved_string[i] = getc (infile);
 	      /* The last character is a ^_.
@@ -1568,7 +1605,7 @@ scan_lisp_file (const char *filename, const char *mode)
 		       buffer, filename);
 	      continue;
 	    }
-	  read_c_string_or_comment (infile, 0, 0, 0);
+	  read_c_string_or_comment (infile, 0, false, 0);
 
 	  if (saved_string == 0)
 	    if (!search_lisp_doc_at_eol (infile))
@@ -1604,10 +1641,11 @@ scan_lisp_file (const char *filename, const char *mode)
 	  saved_string = 0;
 	}
       else
-	read_c_string_or_comment (infile, 1, 0, 0);
+	read_c_string_or_comment (infile, 1, false, 0);
     }
-  fclose (infile);
-  return 0;
+  free (saved_string);
+  if (ferror (infile) || fclose (infile) != 0)
+    fatal ("%s: read error", filename);
 }
 
 

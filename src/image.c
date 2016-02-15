@@ -8672,7 +8672,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
     image_spec_value (img->spec, QCbackground, NULL); if (!STRINGP
     (specified_bg).  */
   value = image_spec_value (img->spec, QCrotation, NULL);
-  if (FLOATP (value) || INTEGERP (value))
+  if (FLOATP (value))
     {
       rotation = extract_float (value);
       status = MagickRotateImage (image_wand, bg_wand, rotation);

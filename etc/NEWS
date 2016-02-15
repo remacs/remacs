@@ -718,10 +718,6 @@ text in the region.  The search engine to use for this is specified by
 the customizable variable `eww-search-prefix'.
 
 +++
-*** Images that have rotation specified in the EXIF headers are now
-automatically rotated (if displayed as ImageMagick images).
-
-+++
 *** Query-replace history is enhanced.
 When query-replace reads the FROM string from the minibuffer, typing
 `M-p' will now show previous replacements as "FROM SEP TO", where FROM

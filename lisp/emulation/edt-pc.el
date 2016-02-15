@@ -3,8 +3,8 @@
 ;; Copyright (C) 1986, 1994-1995, 2001-2016 Free Software Foundation,
 ;; Inc.
 
-;; Author: Kevin Gallagher <Kevin.Gallagher@boeing.com>
-;; Maintainer: Kevin Gallagher <Kevin.Gallagher@boeing.com>
+;; Author: Kevin Gallagher <kevin.gal@verizon.net>
+;; Maintainer: Kevin Gallagher <kevin.gal@verizon.net>
 ;; Keywords: emulations
 ;; Package: edt
 

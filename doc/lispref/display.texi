@@ -5213,9 +5213,7 @@ when the image does not have an associated file name, to provide a
 hint to ImageMagick to help it detect the image type.
 
 @item :rotation @var{angle}
-Specifies a rotation angle in degrees.  If no rotation is explicitly
-specified, and the @acronym{EXIF} headers specify a rotation, the
-rotation from the @acronym{EXIF} headers are used instead.
+Specifies a rotation angle in degrees.
 
 @item :index @var{frame}
 @c Doesn't work: http://debbugs.gnu.org/7978
