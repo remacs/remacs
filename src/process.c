@@ -284,7 +284,7 @@ static Lisp_Object chan_process[FD_SETSIZE];
 #ifdef HAVE_GETADDRINFO_A
 /* Pending DNS requests. */
 static Lisp_Object dns_processes;
-static void wait_for_socket_fds (Lisp_Object process);
+static void wait_for_socket_fds (Lisp_Object process, char *name);
 #endif
 
 /* Alist of elements (NAME . PROCESS).  */
@@ -1031,9 +1031,6 @@ The string argument is normally a multibyte string, except:
 
   CHECK_PROCESS (process);
 
-  if (NETCONN_P (process))
-    wait_for_socket_fds (process);
-
   p = XPROCESS (process);
 
   /* Don't signal an error if the process's input file descriptor
@@ -1119,7 +1116,7 @@ DEFUN ("set-process-window-size", Fset_process_window_size,
   CHECK_PROCESS (process);
 
   if (NETCONN_P (process))
-    wait_for_socket_fds (process);
+    wait_for_socket_fds (process, "set-process-window-size");
 
   /* All known platforms store window sizes as 'unsigned short'.  */
   CHECK_RANGED_INTEGER (height, 0, USHRT_MAX);
@@ -1204,7 +1201,7 @@ list of keywords.  */)
 #ifdef DATAGRAM_SOCKETS
 
   if (NETCONN_P (process))
-    wait_for_socket_fds (process);
+    wait_for_socket_fds (process, "process-contact");
 
   if (DATAGRAM_CONN_P (process)
       && (EQ (key, Qt) || EQ (key, QCremote)))
@@ -2436,7 +2433,7 @@ DEFUN ("process-datagram-address", Fprocess_datagram_address, Sprocess_datagram_
   CHECK_PROCESS (process);
 
   if (NETCONN_P (process))
-    wait_for_socket_fds (process);
+    wait_for_socket_fds (process, "process-datagram-address");
 
   if (!DATAGRAM_CONN_P (process))
     return Qnil;
@@ -2458,7 +2455,7 @@ Returns nil upon error setting address, ADDRESS otherwise.  */)
   CHECK_PROCESS (process);
 
   if (NETCONN_P (process))
-    wait_for_socket_fds (process);
+    wait_for_socket_fds (process, "set-process-datagram-address");
 
   if (!DATAGRAM_CONN_P (process))
     return Qnil;
@@ -2628,7 +2625,7 @@ OPTION is not a supported option, return nil instead; otherwise return t.  */)
   if (!NETCONN1_P (p))
     error ("Process is not a network process");
 
-  wait_for_socket_fds (process);
+  wait_for_socket_fds (process, "set-network-process-option");
 
   s = p->infd;
   if (s < 0)
@@ -3332,16 +3329,49 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
     {
       Lisp_Object boot, params = p->gnutls_boot_parameters;
 
-      p->gnutls_boot_parameters = Qnil;
       boot = Fgnutls_boot (proc, XCAR (params), XCDR (params));
-      if (NILP (boot) || STRINGP (boot)) {
-	deactivate_process (proc);
-	if (NILP (boot))
-	  pset_status (p, list2 (Qfailed,
-				 build_string ("TLS negotiation failed")));
-	else
-	  pset_status (p, list2 (Qfailed, boot));
-      }
+      p->gnutls_boot_parameters = Qnil;
+
+      if (NILP (boot) || STRINGP (boot))
+	{
+	  deactivate_process (proc);
+	  if (NILP (boot))
+	    pset_status (p, list2 (Qfailed,
+				   build_string ("TLS negotiation failed")));
+	  else
+	    pset_status (p, list2 (Qfailed, boot));
+	}
+      else
+	{
+	  Lisp_Object result = Qt;
+
+	  if (!NILP (Ffboundp (Qnsm_verify_connection)))
+	    result = call3 (Qnsm_verify_connection,
+			    proc,
+			    Fplist_get (contact, QChost),
+			    Fplist_get (contact, QCservice));
+
+	  if (NILP (result))
+	    {
+	      pset_status (p, list2 (Qfailed,
+				     build_string ("The Network Security Manager stopped the connections")));
+	      deactivate_process (proc);
+	    }
+	  else
+	    {
+	      /* If we cleared the connection wait mask before we did
+		 the TLS setup, then we have to say that the process
+		 is finally "open" here. */
+	      if (! FD_ISSET (p->outfd, &connect_wait_mask))
+		{
+		  pset_status (p, Qrun);
+		  /* Execute the sentinel here.  If we had relied on
+		     status_notify to do it later, it will read input
+		     from the process before calling the sentinel.  */
+		  exec_sentinel (proc, build_string ("open\n"));
+		}
+	    }
+	}
     }
 #endif
 
@@ -4670,27 +4700,36 @@ check_for_dns (Lisp_Object proc)
 #endif /* HAVE_GETADDRINFO_A */
 
 static void
-wait_for_socket_fds (Lisp_Object process)
+wait_for_socket_fds (Lisp_Object process, char *name)
 {
   while (XPROCESS (process)->infd < 0 &&
 	 EQ (XPROCESS (process)->status, Qconnect))
-    wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
+    {
+      printf("Waiting for socket from %s...\n", name);
+      wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
+    }
 }
 
 static void
 wait_while_connecting (Lisp_Object process)
 {
   while (EQ (XPROCESS (process)->status, Qconnect))
-    wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
+    {
+      printf("Waiting for connection...\n");
+      wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
+    }
 }
 
 static void
 wait_for_tls_negotiation (Lisp_Object process)
 {
 #ifdef HAVE_GNUTLS
-  while (EQ (XPROCESS (process)->status, Qrun) &&
+  while (EQ (XPROCESS (process)->status, Qconnect) &&
 	 !NILP (XPROCESS (process)->gnutls_boot_parameters))
-    wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
+    {
+      printf("Waiting for TLS...\n");
+      wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
+    }
 #endif
 }
 
@@ -5486,11 +5525,15 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		}
 	      else
 		{
-		  pset_status (p, Qrun);
-		  /* Execute the sentinel here.  If we had relied on
-		     status_notify to do it later, it will read input
-		     from the process before calling the sentinel.  */
-		  exec_sentinel (proc, build_string ("open\n"));
+		  if (NILP (p->gnutls_boot_parameters))
+		    {
+		      pset_status (p, Qrun);
+		      /* Execute the sentinel here.  If we had relied on
+			 status_notify to do it later, it will read input
+			 from the process before calling the sentinel.  */
+		      exec_sentinel (proc, build_string ("open\n"));
+		    }
+
 		  if (0 <= p->infd && !EQ (p->filter, Qt)
 		      && !EQ (p->command, Qt))
 		    {
@@ -5947,6 +5990,11 @@ send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
   ssize_t rv;
   struct coding_system *coding;
 
+  if (NETCONN_P (proc)) {
+    wait_while_connecting (proc);
+    wait_for_tls_negotiation (proc);
+  }
+
   if (p->raw_status_new)
     update_status (p);
   if (! EQ (p->status, Qrun))
@@ -6200,11 +6248,6 @@ Output from processes can arrive in between bunches.  */)
   Lisp_Object proc;
   CHECK_STRING (string);
   proc = get_process (process);
-
-  if (NETCONN_P (proc)) {
-    wait_while_connecting (proc);
-    wait_for_tls_negotiation (proc);
-  }
 
   send_process (proc, SSDATA (string),
 		SBYTES (string), string);
@@ -7081,7 +7124,7 @@ encode subprocess input.  */)
   CHECK_PROCESS (process);
 
   if (NETCONN_P (process))
-    wait_for_socket_fds (process);
+    wait_for_socket_fds (process, "set-process-coding-system");
 
   p = XPROCESS (process);
 
@@ -7123,7 +7166,7 @@ suppressed.  */)
   CHECK_PROCESS (process);
 
   if (NETCONN_P (process))
-    wait_for_socket_fds (process);
+    wait_for_socket_fds (process, "set-process-filter-multibyte");
 
   p = XPROCESS (process);
   if (NILP (flag))
@@ -7817,6 +7860,7 @@ syms_of_process (void)
   DEFSYM (QCnowait, ":nowait");
   DEFSYM (QCsentinel, ":sentinel");
   DEFSYM (QCtls_parameters, ":tls-parameters");
+  DEFSYM (Qnsm_verify_connection, "nsm-verify-connection");
   DEFSYM (QClog, ":log");
   DEFSYM (QCnoquery, ":noquery");
   DEFSYM (QCstop, ":stop");

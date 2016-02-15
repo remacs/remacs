@@ -372,27 +372,29 @@ gnutls-boot (as returned by `gnutls-boot-parameters')."
                                     (plist-get parameters :nowait))
               (open-tls-stream name buffer host service)))
 	   (eoc (plist-get parameters :end-of-command)))
-      ;; Check certificate validity etc.
-      (when (and (gnutls-available-p) stream)
-	(setq stream (nsm-verify-connection stream host service)))
-      (if (null stream)
-	  (list nil nil nil 'plain)
-	;; If we're using tls.el, we have to delete the output from
-	;; openssl/gnutls-cli.
-	(when (and (not (gnutls-available-p))
-		   eoc)
-	  (network-stream-get-response stream start eoc)
-	  (goto-char (point-min))
-	  (when (re-search-forward eoc nil t)
-	    (goto-char (match-beginning 0))
-	    (delete-region (point-min) (line-beginning-position))))
-	(let ((capability-command (plist-get parameters :capability-command))
-	      (eo-capa (or (plist-get parameters :end-of-capability)
-			   eoc)))
-	  (list stream
-		(network-stream-get-response stream start eoc)
-		(network-stream-command stream capability-command eo-capa)
-		'tls))))))
+      (if (plist-get parameters :nowait)
+          (list stream nil nil 'tls)
+        ;; Check certificate validity etc.
+        (when (and (gnutls-available-p) stream)
+          (setq stream (nsm-verify-connection stream host service)))
+        (if (null stream)
+            (list nil nil nil 'plain)
+          ;; If we're using tls.el, we have to delete the output from
+          ;; openssl/gnutls-cli.
+          (when (and (not (gnutls-available-p))
+                     eoc)
+            (network-stream-get-response stream start eoc)
+            (goto-char (point-min))
+            (when (re-search-forward eoc nil t)
+              (goto-char (match-beginning 0))
+              (delete-region (point-min) (line-beginning-position))))
+          (let ((capability-command (plist-get parameters :capability-command))
+                (eo-capa (or (plist-get parameters :end-of-capability)
+                             eoc)))
+            (list stream
+                  (network-stream-get-response stream start eoc)
+                  (network-stream-command stream capability-command eo-capa)
+                  'tls)))))))
 
 (defun network-stream-open-shell (name buffer host service parameters)
   (require 'format-spec)
