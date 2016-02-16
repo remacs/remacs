@@ -1115,14 +1115,12 @@ DEFUN ("set-process-window-size", Fset_process_window_size,
 {
   CHECK_PROCESS (process);
 
-  if (NETCONN_P (process))
-    wait_for_socket_fds (process, "set-process-window-size");
-
   /* All known platforms store window sizes as 'unsigned short'.  */
   CHECK_RANGED_INTEGER (height, 0, USHRT_MAX);
   CHECK_RANGED_INTEGER (width, 0, USHRT_MAX);
 
-  if (XPROCESS (process)->infd < 0
+  if (NETCONN_P (process)
+      || XPROCESS (process)->infd < 0
       || (set_window_size (XPROCESS (process)->infd,
 			   XINT (height), XINT (width))
 	  < 0))
