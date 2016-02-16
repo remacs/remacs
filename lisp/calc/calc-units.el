@@ -279,7 +279,9 @@
               "10973731.568527 /m (*)")
     ( k       "1.3806504*10^(-23) J/K"      "Boltzmann's constant" nil
               "1.3806504 10^-23 J/K (*)")
-    ( σ       "5.670367*10^(-8) W/(m^2 K^4)" "Stefan-Boltzmann constant" nil
+    ( sigma   "5.670367*10^(-8) W/(m^2 K^4)" "Stefan-Boltzmann constant" nil
+              "5.670367 10^-8 W/(m^2 K^4) (*)")
+    ( σ       "sigma" "Stefan-Boltzmann constant" nil
               "5.670367 10^-8 W/(m^2 K^4) (*)")
     ( alpha   "7.2973525376*10^(-3)"        "Fine structure constant" nil
               "7.2973525376 10^-3 (*)")
