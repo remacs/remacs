@@ -281,9 +281,7 @@ static int max_input_desc;
 
 /* Indexed by descriptor, gives the process (if any) for that descriptor.  */
 static Lisp_Object chan_process[FD_SETSIZE];
-#ifdef HAVE_GETADDRINFO_A
 static void wait_for_socket_fds (Lisp_Object process, char *name);
-#endif
 
 /* Alist of elements (NAME . PROCESS).  */
 static Lisp_Object Vprocess_alist;
@@ -3038,7 +3036,45 @@ void set_network_socket_coding_system (Lisp_Object proc)
     = !(!NILP (tem) || NILP (p->buffer) || !inherit_process_coding_system);
 }
 
-void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
+#ifdef HAVE_GNUTLS
+void
+finish_after_tls_connection (Lisp_Object proc)
+{
+  struct Lisp_Process *p = XPROCESS (proc);
+  Lisp_Object contact = p->childp;
+  Lisp_Object result = Qt;
+
+  if (!NILP (Ffboundp (Qnsm_verify_connection)))
+    result = call3 (Qnsm_verify_connection,
+		    proc,
+		    Fplist_get (contact, QChost),
+		    Fplist_get (contact, QCservice));
+
+  if (NILP (result))
+    {
+      pset_status (p, list2 (Qfailed,
+			     build_string ("The Network Security Manager stopped the connections")));
+      deactivate_process (proc);
+    }
+  else
+    {
+      /* If we cleared the connection wait mask before we did
+	 the TLS setup, then we have to say that the process
+	 is finally "open" here. */
+      if (! FD_ISSET (p->outfd, &connect_wait_mask))
+	{
+	  pset_status (p, Qrun);
+	  /* Execute the sentinel here.  If we had relied on
+	     status_notify to do it later, it will read input
+	     from the process before calling the sentinel.  */
+	  exec_sentinel (proc, build_string ("open\n"));
+	}
+    }
+}
+#endif
+
+void
+connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
   ptrdiff_t count1;
@@ -3359,8 +3395,10 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
       boot = Fgnutls_boot (proc, XCAR (params), XCDR (params));
       p->gnutls_boot_parameters = Qnil;
 
-      if (NILP (boot) || STRINGP (boot) ||
-	  p->gnutls_initstage != GNUTLS_STAGE_READY)
+      if (p->gnutls_initstage == GNUTLS_STAGE_READY)
+	/* Run sentinels, etc. */
+	finish_after_tls_connection (proc);
+      else if (p->gnutls_initstage != GNUTLS_STAGE_HANDSHAKE_TRIED)
 	{
 	  deactivate_process (proc);
 	  if (NILP (boot))
@@ -3368,37 +3406,6 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 				   build_string ("TLS negotiation failed")));
 	  else
 	    pset_status (p, list2 (Qfailed, boot));
-	}
-      else
-	{
-	  Lisp_Object result = Qt;
-
-	  if (!NILP (Ffboundp (Qnsm_verify_connection)))
-	    result = call3 (Qnsm_verify_connection,
-			    proc,
-			    Fplist_get (contact, QChost),
-			    Fplist_get (contact, QCservice));
-
-	  if (NILP (result))
-	    {
-	      pset_status (p, list2 (Qfailed,
-				     build_string ("The Network Security Manager stopped the connections")));
-	      deactivate_process (proc);
-	    }
-	  else
-	    {
-	      /* If we cleared the connection wait mask before we did
-		 the TLS setup, then we have to say that the process
-		 is finally "open" here. */
-	      if (! FD_ISSET (p->outfd, &connect_wait_mask))
-		{
-		  pset_status (p, Qrun);
-		  /* Execute the sentinel here.  If we had relied on
-		     status_notify to do it later, it will read input
-		     from the process before calling the sentinel.  */
-		  exec_sentinel (proc, build_string ("open\n"));
-		}
-	    }
 	}
     }
 #endif
@@ -4747,8 +4754,8 @@ static void
 wait_for_tls_negotiation (Lisp_Object process)
 {
 #ifdef HAVE_GNUTLS
-  while (EQ (XPROCESS (process)->status, Qconnect) &&
-	 !NILP (XPROCESS (process)->gnutls_boot_parameters))
+  while (XPROCESS (process)->gnutls_p &&
+	 XPROCESS (process)->gnutls_initstage != GNUTLS_STAGE_READY)
     {
       printf("Waiting for TLS...\n");
       wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
@@ -4881,7 +4888,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       if (! NILP (wait_for_cell) && ! NILP (XCAR (wait_for_cell)))
 	break;
 
-#ifdef HAVE_GETADDRINFO_A
+#if defined (HAVE_GETADDRINFO_A) || defined (HAVE_GNUTLS)
       {
 	Lisp_Object ip_addresses;
 	Lisp_Object process_list_head, aproc;
@@ -4891,17 +4898,41 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  {
 	    p = XPROCESS (aproc);
 
-	    if (p->dns_requests &&
-		(! wait_proc || p == wait_proc))
+	    if (! wait_proc || p == wait_proc)
 	      {
-		ip_addresses = check_for_dns (aproc);
-		if (!NILP (ip_addresses) &&
-		    !EQ (ip_addresses, Qt))
-		  connect_network_socket (aproc, ip_addresses);
+#ifdef HAVE_GETADDRINFO_A
+		/* Check for pending DNS requests. */
+		if (p->dns_requests)
+		  {
+		    ip_addresses = check_for_dns (aproc);
+		    if (!NILP (ip_addresses) &&
+			!EQ (ip_addresses, Qt))
+		      connect_network_socket (aproc, ip_addresses);
+		  }
+#endif
+#ifdef HAVE_GNUTLS
+		/* Continue TLS negotiation. */
+		if (p->gnutls_initstage == GNUTLS_STAGE_HANDSHAKE_TRIED &&
+		    p->is_non_blocking_client)
+		  {
+		    gnutls_try_handshake (p);
+		    p->gnutls_handshakes_tried++;
+
+		    if (p->gnutls_initstage == GNUTLS_STAGE_READY)
+		      finish_after_tls_connection (aproc);
+		    else if (p->gnutls_handshakes_tried >
+			     GNUTLS_EMACS_HANDSHAKES_LIMIT)
+		      {
+			deactivate_process (proc);
+			pset_status (p, list2 (Qfailed,
+					       build_string ("TLS negotiation failed")));
+		      }
+		  }
+#endif
 	      }
 	  }
       }
-#endif /* HAVE_GETADDRINFO_A */
+#endif /* GETADDRINFO_A or GNUTLS */
 
       /* Compute time from now till when time limit is up.  */
       /* Exit if already run out.  */
@@ -5522,7 +5553,13 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		}
 	      else
 		{
-		  if (NILP (p->gnutls_boot_parameters))
+#ifdef HAVE_GNUTLS
+		  /* If we have an incompletely set up TLS connection,
+		     then defer the sentinel signalling until
+		     later. */
+		  if (NILP (p->gnutls_boot_parameters) &&
+		      !p->gnutls_p)
+#endif
 		    {
 		      pset_status (p, Qrun);
 		      /* Execute the sentinel here.  If we had relied on

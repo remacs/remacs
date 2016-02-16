@@ -397,11 +397,42 @@ gnutls_log_function2i (int level, const char *string, int extra)
   message ("gnutls.c: [%d] %s %d", level, string, extra);
 }
 
+int
+gnutls_try_handshake (struct Lisp_Process *proc)
+{
+  gnutls_session_t state = proc->gnutls_state;
+  int ret;
+
+  do
+    {
+      ret = gnutls_handshake (state);
+      emacs_gnutls_handle_error (state, ret);
+      QUIT;
+    }
+  while (ret < 0 && gnutls_error_is_fatal (ret) == 0 &&
+	 ! proc->is_non_blocking_client);
+
+  proc->gnutls_initstage = GNUTLS_STAGE_HANDSHAKE_TRIED;
+
+  if (proc->is_non_blocking_client)
+    proc->gnutls_p = 1;
+
+  if (ret == GNUTLS_E_SUCCESS)
+    {
+      /* Here we're finally done.  */
+      proc->gnutls_initstage = GNUTLS_STAGE_READY;
+    }
+  else
+    {
+      //check_memory_full (gnutls_alert_send_appropriate (state, ret));
+    }
+  return ret;
+}
+
 static int
 emacs_gnutls_handshake (struct Lisp_Process *proc)
 {
   gnutls_session_t state = proc->gnutls_state;
-  int ret;
 
   if (proc->gnutls_initstage < GNUTLS_STAGE_HANDSHAKE_CANDO)
     return -1;
@@ -443,26 +474,7 @@ emacs_gnutls_handshake (struct Lisp_Process *proc)
       proc->gnutls_initstage = GNUTLS_STAGE_TRANSPORT_POINTERS_SET;
     }
 
-  do
-    {
-      ret = gnutls_handshake (state);
-      emacs_gnutls_handle_error (state, ret);
-      QUIT;
-    }
-  while (ret < 0 && gnutls_error_is_fatal (ret) == 0);
-
-  proc->gnutls_initstage = GNUTLS_STAGE_HANDSHAKE_TRIED;
-
-  if (ret == GNUTLS_E_SUCCESS)
-    {
-      /* Here we're finally done.  */
-      proc->gnutls_initstage = GNUTLS_STAGE_READY;
-    }
-  else
-    {
-      check_memory_full (gnutls_alert_send_appropriate (state, ret));
-    }
-  return ret;
+  return gnutls_try_handshake (proc);
 }
 
 ptrdiff_t
@@ -531,23 +543,8 @@ emacs_gnutls_read (struct Lisp_Process *proc, char *buf, ptrdiff_t nbyte)
   int log_level = proc->gnutls_log_level;
 
   if (proc->gnutls_initstage != GNUTLS_STAGE_READY)
-    {
-      /* If the handshake count is under the limit, try the handshake
-         again and increment the handshake count.  This count is kept
-         per process (connection), not globally.  */
-      if (proc->gnutls_handshakes_tried < GNUTLS_EMACS_HANDSHAKES_LIMIT)
-        {
-          proc->gnutls_handshakes_tried++;
-          emacs_gnutls_handshake (proc);
-          GNUTLS_LOG2i (5, log_level, "Retried handshake",
-                        proc->gnutls_handshakes_tried);
-          return -1;
-        }
+    return -1;
 
-      GNUTLS_LOG (2, log_level, "Giving up on handshake; resetting retries");
-      proc->gnutls_handshakes_tried = 0;
-      return 0;
-    }
   rtnval = gnutls_record_recv (state, buf, nbyte);
   if (rtnval >= 0)
     return rtnval;
