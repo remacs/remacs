@@ -4923,7 +4923,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		    else if (p->gnutls_handshakes_tried >
 			     GNUTLS_EMACS_HANDSHAKES_LIMIT)
 		      {
-			deactivate_process (proc);
+			deactivate_process (aproc);
 			pset_status (p, list2 (Qfailed,
 					       build_string ("TLS negotiation failed")));
 		      }
