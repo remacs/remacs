@@ -282,8 +282,6 @@ static int max_input_desc;
 /* Indexed by descriptor, gives the process (if any) for that descriptor.  */
 static Lisp_Object chan_process[FD_SETSIZE];
 #ifdef HAVE_GETADDRINFO_A
-/* Pending DNS requests. */
-static Lisp_Object dns_processes;
 static void wait_for_socket_fds (Lisp_Object process, char *name);
 #endif
 
@@ -3959,7 +3957,6 @@ usage: (make-network-process &rest ARGS)  */)
     {
       p->dns_requests = dns_requests;
       p->status = Qconnect;
-      dns_processes = Fcons (proc, dns_processes);
     }
   else
     {
@@ -4885,51 +4882,40 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	break;
 
 #ifdef HAVE_GETADDRINFO_A
-      if (!NILP (dns_processes))
-	{
-	  Lisp_Object dns_list = dns_processes, dns, ip_addresses,
-	    answers = Qnil, answer, new = Qnil;
-	  struct Lisp_Process *p;
+      {
+	Lisp_Object ip_addresses, answers = Qnil, answer;
+	Lisp_Object process_list_head, async_dns_process_candidate;
+	struct Lisp_Process *p;
 
-	  /* This is programmed in a somewhat awkward fashion because
-	  calling connect_network_socket might make us end up back
-	  here again, and we would have a race condition with
-	  segfaults.  So first go through all pending requests and see
-	  whether we got any answers. */
-	  while (!NILP (dns_list))
-	    {
-	      dns = XCAR (dns_list);
-	      dns_list = XCDR (dns_list);
-	      p = XPROCESS (dns);
-	      if (p && p->dns_requests)
-		{
-		  if (! wait_proc || p == wait_proc)
-		    {
-		      ip_addresses = check_for_dns (dns);
-		      if (EQ (ip_addresses, Qt))
-			new = Fcons (dns, new);
-		      else
-			answers = Fcons (Fcons (dns, ip_addresses), answers);
-		    }
-		  else
-		    new = Fcons (dns, new);
-		}
-	    }
+	/* This is programmed in a somewhat awkward fashion because
+	   calling connect_network_socket might make us end up back
+	   here again, and we would have a race condition with
+	   segfaults.  So first go through all pending requests and see
+	   whether we got any answers. */
+	FOR_EACH_PROCESS(process_list_head, async_dns_process_candidate)
+	  {
+	    p = XPROCESS (async_dns_process_candidate);
 
-	  /* Replace with the list of DNS requests still not responded
-	     to. */
-	  dns_processes = new;
-
-	  /* Then continue the connection for the successful
-	     requests. */
-	  while (!NILP (answers))
-	    {
-	      answer = XCAR (answers);
-	      answers = XCDR (answers);
-	      if (!NILP (XCDR (answer)))
-		connect_network_socket (XCAR (answer), XCDR (answer));
-	    }
-	}
+	    if (p->dns_requests)
+	      {
+		if (! wait_proc || p == wait_proc)
+		  {
+		    ip_addresses = check_for_dns (async_dns_process_candidate);
+		    if (!EQ (ip_addresses, Qt))
+		      answers = Fcons (Fcons (async_dns_process_candidate, ip_addresses), answers);
+		  }
+	      }
+	  }
+	/* Then continue the connection for the successful
+	   requests. */
+	while (!NILP (answers))
+	  {
+	    answer = XCAR (answers);
+	    answers = XCDR (answers);
+	    if (!NILP (XCDR (answer)))
+	      connect_network_socket (XCAR (answer), XCDR (answer));
+	  }
+      }
 #endif /* HAVE_GETADDRINFO_A */
 
       /* Compute time from now till when time limit is up.  */
@@ -7811,9 +7797,6 @@ init_process_emacs (void)
 #ifdef DATAGRAM_SOCKETS
   memset (datagram_address, 0, sizeof datagram_address);
 #endif
-#ifdef HAVE_GETADDRINFO_A
-  dns_processes = Qnil;
-#endif
 
 #if defined (DARWIN_OS)
   /* PTYs are broken on Darwin < 6, but are sometimes useful for interactive
@@ -7901,9 +7884,6 @@ syms_of_process (void)
 
   staticpro (&Vprocess_alist);
   staticpro (&deleted_pid_list);
-#ifdef HAVE_GETADDRINFO_A
-  staticpro (&dns_processes);
-#endif
 
 #endif	/* subprocesses */
 
