@@ -463,5 +463,6 @@ That includes all Windows systems except for 9X/Me."
   (getenv "SystemRoot"))
 
 (provide 'w32-win)
+(provide 'term/w32-win)
 
 ;;; w32-win.el ends here

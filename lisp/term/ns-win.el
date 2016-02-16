@@ -936,5 +936,6 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
   (ns-get-selection selection-symbol target-type))
 
 (provide 'ns-win)
+(provide 'term/ns-win)
 
 ;;; ns-win.el ends here
