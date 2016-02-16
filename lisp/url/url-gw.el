@@ -256,7 +256,6 @@ overriding the value of `url-gateway-method'."
 			 (_
 			  (error "Bad setting of url-gateway-method: %s"
 				 url-gateway-method))))))
-      (message "Coding system: %s" (process-coding-system conn))
       conn)))
 
 (provide 'url-gw)
