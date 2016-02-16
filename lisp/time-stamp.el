@@ -120,7 +120,7 @@ If nil, no notification is given."
 
 (defcustom time-stamp-time-zone nil
   "The time zone to be used by \\[time-stamp].
-Its format is that of the ZONE argument of the `format-time-string' function,"
+Its format is that of the ZONE argument of the `format-time-string' function."
   :type '(choice (const :tag "Emacs local time" nil)
                  (const :tag "Universal Time" t)
                  (const :tag "system wall clock time" wall)
