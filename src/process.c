@@ -3004,8 +3004,6 @@ void set_network_socket_coding_system (Lisp_Object proc)
     }
   pset_encode_coding_system (p, val);
 
-  setup_process_coding_systems (proc);
-
   pset_decoding_buf (p, empty_unibyte_string);
   p->decoding_carryover = 0;
   pset_encoding_buf (p, empty_unibyte_string);
@@ -3321,7 +3319,7 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
   if (inch > max_process_desc)
     max_process_desc = inch;
 
-  set_network_socket_coding_system (proc);
+  setup_process_coding_systems (proc);
 
 #ifdef HAVE_GNUTLS
   /* Continue the asynchronous connection. */
@@ -3896,6 +3894,8 @@ usage: (make-network-process &rest ARGS)  */)
   CHECK_LIST (tem);
   p->gnutls_boot_parameters = tem;
 #endif
+
+  set_network_socket_coding_system (proc);
 
   unbind_to (count, Qnil);
 
