@@ -149,6 +149,15 @@
     "box-decoration-break" "break-after" "break-before" "break-inside"
     "orphans" "widows"
 
+    ;; CSS Multi-column Layout Module
+    ;; (https://www.w3.org/TR/css3-multicol/#property-index)
+    ;; "break-after", "break-before", and "break-inside" are left out
+    ;; below, because they're already included in CSS Fragmentation
+    ;; Module Level 3.
+    "column-count" "column-fill" "column-gap" "column-rule"
+    "column-rule-color" "column-rule-style" "column-rule-width"
+    "column-span" "column-width" "columns"
+
     ;; CSS Overflow Module Level 3
     ;; (http://www.w3.org/TR/css-overflow-3/#property-index)
     "max-lines" "overflow" "overflow-x" "overflow-y"
