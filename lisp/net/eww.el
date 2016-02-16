@@ -402,6 +402,10 @@ Currently this means either text/html or application/xhtml+xml."
 		(condition-case nil
 		    (decode-coding-region (point) (point-max) encode)
 		  (coding-system-error nil))
+                (save-excursion
+                  ;; Remove CRLF before parsing.
+                  (while (re-search-forward "\r$" nil t)
+                    (replace-match "" t t)))
 		(libxml-parse-html-region (point) (point-max))))))
 	(source (and (null document)
 		     (buffer-substring (point) (point-max)))))
