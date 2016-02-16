@@ -1628,7 +1628,7 @@ If COMP or STD is non-nil, put that in the units table instead."
                "TeX point will be `pt' instead of `texpt', for example.\n"
                "To avoid conflicts, the unit names for pint and parsec will\n"
                "be `pint' and `parsec' instead of `pt' and `pc'."))))
-	  (view-mode)
+	  (special-mode)
 	  (message "Formatting units table...done"))
 	(setq math-units-table-buffer-valid t)
 	(let ((oldbuf (current-buffer)))
