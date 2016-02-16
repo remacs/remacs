@@ -8,8 +8,7 @@ Emacs uses ERT, Emacs Lisp Regression Testing, for testing.  See (info
 "(ert)") or https://www.gnu.org/software/emacs/manual/html_node/ert/
 for more information on writing and running tests.
 
-All ERT test files are supposed to run from subdirectory automated/.
-The Makefile in that directory supports the following targets:
+The Makefile in this directory supports the following targets:
 
 * make check
   Run all tests as defined in the directory.  Expensive tests are

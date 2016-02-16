@@ -275,28 +275,9 @@ If your test lasts longer than some few seconds, mark it in its
 'ert-deftest' definition with ":tags '(:expensive-test)".
 
 To run tests on the entire Emacs tree, run "make check" from the
-top-level directory.  Most tests are in the directory
-"test/".  From the "test/" directory, run "make
-<filename>" to run the tests for <filename>.el(c).  See
-"test/Makefile" for more information.
-
-Tests which are tagged ":expensive-test" are enabled additionally, if
-you run "make check-expensive" from the top-level directory.  "make
-<filename>" as mentioned above incorporates expensive tests for
-<filename>.el(c). You can also define any ert selector on the command
-line. So "make check SELECTOR=nil" is equivalent to "make
-check-expensive".
-
-You could also use predefined selectors of the Makefile. "make
-<filename> SELECTOR='$(SELECTOR_DEFAULT)'" runs all tests for
-<filename>.el(c) except the tests tagged as expensive.
-
-Selectors can be defined with different methods, see (info "(ert)Test
-Selectors") or
-https://www.gnu.org/software/emacs/manual/html_node/ert/Test-Selectors.html
-If your test file contains the tests "test-foo", "test2-foo" and
-"test-foo-remote", and you want to run only the former two tests, you
-could use a regexp: "make <filename> SELECTOR='\"foo$$\"'" .
+top-level directory.  Most tests are in the directory "test/".  From
+the "test/" directory, run "make <filename>" to run the tests for
+<filename>.el(c).  See "test/README" for more information.
 
 ** Understanding Emacs internals
 
