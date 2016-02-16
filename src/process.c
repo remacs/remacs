@@ -1034,6 +1034,23 @@ DEFUN ("process-mark", Fprocess_mark, Sprocess_mark,
   return XPROCESS (process)->mark;
 }
 
+static void
+set_process_filter_masks (struct Lisp_Process *p)
+{
+  if (EQ (p->filter, Qt) && !EQ (p->status, Qlisten))
+    {
+      FD_CLR (p->infd, &input_wait_mask);
+      FD_CLR (p->infd, &non_keyboard_wait_mask);
+    }
+  else if (EQ (p->filter, Qt)
+	   /* Network or serial process not stopped:  */
+	   && !EQ (p->command, Qt))
+    {
+      FD_SET (p->infd, &input_wait_mask);
+      FD_SET (p->infd, &non_keyboard_wait_mask);
+    }
+}
+
 DEFUN ("set-process-filter", Fset_process_filter, Sset_process_filter,
        2, 2, 0,
        doc: /* Give PROCESS the filter function FILTER; nil means default.
@@ -1069,23 +1086,11 @@ The string argument is normally a multibyte string, except:
   if (NILP (filter))
     filter = Qinternal_default_process_filter;
 
-  if (p->infd >= 0)
-    {
-      if (EQ (filter, Qt) && !EQ (p->status, Qlisten))
-	{
-	  FD_CLR (p->infd, &input_wait_mask);
-	  FD_CLR (p->infd, &non_keyboard_wait_mask);
-	}
-      else if (EQ (p->filter, Qt)
-	       /* Network or serial process not stopped:  */
-	       && !EQ (p->command, Qt))
-	{
-	  FD_SET (p->infd, &input_wait_mask);
-	  FD_SET (p->infd, &non_keyboard_wait_mask);
-	}
-    }
-
   pset_filter (p, filter);
+
+  if (p->infd >= 0)
+    set_process_filter_masks (p);
+
   if (NETCONN1_P (p) || SERIALCONN1_P (p) || PIPECONN1_P (p))
     pset_childp (p, Fplist_put (p->childp, QCfilter, filter));
   setup_process_coding_systems (process);
@@ -3341,6 +3346,9 @@ void connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 
   if (inch > max_process_desc)
     max_process_desc = inch;
+
+  /* Set up the masks based on the process filter. */
+  set_process_filter_masks (p);
 
   setup_process_coding_systems (proc);
 
