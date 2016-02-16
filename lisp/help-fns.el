@@ -296,7 +296,6 @@ suitable file is found, return nil."
 		      (substring-no-properties lib-name 0 -1)
 		    lib-name)
 		file-name))
-	     ;; The next three forms are from `find-source-lisp-file'.
 	     (src-file (locate-library file-name t nil 'readable)))
 	(and src-file (file-readable-p src-file) src-file))))))
 
