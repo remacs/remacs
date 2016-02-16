@@ -743,6 +743,23 @@ remove_process (register Lisp_Object proc)
   deactivate_process (proc);
 }
 
+#ifdef HAVE_GETADDRINFO_A
+static void
+free_dns_request (Lisp_Object proc)
+{
+  struct Lisp_Process *p = XPROCESS (proc);
+
+  if (p->dns_requests[0]->ar_result)
+    freeaddrinfo (p->dns_requests[0]->ar_result);
+  xfree ((void *)p->dns_requests[0]->ar_request);
+  xfree ((void *)p->dns_requests[0]->ar_name);
+  xfree ((void *)p->dns_requests[0]->ar_service);
+  xfree (p->dns_requests[0]);
+  xfree (p->dns_requests);
+  p->dns_requests = NULL;
+}
+#endif
+
 
 DEFUN ("processp", Fprocessp, Sprocessp, 1, 1, 0,
        doc: /* Return t if OBJECT is a process.  */)
@@ -832,6 +849,14 @@ nil, indicating the current buffer's process.  */)
 
   process = get_process (process);
   p = XPROCESS (process);
+
+#ifdef HAVE_GETADDRINFO_A
+  if (p->dns_requests)
+    {
+      gai_cancel (p->dns_requests[0]);
+      free_dns_request (process);
+    }
+#endif
 
   p->raw_status_new = 0;
   if (NETCONN1_P (p) || SERIALCONN1_P (p) || PIPECONN1_P (p))
@@ -4652,10 +4677,6 @@ check_for_dns (Lisp_Object proc)
   if (! p->dns_requests)
     return Qnil;
 
-  /* This process should not already be connected (or killed). */
-  if (!EQ (p->status, Qconnect))
-    return Qnil;
-
   ret = gai_error (p->dns_requests[0]);
   if (ret == EAI_INPROGRESS)
     return Qt;
@@ -4673,10 +4694,9 @@ check_for_dns (Lisp_Object proc)
 	}
 
       ip_addresses = Fnreverse (ip_addresses);
-      freeaddrinfo (p->dns_requests[0]->ar_result);
     }
   /* The DNS lookup failed. */
-  else
+  else if (!EQ (p->status, Qconnect))
     {
       deactivate_process (proc);
       pset_status (p, (list2
@@ -4686,12 +4706,11 @@ check_for_dns (Lisp_Object proc)
 				 build_string (" failed")))));
     }
 
-  xfree ((void *)p->dns_requests[0]->ar_request);
-  xfree ((void *)p->dns_requests[0]->ar_name);
-  xfree ((void *)p->dns_requests[0]->ar_service);
-  xfree (p->dns_requests[0]);
-  xfree (p->dns_requests);
-  p->dns_requests = NULL;
+  free_dns_request (proc);
+
+  /* This process should not already be connected (or killed). */
+  if (!EQ (p->status, Qconnect))
+    return Qnil;
 
   return ip_addresses;
 }
