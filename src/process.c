@@ -4883,37 +4883,22 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 
 #ifdef HAVE_GETADDRINFO_A
       {
-	Lisp_Object ip_addresses, answers = Qnil, answer;
-	Lisp_Object process_list_head, async_dns_process_candidate;
+	Lisp_Object ip_addresses;
+	Lisp_Object process_list_head, aproc;
 	struct Lisp_Process *p;
 
-	/* This is programmed in a somewhat awkward fashion because
-	   calling connect_network_socket might make us end up back
-	   here again, and we would have a race condition with
-	   segfaults.  So first go through all pending requests and see
-	   whether we got any answers. */
-	FOR_EACH_PROCESS(process_list_head, async_dns_process_candidate)
+	FOR_EACH_PROCESS(process_list_head, aproc)
 	  {
-	    p = XPROCESS (async_dns_process_candidate);
+	    p = XPROCESS (aproc);
 
-	    if (p->dns_requests)
+	    if (p->dns_requests &&
+		(! wait_proc || p == wait_proc))
 	      {
-		if (! wait_proc || p == wait_proc)
-		  {
-		    ip_addresses = check_for_dns (async_dns_process_candidate);
-		    if (!EQ (ip_addresses, Qt))
-		      answers = Fcons (Fcons (async_dns_process_candidate, ip_addresses), answers);
-		  }
+		ip_addresses = check_for_dns (aproc);
+		if (!NILP (ip_addresses) &&
+		    !EQ (ip_addresses, Qt))
+		  connect_network_socket (aproc, ip_addresses);
 	      }
-	  }
-	/* Then continue the connection for the successful
-	   requests. */
-	while (!NILP (answers))
-	  {
-	    answer = XCAR (answers);
-	    answers = XCDR (answers);
-	    if (!NILP (XCDR (answer)))
-	      connect_network_socket (XCAR (answer), XCDR (answer));
 	  }
       }
 #endif /* HAVE_GETADDRINFO_A */
