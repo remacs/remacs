@@ -6207,7 +6207,7 @@ where R,G,B are numbers between 0 and 255 and name is an arbitrary string.  */)
       int num;
 
       while (fgets (buf, sizeof (buf), fp) != NULL) {
-	if (sscanf (buf, "%u %u %u %n", &red, &green, &blue, &num) == 3)
+	if (sscanf (buf, "%d %d %d %n", &red, &green, &blue, &num) == 3)
 	  {
 #ifdef HAVE_NTGUI
 	    int color = RGB (red, green, blue);
