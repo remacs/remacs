@@ -3241,7 +3241,7 @@ comment at the start of cc-engine.el for more info."
   ;; pair element into an open paren element.  Doing that would mean that the
   ;; new open paren wouldn't have the required preceding paren pair element.
   ;;
-  ;; This function is called from c-after-change.
+  ;; This function is called from c-before-change.
 
   ;; The caches of non-literals:
   ;; Note that we use "<=" for the possibility of the second char of a two-char
@@ -3265,7 +3265,7 @@ comment at the start of cc-engine.el for more info."
     ;; below `here'.  To maintain its consistency, we may need to insert a new
     ;; brace pair.
     (let ((here-bol (c-point 'bol here))
-	  too-high-pa		  ; recorded {/(/[ next above here, or nil.
+	  too-high-pa  ; recorded {/(/[ next above or just below here, or nil.
 	  dropped-cons		  ; was the last removed element a brace pair?
 	  pa)
       ;; The easy bit - knock over-the-top bits off `c-state-cache'.
@@ -3277,7 +3277,7 @@ comment at the start of cc-engine.el for more info."
 
       ;; Do we need to add in an earlier brace pair, having lopped one off?
       (if (and dropped-cons
-	       (< too-high-pa (+ here c-state-cache-too-far)))
+	       (<= too-high-pa here))
 	  (c-append-lower-brace-pair-to-state-cache too-high-pa here here-bol))
       (setq c-state-cache-good-pos (or (c-state-cache-after-top-paren)
 				       (c-state-get-min-scan-pos)))))
