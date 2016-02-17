@@ -186,11 +186,11 @@
                           compress-algorithm
                  &aux
                  (program
-                  (pcase protocol
-                    (`OpenPGP epg-gpg-program)
-                    (`CMS epg-gpgsm-program)
-                    (_ (signal 'epg-error
-                               (list "unknown protocol" protocol)))))))
+                  (let ((configuration (epg-configuration-find protocol)))
+                    (unless configuration
+                      (signal 'epg-error
+                              (list "no usable configuration" protocol)))
+                    (alist-get 'program configuration)))))
                (:copier nil)
                (:predicate nil))
   protocol
