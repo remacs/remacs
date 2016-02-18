@@ -2913,70 +2913,13 @@ the following code in @file{~/.emacs} file.
 
 
 @item
-How to get a Visual Warning when working with @samp{root} privileges
+How to get a Visual Warning when working with @samp{root} privileges?
+Host indication in the mode line?
 
-Get a modeline indication when working with @samp{root} privileges
-with the following code (tested with Emacs 22.1) in @file{~/.emacs}
-file:
-
-@lisp
-(defun my-mode-line-function ()
-  (when (string-match "^/su\\(do\\)?:" default-directory)
-    (setq mode-line-format
-          (format-mode-line mode-line-format 'font-lock-warning-face))))
-
-(add-hook 'find-file-hook 'my-mode-line-function)
-(add-hook 'dired-mode-hook 'my-mode-line-function)
-@end lisp
-
-
-@item
-How to get host indication in the mode line?
-
-The following code (tested with Emacs 22.1) in @file{~/.emacs} file
-shows it:
-
-@lisp
-(defconst my-mode-line-buffer-identification
-  (list
-   '(:eval
-     (let ((host-name
-            (if (file-remote-p default-directory)
-                (tramp-file-name-host
-                 (tramp-dissect-file-name default-directory))
-              (system-name))))
-       (if (string-match "^[^0-9][^.]*\\(\\..*\\)" host-name)
-           (substring host-name 0 (match-beginning 1))
-         host-name)))
-   ": %12b"))
-
-(setq-default
- mode-line-buffer-identification
- my-mode-line-buffer-identification)
-
-(add-hook
- 'dired-mode-hook
- (lambda ()
-   (setq
-    mode-line-buffer-identification
-    my-mode-line-buffer-identification)))
-@end lisp
-
-The mode line in Emacs 23.1 and later versions now contains an
-indication if @code{default-directory} for the current buffer is on a
-remote host.  Moreover, the corresponding tool-tip shows the remote
-host name.  The above @code{:eval} clause can also be simplified to
-show the host name in the mode line:
-
-@lisp
-   '(:eval
-     (let ((host-name
-            (or (file-remote-p default-directory 'host)
-                (system-name))))
-       (if (string-match "^[^0-9][^.]*\\(\\..*\\)" host-name)
-           (substring host-name 0 (match-beginning 1))
-         host-name)))
-@end lisp
+Install @file{tramp-theme} from GNU ELPA via Emacs' Package Manager.
+Enable it via @kbd{M-x load-theme @key{RET} tramp}.  Further
+customization is explained in variable
+@code{tramp-theme-face-remapping-alist}.
 
 
 @item
