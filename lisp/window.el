@@ -3241,9 +3241,9 @@ move it as far as possible in the desired direction."
 	(setq ignore 'preserved)
 	(setq right first-right)
 	(while (and right
-		    (or (window-size-fixed-p right horizontal 'preserved))
-		    (<= (window-size right horizontal t)
-			(window-min-size right horizontal 'preserved t)))
+		    (or (window-size-fixed-p right horizontal 'preserved)
+                        (<= (window-size right horizontal t)
+                            (window-min-size right horizontal 'preserved t))))
 	  (setq right
 		(or (window-right right)
 		    (progn
@@ -3352,12 +3352,12 @@ negative, shrink selected window by -DELTA lines or columns."
       (window--resize-mini-window minibuffer-window (- delta)))
      ((window--resizable-p nil delta horizontal)
       (window-resize nil delta horizontal))
+     ((window--resizable-p nil delta horizontal 'preserved)
+      (window-resize nil delta horizontal 'preserved))
+     ((eq this-command 'enlarge-window)
+      (user-error "Cannot enlarge selected window"))
      (t
-      (window-resize
-       nil (if (> delta 0)
-	       (window-max-delta nil horizontal)
-	     (- (window-min-delta nil horizontal)))
-       horizontal)))))
+      (error "Cannot enlarge selected window")))))
 
 (defun shrink-window (delta &optional horizontal)
   "Make the selected window DELTA lines smaller.
@@ -3387,12 +3387,12 @@ Also see the `window-min-height' variable."
       (window--resize-mini-window minibuffer-window delta))
      ((window--resizable-p nil (- delta) horizontal)
       (window-resize nil (- delta) horizontal))
+     ((window--resizable-p nil (- delta) horizontal 'preserved)
+      (window-resize nil (- delta) horizontal 'preserved))
+     ((eq this-command 'shrink-window)
+      (user-error "Cannot shrink selected window"))
      (t
-      (window-resize
-       nil (if (> delta 0)
-	       (- (window-min-delta nil horizontal))
-	     (window-max-delta nil horizontal))
-       horizontal)))))
+      (error "Cannot shrink selected window")))))
 
 (defun maximize-window (&optional window)
   "Maximize WINDOW.
