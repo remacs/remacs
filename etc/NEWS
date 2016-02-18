@@ -610,10 +610,6 @@ item as before.
 ** Search and Replace
 
 +++
-*** New user option `search-default-mode'
-specifies the default mode for I-search.
-
-+++
 *** `isearch' and `query-replace' can now perform character folding in matches.
 Isearch does that by default, while `query-replace' will do that if
 the new variable `replace-character-fold' is customized to a non-nil
@@ -627,6 +623,18 @@ For instance, the " will match all variants of double quotes (like “
 and ”), and the letter a will match all of its accented cousins, even
 those composed of multiple characters, as well as many other symbols
 like ℀, ℁, ⒜, and ⓐ.
+
+Character folding is enabled by customizing `search-default-mode' to
+the value `character-fold-to-regexp'.  If you want to turn character
+folding off, customize the value of `search-default-mode' to the `nil'
+value.  You can also toggle character folding in the middle of a
+search by typing `M-s ''.
+
++++
+*** New user option `search-default-mode'.
+This option specifies the default mode for Isearch.  The default
+value, `character-fold-to-regexp' specifies that Isearch should fold
+characters when searching.
 
 +++
 *** New function `character-fold-to-regexp' can be used
