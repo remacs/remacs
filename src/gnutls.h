@@ -85,6 +85,7 @@ extern void emacs_gnutls_transport_set_errno (gnutls_session_t state, int err);
 extern Lisp_Object emacs_gnutls_deinit (Lisp_Object);
 extern Lisp_Object emacs_gnutls_global_init (void);
 extern int gnutls_try_handshake (struct Lisp_Process *p);
+extern Lisp_Object gnutls_verify_boot (Lisp_Object proc, Lisp_Object proplist);
 
 #endif
 

@@ -4919,7 +4919,10 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		    p->gnutls_handshakes_tried++;
 
 		    if (p->gnutls_initstage == GNUTLS_STAGE_READY)
-		      finish_after_tls_connection (aproc);
+		      {
+			gnutls_verify_boot (proc, Qnil);
+			finish_after_tls_connection (aproc);
+		      }
 		    else if (p->gnutls_handshakes_tried >
 			     GNUTLS_EMACS_HANDSHAKES_LIMIT)
 		      {
