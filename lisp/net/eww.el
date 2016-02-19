@@ -1502,11 +1502,10 @@ If CHARSET is nil then use UTF-8."
 (defun eww-toggle-fonts ()
   "Toggle whether to use monospaced or font-enabled layouts."
   (interactive)
-  (message "Fonts are now %s"
-	   (if (setq shr-use-fonts (not shr-use-fonts))
-	       "on"
-	     "off"))
-  (eww-reload))
+  (setq shr-use-fonts (not shr-use-fonts))
+  (eww-reload)
+  (message "Proportional fonts are now %s"
+           (if shr-use-fonts "on" "off")))
 
 ;;; Bookmarks code
 
