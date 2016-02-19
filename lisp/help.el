@@ -613,7 +613,15 @@ temporarily enables it to allow getting help on disabled items and buttons."
 	   (when (null (cdr yank-menu))
 	     (setq saved-yank-menu (copy-sequence yank-menu))
 	     (menu-bar-update-yank-menu "(any string)" nil))
-	   (setq key (read-key-sequence "Describe key (or click or menu item): "))
+           (while
+               (progn
+                 (setq key (read-key-sequence "Describe key (or click or menu item): "))
+                 (and (vectorp key)
+                      (consp (aref key 0))
+                      (symbolp (car (aref key 0)))
+                      (string-match "\\(mouse\\|down\\|click\\|drag\\)"
+                                    (symbol-name (car (aref key 0))))
+                      (not (sit-for (/ double-click-time 1000.0) t)))))
 	   ;; Clear the echo area message (Bug#7014).
 	   (message nil)
 	   ;; If KEY is a down-event, read and discard the
@@ -750,7 +758,15 @@ temporarily enables it to allow getting help on disabled items and buttons."
 	   (when (null (cdr yank-menu))
 	     (setq saved-yank-menu (copy-sequence yank-menu))
 	     (menu-bar-update-yank-menu "(any string)" nil))
-	   (setq key (read-key-sequence "Describe key (or click or menu item): "))
+           (while
+               (progn
+                 (setq key (read-key-sequence "Describe key (or click or menu item): "))
+                 (and (vectorp key)
+                      (consp (aref key 0))
+                      (symbolp (car (aref key 0)))
+                      (string-match "\\(mouse\\|down\\|click\\|drag\\)"
+                                    (symbol-name (car (aref key 0))))
+                      (not (sit-for (/ double-click-time 1000.0) t)))))
 	   (list
 	    key
 	    (prefix-numeric-value current-prefix-arg)
