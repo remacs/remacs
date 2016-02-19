@@ -43,6 +43,9 @@
 ;;;             Measures, by François Cardarelli)
 ;;; All conversions are exact unless otherwise noted.
 
+;; CODATA values updated February 2016, using 2014 adjustment
+;; http://arxiv.org/pdf/1507.07956.pdf
+
 (defvar math-standard-units
   '( ;; Length
     ( m       nil                    "*Meter" )
@@ -136,8 +139,8 @@
               "31.10347680 g") ;; ESUWM, 1/12 exact value for lbt
     ( ct      "(2/10) g"             "Carat" nil
               "0.2 g") ;; ESUWM
-    ( u       "1.660538782*10^(-27) kg"    "Unified atomic mass" nil
-              "1.660538782 10^-27 kg (*)");;(approx) CODATA
+    ( u       "1.660539040*10^(-27) kg"    "Unified atomic mass" nil
+              "1.660539040 10^-27 kg (*)");;(approx) CODATA
 
     ;; Force
     ( N       "m kg/s^2"             "*Newton" )
@@ -204,8 +207,8 @@
     ( C       "A s"                   "Coulomb" )
     ( Fdy     "ech Nav"               "Faraday" )
     ( e       "ech"                   "Elementary charge" )
-    ( ech     "1.602176487*10^(-19) C"     "Elementary charge" nil
-              "1.602176487 10^-19 C (*)") ;;(approx) CODATA
+    ( ech     "1.6021766208*10^(-19) C"     "Elementary charge" nil
+              "1.6021766208 10^-19 C (*)") ;;(approx) CODATA
     ( V       "W/A"                   "Volt" )
     ( ohm     "V/A"                   "Ohm" )
     ( Ω       "ohm"                   "Ohm" )
@@ -254,51 +257,51 @@
 
     ;; Other physical quantities
     ;; The values are from CODATA, and are approximate.
-    ( h       "6.62606896*10^(-34) J s"     "*Planck's constant" nil
-              "6.62606896 10^-34 J s (*)")
+    ( h       "6.626070040*10^(-34) J s"     "*Planck's constant" nil
+              "6.626070040 10^-34 J s (*)")
     ( hbar    "h / (2 pi)"                  "Planck's constant" ) ;; Exact
     ( mu0     "4 pi 10^(-7) H/m"            "Permeability of vacuum") ;; Exact
     ( μ0      "mu0"                         "Permeability of vacuum") ;; Exact
     ( eps0    "1 / (mu0 c^2)"               "Permittivity of vacuum" )
     ( ε0      "eps0"                        "Permittivity of vacuum" )
-    ( G       "6.67428*10^(-11) m^3/(kg s^2)"    "Gravitational constant" nil
-              "6.67428 10^-11 m^3/(kg s^2) (*)")
-    ( Nav     "6.02214179*10^(23) / mol"    "Avogadro's constant" nil
-              "6.02214179 10^23 / mol (*)")
-    ( me      "9.10938215*10^(-31) kg"      "Electron rest mass" nil
-              "9.10938215 10^-31 kg (*)")
-    ( mp      "1.672621637*10^(-27) kg"     "Proton rest mass" nil
-              "1.672621637 10^-27 kg (*)")
-    ( mn      "1.674927211*10^(-27) kg"     "Neutron rest mass" nil
-              "1.674927211 10^-27 kg (*)")
-    ( mmu     "1.88353130*10^(-28) kg"      "Muon rest mass" nil
-              "1.88353130 10^-28 kg (*)")
+    ( G       "6.67408*10^(-11) m^3/(kg s^2)"    "Gravitational constant" nil
+              "6.67408 10^-11 m^3/(kg s^2) (*)")
+    ( Nav     "6.022140857*10^(23) / mol"    "Avogadro's constant" nil
+              "6.022140857 10^23 / mol (*)")
+    ( me      "9.10938356*10^(-31) kg"      "Electron rest mass" nil
+              "9.10938356 10^-31 kg (*)")
+    ( mp      "1.672621898*10^(-27) kg"     "Proton rest mass" nil
+              "1.672621898 10^-27 kg (*)")
+    ( mn      "1.674927471*10^(-27) kg"     "Neutron rest mass" nil
+              "1.674927471 10^-27 kg (*)")
+    ( mmu     "1.883531594*10^(-28) kg"      "Muon rest mass" nil
+              "1.883531594 10^-28 kg (*)")
     ( mμ      "mmu"                         "Muon rest mass" nil
-              "1.88353130 10^-28 kg (*)")
-    ( Ryd     "10973731.568527 /m"          "Rydberg's constant" nil
-              "10973731.568527 /m (*)")
-    ( k       "1.3806504*10^(-23) J/K"      "Boltzmann's constant" nil
-              "1.3806504 10^-23 J/K (*)")
+              "1.883531594 10^-28 kg (*)")
+    ( Ryd     "10973731.568508 /m"          "Rydberg's constant" nil
+              "10973731.568508 /m (*)")
+    ( k       "1.38064852*10^(-23) J/K"      "Boltzmann's constant" nil
+              "1.38064852 10^-23 J/K (*)")
     ( sigma   "5.670367*10^(-8) W/(m^2 K^4)" "Stefan-Boltzmann constant" nil
               "5.670367 10^-8 W/(m^2 K^4) (*)")
     ( σ       "sigma" "Stefan-Boltzmann constant" nil
               "5.670367 10^-8 W/(m^2 K^4) (*)")
-    ( alpha   "7.2973525376*10^(-3)"        "Fine structure constant" nil
-              "7.2973525376 10^-3 (*)")
+    ( alpha   "7.2973525664*10^(-3)"        "Fine structure constant" nil
+              "7.2973525664 10^-3 (*)")
     ( α       "alpha"                        "Fine structure constant" nil
-              "7.2973525376 10^-3 (*)")
-    ( muB     "927.400915*10^(-26) J/T"     "Bohr magneton" nil
-              "927.400915 10^-26 J/T (*)")
-    ( muN     "5.05078324*10^(-27) J/T"     "Nuclear magneton" nil
-              "5.05078324 10^-27 J/T (*)")
-    ( mue     "-928.476377*10^(-26) J/T"    "Electron magnetic moment" nil
-              "-928.476377 10^-26 J/T (*)")
-    ( mup     "1.410606662*10^(-26) J/T"    "Proton magnetic moment" nil
-              "1.410606662 10^-26 J/T (*)")
-    ( R0      "8.314472 J/(mol K)"          "Molar gas constant" nil
-              "8.314472 J/(mol K) (*)")
-    ( V0      "22.710981*10^(-3) m^3/mol"   "Standard volume of ideal gas" nil
-              "22.710981 10^-3 m^3/mol (*)")
+              "7.2973525664 10^-3 (*)")
+    ( muB     "927.4009994*10^(-26) J/T"     "Bohr magneton" nil
+              "927.4009994 10^-26 J/T (*)")
+    ( muN     "5.050783699*10^(-27) J/T"     "Nuclear magneton" nil
+              "5.050783699 10^-27 J/T (*)")
+    ( mue     "-928.4764620*10^(-26) J/T"    "Electron magnetic moment" nil
+              "-928.4764620 10^-26 J/T (*)")
+    ( mup     "1.4106067873*10^(-26) J/T"    "Proton magnetic moment" nil
+              "1.4106067873 10^-26 J/T (*)")
+    ( R0      "8.3144598 J/(mol K)"          "Molar gas constant" nil
+              "8.3144598 J/(mol K) (*)")
+    ( V0      "22.710947*10^(-3) m^3/mol"   "Standard volume of ideal gas" nil
+              "22.710947 10^-3 m^3/mol (*)")
     ;; Logarithmic units
     ( Np      nil    "*Neper")
     ( dB      "(ln(10)/20) Np" "decibel")))
