@@ -851,6 +851,10 @@ keymap put into the text properties (or overlays) that span the
 image.  This keymap binds keystrokes for manipulating size and
 rotation, as well as saving the image to a file.
 
++++
+*** A new library for creating and manipulating SVG images has been
+added.  See the "SVG Images" section in the lispref manual for details.
+
 ** Lisp mode
 
 ---
