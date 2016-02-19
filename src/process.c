@@ -2945,18 +2945,16 @@ usage:  (make-serial-process &rest ARGS)  */)
   return proc;
 }
 
-void set_network_socket_coding_system (Lisp_Object proc)
+void set_network_socket_coding_system (Lisp_Object proc,
+				       Lisp_Object host,
+				       Lisp_Object service,
+				       Lisp_Object name)
 {
   Lisp_Object tem;
   struct Lisp_Process *p = XPROCESS (proc);
   Lisp_Object contact = p->childp;
-  Lisp_Object service, host, name;
   Lisp_Object coding_systems = Qt;
   Lisp_Object val;
-
-  service = Fplist_get (contact, QCservice);
-  host = Fplist_get (contact, QChost);
-  name = Fplist_get (contact, QCname);
 
   tem = Fplist_member (contact, QCcoding);
   if (!NILP (tem) && (!CONSP (tem) || !CONSP (XCDR (tem))))
@@ -3931,7 +3929,7 @@ usage: (make-network-process &rest ARGS)  */)
   p->gnutls_boot_parameters = tem;
 #endif
 
-  set_network_socket_coding_system (proc);
+  set_network_socket_coding_system (proc, service, host, name);
 
   unbind_to (count, Qnil);
 
