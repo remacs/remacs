@@ -114,16 +114,15 @@ entry until the version requirement is met."
     (cl-destructuring-bind (symbol constructor . alist)
         (cdr entry)
       (or (and (not force) (alist-get protocol epg--configurations))
-          (let ((executable (get symbol 'saved-value)))
-            (if executable
-                (ignore-errors
-                  (let ((configuration (funcall constructor executable)))
-                    (epg-check-configuration configuration)
-                    (push (cons protocol configuration) epg--configurations)
-                    configuration))
-              (catch 'found
-                (dolist (program-version alist)
-                  (setq executable (executable-find (car program-version)))
+          ;; If the executable value is already set with M-x
+          ;; customize, use it without checking.
+          (if (get symbol 'saved-value)
+              (let ((configuration (funcall constructor (symbol-value symbol))))
+                (push (cons protocol configuration) epg--configurations)
+                configuration)
+            (catch 'found
+              (dolist (program-version alist)
+                (let ((executable (executable-find (car program-version))))
                   (when executable
                     (let ((configuration
                            (funcall constructor executable)))
