@@ -1548,7 +1548,8 @@ The preference is a float determined from `shr-prefer-media-type'."
             height max-height))
     (setq svg (svg-create width height))
     (svg-gradient svg "background" 'linear '((0 . "#b0b0b0") (100 . "#808080")))
-    (svg-rectangle svg 0 0 width height :gradient "background")
+    (svg-rectangle svg 0 0 width height :gradient "background"
+                   :stroke-width 2 :stroke-color "black")
     (let ((image (svg-image svg)))
       (image-set-property image :ascent 100))))
 
