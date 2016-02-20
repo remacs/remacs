@@ -5444,7 +5444,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 	case charset:
 	case charset_not:
 	  {
-	    register unsigned int c;
+	    register unsigned int c, corig;
 	    boolean not = (re_opcode_t) *(p - 1) == charset_not;
 	    int len;
 
@@ -5473,7 +5473,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 	      }
 
 	    PREFETCH ();
-	    c = RE_STRING_CHAR_AND_LENGTH (d, len, target_multibyte);
+	    corig = c = RE_STRING_CHAR_AND_LENGTH (d, len, target_multibyte);
 	    if (target_multibyte)
 	      {
 		int c1;
@@ -5517,11 +5517,17 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 	      {
 		int class_bits = CHARSET_RANGE_TABLE_BITS (&p[-1]);
 
-		if (  (class_bits & BIT_LOWER && ISLOWER (c))
+		if (  (class_bits & BIT_LOWER
+		       && (ISLOWER (c)
+			   || (corig != c
+			       && c == upcase (corig) && ISUPPER(c))))
 		    | (class_bits & BIT_MULTIBYTE)
 		    | (class_bits & BIT_PUNCT && ISPUNCT (c))
 		    | (class_bits & BIT_SPACE && ISSPACE (c))
-		    | (class_bits & BIT_UPPER && ISUPPER (c))
+		    | (class_bits & BIT_UPPER
+		       && (ISUPPER (c)
+			   || (corig != c
+			       && c == downcase (corig) && ISLOWER (c))))
 		    | (class_bits & BIT_WORD  && ISWORD  (c))
 		    | (class_bits & BIT_ALPHA && ISALPHA (c))
 		    | (class_bits & BIT_ALNUM && ISALNUM (c))
