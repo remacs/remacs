@@ -58,6 +58,7 @@
 (defvar file-notify--test-tmpfile nil)
 (defvar file-notify--test-tmpfile1 nil)
 (defvar file-notify--test-desc nil)
+(defvar file-notify--test-desc1 nil)
 (defvar file-notify--test-results nil)
 (defvar file-notify--test-event nil)
 (defvar file-notify--test-events nil)
@@ -77,6 +78,7 @@ It is different for local and remote file notification libraries.")
 (defun file-notify--test-cleanup ()
   "Cleanup after a test."
   (file-notify-rm-watch file-notify--test-desc)
+  (file-notify-rm-watch file-notify--test-desc1)
 
   (ignore-errors
     (delete-file (file-newest-backup file-notify--test-tmpfile)))
@@ -96,6 +98,7 @@ It is different for local and remote file notification libraries.")
   (setq file-notify--test-tmpfile nil
         file-notify--test-tmpfile1 nil
         file-notify--test-desc nil
+        file-notify--test-desc1 nil
         file-notify--test-results nil
         file-notify--test-events nil)
   (when file-notify--test-event
@@ -937,6 +940,59 @@ longer than timeout seconds for the events to be delivered."
 
 (file-notify--deftest-remote file-notify-test07-backup
   "Check that backup keeps file notification for remote files.")
+
+(ert-deftest file-notify-test08-watched-file-in-watched-dir ()
+  "Watches a directory and a file in that directory separately.
+Checks that the callbacks are only called with events with
+descriptors that were issued when registering the watches.  This
+test caters for the situation in bug#22736 where the callback for
+the directory received events for the file with the descriptor of
+the file watch."
+  (skip-unless (file-notify--test-local-enabled))
+
+  (unwind-protect
+      (progn
+        (setq file-notify--test-tmpfile
+              (make-temp-file "dir" t))
+        (setq file-notify--test-tmpfile1
+              (let ((temporary-file-directory file-notify--test-tmpfile))
+                (make-temp-file "file")))
+	(cl-flet ((dir-callback
+                   (ev)
+                   (should (equal file-notify--test-desc (car ev))))
+                  (file-callback
+                   (ev)
+                   (should (equal file-notify--test-desc1 (car ev)))))
+          (should
+           (setq file-notify--test-desc
+                 (file-notify-add-watch
+                  file-notify--test-tmpfile
+                  '(change attribute-change) #'dir-callback)))
+          (should
+           (setq file-notify--test-desc1
+                 (file-notify-add-watch
+                  file-notify--test-tmpfile1
+                  '(change attribute-change) #'file-callback)))
+          (should (file-notify-valid-p file-notify--test-desc))
+          (should (file-notify-valid-p file-notify--test-desc1))
+          (dotimes (i 100)
+            (if (< 0 (random))
+                (write-region
+                 "any text" nil file-notify--test-tmpfile1 t 'no-message)
+              (let ((temporary-file-directory file-notify--test-tmpfile))
+                (make-temp-file "fileX")))))
+        ;; After saving the buffer, the descriptor is still valid.
+        (should (file-notify-valid-p file-notify--test-desc))
+        (should (file-notify-valid-p file-notify--test-desc1))
+	(delete-file file-notify--test-tmpfile1)
+        (delete-directory file-notify--test-tmpfile))
+
+    ;; Cleanup.
+    (file-notify--test-cleanup)))
+
+(file-notify--deftest-remote file-notify-test08-watched-file-in-watched-dir
+  "Checks what `file-notify-test08-watched-file-in-watched-dir'
+checks, just for a remote directory and file.")
 
 (defun file-notify-test-all (&optional interactive)
   "Run all tests for \\[file-notify]."
