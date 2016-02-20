@@ -1452,7 +1452,7 @@ loading packages twice."
 (defvar package--downloads-in-progress nil
   "List of in-progress asynchronous downloads.")
 
-(declare-function epg-configuration-find "epg-config"
+(declare-function epg-find-configuration "epg-config"
                   (protocol &optional force))
 (declare-function epg-import-keys-from-file "epg" (context keys))
 
@@ -1555,9 +1555,9 @@ downloads in the background."
         (inhibit-message async))
     (if (get 'package-check-signature 'saved-value)
         (when package-check-signature
-          (epg-configuration-find 'OpenPGP))
+          (epg-find-configuration 'OpenPGP))
       (setq package-check-signature
-            (if (epg-configuration-find 'OpenPGP)
+            (if (epg-find-configuration 'OpenPGP)
                 'allow-unsigned)))
     (when (and package-check-signature (file-exists-p default-keyring))
       (condition-case-unless-debug error

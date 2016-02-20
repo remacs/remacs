@@ -99,7 +99,7 @@ Emacs.")
 (defvar epg--configurations nil)
 
 ;;;###autoload
-(defun epg-configuration-find (protocol &optional force)
+(defun epg-find-configuration (protocol &optional force)
   "Find or create a usable configuration to handle PROTOCOL.
 This function first looks at the existing configuration found by
 the previous invocation of this function, unless FORCE is non-nil.
@@ -190,7 +190,7 @@ entry until the version requirement is met."
 ;;;###autoload
 (defun epg-configuration ()
   "Return a list of internal configuration parameters of `epg-gpg-program'."
-  (declare (obsolete epg-configuration-find "25.1"))
+  (declare (obsolete epg-find-configuration "25.1"))
   (epg-config--make-gpg-configuration epg-gpg-program))
 
 (defun epg-config--parse-version (string)

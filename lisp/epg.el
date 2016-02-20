@@ -186,7 +186,7 @@
                           compress-algorithm
                  &aux
                  (program
-                  (let ((configuration (epg-configuration-find protocol)))
+                  (let ((configuration (epg-find-configuration protocol)))
                     (unless configuration
                       (signal 'epg-error
                               (list "no usable configuration" protocol)))
