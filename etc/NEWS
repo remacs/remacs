@@ -846,6 +846,7 @@ of `epg-gpg-program' (instead of gpg).
 `image-scaling-factor' variable (if Emacs supports scaling the images
 in question).
 
++++
 *** Images inserted with `insert-image' and related functions get a
 keymap put into the text properties (or overlays) that span the
 image.  This keymap binds keystrokes for manipulating size and
@@ -853,7 +854,13 @@ rotation, as well as saving the image to a file.
 
 +++
 *** A new library for creating and manipulating SVG images has been
-added.  See the "SVG Images" section in the lispref manual for details.
+added.  See the "SVG Images" section in the lispref manual for
+details.
+
++++
+*** New functions to access and set image parameters are provided:
+`image-get-property' and `image-set-property'.
+
 
 ** Lisp mode
 

@@ -5205,7 +5205,9 @@ the size, and lower means to decrease the size.  For instance, a value
 of 0.25 will make the image a quarter size of what it originally was.
 If the scaling makes the image larger than specified by
 @code{:max-width} or @code{:max-height}, the resulting size will not
-exceed those two values.
+exceed those two values.  If both @code{:scale} and
+@code{:height}/@code{:width} are specified, the height/width will be
+adjusted by the specified scaling factor.
 
 @item :format @var{type}
 The value, @var{type}, should be a symbol specifying the type of the
@@ -5441,6 +5443,19 @@ stored in @var{symbol}.
 If none of the alternatives will work, then @var{symbol} is defined
 as @code{nil}.
 @end defmac
+
+@defun image-set-property image property value
+Set the value of @var{property} in @var{image} to @var{value}.  If
+@var{value} is @code{nil}, the property is removed completely.
+
+@lisp
+(image-set-property image :height 300)
+@end lisp
+@end defun
+
+@defun image-get-property image property
+Return the value of @var{property} in @var{image}.
+@end defun
 
 @defun find-image specs
 This function provides a convenient way to find an image satisfying one

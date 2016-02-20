@@ -435,6 +435,26 @@ Image file names that are not absolute are searched for in the
                        (image-compute-scaling-factor image-scaling-factor)))
 	    props)))
 
+(defun image-set-property (image property value)
+  "Set PROPERTY in IMAGE to VALUE.
+If VALUE is nil, PROPERTY is removed from IMAGE.  IMAGE is
+returned."
+  (if (null value)
+      (while (cdr image)
+        ;; IMAGE starts with the symbol `image', and the rest is a
+        ;; plist.  Decouple plist entries where the key matches
+        ;; the property.
+        (if (eq (cadr image) property)
+            (setcdr image (cddr image))
+          (setq image (cddr image))))
+    ;; Just enter the new value.
+    (plist-put (cdr image) property value))
+  image)
+
+(defun image-get-property (image property)
+  "Return the value of PROPERTY in IMAGE."
+  (plist-get (cdr image) property))
+
 (defun image-compute-scaling-factor (scaling)
   (cond
    ((numberp image-scaling-factor)
