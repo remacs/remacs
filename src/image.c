@@ -8075,18 +8075,21 @@ compute_image_size (size_t width, size_t height,
   int desired_width, desired_height;
   double scale = 1;
 
+  value = image_spec_value (spec, QCscale, NULL);
+  if (NUMBERP (value))
+    scale = extract_float (value);
+
   /* If width and/or height is set in the display spec assume we want
      to scale to those values.  If either h or w is unspecified, the
      unspecified should be calculated from the specified to preserve
      aspect ratio.  */
   value = image_spec_value (spec, QCwidth, NULL);
-  desired_width = NATNUMP (value) ? min (XFASTINT (value), INT_MAX) : -1;
+  desired_width = NATNUMP (value) ?
+    min (XFASTINT (value) * scale, INT_MAX) : -1;
   value = image_spec_value (spec, QCheight, NULL);
-  desired_height = NATNUMP (value) ? min (XFASTINT (value), INT_MAX) : -1;
+  desired_height = NATNUMP (value) ?
+    min (XFASTINT (value) * scale, INT_MAX) : -1;
 
-  value = image_spec_value (spec, QCscale, NULL);
-  if (NUMBERP (value))
-    scale = extract_float (value);
   width = width * scale;
   height = height * scale;
 
