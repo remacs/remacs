@@ -1,4 +1,100 @@
-This directory contains files needed to build Emacs on Nextstep-based
-platforms, including GNUstep and Mac OS X (using the Cocoa libraries).
 
-See the INSTALL file in this directory for compilation instructions.
+  NS -- the Cocoa interface for OS X and compatible systems
+  ---------------------------------------------------------
+
+This directory contains files needed to build Emacs on system based on
+NextStep (NS), including OS X (Mac) and GNUstep, using the Cocoa API.
+
+
+  HISTORY
+
+Up to Emacs 22, the OS X interface was implemented using the C-based
+Carbon API.  Starting with Emacs 23, the interface was rewritten in
+Objective-C using the Cocoa API.  Meanwhile, the Carbon interface has
+been maintained independently under the name "mac".
+
+
+  OVERVIEW OF COCOA AND OBJECTIVE-C
+
+Cocoa is an API for the Objective-C language, an objective oriented
+superset of C.  Anybody with experience with iOS or modern OS X
+application development should feel at home.
+
+A method call in Objective-C differs from most other languages in the
+fact that it doesn't have a normal name.  Instead, the method name is
+made up of the name of each parameter.  An exception to this rule are
+methods without parameters.
+
+The following calls a method in the object `anObject'.
+
+    [anObject alpha:1 beta:2 gamma:3];
+
+Classes are declared like the following:
+
+    @interface AClassName
+    {
+      // A class method.
+      + (TYPE)name1:(TYPE)param1
+
+      // An object method.
+      - (TYPE)name1:(TYPE)param1 name2:(TYPE)param2;
+    }
+    @end
+
+
+  GUIDELINES
+
+* Adhere the to the FSF philosophy that a feature in GNU software
+  should not only be available on non-free systems.
+
+* People with varying Cocoa and Objective-C skills will read and
+  modify the NS code over a long period of time.  Keep the code simple
+  and avoid language constructs that makes the code hard to maintain.
+
+* Don't use macros and types intended for the XCode Interface Builder,
+  like `IBAction'.
+
+* The NS interface should work on all version of OS X from 10.6.8
+  (Snow Leopard) to the latest official release.
+
+* Under OS X, it is possible to build Emacs using NS, X11, or console
+  only.  A new OS X feature should work in all appropriate builds.
+
+
+  TRACING SUPPORT
+
+The NS interface features a printf-based trace package that prints the
+call tree of selected functions in the Cocoa interface, plus various
+extra information.  It can be enabled by uncommenting the line
+defining `NSTRACE_ENABLED' in "nsterm.h".  To enable more output,
+uncomment the lines defining symbols starting with `NSTRACE_GROUP'.
+
+
+  GNUSTEP AND OTHER COMPATIBLE SYSTEMS
+
+The NS interface works on system compatible with OS X, for example
+GNUstep.  Even though they are less frequently used, this is important
+for a number of reasons:
+
+* It supports the GNUstep project and provides an Emacs with the same
+  look-and-feel as the rest of the system.
+
+* This allows other Emacs developers to test their changes on the NS
+  interface without having access to an OS X machine.
+
+* If a feature in the NS interface work on free systems like GNUstep,
+  this meets the FSF requirement that features in GNU software should
+  not only be available on non-free systems.
+
+
+  SEE ALSO
+
+The src/ns... files contains the C and Objective-C parts.
+
+The lisp/term/ns-win.el file contains the lisp part of the NS
+interface.
+
+The INSTALL file in this directory for compilation instructions.
+
+The WISHLIST file in this directory for a list of ideas for future
+development of the NS interface.
