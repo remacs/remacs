@@ -36,6 +36,7 @@
 (require 'subr-x)
 (require 'dom)
 (require 'seq)
+(require 'svg)
 
 (defgroup shr nil
   "Simple HTML Renderer"
@@ -963,10 +964,14 @@ element is the data blob and the second element is the content-type."
 		      (create-image data 'svg t :ascent 100))
 		     ((eq size 'full)
 		      (ignore-errors
-			(shr-rescale-image data content-type)))
+			(shr-rescale-image data content-type
+                                           (plist-get flags :width)
+                                           (plist-get flags :height))))
 		     (t
 		      (ignore-errors
-			(shr-rescale-image data content-type))))))
+			(shr-rescale-image data content-type
+                                           (plist-get flags :width)
+                                           (plist-get flags :height)))))))
         (when image
 	  ;; When inserting big-ish pictures, put them at the
 	  ;; beginning of the line.
@@ -989,21 +994,37 @@ element is the data blob and the second element is the content-type."
 	image)
     (insert (or alt ""))))
 
-(defun shr-rescale-image (data &optional content-type)
-  "Rescale DATA, if too big, to fit the current buffer."
+(defun shr-rescale-image (data content-type width height)
+  "Rescale DATA, if too big, to fit the current buffer.
+WIDTH and HEIGHT are the sizes given in the HTML data, if any."
   (if (not (and (fboundp 'imagemagick-types)
                 (get-buffer-window (current-buffer))))
       (create-image data nil t :ascent 100)
-    (let ((edges (window-inside-pixel-edges
-		  (get-buffer-window (current-buffer)))))
-      (create-image
-       data 'imagemagick t
-       :ascent 100
-       :max-width (truncate (* shr-max-image-proportion
-			       (- (nth 2 edges) (nth 0 edges))))
-       :max-height (truncate (* shr-max-image-proportion
-				(- (nth 3 edges) (nth 1 edges))))
-       :format content-type))))
+    (let* ((edges (window-inside-pixel-edges
+                   (get-buffer-window (current-buffer))))
+           (max-width (truncate (* shr-max-image-proportion
+                                   (- (nth 2 edges) (nth 0 edges)))))
+           (max-height (truncate (* shr-max-image-proportion
+                                    (- (nth 3 edges) (nth 1 edges))))))
+      (when (or (and width
+                     (> width max-width))
+                (and height
+                     (> height max-height)))
+        (setq width nil
+              height nil))
+      (if (and width height)
+          (create-image
+           data 'imagemagick t
+           :ascent 100
+           :width width
+           :height height
+           :format content-type)
+        (create-image
+         data 'imagemagick t
+         :ascent 100
+         :max-width max-width
+         :max-height max-height
+         :format content-type)))))
 
 ;; url-cache-extract autoloads url-cache.
 (declare-function url-cache-create-filename "url-cache" (url))
@@ -1427,6 +1448,8 @@ The preference is a float determined from `shr-prefer-media-type'."
     (when (> (current-column) 0)
       (insert "\n"))
     (let ((alt (dom-attr dom 'alt))
+          (width (shr-string-number (dom-attr dom 'width)))
+          (height (shr-string-number (dom-attr dom 'height)))
 	  (url (shr-expand-url (or url (dom-attr dom 'src)))))
       (let ((start (point-marker)))
 	(when (zerop (length alt))
@@ -1440,7 +1463,8 @@ The preference is a float determined from `shr-prefer-media-type'."
 	       (string-match "\\`data:" url))
 	  (let ((image (shr-image-from-data (substring url (match-end 0)))))
 	    (if image
-		(funcall shr-put-image-function image alt)
+		(funcall shr-put-image-function image alt
+                         (list :width width :height height))
 	      (insert alt))))
 	 ((and (not shr-inhibit-images)
 	       (string-match "\\`cid:" url))
@@ -1449,7 +1473,8 @@ The preference is a float determined from `shr-prefer-media-type'."
 	    (if (or (not shr-content-function)
 		    (not (setq image (funcall shr-content-function url))))
 		(insert alt)
-	      (funcall shr-put-image-function image alt))))
+	      (funcall shr-put-image-function image alt
+                       (list :width width :height height)))))
 	 ((or shr-inhibit-images
 	      (and shr-blocked-images
 		   (string-match shr-blocked-images url)))
@@ -1457,17 +1482,23 @@ The preference is a float determined from `shr-prefer-media-type'."
           (shr-insert alt))
 	 ((and (not shr-ignore-cache)
 	       (url-is-cached (shr-encode-url url)))
-	  (funcall shr-put-image-function (shr-get-image-data url) alt))
+	  (funcall shr-put-image-function (shr-get-image-data url) alt
+                   (list :width width :height height)))
 	 (t
-	  (insert alt " ")
 	  (when (and shr-ignore-cache
 		     (url-is-cached (shr-encode-url url)))
 	    (let ((file (url-cache-create-filename (shr-encode-url url))))
 	      (when (file-exists-p file)
 		(delete-file file))))
+          (when (image-type-available-p 'svg)
+            (insert-image
+             (shr-make-placeholder-image dom)
+             (or alt "")))
+          (insert " ")
 	  (url-queue-retrieve
 	   (shr-encode-url url) 'shr-image-fetched
-	   (list (current-buffer) start (set-marker (make-marker) (1- (point))))
+	   (list (current-buffer) start (set-marker (make-marker) (1- (point)))
+                 (list :width width :height height))
 	   t t)))
 	(when (zerop shr-table-depth) ;; We are not in a table.
 	  (put-text-property start (point) 'keymap shr-image-map)
@@ -1478,6 +1509,48 @@ The preference is a float determined from `shr-prefer-media-type'."
 	  (put-text-property start (point) 'help-echo
 			     (shr-fill-text
 			      (or (dom-attr dom 'title) alt))))))))
+
+(defun shr-string-number (string)
+  (if (null string)
+      nil
+    (setq string (replace-regexp-in-string "[^0-9]" "" string))
+    (if (zerop (length string))
+        nil
+      (string-to-number string))))
+
+(defun shr-make-placeholder-image (dom)
+  (let* ((edges (and
+                 (get-buffer-window (current-buffer))
+                 (window-inside-pixel-edges
+                  (get-buffer-window (current-buffer)))))
+         (scaling (image-compute-scaling-factor image-scaling-factor))
+         (width (truncate
+                 (* (or (shr-string-number (dom-attr dom 'width)) 100)
+                    scaling)))
+         (height (truncate
+                  (* (or (shr-string-number (dom-attr dom 'height)) 100)
+                     scaling)))
+         (max-width
+          (and edges
+               (truncate (* shr-max-image-proportion
+                            (- (nth 2 edges) (nth 0 edges))))))
+         (max-height (and edges
+                          (truncate (* shr-max-image-proportion
+				(- (nth 3 edges) (nth 1 edges))))))
+         svg image)
+    (when (and max-width
+               (> width max-width))
+      (setq height (truncate (* (/ (float max-width) width) height))
+            width max-width))
+    (when (and max-height
+               (> height max-height))
+      (setq width (truncate (* (/ (float max-height) height) width))
+            height max-height))
+    (setq svg (svg-create width height))
+    (svg-gradient svg "background" 'linear '((0 . "#b0b0b0") (100 . "#808080")))
+    (svg-rectangle svg 0 0 width height :gradient "background")
+    (let ((image (svg-image svg)))
+      (image-set-property image :ascent 100))))
 
 (defun shr-tag-pre (dom)
   (let ((shr-folding-mode 'none)

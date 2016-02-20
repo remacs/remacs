@@ -779,6 +779,13 @@ textual parts of a web page and display only that, leaving menus and
 the like off the page.
 
 ---
+*** Images that are being loaded are now marked with grey
+"placeholder" images of the size specified by the HTML.  They are then
+replaced by the real images asynchronously, which will also now
+respect width/height HTML specs (unless they specify widths/heights
+bigger than the current window).
+
+---
 *** You can now use several eww buffers in parallel by renaming eww
 buffers you want to keep separate.
 
