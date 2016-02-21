@@ -4706,7 +4706,7 @@ check_for_dns (Lisp_Object proc)
       ip_addresses = Fnreverse (ip_addresses);
     }
   /* The DNS lookup failed. */
-  else if (!EQ (p->status, Qconnect))
+  else if (EQ (p->status, Qconnect))
     {
       deactivate_process (proc);
       pset_status (p, (list2
