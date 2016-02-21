@@ -2409,14 +2409,22 @@ as it may depend on implementation defined constants, data sizes, and
 data structure alignment.
 @end itemize
 
-@item :nowait @var{nowait}
-If @var{nowait} is non-@code{nil} for a stream connection, return
+@item :nowait @var{bool}
+If @var{bool} is non-@code{nil} for a stream connection, return
 without waiting for the connection to complete.  When the connection
 succeeds or fails, Emacs will call the sentinel function, with a
 second argument matching @code{"open"} (if successful) or
 @code{"failed"}.  The default is to block, so that
-@code{make-network-process} does not return until the connection
-has succeeded or failed.
+@code{make-network-process} does not return until the connection has
+succeeded or failed.
+
+If you're setting up an asynchronous TLS connection, you have to also
+provide the @code{:tls-parameters} parameter (see below).
+
+Depending on the capabilities of Emacs, how asynchronous
+@code{:nowait} is may vary.  The three elements that may (or may not)
+be done asynchronously are domain name resolution, socket setup, and
+(for TLS connections) TLS negotiation.
 
 @item :tls-parameters
 When opening a TLS connection, this should be where the first element
