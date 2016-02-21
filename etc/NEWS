@@ -1720,6 +1720,12 @@ environment.  For the time being this is implemented for modern POSIX
 systems and for MS-Windows, for other systems they fall back to their
 counterparts `string-lessp' and `string-equal'.
 
++++
+** The new function `string-numeric-lessp' compares strings by
+interpreting consecutive runs of numerical characters as numbers, and
+compares their numerical values.  According to this predicate,
+"foo2.png" is smaller than "foo12.png".
+
 ---
 *** The ls-lisp package uses `string-collate-lessp' to sort file names.
 The effect is that, on systems that use ls-lisp for Dired, the default
