@@ -633,20 +633,12 @@ If your system does not support a locale environment, this function
 behaves like @code{string-lessp}.
 @end defun
 
-@defun string-numerical-lessp strin1 string2
-This function behaves like @code{string-lessp} for stretches of
-consecutive non-numerical characters, but compares sequences of
-numerical characters as if they comprised a base-ten number, and then
-compares the numbers.  So @samp{foo2.png} is ``smaller'' than
-@samp{foo12.png} according to this predicate, even if @samp{12} is
-lexicographically ``smaller'' than @samp{2}.
-
-If one string has a number in a position in the string, and the other
-doesn't, then lexicograpic comparison is done at that point, so
-@samp{foo.png} is ``smaller'' than @samp{foo2.png}.  If any of the
-numbers in the strings are larger than can be represented as an
-integer number, the entire string is compared using
-@code{string-less}.
+@defun string-version-lessp string1 string2
+This function compares strings lexicographically, except it treats
+sequences of numerical characters as if they comprised a base-ten
+number, and then compares the numbers.  So @samp{foo2.png} is
+``smaller'' than @samp{foo12.png} according to this predicate, even if
+@samp{12} is lexicographically ``smaller'' than @samp{2}.
 @end defun
 
 @defun string-prefix-p string1 string2 &optional ignore-case

@@ -1726,7 +1726,7 @@ systems and for MS-Windows, for other systems they fall back to their
 counterparts `string-lessp' and `string-equal'.
 
 +++
-** The new function `string-numeric-lessp' compares strings by
+** The new function `string-version-lessp' compares strings by
 interpreting consecutive runs of numerical characters as numbers, and
 compares their numerical values.  According to this predicate,
 "foo2.png" is smaller than "foo12.png".

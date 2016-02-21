@@ -21,6 +21,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include <unistd.h>
+#include <filevercmp.h>
 #include <intprops.h>
 #include <vla.h>
 #include <errno.h>
@@ -332,50 +333,21 @@ Symbols are also allowed; their print names are used instead.  */)
   return i1 < SCHARS (string2) ? Qt : Qnil;
 }
 
-/* Return the numerical value of a consecutive run of numerical
-   characters from STRING.  The ISP and ISP_BYTE address pointer
-   pointers are increased and left at the next character after the
-   numerical characters. */
-static size_t
-gather_number_from_string (Lisp_Object string,
-			   ptrdiff_t *isp, ptrdiff_t *isp_byte)
-{
-  size_t number = 0;
-  char *s = SSDATA (string);
-  char *end;
+DEFUN ("string-version-lessp", Fstring_version_lessp,
+       Sstring_version_lessp, 2, 2, 0,
+       doc: /* Return non-nil if S1 is less than S2, as version strings.
 
-  errno = 0;
-  number = strtoumax (s + *isp_byte, &end, 10);
-  if (errno == ERANGE)
-    /* If we have an integer overflow, then we fall back on lexical
-       comparison. */
-    return -1;
-  else
-    {
-      size_t diff = end - (s + *isp_byte);
-      (*isp) += diff;
-      (*isp_byte) += diff;
-      return number;
-    }
-}
+This function compares version strings S1 and S2:
+   1) By prefix lexicographically.
+   2) Then by version (similarly to version comparison of Debian's dpkg).
+      Leading zeros in version numbers are ignored.
+   3) If both prefix and version are equal, compare as ordinary strings.
 
-DEFUN ("string-numeric-lessp", Fstring_numeric_lessp,
-       Sstring_numeric_lessp, 2, 2, 0,
-       doc: /* Return non-nil if STRING1 is less than STRING2 in 'numeric' order.
-Sequences of non-numerical characters are compared lexicographically,
-while sequences of numerical characters are converted into numbers,
-and then the numbers are compared.  This means that \"foo2.png\" is
-less than \"foo12.png\" according to this predicate.
+For example, \"foo2.png\" compares less than \"foo12.png\".
 Case is significant.
 Symbols are also allowed; their print names are used instead.  */)
-  (register Lisp_Object string1, Lisp_Object string2)
+  (Lisp_Object string1, Lisp_Object string2)
 {
-  ptrdiff_t end;
-  ptrdiff_t i1, i1_byte, i2, i2_byte;
-  size_t num1, num2;
-  unsigned char *chp;
-  int chlen1, chlen2;
-
   if (SYMBOLP (string1))
     string1 = SYMBOL_NAME (string1);
   if (SYMBOLP (string2))
@@ -383,67 +355,26 @@ Symbols are also allowed; their print names are used instead.  */)
   CHECK_STRING (string1);
   CHECK_STRING (string2);
 
-  i1 = i1_byte = i2 = i2_byte = 0;
+  char *p1 = SSDATA (string1);
+  char *p2 = SSDATA (string2);
+  char *lim1 = p1 + SBYTES (string1);
+  char *lim2 = p2 + SBYTES (string2);
+  int cmp;
 
-  end = SCHARS (string1);
-  if (end > SCHARS (string2))
-    end = SCHARS (string2);
-
-  while (i1 < end)
+  while ((cmp = filevercmp (p1, p2)) == 0)
     {
-      /* When we find a mismatch, we must compare the
-	 characters, not just the bytes.  */
-      int c1, c2;
-
-      if (STRING_MULTIBYTE (string1))
-	{
-	  chp = &SDATA (string1)[i1_byte];
-	  c1 = STRING_CHAR_AND_LENGTH (chp, chlen1);
-	}
-      else
-	{
-	  c1 = SREF (string1, i1_byte);
-	  chlen1 = 1;
-	}
-
-      if (STRING_MULTIBYTE (string2))
-	{
-	  chp = &SDATA (string1)[i2_byte];
-	  c2 = STRING_CHAR_AND_LENGTH (chp, chlen2);
-	}
-      else
-	{
-	  c2 = SREF (string2, i2_byte);
-	  chlen2 = 1;
-	}
-
-      if (c1 >= '0' && c1 <= '9' &&
-	  c2 >= '0' && c2 <= '9')
-	/* Both strings are numbers, so compare them. */
-	{
-	  num1 = gather_number_from_string (string1, &i1, &i1_byte);
-	  num2 = gather_number_from_string (string2, &i2, &i2_byte);
-	  /* If we have an integer overflow, then resort to sorting
-	     the entire string lexicographically. */
-	  if (num1 == -1 || num2 == -1)
-	    return Fstring_lessp (string1, string2);
-	  else if (num1 < num2)
-	    return Qt;
-	  else if (num1 > num2)
-	    return Qnil;
-	}
-      else
-	{
-	  if (c1 != c2)
-	    return c1 < c2 ? Qt : Qnil;
-
-	  i1++;
-	  i2++;
-	  i1_byte += chlen1;
-	  i2_byte += chlen2;
-	}
+      /* If the strings are identical through their first null bytes,
+	 skip past identical prefixes and try again.  */
+      ptrdiff_t size = strlen (p1) + 1;
+      p1 += size;
+      p2 += size;
+      if (lim1 < p1)
+	return lim2 < p2 ? Qnil : Qt;
+      if (lim2 < p2)
+	return Qnil;
     }
-  return i1 < SCHARS (string2) ? Qt : Qnil;
+
+  return cmp < 0 ? Qt : Qnil;
 }
 
 DEFUN ("string-collate-lessp", Fstring_collate_lessp, Sstring_collate_lessp, 2, 4, 0,
@@ -5164,7 +5095,7 @@ this variable.  */);
   defsubr (&Sstring_equal);
   defsubr (&Scompare_strings);
   defsubr (&Sstring_lessp);
-  defsubr (&Sstring_numeric_lessp);
+  defsubr (&Sstring_version_lessp);
   defsubr (&Sstring_collate_lessp);
   defsubr (&Sstring_collate_equalp);
   defsubr (&Sappend);

@@ -78,6 +78,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module fdatasync:
   # Code from module fdopendir:
   # Code from module filemode:
+  # Code from module filevercmp:
   # Code from module fpending:
   # Code from module fstatat:
   # Code from module fsync:
@@ -889,6 +890,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/fdopendir.c
   lib/filemode.c
   lib/filemode.h
+  lib/filevercmp.c
+  lib/filevercmp.h
   lib/fpending.c
   lib/fpending.h
   lib/fstatat.c
