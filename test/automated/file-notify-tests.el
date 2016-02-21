@@ -281,8 +281,8 @@ and the event to `file-notify--test-events'."
     (unless (string-match
 	     (regexp-quote ".#")
 	     (file-notify--event-file-name file-notify--test-event))
-      (message "file-notify--test-event-handler result: %s event: %S"
-               (null (ert-test-failed-p result)) file-notify--test-event)
+      ;;(message "file-notify--test-event-handler result: %s event: %S"
+               ;;(null (ert-test-failed-p result)) file-notify--test-event)
       (setq file-notify--test-events
 	    (append file-notify--test-events `(,file-notify--test-event))
 	    file-notify--test-results
@@ -963,11 +963,11 @@ the file watch."
               (let ((temporary-file-directory file-notify--test-tmpfile))
                 (make-temp-file "file")))
 	(cl-flet ((dir-callback (event)
-                   (message "dir-callback %s" event)
-                   (let ((file-notify--test-desc file-notify--test-desc1))
+                   (let ((file-notify--test-desc file-notify--test-desc1)
+                         (file-notify--test-tmpfile
+                          (file-notify--event-file-name event)))
                      (file-notify--test-event-handler event)))
                   (file-callback (event)
-                   (message "file-callback %s" event)
                    (let ((file-notify--test-desc file-notify--test-desc2))
                      (file-notify--test-event-handler event))))
           (should
@@ -989,7 +989,6 @@ the file watch."
                  "any text" nil file-notify--test-tmpfile1 t 'no-message)
               (let ((temporary-file-directory file-notify--test-tmpfile))
                 (make-temp-file "fileX"))))
-          ;; After saving the buffer, the descriptor is still valid.
           (should (file-notify-valid-p file-notify--test-desc1))
           (should (file-notify-valid-p file-notify--test-desc2))
           (delete-file file-notify--test-tmpfile1)

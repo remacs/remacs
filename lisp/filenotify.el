@@ -273,14 +273,16 @@ EVENT is the cadr of the event in `file-notify-handle-event'
 			  (nth 0 entry) (file-name-nondirectory file1)))))
           ;;(message
            ;;"file-notify-callback %S %S %S %S %S"
-           ;;(file-notify--descriptor desc file) action file file1 registered)
+           ;;(file-notify--descriptor desc (car entry))
+           ;;action file file1 registered)
 	  (if file1
 	      (funcall
 	       callback
-	       `(,(file-notify--descriptor desc file) ,action ,file ,file1))
+	       `(,(file-notify--descriptor desc (car entry))
+                 ,action ,file ,file1))
 	    (funcall
 	     callback
-	     `(,(file-notify--descriptor desc file) ,action ,file)))))
+	     `(,(file-notify--descriptor desc (car entry)) ,action ,file)))))
 
       ;; Modify `file-notify-descriptors'.
       (when stopped
