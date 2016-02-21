@@ -23,6 +23,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <unistd.h>
 #include <intprops.h>
 #include <vla.h>
+#include <errno.h>
 
 #include "lisp.h"
 #include "character.h"
@@ -336,42 +337,26 @@ Symbols are also allowed; their print names are used instead.  */)
    pointers are increased and left at the next character after the
    numerical characters. */
 static size_t
-gather_number_from_string (int c, Lisp_Object string,
+gather_number_from_string (Lisp_Object string,
 			   ptrdiff_t *isp, ptrdiff_t *isp_byte)
 {
-  size_t number = c - '0';
-  unsigned char *chp;
-  int chlen;
+  size_t number = 0;
+  char *s = SSDATA (string);
+  char *end;
 
-  do
+  errno = 0;
+  number = strtoumax (s + *isp_byte, &end, 10);
+  if (errno == ERANGE)
+    /* If we have an integer overflow, then we fall back on lexical
+       comparison. */
+    return -1;
+  else
     {
-      if (STRING_MULTIBYTE (string))
-	{
-	  chp = &SDATA (string)[*isp_byte];
-	  c = STRING_CHAR_AND_LENGTH (chp, chlen);
-	}
-      else
-	{
-	  c = SREF (string, *isp_byte);
-	  chlen = 1;
-	}
-
-      /* If we're still in a number, add it to the sum and continue. */
-      /* FIXME: Integer overflow? */
-      if (c >= '0' && c <= '9')
-	{
-	  number = number * 10;
-	  number += c - '0';
-	  (*isp)++;
-	  (*isp_byte) += chlen;
-	}
-      else
-	break;
+      size_t diff = end - (s + *isp_byte);
+      (*isp) += diff;
+      (*isp_byte) += diff;
+      return number;
     }
-  /* Stop when we get to the end of the string anyway. */
-  while (c != 0);
-
-  return number;
 }
 
 DEFUN ("string-numeric-lessp", Fstring_numeric_lessp,
@@ -388,6 +373,8 @@ Symbols are also allowed; their print names are used instead.  */)
   ptrdiff_t end;
   ptrdiff_t i1, i1_byte, i2, i2_byte;
   size_t num1, num2;
+  unsigned char *chp;
+  int chlen1, chlen2;
 
   if (SYMBOLP (string1))
     string1 = SYMBOL_NAME (string1);
@@ -408,22 +395,53 @@ Symbols are also allowed; their print names are used instead.  */)
 	 characters, not just the bytes.  */
       int c1, c2;
 
-      FETCH_STRING_CHAR_ADVANCE (c1, string1, i1, i1_byte);
-      FETCH_STRING_CHAR_ADVANCE (c2, string2, i2, i2_byte);
+      if (STRING_MULTIBYTE (string1))
+	{
+	  chp = &SDATA (string1)[i1_byte];
+	  c1 = STRING_CHAR_AND_LENGTH (chp, chlen1);
+	}
+      else
+	{
+	  c1 = SREF (string1, i1_byte);
+	  chlen1 = 1;
+	}
+
+      if (STRING_MULTIBYTE (string2))
+	{
+	  chp = &SDATA (string1)[i2_byte];
+	  c2 = STRING_CHAR_AND_LENGTH (chp, chlen2);
+	}
+      else
+	{
+	  c2 = SREF (string2, i2_byte);
+	  chlen2 = 1;
+	}
 
       if (c1 >= '0' && c1 <= '9' &&
 	  c2 >= '0' && c2 <= '9')
 	/* Both strings are numbers, so compare them. */
 	{
-	  num1 = gather_number_from_string (c1, string1, &i1, &i1_byte);
-	  num2 = gather_number_from_string (c2, string2, &i2, &i2_byte);
-	  if (num1 < num2)
+	  num1 = gather_number_from_string (string1, &i1, &i1_byte);
+	  num2 = gather_number_from_string (string2, &i2, &i2_byte);
+	  /* If we have an integer overflow, then resort to sorting
+	     the entire string lexicographically. */
+	  if (num1 == -1 || num2 == -1)
+	    return Fstring_lessp (string1, string2);
+	  else if (num1 < num2)
 	    return Qt;
 	  else if (num1 > num2)
 	    return Qnil;
 	}
-      else if (c1 != c2)
-	return c1 < c2 ? Qt : Qnil;
+      else
+	{
+	  if (c1 != c2)
+	    return c1 < c2 ? Qt : Qnil;
+
+	  i1++;
+	  i2++;
+	  i1_byte += chlen1;
+	  i2_byte += chlen2;
+	}
     }
   return i1 < SCHARS (string2) ? Qt : Qnil;
 }

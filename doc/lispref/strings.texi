@@ -643,7 +643,10 @@ lexicographically ``smaller'' than @samp{2}.
 
 If one string has a number in a position in the string, and the other
 doesn't, then lexicograpic comparison is done at that point, so
-@samp{foo.png} is ``smaller'' than @samp{foo2.png}.
+@samp{foo.png} is ``smaller'' than @samp{foo2.png}.  If any of the
+numbers in the strings are larger than can be represented as an
+integer number, the entire string is compared using
+@code{string-less}.
 @end defun
 
 @defun string-prefix-p string1 string2 &optional ignore-case
