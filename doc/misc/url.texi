@@ -417,6 +417,12 @@ cookies, if there are any.  You can remove a cookie using the
 @kbd{C-k} (@code{url-cookie-delete}) command.
 @end defun
 
+@defun url-cookie-delete-cookies &optional regexp
+This function takes a regular expression as its parameters and deletes
+all cookies from that domain.  If @var{regexp} is @code{nil}, delete
+all cookies.
+@end defun
+
 @defopt url-cookie-file
 The file in which cookies are stored, defaulting to @file{cookies} in
 the directory specified by @code{url-configuration-directory}.

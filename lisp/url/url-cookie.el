@@ -353,6 +353,19 @@ to run the `url-cookie-setup-save-timer' function manually."
 					  url-cookie-save-interval
 					  #'url-cookie-write-file))))
 
+(defun url-cookie-delete-cookies (&optional regexp)
+  "Delete all cookies from the cookie store where the domain matches REGEXP.
+If REGEXP is nil, all cookies are deleted."
+  (dolist (variable '(url-cookie-secure-storage url-cookie-storage))
+    (let ((cookies (symbol-value variable)))
+      (dolist (elem cookies)
+        (when (or (null regexp)
+                  (string-match regexp (car elem)))
+          (setq cookies (delq elem cookies))))
+      (set variable cookies)))
+  (setq url-cookies-changed-since-last-save t)
+  (url-cookie-write-file))
+
 ;;; Mode for listing and editing cookies.
 
 (defun url-cookie-list ()

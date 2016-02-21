@@ -1040,6 +1040,11 @@ we should not be queried about things like TLS certificate validity.
 plist will contain a :peer element that has the output of
 `gnutls-peer-status' (if Emacs is built with GnuTLS support).
 
++++
+*** The new function `url-cookie-delete-cookie' can be used to
+programmatically delete all cookies, or cookies from a specific
+domain.
+
 ** Tramp
 
 +++
