@@ -26,7 +26,8 @@
 ;; This package allows GnuPG passphrase to be prompted through the
 ;; minibuffer instead of graphical dialog.
 ;;
-;; To use, add allow-emacs-pinentry to ~/.gnupg/gpg-agent.conf, and
+;; To use, add "allow-emacs-pinentry" to "~/.gnupg/gpg-agent.conf",
+;; reload the configuration with "gpgconf --reload gpg-agent", and
 ;; start the server with M-x pinentry-start.
 ;;
 ;; The actual communication path between the relevant components is

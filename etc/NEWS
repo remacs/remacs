@@ -1275,7 +1275,9 @@ few or no entries have changed.
 minibuffer instead of a graphical dialog, depending on whether the gpg
 command is called from Emacs (i.e., INSIDE_EMACS environment variable
 is set).  This feature requires newer versions of GnuPG (2.1.5 or
-later) and Pinentry (0.9.5 or later).
+later) and Pinentry (0.9.5 or later).  To use this feature, add
+"allow-emacs-pinentry" to "~/.gnupg/gpg-agent.conf" and reload the
+configuration with "gpgconf --reload gpg-agent".
 
 +++
 ** cl-generic.el provides CLOS-style multiple-dispatch generic functions.
