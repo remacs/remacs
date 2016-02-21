@@ -414,16 +414,17 @@ elements is negated."
     (set-buffer (marker-buffer marker))
     (xref--goto-char marker)))
 
-(defun xref--pop-to-location (item &optional window)
+(defun xref--pop-to-location (item &optional action)
   "Go to the location of ITEM and display the buffer.
-WINDOW controls how the buffer is displayed:
+ACTION controls how the buffer is displayed:
   nil      -- switch-to-buffer
   `window' -- pop-to-buffer (other window)
-  `frame'  -- pop-to-buffer (other frame)"
+  `frame'  -- pop-to-buffer (other frame)
+If SELECT is non-nil, select the target window."
   (let* ((marker (save-excursion
                    (xref-location-marker (xref-item-location item))))
          (buf (marker-buffer marker)))
-    (cl-ecase window
+    (cl-ecase action
       ((nil)  (switch-to-buffer buf))
       (window (pop-to-buffer buf t))
       (frame  (let ((pop-up-frames t)) (pop-to-buffer buf t))))
@@ -446,41 +447,61 @@ WINDOW controls how the buffer is displayed:
     (when (and restore (not (eq (car restore) 'same)))
       (push (cons buf win) xref--display-history))))
 
-(defun xref--display-position (pos other-window buf)
-  ;; Show the location, but don't hijack focus.
-  (let ((xref-buf (current-buffer)))
-    (with-selected-window (display-buffer buf other-window)
+(defmacro xref--with-dedicated-window (&rest body)
+  `(let* ((xref-w (get-buffer-window xref-buffer-name))
+          (xref-w-dedicated (window-dedicated-p xref-w)))
+     (unwind-protect
+         (progn
+           (when xref-w
+             (set-window-dedicated-p xref-w 'soft))
+           ,@body)
+       (when xref-w
+         (set-window-dedicated-p xref-w xref-w-dedicated)))))
+
+(defun xref--show-pos-in-buf (pos buf select)
+  (let ((xref-buf (current-buffer))
+        win)
+    (with-selected-window
+        (xref--with-dedicated-window
+         (display-buffer buf))
       (xref--goto-char pos)
       (run-hooks 'xref-after-jump-hook)
-      (let ((buf (current-buffer))
-            (win (selected-window)))
+      (let ((buf (current-buffer)))
+        (setq win (selected-window))
         (with-current-buffer xref-buf
           (setq-local other-window-scroll-buffer buf)
-          (xref--save-to-history buf win))))))
+          (xref--save-to-history buf win))))
+    (when select
+      (select-window win))))
 
-(defun xref--show-location (location)
+(defun xref--show-location (location &optional select)
   (condition-case err
       (let* ((marker (xref-location-marker location))
              (buf (marker-buffer marker)))
-        (xref--display-position marker t buf))
+        (xref--show-pos-in-buf marker buf select))
     (user-error (message (error-message-string err)))))
 
 (defun xref-show-location-at-point ()
-  "Display the source of xref at point in the other window, if any."
+  "Display the source of xref at point in the appropriate window, if any."
   (interactive)
   (let* ((xref (xref--item-at-point))
          (xref--current-item xref))
     (when xref
-      (xref--show-location (xref-item-location xref)))))
+      ;; Try to avoid the window the current xref buffer was
+      ;; originally created from.
+      (if (window-live-p xref--window)
+          (with-selected-window xref--window
+            (xref--show-location (xref-item-location xref)))
+        (xref--show-location (xref-item-location xref))))))
 
 (defun xref-next-line ()
-  "Move to the next xref and display its source in the other window."
+  "Move to the next xref and display its source in the appropriate window."
   (interactive)
   (xref--search-property 'xref-item)
   (xref-show-location-at-point))
 
 (defun xref-prev-line ()
-  "Move to the previous xref and display its source in the other window."
+  "Move to the previous xref and display its source in the appropriate window."
   (interactive)
   (xref--search-property 'xref-item t)
   (xref-show-location-at-point))
@@ -491,16 +512,14 @@ WINDOW controls how the buffer is displayed:
     (get-text-property (point) 'xref-item)))
 
 (defvar-local xref--window nil
-  "ACTION argument to call `display-buffer' with.")
+  "The original window this xref buffer was created from.")
 
 (defun xref-goto-xref ()
-  "Jump to the xref on the current line and bury the xref buffer."
+  "Jump to the xref on the current line and select its window."
   (interactive)
   (let ((xref (or (xref--item-at-point)
-                 (user-error "No reference at point")))
-        (window xref--window))
-    (xref-quit)
-    (xref--pop-to-location xref window)))
+                  (user-error "No reference at point"))))
+    (xref--show-location (xref-item-location xref) t)))
 
 (defun xref-query-replace-in-results (from to)
   "Perform interactive replacement of FROM with TO in all displayed xrefs.
@@ -573,7 +592,8 @@ references displayed in the current *xref* buffer."
                       current-beg (car pair)
                       current-end (cdr pair)
                       current-buf (marker-buffer current-beg))
-                (pop-to-buffer current-buf)
+                (xref--with-dedicated-window
+                 (pop-to-buffer current-buf))
                 (goto-char current-beg)
                 (when (re-search-forward from current-end noerror)
                   (setq found t)))
@@ -614,7 +634,7 @@ references displayed in the current *xref* buffer."
     (dotimes (_ n)
       (setq xref (xref--search-property 'xref-item backward)))
     (cond (xref
-           (xref--pop-to-location xref))
+           (xref--show-location (xref-item-location xref) t))
           (t
            (error "No %s xref" (if backward "previous" "next"))))))
 
@@ -724,15 +744,15 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 
 (defvar xref--read-pattern-history nil)
 
-(defun xref--show-xrefs (xrefs window &optional always-show-list)
+(defun xref--show-xrefs (xrefs display-action &optional always-show-list)
   (cond
    ((and (not (cdr xrefs)) (not always-show-list))
     (xref-push-marker-stack)
-    (xref--pop-to-location (car xrefs) window))
+    (xref--pop-to-location (car xrefs) display-action))
    (t
     (xref-push-marker-stack)
     (funcall xref-show-xrefs-function xrefs
-             `((window . ,window))))))
+             `((window . ,(selected-window)))))))
 
 (defun xref--prompt-p (command)
   (or (eq xref-prompt-for-identifier t)
@@ -761,16 +781,16 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 
 ;;; Commands
 
-(defun xref--find-xrefs (input kind arg window)
+(defun xref--find-xrefs (input kind arg display-action)
   (let ((xrefs (funcall (intern (format "xref-backend-%s" kind))
                         (xref-find-backend)
                         arg)))
     (unless xrefs
       (user-error "No %s found for: %s" (symbol-name kind) input))
-    (xref--show-xrefs xrefs window)))
+    (xref--show-xrefs xrefs display-action)))
 
-(defun xref--find-definitions (id window)
-  (xref--find-xrefs id 'definitions id window))
+(defun xref--find-definitions (id display-action)
+  (xref--find-xrefs id 'definitions id display-action))
 
 ;;;###autoload
 (defun xref-find-definitions (identifier)
