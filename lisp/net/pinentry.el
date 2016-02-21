@@ -26,6 +26,9 @@
 ;; This package allows GnuPG passphrase to be prompted through the
 ;; minibuffer instead of graphical dialog.
 ;;
+;; This feature requires GnuPG 2.1.5 or later and Pinentry 0.9.5 or
+;; later, with the Emacs support compiled in.
+;;
 ;; To use, add "allow-emacs-pinentry" to "~/.gnupg/gpg-agent.conf",
 ;; reload the configuration with "gpgconf --reload gpg-agent", and
 ;; start the server with M-x pinentry-start.
@@ -38,16 +41,14 @@
 ;; where pinentry and Emacs communicate through a Unix domain socket
 ;; created at:
 ;;
-;;   ${TMPDIR-/tmp}/emacs$(id -u)/pinentry
+;;   ~/.emacs.d/pinentry/pinentry
 ;;
-;; under the same directory which server.el uses.  The protocol is a
-;; subset of the Pinentry Assuan protocol described in (info
-;; "(pinentry) Protocol").
-;;
-;; NOTE: As of August 2015, this feature requires newer versions of
-;; GnuPG (2.1.5+) and Pinentry (0.9.5+).
+;; The protocol is a subset of the Pinentry Assuan protocol described
+;; in (info "(pinentry) Protocol").
 
 ;;; Code:
+
+(eval-when-compile (require 'cl-lib))
 
 (defgroup pinentry nil
   "The Pinentry server"
@@ -76,10 +77,7 @@
 
 (defvar pinentry--prompt-buffer nil)
 
-;; We use the same location as `server-socket-dir', when local sockets
-;; are supported.
-(defvar pinentry--socket-dir
-  (format "%s/emacs%d" (or (getenv "TMPDIR") "/tmp") (user-uid))
+(defvar pinentry--socket-dir (locate-user-emacs-file "pinentry")
   "The directory in which to place the server socket.
 If local sockets are not supported, this is nil.")
 
@@ -172,16 +170,17 @@ will not be shown."
       (ignore-errors
         (let (delete-by-moving-to-trash)
           (delete-file server-file)))
-      (setq pinentry--server-process
-            (make-network-process
-             :name "pinentry"
-             :server t
-             :noquery t
-             :sentinel #'pinentry--process-sentinel
-             :filter #'pinentry--process-filter
-             :coding 'no-conversion
-             :family 'local
-             :service server-file))
+      (cl-letf (((default-file-modes) ?\700))
+        (setq pinentry--server-process
+              (make-network-process
+               :name "pinentry"
+               :server t
+               :noquery t
+               :sentinel #'pinentry--process-sentinel
+               :filter #'pinentry--process-filter
+               :coding 'no-conversion
+               :family 'local
+               :service server-file)))
       (process-put pinentry--server-process :server-file server-file))))
 
 (defun pinentry-stop ()
