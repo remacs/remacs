@@ -437,16 +437,6 @@ If SELECT is non-nil, select the target window."
 
 ;; The xref buffer is used to display a set of xrefs.
 
-(defvar-local xref--display-history nil
-  "List of pairs (BUFFER . WINDOW), for temporarily displayed buffers.")
-
-(defun xref--save-to-history (buf win)
-  (let ((restore (window-parameter win 'quit-restore)))
-    ;; Save the new entry if the window displayed another buffer
-    ;; previously.
-    (when (and restore (not (eq (car restore) 'same)))
-      (push (cons buf win) xref--display-history))))
-
 (defmacro xref--with-dedicated-window (&rest body)
   `(let* ((xref-w (get-buffer-window xref-buffer-name))
           (xref-w-dedicated (window-dedicated-p xref-w)))
@@ -469,8 +459,7 @@ If SELECT is non-nil, select the target window."
       (let ((buf (current-buffer)))
         (setq win (selected-window))
         (with-current-buffer xref-buf
-          (setq-local other-window-scroll-buffer buf)
-          (xref--save-to-history buf win))))
+          (setq-local other-window-scroll-buffer buf))))
     (when select
       (select-window win))))
 
@@ -606,7 +595,6 @@ references displayed in the current *xref* buffer."
 
 (defvar xref--xref-buffer-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map [remap quit-window] #'xref-quit)
     (define-key map (kbd "n") #'xref-next-line)
     (define-key map (kbd "p") #'xref-prev-line)
     (define-key map (kbd "r") #'xref-query-replace-in-results)
@@ -637,23 +625,6 @@ references displayed in the current *xref* buffer."
            (xref--show-location (xref-item-location xref) t))
           (t
            (error "No %s xref" (if backward "previous" "next"))))))
-
-(defun xref-quit (&optional kill)
-  "Bury temporarily displayed buffers, then quit the current window.
-
-If KILL is non-nil, also kill the current buffer.
-
-The buffers that the user has otherwise interacted with in the
-meantime are preserved."
-  (interactive "P")
-  (let ((window (selected-window))
-        (history xref--display-history))
-    (setq xref--display-history nil)
-    (pcase-dolist (`(,buf . ,win) history)
-      (when (and (window-live-p win)
-                 (eq buf (window-buffer win)))
-        (quit-window nil win)))
-    (quit-window kill window)))
 
 (defconst xref-buffer-name "*xref*"
   "The name of the buffer to show xrefs.")
