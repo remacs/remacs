@@ -287,22 +287,22 @@ Argument OBJ is the object to write."
   (when (semanticdb-live-p obj)
     (when (semanticdb-in-buffer-p obj)
       (with-current-buffer (semanticdb-in-buffer-p obj)
+        (save-excursion
+          ;; Make sure all our tag lists are up to date.
+          (semantic-fetch-tags)
 
-	;; Make sure all our tag lists are up to date.
-	(semantic-fetch-tags)
+          ;; Try to get an accurate unmatched syntax table.
+          (when (and (boundp semantic-show-unmatched-syntax-mode)
+                     semantic-show-unmatched-syntax-mode)
+            ;; Only do this if the user runs unmatched syntax
+            ;; mode display entries.
+            (oset obj unmatched-syntax
+                  (semantic-show-unmatched-lex-tokens-fetch))
+            )
 
-	;; Try to get an accurate unmatched syntax table.
-	(when (and (boundp semantic-show-unmatched-syntax-mode)
-		   semantic-show-unmatched-syntax-mode)
-	  ;; Only do this if the user runs unmatched syntax
-	  ;; mode display entries.
-	  (oset obj unmatched-syntax
-		(semantic-show-unmatched-lex-tokens-fetch))
-	  )
-
-	;; Make sure pointmax is up to date
-	(oset obj pointmax (point-max))
-	))
+          ;; Make sure pointmax is up to date
+          (oset obj pointmax (point-max))
+          )))
 
     ;; Make sure that the file size and other attributes are
     ;; up to date.
