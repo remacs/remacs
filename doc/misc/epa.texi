@@ -441,26 +441,30 @@ The default value is @code{t}.
 @chapter GnuPG version compatibility
 
 As of February 2016, there are three active branches of GnuPG: 2.1,
-2.0, and 1.4.  All those branches should work flawlessly with Emacs,
+2.0, and 1.4.  All those branches should work flawlessly with Emacs
 with basic use-cases.  They have, however, some incompatible
 characteristics, which might be visible when used from Emacs.
 
 @itemize
 @item
-The key store format used by 2.1 is incompatible with 1.4.  That
-means, a key created with 2.1 might not be visible with 1.4.
+The key store format used by GnuPG 2.1 is incompatible with 1.4.  That
+means, a key created with GnuPG 2.1 is not visible with 1.4.
 
 @item
-2.1 uses a fixed Unix domain socket for gpg-agent, and ignores the
-@code{GPG_AGENT_INFO} environment variable, used by 2.0 and 1.4.
+GnuPG 2.1 uses a fixed address for the Unix domain socket used to
+communicate with gpg-agent.  The @code{GPG_AGENT_INFO} environment
+variable, which is used by GnuPG 2.0 and 1.4, is ignored.  That means,
+if your system has both GnuPG 2.1 and 1.4, the gpg command from GnuPG
+1.4 is not able to use gpg-agent provided by 2.1 (at least out of box).q
 
 @item
-2.1 (2.1.5 or later) has a mechanism to direct the Pinentry password
-prompt to the Emacs minibuffer@footnote{To enable this feature, add
-@samp{allow-emacs-pinentry} to @file{~/.gnupg/gpg-agent.conf} and let
-gpg-agent reload the configuration, with: @samp{gpgconf --reload gpg-agent}},
-which would be useful when you use Emacs remotely or from a text-only
-terminal.  That feature is not available in other versions, and more
+GnuPG 2.1 (2.1.5 or later) has a mechanism to direct the Pinentry
+password prompt to the Emacs minibuffer@footnote{To enable this
+feature, add @samp{allow-emacs-pinentry} to
+@file{~/.gnupg/gpg-agent.conf} and let gpg-agent reload the
+configuration, with: @samp{gpgconf --reload gpg-agent}}, which would
+be useful when you use Emacs remotely or from a text-only terminal.
+That feature is not available in other versions, and more
 specifically, with 2.0 (as of 2.0.29), there is no way to avoid the
 graphical prompt.
 @end itemize
