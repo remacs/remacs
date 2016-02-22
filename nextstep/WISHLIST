@@ -227,7 +227,7 @@ errors.
 
 *** Anders frame test
 
-Anders Lindgren <andlind@gmail.com> has implmented some (very basic)
+Anders Lindgren <andlind@gmail.com> has implemented some (very basic)
 tests for full screen, toolbar, and auto-hiding the menu bar.
 
 ** Make sure all build variants work
