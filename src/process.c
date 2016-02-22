@@ -1214,7 +1214,9 @@ SERVICE) for a network connection or (PORT SPEED) for a serial
 connection.  If KEY is t, the complete contact information for the
 connection is returned, else the specific value for the keyword KEY is
 returned.  See `make-network-process' or `make-serial-process' for a
-list of keywords.  */)
+list of keywords.
+If PROCESS is a non-blocking network process that hasn't been fully
+set up yet, this function will block until socket setup has completed.  */)
   (register Lisp_Object process, Lisp_Object key)
 {
   Lisp_Object contact;
@@ -2449,7 +2451,9 @@ conv_lisp_to_sockaddr (int family, Lisp_Object address, struct sockaddr *sa, int
 #ifdef DATAGRAM_SOCKETS
 DEFUN ("process-datagram-address", Fprocess_datagram_address, Sprocess_datagram_address,
        1, 1, 0,
-       doc: /* Get the current datagram address associated with PROCESS.  */)
+       doc: /* Get the current datagram address associated with PROCESS.
+If PROCESS is a non-blocking network process that hasn't been fully
+set up yet, this function will block until socket setup has completed.  */)
   (Lisp_Object process)
 {
   int channel;
@@ -2470,7 +2474,10 @@ DEFUN ("process-datagram-address", Fprocess_datagram_address, Sprocess_datagram_
 DEFUN ("set-process-datagram-address", Fset_process_datagram_address, Sset_process_datagram_address,
        2, 2, 0,
        doc: /* Set the datagram address for PROCESS to ADDRESS.
-Returns nil upon error setting address, ADDRESS otherwise.  */)
+Returns nil upon error setting address, ADDRESS otherwise.
+
+If PROCESS is a non-blocking network process that hasn't been fully
+set up yet, this function will block until socket setup has completed.  */)
   (Lisp_Object process, Lisp_Object address)
 {
   int channel;
@@ -2638,7 +2645,10 @@ DEFUN ("set-network-process-option",
        doc: /* For network process PROCESS set option OPTION to value VALUE.
 See `make-network-process' for a list of options and values.
 If optional fourth arg NO-ERROR is non-nil, don't signal an error if
-OPTION is not a supported option, return nil instead; otherwise return t.  */)
+OPTION is not a supported option, return nil instead; otherwise return t.
+
+If PROCESS is a non-blocking network process that hasn't been fully
+set up yet, this function will block until socket setup has completed. */)
   (Lisp_Object process, Lisp_Object option, Lisp_Object value, Lisp_Object no_error)
 {
   int s;
@@ -6247,7 +6257,10 @@ nil, indicating the current buffer's process.
 Called from program, takes three arguments, PROCESS, START and END.
 If the region is more than 500 characters long,
 it is sent in several bunches.  This may happen even for shorter regions.
-Output from processes can arrive in between bunches.  */)
+Output from processes can arrive in between bunches.
+
+If PROCESS is a non-blocking network process that hasn't been fully
+set up yet, this function will block until socket setup has completed.  */)
   (Lisp_Object process, Lisp_Object start, Lisp_Object end)
 {
   Lisp_Object proc = get_process (process);
@@ -6277,7 +6290,10 @@ PROCESS may be a process, a buffer, the name of a process or buffer, or
 nil, indicating the current buffer's process.
 If STRING is more than 500 characters long,
 it is sent in several bunches.  This may happen even for shorter strings.
-Output from processes can arrive in between bunches.  */)
+Output from processes can arrive in between bunches.
+
+If PROCESS is a non-blocking network process that hasn't been fully
+set up yet, this function will block until socket setup has completed.  */)
   (Lisp_Object process, Lisp_Object string)
 {
   Lisp_Object proc;
@@ -7151,7 +7167,10 @@ DEFUN ("set-process-coding-system", Fset_process_coding_system,
        Sset_process_coding_system, 1, 3, 0,
        doc: /* Set coding systems of PROCESS to DECODING and ENCODING.
 DECODING will be used to decode subprocess output and ENCODING to
-encode subprocess input.  */)
+encode subprocess input.
+
+If PROCESS is a non-blocking network process that hasn't been fully
+set up yet, this function will block until socket setup has completed. */)
   (register Lisp_Object process, Lisp_Object decoding, Lisp_Object encoding)
 {
   register struct Lisp_Process *p;
