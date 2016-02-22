@@ -4743,7 +4743,7 @@ wait_for_socket_fds (Lisp_Object process, char *name)
   while (XPROCESS (process)->infd < 0 &&
 	 EQ (XPROCESS (process)->status, Qconnect))
     {
-      add_to_log ("Waiting for socket from %s...\n", name);
+      add_to_log ("Waiting for socket from %s...\n", build_string (name));
       wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
     }
 }
