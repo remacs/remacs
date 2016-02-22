@@ -49,6 +49,8 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'cl-lib))
+
 (defgroup pinentry nil
   "The Pinentry server"
   :version "25.1"
@@ -172,17 +174,18 @@ will not be shown."
       (ignore-errors
         (let (delete-by-moving-to-trash)
           (delete-file server-file)))
-      (setq pinentry--server-process
-            (make-network-process
-             :name "pinentry"
-             :server t
-             :noquery t
-             :sentinel #'pinentry--process-sentinel
-             :filter #'pinentry--process-filter
-             :coding 'no-conversion
-             :family 'local
-             :service server-file))
-      (process-put pinentry--server-process :server-file server-file))))
+      (cl-letf (((default-file-modes) ?\700))
+        (setq pinentry--server-process
+              (make-network-process
+               :name "pinentry"
+               :server t
+               :noquery t
+               :sentinel #'pinentry--process-sentinel
+               :filter #'pinentry--process-filter
+               :coding 'no-conversion
+               :family 'local
+               :service server-file))
+        (process-put pinentry--server-process :server-file server-file)))))
 
 (defun pinentry-stop ()
   "Stop a Pinentry service."
