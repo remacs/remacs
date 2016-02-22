@@ -4927,7 +4927,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 
 		    if (p->gnutls_initstage == GNUTLS_STAGE_READY)
 		      {
-			gnutls_verify_boot (proc, Qnil);
+			gnutls_verify_boot (aproc, Qnil);
 			finish_after_tls_connection (aproc);
 		      }
 		    else if (p->gnutls_handshakes_tried >
