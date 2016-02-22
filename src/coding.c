@@ -6828,11 +6828,11 @@ decode_eol (struct coding_system *coding)
 	}
       else
 	{
-	  ptrdiff_t pos_byte = coding->dst_pos_byte;
 	  ptrdiff_t pos = coding->dst_pos;
-	  ptrdiff_t pos_end = pos + coding->produced_char - 1;
+	  ptrdiff_t pos_byte = coding->dst_pos_byte;
+	  ptrdiff_t pos_end = pos_byte + coding->produced - 1;
 
-	  while (pos < pos_end)
+	  while (pos_byte < pos_end)
 	    {
 	      p = BYTE_POS_ADDR (pos_byte);
 	      if (*p == '\r' && p[1] == '\n')

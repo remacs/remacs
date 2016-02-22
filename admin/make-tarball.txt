@@ -5,7 +5,7 @@ Instructions to create pretest or release tarballs. -*- coding: utf-8 -*-
 
 Steps to take before starting on the first pretest in any release sequence:
 
-0.  The release branch (e.g. emacs-24) should already have been made
+0.  The release branch (e.g. emacs-25) should already have been made
     and you should use it for all that follows.  Diffs from this
     branch should be going to the emacs-diffs mailing list.
 
@@ -25,6 +25,13 @@ General steps (for each step, check for possible errors):
 
 1.   git pull     # fetch from the repository
      git status   # check for locally modified files
+
+    Ensure that you have a clean, unmodified state.
+    If you switched in-place from another branch to the release branch,
+    there could be inappropriate generated ignored files left over.
+    You might want to use "git status --ignored" to check for such files,
+    or some form of "git clean -x".  It's probably simpler and safer to
+    make a new working directory exclusively for the release branch.
 
 2.  Regenerate the etc/AUTHORS file:
       M-: (require 'authors) RET

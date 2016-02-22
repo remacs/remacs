@@ -1019,6 +1019,10 @@ The value returned is a list of elements of the form
 
 (cl--generic-prefill-dispatchers 0 (eql nil))
 (cl--generic-prefill-dispatchers window-system (eql nil))
+(cl--generic-prefill-dispatchers (terminal-parameter nil 'xterm--get-selection)
+                                 (eql nil))
+(cl--generic-prefill-dispatchers (terminal-parameter nil 'xterm--set-selection)
+                                 (eql nil))
 
 ;;; Support for cl-defstructs specializers.
 

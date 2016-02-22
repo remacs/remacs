@@ -1453,9 +1453,8 @@ loading packages twice."
 (defvar package--downloads-in-progress nil
   "List of in-progress asynchronous downloads.")
 
-(declare-function epg-check-configuration "epg-config"
-                  (config &optional minimum-version))
-(declare-function epg-configuration "epg-config" ())
+(declare-function epg-find-configuration "epg-config"
+                  (protocol &optional force))
 (declare-function epg-import-keys-from-file "epg" (context keys))
 
 ;;;###autoload
@@ -1555,11 +1554,15 @@ downloads in the background."
   (let ((default-keyring (expand-file-name "package-keyring.gpg"
                                            data-directory))
         (inhibit-message async))
+    (if (get 'package-check-signature 'saved-value)
+        (when package-check-signature
+          (epg-find-configuration 'OpenPGP))
+      (setq package-check-signature
+            (if (epg-find-configuration 'OpenPGP)
+                'allow-unsigned)))
     (when (and package-check-signature (file-exists-p default-keyring))
       (condition-case-unless-debug error
-          (progn
-            (epg-check-configuration (epg-configuration))
-            (package-import-keyring default-keyring))
+          (package-import-keyring default-keyring)
         (error (message "Cannot import default keyring: %S" (cdr error))))))
   (package--download-and-read-archives async))
 

@@ -628,12 +628,12 @@ The following %-sequences are provided:
 	    (cond ((looking-at "; charging")
 		   (setq battery-status "charging"
 			 battery-status-symbol "+"))
-		  ((< (string-to-number load-percentage) battery-load-low)
-		   (setq battery-status "low"
-			 battery-status-symbol "-"))
 		  ((< (string-to-number load-percentage) battery-load-critical)
 		   (setq battery-status "critical"
 			 battery-status-symbol "!"))
+		  ((< (string-to-number load-percentage) battery-load-low)
+		   (setq battery-status "low"
+			 battery-status-symbol "-"))
 		  (t
 		   (setq battery-status "high"
 			 battery-status-symbol "")))

@@ -641,12 +641,14 @@ mmap_alloc (void **var, size_t nbytes)
      advance, and the buffer is enlarged several times as the data is
      decompressed on the fly.  */
   if (nbytes < MAX_BUFFER_SIZE)
-    p = VirtualAlloc (NULL, (nbytes * 2), MEM_RESERVE, PAGE_READWRITE);
+    p = VirtualAlloc (NULL, ROUND_UP (nbytes * 2, get_allocation_unit ()),
+		      MEM_RESERVE, PAGE_READWRITE);
 
   /* If it fails, or if the request is above 512MB, try with the
      requested size.  */
   if (p == NULL)
-    p = VirtualAlloc (NULL, nbytes, MEM_RESERVE, PAGE_READWRITE);
+    p = VirtualAlloc (NULL, ROUND_UP (nbytes, get_allocation_unit ()),
+		      MEM_RESERVE, PAGE_READWRITE);
 
   if (p != NULL)
     {

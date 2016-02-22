@@ -26,7 +26,8 @@
 ;; This package allows GnuPG passphrase to be prompted through the
 ;; minibuffer instead of graphical dialog.
 ;;
-;; To use, add allow-emacs-pinentry to ~/.gnupg/gpg-agent.conf, and
+;; To use, add "allow-emacs-pinentry" to "~/.gnupg/gpg-agent.conf",
+;; reload the configuration with "gpgconf --reload gpg-agent", and
 ;; start the server with M-x pinentry-start.
 ;;
 ;; The actual communication path between the relevant components is
@@ -47,6 +48,8 @@
 ;; GnuPG (2.1.5+) and Pinentry (0.9.5+).
 
 ;;; Code:
+
+(eval-when-compile (require 'cl-lib))
 
 (defgroup pinentry nil
   "The Pinentry server"
@@ -171,17 +174,18 @@ will not be shown."
       (ignore-errors
         (let (delete-by-moving-to-trash)
           (delete-file server-file)))
-      (setq pinentry--server-process
-            (make-network-process
-             :name "pinentry"
-             :server t
-             :noquery t
-             :sentinel #'pinentry--process-sentinel
-             :filter #'pinentry--process-filter
-             :coding 'no-conversion
-             :family 'local
-             :service server-file))
-      (process-put pinentry--server-process :server-file server-file))))
+      (cl-letf (((default-file-modes) ?\700))
+        (setq pinentry--server-process
+              (make-network-process
+               :name "pinentry"
+               :server t
+               :noquery t
+               :sentinel #'pinentry--process-sentinel
+               :filter #'pinentry--process-filter
+               :coding 'no-conversion
+               :family 'local
+               :service server-file))
+        (process-put pinentry--server-process :server-file server-file)))))
 
 (defun pinentry-stop ()
   "Stop a Pinentry service."

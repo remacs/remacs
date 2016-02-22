@@ -518,6 +518,12 @@ each invocation of the saving commands."
 		 (item :tag "never" nil)
 		 (sexp :tag "once" :format "%t\n" :value t)))
 
+(defcustom gnus-article-show-cursor nil
+  "If non-nil, show the cursor in the Article buffer even when not selected."
+  :version "25.1"
+  :group 'gnus-article
+  :type 'bool)
+
 (defcustom gnus-saved-headers gnus-visible-headers
   "Headers to keep if `gnus-save-all-headers' is nil.
 If `gnus-save-all-headers' is non-nil, this variable will be ignored.
@@ -4484,7 +4490,8 @@ commands:
   (set (make-local-variable 'nobreak-char-display) nil)
   ;; Enable `gnus-article-remove-images' to delete images shr.el renders.
   (set (make-local-variable 'shr-put-image-function) 'gnus-shr-put-image)
-  (setq cursor-in-non-selected-windows nil)
+  (unless gnus-article-show-cursor
+    (setq cursor-in-non-selected-windows nil))
   (gnus-set-default-directory)
   (buffer-disable-undo)
   (setq buffer-read-only t

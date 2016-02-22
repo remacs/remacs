@@ -11829,6 +11829,10 @@ A value of 0.7 (the default) means that they are allowed to take up
 this, and Emacs supports it, then the images will be rescaled down to
 fit these criteria.
 
+@item gnus-article-show-cursor
+@vindex gnus-article-show-cursor
+If non-@code{nil}, display the cursor in the article buffer even when
+the article buffer isn't the current buffer.
 @end table
 
 To use this, make sure that you have @code{w3m} and @code{curl}

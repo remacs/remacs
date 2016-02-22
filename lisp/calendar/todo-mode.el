@@ -2262,9 +2262,8 @@ made in the number or names of categories."
 		 (mlist (append tmn-array nil))
 		 (tma-array todo-month-abbrev-array)
 		 (mablist (append tma-array nil))
-		 (yy (and oyear (unless (string= oyear "*")
-				  (string-to-number oyear))))
-		 (mm (or (and omonth (unless (string= omonth "*")
+		 (yy (and oyear (string-to-number oyear))) ; 0 if year is "*".
+		 (mm (or (and omonth (if (string= omonth "*") 13
 				       (string-to-number omonth)))
 			 (1+ (- (length mlist)
 				(length (or (member omonthname mlist)
@@ -2330,12 +2329,11 @@ made in the number or names of categories."
 			     (if omonth
 				 (number-to-string mm)
 			       (aref tma-array (1- mm))))))
-		(let ((yy (string-to-number year)) ; 0 if year is "*".
-		      ;; When mm is 13 (corresponding to "*" as value
-		      ;; of month), this raises an args-out-of-range
-		      ;; error in calendar-last-day-of-month, so use 1
-		      ;; (corresponding to January) to get 31 days.
-		      (mm (if (= mm 13) 1 mm)))
+                ;; Since the number corresponding to the arbitrary
+                ;; month name "*" is out of the range of
+                ;; calendar-last-day-of-month, set it to 1
+                ;; (corresponding to January) to allow 31 days.
+                (let ((mm (if (= mm 13) 1 mm)))
 		  (if (> (string-to-number day)
 			 (calendar-last-day-of-month mm yy))
 		      (user-error "%s %s does not have %s days"
@@ -2347,7 +2345,7 @@ made in the number or names of categories."
 		      monthname omonthname
 		      day (cond
 			   ((not current-prefix-arg)
-			    (todo-read-date 'day mm oyear))
+			    (todo-read-date 'day mm yy))
 			   ((string= oday "*")
 			    (user-error "Cannot increment *"))
 			   ((or (string= omonth "*") (string= omonthname "*"))
@@ -5933,7 +5931,7 @@ number of the last the day of the month."
     (and day (setq day (if (eq day '*)
 			   (symbol-name '*)
 			 (number-to-string day))))
-    (and month (setq month (if (eq month '*)
+    (and month (setq month (if (= month 13)
 			       (symbol-name '*)
 			     (number-to-string month))))
     (if arg

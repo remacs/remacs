@@ -987,6 +987,11 @@ is named like ODF with the extension turned to pdf."
     (doc-view-start-process "odf->pdf" doc-view-odf->pdf-converter-program
 			    (list
 			     (concat "-env:UserInstallation=file://"
+                                     ;; The URL must be
+                                     ;; file:///C:/tmp/dir on Windows.
+                                     ;; https://wiki.documentfoundation.org/UserProfile.
+                                     (when (eq system-type 'windows-nt)
+                                       "/")
 				     tmp-user-install-dir)
 			     "--headless" "--convert-to" "pdf"
 			     "--outdir" (doc-view--current-cache-dir) odf)
