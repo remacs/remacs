@@ -4733,7 +4733,7 @@ wait_for_socket_fds (Lisp_Object process, char *name)
   while (XPROCESS (process)->infd < 0 &&
 	 EQ (XPROCESS (process)->status, Qconnect))
     {
-      printf("Waiting for socket from %s...\n", name);
+      add_to_log ("Waiting for socket from %s...\n", name);
       wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
     }
 }
@@ -4743,7 +4743,7 @@ wait_while_connecting (Lisp_Object process)
 {
   while (EQ (XPROCESS (process)->status, Qconnect))
     {
-      printf("Waiting for connection...\n");
+      add_to_log ("Waiting for connection...\n");
       wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
     }
 }
@@ -4755,7 +4755,7 @@ wait_for_tls_negotiation (Lisp_Object process)
   while (XPROCESS (process)->gnutls_p &&
 	 XPROCESS (process)->gnutls_initstage != GNUTLS_STAGE_READY)
     {
-      printf("Waiting for TLS...\n");
+      add_to_log ("Waiting for TLS...\n");
       wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
     }
 #endif
