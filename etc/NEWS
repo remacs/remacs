@@ -31,6 +31,22 @@ otherwise leave it unmarked.
 
 * Changes in Emacs 25.2
 
++++
+** The networking code has been reworked so that it's more
+asynchronous than it was (when specifying :nowait t in
+`make-network-process').  How asynchronous it is varies based on the
+capabilities of the system, but on a typical GNU/Linux system the DNS
+resolution, the connection, and (for TLS streams) the TLS negotiation
+are all done without blocking the main Emacs thread.  To get
+asynchronous TLS, the TLS boot parameters have to be passed in (see
+the manual for details).
+
+Certain process oriented functions (like `process-datagram-address')
+will block until socket setup has been performed.  The recommended way
+to deal with asynchronous sockets is to avoid interacting with them
+until they have changed status to "run".  This is most easily done
+from a process sentinel.
+
 ** It is possible to disable attempted recovery on fatal signals
 
 Two new variables allow to disable attempts to recover from stack
