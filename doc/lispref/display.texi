@@ -5450,11 +5450,6 @@ set by using @code{setf}.  Setting a property to @code{nil} will
 remove the property from the image.
 @end defun
 
-@lisp
-(image-set-property image :height 300)
-@end lisp
-@end defun
-
 @defun find-image specs
 This function provides a convenient way to find an image satisfying one
 of a list of image specifications @var{specs}.
