@@ -136,8 +136,14 @@ non-nil, is used warn the user if the connection isn't encrypted.
 :nogreeting is a boolean that can be used to inhibit waiting for
 a greeting from the server.
 
-:nowait is a boolean that says the connection should be made
-asynchronously, if possible."
+:nowait, if non-nil, says the connection should be made
+asynchronously, if possible.
+
+:tls-parameters is a list that should be supplied if you're
+opening a TLS connection.  The first element is the TLS
+type (either `gnutls-x509pki' or `gnutls-anon'), and the
+remaining elements should be a keyword list accepted by
+gnutls-boot (as returned by `gnutls-boot-parameters')."
   (unless (featurep 'make-network-process)
     (error "Emacs was compiled without networking support"))
   (let ((type (plist-get parameters :type))
@@ -150,7 +156,9 @@ asynchronously, if possible."
 	;; The simplest case: wrapper around `make-network-process'.
 	(make-network-process :name name :buffer buffer
 			      :host (puny-encode-domain host) :service service
-			      :nowait (plist-get parameters :nowait))
+			      :nowait (plist-get parameters :nowait)
+                              :tls-parameters
+                              (plist-get parameters :tls-parameters))
       (let ((work-buffer (or buffer
 			     (generate-new-buffer " *stream buffer*")))
 	    (fun (cond ((and (eq type 'plain)
@@ -361,32 +369,34 @@ asynchronously, if possible."
   (with-current-buffer buffer
     (let* ((start (point-max))
 	   (stream
-	    (funcall (if (gnutls-available-p)
-			 'open-gnutls-stream
-		       'open-tls-stream)
-		     name buffer host service))
+            (if (gnutls-available-p)
+                (open-gnutls-stream name buffer host service
+                                    (plist-get parameters :nowait))
+              (open-tls-stream name buffer host service)))
 	   (eoc (plist-get parameters :end-of-command)))
-      ;; Check certificate validity etc.
-      (when (and (gnutls-available-p) stream)
-	(setq stream (nsm-verify-connection stream host service)))
-      (if (null stream)
-	  (list nil nil nil 'plain)
-	;; If we're using tls.el, we have to delete the output from
-	;; openssl/gnutls-cli.
-	(when (and (not (gnutls-available-p))
-		   eoc)
-	  (network-stream-get-response stream start eoc)
-	  (goto-char (point-min))
-	  (when (re-search-forward eoc nil t)
-	    (goto-char (match-beginning 0))
-	    (delete-region (point-min) (line-beginning-position))))
-	(let ((capability-command (plist-get parameters :capability-command))
-	      (eo-capa (or (plist-get parameters :end-of-capability)
-			   eoc)))
-	  (list stream
-		(network-stream-get-response stream start eoc)
-		(network-stream-command stream capability-command eo-capa)
-		'tls))))))
+      (if (plist-get parameters :nowait)
+          (list stream nil nil 'tls)
+        ;; Check certificate validity etc.
+        (when (and (gnutls-available-p) stream)
+          (setq stream (nsm-verify-connection stream host service)))
+        (if (null stream)
+            (list nil nil nil 'plain)
+          ;; If we're using tls.el, we have to delete the output from
+          ;; openssl/gnutls-cli.
+          (when (and (not (gnutls-available-p))
+                     eoc)
+            (network-stream-get-response stream start eoc)
+            (goto-char (point-min))
+            (when (re-search-forward eoc nil t)
+              (goto-char (match-beginning 0))
+              (delete-region (point-min) (line-beginning-position))))
+          (let ((capability-command (plist-get parameters :capability-command))
+                (eo-capa (or (plist-get parameters :end-of-capability)
+                             eoc)))
+            (list stream
+                  (network-stream-get-response stream start eoc)
+                  (network-stream-command stream capability-command eo-capa)
+                  'tls)))))))
 
 (defun network-stream-open-shell (name buffer host service parameters)
   (require 'format-spec)

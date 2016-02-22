@@ -3906,6 +3906,8 @@ extern Lisp_Object unbind_to (ptrdiff_t, Lisp_Object);
 extern _Noreturn void error (const char *, ...) ATTRIBUTE_FORMAT_PRINTF (1, 2);
 extern _Noreturn void verror (const char *, va_list)
   ATTRIBUTE_FORMAT_PRINTF (1, 0);
+extern Lisp_Object vformat_string (const char *, va_list)
+  ATTRIBUTE_FORMAT_PRINTF (1, 0);
 extern void un_autoload (Lisp_Object);
 extern Lisp_Object call_debugger (Lisp_Object arg);
 extern void *near_C_stack_top (void);

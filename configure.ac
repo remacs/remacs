@@ -2421,6 +2421,13 @@ if test "${HAVE_X11}" = "yes" || test "${HAVE_NS}" = "yes" || test "${HAVE_W32}"
   fi
 fi
 
+AC_CHECK_LIB(anl, getaddrinfo_a, HAVE_GETADDRINFO_A=yes)
+if test "${HAVE_GETADDRINFO_A}" = "yes"; then
+  AC_DEFINE(HAVE_GETADDRINFO_A, 1,
+[Define to 1 if you have getaddrinfo_a for asynchronous DNS resolution.])
+  GETADDRINFO_A_LIBS="-lanl"
+  AC_SUBST(GETADDRINFO_A_LIBS)
+fi
 
 HAVE_GTK=no
 GTK_OBJ=

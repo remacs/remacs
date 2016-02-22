@@ -106,6 +106,7 @@ struct Lisp_Process
 
 #ifdef HAVE_GNUTLS
     Lisp_Object gnutls_cred_type;
+    Lisp_Object gnutls_boot_parameters;
 #endif
 
     /* Pipe process attached to the standard error of this process.  */
@@ -161,7 +162,25 @@ struct Lisp_Process
        flag indicates that `raw_status' contains a new status that still
        needs to be synced to `status'.  */
     bool_bf raw_status_new : 1;
+    /* Whether this is a nonblocking socket. */
+    bool_bf is_non_blocking_client : 1;
+    /* Whether this is a server or a client socket. */
+    bool_bf is_server : 1;
     int raw_status;
+    /* The length of the socket backlog. */
+    int backlog;
+    /* The port number. */
+    int port;
+    /* The socket type. */
+    int socktype;
+    /* The socket protocol. */
+    int ai_protocol;
+
+#ifdef HAVE_GETADDRINFO_A
+    /* Whether the socket is waiting for response from an asynchronous
+       DNS call. */
+    struct gaicb **dns_requests;
+#endif
 
 #ifdef HAVE_GNUTLS
     gnutls_initstage_t gnutls_initstage;
@@ -189,6 +208,12 @@ INLINE void
 pset_childp (struct Lisp_Process *p, Lisp_Object val)
 {
   p->childp = val;
+}
+
+INLINE void
+pset_status (struct Lisp_Process *p, Lisp_Object val)
+{
+  p->status = val;
 }
 
 #ifdef HAVE_GNUTLS

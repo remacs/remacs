@@ -2415,8 +2415,33 @@ without waiting for the connection to complete.  When the connection
 succeeds or fails, Emacs will call the sentinel function, with a
 second argument matching @code{"open"} (if successful) or
 @code{"failed"}.  The default is to block, so that
-@code{make-network-process} does not return until the connection
-has succeeded or failed.
+@code{make-network-process} does not return until the connection has
+succeeded or failed.
+
+If you're setting up an asynchronous TLS connection, you have to also
+provide the @code{:tls-parameters} parameter (see below).
+
+Depending on the capabilities of Emacs, how asynchronous
+@code{:nowait} is may vary.  The three elements that may (or may not)
+be done asynchronously are domain name resolution, socket setup, and
+(for TLS connections) TLS negotiation.
+
+Many functions that interact with process objects, (for instance,
+@code{process-datagram-address}) rely on them at least having a socket
+before they can return a useful value.  These functions will block
+until the socket has achieved the desired status.  The recommended way
+of interacting with asynchronous sockets is to place a sentinel on the
+process, and not try to interact with it before it has changed status
+to @samp{"run"}.  That way, none of these functions will block.
+
+@item :tls-parameters
+When opening a TLS connection, this should be where the first element
+is the TLS type (which should either be @code{gnutls-x509pki} or
+@code{gnutls-anon}, and the remaining elements should form a keyword
+list acceptable for @code{gnutls-boot}.  (This keyword list can be
+optained from the @code{gnutls-boot-parameters} function.)  The TLS
+connection will then be negotiated after completing the connection to
+the host.
 
 @item :stop @var{stopped}
 If @var{stopped} is non-@code{nil}, start the network connection or
