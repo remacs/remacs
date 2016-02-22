@@ -27,6 +27,9 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'cl))
+
 (defconst file-notify--library
   (cond
    ((featurep 'inotify) 'inotify)
@@ -54,18 +57,15 @@ different files from the same directory are watched.")
 DESCRIPTOR should be an object returned by `file-notify-add-watch'.
 If it is registered in `file-notify-descriptors', a stopped event is sent."
   (let* ((desc (if (consp descriptor) (car descriptor) descriptor))
-	 (file (if (consp descriptor) (cdr descriptor)))
          (registered (gethash desc file-notify-descriptors))
+	 (file (if (consp descriptor) (cdr descriptor) (caadr registered)))
 	 (dir (car registered)))
 
     (when (consp registered)
       ;; Send `stopped' event.
-      (dolist (entry (cdr registered))
-	(funcall (cdr entry)
-		 `(,descriptor stopped
-		   ,(or (and (stringp (car entry))
-			     (expand-file-name (car entry) dir))
-			dir))))
+      (funcall
+       (cdr (assoc file (cdr registered)))
+       `(,descriptor stopped ,(if file (expand-file-name file dir) dir)))
 
       ;; Modify `file-notify-descriptors'.
       (if (not file)
@@ -98,6 +98,15 @@ Otherwise, signal a `file-notify-error'."
 (defvar file-notify--pending-event nil
   "A pending file notification events for a future `renamed' action.
 It is a form ((DESCRIPTOR ACTION FILE [FILE1-OR-COOKIE]) CALLBACK).")
+
+(defun file-notify--event-watched-file (event)
+  "Return file or directory being watched.
+Could be different from the directory watched by the backend library."
+  (let* ((desc (if (consp (car event)) (caar event) (car event)))
+         (registered (gethash desc file-notify-descriptors))
+	 (file (if (consp (car event)) (cdar event) (caadr registered)))
+	 (dir (car registered)))
+    (if file (expand-file-name file dir) dir)))
 
 (defun file-notify--event-file-name (event)
   "Return file name of file notification event, or nil."
@@ -234,26 +243,6 @@ EVENT is the cadr of the event in `file-notify-handle-event'
           (funcall (cadr pending-event) (car pending-event))
           (setq pending-event nil))
 
-        ;; Check for stopped.
-        (setq
-         stopped
-         (or
-          stopped
-          (and
-           (memq action '(deleted renamed))
-           (= (length (cdr registered)) 1)
-           ;; Not, when a file is backed up.
-           (not (and (stringp file1) (backup-file-name-p file1)))
-           (or
-            ;; Watched file or directory is concerned.
-            (string-equal
-             (file-name-nondirectory file)
-	     (file-name-nondirectory (car registered)))
-            ;; File inside a watched directory is concerned.
-            (string-equal
-             (file-name-nondirectory file)
-             (car (cadr registered)))))))
-
 	;; Apply callback.
 	(when (and action
 		   (or
@@ -282,11 +271,15 @@ EVENT is the cadr of the event in `file-notify-handle-event'
                  ,action ,file ,file1))
 	    (funcall
 	     callback
-	     `(,(file-notify--descriptor desc (car entry)) ,action ,file)))))
+	     `(,(file-notify--descriptor desc (car entry)) ,action ,file))))
 
-      ;; Modify `file-notify-descriptors'.
-      (when stopped
-        (file-notify-rm-watch (file-notify--descriptor desc file))))))
+        ;; Send `stopped' event.
+        (when (and (memq action '(deleted renamed))
+                   ;; Not, when a file is backed up.
+                   (not (and (stringp file1) (backup-file-name-p file1)))
+                   ;; Watched file or directory is concerned.
+                   (string-equal file (file-notify--event-watched-file event)))
+          (file-notify-rm-watch (file-notify--descriptor desc (car entry))))))))
 
 ;; `kqueue', `gfilenotify' and `w32notify' return a unique descriptor
 ;; for every `file-notify-add-watch', while `inotify' returns a unique
