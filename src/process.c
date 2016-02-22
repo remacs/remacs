@@ -3787,7 +3787,6 @@ usage: (make-network-process &rest ARGS)  */)
     {
       int ret;
 
-      printf("Async DNS for '%s'\n", SSDATA (host));
       dns_requests = xmalloc (sizeof (struct gaicb*));
       dns_requests[0] = xmalloc (sizeof (struct gaicb));
       dns_requests[0]->ar_name = strdup (SSDATA (host));
@@ -4743,7 +4742,7 @@ wait_for_socket_fds (Lisp_Object process, char *name)
   while (XPROCESS (process)->infd < 0 &&
 	 EQ (XPROCESS (process)->status, Qconnect))
     {
-      add_to_log ("Waiting for socket from %s...\n", build_string (name));
+      add_to_log ("Waiting for socket from %s...", build_string (name));
       wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
     }
 }
@@ -4753,7 +4752,7 @@ wait_while_connecting (Lisp_Object process)
 {
   while (EQ (XPROCESS (process)->status, Qconnect))
     {
-      add_to_log ("Waiting for connection...\n");
+      add_to_log ("Waiting for connection...");
       wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
     }
 }
@@ -4765,7 +4764,7 @@ wait_for_tls_negotiation (Lisp_Object process)
   while (XPROCESS (process)->gnutls_p &&
 	 XPROCESS (process)->gnutls_initstage != GNUTLS_STAGE_READY)
     {
-      add_to_log ("Waiting for TLS...\n");
+      add_to_log ("Waiting for TLS...");
       wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
     }
 #endif
