@@ -1536,7 +1536,7 @@ The preference is a float determined from `shr-prefer-media-type'."
                             (- (nth 2 edges) (nth 0 edges))))))
          (max-height (and edges
                           (truncate (* shr-max-image-proportion
-				(- (nth 3 edges) (nth 1 edges))))))
+                                       (- (nth 3 edges) (nth 1 edges))))))
          svg image)
     (when (and max-width
                (> width max-width))
@@ -1551,7 +1551,8 @@ The preference is a float determined from `shr-prefer-media-type'."
     (svg-rectangle svg 0 0 width height :gradient "background"
                    :stroke-width 2 :stroke-color "black")
     (let ((image (svg-image svg)))
-      (image-set-property image :ascent 100))))
+      (setf (image-property image :ascent) 100)
+      image)))
 
 (defun shr-tag-pre (dom)
   (let ((shr-folding-mode 'none)

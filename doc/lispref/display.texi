@@ -5444,17 +5444,15 @@ If none of the alternatives will work, then @var{symbol} is defined
 as @code{nil}.
 @end defmac
 
-@defun image-set-property image property value
-Set the value of @var{property} in @var{image} to @var{value}.  If
-@var{value} is @code{nil}, the property is removed completely.
+@defun image-property image property
+Return the value of @var{property} in @var{image}.  Properties can be
+set by using @code{setf}.  Setting a property to @code{nil} will
+remove the property from the image.
+@end defun
 
 @lisp
 (image-set-property image :height 300)
 @end lisp
-@end defun
-
-@defun image-get-property image property
-Return the value of @var{property} in @var{image}.
 @end defun
 
 @defun find-image specs

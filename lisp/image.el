@@ -435,10 +435,9 @@ Image file names that are not absolute are searched for in the
                        (image-compute-scaling-factor image-scaling-factor)))
 	    props)))
 
-(defun image-set-property (image property value)
+(defun image--set-property (image property value)
   "Set PROPERTY in IMAGE to VALUE.
-If VALUE is nil, PROPERTY is removed from IMAGE.  IMAGE is
-returned."
+Internal use only."
   (if (null value)
       (while (cdr image)
         ;; IMAGE starts with the symbol `image', and the rest is a
@@ -451,8 +450,13 @@ returned."
     (plist-put (cdr image) property value))
   image)
 
-(defun image-get-property (image property)
-  "Return the value of PROPERTY in IMAGE."
+(defun image-property (image property)
+  "Return the value of PROPERTY in IMAGE.
+Properties can be set with
+
+  (setf (image-property IMAGE PROPERTY) VALUE)
+If VALUE is nil, PROPERTY is removed from IMAGE."
+  (declare (gv-setter image--set-property))
   (plist-get (cdr image) property))
 
 (defun image-compute-scaling-factor (scaling)

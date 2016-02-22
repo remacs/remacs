@@ -865,8 +865,8 @@ added.  See the "SVG Images" section in the lispref manual for
 details.
 
 +++
-*** New functions to access and set image parameters are provided:
-`image-get-property' and `image-set-property'.
+*** New setf-able function to access and set image parameters is
+provided: `image-property'.
 
 
 ** Lisp mode
