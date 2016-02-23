@@ -832,7 +832,7 @@ default_pixels_per_inch_y (void)
 /* True if the frame's window configuration has changed since last call
    of run_window_size_change_functions.  */
 #define FRAME_WINDOW_CONFIGURATION_CHANGED(f)	\
-  ((f)->window_configuration_changed)
+  (f)->window_configuration_changed
 
 /* The minibuffer window of frame F, if it has one; otherwise nil.  */
 #define FRAME_MINIBUF_WINDOW(f) f->minibuffer_window

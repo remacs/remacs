@@ -179,7 +179,7 @@ struct Lisp_Process
 #ifdef HAVE_GETADDRINFO_A
     /* Whether the socket is waiting for response from an asynchronous
        DNS call. */
-    struct gaicb **dns_requests;
+    struct gaicb *dns_request;
 #endif
 
 #ifdef HAVE_GNUTLS

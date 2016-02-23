@@ -57,6 +57,7 @@ static bool foreach_window_1 (struct window *,
 static bool window_resize_check (struct window *, bool);
 static void window_resize_apply (struct window *, bool);
 static void select_window_1 (Lisp_Object, bool);
+static void run_window_configuration_change_hook (struct frame *);
 
 static struct window *set_window_fringes (struct window *, Lisp_Object,
 					  Lisp_Object, Lisp_Object);
@@ -720,7 +721,8 @@ the height of the screen areas spanned by its children.  */)
   return make_number (decode_valid_window (window)->pixel_height);
 }
 
-DEFUN ("window-pixel-width-before-size-change", Fwindow_pixel_width_before_size_change,
+DEFUN ("window-pixel-width-before-size-change",
+       Fwindow_pixel_width_before_size_change,
        Swindow_pixel_width_before_size_change, 0, 1, 0,
        doc: /* Return pixel width of window WINDOW before last size changes.
 WINDOW must be a valid window and defaults to the selected one.
@@ -734,7 +736,8 @@ after that.  */)
 	  (decode_valid_window (window)->pixel_width_before_size_change));
 }
 
-DEFUN ("window-pixel-height-before-size-change", Fwindow_pixel_height_before_size_change,
+DEFUN ("window-pixel-height-before-size-change",
+       Fwindow_pixel_height_before_size_change,
        Swindow_pixel_height_before_size_change, 0, 1, 0,
        doc: /* Return pixel height of window WINDOW before last size changes.
 WINDOW must be a valid window and defaults to the selected one.
@@ -3184,7 +3187,7 @@ select_frame_norecord (Lisp_Object frame)
     Fselect_frame (frame, Qt);
 }
 
-void
+static void
 run_window_configuration_change_hook (struct frame *f)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -3310,8 +3313,8 @@ run_window_size_change_functions (Lisp_Object frame)
   struct window *r = XWINDOW (FRAME_ROOT_WINDOW (f));
   Lisp_Object functions = Vwindow_size_change_functions;
 
-  if (FRAME_WINDOW_CONFIGURATION_CHANGED (f) ||
-      window_size_changed (r))
+  if (FRAME_WINDOW_CONFIGURATION_CHANGED (f)
+      || window_size_changed (r))
     {
       while (CONSP (functions))
 	{

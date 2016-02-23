@@ -409,13 +409,13 @@ gnutls_try_handshake (struct Lisp_Process *proc)
       emacs_gnutls_handle_error (state, ret);
       QUIT;
     }
-  while (ret < 0 && gnutls_error_is_fatal (ret) == 0 &&
-	 ! proc->is_non_blocking_client);
+  while (ret < 0 && gnutls_error_is_fatal (ret) == 0
+	 && ! proc->is_non_blocking_client);
 
   proc->gnutls_initstage = GNUTLS_STAGE_HANDSHAKE_TRIED;
 
   if (proc->is_non_blocking_client)
-    proc->gnutls_p = 1;
+    proc->gnutls_p = true;
 
   if (ret == GNUTLS_E_SUCCESS)
     {
@@ -424,7 +424,7 @@ gnutls_try_handshake (struct Lisp_Process *proc)
     }
   else
     {
-      //check_memory_full (gnutls_alert_send_appropriate (state, ret));
+      /* check_memory_full (gnutls_alert_send_appropriate (state, ret));  */
     }
   return ret;
 }
@@ -650,7 +650,7 @@ emacs_gnutls_deinit (Lisp_Object proc)
 
   CHECK_PROCESS (proc);
 
-  if (XPROCESS (proc)->gnutls_p == 0)
+  if (! XPROCESS (proc)->gnutls_p)
     return Qnil;
 
   log_level = XPROCESS (proc)->gnutls_log_level;
@@ -677,7 +677,7 @@ emacs_gnutls_deinit (Lisp_Object proc)
 	GNUTLS_INITSTAGE (proc) = GNUTLS_STAGE_INIT - 1;
     }
 
-  XPROCESS (proc)->gnutls_p = 0;
+  XPROCESS (proc)->gnutls_p = false;
   return Qt;
 }
 
@@ -1162,8 +1162,7 @@ emacs_gnutls_global_deinit (void)
 }
 #endif
 
-/* VARARGS 1 */
-static void
+static void ATTRIBUTE_FORMAT_PRINTF (2, 3)
 boot_error (struct Lisp_Process *p, const char *m, ...)
 {
   va_list ap;
@@ -1184,7 +1183,7 @@ gnutls_verify_boot (Lisp_Object proc, Lisp_Object proplist)
   Lisp_Object warnings;
   int max_log_level = p->gnutls_log_level;
   Lisp_Object hostname, verify_error;
-  bool verify_error_all = 0;
+  bool verify_error_all = false;
   char *c_hostname;
 
   if (NILP (proplist))
@@ -1194,12 +1193,11 @@ gnutls_verify_boot (Lisp_Object proc, Lisp_Object proplist)
   hostname = Fplist_get (proplist, QCgnutls_bootprop_hostname);
 
   if (EQ (verify_error, Qt))
-    {
-      verify_error_all = 1;
-    }
+    verify_error_all = true;
   else if (NILP (Flistp (verify_error)))
     {
-      boot_error (p, "gnutls-boot: invalid :verify_error parameter (not a list)");
+      boot_error (p,
+		  "gnutls-boot: invalid :verify_error parameter (not a list)");
       return Qnil;
     }
 
@@ -1225,8 +1223,7 @@ gnutls_verify_boot (Lisp_Object proc, Lisp_Object proplist)
   warnings = Fplist_get (Fgnutls_peer_status (proc), intern (":warnings"));
   if (!NILP (warnings))
     {
-      Lisp_Object tail;
-      for (tail = warnings; CONSP (tail); tail = XCDR (tail))
+      for (Lisp_Object tail = warnings; CONSP (tail); tail = XCDR (tail))
         {
           Lisp_Object warning = XCAR (tail);
           Lisp_Object message = Fgnutls_peer_status_warning_describe (warning);
@@ -1241,7 +1238,8 @@ gnutls_verify_boot (Lisp_Object proc, Lisp_Object proplist)
           || !NILP (Fmember (QCgnutls_bootprop_trustfiles, verify_error)))
         {
 	  emacs_gnutls_deinit (proc);
-	  boot_error (p, "Certificate validation failed %s, verification code %x",
+	  boot_error (p,
+		      "Certificate validation failed %s, verification code %x",
 		      c_hostname, peer_verification);
 	  return Qnil;
         }
@@ -1265,8 +1263,8 @@ gnutls_verify_boot (Lisp_Object proc, Lisp_Object proplist)
       if (ret < GNUTLS_E_SUCCESS)
 	return gnutls_make_error (ret);
 
-      gnutls_verify_cert_list =
-	gnutls_certificate_get_peers (state, &gnutls_verify_cert_list_size);
+      gnutls_verify_cert_list
+	= gnutls_certificate_get_peers (state, &gnutls_verify_cert_list_size);
 
       if (gnutls_verify_cert_list == NULL)
 	{
@@ -1276,10 +1274,10 @@ gnutls_verify_boot (Lisp_Object proc, Lisp_Object proplist)
 	  return Qnil;
 	}
 
-      /* We only check the first certificate in the given chain.  */
+      /* Check only the first certificate in the given chain.  */
       ret = gnutls_x509_crt_import (gnutls_verify_cert,
-				       &gnutls_verify_cert_list[0],
-				       GNUTLS_X509_FMT_DER);
+				    &gnutls_verify_cert_list[0],
+				    GNUTLS_X509_FMT_DER);
 
       if (ret < GNUTLS_E_SUCCESS)
 	{
@@ -1294,26 +1292,25 @@ gnutls_verify_boot (Lisp_Object proc, Lisp_Object proplist)
       check_memory_full (err);
       if (!err)
 	{
-	  XPROCESS (proc)->gnutls_extra_peer_verification |=
-	    CERTIFICATE_NOT_MATCHING;
+	  XPROCESS (proc)->gnutls_extra_peer_verification
+	    |= CERTIFICATE_NOT_MATCHING;
           if (verify_error_all
               || !NILP (Fmember (QCgnutls_bootprop_hostname, verify_error)))
             {
 	      gnutls_x509_crt_deinit (gnutls_verify_cert);
 	      emacs_gnutls_deinit (proc);
-	      boot_error (p, "The x509 certificate does not match \"%s\"", c_hostname);
+	      boot_error (p, "The x509 certificate does not match \"%s\"",
+			  c_hostname);
 	      return Qnil;
             }
 	  else
-	    {
-              GNUTLS_LOG2 (1, max_log_level, "x509 certificate does not match:",
-                           c_hostname);
-	    }
+	    GNUTLS_LOG2 (1, max_log_level, "x509 certificate does not match:",
+			 c_hostname);
 	}
     }
 
   /* Set this flag only if the whole initialization succeeded.  */
-  XPROCESS (proc)->gnutls_p = 1;
+  XPROCESS (proc)->gnutls_p = true;
 
   return gnutls_make_error (ret);
 }

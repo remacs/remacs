@@ -281,7 +281,7 @@ static int max_input_desc;
 
 /* Indexed by descriptor, gives the process (if any) for that descriptor.  */
 static Lisp_Object chan_process[FD_SETSIZE];
-static void wait_for_socket_fds (Lisp_Object process, char *name);
+static void wait_for_socket_fds (Lisp_Object, char const *);
 
 /* Alist of elements (NAME . PROCESS).  */
 static Lisp_Object Vprocess_alist;
@@ -745,14 +745,10 @@ free_dns_request (Lisp_Object proc)
 {
   struct Lisp_Process *p = XPROCESS (proc);
 
-  if (p->dns_requests[0]->ar_result)
-    freeaddrinfo (p->dns_requests[0]->ar_result);
-  xfree ((void *)p->dns_requests[0]->ar_request);
-  xfree ((void *)p->dns_requests[0]->ar_name);
-  xfree ((void *)p->dns_requests[0]->ar_service);
-  xfree (p->dns_requests[0]);
-  xfree (p->dns_requests);
-  p->dns_requests = NULL;
+  if (p->dns_request->ar_result)
+    freeaddrinfo (p->dns_request->ar_result);
+  xfree (p->dns_request);
+  p->dns_request = NULL;
 }
 #endif
 
@@ -847,9 +843,9 @@ nil, indicating the current buffer's process.  */)
   p = XPROCESS (process);
 
 #ifdef HAVE_GETADDRINFO_A
-  if (p->dns_requests)
+  if (p->dns_request)
     {
-      gai_cancel (p->dns_requests[0]);
+      gai_cancel (p->dns_request);
       free_dns_request (process);
     }
 #endif
@@ -1063,13 +1059,10 @@ The string argument is normally a multibyte string, except:
 - if `default-enable-multibyte-characters' is nil, it is a unibyte
   string (the result of converting the decoded input multibyte
   string to unibyte with `string-make-unibyte').  */)
-  (register Lisp_Object process, Lisp_Object filter)
+  (Lisp_Object process, Lisp_Object filter)
 {
-  struct Lisp_Process *p;
-
   CHECK_PROCESS (process);
-
-  p = XPROCESS (process);
+  struct Lisp_Process *p = XPROCESS (process);
 
   /* Don't signal an error if the process's input file descriptor
      is closed.  This could make debugging Lisp more difficult,
@@ -1217,7 +1210,7 @@ returned.  See `make-network-process' or `make-serial-process' for a
 list of keywords.
 If PROCESS is a non-blocking network process that hasn't been fully
 set up yet, this function will block until socket setup has completed.  */)
-  (register Lisp_Object process, Lisp_Object key)
+  (Lisp_Object process, Lisp_Object key)
 {
   Lisp_Object contact;
 
@@ -1263,8 +1256,8 @@ DEFUN ("process-plist", Fprocess_plist, Sprocess_plist,
 
 DEFUN ("set-process-plist", Fset_process_plist, Sset_process_plist,
        2, 2, 0,
-       doc: /* Replace the plist of PROCESS with PLIST.  Returns PLIST.  */)
-  (register Lisp_Object process, Lisp_Object plist)
+       doc: /* Replace the plist of PROCESS with PLIST.  Return PLIST.  */)
+  (Lisp_Object process, Lisp_Object plist)
 {
   CHECK_PROCESS (process);
   CHECK_LIST (plist);
@@ -1304,7 +1297,7 @@ A 4 or 5 element vector represents an IPv4 address (with port number).
 An 8 or 9 element vector represents an IPv6 address (with port number).
 If optional second argument OMIT-PORT is non-nil, don't include a port
 number in the string, even when present in ADDRESS.
-Returns nil if format of ADDRESS is invalid.  */)
+Return nil if format of ADDRESS is invalid.  */)
   (Lisp_Object address, Lisp_Object omit_port)
 {
   if (NILP (address))
@@ -2474,7 +2467,7 @@ set up yet, this function will block until socket setup has completed.  */)
 DEFUN ("set-process-datagram-address", Fset_process_datagram_address, Sset_process_datagram_address,
        2, 2, 0,
        doc: /* Set the datagram address for PROCESS to ADDRESS.
-Returns nil upon error setting address, ADDRESS otherwise.
+Return nil upon error setting address, ADDRESS otherwise.
 
 If PROCESS is a non-blocking network process that hasn't been fully
 set up yet, this function will block until socket setup has completed.  */)
@@ -2543,7 +2536,7 @@ static const struct socket_options {
 
 /* Set option OPT to value VAL on socket S.
 
-   Returns (1<<socket_options[OPT].optbit) if option is known, 0 otherwise.
+   Return (1<<socket_options[OPT].optbit) if option is known, 0 otherwise.
    Signals an error if setting a known option fails.
 */
 
@@ -2955,10 +2948,9 @@ usage:  (make-serial-process &rest ARGS)  */)
   return proc;
 }
 
-void set_network_socket_coding_system (Lisp_Object proc,
-				       Lisp_Object host,
-				       Lisp_Object service,
-				       Lisp_Object name)
+static void
+set_network_socket_coding_system (Lisp_Object proc, Lisp_Object host,
+				  Lisp_Object service, Lisp_Object name)
 {
   Lisp_Object tem;
   struct Lisp_Process *p = XPROCESS (proc);
@@ -2981,9 +2973,10 @@ void set_network_socket_coding_system (Lisp_Object proc,
     }
   else if (!NILP (Vcoding_system_for_read))
     val = Vcoding_system_for_read;
-  else if ((!NILP (p->buffer) &&
-	    NILP (BVAR (XBUFFER (p->buffer), enable_multibyte_characters)))
-	   || (NILP (p->buffer) && NILP (BVAR (&buffer_defaults, enable_multibyte_characters))))
+  else if ((!NILP (p->buffer)
+	    && NILP (BVAR (XBUFFER (p->buffer), enable_multibyte_characters)))
+	   || (NILP (p->buffer)
+	       && NILP (BVAR (&buffer_defaults, enable_multibyte_characters))))
     /* We dare not decode end-of-line format by setting VAL to
        Qraw_text, because the existing Emacs Lisp libraries
        assume that they receive bare code including a sequence of
@@ -3045,7 +3038,7 @@ void set_network_socket_coding_system (Lisp_Object proc,
 }
 
 #ifdef HAVE_GNUTLS
-void
+static void
 finish_after_tls_connection (Lisp_Object proc)
 {
   struct Lisp_Process *p = XPROCESS (proc);
@@ -3081,7 +3074,7 @@ finish_after_tls_connection (Lisp_Object proc)
 }
 #endif
 
-void
+static void
 connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -3190,8 +3183,8 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 		  Lisp_Object service;
 		  service = make_number (ntohs (sa1.sin_port));
 		  contact = Fplist_put (contact, QCservice, service);
-		  // Save the port number so that we can stash it in
-		  // the process object later.
+		  /* Save the port number so that we can stash it in
+		     the process object later.  */
 		  ((struct sockaddr_in *)sa)->sin_port = sa1.sin_port;
 		}
 	    }
@@ -3422,15 +3415,14 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 
 #ifndef HAVE_GETADDRINFO
 static Lisp_Object
-conv_numerical_to_lisp (unsigned char *number, unsigned int length, int port)
+conv_numerical_to_lisp (unsigned char *number, int length, int port)
 {
   Lisp_Object address = Fmake_vector (make_number (length + 1), Qnil);
-  register struct Lisp_Vector *p = XVECTOR (address);
-  int i;
+  struct Lisp_Vector *p = XVECTOR (address);
 
   p->contents[length] = make_number (port);
-  for (i = 0; i < length; i++)
-    p->contents[i] = make_number (*(number + i));
+  for (int i = 0; i < length; i++)
+    p->contents[i] = make_number (number[i]);
 
   return address;
 }
@@ -3606,9 +3598,9 @@ usage: (make-network-process &rest ARGS)  */)
   Lisp_Object proc;
   Lisp_Object contact;
   struct Lisp_Process *p;
-#if defined(HAVE_GETADDRINFO) || defined(HAVE_GETADDRINFO_A)
-  struct addrinfo *hints;
+#if defined HAVE_GETADDRINFO || defined HAVE_GETADDRINFO_A
   const char *portstring;
+  ptrdiff_t portstringlen;
   char portbuf[128];
 #endif
 #ifdef HAVE_LOCAL_SOCKETS
@@ -3623,7 +3615,7 @@ usage: (make-network-process &rest ARGS)  */)
   int family = -1;
   int ai_protocol = 0;
 #ifdef HAVE_GETADDRINFO_A
-  struct gaicb **dns_requests = NULL;
+  struct gaicb *dns_request = NULL;
 #endif
   ptrdiff_t count = SPECPDL_INDEX ();
 
@@ -3673,7 +3665,7 @@ usage: (make-network-process &rest ARGS)  */)
       if (!get_lisp_to_sockaddr_size (address, &family))
 	error ("Malformed :address");
 
-      ip_addresses = Fcons (address, Qnil);
+      ip_addresses = list1 (address);
       goto open_socket;
     }
 
@@ -3737,7 +3729,7 @@ usage: (make-network-process &rest ARGS)  */)
       CHECK_STRING (service);
       if (sizeof address_un.sun_path <= SBYTES (service))
 	error ("Service name too long");
-      ip_addresses = Fcons (service, Qnil);
+      ip_addresses = list1 (service);
       goto open_socket;
     }
 #endif
@@ -3753,48 +3745,53 @@ usage: (make-network-process &rest ARGS)  */)
     }
 #endif
 
-#if defined (HAVE_GETADDRINFO) || defined (HAVE_GETADDRINFO_A)
+#if defined HAVE_GETADDRINFO || defined HAVE_GETADDRINFO_A
   if (!NILP (host))
     {
-
       /* SERVICE can either be a string or int.
 	 Convert to a C string for later use by getaddrinfo.  */
       if (EQ (service, Qt))
-	portstring = "0";
+	{
+	  portstring = "0";
+	  portstringlen = 1;
+	}
       else if (INTEGERP (service))
 	{
-	  sprintf (portbuf, "%"pI"d", XINT (service));
 	  portstring = portbuf;
+	  portstringlen = sprintf (portbuf, "%"pI"d", XINT (service));
 	}
       else
 	{
 	  CHECK_STRING (service);
 	  portstring = SSDATA (service);
+	  portstringlen = SBYTES (service);
 	}
-
-      hints = xzalloc (sizeof (struct addrinfo));
-      hints->ai_flags = 0;
-      hints->ai_family = family;
-      hints->ai_socktype = socktype;
-      hints->ai_protocol = 0;
     }
-
 #endif
 
 #ifdef HAVE_GETADDRINFO_A
-  if (!NILP (Fplist_get (contact, QCnowait)) &&
-      !NILP (host))
+  if (!NILP (Fplist_get (contact, QCnowait)) && !NILP (host))
     {
-      int ret;
+      ptrdiff_t hostlen = SBYTES (host);
+      struct req
+      {
+	struct gaicb gaicb;
+	struct addrinfo hints;
+	char str[FLEXIBLE_ARRAY_MEMBER];
+      } *req = xmalloc (offsetof (struct req, str)
+			+ hostlen + 1 + portstringlen + 1);
+      dns_request = &req->gaicb;
+      dns_request->ar_name = req->str;
+      dns_request->ar_service = req->str + hostlen + 1;
+      dns_request->ar_request = &req->hints;
+      dns_request->ar_result = NULL;
+      memset (&req->hints, 0, sizeof req->hints);
+      req->hints.ai_family = family;
+      req->hints.ai_socktype = socktype;
+      strcpy (req->str, SSDATA (host));
+      strcpy (req->str + hostlen + 1, portstring);
 
-      dns_requests = xmalloc (sizeof (struct gaicb*));
-      dns_requests[0] = xmalloc (sizeof (struct gaicb));
-      dns_requests[0]->ar_name = strdup (SSDATA (host));
-      dns_requests[0]->ar_service = strdup (portstring);
-      dns_requests[0]->ar_request = hints;
-      dns_requests[0]->ar_result = NULL;
-
-      ret = getaddrinfo_a (GAI_NOWAIT, dns_requests, 1, NULL);
+      int ret = getaddrinfo_a (GAI_NOWAIT, &dns_request, 1, NULL);
       if (ret)
 	error ("%s/%s getaddrinfo_a error %d", SSDATA (host), portstring, ret);
 
@@ -3818,7 +3815,12 @@ usage: (make-network-process &rest ARGS)  */)
       res_init ();
 #endif
 
-      ret = getaddrinfo (SSDATA (host), portstring, hints, &res);
+      struct addrinfo hints;
+      memset (&hints, 0, sizeof hints);
+      hints.ai_family = family;
+      hints.ai_socktype = socktype;
+
+      ret = getaddrinfo (SSDATA (host), portstring, &hints, &res);
       if (ret)
 #ifdef HAVE_GAI_STRERROR
 	error ("%s/%s %s", SSDATA (host), portstring, gai_strerror (ret));
@@ -3838,7 +3840,6 @@ usage: (make-network-process &rest ARGS)  */)
       ip_addresses = Fnreverse (ip_addresses);
 
       freeaddrinfo (res);
-      xfree (hints);
 
       goto open_socket;
     }
@@ -3866,6 +3867,8 @@ usage: (make-network-process &rest ARGS)  */)
   if (!NILP (host))
     {
       struct hostent *host_info_ptr;
+      unsigned char *addr;
+      int addrlen;
 
       /* gethostbyname may fail with TRY_AGAIN, but we don't honor that,
 	 as it may `hang' Emacs for a very long time.  */
@@ -3881,11 +3884,8 @@ usage: (make-network-process &rest ARGS)  */)
 
       if (host_info_ptr)
 	{
-	  ip_addresses = Fcons (conv_numerical_to_lisp
-				((unsigned char *) host_info_ptr->h_addr,
-				 host_info_ptr->h_length,
-				 port),
-				Qnil);
+	  addr = (unsigned char *) host_info_ptr->h_addr;
+	  addrlen = host_info_ptr->h_length;
 	}
       else
 	/* Attempt to interpret host as numeric inet address.  This
@@ -3896,11 +3896,11 @@ usage: (make-network-process &rest ARGS)  */)
 	  if (numeric_addr == -1)
 	    error ("Unknown host \"%s\"", SDATA (host));
 
-	  ip_addresses = Fcons (conv_numerical_to_lisp
-				((unsigned char *) &numeric_addr, 4, port),
-				Qnil);
+	  addr = (unsigned char *) &numeric_addr;
+	  addrlen = 4;
 	}
 
+      ip_addresses = list1 (conv_numerical_to_lisp (addr, addrlen, port));
     }
 #endif /* not HAVE_GETADDRINFO */
 
@@ -3930,7 +3930,7 @@ usage: (make-network-process &rest ARGS)  */)
   p->socktype = socktype;
   p->ai_protocol = ai_protocol;
 #ifdef HAVE_GETADDRINFO_A
-  p->dns_requests = NULL;
+  p->dns_request = NULL;
 #endif
 #ifdef HAVE_GNUTLS
   tem = Fplist_get (contact, QCtls_parameters);
@@ -3969,7 +3969,7 @@ usage: (make-network-process &rest ARGS)  */)
      here will be nil, so we postpone connecting to the server. */
   if (!p->is_server && NILP (ip_addresses))
     {
-      p->dns_requests = dns_requests;
+      p->dns_request = dns_request;
       p->status = Qconnect;
     }
   else
@@ -4693,10 +4693,10 @@ check_for_dns (Lisp_Object proc)
   int ret = 0;
 
   /* Sanity check. */
-  if (! p->dns_requests)
+  if (! p->dns_request)
     return Qnil;
 
-  ret = gai_error (p->dns_requests[0]);
+  ret = gai_error (p->dns_request);
   if (ret == EAI_INPROGRESS)
     return Qt;
 
@@ -4705,7 +4705,7 @@ check_for_dns (Lisp_Object proc)
     {
       struct addrinfo *res;
 
-      for (res = p->dns_requests[0]->ar_result; res; res = res->ai_next)
+      for (res = p->dns_request->ar_result; res; res = res->ai_next)
 	{
 	  ip_addresses = Fcons (conv_sockaddr_to_lisp
 				(res->ai_addr, res->ai_addrlen),
@@ -4721,7 +4721,7 @@ check_for_dns (Lisp_Object proc)
       pset_status (p, (list2
 		       (Qfailed,
 			concat3 (build_string ("Name lookup of "),
-				 build_string (p->dns_requests[0]->ar_name),
+				 build_string (p->dns_request->ar_name),
 				 build_string (" failed")))));
     }
 
@@ -4737,10 +4737,10 @@ check_for_dns (Lisp_Object proc)
 #endif /* HAVE_GETADDRINFO_A */
 
 static void
-wait_for_socket_fds (Lisp_Object process, char *name)
+wait_for_socket_fds (Lisp_Object process, char const *name)
 {
-  while (XPROCESS (process)->infd < 0 &&
-	 EQ (XPROCESS (process)->status, Qconnect))
+  while (XPROCESS (process)->infd < 0
+	 && EQ (XPROCESS (process)->status, Qconnect))
     {
       add_to_log ("Waiting for socket from %s...", build_string (name));
       wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
@@ -4761,8 +4761,8 @@ static void
 wait_for_tls_negotiation (Lisp_Object process)
 {
 #ifdef HAVE_GNUTLS
-  while (XPROCESS (process)->gnutls_p &&
-	 XPROCESS (process)->gnutls_initstage != GNUTLS_STAGE_READY)
+  while (XPROCESS (process)->gnutls_p
+	 && XPROCESS (process)->gnutls_initstage != GNUTLS_STAGE_READY)
     {
       add_to_log ("Waiting for TLS...");
       wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
@@ -4895,7 +4895,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       if (! NILP (wait_for_cell) && ! NILP (XCAR (wait_for_cell)))
 	break;
 
-#if defined (HAVE_GETADDRINFO_A) || defined (HAVE_GNUTLS)
+#if defined HAVE_GETADDRINFO_A || defined HAVE_GNUTLS
       {
 	Lisp_Object ip_addresses;
 	Lisp_Object process_list_head, aproc;
@@ -4909,18 +4909,17 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	      {
 #ifdef HAVE_GETADDRINFO_A
 		/* Check for pending DNS requests. */
-		if (p->dns_requests)
+		if (p->dns_request)
 		  {
 		    ip_addresses = check_for_dns (aproc);
-		    if (!NILP (ip_addresses) &&
-			!EQ (ip_addresses, Qt))
+		    if (!NILP (ip_addresses) && !EQ (ip_addresses, Qt))
 		      connect_network_socket (aproc, ip_addresses);
 		  }
 #endif
 #ifdef HAVE_GNUTLS
 		/* Continue TLS negotiation. */
-		if (p->gnutls_initstage == GNUTLS_STAGE_HANDSHAKE_TRIED &&
-		    p->is_non_blocking_client)
+		if (p->gnutls_initstage == GNUTLS_STAGE_HANDSHAKE_TRIED
+		    && p->is_non_blocking_client)
 		  {
 		    gnutls_try_handshake (p);
 		    p->gnutls_handshakes_tried++;
@@ -4930,8 +4929,8 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 			gnutls_verify_boot (aproc, Qnil);
 			finish_after_tls_connection (aproc);
 		      }
-		    else if (p->gnutls_handshakes_tried >
-			     GNUTLS_EMACS_HANDSHAKES_LIMIT)
+		    else if (p->gnutls_handshakes_tried
+			     > GNUTLS_EMACS_HANDSHAKES_LIMIT)
 		      {
 			deactivate_process (aproc);
 			pset_status (p, list2 (Qfailed,
@@ -5567,8 +5566,8 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		  /* If we have an incompletely set up TLS connection,
 		     then defer the sentinel signalling until
 		     later. */
-		  if (NILP (p->gnutls_boot_parameters) &&
-		      !p->gnutls_p)
+		  if (NILP (p->gnutls_boot_parameters)
+		      && !p->gnutls_p)
 #endif
 		    {
 		      pset_status (p, Qrun);
@@ -6034,10 +6033,11 @@ send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
   ssize_t rv;
   struct coding_system *coding;
 
-  if (NETCONN_P (proc)) {
-    wait_while_connecting (proc);
-    wait_for_tls_negotiation (proc);
-  }
+  if (NETCONN_P (proc))
+    {
+      wait_while_connecting (proc);
+      wait_for_tls_negotiation (proc);
+    }
 
   if (p->raw_status_new)
     update_status (p);
@@ -6295,10 +6295,8 @@ If PROCESS is a non-blocking network process that hasn't been fully
 set up yet, this function will block until socket setup has completed.  */)
   (Lisp_Object process, Lisp_Object string)
 {
-  Lisp_Object proc;
   CHECK_STRING (string);
-  proc = get_process (process);
-
+  Lisp_Object proc = get_process (process);
   send_process (proc, SSDATA (string),
 		SBYTES (string), string);
   return Qnil;
@@ -6340,12 +6338,8 @@ process group.  */)
 {
   /* Initialize in case ioctl doesn't exist or gives an error,
      in a way that will cause returning t.  */
-  pid_t gid;
-  Lisp_Object proc;
-  struct Lisp_Process *p;
-
-  proc = get_process (process);
-  p = XPROCESS (proc);
+  Lisp_Object proc = get_process (process);
+  struct Lisp_Process *p = XPROCESS (proc);
 
   if (!EQ (p->type, Qreal))
     error ("Process %s is not a subprocess",
@@ -6354,7 +6348,7 @@ process group.  */)
     error ("Process %s is not active",
 	   SDATA (p->name));
 
-  gid = emacs_get_tty_pgrp (p);
+  pid_t gid = emacs_get_tty_pgrp (p);
 
   if (gid == p->pid)
     return Qnil;
@@ -7170,16 +7164,14 @@ encode subprocess input.
 
 If PROCESS is a non-blocking network process that hasn't been fully
 set up yet, this function will block until socket setup has completed. */)
-  (register Lisp_Object process, Lisp_Object decoding, Lisp_Object encoding)
+  (Lisp_Object process, Lisp_Object decoding, Lisp_Object encoding)
 {
-  register struct Lisp_Process *p;
-
   CHECK_PROCESS (process);
 
   if (NETCONN_P (process))
     wait_for_socket_fds (process, "set-process-coding-system");
 
-  p = XPROCESS (process);
+  struct Lisp_Process *p = XPROCESS (process);
 
   if (p->infd < 0)
     error ("Input file descriptor of %s closed", SDATA (p->name));
@@ -7214,14 +7206,12 @@ all character code conversion except for end-of-line conversion is
 suppressed.  */)
   (Lisp_Object process, Lisp_Object flag)
 {
-  register struct Lisp_Process *p;
-
   CHECK_PROCESS (process);
 
   if (NETCONN_P (process))
     wait_for_socket_fds (process, "set-process-filter-multibyte");
 
-  p = XPROCESS (process);
+  struct Lisp_Process *p = XPROCESS (process);
   if (NILP (flag))
     pset_decode_coding_system
       (p, raw_text_coding_system (p->decode_coding_system));
@@ -7235,14 +7225,11 @@ DEFUN ("process-filter-multibyte-p", Fprocess_filter_multibyte_p,
        doc: /* Return t if a multibyte string is given to PROCESS's filter.*/)
   (Lisp_Object process)
 {
-  register struct Lisp_Process *p;
-  struct coding_system *coding;
-
   CHECK_PROCESS (process);
-  p = XPROCESS (process);
+  struct Lisp_Process *p = XPROCESS (process);
   if (p->infd < 0)
     return Qnil;
-  coding = proc_decode_coding_system[p->infd];
+  struct coding_system *coding = proc_decode_coding_system[p->infd];
   return (CODING_FOR_UNIBYTE (coding) ? Qnil : Qt);
 }
 

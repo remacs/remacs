@@ -1020,7 +1020,6 @@ extern void grow_mini_window (struct window *, int, bool);
 extern void shrink_mini_window (struct window *, bool);
 extern int window_relative_x_coord (struct window *, enum window_part, int);
 
-void run_window_configuration_change_hook (struct frame *f);
 void run_window_size_change_functions (Lisp_Object);
 
 /* Make WINDOW display BUFFER.  RUN_HOOKS_P means it's allowed
