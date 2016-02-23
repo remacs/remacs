@@ -32,7 +32,7 @@
 ;; file after putting it on your load path:
 ;;
 ;;    (autoload 'ruby-mode "ruby-mode" "Major mode for ruby files" t)
-;;    (add-to-list 'auto-mode-alist '("\\.rb$" . ruby-mode))
+;;    (add-to-list 'auto-mode-alist '("\\.rb\\'" . ruby-mode))
 ;;    (add-to-list 'interpreter-mode-alist '("ruby" . ruby-mode))
 ;;
 ;; Still needs more docstrings; search below for TODO.
@@ -188,9 +188,10 @@ This should only be called after matching against `ruby-here-doc-beg-re'."
     (modify-syntax-entry ?# "<" table)
     (modify-syntax-entry ?\n ">" table)
     (modify-syntax-entry ?\\ "\\" table)
-    (modify-syntax-entry ?$ "." table)
+    (modify-syntax-entry ?$ "'" table)
     (modify-syntax-entry ?_ "_" table)
-    (modify-syntax-entry ?: "_" table)
+    (modify-syntax-entry ?: "'" table)
+    (modify-syntax-entry ?@ "'" table)
     (modify-syntax-entry ?< "." table)
     (modify-syntax-entry ?> "." table)
     (modify-syntax-entry ?& "." table)
@@ -1859,6 +1860,10 @@ It will be properly highlighted even when the call omits parens.")
             (string-to-syntax "_"))))
       ;; Backtick method redefinition.
       ("^[ \t]*def +\\(`\\)" (1 "_"))
+      ;; Ternary operator colon followed by opening paren or bracket
+      ;; (semi-important for indentation).
+      ("\\(:\\)\\(?:[\({]\\|\\[[^]]\\)"
+       (1 (string-to-syntax ".")))
       ;; Regular expressions.  Start with matching unescaped slash.
       ("\\(?:\\=\\|[^\\]\\)\\(?:\\\\\\\\\\)*\\(/\\)"
        (1 (let ((state (save-excursion (syntax-ppss (match-beginning 1)))))
@@ -2024,7 +2029,7 @@ It will be properly highlighted even when the call omits parens.")
   "The syntax table to use for fontifying Ruby mode buffers.
 See `font-lock-syntax-table'.")
 
-(defconst ruby-font-lock-keyword-beg-re "\\(?:^\\|[^.@$]\\|\\.\\.\\)")
+(defconst ruby-font-lock-keyword-beg-re "\\(?:^\\|[^.@$:]\\|\\.\\.\\)")
 
 (defconst ruby-font-lock-keywords
   `(;; Functions.
@@ -2197,7 +2202,7 @@ See `font-lock-syntax-table'.")
     ("\\(\\$\\|@\\|@@\\)\\(\\w\\|_\\)+"
      0 font-lock-variable-name-face)
     ;; Constants.
-    ("\\(?:\\_<\\|::\\)\\([A-Z]+\\(\\w\\|_\\)*\\)"
+    ("\\_<\\([A-Z]+\\(\\w\\|_\\)*\\)"
      1 (unless (eq ?\( (char-after)) font-lock-type-face))
     ;; Ruby 1.9-style symbol hash keys.
     ("\\(?:^\\s *\\|[[{(,]\\s *\\|\\sw\\s +\\)\\(\\(\\sw\\|_\\)+:\\)[^:]"
