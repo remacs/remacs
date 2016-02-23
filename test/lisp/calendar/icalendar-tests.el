@@ -32,6 +32,7 @@
 ;;; Code:
 
 (require 'ert)
+(require 'ert-x)
 (require 'icalendar)
 
 ;; ======================================================================
@@ -58,23 +59,16 @@
 (ert-deftest icalendar--create-uid ()
   "Test for `icalendar--create-uid'."
   (let* ((icalendar-uid-format "xxx-%t-%c-%h-%u-%s")
-         t-ct
          (icalendar--uid-count 77)
          (entry-full "30.06.1964 07:01 blahblah")
          (hash (format "%d" (abs (sxhash entry-full))))
          (contents "DTSTART:19640630T070100\nblahblah")
-         (username (or user-login-name "UNKNOWN_USER"))
-         )
-    (fset 't-ct (symbol-function 'current-time))
-    (unwind-protect
-	(progn
-	  (fset 'current-time (lambda () '(1 2 3)))
-	  (should (= 77 icalendar--uid-count))
-	  (should (string=  (concat "xxx-123-77-" hash "-" username "-19640630")
-			    (icalendar--create-uid entry-full contents)))
-	  (should (= 78 icalendar--uid-count)))
-      ;; restore 'current-time
-      (fset 'current-time (symbol-function 't-ct)))
+         (username (or user-login-name "UNKNOWN_USER")))
+    (ert-with-function-mocked current-time (lambda () '(1 2 3))
+      (should (= 77 icalendar--uid-count))
+      (should (string=  (concat "xxx-123-77-" hash "-" username "-19640630")
+                        (icalendar--create-uid entry-full contents)))
+      (should (= 78 icalendar--uid-count)))
     (setq contents "blahblah")
     (setq icalendar-uid-format "yyy%syyy")
     (should (string=  (concat "yyyDTSTARTyyy")

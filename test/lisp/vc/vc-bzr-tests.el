@@ -25,6 +25,7 @@
 ;;; Code:
 
 (require 'ert)
+(require 'ert-x)
 (require 'vc-bzr)
 (require 'vc-dir)
 
@@ -101,12 +102,8 @@
           (while (vc-dir-busy)
             (sit-for 0.1))
           (vc-dir-mark-all-files t)
-          (let ((f (symbol-function 'y-or-n-p)))
-            (unwind-protect
-                (progn
-                  (fset 'y-or-n-p (lambda (prompt) t))
-                  (vc-next-action nil))
-              (fset 'y-or-n-p f)))
+          (ert-with-function-mocked y-or-n-p (lambda (_) t)
+            (vc-next-action nil))
           (should (get-buffer "*vc-log*")))
       (delete-directory homedir t))))
 
