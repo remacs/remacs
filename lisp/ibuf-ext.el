@@ -1412,20 +1412,23 @@ You can then feed the file name(s) to other commands with \\[yank]."
       (ibuffer-map-marked-lines
        #'(lambda (buf _mark)
 	   (setq ibuffer-copy-filename-as-kill-result
-		 (concat ibuffer-copy-filename-as-kill-result
-			 (let ((name (buffer-file-name buf)))
-			   (if name
-			       (pcase type
-				 (`full
-				  name)
-				 (`relative
-				  (file-relative-name
-				   name (or ibuffer-default-directory
-					    default-directory)))
-				 (_
-				  (file-name-nondirectory name)))
-			     ""))
-			 " "))))
+                 (concat ibuffer-copy-filename-as-kill-result
+                         (let ((name (buffer-file-name buf)))
+                           (cond (name
+                                  (concat
+                                   (pcase type
+                                     (`full
+                                      name)
+                                     (`relative
+                                      (file-relative-name
+                                       name (or ibuffer-default-directory
+                                                default-directory)))
+                                     (_
+                                      (file-name-nondirectory name))) " "))
+                                 (t "")))))))
+      (when (not (zerop (length ibuffer-copy-filename-as-kill-result)))
+        (setq ibuffer-copy-filename-as-kill-result
+              (substring ibuffer-copy-filename-as-kill-result 0 -1)))
       (kill-new ibuffer-copy-filename-as-kill-result))))
 
 (defun ibuffer-mark-on-buffer (func &optional ibuffer-mark-on-buffer-mark group)
