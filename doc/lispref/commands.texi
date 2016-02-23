@@ -1664,7 +1664,8 @@ gets keyboard input.  This choice of window is called the @dfn{focus}.
 When the user does something to switch between Emacs frames, that
 generates a @dfn{focus event}.  The normal definition of a focus event,
 in the global keymap, is to select a new frame within Emacs, as the user
-would expect.  @xref{Input Focus}.
+would expect.  @xref{Input Focus}, which also describes hooks related
+to focus events.
 
 Focus events are represented in Lisp as lists that look like this:
 
