@@ -11622,8 +11622,8 @@ It's called with one argument, the help string to display.  */);
 
 After a command is executed, if point moved into a region that has
 special properties (e.g. composition, display), Emacs adjusts point to
-the boundary of the region.  But when a command binds this variable to
-non-nil, this point adjustment is suppressed.
+the boundary of the region.  But when a command leaves this variable at
+a non-nil value (e.g., with a setq), this point adjustment is suppressed.
 
 This variable is set to nil before reading a command, and is checked
 just after executing the command.  */);
@@ -11634,8 +11634,8 @@ just after executing the command.  */);
 	       doc: /* If non-nil, always suppress point adjustments.
 
 The default value is nil, in which case point adjustments are
-suppressed only after special commands that set
-`disable-point-adjustment' (which see) to non-nil.  */);
+suppressed only after special commands that leave
+`disable-point-adjustment' (which see) at a non-nil value.  */);
   Vglobal_disable_point_adjustment = Qnil;
 
   DEFVAR_LISP ("minibuffer-message-timeout", Vminibuffer_message_timeout,
