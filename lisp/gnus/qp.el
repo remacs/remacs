@@ -27,9 +27,6 @@
 
 ;;; Code:
 
-(require 'mm-util)
-(defvar mm-use-ultra-safe-encoding)
-
 ;;;###autoload
 (defun quoted-printable-decode-region (from to &optional coding-system)
   "Decode quoted-printable in the region between FROM and TO, per RFC 2045.
@@ -45,7 +42,8 @@ them into characters should be done separately."
   (interactive
    ;; Let the user determine the coding system with "C-x RET c".
    (list (region-beginning) (region-end) coding-system-for-read))
-  (unless (mm-coding-system-p coding-system) ; e.g. `ascii' from Gnus
+  (when (and coding-system
+	     (not (coding-system-p coding-system))) ; e.g. `ascii' from Gnus
     (setq coding-system nil))
   (save-excursion
     (save-restriction
@@ -94,7 +92,8 @@ them into characters should be done separately."
 If CODING-SYSTEM is non-nil, decode the string with coding-system.
 Use of CODING-SYSTEM is deprecated; this function should deal with
 raw bytes, and coding conversion should be done separately."
-  (mm-with-unibyte-buffer
+  (with-temp-buffer
+    (set-buffer-multibyte nil)
     (insert string)
     (quoted-printable-decode-region (point-min) (point-max) coding-system)
     (buffer-string)))
@@ -138,17 +137,17 @@ encode lines starting with \"From\"."
 	   (prog1
 	       (format "=%02X" (char-after))
 	     (delete-char 1)))))
-      (let ((mm-use-ultra-safe-encoding
+      (let ((ultra
 	     (and (boundp 'mm-use-ultra-safe-encoding)
 		  mm-use-ultra-safe-encoding)))
-	(when (or fold mm-use-ultra-safe-encoding)
+	(when (or fold ultra)
 	  (let ((tab-width 1)		; HTAB is one character.
 		(case-fold-search nil))
 	    (goto-char (point-min))
 	    (while (not (eobp))
 	      ;; In ultra-safe mode, encode "From " at the beginning
 	      ;; of a line.
-	      (when mm-use-ultra-safe-encoding
+	      (when ultra
 		(if (looking-at "From ")
 		    (replace-match "From=20" nil t)
 		  (if (looking-at "-")
@@ -167,8 +166,8 @@ encode lines starting with \"From\"."
   "Encode the STRING as quoted-printable and return the result."
   (with-temp-buffer
     (if (multibyte-string-p string)
-	(mm-enable-multibyte)
-      (mm-disable-multibyte))
+	(set-buffer-multibyte 'to)
+      (set-buffer-multibyte nil))
     (insert string)
     (quoted-printable-encode-region (point-min) (point-max))
     (buffer-string)))
