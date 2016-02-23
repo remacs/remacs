@@ -774,7 +774,7 @@ to avoid corrupting the original LIST1 and LIST2.
 \nKeywords supported:  :test :test-not :key
 \n(fn LIST1 LIST2 [KEYWORD VALUE]...)"
   (cond ((null cl-list1) cl-list2) ((null cl-list2) cl-list1)
-	((equal cl-list1 cl-list2) cl-list1)
+	((and (not cl-keys) (equal cl-list1 cl-list2)) cl-list1)
 	(t
 	 (or (>= (length cl-list1) (length cl-list2))
 	     (setq cl-list1 (prog1 cl-list2 (setq cl-list2 cl-list1))))
