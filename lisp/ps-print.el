@@ -4761,7 +4761,11 @@ page-height == ((floor print-height ((th + ls) * zh)) * ((th + ls) * zh)) - th
    ;; Literal strings should be output as is -- the string must contain its own
    ;; PS string delimiters, '(' and ')', if necessary.
    ((stringp content)
-    (ps-output content))
+    (if (functionp ps-encode-header-string-function)
+        (dolist (elem (funcall ps-encode-header-string-function
+                               content fonttag))
+	  (ps-output elem))
+      (ps-output content)))
 
    ;; Functions are called -- they should return strings; they will be inserted
    ;; as strings and the PS string delimiters added.
@@ -4777,7 +4781,7 @@ page-height == ((floor print-height ((th + ls) * zh)) * ((th + ls) * zh)) - th
    ((and (symbolp content) (boundp content))
     (if (fboundp ps-encode-header-string-function)
 	(dolist (l (funcall ps-encode-header-string-function
-			     (symbol-value content) fonttag))
+                            (symbol-value content) fonttag))
 	  (ps-output-string l))
       (ps-output-string (symbol-value content))))
 
