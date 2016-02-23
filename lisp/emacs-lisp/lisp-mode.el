@@ -168,6 +168,8 @@
 (defvar lisp-doc-string-elt-property 'doc-string-elt
   "The symbol property that holds the docstring position info.")
 
+(defconst lisp-prettify-symbols-alist '(("lambda"  . ?λ))
+  "Alist of symbol/\"pretty\" characters to be displayed.")
 
 ;;;; Font-lock support.
 
@@ -594,7 +596,7 @@ font-lock keywords will not be case sensitive."
           (font-lock-extra-managed-props help-echo)
 	  (font-lock-syntactic-face-function
 	   . lisp-font-lock-syntactic-face-function)))
-  (setq-local prettify-symbols-alist lisp--prettify-symbols-alist)
+  (setq-local prettify-symbols-alist lisp-prettify-symbols-alist)
   (setq-local electric-pair-skip-whitespace 'chomp)
   (setq-local electric-pair-open-newline-between-pairs nil))
 
@@ -654,9 +656,6 @@ font-lock keywords will not be case sensitive."
   :options '(eldoc-mode)
   :type 'hook
   :group 'lisp)
-
-(defconst lisp--prettify-symbols-alist
-  '(("lambda"  . ?λ)))
 
 ;;; Generic Lisp mode.
 
