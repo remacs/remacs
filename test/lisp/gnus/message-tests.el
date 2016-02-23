@@ -55,6 +55,49 @@
                             (point)))))
       (set-buffer-modified-p nil))))
 
+
+(ert-deftest message-strip-subject-trailing-was ()
+  (ert-with-function-mocked message-talkative-question nil
+    (with-temp-buffer
+      (let ((no-was "Re: Foo ")
+            (with-was "Re: Foo \t (was: Bar ) ")
+            (stripped-was "Re: Foo")
+            reply)
+
+        ;; Test unconditional stripping
+        (setq-local message-subject-trailing-was-query t)
+        (should (string= no-was (message-strip-subject-trailing-was no-was)))
+        (should (string= stripped-was
+                         (message-strip-subject-trailing-was with-was)))
+
+        ;; Test asking
+        (setq-local message-subject-trailing-was-query 'ask)
+        (fset 'message-talkative-question
+              (lambda (_ question show text)
+                (should (string= "Strip `(was: <old subject>)' in subject? "
+                                 question))
+                (should show)
+                (should (string-match
+                         (concat
+                          "Strip `(was: <old subject>)' in subject "
+                          "and use the new one instead\\?\n\n"
+                          "Current subject is:   \"\\(.*\\)\"\n\n"
+                          "New subject would be: \"\\(.*\\)\"\n\n"
+                          "See the variable "
+                          "`message-subject-trailing-was-query' "
+                          "to get rid of this query.")
+                         text))
+                (should (string= (match-string 1 text) with-was))
+                (should (string= (match-string 2 text) stripped-was))
+                reply))
+        (message-strip-subject-trailing-was with-was)
+        (should (string= with-was
+                         (message-strip-subject-trailing-was with-was)))
+        (setq reply t)
+        (should (string= stripped-was
+                         (message-strip-subject-trailing-was with-was)))))))
+
+
 (provide 'message-mode-tests)
 
 ;;; message-mode-tests.el ends here
