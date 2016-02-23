@@ -1401,9 +1401,8 @@ patch. If not given, the user is prompted according to the prefix argument."
 	 (if arg (prefix-numeric-value arg)) patch-buf))
   (ediff-patch-buffer-internal
    patch-buf
-   (read-buffer
-    "Which buffer to patch? "
-    (ediff-other-buffer patch-buf))))
+   (read-buffer "Which buffer to patch? " (ediff-other-buffer patch-buf)
+                'require-match)))
 
 
 ;;;###autoload
