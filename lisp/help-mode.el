@@ -107,7 +107,7 @@ The format is (FUNCTION ARGS...).")
 
 (defun help-button-action (button)
   "Call BUTTON's help function."
-  (help-do-xref (button-start button)
+  (help-do-xref nil
 		(button-get button 'help-function)
 		(button-get button 'help-args)))
 
