@@ -1313,7 +1313,6 @@ x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
     }
 #endif /* not USE_X_TOOLKIT && not USE_GTK */
   adjust_frame_glyphs (f);
-  run_window_configuration_change_hook (f);
 }
 
 

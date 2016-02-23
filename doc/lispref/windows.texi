@@ -545,6 +545,12 @@ its pixel height is the pixel height of the screen areas spanned by its
 children.
 @end defun
 
+@defun window-pixel-height-before-size-change &optional Lisp_Object &optional window
+This function returns the height of window @var{window} in pixels at the
+time @code{window-size-change-functions} was run for the last time on
+@var{window}'s frame (@pxref{Window Hooks}).
+@end defun
+
 @cindex window pixel width
 @cindex pixel width of a window
 @cindex total pixel width of a window
@@ -557,6 +563,12 @@ The return value includes the fringes and margins of @var{window} as
 well as any vertical dividers or scroll bars belonging to @var{window}.
 If @var{window} is an internal window, its pixel width is the width of
 the screen areas spanned by its children.
+@end defun
+
+@defun window-pixel-width-before-size-change &optional Lisp_Object &optional window
+This function returns the width of window @var{window} in pixels at the
+time @code{window-size-change-functions} was run for the last time on
+@var{window}'s frame (@pxref{Window Hooks}).
 @end defun
 
 @cindex full-width window
@@ -4087,11 +4099,11 @@ was created for.
 The argument @var{configuration} must be a value that was previously
 returned by @code{current-window-configuration}.  The configuration is
 restored in the frame from which @var{configuration} was made, whether
-that frame is selected or not.  This always counts as a window size
-change and triggers execution of the @code{window-size-change-functions}
-(@pxref{Window Hooks}), because @code{set-window-configuration} doesn't
-know how to tell whether the new configuration actually differs from the
-old one.
+that frame is selected or not.  In some rare cases this may trigger
+execution of the @code{window-size-change-functions} (@pxref{Window
+Hooks}) even if the size of windows did not change at all.  The
+@code{window-configuration-change-hook} functions will be called if and
+only if at least one window was added to or deleted from the frame.
 
 If the frame from which @var{configuration} was saved is dead, all this
 function does is restore the three variables @code{window-min-height},
@@ -4378,33 +4390,38 @@ work.
 @end defvar
 
 @defvar window-size-change-functions
-This variable holds a list of functions to be called if the size of
-any window changes for any reason.  The functions are called at the
-beginning of a redisplay cycle, and just once for each frame on which
-size changes have occurred.
+This variable holds a list of functions to be called if the size of any
+window changes for any reason.  The functions are called once per
+redisplay, and once for each frame on which size changes have occurred.
 
-Each function receives the frame as its sole argument.  There is no
-direct way to find out which windows on that frame have changed size, or
-precisely how.  However, if a size-change function records, at each
-call, the existing windows and their sizes, it can also compare the
-present sizes and the previous sizes.
+Each function receives the frame as its sole argument.  To find out
+whether a specific window has changed size, compare the return values of
+@code{window-pixel-width-before-size-change} and
+@code{window-pixel-width} respectively
+@code{window-pixel-height-before-size-change} and
+@code{window-pixel-height} for that window (@pxref{Window Sizes}).
 
-Creating or deleting windows counts as a size change, and therefore
-causes these functions to be called.  Changing the frame size also
-counts, because it changes the sizes of the existing windows.
+These function are usually only called when at least one window was
+added or has changed size since the last time this hook was run for the
+associated frame.  In some rare cases this hook also runs when a window
+that was added intermittently has been deleted afterwards.  In these
+cases none of the windows on the frame will appear to have changed its
+size.
 
 You may use @code{save-selected-window} in these functions
 (@pxref{Selecting Windows}).  However, do not use
 @code{save-window-excursion} (@pxref{Window Configurations}); exiting
-that macro counts as a size change, which would cause these functions
-to be called over and over.
+that macro counts as a size change, which would cause these functions to
+be called again.
 @end defvar
 
 @defvar window-configuration-change-hook
-A normal hook that is run every time you change the window configuration
-of an existing frame.  This includes splitting or deleting windows,
-changing the sizes of windows, or displaying a different buffer in a
-window.
+A normal hook that is run every time the window configuration of a frame
+changes.  Window configuration changes include splitting and deleting
+windows and the display of a different buffer in a window.  Resizing the
+frame or individual windows do not count as configuration changes.  Use
+@code{window-size-change-functions}, see above, when you want to track
+size changes that are not caused by the deletion or creation of windows.
 
 The buffer-local part of this hook is run once for each window on the
 affected frame, with the relevant window selected and its buffer

@@ -11786,24 +11786,7 @@ prepare_menu_bars (void)
 	      && !XBUFFER (w->contents)->text->redisplay)
 	    continue;
 
-	  /* If a window on this frame changed size, report that to
-	     the user and clear the size-change flag.  */
-	  if (FRAME_WINDOW_SIZES_CHANGED (f))
-	    {
-	      Lisp_Object functions;
-
-	      /* Clear flag first in case we get an error below.  */
-	      FRAME_WINDOW_SIZES_CHANGED (f) = false;
-	      functions = Vwindow_size_change_functions;
-
-	      while (CONSP (functions))
-		{
-		  if (!EQ (XCAR (functions), Qt))
-		    call1 (XCAR (functions), frame);
-		  functions = XCDR (functions);
-		}
-	    }
-
+	  run_window_size_change_functions (frame);
 	  menu_bar_hooks_run = update_menu_bar (f, false, menu_bar_hooks_run);
 #ifdef HAVE_WINDOW_SYSTEM
 	  update_tool_bar (f, false);
@@ -13599,24 +13582,12 @@ redisplay_internal (void)
 	 it's too late for the hooks in window-size-change-functions,
 	 which have been examined already in prepare_menu_bars.  So in
 	 that case we call the hooks here only for the selected frame.  */
-      if (sf->redisplay && FRAME_WINDOW_SIZES_CHANGED (sf))
+      if (sf->redisplay)
 	{
-	  Lisp_Object functions;
 	  ptrdiff_t count1 = SPECPDL_INDEX ();
 
 	  record_unwind_save_match_data ();
-
-	  /* Clear flag first in case we get an error below.  */
-	  FRAME_WINDOW_SIZES_CHANGED (sf) = false;
-	  functions = Vwindow_size_change_functions;
-
-	  while (CONSP (functions))
-	    {
-	      if (!EQ (XCAR (functions), Qt))
-		call1 (XCAR (functions), selected_frame);
-	      functions = XCDR (functions);
-	    }
-
+	  run_window_size_change_functions (selected_frame);
 	  unbind_to (count1, Qnil);
 	}
 
@@ -13638,22 +13609,10 @@ redisplay_internal (void)
     {
       if (sf->redisplay)
 	{
-	  Lisp_Object functions;
 	  ptrdiff_t count1 = SPECPDL_INDEX ();
 
 	  record_unwind_save_match_data ();
-
-	  /* Clear flag first in case we get an error below.  */
-	  FRAME_WINDOW_SIZES_CHANGED (sf) = false;
-	  functions = Vwindow_size_change_functions;
-
-	  while (CONSP (functions))
-	    {
-	      if (!EQ (XCAR (functions), Qt))
-		call1 (XCAR (functions), selected_frame);
-	      functions = XCDR (functions);
-	    }
-
+	  run_window_size_change_functions (selected_frame);
 	  unbind_to (count1, Qnil);
 	}
 
@@ -31446,16 +31405,6 @@ and is used only on frames for which no explicit name has been set
 If nil, disable message logging.  If t, log messages but don't truncate
 the buffer when it becomes large.  */);
   Vmessage_log_max = make_number (1000);
-
-  DEFVAR_LISP ("window-size-change-functions", Vwindow_size_change_functions,
-    doc: /* Functions called during redisplay, if window sizes have changed.
-The value should be a list of functions that take one argument.
-During the first part of redisplay, for each frame, if any of its windows
-have changed size since the last redisplay, or have been split or deleted,
-all the functions in the list are called, with the frame as argument.
-If redisplay decides to resize the minibuffer window, it calls these
-functions on behalf of that as well.  */);
-  Vwindow_size_change_functions = Qnil;
 
   DEFVAR_LISP ("window-scroll-functions", Vwindow_scroll_functions,
     doc: /* List of functions to call before redisplaying a window with scrolling.

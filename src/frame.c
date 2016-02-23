@@ -591,8 +591,6 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
 		  || new_pixel_height != old_pixel_height);
 
   unblock_input ();
-
-  run_window_configuration_change_hook (f);
 }
 
 /* Allocate basically initialized frame.  */
