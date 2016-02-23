@@ -40,8 +40,6 @@
 ;;; Code:
 
 (require 'password-cache)
-(require 'mm-util)
-(require 'gnus-util)
 
 (eval-when-compile (require 'cl))
 (require 'eieio)
@@ -1088,12 +1086,10 @@ Note that the MAX parameter is used so we can exit the parse early."
         (when (setq item2 (auth-source-netrc-parse-one))
           ;; Did we get a "machine" value?
           (if (equal item2 "machine")
-              (progn
-                (gnus-error 1
-                 "%s: Unexpected `machine' token at line %d"
-                 "auth-source-netrc-parse-entries"
-                 (auth-source-current-line))
-                (forward-line 1))
+	      (error
+	       "%s: Unexpected `machine' token at line %d"
+	       "auth-source-netrc-parse-entries"
+	       (auth-source-current-line))
             (push (cons item item2) alist)))))
 
     ;; Clean up: if there's an entry left over, use it.
