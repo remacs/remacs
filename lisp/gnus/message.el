@@ -2197,33 +2197,26 @@ charset: "
   "Remove trailing \"(was: <old subject>)\" from SUBJECT lines.
 Leading \"Re: \" is not stripped by this function.  Use the function
 `message-strip-subject-re' for this."
-  (let* ((query message-subject-trailing-was-query)
-	 (new) (found))
-    (setq found
-	  (string-match
-	   (if (eq query 'ask)
-	       message-subject-trailing-was-ask-regexp
-	     message-subject-trailing-was-regexp)
-	   subject))
-    (if found
-	(setq new (substring subject 0 (match-beginning 0))))
-    (if (or (not found) (eq query nil))
-	subject
-      (if (eq query 'ask)
-	  (if (message-y-or-n-p
-	       "Strip `(was: <old subject>)' in subject? " t
-	       (concat
-		"Strip `(was: <old subject>)' in subject "
-		"and use the new one instead?\n\n"
-		"Current subject is:   \""
-		subject "\"\n\n"
-		"New subject would be: \""
-		new "\"\n\n"
-		"See the variable `message-subject-trailing-was-query' "
-		"to get rid of this query."
-		))
-	      new subject)
-	new))))
+  (or
+   (let ((query message-subject-trailing-was-query) new)
+     (and query
+          (string-match (if (eq query 'ask)
+                            message-subject-trailing-was-ask-regexp
+                          message-subject-trailing-was-regexp)
+                        subject)
+          (setq new (substring subject 0 (match-beginning 0)))
+          (or (not (eq query 'ask))
+              (message-y-or-n-p
+               "Strip `(was: <old subject>)' in subject? " t
+               (concat
+                "Strip `(was: <old subject>)' in subject "
+                "and use the new one instead?\n\n"
+                "Current subject is:   \"" subject "\"\n\n"
+                "New subject would be: \"" new "\"\n\n"
+                "See the variable `message-subject-trailing-was-query' "
+                "to get rid of this query.")))
+          new))
+   subject))
 
 ;;; Suggested by Jonas Steverud  @  www.dtek.chalmers.se/~d4jonas/
 
