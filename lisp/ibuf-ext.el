@@ -1403,7 +1403,7 @@ You can then feed the file name(s) to other commands with \\[yank]."
   (if (zerop (ibuffer-count-marked-lines))
       (message "No buffers marked; use 'm' to mark a buffer")
     (let ((ibuffer-copy-filename-as-kill-result "")
-	  (type (cond ((zerop arg)
+	  (type (cond ((or (null arg) (zerop arg))
 		       'full)
 		      ((= arg 4)
 		       'relative)
