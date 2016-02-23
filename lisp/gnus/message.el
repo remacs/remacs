@@ -1367,10 +1367,9 @@ If a function email is passed as the argument."
 		 (repeat :tag "Regexp List" regexp)))
 
 (defsubst message-dont-reply-to-names ()
-  (cond ((functionp message-dont-reply-to-names)
-         message-dont-reply-to-names)
-        ((stringp message-dont-reply-to-names)
-         (gmm-regexp-concat message-dont-reply-to-names))))
+  (if (functionp message-dont-reply-to-names)
+      message-dont-reply-to-names
+    (gmm-regexp-concat message-dont-reply-to-names)))
 
 (defvar message-shoot-gnksa-feet nil
   "*A list of GNKSA feet you are allowed to shoot.
