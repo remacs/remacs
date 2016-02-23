@@ -22,21 +22,12 @@
 
 ;;; Commentary:
 
-;; Usage:
-;; (require 'rfc1843)
-;; (rfc1843-gnus-setup)
-;;
 ;; Test:
 ;; (rfc1843-decode-string  "~{<:Ky2;S{#,NpJ)l6HK!#~}")
 
 ;;; Code:
 
 (eval-when-compile (require 'cl))
-(require 'mm-util)
-
-(defvar gnus-decode-encoded-word-function)
-(defvar gnus-decode-header-function)
-(defvar gnus-newsgroup-name)
 
 (defvar rfc1843-word-regexp
   "~\\({\\([\041-\167][\041-\176]\\| \\)+\\)\\(~}\\|$\\)")
@@ -111,10 +102,10 @@ ftp://ftp.math.psu.edu/pub/simpson/chinese/hzp/hzp.doc"
 
 (defun rfc1843-decode-string (string)
   "Decode HZ STRING and return the results."
-  (let ((m (mm-multibyte-p)))
+  (let ((m enable-multibyte-characters))
     (with-temp-buffer
       (when m
-	(mm-enable-multibyte))
+	(set-buffer-multibyte 'to))
       (insert string)
       (inline
 	(rfc1843-decode-region (point-min) (point-max)))
@@ -134,54 +125,6 @@ ftp://ftp.math.psu.edu/pub/simpson/chinese/hzp/hzp.doc"
 	  (setq v (% v 157))
 	  (aset s (incf i) (+ v (if (< v 63) 64 98))))))
     s))
-
-(autoload 'mail-header-parse-content-type "mail-parse")
-(autoload 'message-narrow-to-head "message")
-(declare-function message-fetch-field "message" (header &optional not-all))
-
-(defun rfc1843-decode-article-body ()
-  "Decode HZ encoded text in the article body."
-  (if (string-match (concat "\\<\\(" rfc1843-newsgroups-regexp "\\)\\>")
-		    (or gnus-newsgroup-name ""))
-      (save-excursion
-	(save-restriction
-	  (message-narrow-to-head)
-	  (let* ((inhibit-point-motion-hooks t)
-		 (case-fold-search t)
-		 (ct (message-fetch-field "Content-Type" t))
-		 (ctl (and ct (mail-header-parse-content-type ct))))
-	    (if (and ctl (not (string-match "/" (car ctl))))
-		(setq ctl nil))
-	    (goto-char (point-max))
-	    (widen)
-	    (forward-line 1)
-	    (narrow-to-region (point) (point-max))
-	    (when (or (not ctl)
-		      (equal (car ctl) "text/plain"))
-	      (rfc1843-decode-region (point) (point-max))))))))
-
-(defvar gnus-decode-header-methods)
-(defvar gnus-decode-encoded-word-methods)
-
-(defun rfc1843-gnus-setup ()
-  "Setup HZ decoding for Gnus."
-  (require 'gnus-art)
-  (require 'gnus-sum)
-  (add-hook 'gnus-article-decode-hook 'rfc1843-decode-article-body t)
-  (setq gnus-decode-encoded-word-function
-	'gnus-multi-decode-encoded-word-string
-	gnus-decode-header-function
-	'gnus-multi-decode-header
-	gnus-decode-encoded-word-methods
-	(nconc gnus-decode-encoded-word-methods
-	       (list
-		(cons (concat "\\<\\(" rfc1843-newsgroups-regexp "\\)\\>")
-		      'rfc1843-decode-string)))
-	gnus-decode-header-methods
-	(nconc gnus-decode-header-methods
-	       (list
-		(cons (concat "\\<\\(" rfc1843-newsgroups-regexp "\\)\\>")
-		      'rfc1843-decode-region)))))
 
 (provide 'rfc1843)
 
