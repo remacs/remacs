@@ -296,7 +296,7 @@ and the hook `eshell-exit-hook'."
   (run-hooks 'eshell-exit-hook))
 
 ;;;###autoload
-(define-derived-mode eshell-mode fundamental-mode "EShell"
+(define-derived-mode eshell-mode fundamental-mode "Eshell"
   "Emacs shell interactive mode."
   (setq-local eshell-mode t)
 
