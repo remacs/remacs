@@ -1293,7 +1293,8 @@ which see."
 
   (cond ((eq ediff-window-setup-function 'ediff-setup-windows-multiframe)
 	 (setq ediff-multiframe nil)
-	 (setq window-setup-func 'ediff-setup-windows-plain))
+	 (setq window-setup-func 'ediff-setup-windows-plain)
+         (message "ediff is now in 'plain' mode"))
 	((eq ediff-window-setup-function 'ediff-setup-windows-plain)
 	 (if (ediff-in-control-buffer-p)
 	     (ediff-kill-bottom-toolbar))
@@ -1301,14 +1302,15 @@ which see."
 		  (window-live-p ediff-control-window))
 	     (set-window-dedicated-p ediff-control-window nil))
 	 (setq ediff-multiframe t)
-	 (setq window-setup-func 'ediff-setup-windows-multiframe))
+	 (setq window-setup-func 'ediff-setup-windows-multiframe)
+         (message "ediff is now in 'multiframe' mode"))
 	(t
 	 (if (and (ediff-buffer-live-p ediff-control-buffer)
 		  (window-live-p ediff-control-window))
 	     (set-window-dedicated-p ediff-control-window nil))
 	 (setq ediff-multiframe t)
 	 (setq window-setup-func 'ediff-setup-windows-multiframe))
-	)
+         (message "ediff is now in 'multiframe' mode"))
 
   ;; change default
   (setq-default ediff-window-setup-function window-setup-func)
