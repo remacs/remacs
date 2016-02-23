@@ -400,10 +400,11 @@ Return nil for non-recurring EVENT."
          (end-date (format-time-string "%Y-%m-%d %a" end))
          (end-time (format-time-string "%H:%M" end))
          (end-at-midnight (string= end-time "00:00"))
-         (start-end-date-diff (/ (float-time (time-subtract
-                                        (date-to-time end-date)
-                                        (date-to-time start-date)))
-                                 86400))
+         (start-end-date-diff
+	  (/ (float-time (time-subtract
+			  (org-time-string-to-time end-date)
+			  (org-time-string-to-time start-date)))
+	     86400))
          (org-repeat (gnus-icalendar-event:org-repeat event))
          (repeat (if org-repeat (concat " " org-repeat) ""))
          (time-1-day '(0 86400)))
