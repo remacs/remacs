@@ -4997,7 +4997,7 @@ Transposing beyond buffer boundaries is an error.  */)
 	  start2_addr = BYTE_POS_ADDR (start2_byte);
           memcpy (temp, start1_addr, len1_byte);
           memcpy (start1_addr, start2_addr, len2_byte);
-          memcpy (start1_addr + len2_byte, start1_addr + len1_byte, len_mid);
+          memmove (start1_addr + len2_byte, start1_addr + len1_byte, len_mid);
           memcpy (start1_addr + len2_byte + len_mid, temp, len1_byte);
 	  SAFE_FREE ();
 
