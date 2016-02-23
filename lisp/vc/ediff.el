@@ -1367,7 +1367,8 @@ buffer. If odd -- assume it is in a file."
     (require 'ediff-ptch)
     (setq patch-buf
 	  (ediff-get-patch-buffer
-	   (if arg (prefix-numeric-value arg)) patch-buf))
+	   (if arg (prefix-numeric-value arg))
+           (get-buffer patch-buf)))
     (setq source-dir (cond (ediff-use-last-dir ediff-last-dir-patch)
 			   ((and (not ediff-patch-default-directory)
 				 (buffer-file-name patch-buf))
