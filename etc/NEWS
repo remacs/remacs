@@ -96,6 +96,10 @@ different group ID.
 
 * Incompatible Lisp Changes in Emacs 25.2
 
++++
+** Resizing a frame no longer runs `window-configuration-change-hook'.
+Put your function on `window-size-change-functions' instead.
+
 
 * Lisp Changes in Emacs 25.2
 
@@ -106,6 +110,11 @@ by setting `autoload-timestamps' to nil.
 
 ** `ert-with-function-mocked' of 'ert-x package allows mocking of functions
 in unit tests.
+
++++
+** New functions `window-pixel-width-before-size-change' and
+`window-pixel-height-before-size-change' allow to detect which window
+changed size when `window-size-change-functions' are run.
 
 
 * Changes in Emacs 25.2 on Non-Free Operating Systems
