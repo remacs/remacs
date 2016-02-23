@@ -3023,8 +3023,8 @@ M-RET    `message-newline-and-reformat' (break the line and reformat)."
     (setq adaptive-fill-first-line-regexp
 	  (concat quote-prefix-regexp "\\|"
 		  adaptive-fill-first-line-regexp)))
-  (setq-default auto-fill-inhibit-regexp nil)
-  (setq-default normal-auto-fill-function 'message-do-auto-fill))
+  (setq-local auto-fill-inhibit-regexp nil)
+  (setq-local normal-auto-fill-function 'message-do-auto-fill))
 
 
 
