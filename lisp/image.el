@@ -448,7 +448,7 @@ Internal use only."
           (setq image (cddr image))))
     ;; Just enter the new value.
     (plist-put (cdr image) property value))
-  image)
+  value)
 
 (defun image-property (image property)
   "Return the value of PROPERTY in IMAGE.
