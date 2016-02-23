@@ -3600,8 +3600,8 @@ usage: (make-network-process &rest ARGS)  */)
   struct Lisp_Process *p;
 #if defined HAVE_GETADDRINFO || defined HAVE_GETADDRINFO_A
   const char *portstring;
-  ptrdiff_t portstringlen;
-  char portbuf[128];
+  ptrdiff_t portstringlen ATTRIBUTE_UNUSED;
+  char portbuf[INT_BUFSIZE_BOUND (EMACS_INT)];
 #endif
 #ifdef HAVE_LOCAL_SOCKETS
   struct sockaddr_un address_un;
@@ -3770,7 +3770,7 @@ usage: (make-network-process &rest ARGS)  */)
 #endif
 
 #ifdef HAVE_GETADDRINFO_A
-  if (!NILP (Fplist_get (contact, QCnowait)) && !NILP (host))
+  if (!NILP (host) && !NILP (Fplist_get (contact, QCnowait)))
     {
       ptrdiff_t hostlen = SBYTES (host);
       struct req
@@ -4897,7 +4897,6 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 
 #if defined HAVE_GETADDRINFO_A || defined HAVE_GNUTLS
       {
-	Lisp_Object ip_addresses;
 	Lisp_Object process_list_head, aproc;
 	struct Lisp_Process *p;
 
@@ -4911,7 +4910,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		/* Check for pending DNS requests. */
 		if (p->dns_request)
 		  {
-		    ip_addresses = check_for_dns (aproc);
+		    Lisp_Object ip_addresses = check_for_dns (aproc);
 		    if (!NILP (ip_addresses) && !EQ (ip_addresses, Qt))
 		      connect_network_socket (aproc, ip_addresses);
 		  }
