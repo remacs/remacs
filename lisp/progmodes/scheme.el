@@ -156,6 +156,7 @@
 	  nil t (("+-*/.<>=!?$%_&~^:" . "w") (?#. "w 14"))
 	  beginning-of-defun
 	  (font-lock-mark-block-function . mark-defun)))
+  (setq-local prettify-symbols-alist lisp-prettify-symbols-alist)
   (setq-local lisp-doc-string-elt-property 'scheme-doc-string-elt))
 
 (defvar scheme-mode-line-process "")
