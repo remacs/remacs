@@ -3746,8 +3746,13 @@ support pty association, if PROGRAM is nil."
 (defun process-menu-delete-process ()
   "Kill process at point in a `list-processes' buffer."
   (interactive)
-  (delete-process (tabulated-list-get-id))
-  (revert-buffer))
+  (let ((pos (point)))
+    (delete-process (tabulated-list-get-id))
+    (revert-buffer)
+    (goto-char (min pos (point-max)))
+    (if (eobp)
+        (forward-line -1)
+      (beginning-of-line))))
 
 (defun list-processes--refresh ()
   "Recompute the list of processes for the Process List buffer.
