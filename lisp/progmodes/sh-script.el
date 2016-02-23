@@ -1661,7 +1661,12 @@ with your script for an edit-interpret-debug cycle."
   (setq-local skeleton-filter-function 'sh-feature)
   (setq-local skeleton-newline-indent-rigidly t)
   (setq-local defun-prompt-regexp
-	      (concat "^\\(function[ \t]\\|[[:alnum:]]+[ \t]+()[ \t]+\\)"))
+              (concat
+               "^\\("
+               "\\(function[ \t]\\)?[ \t]*[[:alnum:]]+[ \t]*([ \t]*)"
+               "\\|"
+               "function[ \t]+[[:alnum:]]+[ \t]*\\(([ \t]*)\\)?"
+               "\\)[ \t]*"))
   (setq-local add-log-current-defun-function #'sh-current-defun-name)
   (add-hook 'completion-at-point-functions
             #'sh-completion-at-point-function nil t)
