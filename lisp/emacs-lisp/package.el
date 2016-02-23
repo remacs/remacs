@@ -2289,7 +2289,7 @@ Otherwise no newline is inserted."
     (insert "\n")
     (unless (and pkg-dir (not archive)) ; Installed pkgs don't have archive.
       (package--print-help-section "Archive"
-        (or archive "n/a") "\n"))
+        (or archive "n/a")))
     (and version
          (package--print-help-section "Version"
            (package-version-join version)))
