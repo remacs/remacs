@@ -368,8 +368,10 @@ Subexpression 1 is what goes into the corresponding `@end' statement.")
     ;; their arguments frequently include a @@, and we don't want that
     ;; to overwrite the normal fontification of the argument.
     ("@\\(file\\|email\\){\\([^}]+\\)" 2 font-lock-string-face keep)
-    ("@\\(samp\\|code\\|var\\|math\\|env\\|command\\|option\\){\\([^}]+\\)"
+    ("@\\(samp\\|code\\|var\\|env\\|command\\|option\\){\\([^}]+\\)"
      2 font-lock-variable-name-face keep)
+    ;; @math allows nested braces like @math{2^{12}}
+    ("@math{\\([^{}]*{?[^{}]*}?[^{}]*\\)}" 1 font-lock-variable-name-face)
     ("@\\(cite\\|x?ref\\|pxref\\|dfn\\|inforef\\){\\([^}]+\\)"
      2 font-lock-constant-face)
     ("@\\(anchor\\){\\([^}]+\\)" 2 font-lock-type-face)
