@@ -394,7 +394,7 @@ Used for repeating operations in calculator-repR/L.")
                                      [kp-5] [kp-6] [kp-7] [kp-8] [kp-9])
              (calculator-op          [kp-divide] [kp-multiply])
              (calculator-decimal     "." [kp-decimal])
-             (calculator-exp         "e")
+             (calculator-exp         "e" "E")
              (calculator-dec/deg-mode "D")
              (calculator-set-register "s")
              (calculator-get-register "g")
@@ -1219,7 +1219,7 @@ arguments."
   "Last char (or event or event sequence) that was read.
 Use KEYS if given, otherwise use `this-command-keys'."
   (let ((inp (or keys (this-command-keys))))
-    (if (or (stringp inp) (not (arrayp inp)))
+    (if (or (stringp inp) (not (arrayp inp)) (member inp '([f1] [help])))
       inp
       ;; Translates kp-x to x and [tries to] create a string to lookup
       ;; operators; assume all symbols are translatable via
