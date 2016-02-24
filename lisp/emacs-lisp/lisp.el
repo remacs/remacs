@@ -621,7 +621,8 @@ This command assumes point is not in a string or comment."
             (save-excursion
               (goto-char (region-end))
               (insert close))
-            (goto-char (region-beginning)) (insert open))
+            (goto-char (region-beginning))
+            (insert open))
         (if arg (setq arg (prefix-numeric-value arg))
           (setq arg 0))
         (cond ((> arg 0) (skip-chars-forward " \t"))
