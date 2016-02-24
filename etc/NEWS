@@ -1547,6 +1547,10 @@ Use the INSIDE_EMACS environment variable instead.
 mode to send the same escape sequences that xterm does.  This makes
 things like forward-word in readline work.
 
+---
+** hideshow mode got four key bindings that are analogous to outline
+mode bindings: `C-c @ C-a',  `C-c @ C-t',  `C-c @ C-d', and `C-c @ C-e.'
+
 +++
 ** `save-excursion' does not save&restore the mark any more.
 Use `save-mark-and-excursion' if you want the old behavior.
