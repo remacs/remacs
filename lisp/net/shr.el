@@ -186,7 +186,7 @@ and other things:
     (define-key map "w" 'shr-copy-url)
     (define-key map "u" 'shr-copy-url)
     (define-key map "v" 'shr-browse-url)
-    (define-key map "o" 'shr-save-contents)
+    (define-key map "O" 'shr-save-contents)
     (define-key map "\r" 'shr-browse-url)
     map))
 
