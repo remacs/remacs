@@ -551,6 +551,11 @@ dependencies).  This variable can also be manually customized.
 packages from `package-selected-packages' which are currently missing.
 
 ---
+*** `package-install' function now takes a DONT-SELECT argument.  If
+this function is called interactively or if DONT-SELECT is nil, add the
+package being installed to `package-selected-packages'.
+
+---
 *** New command `package-autoremove' removes all packages which were
 installed strictly as dependencies but are no longer needed.
 
