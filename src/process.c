@@ -7159,28 +7159,24 @@ DEFUN ("set-process-coding-system", Fset_process_coding_system,
        Sset_process_coding_system, 1, 3, 0,
        doc: /* Set coding systems of PROCESS to DECODING and ENCODING.
 DECODING will be used to decode subprocess output and ENCODING to
-encode subprocess input.
-
-If PROCESS is a non-blocking network process that hasn't been fully
-set up yet, this function will block until socket setup has completed. */)
+encode subprocess input. */)
   (Lisp_Object process, Lisp_Object decoding, Lisp_Object encoding)
 {
   CHECK_PROCESS (process);
 
-  if (NETCONN_P (process))
-    wait_for_socket_fds (process, "set-process-coding-system");
-
   struct Lisp_Process *p = XPROCESS (process);
 
-  if (p->infd < 0)
-    error ("Input file descriptor of %s closed", SDATA (p->name));
-  if (p->outfd < 0)
-    error ("Output file descriptor of %s closed", SDATA (p->name));
   Fcheck_coding_system (decoding);
   Fcheck_coding_system (encoding);
   encoding = coding_inherit_eol_type (encoding, Qnil);
   pset_decode_coding_system (p, decoding);
   pset_encode_coding_system (p, encoding);
+
+  /* If the sockets haven't been set up yet, the final setup part of
+     this will be called asynchronously. */
+  if (p->infd < 0 || p->outfd < 0)
+    return Qnil;
+
   setup_process_coding_systems (process);
 
   return Qnil;
@@ -7207,13 +7203,16 @@ suppressed.  */)
 {
   CHECK_PROCESS (process);
 
-  if (NETCONN_P (process))
-    wait_for_socket_fds (process, "set-process-filter-multibyte");
-
   struct Lisp_Process *p = XPROCESS (process);
   if (NILP (flag))
     pset_decode_coding_system
       (p, raw_text_coding_system (p->decode_coding_system));
+
+  /* If the sockets haven't been set up yet, the final setup part of
+     this will be called asynchronously. */
+  if (p->infd < 0 || p->outfd < 0)
+    return Qnil;
+
   setup_process_coding_systems (process);
 
   return Qnil;
