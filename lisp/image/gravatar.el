@@ -119,7 +119,7 @@ You can provide a list of argument to pass to CB in CBARGS."
 	  (apply #'url-retrieve args))
       (apply cb
                (with-temp-buffer
-                 (mm-disable-multibyte)
+                 (set-buffer-multibyte nil)
                  (url-cache-extract (url-cache-create-filename url))
                  (gravatar-data->image))
                cbargs))))
@@ -136,7 +136,7 @@ You can provide a list of argument to pass to CB in CBARGS."
             (kill-buffer (current-buffer))
             data))
       (with-temp-buffer
-        (mm-disable-multibyte)
+        (set-buffer-multibyte nil)
         (url-cache-extract (url-cache-create-filename url))
         (gravatar-data->image)))))
 
