@@ -427,6 +427,15 @@ kset_system_key_syms (struct kboard *kb, Lisp_Object val)
 }
 
 
+static bool
+echo_keystrokes_p (void)
+{
+  return (!cursor_in_echo_area)
+	 && (FLOATP (Vecho_keystrokes) ? XFLOAT_DATA (Vecho_keystrokes) > 0.0
+	     : INTEGERP (Vecho_keystrokes) ? XINT (Vecho_keystrokes) > 0
+             : false);
+}
+
 /* Add C to the echo string, without echoing it immediately.  C can be
    a character, which is pretty-printed, or a symbol, whose name is
    printed.  */
@@ -568,7 +577,9 @@ echo_update (void)
 static void
 echo_now (void)
 {
-  if (!current_kboard->immediate_echo)
+  if (!current_kboard->immediate_echo
+      /* This test breaks calls that use `echo_now' to display the echo_prompt.
+         && echo_keystrokes_p () */)
     {
       current_kboard->immediate_echo = true;
       echo_update ();
@@ -2268,13 +2279,6 @@ read_decoded_event_from_main_queue (struct timespec *end_time,
 	}
 #endif
     }
-}
-
-static bool
-echo_keystrokes_p (void)
-{
-  return (FLOATP (Vecho_keystrokes) ? XFLOAT_DATA (Vecho_keystrokes) > 0.0
-	  : INTEGERP (Vecho_keystrokes) ? XINT (Vecho_keystrokes) > 0 : false);
 }
 
 /* Read a character from the keyboard; call the redisplay if needed.  */
@@ -8890,11 +8894,15 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	     of echoing, so that it serves as a prompt for the next
 	     character.  */
 	  kset_echo_prompt (current_kboard, prompt);
+          /* FIXME: This use of echo_now doesn't look quite right and is ugly
+             since it forces us to fiddle with current_kboard->immediate_echo
+             before and after.  */
 	  current_kboard->immediate_echo = false;
 	  echo_now ();
+          if (!echo_keystrokes_p ())
+	    current_kboard->immediate_echo = false;
 	}
-      else if (cursor_in_echo_area
-	       && echo_keystrokes_p ())
+      else if (echo_keystrokes_p ())
 	/* This doesn't put in a dash if the echo buffer is empty, so
 	   you don't always see a dash hanging out in the minibuffer.  */
 	echo_dash ();
