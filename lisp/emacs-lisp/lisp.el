@@ -618,8 +618,10 @@ This command assumes point is not in a string or comment."
   (if (and open close)
       (if (and transient-mark-mode mark-active)
           (progn
-            (save-excursion (goto-char (region-end))       (insert close))
-            (save-excursion (goto-char (region-beginning)) (insert open)))
+            (save-excursion
+              (goto-char (region-end))
+              (insert close))
+            (goto-char (region-beginning)) (insert open))
         (if arg (setq arg (prefix-numeric-value arg))
           (setq arg 0))
         (cond ((> arg 0) (skip-chars-forward " \t"))
