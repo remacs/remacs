@@ -435,6 +435,11 @@ is intended for adding to 'kill-emacs-query-functions'.
 in favor of the global `M-s h' bindings introduced in Emacs-23.1.
 They'll disappear soon.
 
++++
+** New bindings for 'query-replace-map'.
+`undo', undo the last replacement; bound to `u'.
+`undo-all', undo all replacements; bound to `U'.
+
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
 

@@ -1805,6 +1805,14 @@ Answer this question and all subsequent questions in the series with
 @item backup
 Move back to the previous place that a question was asked about.
 
+@item undo
+Undo last replacement and move back to the place where that
+replacement was performed.
+
+@item undo-all
+Undo all replacements and move back to the place where the first
+replacement was performed.
+
 @item edit
 Enter a recursive edit to deal with this question---instead of any
 other action that would normally be taken.
