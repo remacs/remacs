@@ -1750,6 +1750,10 @@ details.
 It should be placed right where the docstring would be, and FORM is then
 evaluated (and should return a string) when the closure is built.
 
+---
+** The new command `fortune-message' has been added, which displays
+fortunes in the echo area.
+
 +++
 ** define-inline provides a new way to define inlinable functions.
 
