@@ -644,6 +644,10 @@ mode line, using \"+\" or \"-\" for ascending or descending sort order.
 Type \\[proced-toggle-tree] to toggle whether the listing is
 displayed as process tree.
 
+Type \\[proced-toggle-auto-update] to automatically update the
+process list.  The time interval for updates can be configured
+via `proced-auto-update-interval'.
+
 An existing Proced listing can be refined by typing \\[proced-refine].
 Refining an existing listing does not update the variable `proced-filter'.
 
