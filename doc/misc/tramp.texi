@@ -2219,7 +2219,8 @@ shows host names @value{tramp} from @file{/etc/hosts} file, for example.
 @multitable @columnfractions .5 .5
 @c @multitable {@trampfn{telnet,melancholia.danann.net,}} {@trampfn{telnet,192.168.0.1,}}
 @item @trampfn{telnet,127.0.0.1,} @tab @trampfn{telnet,192.168.0.1,}
-@item @trampfn{telnet,@value{ipv6prefix}::1@value{ipv6postfix},} @tab @trampfn{telnet,localhost,}
+@c @item @trampfn{telnet,@value{ipv6prefix}::1@value{ipv6postfix},} @tab @trampfn{telnet,localhost,}
+@item @value{prefix}telnet@value{postfixhop}@value{ipv6prefix}::1@value{ipv6postfix}@value{postfix} @tab @trampfn{telnet,localhost,}
 @item @trampfn{telnet,melancholia.danann.net,} @tab @trampfn{telnet,melancholia,}
 @end multitable
 @end example
