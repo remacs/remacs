@@ -143,6 +143,7 @@ where it was when you previously visited the same file."
 
 (make-variable-buffer-local 'save-place-mode) ; Hysterical raisins.
 
+;;;###autoload
 (defun toggle-save-place (&optional parg) ;FIXME: save-place-local-mode!
   "Toggle whether to save your place in this file between sessions.
 If this mode is enabled, point is recorded when you kill the buffer
@@ -165,6 +166,18 @@ file:
     (setq save-place (if parg
                          (> (prefix-numeric-value parg) 0)
                        (not save-place)))
+    (cond
+     (save-place
+      (add-hook 'find-file-hook 'save-place-find-file-hook t)
+      (add-hook 'dired-initial-position-hook 'save-place-dired-hook)
+      (unless noninteractive
+        (add-hook 'kill-emacs-hook 'save-place-kill-emacs-hook))
+      (add-hook 'kill-buffer-hook 'save-place-to-alist))
+     (t
+      (remove-hook 'find-file-hook 'save-place-find-file-hook t)
+      (remove-hook 'dired-initial-position-hook 'save-place-dired-hook)
+      (remove-hook 'kill-emacs-hook 'save-place-kill-emacs-hook)
+      (remove-hook 'kill-buffer-hook 'save-place-to-alist)))
     (message (if save-place
                  "Place will be saved"
                "No place will be saved in this file"))))
