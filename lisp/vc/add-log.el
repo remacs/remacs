@@ -911,8 +911,10 @@ non-nil, otherwise in local time."
                              "\\(\\s \\|[(),:]\\)")
                      bound t)))
              ;; Add to the existing item for the same file.
-             (re-search-forward "^\\s *$\\|^\\s \\*")
-             (goto-char (match-beginning 0))
+             (if (re-search-forward "^\\s *$\\|^\\s \\*" nil t)
+                 (goto-char (match-beginning 0))
+               (goto-char (point-max))
+               (insert "\n"))
              ;; Delete excess empty lines; make just 2.
              (while (and (not (eobp)) (looking-at "^\\s *$"))
                (delete-region (point) (line-beginning-position 2)))
