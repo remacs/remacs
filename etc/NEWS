@@ -902,7 +902,8 @@ in question).
 *** Images inserted with `insert-image' and related functions get a
 keymap put into the text properties (or overlays) that span the
 image.  This keymap binds keystrokes for manipulating size and
-rotation, as well as saving the image to a file.
+rotation, as well as saving the image to a file.  These commands are
+also available in `image-mode'.
 
 +++
 *** A new library for creating and manipulating SVG images has been
