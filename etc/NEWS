@@ -1543,6 +1543,10 @@ symbol-function was changed not to signal `void-function' any more.
 ** Comint, term, and compile do not set the EMACS env var any more.
 Use the INSIDE_EMACS environment variable instead.
 
+** `C-up', `C-down', `C-left' and `C-right' are now defined in term
+mode to send the same escape sequences that xterm does.  This makes
+things like forward-word in readline work.
+
 +++
 ** `save-excursion' does not save&restore the mark any more.
 Use `save-mark-and-excursion' if you want the old behavior.
