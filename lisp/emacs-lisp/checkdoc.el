@@ -1638,6 +1638,17 @@ function,command,variable,option or symbol." ms1))))))
 	     ;; * If a user option variable records a true-or-false
 	     ;;   condition, give it a name that ends in `-flag'.
 
+	     ;; "True ..." should be "Non-nil ..."
+	     (when (looking-at "\"\\*?\\(True\\)\\b")
+               (if (checkdoc-autofix-ask-replace
+                    (match-beginning 1) (match-end 1)
+                    "Say \"Non-nil\" instead of \"True\"? "
+                    "Non-nil")
+                   nil
+                 (checkdoc-create-error
+                  "\"True\" should usually be \"Non-nil\""
+                  (match-beginning 1) (match-end 1))))
+
 	     ;; If the variable has -flag in the name, make sure
 	     (if (and (string-match "-flag$" (car fp))
 		      (not (looking-at "\"\\*?Non-nil\\s-+means\\s-+")))
@@ -1798,6 +1809,16 @@ Replace with \"%s\"? " original replace)
 			    "Probably \"%s\" should be imperative \"%s\""
 			    original replace)
 			   (match-beginning 1) (match-end 1))))))
+	     ;; "Return true ..." should be "Return non-nil ..."
+	     (when (looking-at "\"Return \\(true\\)\\b")
+               (if (checkdoc-autofix-ask-replace
+                    (match-beginning 1) (match-end 1)
+                    "Say \"non-nil\" instead of \"true\"? "
+                    "non-nil")
+                   nil
+                 (checkdoc-create-error
+                  "\"true\" should usually be \"non-nil\""
+                  (match-beginning 1) (match-end 1))))
 	     ;; Done with functions
 	     )))
      ;;* When a documentation string refers to a Lisp symbol, write it as
