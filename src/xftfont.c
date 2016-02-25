@@ -395,16 +395,6 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 
   font->ascent = xftfont->ascent;
   font->descent = xftfont->descent;
-  if (pixel_size >= 5)
-    {
-      /* The above condition is a dirty workaround because
-	 XftTextExtents8 behaves strangely for some fonts
-	 (e.g. "Dejavu Sans Mono") when pixel_size is less than 5. */
-      if (font->ascent < extents.y)
-	font->ascent = extents.y;
-      if (font->descent < extents.height - extents.y)
-	font->descent = extents.height - extents.y;
-    }
   font->height = font->ascent + font->descent;
 
   if (XINT (AREF (entity, FONT_SIZE_INDEX)) == 0)
