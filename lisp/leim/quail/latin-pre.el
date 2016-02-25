@@ -707,7 +707,7 @@ Key translation rules are:
  "polish-slash" "Polish" "PL>" nil
  "Polish diacritics and slash character are input as `/[acelnosxzACELNOSXZ/]'.
 For example, the character named `aogonek' is obtained by `/a'."
- nil t t t nil nil nil nil nil nil t)
+ nil t t nil nil nil nil nil nil nil t)
 
 (quail-define-rules
  ("//" ?/)
