@@ -1307,10 +1307,10 @@ Setup char-width-table appropriate for non-CJK language environment."
     (aset char-acronym-table i (car c0-acronyms))
     (setq c0-acronyms (cdr c0-acronyms))))
 
-(let ((c1-acronyms '("XXX" "XXX" "BPH" "NBH" "IND" "NEL" "SSA" "ESA"
+(let ((c1-acronyms '("PAD" "HOP" "BPH" "NBH" "IND" "NEL" "SSA" "ESA"
 		     "HTS" "HTJ" "VTS" "PLD" "PLU" "R1"  "SS2" "SS1"
 		     "DCS" "PU1" "PU2" "STS" "CCH" "MW"  "SPA" "EPA"
-		     "SOS" "XXX" "SC1" "CSI" "ST"  "OSC" "PM"  "APC")))
+		     "SOS" "SGCI" "SC1" "CSI" "ST"  "OSC" "PM"  "APC")))
   (dotimes (i 32)
     (aset char-acronym-table (+ #x0080 i) (car c1-acronyms))
     (setq c1-acronyms (cdr c1-acronyms))))
