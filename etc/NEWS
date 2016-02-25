@@ -47,6 +47,12 @@ to deal with asynchronous sockets is to avoid interacting with them
 until they have changed status to "run".  This is most easily done
 from a process sentinel.
 
+** `make-network-stream' has always allowed :service to be specified
+as a "number string" (i.e., :service "993") when using gethostbyname,
+but has required using a real number (i.e., :service 993) on systems
+without gethostbyname.  This difference has now been eliminated, and
+you can use "number strings" on all systems.
+
 ** It is possible to disable attempted recovery on fatal signals
 
 Two new variables allow to disable attempts to recover from stack
