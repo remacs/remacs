@@ -120,6 +120,25 @@ disabled, i.e., the position is recorded for all files."
 
 (declare-function dired-current-directory "dired" (&optional localp))
 
+(defun save-place--setup-hooks (add)
+  (cond
+   (add
+    (add-hook 'find-file-hook #'save-place-find-file-hook t)
+    (add-hook 'dired-initial-position-hook #'save-place-dired-hook)
+    (unless noninteractive
+      (add-hook 'kill-emacs-hook #'save-place-kill-emacs-hook))
+    (add-hook 'kill-buffer-hook #'save-place-to-alist))
+   (t
+    ;; We should remove the hooks, but only if save-place-mode
+    ;; is nil everywhere.  Is it worth the trouble, tho?
+    ;; (unless (or (default-value 'save-place-mode)
+    ;;             (cl-some <save-place-local-mode-p> (buffer-list)))
+    ;;   (remove-hook 'find-file-hook #'save-place-find-file-hook)
+    ;;   (remove-hook 'dired-initial-position-hook #'save-place-dired-hook)
+    ;;   (remove-hook 'kill-emacs-hook #'save-place-kill-emacs-hook)
+    ;;   (remove-hook 'kill-buffer-hook #'save-place-to-alist))
+    )))
+
 (define-obsolete-variable-alias 'save-place 'save-place-mode "25.1")
 ;;;###autoload
 (define-minor-mode save-place-mode
@@ -128,23 +147,14 @@ This means when you visit a file, point goes to the last place
 where it was when you previously visited the same file."
   :global t
   :group 'save-place
-  (cond
-   (save-place-mode
-    (add-hook 'find-file-hook 'save-place-find-file-hook t)
-    (add-hook 'dired-initial-position-hook 'save-place-dired-hook)
-    (unless noninteractive
-      (add-hook 'kill-emacs-hook 'save-place-kill-emacs-hook))
-    (add-hook 'kill-buffer-hook 'save-place-to-alist))
-   (t
-    (remove-hook 'find-file-hook 'save-place-find-file-hook t)
-    (remove-hook 'dired-initial-position-hook 'save-place-dired-hook)
-    (remove-hook 'kill-emacs-hook 'save-place-kill-emacs-hook)
-    (remove-hook 'kill-buffer-hook 'save-place-to-alist))))
+  (save-place--setup-hooks save-place-mode))
 
-(make-variable-buffer-local 'save-place-mode) ; Hysterical raisins.
+(make-variable-buffer-local 'save-place-mode)
 
+(define-obsolete-function-alias 'toggle-save-place
+  #'save-place-local-mode "25.1")
 ;;;###autoload
-(defun toggle-save-place (&optional parg) ;FIXME: save-place-local-mode!
+(define-minor-mode save-place-local-mode
   "Toggle whether to save your place in this file between sessions.
 If this mode is enabled, point is recorded when you kill the buffer
 or exit Emacs.  Visiting this file again will go to that position,
@@ -157,30 +167,13 @@ To save places automatically in all files, put this in your init
 file:
 
 \(save-place-mode 1)"
-  (interactive "P")
+  :variable save-place-mode
   (if (not (or buffer-file-name (and (derived-mode-p 'dired-mode)
                                      (boundp 'dired-subdir-alist)
 				     dired-subdir-alist
 				     (dired-current-directory))))
       (message "Buffer `%s' not visiting a file or directory" (buffer-name))
-    (setq save-place (if parg
-                         (> (prefix-numeric-value parg) 0)
-                       (not save-place)))
-    (cond
-     (save-place
-      (add-hook 'find-file-hook 'save-place-find-file-hook t)
-      (add-hook 'dired-initial-position-hook 'save-place-dired-hook)
-      (unless noninteractive
-        (add-hook 'kill-emacs-hook 'save-place-kill-emacs-hook))
-      (add-hook 'kill-buffer-hook 'save-place-to-alist))
-     (t
-      (remove-hook 'find-file-hook 'save-place-find-file-hook t)
-      (remove-hook 'dired-initial-position-hook 'save-place-dired-hook)
-      (remove-hook 'kill-emacs-hook 'save-place-kill-emacs-hook)
-      (remove-hook 'kill-buffer-hook 'save-place-to-alist)))
-    (message (if save-place
-                 "Place will be saved"
-               "No place will be saved in this file"))))
+    (save-place--setup-hooks save-place-mode)))
 
 (declare-function dired-get-filename "dired" (&optional localp no-error-if-not-filep))
 
