@@ -3428,6 +3428,17 @@ conv_numerical_to_lisp (unsigned char *number, int length, int port)
 }
 #endif
 
+/* Return true if STRING consists only of numerical characters. */
+static bool
+string_integer_p (Lisp_Object string)
+{
+  char *s = SSDATA (string), c;
+  while ((c = *s++))
+    if (c < '0' || c > '9')
+      return false;
+  return true;
+}
+
 /* Create a network stream/datagram client/server process.  Treated
    exactly like a normal process when reading and writing.  Primary
    differences are in status display and process deletion.  A network
@@ -3852,6 +3863,10 @@ usage: (make-network-process &rest ARGS)  */)
     port = 0;
   else if (INTEGERP (service))
     port = (unsigned short) XINT (service);
+  /* Allow the service to be a string containing the port number,
+     because that's allowed if you have getaddrbyname. */
+  else if (string_integer_p (service))
+    port = strtol (SSDATA (service), NULL, 10);
   else
     {
       struct servent *svc_info;
