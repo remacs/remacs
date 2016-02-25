@@ -250,7 +250,7 @@ extern Lisp_Object system_process_attributes (Lisp_Object);
 
 extern void record_deleted_pid (pid_t, Lisp_Object);
 struct sockaddr;
-extern Lisp_Object conv_sockaddr_to_lisp (struct sockaddr *, int);
+extern Lisp_Object conv_sockaddr_to_lisp (struct sockaddr *, ptrdiff_t);
 extern void hold_keyboard_input (void);
 extern void unhold_keyboard_input (void);
 extern bool kbd_on_hold_p (void);

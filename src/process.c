@@ -302,7 +302,7 @@ static struct coding_system *proc_encode_coding_system[FD_SETSIZE];
 /* Table of `partner address' for datagram sockets.  */
 static struct sockaddr_and_len {
   struct sockaddr *sa;
-  int len;
+  ptrdiff_t len;
 } datagram_address[FD_SETSIZE];
 #define DATAGRAM_CHAN_P(chan)	(datagram_address[chan].sa != 0)
 #define DATAGRAM_CONN_P(proc)                                           \
@@ -2245,12 +2245,12 @@ usage:  (make-pipe-process &rest ARGS)  */)
    The address family of sa is not included in the result.  */
 
 Lisp_Object
-conv_sockaddr_to_lisp (struct sockaddr *sa, int len)
+conv_sockaddr_to_lisp (struct sockaddr *sa, ptrdiff_t len)
 {
   Lisp_Object address;
-  int i;
+  ptrdiff_t i;
   unsigned char *cp;
-  register struct Lisp_Vector *p;
+  struct Lisp_Vector *p;
 
   /* Workaround for a bug in getsockname on BSD: Names bound to
      sockets in the UNIX domain are inaccessible; getsockname returns
@@ -2325,10 +2325,10 @@ conv_sockaddr_to_lisp (struct sockaddr *sa, int len)
 
 /* Get family and required size for sockaddr structure to hold ADDRESS.  */
 
-static int
+static ptrdiff_t
 get_lisp_to_sockaddr_size (Lisp_Object address, int *familyp)
 {
-  register struct Lisp_Vector *p;
+  struct Lisp_Vector *p;
 
   if (VECTORP (address))
     {
@@ -2474,7 +2474,8 @@ set up yet, this function will block until socket setup has completed.  */)
   (Lisp_Object process, Lisp_Object address)
 {
   int channel;
-  int family, len;
+  int family;
+  ptrdiff_t len;
 
   CHECK_PROCESS (process);
 
@@ -3085,7 +3086,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
   int family;
   struct sockaddr *sa = NULL;
   int ret;
-  int addrlen;
+  ptrdiff_t addrlen;
   struct Lisp_Process *p = XPROCESS (proc);
   Lisp_Object contact = p->childp;
   int optbits = 0;
@@ -3283,8 +3284,8 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 	      memset (datagram_address[s].sa, 0, addrlen);
 	      if (remote = Fplist_get (contact, QCremote), !NILP (remote))
 		{
-		  int rfamily, rlen;
-		  rlen = get_lisp_to_sockaddr_size (remote, &rfamily);
+		  int rfamily;
+		  ptrdiff_t rlen = get_lisp_to_sockaddr_size (remote, &rfamily);
 		  if (rlen != 0 && rfamily == family
 		      && rlen == addrlen)
 		    conv_lisp_to_sockaddr (rfamily, remote,
@@ -3427,17 +3428,6 @@ conv_numerical_to_lisp (unsigned char *number, int length, int port)
   return address;
 }
 #endif
-
-/* Return true if STRING consists only of numerical characters. */
-static bool
-string_integer_p (Lisp_Object string)
-{
-  char *s = SSDATA (string), c;
-  while ((c = *s++))
-    if (c < '0' || c > '9')
-      return false;
-  return true;
-}
 
 /* Create a network stream/datagram client/server process.  Treated
    exactly like a normal process when reading and writing.  Primary
@@ -3617,7 +3607,7 @@ usage: (make-network-process &rest ARGS)  */)
 #ifdef HAVE_LOCAL_SOCKETS
   struct sockaddr_un address_un;
 #endif
-  int port = 0;
+  EMACS_INT port = 0;
   Lisp_Object tem;
   Lisp_Object name, buffer, host, service, address;
   Lisp_Object filter, sentinel;
@@ -3807,7 +3797,7 @@ usage: (make-network-process &rest ARGS)  */)
 	error ("%s/%s getaddrinfo_a error %d", SSDATA (host), portstring, ret);
 
       goto open_socket;
- }
+    }
 #endif /* HAVE_GETADDRINFO_A */
 
 #ifdef HAVE_GETADDRINFO
@@ -3862,20 +3852,35 @@ usage: (make-network-process &rest ARGS)  */)
   if (EQ (service, Qt))
     port = 0;
   else if (INTEGERP (service))
-    port = (unsigned short) XINT (service);
-  /* Allow the service to be a string containing the port number,
-     because that's allowed if you have getaddrbyname. */
-  else if (string_integer_p (service))
-    port = strtol (SSDATA (service), NULL, 10);
+    port = XINT (service);
   else
     {
-      struct servent *svc_info;
       CHECK_STRING (service);
-      svc_info = getservbyname (SSDATA (service),
-				(socktype == SOCK_DGRAM ? "udp" : "tcp"));
-      if (svc_info == 0)
-	error ("Unknown service: %s", SDATA (service));
-      port = ntohs (svc_info->s_port);
+
+      port = -1;
+      if (SBYTES (service) != 0)
+	{
+	  /* Allow the service to be a string containing the port number,
+	     because that's allowed if you have getaddrbyname.  */
+	  char *service_end;
+	  long int lport = strtol (SSDATA (service), &service_end, 10);
+	  if (service_end == SSDATA (service) + SBYTES (service))
+	    port = lport;
+	  else
+	    {
+	      struct servent *svc_info
+		= getservbyname (SSDATA (service),
+				 socktype == SOCK_DGRAM ? "udp" : "tcp");
+	      if (svc_info)
+		port = ntohs (svc_info->s_port);
+	    }
+	}
+    }
+
+  if (! (0 <= port && port < 1 << 16))
+    {
+      AUTO_STRING (unknown_service, "Unknown service: %s");
+      xsignal1 (Qerror, CALLN (Fformat, unknown_service, service));
     }
 
 #ifndef HAVE_GETADDRINFO

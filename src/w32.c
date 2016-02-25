@@ -8740,7 +8740,7 @@ sys_write (int fd, const void * buffer, unsigned int count)
 
 /* Emulation of SIOCGIFCONF and getifaddrs, see process.c.  */
 
-extern Lisp_Object conv_sockaddr_to_lisp (struct sockaddr *, int);
+extern Lisp_Object conv_sockaddr_to_lisp (struct sockaddr *, ptrdiff_t);
 
 /* Return information about network interface IFNAME, or about all
    interfaces (if IFNAME is nil).  */
