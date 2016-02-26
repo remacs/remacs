@@ -329,8 +329,9 @@
 	    nil 'identity))))
 
 ;;;###autoload
+
 (defun pcomplete/find ()
-  "Completion for GNU find utility."
+  "Completion for the GNU find utility."
   (let ((prec (pcomplete-arg 'last -1)))
     (cond ((and (pcomplete-match "^-" 'last)
                 (string= "find" prec))
@@ -361,7 +362,7 @@
                (string= prec "-execdir"))
            (while (pcomplete-here* (funcall pcomplete-command-completion-function)
                                    (pcomplete-arg 'last) t))))
-    (while (pcomplete-here (pcomplete-entries) nil 'identity))))
+    (while (pcomplete-here (pcomplete-dirs) nil 'identity))))
 
 ;;;###autoload
 (defalias 'pcomplete/gdb 'pcomplete/xargs)
