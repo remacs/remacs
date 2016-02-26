@@ -21,7 +21,8 @@
 
 ## Some targets:
 ## check: re-run all tests, writing to .log files.
-## check-maybe: run all tests whose .log file needs updating
+## check-maybe: run all tests which are outdated with their .log file
+## or the source files they are testing.
 ## filename.log: run tests from filename.el(c) if .log file needs updating
 ## filename: re-run tests from filename.el(c), with no logging
 
@@ -142,9 +143,9 @@ endef
 $(foreach test,${TESTS},$(eval $(call test_template,${test})))
 
 ## Include dependencies between test files and the files they test.
-## We do this without the file and eval directly, but then we would
-## have to run Emacs for every make invocation, and it might not be
-## available during clean.
+## We could do this without the file and eval directly, but then we
+## would have to run Emacs for every make invocation, and it might not
+## be available during clean.
 -include make-test-deps.mk
 ## Rerun all default tests.
 check: mostlyclean
@@ -155,7 +156,11 @@ check: mostlyclean
 check-expensive: mostlyclean
 	@${MAKE} check-doit SELECTOR="${SELECTOR_EXPENSIVE}"
 
-## Only re-run default tests whose .log is older than the test.
+## Re-run all tests which are outdated. A test is outdated if its
+## logfile is out-of-date with either the test file, or the source
+## files that the tests depend on. The source file dependencies are
+## determined by a heuristic and does not identify the full dependency
+## graph. See make-test-deps.emacs-lisp for details.
 .PHONY: check-maybe
 check-maybe:
 	@${MAKE} check-doit SELECTOR="${SELECTOR_ACTUAL}"
