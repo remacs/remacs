@@ -42,12 +42,11 @@
 
 (defsubst parse-time-string-chars (char)
   (save-match-data
-    (let (case-fold-search str)
+    (let (str)
       (cond ((eq char ?+) 1)
 	    ((eq char ?-) -1)
 	    ((eq char ?:) ?d)
-	    ((string-match "[[:upper:]]" (setq str (string char))) ?A)
-	    ((string-match "[[:lower:]]" str) ?a)
+	    ((string-match "[[:lower:]]" (setq str (string char))) ?a)
 	    ((string-match "[[:digit:]]" str) ?0)))))
 
 (defun parse-time-tokenize (string)
