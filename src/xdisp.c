@@ -13989,9 +13989,6 @@ redisplay_internal (void)
     }
   else if (FRAME_VISIBLE_P (sf) && !FRAME_OBSCURED_P (sf))
     {
-      Lisp_Object mini_window = FRAME_MINIBUF_WINDOW (sf);
-      struct frame *mini_frame;
-
       displayed_buffer = XBUFFER (XWINDOW (selected_window)->contents);
       /* Use list_of_error, not Qerror, so that
 	 we catch only errors and don't run the debugger.  */
@@ -13999,8 +13996,8 @@ redisplay_internal (void)
 				 list_of_error,
 				 redisplay_window_error);
       if (update_miniwindow_p)
-	internal_condition_case_1 (redisplay_window_1, mini_window,
-				   list_of_error,
+	internal_condition_case_1 (redisplay_window_1,
+				   FRAME_MINIBUF_WINDOW (sf), list_of_error,
 				   redisplay_window_error);
 
       /* Compare desired and current matrices, perform output.  */
@@ -14050,8 +14047,8 @@ redisplay_internal (void)
 	 have put text on a frame other than the selected one, so the
 	 above call to update_frame would not have caught it.  Catch
 	 it here.  */
-      mini_window = FRAME_MINIBUF_WINDOW (sf);
-      mini_frame = XFRAME (WINDOW_FRAME (XWINDOW (mini_window)));
+      Lisp_Object mini_window = FRAME_MINIBUF_WINDOW (sf);
+      struct frame *mini_frame = XFRAME (WINDOW_FRAME (XWINDOW (mini_window)));
 
       if (mini_frame != sf && FRAME_WINDOW_P (mini_frame))
 	{
@@ -16041,6 +16038,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
   bool last_line_misfit = false;
   ptrdiff_t beg_unchanged, end_unchanged;
   int frame_line_height;
+  bool use_desired_matrix;
 
   SET_TEXT_POS (lpoint, PT, PT_BYTE);
   opoint = lpoint;
@@ -16763,7 +16761,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
   startp = run_window_scroll_functions (window, it.current.pos);
 
   /* Redisplay the window.  */
-  bool use_desired_matrix = false;
+  use_desired_matrix = false;
   if (!current_matrix_up_to_date_p
       || windows_or_buffers_changed
       || f->cursor_type_changed

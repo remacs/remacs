@@ -5140,8 +5140,6 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 
       if (p == pend)
 	{
-	  ptrdiff_t dcnt;
-
 	  /* End of pattern means we might have succeeded.  */
 	  DEBUG_PRINT ("end of pattern ... ");
 
@@ -5149,19 +5147,22 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 	     longest match, try backtracking.  */
 	  if (d != end_match_2)
 	    {
-	      /* 1 if this match ends in the same string (string1 or string2)
-		 as the best previous match.  */
-	      boolean same_str_p = (FIRST_STRING_P (match_end)
-				    == FIRST_STRING_P (d));
-	      /* 1 if this match is the best seen so far.  */
-	      boolean best_match_p;
+	      /* True if this match is the best seen so far.  */
+	      bool best_match_p;
 
-	      /* AIX compiler got confused when this was combined
-		 with the previous declaration.  */
-	      if (same_str_p)
-		best_match_p = d > match_end;
-	      else
-		best_match_p = !FIRST_STRING_P (d);
+	      {
+		/* True if this match ends in the same string (string1
+		   or string2) as the best previous match.  */
+		bool same_str_p = (FIRST_STRING_P (match_end)
+				   == FIRST_STRING_P (d));
+
+		/* AIX compiler got confused when this was combined
+		   with the previous declaration.  */
+		if (same_str_p)
+		  best_match_p = d > match_end;
+		else
+		  best_match_p = !FIRST_STRING_P (d);
+	      }
 
 	      DEBUG_PRINT ("backtracking.\n");
 
@@ -5290,7 +5291,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 		       nfailure_points_pushed - nfailure_points_popped);
 	  DEBUG_PRINT ("%u registers pushed.\n", num_regs_pushed);
 
-	  dcnt = POINTER_TO_OFFSET (d) - pos;
+	  ptrdiff_t dcnt = POINTER_TO_OFFSET (d) - pos;
 
 	  DEBUG_PRINT ("Returning %td from re_match_2.\n", dcnt);
 

@@ -9257,8 +9257,8 @@ svg_load_image (struct frame *f,         /* Pointer to emacs frame structure.  *
   eassert (gdk_pixbuf_get_has_alpha (pixbuf));
   eassert (gdk_pixbuf_get_bits_per_sample (pixbuf) == 8);
 
-#ifdef USE_CAIRO
   {
+#ifdef USE_CAIRO
     unsigned char *data = (unsigned char *) xmalloc (width*height*4);
     uint32_t bgcolor = get_spec_bg_or_alpha_as_argb (img, f);
 
@@ -9284,82 +9284,77 @@ svg_load_image (struct frame *f,         /* Pointer to emacs frame structure.  *
 
     create_cairo_image_surface (img, data, width, height);
     g_object_unref (pixbuf);
-  }
 #else
-  /* Try to create a x pixmap to hold the svg pixmap.  */
-  XImagePtr ximg;
-  if (!image_create_x_image_and_pixmap (f, img, width, height, 0, &ximg, 0))
-    {
-      g_object_unref (pixbuf);
-      return 0;
-    }
+    /* Try to create a x pixmap to hold the svg pixmap.  */
+    XImagePtr ximg;
+    if (!image_create_x_image_and_pixmap (f, img, width, height, 0, &ximg, 0))
+      {
+	g_object_unref (pixbuf);
+	return 0;
+      }
 
-  init_color_table ();
+    init_color_table ();
 
-  /* Handle alpha channel by combining the image with a background
-     color.  */
-  XColor background;
-  Lisp_Object specified_bg = image_spec_value (img->spec, QCbackground, NULL);
-  if (!STRINGP (specified_bg)
-      || !x_defined_color (f, SSDATA (specified_bg), &background, 0))
-    x_query_frame_background_color (f, &background);
+    /* Handle alpha channel by combining the image with a background
+       color.  */
+    XColor background;
+    Lisp_Object specified_bg = image_spec_value (img->spec, QCbackground, NULL);
+    if (!STRINGP (specified_bg)
+	|| !x_defined_color (f, SSDATA (specified_bg), &background, 0))
+      x_query_frame_background_color (f, &background);
 
-  /* SVG pixmaps specify transparency in the last byte, so right
-     shift 8 bits to get rid of it, since emacs doesn't support
-     transparency.  */
-  background.red   >>= 8;
-  background.green >>= 8;
-  background.blue  >>= 8;
+    /* SVG pixmaps specify transparency in the last byte, so right
+       shift 8 bits to get rid of it, since emacs doesn't support
+       transparency.  */
+    background.red   >>= 8;
+    background.green >>= 8;
+    background.blue  >>= 8;
 
-  /* This loop handles opacity values, since Emacs assumes
-     non-transparent images.  Each pixel must be "flattened" by
-     calculating the resulting color, given the transparency of the
-     pixel, and the image background color.  */
-  for (int y = 0; y < height; ++y)
-    {
-      for (int x = 0; x < width; ++x)
-	{
-	  int red;
-	  int green;
-	  int blue;
-	  int opacity;
+    /* This loop handles opacity values, since Emacs assumes
+       non-transparent images.  Each pixel must be "flattened" by
+       calculating the resulting color, given the transparency of the
+       pixel, and the image background color.  */
+    for (int y = 0; y < height; ++y)
+      {
+	for (int x = 0; x < width; ++x)
+	  {
+	    int red     = *pixels++;
+	    int green   = *pixels++;
+	    int blue    = *pixels++;
+	    int opacity = *pixels++;
 
-	  red     = *pixels++;
-	  green   = *pixels++;
-	  blue    = *pixels++;
-	  opacity = *pixels++;
+	    red   = ((red * opacity)
+		     + (background.red * ((1 << 8) - opacity)));
+	    green = ((green * opacity)
+		     + (background.green * ((1 << 8) - opacity)));
+	    blue  = ((blue * opacity)
+		     + (background.blue * ((1 << 8) - opacity)));
 
-	  red   = ((red * opacity)
-		   + (background.red * ((1 << 8) - opacity)));
-	  green = ((green * opacity)
-		   + (background.green * ((1 << 8) - opacity)));
-	  blue  = ((blue * opacity)
-		   + (background.blue * ((1 << 8) - opacity)));
+	    XPutPixel (ximg, x, y, lookup_rgb_color (f, red, green, blue));
+	  }
 
-	  XPutPixel (ximg, x, y, lookup_rgb_color (f, red, green, blue));
-	}
-
-      pixels += rowstride - 4 * width;
-    }
+	pixels += rowstride - 4 * width;
+      }
 
 #ifdef COLOR_TABLE_SUPPORT
-  /* Remember colors allocated for this image.  */
-  img->colors = colors_in_color_table (&img->ncolors);
-  free_color_table ();
+    /* Remember colors allocated for this image.  */
+    img->colors = colors_in_color_table (&img->ncolors);
+    free_color_table ();
 #endif /* COLOR_TABLE_SUPPORT */
 
-  g_object_unref (pixbuf);
+    g_object_unref (pixbuf);
 
-  img->width  = width;
-  img->height = height;
+    img->width  = width;
+    img->height = height;
 
-  /* Maybe fill in the background field while we have ximg handy.
-     Casting avoids a GCC warning.  */
-  IMAGE_BACKGROUND (img, f, (XImagePtr_or_DC)ximg);
+    /* Maybe fill in the background field while we have ximg handy.
+       Casting avoids a GCC warning.  */
+    IMAGE_BACKGROUND (img, f, (XImagePtr_or_DC)ximg);
 
-  /* Put ximg into the image.  */
-  image_put_x_image (f, img, ximg, 0);
+    /* Put ximg into the image.  */
+    image_put_x_image (f, img, ximg, 0);
 #endif /* ! USE_CAIRO */
+  }
 
   return 1;
 

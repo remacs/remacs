@@ -865,16 +865,14 @@ Otherwise, return a new string.  */)
 	 \<foo> just sets the keymap used for \[cmd].  */
       else if (strp[0] == '\\' && (strp[1] == '{' || strp[1] == '<'))
 	{
-	  struct buffer *oldbuf;
-	  ptrdiff_t start_idx;
+	 {
 	  /* This is for computing the SHADOWS arg for describe_map_tree.  */
 	  Lisp_Object active_maps = Fcurrent_active_maps (Qnil, Qnil);
-	  Lisp_Object earlier_maps;
 	  ptrdiff_t count = SPECPDL_INDEX ();
 
 	  strp += 2;		/* skip \{ or \< */
 	  start = strp;
-	  start_idx = start - SDATA (string);
+	  ptrdiff_t start_idx = start - SDATA (string);
 
 	  while ((strp - SDATA (string) < SBYTES (string))
 		 && *strp != '}' && *strp != '>')
@@ -904,7 +902,7 @@ Otherwise, return a new string.  */)
 	    }
 
 	  /* Now switch to a temp buffer.  */
-	  oldbuf = current_buffer;
+	  struct buffer *oldbuf = current_buffer;
 	  set_buffer_internal (XBUFFER (Vprin1_to_string_buffer));
 	  /* This is for an unusual case where some after-change
 	     function uses 'format' or 'prin1' or something else that
@@ -929,7 +927,8 @@ Otherwise, return a new string.  */)
 	    {
 	      /* Get the list of active keymaps that precede this one.
 		 If this one's not active, get nil.  */
-	      earlier_maps = Fcdr (Fmemq (tem, Freverse (active_maps)));
+	      Lisp_Object earlier_maps
+		= Fcdr (Fmemq (tem, Freverse (active_maps)));
 	      describe_map_tree (tem, 1, Fnreverse (earlier_maps),
 				 Qnil, 0, 1, 0, 0, 1);
 	    }
@@ -937,6 +936,7 @@ Otherwise, return a new string.  */)
 	  Ferase_buffer ();
 	  set_buffer_internal (oldbuf);
 	  unbind_to (count, Qnil);
+	 }
 
 	subst_string:
 	  start = SDATA (tem);
