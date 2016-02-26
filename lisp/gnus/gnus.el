@@ -903,14 +903,20 @@ be set in `.emacs' instead."
 
 (defun gnus-add-buffer ()
   "Add the current buffer to the list of Gnus buffers."
+  (gnus-prune-buffers)
   (push (current-buffer) gnus-buffers))
 
 (defmacro gnus-kill-buffer (buffer)
   "Kill BUFFER and remove from the list of Gnus buffers."
   `(let ((buf ,buffer))
      (when (gnus-buffer-exists-p buf)
-       (setq gnus-buffers (delete (get-buffer buf) gnus-buffers))
-       (kill-buffer buf))))
+       (kill-buffer buf)
+       (gnus-prune-buffers))))
+
+(defun gnus-prune-buffers ()
+  (dolist (buf gnus-buffers)
+    (unless (buffer-live-p buf)
+      (setq gnus-buffers (delete buf gnus-buffers)))))
 
 (defun gnus-buffers ()
   "Return a list of live Gnus buffers."
