@@ -759,6 +759,9 @@ initialize_w32_display (struct terminal *term, int *width, int *height)
 
   /* Setup w32_display_info structure for this frame. */
   w32_initialize_display_info (build_string ("Console"));
+
+  /* Set up the keyboard hook.  */
+  setup_w32_kbdhook ();
 }
 
 

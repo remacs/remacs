@@ -20,6 +20,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Added by Kevin Gallo */
 
 #include <config.h>
+/* Override API version to get the latest functionality.  */
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600
 
 #include <signal.h>
 #include <stdio.h>
@@ -41,6 +44,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "coding.h"
 
 #include "w32common.h"
+#include "w32inevt.h"
 
 #ifdef WINDOWSNT
 #include <mbstring.h>
@@ -52,6 +56,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "w32.h"
 #endif
 
+#include <basetyps.h>
+#include <unknwn.h>
 #include <commctrl.h>
 #include <commdlg.h>
 #include <shellapi.h>
@@ -250,6 +256,38 @@ HINSTANCE hinst = NULL;
 
 static unsigned int sound_type = 0xFFFFFFFF;
 #define MB_EMACS_SILENT (0xFFFFFFFF - 1)
+
+/* Special virtual key code for indicating "any" key.  */
+#define VK_ANY 0xFF
+
+#ifndef WM_WTSSESSION_CHANGE
+/* 32-bit MinGW does not define these constants.  */
+# define WM_WTSSESSION_CHANGE  0x02B1
+# define WTS_SESSION_LOCK      0x7
+#endif
+
+/* Keyboard hook state data.  */
+static struct
+{
+  int hook_count; /* counter, if several windows are created */
+  HHOOK hook;     /* hook handle */
+  HWND console;   /* console window handle */
+
+  int lwindown;      /* Left Windows key currently pressed (and hooked) */
+  int rwindown;      /* Right Windows key currently pressed (and hooked) */
+  int winsdown;      /* Number of handled keys currently pressed */
+  int send_win_up;   /* Pass through the keyup for this Windows key press? */
+  int suppress_lone; /* Suppress simulated Windows keydown-keyup for this press? */
+  int winseen;       /* Windows keys seen during this press? */
+
+  char alt_hooked[256];  /* hook Alt+[this key]? */
+  char lwin_hooked[256]; /* hook left Win+[this key]? */
+  char rwin_hooked[256]; /* hook right Win+[this key]? */
+} kbdhook;
+typedef HWND (WINAPI *GetConsoleWindow_Proc) (void);
+
+/* stdin, from w32console.c */
+extern HANDLE keyboard_handle;
 
 /* Let the user specify a display with a frame.
    nil stands for the selected frame--or, if that is not a w32 frame,
@@ -2074,6 +2112,348 @@ my_post_msg (W32Msg * wmsg, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
   post_msg (wmsg);
 }
 
+/* The Windows keyboard hook callback.  */
+static LRESULT CALLBACK
+funhook (int code, WPARAM w, LPARAM l)
+{
+  INPUT inputs[2];
+  HWND focus = GetFocus ();
+  int console = 0;
+  KBDLLHOOKSTRUCT const *hs = (KBDLLHOOKSTRUCT*)l;
+
+  if (code < 0 || (hs->flags & LLKHF_INJECTED))
+    return CallNextHookEx (0, code, w, l);
+
+  /* The keyboard hook sees keyboard input on all processes (except
+     elevated ones, when Emacs itself is not elevated).  As such,
+     care must be taken to only filter out keyboard input when Emacs
+     itself is on the foreground.
+
+     GetFocus returns a non-NULL window if another application is active,
+     and always for a console Emacs process.  For a console Emacs, determine
+     focus by checking if the current foreground window is the process's
+     console window.  */
+  if (focus == NULL && kbdhook.console != NULL)
+    {
+      if (GetForegroundWindow () == kbdhook.console)
+	{
+	  focus = kbdhook.console;
+	  console = 1;
+	}
+    }
+
+  /* First, check hooks for the left and right Windows keys.  */
+  if (hs->vkCode == VK_LWIN || hs->vkCode == VK_RWIN)
+    {
+      if (focus != NULL && (w == WM_KEYDOWN || w == WM_SYSKEYDOWN))
+	{
+	  /* The key is being pressed in an Emacs window.  */
+	  if (hs->vkCode == VK_LWIN && !kbdhook.lwindown)
+	    {
+	      kbdhook.lwindown = 1;
+	      kbdhook.winseen = 1;
+	      kbdhook.winsdown++;
+	    }
+	  else if (hs->vkCode == VK_RWIN && !kbdhook.rwindown)
+	    {
+	      kbdhook.rwindown = 1;
+	      kbdhook.winseen = 1;
+	      kbdhook.winsdown++;
+	    }
+	  /* Returning 1 here drops the keypress without further processing.
+	     If the keypress was allowed to go through, the normal Windows
+	     hotkeys would take over.  */
+	  return 1;
+	}
+      else if (kbdhook.winsdown > 0 && (w == WM_KEYUP || w == WM_SYSKEYUP))
+	{
+	  /* A key that has been captured earlier is being released now.  */
+	  if (hs->vkCode == VK_LWIN && kbdhook.lwindown)
+	    {
+	      kbdhook.lwindown = 0;
+	      kbdhook.winsdown--;
+	    }
+	  else if (hs->vkCode == VK_RWIN && kbdhook.rwindown)
+	    {
+	      kbdhook.rwindown = 0;
+	      kbdhook.winsdown--;
+	    }
+	  if (kbdhook.winsdown == 0 && kbdhook.winseen)
+	    {
+	      if (!kbdhook.suppress_lone)
+	        {
+		  /* The Windows key was pressed, then released,
+		     without any other key pressed simultaneously.
+		     Normally, this opens the Start menu, but the user
+		     can prevent this by setting the
+		     w32-pass-[lr]window-to-system variable to
+		     NIL.  */
+		  if (hs->vkCode == VK_LWIN && !NILP (Vw32_pass_lwindow_to_system) ||
+		      hs->vkCode == VK_RWIN && !NILP (Vw32_pass_rwindow_to_system))
+		    {
+		      /* Not prevented - Simulate the keypress to the system.  */
+		      memset (inputs, 0, sizeof (inputs));
+		      inputs[0].type = INPUT_KEYBOARD;
+		      inputs[0].ki.wVk = hs->vkCode;
+		      inputs[0].ki.wScan = hs->vkCode;
+		      inputs[0].ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
+		      inputs[0].ki.time = 0;
+		      inputs[1].type = INPUT_KEYBOARD;
+		      inputs[1].ki.wVk = hs->vkCode;
+		      inputs[1].ki.wScan = hs->vkCode;
+		      inputs[1].ki.dwFlags
+			= KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP;
+		      inputs[1].ki.time = 0;
+		      SendInput (2, inputs, sizeof (INPUT));
+		    }
+		  else if (focus != NULL)
+		    {
+		      /* When not passed to system, must simulate privately to Emacs.	 */
+		      PostMessage (focus, WM_SYSKEYDOWN, hs->vkCode, 0);
+		      PostMessage (focus, WM_SYSKEYUP, hs->vkCode, 0);
+		    }
+		}
+	    }
+	  if (kbdhook.winsdown == 0)
+	    {
+	      /* No Windows keys pressed anymore - clear the state flags.  */
+	      kbdhook.suppress_lone = 0;
+	      kbdhook.winseen = 0;
+	    }
+	  if (!kbdhook.send_win_up)
+	    {
+	      /* Swallow this release message, as not to confuse
+		 applications who did not get to see the original
+		 WM_KEYDOWN message either.  */
+	      return 1;
+	    }
+	  kbdhook.send_win_up = 0;
+	}
+    }
+  else if (kbdhook.winsdown > 0)
+    {
+      /* Some other key was pressed while a captured Win key is down.
+	 This is either an Emacs registered hotkey combination, or a
+	 system hotkey.	 */
+      if (kbdhook.lwindown && kbdhook.lwin_hooked[hs->vkCode] ||
+	  kbdhook.rwindown && kbdhook.rwin_hooked[hs->vkCode])
+	{
+	  /* Hooked Win-x combination, do not pass the keypress to Windows.  */
+	  kbdhook.suppress_lone = 1;
+	}
+      else if (!kbdhook.suppress_lone)
+	{
+	  /* Unhooked S-x combination; simulate the combination now
+	     (will be seen by the system).  */
+	  memset (inputs, 0, sizeof (inputs));
+	  inputs[0].type = INPUT_KEYBOARD;
+	  inputs[0].ki.wVk = kbdhook.lwindown ? VK_LWIN : VK_RWIN;
+	  inputs[0].ki.wScan = kbdhook.lwindown ? VK_LWIN : VK_RWIN;
+	  inputs[0].ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
+	  inputs[0].ki.time = 0;
+	  inputs[1].type = INPUT_KEYBOARD;
+	  inputs[1].ki.wVk = hs->vkCode;
+	  inputs[1].ki.wScan = hs->scanCode;
+	  inputs[1].ki.dwFlags =
+	    (hs->flags & LLKHF_EXTENDED) ? KEYEVENTF_EXTENDEDKEY : 0;
+	  inputs[1].ki.time = 0;
+	  SendInput (2, inputs, sizeof (INPUT));
+	  /* Stop processing of this Win sequence here; the
+	     corresponding keyup messages will come through the normal
+	     channel when the keys are released.  */
+	  kbdhook.suppress_lone = 1;
+	  kbdhook.send_win_up = 1;
+	  /* Swallow the original keypress (as we want the Win key
+	     down message simulated above to precede this real message).  */
+	  return 1;
+	}
+    }
+
+  /* Next, handle the registered Alt-* combinations.  */
+  if ((w == WM_SYSKEYDOWN || w == WM_KEYDOWN)
+      && kbdhook.alt_hooked[hs->vkCode]
+      && focus != NULL
+      && (GetAsyncKeyState (VK_MENU) & 0x8000))
+    {
+      /* Prevent the system from getting this Alt-* key - suppress the
+	 message and post as a normal keypress to Emacs.  */
+      if (console)
+	{
+	  INPUT_RECORD rec;
+	  DWORD n;
+	  rec.EventType = KEY_EVENT;
+	  rec.Event.KeyEvent.bKeyDown = TRUE;
+	  rec.Event.KeyEvent.wVirtualKeyCode = hs->vkCode;
+	  rec.Event.KeyEvent.wVirtualScanCode = hs->scanCode;
+	  rec.Event.KeyEvent.uChar.UnicodeChar = 0;
+	  rec.Event.KeyEvent.dwControlKeyState =
+	    ((GetAsyncKeyState (VK_LMENU) & 0x8000) ? LEFT_ALT_PRESSED : 0)
+	    | ((GetAsyncKeyState (VK_RMENU) & 0x8000) ? RIGHT_ALT_PRESSED : 0)
+	    | ((GetAsyncKeyState (VK_LCONTROL) & 0x8000) ? LEFT_CTRL_PRESSED : 0)
+	    | ((GetAsyncKeyState (VK_RCONTROL) & 0x8000) ? RIGHT_CTRL_PRESSED : 0)
+	    | ((GetAsyncKeyState (VK_SHIFT) & 0x8000) ? SHIFT_PRESSED : 0)
+	    | ((hs->flags & LLKHF_EXTENDED) ? ENHANCED_KEY : 0);
+	  if (w32_console_unicode_input)
+	    WriteConsoleInputW (keyboard_handle, &rec, 1, &n);
+	  else
+	    WriteConsoleInputA (keyboard_handle, &rec, 1, &n);
+	}
+      else
+	PostMessage (focus, w, hs->vkCode, 1 | (1<<29));
+      return 1;
+    }
+
+  /* The normal case - pass the message through.  */
+  return CallNextHookEx (0, code, w, l);
+}
+
+/* Set up the hook; can be called several times, with matching
+   remove_w32_kbdhook calls.  */
+void
+setup_w32_kbdhook (void)
+{
+  kbdhook.hook_count++;
+
+  /* Hooking is only available on NT architecture systems, as
+     indicated by the w32_kbdhook_active variable.  */
+  if (kbdhook.hook_count == 1 && w32_kbdhook_active)
+    {
+      /* Get the handle of the Emacs console window.  As the
+	 GetConsoleWindow function is only available on Win2000+, a
+	 hackish workaround described in Microsoft KB article 124103
+	 (https://support.microsoft.com/en-us/kb/124103) is used for
+	 NT 4 systems.  */
+      GetConsoleWindow_Proc get_console = (GetConsoleWindow_Proc)
+	GetProcAddress (GetModuleHandle ("kernel32.dll"), "GetConsoleWindow");
+
+      if (get_console != NULL)
+	kbdhook.console = get_console ();
+      else
+        {
+	  GUID guid;
+	  wchar_t *oldTitle = malloc (1024 * sizeof(wchar_t));
+	  wchar_t newTitle[64];
+	  int i;
+
+	  CoCreateGuid (&guid);
+	  StringFromGUID2 (&guid, newTitle, 64);
+	  if (newTitle != NULL)
+	    {
+	      GetConsoleTitleW (oldTitle, 1024);
+	      SetConsoleTitleW (newTitle);
+	      for (i = 0; i < 25; i++)
+	        {
+		  Sleep (40);
+		  kbdhook.console = FindWindowW (NULL, newTitle);
+		  if (kbdhook.console != NULL)
+		    break;
+		}
+	      SetConsoleTitleW (oldTitle);
+	    }
+	  free (oldTitle);
+	}
+
+      /* Set the hook.  */
+      kbdhook.hook = SetWindowsHookEx (WH_KEYBOARD_LL, funhook,
+				       GetModuleHandle (NULL), 0);
+    }
+}
+
+/* Remove the hook.  */
+void
+remove_w32_kbdhook (void)
+{
+  kbdhook.hook_count--;
+  if (kbdhook.hook_count == 0 && w32_kbdhook_active)
+    {
+      UnhookWindowsHookEx (kbdhook.hook);
+      kbdhook.hook = NULL;
+    }
+}
+
+/* Mark a specific key combination as hooked, preventing it to be
+   handled by the system.  */
+void
+hook_w32_key (int hook, int modifier, int vkey)
+{
+  char *tbl = NULL;
+
+  switch (modifier)
+    {
+    case VK_MENU:
+      tbl = kbdhook.alt_hooked;
+      break;
+    case VK_LWIN:
+      tbl = kbdhook.lwin_hooked;
+      break;
+    case VK_RWIN:
+      tbl = kbdhook.rwin_hooked;
+      break;
+    }
+
+  if (tbl != NULL && vkey >= 0 && vkey <= 255)
+    {
+       /* VK_ANY hooks all keys for this modifier */
+       if (vkey == VK_ANY)
+	 memset (tbl, (char)hook, 256);
+       else
+	 tbl[vkey] = (char)hook;
+       /* Alt-<modifier>s should go through */
+       kbdhook.alt_hooked[VK_MENU] = 0;
+       kbdhook.alt_hooked[VK_LMENU] = 0;
+       kbdhook.alt_hooked[VK_RMENU] = 0;
+       kbdhook.alt_hooked[VK_CONTROL] = 0;
+       kbdhook.alt_hooked[VK_LCONTROL] = 0;
+       kbdhook.alt_hooked[VK_RCONTROL] = 0;
+       kbdhook.alt_hooked[VK_SHIFT] = 0;
+       kbdhook.alt_hooked[VK_LSHIFT] = 0;
+       kbdhook.alt_hooked[VK_RSHIFT] = 0;
+    }
+}
+
+/* Check the current Win key pressed state.  */
+int
+check_w32_winkey_state (int vkey)
+{
+  /* The hook code handles grabbing of the Windows keys and Alt-* key
+     combinations reserved by the system.  Handling Alt is a bit
+     easier, as Windows intends Alt-* shortcuts for application use in
+     Windows; hotkeys such as Alt-tab and Alt-escape are special
+     cases.  Win-* hotkeys, on the other hand, are primarily meant for
+     system use.
+
+     As a result, when we want Emacs to be able to grab the Win-*
+     keys, we must swallow all Win key presses in a low-level keyboard
+     hook.  Unfortunately, this means that the Emacs window procedure
+     (and console input handler) never see the keypresses either.
+     Thus, to check the modifier states properly, Emacs code must use
+     the check_w32_winkey_state function that uses the flags directly
+     updated by the hook callback.  */
+  switch (vkey)
+    {
+    case VK_LWIN:
+      return kbdhook.lwindown;
+    case VK_RWIN:
+      return kbdhook.rwindown;
+    }
+  return 0;
+}
+
+/* Reset the keyboard hook state.  Locking the workstation with Win-L
+   leaves the Win key(s) "down" from the hook's point of view - the
+   keyup event is never seen.  Thus, this function must be called when
+   the system is locked.  */
+void
+reset_w32_kbdhook_state (void)
+{
+  kbdhook.lwindown = 0;
+  kbdhook.rwindown = 0;
+  kbdhook.winsdown = 0;
+  kbdhook.send_win_up = 0;
+  kbdhook.suppress_lone = 0;
+  kbdhook.winseen = 0;
+}
+
 /* GetKeyState and MapVirtualKey on Windows 95 do not actually distinguish
    between left and right keys as advertised.  We test for this
    support dynamically, and set a flag when the support is absent.  If
@@ -2248,6 +2628,8 @@ modifier_set (int vkey)
       else
 	return (GetKeyState (vkey) & 0x1);
     }
+  if (w32_kbdhook_active && (vkey == VK_LWIN || vkey == VK_RWIN))
+    return check_w32_winkey_state (vkey);
 
   if (!modifiers_recorded)
     return (GetKeyState (vkey) & 0x8000);
@@ -2390,7 +2772,9 @@ map_keypad_keys (unsigned int virt_key, unsigned int extended)
 /* List of special key combinations which w32 would normally capture,
    but Emacs should grab instead.  Not directly visible to lisp, to
    simplify synchronization.  Each item is an integer encoding a virtual
-   key code and modifier combination to capture.  */
+   key code and modifier combination to capture.
+   Note: This code is not used if keyboard hooks are active
+   (Windows 2000 and later).  */
 static Lisp_Object w32_grabbed_keys;
 
 #define HOTKEY(vk, mods)      make_number (((vk) & 255) | ((mods) << 8))
@@ -3440,7 +3824,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       switch (wParam)
 	{
 	case VK_LWIN:
-	  if (NILP (Vw32_pass_lwindow_to_system))
+	  if (!w32_kbdhook_active && NILP (Vw32_pass_lwindow_to_system))
 	    {
 	      /* Prevent system from acting on keyup (which opens the
 		 Start menu if no other key was pressed) by simulating a
@@ -3459,7 +3843,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    return 0;
 	  break;
 	case VK_RWIN:
-	  if (NILP (Vw32_pass_rwindow_to_system))
+	  if (!w32_kbdhook_active && NILP (Vw32_pass_rwindow_to_system))
 	    {
 	      if (GetAsyncKeyState (wParam) & 1)
 		{
@@ -4316,10 +4700,12 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_SETFOCUS:
       dpyinfo->faked_key = 0;
       reset_modifiers ();
-      register_hot_keys (hwnd);
+      if (!w32_kbdhook_active)
+	register_hot_keys (hwnd);
       goto command;
     case WM_KILLFOCUS:
-      unregister_hot_keys (hwnd);
+      if (!w32_kbdhook_active)
+	unregister_hot_keys (hwnd);
       button_state = 0;
       ReleaseCapture ();
       /* Relinquish the system caret.  */
@@ -4348,9 +4734,19 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       my_post_msg (&wmsg, hwnd, msg, wParam, lParam);
       goto dflt;
 
+    case WM_CREATE:
+      setup_w32_kbdhook ();
+      goto dflt;
+
     case WM_DESTROY:
+      remove_w32_kbdhook ();
       CoUninitialize ();
       return 0;
+
+    case WM_WTSSESSION_CHANGE:
+      if (wParam == WTS_SESSION_LOCK)
+        reset_w32_kbdhook_state ();
+      goto dflt;
 
     case WM_CLOSE:
       wmsg.dwModifiers = w32_get_modifiers ();
@@ -7617,19 +8013,34 @@ lookup_vk_code (char *key)
 	&& strcmp (lispy_function_keys[i], key) == 0)
       return i;
 
+  if (w32_kbdhook_active)
+    {
+      /* Alphanumerics map to themselves.  */
+      if (key[1] == 0)
+      {
+	if (key[0] >= 'A' && key[0] <= 'Z' ||
+	    key[0] >= '0' && key[0] <= '9')
+	  return key[0];
+	if (key[0] >= 'a' && key[0] <= 'z')
+	  return toupper(key[0]);
+      }
+    }
+
   return -1;
 }
 
 /* Convert a one-element vector style key sequence to a hot key
    definition.  */
 static Lisp_Object
-w32_parse_hot_key (Lisp_Object key)
+w32_parse_and_hook_hot_key (Lisp_Object key, int hook)
 {
   /* Copied from Fdefine_key and store_in_keymap.  */
   register Lisp_Object c;
   int vk_code;
   int lisp_modifiers;
   int w32_modifiers;
+  Lisp_Object res = Qnil;
+  char* vkname;
 
   CHECK_VECTOR (key);
 
@@ -7652,7 +8063,12 @@ w32_parse_hot_key (Lisp_Object key)
       c = Fcar (c);
       if (!SYMBOLP (c))
 	emacs_abort ();
-      vk_code = lookup_vk_code (SSDATA (SYMBOL_NAME (c)));
+      vkname = SSDATA (SYMBOL_NAME (c));
+      /* [s-], [M-], [h-]: Register all keys for this modifier */
+      if (w32_kbdhook_active && vkname[0] == 0)
+        vk_code = VK_ANY;
+      else
+        vk_code = lookup_vk_code (vkname);
     }
   else if (INTEGERP (c))
     {
@@ -7676,34 +8092,75 @@ w32_parse_hot_key (Lisp_Object key)
 #define MOD_WIN         0x0008
 #endif
 
-  /* Convert lisp modifiers to Windows hot-key form.  */
-  w32_modifiers  = (lisp_modifiers & hyper_modifier)    ? MOD_WIN : 0;
-  w32_modifiers |= (lisp_modifiers & alt_modifier)      ? MOD_ALT : 0;
-  w32_modifiers |= (lisp_modifiers & ctrl_modifier)     ? MOD_CONTROL : 0;
-  w32_modifiers |= (lisp_modifiers & shift_modifier)    ? MOD_SHIFT : 0;
+  if (w32_kbdhook_active)
+    {
+      /* Register Alt-x combinations.  */
+      if (lisp_modifiers & alt_modifier)
+        {
+          hook_w32_key (hook, VK_MENU, vk_code);
+          res = Qt;
+        }
+      /* Register Win-x combinations based on modifier mappings.  */
+      if (((lisp_modifiers & hyper_modifier)
+	   && EQ (Vw32_lwindow_modifier, Qhyper))
+	  || ((lisp_modifiers & super_modifier)
+	      && EQ (Vw32_lwindow_modifier, Qsuper)))
+        {
+          hook_w32_key (hook, VK_LWIN, vk_code);
+          res = Qt;
+        }
+      if (((lisp_modifiers & hyper_modifier)
+	   && EQ (Vw32_rwindow_modifier, Qhyper))
+	  || ((lisp_modifiers & super_modifier)
+	      && EQ (Vw32_rwindow_modifier, Qsuper)))
+        {
+          hook_w32_key (hook, VK_RWIN, vk_code);
+          res = Qt;
+        }
+      return res;
+    }
+  else
+    {
+      /* Convert lisp modifiers to Windows hot-key form.  */
+      w32_modifiers  = (lisp_modifiers & hyper_modifier)    ? MOD_WIN : 0;
+      w32_modifiers |= (lisp_modifiers & alt_modifier)      ? MOD_ALT : 0;
+      w32_modifiers |= (lisp_modifiers & ctrl_modifier)     ? MOD_CONTROL : 0;
+      w32_modifiers |= (lisp_modifiers & shift_modifier)    ? MOD_SHIFT : 0;
 
-  return HOTKEY (vk_code, w32_modifiers);
+      return HOTKEY (vk_code, w32_modifiers);
+    }
 }
 
 DEFUN ("w32-register-hot-key", Fw32_register_hot_key,
        Sw32_register_hot_key, 1, 1, 0,
        doc: /* Register KEY as a hot-key combination.
-Certain key combinations like Alt-Tab are reserved for system use on
-Windows, and therefore are normally intercepted by the system.  However,
-most of these key combinations can be received by registering them as
-hot-keys, overriding their special meaning.
+Certain key combinations like Alt-Tab and Win-R are reserved for
+system use on Windows, and therefore are normally intercepted by the
+system.  These key combinations can be received by registering them
+as hot-keys, except for Win-L which always locks the computer.
 
-KEY must be a one element key definition in vector form that would be
-acceptable to `define-key' (e.g. [A-tab] for Alt-Tab).  The meta
-modifier is interpreted as Alt if `w32-alt-is-meta' is t, and hyper
-is always interpreted as the Windows modifier keys.
+On Windows 98 and ME, KEY must be a one element key definition in
+vector form that would be acceptable to `define-key' (e.g. [A-tab] for
+Alt-Tab).  The meta modifier is interpreted as Alt if
+`w32-alt-is-meta' is t, and hyper is always interpreted as the Windows
+modifier keys.  The return value is the hotkey-id if registered, otherwise nil.
 
-The return value is the hotkey-id if registered, otherwise nil.  */)
+On Windows versions since NT, KEY can also be specified as [M-], [s-] or
+[h-] to indicate that all combinations of that key should be processed
+by Emacs instead of the operating system.  The super and hyper
+modifiers are interpreted according to the current values of
+`w32-lwindow-modifier' and `w32-rwindow-modifier'.  For instance,
+setting `w32-lwindow-modifier' to `super' and then calling
+`(register-hot-key [s-])' grabs all combinations of the left Windows
+key to Emacs, but leaves the right Windows key free for the operating
+system keyboard shortcuts.  The return value is t if the call affected
+any key combinations, otherwise nil.  */)
   (Lisp_Object key)
 {
-  key = w32_parse_hot_key (key);
+  key = w32_parse_and_hook_hot_key (key, 1);
 
-  if (!NILP (key) && NILP (Fmemq (key, w32_grabbed_keys)))
+  if (!w32_kbdhook_active
+      && !NILP (key) && NILP (Fmemq (key, w32_grabbed_keys)))
     {
       /* Reuse an empty slot if possible.  */
       Lisp_Object item = Fmemq (Qnil, w32_grabbed_keys);
@@ -7731,7 +8188,10 @@ DEFUN ("w32-unregister-hot-key", Fw32_unregister_hot_key,
   Lisp_Object item;
 
   if (!INTEGERP (key))
-    key = w32_parse_hot_key (key);
+    key = w32_parse_and_hook_hot_key (key, 0);
+
+  if (w32_kbdhook_active)
+    return key;
 
   item = Fmemq (key, w32_grabbed_keys);
 
@@ -9338,11 +9798,15 @@ When non-nil, the Start menu is opened by tapping the key.
 If you set this to nil, the left \"Windows\" key is processed by Emacs
 according to the value of `w32-lwindow-modifier', which see.
 
-Note that some combinations of the left \"Windows\" key with other keys are
-caught by Windows at low level, and so binding them in Emacs will have no
-effect.  For example, <lwindow>-r always pops up the Windows Run dialog,
-<lwindow>-<Pause> pops up the "System Properties" dialog, etc.  However, see
-the doc string of `w32-phantom-key-code'.  */);
+Note that some combinations of the left \"Windows\" key with other
+keys are caught by Windows at low level.  For example, <lwindow>-r
+pops up the Windows Run dialog, <lwindow>-<Pause> pops up the "System
+Properties" dialog, etc.  On Windows 10, no \"Windows\" key
+combinations are normally handed to applications.  To enable Emacs to
+process \"Windows\" key combinations, use the function
+`w32-register-hot-key`.
+
+For Windows 98/ME, see the doc string of `w32-phantom-key-code'.  */);
   Vw32_pass_lwindow_to_system = Qt;
 
   DEFVAR_LISP ("w32-pass-rwindow-to-system",
@@ -9353,11 +9817,15 @@ When non-nil, the Start menu is opened by tapping the key.
 If you set this to nil, the right \"Windows\" key is processed by Emacs
 according to the value of `w32-rwindow-modifier', which see.
 
-Note that some combinations of the right \"Windows\" key with other keys are
-caught by Windows at low level, and so binding them in Emacs will have no
-effect.  For example, <rwindow>-r always pops up the Windows Run dialog,
-<rwindow>-<Pause> pops up the "System Properties" dialog, etc.  However, see
-the doc string of `w32-phantom-key-code'.  */);
+Note that some combinations of the right \"Windows\" key with other
+keys are caught by Windows at low level.  For example, <rwindow>-r
+pops up the Windows Run dialog, <rwindow>-<Pause> pops up the "System
+Properties" dialog, etc.  On Windows 10, no \"Windows\" key
+combinations are normally handed to applications.  To enable Emacs to
+process \"Windows\" key combinations, use the function
+`w32-register-hot-key`.
+
+For Windows 98/ME, see the doc string of `w32-phantom-key-code'.  */);
   Vw32_pass_rwindow_to_system = Qt;
 
   DEFVAR_LISP ("w32-phantom-key-code",
@@ -9367,7 +9835,11 @@ Value is a number between 0 and 255.
 
 Phantom key presses are generated in order to stop the system from
 acting on \"Windows\" key events when `w32-pass-lwindow-to-system' or
-`w32-pass-rwindow-to-system' is nil.  */);
+`w32-pass-rwindow-to-system' is nil.
+
+This variable is only used on Windows 98 and ME.  For other Windows
+versions, see the documentation of the `w32-register-hot-key`
+function.  */);
   /* Although 255 is technically not a valid key code, it works and
      means that this hack won't interfere with any real key code.  */
   XSETINT (Vw32_phantom_key_code, 255);
@@ -9397,7 +9869,9 @@ Any other value will cause the Scroll Lock key to be ignored.  */);
 	       doc: /* Modifier to use for the left \"Windows\" key.
 The value can be hyper, super, meta, alt, control or shift for the
 respective modifier, or nil to appear as the `lwindow' key.
-Any other value will cause the key to be ignored.  */);
+Any other value will cause the key to be ignored.
+
+Also see the documentation of the `w32-register-hot-key` function.  */);
   Vw32_lwindow_modifier = Qnil;
 
   DEFVAR_LISP ("w32-rwindow-modifier",
@@ -9405,7 +9879,9 @@ Any other value will cause the key to be ignored.  */);
 	       doc: /* Modifier to use for the right \"Windows\" key.
 The value can be hyper, super, meta, alt, control or shift for the
 respective modifier, or nil to appear as the `rwindow' key.
-Any other value will cause the key to be ignored.  */);
+Any other value will cause the key to be ignored.
+
+Also see the documentation of the `w32-register-hot-key` function.  */);
   Vw32_rwindow_modifier = Qnil;
 
   DEFVAR_LISP ("w32-apps-modifier",

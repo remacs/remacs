@@ -738,6 +738,12 @@ extern int handle_file_notifications (struct input_event *);
 extern void w32_initialize_display_info (Lisp_Object);
 extern void initialize_w32_display (struct terminal *, int *, int *);
 
+/* Keyboard hooks.  */
+extern void setup_w32_kbdhook (void);
+extern void remove_w32_kbdhook (void);
+extern int check_w32_winkey_state (int);
+#define w32_kbdhook_active (os_subtype != OS_9X)
+
 /* Keypad command key support.  W32 doesn't have virtual keys defined
    for the function keys on the keypad (they are mapped to the standard
    function keys), so we define our own.  */

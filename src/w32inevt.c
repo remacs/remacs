@@ -41,6 +41,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "termchar.h"	/* for Mouse_HLInfo, tty_display_info */
 #include "w32term.h"
 #include "w32inevt.h"
+#include "w32common.h"
 
 /* stdin, from w32console.c */
 extern HANDLE keyboard_handle;
@@ -148,10 +149,12 @@ key_event (KEY_EVENT_RECORD *event, struct input_event *emacs_ev, int *isdead)
       switch (event->wVirtualKeyCode)
 	{
 	case VK_LWIN:
-	  mod_key_state &= ~LEFT_WIN_PRESSED;
+          if (!w32_kbdhook_active)
+            mod_key_state &= ~LEFT_WIN_PRESSED;
 	  break;
 	case VK_RWIN:
-	  mod_key_state &= ~RIGHT_WIN_PRESSED;
+          if (!w32_kbdhook_active)
+            mod_key_state &= ~RIGHT_WIN_PRESSED;
 	  break;
 	case VK_APPS:
 	  mod_key_state &= ~APPS_PRESSED;
@@ -185,7 +188,8 @@ key_event (KEY_EVENT_RECORD *event, struct input_event *emacs_ev, int *isdead)
 	      keybd_event (faked_key, (BYTE) MapVirtualKey (faked_key, 0), 0, 0);
 	    }
 	}
-      mod_key_state |= LEFT_WIN_PRESSED;
+      if (!w32_kbdhook_active)
+        mod_key_state |= LEFT_WIN_PRESSED;
       if (!NILP (Vw32_lwindow_modifier))
 	return 0;
       break;
@@ -201,7 +205,8 @@ key_event (KEY_EVENT_RECORD *event, struct input_event *emacs_ev, int *isdead)
 	      keybd_event (faked_key, (BYTE) MapVirtualKey (faked_key, 0), 0, 0);
 	    }
 	}
-      mod_key_state |= RIGHT_WIN_PRESSED;
+      if (!w32_kbdhook_active)
+        mod_key_state |= RIGHT_WIN_PRESSED;
       if (!NILP (Vw32_rwindow_modifier))
 	return 0;
       break;
@@ -267,6 +272,13 @@ key_event (KEY_EVENT_RECORD *event, struct input_event *emacs_ev, int *isdead)
 
   /* Recognize state of Windows and Apps keys.  */
   event->dwControlKeyState |= mod_key_state;
+  if (w32_kbdhook_active)
+    {
+      if (check_w32_winkey_state (VK_LWIN))
+        event->dwControlKeyState |= LEFT_WIN_PRESSED;
+      if (check_w32_winkey_state (VK_RWIN))
+        event->dwControlKeyState |= RIGHT_WIN_PRESSED;
+    }
 
   /* Distinguish numeric keypad keys from extended keys.  */
   event->wVirtualKeyCode =

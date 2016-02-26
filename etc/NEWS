@@ -129,6 +129,15 @@ changed size when `window-size-change-functions' are run.
 
 * Changes in Emacs 25.2 on Non-Free Operating Systems
 
+** Intercepting hotkeys on Windows 7 and later now works better.
+The new keyboard hooking code properly grabs system hotkeys such as
+Win-* and Alt-TAB, in a way that Emacs can get at them before the
+system.  This makes the `w32-register-hot-key' functionality work
+again on all versions of MS-Windows starting with Windows 7.  On
+Windows NT and later you can now register any hotkey combination.  (On
+Windows 9X, the previous limitations, spelled out in the Emacs manual,
+still apply.)
+
 
 * Installation Changes in Emacs 25.1
 
