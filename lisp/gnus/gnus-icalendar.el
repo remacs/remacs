@@ -406,10 +406,10 @@ Return nil for non-recurring EVENT."
   "Build `org-mode' timestamp from EVENT start/end dates and recurrence info."
   (let* ((start (gnus-icalendar-event:start-time event))
          (end (gnus-icalendar-event:end-time event))
-         (start-date (format-time-string "%Y-%m-%d %a" start))
+         (start-date (format-time-string "%Y-%m-%d" start))
          (start-time (format-time-string "%H:%M" start))
          (start-at-midnight (string= start-time "00:00"))
-         (end-date (format-time-string "%Y-%m-%d %a" end))
+         (end-date (format-time-string "%Y-%m-%d" end))
          (end-time (format-time-string "%H:%M" end))
          (end-at-midnight (string= end-time "00:00"))
          (start-end-date-diff (/ (float-time (time-subtract
@@ -428,7 +428,7 @@ Return nil for non-recurring EVENT."
      ;; A 0:0 - A+1 0:0 -> A
      ;; A 0:0 - A+n 0:0 -> A - A+n-1
      ((and start-at-midnight end-at-midnight) (if (> start-end-date-diff 1)
-                                                  (let ((end-ts (format-time-string "%Y-%m-%d %a" (time-subtract end time-1-day))))
+                                                  (let ((end-ts (format-time-string "%Y-%m-%d" (time-subtract end time-1-day))))
                                                     (format "<%s>--<%s>" start-date end-ts))
                                                 (format "<%s%s>" start-date repeat)))
      ;; end midnight
@@ -436,7 +436,7 @@ Return nil for non-recurring EVENT."
      ;; A .:. - A+n 0:0 -> A .:. - A_n-1
      (end-at-midnight (if (= start-end-date-diff 1)
                           (format "<%s %s-23:59%s>" start-date start-time repeat)
-                        (let ((end-ts (format-time-string "%Y-%m-%d %a" (time-subtract end time-1-day))))
+                        (let ((end-ts (format-time-string "%Y-%m-%d" (time-subtract end time-1-day))))
                           (format "<%s %s>--<%s>" start-date start-time end-ts))))
      ;; start midnight
      ;; A 0:0 - A .:. -> A 0:0-.:. (default 1)
