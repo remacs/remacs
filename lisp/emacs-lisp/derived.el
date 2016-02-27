@@ -162,8 +162,7 @@ The new mode runs the hook constructed by the function
 See Info node `(elisp)Derived Modes' for more details."
   (declare (debug (&define name symbolp sexp [&optional stringp]
 			   [&rest keywordp sexp] def-body))
-	   (doc-string 4)
-           (indent 3))
+	   (doc-string 4))
 
   (when (and docstring (not (stringp docstring)))
     ;; Some trickiness, since what appears to be the docstring may really be
