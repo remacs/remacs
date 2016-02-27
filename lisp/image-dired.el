@@ -1143,7 +1143,8 @@ image."
 (defun image-dired-next-line ()
   "Move to next line and display properties."
   (interactive)
-  (forward-line 1)
+  (let ((goal-column (current-column)))
+    (next-line))
   ;; If we end up in an empty spot, back up to the next thumbnail.
   (if (not (image-dired-image-at-point-p))
       (image-dired-backward-image))
@@ -1155,7 +1156,8 @@ image."
 (defun image-dired-previous-line ()
   "Move to previous line and display properties."
   (interactive)
-  (forward-line -1)
+  (let ((goal-column (current-column)))
+    (previous-line))
   ;; If we end up in an empty spot, back up to the next
   ;; thumbnail. This should only happen if the user deleted a
   ;; thumbnail and did not refresh, so it is not very common. But we
