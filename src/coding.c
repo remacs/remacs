@@ -6814,39 +6814,29 @@ decode_eol (struct coding_system *coding)
   else if (EQ (eol_type, Qdos))
     {
       ptrdiff_t n = 0;
+      ptrdiff_t pos = coding->dst_pos;
+      ptrdiff_t pos_byte = coding->dst_pos_byte;
+      ptrdiff_t pos_end = pos_byte + coding->produced - 1;
 
-      if (NILP (coding->dst_object))
-	{
-	  /* Start deleting '\r' from the tail to minimize the memory
-	     movement.  */
-	  for (p = pend - 2; p >= pbeg; p--)
-	    if (*p == '\r')
-	      {
-		memmove (p, p + 1, pend-- - p - 1);
-		n++;
-	      }
-	}
-      else
-	{
-	  ptrdiff_t pos = coding->dst_pos;
-	  ptrdiff_t pos_byte = coding->dst_pos_byte;
-	  ptrdiff_t pos_end = pos_byte + coding->produced - 1;
+      /* This assertion is here instead of code, now deleted, that
+	 handled the NILP case, which no longer happens with the
+	 current codebase.  */
+      eassert (!NILP (coding->dst_object));
 
-	  while (pos_byte < pos_end)
+      while (pos_byte < pos_end)
+	{
+	  p = BYTE_POS_ADDR (pos_byte);
+	  if (*p == '\r' && p[1] == '\n')
 	    {
-	      p = BYTE_POS_ADDR (pos_byte);
-	      if (*p == '\r' && p[1] == '\n')
-		{
-		  del_range_2 (pos, pos_byte, pos + 1, pos_byte + 1, 0);
-		  n++;
-		  pos_end--;
-		}
-	      pos++;
-	      if (coding->dst_multibyte)
-		pos_byte += BYTES_BY_CHAR_HEAD (*p);
-	      else
-		pos_byte++;
+	      del_range_2 (pos, pos_byte, pos + 1, pos_byte + 1, 0);
+	      n++;
+	      pos_end--;
 	    }
+	  pos++;
+	  if (coding->dst_multibyte)
+	    pos_byte += BYTES_BY_CHAR_HEAD (*p);
+	  else
+	    pos_byte++;
 	}
       coding->produced -= n;
       coding->produced_char -= n;
