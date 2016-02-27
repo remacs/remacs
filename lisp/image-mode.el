@@ -24,8 +24,8 @@
 ;;; Commentary:
 
 ;; Defines a major mode for visiting image files
-;; that allows conversion between viewing the text of the file
-;; and viewing the file as an image.  Viewing the image
+;; that allows conversion between viewing the text of the file,
+;; hex of the file and viewing the file as an image.  Viewing the image
 ;; works by putting a `display' text-property on the
 ;; image data, with the image-data still present underneath; if the
 ;; resulting buffer file is saved to another name it will correctly save
@@ -375,6 +375,7 @@ call."
     (set-keymap-parent map special-mode-map)
     (set-keymap-parent map image-map)
     (define-key map "\C-c\C-c" 'image-toggle-display)
+    (define-key map "\C-c\C-x" 'image-toggle-hex-display)
     (define-key map (kbd "SPC")       'image-scroll-up)
     (define-key map (kbd "S-SPC")     'image-scroll-down)
     (define-key map (kbd "DEL")       'image-scroll-down)
@@ -407,6 +408,8 @@ call."
       '("Image"
 	["Show as Text" image-toggle-display :active t
 	 :help "Show image as text"]
+    ["Show as Hex" image-toggle-hex-display :active t
+     :help "Show image as hex"]
 	"--"
 	["Fit to Window Height" image-transform-fit-to-height
 	 :visible (eq image-type 'imagemagick)
@@ -481,6 +484,7 @@ call."
 (defvar image-minor-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c\C-c" 'image-toggle-display)
+    (define-key map "\C-c\C-x" 'image-toggle-hex-display)
     map)
   "Mode keymap for `image-minor-mode'.")
 
@@ -491,8 +495,8 @@ call."
 ;;;###autoload
 (defun image-mode ()
   "Major mode for image files.
-You can use \\<image-mode-map>\\[image-toggle-display]
-to toggle between display as an image and display as text.
+You can use \\<image-mode-map>\\[image-toggle-display] or \\<image-mode-map>\\[image-toggle-hex-display]
+to toggle between display as an image and display as text or hex.
 
 Key bindings:
 \\{image-mode-map}"
@@ -531,7 +535,7 @@ Key bindings:
 	(run-mode-hooks 'image-mode-hook)
 	(let ((image (image-get-display-property))
 	      (msg1 (substitute-command-keys
-		     "Type \\[image-toggle-display] to view the image as "))
+             "Type \\[image-toggle-display] or \\[image-toggle-hex-display] to view the image as "))
 	      animated)
 	  (cond
 	   ((null image)
@@ -560,7 +564,7 @@ mouse-3: Previous frame"
 ;;;			     (substitute-command-keys
 ;;;			      "\\[image-toggle-animation] to animate."))))
 	   (t
-	    (message "%s" (concat msg1 "text."))))))
+        (message "%s" (concat msg1 "text or hex."))))))
 
     (error
      (image-mode-as-text)
@@ -586,19 +590,10 @@ actual image."
       (add-hook 'change-major-mode-hook (lambda () (image-minor-mode -1)) nil t)))
 
 ;;;###autoload
-(defun image-mode-as-text ()
+(defun image-mode-to-text ()
   "Set a non-image mode as major mode in combination with image minor mode.
-A non-image major mode found from `auto-mode-alist' or Fundamental mode
-displays an image file as text.  `image-minor-mode' provides the key
-\\<image-mode-map>\\[image-toggle-display] to switch back to `image-mode'
-to display an image file as the actual image.
-
-You can use `image-mode-as-text' in `auto-mode-alist' when you want
-to display an image file as text initially.
-
-See commands `image-mode' and `image-minor-mode' for more information
-on these modes."
-  (interactive)
+A non-mage major mode found from `auto-mode-alist' or fundamental mode
+displays an image file as text."
   ;; image-mode-as-text = normal-mode + image-minor-mode
   (let ((previous-image-type image-type)) ; preserve `image-type'
     (if image-mode-previous-major-mode
@@ -626,12 +621,49 @@ on these modes."
     ;; Enable image minor mode with `C-c C-c'.
     (image-minor-mode 1)
     ;; Show the image file as text.
-    (image-toggle-display-text)
-    (message "%s" (concat
-		   (substitute-command-keys
-		    "Type \\[image-toggle-display] to view the image as ")
-		   (if (image-get-display-property)
-		       "text" "an image") "."))))
+    (image-toggle-display-text)))
+
+(defun image-mode-as-hex ()
+  "Set a non-image mode as major mode in combination with image minor mode.
+A non-mage major mode found from `auto-mode-alist' or fundamental mode
+displays an image file as hex.  `image-minor-mode' provides the key
+\\<image-mode-map>\\[image-toggle-hex-display] to switch back to `image-mode'
+to display an image file as the actual image.
+
+You can use `image-mode-as-hex' in `auto-mode-alist' when you want to
+to display an image file as hex initially.
+
+See commands `image-mode' and `image-minor-mode' for more information
+on these modes."
+  (interactive)
+  (image-mode-to-text)
+  ;; Turn on hexl-mode
+  (hexl-mode)
+  (message "%s" (concat
+                 (substitute-command-keys
+                  "Type \\[image-toggle-hex-display] or \\[image-toggle-display] to view the image as ")
+                 (if (image-get-display-property)
+                     "hex" "an image or text") ".")))
+
+(defun image-mode-as-text ()
+  "Set a non-image mode as major mode in combination with image minor mode.
+A non-image major mode found from `auto-mode-alist' or Fundamental mode
+displays an image file as text.  `image-minor-mode' provides the key
+\\<image-mode-map>\\[image-toggle-display] to switch back to `image-mode'
+to display an image file as the actual image.
+
+You can use `image-mode-as-text' in `auto-mode-alist' when you want
+to display an image file as text initially.
+
+See commands `image-mode' and `image-minor-mode' for more information
+on these modes."
+  (interactive)
+  (image-mode-to-text)
+  (message "%s" (concat
+                 (substitute-command-keys
+                  "Type \\[image-toggle-display] or \\[image-toggle-hex-display] to view the image as ")
+                 (if (image-get-display-property)
+                     "text" "an image or hex") ".")))
 
 (define-obsolete-function-alias 'image-mode-maybe 'image-mode "23.2")
 
@@ -726,15 +758,27 @@ was inserted."
     (if (called-interactively-p 'any)
 	(message "Repeat this command to go back to displaying the file as text"))))
 
+(defun image-toggle-hex-display ()
+  "Toggle between image and hex display."
+  (interactive)
+  (if (image-get-display-property)
+      (image-mode-as-hex)
+    (if (eq major-mode 'fundamental-mode)
+        (image-mode-as-hex)
+      (image-mode))))
+
 (defun image-toggle-display ()
   "Toggle between image and text display.
+
 If the current buffer is displaying an image file as an image,
-call `image-mode-as-text' to switch to text.  Otherwise, display
-the image by calling `image-mode'."
+call `image-mode-as-text' to switch to text or hex display.
+Otherwise, display the image by calling `image-mode'"
   (interactive)
   (if (image-get-display-property)
       (image-mode-as-text)
-    (image-mode)))
+    (if (eq major-mode 'hexl-mode)
+        (image-mode-as-text)
+      (image-mode))))
 
 (defun image-kill-buffer ()
   "Kill the current buffer."
