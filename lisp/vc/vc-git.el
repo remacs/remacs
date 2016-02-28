@@ -970,7 +970,9 @@ or BRANCH^ (where \"^\" can be repeated)."
     (goto-char (point-min))
     (unless (eobp)
       ;; Indent the expanded log entry.
-      (indent-region (point-min) (point-max) 2)
+      (while (re-search-forward "^  " nil t)
+        (replace-match "")
+        (forward-line))
       (buffer-string))))
 
 (defun vc-git-region-history (file buffer lfrom lto)
