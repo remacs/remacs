@@ -802,6 +802,9 @@ See the variable `align-exclude-rules-list' for more details.")
 (defvar align-highlight-overlays nil
   "The current overlays highlighting the text matched by a rule.")
 
+(defvar align-regexp-history nil
+  "Input history for the full user-entered regex in `align-regexp'")
+
 ;; Sample extension rule set, for vhdl-mode.  This should properly be
 ;; in vhdl-mode.el itself.
 
@@ -946,7 +949,7 @@ construct a rule to pass to `align-region', which does the real work."
     (list (region-beginning) (region-end))
     (if current-prefix-arg
 	(list (read-string "Complex align using regexp: "
-			   "\\(\\s-*\\)")
+                          "\\(\\s-*\\)" 'align-regexp-history)
 	      (string-to-number
 	       (read-string
 		"Parenthesis group to modify (justify if negative): " "1"))

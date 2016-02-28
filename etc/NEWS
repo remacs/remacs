@@ -31,6 +31,11 @@ otherwise leave it unmarked.
 
 * Changes in Emacs 25.2
 
+---
+** `align-regexp' has a separate history for its interactive argument
+`align-regexp' no longer shares its history with all other
+history-less functions that use `read-string'
+
 +++
 ** The networking code has been reworked so that it's more
 asynchronous than it was (when specifying :nowait t in
