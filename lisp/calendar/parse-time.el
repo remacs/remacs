@@ -41,14 +41,11 @@
 (defvar parse-time-val)
 
 (defsubst parse-time-string-chars (char)
-  (save-match-data
-    (let (case-fold-search str)
-      (cond ((eq char ?+) 1)
-	    ((eq char ?-) -1)
-	    ((eq char ?:) ?d)
-	    ((string-match "[[:upper:]]" (setq str (string char))) ?A)
-	    ((string-match "[[:lower:]]" str) ?a)
-	    ((string-match "[[:digit:]]" str) ?0)))))
+  (cond ((<= ?a char ?z) ?a)
+        ((<= ?0 char ?9) ?0)
+        ((eq char ?+) 1)
+        ((eq char ?-) -1)
+        ((eq char ?:) ?d)))
 
 (defun parse-time-tokenize (string)
   "Tokenize STRING into substrings."
