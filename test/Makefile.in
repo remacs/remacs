@@ -33,6 +33,8 @@ SHELL = @SHELL@
 srcdir = @srcdir@
 VPATH = $(srcdir)
 
+MKDIR_P = @MKDIR_P@
+
 SEPCHAR = @SEPCHAR@
 
 # We never change directory before running Emacs, so a relative file
@@ -110,7 +112,7 @@ endif
 	fi; \
 	echo Testing $$loadfile; \
 	stat=OK ; \
-	mkdir --parents $(dir $@) ; \
+	${MKDIR_P} $(dir $@) ; \
 	$(emacs) -l ert -l $$loadfile \
 	  --eval "(ert-run-tests-batch-and-exit ${SELECTOR_ACTUAL})" ${WRITE_LOG}
 
