@@ -1222,9 +1222,15 @@ make the new option `eshell-destroy-buffer-when-process-dies' non-nil.
 ** tar-mode: new `tar-new-entry' command, allowing for new members to
 be added to the archive.
 
+** Autorevert
+
 ---
-** Autorevert: dired buffers are also auto-reverted via file
-notifications, if Emacs is compiled with file notification support.
+*** Dired buffers are also auto-reverted via file notifications, if
+Emacs is compiled with file notification support.
+
+---
+*** `auto-revert-use-notify' is set to nil in `global-auto-revert-mode'.
+See <http://debbugs.gnu.org/22814>.
 
 ** File Notifications
 

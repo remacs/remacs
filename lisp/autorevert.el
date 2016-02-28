@@ -458,7 +458,11 @@ specifies in the mode line."
   :global t :group 'auto-revert :lighter global-auto-revert-mode-text
   (auto-revert-set-timer)
   (if global-auto-revert-mode
-      (auto-revert-buffers)
+      (progn
+        ;; We disable file notification because it could use too many
+        ;; ressources.  See <http://debbugs.gnu.org/22814>.
+        (setq auto-revert-use-notify nil)
+        (auto-revert-buffers))
     (dolist (buf (buffer-list))
       (with-current-buffer buf
 	(when auto-revert-use-notify
