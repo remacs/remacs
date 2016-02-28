@@ -1426,6 +1426,12 @@ compression command is determined from the new
 `dired-compress-files-alist' variable.
 
 +++
+*** In wdired, when editing files to contain slash characters,
+the resulting directories are automatically created.  Whether
+to do this or not is controlled by the
+`wdired-create-parent-directories' variable.
+
++++
 *** `W' is now bound to `browse-url-of-dired-file', and is useful for
 viewing HTML files and the like.
 

@@ -152,6 +152,16 @@ renamed by `dired-do-rename' and `dired-do-rename-regexp'."
   :version "24.3"
   :group 'wdired)
 
+(defcustom wdired-create-parent-directories t
+  "If non-nil, create parent directories of destination files.
+If non-nil, when you rename a file to a destination path within a
+nonexistent directory, wdired will create any parent directories
+necessary.  When nil, attempts to rename a file into a
+nonexistent directory will fail."
+  :version "25.2"
+  :type 'boolean
+  :group 'wdired)
+
 (defvar wdired-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-x\C-s" 'wdired-finish-edit)
@@ -490,6 +500,8 @@ non-nil means return old filename."
               (require 'dired-aux)
               (condition-case err
                   (let ((dired-backup-overwrite nil))
+                    (and wdired-create-parent-directories
+                         (wdired-create-parentdirs file-new))
                     (dired-rename-file file-ori file-new
                                        overwrite))
                 (error
@@ -499,6 +511,11 @@ non-nil means return old filename."
                             err)))))))))
     errors))
 
+(defun wdired-create-parentdirs (file-new)
+  "Create parent directories for FILE-NEW if they don't exist."
+  (and (not (file-exists-p (file-name-directory file-new)))
+       (message "Creating directory for file %s" file-new)
+       (make-directory (file-name-directory file-new) t)))
 
 (defun wdired-exit ()
   "Exit wdired and return to dired mode.

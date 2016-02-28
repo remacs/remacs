@@ -1294,6 +1294,10 @@ relative).  To mark a file for deletion, delete the entire file name.
 To change the target of a symbolic link, edit the link target name
 which appears next to the link name.
 
+  If you edit the file names to create a new subdirectory, Wdired will
+automatically create these new directories.  To inhibit this behavior,
+set @code{wdired-create-parent-directories} to @code{nil}.
+
   The rest of the text in the buffer, such as the file sizes and
 modification dates, is marked read-only, so you can't edit it.
 However, if you set @code{wdired-allow-to-change-permissions} to
