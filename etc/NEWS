@@ -2006,6 +2006,10 @@ coding-system of your choice when invoking functions like `prin1' and
 ** New possible value for `system-type': `nacl'.
 This is used by Google's Native Client (NaCl).
 
+---
+** `read-color' will now display the color names using the color itself
+as the background color.
+
 ** Miscellaneous name change
 
 ---
