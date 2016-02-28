@@ -403,6 +403,9 @@ gnutls_try_handshake (struct Lisp_Process *proc)
   gnutls_session_t state = proc->gnutls_state;
   int ret;
 
+  if (proc->is_non_blocking_client)
+    proc->gnutls_p = true;
+
   do
     {
       ret = gnutls_handshake (state);
@@ -413,9 +416,6 @@ gnutls_try_handshake (struct Lisp_Process *proc)
 	 && ! proc->is_non_blocking_client);
 
   proc->gnutls_initstage = GNUTLS_STAGE_HANDSHAKE_TRIED;
-
-  if (proc->is_non_blocking_client)
-    proc->gnutls_p = true;
 
   if (ret == GNUTLS_E_SUCCESS)
     {
@@ -541,7 +541,10 @@ emacs_gnutls_read (struct Lisp_Process *proc, char *buf, ptrdiff_t nbyte)
   gnutls_session_t state = proc->gnutls_state;
 
   if (proc->gnutls_initstage != GNUTLS_STAGE_READY)
-    return -1;
+    {
+      errno = EAGAIN;
+      return -1;
+    }
 
   rtnval = gnutls_record_recv (state, buf, nbyte);
   if (rtnval >= 0)
