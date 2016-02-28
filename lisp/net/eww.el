@@ -607,6 +607,15 @@ Currently this means either text/html or application/xhtml+xml."
 	  (html-mode))))
     (view-buffer buf)))
 
+(defun eww-toggle-paragraph-direction ()
+  "Toggle the paragraphs direction between left-to-right and right-to-left."
+  (interactive)
+  (setq bidi-paragraph-direction
+        (if (eq bidi-paragraph-direction 'left-to-right)
+            'right-to-left
+          'left-to-right))
+  (message "The paragraph direction is now %s" bidi-paragraph-direction))
+
 (defun eww-readable ()
   "View the main \"readable\" parts of the current web page.
 This command uses heuristics to find the parts of the web page that
@@ -690,6 +699,7 @@ the like."
     (define-key map "E" 'eww-set-character-encoding)
     (define-key map "S" 'eww-list-buffers)
     (define-key map "F" 'eww-toggle-fonts)
+    (define-key map "D" 'eww-toggle-paragraph-direction)
 
     (define-key map "b" 'eww-add-bookmark)
     (define-key map "B" 'eww-list-bookmarks)
@@ -714,7 +724,8 @@ the like."
 	["Add bookmark" eww-add-bookmark t]
 	["List bookmarks" eww-list-bookmarks t]
 	["List cookies" url-cookie-list t]
-       ["Character Encoding" eww-set-character-encoding]))
+        ["Character Encoding" eww-set-character-encoding]
+        ["Toggle Paragraph Direction" eww-toggle-paragraph-direction]))
     map))
 
 (defvar eww-tool-bar-map

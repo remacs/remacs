@@ -709,6 +709,10 @@ customize the `shr-use-fonts' variable.
 textual parts of a web page and display only that, leaving menus and
 the like off the page.
 
++++
+*** A new command `D' (`eww-toggle-paragraph-direction') allows you to
+toggle the paragraph direction between left-to-right and right-to-left.
+
 ---
 *** You can now use several eww buffers in parallel by renaming eww
 buffers you want to keep separate.
