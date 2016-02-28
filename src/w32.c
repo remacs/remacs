@@ -8654,19 +8654,25 @@ sys_write (int fd, const void * buffer, unsigned int count)
 
       nchars =  pfn_send (SOCK_HANDLE (fd), buffer, count, 0);
 
+      if (nchars == SOCKET_ERROR)
+        {
+	  set_errno ();
+	  /* If this is a non-blocking socket whose connection is in
+	     progress, return the proper error code to the caller;
+	     ENOTCONN is not what they expect . */
+	  if (errno == ENOTCONN && (fd_info[fd].flags & FILE_CONNECT) != 0)
+	    errno = EWOULDBLOCK;
+	  else
+	    DebPrint (("sys_write.send failed with error %d on socket %ld\n",
+		       pfn_WSAGetLastError (), SOCK_HANDLE (fd)));
+	}
+
       /* Set the socket back to non-blocking if it was before,
 	 for other operations that support it.  */
       if (fd_info[fd].flags & FILE_NDELAY)
 	{
 	  nblock = 1;
 	  pfn_ioctlsocket (SOCK_HANDLE (fd), FIONBIO, &nblock);
-	}
-
-      if (nchars == SOCKET_ERROR)
-        {
-	  DebPrint (("sys_write.send failed with error %d on socket %ld\n",
-		     pfn_WSAGetLastError (), SOCK_HANDLE (fd)));
-	  set_errno ();
 	}
     }
   else
