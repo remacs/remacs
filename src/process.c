@@ -858,8 +858,7 @@ nil, indicating the current buffer's process.  */)
 	     completion, and then free the request. */
 	  if (! inhibit_sentinels)
 	    {
-	      gai_suspend ((const struct gaicb * const*)&p->dns_request,
-			   1, NULL);
+	      gai_suspend ((struct gaicb const **) &p->dns_request, 1, NULL);
 	      free_dns_request (process);
 	    }
 	}
