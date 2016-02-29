@@ -845,8 +845,24 @@ nil, indicating the current buffer's process.  */)
 #ifdef HAVE_GETADDRINFO_A
   if (p->dns_request)
     {
+      int ret;
+
       gai_cancel (p->dns_request);
-      free_dns_request (process);
+      ret = gai_error (p->dns_request);
+      if (ret == EAI_CANCELED || ret == 0)
+	free_dns_request (process);
+      else
+	{
+	  /* If we're called during shutdown, we don't really about
+	     freeing all the resources.  Otherwise wait until
+	     completion, and then free the request. */
+	  if (! inhibit_sentinels)
+	    {
+	      gai_suspend ((const struct gaicb * const*)&p->dns_request,
+			   1, NULL);
+	      free_dns_request (process);
+	    }
+	}
     }
 #endif
 
