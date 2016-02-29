@@ -1619,6 +1619,49 @@ names)."))
   :type 'c-extra-types-widget
   :group 'c)
 
+(defvar c-noise-macro-with-parens-name-re nil)
+(defvar c-noise-macro-name-re nil)
+
+(defcustom c-noise-macro-names nil
+  "A list of names of macros which expand to nothing, or compiler extensions
+like \"????\" which are syntactic noise.  Such a macro/extension is complete in
+itself, never having parentheses.  All these names must be syntactically valid
+identifiers.
+
+If you change this variable's value, call the function
+`c-make-noise-macro-regexps' to set the necessary internal variables (or do
+this implicitly by reinitialising C/C++/Objc Mode on any buffer)."
+  :type '(repeat :tag "List of names" string)
+  :group 'c)
+
+(defcustom c-noise-macro-with-parens-names nil
+  "A list of names of macros \(or compiler extensions like \"__attribute__\")
+which optionally have arguments in parentheses, and which expand to nothing.
+These are recognized by CC Mode only in declarations."
+  :type '(regexp :tag "List of names (possibly empty)" string)
+  :group 'c)
+
+(defun c-make-noise-macro-regexps ()
+  ;; Convert `c-noise-macro-names' and `c-noise-macro-with-parens-names' into
+  ;; `c-noise-macro-name-re' and `c-noise-macro-with-parens-name-re'.
+  (setq c-noise-macro-with-parens-name-re
+	(cond ((null c-noise-macro-with-parens-names) "\\<\\>")
+	      ((consp c-noise-macro-with-parens-names)
+	       (concat (regexp-opt c-noise-macro-with-parens-names t)
+		       "\\([^[:alnum:]_$]\\|$\\)"))
+	      ((stringp c-noise-macro-with-parens-names)
+	       (copy-sequence c-noise-macro-with-parens-names))
+	      (t (error "c-make-noise-macro-regexps: \
+c-noise-macro-with-parens-names is invalid: %s" c-noise-macro-with-parens-names))))
+  (setq c-noise-macro-name-re
+	(cond ((null c-noise-macro-names) "\\<\\>")
+	      ((consp c-noise-macro-names)
+	       (concat (regexp-opt c-noise-macro-names t)
+		       "\\([^[:alnum:]_$]\\|$\\)"))
+	      ((stringp c-noise-macro-names)
+	       (copy-sequence c-noise-macro-names))
+	      (t (error "c-make-noise-macro-regexps: \
+c-noise-macro-names is invalid: %s" c-noise-macro-names)))))
 
 ;; Non-customizable variables, still part of the interface to CC Mode
 (defvar c-macro-with-semi-re nil

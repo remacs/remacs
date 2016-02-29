@@ -619,6 +619,11 @@ This is of the form that fits inside [ ] in a regexp."
   objc (concat c-alnum "_$@"))
 (c-lang-defvar c-symbol-chars (c-lang-const c-symbol-chars))
 
+(c-lang-defconst c-symbol-char-key
+  "Regexp matching a sequence of at least one identifier character."
+  t (concat "[" (c-lang-const c-symbol-chars) "]+"))
+(c-lang-defvar c-symbol-char-key (c-lang-const c-symbol-char-key))
+
 (c-lang-defconst c-symbol-key
   "Regexp matching identifiers and keywords (with submatch 0).  Assumed
 to match if `c-symbol-start' matches on the same position."
