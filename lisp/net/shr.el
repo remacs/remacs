@@ -1257,7 +1257,7 @@ ones, in case fg and bg are nil."
   (shr-ensure-paragraph))
 
 (defun shr-tag-div (dom)
-  (shr-ensure-newline)
+  (shr-ensure-paragraph)
   (shr-generic dom)
   (shr-ensure-newline))
 
