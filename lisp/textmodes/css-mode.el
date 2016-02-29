@@ -547,6 +547,8 @@ pseudo-classes, and at-rules."
   (let ((st (make-syntax-table css-mode-syntax-table)))
     (modify-syntax-entry ?/ ". 124" st)
     (modify-syntax-entry ?\n ">" st)
+    ;; Variable names are prefixed by $.
+    (modify-syntax-entry ?$ "'" st)
     st))
 
 (defvar scss-font-lock-keywords
