@@ -418,7 +418,7 @@ Currently this means either text/html or application/xhtml+xml."
 	(source (and (null document)
 		     (buffer-substring (point) (point-max)))))
     (with-current-buffer buffer
-      (setq bidi-paragraph-direction 'left-to-right)
+      (setq bidi-paragraph-direction nil)
       (plist-put eww-data :source source)
       (plist-put eww-data :dom document)
       (let ((inhibit-read-only t)
@@ -580,7 +580,7 @@ Currently this means either text/html or application/xhtml+xml."
   (let ((inhibit-read-only t))
     (remove-overlays)
     (erase-buffer))
-  (setq bidi-paragraph-direction 'left-to-right)
+  (setq bidi-paragraph-direction nil)
   (unless (eq major-mode 'eww-mode)
     (eww-mode)))
 
