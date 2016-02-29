@@ -1818,32 +1818,6 @@ with the color they represent as background color."
 	"black"
       "white")))
 
-(defun defined-colors-with-face-attributes (&optional frame)
-  "Return a list of colors supported for a particular frame.
-See `defined-colors' for arguments and return value. In contrast
-to `define-colors' the elements of the returned list are color
-strings with text properties, that make the color names render
-with the color they represent as background color."
-  (mapcar
-   (lambda (color-name)
-     (let ((foreground (readable-foreground-color color-name))
-	   (color      (copy-sequence color-name)))
-       (propertize color 'face (list :foreground foreground
-				     :background color))))
-   (defined-colors frame)))
-
-(defun readable-foreground-color (color)
-  "Return a readable foreground color for background COLOR."
-  (let* ((rgb   (color-values color))
-	 (max   (apply #'max rgb))
-	 (black (car (color-values "black")))
-	 (white (car (color-values "white"))))
-    ;; Select black or white depending on which one is less similar to
-    ;; the brightest component.
-    (if (> (abs (- max black)) (abs (- max white)))
-	"black"
-      "white")))
-
 (declare-function xw-color-defined-p "xfns.c" (color &optional frame))
 
 (defun color-defined-p (color &optional frame)
