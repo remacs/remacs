@@ -1178,7 +1178,9 @@ ones, in case fg and bg are nil."
      ((equal dir "ltr")
       (setq bidi-paragraph-direction 'left-to-right))
      ((equal dir "rtl")
-      (setq bidi-paragraph-direction 'right-to-left))))
+      (setq bidi-paragraph-direction 'right-to-left))
+     ((equal dir "auto")
+      (setq bidi-paragraph-direction nil))))
   (shr-generic dom))
 
 (defun shr-tag-body (dom)
