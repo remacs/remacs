@@ -1911,7 +1911,8 @@ The preference is a float determined from `shr-prefer-media-type'."
            (let ((background nil))
              (dolist (elem face)
                (when (and (consp elem)
-                          (eq (car elem) :background))
+                          (eq (car elem) :background)
+                          (not background))
                  (setq background (cadr elem))))
              (and background
                   (list :background background))))))
