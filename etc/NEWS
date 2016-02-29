@@ -2010,6 +2010,10 @@ This is used by Google's Native Client (NaCl).
 ** `read-color' will now display the color names using the color itself
 as the background color.
 
+---
+** There is now a new variable `flyspell-sort-corrections-function'
+that allows changing the way corrections are sorted.
+
 ** Miscellaneous name change
 
 ---

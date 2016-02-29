@@ -88,10 +88,33 @@ downcased before comparing with these exceptions."
   :version "24.1")
 
 (defcustom flyspell-sort-corrections nil
-  "Non-nil means, sort the corrections alphabetically before popping them."
+  "If non-nil, sort the corrections before popping them.
+The sorting is controlled by the `flyspell-sort-corrections-function'
+variable, and defaults to sorting alphabetically."
   :group 'flyspell
   :version "21.1"
   :type 'boolean)
+
+(defcustom flyspell-sort-corrections-function
+  'flyspell-sort-corrections-alphabetically
+  "The function used to sort corrections.
+This only happens if `flyspell-sort-corrections' is non-nil.  The
+function takes three parameters -- the two correction candidates
+to be sorted, and the third parameter is the word that's being
+corrected."
+  :version "25.2"
+  :type 'function
+  :group 'flyspell)
+
+(defun flyspell-sort-corrections-alphabetically (corr1 corr2 _)
+  (string< corr1 corr2))
+
+(defun flyspell-sort (corrs word)
+  (if flyspell-sort-corrections
+      (sort corrs
+            (lambda (c1 c2)
+              (funcall flyspell-sort-corrections-function c1 c2 word)))
+    corrs))
 
 (defcustom flyspell-duplicate-distance 400000
   "The maximum distance for finding duplicates of unrecognized words.
@@ -1007,9 +1030,7 @@ Mostly we check word delimiters."
 (defun flyspell-notify-misspell (word poss)
   (let ((replacements (if (stringp poss)
 			  poss
-			(if flyspell-sort-corrections
-			    (sort (car (cdr (cdr poss))) 'string<)
-			  (car (cdr (cdr poss)))))))
+			(flyspell-sort (car (cdr (cdr poss))) word))))
     (if flyspell-issue-message-flag
 	(message "misspelling `%s'  %S" word replacements))))
 
@@ -1979,9 +2000,8 @@ This command proposes various successive corrections for the current word."
                   (error "Ispell: error in Ispell process"))
                  (t
                   ;; The word is incorrect, we have to propose a replacement.
-                  (let ((replacements (if flyspell-sort-corrections
-                                          (sort (car (cdr (cdr poss))) 'string<)
-                                        (car (cdr (cdr poss))))))
+                  (let ((replacements (flyspell-sort (car (cdr (cdr poss)))
+                                                     word)))
                     (setq flyspell-auto-correct-region nil)
                     (if (consp replacements)
                         (progn
@@ -2229,9 +2249,7 @@ If OPOINT is non-nil, restore point there after adjusting it for replacement."
 	(setq event (list (list (car (cdr mouse-pos))
 				(1+ (cdr (cdr mouse-pos))))
 			  (car mouse-pos)))))
-  (let* ((corrects   (if flyspell-sort-corrections
-			 (sort (car (cdr (cdr poss))) 'string<)
-		       (car (cdr (cdr poss)))))
+  (let* ((corrects   (flyspell-sort (car (cdr (cdr poss))) word))
 	 (cor-menu   (if (consp corrects)
 			 (mapcar (lambda (correct)
 				   (list correct correct))
@@ -2262,9 +2280,7 @@ If OPOINT is non-nil, restore point there after adjusting it for replacement."
 ;;*---------------------------------------------------------------------*/
 (defun flyspell-xemacs-popup (poss word cursor-location start end save)
   "The XEmacs popup menu."
-  (let* ((corrects   (if flyspell-sort-corrections
-			 (sort (car (cdr (cdr poss))) 'string<)
-		       (car (cdr (cdr poss)))))
+  (let* ((corrects   (flyspell-sort (car (cdr (cdr poss))) word))
 	 (cor-menu   (if (consp corrects)
 			 (mapcar (lambda (correct)
 				   (vector correct
