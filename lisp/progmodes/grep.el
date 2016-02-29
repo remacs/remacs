@@ -229,20 +229,18 @@ to determine whether cdr should not be excluded."
 
 (defcustom grep-save-buffers 'ask
   "If non-nil, save buffers before running the grep commands.
-If `ask', ask before saving.  If the variable is a function, it
-will be used as a predicate that should say whether the buffer should
-be saved or not.
-E.g., one can set this to
+If `ask', ask before saving.  If a function, call it with no arguments
+with each buffer current, as a predicate to determine whether that
+buffer should be saved or not.  E.g., one can set this to
   (lambda ()
     (string-prefix-p my-grep-root (file-truename (buffer-file-name))))
 to limit saving to files located under `my-grep-root'."
   :version "25.2"
   :type '(choice
-          (const :tag "Default (ask before saving)" ask)
+          (const :tag "Ask before saving" ask)
           (const :tag "Don't save buffers" nil)
-          (const :tag "Save all buffers" t)
-          function)
-  :type 'boolean
+          function
+          (other :tag "Save all buffers" t))
   :group 'grep)
 
 (defcustom grep-error-screen-columns nil
