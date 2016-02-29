@@ -227,7 +227,6 @@ to determine whether cdr should not be excluded."
 		 (const :tag "No ignored files" nil))
   :group 'grep)
 
-;;;###autoload
 (defcustom grep-save-buffers 'ask
   "If non-nil, save buffers before running the grep commands.
 If `ask', ask before saving.  If the variable is a function, it
