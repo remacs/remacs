@@ -4000,44 +4000,13 @@ AC_CACHE_CHECK([whether signals can be handled on alternate stack],
      [emacs_cv_alternate_stack=yes],
      [emacs_cv_alternate_stack=no])])
 
-# Do we have res_init, for detecting changes in /etc/resolv.conf?
-# On Darwin, res_init appears not to be useful: see bug#562 and
-# http://lists.gnu.org/archive/html/emacs-devel/2007-11/msg01467.html
-resolv=no
-
-if test $opsys != darwin; then
-
-  AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <netinet/in.h>
-#include <arpa/nameser.h>
-#include <resolv.h>]],
-    [[return res_init();]])],
-    have_res_init=yes, have_res_init=no)
-  if test "$have_res_init" = no; then
-    OLIBS="$LIBS"
-    LIBS="$LIBS -lresolv"
-    AC_MSG_CHECKING(for res_init with -lresolv)
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <netinet/in.h>
-#include <arpa/nameser.h>
-#include <resolv.h>]],
-      [[return res_init();]])],
-      have_res_init=yes, have_res_init=no)
-    AC_MSG_RESULT($have_res_init)
-    if test "$have_res_init" = yes ; then
-      resolv=yes
-    fi
-    LIBS="$OLIBS"
-  fi
-
-  if test "$have_res_init" = yes; then
-    AC_DEFINE(HAVE_RES_INIT, 1, [Define to 1 if res_init is available.])
-  fi
-fi                              dnl !darwin
-
 # Do we need the Hesiod library to provide the support routines?
 dnl FIXME?  Should we be skipping this on Darwin too?
 LIBHESIOD=
+LIBRESOLV=
 if test "$with_hesiod" != no ; then
   # Don't set $LIBS here -- see comments above.  FIXME which comments?
+  resolv=no
   AC_CHECK_FUNC(res_send, , [AC_CHECK_FUNC(__res_send, ,
      [AC_CHECK_LIB(resolv, res_send, resolv=yes,
 		  [AC_CHECK_LIB(resolv, __res_send, resolv=yes)])])])
@@ -4046,21 +4015,16 @@ if test "$with_hesiod" != no ; then
   else
     RESOLVLIB=
   fi
+  hesiod=no
   AC_CHECK_FUNC(hes_getmailhost, , [AC_CHECK_LIB(hesiod, hes_getmailhost,
 	hesiod=yes, :, $RESOLVLIB)])
 
   if test x"$hesiod" = xyes; then
     LIBHESIOD=-lhesiod
+    LIBRESOLV=$RESOLVLIB
   fi
 fi
 AC_SUBST(LIBHESIOD)
-
-# Do we need libresolv (due to res_init or Hesiod)?
-if test "$resolv" = yes && test $opsys != darwin; then
-  LIBRESOLV=-lresolv
-else
-  LIBRESOLV=
-fi
 AC_SUBST(LIBRESOLV)
 
 # These tell us which Kerberos-related libraries to use.

@@ -75,11 +75,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 # include <sys/stropts.h>
 #endif
 
-#ifdef HAVE_RES_INIT
-#include <arpa/nameser.h>
-#include <resolv.h>
-#endif
-
 #ifdef HAVE_UTIL_H
 #include <util.h>
 #endif
@@ -3827,10 +3822,6 @@ usage: (make-network-process &rest ARGS)  */)
       immediate_quit = 1;
       QUIT;
 
-#ifdef HAVE_RES_INIT
-      res_init ();
-#endif
-
       struct addrinfo hints;
       memset (&hints, 0, sizeof hints);
       hints.ai_family = family;
@@ -3909,10 +3900,6 @@ usage: (make-network-process &rest ARGS)  */)
 	 as it may `hang' Emacs for a very long time.  */
       immediate_quit = 1;
       QUIT;
-
-#ifdef HAVE_RES_INIT
-      res_init ();
-#endif
 
       host_info_ptr = gethostbyname ((const char *) SDATA (host));
       immediate_quit = 0;
