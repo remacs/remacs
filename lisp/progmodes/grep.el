@@ -227,6 +227,25 @@ to determine whether cdr should not be excluded."
 		 (const :tag "No ignored files" nil))
   :group 'grep)
 
+;;;###autoload
+(defcustom grep-save-buffers 'ask
+  "If non-nil, save buffers before running the grep commands.
+If `ask', ask before saving.  If the variable is a function, it
+will be used as a predicate that should say whether the buffer should
+be saved or not.
+E.g., one can set this to
+  (lambda ()
+    (string-prefix-p my-grep-root (file-truename (buffer-file-name))))
+to limit saving to files located under `my-grep-root'."
+  :version "25.2"
+  :type '(choice
+          (const :tag "Default (ask before saving)" ask)
+          (const :tag "Don't save buffers" nil)
+          (const :tag "Save all buffers" t)
+          function)
+  :type 'boolean
+  :group 'grep)
+
 (defcustom grep-error-screen-columns nil
   "If non-nil, column numbers in grep hits are screen columns.
 See `compilation-error-screen-columns'"
@@ -728,6 +747,12 @@ This function is called from `compilation-filter-hook'."
        grep-error-screen-columns)
   (add-hook 'compilation-filter-hook 'grep-filter nil t))
 
+(defun grep--save-buffers ()
+  (when grep-save-buffers
+    (save-some-buffers (and (not (eq grep-save-buffers 'ask))
+                            (not (functionp grep-save-buffers)))
+                       (and (functionp grep-save-buffers)
+                            grep-save-buffers))))
 
 ;;;###autoload
 (defun grep (command-args)
@@ -759,6 +784,7 @@ list is empty)."
                                  'grep-history
                                  (if current-prefix-arg nil default))))))
 
+  (grep--save-buffers)
   ;; Setting process-setup-function makes exit-message-function work
   ;; even when async processes aren't supported.
   (compilation-start (if (and grep-use-null-device null-device)
@@ -952,6 +978,7 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
 	(let ((default-directory dir))
 	  ;; Setting process-setup-function makes exit-message-function work
 	  ;; even when async processes aren't supported.
+          (grep--save-buffers)
 	  (compilation-start (if (and grep-use-null-device null-device)
 				 (concat command " " null-device)
 			       command)
@@ -1014,6 +1041,7 @@ to specify a command to run."
 		    (read-from-minibuffer "Confirm: "
 					  command nil nil 'grep-find-history))
 	    (add-to-history 'grep-find-history command))
+          (grep--save-buffers)
 	  (let ((default-directory dir))
 	    (compilation-start command 'grep-mode))
 	  ;; Set default-directory if we started rgrep in the *grep* buffer.

@@ -1676,6 +1676,10 @@ behavior, set `diff-switches' to `-c'.
 dynamically.  Any third-party code that changes these templates should
 be updated accordingly.
 
+** The grep/rgrep/lgrep functions will now ask about saving files
+before running.  This is controlled by the `grep-save-buffers'
+variable.
+
 +++
 ** ‘(/ N)’ is now equivalent to ‘(/ 1 N)’ rather than to ‘(/ N 1)’.
 The new behavior is compatible with Common Lisp and with XEmacs.
