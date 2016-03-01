@@ -25,7 +25,7 @@
 ;;; Code:
 
 ;;;###autoload
-(defun timer-list ()
+(defun timer-list (&optional _ignore-auto _nonconfirm)
   "List all timers in a buffer."
   (interactive)
   (pop-to-buffer-same-window (get-buffer-create "*timer-list*"))
@@ -90,6 +90,7 @@
   "Mode for listing and controlling timers."
   (setq truncate-lines t)
   (buffer-disable-undo)
+  (setq-local revert-buffer-function 'timer-list)
   (setq buffer-read-only t)
   (setq header-line-format
         (format "%4s %10s %8s %s"
