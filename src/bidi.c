@@ -1919,8 +1919,6 @@ bidi_resolve_explicit (struct bidi_it *bidi_it)
 	{
 	  eassert (bidi_it->prev.charpos == bidi_it->charpos - 1);
 	  prev_type = bidi_it->prev.orig_type;
-	  if (prev_type == FSI)
-	    prev_type = bidi_it->type_after_wn;
 	}
     }
   /* Don't move at end of buffer/string.  */
@@ -1935,8 +1933,6 @@ bidi_resolve_explicit (struct bidi_it *bidi_it)
 	emacs_abort ();
       bidi_it->bytepos += bidi_it->ch_len;
       prev_type = bidi_it->orig_type;
-      if (prev_type == FSI)
-	prev_type = bidi_it->type_after_wn;
     }
   else	/* EOB or end of string */
     prev_type = NEUTRAL_B;
@@ -2091,10 +2087,17 @@ bidi_resolve_explicit (struct bidi_it *bidi_it)
       if (typ1 != STRONG_R && typ1 != STRONG_AL)
 	{
 	  type = LRI;
+	  /* Override orig_type, which will be needed when we come to
+	     examine the next character, which is the first character
+	     inside the isolate.  */
+	  bidi_it->orig_type = type;
 	  goto fsi_as_lri;
 	}
       else
-	type = RLI;
+	{
+	  type = RLI;
+	  bidi_it->orig_type = type;
+	}
       /* FALLTHROUGH */
     case RLI:	/* X5a */
       if (override == NEUTRAL_DIR)
