@@ -674,6 +674,8 @@ FILE's modification time."
       (let ((version-control 'never))
 	(save-buffer)))))
 
+;; FIXME This command should be deprecated.
+;; See http://debbugs.gnu.org/22213#41
 ;;;###autoload
 (defun update-file-autoloads (file &optional save-after outfile)
   "Update the autoloads for FILE.
@@ -691,6 +693,9 @@ Return FILE if there was no autoload cookie in it, else nil."
 		     (read-file-name "Write autoload definitions to file: ")))
   (let* ((generated-autoload-file (or outfile generated-autoload-file))
 	 (autoload-modified-buffers nil)
+	 ;; We need this only if the output file handles more than one input.
+	 ;; See http://debbugs.gnu.org/22213#38 and subsequent.
+	 (autoload-timestamps t)
          (no-autoloads (autoload-generate-file-autoloads file)))
     (if autoload-modified-buffers
         (if save-after (autoload-save-buffers))
