@@ -744,7 +744,7 @@ removes any prior now out-of-date autoload entries."
                                ;; last-time is the time-stamp (specifying
                                ;; the last time we looked at the file) and
                                ;; the file hasn't been changed since.
-                               ((listp last-time) (= (length last-time) 2)
+                               ((listp last-time)
                                 (not (time-less-p last-time file-time)))
                                ;; FIXME? Arguably we should throw a
                                ;; user error, or some kind of warning,
