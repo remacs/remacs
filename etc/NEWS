@@ -928,6 +928,10 @@ to specify that we're running in a noninteractive context, and that
 we should not be queried about things like TLS certificate validity.
 
 ---
+*** `url-mime-accept-string' can now be used as in "interface"
+variable, meaning you can bind it around an `url-retrieve' call.
+
+---
 *** If URL is used with a https connection, the first callback argument
 plist will contain a :peer element that has the output of
 `gnutls-peer-status' (if Emacs is built with GnuTLS support).
