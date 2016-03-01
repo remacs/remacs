@@ -905,12 +905,15 @@ untar into a directory named DIR; otherwise, signal an error."
   file)
 
 (defvar generated-autoload-file)
+(defvar autoload-timestamps)
 (defvar version-control)
 
 (defun package-generate-autoloads (name pkg-dir)
   (let* ((auto-name (format "%s-autoloads.el" name))
          ;;(ignore-name (concat name "-pkg.el"))
          (generated-autoload-file (expand-file-name auto-name pkg-dir))
+         ;; We don't need 'em, and this makes the output reproducible.
+         (autoload-timestamps nil)
          ;; Silence `autoload-generate-file-autoloads'.
          (noninteractive inhibit-message)
          (backup-inhibited t)
