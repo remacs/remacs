@@ -1210,6 +1210,7 @@ The return value of this function is the retrieval buffer."
 				 (and (boundp 'url-http-noninteractive)
 				      url-http-noninteractive)))
 	 (connection (url-http-find-free-connection host port gateway-method))
+         (mime-accept-string url-mime-accept-string)
 	 (buffer (or retry-buffer
 		     (generate-new-buffer
                       (format " *http %s:%d*" host port)))))
@@ -1245,6 +1246,7 @@ The return value of this function is the retrieval buffer."
 		       url-http-target-url
 		       url-http-no-retry
 		       url-http-connection-opened
+                       url-mime-accept-string
 		       url-http-proxy))
 	  (set (make-local-variable var) nil))
 
@@ -1262,6 +1264,7 @@ The return value of this function is the retrieval buffer."
 	      url-http-target-url url-current-object
 	      url-http-no-retry retry-buffer
 	      url-http-connection-opened nil
+              url-mime-accept-string mime-accept-string
 	      url-http-proxy url-using-proxy)
 
 	(set-process-buffer connection buffer)
