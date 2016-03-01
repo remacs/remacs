@@ -1681,6 +1681,24 @@ The preference is a float determined from `shr-prefer-media-type'."
       (shr-colorize-region start (point) color
 			   (cdr (assq 'background-color shr-stylesheet))))))
 
+(defun shr-tag-bdo (dom)
+  (let* ((direction (dom-attr dom 'dir))
+         (char (cond
+                ((equal direction "ltr")
+                 #x202d)                ; LRO
+                ((equal direction "rtl")
+                 #x202e))))             ; RLO
+    (when char
+      (insert char))
+    (shr-generic dom)
+    (when char
+      (insert #x202c))))                ; PDF
+
+(defun shr-tag-bdi (dom)
+  (insert #x2068)                       ; FSI
+  (shr-generic dom)
+  (insert #x2069))                      ; PDI
+
 ;;; Table rendering algorithm.
 
 ;; Table rendering is the only complicated thing here.  We do this by
