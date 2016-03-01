@@ -2637,7 +2637,7 @@ between them, return t; otherwise return nil.  */)
 static enum syntaxcode
 syntax_multibyte (int c, bool multibyte_symbol_p)
 {
-  return (ASCII_CHAR_P (c) || !multibyte_symbol_p) ? SYNTAX (c) : Ssymbol;
+  return ASCII_CHAR_P (c) || !multibyte_symbol_p ? SYNTAX (c) : Ssymbol;
 }
 
 static Lisp_Object
