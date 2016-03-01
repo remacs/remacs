@@ -87,7 +87,7 @@ that text will be copied verbatim to `generated-autoload-file'.")
 (defconst generate-autoload-section-continuation ";;;;;; "
   "String to add on each continuation of the section header form.")
 
-(defvar autoload-timestamps t
+(defvar autoload-timestamps nil		; experimental, see bug#22213
   "Non-nil means insert a timestamp for each input file into the output.
 We use these in incremental updates of the output file to decide
 if we need to rescan an input file.  If you set this to nil,

@@ -122,6 +122,8 @@ Put your function on `window-size-change-functions' instead.
 
 ** Autoload files can be generated without timestamps,
 by setting `autoload-timestamps' to nil.
+FIXME As an experiment, nil is the current default.
+If no insurmountable problems before next release, it can stay that way.
 
 ** `ert-with-function-mocked' of 'ert-x package allows mocking of functions
 in unit tests.
