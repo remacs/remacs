@@ -1160,6 +1160,11 @@ This command is useful when you perform version control commands
 outside Emacs (e.g., from the shell prompt), or if you switch the VC
 back-end for the buffer's file, or remove it from version control.
 
+---
+*** The VC state indicator in the mode line now defaults to more
+colorful faces to make it more obvious to the user what the state is.
+See the `vc-faces' customization group.
+
 +++
 *** New option `vc-annotate-background-mode' controls whether
 the color range from `vc-annotate-color-map' is applied to the
