@@ -392,6 +392,7 @@ Changes to files matching one of the regexps in this list are not listed.")
     "zipdist.bat"
     "nt/makefile.w32-in"
     "config.nt"
+    "nextstep/WISHLIST"
     )
   "List of files and directories to ignore.
 Changes to files in this list are not listed.")
