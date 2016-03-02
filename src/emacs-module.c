@@ -244,7 +244,7 @@ struct module_fun_env
 static void
 CHECK_USER_PTR (Lisp_Object obj)
 {
-  CHECK_TYPE (USER_PTRP (obj), Quser_ptrp, lisp);
+  CHECK_TYPE (USER_PTRP (obj), Quser_ptrp, obj);
 }
 
 /* Catch signals and throws only if the code can actually signal or
