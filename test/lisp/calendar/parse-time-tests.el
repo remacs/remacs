@@ -42,10 +42,7 @@
   (should (equal (parse-time-string "Monday, 22 february 2016 19:35:42 +0100")
                  '(42 35 19 22 2 2016 1 nil 3600)))
   (should (equal (parse-time-string "Monday, 22 february 2016 19:35:42 PDT")
-                 '(42 35 19 22 2 2016 1 t -25200)))
-
-  (should (equal (parse-iso8601-time-string "2016-02-28T15:28:09+1030")
-                 '(22226 32353))))
+                 '(42 35 19 22 2 2016 1 t -25200))))
 
 (provide 'parse-time-tests)
 
