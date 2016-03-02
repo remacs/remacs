@@ -64,6 +64,13 @@ enum
 	 && INTPTR_MAX == EMACS_INT_MAX)
   };
 
+/* Function prototype for the module init function.  */
+typedef int (*emacs_init_function) (struct emacs_runtime *);
+
+/* Function prototype for the module Lisp functions.  */
+typedef emacs_value (*emacs_subr) (emacs_env *, ptrdiff_t,
+				   emacs_value [], void *);
+
 /* Function prototype for module user-pointer finalizers.  These
    should not throw C++ exceptions, so emacs-module.h declares the
    corresponding interfaces with EMACS_NOEXCEPT.  There is only C code
