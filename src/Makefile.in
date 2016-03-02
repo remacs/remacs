@@ -313,6 +313,9 @@ GETLOADAVG_LIBS = @GETLOADAVG_LIBS@
 
 RUN_TEMACS = ./temacs
 
+# Whether builds should contain details. '--no-build-details' or empty.
+BUILD_DETAILS = @BUILD_DETAILS@
+
 UNEXEC_OBJ = @UNEXEC_OBJ@
 
 CANNOT_DUMP=@CANNOT_DUMP@
@@ -534,7 +537,7 @@ emacs$(EXEEXT): temacs$(EXEEXT) \
 ifeq ($(CANNOT_DUMP),yes)
 	ln -f temacs$(EXEEXT) $@
 else
-	LC_ALL=C $(RUN_TEMACS) -batch -l loadup dump
+	LC_ALL=C $(RUN_TEMACS) -batch $(BUILD_DETAILS) -l loadup dump
 	$(PAXCTL_if_present) -zex $@
 	ln -f $@ bootstrap-emacs$(EXEEXT)
 endif
@@ -740,7 +743,7 @@ bootstrap-emacs$(EXEEXT): temacs$(EXEEXT)
 ifeq ($(CANNOT_DUMP),yes)
 	ln -f temacs$(EXEEXT) $@
 else
-	$(RUN_TEMACS) --batch --load loadup bootstrap
+	$(RUN_TEMACS) --batch $(BUILD_DETAILS) --load loadup bootstrap
 	$(PAXCTL_if_present) -zex emacs$(EXEEXT)
 	mv -f emacs$(EXEEXT) $@
 endif

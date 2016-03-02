@@ -4132,6 +4132,9 @@ extern bool noninteractive;
 /* True means remove site-lisp directories from load-path.  */
 extern bool no_site_lisp;
 
+/* True means put details like time stamps into builds.  */
+extern bool build_details;
+
 /* Pipe used to send exit notification to the daemon parent at
    startup.  On Windows, we use a kernel event instead.  */
 #ifndef WINDOWSNT

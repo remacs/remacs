@@ -1408,11 +1408,10 @@ setup_pty (int fd)
 void
 init_system_name (void)
 {
-  if (DETERMINISTIC_DUMP && (might_dump || ! NILP (Vpurify_flag)))
+  if (!build_details)
     {
-      /* If we're dumping, set the hostname to a literal so that the
-         dump is deterministic.  */
-      Vsystem_name = build_pure_c_string ("elided");
+      /* Set system-name to nil so that the build is deterministic.  */
+      Vsystem_name = Qnil;
       return;
     }
   char *hostname_alloc = NULL;

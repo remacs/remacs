@@ -3581,7 +3581,7 @@ the message given by REASON."
 
 (defun erc-cmd-SV ()
   "Say the current ERC and Emacs version into channel."
-  (erc-send-message (format "I'm using ERC with %s %s (%s%s) of %s."
+  (erc-send-message (format "I'm using ERC with %s %s (%s%s)%s."
                             (if (featurep 'xemacs) "XEmacs" "GNU Emacs")
                             emacs-version
                             system-configuration
@@ -3602,7 +3602,9 @@ the message given by REASON."
                                                       x-toolkit-scroll-bars)))
                                "")
                              (if (featurep 'multi-tty) ", multi-tty" ""))
-                            erc-emacs-build-time))
+                            (if erc-emacs-build-time
+                                (concat " of " erc-emacs-build-time)
+                              "")))
   t)
 
 (defun erc-cmd-SM ()

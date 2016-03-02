@@ -283,6 +283,13 @@ which will invoke Emacs with @samp{--script} and supply the name of
 the script file as @var{file}.  Emacs Lisp then treats the @samp{#!}
 on this first line as a comment delimiter.
 
+@item --no-build-details
+@opindex --no-build-details
+@cindex build details
+@cindex deterministic build
+Omit details like system name and build time from the Emacs executable,
+so that builds are more deterministic.
+
 @item -q
 @opindex -q
 @itemx --no-init-file

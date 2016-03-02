@@ -181,6 +181,9 @@ bool noninteractive;
 /* True means remove site-lisp directories from load-path.  */
 bool no_site_lisp;
 
+/* True means put details like time stamps into builds.  */
+bool build_details;
+
 /* Name for the server started by the daemon.*/
 static char *daemon_name;
 
@@ -222,6 +225,7 @@ Initialization options:\n\
 --display, -d DISPLAY       use X server DISPLAY\n\
 ",
     "\
+--no-build-details          do not add build details such as time stamps\n\
 --no-desktop                do not load a saved desktop\n\
 --no-init-file, -q          load neither ~/.emacs nor default.el\n\
 --no-loadup, -nl            do not load loadup.el into bare Emacs\n\
@@ -872,9 +876,6 @@ main (int argc, char **argv)
   SET_BINARY (fileno (stdout));
 #endif /* MSDOS */
 
-  if (DETERMINISTIC_DUMP)
-    Vdeterministic_dump = Qt;
-
   /* Skip initial setlocale if LC_ALL is "C", as it's not needed in that case.
      The build procedure uses this while dumping, to ensure that the
      dumped Emacs does not have its system locale tables initialized,
@@ -1191,6 +1192,9 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 
   no_site_lisp
     = argmatch (argv, argc, "-nsl", "--no-site-lisp", 11, NULL, &skip_args);
+
+  build_details = ! argmatch (argv, argc, "-no-build-details",
+			      "--no-build-details", 7, NULL, &skip_args);
 
 #ifdef HAVE_NS
   ns_pool = ns_alloc_autorelease_pool ();
@@ -1641,6 +1645,7 @@ static const struct standard_args standard_args[] =
   { "-help", "--help", 90, 0 },
   { "-nl", "--no-loadup", 70, 0 },
   { "-nsl", "--no-site-lisp", 65, 0 },
+  { "-no-build-details", "--no-build-details", 63, 0 },
   /* -d must come last before the options handled in startup.el.  */
   { "-d", "--display", 60, 1 },
   { "-display", 0, 60, 1 },
@@ -2534,13 +2539,6 @@ Also note that this is not a generic facility for accessing external
 libraries; only those already known by Emacs will be loaded.  */);
   Vdynamic_library_alist = Qnil;
   Fput (intern_c_string ("dynamic-library-alist"), Qrisky_local_variable, Qt);
-
-  DEFVAR_BOOL ("deterministic-dump", Vdeterministic_dump,
-    doc: /* If non-nil, attempt to make dumping deterministic by
-avoiding sources of nondeterminism such as absolute file names, the
-hostname, or timestamps.  */);
-  Vdeterministic_dump = DETERMINISTIC_DUMP ? Qt : Qnil;
-  XSYMBOL (intern_c_string ("deterministic-dump"))->constant = 1;
 
 #ifdef WINDOWSNT
   Vlibrary_cache = Qnil;

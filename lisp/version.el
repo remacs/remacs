@@ -38,14 +38,11 @@ This variable first existed in version 19.23.")
   "Minor version number of this version of Emacs.
 This variable first existed in version 19.23.")
 
-;; FIXME: The next variable should also be a constant if
-;; `deterministic-dump' is t.
-(defconst emacs-build-time (current-time)
-  "Time at which Emacs was dumped out.")
+(defconst emacs-build-system (system-name)
+  "Name of the system on which Emacs was built, or nil if not available.")
 
-(defconst emacs-build-system
-  (if deterministic-dump "elided" (system-name))
-  "Name of the system on which Emacs was built.")
+(defconst emacs-build-time (if emacs-build-system (current-time))
+  "Time at which Emacs was dumped out, or nil if not available.")
 
 (defvar motif-version-string)
 (defvar gtk-version-string)
@@ -59,9 +56,7 @@ Don't use this function in programs to choose actions according
 to the system configuration; look at `system-configuration' instead."
   (interactive "P")
   (let ((version-string
-         (format (if (not (called-interactively-p 'interactive))
-		     "GNU Emacs %s (%s%s%s%s)\n of %s"
-		   "GNU Emacs %s (%s%s%s%s) of %s")
+         (format "GNU Emacs %s (%s%s%s%s)%s"
                  emacs-version
 		 system-configuration
 		 (cond ((featurep 'motif)
@@ -80,7 +75,14 @@ to the system configuration; look at `system-configuration' instead."
 		     (format ", %s scroll bars"
 			     (capitalize (symbol-name x-toolkit-scroll-bars)))
 		   "")
-		 (format-time-string "%Y-%m-%d" emacs-build-time))))
+		 (if emacs-build-time
+		     (format-time-string (concat
+					  (if (called-interactively-p
+					       'interactive)
+					      "" "\n")
+					  " of %Y-%m-%d")
+					 emacs-build-time)
+		   ""))))
     (if here
         (insert version-string)
       (if (called-interactively-p 'interactive)

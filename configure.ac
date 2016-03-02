@@ -546,18 +546,13 @@ AC_ARG_ENABLE(gtk-deprecation-warnings,
 		[Show Gtk+/Gdk deprecation warnings for Gtk+ >= 3.0])],
 [ac_enable_gtk_deprecation_warnings="${enableval}"],[])
 
-AC_ARG_ENABLE(deterministic-dump,
-[AS_HELP_STRING([--enable-deterministic-dump],
-                [Make dumping deterministic by removing system-specific
-                information from the dump, such as host names and
-                timestamps.])])
-if test "x${enableval}" = xno ; then
-   AC_DEFINE(DETERMINISTIC_DUMP, false,
-   [Set this to true to make dumping deterministic.])
-else
-   AC_DEFINE(DETERMINISTIC_DUMP, true,
-   [Set this to true to make dumping deterministic.])
-fi
+BUILD_DETAILS=
+AC_ARG_ENABLE([build-details],
+  [AS_HELP_STRING([--disable-build-details],
+		  [Make the build more deterministic by omitting host
+		   names, time stamps, etc. from the output.])],
+  [test "$enableval" = no && BUILD_DETAILS=--no-build-details])
+AC_SUBST([BUILD_DETAILS])
 
 dnl This used to use changequote, but, apart from 'changequote is evil'
 dnl per the autoconf manual, we can speed up autoconf somewhat by quoting
