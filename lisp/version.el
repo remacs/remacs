@@ -38,12 +38,13 @@ This variable first existed in version 19.23.")
   "Minor version number of this version of Emacs.
 This variable first existed in version 19.23.")
 
+;; FIXME: The next variable should also be a constant if
+;; `deterministic-dump' is t.
 (defconst emacs-build-time (current-time)
   "Time at which Emacs was dumped out.")
 
-;; I think this should be obsoleted/removed.  It's just one more meaningless
-;; difference between different builds.  It's usually not even an fqdn.
-(defconst emacs-build-system (system-name)
+(defconst emacs-build-system
+  (if deterministic-dump "elided" (system-name))
   "Name of the system on which Emacs was built.")
 
 (defvar motif-version-string)

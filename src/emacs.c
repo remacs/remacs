@@ -872,6 +872,9 @@ main (int argc, char **argv)
   SET_BINARY (fileno (stdout));
 #endif /* MSDOS */
 
+  if (DETERMINISTIC_DUMP)
+    Vdeterministic_dump = Qt;
+
   /* Skip initial setlocale if LC_ALL is "C", as it's not needed in that case.
      The build procedure uses this while dumping, to ensure that the
      dumped Emacs does not have its system locale tables initialized,
@@ -2531,6 +2534,13 @@ Also note that this is not a generic facility for accessing external
 libraries; only those already known by Emacs will be loaded.  */);
   Vdynamic_library_alist = Qnil;
   Fput (intern_c_string ("dynamic-library-alist"), Qrisky_local_variable, Qt);
+
+  DEFVAR_BOOL ("deterministic-dump", Vdeterministic_dump,
+    doc: /* If non-nil, attempt to make dumping deterministic by
+avoiding sources of nondeterminism such as absolute file names, the
+hostname, or timestamps.  */);
+  Vdeterministic_dump = DETERMINISTIC_DUMP ? Qt : Qnil;
+  XSYMBOL (intern_c_string ("deterministic-dump"))->constant = 1;
 
 #ifdef WINDOWSNT
   Vlibrary_cache = Qnil;
