@@ -241,6 +241,12 @@ struct module_fun_env
     return error_retval;                                                \
   MODULE_HANDLE_NONLOCAL_EXIT (error_retval)
 
+static void
+CHECK_USER_PTR (Lisp_Object obj)
+{
+  CHECK_TYPE (USER_PTRP (obj), Quser_ptrp, lisp);
+}
+
 /* Catch signals and throws only if the code can actually signal or
    throw.  If checking is enabled, abort if the current thread is not
    the Emacs main thread.  */
@@ -267,9 +273,9 @@ module_make_global_ref (emacs_env *env, emacs_value ref)
   if (i >= 0)
     {
       Lisp_Object value = HASH_VALUE (h, i);
-      verify (EMACS_INT_MAX > MOST_POSITIVE_FIXNUM);
       EMACS_INT refcount = XFASTINT (value) + 1;
-      if (FIXNUM_OVERFLOW_P (refcount)) xsignal0 (Qoverflow_error);
+      if (MOST_POSITIVE_FIXNUM < refcount)
+	xsignal0 (Qoverflow_error);
       value = make_natnum (refcount);
       set_hash_value_slot (h, i, value);
     }
@@ -409,7 +415,8 @@ module_funcall (emacs_env *env, emacs_value fun, ptrdiff_t nargs,
      first arg, because that's what Ffuncall takes.  */
   Lisp_Object *newargs;
   USE_SAFE_ALLOCA;
-  if (nargs == PTRDIFF_MAX) xsignal0 (Qoverflow_error);
+  if (nargs == PTRDIFF_MAX)
+    xsignal0 (Qoverflow_error);
   SAFE_ALLOCA_LISP (newargs, nargs + 1);
   newargs[0] = value_to_lisp (fun);
   for (ptrdiff_t i = 0; i < nargs; i++)
@@ -464,7 +471,8 @@ static emacs_value
 module_make_integer (emacs_env *env, intmax_t n)
 {
   MODULE_FUNCTION_BEGIN (module_nil);
-  if (FIXNUM_OVERFLOW_P (n)) xsignal0 (Qoverflow_error);
+  if (FIXNUM_OVERFLOW_P (n))
+    xsignal0 (Qoverflow_error);
   return lisp_to_value (make_number (n));
 }
 
@@ -494,7 +502,6 @@ module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
 
   Lisp_Object lisp_str_utf8 = ENCODE_UTF_8 (lisp_str);
   ptrdiff_t raw_size = SBYTES (lisp_str_utf8);
-  if (raw_size == PTRDIFF_MAX) xsignal0 (Qoverflow_error);
   ptrdiff_t required_buf_size = raw_size + 1;
 
   eassert (length != NULL);
@@ -523,7 +530,6 @@ static emacs_value
 module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
 {
   MODULE_FUNCTION_BEGIN (module_nil);
-  if (length > STRING_BYTES_BOUND) xsignal0 (Qoverflow_error);
   Lisp_Object lstr = make_unibyte_string (str, length);
   return lisp_to_value (code_convert_string_norecord (lstr, Qutf_8, false));
 }
@@ -540,7 +546,7 @@ module_get_user_ptr (emacs_env *env, emacs_value uptr)
 {
   MODULE_FUNCTION_BEGIN (NULL);
   Lisp_Object lisp = value_to_lisp (uptr);
-  CHECK_TYPE (USER_PTRP (lisp), Quser_ptrp, lisp);
+  CHECK_USER_PTR (lisp);
   return XUSER_PTR (lisp)->p;
 }
 
@@ -550,7 +556,7 @@ module_set_user_ptr (emacs_env *env, emacs_value uptr, void *ptr)
   /* FIXME: This function should return bool because it can fail.  */
   MODULE_FUNCTION_BEGIN ();
   Lisp_Object lisp = value_to_lisp (uptr);
-  CHECK_TYPE (USER_PTRP (lisp), Quser_ptrp, lisp);
+  CHECK_USER_PTR (lisp);
   XUSER_PTR (lisp)->p = ptr;
 }
 
@@ -559,7 +565,7 @@ module_get_user_finalizer (emacs_env *env, emacs_value uptr)
 {
   MODULE_FUNCTION_BEGIN (NULL);
   Lisp_Object lisp = value_to_lisp (uptr);
-  CHECK_TYPE (USER_PTRP (lisp), Quser_ptrp, lisp);
+  CHECK_USER_PTR (lisp);
   return XUSER_PTR (lisp)->finalizer;
 }
 
@@ -570,7 +576,7 @@ module_set_user_finalizer (emacs_env *env, emacs_value uptr,
   /* FIXME: This function should return bool because it can fail.  */
   MODULE_FUNCTION_BEGIN ();
   Lisp_Object lisp = value_to_lisp (uptr);
-  CHECK_TYPE (USER_PTRP (lisp), Quser_ptrp, lisp);
+  CHECK_USER_PTR (lisp);
   XUSER_PTR (lisp)->finalizer = fin;
 }
 
@@ -581,7 +587,6 @@ module_vec_set (emacs_env *env, emacs_value vec, ptrdiff_t i, emacs_value val)
   MODULE_FUNCTION_BEGIN ();
   Lisp_Object lvec = value_to_lisp (vec);
   CHECK_VECTOR (lvec);
-  if (FIXNUM_OVERFLOW_P (i)) xsignal0 (Qoverflow_error);
   CHECK_RANGED_INTEGER (make_number (i), 0, ASIZE (lvec) - 1);
   ASET (lvec, i, value_to_lisp (val));
 }
@@ -592,7 +597,6 @@ module_vec_get (emacs_env *env, emacs_value vec, ptrdiff_t i)
   MODULE_FUNCTION_BEGIN (module_nil);
   Lisp_Object lvec = value_to_lisp (vec);
   CHECK_VECTOR (lvec);
-  if (FIXNUM_OVERFLOW_P (i)) xsignal0 (Qoverflow_error);
   CHECK_RANGED_INTEGER (make_number (i), 0, ASIZE (lvec) - 1);
   return lisp_to_value (AREF (lvec, i));
 }
