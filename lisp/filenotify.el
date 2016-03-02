@@ -197,8 +197,10 @@ EVENT is the cadr of the event in `file-notify-handle-event'
                       '(attribute-changed changed created deleted renamed))
 		action)
 	       ((memq action '(moved rename))
-		(setq file1 (file-notify--event-file1-name event))
-		'renamed)
+		;; The kqueue rename event does not return file1 in
+		;; case a file monitor is established.
+		(if (setq file1 (file-notify--event-file1-name event))
+		    'renamed 'deleted))
 	       ((eq action 'ignored)
                 (setq stopped t actions nil))
 	       ((memq action '(attrib link)) 'attribute-changed)
