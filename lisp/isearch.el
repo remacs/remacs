@@ -1528,7 +1528,9 @@ The command then executes BODY and updates the isearch prompt."
                   (if docstring (concat "\n" docstring) ""))
          (interactive)
          ,@(when function
-             `((setq isearch-regexp-function #',function)
+             `((setq isearch-regexp-function
+                     (unless (eq isearch-regexp-function #',function)
+                       #',function))
                (setq isearch-regexp nil)))
          ,@body
          (setq isearch-success t isearch-adjusted t)
