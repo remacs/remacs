@@ -1499,7 +1499,7 @@ The preference is a float determined from `shr-prefer-media-type'."
           (insert " ")
 	  (url-queue-retrieve
 	   (shr-encode-url url) 'shr-image-fetched
-	   (list (current-buffer) start (set-marker (make-marker) (1- (point)))
+	   (list (current-buffer) start (set-marker (make-marker) (point))
                  (list :width width :height height))
 	   t t)))
 	(when (zerop shr-table-depth) ;; We are not in a table.
