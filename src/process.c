@@ -120,6 +120,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 #endif
 
+#if defined HAVE_GETADDRINFO_A || defined HAVE_GNUTLS
+/* This is 0.1s in nanoseconds. */
+#define ASYNC_RETRY_NSEC 100000000
+#endif
+
 #ifdef WINDOWSNT
 extern int sys_select (int, fd_set *, fd_set *, fd_set *,
 		       struct timespec *, void *);
@@ -4870,6 +4875,9 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
   struct timespec got_output_end_time = invalid_timespec ();
   enum { MINIMUM = -1, TIMEOUT, INFINITY } wait;
   int got_some_output = -1;
+#if defined HAVE_GETADDRINFO_A || defined HAVE_GNUTLS
+  bool retry_for_async;
+#endif
   ptrdiff_t count = SPECPDL_INDEX ();
 
   /* Close to the current time if known, an invalid timespec otherwise.  */
@@ -4922,6 +4930,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	Lisp_Object process_list_head, aproc;
 	struct Lisp_Process *p;
 
+	retry_for_async = false;
 	FOR_EACH_PROCESS(process_list_head, aproc)
 	  {
 	    p = XPROCESS (aproc);
@@ -4935,6 +4944,8 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		    Lisp_Object ip_addresses = check_for_dns (aproc);
 		    if (!NILP (ip_addresses) && !EQ (ip_addresses, Qt))
 		      connect_network_socket (aproc, ip_addresses);
+		    else
+		      retry_for_async = true;
 		  }
 #endif
 #ifdef HAVE_GNUTLS
@@ -4950,12 +4961,16 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 			gnutls_verify_boot (aproc, Qnil);
 			finish_after_tls_connection (aproc);
 		      }
-		    else if (p->gnutls_handshakes_tried
-			     > GNUTLS_EMACS_HANDSHAKES_LIMIT)
+		    else
 		      {
-			deactivate_process (aproc);
-			pset_status (p, list2 (Qfailed,
-					       build_string ("TLS negotiation failed")));
+			retry_for_async = true;
+			if (p->gnutls_handshakes_tried
+			    > GNUTLS_EMACS_HANDSHAKES_LIMIT)
+			  {
+			    deactivate_process (aproc);
+			    pset_status (p, list2 (Qfailed,
+						   build_string ("TLS negotiation failed")));
+			  }
 		      }
 		  }
 #endif
@@ -5221,6 +5236,15 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  /* NOW can become inaccurate if time can pass during pselect.  */
 	  if (timeout.tv_sec > 0 || timeout.tv_nsec > 0)
 	    now = invalid_timespec ();
+
+#if defined HAVE_GETADDRINFO_A || defined HAVE_GNUTLS
+	  if (retry_for_async
+	      && (timeout.tv_sec > 0 || timeout.tv_nsec > ASYNC_RETRY_NSEC))
+	    {
+	      timeout.tv_sec = 0;
+	      timeout.tv_nsec = ASYNC_RETRY_NSEC;
+	    }
+#endif
 
 #if defined (HAVE_NS)
           nfds = ns_select
