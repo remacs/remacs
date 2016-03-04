@@ -615,7 +615,7 @@ temporarily enables it to allow getting help on disabled items and buttons."
 	     (menu-bar-update-yank-menu "(any string)" nil))
            (while
                (progn
-                 (setq key (read-key-sequence "Describe key (or click or menu item): "))
+                 (setq key (read-key-sequence "Describe the following key, mouse click, or menu item: "))
                  (and (vectorp key)
                       (consp (aref key 0))
                       (symbolp (car (aref key 0)))
@@ -760,7 +760,7 @@ temporarily enables it to allow getting help on disabled items and buttons."
 	     (menu-bar-update-yank-menu "(any string)" nil))
            (while
                (progn
-                 (setq key (read-key-sequence "Describe key (or click or menu item): "))
+                 (setq key (read-key-sequence "Describe the following key, mouse click, or menu item: "))
                  (and (vectorp key)
                       (consp (aref key 0))
                       (symbolp (car (aref key 0)))
