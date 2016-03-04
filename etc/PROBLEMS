@@ -600,6 +600,16 @@ you have a personal configuration file (normally ~/.aspell.conf), it
 can cause this error.  Remove that file, execute 'ispell-kill-ispell'
 in Emacs, and then try spell-checking again.
 
+*** Emacs eats all file descriptors when using kqueue file notifications.
+
+When you have a large number of buffers running auto-revert-mode, and
+Emacs is configured to use the kqueue file notification library, it
+uses an own file descriptor for every watched file.  On systems with a
+small limit of file descriptors allowed per process, like OS X, you
+could run out of file descriptors.  You won't be able to open new files.
+
+Set auto-revert-use-notify to nil in order to avoid this problem.
+
 * Runtime problems related to font handling
 
 ** Characters are displayed as empty boxes or with wrong font under X.

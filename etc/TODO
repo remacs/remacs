@@ -675,15 +675,242 @@ from the emacsclient process.
 
 ** NeXTstep port
 
+*** Missing features
+
+This sections contains features found in other official Emacs ports.
+
+**** Support for "xwidget"
+
+Emacs 25 has support for "xwidgets", a system to include operating
+system components into an Emacs buffer.  The components range from
+simple buttons to "webkit" (effectively, a web browser).
+
+Currently, "xwidget" only works for the "gtk+" framework but it is
+designed to be compatible with multiple Emacs ports.
+
+**** Respect `frame-inhibit-implied-resize'
+
+When the variable `frame-inhibit-implied-resize' is non-nil, frames
+should not be resized when operations like changing font or toggling
+the tool bar is performed.
+
+Unfortunately, the tool bar (and possible other operations) always
+resize the frame.
+
+**** Support `proced' (implement `process-attributes')
+
+Unfortunately, a user-level process like Emacs does not have the
+privileges to get information about other processes under OS X.
+
+There are other ways to do this:
+
+ 1) Spawn "ps" and parse the output ("ps" has superuser privileges).
+
+ 2) Sign Emacs as part of the distribution process.
+
+ 3) Ask the user to self-sign Emacs, if this feature is of interest.
+
+Anders Lindgren <andlind@gmail.com> has implemented
+`process-attributes' for OS X, which currently only work when
+running Emacs as root.
+
+See this article by Bozhidar Batsov for an overview of Proced:
+http://emacsredux.com/blog/2013/05/02/manage-processes-with-proced/
+
+**** Tooltip properties
+
+Tooltip properties like the background color and font are hard-wired,
+even though Emacs allows a user to customize such features.
+
+*** New features
+
+This section contains features unique to Nextstep and/or OS X.
+
+**** PressAndHold for writing accented character
+
+On OS X, many application support the press and hold pattern to
+invoke a menu of accented characters.  (See example at
+https://support.apple.com/en-us/HT201586 .)
+
+Currently, this doesn't work in Emacs.
+
+Note that "ns-win.el" explicitly disables this.
+
+Note: This feature might not be allowed to be implemented until also
+implemented in Emacs for a free system.
+
+**** Floating scroll bars
+
+In modern OS X applications, the scroll bar often floats over the
+content, and is invisible unless actually used.  This makes the user
+interface less cluttered and more area could be used to contain text.
+
+With floating scroll bars, the user interface would look like it does
+when they are disabled today.  However, they will be made visible when
+a scroll action is initiated, e.g. by putting two fingers on a
+trackpad.
+
+Note: This feature might not be allowed to be implemented until also
+implemented in Emacs for a free system.
+
+*** Features from the "mac" port
+
+This section contains features available in the "mac" Emacs port.
+
+As the "mac" port (as of this writing) isn't an official Emacs port,
+it might contain features not following the FSF rule "must exist on
+free systems".
+
+The "mac" port is based on the Emacs 22 C-based Carbon interface.
+It has been maintained in parallel to the official Cocoa-based NS
+interface.  The Carbon interface has been enhanced, and a number of the
+features of that interface could be implemented NS.
+
+**** Smooth scrolling -- maybe not a good idea
+
+Today, by default, scrolling with a trackpad makes the text move in
+steps of five lines.  (Scrolling with SHIFT scrolls one line at a time.)
+
+The "mac" port provides smooth, pixel-based, scrolling.  This is a very
+popular features.  However, there are drawbacks to this method: what
+happens if only a fraction of a line is visible at the top of a
+window, is the partially visible text considered part of the window or
+not?  (Technically, what should `window-start' return.)
+
+An alternative would be to make one-line scrolling the default on NS
+(or in Emacs in general).
+
+Note: This feature might not be allowed to be implemented until also
+implemented in Emacs for a free system.
+
+**** Mouse gestures
+
+The "mac" port defines the gestures `swipe-left/right/up/down',
+`magnify-up/down', and `rotate-left/right'.
+
+It also binds the magnification commands to change the font
+size.  (This should be not be done in a specific interface, instead
+Emacs should do this binding globally.)
+
+Note: This feature might not be allowed to be implemented until also
+implemented in Emacs for a free system.
+
+**** Synthesize bold fonts
+
+*** Open issues
+
+This section contains issues where there is an ongoing debate.
+
+**** Key bindings of CMD and ALT
+
+Currently in the "ns" port, ALT is bound to Meta and CMD is bound to
+Super -- allowing the user to use typical OS X commands like CMD-A to
+mark everything.
+
+Unfortunately, when using an international keyboard, you can't type
+normal characters like "(" etc.
+
+There are many alternative key bindings.  One solution is to bind CMD
+to Meta and pass ALT to the system.  In fact, this is what Emacs did up
+to, and including, version 22.  Also, this is how the "mac" port binds
+the keys.
+
+One could envision asymmetrical variants as well, however, this is
+inappropriate for the default setting.
+
+See the discussion on emacs-devel:
+https://lists.gnu.org/archive/html/emacs-devel/2015-12/msg01575.html
+https://lists.gnu.org/archive/html/emacs-devel/2016-01/msg00008.html
+
+*** Internal development features
+
+**** Regression test system (or at least a checklist)
+
+Today, after each change to the user interface, Emacs must be manually
+tested.  Often, small details are overlooked ("Oh, I didn't test
+toggling the tool-bar in one of the full screen modes, when multiple
+frame were open -- silly me.")
+
+It would be an enormous help if this could be tested automatically.
+Many features are generic, however, the NS interface provides a number
+of unique features.
+
+**** Existing packages
+
+Note that there is a generic UI test named frame-test.el, see
+http://debbugs.gnu.org/21415#284 .
+The NS interface passes this, with the exception of two toolbar-related errors.
+
+**** Anders frame test
+
+Anders Lindgren <andlind@gmail.com> has implemented some (very basic)
+tests for full screen, toolbar, and auto-hiding the menu bar.
+
+**** Make sure all build variants work
+
+Emacs can be build in a number of different ways.  For each feature,
+consider if is really is "NS" specific, or if it should be applied to
+all build versions.
+
+- With the "NS" interface.  This is the normal way to build Emacs on OS X.
+
+- With the "X11" interface.  On OS X, this is mainly of interest to
+  developers of Emacs to get a "reference" interface implementations.
+  However, it might be of interest for people working remotely, as X11
+  applications can be used over a network connection.
+
+- Console only.
+
 *** Bugs
 
+**** Incorrect translation of Super modifier with Ctrl or Meta on OS X
+
+When pressing `M-s-a', Emacs replies "M-s-å is undefined".  What
+happened is a mix of Emacs view that Meta and Super has been pressed,
+and OS X view that ALT-a should yield "å".
+
+The bug reports suggests two different patched, unfortunately, none
+work properly.  For example:
+
+   Use a Swedish keyboard layout
+
+   (setq ns-alternate-modifier nil)
+
+   "CMD-ALT-9"
+
+Today, this correctly yields that s-] is undefined.  With the either
+of the two patches, Emacs responds that s-9 was pressed.
+
+More investigation is needed to fix this problem.
+
+Links:
+- http://debbugs.gnu.org/19977
+- http://debbugs.gnu.org/21330
+- http://debbugs.gnu.org/21551
+
+**** Toggling the toolbar in fullheight or maximized modes
+
+The toolbar, in the NS interface, is not considered part of the text
+area.  When it is toggled, the Emacs frame change height accordingly.
+
+Unfortunately, this also occurs when the frame is in fullheight or
+maximized modes (N.B. this is not the same as "fullscreen").  The
+effect is that the full frame size either increases (stretching down
+below the lower edge of the screen) or decreases (leaving space
+between the lower edge of the frame and the lower edge of the screen).
+
+A better solution would be for the frame to retain its size,
+i.e. change the text area.
+
+This is related to the `frame-inhibit-implied-resize' issue.
+
 **** The event loop does not redraw.
-     A problem is that redraw don't happen during resize,
-     because we can't break out from the NSapp loop during resize.
-     There was a special trick to detect mouse press in the lower right
-     corner and track mouse movements, but this did not work well, and was
-     not scalable to the new Lion "resize on every window edge" behavior.
-     [As of trunk r109635, 2012-08-15, the event loop no longer polls.]
+A problem is that redraw don't happen during resize,
+because we can't break out from the NSapp loop during resize.
+There was a special trick to detect mouse press in the lower right
+corner and track mouse movements, but this did not work well, and was
+not scalable to the new Lion "resize on every window edge" behavior.
+[As of trunk r109635, 2012-08-15, the event loop no longer polls.]
 
 **** (mouse-avoidance-mode 'banish) then minimize Emacs, will pop window back
 up on top of all others (probably fixed in bug#17439)
@@ -1329,3 +1556,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
+;; Local Variables:
+;; coding: utf-8
+;; End:

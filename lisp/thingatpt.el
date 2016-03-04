@@ -489,19 +489,26 @@ looks like an email address, \"ftp://\" if it starts with
 (defun thing-at-point-looking-at (regexp &optional distance)
   "Return non-nil if point is in or just after a match for REGEXP.
 Set the match data from the earliest such match ending at or after
-point."
+point.
+
+Optional argument DISTANCE limits search for REGEXP forward and
+back from point."
   (save-excursion
     (let ((old-point (point))
 	  (forward-bound (and distance (+ (point) distance)))
 	  (backward-bound (and distance (- (point) distance)))
-	  match)
+	  match prev-pos new-pos)
       (and (looking-at regexp)
 	   (>= (match-end 0) old-point)
 	   (setq match (point)))
       ;; Search back repeatedly from end of next match.
       ;; This may fail if next match ends before this match does.
       (re-search-forward regexp forward-bound 'limit)
-      (while (and (re-search-backward regexp backward-bound t)
+      (setq prev-pos (point))
+      (while (and (setq new-pos (re-search-backward regexp backward-bound t))
+                  ;; Avoid inflooping with some regexps, such as "^",
+                  ;; matching which never moves point.
+                  (< new-pos prev-pos)
 		  (or (> (match-beginning 0) old-point)
 		      (and (looking-at regexp)	; Extend match-end past search start
 			   (>= (match-end 0) old-point)

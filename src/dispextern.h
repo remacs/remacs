@@ -1973,8 +1973,8 @@ struct bidi_it {
 				   resolving weak and neutral types */
   bidi_type_t type_after_wn;	/* bidi type after overrides and Wn */
   bidi_type_t orig_type;	/* original bidi type, as found in the buffer */
-  char resolved_level;		/* final resolved level of this character */
-  char isolate_level;		/* count of isolate initiators unmatched by PDI */
+  signed char resolved_level;	/* final resolved level of this character */
+  signed char isolate_level;	/* count of isolate initiators unmatched by PDI */
   ptrdiff_t invalid_levels;	/* how many PDFs to ignore */
   ptrdiff_t invalid_isolates;	/* how many PDIs to ignore */
   struct bidi_saved_info prev;	/* info about previous character */

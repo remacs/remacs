@@ -216,6 +216,14 @@ For details about the Cookie handling @xref{Cookies,,,url}.
 @code{eww-header-line-format}.  The format replaces @code{%t} with the
 title of the website and @code{%u} with the URL.
 
+@findex eww-toggle-paragraph-direction
+@cindex paragraph direction
+  The @kbd{D} command (@code{eww-toggle-paragraph-direction}) toggles
+the paragraphs direction between left-to-right and right-to-left
+text.  This can be useful on web pages that display right-to-left test
+(like Arabic and Hebrew), but where the web pages don't explicitly
+state the directionality.
+
 @c @vindex shr-bullet
 @c @vindex shr-hr-line
 @c @vindex eww-form-checkbox-selected-symbol

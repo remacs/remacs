@@ -101,5 +101,5 @@ interface.
 
 The INSTALL file in this directory for compilation instructions.
 
-The WISHLIST file in this directory for a list of ideas for future
-development of the NS interface.
+The Nextstep section in the etc/TODO file for a list of ideas for
+future development.

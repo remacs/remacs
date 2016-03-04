@@ -505,8 +505,9 @@ variables, not just user options."
 ;;;###autoload
 (defun apropos-variable (pattern &optional do-not-all)
   "Show variables that match PATTERN.
-When DO-NOT-ALL is non-nil, show user options only, i.e. behave
-like `apropos-user-option'."
+With the optional argument DO-NOT-ALL non-nil (or when called
+interactively with the prefix \\[universal-argument]), show user
+options only, i.e. behave like `apropos-user-option'."
   (interactive (list (apropos-read-pattern
 		      (if current-prefix-arg "user option" "variable"))
                      current-prefix-arg))
