@@ -1806,7 +1806,7 @@ Go back to where you previously invoked @kbd{M-.} and friends
 @findex xref-find-definitions
   @kbd{M-.}@: (@code{xref-find-definitions}) shows the definitions of
 the identifier at point.  With a prefix argument, or if there's no
-valid identifier at point, it prompts for the identifier.  If the
+identifier at point, it prompts for the identifier.  If the
 identifier has only one definition, the command jumps to it.  If the
 identifier has more than one possible definition (e.g., in an
 object-oriented language, or if there's a function and a variable by
@@ -1923,7 +1923,7 @@ Restart one of the last 2 commands above, from the current location of point.
 @kindex M-?
 @findex xref-find-references
   @kbd{M-?} finds all the references for the identifier at point.  If
-there's no valid identifier at point, or when invoked with a prefix
+there's no identifier at point, or when invoked with a prefix
 argument, the command prompts for the identifier, with completion.  It
 then presents a @file{*xref*} buffer with all the references to the
 identifier, showing the file name and the line where the identifier is

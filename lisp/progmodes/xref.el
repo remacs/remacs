@@ -608,10 +608,8 @@ references displayed in the current *xref* buffer."
 (define-derived-mode xref--xref-buffer-mode special-mode "XREF"
   "Mode for displaying cross-references."
   (setq buffer-read-only t)
-  ;; FIXME: http://debbugs.gnu.org/20489
-  ;; (setq next-error-function #'xref--next-error-function)
-  ;; (setq next-error-last-buffer (current-buffer))
-  )
+  (setq next-error-function #'xref--next-error-function)
+  (setq next-error-last-buffer (current-buffer)))
 
 (defun xref--next-error-function (n reset?)
   (when reset?
