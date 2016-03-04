@@ -2296,7 +2296,7 @@ Usage example:
                 altered-name))
             (append choices '((?? "?")))
             ", ")))
-         tchar buf wrong-char)
+         tchar buf wrong-char answer)
     (save-window-excursion
       (save-excursion
 	(while (not tchar)
