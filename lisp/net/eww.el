@@ -618,13 +618,19 @@ Currently this means either text/html or application/xhtml+xml."
     (view-buffer buf)))
 
 (defun eww-toggle-paragraph-direction ()
-  "Toggle the paragraphs direction between left-to-right and right-to-left."
+  "Cycle the paragraph direction between left-to-right, right-to-left and auto."
   (interactive)
   (setq bidi-paragraph-direction
-        (if (eq bidi-paragraph-direction 'left-to-right)
-            'right-to-left
-          'left-to-right))
-  (message "The paragraph direction is now %s" bidi-paragraph-direction))
+        (cond ((eq bidi-paragraph-direction 'left-to-right)
+               nil)
+              ((eq bidi-paragraph-direction 'right-to-left)
+               'left-to-right)
+              (t
+               'right-to-left)))
+  (message "The paragraph direction is now %s"
+           (if (null bidi-paragraph-direction)
+               "automatic"
+             bidi-paragraph-direction)))
 
 (defun eww-readable ()
   "View the main \"readable\" parts of the current web page.

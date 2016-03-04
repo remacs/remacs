@@ -1197,13 +1197,16 @@ ns_clip_to_row (struct window *w, struct glyph_row *row,
       // 2011, see https://savannah.gnu.org/bugs/?33396
       //
       // As a drop in replacement, a semitransparent gray square is used.
-      self.image = [[NSImage alloc] initWithSize:NSMakeSize(32, 32)];
+      self.image = [[NSImage alloc] initWithSize:NSMakeSize(32 * 5, 32 * 5)];
       [self.image lockFocus];
       [[NSColor colorForEmacsRed:0.5 green:0.5 blue:0.5 alpha:0.5] set];
       NSRectFill(NSMakeRect(0, 0, 32, 32));
       [self.image unlockFocus];
 #else
       self.image = [NSImage imageNamed:NSImageNameCaution];
+      [self.image setScalesWhenResized:YES];
+      [self.image setSize:NSMakeSize(self.image.size.width * 5,
+                                     self.image.size.height * 5)];
 #endif
     }
   return self;
