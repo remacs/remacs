@@ -3034,7 +3034,11 @@ it is commonly assigned to the @code{mouse-face} property for cursor
 highlighting (@pxref{Special Properties}).
 
 @item match
-For text matching a search command.
+@itemx isearch
+@itemx lazy-highlight
+For text matching (respectively) permanent search matches, interactive
+search matches, and lazy highlighting other matches than the current
+interactive one.
 
 @item error
 @itemx warning

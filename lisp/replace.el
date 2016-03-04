@@ -1268,6 +1268,7 @@ Compatibility function for \\[next-error] invocations."
     (t :background "gray"))
   "Face used to highlight matches permanently."
   :group 'matching
+  :group 'basic-faces
   :version "22.1")
 
 (defcustom list-matching-lines-default-context-lines 0

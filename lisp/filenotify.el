@@ -27,8 +27,7 @@
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'cl))
+(require 'cl-lib)
 
 (defconst file-notify--library
   (cond
@@ -58,7 +57,7 @@ DESCRIPTOR should be an object returned by `file-notify-add-watch'.
 If it is registered in `file-notify-descriptors', a stopped event is sent."
   (let* ((desc (if (consp descriptor) (car descriptor) descriptor))
          (registered (gethash desc file-notify-descriptors))
-	 (file (if (consp descriptor) (cdr descriptor) (caadr registered)))
+	 (file (if (consp descriptor) (cdr descriptor) (cl-caadr registered)))
 	 (dir (car registered)))
 
     (when (consp registered)
@@ -104,7 +103,7 @@ It is a form ((DESCRIPTOR ACTION FILE [FILE1-OR-COOKIE]) CALLBACK).")
 Could be different from the directory watched by the backend library."
   (let* ((desc (if (consp (car event)) (caar event) (car event)))
          (registered (gethash desc file-notify-descriptors))
-	 (file (if (consp (car event)) (cdar event) (caadr registered)))
+	 (file (if (consp (car event)) (cdar event) (cl-caadr registered)))
 	 (dir (car registered)))
     (if file (expand-file-name file dir) dir)))
 
@@ -274,11 +273,13 @@ EVENT is the cadr of the event in `file-notify-handle-event'
 	     `(,(file-notify--descriptor desc (car entry)) ,action ,file))))
 
         ;; Send `stopped' event.
-        (when (and (memq action '(deleted renamed))
-                   ;; Not, when a file is backed up.
-                   (not (and (stringp file1) (backup-file-name-p file1)))
-                   ;; Watched file or directory is concerned.
-                   (string-equal file (file-notify--event-watched-file event)))
+        (when (or stopped
+                  (and (memq action '(deleted renamed))
+                       ;; Not, when a file is backed up.
+                       (not (and (stringp file1) (backup-file-name-p file1)))
+                       ;; Watched file or directory is concerned.
+                       (string-equal
+                        file (file-notify--event-watched-file event))))
           (file-notify-rm-watch (file-notify--descriptor desc (car entry))))))))
 
 ;; `kqueue', `gfilenotify' and `w32notify' return a unique descriptor
