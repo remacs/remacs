@@ -387,7 +387,7 @@ The following commands are available:
       (when entry
 	(gnus-dribble-enter
 	 (concat "(gnus-server-set-info \"" server "\" '"
-		 (gnus-prin1-to-string (cdr entry)) ")\n")
+		 (gnus-prin1-to-string (cdr entry)) ")")
 	 (concat "^(gnus-server-set-info \"" (regexp-quote server) "\"")))
       (when (or entry oentry)
 	;; Buffer may be narrowed.
