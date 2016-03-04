@@ -1195,73 +1195,83 @@ the default, but we plan to change that, so you should specify a
 non-@code{nil} value for @var{id-format} if you use the returned
 @acronym{UID} or @acronym{GID}.
 
+Accessor functions are provided to access the elements in this list.
+The accessors are mentioned along with the descriptions of the
+elements below.
+
 The elements of the list, in order, are:
 
 @enumerate 0
 @item
 @code{t} for a directory, a string for a symbolic link (the name
-linked to), or @code{nil} for a text file.
+linked to), or @code{nil} for a text file
+(@code{file-attribute-type}).
 
 @c Wordy so as to prevent an overfull hbox.  --rjc 15mar92
 @item
-The number of names the file has.  Alternate names, also known as hard
-links, can be created by using the @code{add-name-to-file} function
-(@pxref{Changing Files}).
+The number of names the file has (@code{file-attribute-link-number}).
+Alternate names, also known as hard links, can be created by using the
+@code{add-name-to-file} function (@pxref{Changing Files}).
 
 @item
-The file's @acronym{UID}, normally as a string.  However, if it does
-not correspond to a named user, the value is a number.
+The file's @acronym{UID}, normally as a string
+(@code{file-attribute-user-id}).  However, if it does not correspond
+to a named user, the value is a number.
 
 @item
-The file's @acronym{GID}, likewise.
+The file's @acronym{GID}, likewise (@code{file-attribute-group-id}).
 
 @item
-The time of last access, as a list of four integers @code{(@var{sec-high}
-@var{sec-low} @var{microsec} @var{picosec})}.  (This is similar to the
-value of @code{current-time}; see @ref{Time of Day}.)  Note that on
-some FAT-based filesystems, only the date of last access is recorded,
-so this time will always hold the midnight of the day of last access.
+The time of last access, as a list of four integers
+@code{(@var{sec-high} @var{sec-low} @var{microsec} @var{picosec})}
+(@code{file-attribute-access-time}).  (This is similar to the value of
+@code{current-time}; see @ref{Time of Day}.)  Note that on some
+FAT-based filesystems, only the date of last access is recorded, so
+this time will always hold the midnight of the day of last access.
 
 @cindex modification time of file
 @item
-The time of last modification as a list of four integers (as above).
-This is the last time when the file's contents were modified.
+The time of last modification as a list of four integers (as above)
+(@code{file-attribute-modification-time}).  This is the last time when
+the file's contents were modified.
 
 @item
-The time of last status change as a list of four integers (as above).
-This is the time of the last change to the file's access mode bits,
-its owner and group, and other information recorded in the filesystem
-for the file, beyond the file's contents.
+The time of last status change as a list of four integers (as above)
+(code{file-attribute-status-change-time}).  This is the time of the
+last change to the file's access mode bits, its owner and group, and
+other information recorded in the filesystem for the file, beyond the
+file's contents.
 
 @item
-The size of the file in bytes.  This is floating point if the size is
-too large to fit in a Lisp integer.
+The size of the file in bytes (@code{file-attribute-size}).  This is
+floating point if the size is too large to fit in a Lisp integer.
 
 @item
-The file's modes, as a string of ten letters or dashes,
-as in @samp{ls -l}.
+The file's modes, as a string of ten letters or dashes, as in
+@samp{ls -l} (@code{file-attribute-modes}).
 
 @item
 An unspecified value, present for backward compatibility.
 
 @item
-The file's inode number.  If possible, this is an integer.  If the
-inode number is too large to be represented as an integer in Emacs
-Lisp but dividing it by @math{2^{16}} yields a representable integer,
-then the value has the
+The file's inode number (@code{file-attribute-inode-number}).  If
+possible, this is an integer.  If the inode number is too large to be
+represented as an integer in Emacs Lisp but dividing it by
+@math{2^{16}} yields a representable integer, then the value has the
 form @code{(@var{high} . @var{low})}, where @var{low} holds the low 16
-bits.  If the inode number is too wide for even that, the value is of the form
-@code{(@var{high} @var{middle} . @var{low})}, where @code{high} holds
-the high bits, @var{middle} the middle 24 bits, and @var{low} the low
-16 bits.
+bits.  If the inode number is too wide for even that, the value is of
+the form @code{(@var{high} @var{middle} . @var{low})}, where
+@code{high} holds the high bits, @var{middle} the middle 24 bits, and
+@var{low} the low 16 bits.
 
 @item
-The filesystem number of the device that the file is on.  Depending on
-the magnitude of the value, this can be either an integer or a cons
-cell, in the same manner as the inode number.  This element and the
-file's inode number together give enough information to distinguish
-any two files on the system---no two files can have the same values
-for both of these numbers.
+The filesystem number of the device that the file is on
+@code{file-attribute-device-number}).  Depending on the magnitude of
+the value, this can be either an integer or a cons cell, in the same
+manner as the inode number.  This element and the file's inode number
+together give enough information to distinguish any two files on the
+system---no two files can have the same values for both of these
+numbers.
 @end enumerate
 
 For example, here are the file attributes for @file{files.texi}:

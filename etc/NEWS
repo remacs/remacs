@@ -40,6 +40,16 @@ erc-emacs-build-time.
 
 * Changes in Emacs 25.2
 
++++
+** A number of accessors for the value returned by `file-attributes'
+has been added.  They are: `file-attribute-type',
+`file-attribute-link-number', `file-attribute-user-id',
+`file-attribute-group-id', `file-attribute-access-time',
+`file-attribute-modification-time',
+`file-attribute-status-change-time', `file-attribute-size',
+`file-attribute-modes', `file-attribute-inode-number', and
+`file-attribute-device-number'
+
 ---
 ** `align-regexp' has a separate history for its interactive argument
 `align-regexp' no longer shares its history with all other

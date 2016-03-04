@@ -861,6 +861,14 @@ below) - valid values are `string' and `integer'.  The latter is the
 default, but we plan to change that, so you should specify a non-nil value
 for ID-FORMAT if you use the returned uid or gid.
 
+To access the elements returned, the following access functions are
+provided: `file-attribute-type', `file-attribute-link-number',
+`file-attribute-user-id', `file-attribute-group-id',
+`file-attribute-access-time', `file-attribute-modification-time',
+`file-attribute-status-change-time', `file-attribute-size',
+`file-attribute-modes', `file-attribute-inode-number', and
+`file-attribute-device-number'.
+
 Elements of the attribute list are:
  0. t for directory, string (name linked to) for symbolic link, or nil.
  1. Number of links to file.
