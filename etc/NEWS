@@ -588,7 +588,13 @@ additionally need to add `getSelection' to `xterm-extra-capabilities'.
 *** `xterm-mouse-mode' now supports mouse-tracking (if your xterm supports it).
 
 ---
-** The `save-place' variable is replaced by `save-place-mode'.
+** To turn on `save-place' mode globally, you must call `(save-place-mode 1)'.
+In order to have the last place in every file saved it is no longer
+sufficient to load the saveplace library and set the default value of
+`save-place' to non-nil.  You must explicitly call the function
+`save-place-mode' with a positive argument instead.  The `save-place'
+variable is now an obsolete alias for `save-place-mode', which
+replaces it.
 
 ** ERC
 
@@ -701,6 +707,11 @@ dependencies).  This variable can also be manually customized.
 ---
 *** New command `package-install-selected-packages' installs all
 packages from `package-selected-packages' which are currently missing.
+
+---
+*** `package-install' function now takes a DONT-SELECT argument.  If
+this function is called interactively or if DONT-SELECT is nil, add the
+package being installed to `package-selected-packages'.
 
 ---
 *** New command `package-autoremove' removes all packages which were

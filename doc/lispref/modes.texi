@@ -2511,12 +2511,12 @@ Search-based fontification happens second.
 
   The Font Lock functionality is based on several basic functions.
 Each of these calls the function specified by the corresponding
-variable.  This indirection allows major modes to modify the way
-fontification works in the buffers of that mode, and even use the Font
-Lock mechanisms for features that have nothing to do with
+variable.  This indirection allows major and minor modes to modify the
+way fontification works in the buffers of that mode, and even use the
+Font Lock mechanisms for features that have nothing to do with
 fontification.  (This is why the description below says ``should''
-when it describes what the functions do: the major mode can customize
-the values of the corresponding variables to do something entirely
+when it describes what the functions do: the mode can customize the
+values of the corresponding variables to do something entirely
 different.)  The variables mentioned below are described in @ref{Other
 Font Lock Variables}.
 
@@ -2563,10 +2563,10 @@ variable.  The value assigned to this variable is used, if and when Font
 Lock mode is enabled, to set all the other variables.
 
 @defvar font-lock-defaults
-This variable is set by major modes to specify how to fontify text in
-that mode.  It automatically becomes buffer-local when set.  If its
-value is @code{nil}, Font Lock mode does no highlighting, and you can
-use the @samp{Faces} menu (under @samp{Edit} and then @samp{Text
+This variable is set by modes to specify how to fontify text in that
+mode.  It automatically becomes buffer-local when set.  If its value
+is @code{nil}, Font Lock mode does no highlighting, and you can use
+the @samp{Faces} menu (under @samp{Edit} and then @samp{Text
 Properties} in the menu bar) to assign faces explicitly to text in the
 buffer.
 

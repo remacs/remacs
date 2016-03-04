@@ -681,7 +681,7 @@ void
 clear_glyph_matrix_rows (struct glyph_matrix *matrix, int start, int end)
 {
   eassert (start <= end);
-  eassert (start >= 0 && start < matrix->nrows);
+  eassert (start >= 0 && start <= matrix->nrows);
   eassert (end >= 0 && end <= matrix->nrows);
 
   for (; start < end; ++start)

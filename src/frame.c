@@ -865,6 +865,9 @@ make_initial_frame (void)
   /* The default value of menu-bar-mode is t.  */
   set_menu_bar_lines (f, make_number (1), Qnil);
 
+  /* Allocate glyph matrices.  */
+  adjust_frame_glyphs (f);
+
   if (!noninteractive)
     init_frame_faces (f);
 

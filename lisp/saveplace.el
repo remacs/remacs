@@ -155,7 +155,7 @@ the argument is positive.
 To save places automatically in all files, put this in your init
 file:
 
-\(setq-default save-place t)"
+\(save-place-mode 1)"
   (interactive "P")
   (if (not (or buffer-file-name (and (derived-mode-p 'dired-mode)
                                      (boundp 'dired-subdir-alist)
