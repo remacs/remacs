@@ -114,6 +114,9 @@ different group ID.
 +++
 *** New connection method "doas" for OpenBSD hosts.
 
+---
+** `auto-revert-use-notify' is set back to t in `global-auto-revert-mode'.
+
 
 * New Modes and Packages in Emacs 25.2
 
