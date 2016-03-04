@@ -3888,9 +3888,19 @@ of the variables associated with indentation, not even
 @cindex syntactic element
 @cindex syntactic context
 The first thing @ccmode{} does when indenting a line of code, is to
-analyze the line, determining the @dfn{syntactic context} of the
-(first) construct on that line.  It's a list of @dfn{syntactic
-elements}, where each syntactic element in turn is a list@footnote{In
+analyze the line by calling @code{c-guess-basic-syntax}, determining
+the syntactic context of the (first) construct on that line.  Although
+this function is mainly used internally, it can sometimes be useful in
+Line-up functions (@pxref{Custom Line-Up}) or in functions on
+@code{c-special-indent-hook} (@pxref{Other Indentation}).
+
+@defun c-guess-basic-syntax
+@findex guess-basic-syntax (c-)
+Determine the syntactic context of the current line.
+@end defun
+
+The @dfn{syntactic context} is a list of @dfn{syntactic elements},
+where each syntactic element in turn is a list@footnote{In
 @ccmode 5.28 and earlier, a syntactic element was a dotted pair; the
 cons was the syntactic symbol and the cdr was the anchor position.
 For compatibility's sake, the parameter passed to a line-up function
@@ -6553,6 +6563,11 @@ Note that the return value of this function is always @code{nil} if
 only meaningful when used on syntactic elements taken from
 @code{c-syntactic-element} or @code{c-syntactic-context}.
 @end defun
+
+Sometimes you may need to use the syntactic context of a line other
+than the one being indented.  You can determine this by (temporarily)
+moving point onto this line and calling @code{c-guess-basic-syntax}
+(@pxref{Syntactic Analysis}).
 
 Custom line-up functions can be as simple or as complex as you like, and
 any syntactic symbol that appears in @code{c-offsets-alist} can have a
