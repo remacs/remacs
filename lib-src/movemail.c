@@ -809,7 +809,7 @@ mbx_delimit_begin (FILE *mbf)
 
   char fromline[100];
   if (! strftime (fromline, sizeof fromline,
-		  "From movemail %a %b %e %T %Y\n", ltime))
+		  "From movemail %a %b %d %H:%M:%S %Y\n", ltime))
     {
       errno = EOVERFLOW;
       return false;
