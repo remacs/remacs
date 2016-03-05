@@ -402,8 +402,12 @@ gnutls_try_handshake (struct Lisp_Process *proc)
 {
   gnutls_session_t state = proc->gnutls_state;
   int ret;
+  bool non_blocking = proc->is_non_blocking_client;
 
-  if (proc->is_non_blocking_client)
+  if (proc->gnutls_complete_negotiation_p)
+    non_blocking = false;
+
+  if (non_blocking)
     proc->gnutls_p = true;
 
   do
@@ -412,8 +416,9 @@ gnutls_try_handshake (struct Lisp_Process *proc)
       emacs_gnutls_handle_error (state, ret);
       QUIT;
     }
-  while (ret < 0 && gnutls_error_is_fatal (ret) == 0
-	 && ! proc->is_non_blocking_client);
+  while (ret < 0
+	 && gnutls_error_is_fatal (ret) == 0
+	 && ! non_blocking);
 
   proc->gnutls_initstage = GNUTLS_STAGE_HANDSHAKE_TRIED;
 
@@ -1354,6 +1359,9 @@ t to do all checks.  Currently it can contain `:trustfiles' and
 :min-prime-bits is the minimum accepted number of bits the client will
 accept in Diffie-Hellman key exchange.
 
+:complete-negotiation, if non-nil, will make negotiation complete
+before returning even on non-blocking sockets.
+
 The debug level will be set for this process AND globally for GnuTLS.
 So if you set it higher or lower at any point, it affects global
 debugging.
@@ -1642,6 +1650,8 @@ one trustfile (usually a CA bundle).  */)
 	return gnutls_make_error (ret);
     }
 
+  XPROCESS (proc)->gnutls_complete_negotiation_p =
+    !NILP (Fplist_get (proplist, QCgnutls_complete_negotiation));
   GNUTLS_INITSTAGE (proc) = GNUTLS_STAGE_CRED_SET;
   ret = emacs_gnutls_handshake (XPROCESS (proc));
   if (ret < GNUTLS_E_SUCCESS)
@@ -1734,6 +1744,7 @@ syms_of_gnutls (void)
   DEFSYM (QCgnutls_bootprop_crlfiles, ":crlfiles");
   DEFSYM (QCgnutls_bootprop_min_prime_bits, ":min-prime-bits");
   DEFSYM (QCgnutls_bootprop_loglevel, ":loglevel");
+  DEFSYM (QCgnutls_complete_negotiation, ":complete-negotiation");
   DEFSYM (QCgnutls_bootprop_verify_flags, ":verify-flags");
   DEFSYM (QCgnutls_bootprop_verify_error, ":verify-error");
 

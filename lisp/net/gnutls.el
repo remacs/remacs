@@ -175,7 +175,9 @@ For the meaning of the rest of the parameters, see `gnutls-boot-parameters'."
                   :verify-hostname-error verify-hostname-error))
          ret)
     (gnutls-message-maybe
-     (setq ret (gnutls-boot process type params))
+     (setq ret (gnutls-boot process type
+                            (append (list :complete-negotiation t)
+                                    params)))
      "boot: %s" params)
 
     (when (gnutls-errorp ret)

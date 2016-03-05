@@ -150,6 +150,10 @@ If no insurmountable problems before next release, it can stay that way.
 ** `ert-with-function-mocked' of 'ert-x package allows mocking of functions
 in unit tests.
 
+---
+** `gnutls-boot' now takes a parameter :complete-negotiation that says
+that negotiation should complete even on non-blocking sockets.
+
 +++
 ** New functions `window-pixel-width-before-size-change' and
 `window-pixel-height-before-size-change' allow to detect which window

@@ -193,6 +193,7 @@ struct Lisp_Process
     int gnutls_log_level;
     int gnutls_handshakes_tried;
     bool_bf gnutls_p : 1;
+    bool_bf gnutls_complete_negotiation_p : 1;
 #endif
 };
 
