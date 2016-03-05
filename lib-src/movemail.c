@@ -799,6 +799,24 @@ mbx_write (char *line, int len, FILE *mbf)
   return fwrite (line, 1, len, mbf) == len && 0 <= fputc ('\n', mbf);
 }
 
+#ifdef WINDOWSNT
+/* Work around MS-Windows lack of support for %e or %T with a
+   special-purpose strftime that assumes the exact format that
+   movemail uses.  */
+static size_t
+movemail_strftime (char *s, size_t size, char const *format,
+		   struct tm const *tm)
+{
+  size_t n = strftime (s, size, "From movemail %a %b %d %H:%M:%S %Y\n", tm);
+  char *mday = s + sizeof "From movemail Sun Jan " - 1;
+  if (*mday == '0')
+    *mday = ' ';
+  return n;
+}
+# undef strftime
+# define strftime movemail_strftime
+#endif
+
 static bool
 mbx_delimit_begin (FILE *mbf)
 {
@@ -809,7 +827,7 @@ mbx_delimit_begin (FILE *mbf)
 
   char fromline[100];
   if (! strftime (fromline, sizeof fromline,
-		  "From movemail %a %b %d %H:%M:%S %Y\n", ltime))
+		  "From movemail %a %b %e %T %Y\n", ltime))
     {
       errno = EOVERFLOW;
       return false;
