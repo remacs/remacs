@@ -28,7 +28,17 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/types.h>
 #ifdef WINDOWSNT
 #include "ntlib.h"
-#include <winsock.h>
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x0501	/* for getaddrinfo stuff */
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#undef getaddrinfo
+#define getaddrinfo  sys_getaddrinfo
+#undef freeaddrinfo
+#define freeaddrinfo sys_freeaddrinfo
+int sys_getaddrinfo (const char * node, const char * service,
+		     const struct addrinfo * hints, struct addrinfo ** res);
+void sys_freeaddrinfo (struct addrinfo * ai);
 #undef SOCKET_ERROR
 #define RECV(s,buf,len,flags) recv (s,buf,len,flags)
 #define SEND(s,buf,len,flags) send (s,buf,len,flags)
@@ -1581,4 +1591,143 @@ find_crlf (char *in_string, int len)
   return (0);
 }
 
+#ifdef WINDOWSNT
+/* The following 2 functions are only available since XP, so we load
+   them dynamically and provide fallbacks.  */
+
+int (WINAPI *pfn_getaddrinfo) (const char *, const char *,
+			       const struct addrinfo *, struct addrinfo **);
+void (WINAPI *pfn_freeaddrinfo) (struct addrinfo *);
+
+static int
+load_ws2 (void)
+{
+  static int ws2_loaded = 0;
+
+  if (!ws2_loaded)
+    {
+      HANDLE ws2_lib = LoadLibrary ("Ws2_32.dll");
+
+      if (ws2_lib != NULL)
+	{
+	  ws2_loaded = 1;
+	  pfn_getaddrinfo = (void *) GetProcAddress (ws2_lib, "getaddrinfo");
+	  pfn_freeaddrinfo = (void *) GetProcAddress (ws2_lib, "freeaddrinfo");
+	  /* Paranoia: these two functions should go together, so if
+	     one is absent, we cannot use the other.  */
+	  if (pfn_getaddrinfo == NULL)
+	    pfn_freeaddrinfo = NULL;
+	  else if (pfn_freeaddrinfo == NULL)
+	    pfn_getaddrinfo = NULL;
+	}
+    }
+  if (!ws2_loaded)
+    {
+      errno = ENETDOWN;
+      return -1;
+    }
+  return 0;
+}
+
+
+int
+sys_getaddrinfo (const char *node, const char *service,
+		 const struct addrinfo *hints, struct addrinfo **res)
+{
+  int rc;
+
+  if (load_ws2 () != 0)
+    {
+      errno = ENETDOWN;
+      return WSANO_RECOVERY;
+    }
+
+  if (pfn_getaddrinfo)
+    rc = pfn_getaddrinfo (node, service, hints, res);
+  else
+    {
+      int port = 0;
+      struct hostent *host_info;
+      struct gai_storage {
+	struct addrinfo addrinfo;
+	struct sockaddr_in sockaddr_in;
+      } *gai_storage;
+
+      /* We don't support any flags besides AI_CANONNAME.  */
+      if (hints && (hints->ai_flags & ~(AI_CANONNAME)) != 0)
+	return WSAEINVAL;
+      /* NODE cannot be NULL, since pop.c has fallbacks for that.  */
+      if (!node)
+	return WSAHOST_NOT_FOUND;
+
+      if (service)
+	{
+	  const char *protocol =
+	    (hints && hints->ai_socktype == SOCK_DGRAM) ? "udp" : "tcp";
+	  struct servent *srv = getservbyname (service, protocol);
+
+	  if (srv)
+	    port = srv->s_port;
+	  else
+	    return WSAHOST_NOT_FOUND;
+	}
+
+      gai_storage = calloc (1, sizeof *gai_storage);
+      gai_storage->sockaddr_in.sin_port = port;
+      host_info = gethostbyname (node);
+      if (host_info)
+	{
+	  memcpy (&gai_storage->sockaddr_in.sin_addr,
+		  host_info->h_addr, host_info->h_length);
+	  gai_storage->sockaddr_in.sin_family = host_info->h_addrtype;
+	}
+      else
+	{
+	  free (gai_storage);
+	  return WSAHOST_NOT_FOUND;
+	}
+
+      gai_storage->addrinfo.ai_addr =
+	(struct sockaddr *)&gai_storage->sockaddr_in;
+      gai_storage->addrinfo.ai_addrlen = sizeof (gai_storage->sockaddr_in);
+      if (hints && (hints->ai_flags & AI_CANONNAME) != 0)
+	{
+	  gai_storage->addrinfo.ai_canonname = strdup (host_info->h_name);
+	  if (!gai_storage->addrinfo.ai_canonname)
+	    {
+	      free (gai_storage);
+	      return WSA_NOT_ENOUGH_MEMORY;
+	    }
+	}
+      gai_storage->addrinfo.ai_protocol = (hints) ? hints->ai_protocol : 0;
+      gai_storage->addrinfo.ai_socktype = (hints) ? hints->ai_socktype : 0;
+      gai_storage->addrinfo.ai_family = gai_storage->sockaddr_in.sin_family;
+      gai_storage->addrinfo.ai_next = NULL;
+
+      *res = &gai_storage->addrinfo;
+      rc = 0;
+    }
+
+  return rc;
+}
+
+void
+sys_freeaddrinfo (struct addrinfo *ai)
+{
+  if (load_ws2 () != 0)
+    {
+      errno = ENETDOWN;
+      return;
+    }
+
+  if (pfn_freeaddrinfo)
+    pfn_freeaddrinfo (ai);
+  else
+    {
+      if (ai->ai_canonname)
+	free (ai->ai_canonname);
+      free (ai);
+    }
+}
+#endif	/* WINDOWSNT */
 #endif /* MAIL_USE_POP */

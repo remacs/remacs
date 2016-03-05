@@ -7202,6 +7202,10 @@ int (PASCAL *pfn_recvfrom) (SOCKET s, char * buf, int len, int flags,
 int (PASCAL *pfn_sendto) (SOCKET s, const char * buf, int len, int flags,
 			  const struct sockaddr * to, int tolen);
 
+int (PASCAL *pfn_getaddrinfo) (const char *, const char *,
+			       const struct addrinfo *, struct addrinfo **);
+void (PASCAL *pfn_freeaddrinfo) (struct addrinfo *);
+
 /* SetHandleInformation is only needed to make sockets non-inheritable. */
 BOOL (WINAPI *pfn_SetHandleInformation) (HANDLE object, DWORD mask, DWORD flags);
 #ifndef HANDLE_FLAG_INHERIT
@@ -7283,6 +7287,16 @@ init_winsock (int load_now)
       LOAD_PROC (recvfrom);
       LOAD_PROC (sendto);
 #undef LOAD_PROC
+
+      /* Try loading functions not available before XP.  */
+      pfn_getaddrinfo = (void *) GetProcAddress (winsock_lib, "getaddrinfo");
+      pfn_freeaddrinfo = (void *) GetProcAddress (winsock_lib, "freeaddrinfo");
+      /* Paranoia: these two functions should go together, so if one
+	 is absent, we cannot use the other.  */
+      if (pfn_getaddrinfo == NULL)
+	pfn_freeaddrinfo = NULL;
+      else if (pfn_freeaddrinfo == NULL)
+	pfn_getaddrinfo = NULL;
 
       /* specify version 1.1 of winsock */
       if (pfn_WSAStartup (0x101, &winsockData) == 0)
@@ -7731,6 +7745,117 @@ sys_getpeername (int s, struct sockaddr *addr, int * namelen)
     }
   errno = ENOTSOCK;
   return SOCKET_ERROR;
+}
+
+int
+sys_getaddrinfo (const char *node, const char *service,
+		 const struct addrinfo *hints, struct addrinfo **res)
+{
+  int rc;
+
+  if (winsock_lib == NULL)
+    {
+      errno = ENETDOWN;
+      return SOCKET_ERROR;
+    }
+
+  check_errno ();
+  if (pfn_getaddrinfo)
+    rc = pfn_getaddrinfo (node, service, hints, res);
+  else
+    {
+      int port = 0;
+      struct hostent *host_info;
+      struct gai_storage {
+	struct addrinfo addrinfo;
+	struct sockaddr_in sockaddr_in;
+      } *gai_storage;
+
+      /* We don't (yet) support any flags, as Emacs doesn't need that.  */
+      if (hints && hints->ai_flags != 0)
+	return WSAEINVAL;
+      /* NODE cannot be NULL, since process.c has fallbacks for that.  */
+      if (!node)
+	return WSAHOST_NOT_FOUND;
+
+      if (service)
+	{
+	  const char *protocol =
+	    (hints && hints->ai_socktype == SOCK_DGRAM) ? "udp" : "tcp";
+	  struct servent *srv = sys_getservbyname (service, protocol);
+
+	  if (srv)
+	    port = srv->s_port;
+	  else if (*service >= '0' && *service <= '9')
+	    {
+	      char *endp;
+
+	      port = strtoul (service, &endp, 10);
+	      if (*endp || port > 65536)
+		return WSAHOST_NOT_FOUND;
+	      port = sys_htons ((unsigned short) port);
+	    }
+	  else
+	    return WSAHOST_NOT_FOUND;
+	}
+
+      gai_storage = xzalloc (sizeof *gai_storage);
+      gai_storage->sockaddr_in.sin_port = port;
+      host_info = sys_gethostbyname (node);
+      if (host_info)
+	{
+	  memcpy (&gai_storage->sockaddr_in.sin_addr,
+		  host_info->h_addr, host_info->h_length);
+	  gai_storage->sockaddr_in.sin_family = host_info->h_addrtype;
+	}
+      else
+	{
+	  /* Attempt to interpret host as numeric inet address.  */
+	  unsigned long numeric_addr = sys_inet_addr (node);
+
+	  if (numeric_addr == -1)
+	    {
+	      free (gai_storage);
+	      return WSAHOST_NOT_FOUND;
+	    }
+
+	  memcpy (&gai_storage->sockaddr_in.sin_addr, &numeric_addr,
+		  sizeof (gai_storage->sockaddr_in.sin_addr));
+	  gai_storage->sockaddr_in.sin_family = (hints) ? hints->ai_family : 0;
+	}
+
+      gai_storage->addrinfo.ai_addr =
+	(struct sockaddr *)&gai_storage->sockaddr_in;
+      gai_storage->addrinfo.ai_addrlen = sizeof (gai_storage->sockaddr_in);
+      gai_storage->addrinfo.ai_protocol = (hints) ? hints->ai_protocol : 0;
+      gai_storage->addrinfo.ai_socktype = (hints) ? hints->ai_socktype : 0;
+      gai_storage->addrinfo.ai_family = gai_storage->sockaddr_in.sin_family;
+      gai_storage->addrinfo.ai_next = NULL;
+
+      *res = &gai_storage->addrinfo;
+      rc = 0;
+    }
+
+  return rc;
+}
+
+void
+sys_freeaddrinfo (struct addrinfo *ai)
+{
+  if (winsock_lib == NULL)
+    {
+      errno = ENETDOWN;
+      return;
+    }
+
+  check_errno ();
+  if (pfn_freeaddrinfo)
+    pfn_freeaddrinfo (ai);
+  else
+    {
+      eassert (ai->ai_next == NULL);
+      xfree (ai);
+    }
 }
 
 int

@@ -68,6 +68,10 @@ ac_cv_func_getsockname=yes
 ac_cv_func_getpeername=yes
 # Implemented as sys_socket in w32.c
 ac_cv_func_socket=yes
+# Implemented as sys_getaddrinfo in w32.c
+ac_cv_func_getaddrinfo=yes
+# Implemented as an inline function in ws2tcpip.h
+ac_cv_func_gai_strerror=yes
 # Implemented in w32.c
 ac_cv_func_mkostemp=yes
 ac_cv_func_readlink=yes

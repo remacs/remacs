@@ -98,6 +98,8 @@ typedef unsigned short uint16_t;
 #define accept         sys_accept
 #define recvfrom       sys_recvfrom
 #define sendto         sys_sendto
+#define getaddrinfo    sys_getaddrinfo
+#define freeaddrinfo   sys_freeaddrinfo
 
 int sys_socket(int af, int type, int protocol);
 int sys_bind (int s, const struct sockaddr *addr, int namelen);
@@ -118,6 +120,9 @@ int sys_recvfrom (int s, char *buf, int len, int flags,
 		  struct sockaddr *from, int * fromlen);
 int sys_sendto (int s, const char * buf, int len, int flags,
 		const struct sockaddr *to, int tolen);
+int sys_getaddrinfo (const char * node, const char * service,
+		     const struct addrinfo * hints, struct addrinfo ** res);
+void sys_freeaddrinfo (struct addrinfo * ai);
 
 /* In addition to wrappers for the winsock functions, we also provide
    an fcntl function, for setting sockets to non-blocking mode.  */
