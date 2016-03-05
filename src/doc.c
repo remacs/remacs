@@ -126,9 +126,6 @@ get_doc_string (Lisp_Object filepos, bool unibyte, bool definition)
   fd = emacs_open (name, O_RDONLY, 0);
   if (fd < 0)
     {
-      if ((errno == EMFILE) || (errno == ENFILE))
-	report_file_error ("Read error on documentation file", file);
-
 #ifndef CANNOT_DUMP
       if (!NILP (Vpurify_flag))
 	{
@@ -141,6 +138,9 @@ get_doc_string (Lisp_Object filepos, bool unibyte, bool definition)
 #endif
       if (fd < 0)
 	{
+	  if (errno == EMFILE || errno == ENFILE)
+	    report_file_error ("Read error on documentation file", file);
+
 	  SAFE_FREE ();
 	  AUTO_STRING (cannot_open, "Cannot open doc string file \"");
 	  AUTO_STRING (quote_nl, "\"\n");
