@@ -238,6 +238,7 @@
   (skip-unless (executable-find "gnutls-serv"))
   (skip-unless (gnutls-available-p))
   (skip-unless (not (eq system-type 'windows-nt)))
+  (skip-unless (featurep 'make-network-process '(family ipv6)))
   (let ((server (make-tls-server 44333))
         (times 0)
         proc status)
