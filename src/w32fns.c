@@ -2112,6 +2112,7 @@ my_post_msg (W32Msg * wmsg, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
   post_msg (wmsg);
 }
 
+#ifdef WINDOWSNT
 /* The Windows keyboard hook callback.  */
 static LRESULT CALLBACK
 funhook (int code, WPARAM w, LPARAM l)
@@ -2370,6 +2371,7 @@ remove_w32_kbdhook (void)
       kbdhook.hook = NULL;
     }
 }
+#endif	/* WINDOWSNT */
 
 /* Mark a specific key combination as hooked, preventing it to be
    handled by the system.  */
@@ -4734,12 +4736,16 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       my_post_msg (&wmsg, hwnd, msg, wParam, lParam);
       goto dflt;
 
+#ifdef WINDOWSNT
     case WM_CREATE:
       setup_w32_kbdhook ();
       goto dflt;
+#endif
 
     case WM_DESTROY:
+#ifdef WINDOWSNT
       remove_w32_kbdhook ();
+#endif
       CoUninitialize ();
       return 0;
 
