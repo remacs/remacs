@@ -420,7 +420,10 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
 
 (defun ruby-smie--bosp ()
   (save-excursion (skip-chars-backward " \t")
-                  (or (bolp) (memq (char-before) '(?\; ?=)))))
+                  (or (and (bolp)
+                           ;; Newline is escaped.
+                           (not (eq (char-before (1- (point))) ?\\)))
+                      (memq (char-before) '(?\; ?=)))))
 
 (defun ruby-smie--implicit-semi-p ()
   (save-excursion
@@ -669,7 +672,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
      ;; Align to the previous `when', but look up the virtual
      ;; indentation of `case'.
      (if (smie-rule-sibling-p) 0 (smie-rule-parent)))
-    (`(:after . ,(or "=" "iuwu-mod" "+" "-" "*" "/" "&&" "||" "%" "**" "^" "&"
+    (`(:after . ,(or "=" "+" "-" "*" "/" "&&" "||" "%" "**" "^" "&"
                      "<=>" ">" "<" ">=" "<=" "==" "===" "!=" "<<" ">>"
                      "+=" "-=" "*=" "/=" "%=" "**=" "&=" "|=" "^=" "|"
                      "<<=" ">>=" "&&=" "||=" "and" "or"))
@@ -682,6 +685,8 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
        (if (ruby-smie--indent-to-stmt-p token)
            (ruby-smie--indent-to-stmt)
          (cons 'column (current-column)))))
+    (`(:before . "iuwu-mod")
+     (smie-rule-parent ruby-indent-level))
     ))
 
 (defun ruby--at-indentation-p (&optional point)

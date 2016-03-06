@@ -223,6 +223,9 @@ z = {
 foo if
   bar
 
+fail "stuff" \
+  unless all_fine?
+
 if foo?
   bar
 end
