@@ -807,7 +807,34 @@ static size_t
 movemail_strftime (char *s, size_t size, char const *format,
 		   struct tm const *tm)
 {
-  size_t n = strftime (s, size, "From movemail %a %b %d %H:%M:%S %Y\n", tm);
+  char fmt[size + 6], *q;
+  const char *p;
+
+  for (p = format, q = &fmt[0]; *p; )
+    {
+      if (*p == '%' && p[1] == 'e')
+	{
+	  memcpy (q, "%d", 2);
+	  q += 2;
+	  p += 2;
+	}
+      else if (*p == '%' && p[1] == 'T')
+	{
+	  memcpy (q, "%H:%M:%S", 8);
+	  q += 8;
+	  p += 2;
+	}
+      else if (*p == '%' && p[1] == '%')
+	{
+	  memcpy (q, p, 2);
+	  q += 2;
+	  p += 2;
+	}
+      else
+	*q++ = *p++;
+    }
+
+  size_t n = strftime (s, size, fmt, tm);
   char *mday = s + sizeof "From movemail Sun Jan " - 1;
   if (*mday == '0')
     *mday = ' ';
