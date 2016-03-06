@@ -719,7 +719,9 @@ usage: (gnutls-errorp ERROR)  */
        attributes: const)
   (Lisp_Object err)
 {
-  if (EQ (err, Qt)) return Qnil;
+  if (EQ (err, Qt)
+      || EQ (err, Qgnutls_e_again))
+    return Qnil;
 
   return Qt;
 }
