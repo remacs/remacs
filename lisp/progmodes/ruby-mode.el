@@ -1901,7 +1901,10 @@ It will be properly highlighted even when the call omits parens.")
             (ruby-syntax-propertize-heredoc end))))
       ;; Handle percent literals: %w(), %q{}, etc.
       ((concat "\\(?:^\\|[[ \t\n<+(,=]\\)" ruby-percent-literal-beg-re)
-       (1 (prog1 "|" (ruby-syntax-propertize-percent-literal end)))))
+       (1 (unless (nth 8 (save-excursion (syntax-ppss (match-beginning 1))))
+            ;; Not inside a string, a comment, or a percent literal.
+            (ruby-syntax-propertize-percent-literal end)
+            (string-to-syntax "|")))))
      (point) end)))
 
 (define-obsolete-function-alias
@@ -1944,35 +1947,33 @@ It will be properly highlighted even when the call omits parens.")
 
 (defun ruby-syntax-propertize-percent-literal (limit)
   (goto-char (match-beginning 2))
-  ;; Not inside a simple string or comment.
-  (when (eq t (nth 3 (syntax-ppss)))
-    (let* ((op (char-after))
-           (ops (char-to-string op))
-           (cl (or (cdr (aref (syntax-table) op))
-                   (cdr (assoc op '((?< . ?>))))))
-           parse-sexp-lookup-properties)
-      (save-excursion
-        (condition-case nil
-            (progn
-              (if cl              ; Paired delimiters.
-                  ;; Delimiter pairs of the same kind can be nested
-                  ;; inside the literal, as long as they are balanced.
-                  ;; Create syntax table that ignores other characters.
-                  (with-syntax-table (make-char-table 'syntax-table nil)
-                    (modify-syntax-entry op (concat "(" (char-to-string cl)))
-                    (modify-syntax-entry cl (concat ")" ops))
-                    (modify-syntax-entry ?\\ "\\")
-                    (save-restriction
-                      (narrow-to-region (point) limit)
-                      (forward-list))) ; skip to the paired character
-                ;; Single character delimiter.
-                (re-search-forward (concat "[^\\]\\(?:\\\\\\\\\\)*"
-                                           (regexp-quote ops)) limit nil))
-              ;; Found the closing delimiter.
-              (put-text-property (1- (point)) (point) 'syntax-table
-                                 (string-to-syntax "|")))
-          ;; Unclosed literal, do nothing.
-          ((scan-error search-failed)))))))
+  (let* ((op (char-after))
+         (ops (char-to-string op))
+         (cl (or (cdr (aref (syntax-table) op))
+                 (cdr (assoc op '((?< . ?>))))))
+         parse-sexp-lookup-properties)
+    (save-excursion
+      (condition-case nil
+          (progn
+            (if cl              ; Paired delimiters.
+                ;; Delimiter pairs of the same kind can be nested
+                ;; inside the literal, as long as they are balanced.
+                ;; Create syntax table that ignores other characters.
+                (with-syntax-table (make-char-table 'syntax-table nil)
+                  (modify-syntax-entry op (concat "(" (char-to-string cl)))
+                  (modify-syntax-entry cl (concat ")" ops))
+                  (modify-syntax-entry ?\\ "\\")
+                  (save-restriction
+                    (narrow-to-region (point) limit)
+                    (forward-list))) ; skip to the paired character
+              ;; Single character delimiter.
+              (re-search-forward (concat "[^\\]\\(?:\\\\\\\\\\)*"
+                                         (regexp-quote ops)) limit nil))
+            ;; Found the closing delimiter.
+            (put-text-property (1- (point)) (point) 'syntax-table
+                               (string-to-syntax "|")))
+        ;; Unclosed literal, do nothing.
+        ((scan-error search-failed))))))
 
 (defun ruby-syntax-propertize-expansion ()
   ;; Save the match data to a text property, for font-locking later.

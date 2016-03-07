@@ -461,6 +461,14 @@ VALUES-PLIST is a list with alternating index and value elements."
   (ruby-assert-face "%S{foo}" 4 nil)
   (ruby-assert-face "%R{foo}" 4 nil))
 
+(ert-deftest ruby-no-nested-percent-literals ()
+  (ruby-with-temp-buffer "a = %w[b %()]"
+    (syntax-propertize (point))
+    (should (null (nth 8 (syntax-ppss))))
+    (should (eq t (nth 3 (syntax-ppss (1- (point-max))))))
+    (search-backward "[")
+    (should (eq t (nth 3 (syntax-ppss))))))
+
 (ert-deftest ruby-add-log-current-method-examples ()
   (let ((pairs '(("foo" . "#foo")
                  ("C.foo" . ".foo")
