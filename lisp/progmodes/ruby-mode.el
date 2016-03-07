@@ -1852,7 +1852,8 @@ It will be properly highlighted even when the call omits parens.")
        (1 (if (save-excursion
                 (nth 3 (syntax-ppss (match-beginning 0))))
               ;; Within a string, skip.
-              (goto-char (match-end 1))
+              (ignore
+               (goto-char (match-end 1)))
             (string-to-syntax "\\"))))
       ;; Part of symbol when at the end of a method name.
       ("[!?]"
