@@ -13,7 +13,6 @@ CYGWIN		Compiling the Cygwin port.
 __CYGWIN__	Ditto
 GNU_LINUX
 HPUX
-IRIX6_5
 MSDOS		Compiling the MS-DOS port.
 __MSDOS__	Ditto.
 __DJGPP_MINOR__ Minor version number of the DJGPP library; used only in msdos.c and dosfns.c.
@@ -378,7 +377,6 @@ NSIG
 NSIG_MINIMUM
 NULL_DEVICE
 PAGESIZE
-PREFER_VSUSP
 PTY_ITERATION
 PTY_NAME_SPRINTF
 PTY_OPEN

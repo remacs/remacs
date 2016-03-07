@@ -79,7 +79,7 @@
 ;; On GNU/Linux and Irix, the system's ping program seems to send packets
 ;; indefinitely unless told otherwise
 (defcustom ping-program-options
-  (and (memq system-type '(gnu/linux irix))
+  (and (eq system-type 'gnu/linux)
        (list "-c" "4"))
   "Options for the ping program.
 These options can be used to limit how many ICMP packets are emitted."

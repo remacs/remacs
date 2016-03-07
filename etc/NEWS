@@ -34,6 +34,9 @@ emacs-version and erc-cmd-SV functions, and the leave the following
 variables nil: emacs-build-system, emacs-build-time,
 erc-emacs-build-time.
 
+** Emacs no longer works on IRIX.  We expect that Emacs users are not
+affected by this, as SGI stopped supporting IRIX in December 2013.
+
 
 * Startup Changes in Emacs 25.2
 

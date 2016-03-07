@@ -6464,7 +6464,7 @@ process_send_signal (Lisp_Object process, int signo, Lisp_Object current_group,
 	  break;
 
   	case SIGTSTP:
-#if defined (VSWTCH) && !defined (PREFER_VSUSP)
+#ifdef VSWTCH
 	  sig_char = &t.c_cc[VSWTCH];
 #else
 	  sig_char = &t.c_cc[VSUSP];

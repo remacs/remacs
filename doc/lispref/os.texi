@@ -899,9 +899,6 @@ A GNU (glibc-based) system with a FreeBSD kernel.
 @item hpux
 Hewlett-Packard HPUX operating system.
 
-@item irix
-Silicon Graphics Irix system.
-
 @item nacl
 Google Native Client (@acronym{NaCl}) sandboxing system.
 

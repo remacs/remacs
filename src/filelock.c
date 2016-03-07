@@ -253,14 +253,7 @@ get_boot_time_1 (const char *filename, bool newest)
   struct utmp ut, *utp;
 
   if (filename)
-    {
-      /* On some versions of IRIX, opening a nonexistent file name
-	 is likely to crash in the utmp routines.  */
-      if (faccessat (AT_FDCWD, filename, R_OK, AT_EACCESS) != 0)
-	return;
-
-      utmpname (filename);
-    }
+    utmpname (filename);
 
   setutent ();
 

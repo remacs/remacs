@@ -2419,8 +2419,8 @@ Special values:
   `ms-dos'       compiled as an MS-DOS application.
   `windows-nt'   compiled as a native W32 application.
   `cygwin'       compiled using the Cygwin library.
-Anything else (in Emacs 24.1, the possibilities are: aix, berkeley-unix,
-hpux, irix, usg-unix-v) indicates some sort of Unix system.  */);
+Anything else (in Emacs 26, the possibilities are: aix, berkeley-unix,
+hpux, usg-unix-v) indicates some sort of Unix system.  */);
   Vsystem_type = intern_c_string (SYSTEM_TYPE);
   /* See configure.ac for the possible SYSTEM_TYPEs.  */
 

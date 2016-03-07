@@ -117,14 +117,6 @@ typedef bool bool_bf;
 #undef HAVE_RINT
 #endif  /* HPUX */
 
-#ifdef IRIX6_5
-#ifdef emacs
-char *_getpty();
-#endif
-#define INET6 /* Needed for struct sockaddr_in6.  */
-#undef HAVE_GETADDRINFO /* IRIX has getaddrinfo but not struct addrinfo.  */
-#endif /* IRIX6_5 */
-
 #ifdef MSDOS
 #ifndef __DJGPP__
 You lose; /* Emacs for DOS must be compiled with DJGPP */

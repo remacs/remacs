@@ -163,7 +163,7 @@ its character representation and its display representation.")
 (put 'rmail-spool-directory 'standard-value
      '((cond ((file-exists-p "/var/mail") "/var/mail/")
 	     ((file-exists-p "/var/spool/mail") "/var/spool/mail/")
-	     ((memq system-type '(hpux usg-unix-v irix)) "/usr/mail/")
+	     ((memq system-type '(hpux usg-unix-v)) "/usr/mail/")
 	     (t "/usr/spool/mail/"))))
 
 ;;;###autoload
@@ -176,7 +176,7 @@ its character representation and its display representation.")
 	 "/var/mail/")
 	;; Many GNU/Linux systems use this name.
 	((file-exists-p "/var/spool/mail") "/var/spool/mail/")
-	((memq system-type '(hpux usg-unix-v irix)) "/usr/mail/")
+	((memq system-type '(hpux usg-unix-v)) "/usr/mail/")
 	(t "/usr/spool/mail/")))
   "Name of directory used by system mailer for delivering new mail.
 Its name should end with a slash."
