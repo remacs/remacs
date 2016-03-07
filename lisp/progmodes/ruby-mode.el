@@ -1901,7 +1901,7 @@ It will be properly highlighted even when the call omits parens.")
                                'syntax-table (string-to-syntax "\""))
             (ruby-syntax-propertize-heredoc end))))
       ;; Handle percent literals: %w(), %q{}, etc.
-      ((concat "\\(?:^\\|[[ \t\n<+(,=]\\)" ruby-percent-literal-beg-re)
+      ((concat "\\(?:^\\|[[ \t\n<+(,=*]\\)" ruby-percent-literal-beg-re)
        (1 (unless (nth 8 (save-excursion (syntax-ppss (match-beginning 1))))
             ;; Not inside a string, a comment, or a percent literal.
             (ruby-syntax-propertize-percent-literal end)
