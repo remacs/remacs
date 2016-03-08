@@ -459,8 +459,8 @@ specifies in the mode line."
   (auto-revert-set-timer)
   (if global-auto-revert-mode
       (progn
-        ;; We disable file notification because it could use too many
-        ;; ressources.  See <http://debbugs.gnu.org/22814>.
+        ;; Disable file notification because it could use too many resources.
+        ;; See Bug#22814.
         (setq auto-revert-use-notify nil)
         (auto-revert-buffers))
     (dolist (buf (buffer-list))
