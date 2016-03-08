@@ -311,6 +311,7 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 					    (const :tag "Always" t)
 					    (repeat (symbol :tag "Parameter")))
 					   "25.1")
+	     (tooltip-reuse-hidden-frame tooltip boolean "26.1")
 	     ;; fringe.c
 	     (overflow-newline-into-fringe fringe boolean)
 	     ;; image.c

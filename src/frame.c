@@ -5262,6 +5262,21 @@ The function `frame--size-history' displays the value of this variable
 in a more readable form.  */);
     frame_size_history = Qnil;
 
+  DEFVAR_BOOL ("tooltip-reuse-hidden-frame", tooltip_reuse_hidden_frame,
+	       doc: /* Non-nil means reuse hidden tooltip frames.
+When this is nil, delete a tooltip frame when hiding the associated
+tooltip.  When this is non-nil, make the tooltip frame invisible only,
+so it can be reused when the next tooltip is shown.
+
+Setting this to non-nil may drastically reduce the consing overhead
+incurred by creating new tooltip frames.  However, a value of non-nil
+means also that intermittent changes of faces or `default-frame-alist'
+are not applied when showing a tooltip in a reused frame.
+
+This variable is effective only with the X toolkit (and there only when
+Gtk+ tooltips are not used) and on Windows.  */);
+  tooltip_reuse_hidden_frame = false;
+
   staticpro (&Vframe_list);
 
   defsubr (&Sframep);
