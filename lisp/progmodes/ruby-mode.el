@@ -894,12 +894,18 @@ and `\\' when preceded by `?'."
           ((and (eq c ?:) (or (not b) (eq (char-syntax b) ? ))))
           ((eq c ?\\) (eq b ??)))))
 
-(defun ruby-singleton-class-p (&optional pos)
+(defun ruby-verify-heredoc (&optional pos)
   (save-excursion
     (when pos (goto-char pos))
-    (forward-word-strictly -1)
-    (and (or (bolp) (not (eq (char-before (point)) ?_)))
-         (looking-at ruby-singleton-class-re))))
+    ;; Not right after a symbol or prefix character.
+    ;; Method names are only allowed when separated by
+    ;; whitespace.  Not a limitation in Ruby, but it's hard for
+    ;; us to do better.
+    (when (not (memq (car (syntax-after (1- (point)))) '(2 3 6 10)))
+      (or (not (memq (char-before) '(?\s ?\t)))
+          (ignore (forward-word-strictly -1))
+          (eq (char-before) ?_)
+          (not (looking-at ruby-singleton-class-re))))))
 
 (defun ruby-expr-beg (&optional option)
   "Check if point is possibly at the beginning of an expression.
@@ -919,7 +925,7 @@ Can be one of `heredoc', `modifier', `expr-qstr', `expr-re'."
         nil)
        ((looking-at ruby-operator-re))
        ((eq option 'heredoc)
-        (and (< space 0) (not (ruby-singleton-class-p start))))
+        (and (< space 0) (ruby-verify-heredoc start)))
        ((or (looking-at "[\\[({,;]")
             (and (looking-at "[!?]")
                  (or (not (eq option 'modifier))
@@ -1894,9 +1900,9 @@ It will be properly highlighted even when the call omits parens.")
       ("^\\(=\\)begin\\_>" (1 "!"))
       ;; Handle here documents.
       ((concat ruby-here-doc-beg-re ".*\\(\n\\)")
-       (7 (unless (or (nth 8 (save-excursion
-                               (syntax-ppss (match-beginning 0))))
-                      (ruby-singleton-class-p (match-beginning 0)))
+       (7 (when (and (not (nth 8 (save-excursion
+                                   (syntax-ppss (match-beginning 0)))))
+                     (ruby-verify-heredoc (match-beginning 0)))
             (put-text-property (match-beginning 7) (match-end 7)
                                'syntax-table (string-to-syntax "\""))
             (ruby-syntax-propertize-heredoc end))))
@@ -1920,7 +1926,7 @@ It will be properly highlighted even when the call omits parens.")
         (beginning-of-line)
         (while (re-search-forward ruby-here-doc-beg-re
                                   (line-end-position) t)
-          (unless (ruby-singleton-class-p (match-beginning 0))
+          (when (ruby-verify-heredoc (match-beginning 0))
             (push (concat (ruby-here-doc-end-match) "\n") res))))
       (save-excursion
         ;; With multiple openers on the same line, we don't know in which
@@ -2166,7 +2172,7 @@ See `font-lock-syntax-table'.")
      (1 font-lock-builtin-face))
     ;; Here-doc beginnings.
     (,ruby-here-doc-beg-re
-     (0 (unless (ruby-singleton-class-p (match-beginning 0))
+     (0 (when (ruby-verify-heredoc (match-beginning 0))
           'font-lock-string-face)))
     ;; Perl-ish keywords.
     "\\_<\\(?:BEGIN\\|END\\)\\_>\\|^__END__$"
