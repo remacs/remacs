@@ -3701,20 +3701,6 @@ fi
 AC_SUBST(LIBXML2_LIBS)
 AC_SUBST(LIBXML2_CFLAGS)
 
-# If netdb.h doesn't declare h_errno, we must declare it by hand.
-# On MinGW, that is provided by nt/inc/sys/socket.h and w32.c.
-if test "${opsys}" = "mingw32"; then
-  emacs_cv_netdb_declares_h_errno=yes
-fi
-AC_CACHE_CHECK(whether netdb declares h_errno,
-	       emacs_cv_netdb_declares_h_errno,
-[AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <netdb.h>]],
-  [[return h_errno;]])],
-  emacs_cv_netdb_declares_h_errno=yes, emacs_cv_netdb_declares_h_errno=no)])
-if test $emacs_cv_netdb_declares_h_errno = yes; then
-  AC_DEFINE(HAVE_H_ERRNO, 1, [Define to 1 if netdb.h declares h_errno.])
-fi
-
 # Check for mail-locking functions in a "mail" library.  Probably this should
 # have the same check as for liblockfile below.
 AC_CHECK_LIB(mail, maillock, have_mail=yes, have_mail=no)
@@ -3803,7 +3789,7 @@ AC_CHECK_FUNCS(accept4 fchdir gethostname \
 getrusage get_current_dir_name \
 lrand48 random rint \
 select getpagesize setlocale newlocale \
-getrlimit setrlimit shutdown getaddrinfo \
+getrlimit setrlimit shutdown \
 pthread_sigmask strsignal setitimer \
 sendto recvfrom getsockname getpeername getifaddrs freeifaddrs \
 gai_strerror sync \

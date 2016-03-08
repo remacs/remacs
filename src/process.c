@@ -3429,21 +3429,6 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 
 }
 
-#ifndef HAVE_GETADDRINFO
-static Lisp_Object
-conv_numerical_to_lisp (unsigned char *number, int length, int port)
-{
-  Lisp_Object address = Fmake_vector (make_number (length + 1), Qnil);
-  struct Lisp_Vector *p = XVECTOR (address);
-
-  p->contents[length] = make_number (port);
-  for (int i = 0; i < length; i++)
-    p->contents[i] = make_number (number[i]);
-
-  return address;
-}
-#endif
-
 /* Create a network stream/datagram client/server process.  Treated
    exactly like a normal process when reading and writing.  Primary
    differences are in status display and process deletion.  A network
@@ -3479,9 +3464,8 @@ host, and only clients connecting to that address will be accepted.
 
 :service SERVICE -- SERVICE is name of the service desired, or an
 integer specifying a port number to connect to.  If SERVICE is t,
-a random port number is selected for the server.  (If Emacs was
-compiled with getaddrinfo, a port number can also be specified as a
-string, e.g. "80", as well as an integer.  This is not portable.)
+a random port number is selected for the server.  A port number can
+be specified as an integer string, e.g., "80", as well as an integer.
 
 :type TYPE -- TYPE is the type of connection.  The default (nil) is a
 stream type connection, `datagram' creates a datagram type connection,
@@ -3614,11 +3598,9 @@ usage: (make-network-process &rest ARGS)  */)
   Lisp_Object proc;
   Lisp_Object contact;
   struct Lisp_Process *p;
-#if defined HAVE_GETADDRINFO || defined HAVE_GETADDRINFO_A
   const char *portstring;
   ptrdiff_t portstringlen ATTRIBUTE_UNUSED;
   char portbuf[INT_BUFSIZE_BOUND (EMACS_INT)];
-#endif
 #ifdef HAVE_LOCAL_SOCKETS
   struct sockaddr_un address_un;
 #endif
@@ -3689,7 +3671,7 @@ usage: (make-network-process &rest ARGS)  */)
   tem = Fplist_get (contact, QCfamily);
   if (NILP (tem))
     {
-#if defined (HAVE_GETADDRINFO) && defined (AF_INET6)
+#ifdef AF_INET6
       family = AF_UNSPEC;
 #else
       family = AF_INET;
@@ -3761,7 +3743,6 @@ usage: (make-network-process &rest ARGS)  */)
     }
 #endif
 
-#if defined HAVE_GETADDRINFO || defined HAVE_GETADDRINFO_A
   if (!NILP (host))
     {
       /* SERVICE can either be a string or int.
@@ -3783,7 +3764,6 @@ usage: (make-network-process &rest ARGS)  */)
 	  portstringlen = SBYTES (service);
 	}
     }
-#endif
 
 #ifdef HAVE_GETADDRINFO_A
   if (!NILP (host) && !NILP (Fplist_get (contact, QCnowait)))
@@ -3815,7 +3795,6 @@ usage: (make-network-process &rest ARGS)  */)
     }
 #endif /* HAVE_GETADDRINFO_A */
 
-#ifdef HAVE_GETADDRINFO
   /* If we have a host, use getaddrinfo to resolve both host and service.
      Otherwise, use getservbyname to lookup the service.  */
 
@@ -3855,10 +3834,8 @@ usage: (make-network-process &rest ARGS)  */)
 
       goto open_socket;
     }
-#endif /* HAVE_GETADDRINFO */
 
-  /* We end up here if getaddrinfo is not defined, or in case no hostname
-     has been specified (e.g. for a local server process).  */
+  /* No hostname has been specified (e.g., a local server process).  */
 
   if (EQ (service, Qt))
     port = 0;
@@ -3893,43 +3870,6 @@ usage: (make-network-process &rest ARGS)  */)
       AUTO_STRING (unknown_service, "Unknown service: %s");
       xsignal1 (Qerror, CALLN (Fformat, unknown_service, service));
     }
-
-#ifndef HAVE_GETADDRINFO
-  if (!NILP (host))
-    {
-      struct hostent *host_info_ptr;
-      unsigned char *addr;
-      int addrlen;
-
-      /* gethostbyname may fail with TRY_AGAIN, but we don't honor that,
-	 as it may `hang' Emacs for a very long time.  */
-      immediate_quit = 1;
-      QUIT;
-
-      host_info_ptr = gethostbyname ((const char *) SDATA (host));
-      immediate_quit = 0;
-
-      if (host_info_ptr)
-	{
-	  addr = (unsigned char *) host_info_ptr->h_addr;
-	  addrlen = host_info_ptr->h_length;
-	}
-      else
-	/* Attempt to interpret host as numeric inet address.  This
-	   only works for IPv4 addresses. */
-	{
-	  unsigned long numeric_addr = inet_addr (SSDATA (host));
-
-	  if (numeric_addr == -1)
-	    error ("Unknown host \"%s\"", SDATA (host));
-
-	  addr = (unsigned char *) &numeric_addr;
-	  addrlen = 4;
-	}
-
-      ip_addresses = list1 (conv_numerical_to_lisp (addr, addrlen, port));
-    }
-#endif /* not HAVE_GETADDRINFO */
 
  open_socket:
 

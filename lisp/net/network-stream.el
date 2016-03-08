@@ -65,8 +65,8 @@ BUFFER is a buffer or buffer name to associate with the process.
  Process output goes at end of that buffer.  BUFFER may be nil,
  meaning that the process is not associated with any buffer.
 HOST is the name or IP address of the host to connect to.
-SERVICE is the name of the service desired, or an integer specifying
- a port number to connect to.
+SERVICE is the name of the service desired, or an integer or
+ integer string specifying a port number to connect to.
 
 The remaining PARAMETERS should be a sequence of keywords and
 values:

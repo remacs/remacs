@@ -2128,7 +2128,8 @@ associated with any buffer.
 
 The arguments @var{host} and @var{service} specify where to connect to;
 @var{host} is the host name (a string), and @var{service} is the name of
-a defined network service (a string) or a port number (an integer).
+a defined network service (a string) or a port number (an integer like
+@code{80} or an integer string like @code{"80"}).
 
 The remaining arguments @var{parameters} are keyword/argument pairs
 that are mainly relevant to encrypted connections:
@@ -2352,8 +2353,9 @@ connecting to that address will be accepted.
 
 @item :service @var{service}
 @var{service} specifies a port number to connect to; or, for a server,
-the port number to listen on.  It should be a service name that
-translates to a port number, or an integer specifying the port number
+the port number to listen on.  It should be a service name like
+@samp{"http"} that translates to a port number, or an integer like @samp{80}
+or an integer string like @samp{"80"} that specifies the port number
 directly.  For a server, it can also be @code{t}, which means to let
 the system select an unused port number.
 

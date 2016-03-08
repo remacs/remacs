@@ -102,12 +102,6 @@ extern char *krb_realmofhost (/* char * */);
 #endif /* ! KERBEROS5 */
 #endif /* KERBEROS */
 
-#ifndef WINDOWSNT
-#ifndef HAVE_H_ERRNO
-extern int h_errno;
-#endif
-#endif
-
 static int socket_connection (char *, int);
 static int pop_getline (popserver, char **);
 static int sendline (popserver, const char *);
@@ -972,13 +966,9 @@ static int have_winsock = 0;
 static int
 socket_connection (char *host, int flags)
 {
-#ifdef HAVE_GETADDRINFO
   struct addrinfo *res, *it;
   struct addrinfo hints;
   int ret;
-#else /* !HAVE_GETADDRINFO */
-  struct hostent *hostent;
-#endif
   struct servent *servent;
   struct sockaddr_in addr;
   char found_port = 0;
@@ -1065,7 +1055,6 @@ socket_connection (char *host, int flags)
 
     }
 
-#ifdef HAVE_GETADDRINFO
   memset (&hints, 0, sizeof (hints));
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_CANONNAME;
@@ -1096,34 +1085,6 @@ socket_connection (char *host, int flags)
       strcpy (realhost, it->ai_canonname);
     }
   freeaddrinfo (res);
-
-#else /* !HAVE_GETADDRINFO */
-  do
-    {
-      hostent = gethostbyname (host);
-      try_count++;
-      if ((! hostent) && ((h_errno != TRY_AGAIN) || (try_count == 5)))
-	{
-	  strcpy (pop_error, "Could not determine POP server's address");
-	  return (-1);
-	}
-    } while (! hostent);
-
-  while (*hostent->h_addr_list)
-    {
-      memcpy (&addr.sin_addr, *hostent->h_addr_list, hostent->h_length);
-      if (! connect (sock, (struct sockaddr *) &addr, sizeof (addr)))
-	break;
-      hostent->h_addr_list++;
-    }
-  connect_ok = *hostent->h_addr_list != NULL;
-  if (! connect_ok)
-    {
-      realhost = alloca (strlen (hostent->h_name) + 1);
-      strcpy (realhost, hostent->h_name);
-    }
-
-#endif /* !HAVE_GETADDRINFO */
 
 #define CONNECT_ERROR "Could not connect to POP server: "
 
