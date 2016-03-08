@@ -2188,11 +2188,11 @@ See `font-lock-syntax-table'.")
      (2 font-lock-constant-face)
      (3 (unless (and (eq (char-before (match-end 3)) ?=)
                      (eq (char-after (match-end 3)) ?>))
-          ;; bug#18466
+          ;; bug#18644
           font-lock-constant-face)
         nil t))
     ;; Symbols with special characters.
-    ("\\(^\\|[^:]\\)\\(:\\([-+~]@?\\|[/%&|^`]\\|\\*\\*?\\|<\\(<\\|=>?\\)?\\|>[>=]?\\|===?\\|=~\\|![~=]?\\|\\[\\]=?\\|#{[^}\n\\\\]*\\(\\\\.[^}\n\\\\]*\\)*}\\)\\)"
+    ("\\(^\\|[^:]\\)\\(:\\([-+~]@?\\|[/%&|^`]\\|\\*\\*?\\|<\\(<\\|=>?\\)?\\|>[>=]?\\|===?\\|=~\\|![~=]?\\|\\[\\]=?\\)\\)"
      2 font-lock-constant-face)
     ;; Special globals.
     (,(concat "\\$\\(?:[:\"!@;,/\\._><\\$?~=*&`'+0-9]\\|-[0adFiIlpvw]\\|"
