@@ -264,7 +264,7 @@ readchar (Lisp_Object readcharfun, bool *multibyte)
       return c;
     }
 
-  if (CONSP (readcharfun))
+  if (CONSP (readcharfun) && STRINGP (XCAR (readcharfun)))
     {
       /* This is the case that read_vector is reading from a unibyte
 	 string that contains a byte sequence previously skipped
@@ -406,7 +406,7 @@ unreadchar (Lisp_Object readcharfun, int c)
       read_from_string_index_byte
 	= string_char_to_byte (readcharfun, read_from_string_index);
     }
-  else if (CONSP (readcharfun))
+  else if (CONSP (readcharfun) && STRINGP (XCAR (readcharfun)))
     {
       unread_char = c;
     }
