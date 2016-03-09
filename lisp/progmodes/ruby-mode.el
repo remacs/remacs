@@ -431,17 +431,11 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
     (not (or (bolp)
              (memq (char-before) '(?\[ ?\())
              (and (memq (char-before)
-                        '(?\; ?- ?+ ?* ?/ ?: ?. ?, ?\\ ?& ?> ?< ?% ?~ ?^))
-                  ;; Not a binary operator symbol.
-                  (not (eq (char-before (1- (point))) ?:))
-                  ;; Not the end of a regexp or a percent literal.
-                  (not (memq (car (syntax-after (1- (point)))) '(7 15))))
-             (and (eq (char-before) ?\?)
-                  (equal (save-excursion (ruby-smie--backward-token)) "?"))
-             (and (eq (char-before) ?=)
-                  ;; Not a symbol :==, :!=, or a foo= method.
-                  (string-match "\\`\\s." (save-excursion
-                                            (ruby-smie--backward-token))))
+                        '(?\; ?- ?+ ?* ?/ ?: ?. ?, ?\\ ?& ?> ?< ?% ?~ ?^ ?= ??))
+                  ;; Not a binary operator symbol like :+ or :[]=.
+                  ;; Or a (method or symbol) name ending with ?.
+                  ;; Or the end of a regexp or a percent literal.
+                  (not (memq (car (syntax-after (1- (point)))) '(3 7 15))))
              (and (eq (char-before) ?|)
                   (member (save-excursion (ruby-smie--backward-token))
                           '("|" "||")))
@@ -485,7 +479,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
                                              "else" "elsif" "do" "end" "and")
                                            'symbols))))
          (memq (car (syntax-after pos)) '(7 15))
-         (looking-at "[([]\\|[-+!~]\\sw\\|:\\(?:\\sw\\|\\s.\\)")))))
+         (looking-at "[([]\\|[-+!~:]\\(?:\\sw\\|\\s_\\)")))))
 
 (defun ruby-smie--at-dot-call ()
   (and (eq ?w (char-syntax (following-char)))
@@ -511,8 +505,6 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
              (save-excursion
                (ruby-smie--args-separator-p (prog1 (point) (goto-char pos)))))
         " @ ")
-       ((looking-at ":\\s.+")
-        (goto-char (match-end 0)) (match-string 0)) ;bug#15208.
        ((looking-at "\\s\"") "")                    ;A string.
        (t
         (let ((dot (ruby-smie--at-dot-call))
@@ -562,8 +554,6 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
             (dot (ruby-smie--at-dot-call)))
         (when dot
           (setq tok (concat "." tok)))
-        (when (and (eq ?: (char-before)) (string-match "\\`\\s." tok))
-          (forward-char -1) (setq tok (concat ":" tok))) ;; bug#15208.
         (cond
          ((member tok '("unless" "if" "while" "until"))
           (if (ruby-smie--bosp)
@@ -1861,11 +1851,13 @@ It will be properly highlighted even when the call omits parens.")
               (ignore
                (goto-char (match-end 1)))
             (string-to-syntax "\\"))))
-      ;; Part of symbol when at the end of a method name.
+      ;; Symbols with special characters.
+      ("\\(^\\|[^:]\\)\\(:\\([-+~]@?\\|[/%&|^`]\\|\\*\\*?\\|<\\(<\\|=>?\\)?\\|>[>=]?\\|===?\\|=~\\|![~=]?\\|\\[\\]=?\\)\\)"
+       (3 (string-to-syntax "_")))
+      ;; Part of method name when at the end of it.
       ("[!?]"
        (0 (unless (save-excursion
                     (or (nth 8 (syntax-ppss (match-beginning 0)))
-                        (eq (char-before) ?:)
                         (let (parse-sexp-lookup-properties)
                           (zerop (skip-syntax-backward "w_")))
                         (memq (preceding-char) '(?@ ?$))))
@@ -2183,7 +2175,7 @@ See `font-lock-syntax-table'.")
     ;; Keywords that evaluate to certain values.
     ("\\_<__\\(?:LINE\\|ENCODING\\|FILE\\)__\\_>"
      (0 font-lock-builtin-face))
-    ;; Symbols with symbol characters.
+    ;; Symbols.
     ("\\(^\\|[^:]\\)\\(:@?\\(?:\\w\\|_\\)+\\)\\([!?=]\\)?"
      (2 font-lock-constant-face)
      (3 (unless (and (eq (char-before (match-end 3)) ?=)
@@ -2191,9 +2183,6 @@ See `font-lock-syntax-table'.")
           ;; bug#18644
           font-lock-constant-face)
         nil t))
-    ;; Symbols with special characters.
-    ("\\(^\\|[^:]\\)\\(:\\([-+~]@?\\|[/%&|^`]\\|\\*\\*?\\|<\\(<\\|=>?\\)?\\|>[>=]?\\|===?\\|=~\\|![~=]?\\|\\[\\]=?\\)\\)"
-     2 font-lock-constant-face)
     ;; Special globals.
     (,(concat "\\$\\(?:[:\"!@;,/\\._><\\$?~=*&`'+0-9]\\|-[0adFiIlpvw]\\|"
               (regexp-opt '("LOAD_PATH" "LOADED_FEATURES" "PROGRAM_NAME"
