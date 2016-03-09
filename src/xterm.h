@@ -459,6 +459,11 @@ struct x_display_info
   /* SM */
   Atom Xatom_SM_CLIENT_ID;
 
+#ifdef HAVE_XRANDR
+  int xrandr_major_version;
+  int xrandr_minor_version;
+#endif
+
 #ifdef USE_CAIRO
   XExtCodes *ext_codes;
 #endif

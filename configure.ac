@@ -3594,14 +3594,6 @@ if test "${HAVE_X11}" = "yes"; then
     fi
   fi
   if test $HAVE_XRANDR = yes; then
-    SAVE_CFLAGS="$CFLAGS"
-    SAVE_LIBS="$LIBS"
-    CFLAGS="$XRANDR_CFLAGS $CFLAGS"
-    LIBS="$XRANDR_LIBS $LIBS"
-    AC_CHECK_FUNCS(XRRGetOutputPrimary XRRGetScreenResourcesCurrent)
-    CFLAGS="$SAVE_CFLAGS"
-    LIBS="$SAVE_LIBS"
-
     AC_DEFINE(HAVE_XRANDR, 1, [Define to 1 if you have the XRandr extension.])
   fi
 fi

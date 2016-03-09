@@ -4262,8 +4262,19 @@ x_get_monitor_attributes_xrandr (struct x_display_info *dpyinfo)
   RROutput pxid = None;
   struct MonitorInfo *monitors;
 
-#ifdef HAVE_XRRGETSCREENRESOURCESCURRENT
-  resources = XRRGetScreenResourcesCurrent (dpy, dpyinfo->root_window);
+#define RANDR13_LIBRARY \
+  (RANDR_MAJOR > 1 || (RANDR_MAJOR == 1 && RANDR_MINOR >= 3))
+
+#if RANDR13_LIBRARY
+  /* Check if the display supports 1.3 too.  */
+  bool randr13_avail = (dpyinfo->xrandr_major_version > 1
+			|| (dpyinfo->xrandr_major_version == 1
+			    && dpyinfo->xrandr_minor_version >= 3));
+
+  if (randr13_avail)
+    resources = XRRGetScreenResourcesCurrent (dpy, dpyinfo->root_window);
+  else
+    resources = XRRGetScreenResources (dpy, dpyinfo->root_window);
 #else
   resources = XRRGetScreenResources (dpy, dpyinfo->root_window);
 #endif
@@ -4276,8 +4287,9 @@ x_get_monitor_attributes_xrandr (struct x_display_info *dpyinfo)
   n_monitors = resources->noutput;
   monitors = xzalloc (n_monitors * sizeof *monitors);
 
-#ifdef HAVE_XRRGETOUTPUTPRIMARY
-  pxid = XRRGetOutputPrimary (dpy, dpyinfo->root_window);
+#ifdef RANDR13_LIBRARY
+  if (randr13_avail)
+    pxid = XRRGetOutputPrimary (dpy, dpyinfo->root_window);
 #endif
 
   for (i = 0; i < n_monitors; ++i)
@@ -4360,9 +4372,11 @@ x_get_monitor_attributes (struct x_display_info *dpyinfo)
   xrr_ok = XRRQueryExtension (dpy, &xrr_event_base, &xrr_error_base);
   if (xrr_ok)
     {
-      int xrr_major, xrr_minor;
-      XRRQueryVersion (dpy, &xrr_major, &xrr_minor);
-      xrr_ok = (xrr_major == 1 && xrr_minor >= 2) || xrr_major > 1;
+      XRRQueryVersion (dpy, &dpyinfo->xrandr_major_version,
+		       &dpyinfo->xrandr_minor_version);
+      xrr_ok = ((dpyinfo->xrandr_major_version == 1
+		 && dpyinfo->xrandr_minor_version >= 2)
+		|| dpyinfo->xrandr_major_version > 1);
     }
 
   if (xrr_ok)
