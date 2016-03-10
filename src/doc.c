@@ -7,8 +7,8 @@ This file is part of GNU Emacs.
 
 GNU Emacs is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+the Free Software Foundation, either version 3 of the License, or (at
+your option) any later version.
 
 GNU Emacs is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -719,7 +719,7 @@ is not on any keys.
 Each substring of the form \\=\\{MAPVAR} is replaced by a summary of
 the value of MAPVAR as a keymap.  This summary is similar to the one
 produced by `describe-bindings'.  The summary ends in two newlines
-(used by the helper function `help-make-xrefs' to find the end of the
+\(used by the helper function `help-make-xrefs' to find the end of the
 summary).
 
 Each substring of the form \\=\\<MAPVAR> specifies the use of MAPVAR
