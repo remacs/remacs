@@ -481,10 +481,14 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
          (memq (car (syntax-after pos)) '(7 15))
          (looking-at "[([]\\|[-+!~:]\\(?:\\sw\\|\\s_\\)")))))
 
-(defun ruby-smie--at-dot-call ()
+(defun ruby-smie--before-method-name ()
+  ;; Only need to be accurate when method has keyword name.
   (and (eq ?w (char-syntax (following-char)))
-       (eq (char-before) ?.)
-       (not (eq (char-before (1- (point))) ?.))))
+       (or
+        (and
+         (eq (char-before) ?.)
+         (not (eq (char-before (1- (point))) ?.)))
+        (looking-back "^\\s *def\\s +\\=" (line-beginning-position)))))
 
 (defun ruby-smie--forward-token ()
   (let ((pos (point)))
@@ -507,7 +511,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
         " @ ")
        ((looking-at "\\s\"") "")                    ;A string.
        (t
-        (let ((dot (ruby-smie--at-dot-call))
+        (let ((dot (ruby-smie--before-method-name))
               (tok (smie-default-forward-token)))
           (when dot
             (setq tok (concat "." tok)))
@@ -551,7 +555,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
       " @ ")
      (t
       (let ((tok (smie-default-backward-token))
-            (dot (ruby-smie--at-dot-call)))
+            (dot (ruby-smie--before-method-name)))
         (when dot
           (setq tok (concat "." tok)))
         (cond

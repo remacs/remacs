@@ -203,6 +203,9 @@ class C
     self.end
     D.new.class
   end
+
+  def begin
+  end
 end
 
 a = foo(j, k) -
