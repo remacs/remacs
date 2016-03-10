@@ -8772,6 +8772,30 @@ sys_write (int fd, const void * buffer, unsigned int count)
       unsigned long nblock = 0;
       if (winsock_lib == NULL) emacs_abort ();
 
+      child_process *cp = fd_info[fd].cp;
+
+      /* If this is a non-blocking socket whose connection is in
+	 progress or terminated with an error already, return the
+	 proper error code to the caller. */
+      if (cp != NULL && (fd_info[fd].flags & FILE_CONNECT) != 0)
+	{
+	  /* In case connection is in progress, ENOTCONN that would
+	     result from calling pfn_send is not what callers expect. */
+	  if (cp->status != STATUS_CONNECT_FAILED)
+	    {
+	      errno = EWOULDBLOCK;
+	      return -1;
+	    }
+	  /* In case connection failed, use the actual error code
+	     stashed by '_sys_wait_connect' in cp->errcode. */
+	  else if (cp->errcode != 0)
+	    {
+	      pfn_WSASetLastError (cp->errcode);
+	      set_errno ();
+	      return -1;
+	    }
+	}
+
       /* TODO: implement select() properly so non-blocking I/O works. */
       /* For now, make sure the write blocks.  */
       if (fd_info[fd].flags & FILE_NDELAY)
@@ -8782,14 +8806,8 @@ sys_write (int fd, const void * buffer, unsigned int count)
       if (nchars == SOCKET_ERROR)
         {
 	  set_errno ();
-	  /* If this is a non-blocking socket whose connection is in
-	     progress, return the proper error code to the caller;
-	     ENOTCONN is not what they expect . */
-	  if (errno == ENOTCONN && (fd_info[fd].flags & FILE_CONNECT) != 0)
-	    errno = EWOULDBLOCK;
-	  else
-	    DebPrint (("sys_write.send failed with error %d on socket %ld\n",
-		       pfn_WSAGetLastError (), SOCK_HANDLE (fd)));
+	  DebPrint (("sys_write.send failed with error %d on socket %ld\n",
+		     pfn_WSAGetLastError (), SOCK_HANDLE (fd)));
 	}
 
       /* Set the socket back to non-blocking if it was before,
