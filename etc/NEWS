@@ -1925,7 +1925,7 @@ Those features have been deprecated in Gtk+ for a long time.
 +++
 *** etags no longer qualifies class members by default.
 
-By default, `etags' will not qualify class members for C-like
+By default, `etags' will not qualify class members for Perl and C-like
 object-oriented languages with their class names and namespaces, and
 will remove qualifications used explicitly in the code from the tag
 names it puts in TAGS files.  This is so the etags.el back-end for
@@ -1933,8 +1933,8 @@ names it puts in TAGS files.  This is so the etags.el back-end for
 positives.
 
 Use --class-qualify (-Q) if you want the old default behavior of
-qualifying class members in C++, Java, and Objective C.  Note that
-using -Q might make some class members become "unknown" to `M-.'
+qualifying class members in C++, Java, Objective C, and Perl.  Note
+that using -Q might make some class members become "unknown" to `M-.'
 (`xref-find-definitions'); if so, you can use `C-u M-.' to specify the
 qualified names by hand.
 
