@@ -1844,13 +1844,15 @@ It will be properly highlighted even when the call omits parens.")
      (syntax-propertize-rules
       ;; $' $" $` .... are variables.
       ;; ?' ?" ?` are character literals (one-char strings in 1.9+).
-      ("\\([?$]\\)[#\"'`]"
+      ("\\([?$]\\)[#\"'`:?]"
        (1 (if (save-excursion
                 (nth 3 (syntax-ppss (match-beginning 0))))
               ;; Within a string, skip.
               (ignore
                (goto-char (match-end 1)))
-            (string-to-syntax "\\"))))
+            (put-text-property (match-end 1) (match-end 0)
+                               'syntax-table (string-to-syntax "_"))
+            (string-to-syntax "'"))))
       ;; Symbols with special characters.
       ("\\(^\\|[^:]\\)\\(:\\([-+~]@?\\|[/%&|^`]\\|\\*\\*?\\|<\\(<\\|=>?\\)?\\|>[>=]?\\|===?\\|=~\\|![~=]?\\|\\[\\]=?\\)\\)"
        (3 (string-to-syntax "_")))
@@ -2222,7 +2224,7 @@ See `font-lock-syntax-table'.")
      1 font-lock-negation-char-face)
     ;; Character literals.
     ;; FIXME: Support longer escape sequences.
-    ("\\_<\\?\\\\?\\S " 0 font-lock-string-face)
+    ("\\?\\\\?\\_<.\\_>" 0 font-lock-string-face)
     ;; Regexp options.
     ("\\(?:\\s|\\|/\\)\\([imxo]+\\)"
      1 (when (save-excursion
