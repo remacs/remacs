@@ -161,6 +161,16 @@ that negotiation should complete even on non-blocking sockets.
 `window-pixel-height-before-size-change' allow to detect which window
 changed size when `window-size-change-functions' are run.
 
++++
+** New function `display-buffer-reuse-mode-window' is an action function
+suitable for use in `display-buffer-alist'. For example, to avoid creating
+a new window when opening man pages when there's already one, use
+(add-to-list 'display-buffer-alist
+     '("\\`\\*Man .*\\*\\'" .
+       (display-buffer-reuse-mode-window
+        (inhibit-same-window . nil)
+        (mode . Man-mode))))
+
 
 * Changes in Emacs 25.2 on Non-Free Operating Systems
 
