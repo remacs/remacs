@@ -622,30 +622,31 @@ item as before.
 ** Search and Replace
 
 +++
-*** `isearch' and `query-replace' can now perform character folding in
-matches.  Character folding is enabled by customizing
-`search-default-mode' to the value `character-fold-to-regexp'.  You
-can also toggle character folding in the middle of a search by typing
-`M-s ''.
-
-`query-replace' honors character folding this if the new variable
-`replace-character-fold' is customized to a non-nil value.  This is
-analogous to case folding, but instead of disregarding case variants,
-it disregards wider classes of distinctions between similar
+*** `isearch' and `query-replace' can now perform character folding in matches.
+This is analogous to case folding, but instead of disregarding case
+variants, it disregards wider classes of distinctions between similar
 characters.  (Case folding is a special case of character folding.)
 This means many characters in the search string will match entire
 groups of characters instead of just themselves.
 
-For instance, the " will match all variants of double quotes (like “
-and ”), and the letter a will match all of its accented cousins, even
-those composed of multiple characters, as well as many other symbols
-like ℀, ℁, ⒜, and ⓐ.
+For instance, the ASCII double quote character " will match all
+variants of double quotes (like “ and ”), and the letter a will match
+all of its accented cousins, even those composed of multiple
+characters, as well as many other symbols like ℀, ℁, ⒜, and ⓐ.
+
+Character folding is enabled by customizing `search-default-mode' to
+the value `character-fold-to-regexp'.  You can also toggle character
+folding in the middle of a search by typing `M-s ''.
+
+`query-replace' honors character folding if the new variable
+`replace-character-fold' is customized to a non-nil value.
 
 +++
 *** New user option `search-default-mode'.
 This option specifies the default mode for Isearch.  The default
-value, nil specifies that Isearch does not fold characters when
-searching.
+value, nil specifies that Isearch does literal searches (however,
+`case-fold-search' and `isearch-lax-whitespace' may still be applied,
+as in previous Emacs versions).
 
 +++
 *** New function `character-fold-to-regexp' can be used
