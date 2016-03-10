@@ -971,11 +971,12 @@ Relative ones are stored relative to the output file's directory.\n");
 	in some languages.");
 
   puts ("-Q, --class-qualify\n\
-        Qualify tag names with their class name in C++, ObjC, and Java.\n\
+        Qualify tag names with their class name in C++, ObjC, Java, and Perl.\n\
         This produces tag names of the form \"class::member\" for C++,\n\
         \"class(category)\" for Objective C, and \"class.member\" for Java.\n\
         For Objective C, this also produces class methods qualified with\n\
-        their arguments, as in \"foo:bar:baz:more\".");
+        their arguments, as in \"foo:bar:baz:more\".\n\
+        For Perl, this produces \"package::member\".");
   puts ("-r REGEXP, --regex=REGEXP or --regex=@regexfile\n\
         Make a tag for each line matching a regular expression pattern\n\
 	in the following files.  {LANGUAGE}REGEXP uses REGEXP for LANGUAGE\n\
@@ -4534,10 +4535,21 @@ Perl_functions (FILE *inf)
 	    continue;		/* nothing found */
 	  pos = strchr (sp, ':');
 	  if (pos && pos < cp && pos[1] == ':')
-	    /* The name is already qualified. */
-	    make_tag (sp, cp - sp, true,
-		      lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
-	  else
+	    {
+	      /* The name is already qualified. */
+	      if (!class_qualify)
+		{
+		  char *q = pos + 2, *qpos;
+		  while ((qpos = strchr (q, ':')) != NULL
+			 && qpos < cp
+			 && qpos[1] == ':')
+		    q = qpos + 2;
+		  sp = q;
+		}
+	      make_tag (sp, cp - sp, true,
+			lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
+	    }
+	  else if (class_qualify)
 	    /* Qualify it. */
 	    {
 	      char savechar, *name;
@@ -4550,6 +4562,9 @@ Perl_functions (FILE *inf)
 			lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
 	      free (name);
 	    }
+	  else
+	    make_tag (sp, cp - sp, true,
+		      lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
 	}
       else if (LOOKING_AT (cp, "use constant")
 	       || LOOKING_AT (cp, "use constant::defer"))
