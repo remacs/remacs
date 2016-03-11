@@ -24,8 +24,8 @@ d = %(hello (nested) world)
 # Don't propertize percent literals inside strings.
 "(%s, %s)" % [123, 456]
 
-"abc/#{def}ghi"
-"abc\#{def}ghi"
+"abc/#{ddf}ghi"
+"abc\#{ddf}ghi"
 
 # Or inside comments.
 x = # "tot %q/to"; =
@@ -303,8 +303,9 @@ foo ^
   bar
 
 foo_bar_tee(1, 2, 3)
-  .qux.bar
-  .tee
+  .qux&.bar
+  .tee.bar
+  &.tee
 
 foo do
   bar

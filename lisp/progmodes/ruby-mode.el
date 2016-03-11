@@ -444,7 +444,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
                           '("iuwu-mod" "and" "or")))
              (save-excursion
                (forward-comment 1)
-               (eq (char-after) ?.))))))
+               (looking-at "&?\\."))))))
 
 (defun ruby-smie--redundant-do-p (&optional skip)
   (save-excursion
@@ -535,6 +535,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
                  (line-end-position))
               (ruby-smie--forward-token)) ;Fully redundant.
              (t ";")))
+           ((equal tok "&.") ".")
            (t tok)))))))))
 
 (defun ruby-smie--backward-token ()
@@ -580,6 +581,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
                (line-end-position))
             (ruby-smie--backward-token)) ;Fully redundant.
            (t ";")))
+         ((equal tok "&.") ".")
          (t tok)))))))
 
 (defun ruby-smie--indent-to-stmt ()
