@@ -73,11 +73,11 @@ prompt, to unconditionally load the GDB init file.
 
 We recommend using the GUI front-end for GDB provided by Emacs.  With
 it, you can start GDB by typing "M-x gdb RET".  This will suggest the
-default binary to debug; if you are going to start a new Emacs
-process, change it as needed to point to the correct binary.
-Alternatively, if you want to attach the debugger to an already
-running Emacs process, change the GDB command shown in the minibuffer
-to say this:
+file name of the default binary to debug; if the suggested default is
+not the Emacs binary you want to debug, change the file name as
+needed.  Alternatively, if you want to attach the debugger to an
+already running Emacs process, change the GDB command shown in the
+minibuffer to say this:
 
    gdb -i=mi -p PID
 
@@ -681,8 +681,9 @@ not exit when it should.
 On GNU and Unix systems, you can also trying sending Emacs SIGUSR2,
 which, if 'debug-on-event' has its default value, will cause Emacs to
 attempt to break it out of its current loop and into the Lisp
-debugger.  This feature is useful when a C-level debugger is not
-conveniently available.
+debugger.  (See the node "Debugging" in the ELisp manual for the
+details about the Lisp debugger.)  This feature is useful when a
+C-level debugger is not conveniently available.
 
 ** If certain operations in Emacs are slower than they used to be, here
 is some advice for how to find out why.
