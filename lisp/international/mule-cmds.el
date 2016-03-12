@@ -2939,7 +2939,10 @@ on encoding."
                (#x14400 . #x14646)
 	       ;; (#x14647 . #x167FF) unused
 	       (#x16800 . #x16F9F)
-	       ;; (#x16FA0 . #x1AFFF) unused
+               (#x16FE0 . #x16FE0)
+               ;; (#x17000 . #x187FF) Tangut Ideographs
+               ;; (#x18800 . #x18AFF) Tangut Components
+	       ;; (#x18B00 . #x1AFFF) unused
 	       (#x1B000 . #x1B0FF)
 	       ;; (#x1B100 . #x1BBFF) unused
                (#x1BC00 . #x1BCAF)
