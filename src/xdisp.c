@@ -2946,7 +2946,7 @@ init_iterator (struct it *it, struct window *w,
 	 character properties needed for reordering are not yet
 	 available.  */
       it->bidi_p =
-	NILP (Vpurify_flag)
+	!redisplay__inhibit_bidi
 	&& !NILP (BVAR (current_buffer, bidi_display_reordering))
 	&& it->multibyte_p;
 
@@ -6641,7 +6641,7 @@ reseat_to_string (struct it *it, const char *s, Lisp_Object string,
      loading loadup.el, as the necessary character property tables are
      not yet available.  */
   it->bidi_p =
-    NILP (Vpurify_flag)
+    !redisplay__inhibit_bidi
     && !NILP (BVAR (&buffer_defaults, bidi_display_reordering));
 
   if (s == NULL)
@@ -21230,7 +21230,7 @@ See also `bidi-paragraph-direction'.  */)
       || NILP (BVAR (buf, enable_multibyte_characters))
       /* When we are loading loadup.el, the character property tables
 	 needed for bidi iteration are not yet available.  */
-      || !NILP (Vpurify_flag))
+      || redisplay__inhibit_bidi)
     return Qleft_to_right;
   else if (!NILP (BVAR (buf, bidi_paragraph_direction)))
     return BVAR (buf, bidi_paragraph_direction);
@@ -21354,7 +21354,7 @@ the `bidi-class' property of a character.  */)
 	  /* When we are loading loadup.el, the character property
 	     tables needed for bidi iteration are not yet
 	     available.  */
-	  || !NILP (Vpurify_flag))
+	  || redisplay__inhibit_bidi)
 	return Qnil;
 
       validate_subarray (object, from, to, SCHARS (object), &from_pos, &to_pos);
@@ -21382,7 +21382,7 @@ the `bidi-class' property of a character.  */)
 	  /* When we are loading loadup.el, the character property
 	     tables needed for bidi iteration are not yet
 	     available.  */
-	  || !NILP (Vpurify_flag))
+	  || redisplay__inhibit_bidi)
 	return Qnil;
 
       set_buffer_temp (buf);
@@ -31806,6 +31806,12 @@ display table takes effect; in this case, Emacs does not consult
   DEFVAR_LISP ("redisplay--variables", Vredisplay__variables,
      doc: /* A hash-table of variables changing which triggers a thorough redisplay.  */);
   Vredisplay__variables = Qnil;
+
+  DEFVAR_BOOL ("redisplay--inhibit-bidi", redisplay__inhibit_bidi,
+     doc: /* Non-nil means it is not safe to attempt bidi reordering for display.  */);
+  /* Initialize to t, since we need to disable reordering until
+     loadup.el successfully loads charprop.el.  */
+  redisplay__inhibit_bidi = true;
 }
 
 

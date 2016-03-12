@@ -47,6 +47,13 @@
 
 ;;; Code:
 
+;; This is used in xdisp.c to determine when bidi reordering is safe.
+;; (It starts non-nil in temacs, but we set it non-nil here anyway, in
+;; case someone loads loadup one more time.)  We reset it after
+;; successfully loading charprop.el, which defines the Unicode tables
+;; bidi.c needs for its job.
+(setq redisplay--inhibit-bidi t)
+
 ;; Add subdirectories to the load-path for files that might get
 ;; autoloaded when bootstrapping.
 ;; This is because PATH_DUMPLOADSEARCH is just "../lisp".
@@ -162,7 +169,8 @@
 (load "case-table")
 ;; This file doesn't exist when building a development version of Emacs
 ;; from the repository.  It is generated just after temacs is built.
-(load "international/charprop.el" t)
+(if (load "international/charprop.el" t)
+    (setq redisplay--inhibit-bidi nil))
 (load "international/characters")
 (load "composite")
 
@@ -414,6 +422,9 @@ lost after dumping")))
 
 (if (null (garbage-collect))
     (setq pure-space-overflow t))
+
+;; Make sure we will attempt bidi reordering henceforth.
+(setq redisplay--inhibit-bidi nil)
 
 (if (member (car (last command-line-args)) '("dump" "bootstrap"))
     (progn
