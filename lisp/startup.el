@@ -1998,7 +1998,7 @@ To quit a partially entered command, type Control-g.\n")
   (insert "  How to order printed manuals from the FSF\n")
 
   (insert "\nUseful tasks:\n")
-  (insert-button "Visit New File"
+  (insert-button "New File"
 		 'action (lambda (_button) (call-interactively 'find-file))
 		 'follow-link t)
   (insert (substitute-command-keys
@@ -2075,7 +2075,7 @@ If you have no Meta key, you may instead type ESC followed by the character.)"))
   ;; Insert links to useful tasks
   (insert "\nUseful tasks:\n")
 
-  (insert-button "Visit New File"
+  (insert-button "New File"
 		 'action (lambda (_button) (call-interactively 'find-file))
 		 'follow-link t)
   (insert "\t\t\t")
