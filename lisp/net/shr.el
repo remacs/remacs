@@ -1689,10 +1689,10 @@ The preference is a float determined from `shr-prefer-media-type'."
                 ((equal direction "rtl")
                  #x202e))))             ; RLO
     (when char
-      (insert char))
+      (insert #x2068 char))             ; FSI + LRO/RLO
     (shr-generic dom)
     (when char
-      (insert #x202c))))                ; PDF
+      (insert #x202c #x2069))))         ; PDF + PDI
 
 (defun shr-tag-bdi (dom)
   (insert #x2068)                       ; FSI
