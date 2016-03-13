@@ -388,7 +388,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
        (cases (exp "then" insts)
               (cases "when" cases) (insts "else" insts))
        (expseq (exp) );;(expseq "," expseq)
-       (hashvals (id "=>" exp1) (hashvals "," hashvals))
+       (hashvals (exp1 "=>" exp1) (hashvals "," hashvals))
        (insts-rescue-insts (insts)
                            (insts-rescue-insts "rescue" insts-rescue-insts)
                            (insts-rescue-insts "ensure" insts-rescue-insts))

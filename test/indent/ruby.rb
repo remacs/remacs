@@ -415,6 +415,12 @@ foo(bar:
 foo(:bar =>
     tee)
 
+regions = foo(
+  OpenStruct.new(id: 0, name: "foo") => [
+    10
+  ]
+)
+
 {'a' => {
    'b' => 'c',
    'd' => %w(e f)
