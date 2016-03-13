@@ -368,7 +368,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
        (exp  (exp1) (exp "," exp) (exp "=" exp)
              (id " @ " exp))
        (exp1 (exp2) (exp2 "?" exp1 ":" exp1))
-       (exp2 (exp3) (exp3 "." exp2))
+       (exp2 (exp3) (exp3 "." exp3))
        (exp3 ("def" insts "end")
              ("begin" insts-rescue-insts "end")
              ("do" insts "end")
@@ -416,7 +416,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
        (nonassoc "==" "===" "!=")
        (nonassoc "=~" "!~")
        (left "<<" ">>")
-       (right "."))))))
+       (assoc "."))))))
 
 (defun ruby-smie--bosp ()
   (save-excursion (skip-chars-backward " \t")
