@@ -281,6 +281,11 @@ git_config transfer.fsckObjects true
 
 git_config diff.elisp.xfuncname \
 	   '^\(def[^[:space:]]+[[:space:]]+([^()[:space:]]+)'
+git_config 'diff.m4.xfuncname' '^((m4_)?define|A._DEFUN(_ONCE)?)\([^),]*'
+git_config 'diff.make.xfuncname' \
+	   '^([$.[:alnum:]_].*:|[[:alnum:]_]+[[:space:]]*([*:+]?[:?]?|!?)=|define .*)'
+git_config 'diff.shell.xfuncname' \
+	   '^([[:space:]]*[[:alpha:]_][[:alnum:]_]*[[:space:]]*\(\)|[[:alpha:]_][[:alnum:]_]*=)'
 git_config diff.texinfo.xfuncname \
 	   '^@node[[:space:]]+([^,[:space:]][^,]+)'
 
