@@ -1258,7 +1258,8 @@ been put there by c-put-char-property.  POINT remains unchanged."
 (def-edebug-spec c-clear-char-property t)
 (def-edebug-spec c-clear-char-properties t)
 (def-edebug-spec c-put-overlay t)
-(def-edebug-spec c-delete-overlay t) ;))
+(def-edebug-spec c-delete-overlay t)
+(def-edebug-spec c-self-bind-state-cache t);))
 
 
 ;;; Functions.
@@ -1397,6 +1398,26 @@ been put there by c-put-char-property.  POINT remains unchanged."
        (save-restriction
 	 (widen)
 	 (c-set-cpp-delimiters ,beg ,end)))))
+
+(defmacro c-self-bind-state-cache (&rest forms)
+  ;; Bind the state cache to itself and execute the FORMS.  It is assumed that no
+  ;; buffer changes will happen in FORMS, and no hidden buffer changes which could
+  ;; affect the parsing will be made by FORMS.
+  `(let ((c-state-cache (copy-tree c-state-cache))
+	 (c-state-cache-good-pos c-state-cache-good-pos)
+	 ;(c-state-nonlit-pos-cache (copy-tree c-state-nonlit-pos-cache))
+	 ;(c-state-nonlit-pos-cache-limit c-state-nonlit-pos-cache-limit)
+	 ;(c-state-semi-nonlit-pos-cache (copy-treec c-state-semi-nonlit-pos-cache))
+	 ;(c-state-semi-nonlit-pos-cache-limit c-state-semi-nonlit-pos-cache)
+	 (c-state-brace-pair-desert (copy-tree c-state-brace-pair-desert))
+	 (c-state-point-min c-state-point-min)
+	 (c-state-point-min-lit-type c-state-point-min-lit-type)
+	 (c-state-point-min-lit-start c-state-point-min-lit-start)
+	 (c-state-min-scan-pos c-state-min-scan-pos)
+	 (c-state-old-cpp-beg c-state-old-cpp-beg)
+	 (c-state-old-cpp-end c-state-old-cpp-end))
+     ,@forms))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The following macros are to be used only in `c-parse-state' and its
