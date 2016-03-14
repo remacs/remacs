@@ -1,4 +1,3 @@
-
   NS -- the Cocoa interface for OS X and compatible systems
   ---------------------------------------------------------
 
@@ -30,7 +29,7 @@ fact that it doesn't have a normal name.  Instead, the method name is
 made up of the name of each parameter.  An exception to this rule are
 methods without parameters.
 
-The following calls a method in the object `anObject'.
+The following calls a method in the object 'anObject'.
 
     [anObject alpha:1 beta:2 gamma:3];
 
@@ -57,7 +56,7 @@ Classes are declared like the following:
   and avoid language constructs that makes the code hard to maintain.
 
 * Don't use macros and types intended for the XCode Interface Builder,
-  like `IBAction'.
+  like 'IBAction'.
 
 * The NS interface should work on all version of OS X from 10.6.8
   (Snow Leopard) to the latest official release.
@@ -71,8 +70,8 @@ Classes are declared like the following:
 The NS interface features a printf-based trace package that prints the
 call tree of selected functions in the Cocoa interface, plus various
 extra information.  It can be enabled by uncommenting the line
-defining `NSTRACE_ENABLED' in "nsterm.h".  To enable more output,
-uncomment the lines defining symbols starting with `NSTRACE_GROUP'.
+defining 'NSTRACE_ENABLED' in "nsterm.h".  To enable more output,
+uncomment the lines defining symbols starting with 'NSTRACE_GROUP'.
 
 
   GNUSTEP AND OTHER COMPATIBLE SYSTEMS
