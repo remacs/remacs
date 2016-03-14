@@ -997,7 +997,8 @@ textual parts.")
       (and (nnimap-change-group group server)
 	   (with-current-buffer (nnimap-buffer)
 	     (nnheader-message 7 "Expiring articles from %s: %s" group articles)
-             (let ((can-move (nnimap-capability "MOVE")))
+             (let ((can-move (and (nnimap-capability "MOVE")
+				  (equal (nnimap-quirk "MOVE") "MOVE"))))
                (nnimap-command
                 (if can-move
                     "UID MOVE %s %S"
@@ -2068,7 +2069,8 @@ Return the server's response to the SELECT or EXAMINE command."
 				  nnmail-split-fancy))
 	  (nnmail-inhibit-default-split-group t)
 	  (groups (nnimap-get-groups))
-          (can-move (nnimap-capability "MOVE"))
+          (can-move (and (nnimap-capability "MOVE")
+			 (equal (nnimap-quirk "MOVE") "MOVE")))
 	  new-articles)
       (erase-buffer)
       (nnimap-command "SELECT %S" nnimap-inbox)
