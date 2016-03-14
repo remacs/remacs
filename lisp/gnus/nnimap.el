@@ -157,7 +157,8 @@ textual parts.")
     (forward "gnus-forward")))
 
 (defvar nnimap-quirks
-  '(("QRESYNC" "Zimbra" "QRESYNC ")))
+  '(("QRESYNC" "Zimbra" "QRESYNC ")
+    ("MOVE" "Dovecot" nil)))
 
 (defvar nnimap-inhibit-logging nil)
 
@@ -929,7 +930,8 @@ textual parts.")
       (let ((message-id (message-field-value "message-id")))
 	(if internal-move-group
             (with-current-buffer (nnimap-buffer)
-              (let* ((can-move (nnimap-capability "MOVE"))
+              (let* ((can-move (and (nnimap-capability "MOVE")
+				    (equal (nnimap-quirk "MOVE") "MOVE")))
 		     (command (if can-move
 				  "UID MOVE %d %S"
 				"UID COPY %d %S"))
