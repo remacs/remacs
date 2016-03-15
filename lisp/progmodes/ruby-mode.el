@@ -443,7 +443,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
                   (member (save-excursion (ruby-smie--backward-token))
                           '("iuwu-mod" "and" "or")))
              (save-excursion
-               (forward-comment 1)
+               (forward-comment (point-max))
                (looking-at "&?\\."))))))
 
 (defun ruby-smie--redundant-do-p (&optional skip)

@@ -222,7 +222,7 @@ foo.
   bar
 
 # https://github.com/rails/rails/blob/17f5d8e062909f1fcae25351834d8e89967b645e/activesupport/lib/active_support/time_with_zone.rb#L206
-foo
+foo # comment intended to confuse the tokenizer
   .bar
 
 z = {
