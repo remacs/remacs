@@ -405,6 +405,17 @@ zoo
 a.records().map(&:b).zip(
   foo)
 
+foo1 =
+  subject.update(
+    1
+  )
+
+foo2 =
+  subject.
+    update(
+      2
+    )
+
 # FIXME: This is not consistent with the example below it, but this
 # offset only happens if the colon is at eol, which wouldn't be often.
 # Tokenizing `bar:' as `:bar =>' would be better, but it's hard to

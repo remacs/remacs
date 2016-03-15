@@ -629,19 +629,13 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
         ;; because when `.' is inside the line, the
         ;; additional indentation from it looks out of place.
         ((smie-rule-parent-p ".")
-         (let (smie--parent)
-           (save-excursion
-             ;; Traverse up the parents until the parent is "." at
-             ;; indentation, or any other token.
-             (while (and (let ((parent (smie-indent--parent)))
-                           (goto-char (cadr parent))
-                           (save-excursion
-                             (unless (integerp (car parent)) (forward-char -1))
-                             (not (ruby-smie--bosp))))
-                         (progn
-                           (setq smie--parent nil)
-                           (smie-rule-parent-p "."))))
-             (smie-rule-parent))))
+         ;; Traverse up the call chain until the parent is not `.',
+         ;; or `.' at indentation, or at eol.
+         (while (and (not (ruby-smie--bosp))
+                     (equal (nth 2 (smie-backward-sexp ".")) ".")
+                     (not (ruby-smie--bosp)))
+           (forward-char -1))
+         (smie-indent-virtual))
         (t (smie-rule-parent))))))
     (`(:after . ,(or `"(" "[" "{"))
      ;; FIXME: Shouldn't this be the default behavior of
