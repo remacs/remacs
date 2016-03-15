@@ -31598,7 +31598,12 @@ A value of t means resize them to fit the text displayed in them.
 A value of `grow-only', the default, means let mini-windows grow only;
 they return to their normal size when the minibuffer is closed, or the
 echo area becomes empty.  */);
-  Vresize_mini_windows = Qgrow_only;
+  /* Contrary to the doc string, we initialize this to nil, so that
+     loading loadup.el won't try to resize windows before loading
+     window.el, where some functions we need to call for this live.
+     We assign the 'grow-only' value right after loading window.el
+     during loadup.  */
+  Vresize_mini_windows = Qnil;
 
   DEFVAR_LISP ("blink-cursor-alist", Vblink_cursor_alist,
     doc: /* Alist specifying how to blink the cursor off.
