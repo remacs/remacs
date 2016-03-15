@@ -273,7 +273,7 @@ x_real_pos_and_offsets (struct frame *f,
       XFree (tmp_children);
 #endif
 
-      if (wm_window == rootw || had_errors)
+      if (had_errors || wm_window == rootw)
         break;
 
       win = wm_window;
