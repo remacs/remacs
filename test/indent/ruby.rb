@@ -295,9 +295,30 @@ foo > bar &&
   tee < qux
 
 zux do
-  foo == bar and
+  foo == bar &&
     tee == qux
+
+  a = 3 and
+    b = 4
 end
+
+foo + bar ==
+  tee + qux
+
+1 .. 2 &&
+     3
+
+3 < 4 +
+    5
+
+10 << 4 ^
+  20
+
+100 + 2 >>
+  3
+
+2 ** 10 /
+  2
 
 foo ^
   bar
