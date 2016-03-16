@@ -1374,7 +1374,7 @@ delimiter."
       (goto-char ruby-indent-point)
       (beginning-of-line)
       (skip-syntax-forward " ")
-      (if (looking-at "\\.[^.]")
+      (if (looking-at "\\.[^.]\\|&\\.")
           (+ indent ruby-indent-level)
         indent))))
 
