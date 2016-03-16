@@ -819,9 +819,8 @@ If in a Dired buffer, reverts it."
 replace it with a dir-locals-file `./%s.el'"
              dired-local-variables-file
              dir-locals-file))
-  (if (dir-locals--all-files default-directory)
-      (message "File `./%s' already exists."
-               (car (dir-locals--all-files default-directory)))
+  (if (file-exists-p dir-locals-file)
+      (message "File `./%s' already exists." dir-locals-file)
     (add-dir-local-variable 'dired-mode 'subdirs nil)
     (add-dir-local-variable 'dired-mode 'dired-omit-mode t)
     ;; Run extra-hooks and revert directory.
