@@ -10524,8 +10524,8 @@ ensure_echo_area_buffers (void)
    suitable buffer from echo_buffer[] and clear it.
 
    If WHICH < 0, set echo_area_buffer[1] to echo_area_buffer[0], so
-   that the current message becomes the last displayed one, make
-   choose a suitable buffer for echo_area_buffer[0], and clear it.
+   that the current message becomes the last displayed one, choose a
+   suitable buffer for echo_area_buffer[0], and clear it.
 
    Value is what FN returns.  */
 
@@ -10559,7 +10559,7 @@ with_echo_area_buffer (struct window *w, int which,
 	echo_area_buffer[this_one] = Qnil;
     }
 
-  /* Choose a suitable buffer from echo_buffer[] is we don't
+  /* Choose a suitable buffer from echo_buffer[] if we don't
      have one.  */
   if (NILP (echo_area_buffer[this_one]))
     {
