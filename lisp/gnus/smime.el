@@ -120,9 +120,7 @@
 
 (require 'dig)
 
-(if (locate-library "password-cache")
-    (require 'password-cache)
-  (require 'password))
+(require 'password-cache)
 
 (eval-when-compile (require 'cl))
 
@@ -230,9 +228,6 @@ must be set in `ldap-host-parameters-alist'."
   :group 'smime)
 
 (defvar smime-details-buffer "*OpenSSL output*")
-
-;; Password dialog function
-(declare-function password-read-and-add "password-cache" (prompt &optional key))
 
 (defun smime-ask-passphrase (&optional cache-key)
   "Asks the passphrase to unlock the secret key.
