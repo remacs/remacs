@@ -27,6 +27,8 @@
 
 (require 'gnus-util)
 (require 'epg)
+(require 'password-cache)
+(require 'mm-encode)
 
 (autoload 'mail-strip-quoted-names "mail-utils")
 (autoload 'mml2015-sign "mml2015")
@@ -35,6 +37,7 @@
 (autoload 'mml1991-encrypt "mml1991")
 (autoload 'message-fetch-field "message")
 (autoload 'message-goto-body "message")
+(autoload 'message-options-get "message")
 (autoload 'mml-insert-tag "mml")
 (autoload 'mml-smime-sign "mml-smime")
 (autoload 'mml-smime-encrypt "mml-smime")
@@ -43,6 +46,8 @@
 (autoload 'mml-smime-verify "mml-smime")
 (autoload 'mml-smime-verify-test "mml-smime")
 (autoload 'epa--select-keys "epa")
+
+(declare-function message-options-set "message" (symbol value))
 
 (defvar mml-sign-alist
   '(("smime"     mml-smime-sign-buffer     mml-smime-sign-query)
@@ -110,20 +115,15 @@ details."
   :group 'message
   :type 'boolean)
 
-(defcustom mml-secure-cache-passphrase
-  (if (boundp 'password-cache)
-      password-cache
-    t)
+;; FIXME If it's "NOT recommended", why is it the default?
+(defcustom mml-secure-cache-passphrase password-cache
   "If t, cache OpenPGP or S/MIME passphrases inside Emacs.
 Passphrase caching in Emacs is NOT recommended.  Use gpg-agent instead.
 See Info node `(message) Security'."
   :group 'message
   :type 'boolean)
 
-(defcustom mml-secure-passphrase-cache-expiry
-  (if (boundp 'password-cache-expiry)
-      password-cache-expiry
-    16)
+(defcustom mml-secure-passphrase-cache-expiry password-cache-expiry
   "How many seconds the passphrase is cached.
 Whether the passphrase is cached at all is controlled by
 `mml-secure-cache-passphrase'."

@@ -30,6 +30,7 @@
 (autoload 'gnus-map-function "gnus-util")
 (autoload 'gnus-replace-in-string "gnus-util")
 (autoload 'gnus-read-shell-command "gnus-util")
+(autoload 'gnus-format-message "gnus-util")
 
 (autoload 'mm-inline-partial "mm-partial")
 (autoload 'mm-inline-external-body "mm-extern")
