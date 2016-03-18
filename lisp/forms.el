@@ -593,7 +593,7 @@ Commands:                        Equivalent keys in read-only mode:
         ;; set-visited-file-name from calling set-auto-mode, which
         ;; might kill all local variables and set forms-file nil,
         ;; which will then barf in find-file-noselect below.  This can
-        ;; hapen when the user sets the default major mode that is
+        ;; happen when the user sets the default major mode that is
         ;; different from the Fundamental mode.
         (let (change-major-mode-with-file-name)
           (set-visited-file-name nil))

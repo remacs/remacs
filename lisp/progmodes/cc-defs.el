@@ -1407,7 +1407,7 @@ been put there by c-put-char-property.  POINT remains unchanged."
 	 (c-state-cache-good-pos c-state-cache-good-pos)
 	 ;(c-state-nonlit-pos-cache (copy-tree c-state-nonlit-pos-cache))
 	 ;(c-state-nonlit-pos-cache-limit c-state-nonlit-pos-cache-limit)
-	 ;(c-state-semi-nonlit-pos-cache (copy-treec c-state-semi-nonlit-pos-cache))
+	 ;(c-state-semi-nonlit-pos-cache (copy-tree c-state-semi-nonlit-pos-cache))
 	 ;(c-state-semi-nonlit-pos-cache-limit c-state-semi-nonlit-pos-cache)
 	 (c-state-brace-pair-desert (copy-tree c-state-brace-pair-desert))
 	 (c-state-point-min c-state-point-min)
