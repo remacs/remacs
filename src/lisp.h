@@ -1766,7 +1766,8 @@ CHAR_TABLE_EXTRA_SLOTS (struct Lisp_Char_Table *ct)
 
 /* Make sure that sub char-table contents slot is where we think it is.  */
 verify (offsetof (struct Lisp_Sub_Char_Table, contents)
-	== offsetof (struct Lisp_Vector, contents[SUB_CHAR_TABLE_OFFSET]));
+	== (offsetof (struct Lisp_Vector, contents)
+	    + SUB_CHAR_TABLE_OFFSET * sizeof (Lisp_Object)));
 
 /***********************************************************************
 			       Symbols

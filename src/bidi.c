@@ -532,7 +532,7 @@ bidi_copy_it (struct bidi_it *to, struct bidi_it *from)
   /* Copy everything from the start through the active part of
      the level stack.  */
   memcpy (to, from,
-	  (offsetof (struct bidi_it, level_stack[1])
+	  (offsetof (struct bidi_it, level_stack) + sizeof from->level_stack[0]
 	   + from->stack_idx * sizeof from->level_stack[0]));
 }
 
