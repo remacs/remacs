@@ -91,7 +91,7 @@
 
 (defface vc-edited-state
   '((default :inherit vc-state-base-face))
-  "Face for VC modeline state when the file is up to date."
+  "Face for VC modeline state when the file is edited."
   :version "25.1"
   :group 'vc-faces)
 
