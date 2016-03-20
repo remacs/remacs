@@ -158,8 +158,8 @@
 (defun make-tls-server (port)
   (start-process "gnutls" (generate-new-buffer "*tls*")
                  "gnutls-serv" "--http"
-                 "--x509keyfile" "lisp/net/key.pem"
-                 "--x509certfile" "lisp/net/cert.pem"
+                 "--x509keyfile" "data/net/key.pem"
+                 "--x509certfile" "data/net/cert.pem"
                  "--port" (format "%s" port)))
 
 (ert-deftest connect-to-tls-ipv4-wait ()
