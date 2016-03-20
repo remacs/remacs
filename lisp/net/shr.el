@@ -946,7 +946,8 @@ If EXTERNAL, browse the URL using `shr-external-browser'."
     (let ((param (match-string 4 data))
 	  (payload (url-unhex-string (match-string 5 data))))
       (when (string-match "^.*\\(;[ \t]*base64\\)$" param)
-	(setq payload (base64-decode-string payload)))
+	(setq payload (ignore-errors
+                        (base64-decode-string payload))))
       payload)))
 
 ;; Behind display-graphic-p test.
