@@ -1480,6 +1480,10 @@ The preference is a float determined from `shr-prefer-media-type'."
   (shr-ensure-paragraph)
   (let ((shr-list-mode 'ul))
     (shr-generic dom))
+  ;; If we end on an empty <li>, then make sure we really end on a new
+  ;; paragraph.
+  (unless (bolp)
+    (insert "\n"))
   (shr-ensure-paragraph))
 
 (defun shr-tag-ol (dom)
