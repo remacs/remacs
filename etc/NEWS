@@ -54,6 +54,10 @@ has been added.  They are: `file-attribute-type',
 `file-attribute-device-number'
 
 ---
+** The locale language name `ca' is now mapped to the language
+environment `Catalan', which has been added.
+
+---
 ** `align-regexp' has a separate history for its interactive argument
 `align-regexp' no longer shares its history with all other
 history-less functions that use `read-string'

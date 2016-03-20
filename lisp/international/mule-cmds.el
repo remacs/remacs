@@ -2235,7 +2235,7 @@ See `set-language-info-alist' for use in programs."
     ("br" . "Latin-1") ; Breton
     ("bs" . "Latin-2") ; Bosnian
     ("byn" . "UTF-8")  ; Bilin; Blin
-    ("ca" . "Latin-1") ; Catalan
+    ("ca" "Catalan" iso-8859-1) ; Catalan
     ; co Corsican
     ("cs" "Czech" iso-8859-2)
     ("cy" "Welsh" iso-8859-14)

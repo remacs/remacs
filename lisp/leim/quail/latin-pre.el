@@ -188,6 +188,7 @@
   diaeresis  |   \"    | \"i -> ï   \"\" -> ¨
     tilde    |   ~    | ~n -> ñ
    cedilla   |   ~    | ~c -> ç
+  middle dot |   ~    | ~. -> ·
    symbol    |   ~    | ~> -> »   ~< -> «   ~! -> ¡   ~? -> ¿
 " nil t nil nil nil nil nil nil nil nil t)
 
@@ -223,6 +224,7 @@
  ("~<" ?\«)
  ("~!" ?¡)
  ("~?" ?¿)
+ ("~." ?·)
  ("~ " ?~)
 )
 
