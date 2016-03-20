@@ -1617,7 +1617,9 @@ The preference is a float determined from `shr-prefer-media-type'."
 	(put-text-property start (1+ start)
 			   'shr-continuation-indentation shr-indentation)
 	(put-text-property start (1+ start) 'shr-prefix-length (length bullet))
-	(shr-generic dom)))))
+	(shr-generic dom))))
+  (unless (bolp)
+    (insert "\n")))
 
 (defun shr-mark-fill (start)
   ;; We may not have inserted any text to fill.
