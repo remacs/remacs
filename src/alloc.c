@@ -5427,7 +5427,7 @@ purecopy (Lisp_Object obj)
     }
   else
     {
-      Lisp_Object fmt = build_pure_c_string ("Don't know how to purify: %S");
+      AUTO_STRING (fmt, "Don't know how to purify: %S");
       Fsignal (Qerror, list1 (CALLN (Fformat, fmt, obj)));
     }
 
