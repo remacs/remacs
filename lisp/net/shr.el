@@ -783,8 +783,13 @@ size, and full-buffer size."
 	 (url-expand-file-name url (concat (car base) (cadr base))))))
 
 (defun shr-ensure-newline ()
-  (unless (zerop (current-column))
-    (insert "\n")))
+  (unless (bobp)
+    (let ((prefix (get-text-property (line-beginning-position)
+				     'shr-prefix-length)))
+      (unless (or (zerop (current-column))
+                  (and prefix
+                       (= prefix (- (point) (line-beginning-position)))))
+        (insert "\n")))))
 
 (defun shr-ensure-paragraph ()
   (unless (bobp)
@@ -812,6 +817,10 @@ size, and full-buffer size."
 						    (line-end-position))
 		       (line-end-position)))))
 	(delete-region (match-beginning 0) (match-end 0)))
+       ;; We have a single blank line.
+       ((and (eolp) (bolp))
+        (insert "\n"))
+       ;; Insert new paragraph.
        (t
 	(insert "\n\n"))))))
 
@@ -1206,7 +1215,7 @@ ones, in case fg and bg are nil."
   (shr-ensure-paragraph))
 
 (defun shr-tag-div (dom)
-  (shr-ensure-paragraph)
+  (shr-ensure-newline)
   (shr-generic dom)
   (shr-ensure-newline))
 
