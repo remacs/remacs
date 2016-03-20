@@ -175,6 +175,18 @@ a new window when opening man pages when there's already one, use
         (inhibit-same-window . nil)
         (mode . Man-mode))))
 
++++
+** `parse-partial-sexp' state has a new element.  Element 10 is
+non-nil when the last character scanned might be the first character
+of a two character construct, i.e. a comment delimiter or escaped
+character.  Its value is the syntax of that last character.
+
++++
+** `parse-partial-sexp''s state, element 9, has now been confirmed as
+permanent and documented, and may be used by Lisp programs.  Its value
+is a list of currently open parenthesis positions, starting with the
+outermost parenthesis.
+
 
 * Changes in Emacs 25.2 on Non-Free Operating Systems
 
