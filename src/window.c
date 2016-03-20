@@ -4064,9 +4064,11 @@ values.  */)
 }
 
 
-/* Resize frame F's windows when number of lines of F is set to SIZE.
-   HORFLAG means resize windows when number of columns of F is set to
-   SIZE.  PIXELWISE means to interpret SIZE as pixels.  */
+/* Resize frame F's windows when F's width or height is set to SIZE.
+   If HORFLAG is zero, F's width was set to SIZE, otherwise its height
+   was set.  SIZE is interpreted in F's canonical character units
+   (a.k.a. "columns" or "lines"), unless PIXELWISE is non-zero, which
+   means to interpret SIZE in pixel units.  */
 void
 resize_frame_windows (struct frame *f, int size, bool horflag, bool pixelwise)
 {
@@ -4167,7 +4169,7 @@ resize_frame_windows (struct frame *f, int size, bool horflag, bool pixelwise)
       m = XWINDOW (mini);
       if (horflag)
 	{
-	  m->total_cols = size;
+	  m->total_cols = new_size;
 	  m->pixel_width = new_pixel_size;
 	}
       else
