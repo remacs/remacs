@@ -33,6 +33,9 @@ test/etags/html-src/algrthms.html whitespace=cr-at-eol
 # The upstream maintainer does not want to remove trailing whitespace.
 doc/misc/texinfo.tex -whitespace=blank-at-eol
 
+# The shr test files can have trailing whitespace.
+test/data/shr/*.txt -whitespace=blank-at-eol
+
 # Some files should not be treated as text when diffing or merging.
 *.cur binary
 *.gpg binary
