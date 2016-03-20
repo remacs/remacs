@@ -23,10 +23,14 @@
 
 ;;; Code:
 
+(require 'shr)
+
 (defun shr-test (name)
   (with-temp-buffer
     (insert-file-contents (format "data/shr/%s.html" name))
-    (let ((dom (libxml-parse-html-region (point-min) (point-max))))
+    (let ((dom (libxml-parse-html-region (point-min) (point-max)))
+          (shr-width 80)
+          (shr-use-fonts nil))
       (erase-buffer)
       (shr-insert-document dom)
       (cons (buffer-substring-no-properties (point-min) (point-max))
@@ -37,9 +41,10 @@
 (ert-deftest rendering ()
   (skip-unless (fboundp 'libxml-parse-html-region))
   (dolist (file (directory-files "data/shr" nil "\\.html\\'"))
-    (let ((result (shr-test (replace-regexp-in-string
-                             "\\.html\\'" "" file))))
-      (should (equal (car result) (cdr result))))))
+    (let* ((name (replace-regexp-in-string "\\.html\\'" "" file))
+           (result (shr-test name)))
+      (unless (equal (car result) (cdr result))
+        (should (not (list name (car result) (cdr result))))))))
 
 (require 'shr)
 
