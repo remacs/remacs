@@ -42,7 +42,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "coding.h"
 #include "regex.h"
-#include "blockinput.h"
 
 #ifdef MSDOS
 #include "msdos.h"	/* for fstatat */
@@ -69,8 +68,6 @@ open_directory (Lisp_Object dirname, int *fdp)
   DIR *d;
   int fd, opendir_errno;
 
-  block_input ();
-
 #ifdef DOS_NT
   /* Directories cannot be opened.  The emulation assumes that any
      file descriptor other than AT_FDCWD corresponds to the most
@@ -94,8 +91,6 @@ open_directory (Lisp_Object dirname, int *fdp)
     }
 #endif
 
-  unblock_input ();
-
   if (!d)
     report_file_errno ("Opening directory", dirname, opendir_errno);
   *fdp = fd;
@@ -111,12 +106,9 @@ directory_files_internal_w32_unwind (Lisp_Object arg)
 #endif
 
 static void
-directory_files_internal_unwind (void *dh)
+directory_files_internal_unwind (void *d)
 {
-  DIR *d = dh;
-  block_input ();
   closedir (d);
-  unblock_input ();
 }
 
 /* Return the next directory entry from DIR; DIR's name is DIRNAME.
@@ -307,9 +299,7 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 	}
     }
 
-  block_input ();
   closedir (d);
-  unblock_input ();
 #ifdef WINDOWSNT
   if (attrs)
     Vw32_get_true_file_attributes = w32_save;
@@ -959,10 +949,8 @@ file_attributes (int fd, char const *name, Lisp_Object id_format)
 
   if (!(NILP (id_format) || EQ (id_format, Qinteger)))
     {
-      block_input ();
       uname = stat_uname (&s);
       gname = stat_gname (&s);
-      unblock_input ();
     }
 
   filemodestring (&s, modes);
