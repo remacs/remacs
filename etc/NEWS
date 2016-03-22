@@ -1630,6 +1630,14 @@ Removed font-lock-beginning-of-syntax-function and the SYNTAX-BEGIN
 slot in font-lock-defaults.
 
 +++
+** The new implementation of Subword mode affects word movement everywhere.
+When Subword mode is turned on, `forward-word', `backward-word', and
+everything that uses them will move by sub-words, effectively
+overriding the buffer's syntax table.  Lisp programs that shouldn't be
+affected by Subword mode should call the new functions
+`forward-word-strictly' and `backward-word-strictly' instead.
+
++++
 ** `package-initialize' now sets `package-enable-at-startup' to nil if
 called during startup.  Users who call this function in their init
 file and still expect it to be run after startup should set

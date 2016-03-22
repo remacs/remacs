@@ -2355,7 +2355,8 @@ CHANGE-WORD should be one of `upcase-word', `downcase-word', `capitalize-word'."
               (setq ref-point (point)
                     ;; FIXME this does not work for constructs with
                     ;; embedded space, eg "sync all".
-                    back-point (save-excursion (backward-word 1) (point))
+                    back-point (save-excursion (backward-word-strictly 1)
+                                               (point))
                     saveword (buffer-substring back-point ref-point))
               (funcall change-word -1)
               (or (string= saveword (buffer-substring back-point ref-point))

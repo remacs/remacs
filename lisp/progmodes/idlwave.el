@@ -2118,7 +2118,7 @@ An END token must be preceded by whitespace."
   (if (not (idlwave-quoted))
       (if
 	  (save-excursion
-	    (backward-word 1)
+	    (backward-word-strictly 1)
 	    (backward-char 1)
 	    (looking-at "[ \t\n\f]"))
 	  (idlwave-show-begin))))
@@ -2435,13 +2435,13 @@ If prefix ARG < 0 then move forward to enclosing block end."
   "Go to the beginning of the current block."
   (interactive)
   (idlwave-block-jump-out -1 'nomark)
-  (forward-word 1))
+  (forward-word-strictly 1))
 
 (defun idlwave-end-of-block ()
   "Go to the beginning of the current block."
   (interactive)
   (idlwave-block-jump-out 1 'nomark)
-  (backward-word 1))
+  (backward-word-strictly 1))
 
 (defun idlwave-forward-block (&optional arg)
   "Move across next nested block."
@@ -3150,12 +3150,12 @@ possibility of unbalanced blocks."
     (if (>= dir 0) (end-of-line)) ;Make sure we are in current block
     (if (setq found (idlwave-find-key  block-reg dir t unit-limit))
         (while (and found (looking-at block-limit))
-          (if (>= dir 0) (forward-word 1))
+          (if (>= dir 0) (forward-word-strictly 1))
           (idlwave-block-jump-out dir t)
           (setq found (idlwave-find-key block-reg dir t unit-limit))))
     (if (not nomark) (push-mark here))
     (if (not found) (goto-char unit-limit)
-      (if (>= dir 0) (forward-word 1)))))
+      (if (>= dir 0) (forward-word-strictly 1)))))
 
 (defun idlwave-min-current-statement-indent (&optional end-reg)
   "The minimum indent in the current statement."
@@ -6325,7 +6325,7 @@ Must accept two arguments: `apos' and `info'.")
 	 (is-self
 	  (and arrow
 	       (save-excursion (goto-char apos)
-			       (forward-word -1)
+			       (forward-word-strictly -1)
 			       (let ((case-fold-search t))
 				 (looking-at "self\\>")))))
 	 (force-query idlwave-force-class-query)

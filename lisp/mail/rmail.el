@@ -4089,7 +4089,7 @@ typically for purposes of moderating a list."
 		    (set-syntax-table mail-abbrev-syntax-table)
 		    (goto-char before)
 		    (while (and (< (point) end)
-				(progn (forward-word 1)
+				(progn (forward-word-strictly 1)
 				       (<= (point) end)))
 		      (expand-abbrev))
 		    (set-syntax-table old-syntax-table))

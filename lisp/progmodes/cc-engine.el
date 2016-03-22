@@ -6083,7 +6083,7 @@ comment at the start of cc-engine.el for more info."
 
 		      (when (or (looking-at "extends")
 				(looking-at "super"))
-			(forward-word)
+			(forward-word-strictly)
 			(c-forward-syntactic-ws)
 			(let ((c-promote-possible-types t)
 			      (c-record-found-types t))

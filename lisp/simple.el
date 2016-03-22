@@ -1170,7 +1170,7 @@ END, without printing any message."
 	     (save-restriction
 	       (narrow-to-region start end)
 	       (goto-char (point-min))
-	       (while (forward-word 1)
+	       (while (forward-word-strictly 1)
 		 (setq words (1+ words)))))
 	   words))
 	((use-region-p)

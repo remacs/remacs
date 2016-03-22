@@ -3771,11 +3771,11 @@ Each function is called with two arguments; POS and LIMIT.
 POS and LIMIT are character positions in the current buffer.
 
 If POS is less than LIMIT, POS is at the first character of a word,
-and the return value of a function is a position after the last
-character of that word.
+and the return value of a function should be a position after the
+last character of that word.
 
 If POS is not less than LIMIT, POS is at the last character of a word,
-and the return value of a function is a position at the first
+and the return value of a function should be a position at the first
 character of that word.
 
 In both cases, LIMIT bounds the search. */);

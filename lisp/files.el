@@ -6568,7 +6568,7 @@ normally equivalent short `-D' option is just passed on to
 		  (setq error-lines (nreverse error-lines))
 		  ;; Now read the numeric positions of file names.
 		  (goto-char linebeg)
-		  (forward-word 1)
+		  (forward-word-strictly 1)
 		  (forward-char 3)
 		  (while (< (point) end)
 		    (let ((start (insert-directory-adj-pos

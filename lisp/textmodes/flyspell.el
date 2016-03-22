@@ -368,7 +368,7 @@ property of the major mode name.")
 (defun texinfo-mode-flyspell-verify ()
   "Function used for `flyspell-generic-check-word-predicate' in Texinfo mode."
   (save-excursion
-    (forward-word -1)
+    (forward-word-strictly -1)
     (not (looking-at "@"))))
 
 ;;*--- tex mode --------------------------------------------------------*/

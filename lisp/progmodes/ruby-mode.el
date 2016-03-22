@@ -448,7 +448,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
 
 (defun ruby-smie--redundant-do-p (&optional skip)
   (save-excursion
-    (if skip (backward-word 1))
+    (if skip (backward-word-strictly 1))
     (member (nth 2 (smie-backward-sexp ";")) '("while" "until" "for"))))
 
 (defun ruby-smie--opening-pipe-p ()
@@ -517,7 +517,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
             (setq tok (concat "." tok)))
           (cond
            ((member tok '("unless" "if" "while" "until"))
-            (if (save-excursion (forward-word -1) (ruby-smie--bosp))
+            (if (save-excursion (forward-word-strictly -1) (ruby-smie--bosp))
                 tok "iuwu-mod"))
            ((string-match-p "\\`|[*&]?\\'" tok)
             (forward-char (- 1 (length tok)))
@@ -575,7 +575,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
          ((equal tok "do")
           (cond
            ((not (ruby-smie--redundant-do-p)) tok)
-           ((> (save-excursion (forward-word 1)
+           ((> (save-excursion (forward-word-strictly 1)
                                (forward-comment (point-max)) (point))
                (line-end-position))
             (ruby-smie--backward-token)) ;Fully redundant.
@@ -897,7 +897,7 @@ and `\\' when preceded by `?'."
     ;; us to do better.
     (when (not (memq (car (syntax-after (1- (point)))) '(2 3 6 10)))
       (or (not (memq (char-before) '(?\s ?\t)))
-          (ignore (forward-word -1))
+          (ignore (forward-word-strictly -1))
           (eq (char-before) ?_)
           (not (looking-at ruby-singleton-class-re))))))
 
@@ -1240,7 +1240,7 @@ delimiter."
                     ((let ((s (ruby-parse-region (point) ruby-indent-point)))
                        (and (nth 2 s) (> (nth 2 s) 0)
                             (or (goto-char (cdr (nth 1 s))) t)))
-                     (forward-word -1)
+                     (forward-word-strictly -1)
                      (setq indent (ruby-indent-size (current-column)
 						    (nth 2 state))))
                     (t
@@ -1259,7 +1259,7 @@ delimiter."
         (if (null (cdr (nth 1 state)))
             (error "Invalid nesting"))
         (goto-char (cdr (nth 1 state)))
-        (forward-word -1)               ; skip back a keyword
+        (forward-word-strictly -1)               ; skip back a keyword
         (setq begin (point))
         (cond
          ((looking-at "do\\>[^_]")      ; iter block is a special case
@@ -1352,7 +1352,7 @@ delimiter."
                                       (forward-char -1)
                                       (not (looking-at "{")))
                                     (progn
-                                      (forward-word -1)
+                                      (forward-word-strictly -1)
                                       (not (looking-at "do\\>[^_]")))))
                               (t t))))
                        (not (eq ?, c))
@@ -1505,10 +1505,11 @@ With ARG, do it many times.  Negative ARG means move backward."
                         (not (eq (char-before (point)) ?.))
                         (not (eq (char-before (point)) ?:)))
                    (ruby-end-of-block)
-                   (forward-word 1))
+                   (forward-word-strictly 1))
                   ((looking-at "\\(\\$\\|@@?\\)?\\sw")
                    (while (progn
-                            (while (progn (forward-word 1) (looking-at "_")))
+                            (while (progn (forward-word-strictly 1)
+                                          (looking-at "_")))
                             (cond ((looking-at "::") (forward-char 2) t)
                                   ((> (skip-chars-forward ".") 0))
                                   ((looking-at "\\?\\|!\\(=[~=>]\\|[^~=]\\)")
@@ -1524,7 +1525,7 @@ With ARG, do it many times.  Negative ARG means move backward."
                        (skip-chars-forward "<"))
                      (not expr))))
             (setq i (1- i)))
-        ((error) (forward-word 1)))
+        ((error) (forward-word-strictly 1)))
       i))))
 
 (defun ruby-backward-sexp (&optional arg)
@@ -1560,7 +1561,7 @@ With ARG, do it many times.  Negative ARG means move forward."
                   ((looking-at "\\s(") nil)
                   (t
                    (forward-char 1)
-                   (while (progn (forward-word -1)
+                   (while (progn (forward-word-strictly -1)
                                  (pcase (char-before)
                                    (`?_ t)
                                    (`?. (forward-char -1) t)

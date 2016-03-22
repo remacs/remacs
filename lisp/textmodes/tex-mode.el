@@ -735,7 +735,8 @@ automatically inserts its partner."
                   (let ((arg-end (match-end 0)))
                     (if (null type)     ;\end
                         (progn (goto-char arg-end)
-                               (latex-forward-sexp -1) (forward-word 1))
+                               (latex-forward-sexp -1)
+                               (forward-word-strictly 1))
                       (goto-char cmd-start)
                       (latex-forward-sexp 1)
                       (let (forward-sexp-function) (backward-sexp)))

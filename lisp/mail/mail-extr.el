@@ -880,7 +880,7 @@ consing a string.)"
 		       (and (not (eobp))
 			    (eq ?w (char-syntax (char-after)))
 			    (progn
-			      (forward-word 1)
+			      (forward-word-strictly 1)
 			      (and (not (eobp))
 				   (> (char-after) ?\177)
 				   (not (eq (char-after) ? )))))))))
@@ -1312,7 +1312,7 @@ consing a string.)"
 		     )
 		    (t
 		     (setq atom-beg (point))
-		     (forward-word 1)
+		     (forward-word-strictly 1)
 		     (setq atom-end (point))
 		     (goto-char atom-beg)
 		     (save-restriction

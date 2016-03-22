@@ -685,7 +685,7 @@ If OLD, return the old target.  If MOVE, move point before it."
             (funcall command 1)
             (setq arg (1- arg)))
         (error
-         (if (forward-word)
+         (if (forward-word-strictly)
 	     ;; Skip any non-word characters to avoid triggering a read-only
 	     ;; error which would cause skipping the next word characters too.
 	     (skip-syntax-forward "^w")

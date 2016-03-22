@@ -2197,7 +2197,7 @@ Returns the construct's token and moves point before it, if so."
 Point should be before the newline."
   (save-excursion
     (let ((tok (funcall smie-backward-token-function)))
-      (if (or (when (equal tok "not") (forward-word 1) t)
+      (if (or (when (equal tok "not") (forward-word-strictly 1) t)
               (and (zerop (length tok)) (eq (char-before) ?\))))
           (not (sh-smie--rc-after-special-arg-p))
         (sh-smie--newline-semi-p tok)))))
