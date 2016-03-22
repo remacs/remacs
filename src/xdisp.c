@@ -7229,18 +7229,21 @@ get_next_display_element (struct it *it)
 		{
 		  ptrdiff_t ignore;
 		  int next_face_id;
+		  bool text_from_string = false;
+		  /* Normally, the next buffer location is stored in
+		     IT->current.pos...  */
 		  struct text_pos pos = it->current.pos;
 
-		  /* For a string from a display property, the next
-		     buffer position is stored in the 'position'
+		  /* ...but for a string from a display property, the
+		     next buffer position is stored in the 'position'
 		     member of the iteration stack slot below the
 		     current one, see handle_single_display_spec.  By
-		     contrast, it->current.pos was not yet updated
-		     to point to that buffer position; that will
-		     happen in pop_it, after we finish displaying the
-		     current string.  Note that we already checked
-		     above that it->sp is positive, so subtracting one
-		     from it is safe.  */
+		     contrast, it->current.pos was not yet updated to
+		     point to that buffer position; that will happen
+		     in pop_it, after we finish displaying the current
+		     string.  Note that we already checked above that
+		     it->sp is positive, so subtracting one from it is
+		     safe.  */
 		  if (it->from_disp_prop_p)
 		    {
 		      int stackp = it->sp - 1;
@@ -7249,19 +7252,49 @@ get_next_display_element (struct it *it)
 		      while (stackp >= 0
 			     && STRINGP ((it->stack + stackp)->string))
 			stackp--;
-		      eassert (stackp >= 0);
-		      pos = (it->stack + stackp)->position;
+		      if (stackp < 0)
+			{
+			  /* If no stack slot was found for iterating
+			     a buffer, we are displaying text from a
+			     string, most probably the mode line or
+			     the header line, and that string has a
+			     display string on some of its
+			     characters.  */
+			  text_from_string = true;
+			  pos = it->stack[it->sp - 1].position;
+			}
+		      else
+			pos = (it->stack + stackp)->position;
 		    }
 		  else
 		    INC_TEXT_POS (pos, it->multibyte_p);
 
-		  if (CHARPOS (pos) >= ZV)
+		  if (text_from_string)
+		    {
+		      Lisp_Object base_string = it->stack[it->sp - 1].string;
+
+		      if (CHARPOS (pos) >= SCHARS (base_string) - 1)
+			it->end_of_box_run_p = true;
+		      else
+			{
+			  next_face_id
+			    = face_at_string_position (it->w, base_string,
+						       CHARPOS (pos), 0,
+						       &ignore, face_id, false);
+			  it->end_of_box_run_p
+			    = (FACE_FROM_ID (it->f, next_face_id)->box
+			       == FACE_NO_BOX);
+			}
+		    }
+		  else if (CHARPOS (pos) >= ZV)
 		    it->end_of_box_run_p = true;
 		  else
 		    {
-		      next_face_id = face_at_buffer_position
-			(it->w, CHARPOS (pos), &ignore,
-			 CHARPOS (pos) + TEXT_PROP_DISTANCE_LIMIT, false, -1);
+		      next_face_id =
+			face_at_buffer_position (it->w, CHARPOS (pos), &ignore,
+						 CHARPOS (pos)
+						 + TEXT_PROP_DISTANCE_LIMIT,
+						 false, -1);
 		      it->end_of_box_run_p
 			= (FACE_FROM_ID (it->f, next_face_id)->box
 			   == FACE_NO_BOX);
