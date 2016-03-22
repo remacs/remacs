@@ -679,25 +679,25 @@ from the emacsclient process.
 
 This sections contains features found in other official Emacs ports.
 
-**** Support for "xwidget"
+**** Support for xwidgets
 
-Emacs 25 has support for "xwidgets", a system to include operating
+Emacs 25 has support for xwidgets, a system to include operating
 system components into an Emacs buffer.  The components range from
-simple buttons to "webkit" (effectively, a web browser).
+simple buttons to webkit (effectively, a web browser).
 
-Currently, "xwidget" only works for the "gtk+" framework but it is
+Currently, xwidgets works only for the gtk+ framework but it is
 designed to be compatible with multiple Emacs ports.
 
-**** Respect `frame-inhibit-implied-resize'
+**** Respect 'frame-inhibit-implied-resize'
 
-When the variable `frame-inhibit-implied-resize' is non-nil, frames
+When the variable 'frame-inhibit-implied-resize' is non-nil, frames
 should not be resized when operations like changing font or toggling
 the tool bar is performed.
 
 Unfortunately, the tool bar (and possible other operations) always
 resize the frame.
 
-**** Support `proced' (implement `process-attributes')
+**** Support 'proced' (implement 'process-attributes')
 
 Unfortunately, a user-level process like Emacs does not have the
 privileges to get information about other processes under OS X.
@@ -711,7 +711,7 @@ There are other ways to do this:
  3) Ask the user to self-sign Emacs, if this feature is of interest.
 
 Anders Lindgren <andlind@gmail.com> has implemented
-`process-attributes' for OS X, which currently only work when
+'process-attributes' for OS X, which currently only work when
 running Emacs as root.
 
 See this article by Bozhidar Batsov for an overview of Proced:
@@ -775,7 +775,7 @@ The "mac" port provides smooth, pixel-based, scrolling.  This is a very
 popular features.  However, there are drawbacks to this method: what
 happens if only a fraction of a line is visible at the top of a
 window, is the partially visible text considered part of the window or
-not?  (Technically, what should `window-start' return.)
+not?  (Technically, what should 'window-start' return.)
 
 An alternative would be to make one-line scrolling the default on NS
 (or in Emacs in general).
@@ -785,8 +785,8 @@ implemented in Emacs for a free system.
 
 **** Mouse gestures
 
-The "mac" port defines the gestures `swipe-left/right/up/down',
-`magnify-up/down', and `rotate-left/right'.
+The "mac" port defines the gestures 'swipe-left/right/up/down',
+'magnify-up/down', and 'rotate-left/right'.
 
 It also binds the magnification commands to change the font
 size.  (This should be not be done in a specific interface, instead
@@ -865,12 +865,13 @@ all build versions.
 
 **** Incorrect translation of Super modifier with Ctrl or Meta on OS X
 
-When pressing `M-s-a', Emacs replies "M-s-å is undefined".  What
+When pressing 'M-s-a', Emacs replies "M-s-å is undefined".  What
 happened is a mix of Emacs view that Meta and Super has been pressed,
-and OS X view that ALT-a should yield "å".
+and OS X view that ALT-a should yield "å" (U+00E5 LATIN SMALL LETTER A
+WITH RING ABOVE).
 
-The bug reports suggests two different patched, unfortunately, none
-work properly.  For example:
+The bug reports suggest two different patches; unfortunately, neither
+works properly.  For example:
 
    Use a Swedish keyboard layout
 
@@ -878,7 +879,7 @@ work properly.  For example:
 
    "CMD-ALT-9"
 
-Today, this correctly yields that s-] is undefined.  With the either
+Today, this correctly yields that s-] is undefined.  With either
 of the two patches, Emacs responds that s-9 was pressed.
 
 More investigation is needed to fix this problem.
@@ -902,7 +903,7 @@ between the lower edge of the frame and the lower edge of the screen).
 A better solution would be for the frame to retain its size,
 i.e. change the text area.
 
-This is related to the `frame-inhibit-implied-resize' issue.
+This is related to the 'frame-inhibit-implied-resize' issue.
 
 **** The event loop does not redraw.
 A problem is that redraw don't happen during resize,
