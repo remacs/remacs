@@ -50,7 +50,7 @@
 (defvar gitmerge-skip-regexp
   ;; We used to include "sync" in there, but in my experience it only
   ;; caused false positives.  --Stef
-  "back[- ]?port\\|re-?generate\\|bump version\\|from trunk\\|\
+  "back[- ]?port\\|do not merge\\|re-?generate\\|bump version\\|from trunk\\|\
 Auto-commit"
   "Regexp matching logs of revisions that might be skipped.
 `gitmerge-missing' will ask you if it should skip any matches.")
@@ -171,9 +171,10 @@ Auto-commit"
 (defun gitmerge-highlight-skip-regexp ()
   "Highlight strings that match `gitmerge-skip-regexp'."
   (save-excursion
-    (while (re-search-forward gitmerge-skip-regexp nil t)
-      (put-text-property (match-beginning 0) (match-end 0)
-			 'face 'font-lock-warning-face))))
+    (let ((case-fold-search t))
+      (while (re-search-forward gitmerge-skip-regexp nil t)
+        (put-text-property (match-beginning 0) (match-end 0)
+                           'face 'font-lock-warning-face)))))
 
 (defun gitmerge-missing (from)
   "Return the list of revisions that need to be merged from FROM.
