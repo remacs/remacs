@@ -193,16 +193,6 @@ static EMACS_INT process_tick;
 /* Number of events for which the user or sentinel has been notified.  */
 static EMACS_INT update_tick;
 
-/* Define NON_BLOCKING_CONNECT if we can support non-blocking connects.
-   The code can be simplified by assuming NON_BLOCKING_CONNECT once
-   Emacs starts assuming POSIX 1003.1-2001 or later.  */
-
-#if (defined HAVE_SELECT				\
-     && (defined GNU_LINUX || defined HAVE_GETPEERNAME)	\
-     && (defined EWOULDBLOCK || defined EINPROGRESS))
-# define NON_BLOCKING_CONNECT
-#endif
-
 /* Define DATAGRAM_SOCKETS if datagrams can be used safely on
    this system.  We need to read full packets, so we need a
    "non-destructive" select.  So we require either native select,
@@ -262,7 +252,6 @@ static fd_set non_process_wait_mask;
 
 static fd_set write_mask;
 
-#ifdef NON_BLOCKING_CONNECT
 /* Mask of bits indicating the descriptors that we wait for connect to
    complete on.  Once they complete, they are removed from this mask
    and added to the input_wait_mask and non_keyboard_wait_mask.  */
@@ -271,7 +260,6 @@ static fd_set connect_wait_mask;
 
 /* Number of bits set in connect_wait_mask.  */
 static int num_pending_connects;
-#endif	/* NON_BLOCKING_CONNECT */
 
 /* The largest descriptor currently in use for a process object; -1 if none.  */
 static int max_process_desc;
@@ -3133,7 +3121,6 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 	break;
 #endif /* DATAGRAM_SOCKETS */
 
-#ifdef NON_BLOCKING_CONNECT
       if (p->is_non_blocking_client)
 	{
 	  ret = fcntl (s, F_SETFL, O_NONBLOCK);
@@ -3145,7 +3132,6 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 	      continue;
 	    }
 	}
-#endif
 
       /* Make us close S if quit.  */
       record_unwind_protect_int (close_file_unwind, s);
@@ -3221,17 +3207,8 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 	  break;
 	}
 
-#ifdef NON_BLOCKING_CONNECT
-#ifdef EINPROGRESS
       if (p->is_non_blocking_client && xerrno == EINPROGRESS)
 	break;
-#else
-#ifdef EWOULDBLOCK
-      if (p->is_non_blocking_client && xerrno == EWOULDBLOCK)
-	break;
-#endif
-#endif
-#endif
 
 #ifndef WINDOWSNT
       if (xerrno == EINTR)
@@ -3366,7 +3343,6 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 		     BUF_ZV (XBUFFER (p->buffer)),
 		     BUF_ZV_BYTE (XBUFFER (p->buffer)));
 
-#ifdef NON_BLOCKING_CONNECT
   if (p->is_non_blocking_client)
     {
       /* We may get here if connect did succeed immediately.  However,
@@ -3381,7 +3357,6 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 	}
     }
   else
-#endif
     /* A server may have a client filter setting of Qt, but it must
        still listen for incoming connects unless it is stopped.  */
     if ((!EQ (p->filter, Qt) && !EQ (p->command, Qt))
@@ -3894,8 +3869,8 @@ usage: (make-network-process &rest ARGS)  */)
     pset_command (p, Qt);
   p->pid = 0;
   p->backlog = 5;
-  p->is_non_blocking_client = 0;
-  p->is_server = 0;
+  p->is_non_blocking_client = false;
+  p->is_server = false;
   p->port = port;
   p->socktype = socktype;
   p->ai_protocol = ai_protocol;
@@ -3918,21 +3893,15 @@ usage: (make-network-process &rest ARGS)  */)
     {
       /* Don't support network sockets when non-blocking mode is
 	 not available, since a blocked Emacs is not useful.  */
-      p->is_server = 1;
+      p->is_server = true;
       if (TYPE_RANGED_INTEGERP (int, tem))
 	p->backlog = XINT (tem);
     }
 
   /* :nowait BOOL */
   if (!p->is_server && socktype != SOCK_DGRAM
-      && (tem = Fplist_get (contact, QCnowait), !NILP (tem)))
-    {
-#ifndef NON_BLOCKING_CONNECT
-      error ("Non-blocking connect not supported");
-#else
-      p->is_non_blocking_client = 1;
-#endif
-    }
+      && !NILP (Fplist_get (contact, QCnowait)))
+    p->is_non_blocking_client = true;
 
 #ifdef HAVE_GETADDRINFO_A
   /* With async address resolution, the list of addresses is empty, so
@@ -4338,7 +4307,6 @@ deactivate_process (Lisp_Object proc)
       chan_process[inchannel] = Qnil;
       FD_CLR (inchannel, &input_wait_mask);
       FD_CLR (inchannel, &non_keyboard_wait_mask);
-#ifdef NON_BLOCKING_CONNECT
       if (FD_ISSET (inchannel, &connect_wait_mask))
 	{
 	  FD_CLR (inchannel, &connect_wait_mask);
@@ -4346,7 +4314,6 @@ deactivate_process (Lisp_Object proc)
 	  if (--num_pending_connects < 0)
 	    emacs_abort ();
 	}
-#endif
       if (inchannel == max_process_desc)
 	{
 	  /* We just closed the highest-numbered process input descriptor,
@@ -4999,11 +4966,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  timeout = make_timespec (0, 0);
 	  if ((pselect (max (max_process_desc, max_input_desc) + 1,
 			&Atemp,
-#ifdef NON_BLOCKING_CONNECT
 			(num_pending_connects > 0 ? &Ctemp : NULL),
-#else
-			NULL,
-#endif
 			NULL, &timeout, NULL)
 	       <= 0))
 	    {
@@ -5495,7 +5458,6 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 				 list2 (Qexit, make_number (256)));
 		}
 	    }
-#ifdef NON_BLOCKING_CONNECT
 	  if (FD_ISSET (channel, &Writeok)
 	      && FD_ISSET (channel, &connect_wait_mask))
 	    {
@@ -5568,7 +5530,6 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		    }
 		}
 	    }
-#endif /* NON_BLOCKING_CONNECT */
 	}			/* End for each file descriptor.  */
     }				/* End while exit conditions not met.  */
 
@@ -7780,10 +7741,8 @@ init_process_emacs (void)
   max_process_desc = max_input_desc = -1;
   memset (fd_callback_info, 0, sizeof (fd_callback_info));
 
-#ifdef NON_BLOCKING_CONNECT
   FD_ZERO (&connect_wait_mask);
   num_pending_connects = 0;
-#endif
 
   process_output_delay_count = 0;
   process_output_skip = 0;
@@ -8036,9 +7995,7 @@ The variable takes effect when `start-process' is called.  */);
 #define ADD_SUBFEATURE(key, val) \
   subfeatures = pure_cons (pure_cons (key, pure_cons (val, Qnil)), subfeatures)
 
-#ifdef NON_BLOCKING_CONNECT
    ADD_SUBFEATURE (QCnowait, Qt);
-#endif
 #ifdef DATAGRAM_SOCKETS
    ADD_SUBFEATURE (QCtype, Qdatagram);
 #endif
