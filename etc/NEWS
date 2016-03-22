@@ -170,7 +170,7 @@ changed size when 'window-size-change-functions' are run.
 suitable for use in 'display-buffer-alist'. For example, to avoid creating
 a new window when opening man pages when there's already one, use
 (add-to-list 'display-buffer-alist
-     '("\\'\\*Man .*\\*\\'" .
+     '("\\`\\*Man .*\\*\\'" .
        (display-buffer-reuse-mode-window
         (inhibit-same-window . nil)
         (mode . Man-mode))))
