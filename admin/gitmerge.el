@@ -331,6 +331,10 @@ is nil, only the single commit BEG is merged."
 	   (if end (list (concat beg "~.." end))
 	     `("-1" ,beg)))
     (insert "\n")
+    ;; Truncate to 72 chars so that the resulting ChangeLog line fits in 80.
+    (goto-char (point-min))
+    (while (re-search-forward "^\\(.\\{69\\}\\).\\{4,\\}" nil t)
+      (replace-match "\\1..."))
     (buffer-string)))
 
 (defun gitmerge-apply (missing from)
@@ -432,14 +436,8 @@ If so, add no longer conflicted files and commit."
 	(when mergehead
 	  (with-current-buffer (get-buffer-create gitmerge-output-buffer)
 	    (erase-buffer)
-            ;; FIXME: We add "-m-" because the default commit message
-            ;; apparently tickles our commit hook:
-            ;;    Line longer than 78 characters in commit message
-            ;;    Line longer than 78 characters in commit message
-            ;;    Line longer than 78 characters in commit message
-            ;;    Commit aborted; please see the file CONTRIBUTE
 	    (unless (zerop (call-process "git" nil t nil
-					 "commit" "--no-edit" "-m-"))
+					 "commit" "--no-edit"))
 	      (error "Git error during merge - fix it manually"))))
 	;; Successfully resumed.
 	t))))
