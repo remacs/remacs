@@ -349,10 +349,6 @@ Whether the passphrase is cached at all is controlled by
 
 (autoload 'mml-compute-boundary "mml")
 
-;; We require mm-decode, which requires mm-bodies, which autoloads
-;; message-options-get (!).
-(declare-function message-options-set "message" (symbol value))
-
 (defun mml-smime-epg-sign (cont)
   (let ((inhibit-redisplay t)
 	(boundary (mml-compute-boundary cont)))

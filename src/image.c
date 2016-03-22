@@ -1830,6 +1830,9 @@ cache_image (struct frame *f, struct image *img)
   struct image_cache *c = FRAME_IMAGE_CACHE (f);
   ptrdiff_t i;
 
+  if (!c)
+    c = FRAME_IMAGE_CACHE (f) = make_image_cache ();
+
   /* Find a free slot in c->images.  */
   for (i = 0; i < c->used; ++i)
     if (c->images[i] == NULL)

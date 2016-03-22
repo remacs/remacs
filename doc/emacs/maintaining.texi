@@ -1289,15 +1289,15 @@ whose state is that of the item at point.
 @findex vc-dir-mark
 @findex vc-dir-mark-all-files
   While in the VC Directory buffer, all the files that you mark with
-@kbd{m} (@code{vc-dir-mark}) or @kbd{M} (@code{vc-dir-mark}) are in
-the current VC fileset.  If you mark a directory entry with @kbd{m},
-all the listed files in that directory tree are in the current VC
-fileset.  The files and directories that belong to the current VC
-fileset are indicated with a @samp{*} character in the VC Directory
-buffer, next to their VC status.  In this way, you can set up a
-multi-file VC fileset to be acted on by VC commands like @w{@kbd{C-x v
-v}} (@pxref{Basic VC Editing}), @w{@kbd{C-x v =}} (@pxref{Old
-Revisions}), and @w{@kbd{C-x v u}} (@pxref{VC Undo}).
+@kbd{m} (@code{vc-dir-mark}) or @kbd{M} (@code{vc-dir-mark-all-files})
+are in the current VC fileset.  If you mark a directory entry with
+@kbd{m}, all the listed files in that directory tree are in the
+current VC fileset.  The files and directories that belong to the
+current VC fileset are indicated with a @samp{*} character in the VC
+Directory buffer, next to their VC status.  In this way, you can set
+up a multi-file VC fileset to be acted on by VC commands like
+@w{@kbd{C-x v v}} (@pxref{Basic VC Editing}), @w{@kbd{C-x v =}}
+(@pxref{Old Revisions}), and @w{@kbd{C-x v u}} (@pxref{VC Undo}).
 
   The VC Directory buffer also defines some single-key shortcuts for
 VC commands with the @kbd{C-x v} prefix: @kbd{=}, @kbd{+}, @kbd{l},

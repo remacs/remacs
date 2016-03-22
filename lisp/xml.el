@@ -580,7 +580,7 @@ Return one of:
       ;; However, if we're parsing incrementally, then we need to deal
       ;; with stray CDATA.
       (let ((s (xml-parse-string)))
-        (when (string-empty-p s)
+        (when (zerop (length s))
           ;; We haven't consumed any input! We must throw an error in
           ;; order to prevent looping forever.
           (error "XML: (Not Well-Formed) Could not parse: %s"

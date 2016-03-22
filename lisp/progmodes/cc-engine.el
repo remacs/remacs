@@ -4288,8 +4288,7 @@ comment at the start of cc-engine.el for more info."
 	(setq safe-pos-list (cdr safe-pos-list)))
       (unless (setq safe-pos (car-safe safe-pos-list))
 	(setq safe-pos (max (or (c-safe-position
-				 (point) (or c-state-cache
-					     (c-parse-state)))
+				 (point) (c-parse-state))
 				0)
 			    (point-min))
 	      safe-pos-list (list safe-pos)))
@@ -4337,107 +4336,108 @@ Non-nil is returned if the point moved, nil otherwise.
 Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
 
-  (let ((start (point))
-	state-2
-	;; A list of syntactically relevant positions in descending
-	;; order.  It's used to avoid scanning repeatedly over
-	;; potentially large regions with `parse-partial-sexp' to verify
-	;; each position.  Used in `c-ssb-lit-begin'
-	safe-pos-list
-	;; The result from `c-beginning-of-macro' at the start position or the
-	;; start position itself if it isn't within a macro.  Evaluated on
-	;; demand.
-	start-macro-beg
-	;; The earliest position after the current one with the same paren
-	;; level.  Used only when `paren-level' is set.
-	lit-beg
-	(paren-level-pos (point)))
+  (c-self-bind-state-cache
+   (let ((start (point))
+	 state-2
+	 ;; A list of syntactically relevant positions in descending
+	 ;; order.  It's used to avoid scanning repeatedly over
+	 ;; potentially large regions with `parse-partial-sexp' to verify
+	 ;; each position.  Used in `c-ssb-lit-begin'
+	 safe-pos-list
+	 ;; The result from `c-beginning-of-macro' at the start position or the
+	 ;; start position itself if it isn't within a macro.  Evaluated on
+	 ;; demand.
+	 start-macro-beg
+	 ;; The earliest position after the current one with the same paren
+	 ;; level.  Used only when `paren-level' is set.
+	 lit-beg
+	 (paren-level-pos (point)))
 
-    (while
-	(progn
-	  ;; The next loop "tries" to find the end point each time round,
-	  ;; loops when it hasn't succeeded.
-	  (while
-	      (and
-	       (let ((pos (point)))
-		 (while (and
-			 (< (skip-chars-backward skip-chars limit) 0)
-			 ;; Don't stop inside a literal.
-			 (when (setq lit-beg (c-ssb-lit-begin))
-			   (goto-char lit-beg)
-			   t)))
-		 (< (point) pos))
+     (while
+	 (progn
+	   ;; The next loop "tries" to find the end point each time round,
+	   ;; loops when it hasn't succeeded.
+	   (while
+	       (and
+		(let ((pos (point)))
+		  (while (and
+			  (< (skip-chars-backward skip-chars limit) 0)
+			  ;; Don't stop inside a literal.
+			  (when (setq lit-beg (c-ssb-lit-begin))
+			    (goto-char lit-beg)
+			    t)))
+		  (< (point) pos))
 
-	       (let ((pos (point)) state-2 pps-end-pos)
+		(let ((pos (point)) state-2 pps-end-pos)
 
-		 (cond
-		  ((and paren-level
-			(save-excursion
-			  (setq state-2 (parse-partial-sexp
-					 pos paren-level-pos -1)
-				pps-end-pos (point))
-			  (/= (car state-2) 0)))
-		   ;; Not at the right level.
+		  (cond
+		   ((and paren-level
+			 (save-excursion
+			   (setq state-2 (parse-partial-sexp
+					  pos paren-level-pos -1)
+				 pps-end-pos (point))
+			   (/= (car state-2) 0)))
+		    ;; Not at the right level.
 
-		   (if (and (< (car state-2) 0)
-			    ;; We stop above if we go out of a paren.
-			    ;; Now check whether it precedes or is
-			    ;; nested in the starting sexp.
-			    (save-excursion
-			      (setq state-2
-				    (parse-partial-sexp
-				     pps-end-pos paren-level-pos
-				     nil nil state-2))
-			      (< (car state-2) 0)))
+		    (if (and (< (car state-2) 0)
+			     ;; We stop above if we go out of a paren.
+			     ;; Now check whether it precedes or is
+			     ;; nested in the starting sexp.
+			     (save-excursion
+			       (setq state-2
+				     (parse-partial-sexp
+				      pps-end-pos paren-level-pos
+				      nil nil state-2))
+			       (< (car state-2) 0)))
 
-		       ;; We've stopped short of the starting position
-		       ;; so the hit was inside a nested list.  Go up
-		       ;; until we are at the right level.
-		       (condition-case nil
-			   (progn
-			     (goto-char (scan-lists pos -1
-						    (- (car state-2))))
-			     (setq paren-level-pos (point))
-			     (if (and limit (>= limit paren-level-pos))
-				 (progn
-				   (goto-char limit)
-				   nil)
-			       t))
-			 (error
-			  (goto-char (or limit (point-min)))
-			  nil))
+			;; We've stopped short of the starting position
+			;; so the hit was inside a nested list.  Go up
+			;; until we are at the right level.
+			(condition-case nil
+			    (progn
+			      (goto-char (scan-lists pos -1
+						     (- (car state-2))))
+			      (setq paren-level-pos (point))
+			      (if (and limit (>= limit paren-level-pos))
+				  (progn
+				    (goto-char limit)
+				    nil)
+				t))
+			  (error
+			   (goto-char (or limit (point-min)))
+			   nil))
 
-		     ;; The hit was outside the list at the start
-		     ;; position.  Go to the start of the list and exit.
-		     (goto-char (1+ (elt state-2 1)))
-		     nil))
+		      ;; The hit was outside the list at the start
+		      ;; position.  Go to the start of the list and exit.
+		      (goto-char (1+ (elt state-2 1)))
+		      nil))
 
-		  ((c-beginning-of-macro limit)
-		   ;; Inside a macro.
-		   (if (< (point)
-			  (or start-macro-beg
-			      (setq start-macro-beg
-				    (save-excursion
-				      (goto-char start)
-				      (c-beginning-of-macro limit)
-				      (point)))))
-		       t
+		   ((c-beginning-of-macro limit)
+		    ;; Inside a macro.
+		    (if (< (point)
+			   (or start-macro-beg
+			       (setq start-macro-beg
+				     (save-excursion
+				       (goto-char start)
+				       (c-beginning-of-macro limit)
+				       (point)))))
+			t
 
-		     ;; It's inside the same macro we started in so it's
-		     ;; a relevant match.
-		     (goto-char pos)
-		     nil))))))
+		      ;; It's inside the same macro we started in so it's
+		      ;; a relevant match.
+		      (goto-char pos)
+		      nil))))))
 
-	  (> (point)
-	     (progn
-	       ;; Skip syntactic ws afterwards so that we don't stop at the
-	       ;; end of a comment if `skip-chars' is something like "^/".
-	       (c-backward-syntactic-ws)
-	       (point)))))
+	   (> (point)
+	      (progn
+		;; Skip syntactic ws afterwards so that we don't stop at the
+		;; end of a comment if `skip-chars' is something like "^/".
+		(c-backward-syntactic-ws)
+		(point)))))
 
-    ;; We might want to extend this with more useful return values in
-    ;; the future.
-    (/= (point) start)))
+     ;; We might want to extend this with more useful return values in
+     ;; the future.
+     (/= (point) start))))
 
 ;; The following is an alternative implementation of
 ;; `c-syntactic-skip-backward' that uses backward movement to keep

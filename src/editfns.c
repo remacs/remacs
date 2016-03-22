@@ -1456,7 +1456,7 @@ time_overflow (void)
   error ("Specified time is not representable");
 }
 
-static void
+static _Noreturn void
 invalid_time (void)
 {
   error ("Invalid time specification");
@@ -1848,7 +1848,9 @@ lisp_time_struct (Lisp_Object specified_time, int *plen)
   Lisp_Object high, low, usec, psec;
   struct lisp_time t;
   int len = disassemble_lisp_time (specified_time, &high, &low, &usec, &psec);
-  int val = len ? decode_time_components (high, low, usec, psec, &t, 0) : 0;
+  if (!len)
+    invalid_time ();
+  int val = decode_time_components (high, low, usec, psec, &t, 0);
   check_time_validity (val);
   *plen = len;
   return t;

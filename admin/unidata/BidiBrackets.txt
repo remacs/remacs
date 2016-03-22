@@ -1,13 +1,15 @@
-# BidiBrackets-8.0.0.txt
-# Date: 2015-01-20, 19:00:00 GMT [AG, LI, KW]
+# BidiBrackets-9.0.0.txt
+# Date: 2016-01-21, 22:00:00 GMT [AG, LI, KW]
+# © 2016 Unicode®, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
+#
+# Unicode Character Database
+# For documentation, see http://www.unicode.org/reports/tr44/
 #
 # Bidi_Paired_Bracket and Bidi_Paired_Bracket_Type Properties
 # 
 # This file is a normative contributory data file in the Unicode
 # Character Database.
-#
-# Copyright (c) 1991-2015 Unicode, Inc.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Bidi_Paired_Bracket is a normative property of type Miscellaneous,
 # which establishes a mapping between characters that are treated as

@@ -289,12 +289,15 @@ _GL_WARN_ON_USE (pselect, "pselect is not portable - "
 #   define select rpl_select
 #  endif
 _GL_FUNCDECL_RPL (select, int,
-                  (int, fd_set *, fd_set *, fd_set *, struct timeval *));
+                  (int, fd_set *restrict, fd_set *restrict, fd_set *restrict,
+                   struct timeval *restrict));
 _GL_CXXALIAS_RPL (select, int,
-                  (int, fd_set *, fd_set *, fd_set *, struct timeval *));
+                  (int, fd_set *restrict, fd_set *restrict, fd_set *restrict,
+                   struct timeval *restrict));
 # else
 _GL_CXXALIAS_SYS (select, int,
-                  (int, fd_set *, fd_set *, fd_set *, struct timeval *));
+                  (int, fd_set *restrict, fd_set *restrict, fd_set *restrict,
+                   struct timeval *restrict));
 # endif
 _GL_CXXALIASWARN (select);
 #elif @HAVE_WINSOCK2_H@

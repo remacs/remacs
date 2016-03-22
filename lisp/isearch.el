@@ -2574,15 +2574,26 @@ the word mode."
   (when (eq regexp-function t)
     (setq regexp-function #'word-search-regexp))
   (let ((description
-         ;; Don't use a description on the default search mode.
-         (cond ((equal regexp-function search-default-mode) "")
+         (cond
+          ;; 1. Do not use a description on the default search mode,
+          ;;    but only if the default search mode is non-nil.
+          ((or (and search-default-mode
+                    (equal search-default-mode regexp-function))
+               ;; Special case where `search-default-mode' is t
+               ;; (defaults to regexp searches).
+               (and (eq search-default-mode t)
+                    (eq search-default-mode isearch-regexp))) "")
+          ;; 2. Use the `isearch-message-prefix' set for
+          ;;    `regexp-function' if available.
                (regexp-function
                 (and (symbolp regexp-function)
                      (or (get regexp-function 'isearch-message-prefix)
                          "")))
+          ;; 3. Else if `isearch-regexp' is non-nil, set description
+          ;;    to "regexp ".
                (isearch-regexp "regexp ")
-               ;; We're in literal mode. If the default mode is not
-               ;; literal, then describe it.
+          ;; 4. And finally, if we're in literal mode (and if the
+          ;;    default mode is also not literal), describe it.
                ((functionp search-default-mode) "literal "))))
     (if space-before
         ;; Move space from the end to the beginning.
