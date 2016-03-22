@@ -1300,7 +1300,7 @@ xg_create_frame_widgets (struct frame *f)
     if (! g_signal_handler_find (G_OBJECT (gs),
                                  G_SIGNAL_MATCH_FUNC,
                                  0, 0, 0,
-                                 G_CALLBACK (style_changed_cb),
+                                 (gpointer) G_CALLBACK (style_changed_cb),
                                  0))
       {
         g_signal_connect (G_OBJECT (gs), "notify::gtk-theme-name",
@@ -1832,14 +1832,10 @@ xg_toggle_notify_cb (GObject *gobject, GParamSpec *arg1, gpointer user_data)
 
       if (!!visible != !!toggle_on)
         {
-          g_signal_handlers_block_by_func (G_OBJECT (wtoggle),
-                                           G_CALLBACK (xg_toggle_visibility_cb),
-                                           gobject);
+          gpointer cb = (gpointer) G_CALLBACK (xg_toggle_visibility_cb);
+          g_signal_handlers_block_by_func (G_OBJECT (wtoggle), cb, gobject);
           gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (wtoggle), visible);
-          g_signal_handlers_unblock_by_func
-            (G_OBJECT (wtoggle),
-             G_CALLBACK (xg_toggle_visibility_cb),
-             gobject);
+          g_signal_handlers_unblock_by_func (G_OBJECT (wtoggle), cb, gobject);
         }
       x_gtk_show_hidden_files = visible;
     }

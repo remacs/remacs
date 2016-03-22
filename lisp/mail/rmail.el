@@ -4585,6 +4585,8 @@ Argument MIME is non-nil if this is a mime message."
     (list armor-start (- (point-max) after-end) mime
           armor-end-regexp)))
 
+(declare-function rmail-mime-entity-truncated "rmailmm" (entity))
+
 ;; Should this have a key-binding, or be in a menu?
 ;; There doesn't really seem to be an appropriate menu.
 ;; Eg the edit command is not in a menu either.

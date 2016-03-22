@@ -3,8 +3,7 @@
 Copyright (C) 1988, 1993-1994, 1999, 2001-2016 Free Software Foundation,
 Inc.
 
-Author: Wolfgang Rupprecht (ac
-ording to ack.texi)
+Author: Wolfgang Rupprecht (according to ack.texi)
 
 This file is part of GNU Emacs.
 

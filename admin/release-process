@@ -238,7 +238,7 @@ TUTORIAL.zh
 
 ** Check the manual.
 
-abbrevs.texi
+abbrevs.texi 		Steve Byrne
 ack.texi
 anti.texi
 arevert-xtra.texi
@@ -293,7 +293,7 @@ xresources.texi
 
 ** Check the Lisp manual.
 
-abbrevs.texi
+abbrevs.texi 		Steve Byrne
 anti.texi
 back.texi
 backups.texi

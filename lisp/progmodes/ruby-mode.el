@@ -2173,7 +2173,7 @@ See `font-lock-syntax-table'.")
           'font-lock-string-face)))
     ;; Perl-ish keywords.
     "\\_<\\(?:BEGIN\\|END\\)\\_>\\|^__END__$"
-    ;; Variables.
+    ;; Singleton objects.
     (,(concat ruby-font-lock-keyword-beg-re
               "\\_<\\(nil\\|true\\|false\\)\\_>")
      1 font-lock-constant-face)
@@ -2181,7 +2181,7 @@ See `font-lock-syntax-table'.")
     ("\\_<__\\(?:LINE\\|ENCODING\\|FILE\\)__\\_>"
      (0 font-lock-builtin-face))
     ;; Symbols.
-    ("\\(^\\|[^:]\\)\\(:@?\\(?:\\w\\|_\\)+\\)\\([!?=]\\)?"
+    ("\\(^\\|[^:]\\)\\(:@\\{0,2\\}\\(?:\\sw\\|\\s_\\)+\\)"
      (2 font-lock-constant-face)
      (3 (unless (and (eq (char-before (match-end 3)) ?=)
                      (eq (char-after (match-end 3)) ?>))
