@@ -1404,7 +1404,8 @@ symbol-function was changed not to signal 'void-function' any more.
 *** As a consequence, the second arg of 'indirect-function' is now obsolete.
 
 +++
-** Comint, term, and compile do not set the EMACS env var any more.
+** Although comint, term, and compile still set the EMACS variable,
+this is now considered deprecated and will be removed in a future release.
 Use the INSIDE_EMACS environment variable instead.
 
 +++
