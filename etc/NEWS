@@ -133,6 +133,12 @@ different group ID.
 ---
 ** 'auto-revert-use-notify' is set back to t in 'global-auto-revert-mode'.
 
+** CSS mode
+
+---
+*** Support for completing attribute values using the `completion-at-point'
+command.
+
 
 * New Modes and Packages in Emacs 25.2
 
