@@ -123,7 +123,7 @@
 ;;
 
 ;; This variable will always hold the version number of the mode
-(defconst verilog-mode-version "2015-11-21-8112ca0-vpo-GNU"
+(defconst verilog-mode-version "2016-03-22-7547e76-vpo-GNU"
   "Version of this Verilog mode.")
 (defconst verilog-mode-release-emacs t
   "If non-nil, this version of Verilog mode was released with Emacs itself.")
@@ -349,6 +349,11 @@ wherever possible, since it is slow."
   (condition-case nil
       (unless (fboundp 'prog-mode)
 	(define-derived-mode prog-mode fundamental-mode "Prog"))
+    (error nil))
+  ;; Added in Emacs 25.1
+  (condition-case nil
+      (unless (fboundp 'forward-word-strictly)
+        (defalias 'forward-word-strictly 'forward-word))
     (error nil)))
 
 (eval-when-compile
@@ -1321,8 +1326,13 @@ See also `verilog-case-fold'."
   :type 'hook)
 
 (defvar verilog-imenu-generic-expression
-  '((nil "^\\s-*\\(\\(m\\(odule\\|acromodule\\)\\)\\|primitive\\)\\s-+\\([a-zA-Z0-9_.:]+\\)" 4)
-    ("*Vars*" "^\\s-*\\(reg\\|wire\\)\\s-+\\(\\|\\[[^]]+\\]\\s-+\\)\\([A-Za-z0-9_]+\\)" 3))
+  '((nil            "^\\s-*\\(?:m\\(?:odule\\|acromodule\\)\\|p\\(?:rimitive\\|rogram\\|ackage\\)\\)\\s-+\\([a-zA-Z0-9_.:]+\\)" 1)
+    ("*Variables*"  "^\\s-*\\(reg\\|wire\\|logic\\)\\s-+\\(\\|\\[[^]]+\\]\\s-+\\)\\([A-Za-z0-9_]+\\)" 3)
+    ("*Classes*"    "^\\s-*\\(?:\\(?:virtual\\|interface\\)\\s-+\\)?class\\s-+\\([A-Za-z_][A-Za-z0-9_]+\\)" 1)
+    ("*Tasks*"      "^\\s-*\\(?:\\(?:static\\|pure\\|virtual\\|local\\|protected\\)\\s-+\\)*task\\s-+\\(?:\\(?:static\\|automatic\\)\\s-+\\)?\\([A-Za-z_][A-Za-z0-9_:]+\\)" 1)
+    ("*Functions*"  "^\\s-*\\(?:\\(?:static\\|pure\\|virtual\\|local\\|protected\\)\\s-+\\)*function\\s-+\\(?:\\(?:static\\|automatic\\)\\s-+\\)?\\(?:\\w+\\s-+\\)?\\([A-Za-z_][A-Za-z0-9_:]+\\)" 1)
+    ("*Interfaces*" "^\\s-*interface\\s-+\\([a-zA-Z_0-9]+\\)" 1)
+    ("*Types*"      "^\\s-*typedef\\s-+.*\\s-+\\([a-zA-Z_0-9]+\\)\\s-*;" 1))
   "Imenu expression for Verilog mode.  See `imenu-generic-expression'.")
 
 ;;
@@ -1374,7 +1384,7 @@ If set will become buffer local.")
     (define-key map "\C-c\C-i" 'verilog-pretty-declarations)
     (define-key map "\C-c="    'verilog-pretty-expr)
     (define-key map "\C-c\C-b" 'verilog-submit-bug-report)
-    (define-key map "\M-*"     'verilog-star-comment)
+    (define-key map "\C-c/"    'verilog-star-comment)
     (define-key map "\C-c\C-c" 'verilog-comment-region)
     (define-key map "\C-c\C-u" 'verilog-uncomment-region)
     (when (featurep 'xemacs)
@@ -3026,7 +3036,7 @@ See also `verilog-font-lock-extra-types'.")
   "Font lock mode face used to highlight AMS keywords."
   :group 'font-lock-highlighting-faces)
 
-(defvar verilog-font-grouping-keywords-face
+(defvar verilog-font-lock-grouping-keywords-face
   'verilog-font-lock-grouping-keywords-face
   "Font to use for Verilog Grouping Keywords (such as begin..end).")
 (defface verilog-font-lock-grouping-keywords-face
@@ -3870,6 +3880,25 @@ Key bindings specific to `verilog-mode-map' are:
   (add-hook 'write-contents-hooks 'verilog-auto-save-check nil 'local)
   ;; verilog-mode-hook call added by define-derived-mode
   )
+
+;;; Integration with the speedbar
+;;
+
+(declare-function speedbar-add-supported-extension "speedbar" (extension))
+
+(defun verilog-speedbar-initialize ()
+  "Initialize speedbar to understand `verilog-mode'."
+  ;; Set Verilog file extensions (extracted from `auto-mode-alist')
+  (let ((mode-alist auto-mode-alist))
+    (while mode-alist
+      (when (eq (cdar mode-alist) 'verilog-mode)
+        (speedbar-add-supported-extension (caar mode-alist)))
+      (setq mode-alist (cdr mode-alist)))))
+
+;; If the speedbar is loaded, execute initialization instructions right away,
+;; otherwise add the initialization instructions to the speedbar loader.
+(eval-after-load "speedbar" '(verilog-speedbar-initialize))
+
 
 ;;; Electric functions:
 ;;
@@ -9016,7 +9045,8 @@ IGNORE-NEXT is true to ignore next token, fake from inside case statement."
 	    ;;(if dbg (setq dbg (concat dbg (format "\tif-check-else-other %s\n" keywd))))
 	    (setq gotend t))
 	   ;; Final statement?
-	   ((and exit-keywd (equal keywd exit-keywd))
+	   ((and exit-keywd (and (equal keywd exit-keywd)
+                                 (not (looking-at "::"))))
 	    (setq gotend t)
 	    (forward-char (length keywd)))
 	   ;; Standard tokens...
@@ -9032,7 +9062,9 @@ IGNORE-NEXT is true to ignore next token, fake from inside case statement."
 		(goto-char (match-end 0))
 	      (forward-char 1)))
            ((equal keywd ":")  ; Case statement, begin/end label, x?y:z
-            (cond ((equal "endcase" exit-keywd)  ; case x: y=z; statement next
+            (cond ((looking-at "::")
+                   (forward-char 1))  ; Another forward-char below
+                  ((equal "endcase" exit-keywd)  ; case x: y=z; statement next
 		   (setq ignore-next nil rvalue nil))
                   ((equal "?" exit-keywd)  ; x?y:z rvalue
                    )  ; NOP
@@ -9127,7 +9159,7 @@ IGNORE-NEXT is true to ignore next token, fake from inside case statement."
       (verilog-read-always-signals-recurse nil nil nil)
       (setq sigs-out-i (append sigs-out-i sigs-out-unk)
 	    sigs-out-unk nil)
-      ;;(if dbg (with-current-buffer (get-buffer-create "*vl-dbg*")) (delete-region (point-min) (point-max)) (insert dbg) (setq dbg ""))
+      ;;(if dbg (with-current-buffer (get-buffer-create "*vl-dbg*") (delete-region (point-min) (point-max)) (insert dbg) (setq dbg "")))
       ;; Return what was found
       (verilog-alw-new sigs-out-d sigs-out-i sigs-temp sigs-in))))
 
