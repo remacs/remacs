@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2016-03-06.18}
+\def\texinfoversion{2016-03-22.15}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -1513,10 +1513,27 @@ output) for that.)}
 \fi  % \ifx\pdfoutput
 
 %
-% PDF outline support for XeTeX
+% For XeTeX
 %
+\newif\iftxiuseunicodedestname
 \ifx\XeTeXrevision\thisisundefined
 \else
+  %
+  % XeTeX version check
+  %
+  \ifnum\strcmp{\the\XeTeXversion\XeTeXrevision}{0.99995}>-1
+    % XeTeX 0.99995+ contains xdvipdfmx 20160307+.
+    % It can handle Unicode destination name for PDF.
+    \txiuseunicodedestnametrue
+  \else
+    % XeTeX < 0.99995 can not handle Unicode destination name for PDF
+    % because xdvipdfmx 20150315 has UTF-16 convert issue.
+    % It fixed by xdvipdfmx 20160106 (TeX Live SVN r39753).
+    \txiuseunicodedestnamefalse
+  \fi
+  %
+  % PDF outline support
+  %
   \pdfmakepagedesttrue \relax
   % Emulate the primitive of pdfTeX
   \def\pdfdest name#1 xyz{%
@@ -1525,15 +1542,25 @@ output) for that.)}
   \def\pdfmkdest#1{{%
     % We have to set dummies so commands such as @code, and characters
     % such as \, aren't expanded when present in a section title.
-    \indexnofonts  % For avoiding UTF-16 convert issue of xdvipdfmx 20150315.
+    \indexnofonts
+    \iftxiuseunicodedestname
+      \def\pdfdestname{#1}% Pass through Unicode characters.
+    \else
+      \edef\pdfdestname{#1}% Replace Unicode characters to ASCII.
+    \fi
+    \turnoffactive
     \makevalueexpandable
     % In the case of XeTeX, xdvipdfmx converts strings to UTF-16.
     % Therefore \txiescapepdf is not necessary.
-    \safewhatsit{\pdfdest name{#1} xyz}%
+    \safewhatsit{\pdfdest name{\pdfdestname} xyz}%
   }}
   %
   \def\dopdfoutline#1#2#3#4{%
-    \edef\pdfoutlinedest{#3}%
+    \iftxiuseunicodedestname
+      \def\pdfoutlinedest{#3}% Pass through Unicode characters.
+    \else
+      \edef\pdfoutlinedest{#3}% Replace Unicode characters to ASCII.
+    \fi
     \ifx\pdfoutlinedest\empty
       \def\pdfoutlinedest{#4}%
     \fi
@@ -1574,7 +1601,7 @@ output) for that.)}
       % In the case of XeTeX, xdvipdfmx converts strings to UTF-16.
       % Therefore, the encoding and the language may not be considered.
       %
-      \indexnofonts % For avoiding UTF-16 convert issue of xdvipdfmx 20150315.
+      \indexnofonts
       \setupdatafile
       % We can have normal brace characters in the PDF outlines, unlike
       % Texinfo index files.  So set that up.
@@ -1596,14 +1623,31 @@ output) for that.)}
   % However, due to UTF-16 convert issue of xdvipdfmx 20150315,
   % ``\special{pdf:dest ...}'' can not handle non-ASCII strings.
   % It fixed by xdvipdfmx 20160106 (TeX Live SVN r39753).
-\fi
-
 %
-% @image support for XeTeX
+  % make a live url in pdf output.
+  \def\pdfurl#1{%
+    \begingroup
+      % it seems we really need yet another set of dummies; have not
+      % tried to figure out what each command should do in the context
+      % of @url.  for now, just make @/ a no-op, that's the only one
+      % people have actually reported a problem with.
+      %
+      \normalturnoffactive
+      \def\@{@}%
+      \let\/=\empty
+      \makevalueexpandable
+      % do we want to go so far as to use \indexnofonts instead of just
+      % special-casing \var here?
+      \def\var##1{##1}%
+      %
+      \leavevmode\setcolor{\urlcolor}%
+      \special{pdf:bann << /Border [0 0 0]
+        /Subtype /Link /A << /S /URI /URI (#1) >> >>}%
+    \endgroup}
+  \def\endlink{\setcolor{\maincolor}\special{pdf:eann}}
 %
-\newif\ifxeteximgpdf
-\ifx\XeTeXrevision\thisisundefined
-\else
+  %
+  % @image support
   %
   % #1 is image name, #2 width (might be empty/whitespace), #3 height (ditto).
   \def\doxeteximage#1#2#3{%
@@ -1615,7 +1659,6 @@ output) for that.)}
     % someone has a scalable image, presumably better to use that than a
     % bitmap.
     \let\xeteximgext=\empty
-    \xeteximgpdffalse
     \begingroup
       \openin 1 #1.pdf \ifeof 1
         \openin 1 #1.PDF \ifeof 1
@@ -1632,17 +1675,23 @@ output) for that.)}
             \fi
           \else \gdef\xeteximgext{png}%
           \fi
-        \else \gdef\xeteximgext{PDF} \global\xeteximgpdftrue%
+        \else \gdef\xeteximgext{PDF}%
         \fi
-      \else \gdef\xeteximgext{pdf} \global\xeteximgpdftrue%
+      \else \gdef\xeteximgext{pdf}%
       \fi
       \closein 1
     \endgroup
     %
-    \ifxeteximgpdf
+    \def\xetexpdfext{pdf}%
+    \ifx\xeteximgext\xetexpdfext
       \XeTeXpdffile "#1".\xeteximgext ""
     \else
-      \XeTeXpicfile "#1".\xeteximgext ""
+      \def\xetexpdfext{PDF}%
+      \ifx\xeteximgext\xetexpdfext
+        \XeTeXpdffile "#1".\xeteximgext ""
+      \else
+        \XeTeXpicfile "#1".\xeteximgext ""
+      \fi
     \fi
     \ifdim \wd0 >0pt width \xeteximagewidth \fi
     \ifdim \wd2 >0pt height \xeteximageheight \fi \relax
@@ -7804,7 +7853,7 @@ end
   % Process the macro body under the current catcode regime.
   \scantokens{#1\texinfoc}\aftermacro%
   %
-  % The \c is to remove the \newlinechar added by \scantokens, and
+  % The \texinfoc is to remove the \newlinechar added by \scantokens, and
   % can be noticed by \parsearg.
   %   The \aftermacro allows a \comment at the end of the macro definition
   % to duplicate itself past the final \newlinechar added by \scantokens:
@@ -7817,15 +7866,7 @@ end
 
 % Used for copying and captions
 \def\scanexp#1{%
-  \bgroup
-  % Undo catcode changes of \startcontents and \printindex
-  % When called from @insertcopying or (short)caption, we need active
-  % backslash to get it printed correctly.
-  % FIXME: This may not be needed.
-  %\catcode`\@=0 \catcode`\\=\active \escapechar=`\@
-  \edef\temp{\noexpand\scanmacro{#1}}%
-  \temp
-  \egroup
+  \expandafter\scanmacro\expandafter{#1}%
 }
 
 \newcount\paramno   % Count of parameters
@@ -9371,7 +9412,7 @@ end
     %
     \ifx\thiscaption\empty \else
       \ifx\floatident\empty \else
-	\appendtomacro\captionline{: }% had ident, so need a colon between
+        \appendtomacro\captionline{: }% had ident, so need a colon between
       \fi
       %
       % caption text.
@@ -9398,29 +9439,16 @@ end
         \requireauxfile
         \atdummies
         %
-        % since we read the caption text in the macro world, where ^^M
-        % is turned into a normal character, we have to scan it back, so
-        % we don't write the literal three characters "^^M" into the aux file.
-	\scanexp{%
-	  \xdef\noexpand\gtemp{%
-	    \ifx\thisshortcaption\empty
-	      \thiscaption
-	    \else
-	      \thisshortcaption
-	    \fi
-	  }%
-	}%
+        \ifx\thisshortcaption\empty
+          \def\gtemp{\thiscaption}%
+        \else
+          \def\gtemp{\thisshortcaption}%
+        \fi
         \immediate\write\auxfile{@xrdef{\floatlabel-lof}{\floatident
-	  \ifx\gtemp\empty \else : \gtemp \fi}}%
+          \ifx\gtemp\empty \else : \gtemp \fi}}%
       }%
     \fi
   \egroup  % end of \vtop
-  %
-  % place the captured inserts
-  %
-  % BEWARE: when the floats start floating, we have to issue warning
-  % whenever an insert appears inside a float which could possibly
-  % float. --kasal, 26may04
   %
   \checkinserts
 }
@@ -10865,6 +10893,10 @@ directory should work if nowhere else does.}
   \unicodechardefs
 }
 
+% Whether the active definitions of non-ASCII characters expand to
+% non-active tokens with the same character code.  This is used to
+% write characters literally, instead of using active definitions for
+% printing the correct glyphs.
 \newif\ifpassthroughchars
 \passthroughcharsfalse
 
@@ -10916,13 +10948,6 @@ directory should work if nowhere else does.}
 \def\asciichardefs{% nothing need be done
    \relax
 }
-
-% Whether the active definitions of non-ASCII characters expand to
-% non-active tokens with the same character code.  This is used to
-% write characters literally, instead of using active definitions for
-% printing the correct glyphs.
-\newif\ifpassthroughchars
-\passthroughcharsfalse
 
 % define all the unicode characters we know about, for the sake of @U.
 \iftxinativeunicodecapable
