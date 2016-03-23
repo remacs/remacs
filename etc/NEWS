@@ -136,7 +136,7 @@ different group ID.
 ** CSS mode
 
 ---
-*** Support for completing attribute values using the `completion-at-point'
+*** Support for completing attribute values using the 'completion-at-point'
 command.
 
 
