@@ -397,7 +397,6 @@ longer than timeout seconds for the events to be delivered."
               '((changed deleted stopped)
                 (changed changed deleted stopped)))
 	     (t '(changed changed deleted stopped)))
-          (read-event nil nil file-notify--test-read-event-timeout)
           (write-region
            "another text" nil file-notify--test-tmpfile nil 'no-message)
           (read-event nil nil file-notify--test-read-event-timeout)
@@ -429,12 +428,10 @@ longer than timeout seconds for the events to be delivered."
 	       ((string-equal (file-notify--test-library) "kqueue")
 		'(created changed deleted stopped))
 	       (t '(created changed deleted deleted stopped)))
-	    (read-event nil nil file-notify--test-read-event-timeout)
 	    (write-region
 	     "any text" nil file-notify--test-tmpfile nil 'no-message)
 	    (read-event nil nil file-notify--test-read-event-timeout)
-            (delete-directory temporary-file-directory 'recursive)
-            (read-event nil nil file-notify--test-read-event-timeout))
+            (delete-directory temporary-file-directory 'recursive))
           (file-notify-rm-watch file-notify--test-desc))
 
         ;; Check copy of files inside a directory.
@@ -465,7 +462,6 @@ longer than timeout seconds for the events to be delivered."
 		'(created changed created changed deleted stopped))
 	       (t '(created changed created changed
 		    deleted deleted deleted stopped)))
-	    (read-event nil nil file-notify--test-read-event-timeout)
 	    (write-region
 	     "any text" nil file-notify--test-tmpfile nil 'no-message)
 	    (read-event nil nil file-notify--test-read-event-timeout)
@@ -476,8 +472,7 @@ longer than timeout seconds for the events to be delivered."
 	    (read-event nil nil file-notify--test-read-event-timeout)
 	    (set-file-times file-notify--test-tmpfile '(0 0))
 	    (read-event nil nil file-notify--test-read-event-timeout)
-            (delete-directory temporary-file-directory 'recursive)
-            (read-event nil nil file-notify--test-read-event-timeout))
+            (delete-directory temporary-file-directory 'recursive))
           (file-notify-rm-watch file-notify--test-desc))
 
         ;; Check rename of files inside a directory.
@@ -504,15 +499,13 @@ longer than timeout seconds for the events to be delivered."
 	       ((string-equal (file-notify--test-library) "kqueue")
 		'(created changed renamed deleted stopped))
 	       (t '(created changed renamed deleted deleted stopped)))
-	    (read-event nil nil file-notify--test-read-event-timeout)
 	    (write-region
 	     "any text" nil file-notify--test-tmpfile nil 'no-message)
 	    (read-event nil nil file-notify--test-read-event-timeout)
 	    (rename-file file-notify--test-tmpfile file-notify--test-tmpfile1)
 	    ;; After the rename, we won't get events anymore.
 	    (read-event nil nil file-notify--test-read-event-timeout)
-            (delete-directory temporary-file-directory 'recursive)
-            (read-event nil nil file-notify--test-read-event-timeout))
+            (delete-directory temporary-file-directory 'recursive))
           (file-notify-rm-watch file-notify--test-desc))
 
         ;; Check attribute change.  Does not work for cygwin.
@@ -528,16 +521,18 @@ longer than timeout seconds for the events to be delivered."
 	  (file-notify--test-with-events
 	      (cond
 	       ;; w32notify does not distinguish between `changed' and
-	       ;; `attribute-changed'.
+	       ;; `attribute-changed'.  Under MS Windows 7, we get
+	       ;; four `changed' events, and under MS Windows 10 just
+	       ;; two.  Strange.
 	       ((string-equal (file-notify--test-library) "w32notify")
-		'(changed changed))
+		'((changed changed)
+		  (changed changed changed changed)))
 	       ;; For kqueue and in the remote case, `write-region'
 	       ;; raises also an `attribute-changed' event.
 	       ((or (string-equal (file-notify--test-library) "kqueue")
 		    (file-remote-p temporary-file-directory))
 		'(attribute-changed attribute-changed attribute-changed))
 	       (t '(attribute-changed attribute-changed)))
-	    (read-event nil nil file-notify--test-read-event-timeout)
 	    (write-region
 	     "any text" nil file-notify--test-tmpfile nil 'no-message)
 	    (read-event nil nil file-notify--test-read-event-timeout)
@@ -673,6 +668,7 @@ longer than timeout seconds for the events to be delivered."
 	       (file-notify-add-watch
 		file-notify--test-tmpfile
 		'(change) #'file-notify--test-event-handler)))
+	(should (file-notify-valid-p file-notify--test-desc))
         (file-notify--test-with-events
             (cond
              ;; cygwin recognizes only `deleted' and `stopped' events.
@@ -688,8 +684,6 @@ longer than timeout seconds for the events to be delivered."
               '((changed deleted stopped)
                 (changed changed deleted stopped)))
 	     (t '(changed changed deleted stopped)))
-          (should (file-notify-valid-p file-notify--test-desc))
-	  (read-event nil nil file-notify--test-read-event-timeout)
           (write-region
            "another text" nil file-notify--test-tmpfile nil 'no-message)
 	  (read-event nil nil file-notify--test-read-event-timeout)
@@ -710,6 +704,7 @@ longer than timeout seconds for the events to be delivered."
 	       (file-notify-add-watch
 		temporary-file-directory
 		'(change) #'file-notify--test-event-handler)))
+	(should (file-notify-valid-p file-notify--test-desc))
 	(file-notify--test-with-events
 	 (cond
 	  ;; w32notify does not raise `deleted' and `stopped' events
@@ -724,8 +719,6 @@ longer than timeout seconds for the events to be delivered."
 	  ((string-equal (file-notify--test-library) "kqueue")
 	   '(created changed deleted stopped))
 	  (t '(created changed deleted deleted stopped)))
-	 (should (file-notify-valid-p file-notify--test-desc))
-	 (read-event nil nil file-notify--test-read-event-timeout)
 	 (write-region
 	  "any text" nil file-notify--test-tmpfile nil 'no-message)
 	 (read-event nil nil file-notify--test-read-event-timeout)
@@ -757,9 +750,7 @@ longer than timeout seconds for the events to be delivered."
         (should (file-notify-valid-p file-notify--test-desc))
         ;; After removing the watch, the descriptor must not be valid
         ;; anymore.
-        (read-event nil nil file-notify--test-read-event-timeout)
         (file-notify-rm-watch file-notify--test-desc)
-        (read-event nil nil file-notify--test-read-event-timeout)
         (file-notify--wait-for-events
          (file-notify--test-timeout)
 	 (not (file-notify-valid-p file-notify--test-desc)))
@@ -781,9 +772,7 @@ longer than timeout seconds for the events to be delivered."
         (should (file-notify-valid-p file-notify--test-desc))
         ;; After deleting the directory, the descriptor must not be
         ;; valid anymore.
-        (read-event nil nil file-notify--test-read-event-timeout)
         (delete-directory file-notify--test-tmpfile t)
-        (read-event nil nil file-notify--test-read-event-timeout)
         (file-notify--wait-for-events
 	 (file-notify--test-timeout)
 	 (not (file-notify-valid-p file-notify--test-desc)))
