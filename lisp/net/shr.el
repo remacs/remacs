@@ -554,6 +554,16 @@ size, and full-buffer size."
       (insert string)
       (shr-pixel-column))))
 
+(defsubst shr--translate-insertion-chars ()
+  ;; Remove soft hyphens.
+  (goto-char (point-min))
+  (while (search-forward "­" nil t)
+    (replace-match "" t t))
+  ;; Translate non-breaking spaces into real spaces.
+  (goto-char (point-min))
+  (while (search-forward " " nil t)
+    (replace-match " " t t)))
+
 (defun shr-insert (text)
   (when (and (not (bolp))
 	     (get-text-property (1- (point)) 'image-url))
@@ -564,14 +574,11 @@ size, and full-buffer size."
       (insert text)
       (save-restriction
 	(narrow-to-region start (point))
-	;; Remove soft hyphens.
-	(goto-char (point-min))
-	(while (search-forward "­" nil t)
-	  (replace-match "" t t))
+        (shr--translate-insertion-chars)
 	(goto-char (point-max)))))
    (t
     (let ((font-start (point)))
-      (when (and (string-match "\\`[ \t\n\r ]" text)
+      (when (and (string-match "\\`[ \t\n\r]" text)
 		 (not (bolp))
 		 (not (eq (char-after (1- (point))) ? )))
 	(insert " "))
@@ -581,14 +588,11 @@ size, and full-buffer size."
 	(save-restriction
 	  (narrow-to-region start (point))
 	  (goto-char start)
-	  (when (looking-at "[ \t\n\r ]+")
+	  (when (looking-at "[ \t\n\r]+")
 	    (replace-match "" t t))
-	  (while (re-search-forward "[ \t\n\r ]+" nil t)
+	  (while (re-search-forward "[ \t\n\r]+" nil t)
 	    (replace-match " " t t))
-	  ;; Remove soft hyphens.
-	  (goto-char (point-min))
-	  (while (search-forward "­" nil t)
-	    (replace-match "" t t))
+          (shr--translate-insertion-chars)
 	  (goto-char (point-max)))
 	;; We may have removed everything we inserted if if was just
 	;; spaces.
