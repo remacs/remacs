@@ -1619,8 +1619,8 @@ names)."))
   :type 'c-extra-types-widget
   :group 'c)
 
-(defvar c-noise-macro-with-parens-name-re nil)
-(defvar c-noise-macro-name-re nil)
+(defvar c-noise-macro-with-parens-name-re "\\<\\>")
+(defvar c-noise-macro-name-re "\\<\\>")
 
 (defcustom c-noise-macro-names nil
   "A list of names of macros which expand to nothing, or compiler extensions

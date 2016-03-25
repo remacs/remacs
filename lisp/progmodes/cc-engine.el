@@ -5838,7 +5838,8 @@ comment at the start of cc-engine.el for more info."
 		nil
 	      (cond ((looking-at c-keywords-regexp)
 		     (c-forward-keyword-clause 1))
-		    ((looking-at c-noise-macro-with-parens-name-re)
+		    ((and c-opt-cpp-prefix
+			  (looking-at c-noise-macro-with-parens-name-re))
 		     (c-forward-noise-clause)))))
      (when (memq res '(t known found prefix))
        ,(when (eq type 'ref)
@@ -6506,7 +6507,8 @@ comment at the start of cc-engine.el for more info."
       (while (cond
 	      ((looking-at c-decl-hangon-key)
 	       (c-forward-keyword-clause 1))
-	      ((looking-at c-noise-macro-with-parens-name-re)
+	      ((and c-opt-cpp-prefix
+		    (looking-at c-noise-macro-with-parens-name-re))
 	       (c-forward-noise-clause))))
 
       (setq pos (point))
@@ -6911,7 +6913,8 @@ comment at the start of cc-engine.el for more info."
 		  (cond
 		   ((looking-at c-decl-hangon-key)
 		    (c-forward-keyword-clause 1))
-		   ((looking-at c-noise-macro-with-parens-name-re)
+		   ((and c-opt-cpp-prefix
+			 (looking-at c-noise-macro-with-parens-name-re))
 		    (c-forward-noise-clause))
 		   ((and (looking-at c-type-decl-prefix-key)
 			 (if (and (c-major-mode-is 'c++-mode)
@@ -6966,7 +6969,8 @@ comment at the start of cc-engine.el for more info."
 	      (while (cond
 		      ((looking-at c-decl-hangon-key)
 		       (c-forward-keyword-clause 1))
-		      ((looking-at c-noise-macro-with-parens-name-re)
+		      ((and c-opt-cpp-prefix
+			    (looking-at c-noise-macro-with-parens-name-re))
 		       (c-forward-noise-clause))))
 	      (<= (point) limit))
 
@@ -7161,7 +7165,8 @@ comment at the start of cc-engine.el for more info."
 	    (save-excursion
 	      (c-forward-keyword-clause 1)
 	      (setq kwd-clause-end (point))))
-	   ((looking-at c-noise-macro-with-parens-name-re)
+	   ((and c-opt-cpp-prefix
+		 (looking-at c-noise-macro-with-parens-name-re))
 	    (setq noise-start (point))
 	    (c-forward-noise-clause)
 	    (setq kwd-clause-end (point))))
@@ -7267,7 +7272,8 @@ comment at the start of cc-engine.el for more info."
       (while
 	  (cond ((looking-at c-decl-hangon-key)
 		 (c-forward-keyword-clause 1))
-		((looking-at c-noise-macro-with-parens-name-re)
+		((and c-opt-cpp-prefix
+		      (looking-at c-noise-macro-with-parens-name-re))
 		 (c-forward-noise-clause))))
       (setq id-start (point)))
 
@@ -9038,7 +9044,8 @@ comment at the start of cc-engine.el for more info."
 	  ((eq (char-after) ?\()
 	   (and (eq (c-backward-token-2) 0)
 		(or (looking-at c-decl-hangon-key)
-		    (looking-at c-noise-macro-with-parens-name-re))))
+		    (and c-opt-cpp-prefix
+			 (looking-at c-noise-macro-with-parens-name-re)))))
 
 	  ((and c-recognize-<>-arglists
 		(eq (char-after) ?<)
@@ -10303,7 +10310,8 @@ comment at the start of cc-engine.el for more info."
 	      (while (cond
 		      ((looking-at c-specifier-key)
 		       (c-forward-keyword-clause 1))
-		      ((looking-at c-noise-macro-with-parens-name-re)
+		      ((and c-opt-cpp-prefix
+			    (looking-at c-noise-macro-with-parens-name-re))
 		       (c-forward-noise-clause))))
 	      (setq placeholder (c-point 'boi))
 	      (or (consp special-brace-list)
@@ -10359,7 +10367,8 @@ comment at the start of cc-engine.el for more info."
 	      (while (cond
 		      ((looking-at c-specifier-key)
 		       (c-forward-keyword-clause 1))
-		      ((looking-at c-noise-macro-with-parens-name-re)
+		      ((and c-opt-cpp-prefix
+			    (looking-at c-noise-macro-with-parens-name-re))
 		       (c-forward-noise-clause))))
 	      (c-add-syntax 'defun-open (c-point 'boi))
 	      ;; Bogus to use bol here, but it's the legacy.  (Resolved,
@@ -10994,7 +11003,8 @@ comment at the start of cc-engine.el for more info."
 	    (while (cond
 		    ((looking-at c-specifier-key)
 		     (c-forward-keyword-clause 1))
-		    ((looking-at c-noise-macro-with-parens-name-re)
+		    ((and c-opt-cpp-prefix
+			  (looking-at c-noise-macro-with-parens-name-re))
 		     (c-forward-noise-clause))))
 	    (c-add-syntax 'brace-list-open (c-point 'boi))))
 

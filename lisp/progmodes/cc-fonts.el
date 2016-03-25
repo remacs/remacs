@@ -1705,7 +1705,9 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 					      (looking-at "@[A-Za-z0-9]+")))
 				 (c-forward-keyword-clause 1)
 				 t)
-			       (when (looking-at c-noise-macro-with-parens-name-re)
+			       (when (and c-opt-cpp-prefix
+					  (looking-at
+					   c-noise-macro-with-parens-name-re))
 				 (c-forward-noise-clause)
 				 t)))
 			  ,(if (c-major-mode-is 'c++-mode)
