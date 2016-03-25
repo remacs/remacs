@@ -2600,8 +2600,8 @@ ftfont_shape_by_flt (Lisp_Object lgstring, struct font *font,
 	 "combining" is the sole FLT provided by the m17n-lib.  In
 	 addition, it is the sole FLT that can handle the other
 	 combining characters with non-OTF fonts.  */
-      if (0x300 <= c1 && c1 <= 0x36F
-	  || (! otf  && CHAR_HAS_CATEGORY (c1, '^')))
+      if ((0x300 <= c1 && c1 <= 0x36F)
+	  || (! otf && CHAR_HAS_CATEGORY (c1, '^')))
 	flt = mflt_get (msymbol ("combining"));
     }
   if (! flt && ! otf)
