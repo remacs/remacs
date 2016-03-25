@@ -767,7 +767,7 @@ VALUE is the amount to scroll, either relatively or absolutely.  */)
    Lisp_Object value)
 {
   CHECK_XWIDGET (xwidget);
-  CHECK_NATNUM (value);
+  CHECK_NUMBER (value);
   struct xwidget *xw = XXWIDGET (xwidget);
   GtkAdjustment *adjustment
     = ((EQ (Qhorizontal, axis)
