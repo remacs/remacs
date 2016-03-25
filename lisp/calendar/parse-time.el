@@ -146,8 +146,12 @@ letters, digits, plus or minus signs or colons."
 ;;;###autoload
 (defun parse-time-string (string)
   "Parse the time-string STRING into (SEC MIN HOUR DAY MON YEAR DOW DST TZ).
-The values are identical to those of `decode-time', but any values that are
-unknown are returned as nil."
+STRING should be on something resembling an RFC2822 string, a la
+\"Fri, 25 Mar 2016 16:24:56 +0100\", but this function is
+somewhat liberal in what format it accepts, and will attempt to
+return a \"likely\" value even for somewhat malformed strings.
+The values returned are identical to those of `decode-time', but
+any values that are unknown are returned as nil."
   (let ((time (list nil nil nil nil nil nil nil nil nil))
 	(temp (parse-time-tokenize (downcase string))))
     (while temp
