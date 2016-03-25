@@ -123,33 +123,26 @@ MAP can be a list, hash-table or array."
              default)))
 
 (defmacro map-put (map key value)
-  "Associate KEY with VALUE in MAP and return MAP.
+  "Associate KEY with VALUE in MAP and return VALUE.
 If KEY is already present in MAP, replace the associated value
 with VALUE.
 
 MAP can be a list, hash-table or array."
-  (macroexp-let2 nil map map
-    `(progn
-       (setf (map-elt ,map ,key) ,value)
-       ,map)))
+  `(setf (map-elt ,map ,key) ,value))
 
-(defmacro map-delete (map key)
+(defun map-delete (map key)
   "Delete KEY from MAP and return MAP.
 No error is signaled if KEY is not a key of MAP.  If MAP is an
 array, store nil at the index KEY.
 
 MAP can be a list, hash-table or array."
-  (declare (debug t))
-  (gv-letplace (mgetter msetter) `(gv-delay-error ,map)
-    (macroexp-let2 nil key key
-      `(if (not (listp ,mgetter))
-           (map--delete ,mgetter ,key)
-         ;; The alist case is special, since it can't be handled by the
-         ;; map--delete function.
-         (setf (alist-get ,key (gv-synthetic-place ,mgetter ,msetter)
-                          nil t)
-               nil)
-         ,mgetter))))
+  (map--dispatch map
+    :list (setf (alist-get key map nil t) nil)
+    :hash-table (remhash key map)
+    :array (and (>= key 0)
+                (<= key (seq-length map))
+                (aset map key nil)))
+  map)
 
 (defun map-nested-elt (map keys &optional default)
   "Traverse MAP using KEYS and return the looked up value or DEFAULT if nil.
@@ -336,15 +329,6 @@ MAP can be a list, hash-table or array."
                       (car pair)
                       (cdr pair)))
            map))
-
-(defun map--delete (map key)
-  (map--dispatch map
-    :list (error "No place to remove the mapping for %S" key)
-    :hash-table (remhash key map)
-    :array (and (>= key 0)
-                (<= key (seq-length map))
-                (aset map key nil)))
-  map)
 
 (defun map--apply-hash-table (function map)
   "Private function used to apply FUNCTION over MAP, MAP being a hash-table."
