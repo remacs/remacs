@@ -48,7 +48,9 @@
         ((eq char ?:) ?d)))
 
 (defun parse-time-tokenize (string)
-  "Tokenize STRING into substrings."
+  "Tokenize STRING into substrings.
+Each substring is a run of \"valid\" characters, i.e., lowercase
+letters, digits, plus or minus signs or colons."
   (let ((start nil)
 	(end (length string))
 	(all-digits nil)
@@ -59,7 +61,8 @@
       (while (and (< index end)		;Skip invalid characters.
 		  (not (setq c (parse-time-string-chars (aref string index)))))
 	(cl-incf index))
-      (setq start index all-digits (eq c ?0))
+      (setq start index
+            all-digits (eq c ?0))
       (while (and (< (cl-incf index) end)	;Scan valid characters.
 		  (setq c (parse-time-string-chars (aref string index))))
 	(setq all-digits (and all-digits (eq c ?0))))
