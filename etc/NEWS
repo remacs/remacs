@@ -1920,6 +1920,12 @@ frames.
 'window-divider-default-places', 'window-divider-default-bottom-width'
 and 'window-divider-default-right-width'.
 
++++
+*** The minibuffer completions window is now displayad at the bottom of
+the selected frame and always fit to its buffer.  The Emacs manual
+describes how to customize 'display-buffer-alist' to get back the old
+behavior.
+
 ---
 ** Tearoff menus and detachable toolbars for Gtk+ have been removed.
 Those features have been deprecated in Gtk+ for a long time.
