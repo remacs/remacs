@@ -374,6 +374,7 @@ Several of these commands are bound in the @kbd{C-x 5} prefix key.
 
 @menu
 * Window Choice::   How @code{display-buffer} works.
+* Temporary Displays::   Displaying non-editable buffers.
 @end menu
 
 @node Window Choice
@@ -411,20 +412,26 @@ By default, this step is skipped.  To enable it, change the variable
 @code{graphic-only} means to do this only on graphical displays.
 
 @item
-Otherwise, try to create a new window by splitting the selected
-window, and display the buffer in that new window.
+Otherwise, try to create a new window by splitting a window on the
+selected frame, and display the buffer in that new window.
 
 @vindex split-height-threshold
 @vindex split-width-threshold
 The split can be either vertical or horizontal, depending on the
 variables @code{split-height-threshold} and
 @code{split-width-threshold}.  These variables should have integer
-values.  If @code{split-height-threshold} is smaller than the selected
+values.  If @code{split-height-threshold} is smaller than the chosen
 window's height, the split puts the new window below.  Otherwise, if
 @code{split-width-threshold} is smaller than the window's width, the
 split puts the new window on the right.  If neither condition holds,
 Emacs tries to split so that the new window is below---but only if the
 window was not split before (to avoid excessive splitting).
+
+@item
+Otherwise, display the buffer in a window previously showing it.
+Normally, only windows on the selected frame are considered, but if
+@code{pop-up-frames} is non-@code{nil} the window may be also on another
+frame.
 
 @item
 Otherwise, display the buffer in an existing window on the selected
@@ -434,6 +441,57 @@ frame.
 If all the above methods fail for whatever reason, create a new frame
 and display the buffer there.
 @end itemize
+
+A more advanced and flexible way to customize the behavior of
+@code{display-buffer} is by using the option @code{display-buffer-alist}
+mentioned in the next section.
+
+
+@node Temporary Displays
+@subsection Displaying non-editable buffers.
+
+Some buffers are shown in windows for perusal rather than for editing.
+Help commands (@pxref{Help}) typically use a buffer called @file{*Help*}
+for that purpose, minibuffer completion (@pxref{Completion}) uses a
+buffer called @file{*Completions*} instead.  Such buffers are usually
+displayed only for a short period of time.
+
+   Normally, Emacs chooses the window for such temporary displays via
+@code{display-buffer} as described above.  The @file{*Completions*}
+buffer, on the other hand, is preferably displayed in a window at the
+bottom of the selected frame, regardless of the number of windows
+already shown on that frame.
+
+   If you prefer Emacs to display a temporary buffer in a different
+fashion, the recommended approach is to customize the variable
+@code{display-buffer-alist} (@pxref{Choosing Window,,Choosing a Window
+for Display, elisp, The Emacs Lisp Reference Manual}).  For example, to
+display @file{*Completions*} by splitting a window as described in the
+previous section, use the following form in your initialization file
+(@pxref{Init File}):
+
+@example
+@group
+(customize-set-variable
+ 'display-buffer-alist
+ '(("\\*Completions\\*" display-buffer-pop-up-window)))
+@end group
+@end example
+
+   The @file{*Completions*} buffer is also special in the sense that
+Emacs usually tries to make its window just as large as to display all
+of its contents.  To resize windows showing other temporary displays
+like, for example, the @file{*Help*} buffer accordingly, you have to
+explicitly invoke the minor mode (@pxref{Minor Modes})
+@code{temp-buffer-resize-mode} (@pxref{Temporary Displays,,Temporary
+Displays, elisp, The Emacs Lisp Reference Manual}).
+
+   The maximum size of windows resized by @code{temp-buffer-resize-mode}
+can be controlled by customizing the options
+@code{temp-buffer-max-height} and @code{temp-buffer-max-width}
+(@pxref{Temporary Displays,,Temporary Displays, elisp, The Emacs Lisp
+Reference Manual}) and cannot exceed the size of the containing frame.
+
 
 @node Window Convenience
 @section Convenience Features for Window Handling
