@@ -3674,7 +3674,12 @@ Fall back to normal file name handler if no Tramp handler exists."
 		(concat "create,modify,move,moved_from,moved_to,move_self,"
 			"delete,delete_self,ignored"))
 	       ((memq 'attribute-change flags) "attrib,ignored"))
-	      sequence `(,command "-mq" "-e" ,events ,localname)))
+	      sequence `(,command "-mq" "-e" ,events ,localname)
+	      ;; Make events a list of symbols.
+	      events
+	      (mapcar
+	       (lambda (x) (intern-soft (replace-regexp-in-string "_" "-" x)))
+	       (split-string events "," 'omit))))
        ;; None.
        (t (tramp-error
 	   v 'file-notify-error
@@ -3695,7 +3700,7 @@ Fall back to normal file name handler if no Tramp handler exists."
 	   (mapconcat 'identity sequence " "))
 	(tramp-message v 6 "Run `%s', %S" (mapconcat 'identity sequence " ") p)
 	(tramp-set-connection-property p "vector" v)
-	;; Needed for `tramp-sh-gvfs-monitor-dir-process-filter'.
+	;; Needed for process filter.
 	(process-put p 'events events)
 	(process-put p 'watch-name localname)
 	(set-process-query-on-exit-flag p nil)
@@ -3711,7 +3716,8 @@ Fall back to normal file name handler if no Tramp handler exists."
 (defun tramp-sh-gvfs-monitor-dir-process-filter (proc string)
   "Read output from \"gvfs-monitor-dir\" and add corresponding \
 file-notify events."
-  (let ((remote-prefix
+  (let ((events (process-get proc 'events))
+	(remote-prefix
 	 (with-current-buffer (process-buffer proc)
 	   (file-remote-p default-directory)))
 	(rest-string (process-get proc 'rest-string)))
@@ -3737,23 +3743,26 @@ file-notify events."
 	     (object
 	      (list
 	       proc
-	       (intern-soft
-		(replace-regexp-in-string
-		 "_" "-" (downcase (match-string 4 string))))
+	       (list
+		(intern-soft
+		 (replace-regexp-in-string
+		  "_" "-" (downcase (match-string 4 string)))))
 	       ;; File names are returned as absolute paths.  We must
 	       ;; add the remote prefix.
 	       (concat remote-prefix file)
 	       (when file1 (concat remote-prefix file1)))))
 	(setq string (replace-match "" nil nil string))
 	;; Remove watch when file or directory to be watched is deleted.
-	(when (and (member (cadr object) '(moved deleted))
+	(when (and (member (caadr object) '(moved deleted))
 		   (string-equal file (process-get proc 'watch-name)))
 	  (delete-process proc))
 	;; Usually, we would add an Emacs event now.  Unfortunately,
 	;; `unread-command-events' does not accept several events at
-	;; once.  Therefore, we apply the callback directly.
-	(when (member (cadr object) (process-get proc 'events))
-	  (tramp-compat-funcall 'file-notify-callback object))))
+	;; once.  Therefore, we apply the handler directly.
+	(when (member (caadr object) events)
+	  (tramp-compat-funcall
+	   'file-notify-handle-event
+	   `(file-notify ,object file-notify-callback)))))
 
     ;; Save rest of the string.
     (when (zerop (length string)) (setq string nil))
@@ -3762,33 +3771,37 @@ file-notify events."
 
 (defun tramp-sh-inotifywait-process-filter (proc string)
   "Read output from \"inotifywait\" and add corresponding file-notify events."
-  (tramp-message proc 6 "%S\n%s" proc string)
-  (dolist (line (split-string string "[\n\r]+" 'omit))
-    ;; Check, whether there is a problem.
-    (unless
-	(string-match
-	 (concat "^[^[:blank:]]+"
-		 "[[:blank:]]+\\([^[:blank:]]+\\)+"
-		 "\\([[:blank:]]+\\([^\n\r]+\\)\\)?")
-	 line)
-      (tramp-error proc 'file-notify-error "%s" line))
+  (let ((events (process-get proc 'events)))
+    (tramp-message proc 6 "%S\n%s" proc string)
+    (dolist (line (split-string string "[\n\r]+" 'omit))
+      ;; Check, whether there is a problem.
+      (unless
+	  (string-match
+	   (concat "^[^[:blank:]]+"
+		   "[[:blank:]]+\\([^[:blank:]]+\\)+"
+		   "\\([[:blank:]]+\\([^\n\r]+\\)\\)?")
+	   line)
+	(tramp-error proc 'file-notify-error "%s" line))
 
-    (let ((object
-	   (list
-	    proc
-	    (mapcar
-	     (lambda (x)
-	       (intern-soft
-		(replace-regexp-in-string "_" "-" (downcase x))))
-	     (split-string (match-string 1 line) "," 'omit))
-	    (match-string 3 line))))
-      ;; Remove watch when file or directory to be watched is deleted.
-      (when (equal (cadr object) 'ignored)
-	(delete-process proc))
-      ;; Usually, we would add an Emacs event now.  Unfortunately,
-      ;; `unread-command-events' does not accept several events at
-      ;; once.  Therefore, we apply the callback directly.
-      (tramp-compat-funcall 'file-notify-callback object))))
+      (let ((object
+	     (list
+	      proc
+	      (mapcar
+	       (lambda (x)
+		 (intern-soft
+		  (replace-regexp-in-string "_" "-" (downcase x))))
+	       (split-string (match-string 1 line) "," 'omit))
+	      (match-string 3 line))))
+	;; Remove watch when file or directory to be watched is deleted.
+	(when (member (caadr object) '(move-self delete-self ignored))
+	  (delete-process proc))
+	;; Usually, we would add an Emacs event now.  Unfortunately,
+	;; `unread-command-events' does not accept several events at
+	;; once.  Therefore, we apply the handler directly.
+	(when (member (caadr object) events)
+	  (tramp-compat-funcall
+	   'file-notify-handle-event
+	   `(file-notify ,object file-notify-callback)))))))
 
 ;;; Internal Functions:
 
