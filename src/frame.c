@@ -4565,7 +4565,7 @@ On Nextstep, this just calls `ns-parse-geometry'.  */)
 
    This function does not make the coordinates positive.  */
 
-#define DEFAULT_ROWS 35
+#define DEFAULT_ROWS 36
 #define DEFAULT_COLS 80
 
 long

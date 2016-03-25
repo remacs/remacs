@@ -123,6 +123,12 @@ command line when 'initial-buffer-choice' is non-nil.
 ** The value of 'initial-scratch-message' is now treated as a doc string
 and can contain escape sequences for command keys, quotes, and the like.
 
+---
+** The default height of GUI frames was enlarged.
+This is so there's enough space in the initial window to display the
+optional text about recovering crashes sessions, without losing the
+splash image display.
+
 
 * Changes in Emacs 25.1
 
