@@ -2596,7 +2596,12 @@ ftfont_shape_by_flt (Lisp_Object lgstring, struct font *font,
 	 language information, and select a proper flt for them
 	 here.  */
       int c1 = LGLYPH_CHAR (LGSTRING_GLYPH (lgstring, 1));
-      if (CHAR_HAS_CATEGORY (c1, '^'))
+      /* For the combining characters in the range U+300..U+36F,
+	 "combining" is the sole FLT provided by the m17n-lib.  In
+	 addition, it is the sole FLT that can handle the other
+	 combining characters with non-OTF fonts.  */
+      if (0x300 <= c1 && c1 <= 0x36F
+	  || (! otf  && CHAR_HAS_CATEGORY (c1, '^')))
 	flt = mflt_get (msymbol ("combining"));
     }
   if (! flt && ! otf)
