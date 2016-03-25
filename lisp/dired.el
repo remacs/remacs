@@ -2736,9 +2736,18 @@ instead of `dired-actual-switches'."
 		 (save-excursion
 		   (goto-char (point-min))
 		   (dired-goto-file-1 file file (point-max)))
-		 ;; Otherwise, look for it as a relative name.  The
-		 ;; hair is to get the result of `dired-goto-subdir'
-		 ;; without calling it if we don't have any subdirs.
+                 ;; Next, look for it as a relative name with leading
+                 ;; subdirectories.  (This happens in Dired buffers
+                 ;; created by find-dired, for example.)
+                 (save-excursion
+                   (goto-char (point-min))
+                   (dired-goto-file-1 (file-relative-name file
+                                                          default-directory)
+                                      file (point-max)))
+		 ;; Otherwise, look for it as a relative name, a base
+		 ;; name only.  The hair is to get the result of
+		 ;; `dired-goto-subdir' without calling it if we don't
+		 ;; have any subdirs.
 		 (save-excursion
 		   (when (if (string= dir (expand-file-name default-directory))
 			     (goto-char (point-min))
