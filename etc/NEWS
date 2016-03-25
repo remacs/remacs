@@ -1927,10 +1927,14 @@ frames.
 and 'window-divider-default-right-width'.
 
 +++
-*** The minibuffer completions window is now displayad at the bottom of
-the selected frame and always fit to its buffer.  The Emacs manual
+*** The window displaying the '*Completions*' buffer with minibuffer
+completion candidates is now shown at the bottom of the selected
+frame.  The size of that window is always as large as required to
+display all the candidates, except when limited by the minimum size
+of the other windows on that frame; those other windows are resized
+to provide space for the '*Completions*' display.  The Emacs manual
 describes how to customize 'display-buffer-alist' to get back the old
-behavior.
+behavior, see the node "Temporary Displays" there.
 
 ---
 ** Tearoff menus and detachable toolbars for Gtk+ have been removed.

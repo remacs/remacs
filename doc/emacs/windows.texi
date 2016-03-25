@@ -206,7 +206,7 @@ Choice}, for how Emacs picks or creates the window to use.
 Select buffer @var{bufname} in another window
 (@code{switch-to-buffer-other-window}).
 
-@findex display-buffer
+@findex display-buffer @r{(command)}
 @item C-x 4 C-o @var{bufname} @key{RET}
 @kindex C-x 4 C-o
 Display buffer @var{bufname} in some window, without trying to select
@@ -345,7 +345,6 @@ user's attention will be diverted to that buffer.  These commands
 usually work by calling @code{switch-to-buffer} internally
 (@pxref{Select Buffer}).
 
-@findex display-buffer
   Some commands try to display intelligently, trying not to take
 over the selected window, e.g., by splitting off a new window and
 displaying the desired buffer there.  Such commands, which include the
@@ -379,7 +378,7 @@ Several of these commands are bound in the @kbd{C-x 5} prefix key.
 
 @node Window Choice
 @subsection How @code{display-buffer} works
-@findex display-buffer
+@findex display-buffer, detailed description
 
 The @code{display-buffer} command (as well as commands that call it
 internally) chooses a window to display by following the steps given
@@ -449,6 +448,8 @@ mentioned in the next section.
 
 @node Temporary Displays
 @subsection Displaying non-editable buffers.
+@cindex pop-up windows
+@cindex temporary windows
 
 Some buffers are shown in windows for perusal rather than for editing.
 Help commands (@pxref{Help}) typically use a buffer called @file{*Help*}
@@ -456,19 +457,19 @@ for that purpose, minibuffer completion (@pxref{Completion}) uses a
 buffer called @file{*Completions*} instead.  Such buffers are usually
 displayed only for a short period of time.
 
-   Normally, Emacs chooses the window for such temporary displays via
+  Normally, Emacs chooses the window for such temporary displays via
 @code{display-buffer} as described above.  The @file{*Completions*}
-buffer, on the other hand, is preferably displayed in a window at the
+buffer, on the other hand, is normally displayed in a window at the
 bottom of the selected frame, regardless of the number of windows
 already shown on that frame.
 
-   If you prefer Emacs to display a temporary buffer in a different
-fashion, the recommended approach is to customize the variable
+  If you prefer Emacs to display a temporary buffer in a different
+fashion, we recommend to customize the variable
 @code{display-buffer-alist} (@pxref{Choosing Window,,Choosing a Window
-for Display, elisp, The Emacs Lisp Reference Manual}).  For example, to
-display @file{*Completions*} by splitting a window as described in the
-previous section, use the following form in your initialization file
-(@pxref{Init File}):
+for Display, elisp, The Emacs Lisp Reference Manual}).  For example,
+to display @file{*Completions*} by splitting a window as described in
+the previous section, use the following form in your initialization
+file (@pxref{Init File}):
 
 @example
 @group
@@ -478,15 +479,18 @@ previous section, use the following form in your initialization file
 @end group
 @end example
 
-   The @file{*Completions*} buffer is also special in the sense that
-Emacs usually tries to make its window just as large as to display all
-of its contents.  To resize windows showing other temporary displays
-like, for example, the @file{*Help*} buffer accordingly, you have to
-explicitly invoke the minor mode (@pxref{Minor Modes})
+@findex temp-buffer-resize-mode
+  The @file{*Completions*} buffer is also special in the sense that
+Emacs usually tries to make its window just as large as necessary to
+display all of its contents.  To resize windows showing other
+temporary displays like, for example, the @file{*Help*} buffer
+accordingly, turn on the minor mode (@pxref{Minor Modes})
 @code{temp-buffer-resize-mode} (@pxref{Temporary Displays,,Temporary
 Displays, elisp, The Emacs Lisp Reference Manual}).
 
-   The maximum size of windows resized by @code{temp-buffer-resize-mode}
+@vindex temp-buffer-max-height
+@vindex temp-buffer-max-width
+  The maximum size of windows resized by @code{temp-buffer-resize-mode}
 can be controlled by customizing the options
 @code{temp-buffer-max-height} and @code{temp-buffer-max-width}
 (@pxref{Temporary Displays,,Temporary Displays, elisp, The Emacs Lisp
