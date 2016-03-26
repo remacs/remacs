@@ -1414,7 +1414,12 @@ the archive of the file moved to, creating it if it does not exist."
 	(setq todo-files (funcall todo-files-function))
 	(todo-reevaluate-filelist-defcustoms))
       (dolist (buf buffers)
+        ;; Make sure archive file is in Todo Archive mode so that
+        ;; todo-categories has correct value.
 	(with-current-buffer (find-file-noselect buf)
+          (when (equal (file-name-extension (buffer-file-name)) "toda")
+            (unless (derived-mode-p 'todo-archive-mode)
+              (todo-archive-mode)))
 	  (widen)
 	  (goto-char (point-max))
 	  (let* ((beg (re-search-backward
@@ -1466,10 +1471,18 @@ the archive of the file moved to, creating it if it does not exist."
 		  (re-search-backward
 		   (concat "^" (regexp-quote todo-category-beg)
 			   "\\(" (regexp-quote cat) "\\)$") nil t)
-		  (replace-match new nil nil nil 1)))
-	      (setq todo-categories
-		    (append todo-categories (list (cons (or new cat) counts))))
-	      (todo-update-categories-sexp)
+		  (replace-match new nil nil nil 1))
+                (setq todo-categories
+                      (append todo-categories (list (cons (or new cat) counts))))
+                (goto-char (point-min))
+                (if (looking-at "((\"")
+                    ;; Delete existing sexp.
+                    (delete-region (line-beginning-position) (line-end-position))
+                  ;; Otherwise, file is new, so make space for categories sexp.
+                  (insert "\n")
+                  (goto-char (point-min)))
+                ;; Insert (new or updated) sexp.
+                (prin1 todo-categories (current-buffer)))
 	      ;; If archive was just created, save it to avoid "File
 	      ;; <xyz> no longer exists!" message on invoking
 	      ;; `todo-view-archived-items'.
@@ -1500,9 +1513,7 @@ the archive of the file moved to, creating it if it does not exist."
 		(setq todo-category-number 1))
 	      (todo-category-select)))))
       (set-window-buffer (selected-window)
-			 (set-buffer (find-file-noselect nfile)))
-      (todo-category-number (or new cat))
-      (todo-category-select))))
+			 (set-buffer (find-file-noselect nfile))))))
 
 (defun todo-merge-category (&optional file)
   "Merge current category into another existing category.
