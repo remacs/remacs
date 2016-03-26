@@ -182,6 +182,13 @@ a new window when opening man pages when there's already one, use
         (mode . Man-mode))))
 
 +++
+** New function 'func-arity' returns information about the argument list
+of an arbitrary function.
+This is a generalization of 'subr-arity' for functions that are not
+built-in primitives.  We recommend using this new function instead of
+'subr-arity'.
+
++++
 ** 'parse-partial-sexp' state has a new element.  Element 10 is
 non-nil when the last character scanned might be the first character
 of a two character construct, i.e. a comment delimiter or escaped

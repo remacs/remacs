@@ -90,6 +90,7 @@ union specbinding *backtrace_top (void) EXTERNALLY_VISIBLE;
 
 static Lisp_Object funcall_lambda (Lisp_Object, ptrdiff_t, Lisp_Object *);
 static Lisp_Object apply_lambda (Lisp_Object, Lisp_Object, ptrdiff_t);
+static Lisp_Object lambda_arity (Lisp_Object);
 
 static Lisp_Object
 specpdl_symbol (union specbinding *pdl)
@@ -2934,6 +2935,115 @@ funcall_lambda (Lisp_Object fun, ptrdiff_t nargs,
   return unbind_to (count, val);
 }
 
+DEFUN ("func-arity", Ffunc_arity, Sfunc_arity, 1, 1, 0,
+       doc: /* Return minimum and maximum number of args allowed for FUNCTION.
+FUNCTION must be a function of some kind.
+The returned value is a cons cell (MIN . MAX).  MIN is the minimum number
+of args.  MAX is the maximum number, or the symbol `many', for a
+function with `&rest' args, or `unevalled' for a special form.  */)
+  (Lisp_Object function)
+{
+  Lisp_Object original;
+  Lisp_Object funcar;
+  Lisp_Object result;
+  short minargs, maxargs;
+
+  original = function;
+
+ retry:
+
+  /* Optimize for no indirection.  */
+  function = original;
+  if (SYMBOLP (function) && !NILP (function)
+      && (function = XSYMBOL (function)->function, SYMBOLP (function)))
+    function = indirect_function (function);
+
+  if (SUBRP (function))
+    result = Fsubr_arity (function);
+  else if (COMPILEDP (function))
+    result = lambda_arity (function);
+  else
+    {
+      if (NILP (function))
+	xsignal1 (Qvoid_function, original);
+      if (!CONSP (function))
+	xsignal1 (Qinvalid_function, original);
+      funcar = XCAR (function);
+      if (!SYMBOLP (funcar))
+	xsignal1 (Qinvalid_function, original);
+      if (EQ (funcar, Qlambda)
+	  || EQ (funcar, Qclosure))
+	result = lambda_arity (function);
+      else if (EQ (funcar, Qautoload))
+	{
+	  Fautoload_do_load (function, original, Qnil);
+	  goto retry;
+	}
+      else
+	xsignal1 (Qinvalid_function, original);
+    }
+  return result;
+}
+
+/* FUN must be either a lambda-expression or a compiled-code object.  */
+static Lisp_Object
+lambda_arity (Lisp_Object fun)
+{
+  Lisp_Object val, syms_left, next;
+  ptrdiff_t minargs, maxargs;
+  bool optional;
+
+  if (CONSP (fun))
+    {
+      if (EQ (XCAR (fun), Qclosure))
+	{
+	  fun = XCDR (fun);	/* Drop `closure'.  */
+	  CHECK_LIST_CONS (fun, fun);
+	}
+      syms_left = XCDR (fun);
+      if (CONSP (syms_left))
+	syms_left = XCAR (syms_left);
+      else
+	xsignal1 (Qinvalid_function, fun);
+    }
+  else if (COMPILEDP (fun))
+    {
+      ptrdiff_t size = ASIZE (fun) & PSEUDOVECTOR_SIZE_MASK;
+      if (size <= COMPILED_STACK_DEPTH)
+	xsignal1 (Qinvalid_function, fun);
+      syms_left = AREF (fun, COMPILED_ARGLIST);
+      if (INTEGERP (syms_left))
+        return get_byte_code_arity (syms_left);
+    }
+  else
+    emacs_abort ();
+
+  minargs = maxargs = optional = 0;
+  for (; CONSP (syms_left); syms_left = XCDR (syms_left))
+    {
+      next = XCAR (syms_left);
+      if (!SYMBOLP (next))
+	xsignal1 (Qinvalid_function, fun);
+
+      if (EQ (next, Qand_rest))
+	return Fcons (make_number (minargs), Qmany);
+      else if (EQ (next, Qand_optional))
+	optional = 1;
+      else
+	{
+          if (!optional)
+            minargs++;
+          maxargs++;
+        }
+    }
+
+  if (!NILP (syms_left))
+    xsignal1 (Qinvalid_function, fun);
+
+  return Fcons (make_number (minargs), make_number (maxargs));
+}
+
+
 DEFUN ("fetch-bytecode", Ffetch_bytecode, Sfetch_bytecode,
        1, 1, 0,
        doc: /* If byte-compiled OBJECT is lazy-loaded, fetch it now.  */)
@@ -3808,6 +3918,7 @@ alist of active lexical bindings.  */);
   defsubr (&Seval);
   defsubr (&Sapply);
   defsubr (&Sfuncall);
+  defsubr (&Sfunc_arity);
   defsubr (&Srun_hooks);
   defsubr (&Srun_hook_with_args);
   defsubr (&Srun_hook_with_args_until_success);

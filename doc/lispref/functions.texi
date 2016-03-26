@@ -143,6 +143,37 @@ function, i.e., can be passed to @code{funcall}.  Note that
 and returns @code{nil} for special forms.
 @end defun
 
+  It is also possible to find out how many arguments an arbitrary
+function expects:
+
+@defun func-arity function
+This function provides information about the argument list of the
+specified @var{function}.  The returned value is a cons cell of the
+form @w{@code{(@var{min} . @var{max})}}, where @var{min} is the
+minimum number of arguments, and @var{max} is either the maximum
+number of arguments, or the symbol @code{many} for functions with
+@code{&rest} arguments, or the symbol @code{unevalled} if
+@var{function} is a special form.
+
+Note that this function might return inaccurate results in some
+situations, such as the following:
+
+@itemize @minus
+@item
+Functions defined using @code{apply-partially} (@pxref{Calling
+Functions, apply-partially}).
+
+@item
+Functions that are advised using @code{advice-add} (@pxref{Advising
+Named Functions}).
+
+@item
+Functions that determine the argument list dynamically, as part of
+their code.
+@end itemize
+
+@end defun
+
 @noindent
 Unlike @code{functionp}, the next three functions do @emph{not} treat
 a symbol as its function definition.
@@ -176,12 +207,9 @@ function.  For example:
 @end defun
 
 @defun subr-arity subr
-This function provides information about the argument list of a
-primitive, @var{subr}.  The returned value is a pair
-@code{(@var{min} . @var{max})}.  @var{min} is the minimum number of
-args.  @var{max} is the maximum number or the symbol @code{many}, for a
-function with @code{&rest} arguments, or the symbol @code{unevalled} if
-@var{subr} is a special form.
+This works like @code{func-arity}, but only for built-in functions and
+without symbol indirection.  It signals an error for non-built-in
+functions.  We recommend to use @code{func-arity} instead.
 @end defun
 
 @node Lambda Expressions

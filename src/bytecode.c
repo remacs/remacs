@@ -1987,6 +1987,24 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
   return result;
 }
 
+/* `args_template' has the same meaning as in exec_byte_code() above.  */
+Lisp_Object
+get_byte_code_arity (Lisp_Object args_template)
+{
+  if (INTEGERP (args_template))
+    {
+      ptrdiff_t at = XINT (args_template);
+      bool rest = (at & 128) != 0;
+      int mandatory = at & 127;
+      ptrdiff_t nonrest = at >> 8;
+
+      return Fcons (make_number (mandatory),
+		    rest ? Qmany : make_number (nonrest));
+    }
+  else
+    error ("Unknown args template!");
+}
+
 void
 syms_of_bytecode (void)
 {
