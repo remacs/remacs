@@ -117,10 +117,14 @@ variable @code{truncate-lines} (@pxref{Line Truncation}); it is
 instead controlled by the variable
 @code{truncate-partial-width-windows}.  If the value of this variable
 is a positive integer (the default is 50), that specifies the minimum
-width for a partial-width window before automatic line truncation
-occurs; if the value is @code{nil}, automatic line truncation is
-disabled; and for any other non-@code{nil} value, Emacs truncates
-lines in every partial-width window regardless of its width.
+total width for a partial-width window before automatic line
+truncation occurs; if the value is @code{nil}, automatic line
+truncation is disabled; and for any other non-@code{nil} value, Emacs
+truncates lines in every partial-width window regardless of its width.
+The total width of a window is in column units as reported by
+@code{window-total-width} (@pxref{Window Sizes,,, elisp, The Emacs
+Lisp Reference Manual}), it includes the fringes, the continuation and
+truncation glyphs, the margins, and the scroll bar.
 
   On text terminals, side-by-side windows are separated by a vertical
 divider which is drawn using the @code{vertical-border} face.

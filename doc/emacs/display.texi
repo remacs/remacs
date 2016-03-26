@@ -1601,7 +1601,6 @@ screen lines.  Setting the variable @code{truncate-lines} in any way
 makes it local to the current buffer; until that time, the default
 value, which is normally @code{nil}, is in effect.
 
-@vindex truncate-partial-width-windows
   If a split window becomes too narrow, Emacs may automatically enable
 line truncation.  @xref{Split Window}, for the variable
 @code{truncate-partial-width-windows} which controls this.
