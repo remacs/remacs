@@ -3319,7 +3319,7 @@ run_window_size_change_functions (Lisp_Object frame)
       while (CONSP (functions))
 	{
 	  if (!EQ (XCAR (functions), Qt))
-	    call1 (XCAR (functions), frame);
+	    safe_call1 (XCAR (functions), frame);
 	  functions = XCDR (functions);
 	}
 
@@ -4619,6 +4619,9 @@ grow_mini_window (struct window *w, int delta, bool pixelwise)
 	  adjust_frame_glyphs (f);
 	  unblock_input ();
 	}
+      else
+	error ("Failed to grow minibuffer window");
+
     }
 }
 
@@ -4662,6 +4665,8 @@ shrink_mini_window (struct window *w, bool pixelwise)
 	 one window frame here.  The same routine will be needed when
 	 shrinking the frame (and probably when making the initial
 	 *scratch* window).  For the moment leave things as they are.  */
+      else
+	error ("Failed to shrink minibuffer window");
     }
 }
 
