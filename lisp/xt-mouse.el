@@ -138,6 +138,7 @@ http://invisible-island.net/xterm/ctlseqs/ctlseqs.html)."
   "Non-nil if UTF-8 coordinates should be used to read mouse coordinates.
 Set this to non-nil if you are sure that your terminal
 understands UTF-8 coordinates, but not SGR coordinates."
+  :version "25.1"
   :type 'boolean
   :risky t
   :group 'xterm)
