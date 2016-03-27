@@ -774,7 +774,7 @@ VALUE is the amount to scroll, either relatively or absolutely.  */)
 	? gtk_scrolled_window_get_hadjustment
 	: gtk_scrolled_window_get_vadjustment)
        (GTK_SCROLLED_WINDOW (xw->widgetscrolledwindow_osr)));
-  double final_value = XFASTINT (value);
+  double final_value = XINT (value);
   if (EQ (Qt, relative))
     final_value += gtk_adjustment_get_value (adjustment);
   gtk_adjustment_set_value (adjustment, final_value);
