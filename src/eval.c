@@ -2946,7 +2946,6 @@ function with `&rest' args, or `unevalled' for a special form.  */)
   Lisp_Object original;
   Lisp_Object funcar;
   Lisp_Object result;
-  short minargs, maxargs;
 
   original = function;
 
@@ -2954,9 +2953,12 @@ function with `&rest' args, or `unevalled' for a special form.  */)
 
   /* Optimize for no indirection.  */
   function = original;
-  if (SYMBOLP (function) && !NILP (function)
-      && (function = XSYMBOL (function)->function, SYMBOLP (function)))
-    function = indirect_function (function);
+  if (SYMBOLP (function) && !NILP (function))
+    {
+      function = XSYMBOL (function)->function;
+      if (SYMBOLP (function))
+	function = indirect_function (function);
+    }
 
   if (SUBRP (function))
     result = Fsubr_arity (function);
@@ -2989,9 +2991,7 @@ function with `&rest' args, or `unevalled' for a special form.  */)
 static Lisp_Object
 lambda_arity (Lisp_Object fun)
 {
-  Lisp_Object val, syms_left, next;
-  ptrdiff_t minargs, maxargs;
-  bool optional;
+  Lisp_Object syms_left;
 
   if (CONSP (fun))
     {
@@ -3018,17 +3018,18 @@ lambda_arity (Lisp_Object fun)
   else
     emacs_abort ();
 
-  minargs = maxargs = optional = 0;
+  EMACS_INT minargs = 0, maxargs = 0;
+  bool optional = false;
   for (; CONSP (syms_left); syms_left = XCDR (syms_left))
     {
-      next = XCAR (syms_left);
+      Lisp_Object next = XCAR (syms_left);
       if (!SYMBOLP (next))
 	xsignal1 (Qinvalid_function, fun);
 
       if (EQ (next, Qand_rest))
 	return Fcons (make_number (minargs), Qmany);
       else if (EQ (next, Qand_optional))
-	optional = 1;
+	optional = true;
       else
 	{
           if (!optional)
@@ -3042,7 +3043,6 @@ lambda_arity (Lisp_Object fun)
 
   return Fcons (make_number (minargs), make_number (maxargs));
 }
-
 
 DEFUN ("fetch-bytecode", Ffetch_bytecode, Sfetch_bytecode,
        1, 1, 0,

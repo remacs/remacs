@@ -1991,18 +1991,14 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 Lisp_Object
 get_byte_code_arity (Lisp_Object args_template)
 {
-  if (INTEGERP (args_template))
-    {
-      ptrdiff_t at = XINT (args_template);
-      bool rest = (at & 128) != 0;
-      int mandatory = at & 127;
-      ptrdiff_t nonrest = at >> 8;
+  eassert (NATNUMP (args_template));
+  EMACS_INT at = XINT (args_template);
+  bool rest = (at & 128) != 0;
+  int mandatory = at & 127;
+  EMACS_INT nonrest = at >> 8;
 
-      return Fcons (make_number (mandatory),
-		    rest ? Qmany : make_number (nonrest));
-    }
-  else
-    error ("Unknown args template!");
+  return Fcons (make_number (mandatory),
+		rest ? Qmany : make_number (nonrest));
 }
 
 void
