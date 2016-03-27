@@ -5246,7 +5246,8 @@ x_default_font_parameter (struct frame *f, Lisp_Object parms)
     {
       /* Remember the explicit font parameter, so we can re-apply it after
 	 we've applied the `default' face settings.  */
-      x_set_frame_parameters (f, Fcons (Fcons (Qfont_param, font_param), Qnil));
+      x_set_frame_parameters (f, Fcons (Fcons (Qfont_parameter, font_param),
+					Qnil));
     }
   x_default_parameter (f, parms, Qfont, font, "font", "Font", RES_TYPE_STRING);
 }
@@ -9711,7 +9712,7 @@ syms_of_w32fns (void)
   DEFSYM (Qctrl, "ctrl");
   DEFSYM (Qcontrol, "control");
   DEFSYM (Qshift, "shift");
-  DEFSYM (Qfont_param, "font-parameter");
+  DEFSYM (Qfont_parameter, "font-parameter");
   DEFSYM (Qgeometry, "geometry");
   DEFSYM (Qworkarea, "workarea");
   DEFSYM (Qmm_size, "mm-size");
@@ -9730,10 +9731,10 @@ syms_of_w32fns (void)
 #endif
 
   /* Symbols used elsewhere, but only in MS-Windows-specific code.  */
-  DEFSYM (Qgnutls_dll, "gnutls");
-  DEFSYM (Qlibxml2_dll, "libxml2");
+  DEFSYM (Qgnutls, "gnutls");
+  DEFSYM (Qlibxml2, "libxml2");
   DEFSYM (Qserif, "serif");
-  DEFSYM (Qzlib_dll, "zlib");
+  DEFSYM (Qzlib, "zlib");
 
   Fput (Qundefined_color, Qerror_conditions,
 	listn (CONSTYPE_PURE, 2, Qundefined_color, Qerror));

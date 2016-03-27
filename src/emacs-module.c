@@ -405,7 +405,7 @@ module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
                            list2 (Qand_rest, Qargs),
                            doc,
                            list4 (Qapply,
-                                  list2 (Qfunction, Qinternal_module_call),
+                                  list2 (Qfunction, Qinternal__module_call),
                                   envobj,
                                   Qargs));
 
@@ -1047,7 +1047,7 @@ syms_of_module (void)
 
   defsubr (&Smodule_load);
 
-  DEFSYM (Qinternal_module_call, "internal--module-call");
+  DEFSYM (Qinternal__module_call, "internal--module-call");
   defsubr (&Sinternal_module_call);
 }
 

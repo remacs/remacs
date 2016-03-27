@@ -45,7 +45,7 @@ DEF_DLL_FN (void, xmlCheckVersion, (int));
 static bool
 libxml2_loaded_p (void)
 {
-  Lisp_Object found = Fassq (Qlibxml2_dll, Vlibrary_cache);
+  Lisp_Object found = Fassq (Qlibxml2, Vlibrary_cache);
 
   return CONSP (found) && EQ (XCDR (found), Qt);
 }
@@ -96,7 +96,7 @@ init_libxml2_functions (void)
     {
       HMODULE library;
 
-      if (!(library = w32_delayed_load (Qlibxml2_dll)))
+      if (!(library = w32_delayed_load (Qlibxml2)))
 	{
 	  message1 ("libxml2 library not found");
 	  return false;
@@ -105,12 +105,12 @@ init_libxml2_functions (void)
       if (! load_dll_functions (library))
 	goto bad_library;
 
-      Vlibrary_cache = Fcons (Fcons (Qlibxml2_dll, Qt), Vlibrary_cache);
+      Vlibrary_cache = Fcons (Fcons (Qlibxml2, Qt), Vlibrary_cache);
       return true;
     }
 
  bad_library:
-  Vlibrary_cache = Fcons (Fcons (Qlibxml2_dll, Qnil), Vlibrary_cache);
+  Vlibrary_cache = Fcons (Fcons (Qlibxml2, Qnil), Vlibrary_cache);
 
   return false;
 #else  /* !WINDOWSNT */

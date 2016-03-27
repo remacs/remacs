@@ -256,7 +256,7 @@ render (Lisp_Object oformat)
 	switch (format)
 	  {
 	  case CF_UNICODETEXT:
-	    htext = convert_to_handle_as_coded (QUNICODE);
+	    htext = convert_to_handle_as_coded (Qutf_16le_dos);
 	    break;
 	  case CF_TEXT:
 	  case CF_OEMTEXT:
@@ -1109,7 +1109,7 @@ After the communication, this variable is set to nil.  */);
   current_text = Qnil;		staticpro (&current_text);
   current_coding_system = Qnil; staticpro (&current_coding_system);
 
-  DEFSYM (QUNICODE, "utf-16le-dos");
+  DEFSYM (Qutf_16le_dos, "utf-16le-dos");
   QANSICP = Qnil; staticpro (&QANSICP);
   QOEMCP = Qnil;  staticpro (&QOEMCP);
 }
@@ -1132,7 +1132,7 @@ globals_of_w32select (void)
   QOEMCP = coding_from_cp (OEMCP);
 
   if (os_subtype == OS_NT)
-    Vselection_coding_system = QUNICODE;
+    Vselection_coding_system = Qutf_16le_dos;
   else if (inhibit_window_system)
     Vselection_coding_system = QOEMCP;
   else

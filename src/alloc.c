@@ -5658,7 +5658,7 @@ garbage_collect_1 (void *end)
     return Qnil;
 
   /* Record this function, so it appears on the profiler's backtraces.  */
-  record_in_backtrace (Qautomatic_gc, 0, 0);
+  record_in_backtrace (QAutomatic_GC, 0, 0);
 
   check_cons_list ();
 
@@ -7388,7 +7388,7 @@ do hash-consing of the objects allocated to pure space.  */);
   DEFSYM (Qstring_bytes, "string-bytes");
   DEFSYM (Qvector_slots, "vector-slots");
   DEFSYM (Qheap, "heap");
-  DEFSYM (Qautomatic_gc, "Automatic GC");
+  DEFSYM (QAutomatic_GC, "Automatic GC");
 
   DEFSYM (Qgc_cons_threshold, "gc-cons-threshold");
   DEFSYM (Qchar_table_extra_slots, "char-table-extra-slots");

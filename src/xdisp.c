@@ -13508,7 +13508,7 @@ redisplay_internal (void)
   specbind (Qinhibit_free_realized_faces, Qnil);
 
   /* Record this function, so it appears on the profiler's backtraces.  */
-  record_in_backtrace (Qredisplay_internal, 0, 0);
+  record_in_backtrace (Qredisplay_internal_xC_functionx, 0, 0);
 
   FOR_EACH_FRAME (tail, frame)
     XFRAME (frame)->already_hscrolled_p = false;
@@ -31117,7 +31117,7 @@ syms_of_xdisp (void)
   /* Non-nil means don't actually do any redisplay.  */
   DEFSYM (Qinhibit_redisplay, "inhibit-redisplay");
 
-  DEFSYM (Qredisplay_internal, "redisplay_internal (C function)");
+  DEFSYM (Qredisplay_internal_xC_functionx, "redisplay_internal (C function)");
 
   DEFVAR_BOOL("inhibit-message", inhibit_message,
               doc:  /* Non-nil means calls to `message' are not displayed.

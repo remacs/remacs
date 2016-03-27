@@ -224,7 +224,7 @@ static EMACS_INT current_sampling_interval;
 static void
 handle_profiler_signal (int signal)
 {
-  if (EQ (backtrace_top_function (), Qautomatic_gc))
+  if (EQ (backtrace_top_function (), QAutomatic_GC))
     /* Special case the time-count inside GC because the hash-table
        code is not prepared to be used while the GC is running.
        More specifically it uses ASIZE at many places where it does
@@ -418,7 +418,7 @@ Before returning, a new log is allocated for future samples.  */)
   cpu_log = (profiler_cpu_running
 	     ? make_log (profiler_log_size, profiler_max_stack_depth)
 	     : Qnil);
-  Fputhash (Fmake_vector (make_number (1), Qautomatic_gc),
+  Fputhash (Fmake_vector (make_number (1), QAutomatic_GC),
 	    make_number (cpu_gc_count),
 	    result);
   cpu_gc_count = 0;

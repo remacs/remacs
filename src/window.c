@@ -2859,9 +2859,12 @@ selected frame and no others.  */)
 
 
 static Lisp_Object
-resize_root_window (Lisp_Object window, Lisp_Object delta, Lisp_Object horizontal, Lisp_Object ignore, Lisp_Object pixelwise)
+resize_root_window (Lisp_Object window, Lisp_Object delta,
+		    Lisp_Object horizontal, Lisp_Object ignore,
+		    Lisp_Object pixelwise)
 {
-  return call5 (Qwindow_resize_root_window, window, delta, horizontal, ignore, pixelwise);
+  return call5 (Qwindow__resize_root_window, window, delta,
+		horizontal, ignore, pixelwise);
 }
 
 /* Placeholder used by temacs -nw before window.el is loaded.  */
@@ -2877,14 +2880,14 @@ DEFUN ("window--sanitize-window-sizes", Fwindow__sanitize_window_sizes,
 Lisp_Object
 sanitize_window_sizes (Lisp_Object frame, Lisp_Object horizontal)
 {
-  return call2 (Qwindow_sanitize_window_sizes, frame, horizontal);
+  return call2 (Qwindow__sanitize_window_sizes, frame, horizontal);
 }
 
 
 static Lisp_Object
 window_pixel_to_total (Lisp_Object frame, Lisp_Object horizontal)
 {
-  return call2 (Qwindow_pixel_to_total, frame, horizontal);
+  return call2 (Qwindow__pixel_to_total, frame, horizontal);
 }
 
 
@@ -4585,7 +4588,7 @@ grow_mini_window (struct window *w, int delta, bool pixelwise)
     {
       root = FRAME_ROOT_WINDOW (f);
       r = XWINDOW (root);
-      height = call3 (Qwindow_resize_root_window_vertically,
+      height = call3 (Qwindow__resize_root_window_vertically,
 		      root, make_number (- delta), pixelwise ? Qt : Qnil);
       if (INTEGERP (height) && window_resize_check (r, false))
 	{
@@ -4642,7 +4645,7 @@ shrink_mini_window (struct window *w, bool pixelwise)
     {
       root = FRAME_ROOT_WINDOW (f);
       r = XWINDOW (root);
-      delta = call3 (Qwindow_resize_root_window_vertically,
+      delta = call3 (Qwindow__resize_root_window_vertically,
 		     root, make_number (height - unit),
 		     pixelwise ? Qt : Qnil);
       if (INTEGERP (delta) && window_resize_check (r, false))
@@ -7309,10 +7312,11 @@ syms_of_window (void)
   DEFSYM (Qwindow_valid_p, "window-valid-p");
   DEFSYM (Qwindow_deletable_p, "window-deletable-p");
   DEFSYM (Qdelete_window, "delete-window");
-  DEFSYM (Qwindow_resize_root_window, "window--resize-root-window");
-  DEFSYM (Qwindow_resize_root_window_vertically, "window--resize-root-window-vertically");
-  DEFSYM (Qwindow_sanitize_window_sizes, "window--sanitize-window-sizes");
-  DEFSYM (Qwindow_pixel_to_total, "window--pixel-to-total");
+  DEFSYM (Qwindow__resize_root_window, "window--resize-root-window");
+  DEFSYM (Qwindow__resize_root_window_vertically,
+	  "window--resize-root-window-vertically");
+  DEFSYM (Qwindow__sanitize_window_sizes, "window--sanitize-window-sizes");
+  DEFSYM (Qwindow__pixel_to_total, "window--pixel-to-total");
   DEFSYM (Qsafe, "safe");
   DEFSYM (Qdisplay_buffer, "display-buffer");
   DEFSYM (Qreplace_buffer_in_windows, "replace-buffer-in-windows");

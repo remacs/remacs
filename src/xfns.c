@@ -3128,7 +3128,7 @@ x_default_font_parameter (struct frame *f, Lisp_Object parms)
     {
       /* Remember the explicit font parameter, so we can re-apply it after
 	 we've applied the `default' face settings.  */
-      AUTO_FRAME_ARG (arg, Qfont_param, font_param);
+      AUTO_FRAME_ARG (arg, Qfont_parameter, font_param);
       x_set_frame_parameters (f, arg);
     }
 
@@ -6463,7 +6463,7 @@ nil, it defaults to the selected frame. */)
     default_name = xlispstrdup (font_param);
   else
     {
-      font_param = Fframe_parameter (frame, Qfont_param);
+      font_param = Fframe_parameter (frame, Qfont_parameter);
       if (STRINGP (font_param))
         default_name = xlispstrdup (font_param);
     }
@@ -6795,7 +6795,7 @@ syms_of_xfns (void)
   DEFSYM (Qundefined_color, "undefined-color");
   DEFSYM (Qcompound_text, "compound-text");
   DEFSYM (Qcancel_timer, "cancel-timer");
-  DEFSYM (Qfont_param, "font-parameter");
+  DEFSYM (Qfont_parameter, "font-parameter");
   DEFSYM (Qmono, "mono");
   DEFSYM (Qassq_delete_all, "assq-delete-all");
 

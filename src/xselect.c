@@ -215,7 +215,7 @@ symbol_to_x_atom (struct x_display_info *dpyinfo, Lisp_Object sym)
   if (EQ (sym, QDELETE))    return dpyinfo->Xatom_DELETE;
   if (EQ (sym, QMULTIPLE))  return dpyinfo->Xatom_MULTIPLE;
   if (EQ (sym, QINCR))	    return dpyinfo->Xatom_INCR;
-  if (EQ (sym, QEMACS_TMP)) return dpyinfo->Xatom_EMACS_TMP;
+  if (EQ (sym, Q_EMACS_TMP_)) return dpyinfo->Xatom_EMACS_TMP;
   if (EQ (sym, QTARGETS))   return dpyinfo->Xatom_TARGETS;
   if (EQ (sym, QNULL))	    return dpyinfo->Xatom_NULL;
   if (!SYMBOLP (sym)) emacs_abort ();
@@ -273,7 +273,7 @@ x_atom_to_symbol (struct x_display_info *dpyinfo, Atom atom)
   if (atom == dpyinfo->Xatom_INCR)
     return QINCR;
   if (atom == dpyinfo->Xatom_EMACS_TMP)
-    return QEMACS_TMP;
+    return Q_EMACS_TMP_;
   if (atom == dpyinfo->Xatom_TARGETS)
     return QTARGETS;
   if (atom == dpyinfo->Xatom_NULL)
@@ -2679,7 +2679,7 @@ A value of 0 means wait as long as necessary.  This is initialized from the
   DEFSYM (QDELETE, "DELETE");
   DEFSYM (QMULTIPLE, "MULTIPLE");
   DEFSYM (QINCR, "INCR");
-  DEFSYM (QEMACS_TMP, "_EMACS_TMP_");
+  DEFSYM (Q_EMACS_TMP_, "_EMACS_TMP_");
   DEFSYM (QTARGETS, "TARGETS");
   DEFSYM (QATOM, "ATOM");
   DEFSYM (QCLIPBOARD_MANAGER, "CLIPBOARD_MANAGER");
