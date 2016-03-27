@@ -53,8 +53,12 @@ the time when it is run.")
   "Non-nil means run `midnight-hook' at midnight."
   :global t
   :initialize #'custom-initialize-default
-  (if midnight-mode (timer-activate midnight-timer)
-    (cancel-timer midnight-timer)))
+  ;; Disable first, since the ':initialize' function above already
+  ;; starts the timer when the mode is turned on for the first time,
+  ;; via setting 'midnight-delay', which calls 'midnight-delay-set',
+  ;; which starts the timer.
+  (when (timerp midnight-timer) (cancel-timer midnight-timer))
+  (if midnight-mode (timer-activate midnight-timer)))
 
 ;;; time conversion
 
