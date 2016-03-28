@@ -219,3 +219,19 @@
   (should (equal (func-arity (eval (lambda (x &optional y)) nil)) '(1 . 2)))
   (should (equal (func-arity (eval (lambda (x &optional y)) t)) '(1 . 2)))
   (should (equal (func-arity 'let) '(1 . unevalled))))
+
+(ert-deftest fns-tests-hash-buffer ()
+  (should (equal (sha1 "foo") "0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33"))
+  (should (equal (with-temp-buffer
+                   (insert "foo")
+                   (buffer-hash))
+                 (sha1 "foo")))
+  ;; This tests whether the presence of a gap in the middle of the
+  ;; buffer is handled correctly.
+  (should (equal (with-temp-buffer
+                   (insert "foo")
+                   (goto-char 2)
+                   (insert " ")
+                   (backward-delete-char 1)
+                   (buffer-hash))
+                 (sha1 "foo"))))

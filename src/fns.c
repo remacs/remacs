@@ -4737,6 +4737,22 @@ returns nil, then (funcall TEST x1 x2) also returns nil.  */)
 #include "sha256.h"
 #include "sha512.h"
 
+Lisp_Object
+make_digest_string (Lisp_Object digest, int digest_size)
+{
+  unsigned char *p = SDATA (digest);
+  int i;
+
+  for (i = digest_size - 1; i >= 0; i--)
+    {
+      static char const hexdigit[16] = "0123456789abcdef";
+      int p_i = p[i];
+      p[2 * i] = hexdigit[p_i >> 4];
+      p[2 * i + 1] = hexdigit[p_i & 0xf];
+    }
+  return digest;
+}
+
 /* ALGORITHM is a symbol: md5, sha1, sha224 and so on. */
 
 static Lisp_Object
@@ -4936,17 +4952,7 @@ secure_hash (Lisp_Object algorithm, Lisp_Object object, Lisp_Object start,
 	     SSDATA (digest));
 
   if (NILP (binary))
-    {
-      unsigned char *p = SDATA (digest);
-      for (i = digest_size - 1; i >= 0; i--)
-	{
-	  static char const hexdigit[16] = "0123456789abcdef";
-	  int p_i = p[i];
-	  p[2 * i] = hexdigit[p_i >> 4];
-	  p[2 * i + 1] = hexdigit[p_i & 0xf];
-	}
-      return digest;
-    }
+    return make_digest_string (digest, digest_size);
   else
     return make_unibyte_string (SSDATA (digest), digest_size);
 }
@@ -4997,6 +5003,45 @@ If BINARY is non-nil, returns a string in binary form.  */)
 {
   return secure_hash (algorithm, object, start, end, Qnil, Qnil, binary);
 }
+
+DEFUN ("buffer-hash", Fbuffer_hash, Sbuffer_hash, 0, 1, 0,
+       doc: /* Return a hash of the contents of BUFFER-OR-NAME.
+This hash is performed on the raw internal format of the buffer,
+disregarding any coding systems.
+If nil, use the current buffer." */ )
+  (Lisp_Object buffer_or_name)
+{
+  Lisp_Object buffer;
+  struct buffer *b;
+  struct sha1_ctx ctx;
+  Lisp_Object digest = make_uninit_string (SHA1_DIGEST_SIZE * 2);
+
+  if (NILP (buffer_or_name))
+    buffer = Fcurrent_buffer ();
+  else
+    buffer = Fget_buffer (buffer_or_name);
+  if (NILP (buffer))
+    nsberror (buffer_or_name);
+
+  b = XBUFFER (buffer);
+  sha1_init_ctx (&ctx);
+
+  /* Process the first part of the buffer. */
+  sha1_process_bytes (BUF_BEG_ADDR (b),
+		      BUF_GPT_BYTE (b) - BUF_BEG_BYTE (b),
+		      &ctx);
+
+  /* If the gap is before the end of the buffer, process the last half
+     of the buffer. */
+  if (BUF_GPT_BYTE (b) < BUF_Z_BYTE (b))
+    sha1_process_bytes (BUF_GAP_END_ADDR (b),
+			BUF_Z_ADDR (b) - BUF_GAP_END_ADDR (b),
+			&ctx);
+
+  sha1_finish_ctx (&ctx, SSDATA (digest));
+  return make_digest_string (digest, SHA1_DIGEST_SIZE);
+}
+
 
 void
 syms_of_fns (void)
@@ -5156,6 +5201,7 @@ this variable.  */);
   defsubr (&Sbase64_decode_string);
   defsubr (&Smd5);
   defsubr (&Ssecure_hash);
+  defsubr (&Sbuffer_hash);
   defsubr (&Slocale_info);
 
   hashtest_eq.name = Qeq;
