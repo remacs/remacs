@@ -58,6 +58,10 @@ has been added.  They are: 'file-attribute-type',
 compute a fash, non-consing hash of the contents of a buffer.
 
 ---
+** `fill-paragraph' no longer marks the buffer as changed unless it
+actually changed something.
+
+---
 ** The locale language name 'ca' is now mapped to the language
 environment 'Catalan', which has been added.
 
