@@ -396,18 +396,6 @@ the ordering of object keys by default.
 'json-pretty-print-buffer-ordered' pretty prints JSON objects with
 object keys sorted alphabetically.
 
-+++
-** Prog mode has some support for multi-mode indentation.
-This allows better indentation support in modes that support multiple
-programming languages in the same buffer, like literate programming
-environments or ANTLR programs with embedded Python code.
-
-A major mode can provide indentation context for a sub-mode through
-the 'prog-indentation-context' variable.  To support this, modes that
-provide indentation should use 'prog-widen' instead of 'widen' and
-'prog-first-column' instead of a literal zero.  See the node
-"Mode-Specific Indent" in the ELisp manual for more details.
-
 ** Prettify Symbols mode
 
 +++
