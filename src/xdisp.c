@@ -17082,7 +17082,16 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	    ignore_mouse_drag_p = true;
 #endif
         }
+      ptrdiff_t count1 = SPECPDL_INDEX ();
+      /* x_consider_frame_title calls select-frame, which calls
+	 resize_mini_window, which could resize the mini-window and by
+	 that undo the effect of this redisplay cycle wrt minibuffer
+	 and echo-area display.  Binding inhibit-redisplay to t makes
+	 the call to resize_mini_window a no-op, thus avoiding the
+	 adverse side effects.  */
+      specbind (Qinhibit_redisplay, Qt);
       x_consider_frame_title (w->frame);
+      unbind_to (count1, Qnil);
 #endif
     }
 
