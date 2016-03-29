@@ -4,7 +4,7 @@
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: sequences
-;; Version: 2.3
+;; Version: 2.14
 ;; Package: seq
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -217,6 +217,16 @@ The result is a sequence of the same type as SEQUENCE."
 
 (cl-defmethod seq-sort (pred (list list))
   (sort (seq-copy list) pred))
+
+(defun seq-sort-by (function pred sequence)
+  "Sort SEQUENCE using PRED as a comparison function.
+Elements of SEQUENCE are transformed by FUNCTION before being
+sorted.  FUNCTION must be a function of one argument."
+  (seq-sort (lambda (a b)
+              (funcall pred
+                       (funcall function a)
+                       (funcall function b)))
+            sequence))
 
 (cl-defgeneric seq-reverse (sequence)
   "Return a sequence with elements of SEQUENCE in reverse order."

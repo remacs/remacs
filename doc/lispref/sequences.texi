@@ -763,6 +763,18 @@ according to @var{function}, a function of two arguments that returns
 non-@code{nil} if the first argument should sort before the second.
 @end defun
 
+@defun seq-sort-by function predicate sequence
+  This function is similar to @code{seq-sort}, but the elements of
+@var{sequence} are transformed by applying @var{function} on them
+before being sorted.  @var{function} is a function of one argument.
+
+@example
+(seq-sort-by #'seq-length #'> ["a" "ab" "abc"])
+@result{} ["abc" "ab" "a"]
+@end example
+@end defun
+
+
 @defun seq-contains sequence elt &optional function
   This function returns the first element in @var{sequence} that is equal to
 @var{elt}.  If the optional argument @var{function} is non-@code{nil},

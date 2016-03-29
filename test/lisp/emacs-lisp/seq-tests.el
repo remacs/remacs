@@ -347,5 +347,10 @@ Evaluate BODY for each created sequence.
     (should (= (seq-position seq 'a #'eq) 0))
     (should (null (seq-position seq (make-symbol "a") #'eq)))))
 
+(ert-deftest test-seq-sort-by ()
+  (let ((seq ["x" "xx" "xxx"]))
+    (should (equal (seq-sort-by #'seq-length #'> seq)
+                   ["xxx" "xx" "x"]))))
+
 (provide 'seq-tests)
 ;;; seq-tests.el ends here
