@@ -4737,13 +4737,12 @@ returns nil, then (funcall TEST x1 x2) also returns nil.  */)
 #include "sha256.h"
 #include "sha512.h"
 
-Lisp_Object
+static Lisp_Object
 make_digest_string (Lisp_Object digest, int digest_size)
 {
   unsigned char *p = SDATA (digest);
-  int i;
 
-  for (i = digest_size - 1; i >= 0; i--)
+  for (int i = digest_size - 1; i >= 0; i--)
     {
       static char const hexdigit[16] = "0123456789abcdef";
       int p_i = p[i];
@@ -4760,7 +4759,6 @@ secure_hash (Lisp_Object algorithm, Lisp_Object object, Lisp_Object start,
 	     Lisp_Object end, Lisp_Object coding_system, Lisp_Object noerror,
 	     Lisp_Object binary)
 {
-  int i;
   ptrdiff_t size, start_char = 0, start_byte, end_char = 0, end_byte;
   register EMACS_INT b, e;
   register struct buffer *bp;
@@ -5014,7 +5012,6 @@ If nil, use the current buffer." */ )
   Lisp_Object buffer;
   struct buffer *b;
   struct sha1_ctx ctx;
-  Lisp_Object digest = make_uninit_string (SHA1_DIGEST_SIZE * 2);
 
   if (NILP (buffer_or_name))
     buffer = Fcurrent_buffer ();
@@ -5038,6 +5035,7 @@ If nil, use the current buffer." */ )
 			BUF_Z_ADDR (b) - BUF_GAP_END_ADDR (b),
 			&ctx);
 
+  Lisp_Object digest = make_uninit_string (SHA1_DIGEST_SIZE * 2);
   sha1_finish_ctx (&ctx, SSDATA (digest));
   return make_digest_string (digest, SHA1_DIGEST_SIZE);
 }

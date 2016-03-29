@@ -54,11 +54,11 @@ has been added.  They are: 'file-attribute-type',
 'file-attribute-device-number'
 
 +++
-** The new function `buffer-hash' has been added, and can be used to
+** The new function 'buffer-hash' has been added, and can be used to
 compute a fash, non-consing hash of the contents of a buffer.
 
 ---
-** `fill-paragraph' no longer marks the buffer as changed unless it
+** 'fill-paragraph' no longer marks the buffer as changed unless it
 actually changed something.
 
 ---
