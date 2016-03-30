@@ -449,6 +449,14 @@ VALUES-PLIST is a list with alternating index and value elements."
     ;; It's confused by the closing paren in the middle.
     (ruby-assert-state s 8 nil)))
 
+(ert-deftest ruby-interpolation-inside-another-interpolation ()
+  :expected-result :failed
+  (let ((s "\"#{[a, b, c].map { |v| \"#{v}\" }.join}\""))
+    (ruby-assert-face s 1 font-lock-string-face)
+    (ruby-assert-face s 2 font-lock-variable-name-face)
+    (ruby-assert-face s 38 font-lock-string-face)
+    (ruby-assert-state s 8 nil)))
+
 (ert-deftest ruby-interpolation-inside-double-quoted-percent-literals ()
   (ruby-assert-face "%Q{foo #@bar}" 8 font-lock-variable-name-face)
   (ruby-assert-face "%W{foo #@bar}" 8 font-lock-variable-name-face)

@@ -1702,6 +1702,14 @@ Returns the compilation buffer created."
 		(list "TERM=emacs"
 		      (format "TERMCAP=emacs:co#%d:tc=unknown:"
 			      (window-width))))
+
+	      ;; Set the EMACS variable, but
+	      ;; don't override users' setting of $EMACS.
+	      ;; Remove this hack once Bash 4.4-or-later is common,
+	      ;; since it can break 'configure'.
+	      (unless (getenv "EMACS")
+		(list "EMACS=t"))
+
 	      (list (format "INSIDE_EMACS=%s,compile" emacs-version))
 	      (copy-sequence process-environment))))
 	(set (make-local-variable 'compilation-arguments)

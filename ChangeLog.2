@@ -9560,8 +9560,8 @@
 	(xref-backend-identifier-completion-table):
 	New generic functions.
 
-	* lisp/progmodes/elisp-mode.el (emacs-lisp-mode): Add
-	`elisp--xref-backend' to the beginning of
+	* lisp/progmodes/elisp-mode.el (emacs-lisp-mode):
+	Add `elisp--xref-backend' to the beginning of
 	`xref-backend-functions', locally.  Delete references to
 	removed functions and vars.
 	(elisp-xref-find): Remove.
@@ -9579,7 +9579,8 @@
 
 	Support rectangular regions for more commands
 
-	* lisp/simple.el (region-extract-function): Handle the arg value ‘bounds’.
+	* lisp/simple.el (region-extract-function): Handle the arg
+	value ‘bounds’.
 	(region-insert-function): New function.
 	(shell-command-on-region): Add arg ‘region-noncontiguous-p’.
 	If non-nil, operate on multiple chunks.
@@ -9605,7 +9606,7 @@
 	If non-nil, operate on multiple chunks.
 
 	* src/casefiddle.c (Fdowncase_region): Add arg ‘region-noncontiguous-p’.
-	If non-nil, operate on multiple chunks. (Bug#19829)
+	If non-nil, operate on multiple chunks.  (Bug#19829)
 
 2015-11-14  Dmitry Gutov  <dgutov@yandex.ru>
 
@@ -9837,7 +9838,6 @@
 2015-11-13  Juanma Barranquero  <lekktu@gmail.com>
 
 	* test/automated/simple-test.el: Add test for bug#20698 (bug#21885)
-
 	(simple-test--transpositions): New macro.
 	(simple-transpose-subr): New test.
 
@@ -9848,7 +9848,6 @@
 2015-11-13  Juanma Barranquero  <lekktu@gmail.com>
 
 	* src/undo.c: Small fixes for previous change
-
 	(run_undoable_change): Mark void argument list.
 	(record_property_change): Remove unused variable `boundary'.
 
@@ -9909,7 +9908,7 @@
 	shr: don't invoke unbound function (Bug#21895)
 
 	* lisp/net/shr.el (have-fringes-p): New function.
-	  (shr-insert-document, shr-fill-text): Use it.
+	(shr-insert-document, shr-fill-text): Use it.
 
 2015-11-12  Juanma Barranquero  <lekktu@gmail.com>
 
@@ -9966,8 +9965,8 @@
 
 	Enable sorting of JSON object keys when encoding
 
-	* lisp/json.el (json-encoding-object-sort-predicate): New variable for
-	specifying a sorting predicate for JSON objects during encoding.
+	* lisp/json.el (json-encoding-object-sort-predicate): New variable
+	for specifying a sorting predicate for JSON objects during encoding.
 	(json--plist-to-alist): New utility function.
 	(json-encode-hash-table): Re-use `json-encode-alist' when object keys
 	are to be sorted.
@@ -9977,8 +9976,8 @@
 	to be sorted.
 	(json-pretty-print-buffer-ordered): New command to pretty print the
 	buffer with object keys sorted alphabetically.
-	(json-pretty-print-ordered): New command to pretty print the region with
-	object keys sorted alphabetically.
+	(json-pretty-print-ordered): New command to pretty print the region
+	with object keys sorted alphabetically.
 
 	* test/automated/json-tests.el (test-json-plist-to-alist)
 	(test-json-encode-plist, test-json-encode-hash-table)
@@ -9989,7 +9988,7 @@
 
 2015-11-12  Juanma Barranquero  <lekktu@gmail.com>
 
-	* test/automated/keymap-tests.el: New test file
+	* test/automated/keymap-tests.el: New test file.
 
 2015-11-12  Ken Raeburn  <raeburn@raeburn.org>
 
@@ -10036,9 +10035,9 @@
 
 	Use color cache for creating bitmap
 
-	* src/image.c (x_create_bitmap_from_xpm_data) [ALLOC_XPM_COLORS]: Set
-	attributes to use the caching color allocator.  Initialize and free
-	the cache.
+	* src/image.c (x_create_bitmap_from_xpm_data) [ALLOC_XPM_COLORS]:
+	Set attributes to use the caching color allocator.  Initialize and
+	free the cache.
 
 2015-11-12  Eli Barzilay  <eli@barzilay.org>
 
@@ -10065,32 +10064,32 @@
 
 	* lisp/net/soap-inspect.el: Remove version header.
 
-	* lisp/net/soap-client.el, lisp/net/soap-inspect.el: Fix first line header
+	* soap-client.el, soap-inspect.el, jira2.el: Fix first line header
 	format.
 
 2015-11-11  Alan Mackenzie  <acm@muc.de>
 
 	CC Mode: Respect users' settings of open-paren-in-column-0-is-defun-start.
 
-	lisp/progmodes/cc-engine.el (c-backward-single-comment, c-backward-comments)
-	(c-invalidate-state-cache-1, c-parse-state-1, c-guess-basic-syntax):
-	remove bindings of open-paren-in-column-0-is-defun-start to nil.
+	* lisp/progmodes/cc-engine.el (c-backward-single-comment)
+	(c-backward-comments, c-invalidate-state-cache-1, c-parse-state-1)
+	(c-guess-basic-syntax):
+	Remove bindings of open-paren-in-column-0-is-defun-start to nil.
 	(c-get-fallback-scan-pos): "New" function (existed several years ago).
 	(c-parse-state-get-strategy): Reintroduce the 'BOD strategy, using
 	c-get-fallback-scan-pos.
 	(c-parse-state-1): Handle 'BOD strategy.
 
-	lisp/progmodes/cc-mode.el (c-before-change, c-after-change)
-	c-font-lock-fontify-region): remove bindings of
+	* lisp/progmodes/cc-mode.el (c-before-change, c-after-change)
+	(c-font-lock-fontify-region): Remove bindings of
 	open-paren-in-column-0-is-defun-start to nil.
 
-	cc-mode.texi (Performance Issues, Limitations and Known Bugs): Fix mix up
-	between @chapter and @appendix.
+	* doc/misc/cc-mode.texi (Performance Issues)
+	(Limitations and Known Bugs): Fix mix up between @chapter and @appendix.
 
 2015-11-11  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/obarray.el: Fix shadowed variables
-
+	* lisp/obarray.el: Fix shadowed variables.
 	(obarray-map, obarray-remove, obarray-put, obarray-get):
 	Change OBARRAY arg to OB to avoid shadowing ‘obarray’.
 
@@ -10128,8 +10127,8 @@
 
 	New file with obarray functions.
 
-	* lisp/obarray.el: basic obarray functions extracted from abbrev.el
-	* test/automated/obarray-tests.el: new file
+	* lisp/obarray.el: Basic obarray functions extracted from abbrev.el.
+	* test/automated/obarray-tests.el: New file.
 
 2015-11-11  Eli Zaretskii  <eliz@gnu.org>
 
@@ -10217,7 +10216,7 @@
 
 	* lisp/net/tramp.el (tramp-handle-file-equal-p)
 	(tramp-handle-file-in-directory-p): New defuns.  Suggested by
-	Harvey Chapman <hchapman@3gfp.com>
+	Harvey Chapman <hchapman@3gfp.com>.
 
 	* lisp/net/tramp-adb.el (tramp-adb-file-name-handler-alist):
 	* lisp/net/tramp-gvfs.el (tramp-gvfs-file-name-handler-alist):
@@ -10244,11 +10243,11 @@
 
 	Avoid creating notification objects when possible
 
-	* src/nsterm.m (windowWillEnterFullScreen, windowWillExitFullScreen:,
-	windowDidEnterFullScreen, windowDidExitFullScreen): provide
-	convenience functions that do not require a notification object.  When
-	needed, define NSWindowDidEnterFullScreenNotification to allow for
-	compilation on OS X 10.6.8.
+	* src/nsterm.m (windowWillEnterFullScreen, windowWillExitFullScreen:)
+	(windowDidEnterFullScreen, windowDidExitFullScreen): Provide convenience
+	functions that do not require a notification object.  When needed,
+	define NSWindowDidEnterFullScreenNotification to allow for compilation
+	on OS X 10.6.8.
 
 2015-11-10  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -10281,8 +10280,7 @@
 2015-11-10  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* doc/lispref/variables.texi (Directory Local Variables):
-
-	Document dir-locals wildcards
+	Document dir-locals wildcards.
 
 	* lisp/files.el (dir-locals-file): Point to Info node.
 
@@ -10293,14 +10291,12 @@
 
 2015-11-10  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/files.el: Don't allow customization of dir-locals sorting
-
+	* lisp/files.el: Don't allow customization of dir-locals sorting.
 	In retrospect, this is not a good idea for the same reason that
 	`dir-locals-file' is a defconst, because it is important that this
 	behaviour be "uniform across different environments and users".
 	Sure, the user can still change the sorting with a hack, but we
 	shouldn't encourage them to change it.
-
 	(dir-locals--all-files): Return list in the order returned by
 	`file-expand-wildcards'.
 	(file-expand-wildcards): Document the sorting predicate used.
@@ -10308,54 +10304,52 @@
 
 2015-11-10  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/files.el (dir-locals-read-from-file): Better handle errors
+	* lisp/files.el (dir-locals-read-from-file): Better handle errors.
 
-	* lisp/isearch.el (search-default-regexp-mode): change default value
+	* lisp/isearch.el (search-default-regexp-mode): Change default value.
 
 2015-11-10  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/files.el (dir-locals-find-file): Don't stop at unreadable files
-
+	* lisp/files.el (dir-locals-find-file): Don't stop at unreadable files.
 	`locate-dominating-file' will now keep looking if the files it finds in
 	a given directory are unreadable (or not files).
 
 2015-11-10  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/files.el (dir-locals-file): Allow wildcards
-
+	* lisp/files.el (dir-locals-file): Allow wildcards.
 	(dir-locals-find-file, dir-locals-collect-variables)
 	(dir-locals-read-from-file): Update accordingly.
 	(hack-dir-local-variables): Rename a local variable.
 
-	* lisp/files-x.el (modify-dir-local-variable): Update accordingly
+	* lisp/files-x.el (modify-dir-local-variable): Update accordingly.
 
-	* lisp/help-fns.el (describe-variable): Update accordingly
+	* lisp/help-fns.el (describe-variable): Update accordingly.
 
-	* .gitignore: Add .dir-locals?.el
+	* .gitignore: Add .dir-locals?.el.
 
 2015-11-10  Artur Malabarba  <bruce.connor.am@gmail.com>
 
-	* lisp/emacs-lisp/map.el (map-merge-with): New function
+	* lisp/emacs-lisp/map.el (map-merge-with): New function.
 
-	* test/automated/map-tests.el (test-map-merge-with): New test
+	* test/automated/map-tests.el (test-map-merge-with): New test.
 
 2015-11-10  Karl Fogel  <kfogel@red-bean.com>
 
 	Fix some recently-perturbed bookmark autoloads
 
 	* lisp/bookmark.el (bookmark-set-internal): Remove unnecessary autoload.
-	  (bookmark-set): Restore autoload.
-	  (bookmark-set-no-overwrite): Add autoload.
+	(bookmark-set): Restore autoload.
+	(bookmark-set-no-overwrite): Add autoload.
 
 	Thanks to Juanma Barranquero for noticing the autoload problems
 	introduced by my recent commit adding/changing the above functions
 	(Sun Nov 8 14:16:43 2015 -0500, git commit 3812e17978).
 
-2015-11-10  Noah Friedman  <friedman@splode.com>
+2015-11-09  Noah Friedman  <friedman@splode.com>
 
-	(ydump-buffer): Handle case where gap is at the start of buffer.
-	I don't recall if older versions of gdb were less strict but you
-	cannot dump a 0-length range in gdb 7.9.1.
+	* etc/emacs-buffer.gdb (ydump-buffer): Handle case where gap is at
+	the start of buffer.  I don't recall if older versions of gdb were
+	less strict but you cannot dump a 0-length range in gdb 7.9.1.
 
 2015-11-10  Dmitry Gutov  <dgutov@yandex.ru>
 
@@ -10503,13 +10497,13 @@
 	Offer non-overwrite bookmark setter (Bug#15746)
 
 	* lisp/bookmark.el (bookmark-set-internal): New helper function to do
-	  what `bookmark-set' used to do, but with more choices for overwrite
-	  vs push, and with minor changes to the interactive prompt format.
-	  (bookmark-set): Rewrite as wrapper around above.
-	  If overwriting, inform the user of that in the prompt.
-	  (bookmark-set-no-overwrite): New function, also done as wrapper.
-	  Bind to "M" in `ctl-x-r-map' autoloads.
-	  (bookmark-map): Similarly bind "M" here.
+	what `bookmark-set' used to do, but with more choices for overwrite
+	vs push, and with minor changes to the interactive prompt format.
+	(bookmark-set): Rewrite as wrapper around above.
+	If overwriting, inform the user of that in the prompt.
+	(bookmark-set-no-overwrite): New function, also done as wrapper.
+	Bind to "M" in `ctl-x-r-map' autoloads.
+	(bookmark-map): Similarly bind "M" here.
 
 2015-11-08  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -10595,7 +10589,8 @@
 	unchanged, in which case no clearing is needed (and sh_offset isn't
 	necessarily valid, which can lead to a wild memset).
 
-	* src/unexelf.c (unexec): Properly handle _OBJC_ symbols in bss sections.
+	* src/unexelf.c (unexec): Properly handle _OBJC_ symbols in
+	bss sections.
 
 2015-11-08  Alan Modra  <amodra@gmail.com>
 
@@ -10656,8 +10651,8 @@
 
 	Remove dirs in vc project roots from the the vc project library roots
 
-	* lisp/progmodes/project.el (project-library-roots): Remove
-	directories inside the project roots from the result.
+	* lisp/progmodes/project.el (project-library-roots):
+	Remove directories inside the project roots from the result.
 	(http://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00536.html)
 
 2015-11-08  Dmitry Gutov  <dgutov@yandex.ru>

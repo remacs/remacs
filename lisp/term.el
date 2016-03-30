@@ -1454,6 +1454,13 @@ Using \"emacs\" loses, because bash disables editing if $TERM == emacs.")
 	   (format "TERMINFO=%s" data-directory)
 	   (format term-termcap-format "TERMCAP="
 		   term-term-name term-height term-width)
+
+	   ;; This is for backwards compatibility with Bash 4.3 and earlier.
+	   ;; Remove this hack once Bash 4.4-or-later is common, because
+	   ;; it breaks './configure' of some packages that expect it to
+	   ;; say where to find EMACS.
+	   (format "EMACS=%s (term:%s)" emacs-version term-protocol-version)
+
 	   (format "INSIDE_EMACS=%s,term:%s" emacs-version term-protocol-version)
 	   (format "LINES=%d" term-height)
 	   (format "COLUMNS=%d" term-width))

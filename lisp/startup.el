@@ -1890,10 +1890,12 @@ we put it on this frame."
       (when frame
 	(let* ((img (create-image (fancy-splash-image-file)))
 	       (image-height (and img (cdr (image-size img nil frame))))
-	       ;; We test frame-height so that, if the frame is split
-	       ;; by displaying a warning, that doesn't cause the normal
-	       ;; splash screen to be used.
-	       (frame-height (1- (frame-height frame))))
+	       ;; We test frame-height and not window-height so that,
+	       ;; if the frame is split by displaying a warning, that
+	       ;; doesn't cause the normal splash screen to be used.
+	       ;; We subtract 2 from frame-height to account for the
+	       ;; echo area and the mode line.
+	       (frame-height (- (frame-height frame) 2)))
 	  (> frame-height (+ image-height 19)))))))
 
 
@@ -1998,7 +2000,7 @@ To quit a partially entered command, type Control-g.\n")
   (insert "  How to order printed manuals from the FSF\n")
 
   (insert "\nUseful tasks:\n")
-  (insert-button "New File"
+  (insert-button "Visit New File"
 		 'action (lambda (_button) (call-interactively 'find-file))
 		 'follow-link t)
   (insert (substitute-command-keys
@@ -2075,7 +2077,7 @@ If you have no Meta key, you may instead type ESC followed by the character.)"))
   ;; Insert links to useful tasks
   (insert "\nUseful tasks:\n")
 
-  (insert-button "New File"
+  (insert-button "Visit New File"
 		 'action (lambda (_button) (call-interactively 'find-file))
 		 'follow-link t)
   (insert "\t\t\t")

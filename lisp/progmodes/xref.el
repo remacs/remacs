@@ -436,6 +436,8 @@ If SELECT is non-nil, select the target window."
 ;;; XREF buffer (part of the UI)
 
 ;; The xref buffer is used to display a set of xrefs.
+(defconst xref-buffer-name "*xref*"
+  "The name of the buffer to show xrefs.")
 
 (defmacro xref--with-dedicated-window (&rest body)
   `(let* ((xref-w (get-buffer-window xref-buffer-name))
@@ -470,6 +472,9 @@ If SELECT is non-nil, select the target window."
         (xref--show-pos-in-buf marker buf select))
     (user-error (message (error-message-string err)))))
 
+(defvar-local xref--window nil
+  "The original window this xref buffer was created from.")
+
 (defun xref-show-location-at-point ()
   "Display the source of xref at point in the appropriate window, if any."
   (interactive)
@@ -499,9 +504,6 @@ If SELECT is non-nil, select the target window."
   (save-excursion
     (back-to-indentation)
     (get-text-property (point) 'xref-item)))
-
-(defvar-local xref--window nil
-  "The original window this xref buffer was created from.")
 
 (defun xref-goto-xref ()
   "Jump to the xref on the current line and select its window."
@@ -623,9 +625,6 @@ references displayed in the current *xref* buffer."
            (xref--show-location (xref-item-location xref) t))
           (t
            (error "No %s xref" (if backward "previous" "next"))))))
-
-(defconst xref-buffer-name "*xref*"
-  "The name of the buffer to show xrefs.")
 
 (defvar xref--button-map
   (let ((map (make-sparse-keymap)))

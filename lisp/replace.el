@@ -167,8 +167,6 @@ wants to replace FROM with TO."
     ;; unavailable while preparing to dump.
     (custom-reevaluate-setting 'query-replace-from-to-separator)
     (let* ((history-add-new-input nil)
-	   (text-property-default-nonsticky
-	    (cons '(separator . t) text-property-default-nonsticky))
 	   (separator
 	    (when query-replace-from-to-separator
 	      (propertize "\0"
@@ -193,11 +191,18 @@ wants to replace FROM with TO."
 	    ;; a region in order to specify the minibuffer input.
 	    ;; That should not clobber the region for the query-replace itself.
 	    (save-excursion
-	      (if regexp-flag
-		  (read-regexp prompt nil 'query-replace-from-to-history)
-		(read-from-minibuffer
-		 prompt nil nil nil 'query-replace-from-to-history
-		 (car (if regexp-flag regexp-search-ring search-ring)) t))))
+              ;; The `with-current-buffer' ensures that the binding
+              ;; for `text-property-default-nonsticky' isn't a buffer
+              ;; local binding in the current buffer, which
+              ;; `read-from-minibuffer' wouldn't see.
+              (with-current-buffer (window-buffer (minibuffer-window))
+                (let ((text-property-default-nonsticky
+                       (cons '(separator . t) text-property-default-nonsticky)))
+                  (if regexp-flag
+                      (read-regexp prompt nil 'query-replace-from-to-history)
+                    (read-from-minibuffer
+                     prompt nil nil nil 'query-replace-from-to-history
+                     (car (if regexp-flag regexp-search-ring search-ring)) t))))))
            (to))
       (if (and (zerop (length from)) query-replace-defaults)
 	  (cons (caar query-replace-defaults)
@@ -293,7 +298,8 @@ As each match is found, the user must type a character saying
 what to do with it.  For directions, type \\[help-command] at that time.
 
 In Transient Mark mode, if the mark is active, operate on the contents
-of the region.  Otherwise, operate from point to the end of the buffer.
+of the region.  Otherwise, operate from point to the end of the buffer's
+accessible portion.
 
 Use \\<minibuffer-local-map>\\[next-history-element] \
 to pull the last incremental search string to the minibuffer
@@ -355,7 +361,8 @@ As each match is found, the user must type a character saying
 what to do with it.  For directions, type \\[help-command] at that time.
 
 In Transient Mark mode, if the mark is active, operate on the contents
-of the region.  Otherwise, operate from point to the end of the buffer.
+of the region.  Otherwise, operate from point to the end of the buffer's
+accessible portion.
 
 Use \\<minibuffer-local-map>\\[next-history-element] \
 to pull the last incremental search regexp to the minibuffer
@@ -452,7 +459,8 @@ Use `\\#&' or `\\#N' if you want a number instead of a string.
 In interactive use, `\\#' in itself stands for `replace-count'.
 
 In Transient Mark mode, if the mark is active, operate on the contents
-of the region.  Otherwise, operate from point to the end of the buffer.
+of the region.  Otherwise, operate from point to the end of the buffer's
+accessible portion.
 
 Use \\<minibuffer-local-map>\\[next-history-element] \
 to pull the last incremental search regexp to the minibuffer
@@ -507,7 +515,8 @@ each successive replacement uses the next successive replacement string,
 wrapping around from the last such string to the first.
 
 In Transient Mark mode, if the mark is active, operate on the contents
-of the region.  Otherwise, operate from point to the end of the buffer.
+of the region.  Otherwise, operate from point to the end of the buffer's
+accessible portion.
 
 Non-interactively, TO-STRINGS may be a list of replacement strings.
 
@@ -573,7 +582,7 @@ replace backward.
 Operates on the region between START and END (if both are nil, from point
 to the end of the buffer).  Interactively, if Transient Mark mode is
 enabled and the mark is active, operates on the contents of the region;
-otherwise from point to the end of the buffer.
+otherwise from point to the end of the buffer's accessible portion.
 
 Use \\<minibuffer-local-map>\\[next-history-element] \
 to pull the last incremental search string to the minibuffer
@@ -620,7 +629,8 @@ regexp in `search-whitespace-regexp'.
 This function is not affected by `replace-character-fold'
 
 In Transient Mark mode, if the mark is active, operate on the contents
-of the region.  Otherwise, operate from point to the end of the buffer.
+of the region.  Otherwise, operate from point to the end of the buffer's
+accessible portion.
 
 Third arg DELIMITED (prefix arg if interactive), if non-nil, means replace
 only matches surrounded by word boundaries.  A negative prefix arg means

@@ -646,13 +646,115 @@ ns_release_autorelease_pool (void *pool)
 }
 
 
-/* True, if the menu bar should be hidden.  */
-
 static BOOL
 ns_menu_bar_should_be_hidden (void)
+/* True, if the menu bar should be hidden.  */
 {
   return !NILP (ns_auto_hide_menu_bar)
     && [NSApp respondsToSelector:@selector(setPresentationOptions:)];
+}
+
+
+struct EmacsMargins
+{
+  CGFloat top;
+  CGFloat bottom;
+  CGFloat left;
+  CGFloat right;
+};
+
+
+static struct EmacsMargins
+ns_screen_margins (NSScreen *screen)
+/* The parts of SCREEN used by the operating system.  */
+{
+  NSTRACE ("ns_screen_margins");
+
+  struct EmacsMargins margins;
+
+  NSRect screenFrame = [screen frame];
+  NSRect screenVisibleFrame = [screen visibleFrame];
+
+  /* Sometimes, visibleFrame isn't up-to-date with respect to a hidden
+     menu bar, check this explicitly.  */
+  if (ns_menu_bar_should_be_hidden())
+    {
+      margins.top = 0;
+    }
+  else
+    {
+      CGFloat frameTop = screenFrame.origin.y + screenFrame.size.height;
+      CGFloat visibleFrameTop = (screenVisibleFrame.origin.y
+                                 + screenVisibleFrame.size.height);
+
+      margins.top = frameTop - visibleFrameTop;
+    }
+
+  {
+    CGFloat frameRight = screenFrame.origin.x + screenFrame.size.width;
+    CGFloat visibleFrameRight = (screenVisibleFrame.origin.x
+                                 + screenVisibleFrame.size.width);
+    margins.right = frameRight - visibleFrameRight;
+  }
+
+  margins.bottom = screenVisibleFrame.origin.y - screenFrame.origin.y;
+  margins.left   = screenVisibleFrame.origin.x - screenFrame.origin.x;
+
+  NSTRACE_MSG ("left:%g right:%g top:%g bottom:%g",
+               margins.left,
+               margins.right,
+               margins.top,
+               margins.bottom);
+
+  return margins;
+}
+
+
+/* A screen margin between 1 and DOCK_IGNORE_LIMIT (inclusive) is
+   assumed to contain a hidden dock.  OS X currently use 4 pixels for
+   this, however, to be future compatible, a larger value is used.  */
+#define DOCK_IGNORE_LIMIT 6
+
+static struct EmacsMargins
+ns_screen_margins_ignoring_hidden_dock (NSScreen *screen)
+/* The parts of SCREEN used by the operating system, excluding the parts
+reserved for an hidden dock.  */
+{
+  NSTRACE ("ns_screen_margins_ignoring_hidden_dock");
+
+  struct EmacsMargins margins = ns_screen_margins(screen);
+
+  /* OS X (currently) reserved 4 pixels along the edge where a hidden
+     dock is located.  Unfortunately, it's not possible to find the
+     location and information about if the dock is hidden.  Instead,
+     it is assumed that if the margin of an edge is less than
+     DOCK_IGNORE_LIMIT, it contains a hidden dock.  */
+  if (margins.left <= DOCK_IGNORE_LIMIT)
+    {
+      margins.left = 0;
+    }
+  if (margins.right <= DOCK_IGNORE_LIMIT)
+    {
+      margins.right = 0;
+    }
+  if (margins.top <= DOCK_IGNORE_LIMIT)
+    {
+      margins.top = 0;
+    }
+  /* Note: This doesn't occur in current versions of OS X, but
+     included for completeness and future compatibility.  */
+  if (margins.bottom <= DOCK_IGNORE_LIMIT)
+    {
+      margins.bottom = 0;
+    }
+
+  NSTRACE_MSG ("left:%g right:%g top:%g bottom:%g",
+               margins.left,
+               margins.right,
+               margins.top,
+               margins.bottom);
+
+  return margins;
 }
 
 
@@ -661,26 +763,11 @@ ns_menu_bar_height (NSScreen *screen)
 /* The height of the menu bar, if visible.
 
    Note: Don't use this when fullscreen is enabled -- the screen
-   sometimes includes, sometimes excludes the menu bar area. */
+   sometimes includes, sometimes excludes the menu bar area.  */
 {
-  CGFloat res;
+  struct EmacsMargins margins = ns_screen_margins(screen);
 
-  if (ns_menu_bar_should_be_hidden())
-    {
-      res = 0;
-    }
-  else
-    {
-      NSRect screenFrame = [screen frame];
-      NSRect screenVisibleFrame = [screen visibleFrame];
-
-      CGFloat frameTop = screenFrame.origin.y + screenFrame.size.height;
-      CGFloat visibleFrameTop = (screenVisibleFrame.origin.y
-                                 + screenVisibleFrame.size.height);
-
-      res = frameTop - visibleFrameTop;
-
-    }
+  CGFloat res = margins.top;
 
   NSTRACE ("ns_menu_bar_height " NSTRACE_FMT_RETURN " %.0f", res);
 
@@ -1172,10 +1259,31 @@ ns_clip_to_row (struct window *w, struct glyph_row *row,
    ========================================================================== */
 
 
+// This bell implementation shows the visual bell image asynchronously
+// from the rest of Emacs. This is done by adding a NSView to the
+// superview of the Emacs window and removing it using a timer.
+//
+// Unfortunately, some Emacs operations, like scrolling, is done using
+// low-level primitives that copy the content of the window, including
+// the bell image. To some extent, this is handled by removing the
+// image prior to scrolling and marking that the window is in need for
+// redisplay.
+//
+// To test this code, make sure that there is no artifacts of the bell
+// image in the following situations. Use a non-empty buffer (like the
+// tutorial) to ensure that a scroll is performed:
+//
+// * Single-window: C-g C-v
+//
+// * Side-by-windows: C-x 3 C-g C-v
+//
+// * Windows above each other: C-x 2 C-g C-v
+
 @interface EmacsBell : NSImageView
 {
   // Number of currently active bell:s.
   unsigned int nestCount;
+  NSView * mView;
   bool isAttached;
 }
 - (void)show:(NSView *)view;
@@ -1204,7 +1312,6 @@ ns_clip_to_row (struct window *w, struct glyph_row *row,
       [self.image unlockFocus];
 #else
       self.image = [NSImage imageNamed:NSImageNameCaution];
-      [self.image setScalesWhenResized:YES];
       [self.image setSize:NSMakeSize(self.image.size.width * 5,
                                      self.image.size.height * 5)];
 #endif
@@ -1229,6 +1336,7 @@ ns_clip_to_row (struct window *w, struct glyph_row *row,
       [self setFrameSize:self.image.size];
 
       isAttached = true;
+      mView = view;
       [[[view window] contentView] addSubview:self
                                    positioned:NSWindowAbove
                                    relativeTo:nil];
@@ -1258,9 +1366,12 @@ ns_clip_to_row (struct window *w, struct glyph_row *row,
 
 -(void)remove
 {
+  NSTRACE ("[EmacsBell remove]");
   if (isAttached)
     {
+      NSTRACE_MSG ("removeFromSuperview");
       [self removeFromSuperview];
+      mView.needsDisplay = YES;
       isAttached = false;
     }
 }
@@ -1310,6 +1421,8 @@ static void hide_bell ()
      Ensure the bell is hidden.
    -------------------------------------------------------------------------- */
 {
+  NSTRACE ("hide_bell");
+
   if (bell_view != nil)
     {
       [bell_view remove];
@@ -2392,6 +2505,8 @@ ns_clear_frame_area (struct frame *f, int x, int y, int width, int height)
 static void
 ns_copy_bits (struct frame *f, NSRect src, NSRect dest)
 {
+  NSTRACE ("ns_copy_bits");
+
   if (FRAME_NS_VIEW (f))
     {
       hide_bell();              // Ensure the bell image isn't scrolled.
@@ -7839,9 +7954,10 @@ not_in_argv (NSString *arg)
   // the menu-bar.
   [super zoom:sender];
 
-#elsif 0
+#elif 0
   // Native zoom done using the standard zoom animation, plus an
-  // explicit resize to cover the full screen.
+  // explicit resize to cover the full screen, except the menu-bar and
+  // dock, if present.
   [super zoom:sender];
 
   // After the native zoom, resize the resulting frame to fill the
@@ -7861,6 +7977,9 @@ not_in_argv (NSString *arg)
       NSTRACE_FSTYPE ("fullscreenState", fs_state);
 
       NSRect sr = [screen frame];
+      struct EmacsMargins margins
+        = ns_screen_margins_ignoring_hidden_dock(screen);
+
       NSRect wr = [self frame];
       NSTRACE_RECT ("Rect after zoom", wr);
 
@@ -7869,15 +7988,15 @@ not_in_argv (NSString *arg)
       if (fs_state == FULLSCREEN_MAXIMIZED
           || fs_state == FULLSCREEN_HEIGHT)
         {
-          newWr.origin.x = 0;
-          newWr.size.height = sr.size.height - ns_menu_bar_height(screen);
+          newWr.origin.y = sr.origin.y + margins.bottom;
+          newWr.size.height = sr.size.height - margins.top - margins.bottom;
         }
 
       if (fs_state == FULLSCREEN_MAXIMIZED
           || fs_state == FULLSCREEN_WIDTH)
         {
-          newWr.origin.y = 0;
-          newWr.size.width = sr.size.width;
+          newWr.origin.x = sr.origin.x + margins.left;
+          newWr.size.width = sr.size.width - margins.right - margins.left;
         }
 
       if (newWr.size.width     != wr.size.width
@@ -7890,13 +8009,20 @@ not_in_argv (NSString *arg)
         }
     }
 #else
-  // Non-native zoom which is done instantaneously.  The resulting frame
-  // covers the entire screen, except the menu-bar, if present.
+  // Non-native zoom which is done instantaneously.  The resulting
+  // frame covers the entire screen, except the menu-bar and dock, if
+  // present.
   NSScreen * screen = [self screen];
   if (screen != nil)
     {
       NSRect sr = [screen frame];
-      sr.size.height -= ns_menu_bar_height (screen);
+      struct EmacsMargins margins
+        = ns_screen_margins_ignoring_hidden_dock(screen);
+
+      sr.size.height -= (margins.top + margins.bottom);
+      sr.size.width  -= (margins.left + margins.right);
+      sr.origin.x += margins.left;
+      sr.origin.y += margins.bottom;
 
       sr = [[self delegate] windowWillUseStandardFrame:self
                                           defaultFrame:sr];

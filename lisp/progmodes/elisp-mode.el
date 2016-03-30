@@ -575,7 +575,7 @@ It can be quoted, or be inside a quoted form."
                                        " " (cadr table-etc)))
                     (cddr table-etc)))))))))
 
-(defun lisp-completion-at-point (_predicate)
+(defun lisp-completion-at-point (&optional _predicate)
   (declare (obsolete elisp-completion-at-point "25.1"))
   (elisp-completion-at-point))
 

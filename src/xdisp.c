@@ -7229,18 +7229,21 @@ get_next_display_element (struct it *it)
 		{
 		  ptrdiff_t ignore;
 		  int next_face_id;
+		  bool text_from_string = false;
+		  /* Normally, the next buffer location is stored in
+		     IT->current.pos...  */
 		  struct text_pos pos = it->current.pos;
 
-		  /* For a string from a display property, the next
-		     buffer position is stored in the 'position'
+		  /* ...but for a string from a display property, the
+		     next buffer position is stored in the 'position'
 		     member of the iteration stack slot below the
 		     current one, see handle_single_display_spec.  By
-		     contrast, it->current.pos was not yet updated
-		     to point to that buffer position; that will
-		     happen in pop_it, after we finish displaying the
-		     current string.  Note that we already checked
-		     above that it->sp is positive, so subtracting one
-		     from it is safe.  */
+		     contrast, it->current.pos was not yet updated to
+		     point to that buffer position; that will happen
+		     in pop_it, after we finish displaying the current
+		     string.  Note that we already checked above that
+		     it->sp is positive, so subtracting one from it is
+		     safe.  */
 		  if (it->from_disp_prop_p)
 		    {
 		      int stackp = it->sp - 1;
@@ -7249,19 +7252,49 @@ get_next_display_element (struct it *it)
 		      while (stackp >= 0
 			     && STRINGP ((it->stack + stackp)->string))
 			stackp--;
-		      eassert (stackp >= 0);
-		      pos = (it->stack + stackp)->position;
+		      if (stackp < 0)
+			{
+			  /* If no stack slot was found for iterating
+			     a buffer, we are displaying text from a
+			     string, most probably the mode line or
+			     the header line, and that string has a
+			     display string on some of its
+			     characters.  */
+			  text_from_string = true;
+			  pos = it->stack[it->sp - 1].position;
+			}
+		      else
+			pos = (it->stack + stackp)->position;
 		    }
 		  else
 		    INC_TEXT_POS (pos, it->multibyte_p);
 
-		  if (CHARPOS (pos) >= ZV)
+		  if (text_from_string)
+		    {
+		      Lisp_Object base_string = it->stack[it->sp - 1].string;
+
+		      if (CHARPOS (pos) >= SCHARS (base_string) - 1)
+			it->end_of_box_run_p = true;
+		      else
+			{
+			  next_face_id
+			    = face_at_string_position (it->w, base_string,
+						       CHARPOS (pos), 0,
+						       &ignore, face_id, false);
+			  it->end_of_box_run_p
+			    = (FACE_FROM_ID (it->f, next_face_id)->box
+			       == FACE_NO_BOX);
+			}
+		    }
+		  else if (CHARPOS (pos) >= ZV)
 		    it->end_of_box_run_p = true;
 		  else
 		    {
-		      next_face_id = face_at_buffer_position
-			(it->w, CHARPOS (pos), &ignore,
-			 CHARPOS (pos) + TEXT_PROP_DISTANCE_LIMIT, false, -1);
+		      next_face_id =
+			face_at_buffer_position (it->w, CHARPOS (pos), &ignore,
+						 CHARPOS (pos)
+						 + TEXT_PROP_DISTANCE_LIMIT,
+						 false, -1);
 		      it->end_of_box_run_p
 			= (FACE_FROM_ID (it->f, next_face_id)->box
 			   == FACE_NO_BOX);
@@ -10524,8 +10557,8 @@ ensure_echo_area_buffers (void)
    suitable buffer from echo_buffer[] and clear it.
 
    If WHICH < 0, set echo_area_buffer[1] to echo_area_buffer[0], so
-   that the current message becomes the last displayed one, make
-   choose a suitable buffer for echo_area_buffer[0], and clear it.
+   that the current message becomes the last displayed one, choose a
+   suitable buffer for echo_area_buffer[0], and clear it.
 
    Value is what FN returns.  */
 
@@ -10559,7 +10592,7 @@ with_echo_area_buffer (struct window *w, int which,
 	echo_area_buffer[this_one] = Qnil;
     }
 
-  /* Choose a suitable buffer from echo_buffer[] is we don't
+  /* Choose a suitable buffer from echo_buffer[] if we don't
      have one.  */
   if (NILP (echo_area_buffer[this_one]))
     {
@@ -17049,7 +17082,16 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	    ignore_mouse_drag_p = true;
 #endif
         }
+      ptrdiff_t count1 = SPECPDL_INDEX ();
+      /* x_consider_frame_title calls select-frame, which calls
+	 resize_mini_window, which could resize the mini-window and by
+	 that undo the effect of this redisplay cycle wrt minibuffer
+	 and echo-area display.  Binding inhibit-redisplay to t makes
+	 the call to resize_mini_window a no-op, thus avoiding the
+	 adverse side effects.  */
+      specbind (Qinhibit_redisplay, Qt);
       x_consider_frame_title (w->frame);
+      unbind_to (count1, Qnil);
 #endif
     }
 
@@ -31389,8 +31431,11 @@ Value is a number or a cons (WIDTH-DPI . HEIGHT-DPI).  */);
 	       Vtruncate_partial_width_windows,
     doc: /* Non-nil means truncate lines in windows narrower than the frame.
 For an integer value, truncate lines in each window narrower than the
-full frame width, provided the window width is less than that integer;
-otherwise, respect the value of `truncate-lines'.
+full frame width, provided the total window width in column units is less
+than that integer; otherwise, respect the value of `truncate-lines'.
+The total width of the window is as returned by `window-total-width', it
+includes the fringes, the continuation and truncation glyphs, the
+display margins (if any), and the scroll bar
 
 For any other non-nil value, truncate lines in all windows that do
 not span the full frame width.
@@ -31598,7 +31643,12 @@ A value of t means resize them to fit the text displayed in them.
 A value of `grow-only', the default, means let mini-windows grow only;
 they return to their normal size when the minibuffer is closed, or the
 echo area becomes empty.  */);
-  Vresize_mini_windows = Qgrow_only;
+  /* Contrary to the doc string, we initialize this to nil, so that
+     loading loadup.el won't try to resize windows before loading
+     window.el, where some functions we need to call for this live.
+     We assign the 'grow-only' value right after loading window.el
+     during loadup.  */
+  Vresize_mini_windows = Qnil;
 
   DEFVAR_LISP ("blink-cursor-alist", Vblink_cursor_alist,
     doc: /* Alist specifying how to blink the cursor off.

@@ -87,9 +87,16 @@ Evaluate BODY for each created map.
   (let ((vec [3 4 5]))
    (should-error (setf (map-elt vec 3) 6))))
 
+(ert-deftest test-map-put-alist-new-key ()
+  "Regression test for Bug#23105."
+  (let ((alist '((0 . a))))
+    (map-put alist 2 'b)
+    (should (eq (map-elt alist 2)
+                'b))))
+
 (ert-deftest test-map-put-return-value ()
   (let ((ht (make-hash-table)))
-    (should (eq (map-put ht 'a 'hello) ht))))
+    (should (eq (map-put ht 'a 'hello) 'hello))))
 
 (ert-deftest test-map-delete ()
   (with-maps-do map

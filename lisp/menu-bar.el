@@ -192,7 +192,7 @@
                   :enable (menu-bar-non-minibuffer-window-p)
                   :help "Read an existing file into an Emacs buffer"))
     (bindings--define-key menu [new-file]
-      '(menu-item "New File..." find-file
+      '(menu-item "Visit New File..." find-file
                   :enable (menu-bar-non-minibuffer-window-p)
                   :help "Specify a new file's name, to edit the file"))
 

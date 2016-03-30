@@ -538,7 +538,7 @@ This is a specialization of `soap-encode-value' for
                (base64Binary
                 (unless (stringp value)
                   (error "Not a string value for base64Binary"))
-                (base64-encode-string (encode-coding-string value 'utf-8)))
+                (base64-encode-string value))
 
                (otherwise
                 (error "Don't know how to encode %s for type %s"
@@ -682,7 +682,7 @@ This is a specialization of `soap-decode-type' for
                decimal byte float double duration)
          (string-to-number (car contents)))
         (boolean (string= (downcase (car contents)) "true"))
-        (base64Binary (decode-coding-string (base64-decode-string (car contents)) 'utf-8))
+        (base64Binary (base64-decode-string (car contents)))
         (anyType (soap-decode-any-type node))
         (Array (soap-decode-array node))))))
 
@@ -3096,7 +3096,11 @@ the SOAP request.
 NOTE: The SOAP service provider should document the available
 operations and their parameters for the service.  You can also
 use the `soap-inspect' function to browse the available
-operations in a WSDL document."
+operations in a WSDL document.
+
+NOTE: `soap-invoke' base64-decodes xsd:base64Binary return values
+into unibyte strings; these byte-strings require further
+interpretation by the caller."
   (apply #'soap-invoke-internal nil nil wsdl service operation-name parameters))
 
 (defun soap-invoke-async (callback cbargs wsdl service operation-name

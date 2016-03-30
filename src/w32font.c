@@ -796,7 +796,8 @@ w32font_list_internal (struct frame *f, Lisp_Object font_spec,
 	  && !EQ (spec_charset, Qiso10646_1)
 	  && !EQ (spec_charset, Qunicode_bmp)
 	  && !EQ (spec_charset, Qunicode_sip)
-	  && !EQ (spec_charset, Qunknown))
+	  && !EQ (spec_charset, Qunknown)
+	  && !EQ (spec_charset, Qascii_0))
 	return Qnil;
     }
 

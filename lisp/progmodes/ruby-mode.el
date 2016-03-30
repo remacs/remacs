@@ -368,7 +368,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
        (exp  (exp1) (exp "," exp) (exp "=" exp)
              (id " @ " exp))
        (exp1 (exp2) (exp2 "?" exp1 ":" exp1))
-       (exp2 (exp3) (exp3 "." exp2))
+       (exp2 (exp3) (exp3 "." exp3))
        (exp3 ("def" insts "end")
              ("begin" insts-rescue-insts "end")
              ("do" insts "end")
@@ -388,7 +388,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
        (cases (exp "then" insts)
               (cases "when" cases) (insts "else" insts))
        (expseq (exp) );;(expseq "," expseq)
-       (hashvals (id "=>" exp1) (hashvals "," hashvals))
+       (hashvals (exp1 "=>" exp1) (hashvals "," hashvals))
        (insts-rescue-insts (insts)
                            (insts-rescue-insts "rescue" insts-rescue-insts)
                            (insts-rescue-insts "ensure" insts-rescue-insts))
@@ -406,17 +406,18 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
      '((right "=")
        (right "+=" "-=" "*=" "/=" "%=" "**=" "&=" "|=" "^="
               "<<=" ">>=" "&&=" "||=")
-       (left ".." "...")
-       (left "+" "-")
-       (left "*" "/" "%" "**")
+       (nonassoc ".." "...")
        (left "&&" "||")
-       (left "^" "&" "|")
        (nonassoc "<=>")
-       (nonassoc ">" ">=" "<" "<=")
        (nonassoc "==" "===" "!=")
        (nonassoc "=~" "!~")
+       (nonassoc ">" ">=" "<" "<=")
+       (left "^" "&" "|")
        (left "<<" ">>")
-       (right "."))))))
+       (left "+" "-")
+       (left "*" "/" "%")
+       (left "**")
+       (assoc "."))))))
 
 (defun ruby-smie--bosp ()
   (save-excursion (skip-chars-backward " \t")
@@ -443,7 +444,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
                   (member (save-excursion (ruby-smie--backward-token))
                           '("iuwu-mod" "and" "or")))
              (save-excursion
-               (forward-comment 1)
+               (forward-comment (point-max))
                (looking-at "&?\\."))))))
 
 (defun ruby-smie--redundant-do-p (&optional skip)
@@ -629,19 +630,13 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
         ;; because when `.' is inside the line, the
         ;; additional indentation from it looks out of place.
         ((smie-rule-parent-p ".")
-         (let (smie--parent)
-           (save-excursion
-             ;; Traverse up the parents until the parent is "." at
-             ;; indentation, or any other token.
-             (while (and (let ((parent (smie-indent--parent)))
-                           (goto-char (cadr parent))
-                           (save-excursion
-                             (unless (integerp (car parent)) (forward-char -1))
-                             (not (ruby-smie--bosp))))
-                         (progn
-                           (setq smie--parent nil)
-                           (smie-rule-parent-p "."))))
-             (smie-rule-parent))))
+         ;; Traverse up the call chain until the parent is not `.',
+         ;; or `.' at indentation, or at eol.
+         (while (and (not (ruby-smie--bosp))
+                     (equal (nth 2 (smie-backward-sexp ".")) ".")
+                     (not (ruby-smie--bosp)))
+           (forward-char -1))
+         (smie-indent-virtual))
         (t (smie-rule-parent))))))
     (`(:after . ,(or `"(" "[" "{"))
      ;; FIXME: Shouldn't this be the default behavior of
@@ -661,7 +656,9 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
     (`(:before . ".")
      (if (smie-rule-sibling-p)
          (and ruby-align-chained-calls 0)
-       ruby-indent-level))
+       (smie-backward-sexp ".")
+       (cons 'column (+ (current-column)
+                        ruby-indent-level))))
     (`(:before . ,(or `"else" `"then" `"elsif" `"rescue" `"ensure"))
      (smie-rule-parent))
     (`(:before . "when")
@@ -1377,7 +1374,7 @@ delimiter."
       (goto-char ruby-indent-point)
       (beginning-of-line)
       (skip-syntax-forward " ")
-      (if (looking-at "\\.[^.]")
+      (if (looking-at "\\.[^.]\\|&\\.")
           (+ indent ruby-indent-level)
         indent))))
 
@@ -2176,7 +2173,7 @@ See `font-lock-syntax-table'.")
           'font-lock-string-face)))
     ;; Perl-ish keywords.
     "\\_<\\(?:BEGIN\\|END\\)\\_>\\|^__END__$"
-    ;; Variables.
+    ;; Singleton objects.
     (,(concat ruby-font-lock-keyword-beg-re
               "\\_<\\(nil\\|true\\|false\\)\\_>")
      1 font-lock-constant-face)
@@ -2184,7 +2181,7 @@ See `font-lock-syntax-table'.")
     ("\\_<__\\(?:LINE\\|ENCODING\\|FILE\\)__\\_>"
      (0 font-lock-builtin-face))
     ;; Symbols.
-    ("\\(^\\|[^:]\\)\\(:@?\\(?:\\w\\|_\\)+\\)\\([!?=]\\)?"
+    ("\\(^\\|[^:]\\)\\(:@\\{0,2\\}\\(?:\\sw\\|\\s_\\)+\\)"
      (2 font-lock-constant-face)
      (3 (unless (and (eq (char-before (match-end 3)) ?=)
                      (eq (char-after (match-end 3)) ?>))

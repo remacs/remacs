@@ -3402,9 +3402,11 @@ static void
 tty_pop_down_menu (Lisp_Object arg)
 {
   tty_menu *menu = XSAVE_POINTER (arg, 0);
+  struct buffer *orig_buffer = XSAVE_POINTER (arg, 1);
 
   block_input ();
   tty_menu_destroy (menu);
+  set_buffer_internal (orig_buffer);
   unblock_input ();
 }
 
@@ -3683,7 +3685,10 @@ tty_menu_show (struct frame *f, int x, int y, int menuflags,
 
   pane = selidx = 0;
 
-  record_unwind_protect (tty_pop_down_menu, make_save_ptr (menu));
+  /* We save and restore the current buffer because tty_menu_activate
+     triggers redisplay, which switches buffers at will.  */
+  record_unwind_protect (tty_pop_down_menu,
+			 make_save_ptr_ptr (menu, current_buffer));
 
   specbind (Qoverriding_terminal_local_map,
 	    Fsymbol_value (Qtty_menu_navigation_map));

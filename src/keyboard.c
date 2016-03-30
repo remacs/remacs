@@ -430,10 +430,9 @@ kset_system_key_syms (struct kboard *kb, Lisp_Object val)
 static bool
 echo_keystrokes_p (void)
 {
-  return (!cursor_in_echo_area)
-	 && (FLOATP (Vecho_keystrokes) ? XFLOAT_DATA (Vecho_keystrokes) > 0.0
-	     : INTEGERP (Vecho_keystrokes) ? XINT (Vecho_keystrokes) > 0
-             : false);
+  return (FLOATP (Vecho_keystrokes) ? XFLOAT_DATA (Vecho_keystrokes) > 0.0
+	  : INTEGERP (Vecho_keystrokes) ? XINT (Vecho_keystrokes) > 0
+          : false);
 }
 
 /* Add C to the echo string, without echoing it immediately.  C can be
@@ -2530,7 +2529,7 @@ read_char (int commandflag, Lisp_Object map,
   if (KEYMAPP (map) && INTERACTIVE
       && !NILP (prev_event) && ! EVENT_HAS_PARAMETERS (prev_event)
       /* Don't bring up a menu if we already have another event.  */
-      && NILP (Vunread_command_events)
+      && !CONSP (Vunread_command_events)
       && !detect_input_pending_run_timers (0))
     {
       c = read_char_minibuf_menu_prompt (commandflag, map);
@@ -2661,7 +2660,7 @@ read_char (int commandflag, Lisp_Object map,
       && !EQ (XCAR (prev_event), Qmenu_bar)
       && !EQ (XCAR (prev_event), Qtool_bar)
       /* Don't bring up a menu if we already have another event.  */
-      && NILP (Vunread_command_events))
+      && !CONSP (Vunread_command_events))
     {
       c = read_char_x_menu_prompt (map, prev_event, used_mouse_menu);
 
@@ -8902,7 +8901,9 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
           if (!echo_keystrokes_p ())
 	    current_kboard->immediate_echo = false;
 	}
-      else if (echo_keystrokes_p ())
+      else if (cursor_in_echo_area /* FIXME: Not sure why we test this here,
+                                      maybe we should just drop this test.  */
+	       && echo_keystrokes_p ())
 	/* This doesn't put in a dash if the echo buffer is empty, so
 	   you don't always see a dash hanging out in the minibuffer.  */
 	echo_dash ();
@@ -9877,7 +9878,7 @@ clear_input_pending (void)
 bool
 requeued_events_pending_p (void)
 {
-  return (!NILP (Vunread_command_events));
+  return (CONSP (Vunread_command_events));
 }
 
 DEFUN ("input-pending-p", Finput_pending_p, Sinput_pending_p, 0, 1, 0,
@@ -9888,7 +9889,7 @@ if there is a doubt, the value is t.
 If CHECK-TIMERS is non-nil, timers that are ready to run will do so.  */)
   (Lisp_Object check_timers)
 {
-  if (!NILP (Vunread_command_events)
+  if (CONSP (Vunread_command_events)
       || !NILP (Vunread_post_input_method_events)
       || !NILP (Vunread_input_method_events))
     return (Qt);

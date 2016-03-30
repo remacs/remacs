@@ -5317,7 +5317,7 @@ syms_of_font (void)
   DEFSYM (Qja, "ja");
   DEFSYM (Qko, "ko");
 
-  DEFSYM (QCuser_spec, "user-spec");
+  DEFSYM (QCuser_spec, ":user-spec");
 
   staticpro (&scratch_font_spec);
   scratch_font_spec = Ffont_spec (0, NULL);
