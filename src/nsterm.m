@@ -37,6 +37,7 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 #include <time.h>
 #include <signal.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include <c-ctype.h>
 #include <c-strcase.h>
@@ -5944,7 +5945,6 @@ not_in_argv (NSString *arg)
 @end  /* EmacsApp */
 
 
-
 /* ==========================================================================
 
     EmacsView implementation
@@ -6050,7 +6050,6 @@ not_in_argv (NSString *arg)
   int code;
   unsigned fnKeysym = 0;
   static NSMutableArray *nsEvArray;
-  int left_is_none;
   unsigned int flags = [theEvent modifierFlags];
 
   NSTRACE ("[EmacsView keyDown:]");
@@ -6092,10 +6091,8 @@ not_in_argv (NSString *arg)
 
   if (!processingCompose)
     {
-      /* When using screen sharing, no left or right information is sent,
-         so use Left key in those cases.  */
-      int is_left_key, is_right_key;
-
+      /* FIXME: What should happen for key sequences with more than
+         one character?  */
       code = ([[theEvent charactersIgnoringModifiers] length] == 0) ?
         0 : [[theEvent charactersIgnoringModifiers] characterAtIndex: 0];
 
@@ -6142,131 +6139,47 @@ not_in_argv (NSString *arg)
       if (flags & NSEventModifierFlagShift)
         emacs_event->modifiers |= shift_modifier;
 
-      is_right_key = (flags & NSRightCommandKeyMask) == NSRightCommandKeyMask;
-      is_left_key = (flags & NSLeftCommandKeyMask) == NSLeftCommandKeyMask
-        || (! is_right_key && (flags & NSEventModifierFlagCommand) == NSEventModifierFlagCommand);
+      /* The ⌘ and ⌥ modifiers can be either shift-like (for alternate
+         character input) or control-like (as command prefix).  If we
+         have only shift-like modifiers, then we should use the
+         translated characters (returned by the characters method); if
+         we have only control-like modifiers, then we should use the
+         untranslated characters (returned by the
+         charactersIgnoringModifiers method).  An annoyance happens if
+         we have both shift-like and control-like modifiers because
+         the NSEvent API doesn’t let us ignore only some modifiers.
+         Therefore we ignore all shift-like modifiers in that
+         case.  */
 
-      if (is_right_key)
-        emacs_event->modifiers |= parse_solitary_modifier
-          (EQ (ns_right_command_modifier, Qleft)
-           ? ns_command_modifier
-           : ns_right_command_modifier);
+      /* EV_MODIFIERS2 uses parse_solitary_modifier on all known
+         modifier keys, which returns 0 for shift-like modifiers.
+         Therefore its return value is the set of control-like
+         modifiers.  */
+      unsigned int control_modifiers = EV_MODIFIERS2 (flags);
+      emacs_event->modifiers |= control_modifiers;
 
-      if (is_left_key)
-        {
-          emacs_event->modifiers |= parse_solitary_modifier
-            (ns_command_modifier);
+      if (NS_KEYLOG)
+        fprintf (stderr, "keyDown: code =%x\tfnKey =%x\tflags = %x\tmods = %x\n",
+                 code, fnKeysym, flags, emacs_event->modifiers);
 
-          /* if super (default), take input manager's word so things like
-             dvorak / qwerty layout work */
-          if (EQ (ns_command_modifier, Qsuper)
-              && !fnKeysym
-              && [[theEvent characters] length] != 0)
-            {
-              /* XXX: the code we get will be unshifted, so if we have
-                 a shift modifier, must convert ourselves */
-              if (!(flags & NSEventModifierFlagShift))
-                code = [[theEvent characters] characterAtIndex: 0];
-#if 0
-              /* this is ugly and also requires linking w/Carbon framework
-                 (for LMGetKbdType) so for now leave this rare (?) case
-                 undealt with.. in future look into CGEvent methods */
-              else
-                {
-                  long smv = GetScriptManagerVariable (smKeyScript);
-                  Handle uchrHandle = GetResource
-                    ('uchr', GetScriptVariable (smv, smScriptKeys));
-                  UInt32 dummy = 0;
-                  UCKeyTranslate ((UCKeyboardLayout *) *uchrHandle,
-                                 [[theEvent characters] characterAtIndex: 0],
-                                 kUCKeyActionDisplay,
-                                 (flags & ~NSEventModifierFlagCommand) >> 8,
-                                 LMGetKbdType (), kUCKeyTranslateNoDeadKeysMask,
-                                 &dummy, 1, &dummy, &code);
-                  code &= 0xFF;
-                }
-#endif
-            }
-        }
-
-      is_right_key = (flags & NSRightControlKeyMask) == NSRightControlKeyMask;
-      is_left_key = (flags & NSLeftControlKeyMask) == NSLeftControlKeyMask
-        || (! is_right_key && (flags & NSEventModifierFlagControl) == NSEventModifierFlagControl);
-
-      if (is_right_key)
-          emacs_event->modifiers |= parse_solitary_modifier
-              (EQ (ns_right_control_modifier, Qleft)
-               ? ns_control_modifier
-               : ns_right_control_modifier);
-
-      if (is_left_key)
-        emacs_event->modifiers |= parse_solitary_modifier
-          (ns_control_modifier);
-
-      if (flags & NS_FUNCTION_KEY_MASK && !fnKeysym)
-          emacs_event->modifiers |=
-            parse_solitary_modifier (ns_function_modifier);
-
-      left_is_none = NILP (ns_alternate_modifier)
-        || EQ (ns_alternate_modifier, Qnone);
-
-      is_right_key = (flags & NSRightAlternateKeyMask)
-        == NSRightAlternateKeyMask;
-      is_left_key = (flags & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask
-        || (! is_right_key
-            && (flags & NSEventModifierFlagOption) == NSEventModifierFlagOption);
-
-      if (is_right_key)
-        {
-          if ((NILP (ns_right_alternate_modifier)
-               || EQ (ns_right_alternate_modifier, Qnone)
-               || (EQ (ns_right_alternate_modifier, Qleft) && left_is_none))
-              && !fnKeysym)
-            {   /* accept pre-interp alt comb */
-              if ([[theEvent characters] length] > 0)
-                code = [[theEvent characters] characterAtIndex: 0];
-              /*HACK: clear lone shift modifier to stop next if from firing */
-              if (emacs_event->modifiers == shift_modifier)
-                emacs_event->modifiers = 0;
-            }
-          else
-            emacs_event->modifiers |= parse_solitary_modifier
-              (EQ (ns_right_alternate_modifier, Qleft)
-               ? ns_alternate_modifier
-               : ns_right_alternate_modifier);
-        }
-
-      if (is_left_key) /* default = meta */
-        {
-          if (left_is_none && !fnKeysym)
-            {   /* accept pre-interp alt comb */
-              if ([[theEvent characters] length] > 0)
-                code = [[theEvent characters] characterAtIndex: 0];
-              /*HACK: clear lone shift modifier to stop next if from firing */
-              if (emacs_event->modifiers == shift_modifier)
-                emacs_event->modifiers = 0;
-            }
-          else
-              emacs_event->modifiers |=
-                parse_solitary_modifier (ns_alternate_modifier);
-        }
-
-  if (NS_KEYLOG)
-    fprintf (stderr, "keyDown: code =%x\tfnKey =%x\tflags = %x\tmods = %x\n",
-             (unsigned) code, fnKeysym, flags, emacs_event->modifiers);
-
-      /* if it was a function key or had modifiers, pass it directly to emacs */
+      /* If it was a function key or had control-like modifiers, pass
+         it directly to Emacs.  */
       if (fnKeysym || (emacs_event->modifiers
                        && (emacs_event->modifiers != shift_modifier)
                        && [[theEvent charactersIgnoringModifiers] length] > 0))
 /*[[theEvent characters] length] */
         {
           emacs_event->kind = NON_ASCII_KEYSTROKE_EVENT;
+          /* FIXME: What are the next four lines supposed to do?  */
           if (code < 0x20)
             code |= (1<<28)|(3<<16);
           else if (code == 0x7f)
             code |= (1<<28)|(3<<16);
           else if (!fnKeysym)
+            /* FIXME: This seems wrong, characters in the range
+               [0x80, 0xFF] are not ASCII characters.  Can’t we just
+               use MULTIBYTE_CHAR_KEYSTROKE_EVENT here for all kinds
+               of characters?  */
             emacs_event->kind = code > 0xFF
               ? MULTIBYTE_CHAR_KEYSTROKE_EVENT : ASCII_KEYSTROKE_EVENT;
 
@@ -6277,11 +6190,32 @@ not_in_argv (NSString *arg)
         }
     }
 
+  /* If we get here, a non-function key without control-like modifiers
+     was hit.  Use interpretKeyEvents, which in turn will call
+     insertText; see
+     https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/EventOverview/HandlingKeyEvents/HandlingKeyEvents.html.  */
 
   if (NS_KEYLOG && !processingCompose)
     fprintf (stderr, "keyDown: Begin compose sequence.\n");
 
+  /* FIXME: interpretKeyEvents doesn’t seem to send insertText if ⌘ is
+     used as shift-like modifier, at least on El Capitan.  Mask it
+     out.  This shouldn’t be needed though; we should figure out what
+     the correct way of handling ⌘ is.  */
+  if ([theEvent modifierFlags] & NSEventModifierFlagCommand)
+    theEvent = [NSEvent keyEventWithType:[theEvent type]
+                                location:[theEvent locationInWindow]
+                           modifierFlags:[theEvent modifierFlags] & ~NSEventModifierFlagCommand
+                               timestamp:[theEvent timestamp]
+                            windowNumber:[theEvent windowNumber]
+                                 context:nil
+                              characters:[theEvent characters]
+                        charactersIgnoringModifiers:[theEvent charactersIgnoringModifiers]
+                               isARepeat:[theEvent isARepeat]
+                                 keyCode:[theEvent keyCode]];
+
   processingCompose = YES;
+  /* FIXME: Use [NSArray arrayWithObject:theEvent]?  */
   [nsEvArray addObject: theEvent];
   [self interpretKeyEvents: nsEvArray];
   [nsEvArray removeObject: theEvent];

@@ -286,6 +286,9 @@ loading messages if requested, and protects against recursive loads.
 ** Battery status is now supported in all Cygwin builds.
 Previously it was supported only in the Cygwin-w32 build.
 
+** Emacs now handles key combinations involving the macOS "command"
+and "option" modifier keys more correctly.
+
 
 ----------------------------------------------------------------------
 This file is part of GNU Emacs.
