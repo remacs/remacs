@@ -1594,70 +1594,69 @@ defun."
       (c-region-is-active-p)
       (push-mark))
 
-  (c-self-bind-state-cache ; We must not share with other users of c-state-cache.
-   (c-save-buffer-state
-       (beginning-of-defun-function
-	end-of-defun-function
-	(start (point))
-	(paren-state (c-parse-state))
-	(orig-point-min (point-min)) (orig-point-max (point-max))
-	lim		    ; Position of { which has been widened to.
-	where pos case-fold-search)
+  (c-save-buffer-state
+      (beginning-of-defun-function
+       end-of-defun-function
+       (start (point))
+       (paren-state (c-parse-state))
+       (orig-point-min (point-min)) (orig-point-max (point-max))
+       lim		    ; Position of { which has been widened to.
+       where pos case-fold-search)
 
-     (save-restriction
-       (if (eq c-defun-tactic 'go-outward)
-	   (setq lim (c-widen-to-enclosing-decl-scope ; e.g. class, namespace.
-		      paren-state orig-point-min orig-point-max)))
+    (save-restriction
+      (if (eq c-defun-tactic 'go-outward)
+	  (setq lim (c-widen-to-enclosing-decl-scope ; e.g. class, namespace.
+		     paren-state orig-point-min orig-point-max)))
 
-       ;; Move back out of any macro/comment/string we happen to be in.
-       (c-beginning-of-macro)
-       (setq pos (c-literal-limits))
-       (if pos (goto-char (car pos)))
+      ;; Move back out of any macro/comment/string we happen to be in.
+      (c-beginning-of-macro)
+      (setq pos (c-literal-limits))
+      (if pos (goto-char (car pos)))
 
-       (setq where (c-where-wrt-brace-construct))
+      (setq where (c-where-wrt-brace-construct))
 
-       (if (< arg 0)
-	   ;; Move forward to the closing brace of a function.
-	   (progn
-	     (if (memq where '(at-function-end outwith-function))
-		 (setq arg (1+ arg)))
-	     (if (< arg 0)
-		 (c-while-widening-to-decl-block
-		  (< (setq arg (- (c-forward-to-nth-EOF-} (- arg) where))) 0)))
-	     ;; Move forward to the next opening brace....
-	     (when (and (= arg 0)
-			(progn
-			  (c-while-widening-to-decl-block
-			   (not (c-syntactic-re-search-forward "{" nil 'eob)))
-			  (eq (char-before) ?{)))
-	       (backward-char)
-	       ;; ... and backward to the function header.
-	       (c-beginning-of-decl-1)
-	       t))
+      (if (< arg 0)
+	  ;; Move forward to the closing brace of a function.
+	  (progn
+	    (if (memq where '(at-function-end outwith-function))
+		(setq arg (1+ arg)))
+	    (if (< arg 0)
+		(c-while-widening-to-decl-block
+		 (< (setq arg (- (c-forward-to-nth-EOF-} (- arg) where))) 0)))
+	    ;; Move forward to the next opening brace....
+	    (when (and (= arg 0)
+		       (progn
+			 (c-while-widening-to-decl-block
+			  (not (c-syntactic-re-search-forward "{" nil 'eob)))
+			 (eq (char-before) ?{)))
+	      (backward-char)
+	      ;; ... and backward to the function header.
+	      (c-beginning-of-decl-1)
+	      t))
 
-	 ;; Move backward to the opening brace of a function, making successively
-	 ;; larger portions of the buffer visible as necessary.
-	 (when (> arg 0)
-	   (c-while-widening-to-decl-block
-	    (> (setq arg (c-backward-to-nth-BOF-{ arg where)) 0)))
+	;; Move backward to the opening brace of a function, making successively
+	;; larger portions of the buffer visible as necessary.
+	(when (> arg 0)
+	  (c-while-widening-to-decl-block
+	   (> (setq arg (c-backward-to-nth-BOF-{ arg where)) 0)))
 
-	 (when (eq arg 0)
-	   ;; Go backward to this function's header.
-	   (c-beginning-of-decl-1)
+	(when (eq arg 0)
+	  ;; Go backward to this function's header.
+	  (c-beginning-of-decl-1)
 
-	   (setq pos (point))
-	   ;; We're now there, modulo comments and whitespace.
-	   ;; Try to be line oriented; position point at the closest
-	   ;; preceding boi that isn't inside a comment, but if we hit
-	   ;; the previous declaration then we use the current point
-	   ;; instead.
-	   (while (and (/= (point) (c-point 'boi))
-		       (c-backward-single-comment)))
-	   (if (/= (point) (c-point 'boi))
-	       (goto-char pos)))
+	  (setq pos (point))
+	  ;; We're now there, modulo comments and whitespace.
+	  ;; Try to be line oriented; position point at the closest
+	  ;; preceding boi that isn't inside a comment, but if we hit
+	  ;; the previous declaration then we use the current point
+	  ;; instead.
+	  (while (and (/= (point) (c-point 'boi))
+		      (c-backward-single-comment)))
+	  (if (/= (point) (c-point 'boi))
+	      (goto-char pos)))
 
-	 (c-keep-region-active)
-	 (= arg 0))))))
+	(c-keep-region-active)
+	(= arg 0)))))
 
 (defun c-forward-to-nth-EOF-} (n where)
   ;; Skip to the closing brace of the Nth function after point.  If
@@ -1719,68 +1718,66 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
       (c-region-is-active-p)
       (push-mark))
 
-  (c-self-bind-state-cache ; c-state-cache's list structure must not be shared
-			   ; with other users.
-   (c-save-buffer-state
-       (beginning-of-defun-function
-	end-of-defun-function
-	(start (point))
-	(paren-state (c-parse-state))
-	(orig-point-min (point-min)) (orig-point-max (point-max))
-	lim
-	where pos case-fold-search)
+  (c-save-buffer-state
+      (beginning-of-defun-function
+       end-of-defun-function
+       (start (point))
+       (paren-state (c-parse-state))
+       (orig-point-min (point-min)) (orig-point-max (point-max))
+       lim
+       where pos case-fold-search)
 
-     (save-restriction
-       (if (eq c-defun-tactic 'go-outward)
-	   (setq lim (c-widen-to-enclosing-decl-scope ; e.g. class, namespace
-		      paren-state orig-point-min orig-point-max)))
+    (save-restriction
+      (if (eq c-defun-tactic 'go-outward)
+	  (setq lim (c-widen-to-enclosing-decl-scope ; e.g. class, namespace
+		     paren-state orig-point-min orig-point-max)))
 
-       ;; Move back out of any macro/comment/string we happen to be in.
-       (c-beginning-of-macro)
-       (setq pos (c-literal-limits))
-       (if pos (goto-char (car pos)))
+      ;; Move back out of any macro/comment/string we happen to be in.
+      (c-beginning-of-macro)
+      (setq pos (c-literal-limits))
+      (if pos (goto-char (car pos)))
 
-       (setq where (c-where-wrt-brace-construct))
+      (setq where (c-where-wrt-brace-construct))
 
-       (if (< arg 0)
-	   ;; Move backwards to the } of a function
-	   (progn
-	     (if (memq where '(at-header outwith-function))
-		 (setq arg (1+ arg)))
-	     (if (< arg 0)
-		 (c-while-widening-to-decl-block
-		  (< (setq arg (- (c-backward-to-nth-BOF-{ (- arg) where))) 0)))
-	     (if (= arg 0)
-		 (c-while-widening-to-decl-block
-		  (progn (c-syntactic-skip-backward "^}")
-			 (not (eq (char-before) ?}))))))
+      (if (< arg 0)
+	  ;; Move backwards to the } of a function
+	  (progn
+	    (if (memq where '(at-header outwith-function))
+		(setq arg (1+ arg)))
+	    (if (< arg 0)
+		(c-while-widening-to-decl-block
+		 (< (setq arg (- (c-backward-to-nth-BOF-{ (- arg) where))) 0)))
+	    (if (= arg 0)
+		(c-while-widening-to-decl-block
+		 (progn (c-syntactic-skip-backward "^}")
+			(not (eq (char-before) ?}))))))
 
-	 ;; Move forward to the } of a function
-	 (if (> arg 0)
-	     (c-while-widening-to-decl-block
-	      (> (setq arg (c-forward-to-nth-EOF-} arg where)) 0))))
+	;; Move forward to the } of a function
+	(if (> arg 0)
+	    (c-while-widening-to-decl-block
+	     (> (setq arg (c-forward-to-nth-EOF-} arg where)) 0))))
 
-       ;; Do we need to move forward from the brace to the semicolon?
-       (when (eq arg 0)
-	 (if (c-in-function-trailer-p)	; after "}" of struct/enum, etc.
-	     (c-syntactic-re-search-forward ";"))
+      ;; Do we need to move forward from the brace to the semicolon?
+      (when (eq arg 0)
+	(if (c-in-function-trailer-p)	; after "}" of struct/enum, etc.
+	    (c-syntactic-re-search-forward ";"))
 
-	 (setq pos (point))
-	 ;; We're there now, modulo comments and whitespace.
-	 ;; Try to be line oriented; position point after the next
-	 ;; newline that isn't inside a comment, but if we hit the
-	 ;; next declaration then we use the current point instead.
-	 (while (and (not (bolp))
-		     (not (looking-at "\\s *$"))
-		     (c-forward-single-comment)))
-	 (cond ((bolp))
-	       ((looking-at "\\s *$")
-		(forward-line 1))
-	       (t
-		(goto-char pos))))
+	(setq pos (point))
+	;; We're there now, modulo comments and whitespace.
+	;; Try to be line oriented; position point after the next
+	;; newline that isn't inside a comment, but if we hit the
+	;; next declaration then we use the current point instead.
+	(while (and (not (bolp))
+		    (not (looking-at "\\s *$"))
+		    (c-forward-single-comment)))
+	(cond ((bolp))
+	      ((looking-at "\\s *$")
+	       (forward-line 1))
+	      (t
+	       (goto-char pos))))
 
-       (c-keep-region-active)
-       (= arg 0)))))
+      (c-keep-region-active)
+      (= arg 0))))
 
 (defun c-defun-name ()
   "Return the name of the current defun, or NIL if there isn't one.

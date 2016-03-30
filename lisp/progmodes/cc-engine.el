@@ -3472,6 +3472,9 @@ comment at the start of cc-engine.el for more info."
 (make-variable-buffer-local 'c-parse-state-state)
 (defun c-record-parse-state-state ()
   (setq c-parse-state-point (point))
+  (when (markerp (cdr (assq 'c-state-old-cpp-beg c-parse-state-state)))
+    (move-marker (cdr (assq 'c-state-old-cpp-beg c-parse-state-state)) nil)
+    (move-marker (cdr (assq 'c-state-old-cpp-end c-parse-state-state)) nil))
   (setq c-parse-state-state
 	(mapcar
 	 (lambda (arg)
