@@ -2865,7 +2865,7 @@ This is like `dired-recursive-delete-directory' for Tramp files."
 	  (narrow-to-region (point) (point))
 	  ;; We cannot use `insert-buffer-substring' because the Tramp
 	  ;; buffer changes its contents before insertion due to calling
-	  ;; `expand-file' and alike.
+	  ;; `expand-file-name' and alike.
 	  (insert
 	   (with-current-buffer (tramp-get-buffer v)
 	     (buffer-string)))
@@ -4865,7 +4865,7 @@ connection if a previous connection has died for some reason."
 	      (when (and p (processp p))
 		(delete-process p))
 	      (setenv "TERM" tramp-terminal-type)
-	      (setenv "LC_ALL" "en_US.utf8")
+	      (setenv "LC_ALL" (tramp-get-local-locale vec))
 	      (if (stringp tramp-histfile-override)
 		  (setenv "HISTFILE" tramp-histfile-override)
 		(if tramp-histfile-override
