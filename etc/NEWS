@@ -144,8 +144,8 @@ different group ID.
 ** CSS mode
 
 ---
-*** Support for completing attribute values using the 'completion-at-point'
-command.
+*** Support for completing attribute values and bang-rules using the
+'completion-at-point' command.
 
 
 * New Modes and Packages in Emacs 25.2

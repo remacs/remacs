@@ -64,6 +64,10 @@
   '("default" "global" "optional")
   "Additional identifiers that appear in the form !foo in SCSS.")
 
+(defvar css--bang-ids css-bang-ids
+  "List of bang-rules for the current mode.")
+(make-variable-buffer-local 'css--bang-ids)
+
 (defconst css-descriptor-ids
   '("ascent" "baseline" "bbox" "cap-height" "centerline" "definition-src"
     "descent" "font-family" "font-size" "font-stretch" "font-style"
@@ -600,9 +604,7 @@ cannot be completed sensibly: `angle', `element-reference',
   "Face to use for vendor-specific properties.")
 
 (defun css--font-lock-keywords (&optional sassy)
-  `((,(concat "!\\s-*"
-              (regexp-opt (append (if sassy scss-bang-ids)
-                                  css-bang-ids)))
+  `((,(concat "!\\s-*" (regexp-opt css--bang-ids))
      (0 font-lock-builtin-face))
     ;; Atrules keywords.  IDs not in css-at-ids are valid (ignored).
     ;; In fact the regexp should probably be
@@ -732,6 +734,14 @@ cannot be completed sensibly: `angle', `element-reference',
         (when (memq (char-before) '(?\{ ?\;))
           (list start pos css-property-ids))))))
 
+(defun css--complete-bang-rule ()
+  "Complete bang-rule at point."
+  (save-excursion
+    (let ((pos (point)))
+      (skip-chars-backward "-[:alnum:]")
+      (when (eq (char-before) ?\!)
+        (list (point) pos css--bang-ids)))))
+
 (defun css--complete-pseudo-element-or-class ()
   "Complete pseudo-element or pseudo-class at point."
   (save-excursion
@@ -798,8 +808,9 @@ the string PROPERTY."
 (defun css-completion-at-point ()
   "Complete current symbol at point.
 Currently supports completion of CSS properties, property values,
-pseudo-elements, pseudo-classes, and at-rules."
+pseudo-elements, pseudo-classes, at-rules, and bang-rules."
   (or (css--complete-property)
+      (css--complete-bang-rule)
       (css--complete-property-value)
       (css--complete-pseudo-element-or-class)
       (css--complete-at-rule)))
@@ -937,7 +948,7 @@ pseudo-elements, pseudo-classes, and at-rules."
     (modify-syntax-entry ?$ "'" st)
     st))
 
-(defvar scss-font-lock-keywords
+(defun scss-font-lock-keywords ()
   (append `((,(concat "$" css-ident-re) (0 font-lock-variable-name-face)))
           (css--font-lock-keywords 'sassy)
           `((,(concat "@mixin[ \t]+\\(" css-ident-re "\\)[ \t]*(")
@@ -958,7 +969,9 @@ pseudo-elements, pseudo-classes, and at-rules."
   (setq-local comment-continue " *")
   (setq-local comment-start-skip "/[*/]+[ \t]*")
   (setq-local comment-end-skip "[ \t]*\\(?:\n\\|\\*+/\\)")
-  (setq-local font-lock-defaults '(scss-font-lock-keywords nil t)))
+  (setq-local css--bang-ids (append css-bang-ids scss-bang-ids))
+  (setq-local font-lock-defaults
+              (list (scss-font-lock-keywords) nil t)))
 
 (provide 'css-mode)
 ;;; css-mode.el ends here
