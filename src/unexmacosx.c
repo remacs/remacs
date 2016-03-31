@@ -103,9 +103,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stdio.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <mach/mach.h>
+#include <mach/vm_map.h>
 #include <mach-o/loader.h>
 #include <mach-o/reloc.h>
 #ifdef HAVE_MALLOC_MALLOC_H
@@ -217,10 +219,27 @@ unexec_read (void *dest, size_t n)
 static int
 unexec_write (off_t dest, const void *src, size_t count)
 {
+  task_t task = mach_task_self();
+  if (task == MACH_PORT_NULL || task == MACH_PORT_DEAD)
+    return false;
+
   if (lseek (outfd, dest, SEEK_SET) != dest)
     return 0;
 
-  return write (outfd, src, count) == count;
+  /* We use the Mach virtual memory API to read our process memory
+     because using src directly would be undefined behavior and fails
+     under Address Sanitizer.  */
+  bool success = false;
+  vm_offset_t data;
+  mach_msg_type_number_t data_count;
+  if (vm_read (task, (uintptr_t) src, count, &data, &data_count)
+      == KERN_SUCCESS)
+    {
+      success =
+        write (outfd, (const void *) (uintptr_t) data, data_count) == count;
+      vm_deallocate (task, data, data_count);
+    }
+  return success;
 }
 
 /* Write COUNT bytes of zeros to outfd starting at offset DEST.
