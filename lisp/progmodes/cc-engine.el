@@ -5812,10 +5812,11 @@ comment at the start of cc-engine.el for more info."
 		nil
 	      (and (looking-at c-keywords-regexp)
 		   (c-forward-keyword-clause 1))))
-     (when (memq res '(t known found prefix))
-       ,(when (eq type 'ref)
-	  `(when c-record-type-identifiers
-	     (c-record-ref-id c-last-identifier-range)))
+     (when (memq res '(t known found prefix maybe))
+       (when c-record-type-identifiers
+	 ,(if (eq type 'type)
+	      `(c-record-type-id c-last-identifier-range)
+	    `(c-record-ref-id c-last-identifier-range)))
        t)))
 
 (defmacro c-forward-id-comma-list (type update-safe-pos)
@@ -6371,13 +6372,15 @@ comment at the start of cc-engine.el for more info."
 		    (eq (char-after) ?<))
 	       ;; Maybe an angle bracket arglist.
 	       (when (let ((c-record-type-identifiers t)
-			   (c-record-found-types t))
+			   (c-record-found-types t)
+			   (c-last-identifier-range))
 		       (c-forward-<>-arglist nil))
 
-		 (c-add-type start (1+ pos))
 		 (c-forward-syntactic-ws)
-		 (setq pos (point)
-		       c-last-identifier-range nil)
+		 (unless (eq (char-after) ?\()
+		   (setq c-last-identifier-range nil)
+		   (c-add-type start (1+ pos)))
+		 (setq pos (point))
 
 		 (if (and c-opt-identifier-concat-key
 			  (looking-at c-opt-identifier-concat-key))
@@ -6391,7 +6394,8 @@ comment at the start of cc-engine.el for more info."
 		       (c-forward-syntactic-ws)
 		       t)
 
-		   (when (and c-record-type-identifiers id-start)
+		   (when (and c-record-type-identifiers id-start
+			      (not (eq (char-after) ?\()))
 		     (c-record-type-id (cons id-start id-end)))
 		   (setq res 'template)
 		   nil)))
@@ -6565,9 +6569,18 @@ comment at the start of cc-engine.el for more info."
 			   ;; It's an identifier that might be a type.
 			   'maybe))))
 	    ((eq name-res 'template)
-	     ;; A template is a type.
+	     ;; A template is sometimes a type.
 	     (goto-char id-end)
-	     (setq res t))
+	     (c-forward-syntactic-ws)
+	     (setq res
+		   (if (eq (char-after) ?\()
+		       (if (c-check-type id-start id-end)
+			   ;; It's an identifier that has been used as
+			   ;; a type somewhere else.
+			   'found
+			 ;; It's an identifier that might be a type.
+			 'maybe)
+		     t)))
 	    (t
 	     ;; Otherwise it's an operator identifier, which is not a type.
 	     (goto-char start)
