@@ -588,13 +588,21 @@ module_set_user_finalizer (emacs_env *env, emacs_value uptr,
 }
 
 static void
+check_vec_index (Lisp_Object lvec, ptrdiff_t i)
+{
+  CHECK_VECTOR (lvec);
+  if (! (0 <= i && i < ASIZE (lvec)))
+    args_out_of_range_3 (make_fixnum_or_float (i),
+			 make_number (0), make_number (ASIZE (lvec) - 1));
+}
+
+static void
 module_vec_set (emacs_env *env, emacs_value vec, ptrdiff_t i, emacs_value val)
 {
   /* FIXME: This function should return bool because it can fail.  */
   MODULE_FUNCTION_BEGIN ();
   Lisp_Object lvec = value_to_lisp (vec);
-  CHECK_VECTOR (lvec);
-  CHECK_RANGED_INTEGER (make_number (i), 0, ASIZE (lvec) - 1);
+  check_vec_index (lvec, i);
   ASET (lvec, i, value_to_lisp (val));
 }
 
@@ -603,8 +611,7 @@ module_vec_get (emacs_env *env, emacs_value vec, ptrdiff_t i)
 {
   MODULE_FUNCTION_BEGIN (module_nil);
   Lisp_Object lvec = value_to_lisp (vec);
-  CHECK_VECTOR (lvec);
-  CHECK_RANGED_INTEGER (make_number (i), 0, ASIZE (lvec) - 1);
+  check_vec_index (lvec, i);
   return lisp_to_value (AREF (lvec, i));
 }
 
