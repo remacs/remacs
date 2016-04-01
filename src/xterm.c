@@ -7895,10 +7895,6 @@ handle_one_xevent (struct x_display_info *dpyinfo,
             /* Force a redisplay sooner or later to update the
 	       frame titles in case this is the second frame.  */
             record_asynch_buffer_change ();
-
-#ifdef USE_GTK
-          xg_frame_resized (f, -1, -1);
-#endif
         }
       goto OTHER;
 
