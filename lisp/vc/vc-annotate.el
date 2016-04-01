@@ -432,10 +432,11 @@ should be applied to the background or to the foreground."
     (with-output-to-temp-buffer temp-buffer-name
       (let ((backend (or vc-bk (vc-backend file)))
 	    (coding-system-for-read buffer-file-coding-system))
-        ;; On DOS/Windows, "svn annotate" will produce CRLF EOLs even
-        ;; if the original file has Unix EOLs, which will show ^M
-        ;; characters in the Annotate buffer.  Prevent that by forcing
-        ;; DOS EOL decoding.
+        ;; For a VC backend running on DOS/Windows, it's normal to
+        ;; produce CRLF EOLs even if the original file has Unix EOLs,
+        ;; which will show ^M characters in the Annotate buffer.  (One
+        ;; known case in point is "svn annotate".)  Prevent that by
+        ;; forcing DOS EOL decoding.
         (if (memq system-type '(windows-nt ms-dos))
             (setq coding-system-for-read
                   (coding-system-change-eol-conversion coding-system-for-read
