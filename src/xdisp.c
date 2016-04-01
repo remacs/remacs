@@ -25828,6 +25828,7 @@ append_glyph (struct it *it)
       glyph->object = it->object;
       if (it->pixel_width > 0)
 	{
+	  eassert (it->pixel_width <= SHRT_MAX);
 	  glyph->pixel_width = it->pixel_width;
 	  glyph->padding_p = false;
 	}
@@ -25908,6 +25909,7 @@ append_composite_glyph (struct it *it)
 	}
       glyph->charpos = it->cmp_it.charpos;
       glyph->object = it->object;
+      eassert (it->pixel_width <= SHRT_MAX);
       glyph->pixel_width = it->pixel_width;
       glyph->ascent = it->ascent;
       glyph->descent = it->descent;
@@ -26117,7 +26119,7 @@ produce_image_glyph (struct it *it)
 	{
 	  glyph->charpos = CHARPOS (it->position);
 	  glyph->object = it->object;
-	  glyph->pixel_width = it->pixel_width;
+	  glyph->pixel_width = clip_to_bounds (-1, it->pixel_width, SHRT_MAX);
 	  glyph->ascent = glyph_ascent;
 	  glyph->descent = it->descent;
 	  glyph->voffset = it->voffset;
@@ -26221,7 +26223,7 @@ produce_xwidget_glyph (struct it *it)
 	{
 	  glyph->charpos = CHARPOS (it->position);
 	  glyph->object = it->object;
-	  glyph->pixel_width = it->pixel_width;
+	  glyph->pixel_width = clip_to_bounds (-1, it->pixel_width, SHRT_MAX);
 	  glyph->ascent = glyph_ascent;
 	  glyph->descent = it->descent;
 	  glyph->voffset = it->voffset;
@@ -26307,7 +26309,9 @@ append_stretch_glyph (struct it *it, Lisp_Object object,
 	}
       glyph->charpos = CHARPOS (it->position);
       glyph->object = object;
-      glyph->pixel_width = width;
+      /* FIXME: It would be better to use TYPE_MAX here, but
+	 __typeof__ is not portable enough...  */
+      glyph->pixel_width = clip_to_bounds (-1, width, SHRT_MAX);
       glyph->ascent = ascent;
       glyph->descent = height - ascent;
       glyph->voffset = it->voffset;
@@ -26758,6 +26762,7 @@ append_glyphless_glyph (struct it *it, int face_id, bool for_no_font, int len,
 	}
       glyph->charpos = CHARPOS (it->position);
       glyph->object = it->object;
+      eassert (it->pixel_width <= SHRT_MAX);
       glyph->pixel_width = it->pixel_width;
       glyph->ascent = it->ascent;
       glyph->descent = it->descent;

@@ -1676,6 +1676,7 @@ append_composite_glyph (struct it *it)
 	  glyph = it->glyph_row->glyphs[it->area];
 	}
       glyph->type = COMPOSITE_GLYPH;
+      eassert (it->pixel_width <= SHRT_MAX);
       glyph->pixel_width = it->pixel_width;
       glyph->u.cmp.id = it->cmp_it.id;
       if (it->cmp_it.ch < 0)
