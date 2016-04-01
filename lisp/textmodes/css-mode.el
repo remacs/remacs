@@ -56,6 +56,16 @@
   '("charset" "font-face" "import" "media" "namespace" "page")
   "Identifiers that appear in the form @foo.")
 
+(defconst scss-at-ids
+  '("at-root" "content" "debug" "each" "else" "else if" "error" "extend"
+    "for" "function" "if" "import" "include" "mixin" "return" "warn"
+    "while")
+  "Additional identifiers that appear in the form @foo in SCSS.")
+
+(defvar css--at-ids css-at-ids
+  "List of at-rules for the current mode.")
+(make-variable-buffer-local 'css--at-ids)
+
 (defconst css-bang-ids
   '("important")
   "Identifiers that appear in the form !foo.")
@@ -759,7 +769,7 @@ cannot be completed sensibly: `angle', `element-reference',
     (let ((pos (point)))
       (skip-chars-backward "-[:alnum:]")
       (when (eq (char-before) ?\@)
-        (list (point) pos css-at-ids)))))
+        (list (point) pos css--at-ids)))))
 
 (defvar css--property-value-cache
   (make-hash-table :test 'equal :size (length css-property-alist))
@@ -969,6 +979,7 @@ pseudo-elements, pseudo-classes, at-rules, and bang-rules."
   (setq-local comment-continue " *")
   (setq-local comment-start-skip "/[*/]+[ \t]*")
   (setq-local comment-end-skip "[ \t]*\\(?:\n\\|\\*+/\\)")
+  (setq-local css--at-ids (append css-at-ids scss-at-ids))
   (setq-local css--bang-ids (append css-bang-ids scss-bang-ids))
   (setq-local font-lock-defaults
               (list (scss-font-lock-keywords) nil t)))
