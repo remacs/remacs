@@ -3724,7 +3724,6 @@ make_save_ptr_int (void *a, ptrdiff_t b)
   return val;
 }
 
-#if ! (defined USE_X_TOOLKIT || defined USE_GTK)
 Lisp_Object
 make_save_ptr_ptr (void *a, void *b)
 {
@@ -3735,7 +3734,6 @@ make_save_ptr_ptr (void *a, void *b)
   p->data[1].pointer = b;
   return val;
 }
-#endif
 
 Lisp_Object
 make_save_funcptr_ptr_obj (void (*a) (void), void *b, Lisp_Object c)

@@ -2529,7 +2529,7 @@ read_char (int commandflag, Lisp_Object map,
   if (KEYMAPP (map) && INTERACTIVE
       && !NILP (prev_event) && ! EVENT_HAS_PARAMETERS (prev_event)
       /* Don't bring up a menu if we already have another event.  */
-      && NILP (Vunread_command_events)
+      && !CONSP (Vunread_command_events)
       && !detect_input_pending_run_timers (0))
     {
       c = read_char_minibuf_menu_prompt (commandflag, map);
@@ -2660,7 +2660,7 @@ read_char (int commandflag, Lisp_Object map,
       && !EQ (XCAR (prev_event), Qmenu_bar)
       && !EQ (XCAR (prev_event), Qtool_bar)
       /* Don't bring up a menu if we already have another event.  */
-      && NILP (Vunread_command_events))
+      && !CONSP (Vunread_command_events))
     {
       c = read_char_x_menu_prompt (map, prev_event, used_mouse_menu);
 
@@ -9877,7 +9877,7 @@ clear_input_pending (void)
 bool
 requeued_events_pending_p (void)
 {
-  return (!NILP (Vunread_command_events));
+  return (CONSP (Vunread_command_events));
 }
 
 DEFUN ("input-pending-p", Finput_pending_p, Sinput_pending_p, 0, 1, 0,
@@ -9888,7 +9888,7 @@ if there is a doubt, the value is t.
 If CHECK-TIMERS is non-nil, timers that are ready to run will do so.  */)
   (Lisp_Object check_timers)
 {
-  if (!NILP (Vunread_command_events)
+  if (CONSP (Vunread_command_events)
       || !NILP (Vunread_post_input_method_events)
       || !NILP (Vunread_input_method_events))
     return (Qt);

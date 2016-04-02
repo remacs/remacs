@@ -31386,8 +31386,11 @@ Value is a number or a cons (WIDTH-DPI . HEIGHT-DPI).  */);
 	       Vtruncate_partial_width_windows,
     doc: /* Non-nil means truncate lines in windows narrower than the frame.
 For an integer value, truncate lines in each window narrower than the
-full frame width, provided the window width is less than that integer;
-otherwise, respect the value of `truncate-lines'.
+full frame width, provided the total window width in column units is less
+than that integer; otherwise, respect the value of `truncate-lines'.
+The total width of the window is as returned by `window-total-width', it
+includes the fringes, the continuation and truncation glyphs, the
+display margins (if any), and the scroll bar
 
 For any other non-nil value, truncate lines in all windows that do
 not span the full frame width.

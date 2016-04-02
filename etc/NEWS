@@ -321,6 +321,12 @@ command line when 'initial-buffer-choice' is non-nil.
 ** The value of 'initial-scratch-message' is now treated as a doc string
 and can contain escape sequences for command keys, quotes, and the like.
 
+---
+** The default height of GUI frames was enlarged.
+This is so there's enough space in the initial window to display the
+optional text about recovering crashes sessions, without losing the
+splash image display.
+
 
 * Changes in Emacs 25.1
 
@@ -1695,7 +1701,8 @@ symbol-function was changed not to signal 'void-function' any more.
 *** As a consequence, the second arg of 'indirect-function' is now obsolete.
 
 +++
-** Comint, term, and compile do not set the EMACS env var any more.
+** Although comint, term, and compile still set the EMACS variable,
+this is now considered deprecated and will be removed in a future release.
 Use the INSIDE_EMACS environment variable instead.
 
 ** 'C-up', 'C-down', 'C-left' and 'C-right' are now defined in term
@@ -2239,6 +2246,16 @@ frames.
 *** New minor mode 'window-divider-mode' and options
 'window-divider-default-places', 'window-divider-default-bottom-width'
 and 'window-divider-default-right-width'.
+
++++
+*** The window displaying the '*Completions*' buffer with minibuffer
+completion candidates is now shown at the bottom of the selected
+frame.  The size of that window is always as large as required to
+display all the candidates, except when limited by the minimum size
+of the other windows on that frame; those other windows are resized
+to provide space for the '*Completions*' display.  The Emacs manual
+describes how to customize 'display-buffer-alist' to get back the old
+behavior, see the node "Temporary Displays" there.
 
 ---
 ** Tearoff menus and detachable toolbars for Gtk+ have been removed.

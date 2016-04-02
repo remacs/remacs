@@ -1835,7 +1835,7 @@ variables.")
                 'display-buffer-below-selected))
 	    ,(if temp-buffer-resize-mode
 		 '(window-height . resize-temp-buffer-window)
-	       '(window-height . shrink-window-if-larger-than-buffer))
+	       '(window-height . fit-window-to-buffer))
 	    ,(when temp-buffer-resize-mode
 	       '(preserve-size . (nil . t))))
           nil
