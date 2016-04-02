@@ -1771,6 +1771,11 @@ rule.  The affected functions are 'current-time-string',
 function 'encode-time', which already accepted a simple time zone rule
 argument, has been extended to accept all the new forms.
 
+*** Incompatible change in the third argument of 'format-time-string'.
+Previously, any non-nil argument was interpreted as a UTC time zone.
+This is no longer true; packages that want UTC time zone should pass t
+as the third argument.
+
 *** Time-related functions now consistently accept numbers
 (representing seconds since the epoch) and nil (representing the
 current time) as well as the usual list-of-integer representation.
