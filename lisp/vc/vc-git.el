@@ -853,7 +853,8 @@ If SHORTLOG is non-nil, use a short format based on `vc-git-root-log-format'.
 \(This requires at least Git version 1.5.6, for the --graph option.)
 If START-REVISION is non-nil, it is the newest revision to show.
 If LIMIT is non-nil, show no more than this many entries."
-  (let ((coding-system-for-read vc-git-commits-coding-system))
+  (let ((coding-system-for-read
+         (or coding-system-for-read vc-git-commits-coding-system)))
     ;; `vc-do-command' creates the buffer, but we need it before running
     ;; the command.
     (vc-setup-buffer buffer)
@@ -1385,8 +1386,10 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
   "A wrapper around `vc-do-command' for use in vc-git.el.
 The difference to vc-do-command is that this function always invokes
 `vc-git-program'."
-  (let ((coding-system-for-read vc-git-commits-coding-system)
-	(coding-system-for-write vc-git-commits-coding-system))
+  (let ((coding-system-for-read
+         (or coding-system-for-read vc-git-commits-coding-system))
+	(coding-system-for-write
+         (or coding-system-for-write vc-git-commits-coding-system)))
     (apply 'vc-do-command (or buffer "*vc*") okstatus vc-git-program
 	   ;; http://debbugs.gnu.org/16897
 	   (unless (and (not (cdr-safe file-or-list))
