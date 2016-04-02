@@ -2960,6 +2960,9 @@ function with `&rest' args, or `unevalled' for a special form.  */)
 	function = indirect_function (function);
     }
 
+  if (CONSP (function) && EQ (XCAR (function), Qmacro))
+    function = XCDR (function);
+
   if (SUBRP (function))
     result = Fsubr_arity (function);
   else if (COMPILEDP (function))
