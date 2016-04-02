@@ -2191,9 +2191,6 @@ This function returns the horizontal position of point, measured in
 columns, counting from 0 at the left margin.  The column position is the
 sum of the widths of all the displayed representations of the characters
 between the start of the current line and point.
-
-For an example of using @code{current-column}, see the description of
-@code{count-lines} in @ref{Text Lines}.
 @end defun
 
 @deffn Command move-to-column column &optional force
