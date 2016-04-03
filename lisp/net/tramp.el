@@ -146,7 +146,7 @@ use for the remote host."
   :type '(file :must-match t))
 
 (defcustom tramp-encoding-command-switch
-  (if (string-match "cmd\\.exe" tramp-encoding-shell)
+  (if (string-match "cmd\\.exe" (or tramp-encoding-shell ""))
       "/c"
     "-c")
   "Use this switch together with `tramp-encoding-shell' for local commands.
@@ -155,7 +155,7 @@ See the variable `tramp-encoding-shell' for more information."
   :type 'string)
 
 (defcustom tramp-encoding-command-interactive
-  (unless (string-match "cmd\\.exe" tramp-encoding-shell) "-i")
+  (unless (string-match "cmd\\.exe" (or tramp-encoding-shell "")) "-i")
   "Use this switch together with `tramp-encoding-shell' for interactive shells.
 See the variable `tramp-encoding-shell' for more information."
   :version "24.1"
