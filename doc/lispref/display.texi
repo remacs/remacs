@@ -5804,17 +5804,16 @@ xwidget object, and then use that object as the display specifier
 in a @code{display} text or overlay property (@pxref{Display
 Property}).
 
-@defun make-xwidget beg end type title width height arguments &optional buffer
-This creates an xwidget object between @var{beg} and @var{end}, buffer
-positions in @var{buffer}, and returns the new object.  If
+@defun make-xwidget type title width height arguments &optional buffer
+This creates and returns an xwidget object.  If
 @var{buffer} is omitted or @code{nil}, it defaults to the current
 buffer.  If @var{buffer} names a buffer that doesn't exist, it will be
 created.  The @var{type} identifies the type of the xwidget component,
 it can be one of the following:
 
 @table @code
-@item webkit-osr
-The WebKit OSR (@dfn{on-stack replacement}) component.
+@item webkit
+The WebKit component.
 @end table
 
 The @var{width} and @var{height} arguments specify the widget size in

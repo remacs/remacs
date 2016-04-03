@@ -95,6 +95,12 @@ Foobar
     console.log(num);
   });
 
+var arr = [
+  -1, 2,
+  -3, 4 +
+    -5
+];
+
 // Local Variables:
 // indent-tabs-mode: nil
 // js-indent-level: 2

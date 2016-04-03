@@ -914,7 +914,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;;
   ;; Fontify types and references in names containing angle bracket
   ;; arglists from the point to LIMIT.  Note that
-  ;; `c-font-lock-declarations' already has handled many of them.
+  ;; `c-font-lock-declarations' has already handled many of them.
   ;;
   ;; This function might do hidden buffer changes.
 
@@ -976,11 +976,12 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		    (when (and c-opt-identifier-concat-key
 			       (not (get-text-property id-start 'face)))
 		      (c-forward-syntactic-ws)
-		      (if (looking-at c-opt-identifier-concat-key)
-			  (c-put-font-lock-face id-start id-end
-						c-reference-face-name)
-			(c-put-font-lock-face id-start id-end
-					      'font-lock-type-face)))))
+		      (cond ((looking-at c-opt-identifier-concat-key)
+			     (c-put-font-lock-face id-start id-end
+						c-reference-face-name))
+			    ((eq (char-after) ?\())
+			    (t (c-put-font-lock-face id-start id-end
+					      'font-lock-type-face))))))
 
 		(goto-char pos)))
 	  (goto-char pos)))))

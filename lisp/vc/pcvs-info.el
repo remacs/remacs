@@ -465,7 +465,7 @@ DIR can also be a file."
 	       ((equal date "Result of merge") (setq subtype 'MERGED))
 	       ((let ((mtime (nth 5 (file-attributes (concat dir f))))
 		      (system-time-locale "C"))
-		  (setq timestamp (format-time-string "%c" mtime 'utc))
+		  (setq timestamp (format-time-string "%c" mtime t))
 		  ;; Solaris sometimes uses "Wed Sep 05", not "Wed Sep  5".
 		  ;; See "grep '[^a-z_]ctime' cvs/src/*.c" for reference.
 		  (if (= (aref timestamp 8) ?0)

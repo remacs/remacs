@@ -1402,25 +1402,41 @@ been put there by c-put-char-property.  POINT remains unchanged."
 	 (c-set-cpp-delimiters ,beg ,end)))))
 
 (defmacro c-self-bind-state-cache (&rest forms)
-  ;; Bind the state cache to itself and execute the FORMS.  It is assumed that no
-  ;; buffer changes will happen in FORMS, and no hidden buffer changes which could
-  ;; affect the parsing will be made by FORMS.
-  `(let ((c-state-cache (copy-tree c-state-cache))
-	 (c-state-cache-good-pos c-state-cache-good-pos)
-	 ;(c-state-nonlit-pos-cache (copy-tree c-state-nonlit-pos-cache))
-	 ;(c-state-nonlit-pos-cache-limit c-state-nonlit-pos-cache-limit)
-	 ;(c-state-semi-nonlit-pos-cache (copy-tree c-state-semi-nonlit-pos-cache))
-	 ;(c-state-semi-nonlit-pos-cache-limit c-state-semi-nonlit-pos-cache)
-	 (c-state-brace-pair-desert (copy-tree c-state-brace-pair-desert))
-	 (c-state-point-min c-state-point-min)
-	 (c-state-point-min-lit-type c-state-point-min-lit-type)
-	 (c-state-point-min-lit-start c-state-point-min-lit-start)
-	 (c-state-min-scan-pos c-state-min-scan-pos)
-	 (c-state-old-cpp-beg c-state-old-cpp-beg)
-	 (c-state-old-cpp-end c-state-old-cpp-end))
-     ,@forms))
+  ;; Bind the state cache to itself and execute the FORMS.  Return the result
+  ;; of the last FORM executed.  It is assumed that no buffer changes will
+  ;; happen in FORMS, and no hidden buffer changes which could affect the
+  ;; parsing will be made by FORMS.
+  `(let* ((c-state-cache (copy-tree c-state-cache))
+	  (c-state-cache-good-pos c-state-cache-good-pos)
+	  ;(c-state-nonlit-pos-cache (copy-tree c-state-nonlit-pos-cache))
+          ;(c-state-nonlit-pos-cache-limit c-state-nonlit-pos-cache-limit)
+          ;(c-state-semi-nonlit-pos-cache (copy-tree c-state-semi-nonlit-pos-cache))
+          ;(c-state-semi-nonlit-pos-cache-limit c-state-semi-nonlit-pos-cache)
+	  (c-state-brace-pair-desert (copy-tree c-state-brace-pair-desert))
+	  (c-state-point-min c-state-point-min)
+	  (c-state-point-min-lit-type c-state-point-min-lit-type)
+	  (c-state-point-min-lit-start c-state-point-min-lit-start)
+	  (c-state-min-scan-pos c-state-min-scan-pos)
+	  (c-state-old-cpp-beg-marker (if (markerp c-state-old-cpp-beg-marker)
+					  (copy-marker c-state-old-cpp-beg-marker)
+					c-state-old-cpp-beg-marker))
+	  (c-state-old-cpp-beg (if (markerp c-state-old-cpp-beg)
+				   c-state-old-cpp-beg-marker
+				 c-state-old-cpp-beg))
+	  (c-state-old-cpp-end-marker (if (markerp c-state-old-cpp-end-marker)
+					  (copy-marker c-state-old-cpp-end-marker)
+					c-state-old-cpp-end-marker))
+	  (c-state-old-cpp-end (if (markerp c-state-old-cpp-end)
+				   c-state-old-cpp-end-marker
+				 c-state-old-cpp-end))
+	  (c-parse-state-state c-parse-state-state))
+     (prog1
+	 (progn ,@forms)
+       (if (markerp c-state-old-cpp-beg-marker)
+	   (move-marker c-state-old-cpp-beg-marker nil))
+       (if (markerp c-state-old-cpp-end-marker)
+	   (move-marker c-state-old-cpp-end-marker nil)))))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The following macros are to be used only in `c-parse-state' and its
 ;; subroutines.  Their main purpose is to simplify the handling of C++/Java

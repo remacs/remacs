@@ -286,7 +286,7 @@ specifiers `%Z' and `%z' will be replaced with a numeric form. "
 	  (setq st nd))
 	(push (substring format-string st) rest)
 	(format-time-string (apply 'concat (nreverse rest)) time))
-    (format-time-string format-string time tz)))
+    (format-time-string format-string time t)))
 
 (provide 'gmm-utils)
 

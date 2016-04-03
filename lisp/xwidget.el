@@ -42,7 +42,7 @@ The possible values are: `native' or `image'."
   :type '(choice (const native) (const image)))
 
 (declare-function make-xwidget "xwidget.c"
-                  (beg end type title width height arguments &optional buffer))
+                  (type title width height arguments &optional buffer))
 (declare-function xwidget-set-adjustment "xwidget.c"
                   (xwidget axis relative value))
 (declare-function xwidget-buffer "xwidget.c" (xwidget))
@@ -66,8 +66,7 @@ See `make-xwidget' for the possible TYPE values.
 The usage of optional argument ARGS depends on the xwidget.
 This returns the result of `make-xwidget'."
   (goto-char pos)
-  (let ((id (make-xwidget (point) (point)
-                          type title width height args)))
+  (let ((id (make-xwidget type title width height args)))
     (put-text-property (point) (+ 1 (point))
                        'display (list 'xwidget ':xwidget id))
     id))
@@ -454,7 +453,7 @@ For example, use this to display an anchor."
     (setq xwidget-webkit-last-session-buffer (switch-to-buffer
                                               (get-buffer-create bufname)))
     (insert " 'a' adjusts the xwidget size.")
-    (setq xw (xwidget-insert 1 'webkit-osr  bufname 1000 1000))
+    (setq xw (xwidget-insert 1 'webkit  bufname 1000 1000))
     (xwidget-put xw 'callback 'xwidget-webkit-callback)
     (xwidget-webkit-mode)
     (xwidget-webkit-goto-uri (xwidget-webkit-last-session) url)))
