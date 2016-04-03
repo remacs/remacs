@@ -57,6 +57,10 @@ has been added.  They are: 'file-attribute-type',
 ** The new function 'buffer-hash' has been added, and can be used to
 compute a fash, non-consing hash of the contents of a buffer.
 
++++
+** The grep mode now has a command history that you can access via the
+`r' and `l' commands.
+
 ---
 ** 'fill-paragraph' no longer marks the buffer as changed unless it
 actually changed something.
@@ -1807,6 +1811,7 @@ behavior, set 'diff-switches' to '-c'.
 dynamically.  Any third-party code that changes these templates should
 be updated accordingly.
 
++++
 ** The grep/rgrep/lgrep functions will now ask about saving files
 before running.  This is controlled by the 'grep-save-buffers'
 variable.
