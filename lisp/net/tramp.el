@@ -120,8 +120,8 @@ This setting has precedence over `auto-save-file-name-transforms'."
 		 (directory :tag "Auto save directory name")))
 
 (defcustom tramp-encoding-shell
-  (if (memq system-type '(windows-nt))
-      (getenv "COMSPEC")
+  (if (boundp 'w32-shell-name)
+      (symbol-value 'w32-shell-name)
     "/bin/sh")
   "Use this program for encoding and decoding commands on the local host.
 This shell is used to execute the encoding and decoding command on the
@@ -145,17 +145,14 @@ use for the remote host."
   :group 'tramp
   :type '(file :must-match t))
 
-(defcustom tramp-encoding-command-switch
-  (if (string-match "cmd\\.exe" (or tramp-encoding-shell ""))
-      "/c"
-    "-c")
+(defcustom tramp-encoding-command-switch (if (boundp 'w32-shell-name) "/c" "-c")
   "Use this switch together with `tramp-encoding-shell' for local commands.
 See the variable `tramp-encoding-shell' for more information."
   :group 'tramp
   :type 'string)
 
 (defcustom tramp-encoding-command-interactive
-  (unless (string-match "cmd\\.exe" (or tramp-encoding-shell "")) "-i")
+  (unless (boundp 'w32-shell-name) "-i")
   "Use this switch together with `tramp-encoding-shell' for interactive shells.
 See the variable `tramp-encoding-shell' for more information."
   :version "24.1"
