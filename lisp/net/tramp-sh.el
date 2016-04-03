@@ -4773,7 +4773,7 @@ connection if a previous connection has died for some reason."
 	      (when (and p (processp p))
 		(delete-process p))
 	      (setenv "TERM" tramp-terminal-type)
-	      (setenv "LC_ALL" "en_US.utf8")
+	      (setenv "LC_ALL" (tramp-get-local-locale vec))
 	      (if (stringp tramp-histfile-override)
 		  (setenv "HISTFILE" tramp-histfile-override)
 		(if tramp-histfile-override

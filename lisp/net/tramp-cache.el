@@ -223,8 +223,10 @@ This is suppressed for temporary buffers."
 ;;;###tramp-autoload
 (defun tramp-get-connection-property (key property default)
   "Get the named PROPERTY for the connection.
-KEY identifies the connection, it is either a process or a vector.
-If the value is not set for the connection, returns DEFAULT."
+KEY identifies the connection, it is either a process or a
+vector.  A special case is nil, which is used to cache connection
+properties of the local machine.  If the value is not set for the
+connection, returns DEFAULT."
   ;; Unify key by removing localname and hop from vector.  Work with a
   ;; copy in order to avoid side effects.
   (when (vectorp key)
@@ -241,8 +243,10 @@ If the value is not set for the connection, returns DEFAULT."
 ;;;###tramp-autoload
 (defun tramp-set-connection-property (key property value)
   "Set the named PROPERTY of a connection to VALUE.
-KEY identifies the connection, it is either a process or a vector.
-PROPERTY is set persistent when KEY is a vector."
+KEY identifies the connection, it is either a process or a
+vector.  A special case is nil, which is used to cache connection
+properties of the local machine.  PROPERTY is set persistent when
+KEY is a vector."
   ;; Unify key by removing localname and hop from vector.  Work with a
   ;; copy in order to avoid side effects.
   (when (vectorp key)
@@ -258,13 +262,17 @@ PROPERTY is set persistent when KEY is a vector."
 ;;;###tramp-autoload
 (defun tramp-connection-property-p (key property)
   "Check whether named PROPERTY of a connection is defined.
-KEY identifies the connection, it is either a process or a vector."
+KEY identifies the connection, it is either a process or a
+vector.  A special case is nil, which is used to cache connection
+properties of the local machine."
   (not (eq (tramp-get-connection-property key property 'undef) 'undef)))
 
 ;;;###tramp-autoload
 (defun tramp-flush-connection-property (key)
   "Remove all properties identified by KEY.
-KEY identifies the connection, it is either a process or a vector."
+KEY identifies the connection, it is either a process or a
+vector.  A special case is nil, which is used to cache connection
+properties of the local machine."
   ;; Unify key by removing localname and hop from vector.  Work with a
   ;; copy in order to avoid side effects.
   (when (vectorp key)

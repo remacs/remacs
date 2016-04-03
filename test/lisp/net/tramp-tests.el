@@ -2033,9 +2033,12 @@ Use the `ls' command."
 
 (defun tramp--test-utf8 ()
   "Perform the test in `tramp-test32-utf8*'."
-  (let ((coding-system-for-read 'utf-8)
-	(coding-system-for-write 'utf-8)
-	(file-name-coding-system 'utf-8))
+  (let* ((utf8 (if (and (eq system-type 'darwin)
+			(memq 'utf-8-hfs (coding-system-list)))
+		   'utf-8-hfs 'utf-8))
+	 (coding-system-for-read utf8)
+	 (coding-system-for-write utf8)
+	 (file-name-coding-system utf8))
     (tramp--test-check-files
      (unless (tramp--test-hpux-p) "Γυρίστε το Γαλαξία με Ώτο Στοπ")
      (unless (tramp--test-hpux-p)
