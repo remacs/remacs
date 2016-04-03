@@ -390,13 +390,6 @@ is called with the file name as the parameter and should return
 non-nil if the buffer is to be saved), and any other non-@code{nil}
 value means that all buffers should be saved without asking.
 
-  In addition to the normal compilation mode commands (for
-next/previous match and so on), two additional commands are available
-for accessing the @command{grep} command history.  @kbd{l}
-(@code{grep-backward-history}) will re-run successively the previous
-@command{grep} commands, and @kbd{r} (@code{grep-forward-history}
-will go ``forward'' in the command history.
-
 @findex grep-find
 @findex find-grep
   The command @kbd{M-x grep-find} (also available as @kbd{M-x

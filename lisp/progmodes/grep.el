@@ -271,8 +271,6 @@ See `compilation-error-screen-columns'"
     (define-key map "{" 'compilation-previous-file)
     (define-key map "}" 'compilation-next-file)
     (define-key map "\t" 'compilation-next-error)
-    (define-key map "r" 'grep-forward-history)
-    (define-key map "l" 'grep-backward-history)
     (define-key map [backtab] 'compilation-previous-error)
 
     ;; Set up the menu-bar
@@ -311,12 +309,6 @@ See `compilation-error-screen-columns'"
     (define-key map [menu-bar grep compilation-next-error]
       '(menu-item "Next Match" next-error
 		  :help "Visit the next match and corresponding location"))
-    (define-key map [menu-bar grep grep-backward-history]
-      '(menu-item "Previous Command" grep-backward-history
-		  :help "Run the previous grep command from the command history"))
-    (define-key map [menu-bar grep grep-forward-history]
-      '(menu-item "Next Command" grep-forward-history
-		  :help "Run the next grep command from the command history"))
     map)
   "Keymap for grep buffers.
 `compilation-minor-mode-map' is a cdr of this.")
@@ -752,43 +744,6 @@ This function is called from `compilation-filter-hook'."
        grep-error-screen-columns)
   (add-hook 'compilation-filter-hook 'grep-filter nil t))
 
-(defvar grep--command-history nil)
-(defvar grep--history-inhibit nil)
-(defvar grep--history-place 0)
-
-(defun grep--save-history (command)
-  (unless grep--history-inhibit
-    (push (cons default-directory command) grep--command-history)
-    (setq grep--history-place 0)
-    ;; Don't let the history grow without bounds.
-    (when (> (length grep--command-history) 100)
-      (setcdr (nthcdr 100 grep--command-history) nil))))
-
-(defun grep-forward-history ()
-  "Go to the next result in the grep command history.
-Also see `grep-backward-history'."
-  (interactive)
-  (let ((elem (and (> grep--history-place 0)
-                   (nth (1- grep--history-place) grep--command-history)))
-        (grep--history-inhibit t))
-    (unless elem
-      (error "Nothing further in the command history"))
-    (cl-decf grep--history-place)
-    (let ((default-directory (car elem)))
-      (grep (cdr elem)))))
-
-(defun grep-backward-history ()
-  "Go to the previous result in the grep command history.
-Also see `grep-forward-history'."
-  (interactive)
-  (let ((elem (nth (1+ grep--history-place) grep--command-history))
-        (grep--history-inhibit t))
-    (unless elem
-      (error "Nothing further in the command history"))
-    (cl-incf grep--history-place)
-    (let ((default-directory (car elem)))
-      (grep (cdr elem)))))
-
 (defun grep--save-buffers ()
   (when grep-save-buffers
     (save-some-buffers (and (not (eq grep-save-buffers 'ask))
@@ -825,7 +780,7 @@ list is empty)."
                                  (if current-prefix-arg default grep-command)
                                  'grep-history
                                  (if current-prefix-arg nil default))))))
-  (grep--save-history command-args)
+
   (grep--save-buffers)
   ;; Setting process-setup-function makes exit-message-function work
   ;; even when async processes aren't supported.
