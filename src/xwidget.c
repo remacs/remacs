@@ -156,27 +156,23 @@ webkit_navigation_policy_decision_requested_cb (WebKitWebView *,
 
 DEFUN ("make-xwidget",
        Fmake_xwidget, Smake_xwidget,
-       7, 8, 0,
-       doc: /* Make an xwidget from BEG to END of TYPE.
+       5, 6, 0,
+       doc: /* Make an xwidget of TYPE.
 If BUFFER is nil, use the current buffer.
 If BUFFER is a string and no such buffer exists, create it.
 TYPE is a symbol which can take one of the following values:
 
-- webkit-osr
+- webkit
 
 Returns the newly constructed xwidget, or nil if construction fails.  */)
-  (Lisp_Object beg, Lisp_Object end, Lisp_Object type,
+  (Lisp_Object type,
    Lisp_Object title, Lisp_Object width, Lisp_Object height,
    Lisp_Object arguments, Lisp_Object buffer)
 {
   CHECK_SYMBOL (type);
   CHECK_NATNUM (width);
   CHECK_NATNUM (height);
-  /* This should work a bit like "make-button"
-     (make-button BEG END &rest PROPERTIES)
-     TYPE etc. should be keyword args eventually.
-     (make-xwidget 3 3 'button "oei" 31 31 nil)
-     (xwidget-info (car xwidget-list))  */
+
   struct xwidget *xw = allocate_xwidget ();
   Lisp_Object val;
   xw->type = type;
@@ -987,7 +983,7 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_webkit_goto_uri);
   defsubr (&Sxwidget_webkit_execute_script);
   defsubr (&Sxwidget_webkit_get_title);
-  DEFSYM (Qwebkit_osr, "webkit-osr");
+  DEFSYM (Qwebkit_osr, "webkit");
 
   defsubr (&Sxwidget_size_request);
   defsubr (&Sdelete_xwidget_view);
