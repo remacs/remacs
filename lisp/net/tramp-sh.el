@@ -1525,7 +1525,7 @@ of."
 			  (current-time)
 			time))
 		;; With GNU Emacs, `format-time-string' has an
-		;; optional parameter UNIVERSAL.  This is preferred,
+		;; optional parameter ZONE.  This is preferred,
 		;; because we could handle the case when the remote
 		;; host is located in a different time zone as the
 		;; local host.
