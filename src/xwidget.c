@@ -187,7 +187,7 @@ Returns the newly constructed xwidget, or nil if construction fails.  */)
   xw->widget_osr = NULL;
   xw->plist = Qnil;
 
-  if (EQ (xw->type, Qwebkit_osr))
+  if (EQ (xw->type, Qwebkit))
     {
       block_input ();
       xw->widgetwindow_osr = gtk_offscreen_window_new ();
@@ -197,7 +197,7 @@ Returns the newly constructed xwidget, or nil if construction fails.  */)
       /* WebKit OSR is the only scrolled component at the moment.  */
       xw->widgetscrolledwindow_osr = NULL;
 
-      if (EQ (xw->type, Qwebkit_osr))
+      if (EQ (xw->type, Qwebkit))
         {
           xw->widgetscrolledwindow_osr = gtk_scrolled_window_new (NULL, NULL);
           gtk_scrolled_window_set_min_content_height
@@ -218,7 +218,7 @@ Returns the newly constructed xwidget, or nil if construction fails.  */)
       gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width,
                                    xw->height);
 
-      if (EQ (xw->type, Qwebkit_osr))
+      if (EQ (xw->type, Qwebkit))
         {
           gtk_container_add (GTK_CONTAINER (xw->widgetwindow_osr),
                              xw->widgetscrolledwindow_osr);
@@ -239,7 +239,7 @@ Returns the newly constructed xwidget, or nil if construction fails.  */)
       g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, xw);
 
       /* signals */
-      if (EQ (xw->type, Qwebkit_osr))
+      if (EQ (xw->type, Qwebkit))
         {
           g_signal_connect (G_OBJECT (xw->widget_osr),
                             "document-load-finished",
@@ -497,7 +497,7 @@ xwidget_init_view (struct xwidget *xww,
   XSETWINDOW (xv->w, s->w);
   XSETXWIDGET (xv->model, xww);
 
-  if (EQ (xww->type, Qwebkit_osr))
+  if (EQ (xww->type, Qwebkit))
     {
       xv->widget = gtk_drawing_area_new ();
       /* Expose event handling.  */
@@ -508,7 +508,7 @@ xwidget_init_view (struct xwidget *xww,
       g_signal_connect (G_OBJECT (xww->widgetwindow_osr), "damage-event",
                         G_CALLBACK (offscreen_damage_event), xv->widget);
 
-      if (EQ (xww->type, Qwebkit_osr))
+      if (EQ (xww->type, Qwebkit))
         {
           g_signal_connect (G_OBJECT (xv->widget), "button-press-event",
                             G_CALLBACK (xwidget_osr_event_forward), NULL);
@@ -983,7 +983,7 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_webkit_goto_uri);
   defsubr (&Sxwidget_webkit_execute_script);
   defsubr (&Sxwidget_webkit_get_title);
-  DEFSYM (Qwebkit_osr, "webkit");
+  DEFSYM (Qwebkit, "webkit");
 
   defsubr (&Sxwidget_size_request);
   defsubr (&Sdelete_xwidget_view);
