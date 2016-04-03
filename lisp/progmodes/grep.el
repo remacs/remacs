@@ -472,12 +472,9 @@ This variable's value takes effect when `grep-compute-defaults' is called.")
 (defvar grep-files-history nil)
 
 ;;;###autoload
-(defun grep-process-setup (&optional point)
+(defun grep-process-setup ()
   "Setup compilation variables and buffer for `grep'.
-Set up `compilation-exit-message-function' and run
-`grep-setup-hook'.  If the optional parameter POINT is given,
-point will be moved to this vicinity when the grep command has
-finished."
+Set up `compilation-exit-message-function' and run `grep-setup-hook'."
   (when (eq grep-highlight-matches 'auto-detect)
     (grep-compute-defaults))
   (unless (or (eq grep-highlight-matches 'auto-detect)
@@ -498,14 +495,12 @@ finished."
 	     ;; This relies on the fact that `compilation-start'
 	     ;; sets buffer-modified to nil before running the command,
 	     ;; so the buffer is still unmodified if there is no output.
-             (progn
-               (goto-char (min point (point-max)))
-               (cond ((and (zerop code) (buffer-modified-p))
-                      '("finished (matches found)\n" . "matched"))
-                     ((not (buffer-modified-p))
-                      '("finished with no matches found\n" . "no match"))
-                     (t
-                      (cons msg code))))
+	     (cond ((and (zerop code) (buffer-modified-p))
+		    '("finished (matches found)\n" . "matched"))
+		   ((not (buffer-modified-p))
+		    '("finished with no matches found\n" . "no match"))
+		   (t
+		    (cons msg code)))
 	   (cons msg code))))
   (run-hooks 'grep-setup-hook))
 
@@ -737,10 +732,6 @@ This function is called from `compilation-filter-hook'."
       ;; Now replace the pattern with the default tag.
       (replace-match tag-default t t grep-default 1))))
 
-(defvar grep--command-history nil)
-(defvar grep--history-inhibit nil)
-(defvar grep--history-place 0)
-(defvar grep--history-point 0)
 
 ;;;###autoload
 (define-compilation-mode grep-mode "Grep"
@@ -755,19 +746,19 @@ This function is called from `compilation-filter-hook'."
   ;; can never match.
   (set (make-local-variable 'compilation-directory-matcher) '("\\`a\\`"))
   (set (make-local-variable 'compilation-process-setup-function)
-       (lambda ()
-         (grep-process-setup grep--history-point)))
+       'grep-process-setup)
   (set (make-local-variable 'compilation-disable-input) t)
   (set (make-local-variable 'compilation-error-screen-columns)
        grep-error-screen-columns)
   (add-hook 'compilation-filter-hook 'grep-filter nil t))
 
+(defvar grep--command-history nil)
+(defvar grep--history-inhibit nil)
+(defvar grep--history-place 0)
+
 (defun grep--save-history (command)
   (unless grep--history-inhibit
-    (when grep--command-history
-      (setcar (cdr (car grep--command-history)) (point)))
-    (push (list default-directory 0 command)
-          grep--command-history)
+    (push (cons default-directory command) grep--command-history)
     (setq grep--history-place 0)
     ;; Don't let the history grow without bounds.
     (when (> (length grep--command-history) 100)
@@ -782,11 +773,9 @@ Also see `grep-backward-history'."
         (grep--history-inhibit t))
     (unless elem
       (error "Nothing further in the command history"))
-    (setcar (cdr (nth grep--history-place grep--command-history)) (point))
     (cl-decf grep--history-place)
-    (let ((default-directory (car elem))
-          (grep--history-point (nth 1 elem)))
-      (grep (nth 2 elem)))))
+    (let ((default-directory (car elem)))
+      (grep (cdr elem)))))
 
 (defun grep-backward-history ()
   "Go to the previous result in the grep command history.
@@ -796,11 +785,9 @@ Also see `grep-forward-history'."
         (grep--history-inhibit t))
     (unless elem
       (error "Nothing further in the command history"))
-    (setcar (cdr (nth grep--history-place grep--command-history)) (point))
     (cl-incf grep--history-place)
-    (let ((default-directory (car elem))
-          (grep--history-point (nth 1 elem)))
-      (grep (nth 2 elem)))))
+    (let ((default-directory (car elem)))
+      (grep (cdr elem)))))
 
 (defun grep--save-buffers ()
   (when grep-save-buffers
