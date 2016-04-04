@@ -187,9 +187,9 @@ report_file_errno (char const *string, Lisp_Object name, int errorno)
   Lisp_Object data = CONSP (name) || NILP (name) ? name : list1 (name);
   synchronize_system_messages_locale ();
   char *str = strerror (errorno);
+  AUTO_STRING (unibyte_str, str);
   Lisp_Object errstring
-    = code_convert_string_norecord (build_unibyte_string (str),
-				    Vlocale_coding_system, 0);
+    = code_convert_string_norecord (unibyte_str, Vlocale_coding_system, 0);
   Lisp_Object errdata = Fcons (errstring, data);
 
   if (errorno == EEXIST)
@@ -217,9 +217,9 @@ report_file_notify_error (const char *string, Lisp_Object name)
   Lisp_Object data = CONSP (name) || NILP (name) ? name : list1 (name);
   synchronize_system_messages_locale ();
   char *str = strerror (errno);
+  AUTO_STRING (unibyte_str, str);
   Lisp_Object errstring
-    = code_convert_string_norecord (build_unibyte_string (str),
-				    Vlocale_coding_system, 0);
+    = code_convert_string_norecord (unibyte_str, Vlocale_coding_system, 0);
   Lisp_Object errdata = Fcons (errstring, data);
 
   xsignal (Qfile_notify_error, Fcons (build_string (string), errdata));
@@ -1015,11 +1015,9 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
 	  /* Drive must be set, so this is okay.  */
 	  if (strcmp (nm - 2, SSDATA (name)) != 0)
 	    {
-	      char temp[] = " :";
-
 	      name = make_specified_string (nm, -1, p - nm, multibyte);
-	      temp[0] = DRIVE_LETTER (drive);
-	      AUTO_STRING (drive_prefix, temp);
+	      char temp[] = { DRIVE_LETTER (drive), ':', 0 };
+	      AUTO_STRING_WITH_LEN (drive_prefix, temp, 2);
 	      name = concat2 (drive_prefix, name);
 	    }
 #ifdef WINDOWSNT

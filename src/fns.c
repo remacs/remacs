@@ -2999,7 +2999,6 @@ The data read from the system are decoded using `locale-coding-system'.  */)
 {
   char *str = NULL;
 #ifdef HAVE_LANGINFO_CODESET
-  Lisp_Object val;
   if (EQ (item, Qcodeset))
     {
       str = nl_langinfo (CODESET);
@@ -3015,7 +3014,7 @@ The data read from the system are decoded using `locale-coding-system'.  */)
       for (i = 0; i < 7; i++)
 	{
 	  str = nl_langinfo (days[i]);
-	  val = build_unibyte_string (str);
+	  AUTO_STRING (val, str);
 	  /* Fixme: Is this coding system necessarily right, even if
 	     it is consistent with CODESET?  If not, what to do?  */
 	  ASET (v, i, code_convert_string_norecord (val, Vlocale_coding_system,
@@ -3035,7 +3034,7 @@ The data read from the system are decoded using `locale-coding-system'.  */)
       for (i = 0; i < 12; i++)
 	{
 	  str = nl_langinfo (months[i]);
-	  val = build_unibyte_string (str);
+	  AUTO_STRING (val, str);
 	  ASET (v, i, code_convert_string_norecord (val, Vlocale_coding_system,
 						    0));
 	}

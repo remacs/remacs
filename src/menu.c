@@ -408,7 +408,7 @@ single_menu_item (Lisp_Object key, Lisp_Object item, Lisp_Object dummy, void *sk
 
       if (prefix)
 	{
-	  AUTO_STRING (prefix_obj, prefix);
+	  AUTO_STRING_WITH_LEN (prefix_obj, prefix, 4);
 	  item_string = concat2 (prefix_obj, item_string);
 	}
   }

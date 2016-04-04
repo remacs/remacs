@@ -8419,11 +8419,10 @@ from_unicode (Lisp_Object str)
 Lisp_Object
 from_unicode_buffer (const wchar_t *wstr)
 {
-    return from_unicode (
-        make_unibyte_string (
-            (char *) wstr,
-            /* we get one of the two final 0 bytes for free. */
-            1 + sizeof (wchar_t) * wcslen (wstr)));
+  /* We get one of the two final null bytes for free.  */
+  prtdiff_t len = 1 + sizeof (wchar_t) * wcslen (wstr);
+  AUTO_STRING_WITH_LEN (str, (char *) wstr, len);
+  return from_unicode (str);
 }
 
 wchar_t *

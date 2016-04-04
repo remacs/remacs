@@ -2042,7 +2042,6 @@ format_time_string (char const *format, ptrdiff_t formatlen,
   char *buf = buffer;
   ptrdiff_t size = sizeof buffer;
   size_t len;
-  Lisp_Object bufstring;
   int ns = t.tv_nsec;
   USE_SAFE_ALLOCA;
 
@@ -2074,9 +2073,11 @@ format_time_string (char const *format, ptrdiff_t formatlen,
     }
 
   xtzfree (tz);
-  bufstring = make_unibyte_string (buf, len);
+  AUTO_STRING_WITH_LEN (bufstring, buf, len);
+  Lisp_Object result = code_convert_string_norecord (bufstring,
+						     Vlocale_coding_system, 0);
   SAFE_FREE ();
-  return code_convert_string_norecord (bufstring, Vlocale_coding_system, 0);
+  return result;
 }
 
 DEFUN ("decode-time", Fdecode_time, Sdecode_time, 0, 2, 0,

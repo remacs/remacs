@@ -568,7 +568,6 @@ ftfont_get_charset (Lisp_Object registry)
   char *str = SSDATA (SYMBOL_NAME (registry));
   USE_SAFE_ALLOCA;
   char *re = SAFE_ALLOCA (SBYTES (SYMBOL_NAME (registry)) * 2 + 1);
-  Lisp_Object regexp;
   int i, j;
 
   for (i = j = 0; i < SBYTES (SYMBOL_NAME (registry)); i++, j++)
@@ -582,13 +581,13 @@ ftfont_get_charset (Lisp_Object registry)
 	re[j] = '.';
     }
   re[j] = '\0';
-  regexp = make_unibyte_string (re, j);
-  SAFE_FREE ();
+  AUTO_STRING_WITH_LEN (regexp, re, j);
   for (i = 0; fc_charset_table[i].name; i++)
     if (fast_c_string_match_ignore_case
 	(regexp, fc_charset_table[i].name,
 	 strlen (fc_charset_table[i].name)) >= 0)
       break;
+  SAFE_FREE ();
   if (! fc_charset_table[i].name)
     return -1;
   if (! fc_charset_table[i].fc_charset)

@@ -3050,7 +3050,7 @@ system_process_attributes (Lisp_Object pid)
   struct timespec tnow, tstart, tboot, telapsed, us_time;
   double pcpu, pmem;
   Lisp_Object attrs = Qnil;
-  Lisp_Object cmd_str, decoded_cmd;
+  Lisp_Object decoded_cmd;
   ptrdiff_t count;
 
   CHECK_NUMBER_OR_FLOAT (pid);
@@ -3107,7 +3107,7 @@ system_process_attributes (Lisp_Object pid)
       else
 	q = NULL;
       /* Command name is encoded in locale-coding-system; decode it.  */
-      cmd_str = make_unibyte_string (cmd, cmdsize);
+      AUTO_STRING_WITH_LEN (cmd_str, cmd, cmdsize);
       decoded_cmd = code_convert_string_norecord (cmd_str,
 						  Vlocale_coding_system, 0);
       attrs = Fcons (Fcons (Qcomm, decoded_cmd), attrs);
@@ -3240,7 +3240,7 @@ system_process_attributes (Lisp_Object pid)
 	  sprintf (cmdline, "[%.*s]", cmdsize, cmd);
 	}
       /* Command line is encoded in locale-coding-system; decode it.  */
-      cmd_str = make_unibyte_string (q, nread);
+      AUTO_STRING_WITH_LEN (cmd_str, q, nread);
       decoded_cmd = code_convert_string_norecord (cmd_str,
 						  Vlocale_coding_system, 0);
       unbind_to (count, Qnil);
@@ -3375,13 +3375,13 @@ system_process_attributes (Lisp_Object pid)
 			    make_float (100.0 / 0x8000 * pinfo.pr_pctmem)),
 		     attrs);
 
-      decoded_cmd = (code_convert_string_norecord
-		     (build_unibyte_string (pinfo.pr_fname),
-		      Vlocale_coding_system, 0));
+      AUTO_STRING (fname, pinfo.pr_fname);
+      decoded_cmd = code_convert_string_norecord (fname,
+						  Vlocale_coding_system, 0);
       attrs = Fcons (Fcons (Qcomm, decoded_cmd), attrs);
-      decoded_cmd = (code_convert_string_norecord
-		     (build_unibyte_string (pinfo.pr_psargs),
-		      Vlocale_coding_system, 0));
+      AUTO_STRING (psargs, pinfo.pr_psargs);
+      decoded_cmd = code_convert_string_norecord (psargs,
+						  Vlocale_coding_system, 0);
       attrs = Fcons (Fcons (Qargs, decoded_cmd), attrs);
     }
   unbind_to (count, Qnil);
@@ -3446,9 +3446,8 @@ system_process_attributes (Lisp_Object pid)
   if (gr)
     attrs = Fcons (Fcons (Qgroup, build_string (gr->gr_name)), attrs);
 
-  decoded_comm = (code_convert_string_norecord
-		  (build_unibyte_string (proc.ki_comm),
-		   Vlocale_coding_system, 0));
+  AUTO_STRING (comm, proc.ki_comm);
+  decoded_comm = code_convert_string_norecord (comm, Vlocale_coding_system, 0);
 
   attrs = Fcons (Fcons (Qcomm, decoded_comm), attrs);
   {
@@ -3559,10 +3558,9 @@ system_process_attributes (Lisp_Object pid)
 	    args[i] = ' ';
 	}
 
-      decoded_comm =
-	(code_convert_string_norecord
-	 (build_unibyte_string (args),
-	  Vlocale_coding_system, 0));
+      AUTO_STRING (comm, args);
+      decoded_comm = code_convert_string_norecord (comm,
+						   Vlocale_coding_system, 0);
 
       attrs = Fcons (Fcons (Qargs, decoded_comm), attrs);
     }

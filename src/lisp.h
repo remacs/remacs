@@ -4609,27 +4609,29 @@ enum
 						     STACK_CONS (d, Qnil)))) \
 	 : list4 (a, b, c, d))
 
-/* Check whether stack-allocated strings are ASCII-only.  */
+/* Declare NAME as an auto Lisp string if possible, a GC-based one if not.
+   Take its unibyte value from the null-terminated string STR,
+   an expression that should not have side effects.
+   STR's value is not necessarily copied.  The resulting Lisp string
+   should not be modified or made visible to user code.  */
 
-#if defined (ENABLE_CHECKING) && USE_STACK_LISP_OBJECTS
-extern const char *verify_ascii (const char *);
-#else
-# define verify_ascii(str) (str)
-#endif
+#define AUTO_STRING(name, str) \
+  AUTO_STRING_WITH_LEN (name, str, strlen (str))
 
 /* Declare NAME as an auto Lisp string if possible, a GC-based one if not.
-   Take its value from STR.  STR is not necessarily copied and should
-   contain only ASCII characters.  The resulting Lisp string should
-   not be modified or made visible to user code.  */
+   Take its unibyte value from the null-terminated string STR with length LEN.
+   STR may have side effects and may contain null bytes.
+   STR's value is not necessarily copied.  The resulting Lisp string
+   should not be modified or made visible to user code.  */
 
-#define AUTO_STRING(name, str)						\
+#define AUTO_STRING_WITH_LEN(name, str, len)				\
   Lisp_Object name =							\
     (USE_STACK_STRING							\
      ? (make_lisp_ptr							\
 	((&(union Aligned_String)					\
-	  {{strlen (str), -1, 0, (unsigned char *) verify_ascii (str)}}.s), \
-	  Lisp_String))							\
-     : build_string (verify_ascii (str)))
+	  {{len, -1, 0, (unsigned char *) (str)}}.s),			\
+	 Lisp_String))							\
+     : make_unibyte_string (str, len))
 
 /* Loop over all tails of a list, checking for cycles.
    FIXME: Make tortoise and n internal declarations.

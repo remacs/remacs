@@ -7216,21 +7216,6 @@ die (const char *msg, const char *file, int line)
 
 #if defined (ENABLE_CHECKING) && USE_STACK_LISP_OBJECTS
 
-/* Debugging check whether STR is ASCII-only.  */
-
-const char *
-verify_ascii (const char *str)
-{
-  const unsigned char *ptr = (unsigned char *) str, *end = ptr + strlen (str);
-  while (ptr < end)
-    {
-      int c = STRING_CHAR_ADVANCE (ptr);
-      if (!ASCII_CHAR_P (c))
-	emacs_abort ();
-    }
-  return str;
-}
-
 /* Stress alloca with inconveniently sized requests and check
    whether all allocated areas may be used for Lisp_Object.  */
 

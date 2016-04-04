@@ -1303,7 +1303,7 @@ silly_event_symbol_error (Lisp_Object c)
       *p = 0;
 
       c = reorder_modifiers (c);
-      AUTO_STRING (new_mods_string, new_mods);
+      AUTO_STRING_WITH_LEN (new_mods_string, new_mods, p - new_mods);
       keystring = concat2 (new_mods_string, XCDR (assoc));
 
       error ("To bind the key %s, use [?%s], not [%s]",
