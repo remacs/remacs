@@ -282,7 +282,7 @@ If no list entry produces a useful revision, return `nil'."
   :group 'vc-hg)
 
 (defcustom vc-hg-use-file-version-for-mode-line-version nil
-  "When enabled, the modeline will contain revision informtion for the visited file.
+  "When enabled, the modeline contains revision information for the visited file.
 When not, the revision in the modeline is for the repository
 working copy.  `nil' is the much faster setting for
 large repositories."

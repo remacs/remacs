@@ -29,7 +29,7 @@
 (require 'dom)
 
 (defun svg-create (width height &rest args)
-  "Create a new, empty SVG image with dimentions WIDTHxHEIGHT.
+  "Create a new, empty SVG image with dimensions WIDTHxHEIGHT.
 ARGS can be used to provide `stroke' and `stroke-width' parameters to
 any further elements added."
   (dom-node 'svg

@@ -2441,7 +2441,7 @@ When opening a TLS connection, this should be where the first element
 is the TLS type (which should either be @code{gnutls-x509pki} or
 @code{gnutls-anon}, and the remaining elements should form a keyword
 list acceptable for @code{gnutls-boot}.  (This keyword list can be
-optained from the @code{gnutls-boot-parameters} function.)  The TLS
+obtained from the @code{gnutls-boot-parameters} function.)  The TLS
 connection will then be negotiated after completing the connection to
 the host.
 

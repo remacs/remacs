@@ -9844,7 +9844,7 @@ argument as small as possible; in particular, if the buffer contains
 long lines that shall be truncated anyway.
 
 The optional argument Y-LIMIT, if non-nil, specifies the maximum text
-height (exluding the height of the mode- or header-line, if any) that
+height (excluding the height of the mode- or header-line, if any) that
 can be returned.  Text lines whose y-coordinate is beyond Y-LIMIT are
 ignored.  Since calculating the text height of a large buffer can take
 some time, it makes sense to specify this argument if the size of the

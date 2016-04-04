@@ -5509,7 +5509,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		{
 #ifdef HAVE_GNUTLS
 		  /* If we have an incompletely set up TLS connection,
-		     then defer the sentinel signalling until
+		     then defer the sentinel signaling until
 		     later. */
 		  if (NILP (p->gnutls_boot_parameters)
 		      && !p->gnutls_p)

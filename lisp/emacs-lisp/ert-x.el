@@ -289,7 +289,7 @@ BUFFER defaults to current buffer.  Does not modify BUFFER."
   "Mocks function NAME with MOCK and run BODY.
 
 Once BODY finishes (be it normally by returning a value or
-abnormally by throwing or signalling), the old definition of
+abnormally by throwing or signaling), the old definition of
 function NAME is restored.
 
 BODY may further change the mock with `fset'.

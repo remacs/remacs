@@ -1055,8 +1055,8 @@ the file watch."
 (file-notify--deftest-remote file-notify-test08-watched-file-in-watched-dir
   "Check `file-notify-test08-watched-file-in-watched-dir' for remote files.")
 
-(ert-deftest file-notify-test09-sufficient-ressources ()
-  "Check that file notification does not use too many ressources."
+(ert-deftest file-notify-test09-sufficient-resources ()
+  "Check that file notification does not use too many resources."
   :tags '(:expensive-test)
   (skip-unless (file-notify--test-local-enabled))
   ;; This test is intended for kqueue only.
@@ -1093,8 +1093,8 @@ the file watch."
     ;; Cleanup.
     (file-notify--test-cleanup)))
 
-(file-notify--deftest-remote file-notify-test09-sufficient-ressources
-  "Check `file-notify-test09-sufficient-ressources' for remote files.")
+(file-notify--deftest-remote file-notify-test09-sufficient-resources
+  "Check `file-notify-test09-sufficient-resources' for remote files.")
 
 (defun file-notify-test-all (&optional interactive)
   "Run all tests for \\[file-notify]."

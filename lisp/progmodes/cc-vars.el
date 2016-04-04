@@ -1630,7 +1630,7 @@ identifiers.
 
 If you change this variable's value, call the function
 `c-make-noise-macro-regexps' to set the necessary internal variables (or do
-this implicitly by reinitialising C/C++/Objc Mode on any buffer)."
+this implicitly by reinitializing C/C++/Objc Mode on any buffer)."
   :type '(repeat :tag "List of names" string)
   :group 'c)
 
