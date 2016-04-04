@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2016-03-22.15}
+\def\texinfoversion{2016-03-25.17}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -1645,6 +1645,32 @@ output) for that.)}
         /Subtype /Link /A << /S /URI /URI (#1) >> >>}%
     \endgroup}
   \def\endlink{\setcolor{\maincolor}\special{pdf:eann}}
+  \def\pdfgettoks#1.{\setbox\boxA=\hbox{\toksA={#1.}\toksB={}\maketoks}}
+  \def\addtokens#1#2{\edef\addtoks{\noexpand#1={\the#1#2}}\addtoks}
+  \def\adn#1{\addtokens{\toksC}{#1}\global\countA=1\let\next=\maketoks}
+  \def\poptoks#1#2|ENDTOKS|{\let\first=#1\toksD={#1}\toksA={#2}}
+  \def\maketoks{%
+    \expandafter\poptoks\the\toksA|ENDTOKS|\relax
+    \ifx\first0\adn0
+    \else\ifx\first1\adn1 \else\ifx\first2\adn2 \else\ifx\first3\adn3
+    \else\ifx\first4\adn4 \else\ifx\first5\adn5 \else\ifx\first6\adn6
+    \else\ifx\first7\adn7 \else\ifx\first8\adn8 \else\ifx\first9\adn9
+    \else
+      \ifnum0=\countA\else\makelink\fi
+      \ifx\first.\let\next=\done\else
+        \let\next=\maketoks
+        \addtokens{\toksB}{\the\toksD}
+        \ifx\first,\addtokens{\toksB}{\space}\fi
+      \fi
+    \fi\fi\fi\fi\fi\fi\fi\fi\fi\fi
+    \next}
+  \def\makelink{\addtokens{\toksB}%
+    {\noexpand\pdflink{\the\toksC}}\toksC={}\global\countA=0}
+  \def\pdflink#1{%
+    \special{pdf:bann << /Border [0 0 0]
+      /Type /Annot /Subtype /Link /A << /S /GoTo /D (name#1) >> >>}%
+    \setcolor{\linkcolor}#1\endlink}
+  \def\done{\edef\st{\global\noexpand\toksA={\the\toksB}}\st}
 %
   %
   % @image support
@@ -2857,6 +2883,7 @@ end
     \setbox0 = \hbox{\ignorespaces #2}% look for second arg
     \ifdim\wd0 > 0pt
       \ifpdf
+        % For pdfTeX and LuaTeX
         \ifurefurlonlylink
           % PDF plus option to not display url, show just arg
           \unhbox0             
@@ -2866,7 +2893,19 @@ end
           \unhbox0\ (\urefcode{#1})%
         \fi
       \else
-        \unhbox0\ (\urefcode{#1})% DVI, always show arg and url
+        \ifx\XeTeXrevision\thisisundefined
+          \unhbox0\ (\urefcode{#1})% DVI, always show arg and url
+        \else
+          % For XeTeX
+          \ifurefurlonlylink
+            % PDF plus option to not display url, show just arg
+            \unhbox0             
+          \else
+            % PDF, normally display both arg and url for consistency,
+            % visibility, if the pdf is eventually used to print, etc.
+            \unhbox0\ (\urefcode{#1})%
+          \fi
+        \fi
       \fi
     \else
       \urefcode{#1}% only url given, so show it
@@ -2967,7 +3006,18 @@ end
     \endlink
   \endgroup}
 \else
-  \let\email=\uref
+  \ifx\XeTeXrevision\thisisundefined
+    \let\email=\uref
+  \else
+    \def\email#1{\doemail#1,,\finish}
+    \def\doemail#1,#2,#3\finish{\begingroup
+      \unsepspaces
+      \pdfurl{mailto:#1}%
+      \setbox0 = \hbox{\ignorespaces #2}%
+      \ifdim\wd0>0pt\unhbox0\else\code{#1}\fi
+      \endlink
+    \endgroup}
+  \fi
 \fi
 
 % @kbdinputstyle -- arg is `distinct' (@kbd uses slanted tty font always),
@@ -5479,7 +5529,14 @@ end
         % preserve coloured links across page boundaries.  Otherwise the marks
         % would get in the way of \lastbox in \insertindexentrybox.
       \else
-        \hskip\skip\thinshrinkable #1%
+        \ifx\XeTeXrevision\thisisundefined
+          \hskip\skip\thinshrinkable #1%
+        \else
+          \pdfgettoks#1.%
+          \bgroup\let\domark\relax
+            \hskip\skip\thinshrinkable\the\toksA
+          \egroup
+        \fi
       \fi
     \fi
     \egroup % end \boxA
@@ -5614,7 +5671,11 @@ end
   \ifpdf
     \pdfgettoks#2.\ \the\toksA % The page number ends the paragraph.
   \else
-    #2
+    \ifx\XeTeXrevision\thisisundefined
+      #2
+    \else
+      \pdfgettoks#2.\ \the\toksA % The page number ends the paragraph.
+    \fi
   \fi
   \par
 }}
@@ -11029,6 +11090,13 @@ directory should work if nowhere else does.}
     % whatever layout pdftex was dumped with.
     \pdfhorigin = 1 true in
     \pdfvorigin = 1 true in
+  \else
+    \ifx\XeTeXrevision\thisisundefined
+    \else
+      \pdfpageheight #7\relax
+      \pdfpagewidth #8\relax
+      % XeTeX does not have \pdfhorigin and \pdfvorigin.
+    \fi
   \fi
   %
   \setleading{\textleading}

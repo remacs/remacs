@@ -1,4 +1,4 @@
-# stdint.m4 serial 43
+# stdint.m4 serial 44
 dnl Copyright (C) 2001-2016 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -70,6 +70,8 @@ AC_DEFUN_ONCE([gl_STDINT_H],
        AC_COMPILE_IFELSE([
          AC_LANG_PROGRAM([[
 #define _GL_JUST_INCLUDE_SYSTEM_STDINT_H 1 /* work if build isn't clean */
+#define __STDC_CONSTANT_MACROS 1
+#define __STDC_LIMIT_MACROS 1
 #include <stdint.h>
 /* Dragonfly defines WCHAR_MIN, WCHAR_MAX only in <wchar.h>.  */
 #if !(defined WCHAR_MIN && defined WCHAR_MAX)
@@ -218,6 +220,8 @@ struct s {
           AC_RUN_IFELSE([
             AC_LANG_PROGRAM([[
 #define _GL_JUST_INCLUDE_SYSTEM_STDINT_H 1 /* work if build isn't clean */
+#define __STDC_CONSTANT_MACROS 1
+#define __STDC_LIMIT_MACROS 1
 #include <stdint.h>
 ]
 gl_STDINT_INCLUDES
@@ -279,6 +283,29 @@ static const char *macro_values[] =
       ])
   fi
   if test "$gl_cv_header_working_stdint_h" = yes; then
+    dnl Now see whether the system <stdint.h> works without
+    dnl __STDC_CONSTANT_MACROS/__STDC_LIMIT_MACROS defined.
+    AC_CACHE_CHECK([whether stdint.h predates C++11],
+      [gl_cv_header_stdint_predates_cxx11_h],
+      [gl_cv_header_stdint_predates_cxx11_h=yes
+       AC_COMPILE_IFELSE([
+	 AC_LANG_PROGRAM([[
+#define _GL_JUST_INCLUDE_SYSTEM_STDINT_H 1 /* work if build isn't clean */
+#include <stdint.h>
+]
+gl_STDINT_INCLUDES
+[
+intmax_t im = INTMAX_MAX;
+int32_t i32 = INT32_C (0x7fffffff);
+         ]])],
+         [gl_cv_header_stdint_predates_cxx11_h=no])])
+
+    if test "$gl_cv_header_stdint_predates_cxx11_h" = yes; then
+      AC_DEFINE([__STDC_CONSTANT_MACROS], [1],
+                [Define to 1 if the system <stdint.h> predates C++11.])
+      AC_DEFINE([__STDC_LIMIT_MACROS], [1],
+                [Define to 1 if the system <stdint.h> predates C++11.])
+    fi
     STDINT_H=
   else
     dnl Check for <sys/inttypes.h>, and for
