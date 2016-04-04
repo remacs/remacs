@@ -194,7 +194,7 @@ read_minibuf_noninteractive (Lisp_Object map, Lisp_Object initial,
   int c;
   unsigned char hide_char = 0;
   struct emacs_tty etty;
-  bool etty_valid;
+  bool etty_valid IF_LINT (= false);
 
   /* Check, whether we need to suppress echoing.  */
   if (CHARACTERP (Vread_hide_char))
@@ -203,10 +203,10 @@ read_minibuf_noninteractive (Lisp_Object map, Lisp_Object initial,
   /* Manipulate tty.  */
   if (hide_char)
     {
-      etty_valid = emacs_get_tty (fileno (stdin), &etty) == 0;
+      etty_valid = emacs_get_tty (STDIN_FILENO, &etty) == 0;
       if (etty_valid)
-	set_binary_mode (fileno (stdin), O_BINARY);
-      suppress_echo_on_tty (fileno (stdin));
+	set_binary_mode (STDIN_FILENO, O_BINARY);
+      suppress_echo_on_tty (STDIN_FILENO);
     }
 
   fwrite (SDATA (prompt), 1, SBYTES (prompt), stdout);
@@ -240,8 +240,8 @@ read_minibuf_noninteractive (Lisp_Object map, Lisp_Object initial,
       fprintf (stdout, "\n");
       if (etty_valid)
 	{
-	  emacs_set_tty (fileno (stdin), &etty, 0);
-	  set_binary_mode (fileno (stdin), O_TEXT);
+	  emacs_set_tty (STDIN_FILENO, &etty, 0);
+	  set_binary_mode (STDIN_FILENO, O_TEXT);
 	}
     }
 

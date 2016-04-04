@@ -215,7 +215,7 @@ xmalloc (size_t size)
   void *val = malloc (size);
   if (!val && size)
     {
-      write (2, "virtual memory exhausted\n", 25);
+      write (STDERR_FILENO, "virtual memory exhausted\n", 25);
       exit (1);
     }
   return val;
@@ -233,7 +233,7 @@ xrealloc (void *block, size_t size)
     val = realloc (block, size);
   if (!val && size)
     {
-      write (2, "virtual memory exhausted\n", 25);
+      write (STDERR_FILENO, "virtual memory exhausted\n", 25);
       exit (1);
     }
   return val;

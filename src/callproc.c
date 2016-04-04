@@ -1078,10 +1078,6 @@ usage: (call-process-region START END PROGRAM &optional DELETE BUFFER DISPLAY &r
   return unbind_to (count, val);
 }
 
-#ifndef WINDOWSNT
-static int relocate_fd (int fd, int minfd);
-#endif
-
 static char **
 add_env (char **env, char **new_env, char *string)
 {
@@ -1310,37 +1306,14 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
   return cpid;
 
 #else  /* not WINDOWSNT */
-  /* Make sure that in, out, and err are not actually already in
-     descriptors zero, one, or two; this could happen if Emacs is
-     started with its standard in, out, or error closed, as might
-     happen under X.  */
-  {
-    int oin = in, oout = out;
-
-    /* We have to avoid relocating the same descriptor twice!  */
-
-    in = relocate_fd (in, 3);
-
-    if (out == oin)
-      out = in;
-    else
-      out = relocate_fd (out, 3);
-
-    if (err == oin)
-      err = in;
-    else if (err == oout)
-      err = out;
-    else
-      err = relocate_fd (err, 3);
-  }
 
 #ifndef MSDOS
   /* Redirect file descriptors and clear the close-on-exec flag on the
      redirected ones.  IN, OUT, and ERR are close-on-exec so they
      need not be closed explicitly.  */
-  dup2 (in, 0);
-  dup2 (out, 1);
-  dup2 (err, 2);
+  dup2 (in, STDIN_FILENO);
+  dup2 (out, STDOUT_FILENO);
+  dup2 (err, STDERR_FILENO);
 
   setpgid (0, 0);
   tcsetpgrp (0, pid);
@@ -1358,31 +1331,6 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
 #endif  /* MSDOS */
 #endif  /* not WINDOWSNT */
 }
-
-#ifndef WINDOWSNT
-/* Move the file descriptor FD so that its number is not less than MINFD.
-   If the file descriptor is moved at all, the original is closed on MSDOS,
-   but not elsewhere as the caller will close it anyway.  */
-static int
-relocate_fd (int fd, int minfd)
-{
-  if (fd >= minfd)
-    return fd;
-  else
-    {
-      int new = fcntl (fd, F_DUPFD_CLOEXEC, minfd);
-      if (new == -1)
-	{
-	  emacs_perror ("while setting up child");
-	  _exit (EXIT_CANCELED);
-	}
-#ifdef MSDOS
-      emacs_close (fd);
-#endif
-      return new;
-    }
-}
-#endif /* not WINDOWSNT */
 
 static bool
 getenv_internal_1 (const char *var, ptrdiff_t varlen, char **value,

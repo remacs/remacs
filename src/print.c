@@ -775,15 +775,6 @@ debug_output_compilation_hack (bool x)
   print_output_debug_flag = x;
 }
 
-#if defined (GNU_LINUX)
-
-/* This functionality is not vitally important in general, so we rely on
-   non-portable ability to use stderr as lvalue.  */
-
-#define WITH_REDIRECT_DEBUGGING_OUTPUT 1
-
-static FILE *initial_stderr_stream = NULL;
-
 DEFUN ("redirect-debugging-output", Fredirect_debugging_output, Sredirect_debugging_output,
        1, 2,
        "FDebug output file: \nP",
@@ -793,30 +784,38 @@ Optional arg APPEND non-nil (interactively, with prefix arg) means
 append to existing target file.  */)
   (Lisp_Object file, Lisp_Object append)
 {
-  if (initial_stderr_stream != NULL)
-    {
-      block_input ();
-      fclose (stderr);
-      unblock_input ();
-    }
-  stderr = initial_stderr_stream;
-  initial_stderr_stream = NULL;
+  /* If equal to STDERR_FILENO, stderr has not been duplicated and is OK as-is.
+     Otherwise, this is a close-on-exec duplicate of the original stderr. */
+  static int stderr_dup = STDERR_FILENO;
+  int fd = stderr_dup;
 
-  if (STRINGP (file))
+  if (! NILP (file))
     {
       file = Fexpand_file_name (file, Qnil);
-      initial_stderr_stream = stderr;
-      stderr = emacs_fopen (SSDATA (file), NILP (append) ? "w" : "a");
-      if (stderr == NULL)
+
+      if (stderr_dup == STDERR_FILENO)
 	{
-	  stderr = initial_stderr_stream;
-	  initial_stderr_stream = NULL;
-	  report_file_error ("Cannot open debugging output stream", file);
+	  int n = fcntl (STDERR_FILENO, F_DUPFD_CLOEXEC, STDERR_FILENO + 1);
+	  if (n < 0)
+	    report_file_error ("dup", file);
+	  stderr_dup = n;
 	}
+
+      fd = emacs_open (SSDATA (ENCODE_FILE (file)),
+		       (O_WRONLY | O_CREAT
+			| (! NILP (append) ? O_APPEND : O_TRUNC)),
+		       0666);
+      if (fd < 0)
+	report_file_error ("Cannot open debugging output stream", file);
     }
+
+  fflush (stderr);
+  if (dup2 (fd, STDERR_FILENO) < 0)
+    report_file_error ("dup2", file);
+  if (fd != stderr_dup)
+    emacs_close (fd);
   return Qnil;
 }
-#endif /* GNU_LINUX */
 
 
 /* This is the interface for debugging printing.  */
@@ -2305,9 +2304,7 @@ priorities.  */);
   defsubr (&Sprint);
   defsubr (&Sterpri);
   defsubr (&Swrite_char);
-#ifdef WITH_REDIRECT_DEBUGGING_OUTPUT
   defsubr (&Sredirect_debugging_output);
-#endif
 
   DEFSYM (Qprint_escape_newlines, "print-escape-newlines");
   DEFSYM (Qprint_escape_multibyte, "print-escape-multibyte");

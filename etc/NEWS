@@ -208,6 +208,9 @@ permanent and documented, and may be used by Lisp programs.  Its value
 is a list of currently open parenthesis positions, starting with the
 outermost parenthesis.
 
+** The function 'redirect-debugging-output' now works on platforms
+other than GNU/Linux.
+
 
 * Changes in Emacs 25.2 on Non-Free Operating Systems
 

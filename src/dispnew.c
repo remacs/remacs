@@ -6038,7 +6038,7 @@ init_display (void)
 #endif
 
   /* If no window system has been specified, try to use the terminal.  */
-  if (! isatty (0))
+  if (! isatty (STDIN_FILENO))
     fatal ("standard input is not a tty");
 
 #ifdef WINDOWSNT

@@ -130,6 +130,35 @@ static const int baud_convert[] =
     1800, 2400, 4800, 9600, 19200, 38400
   };
 
+/* If FD is not already open, arrange for it to be open with FLAGS.  */
+static void
+force_open (int fd, int flags)
+{
+  if (dup2 (fd, fd) < 0 && errno == EBADF)
+    {
+      int n = open (NULL_DEVICE, flags);
+      if (n < 0 || (fd != n && (dup2 (n, fd) < 0 || emacs_close (n) != 0)))
+	{
+	  emacs_perror (NULL_DEVICE);
+	  exit (EXIT_FAILURE);
+	}
+    }
+}
+
+/* Make sure stdin, stdout, and stderr are open to something, so that
+   their file descriptors are not hijacked by later system calls.  */
+void
+init_standard_fds (void)
+{
+  /* Open stdin for *writing*, and stdout and stderr for *reading*.
+     That way, any attempt to do normal I/O will result in an error,
+     just as if the files were closed, and the file descriptors will
+     not be reused by later opens.  */
+  force_open (STDIN_FILENO, O_WRONLY);
+  force_open (STDOUT_FILENO, O_RDONLY);
+  force_open (STDERR_FILENO, O_RDONLY);
+}
+
 /* Return the current working directory.  The result should be freed
    with 'free'.  Return NULL on errors.  */
 char *

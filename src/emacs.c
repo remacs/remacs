@@ -721,6 +721,7 @@ main (int argc, char **argv)
     unexec_init_emacs_zone ();
 #endif
 
+  init_standard_fds ();
   atexit (close_output_streams);
 
 #ifdef HAVE_MODULES
@@ -899,24 +900,25 @@ main (int argc, char **argv)
       char *term;
       if (argmatch (argv, argc, "-t", "--terminal", 4, &term, &skip_args))
 	{
-	  int result;
-	  emacs_close (0);
-	  emacs_close (1);
-	  result = emacs_open (term, O_RDWR, 0);
-	  if (result < 0 || fcntl (0, F_DUPFD_CLOEXEC, 1) < 0)
+	  emacs_close (STDIN_FILENO);
+	  emacs_close (STDOUT_FILENO);
+	  int result = emacs_open (term, O_RDWR, 0);
+	  if (result != STDIN_FILENO
+	      || (fcntl (STDIN_FILENO, F_DUPFD_CLOEXEC, STDOUT_FILENO)
+		  != STDOUT_FILENO))
 	    {
 	      char *errstring = strerror (errno);
 	      fprintf (stderr, "%s: %s: %s\n", argv[0], term, errstring);
-	      exit (1);
+	      exit (EXIT_FAILURE);
 	    }
-	  if (! isatty (0))
+	  if (! isatty (STDIN_FILENO))
 	    {
 	      fprintf (stderr, "%s: %s: not a tty\n", argv[0], term);
-	      exit (1);
+	      exit (EXIT_FAILURE);
 	    }
 	  fprintf (stderr, "Using %s\n", term);
 #ifdef HAVE_WINDOW_SYSTEM
-	  inhibit_window_system = 1; /* -t => -nw */
+	  inhibit_window_system = true; /* -t => -nw */
 #endif
 	}
       else
@@ -1209,7 +1211,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
       /* Started from GUI? */
       /* FIXME: Do the right thing if getenv returns NULL, or if
          chdir fails.  */
-      if (! inhibit_window_system && ! isatty (0) && ! ch_to_dir)
+      if (! inhibit_window_system && ! isatty (STDIN_FILENO) && ! ch_to_dir)
         chdir (getenv ("HOME"));
       if (skip_args < argc)
         {
@@ -2357,9 +2359,9 @@ from the parent process and its tty file descriptors.  */)
   /* Get rid of stdin, stdout and stderr.  */
   nfd = emacs_open ("/dev/null", O_RDWR, 0);
   err |= nfd < 0;
-  err |= dup2 (nfd, 0) < 0;
-  err |= dup2 (nfd, 1) < 0;
-  err |= dup2 (nfd, 2) < 0;
+  err |= dup2 (nfd, STDIN_FILENO) < 0;
+  err |= dup2 (nfd, STDOUT_FILENO) < 0;
+  err |= dup2 (nfd, STDERR_FILENO) < 0;
   err |= emacs_close (nfd) != 0;
 
   /* Closing the pipe will notify the parent that it can exit.

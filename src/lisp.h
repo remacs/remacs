@@ -4248,6 +4248,7 @@ struct tty_display_info;
 struct terminal;
 
 /* Defined in sysdep.c.  */
+extern void init_standard_fds (void);
 extern char *emacs_get_current_dir_name (void);
 extern void stuff_char (char c);
 extern void init_foreground_group (void);
