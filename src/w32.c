@@ -8181,17 +8181,33 @@ sys_dup2 (int src, int dst)
       return -1;
     }
 
-  /* make sure we close the destination first if it's a pipe or socket */
-  if (src != dst && fd_info[dst].flags != 0)
+  /* MS _dup2 seems to have weird side effect when invoked with 2
+     identical arguments: an attempt to fclose the corresponding stdio
+     stream after that hangs (we do close standard streams in
+     init_ntproc).  Attempt to avoid that by not calling _dup2 that
+     way: if SRC is valid, we know that dup2 should be a no-op, so do
+     nothing and return DST.  */
+  if (src == dst)
+    {
+      if ((HANDLE)_get_osfhandle (src) == INVALID_HANDLE_VALUE)
+	{
+	  errno = EBADF;
+	  return -1;
+	}
+      return dst;
+    }
+
+  /* Make sure we close the destination first if it's a pipe or socket.  */
+  if (fd_info[dst].flags != 0)
     sys_close (dst);
 
   rc = _dup2 (src, dst);
   if (rc == 0)
     {
-      /* duplicate our internal info as well */
+      /* Duplicate our internal info as well.  */
       fd_info[dst] = fd_info[src];
     }
-  return rc;
+  return rc == 0 ? dst : rc;
 }
 
 int

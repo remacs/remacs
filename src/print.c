@@ -38,6 +38,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <float.h>
 #include <ftoastr.h>
 
+#ifdef WINDOWSNT
+# include <sys/socket.h> /* for F_DUPFD_CLOEXEC */
+#endif
+
 struct terminal;
 
 /* Avoid actual stack overflow in print.  */
