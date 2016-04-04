@@ -1225,6 +1225,8 @@ plist will contain a :peer element that has the output of
 programmatically delete all cookies, or cookies from a specific
 domain.
 
+*** The URL package now support https over proxies supporting CONNECT.
+
 ** Tramp
 
 +++
