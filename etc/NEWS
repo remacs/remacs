@@ -25,6 +25,12 @@ otherwise leave it unmarked.
 
 * Installation Changes in Emacs 25.2
 
+** The new option 'configure --enable-gcc-warnings=warn-only' causes
+GCC to issue warnings without stopping the bild.  This behavior is now
+the default in developer builds.  As before, use
+'--disable-gcc-warnings' to suppress GCC's warnings, and
+'--enable-gcc-warnings' to stop the build if GCC issues warnings.
+
 +++
 ** New configure option '--disable-build-details' attempts to build an
 Emacs that is more likely to be reproducible; that is, if you build

@@ -842,17 +842,44 @@ if test "$ac_test_CFLAGS" != set; then
   esac
 fi
 
+# gl_GCC_VERSION_IFELSE([major], [minor], [run-if-found], [run-if-not-found])
+# ---------------------------------------------------------------------------
+# If $CPP is gcc-MAJOR.MINOR or newer, then run RUN-IF-FOUND.
+# Otherwise, run RUN-IF-NOT-FOUND.
+AC_DEFUN([gl_GCC_VERSION_IFELSE],
+  [AC_PREPROC_IFELSE(
+    [AC_LANG_PROGRAM(
+      [[
+#if ($1) < __GNUC__ || (($1) == __GNUC__ && ($2) <= __GNUC_MINOR__)
+/* ok */
+#else
+# error "your version of gcc is older than $1.$2"
+#endif
+      ]]),
+    ], [$3], [$4])
+  ]
+)
+
 AC_ARG_ENABLE([gcc-warnings],
-  [AS_HELP_STRING([--enable-gcc-warnings],
-                  [turn on lots of GCC warnings/errors. This is intended for
-		   developers, and may generate false alarms when used
-		   with older or non-GNU development tools.])],
+  [AS_HELP_STRING([--enable-gcc-warnings@<:@=TYPE@:>@],
+                  [control generation of GCC warnings.  The TYPE 'yes'
+		   means to fail if any warnings are issued; 'warn-only'
+		   means issue warnings without failing (default for
+		   developer builds); 'no' means disable warnings
+		   (default for non-developer builds).])],
   [case $enableval in
-     yes|no) ;;
+     yes|no|warn-only) ;;
      *)      AC_MSG_ERROR([bad value $enableval for gcc-warnings option]) ;;
    esac
    gl_gcc_warnings=$enableval],
-  [gl_gcc_warnings=no]
+  [# By default, use 'warn-only' if it looks like the invoker of 'configure'
+   # is a developer as opposed to a builder.  This is most likely true
+   # if GCC is recent enough and there is a .git subdirectory;
+   # however, if there is also a .tarball-version file it is probably
+   # just a reliease imported into Git for patch management.
+   gl_gcc_warnings=no
+   test -d "$srcdir"/.git && test ! -f "$srcdir"/.tarball-version &&
+     gl_GCC_VERSION_IFELSE([5], [3], [gl_gcc_warnings=warn-only])]
 )
 
 # clang is unduly picky about some things.
@@ -868,7 +895,7 @@ AC_CACHE_CHECK([whether the compiler is clang], [emacs_cv_clang],
 
 # When compiling with GCC, prefer -isystem to -I when including system
 # include files, to avoid generating useless diagnostics for the files.
-AS_IF([test "$gl_gcc_warnings" != yes],
+AS_IF([test $gl_gcc_warnings = no],
  [
   isystem='-I'
   AS_IF([test "$emacs_cv_clang" = yes],
@@ -892,7 +919,7 @@ AS_IF([test "$gl_gcc_warnings" != yes],
        nw="$nw -Wwrite-strings"
        ;;
   esac
-  AS_IF([test -z "$nw"],
+  AS_IF([test $gl_gcc_warnings = yes],
     [gl_WARN_ADD([-Werror], [WERROR_CFLAGS])])
   AC_SUBST([WERROR_CFLAGS])
 
@@ -2010,17 +2037,6 @@ fi
 
 ## $window_system is now set to the window system we will
 ## ultimately use.
-
-if test "$window_system" = none && test "$gl_gcc_warnings" = yes; then
-   # Too many warnings for now.
-   nw=
-   nw="$nw -Wsuggest-attribute=noreturn"
-   gl_MANYWARN_COMPLEMENT([WARN_CFLAGS], [$WARN_CFLAGS], [$nw])
-
-   gl_WARN_ADD([-Wno-unused-variable])
-   gl_WARN_ADD([-Wno-unused-but-set-variable])
-   gl_WARN_ADD([-Wno-unused-but-set-parameter])
-fi
 
 term_header=
 HAVE_X_WINDOWS=no
