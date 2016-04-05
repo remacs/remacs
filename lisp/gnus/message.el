@@ -7637,6 +7637,9 @@ is for the internal use."
 	     (let ((case-fold-search t))
 	       (re-search-forward "^mime-version:" nil t)))
 	    (message-inhibit-ecomplete t)
+	    ;; We don't want smtpmail.el to encode anything, either.
+	    (sendmail-coding-system 'raw-text)
+	    (select-safe-coding-system-function nil)
 	    message-required-mail-headers
 	    message-generate-hashcash
 	    rfc2047-encode-encoded-words)
