@@ -1051,44 +1051,36 @@ it is in the sequence to be tried) even if a buffer with that name exists.
 If NAME begins with a space (i.e., a buffer that is not normally
 visible to users), then if buffer NAME already exists a random number
 is first appended to NAME, to speed up finding a non-existent buffer.  */)
-  (register Lisp_Object name, Lisp_Object ignore)
+  (Lisp_Object name, Lisp_Object ignore)
 {
-  register Lisp_Object gentemp, tem, tem2;
-  ptrdiff_t count;
-  char number[INT_BUFSIZE_BOUND (ptrdiff_t) + sizeof "<>"];
+  Lisp_Object genbase;
 
   CHECK_STRING (name);
 
-  tem = Fstring_equal (name, ignore);
-  if (!NILP (tem))
-    return name;
-  tem = Fget_buffer (name);
-  if (NILP (tem))
+  if (!NILP (Fstring_equal (name, ignore)) || NILP (Fget_buffer (name)))
     return name;
 
-  if (!strncmp (SSDATA (name), " ", 1)) /* see bug#1229 */
+  if (SREF (name, 0) != ' ') /* See bug#1229.  */
+    genbase = name;
+  else
     {
       /* Note fileio.c:make_temp_name does random differently.  */
-      tem2 = concat2 (name, make_formatted_string
-		      (number, "-%"pI"d",
-		       XFASTINT (Frandom (make_number (999999)))));
-      tem = Fget_buffer (tem2);
-      if (NILP (tem))
-	return tem2;
+      char number[sizeof "-999999"];
+      int i = XFASTINT (Frandom (make_number (999999)));
+      AUTO_STRING_WITH_LEN (lnumber, number, sprintf (number, "-%d", i));
+      genbase = concat2 (name, lnumber);
+      if (NILP (Fget_buffer (genbase)))
+	return genbase;
     }
-  else
-    tem2 = name;
 
-  count = 1;
-  while (1)
+  for (ptrdiff_t count = 1; ; count++)
     {
-      gentemp = concat2 (tem2, make_formatted_string
-			 (number, "<%"pD"d>", ++count));
-      tem = Fstring_equal (gentemp, ignore);
-      if (!NILP (tem))
-	return gentemp;
-      tem = Fget_buffer (gentemp);
-      if (NILP (tem))
+      char number[INT_BUFSIZE_BOUND (ptrdiff_t) + sizeof "<>"];
+      AUTO_STRING_WITH_LEN (lnumber, number,
+			    sprintf (number, "<%"pD"d>", count));
+      Lisp_Object gentemp = concat2 (genbase, lnumber);
+      if (!NILP (Fstring_equal (gentemp, ignore))
+	  || NILP (Fget_buffer (gentemp)))
 	return gentemp;
     }
 }

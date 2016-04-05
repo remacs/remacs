@@ -675,12 +675,7 @@ allocate_process (void)
 static Lisp_Object
 make_process (Lisp_Object name)
 {
-  register Lisp_Object val, tem, name1;
-  register struct Lisp_Process *p;
-  char suffix[sizeof "<>" + INT_STRLEN_BOUND (printmax_t)];
-  printmax_t i;
-
-  p = allocate_process ();
+  struct Lisp_Process *p = allocate_process ();
   /* Initialize Lisp data.  Note that allocate_process initializes all
      Lisp data to nil, so do it only for slots which should not be nil.  */
   pset_status (p, Qrun);
@@ -690,7 +685,7 @@ make_process (Lisp_Object name)
      non-Lisp data, so do it only for slots which should not be zero.  */
   p->infd = -1;
   p->outfd = -1;
-  for (i = 0; i < PROCESS_OPEN_FDS; i++)
+  for (int i = 0; i < PROCESS_OPEN_FDS; i++)
     p->open_fd[i] = -1;
 
 #ifdef HAVE_GNUTLS
@@ -700,17 +695,22 @@ make_process (Lisp_Object name)
 
   /* If name is already in use, modify it until it is unused.  */
 
-  name1 = name;
-  for (i = 1; ; i++)
+  Lisp_Object name1 = name;
+  for (printmax_t i = 1; ; i++)
     {
-      tem = Fget_process (name1);
-      if (NILP (tem)) break;
-      name1 = concat2 (name, make_formatted_string (suffix, "<%"pMd">", i));
+      Lisp_Object tem = Fget_process (name1);
+      if (NILP (tem))
+	break;
+      char const suffix_fmt[] = "<%"pMd">";
+      char suffix[sizeof suffix_fmt + INT_STRLEN_BOUND (printmax_t)];
+      AUTO_STRING_WITH_LEN (lsuffix, suffix, sprintf (suffix, suffix_fmt, i));
+      name1 = concat2 (name, lsuffix);
     }
   name = name1;
   pset_name (p, name);
   pset_sentinel (p, Qinternal_default_process_sentinel);
   pset_filter (p, Qinternal_default_process_filter);
+  Lisp_Object val;
   XSETPROCESS (val, p);
   Vprocess_alist = Fcons (Fcons (name, val), Vprocess_alist);
   return val;

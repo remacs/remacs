@@ -191,14 +191,11 @@ get_boot_time (void)
   /* If we did not find a boot time in wtmp, look at wtmp, and so on.  */
   for (counter = 0; counter < 20 && ! boot_time; counter++)
     {
+      Lisp_Object filename = Qnil;
+      bool delete_flag = false;
       char cmd_string[sizeof WTMP_FILE ".19.gz"];
-      Lisp_Object tempname, filename;
-      bool delete_flag = 0;
-
-      filename = Qnil;
-
-      tempname = make_formatted_string
-	(cmd_string, "%s.%d", WTMP_FILE, counter);
+      AUTO_STRING_WITH_LEN (tempname, cmd_string,
+			    sprintf (cmd_string, "%s.%d", WTMP_FILE, counter));
       if (! NILP (Ffile_exists_p (tempname)))
 	filename = tempname;
       else
@@ -218,7 +215,7 @@ get_boot_time (void)
 	      CALLN (Fcall_process, build_string ("gzip"), Qnil,
 		     list2 (QCfile, filename), Qnil,
 		     build_string ("-cd"), tempname);
-	      delete_flag = 1;
+	      delete_flag = true;
 	    }
 	}
 

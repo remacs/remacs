@@ -742,27 +742,25 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
 }
 
 /* Return a buffer to be used as the minibuffer at depth `depth'.
- depth = 0 is the lowest allowed argument, and that is the value
- used for nonrecursive minibuffer invocations.  */
+   depth = 0 is the lowest allowed argument, and that is the value
+   used for nonrecursive minibuffer invocations.  */
 
 Lisp_Object
 get_minibuffer (EMACS_INT depth)
 {
-  Lisp_Object tail, num, buf;
-  char name[sizeof " *Minibuf-*" + INT_STRLEN_BOUND (EMACS_INT)];
-
-  XSETFASTINT (num, depth);
-  tail = Fnthcdr (num, Vminibuffer_list);
+  Lisp_Object tail = Fnthcdr (make_number (depth), Vminibuffer_list);
   if (NILP (tail))
     {
       tail = list1 (Qnil);
       Vminibuffer_list = nconc2 (Vminibuffer_list, tail);
     }
-  buf = Fcar (tail);
+  Lisp_Object buf = Fcar (tail);
   if (NILP (buf) || !BUFFER_LIVE_P (XBUFFER (buf)))
     {
-      buf = Fget_buffer_create
-	(make_formatted_string (name, " *Minibuf-%"pI"d*", depth));
+      static char const name_fmt[] = " *Minibuf-%"pI"d*";
+      char name[sizeof name_fmt + INT_STRLEN_BOUND (EMACS_INT)];
+      AUTO_STRING_WITH_LEN (lname, name, sprintf (name, name_fmt, depth));
+      buf = Fget_buffer_create (lname);
 
       /* Although the buffer's name starts with a space, undo should be
 	 enabled in it.  */

@@ -10528,25 +10528,21 @@ update_echo_area (void)
 static void
 ensure_echo_area_buffers (void)
 {
-  int i;
-
-  for (i = 0; i < 2; ++i)
+  for (int i = 0; i < 2; i++)
     if (!BUFFERP (echo_buffer[i])
 	|| !BUFFER_LIVE_P (XBUFFER (echo_buffer[i])))
       {
-	char name[30];
-	Lisp_Object old_buffer;
-	int j;
-
-	old_buffer = echo_buffer[i];
-	echo_buffer[i] = Fget_buffer_create
-	  (make_formatted_string (name, " *Echo Area %d*", i));
+	Lisp_Object old_buffer = echo_buffer[i];
+	static char const name_fmt[] = " *Echo Area %d*";
+	char name[sizeof name_fmt + INT_STRLEN_BOUND (int)];
+	AUTO_STRING_WITH_LEN (lname, name, sprintf (name, name_fmt, i));
+	echo_buffer[i] = Fget_buffer_create (lname);
 	bset_truncate_lines (XBUFFER (echo_buffer[i]), Qnil);
 	/* to force word wrap in echo area -
 	   it was decided to postpone this*/
 	/* XBUFFER (echo_buffer[i])->word_wrap = Qt; */
 
-	for (j = 0; j < 2; ++j)
+	for (int j = 0; j < 2; j++)
 	  if (EQ (old_buffer, echo_area_buffer[j]))
 	    echo_area_buffer[j] = echo_buffer[i];
       }
