@@ -876,7 +876,7 @@ AC_ARG_ENABLE([gcc-warnings],
    # is a developer as opposed to a builder.  This is most likely true
    # if GCC is recent enough and there is a .git subdirectory;
    # however, if there is also a .tarball-version file it is probably
-   # just a reliease imported into Git for patch management.
+   # just a release imported into Git for patch management.
    gl_gcc_warnings=no
    test -d "$srcdir"/.git && test ! -f "$srcdir"/.tarball-version &&
      gl_GCC_VERSION_IFELSE([5], [3], [gl_gcc_warnings=warn-only])]
