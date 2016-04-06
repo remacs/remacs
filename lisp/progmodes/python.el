@@ -372,7 +372,10 @@
   (defconst python-rx-constituents
     `((block-start          . ,(rx symbol-start
                                    (or "def" "class" "if" "elif" "else" "try"
-                                       "except" "finally" "for" "while" "with")
+                                       "except" "finally" "for" "while" "with"
+                                       ;; Python 3.5+ PEP492
+                                       (and "async" (+ space)
+                                            (or "def" "for" "with")))
                                    symbol-end))
       (dedenter            . ,(rx symbol-start
                                    (or "elif" "else" "except" "finally")
@@ -383,7 +386,11 @@
                                   symbol-end))
       (decorator            . ,(rx line-start (* space) ?@ (any letter ?_)
                                    (* (any word ?_))))
-      (defun                . ,(rx symbol-start (or "def" "class") symbol-end))
+      (defun                . ,(rx symbol-start
+                                   (or "def" "class"
+                                       ;; Python 3.5+ PEP492
+                                       (and "async" (+ space) "def"))
+                                   symbol-end))
       (if-name-main         . ,(rx line-start "if" (+ space) "__name__"
                                    (+ space) "==" (+ space)
                                    (any ?' ?\") "__main__" (any ?' ?\")
@@ -515,6 +522,8 @@ The type returned can be `comment', `string' or `paren'."
           ;; fontified like that in order to keep font-lock consistent between
           ;; Python versions.
           "nonlocal"
+          ;; Python 3.5+ PEP492
+          (and "async" (+ space) (or "def" "for" "with"))
           ;; Extra:
           "self")
          symbol-end)
