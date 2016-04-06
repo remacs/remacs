@@ -933,8 +933,6 @@ variable, meaning you can bind it around an 'url-retrieve' call.
 plist will contain a :peer element that has the output of
 'gnutls-peer-status' (if Emacs is built with GnuTLS support).
 
-*** The URL package now support https over proxies supporting CONNECT.
-
 ** Tramp
 
 +++
