@@ -577,7 +577,7 @@ The possible settings for `align-region-separate' are:
 		     (eq '- current-prefix-arg)))))
 
     (css-declaration
-     (regexp . "^\\s-*\\w+:\\(\\s-*\\).*;")
+     (regexp . "^\\s-*\\(?:\\w-?\\)+:\\(\\s-*\\).*;")
      (group . (1))
      (modes . '(css-mode html-mode))))
   "A list describing all of the available alignment rules.
