@@ -1205,7 +1205,7 @@ other client."
         (setq posn (match-end 0))
         (erc-display-message
          nil nil proc
-         'dcc-chat-privmsg ?n (erc-propertize erc-dcc-from 'face
+         'dcc-chat-privmsg ?n (erc-propertize erc-dcc-from 'font-lock-face
                                               'erc-nick-default-face) ?m line))
       (setq erc-dcc-unprocessed-output (substring str posn)))))
 
