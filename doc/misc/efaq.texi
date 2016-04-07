@@ -2664,11 +2664,6 @@ by typing @kbd{M-x ansi-color-for-comint-mode} in the Shell buffer, or
 by adding @code{(add-hook 'shell-mode-hook
 'ansi-color-for-comint-mode-on)} to your init file.
 
-In Emacs versions before 21.1, the @code{ansi-color} package is not
-included.  In that case, you need to unalias @code{ls} for interactive
-shells running in Emacs; this can be done by checking the @code{EMACS}
-variable in the environment.
-
 @node Fullscreen mode on MS-Windows
 @section How can I start Emacs in fullscreen mode on MS-Windows?
 @cindex Maximize frame
@@ -2757,11 +2752,9 @@ For @code{tcsh}, put this in your @file{.cshrc} (or @file{.tcshrc})
 file:
 
 @example
-if ($?EMACS) then
-    if ("$EMACS" =~ /*) then
-        if ($?tcsh) unset edit
-        stty nl
-    endif
+if ($?INSIDE_EMACS && $?tcsh)
+    unset edit
+    stty -icrnl -onlcr -echo susp ^Z
 endif
 @end example
 
@@ -2769,7 +2762,7 @@ Or put this in your @file{.emacs_tcsh} or @file{~/.emacs.d/init_tcsh.sh} file:
 
 @example
 unset edit
-stty nl
+stty -icrnl -onlcr -echo susp ^Z
 @end example
 
 Alternatively, use @code{csh} in your shell buffers instead of
