@@ -217,6 +217,17 @@ outermost parenthesis.
 ** The function 'redirect-debugging-output' now works on platforms
 other than GNU/Linux.
 
++++
+** New functions 'sxhash-eq' and 'sxhash-eql' return hash codes of a
+Lisp object suitable for use with 'eq' and 'eql' correspondingly.  If
+two objects are 'eq' ('eql'), then the result of 'sxhash-eq'
+('sxhash-eql') on them will be the same.
+
++++
+** Function 'sxhash' has been renamed to 'sxhash-equal' for
+consistency with the new functions.  For compatibility, 'sxhash'
+remains as an alias to 'sxhash-equal'.
+
 
 * Changes in Emacs 25.2 on Non-Free Operating Systems
 

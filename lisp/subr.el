@@ -66,6 +66,7 @@ For more information, see Info node `(elisp)Declaring Functions'."
 ;;;; Basic Lisp macros.
 
 (defalias 'not 'null)
+(defalias 'sxhash 'sxhash-equal)
 
 (defmacro noreturn (form)
   "Evaluate FORM, expecting it not to return.

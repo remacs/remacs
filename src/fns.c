@@ -4447,8 +4447,26 @@ sxhash (Lisp_Object obj, int depth)
 			    Lisp Interface
  ***********************************************************************/
 
+DEFUN ("sxhash-eq", Fsxhash_eq, Ssxhash_eq, 1, 1, 0,
+       doc: /* Compute identity hash code for OBJ and return it as integer.
+In other words, hash codes of two non-`eq' lists will be (most likely)
+different, even if the lists contain the same elements. */)
+  (Lisp_Object obj)
+{
+  return make_number (hashfn_eq (NULL, obj));
+}
 
-DEFUN ("sxhash", Fsxhash, Ssxhash, 1, 1, 0,
+DEFUN ("sxhash-eql", Fsxhash_eql, Ssxhash_eql, 1, 1, 0,
+       doc: /* Compute identity hash code for OBJ and return it as integer.
+In comparison to `sxhash-eq', it is also guaranteed that hash codes
+of equal float numbers will be the same, even if the numbers are not
+the same Lisp object. */)
+  (Lisp_Object obj)
+{
+  return make_number (hashfn_eql (NULL, obj));
+}
+
+DEFUN ("sxhash-equal", Fsxhash_equal, Ssxhash_equal, 1, 1, 0,
        doc: /* Compute a hash code for OBJ and return it as integer.  */)
   (Lisp_Object obj)
 {
@@ -5066,7 +5084,9 @@ syms_of_fns (void)
   DEFSYM (Qkey_or_value, "key-or-value");
   DEFSYM (Qkey_and_value, "key-and-value");
 
-  defsubr (&Ssxhash);
+  defsubr (&Ssxhash_eq);
+  defsubr (&Ssxhash_eql);
+  defsubr (&Ssxhash_equal);
   defsubr (&Smake_hash_table);
   defsubr (&Scopy_hash_table);
   defsubr (&Shash_table_count);
