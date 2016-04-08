@@ -1398,8 +1398,10 @@ symbol-function was changed not to signal 'void-function' any more.
 *** As a consequence, the second arg of 'indirect-function' is now obsolete.
 
 +++
-** Although comint, term, and compile still set the EMACS variable,
-this is now considered deprecated and will be removed in a future release.
+** M-x shell and M-x compile no longer set the EMACS environment variable.
+This avoids clashing when other programs use the variable for other purposes.
+Although M-x term still sets EMACS for compatibility with Bash 4.3 and earlier,
+this is deprecated and will be phased out when Bash 4.4 or later takes over.
 Use the INSIDE_EMACS environment variable instead.
 
 +++
