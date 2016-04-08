@@ -1966,7 +1966,9 @@ Only intended for interactive use."
 (defun ffap-guess-file-name-at-point ()
   "Try to get a file name at point.
 This hook is intended to be put in `file-name-at-point-functions'."
-  (let ((guess (ffap-guesser)))
+  ;; ffap-guesser can signal an error, and we don't want that when,
+  ;; e.g., the user types M-n at the "C-x C-f" prompt.
+  (let ((guess (ignore-errors (ffap-guesser))))
     (when (stringp guess)
       (let ((url (ffap-url-p guess)))
 	(or url
