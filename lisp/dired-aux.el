@@ -730,6 +730,7 @@ can be produced by `dired-get-marked-files', for example."
 	 (command (if sequentially
 		      (substring command 0 (match-beginning 0))
 		    command))
+         (parallel-in-background (and in-background (not sequentially)))
 	 (stuff-it
 	  (if (or (string-match-p dired-star-subst-regexp command)
 		  (string-match-p dired-quark-subst-regexp command))
@@ -741,15 +742,27 @@ can be produced by `dired-get-marked-files', for example."
 		  retval))
 	    (lambda (x) (concat command dired-mark-separator x)))))
     (concat
-     (if on-each
-	 (mapconcat stuff-it (mapcar 'shell-quote-argument file-list)
-		    (if (and in-background (not sequentially)) "&" ";"))
-       (let ((files (mapconcat 'shell-quote-argument
-			       file-list dired-mark-separator)))
-	 (if (> (length file-list) 1)
-	     (setq files (concat dired-mark-prefix files dired-mark-postfix)))
-	 (funcall stuff-it files)))
-     (if in-background "&" ""))))
+     (cond (on-each
+            (format "%s%s"
+                    (mapconcat stuff-it (mapcar 'shell-quote-argument file-list)
+                               (or (and parallel-in-background "&") ";"))
+                    ;; POSIX shells running a list of commands in the background
+                    ;; (LIST = cmd_1 & [cmd_2 & ... cmd_i & ... cmd_N &])
+                    ;; return once cmd_N ends, i.e., the shell does not
+                    ;; wait for cmd_i to finish before executing cmd_i+1.
+                    ;; That means, running (shell-command LIST) may not show
+                    ;; the output of all the commands (Bug#23206).
+                    ;; Add 'wait' to force those POSIX shells to wait until
+                    ;; all commands finish.
+                    (or (and parallel-in-background (not (memq system-type '(ms-dos windows-nt))) "&wait")
+                        "")))
+           (t
+            (let ((files (mapconcat 'shell-quote-argument
+                                    file-list dired-mark-separator)))
+              (when (cdr file-list)
+                (setq files (concat dired-mark-prefix files dired-mark-postfix)))
+              (funcall stuff-it files))))
+     (or (and in-background "&") ""))))
 
 ;; This is an extra function so that it can be redefined by ange-ftp.
 ;;;###autoload
