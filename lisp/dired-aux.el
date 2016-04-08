@@ -730,22 +730,34 @@ can be produced by `dired-get-marked-files', for example."
 	 (command (if sequentially
 		      (substring command 0 (match-beginning 0))
 		    command))
-         (parallel-in-background (and in-background (not sequentially)))
+         (parallel-in-background
+          (and in-background (not sequentially) (not (eq system-type 'ms-dos))))
+         (w32-shell (and (fboundp 'w32-shell-dos-semantics)
+                         (w32-shell-dos-semantics)))
+         ;; The way to run a command in background in Windows shells
+         ;; is to use the START command.  The /B switch means not to
+         ;; create a new window for the command.
+         (cmd-prefix (if w32-shell "start /b " ""))
+         ;; Windows shells don't support chaining with ";", they use
+         ;; "&" instead.
+         (cmd-sep (if (and (not w32-shell) (not parallel-in-background))
+                      ";"
+                    "&"))
 	 (stuff-it
 	  (if (or (string-match-p dired-star-subst-regexp command)
 		  (string-match-p dired-quark-subst-regexp command))
 	      (lambda (x)
-		(let ((retval command))
+		(let ((retval (concat cmd-prefix command)))
 		  (while (string-match
 			  "\\(^\\|[ \t]\\)\\([*?]\\)\\([ \t]\\|$\\)" retval)
 		    (setq retval (replace-match x t t retval 2)))
 		  retval))
-	    (lambda (x) (concat command dired-mark-separator x)))))
+	    (lambda (x) (concat cmd-prefix command dired-mark-separator x)))))
     (concat
      (cond (on-each
             (format "%s%s"
                     (mapconcat stuff-it (mapcar 'shell-quote-argument file-list)
-                               (or (and parallel-in-background "&") ";"))
+                               cmd-sep)
                     ;; POSIX shells running a list of commands in the background
                     ;; (LIST = cmd_1 & [cmd_2 & ... cmd_i & ... cmd_N &])
                     ;; return once cmd_N ends, i.e., the shell does not
@@ -754,8 +766,7 @@ can be produced by `dired-get-marked-files', for example."
                     ;; the output of all the commands (Bug#23206).
                     ;; Add 'wait' to force those POSIX shells to wait until
                     ;; all commands finish.
-                    (or (and parallel-in-background
-                             (not (memq system-type '(ms-dos windows-nt)))
+                    (or (and parallel-in-background (not w32-shell)
                              "&wait")
                         "")))
            (t
