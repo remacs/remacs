@@ -754,7 +754,9 @@ can be produced by `dired-get-marked-files', for example."
                     ;; the output of all the commands (Bug#23206).
                     ;; Add 'wait' to force those POSIX shells to wait until
                     ;; all commands finish.
-                    (or (and parallel-in-background (not (memq system-type '(ms-dos windows-nt))) "&wait")
+                    (or (and parallel-in-background
+                             (not (memq system-type '(ms-dos windows-nt)))
+                             "&wait")
                         "")))
            (t
             (let ((files (mapconcat 'shell-quote-argument
