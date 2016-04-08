@@ -234,9 +234,22 @@ If a buffer is visiting the desired autoload file, return it."
 	(enable-local-eval nil))
     ;; We used to use `raw-text' to read this file, but this causes
     ;; problems when the file contains non-ASCII characters.
-    (let ((delay-mode-hooks t))
-      (find-file-noselect
-       (autoload-ensure-default-file (autoload-generated-file))))))
+    (let* ((delay-mode-hooks t)
+           (file (autoload-generated-file))
+           (file-missing (not (file-exists-p file))))
+      (when file-missing
+        (autoload-ensure-default-file file))
+      (with-current-buffer
+          (find-file-noselect
+           (autoload-ensure-file-writeable
+            file))
+        ;; block backups when the file has just been created, since
+        ;; the backups will just be the auto-generated headers.
+        ;; bug#23203
+        (when file-missing
+          (setq buffer-backed-up t)
+          (save-buffer))
+        (current-buffer)))))
 
 (defun autoload-generated-file ()
   (expand-file-name generated-autoload-file
@@ -357,21 +370,22 @@ not be relied upon."
 ;;;###autoload
 (put 'autoload-ensure-writable 'risky-local-variable t)
 
+(defun autoload-ensure-file-writeable (file)
+  ;; Probably pointless, but replaces the old AUTOGEN_VCS in lisp/Makefile,
+  ;; which was designed to handle CVSREAD=1 and equivalent.
+  (and autoload-ensure-writable
+       (let ((modes (file-modes file)))
+         (if (zerop (logand modes #o0200))
+             ;; Ignore any errors here, and let subsequent attempts
+             ;; to write the file raise any real error.
+             (ignore-errors (set-file-modes file (logior modes #o0200))))))
+  file)
+
 (defun autoload-ensure-default-file (file)
   "Make sure that the autoload file FILE exists, creating it if needed.
 If the file already exists and `autoload-ensure-writable' is non-nil,
 make it writable."
-  (if (file-exists-p file)
-      ;; Probably pointless, but replaces the old AUTOGEN_VCS in lisp/Makefile,
-      ;; which was designed to handle CVSREAD=1 and equivalent.
-      (and autoload-ensure-writable
-	   (let ((modes (file-modes file)))
-	     (if (zerop (logand modes #o0200))
-		 ;; Ignore any errors here, and let subsequent attempts
-		 ;; to write the file raise any real error.
-		 (ignore-errors (set-file-modes file (logior modes #o0200))))))
-    (write-region (autoload-rubric file) nil file))
-  file)
+  (write-region (autoload-rubric file) nil file))
 
 (defun autoload-insert-section-header (outbuf autoloads load-name file time)
   "Insert the section-header line,
