@@ -721,12 +721,16 @@ struct Lisp_Symbol
    except the former expands to an integer constant expression.  */
 #define XLI_BUILTIN_LISPSYM(iname) TAG_SYMOFFSET ((iname) * sizeof *lispsym)
 
+/* LISPSYM_INITIALLY (Qfoo) is equivalent to Qfoo except it is
+   designed for use as an initializer, even for a constant initializer.  */
+#define LISPSYM_INITIALLY(name) LISP_INITIALLY (XLI_BUILTIN_LISPSYM (i##name))
+
 /* Declare extern constants for Lisp symbols.  These can be helpful
    when using a debugger like GDB, on older platforms where the debug
    format does not represent C macros.  */
 #define DEFINE_LISP_SYMBOL(name) \
   DEFINE_GDB_SYMBOL_BEGIN (Lisp_Object, name) \
-  DEFINE_GDB_SYMBOL_END (LISP_INITIALLY (XLI_BUILTIN_LISPSYM (i##name)))
+  DEFINE_GDB_SYMBOL_END (LISPSYM_INITIALLY (name))
 
 /* By default, define macros for Qt, etc., as this leads to a bit
    better performance in the core Emacs interpreter.  A plugin can
@@ -3441,7 +3445,7 @@ ptrdiff_t hash_lookup (struct Lisp_Hash_Table *, Lisp_Object, EMACS_UINT *);
 ptrdiff_t hash_put (struct Lisp_Hash_Table *, Lisp_Object, Lisp_Object,
 		    EMACS_UINT);
 void hash_remove_from_table (struct Lisp_Hash_Table *, Lisp_Object);
-extern struct hash_table_test hashtest_eq, hashtest_eql, hashtest_equal;
+extern struct hash_table_test const hashtest_eq, hashtest_eql, hashtest_equal;
 extern void validate_subarray (Lisp_Object, Lisp_Object, Lisp_Object,
 			       ptrdiff_t, ptrdiff_t *, ptrdiff_t *);
 extern Lisp_Object substring_both (Lisp_Object, ptrdiff_t, ptrdiff_t,

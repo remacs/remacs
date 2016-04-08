@@ -3667,8 +3667,6 @@ larger_vector (Lisp_Object vec, ptrdiff_t incr_min, ptrdiff_t nitems_max)
 			 Low-level Functions
  ***********************************************************************/
 
-struct hash_table_test hashtest_eq, hashtest_eql, hashtest_equal;
-
 /* Compare KEY1 which has hash code HASH1 and KEY2 with hash code
    HASH2 in hash table H using `eql'.  Value is true if KEY1 and
    KEY2 are the same.  */
@@ -3709,7 +3707,6 @@ cmpfn_user_defined (struct hash_table_test *ht,
   return !NILP (call2 (ht->user_cmp_function, key1, key2));
 }
 
-
 /* Value is a hash code for KEY for use in hash table H which uses
    `eq' to compare keys.  The hash code returned is guaranteed to fit
    in a Lisp integer.  */
@@ -3717,23 +3714,7 @@ cmpfn_user_defined (struct hash_table_test *ht,
 static EMACS_UINT
 hashfn_eq (struct hash_table_test *ht, Lisp_Object key)
 {
-  EMACS_UINT hash = XHASH (key) ^ XTYPE (key);
-  return hash;
-}
-
-/* Value is a hash code for KEY for use in hash table H which uses
-   `eql' to compare keys.  The hash code returned is guaranteed to fit
-   in a Lisp integer.  */
-
-static EMACS_UINT
-hashfn_eql (struct hash_table_test *ht, Lisp_Object key)
-{
-  EMACS_UINT hash;
-  if (FLOATP (key))
-    hash = sxhash (key, 0);
-  else
-    hash = XHASH (key) ^ XTYPE (key);
-  return hash;
+  return XHASH (key) ^ XTYPE (key);
 }
 
 /* Value is a hash code for KEY for use in hash table H which uses
@@ -3743,8 +3724,17 @@ hashfn_eql (struct hash_table_test *ht, Lisp_Object key)
 static EMACS_UINT
 hashfn_equal (struct hash_table_test *ht, Lisp_Object key)
 {
-  EMACS_UINT hash = sxhash (key, 0);
-  return hash;
+  return sxhash (key, 0);
+}
+
+/* Value is a hash code for KEY for use in hash table H which uses
+   `eql' to compare keys.  The hash code returned is guaranteed to fit
+   in a Lisp integer.  */
+
+static EMACS_UINT
+hashfn_eql (struct hash_table_test *ht, Lisp_Object key)
+{
+  return FLOATP (key) ? hashfn_equal (ht, key) : hashfn_eq (ht, key);
 }
 
 /* Value is a hash code for KEY for use in hash table H which uses as
@@ -3757,6 +3747,14 @@ hashfn_user_defined (struct hash_table_test *ht, Lisp_Object key)
   Lisp_Object hash = call1 (ht->user_hash_function, key);
   return hashfn_eq (ht, hash);
 }
+
+struct hash_table_test const
+  hashtest_eq = { LISPSYM_INITIALLY (Qeq), LISPSYM_INITIALLY (Qnil),
+		  LISPSYM_INITIALLY (Qnil), 0, hashfn_eq },
+  hashtest_eql = { LISPSYM_INITIALLY (Qeql), LISPSYM_INITIALLY (Qnil),
+		   LISPSYM_INITIALLY (Qnil), cmpfn_eql, hashfn_eql },
+  hashtest_equal = { LISPSYM_INITIALLY (Qequal), LISPSYM_INITIALLY (Qnil),
+		     LISPSYM_INITIALLY (Qnil), cmpfn_equal, hashfn_equal };
 
 /* Allocate basically initialized hash table.  */
 
@@ -4448,32 +4446,28 @@ sxhash (Lisp_Object obj, int depth)
  ***********************************************************************/
 
 DEFUN ("sxhash-eq", Fsxhash_eq, Ssxhash_eq, 1, 1, 0,
-       doc: /* Compute identity hash code for OBJ and return it as integer.
-In other words, hash codes of two non-`eq' lists will be (most likely)
-different, even if the lists contain the same elements. */)
+       doc: /* Return an integer hash code for OBJ suitable for `eq'.
+If (eq A B), then (= (sxhash-eq A) (sxhash-eq B)).  */)
   (Lisp_Object obj)
 {
   return make_number (hashfn_eq (NULL, obj));
 }
 
 DEFUN ("sxhash-eql", Fsxhash_eql, Ssxhash_eql, 1, 1, 0,
-       doc: /* Compute identity hash code for OBJ and return it as integer.
-In comparison to `sxhash-eq', it is also guaranteed that hash codes
-of equal float numbers will be the same, even if the numbers are not
-the same Lisp object. */)
+       doc: /* Return an integer hash code for OBJ suitable for `eql'.
+If (eql A B), then (= (sxhash-eql A) (sxhash-eql B)).  */)
   (Lisp_Object obj)
 {
   return make_number (hashfn_eql (NULL, obj));
 }
 
 DEFUN ("sxhash-equal", Fsxhash_equal, Ssxhash_equal, 1, 1, 0,
-       doc: /* Compute a hash code for OBJ and return it as integer.  */)
+       doc: /* Return an integer hash code for OBJ suitable for `equal'.
+If (equal A B), then (= (sxhash-equal A) (sxhash-equal B)).  */)
   (Lisp_Object obj)
 {
-  EMACS_UINT hash = sxhash (obj, 0);
-  return make_number (hash);
+  return make_number (hashfn_equal (NULL, obj));
 }
-
 
 DEFUN ("make-hash-table", Fmake_hash_table, Smake_hash_table, 0, MANY, 0,
        doc: /* Create and return a new hash table.
@@ -5220,22 +5214,4 @@ this variable.  */);
   defsubr (&Ssecure_hash);
   defsubr (&Sbuffer_hash);
   defsubr (&Slocale_info);
-
-  hashtest_eq.name = Qeq;
-  hashtest_eq.user_hash_function = Qnil;
-  hashtest_eq.user_cmp_function = Qnil;
-  hashtest_eq.cmpfn = 0;
-  hashtest_eq.hashfn = hashfn_eq;
-
-  hashtest_eql.name = Qeql;
-  hashtest_eql.user_hash_function = Qnil;
-  hashtest_eql.user_cmp_function = Qnil;
-  hashtest_eql.cmpfn = cmpfn_eql;
-  hashtest_eql.hashfn = hashfn_eql;
-
-  hashtest_equal.name = Qequal;
-  hashtest_equal.user_hash_function = Qnil;
-  hashtest_equal.user_cmp_function = Qnil;
-  hashtest_equal.cmpfn = cmpfn_equal;
-  hashtest_equal.hashfn = hashfn_equal;
 }
