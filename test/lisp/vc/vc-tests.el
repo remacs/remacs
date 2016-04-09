@@ -137,7 +137,7 @@ For backends which dont support it, it is emulated."
               (tdir tmp-dir))
           ;; If CVS executable is an MSYS program, reformat the file
           ;; name of TMP-DIR to have the /d/foo/bar form supported by
-          ;; MSYS programs.  (FIXME: What about Cygwin cvs.exe?)
+          ;; MSYS programs.  (FIXME What about Cygwin cvs.exe?)
           (if (eq (w32-application-type cvs-prog) 'msys)
               (setq tdir
                     (concat "/" (substring tmp-dir 0 1) (substring tmp-dir 2))))
@@ -201,19 +201,24 @@ For backends which dont support it, it is emulated."
       ;; Save exit.
       (ignore-errors (run-hooks 'vc-test--cleanup-hook)))))
 
-;; Why isn't there `vc-unregister'?
+;; FIXME Why isn't there `vc-unregister'?
 (defun vc-test--unregister-function (backend file)
   "Run the `vc-unregister' backend function.
 For backends which dont support it, `vc-not-supported' is signalled."
 
-  (let ((symbol (intern (downcase (format "vc-%s-unregister" backend)))))
-    (if (functionp symbol)
-	(funcall symbol file)
-      ;; CVS, SVN, SCCS, SRC and Mtn are not supported.
-      (signal 'vc-not-supported (list 'unregister backend)))))
+  (unwind-protect
+      (let ((symbol (intern (downcase (format "vc-%s-unregister" backend)))))
+        (if (functionp symbol)
+            (funcall symbol file)
+          ;; CVS, SVN, SCCS, SRC and Mtn are not supported.
+          (signal 'vc-not-supported (list 'unregister backend))))
+
+    ;; FIXME This shall be called in `vc-unregister'.
+    (vc-file-clearprops file)))
 
 (defun vc-test--register (backend)
-  "Register and unregister a file."
+  "Register and unregister a file.
+This checks also `vc-backend' and `vc-reponsible-backend'."
 
   (let ((vc-handled-backends `(,backend))
 	(default-directory
@@ -232,32 +237,58 @@ For backends which dont support it, `vc-not-supported' is signalled."
 	  ;; Create empty repository.
 	  (make-directory default-directory)
 	  (vc-test--create-repo-function backend)
+          ;; For file oriented backends CVS, RCS and SVN the backend is
+          ;; returned, and the directory is registered already.
+          ;; FIXME is this correct?
+          (should (if (vc-backend default-directory)
+                      (vc-registered default-directory)
+                    (not (vc-registered default-directory))))
+          (should (eq (vc-responsible-backend default-directory) backend))
 
 	  (let ((tmp-name1 (expand-file-name "foo" default-directory))
 		(tmp-name2 "bla"))
 	    ;; Register files.  Check for it.
 	    (write-region "foo" nil tmp-name1 nil 'nomessage)
 	    (should (file-exists-p tmp-name1))
+            (should-not (vc-backend tmp-name1))
+            (should (eq (vc-responsible-backend tmp-name1) backend))
 	    (should-not (vc-registered tmp-name1))
+
 	    (write-region "bla" nil tmp-name2 nil 'nomessage)
 	    (should (file-exists-p tmp-name2))
+            (should-not (vc-backend tmp-name2))
+            (should (eq (vc-responsible-backend tmp-name2) backend))
 	    (should-not (vc-registered tmp-name2))
+
 	    (vc-register (list backend (list tmp-name1 tmp-name2)))
 	    (should (file-exists-p tmp-name1))
+            (should (eq (vc-backend tmp-name1) backend))
+            (should (eq (vc-responsible-backend tmp-name1) backend))
 	    (should (vc-registered tmp-name1))
+
 	    (should (file-exists-p tmp-name2))
+            (should (eq (vc-backend tmp-name2) backend))
+            (should (eq (vc-responsible-backend tmp-name2) backend))
 	    (should (vc-registered tmp-name2))
+
+            ;; FIXME `vc-backend' accepts also a list of files,
+            ;; `vc-responsible-backend' doesn't.  Is this right?
+            (should (vc-backend (list tmp-name1 tmp-name2)))
 
 	    ;; Unregister the files.
 	    (condition-case err
 		(progn
 		  (vc-test--unregister-function backend tmp-name1)
+                  (should-not (vc-backend tmp-name1))
 		  (should-not (vc-registered tmp-name1))
 		  (vc-test--unregister-function backend tmp-name2)
+                  (should-not (vc-backend tmp-name2))
 		  (should-not (vc-registered tmp-name2)))
 	      ;; CVS, SVN, SCCS, SRC and Mtn are not supported.
-	      (vc-not-supported t))
-	    ;; The files shall still exist.
+	      (vc-not-supported t)
+              (t (signal (car err) (cdr err))))
+
+            ;; The files shall still exist.
 	    (should (file-exists-p tmp-name1))
 	    (should (file-exists-p tmp-name2))))
 
@@ -331,7 +362,7 @@ For backends which dont support it, `vc-not-supported' is signalled."
 	    (should (memq (vc-state tmp-name) '(added unregistered up-to-date)))
 
 	    ;; Unregister the file.  Check state.
-	    (condition-case nil
+	    (condition-case err
 		(progn
 		  (vc-test--unregister-function backend tmp-name)
 
@@ -343,7 +374,8 @@ For backends which dont support it, `vc-not-supported' is signalled."
 		  (should (eq (vc-state tmp-name) (vc-state tmp-name backend)))
 		  (should (memq (vc-state tmp-name)
 				'(added unregistered up-to-date))))
-	      (vc-not-supported (message "vc-state5 unsupported")))))
+	      (vc-not-supported (message "vc-state5 unsupported"))
+              (t (signal (car err) (cdr err))))))
 
       ;; Save exit.
       (ignore-errors (run-hooks 'vc-test--cleanup-hook)))))
@@ -403,15 +435,16 @@ For backends which dont support it, `vc-not-supported' is signalled."
 	    (vc-register
 	     (list backend (list (file-name-nondirectory tmp-name))))
 
-	    ;; nil: Mtn Git RCS SCCS
+	    ;; nil: Mtn Git
 	    ;; "0": Bzr CVS Hg SRC SVN
+            ;; "1.1"  RCS SCCS
             (message "vc-working-revision4 %s" (vc-working-revision tmp-name))
 	    (should (eq (vc-working-revision tmp-name)
 			(vc-working-revision tmp-name backend)))
-	    (should (member (vc-working-revision tmp-name) '(nil "0")))
+	    (should (member (vc-working-revision tmp-name) '(nil "0" "1.1")))
 
 	    ;; Unregister the file.  Check working revision.
-	    (condition-case nil
+	    (condition-case err
 		(progn
 		  (vc-test--unregister-function backend tmp-name)
 
@@ -423,7 +456,8 @@ For backends which dont support it, `vc-not-supported' is signalled."
 		  (should (eq (vc-working-revision tmp-name)
 			      (vc-working-revision tmp-name backend)))
 		  (should (member (vc-working-revision tmp-name) '(nil "0"))))
-	      (vc-not-supported (message "vc-working-revision5 unsupported")))))
+	      (vc-not-supported (message "vc-working-revision5 unsupported"))
+              (t (signal (car err) (cdr err))))))
 
       ;; Save exit.
       (ignore-errors (run-hooks 'vc-test--cleanup-hook)))))
@@ -494,7 +528,7 @@ For backends which dont support it, `vc-not-supported' is signalled."
 			  '(announce implicit locking)))
 
 	    ;; Unregister the file.  Check checkout model.
-	    (condition-case nil
+	    (condition-case err
 		(progn
 		  (vc-test--unregister-function backend tmp-name)
 
@@ -505,7 +539,8 @@ For backends which dont support it, `vc-not-supported' is signalled."
                    "vc-checkout-model5 %s" (vc-checkout-model backend tmp-name))
 		  (should (memq (vc-checkout-model backend tmp-name)
 				'(announce implicit locking))))
-	      (vc-not-supported (message "vc-checkout-model5 unsupported")))))
+	      (vc-not-supported (message "vc-checkout-model5 unsupported"))
+              (t (signal (car err) (cdr err))))))
 
       ;; Save exit.
       (ignore-errors (run-hooks 'vc-test--cleanup-hook)))))
@@ -580,6 +615,8 @@ For backends which dont support it, `vc-not-supported' is signalled."
 	(ert-deftest
 	    ,(intern (format "vc-test-%s02-state" backend-string)) ()
 	  ,(format "Check `vc-state' for the %s backend." backend-string)
+	  ;; FIXME make this pass.
+	  :expected-result ,(if (equal backend 'SRC) :failed :passed)
 	  (skip-unless
 	   (ert-test-passed-p
 	    (ert-test-most-recent-result

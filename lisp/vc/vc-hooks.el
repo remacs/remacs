@@ -206,17 +206,17 @@ VC commands are globally reachable under the prefix `\\[vc-prefix-map]':
 	   (not (memq property vc-touched-properties)))
       (setq vc-touched-properties (append (list property)
 					  vc-touched-properties)))
-  (put (intern file vc-file-prop-obarray) property value))
+  (put (intern (expand-file-name file) vc-file-prop-obarray) property value))
 
 (defun vc-file-getprop (file property)
   "Get per-file VC PROPERTY for FILE."
-  (get (intern file vc-file-prop-obarray) property))
+  (get (intern (expand-file-name file) vc-file-prop-obarray) property))
 
 (defun vc-file-clearprops (file)
   "Clear all VC properties of FILE."
   (if (boundp 'vc-parent-buffer)
       (kill-local-variable 'vc-parent-buffer))
-  (setplist (intern file vc-file-prop-obarray) nil))
+  (setplist (intern (expand-file-name file) vc-file-prop-obarray) nil))
 
 
 ;; We keep properties on each symbol naming a backend as follows:
