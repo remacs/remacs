@@ -34,6 +34,7 @@ that Emacs presents to the user.
 * Character Display::   How Emacs displays individual characters.
 * Beeping::             Audible signal to the user.
 * Window Systems::      Which window system is being used.
+* Tooltips::            Tooltip display in Emacs.
 * Bidirectional Display:: Display of bidirectional scripts, such as
                              Arabic and Farsi.
 @end menu
@@ -6967,6 +6968,81 @@ graphic displays.  That is because @code{window-system} is not a good
 indicator of Emacs capabilities on a given display type.  Instead, use
 @code{display-graphic-p} or any of the other @code{display-*-p}
 predicates described in @ref{Display Feature Testing}.
+
+@node Tooltips
+@section Tooltips
+@cindex tooltips
+@dfn{Tooltips} are special frames (@pxref{Frames}) that are used to
+display helpful hints (a.k.a.@: ``tips'') related to the current
+position of the mouse pointer.  Emacs uses tooltips to display help
+strings about active portions of text (@pxref{Special Properties}) and
+about various UI elements, such as menu items (@pxref{Extended Menu
+Items}) and tool-bar buttons (@pxref{Tool Bar}).
+
+@defun tooltip-mode
+Tooltip Mode is a minor mode that enables display of tooltips.
+Turning off this mode causes the tooltips be displayed in the echo
+area.  On text-mode (a.k.a.@: ``TTY'') frames, tooltips are always
+displayed in the echo area.
+@end defun
+
+@vindex x-gtk-use-system-tooltips
+When Emacs is built with GTK+ support, it by default displays tooltips
+using GTK+ functions, and the appearance of the tooltips is then
+controlled by GTK+ settings.  GTK+ tooltips can be disabled by
+changing the value of the variable @code{x-gtk-use-system-tooltips} to
+@code{nil}.  The rest of this subsection describes how to control
+non-GTK+ tooltips, which are presented by Emacs itself.
+
+Since tooltips are special frames, they have their frame parameters
+(@pxref{Frame Parameters}).  Unlike other frames, the frame parameters
+for tooltips are stored in a special variable.
+
+@defvar tooltip-frame-parameters
+This customizable option holds the frame parameters used for
+displaying tooltips.  Any font and color parameters are ignored, and
+the corresponding attributes of the @code{tooltip} face are used
+instead.  If @code{left} or @code{top} parameters are included, they
+are used as absolute frame-relative coordinates where the tooltip
+should be shown.  (Mouse-relative position of the tooltip can be
+customized using the variables described in @ref{Tooltips,,, emacs,
+The GNU Emacs Manual}.)  Note that the @code{left} and @code{top}
+parameters, if present, override the values of mouse-relative offsets.
+@end defvar
+
+@vindex tooltip@r{ face}
+The @code{tooltip} face determines the appearance of text shown in
+tooltips.  It should generally use a variable-pitch font of size that
+is preferably smaller than the default frame font.
+
+@findex tooltip-help-tips
+@defvar tooltip-functions
+This abnormal hook is a list of functions to call when Emacs needs to
+display a tooltip.  Each function is called with a single argument
+@var{event} which is a copy of the last mouse movement event.  If a
+function on this list actually displays the tooltip, it should return
+non-@code{nil}, and then the rest of the functions will not be
+called.  The default value of this variable is a single function
+@code{tooltip-help-tips}.
+@end defvar
+
+If you write your own function to be put on the
+@code{tooltip-functions} list, you may need to know the buffer of the
+mouse event that triggered the tooltip display.  The following
+function provides that information.
+
+@defun tooltip-event-buffer event
+This function returns the buffer over which @var{event} occurred.
+Call it with the argument of the function from
+@code{tooltip-functions} to obtain the buffer whose text triggered the
+tooltip.  Note that the event might occur not over a buffer (e.g.,
+over the tool bar), in which case this function will return
+@code{nil}.
+@end defun
+
+Other aspects of tooltip display are controlled by several
+customizable settings; see @ref{Tooltips,,, emacs, The GNU Emacs
+Manual}.
 
 @node Bidirectional Display
 @section Bidirectional Display
