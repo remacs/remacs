@@ -40,7 +40,7 @@
   :group 'mode-line
   :version "25.1")
 
-(defface vc-state-base-face
+(defface vc-state-base
   '((default))
   "Base face for VC state indicator."
   :group 'vc-faces
@@ -48,49 +48,49 @@
   :version "25.1")
 
 (defface vc-up-to-date-state
-  '((default :inherit vc-state-base-face))
+  '((default :inherit vc-state-base))
   "Face for VC modeline state when the file is up to date."
   :version "25.1"
   :group 'vc-faces)
 
 (defface vc-needs-update-state
-  '((default :inherit vc-state-base-face))
+  '((default :inherit vc-state-base))
   "Face for VC modeline state when the file needs update."
   :version "25.1"
   :group 'vc-faces)
 
 (defface vc-locked-state
-  '((default :inherit vc-state-base-face))
+  '((default :inherit vc-state-base))
   "Face for VC modeline state when the file locked."
   :version "25.1"
   :group 'vc-faces)
 
 (defface vc-locally-added-state
-  '((default :inherit vc-state-base-face))
+  '((default :inherit vc-state-base))
   "Face for VC modeline state when the file is locally added."
   :version "25.1"
   :group 'vc-faces)
 
 (defface vc-conflict-state
-  '((default :inherit vc-state-base-face))
+  '((default :inherit vc-state-base))
   "Face for VC modeline state when the file contains merge conflicts."
   :version "25.1"
   :group 'vc-faces)
 
 (defface vc-removed-state
-  '((default :inherit vc-state-base-face))
+  '((default :inherit vc-state-base))
   "Face for VC modeline state when the file was removed from the VC system."
   :version "25.1"
   :group 'vc-faces)
 
 (defface vc-missing-state
-  '((default :inherit vc-state-base-face))
+  '((default :inherit vc-state-base))
   "Face for VC modeline state when the file is missing from the file system."
   :version "25.1"
   :group 'vc-faces)
 
 (defface vc-edited-state
-  '((default :inherit vc-state-base-face))
+  '((default :inherit vc-state-base))
   "Face for VC modeline state when the file is edited."
   :version "25.1"
   :group 'vc-faces)

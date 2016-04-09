@@ -398,8 +398,9 @@ With a prefix (or a FILL) argument, also fill too short lines."
 (defun rectangle--space-to (col)
   (propertize " " 'display `(space :align-to ,col)))
 
-(defface rectangle-preview-face '((t :inherit region))
-  "The face to use for the `string-rectangle' preview.")
+(defface rectangle-preview '((t :inherit region))
+  "The face to use for the `string-rectangle' preview."
+  :version "25.1")
 
 (defcustom rectangle-preview t
   "If non-nil, `string-rectangle' will show an-the-fly preview."
