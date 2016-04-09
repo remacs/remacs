@@ -578,24 +578,22 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
      other time to know things like window placement etc.  */
   xv = xwidget_init_view (xww, s, x, y);
 
-  /* Calculate clipping, which is used for all manner of onscreen
-     xwidget views.  Each widget border can get clipped by other emacs
-     objects so there are four clipping variables.  */
-  clip_right =
-    min (xww->width,
-         WINDOW_RIGHT_EDGE_X (s->w) - x -
-         WINDOW_RIGHT_SCROLL_BAR_AREA_WIDTH (s->w) -
-         WINDOW_RIGHT_FRINGE_WIDTH (s->w));
-  clip_left =
-    max (0,
-         WINDOW_LEFT_EDGE_X (s->w) - x +
-         WINDOW_LEFT_SCROLL_BAR_AREA_WIDTH (s->w) +
-         WINDOW_LEFT_FRINGE_WIDTH (s->w));
+  int text_area_x, text_area_y, text_area_width, text_area_height;
 
-  clip_bottom =
-    min (xww->height,
-         WINDOW_BOTTOM_EDGE_Y (s->w) - WINDOW_MODE_LINE_HEIGHT (s->w) - y);
-  clip_top = max (0, WINDOW_TOP_EDGE_Y (s->w) - y);
+  window_box (s->w,
+              ANY_AREA,
+              &text_area_x,
+              &text_area_y,
+              &text_area_width,
+              &text_area_height);
+  clip_right = min (xww->width,
+                    text_area_width);
+  clip_left = max (0,
+                   text_area_x);
+
+  clip_bottom = min (xww->height,
+                     text_area_height);
+  clip_top = max (0, text_area_y);
 
   /* We are concerned with movement of the onscreen area.  The area
      might sit still when the widget actually moves.  This happens
