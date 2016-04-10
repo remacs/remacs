@@ -987,6 +987,17 @@ back-end for the buffer's file, or remove it from version control.
 the color range from 'vc-annotate-color-map' is applied to the
 background or to the foreground.
 
+---
+*** New options for customizing encoding of Git commit log messages.
+The new options `vc-git-commits-coding-system' and
+`vc-git-log-output-coding-system' allow to customize the encoding of
+the log messages sent to Git when committing, and the decoding of the
+log messages read from Git history commands.  Both default to UTF-8;
+if you customize them, make sure they are consistent with the Git
+config variables i18n.commitEncoding and i18n.logOutputEncoding.
+(`vc-git-commits-coding-system' existed previously, but was a
+variable, not a user option.)
+
 +++
 *** 'compare-windows' now compares text with the most recently selected window
 instead of the next window.  If you want the previous behavior of

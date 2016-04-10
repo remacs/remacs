@@ -165,8 +165,20 @@ matching the resulting Git log output, and KEYWORDS is a list of
   :type '(list string string (repeat sexp))
   :version "24.1")
 
-(defvar vc-git-commits-coding-system 'utf-8
-  "Default coding system for git commits.")
+(defcustom vc-git-commits-coding-system 'utf-8
+  "Default coding system for sending commit log messages to Git.
+
+Should be consistent with the Git config value i18n.commitEncoding,
+and should also be consistent with `locale-coding-system'."
+  :type '(coding-system :tag "Coding system to encode Git commit logs")
+  :version "25.1")
+
+(defcustom vc-git-log-output-coding-system 'utf-8
+  "Default coding system for receiving log output from Git.
+
+Should be consistent with the Git config value i18n.logOutputEncoding."
+  :type '(coding-system :tag "Coding system to decode Git log output")
+  :version "25.1")
 
 ;; History of Git commands.
 (defvar vc-git-history nil)
@@ -680,21 +692,43 @@ It is based on `log-edit-mode', and has Git-specific extensions.")
          (default-directory (expand-file-name root))
          (only (or (cdr files)
                    (not (equal root (abbreviate-file-name file1)))))
-         (coding-system-for-write vc-git-commits-coding-system))
+         (pcsw coding-system-for-write)
+         (coding-system-for-write
+          ;; On MS-Windows, we must encode command-line arguments in
+          ;; the system codepage.
+          (if (eq system-type 'windows-nt)
+              locale-coding-system
+            (or coding-system-for-write vc-git-commits-coding-system)))
+         (msg-file
+          ;; On MS-Windows, pass the commit log message through a
+          ;; file, to work around the limitation that command-line
+          ;; arguments must be in the system codepage, and therefore
+          ;; might not support the non-ASCII characters in the log
+          ;; message.
+          (if (eq system-type 'windows-nt) (make-temp-file "git-msg"))))
     (cl-flet ((boolean-arg-fn
                (argument)
                (lambda (value) (when (equal value "yes") (list argument)))))
       ;; When operating on the whole tree, better pass "-a" than ".", since "."
       ;; fails when we're committing a merge.
       (apply 'vc-git-command nil 0 (if only files)
-             (nconc (list "commit" "-m")
-                    (log-edit-extract-headers
-                     `(("Author" . "--author")
-                       ("Date" . "--date")
-                       ("Amend" . ,(boolean-arg-fn "--amend"))
-                       ("Sign-Off" . ,(boolean-arg-fn "--signoff")))
-                     comment)
-		    (if only (list "--only" "--") '("-a")))))))
+             (nconc (if msg-file (list "commit" "-F" msg-file)
+                      (list "commit" "-m"))
+                    (let ((args
+                           (log-edit-extract-headers
+                            `(("Author" . "--author")
+                              ("Date" . "--date")
+                              ("Amend" . ,(boolean-arg-fn "--amend"))
+                              ("Sign-Off" . ,(boolean-arg-fn "--signoff")))
+                            comment)))
+                      (when msg-file
+                        (let ((coding-system-for-write
+                               (or pcsw vc-git-commits-coding-system)))
+                          (write-region (car args) nil msg-file))
+                        (setq args (cdr args)))
+                      args)
+		    (if only (list "--only" "--") '("-a")))))
+    (if (and msg-file (file-exists-p msg-file)) (delete-file msg-file))))
 
 (defun vc-git-find-revision (file rev buffer)
   (let* (process-file-side-effects
@@ -854,7 +888,7 @@ If SHORTLOG is non-nil, use a short format based on `vc-git-root-log-format'.
 If START-REVISION is non-nil, it is the newest revision to show.
 If LIMIT is non-nil, show no more than this many entries."
   (let ((coding-system-for-read
-         (or coding-system-for-read vc-git-commits-coding-system)))
+         (or coding-system-for-read vc-git-log-output-coding-system)))
     ;; `vc-do-command' creates the buffer, but we need it before running
     ;; the command.
     (vc-setup-buffer buffer)
@@ -1387,7 +1421,7 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
 The difference to vc-do-command is that this function always invokes
 `vc-git-program'."
   (let ((coding-system-for-read
-         (or coding-system-for-read vc-git-commits-coding-system))
+         (or coding-system-for-read vc-git-log-output-coding-system))
 	(coding-system-for-write
          (or coding-system-for-write vc-git-commits-coding-system)))
     (apply 'vc-do-command (or buffer "*vc*") okstatus vc-git-program
@@ -1412,8 +1446,10 @@ The difference to vc-do-command is that this function always invokes
   ;; directories.  We enable `inhibit-null-byte-detection', otherwise
   ;; Tramp's eol conversion might be confused.
   (let ((inhibit-null-byte-detection t)
-	(coding-system-for-read vc-git-commits-coding-system)
-	(coding-system-for-write vc-git-commits-coding-system)
+	(coding-system-for-read
+         (or coding-system-for-read vc-git-log-output-coding-system))
+	(coding-system-for-write
+         (or coding-system-for-write vc-git-commits-coding-system))
 	(process-environment (cons "PAGER=" process-environment)))
     (apply 'process-file vc-git-program nil buffer nil command args)))
 
