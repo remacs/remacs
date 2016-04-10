@@ -2834,7 +2834,16 @@ read_char (int commandflag, Lisp_Object map,
       last_input_event = c;
       call4 (Qcommand_execute, tem, Qnil, Fvector (1, &last_input_event), Qt);
 
-      if (CONSP (c) && EQ (XCAR (c), Qselect_window) && !end_time)
+      if (CONSP (c)
+          && (EQ (XCAR (c), Qselect_window)
+#ifdef HAVE_DBUS
+	      || EQ (XCAR (c), Qdbus_event)
+#endif
+#ifdef USE_FILE_NOTIFY
+	      || EQ (XCAR (c), Qfile_notify)
+#endif
+	      || EQ (XCAR (c), Qconfig_changed_event))
+          && !end_time)
 	/* We stopped being idle for this event; undo that.  This
 	   prevents automatic window selection (under
 	   mouse-autoselect-window) from acting as a real input event, for
