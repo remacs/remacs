@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2016-03-25.17}
+\def\texinfoversion{2016-03-29.15}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -1550,8 +1550,7 @@ output) for that.)}
     \fi
     \turnoffactive
     \makevalueexpandable
-    % In the case of XeTeX, xdvipdfmx converts strings to UTF-16.
-    % Therefore \txiescapepdf is not necessary.
+    \txiescapepdf\pdfdestname
     \safewhatsit{\pdfdest name{\pdfdestname} xyz}%
   }}
   %
@@ -1566,9 +1565,12 @@ output) for that.)}
     \fi
     {
       \turnoffactive
-      % In the case of XeTeX, xdvipdfmx converts strings to UTF-16.
-      % Therefore \txiescapepdf is not necessary.
-      \special{pdf:out [-] #2 << /Title (#1) /A << /S /GoTo /D (name\pdfoutlinedest) >> >> }%
+      \txiescapepdf\pdfoutlinedest
+      \edef\pdfoutlinetext{#1}%
+      \txiescapepdf\pdfoutlinetext
+      %
+      \special{pdf:out [-] #2 << /Title (\pdfoutlinetext) /A
+        << /S /GoTo /D (name\pdfoutlinedest) >> >> }%
     }
   }
   %
@@ -1624,6 +1626,20 @@ output) for that.)}
   % ``\special{pdf:dest ...}'' can not handle non-ASCII strings.
   % It fixed by xdvipdfmx 20160106 (TeX Live SVN r39753).
 %
+  \def\skipspaces#1{\def\PP{#1}\def\D{|}%
+    \ifx\PP\D\let\nextsp\relax
+    \else\let\nextsp\skipspaces
+      \addtokens{\filename}{\PP}%
+      \advance\filenamelength by 1
+    \fi
+    \nextsp}
+  \def\getfilename#1{%
+    \filenamelength=0
+    % If we don't expand the argument now, \skipspaces will get
+    % snagged on things like "@value{foo}".
+    \edef\temp{#1}%
+    \expandafter\skipspaces\temp|\relax
+  }
   % make a live url in pdf output.
   \def\pdfurl#1{%
     \begingroup
@@ -8760,6 +8776,7 @@ end
   %
   % Make link in pdf output.
   \ifpdf
+    % For pdfTeX and LuaTeX
     {\indexnofonts
      \turnoffactive
      \makevalueexpandable
@@ -8786,6 +8803,47 @@ end
      \fi
     }%
     \setcolor{\linkcolor}%
+  \else
+    \ifx\XeTeXrevision\thisisundefined
+    \else
+      % For XeTeX
+      {\indexnofonts
+       \turnoffactive
+       \makevalueexpandable
+       % This expands tokens, so do it after making catcode changes, so _
+       % etc. don't get their TeX definitions.  This ignores all spaces in
+       % #4, including (wrongly) those in the middle of the filename.
+       \getfilename{#4}%
+       %
+       % This (wrongly) does not take account of leading or trailing
+       % spaces in #1, which should be ignored.
+       \iftxiuseunicodedestname
+         \def\pdfxrefdest{#1}% Pass through Unicode characters.
+       \else
+         \edef\pdfxrefdest{#1}% Replace Unicode characters to ASCII.
+       \fi
+       \ifx\pdfxrefdest\empty
+         \def\pdfxrefdest{Top}% no empty targets
+       \else
+         \txiescapepdf\pdfxrefdest  % escape PDF special chars
+       \fi
+       %
+       \leavevmode
+       \ifnum\filenamelength>0
+         % By the default settings,
+         % XeTeX (xdvipdfmx) replaces link destination names with integers.
+         % In this case, the replaced destination names of
+         % remote PDF cannot be known. In order to avoid replacement,
+         % you can use commandline option `-C 0x0010' for xdvipdfmx.
+         \special{pdf:bann << /Border [0 0 0] /Type /Annot /Subtype /Link /A
+           << /S /GoToR /F (\the\filename.pdf) /D (name\pdfxrefdest) >> >>}%
+       \else
+         \special{pdf:bann << /Border [0 0 0] /Type /Annot /Subtype /Link /A
+           << /S /GoTo /D (name\pdfxrefdest) >> >>}%
+       \fi
+      }%
+      \setcolor{\linkcolor}%
+    \fi
   \fi
   {%
     % Have to otherify everything special to allow the \csname to
