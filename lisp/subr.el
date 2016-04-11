@@ -2087,6 +2087,10 @@ some sort of escape sequence, the ambiguity is resolved via `read-key-delay'."
                 (aref keys 1)
               key)))
       (cancel-timer timer)
+      ;; For some reason, `read-key(-sequence)' leaves the prompt in the echo
+      ;; area, whereas `read-event' seems to empty it just before returning
+      ;; (bug#22714).  So, let's mimic the behavior of `read-event'.
+      (message nil)
       (use-global-map old-global-map))))
 
 (defvar read-passwd-map
@@ -4107,7 +4111,8 @@ This function makes or adds to an entry on `after-load-alist'."
 (defmacro with-eval-after-load (file &rest body)
   "Execute BODY after FILE is loaded.
 FILE is normally a feature name, but it can also be a file name,
-in case that file does not provide any feature."
+in case that file does not provide any feature.  See `eval-after-load'
+for more details about the different forms of FILE and their semantics."
   (declare (indent 1) (debug t))
   `(eval-after-load ,file (lambda () ,@body)))
 

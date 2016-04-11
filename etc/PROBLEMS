@@ -459,11 +459,9 @@ smart.  It sees that the Shell uses terminal type 'unknown' and turns
 on the flag to output ^M at the end of each line.  You can fix the
 problem by adding this to your .cshrc file:
 
-    if ($?EMACS) then
-        if ("$EMACS" =~ /*) then
-            unset edit
-            stty  -icrnl -onlcr -echo susp ^Z
-        endif
+    if ($?INSIDE_EMACS && $?tcsh)
+        unset edit
+        stty -icrnl -onlcr -echo susp ^Z
     endif
 
 *** Emacs startup on GNU/Linux systems (and possibly other systems) is slow.

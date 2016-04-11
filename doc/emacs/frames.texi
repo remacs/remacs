@@ -1152,11 +1152,11 @@ change the variable @code{x-gtk-file-dialog-help-text} to @code{nil}.
 @section Tooltips
 @cindex tooltips
 
-  @dfn{Tooltips} are small windows that display text information at
-the current mouse position.  They activate when there is a pause in
-mouse movement over some significant piece of text in a window, or the
-mode line, or some other part of the Emacs frame such as a tool bar
-button or menu item.
+  @dfn{Tooltips} are small special frames that display text
+information at the current mouse position.  They activate when there
+is a pause in mouse movement over some significant piece of text in a
+window, or the mode line, or some other part of the Emacs frame such
+as a tool bar button or menu item.
 
 @findex tooltip-mode
   You can toggle the use of tooltips with the command @kbd{M-x
@@ -1164,11 +1164,41 @@ tooltip-mode}.  When Tooltip mode is disabled, the help text is
 displayed in the echo area instead.  To control the use of tooltips at
 startup, customize the variable @code{tooltip-mode}.
 
-@vindex tooltip-delay
-  The variables @code{tooltip-delay} specifies how long Emacs should
-wait before displaying a tooltip.  For additional customization
-options for displaying tooltips, use @kbd{M-x customize-group
-@key{RET} tooltip @key{RET}}.
+The following variables provide customization options for tooltip
+display:
+
+@vtable @code
+@item tooltip-delay
+This variable specifies how long Emacs should wait before displaying
+the first tooltip.  The value is in seconds.
+
+@item tooltip-short-delay
+This variable specifies how long Emacs should wait before displaying
+subsequent tooltips on different items, having already displayed the
+first tooltip.  The value is in seconds.
+
+@item tooltip-hide-delay
+The number of seconds since displaying a tooltip to hide it, if the
+mouse doesn't move.
+
+@item tooltip-x-offset
+@itemx tooltip-y-offset
+The X and Y offsets, in pixels, of the left top corner of the tooltip
+from the mouse pointer position.  Note that these are ignored if
+@code{tooltip-frame-parameters} was customized to include,
+respectively, the @code{left} and @code{top} parameters.  The values
+of the offsets should be chosen so that the tooltip doesn't cover the
+mouse pointer's hot spot, or it might interfere with clicking the
+mouse.
+
+@item tooltip-frame-parameters
+The frame parameters used for displaying tooltips.  @xref{Frame
+Parameters,,, elisp, The Emacs Lisp Reference Manual}, and also
+@ref{Tooltips,,, elisp, The Emacs Lisp Reference Manual}.
+@end vtable
+
+For additional customization options for displaying tooltips, use
+@kbd{M-x customize-group @key{RET} tooltip @key{RET}}.
 
 @vindex x-gtk-use-system-tooltips
   If Emacs is built with GTK+ support, it displays tooltips via GTK+,

@@ -427,21 +427,34 @@ Notice that using \\[next-error] or \\[compile-goto-error] modifies
 This gets tacked on the end of the generated expressions.")
 
 ;;;###autoload
-(defvar grep-program (purecopy "grep")
+(defcustom grep-program (purecopy "grep")
   "The default grep program for `grep-command' and `grep-find-command'.
-This variable's value takes effect when `grep-compute-defaults' is called.")
+This variable's value takes effect when `grep-compute-defaults' is called."
+  :type 'string
+  :version "25.1"
+  :group 'grep)
 
 ;;;###autoload
-(defvar find-program (purecopy "find")
+(defcustom grep-find-program (purecopy "find")
   "The default find program.
 This is used by commands like `grep-find-command', `find-dired'
-and others.")
+and others."
+  :type 'string
+  :version "25.1"
+  :group 'grep)
+
+(define-obsolete-variable-alias 'find-program 'grep-find-program "25.1")
 
 ;;;###autoload
-(defvar xargs-program (purecopy "xargs")
+(defcustom grep-xargs-program (purecopy "xargs")
   "The default xargs program for `grep-find-command'.
 See `grep-find-use-xargs'.
-This variable's value takes effect when `grep-compute-defaults' is called.")
+This variable's value takes effect when `grep-compute-defaults' is called."
+  :type 'string
+  :version "25.1"
+  :group 'grep)
+
+(define-obsolete-variable-alias 'xargs-program 'grep-xargs-program "25.1")
 
 ;;;###autoload
 (defvar grep-find-use-xargs nil
@@ -611,13 +624,14 @@ This function is called from `compilation-filter-hook'."
 	(unless grep-find-use-xargs
 	  (setq grep-find-use-xargs
 		(cond
-		 ((grep-probe find-program
+		 ((grep-probe grep-find-program
 			      `(nil nil nil ,null-device "-exec" "echo"
 				    "{}" "+"))
 		  'exec-plus)
 		 ((and
-		   (grep-probe find-program `(nil nil nil ,null-device "-print0"))
-		   (grep-probe xargs-program `(nil nil nil "-0" "echo")))
+		   (grep-probe grep-find-program
+                               `(nil nil nil ,null-device "-print0"))
+		   (grep-probe grep-xargs-program `(nil nil nil "-0" "echo")))
 		  'gnu)
 		 (t
 		  'exec))))
@@ -628,10 +642,11 @@ This function is called from `compilation-filter-hook'."
 		       ;; after the pipe symbol be quoted if they use
 		       ;; forward slashes as directory separators.
 		       (format "%s . -type f -print0 | \"%s\" -0 %s"
-			       find-program xargs-program grep-command))
+			       grep-find-program grep-xargs-program
+                               grep-command))
 		      ((memq grep-find-use-xargs '(exec exec-plus))
 		       (let ((cmd0 (format "%s . -type f -exec %s"
-					   find-program grep-command))
+					   grep-find-program grep-command))
 			     (null (if grep-use-null-device
 				       (format "%s " null-device)
 				     "")))
@@ -643,7 +658,8 @@ This function is called from `compilation-filter-hook'."
 			  (1+ (length cmd0)))))
 		      (t
 		       (format "%s . -type f -print | \"%s\" %s"
-			       find-program xargs-program grep-command)))))
+			       grep-find-program grep-xargs-program
+                               grep-command)))))
 	(unless grep-find-template
 	  (setq grep-find-template
 		(let ((gcmd (format "%s <C> %s <R>"
@@ -653,17 +669,17 @@ This function is called from `compilation-filter-hook'."
 			      "")))
 		  (cond ((eq grep-find-use-xargs 'gnu)
 			 (format "%s <D> <X> -type f <F> -print0 | \"%s\" -0 %s"
-				 find-program xargs-program gcmd))
+				 grep-find-program grep-xargs-program gcmd))
 			((eq grep-find-use-xargs 'exec)
 			 (format "%s <D> <X> -type f <F> -exec %s {} %s%s"
-				 find-program gcmd null
+				 grep-find-program gcmd null
 				 (shell-quote-argument ";")))
 			((eq grep-find-use-xargs 'exec-plus)
 			 (format "%s <D> <X> -type f <F> -exec %s %s{} +"
-				 find-program gcmd null))
+				 grep-find-program gcmd null))
 			(t
 			 (format "%s <D> <X> -type f <F> -print | \"%s\" %s"
-				 find-program xargs-program gcmd))))))))
+				 grep-find-program grep-xargs-program gcmd))))))))
 
     ;; Save defaults for this host.
     (setq grep-host-defaults-alist

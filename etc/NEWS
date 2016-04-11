@@ -1303,6 +1303,17 @@ See the 'vc-faces' customization group.
 the color range from 'vc-annotate-color-map' is applied to the
 background or to the foreground.
 
+---
+*** New options for customizing encoding of Git commit log messages.
+The new options `vc-git-commits-coding-system' and
+`vc-git-log-output-coding-system' allow to customize the encoding of
+the log messages sent to Git when committing, and the decoding of the
+log messages read from Git history commands.  Both default to UTF-8;
+if you customize them, make sure they are consistent with the Git
+config variables i18n.commitEncoding and i18n.logOutputEncoding.
+(`vc-git-commits-coding-system' existed previously, but was a
+variable, not a user option.)
+
 +++
 *** 'compare-windows' now compares text with the most recently selected window
 instead of the next window.  If you want the previous behavior of
@@ -1723,8 +1734,10 @@ symbol-function was changed not to signal 'void-function' any more.
 *** As a consequence, the second arg of 'indirect-function' is now obsolete.
 
 +++
-** Although comint, term, and compile still set the EMACS variable,
-this is now considered deprecated and will be removed in a future release.
+** M-x shell and M-x compile no longer set the EMACS environment variable.
+This avoids clashing when other programs use the variable for other purposes.
+Although M-x term still sets EMACS for compatibility with Bash 4.3 and earlier,
+this is deprecated and will be phased out when Bash 4.4 or later takes over.
 Use the INSIDE_EMACS environment variable instead.
 
 ** 'C-up', 'C-down', 'C-left' and 'C-right' are now defined in term
@@ -2119,7 +2132,7 @@ function 'encode-time', which already accepted a simple time zone rule
 argument, has been extended to accept all the new forms.
 
 *** Incompatible change in the third argument of 'format-time-string'.
-Previously, any non-nil argument was interpeted as specifying Universal Time.
+Previously, any non-nil argument was interpreted as specifying Universal Time.
 This is no longer true; packages that want Universal Time should pass t
 as the third argument.
 

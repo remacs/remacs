@@ -816,13 +816,6 @@ series of processes in the same Comint buffer.  The hook
 		    (format "COLUMNS=%d" (window-width)))
 	    (list "TERM=emacs"
 		  (format "TERMCAP=emacs:co#%d:tc=unknown:" (window-width))))
-
-	  ;; This hack is for backward compatibility with Bash 4.3 and
-	  ;; earlier.  It can break common uses of 'configure', so
-	  ;; remove it once Bash 4.4 or later is common.
-	  (unless (getenv "EMACS")
-	    (list "EMACS=t"))
-
 	  (list (format "INSIDE_EMACS=%s,comint" emacs-version))
 	  process-environment))
 	(default-directory

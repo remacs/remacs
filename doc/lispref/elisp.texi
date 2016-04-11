@@ -1380,6 +1380,7 @@ Emacs Display
 * Character Display::       How Emacs displays individual characters.
 * Beeping::                 Audible signal to the user.
 * Window Systems::          Which window system is being used.
+* Tooltips::                Tooltip display in Emacs.
 * Bidirectional Display::   Display of bidirectional scripts, such as
                               Arabic and Farsi.
 
