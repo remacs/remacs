@@ -1028,7 +1028,7 @@ on parts -- for instance, adding Vcard info to a database."
 
 (defcustom gnus-article-date-headers '(combined-lapsed)
   "A list of Date header formats to display.
-Valid formats are `ut' (universal time), `local' (local time
+Valid formats are `ut' (Universal Time), `local' (local time
 zone), `english' (readable English), `lapsed' (elapsed time),
 `combined-lapsed' (both the original date and the elapsed time),
 `original' (the original date header), `iso8601' (ISO8601
