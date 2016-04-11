@@ -1374,8 +1374,20 @@ the variable `prolog-prompt-regexp'."
       ()
     (with-current-buffer (get-buffer-create "*prolog*")
       (prolog-inferior-mode)
-      (apply 'make-comint-in-buffer "prolog" (current-buffer)
-             (prolog-program-name) nil (prolog-program-switches))
+
+      ;; The "INFERIOR=yes" hack is for SWI-Prolog 7.2.3 and earlier,
+      ;; which assumes it is running under Emacs if either INFERIOR=yes or
+      ;; if EMACS is set to a nonempty value.  The EMACS setting is
+      ;; obsolescent, so set INFERIOR.  Newer versions of SWI-Prolog should
+      ;; know about INSIDE_EMACS (which replaced EMACS) and should not need
+      ;; this hack.
+      (let ((process-environment
+	     (if (getenv "INFERIOR")
+		 process-environment
+	       (cons "INFERIOR=yes" process-environment))))
+	(apply 'make-comint-in-buffer "prolog" (current-buffer)
+	       (prolog-program-name) nil (prolog-program-switches)))
+
       (unless prolog-system
         ;; Setup auto-detection.
         (setq-local
