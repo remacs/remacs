@@ -2027,17 +2027,21 @@ If some packages are not installed propose to install them."
   ;; gets installed).
   (if (not package-selected-packages)
       (message "`package-selected-packages' is empty, nothing to install")
-    (cl-loop for p in package-selected-packages
-             unless (package-installed-p p)
-             collect p into lst
-             finally
-             (if lst
-                 (when (y-or-n-p
-                        (format "%s packages will be installed:\n%s, proceed?"
-                          (length lst)
-                          (mapconcat #'symbol-name lst ", ")))
-                   (mapc #'package-install lst))
-               (message "All your packages are already installed")))))
+    (let* ((not-installed (seq-remove #'package-installed-p package-selected-packages))
+           (available (seq-filter (lambda (p) (assq p package-archive-contents)) not-installed))
+           (difference (- (length not-installed) (length available))))
+      (cond
+       (available
+        (when (y-or-n-p
+               (format "%s packages will be installed:\n%s, proceed?"
+                       (length available)
+                       (mapconcat #'symbol-name available ", ")))
+          (mapc (lambda (p) (package-install p 'dont-select)) available)))
+       ((> difference 0)
+        (message "%s packages are not available (the rest already installed), maybe you need to `M-x package-refresh-contents'"
+                 difference))
+       (t
+        (message "All your packages are already installed"))))))
 
 
 ;;; Package Deletion

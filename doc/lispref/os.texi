@@ -1302,7 +1302,7 @@ This function returns a list describing the time zone that the user is
 in.
 
 The value has the form @code{(@var{offset} @var{name})}.  Here
-@var{offset} is an integer giving the number of seconds ahead of UTC
+@var{offset} is an integer giving the number of seconds ahead of Universal Time
 (east of Greenwich).  A negative value means west of Greenwich.  The
 second element, @var{name}, is a string giving the name of the time
 zone.  Both elements change when daylight saving time begins or ends;
@@ -1320,7 +1320,7 @@ defaults to the current time zone rule.
 @vindex TZ, environment variable
 The default time zone is determined by the @env{TZ} environment
 variable.  @xref{System Environment}.  For example, you can tell Emacs
-to default to universal time with @code{(setenv "TZ" "UTC0")}.  If
+to default to Universal Time with @code{(setenv "TZ" "UTC0")}.  If
 @env{TZ} is not in the environment, Emacs uses system wall clock time,
 which is a platform-dependent default time zone.
 
@@ -1344,8 +1344,8 @@ calendrical information and vice versa.
 
   Many 32-bit operating systems are limited to system times containing
 32 bits of information in their seconds component; these systems
-typically handle only the times from 1901-12-13 20:45:52 UTC through
-2038-01-19 03:14:07 UTC@.  However, 64-bit and some 32-bit operating
+typically handle only the times from 1901-12-13 20:45:52 through
+2038-01-19 03:14:07 Universal Time.  However, 64-bit and some 32-bit operating
 systems have larger seconds components, and can represent times far in
 the past or future.
 
@@ -1387,7 +1387,7 @@ Sunday.
 @item dst
 @code{t} if daylight saving time is effect, otherwise @code{nil}.
 @item utcoff
-An integer indicating the UTC offset in seconds, i.e., the number of
+An integer indicating the Universal Time offset in seconds, i.e., the number of
 seconds east of Greenwich.
 @end table
 
@@ -1555,10 +1555,6 @@ based on the Japanese Emperors' reigns.  @samp{E} is allowed in
 @samp{O} means to use the current locale's alternative
 representation of numbers, instead of the ordinary decimal digits.  This
 is allowed with most letters, all the ones that output numbers.
-
-If @var{universal} is non-@code{nil}, that means to describe the time as
-Universal Time; @code{nil} means describe it using what Emacs believes
-is the local time zone (see @code{current-time-zone}).
 
 This function uses the C library function @code{strftime}
 (@pxref{Formatting Calendar Time,,, libc, The GNU C Library Reference
