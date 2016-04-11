@@ -2088,7 +2088,7 @@ some sort of escape sequence, the ambiguity is resolved via `read-key-delay'."
       (cancel-timer timer)
       ;; For some reason, `read-key(-sequence)' leaves the prompt in the echo
       ;; area, whereas `read-event' seems to empty it just before returning
-      ;; (bug#22714).  So, let's mimick the behavior of `read-event'.
+      ;; (bug#22714).  So, let's mimic the behavior of `read-event'.
       (message nil)
       (use-global-map old-global-map))))
 

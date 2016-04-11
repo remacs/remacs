@@ -2895,7 +2895,7 @@
 	(wait_reading_process_output, init_process_emacs):
 	Assume O_NONBLOCK.
 	(wait_reading_process_output): Put in a special case for WINDOWSNT
-	to mimick the older behavior where it had O_NDELAY but not O_NONBLOCK.
+	to mimic the older behavior where it had O_NDELAY but not O_NONBLOCK.
 	It's not clear this is needed, but it's a more-conservative change.
 	(create_process): Assume FD_CLOEXEC.
 	(create_process, create_pty): Assume O_NOCTTY.
