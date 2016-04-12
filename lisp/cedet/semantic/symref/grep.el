@@ -50,6 +50,7 @@ and those hits returned.")
                "Rakefile" "Thorfile" "Capfile" "Guardfile" "Vagrantfile")
     (perl-mode "*.pl" "*.PL")
     (cperl-mode "*.pl" "*.PL")
+    (lisp-interaction-mode "*.el" "*.ede" ".emacs" "_emacs")
     )
   "List of major modes and file extension pattern.
 See find -name man page for format.")
