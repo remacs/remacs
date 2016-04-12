@@ -22673,8 +22673,10 @@ When optional argument END is non-nil, use end of date-range or
 time-range, if possible.
 
 The optional ZONE is omitted or nil for Emacs local time, t for
-Universal Time, `wall' for system wall clock time, or a string as in
-the TZ environment variable."
+Universal Time, `wall' for system wall clock time, or a string as
+in the TZ environment variable.  It can also be a list (as from
+`current-time-zone') or an integer (as from `decode-time')
+applied without consideration for daylight saving time."
   (format-time-string
    format
    (apply 'encode-time

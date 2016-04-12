@@ -3879,8 +3879,13 @@ This function uses `mail-citation-hook' if that is non-nil."
 (defun message-insert-formatted-citation-line (&optional from date tz)
   "Function that inserts a formatted citation line.
 The optional FROM, and DATE are strings containing the contents of
-the From header and the Date header respectively.  The optional TZ
-is a number of seconds, overrides the time zone of DATE.
+the From header and the Date header respectively.
+
+The optional TZ is omitted or nil for Emacs local time, t for
+Universal Time, `wall' for system wall clock time, or a string as
+in the TZ environment variable.  It can also be a list (as from
+`current-time-zone') or an integer (as from `decode-time')
+applied without consideration for daylight saving time.
 
 See `message-citation-line-format'."
   ;; The optional args are for testing/debugging.  They will disappear later.

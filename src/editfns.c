@@ -146,8 +146,6 @@ xtzfree (timezone_t tz)
 static timezone_t
 tzlookup (Lisp_Object zone, bool settz)
 {
-  static char const tzbuf_format[] = "XXX%s%"pI"d:%02d:%02d";
-  char tzbuf[sizeof tzbuf_format + INT_STRLEN_BOUND (EMACS_INT)];
   char const *zone_string;
   timezone_t new_tz;
 
@@ -160,16 +158,53 @@ tzlookup (Lisp_Object zone, bool settz)
     }
   else
     {
+      static char const tzbuf_format[] = "<%+.*"pI"d>%s%"pI"d:%02d:%02d";
+      char const *trailing_tzbuf_format = tzbuf_format + sizeof "<%+.*"pI"d" - 1;
+      char tzbuf[sizeof tzbuf_format + 2 * INT_STRLEN_BOUND (EMACS_INT)];
+      bool plain_integer = INTEGERP (zone);
+
       if (EQ (zone, Qwall))
 	zone_string = 0;
       else if (STRINGP (zone))
-	zone_string = SSDATA (zone);
-      else if (INTEGERP (zone))
+	zone_string = SSDATA (ENCODE_SYSTEM (zone));
+      else if (plain_integer || (CONSP (zone) && INTEGERP (XCAR (zone))
+				 && CONSP (XCDR (zone))))
 	{
+	  Lisp_Object abbr;
+	  if (!plain_integer)
+	    {
+	      abbr = XCAR (XCDR (zone));
+	      zone = XCAR (zone);
+	    }
+
 	  EMACS_INT abszone = eabs (XINT (zone)), hour = abszone / (60 * 60);
-	  int min = (abszone / 60) % 60, sec = abszone % 60;
-	  sprintf (tzbuf, tzbuf_format, &"-"[XINT (zone) < 0], hour, min, sec);
-	  zone_string = tzbuf;
+	  int hour_remainder = abszone % (60 * 60);
+	  int min = hour_remainder / 60, sec = hour_remainder % 60;
+
+	  if (plain_integer)
+	    {
+	      int prec = 2;
+	      EMACS_INT numzone = hour;
+	      if (hour_remainder != 0)
+		{
+		  prec += 2, numzone = 100 * numzone + min;
+		  if (sec != 0)
+		    prec += 2, numzone = 100 * numzone + sec;
+		}
+	      sprintf (tzbuf, tzbuf_format, prec, numzone,
+		       &"-"[XINT (zone) < 0], hour, min, sec);
+	      zone_string = tzbuf;
+	    }
+	  else
+	    {
+	      AUTO_STRING (leading, "<");
+	      AUTO_STRING_WITH_LEN (trailing, tzbuf,
+				    sprintf (tzbuf, trailing_tzbuf_format,
+					     &"-"[XINT (zone) < 0],
+					     hour, min, sec));
+	      zone_string = SSDATA (concat3 (leading, ENCODE_SYSTEM (abbr),
+					     trailing));
+	    }
 	}
       else
 	xsignal2 (Qerror, build_string ("Invalid time zone specification"),
@@ -1969,9 +2004,13 @@ DEFUN ("format-time-string", Fformat_time_string, Sformat_time_string, 1, 3, 0,
        doc: /* Use FORMAT-STRING to format the time TIME, or now if omitted.
 TIME is specified as (HIGH LOW USEC PSEC), as returned by
 `current-time' or `file-attributes'.  The obsolete form (HIGH . LOW)
-is also still accepted.  The optional ZONE is omitted or nil for Emacs
-local time, t for Universal Time, `wall' for system wall clock time,
-or a string as in the TZ environment variable.
+is also still accepted.
+
+The optional ZONE is omitted or nil for Emacs local time, t for
+Universal Time, `wall' for system wall clock time, or a string as in
+the TZ environment variable.  It can also be a list (as from
+`current-time-zone') or an integer (as from `decode-time') applied
+without consideration for daylight saving time.
 
 The value is a copy of FORMAT-STRING, but with certain constructs replaced
 by text that describes the specified date and time in TIME:
@@ -2085,9 +2124,12 @@ DEFUN ("decode-time", Fdecode_time, Sdecode_time, 0, 2, 0,
 The optional SPECIFIED-TIME should be a list of (HIGH LOW . IGNORED),
 as from `current-time' and `file-attributes', or nil to use the
 current time.  The obsolete form (HIGH . LOW) is also still accepted.
+
 The optional ZONE is omitted or nil for Emacs local time, t for
 Universal Time, `wall' for system wall clock time, or a string as in
-the TZ environment variable.
+the TZ environment variable.  It can also be a list (as from
+`current-time-zone') or an integer (as from `decode-time') applied
+without consideration for daylight saving time.
 
 The list has the following nine members: SEC is an integer between 0
 and 60; SEC is 60 for a leap second, which only some operating systems
@@ -2150,6 +2192,7 @@ check_tm_member (Lisp_Object obj, int offset)
 DEFUN ("encode-time", Fencode_time, Sencode_time, 6, MANY, 0,
        doc: /* Convert SECOND, MINUTE, HOUR, DAY, MONTH, YEAR and ZONE to internal time.
 This is the reverse operation of `decode-time', which see.
+
 The optional ZONE is omitted or nil for Emacs local time, t for
 Universal Time, `wall' for system wall clock time, or a string as in
 the TZ environment variable.  It can also be a list (as from
@@ -2184,8 +2227,6 @@ usage: (encode-time SECOND MINUTE HOUR DAY MONTH YEAR &optional ZONE)  */)
   tm.tm_year = check_tm_member (args[5], TM_YEAR_BASE);
   tm.tm_isdst = -1;
 
-  if (CONSP (zone))
-    zone = XCAR (zone);
   timezone_t tz = tzlookup (zone, false);
   value = emacs_mktime_z (tz, &tm);
   xtzfree (tz);
@@ -2214,7 +2255,9 @@ but this is considered obsolete.
 
 The optional ZONE is omitted or nil for Emacs local time, t for
 Universal Time, `wall' for system wall clock time, or a string as in
-the TZ environment variable.  */)
+the TZ environment variable.  It can also be a list (as from
+`current-time-zone') or an integer (as from `decode-time') applied
+without consideration for daylight saving time.  */)
   (Lisp_Object specified_time, Lisp_Object zone)
 {
   time_t value = lisp_seconds_argument (specified_time);
@@ -2290,8 +2333,12 @@ instead of using the current time.  The argument should have the form
 \(HIGH LOW . IGNORED).  Thus, you can use times obtained from
 `current-time' and from `file-attributes'.  SPECIFIED-TIME can also
 have the form (HIGH . LOW), but this is considered obsolete.
-Optional second arg ZONE is omitted or nil for the local time zone, or
-a string as in the TZ environment variable.
+
+The optional ZONE is omitted or nil for Emacs local time, t for
+Universal Time, `wall' for system wall clock time, or a string as in
+the TZ environment variable.  It can also be a list (as from
+`current-time-zone') or an integer (as from `decode-time') applied
+without consideration for daylight saving time.
 
 Some operating systems cannot provide all this information to Emacs;
 in this case, `current-time-zone' returns a list containing nil for
@@ -2315,15 +2362,18 @@ the data it can't find.  */)
       zone_offset = make_number (offset);
       if (SCHARS (zone_name) == 0)
 	{
-	  /* No local time zone name is available; use "+-NNNN" instead.  */
-	  long int m = offset / 60;
-	  long int am = offset < 0 ? - m : m;
-	  long int hour = am / 60;
-	  int min = am % 60;
-	  char buf[sizeof "+00" + INT_STRLEN_BOUND (long int)];
-	  zone_name = make_formatted_string (buf, "%c%02ld%02d",
+	  /* No local time zone name is available; use numeric zone instead.  */
+	  long int hour = offset / 3600;
+	  int min_sec = offset % 3600;
+	  int amin_sec = min_sec < 0 ? - min_sec : min_sec;
+	  int min = amin_sec / 60;
+	  int sec = amin_sec % 60;
+	  int min_prec = min_sec ? 2 : 0;
+	  int sec_prec = sec ? 2 : 0;
+	  char buf[sizeof "+0000" + INT_STRLEN_BOUND (long int)];
+	  zone_name = make_formatted_string (buf, "%c%.2ld%.*d%.*d",
 					     (offset < 0 ? '-' : '+'),
-					     hour, min);
+					     hour, min_prec, min, sec_prec, sec);
 	}
     }
 
@@ -2332,11 +2382,11 @@ the data it can't find.  */)
 
 DEFUN ("set-time-zone-rule", Fset_time_zone_rule, Sset_time_zone_rule, 1, 1, 0,
        doc: /* Set the Emacs local time zone using TZ, a string specifying a time zone rule.
-
 If TZ is nil or `wall', use system wall clock time; this differs from
 the usual Emacs convention where nil means current local time.  If TZ
-is t, use Universal Time.  If TZ is an integer, treat it as in
-`encode-time'.
+is t, use Universal Time.  If TZ is a list (as from
+`current-time-zone') or an integer (as from `decode-time'), use the
+specified time zone without consideration for daylight saving time.
 
 Instead of calling this function, you typically want something else.
 To temporarily use a different time zone rule for just one invocation

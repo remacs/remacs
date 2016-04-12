@@ -1325,7 +1325,12 @@ omitted or @code{nil}, the conversion uses Emacs's default time zone.
 If it is @code{t}, the conversion uses Universal Time.  If it is
 @code{wall}, the conversion uses the system wall clock time.  If it is
 a string, the conversion uses the time zone rule equivalent to setting
-@env{TZ} to that string.
+@env{TZ} to that string.  If it is an integer @var{offset}, the
+conversion uses a fixed time zone with the given offset and a numeric
+abbreviation.  If it is a list (@var{offset} @var{abbr}), where
+@var{offset} is an integer number of seconds east of Universal Time
+and @var{abbr} is a string, the conversion uses a fixed time zone with
+the given offset and abbreviation.
 
 @defun current-time-zone &optional time zone
 @cindex time zone, current
@@ -1423,10 +1428,6 @@ yourself before you call @code{encode-time}.
 
 The optional argument @var{zone} defaults to the current time zone rule.
 @xref{Time Zone Rules}.
-In addition to the usual time zone rule values, it can also be a list
-(as you would get from @code{current-time-zone}) or an integer (as
-from @code{decode-time}), applied without any further alteration for
-daylight saving time.
 
 If you pass more than seven arguments to @code{encode-time}, the first
 six are used as @var{seconds} through @var{year}, the last argument is

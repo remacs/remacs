@@ -590,25 +590,14 @@ If a string, interpret as the ZONE argument of `format-time-string'.")
      (lambda (x) (or (booleanp x) (stringp x))))
 
 (defun add-log-iso8601-time-zone (&optional time zone)
-  (let* ((utc-offset (or (car (current-time-zone time zone)) 0))
-	 (sign (if (< utc-offset 0) ?- ?+))
-	 (sec (abs utc-offset))
-	 (ss (% sec 60))
-	 (min (/ sec 60))
-	 (mm (% min 60))
-	 (hh (/ min 60)))
-    (format (cond ((not (zerop ss)) "%c%02d:%02d:%02d")
-		  ((not (zerop mm)) "%c%02d:%02d")
-		  (t "%c%02d"))
-	    sign hh mm ss)))
+  (declare (obsolete nil "25.2"))
+  (format-time-string "%:::z" time zone))
 
 (defvar add-log-iso8601-with-time-zone nil)
 
 (defun add-log-iso8601-time-string (&optional time zone)
-  (let ((date (format-time-string "%Y-%m-%d" time zone)))
-    (if add-log-iso8601-with-time-zone
-        (concat date " " (add-log-iso8601-time-zone time zone))
-      date)))
+  (format-time-string
+   (if add-log-iso8601-with-time-zone "%Y-%m-%d %:::z" "%Y-%m-%d") time zone))
 
 (defun change-log-name ()
   "Return (system-dependent) default name for a change log file."
