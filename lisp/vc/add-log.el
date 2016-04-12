@@ -583,10 +583,9 @@ Compatibility function for \\[next-error] invocations."
 ;; called add-log-time-zone-rule since it's only used from add-log-* code.
 (defvaralias 'change-log-time-zone-rule 'add-log-time-zone-rule)
 (defvar add-log-time-zone-rule nil
-  "Time zone used for calculating change log time stamps.
-It takes the same format as the TZ argument of `set-time-zone-rule'.
-If nil, use local time.
-If t, use universal time.")
+  "Time zone rule used for calculating change log time stamps.
+If nil, use local time.  If t, use Universal Time.
+If a string, interpret as the ZONE argument of `format-time-string'.")
 (put 'add-log-time-zone-rule 'safe-local-variable
      (lambda (x) (or (booleanp x) (stringp x))))
 

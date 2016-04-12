@@ -2125,11 +2125,11 @@ quotation marks.
 *** Time conversion functions now accept an optional ZONE argument
 that specifies the time zone rules for conversion.  ZONE is omitted or
 nil for Emacs local time, t for Universal Time, 'wall' for system wall
-clock time, or a string as in 'set-time-zone-rule' for a time zone
-rule.  The affected functions are 'current-time-string',
-'current-time-zone', 'decode-time', and 'format-time-string'.  The
-function 'encode-time', which already accepted a simple time zone rule
-argument, has been extended to accept all the new forms.
+clock time, or a string as in the TZ environment variable.  The
+affected functions are 'current-time-string', 'current-time-zone',
+'decode-time', and 'format-time-string'.  The function 'encode-time',
+which already accepted a simple time zone rule argument, has been
+extended to accept all the new forms.
 
 *** Incompatible change in the third argument of 'format-time-string'.
 Previously, any non-nil argument was interpreted as specifying Universal Time.

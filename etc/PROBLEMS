@@ -2181,11 +2181,11 @@ month names with consistent widths for some locales on some versions
 of Windows.  This is caused by a deficiency in the underlying system
 library function.
 
-** Problems with set-time-zone-rule function
+** Non-US time zones.
 
-The function set-time-zone-rule gives incorrect results for many
-non-US timezones.  This is due to over-simplistic handling of
-daylight savings switchovers by the Windows libraries.
+Many non-US time zones are implemented incorrectly.  This is due to
+over-simplistic handling of daylight savings switchovers by the
+Windows libraries.
 
 ** Files larger than 4GB report wrong size in a 32-bit Windows build
 
