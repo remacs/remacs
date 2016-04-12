@@ -19,6 +19,7 @@ terminal and the screen.
 * System Environment::  Distinguish the name and kind of system.
 * User Identification:: Finding the name and user id of the user.
 * Time of Day::         Getting the current time.
+* Time Zone Rules::     Rules for time zones and daylight saving time.
 * Time Conversion::     Converting a time from numeric form to
                           calendrical data and vice versa.
 * Time Parsing::        Converting a time from numeric form to text
@@ -1262,7 +1263,7 @@ information may some day be added at the end.
 
 The argument @var{time}, if given, specifies a time to format,
 instead of the current time.  The optional argument @var{zone}
-defaults to the current time zone rule.
+defaults to the current time zone rule.  @xref{Time Zone Rules}.
 
 @example
 @group
@@ -1299,26 +1300,9 @@ For example, if @var{time} is a number, @code{(time-to-seconds
 or rounding errors occur.
 @end defun
 
-@defun current-time-zone &optional time zone
-@cindex time zone, current
-This function returns a list describing the time zone that the user is
-in.
-
-The value has the form @code{(@var{offset} @var{name})}.  Here
-@var{offset} is an integer giving the number of seconds ahead of Universal Time
-(east of Greenwich).  A negative value means west of Greenwich.  The
-second element, @var{name}, is a string giving the name of the time
-zone.  Both elements change when daylight saving time begins or ends;
-if the user has specified a time zone that does not use a seasonal time
-adjustment, then the value is constant through time.
-
-If the operating system doesn't supply all the information necessary to
-compute the value, the unknown elements of the list are @code{nil}.
-
-The argument @var{time}, if given, specifies a time value to
-analyze instead of the current time.  The optional argument @var{zone}
-defaults to the current time zone rule.
-@end defun
+@node Time Zone Rules
+@section Time Zone Rules
+@cindex time zone rules
 
 @vindex TZ, environment variable
 The default time zone is determined by the @env{TZ} environment
@@ -1326,6 +1310,15 @@ variable.  @xref{System Environment}.  For example, you can tell Emacs
 to default to Universal Time with @code{(setenv "TZ" "UTC0")}.  If
 @env{TZ} is not in the environment, Emacs uses system wall clock time,
 which is a platform-dependent default time zone.
+
+The set of supported @env{TZ} strings is system-dependent.  GNU and
+many other systems support the tzdata database, e.g.,
+@samp{"America/New_York"} specifies the time zone and daylight saving
+time history for locations near New York City.  GNU and most other
+systems support POSIX-style @env{TZ} strings, e.g.,
+@samp{"EST+5EDT,M4.1.0/2,M10.5.0/2"} specifies the rules used in New
+York from 1987 through 2006.  All systems support the string
+@samp{"UTC0"} meaning Universal Time.
 
 @cindex time zone rule
 Functions that convert to and from local time accept an optional
@@ -1336,6 +1329,29 @@ If it is @code{t}, the conversion uses Universal Time.  If it is
 @code{wall}, the conversion uses the system wall clock time.  If it is
 a string, the conversion uses the time zone rule equivalent to setting
 @env{TZ} to that string.
+
+@defun current-time-zone &optional time zone
+@cindex time zone, current
+This function returns a list describing the time zone that the user is
+in.
+
+The value has the form @code{(@var{offset} @var{abbr})}.  Here
+@var{offset} is an integer giving the number of seconds ahead of Universal Time
+(east of Greenwich).  A negative value means west of Greenwich.  The
+second element, @var{abbr}, is a string giving an abbreviation for the
+time zone, e.g., @samp{"CST"} for China Standard Time or for
+U.S. Central Standard Time.  Both elements can change when daylight
+saving time begins or ends; if the user has specified a time zone that
+does not use a seasonal time adjustment, then the value is constant
+through time.
+
+If the operating system doesn't supply all the information necessary to
+compute the value, the unknown elements of the list are @code{nil}.
+
+The argument @var{time}, if given, specifies a time value to
+analyze instead of the current time.  The optional argument @var{zone}
+defaults to the current time zone rule.
+@end defun
 
 @node Time Conversion
 @section Time Conversion
@@ -1361,8 +1377,8 @@ as traditional Gregorian years do; for example, the year number
 @defun decode-time &optional time zone
 This function converts a time value into calendrical information.  If
 you don't specify @var{time}, it decodes the current time, and similarly
-@var{zone} defaults to the current time zone rule.  The return
-value is a list of nine elements, as follows:
+@var{zone} defaults to the current time zone rule.  @xref{Time Zone Rules}.
+The return value is a list of nine elements, as follows:
 
 @example
 (@var{seconds} @var{minutes} @var{hour} @var{day} @var{month} @var{year} @var{dow} @var{dst} @var{utcoff})
@@ -1409,6 +1425,7 @@ to stand for years above 1900, or years above 2000, you must alter them
 yourself before you call @code{encode-time}.
 
 The optional argument @var{zone} defaults to the current time zone rule.
+@xref{Time Zone Rules}.
 In addition to the usual time zone rule values, it can also be a list
 (as you would get from @code{current-time-zone}) or an integer (as
 from @code{decode-time}), applied without any further alteration for
@@ -1452,8 +1469,8 @@ corresponding time value.
 
 This function converts @var{time} (or the current time, if
 @var{time} is omitted) to a string according to
-@var{format-string}.  The conversion uses the time zone rule @var{zone}
-(or the current time zone rule, if omitted).  The argument
+@var{format-string}.  The conversion uses the time zone rule @var{zone}, which
+defaults to the current time zone rule.  @xref{Time Zone Rules}.  The argument
 @var{format-string} may contain @samp{%}-sequences which say to
 substitute parts of the time.  Here is a table of what the
 @samp{%}-sequences mean:

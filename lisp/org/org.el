@@ -22674,7 +22674,7 @@ time-range, if possible.
 
 The optional ZONE is omitted or nil for Emacs local time, t for
 Universal Time, `wall' for system wall clock time, or a string as in
-`set-time-zone-rule' for a time zone rule."
+the TZ environment variable."
   (format-time-string
    format
    (apply 'encode-time
