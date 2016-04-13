@@ -3976,7 +3976,7 @@ See `message-citation-line-format'."
 			       (>= i ?a)))
 		  (push i lst)
 		  (push (condition-case nil
-			    (gmm-format-time-string (format "%%%c" i) time tz)
+			    (format-time-string (format "%%%c" i) time tz)
 			  (error (format ">%c<" i)))
 			lst))
 		(setq i (1+ i)))
