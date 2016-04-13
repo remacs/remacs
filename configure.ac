@@ -874,11 +874,11 @@ AC_ARG_ENABLE([gcc-warnings],
    gl_gcc_warnings=$enableval],
   [# By default, use 'warn-only' if it looks like the invoker of 'configure'
    # is a developer as opposed to a builder.  This is most likely true
-   # if GCC is recent enough and there is a .git subdirectory;
+   # if GCC is recent enough and there is a .git directory or file;
    # however, if there is also a .tarball-version file it is probably
    # just a release imported into Git for patch management.
    gl_gcc_warnings=no
-   test -d "$srcdir"/.git && test ! -f "$srcdir"/.tarball-version &&
+   test -e "$srcdir"/.git && test ! -f "$srcdir"/.tarball-version &&
      gl_GCC_VERSION_IFELSE([5], [3], [gl_gcc_warnings=warn-only])]
 )
 

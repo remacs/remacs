@@ -330,7 +330,7 @@ fi
 
 if test ! -f configure; then
     echo "You can now run '$0 autoconf'."
-elif test -d .git && test $git_was_ok = false && test $do_git = false; then
+elif test -e .git && test $git_was_ok = false && test $do_git = false; then
     echo "You can now run '$0 git'."
 elif test ! -f config.status ||
 	test -n "`find src/stamp-h.in -newer config.status`"; then

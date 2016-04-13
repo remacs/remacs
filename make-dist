@@ -284,7 +284,7 @@ echo "Creating top directory: '${tempdir}'"
 mkdir ${tempdir}
 
 if [ "$changelog" = yes ]; then
-  if test -d .git; then
+  if test -e .git; then
     echo "Making top-level ChangeLog"
     make ChangeLog CHANGELOG=${tempdir}/ChangeLog || \
       { x=$?; echo "make ChangeLog FAILED (try --no-changelog?)" >&2; exit $x; }
