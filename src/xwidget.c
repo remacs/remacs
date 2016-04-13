@@ -580,20 +580,14 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 
   int text_area_x, text_area_y, text_area_width, text_area_height;
 
-  window_box (s->w,
-              ANY_AREA,
-              &text_area_x,
-              &text_area_y,
-              &text_area_width,
-              &text_area_height);
-  clip_right = min (xww->width,
-                    text_area_width);
-  clip_left = max (0,
-                   text_area_x);
-
-  clip_bottom = min (xww->height,
-                     text_area_height);
-  clip_top = max (0, text_area_y);
+  window_box (s->w, TEXT_AREA, &text_area_x, &text_area_y,
+              &text_area_width, &text_area_height);
+  clip_left = max (0, text_area_x - x);
+  clip_right = max (clip_left,
+		    min (xww->width, text_area_x + text_area_width - x));
+  clip_top = max (0, text_area_y - y);
+  clip_bottom = max (clip_top,
+		     min (xww->height, text_area_y + text_area_height - y));
 
   /* We are concerned with movement of the onscreen area.  The area
      might sit still when the widget actually moves.  This happens
@@ -622,8 +616,8 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
       || xv->clip_bottom != clip_bottom
       || xv->clip_top != clip_top || xv->clip_left != clip_left)
     {
-      gtk_widget_set_size_request (xv->widgetwindow, clip_right + clip_left,
-                                   clip_bottom + clip_top);
+      gtk_widget_set_size_request (xv->widgetwindow, clip_right - clip_left,
+                                   clip_bottom - clip_top);
       gtk_fixed_move (GTK_FIXED (xv->widgetwindow), xv->widget, -clip_left,
                       -clip_top);
 
