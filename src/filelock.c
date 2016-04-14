@@ -485,7 +485,7 @@ read_lock_data (char *lfname, char lfinfo[MAX_LFINFO + 1])
   while ((nbytes = readlinkat (AT_FDCWD, lfname, lfinfo, MAX_LFINFO + 1)) < 0
 	 && errno == EINVAL)
     {
-      int fd = emacs_open (lfname, O_RDONLY | O_BINARY | O_NOFOLLOW, 0);
+      int fd = emacs_open (lfname, O_RDONLY | O_NOFOLLOW, 0);
       if (0 <= fd)
 	{
 	  /* Use read, not emacs_read, since FD isn't unwind-protected.  */

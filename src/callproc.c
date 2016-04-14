@@ -565,8 +565,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
     {
       /* Since CRLF is converted to LF within `decode_coding', we
 	 can always open a file with binary mode.  */
-      callproc_fd[CALLPROC_PIPEREAD] = emacs_open (tempfile,
-						   O_RDONLY | O_BINARY, 0);
+      callproc_fd[CALLPROC_PIPEREAD] = emacs_open (tempfile, O_RDONLY, 0);
       if (callproc_fd[CALLPROC_PIPEREAD] < 0)
 	{
 	  int open_errno = errno;

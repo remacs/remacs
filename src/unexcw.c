@@ -275,9 +275,9 @@ unexec (const char *outfile, const char *infile)
   infile = add_exe_suffix_if_necessary (infile, infile_buffer);
   outfile = add_exe_suffix_if_necessary (outfile, outfile_buffer);
 
-  fd_in = emacs_open (infile, O_RDONLY | O_BINARY, 0);
+  fd_in = emacs_open (infile, O_RDONLY, 0);
   assert (fd_in >= 0);
-  fd_out = emacs_open (outfile, O_RDWR | O_TRUNC | O_CREAT | O_BINARY, 0755);
+  fd_out = emacs_open (outfile, O_RDWR | O_TRUNC | O_CREAT, 0755);
   assert (fd_out >= 0);
   for (;;)
     {

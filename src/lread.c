@@ -1578,8 +1578,7 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 		}
 	      else
 		{
-		  int oflags = O_RDONLY + (NILP (predicate) ? 0 : O_BINARY);
-		  fd = emacs_open (pfn, oflags, 0);
+		  fd = emacs_open (pfn, O_RDONLY, 0);
 		  if (fd < 0)
 		    {
 		      if (errno != ENOENT)

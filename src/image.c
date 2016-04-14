@@ -2300,7 +2300,7 @@ x_find_image_fd (Lisp_Object file, int *pfd)
 	     happens, e.g., under Auto Image File Mode.)  'openp'
 	     didn't open the file, so we should, because the caller
 	     expects that.  */
-	  fd = emacs_open (SSDATA (file_found), O_RDONLY | O_BINARY, 0);
+	  fd = emacs_open (SSDATA (file_found), O_RDONLY, 0);
 	}
     }
   else	/* fd < 0, but not -2 */

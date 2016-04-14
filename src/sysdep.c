@@ -2148,7 +2148,7 @@ init_random (void)
     {
       bool success = false;
 #ifndef WINDOWSNT
-      int fd = emacs_open ("/dev/urandom", O_RDONLY | O_BINARY, 0);
+      int fd = emacs_open ("/dev/urandom", O_RDONLY, 0);
       if (0 <= fd)
 	{
 	  success = emacs_read (fd, &v, sizeof v) == sizeof v;
@@ -2328,7 +2328,6 @@ emacs_fopen (char const *file, char const *mode)
     switch (*m++)
       {
       case '+': omode = O_RDWR; break;
-      case 'b': bflag = O_BINARY; break;
       case 't': bflag = O_TEXT; break;
       default: /* Ignore.  */ break;
       }

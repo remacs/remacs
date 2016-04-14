@@ -4804,7 +4804,7 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
 
   encoded_filename = ENCODE_FILE (filename);
   fn = SSDATA (encoded_filename);
-  open_flags = O_WRONLY | O_BINARY | O_CREAT;
+  open_flags = O_WRONLY | O_CREAT;
   open_flags |= EQ (mustbenew, Qexcl) ? O_EXCL : !NILP (append) ? 0 : O_TRUNC;
   if (NUMBERP (append))
     offset = file_offset (append);
@@ -4923,7 +4923,7 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
   if (timespec_valid_p (modtime)
       && ! (valid_timestamp_file_system && st.st_dev == timestamp_file_system))
     {
-      int desc1 = emacs_open (fn, O_WRONLY | O_BINARY, 0);
+      int desc1 = emacs_open (fn, O_WRONLY, 0);
       if (desc1 >= 0)
 	{
 	  struct stat st1;
