@@ -112,7 +112,8 @@ for arg; do
       --help)
 	exec echo "$0: usage: $0 [all|autoconf|git]";;
       all)
-	do_autoconf=true do_git=true;;
+	do_autoconf=true
+	test -e .git && do_git=true;;
       autoconf)
 	do_autoconf=true;;
       git)
@@ -260,7 +261,8 @@ git_config ()
 		echo 'Configuring local git repository...'
 		case $cp_options in
 		  --backup=*)
-		    cp $cp_options --force .git/config .git/config || exit;;
+		    config=$git_common_dir/config
+		    cp $cp_options --force -- "$config" "$config" || exit;;
 		esac
 	    fi
 	    echo "git config $name '$value'"
@@ -271,6 +273,13 @@ git_config ()
 }
 
 ## Configure Git, if requested.
+
+# Get location of Git's common configuration directory.  For older Git
+# versions this is just '.git'.  Newer Git versions support worktrees.
+
+test -e .git && git_common_dir=`git rev-parse --git-common-dir 2>/dev/null` ||
+  git_common_dir=.git
+hooks=$git_common_dir/hooks
 
 # Check hashes when transferring objects among repositories.
 
@@ -296,12 +305,11 @@ tailored_hooks=
 sample_hooks=
 
 for hook in commit-msg pre-commit; do
-    cmp build-aux/git-hooks/$hook .git/hooks/$hook >/dev/null 2>&1 ||
+    cmp -- build-aux/git-hooks/$hook "$hooks/$hook" >/dev/null 2>&1 ||
 	tailored_hooks="$tailored_hooks $hook"
 done
 for hook in applypatch-msg pre-applypatch; do
-    src=.git/hooks/$hook.sample
-    cmp "$src" .git/hooks/$hook >/dev/null 2>&1 ||
+    cmp -- "$hooks/$hook.sample" "$hooks/$hook" >/dev/null 2>&1 ||
 	sample_hooks="$sample_hooks $hook"
 done
 
@@ -311,15 +319,15 @@ if test -n "$tailored_hooks$sample_hooks"; then
 
 	if test -n "$tailored_hooks"; then
 	    for hook in $tailored_hooks; do
-		dst=.git/hooks/$hook
-		cp $cp_options build-aux/git-hooks/$hook "$dst" || exit
-		chmod a-w "$dst" || exit
+		dst=$hooks/$hook
+		cp $cp_options -- build-aux/git-hooks/$hook "$dst" || exit
+		chmod -- a-w "$dst" || exit
 	    done
 	fi
 
 	if test -n "$sample_hooks"; then
 	    for hook in $sample_hooks; do
-		cp $cp_options .git/hooks/$hook.sample .git/hooks/$hook || exit
+		cp $cp_options -- "$hooks/$hook.sample" "$hooks/$hook" || exit
 		chmod a-w .git/hooks/$hook || exit
 	    done
 	fi
