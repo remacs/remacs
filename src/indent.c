@@ -2036,7 +2036,7 @@ whether or not it is currently displayed in some window.  */)
       bool disp_string_at_start_p = 0;
       ptrdiff_t nlines = XINT (lines);
       int vpos_init = 0;
-      double start_col;
+      double start_col IF_LINT (= 0);
       int start_x IF_LINT (= 0);
       int to_x = -1;
 
