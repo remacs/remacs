@@ -3336,24 +3336,26 @@ HAVE_MODULES=no
 MODULES_OBJ=
 MODULES_SUFFIX=
 if test "${with_modules}" != "no"; then
-  if test "$opsys" = "gnu-linux"; then
-    LIBMODULES="-ldl"
-    MODULES_SUFFIX=".so"
-    HAVE_MODULES=yes
-  elif test "$opsys" = "cygwin"; then
-    MODULES_SUFFIX=".dll"
-    HAVE_MODULES=yes
-  elif test "$opsys" = "darwin"; then
-    MODULES_SUFFIX=".so"
-    HAVE_MODULES=yes
-  elif test "$opsys" = "mingw32"; then
-    MODULES_SUFFIX=".dll"
-    HAVE_MODULES=yes
-  else
-    # BSD system have dlopen in the libc
-    AC_CHECK_FUNC(dlopen, [MODULES_SUFFIX=".so"]
-                          [HAVE_MODULES=yes], [])
-  fi
+  case $opsys in
+    gnu*)
+      LIBMODULES="-ldl"
+      MODULES_SUFFIX=".so"
+      HAVE_MODULES=yes
+      ;;
+    cygwin|mingw32)
+      MODULES_SUFFIX=".dll"
+      HAVE_MODULES=yes
+      ;;
+    darwin)
+      MODULES_SUFFIX=".so"
+      HAVE_MODULES=yes
+      ;;
+    *)
+      # BSD system have dlopen in the libc
+      AC_CHECK_FUNC(dlopen, [MODULES_SUFFIX=".so"]
+                            [HAVE_MODULES=yes], [])
+      ;;
+  esac
 
   if test "${HAVE_MODULES}" = no; then
     AC_MSG_ERROR([Dynamic modules are not supported on your system])
