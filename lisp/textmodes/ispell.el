@@ -1875,6 +1875,7 @@ Valid forms include:
      ("\\\\add\\(tocontents\\|vspace\\)" ispell-tex-arg-end)
      ("\\\\\\([aA]lph\\|arabic\\)"	 ispell-tex-arg-end)
      ;;("\\\\author"			 ispell-tex-arg-end)
+     ("\\\\cref"			 ispell-tex-arg-end)
      ("\\\\bibliographystyle"		 ispell-tex-arg-end)
      ("\\\\makebox"			 ispell-tex-arg-end 0)
      ("\\\\e?psfig"			 ispell-tex-arg-end)
