@@ -2367,6 +2367,12 @@ automatically for the given @var{host} and @var{service}.
 ignored.  @code{ipv4} and @code{ipv6} specify to use IPv4 and IPv6,
 respectively.
 
+@item :use-external-socket @var{use-external-socket}
+If @var{use-external-socket} is non-@code{nil} use any sockets passed
+to Emacs on invocation instead of allocating one.  This is used by the
+Emacs server code to allow on-demand socket activation.  If Emacs
+wasn't passed a socket, this option is silently ignored.
+
 @item :local @var{local-address}
 For a server process, @var{local-address} is the address to listen on.
 It overrides @var{family}, @var{host} and @var{service}, so you

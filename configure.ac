@@ -330,6 +330,7 @@ OPTION_DEFAULT_ON([tiff],[don't compile with TIFF image support])
 OPTION_DEFAULT_ON([gif],[don't compile with GIF image support])
 OPTION_DEFAULT_ON([png],[don't compile with PNG image support])
 OPTION_DEFAULT_ON([rsvg],[don't compile with SVG image support])
+OPTION_DEFAULT_ON([libsystemd],[don't compile with libsystemd support])
 OPTION_DEFAULT_OFF([cairo],[compile with Cairo drawing (experimental)])
 OPTION_DEFAULT_ON([xml2],[don't compile with XML parsing support])
 OPTION_DEFAULT_ON([imagemagick],[don't compile with ImageMagick image support])
@@ -2731,6 +2732,18 @@ fi
 
 AC_SUBST(LIBGNUTLS_LIBS)
 AC_SUBST(LIBGNUTLS_CFLAGS)
+
+HAVE_LIBSYSTEMD=no
+if test "${with_libsystemd}" = "yes" ; then
+  EMACS_CHECK_MODULES([LIBSYSTEMD], [libsystemd >= 226],
+    [HAVE_LIBSYSTEMD=yes], [HAVE_LIBSYSTEMD=no])
+  if test "${HAVE_LIBSYSTEMD}" = "yes"; then
+    AC_DEFINE(HAVE_LIBSYSTEMD, 1, [Define if using libsystemd.])
+  fi
+fi
+
+AC_SUBST(LIBSYSTEMD_LIBS)
+AC_SUBST(LIBSYSTEMD_CFLAGS)
 
 NOTIFY_OBJ=
 NOTIFY_SUMMARY=no

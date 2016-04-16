@@ -56,6 +56,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <binary-io.h>
 #endif
 
+#ifdef HAVE_LIBSYSTEMD
+#include <systemd/sd-daemon.h>
+#include <sys/socket.h>
+#endif /* HAVE_LIBSYSTEMD */
+
 #ifdef HAVE_WINDOW_SYSTEM
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
@@ -676,6 +681,9 @@ main (int argc, char **argv)
   char dname_arg2[80];
 #endif
   char *ch_to_dir = 0;
+#ifdef HAVE_LIBSYSTEMD
+  int systemd_socket;
+#endif
 
   /* If we use --chdir, this records the original directory.  */
   char *original_pwd = 0;
@@ -998,6 +1006,20 @@ main (int argc, char **argv)
 	  fprintf (stderr, "Cannot pipe!\n");
 	  exit (1);
 	}
+
+#ifdef HAVE_LIBSYSTEMD
+      /* Read the number of sockets passed through by systemd. */
+      systemd_socket = sd_listen_fds(1);
+
+      if (systemd_socket > 1)
+        fprintf (stderr, "\nWarning: systemd has passed more than one socket to the Emacs process.\n\
+Try adding 'Accept=false' in the Emacs socket unit file.\n");
+
+      else if (systemd_socket == 1 &&
+               sd_is_socket (SD_LISTEN_FDS_START,
+                             AF_UNSPEC, SOCK_STREAM, 1) >= 0)
+        set_external_socket_descriptor (SD_LISTEN_FDS_START);
+#endif /* HAVE_LIBSYSTEMD */
 
 #ifndef DAEMON_MUST_EXEC
 #ifdef USE_GTK

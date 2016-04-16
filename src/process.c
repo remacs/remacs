@@ -267,6 +267,9 @@ static int max_process_desc;
 /* The largest descriptor currently in use for input; -1 if none.  */
 static int max_input_desc;
 
+/* The descriptor  of any sockets passed to Emacs; -1 if none. */
+static int external_sock_fd = -1;
+
 /* Indexed by descriptor, gives the process (if any) for that descriptor.  */
 static Lisp_Object chan_process[FD_SETSIZE];
 static void wait_for_socket_fds (Lisp_Object, char const *);
@@ -3075,7 +3078,8 @@ finish_after_tls_connection (Lisp_Object proc)
 #endif
 
 static void
-connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
+connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses,
+                        Lisp_Object use_external_socket_p)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
   ptrdiff_t count1;
@@ -3089,6 +3093,16 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
   struct Lisp_Process *p = XPROCESS (proc);
   Lisp_Object contact = p->childp;
   int optbits = 0;
+  int socket_to_use = -1;
+
+  if (!NILP (use_external_socket_p))
+    {
+      socket_to_use = external_sock_fd;
+
+      /* Ensure we don't consume the external socket twice. */
+      external_sock_fd = -1;
+    }
+
 
   /* Do this in case we never enter the while-loop below.  */
   count1 = SPECPDL_INDEX ();
@@ -3109,7 +3123,11 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
       sa = xmalloc (addrlen);
       conv_lisp_to_sockaddr (family, ip_address, sa, addrlen);
 
-      s = socket (family, p->socktype | SOCK_CLOEXEC, p->ai_protocol);
+      if (socket_to_use != -1)
+          s = socket_to_use;
+      else
+          s = socket (family, p->socktype | SOCK_CLOEXEC, p->ai_protocol);
+
       if (s < 0)
 	{
 	  xerrno = errno;
@@ -3168,8 +3186,11 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses)
 		  report_file_error ("Cannot set reuse option on server socket", Qnil);
 	      }
 
-	  if (bind (s, sa, addrlen))
-	    report_file_error ("Cannot bind server socket", Qnil);
+          /* If we are passed a socket descriptor, it should be
+             already bound. */
+	  if (socket_to_use == -1)
+	    if (bind (s, sa, addrlen))
+	      report_file_error ("Cannot bind server socket", Qnil);
 
 #ifdef HAVE_GETSOCKNAME
 	  if (p->port == 0)
@@ -3534,6 +3555,11 @@ The following network options can be specified for this connection:
                       (this is allowed by default for a server process).
 :bindtodevice NAME -- bind to interface NAME.  Using this may require
                       special privileges on some systems.
+:use-external-socket BOOL -- Use any pre-allocated sockets that have
+                             been passed to Emacs.  If Emacs wasn't
+                             passed a socket, this option is silently
+                             ignored.
+
 
 Consult the relevant system programmer's manual pages for more
 information on using these options.
@@ -3578,7 +3604,7 @@ usage: (make-network-process &rest ARGS)  */)
   EMACS_INT port = 0;
   Lisp_Object tem;
   Lisp_Object name, buffer, host, service, address;
-  Lisp_Object filter, sentinel;
+  Lisp_Object filter, sentinel, use_external_socket_p;
   Lisp_Object ip_addresses = Qnil;
   int socktype;
   int family = -1;
@@ -3618,6 +3644,7 @@ usage: (make-network-process &rest ARGS)  */)
   buffer = Fplist_get (contact, QCbuffer);
   filter = Fplist_get (contact, QCfilter);
   sentinel = Fplist_get (contact, QCsentinel);
+  use_external_socket_p = Fplist_get (contact, QCuse_external_socket);
 
   CHECK_STRING (name);
 
@@ -3914,7 +3941,7 @@ usage: (make-network-process &rest ARGS)  */)
     }
 #endif
 
-  connect_network_socket (proc, ip_addresses);
+  connect_network_socket (proc, ip_addresses, use_external_socket_p);
   return proc;
 }
 
@@ -4848,7 +4875,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		  {
 		    Lisp_Object ip_addresses = check_for_dns (aproc);
 		    if (!NILP (ip_addresses) && !EQ (ip_addresses, Qt))
-		      connect_network_socket (aproc, ip_addresses);
+		      connect_network_socket (aproc, ip_addresses, Qnil);
 		    else
 		      retry_for_async = true;
 		  }
@@ -7709,6 +7736,16 @@ catch_child_signal (void)
 }
 #endif	/* subprocesses */
 
+/* Set the external socket descriptor for Emacs to use when
+   `make-network-process' is called with a non-nil
+   `:use-external-socket' option.  The fd should have been checked to
+   ensure it is a valid socket and is already bound.  */
+void
+set_external_socket_descriptor(int fd)
+{
+    external_sock_fd = fd;
+}
+
 
 /* This is not called "init_process" because that is the name of a
    Mach system call, so it would cause problems on Darwin systems.  */
@@ -7837,6 +7874,7 @@ syms_of_process (void)
   DEFSYM (QCserver, ":server");
   DEFSYM (QCnowait, ":nowait");
   DEFSYM (QCsentinel, ":sentinel");
+  DEFSYM (QCuse_external_socket, ":use-external-socket");
   DEFSYM (QCtls_parameters, ":tls-parameters");
   DEFSYM (Qnsm_verify_connection, "nsm-verify-connection");
   DEFSYM (QClog, ":log");

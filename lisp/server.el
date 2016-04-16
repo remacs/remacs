@@ -655,6 +655,7 @@ server or call `\\[server-force-delete]' to forcibly disconnect it."))
 		       :noquery t
 		       :sentinel #'server-sentinel
 		       :filter #'server-process-filter
+		       :use-external-socket t
 		       ;; We must receive file names without being decoded.
 		       ;; Those are decoded by server-process-filter according
 		       ;; to file-name-coding-system.  Also don't get
