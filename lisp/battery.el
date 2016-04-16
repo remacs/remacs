@@ -38,8 +38,12 @@
   :prefix "battery-"
   :group 'hardware)
 
-;; Either BATn or yeeloong-bat, basically.
-(defconst battery--linux-sysfs-regexp "[bB][aA][tT][0-9]?$")
+(defcustom battery-linux-sysfs-regexp "[bB][aA][tT][0-9]?$"
+  "Regexp for folder names to be searched under
+  /sys/class/power_supply/ that contain battery information."
+  :version "25.2"
+  :type 'regexp
+  :group 'battery)
 
 (defcustom battery-status-function
   (cond ((and (eq system-type 'gnu/linux)
@@ -51,7 +55,7 @@
 	((and (eq system-type 'gnu/linux)
 	      (file-directory-p "/sys/class/power_supply/")
 	      (directory-files "/sys/class/power_supply/" nil
-                               battery--linux-sysfs-regexp))
+                               battery-linux-sysfs-regexp))
 	 #'battery-linux-sysfs)
 	((and (eq system-type 'berkeley-unix)
 	      (file-executable-p "/usr/sbin/apm"))
@@ -445,7 +449,7 @@ The following %-sequences are provided:
       (dolist (dir (ignore-errors
 		    (directory-files
 		     "/sys/class/power_supply/" t
-                     battery--linux-sysfs-regexp)))
+                     battery-linux-sysfs-regexp)))
 	(erase-buffer)
 	(ignore-errors (insert-file-contents
 			(expand-file-name "uevent" dir)))
