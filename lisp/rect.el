@@ -412,7 +412,7 @@ With a prefix (or a FILL) argument, also fill too short lines."
     (when (equal str "")
       (setq str (or (car-safe minibuffer-default)
                     (if (stringp minibuffer-default) minibuffer-default))))
-    (when str (setq str (propertize str 'face 'region)))
+    (when str (setq str (propertize str 'face 'rectangle-preview)))
     (with-selected-window rectangle--string-preview-window
       (unless (or (null rectangle--string-preview-state)
                   (equal str (car rectangle--string-preview-state)))
@@ -782,7 +782,7 @@ Ignores `line-move-visual'."
                      (if (not old)
                          (let ((ol (make-overlay left right)))
                            (overlay-put ol 'window window)
-                           (overlay-put ol 'face 'region)
+                           (overlay-put ol 'face 'rectangle-preview)
                            ol)
                        (let ((ol (pop old)))
                          (move-overlay ol left right (current-buffer))
@@ -814,7 +814,7 @@ Ignores `line-move-visual'."
                      (overlay-put ol 'after-string nil)))
                 ((< mright rightcol)    ;`rightcol' is past EOL.
                  (let ((str (rectangle--space-to rightcol)))
-                   (put-text-property 0 (length str) 'face 'region str)
+                   (put-text-property 0 (length str) 'face 'rectangle-preview str)
                    ;; If cursor happens to be here, draw it at the right place.
                    (rectangle--place-cursor leftcol left str)
                    (overlay-put ol 'after-string str)))
@@ -826,7 +826,7 @@ Ignores `line-move-visual'."
                      (overlay-put ol 'after-string nil)
                    (goto-char right)
                    (let ((str (rectangle--space-to rightcol)))
-                     (put-text-property 0 (length str) 'face 'region str)
+                     (put-text-property 0 (length str) 'face 'rectangle-preview str)
                      (when (= left right)
                        (rectangle--place-cursor leftcol left str))
                      (overlay-put ol 'after-string str))))
@@ -836,7 +836,7 @@ Ignores `line-move-visual'."
                  ;; Make zero-width rectangles visible!
                  (overlay-put ol 'after-string
                               (concat (propertize " "
-                                                  'face '(region (:height 0.2)))
+                                                  'face '(rectangle-preview (:height 0.2)))
                                       (overlay-get ol 'after-string))))
                (push ol nrol)))
            start end))
