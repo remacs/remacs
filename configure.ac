@@ -3337,7 +3337,7 @@ MODULES_OBJ=
 MODULES_SUFFIX=
 if test "${with_modules}" != "no"; then
   case $opsys in
-    gnu*)
+    gnu|gnu-linux)
       LIBMODULES="-ldl"
       MODULES_SUFFIX=".so"
       HAVE_MODULES=yes
