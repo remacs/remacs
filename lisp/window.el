@@ -1889,9 +1889,19 @@ the font."
 	   (ncols (/ window-width font-width)))
       (if (and (display-graphic-p)
 	       overflow-newline-into-fringe
-	       (/= (frame-parameter nil 'left-fringe) 0)
-	       (/= (frame-parameter nil 'right-fringe) 0))
+               (not
+                (or (eq left-fringe-width 0)
+                    (and (null left-fringe-width)
+                         (= (frame-parameter nil 'left-fringe) 0))))
+               (not
+                (or (eq right-fringe-width 0)
+                    (and (null right-fringe-width)
+                         (= (frame-parameter nil 'right-fringe) 0)))))
 	  ncols
+        ;; FIXME: This should remove 1 more column when there are no
+        ;; fringes, lines are truncated, and the window is hscrolled,
+        ;; but EOL is not in the view, because then there are 2
+        ;; truncation glyphs, not one.
 	(1- ncols)))))
 
 (defun window-current-scroll-bars (&optional window)
