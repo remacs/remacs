@@ -1610,18 +1610,9 @@ It is a string, such as \"PGP\". If nil, ask user."
   :type 'string
   :group 'mime-security)
 
-(defvar idna-program)
-
-(defcustom gnus-use-idna (and (mm-coding-system-p 'utf-8)
-			      (condition-case nil
-				  (require 'idna)
-				(file-error)
-				(invalid-operation))
-			      idna-program
-			      (executable-find idna-program))
-  "Whether IDNA decoding of headers is used when viewing messages.
-This requires GNU Libidn, and by default only enabled if it is found."
-  :version "22.1"
+(defcustom gnus-use-idna t
+  "Whether IDNA decoding of headers is used when viewing messages."
+  :version "25.2"
   :group 'gnus-article-headers
   :type 'boolean)
 
@@ -2591,8 +2582,6 @@ If PROMPT (the prefix), prompt for a coding system to use."
 			   t t nil 1))
 	  (goto-char (point-min)))))))
 
-(autoload 'idna-to-unicode "idna")
-
 (defun article-decode-idna-rhs ()
   "Decode IDNA strings in RHS in various headers in current buffer.
 The following headers are decoded: From:, To:, Cc:, Reply-To:,
@@ -2610,7 +2599,7 @@ Mail-Reply-To: and Mail-Followup-To:."
 			 (save-excursion
 			   (and (re-search-backward "^[^ \t]" nil t)
 				(looking-at "From\\|To\\|Cc\\|Reply-To\\|Mail-Reply-To\\|Mail-Followup-To")))
-			 (setq unicode (idna-to-unicode ace))))
+			 (setq unicode (puny-decode-domain ace))))
 	      (unless (string= ace unicode)
 		(replace-match unicode nil nil nil 1)))))))))
 

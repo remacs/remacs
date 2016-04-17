@@ -9807,8 +9807,6 @@ prefix specifies how many places to rotate each letter forward."
   ;; Create buttons and stuff...
   (gnus-treat-article nil))
 
-(declare-function idna-to-unicode "ext:idna" (str))
-
 (defun gnus-summary-idna-message (&optional arg)
   "Decode IDNA encoded domain names in the current articles.
 IDNA encoded domain names looks like `xn--bar'.  If a string
@@ -9818,25 +9816,16 @@ invalid IDNA string (`xn--bar' is invalid).
 You must have GNU Libidn (URL `http://www.gnu.org/software/libidn/')
 installed for this command to work."
   (interactive "P")
-  (if (not (and (mm-coding-system-p 'utf-8)
-		(condition-case nil
-		    (require 'idna)
-		  (file-error)
-		  (invalid-operation))
-		(symbol-value 'idna-program)
-		(executable-find (symbol-value 'idna-program))))
-      (gnus-message
-       5 "GNU Libidn not installed properly (`idn' or `idna.el' missing)")
-    (gnus-summary-select-article)
-    (let ((mail-header-separator ""))
-      (gnus-eval-in-buffer-window gnus-article-buffer
-	(save-restriction
-	  (widen)
-	  (let ((start (window-start))
-		buffer-read-only)
-	    (while (re-search-forward "\\(xn--[-0-9a-z]+\\)" nil t)
-	      (replace-match (idna-to-unicode (match-string 1))))
-	    (set-window-start (get-buffer-window (current-buffer)) start)))))))
+  (gnus-summary-select-article)
+  (let ((mail-header-separator ""))
+    (gnus-eval-in-buffer-window gnus-article-buffer
+      (save-restriction
+	(widen)
+	(let ((start (window-start))
+	      buffer-read-only)
+	  (while (re-search-forward "\\(xn--[-0-9a-z]+\\)" nil t)
+	    (replace-match (puny-decode-domain (match-string 1))))
+	  (set-window-start (get-buffer-window (current-buffer)) start))))))
 
 (defun gnus-summary-morse-message (&optional arg)
   "Morse decode the current article."
