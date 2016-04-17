@@ -48,6 +48,7 @@
 (require 'dired)
 (require 'mm-util)
 (require 'rfc2047)
+(require 'puny)
 
 (autoload 'mailclient-send-it "mailclient")
 
@@ -1910,7 +1911,6 @@ You must have the \"hashcash\" binary installed, see `hashcash-path'."
 (autoload 'gnus-output-to-rmail "gnus-util")
 (autoload 'gnus-request-post "gnus-int")
 (autoload 'gnus-server-string "gnus")
-(autoload 'idna-to-ascii "idna")
 (autoload 'message-setup-toolbar "messagexmas")
 (autoload 'mh-new-draft-name "mh-comp")
 (autoload 'mh-send-letter "mh-comp")
@@ -5851,7 +5851,7 @@ subscribed address (and not the additional To and Cc header contents)."
 	;; the domain part, i.e., if it is a local user's address.
 	(setq ace (if (string-match "\\`[[:ascii:]]*\\'" rhs)
 		      rhs
-		    (downcase (idna-to-ascii rhs))))
+		    (downcase (puny-encode-domain rhs))))
 	(when (and (not (equal rhs ace))
 		   (or (not (eq message-use-idna 'ask))
 		       (y-or-n-p (format "Replace %s with %s in %s:? "
