@@ -144,6 +144,12 @@ for the ChangeLog file, if none already exists.  Customize
 
 ** Tramp
 
+** Message
+
+---
+*** `message-use-idna' now defaults to t (because Emacs comes with
+built-in IDNA support now).
+
 +++
 *** New connection method "sg", which allows to edit files under
 different group ID.
