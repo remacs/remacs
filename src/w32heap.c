@@ -714,13 +714,12 @@ mmap_realloc (void **var, size_t nbytes)
       /* If there is enough room in the current reserved area, then
 	 commit more pages as needed.  */
       if (m2.State == MEM_RESERVE
+	  && m2.AllocationBase == memInfo.AllocationBase
 	  && nbytes <= memInfo.RegionSize + m2.RegionSize)
 	{
 	  void *p;
 
-	  p = VirtualAlloc (*var + memInfo.RegionSize,
-			    nbytes - memInfo.RegionSize,
-			    MEM_COMMIT, PAGE_READWRITE);
+	  p = VirtualAlloc (*var, nbytes, MEM_COMMIT, PAGE_READWRITE);
 	  if (!p /* && GetLastError() != ERROR_NOT_ENOUGH_MEMORY */)
 	    {
 	      DebPrint (("realloc enlarge: VirtualAlloc (%p + %I64x, %I64x) error %ld\n",
@@ -728,7 +727,8 @@ mmap_realloc (void **var, size_t nbytes)
 			 (uint64_t)(nbytes - memInfo.RegionSize),
 			 GetLastError ()));
 	      DebPrint (("next region: %p %p %I64x %x\n", m2.BaseAddress,
-			 m2.AllocationBase, m2.RegionSize, m2.AllocationProtect));
+			 m2.AllocationBase, (uint64_t)m2.RegionSize,
+			 m2.AllocationProtect));
 	    }
 	  else
 	    return *var;

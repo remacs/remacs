@@ -1087,6 +1087,23 @@ To disable this, change the variable
 @code{overflow-newline-into-fringe} to @code{nil}; this causes Emacs
 to continue or truncate lines that are exactly as wide as the window.
 
+  If you customize @code{fringe-mode} to remove the fringes on one or
+both sides of the window display, the features that display on the
+fringe are not available.  Indicators of line continuation and
+truncation are an exception: when fringes are not available, Emacs
+uses the leftmost and rightmost character cells to indicate
+continuation and truncation with special ASCII characters, see
+@ref{Continuation Lines}, and @ref{Line Truncation}.  This reduces the
+width available for displaying text on each line, because the
+character cells used for truncation and continuation indicators are
+reserved for that purpose.  Since buffer text can include
+bidirectional text, and thus both left-to-right and right-to-left
+paragraphs (@pxref{Bidirectional Editing}), removing only one of the
+fringes still reserves two character cells, one on each side of the
+window, for truncation and continuation indicators, because these
+indicators are displayed on opposite sides of the window in
+right-to-left paragraphs.
+
 @node Displaying Boundaries
 @section Displaying Boundaries
 

@@ -73,6 +73,7 @@ Michael Albinus
 
         File Notifications
 	    src/gfilenotify.c
+	    src/kqueue.c
 	    lisp/filenotify.el
 	    test/lisp/filenotify-tests.el
 

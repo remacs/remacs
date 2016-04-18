@@ -1225,9 +1225,10 @@ and command `sh-reset-indent-vars-to-global-values'."
   :type 'hook
   :group 'sh-script)
 
-(defcustom sh-mode-hook nil
+(defcustom sh-mode-hook '(sh-electric-here-document-mode)
   "Hook run by `sh-mode'."
   :type 'hook
+  :options '(sh-electric-here-document-mode)
   :group 'sh-script)
 
 (defcustom sh-learn-basic-offset nil
@@ -1616,7 +1617,8 @@ buffer indents as it currently is indented.
 \\[sh-execute-region]	 Have optional header and region be executed in a subshell.
 
 `sh-electric-here-document-mode' controls whether insertion of two
-unquoted < insert a here document.
+unquoted < insert a here document.  You can control this behavior by
+modifying `sh-mode-hook'.
 
 If you generally program a shell different from your login shell you can
 set `sh-shell-file' accordingly.  If your shell's file name doesn't correctly
@@ -1653,7 +1655,6 @@ with your script for an edit-interpret-debug cycle."
   (setq-local syntax-propertize-function #'sh-syntax-propertize-function)
   (add-hook 'syntax-propertize-extend-region-functions
             #'syntax-propertize-multiline 'append 'local)
-  (sh-electric-here-document-mode 1)
   (setq-local skeleton-pair-alist '((?` _ ?`)))
   (setq-local skeleton-pair-filter-function 'sh-quoted-p)
   (setq-local skeleton-further-elements

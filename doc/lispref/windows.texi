@@ -617,6 +617,12 @@ exceed its total height as returned by @code{window-total-height}.
 @cindex body width of a window
 The @dfn{body width} of a window is the width of its text area, which
 does not include the scroll bar, fringes, margins or a right divider.
+Note that when one or both fringes are removed (by setting their width
+to zero), the display engine reserves two character cells, one on each
+side of the window, for displaying the continuation and truncation
+glyphs, which leaves 2 columns less for text display.  (The function
+@code{window-max-chars-per-line}, described below, takes this
+peculiarity into account.)
 
 @defun window-body-width &optional window pixelwise
 This function returns the width, in columns, of the body of window

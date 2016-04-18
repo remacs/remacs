@@ -155,10 +155,7 @@ single byte."
           (set-keyboard-coding-system
            (if (terminal-parameter nil 'xterm-mouse-utf-8)
                'utf-8-unix
-             ;; Use Latin-1 instead of no-conversion to avoid flicker
-             ;; due to `set-keyboard-coding-system' changing the meta
-             ;; mode.
-             'latin-1))
+             'no-conversion))
           ;; Wait only a little; we assume that the entire escape sequence
           ;; has already been sent when this function is called.
           (read-char nil nil 0.1))

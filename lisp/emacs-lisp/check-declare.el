@@ -339,7 +339,7 @@ Returns non-nil if any false statements are found."
         errlist files)
     (message "%s" m)
     (message "%s" m2)
-    (setq files (process-lines find-program root
+    (setq files (process-lines grep-find-program root
 			       "-name" "*.el"
 			       "-exec" grep-program
 			       "-l" "^[ \t]*(declare-function" "{}" ";"))
