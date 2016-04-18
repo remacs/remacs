@@ -1020,6 +1020,9 @@ customization group.
 "Copyright-paperwork-exempt: yes".  Set 'log-edit-rewrite-tiny-change'
 nil to disable this.
 
++++
+*** vc-mcvs.el has been removed.
+
 ---
 ** VHDL mode now supports VHDL'08.
 

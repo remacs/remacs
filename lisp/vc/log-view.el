@@ -542,7 +542,7 @@ If called interactively, visit the version at point."
       (setq en (point))
       (or (log-view-current-entry nil t)
           (throw 'beginning-of-buffer nil))
-      (cond ((memq backend '(SCCS RCS CVS MCVS SVN))
+      (cond ((memq backend '(SCCS RCS CVS SVN))
 	     (forward-line 2))
 	    ((eq backend 'Hg)
 	     (forward-line 4)
