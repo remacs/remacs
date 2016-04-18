@@ -34,6 +34,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "buffer.h"
 #include "disptab.h"
+#include "intervals.h"
 #include "keymap.h"
 
 /* Buffer used for reading from documentation file.  */
@@ -739,6 +740,7 @@ Otherwise, return a new string.  */)
 {
   char *buf;
   bool changed = false;
+  bool nonquotes_changed = false;
   unsigned char *strp;
   char *bufp;
   ptrdiff_t idx;
@@ -786,7 +788,7 @@ Otherwise, return a new string.  */)
 	{
 	  /* \= quotes the next character;
 	     thus, to put in \[ without its special meaning, use \=\[.  */
-	  changed = true;
+	  changed = nonquotes_changed = true;
 	  strp += 2;
 	  if (multibyte)
 	    {
@@ -946,6 +948,8 @@ Otherwise, return a new string.  */)
 	  length = SCHARS (tem);
 	  length_byte = SBYTES (tem);
 	subst:
+	  nonquotes_changed = true;
+	subst_quote:
 	  changed = true;
 	  {
 	    ptrdiff_t offset = bufp - buf;
@@ -967,7 +971,7 @@ Otherwise, return a new string.  */)
 	  length = 1;
 	  length_byte = sizeof uLSQM - 1;
 	  idx = strp - SDATA (string) + 1;
-	  goto subst;
+	  goto subst_quote;
 	}
       else if (strp[0] == '`' && quoting_style == STRAIGHT_QUOTING_STYLE)
 	{
@@ -1003,7 +1007,22 @@ Otherwise, return a new string.  */)
     }
 
   if (changed)			/* don't bother if nothing substituted */
-    tem = make_string_from_bytes (buf, nchars, bufp - buf);
+    {
+      tem = make_string_from_bytes (buf, nchars, bufp - buf);
+      if (!nonquotes_changed)
+	{
+	  /* Nothing has changed other than quoting, so copy the string’s
+	     text properties.  FIXME: Text properties should survive other
+	     changes too.  */
+	  INTERVAL interval_copy = copy_intervals (string_intervals (string),
+						   0, SCHARS (string));
+	  if (interval_copy)
+	    {
+	      set_interval_object (interval_copy, tem);
+	      set_string_intervals (tem, interval_copy);
+	    }
+	}
+    }
   else
     tem = string;
   xfree (buf);
