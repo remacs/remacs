@@ -32,12 +32,12 @@ the default in developer builds.  As before, use
 '--enable-gcc-warnings' to stop the build if GCC issues warnings.
 
 +++
-** Emacs server now has socket-launching support.  This allows socket
-based activation, where an external process can invoke the Emacs
-server process upon a socket connection event and hand over the socket
-to Emacs.  Emacs will use this socket for servicing emacsclient
-commands.  systemd can make use of this new functionally but can be
-disabled with the configure option '--disable-libsystemd'.
+** The Emacs server now has socket-launching support.  This allows
+socket based activation, where an external process like systemd can
+invoke the Emacs server process upon a socket connection event and
+hand the socket over to Emacs.  Emacs uses this socket to service
+emacsclient commands.  This new functionality can be disabled with the
+configure option '--disable-libsystemd'.
 
 ** New configure option '--disable-build-details' attempts to build an
 Emacs that is more likely to be reproducible; that is, if you build

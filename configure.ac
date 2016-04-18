@@ -2735,7 +2735,10 @@ AC_SUBST(LIBGNUTLS_CFLAGS)
 
 HAVE_LIBSYSTEMD=no
 if test "${with_libsystemd}" = "yes" ; then
-  EMACS_CHECK_MODULES([LIBSYSTEMD], [libsystemd >= 226],
+  dnl This code has been tested with libsystemd 222 and later.
+  dnl FIXME: Find the earliest version number for which Emacs should work,
+  dnl and change '222' to that number.
+  EMACS_CHECK_MODULES([LIBSYSTEMD], [libsystemd >= 222],
     [HAVE_LIBSYSTEMD=yes], [HAVE_LIBSYSTEMD=no])
   if test "${HAVE_LIBSYSTEMD}" = "yes"; then
     AC_DEFINE(HAVE_LIBSYSTEMD, 1, [Define if using libsystemd.])

@@ -267,8 +267,8 @@ static int max_process_desc;
 /* The largest descriptor currently in use for input; -1 if none.  */
 static int max_input_desc;
 
-/* The descriptor  of any sockets passed to Emacs; -1 if none. */
-static int external_sock_fd = -1;
+/* The descriptor of any socket passed to Emacs; -1 if none. */
+static int external_sock_fd;
 
 /* Indexed by descriptor, gives the process (if any) for that descriptor.  */
 static Lisp_Object chan_process[FD_SETSIZE];
@@ -3099,10 +3099,9 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses,
     {
       socket_to_use = external_sock_fd;
 
-      /* Ensure we don't consume the external socket twice. */
+      /* Ensure we don't consume the external socket twice.  */
       external_sock_fd = -1;
     }
-
 
   /* Do this in case we never enter the while-loop below.  */
   count1 = SPECPDL_INDEX ();
@@ -3123,15 +3122,15 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses,
       sa = xmalloc (addrlen);
       conv_lisp_to_sockaddr (family, ip_address, sa, addrlen);
 
-      if (socket_to_use != -1)
-          s = socket_to_use;
-      else
-          s = socket (family, p->socktype | SOCK_CLOEXEC, p->ai_protocol);
-
+      s = socket_to_use;
       if (s < 0)
 	{
-	  xerrno = errno;
-	  continue;
+	  s = socket (family, p->socktype | SOCK_CLOEXEC, p->ai_protocol);
+	  if (s < 0)
+	    {
+	      xerrno = errno;
+	      continue;
+	    }
 	}
 
 #ifdef DATAGRAM_SOCKETS
@@ -3186,11 +3185,9 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses,
 		  report_file_error ("Cannot set reuse option on server socket", Qnil);
 	      }
 
-          /* If we are passed a socket descriptor, it should be
-             already bound. */
-	  if (socket_to_use == -1)
-	    if (bind (s, sa, addrlen))
-	      report_file_error ("Cannot bind server socket", Qnil);
+          /* If passed a socket descriptor, it should be already bound. */
+	  if (socket_to_use < 0 && bind (s, sa, addrlen) != 0)
+	    report_file_error ("Cannot bind server socket", Qnil);
 
 #ifdef HAVE_GETSOCKNAME
 	  if (p->port == 0)
@@ -7741,9 +7738,9 @@ catch_child_signal (void)
    `:use-external-socket' option.  The fd should have been checked to
    ensure it is a valid socket and is already bound.  */
 void
-set_external_socket_descriptor(int fd)
+set_external_socket_descriptor (int fd)
 {
-    external_sock_fd = fd;
+  external_sock_fd = fd;
 }
 
 
@@ -7775,7 +7772,7 @@ init_process_emacs (void)
   FD_ZERO (&non_keyboard_wait_mask);
   FD_ZERO (&non_process_wait_mask);
   FD_ZERO (&write_mask);
-  max_process_desc = max_input_desc = -1;
+  max_process_desc = max_input_desc = external_sock_fd = -1;
   memset (fd_callback_info, 0, sizeof (fd_callback_info));
 
   FD_ZERO (&connect_wait_mask);

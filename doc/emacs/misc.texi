@@ -1586,7 +1586,7 @@ waits in the background, listening for edit requests.
 An external process can invoke the Emacs server when a connection
 event occurs upon a specified socket and pass the socket to the new
 Emacs server process.  An instance of this is @command{systemd}'s
-socket functionaly: the @command{systemd} service creates a socket and
+socket functionality: the @command{systemd} service creates a socket and
 listens for connections on it; when @command{emacsclient} connects to
 it for the first time, @command{systemd} can launch the Emacs server
 and hand over the socket to it for servicing @command{emacsclient}

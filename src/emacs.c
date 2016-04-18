@@ -57,9 +57,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 #ifdef HAVE_LIBSYSTEMD
-#include <systemd/sd-daemon.h>
-#include <sys/socket.h>
-#endif /* HAVE_LIBSYSTEMD */
+# include <systemd/sd-daemon.h>
+# include <sys/socket.h>
+#endif
 
 #ifdef HAVE_WINDOW_SYSTEM
 #include TERM_HEADER
@@ -681,9 +681,6 @@ main (int argc, char **argv)
   char dname_arg2[80];
 #endif
   char *ch_to_dir = 0;
-#ifdef HAVE_LIBSYSTEMD
-  int systemd_socket;
-#endif
 
   /* If we use --chdir, this records the original directory.  */
   char *original_pwd = 0;
@@ -1008,16 +1005,17 @@ main (int argc, char **argv)
 	}
 
 #ifdef HAVE_LIBSYSTEMD
-      /* Read the number of sockets passed through by systemd. */
-      systemd_socket = sd_listen_fds(1);
+      /* Read the number of sockets passed through by systemd.  */
+      int systemd_socket = sd_listen_fds (1);
 
       if (systemd_socket > 1)
-        fprintf (stderr, "\nWarning: systemd has passed more than one socket to the Emacs process.\n\
-Try adding 'Accept=false' in the Emacs socket unit file.\n");
-
-      else if (systemd_socket == 1 &&
-               sd_is_socket (SD_LISTEN_FDS_START,
-                             AF_UNSPEC, SOCK_STREAM, 1) >= 0)
+        fprintf (stderr,
+		 ("\n"
+		  "Warning: systemd passed more than one socket to Emacs.\n"
+		  "Try 'Accept=false' in the Emacs socket unit file.\n"));
+      else if (systemd_socket == 1
+	       && (0 < sd_is_socket (SD_LISTEN_FDS_START,
+				     AF_UNSPEC, SOCK_STREAM, 1)))
         set_external_socket_descriptor (SD_LISTEN_FDS_START);
 #endif /* HAVE_LIBSYSTEMD */
 
