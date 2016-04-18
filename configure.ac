@@ -3389,9 +3389,10 @@ if test "${with_modules}" != "no"; then
       HAVE_MODULES=yes
       ;;
     *)
-      # BSD system have dlopen in the libc
-      AC_CHECK_FUNC(dlopen, [MODULES_SUFFIX=".so"]
-                            [HAVE_MODULES=yes], [])
+      # BSD systems have dlopen in libc.
+      AC_CHECK_FUNC([dlopen],
+        [MODULES_SUFFIX=".so"
+         HAVE_MODULES=yes])
       ;;
   esac
 

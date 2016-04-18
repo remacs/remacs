@@ -680,7 +680,10 @@ This is an internal function used by Auto-Revert Mode."
         ;; not to forget that.  This gives undesirable results when
         ;; the file's mode changes, but that is less common.
         (let ((buffer-read-only buffer-read-only))
-          (revert-buffer 'ignore-auto 'dont-ask 'preserve-modes)))
+          ;; Bug#23276: When the file has been deleted, keep the
+          ;; buffer unchanged.
+          (ignore-errors
+            (revert-buffer 'ignore-auto 'dont-ask 'preserve-modes))))
       (when buffer-file-name
         (when eob (goto-char (point-max)))
         (dolist (window eoblist)

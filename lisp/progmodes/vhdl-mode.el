@@ -13,10 +13,10 @@
 ;; filed in the Emacs bug reporting system against this file, a copy
 ;; of the bug report be sent to the maintainer's email address.
 
-(defconst vhdl-version "3.37.1"
+(defconst vhdl-version "3.38.1"
   "VHDL Mode version number.")
 
-(defconst vhdl-time-stamp "2015-01-15"
+(defconst vhdl-time-stamp "2015-03-12"
   "VHDL Mode time stamp for last update.")
 
 ;; This file is part of GNU Emacs.
@@ -4876,8 +4876,6 @@ Key bindings:
   (set (make-local-variable 'indent-line-function) 'vhdl-indent-line)
   (set (make-local-variable 'comment-start) "--")
   (set (make-local-variable 'comment-end) "")
-  (when vhdl-emacs-21
-    (set (make-local-variable 'comment-padding) ""))
   (set (make-local-variable 'comment-column) vhdl-inline-comment-column)
   (set (make-local-variable 'end-comment-column) vhdl-end-comment-column)
   (set (make-local-variable 'comment-start-skip) "--+\\s-*")
@@ -6001,6 +5999,7 @@ keyword."
 	   ;; following search list so that we don't run into
 	   ;; semicolons in the function interface list.
 	   (backward-sexp)
+	   (skip-chars-forward "(")
 	   (let (foundp)
 	     (while (and (not foundp)
 			 (re-search-backward
@@ -6779,7 +6778,8 @@ statement if already at the beginning of one."
 		    ;; start point was not inside leader area
 		    ;; set stop point at word after leader
 		    (setq pos (point))))
-	    (forward-word-strictly 1)
+	    (unless (looking-at "\\<else\\s-+generate\\>")
+	      (forward-word-strictly 1))
 	    (vhdl-forward-syntactic-ws here)
 	    (setq pos (point)))
 	  (goto-char pos)
@@ -9311,9 +9311,11 @@ a configuration declaration if not within a design unit."
   (let (margin)
     (vhdl-prepare-search-1
      (vhdl-insert-keyword "ELSE")
-     (if (and (save-excursion (vhdl-re-search-backward "\\(\\<when\\>\\|;\\)" nil t))
-	      (equal "WHEN" (upcase (match-string 1))))
+     (if (and (save-excursion (vhdl-re-search-backward "\\(\\(\\<when\\>\\)\\|;\\)" nil t))
+	      (match-string 2))
 	 (insert " ")
+       (unless (vhdl-sequential-statement-p)
+ 	 (vhdl-insert-keyword " GENERATE"))
        (indent-according-to-mode)
        (setq margin (current-indentation))
        (insert "\n")
@@ -9325,15 +9327,16 @@ a configuration declaration if not within a design unit."
   (let ((start (point))
 	margin)
     (vhdl-insert-keyword "ELSIF ")
-    (when (or (vhdl-sequential-statement-p) (vhdl-standard-p 'ams))
       (when vhdl-conditions-in-parenthesis (insert "("))
       (when (vhdl-template-field "condition" nil t start (point))
 	(when vhdl-conditions-in-parenthesis (insert ")"))
 	(indent-according-to-mode)
 	(setq margin (current-indentation))
 	(vhdl-insert-keyword
-	 (concat " " (if (vhdl-sequential-statement-p) "THEN" "USE") "\n"))
-	(indent-to (+ margin vhdl-basic-offset))))))
+       (concat " " (cond ((vhdl-sequential-statement-p) "THEN")
+			 ((vhdl-standard-p 'ams) "USE")
+			 (t "GENERATE")) "\n"))
+      (indent-to (+ margin vhdl-basic-offset)))))
 
 (defun vhdl-template-entity ()
   "Insert an entity."
@@ -13001,7 +13004,7 @@ File statistics: \"%s\"\n\
   (let (pos)
     (save-excursion
       (while (and (setq pos (re-search-forward regexp bound noerror count))
-		  (vhdl-in-literal))))
+		  (save-match-data (vhdl-in-literal)))))
     (when pos (goto-char pos))
     pos))
 
@@ -13010,7 +13013,7 @@ File statistics: \"%s\"\n\
   (let (pos)
     (save-excursion
       (while (and (setq pos (re-search-backward regexp bound noerror count))
-		  (vhdl-in-literal))))
+		  (save-match-data (vhdl-in-literal)))))
     (when pos (goto-char pos))
     pos))
 
