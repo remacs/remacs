@@ -53,7 +53,8 @@
   "Identifiers for pseudo-elements.")
 
 (defconst css-at-ids
-  '("charset" "font-face" "import" "media" "namespace" "page")
+  '("charset" "font-face" "import" "keyframes" "media" "namespace"
+    "page")
   "Identifiers that appear in the form @foo.")
 
 (defconst scss-at-ids
