@@ -879,8 +879,9 @@ AC_ARG_ENABLE([gcc-warnings],
    # however, if there is also a .tarball-version file it is probably
    # just a release imported into Git for patch management.
    gl_gcc_warnings=no
-   test -e "$srcdir"/.git && test ! -f "$srcdir"/.tarball-version &&
+   if test -e "$srcdir"/.git && test ! -f "$srcdir"/.tarball-version; then
      gl_GCC_VERSION_IFELSE([5], [3], [gl_gcc_warnings=warn-only])]
+   fi
 )
 
 # clang is unduly picky about some things.
