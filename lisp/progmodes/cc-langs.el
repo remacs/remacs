@@ -3069,7 +3069,7 @@ is in effect or not."
 
 (c-lang-defconst c-special-brace-lists
 "List of open- and close-chars that makes up a pike-style brace list,
-i.e. for a ([ ]) list there should be a cons (?\\[ . ?\\]) in this
+i.e., for a ([ ]) list there should be a cons (?\\[ . ?\\]) in this
 list."
   t    nil
   pike '((?{ . ?}) (?\[ . ?\]) (?< . ?>)))

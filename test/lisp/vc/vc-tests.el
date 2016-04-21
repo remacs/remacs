@@ -218,7 +218,7 @@ For backends which dont support it, `vc-not-supported' is signalled."
 
 (defun vc-test--register (backend)
   "Register and unregister a file.
-This checks also `vc-backend' and `vc-reponsible-backend'."
+This checks also `vc-backend' and `vc-responsible-backend'."
 
   (let ((vc-handled-backends `(,backend))
 	(default-directory

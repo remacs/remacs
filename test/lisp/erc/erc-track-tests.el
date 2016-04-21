@@ -3,7 +3,7 @@
 ;; Copyright © 2016 Free Software Foundation, Inc.
 
 ;; Author: Mario Lang <mlang@delysid.org>
-;; Author: Vivek Das Mohapatra <vivek@etla.org>
+;; Author: Vivek Dasmohapatra <vivek@etla.org>
 
 ;; This file is part of GNU Emacs.
 
