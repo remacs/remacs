@@ -3154,9 +3154,45 @@ deliver_wm_chars (int do_translate, HWND hwnd, UINT msg, UINT wParam,
 	      SHORT r = VkKeyScanW (*b), bitmap = 0x1FF;
 
 	      FPRINTF_WM_CHARS((stderr, "VkKeyScanW %#06x %#04x\n", (int)r,
-			       wParam));
+				wParam));
 	      if ((r & 0xFF) == wParam)
 		bitmap = r>>8; /* *b is reachable via simple interface */
+	      else
+		{
+		  /* VkKeyScanW() (essentially) returns the FIRST key with
+		     the specified character; so here the pressed key is the
+		     SECONDARY key producing the character.
+
+		     Essentially, we have no information about the "role" of
+		     modifiers on this key: which contribute into the
+		     produced character (so "are consumed"), and which are
+		     "extra" (must attache to bindable events).
+
+		     The default above would consume ALL modifiers, so the
+		     character is reported "as is".  However, on many layouts
+		     the ordering of the keys (in the layout table) is not
+		     thought out well, so the "secondary" keys are often those
+		     which the users would prefer to use with Alt-CHAR.
+		     (Moreover - with e.g. Czech-QWERTY - the ASCII
+		     punctuation is accessible from two equally [nu]preferable
+		     AltGr-keys.)
+
+		     SO:   Heuristic: if the reported char is ASCII, AND Meta
+		     modifier is a candidate, behave as if Meta is present
+		     (fallback to the legacy branch; bug#23251).
+
+		     (This would break layouts
+		     - delivering ASCII characters
+		     - on SECONDARY keys
+		     - with not Shift/AltGr-like modifier combinations.
+		     All 3 conditions together must be pretty exotic
+		     cases - and a workaround exists: use "primary" keys!) */
+		  if (*b < 0x80
+		      && (wmsg.dwModifiers
+			  & (alt_modifier | meta_modifier
+			     | super_modifier | hyper_modifier)))
+		    return 0;
+		}
 	      if (*type_CtrlAlt == 'a') /* Simple Alt seen */
 		{
 		  if ((bitmap & ~1) == 0) /* 1: KBDSHIFT */
