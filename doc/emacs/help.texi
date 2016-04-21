@@ -410,6 +410,8 @@ Follow a hyperlink that you click on.
 @item C-c C-c
 Show all documentation about the symbol at point
 (@code{help-follow-symbol}).
+@item C-c C-f
+Go forward to the next help topic (@code{help-go-forward}).
 @item C-c C-b
 Go back to the previous help topic (@code{help-go-back}).
 @end table
@@ -417,15 +419,18 @@ Go back to the previous help topic (@code{help-go-back}).
 @cindex hyperlink
 @findex help-follow
 @findex help-go-back
+@findex help-go-forward
 @kindex RET @r{(Help mode)}
 @kindex C-c C-b @r{(Help mode)}
+@kindex C-c C-f @r{(Help mode)}
   When a function name, variable name, or face name (@pxref{Faces})
 appears in the documentation in the help buffer, it is normally an
 underlined @dfn{hyperlink}.  To view the associated documentation,
 move point there and type @key{RET} (@code{help-follow}), or click on
 the hyperlink with @kbd{Mouse-1} or @kbd{Mouse-2}.  Doing so replaces
 the contents of the help buffer; to retrace your steps, type @kbd{C-c
-C-b} (@code{help-go-back}).
+C-b} (@code{help-go-back}).  While retracing your steps, you can go
+forward by using @kbd{C-c C-b} (@code{help-go-forward}).
 
 @cindex URL, viewing in help
 @cindex help, viewing web pages
