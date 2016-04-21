@@ -43,6 +43,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "systime.h"
 #include "termhooks.h"
 #include "blockinput.h"
+#include <c-ctype.h>
 
 #ifdef MSDOS
 #include "msdos.h"
@@ -2149,6 +2150,36 @@ grow_read_buffer (void)
 			 MAX_MULTIBYTE_LENGTH, -1, 1);
 }
 
+/* Hash table that maps Unicode character names to code points.  */
+static Lisp_Object character_names;
+
+/* Length of the longest Unicode character name, in bytes. */
+static ptrdiff_t max_character_name_length;
+
+/* Initializes `character_names' and `max_character_name_length'.
+   Called by `read_escape'.  */
+void init_character_names ()
+{
+  character_names = CALLN (Fmake_hash_table,
+                           QCtest, Qequal,
+                           /* Currently around 100,000 Unicode
+                              characters are defined.  */
+                           QCsize, make_natnum (100000));
+  const Lisp_Object get_property =
+    Fsymbol_function (intern_c_string ("get-char-code-property"));
+  ptrdiff_t length = 0;
+  for (int i = 0; i <= MAX_UNICODE_CHAR; ++i)
+    {
+      const Lisp_Object code = make_natnum (i);
+      const Lisp_Object name = call2 (get_property, code, Qname);
+      if (NILP (name)) continue;
+      CHECK_STRING (name);
+      length = max (length, SBYTES (name));
+      Fputhash (name, code, character_names);
+    }
+  max_character_name_length = length;
+}
+
 /* Read a \-escape sequence, assuming we already read the `\'.
    If the escape sequence forces unibyte, return eight-bit char.  */
 
@@ -2354,6 +2385,68 @@ read_escape (Lisp_Object readcharfun, bool stringp)
 	if (i > 0x10FFFF)
 	  error ("Non-Unicode character: 0x%x", i);
 	return i;
+      }
+
+    case 'N':
+      /* Named character.  */
+      {
+        c = READCHAR;
+        if (c != '{')
+          invalid_syntax ("Expected opening brace after \\N");
+        if (NILP (character_names))
+          init_character_names ();
+        USE_SAFE_ALLOCA;
+        char *name = SAFE_ALLOCA (max_character_name_length + 1);
+        bool whitespace = false;
+        ptrdiff_t length = 0;
+        while (true)
+          {
+            c = READCHAR;
+            if (c < 0)
+              end_of_file_error ();
+            if (c == '}')
+              break;
+            if (! c_isascii (c))
+              xsignal1 (Qinvalid_read_syntax,
+                        CALLN (Fformat,
+                               build_pure_c_string ("Non-ASCII character U+%04X"
+                                                    " in character name"),
+                               make_natnum (c)));
+            /* We treat multiple adjacent whitespace characters as a
+               single space character.  This makes it easier to use
+               character names in e.g. multi-line strings.  */
+            if (c_isspace (c))
+              {
+                if (! whitespace)
+                  {
+                    whitespace = true;
+                    name[length++] = ' ';
+                  }
+              }
+            else
+              {
+                whitespace = false;
+                name[length++] = c;
+              }
+            if (length >= max_character_name_length)
+              invalid_syntax ("Character name too long");
+          }
+        if (length == 0)
+          invalid_syntax ("Empty character name");
+        name[length] = 0;
+        const Lisp_Object lisp_name = make_unibyte_string (name, length);
+        const Lisp_Object code =
+          (length >= 3 && length <= 10 && name[0] == 'U' && name[1] == '+') ?
+          /* Code point as U+N, where N is between 1 and 8 hexadecimal
+             digits.  */
+          string_to_number (name + 2, 16, false) :
+          Fgethash (lisp_name, character_names, Qnil);
+        SAFE_FREE ();
+        if (! RANGED_INTEGERP (0, code, MAX_UNICODE_CHAR))
+          xsignal1 (Qinvalid_read_syntax,
+                    CALLN (Fformat,
+                           build_pure_c_string ("\\N{%s}"), lisp_name));
+        return XINT (code);
       }
 
     default:
@@ -4744,4 +4837,7 @@ that are loaded before your customizations are read!  */);
   DEFSYM (Qweakness, "weakness");
   DEFSYM (Qrehash_size, "rehash-size");
   DEFSYM (Qrehash_threshold, "rehash-threshold");
+
+  character_names = Qnil;
+  staticpro (&character_names);
 }
