@@ -633,7 +633,7 @@ This function returns the value of @var{char}'s @var{propname} property.
 @end group
 @group
 ;; U+2163 ROMAN NUMERAL FOUR
-(get-char-code-property ?\u2163 'numeric-value)
+(get-char-code-property ?\N@{ROMAN NUMERAL FOUR@} 'numeric-value)
      @result{} 4
 @end group
 @group

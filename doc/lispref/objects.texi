@@ -387,6 +387,16 @@ up to three octal digits; thus, @samp{?\101} for the character
 for the character @kbd{C-b}.  Only characters up to octal code 777 can
 be specified this way.
 
+  Fourthly, you can specify characters by their name.  A character
+name escape sequence consists of a backslash, @samp{N@{}, the Unicode
+character name, and @samp{@}}.  Alternatively, you can also put the
+numeric code point value between the braces, using the syntax
+@samp{\N@{U+nnnn@}}, where @samp{nnnn} denotes between one and eight
+hexadecimal digits.  Thus, @samp{?\N@{LATIN CAPITAL LETTER A@}} and
+@samp{?\N@{U+41@}} both denote the character @kbd{A}.  To simplify
+entering multi-line strings, you can replace spaces in the character
+names by arbitrary non-empty sequence of whitespace (e.g., newlines).
+
   These escape sequences may also be used in strings.  @xref{Non-ASCII
 in Strings}.
 

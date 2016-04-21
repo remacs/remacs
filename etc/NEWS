@@ -166,6 +166,11 @@ different group ID.
 *** Support for completing attribute values and bang-rules using the
 'completion-at-point' command.
 
++++
+** Emacs now supports character name escape sequences in character and
+string literals.  The syntax variants \N{character name} and
+\N{U+code} are supported.
+
 
 * New Modes and Packages in Emacs 25.2
 
