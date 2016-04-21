@@ -2158,20 +2158,20 @@ static ptrdiff_t max_character_name_length;
 
 /* Initializes `character_names' and `max_character_name_length'.
    Called by `read_escape'.  */
-void init_character_names ()
+void init_character_names (void)
 {
   character_names = CALLN (Fmake_hash_table,
                            QCtest, Qequal,
                            /* Currently around 100,000 Unicode
                               characters are defined.  */
                            QCsize, make_natnum (100000));
-  const Lisp_Object get_property =
+  Lisp_Object get_property =
     Fsymbol_function (intern_c_string ("get-char-code-property"));
   ptrdiff_t length = 0;
   for (int i = 0; i <= MAX_UNICODE_CHAR; ++i)
     {
-      const Lisp_Object code = make_natnum (i);
-      const Lisp_Object name = call2 (get_property, code, Qname);
+      Lisp_Object code = make_natnum (i);
+      Lisp_Object name = call2 (get_property, code, Qname);
       if (NILP (name)) continue;
       CHECK_STRING (name);
       length = max (length, SBYTES (name));
@@ -2417,25 +2417,22 @@ read_escape (Lisp_Object readcharfun, bool stringp)
                character names in e.g. multi-line strings.  */
             if (c_isspace (c))
               {
-                if (! whitespace)
-                  {
-                    whitespace = true;
-                    name[length++] = ' ';
-                  }
+                if (whitespace)
+                  continue;
+                c = ' ';
+                whitespace = true;
               }
             else
-              {
-                whitespace = false;
-                name[length++] = c;
-              }
+              whitespace = false;
+            name[length++] = c;
             if (length >= max_character_name_length)
               invalid_syntax ("Character name too long");
           }
         if (length == 0)
           invalid_syntax ("Empty character name");
         name[length] = 0;
-        const Lisp_Object lisp_name = make_unibyte_string (name, length);
-        const Lisp_Object code =
+        Lisp_Object lisp_name = make_unibyte_string (name, length);
+        Lisp_Object code =
           (length >= 3 && length <= 10 && name[0] == 'U' && name[1] == '+') ?
           /* Code point as U+N, where N is between 1 and 8 hexadecimal
              digits.  */
