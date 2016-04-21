@@ -40,10 +40,17 @@
   (should-error (read "?\\N{DOES NOT EXIST}")) :type 'invalid-read-syntax)
 
 (ert-deftest lread-char-non-ascii-name ()
-  (should-error (read "?\\N{LATIN CAPITAL LETTER Ø}")) 'invalid-read-syntax)
+  (should-error (read "?\\N{LATIN CAPITAL LETTER Ø}")
+                :type 'invalid-read-syntax))
 
 (ert-deftest lread-char-empty-name ()
-  (should-error (read "?\\N{}")) 'invalid-read-syntax)
+  (should-error (read "?\\N{}") :type 'invalid-read-syntax))
+
+(ert-deftest lread-char-cjk-name ()
+  (should (equal ?\N{CJK IDEOGRAPH-2B734} #x2B734)))
+
+(ert-deftest lread-char-invalid-cjk-name ()
+  (should-error (read "?\\N{CJK IDEOGRAPH-2B735}") :type 'invalid-read-syntax))
 
 (ert-deftest lread-string-char-number ()
   (should (equal "a\N{U+A817}b" "a\uA817b")))
