@@ -162,7 +162,7 @@ end it with `/'.  DIR must be one of `project-roots' or
 DIRS is a list of absolute directories; it should be some
 subset of the project roots and external roots.
 
-The default implementation uses `grep-find-program'.  PROJECT is used
+The default implementation uses `find-program'.  PROJECT is used
 to find the list of ignores for each directory."
   ;; FIXME: Uniquely abbreviate the roots?
   (require 'xref)
@@ -171,7 +171,7 @@ to find the list of ignores for each directory."
 	  (lambda (dir)
 	    (let ((command
 		   (format "%s %s %s -type f -print0"
-			   grep-find-program
+			   find-program
 			   dir
 			   (xref--find-ignores-arguments
 			    (project-ignores project dir)
