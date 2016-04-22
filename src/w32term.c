@@ -6231,6 +6231,8 @@ x_set_window_size (struct frame *f, bool change_gravity,
     }
 
   unblock_input ();
+
+  do_pending_window_change (false);
 }
 
 /* Mouse warping.  */
