@@ -44,7 +44,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "termhooks.h"
 #include "blockinput.h"
 #include <c-ctype.h>
-#include <string.h>
 
 #ifdef MSDOS
 #include "msdos.h"
@@ -2151,88 +2150,42 @@ grow_read_buffer (void)
 			 MAX_MULTIBYTE_LENGTH, -1, 1);
 }
 
-/* Signal an invalid-read-syntax error indicating that the character
-   name in an \N{…} literal is invalid.  */
-static _Noreturn void
-invalid_character_name (Lisp_Object name)
-{
-  AUTO_STRING (format, "\\N{%s}");
-  xsignal1 (Qinvalid_read_syntax, CALLN (Fformat, format, name));
-}
-
-/* Check that CODE is a valid Unicode scalar value, and return its
-   value.  CODE should be parsed from the character name given by
-   NAME.  NAME is used for error messages.  */
+/* Return the scalar value that has the Unicode character name NAME.
+   Raise 'invalid-read-syntax' if there is no such character.  */
 static int
-check_scalar_value (Lisp_Object code, Lisp_Object name)
+character_name_to_code (char const *name, ptrdiff_t name_len)
 {
-  if (! NUMBERP (code))
-    invalid_character_name (name);
-  EMACS_INT i = XINT (code);
-  if (! (0 <= i && i <= MAX_UNICODE_CHAR)
-      /* Don't allow surrogates.  */
-      || (0xD800 <= code && code <= 0xDFFF))
-    invalid_character_name (name);
-  return i;
-}
+  Lisp_Object code;
 
-/* If NAME starts with PREFIX, interpret the rest as a hexadecimal
-   number and return its value.  Raise invalid-read-syntax if the
-   number is not a valid scalar value.  Return −1 if NAME doesn’t
-   start with PREFIX.  */
-static int
-parse_code_after_prefix (Lisp_Object name, const char *prefix)
-{
-  ptrdiff_t name_len = SBYTES (name);
-  ptrdiff_t prefix_len = strlen (prefix);
-  /* Allow between one and eight hexadecimal digits after the
-     prefix.  */
-  if (prefix_len < name_len && name_len <= prefix_len + 8
-      && memcmp (SDATA (name), prefix, prefix_len) == 0)
+  /* Code point as U+XXXX....  */
+  if (name[0] == 'U' && name[1] == '+')
     {
-      Lisp_Object code = string_to_number (SDATA (name) + prefix_len, 16, false);
-      if (NUMBERP (code))
-        return check_scalar_value (code, name);
+      /* Pass the leading '+' to string_to_number, so that it
+	 rejects monstrosities such as negative values.  */
+      code = string_to_number (name + 1, 16, false);
     }
-  return -1;
-}
-
-/* Returns the scalar value that has the Unicode character name NAME.
-   Raises `invalid-read-syntax' if there is no such character.  */
-static int
-character_name_to_code (Lisp_Object name)
-{
-  /* Code point as U+N, where N is between 1 and 8 hexadecimal
-     digits.  */
-  int code = parse_code_after_prefix (name, "U+");
-  if (code >= 0)
-    return code;
-
-  /* CJK ideographs are not contained in the association list returned
-     by `ucs-names'.  But they follow a predictable naming pattern: a
-     fixed prefix plus the hexadecimal codepoint value.  */
-  code = parse_code_after_prefix (name, "CJK IDEOGRAPH-");
-  if (code >= 0)
+  else
     {
-      /* Various ranges of CJK characters; see UnicodeData.txt.  */
-      if ((0x3400 <= code && code <= 0x4DB5)
-          || (0x4E00 <= code && code <= 0x9FD5)
-          || (0x20000 <= code && code <= 0x2A6D6)
-          || (0x2A700 <= code && code <= 0x2B734)
-          || (0x2B740 <= code && code <= 0x2B81D)
-          || (0x2B820 <= code && code <= 0x2CEA1))
-        return code;
-      else
-        invalid_character_name (name);
+      /* Look up the name in the table returned by 'ucs-names'.  */
+      AUTO_STRING_WITH_LEN (namestr, name, name_len);
+      Lisp_Object names = call0 (Qucs_names);
+      code = CDR (Fassoc (namestr, names));
     }
 
-  /* Look up the name in the table returned by `ucs-names'.  */
-  Lisp_Object names = call0 (Qucs_names);
-  return check_scalar_value (CDR (Fassoc (name, names)), name);
+  if (! (INTEGERP (code)
+	 && 0 <= XINT (code) && XINT (code) <= MAX_UNICODE_CHAR
+	 && ! char_surrogate_p (XINT (code))))
+    {
+      AUTO_STRING (format, "\\N{%s}");
+      AUTO_STRING_WITH_LEN (namestr, name, name_len);
+      xsignal1 (Qinvalid_read_syntax, CALLN (Fformat, format, namestr));
+    }
+
+  return XINT (code);
 }
 
 /* Bound on the length of a Unicode character name.  As of
-   Unicode 9.0.0 the maximum is 83, so this should be safe. */
+   Unicode 9.0.0 the maximum is 83, so this should be safe.  */
 enum { UNICODE_CHARACTER_NAME_LENGTH_BOUND = 200 };
 
 /* Read a \-escape sequence, assuming we already read the `\'.
@@ -2458,14 +2411,14 @@ read_escape (Lisp_Object readcharfun, bool stringp)
               end_of_file_error ();
             if (c == '}')
               break;
-            if (! c_isascii (c))
+            if (! (0 < c && c < 0x80))
               {
                 AUTO_STRING (format,
-                             "Non-ASCII character U+%04X in character name");
+                             "Invalid character U+%04X in character name");
                 xsignal1 (Qinvalid_read_syntax,
                           CALLN (Fformat, format, make_natnum (c)));
               }
-            /* We treat multiple adjacent whitespace characters as a
+            /* Treat multiple adjacent whitespace characters as a
                single space character.  This makes it easier to use
                character names in e.g. multi-line strings.  */
             if (c_isspace (c))
@@ -2483,7 +2436,8 @@ read_escape (Lisp_Object readcharfun, bool stringp)
           }
         if (length == 0)
           invalid_syntax ("Empty character name");
-        return character_name_to_code (make_unibyte_string (name, length));
+	name[length] = '\0';
+	return character_name_to_code (name, length);
       }
 
     default:

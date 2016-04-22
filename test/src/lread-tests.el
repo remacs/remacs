@@ -1,6 +1,6 @@
 ;;; lread-tests.el --- tests for lread.c -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016  Google Inc.
+;; Copyright (C) 2016 Free Software Foundation, Inc.
 
 ;; Author: Philipp Stephani <phst@google.com>
 
@@ -26,11 +26,10 @@
 ;;; Code:
 
 (ert-deftest lread-char-number ()
-  (should (equal ?\N{U+A817} #xA817)))
+  (should (equal (read "?\\N{U+A817}") #xA817)))
 
 (ert-deftest lread-char-name ()
-  (should (equal ?\N{SYLOTI  NAGRI LETTER
-                 DHO}
+  (should (equal (read "?\\N{SYLOTI  NAGRI LETTER \n DHO}")
                  #xA817)))
 
 (ert-deftest lread-char-invalid-number ()
@@ -46,16 +45,23 @@
 (ert-deftest lread-char-empty-name ()
   (should-error (read "?\\N{}") :type 'invalid-read-syntax))
 
-(ert-deftest lread-char-cjk-name ()
-  (should (equal ?\N{CJK IDEOGRAPH-2B734} #x2B734)))
+(ert-deftest lread-char-surrogate-1 ()
+  (should-error (read "?\\N{U+D800}") :type 'invalid-read-syntax))
+(ert-deftest lread-char-surrogate-2 ()
+  (should-error (read "?\\N{U+D801}") :type 'invalid-read-syntax))
+(ert-deftest lread-char-surrogate-3 ()
+  (should-error (read "?\\N{U+Dffe}") :type 'invalid-read-syntax))
+(ert-deftest lread-char-surrogate-4 ()
+  (should-error (read "?\\N{U+DFFF}") :type 'invalid-read-syntax))
 
-(ert-deftest lread-char-invalid-cjk-name ()
-  (should-error (read "?\\N{CJK IDEOGRAPH-2B735}") :type 'invalid-read-syntax))
-
-(ert-deftest lread-string-char-number ()
-  (should (equal "a\N{U+A817}b" "a\uA817b")))
+(ert-deftest lread-string-char-number-1 ()
+  (should (equal (read "a\\N{U+A817}b") "a\uA817bx")))
+(ert-deftest lread-string-char-number-2 ()
+  (should-error (read "?\\N{0.5}") :type 'invalid-read-syntax))
+(ert-deftest lread-string-char-number-3 ()
+  (should-error (read "?\\N{U+-0}") :type 'invalid-read-syntax))
 
 (ert-deftest lread-string-char-name ()
-  (should (equal "a\N{SYLOTI NAGRI  LETTER DHO}b" "a\uA817b")))
+  (should (equal (read "a\\N{SYLOTI NAGRI  LETTER DHO}b") "a\uA817b")))
 
 ;;; lread-tests.el ends here

@@ -612,14 +612,13 @@ sanitize_char_width (EMACS_INT width)
    : (c) <= 0xE01EF ? (c) - 0xE0100 + 17	\
    : 0)
 
-/* If C is a high surrogate, return 1.  If C is a low surrogate,
-   return 2.  Otherwise, return 0.  */
+/* Return true if C is a surrogate.  */
 
-#define CHAR_SURROGATE_PAIR_P(c)	\
-  ((c) < 0xD800 ? 0			\
-   : (c) <= 0xDBFF ? 1			\
-   : (c) <= 0xDFFF ? 2			\
-   : 0)
+INLINE bool
+char_surrogate_p (int c)
+{
+  return 0xD800 <= c && c <= 0xDFFF;
+}
 
 /* Data type for Unicode general category.
 

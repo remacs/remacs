@@ -622,18 +622,21 @@ This function returns the value of @var{char}'s @var{propname} property.
      @result{} Nd
 @end group
 @group
-;; U+2084 SUBSCRIPT FOUR
-(get-char-code-property ?\u2084 'digit-value)
+;; U+2084
+(get-char-code-property ?\N@{SUBSCRIPT FOUR@}
+                        'digit-value)
      @result{} 4
 @end group
 @group
-;; U+2155 VULGAR FRACTION ONE FIFTH
-(get-char-code-property ?\u2155 'numeric-value)
+;; U+2155
+(get-char-code-property ?\N@{VULGAR FRACTION ONE FIFTH@}
+                        'numeric-value)
      @result{} 0.2
 @end group
 @group
-;; U+2163 ROMAN NUMERAL FOUR
-(get-char-code-property ?\N@{ROMAN NUMERAL FOUR@} 'numeric-value)
+;; U+2163
+(get-char-code-property ?\N@{ROMAN NUMERAL FOUR@}
+                        'numeric-value)
      @result{} 4
 @end group
 @group
