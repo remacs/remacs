@@ -117,7 +117,7 @@ detected as prompt when being sent on echoing hosts, therefore.")
   "Which ssh Control* arguments to use.
 
 If it is a string, it should have the form
-\"-o ControlMaster=auto -o ControlPath='tramp.%%r@%%h:%%p'
+\"-o ControlMaster=auto -o ControlPath=\\='tramp.%%r@%%h:%%p\\='
 -o ControlPersist=no\".  Percent characters in the ControlPath
 spec must be doubled, because the string is used as format string.
 
