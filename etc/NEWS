@@ -125,6 +125,11 @@ in these situations.
 
 * Changes in Specialized Modes and Packages in Emacs 25.2
 
+** Compilation mode
+
+---
+*** Messages from CMake are now recognized.
+
 ** eww
 
 +++
