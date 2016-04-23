@@ -619,7 +619,7 @@ relevant to POS."
                           (let ((name
                                  (or (get-char-code-property char 'name)
                                      (get-char-code-property char 'old-name))))
-                            (if name
+                            (if (and name (assoc-string name (ucs-names)))
                                 (format
                                  "type \"C-x 8 RET %x\" or \"C-x 8 RET %s\""
                                  char name)
