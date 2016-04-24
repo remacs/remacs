@@ -3567,6 +3567,146 @@ system_process_attributes (Lisp_Object pid)
   return attrs;
 }
 
+#elif defined DARWIN_OS
+
+static struct timespec
+timeval_to_timespec (struct timeval t)
+{
+  return make_timespec (t.tv_sec, t.tv_usec * 1000);
+}
+
+static Lisp_Object
+make_lisp_timeval (struct timeval t)
+{
+  return make_lisp_time (timeval_to_timespec (t));
+}
+
+Lisp_Object
+system_process_attributes (Lisp_Object pid)
+{
+  int proc_id;
+  int pagesize = getpagesize ();
+  unsigned long npages;
+  int fscale;
+  struct passwd *pw;
+  struct group  *gr;
+  char *ttyname;
+  size_t len;
+  char args[MAXPATHLEN];
+  struct timeval starttime;
+  struct timespec t, now;
+  struct rusage *rusage;
+  dev_t tdev;
+  uid_t uid;
+  gid_t gid;
+
+  int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PID};
+  struct kinfo_proc proc;
+  size_t proclen = sizeof proc;
+
+  Lisp_Object attrs = Qnil;
+  Lisp_Object decoded_comm;
+
+  CHECK_NUMBER_OR_FLOAT (pid);
+  CONS_TO_INTEGER (pid, int, proc_id);
+  mib[3] = proc_id;
+
+  if (sysctl (mib, 4, &proc, &proclen, NULL, 0) != 0)
+    return attrs;
+
+  uid = proc.kp_eproc.e_ucred.cr_uid;
+  attrs = Fcons (Fcons (Qeuid, make_fixnum_or_float (uid)), attrs);
+
+  block_input ();
+  pw = getpwuid (uid);
+  unblock_input ();
+  if (pw)
+    attrs = Fcons (Fcons (Quser, build_string (pw->pw_name)), attrs);
+
+  gid = proc.kp_eproc.e_pcred.p_svgid;
+  attrs = Fcons (Fcons (Qegid, make_fixnum_or_float (gid)), attrs);
+
+  block_input ();
+  gr = getgrgid (gid);
+  unblock_input ();
+  if (gr)
+    attrs = Fcons (Fcons (Qgroup, build_string (gr->gr_name)), attrs);
+
+  decoded_comm = (code_convert_string_norecord
+		  (build_unibyte_string (proc.kp_proc.p_comm),
+		   Vlocale_coding_system, 0));
+
+  attrs = Fcons (Fcons (Qcomm, decoded_comm), attrs);
+  {
+    char state[2] = {'\0', '\0'};
+    switch (proc.kp_proc.p_stat)
+      {
+      case SRUN:
+	state[0] = 'R';
+	break;
+
+      case SSLEEP:
+	state[0] = 'S';
+	break;
+
+      case SZOMB:
+	state[0] = 'Z';
+	break;
+
+      case SSTOP:
+	state[0] = 'T';
+	break;
+
+      case SIDL:
+	state[0] = 'I';
+	break;
+      }
+    attrs = Fcons (Fcons (Qstate, build_string (state)), attrs);
+  }
+
+  attrs = Fcons (Fcons (Qppid, make_fixnum_or_float (proc.kp_eproc.e_ppid)),
+		 attrs);
+  attrs = Fcons (Fcons (Qpgrp, make_fixnum_or_float (proc.kp_eproc.e_pgid)),
+		 attrs);
+
+  tdev = proc.kp_eproc.e_tdev;
+  block_input ();
+  ttyname = tdev == NODEV ? NULL : devname (tdev, S_IFCHR);
+  unblock_input ();
+  if (ttyname)
+    attrs = Fcons (Fcons (Qtty, build_string (ttyname)), attrs);
+
+  attrs = Fcons (Fcons (Qtpgid,   make_fixnum_or_float (proc.kp_eproc.e_tpgid)),
+		 attrs);
+
+  rusage = proc.kp_proc.p_ru;
+  if (rusage)
+    {
+      attrs = Fcons (Fcons (Qminflt,  make_fixnum_or_float (rusage->ru_minflt)),
+		     attrs);
+      attrs = Fcons (Fcons (Qmajflt,  make_fixnum_or_float (rusage->ru_majflt)),
+		     attrs);
+
+      attrs = Fcons (Fcons (Qutime, make_lisp_timeval (rusage->ru_utime)),
+		     attrs);
+      attrs = Fcons (Fcons (Qstime, make_lisp_timeval (rusage->ru_stime)),
+		     attrs);
+      t = timespec_add (timeval_to_timespec (rusage->ru_utime),
+			timeval_to_timespec (rusage->ru_stime));
+      attrs = Fcons (Fcons (Qtime, make_lisp_time (t)), attrs);
+    }
+
+  starttime = proc.kp_proc.p_starttime;
+  attrs = Fcons (Fcons (Qnice,  make_number (proc.kp_proc.p_nice)), attrs);
+  attrs = Fcons (Fcons (Qstart, make_lisp_timeval (starttime)), attrs);
+
+  now = current_timespec ();
+  t = timespec_sub (now, timeval_to_timespec (starttime));
+  attrs = Fcons (Fcons (Qetime, make_lisp_time (t)), attrs);
+
+  return attrs;
+}
+
 /* The WINDOWSNT implementation is in w32.c.
    The MSDOS implementation is in dosfns.c.  */
 #elif !defined (WINDOWSNT) && !defined (MSDOS)
