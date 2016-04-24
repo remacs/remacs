@@ -312,6 +312,9 @@ gnutls-boot (as returned by `gnutls-boot-parameters')."
 					:host (puny-encode-domain host)
                                         :service service))
 	    (network-stream-get-response stream start eoc)))
+        (unless (process-live-p stream)
+          (error "Unable to negotiate a TLS connection with %s/%s"
+                 host service))
 	;; Re-get the capabilities, which may have now changed.
 	(setq capabilities
 	      (network-stream-command stream capability-command eo-capa))))
