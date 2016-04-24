@@ -462,9 +462,9 @@ file.  Since that is a plaintext file, this could be dangerous."
      :list-all ("\\d+" . "\\dS+")
      :list-table ("\\d+ %s" . "\\dS+ %s")
      :completion-object sql-postgres-completion-object
-     :prompt-regexp "^\\w*=[#>] "
+     :prompt-regexp "^[[:alnum:]_]*=[#>] "
      :prompt-length 5
-     :prompt-cont-regexp "^\\w*[-(][#>] "
+     :prompt-cont-regexp "^[[:alnum:]_]*[-(][#>] "
      :input-filter sql-remove-tabs-filter
      :terminator ("\\(^\\s-*\\\\g$\\|;\\)" . "\\g"))
 
@@ -514,9 +514,9 @@ file.  Since that is a plaintext file, this could be dangerous."
      :sqli-comint-func sql-comint-vertica
      :list-all ("\\d" . "\\dS")
      :list-table "\\d %s"
-     :prompt-regexp "^\\w*=[#>] "
+     :prompt-regexp "^[[:alnum:]_]*=[#>] "
      :prompt-length 5
-     :prompt-cont-regexp "^\\w*[-(][#>] ")
+     :prompt-cont-regexp "^[[:alnum:]_]*[-(][#>] ")
     )
   "An alist of product specific configuration settings.
 
