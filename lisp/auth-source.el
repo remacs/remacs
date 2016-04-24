@@ -1758,12 +1758,28 @@ entries for git.gnus.org:
                         items)))
     items))
 
+
+(defun auth-source--decode-octal-string (string)
+  "Convert octal string to utf-8 string. E.g: 'a\134b' to 'a\b'"
+  (let ((list (string-to-list string))
+        (size (length string)))
+    (decode-coding-string
+     (apply #'unibyte-string
+            (loop for i = 0 then (+ i (if (eq (nth i list) ?\\) 4 1))
+                  for var = (nth i list)
+                  while (< i size)
+                  if (eq var ?\\)
+                  collect (string-to-number
+                           (concat (cl-subseq list (+ i 1) (+ i 4))) 8)
+                  else
+                  collect var))
+     'utf-8)))
+
 (defun* auth-source-macos-keychain-search-items (coll _type _max
                                                       host port
                                                       &key label type
                                                       user
                                                       &allow-other-keys)
-
   (let* ((keychain-generic (eq type 'macos-keychain-generic))
          (args `(,(if keychain-generic
                       "find-generic-password"
@@ -1792,29 +1808,32 @@ entries for git.gnus.org:
         (goto-char (point-min))
         (while (not (eobp))
           (cond
-           ((looking-at "^password: \"\\(.+\\)\"$")
+           ((looking-at "^password: \\(?:0x[0-9A-F]+\\)? *\"\\(.+\\)\"")
             (setq ret (auth-source-macos-keychain-result-append
                        ret
                        keychain-generic
                        "secret"
-                       (lexical-let ((v (match-string 1)))
+                       (lexical-let ((v (auth-source--decode-octal-string
+                                         (match-string 1))))
                          (lambda () v)))))
            ;; TODO: check if this is really the label
            ;; match 0x00000007 <blob>="AppleID"
-           ((looking-at "^[ ]+0x00000007 <blob>=\"\\(.+\\)\"")
+           ((looking-at
+             "^[ ]+0x00000007 <blob>=\\(?:0x[0-9A-F]+\\)? *\"\\(.+\\)\"")
             (setq ret (auth-source-macos-keychain-result-append
                        ret
                        keychain-generic
                        "label"
-                       (match-string 1))))
+                       (auth-source--decode-octal-string (match-string 1)))))
            ;; match "crtr"<uint32>="aapl"
            ;; match "svce"<blob>="AppleID"
-           ((looking-at "^[ ]+\"\\([a-z]+\\)\"[^=]+=\"\\(.+\\)\"")
+           ((looking-at
+             "^[ ]+\"\\([a-z]+\\)\"[^=]+=\\(?:0x[0-9A-F]+\\)? *\"\\(.+\\)\"")
             (setq ret (auth-source-macos-keychain-result-append
                        ret
                        keychain-generic
-                       (match-string 1)
-                       (match-string 2)))))
+                       (auth-source--decode-octal-string (match-string 1))
+                       (auth-source--decode-octal-string (match-string 2))))))
           (forward-line)))
       ;; return `ret' iff it has the :secret key
       (and (plist-get ret :secret) (list ret))))
