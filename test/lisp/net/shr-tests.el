@@ -36,6 +36,9 @@
       (cons (buffer-substring-no-properties (point-min) (point-max))
             (with-temp-buffer
               (insert-file-contents (format "data/shr/%s.txt" name))
+              (while (re-search-forward "%\\([0-9A-F][0-9A-F]\\)" nil t)
+                (replace-match (string (string-to-number (match-string 1) 16))
+                               t t))
               (buffer-string))))))
 
 (ert-deftest rendering ()
