@@ -119,8 +119,29 @@ These variables are for users who would like to avoid the small
 probability of data corruption due to techniques Emacs uses to recover
 in these situations.
 
++++
+** A second dir-local file (.dir-locals-2.el) is now accepted.
+See the variable 'dir-locals-file-2' for more information.
+
+---
+** International domain names (IDNA) are now encoded via the new
+puny.el library, so that one can visit web sites with non-ASCII URLs.
+
++++
+** The new 'timer-list' command lists all active timers in a buffer
+where you can cancel them with the 'c' command.
+
++++
+** New function 'read-multiple-choice' use to prompt for
+multiple-choice questions, with a handy way to display help texts.
+
 
 * Editing Changes in Emacs 25.2
+
++++
+** New bindings for 'query-replace-map'.
+'undo', undo the last replacement; bound to 'u'.
+'undo-all', undo all replacements; bound to 'U'.
 
 
 * Changes in Specialized Modes and Packages in Emacs 25.2
@@ -129,6 +150,18 @@ in these situations.
 
 ---
 *** Messages from CMake are now recognized.
+
+** Dired
+
++++
+*** In wdired, when editing files to contain slash characters,
+the resulting directories are automatically created.  Whether
+to do this or not is controlled by the
+'wdired-create-parent-directories' variable.
+
++++
+*** 'W' is now bound to 'browse-url-of-dired-file', and is useful for
+viewing HTML files and the like.
 
 ** eww
 
@@ -140,6 +173,41 @@ in these situations.
 with the 'o' command from 'image-map'.
 
 +++
+*** A new command 'C' ('eww-toggle-colors') can be used to toggle
+whether to use the HTML-specified colors or not.  The user can also
+customize the 'shr-use-colors' variable.
+
+---
+*** Images that are being loaded are now marked with grey
+"placeholder" images of the size specified by the HTML.  They are then
+replaced by the real images asynchronously, which will also now
+respect width/height HTML specs (unless they specify widths/heights
+bigger than the current window).
+
+** Images
+
++++
+*** Images are automatically scaled before displaying based on the
+'image-scaling-factor' variable (if Emacs supports scaling the images
+in question).
+
++++
+*** Images inserted with 'insert-image' and related functions get a
+keymap put into the text properties (or overlays) that span the
+image.  This keymap binds keystrokes for manipulating size and
+rotation, as well as saving the image to a file.  These commands are
+also available in 'image-mode'.
+
++++
+*** A new library for creating and manipulating SVG images has been
+added.  See the "SVG Images" section in the lispref manual for
+details.
+
++++
+*** New setf-able function to access and set image parameters is
+provided: 'image-property'.
+
++++
 ** The commands that add ChangeLog entries now prefer a VCS root directory
 for the ChangeLog file, if none already exists.  Customize
 'change-log-directory-files' to nil for the old behavior.
@@ -147,13 +215,24 @@ for the ChangeLog file, if none already exists.  Customize
 ---
 ** Support for non-string values of 'time-stamp-format' has been removed.
 
-** Tramp
-
 ** Message
 
 ---
 *** `message-use-idna' now defaults to t (because Emacs comes with
 built-in IDNA support now).
+
+---
+*** The 'message-valid-fqdn-regexp' variable has been removed, since
+there are now top-level domains added all the time.  Message will no
+longer warn about sending emails to top-level domains it hasn't heard
+about.
+
+*** 'message-beginning-of-line' (bound to C-a) understands folded headers.
+In 'visual-line-mode' it will look for the true beginning of a header
+while in non-'visual-line-mode' it will move the point to the indented
+header's value.
+
+** Tramp
 
 +++
 *** New connection method "sg", which allows to edit files under
@@ -176,6 +255,39 @@ different group ID.
 string literals.  The syntax variants \N{character name} and
 \N{U+code} are supported.
 
++++
+** Prog mode has some support for multi-mode indentation.
+This allows better indentation support in modes that support multiple
+programming languages in the same buffer, like literate programming
+environments or ANTLR programs with embedded Python code.
+
+A major mode can provide indentation context for a sub-mode through
+the 'prog-indentation-context' variable.  To support this, modes that
+provide indentation should use 'prog-widen' instead of 'widen' and
+'prog-first-column' instead of a literal zero.  See the node
+"Mode-Specific Indent" in the ELisp manual for more details.
+
+** ERC
+
+*** New variable 'erc-default-port-tls' used to connect to TLS IRC
+servers.
+
+** URL
+
++++
+*** The new function 'url-cookie-delete-cookie' can be used to
+programmatically delete all cookies, or cookies from a specific
+domain.
+
+*** The URL package now support https over proxies supporting CONNECT.
+
+** VC and related modes
+
+---
+*** The VC state indicator in the mode line now defaults to more
+colorful faces to make it more obvious to the user what the state is.
+See the 'vc-faces' customization group.
+
 
 * New Modes and Packages in Emacs 25.2
 
@@ -185,6 +297,18 @@ string literals.  The syntax variants \N{character name} and
 +++
 ** Resizing a frame no longer runs 'window-configuration-change-hook'.
 Put your function on 'window-size-change-functions' instead.
+
+** 'C-up', 'C-down', 'C-left' and 'C-right' are now defined in term
+mode to send the same escape sequences that xterm does.  This makes
+things like forward-word in readline work.
+
+---
+** hideshow mode got four key bindings that are analogous to outline
+mode bindings: 'C-c @ C-a',  'C-c @ C-t',  'C-c @ C-d', and 'C-c @ C-e.'
+
+** The grep/rgrep/lgrep functions will now ask about saving files
+before running.  This is controlled by the 'grep-save-buffers'
+variable.
 
 
 * Lisp Changes in Emacs 25.2
@@ -218,6 +342,14 @@ a new window when opening man pages when there's already one, use
         (inhibit-same-window . nil)
         (mode . Man-mode))))
 
+---
+** There is now a new variable 'flyspell-sort-corrections-function'
+that allows changing the way corrections are sorted.
+
+---
+** The new command 'fortune-message' has been added, which displays
+fortunes in the echo area.
+
 +++
 ** New function 'func-arity' returns information about the argument list
 of an arbitrary function.
@@ -237,8 +369,18 @@ permanent and documented, and may be used by Lisp programs.  Its value
 is a list of currently open parenthesis positions, starting with the
 outermost parenthesis.
 
+---
+** 'read-color' will now display the color names using the color itself
+as the background color.
+
 ** The function 'redirect-debugging-output' now works on platforms
 other than GNU/Linux.
+
++++
+** The new function 'string-version-lessp' compares strings by
+interpreting consecutive runs of numerical characters as numbers, and
+compares their numerical values.  According to this predicate,
+"foo2.png" is smaller than "foo12.png".
 
 +++
 ** New functions 'sxhash-eq' and 'sxhash-eql' return hash codes of a
@@ -436,31 +578,16 @@ by default, and must be enabled by using the '--with-modules' option
 at configure time.
 
 +++
-** A second dir-local file (.dir-locals-2.el) is now accepted.
-See the variable 'dir-locals-file-2' for more information.
-
-+++
 ** Network security (TLS/SSL certificate validity and the like) is
 added via the new Network Security Manager (NSM) and controlled via
 the 'network-security-level' variable.
 
----
-** International domain names (IDNA) are now encoded via the new
-puny.el library, so that one can visit web sites with non-ASCII URLs.
-
 +++
 ** C-h l now also lists the commands that were run.
 
-** The new M-s M-w key binding uses eww to search the web for the
-text in the region.
-
 +++
-** The new 'timer-list' command lists all active timers in a buffer
-where you can cancel them with the 'c' command.
-
-** M-x suggests shorthands and ignores obsolete commands for completion.
-** x-select-enable-clipboard is renamed select-enable-clipboard.
-x-select-enable-primary and renamed select-enable-primary.
+** x-select-enable-clipboard is renamed select-enable-clipboard
+and x-select-enable-primary is renamed select-enable-primary.
 Additionally they both now apply to all systems (OSX, GNUstep, Windows, you
 name it), with the proviso that on some systems (e.g. Windows)
 select-enable-primary is ineffective since the system doesn't
@@ -474,10 +601,6 @@ selected window is strongly dedicated to its buffer.
 +++
 ** The option 'even-window-heights' has been renamed to
 'even-window-sizes' and now handles window widths as well.
-
-+++
-** New function 'read-multiple-choice' use to prompt for
-multiple-choice questions, with a handy way to display help texts.
 
 +++
 ** terpri gets an optional arg ENSURE to conditionally output a newline.
@@ -601,11 +724,6 @@ is intended for adding to 'kill-emacs-query-functions'.
 in favor of the global 'M-s h' bindings introduced in Emacs-23.1.
 They'll disappear soon.
 
-+++
-** New bindings for 'query-replace-map'.
-'undo', undo the last replacement; bound to 'u'.
-'undo-all', undo all replacements; bound to 'U'.
-
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
 
@@ -669,18 +787,6 @@ the ordering of object keys by default.
 'json-pretty-print-buffer-ordered' pretty prints JSON objects with
 object keys sorted alphabetically.
 
-+++
-** Prog mode has some support for multi-mode indentation.
-This allows better indentation support in modes that support multiple
-programming languages in the same buffer, like literate programming
-environments or ANTLR programs with embedded Python code.
-
-A major mode can provide indentation context for a sub-mode through
-the 'prog-indentation-context' variable.  To support this, modes that
-provide indentation should use 'prog-widen' instead of 'widen' and
-'prog-first-column' instead of a literal zero.  See the node
-"Mode-Specific Indent" in the ELisp manual for more details.
-
 ** Prettify Symbols mode
 
 +++
@@ -735,9 +841,6 @@ obsolete alias for the new 'save-place-local-mode' command.
 'erc-hide-list' will hide all messages of the specified type, while
 'erc-network-hide-list' and 'erc-channel-hide-list' will only hide the
 specified message types for the respective specified targets.
-
-*** New variable 'erc-default-port-tls' used to connect to TLS IRC
-servers.
 
 ---
 *** Reconnection is now asynchronous.
@@ -990,11 +1093,6 @@ whether to use variable-pitch fonts or not.  The user can also
 customize the 'shr-use-fonts' variable.
 
 +++
-*** A new command 'C' ('eww-toggle-colors') can be used to toggle
-whether to use the HTML-specified colors or not.  The user can also
-customize the 'shr-use-colors' variable.
-
-+++
 *** A new command 'R' ('eww-readable') will try do identify the main
 textual parts of a web page and display only that, leaving menus and
 the like off the page.
@@ -1002,13 +1100,6 @@ the like off the page.
 +++
 *** A new command 'D' ('eww-toggle-paragraph-direction') allows you to
 toggle the paragraph direction between left-to-right and right-to-left.
-
----
-*** Images that are being loaded are now marked with grey
-"placeholder" images of the size specified by the HTML.  They are then
-replaced by the real images asynchronously, which will also now
-respect width/height HTML specs (unless they specify widths/heights
-bigger than the current window).
 
 ---
 *** You can now use several eww buffers in parallel by renaming eww
@@ -1049,17 +1140,6 @@ invalid certificates are marked in red.
 *** text/html messages that contain inline image parts will be
 transformed into multipart/related messages before sending.
 
----
-*** The 'message-valid-fqdn-regexp' variable has been removed, since
-there are now top-level domains added all the time.  Message will no
-longer warn about sending emails to top-level domains it hasn't heard
-about.
-
-*** 'message-beginning-of-line' (bound to C-a) understands folded headers.
-In 'visual-line-mode' it will look for the true beginning of a header
-while in non-'visual-line-mode' it will move the point to the indented
-header's value.
-
 +++
 ** In Show Paren Mode, a parenthesis can be highlighted when point
 stands inside it, and certain parens can be highlighted when point is
@@ -1070,30 +1150,6 @@ respectively, 'show-paren-when-point-inside-paren' or
 ---
 ** If gpg2 exists on the system, it is now used as the default value
 of 'epg-gpg-program' (instead of gpg).
-
-** Images
-
-+++
-*** Images are automatically scaled before displaying based on the
-'image-scaling-factor' variable (if Emacs supports scaling the images
-in question).
-
-+++
-*** Images inserted with 'insert-image' and related functions get a
-keymap put into the text properties (or overlays) that span the
-image.  This keymap binds keystrokes for manipulating size and
-rotation, as well as saving the image to a file.  These commands are
-also available in 'image-mode'.
-
-+++
-*** A new library for creating and manipulating SVG images has been
-added.  See the "SVG Images" section in the lispref manual for
-details.
-
-+++
-*** New setf-able function to access and set image parameters is
-provided: 'image-property'.
-
 
 ** Lisp mode
 
@@ -1268,13 +1324,6 @@ variable, meaning you can bind it around an 'url-retrieve' call.
 plist will contain a :peer element that has the output of
 'gnutls-peer-status' (if Emacs is built with GnuTLS support).
 
-+++
-*** The new function 'url-cookie-delete-cookie' can be used to
-programmatically delete all cookies, or cookies from a specific
-domain.
-
-*** The URL package now support https over proxies supporting CONNECT.
-
 ** Tramp
 
 +++
@@ -1323,11 +1372,6 @@ Implemented for Bzr, Git, Hg.  As part of this change, the pre-existing
 This command is useful when you perform version control commands
 outside Emacs (e.g., from the shell prompt), or if you switch the VC
 back-end for the buffer's file, or remove it from version control.
-
----
-*** The VC state indicator in the mode line now defaults to more
-colorful faces to make it more obvious to the user what the state is.
-See the 'vc-faces' customization group.
 
 +++
 *** New option 'vc-annotate-background-mode' controls whether
@@ -1617,15 +1661,6 @@ compression command is determined from the new
 'dired-compress-files-alist' variable.
 
 +++
-*** In wdired, when editing files to contain slash characters,
-the resulting directories are automatically created.  Whether
-to do this or not is controlled by the
-'wdired-create-parent-directories' variable.
-
-+++
-*** 'W' is now bound to 'browse-url-of-dired-file', and is useful for
-viewing HTML files and the like.
-
 *** New user interface for the 'A' and 'Q' commands.
 These keys, now bound to 'dired-do-find-regexp' and
 'dired-do-find-regexp-and-replace', work similarly to 'xref-find-apropos'
@@ -1771,14 +1806,6 @@ Although M-x term still sets EMACS for compatibility with Bash 4.3 and earlier,
 this is deprecated and will be phased out when Bash 4.4 or later takes over.
 Use the INSIDE_EMACS environment variable instead.
 
-** 'C-up', 'C-down', 'C-left' and 'C-right' are now defined in term
-mode to send the same escape sequences that xterm does.  This makes
-things like forward-word in readline work.
-
----
-** hideshow mode got four key bindings that are analogous to outline
-mode bindings: 'C-c @ C-a',  'C-c @ C-t',  'C-c @ C-d', and 'C-c @ C-e.'
-
 +++
 ** 'save-excursion' does not save&restore the mark any more.
 Use 'save-mark-and-excursion' if you want the old behavior.
@@ -1872,10 +1899,6 @@ behavior, set 'diff-switches' to '-c'.
 --color argument anymore.  It's added at the <C> place holder position
 dynamically.  Any third-party code that changes these templates should
 be updated accordingly.
-
-** The grep/rgrep/lgrep functions will now ask about saving files
-before running.  This is controlled by the 'grep-save-buffers'
-variable.
 
 +++
 ** '(/ N)' is now equivalent to '(/ 1 N)' rather than to '(/ N 1)'.
@@ -1982,10 +2005,6 @@ details.
 It should be placed right where the docstring would be, and FORM is then
 evaluated (and should return a string) when the closure is built.
 
----
-** The new command 'fortune-message' has been added, which displays
-fortunes in the echo area.
-
 +++
 ** define-inline provides a new way to define inlinable functions.
 
@@ -2011,12 +2030,6 @@ preserve the collation order as defined by the system's locale(1)
 environment.  For the time being this is implemented for modern POSIX
 systems and for MS-Windows, for other systems they fall back to their
 counterparts 'string-lessp' and 'string-equal'.
-
-+++
-** The new function 'string-version-lessp' compares strings by
-interpreting consecutive runs of numerical characters as numbers, and
-compares their numerical values.  According to this predicate,
-"foo2.png" is smaller than "foo12.png".
 
 ---
 *** The ls-lisp package uses 'string-collate-lessp' to sort file names.
@@ -2211,14 +2224,6 @@ coding-system of your choice when invoking functions like 'prin1' and
 +++
 ** New possible value for 'system-type': 'nacl'.
 This is used by Google's Native Client (NaCl).
-
----
-** 'read-color' will now display the color names using the color itself
-as the background color.
-
----
-** There is now a new variable 'flyspell-sort-corrections-function'
-that allows changing the way corrections are sorted.
 
 ** Miscellaneous name change
 
