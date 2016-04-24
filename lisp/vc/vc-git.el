@@ -284,7 +284,7 @@ Should be consistent with the Git config value i18n.logOutputEncoding."
          (def-ml (vc-default-mode-line-string 'Git file))
          (help-echo (get-text-property 0 'help-echo def-ml))
          (face   (get-text-property 0 'face def-ml)))
-    (propertize (replace-regexp-in-string (concat rev "\\'") disp-rev def-ml t t)
+    (propertize (concat (substring def-ml 0 4) disp-rev)
                 'face face
                 'help-echo (concat help-echo "\nCurrent revision: " rev))))
 
