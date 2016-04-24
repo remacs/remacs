@@ -57,21 +57,21 @@ affected by this, as SGI stopped supporting IRIX in December 2013.
 * Changes in Emacs 25.2
 
 --
-** `process-attributes' on Darwin systems now return more information.
+** 'process-attributes' on Darwin systems now returns more information.
 
 +++
-** A number of accessors for the value returned by 'file-attributes'
-has been added.  They are: 'file-attribute-type',
+** Several accessors for the value returned by 'file-attributes'
+have been added.  They are: 'file-attribute-type',
 'file-attribute-link-number', 'file-attribute-user-id',
 'file-attribute-group-id', 'file-attribute-access-time',
 'file-attribute-modification-time',
 'file-attribute-status-change-time', 'file-attribute-size',
 'file-attribute-modes', 'file-attribute-inode-number', and
-'file-attribute-device-number'
+'file-attribute-device-number'.
 
 +++
-** The new function 'buffer-hash' has been added, and can be used to
-compute a fash, non-consing hash of the contents of a buffer.
+** The new function 'buffer-hash' computes compute a fast, non-consing
+hash of a buffer's contents.
 
 ---
 ** 'fill-paragraph' no longer marks the buffer as changed unless it
@@ -82,9 +82,9 @@ actually changed something.
 environment 'Catalan', which has been added.
 
 ---
-** 'align-regexp' has a separate history for its interactive argument
+** 'align-regexp' has a separate history for its interactive argument.
 'align-regexp' no longer shares its history with all other
-history-less functions that use 'read-string'
+history-less functions that use 'read-string'.
 
 +++
 ** The networking code has been reworked so that it's more
@@ -107,9 +107,9 @@ from a process sentinel.
 required an integer (e.g., :service 993).  This difference has been
 eliminated, and integer strings work everywhere.
 
-** It is possible to disable attempted recovery on fatal signals
+** It is possible to disable attempted recovery on fatal signals.
 
-Two new variables allow to disable attempts to recover from stack
+Two new variables support disabling attempts to recover from stack
 overflow and to avoid automatic auto-save when Emacs is delivered a
 fatal signal.  'attempt-stack-overflow-recovery', if set to 'nil',
 will disable attempts to recover from C stack overflows; Emacs will
@@ -131,12 +131,12 @@ See the variable 'dir-locals-file-2' for more information.
 puny.el library, so that one can visit web sites with non-ASCII URLs.
 
 +++
-** The new 'timer-list' command lists all active timers in a buffer
+** The new 'timer-list' command lists all active timers in a buffer,
 where you can cancel them with the 'c' command.
 
 +++
-** New function 'read-multiple-choice' use to prompt for
-multiple-choice questions, with a handy way to display help texts.
+** The new function 'read-multiple-choice' prompts for multiple-choice
+questions, with a handy way to display help texts.
 
 
 * Editing Changes in Emacs 25.2
@@ -158,9 +158,8 @@ multiple-choice questions, with a handy way to display help texts.
 
 +++
 *** In wdired, when editing files to contain slash characters,
-the resulting directories are automatically created.  Whether
-to do this or not is controlled by the
-'wdired-create-parent-directories' variable.
+the resulting directories are automatically created.  Whether to do
+this is controlled by the 'wdired-create-parent-directories' variable.
 
 +++
 *** 'W' is now bound to 'browse-url-of-dired-file', and is useful for
@@ -181,7 +180,7 @@ whether to use the HTML-specified colors or not.  The user can also
 customize the 'shr-use-colors' variable.
 
 ---
-*** Images that are being loaded are now marked with grey
+*** Images that are being loaded are now marked with gray
 "placeholder" images of the size specified by the HTML.  They are then
 replaced by the real images asynchronously, which will also now
 respect width/height HTML specs (unless they specify widths/heights
@@ -221,7 +220,7 @@ for the ChangeLog file, if none already exists.  Customize
 ** Message
 
 ---
-*** `message-use-idna' now defaults to t (because Emacs comes with
+*** 'message-use-idna' now defaults to t (because Emacs comes with
 built-in IDNA support now).
 
 ---
@@ -238,7 +237,7 @@ header's value.
 ** Tramp
 
 +++
-*** New connection method "sg", which allows to edit files under
+*** New connection method "sg", which supports editing files under a
 different group ID.
 
 +++
@@ -282,11 +281,11 @@ servers.
 programmatically delete all cookies, or cookies from a specific
 domain.
 
-*** The URL package now support https over proxies supporting CONNECT.
+*** The URL package now support HTTPS over proxies supporting CONNECT.
 
 +++
-*** `url-user-agent' now defaults to `default', and the User-Agent
-string is computed dynamically based on `url-privacy-level'.
+*** 'url-user-agent' now defaults to 'default', and the User-Agent
+string is computed dynamically based on 'url-privacy-level'.
 
 ** VC and related modes
 
@@ -311,7 +310,7 @@ things like forward-word in readline work.
 
 ---
 ** hideshow mode got four key bindings that are analogous to outline
-mode bindings: 'C-c @ C-a',  'C-c @ C-t',  'C-c @ C-d', and 'C-c @ C-e.'
+mode bindings: 'C-c @ C-a', 'C-c @ C-t', 'C-c @ C-d', and 'C-c @ C-e.'
 
 ** The grep/rgrep/lgrep functions will now ask about saving files
 before running.  This is controlled by the 'grep-save-buffers'
@@ -320,7 +319,7 @@ variable.
 
 * Lisp Changes in Emacs 25.2
 
-** New var syntax-ppss-table to control the syntax-table used in syntax-ppss
+** New var syntax-ppss-table to control the syntax-table used in syntax-ppss.
 
 ** Autoload files can be generated without timestamps,
 by setting 'autoload-timestamps' to nil.
@@ -336,8 +335,8 @@ that negotiation should complete even on non-blocking sockets.
 
 +++
 ** New functions 'window-pixel-width-before-size-change' and
-'window-pixel-height-before-size-change' allow to detect which window
-changed size when 'window-size-change-functions' are run.
+'window-pixel-height-before-size-change' support detecting which
+window changed size when 'window-size-change-functions' are run.
 
 +++
 ** New function 'display-buffer-reuse-mode-window' is an action function
@@ -359,15 +358,14 @@ fortunes in the echo area.
 
 +++
 ** New function 'func-arity' returns information about the argument list
-of an arbitrary function.
-This is a generalization of 'subr-arity' for functions that are not
-built-in primitives.  We recommend using this new function instead of
-'subr-arity'.
+of an arbitrary function.  This generalizes 'subr-arity' for functions
+that are not built-in primitives.  We recommend using this new
+function instead of 'subr-arity'.
 
 +++
 ** 'parse-partial-sexp' state has a new element.  Element 10 is
 non-nil when the last character scanned might be the first character
-of a two character construct, i.e. a comment delimiter or escaped
+of a two character construct, i.e., a comment delimiter or escaped
 character.  Its value is the syntax of that last character.
 
 +++
