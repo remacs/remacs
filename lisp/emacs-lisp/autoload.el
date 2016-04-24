@@ -87,6 +87,12 @@ that text will be copied verbatim to `generated-autoload-file'.")
 (defconst generate-autoload-section-continuation ";;;;;; "
   "String to add on each continuation of the section header form.")
 
+;; In some ways it would be nicer to use a value that is recognisably
+;; not a time-value, eg t, but that can cause issues if an older Emacs
+;; that does not expect non-time-values loads the file.
+(defconst autoload--non-timestamp '(0 0 0 0)
+  "Value to insert when `autoload-timestamps' is nil.")
+
 (defvar autoload-timestamps nil		; experimental, see bug#22213
   "Non-nil means insert a timestamp for each input file into the output.
 We use these in incremental updates of the output file to decide
@@ -657,7 +663,7 @@ FILE's modification time."
                                       nil nil 'emacs-mule-unix)
                                (if autoload-timestamps
                                    (nth 5 (file-attributes relfile))
-                                 t)))
+                                 autoload--non-timestamp)))
                             (insert ";;; Generated autoloads from " relfile "\n")))
                         (insert generate-autoload-section-trailer))))
                   (or noninteractive
@@ -755,11 +761,6 @@ removes any prior now out-of-date autoload entries."
                      (if (and (or (null existing-buffer)
                                   (not (buffer-modified-p existing-buffer)))
                               (cond
-                               ;; last-time is the time-stamp (specifying
-                               ;; the last time we looked at the file) and
-                               ;; the file hasn't been changed since.
-                               ((listp last-time)
-                                (not (time-less-p last-time file-time)))
                                ;; FIXME? Arguably we should throw a
                                ;; user error, or some kind of warning,
                                ;; if we were called from update-file-autoloads,
@@ -768,8 +769,15 @@ removes any prior now out-of-date autoload entries."
                                ;; file modtime in such a case,
                                ;; if there are multiple input files
                                ;; contributing to the output.
-                               ((and output-time (eq t last-time))
+                               ((and output-time
+				     (member last-time
+					     (list t autoload--non-timestamp)))
                                 (not (time-less-p output-time file-time)))
+                               ;; last-time is the time-stamp (specifying
+                               ;; the last time we looked at the file) and
+                               ;; the file hasn't been changed since.
+                               ((listp last-time)
+                                (not (time-less-p last-time file-time)))
                                ;; last-time is an MD5 checksum instead.
                                ((stringp last-time)
                                 (equal last-time
@@ -854,7 +862,7 @@ write its autoloads into the specified file instead."
 		   ;; Remove the obsolete section.
 		   (autoload-remove-section (match-beginning 0))
 		   (setq last-time (nth 4 form))
-		   (if (equal t last-time)
+		   (if (member last-time (list t autoload--non-timestamp))
 		       (setq last-time output-time))
 		   (dolist (file file)
 		     (let ((file-time (nth 5 (file-attributes file))))
@@ -872,7 +880,9 @@ write its autoloads into the specified file instead."
                    ;; Remove the obsolete section.
 		   (autoload-remove-section (match-beginning 0)))
 		  ((not (time-less-p (let ((oldtime (nth 4 form)))
-				       (if (equal t oldtime)
+				       (if (member oldtime
+						   (list
+						    t autoload--non-timestamp))
 					   output-time
 					 oldtime))
                                      (nth 5 (file-attributes file))))
@@ -909,7 +919,7 @@ write its autoloads into the specified file instead."
 	  (autoload-insert-section-header
 	   (current-buffer) nil nil no-autoloads (if autoload-timestamps
 						     no-autoloads-time
-						   t))
+						   autoload--non-timestamp))
 	  (insert generate-autoload-section-trailer)))
 
       (let ((version-control 'never))
