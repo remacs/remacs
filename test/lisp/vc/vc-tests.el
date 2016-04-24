@@ -316,46 +316,31 @@ This checks also `vc-backend' and `vc-responsible-backend'."
 	   'vc-test--cleanup-hook
 	   `(lambda () (delete-directory ,default-directory 'recursive)))
 
-	  ;; Create empty repository.  Check repository state.
+	  ;; Create empty repository.
 	  (make-directory default-directory)
 	  (vc-test--create-repo-function backend)
-
-          ;; FIXME: The state shall be unregistered only.
-	  ;; nil: RCS
-          ;; unregistered: Bzr CVS Git Hg Mtn SCCS SRC
-	  ;; up-to-date: SVN
-          (message "vc-state1 %s" (vc-state default-directory))
-	  (should (eq (vc-state default-directory)
-		      (vc-state default-directory backend)))
-	  (should (memq (vc-state default-directory)
-			'(nil unregistered up-to-date)))
 
 	  (let ((tmp-name (expand-file-name "foo" default-directory)))
 	    ;; Check state of a nonexistent file.
 
-	    ;; unregistered: Bzr CVS Git Hg Mtn RCS SCCS SRC SVN
             (message "vc-state2 %s" (vc-state tmp-name))
-	    (should (eq (vc-state tmp-name) (vc-state tmp-name backend)))
-	    (should (eq (vc-state tmp-name) 'unregistered))
+	    (should (null (vc-state tmp-name)))
 
 	    ;; Write a new file.  Check state.
 	    (write-region "foo" nil tmp-name nil 'nomessage)
 
-            ;; unregistered: Bzr CVS Git Hg Mtn RCS SCCS SRC SVN
             (message "vc-state3 %s" (vc-state tmp-name))
-	    (should (eq (vc-state tmp-name) (vc-state tmp-name backend)))
-	    (should (eq (vc-state tmp-name) 'unregistered))
+	    (should (null (vc-state tmp-name)))
 
 	    ;; Register a file.  Check state.
 	    (vc-register
 	     (list backend (list (file-name-nondirectory tmp-name))))
 
-            ;; FIXME: nil seems to be wrong.
+            ;; FIXME: nil is definitely wrong.
 	    ;; nil: SRC
             ;; added: Bzr CVS Git Hg Mtn SVN
 	    ;; up-to-date: RCS SCCS
             (message "vc-state4 %s" (vc-state tmp-name))
-	    (should (eq (vc-state tmp-name) (vc-state tmp-name backend)))
 	    (should (memq (vc-state tmp-name) '(nil added up-to-date)))
 
 	    ;; Unregister the file.  Check state.
@@ -363,11 +348,10 @@ This checks also `vc-backend' and `vc-responsible-backend'."
                      'vc-test--unregister-function backend tmp-name)
                     'vc-not-supported)
                 (message "vc-state5 unsupported")
-              ;; unregistered: Bzr Git Hg RCS
+              ;; nil: Bzr Git Hg RCS
               ;; unsupported: CVS Mtn SCCS SRC SVN
               (message "vc-state5 %s" (vc-state tmp-name))
-              (should (eq (vc-state tmp-name) (vc-state tmp-name backend)))
-              (should (memq (vc-state tmp-name) '(unregistered))))))
+              (should (null (vc-state tmp-name))))))
 
       ;; Save exit.
       (ignore-errors (run-hooks 'vc-test--cleanup-hook)))))
@@ -399,41 +383,36 @@ This checks also `vc-backend' and `vc-responsible-backend'."
 	  ;; "0": SVN
           (message
            "vc-working-revision1 %s" (vc-working-revision default-directory))
-	  (should (eq (vc-working-revision default-directory)
-		      (vc-working-revision default-directory backend)))
-	  (should (member (vc-working-revision default-directory) '(nil "0")))
+          (should (member (vc-working-revision default-directory) '(nil "0")))
 
 	  (let ((tmp-name (expand-file-name "foo" default-directory)))
 	    ;; Check initial working revision, should be nil until
             ;; it's registered.
 
-	    ;; nil: Bzr CVS Git Hg Mtn RCS SCCS SRC SVN
             (message "vc-working-revision2 %s" (vc-working-revision tmp-name))
-	    (should (eq (vc-working-revision tmp-name)
-			(vc-working-revision tmp-name backend)))
-	    (should-not (vc-working-revision tmp-name))
+            (should-not (vc-working-revision tmp-name))
 
 	    ;; Write a new file.  Check working revision.
 	    (write-region "foo" nil tmp-name nil 'nomessage)
 
-	    ;; nil: Bzr CVS Git Hg Mtn RCS SCCS SRC SVN
             (message "vc-working-revision3 %s" (vc-working-revision tmp-name))
-	    (should (eq (vc-working-revision tmp-name)
-			(vc-working-revision tmp-name backend)))
-	    (should-not (vc-working-revision tmp-name))
+            (should-not (vc-working-revision tmp-name))
 
 	    ;; Register a file.  Check working revision.
 	    (vc-register
 	     (list backend (list (file-name-nondirectory tmp-name))))
 
-            ;; FIXME: nil doesn't seem to be proper.
+            ;; XXX: nil is fine, at least in Git's case, because
+	    ;; `vc-register' only makes the file `added' in this case.
 	    ;; nil: Git Mtn
 	    ;; "0": Bzr CVS Hg SRC SVN
 	    ;; "1.1": RCS SCCS
             (message "vc-working-revision4 %s" (vc-working-revision tmp-name))
-	    (should (eq (vc-working-revision tmp-name)
-			(vc-working-revision tmp-name backend)))
-	    (should (member (vc-working-revision tmp-name) '(nil "0" "1.1")))
+            (should (member (vc-working-revision tmp-name) '(nil "0" "1.1")))
+
+            ;; TODO: Call `vc-checkin', and check the resulting
+            ;; working revision.  None of the return values should be
+            ;; nil then.
 
 	    ;; Unregister the file.  Check working revision.
             (if (eq (vc-test--run-maybe-unsupported-function
@@ -443,8 +422,6 @@ This checks also `vc-backend' and `vc-responsible-backend'."
               ;; nil: Bzr Git Hg RCS
               ;; unsupported: CVS Mtn SCCS SRC SVN
               (message "vc-working-revision5 %s" (vc-working-revision tmp-name))
-              (should (eq (vc-working-revision tmp-name)
-                          (vc-working-revision tmp-name backend)))
               (should-not (vc-working-revision tmp-name)))))
 
       ;; Save exit.

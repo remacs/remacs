@@ -468,18 +468,21 @@ status of this file.  Otherwise, the value returned is one of:
 
   `unregistered'     The file is not under version control."
 
-  ;; Note: in Emacs 22 and older, return of nil meant the file was
-  ;; unregistered.  This is potentially a source of
-  ;; backward-compatibility bugs.
+  ;; Note: we usually return nil here for unregistered files anyway
+  ;; when called with only one argument.  This doesn't seem to cause
+  ;; any problems.  But if we wanted to change that, we should
+  ;; probably opt for redefining the `registered' command to return
+  ;; non-nil even for unregistered files (maybe also rename it), and
+  ;; then make sure that all `state' implementations handle
+  ;; unregistered file appropriately.
 
   ;; FIXME: New (sub)states needed (?):
   ;; - `copied' and `moved' (might be handled by `removed' and `added')
   (or (vc-file-getprop file 'vc-state)
-      (and (not (vc-registered file)) 'unregistered)
       (when (> (length file) 0)         ;Why??  --Stef
-	(setq backend (or backend (vc-responsible-backend file)))
-	(when backend
-	  (vc-state-refresh file backend)))))
+        (setq backend (or backend (vc-backend file)))
+        (when backend
+          (vc-state-refresh file backend)))))
 
 (defun vc-state-refresh (file backend)
   "Quickly recompute the `state' of FILE."
@@ -495,13 +498,12 @@ status of this file.  Otherwise, the value returned is one of:
   "Return the repository version from which FILE was checked out.
 If FILE is not registered, this function always returns nil."
   (or (vc-file-getprop file 'vc-working-revision)
-      (and (vc-registered file)
-	   (progn
-	     (setq backend (or backend (vc-responsible-backend file)))
-	     (when backend
-	       (vc-file-setprop file 'vc-working-revision
-				(vc-call-backend
-                                 backend 'working-revision file)))))))
+      (progn
+        (setq backend (or backend (vc-backend file)))
+        (when backend
+          (vc-file-setprop file 'vc-working-revision
+                           (vc-call-backend
+                            backend 'working-revision file))))))
 
 ;; Backward compatibility.
 (define-obsolete-function-alias
