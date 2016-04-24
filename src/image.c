@@ -7979,7 +7979,8 @@ gif_load (struct frame *f, struct image *img)
 	{
 	  img->lisp_data
 	    = Fcons (make_number (ext->Function),
-		     Fcons (make_unibyte_string (ext->Bytes, ext->ByteCount),
+		     Fcons (make_unibyte_string ((char *) ext->Bytes,
+						 ext->ByteCount),
 			    img->lisp_data));
 	  if (ext->Function == GIF_LOCAL_DESCRIPTOR_EXTENSION
 	      && ext->ByteCount == 4)
