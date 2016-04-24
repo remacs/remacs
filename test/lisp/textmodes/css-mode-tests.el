@@ -24,8 +24,9 @@
 
 ;;; Code:
 
-(require 'ert)
 (require 'css-mode)
+(require 'ert)
+(require 'seq)
 
 (ert-deftest css-test-property-values ()
   ;; The `float' property has a flat value list.
@@ -36,9 +37,10 @@
   ;; The `list-style' property refers to several other properties.
   (should
    (equal (sort (css--property-values "list-style") #'string-lessp)
-          (sort (append (css--property-values "list-style-type")
-                        (css--property-values "list-style-position")
-                        (css--property-values "list-style-image"))
+          (sort (seq-uniq
+                 (append (css--property-values "list-style-type")
+                         (css--property-values "list-style-position")
+                         (css--property-values "list-style-image")))
                 #'string-lessp)))
 
   ;; The `position' property is tricky because it's also the name of a
@@ -63,6 +65,14 @@
   (let ((word-wrap-values (css--property-values "word-wrap")))
     (should (equal (gethash "word-wrap" css--property-value-cache)
                    word-wrap-values))))
+
+(ert-deftest css-test-property-values-no-duplicates ()
+  "Test that `css--property-values' returns no duplicates."
+  ;; The `flex' property is prone to duplicate values; if they aren't
+  ;; removed, it'll contain at least two instances of `auto'.
+  (should
+   (equal (sort (css--property-values "flex") #'string-lessp)
+          '("auto" "content" "none"))))
 
 (ert-deftest css-test-value-class-lookup ()
   (should
