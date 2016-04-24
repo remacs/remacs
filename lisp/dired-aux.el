@@ -2486,8 +2486,8 @@ Lower levels are unaffected."
 	 (cur-dir (dired-current-directory))
 	 (cons (assoc-string cur-dir dired-switches-alist))
 	 buffer-read-only)
-    (if (equal cur-dir default-directory)
-	(error "Attempt to kill top level directory"))
+    (when (equal cur-dir (expand-file-name default-directory))
+      (error "Attempt to kill top level directory"))
     (prog1
 	(if remember-marks (dired-remember-marks beg end))
       (delete-region beg end)
