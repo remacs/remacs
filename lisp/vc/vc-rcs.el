@@ -120,7 +120,9 @@ For a description of possible values, see `vc-check-master-templates'."
       (setq result (vc-file-getprop file 'vc-checkout-model)))
     (or result
         (progn (vc-rcs-fetch-master-state file)
-               (vc-file-getprop file 'vc-checkout-model)))))
+               (vc-file-getprop file 'vc-checkout-model))
+        ;; For non-existing files we assume strict locking.
+        'locking)))
 
 ;;;
 ;;; State-querying functions
