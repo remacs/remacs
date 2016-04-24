@@ -1690,19 +1690,19 @@ The preference is a float determined from `shr-prefer-media-type'."
   (let* ((direction (dom-attr dom 'dir))
          (char (cond
                 ((equal direction "ltr")
-                 #x202d)                ; LRO
+                 ?\N{LEFT-TO-RIGHT OVERRIDE})
                 ((equal direction "rtl")
-                 #x202e))))             ; RLO
+                 ?\N{RIGHT-TO-LEFT OVERRIDE}))))
     (when char
-      (insert #x2068 char))             ; FSI + LRO/RLO
+      (insert ?\N{FIRST STRONG ISOLATE} char))
     (shr-generic dom)
     (when char
-      (insert #x202c #x2069))))         ; PDF + PDI
+      (insert ?\N{POP DIRECTIONAL FORMATTING} ?\N{POP DIRECTIONAL ISOLATE}))))
 
 (defun shr-tag-bdi (dom)
-  (insert #x2068)                       ; FSI
+  (insert ?\N{FIRST STRONG ISOLATE})
   (shr-generic dom)
-  (insert #x2069))                      ; PDI
+  (insert ?\N{POP DIRECTIONAL ISOLATE}))
 
 ;;; Table rendering algorithm.
 
