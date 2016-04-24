@@ -57,6 +57,13 @@
   ;; because it refers to the value class of the same name.
   (should (= (length (css--property-values "color")) 18)))
 
+(ert-deftest css-test-property-value-cache ()
+  "Test that `css--property-value-cache' is in use."
+  (should-not (gethash "word-wrap" css--property-value-cache))
+  (let ((word-wrap-values (css--property-values "word-wrap")))
+    (should (equal (gethash "word-wrap" css--property-value-cache)
+                   word-wrap-values))))
+
 (ert-deftest css-test-value-class-lookup ()
   (should
    (equal (sort (css--value-class-lookup 'position) #'string-lessp)

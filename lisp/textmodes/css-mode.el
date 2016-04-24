@@ -792,13 +792,15 @@ the symbol VALUE-CLASS."
 Completion candidates are looked up in `css-property-alist' by
 the string PROPERTY."
   (or (gethash property css--property-value-cache)
-      (seq-mapcat
-       (lambda (value)
-         (if (stringp value)
-             (list value)
-           (or (css--value-class-lookup value)
-               (css--property-values (symbol-name value)))))
-       (cdr (assoc property css-property-alist)))))
+      (let ((values
+             (seq-mapcat
+              (lambda (value)
+                (if (stringp value)
+                    (list value)
+                  (or (css--value-class-lookup value)
+                      (css--property-values (symbol-name value)))))
+              (cdr (assoc property css-property-alist)))))
+        (puthash property values css--property-value-cache))))
 
 (defun css--complete-property-value ()
   "Complete property value at point."
