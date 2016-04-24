@@ -222,15 +222,36 @@ request.")
     (if connection
 	(url-http-mark-connection-as-busy host port connection))))
 
+(defun url-http--user-agent-default-string ()
+  "Compute a default User-Agent string based on `url-privacy-level'."
+  (let ((package-info (when url-package-name
+                        (format "%s/%s" url-package-name url-package-version)))
+        (emacs-info (unless (and (listp url-privacy-level)
+                                 (memq 'emacs url-privacy-level))
+                      (format "Emacs/%s" emacs-version)))
+        (os-info (unless (and (listp url-privacy-level)
+                              (memq 'os url-privacy-level))
+                   (format "(%s; %s)" url-system-type url-os-type)))
+        (url-info (format "URL/%s" url-version)))
+    (string-join (delq nil (list package-info url-info
+                                 emacs-info os-info))
+                 " ")))
+
 ;; Building an HTTP request
 (defun url-http-user-agent-string ()
-  (if (or (eq url-privacy-level 'paranoid)
-	  (and (listp url-privacy-level)
-	       (memq 'agent url-privacy-level)))
-      ""
-    (if (functionp url-user-agent)
-        (funcall url-user-agent)
-      url-user-agent)))
+  "Compute a User-Agent string.
+The string is based on `url-privacy-level' and `url-user-agent'."
+  (let* ((hide-ua
+          (or (eq url-privacy-level 'paranoid)
+              (and (listp url-privacy-level)
+                   (memq 'agent url-privacy-level))))
+         (ua-string
+          (and (not hide-ua)
+               (cond
+                ((functionp url-user-agent) (funcall url-user-agent))
+                ((stringp url-user-agent) url-user-agent)
+                ((eq url-user-agent 'default) (url-http--user-agent-default-string))))))
+    (if ua-string (format "User-Agent: %s\r\n" (string-trim ua-string)) "")))
 
 (defun url-http-create-request (&optional ref-url)
   "Create an HTTP request for `url-http-target-url', referred to by REF-URL."

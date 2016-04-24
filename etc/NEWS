@@ -284,6 +284,10 @@ domain.
 
 *** The URL package now support https over proxies supporting CONNECT.
 
+---
+*** `url-user-agent' now defaults to `default', and the User-Agent
+string is computed dynamically based on `url-privacy-level'.
+
 ** VC and related modes
 
 ---
