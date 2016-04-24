@@ -6835,7 +6835,7 @@
 	console as well (bug#18629).
 	* w32-common-fns.el: Remove.
 	* loadup.el: Don't load w32-common-fns.el.
-	* w32-fns.elc: Don't require w32-common-fns.
+	* w32-fns.el: Don't require w32-common-fns.
 
 	* icomplete.el: Move Iswitchb autoload here.  Much simpler.
 	* obsolete/iswitchb.el (iswitchb-mode): Use normal autoload cookie.

@@ -3357,7 +3357,12 @@ object files--just `.o' will mark more than you might think."
 (defun dired-mark-files-containing-regexp (regexp &optional marker-char)
   "Mark all files with contents containing REGEXP for use in later commands.
 A prefix argument means to unmark them instead.
-`.' and `..' are never marked."
+`.' and `..' are never marked.
+
+Note that if a file is visited in an Emacs buffer, this command will
+look in the buffer without revisiting the file, so the results might
+be inconsistent with the file on disk if its contents has changed
+since it was last visited."
   (interactive
    (list (read-regexp (concat (if current-prefix-arg "Unmark" "Mark")
                               " files containing (regexp): ")

@@ -122,7 +122,7 @@ An empty list disables VC altogether."
   :group 'vc)
 
 ;; Note: we don't actually have a darcs back end yet.
-;; Also, Meta-CVS (corresponding to MCVS) and Arch are unsupported.
+;; Also, Arch is unsupported, and the Meta-CVS back end has been removed.
 ;; The Arch back end will be retrieved and fixed if it is ever required.
 (defcustom vc-directory-exclusion-list (purecopy '("SCCS" "RCS" "CVS" "MCVS"
 					 ".src" ".svn" ".git" ".hg" ".bzr"
