@@ -1472,7 +1472,8 @@ Set it to 'curve' for curved single quotes, to 'straight' for straight
 apostrophes, and to 'grave' for grave accent and apostrophe.  The
 default value nil acts like 'curve' if curved single quotes are
 displayable, and like 'grave' otherwise.  The new variable affects
-display of diagnostics and help, but not of info.
+display of diagnostics and help, but not of info.  As the variable is
+not intended for casual use, it is not a user option.
 
 +++
 ** substitute-command-keys now replaces quotes.

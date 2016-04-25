@@ -362,6 +362,10 @@ this'} with grave accent and apostrophe, the standard style
 before Emacs version 25.  The default value @code{nil}
 acts like @code{curve} if curved single quotes are displayable, and
 like @code{grave} otherwise.
+
+This variable can be used by experts on platforms that have problems
+with curved quotes.  As it is not intended for casual use, it is not a
+user option.
 @end defvar
 
 @defun substitute-command-keys string
