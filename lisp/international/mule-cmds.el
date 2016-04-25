@@ -2978,6 +2978,27 @@ on encoding."
   (let ((char (assoc name ucs-names)))
     (when char (format " (%c)" (cdr char)))))
 
+(defun char-from-name (string &optional ignore-case)
+  "Return a character as a number from its Unicode name STRING.
+If optional IGNORE-CASE is non-nil, ignore case in STRING.
+Return nil if STRING does not name a character."
+  (or (cdr (assoc-string string (ucs-names) ignore-case))
+      (let ((minus (string-match-p "-[0-9A-F]+\\'" string)))
+        (when minus
+          ;; Parse names like "VARIATION SELECTOR-17" and "CJK
+          ;; COMPATIBILITY IDEOGRAPH-F900" that are not in ucs-names.
+          (ignore-errors
+            (let* ((case-fold-search ignore-case)
+                   (vs (string-match-p "\\`VARIATION SELECTOR-" string))
+                   (minus-num (string-to-number (substring string minus)
+                                                (if vs 10 16)))
+                   (vs-offset (if vs (if (< minus-num -16) #xE00EF #xFDFF) 0))
+                   (code (- vs-offset minus-num))
+                   (name (get-char-code-property code 'name)))
+              (when (eq t (compare-strings string nil nil name nil nil
+                                           ignore-case))
+                code)))))))
+
 (defun read-char-by-name (prompt)
   "Read a character by its Unicode name or hex number string.
 Display PROMPT and read a string that represents a character by its
@@ -2991,9 +3012,11 @@ preceded by an asterisk `*' and use completion, it will show all
 the characters whose names include that substring, not necessarily
 at the beginning of the name.
 
-This function also accepts a hexadecimal number of Unicode code
-point or a number in hash notation, e.g. #o21430 for octal,
-#x2318 for hex, or #10r8984 for decimal."
+Accept a name like \"CIRCULATION FUNCTION\", a hexadecimal
+number like \"2A10\", or a number in hash notation (e.g.,
+\"#x2a10\" for hex, \"10r10768\" for decimal, or \"#o25020\" for
+octal).  Treat otherwise-ambiguous strings like \"BED\" (U+1F6CF)
+as names, not numbers."
   (let* ((enable-recursive-minibuffers t)
 	 (completion-ignore-case t)
 	 (input
@@ -3006,13 +3029,13 @@ point or a number in hash notation, e.g. #o21430 for octal,
 		   (category . unicode-name))
 	       (complete-with-action action (ucs-names) string pred)))))
 	 (char
-	  (cond
-	   ((string-match-p "\\`[0-9a-fA-F]+\\'" input)
-	    (string-to-number input 16))
-	   ((string-match-p "\\`#" input)
-	    (read input))
-	   (t
-	    (cdr (assoc-string input (ucs-names) t))))))
+          (cond
+           ((char-from-name input t))
+           ((string-match-p "\\`[0-9a-fA-F]+\\'" input)
+            (ignore-errors (string-to-number input 16)))
+           ((string-match-p "\\`#\\([bBoOxX]\\|[0-9]+[rR]\\)[0-9a-zA-Z]+\\'"
+                            input)
+            (ignore-errors (read input))))))
     (unless (characterp char)
       (error "Invalid character"))
     char))

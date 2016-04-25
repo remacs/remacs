@@ -420,6 +420,18 @@ codepoint can have.
 @end example
 @end defun
 
+@defun char-from-name string &optional ignore-case
+This function returns the character whose Unicode name is @var{string}.
+If @var{ignore-case} is non-@code{nil}, case is ignored in @var{string}.
+This function returns @code{nil} if @var{string} does not name a character.
+
+@example
+;; U+03A3
+(= (char-from-name "GREEK CAPITAL LETTER SIGMA") #x03A3)
+     @result{} t
+@end example
+@end defun
+
 @defun get-byte &optional pos string
 This function returns the byte at character position @var{pos} in the
 current buffer.  If the current buffer is unibyte, this is literally

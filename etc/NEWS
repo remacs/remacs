@@ -391,6 +391,10 @@ compares their numerical values.  According to this predicate,
 "foo2.png" is smaller than "foo12.png".
 
 +++
+** The new function 'char-from-name' converts a Unicode name string
+to the corresponding character code.
+
++++
 ** New functions 'sxhash-eq' and 'sxhash-eql' return hash codes of a
 Lisp object suitable for use with 'eq' and 'eql' correspondingly.  If
 two objects are 'eq' ('eql'), then the result of 'sxhash-eq'
