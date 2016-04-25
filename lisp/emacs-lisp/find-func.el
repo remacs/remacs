@@ -283,7 +283,11 @@ LIBRARY should be a string (the name of the library)."
 			 "Library name: ")
 		       table nil nil nil nil def))))
   (let ((buf (find-file-noselect (find-library-name library))))
-    (condition-case nil (switch-to-buffer buf) (error (pop-to-buffer buf)))))
+    (condition-case nil
+        (prog1
+            (switch-to-buffer buf)
+          (run-hooks 'find-function-after-hook))
+      (error (pop-to-buffer buf)))))
 
 ;;;###autoload
 (defun find-function-search-for-symbol (symbol type library)
