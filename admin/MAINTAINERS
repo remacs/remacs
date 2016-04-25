@@ -212,7 +212,6 @@ Michael Albinus
 	lisp/eshell/em-tramp.el
 	lisp/notifications.el
         test/lisp/autorevert-tests.el
-	test/lisp/vc/vc-tests.el
 	test/src/inotify-test.el
 
 Nicolas Petton
