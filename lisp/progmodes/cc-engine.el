@@ -6026,7 +6026,6 @@ comment at the start of cc-engine.el for more info."
 		  ;; `nconc' doesn't mind that the tail of
 		  ;; `c-record-found-types' is t.
 		  (nconc c-record-found-types c-record-type-identifiers)))
-	    (if (c-major-mode-is 'java-mode) (c-fontify-recorded-types-and-refs))
 	  t)
 
       (goto-char start)
@@ -6072,28 +6071,31 @@ comment at the start of cc-engine.el for more info."
 		(progn
 		  (c-forward-syntactic-ws)
 		  (when (or (and c-record-type-identifiers all-types)
-			    (c-major-mode-is 'java-mode))
-		    ;; All encountered identifiers are types, so set the
-		    ;; promote flag and parse the type.
-		    (progn
-		      (c-forward-syntactic-ws)
-		      (if (looking-at "\\?")
-			  (forward-char)
-			(when (looking-at c-identifier-start)
+			    (not (equal c-inside-<>-type-key "\\(\\<\\>\\)")))
+		    (c-forward-syntactic-ws)
+		    (cond
+		     ((eq (char-after) ??)
+		      (forward-char))
+		     ((and (looking-at c-identifier-start)
+			   (not (looking-at c-keywords-regexp)))
+		      (if (or (and all-types c-record-type-identifiers)
+			      (c-major-mode-is 'java-mode))
+			  ;; All encountered identifiers are types, so set the
+			  ;; promote flag and parse the type.
 			  (let ((c-promote-possible-types t)
 				(c-record-found-types t))
-			    (c-forward-type))))
+			    (c-forward-type))
+			(c-forward-token-2))))
 
+		    (c-forward-syntactic-ws)
+
+		    (when (looking-at c-inside-<>-type-key)
+		      (goto-char (match-end 1))
 		      (c-forward-syntactic-ws)
-
-		      (when (or (looking-at "extends")
-				(looking-at "super"))
-			(forward-word-strictly)
-			(c-forward-syntactic-ws)
-			(let ((c-promote-possible-types t)
-			      (c-record-found-types t))
-			  (c-forward-type)
-			  (c-forward-syntactic-ws)))))
+		      (let ((c-promote-possible-types t)
+			    (c-record-found-types t))
+			(c-forward-type))
+		      (c-forward-syntactic-ws)))
 
 		  (setq pos (point))	; e.g. first token inside the '<'
 
@@ -6414,9 +6416,7 @@ comment at the start of cc-engine.el for more info."
 	      ((and c-recognize-<>-arglists
 		    (eq (char-after) ?<))
 	       ;; Maybe an angle bracket arglist.
-	       (when (let ((c-record-type-identifiers t)
-			   (c-record-found-types t)
-			   (c-last-identifier-range))
+	       (when (let (c-last-identifier-range)
 		       (c-forward-<>-arglist nil))
 
 		 (c-forward-syntactic-ws)

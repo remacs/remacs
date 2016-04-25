@@ -686,9 +686,8 @@ compatible with old code; callers should always specify it."
 		(funcall fn (point-min) (point-max)))
 	      c-get-state-before-change-functions)
 	(mapc (lambda (fn)
-		(if (not (eq fn 'c-restore-<>-properties))
-		    (funcall fn (point-min) (point-max)
-			     (- (point-max) (point-min)))))
+		(funcall fn (point-min) (point-max)
+			 (- (point-max) (point-min))))
 	      c-before-font-lock-functions))))
 
   (set (make-local-variable 'outline-regexp) "[^#\n\^M]")

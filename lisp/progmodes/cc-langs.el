@@ -2310,6 +2310,15 @@ assumed to be set if this isn't nil."
   t (c-make-keywords-re t (c-lang-const c-<>-sexp-kwds)))
 (c-lang-defvar c-opt-<>-sexp-key (c-lang-const c-opt-<>-sexp-key))
 
+(c-lang-defconst c-inside-<>-type-kwds
+  "Keywords which, used inside a C++ style template arglist, introduce a type."
+  t nil
+  java '("extends" "super"))
+
+(c-lang-defconst c-inside-<>-type-key
+  t (c-make-keywords-re t (c-lang-const c-inside-<>-type-kwds)))
+(c-lang-defvar c-inside-<>-type-key (c-lang-const c-inside-<>-type-key))
+
 (c-lang-defconst c-brace-id-list-kwds
   "Keywords that may be followed by a brace block containing a comma
 separated list of identifier definitions, i.e. like the list of
