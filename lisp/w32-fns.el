@@ -200,8 +200,7 @@ certain patterns.
 This function is called by `convert-standard-filename'.
 
 Replace invalid characters and turn Cygwin names into native
-names, and also turn slashes into backslashes if the shell
-requires it (see `w32-shell-dos-semantics')."
+names."
   (save-match-data
     (let ((name
 	   (if (string-match "\\`/cygdrive/\\([a-zA-Z]\\)/" filename)
@@ -216,13 +215,6 @@ requires it (see `w32-shell-dos-semantics')."
       (while (string-match "[?*:<>|\"\000-\037]" name start)
 	(aset name (match-beginning 0) ?!)
 	(setq start (match-end 0)))
-      ;; convert directory separators to Windows format
-      ;; (but only if the shell in use requires it)
-      (when (w32-shell-dos-semantics)
-	(setq start 0)
-	(while (string-match "/" name start)
-	  (aset name (match-beginning 0) ?\\)
-	  (setq start (match-end 0))))
       name)))
 
 (defun set-w32-system-coding-system (coding-system)

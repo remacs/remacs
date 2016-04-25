@@ -418,6 +418,10 @@ Windows NT and later you can now register any hotkey combination.  (On
 Windows 9X, the previous limitations, spelled out in the Emacs manual,
 still apply.)
 
+** `convert-standard-filename' no longer mirrors slashes on MS-Windows.
+Previously, on MS-Windows this function converted slash characters in
+file names into backslashes.  It no longer does that.
+
 
 * Installation Changes in Emacs 25.1
 
