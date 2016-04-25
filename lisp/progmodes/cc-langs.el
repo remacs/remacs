@@ -1330,6 +1330,14 @@ operators."
 (c-lang-defconst c-haskell-op-re
   t (c-make-keywords-re nil (c-lang-const c-haskell-op)))
 (c-lang-defvar c-haskell-op-re (c-lang-const c-haskell-op-re))
+
+(c-lang-defconst c-pre-start-tokens
+  "List of operators following which an apparent declaration \(e.g.
+\"t1 *fn (t2 *b);\") is most likely to be an actual declaration
+\(as opposed to an arithmetic expression)."
+  t '(";" "{" "}"))
+(c-lang-defvar c-pre-start-tokens (c-lang-const c-pre-start-tokens))
+
 
 ;;; Syntactic whitespace.
 

@@ -7152,12 +7152,24 @@ comment at the start of cc-engine.el for more info."
 	cast-end
 	;; Have we got a new-style C++11 "auto"?
 	new-style-auto
+	;; Set when the symbol before `preceding-token-end' is known to
+	;; terminate the previous construct, or when we're at point-min.
+	at-decl-start
 	;; Save `c-record-type-identifiers' and
 	;; `c-record-ref-identifiers' since ranges are recorded
 	;; speculatively and should be thrown away if it turns out
 	;; that it isn't a declaration or cast.
 	(save-rec-type-ids c-record-type-identifiers)
 	(save-rec-ref-ids c-record-ref-identifiers))
+
+    (save-excursion
+      (goto-char preceding-token-end)
+      (setq at-decl-start
+	    (or (bobp)
+		(let ((tok-end (point)))
+		  (c-backward-token-2)
+		  (member (buffer-substring-no-properties (point) tok-end)
+			  c-pre-start-tokens)))))
 
     (while (c-forward-annotation)
       (c-forward-syntactic-ws))
@@ -7771,12 +7783,15 @@ comment at the start of cc-engine.el for more info."
 			  at-type
 			  (or at-decl-end (looking-at "=[^=]"))
 			  (not context)
-			  (not got-suffix))
-		 ;; Got something like "foo * bar;".  Since we're not inside an
-		 ;; arglist it would be a meaningless expression because the
-		 ;; result isn't used.  We therefore choose to recognize it as
-		 ;; a declaration.  Do not allow a suffix since it could then
-		 ;; be a function call.
+			  (or (not got-suffix)
+			      at-decl-start))
+		 ;; Got something like "foo * bar;".  Since we're not inside
+		 ;; an arglist it would be a meaningless expression because
+		 ;; the result isn't used.  We therefore choose to recognize
+		 ;; it as a declaration.  We only allow a suffix (which makes
+		 ;; the construct look like a function call) when
+		 ;; `at-decl-start' provides additional evidence that we do
+		 ;; have a declaration.
 		 (throw 'at-decl-or-cast t))
 
 	       ;; CASE 17
