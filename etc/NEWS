@@ -2021,6 +2021,12 @@ non-native NS fullscreen.  The default is nil.  Set to t to enable
 animation when entering and leaving fullscreen.  For native OSX fullscreen
 this has no effect.
 
+** On the OS X Cocoa ("Nextstep") port, multicolor font (such as color
+emoji) display is disabled.  This feature was accidentally added when
+Emacs 24.4 included the new Core Text based font backend code that was
+originally implemented for a non-mainline port.  This will be enabled
+again once it is also implemented in Emacs on free operating systems.
+
 ---
 ** The new function 'w32-application-type' returns the type of an
 MS-Windows application given the name of its executable program file.
