@@ -1735,7 +1735,7 @@ entries for git.gnus.org:
          (items (catch 'match
                   (dolist (host hosts)
                     (dolist (port ports)
-                      (let* ((port (format "%S" port))
+                      (let* ((port (if port (format "%S" port)))
                              (items (apply #'auth-source-macos-keychain-search-items
                                            coll
                                            type
