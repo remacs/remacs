@@ -800,13 +800,14 @@ write its autoloads into the specified file instead."
 		   ;; Remove the obsolete section.
 		   (autoload-remove-section (match-beginning 0))
 		   (setq last-time (nth 4 form))
-		   (dolist (file file)
-		     (let ((file-time (nth 5 (file-attributes file))))
-		       (when (and file-time
-				  (not (time-less-p last-time file-time)))
-			 ;; file unchanged
-			 (push file no-autoloads)
-			 (setq files (delete file files))))))
+		   (when (listp last-time)
+		     (dolist (file file)
+		       (let ((file-time (nth 5 (file-attributes file))))
+			 (when (and file-time
+				    (not (time-less-p last-time file-time)))
+			   ;; file unchanged
+			   (push file no-autoloads)
+			   (setq files (delete file files)))))))
 		  ((not (stringp file)))
 		  ((or (not (file-exists-p file))
                        ;; Remove duplicates as well, just in case.
@@ -815,8 +816,9 @@ write its autoloads into the specified file instead."
                        (member (expand-file-name file) autoload-excludes))
                    ;; Remove the obsolete section.
 		   (autoload-remove-section (match-beginning 0)))
-		  ((not (time-less-p (nth 4 form)
-                                     (nth 5 (file-attributes file))))
+		  ((and (listp (nth 4 form))
+			(not (time-less-p (nth 4 form)
+					  (nth 5 (file-attributes file)))))
 		   ;; File hasn't changed.
 		   nil)
 		  (t
