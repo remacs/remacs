@@ -284,6 +284,10 @@ servers.
 programmatically delete all cookies, or cookies from a specific
 domain.
 
++++
+*** `url-retrieve-synchronously' now takes an optional timeout parameter.
+
+---
 *** The URL package now support HTTPS over proxies supporting CONNECT.
 
 +++

@@ -289,11 +289,16 @@ string or a parsed URL structure.  If it is a string, that string is
 passed through @code{url-encode-url} before using it, to ensure that
 it is properly URI-encoded (@pxref{URI Encoding}).
 
-@defun url-retrieve-synchronously url
+@defun url-retrieve-synchronously url &optional silent no-cookies timeout
 This function synchronously retrieves the data specified by @var{url},
 and returns a buffer containing the data.  The return value is
 @code{nil} if there is no data associated with the URL (as is the case
 for @code{dired}, @code{info}, and @code{mailto} URLs).
+
+If @var{silent} is non-@code{nil}, don't do any messaging while
+retrieving.  If @var{inhibit-cookies} is non-@code{nil}, refuse to
+store cookies.  If @var{timeout} is passed, it should be a number that
+says (in seconds) how long to wait for a response before giving up.
 @end defun
 
 @defun url-retrieve url callback &optional cbargs silent no-cookies
