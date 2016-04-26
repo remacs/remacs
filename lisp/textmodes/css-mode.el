@@ -454,6 +454,7 @@ further value candidates, since that list would be infinite.")
      "xx-small" "x-small" "small" "medium" "large" "x-large"
      "xx-large")
     (alphavalue number)
+    (angle "calc()")
     (attachment "scroll" "fixed" "local")
     (bg-image image "none")
     (bg-layer bg-image position repeat-style attachment box)
@@ -481,6 +482,7 @@ further value candidates, since that list would be infinite.")
     (final-bg-layer
      bg-image position repeat-style attachment box color)
     (font-variant-css21 "normal" "small-caps")
+    (frequency "calc()")
     (generic-family
      "serif" "sans-serif" "cursive" "fantasy" "monospace")
     (generic-voice "male" "female" "child")
@@ -491,7 +493,8 @@ further value candidates, since that list would be infinite.")
      "historical-ligatures" "no-historical-ligatures")
     (image uri image-list element-reference gradient)
     (image-list "image()")
-    (length number)
+    (integer "calc()")
+    (length "calc()" number)
     (line-height "normal" number length percentage)
     (line-style
      "none" "hidden" "dotted" "dashed" "solid" "double" "groove"
@@ -499,6 +502,7 @@ further value candidates, since that list would be infinite.")
     (line-width length "thin" "medium" "thick")
     (linear-gradient "linear-gradient()")
     (margin-width "auto" length percentage)
+    (number "calc()")
     (numeric-figure-values "lining-nums" "oldstyle-nums")
     (numeric-fraction-values "diagonal-fractions" "stacked-fractions")
     (numeric-spacing-values "proportional-nums" "tabular-nums")
@@ -529,6 +533,7 @@ further value candidates, since that list would be infinite.")
      "step-end" "steps()" "cubic-bezier()")
     (specific-voice identifier)
     (target-name string)
+    (time "calc()")
     (transform-list
      "matrix()" "translate()" "translateX()" "translateY()" "scale()"
      "scaleX()" "scaleY()" "rotate()" "skew()" "skewX()" "skewY()"
@@ -546,9 +551,8 @@ a class of values, and that symbols in the CDRs always refer to
 other entries in this list, not to properties.
 
 The following classes have been left out above because they
-cannot be completed sensibly: `angle', `element-reference',
-`frequency', `id', `identifier', `integer', `number',
-`percentage', `string', and `time'.")
+cannot be completed sensibly: `element-reference', `id',
+`identifier', `percentage', and `string'.")
 
 (defcustom css-electric-keys '(?\} ?\;) ;; '()
   "Self inserting keys which should trigger re-indentation."
@@ -780,12 +784,13 @@ cannot be completed sensibly: `angle', `element-reference',
   "Return a list of value completion candidates for VALUE-CLASS.
 Completion candidates are looked up in `css-value-class-alist' by
 the symbol VALUE-CLASS."
-  (seq-mapcat
-   (lambda (value)
-     (if (stringp value)
-         (list value)
-       (css--value-class-lookup value)))
-   (cdr (assq value-class css-value-class-alist))))
+  (seq-uniq
+   (seq-mapcat
+    (lambda (value)
+      (if (stringp value)
+          (list value)
+        (css--value-class-lookup value)))
+    (cdr (assq value-class css-value-class-alist)))))
 
 (defun css--property-values (property)
   "Return a list of value completion candidates for PROPERTY.

@@ -72,12 +72,12 @@
   ;; removed, it'll contain at least two instances of `auto'.
   (should
    (equal (sort (css--property-values "flex") #'string-lessp)
-          '("auto" "content" "none"))))
+          '("auto" "calc()" "content" "none"))))
 
 (ert-deftest css-test-value-class-lookup ()
   (should
    (equal (sort (css--value-class-lookup 'position) #'string-lessp)
-          '("bottom" "center" "left" "right" "top"))))
+          '("bottom" "calc()" "center" "left" "right" "top"))))
 
 (provide 'css-mode-tests)
 ;;; css-mode-tests.el ends here
