@@ -783,7 +783,7 @@ Ignores `line-move-visual'."
                      (if (not old)
                          (let ((ol (make-overlay left right)))
                            (overlay-put ol 'window window)
-                           (overlay-put ol 'face 'rectangle-preview)
+                           (overlay-put ol 'face 'region)
                            ol)
                        (let ((ol (pop old)))
                          (move-overlay ol left right (current-buffer))
