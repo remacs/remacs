@@ -2027,6 +2027,9 @@ emoji) display is disabled.  This feature was accidentally added when
 Emacs 24.4 included the new Core Text based font backend code that was
 originally implemented for a non-mainline port.  This will be enabled
 again once it is also implemented in Emacs on free operating systems.
+If some symbols, such as emoji, do not display, we suggest to install
+an appropriate font, such as Symbola; then they will be displayed,
+albeit without the color effects.
 
 ---
 ** The new function 'w32-application-type' returns the type of an
