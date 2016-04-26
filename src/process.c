@@ -267,7 +267,10 @@ static int max_process_desc;
 /* The largest descriptor currently in use for input; -1 if none.  */
 static int max_input_desc;
 
-/* The descriptor of any socket passed to Emacs; -1 if none. */
+/* Set the external socket descriptor for Emacs to use when
+   `make-network-process' is called with a non-nil
+   `:use-external-socket' option.  The value should be either -1, or
+   the file descriptor of a socket that is already bound.  */
 static int external_sock_fd;
 
 /* Indexed by descriptor, gives the process (if any) for that descriptor.  */
@@ -7733,24 +7736,14 @@ catch_child_signal (void)
 }
 #endif	/* subprocesses */
 
-/* Set the external socket descriptor for Emacs to use when
-   `make-network-process' is called with a non-nil
-   `:use-external-socket' option.  The fd should have been checked to
-   ensure it is a valid socket and is already bound.  */
-void
-set_external_socket_descriptor (int fd)
-{
-  external_sock_fd = fd;
-}
-
 
 /* This is not called "init_process" because that is the name of a
    Mach system call, so it would cause problems on Darwin systems.  */
 void
-init_process_emacs (void)
+init_process_emacs (int sockfd)
 {
 #ifdef subprocesses
-  register int i;
+  int i;
 
   inhibit_sentinels = 0;
 
@@ -7772,7 +7765,8 @@ init_process_emacs (void)
   FD_ZERO (&non_keyboard_wait_mask);
   FD_ZERO (&non_process_wait_mask);
   FD_ZERO (&write_mask);
-  max_process_desc = max_input_desc = external_sock_fd = -1;
+  max_process_desc = max_input_desc = -1;
+  external_sock_fd = sockfd;
   memset (fd_callback_info, 0, sizeof (fd_callback_info));
 
   FD_ZERO (&connect_wait_mask);
