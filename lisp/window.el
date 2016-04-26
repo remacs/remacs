@@ -8560,10 +8560,10 @@ WINDOWS is a list of windows associated with PROCESS.  REDUCER is
 a two-argument function used to combine the widths and heights of
 the given windows."
   (when windows
-    (let ((width (window-body-width (car windows)))
+    (let ((width (window-max-chars-per-line (car windows)))
           (height (window-body-height (car windows))))
       (dolist (window (cdr windows))
-        (setf width (funcall reducer width (window-body-width window)))
+        (setf width (funcall reducer width (window-max-chars-per-line window)))
         (setf height (funcall reducer height (window-body-height window))))
       (cons width height))))
 
