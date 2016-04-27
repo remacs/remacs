@@ -69,6 +69,11 @@ detect built-in libxml support, instead of testing for that
 indirectly, e.g., by checking that functions like
 'libxml-parse-html-region' return nil.
 
++++
+** New function 'fill-polish-nobreak-p', to be used in 'fill-nobreak-predicate'.
+It blocks line breaking after a one-letter word, also in the case when
+this word is preceded by a non-space, but non-alphanumeric character.
+
 
 * Editing Changes in Emacs 27.1
 
