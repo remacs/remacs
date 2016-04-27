@@ -2753,7 +2753,9 @@ FILE should be (FILENAME) or (RELATIVE-FILENAME . DIRNAME).
 In the former case, FILENAME may be relative or absolute.
 
 The file-structure looks like this:
-  ((FILENAME [DIR-FROM-PREV-MSG]) FMT LINE-STRUCT...)"
+  ((FILENAME [TRUE-DIRNAME]) FMT ...)
+
+TRUE-DIRNAME is the `file-truename' of DIRNAME, if given."
   (or (gethash file compilation-locs)
       ;; File was not previously encountered, at least not in the form passed.
       ;; Let's normalize it and look again.
@@ -2808,7 +2810,7 @@ The file-structure looks like this:
   (let ((fs (compilation-get-file-structure file)))
     (cl-assert (eq fs (gethash file compilation-locs)))
     (cl-assert (eq fs (gethash (cons (caar fs) (cadr (car fs)))
-                            compilation-locs)))
+                               compilation-locs)))
     (maphash (lambda (k v)
                (if (eq v fs) (remhash k compilation-locs)))
              compilation-locs)))
