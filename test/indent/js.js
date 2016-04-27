@@ -53,6 +53,14 @@ var p = {
 var evens = [e for each (e in range(0, 21))
                if (ed % 2 == 0)];
 
+var funs = [
+  function() {
+    for (;;) {
+    }
+  },
+  function(){},
+];
+
 !b
   !=b
   !==b
