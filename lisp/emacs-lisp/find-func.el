@@ -255,9 +255,12 @@ TYPE should be nil to find a function, or `defvar' to find a variable."
     (cons (current-buffer) (match-beginning 0))))
 
 ;;;###autoload
-(defun find-library (library)
+(defun find-library (library &optional other-window)
   "Find the Emacs Lisp source of LIBRARY.
-LIBRARY should be a string (the name of the library)."
+LIBRARY should be a string (the name of the library).  If the
+optional OTHER-WINDOW argument (i.e., the command argument) is
+specified, pop to a different window before displaying the
+buffer."
   (interactive
    (let* ((dirs (or find-function-source-path load-path))
           (suffixes (find-library-suffixes))
@@ -279,15 +282,17 @@ LIBRARY should be a string (the name of the library)."
      (when (and def (not (test-completion def table)))
        (setq def nil))
      (list
-      (completing-read (if def (format "Library name (default %s): " def)
+      (completing-read (if def
+                           (format "Library name (default %s): " def)
 			 "Library name: ")
-		       table nil nil nil nil def))))
-  (let ((buf (find-file-noselect (find-library-name library))))
-    (condition-case nil
-        (prog1
-            (switch-to-buffer buf)
-          (run-hooks 'find-function-after-hook))
-      (error (pop-to-buffer buf)))))
+		       table nil nil nil nil def)
+      current-prefix-arg)))
+  (prog1
+      (funcall (if other-window
+                   'pop-to-buffer
+                 'pop-to-buffer-same-window)
+               (find-file-noselect (find-library-name library)))
+    (run-hooks 'find-function-after-hook)))
 
 ;;;###autoload
 (defun find-function-search-for-symbol (symbol type library)
