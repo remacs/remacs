@@ -815,7 +815,7 @@ Ignores `line-move-visual'."
                      (overlay-put ol 'after-string nil)))
                 ((< mright rightcol)    ;`rightcol' is past EOL.
                  (let ((str (rectangle--space-to rightcol)))
-                   (put-text-property 0 (length str) 'face 'rectangle-preview str)
+                   (put-text-property 0 (length str) 'face 'region str)
                    ;; If cursor happens to be here, draw it at the right place.
                    (rectangle--place-cursor leftcol left str)
                    (overlay-put ol 'after-string str)))
@@ -827,7 +827,7 @@ Ignores `line-move-visual'."
                      (overlay-put ol 'after-string nil)
                    (goto-char right)
                    (let ((str (rectangle--space-to rightcol)))
-                     (put-text-property 0 (length str) 'face 'rectangle-preview str)
+                     (put-text-property 0 (length str) 'face 'region str)
                      (when (= left right)
                        (rectangle--place-cursor leftcol left str))
                      (overlay-put ol 'after-string str))))
@@ -837,7 +837,7 @@ Ignores `line-move-visual'."
                  ;; Make zero-width rectangles visible!
                  (overlay-put ol 'after-string
                               (concat (propertize " "
-                                                  'face '(rectangle-preview (:height 0.2)))
+                                                  'face '(region (:height 0.2)))
                                       (overlay-get ol 'after-string))))
                (push ol nrol)))
            start end))
