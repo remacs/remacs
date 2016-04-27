@@ -561,23 +561,32 @@ The type returned can be `comment', `string' or `paren'."
     ;; Builtin Exceptions
     (,(rx symbol-start
           (or
+           ;; Python 2 and 3:
            "ArithmeticError" "AssertionError" "AttributeError" "BaseException"
-           "DeprecationWarning" "EOFError" "EnvironmentError" "Exception"
-           "FloatingPointError" "FutureWarning" "GeneratorExit" "IOError"
-           "ImportError" "ImportWarning" "IndexError" "KeyError"
-           "KeyboardInterrupt" "LookupError" "MemoryError" "NameError"
-           "NotImplementedError" "OSError" "OverflowError"
-           "PendingDeprecationWarning" "ReferenceError" "RuntimeError"
-           "RuntimeWarning" "StopIteration" "SyntaxError" "SyntaxWarning"
-           "SystemError" "SystemExit" "TypeError" "UnboundLocalError"
-           "UnicodeDecodeError" "UnicodeEncodeError" "UnicodeError"
-           "UnicodeTranslateError" "UnicodeWarning" "UserWarning" "VMSError"
-           "ValueError" "Warning" "WindowsError" "ZeroDivisionError"
+           "BufferError" "BytesWarning" "DeprecationWarning" "EOFError"
+           "EnvironmentError" "Exception" "FloatingPointError" "FutureWarning"
+           "GeneratorExit" "IOError" "ImportError" "ImportWarning"
+           "IndentationError" "IndexError" "KeyError" "KeyboardInterrupt"
+           "LookupError" "MemoryError" "NameError" "NotImplementedError"
+           "OSError" "OverflowError" "PendingDeprecationWarning"
+           "ReferenceError" "RuntimeError" "RuntimeWarning" "StopIteration"
+           "SyntaxError" "SyntaxWarning" "SystemError" "SystemExit" "TabError"
+           "TypeError" "UnboundLocalError" "UnicodeDecodeError"
+           "UnicodeEncodeError" "UnicodeError" "UnicodeTranslateError"
+           "UnicodeWarning" "UserWarning" "ValueError" "Warning"
+           "ZeroDivisionError"
            ;; Python 2:
            "StandardError"
            ;; Python 3:
-           "BufferError" "BytesWarning" "IndentationError" "ResourceWarning"
-           "TabError")
+           "BlockingIOError" "BrokenPipeError" "ChildProcessError"
+           "ConnectionAbortedError" "ConnectionError" "ConnectionRefusedError"
+           "ConnectionResetError" "FileExistsError" "FileNotFoundError"
+           "InterruptedError" "IsADirectoryError" "NotADirectoryError"
+           "PermissionError" "ProcessLookupError" "RecursionError"
+           "ResourceWarning" "StopAsyncIteration" "TimeoutError"
+           ;; OS specific
+           "VMSError" "WindowsError"
+           )
           symbol-end) . font-lock-type-face)
     ;; Builtins
     (,(rx symbol-start
