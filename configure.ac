@@ -1140,16 +1140,9 @@ AC_PATH_PROG(GZIP_PROG, gzip)
 test $with_compress_install != yes && test -n "$GZIP_PROG" && \
    GZIP_PROG=" # $GZIP_PROG # (disabled by configure --without-compress-install)"
 
+PAXCTL_dumped=
+PAXCTL_notdumped=
 if test $opsys = gnu-linux; then
-  AC_PATH_PROG(PAXCTL, paxctl,,
-    [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin])
-  if test "X$PAXCTL" != X; then
-    AC_MSG_CHECKING([whether binaries have a PT_PAX_FLAGS header])
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
-      [if $PAXCTL -v conftest$EXEEXT >/dev/null 2>&1; then AC_MSG_RESULT(yes)
-      else AC_MSG_RESULT(no); PAXCTL=""; fi])
-  fi
-
   if test "${SETFATTR+set}" != set; then
     AC_CACHE_CHECK([for setfattr],
       [emacs_cv_prog_setfattr],
@@ -1160,6 +1153,7 @@ if test $opsys = gnu-linux; then
 	 emacs_cv_prog_setfattr=no
        fi])
     if test "$emacs_cv_prog_setfattr" = yes; then
+      PAXCTL_notdumped='$(SETFATTR) -n user.pax.flags -v er'
       SETFATTR=setfattr
     else
       SETFATTR=
@@ -1168,6 +1162,32 @@ if test $opsys = gnu-linux; then
     AC_SUBST([SETFATTR])
   fi
 fi
+case $opsys,$PAXCTL_notdumped in
+  gnu-linux, | netbsd,)
+    AC_PATH_PROG([PAXCTL], [paxctl], [],
+      [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin])
+    if test -n "$PAXCTL"; then
+      if test "$opsys" = netbsd; then
+	PAXCTL_dumped='$(PAXCTL) +a'
+	PAXCTL_notdumped=$PAXCTL_dumped
+      else
+	AC_MSG_CHECKING([whether binaries have a PT_PAX_FLAGS header])
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
+	  [if $PAXCTL -v conftest$EXEEXT >/dev/null 2>&1; then
+	     AC_MSG_RESULT([yes])
+	   else
+	     AC_MSG_RESULT([no])
+	     PAXCTL=
+	   fi])
+	if test -n "$PAXCTL"; then
+	  PAXCTL_dumped='$(PAXCTL) -zex'
+	  PAXCTL_notdumped='$(PAXCTL) -r'
+	fi
+      fi
+    fi;;
+esac
+AC_SUBST([PAXCTL_dumped])
+AC_SUBST([PAXCTL_notdumped])
 
 ## Need makeinfo >= 4.7 (?) to build the manuals.
 if test "$MAKEINFO" != "no"; then

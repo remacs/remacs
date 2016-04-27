@@ -114,8 +114,9 @@ TEMACS_LDFLAGS = $(LD_SWITCH_SYSTEM) $(LD_SWITCH_SYSTEM_TEMACS)
 ## around this, newer ones setfattr.  See Bug#11398 and Bug#16343.
 PAXCTL = @PAXCTL@
 SETFATTR = @SETFATTR@
-PAXCTL_if_present = $(or $(PAXCTL),: paxctl)
-SETFATTR_if_present = $(or $(SETFATTR),: setfattr)
+## Commands to set PaX flags on dumped and not-dumped instances of Emacs.
+PAXCTL_dumped = @PAXCTL_dumped@
+PAXCTL_notdumped = @PAXCTL_notdumped@
 
 ## Some systems define this to request special libraries.
 LIBS_SYSTEM=@LIBS_SYSTEM@
@@ -532,7 +533,9 @@ ifeq ($(CANNOT_DUMP),yes)
 	ln -f temacs$(EXEEXT) $@
 else
 	LC_ALL=C $(RUN_TEMACS) -batch -l loadup dump
-	$(PAXCTL_if_present) -zex $@
+  ifneq ($(PAXCTL_dumped),)
+	$(PAXCTL_dumped) $@
+  endif
 	ln -f $@ bootstrap-emacs$(EXEEXT)
 endif
 
@@ -594,8 +597,9 @@ temacs$(EXEEXT): $(LIBXMENU) $(ALLOBJS) \
 	  -o temacs $(ALLOBJS) $(lib)/libgnu.a $(W32_RES_LINK) $(LIBES)
 	$(MKDIR_P) $(etc)
 ifneq ($(CANNOT_DUMP),yes)
-	$(PAXCTL_if_present) -r $@
-	$(SETFATTR_if_present) -n user.pax.flags -v er $@
+  ifneq ($(PAXCTL_notdumped),)
+	$(PAXCTL_notdumped) $@
+  endif
 endif
 
 ## The following oldxmenu-related rules are only (possibly) used if
@@ -734,7 +738,9 @@ ifeq ($(CANNOT_DUMP),yes)
 	ln -f temacs$(EXEEXT) $@
 else
 	$(RUN_TEMACS) --batch --load loadup bootstrap
-	$(PAXCTL_if_present) -zex emacs$(EXEEXT)
+  ifneq ($(PAXCTL_dumped),)
+	$(PAXCTL_dumped) emacs$(EXEEXT)
+  endif
 	mv -f emacs$(EXEEXT) $@
 endif
 	@: Compile some files earlier to speed up further compilation.
