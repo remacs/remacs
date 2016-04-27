@@ -700,16 +700,10 @@ directory, like `default-directory'."
 
     (define-key-after map [menu-bar view dashes2]
       '("--"))
-    (define-key-after map [menu-bar view diff-with-file]
-      '(menu-item "Diff with file" ibuffer-diff-with-file
-        :help "View the differences between this buffer and its file"))
     (define-key-after map [menu-bar view auto-mode]
       '(menu-item "Auto Mode" ibuffer-auto-mode
         :button (:toggle . ibuffer-auto-mode)
         :help "Attempt to automatically update the Ibuffer buffer"))
-    (define-key-after map [menu-bar view customize]
-      '(menu-item "Customize Ibuffer" ibuffer-customize
-        :help "Use Custom to customize Ibuffer"))
 
     (define-key-after map [menu-bar mark]
       (cons "Mark" (make-sparse-keymap "Mark")))
@@ -820,6 +814,9 @@ directory, like `default-directory'."
     (define-key-after operate-map [do-view-and-eval]
       '(menu-item "Eval (viewing buffer)..." ibuffer-do-view-and-eval
         :help "Evaluate a Lisp form in each marked buffer while viewing it"))
+    (define-key-after operate-map [diff-with-file]
+      '(menu-item "Diff with file" ibuffer-diff-with-file
+                  :help "View the differences between this buffer and its file"))
 
     operate-map))
 
