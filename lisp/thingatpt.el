@@ -603,7 +603,10 @@ Signal an error if the entire string was not used."
 ;;;###autoload
 (defun number-at-point ()
   "Return the number at point, or nil if none is found."
-  (form-at-point 'sexp 'numberp))
+  (when (thing-at-point-looking-at "-?[0-9]+\\.?[0-9]*" 500)
+    (string-to-number
+     (buffer-substring (match-beginning 0) (match-end 0)))))
+
 (put 'number 'thing-at-point 'number-at-point)
 ;;;###autoload
 (defun list-at-point ()
