@@ -657,6 +657,9 @@ The face for displaying control characters and escape sequences
 @item nobreak-space
 The face for displaying no-break space characters (@pxref{Text
 Display}).
+@item nobreak-hyphen
+The face for displaying no-break hyphen characters (@pxref{Text
+Display}).
 @end table
 
   The following faces control the appearance of parts of the Emacs
@@ -1481,7 +1484,7 @@ characters.  To deal with this problem, Emacs displays such characters
 specially: it displays @code{U+00A0} (no-break space) with the
 @code{nobreak-space} face, and it displays @code{U+00AD} (soft
 hyphen), @code{U+2010} (hyphen), and @code{U+2011} (non-breaking
-hyphen) with the @code{escape-glyph} face.  To disable this, change
+hyphen) with the @code{nobreak-hyphen} face.  To disable this, change
 the variable @code{nobreak-char-display} to @code{nil}.  If you give
 this variable a non-@code{nil} and non-@code{t} value, Emacs instead
 displays such characters as a highlighted backslash followed by a

@@ -7080,6 +7080,19 @@ get_next_display_element (struct it *it)
 		  goto display_control;
 		}
 
+	      /* Handle non-ascii hyphens in the mode where it only
+		 gets highlighting.  */
+
+	      if (nonascii_hyphen_p && EQ (Vnobreak_char_display, Qt))
+		{
+		  /* Merge `nobreak-space' into the current face.  */
+		  face_id = merge_faces (it->f, Qnobreak_hyphen, 0,
+					 it->face_id);
+		  XSETINT (it->ctl_chars[0], '-');
+		  ctl_len = 1;
+		  goto display_control;
+		}
+
 	      /* Handle sequences that start with the "escape glyph".  */
 
 	      /* the default escape glyph is \.  */
@@ -7095,15 +7108,6 @@ get_next_display_element (struct it *it)
 	      face_id = (lface_id
 			 ? merge_faces (it->f, Qt, lface_id, it->face_id)
 			 : merge_escape_glyph_face (it));
-
-	      /* Draw non-ASCII hyphen with just highlighting: */
-
-	      if (nonascii_hyphen_p && EQ (Vnobreak_char_display, Qt))
-		{
-		  XSETINT (it->ctl_chars[0], '-');
-		  ctl_len = 1;
-		  goto display_control;
-		}
 
 	      /* Draw non-ASCII space/hyphen with escape glyph: */
 
@@ -31198,8 +31202,10 @@ They are still logged to the *Messages* buffer.  */);
   /* Name and number of the face used to highlight escape glyphs.  */
   DEFSYM (Qescape_glyph, "escape-glyph");
 
-  /* Name and number of the face used to highlight non-breaking spaces.  */
+  /* Name and number of the face used to highlight non-breaking
+     spaces/hyphens.  */
   DEFSYM (Qnobreak_space, "nobreak-space");
+  DEFSYM (Qnobreak_hyphen, "nobreak-hyphen");
 
   /* The symbol 'image' which is the car of the lists used to represent
      images in Lisp.  Also a tool bar style.  */
@@ -31311,7 +31317,7 @@ The face used for trailing whitespace is `trailing-whitespace'.  */);
     doc: /* Control highlighting of non-ASCII space and hyphen chars.
 If the value is t, Emacs highlights non-ASCII chars which have the
 same appearance as an ASCII space or hyphen, using the `nobreak-space'
-or `escape-glyph' face respectively.
+or `nobreak-hyphen' face respectively.
 
 U+00A0 (no-break space), U+00AD (soft hyphen), U+2010 (hyphen), and
 U+2011 (non-breaking hyphen) are affected.
