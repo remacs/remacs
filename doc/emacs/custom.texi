@@ -1400,7 +1400,7 @@ init file (@pxref{Init Rebinding}).
 * Minibuffer Maps::     The minibuffer uses its own local keymaps.
 * Rebinding::           How to redefine one key's meaning conveniently.
 * Init Rebinding::      Rebinding keys with your initialization file.
-* Modifier Keys::       Using modifier keys in key bindings.
+* Modifier Keys::       Using modifier keys.
 * Function Keys::       Rebinding terminal function keys.
 * Named ASCII Chars::   Distinguishing @key{TAB} from @kbd{C-i}, and so on.
 * Mouse Buttons::       Rebinding mouse buttons in Emacs.
