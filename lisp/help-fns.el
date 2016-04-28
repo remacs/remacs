@@ -758,9 +758,8 @@ it is displayed along with the global value."
 	    (unless valvoid
 	      (with-current-buffer standard-output
 		(setq val-start-pos (point))
-		(princ "value is ")
-		(let ((from (point))
-		      (line-beg (line-beginning-position))
+		(princ "value is")
+		(let ((line-beg (line-beginning-position))
 		      (print-rep
 		       (let ((rep
 			      (let ((print-quoted t))
@@ -769,17 +768,17 @@ it is displayed along with the global value."
 			     (format-message "`%s'" rep)
 			   rep))))
 		  (if (< (+ (length print-rep) (point) (- line-beg)) 68)
-		      (insert print-rep)
+		      (insert " " print-rep)
 		    (terpri)
 		    (pp val)
-		    (if (< (point) (+ 68 (line-beginning-position 0)))
-			(delete-region from (1+ from))
-		      (delete-region (1- from) from)))
+                    ;; Remove trailing newline.
+                    (delete-char -1))
 		  (let* ((sv (get variable 'standard-value))
 			 (origval (and (consp sv)
 				       (condition-case nil
 					   (eval (car sv))
-					 (error :help-eval-error)))))
+					 (error :help-eval-error))))
+                         from)
 		    (when (and (consp sv)
                                (not (equal origval val))
                                (not (equal origval :help-eval-error)))
