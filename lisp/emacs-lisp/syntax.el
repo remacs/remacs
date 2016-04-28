@@ -272,9 +272,10 @@ Note: back-references in REGEXPs do not work."
          (cond ,@(nreverse branches))))))
 
 (defun syntax-propertize-via-font-lock (keywords)
-  "Propertize for syntax in START..END using font-lock syntax.
+  "Propertize for syntax using font-lock syntax.
 KEYWORDS obeys the format used in `font-lock-syntactic-keywords'.
-The return value is a function suitable for `syntax-propertize-function'."
+The return value is a function (with two paremeters, START and
+END) suitable for `syntax-propertize-function'."
   (lambda (start end)
     (with-no-warnings
       (let ((font-lock-syntactic-keywords keywords))
@@ -283,7 +284,7 @@ The return value is a function suitable for `syntax-propertize-function'."
         (setq keywords font-lock-syntactic-keywords)))))
 
 (defun syntax-propertize (pos)
-  "Ensure that syntax-table properties are set until POS."
+  "Ensure that syntax-table properties are set until POS (a buffer point)."
   (when (< syntax-propertize--done pos)
     (if (null syntax-propertize-function)
         (setq syntax-propertize--done (max (point-max) pos))
