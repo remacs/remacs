@@ -1543,27 +1543,29 @@ not for everybody."
 	buf))))
 
 ;;;###autoload
-(defun custom-buffer-create (options &optional name description)
+(defun custom-buffer-create (options &optional name _description)
   "Create a buffer containing OPTIONS.
 Optional NAME is the name of the buffer.
 OPTIONS should be an alist of the form ((SYMBOL WIDGET)...), where
 SYMBOL is a customization option, and WIDGET is a widget for editing
 that option.
-DESCRIPTION is unused."
-  (pop-to-buffer-same-window (custom-get-fresh-buffer (or name "*Customization*")))
-  (custom-buffer-create-internal options description))
+_DESCRIPTION is unused."
+  (pop-to-buffer-same-window
+   (custom-get-fresh-buffer (or name "*Customization*")))
+  (custom-buffer-create-internal options))
 
 ;;;###autoload
-(defun custom-buffer-create-other-window (options &optional name description)
+(defun custom-buffer-create-other-window (options &optional name _description)
   "Create a buffer containing OPTIONS, and display it in another window.
 The result includes selecting that window.
 Optional NAME is the name of the buffer.
 OPTIONS should be an alist of the form ((SYMBOL WIDGET)...), where
 SYMBOL is a customization option, and WIDGET is a widget for editing
-that option."
+that option.
+_DESCRIPTION is unused."
   (unless name (setq name "*Customization*"))
   (switch-to-buffer-other-window (custom-get-fresh-buffer name))
-  (custom-buffer-create-internal options description))
+  (custom-buffer-create-internal options))
 
 (defcustom custom-reset-button-menu t
   "If non-nil, only show a single reset button in customize buffers.
