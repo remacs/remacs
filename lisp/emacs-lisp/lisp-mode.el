@@ -1216,8 +1216,15 @@ and initial semicolons."
       ;;
       ;; The `fill-column' is temporarily bound to
       ;; `emacs-lisp-docstring-fill-column' if that value is an integer.
-      (let ((paragraph-start (concat paragraph-start
-				     "\\|\\s-*\\([(;:\"]\\|`(\\|#'(\\)"))
+      (let ((paragraph-start
+             (concat paragraph-start
+                     (format "\\|\\s-*\\([(;%s\"]\\|`(\\|#'(\\)"
+                             ;; If we're inside a string (like the doc
+                             ;; string), don't consider a colon to be
+                             ;; a paragraph-start character.
+                             (if (nth 3 (syntax-ppss))
+                                 ""
+                               ":"))))
 	    (paragraph-separate
 	     (concat paragraph-separate "\\|\\s-*\".*[,\\.]$"))
             (fill-column (if (and (integerp emacs-lisp-docstring-fill-column)
