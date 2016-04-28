@@ -6663,11 +6663,14 @@ message to that effect instead of signaling an error."
     ;; Simulate the message printed by `ls'.
     (insert (format "%s: No such file or directory\n" file))))
 
-(defvar kill-emacs-query-functions nil
+(defcustom kill-emacs-query-functions nil
   "Functions to call with no arguments to query about killing Emacs.
 If any of these functions returns nil, killing Emacs is canceled.
 `save-buffers-kill-emacs' calls these functions, but `kill-emacs',
-the low level primitive, does not.  See also `kill-emacs-hook'.")
+the low level primitive, does not.  See also `kill-emacs-hook'."
+  :type 'hook
+  :version "25.2"
+  :group 'convenience)
 
 (defcustom confirm-kill-emacs nil
   "How to ask for confirmation when leaving Emacs.
@@ -6726,7 +6729,8 @@ if any returns nil.  If `confirm-kill-emacs' is non-nil, calls it."
 
 (defun save-buffers-kill-terminal (&optional arg)
   "Offer to save each buffer, then kill the current connection.
-If the current frame has no client, kill Emacs itself.
+If the current frame has no client, kill Emacs itself using
+`save-buffers-kill-emacs'.
 
 With prefix ARG, silently save all file-visiting buffers, then kill.
 
