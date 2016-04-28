@@ -1966,7 +1966,9 @@ controls the behavior, rather than this variable.  */);
 
   DEFVAR_BOOL ("enable-recursive-minibuffers", enable_recursive_minibuffers,
 	       doc: /* Non-nil means to allow minibuffer commands while in the minibuffer.
-This variable makes a difference whenever the minibuffer window is active. */);
+This variable makes a difference whenever the minibuffer window is active.
+Also see `minibuffer-depth-indicator-mode', which may be handy if this
+variable is non-nil. */);
   enable_recursive_minibuffers = 0;
 
   DEFVAR_LISP ("minibuffer-completion-table", Vminibuffer_completion_table,
