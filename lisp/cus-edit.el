@@ -1549,7 +1549,7 @@ Optional NAME is the name of the buffer.
 OPTIONS should be an alist of the form ((SYMBOL WIDGET)...), where
 SYMBOL is a customization option, and WIDGET is a widget for editing
 that option.
-_DESCRIPTION is unused."
+DESCRIPTION is unused."
   (pop-to-buffer-same-window
    (custom-get-fresh-buffer (or name "*Customization*")))
   (custom-buffer-create-internal options))
@@ -1562,7 +1562,7 @@ Optional NAME is the name of the buffer.
 OPTIONS should be an alist of the form ((SYMBOL WIDGET)...), where
 SYMBOL is a customization option, and WIDGET is a widget for editing
 that option.
-_DESCRIPTION is unused."
+DESCRIPTION is unused."
   (unless name (setq name "*Customization*"))
   (switch-to-buffer-other-window (custom-get-fresh-buffer name))
   (custom-buffer-create-internal options))
