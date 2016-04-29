@@ -5218,7 +5218,7 @@ This macro does what `save-excursion' did before Emacs 25.1."
 
 (defcustom use-empty-active-region nil
   "Whether \"region-aware\" commands should act on empty regions.
-If nil, region-aware commands treat empty regions as inactive.
+If nil, region-aware commands treat the empty region as inactive.
 If non-nil, region-aware commands treat the region as active as
 long as the mark is active, even if the region is empty.
 
