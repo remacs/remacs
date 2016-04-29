@@ -5806,6 +5806,7 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;; This macro might do hidden buffer changes.
   `(let (res)
+     (setq c-last-identifier-range nil)
      (while (if (setq res ,(if (eq type 'type)
 			       `(c-forward-type)
 			     `(c-forward-name)))
@@ -8928,11 +8929,11 @@ comment at the start of cc-engine.el for more info."
 		      (not (looking-at "=")))))
       b-pos)))
 
-(defun c-backward-colon-prefixed-type ()
-  ;; We're at the token after what might be a type prefixed with a colon.  Try
-  ;; moving backward over this type and the colon.  On success, return t and
-  ;; leave point before colon; on failure, leave point unchanged.  Will clobber
-  ;; match data.
+(defun c-backward-typed-enum-colon ()
+  ;; We're at a "{" which might be the opening brace of a enum which is
+  ;; strongly typed (by a ":" followed by a type).  If this is the case, leave
+  ;; point before the colon and return t.  Otherwise leave point unchanged and return nil.
+  ;; Match data will be clobbered.
   (let ((here (point))
 	(colon-pos nil))
     (save-excursion
@@ -8941,7 +8942,10 @@ comment at the start of cc-engine.el for more info."
 	       (or (not (looking-at "\\s)"))
 		   (c-go-up-list-backward))
 	       (cond
-		((eql (char-after) ?:)
+		((and (eql (char-after) ?:)
+		      (save-excursion
+			(c-backward-syntactic-ws)
+			(c-on-identifier)))
 		 (setq colon-pos (point))
 		 (forward-char)
 		 (c-forward-syntactic-ws)
@@ -8965,7 +8969,7 @@ comment at the start of cc-engine.el for more info."
   (let ((here (point))
 	up-sexp-pos before-identifier)
     (when c-recognize-post-brace-list-type-p
-      (c-backward-colon-prefixed-type))
+      (c-backward-typed-enum-colon))
     (while
 	(and
 	 (eq (c-backward-token-2) 0)
