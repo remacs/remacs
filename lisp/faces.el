@@ -1004,6 +1004,10 @@ a single face name."
     ;; to define DEFAULT if MULTIPLE is nil.
     (setq default (car (split-string default crm-separator t))))
 
+  ;; Older versions of `read-face-name' did not append ": " to the
+  ;; prompt, so there are third party libraries that have that in the
+  ;; prompt.  If so, remove it.
+  (setq prompt (replace-regexp-in-string ": ?\\'" "" prompt))
   (let ((prompt (if default
                     (format-message "%s (default `%s'): " prompt default)
                   (format "%s: " prompt)))
