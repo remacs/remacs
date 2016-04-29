@@ -133,6 +133,9 @@ run.  One convenient function to use as the value of
 @code{confirm-kill-emacs} is the function @code{yes-or-no-p}.  The
 default value of @code{confirm-kill-emacs} is @code{nil}.
 
+  To further customize what happens when Emacs is exiting, see
+@ref{Killing Emacs,,, elisp, The GNU Emacs Lisp Reference Manual}.
+
 @findex kill-emacs
   To kill Emacs without being prompted about saving, type @kbd{M-x
 kill-emacs}.
