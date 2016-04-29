@@ -5829,7 +5829,7 @@ The value is a floating-point number."
     (/ (float (- (nth 3 edges) (nth 1 edges))) dlh)))
 
 ;; Returns non-nil if partial move was done.
-(defun line-move-partial (arg noerror to-end)
+(defun line-move-partial (arg noerror &optional _to-end)
   (if (< arg 0)
       ;; Move backward (up).
       ;; If already vscrolled, reduce vscroll
@@ -5927,7 +5927,7 @@ The value is a floating-point number."
 	  ;; discrepancies between that and DLH.
 	  (if (and rowh rbot (>= (- (+ rowh rbot) winh) 1))
 	      (set-window-vscroll nil dlh t))
-	  (line-move-1 arg noerror to-end)
+	  (line-move-1 arg noerror)
 	  t)
 	 ;; If there are lines above the last line, scroll-up one line.
 	 ((and vpos (> vpos 0))
@@ -5944,7 +5944,7 @@ The value is a floating-point number."
 ;; scrolling with cursor motion.  But so far we don't have
 ;; a cleaner solution to the problem of making C-n do something
 ;; useful given a tall image.
-(defun line-move (arg &optional noerror to-end try-vscroll)
+(defun line-move (arg &optional noerror _to-end try-vscroll)
   "Move forward ARG lines.
 If NOERROR, don't signal an error if we can't move ARG lines.
 TO-END is unused.
@@ -5952,7 +5952,7 @@ TRY-VSCROLL controls whether to vscroll tall lines: if either
 `auto-window-vscroll' or TRY-VSCROLL is nil, this function will
 not vscroll."
   (if noninteractive
-      (line-move-1 arg noerror to-end)
+      (line-move-1 arg noerror)
     (unless (and auto-window-vscroll try-vscroll
 		 ;; Only vscroll for single line moves
 		 (= (abs arg) 1)
@@ -5962,7 +5962,7 @@ not vscroll."
 		 ;; But don't vscroll in a keyboard macro.
 		 (not defining-kbd-macro)
 		 (not executing-kbd-macro)
-		 (line-move-partial arg noerror to-end))
+		 (line-move-partial arg noerror))
       (set-window-vscroll nil 0 t)
       (if (and line-move-visual
 	       ;; Display-based column are incompatible with goal-column.
@@ -5994,7 +5994,7 @@ not vscroll."
 		  (set-window-vscroll
 		   nil
 		   (- lh dlh) t))))
-	(line-move-1 arg noerror to-end)))))
+	(line-move-1 arg noerror)))))
 
 ;; Display-based alternative to line-move-1.
 ;; Arg says how many lines to move.  The value is t if we can move the
