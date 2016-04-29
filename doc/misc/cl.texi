@@ -4501,8 +4501,9 @@ referenced by @code{cl-return} or @code{cl-return-from} inside the block.
 @appendix Common Lisp Compatibility
 
 @noindent
-The following is a list of all known incompatibilities between this
-package and Common Lisp as documented in Steele (2nd edition).
+The following is a list of some of the most important
+incompatibilities between this package and Common Lisp as documented
+in Steele (2nd edition).
 
 The word @code{cl-defun} is required instead of @code{defun} in order
 to use extended Common Lisp argument lists in a function.  Likewise,
