@@ -1255,7 +1255,7 @@ C-x} exits two folds and leaves the text and subheadings exposed.
 folds, and for showing and hiding text:
 
 @table @asis
-@item @kbd{C-M-Mouse-1} zooms in on the heading clicked on
+@item @kbd{C-M-mouse-1} zooms in on the heading clicked on
 @itemize @w{}
 @item
 single click: expose body.
@@ -1266,7 +1266,7 @@ triple click: expose body and subheadings.
 @item
 quad click: expose entire subtree.
 @end itemize
-@item @kbd{C-M-Mouse-2} exposes text under the heading clicked on
+@item @kbd{C-M-mouse-2} exposes text under the heading clicked on
 @itemize @w{}
 @item
 single click: expose body.
@@ -1277,7 +1277,7 @@ triple click: expose body and subheadings.
 @item
 quad click: expose entire subtree.
 @end itemize
-@item @kbd{C-M-Mouse-3} hides text under the heading clicked on or exits fold
+@item @kbd{C-M-mouse-3} hides text under the heading clicked on or exits fold
 @itemize @w{}
 @item
 single click: hide subtree.
@@ -2156,7 +2156,7 @@ want to set the justification style to @code{unfilled}
 
   The easiest way to alter properties is with the @samp{Text
 Properties} menu.  You can get to this menu from the @samp{Edit} menu
-in the menu bar (@pxref{Menu Bar}), or with @kbd{C-Mouse-2}
+in the menu bar (@pxref{Menu Bar}), or with @kbd{C-mouse-2}
 (@pxref{Menu Mouse Clicks}).  Some of the commands in the @samp{Text
 Properties} menu are listed below (you can also invoke them with
 @kbd{M-x}):

@@ -343,7 +343,7 @@ invoke it with.  In our example, it would say that you can invoke
 
   For more information about a function definition, variable or symbol
 property listed in an apropos buffer, you can click on it with
-@kbd{Mouse-1} or @kbd{Mouse-2}, or move there and type @key{RET}.
+@kbd{mouse-1} or @kbd{mouse-2}, or move there and type @key{RET}.
 
   When you specify more than one word in the apropos pattern, a name
 must contain at least two of the words in order to match.  Thus, if
@@ -404,8 +404,8 @@ Follow a cross reference at point (@code{help-follow}).
 Move point forward to the next hyperlink (@code{forward-button}).
 @item S-@key{TAB}
 Move point back to the previous hyperlink (@code{backward-button}).
-@item Mouse-1
-@itemx Mouse-2
+@item mouse-1
+@itemx mouse-2
 Follow a hyperlink that you click on.
 @item C-c C-c
 Show all documentation about the symbol at point
@@ -427,7 +427,7 @@ Go back to the previous help topic (@code{help-go-back}).
 appears in the documentation in the help buffer, it is normally an
 underlined @dfn{hyperlink}.  To view the associated documentation,
 move point there and type @key{RET} (@code{help-follow}), or click on
-the hyperlink with @kbd{Mouse-1} or @kbd{Mouse-2}.  Doing so replaces
+the hyperlink with @kbd{mouse-1} or @kbd{mouse-2}.  Doing so replaces
 the contents of the help buffer; to retrace your steps, type @kbd{C-c
 C-b} (@code{help-go-back}).  While retracing your steps, you can go
 forward by using @kbd{C-c C-b} (@code{help-go-forward}).

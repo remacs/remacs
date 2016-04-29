@@ -1305,7 +1305,7 @@ count as blocks.
 @kindex C-c @@ C-M-s
 @kindex C-c @@ C-r
 @kindex C-c @@ C-l
-@kindex S-Mouse-2
+@kindex S-mouse-2
 @table @kbd
 @item C-c @@ C-h
 Hide the current block (@code{hs-hide-block}).
@@ -1313,7 +1313,7 @@ Hide the current block (@code{hs-hide-block}).
 Show the current block (@code{hs-show-block}).
 @item C-c @@ C-c
 Either hide or show the current block (@code{hs-toggle-hiding}).
-@item S-Mouse-2
+@item S-mouse-2
 Toggle hiding for the block you click on (@code{hs-mouse-toggle-hiding}).
 @item C-c @@ C-M-h
 Hide all top-level blocks (@code{hs-hide-all}).

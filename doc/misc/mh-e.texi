@@ -1566,7 +1566,7 @@ M-x mh-rmail @key{RET} bob @key{RET}}). @xref{Folders}.}.
 @findex display-time
 @vindex read-mail-command
 
-There are some commands that need to read mail, such as @kbd{Mouse-2}
+There are some commands that need to read mail, such as @kbd{mouse-2}
 over the @samp{Mail} button that @code{display-time} adds to the mode
 line. You can configure Emacs to have these commands use MH-E by
 setting the option @code{read-mail-command} to @samp{mh-rmail}.
@@ -1835,9 +1835,9 @@ minibuffer (@code{mh-prefix-help}).
 Unpack message created with @command{uudecode} or @command{shar}
 (@code{mh-store-msg}).
 @c -------------------------
-@kindex Mouse-2
+@kindex mouse-2
 @findex mh-show-mouse
-@item Mouse-2
+@item mouse-2
 Move point to mouse event and show message (@code{mh-show-mouse}).
 @end table
 
@@ -1845,12 +1845,12 @@ Within the MH-Show buffer, the following command is defined.
 
 @table @kbd
 @kindex @key{RET}
-@kindex Mouse-1
-@kindex Mouse-2
+@kindex mouse-1
+@kindex mouse-2
 @findex mh-press-button
 @item @key{RET}
-@itemx Mouse-1
-@itemx Mouse-2
+@itemx mouse-1
+@itemx mouse-2
 View contents of button (@code{mh-press-button}).
 @end table
 
@@ -2022,10 +2022,10 @@ detail in the following sections.
 @kindex @key{BS}
 @kindex @key{RET}
 @kindex @key{SPC}
-@kindex Mouse-2
+@kindex mouse-2
 
 The command @key{RET} (@code{mh-show}) displays the message that the
-cursor is on while @kbd{Mouse-2} (@code{mh-show-mouse}) displays the
+cursor is on while @kbd{mouse-2} (@code{mh-show-mouse}) displays the
 message that the mouse cursor is on. If the message is already
 displayed, it scrolls to the beginning of the message. Use @key{SPC}
 (@code{mh-page-msg}) and @key{BS} (@code{mh-previous-page}) to move
@@ -2201,13 +2201,13 @@ highlighting of citations entirely, choose @samp{None}.
 @cindex links, following
 @findex goto-address-at-point
 @kindex C-c @key{RET}
-@kindex Mouse-2
+@kindex mouse-2
 @vindex goto-address-highlight-p
 
 Email addresses and URLs in the message are highlighted if the option
 @code{goto-address-highlight-p} is on, which it is by default. To view
 the web page for a highlighted URL or to send a message using a
-highlighted email address, use @kbd{Mouse-2} or @kbd{C-c @key{RET}}
+highlighted email address, use @kbd{mouse-2} or @kbd{C-c @key{RET}}
 (@code{goto-address-at-point}). @xref{Sending Mail}, to see how to
 configure Emacs to send the message using MH-E.
 
@@ -2337,11 +2337,11 @@ Attachments in MH-E are indicated by @dfn{buttons} like this:
 @kindex @key{RET}
 @kindex K @key{TAB}
 @kindex K S-@key{TAB}
-@kindex Mouse-1
-@kindex Mouse-2
+@kindex mouse-1
+@kindex mouse-2
 
-To view the contents of the button, use either @kbd{Mouse-1} or
-@kbd{Mouse-2} on the button or @key{RET} (@code{mh-press-button}) when
+To view the contents of the button, use either @kbd{mouse-1} or
+@kbd{mouse-2} on the button or @key{RET} (@code{mh-press-button}) when
 the cursor is over the button. This command is a toggle so if you use
 it again on the same attachment, it is hidden. If Emacs does not know
 how to display the attachment, then Emacs offers to save the
@@ -2561,11 +2561,11 @@ includes the results of a quick poll of MH-E users from 2005-12-23.
 @table @asis
 @cindex browser, @samp{w3m}
 @cindex @samp{w3m}
-@kindex Mouse-2
+@kindex mouse-2
 @item @samp{w3m} 7
 The @samp{w3m} browser requires an external program. It's quick,
 produces pretty nice output, and best of all, it's the only browser
-that highlights links. These can be clicked with @kbd{Mouse-2} to view
+that highlights links. These can be clicked with @kbd{mouse-2} to view
 the content of the link in @samp{w3m}. The @samp{w3m} browser handles
 tables well and actually respects the table's width parameter (which
 can cause text to wrap if the author didn't anticipate that the page
@@ -2650,7 +2650,7 @@ documentation for the Gnus command @kbd{W h} (see section
 @cindex @file{.emacs}
 @cindex files, @file{.emacs}
 @findex browse-url-at-mouse
-@kindex S-Mouse-2
+@kindex S-mouse-2
 
 A useful key binding that you can add to @file{~/.emacs} is the
 following which displays an HTML link or textual URL in an external
@@ -6261,7 +6261,7 @@ containing the value for the field is given.
 @findex mh-visit-folder
 @kindex F v
 @kindex M-x speedbar
-@kindex Mouse-2
+@kindex mouse-2
 
 You can also use the speedbar
 @ifnothtml
@@ -6275,7 +6275,7 @@ Speedbar Frames} in @cite{The GNU Emacs Manual})
 to view your folders. To bring up the speedbar, run @kbd{M-x speedbar
 @key{RET}}. You will see a new frame appear with all of your MH
 folders. Folders with unseen messages appear in boldface. Click on a
-folder name with @kbd{Mouse-2} to visit that folder in a similar
+folder name with @kbd{mouse-2} to visit that folder in a similar
 fashion to the command @kbd{F v} (@code{mh-visit-folder})
 (@pxref{Folders}). Click on the @samp{+} icon to expand and view the
 sub-folders of that folder.
@@ -6310,9 +6310,9 @@ count before the next automatic update (@code{mh-speed-refresh}).
 
 @findex delete-frame
 @kindex C-x 5 0
-@kindex Mouse-3
+@kindex mouse-3
 
-You can click on @kbd{Mouse-3} to bring up a context menu that
+You can click on @kbd{mouse-3} to bring up a context menu that
 contains these items. Dismiss the speedbar with @kbd{C-x 5 0}
 (@code{delete-frame}).
 

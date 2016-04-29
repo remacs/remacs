@@ -432,7 +432,7 @@ to the master repository.
 
   On a graphical display, you can move the mouse over this mode line
 indicator to pop up a tool-tip, which displays a more verbose
-description of the version control status.  Pressing @kbd{Mouse-1}
+description of the version control status.  Pressing @kbd{mouse-1}
 over the indicator pops up a menu of VC commands, identical to
 @samp{Tools / Version Control} on the menu bar.
 
@@ -1335,7 +1335,7 @@ their single-buffer counterparts (@pxref{Search}).
 @cindex stashes in version control
 @cindex shelves in version control
   The above commands are also available via the menu bar, and via a
-context menu invoked by @kbd{Mouse-2}.  Furthermore, some VC backends
+context menu invoked by @kbd{mouse-2}.  Furthermore, some VC backends
 use the menu to provide extra backend-specific commands.  For example,
 Git and Bazaar allow you to manipulate @dfn{stashes} and @dfn{shelves}
 (where are a way to temporarily put aside uncommitted changes, and
@@ -1813,7 +1813,7 @@ object-oriented language, or if there's a function and a variable by
 the same name), the command shows the candidate definitions in a
 @file{*xref*} buffer, together with the files in which these
 definitions are found.  Selecting one of these candidates by typing
-@kbd{@key{RET}} or clicking @kbd{Mouse-2} will pop a buffer showing
+@kbd{@key{RET}} or clicking @kbd{mouse-2} will pop a buffer showing
 the corresponding definition.
 
   When entering the identifier argument to @kbd{M-.}, the usual
@@ -1865,7 +1865,7 @@ the special XREF mode:
 
 @table @kbd
 @item @key{RET}
-@itemx Mouse-2
+@itemx mouse-2
 Display the reference on the current line and bury the @file{*xref*}
 buffer.
 @item n
