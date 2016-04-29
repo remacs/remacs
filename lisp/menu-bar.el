@@ -539,13 +539,17 @@
     (yank)))
 
 (defun clipboard-kill-ring-save (beg end &optional region)
-  "Copy region to kill ring, and save in the GUI's clipboard."
+  "Copy region to kill ring, and save in the GUI's clipboard.
+If the optional argument REGION is non-nil, the function ignores
+BEG and END, and saves the current region instead."
   (interactive "r\np")
   (let ((gui-select-enable-clipboard t))
     (kill-ring-save beg end region)))
 
 (defun clipboard-kill-region (beg end &optional region)
-  "Kill the region, and save it in the GUI's clipboard."
+  "Kill the region, and save it in the GUI's clipboard.
+If the optional argument REGION is non-nil, the function ignores
+BEG and END, and kills the current region instead."
   (interactive "r\np")
   (let ((gui-select-enable-clipboard t))
     (kill-region beg end region)))
