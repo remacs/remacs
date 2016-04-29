@@ -3411,7 +3411,7 @@ comment at the start of cc-engine.el for more info."
 		(< c-state-old-cpp-beg here))
 	   (c-with-all-but-one-cpps-commented-out
 	    c-state-old-cpp-beg
-	    (min c-state-old-cpp-end here)
+	    c-state-old-cpp-end
 	    (c-invalidate-state-cache-1 here))
 	 (c-with-cpps-commented-out
 	  (c-invalidate-state-cache-1 here))))
