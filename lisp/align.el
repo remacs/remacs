@@ -1051,7 +1051,9 @@ to be colored."
 
 ;;;###autoload
 (defun align-newline-and-indent ()
-  "A replacement function for `newline-and-indent', aligning as it goes."
+  "A replacement function for `newline-and-indent', aligning as it goes.
+The alignment is done by calling `align' on the region that was
+indented."
   (interactive)
   (let ((separate (or (if (and (symbolp align-region-separate)
 			       (boundp align-region-separate))
