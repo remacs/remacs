@@ -370,7 +370,7 @@ no text on the right side of the rectangle."
   "Delete all whitespace following a specified column in each line.
 The left edge of the rectangle specifies the position in each line
 at which whitespace deletion should begin.  On each line in the
-rectangle, all continuous whitespace starting at that column is deleted.
+rectangle, all contiguous whitespace starting at that column is deleted.
 
 When called from a program the rectangle's corners are START and END.
 With a prefix (or a FILL) argument, also fill too short lines."
