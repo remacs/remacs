@@ -219,7 +219,7 @@ set the variable @code{enable-recursive-minibuffers} to @code{t}.
 
 @findex minibuffer-inactive-mode
   When not active, the minibuffer is in @code{minibuffer-inactive-mode},
-and clicking @kbd{Mouse-1} there shows the @file{*Messages*} buffer.
+and clicking @kbd{mouse-1} there shows the @file{*Messages*} buffer.
 If you use a dedicated frame for minibuffers, Emacs also recognizes
 certain keys there, for example @kbd{n} to make a new frame.
 
@@ -337,8 +337,8 @@ used with the completion list:
 
 @table @kbd
 @findex mouse-choose-completion
-@item Mouse-1
-@itemx Mouse-2
+@item mouse-1
+@itemx mouse-2
 Clicking mouse button 1 or 2 on a completion alternative chooses it
 (@code{mouse-choose-completion}).
 

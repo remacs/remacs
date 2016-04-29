@@ -3707,7 +3707,7 @@ properties.  For simplicity, we will refer to the clickable text as a
 
   Implementing a link involves three separate steps: (1) indicating
 clickability when the mouse moves over the link; (2) making @key{RET}
-or @kbd{Mouse-2} on that link do something; and (3) setting up a
+or @kbd{mouse-2} on that link do something; and (3) setting up a
 @code{follow-link} condition so that the link obeys
 @code{mouse-1-click-follows-link}.
 
@@ -3729,10 +3729,10 @@ names are clickable:
          help-echo "mouse-2: visit this file in other window")))
 @end smallexample
 
-  To make the link clickable, bind @key{RET} and @kbd{Mouse-2} to
+  To make the link clickable, bind @key{RET} and @kbd{mouse-2} to
 commands that perform the desired action.  Each command should check
 to see whether it was called on a link, and act accordingly.  For
-instance, Dired's major mode keymap binds @kbd{Mouse-2} to the
+instance, Dired's major mode keymap binds @kbd{mouse-2} to the
 following command:
 
 @smallexample
@@ -3775,12 +3775,12 @@ bind it within the link text, using the @code{keymap} text property
 @noindent
 With this method, you can easily define different commands for
 different links.  Furthermore, the global definition of @key{RET} and
-@kbd{Mouse-2} remain available for the rest of the text in the buffer.
+@kbd{mouse-2} remain available for the rest of the text in the buffer.
 
 @vindex mouse-1-click-follows-link
-  The basic Emacs command for clicking on links is @kbd{Mouse-2}.
+  The basic Emacs command for clicking on links is @kbd{mouse-2}.
 However, for compatibility with other graphical applications, Emacs
-also recognizes @kbd{Mouse-1} clicks on links, provided the user
+also recognizes @kbd{mouse-1} clicks on links, provided the user
 clicks on the link quickly without moving the mouse.  This behavior is
 controlled by the user option @code{mouse-1-click-follows-link}.
 @xref{Mouse References,,, emacs, The GNU Emacs Manual}.
@@ -3794,9 +3794,9 @@ mode keymap or a local keymap specified via the @code{keymap} text
 property).  The value of the @code{follow-link} property, or the
 binding for the @code{follow-link} event, acts as a condition for
 the link action.  This condition tells Emacs two things: the
-circumstances under which a @kbd{Mouse-1} click should be regarded as
+circumstances under which a @kbd{mouse-1} click should be regarded as
 occurring inside the link, and how to compute an action code
-that says what to translate the @kbd{Mouse-1} click into.  The link
+that says what to translate the @kbd{mouse-1} click into.  The link
 action condition can be one of the following:
 
 @table @asis
@@ -3805,7 +3805,7 @@ If the condition is the symbol @code{mouse-face}, a position is inside
 a link if there is a non-@code{nil} @code{mouse-face} property at that
 position.  The action code is always @code{t}.
 
-For example, here is how Info mode handles @key{Mouse-1}:
+For example, here is how Info mode handles @key{mouse-1}:
 
 @smallexample
 (define-key Info-mode-map [follow-link] 'mouse-face)
@@ -3817,7 +3817,7 @@ is inside a link if @code{(@var{func} @var{pos})} evaluates to
 non-@code{nil}.  The value returned by @var{func} serves as the action
 code.
 
-For example, here is how pcvs enables @kbd{Mouse-1} to follow links on
+For example, here is how pcvs enables @kbd{mouse-1} to follow links on
 file names only:
 
 @smallexample
@@ -3835,27 +3835,27 @@ to the entire buffer).
 @end table
 
 @noindent
-The action code tells @kbd{Mouse-1} how to follow the link:
+The action code tells @kbd{mouse-1} how to follow the link:
 
 @table @asis
 @item a string or vector
-If the action code is a string or vector, the @kbd{Mouse-1} event is
+If the action code is a string or vector, the @kbd{mouse-1} event is
 translated into the first element of the string or vector; i.e., the
-action of the @kbd{Mouse-1} click is the local or global binding of
+action of the @kbd{mouse-1} click is the local or global binding of
 that character or symbol.  Thus, if the action code is @code{"foo"},
-@kbd{Mouse-1} translates into @kbd{f}.  If it is @code{[foo]},
-@kbd{Mouse-1} translates into @key{foo}.
+@kbd{mouse-1} translates into @kbd{f}.  If it is @code{[foo]},
+@kbd{mouse-1} translates into @key{foo}.
 
 @item anything else
-For any other non-@code{nil} action code, the @kbd{Mouse-1} event is
-translated into a @kbd{Mouse-2} event at the same position.
+For any other non-@code{nil} action code, the @kbd{mouse-1} event is
+translated into a @kbd{mouse-2} event at the same position.
 @end table
 
-  To define @kbd{Mouse-1} to activate a button defined with
+  To define @kbd{mouse-1} to activate a button defined with
 @code{define-button-type}, give the button a @code{follow-link}
 property.  The property value should be a link action condition, as
 described above.  @xref{Buttons}.  For example, here is how Help mode
-handles @kbd{Mouse-1}:
+handles @kbd{mouse-1}:
 
 @smallexample
 (define-button-type 'help-xref
@@ -3863,11 +3863,11 @@ handles @kbd{Mouse-1}:
   'action #'help-button-action)
 @end smallexample
 
-  To define @kbd{Mouse-1} on a widget defined with
+  To define @kbd{mouse-1} on a widget defined with
 @code{define-widget}, give the widget a @code{:follow-link} property.
 The property value should be a link action condition, as described
 above.  For example, here is how the @code{link} widget specifies that
-a @key{Mouse-1} click shall be translated to @key{RET}:
+a @key{mouse-1} click shall be translated to @key{RET}:
 
 @smallexample
 (define-widget 'link 'item

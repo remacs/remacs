@@ -203,10 +203,10 @@ saved in the search ring is specified by the variable
 @cindex incremental search, edit search string
 @cindex interactively edit search string
 @kindex M-e @r{(Incremental search)}
-@kindex Mouse-1 @r{in the minibuffer (Incremental Search)}
+@kindex mouse-1 @r{in the minibuffer (Incremental Search)}
   To edit the current search string in the minibuffer without
 replacing it with items from the search ring, type @kbd{M-e} or click
-@kbd{Mouse-1} in the minibuffer.  Type @key{RET}, @kbd{C-s} or
+@kbd{mouse-1} in the minibuffer.  Type @key{RET}, @kbd{C-s} or
 @kbd{C-r} to finish editing the string and search for it.  Type
 @kbd{C-f} or @kbd{@key{RIGHT}} to add to the search string characters
 following point from the buffer from which you started the search.
@@ -234,7 +234,7 @@ end of a line, it appends the next line.  With a prefix argument
 
 @kindex C-y @r{(Incremental search)}
 @kindex M-y @r{(Incremental search)}
-@kindex Mouse-2 @r{in the minibuffer (Incremental search)}
+@kindex mouse-2 @r{in the minibuffer (Incremental search)}
 @findex isearch-yank-kill
 @findex isearch-yank-pop
 @findex isearch-yank-x-selection
@@ -242,7 +242,7 @@ end of a line, it appends the next line.  With a prefix argument
 appends the current kill to the search string.  @kbd{M-y}
 (@code{isearch-yank-pop}), if called after @kbd{C-y}, replaces that
 appended text with an earlier kill, similar to the usual @kbd{M-y}
-(@code{yank-pop}) command (@pxref{Yanking}).  Clicking @kbd{Mouse-2}
+(@code{yank-pop}) command (@pxref{Yanking}).  Clicking @kbd{mouse-2}
 in the echo area appends the current X selection (@pxref{Primary
 Selection}) to the search string (@code{isearch-yank-x-selection}).
 

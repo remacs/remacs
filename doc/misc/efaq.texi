@@ -2408,7 +2408,7 @@ error messages, inserts them into a special buffer called
 the source.  Type @kbd{C-x `} to step through the offending lines one by
 one (starting with Emacs 22, you can also use @kbd{M-g M-p} and
 @kbd{M-g M-n} to go to the previous and next matches directly).  Click
-@kbd{Mouse-2} or press @key{RET} on a message text in the
+@kbd{mouse-2} or press @key{RET} on a message text in the
 @file{*compilation*} buffer to go to the line whose number is mentioned
 in that message.
 
@@ -3888,7 +3888,7 @@ is how to make @kbd{H-M-RIGHT} move forward a word:
 Not all modifiers are permitted in all situations.  @key{Hyper},
 @key{Super}, and @key{Alt} are not available on Unix character
 terminals.  Non-@acronym{ASCII} keys and mouse events (e.g., @kbd{C-=} and
-@kbd{Mouse-1}) also fall under this category.
+@kbd{mouse-1}) also fall under this category.
 
 @end itemize
 

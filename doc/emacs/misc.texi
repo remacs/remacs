@@ -1217,7 +1217,7 @@ submit the copy as input with @key{RET}.  If you wish, you can edit
 the copy before resubmitting it.  If you use this command on an output
 line, it copies that line to the end of the buffer.
 
-@item Mouse-2
+@item mouse-2
 If @code{comint-use-prompt-regexp} is @code{nil} (the default), copy
 the old input command that you click on, inserting the copy at the end
 of the buffer (@code{comint-insert-input}).  If
@@ -1226,7 +1226,7 @@ not over old input, just yank as usual.
 @end table
 
   Moving to a previous input and then copying it with @kbd{C-c
-@key{RET}} or @kbd{Mouse-2} produces the same results---the same
+@key{RET}} or @kbd{mouse-2} produces the same results---the same
 buffer contents---that you would get by using @kbd{M-p} enough times
 to fetch that previous input from the history list.  However, @kbd{C-c
 @key{RET}} copies the text from the buffer, which can be different
@@ -2097,7 +2097,7 @@ You can also type @kbd{M-x pr-interface @key{RET}}; this creates a
 @file{*Printing Interface*} buffer, similar to a customization buffer,
 where you can set the printing options.  After selecting what and how
 to print, you start the print job using the @samp{Print} button (click
-@kbd{Mouse-2} on it, or move point over it and type @key{RET}).  For
+@kbd{mouse-2} on it, or move point over it and type @key{RET}).  For
 further information on the various options, use the @samp{Interface
 Help} button.
 
@@ -2606,8 +2606,8 @@ typing @kbd{M-x goto-address-mode}.  When this buffer-local minor mode
 is enabled, it finds all the URLs in the buffer, highlights them, and
 turns them into clickable buttons.  You can follow the URL by typing
 @kbd{C-c @key{RET}} (@code{goto-address-at-point}) while point is on
-its text; or by clicking with @kbd{Mouse-2}, or by clicking
-@kbd{Mouse-1} quickly (@pxref{Mouse References}).  Following a URL is
+its text; or by clicking with @kbd{mouse-2}, or by clicking
+@kbd{mouse-1} quickly (@pxref{Mouse References}).  Following a URL is
 done by calling @code{browse-url} as a subroutine
 (@pxref{Browse-URL}).
 
@@ -2680,12 +2680,12 @@ point (@code{dired-at-point}).
 @code{ffap-dired-other-frame}, analogous to @code{dired-other-frame}.
 @item M-x ffap-next
 Search buffer for next file name or URL, then find that file or URL.
-@item S-Mouse-3
-@kindex S-Mouse-3 @r{(FFAP)}
+@item S-mouse-3
+@kindex S-mouse-3 @r{(FFAP)}
 @code{ffap-at-mouse} finds the file guessed from text around the position
 of a mouse click.
-@item C-S-Mouse-3
-@kindex C-S-Mouse-3 @r{(FFAP)}
+@item C-S-mouse-3
+@kindex C-S-mouse-3 @r{(FFAP)}
 Display a menu of files and URLs mentioned in current buffer, then
 find the one you select (@code{ffap-menu}).
 @end table

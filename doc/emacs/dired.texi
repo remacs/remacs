@@ -353,8 +353,8 @@ file.  @xref{Windows}.
 Visit the file described on the current line, and display the buffer in
 another window, but do not select that window (@code{dired-display-file}).
 
-@item Mouse-1
-@itemx Mouse-2
+@item mouse-1
+@itemx mouse-2
 @findex dired-mouse-find-file-other-window
 Visit the file whose name you clicked on
 (@code{dired-mouse-find-file-other-window}).  This uses another window

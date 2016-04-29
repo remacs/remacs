@@ -499,7 +499,7 @@ the alternative.  Typing a number selects the associated alternative
 of the current row and uses it as input.
 
   @key{TAB} in these Chinese input methods displays a buffer showing
-all the possible characters at once; then clicking @kbd{Mouse-2} on
+all the possible characters at once; then clicking @kbd{mouse-2} on
 one of them selects that alternative.  The keys @kbd{C-f}, @kbd{C-b},
 @kbd{C-n}, @kbd{C-p}, and digits continue to work as usual, but they
 do the highlighting in the buffer showing the possible characters,
@@ -1036,7 +1036,7 @@ decoding it using coding system @var{right} instead.
 the current buffer (i.e., the coding system to use when saving or
 reverting the file).  You specify which coding system using the
 minibuffer.  You can also invoke this command by clicking with
-@kbd{Mouse-3} on the coding system indicator in the mode line
+@kbd{mouse-3} on the coding system indicator in the mode line
 (@pxref{Mode Line}).
 
   If you specify a coding system that cannot handle all the characters

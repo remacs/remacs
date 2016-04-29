@@ -51,9 +51,9 @@ modifier keys; a value to @code{left} means be the same key as
 @code{ns-alternate-modifier}; a value of @code{none} tells Emacs to
 ignore them.
 
-  @kbd{S-Mouse-1} adjusts the region to the click position,
-just like @kbd{Mouse-3} (@code{mouse-save-then-kill}); it does not pop
-up a menu for changing the default face, as @kbd{S-Mouse-1} normally
+  @kbd{S-mouse-1} adjusts the region to the click position,
+just like @kbd{mouse-3} (@code{mouse-save-then-kill}); it does not pop
+up a menu for changing the default face, as @kbd{S-mouse-1} normally
 does (@pxref{Text Scale}).  This change makes Emacs behave more like
 other Mac / GNUstep applications.
 
