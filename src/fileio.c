@@ -2662,13 +2662,13 @@ file_directory_p (char const *file)
 
 DEFUN ("file-accessible-directory-p", Ffile_accessible_directory_p,
        Sfile_accessible_directory_p, 1, 1, 0,
-       doc: /* Return t if file FILENAME names a directory you can open.
-For the value to be t, FILENAME must specify the name of a directory as a file,
-and the directory must allow you to open files in it.  In order to use a
-directory as a buffer's current directory, this predicate must return true.
-A directory name spec may be given instead; then the value is t
-if the directory so specified exists and really is a readable and
-searchable directory.  */)
+       doc: /* Return t if FILENAME names a directory you can open.
+For the value to be t, FILENAME must specify the name of a directory
+as a file, and the directory must allow you to open files in it.  In
+order to use a directory as a buffer's current directory, this
+predicate must return true.  A directory name spec may be given
+instead; then the value is t if the directory so specified exists and
+really is a readable and searchable directory.  */)
   (Lisp_Object filename)
 {
   Lisp_Object absname;
