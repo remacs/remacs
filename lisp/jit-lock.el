@@ -195,9 +195,11 @@ the variable `jit-lock-stealth-nice'.
 If you need to debug code run from jit-lock, see `jit-lock-debug-mode'."
   (setq jit-lock-mode arg)
   (cond
-   ((buffer-base-buffer)
-    ;; We're in an indirect buffer.  This doesn't work because jit-lock relies
-    ;; on the `fontified' text-property which is shared with the base buffer.
+   ((and (buffer-base-buffer)
+         jit-lock-mode)
+    ;; We're in an indirect buffer, and we're turning the mode on.
+    ;; This doesn't work because jit-lock relies on the `fontified'
+    ;; text-property which is shared with the base buffer.
     (setq jit-lock-mode nil)
     (message "Not enabling jit-lock: it does not work in indirect buffer"))
 
