@@ -412,8 +412,7 @@ Returns nil if MARKER points into a dead buffer.  */)
 }
 
 DEFUN ("marker-position", Fmarker_position, Smarker_position, 1, 1, 0,
-       doc: /* Return the position MARKER points at, as a character number.
-Returns nil if MARKER points nowhere.  */)
+       doc: /* Return the position of MARKER, or nil if it points nowhere.  */)
   (Lisp_Object marker)
 {
   CHECK_MARKER (marker);
