@@ -5075,7 +5075,7 @@ change the additional actions you can take on files."
 
 (defun clear-visited-file-modtime ()
   "Clear out records of last mod time of visited file.
-Next attempt to save will certainly not complain of a discrepancy."
+Next attempt to save will not complain of a discrepancy."
   (set-visited-file-modtime 0))
 
 (defun not-modified (&optional arg)
