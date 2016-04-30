@@ -8543,16 +8543,17 @@ displaying that processes's buffer."
 
 (defun window--adjust-process-windows ()
   "Update process window sizes to match the current window configuration."
-  (dolist (procwin (window--process-window-list))
-    (let ((process (car procwin)))
-      (with-demoted-errors "Error adjusting window size: %S"
-        (with-current-buffer (process-buffer process)
-          (let ((size (funcall
-                       (or (process-get process 'adjust-window-size-function)
-                           window-adjust-process-window-size-function)
-                       process (cdr procwin))))
-            (when size
-              (set-process-window-size process (cdr size) (car size)))))))))
+  (when (fboundp 'process-list)
+    (dolist (procwin (window--process-window-list))
+      (let ((process (car procwin)))
+        (with-demoted-errors "Error adjusting window size: %S"
+          (with-current-buffer (process-buffer process)
+            (let ((size (funcall
+                         (or (process-get process 'adjust-window-size-function)
+                             window-adjust-process-window-size-function)
+                         process (cdr procwin))))
+              (when size
+                (set-process-window-size process (cdr size) (car size))))))))))
 
 (add-hook 'window-configuration-change-hook 'window--adjust-process-windows)
 

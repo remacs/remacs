@@ -32,8 +32,13 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "intervals.h"
 #include "window.h"
 
+#if __GNUC__ >= 4
 static void sort_vector_copy (Lisp_Object, ptrdiff_t,
 			      Lisp_Object [restrict], Lisp_Object [restrict]);
+#else
+static void sort_vector_copy (Lisp_Object, ptrdiff_t,
+			      Lisp_Object [], Lisp_Object []);
+#endif
 static bool internal_equal (Lisp_Object, Lisp_Object, int, bool, Lisp_Object);
 
 DEFUN ("identity", Fidentity, Sidentity, 1, 1, 0,

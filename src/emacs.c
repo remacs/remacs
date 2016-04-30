@@ -54,6 +54,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef MSDOS
 #include <binary-io.h>
+#include "dosfns.h"
 #endif
 
 #ifdef HAVE_WINDOW_SYSTEM

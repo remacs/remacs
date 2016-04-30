@@ -1736,7 +1736,7 @@ Returns the compilation buffer created."
 	    (funcall compilation-process-setup-function))
 	(and outwin (compilation-set-window-height outwin))
 	;; Start the compilation.
-	(if (fboundp 'start-process)
+	(if (fboundp 'make-process)
 	    (let ((proc
 		   (if (eq mode t)
 		       ;; comint uses `start-file-process'.
