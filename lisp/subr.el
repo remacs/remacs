@@ -1323,7 +1323,9 @@ is converted into a string by expressing it in decimal."
 ;; buffer-local.
 
 ;; Not used at all in Emacs, last time I checked:
-(make-obsolete-variable 'default-mode-line-format 'mode-line-format "23.2")
+(make-obsolete-variable 'default-mode-line-format
+                        "use (setq-default mode-line-format) or (default-value mode-line-format) instead"
+                        "23.2")
 (make-obsolete-variable 'default-header-line-format 'header-line-format "23.2")
 (make-obsolete-variable 'default-line-spacing 'line-spacing "23.2")
 (make-obsolete-variable 'default-abbrev-mode 'abbrev-mode "23.2")
