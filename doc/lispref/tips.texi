@@ -200,12 +200,12 @@ It is likewise a bad idea for one Lisp package to advise a function in
 another Lisp package (@pxref{Advising Functions}).
 
 @item
-Avoid using @code{eval-after-load} in libraries and packages
-(@pxref{Hooks for Loading}).  This feature is meant for personal
-customizations; using it in a Lisp program is unclean, because it
-modifies the behavior of another Lisp file in a way that's not visible
-in that file.  This is an obstacle for debugging, much like advising a
-function in the other package.
+Avoid using @code{eval-after-load} and @code{with-eval-after-load} in
+libraries and packages (@pxref{Hooks for Loading}).  This feature is
+meant for personal customizations; using it in a Lisp program is
+unclean, because it modifies the behavior of another Lisp file in a
+way that's not visible in that file.  This is an obstacle for
+debugging, much like advising a function in the other package.
 
 @item
 If a file does replace any of the standard functions or library

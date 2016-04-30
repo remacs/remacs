@@ -1089,11 +1089,12 @@ execution of the rest of @var{body}.
 @end defmac
 
 Normally, well-designed Lisp programs should not use
-@code{eval-after-load}.  If you need to examine and set the variables
-defined in another library (those meant for outside use), you can do
-it immediately---there is no need to wait until the library is loaded.
-If you need to call functions defined by that library, you should load
-the library, preferably with @code{require} (@pxref{Named Features}).
+@code{with-eval-after-load}.  If you need to examine and set the
+variables defined in another library (those meant for outside use),
+you can do it immediately---there is no need to wait until the library
+is loaded.  If you need to call functions defined by that library, you
+should load the library, preferably with @code{require} (@pxref{Named
+Features}).
 
 @node Dynamic Modules
 @section Emacs Dynamic Modules

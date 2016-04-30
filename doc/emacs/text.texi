@@ -1302,7 +1302,8 @@ it in order for this to take effect.
 automatically by putting the following in your init file:
 
 @example
-(eval-after-load "outline" '(require 'foldout))
+(with-eval-after-load "outline"
+  (require 'foldout))
 @end example
 
 @node Org Mode
