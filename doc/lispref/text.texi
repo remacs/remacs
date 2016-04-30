@@ -2963,6 +2963,11 @@ construct each part with @code{propertize} and then combine them with
 @code{buffer-substring-no-properties}, which copies text from the
 buffer but does not copy its properties.
 
+@findex with-silent-modifications
+  If you wish to add or remove text properties to a buffer without
+marking the buffer as modified, you can wrap the calls above in the
+@code{with-silent-modifications} macro.
+
 @node Property Search
 @subsection Text Property Search Functions
 @cindex searching text properties
