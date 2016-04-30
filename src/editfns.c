@@ -2882,10 +2882,9 @@ DEFUN ("compare-buffer-substrings", Fcompare_buffer_substrings, Scompare_buffer_
        6, 6, 0,
        doc: /* Compare two substrings of two buffers; return result as number.
 Return -N if first string is less after N-1 chars, +N if first string is
-greater after N-1 chars, or 0 if strings match.  Each substring is
-represented as three arguments: BUFFER, START and END.  That makes six
-args in all, three for each substring.
-
+greater after N-1 chars, or 0 if strings match.
+The first substring is in BUFFER1 from START1 to END1 and the second
+is in BUFFER2 from START2 to END2.
 The value of `case-fold-search' in the current buffer
 determines whether case is significant or ignored.  */)
   (Lisp_Object buffer1, Lisp_Object start1, Lisp_Object end1, Lisp_Object buffer2, Lisp_Object start2, Lisp_Object end2)
