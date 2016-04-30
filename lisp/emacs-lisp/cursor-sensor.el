@@ -31,6 +31,7 @@
 
 ;;; Code:
 
+;;;###autoload
 (defvar cursor-sensor-inhibit nil)
 
 (defun cursor-sensor--intangible-p (pos)
