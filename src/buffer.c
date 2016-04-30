@@ -6233,6 +6233,8 @@ Values are interpreted as follows:
   (hbar . HEIGHT) display a horizontal bar cursor with height HEIGHT
   ANYTHING ELSE   display a hollow box cursor
 
+WIDTH and HEIGHT can't exceed the frame's canonical character size.
+
 When the buffer is displayed in a non-selected window, the
 cursor's appearance is instead controlled by the variable
 `cursor-in-non-selected-windows'.  */);
