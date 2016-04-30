@@ -1997,7 +1997,9 @@ but coerced to the correct value of INTEGERS."
 FIXEDCASE, LITERAL are passed to `replace-match' (which see).
 After possibly editing it (if `\\?' is present), NEWTEXT is also
 passed to `replace-match'.  If NOEDIT is true, no check for `\\?'
-is made (to save time).  MATCH-DATA is used for the replacement.
+is made (to save time).
+MATCH-DATA is used for the replacement, and is a data structure
+as returned from the `match-data' function.
 In case editing is done, it is changed to use markers.  BACKWARD is
 used to reverse the replacement direction.
 
