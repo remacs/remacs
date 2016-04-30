@@ -204,8 +204,16 @@ expression point is on."
 
 ;;;###autoload
 (define-minor-mode global-eldoc-mode
-  "Enable `eldoc-mode' in all buffers where it's applicable."
-  :group 'eldoc :global t
+  "Toggle Global Eldoc mode on or off.
+With a prefix argument ARG, enable Global Eldoc mode if ARG is
+positive, and disable it otherwise.  If called from Lisp, enable
+the mode if ARG is omitted or nil, and toggle it if ARG is ‘toggle’.
+
+If Global Eldoc mode is on, `eldoc-mode' will be enabled in all
+buffers where it's applicable.  These are buffers that have modes
+that have enabled eldoc support.  See `eldoc-documentation-function'."
+  :group 'eldoc
+  :global t
   :initialize 'custom-initialize-delay
   :init-value t
   (setq eldoc-last-message nil)
