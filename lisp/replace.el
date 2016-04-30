@@ -301,6 +301,10 @@ In Transient Mark mode, if the mark is active, operate on the contents
 of the region.  Otherwise, operate from point to the end of the buffer's
 accessible portion.
 
+In interactive use, the prefix arg (non-nil DELIMITED in
+non-interactive use), means replace only matches surrounded by
+word boundaries.  A negative prefix arg means replace backward.
+
 Use \\<minibuffer-local-map>\\[next-history-element] \
 to pull the last incremental search string to the minibuffer
 that reads FROM-STRING, or invoke replacements from
@@ -326,10 +330,6 @@ regexp in `search-whitespace-regexp'.
 If `replace-character-fold' is non-nil, matching uses character folding,
 i.e. it ignores diacritics and other differences between equivalent
 character strings.
-
-Third arg DELIMITED (prefix arg if interactive), if non-nil, means replace
-only matches surrounded by word boundaries.  A negative prefix arg means
-replace backward.
 
 Fourth and fifth arg START and END specify the region to operate on.
 
