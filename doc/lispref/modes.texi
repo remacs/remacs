@@ -1912,7 +1912,8 @@ could have the same effects on the mode line if the value of
 @code{mode-line-format} is changed to use them.  However, various parts
 of Emacs set these variables on the understanding that they will control
 parts of the mode line; therefore, practically speaking, it is essential
-for the mode line to use them.
+for the mode line to use them.  Also see
+@ref{Optional Mode Line,,, emacs, The GNU Emacs Manual}.
 
 @defvar mode-line-mule-info
 This variable holds the value of the mode line construct that displays
