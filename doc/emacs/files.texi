@@ -522,6 +522,18 @@ a new backup file.  @kbd{C-u C-u C-u C-x C-s} does both things: it
 makes a backup from the previous contents, and arranges to make
 another from the newly saved contents if you save again.
 
+@vindex backup-directory-alist
+  You can customize the variable @code{backup-directory-alist} to
+specify that files matching certain patterns should be backed up in
+specific directories.  A typical use is to add an element @code{("."
+. @var{dir})} to make all backups in the directory with absolute name
+@var{dir}.  Emacs modifies the backup file names to avoid clashes
+between files with the same names originating in different
+directories.  Alternatively, adding, @code{("." . ".~")} would make
+backups in the invisible subdirectory @file{.~} of the original file's
+directory.  Emacs creates the directory, if necessary, to make the
+backup.
+
 @menu
 * Names: Backup Names.          How backup files are named.
 * Deletion: Backup Deletion.    Emacs deletes excess numbered backups.
@@ -584,19 +596,6 @@ or @samp{numbered}, then @code{version-control} becomes @code{t}; if the
 value is @samp{nil} or @samp{existing}, then @code{version-control}
 becomes @code{nil}; if it is @samp{never} or @samp{simple}, then
 @code{version-control} becomes @code{never}.
-
-@vindex backup-directory-alist
-  You can customize the variable @code{backup-directory-alist} to
-specify that files matching certain patterns should be backed up in
-specific directories.  This variable applies to both single and
-numbered backups.  A typical use is to add an element @code{("."
-. @var{dir})} to make all backups in the directory with absolute name
-@var{dir}; Emacs modifies the backup file names to avoid clashes
-between files with the same names originating in different
-directories.  Alternatively, adding, @code{("." . ".~")} would make
-backups in the invisible subdirectory @file{.~} of the original file's
-directory.  Emacs creates the directory, if necessary, to make the
-backup.
 
 @vindex make-backup-file-name-function
   If you set the variable @code{make-backup-file-name-function} to
