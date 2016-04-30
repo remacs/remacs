@@ -1141,11 +1141,8 @@ of the current buffer."
        ))
 
 (defun ediff-file-compressed-p (file)
-  (condition-case nil
-      (require 'jka-compr)
-    (error))
-  (if (featurep 'jka-compr)
-      (string-match (jka-compr-build-file-regexp) file)))
+  (require 'jka-compr)
+  (string-match (jka-compr-build-file-regexp) file))
 
 
 (defun ediff-swap-buffers ()
