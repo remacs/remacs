@@ -145,18 +145,18 @@ nil means use goto-char using the second argument position.")
 			       &optional avoid-current
 			       extra-test-inclusive
 			       extra-test-exclusive)
-  "Test if BUFFER is a `next-error' capable buffer.
+  "Return non-nil if BUFFER is a `next-error' capable buffer.
+If AVOID-CURRENT is non-nil, and BUFFER is the current buffer,
+return nil.
 
-If AVOID-CURRENT is non-nil, treat the current buffer
-as an absolute last resort only.
+The function EXTRA-TEST-INCLUSIVE, if non-nil, is called if
+BUFFER would not normally qualify.  If it returns non-nil, BUFFER
+is considered `next-error' capable, anyway, and the function
+returns non-nil.
 
-The function EXTRA-TEST-INCLUSIVE, if non-nil, is called in each buffer
-that normally would not qualify.  If it returns t, the buffer
-in question is treated as usable.
-
-The function EXTRA-TEST-EXCLUSIVE, if non-nil, is called in each buffer
-that would normally be considered usable.  If it returns nil,
-that buffer is rejected."
+The function EXTRA-TEST-EXCLUSIVE, if non-nil, is called if the
+buffer would normally qualify.  If it returns nil, BUFFER is
+rejected, and the function returns nil."
   (and (buffer-name buffer)		;First make sure it's live.
        (not (and avoid-current (eq buffer (current-buffer))))
        (with-current-buffer buffer
