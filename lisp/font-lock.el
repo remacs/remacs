@@ -785,8 +785,11 @@ see the variables `c-font-lock-extra-types', `c++-font-lock-extra-types',
 (defun font-lock-remove-keywords (mode keywords)
   "Remove highlighting KEYWORDS for MODE.
 
-MODE should be a symbol, the major mode command name, such as `c-mode'
-or nil.  If nil, highlighting keywords are removed for the current buffer.
+MODE should be a symbol, the major mode command name, such as
+`c-mode' or nil.  If nil, highlighting keywords are removed for
+the current buffer.
+
+For a description of KEYWORDS, see `font-lock-add-keywords'.
 
 To make the removal apply to modes derived from MODE as well,
 pass nil for MODE and add the call to MODE-hook.  This may fail
