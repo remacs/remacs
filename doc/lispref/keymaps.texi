@@ -2605,8 +2605,8 @@ this is how you specify the image to display in the tool bar:
 
 @table @code
 @item :image @var{image}
-@var{images} is either a single image specification or a vector of four
-image specifications.  If you use a vector of four,
+@var{image} is either a single image specification (@pxref{Images}) or
+a vector of four image specifications.  If you use a vector of four,
 one of them is used, depending on circumstances:
 
 @table @asis
