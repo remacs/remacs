@@ -5145,6 +5145,12 @@ Conveniences,,, emacs, The GNU Emacs Manual}).  The image type symbol
 for images loaded via ImageMagick is @code{imagemagick}, regardless of
 the actual underlying image format.
 
+To check for ImageMagick support, use the following:
+
+@lisp
+(image-type-available-p 'imagemagick)
+@end lisp
+
 @defun imagemagick-types
 This function returns a list of image file extensions supported by the
 current ImageMagick installation.  Each list element is a symbol
