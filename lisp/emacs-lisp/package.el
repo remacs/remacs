@@ -1426,7 +1426,10 @@ If `user-init-file' does not mention `(package-initialize)', add
 it to the file.
 If called as part of loading `user-init-file', set
 `package-enable-at-startup' to nil, to prevent accidentally
-loading packages twice."
+loading packages twice.
+It is not necessary to adjust `load-path' or `require' the
+individual packages after calling `package-initialize' -- this is
+taken care of by `package-initialize'."
   (interactive)
   (setq package-alist nil)
   (if (equal user-init-file load-file-name)
