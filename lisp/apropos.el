@@ -1044,9 +1044,12 @@ Each element should have the format
 The return value is the list that was in `apropos-accumulator', sorted
 alphabetically by symbol name; but this function also sets
 `apropos-accumulator' to nil before returning.
-
-If SPACING is non-nil, it should be a string; separate items with that string.
-If non-nil, TEXT is a string that will be printed as a heading."
+If DO-KEYS is non-nil, output the key bindings.  If NOSUBST is
+nil, substitute \"ASCII quotes\" (i.e., grace accent and
+apostrophe) with curly quotes), and if non-nil, leave them alone.
+If SPACING is non-nil, it should be a string; separate items with
+that string.  If non-nil, TEXT is a string that will be printed
+as a heading."
   (if (null apropos-accumulator)
       (message "No apropos matches for `%s'" apropos-pattern)
     (setq apropos-accumulator
