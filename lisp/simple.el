@@ -1635,9 +1635,10 @@ If the value is non-nil and not a number, we wait 2 seconds."
                  (other :tag "on")))
 
 (defcustom extended-command-suggest-shorter t
-  "Non-nil means show a shorter M-x invocation when there is one."
+  "If non-nil, show a shorter M-x invocation when there is one."
   :group 'keyboard
-  :type 'boolean)
+  :type 'boolean
+  :version "25.2")
 
 (defun execute-extended-command--shorter-1 (name length)
   (cond
