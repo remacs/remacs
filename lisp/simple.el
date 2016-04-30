@@ -1418,10 +1418,11 @@ If nil, don't change the value of `debug-on-error'."
   :version "21.1")
 
 (defun eval-expression-print-format (value)
-  "Format VALUE as a result of evaluated expression.
-Return a formatted string which is displayed in the echo area
-in addition to the value printed by prin1 in functions which
-display the result of expression evaluation."
+  "If VALUE in an integer, return a specially formatted string.
+This string will typically look like \" (#o1, #x1, ?\\C-a)\".
+If VALUE is not an integer, nil is returned.
+This function is used by functions like `prin1' that display the
+result of expression evaluation."
   (if (and (integerp value)
 	   (or (eq standard-output t)
 	       (zerop (prefix-numeric-value current-prefix-arg))))
