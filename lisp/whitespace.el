@@ -528,14 +528,14 @@ these values is:
    2. space-before-tab::tab
    3. space-before-tab::space
 
-So, for example, if indentation and indentation::space are
-included in `whitespace-style' list, the indentation value is
-evaluated instead of indentation::space value.
+For example, if `indentation' and `indentation::space' are
+included in `whitespace-style', the `indentation' value is used
+instead of the `indentation::space' value.
 
-One reason for not visualize spaces via faces (if `face' is not
-included in `whitespace-style') is to use exclusively for
-cleaning up a buffer.  See `whitespace-cleanup' and
-`whitespace-cleanup-region' for documentation.
+One reason to not use faces to visualize spaces (i.e., not
+include `face' in `whitespace-style') is to use `whitespace-mode'
+only for cleaning up a buffer.  See `whitespace-cleanup' and
+`whitespace-cleanup-region'.
 
 See also `whitespace-display-mappings' for documentation."
   :type '(set :tag "Kind of Blank"
