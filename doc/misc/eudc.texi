@@ -177,12 +177,10 @@ initialization file to add a shortcut for email address expansion in
 email composition buffers (@pxref{Inline Query Expansion})
 
 @lisp
-(eval-after-load
- "message"
- '(define-key message-mode-map [(control ?c) (tab)] 'eudc-expand-inline))
-(eval-after-load
- "sendmail"
- '(define-key mail-mode-map [(control ?c) (tab)] 'eudc-expand-inline))
+(with-eval-after-load "message"
+  (define-key message-mode-map [(control ?c) (tab)] 'eudc-expand-inline))
+(with-eval-after-load "sendmail"
+  (define-key mail-mode-map [(control ?c) (tab)] 'eudc-expand-inline))
 @end lisp
 
 @menu
@@ -271,8 +269,8 @@ LDAP:
 @vindex eudc-server-hotlist
 @vindex ldap-host-parameters-alist
 @lisp
-(eval-after-load "message"
-  '(define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
+(with-eval-after-load "message"
+  (define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
 (customize-set-variable 'eudc-server-hotlist
                         '(("" . bbdb)
                           ("ldaps://ldap.gnu.org" . ldap)))
@@ -327,8 +325,8 @@ configure EUDC for LDAP:
 @vindex eudc-server-hotlist
 @vindex ldap-host-parameters-alist
 @lisp
-(eval-after-load "message"
-  '(define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
+(with-eval-after-load "message"
+  (define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
 (customize-set-variable 'eudc-server-hotlist
                         '(("" . bbdb)
                           ("ldaps://ldap.gnu.org" . ldap)))
@@ -356,8 +354,8 @@ and the @file{.emacs} expressions become:
 @vindex eudc-server-hotlist
 @vindex ldap-host-parameters-alist
 @lisp
-(eval-after-load "message"
-  '(define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
+(with-eval-after-load "message"
+  (define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
 (customize-set-variable 'eudc-server-hotlist
                         '(("" . bbdb) ("" . ldap)))
 (customize-set-variable 'ldap-host-parameters-alist

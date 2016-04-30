@@ -17148,9 +17148,9 @@ summary buffer.
           (gnus-summary-mark-as-read-forward 1))
       (gnus-summary-scroll-up arg))))
 
-(eval-after-load "gnus"
-  #'(define-key gnus-summary-mode-map
-      (kbd "<RET>") 'browse-nnrss-url))
+(with-eval-after-load "gnus"
+  (define-key gnus-summary-mode-map
+    (kbd "<RET>") 'browse-nnrss-url))
 (add-to-list 'nnmail-extra-headers nnrss-url-field)
 @end lisp
 
@@ -17166,11 +17166,11 @@ Parameters}) in order to display @samp{text/html} parts only in
 
 @lisp
 ;; @r{Set the default value of @code{mm-discouraged-alternatives}.}
-(eval-after-load "gnus-sum"
-  '(add-to-list
-    'gnus-newsgroup-variables
-    '(mm-discouraged-alternatives
-      . '("text/html" "image/.*"))))
+(with-eval-after-load "gnus-sum"
+  (add-to-list
+   'gnus-newsgroup-variables
+   '(mm-discouraged-alternatives
+     . '("text/html" "image/.*"))))
 
 ;; @r{Display @samp{text/html} parts in @code{nnrss} groups.}
 (add-to-list
