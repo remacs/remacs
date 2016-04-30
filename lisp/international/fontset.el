@@ -1259,7 +1259,7 @@ to map charsets to scripts.")
 					 &optional _style-variant _noerror)
   "Create a fontset from fontset specification string FONTSET-SPEC.
 FONTSET-SPEC is a string of the format:
-	FONTSET-NAME,SCRIPT-NAME0:FONT-NAME0,SCRIPT-NAME1:FONT-NAME1, ...
+	FONTSET-NAME[,SCRIPT-NAME0:FONT-NAME0,SCRIPT-NAME1:FONT-NAME1] ...
 Any number of SPACE, TAB, and NEWLINE can be put before and after commas.
 
 When a frame uses the fontset as the `font' parameter, the frame's
