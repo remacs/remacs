@@ -2271,7 +2271,7 @@ display in.  These steps are described by means of @dfn{display
 actions}, which have the form @code{(@var{function} . @var{alist})}.
 Here, @var{function} is either a function or a list of functions,
 which we refer to as @dfn{action functions}; @var{alist} is an
-association list, which we refer to as @dfn{action alists}.
+association list, which we refer to as an @dfn{action alist}.
 
   An action function accepts two arguments: the buffer to display and
 an action alist.  It attempts to display the buffer in some window,
