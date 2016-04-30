@@ -1994,6 +1994,21 @@ with the major mode as: @samp{(Shell:run)}.  Normally this variable
 is @code{nil}.
 @end defvar
 
+@defvar mode-line-front-space
+This variable is displayed at the front of the mode line.  By default,
+this construct is displayed right at the beginning of the mode line,
+except that if there is a memory-full message, it is displayed first.
+@end defvar
+
+@defvar mode-line-end-spaces
+This variable is displayed at the end of the mode line.
+@end defvar
+
+@defvar mode-line-misc-info
+Mode line construct for miscellaneous information.  By default, this
+shows the information specified by @code{global-mode-string}.
+@end defvar
+
 @defvar minor-mode-alist
 @anchor{Definition of minor-mode-alist}
 This variable holds an association list whose elements specify how the
