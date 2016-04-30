@@ -5139,7 +5139,7 @@ specifying the bounding box of the PostScript image, analogous to the
 @cindex ImageMagick images
 @cindex images, support for more formats
 
-  If you build Emacs with ImageMagick support, you can use the
+  If your Emacs build has ImageMagick support, you can use the
 ImageMagick library to load many image formats (@pxref{File
 Conveniences,,, emacs, The GNU Emacs Manual}).  The image type symbol
 for images loaded via ImageMagick is @code{imagemagick}, regardless of
@@ -5233,7 +5233,7 @@ Specifies a rotation angle in degrees.
 @cindex SVG images
 
 SVG (Scalable Vector Graphics) is an XML format for specifying images.
-If you build Emacs with SVG support, you can create and manipulate
+If your Emacs build has with SVG support, you can create and manipulate
 these images with the following commands.
 
 @defun svg-create width height &rest args
