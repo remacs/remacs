@@ -1499,11 +1499,12 @@ Return non-nil if user chooses to customize, for use in
 (defcustom custom-buffer-style 'links
   "Control the presentation style for customization buffers.
 The value should be a symbol, one of:
-
-brackets: groups nest within each other with big horizontal brackets.
-links: groups have links to subgroups."
+`brackets': groups nest within each other with big horizontal brackets.
+`links': groups have links to subgroups.
+`tree': display groups as trees."
   :type '(radio (const brackets)
-		(const links))
+		(const links)
+                (const tree))
   :group 'custom-buffer)
 
 (defcustom custom-buffer-done-kill nil
