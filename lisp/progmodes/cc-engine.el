@@ -7433,36 +7433,42 @@ comment at the start of cc-engine.el for more info."
 	       (setq got-identifier (c-forward-name))
 	       (setq name-start pos)))
 
-      ;; Skip over type decl suffix operators.
-      (while (if (looking-at c-type-decl-suffix-key)
+      ;; Skip over type decl suffix operators and trailing noise macros.
+      (while
+	  (cond
+	   ((and c-opt-cpp-prefix
+		 (looking-at c-noise-macro-with-parens-name-re))
+	    (c-forward-noise-clause))
 
-		 (if (eq (char-after) ?\))
-		     (when (> paren-depth 0)
-		       (setq paren-depth (1- paren-depth))
-		       (forward-char)
-		       t)
-		   (when (if (save-match-data (looking-at "\\s("))
-			     (c-safe (c-forward-sexp 1) t)
-			   (goto-char (match-end 1))
-			   t)
-		     (when (and (not got-suffix-after-parens)
-				(= paren-depth 0))
-		       (setq got-suffix-after-parens (match-beginning 0)))
-		     (setq got-suffix t)))
+	   ((looking-at c-type-decl-suffix-key)
+	    (if (eq (char-after) ?\))
+		(when (> paren-depth 0)
+		  (setq paren-depth (1- paren-depth))
+		  (forward-char)
+		  t)
+	      (when (if (save-match-data (looking-at "\\s("))
+			(c-safe (c-forward-sexp 1) t)
+		      (goto-char (match-end 1))
+		      t)
+		(when (and (not got-suffix-after-parens)
+			   (= paren-depth 0))
+		  (setq got-suffix-after-parens (match-beginning 0)))
+		(setq got-suffix t))))
 
-	       ;; No suffix matched.  We might have matched the
-	       ;; identifier as a type and the open paren of a
-	       ;; function arglist as a type decl prefix.  In that
-	       ;; case we should "backtrack": Reinterpret the last
-	       ;; type as the identifier, move out of the arglist and
-	       ;; continue searching for suffix operators.
-	       ;;
-	       ;; Do this even if there's no preceding type, to cope
-	       ;; with old style function declarations in K&R C,
-	       ;; (con|de)structors in C++ and `c-typeless-decl-kwds'
-	       ;; style declarations.  That isn't applicable in an
-	       ;; arglist context, though.
-	       (when (and (= paren-depth 1)
+	   (t
+	    ;; No suffix matched.  We might have matched the
+	    ;; identifier as a type and the open paren of a
+	    ;; function arglist as a type decl prefix.  In that
+	    ;; case we should "backtrack": Reinterpret the last
+	    ;; type as the identifier, move out of the arglist and
+	    ;; continue searching for suffix operators.
+	    ;;
+	    ;; Do this even if there's no preceding type, to cope
+	    ;; with old style function declarations in K&R C,
+	    ;; (con|de)structors in C++ and `c-typeless-decl-kwds'
+	    ;; style declarations.  That isn't applicable in an
+	    ;; arglist context, though.
+	    (when (and (= paren-depth 1)
 			  (not got-prefix-before-parens)
 			  (not (eq at-type t))
 			  (or backup-at-type
@@ -7474,7 +7480,7 @@ comment at the start of cc-engine.el for more info."
 			  (eq (char-before pos) ?\)))
 		 (c-fdoc-shift-type-backward)
 		 (goto-char pos)
-		 t))
+		 t)))
 
 	(c-forward-syntactic-ws))
 
