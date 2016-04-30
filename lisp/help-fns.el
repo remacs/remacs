@@ -1109,7 +1109,13 @@ BUFFER should be a buffer or a buffer name."
       (if (or (not (vectorp docs)) (/= (length docs) 95))
 	  (error "Invalid first extra slot in this category table\n"))
       (with-current-buffer standard-output
-	(insert "Legend of category mnemonics (see the tail for the longer description)\n")
+        (setq-default help-button-cache (make-marker))
+	(insert "Legend of category mnemonics ")
+        (insert-button "(longer descriptions at the bottom)"
+                       'action help-button-cache
+                       'follow-link t
+                       'help-echo "mouse-2, RET: show full legend")
+        (insert "\n")
 	(let ((pos (point)) (items 0) lines n)
 	  (dotimes (i 95)
 	    (if (aref docs i) (setq items (1+ items))))
@@ -1136,6 +1142,7 @@ BUFFER should be a buffer or a buffer name."
 		"character(s)\tcategory mnemonics\n"
 		"------------\t------------------")
 	(describe-vector table 'help-describe-category-set)
+        (set-marker help-button-cache (point))
 	(insert "Legend of category mnemonics:\n")
 	(dotimes (i 95)
 	  (let ((elt (aref docs i)))
