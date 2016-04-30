@@ -15069,7 +15069,7 @@ a *different* entry, you cannot use these techniques."
 	  (if (not scope)
 	      (progn
 		(org-agenda-prepare-buffers
-		 (list (buffer-file-name (current-buffer))))
+		 (and buffer-file-name (list buffer-file-name)))
 		(setq res (org-scan-tags func matcher todo-only start-level)))
 	    ;; Get the right scope
 	    (cond
@@ -15081,7 +15081,7 @@ a *different* entry, you cannot use these techniques."
 	      (setq scope (org-agenda-files t))
 	      (setq scope (org-add-archive-files scope)))
 	     ((eq scope 'file)
-	      (setq scope (list (buffer-file-name))))
+	      (setq scope (and buffer-file-name (list buffer-file-name))))
 	     ((eq scope 'file-with-archives)
 	      (setq scope (org-add-archive-files (list (buffer-file-name))))))
 	    (org-agenda-prepare-buffers scope)
