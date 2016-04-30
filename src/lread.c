@@ -4508,6 +4508,7 @@ were read in.  */);
 	       doc: /* List of directories to search for files to load.
 Each element is a string (directory file name) or nil (meaning
 `default-directory').
+This list is consulted by the `require' function.
 Initialized during startup as described in Info node `(elisp)Library Search'.
 Use `directory-file-name' when adding items to this path.  However, Lisp
 programs that process this list should tolerate directories both with

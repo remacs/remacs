@@ -2762,17 +2762,24 @@ require_unwind (Lisp_Object old_value)
 
 DEFUN ("require", Frequire, Srequire, 1, 3, 0,
        doc: /* If feature FEATURE is not loaded, load it from FILENAME.
-If FEATURE is not a member of the list `features', then the feature
-is not loaded; so load the file FILENAME.
-If FILENAME is omitted, the printname of FEATURE is used as the file name,
-and `load' will try to load this name appended with the suffix `.elc',
-`.el', or the system-dependent suffix for dynamic module files, in that
-order.  The name without appended suffix will not be used.
-See `get-load-suffixes' for the complete list of suffixes.
-If the optional third argument NOERROR is non-nil,
-then return nil if the file is not found instead of signaling an error.
-Normally the return value is FEATURE.
-The normal messages at start and end of loading FILENAME are suppressed.  */)
+If FEATURE is not a member of the list `features', then the feature is
+not loaded; so load the file FILENAME.
+
+If FILENAME is omitted, the printname of FEATURE is used as the file
+name, and `load' will try to load this name appended with the suffix
+`.elc', `.el', or the system-dependent suffix for dynamic module
+files, in that order.  The name without appended suffix will not be
+used.  See `get-load-suffixes' for the complete list of suffixes.
+
+The directories in `load-path' are searched when trying to find the
+file name.
+
+If the optional third argument NOERROR is non-nil, then return nil if
+the file is not found instead of signaling an error.  Normally the
+return value is FEATURE.
+
+The normal messages at start and end of loading FILENAME are
+suppressed.  */)
   (Lisp_Object feature, Lisp_Object filename, Lisp_Object noerror)
 {
   Lisp_Object tem;
