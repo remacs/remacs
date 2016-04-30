@@ -1634,6 +1634,11 @@ If the value is non-nil and not a number, we wait 2 seconds."
                  (integer :tag "time" 2)
                  (other :tag "on")))
 
+(defcustom extended-command-suggest-shorter t
+  "Non-nil means show a shorter M-x invocation when there is one."
+  :group 'keyboard
+  :type 'boolean)
+
 (defun execute-extended-command--shorter-1 (name length)
   (cond
    ((zerop length) (list ""))
@@ -1716,7 +1721,8 @@ invoking, give a prefix argument to `execute-extended-command'."
                         ((numberp suggest-key-bindings) suggest-key-bindings)
                         (t 2))))))
       (when (and waited (not (consp unread-command-events)))
-        (unless (or binding executing-kbd-macro (not (symbolp function))
+        (unless (or (not extended-command-suggest-shorter)
+                    binding executing-kbd-macro (not (symbolp function))
                     (<= (length (symbol-name function)) 2))
           ;; There's no binding for CMD.  Let's try and find the shortest
           ;; string to use in M-x.
