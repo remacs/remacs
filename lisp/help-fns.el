@@ -699,17 +699,23 @@ it is displayed along with the global value."
   (interactive
    (let ((v (variable-at-point))
 	 (enable-recursive-minibuffers t)
+         (orig-buffer (current-buffer))
 	 val)
-     (setq val (completing-read (if (symbolp v)
-				    (format
-				     "Describe variable (default %s): " v)
-				  "Describe variable: ")
-				obarray
-				(lambda (vv)
-                                  (or (get vv 'variable-documentation)
-                                      (and (boundp vv) (not (keywordp vv)))))
-				t nil nil
-				(if (symbolp v) (symbol-name v))))
+     (setq val (completing-read
+                (if (symbolp v)
+                    (format
+                     "Describe variable (default %s): " v)
+                  "Describe variable: ")
+                obarray
+                (lambda (vv)
+                  ;; In case the variable only exists in the buffer
+                  ;; the command we switch back to that buffer before
+                  ;; we examine the variable.
+                  (with-current-buffer orig-buffer
+                    (or (get vv 'variable-documentation)
+                        (and (boundp vv) (not (keywordp vv))))))
+                t nil nil
+                (if (symbolp v) (symbol-name v))))
      (list (if (equal val "")
 	       v (intern val)))))
   (let (file-name)
