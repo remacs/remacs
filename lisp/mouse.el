@@ -155,7 +155,7 @@ items `Turn Off' and `Help'."
               (if (fboundp mm-fun)      ; bug#20201
                   `(keymap
                     ,indicator
-                    (turn-off menu-item "Turn Off minor mode" ,mm-fun)
+                    (turn-off menu-item "Turn off minor mode" ,mm-fun)
                     (help menu-item "Help for minor mode"
                           (lambda () (interactive)
                             (describe-function ',mm-fun)))))))
