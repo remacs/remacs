@@ -3132,9 +3132,11 @@ Since @file{filecache} remembers visited places, add the remote
 directory to the cache:
 
 @lisp
-(with-eval-after-load "filecache"
-  (file-cache-add-directory
-   "@trampfn{ssh,news@@news.my.domain,/opt/news/etc/}"))
+@c `with-eval-after-load' has been introduced with Emacs 24.4.  Shall
+@c be used when appropriate.
+(eval-after-load "filecache"
+  '(file-cache-add-directory
+    "@trampfn{ssh,news@@news.my.domain,/opt/news/etc/}"))
 @end lisp
 
 Then use directory completion in the minibuffer with @kbd{C-x C-f
