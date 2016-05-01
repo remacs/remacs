@@ -148,8 +148,7 @@ created in the future."
   "Return non-nil when horizontal scroll bars are available on this system."
   (and (display-graphic-p)
        (boundp 'x-toolkit-scroll-bars)
-       x-toolkit-scroll-bars
-       (not (eq (window-system) 'ns))))
+       x-toolkit-scroll-bars))
 
 (define-minor-mode horizontal-scroll-bar-mode
   "Toggle horizontal scroll bars on all frames (Horizontal Scroll Bar mode).

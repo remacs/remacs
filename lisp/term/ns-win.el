@@ -717,60 +717,12 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 
 ;;;; Scrollbar handling.
 
-(global-set-key [vertical-scroll-bar down-mouse-1] 'ns-handle-scroll-bar-event)
+(global-set-key [vertical-scroll-bar down-mouse-1] 'scroll-bar-toolkit-scroll)
+(global-set-key [horizontal-scroll-bar down-mouse-1] 'scroll-bar-toolkit-horizontal-scroll)
 (global-unset-key [vertical-scroll-bar mouse-1])
 (global-unset-key [vertical-scroll-bar drag-mouse-1])
-
-(declare-function scroll-bar-scale "scroll-bar" (num-denom whole))
-
-(defun ns-scroll-bar-move (event)
-  "Scroll the frame according to a Nextstep scroller event."
-  (interactive "e")
-  (let* ((pos (event-end event))
-         (window (nth 0 pos))
-         (scale (nth 2 pos)))
-    (with-current-buffer (window-buffer window)
-      (cond
-       ((eq (car scale) (cdr scale))
-	(goto-char (point-max)))
-       ((= (car scale) 0)
-	(goto-char (point-min)))
-       (t
-	(goto-char (+ (point-min) 1
-		      (scroll-bar-scale scale (- (point-max) (point-min)))))))
-      (beginning-of-line)
-      (set-window-start window (point))
-      (vertical-motion (/ (window-height window) 2) window))))
-
-(defun ns-handle-scroll-bar-event (event)
-  "Handle scroll bar EVENT to emulate Nextstep style scrolling."
-  (interactive "e")
-  (let* ((position (event-start event))
-	 (bar-part (nth 4 position))
-	 (window (nth 0 position))
-	 (old-window (selected-window)))
-    (cond
-     ((eq bar-part 'ratio)
-      (ns-scroll-bar-move event))
-     ((eq bar-part 'handle)
-      (if (eq window (selected-window))
-	  (track-mouse (ns-scroll-bar-move event))
-        ;; track-mouse faster for selected window, slower for unselected.
-	(ns-scroll-bar-move event)))
-     (t
-      (select-window window)
-      (cond
-       ((eq bar-part 'up)
-	(goto-char (window-start window))
-	(scroll-down 1))
-       ((eq bar-part 'above-handle)
-	(scroll-down))
-       ((eq bar-part 'below-handle)
-	(scroll-up))
-       ((eq bar-part 'down)
-	(goto-char (window-start window))
-	(scroll-up 1)))
-      (select-window old-window)))))
+(global-unset-key [horizontal-scroll-bar mouse-1])
+(global-unset-key [horizontal-scroll-bar drag-mouse-1])
 
 
 ;;;; Color support.

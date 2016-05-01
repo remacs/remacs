@@ -793,7 +793,7 @@ wset_next_buffers (struct window *w, Lisp_Object val)
    || WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_RIGHT (W))
 
 #if (defined (HAVE_WINDOW_SYSTEM)					\
-     && ((defined (USE_TOOLKIT_SCROLL_BARS) && !defined (HAVE_NS))	\
+     && ((defined (USE_TOOLKIT_SCROLL_BARS))	\
 	 || defined (HAVE_NTGUI)))
 # define USE_HORIZONTAL_SCROLL_BARS true
 #else
