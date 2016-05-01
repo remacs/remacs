@@ -972,7 +972,6 @@ The last thing is to trigger a new round of lazy highlighting."
         (setq cursor-sensor-inhibit (delq 'isearch cursor-sensor-inhibit))))
     (setq isearch--current-buffer (current-buffer))
     (make-local-variable 'cursor-sensor-inhibit)
-    (setq cursor-sensor-inhibit nil)
     ;; Suspend things like cursor-intangible during Isearch so we can search
     ;; even within intangible text.
     (push 'isearch cursor-sensor-inhibit))
