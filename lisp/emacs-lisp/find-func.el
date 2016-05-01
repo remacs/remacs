@@ -182,15 +182,15 @@ See the functions `find-function' and `find-variable'."
 LIBRARY should be a string (the name of the library)."
   ;; If the library is byte-compiled, try to find a source library by
   ;; the same name.
-  (if (string-match "\\.el\\(c\\(\\..*\\)?\\)\\'" library)
-      (setq library (replace-match "" t t library)))
+  (when (string-match "\\.el\\(c\\(\\..*\\)?\\)\\'" library)
+    (setq library (replace-match "" t t library)))
   (or
    (locate-file library
-		(or find-function-source-path load-path)
-		(find-library-suffixes))
+                (or find-function-source-path load-path)
+                (find-library-suffixes))
    (locate-file library
-		(or find-function-source-path load-path)
-		load-file-rep-suffixes)
+                (or find-function-source-path load-path)
+                load-file-rep-suffixes)
    (when (file-name-absolute-p library)
      (let ((rel (find-library--load-name library)))
        (when rel
@@ -201,7 +201,43 @@ LIBRARY should be a string (the name of the library)."
           (locate-file rel
                        (or find-function-source-path load-path)
                        load-file-rep-suffixes)))))
+   (find-library--from-load-path library)
    (error "Can't find library %s" library)))
+
+(defun find-library--from-load-path (library)
+  ;; In `load-history', the file may be ".elc", ".el", ".el.gz", and
+  ;; LIBRARY may be "foo.el" or "foo", so make sure that we get all
+  ;; potential matches, and then see whether any of them lead us to an
+  ;; ".el" or an ".el.gz" file.
+  (let* ((elc-regexp "\\.el\\(c\\(\\..*\\)?\\)\\'")
+         (suffix-regexp
+          (concat "\\("
+                  (mapconcat 'regexp-quote (find-library-suffixes) "\\'\\|")
+                  "\\|" elc-regexp "\\)\\'"))
+         (potentials
+          (mapcar
+           (lambda (entry)
+             (if (string-match suffix-regexp (car entry))
+                 (replace-match "" t t (car entry))
+               (car entry)))
+           (seq-filter
+            (lambda (entry)
+              (string-match
+               (concat "\\`"
+                       (regexp-quote
+                        (replace-regexp-in-string suffix-regexp "" library))
+                       suffix-regexp)
+               (file-name-nondirectory (car entry))))
+            load-history)))
+         result)
+    (dolist (file potentials)
+      (dolist (suffix (find-library-suffixes))
+        (when (not result)
+          (cond ((file-exists-p file)
+                 (setq result file))
+                ((file-exists-p (concat file suffix))
+                 (setq result (concat file suffix)))))))
+    result))
 
 (defvar find-function-C-source-directory
   (let ((dir (expand-file-name "src" source-directory)))
