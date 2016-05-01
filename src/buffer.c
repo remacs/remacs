@@ -1073,11 +1073,11 @@ is first appended to NAME, to speed up finding a non-existent buffer.  */)
 	return genbase;
     }
 
-  for (ptrdiff_t count = 1; ; count++)
+  for (ptrdiff_t count = 2; ; count++)
     {
       char number[INT_BUFSIZE_BOUND (ptrdiff_t) + sizeof "<>"];
       AUTO_STRING_WITH_LEN (lnumber, number,
-			    sprintf (number, "<%"pD"d>", ++count));
+			    sprintf (number, "<%"pD"d>", count));
       Lisp_Object gentemp = concat2 (genbase, lnumber);
       if (!NILP (Fstring_equal (gentemp, ignore))
 	  || NILP (Fget_buffer (gentemp)))
