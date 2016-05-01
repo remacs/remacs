@@ -314,7 +314,16 @@ See `run-hooks'."
                "and" "or" "delay" "force"
                ;; Stefan Monnier <stefan.monnier@epfl.ch> says don't bother:
                ;;"quasiquote" "quote" "unquote" "unquote-splicing"
-               "map" "syntax" "syntax-rules") t)
+	       "map" "syntax" "syntax-rules"
+	       ;; For R7RS
+	       "when" "unless" "letrec*" "include" "include-ci" "cond-expand"
+	       "delay-force" "parameterize" "guard" "case-lambda"
+	       "syntax-error" "only" "except" "prefix" "rename" "define-values"
+	       "define-record-type" "define-library"
+	       "include-library-declarations"
+	       ;; SRFI-8
+	       "receive"
+	       ) t)
         "\\>") 1)
       ;;
       ;; It wouldn't be Scheme w/o named-let.
@@ -546,6 +555,18 @@ indentation."
 (put 'with-output-to-port 'scheme-indent-function 1)
 (put 'call-with-values 'scheme-indent-function 1) ; r5rs?
 (put 'dynamic-wind 'scheme-indent-function 3) ; r5rs?
+
+;; R7RS
+(put 'when 'scheme-indent-function 1)
+(put 'unless 'scheme-indent-function 1)
+(put 'letrec* 'scheme-indent-function 1)
+(put 'parameterize 'scheme-indent-function 1)
+(put 'define-values 'scheme-indent-function 1)
+(put 'define-record-type 'scheme-indent-function 1) ;; is 1 correct?
+(put 'define-library 'scheme-indent-function 1)
+
+;; SRFI-8
+(put 'receive 'scheme-indent-function 2)
 
 ;;;; MIT Scheme specific indentation.
 
