@@ -837,6 +837,7 @@ See the command `isearch-forward-symbol' for more information."
        (buffer-substring-no-properties (car bounds) (cdr bounds))))
      (t
       (setq isearch-error "No symbol at point")
+      (isearch-push-state)
       (isearch-update)))))
 
 
