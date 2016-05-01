@@ -225,7 +225,10 @@ URL-encoded before it's used."
   "Retrieve URL synchronously.
 Return the buffer containing the data, or nil if there are no data
 associated with it (the case for dired, info, or mailto URLs that need
-no further processing).  URL is either a string or a parsed URL."
+no further processing).  URL is either a string or a parsed URL.
+If SILENT is non-nil, don't display progress reports and similar messages.
+If INHIBIT-COOKIES is non-nil, cookies will neither be stored nor sent
+to the server."
   (url-do-setup)
 
   (let ((retrieval-done nil)
