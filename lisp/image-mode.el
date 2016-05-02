@@ -372,7 +372,6 @@ call."
 
 (defvar image-mode-map
   (let ((map (make-sparse-keymap)))
-    (set-keymap-parent map image-map)
     (define-key map "\C-c\C-c" 'image-toggle-display)
     (define-key map "\C-c\C-x" 'image-toggle-hex-display)
     (define-key map (kbd "SPC")       'image-scroll-up)
