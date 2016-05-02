@@ -1117,6 +1117,7 @@ The return value is a positive integer."
 
 (defun posnp (obj)
   "Return non-nil if OBJ appears to be a valid `posn' object specifying a window.
+A `posn' object is returned from functions such as `event-start'.
 If OBJ is a valid `posn' object, but specifies a frame rather
 than a window, return nil."
   ;; FIXME: Correct the behavior of this function so that all valid
