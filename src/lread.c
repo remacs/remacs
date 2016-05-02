@@ -47,6 +47,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef MSDOS
 #include "msdos.h"
+#if __DJGPP__ == 2 && __DJGPP_MINOR__ < 5
+# define INFINITY  __builtin_inf()
+# define NAN       __builtin_nan("")
+#endif
 #endif
 
 #ifdef HAVE_NS

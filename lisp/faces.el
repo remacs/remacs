@@ -2319,7 +2319,11 @@ If you set `term-file-prefix' to nil, this function does nothing."
   :group 'basic-faces)
 
 (defface variable-pitch
-  '((t :family "Sans Serif"))
+  '((((type w32))
+     ;; This is a kludgey workaround for an issue discussed in
+     ;; http://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00746.html.
+     :font "-outline-Arial-normal-normal-normal-sans-*-*-*-*-p-*-iso8859-1")
+    (t :family "Sans Serif"))
   "The basic variable-pitch face."
   :group 'basic-faces)
 

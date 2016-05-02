@@ -509,10 +509,13 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
   block_input ();
 
 #ifdef MSDOS
-  /* We only can set screen dimensions to certain values supported
-     by our video hardware.  Try to find the smallest size greater
-     or equal to the requested dimensions.  */
-  dos_set_window_size (&new_lines, &new_cols);
+  /* We only can set screen dimensions to certain values supported by
+     our video hardware.  Try to find the smallest size greater or
+     equal to the requested dimensions, while accounting for the fact
+     that the menu-bar lines are not counted in the frame height.  */
+  int dos_new_lines = new_lines + FRAME_TOP_MARGIN (f);
+  dos_set_window_size (&dos_new_lines, &new_cols);
+  new_lines = dos_new_lines - FRAME_TOP_MARGIN (f);
 #endif
 
   if (new_windows_width != old_windows_width)

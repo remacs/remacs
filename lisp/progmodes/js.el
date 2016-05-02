@@ -1892,9 +1892,11 @@ In particular, return the buffer position of the first `for' kwd."
           ;; To skip arbitrary expressions we need the parser,
           ;; so we'll just guess at it.
           (if (and (> end (point)) ; Not empty literal.
-                   (re-search-forward "[^,]]* \\(for\\) " end t)
+                   (re-search-forward "[^,]]* \\(for\\_>\\)" end t)
                    ;; Not inside comment or string literal.
-                   (not (nth 8 (parse-partial-sexp bracket (point)))))
+                   (let ((status (parse-partial-sexp bracket (point))))
+                     (and (= 1 (car status))
+                          (not (nth 8 status)))))
               (match-beginning 1)))))))
 
 (defun js--array-comp-indentation (bracket for-kwd)

@@ -134,6 +134,9 @@ You lose; /* Emacs for DOS must be compiled with DJGPP */
 # define HAVE_LSTAT 1
 #else
 # define lstat stat
+/* DJGPP 2.03 and older don't have the next two.  */
+# define EOVERFLOW ERANGE
+# define SIZE_MAX  4294967295U
 #endif
 
 /* We must intercept 'opendir' calls to stash away the directory name,

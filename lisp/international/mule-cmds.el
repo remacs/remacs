@@ -72,7 +72,7 @@
   (let ((map (make-sparse-keymap "Set Coding System")))
     (bindings--define-key map [set-buffer-process-coding-system]
       '(menu-item "For I/O with Subprocess" set-buffer-process-coding-system
-        :visible (fboundp 'start-process)
+        :visible (fboundp 'make-process)
         :enable (get-buffer-process (current-buffer))
         :help "How to en/decode I/O from/to subprocess connected to this buffer"))
     (bindings--define-key map [set-next-selection-coding-system]

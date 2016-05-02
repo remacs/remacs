@@ -4278,19 +4278,6 @@ Data that is unavailable is returned as nil.  */)
 #endif
 }
 
-/* If program file NAME starts with /: for quoting a magic
-   name, remove that, preserving the multibyteness of NAME.  */
-
-Lisp_Object
-remove_slash_colon (Lisp_Object name)
-{
-  return
-    ((SBYTES (name) > 2 && SREF (name, 0) == '/' && SREF (name, 1) == ':')
-     ? make_specified_string (SSDATA (name) + 2, SCHARS (name) - 2,
-			      SBYTES (name) - 2, STRING_MULTIBYTE (name))
-     : name);
-}
-
 /* Turn off input and output for process PROC.  */
 
 static void
@@ -7483,6 +7470,19 @@ add_timer_wait_descriptor (int fd)
 
 #endif /* HAVE_TIMERFD */
 
+/* If program file NAME starts with /: for quoting a magic
+   name, remove that, preserving the multibyteness of NAME.  */
+
+Lisp_Object
+remove_slash_colon (Lisp_Object name)
+{
+  return
+    ((SBYTES (name) > 2 && SREF (name, 0) == '/' && SREF (name, 1) == ':')
+     ? make_specified_string (SSDATA (name) + 2, SCHARS (name) - 2,
+			      SBYTES (name) - 2, STRING_MULTIBYTE (name))
+     : name);
+}
+
 /* Add DESC to the set of keyboard input descriptors.  */
 
 void
@@ -8010,13 +8010,6 @@ The variable takes effect when `start-process' is called.  */);
   defsubr (&Sset_process_filter_multibyte);
   defsubr (&Sprocess_filter_multibyte_p);
 
-#endif	/* subprocesses */
-
-  defsubr (&Sget_buffer_process);
-  defsubr (&Sprocess_inherit_coding_system_flag);
-  defsubr (&Slist_system_processes);
-  defsubr (&Sprocess_attributes);
-
  {
    Lisp_Object subfeatures = Qnil;
    const struct socket_options *sopt;
@@ -8049,4 +8042,10 @@ The variable takes effect when `start-process' is called.  */);
    Fprovide (intern_c_string ("make-network-process"), subfeatures);
  }
 
+#endif	/* subprocesses */
+
+  defsubr (&Sget_buffer_process);
+  defsubr (&Sprocess_inherit_coding_system_flag);
+  defsubr (&Slist_system_processes);
+  defsubr (&Sprocess_attributes);
 }
