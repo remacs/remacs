@@ -645,11 +645,13 @@ This checks also `file-name-as-directory', `file-name-directory',
       (dolist (file
 	       `(,(file-remote-p tramp-test-temporary-file-directory 'method)
 		 ,(file-remote-p tramp-test-temporary-file-directory 'host)))
-	(setq file (format "/%s:" file))
-	(should (string-equal (directory-file-name file) file))
-	(should (string-equal (file-name-as-directory file) (concat file "./")))
-	(should (string-equal (file-name-directory file) file))
-	(should (string-equal (file-name-nondirectory file) ""))))))
+	(unless (zerop (length file))
+	  (setq file (format "/%s:" file))
+	  (should (string-equal (directory-file-name file) file))
+	  (should
+	   (string-equal (file-name-as-directory file) (concat file "./")))
+	  (should (string-equal (file-name-directory file) file))
+	  (should (string-equal (file-name-nondirectory file) "")))))))
 
 (ert-deftest tramp-test07-file-exists-p ()
   "Check `file-exist-p', `write-region' and `delete-file'."
