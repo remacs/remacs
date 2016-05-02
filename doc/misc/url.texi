@@ -295,9 +295,10 @@ and returns a buffer containing the data.  The return value is
 @code{nil} if there is no data associated with the URL (as is the case
 for @code{dired}, @code{info}, and @code{mailto} URLs).
 
-If @var{silent} is non-@code{nil}, don't do any messaging while
-retrieving.  If @var{inhibit-cookies} is non-@code{nil}, refuse to
-store cookies.  If @var{timeout} is passed, it should be a number that
+If the optional argument @var{silent} is non-@code{nil}, progress
+messages are suppressed.  If the optional argument @var{no-cookies} is
+non-@code{nil}, cookies are not stored or sent.  If the optional
+argument @var{timeout} is non-@code{nil}, it should be a number that
 says (in seconds) how long to wait for a response before giving up.
 @end defun
 
