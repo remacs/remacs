@@ -3919,7 +3919,7 @@ Ask means pop up a menu for the user to select one of copy, move or link."
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads nil "dired-aux" "dired-aux.el" "6b3eb2080834b976621adc041c42f5cc")
+;;;### (autoloads nil "dired-aux" "dired-aux.el" "00fe45cfae47cace47cffc09afca6832")
 ;;; Generated autoloads from dired-aux.el
 
 (autoload 'dired-diff "dired-aux" "\
@@ -4423,12 +4423,15 @@ with the command \\[tags-loop-continue].
 \(fn FROM TO &optional DELIMITED)" t nil)
 
 (autoload 'dired-do-find-regexp "dired-aux" "\
-Find all matches for REGEXP in all marked files, recursively.
+Find all matches for REGEXP in all marked files.
+For any marked directory, all of its files are searched recursively.
 
 \(fn REGEXP)" t nil)
 
 (autoload 'dired-do-find-regexp-and-replace "dired-aux" "\
-Replace matches of FROM with TO, in all marked files, recursively.
+Replace matches of FROM with TO, in all marked files.
+For any marked directory, matches in all of its files are replaced,
+recursively.
 
 \(fn FROM TO)" t nil)
 

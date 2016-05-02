@@ -2719,7 +2719,8 @@ with the command \\[tags-loop-continue]."
 
 ;;;###autoload
 (defun dired-do-find-regexp (regexp)
-  "Find all matches for REGEXP in all marked files, recursively."
+  "Find all matches for REGEXP in all marked files.
+For any marked directory, all of its files are searched recursively."
   (interactive "sSearch marked files (regexp): ")
   (require 'grep)
   (defvar grep-find-ignored-files)
@@ -2740,7 +2741,9 @@ with the command \\[tags-loop-continue]."
 
 ;;;###autoload
 (defun dired-do-find-regexp-and-replace (from to)
-  "Replace matches of FROM with TO, in all marked files, recursively."
+  "Replace matches of FROM with TO, in all marked files.
+For any marked directory, matches in all of its files are replaced,
+recursively."
   (interactive
    (let ((common
           (query-replace-read-args
