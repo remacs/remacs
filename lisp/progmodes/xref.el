@@ -902,7 +902,7 @@ IGNORES is a list of glob patterns."
                     (match-string 1)
                     (buffer-substring-no-properties (point) (line-end-position)))
               hits)))
-    (xref--convert-hits hits regexp)))
+    (xref--convert-hits (nreverse hits) regexp)))
 
 (defun xref--rgrep-command (regexp files dir ignores)
   (require 'find-dired)      ; for `find-name-arg'

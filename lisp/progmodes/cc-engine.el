@@ -3527,7 +3527,7 @@ comment at the start of cc-engine.el for more info."
 	   c-state-old-cpp-end
 	   c-parse-state-point))))
 (defun c-replay-parse-state-state ()
-  (message
+  (message "%s"
    (concat "(setq "
     (mapconcat
      (lambda (arg)
