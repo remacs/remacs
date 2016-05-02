@@ -3910,7 +3910,7 @@ usage: (make-network-process &rest ARGS)  */)
   p->gnutls_boot_parameters = tem;
 #endif
 
-  set_network_socket_coding_system (proc, service, host, name);
+  set_network_socket_coding_system (proc, host, service, name);
 
   unbind_to (count, Qnil);
 
