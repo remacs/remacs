@@ -274,7 +274,7 @@ Note: back-references in REGEXPs do not work."
 (defun syntax-propertize-via-font-lock (keywords)
   "Propertize for syntax using font-lock syntax.
 KEYWORDS obeys the format used in `font-lock-syntactic-keywords'.
-The return value is a function (with two paremeters, START and
+The return value is a function (with two parameters, START and
 END) suitable for `syntax-propertize-function'."
   (lambda (start end)
     (with-no-warnings
