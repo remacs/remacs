@@ -630,7 +630,7 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
 			    Qrear_nonsticky, Qt, Qnil);
 	Fput_text_property (make_number (BEG), make_number (PT),
 			    Qfield, Qt, Qnil);
-	if (Fconsp (Vminibuffer_prompt_properties))
+	if (CONSP (Vminibuffer_prompt_properties))
 	  {
 	    /* We want to apply all properties from
 	       `minibuffer-prompt-properties' to the region normally,
