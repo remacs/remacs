@@ -1913,7 +1913,8 @@ Set it to 'curve' for curved single quotes, to 'straight' for straight
 apostrophes, and to 'grave' for grave accent and apostrophe.  The
 default value nil acts like 'curve' if curved single quotes are
 displayable, and like 'grave' otherwise.  The new variable affects
-display of diagnostics and help, but not of info.
+display of diagnostics and help, but not of info.  As the variable is
+not intended for casual use, it is not a user option.
 
 +++
 ** substitute-command-keys now replaces quotes.
@@ -2467,6 +2468,9 @@ emoji) display is disabled.  This feature was accidentally added when
 Emacs 24.4 included the new Core Text based font backend code that was
 originally implemented for a non-mainline port.  This will be enabled
 again once it is also implemented in Emacs on free operating systems.
+If some symbols, such as emoji, do not display, we suggest to install
+an appropriate font, such as Symbola; then they will be displayed,
+albeit without the color effects.
 
 ---
 ** The new function 'w32-application-type' returns the type of an

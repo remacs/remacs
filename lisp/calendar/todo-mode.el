@@ -612,11 +612,12 @@ Otherwise, `todo-show' always visits `todo-default-todo-file'."
 (defun todo-show (&optional solicit-file interactive)
   "Visit a todo file and display one of its categories.
 
-When invoked in Todo mode, prompt for which todo file to visit.
-When invoked outside of Todo mode with non-nil prefix argument
-SOLICIT-FILE prompt for which todo file to visit; otherwise visit
-`todo-default-todo-file'.  Subsequent invocations from outside
-of Todo mode revisit this file or, with option
+When invoked in Todo mode, Todo Archive mode or Todo Filtered
+Items mode, or when invoked anywhere else with a prefix argument,
+prompt for which todo file to visit.  When invoked outside of a
+Todo mode buffer without a prefix argument, visit
+`todo-default-todo-file'.  Subsequent invocations from outside of
+Todo mode revisit this file or, with option
 `todo-show-current-file' non-nil (the default), whichever todo
 file was last visited.
 
@@ -643,10 +644,7 @@ In Todo mode just the category's unfinished todo items are shown
 by default.  The done items are hidden, but typing
 `\\[todo-toggle-view-done-items]' displays them below the todo
 items.  With non-nil user option `todo-show-with-done' both todo
-and done items are always shown on visiting a category.
-
-Invoking this command in Todo Archive mode visits the
-corresponding todo file, displaying the corresponding category."
+and done items are always shown on visiting a category."
   (interactive "P\np")
   (when todo-default-todo-file
     (todo-check-file (todo-absolute-file-name todo-default-todo-file)))

@@ -278,7 +278,7 @@ Should be consistent with the Git config value i18n.logOutputEncoding."
 
 (defun vc-git-mode-line-string (file)
   "Return a string for `vc-mode-line' to put in the mode line for FILE."
-  (let* ((rev (vc-working-revision file))
+  (let* ((rev (vc-working-revision file 'Git))
          (disp-rev (or (vc-git--symbolic-ref file)
                        (substring rev 0 7)))
          (def-ml (vc-default-mode-line-string 'Git file))
