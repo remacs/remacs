@@ -871,7 +871,7 @@ Returns list of symbols and documentation found."
    ((consp doc)
     (apropos-documentation-check-elc-file (car doc)))
    ((and doc
-         ;; Sanity check in case bad data has snuck into the
+         ;; Sanity check in case bad data sneaked into the
          ;; documentation slot.
          (stringp doc)
          (string-match apropos-all-words-regexp doc)

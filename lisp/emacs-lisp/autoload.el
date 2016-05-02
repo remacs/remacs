@@ -87,7 +87,7 @@ that text will be copied verbatim to `generated-autoload-file'.")
 (defconst generate-autoload-section-continuation ";;;;;; "
   "String to add on each continuation of the section header form.")
 
-;; In some ways it would be nicer to use a value that is recognisably
+;; In some ways it would be nicer to use a value that is recognizably
 ;; not a time-value, eg t, but that can cause issues if an older Emacs
 ;; that does not expect non-time-values loads the file.
 (defconst autoload--non-timestamp '(0 0 0 0)

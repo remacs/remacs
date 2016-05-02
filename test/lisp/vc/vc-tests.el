@@ -214,7 +214,7 @@ For backends which don't support it, `vc-not-supported' is signalled."
     (vc-file-clearprops file)))
 
 (defmacro vc-test--run-maybe-unsupported-function (func &rest args)
-  "Run FUNC withs ARGS as arguments.
+  "Run FUNC with ARGS as arguments.
 Catch the `vc-not-supported' error."
   `(let (err)
     (condition-case err

@@ -102,8 +102,8 @@ CMake Warning at cmake/modules/UseUG.cmake:73 (find_package):
   development package or SDK, be sure it has been installed.
 Call Stack (most recent call first):
   cmake/modules/DuneGridMacros.cmake:19 (include)
-  /home/joe/Projekte/EXA-DUNE/patches/dune-common/cmake/modules/DuneMacros.cmake:556 (include)
-  /home/joe/Projekte/EXA-DUNE/patches/dune-common/cmake/modules/DuneMacros.cmake:694 (dune_process_dependency_macros)
+  /home/joe/Project/EXA-DUNE/patches/dune-common/cmake/modules/DuneMacros.cmake:556 (include)
+  /home/joe/Project/EXA-DUNE/patches/dune-common/cmake/modules/DuneMacros.cmake:694 (dune_process_dependency_macros)
   CMakeLists.txt:22 (dune_project)
 
 

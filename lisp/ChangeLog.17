@@ -1254,7 +1254,7 @@
 2015-03-01  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/shr.el (shr-insert): Remove soft hyphens.
-	(shr-insert): Also remove soft hypens from non-folded text.
+	(shr-insert): Also remove soft hyphens from non-folded text.
 
 2015-02-28  Eli Zaretskii  <eliz@gnu.org>
 
