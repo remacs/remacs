@@ -170,7 +170,7 @@ non-@code{nil}, then the string that is returned includes whatever text
 properties were present in the minibuffer.  Otherwise all the text
 properties are stripped when the value is returned.
 
-@cvindex minibuffer-prompt-properties
+@vindex minibuffer-prompt-properties
 The text properties in @code{minibuffer-prompt-properties} are applied
 to the prompt.  By default, this property list defines a face to use
 for the prompt.  This face, if present, is applied to the end of the
