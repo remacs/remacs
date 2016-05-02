@@ -1181,6 +1181,7 @@ boot_error (struct Lisp_Process *p, const char *m, ...)
     pset_status (p, list2 (Qfailed, vformat_string (m, ap)));
   else
     verror (m, ap);
+  va_end (ap);
 }
 
 Lisp_Object
