@@ -584,5 +584,13 @@ baz\"\""
                   (skip-chars-backward "\"")
                   (mark-sexp -1)))
 
+
+;;; Electric quotes
+(define-electric-pair-test electric-quote-string
+  "" "'" :expected-string "'" :expected-point 2
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-string . t))
+  :test-in-comments nil :test-in-strings nil)
+
 (provide 'electric-tests)
 ;;; electric-tests.el ends here
