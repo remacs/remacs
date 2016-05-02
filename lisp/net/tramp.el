@@ -1944,7 +1944,8 @@ ARGS are the arguments OPERATION has been called with."
    ;; Unknown file primitive.
    (t (error "unknown file I/O primitive: %s" operation))))
 
-(defun tramp-find-foreign-file-name-handler (filename)
+(defun tramp-find-foreign-file-name-handler
+    (filename &optional operation completion)
   "Return foreign file name handler if exists."
   (when (tramp-tramp-file-p filename)
     (let ((v (tramp-dissect-file-name filename t))
@@ -1952,11 +1953,17 @@ ARGS are the arguments OPERATION has been called with."
 	  elt res)
       ;; When we are not fully sure that filename completion is safe,
       ;; we should not return a handler.
-      (when (or (tramp-file-name-method v) (tramp-file-name-user v)
+      (when (or (not completion)
+		(tramp-file-name-method v) (tramp-file-name-user v)
 		(and (tramp-file-name-host v)
 		     (not (member (tramp-file-name-host v)
 				  (mapcar 'car tramp-methods))))
-		(not (tramp-completion-mode-p)))
+		;; Some operations are safe by default.
+		(member
+		 operation
+		 '(file-name-as-directory
+		   file-name-directory
+		   file-name-nondirectory)))
 	(while handler
 	  (setq elt (car handler)
 		handler (cdr handler))
@@ -1984,7 +1991,9 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 		(tramp-replace-environment-variables
 		 (apply 'tramp-file-name-for-operation operation args)))
 	       (completion (tramp-completion-mode-p))
-	       (foreign (tramp-find-foreign-file-name-handler filename))
+	       (foreign
+		(tramp-find-foreign-file-name-handler
+		 filename operation completion))
 	       result)
 	  (with-parsed-tramp-file-name filename nil
 	    ;; Call the backend function.

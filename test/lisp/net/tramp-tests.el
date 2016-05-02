@@ -637,7 +637,19 @@ This checks also `file-name-as-directory', `file-name-directory',
   (should
    (string-equal (file-name-nondirectory "/method:host:/path/to/file/") ""))
   (should-not
-   (unhandled-file-name-directory "/method:host:/path/to/file")))
+   (unhandled-file-name-directory "/method:host:/path/to/file"))
+
+  ;; Bug#10085.
+  (dolist (n-e '(nil t))
+    (let ((non-essential n-e))
+      (dolist (file
+	       `(,(file-remote-p tramp-test-temporary-file-directory 'method)
+		 ,(file-remote-p tramp-test-temporary-file-directory 'host)))
+	(setq file (format "/%s:" file))
+	(should (string-equal (directory-file-name file) file))
+	(should (string-equal (file-name-as-directory file) (concat file "./")))
+	(should (string-equal (file-name-directory file) file))
+	(should (string-equal (file-name-nondirectory file) ""))))))
 
 (ert-deftest tramp-test07-file-exists-p ()
   "Check `file-exist-p', `write-region' and `delete-file'."
