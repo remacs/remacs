@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2016-03-29.15}
+\def\texinfoversion{2016-04-14.07}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -5371,7 +5371,6 @@ end
     \putwordIndexNonexistent
   \else
     \catcode`\\ = 0
-    \escapechar = `\\
     %
     % If the index file exists but is empty, then \openin leaves \ifeof
     % false.  We have to make TeX try to read something from the file, so
@@ -6943,7 +6942,6 @@ end
   \catcode `\>=\other
   \catcode `\`=\other
   \catcode `\'=\other
-  \escapechar=`\\
   %
   % ' is active in math mode (mathcode"8000).  So reset it, and all our
   % other math active characters (just in case), to plain's definitions.
@@ -7921,14 +7919,28 @@ end
 % alias because \c means cedilla in @tex or @math
 \let\texinfoc=\c
 
+\newcount\savedcatcodeone
+\newcount\savedcatcodetwo
+
 % Used at the time of macro expansion.
 % Argument is macro body with arguments substituted
 \def\scanmacro#1{%
   \newlinechar`\^^M
   \def\xeatspaces{\eatspaces}%
   %
+  % Temporarily undo catcode changes of \printindex.  Set catcode of @ to
+  % 0 so that @-commands in macro expansions aren't printed literally when 
+  % formatting an index file, where \ is used as the escape character.
+  \savedcatcodeone=\catcode`\@
+  \savedcatcodetwo=\catcode`\\
+  \catcode`\@=0
+  \catcode`\\=\active
+  %
   % Process the macro body under the current catcode regime.
-  \scantokens{#1\texinfoc}\aftermacro%
+  \scantokens{#1@texinfoc}\aftermacro%
+  %
+  \catcode`\@=\savedcatcodeone
+  \catcode`\\=\savedcatcodetwo
   %
   % The \texinfoc is to remove the \newlinechar added by \scantokens, and
   % can be noticed by \parsearg.
