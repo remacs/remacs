@@ -1,8 +1,8 @@
 # Prefer GNU C11 and C++11 to earlier versions.  -*- coding: utf-8 -*-
 
 # This implementation is taken from GNU Autoconf lib/autoconf/c.m4
-# commit 739cdc82b5325402231f3f5e1a38f681fcbd1db2
-# dated Tue Mar 15 09:34:11 2016 -0700.
+# commit 017d5ddd82854911f0119691d91ea8a1438824d6
+# dated Sun Apr 3 13:57:17 2016 -0700
 # This implementation will be obsolete once we can assume Autoconf 2.70
 # or later is installed everywhere a Gnulib program might be developed.
 
@@ -707,7 +707,7 @@ AC_DEFUN([_AC_CXX_CXX11_TEST_BODY],
   short sa[cxx11test::get_val()] = { 0 };
 }
 {
-  // Test initialiser lists
+  // Test initializer lists
   cxx11test::testinit il = { 4323, 435234.23544 };
 }
 {
@@ -801,7 +801,7 @@ dnl with extended modes being tried first.
 # considers the compiler to be in ISO C++11 mode if it handles all the
 # tests from the C++98 checks, plus the following: Language features
 # (auto, constexpr, decltype, default/deleted constructors, delegate
-# constructors, final, initialiser lists, lambda functions, nullptr,
+# constructors, final, initializer lists, lambda functions, nullptr,
 # override, range-based for loops, template brackets without spaces,
 # unicode literals) and library features (array, memory (shared_ptr,
 # weak_ptr), regex and tuple types).

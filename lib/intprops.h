@@ -21,6 +21,7 @@
 #define _GL_INTPROPS_H
 
 #include <limits.h>
+#include <verify.h>
 
 /* Return a value with the common real type of E and V and the value of V.  */
 #define _GL_INT_CONVERT(e, v) (0 * (e) + (v))
@@ -36,17 +37,6 @@
    an integer.  */
 #define TYPE_IS_INTEGER(t) ((t) 1.5 == 1)
 
-/* True if negative values of the signed integer type T use two's
-   complement, ones' complement, or signed magnitude representation,
-   respectively.  Much GNU code assumes two's complement, but some
-   people like to be portable to all possible C hosts.  */
-#define TYPE_TWOS_COMPLEMENT(t) ((t) ~ (t) 0 == (t) -1)
-#define TYPE_ONES_COMPLEMENT(t) ((t) ~ (t) 0 == 0)
-#define TYPE_SIGNED_MAGNITUDE(t) ((t) ~ (t) 0 < (t) -1)
-
-/* True if the signed integer expression E uses two's complement.  */
-#define _GL_INT_TWOS_COMPLEMENT(e) (~ _GL_INT_CONVERT (e, 0) == -1)
-
 /* True if the real type T is signed.  */
 #define TYPE_SIGNED(t) (! ((t) 0 < (t) -1))
 
@@ -55,18 +45,10 @@
 #define EXPR_SIGNED(e) (_GL_INT_NEGATE_CONVERT (e, 1) < 0)
 
 
-/* Minimum and maximum values for integer types and expressions.  These
-   macros have undefined behavior if T is signed and has padding bits.
-   If this is a problem for you, please let us know how to fix it for
-   your host.  */
+/* Minimum and maximum values for integer types and expressions.  */
 
 /* The maximum and minimum values for the integer type T.  */
-#define TYPE_MINIMUM(t)                                                 \
-  ((t) (! TYPE_SIGNED (t)                                               \
-        ? (t) 0                                                         \
-        : TYPE_SIGNED_MAGNITUDE (t)                                     \
-        ? ~ (t) 0                                                       \
-        : ~ TYPE_MAXIMUM (t)))
+#define TYPE_MINIMUM(t) ((t) ~ TYPE_MAXIMUM (t))
 #define TYPE_MAXIMUM(t)                                                 \
   ((t) (! TYPE_SIGNED (t)                                               \
         ? (t) -1                                                        \
@@ -76,7 +58,7 @@
    after integer promotion.  E should not have side effects.  */
 #define _GL_INT_MINIMUM(e)                                              \
   (EXPR_SIGNED (e)                                                      \
-   ? - _GL_INT_TWOS_COMPLEMENT (e) - _GL_SIGNED_INT_MAXIMUM (e)         \
+   ? ~ _GL_SIGNED_INT_MAXIMUM (e)                                       \
    : _GL_INT_CONVERT (e, 0))
 #define _GL_INT_MAXIMUM(e)                                              \
   (EXPR_SIGNED (e)                                                      \
@@ -85,8 +67,25 @@
 #define _GL_SIGNED_INT_MAXIMUM(e)                                       \
   (((_GL_INT_CONVERT (e, 1) << (sizeof ((e) + 0) * CHAR_BIT - 2)) - 1) * 2 + 1)
 
+/* This include file assumes that signed types are two's complement without
+   padding bits; the above macros have undefined behavior otherwise.
+   If this is a problem for you, please let us know how to fix it for your host.
+   As a sanity check, test the assumption for some signed types that
+   <limits.h> bounds.  */
+verify (TYPE_MINIMUM (signed char) == SCHAR_MIN);
+verify (TYPE_MAXIMUM (signed char) == SCHAR_MAX);
+verify (TYPE_MINIMUM (short int) == SHRT_MIN);
+verify (TYPE_MAXIMUM (short int) == SHRT_MAX);
+verify (TYPE_MINIMUM (int) == INT_MIN);
+verify (TYPE_MAXIMUM (int) == INT_MAX);
+verify (TYPE_MINIMUM (long int) == LONG_MIN);
+verify (TYPE_MAXIMUM (long int) == LONG_MAX);
+#ifdef LLONG_MAX
+verify (TYPE_MINIMUM (long long int) == LLONG_MIN);
+verify (TYPE_MAXIMUM (long long int) == LLONG_MAX);
+#endif
 
-/* Return 1 if the __typeof__ keyword works.  This could be done by
+/* Does the __typeof__ keyword work?  This could be done by
    'configure', but for now it's easier to do it by hand.  */
 #if (2 <= __GNUC__ || defined __IBM__TYPEOF__ \
      || (0x5110 <= __SUNPRO_C && !__STDC__))
