@@ -641,5 +641,11 @@ to (xref-elisp-test-descr-to-target xref)."
   (elisp--xref-find-definitions (eval '(provide 'stephe-leake-feature)))
   nil)
 
+(ert-deftest elisp--preceding-sexp--char-name ()
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert "?\\N{HEAVY CHECK MARK}")
+    (should (equal (elisp--preceding-sexp) ?\N{HEAVY CHECK MARK}))))
+
 (provide 'elisp-mode-tests)
 ;;; elisp-mode-tests.el ends here

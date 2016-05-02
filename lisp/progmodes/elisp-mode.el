@@ -1051,6 +1051,17 @@ If CHAR is not a character, return nil."
 	      ((or (eq (following-char) ?\')
 		   (eq (preceding-char) ?\'))
 	       (setq left-quote ?\`)))
+
+        ;; When after a named character literal, skip over the entire
+        ;; literal, not only its last word.
+        (when (= (preceding-char) ?})
+          (let ((begin (save-excursion
+                         (backward-char)
+                         (skip-syntax-backward "w-")
+                         (backward-char 3)
+                         (when (looking-at-p "\\\\N{") (point)))))
+            (when begin (goto-char begin))))
+
 	(forward-sexp -1)
 	;; If we were after `?\e' (or similar case),
 	;; use the whole thing, not just the `e'.
