@@ -444,10 +444,15 @@ This requotes when a quoting key is typed."
     (let ((start
            (if (and comment-start comment-use-syntax)
                (when (or electric-quote-comment electric-quote-string)
-                 (let ((syntax (syntax-ppss)))
-                   (and (or (and electric-quote-comment (nth 4 syntax))
+                 (let* ((syntax (syntax-ppss))
+                        (beg (nth 8 syntax)))
+                   (and beg
+                        (or (and electric-quote-comment (nth 4 syntax))
                             (and electric-quote-string (nth 3 syntax)))
-                        (nth 8 syntax))))
+                        ;; Do not requote a quote that starts or ends
+                        ;; a comment or string.
+                        (eq beg (nth 8 (save-excursion
+                                         (syntax-ppss (1- (point)))))))))
              (and electric-quote-paragraph
                   (derived-mode-p 'text-mode)
                   (or (eq last-command-event ?\`)
