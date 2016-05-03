@@ -1487,7 +1487,8 @@ before, characters preceded by \= are output as-is.
 They use the new 'format-message' function instead of plain 'format',
 so that they now follow user preference as per 'text-quoting-style'
 when processing curved single quotes, grave accents, and apostrophes
-in their format argument.
+in their format argument.  To process % directives but not quotes, you
+can use calls like (message "%s" (format FORMAT ARG1 ... ARGn)).
 
 +++
 ** The character classes [:alpha:] and [:alnum:] in regular expressions
