@@ -2720,7 +2720,12 @@ with the command \\[tags-loop-continue]."
 ;;;###autoload
 (defun dired-do-find-regexp (regexp)
   "Find all matches for REGEXP in all marked files.
-For any marked directory, all of its files are searched recursively."
+For any marked directory, all of its files are searched recursively.
+However, files matching `grep-find-ignored-files' and subdirectories
+matching `vc-directory-exclusion-list' are skipped in the marked
+directories.
+
+REGEXP should use constructs supported by your local `grep' command."
   (interactive "sSearch marked files (regexp): ")
   (require 'grep)
   (defvar grep-find-ignored-files)
@@ -2743,7 +2748,11 @@ For any marked directory, all of its files are searched recursively."
 (defun dired-do-find-regexp-and-replace (from to)
   "Replace matches of FROM with TO, in all marked files.
 For any marked directory, matches in all of its files are replaced,
-recursively."
+recursively.  However, files matching `grep-find-ignored-files'
+and subdirectories matching `vc-directory-exclusion-list' are skipped
+in the marked directories.
+
+REGEXP should use constructs supported by your local `grep' command."
   (interactive
    (let ((common
           (query-replace-read-args

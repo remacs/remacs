@@ -4425,13 +4425,22 @@ with the command \\[tags-loop-continue].
 (autoload 'dired-do-find-regexp "dired-aux" "\
 Find all matches for REGEXP in all marked files.
 For any marked directory, all of its files are searched recursively.
+However, files matching `grep-find-ignored-files' and subdirectories
+matching `vc-directory-exclusion-list' are skipped in the marked
+directories.
+
+REGEXP should use constructs supported by your local `grep' command.
 
 \(fn REGEXP)" t nil)
 
 (autoload 'dired-do-find-regexp-and-replace "dired-aux" "\
 Replace matches of FROM with TO, in all marked files.
 For any marked directory, matches in all of its files are replaced,
-recursively.
+recursively.  However, files matching `grep-find-ignored-files'
+and subdirectories matching `vc-directory-exclusion-list' are skipped
+in the marked directories.
+
+REGEXP should use constructs supported by your local `grep' command.
 
 \(fn FROM TO)" t nil)
 
