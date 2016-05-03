@@ -1016,7 +1016,11 @@ directory, used as the root of the ignore globs."
     (syntax-propertize line-end)
     ;; FIXME: This results in several lines with the same
     ;; summary. Solve with composite pattern?
-    (while (re-search-forward regexp line-end t)
+    (while (and
+            ;; REGEXP might match an empty string.  Or line.
+            (or (null matches)
+                (> (point) line-beg))
+            (re-search-forward regexp line-end t))
       (let* ((beg-column (- (match-beginning 0) line-beg))
              (end-column (- (match-end 0) line-beg))
              (loc (xref-make-file-location file line beg-column))
