@@ -852,8 +852,8 @@ button end points."
     (define-key map [(shift tab)] 'widget-backward)
     (put 'widget-backward :advertised-binding [(shift tab)])
     (define-key map [backtab] 'widget-backward)
-    (define-key map [down-mouse-2] 'widget-button-click)
-    (define-key map [down-mouse-1] 'widget-button-click)
+    (define-key map [mouse-2] 'widget-button-click)
+    (define-key map [mouse-1] 'widget-button-click)
     ;; The following definition needs to avoid using escape sequences that
     ;; might get converted to ^M when building loaddefs.el
     (define-key map [(control ?m)] 'widget-button-press)
