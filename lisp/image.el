@@ -731,7 +731,7 @@ number, play until that number of seconds has elapsed."
       (plist-put (cdr image) :animate-buffer (current-buffer))
       (run-with-timer 0.2 nil 'image-animate-timeout
 		      image (or index 0) (car animation)
-		      0 limit))))
+		      0 limit (+ (float-time) 0.2)))))
 
 (defun image-animate-timer (image)
   "Return the animation timer for image IMAGE."
@@ -780,7 +780,7 @@ multiplication factor for the current value."
 ;; hence we need to call image-multi-frame-p to return it.
 ;; But it also returns count, so why do we bother passing that as an
 ;; argument?
-(defun image-animate-timeout (image n count time-elapsed limit)
+(defun image-animate-timeout (image n count time-elapsed limit target-time)
   "Display animation frame N of IMAGE.
 N=0 refers to the initial animation frame.
 COUNT is the total number of frames in the animation.
@@ -793,7 +793,11 @@ The minimum delay between successive frames is `image-minimum-frame-delay'.
 
 If the image has a non-nil :speed property, it acts as a multiplier
 for the animation speed.  A negative value means to animate in reverse."
-  (when (buffer-live-p (plist-get (cdr image) :animate-buffer))
+  (when (and (buffer-live-p (plist-get (cdr image) :animate-buffer))
+             ;; Delayed more than two seconds more than expected.
+             (when (> (- (float-time) target-time) 2)
+               (message "Stopping animation; animation possibly too big")
+               nil))
     (image-show-frame image n t)
     (let* ((speed (image-animate-get-speed image))
 	   (time (float-time))
@@ -817,7 +821,8 @@ for the animation speed.  A negative value means to animate in reverse."
 	  (setq done (>= time-elapsed limit)))
       (unless done
 	(run-with-timer delay nil 'image-animate-timeout
-			image n count time-elapsed limit)))))
+			image n count time-elapsed limit
+                        (+ (float-time) delay))))))
 
 
 (defvar imagemagick-types-inhibit)
