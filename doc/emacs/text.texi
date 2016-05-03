@@ -862,8 +862,8 @@ indenting the current line.  @xref{Indentation}, for details.
 
   Text mode turns off the features concerned with comments except when
 you explicitly invoke them.  It changes the syntax table so that
-single-quotes are considered part of words (e.g., @samp{don't} is
-considered one word).  However, if a word starts with a single-quote,
+apostrophes are considered part of words (e.g., @samp{don't} is
+considered one word).  However, if a word starts with an apostrophe,
 it is treated as a prefix for the purposes of capitalization
 (e.g., @kbd{M-c} converts @samp{'hello'} into @samp{'Hello'}, as
 expected).

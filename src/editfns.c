@@ -3665,10 +3665,11 @@ In batch mode, the message is printed to the standard error stream,
 followed by a newline.
 
 The first argument is a format control string, and the rest are data
-to be formatted under control of the string.  See `format' for details.
+to be formatted under control of the string.  See `format-message' for
+details.
 
-Note: Use (message "%s" VALUE) to print the value of expressions and
-variables to avoid accidentally interpreting `%' as format specifiers.
+Note: (message "%s" VALUE) displays the string VALUE without
+interpreting format characters like `%', `\\=`', and `\\=''.
 
 If the first argument is nil or the empty string, the function clears
 any existing message; this lets the minibuffer contents show.  See
@@ -3696,7 +3697,8 @@ DEFUN ("message-box", Fmessage_box, Smessage_box, 1, MANY, 0,
        doc: /* Display a message, in a dialog box if possible.
 If a dialog box is not available, use the echo area.
 The first argument is a format control string, and the rest are data
-to be formatted under control of the string.  See `format' for details.
+to be formatted under control of the string.  See `format-message' for
+details.
 
 If the first argument is nil or the empty string, clear any existing
 message; let the minibuffer contents show.
@@ -3727,7 +3729,8 @@ If this command was invoked with the mouse, use a dialog box if
 `use-dialog-box' is non-nil.
 Otherwise, use the echo area.
 The first argument is a format control string, and the rest are data
-to be formatted under control of the string.  See `format' for details.
+to be formatted under control of the string.  See `format-message' for
+details.
 
 If the first argument is nil or the empty string, clear any existing
 message; let the minibuffer contents show.

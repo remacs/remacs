@@ -335,10 +335,14 @@ specifies @var{mapvar}'s value as the keymap for any following
 @item ‘
 @itemx `
 (left single quotation mark and grave accent) both stand for a left quote.
+This generates a left single quotation mark, an apostrophe, or a grave
+accent depending on the value of @code{text-quoting-style}.
 
 @item ’
 @itemx '
 (right single quotation mark and apostrophe) both stand for a right quote.
+This generates a right single quotation mark or an apostrophe
+depending on the value of @code{text-quoting-style}.
 
 @item \=
 quotes the following character and is discarded; thus, @samp{\=`} puts

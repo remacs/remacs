@@ -1004,11 +1004,11 @@ the name stands for ``Lots of Isolated Silly Parentheses''.  But the
 claim is unwarranted.  Lisp stands for LISt Processing, and the
 programming language handles @emph{lists} (and lists of lists) by
 putting them between parentheses.  The parentheses mark the boundaries
-of the list.  Sometimes a list is preceded by a single apostrophe or
-quotation mark, @samp{'}@footnote{The single apostrophe or quotation
-mark is an abbreviation for the function @code{quote}; you need not
-think about functions now; functions are defined in @ref{Making
-Errors, , Generate an Error Message}.}  Lists are the basis of Lisp.
+of the list.  Sometimes a list is preceded by an apostrophe @samp{'},
+called a @dfn{single-quote} in Lisp.@footnote{A single-quote is an
+abbreviation for the special form @code{quote}; you need not think
+about special forms now.  @xref{Complications}.}  Lists are the basis
+of Lisp.
 
 @menu
 * Lisp Lists::                  What are lists?
@@ -2490,14 +2490,7 @@ in the list and then at the function definition bound to that symbol.
 Then the instructions in the function definition are carried out.
 
 @item
-A single quotation mark,
-@ifinfo
-'
-@end ifinfo
-@ifnotinfo
-@code{'}
-@end ifnotinfo
-, tells the Lisp interpreter that it should
+A single-quote @samp{'} tells the Lisp interpreter that it should
 return the following expression as written, and not evaluate it as it
 would if the quote were not there.
 
@@ -7610,7 +7603,8 @@ displays in which grave accent and apostrophe were often mirror images
 suitable for use as quotes.  On most modern displays this is no longer
 true, and when these two ASCII characters appear in documentation
 strings or diagnostic message formats, Emacs typically transliterates
-them to curved single quotes, so that the abovequoted symbol appears
+them to @dfn{curved quotes} (left and right single quotation marks),
+so that the abovequoted symbol appears
 as @t{‘case-fold-search’}.  Source-code strings can also simply use
 curved quotes directly.
 
@@ -17117,7 +17111,7 @@ This line is a short, but complete Emacs Lisp expression.
 
 We are already familiar with @code{setq}.  It sets the following variable,
 @code{major-mode}, to the subsequent value, which is @code{text-mode}.
-The single quote mark before @code{text-mode} tells Emacs to deal directly
+The single-quote before @code{text-mode} tells Emacs to deal directly
 with the @code{text-mode} symbol, not with whatever it might stand for.
 @xref{set & setq, , Setting the Value of a Variable},
 for a reminder of how @code{setq} works.
@@ -17284,11 +17278,11 @@ Rebinding Keys in Your Init File, emacs, The GNU Emacs Manual}, for
 details.)
 
 The command invoked by the keys is @code{compare-windows}.  Note that
-@code{compare-windows} is preceded by a single quote; otherwise, Emacs
+@code{compare-windows} is preceded by a single-quote; otherwise, Emacs
 would first try to evaluate the symbol to determine its value.
 
 These three things, the double quotation marks, the backslash before
-the @samp{C}, and the single quote mark are necessary parts of
+the @samp{C}, and the single-quote are necessary parts of
 keybinding that I tend to forget.  Fortunately, I have come to
 remember that I should look at my existing @file{.emacs} file, and
 adapt what is there.

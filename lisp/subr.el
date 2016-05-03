@@ -290,21 +290,27 @@ This function accepts any number of arguments, but ignores them."
 
 ;; Signal a compile-error if the first arg is missing.
 (defun error (&rest args)
-  "Signal an error, making error message by passing all args to `format'.
+  "Signal an error, making a message by passing args to `format-message'.
 In Emacs, the convention is that error messages start with a capital
 letter but *do not* end with a period.  Please follow this convention
-for the sake of consistency."
+for the sake of consistency.
+
+Note: (error \"%s\" VALUE) makes the message VALUE without
+interpreting format characters like `%', `\\=`', and `\\=''."
   (declare (advertised-calling-convention (string &rest args) "23.1"))
   (signal 'error (list (apply #'format-message args))))
 
 (defun user-error (format &rest args)
-  "Signal a pilot error, making error message by passing all args to `format'.
+  "Signal a pilot error, making a message by passing args to `format-message'.
 In Emacs, the convention is that error messages start with a capital
 letter but *do not* end with a period.  Please follow this convention
 for the sake of consistency.
 This is just like `error' except that `user-error's are expected to be the
 result of an incorrect manipulation on the part of the user, rather than the
-result of an actual problem."
+result of an actual problem.
+
+Note: (user-error \"%s\" VALUE) makes the message VALUE without
+interpreting format characters like `%', `\\=`', and `\\=''."
   (signal 'user-error (list (apply #'format-message format args))))
 
 (defun define-error (name message &optional parent)
