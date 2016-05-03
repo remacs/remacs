@@ -1008,8 +1008,8 @@ element is the data blob and the second element is the content-type."
 (defun shr-rescale-image (data content-type width height)
   "Rescale DATA, if too big, to fit the current buffer.
 WIDTH and HEIGHT are the sizes given in the HTML data, if any."
-  (if (not (and (fboundp 'imagemagick-types)
-                (get-buffer-window (current-buffer))))
+  (if (or (not (fboundp 'imagemagick-types))
+          (not (get-buffer-window (current-buffer))))
       (create-image data nil t :ascent 100)
     (let* ((edges (window-inside-pixel-edges
                    (get-buffer-window (current-buffer))))
