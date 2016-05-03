@@ -2722,17 +2722,18 @@ with the command \\[tags-loop-continue]."
   "Find all matches for REGEXP in all marked files.
 For any marked directory, all of its files are searched recursively.
 However, files matching `grep-find-ignored-files' and subdirectories
-matching `vc-directory-exclusion-list' are skipped in the marked
+matching `grep-find-ignored-directories' are skipped in the marked
 directories.
 
 REGEXP should use constructs supported by your local `grep' command."
   (interactive "sSearch marked files (regexp): ")
   (require 'grep)
   (defvar grep-find-ignored-files)
+  (defvar grep-find-ignored-directories)
   (let* ((files (dired-get-marked-files))
          (ignores (nconc (mapcar
                           (lambda (s) (concat s "/"))
-                          vc-directory-exclusion-list)
+                          grep-find-ignored-directories)
                          grep-find-ignored-files))
          (xrefs (cl-mapcan
                  (lambda (file)
@@ -2749,7 +2750,7 @@ REGEXP should use constructs supported by your local `grep' command."
   "Replace matches of FROM with TO, in all marked files.
 For any marked directory, matches in all of its files are replaced,
 recursively.  However, files matching `grep-find-ignored-files'
-and subdirectories matching `vc-directory-exclusion-list' are skipped
+and subdirectories matching `grep-find-ignored-directories' are skipped
 in the marked directories.
 
 REGEXP should use constructs supported by your local `grep' command."

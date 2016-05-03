@@ -796,12 +796,12 @@ where you can navigate between matches and display them as needed
 using the commands described in @ref{Xref Commands}.
 
 @vindex grep-find-ignored-files @r{(Dired)}
-@vindex vc-directory-exclusion-list @r{(Dired)}
+@vindex grep-find-ignored-directories @r{(Dired)}
 If any of the marked files are directories, then this command searches
 all of the files in those directories, and any of their
 subdirectories, recursively, except files whose names match
 @code{grep-find-ignored-files} and subdirectories whose names match
-@code{vc-directory-exclusion-list}.
+@code{grep-find-ignored-directories}.
 
 @kindex Q @r{(Dired)}
 @findex dired-do-find-regexp-and-replace
@@ -822,7 +822,7 @@ Like with @code{dired-do-find-regexp}, if any of the marked files are
 directories, this command performs replacements in all of the files in
 those directories, and in any of their subdirectories, recursively,
 except for files whose names match @code{grep-find-ignored-files} and
-subdirectories whose names match @code{vc-directory-exclusion-list}.
+subdirectories whose names match @code{grep-find-ignored-directories}.
 @end table
 
 @node Shell Commands in Dired

@@ -3919,7 +3919,7 @@ Ask means pop up a menu for the user to select one of copy, move or link."
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads nil "dired-aux" "dired-aux.el" "00fe45cfae47cace47cffc09afca6832")
+;;;### (autoloads nil "dired-aux" "dired-aux.el" "8346506b9ef7167fd55b5eac7e6617a1")
 ;;; Generated autoloads from dired-aux.el
 
 (autoload 'dired-diff "dired-aux" "\
@@ -4426,7 +4426,7 @@ with the command \\[tags-loop-continue].
 Find all matches for REGEXP in all marked files.
 For any marked directory, all of its files are searched recursively.
 However, files matching `grep-find-ignored-files' and subdirectories
-matching `vc-directory-exclusion-list' are skipped in the marked
+matching `grep-find-ignored-directories' are skipped in the marked
 directories.
 
 REGEXP should use constructs supported by your local `grep' command.
@@ -4437,7 +4437,7 @@ REGEXP should use constructs supported by your local `grep' command.
 Replace matches of FROM with TO, in all marked files.
 For any marked directory, matches in all of its files are replaced,
 recursively.  However, files matching `grep-find-ignored-files'
-and subdirectories matching `vc-directory-exclusion-list' are skipped
+and subdirectories matching `grep-find-ignored-directories' are skipped
 in the marked directories.
 
 REGEXP should use constructs supported by your local `grep' command.
