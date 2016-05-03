@@ -1476,6 +1476,13 @@ display of diagnostics and help, but not of info.  As the variable is
 not intended for casual use, it is not a user option.
 
 +++
+** `message' now translates various sorts of single quotes in its
+format string according to the value of `text-quoting-style' (see
+above).  This translation cannot be disabled.  To get the old
+behavior of `message', use `format', which is not affected by
+`text-quoting-style', e.g. (message "%s" (format "...." foo bar)).
+
++++
 ** substitute-command-keys now replaces quotes.
 That is, it converts documentation strings' quoting style as per the
 value of 'text-quoting-style'.  Doc strings in source code can use
