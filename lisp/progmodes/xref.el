@@ -521,58 +521,86 @@ references displayed in the current *xref* buffer."
    (let ((fr (read-regexp "Xref query-replace (regexp)" ".*")))
      (list fr
            (read-regexp (format "Xref query-replace (regexp) %s with: " fr)))))
-  (let ((reporter (make-progress-reporter (format "Saving search results...")
-                                          0 (line-number-at-pos (point-max))))
-        (counter 0)
-        pairs item)
+  (let* (item xrefs iter)
+    (save-excursion
+      (while (setq item (xref--search-property 'xref-item))
+        (when (xref-match-length item)
+          (push item xrefs))))
     (unwind-protect
         (progn
-          (save-excursion
-            (goto-char (point-min))
-            ;; TODO: This list should be computed on-demand instead.
-            ;; As long as the UI just iterates through matches one by
-            ;; one, there's no need to compute them all in advance.
-            ;; Then we can throw away the reporter.
-            (while (setq item (xref--search-property 'xref-item))
-              (when (xref-match-length item)
-                (save-excursion
-                  (let* ((loc (xref-item-location item))
-                         (beg (xref-location-marker loc))
-                         (end (move-marker (make-marker)
-                                           (+ beg (xref-match-length item))
-                                           (marker-buffer beg))))
-                    ;; Perform sanity check first.
-                    (xref--goto-location loc)
-                    ;; FIXME: The check should probably be a generic
-                    ;; function, instead of the assumption that all
-                    ;; matches contain the full line as summary.
-                    ;; TODO: Offer to re-scan otherwise.
-                    (unless (equal (buffer-substring-no-properties
-                                    (line-beginning-position)
-                                    (line-end-position))
-                                   (xref-item-summary item))
-                      (user-error "Search results out of date"))
-                    (progress-reporter-update reporter (cl-incf counter))
-                    (push (cons beg end) pairs)))))
-            (setq pairs (nreverse pairs)))
-          (unless pairs (user-error "No suitable matches here"))
-          (progress-reporter-done reporter)
-          (xref--query-replace-1 from to pairs))
-      (dolist (pair pairs)
-        (move-marker (car pair) nil)
-        (move-marker (cdr pair) nil)))))
+          (goto-char (point-min))
+          (setq iter (xref--buf-pairs-iterator (nreverse xrefs)))
+          (xref--query-replace-1 from to iter))
+      (funcall iter :cleanup))))
+
+(defun xref--buf-pairs-iterator (xrefs)
+  (let (chunk-done item next-pair file-buf pairs all-pairs)
+    (lambda (action)
+      (pcase action
+        (:next
+         (when (or xrefs next-pair)
+           (setq chunk-done nil)
+           (when next-pair
+             (setq file-buf (marker-buffer (car next-pair))
+                   pairs (list next-pair)
+                   next-pair nil))
+           (while (and (not chunk-done)
+                       (setq item (pop xrefs)))
+             (save-excursion
+               (let* ((loc (xref-item-location item))
+                      (beg (xref-location-marker loc))
+                      (end (move-marker (make-marker)
+                                        (+ beg (xref-match-length item))
+                                        (marker-buffer beg))))
+                 (let ((pair (cons beg end)))
+                   (push pair all-pairs)
+                   ;; Perform sanity check first.
+                   (xref--goto-location loc)
+                   (if (xref--outdated-p item
+                                         (buffer-substring-no-properties
+                                          (line-beginning-position)
+                                          (line-end-position)))
+                       (message "Search result out of date, skipping")
+                     (cond
+                      ((null file-buf)
+                       (setq file-buf (marker-buffer beg))
+                       (push pair pairs))
+                      ((equal file-buf (marker-buffer beg))
+                       (push pair pairs))
+                      (t
+                       (setq chunk-done t
+                             next-pair pair))))))))
+           (cons file-buf pairs)))
+        (:cleanup
+         (dolist (pair all-pairs)
+           (move-marker (car pair) nil)
+           (move-marker (cdr pair) nil)))))))
+
+(defun xref--outdated-p (item line-text)
+  ;; FIXME: The check should probably be a generic function instead of
+  ;; the assumption that all matches contain the full line as summary.
+  (let ((summary (xref-item-summary item))
+        (strip (lambda (s) (if (string-match "\r\\'" s)
+                          (substring-no-properties s 0 -1)
+                        s))))
+    (not
+     ;; Sometimes buffer contents include ^M, and sometimes Grep
+     ;; output includes it, and they don't always match.
+     (equal (funcall strip line-text)
+            (funcall strip summary)))))
 
 ;; FIXME: Write a nicer UI.
-(defun xref--query-replace-1 (from to pairs)
+(defun xref--query-replace-1 (from to iter)
   (let* ((query-replace-lazy-highlight nil)
-         current-beg current-end current-buf
+         (continue t)
+         did-it-once buf-pairs pairs
+         current-beg current-end
          ;; Counteract the "do the next match now" hack in
          ;; `perform-replace'.  And still, it'll report that those
          ;; matches were "filtered out" at the end.
          (isearch-filter-predicate
           (lambda (beg end)
             (and current-beg
-                 (eq (current-buffer) current-buf)
                  (>= beg current-beg)
                  (<= end current-end))))
          (replace-re-search-function
@@ -581,19 +609,22 @@ references displayed in the current *xref* buffer."
               (while (and (not found) pairs)
                 (setq pair (pop pairs)
                       current-beg (car pair)
-                      current-end (cdr pair)
-                      current-buf (marker-buffer current-beg))
-                (xref--with-dedicated-window
-                 (pop-to-buffer current-buf))
+                      current-end (cdr pair))
                 (goto-char current-beg)
                 (when (re-search-forward from current-end noerror)
                   (setq found t)))
               found))))
-    ;; FIXME: Despite this being a multi-buffer replacement, `N'
-    ;; doesn't work, because we're not using
-    ;; `multi-query-replace-map', and it would expect the below
-    ;; function to be called once per buffer.
-    (perform-replace from to t t nil)))
+    (while (and continue (setq buf-pairs (funcall iter :next)))
+      (if did-it-once
+          ;; Reuse the same window for subsequent buffers.
+          (switch-to-buffer (car buf-pairs))
+        (xref--with-dedicated-window
+         (pop-to-buffer (car buf-pairs)))
+        (setq did-it-once t))
+      (setq pairs (cdr buf-pairs))
+      (setq continue
+            (perform-replace from to t t nil nil multi-query-replace-map)))
+    (unless did-it-once (user-error "No suitable matches here"))))
 
 (defvar xref--xref-buffer-mode-map
   (let ((map (make-sparse-keymap)))
