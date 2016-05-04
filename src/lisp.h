@@ -4198,6 +4198,9 @@ extern void syms_of_callproc (void);
 /* Defined in doc.c.  */
 enum text_quoting_style
   {
+    /* Leave quotes unchanged.  */
+    LEAVE_QUOTING_STYLE,
+
     /* Use curved single quotes ‘like this’.  */
     CURVE_QUOTING_STYLE,
 

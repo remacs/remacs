@@ -3974,6 +3974,8 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
       multibyte = true;
 
   int quoting_style = message ? text_quoting_style () : -1;
+  if (quoting_style == LEAVE_QUOTING_STYLE)
+    quoting_style = -1;
 
   /* If we start out planning a unibyte result,
      then discover it has to be multibyte, we jump back to retry.  */

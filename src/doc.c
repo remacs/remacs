@@ -704,6 +704,8 @@ text_quoting_style (void)
       ? default_to_grave_quoting_style ()
       : EQ (Vtext_quoting_style, Qgrave))
     return GRAVE_QUOTING_STYLE;
+  else if (EQ (Vtext_quoting_style, Qleave))
+    return LEAVE_QUOTING_STYLE;
   else if (EQ (Vtext_quoting_style, Qstraight))
     return STRAIGHT_QUOTING_STYLE;
   else
@@ -988,7 +990,8 @@ Otherwise, return a new string.  */)
 	  int ch = STRING_CHAR_AND_LENGTH (strp, len);
 	  if ((ch == LEFT_SINGLE_QUOTATION_MARK
 	       || ch == RIGHT_SINGLE_QUOTATION_MARK)
-	      && quoting_style != CURVE_QUOTING_STYLE)
+	      && quoting_style != CURVE_QUOTING_STYLE
+              && quoting_style != LEAVE_QUOTING_STYLE)
 	    {
 	      *bufp++ = ((ch == LEFT_SINGLE_QUOTATION_MARK
 			  && quoting_style == GRAVE_QUOTING_STYLE)
@@ -1033,6 +1036,7 @@ void
 syms_of_doc (void)
 {
   DEFSYM (Qfunction_documentation, "function-documentation");
+  DEFSYM (Qleave, "leave");
   DEFSYM (Qgrave, "grave");
   DEFSYM (Qstraight, "straight");
 
@@ -1046,7 +1050,11 @@ syms_of_doc (void)
 
   DEFVAR_LISP ("text-quoting-style", Vtext_quoting_style,
                doc: /* Style to use for single quotes in help and messages.
-Its value should be a symbol.
+Its value should be a symbol.  It works by substituting certain single
+quotes for certain other single quotes.  This is done in help output and
+`message' output.  It is not done in `format'.
+
+`leave' means do not do any substitutions.
 `curve' means quote with curved single quotes \\=‘like this\\=’.
 `straight' means quote with straight apostrophes \\='like this\\='.
 `grave' means quote with grave accent and apostrophe \\=`like this\\='.

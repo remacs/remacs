@@ -626,7 +626,7 @@ FILE is the file where FUNCTION was probably defined."
             ;; Avoid asking the user annoying questions if she decides
             ;; to save the help buffer, when her locale's codeset
             ;; isn't UTF-8.
-            (unless (memq text-quoting-style '(straight grave))
+            (unless (memq text-quoting-style '(leave straight grave))
               (set-buffer-file-coding-system 'utf-8))))))))
 
 ;; Add defaults to `help-fns-describe-function-functions'.
