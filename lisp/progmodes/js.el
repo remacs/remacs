@@ -1722,7 +1722,8 @@ This performs fontification according to `js--class-styles'."
                            (eval-when-compile (append "=({[,:;" '(nil))))))
            (put-text-property (match-beginning 1) (match-end 1)
                               'syntax-table (string-to-syntax "\"/"))
-           (js-syntax-propertize-regexp end))))))
+           (js-syntax-propertize-regexp end)))))
+    ("\\`\\(#\\)!" (1 "< b")))
    (point) end))
 
 (defconst js--prettify-symbols-alist
@@ -2248,7 +2249,7 @@ i.e., customize JSX element indentation with `sgml-basic-offset',
   "Fill the paragraph with `c-fill-paragraph'."
   (interactive "*P")
   (let ((js--filling-paragraph t)
-        (fill-paragraph-function 'c-fill-paragraph))
+        (fill-paragraph-function #'c-fill-paragraph))
     (c-fill-paragraph justify)))
 
 ;;; Type database and Imenu
@@ -3495,6 +3496,7 @@ browser, respectively."
 
 
        (unwind-protect
+           ;; FIXME: Don't impose IDO on the user.
            (setq selected-tab-cname
                  (let ((ido-minibuffer-setup-hook
                         (cons #'setup-hook ido-minibuffer-setup-hook)))
@@ -3717,11 +3719,11 @@ If one hasn't been set, or if it's stale, prompt for a new one."
 (define-derived-mode js-mode prog-mode "JavaScript"
   "Major mode for editing JavaScript."
   :group 'js
-  (setq-local indent-line-function 'js-indent-line)
-  (setq-local beginning-of-defun-function 'js-beginning-of-defun)
-  (setq-local end-of-defun-function 'js-end-of-defun)
+  (setq-local indent-line-function #'js-indent-line)
+  (setq-local beginning-of-defun-function #'js-beginning-of-defun)
+  (setq-local end-of-defun-function #'js-end-of-defun)
   (setq-local open-paren-in-column-0-is-defun-start nil)
-  (setq-local font-lock-defaults (list js--font-lock-keywords))
+  (setq-local font-lock-defaults '(js--font-lock-keywords))
   (setq-local syntax-propertize-function #'js-syntax-propertize)
   (setq-local prettify-symbols-alist js--prettify-symbols-alist)
 
@@ -3732,7 +3734,7 @@ If one hasn't been set, or if it's stale, prompt for a new one."
   ;; Comments
   (setq-local comment-start "// ")
   (setq-local comment-end "")
-  (setq-local fill-paragraph-function 'js-c-fill-paragraph)
+  (setq-local fill-paragraph-function #'js-c-fill-paragraph)
 
   ;; Parse cache
   (add-hook 'before-change-functions #'js--flush-caches t t)
