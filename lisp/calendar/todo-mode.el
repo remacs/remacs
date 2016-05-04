@@ -902,17 +902,19 @@ Categories mode."
       (todo-show)
     (let* ((archive (eq where 'archive))
 	   (cat (unless archive where))
+           (goto-archive (and cat
+                              todo-skip-archived-categories
+                              (zerop (todo-get-count 'todo cat))
+                              (zerop (todo-get-count 'done cat))
+                              (not (zerop (todo-get-count 'archived cat)))))
 	   (file0 (when cat		; We're in Todo Categories mode.
-		    ;; With non-nil `todo-skip-archived-categories'
-		    ;; jump to archive file of a category with only
-		    ;; archived items.
-		    (if (and todo-skip-archived-categories
-			     (zerop (todo-get-count 'todo cat))
-			     (zerop (todo-get-count 'done cat))
-			     (not (zerop (todo-get-count 'archived cat))))
+		    (if goto-archive
+			;; If the category has only archived items and
+			;; `todo-skip-archived-categories' is non-nil, jump to
+			;; the archive category.
 			(concat (file-name-sans-extension
 				 todo-current-todo-file) ".toda")
-		      ;; Otherwise, jump to current todo file.
+		      ;; Otherwise, jump to the category in the todo file.
 		      todo-current-todo-file)))
 	   (len (length todo-categories))
 	   (cat+file (unless cat
@@ -923,18 +925,15 @@ Categories mode."
 	   (category (or cat (car cat+file))))
       (unless cat (setq file0 (cdr cat+file)))
       (with-current-buffer (find-file-noselect file0 'nowarn)
-	(setq todo-current-todo-file file0)
-	;; If called from Todo Categories mode, clean up before jumping.
-	(if (string= (buffer-name) todo-categories-buffer)
-	    (kill-buffer))
-	(set-window-buffer (selected-window)
-			   (set-buffer (find-buffer-visiting file0)))
-	(unless todo-global-current-todo-file
-	  (setq todo-global-current-todo-file todo-current-todo-file))
-	(todo-category-number category)
-	(todo-category-select)
-	(goto-char (point-min))
-	(when add-item (todo-insert-item--basic))))))
+        (when goto-archive (todo-archive-mode))
+        (set-window-buffer (selected-window)
+                           (set-buffer (find-buffer-visiting file0)))
+        (unless todo-global-current-todo-file
+          (setq todo-global-current-todo-file todo-current-todo-file))
+        (todo-category-number category)
+        (todo-category-select)
+        (goto-char (point-min))
+        (when add-item (todo-insert-item--basic))))))
 
 (defun todo-next-item (&optional count)
   "Move point down to the beginning of the next item.
