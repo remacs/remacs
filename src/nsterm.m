@@ -2955,10 +2955,11 @@ ns_draw_vertical_window_border (struct window *w, int x, int y0, int y1)
   NSTRACE ("ns_draw_vertical_window_border");
 
   face = FACE_OPT_FROM_ID (f, VERTICAL_BORDER_FACE_ID);
-  if (face)
-      [ns_lookup_indexed_color(face->foreground, f) set];
 
   ns_focus (f, &r, 1);
+  if (face)
+    [ns_lookup_indexed_color(face->foreground, f) set];
+
   NSRectFill(r);
   ns_unfocus (f);
 }
@@ -2977,10 +2978,11 @@ ns_draw_window_divider (struct window *w, int x0, int x1, int y0, int y1)
   NSTRACE ("ns_draw_window_divider");
 
   face = FACE_OPT_FROM_ID (f, WINDOW_DIVIDER_FACE_ID);
-  if (face)
-      [ns_lookup_indexed_color(face->foreground, f) set];
 
   ns_focus (f, &r, 1);
+  if (face)
+    [ns_lookup_indexed_color(face->foreground, f) set];
+
   NSRectFill(r);
   ns_unfocus (f);
 }
