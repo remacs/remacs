@@ -1613,7 +1613,7 @@ any form of file-local variable.  For examples of why you might want
 to use this, @pxref{Auto Major Mode}.
 @end defvar
 
-@defun hack-local-variables &optional mode-only
+@defun hack-local-variables &optional handle-mode
 This function parses, and binds or evaluates as appropriate, any local
 variables specified by the contents of the current buffer.  The variable
 @code{enable-local-variables} has its effect here.  However, this
@@ -1630,11 +1630,15 @@ is non-@code{nil}; it always calls the other hook.  This
 function ignores a @samp{mode} element if it specifies the same major
 mode as the buffer already has.
 
-If the optional argument @var{mode-only} is non-@code{nil}, then all
-this function does is return a symbol specifying the major mode,
-if the @w{@samp{-*-}} line or the local variables list specifies one,
-and @code{nil} otherwise.  It does not set the mode nor any other
-file-local variable.
+If the optional argument @var{handle-mode} is @code{t}, then all this
+function does is return a symbol specifying the major mode, if the
+@w{@samp{-*-}} line or the local variables list specifies one, and
+@code{nil} otherwise.  It does not set the mode or any other
+file-local variable.  If @var{handle-mode} has any value other than
+@code{nil} or @code{t}, any settings of @samp{mode} in the
+@w{@samp{-*-}} line or the local variables list are ignored, and the
+other settings are applied.  If @var{handle-mode} is @code{nil}, all
+the file local variables are set.
 @end defun
 
 @defvar file-local-variables-alist

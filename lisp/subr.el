@@ -1737,10 +1737,14 @@ if it is empty or a duplicate."
 
 (defun run-mode-hooks (&rest hooks)
   "Run mode hooks `delayed-mode-hooks' and HOOKS, or delay HOOKS.
-If the variable `delay-mode-hooks' is non-nil, does not run any hooks,
+Call `hack-local-variables' to set up file local and directory local
+variables.
+
+If the variable `delay-mode-hooks' is non-nil, does not do anything,
 just adds the HOOKS to the list `delayed-mode-hooks'.
 Otherwise, runs hooks in the sequence: `change-major-mode-after-body-hook',
-`delayed-mode-hooks' (in reverse order), HOOKS, and finally
+`delayed-mode-hooks' (in reverse order), HOOKS, then runs
+`hack-local-variables' and finally runs the hook
 `after-change-major-mode-hook'.  Major mode functions should use
 this instead of `run-hooks' when running their FOO-mode-hook."
   (if delay-mode-hooks
@@ -1751,6 +1755,9 @@ this instead of `run-hooks' when running their FOO-mode-hook."
     (setq hooks (nconc (nreverse delayed-mode-hooks) hooks))
     (setq delayed-mode-hooks nil)
     (apply 'run-hooks (cons 'change-major-mode-after-body-hook hooks))
+    (if (buffer-file-name)
+        (with-demoted-errors "File local-variables error: %s"
+          (hack-local-variables 'no-mode)))
     (run-hooks 'after-change-major-mode-hook)))
 
 (defmacro delay-mode-hooks (&rest body)

@@ -2322,8 +2322,12 @@ in that case, this function acts as if `enable-local-variables' were t."
     ;; s-a-m and h-l-v may parse the same regions, looking for "mode:".
     (with-demoted-errors "File mode specification error: %s"
       (set-auto-mode))
-    (with-demoted-errors "File local-variables error: %s"
-      (hack-local-variables)))
+    ;; `delay-mode-hooks' being non-nil will have prevented the major
+    ;; mode's call to `run-mode-hooks' from calling
+    ;; `hack-local-variables'.  In that case, call it now.
+    (when delay-mode-hooks
+      (with-demoted-errors "File local-variables error: %s"
+        (hack-local-variables 'no-mode))))
   ;; Turn font lock off and on, to make sure it takes account of
   ;; whatever file local variables are relevant to it.
   (when (and font-lock-mode
@@ -3297,11 +3301,15 @@ DIR-NAME is the name of the associated directory.  Otherwise it is nil."
 ;; TODO?  Warn once per file rather than once per session?
 (defvar hack-local-variables--warned-lexical nil)
 
-(defun hack-local-variables (&optional mode-only)
+(defun hack-local-variables (&optional handle-mode)
   "Parse and put into effect this buffer's local variables spec.
 Uses `hack-local-variables-apply' to apply the variables.
 
-If MODE-ONLY is non-nil, all we do is check whether a \"mode:\"
+If HANDLE-MODE is nil, we apply all the specified local
+variables.  If HANDLE-MODE is neither nil nor t, we do the same,
+except that any settings of `mode' are ignored.
+
+If HANDLE-MODE is t, all we do is check whether a \"mode:\"
 is specified, and return the corresponding mode symbol, or nil.
 In this case, we try to ignore minor-modes, and only return a
 major-mode.
@@ -3319,7 +3327,7 @@ local variables, but directory-local variables may still be applied."
   (let ((enable-local-variables
 	 (and local-enable-local-variables enable-local-variables))
 	result)
-    (unless mode-only
+    (unless (eq handle-mode t)
       (setq file-local-variables-alist nil)
       (with-demoted-errors "Directory-local variables error: %s"
 	;; Note this is a no-op if enable-local-variables is nil.
@@ -3327,18 +3335,19 @@ local variables, but directory-local variables may still be applied."
     ;; This entire function is basically a no-op if enable-local-variables
     ;; is nil.  All it does is set file-local-variables-alist to nil.
     (when enable-local-variables
-      ;; This part used to ignore enable-local-variables when mode-only
-      ;; was non-nil.  That was inappropriate, eg consider the
+      ;; This part used to ignore enable-local-variables when handle-mode
+      ;; was t.  That was inappropriate, eg consider the
       ;; (artificial) example of:
       ;; (setq local-enable-local-variables nil)
       ;; Open a file foo.txt that contains "mode: sh".
       ;; It correctly opens in text-mode.
       ;; M-x set-visited-file name foo.c, and it incorrectly stays in text-mode.
       (unless (or (inhibit-local-variables-p)
-		  ;; If MODE-ONLY is non-nil, and the prop line specifies a
+		  ;; If HANDLE-MODE is t, and the prop line specifies a
 		  ;; mode, then we're done, and have no need to scan further.
-		  (and (setq result (hack-local-variables-prop-line mode-only))
-		       mode-only))
+		  (and (setq result (hack-local-variables-prop-line
+                                     (eq handle-mode t)))
+		       (eq handle-mode t)))
 	;; Look for "Local variables:" line in last page.
 	(save-excursion
 	  (goto-char (point-max))
@@ -3393,7 +3402,7 @@ local variables, but directory-local variables may still be applied."
 		  (goto-char (point-min))
 
 		  (while (not (or (eobp)
-                                  (and mode-only result)))
+                                  (and (eq handle-mode t) result)))
 		    ;; Find the variable name;
 		    (unless (looking-at hack-local-variable-regexp)
                       (error "Malformed local variable line: %S"
@@ -3410,7 +3419,7 @@ local variables, but directory-local variables may still be applied."
 		      (forward-char 1)
 		      (let ((read-circle nil))
 			(setq val (read (current-buffer))))
-		      (if mode-only
+		      (if (eq handle-mode t)
 			  (and (eq var 'mode)
 			       ;; Specifying minor-modes via mode: is
 			       ;; deprecated, but try to reject them anyway.
@@ -3432,6 +3441,7 @@ local variables, but directory-local variables may still be applied."
                                     ;; to use 'thisbuf's name in the
                                     ;; warning message.
                                     (or (buffer-file-name thisbuf) ""))))))
+                              ((and (eq var 'mode) handle-mode))
 			      (t
 			       (ignore-errors
 				 (push (cons (if (eq var 'eval)
@@ -3440,8 +3450,8 @@ local variables, but directory-local variables may still be applied."
 					     val) result))))))
 		    (forward-line 1))))))))
       ;; Now we've read all the local variables.
-      ;; If MODE-ONLY is non-nil, return whether the mode was specified.
-      (if mode-only result
+      ;; If HANDLE-MODE is t, return whether the mode was specified.
+      (if (eq handle-mode t) result
 	;; Otherwise, set the variables.
 	(hack-local-variables-filter result nil)
 	(hack-local-variables-apply)))))
