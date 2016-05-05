@@ -941,6 +941,8 @@ IGNORES is a list of glob patterns."
   (require 'find-dired)      ; for `find-name-arg'
   (defvar grep-find-template)
   (defvar find-name-arg)
+  ;; `shell-quote-argument' quotes the tilde as well.
+  (cl-assert (not (string-match-p "\\`~" dir)))
   (grep-expand-template
    grep-find-template
    regexp
@@ -952,14 +954,13 @@ IGNORES is a list of glob patterns."
             (concat " -o " find-name-arg " "))
            " "
            (shell-quote-argument ")"))
-   dir
+   (shell-quote-argument dir)
    (xref--find-ignores-arguments ignores dir)))
 
 (defun xref--find-ignores-arguments (ignores dir)
   "Convert IGNORES and DIR to a list of arguments for 'find'.
 IGNORES is a list of glob patterns.  DIR is an absolute
 directory, used as the root of the ignore globs."
-  ;; `shell-quote-argument' quotes the tilde as well.
   (cl-assert (not (string-match-p "\\`~" dir)))
   (when ignores
     (concat
