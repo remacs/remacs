@@ -669,11 +669,13 @@ the like."
       (setq score (- (length (split-string (dom-text node))))))
      (t
       (dolist (elem (dom-children node))
-	(if (stringp elem)
-	    (setq score (+ score (length (split-string elem))))
+	(cond
+         ((stringp elem)
+          (setq score (+ score (length (split-string elem)))))
+         ((consp elem)
 	  (setq score (+ score
 			 (or (cdr (assoc :eww-readability-score (cdr elem)))
-			     (eww-score-readability elem))))))))
+			     (eww-score-readability elem)))))))))
     ;; Cache the score of the node to avoid recomputing all the time.
     (dom-set-attribute node :eww-readability-score score)
     score))
