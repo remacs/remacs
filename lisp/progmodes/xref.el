@@ -570,7 +570,7 @@ references displayed in the current *xref* buffer."
                       (t
                        (setq chunk-done t
                              next-pair pair))))))))
-           (cons file-buf pairs)))
+           (cons file-buf (nreverse pairs))))
         (:cleanup
          (dolist (pair all-pairs)
            (move-marker (car pair) nil)
