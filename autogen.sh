@@ -327,8 +327,9 @@ if test -n "$tailored_hooks$sample_hooks"; then
 
 	if test -n "$sample_hooks"; then
 	    for hook in $sample_hooks; do
-		cp $cp_options -- "$hooks/$hook.sample" "$hooks/$hook" || exit
-		chmod a-w .git/hooks/$hook || exit
+		dst=$hooks/$hook
+		cp $cp_options -- "$dst.sample" "$dst" || exit
+		chmod -- a-w "$dst" || exit
 	    done
 	fi
     else
