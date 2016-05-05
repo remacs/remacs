@@ -2498,10 +2498,10 @@ typedef struct bpa_stack_entry {
 
    And finally, cross-reference these two:
 
-    fgrep -w -f brackets.txt decompositions.txt
+    grep -Fw -f brackets.txt decompositions.txt
 
    where "decompositions.txt" was produced by the 1st script, and
-   "brackets.txt" by the 2nd script.  In the output of fgrep, look
+   "brackets.txt" by the 2nd script.  In the output of grep, look
    only for decompositions that don't begin with some compatibility
    formatting tag, such as "<compat>".  Only decompositions that
    consist solely of character codepoints are relevant to bidi

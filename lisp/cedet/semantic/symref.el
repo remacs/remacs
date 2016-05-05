@@ -266,7 +266,7 @@ Returns an object of class `semantic-symref-result'."
 ;;;###autoload
 (defun semantic-symref-find-text (text &optional scope)
   "Find a list of occurrences of TEXT in the current project.
-TEXT is a regexp formatted for use with egrep.
+TEXT is a regexp formatted for use with grep -E.
 Optional SCOPE specifies which file set to search.  Defaults to `project'.
 Refers to `semantic-symref-tool', to determine the reference tool to use
 for the current buffer.

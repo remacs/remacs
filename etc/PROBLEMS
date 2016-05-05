@@ -1655,7 +1655,7 @@ which combination produces "M-x" in the echo area.  You can also use
 the 'xmodmap' utility to show all the keys which produce a Meta
 modifier:
 
-         xmodmap -pk | egrep -i "meta|alt"
+         xmodmap -pk | grep -Ei "meta|alt"
 
 A more convenient way of finding out which keys produce a Meta modifier
 is to use the 'xkbprint' utility, if it's available on your system:
