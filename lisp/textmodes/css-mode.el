@@ -30,10 +30,12 @@
 ;; - electric ; and }
 ;; - filling code with auto-fill-mode
 ;; - fix font-lock errors with multi-line selectors
+;; - support completion of user-defined classes names and IDs
 
 ;;; Code:
 
 (require 'seq)
+(require 'sgml-mode)
 (require 'smie)
 
 (defgroup css nil
@@ -824,15 +826,40 @@ the string PROPERTY."
           (list (point) end
                 (cons "inherit" (css--property-values property))))))))
 
+(defvar css--html-tags (mapcar #'car html-tag-alist)
+  "List of HTML tags.
+Used to provide completion of HTML tags in selectors.")
+
+(defvar css--nested-selectors-allowed nil
+  "Non-nil if nested selectors are allowed in the current mode.")
+(make-variable-buffer-local 'css--nested-selectors-allowed)
+
+;; TODO: Currently only supports completion of HTML tags.  By looking
+;; at open HTML mode buffers we should be able to provide completion
+;; of user-defined classes and IDs too.
+(defun css--complete-selector ()
+  "Complete part of a CSS selector at point."
+  (when (or (= (nth 0 (syntax-ppss)) 0) css--nested-selectors-allowed)
+    (save-excursion
+      (let ((end (point)))
+        (skip-chars-backward "-[:alnum:]")
+        (list (point) end css--html-tags)))))
+
 (defun css-completion-at-point ()
   "Complete current symbol at point.
 Currently supports completion of CSS properties, property values,
 pseudo-elements, pseudo-classes, at-rules, and bang-rules."
-  (or (css--complete-property)
-      (css--complete-bang-rule)
+  (or (css--complete-bang-rule)
       (css--complete-property-value)
       (css--complete-pseudo-element-or-class)
-      (css--complete-at-rule)))
+      (css--complete-at-rule)
+      (seq-let (prop-beg prop-end prop-table) (css--complete-property)
+        (seq-let (sel-beg sel-end sel-table) (css--complete-selector)
+          (when (or prop-table sel-table)
+            `(,@(if prop-table
+                    (list prop-beg prop-end)
+                  (list sel-beg sel-end))
+              ,(completion-table-merge prop-table sel-table)))))))
 
 ;;;###autoload
 (define-derived-mode css-mode prog-mode "CSS"
@@ -990,6 +1017,7 @@ pseudo-elements, pseudo-classes, at-rules, and bang-rules."
   (setq-local comment-end-skip "[ \t]*\\(?:\n\\|\\*+/\\)")
   (setq-local css--at-ids (append css-at-ids scss-at-ids))
   (setq-local css--bang-ids (append css-bang-ids scss-bang-ids))
+  (setq-local css--nested-selectors-allowed t)
   (setq-local font-lock-defaults
               (list (scss-font-lock-keywords) nil t)))
 

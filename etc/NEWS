@@ -282,8 +282,8 @@ different group ID.
 ** CSS mode
 
 ---
-*** Support for completing attribute values and bang-rules using the
-'completion-at-point' command.
+*** Support for completing attribute values, at-rules, bang-rules, and
+HTML tags using the 'completion-at-point' command.
 
 +++
 ** Emacs now supports character name escape sequences in character and
