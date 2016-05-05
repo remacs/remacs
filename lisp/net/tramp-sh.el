@@ -5430,13 +5430,15 @@ Return ATTR."
 		   vec "stat" (tramp-get-remote-path vec)))
 	  tmp)
       ;; Check whether stat(1) returns usable syntax.  "%s" does not
-      ;; work on older AIX systems.
+      ;; work on older AIX systems.  Recent GNU stat versions (8.24?)
+      ;; use shell quoted format for "%N", we check the boundaries "`"
+      ;; and "'", therefore.  See Bug#23422 in coreutils.
       (when result
 	(setq tmp
 	      (tramp-send-command-and-read
 	       vec (format "%s -c '(\"%%N\" %%s)' /" result) 'noerror))
 	(unless (and (listp tmp) (stringp (car tmp))
-		     (string-match "^./.$" (car tmp))
+		     (string-match "^`/'$" (car tmp))
 		     (integerp (cadr tmp)))
 	  (setq result nil)))
       result)))
