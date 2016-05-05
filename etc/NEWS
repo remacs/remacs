@@ -1476,11 +1476,12 @@ display of diagnostics and help, but not of info.  As the variable is
 not intended for casual use, it is not a user option.
 
 +++
-** `message' now translates various sorts of single quotes in its
-format string according to the value of `text-quoting-style' (see
-above).  This translation cannot be disabled.  To get the old
-behavior of `message', use `format', which is not affected by
-`text-quoting-style', e.g. (message "%s" (format "...." foo bar)).
+** Message-issuing functions like 'message' and 'error' now translate
+various sorts of single quotes in their format strings according to
+the value of 'text-quoting-style' (see above).  This translation
+cannot be disabled.  To get the old behavior, use 'format', which is
+not affected by 'text-quoting-style', e.g., (message "%s" (format
+"...." foo bar)).
 
 +++
 ** substitute-command-keys now replaces quotes.
@@ -1488,14 +1489,6 @@ That is, it converts documentation strings' quoting style as per the
 value of 'text-quoting-style'.  Doc strings in source code can use
 either curved single quotes or grave accents and apostrophes.  As
 before, characters preceded by \= are output as-is.
-
-+++
-** Message-issuing functions 'error', 'message', etc. now convert quotes.
-They use the new 'format-message' function instead of plain 'format',
-so that they now follow user preference as per 'text-quoting-style'
-when processing curved single quotes, grave accents, and apostrophes
-in their format argument.  To process % directives but not quotes, you
-can use calls like (message "%s" (format FORMAT ARG1 ... ARGn)).
 
 +++
 ** The character classes [:alpha:] and [:alnum:] in regular expressions
