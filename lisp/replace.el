@@ -191,18 +191,15 @@ wants to replace FROM with TO."
 	    ;; a region in order to specify the minibuffer input.
 	    ;; That should not clobber the region for the query-replace itself.
 	    (save-excursion
-              ;; The `with-current-buffer' ensures that the binding
-              ;; for `text-property-default-nonsticky' isn't a buffer
-              ;; local binding in the current buffer, which
-              ;; `read-from-minibuffer' wouldn't see.
-              (with-current-buffer (window-buffer (minibuffer-window))
-                (let ((text-property-default-nonsticky
-                       (cons '(separator . t) text-property-default-nonsticky)))
-                  (if regexp-flag
-                      (read-regexp prompt nil 'query-replace-from-to-history)
-                    (read-from-minibuffer
-                     prompt nil nil nil 'query-replace-from-to-history
-                     (car (if regexp-flag regexp-search-ring search-ring)) t))))))
+              (minibuffer-with-setup-hook
+                  (lambda ()
+                    (setq-local text-property-default-nonsticky
+                                (cons '(separator . t) text-property-default-nonsticky)))
+                (if regexp-flag
+                    (read-regexp prompt nil 'query-replace-from-to-history)
+                  (read-from-minibuffer
+                   prompt nil nil nil 'query-replace-from-to-history
+                   (car (if regexp-flag regexp-search-ring search-ring)) t)))))
            (to))
       (if (and (zerop (length from)) query-replace-defaults)
 	  (cons (caar query-replace-defaults)

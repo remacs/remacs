@@ -964,7 +964,7 @@ otherwise look like a page name.
 
 An \"apropos\" query with -k gives a buffer of matching page
 names or descriptions.  The pattern argument is usually an
-\"egrep\" style regexp.
+\"grep -E\" style regexp.
 
     -k pattern"
 

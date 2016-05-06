@@ -842,8 +842,14 @@ if any.
 This function acts like @code{format}, except it also converts any
 curved single quotes in @var{string} as per the value of
 @code{text-quoting-style}, and treats grave accent (@t{`}) and
-apostrophe (@t{'}) as if they were curved single quotes.  @xref{Keys
-in Documentation}.
+apostrophe (@t{'}) as if they were curved single quotes.
+
+A format that quotes with grave accents and apostrophes @t{`like
+this'} typically generates curved quotes @t{‘like this’}.  In
+contrast, a format that quotes with only apostrophes @t{'like this'}
+typically generates two closing curved quotes @t{’like this’}, an
+unusual style in English.  @xref{Keys in Documentation}, for how the
+@code{text-quoting-style} variable affects generated quotes.
 @end defun
 
 @cindex @samp{%} in format

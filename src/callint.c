@@ -272,7 +272,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
 {
   /* `args' will contain the array of arguments to pass to the function.
      `visargs' will contain the same list but in a nicer form, so that if we
-     pass it to `Fformat' it will be understandable to a human.  */
+     pass it to `Fformat_message' it will be understandable to a human.  */
   Lisp_Object *args, *visargs;
   Lisp_Object specs;
   Lisp_Object filter_specs;

@@ -172,7 +172,8 @@ to find the list of ignores for each directory."
 	    (let ((command
 		   (format "%s %s %s -type f -print0"
 			   find-program
-			   dir
+                           (shell-quote-argument
+                            (expand-file-name dir))
 			   (xref--find-ignores-arguments
 			    (project-ignores project dir)
 			    (expand-file-name dir)))))

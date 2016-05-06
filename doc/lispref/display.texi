@@ -265,10 +265,13 @@ properties, it is displayed with the specified faces (@pxref{Faces}).
 The string is also added to the @file{*Messages*} buffer, but without
 text properties (@pxref{Logging Messages}).
 
-In a format string containing single quotes, curved quotes @t{‘like
-this’} and grave quotes @t{`like this'} work better than straight
-quotes @t{'like this'}, as @code{message} typically formats every
-straight quote as a curved closing quote.
+The @code{text-quoting-style} variable controls what quotes are
+generated; @xref{Keys in Documentation}.  A call using a format like
+@t{"Missing `%s'"} with grave accents and apostrophes typically
+generates a message like @t{"Missing ‘foo’"} with matching curved
+quotes.  In contrast, a call using a format like @t{"Missing '%s'"}
+with only apostrophes typically generates a message like @t{"Missing
+’foo’"} with only closing curved quotes, an unusual style in English.
 
 In batch mode, the message is printed to the standard error stream,
 followed by a newline.

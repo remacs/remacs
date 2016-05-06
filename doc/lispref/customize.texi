@@ -66,9 +66,12 @@ cause confusion.}
 
 @kindex group@r{, customization keyword}
 @item :group @var{group}
-Put this customization item in group @var{group}.  When you use
-@code{:group} in a @code{defgroup}, it makes the new group a subgroup of
-@var{group}.
+Put this customization item in group @var{group}.  If this keyword is
+missing from a customization item, it'll be placed in the same group
+that was last defined (in the current file).
+
+When you use @code{:group} in a @code{defgroup}, it makes the new
+group a subgroup of @var{group}.
 
 If you use this keyword more than once, you can put a single item into
 more than one group.  Displaying any of those groups will show this

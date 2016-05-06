@@ -46,15 +46,15 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    ignored %s and %c conversions.  (See below for the detailed documentation of
    what is supported.)  However, this is okay, as this function is supposed to
    be called from `error' and similar functions, and thus does not need to
-   support features beyond those in `Fformat', which is used by `error' on the
-   Lisp level.  */
+   support features beyond those in `Fformat_message', which is used
+   by `error' on the Lisp level.  */
 
 /* In the FORMAT argument this function supports ` and ' as directives
    that output left and right quotes as per ‘text-quoting style’.  It
    also supports the following %-sequences:
 
    %s means print a string argument.
-   %S is silently treated as %s, for loose compatibility with `Fformat'.
+   %S is treated as %s, for loose compatibility with `Fformat_message'.
    %d means print a `signed int' argument in decimal.
    %o means print an `unsigned int' argument in octal.
    %x means print an `unsigned int' argument in hex.

@@ -764,7 +764,8 @@ Fontconfig fonts, you can use the @command{fc-list} command to list
 the available fixed-width fonts, like this:
 
 @example
-fc-list :spacing=mono fc-list :spacing=charcell
+fc-list :spacing=mono
+fc-list :spacing=charcell
 @end example
 
 @noindent
@@ -772,7 +773,7 @@ For server-side X fonts, you can use the @command{xlsfonts} program to
 list the available fixed-width fonts, like this:
 
 @example
-xlsfonts -fn '*x*' | egrep "^[0-9]+x[0-9]+"
+xlsfonts -fn '*x*' | grep -E '^[0-9]+x[0-9]+'
 xlsfonts -fn '*-*-*-*-*-*-*-*-*-*-*-m*'
 xlsfonts -fn '*-*-*-*-*-*-*-*-*-*-*-c*'
 @end example

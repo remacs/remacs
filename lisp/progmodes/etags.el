@@ -2146,8 +2146,9 @@ for \\[find-tag] (which see)."
   (with-slots (tag-info file) l
     (let ((buffer (find-file-noselect file)))
       (with-current-buffer buffer
-        (etags-goto-tag-location tag-info)
-        (point-marker)))))
+        (save-excursion
+          (etags-goto-tag-location tag-info)
+          (point-marker))))))
 
 (cl-defmethod xref-location-line ((l xref-etags-location))
   (with-slots (tag-info) l
