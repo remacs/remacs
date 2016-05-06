@@ -2316,7 +2316,10 @@ not set local variables (though we do notice a mode specified with -*-.)
 or from Lisp without specifying the optional argument FIND-FILE;
 in that case, this function acts as if `enable-local-variables' were t."
   (interactive)
-  (fundamental-mode)
+  (kill-all-local-variables)
+  (unless delay-mode-hooks
+    (run-hooks 'change-major-mode-after-body-hook
+               'after-change-major-mode-hook))
   (let ((enable-local-variables (or (not find-file) enable-local-variables)))
     ;; FIXME this is less efficient than it could be, since both
     ;; s-a-m and h-l-v may parse the same regions, looking for "mode:".
