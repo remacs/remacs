@@ -28,7 +28,7 @@
 
 (defvar xref-tests-data-dir
   (expand-file-name "data/xref/"
-                    (file-name-directory (or load-file-name (buffer-file-name)))))
+                    (getenv "EMACS_TEST_DIRECTORY")))
 
 (ert-deftest xref-collect-matches-finds-none-for-some-regexp ()
   (should (null (xref-collect-matches "zzz" "*" xref-tests-data-dir nil))))

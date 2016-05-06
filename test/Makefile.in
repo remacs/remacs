@@ -148,18 +148,25 @@ endef
 
 $(foreach test,${TESTS},$(eval $(call test_template,${test})))
 
+## Check that there is no 'automated' subdirectory, which would
+## indicate an incomplete merge from an older version of Emacs where
+## the tests were arranged differently.
+.PHONY: check-no-automated-subdir
+check-no-automated-subdir:
+	test ! -d $(srcdir)/automated
+
 ## Include dependencies between test files and the files they test.
 ## We could do this without the file and eval directly, but then we
 ## would have to run Emacs for every make invocation, and it might not
 ## be available during clean.
 -include make-test-deps.mk
 ## Rerun all default tests.
-check: mostlyclean
+check: mostlyclean check-no-automated-subdir
 	@${MAKE} check-doit SELECTOR="${SELECTOR_ACTUAL}"
 
 ## Rerun all default and expensive tests.
 .PHONY: check-expensive
-check-expensive: mostlyclean
+check-expensive: mostlyclean check-no-automated-subdir
 	@${MAKE} check-doit SELECTOR="${SELECTOR_EXPENSIVE}"
 
 ## Re-run all tests which are outdated. A test is outdated if its
@@ -168,7 +175,7 @@ check-expensive: mostlyclean
 ## determined by a heuristic and does not identify the full dependency
 ## graph. See make-test-deps.emacs-lisp for details.
 .PHONY: check-maybe
-check-maybe:
+check-maybe: check-no-automated-subdir
 	@${MAKE} check-doit SELECTOR="${SELECTOR_ACTUAL}"
 
 ## Run the tests.
