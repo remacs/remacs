@@ -1381,6 +1381,58 @@ Killing the process's buffer deletes the process, which kills the
 subprocess with a @code{SIGHUP} signal (@pxref{Signals to Processes}).
 @end defun
 
+If the process's buffer is displayed in a window, your Lisp program
+may wish telling the process the dimensions of that window, so that
+the process could adapt its output to those dimensions, much as it
+adapts to the screen dimensions.  The following functions allow to
+communicate this kind of information to processes; however, not all
+systems support the underlying functionality, so it is best to provide
+fallbacks, e.g., via command-line arguments or environment variables.
+
+@defun set-process-window-size process height width
+Tell @var{process} that its logical window size has dimensions
+@var{width} by @var{height}, in character units.  If this function
+succeeds in communicating this information to the process, it returns
+@code{t}; otherwise it returns @code{nil}.
+@end defun
+
+When windows that display buffers associated with process change their
+dimensions, the affected processes should be told about these changes.
+By default, when the window configuration changes, Emacs will
+automatically call @code{set-process-window-size} on behalf of every
+process whose buffer is displayed in a window, passing it the smallest
+dimensions of all the windows displaying the process's buffer.  This
+works via @code{window-configuration-change-hook} (@pxref{Window
+Hooks}), which is told to invoke the function that is the value of
+the variable @code{window-adjust-process-window-size-function} for
+each process whose buffer is displayed in at least one window.  You
+can customize this behavior by setting the value of that variable.
+
+@defopt window-adjust-process-window-size-function
+The value of this variable should be a function of two arguments: a
+process and the list of windows displaying the process's buffer.  When
+the function is called, the process's buffer is the current buffer.
+The function should return a cons cell @w{@code{(@var{width}
+. @var{height})}} that describes the dimensions of the logical process
+window to be passed via a call to @code{set-process-window-size}.  The
+function can also return @code{nil}, in which case Emacs will not call
+@code{set-process-window-size} for this process.
+
+Emacs supplies two predefined values for this variable:
+@code{window-adjust-process-window-size-smallest}, which returns the
+smallest of all the dimensions of the windows that display a process's
+buffer; and @code{window-adjust-process-window-size-largest}, which
+returns the largest dimensions.  For more complex strategies, write
+your own function.
+
+This variable can be buffer-local.
+@end defopt
+
+If the process has the @code{adjust-window-size-function} property
+(@pxref{Process Information}), its value overrides the global and
+buffer-local values of
+@code{window-adjust-process-window-size-function}.
+
 @node Filter Functions
 @subsection Process Filter Functions
 @cindex filter function

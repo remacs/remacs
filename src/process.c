@@ -1108,7 +1108,9 @@ See `set-process-sentinel' for more info on sentinels.  */)
 
 DEFUN ("set-process-window-size", Fset_process_window_size,
        Sset_process_window_size, 3, 3, 0,
-       doc: /* Tell PROCESS that it has logical window size HEIGHT and WIDTH.  */)
+       doc: /* Tell PROCESS that it has logical window size WIDTH by HEIGHT.
+Value is t if PROCESS was successfully told about the window size,
+nil otherwise.  */)
   (Lisp_Object process, Lisp_Object height, Lisp_Object width)
 {
   CHECK_PROCESS (process);
