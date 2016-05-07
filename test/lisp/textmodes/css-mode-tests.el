@@ -31,22 +31,23 @@
 (ert-deftest css-test-property-values ()
   ;; The `float' property has a flat value list.
   (should
-   (equal (sort (css--property-values "float") #'string-lessp)
+   (equal (seq-sort #'string-lessp (css--property-values "float"))
           '("left" "none" "right")))
 
   ;; The `list-style' property refers to several other properties.
   (should
-   (equal (sort (css--property-values "list-style") #'string-lessp)
-          (sort (seq-uniq
-                 (append (css--property-values "list-style-type")
-                         (css--property-values "list-style-position")
-                         (css--property-values "list-style-image")))
-                #'string-lessp)))
+   (equal (seq-sort #'string-lessp (css--property-values "list-style"))
+          (seq-sort
+           #'string-lessp
+           (seq-uniq
+            (append (css--property-values "list-style-type")
+                    (css--property-values "list-style-position")
+                    (css--property-values "list-style-image"))))))
 
   ;; The `position' property is tricky because it's also the name of a
   ;; value class.
   (should
-   (equal (sort (css--property-values "position") #'string-lessp)
+   (equal (seq-sort #'string-lessp (css--property-values "position"))
           '("absolute" "fixed" "relative" "static")))
 
   ;; The `background-position' property should refer to the `position'
@@ -71,13 +72,116 @@
   ;; The `flex' property is prone to duplicate values; if they aren't
   ;; removed, it'll contain at least two instances of `auto'.
   (should
-   (equal (sort (css--property-values "flex") #'string-lessp)
+   (equal (seq-sort #'string-lessp (css--property-values "flex"))
           '("auto" "calc()" "content" "none"))))
 
 (ert-deftest css-test-value-class-lookup ()
   (should
-   (equal (sort (css--value-class-lookup 'position) #'string-lessp)
+   (equal (seq-sort #'string-lessp (css--value-class-lookup 'position))
           '("bottom" "calc()" "center" "left" "right" "top"))))
+
+;;; Completion
+
+(defun css-mode-tests--completions ()
+  (let ((data (css-completion-at-point)))
+    (all-completions (buffer-substring (nth 0 data) (nth 1 data))
+                     (nth 2 data))))
+
+(ert-deftest css-test-complete-bang-rule ()
+  (with-temp-buffer
+    (css-mode)
+    (insert "body { left: 0 !")
+    (let ((completions (css-mode-tests--completions)))
+      (should (member "important" completions))
+      ;; Don't include SCSS bang-rules
+      (should-not (member "default" completions)))))
+
+(ert-deftest scss-test-complete-bang-rule ()
+  (with-temp-buffer
+    (scss-mode)
+    (insert "body { left: 0 !")
+    (let ((completions (css-mode-tests--completions)))
+      (should (member "important" completions))
+      (should (member "default" completions)))))
+
+(ert-deftest css-test-complete-property-value ()
+  (with-temp-buffer
+    (css-mode)
+    (insert "body { position: ")
+    (let ((completions (css-mode-tests--completions)))
+      (should
+       (equal (seq-sort #'string-lessp completions)
+              '("absolute" "fixed" "inherit" "relative" "static"))))))
+
+(ert-deftest css-test-complete-pseudo-class ()
+  (with-temp-buffer
+    (css-mode)
+    (insert "body:a")
+    (let ((completions (css-mode-tests--completions)))
+      (should (member "active" completions))
+      (should-not (member "disabled" completions))
+      ;; Don't include pseudo-elements
+      (should-not (member "after" completions)))))
+
+(ert-deftest css-test-complete-pseudo-element ()
+  (with-temp-buffer
+    (css-mode)
+    (insert "body::a")
+    (let ((completions (css-mode-tests--completions)))
+      (should (member "after" completions))
+      (should-not (member "disabled" completions))
+      ;; Don't include pseudo-classes
+      (should-not (member "active" completions)))))
+
+(ert-deftest css-test-complete-at-rule ()
+  (with-temp-buffer
+    (css-mode)
+    (insert "@m")
+    (let ((completions (css-mode-tests--completions)))
+      (should (member "media" completions))
+      (should-not (member "keyframes" completions))
+      ;; Don't include SCSS at-rules
+      (should-not (member "mixin" completions)))))
+
+(ert-deftest scss-test-complete-at-rule ()
+  (with-temp-buffer
+    (scss-mode)
+    (insert "@m")
+    (let ((completions (css-mode-tests--completions)))
+      (should (member "media" completions))
+      (should-not (member "keyframes" completions))
+      (should (member "mixin" completions)))))
+
+(ert-deftest css-test-complete-property ()
+  (with-temp-buffer
+    (css-mode)
+    (insert "body { f")
+    (let ((completions (css-mode-tests--completions)))
+      (should (member "filter" completions))
+      (should-not (member "position" completions)))))
+
+(ert-deftest css-test-complete-selector ()
+  (with-temp-buffer
+    (css-mode)
+    (insert "b")
+    (let ((completions (css-mode-tests--completions)))
+      (should (member "body" completions))
+      (should-not (member "article" completions)))))
+
+(ert-deftest css-test-complete-nested-selector ()
+  (with-temp-buffer
+    (css-mode)
+    (insert "body {")
+    (let ((completions (css-mode-tests--completions)))
+      (should-not (member "body" completions)))))
+
+(ert-deftest scss-test-complete-nested-selector ()
+  (with-temp-buffer
+    (scss-mode)
+    (insert "body { b")
+    (let ((completions (css-mode-tests--completions)))
+      (should (member "body" completions))
+      (should-not (member "article" completions)))))
 
 (provide 'css-mode-tests)
 ;;; css-mode-tests.el ends here
