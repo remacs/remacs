@@ -624,7 +624,9 @@ references displayed in the current *xref* buffer."
       (setq pairs (cdr buf-pairs))
       (setq continue
             (perform-replace from to t t nil nil multi-query-replace-map)))
-    (unless did-it-once (user-error "No suitable matches here"))))
+    (unless did-it-once (user-error "No suitable matches here"))
+    (when (and continue (not buf-pairs))
+      (message "All results processed"))))
 
 (defvar xref--xref-buffer-mode-map
   (let ((map (make-sparse-keymap)))
