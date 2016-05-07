@@ -1010,7 +1010,9 @@ means to use always cached values for the directory contents."
 
 ;;;###autoload
 (defconst tramp-completion-file-name-handler-alist
-  '((file-name-all-completions . tramp-completion-handle-file-name-all-completions)
+  '((expand-file-name . tramp-completion-handle-expand-file-name)
+    (file-name-all-completions
+     . tramp-completion-handle-file-name-all-completions)
     (file-name-completion . tramp-completion-handle-file-name-completion))
   "Alist of completion handler functions.
 Used for file names matching `tramp-file-name-regexp'. Operations
@@ -2261,6 +2263,23 @@ not in completion mode."
 		    (p (tramp-get-connection-process v)))
 	       (and p (processp p) (memq (process-status p) '(run open))))))))
 
+;;;###autoload
+(defun tramp-completion-handle-expand-file-name
+    (name &optional dir)
+  "Like `expand-file-name' for Tramp files."
+  (if (tramp-completion-mode-p)
+      (progn
+	;; If DIR is not given, use `default-directory' or "/".
+	(setq dir (or dir default-directory "/"))
+	;; Unless NAME is absolute, concat DIR and NAME.
+	(unless (file-name-absolute-p name)
+	  (setq name (concat (file-name-as-directory dir) name)))
+	;; Return NAME.
+	name)
+
+    (tramp-completion-run-real-handler
+     'expand-file-name (list name dir))))
+
 ;; Method, host name and user name completion.
 ;; `tramp-completion-dissect-file-name' returns a list of
 ;; tramp-file-name structures. For all of them we return possible completions.
@@ -2817,13 +2836,17 @@ User is always nil."
   ;; `file-name-as-directory' would be sufficient except localname is
   ;; the empty string.
   (let ((v (tramp-dissect-file-name file t)))
-    ;; Run the command on the localname portion only.
+    ;; Run the command on the localname portion only unless we are in
+    ;; completion mode.
     (tramp-make-tramp-file-name
      (tramp-file-name-method v)
      (tramp-file-name-user v)
      (tramp-file-name-host v)
-     (tramp-run-real-handler
-      'file-name-as-directory (list (or (tramp-file-name-localname v) "")))
+     (if (and (tramp-completion-mode-p)
+	      (zerop (length (tramp-file-name-localname v))))
+	 ""
+       (tramp-run-real-handler
+	'file-name-as-directory (list (or (tramp-file-name-localname v) ""))))
      (tramp-file-name-hop v))))
 
 (defun tramp-handle-file-name-completion

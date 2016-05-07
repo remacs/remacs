@@ -649,7 +649,9 @@ This checks also `file-name-as-directory', `file-name-directory',
 	  (setq file (format "/%s:" file))
 	  (should (string-equal (directory-file-name file) file))
 	  (should
-	   (string-equal (file-name-as-directory file) (concat file "./")))
+	   (string-equal
+	    (file-name-as-directory file)
+	    (if (tramp-completion-mode-p) file (concat file "./"))))
 	  (should (string-equal (file-name-directory file) file))
 	  (should (string-equal (file-name-nondirectory file) "")))))))
 
@@ -1367,25 +1369,52 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   "Check `file-name-completion' and `file-name-all-completions'."
   (skip-unless (tramp--test-enabled))
 
-  (let ((tmp-name (tramp--test-make-temp-name)))
-    (unwind-protect
-	(progn
-	  (make-directory tmp-name)
-	  (should (file-directory-p tmp-name))
-	  (write-region "foo" nil (expand-file-name "foo" tmp-name))
-	  (write-region "bar" nil (expand-file-name "bold" tmp-name))
-	  (make-directory (expand-file-name "boz" tmp-name))
-	  (should (equal (file-name-completion "fo" tmp-name) "foo"))
-	  (should (equal (file-name-completion "b" tmp-name) "bo"))
-	  (should
-	   (equal (file-name-completion "b" tmp-name 'file-directory-p) "boz/"))
-	  (should (equal (file-name-all-completions "fo" tmp-name) '("foo")))
-	  (should
-	   (equal (sort (file-name-all-completions "b" tmp-name) 'string-lessp)
-		  '("bold" "boz/"))))
+  (dolist (n-e '(nil t))
+    (let ((non-essential n-e)
+	  (tmp-name (tramp--test-make-temp-name))
+	  (method (file-remote-p tramp-test-temporary-file-directory 'method))
+	  (host (file-remote-p tramp-test-temporary-file-directory 'host)))
 
-      ;; Cleanup.
-      (ignore-errors (delete-directory tmp-name 'recursive)))))
+      (unwind-protect
+	  (progn
+	    ;; Method and host name in completion mode.
+	    (when (tramp-completion-mode-p)
+	      (unless (zerop (length method))
+		(should
+		 (member
+		  (format "%s:" method)
+		  (file-name-all-completions (substring method 0 1) "/"))))
+	      (unless (zerop (length host))
+		(should
+		 (member
+		  (format "%s:" host)
+		  (file-name-all-completions (substring host 0 1) "/"))))
+	      (unless (or (zerop (length method)) (zerop (length host)))
+		(should
+		 (member
+		  (format "%s:" host)
+		  (file-name-all-completions
+		   (substring host 0 1) (format "/%s:" method))))))
+
+	    ;; Local files.
+	    (make-directory tmp-name)
+	    (should (file-directory-p tmp-name))
+	    (write-region "foo" nil (expand-file-name "foo" tmp-name))
+	    (write-region "bar" nil (expand-file-name "bold" tmp-name))
+	    (make-directory (expand-file-name "boz" tmp-name))
+	    (should (equal (file-name-completion "fo" tmp-name) "foo"))
+	    (should (equal (file-name-completion "b" tmp-name) "bo"))
+	    (should
+	     (equal
+	      (file-name-completion "b" tmp-name 'file-directory-p) "boz/"))
+	    (should (equal (file-name-all-completions "fo" tmp-name) '("foo")))
+	    (should
+	     (equal
+	      (sort (file-name-all-completions "b" tmp-name) 'string-lessp)
+	      '("bold" "boz/"))))
+
+	;; Cleanup.
+	(ignore-errors (delete-directory tmp-name 'recursive))))))
 
 (ert-deftest tramp-test25-load ()
   "Check `load'."
