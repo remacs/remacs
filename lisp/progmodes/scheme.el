@@ -425,7 +425,7 @@ that variable's value is a string."
   (eval-when-compile
     (list
      ;; Similar to Scheme
-     (list "(\\(define\\(-\\w+\\)?\\)\\>[       ]*\\((?\\)\\(\\sw+\\)\\>"
+     (list "(\\(define\\(-\\w+\\)?\\)\\>[ \t]*\\((?\\)\\(\\sw+\\)\\>"
            '(1 font-lock-keyword-face)
            '(4 font-lock-function-name-face))
      (cons
@@ -437,10 +437,10 @@ that variable's value is a string."
               "\\)\\>")
       1)
      ;; DSSSL syntax
-     '("(\\(element\\|mode\\|declare-\\w+\\)\\>[        ]*\\(\\sw+\\)"
+     '("(\\(element\\|mode\\|declare-\\w+\\)\\>[ \t]*\\(\\sw+\\)"
        (1 font-lock-keyword-face)
        (2 font-lock-type-face))
-     '("(\\(element\\)\\>[      ]*(\\(\\S)+\\))"
+     '("(\\(element\\)\\>[ \t]*(\\(\\S)+\\))"
        (1 font-lock-keyword-face)
        (2 font-lock-type-face))
      '("\\<\\sw+:\\>" . font-lock-constant-face) ; trailing `:' c.f. scheme
