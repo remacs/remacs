@@ -236,7 +236,8 @@ If the result is non-nil, then break.  Errors are ignored."
 (defcustom edebug-sit-on-break t
   "Whether or not to pause for `edebug-sit-for-seconds' on reaching a break."
   :type 'boolean
-  :group 'edebug)
+  :group 'edebug
+  :version "25.2")
 
 ;;; Form spec utilities.
 
