@@ -203,6 +203,12 @@ this is controlled by the 'wdired-create-parent-directories' variable.
 *** 'W' is now bound to 'browse-url-of-dired-file', and is useful for
 viewing HTML files and the like.
 
+** Ediff
+
+*** Ediff can be prevented from pausing 1 second after reaching a
+breakpoint (e.g. with "f" and "o") by customizing the new option
+`edebug-sit-on-break'.
+
 ** eww
 
 +++

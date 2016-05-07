@@ -233,6 +233,11 @@ If the result is non-nil, then break.  Errors are ignored."
   :type 'number
   :group 'edebug)
 
+(defcustom edebug-sit-on-break t
+  "Whether or not to pause for `edebug-sit-for-seconds' on reaching a break."
+  :type 'boolean
+  :group 'edebug)
+
 ;;; Form spec utilities.
 
 (defun get-edebug-spec (symbol)
@@ -2489,6 +2494,7 @@ MSG is printed after `::::} '."
                 (progn
                   ;; Display result of previous evaluation.
                   (if (and edebug-break
+                           edebug-sit-on-break
                            (not (eq edebug-execution-mode 'Continue-fast)))
                       (sit-for edebug-sit-for-seconds)) ; Show message.
                   (edebug-previous-result)))
