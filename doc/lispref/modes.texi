@@ -752,7 +752,8 @@ The new mode has its own abbrev table, kept in the variable
 @item
 The new mode has its own mode hook, @code{@var{variant}-hook}.  It
 runs this hook, after running the hooks of its ancestor modes, with
-@code{run-mode-hooks}, as the last thing it does.  @xref{Mode Hooks}.
+@code{run-mode-hooks}, as the last thing it does, apart from running
+any @code{:after-hook} form it may have.  @xref{Mode Hooks}.
 @end itemize
 
 In addition, you can specify how to override other aspects of
@@ -776,8 +777,9 @@ about the mode's hook, followed by the mode's keymap, at the end of this
 documentation string.  If you omit @var{docstring},
 @code{define-derived-mode} generates a documentation string.
 
-The @var{keyword-args} are pairs of keywords and values.  The values
-are evaluated.  The following keywords are currently supported:
+The @var{keyword-args} are pairs of keywords and values.  The values,
+except for @code{:after-hook}'s, are evaluated.  The following
+keywords are currently supported:
 
 @table @code
 @item :syntax-table
@@ -801,6 +803,15 @@ this mode.  (Not all major modes have one.)  Only the (still
 experimental and unadvertised) command @code{customize-mode} currently
 uses this.  @code{define-derived-mode} does @emph{not} automatically
 define the specified customization group.
+
+@item :after-hook
+This optional keyword specifies a single Lisp form to evaluate as the
+final act of the mode function, after the mode hooks have been run.
+It should not be quoted.  Since the form might be evaluated after the
+mode function has terminated, it should not access any element of the
+mode function's local state.  An @code{:after-hook} form is useful for
+setting up aspects of the mode which depend on the user's settings,
+which in turn may have been changed in a mode hook.
 @end table
 
 Here is a hypothetical example:
@@ -912,12 +923,15 @@ Major modes should run their mode hook using this function.  It is
 similar to @code{run-hooks} (@pxref{Hooks}), but it also runs
 @code{change-major-mode-after-body-hook}, @code{hack-local-variables}
 (when the buffer is visiting a file) (@pxref{File Local Variables}),
-and @code{after-change-major-mode-hook}.
+and @code{after-change-major-mode-hook}.  The last thing it does is to
+evaluate any @code{:after-hook} forms declared by parent modes
+(@pxref{Derived Modes}).
 
 When this function is called during the execution of a
 @code{delay-mode-hooks} form, it does not run the hooks or
-@code{hack-local-variables} immediately.  Instead, it arranges for the
-next call to @code{run-mode-hooks} to run them.
+@code{hack-local-variables} or evaluate the forms immediately.
+Instead, it arranges for the next call to @code{run-mode-hooks} to run
+them.
 @end defun
 
 @defmac delay-mode-hooks body@dots{}
