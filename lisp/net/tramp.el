@@ -2110,7 +2110,7 @@ Falls back to normal file name handler if no Tramp file name handler exists."
   (let ((fn (assoc operation tramp-completion-file-name-handler-alist)))
     (if (and
 	 ;; When `tramp-mode' is not enabled, we don't do anything.
-         fn tramp-mode
+         fn tramp-mode (tramp-completion-mode-p)
          ;; For other syntaxes than `sep', the regexp matches many common
          ;; situations where the user doesn't actually want to use Tramp.
          ;; So to avoid autoloading Tramp after typing just "/s", we
@@ -2217,6 +2217,7 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 
 ;;; File name handler functions for completion mode:
 
+;;;###autoload
 (defvar tramp-completion-mode nil
   "If non-nil, external packages signal that they are in file name completion.
 
@@ -2236,8 +2237,8 @@ should never be set globally, the intention is to let-bind it.")
 ;; Tramp file name syntax. Maybe another variable should be introduced
 ;; overwriting this check in such cases. Or we change Tramp file name
 ;; syntax in order to avoid ambiguities.
-;;;###tramp-autoload
-(defun tramp-completion-mode-p ()
+;;;###autoload
+(progn (defun tramp-completion-mode-p ()
   "Check, whether method / user name / host name completion is active."
   (or
    ;; Signal from outside.  `non-essential' has been introduced in Emacs 24.
@@ -2250,7 +2251,7 @@ should never be set globally, the intention is to let-bind it.")
 	 (equal last-input-event ?\t)
 	 (and (not (event-modifiers last-input-event))
 	      (or (equal last-input-event ?\?)
-		  (equal last-input-event ?\ )))))))
+		  (equal last-input-event ?\ ))))))))
 
 (defun tramp-connectable-p (filename)
   "Check, whether it is possible to connect the remote host w/o side-effects.
