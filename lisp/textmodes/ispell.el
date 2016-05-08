@@ -396,19 +396,15 @@ Always stores Fcc copy of message when nil."
 
 
 (defcustom ispell-grep-command
-  ;; MS-Windows/MS-DOS have `egrep' as a Unix shell script, so they
-  ;; cannot invoke it.  Use "grep -E" instead (see ispell-grep-options
-  ;; below).
-  (if (memq system-type '(windows-nt ms-dos)) "grep" "egrep")
+  "grep"
   "Name of the grep command for search processes."
   :type 'string
   :group 'ispell)
 
 (defcustom ispell-grep-options
-  (if (memq system-type '(windows-nt ms-dos)) "-Ei" "-i")
+  "-Ei"
   "String of options to use when running the program in `ispell-grep-command'.
-Should probably be \"-i\" or \"-e\".
-Some machines (like the NeXT) don't support \"-i\"."
+Should probably be \"-Ei\"."
   :type 'string
   :group 'ispell)
 
@@ -2678,8 +2674,8 @@ SPC:   Accept word this time.
 (defun ispell-lookup-words (word &optional lookup-dict)
   "Look up WORD in optional word-list dictionary LOOKUP-DICT.
 A `*' serves as a wild card.  If no wild cards, `look' is used if it exists.
-Otherwise the variable `ispell-grep-command' contains the command used to
-search for the words (usually egrep).
+Otherwise the variable `ispell-grep-command' contains the command
+\(usually \"grep\") used to search for the words.
 
 Optional second argument contains the dictionary to use; the default is
 `ispell-alternate-dictionary', overridden by `ispell-complete-word-dict'
