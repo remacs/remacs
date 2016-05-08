@@ -4530,7 +4530,7 @@ or `gnus-group-catchup-group-hook'."
   "Return the offset in seconds from the timestamp for GROUP to the current time, as a floating point number."
   (let* ((time (or (gnus-group-timestamp group)
 		   (list 0 0)))
-	 (delta (subtract-time (current-time) time)))
+	 (delta (time-subtract (current-time) time)))
     (+ (* (nth 0 delta) 65536.0)
        (nth 1 delta))))
 

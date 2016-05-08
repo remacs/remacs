@@ -5280,7 +5280,6 @@ This variable is set by `org-before-change-function'.
 
 ;; Other stuff we need.
 (require 'time-date)
-(unless (fboundp 'time-subtract) (defalias 'time-subtract 'subtract-time))
 (require 'easymenu)
 (require 'overlay)
 
@@ -5514,8 +5513,8 @@ the rounding returns a past time."
 	    (apply 'encode-time
 		   (append (list 0 (* r (floor (+ .5 (/ (float (nth 1 time)) r)))))
 			   (nthcdr 2 time))))
-      (if (and past (< (org-float-time (time-subtract (current-time) res)) 0))
-	  (seconds-to-time (- (org-float-time res) (* r 60)))
+      (if (and past (< (float-time (time-subtract (current-time) res)) 0))
+	  (seconds-to-time (- (float-time res) (* r 60)))
 	res))))
 
 (defun org-today ()
@@ -8779,24 +8778,24 @@ links."
 	       (if (or (re-search-forward org-ts-regexp end t)
 		       (re-search-forward org-ts-regexp-both end t))
 		   (org-time-string-to-seconds (match-string 0))
-		 (org-float-time now))))
+		 (float-time now))))
 	    ((= dcst ?c)
 	     (let ((end (save-excursion (outline-next-heading) (point))))
 	       (if (re-search-forward
 		    (concat "^[ \t]*\\[" org-ts-regexp1 "\\]")
 		    end t)
 		   (org-time-string-to-seconds (match-string 0))
-		 (org-float-time now))))
+		 (float-time now))))
 	    ((= dcst ?s)
 	     (let ((end (save-excursion (outline-next-heading) (point))))
 	       (if (re-search-forward org-scheduled-time-regexp end t)
 		   (org-time-string-to-seconds (match-string 1))
-		 (org-float-time now))))
+		 (float-time now))))
 	    ((= dcst ?d)
 	     (let ((end (save-excursion (outline-next-heading) (point))))
 	       (if (re-search-forward org-deadline-time-regexp end t)
 		   (org-time-string-to-seconds (match-string 1))
-		 (org-float-time now))))
+		 (float-time now))))
 	    ((= dcst ?p)
 	     (if (re-search-forward org-priority-regexp (point-at-eol) t)
 		 (string-to-char (match-string 2))
@@ -8860,7 +8859,7 @@ If WITH-CASE is non-nil, the sorting will be case-sensitive."
 	    (lambda (x)
 	      (if (or (string-match org-ts-regexp x)
 		      (string-match org-ts-regexp-both x))
-		  (org-float-time
+		  (float-time
 		   (org-time-string-to-time (match-string 0 x)))
 		0))
 	    comparefun (if (= dcst sorting-type) '< '>)))
@@ -16886,7 +16885,7 @@ Don't touch the rest."
 (defun org-time-stamp-to-now (timestamp-string &optional seconds)
   "Difference between TIMESTAMP-STRING and now in days.
 If SECONDS is non-nil, return the difference in seconds."
-  (let ((fdiff (if seconds 'org-float-time 'time-to-days)))
+  (let ((fdiff (if seconds 'float-time 'time-to-days)))
     (- (funcall fdiff (org-time-string-to-time timestamp-string))
        (funcall fdiff (current-time)))))
 
@@ -17041,8 +17040,8 @@ days in order to avoid rounding problems."
 	  (match-end (match-end 0))
 	  (time1 (org-time-string-to-time ts1))
 	  (time2 (org-time-string-to-time ts2))
-	  (t1 (org-float-time time1))
-	  (t2 (org-float-time time2))
+	  (t1 (float-time time1))
+	  (t2 (float-time time2))
 	  (diff (abs (- t2 t1)))
 	  (negative (< (- t2 t1) 0))
 	  ;; (ys (floor (* 365 24 60 60)))
@@ -17107,7 +17106,7 @@ days in order to avoid rounding problems."
 
 (defun org-time-string-to-seconds (s)
   "Convert a timestamp string to a number of seconds."
-  (org-float-time (org-time-string-to-time s)))
+  (float-time (org-time-string-to-time s)))
 
 (defun org-time-string-to-absolute (s &optional daynr prefer show-all buffer pos)
   "Convert a time stamp to an absolute day number.

@@ -2460,7 +2460,7 @@ To be used in the ERT results buffer."
                                                stats)
                         for end-time across (ert--stats-test-end-times stats)
                         collect (list test
-                                      (float-time (subtract-time
+                                      (float-time (time-subtract
                                                    end-time start-time))))))
     (setq data (sort data (lambda (a b)
                             (> (cl-second a) (cl-second b)))))

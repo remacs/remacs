@@ -161,7 +161,7 @@ There are currently two built-in format functions:
 	 (sched (gnus-diary-header-schedule extras))
 	 (occur (nndiary-next-occurence sched (current-time)))
 	 (now (current-time))
-	 (real-time (subtract-time occur now)))
+	 (real-time (time-subtract occur now)))
     (if (null real-time)
 	"?????"
       (let* ((sec (+ (* (float (car real-time)) 65536) (cadr real-time)))

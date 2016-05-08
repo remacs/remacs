@@ -3596,7 +3596,7 @@ possible values."
   ;; If the date is seriously mangled, the timezone functions are
   ;; liable to bug out, so we ignore all errors.
   (let* ((now (current-time))
-	 (real-time (subtract-time now time))
+	 (real-time (time-subtract now time))
 	 (real-sec (and real-time
 			(+ (* (float (car real-time)) 65536)
 			   (cadr real-time))))

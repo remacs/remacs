@@ -109,16 +109,14 @@
                          (character-fold-to-regexp string)))
     (with-temp-buffer
       (save-excursion (insert string))
-      (let ((time (time-to-seconds (current-time))))
+      (let ((time (float-time)))
         ;; Our initial implementation of case-folding in char-folding
         ;; created a lot of redundant paths in the regexp. Because of
         ;; that, if a really long string "almost" matches, the regexp
         ;; engine took a long time to realize that it doesn't match.
         (should-not (character-fold-search-forward (concat string "c") nil 'noerror))
         ;; Ensure it took less than a second.
-        (should (< (- (time-to-seconds (current-time))
-                      time)
-                   1))))))
+        (should (< (- (float-time) time) 1))))))
 
 (provide 'character-fold-tests)
 ;;; character-fold-tests.el ends here

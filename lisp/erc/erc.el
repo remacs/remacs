@@ -6007,10 +6007,8 @@ Returns a list of the form (HIGH LOW), compatible with Emacs time format."
     (list (truncate (/ n 65536))
           (truncate (mod n 65536)))))
 
-(defalias 'erc-emacs-time-to-erc-time
-  (if (featurep 'xemacs) 'time-to-seconds 'float-time))
-
-(defalias 'erc-current-time 'erc-emacs-time-to-erc-time)
+(defalias 'erc-emacs-time-to-erc-time 'float-time)
+(defalias 'erc-current-time 'float-time)
 
 (defun erc-time-diff (t1 t2)
   "Return the time difference in seconds between T1 and T2."

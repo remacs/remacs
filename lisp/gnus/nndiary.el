@@ -1278,27 +1278,27 @@ all.  This may very well take some time.")
     (while (setq reminder (pop reminders))
       (push
        (cond ((eq (cdr reminder) 'minute)
-	      (subtract-time
+	      (time-subtract
 	       (apply 'encode-time 0 (nthcdr 1 date-elts))
 	       (seconds-to-time (* (car reminder) 60.0))))
 	     ((eq (cdr reminder) 'hour)
-	      (subtract-time
+	      (time-subtract
 	       (apply 'encode-time 0 0 (nthcdr 2 date-elts))
 	       (seconds-to-time (* (car reminder) 3600.0))))
 	     ((eq (cdr reminder) 'day)
-	      (subtract-time
+	      (time-subtract
 	       (apply 'encode-time 0 0 0 (nthcdr 3 date-elts))
 	       (seconds-to-time (* (car reminder) 86400.0))))
 	     ((eq (cdr reminder) 'week)
-	      (subtract-time
+	      (time-subtract
 	       (apply 'encode-time 0 0 0 monday (nthcdr 4 date-elts))
 	       (seconds-to-time (* (car reminder) 604800.0))))
 	     ((eq (cdr reminder) 'month)
-	      (subtract-time
+	      (time-subtract
 	       (apply 'encode-time 0 0 0 1 (nthcdr 4 date-elts))
 	       (seconds-to-time (* (car reminder) 18748800.0))))
 	     ((eq (cdr reminder) 'year)
-	      (subtract-time
+	      (time-subtract
 	       (apply 'encode-time 0 0 0 1 1 (nthcdr 5 date-elts))
 	       (seconds-to-time (* (car reminder) 400861056.0)))))
        res))

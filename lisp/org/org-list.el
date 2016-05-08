@@ -2884,7 +2884,7 @@ ignores hidden links."
 			  (save-excursion (re-search-forward org-ts-regexp-both
 							     (point-at-eol) t)))
 		      (org-time-string-to-seconds (match-string 0)))
-		     (t (org-float-time now))))
+		     (t (float-time now))))
 		   ((= dcst ?x) (or (and (stringp (match-string 1))
 					 (match-string 1))
 				    ""))

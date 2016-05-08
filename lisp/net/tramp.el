@@ -4124,7 +4124,7 @@ Invokes `password-read' if available, `read-passwd' else."
 (defun tramp-time-diff (t1 t2)
   "Return the difference between the two times, in seconds.
 T1 and T2 are time values (as returned by `current-time' for example)."
-  (float-time (subtract-time t1 t2)))
+  (float-time (time-subtract t1 t2)))
 
 ;; Currently (as of Emacs 20.5), the function `shell-quote-argument'
 ;; does not deal well with newline characters.  Newline is replaced by

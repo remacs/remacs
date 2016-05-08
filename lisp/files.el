@@ -3817,8 +3817,10 @@ This function returns either:
                   ;; The entry MTIME should match the most recent
                   ;; MTIME among matching files.
                   (and cached-files
-                       (= (time-to-seconds (nth 2 dir-elt))
-                          (apply #'max (mapcar (lambda (f) (time-to-seconds (nth 5 (file-attributes f))))
+                       (= (float-time (nth 2 dir-elt))
+                          (apply #'max (mapcar (lambda (f)
+                                                 (float-time
+                                                  (nth 5 (file-attributes f))))
                                                cached-files))))))
             ;; This cache entry is OK.
             dir-elt
@@ -3860,7 +3862,7 @@ Return the new class name, which is a symbol named DIR."
      (seconds-to-time
       (if success
           (apply #'max (mapcar (lambda (file)
-                                 (time-to-seconds (nth 5 (file-attributes file))))
+                                 (float-time (nth 5 (file-attributes file))))
                                files))
         ;; If there was a problem, use the values we could get but
         ;; don't let the cache prevent future reads.
