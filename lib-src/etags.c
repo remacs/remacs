@@ -1343,7 +1343,7 @@ main (int argc, char **argv)
     {
       char *cmd =
 	xmalloc (strlen (tagfile) + whatlen_max +
-		 sizeof "mv..OTAGS;fgrep -v '\t\t' OTAGS >;rm OTAGS");
+		 sizeof "mv..OTAGS;grep -Fv '\t\t' OTAGS >;rm OTAGS");
       for (i = 0; i < current_arg; ++i)
 	{
 	  switch (argbuffer[i].arg_type)
@@ -1356,7 +1356,7 @@ main (int argc, char **argv)
 	    }
 	  char *z = stpcpy (cmd, "mv ");
 	  z = stpcpy (z, tagfile);
-	  z = stpcpy (z, " OTAGS;fgrep -v '\t");
+	  z = stpcpy (z, " OTAGS;grep -Fv '\t");
 	  z = stpcpy (z, argbuffer[i].what);
 	  z = stpcpy (z, "\t' OTAGS >");
 	  z = stpcpy (z, tagfile);

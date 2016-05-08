@@ -271,7 +271,7 @@ Optional SCOPE specifies which file set to search.  Defaults to `project'.
 Refers to `semantic-symref-tool', to determine the reference tool to use
 for the current buffer.
 Returns an object of class `semantic-symref-result'."
-  (interactive "sEgrep style Regexp: ")
+  (interactive "sGrep -E style Regexp: ")
   (let* ((inst (semantic-symref-instantiate
 		:searchfor text
 		:searchtype 'regexp
