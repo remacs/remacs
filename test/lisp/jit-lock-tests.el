@@ -28,7 +28,8 @@
 
 (defun jit-lock-tests--setup-buffer ()
   (setq font-lock-defaults '(nil t))
-  (font-lock-mode))
+  (let (noninteractive)
+    (font-lock-mode)))
 
 (ert-deftest jit-lock-fontify-now-fontifies-a-new-buffer ()
   (ert-with-test-buffer (:name "xxx")
@@ -51,7 +52,8 @@
   (ert-with-test-buffer (:name "xxx")
     (setq font-lock-defaults
           (list '(((lambda () (error "Don't call me")))) t))
-    (font-lock-mode)
+    (let (noninteractive)
+      (font-lock-mode))
     (insert "aaa")
     (with-silent-modifications
       (put-text-property (point-min) (point-max) 'fontified t))
