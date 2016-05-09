@@ -2484,7 +2484,7 @@ insert1 (Lisp_Object arg)
 
 DEFUN ("insert", Finsert, Sinsert, 0, MANY, 0,
        doc: /* Insert the arguments, either strings or characters, at point.
-Point and before-insertion markers move forward to end up
+Point and after-insertion markers move forward to end up
  after the inserted text.
 Any other markers at the point of insertion remain before the text.
 
@@ -2508,7 +2508,7 @@ usage: (insert &rest ARGS)  */)
 DEFUN ("insert-and-inherit", Finsert_and_inherit, Sinsert_and_inherit,
    0, MANY, 0,
        doc: /* Insert the arguments at point, inheriting properties from adjoining text.
-Point and before-insertion markers move forward to end up
+Point and after-insertion markers move forward to end up
  after the inserted text.
 Any other markers at the point of insertion remain before the text.
 
