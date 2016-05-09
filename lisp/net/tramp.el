@@ -1723,7 +1723,6 @@ For definition of that list see `tramp-set-completion-function'."
 
 ;;; Fontification of `read-file-name':
 
-;; rfn-eshadow.el is part of Emacs 22.  It is autoloaded.
 (defvar tramp-rfn-eshadow-overlay)
 (make-variable-buffer-local 'tramp-rfn-eshadow-overlay)
 
@@ -4147,7 +4146,7 @@ Invokes `password-read' if available, `read-passwd' else."
   "Return the difference between the two times, in seconds.
 T1 and T2 are time values (as returned by `current-time' for example)."
   ;; Starting with Emacs 25.1, we could change this to use `time-subtract'.
-  (float-time (subtract-time t1 t2)))
+  (float-time (tramp-compat-funcall 'subtract-time t1 t2)))
 
 ;; Currently (as of Emacs 20.5), the function `shell-quote-argument'
 ;; does not deal well with newline characters.  Newline is replaced by

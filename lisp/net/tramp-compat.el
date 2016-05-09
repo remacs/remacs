@@ -50,9 +50,9 @@
 (unless (boundp 'remote-file-name-inhibit-cache)
   (defvar remote-file-name-inhibit-cache nil))
 
-;; For not existing functions, or functions with a changed argument
-;; list, there are compiler warnings.  We want to avoid them in cases
-;; we know what we do.
+;; For not existing functions, obsolete functions, or functions with a
+;; changed argument list, there are compiler warnings.  We want to
+;; avoid them in cases we know what we do.
 (defmacro tramp-compat-funcall (function &rest arguments)
   `(when (or (subrp ,function) (functionp ,function))
      (with-no-warnings (funcall ,function ,@arguments))))
