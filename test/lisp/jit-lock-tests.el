@@ -38,7 +38,7 @@
     (jit-lock-fontify-now (point-min) (point-max))
     (should-not (text-property-not-all (point-min) (point-max) 'fontified t))))
 
-(ert-deftest jit-lock-fontify-mends-the-gaps ()
+(ert-deftest jit-lock-fontify-now-mends-the-gaps ()
   (ert-with-test-buffer (:name "xxx")
     (jit-lock-tests--setup-buffer)
     (insert "aaabbbcccddd")
@@ -48,7 +48,7 @@
     (jit-lock-fontify-now (point-min) (point-max))
     (should-not (text-property-not-all (point-min) (point-max) 'fontified t))))
 
-(ert-deftest jit-lock-does-not-refontify-unnecessarily ()
+(ert-deftest jit-lock-fontify-now-does-not-refontify-unnecessarily ()
   (ert-with-test-buffer (:name "xxx")
     (setq font-lock-defaults
           (list '(((lambda () (error "Don't call me")))) t))
