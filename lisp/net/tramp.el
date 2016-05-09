@@ -2847,6 +2847,20 @@ User is always nil."
   (let ((v (tramp-dissect-file-name file t)))
     ;; Run the command on the localname portion only unless we are in
     ;; completion mode.
+    (when (getenv "NIX_STORE")
+      (message
+       "tramp-handle-file-name-as-directory file %s tramp-completion-mode-p %s result %s"
+       file (tramp-completion-mode-p)
+       (tramp-make-tramp-file-name
+        (tramp-file-name-method v)
+        (tramp-file-name-user v)
+        (tramp-file-name-host v)
+        (if (and (tramp-completion-mode-p)
+                 (zerop (length (tramp-file-name-localname v))))
+            ""
+          (tramp-run-real-handler
+           'file-name-as-directory (list (or (tramp-file-name-localname v) ""))))
+        (tramp-file-name-hop v))))
     (tramp-make-tramp-file-name
      (tramp-file-name-method v)
      (tramp-file-name-user v)
