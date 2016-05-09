@@ -1712,9 +1712,11 @@ Example:
 (defun tramp-get-completion-function (method)
   "Returns a list of completion functions for METHOD.
 For definition of that list see `tramp-set-completion-function'."
-  (cons
-   ;; Hosts visited once shall be remembered.
-   `(tramp-parse-connection-properties ,method)
+  (append
+   `(;; Default settings are taken into account.
+     (tramp-parse-default-user-host ,method)
+     ;; Hosts visited once shall be remembered.
+     (tramp-parse-connection-properties ,method))
    ;; The method related defaults.
    (cdr (assoc method tramp-completion-function-alist))))
 
@@ -2548,6 +2550,12 @@ PARTIAL-USER must match USER, PARTIAL-HOST must match HOST."
 
   (unless (zerop (+ (length user) (length host)))
     (tramp-completion-make-tramp-file-name method user host nil)))
+
+(defun tramp-parse-default-user-host (method)
+  "Return a list of (user host) tuples allowed to access for METHOD.
+This function is added always in `tramp-get-completion-function'
+for all methods.  Resulting data are derived from default settings."
+  `((,(tramp-find-user method nil nil) ,(tramp-find-host method nil nil))))
 
 ;; Generic function.
 (defun tramp-parse-group (regexp match-level skip-regexp)
