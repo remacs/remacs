@@ -648,6 +648,9 @@ This checks also `file-name-as-directory', `file-name-directory',
 	(unless (zerop (length file))
 	  (setq file (format "/%s:" file))
 	  (should (string-equal (directory-file-name file) file))
+          (when (getenv "NIX_STORE")
+            (message "file %s non-essential %s tramp-completion-mode-p %s"
+                     file non-essential (tramp-completion-mode-p)))
 	  (should
 	   (string-equal
 	    (file-name-as-directory file)
