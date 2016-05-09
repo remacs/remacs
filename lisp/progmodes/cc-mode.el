@@ -596,7 +596,6 @@ that requires a literal mode spec at compile time."
 				     (not (string-equal c-indentation-style
 							style)))))))
   (c-setup-paragraph-variables)
-  (c-make-noise-macro-regexps)
 
   ;; we have to do something special for c-offsets-alist so that the
   ;; buffer local value has its own alist structure.
@@ -1487,18 +1486,16 @@ initialization, then `c-mode-hook'.
 
 Key bindings:
 \\{c-mode-map}"
+  :after-hook (progn (c-make-noise-macro-regexps)
+		     (c-make-macro-with-semi-re)
+		     (c-update-modeline))
   (c-initialize-cc-mode t)
-  (set-syntax-table c-mode-syntax-table)
-  (setq local-abbrev-table c-mode-abbrev-table
-	abbrev-mode t)
-  (use-local-map c-mode-map)
+  (setq abbrev-mode t)
   (c-init-language-vars-for 'c-mode)
-  (c-make-macro-with-semi-re) ; matches macro names whose expansion ends with ;
   (c-common-init 'c-mode)
   (easy-menu-add c-c-menu)
   (cc-imenu-init cc-imenu-c-generic-expression)
-  (c-run-mode-hooks 'c-mode-common-hook 'c-mode-hook)
-  (c-update-modeline))
+  (c-run-mode-hooks 'c-mode-common-hook))
 
 
 ;; Support for C++
@@ -1542,18 +1539,16 @@ initialization, then `c++-mode-hook'.
 
 Key bindings:
 \\{c++-mode-map}"
+  :after-hook (progn (c-make-noise-macro-regexps)
+		     (c-make-macro-with-semi-re)
+		     (c-update-modeline))
   (c-initialize-cc-mode t)
-  (set-syntax-table c++-mode-syntax-table)
-  (setq local-abbrev-table c++-mode-abbrev-table
-	abbrev-mode t)
-  (use-local-map c++-mode-map)
+  (setq abbrev-mode t)
   (c-init-language-vars-for 'c++-mode)
-  (c-make-macro-with-semi-re) ; matches macro names whose expansion ends with ;
   (c-common-init 'c++-mode)
   (easy-menu-add c-c++-menu)
   (cc-imenu-init cc-imenu-c++-generic-expression)
-  (c-run-mode-hooks 'c-mode-common-hook 'c++-mode-hook)
-  (c-update-modeline))
+  (c-run-mode-hooks 'c-mode-common-hook))
 
 
 ;; Support for Objective-C
@@ -1595,18 +1590,16 @@ initialization, then `objc-mode-hook'.
 
 Key bindings:
 \\{objc-mode-map}"
+  :after-hook (progn (c-make-noise-macro-regexps)
+		     (c-make-macro-with-semi-re)
+		     (c-update-modeline))
   (c-initialize-cc-mode t)
-  (set-syntax-table objc-mode-syntax-table)
-  (setq local-abbrev-table objc-mode-abbrev-table
-	abbrev-mode t)
-  (use-local-map objc-mode-map)
+  (setq abbrev-mode t)
   (c-init-language-vars-for 'objc-mode)
-  (c-make-macro-with-semi-re) ; matches macro names whose expansion ends with ;
   (c-common-init 'objc-mode)
   (easy-menu-add c-objc-menu)
   (cc-imenu-init nil 'cc-imenu-objc-function)
-  (c-run-mode-hooks 'c-mode-common-hook 'objc-mode-hook)
-  (c-update-modeline))
+  (c-run-mode-hooks 'c-mode-common-hook))
 
 
 ;; Support for Java
@@ -1656,17 +1649,14 @@ initialization, then `java-mode-hook'.
 
 Key bindings:
 \\{java-mode-map}"
+  :after-hook (c-update-modeline)
   (c-initialize-cc-mode t)
-  (set-syntax-table java-mode-syntax-table)
-  (setq local-abbrev-table java-mode-abbrev-table
-	abbrev-mode t)
-  (use-local-map java-mode-map)
+  (setq abbrev-mode t)
   (c-init-language-vars-for 'java-mode)
   (c-common-init 'java-mode)
   (easy-menu-add c-java-menu)
   (cc-imenu-init cc-imenu-java-generic-expression)
-  (c-run-mode-hooks 'c-mode-common-hook 'java-mode-hook)
-  (c-update-modeline))
+  (c-run-mode-hooks 'c-mode-common-hook))
 
 
 ;; Support for CORBA's IDL language
@@ -1705,16 +1695,13 @@ initialization, then `idl-mode-hook'.
 
 Key bindings:
 \\{idl-mode-map}"
+  :after-hook (c-update-modeline)
   (c-initialize-cc-mode t)
-  (set-syntax-table idl-mode-syntax-table)
-  (setq local-abbrev-table idl-mode-abbrev-table)
-  (use-local-map idl-mode-map)
   (c-init-language-vars-for 'idl-mode)
   (c-common-init 'idl-mode)
   (easy-menu-add c-idl-menu)
   ;;(cc-imenu-init cc-imenu-idl-generic-expression) ;TODO
-  (c-run-mode-hooks 'c-mode-common-hook 'idl-mode-hook)
-  (c-update-modeline))
+  (c-run-mode-hooks 'c-mode-common-hook))
 
 
 ;; Support for Pike
@@ -1757,17 +1744,14 @@ initialization, then `pike-mode-hook'.
 
 Key bindings:
 \\{pike-mode-map}"
+  :after-hook (c-update-modeline)
   (c-initialize-cc-mode t)
-  (set-syntax-table pike-mode-syntax-table)
-  (setq local-abbrev-table pike-mode-abbrev-table
-	abbrev-mode t)
-  (use-local-map pike-mode-map)
+  (setq	abbrev-mode t)
   (c-init-language-vars-for 'pike-mode)
   (c-common-init 'pike-mode)
   (easy-menu-add c-pike-menu)
   ;;(cc-imenu-init cc-imenu-pike-generic-expression) ;TODO
-  (c-run-mode-hooks 'c-mode-common-hook 'pike-mode-hook)
-  (c-update-modeline))
+  (c-run-mode-hooks 'c-mode-common-hook))
 
 
 ;; Support for AWK
@@ -1821,22 +1805,18 @@ initialization, then `awk-mode-hook'.
 
 Key bindings:
 \\{awk-mode-map}"
+  :after-hook (c-update-modeline)
   ;; We need the next line to stop the macro defining
   ;; `awk-mode-syntax-table'.  This would mask the real table which is
   ;; declared in cc-awk.el and hasn't yet been loaded.
   :syntax-table nil
   (require 'cc-awk)			; Added 2003/6/10.
   (c-initialize-cc-mode t)
-  (set-syntax-table awk-mode-syntax-table)
-  (setq local-abbrev-table awk-mode-abbrev-table
-	abbrev-mode t)
-  (use-local-map awk-mode-map)
+  (setq	abbrev-mode t)
   (c-init-language-vars-for 'awk-mode)
   (c-common-init 'awk-mode)
   (c-awk-unstick-NL-prop)
-
-  (c-run-mode-hooks 'c-mode-common-hook 'awk-mode-hook)
-  (c-update-modeline))
+  (c-run-mode-hooks 'c-mode-common-hook))
 
 
 ;; bug reporting

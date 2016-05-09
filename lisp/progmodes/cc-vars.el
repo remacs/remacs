@@ -229,7 +229,20 @@ See `c-offsets-alist'."
 	       (setq offset (cdr offset)))
 	     (null offset)))))
 
+(defun c-string-list-p (val)
+  "Return non-nil if VAL is a list of strings."
+  (and
+   (listp val)
+   (catch 'string
+     (dolist (elt val)
+       (if (not (stringp elt))
+	   (throw 'string nil)))
+     t)))
 
+(defun c-string-or-string-list-p (val)
+  "Return non-nil if VAL is a string or a list of strings."
+  (or (stringp val)
+      (c-string-list-p val)))
 
 ;;; User variables
 
@@ -1633,6 +1646,7 @@ If you change this variable's value, call the function
 this implicitly by reinitializing C/C++/Objc Mode on any buffer)."
   :type '(repeat :tag "List of names" string)
   :group 'c)
+(put 'c-noise-macro-names 'safe-local-variable #'c-string-list-p)
 
 (defcustom c-noise-macro-with-parens-names nil
   "A list of names of macros \(or compiler extensions like \"__attribute__\")
@@ -1640,6 +1654,7 @@ which optionally have arguments in parentheses, and which expand to nothing.
 These are recognized by CC Mode only in declarations."
   :type '(regexp :tag "List of names (possibly empty)" string)
   :group 'c)
+(put 'c-noise-macro-with-parens-names 'safe-local-variable #'c-string-list-p)
 
 (defun c-make-noise-macro-regexps ()
   ;; Convert `c-noise-macro-names' and `c-noise-macro-with-parens-names' into
@@ -1690,6 +1705,8 @@ variables.
 Note that currently \(2008-11-04) this variable is a prototype,
 and is likely to disappear or change its form soon.")
 (make-variable-buffer-local 'c-macro-names-with-semicolon)
+(put 'c-macro-names-with-semicolon 'safe-local-variable
+     #'c-string-or-string-list-p)
 
 (defun c-make-macro-with-semi-re ()
   ;; Convert `c-macro-names-with-semicolon' into the regexp
