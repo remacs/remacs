@@ -1588,7 +1588,7 @@ process filter, sentinel, etc., through keyword arguments (similar to
 'make-network-process').
 
 +++
-** Subprocesses are automatically told about changes in window dimensions
+** Subprocesses are automatically told about changes in window dimensions.
 The new option 'window-adjust-process-window-size-function' controls
 how subprocesses are told to adapt their logical window sizes to
 changes in the Emacs window configuration.  Its default value calls
