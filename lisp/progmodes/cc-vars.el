@@ -229,7 +229,20 @@ See `c-offsets-alist'."
 	       (setq offset (cdr offset)))
 	     (null offset)))))
 
+(defun c-string-list-p (val)
+  "Return non-nil if VAL is a list of strings."
+  (and
+   (listp val)
+   (catch 'string
+     (dolist (elt val)
+       (if (not (stringp elt))
+	   (throw 'string nil)))
+     t)))
 
+(defun c-string-or-string-list-p (val)
+  "Return non-nil if VAL is a string or a list of strings."
+  (or (stringp val)
+      (c-string-list-p val)))
 
 ;;; User variables
 
@@ -1621,6 +1634,10 @@ names)."))
 
 
 ;; Non-customizable variables, still part of the interface to CC Mode
+;; The following two are preparations for Emacs 25.2 (2016-05-09):
+(put 'c-noise-macro-names 'safe-local-variable #'c-string-list-p)
+(put 'c-noise-macro-with-parens-names 'safe-local-variable #'c-string-list-p)
+
 (defvar c-macro-with-semi-re nil
   ;; Regular expression which matches a (#define'd) symbol whose expansion
   ;; ends with a semicolon.
@@ -1647,6 +1664,8 @@ variables.
 Note that currently \(2008-11-04) this variable is a prototype,
 and is likely to disappear or change its form soon.")
 (make-variable-buffer-local 'c-macro-names-with-semicolon)
+(put 'c-macro-names-with-semicolon 'safe-local-variable
+     #'c-string-or-string-list-p)
 
 (defun c-make-macro-with-semi-re ()
   ;; Convert `c-macro-names-with-semicolon' into the regexp
