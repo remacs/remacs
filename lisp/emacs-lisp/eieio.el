@@ -984,7 +984,7 @@ Optional argument GROUP is the sub-group of slots to display.
 
 ;;;***
 
-;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "5bd32f1033d0e2eee7c32c0ad28330fc")
+;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "0b9c6be48520da2085812f6e7fed9792")
 ;;; Generated autoloads from eieio-opt.el
 
 (autoload 'eieio-browse "eieio-opt" "\
