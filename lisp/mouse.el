@@ -97,35 +97,44 @@ Expects to be bound to `down-mouse-1' in `key-translation-map'."
   (when (and mouse-1-click-follows-link
              (eq (if (eq mouse-1-click-follows-link 'double)
                      'double-down-mouse-1 'down-mouse-1)
-                 (car-safe last-input-event))
-             (mouse-on-link-p (event-start last-input-event))
-             (or mouse-1-click-in-non-selected-windows
-                 (eq (selected-window)
-                     (posn-window (event-start last-input-event)))))
-    (let ((timedout
-           (sit-for (if (numberp mouse-1-click-follows-link)
-                     (/ (abs mouse-1-click-follows-link) 1000.0)
-                     0))))
-      (if (if (and (numberp mouse-1-click-follows-link)
-                   (>= mouse-1-click-follows-link 0))
-              timedout (not timedout))
-          nil
-
-        (let ((event (read-key))) ;Use read-key so it works for xterm-mouse-mode!
-          (if (eq (car-safe event) (if (eq mouse-1-click-follows-link 'double)
-                                       'double-mouse-1 'mouse-1))
-              ;; Turn the mouse-1 into a mouse-2 to follow links.
-              (let ((newup (if (eq mouse-1-click-follows-link 'double)
-                                'double-mouse-2 'mouse-2)))
-                ;; If mouse-2 has never been done by the user, it doesn't have
-                ;; the necessary property to be interpreted correctly.
-                (unless (get newup 'event-kind)
-                  (put newup 'event-kind (get (car event) 'event-kind)))
-                (push (cons newup (cdr event)) unread-command-events)
-                ;; Don't change the down event, only the up-event (bug#18212).
-                nil)
-            (push event unread-command-events)
-            nil))))))
+                 (car-safe last-input-event)))
+    (let ((action (mouse-on-link-p (event-start last-input-event))))
+      (when (and action
+                 (or mouse-1-click-in-non-selected-windows
+                     (eq (selected-window)
+                         (posn-window (event-start last-input-event)))))
+        (let ((timedout
+               (sit-for (if (numberp mouse-1-click-follows-link)
+                            (/ (abs mouse-1-click-follows-link) 1000.0)
+                          0))))
+          (if (if (and (numberp mouse-1-click-follows-link)
+                       (>= mouse-1-click-follows-link 0))
+                  timedout (not timedout))
+              nil
+            ;; Use read-key so it works for xterm-mouse-mode!
+            (let ((event (read-key)))
+              (if (eq (car-safe event)
+                      (if (eq mouse-1-click-follows-link 'double)
+                          'double-mouse-1 'mouse-1))
+                  (progn
+                    ;; Turn the mouse-1 into a mouse-2 to follow links,
+                    ;; but only if ‘mouse-on-link-p’ hasn’t returned a
+                    ;; string or vector (see its docstring).
+                    (if (or (stringp action) (vectorp action))
+                        (push (aref action 0) unread-command-events)
+                      (let ((newup (if (eq mouse-1-click-follows-link 'double)
+                                       'double-mouse-2 'mouse-2)))
+                        ;; If mouse-2 has never been done by the user, it
+                        ;; doesn't have the necessary property to be
+                        ;; interpreted correctly.
+                        (unless (get newup 'event-kind)
+                          (put newup 'event-kind (get (car event) 'event-kind)))
+                        (push (cons newup (cdr event)) unread-command-events)))
+                    ;; Don't change the down event, only the up-event
+                    ;; (bug#18212).
+                    nil)
+                (push event unread-command-events)
+                nil))))))))
 
 (define-key key-translation-map [down-mouse-1]
   #'mouse--down-1-maybe-follows-link)
