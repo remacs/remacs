@@ -1205,20 +1205,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			   'font-lock-keyword-face)
 		       (looking-at c-not-decl-init-keywords))
 		  (and c-macro-with-semi-re
-		       (looking-at c-macro-with-semi-re)) ; 2008-11-04
-		  (save-excursion ; A construct after a ; in a `for' statement
-				  ; can't be a declaration.
-		    (and (c-go-up-list-backward)
-			 (eq (char-after) ?\()
-			 (progn (c-backward-syntactic-ws)
-				(c-simple-skip-symbol-backward))
-			 (looking-at c-paren-stmt-key)
-			 (progn (goto-char match-pos)
-				(while (and (eq (char-before) ?\))
-					    (c-go-list-backward))
-				  (c-backward-syntactic-ws))
-				(eq (char-before) ?\;)))))
-	      ;; Don't do anything more if we're looking at something that
+		       (looking-at c-macro-with-semi-re))) ; 2008-11-04
+	      ;; Don't do anything more if we're looking at a keyword that
 	      ;; can't start a declaration.
 	      t
 
