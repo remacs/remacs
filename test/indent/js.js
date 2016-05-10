@@ -103,6 +103,12 @@ Foobar
     console.log(num);
   });
 
+var z = [
+  ...iterableObj,
+  4,
+  5
+]
+
 var arr = [
   -1, 2,
   -3, 4 +
