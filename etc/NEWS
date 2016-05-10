@@ -207,7 +207,7 @@ viewing HTML files and the like.
 
 *** Ediff can be prevented from pausing 1 second after reaching a
 breakpoint (e.g. with "f" and "o") by customizing the new option
-`edebug-sit-on-break'.
+'edebug-sit-on-break'.
 
 ** eww
 
@@ -364,13 +364,19 @@ mode bindings: 'C-c @ C-a', 'C-c @ C-t', 'C-c @ C-d', and 'C-c @ C-e.'
 before running.  This is controlled by the 'grep-save-buffers'
 variable.
 
++++
+** The variable 'text-quoting-style' no longer affects the treatment
+of curved quotes in format arguments to functions like 'message' and
+'format-message'.  In particular, when this variable's value is
+'grave', all quotes in formats are output as-is.
+
 
 * Lisp Changes in Emacs 25.2
 
 ** New var syntax-ppss-table to control the syntax-table used in syntax-ppss.
 
 +++
-** `define-derived-mode' can now specify an :after-hook form, which
+** 'define-derived-mode' can now specify an :after-hook form, which
 gets evaluated after the new mode's hook has run.  This can be used to
 incorporate configuration changes made in the mode hook into the
 mode's setup.

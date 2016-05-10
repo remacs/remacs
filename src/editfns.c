@@ -3977,8 +3977,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
       multibyte = true;
 
   int quoting_style = message ? text_quoting_style () : -1;
-  if (quoting_style == LEAVE_QUOTING_STYLE)
-    quoting_style = -1;
 
   /* If we start out planning a unibyte result,
      then discover it has to be multibyte, we jump back to retry.  */
@@ -4457,14 +4455,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	}
       else
 	{
-	  /* Named constants for the UTF-8 encodings of U+2018 LEFT SINGLE
-	     QUOTATION MARK and U+2019 RIGHT SINGLE QUOTATION MARK.  */
-	  enum
-	  {
-	    uLSQM0 = 0xE2, uLSQM1 = 0x80, uLSQM2 = 0x98,
-	    /* uRSQM0 = 0xE2, uRSQM1 = 0x80, */ uRSQM2 = 0x99
-	  };
-
 	  unsigned char str[MAX_MULTIBYTE_LENGTH];
 
 	  if ((format_char == '`' || format_char == '\'')
@@ -4480,18 +4470,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	    }
 	  else if (format_char == '`' && quoting_style == STRAIGHT_QUOTING_STYLE)
 	    convsrc = "'";
-	  else if (format_char == uLSQM0 && CURVE_QUOTING_STYLE < quoting_style
-		   && multibyte_format
-		   && (unsigned char) format[0] == uLSQM1
-		   && ((unsigned char) format[1] == uLSQM2
-		       || (unsigned char) format[1] == uRSQM2))
-	    {
-	      convsrc = (((unsigned char) format[1] == uLSQM2
-			  && quoting_style == GRAVE_QUOTING_STYLE)
-			 ? "`" : "'");
-	      format += 2;
-	      memset (&discarded[format0 + 1 - format_start], 2, 2);
-	    }
 	  else
 	    {
 	      /* Copy a single character from format to buf.  */
