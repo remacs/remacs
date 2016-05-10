@@ -336,7 +336,7 @@ Return a list of tags."
 			     (mapcar 'semanticdb-elisp-sym->tag
 				     ;; Fancy eieio function that knows all about
 				     ;; built in methods belonging to CLASS.
-				     (eieio-all-generic-functions class)))))
+				     (cl-generic-all-functions class)))))
 	     )
 	taglst))))
 

@@ -822,7 +822,7 @@ including `cl-block' and `cl-eval-when'."
     (cl--describe-class-slots class)
 
     ;; Describe all the methods specific to this class.
-    (let ((generics (cl--generic-all-functions type)))
+    (let ((generics (cl-generic-all-functions type)))
       (when generics
         (insert (propertize "Specialized Methods:\n\n" 'face 'bold))
         (dolist (generic generics)

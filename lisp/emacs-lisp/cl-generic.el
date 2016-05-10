@@ -937,7 +937,7 @@ MET-NAME is a cons (SYMBOL . SPECIALIZERS)."
            (setq applies t)))
     applies))
 
-(defun cl--generic-all-functions (&optional type)
+(defun cl-generic-all-functions (&optional type)
   "Return a list of all generic functions.
 Optional TYPE argument returns only those functions that contain
 methods for TYPE."

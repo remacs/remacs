@@ -1679,6 +1679,10 @@ c-noise-macro-with-parens-names is invalid: %s" c-noise-macro-with-parens-names)
 c-noise-macro-names is invalid: %s" c-noise-macro-names)))))
 
 ;; Non-customizable variables, still part of the interface to CC Mode
+;; The following two are preparations for Emacs 25.2 (2016-05-09):
+(put 'c-noise-macro-names 'safe-local-variable #'c-string-list-p)
+(put 'c-noise-macro-with-parens-names 'safe-local-variable #'c-string-list-p)
+
 (defvar c-macro-with-semi-re nil
   ;; Regular expression which matches a (#define'd) symbol whose expansion
   ;; ends with a semicolon.
