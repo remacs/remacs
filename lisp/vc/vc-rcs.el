@@ -41,6 +41,13 @@
   (require 'cl-lib)
   (require 'vc))
 
+(declare-function vc-branch-p "vc" (rev))
+(declare-function vc-read-revision "vc"
+                  (prompt &optional files backend default initial-input))
+(declare-function vc-buffer-context "vc-dispatcher" ())
+(declare-function vc-restore-buffer-context "vc-dispatcher" (context))
+(declare-function vc-setup-buffer "vc-dispatcher" (buf))
+
 (defgroup vc-rcs nil
   "VC RCS backend."
   :version "24.1"

@@ -106,6 +106,8 @@
   (require 'vc)
   (require 'vc-dir))
 
+(declare-function vc-compilation-mode "vc-dispatcher" (backend))
+
 ;;; Customization options
 
 (defgroup vc-hg nil

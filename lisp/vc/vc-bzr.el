@@ -50,6 +50,11 @@
   (require 'vc-dispatcher)
   (require 'vc-dir))                    ; vc-dir-at-event
 
+(declare-function vc-deduce-fileset "vc"
+                  (&optional observer allow-unregistered
+                             state-model-only-files))
+
+
 ;; Clear up the cache to force vc-call to check again and discover
 ;; new functions when we reload this file.
 (put 'Bzr 'vc-functions nil)

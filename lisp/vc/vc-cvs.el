@@ -27,6 +27,12 @@
 
 (eval-when-compile (require 'vc))
 
+(declare-function vc-branch-p "vc" (rev))
+(declare-function vc-checkout "vc" (file &optional rev))
+(declare-function vc-expand-dirs "vc" (file-or-dir-list backend))
+(declare-function vc-read-revision "vc"
+                  (prompt &optional files backend default initial-input))
+
 ;; Clear up the cache to force vc-call to check again and discover
 ;; new functions when we reload this file.
 (put 'CVS 'vc-functions nil)
