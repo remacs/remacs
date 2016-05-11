@@ -639,34 +639,24 @@ This checks also `file-name-as-directory', `file-name-directory',
   (should-not
    (unhandled-file-name-directory "/method:host:/path/to/file"))
 
-  (unwind-protect
   ;; Bug#10085.
   (dolist (n-e '(nil t))
     ;; We must clear `tramp-default-method'.  On hydra, it is "ftp",
     ;; which ruins the tests.
     (let ((non-essential n-e)
           tramp-default-method)
-      (when (getenv "NIX_STORE")
-        (dolist (elt (all-completions "tramp-" obarray 'functionp))
-          (trace-function-background (intern elt))))
       (dolist (file
 	       `(,(file-remote-p tramp-test-temporary-file-directory 'method)
 		 ,(file-remote-p tramp-test-temporary-file-directory 'host)))
 	(unless (zerop (length file))
 	  (setq file (format "/%s:" file))
 	  (should (string-equal (directory-file-name file) file))
-          (when (getenv "NIX_STORE")
-            (message "file %s non-essential %s tramp-completion-mode-p %s"
-                     file non-essential (tramp-completion-mode-p)))
 	  (should
 	   (string-equal
 	    (file-name-as-directory file)
 	    (if (tramp-completion-mode-p) file (concat file "./"))))
 	  (should (string-equal (file-name-directory file) file))
-	  (should (string-equal (file-name-nondirectory file) ""))))))
-  (when (getenv "NIX_STORE")
-    (untrace-all)
-    (message "%s" (with-current-buffer trace-buffer (buffer-string))))))
+	  (should (string-equal (file-name-nondirectory file) "")))))))
 
 (ert-deftest tramp-test07-file-exists-p ()
   "Check `file-exist-p', `write-region' and `delete-file'."
