@@ -642,7 +642,10 @@ This checks also `file-name-as-directory', `file-name-directory',
   (unwind-protect
   ;; Bug#10085.
   (dolist (n-e '(nil t))
-    (let ((non-essential n-e))
+    ;; We must clear `tramp-default-method'.  On hydra, it is "ftp",
+    ;; which ruins the tests.
+    (let ((non-essential n-e)
+          tramp-default-method)
       (when (getenv "NIX_STORE")
         (dolist (elt (all-completions "tramp-" obarray 'functionp))
           (trace-function-background (intern elt))))
@@ -2327,6 +2330,7 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * set-file-selinux-context
 
 ;; * Work on skipped tests.  Make a comment, when it is impossible.
+;; * Fix `tramp-test06-directory-file-name' for `ftp'.
 ;; * Fix `tramp-test15-copy-directory' for `smb'.  Using tar in a pipe
 ;;   doesn't work well when an interactive password must be provided.
 ;; * Fix `tramp-test27-start-file-process' on MS Windows (`process-send-eof'?).
