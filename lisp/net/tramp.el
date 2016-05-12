@@ -1008,7 +1008,6 @@ means to use always cached values for the directory contents."
 (defvar tramp-current-connection nil
   "Last connection timestamp.")
 
-;;;###autoload
 (defconst tramp-completion-file-name-handler-alist
   '((expand-file-name . tramp-completion-handle-expand-file-name)
     (file-name-all-completions
@@ -2241,8 +2240,7 @@ should never be set globally, the intention is to let-bind it.")
 ;; Tramp file name syntax. Maybe another variable should be introduced
 ;; overwriting this check in such cases. Or we change Tramp file name
 ;; syntax in order to avoid ambiguities.
-;;;###autoload
-(progn (defun tramp-completion-mode-p ()
+(defun tramp-completion-mode-p ()
   "Check, whether method / user name / host name completion is active."
   (or
    ;; Signal from outside.  `non-essential' has been introduced in Emacs 24.
@@ -2255,7 +2253,7 @@ should never be set globally, the intention is to let-bind it.")
 	 (equal last-input-event ?\t)
 	 (and (not (event-modifiers last-input-event))
 	      (or (equal last-input-event ?\?)
-		  (equal last-input-event ?\ ))))))))
+		  (equal last-input-event ?\ )))))))
 
 (defun tramp-connectable-p (filename)
   "Check, whether it is possible to connect the remote host w/o side-effects.
@@ -2268,7 +2266,6 @@ not in completion mode."
 		    (p (tramp-get-connection-process v)))
 	       (and p (processp p) (memq (process-status p) '(run open))))))))
 
-;;;###autoload
 (defun tramp-completion-handle-expand-file-name
     (name &optional dir)
   "Like `expand-file-name' for Tramp files."
@@ -2288,7 +2285,6 @@ not in completion mode."
 ;; Method, host name and user name completion.
 ;; `tramp-completion-dissect-file-name' returns a list of
 ;; tramp-file-name structures. For all of them we return possible completions.
-;;;###autoload
 (defun tramp-completion-handle-file-name-all-completions (filename directory)
   "Like `file-name-all-completions' for partial Tramp files."
 
@@ -2361,7 +2357,6 @@ not in completion mode."
 	      'file-name-all-completions (list (list filename directory)))))))
 
 ;; Method, host name and user name completion for a file.
-;;;###autoload
 (defun tramp-completion-handle-file-name-completion
   (filename directory &optional predicate)
   "Like `file-name-completion' for Tramp files."
