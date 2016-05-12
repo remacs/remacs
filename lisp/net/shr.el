@@ -1445,13 +1445,14 @@ The preference is a float determined from `shr-prefer-media-type'."
 (defun shr-tag-img (dom &optional url)
   (when (or url
 	    (and dom
-		 (> (length (dom-attr dom 'src)) 0)))
+		 (or (> (length (dom-attr dom 'src)) 0)
+                     (> (length (dom-attr dom 'srcset)) 0))))
     (when (> (current-column) 0)
       (insert "\n"))
     (let ((alt (dom-attr dom 'alt))
           (width (shr-string-number (dom-attr dom 'width)))
           (height (shr-string-number (dom-attr dom 'height)))
-	  (url (shr-expand-url (or url (dom-attr dom 'src)))))
+	  (url (shr-expand-url (or url (shr--preferred-image dom)))))
       (let ((start (point-marker)))
 	(when (zerop (length alt))
 	  (setq alt "*"))
@@ -1510,6 +1511,43 @@ The preference is a float determined from `shr-prefer-media-type'."
 	  (put-text-property start (point) 'help-echo
 			     (shr-fill-text
 			      (or (dom-attr dom 'title) alt))))))))
+
+(defun shr--preferred-image (dom)
+  (let ((srcset (dom-attr dom 'srcset))
+        (frame-width (frame-pixel-width))
+        (width (string-to-number (or (dom-attr dom 'width) "100")))
+        candidate)
+    (when (> (length srcset) 0)
+      ;; srcset consist of a series of URL/size specifications
+      ;; separated by the ", " string.
+      (setq srcset
+            (sort (mapcar
+                   (lambda (elem)
+                     (let ((spec (split-string elem " ")))
+                       (cond
+                        ((= (length spec) 1)
+                         ;; Make sure it's well formed.
+                         (list (car spec) 0))
+                        ((string-match "\\([0-9]+\\)x\\'" (cadr spec))
+                         ;; If we have an "x" form, then use the width
+                         ;; spec to compute the real width.
+                         (list (car spec)
+                               (* width (string-to-number
+                                         (match-string 1 (cadr spec))))))
+                        (t
+                         (list (car spec)
+                               (string-to-number (cadr spec)))))))
+                   (split-string srcset ", "))
+                  (lambda (e1 e2)
+                    (> (cadr e1) (cadr e2)))))
+      ;; Choose the smallest picture that's bigger than the current
+      ;; frame.
+      (setq candidate (caar srcset))
+      (while (and srcset
+                  (> (cadr (car srcset)) frame-width))
+        (setq candidate (caar srcset))
+        (pop srcset)))
+    (or candidate (dom-attr dom 'src))))
 
 (defun shr-string-number (string)
   (if (null string)
