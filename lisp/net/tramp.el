@@ -2104,8 +2104,11 @@ preventing reentrant calls of Tramp.")
 Together with `tramp-locked', this implements a locking mechanism
 preventing reentrant calls of Tramp.")
 
-;;;###autoload
-(progn (defun tramp-completion-file-name-handler (operation &rest args)
+;; Avoid recursive loading of tramp.el.
+;;;###autoload(defun tramp-completion-file-name-handler (operation &rest args)
+;;;###autoload  (tramp-completion-run-real-handler operation args))
+
+(defun tramp-completion-file-name-handler (operation &rest args)
   "Invoke Tramp file name completion handler.
 Falls back to normal file name handler if no Tramp file name handler exists."
   (let ((fn (assoc operation tramp-completion-file-name-handler-alist)))
@@ -2127,7 +2130,7 @@ Falls back to normal file name handler if no Tramp file name handler exists."
              (featurep 'ido)
              (featurep 'icicles)))
 	(save-match-data (apply (cdr fn) args))
-      (tramp-completion-run-real-handler operation args)))))
+      (tramp-completion-run-real-handler operation args))))
 
 ;;;###autoload
 (progn (defun tramp-autoload-file-name-handler (operation &rest args)
