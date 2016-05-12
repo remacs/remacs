@@ -79,7 +79,7 @@ Adds the number of tags in this file to the object print name."
 ;; Create the database, and add it to searchable databases for Emacs Lisp mode.
 (defvar-mode-local emacs-lisp-mode semanticdb-project-system-databases
   (list
-   (semanticdb-project-database-emacs-lisp "Emacs"))
+   (make-instance 'semanticdb-project-database-emacs-lisp))
   "Search Emacs core for symbols.")
 
 (defvar-mode-local emacs-lisp-mode semanticdb-find-default-throttle
@@ -96,7 +96,7 @@ Create one of our special tables that can act as an intermediary."
   ;; We need to return something since there is always the "master table"
   ;; The table can then answer file name type questions.
   (when (not (slot-boundp obj 'tables))
-    (let ((newtable (semanticdb-table-emacs-lisp "Emacs System Table")))
+    (let ((newtable (make-instance 'semanticdb-table-emacs-lisp)))
       (oset obj tables (list newtable))
       (oset newtable parent-db obj)
       (oset newtable tags nil)
