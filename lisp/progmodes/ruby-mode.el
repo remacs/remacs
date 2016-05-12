@@ -1858,7 +1858,9 @@ It will be properly highlighted even when the call omits parens.")
             (string-to-syntax "'"))))
       ;; Symbols with special characters.
       ("\\(^\\|[^:]\\)\\(:\\([-+~]@?\\|[/%&|^`]\\|\\*\\*?\\|<\\(<\\|=>?\\)?\\|>[>=]?\\|===?\\|=~\\|![~=]?\\|\\[\\]=?\\)\\)"
-       (3 (string-to-syntax "_")))
+       (3 (unless (nth 8 (syntax-ppss (match-beginning 3)))
+            (goto-char (match-end 0))
+            (string-to-syntax "_"))))
       ;; Part of method name when at the end of it.
       ("[!?]"
        (0 (unless (save-excursion
