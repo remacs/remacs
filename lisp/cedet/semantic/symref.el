@@ -338,7 +338,7 @@ The symref TOOL should already contain the search criteria."
       )
     ))
 
-(cl-defmethod semantic-symref-perform-search ((tool semantic-symref-tool-baseclass))
+(cl-defmethod semantic-symref-perform-search ((_tool semantic-symref-tool-baseclass))
   "Base search for symref tools should throw an error."
   (error "Symref tool objects must implement `semantic-symref-perform-search'"))
 
@@ -356,7 +356,7 @@ over until it returns nil."
       (nreverse result)))
   )
 
-(cl-defmethod semantic-symref-parse-tool-output-one-line ((tool semantic-symref-tool-baseclass))
+(cl-defmethod semantic-symref-parse-tool-output-one-line ((_tool semantic-symref-tool-baseclass))
   "Base tool output parser is not implemented."
   (error "Symref tool objects must implement `semantic-symref-parse-tool-output-one-line'"))
 
@@ -479,8 +479,7 @@ If there is no database, of if the searchtype is wrong, return nil."
   ;; tagname, tagregexp, tagcompletions
   (if (not (memq searchtype '(tagname tagregexp tagcompletions)))
       nil
-    (let* ((line (car hit))
-	   (file (cdr hit))
+    (let* ((file (cdr hit))
 	   ;; FAIL here vv - don't load is not obeyed if no table found.
 	   (db (semanticdb-file-table-object file t))
 	   (found
