@@ -5260,6 +5260,10 @@ w32_read_socket (struct terminal *terminal,
 	    }
 	  break;
 
+	case WM_ENDSESSION:
+	  inev.kind = END_SESSION_EVENT;
+	  break;
+
 	case WM_INITMENU:
 	  f = x_window_to_frame (dpyinfo, msg.msg.hwnd);
 

@@ -4795,6 +4795,11 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       my_post_msg (&wmsg, hwnd, msg, wParam, lParam);
       return 0;
 
+    case WM_ENDSESSION:
+      my_post_msg (&wmsg, hwnd, msg, wParam, lParam);
+      /* If we return, the process will be terminated immediately.  */
+      sleep (1000);
+
     case WM_WINDOWPOSCHANGING:
       /* Don't restrict the sizing of any kind of frames.  If the window
 	 manager doesn't, there's no reason to do it ourselves.  */

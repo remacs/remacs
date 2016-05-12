@@ -3893,6 +3893,16 @@ kbd_buffer_get_event (KBOARD **kbp,
 	  kbd_fetch_ptr = event + 1;
 	}
 #endif
+
+#ifdef HAVE_NTGUI
+      else if (event->kind == END_SESSION_EVENT)
+	{
+	  /* Make an event (end-session).  */
+	  obj = list1 (Qend_session);
+	  kbd_fetch_ptr = event + 1;
+	}
+#endif
+
 #if defined (HAVE_X11) || defined (HAVE_NTGUI) \
     || defined (HAVE_NS)
       else if (event->kind == ICONIFY_EVENT)
@@ -10984,6 +10994,7 @@ syms_of_keyboard (void)
 
 #ifdef HAVE_NTGUI
   DEFSYM (Qlanguage_change, "language-change");
+  DEFSYM (Qend_session, "end-session");
 #endif
 
 #ifdef HAVE_DBUS
@@ -11758,6 +11769,10 @@ keys_of_keyboard (void)
 
   initial_define_lispy_key (Vspecial_event_map, "delete-frame",
 			    "handle-delete-frame");
+#ifdef HAVE_NTGUI
+  initial_define_lispy_key (Vspecial_event_map, "end-session",
+			    "kill-emacs");
+#endif
   initial_define_lispy_key (Vspecial_event_map, "ns-put-working-text",
 			    "ns-put-working-text");
   initial_define_lispy_key (Vspecial_event_map, "ns-unput-working-text",
