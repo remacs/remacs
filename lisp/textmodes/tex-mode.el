@@ -804,8 +804,7 @@ Not smaller than the value set by `tex-suscript-height-minimum'."
 (defvar tex-math-face 'tex-math)
 
 (defface tex-verbatim
-  ;; '((t :inherit font-lock-string-face))
-  '((t :family "courier"))
+  '((t :inherit fixed-pitch-serif))
   "Face used to highlight TeX verbatim environments."
   :group 'tex)
 (define-obsolete-face-alias 'tex-verbatim-face 'tex-verbatim "22.1")

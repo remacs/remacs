@@ -3017,6 +3017,7 @@ attribute on this face (@pxref{Face Attributes}).
 @itemx bold-italic
 @itemx underline
 @itemx fixed-pitch
+@itemx fixed-pitch-serif
 @itemx variable-pitch
 These have the attributes indicated by their names (e.g., @code{bold}
 has a bold @code{:weight} attribute), with all other attributes

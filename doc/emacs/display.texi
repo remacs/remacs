@@ -613,6 +613,9 @@ This face underlines text.
 This face forces use of a fixed-width font.  It's reasonable to
 customize this face to use a different fixed-width font, if you like,
 but you should not make it a variable-width font.
+@item fixed-pitch-serif
+This face is like @code{fixed-pitch}, except the font has serifs and
+looks more like traditional typewriting.
 @cindex variable-pitch face
 @item variable-pitch
 This face forces use of a variable-width font.
