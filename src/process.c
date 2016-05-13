@@ -3652,7 +3652,7 @@ usage: (make-network-process &rest ARGS)  */)
 
   /* :local ADDRESS or :remote ADDRESS */
   tem = Fplist_get (contact, QCserver);
-  if (!NILP (tem))
+  if (NILP (tem))
     address = Fplist_get (contact, QCremote);
   else
     address = Fplist_get (contact, QClocal);
