@@ -342,7 +342,7 @@ Returns non-nil if any false statements are found."
     (setq files (process-lines find-program root
 			       "-name" "*.el"
 			       "-exec" grep-program
-			       "-l" "^[ \t]*(declare-function" "{}" ";"))
+			       "-l" "^[ \t]*(declare-function" "{}" "+"))
     (message "%s%d found" m2 (length files))
     (when files
       (setq errlist (apply 'check-declare-files files))
