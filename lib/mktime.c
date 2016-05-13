@@ -228,7 +228,7 @@ guess_time_tm (long_int year, long_int yday, int hour, int min, int sec,
 }
 
 /* Use CONVERT to convert T to a struct tm value in *TM.  T must be in
-   range for time_t.  Return TM if successfull, NULL if T is out of
+   range for time_t.  Return TM if successful, NULL if T is out of
    range for CONVERT.  */
 static struct tm *
 convert_time (struct tm *(*convert) (const time_t *, struct tm *),
