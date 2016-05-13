@@ -4236,7 +4236,7 @@ With a zero prefix arg, put the name inside a function call to `info'."
   "Syntax table used in `Info-mode'.")
 
 (defface Info-quoted
-  '((t :family "courier"))
+  '((t :inherit fixed-pitch-serif))
   "Face used for quoted elements.")
 
 (defvar Info-mode-font-lock-keywords

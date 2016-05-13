@@ -98,7 +98,31 @@ a font height that isn't optimal."
 (defcustom face-font-family-alternatives
   (mapcar (lambda (arg) (mapcar 'purecopy arg))
   '(("Monospace" "courier" "fixed")
+
+    ;; Monospace Serif is an Emacs invention, intended to work around
+    ;; portability problems when using Courier.  It should work well
+    ;; when combined with Monospaced and with other standard fonts.
+    ("Monospace Serif"
+
+     ;; This looks good on GNU/Linux.
+     "Courier 10 Pitch"
+     ;; This looks good on MS-Windows and OS X.
+     "Consolas"
+     ;; This looks good on OS X.  "Courier" looks good too, but is
+     ;; jagged on GNU/Linux and so is listed later as "courier".
+     "Courier Std"
+     ;; Although these are anti-aliased, they are a bit faint compared
+     ;; to the above.
+     "FreeMono" "Nimbus Mono L"
+     ;; These are aliased and look jagged.
+     "courier" "fixed"
+     ;; Omit Courier New, as it is the default MS-Windows font and so
+     ;; would look no different, and is pretty faint on other platforms.
+     )
+
+    ;; This is present for backward compatibility.
     ("courier" "CMU Typewriter Text" "fixed")
+
     ("Sans Serif" "helv" "helvetica" "arial" "fixed")
     ("helv" "helvetica" "arial" "fixed")))
   "Alist of alternative font family names.
@@ -2278,6 +2302,11 @@ If you set `term-file-prefix' to nil, this function does nothing."
 (defface fixed-pitch
   '((t :family "Monospace"))
   "The basic fixed-pitch face."
+  :group 'basic-faces)
+
+(defface fixed-pitch-serif
+  '((t :family "Monospace Serif"))
+  "The basic fixed-pitch face with serifs."
   :group 'basic-faces)
 
 (defface variable-pitch

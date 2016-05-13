@@ -32,6 +32,7 @@
 (defvar font-parse-tests--data
   `((" " ,(intern " ") nil nil nil nil)
     ("Monospace" Monospace nil nil nil nil)
+    ("Monospace Serif" ,(intern "Monospace Serif") nil nil nil nil)
     ("Foo1" Foo1 nil nil nil nil)
     ("12" nil 12.0 nil nil nil)
     ("12 " ,(intern "12 ") nil nil nil nil)

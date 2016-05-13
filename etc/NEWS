@@ -19,8 +19,13 @@ with a prefix argument or by typing C-u C-h C-n.
 * Changes in Emacs 25.2
 This is a bug-fix release with (almost) no new features.
 
+---
 ** `find-library', `help-function-def' and `help-variable-def' now run
 `find-function-after-hook'.
+
++++
+*** New basic face 'fixed-pitch-serif', for a fixed-width font with serifs.
+The Info-quoted and tex-verbatim faces now default to inheriting from it.
 
 
 * Installation Changes in Emacs 25.1
