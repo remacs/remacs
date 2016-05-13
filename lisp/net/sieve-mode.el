@@ -57,7 +57,6 @@
 
 (defcustom sieve-mode-hook nil
   "Hook run in sieve mode buffers."
-  :group 'sieve
   :type 'hook)
 
 ;; Font-lock
@@ -72,8 +71,7 @@
     (((class color) (background light)) (:foreground "Orchid"))
     (((class color) (background dark)) (:foreground "LightSteelBlue"))
     (t (:bold t)))
-  "Face used for Sieve Control Commands."
-  :group 'sieve)
+  "Face used for Sieve Control Commands.")
 ;; backward-compatibility alias
 (put 'sieve-control-commands-face 'face-alias 'sieve-control-commands)
 (put 'sieve-control-commands-face 'obsolete-face "22.1")
@@ -86,8 +84,7 @@
     (((class color) (background light)) (:foreground "Blue"))
     (((class color) (background dark)) (:foreground "LightSkyBlue"))
     (t (:inverse-video t :bold t)))
-  "Face used for Sieve Action Commands."
-  :group 'sieve)
+  "Face used for Sieve Action Commands.")
 ;; backward-compatibility alias
 (put 'sieve-action-commands-face 'face-alias 'sieve-action-commands)
 (put 'sieve-action-commands-face 'obsolete-face "22.1")
@@ -104,8 +101,7 @@
     (((class color) (background light)) (:foreground "CadetBlue"))
     (((class color) (background dark)) (:foreground "Aquamarine"))
     (t (:bold t :underline t)))
-  "Face used for Sieve Test Commands."
-  :group 'sieve)
+  "Face used for Sieve Test Commands.")
 ;; backward-compatibility alias
 (put 'sieve-test-commands-face 'face-alias 'sieve-test-commands)
 (put 'sieve-test-commands-face 'obsolete-face "22.1")
@@ -120,8 +116,7 @@
     (((class color) (background light)) (:foreground "Purple"))
     (((class color) (background dark)) (:foreground "Cyan"))
     (t (:bold t)))
-  "Face used for Sieve Tagged Arguments."
-  :group 'sieve)
+  "Face used for Sieve Tagged Arguments.")
 ;; backward-compatibility alias
 (put 'sieve-tagged-arguments-face 'face-alias 'sieve-tagged-arguments)
 (put 'sieve-tagged-arguments-face 'obsolete-face "22.1")
@@ -149,28 +144,27 @@
 
 ;; Syntax table
 
-(defvar sieve-mode-syntax-table nil
+(defvar sieve-mode-syntax-table
+  (let ((st (make-syntax-table)))
+    (modify-syntax-entry ?\\ "\\" st)
+    (modify-syntax-entry ?\n ">   " st)
+    (modify-syntax-entry ?\f ">   " st)
+    (modify-syntax-entry ?\# "<   " st)
+    (modify-syntax-entry ?/ ". 14" st)
+    (modify-syntax-entry ?* ". 23b" st)
+    (modify-syntax-entry ?+ "." st)
+    (modify-syntax-entry ?- "." st)
+    (modify-syntax-entry ?= "." st)
+    (modify-syntax-entry ?% "." st)
+    (modify-syntax-entry ?< "." st)
+    (modify-syntax-entry ?> "." st)
+    (modify-syntax-entry ?& "." st)
+    (modify-syntax-entry ?| "." st)
+    (modify-syntax-entry ?_ "_" st)
+    (modify-syntax-entry ?\' "\"" st)
+    st)
   "Syntax table in use in sieve-mode buffers.")
 
-(if sieve-mode-syntax-table
-    ()
-  (setq sieve-mode-syntax-table (make-syntax-table))
-  (modify-syntax-entry ?\\ "\\" sieve-mode-syntax-table)
-  (modify-syntax-entry ?\n ">   " sieve-mode-syntax-table)
-  (modify-syntax-entry ?\f ">   " sieve-mode-syntax-table)
-  (modify-syntax-entry ?\# "<   " sieve-mode-syntax-table)
-  (modify-syntax-entry ?/ "." sieve-mode-syntax-table)
-  (modify-syntax-entry ?* "." sieve-mode-syntax-table)
-  (modify-syntax-entry ?+ "." sieve-mode-syntax-table)
-  (modify-syntax-entry ?- "." sieve-mode-syntax-table)
-  (modify-syntax-entry ?= "." sieve-mode-syntax-table)
-  (modify-syntax-entry ?% "." sieve-mode-syntax-table)
-  (modify-syntax-entry ?< "." sieve-mode-syntax-table)
-  (modify-syntax-entry ?> "." sieve-mode-syntax-table)
-  (modify-syntax-entry ?& "." sieve-mode-syntax-table)
-  (modify-syntax-entry ?| "." sieve-mode-syntax-table)
-  (modify-syntax-entry ?_ "_" sieve-mode-syntax-table)
-  (modify-syntax-entry ?\' "\"" sieve-mode-syntax-table))
 
 ;; Key map definition
 
@@ -182,13 +176,40 @@
     map)
   "Key map used in sieve mode.")
 
-;; Menu definition
+;; Menu
 
-(defvar sieve-mode-menu nil
-  "Menubar used in sieve mode.")
+(easy-menu-define sieve-mode-menu sieve-mode-map
+  "Sieve Menu."
+  '("Sieve"
+    ["Upload script" sieve-upload t]
+    ["Manage scripts on server" sieve-manage t]))
 
 ;; Code for Sieve editing mode.
-(autoload 'easy-menu-add-item "easymenu")
+
+
+(defun sieve-syntax-propertize (beg end)
+  (goto-char beg)
+  (sieve-syntax-propertize-text end)
+  (funcall
+   (syntax-propertize-rules
+    ;; FIXME: When there's a "text:" with a # comment, the \n plays dual role:
+    ;; it closes the comment and starts the string.  This is problematic for us
+    ;; since syntax-table entries can either close a comment or
+    ;; delimit a string, but not both.
+    ("\\_<text:[ \t]*\\(?:#.*\\(.\\)\\)?\\(\n\\)"
+     (1 ">")
+     (2 (prog1 (unless (save-excursion
+                         (nth 8 (syntax-ppss (match-beginning 0))))
+                 (string-to-syntax "|"))
+          (sieve-syntax-propertize-text end)))))
+   beg end))
+
+(defun sieve-syntax-propertize-text (end)
+  (let ((ppss (syntax-ppss)))
+    (when (and (eq t (nth 3 ppss))
+               (re-search-forward "^\\.\\(\n\\)" end 'move))
+      (put-text-property (match-beginning 1) (match-end 1)
+                         'syntax-table (string-to-syntax "|")))))
 
 ;;;###autoload
 (define-derived-mode sieve-mode c-mode "Sieve"
@@ -204,17 +225,11 @@ Turning on Sieve mode runs `sieve-mode-hook'."
   (set (make-local-variable 'comment-end) "")
   ;;(set (make-local-variable 'comment-start-skip) "\\(^\\|\\s-\\);?#+ *")
   (set (make-local-variable 'comment-start-skip) "#+ *")
+  (set (make-local-variable 'syntax-propertize-function)
+       #'sieve-syntax-propertize)
   (set (make-local-variable 'font-lock-defaults)
        '(sieve-font-lock-keywords nil nil ((?_ . "w"))))
   (easy-menu-add-item nil nil sieve-mode-menu))
-
-;; Menu
-
-(easy-menu-define sieve-mode-menu sieve-mode-map
-  "Sieve Menu."
-  '("Sieve"
-    ["Upload script" sieve-upload t]
-    ["Manage scripts on server" sieve-manage t]))
 
 (provide 'sieve-mode)
 
