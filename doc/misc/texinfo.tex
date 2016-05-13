@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2016-04-14.07}
+\def\texinfoversion{2016-05-07.20}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -66,6 +66,10 @@
 % they might have appeared in the input file name.
 \everyjob{\message{[Texinfo version \texinfoversion]}%
   \catcode`+=\active \catcode`\_=\active}
+
+% LaTeX's \typeout.  This ensures that the messages it is used for
+% are identical in format to the corresponding ones from latex/pdflatex.
+\def\typeout{\immediate\write17}%
 
 \chardef\other=12
 
@@ -1534,7 +1538,6 @@ output) for that.)}
   %
   % PDF outline support
   %
-  \pdfmakepagedesttrue \relax
   % Emulate the primitive of pdfTeX
   \def\pdfdest name#1 xyz{%
     \special{pdf:dest (name#1) [@thispage /XYZ @xpos @ypos]}%
@@ -3270,8 +3273,8 @@ end
 % @{ @} @lbracechar{} @rbracechar{} all generate brace characters.
 % Unless we're in typewriter, use \ecfont because the CM text fonts do
 % not have braces, and we don't want to switch into math.
-\def\mylbrace{{\ifmonospace\else\ecfont\fi \char123}}
-\def\myrbrace{{\ifmonospace\else\ecfont\fi \char125}}
+\def\mylbrace{{\ifmonospace\char123\else\ensuremath\lbrace\fi}}
+\def\myrbrace{{\ifmonospace\char125\else\ensuremath\rbrace\fi}}
 \let\{=\mylbrace \let\lbracechar=\{
 \let\}=\myrbrace \let\rbracechar=\}
 \begingroup
@@ -4753,7 +4756,7 @@ end
 \def\docodeindex#1{\edef\indexname{#1}\parsearg\docodeindexxxx}
 \def\docodeindexxxx #1{\doind{\indexname}{\code{#1}}}
 
-% Used when writing an index entry out to an index file, to prevent
+% Used when writing an index entry out to an index file to prevent
 % expansion of Texinfo commands that can appear in an index entry.
 %
 \def\indexdummies{%
@@ -4889,12 +4892,9 @@ end
   %
   % We want to disable all macros so that they are not expanded by \write.
   \macrolist
+  \definedummyword\value
   %
   \normalturnoffactive
-  %
-  % Handle some cases of @value -- where it does not contain any
-  % (non-fully-expandable) commands.
-  \makevalueexpandable
 }
 
 % \commondummiesnofonts: common to \commondummies and \indexnofonts.
@@ -5159,9 +5159,10 @@ end
   \ifx\suffix\indexisfl\def\suffix{f1}\fi
   % Open the file
   \immediate\openout\csname#1indfile\endcsname \jobname.\suffix
-  % Using \immediate here prevents an object entering into the current box,
-  % which could confound checks such as those in \safewhatsit for preceding
-  % skips.
+  % Using \immediate above here prevents an object entering into the current 
+  % box, which could confound checks such as those in \safewhatsit for
+  % preceding skips.
+  \typeout{Writing index file \jobname.\suffix}%
 \fi}
 \def\indexisfl{fl}
 
@@ -5369,6 +5370,7 @@ end
     % index.  The easiest way to prevent this problem is to make sure
     % there is some text.
     \putwordIndexNonexistent
+    \typeout{No file \jobname.\indexname s.}%
   \else
     \catcode`\\ = 0
     %
@@ -6682,7 +6684,14 @@ end
   % 1 and 2 (the page numbers aren't printed), and so are the first
   % two pages of the document.  Thus, we'd have two destinations named
   % `1', and two named `2'.
-  \ifpdf \global\pdfmakepagedesttrue \fi
+  \ifpdf
+    \global\pdfmakepagedesttrue
+  \else
+    \ifx\XeTeXrevision\thisisundefined
+    \else
+      \global\pdfmakepagedesttrue
+    \fi
+  \fi
 }
 
 
@@ -8862,6 +8871,7 @@ end
     % include an _ in the xref name, etc.
     \indexnofonts
     \turnoffactive
+    \def\value##1{##1}%
     \expandafter\global\expandafter\let\expandafter\Xthisreftitle
       \csname XR#1-title\endcsname
   }%
@@ -9002,14 +9012,14 @@ end
   \fi\fi\fi
 }
 
-% Define \refx{NAME}{SUFFIX} to reference a cross-reference string named NAME.
-% If its value is nonempty, SUFFIX is output afterward.
-%
+% \refx{NAME}{SUFFIX} - reference a cross-reference string named NAME.  SUFFIX 
+% is output afterwards if non-empty.
 \def\refx#1#2{%
   \requireauxfile
   {%
     \indexnofonts
     \otherbackslash
+    \def\value##1{##1}%
     \expandafter\global\expandafter\let\expandafter\thisrefX
       \csname XR#1\endcsname
   }%
@@ -9034,16 +9044,18 @@ end
   #2% Output the suffix in any case.
 }
 
-% This is the macro invoked by entries in the aux file.  Usually it's
-% just a \def (we prepend XR to the control sequence name to avoid
-% collisions).  But if this is a float type, we have more work to do.
+% This is the macro invoked by entries in the aux file.  Define a control 
+% sequence for a cross-reference target (we prepend XR to the control sequence 
+% name to avoid collisions).  The value is the page number.  If this is a float 
+% type, we have more work to do.
 %
 \def\xrdef#1#2{%
-  {% The node name might contain 8-bit characters, which in our current
-   % implementation are changed to commands like @'e.  Don't let these
-   % mess up the control sequence name.
+  {% Expand the node or anchor name to remove control sequences.
+   % \turnoffactive stops 8-bit characters being changed to commands
+   % like @'e.  \refx does the same to retrieve the value in the definition.
     \indexnofonts
     \turnoffactive
+    \def\value##1{##1}%
     \xdef\safexrefname{#1}%
   }%
   %
