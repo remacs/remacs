@@ -1993,7 +1993,8 @@ Downloads and installs required packages as needed."
             ((derived-mode-p 'tar-mode)
              (package-tar-file-info))
             (t
-             (package-buffer-info))))
+             (save-excursion
+              (package-buffer-info)))))
          (name (package-desc-name pkg-desc)))
     ;; Download and install the dependencies.
     (let* ((requires (package-desc-reqs pkg-desc))

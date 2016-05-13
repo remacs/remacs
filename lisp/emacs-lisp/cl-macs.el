@@ -299,7 +299,8 @@ FORM is of the form (ARGS . BODY)."
                                ;; Be careful with make-symbol and (back)quote,
                                ;; see bug#12884.
                                (help--docstring-quote
-                                (let ((print-gensym nil) (print-quoted t))
+                                (let ((print-gensym nil) (print-quoted t)
+                                      (print-escape-newlines t))
                                   (format "%S" (cons 'fn (cl--make-usage-args
                                                           orig-args))))))
                               header)))

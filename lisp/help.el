@@ -1412,7 +1412,7 @@ ARGLIST can also be t or a string of the form \"(FUN ARG1 ARG2 ...)\"."
 		(if (< (- (match-end 0) (match-beginning 0)) 2) "\n" "")
 	      "\n\n")
 	    (if (stringp arglist)
-                (if (string-match "\\`[^ ]+\\(\\(?:.\\|\n\\)*\\))\\'" arglist)
+                (if (string-match "\\`[^ ]+\\(.*\\))\\'" arglist)
                     (concat "(fn" (match-string 1 arglist) ")")
                   (error "Unrecognized usage format"))
 	      (help--make-usage-docstring 'fn arglist)))))
@@ -1485,7 +1485,8 @@ the same names as used in the original source code, when possible."
 (define-obsolete-function-alias 'help-make-usage 'help--make-usage "25.1")
 
 (defun help--make-usage-docstring (fn arglist)
-  (help--docstring-quote (format "%S" (help--make-usage fn arglist))))
+  (let ((print-escape-newlines t))
+    (help--docstring-quote (format "%S" (help--make-usage fn arglist)))))
 
 
 (provide 'help)

@@ -146,6 +146,9 @@ VALUES-PLIST is a list with alternating index and value elements."
 (ert-deftest ruby-slash-char-literal-is-not-mistaken-for-regexp ()
   (ruby-assert-state "?/" 3 nil))
 
+(ert-deftest ruby-regexp-is-not-mistaken-for-slash-symbol ()
+  (ruby-assert-state "x = /foo:/" 3 nil))
+
 (ert-deftest ruby-indent-simple ()
   (ruby-should-indent-buffer
    "if foo

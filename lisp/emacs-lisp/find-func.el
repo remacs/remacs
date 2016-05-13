@@ -111,7 +111,7 @@ should insert the feature name."
   ;; (point-min), which is acceptable in this case.
   :type 'regexp
   :group 'xref
-  :version "25.0")
+  :version "25.1")
 
 (defcustom find-alias-regexp
   "(defalias +'%s"
@@ -120,7 +120,7 @@ Note it must contain a `%s' at the place where `format'
 should insert the feature name."
   :type 'regexp
   :group 'xref
-  :version "25.0")
+  :version "25.1")
 
 (defvar find-function-regexp-alist
   '((nil . find-function-regexp)
