@@ -1016,14 +1016,17 @@ WIDTH and HEIGHT are the sizes given in the HTML data, if any."
            (max-width (truncate (* shr-max-image-proportion
                                    (- (nth 2 edges) (nth 0 edges)))))
            (max-height (truncate (* shr-max-image-proportion
-                                    (- (nth 3 edges) (nth 1 edges))))))
+                                    (- (nth 3 edges) (nth 1 edges)))))
+           (scaling (image-compute-scaling-factor image-scaling-factor)))
       (when (or (and width
                      (> width max-width))
                 (and height
                      (> height max-height)))
         (setq width nil
               height nil))
-      (if (and width height)
+      (if (and width height
+               (< (* width scaling) max-width)
+               (< (* height scaling) max-height))
           (create-image
            data 'imagemagick t
            :ascent 100
