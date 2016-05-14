@@ -277,8 +277,10 @@ git_config ()
 # Get location of Git's common configuration directory.  For older Git
 # versions this is just '.git'.  Newer Git versions support worktrees.
 
-test -e .git && git_common_dir=`git rev-parse --git-common-dir 2>/dev/null` ||
-  git_common_dir=.git
+{ test -e .git &&
+  git_common_dir=`git rev-parse --no-flags --git-common-dir 2>/dev/null` &&
+  test -n "$git_common_dir"
+} || git_common_dir=.git
 hooks=$git_common_dir/hooks
 
 # Check hashes when transferring objects among repositories.
