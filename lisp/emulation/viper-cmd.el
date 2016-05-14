@@ -2127,6 +2127,7 @@ problems."
 
     (setq keymap (or keymap minibuffer-local-map)
 	  initial (or initial "")
+	  viper-initial initial
 	  temp-msg (if default
 		       (format "(default %s) " default)
 		     ""))
