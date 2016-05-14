@@ -1214,7 +1214,7 @@ errors."
           (unless (and (eq package-check-signature 'allow-unsigned)
                        (eq (epg-signature-status sig) 'no-pubkey))
             (setq had-fatal-error t))))
-      (when (and (null good-signatures) had-fatal-error)
+      (when (or (null good-signatures) had-fatal-error)
         (package--display-verify-error context sig-file)
         (signal 'bad-signature (list sig-file)))
       good-signatures)))
