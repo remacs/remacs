@@ -1271,7 +1271,7 @@ Actually this is just customized `prolog-mode'."
         (comint-send-string proc (string last-command-event))
       (call-interactively 'self-insert-command))))
 
-(declare-function 'compilation-shell-minor-mode "compile" (&optional arg))
+(declare-function compilation-shell-minor-mode "compile" (&optional arg))
 (defvar compilation-error-regexp-alist)
 
 (define-derived-mode prolog-inferior-mode comint-mode "Inferior Prolog"

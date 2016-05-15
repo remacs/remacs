@@ -34,8 +34,6 @@
 
 (require 'org-macs)
 
-(declare-function w32-focus-frame "term/w32-win" (frame))
-
 ;; The following constant is for backward compatibility.  We do not use
 ;; it in org-mode, because the Byte compiler evaluates (featurep 'xemacs)
 ;; at compilation time and can therefore optimize code better.

@@ -32,7 +32,7 @@
   (require 'cl))
 (require 'org)
 
-(declare-function calendar-absolute-from-iso "cal-iso" (&optional date))
+(declare-function calendar-iso-to-absolute "cal-iso" (date))
 (declare-function notifications-notify "notifications" (&rest params))
 (declare-function org-pop-to-buffer-same-window "org-compat" (&optional buffer-or-name norecord label))
 (declare-function org-refresh-properties "org" (dprop tprop))

@@ -127,7 +127,7 @@ Stars are put in group 1 and the trimmed body in group 2.")
 
 (declare-function orgtbl-mode "org-table" (&optional arg))
 (declare-function org-clock-out "org-clock" (&optional switch-to-state fail-quietly at-time))
-(declare-function org-beamer-mode "ox-beamer" ())
+(declare-function org-beamer-mode "ox-beamer" (&optional prefix) t)
 (declare-function org-table-edit-field "org-table" (arg))
 (declare-function org-table-justify-field-maybe "org-table" (&optional new))
 (declare-function org-table-set-constants "org-table" ())
@@ -135,7 +135,8 @@ Stars are put in group 1 and the trimmed body in group 2.")
 (declare-function org-id-get-create "org-id" (&optional force))
 (declare-function org-id-find-id-file "org-id" (id))
 (declare-function org-tags-view "org-agenda" (&optional todo-only match))
-(declare-function org-agenda-list "org-agenda" (&optional arg start-day span))
+(declare-function org-agenda-list "org-agenda"
+                  (&optional arg start-day span with-hour))
 (declare-function org-agenda-redo "org-agenda" (&optional all))
 (declare-function org-table-align "org-table" ())
 (declare-function org-table-begin "org-table" (&optional table-type))
@@ -154,7 +155,8 @@ Stars are put in group 1 and the trimmed body in group 2.")
 (declare-function org-element-interpret-data "org-element"
 		  (data &optional parent))
 (declare-function org-element-map "org-element"
-		  (data types fun &optional info first-match no-recursion))
+                  (data types fun &optional
+                        info first-match no-recursion with-affiliated))
 (declare-function org-element-nested-p "org-element" (elem-a elem-b))
 (declare-function org-element-parse-buffer "org-element"
 		  (&optional granularity visible-only))
@@ -448,7 +450,8 @@ For export specific modules, see also `org-export-backends'."
 
 (defvar org-export--registered-backends) ; From ox.el.
 (declare-function org-export-derived-backend-p "ox" (backend &rest backends))
-(declare-function org-export-backend-name "ox" (backend))
+(declare-function org-export-backend-name "ox" (backend) t)
+(declare-function org-export-backend-options "ox" (cl-x) t)
 (defcustom org-export-backends '(ascii html icalendar latex)
   "List of export back-ends that should be always available.
 
@@ -4213,7 +4216,7 @@ Normal means, no org-mode-specific context."
 (defvar mark-active)
 
 ;; Various packages
-(declare-function calendar-absolute-from-iso    "cal-iso"    (date))
+(declare-function calendar-iso-to-absolute      "cal-iso"    (date))
 (declare-function calendar-forward-day          "cal-move"   (arg))
 (declare-function calendar-goto-date            "cal-move"   (date))
 (declare-function calendar-goto-today           "cal-move"   ())
@@ -4225,14 +4228,15 @@ Normal means, no org-mode-specific context."
 (declare-function dired-get-filename "dired" (&optional localp no-error-if-not-filep))
 (defvar font-lock-unfontify-region-function)
 (declare-function iswitchb-read-buffer "iswitchb"
-                  (prompt &optional default require-match start matches-set))
+                  (prompt &optional
+                          default require-match _predicate start matches-set))
 (defvar iswitchb-temp-buflist)
 (declare-function org-gnus-follow-link "org-gnus" (&optional group article))
 (defvar org-agenda-tags-todo-honor-ignore-options)
 (declare-function org-agenda-skip "org-agenda" ())
 (declare-function
  org-agenda-format-item "org-agenda"
- (extra txt &optional level category tags dotime noprefix remove-re habitp))
+ (extra txt &optional level category tags dotime remove-re habitp))
 (declare-function org-agenda-new-marker "org-agenda" (&optional pos))
 (declare-function org-agenda-change-all-lines "org-agenda"
 		  (newhead hdmarker &optional fixface just-this))
@@ -12038,8 +12042,6 @@ This function can be used in a hook."
 
 ;;;; Completion
 
-(declare-function org-export-backend-name "org-export" (cl-x))
-(declare-function org-export-backend-options "org-export" (cl-x))
 (defun org-get-export-keywords ()
   "Return a list of all currently understood export keywords.
 Export keywords include options, block names, attributes and

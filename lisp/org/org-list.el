@@ -115,7 +115,7 @@
 (declare-function org-level-increment "org" ())
 (declare-function org-narrow-to-subtree "org" ())
 (declare-function org-at-heading-p "org" (&optional invisible-ok))
-(declare-function org-previous-line-empty-p "org" ())
+(declare-function org-previous-line-empty-p "org" (&optional next))
 (declare-function org-remove-if "org" (predicate seq))
 (declare-function org-reduced-level "org" (L))
 (declare-function org-show-subtree "org" ())

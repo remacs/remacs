@@ -508,7 +508,7 @@ work correctly."
   )
 
 (declare-function gnutls-peer-status "gnutls.c" (proc))
-(declare-function gnutls-negotiate "gnutls.el")
+(declare-function gnutls-negotiate "gnutls.el" t t)
 
 (defun url-http-parse-headers ()
  "Parse and handle HTTP specific headers.
