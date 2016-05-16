@@ -385,6 +385,25 @@ comment at the start of cc-engine.el for more info."
 
 ;;; Basic utility functions.
 
+(defun c-delq-from-dotted-list (elt dlist)
+  ;; If ELT is a member of the (possibly dotted) list DLIST, remove all
+  ;; occurrences of it (except for any in the last cdr of DLIST).
+  ;;
+  ;; Call this as (setq DLIST (c-delq-from-dotted-list ELT DLIST)), as
+  ;; sometimes the original structure is changed, sometimes it's not.
+  ;;
+  ;; This function is needed in Emacs < 24.5, and possibly XEmacs, because
+  ;; `delq' throws an error in these versions when given a dotted list.
+  (let ((tail dlist) prev)
+    (while (consp tail)
+      (if (eq (car tail) elt)
+	  (if prev
+	      (setcdr prev (cdr tail))
+	    (setq dlist (cdr dlist)))
+	(setq prev tail))
+      (setq tail (cdr tail)))
+    dlist))
+
 (defun c-syntactic-content (from to paren-level)
   ;; Return the given region as a string where all syntactic
   ;; whitespace is removed or, where necessary, replaced with a single
@@ -7020,9 +7039,9 @@ comment at the start of cc-engine.el for more info."
   ;; If a declaration is parsed:
   ;;
   ;;   The point is left at the first token after the first complete
-  ;;   declarator, if there is one.  The return value is a cons where
-  ;;   the car is the position of the first token in the declarator.  (See
-  ;;   below for the cdr.)
+  ;;   declarator, if there is one.  The return value is a list of 4 elements,
+  ;;   where the first is the position of the first token in the declarator.
+  ;;   (See below for the other three.)
   ;;   Some examples:
   ;;
   ;; 	 void foo (int a, char *b) stuff ...
@@ -7053,13 +7072,17 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;;
   ;;
-  ;;   The cdr of the return value is non-nil when a
+  ;;   The second element of the return value is non-nil when a
   ;;   `c-typedef-decl-kwds' specifier is found in the declaration.
   ;;   Specifically it is a dotted pair (A . B) where B is t when a
   ;;   `c-typedef-kwds' ("typedef") is present, and A is t when some
   ;;   other `c-typedef-decl-kwds' (e.g. class, struct, enum)
   ;;   specifier is present.  I.e., (some of) the declared
   ;;   identifier(s) are types.
+  ;;
+  ;;   The third element of the return value is non-nil when the declaration
+  ;;   parsed might be an expression.  The fourth element is the position of
+  ;;   the start of the type identifier.
   ;;
   ;; If a cast is parsed:
   ;;
@@ -7161,7 +7184,10 @@ comment at the start of cc-engine.el for more info."
 	;; speculatively and should be thrown away if it turns out
 	;; that it isn't a declaration or cast.
 	(save-rec-type-ids c-record-type-identifiers)
-	(save-rec-ref-ids c-record-ref-identifiers))
+	(save-rec-ref-ids c-record-ref-identifiers)
+	;; Set when we parse a declaration which might also be an expression,
+	;; such as "a *b".  See CASE 16 and CASE 17.
+	maybe-expression)
 
     (save-excursion
       (goto-char preceding-token-end)
@@ -7799,6 +7825,7 @@ comment at the start of cc-engine.el for more info."
 		 ;; the construct look like a function call) when
 		 ;; `at-decl-start' provides additional evidence that we do
 		 ;; have a declaration.
+		 (setq maybe-expression t)
 		 (throw 'at-decl-or-cast t))
 
 	       ;; CASE 17
@@ -7810,6 +7837,7 @@ comment at the start of cc-engine.el for more info."
 		 ;; be an odd expression or it could be a declaration.  Treat
 		 ;; it as a declaration if "a" has been used as a type
 		 ;; somewhere else (if it's a known type we won't get here).
+		 (setq maybe-expression t)
 		 (throw 'at-decl-or-cast t)))
 
 	   ;; CASE 18
@@ -7933,9 +7961,11 @@ comment at the start of cc-engine.el for more info."
 	    (goto-char type-start)
 	    (c-forward-type))))
 
-      (cons id-start
+      (list id-start
 	    (and (or at-type-decl at-typedef)
-		 (cons at-type-decl at-typedef))))
+		 (cons at-type-decl at-typedef))
+	    maybe-expression
+	    type-start))
 
      (t
       ;; False alarm.  Restore the recorded ranges.
