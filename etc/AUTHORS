@@ -1161,6 +1161,7 @@ Dmitry Dzhus: changed gdb-mi.el gud.el fadr.el all.xpm building.texi
 Dmitry Gorbik: changed org.el
 
 Dmitry Gutov: wrote elisp-mode-tests.el json-tests.el vc-hg.el
+  xref-tests.el
 and changed ruby-mode.el xref.el elisp-mode.el etags.el project.el
   ruby-mode-tests.el vc-git.el ruby.rb package.el vc.el js.el log-edit.el
   menu-bar.el vc-svn.el minibuffer.el package-test.el progmodes/grep.el
@@ -3480,7 +3481,7 @@ and co-wrote cal-dst.el
 and changed lisp.h configure.ac alloc.c process.c xdisp.c fileio.c
   sysdep.c keyboard.c image.c editfns.c emacs.c xterm.c lread.c data.c
   callproc.c fns.c Makefile.in eval.c buffer.c dispnew.c gnulib.mk
-  and 1472 other files
+  and 1473 other files
 
 Paul Fisher: changed fns.c
 
