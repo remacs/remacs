@@ -1257,7 +1257,7 @@ mail status in mode line"))
 (defvar menu-bar-search-options-menu
   (let ((menu (make-sparse-keymap "Search Options")))
 
-    (dolist (x '((character-fold-to-regexp "Fold Characters" "Character folding")
+    (dolist (x '((char-fold-to-regexp "Fold Characters" "Character folding")
                  (isearch-symbol-regexp "Whole Symbols" "Whole symbol")
                  (word-search-regexp "Whole Words" "Whole word")))
       (bindings--define-key menu (vector (nth 0 x))

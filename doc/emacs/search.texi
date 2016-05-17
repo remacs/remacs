@@ -1264,13 +1264,13 @@ but match under character folding are known as @dfn{equivalent
 character sequences}.
 
 @kindex M-s ' @r{(Incremental Search)}
-@findex isearch-toggle-character-fold
+@findex isearch-toggle-char-fold
   Generally, search commands in Emacs do not by default perform
 character folding in order to match equivalent character sequences.
 You can enable this behavior by customizing the variable
-@code{search-default-mode} to @code{character-fold-to-regexp}.
+@code{search-default-mode} to @code{char-fold-to-regexp}.
 @xref{Search Customizations}.  Within an incremental search, typing
-@kbd{M-s '} (@code{isearch-toggle-character-fold}) toggles character
+@kbd{M-s '} (@code{isearch-toggle-char-fold}) toggles character
 folding, but only for that search.  (Replace commands have a different
 default, controlled by a separate option; see @ref{Replacement and Lax
 Matches}.)
@@ -1481,7 +1481,7 @@ replacement is done without case conversion.
 (@pxref{Lax Search, character folding}) when looking for the text to
 replace.  To enable character folding for matching in
 @code{query-replace} and @code{replace-string}, set the variable
-@code{replace-character-fold} to a non-@code{nil} value.  (This
+@code{replace-char-fold} to a non-@code{nil} value.  (This
 setting does not affect the replacement text, only how Emacs finds the
 text to replace.  It also doesn't affect @code{replace-regexp}.)
 
