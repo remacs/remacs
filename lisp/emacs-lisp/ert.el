@@ -1470,7 +1470,7 @@ this exits Emacs, with status as per `ert-run-tests-batch-and-exit'."
       (user-error "This function is only for use in batch mode"))
   (let ((nlogs (length command-line-args-left))
         (ntests 0) (nrun 0) (nexpected 0) (nunexpected 0) (nskipped 0)
-        nnotrun logfile notests badtests unexpected)
+        nnotrun logfile notests badtests unexpected skipped)
     (with-temp-buffer
       (while (setq logfile (pop command-line-args-left))
         (erase-buffer)
@@ -1490,9 +1490,10 @@ Ran \\([0-9]+\\) tests, \\([0-9]+\\) results as expected\
               (push logfile unexpected)
               (setq nunexpected (+ nunexpected
                                    (string-to-number (match-string 4)))))
-            (if (match-string 5)
-                (setq nskipped (+ nskipped
-                                  (string-to-number (match-string 5)))))))))
+            (when (match-string 5)
+              (push logfile skipped)
+              (setq nskipped (+ nskipped
+                                (string-to-number (match-string 5)))))))))
     (setq nnotrun (- ntests nrun))
     (message "\nSUMMARY OF TEST RESULTS")
     (message "-----------------------")
@@ -1516,6 +1517,26 @@ Ran \\([0-9]+\\) tests, \\([0-9]+\\) results as expected\
     (when unexpected
       (message "%d files contained unexpected results:" (length unexpected))
       (mapc (lambda (l) (message "  %s" l)) unexpected))
+    ;; More details on hydra, where the logs are harder to get to.
+    (when (and (getenv "HOME")
+               (not (zerop (+ nunexpected nskipped))))
+      (message "\nDETAILS")
+      (message "-------")
+      (with-temp-buffer
+        (dolist (x (list (list skipped "skipped" "SKIPPED")
+                         (list unexpected "unexpected" "FAILED")))
+          (mapc (lambda (l)
+                  (erase-buffer)
+                  (insert-file-contents l)
+                  (message "%s:" l)
+                  (when (re-search-forward (format "^[ \t]*[0-9]+ %s results:"
+                                                   (nth 1 x))
+                                           nil t)
+                    (while (and (zerop (forward-line 1))
+                                (looking-at (format "^[ \t]*%s" (nth 2 x))))
+                      (message "%s" (buffer-substring (line-beginning-position)
+                                                      (line-end-position))))))
+                (car x)))))
     (kill-emacs (cond ((or notests badtests (not (zerop nnotrun))) 2)
                       (unexpected 1)
                       (t 0)))))
