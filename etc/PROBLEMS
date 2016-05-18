@@ -2600,51 +2600,70 @@ See <URL:http://debbugs.gnu.org/327>, <URL:http://debbugs.gnu.org/821>.
 
 ** Dumping
 
-*** Segfault during 'make bootstrap' under the Linux kernel.
+*** Segfault during 'make'
 
-In Red Hat Linux kernels, "Exec-shield" functionality is enabled by
-default, which creates a different memory layout that can break the
-emacs dumper.  Emacs tries to handle this at build time, but if this
-fails, the following instructions may be useful.
+If Emacs segfaults when 'make' executes one of these commands:
 
-Exec-shield is enabled on your system if
+  LC_ALL=C ./temacs -batch -l loadup bootstrap
+  LC_ALL=C ./temacs -batch -l loadup dump
+
+the problem may be due to inadequate workarounds for address space
+layout randomization (ASLR), an operating system feature that
+randomizes the virtual address space of a process.  ASLR is commonly
+enabled in Linux and NetBSD kernels, and is intended to deter exploits
+of pointer-related bugs in applications.  If ASLR is enabled, the
+command:
+
+   cat /proc/sys/kernel/randomize_va_space  # GNU/Linux
+   sysctl security.pax.aslr.global          # NetBSD
+
+outputs a nonzero value.
+
+These segfaults should not occur on most modern systems, because the
+Emacs build procedure uses the command 'setfattr' or 'paxctl' to mark
+the Emacs executable as requiring non-randomized address space, and
+Emacs uses the 'personality' system call to disable address space
+randomization when dumping.  However, older kernels may not support
+'setfattr', 'paxctl', or 'personality', and newer Linux kernels have a
+secure computing mode (seccomp) that can be configured to disable the
+'personality' call.
+
+It may be possible to work around the 'personality' problem in a newer
+Linux kernel by configuring seccomp to allow the 'personality' call.
+For example, if you are building Emacs under Docker, you can run the
+Docker container with a security profile that allows 'personality' by
+using Docker's --security-opt option with an appropriate profile; see
+<https://docs.docker.com/engine/security/seccomp/>.
+
+To work around the ASLR problem in either an older or a newer kernel,
+you can temporarily disable the feature while building Emacs.  On
+GNU/Linux you can do so using the following command (as root).
+
+    echo 0 > /proc/sys/kernel/randomize_va_space
+
+You can re-enable the feature when you are done, by echoing the
+original value back to the file.  NetBSD uses a different command,
+e.g., 'sysctl -w security.pax.aslr.global=0'.
+
+Alternatively, you can try using the 'setarch' command when building
+temacs like this, where -R disables address space randomization:
+
+    setarch $(uname -m) -R make
+
+ASLR is not the only problem that can break Emacs dumping.  Another
+issue is that in Red Hat Linux kernels, Exec-shield is enabled by
+default, and this creates a different memory layout.  Emacs should
+handle this at build time, but if this fails the following
+instructions may be useful.  Exec-shield is enabled on your system if
 
     cat /proc/sys/kernel/exec-shield
 
-prints a value other than 0.  (Please read your system documentation
-for more details on Exec-shield and associated commands.)
-
-Additionally, Linux kernel versions since 2.6.12 randomize the virtual
-address space of a process by default.  If this feature is enabled on
-your system, then
-
-   cat /proc/sys/kernel/randomize_va_space
-
-prints a value other than 0.
-
-When these features are enabled, building Emacs may segfault during
-the execution of this command:
-
-    ./temacs --batch --load loadup [dump|bootstrap]
-
-To work around this problem, you can temporarily disable these
-features while building Emacs.  You can do so using the following
-commands (as root).  Remember to re-enable them when you are done,
-by echoing the original values back to the files.
+prints a nonzero value.  You can temporarily disable it as follows:
 
     echo 0 > /proc/sys/kernel/exec-shield
-    echo 0 > /proc/sys/kernel/randomize_va_space
 
-Or, on x86, you can try using the 'setarch' command when running
-temacs, like this:
-
-    setarch i386 -R ./temacs --batch --load loadup [dump|bootstrap]
-
-or
-
-    setarch i386 -R make
-
-(The -R option disables address space randomization.)
+As with randomize_va_space, you can re-enable Exec-shield when you are
+done, by echoing the original value back to the file.
 
 *** temacs prints "Pure Lisp storage exhausted".
 
