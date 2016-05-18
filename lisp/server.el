@@ -255,6 +255,7 @@ This means that the server should not kill the buffer when you say you
 are done with it in the server.")
 (make-variable-buffer-local 'server-existing-buffer)
 
+;;;###autoload
 (defcustom server-name "server"
   "The name of the Emacs server, if this Emacs process creates one.
 The command `server-start' makes use of this.  It should not be
