@@ -1,4 +1,4 @@
-# manywarnings.m4 serial 7
+# manywarnings.m4 serial 8
 dnl Copyright (C) 2008-2016 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -129,6 +129,7 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Wdiscarded-qualifiers \
     -Wdiv-by-zero \
     -Wdouble-promotion \
+    -Wduplicated-cond \
     -Wempty-body \
     -Wendif-labels \
     -Wenum-compare \
@@ -140,7 +141,10 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Wformat-signedness \
     -Wformat-y2k \
     -Wformat-zero-length \
+    -Wframe-address \
     -Wfree-nonheap-object \
+    -Whsa \
+    -Wignored-attributes \
     -Wignored-qualifiers \
     -Wimplicit \
     -Wimplicit-function-declaration \
@@ -158,6 +162,7 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Wmain \
     -Wmaybe-uninitialized \
     -Wmemset-transposed-args \
+    -Wmisleading-indentation \
     -Wmissing-braces \
     -Wmissing-declarations \
     -Wmissing-field-initializers \
@@ -168,6 +173,8 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Wnarrowing \
     -Wnested-externs \
     -Wnonnull \
+    -Wnonnull-compare \
+    -Wnull-dereference \
     -Wodr \
     -Wold-style-declaration \
     -Wold-style-definition \
@@ -184,10 +191,12 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Wpragmas \
     -Wreturn-local-addr \
     -Wreturn-type \
+    -Wscalar-storage-order \
     -Wsequence-point \
     -Wshadow \
     -Wshift-count-negative \
     -Wshift-count-overflow \
+    -Wshift-negative-value \
     -Wsizeof-array-argument \
     -Wsizeof-pointer-memaccess \
     -Wstack-protector \
@@ -205,6 +214,7 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Wswitch-default \
     -Wsync-nand \
     -Wsystem-headers \
+    -Wtautological-compare \
     -Wtrampolines \
     -Wtrigraphs \
     -Wtype-limits \
@@ -237,6 +247,8 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
   # them here so that the above 'comm' command doesn't report a false match.
   gl_manywarn_set="$gl_manywarn_set -Warray-bounds=2"
   gl_manywarn_set="$gl_manywarn_set -Wnormalized=nfc"
+  gl_manywarn_set="$gl_manywarn_set -Wshift-overflow=2"
+  gl_manywarn_set="$gl_manywarn_set -Wunused-const-variable=2"
 
   # These are needed for older GCC versions.
   if test -n "$GCC"; then
