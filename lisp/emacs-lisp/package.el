@@ -1154,6 +1154,8 @@ errors signaled by ERROR-FORM or by BODY).
   (while (keywordp (car body))
     (setq body (cdr (cdr body))))
   (macroexp-let2* nil ((url-1 url)
+                       (url-sym (make-symbol "url"))
+                       (b-sym (make-symbol "b-sym"))
                        (noerror-1 noerror))
     `(cl-macrolet ((unless-error (body-2 &rest before-body)
                                  (let ((err (make-symbol "err")))
@@ -1165,23 +1167,26 @@ errors signaled by ERROR-FORM or by BODY).
                                                            `(signal (car ,err) (cdr ,err)))))
                                         ,@body-2)))))
        (if (string-match-p "\\`https?:" ,url-1)
-           (let* ((url (concat ,url-1 ,file))
-                  (callback (lambda (status)
-                              (let ((b (current-buffer)))
-                                (require 'url-handlers)
-                                (unless-error ,body
-                                              (when-let ((er (plist-get status :error)))
-                                                (error "Error retrieving: %s %S" url er))
-                                              (with-current-buffer b
-                                                (goto-char (point-min))
-                                                (unless (search-forward-regexp "^\r?\n\r?" nil 'noerror)
-                                                  (error "Error retrieving: %s %S" url "incomprehensible buffer")))
-                                              (url-insert-buffer-contents b url)
-                                              (kill-buffer b)
-                                              (goto-char (point-min)))))))
+           (let ((,url-sym (concat ,url-1 ,file)))
              (if ,async
-                 (unless-error nil (url-retrieve url callback nil 'silent))
-               (unless-error ,body (url-insert-file-contents url))))
+                 (unless-error nil
+                               (url-retrieve ,url-sym
+                                             (lambda (status)
+                                               (let ((,b-sym (current-buffer)))
+                                                 (require 'url-handlers)
+                                                 (unless-error ,body
+                                                               (when-let ((er (plist-get status :error)))
+                                                                 (error "Error retrieving: %s %S" ,url-sym er))
+                                                               (with-current-buffer ,b-sym
+                                                                 (goto-char (point-min))
+                                                                 (unless (search-forward-regexp "^\r?\n\r?" nil 'noerror)
+                                                                   (error "Error retrieving: %s %S" ,url-sym "incomprehensible buffer")))
+                                                               (url-insert-buffer-contents ,b-sym ,url-sym)
+                                                               (kill-buffer ,b-sym)
+                                                               (goto-char (point-min)))))
+                                             nil
+                                             'silent))
+               (unless-error ,body (url-insert-file-contents ,url-sym))))
          (unless-error ,body
                        (let ((url (expand-file-name ,file ,url-1)))
                          (unless (file-name-absolute-p url)
