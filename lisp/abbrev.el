@@ -848,7 +848,7 @@ if expansion occurred, else nil.)"
   "Default function to use for `abbrev-expand-function'.
 This respects the wrapper hook `abbrev-expand-functions'.
 Calls `abbrev-insert' to insert any expansion, and returns what it does."
-  (with-wrapper-hook abbrev-expand-functions ()
+  (subr--with-wrapper-hook-no-warnings abbrev-expand-functions ()
     (pcase-let ((`(,sym ,name ,wordstart ,wordend) (abbrev--before-point)))
       (when sym
         (let ((startpos (copy-marker (point) t))

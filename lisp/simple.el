@@ -4061,7 +4061,8 @@ Its arguments and return value are as specified for `filter-buffer-substring'.
 This respects the wrapper hook `filter-buffer-substring-functions',
 and the abnormal hook `buffer-substring-filters'.
 No filtering is done unless a hook says to."
-  (with-wrapper-hook filter-buffer-substring-functions (beg end delete)
+  (subr--with-wrapper-hook-no-warnings
+    filter-buffer-substring-functions (beg end delete)
     (cond
      ((or delete buffer-substring-filters)
       (save-excursion

@@ -1970,7 +1970,7 @@ if there was no valid completion, else t."
   "Default function to use for `completion-in-region-function'.
 Its arguments and return value are as specified for `completion-in-region'.
 This respects the wrapper hook `completion-in-region-functions'."
-  (with-wrapper-hook
+  (subr--with-wrapper-hook-no-warnings
       ;; FIXME: Maybe we should use this hook to provide a "display
       ;; completions" operation as well.
       completion-in-region-functions (start end collection predicate)
