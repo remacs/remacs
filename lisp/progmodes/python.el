@@ -330,6 +330,7 @@
     ;; Some util commands
     (define-key map "\C-c\C-v" 'python-check)
     (define-key map "\C-c\C-f" 'python-eldoc-at-point)
+    (define-key map "\C-c\C-d" 'python-describe-at-point)
     ;; Utilities
     (substitute-key-definition 'complete-symbol 'completion-at-point
                                map global-map)
@@ -4330,6 +4331,11 @@ Interactively, prompt for symbol."
                           "Describe symbol: ")
                         nil nil symbol))))
   (message (python-eldoc--get-doc-at-point symbol)))
+
+(defun python-describe-at-point (symbol process)
+  (interactive (list (python-info-current-symbol)
+                     (python-shell-get-process)))
+  (comint-send-string process (concat "help('" symbol "')\n")))
 
 
 ;;; Hideshow
