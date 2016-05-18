@@ -301,10 +301,12 @@ contrast, `package-user-dir' contains packages for personal use."
   :risky t
   :version "24.1")
 
-(defvar epg-gpg-program)
+(declare-function epg-find-configuration "epg-config"
+                  (protocol &optional force))
 
 (defcustom package-check-signature
-  (if (progn (require 'epg-config) (executable-find epg-gpg-program))
+  (if (and (require 'epg-config)
+           (epg-find-configuration 'OpenPGP))
       'allow-unsigned)
   "Non-nil means to check package signatures when installing.
 The value `allow-unsigned' means to still install a package even if
@@ -1461,8 +1463,6 @@ taken care of by `package-initialize'."
 (defvar package--downloads-in-progress nil
   "List of in-progress asynchronous downloads.")
 
-(declare-function epg-find-configuration "epg-config"
-                  (protocol &optional force))
 (declare-function epg-import-keys-from-file "epg" (context keys))
 
 ;;;###autoload
@@ -1562,12 +1562,6 @@ downloads in the background."
   (let ((default-keyring (expand-file-name "package-keyring.gpg"
                                            data-directory))
         (inhibit-message async))
-    (if (get 'package-check-signature 'saved-value)
-        (when package-check-signature
-          (epg-find-configuration 'OpenPGP))
-      (setq package-check-signature
-            (if (epg-find-configuration 'OpenPGP)
-                'allow-unsigned)))
     (when (and package-check-signature (file-exists-p default-keyring))
       (condition-case-unless-debug error
           (package-import-keyring default-keyring)
