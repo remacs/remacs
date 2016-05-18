@@ -1596,9 +1596,16 @@ variable to @samp{emacsclient +%d %s}.}
   You can run multiple Emacs servers on the same machine by giving
 each one a unique @dfn{server name}, using the variable
 @code{server-name}.  For example, @kbd{M-x set-variable @key{RET}
-server-name @key{RET} foo @key{RET}} sets the server name to
+server-name @key{RET} "foo" @key{RET}} sets the server name to
 @samp{foo}.  The @code{emacsclient} program can specify a server by
 name, using the @samp{-s} option (@pxref{emacsclient Options}).
+
+  If you want to run multiple Emacs daemons (@pxref{Initial Options}),
+you can give each daemon its own server name like this:
+
+@example
+  emacs --eval "(setq server-name \"foo\")" --daemon
+@end example
 
 @findex server-eval-at
   If you have defined a server by a unique server name, it is possible
