@@ -370,6 +370,10 @@ of curved quotes in format arguments to functions like 'message' and
 'format-message'.  In particular, when this variable's value is
 'grave', all quotes in formats are output as-is.
 
+** Functions like 'check-declare-file' and 'check-declare-directory'
+now generate less chatter and more-compact diagnostics.  The auxiliary
+function 'check-declare-errmsg' has been removed.
+
 
 * Lisp Changes in Emacs 25.2
 
