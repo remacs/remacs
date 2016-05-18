@@ -2174,89 +2174,96 @@ free_large_strings (void)
 static void
 compact_small_strings (void)
 {
-  struct sblock *b, *tb, *next;
-  sdata *from, *to, *end, *tb_end;
-  sdata *to_end, *from_end;
-
   /* TB is the sblock we copy to, TO is the sdata within TB we copy
      to, and TB_END is the end of TB.  */
-  tb = oldest_sblock;
-  tb_end = (sdata *) ((char *) tb + SBLOCK_SIZE);
-  to = tb->data;
-
-  /* Step through the blocks from the oldest to the youngest.  We
-     expect that old blocks will stabilize over time, so that less
-     copying will happen this way.  */
-  for (b = oldest_sblock; b; b = b->next)
+  struct sblock *tb = oldest_sblock;
+  if (tb)
     {
-      end = b->next_free;
-      eassert ((char *) end <= (char *) b + SBLOCK_SIZE);
+      sdata *tb_end = (sdata *) ((char *) tb + SBLOCK_SIZE);
+      sdata *to = tb->data;
 
-      for (from = b->data; from < end; from = from_end)
+      /* Step through the blocks from the oldest to the youngest.  We
+	 expect that old blocks will stabilize over time, so that less
+	 copying will happen this way.  */
+      struct sblock *b = tb;
+      do
 	{
-	  /* Compute the next FROM here because copying below may
-	     overwrite data we need to compute it.  */
-	  ptrdiff_t nbytes;
-	  struct Lisp_String *s = from->string;
+	  sdata *end = b->next_free;
+	  eassert ((char *) end <= (char *) b + SBLOCK_SIZE);
+
+	  for (sdata *from = b->data; from < end; )
+	    {
+	      /* Compute the next FROM here because copying below may
+		 overwrite data we need to compute it.  */
+	      ptrdiff_t nbytes;
+	      struct Lisp_String *s = from->string;
 
 #ifdef GC_CHECK_STRING_BYTES
-	  /* Check that the string size recorded in the string is the
-	     same as the one recorded in the sdata structure.  */
-	  if (s && string_bytes (s) != SDATA_NBYTES (from))
-	    emacs_abort ();
+	      /* Check that the string size recorded in the string is the
+		 same as the one recorded in the sdata structure.  */
+	      if (s && string_bytes (s) != SDATA_NBYTES (from))
+		emacs_abort ();
 #endif /* GC_CHECK_STRING_BYTES */
 
-	  nbytes = s ? STRING_BYTES (s) : SDATA_NBYTES (from);
-	  eassert (nbytes <= LARGE_STRING_BYTES);
+	      nbytes = s ? STRING_BYTES (s) : SDATA_NBYTES (from);
+	      eassert (nbytes <= LARGE_STRING_BYTES);
 
-	  nbytes = SDATA_SIZE (nbytes);
-	  from_end = (sdata *) ((char *) from + nbytes + GC_STRING_EXTRA);
+	      nbytes = SDATA_SIZE (nbytes);
+	      sdata *from_end = (sdata *) ((char *) from
+					   + nbytes + GC_STRING_EXTRA);
 
 #ifdef GC_CHECK_STRING_OVERRUN
-	  if (memcmp (string_overrun_cookie,
-		      (char *) from_end - GC_STRING_OVERRUN_COOKIE_SIZE,
-		      GC_STRING_OVERRUN_COOKIE_SIZE))
-	    emacs_abort ();
+	      if (memcmp (string_overrun_cookie,
+			  (char *) from_end - GC_STRING_OVERRUN_COOKIE_SIZE,
+			  GC_STRING_OVERRUN_COOKIE_SIZE))
+		emacs_abort ();
 #endif
 
-	  /* Non-NULL S means it's alive.  Copy its data.  */
-	  if (s)
-	    {
-	      /* If TB is full, proceed with the next sblock.  */
-	      to_end = (sdata *) ((char *) to + nbytes + GC_STRING_EXTRA);
-	      if (to_end > tb_end)
+	      /* Non-NULL S means it's alive.  Copy its data.  */
+	      if (s)
 		{
-		  tb->next_free = to;
-		  tb = tb->next;
-		  tb_end = (sdata *) ((char *) tb + SBLOCK_SIZE);
-		  to = tb->data;
-		  to_end = (sdata *) ((char *) to + nbytes + GC_STRING_EXTRA);
-		}
+		  /* If TB is full, proceed with the next sblock.  */
+		  sdata *to_end = (sdata *) ((char *) to
+					     + nbytes + GC_STRING_EXTRA);
+		  if (to_end > tb_end)
+		    {
+		      tb->next_free = to;
+		      tb = tb->next;
+		      tb_end = (sdata *) ((char *) tb + SBLOCK_SIZE);
+		      to = tb->data;
+		      to_end = (sdata *) ((char *) to + nbytes + GC_STRING_EXTRA);
+		    }
 
-	      /* Copy, and update the string's `data' pointer.  */
-	      if (from != to)
-		{
-		  eassert (tb != b || to < from);
-		  memmove (to, from, nbytes + GC_STRING_EXTRA);
-		  to->string->data = SDATA_DATA (to);
-		}
+		  /* Copy, and update the string's `data' pointer.  */
+		  if (from != to)
+		    {
+		      eassert (tb != b || to < from);
+		      memmove (to, from, nbytes + GC_STRING_EXTRA);
+		      to->string->data = SDATA_DATA (to);
+		    }
 
-	      /* Advance past the sdata we copied to.  */
-	      to = to_end;
+		  /* Advance past the sdata we copied to.  */
+		  to = to_end;
+		}
+	      from = from_end;
 	    }
+	  b = b->next;
 	}
+      while (b);
+
+      /* The rest of the sblocks following TB don't contain live data, so
+	 we can free them.  */
+      for (b = tb->next; b; )
+	{
+	  struct sblock *next = b->next;
+	  lisp_free (b);
+	  b = next;
+	}
+
+      tb->next_free = to;
+      tb->next = NULL;
     }
 
-  /* The rest of the sblocks following TB don't contain live data, so
-     we can free them.  */
-  for (b = tb->next; b; b = next)
-    {
-      next = b->next;
-      lisp_free (b);
-    }
-
-  tb->next_free = to;
-  tb->next = NULL;
   current_sblock = tb;
 }
 
@@ -6119,7 +6126,7 @@ mark_face_cache (struct face_cache *c)
       int i, j;
       for (i = 0; i < c->used; ++i)
 	{
-	  struct face *face = FACE_FROM_ID (c->f, i);
+	  struct face *face = FACE_OPT_FROM_ID (c->f, i);
 
 	  if (face)
 	    {

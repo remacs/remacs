@@ -197,12 +197,12 @@ set_interval_plist (INTERVAL i, Lisp_Object plist)
 
 /* Is this interval writable?  Replace later with cache access.  */
 #define INTERVAL_WRITABLE_P(i)					\
-  (i && (NILP (textget ((i)->plist, Qread_only))		\
-         || !NILP (textget ((i)->plist, Qinhibit_read_only))	\
-	 || ((CONSP (Vinhibit_read_only)			\
-	      ? !NILP (Fmemq (textget ((i)->plist, Qread_only),	\
-			      Vinhibit_read_only))		\
-	      : !NILP (Vinhibit_read_only)))))			\
+  (NILP (textget ((i)->plist, Qread_only))			\
+   || !NILP (textget ((i)->plist, Qinhibit_read_only))		\
+   || ((CONSP (Vinhibit_read_only)				\
+	? !NILP (Fmemq (textget ((i)->plist, Qread_only),	\
+			Vinhibit_read_only))			\
+	: !NILP (Vinhibit_read_only))))
 
 /* Macros to tell whether insertions before or after this interval
    should stick to it.  Now we have Vtext_property_default_nonsticky,

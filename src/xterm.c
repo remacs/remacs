@@ -1062,7 +1062,7 @@ x_draw_vertical_window_border (struct window *w, int x, int y0, int y1)
   struct frame *f = XFRAME (WINDOW_FRAME (w));
   struct face *face;
 
-  face = FACE_FROM_ID (f, VERTICAL_BORDER_FACE_ID);
+  face = FACE_OPT_FROM_ID (f, VERTICAL_BORDER_FACE_ID);
   if (face)
     XSetForeground (FRAME_X_DISPLAY (f), f->output_data.x->normal_gc,
 		    face->foreground);
@@ -1081,9 +1081,11 @@ static void
 x_draw_window_divider (struct window *w, int x0, int x1, int y0, int y1)
 {
   struct frame *f = XFRAME (WINDOW_FRAME (w));
-  struct face *face = FACE_FROM_ID (f, WINDOW_DIVIDER_FACE_ID);
-  struct face *face_first = FACE_FROM_ID (f, WINDOW_DIVIDER_FIRST_PIXEL_FACE_ID);
-  struct face *face_last = FACE_FROM_ID (f, WINDOW_DIVIDER_LAST_PIXEL_FACE_ID);
+  struct face *face = FACE_OPT_FROM_ID (f, WINDOW_DIVIDER_FACE_ID);
+  struct face *face_first
+    = FACE_OPT_FROM_ID (f, WINDOW_DIVIDER_FIRST_PIXEL_FACE_ID);
+  struct face *face_last
+    = FACE_OPT_FROM_ID (f, WINDOW_DIVIDER_LAST_PIXEL_FACE_ID);
   unsigned long color = face ? face->foreground : FRAME_FOREGROUND_PIXEL (f);
   unsigned long color_first = (face_first
 			       ? face_first->foreground
@@ -1505,7 +1507,7 @@ x_set_mouse_face_gc (struct glyph_string *s)
 
   /* What face has to be used last for the mouse face?  */
   face_id = MOUSE_HL_INFO (s->f)->mouse_face_face_id;
-  face = FACE_FROM_ID (s->f, face_id);
+  face = FACE_OPT_FROM_ID (s->f, face_id);
   if (face == NULL)
     face = FACE_FROM_ID (s->f, MOUSE_FACE_ID);
 
@@ -2156,6 +2158,7 @@ static const XColor *
 x_color_cells (Display *dpy, int *ncells)
 {
   struct x_display_info *dpyinfo = x_display_info_for_display (dpy);
+  eassume (dpyinfo);
 
   if (dpyinfo->color_cells == NULL)
     {
@@ -2352,17 +2355,19 @@ x_alloc_nearest_color_1 (Display *dpy, Colormap cmap, XColor *color)
          equal to a cached pixel color recorded earlier, there was a
          change in the colormap, so clear the color cache.  */
       struct x_display_info *dpyinfo = x_display_info_for_display (dpy);
-      XColor *cached_color;
+      eassume (dpyinfo);
 
-      if (dpyinfo->color_cells
-	  && (cached_color = &dpyinfo->color_cells[color->pixel],
-	      (cached_color->red != color->red
-	       || cached_color->blue != color->blue
-	       || cached_color->green != color->green)))
+      if (dpyinfo->color_cells)
 	{
-	  xfree (dpyinfo->color_cells);
-	  dpyinfo->color_cells = NULL;
-	  dpyinfo->ncolor_cells = 0;
+	  XColor *cached_color = &dpyinfo->color_cells[color->pixel];
+	  if (cached_color->red != color->red
+	      || cached_color->blue != color->blue
+	      || cached_color->green != color->green)
+	    {
+	      xfree (dpyinfo->color_cells);
+	      dpyinfo->color_cells = NULL;
+	      dpyinfo->ncolor_cells = 0;
+	    }
 	}
     }
 

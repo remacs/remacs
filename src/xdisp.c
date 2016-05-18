@@ -1813,7 +1813,7 @@ estimate_mode_line_height (struct frame *f, enum face_id face_id)
 	 cache and mode line face are not yet initialized.  */
       if (FRAME_FACE_CACHE (f))
 	{
-	  struct face *face = FACE_FROM_ID (f, face_id);
+	  struct face *face = FACE_OPT_FROM_ID (f, face_id);
 	  if (face)
 	    {
 	      if (face->font)
@@ -2918,7 +2918,7 @@ init_iterator (struct it *it, struct window *w,
 
       /* If we have a boxed mode line, make the first character appear
 	 with a left box line.  */
-      face = FACE_FROM_ID (it->f, remapped_base_face_id);
+      face = FACE_OPT_FROM_ID (it->f, remapped_base_face_id);
       if (face && face->box != FACE_NO_BOX)
 	it->start_of_box_run_p = true;
     }
@@ -3877,9 +3877,9 @@ handle_face_prop (struct it *it)
 	{
 	  struct face *new_face = FACE_FROM_ID (it->f, new_face_id);
 	  /* If it->face_id is -1, old_face below will be NULL, see
-	     the definition of FACE_FROM_ID.  This will happen if this
+	     the definition of FACE_OPT_FROM_ID.  This will happen if this
 	     is the initial call that gets the face.  */
-	  struct face *old_face = FACE_FROM_ID (it->f, it->face_id);
+	  struct face *old_face = FACE_OPT_FROM_ID (it->f, it->face_id);
 
 	  /* If the value of face_id of the iterator is -1, we have to
 	     look in front of IT's position and see whether there is a
@@ -3888,7 +3888,7 @@ handle_face_prop (struct it *it)
 	    {
 	      int prev_face_id = face_before_it_pos (it);
 
-	      old_face = FACE_FROM_ID (it->f, prev_face_id);
+	      old_face = FACE_OPT_FROM_ID (it->f, prev_face_id);
 	    }
 
 	  /* If the new face has a box, but the old face does not,
@@ -3988,7 +3988,7 @@ handle_face_prop (struct it *it)
       if (new_face_id != it->face_id)
 	{
 	  struct face *new_face = FACE_FROM_ID (it->f, new_face_id);
-	  struct face *old_face = FACE_FROM_ID (it->f, it->face_id);
+	  struct face *old_face = FACE_OPT_FROM_ID (it->f, it->face_id);
 
 	  /* If new face has a box but old face hasn't, this is the
 	     start of a run of characters with box, i.e. it has a
@@ -4847,7 +4847,6 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	  it->font_height = XCAR (XCDR (spec));
 	  if (!NILP (it->font_height))
 	    {
-	      struct face *face = FACE_FROM_ID (it->f, it->face_id);
 	      int new_height = -1;
 
 	      if (CONSP (it->font_height)
@@ -4866,6 +4865,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		{
 		  /* Call function with current height as argument.
 		     Value is the new height.  */
+		  struct face *face = FACE_FROM_ID (it->f, it->face_id);
 		  Lisp_Object height;
 		  height = safe_call1 (it->font_height,
 				       face->lface[LFACE_HEIGHT_INDEX]);
@@ -4887,6 +4887,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		  /* Evaluate IT->font_height with `height' bound to the
 		     current specified height to get the new height.  */
 		  ptrdiff_t count = SPECPDL_INDEX ();
+		  struct face *face = FACE_FROM_ID (it->f, it->face_id);
 
 		  specbind (Qheight, face->lface[LFACE_HEIGHT_INDEX]);
 		  value = safe_eval (it->font_height);
@@ -6096,7 +6097,7 @@ pop_it (struct it *it)
       break;
     case GET_FROM_STRING:
       {
-	struct face *face = FACE_FROM_ID (it->f, it->face_id);
+	struct face *face = FACE_OPT_FROM_ID (it->f, it->face_id);
 
 	/* Restore the face_box_p flag, since it could have been
 	   overwritten by the face of the object that we just finished
@@ -6777,7 +6778,7 @@ static next_element_function const get_next_element[NUM_IT_METHODS] =
    || ((IT)->cmp_it.stop_pos == (CHARPOS)				\
        && composition_reseat_it (&(IT)->cmp_it, CHARPOS, BYTEPOS,	\
 				 END_CHARPOS, (IT)->w,			\
-				 FACE_FROM_ID ((IT)->f, (IT)->face_id),	\
+				 FACE_OPT_FROM_ID ((IT)->f, (IT)->face_id),	\
 				 (IT)->string)))
 
 
@@ -7206,7 +7207,7 @@ get_next_display_element (struct it *it)
       if (it->method == GET_FROM_STRING && it->sp)
 	{
 	  int face_id = underlying_face_id (it);
-	  struct face *face = FACE_FROM_ID (it->f, face_id);
+	  struct face *face = FACE_OPT_FROM_ID (it->f, face_id);
 
 	  if (face)
 	    {
@@ -7739,8 +7740,8 @@ next_element_from_display_vector (struct it *it)
       /* Glyphs in the display vector could have the box face, so we
 	 need to set the related flags in the iterator, as
 	 appropriate.  */
-      this_face = FACE_FROM_ID (it->f, it->face_id);
-      prev_face = FACE_FROM_ID (it->f, prev_face_id);
+      this_face = FACE_OPT_FROM_ID (it->f, it->face_id);
+      prev_face = FACE_OPT_FROM_ID (it->f, prev_face_id);
 
       /* Is this character the first character of a box-face run?  */
       it->start_of_box_run_p = (this_face && this_face->box != FACE_NO_BOX
@@ -7765,7 +7766,7 @@ next_element_from_display_vector (struct it *it)
 					    it->saved_face_id);
 	    }
 	}
-      next_face = FACE_FROM_ID (it->f, next_face_id);
+      next_face = FACE_OPT_FROM_ID (it->f, next_face_id);
       it->end_of_box_run_p = (this_face && this_face->box != FACE_NO_BOX
 			      && (!next_face
 				  || next_face->box == FACE_NO_BOX));
@@ -18662,7 +18663,7 @@ try_window_id (struct window *w)
       eassert (MATRIX_ROW_DISPLAYS_TEXT_P (first_unchanged_at_end_row));
       row = find_last_row_displaying_text (w->current_matrix, &it,
 					   first_unchanged_at_end_row);
-      eassert (row && MATRIX_ROW_DISPLAYS_TEXT_P (row));
+      eassume (row && MATRIX_ROW_DISPLAYS_TEXT_P (row));
       adjust_window_ends (w, row, true);
       eassert (w->window_end_bytepos >= 0);
       IF_DEBUG (debug_method_add (w, "A"));
@@ -18692,10 +18693,9 @@ try_window_id (struct window *w)
       struct glyph_row *current_row = current_matrix->rows + vpos;
       struct glyph_row *desired_row = desired_matrix->rows + vpos;
 
-      for (row = NULL;
-	   row == NULL && vpos >= first_vpos;
-	   --vpos, --current_row, --desired_row)
+      for (row = NULL; !row; --vpos, --current_row, --desired_row)
 	{
+	  eassert (first_vpos <= vpos);
 	  if (desired_row->enabled_p)
 	    {
 	      if (MATRIX_ROW_DISPLAYS_TEXT_P (desired_row))
@@ -18705,7 +18705,6 @@ try_window_id (struct window *w)
 	    row  = current_row;
 	}
 
-      eassert (row != NULL);
       w->window_end_vpos = vpos + 1;
       w->window_end_pos = Z - MATRIX_ROW_END_CHARPOS (row);
       w->window_end_bytepos = Z_BYTE - MATRIX_ROW_END_BYTEPOS (row);
@@ -19630,15 +19629,14 @@ extend_face_to_end_of_line (struct it *it)
     return;
 
   /* The default face, possibly remapped. */
-  default_face = FACE_FROM_ID (f, lookup_basic_face (f, DEFAULT_FACE_ID));
+  default_face = FACE_OPT_FROM_ID (f, lookup_basic_face (f, DEFAULT_FACE_ID));
 
   /* Face extension extends the background and box of IT->face_id
      to the end of the line.  If the background equals the background
      of the frame, we don't have to do anything.  */
-  if (it->face_before_selective_p)
-    face = FACE_FROM_ID (f, it->saved_face_id);
-  else
-    face = FACE_FROM_ID (f, it->face_id);
+  face = FACE_OPT_FROM_ID (f, (it->face_before_selective_p
+			       ? it->face_id
+			       : it->saved_face_id));
 
   if (FRAME_WINDOW_P (f)
       && MATRIX_ROW_DISPLAYS_TEXT_P (it->glyph_row)
@@ -24612,7 +24610,6 @@ get_glyph_face_and_encoding (struct frame *f, struct glyph *glyph,
   face = FACE_FROM_ID (f, glyph->face_id);
 
   /* Make sure X resources of the face are allocated.  */
-  eassert (face != NULL);
   prepare_face_for_display (f, face);
 
   if (face->font)
@@ -24744,7 +24741,7 @@ fill_gstring_glyph_string (struct glyph_string *s, int face_id,
   s->cmp_id = glyph->u.cmp.id;
   s->cmp_from = glyph->slice.cmp.from;
   s->cmp_to = glyph->slice.cmp.to + 1;
-  s->face = FACE_FROM_ID (s->f, face_id);
+  s->face = FACE_OPT_FROM_ID (s->f, face_id);
   lgstring = composition_gstring_from_id (s->cmp_id);
   s->font = XFONT_OBJECT (LGSTRING_FONT (lgstring));
   glyph++;
@@ -24873,7 +24870,6 @@ fill_image_glyph_string (struct glyph_string *s)
 {
   eassert (s->first_glyph->type == IMAGE_GLYPH);
   s->img = IMAGE_FROM_ID (s->f, s->first_glyph->u.img_id);
-  eassert (s->img);
   s->slice = s->first_glyph->slice.img;
   s->face = FACE_FROM_ID (s->f, s->first_glyph->face_id);
   s->font = s->face->font;
@@ -25337,7 +25333,7 @@ compute_overhangs_and_x (struct glyph_string *s, int x, bool backward_p)
 #define BUILD_COMPOSITE_GLYPH_STRING(START, END, HEAD, TAIL, HL, X, LAST_X) \
   do {									    \
     int face_id = (row)->glyphs[area][START].face_id;			    \
-    struct face *base_face = FACE_FROM_ID (f, face_id);			    \
+    struct face *base_face = FACE_OPT_FROM_ID (f, face_id);		    \
     ptrdiff_t cmp_id = (row)->glyphs[area][START].u.cmp.id;		    \
     struct composition *cmp = composition_table[cmp_id];		    \
     XChar2b *char2b;							    \
@@ -25960,7 +25956,6 @@ produce_image_glyph (struct it *it)
   eassert (it->what == IT_IMAGE);
 
   face = FACE_FROM_ID (it->f, it->face_id);
-  eassert (face);
   /* Make sure X resources of the face is loaded.  */
   prepare_face_for_display (it->f, face);
 
@@ -25975,7 +25970,6 @@ produce_image_glyph (struct it *it)
     }
 
   img = IMAGE_FROM_ID (it->f, it->image_id);
-  eassert (img);
   /* Make sure X resources of the image is loaded.  */
   prepare_image_for_display (it->f, img);
 
@@ -26131,7 +26125,6 @@ produce_xwidget_glyph (struct it *it)
   eassert (it->what == IT_XWIDGET);
 
   struct face *face = FACE_FROM_ID (it->f, it->face_id);
-  eassert (face);
   /* Make sure X resources of the face is loaded.  */
   prepare_face_for_display (it->f, face);
 
@@ -28018,7 +28011,7 @@ get_window_cursor_type (struct window *w, struct glyph *glyph, int *width,
 	      /* Using a block cursor on large images can be very annoying.
 		 So use a hollow cursor for "large" images.
 		 If image is not transparent (no mask), also use hollow cursor.  */
-	      struct image *img = IMAGE_FROM_ID (f, glyph->u.img_id);
+	      struct image *img = IMAGE_OPT_FROM_ID (f, glyph->u.img_id);
 	      if (img != NULL && IMAGEP (img->spec))
 		{
 		  /* Arbitrarily, interpret "Large" as >32x32 and >NxN
@@ -30105,7 +30098,7 @@ note_mouse_highlight (struct frame *f, int x, int y)
       /* Look for :pointer property on image.  */
       if (glyph != NULL && glyph->type == IMAGE_GLYPH)
 	{
-	  struct image *img = IMAGE_FROM_ID (f, glyph->u.img_id);
+	  struct image *img = IMAGE_OPT_FROM_ID (f, glyph->u.img_id);
 	  if (img != NULL && IMAGEP (img->spec))
 	    {
 	      Lisp_Object image_map, hotspot;

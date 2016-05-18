@@ -1954,8 +1954,6 @@ turn_off_face (struct frame *f, int face_id)
   struct face *face = FACE_FROM_ID (f, face_id);
   struct tty_display_info *tty = FRAME_TTY (f);
 
-  eassert (face != NULL);
-
   if (tty->TS_exit_attribute_mode)
     {
       /* Capability "me" will turn off appearance modes double-bright,

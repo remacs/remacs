@@ -1014,7 +1014,7 @@ struct x_output
 #define FRAME_NS_TITLEBAR_HEIGHT(f) ((f)->output_data.ns->titlebar_height)
 #define FRAME_TOOLBAR_HEIGHT(f) ((f)->output_data.ns->toolbar_height)
 
-#define FRAME_DEFAULT_FACE(f) FACE_FROM_ID (f, DEFAULT_FACE_ID)
+#define FRAME_DEFAULT_FACE(f) FACE_OPT_FROM_ID (f, DEFAULT_FACE_ID)
 
 #define FRAME_NS_VIEW(f) ((f)->output_data.ns->view)
 #define FRAME_CURSOR_COLOR(f) ((f)->output_data.ns->cursor_color)

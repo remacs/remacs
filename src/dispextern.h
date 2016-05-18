@@ -1811,13 +1811,20 @@ struct face_cache
   bool_bf menu_face_changed_p : 1;
 };
 
+/* Return a pointer to the cached face with ID on frame F.  */
+
+#define FACE_FROM_ID(F, ID)					\
+  (eassert (UNSIGNED_CMP (ID, <, FRAME_FACE_CACHE (F)->used)),	\
+   eassume (FRAME_FACE_CACHE (F)->faces_by_id[ID]),		\
+   FRAME_FACE_CACHE (F)->faces_by_id[ID])
+
 /* Return a pointer to the face with ID on frame F, or null if such a
    face doesn't exist.  */
 
-#define FACE_FROM_ID(F, ID)				\
-     (UNSIGNED_CMP (ID, <, FRAME_FACE_CACHE (F)->used)	\
-      ? FRAME_FACE_CACHE (F)->faces_by_id[ID]		\
-      : NULL)
+#define FACE_OPT_FROM_ID(F, ID)				\
+  (UNSIGNED_CMP (ID, <, FRAME_FACE_CACHE (F)->used)	\
+   ? FACE_FROM_ID (F, ID)				\
+   : NULL)
 
 #ifdef HAVE_WINDOW_SYSTEM
 
@@ -3082,13 +3089,20 @@ struct image_cache
 };
 
 
+/* A pointer to the image with id ID on frame F.  */
+
+#define IMAGE_FROM_ID(F, ID)					\
+  (eassert (UNSIGNED_CMP (ID, <, FRAME_IMAGE_CACHE (F)->used)),	\
+   eassume (FRAME_IMAGE_CACHE (F)->images[ID]),			\
+   FRAME_IMAGE_CACHE (F)->images[ID])
+
 /* Value is a pointer to the image with id ID on frame F, or null if
    no image with that id exists.  */
 
-#define IMAGE_FROM_ID(F, ID)					\
-     (((ID) >= 0 && (ID) < (FRAME_IMAGE_CACHE (F)->used))	\
-      ? FRAME_IMAGE_CACHE (F)->images[ID]			\
-      : NULL)
+#define IMAGE_OPT_FROM_ID(F, ID)				\
+  (UNSIGNED_CMP (ID, <, FRAME_IMAGE_CACHE (F)->used)		\
+   ? IMAGE_FROM_ID (F, ID)					\
+   : NULL)
 
 /* Size of bucket vector of image caches.  Should be prime.  */
 

@@ -151,6 +151,18 @@ bool inhibit_sentinels;
 # define SOCK_CLOEXEC 0
 #endif
 
+/* True if ERRNUM represents an error where the system call would
+   block if a blocking variant were used.  */
+static bool
+would_block (int errnum)
+{
+#ifdef EWOULDBLOCK
+  if (EWOULDBLOCK != EAGAIN && errnum == EWOULDBLOCK)
+    return true;
+#endif
+  return errnum == EAGAIN;
+}
+
 #ifndef HAVE_ACCEPT4
 
 /* Emulate GNU/Linux accept4 and socket well enough for this module.  */
@@ -4453,15 +4465,7 @@ server_accept_connection (Lisp_Object server, int channel)
   if (s < 0)
     {
       int code = errno;
-
-      if (code == EAGAIN)
-	return;
-#ifdef EWOULDBLOCK
-      if (code == EWOULDBLOCK)
-	return;
-#endif
-
-      if (!NILP (ps->log))
+      if (!would_block (code) && !NILP (ps->log))
 	call3 (ps->log, server, Qnil,
 	       concat3 (build_string ("accept failed with code"),
 			Fnumber_to_string (make_number (code)),
@@ -5016,12 +5020,8 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		  int nread = read_process_output (proc, wait_proc->infd);
 		  if (nread < 0)
 		    {
-		    if (errno == EIO || errno == EAGAIN)
-		      break;
-#ifdef EWOULDBLOCK
-		    if (errno == EWOULDBLOCK)
-		      break;
-#endif
+		      if (errno == EIO || would_block (errno))
+			break;
 		    }
 		  else
 		    {
@@ -5405,11 +5405,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		  if (do_display)
 		    redisplay_preserve_echo_area (12);
 		}
-#ifdef EWOULDBLOCK
-	      else if (nread == -1 && errno == EWOULDBLOCK)
-		;
-#endif
-	      else if (nread == -1 && errno == EAGAIN)
+	      else if (nread == -1 && would_block (errno))
 		;
 #ifdef WINDOWSNT
 	      /* FIXME: Is this special case still needed?  */
@@ -6147,11 +6143,7 @@ send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
 
 	  if (rv < 0)
 	    {
-	      if (errno == EAGAIN
-#ifdef EWOULDBLOCK
-		  || errno == EWOULDBLOCK
-#endif
-		  )
+	      if (would_block (errno))
 		/* Buffer is full.  Wait, accepting input;
 		   that may allow the program
 		   to finish doing output and read more.  */

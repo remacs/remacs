@@ -2280,6 +2280,11 @@ read_decoded_event_from_main_queue (struct timespec *end_time,
     }
 }
 
+#if 4 < __GNUC__ + (6 <= __GNUC_MINOR__)
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wclobbered"
+#endif
+
 /* Read a character from the keyboard; call the redisplay if needed.  */
 /* commandflag 0 means do not autosave, but do redisplay.
    -1 means do not redisplay, but do autosave.
@@ -3119,6 +3124,10 @@ read_char (int commandflag, Lisp_Object map,
   input_was_pending = input_pending;
   return c;
 }
+
+#if 4 < __GNUC__ + (6 <= __GNUC_MINOR__)
+# pragma GCC diagnostic pop
+#endif
 
 /* Record a key that came from a mouse menu.
    Record it for echoing, for this-command-keys, and so on.  */

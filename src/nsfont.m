@@ -1071,7 +1071,7 @@ nsfont_draw (struct glyph_string *s, int from, int to, int x, int y,
       face = s->face;
       break;
     case NS_DUMPGLYPH_MOUSEFACE:
-      face = FACE_FROM_ID (s->f, MOUSE_HL_INFO (s->f)->mouse_face_face_id);
+      face = FACE_OPT_FROM_ID (s->f, MOUSE_HL_INFO (s->f)->mouse_face_face_id);
       if (!face)
         face = FACE_FROM_ID (s->f, MOUSE_FACE_ID);
       break;

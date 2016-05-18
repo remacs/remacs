@@ -2878,7 +2878,7 @@ ns_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
   ns_clip_to_row (w, glyph_row, ANY_AREA, NO); /* do ns_focus(f, &r, 1); if remove */
 
 
-  face = FACE_FROM_ID (f, phys_cursor_glyph->face_id);
+  face = FACE_OPT_FROM_ID (f, phys_cursor_glyph->face_id);
   if (face && NS_FACE_BACKGROUND (face)
       == ns_index_color (FRAME_CURSOR_COLOR (f), f))
     {
@@ -2950,7 +2950,7 @@ ns_draw_vertical_window_border (struct window *w, int x, int y0, int y1)
 
   NSTRACE ("ns_draw_vertical_window_border");
 
-  face = FACE_FROM_ID (f, VERTICAL_BORDER_FACE_ID);
+  face = FACE_OPT_FROM_ID (f, VERTICAL_BORDER_FACE_ID);
   if (face)
       [ns_lookup_indexed_color(face->foreground, f) set];
 
@@ -2972,7 +2972,7 @@ ns_draw_window_divider (struct window *w, int x0, int x1, int y0, int y1)
 
   NSTRACE ("ns_draw_window_divider");
 
-  face = FACE_FROM_ID (f, WINDOW_DIVIDER_FACE_ID);
+  face = FACE_OPT_FROM_ID (f, WINDOW_DIVIDER_FACE_ID);
   if (face)
       [ns_lookup_indexed_color(face->foreground, f) set];
 
@@ -3305,9 +3305,9 @@ ns_dumpglyphs_box_or_relief (struct glyph_string *s)
 
   if (s->hl == DRAW_MOUSE_FACE)
     {
-      face = FACE_FROM_ID (s->f, MOUSE_HL_INFO (s->f)->mouse_face_face_id);
+      face = FACE_OPT_FROM_ID (s->f, MOUSE_HL_INFO (s->f)->mouse_face_face_id);
       if (!face)
-        face = FACE_FROM_ID (s->f, MOUSE_FACE_ID);
+        face = FACE_OPT_FROM_ID (s->f, MOUSE_FACE_ID);
     }
   else
     face = s->face;
@@ -3372,8 +3372,9 @@ ns_maybe_dumpglyphs_background (struct glyph_string *s, char force_p)
           struct face *face;
           if (s->hl == DRAW_MOUSE_FACE)
             {
-              face = FACE_FROM_ID (s->f,
-				   MOUSE_HL_INFO (s->f)->mouse_face_face_id);
+              face
+		= FACE_OPT_FROM_ID (s->f,
+				    MOUSE_HL_INFO (s->f)->mouse_face_face_id);
               if (!face)
                 face = FACE_FROM_ID (s->f, MOUSE_FACE_ID);
             }
@@ -3439,7 +3440,7 @@ ns_dumpglyphs_image (struct glyph_string *s, NSRect r)
      with its background color), we must clear just the image area. */
   if (s->hl == DRAW_MOUSE_FACE)
     {
-      face = FACE_FROM_ID (s->f, MOUSE_HL_INFO (s->f)->mouse_face_face_id);
+      face = FACE_OPT_FROM_ID (s->f, MOUSE_HL_INFO (s->f)->mouse_face_face_id);
       if (!face)
        face = FACE_FROM_ID (s->f, MOUSE_FACE_ID);
     }
@@ -3556,7 +3557,8 @@ ns_dumpglyphs_stretch (struct glyph_string *s)
 
       if (s->hl == DRAW_MOUSE_FACE)
        {
-         face = FACE_FROM_ID (s->f, MOUSE_HL_INFO (s->f)->mouse_face_face_id);
+         face = FACE_OPT_FROM_ID (s->f,
+				  MOUSE_HL_INFO (s->f)->mouse_face_face_id);
          if (!face)
            face = FACE_FROM_ID (s->f, MOUSE_FACE_ID);
        }
