@@ -19635,8 +19635,8 @@ extend_face_to_end_of_line (struct it *it)
      to the end of the line.  If the background equals the background
      of the frame, we don't have to do anything.  */
   face = FACE_OPT_FROM_ID (f, (it->face_before_selective_p
-			       ? it->face_id
-			       : it->saved_face_id));
+			       ? it->saved_face_id
+			       : it->face_id));
 
   if (FRAME_WINDOW_P (f)
       && MATRIX_ROW_DISPLAYS_TEXT_P (it->glyph_row)
