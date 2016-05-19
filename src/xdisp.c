@@ -24870,6 +24870,7 @@ fill_image_glyph_string (struct glyph_string *s)
 {
   eassert (s->first_glyph->type == IMAGE_GLYPH);
   s->img = IMAGE_FROM_ID (s->f, s->first_glyph->u.img_id);
+  eassert (s->img);
   s->slice = s->first_glyph->slice.img;
   s->face = FACE_FROM_ID (s->f, s->first_glyph->face_id);
   s->font = s->face->font;
