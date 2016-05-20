@@ -463,9 +463,8 @@ further value candidates, since that list would be infinite.")
     (bg-size length percentage "auto" "cover" "contain")
     (box "border-box" "padding-box" "content-box")
     (color
-     "aqua" "black" "blue" "fuchsia" "gray" "green" "lime" "maroon"
-     "navy" "olive" "orange" "purple" "red" "silver" "teal" "white"
-     "yellow" "transparent")
+     "rgb()" "rgba()" "hsl()" "hsla()" named-color "transparent"
+     "currentColor")
     (common-lig-values "common-ligatures" "no-common-ligatures")
     (contextual-alt-values "contextual" "no-contextual")
     (counter "counter()" "counters()")
@@ -504,6 +503,36 @@ further value candidates, since that list would be infinite.")
     (line-width length "thin" "medium" "thick")
     (linear-gradient "linear-gradient()")
     (margin-width "auto" length percentage)
+    (named-color
+     "aliceblue" "antiquewhite" "aqua" "aquamarine" "azure" "beige"
+     "bisque" "black" "blanchedalmond" "blue" "blueviolet" "brown"
+     "burlywood" "cadetblue" "chartreuse" "chocolate" "coral"
+     "cornflowerblue" "cornsilk" "crimson" "cyan" "darkblue"
+     "darkcyan" "darkgoldenrod" "darkgray" "darkgreen" "darkkhaki"
+     "darkmagenta" "darkolivegreen" "darkorange" "darkorchid"
+     "darkred" "darksalmon" "darkseagreen" "darkslateblue"
+     "darkslategray" "darkturquoise" "darkviolet" "deeppink"
+     "deepskyblue" "dimgray" "dodgerblue" "firebrick" "floralwhite"
+     "forestgreen" "fuchsia" "gainsboro" "ghostwhite" "gold"
+     "goldenrod" "gray" "green" "greenyellow" "honeydew" "hotpink"
+     "indianred" "indigo" "ivory" "khaki" "lavender" "lavenderblush"
+     "lawngreen" "lemonchiffon" "lightblue" "lightcoral" "lightcyan"
+     "lightgoldenrodyellow" "lightgray" "lightgreen" "lightpink"
+     "lightsalmon" "lightseagreen" "lightskyblue" "lightslategray"
+     "lightsteelblue" "lightyellow" "lime" "limegreen" "linen"
+     "magenta" "maroon" "mediumaquamarine" "mediumblue" "mediumorchid"
+     "mediumpurple" "mediumseagreen" "mediumslateblue"
+     "mediumspringgreen" "mediumturquoise" "mediumvioletred"
+     "midnightblue" "mintcream" "mistyrose" "moccasin" "navajowhite"
+     "navy" "oldlace" "olive" "olivedrab" "orange" "orangered"
+     "orchid" "palegoldenrod" "palegreen" "paleturquoise"
+     "palevioletred" "papayawhip" "peachpuff" "peru" "pink" "plum"
+     "powderblue" "purple" "rebeccapurple" "red" "rosybrown"
+     "royalblue" "saddlebrown" "salmon" "sandybrown" "seagreen"
+     "seashell" "sienna" "silver" "skyblue" "slateblue" "slategray"
+     "snow" "springgreen" "steelblue" "tan" "teal" "thistle" "tomato"
+     "turquoise" "violet" "wheat" "white" "whitesmoke" "yellow"
+     "yellowgreen")
     (number "calc()")
     (numeric-figure-values "lining-nums" "oldstyle-nums")
     (numeric-fraction-values "diagonal-fractions" "stacked-fractions")

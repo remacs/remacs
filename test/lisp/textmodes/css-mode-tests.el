@@ -58,7 +58,7 @@
 
   ;; Check that the `color' property doesn't cause infinite recursion
   ;; because it refers to the value class of the same name.
-  (should (= (length (css--property-values "color")) 18)))
+  (should (= (length (css--property-values "color")) 147)))
 
 (ert-deftest css-test-property-value-cache ()
   "Test that `css--property-value-cache' is in use."
