@@ -48,3 +48,11 @@
          (let ((coding-system-for-write (intern "\"us-ascii\"")))
            (write-region "some text" nil test-file))))
     (coding-tests-remove-files)))
+
+;; See issue #5251.
+(ert-deftest ert-test-unibyte-buffer-dos-eol-decode ()
+  (with-temp-buffer
+    (set-buffer-multibyte nil)
+    (insert (encode-coding-string "あ" 'euc-jp) "\xd" "\n")
+    (decode-coding-region (point-min) (point-max) 'euc-jp-dos)
+    (should-not (string-match-p "\^M" (buffer-string)))))
