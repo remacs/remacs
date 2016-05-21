@@ -1295,7 +1295,7 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
 
 #ifdef WINDOWSNT
   prepare_standard_handles (in, out, err, handles);
-  set_process_dir (SDATA (current_dir));
+  set_process_dir (SSDATA (current_dir));
   /* Spawn the child.  (See w32proc.c:sys_spawnve).  */
   cpid = spawnve (_P_NOWAIT, new_argv[0], new_argv, env);
   reset_standard_handles (in, out, err, handles);
@@ -1342,7 +1342,7 @@ getenv_internal_1 (const char *var, ptrdiff_t varlen, char **value,
 	  && SBYTES (entry) >= varlen
 #ifdef WINDOWSNT
 	  /* NT environment variables are case insensitive.  */
-	  && ! strnicmp (SDATA (entry), var, varlen)
+	  && ! strnicmp (SSDATA (entry), var, varlen)
 #else  /* not WINDOWSNT */
 	  && ! memcmp (SDATA (entry), var, varlen)
 #endif /* not WINDOWSNT */

@@ -34,6 +34,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "ntlib.h"
 
+char *sys_ctime (const time_t *);
+FILE *sys_fopen (const char *, const char *);
+int sys_chdir (const char *);
+int mkostemp (char *, int);
+int sys_rename (const char *, const char *);
+
 /* MinGW64 defines _TIMEZONE_DEFINED and defines 'struct timespec' in
    its system headers.  */
 #ifndef _TIMEZONE_DEFINED
@@ -43,6 +49,8 @@ struct timezone
   int		tz_dsttime;	/* type of dst correction */
 };
 #endif
+
+void gettimeofday (struct timeval *, struct timezone *);
 
 #define MAXPATHLEN _MAX_PATH
 

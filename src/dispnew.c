@@ -6042,7 +6042,7 @@ init_display (void)
     fatal ("standard input is not a tty");
 
 #ifdef WINDOWSNT
-  terminal_type = "w32console";
+  terminal_type = (char *)"w32console";
 #else
   terminal_type = getenv ("TERM");
 #endif

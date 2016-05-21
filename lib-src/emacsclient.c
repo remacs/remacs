@@ -39,7 +39,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 # define CLOSE_SOCKET closesocket
 # define INITIALIZE() (initialize_sockets ())
 
-char *w32_getenv (char *);
+char *w32_getenv (const char *);
 #define egetenv(VAR) w32_getenv(VAR)
 
 #else /* !WINDOWSNT */
@@ -254,6 +254,7 @@ get_current_dir_name (void)
 #ifdef WINDOWSNT
 
 /* Like strdup but get a fatal error if memory is exhausted. */
+char *xstrdup (const char *);
 
 char *
 xstrdup (const char *s)
@@ -269,11 +270,13 @@ xstrdup (const char *s)
 
 #define REG_ROOT "SOFTWARE\\GNU\\Emacs"
 
+char *w32_get_resource (HKEY, const char *, LPDWORD);
+
 /* Retrieve an environment variable from the Emacs subkeys of the registry.
    Return NULL if the variable was not found, or it was empty.
    This code is based on w32_get_resource (w32.c).  */
 char *
-w32_get_resource (HKEY predefined, char *key, LPDWORD type)
+w32_get_resource (HKEY predefined, const char *key, LPDWORD type)
 {
   HKEY hrootkey = NULL;
   char *result = NULL;
@@ -285,7 +288,7 @@ w32_get_resource (HKEY predefined, char *key, LPDWORD type)
 	{
 	  result = (char *) xmalloc (cbData);
 
-	  if ((RegQueryValueEx (hrootkey, key, NULL, type, result, &cbData) != ERROR_SUCCESS)
+	  if ((RegQueryValueEx (hrootkey, key, NULL, type, (LPBYTE)result, &cbData) != ERROR_SUCCESS)
 	      || (*result == 0))
 	    {
 	      free (result);
@@ -308,7 +311,7 @@ w32_get_resource (HKEY predefined, char *key, LPDWORD type)
   environment variables in the registry if they don't appear in the
   environment.  */
 char *
-w32_getenv (char *envvar)
+w32_getenv (const char *envvar)
 {
   char *value;
   DWORD dwType;
@@ -356,6 +359,7 @@ w32_getenv (char *envvar)
   return NULL;
 }
 
+int w32_window_app (void);
 
 int
 w32_window_app (void)
@@ -383,11 +387,13 @@ w32_window_app (void)
   predictably bad results.  By contrast, POSIX execvp passes the arguments
   directly into the argv array of the child process.  */
 
+int w32_execvp (const char *, char **);
+extern int execvp (const char*, char **);
+
 int
 w32_execvp (const char *path, char **argv)
 {
   int i;
-  extern int execvp (const char*, char **);
 
   /* Required to allow a .BAT script as alternate editor.  */
   argv[0] = (char *) alternate_editor;
@@ -407,7 +413,8 @@ w32_execvp (const char *path, char **argv)
 #define execvp w32_execvp
 
 /* Emulation of ttyname for Windows.  */
-char *
+const char *ttyname (int);
+const char *
 ttyname (int fd)
 {
   return "CONOUT$";
@@ -852,6 +859,7 @@ file_name_absolute_p (const char *filename)
 
 #ifdef WINDOWSNT
 /* Wrapper to make WSACleanup a cdecl, as required by atexit.  */
+void __cdecl close_winsock (void);
 void __cdecl
 close_winsock (void)
 {
@@ -859,6 +867,7 @@ close_winsock (void)
 }
 
 /* Initialize the WinSock2 library.  */
+void initialize_sockets (void);
 void
 initialize_sockets (void)
 {
@@ -1380,11 +1389,13 @@ set_socket (int no_exit_if_error)
 FARPROC set_fg;  /* Pointer to AllowSetForegroundWindow.  */
 FARPROC get_wc;  /* Pointer to RealGetWindowClassA.  */
 
+void w32_set_user_model_id (void);
+
 void
 w32_set_user_model_id (void)
 {
   HMODULE shell;
-  HRESULT (WINAPI * set_user_model) (wchar_t * id);
+  HRESULT (WINAPI * set_user_model) (const wchar_t * id);
 
   /* On Windows 7 and later, we need to set the user model ID
      to associate emacsclient launched files with Emacs frames
@@ -1406,6 +1417,8 @@ w32_set_user_model_id (void)
       FreeLibrary (shell);
     }
 }
+
+BOOL CALLBACK w32_find_emacs_process (HWND, LPARAM);
 
 BOOL CALLBACK
 w32_find_emacs_process (HWND hWnd, LPARAM lParam)
@@ -1433,6 +1446,7 @@ w32_find_emacs_process (HWND hWnd, LPARAM lParam)
 
 /* Search for a window of class "Emacs" and owned by a process with
    process id = emacs_pid.  If found, allow it to grab the focus.  */
+void w32_give_focus (void);
 
 void
 w32_give_focus (void)
@@ -1526,7 +1540,7 @@ start_daemon_and_retry_set_socket (void)
      it is ready to accept client connections, by asserting an event
      whose name is known to the daemon (defined by nt/inc/ms-w32.h).  */
 
-  if (!CreateProcess (NULL, "emacs --daemon", NULL, NULL, FALSE,
+  if (!CreateProcess (NULL, (LPSTR)"emacs --daemon", NULL, NULL, FALSE,
                       CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
     {
       char* msg = NULL;
@@ -1548,7 +1562,7 @@ start_daemon_and_retry_set_socket (void)
   if ((wait_result = WaitForSingleObject (w32_daemon_event, INFINITE))
       != WAIT_OBJECT_0)
     {
-      char *msg = NULL;
+      const char *msg = NULL;
 
       switch (wait_result)
 	{

@@ -47,7 +47,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 # else /* !NTGUI_UNICODE */
 extern AppendMenuW_Proc unicode_append_menu;
 # endif /* NTGUI_UNICODE */
-extern HMENU current_popup_menu;
 #endif /* HAVE_NTGUI  */
 
 #include "menu.h"

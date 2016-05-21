@@ -66,6 +66,24 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #undef localtime
 
+char *sys_ctime (const time_t *);
+int sys_chdir (const char *);
+int sys_creat (const char *, int);
+FILE *sys_fopen (const char *, const char *);
+int sys_mkdir (const char *);
+int sys_open (const char *, int, int);
+int sys_rename (char const *, char const *);
+int sys_rmdir (const char *);
+int sys_close (int);
+int sys_dup2 (int, int);
+int sys_read (int, char *, unsigned int);
+int sys_write (int, const void *, unsigned int);
+struct tm *sys_localtime (const time_t *);
+
+#ifdef HAVE_MODULES
+extern void dynlib_reset_last_error (void);
+#endif
+
 #include "lisp.h"
 #include "epaths.h"	/* for PATH_EXEC */
 
@@ -227,6 +245,7 @@ typedef struct _REPARSE_DATA_BUFFER {
 #include <wincrypt.h>
 
 #include <c-strcase.h>
+#include <utimens.h>	/* for fdutimens */
 
 #include "w32.h"
 #include <dirent.h>
@@ -246,7 +265,6 @@ typedef struct _REPARSE_DATA_BUFFER {
 typedef HRESULT (WINAPI * ShGetFolderPath_fn)
   (IN HWND, IN int, IN HANDLE, IN DWORD, OUT char *);
 
-void globals_of_w32 (void);
 static DWORD get_rid (PSID);
 static int is_symlink (const char *);
 static char * chase_symlinks (const char *);
@@ -512,6 +530,8 @@ static Lisp_Object ltime (ULONGLONG);
 /* Get total user and system times for get-internal-run-time.
    Returns a list of integers if the times are provided by the OS
    (NT derivatives), otherwise it returns the result of current-time. */
+Lisp_Object w32_get_internal_run_time (void);
+
 Lisp_Object
 w32_get_internal_run_time (void)
 {
@@ -2491,7 +2511,7 @@ sys_putenv (char *str)
 #define REG_ROOT "SOFTWARE\\GNU\\Emacs"
 
 LPBYTE
-w32_get_resource (char *key, LPDWORD lpdwtype)
+w32_get_resource (const char *key, LPDWORD lpdwtype)
 {
   LPBYTE lpvalue;
   HKEY hrootkey = NULL;
@@ -2600,8 +2620,8 @@ init_environment (char ** argv)
 
     static const struct env_entry
     {
-      char * name;
-      char * def_value;
+      const char * name;
+      const char * def_value;
     } dflt_envvars[] =
     {
       /* If the default value is NULL, we will use the value from the
@@ -2761,14 +2781,14 @@ init_environment (char ** argv)
 			{
 			  /* If not found in any directory, use the
 			     default as the last resort.  */
-			  lpval = env_vars[i].def_value;
+			  lpval = (char *)env_vars[i].def_value;
 			  dwType = REG_EXPAND_SZ;
 			}
 		    } while (*pstart);
 		  }
 		else
 		  {
-		    lpval = env_vars[i].def_value;
+		    lpval = (char *)env_vars[i].def_value;
 		    dwType = REG_EXPAND_SZ;
 		  }
 		if (strcmp (env_vars[i].name, "HOME") == 0 && !appdata)
@@ -2786,7 +2806,7 @@ init_environment (char ** argv)
 		if (dwType == REG_EXPAND_SZ)
 		  ExpandEnvironmentStrings ((LPSTR) lpval, buf1, sizeof (buf1));
 		else if (dwType == REG_SZ)
-		  strcpy (buf1, lpval);
+		  strcpy (buf1, (char *)lpval);
 		if (dwType == REG_EXPAND_SZ || dwType == REG_SZ)
 		  {
 		    _snprintf (buf2, sizeof (buf2)-1, "%s=%s", env_vars[i].name,
@@ -2961,7 +2981,7 @@ char *
 sys_ctime (const time_t *t)
 {
   char *str = (char *) ctime (t);
-  return (str ? str : "Sun Jan 01 00:00:00 1970");
+  return (str ? str : (char *)"Sun Jan 01 00:00:00 1970");
 }
 
 /* Emulate sleep...we could have done this with a define, but that
@@ -3225,6 +3245,8 @@ is_fat_volume (const char * name, const char ** pPath)
 /* Convert all slashes in a filename to backslashes, and map filename
    to a valid 8.3 name if necessary.  The result is a pointer to a
    static buffer, so CAVEAT EMPTOR!  */
+const char *map_w32_filename (const char *, const char **);
+
 const char *
 map_w32_filename (const char * name, const char ** pPath)
 {
@@ -4430,7 +4452,7 @@ sys_rename_replace (const char *oldname, const char *newname, BOOL force)
 	{
 	  /* Force temp name to require a manufactured 8.3 alias - this
 	     seems to make the second rename work properly.  */
-	  sprintf (p, "_.%s.%u", o, i);
+	  sprintf (p, "_.%s.%d", o, i);
 	  i++;
 	  result = rename (oldname_a, temp_a);
 	}
@@ -4858,6 +4880,8 @@ get_file_owner_and_group (PSECURITY_DESCRIPTOR psd, struct stat *st)
 }
 
 /* Return non-zero if NAME is a potentially slow filesystem.  */
+int is_slow_fs (const char *);
+
 int
 is_slow_fs (const char *name)
 {
@@ -7215,6 +7239,8 @@ BOOL (WINAPI *pfn_SetHandleInformation) (HANDLE object, DWORD mask, DWORD flags)
 HANDLE winsock_lib;
 static int winsock_inuse;
 
+BOOL term_winsock (void);
+
 BOOL
 term_winsock (void)
 {
@@ -7372,7 +7398,7 @@ check_errno (void)
 /* Extend strerror to handle the winsock-specific error codes.  */
 struct {
   int errnum;
-  char * msg;
+  const char * msg;
 } _wsa_errlist[] = {
   {WSAEINTR                , "Interrupted function call"},
   {WSAEBADF                , "Bad file descriptor"},
@@ -7456,7 +7482,7 @@ sys_strerror (int error_no)
 
   for (i = 0; _wsa_errlist[i].errnum >= 0; i++)
     if (_wsa_errlist[i].errnum == error_no)
-      return _wsa_errlist[i].msg;
+      return (char *)_wsa_errlist[i].msg;
 
   sprintf (unknown_msg, "Unidentified error: %d", error_no);
   return unknown_msg;
@@ -8905,8 +8931,6 @@ sys_write (int fd, const void * buffer, unsigned int count)
 
 /* Emulation of SIOCGIFCONF and getifaddrs, see process.c.  */
 
-extern Lisp_Object conv_sockaddr_to_lisp (struct sockaddr *, ptrdiff_t);
-
 /* Return information about network interface IFNAME, or about all
    interfaces (if IFNAME is nil).  */
 static Lisp_Object
@@ -9619,7 +9643,6 @@ globals_of_w32 (void)
     w32_unicode_filenames = 1;
 
 #ifdef HAVE_MODULES
-  extern void dynlib_reset_last_error (void);
   dynlib_reset_last_error ();
 #endif
 

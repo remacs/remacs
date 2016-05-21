@@ -3913,13 +3913,15 @@ dissociate_if_controlling_tty (int fd)
 struct terminal *
 init_tty (const char *name, const char *terminal_type, bool must_succeed)
 {
+  struct tty_display_info *tty = NULL;
+  struct terminal *terminal = NULL;
+#ifndef DOS_NT
   char *area;
   char **address = &area;
   int status;
-  struct tty_display_info *tty = NULL;
-  struct terminal *terminal = NULL;
   sigset_t oldset;
   bool ctty = false;  /* True if asked to open controlling tty.  */
+#endif
 
   if (!terminal_type)
     maybe_fatal (must_succeed, 0,
@@ -3928,8 +3930,10 @@ init_tty (const char *name, const char *terminal_type, bool must_succeed)
 
   if (name == NULL)
     name = DEV_TTY;
+#ifndef DOS_NT
   if (!strcmp (name, DEV_TTY))
     ctty = 1;
+#endif
 
   /* If we already have a terminal on the given device, use that.  If
      all such terminals are suspended, create a new one instead.  */

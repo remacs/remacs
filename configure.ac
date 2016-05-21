@@ -967,6 +967,11 @@ AS_IF([test $gl_gcc_warnings = no],
     nw="$nw -Wcast-align"
   fi
 
+  # This causes too much noise in the MinGW build
+  if test $opsys = mingw32; then
+    nw="$nw -Wpointer-sign"
+  fi
+
   gl_MANYWARN_ALL_GCC([ws])
   gl_MANYWARN_COMPLEMENT([ws], [$ws], [$nw])
   for w in $ws; do
@@ -985,6 +990,11 @@ AS_IF([test $gl_gcc_warnings = no],
     gl_WARN_ADD([-Wno-tautological-constant-out-of-range-compare])
     gl_WARN_ADD([-Wno-unused-command-line-argument])
     gl_WARN_ADD([-Wno-unused-value])
+  fi
+
+  # This causes too much noise in the MinGW build
+  if test $opsys = mingw32; then
+    gl_WARN_ADD([-Wno-pointer-sign])
   fi
 
   AC_DEFINE([lint], [1], [Define to 1 if the compiler is checking for lint.])

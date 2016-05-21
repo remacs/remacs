@@ -201,7 +201,12 @@ static bool profiler_timer_ok;
 
 /* Status of sampling profiler.  */
 static enum profiler_cpu_running
-  { NOT_RUNNING, TIMER_SETTIME_RUNNING, SETITIMER_RUNNING }
+  { NOT_RUNNING,
+#ifdef HAVE_ITIMERSPEC
+    TIMER_SETTIME_RUNNING,
+#endif
+    SETITIMER_RUNNING
+  }
   profiler_cpu_running;
 
 /* Hash-table log of CPU profiler.  */

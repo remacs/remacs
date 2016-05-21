@@ -65,7 +65,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define BOOT_TIME_FILE "/var/run/random-seed"
 #endif
 
-#ifndef WTMP_FILE
+#if !defined WTMP_FILE && !defined WINDOWSNT
 #define WTMP_FILE "/var/log/wtmp"
 #endif
 

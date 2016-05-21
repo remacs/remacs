@@ -83,8 +83,6 @@ static int any_help_event_p;
 
 extern unsigned int msh_mousewheel;
 
-extern void free_frame_menubar (struct frame *);
-
 extern int w32_codepage_for_font (char *fontname);
 extern Cursor w32_load_cursor (LPCTSTR name);
 
@@ -178,9 +176,7 @@ static void w32_define_cursor (Window, Cursor);
 
 void x_lower_frame (struct frame *);
 void x_scroll_bar_clear (struct frame *);
-void x_wm_set_size_hint (struct frame *, long, bool);
 void x_raise_frame (struct frame *);
-void x_set_window_size (struct frame *, bool, int, int, bool);
 void x_wm_set_window_state (struct frame *, int);
 void x_wm_set_icon_pixmap (struct frame *, int);
 static void w32_initialize (void);
@@ -248,7 +244,7 @@ record_event (char *locus, int type)
 #endif /* 0 */
 
 
-void
+static void
 XChangeGC (void *ignore, XGCValues *gc, unsigned long mask,
 	   XGCValues *xgcv)
 {
@@ -270,12 +266,14 @@ XCreateGC (void *ignore, Window window, unsigned long mask, XGCValues *xgcv)
   return gc;
 }
 
-void
+#if 0	/* unused for now, see x_draw_image_glyph_string below */
+static void
 XGetGCValues (void *ignore, XGCValues *gc,
 	      unsigned long mask, XGCValues *xgcv)
 {
   XChangeGC (ignore, xgcv, mask, gc);
 }
+#endif
 
 static void
 w32_set_clip_rectangle (HDC hdc, RECT *rect)
@@ -321,7 +319,7 @@ w32_restore_glyph_string_clip (struct glyph_string *s)
 
 */
 
-void
+static void
 w32_draw_underwave (struct glyph_string *s, COLORREF color)
 {
   int wave_height = 3, wave_length = 2;
@@ -384,7 +382,7 @@ w32_draw_underwave (struct glyph_string *s, COLORREF color)
 }
 
 /* Draw a hollow rectangle at the specified position.  */
-void
+static void
 w32_draw_rectangle (HDC hdc, XGCValues *gc, int x, int y,
                     int width, int height)
 {
@@ -2579,7 +2577,7 @@ x_draw_glyph_string (struct glyph_string *s)
 
 /* Shift display to make room for inserted glyphs.   */
 
-void
+static void
 w32_shift_glyphs_for_insert (struct frame *f, int x, int y,
 			     int width, int height, int shift_by)
 {
@@ -2876,13 +2874,15 @@ w32_detect_focus_change (struct w32_display_info *dpyinfo, W32Msg *event,
 }
 
 
+#if 0	/* unused */
 /* Handle an event saying the mouse has moved out of an Emacs frame.  */
 
-void
+static void
 x_mouse_leave (struct w32_display_info *dpyinfo)
 {
   x_new_focus_frame (dpyinfo, dpyinfo->w32_focus_event_frame);
 }
+#endif
 
 /* The focus has changed, or we have redirected a frame's focus to
    another frame (this happens when a frame uses a surrogate
@@ -4550,6 +4550,8 @@ static char dbcs_lead = 0;
    recursively with different messages by the system.
 */
 
+extern void menubar_selection_callback (struct frame *, void *);
+
 static int
 w32_read_socket (struct terminal *terminal,
 		 struct input_event *hold_quit)
@@ -5281,8 +5283,6 @@ w32_read_socket (struct terminal *terminal,
 
 	  if (f)
 	    {
-	      extern void menubar_selection_callback
-		(struct frame *f, void * client_data);
 	      menubar_selection_callback (f, (void *)msg.msg.wParam);
 	    }
 
@@ -5899,7 +5899,7 @@ xim_close_dpy (dpyinfo)
 /* Calculate the absolute position in frame F
    from its current recorded position values and gravity.  */
 
-void
+static void
 x_calc_absolute_position (struct frame *f)
 {
   int flags = f->size_hint_flags;
@@ -6575,7 +6575,7 @@ x_free_frame_resources (struct frame *f)
 
 
 /* Destroy the window of frame F.  */
-void
+static void
 x_destroy_window (struct frame *f)
 {
   struct w32_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);

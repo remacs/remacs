@@ -129,3 +129,5 @@ gl_cv_func_stat_file_slash=yes
 ac_cv_func_random=yes
 # Implemented in w32.c as sys_putenv
 gl_cv_func_svid_putenv=yes
+# GCC warnings that produce too much noise
+gl_cv_warn_c__Wredundant_decls=no

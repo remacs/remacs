@@ -221,7 +221,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #include "fontset.h"
 #ifdef HAVE_NTGUI
-#define x_display_info w32_display_info
 #define GCGraphicsExposures 0
 #endif /* HAVE_NTGUI */
 

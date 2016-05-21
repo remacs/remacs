@@ -316,6 +316,7 @@ sound_perror (const char *msg)
 }
 
 
+#ifndef WINDOWSNT
 /* Display a warning message.  */
 
 static void
@@ -323,6 +324,7 @@ sound_warning (const char *msg)
 {
   message1 (msg);
 }
+#endif	/* !WINDOWSNT */
 
 
 /* Parse sound specification SOUND, and fill ATTRS with what is

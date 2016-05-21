@@ -230,25 +230,14 @@ extern struct frame *x_window_to_frame (struct w32_display_info *, HWND);
 
 struct w32_display_info *x_display_info_for_name (Lisp_Object);
 
-Lisp_Object display_x_get_resource (struct w32_display_info *,
-                                    Lisp_Object, Lisp_Object,
-                                    Lisp_Object, Lisp_Object);
-
 /* also defined in xterm.h XXX: factor out to common header */
 
 extern struct w32_display_info *w32_term_init (Lisp_Object,
 					       char *, char *);
 extern int w32_defined_color (struct frame *f, const char *color,
                               XColor *color_def, bool alloc_p);
-extern void x_set_window_size (struct frame *f, bool change_gravity,
-			       int width, int height, bool pixelwise);
 extern int x_display_pixel_height (struct w32_display_info *);
 extern int x_display_pixel_width (struct w32_display_info *);
-extern Lisp_Object x_get_focus_frame (struct frame *);
-extern void x_make_frame_visible (struct frame *f);
-extern void x_make_frame_invisible (struct frame *f);
-extern void x_iconify_frame (struct frame *f);
-extern void x_set_frame_alpha (struct frame *f);
 extern void x_set_menu_bar_lines (struct frame *, Lisp_Object, Lisp_Object);
 extern void x_set_tool_bar_lines (struct frame *f,
                                   Lisp_Object value,
@@ -256,18 +245,11 @@ extern void x_set_tool_bar_lines (struct frame *f,
 extern void x_set_internal_border_width (struct frame *f,
 					 Lisp_Object value,
 					 Lisp_Object oldval);
-extern void x_activate_menubar (struct frame *);
-extern bool x_bitmap_icon (struct frame *, Lisp_Object);
 extern void initialize_frame_menubar (struct frame *);
-extern void x_free_frame_resources (struct frame *);
-extern void x_real_positions (struct frame *, int *, int *);
 
 /* w32inevt.c */
 extern int w32_kbd_patch_key (KEY_EVENT_RECORD *event, int cpId);
 extern int w32_kbd_mods_to_emacs (DWORD mods, WORD key);
-
-
-extern Lisp_Object x_get_focus_frame (struct frame *);
 
 /* w32console.c */
 extern void w32con_hide_cursor (void);

@@ -45,11 +45,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #undef kill
 
 #include <windows.h>
-#if defined(__GNUC__) && !defined(__MINGW64__)
-/* This definition is missing from mingw.org headers, but not MinGW64
-   headers. */
-extern BOOL WINAPI IsValidLocale (LCID, DWORD);
-#endif
 
 #ifdef HAVE_LANGINFO_CODESET
 #include <nl_types.h>
@@ -69,6 +64,10 @@ extern BOOL WINAPI IsValidLocale (LCID, DWORD);
   ((void *)((section)->PointerToRawData					\
 	    + ((DWORD_PTR)(var) - (section)->VirtualAddress)		\
 	    + (filedata).file_base))
+
+extern BOOL g_b_init_compare_string_w;
+int sys_select (int, SELECT_TYPE *, SELECT_TYPE *, SELECT_TYPE *,
+		struct timespec *, void *);
 
 /* Signal handlers...SIG_DFL == 0 so this is initialized correctly.  */
 static signal_handler sig_handlers[NSIG];
@@ -1728,7 +1727,7 @@ sys_spawnve (int mode, char *cmdname, char **argv, char **envp)
      are not expanded if we run the program directly without a shell.
      Some extra whitespace characters need quoting in Cygwin/MSYS programs,
      so this list is conditionally modified below.  */
-  char *sepchars = " \t*?";
+  const char *sepchars = " \t*?";
   /* This is for native w32 apps; modified below for Cygwin/MSUS apps.  */
   char escape_char = '\\';
   char cmdname_a[MAX_PATH];
@@ -2815,7 +2814,6 @@ set_process_dir (char * dir)
 /* From w32.c */
 extern HANDLE winsock_lib;
 extern BOOL term_winsock (void);
-extern BOOL init_winsock (int load_now);
 
 DEFUN ("w32-has-winsock", Fw32_has_winsock, Sw32_has_winsock, 0, 1, 0,
        doc: /* Test for presence of the Windows socket library `winsock'.
@@ -3522,7 +3520,6 @@ w32_compare_strings (const char *s1, const char *s2, char *locname,
   LCID lcid = GetThreadLocale ();
   wchar_t *string1_w, *string2_w;
   int val, needed;
-  extern BOOL g_b_init_compare_string_w;
   static CompareStringW_Proc pCompareStringW;
   DWORD flags = 0;
 

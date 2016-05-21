@@ -2542,7 +2542,7 @@ DEFUN ("file-writable-p", Ffile_writable_p, Sfile_writable_p, 1, 1, 0,
   /* The read-only attribute of the parent directory doesn't affect
      whether a file or directory can be created within it.  Some day we
      should check ACLs though, which do affect this.  */
-  return file_directory_p (SDATA (dir)) ? Qt : Qnil;
+  return file_directory_p (SSDATA (dir)) ? Qt : Qnil;
 #else
   return check_writable (SSDATA (dir), W_OK | X_OK) ? Qt : Qnil;
 #endif
@@ -2773,7 +2773,7 @@ See `file-symlink-p' to distinguish symlinks.  */)
 
     /* Tell stat to use expensive method to get accurate info.  */
     Vw32_get_true_file_attributes = Qt;
-    result = stat (SDATA (absname), &st);
+    result = stat (SSDATA (absname), &st);
     Vw32_get_true_file_attributes = tem;
 
     if (result < 0)

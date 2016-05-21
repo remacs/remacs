@@ -102,7 +102,6 @@ static void list_all_matching_fonts (struct font_callback_data *);
 static BOOL g_b_init_get_outline_metrics_w;
 static BOOL g_b_init_get_text_metrics_w;
 static BOOL g_b_init_get_glyph_outline_w;
-static BOOL g_b_init_get_glyph_outline_w;
 static BOOL g_b_init_get_char_width_32_w;
 
 typedef UINT (WINAPI * GetOutlineTextMetricsW_Proc) (
@@ -1688,7 +1687,7 @@ w32_to_x_charset (int fncharset, char *matching)
       /* Handle startup case of w32-charset-info-alist not
          being set up yet. */
       if (NILP (Vw32_charset_info_alist))
-        return "iso8859-1";
+        return (char *)"iso8859-1";
       charset_type = Qw32_charset_ansi;
       break;
     case DEFAULT_CHARSET:
@@ -2355,7 +2354,7 @@ w32font_full_name (LOGFONT * font, Lisp_Object font_obj,
     {
       if (outline)
         {
-          float pointsize = height * 72.0 / one_w32_display_info.resy;
+          double pointsize = height * 72.0 / one_w32_display_info.resy;
           /* Round to nearest half point.  floor is used, since round is not
 	     supported in MS library.  */
           pointsize = floor (pointsize * 2 + 0.5) / 2;

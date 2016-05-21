@@ -107,7 +107,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* In process.h which conflicts with the local copy.  */
 #define _P_WAIT 0
 int _cdecl _spawnlp (int, const char *, const char *, ...);
-int _cdecl _getpid (void);
 /* The following is needed for O_CLOEXEC, F_SETFD, FD_CLOEXEC, and
    several prototypes of functions called below.  */
 #include <sys/socket.h>
@@ -507,15 +506,16 @@ void
 sys_subshell (void)
 {
 #ifdef DOS_NT	/* Demacs 1.1.2 91/10/20 Manabu Higashida */
-  int st;
 #ifdef MSDOS
+  int st;
   char oldwd[MAXPATHLEN+1]; /* Fixed length is safe on MSDOS.  */
 #else
   char oldwd[MAX_UTF8_PATH];
-#endif
+#endif	/* MSDOS */
+#else	/* !DOS_NT */
+  int status;
 #endif
   pid_t pid;
-  int status;
   struct save_signal saved_handlers[5];
   char *str = SSDATA (encode_current_directory ());
 
@@ -938,7 +938,9 @@ void
 init_sys_modes (struct tty_display_info *tty_out)
 {
   struct emacs_tty tty;
+#ifndef DOS_NT
   Lisp_Object terminal;
+#endif
 
   Vtty_erase_char = Qnil;
 
@@ -3915,7 +3917,7 @@ str_collate (Lisp_Object s1, Lisp_Object s2,
   int res, err = errno;
 
   errno = 0;
-  res = w32_compare_strings (SDATA (s1), SDATA (s2), loc, !NILP (ignore_case));
+  res = w32_compare_strings (SSDATA (s1), SSDATA (s2), loc, !NILP (ignore_case));
   if (errno)
     error ("Invalid string for collation: %s", strerror (errno));
 

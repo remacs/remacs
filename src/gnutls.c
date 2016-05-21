@@ -55,7 +55,6 @@ DEF_DLL_FN (gnutls_alert_description_t, gnutls_alert_get,
 	    (gnutls_session_t));
 DEF_DLL_FN (const char *, gnutls_alert_get_name,
 	    (gnutls_alert_description_t));
-DEF_DLL_FN (int, gnutls_alert_send_appropriate, (gnutls_session_t, int));
 DEF_DLL_FN (int, gnutls_anon_allocate_client_credentials,
 	    (gnutls_anon_client_credentials_t *));
 DEF_DLL_FN (void, gnutls_anon_free_client_credentials,
@@ -156,8 +155,6 @@ DEF_DLL_FN (int, gnutls_x509_crt_get_subject_unique_id,
 	    (gnutls_x509_crt_t, char *, size_t *));
 DEF_DLL_FN (int, gnutls_x509_crt_get_signature_algorithm,
 	    (gnutls_x509_crt_t));
-DEF_DLL_FN (int, gnutls_x509_crt_get_signature,
-	    (gnutls_x509_crt_t, char *, size_t *));
 DEF_DLL_FN (int, gnutls_x509_crt_get_key_id,
 	    (gnutls_x509_crt_t, unsigned int, unsigned char *, size_t *_size));
 DEF_DLL_FN (const char*, gnutls_sec_param_get_name, (gnutls_sec_param_t));
@@ -192,7 +189,6 @@ init_gnutls_functions (void)
 
   LOAD_DLL_FN (library, gnutls_alert_get);
   LOAD_DLL_FN (library, gnutls_alert_get_name);
-  LOAD_DLL_FN (library, gnutls_alert_send_appropriate);
   LOAD_DLL_FN (library, gnutls_anon_allocate_client_credentials);
   LOAD_DLL_FN (library, gnutls_anon_free_client_credentials);
   LOAD_DLL_FN (library, gnutls_bye);
@@ -255,7 +251,6 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_x509_crt_get_issuer_unique_id);
   LOAD_DLL_FN (library, gnutls_x509_crt_get_subject_unique_id);
   LOAD_DLL_FN (library, gnutls_x509_crt_get_signature_algorithm);
-  LOAD_DLL_FN (library, gnutls_x509_crt_get_signature);
   LOAD_DLL_FN (library, gnutls_x509_crt_get_key_id);
   LOAD_DLL_FN (library, gnutls_sec_param_get_name);
   LOAD_DLL_FN (library, gnutls_sign_get_name);
@@ -282,7 +277,6 @@ init_gnutls_functions (void)
 
 # define gnutls_alert_get fn_gnutls_alert_get
 # define gnutls_alert_get_name fn_gnutls_alert_get_name
-# define gnutls_alert_send_appropriate fn_gnutls_alert_send_appropriate
 # define gnutls_anon_allocate_client_credentials fn_gnutls_anon_allocate_client_credentials
 # define gnutls_anon_free_client_credentials fn_gnutls_anon_free_client_credentials
 # define gnutls_bye fn_gnutls_bye
@@ -343,7 +337,6 @@ init_gnutls_functions (void)
 # define gnutls_x509_crt_get_key_id fn_gnutls_x509_crt_get_key_id
 # define gnutls_x509_crt_get_pk_algorithm fn_gnutls_x509_crt_get_pk_algorithm
 # define gnutls_x509_crt_get_serial fn_gnutls_x509_crt_get_serial
-# define gnutls_x509_crt_get_signature fn_gnutls_x509_crt_get_signature
 # define gnutls_x509_crt_get_signature_algorithm fn_gnutls_x509_crt_get_signature_algorithm
 # define gnutls_x509_crt_get_subject_unique_id fn_gnutls_x509_crt_get_subject_unique_id
 # define gnutls_x509_crt_get_version fn_gnutls_x509_crt_get_version

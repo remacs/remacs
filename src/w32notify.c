@@ -123,7 +123,6 @@ static Lisp_Object watch_list;
 static void
 send_notifications (struct notifications_set *ns)
 {
-  int done = 0;
   struct frame *f = SELECTED_FRAME ();
 
   /* We add the current notification set to the linked list.  Use the
@@ -153,8 +152,10 @@ send_notifications (struct notifications_set *ns)
   /* When we are running in batch mode, there's no one to send a
      message, so we just signal the data is available and hope
      sys_select will be called soon and will read the data.  */
+#if 0
   else if (FRAME_INITIAL_P (f) && noninteractive)
     ;
+#endif
 }
 
 /* An APC routine to cancel outstanding directory watch.  Invoked by
@@ -162,6 +163,8 @@ send_notifications (struct notifications_set *ns)
    thread that issued the ReadDirectoryChangesW call can call CancelIo
    to cancel that.  (CancelIoEx is only available since Vista, so we
    cannot use it on XP.)  */
+VOID CALLBACK watch_end (ULONG_PTR);
+
 VOID CALLBACK
 watch_end (ULONG_PTR arg)
 {
@@ -175,6 +178,8 @@ watch_end (ULONG_PTR arg)
    read by ReadDirectoryChangesW.  Called by the OS when the thread
    which issued the asynchronous ReadDirectoryChangesW call is in the
    "alertable state", i.e. waiting inside SleepEx call.  */
+VOID CALLBACK watch_completion (DWORD, DWORD, OVERLAPPED *);
+
 VOID CALLBACK
 watch_completion (DWORD status, DWORD bytes_ret, OVERLAPPED *io_info)
 {

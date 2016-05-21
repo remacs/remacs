@@ -270,11 +270,11 @@ x_create_bitmap_from_data (struct frame *f, char *bits, unsigned int width, unsi
 ptrdiff_t
 x_create_bitmap_from_file (struct frame *f, Lisp_Object file)
 {
-  Display_Info *dpyinfo = FRAME_DISPLAY_INFO (f);
-
 #ifdef HAVE_NTGUI
   return -1;  /* W32_TODO : bitmap support */
 #endif /* HAVE_NTGUI */
+
+  Display_Info *dpyinfo = FRAME_DISPLAY_INFO (f);
 
 #ifdef HAVE_NS
   ptrdiff_t id;
@@ -3677,7 +3677,7 @@ xpm_load (struct frame *f, struct image *img)
 #endif
       /* XpmReadFileToPixmap is not available in the Windows port of
 	 libxpm.  But XpmReadFileToImage almost does what we want.  */
-      rc = XpmReadFileToImage (&hdc, SDATA (file),
+      rc = XpmReadFileToImage (&hdc, SSDATA (file),
 			       &xpm_image, &xpm_mask,
 			       &attrs);
 #else
@@ -3701,7 +3701,7 @@ xpm_load (struct frame *f, struct image *img)
 #ifdef HAVE_NTGUI
       /* XpmCreatePixmapFromBuffer is not available in the Windows port
 	 of libxpm.  But XpmCreateImageFromBuffer almost does what we want.  */
-      rc = XpmCreateImageFromBuffer (&hdc, SDATA (buffer),
+      rc = XpmCreateImageFromBuffer (&hdc, SSDATA (buffer),
 				     &xpm_image, &xpm_mask,
 				     &attrs);
 #else

@@ -316,7 +316,6 @@ static struct sockaddr_and_len {
    XPROCESS (proc)->infd >= 0 &&                                        \
    datagram_address[XPROCESS (proc)->infd].sa != 0)
 #else
-#define DATAGRAM_CHAN_P(chan)	(0)
 #define DATAGRAM_CONN_P(proc)	(0)
 #endif
 

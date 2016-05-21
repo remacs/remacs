@@ -112,7 +112,6 @@ char pot_etags_version[] = "@(#) pot revision number is 17.38.1.4";
 
 #ifdef WINDOWSNT
 # include <direct.h>
-# define MAXPATHLEN _MAX_PATH
 # undef HAVE_NTGUI
 # undef  DOS_NT
 # define DOS_NT
