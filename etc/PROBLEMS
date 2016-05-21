@@ -940,6 +940,21 @@ into Meta.  This is because of the great importance of Meta in Emacs.
 
 ** Window-manager and toolkit-related problems
 
+*** Emacs built with GTK+ toolkit produces corrupted display on HiDPI screen
+
+This can happen if you set GDK_SCALE=2 in the environment or in your
+'.xinitrc' file.  (This setting is usually accompanied by
+GDK_DPI_SCALE=0.5.)  Emacs can not support these settings correctly,
+as it doesn't use GTK+ exclusively.  The result is that sometimes
+widgets like the scroll bar are displayed incorrectly, and frames
+could be displayed "cropped" to only part of the stuff that should be
+displayed.
+
+The workaround is to explicitly disable these settings when invoking
+Emacs, for example (from a Posix shell prompt):
+
+  $ GDK_SCALE=1 GDK_DPI_SCALE=1 emacs
+
 *** Metacity: Resizing Emacs or ALT-Tab causes X to be unresponsive.
 
 This happens sometimes when using Metacity.  Resizing Emacs or ALT-Tab:bing
