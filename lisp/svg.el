@@ -36,7 +36,7 @@ any further elements added."
 	    `((width . ,width)
 	      (height . ,height)
 	      (version . "1.1")
-	      (xmlsn . "http://www.w3.org/2000/svg")
+	      (xmlns . "http://www.w3.org/2000/svg")
 	      ,@(svg--arguments nil args))))
 
 (defun svg-gradient (svg id type stops)
