@@ -150,6 +150,9 @@ bool inhibit_sentinels;
 #ifndef SOCK_CLOEXEC
 # define SOCK_CLOEXEC 0
 #endif
+#ifndef SOCK_NONBLOCK
+# define SOCK_NONBLOCk 0
+#endif
 
 /* True if ERRNUM represents an error where the system call would
    block if a blocking variant were used.  */
@@ -3141,7 +3144,10 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses,
       s = socket_to_use;
       if (s < 0)
 	{
-	  s = socket (family, p->socktype | SOCK_CLOEXEC, p->ai_protocol);
+	  int socktype = p->socktype | SOCK_CLOEXEC;
+	  if (p->is_non_blocking_client)
+	    socktype |= SOCK_NONBLOCK;
+	  s = socket (family, socktype, p->ai_protocol);
 	  if (s < 0)
 	    {
 	      xerrno = errno;
@@ -3149,12 +3155,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses,
 	    }
 	}
 
-#ifdef DATAGRAM_SOCKETS
-      if (!p->is_server && p->socktype == SOCK_DGRAM)
-	break;
-#endif /* DATAGRAM_SOCKETS */
-
-      if (p->is_non_blocking_client)
+      if (p->is_non_blocking_client && ! (SOCK_NONBLOCK && socket_to_use < 0))
 	{
 	  ret = fcntl (s, F_SETFL, O_NONBLOCK);
 	  if (ret < 0)
@@ -3165,6 +3166,11 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses,
 	      continue;
 	    }
 	}
+
+#ifdef DATAGRAM_SOCKETS
+      if (!p->is_server && p->socktype == SOCK_DGRAM)
+	break;
+#endif /* DATAGRAM_SOCKETS */
 
       /* Make us close S if quit.  */
       record_unwind_protect_int (close_file_unwind, s);
