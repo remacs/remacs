@@ -36,6 +36,7 @@
   (require 'dired))
 
 (require 'font-core)
+(require 'seq)
 
 (require 'ibuffer-loaddefs)
 ;; These come from ibuf-ext.el, which can not be require'd at compile time

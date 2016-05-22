@@ -25,6 +25,7 @@
 
 ;;; Code:
 
+(require 'seq)
 
 (defgroup image ()
   "Image support."

@@ -43,6 +43,8 @@
 
 ;;; Code:
 
+(require 'seq)
+
 ;;; User variables:
 
 (defgroup find-function nil
