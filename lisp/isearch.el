@@ -510,6 +510,7 @@ This is like `describe-bindings', but displays only Isearch keys."
     ;; People expect to be able to paste with the mouse.
     (define-key map [mouse-2] #'isearch-mouse-2)
     (define-key map [down-mouse-2] nil)
+    (define-key map [xterm-paste] #'isearch-xterm-paste)
 
     ;; Some bindings you may want to put in your isearch-mode-hook.
     ;; Suggest some alternates...
@@ -2000,6 +2001,13 @@ is bound to outside of Isearch."
 	(isearch-yank-x-selection)
       (when (functionp binding)
 	(call-interactively binding)))))
+
+(declare-function xterm--pasted-text "term/xterm" ())
+
+(defun isearch-xterm-paste ()
+  "Pull terminal paste into search string."
+  (interactive)
+  (isearch-yank-string (xterm--pasted-text)))
 
 (defun isearch-yank-internal (jumpform)
   "Pull the text from point to the point reached by JUMPFORM.
