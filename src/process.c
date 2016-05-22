@@ -151,7 +151,7 @@ bool inhibit_sentinels;
 # define SOCK_CLOEXEC 0
 #endif
 #ifndef SOCK_NONBLOCK
-# define SOCK_NONBLOCk 0
+# define SOCK_NONBLOCK 0
 #endif
 
 /* True if ERRNUM represents an error where the system call would
