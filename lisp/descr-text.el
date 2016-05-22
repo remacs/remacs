@@ -806,9 +806,16 @@ relevant to POS."
                         'describe-char-unidata-list))
              'follow-link t)
             (insert "\n")
-            (dolist (elt (if (eq describe-char-unidata-list t)
-                             (nreverse (mapcar 'car char-code-property-alist))
-                           describe-char-unidata-list))
+            (dolist (elt
+                     (cond ((eq describe-char-unidata-list t)
+                            (nreverse (mapcar 'car char-code-property-alist)))
+                           ((< char 32)
+                            ;; Temporary fix (2016-05-22): The
+                            ;; decomposition item for \n corrupts the
+                            ;; display on a Linux virtual terminal.
+                            ;; (Bug #23594).
+                            (remq 'decomposition describe-char-unidata-list))
+                           (t describe-char-unidata-list)))
               (let ((val (get-char-code-property char elt))
                     description)
                 (when val
