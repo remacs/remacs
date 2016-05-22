@@ -395,6 +395,24 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 
   font->ascent = xftfont->ascent;
   font->descent = xftfont->descent;
+  /* The following workaround is unnecessary on most systems, and
+     causes annoying differences in glyph height between regular and
+     bold fonts (see bug#22383).  However, with some fonts, such as
+     monaco, removing the workaround results in overlapping vertical
+     space of a line, see bug#23360.  As long as the way to reconcile
+     these opposites is not known, we provide a user option to work
+     around the problem.  */
+  if (pixel_size >= 5
+      && xft_font_ascent_descent_override)
+    {
+      /* The above condition is a dirty workaround because
+	 XftTextExtents8 behaves strangely for some fonts
+	 (e.g. "Dejavu Sans Mono") when pixel_size is less than 5. */
+      if (font->ascent < extents.y)
+	font->ascent = extents.y;
+      if (font->descent < extents.height - extents.y)
+	font->descent = extents.height - extents.y;
+    }
   font->height = font->ascent + font->descent;
 
   if (XINT (AREF (entity, FONT_SIZE_INDEX)) == 0)
@@ -732,6 +750,12 @@ syms_of_xftfont (void)
   DEFSYM (QCrgba, ":rgba");
   DEFSYM (QCembolden, ":embolden");
   DEFSYM (QClcdfilter, ":lcdfilter");
+
+  DEFVAR_BOOL ("xft-font-ascent-descent-override",
+	       xft_font_ascent_descent_override,
+	       doc:  /* Non-nil means override the ascent and descent values for Xft font driver.
+This is needed with some fonts to correct vertical overlap of glyphs.  */);
+  xft_font_ascent_descent_override = 0;
 
   ascii_printable[0] = 0;
 
