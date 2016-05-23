@@ -173,8 +173,6 @@ struct Lisp_Process
     int port;
     /* The socket type. */
     int socktype;
-    /* The socket protocol. */
-    int ai_protocol;
 
 #ifdef HAVE_GETADDRINFO_A
     /* Whether the socket is waiting for response from an asynchronous

@@ -2343,6 +2343,16 @@ conv_sockaddr_to_lisp (struct sockaddr *sa, ptrdiff_t len)
   return address;
 }
 
+/* Convert an internal struct addrinfo to a Lisp object.  */
+
+static Lisp_Object
+conv_addrinfo_to_lisp (struct addrinfo *res)
+{
+  Lisp_Object protocol = make_number (res->ai_protocol);
+  eassert (XINT (protocol) == res->ai_protocol);
+  return Fcons (protocol, conv_sockaddr_to_lisp (res->ai_addr, res->ai_addrlen));
+}
+
 
 /* Get family and required size for sockaddr structure to hold ADDRESS.  */
 
@@ -3097,14 +3107,13 @@ finish_after_tls_connection (Lisp_Object proc)
 #endif
 
 static void
-connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses,
+connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
                         Lisp_Object use_external_socket_p)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
   ptrdiff_t count1;
   int s = -1, outch, inch;
   int xerrno = 0;
-  Lisp_Object ip_address;
   int family;
   struct sockaddr *sa = NULL;
   int ret;
@@ -3126,10 +3135,12 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses,
   count1 = SPECPDL_INDEX ();
   s = -1;
 
-  while (!NILP (ip_addresses))
+  while (!NILP (addrinfos))
     {
-      ip_address = XCAR (ip_addresses);
-      ip_addresses = XCDR (ip_addresses);
+      Lisp_Object addrinfo = XCAR (addrinfos);
+      addrinfos = XCDR (addrinfos);
+      int protocol = XINT (XCAR (addrinfo));
+      Lisp_Object ip_address = XCDR (addrinfo);
 
 #ifdef WINDOWSNT
     retry_connect:
@@ -3147,7 +3158,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object ip_addresses,
 	  int socktype = p->socktype | SOCK_CLOEXEC;
 	  if (p->is_non_blocking_client)
 	    socktype |= SOCK_NONBLOCK;
-	  s = socket (family, socktype, p->ai_protocol);
+	  s = socket (family, socktype, protocol);
 	  if (s < 0)
 	    {
 	      xerrno = errno;
@@ -3624,10 +3635,10 @@ usage: (make-network-process &rest ARGS)  */)
   Lisp_Object tem;
   Lisp_Object name, buffer, host, service, address;
   Lisp_Object filter, sentinel, use_external_socket_p;
-  Lisp_Object ip_addresses = Qnil;
+  Lisp_Object addrinfos = Qnil;
   int socktype;
   int family = -1;
-  int ai_protocol = 0;
+  enum { any_protocol = 0 };
 #ifdef HAVE_GETADDRINFO_A
   struct gaicb *dns_request = NULL;
 #endif
@@ -3680,7 +3691,7 @@ usage: (make-network-process &rest ARGS)  */)
       if (!get_lisp_to_sockaddr_size (address, &family))
 	error ("Malformed :address");
 
-      ip_addresses = list1 (address);
+      addrinfos = list1 (Fcons (make_number (any_protocol), address));
       goto open_socket;
     }
 
@@ -3744,7 +3755,7 @@ usage: (make-network-process &rest ARGS)  */)
       CHECK_STRING (service);
       if (sizeof address_un.sun_path <= SBYTES (service))
 	error ("Service name too long");
-      ip_addresses = list1 (service);
+      addrinfos = list1 (Fcons (make_number (any_protocol), service));
       goto open_socket;
     }
 #endif
@@ -3845,14 +3856,9 @@ usage: (make-network-process &rest ARGS)  */)
       immediate_quit = 0;
 
       for (lres = res; lres; lres = lres->ai_next)
-	{
-	  ip_addresses = Fcons (conv_sockaddr_to_lisp
-				(lres->ai_addr, lres->ai_addrlen),
-				ip_addresses);
-	  ai_protocol = lres->ai_protocol;
-	}
+	addrinfos = Fcons (conv_addrinfo_to_lisp (lres), addrinfos);
 
-      ip_addresses = Fnreverse (ip_addresses);
+      addrinfos = Fnreverse (addrinfos);
 
       freeaddrinfo (res);
 
@@ -3919,7 +3925,6 @@ usage: (make-network-process &rest ARGS)  */)
   p->is_server = false;
   p->port = port;
   p->socktype = socktype;
-  p->ai_protocol = ai_protocol;
 #ifdef HAVE_GETADDRINFO_A
   p->dns_request = NULL;
 #endif
@@ -3952,7 +3957,7 @@ usage: (make-network-process &rest ARGS)  */)
 #ifdef HAVE_GETADDRINFO_A
   /* With async address resolution, the list of addresses is empty, so
      postpone connecting to the server. */
-  if (!p->is_server && NILP (ip_addresses))
+  if (!p->is_server && NILP (addrinfos))
     {
       p->dns_request = dns_request;
       p->status = Qconnect;
@@ -3960,7 +3965,7 @@ usage: (make-network-process &rest ARGS)  */)
     }
 #endif
 
-  connect_network_socket (proc, ip_addresses, use_external_socket_p);
+  connect_network_socket (proc, addrinfos, use_external_socket_p);
   return proc;
 }
 
@@ -4647,7 +4652,7 @@ static Lisp_Object
 check_for_dns (Lisp_Object proc)
 {
   struct Lisp_Process *p = XPROCESS (proc);
-  Lisp_Object ip_addresses = Qnil;
+  Lisp_Object addrinfos = Qnil;
 
   /* Sanity check. */
   if (! p->dns_request)
@@ -4663,13 +4668,9 @@ check_for_dns (Lisp_Object proc)
       struct addrinfo *res;
 
       for (res = p->dns_request->ar_result; res; res = res->ai_next)
-	{
-	  ip_addresses = Fcons (conv_sockaddr_to_lisp
-				(res->ai_addr, res->ai_addrlen),
-				ip_addresses);
-	}
+	addrinfos = Fcons (conv_addrinfo_to_lisp (res), addrinfos);
 
-      ip_addresses = Fnreverse (ip_addresses);
+      addrinfos = Fnreverse (addrinfos);
     }
   /* The DNS lookup failed. */
   else if (EQ (p->status, Qconnect))
@@ -4688,7 +4689,7 @@ check_for_dns (Lisp_Object proc)
   if (!EQ (p->status, Qconnect))
     return Qnil;
 
-  return ip_addresses;
+  return addrinfos;
 }
 
 #endif /* HAVE_GETADDRINFO_A */
@@ -4871,9 +4872,9 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		/* Check for pending DNS requests. */
 		if (p->dns_request)
 		  {
-		    Lisp_Object ip_addresses = check_for_dns (aproc);
-		    if (!NILP (ip_addresses) && !EQ (ip_addresses, Qt))
-		      connect_network_socket (aproc, ip_addresses, Qnil);
+		    Lisp_Object addrinfos = check_for_dns (aproc);
+		    if (!NILP (addrinfos) && !EQ (addrinfos, Qt))
+		      connect_network_socket (aproc, addrinfos, Qnil);
 		    else
 		      retry_for_async = true;
 		  }
