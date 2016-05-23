@@ -1869,6 +1869,7 @@ add a call to it along with some explanatory comments."
              (file-readable-p user-init-file)
              (file-writable-p user-init-file))
     (let* ((buffer (find-buffer-visiting user-init-file))
+           buffer-name
            (contains-init
             (if buffer
                 (with-current-buffer buffer
@@ -1884,8 +1885,12 @@ add a call to it along with some explanatory comments."
                 (re-search-forward "(package-initialize\\_>" nil 'noerror)))))
       (unless contains-init
         (with-current-buffer (or buffer
-                                 (let ((delay-mode-hooks t))
+                                 (let ((delay-mode-hooks t)
+                                       (find-file-visit-truename t))
                                    (find-file-noselect user-init-file)))
+          (when buffer
+            (setq buffer-name (buffer-file-name))
+            (set-visited-file-name (file-chase-links user-init-file)))
           (save-excursion
             (save-restriction
               (widen)
@@ -1904,7 +1909,10 @@ add a call to it along with some explanatory comments."
                 (insert "\n"))
               (let ((file-precious-flag t))
                 (save-buffer))
-              (unless buffer
+              (if buffer
+                  (progn
+                    (set-visited-file-name buffer-name)
+                    (set-buffer-modified-p nil))
                 (kill-buffer (current-buffer)))))))))
   (setq package--init-file-ensured t))
 
