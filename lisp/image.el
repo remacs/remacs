@@ -25,8 +25,6 @@
 
 ;;; Code:
 
-(require 'seq)
-
 (defgroup image ()
   "Image support."
   :group 'multimedia)
@@ -975,6 +973,7 @@ default is 20%."
                         0.8)))
 
 (defun image--get-image ()
+  (require 'seq)
   (let ((image (or (get-text-property (point) 'display)
                    ;; `put-image' uses overlays, so find an image in
                    ;; the overlays.
