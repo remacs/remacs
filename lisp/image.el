@@ -1,4 +1,4 @@
-;;; image.el --- image API
+;;; image.el --- image API  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
@@ -123,7 +123,7 @@ value is used as a list of directories to search.
 
 Subdirectories are not automatically included in the search."
   :type '(repeat (choice directory variable))
-  :initialize 'custom-initialize-delay)
+  :initialize #'custom-initialize-delay)
 
 (defcustom image-scaling-factor 'auto
   "When displaying images, apply this scaling factor before displaying.
@@ -135,7 +135,6 @@ size), or the symbol `auto', which will compute a scaling factor
 based on the font pixel size."
   :type '(choice number
                  (const :tag "Automatically compute" auto))
-  :group 'image
   :version "25.2")
 
 ;; Map put into text properties on images.
@@ -460,9 +459,8 @@ If VALUE is nil, PROPERTY is removed from IMAGE."
 
 (defun image-compute-scaling-factor (scaling)
   (cond
-   ((numberp image-scaling-factor)
-    image-scaling-factor)
-   ((eq image-scaling-factor 'auto)
+   ((numberp scaling) scaling)
+   ((eq scaling 'auto)
     (let ((width (/ (float (window-width nil t)) (window-width))))
       ;; If we assume that a typical character is 10 pixels in width,
       ;; then we should scale all images according to how wide they
@@ -471,7 +469,7 @@ If VALUE is nil, PROPERTY is removed from IMAGE."
           1
         (/ (float width) 10))))
    (t
-    (error "Invalid scaling factor %s" image-scaling-factor))))
+    (error "Invalid scaling factor %s" scaling))))
 
 ;;;###autoload
 (defun put-image (image pos &optional string area)
@@ -728,7 +726,7 @@ number, play until that number of seconds has elapsed."
       (if (setq timer (image-animate-timer image))
 	  (cancel-timer timer))
       (plist-put (cdr image) :animate-buffer (current-buffer))
-      (run-with-timer 0.2 nil 'image-animate-timeout
+      (run-with-timer 0.2 nil #'image-animate-timeout
 		      image (or index 0) (car animation)
 		      0 limit (+ (float-time) 0.2)))))
 
@@ -739,7 +737,7 @@ number, play until that number of seconds has elapsed."
     (while tail
       (setq timer (car tail)
 	    tail (cdr tail))
-      (if (and (eq (timer--function timer) 'image-animate-timeout)
+      (if (and (eq (timer--function timer) #'image-animate-timeout)
 	       (eq (car-safe (timer--args timer)) image))
 	  (setq tail nil)
 	(setq timer nil)))
@@ -819,7 +817,7 @@ for the animation speed.  A negative value means to animate in reverse."
       (if (numberp limit)
 	  (setq done (>= time-elapsed limit)))
       (unless done
-	(run-with-timer delay nil 'image-animate-timeout
+	(run-with-timer delay nil #'image-animate-timeout
 			image n count time-elapsed limit
                         (+ (float-time) delay))))))
 
@@ -907,12 +905,11 @@ has no effect."
   :type '(choice (const :tag "Support all ImageMagick types" nil)
 		 (const :tag "Disable all ImageMagick types" t)
 		 (repeat symbol))
-  :initialize 'custom-initialize-default
+  :initialize #'custom-initialize-default
   :set (lambda (symbol value)
 	 (set-default symbol value)
 	 (imagemagick-register-types))
-  :version "24.3"
-  :group 'image)
+  :version "24.3")
 
 (defcustom imagemagick-enabled-types
   '(3FR ART ARW AVS BMP BMP2 BMP3 CAL CALS CMYK CMYKA CR2 CRW
@@ -945,12 +942,11 @@ has no effect."
 		 (repeat :tag "List of types"
 			 (choice (symbol :tag "type")
 				 (regexp :tag "regexp"))))
-  :initialize 'custom-initialize-default
+  :initialize #'custom-initialize-default
   :set (lambda (symbol value)
 	 (set-default symbol value)
 	 (imagemagick-register-types))
-  :version "24.3"
-  :group 'image)
+  :version "24.3")
 
 (imagemagick-register-types)
 
@@ -974,8 +970,7 @@ default is 20%."
 
 (defun image--get-image ()
   (let ((image (get-text-property (point) 'display)))
-    (when (or (not (consp image))
-              (not (eq (car image) 'image)))
+    (unless (eq (car-safe image) 'image)
       (error "No image under point"))
     image))
 
