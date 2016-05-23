@@ -973,13 +973,7 @@ default is 20%."
                         0.8)))
 
 (defun image--get-image ()
-  (let ((image (or (get-text-property (point) 'display)
-                   ;; `put-image' uses overlays, so find an image in
-                   ;; the overlays.
-                   (catch 'found
-                     (dolist (o (overlays-at (point)))
-                       (if (overlay-get o 'display)
-                           (throw 'found o)))))))
+  (let ((image (get-text-property (point) 'display)))
     (when (or (not (consp image))
               (not (eq (car image) 'image)))
       (error "No image under point"))
