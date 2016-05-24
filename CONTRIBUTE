@@ -183,7 +183,7 @@ intended for more-conservative changes such as bug fixes.  Typically,
 collective development is active on the master branch and possibly on
 the current release branch.  Periodically, the current release branch
 is merged into the master, using the gitmerge function described in
-admin/notes-git-workflow.
+admin/notes/git-workflow.
 
 If you are fixing a bug that exists in the current release, be sure to
 commit it to the release branch; it will be merged to the master
