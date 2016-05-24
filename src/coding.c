@@ -9843,7 +9843,8 @@ usage: (find-operation-coding-system OPERATION ARGUMENTS...)  */)
   if (!(STRINGP (target)
 	|| (EQ (operation, Qinsert_file_contents) && CONSP (target)
 	    && STRINGP (XCAR (target)) && BUFFERP (XCDR (target)))
-	|| (EQ (operation, Qopen_network_stream) && INTEGERP (target))))
+	|| (EQ (operation, Qopen_network_stream)
+	    && (INTEGERP (target) || EQ (target, Qt)))))
     error ("Invalid argument %"pI"d of operation `%s'",
 	   XFASTINT (target_idx) + 1, SDATA (SYMBOL_NAME (operation)));
   if (CONSP (target))
