@@ -71,6 +71,19 @@
 ;;
 ;;    http://lists.sourceforge.net/mailman/listinfo/cc-mode-announce
 
+;; Externally maintained major modes which use CC-mode's engine include:
+;; - cuda-mode
+;; - csharp-mode (https://github.com/josteink/csharp-mode)
+;; - haxe-mode
+;; - d-mode
+;; - dart-mode
+;; - cc-php-js-cs.el
+;; - php-mode
+;; - yang-mode
+;; - math-mode (mathematica)
+;; - unrealscript-mode
+;; - groovy-mode
+
 ;;; Code:
 
 ;; For Emacs < 22.2.
@@ -1234,7 +1247,7 @@ Note that the style variables are always made local to the buffer."
       (backward-char))			; back over (, [, <.
     (and (/= new-pos pos) new-pos)))
 
-(defun c-change-expand-fl-region (beg end old-len)
+(defun c-change-expand-fl-region (_beg _end _old-len)
   ;; Expand the region (c-new-BEG c-new-END) to an after-change font-lock
   ;; region.  This will usually be the smallest sequence of whole lines
   ;; containing `c-new-BEG' and `c-new-END', but if `c-new-BEG' is in a
@@ -1770,9 +1783,9 @@ Key bindings:
 (defvar awk-mode-map
   (let ((map (c-make-inherited-keymap)))
     ;; Add bindings which are only useful for awk.
-    (define-key map "#" 'self-insert-command)
-    (define-key map "/" 'self-insert-command)
-    (define-key map "*" 'self-insert-command)
+    (define-key map "#" 'self-insert-command);Overrides electric parent binding.
+    (define-key map "/" 'self-insert-command);Overrides electric parent binding.
+    (define-key map "*" 'self-insert-command);Overrides electric parent binding.
     (define-key map "\C-c\C-n" 'undefined) ; #if doesn't exist in awk.
     (define-key map "\C-c\C-p" 'undefined)
     (define-key map "\C-c\C-u" 'undefined)
