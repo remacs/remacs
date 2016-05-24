@@ -1175,7 +1175,7 @@ see
 @url{http://www.gnu.org/prep/standards/html_node/Change-Log-Concepts.html},
 @end ifset
 @xref{Change Log Concepts, Change Log Concepts,
-Change Log Concepts, gnu-coding-standards, GNU Coding Standards}.
+Change Log Concepts, standards, GNU Coding Standards}.
 
 @item
 When you write the fix, keep in mind that we can't install a change that

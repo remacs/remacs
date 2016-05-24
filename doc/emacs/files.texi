@@ -1281,7 +1281,7 @@ The value of @code{diff-switches} should be a string; the default is
 @c Note that the actual name of the info file is diffutils.info,
 @c but it adds a dir entry for diff too.
 @c On older systems, only "info diff" works, not "info diffutils".
-@xref{Top,, Diff, diff, Comparing and Merging Files}, for more
+@xref{Top,, Diff, diffutils, Comparing and Merging Files}, for more
 information about the @command{diff} program.
 
   The output of the @code{diff} command is shown using a major mode
