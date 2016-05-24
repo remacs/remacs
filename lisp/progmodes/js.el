@@ -3723,7 +3723,7 @@ If one hasn't been set, or if it's stale, prompt for a new one."
   (setq-local beginning-of-defun-function #'js-beginning-of-defun)
   (setq-local end-of-defun-function #'js-end-of-defun)
   (setq-local open-paren-in-column-0-is-defun-start nil)
-  (setq-local font-lock-defaults '(js--font-lock-keywords))
+  (setq-local font-lock-defaults (list js--font-lock-keywords))
   (setq-local syntax-propertize-function #'js-syntax-propertize)
   (setq-local prettify-symbols-alist js--prettify-symbols-alist)
 
