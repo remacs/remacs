@@ -25,9 +25,12 @@
 
 (require 'shr)
 
+(defconst shr-tests--datadir
+  (expand-file-name "test/data/shr" source-directory))
+
 (defun shr-test (name)
   (with-temp-buffer
-    (insert-file-contents (format "data/shr/%s.html" name))
+    (insert-file-contents (format (concat shr-tests--datadir "/%s.html") name))
     (let ((dom (libxml-parse-html-region (point-min) (point-max)))
           (shr-width 80)
           (shr-use-fonts nil))
@@ -35,7 +38,8 @@
       (shr-insert-document dom)
       (cons (buffer-substring-no-properties (point-min) (point-max))
             (with-temp-buffer
-              (insert-file-contents (format "data/shr/%s.txt" name))
+              (insert-file-contents
+               (format (concat shr-tests--datadir "/%s.txt") name))
               (while (re-search-forward "%\\([0-9A-F][0-9A-F]\\)" nil t)
                 (replace-match (string (string-to-number (match-string 1) 16))
                                t t))
@@ -43,7 +47,7 @@
 
 (ert-deftest rendering ()
   (skip-unless (fboundp 'libxml-parse-html-region))
-  (dolist (file (directory-files "data/shr" nil "\\.html\\'"))
+  (dolist (file (directory-files shr-tests--datadir nil "\\.html\\'"))
     (let* ((name (replace-regexp-in-string "\\.html\\'" "" file))
            (result (shr-test name)))
       (unless (equal (car result) (cdr result))
