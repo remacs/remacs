@@ -874,9 +874,9 @@ command, like this:
 @end example
 @end defun
 
-These commands are often more accurate than the @code{find-tag}
-command (@pxref{Tags,,,emacs,Emacs manual}), because the Semantic
-Analyzer is context-sensitive.
+These commands are often more accurate than the @code{xref-find-definitions}
+command (@pxref{Looking Up Identifiers,,,emacs,Emacs manual}), because
+the Semantic Analyzer is context-sensitive.
 
 You can also use @kbd{C-c , j} (@code{semantic-complete-jump-local})
 and @kbd{C-c , J} (@code{semantic-complete-jump}) to navigate tags.

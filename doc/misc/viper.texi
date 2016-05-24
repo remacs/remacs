@@ -2568,7 +2568,7 @@ above block should be commented out.
 
 Even though these commands are sometimes useful, they are no substitute for
 the powerful @emph{tag table} facility of Emacs.  Viper's @kbd{:tag} command
-in a primitive interface to Emacs tags.  @xref{Tags,Tags,Tags,emacs,
+in a primitive interface to Emacs tags.  @xref{Tags Tables,,,emacs,
 The GNU Emacs Manual}, for more information on tags.
 
 The following two commands are normally bound to a mouse click and are part
