@@ -1,4 +1,4 @@
-;;; url-http.el --- HTTP retrieval routines
+;;; url-http.el --- HTTP retrieval routines  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1999, 2001, 2004-2016 Free Software Foundation, Inc.
 
@@ -931,7 +931,7 @@ should be shown to the user."
 ;; )
 
 ;; These unfortunately cannot be macros... please ignore them!
-(defun url-http-idle-sentinel (proc why)
+(defun url-http-idle-sentinel (proc _why)
   "Remove (now defunct) process PROC from the list of open connections."
   (maphash (lambda (key val)
 		(if (memq proc val)
@@ -969,12 +969,12 @@ should be shown to the user."
 	    ((url-http-parse-headers)
 	     (url-http-activate-callback))))))
 
-(defun url-http-simple-after-change-function (st nd length)
+(defun url-http-simple-after-change-function (_st _nd _length)
   ;; Function used when we do NOT know how long the document is going to be
   ;; Just _very_ simple 'downloaded %d' type of info.
-  (url-lazy-message "Reading %s..." (file-size-human-readable nd)))
+  (url-lazy-message "Reading %s..." (file-size-human-readable (buffer-size))))
 
-(defun url-http-content-length-after-change-function (st nd length)
+(defun url-http-content-length-after-change-function (_st nd _length)
   "Function used when we DO know how long the document is going to be.
 More sophisticated percentage downloaded, etc.
 Also does minimal parsing of HTTP headers and will actually cause
@@ -1093,7 +1093,7 @@ the end of the document."
 		  (if (url-http-parse-headers)
 		      (url-http-activate-callback))))))))))
 
-(defun url-http-wait-for-headers-change-function (st nd length)
+(defun url-http-wait-for-headers-change-function (_st nd _length)
   ;; This will wait for the headers to arrive and then splice in the
   ;; next appropriate after-change-function, etc.
   (url-http-debug "url-http-wait-for-headers-change-function (%s)"
@@ -1101,7 +1101,8 @@ the end of the document."
   (let ((end-of-headers nil)
 	(old-http nil)
 	(process-buffer (current-buffer))
-	(content-length nil))
+	;; (content-length nil)
+        )
     (when (not (bobp))
       (goto-char (point-min))
       (if (and (looking-at ".*\n")	; have one line at least
@@ -1242,8 +1243,8 @@ overriding the value of `url-gateway-method'.
 
 The return value of this function is the retrieval buffer."
   (cl-check-type url vector "Need a pre-parsed URL.")
-  (let* ((host (url-host (or url-using-proxy url)))
-	 (port (url-port (or url-using-proxy url)))
+  (let* (;; (host (url-host (or url-using-proxy url)))
+	 ;; (port (url-port (or url-using-proxy url)))
 	 (nsm-noninteractive (or url-request-noninteractive
 				 (and (boundp 'url-http-noninteractive)
 				      url-http-noninteractive)))
@@ -1337,7 +1338,7 @@ The return value of this function is the retrieval buffer."
                                               url-https-default-port)
                                           (url-host url-current-object))))
 
-(defun url-https-proxy-after-change-function (st nd length)
+(defun url-https-proxy-after-change-function (_st _nd _length)
   (let* ((process-buffer (current-buffer))
          (proc (get-buffer-process process-buffer)))
     (goto-char (point-min))
@@ -1461,7 +1462,7 @@ The return value of this function is the retrieval buffer."
 
 (defalias 'url-http-file-readable-p 'url-http-file-exists-p)
 
-(defun url-http-head-file-attributes (url &optional id-format)
+(defun url-http-head-file-attributes (url &optional _id-format)
   (let ((buffer (url-http-head url)))
     (when buffer
       (prog1
@@ -1476,7 +1477,7 @@ The return value of this function is the retrieval buffer."
            nil nil nil)          ;whether gid would change ; inode ; device.
         (kill-buffer buffer)))))
 
-(declare-function url-dav-file-attributes "url-dav" (url &optional id-format))
+(declare-function url-dav-file-attributes "url-dav" (url &optional _id-format))
 
 (defun url-http-file-attributes (url &optional id-format)
   (if (url-dav-supported-p url)
