@@ -145,6 +145,7 @@
                                      :buffer (generate-new-buffer "*foo*")
                                      :host "localhost"
                                      :nowait t
+                                     :family 'ipv4
                                      :service port)))
     (should (eq (process-status proc) 'connect))
     (while (eq (process-status proc) 'connect)
