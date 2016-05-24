@@ -30,6 +30,7 @@
 
 (defun add-release-logs (root version &optional date)
   "Add \"Version VERSION released.\" change log entries in ROOT.
+Also update the etc/HISTORY file.
 Root must be the root of an Emacs source tree.
 Optional argument DATE is the release date, default today."
   (interactive (list (read-directory-name "Emacs root directory: ")
@@ -42,6 +43,12 @@ Optional argument DATE is the release date, default today."
   (setq root (expand-file-name root))
   (unless (file-exists-p (expand-file-name "src/emacs.c" root))
     (user-error "%s doesn't seem to be the root of an Emacs source tree" root))
+  ;; FIXME this does not check that a ChangeLog that exists is not
+  ;; your own personal one.  Perhaps we should move any existing file
+  ;; and unconditionally call make ChangeLog?
+  ;; Or make ChangeLog CHANGELOG=temp and compare with the existing?
+  (unless (file-exists-p (expand-file-name "ChangeLog" root))
+    (user-error "No top-level ChangeLog - run \"make ChangeLog\" first"))
   (require 'add-log)
   (or date (setq date (funcall add-log-time-format nil t)))
   (let* ((logs (process-lines "find" root "-name" "ChangeLog"))
@@ -53,7 +60,14 @@ Optional argument DATE is the release date, default today."
     (dolist (log logs)
       (find-file log)
       (goto-char (point-min))
-      (insert entry))))
+      (insert entry)))
+  (let ((histfile (expand-file-name "etc/HISTORY" root)))
+    (unless (file-exists-p histfile)
+      (error "%s not present" histfile))
+    (find-file histfile)
+    (goto-char (point-max))
+    (search-backward "")
+    (insert (format "GNU Emacs %s (%s) emacs-%s\n\n" version date version))))
 
 (defun set-version-in-file (root file version rx)
   "Subroutine of `set-version' and `set-copyright'."
