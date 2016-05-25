@@ -37,14 +37,15 @@ General steps (for each step, check for possible errors):
       M-: (require 'authors) RET
       M-x authors RET
 
+    (This first updates the current versioned ChangeLog.N)
+
     If there is an "*Authors Errors*" buffer, address the issues.
-    If there was a ChangeLog typo, run "make change-history" and then
-    fix the newest ChangeLog history file.  If a file was deleted or
-    renamed, consider adding an appropriate entry to
-    authors-ignored-files, authors-valid-file-names, or
+    If there was a ChangeLog typo, fix the relevant entry.
+    If a file was deleted or renamed, consider adding an appropriate
+    entry to authors-ignored-files, authors-valid-file-names, or
     authors-renamed-files-alist.
 
-    If necessary, repeat M-x authors after making those changes.
+    If necessary, repeat 'C-u M-x authors' after making those changes.
     Save the "*Authors*" buffer as etc/AUTHORS.
     Check the diff looks reasonable.  Maybe add entries to
     authors-ambiguous-files or authors-aliases, and repeat.
@@ -85,8 +86,8 @@ General steps (for each step, check for possible errors):
 
 5.  Copy lisp/loaddefs.el to lisp/ldefs-boot.el.
 
-    Commit etc/AUTHORS, lisp/ldefs-boot.el, and the files changed
-    by M-x set-version.
+    Commit ChangeLog.N, etc/AUTHORS, lisp/ldefs-boot.el, and the
+    files changed by M-x set-version.
 
     If someone else made a commit between step 1 and now,
     you need to repeat from step 4 onwards.  (You can commit the files

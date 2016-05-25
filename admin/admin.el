@@ -43,12 +43,19 @@ Optional argument DATE is the release date, default today."
   (setq root (expand-file-name root))
   (unless (file-exists-p (expand-file-name "src/emacs.c" root))
     (user-error "%s doesn't seem to be the root of an Emacs source tree" root))
-  ;; FIXME this does not check that a ChangeLog that exists is not
-  ;; your own personal one.  Perhaps we should move any existing file
-  ;; and unconditionally call make ChangeLog?
-  ;; Or make ChangeLog CHANGELOG=temp and compare with the existing?
-  (unless (file-exists-p (expand-file-name "ChangeLog" root))
-    (user-error "No top-level ChangeLog - run \"make ChangeLog\" first"))
+  (let ((clog (expand-file-name "ChangeLog" root)))
+    (if (file-exists-p clog)
+        ;; Basic check that a ChangeLog that exists is not your personal one.
+        ;; TODO Perhaps we should move any existing file and unconditionally
+        ;; call make ChangeLog?  Or make ChangeLog CHANGELOG=temp and compare
+        ;; with the existing?
+        (with-temp-buffer
+          (insert-file-contents clog)
+          (or (re-search-forward "^[ \t]*Copyright.*Free Software" nil t)
+              (user-error "ChangeLog looks like a personal one - remove it?")))
+      (or
+       (zerop (call-process "make" nil nil nil "-C" root "ChangeLog"))
+       (error "Problem generating ChangeLog"))))
   (require 'add-log)
   (or date (setq date (funcall add-log-time-format nil t)))
   (let* ((logs (process-lines "find" root "-name" "ChangeLog"))
