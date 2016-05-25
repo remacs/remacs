@@ -749,6 +749,20 @@ the following variables: tex-font-script-display (how much to
 lower/raise); tex-suscript-height-ratio (how much smaller than
 normal); tex-suscript-height-minimum (minimum height).
 
+** Screen refresh is slow when there are special characters for which no suitable font is available
+
+If the display is too slow in refreshing when you scroll to a new
+region, or when you edit the buffer, it might be due to the fact that
+some characters cannot be displayed in the default font, and Emacs is
+spending too much time in looking for a suitable font to display them.
+
+You can suspect this if you have several characters that are displayed
+as small rectangles containing a hexadecimal code inside.
+
+The solution is to install the appropriate fonts on your machine. For
+instance if you are editing a text with a lot of math symbols, then
+installing a font like 'Symbola' should solve this problem.
+
 * Internationalization problems
 
 ** M-{ does not work on a Spanish PC keyboard.
