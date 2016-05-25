@@ -577,8 +577,8 @@
 ;;   only affected back ends were SCCS and RCS.
 ;;
 ;; - vc-stay-local-p and repository-hostname are no longer part
-;;   of the public API. The vc-stay-local configuration variable
-;;   remains but only affects the CVS back end.
+;;   of the public API. The vc-cvs-stay-local configuration variable
+;;   remains and only affects the CVS back end.
 ;;
 ;; - The init-revision function and the default-initial-revision
 ;;   variable are gone.  These have't made sense on anything shipped
