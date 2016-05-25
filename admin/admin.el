@@ -47,8 +47,9 @@ Optional argument DATE is the release date, default today."
   ;; your own personal one.  Perhaps we should move any existing file
   ;; and unconditionally call make ChangeLog?
   ;; Or make ChangeLog CHANGELOG=temp and compare with the existing?
-  (unless (file-exists-p (expand-file-name "ChangeLog" root))
-    (user-error "No top-level ChangeLog - run \"make ChangeLog\" first"))
+  (or (file-exists-p (expand-file-name "ChangeLog" root))
+      (zerop (call-process "make" nil nil nil "-C" root "ChangeLog"))
+      (error "Problem generating ChangeLog"))
   (require 'add-log)
   (or date (setq date (funcall add-log-time-format nil t)))
   (let* ((logs (process-lines "find" root "-name" "ChangeLog"))
