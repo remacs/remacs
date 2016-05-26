@@ -161,6 +161,12 @@
   ;; In case loaddefs hasn't been generated yet.
   (file-error (load "ldefs-boot.el")))
 
+(let ((new (make-hash-table :test 'equal)))
+  ;; Now that loaddefs has populated definition-prefixes, purify its contents.
+  (maphash (lambda (k v) (puthash (purecopy k) (purecopy v) new))
+           definition-prefixes)
+  (setq definition-prefixes new))
+
 (load "emacs-lisp/nadvice")
 (load "emacs-lisp/cl-preloaded")
 (load "minibuffer")            ;After loaddefs, for define-minor-mode.

@@ -183,10 +183,12 @@ expression, in which case we want to handle forms differently."
 	     (args (pcase car
                      ((or `defun `defmacro
                           `defun* `defmacro* `cl-defun `cl-defmacro
-                          `define-overloadable-function) (nth 2 form))
+                          `define-overloadable-function)
+                      (nth 2 form))
                      (`define-skeleton '(&optional str arg))
                      ((or `define-generic-mode `define-derived-mode
-                          `define-compilation-mode) nil)
+                          `define-compilation-mode)
+                      nil)
                      (_ t)))
 	     (body (nthcdr (or (function-get car 'doc-string-elt) 3) form))
 	     (doc (if (stringp (car body)) (pop body))))
@@ -202,7 +204,8 @@ expression, in which case we want to handle forms differently."
                                   define-global-minor-mode
                                   define-globalized-minor-mode
                                   easy-mmode-define-minor-mode
-                                  define-minor-mode)) t)
+                                  define-minor-mode))
+                     t)
                 (eq (car-safe (car body)) 'interactive))
            ,(if macrop ''macro nil))))
 
@@ -313,7 +316,7 @@ The variable `autoload-print-form-outbuf' specifies the buffer to
 put the output in."
   (cond
    ;; If the form is a sequence, recurse.
-   ((eq (car form) 'progn) (mapcar 'autoload-print-form (cdr form)))
+   ((eq (car form) 'progn) (mapcar #'autoload-print-form (cdr form)))
    ;; Symbols at the toplevel are meaningless.
    ((symbolp form) nil)
    (t
@@ -413,6 +416,16 @@ make it writable."
 (defun autoload-insert-section-header (outbuf autoloads load-name file time)
   "Insert the section-header line,
 which lists the file name and which functions are in it, etc."
+  ;; (cl-assert ;Make sure we don't insert it in the middle of another section.
+  ;;  (save-excursion
+  ;;    (or (not (re-search-backward
+  ;;              (concat "\\("
+  ;;                      (regexp-quote generate-autoload-section-header)
+  ;;                      "\\)\\|\\("
+  ;;                      (regexp-quote generate-autoload-section-trailer)
+  ;;                      "\\)")
+  ;;              nil t))
+  ;;        (match-end 2))))
   (insert generate-autoload-section-header)
   (prin1 `(autoloads ,autoloads ,load-name ,file ,time)
 	 outbuf)
@@ -471,7 +484,7 @@ which lists the file name and which functions are in it, etc."
         ;; without checking its content.  This makes it generate wrong load
         ;; names for cases like lisp/term which is not added to load-path.
         (setq dir (expand-file-name (pop names) dir)))
-       (t (setq name (mapconcat 'identity names "/")))))
+       (t (setq name (mapconcat #'identity names "/")))))
     (if (string-match "\\.elc?\\(\\.\\|\\'\\)" name)
         (substring name 0 (match-beginning 0))
       name)))
@@ -487,8 +500,93 @@ Return non-nil in the case where no autoloads were added at point."
   (let ((generated-autoload-file buffer-file-name))
     (autoload-generate-file-autoloads file (current-buffer))))
 
-(defvar print-readably)
+(defun autoload--split-prefixes-1 (strs)
+  (let ((prefixes ()))
+    (dolist (str strs)
+      (string-match "\\`[^-:/_]*[-:/_]*" str)
+      (let* ((prefix (match-string 0 str))
+             (tail (substring str (match-end 0)))
+             (cell (assoc prefix prefixes)))
+        (cond
+         ((null cell) (push (list prefix tail) prefixes))
+         ((equal (cadr cell) tail) nil)
+         (t (setcdr cell (cons tail (cdr cell)))))))
+    prefixes))
 
+(defun autoload--split-prefixes (prefixes)
+  (apply #'nconc
+         (mapcar (lambda (cell)
+                   (let ((prefix (car cell)))
+                     (mapcar (lambda (cell)
+                               (cons (concat prefix (car cell)) (cdr cell)))
+                             (autoload--split-prefixes-1 (cdr cell)))))
+                 prefixes)))
+
+(defvar autoload-compute-prefixes t
+  "If non-nil, autoload will add code to register the prefixes used in a file.
+Standard prefixes won't be registered anyway.  I.e. if a file \"foo.el\" defines
+variables or functions that use \"foo-\" as prefix, that will not be registered.
+But all other prefixes will be included.")
+
+(defconst autoload-defs-autoload-max-size 5
+  "Target length of the list of definition prefixes per file.
+If set too small, the prefixes will be too generic (i.e. they'll use little
+memory, we'll end up looking in too many files when we need a particular
+prefix), and if set too large, they will be too specific (i.e. they will
+cost more memory use).")
+
+(defvar autoload-popular-prefixes nil)
+
+(defun autoload--make-defs-autoload (defs file)
+  ;; Remove the defs that obey the rule that file foo.el (or
+  ;; foo-mode.el) uses "foo-" as prefix.
+  ;; FIXME: help--symbol-completion-table still doesn't know how to use
+  ;; the rule that file foo.el (or foo-mode.el) uses "foo-" as prefix.
+  ;;(let ((prefix
+  ;;       (concat (substring file 0 (string-match "-mode\\'" file)) "-")))
+  ;;  (dolist (def (prog1 defs (setq defs nil)))
+  ;;    (unless (string-prefix-p prefix def)
+  ;;      (push def defs))))
+
+  ;; Then compute a small set of prefixes that cover all the
+  ;; remaining definitions.
+  (let ((prefixes (autoload--split-prefixes-1 defs))
+        (again t))
+    ;; (message "Initial prefixes %s : %S" file (mapcar #'car prefixes))
+    (while again
+      (setq again nil)
+      (let ((newprefixes
+             (sort
+              (mapcar (lambda (cell)
+                        (cons cell
+                              (autoload--split-prefixes-1 (cdr cell))))
+                      prefixes)
+              (lambda (x y) (< (length (cdr x)) (length (cdr y)))))))
+        (setq prefixes nil)
+        (while newprefixes
+          (let ((x (pop newprefixes)))
+            (if (or (equal '("") (cdar x))
+                    (and (cddr x)
+                         (not (member (caar x)
+                                      autoload-popular-prefixes))
+                         (> (+ (length prefixes) (length newprefixes)
+                               (length (cdr x)))
+                            autoload-defs-autoload-max-size)))
+                ;; Nothing to split or would split too deep.
+                (push (car x) prefixes)
+              ;; (message "Expand %S to %S" (caar x) (cdr x))
+              (setq again t)
+              (setq prefixes
+                    (nconc (mapcar (lambda (cell)
+                                     (cons (concat (caar x)
+                                                   (car cell))
+                                           (cdr cell)))
+                                   (cdr x))
+                           prefixes)))))))
+    ;; (message "Final prefixes %s : %S" file (mapcar #'car prefixes))
+    (when prefixes
+      `(if (fboundp 'register-definition-prefixes)
+           (register-definition-prefixes ,file ',(mapcar #'car prefixes))))))
 
 (defun autoload--setup-output (otherbuf outbuf absfile load-name)
   (let ((outbuf
@@ -566,11 +664,11 @@ FILE's modification time."
       (let (load-name
             (print-length nil)
             (print-level nil)
-            (print-readably t)           ; This does something in Lucid Emacs.
             (float-output-format nil)
             (visited (get-file-buffer file))
             (otherbuf nil)
             (absfile (expand-file-name file))
+          (defs '())
             ;; nil until we found a cookie.
             output-start)
         (when
@@ -629,13 +727,73 @@ FILE's modification time."
                           ;; Don't read the comment.
                           (forward-line 1))
                          (t
+                  ;; Avoid (defvar <foo>) by requiring a trailing space.
+                  ;; Also, ignore this prefix business
+                  ;; for ;;;###tramp-autoload and friends.
+                  (when (and (equal generate-autoload-cookie ";;;###autoload")
+                             (looking-at "(\\(def[^ ]+\\) ['(]*\\([^' ()\"\n]+\\)[\n \t]")
+                             (not (member
+                                   (match-string 1)
+                                   '("define-obsolete-function-alias"
+                                     "define-obsolete-variable-alias"
+                                     "define-category" "define-key"
+                                     "defgroup" "defface" "defadvice"
+                                     ;; Hmm... this is getting ugly:
+                                     "define-widget"
+                                     "defun-rcirc-command"))))
+                    (push (match-string 2) defs))
                           (forward-sexp 1)
                           (forward-line 1))))))
+
+          (when (and autoload-compute-prefixes defs)
+            ;; This output needs to always go in the main loaddefs.el,
+            ;; regardless of generated-autoload-file.
+            ;; FIXME: the files that don't have autoload cookies but
+            ;; do have definitions end up listed twice in loaddefs.el:
+            ;; once for their register-definition-prefixes and once in
+            ;; the list of "files without any autoloads".
+            (let ((form (autoload--make-defs-autoload defs load-name)))
+              (cond
+               ((null form))             ;All defs obey the default rule, yay!
+               ((not otherbuf)
+                (unless output-start
+                  (setq output-start (autoload--setup-output
+                                      nil outbuf absfile load-name)))
+                (let ((autoload-print-form-outbuf
+                       (marker-buffer output-start)))
+                  (autoload-print-form form)))
+               (t
+                (let* ((other-output-start
+                        ;; To force the output to go to the main loaddefs.el
+                        ;; rather than to generated-autoload-file,
+                        ;; there are two cases: if outbuf is non-nil,
+                        ;; then passing otherbuf=nil is enough, but if
+                        ;; outbuf is nil, that won't cut it, so we
+                        ;; locally bind generated-autoload-file.
+                        (let ((generated-autoload-file
+                               (default-value 'generated-autoload-file)))
+                          (autoload--setup-output nil outbuf absfile load-name)))
+                       (autoload-print-form-outbuf
+                        (marker-buffer other-output-start)))
+                  (autoload-print-form form)
+                  (with-current-buffer (marker-buffer other-output-start)
+                    (save-excursion
+                      ;; Insert the section-header line which lists
+                      ;; the file name and which functions are in it, etc.
+                      (goto-char other-output-start)
+                      (let ((relfile (file-relative-name absfile)))
+                        (autoload-insert-section-header
+                         (marker-buffer other-output-start)
+                         "actual autoloads are elsewhere" load-name relfile
+                         (nth 5 (file-attributes absfile)))
+                        (insert ";;; Generated autoloads from " relfile "\n")))
+                    (insert generate-autoload-section-trailer)))))))
 
                   (when output-start
                     (let ((secondary-autoloads-file-buf
                            (if otherbuf (current-buffer))))
                       (with-current-buffer (marker-buffer output-start)
+                        (cl-assert (> (point) output-start))
                         (save-excursion
                           ;; Insert the section-header line which lists the file name
                           ;; and which functions are in it, etc.
@@ -827,12 +985,13 @@ write its autoloads into the specified file instead."
 		     (dolist (suf (get-load-suffixes))
 		       (unless (string-match "\\.elc" suf) (push suf tmp)))
                      (concat "^[^=.].*" (regexp-opt tmp t) "\\'")))
-	 (files (apply 'nconc
+	 (files (apply #'nconc
 		       (mapcar (lambda (dir)
 				 (directory-files (expand-file-name dir)
 						  t files-re))
 			       dirs)))
-         (done ())
+         (done ())                      ;Files processed; to remove duplicates.
+         (changed nil)                  ;Non-nil if some change occured.
 	 (last-time)
          ;; Files with no autoload cookies or whose autoloads go to other
          ;; files because of file-local autoload-generated-file settings.
@@ -850,7 +1009,7 @@ write its autoloads into the specified file instead."
       (save-excursion
 	;; Canonicalize file names and remove the autoload file itself.
 	(setq files (delete (file-relative-name buffer-file-name)
-			    (mapcar 'file-relative-name files)))
+			    (mapcar #'file-relative-name files)))
 
 	(goto-char (point-min))
 	(while (search-forward generate-autoload-section-header nil t)
@@ -878,6 +1037,7 @@ write its autoloads into the specified file instead."
                        ;; If the file is actually excluded.
                        (member (expand-file-name file) autoload-excludes))
                    ;; Remove the obsolete section.
+                   (setq changed t)
 		   (autoload-remove-section (match-beginning 0)))
 		  ((not (time-less-p (let ((oldtime (nth 4 form)))
 				       (if (member oldtime
@@ -889,6 +1049,7 @@ write its autoloads into the specified file instead."
 		   ;; File hasn't changed.
 		   nil)
 		  (t
+                   (setq changed t)
                    (autoload-remove-section (match-beginning 0))
                    (if (autoload-generate-file-autoloads
                         ;; Passing `current-buffer' makes it insert at point.
@@ -908,7 +1069,8 @@ write its autoloads into the specified file instead."
 		  (autoload-generate-file-autoloads file nil buffer-file-name))
 	    (push file no-autoloads)
 	    (if (time-less-p no-autoloads-time file-time)
-		(setq no-autoloads-time file-time)))))
+		(setq no-autoloads-time file-time)))
+           (t (setq changed t))))
 
 	(when no-autoloads
 	  ;; Sort them for better readability.
@@ -922,8 +1084,12 @@ write its autoloads into the specified file instead."
 						   autoload--non-timestamp))
 	  (insert generate-autoload-section-trailer)))
 
-      (let ((version-control 'never))
-	(save-buffer))
+      ;; Don't modify the file if its content has not been changed, so `make'
+      ;; dependencies don't trigger unnecessarily.
+      (when changed
+        (let ((version-control 'never))
+          (save-buffer)))
+
       ;; In case autoload entries were added to other files because of
       ;; file-local autoload-generated-file settings.
       (autoload-save-buffers))))
@@ -955,7 +1121,7 @@ should be non-nil)."
 		(push (expand-file-name file) autoload-excludes)))))))
   (let ((args command-line-args-left))
     (setq command-line-args-left nil)
-    (apply 'update-directory-autoloads args)))
+    (apply #'update-directory-autoloads args)))
 
 (provide 'autoload)
 
