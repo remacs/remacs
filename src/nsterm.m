@@ -1612,7 +1612,12 @@ x_iconify_frame (struct frame *f)
       [[view window] orderOut: NSApp];
       [[view window] setFrame: t display: NO];
     }
+
+  /* Processing input while Emacs is being minimized can cause a
+     crash, so block it for the duration. */
+  block_input();
   [[view window] miniaturize: NSApp];
+  unblock_input();
 }
 
 /* Free X resources of frame F.  */
