@@ -62,7 +62,7 @@
 (defvar moz-repl-name)
 (defvar ido-cur-list)
 (defvar electric-layout-rules)
-(declare-function ido-mode "ido" (arg))
+(declare-function ido-mode "ido" (&optional arg))
 (declare-function inferior-moz-process "ext:mozrepl" ())
 
 ;;; Constants

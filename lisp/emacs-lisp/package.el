@@ -303,7 +303,7 @@ contrast, `package-user-dir' contains packages for personal use."
   :version "24.1")
 
 (declare-function epg-find-configuration "epg-config"
-                  (protocol &optional force))
+                  (protocol &optional no-cache program-alist))
 
 (defcustom package-check-signature
   (if (and (require 'epg-config)
