@@ -31,9 +31,9 @@
 
 ;;;; Function keys
 
-(declare-function set-message-beep "w32fns.c")
-(declare-function w32-get-locale-info "w32proc.c")
-(declare-function w32-get-valid-locale-ids "w32proc.c")
+(declare-function set-message-beep "w32fns.c" (sound))
+(declare-function w32-get-locale-info "w32proc.c" (lcid &optional longform))
+(declare-function w32-get-valid-locale-ids "w32proc.c" ())
 
 ;; Map all versions of a filename (8.3, longname, mixed case) to the
 ;; same buffer.
