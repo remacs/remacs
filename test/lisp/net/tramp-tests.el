@@ -1380,8 +1380,10 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 
       (unwind-protect
 	  (progn
-	    ;; Method and host name in completion mode.
-	    (when (tramp-completion-mode-p)
+	    ;; Method and host name in completion mode.  This kind of
+	    ;; completion does not work on MS Windows.
+	    (when (and (tramp-completion-mode-p)
+		       (not (memq system-type '(cygwin windows-nt))))
 	      (unless (zerop (length method))
 		(should
 		 (member

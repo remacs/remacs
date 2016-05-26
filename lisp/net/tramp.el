@@ -120,9 +120,7 @@ This setting has precedence over `auto-save-file-name-transforms'."
 		 (directory :tag "Auto save directory name")))
 
 (defcustom tramp-encoding-shell
-  (if (boundp 'w32-shell-name)
-      (symbol-value 'w32-shell-name)
-    "/bin/sh")
+  (or (tramp-compat-funcall 'w32-shell-name) "/bin/sh")
   "Use this program for encoding and decoding commands on the local host.
 This shell is used to execute the encoding and decoding command on the
 local host, so if you want to use `~' in those commands, you should
@@ -145,14 +143,15 @@ use for the remote host."
   :group 'tramp
   :type '(file :must-match t))
 
-(defcustom tramp-encoding-command-switch (if (boundp 'w32-shell-name) "/c" "-c")
+(defcustom tramp-encoding-command-switch
+  (if (tramp-compat-funcall 'w32-shell-dos-semantics) "/c" "-c")
   "Use this switch together with `tramp-encoding-shell' for local commands.
 See the variable `tramp-encoding-shell' for more information."
   :group 'tramp
   :type 'string)
 
 (defcustom tramp-encoding-command-interactive
-  (unless (boundp 'w32-shell-name) "-i")
+  (unless (tramp-compat-funcall 'w32-shell-dos-semantics) "-i")
   "Use this switch together with `tramp-encoding-shell' for interactive shells.
 See the variable `tramp-encoding-shell' for more information."
   :version "24.1"
