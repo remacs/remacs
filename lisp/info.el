@@ -189,7 +189,7 @@ A header-line does not scroll with the rest of the buffer."
 	       configure-info-directory)))
 	 (prefixes
 	  ;; Directory trees in which to look for info subdirectories
-	  (prune-directory-list '("/usr/local/" "/usr/" "/opt/" "/")))
+	  (prune-directory-list '("/usr/local/" "/usr/" "/opt/")))
 	 (suffixes
 	  ;; Subdirectories in each directory tree that may contain info
 	  ;; directories.
