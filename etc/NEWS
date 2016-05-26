@@ -253,6 +253,11 @@ details.
 *** New setf-able function to access and set image parameters is
 provided: 'image-property'.
 
+---
+** The default 'Info-default-directory-list' no longer checks some obsolete
+directory suffixes (gnu, gnu/lib, gnu/lib/emacs, emacs, lib, lib/emacs)
+when searching for info directories.
+
 +++
 ** The commands that add ChangeLog entries now prefer a VCS root directory
 for the ChangeLog file, if none already exists.  Customize
