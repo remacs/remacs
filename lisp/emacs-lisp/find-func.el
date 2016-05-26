@@ -357,8 +357,10 @@ signal an error.
 
 If VERBOSE is non-nil, and FUNCTION is an alias, display a
 message about the whole chain of aliases."
-  (let ((def (if (symbolp function)
-                 (find-function-advised-original function)))
+  (let ((def (when (symbolp function)
+               (or (fboundp function)
+                   (signal 'void-function (list function)))
+               (find-function-advised-original function)))
         aliases)
     ;; FIXME for completeness, it might be nice to print something like:
     ;; foo (which is advised), which is an alias for bar (which is advised).
