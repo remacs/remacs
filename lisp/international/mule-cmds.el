@@ -2733,8 +2733,8 @@ See also `locale-charset-language-names', `locale-language-names',
     ;; Default to A4 paper if we're not in a C, POSIX or US locale.
     ;; (See comments in Flocale_info.)
     (unless frame
-      (let ((locale locale)
-	    (paper (locale-info 'paper)))
+      (let ((paper (locale-info 'paper))
+            locale)
 	(if paper
 	    ;; This will always be null at the time of writing.
 	    (cond
