@@ -1,4 +1,4 @@
-;;; character-fold.el --- match unicode to similar ASCII -*- lexical-binding: t; -*-
+;;; char-fold.el --- match unicode to similar ASCII -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2015-2016 Free Software Foundation, Inc.
 
@@ -22,12 +22,12 @@
 
 ;;; Code:
 
-(eval-and-compile (put 'character-fold-table 'char-table-extra-slots 1))
+(eval-and-compile (put 'char-fold-table 'char-table-extra-slots 1))
 
-(defconst character-fold-table
+(defconst char-fold-table
   (eval-when-compile
-    (let ((equiv (make-char-table 'character-fold-table))
-          (equiv-multi (make-char-table 'character-fold-table))
+    (let ((equiv (make-char-table 'char-fold-table))
+          (equiv-multi (make-char-table 'char-fold-table))
           (table (unicode-property-table-internal 'decomposition)))
       (set-char-table-extra-slot equiv 0 equiv-multi)
 
@@ -115,7 +115,7 @@
        equiv)
       equiv))
   "Used for folding characters of the same group during search.
-This is a char-table with the `character-fold-table' subtype.
+This is a char-table with the `char-fold-table' subtype.
 
 Let us refer to the character in question by char-x.
 Each entry is either nil (meaning char-x only matches literally)
@@ -136,18 +136,18 @@ For instance, the default alist for ?f includes:
 
 Exceptionally for the space character (32), ALIST is ignored.")
 
-(defun character-fold--make-space-string (n)
+(defun char-fold--make-space-string (n)
   "Return a string that matches N spaces."
   (format "\\(?:%s\\|%s\\)"
           (make-string n ?\s)
           (apply #'concat
-                 (make-list n (or (aref character-fold-table ?\s) " ")))))
+                 (make-list n (or (aref char-fold-table ?\s) " ")))))
 
 ;;;###autoload
-(defun character-fold-to-regexp (string &optional _lax from)
-  "Return a regexp matching anything that character-folds into STRING.
+(defun char-fold-to-regexp (string &optional _lax from)
+  "Return a regexp matching anything that char-folds into STRING.
 Any character in STRING that has an entry in
-`character-fold-table' is replaced with that entry (which is a
+`char-fold-table' is replaced with that entry (which is a
 regexp) and other characters are `regexp-quote'd.
 
 If the resulting regexp would be too long for Emacs to handle,
@@ -156,7 +156,7 @@ just return the result of calling `regexp-quote' on STRING.
 FROM is for internal use.  It specifies an index in the STRING
 from which to start."
   (let* ((spaces 0)
-         (multi-char-table (char-table-extra-slot character-fold-table 0))
+         (multi-char-table (char-table-extra-slot char-fold-table 0))
          (i (or from 0))
          (end (length string))
          (out nil))
@@ -172,9 +172,9 @@ from which to start."
       (pcase (aref string i)
         (`?\s (setq spaces (1+ spaces)))
         (c (when (> spaces 0)
-             (push (character-fold--make-space-string spaces) out)
+             (push (char-fold--make-space-string spaces) out)
              (setq spaces 0))
-           (let ((regexp (or (aref character-fold-table c)
+           (let ((regexp (or (aref char-fold-table c)
                              (regexp-quote (string c))))
                  ;; Long string.  The regexp would probably be too long.
                  (alist (unless (> end 50)
@@ -206,13 +206,13 @@ from which to start."
                                        (let ((length (car entry))
                                              (suffix-regexp (cdr entry)))
                                          (concat suffix-regexp
-                                                 (character-fold-to-regexp subs nil length))))
+                                                 (char-fold-to-regexp subs nil length))))
                                      `((0 . ,regexp) . ,matched-entries) "\\|")
                           "\\)"))))
                    out))))
       (setq i (1+ i)))
     (when (> spaces 0)
-      (push (character-fold--make-space-string spaces) out))
+      (push (char-fold--make-space-string spaces) out))
     (let ((regexp (apply #'concat (nreverse out))))
       ;; Limited by `MAX_BUF_SIZE' in `regex.c'.
       (if (> (length regexp) 5000)
@@ -221,22 +221,22 @@ from which to start."
 
 
 ;;; Commands provided for completeness.
-(defun character-fold-search-forward (string &optional bound noerror count)
-  "Search forward for a character-folded version of STRING.
-STRING is converted to a regexp with `character-fold-to-regexp',
+(defun char-fold-search-forward (string &optional bound noerror count)
+  "Search forward for a char-folded version of STRING.
+STRING is converted to a regexp with `char-fold-to-regexp',
 which is searched for with `re-search-forward'.
 BOUND NOERROR COUNT are passed to `re-search-forward'."
   (interactive "sSearch: ")
-  (re-search-forward (character-fold-to-regexp string) bound noerror count))
+  (re-search-forward (char-fold-to-regexp string) bound noerror count))
 
-(defun character-fold-search-backward (string &optional bound noerror count)
-  "Search backward for a character-folded version of STRING.
-STRING is converted to a regexp with `character-fold-to-regexp',
+(defun char-fold-search-backward (string &optional bound noerror count)
+  "Search backward for a char-folded version of STRING.
+STRING is converted to a regexp with `char-fold-to-regexp',
 which is searched for with `re-search-backward'.
 BOUND NOERROR COUNT are passed to `re-search-backward'."
   (interactive "sSearch: ")
-  (re-search-backward (character-fold-to-regexp string) bound noerror count))
+  (re-search-backward (char-fold-to-regexp string) bound noerror count))
 
-(provide 'character-fold)
+(provide 'char-fold)
 
-;;; character-fold.el ends here
+;;; char-fold.el ends here

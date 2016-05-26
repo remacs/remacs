@@ -828,12 +828,12 @@ The file transfer protocol.  @xref{file/ftp}.
 
 @item ssh
 @cindex ssh
-The secure shell protocol.  @xref{Inline Methods,,, tramp, The Tramp
+The secure shell protocol.  @xref{Inline methods,,, tramp, The Tramp
 Manual}.
 
 @item scp
 @cindex scp
-The secure file copy protocol.  @xref{External Methods,,, tramp, The
+The secure file copy protocol.  @xref{External methods,,, tramp, The
 Tramp Manual}.
 
 @item rsync

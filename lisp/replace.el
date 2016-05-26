@@ -33,7 +33,7 @@
   :type 'boolean
   :group 'matching)
 
-(defcustom replace-character-fold nil
+(defcustom replace-char-fold nil
   "Non-nil means replacement commands should do character folding in matches.
 This means, for instance, that \\=' will match a large variety of
 unicode quotes.
@@ -324,7 +324,7 @@ If `replace-lax-whitespace' is non-nil, a space or spaces in the string
 to be replaced will match a sequence of whitespace chars defined by the
 regexp in `search-whitespace-regexp'.
 
-If `replace-character-fold' is non-nil, matching uses character folding,
+If `replace-char-fold' is non-nil, matching uses character folding,
 i.e. it ignores diacritics and other differences between equivalent
 character strings.
 
@@ -383,7 +383,7 @@ If `replace-regexp-lax-whitespace' is non-nil, a space or spaces in the regexp
 to be replaced will match a sequence of whitespace chars defined by the
 regexp in `search-whitespace-regexp'.
 
-This function is not affected by `replace-character-fold'.
+This function is not affected by `replace-char-fold'.
 
 Third arg DELIMITED (prefix arg if interactive), if non-nil, means replace
 only matches surrounded by word boundaries.  A negative prefix arg means
@@ -474,7 +474,7 @@ If `replace-regexp-lax-whitespace' is non-nil, a space or spaces in the regexp
 to be replaced will match a sequence of whitespace chars defined by the
 regexp in `search-whitespace-regexp'.
 
-This function is not affected by `replace-character-fold'.
+This function is not affected by `replace-char-fold'.
 
 Third arg DELIMITED (prefix arg if interactive), if non-nil, means replace
 only matches that are surrounded by word boundaries.
@@ -568,7 +568,7 @@ If `replace-lax-whitespace' is non-nil, a space or spaces in the string
 to be replaced will match a sequence of whitespace chars defined by the
 regexp in `search-whitespace-regexp'.
 
-If `replace-character-fold' is non-nil, matching uses character folding,
+If `replace-char-fold' is non-nil, matching uses character folding,
 i.e. it ignores diacritics and other differences between equivalent
 character strings.
 
@@ -623,7 +623,7 @@ If `replace-regexp-lax-whitespace' is non-nil, a space or spaces in the regexp
 to be replaced will match a sequence of whitespace chars defined by the
 regexp in `search-whitespace-regexp'.
 
-This function is not affected by `replace-character-fold'
+This function is not affected by `replace-char-fold'
 
 In Transient Mark mode, if the mark is active, operate on the contents
 of the region.  Otherwise, operate from point to the end of the buffer's
@@ -2055,9 +2055,9 @@ It is called with three arguments, as if it were
   ;; used after `recursive-edit' might override them.
   (let* ((isearch-regexp regexp-flag)
 	 (isearch-regexp-function (or delimited-flag
-                           (and replace-character-fold
+                           (and replace-char-fold
                                 (not regexp-flag)
-                                #'character-fold-to-regexp)))
+                                #'char-fold-to-regexp)))
 	 (isearch-lax-whitespace
 	  replace-lax-whitespace)
 	 (isearch-regexp-lax-whitespace

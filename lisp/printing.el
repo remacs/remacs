@@ -5673,7 +5673,7 @@ If menu binding was not done, calls `pr-menu-bind'."
   (or (listp switches)
       (error "%S should have a list of strings" mess))
   (lpr-flatten-list			; dynamic evaluation
-   (mapcar 'ps-eval-switch switches)))
+   (mapcar #'lpr-eval-switch switches)))
 
 
 (defun pr-ps-preview (kind n-up filename mess)

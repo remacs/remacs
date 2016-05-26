@@ -1110,11 +1110,11 @@ as many other symbols like U+249C (PARENTHESIZED LATIN SMALL LETTER
 A).
 
 Character folding is enabled by customizing 'search-default-mode' to
-the value 'character-fold-to-regexp'.  You can also toggle character
+the value 'char-fold-to-regexp'.  You can also toggle character
 folding in the middle of a search by typing 'M-s ''.
 
 'query-replace' honors character folding if the new variable
-'replace-character-fold' is customized to a non-nil value.
+'replace-char-fold' is customized to a non-nil value.
 
 +++
 *** New user option 'search-default-mode'.
@@ -1124,9 +1124,9 @@ value, nil specifies that Isearch does literal searches (however,
 as in previous Emacs versions).
 
 +++
-*** New function 'character-fold-to-regexp' can be used
+*** New function 'char-fold-to-regexp' can be used
 by searching commands to produce a regexp matching anything that
-character-folds into STRING.
+char-folds into STRING.
 
 +++
 *** The new 'M-s M-w' key binding uses eww to search the web for the

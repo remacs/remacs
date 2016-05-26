@@ -222,7 +222,7 @@ It is nil if none yet.")
 Default value, nil, means edit the string instead."
   :type 'boolean)
 
-(autoload 'character-fold-to-regexp "character-fold")
+(autoload 'char-fold-to-regexp "char-fold")
 
 (defcustom search-default-mode nil
   "Default mode to use when starting isearch.
@@ -236,7 +236,7 @@ isearch).
 If a function, use that function as an `isearch-regexp-function'.
 Example functions (and the keys to toggle them during isearch)
 are `word-search-regexp' \(`\\[isearch-toggle-word]'), `isearch-symbol-regexp'
-\(`\\[isearch-toggle-symbol]'), and `character-fold-to-regexp' \(`\\[isearch-toggle-character-fold]')."
+\(`\\[isearch-toggle-symbol]'), and `char-fold-to-regexp' \(`\\[isearch-toggle-char-fold]')."
   ;; :type is set below by `isearch-define-mode-toggle'.
   :type '(choice (const :tag "Literal search" nil)
                  (const :tag "Regexp search" t)
@@ -510,6 +510,7 @@ This is like `describe-bindings', but displays only Isearch keys."
     ;; People expect to be able to paste with the mouse.
     (define-key map [mouse-2] #'isearch-mouse-2)
     (define-key map [down-mouse-2] nil)
+    (define-key map [xterm-paste] #'isearch-xterm-paste)
 
     ;; Some bindings you may want to put in your isearch-mode-hook.
     ;; Suggest some alternates...
@@ -718,7 +719,7 @@ Type \\[isearch-toggle-invisible] to toggle search in invisible text.
 Type \\[isearch-toggle-regexp] to toggle regular-expression mode.
 Type \\[isearch-toggle-word] to toggle word mode.
 Type \\[isearch-toggle-symbol] to toggle symbol mode.
-Type \\[isearch-toggle-character-fold] to toggle character folding.
+Type \\[isearch-toggle-char-fold] to toggle character folding.
 
 Type \\[isearch-toggle-lax-whitespace] to toggle whitespace matching.
 In incremental searches, a space or spaces normally matches any whitespace
@@ -1546,9 +1547,9 @@ The command then executes BODY and updates the isearch prompt."
 Turning on word search turns off regexp mode.")
 (isearch-define-mode-toggle symbol "_" isearch-symbol-regexp "\
 Turning on symbol search turns off regexp mode.")
-(isearch-define-mode-toggle character-fold "'" character-fold-to-regexp "\
+(isearch-define-mode-toggle char-fold "'" char-fold-to-regexp "\
 Turning on character-folding turns off regexp mode.")
-(put 'character-fold-to-regexp 'isearch-message-prefix "char-fold ")
+(put 'char-fold-to-regexp 'isearch-message-prefix "char-fold ")
 
 (isearch-define-mode-toggle regexp "r" nil nil
   (setq isearch-regexp (not isearch-regexp))
@@ -2000,6 +2001,13 @@ is bound to outside of Isearch."
 	(isearch-yank-x-selection)
       (when (functionp binding)
 	(call-interactively binding)))))
+
+(declare-function xterm--pasted-text "term/xterm" ())
+
+(defun isearch-xterm-paste ()
+  "Pull terminal paste into search string."
+  (interactive)
+  (isearch-yank-string (xterm--pasted-text)))
 
 (defun isearch-yank-internal (jumpform)
   "Pull the text from point to the point reached by JUMPFORM.

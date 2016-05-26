@@ -1163,7 +1163,7 @@ This function also sets `desktop-dirname' to nil."
   "Restore the state of a set of frames.
 This function depends on the value of `desktop-saved-frameset'
 being set (usually, by reading it from the desktop)."
-  (when (desktop-restoring-frameset-p)
+  (when (and (display-graphic-p) (desktop-restoring-frameset-p))
     (frameset-restore desktop-saved-frameset
 		      :reuse-frames (eq desktop-restore-reuses-frames t)
 		      :cleanup-frames (not (eq desktop-restore-reuses-frames 'keep))
@@ -1634,15 +1634,8 @@ If there are no buffers left to create, kill the timer."
         (setq command-line-args (delete key command-line-args))
         (desktop-save-mode 0)))
     (when desktop-save-mode
-      ;; People don't expect emacs -nw, or --daemon,
-      ;; to create graphical frames (bug#17693).
-      ;; TODO perhaps there should be a separate value
-      ;; for desktop-restore-frames to control this startup behavior?
-      (let ((desktop-restore-frames (and desktop-restore-frames
-                                         initial-window-system
-                                         (not (daemonp)))))
-        (desktop-read)
-        (setq inhibit-startup-screen t)))))
+      (desktop-read)
+      (setq inhibit-startup-screen t))))
 
 (provide 'desktop)
 

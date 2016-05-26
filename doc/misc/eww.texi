@@ -261,7 +261,7 @@ variables @code{shr-color-visible-distance-min} and
   In addition to maintaining the history at run-time, EWW will also
 save the partial state of its buffers (the URIs and the titles of the
 pages visited) in the desktop file if one is used.  @xref{Saving Emacs
-Sessions, , emacs, The GNU Emacs Manual}.
+Sessions,,, emacs, The GNU Emacs Manual}.
 
 @vindex eww-desktop-remove-duplicates
   EWW history may sensibly contain multiple entries for the same page

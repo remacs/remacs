@@ -552,7 +552,7 @@
 ;;   argument, since on no system since RCS has setting the initial
 ;;   revision been even possible, let alone sane.
 ;;
-;;   INCOMPATIBLE CHANGE: In older versions of the API, vc-diff did
+;; - INCOMPATIBLE CHANGE: In older versions of the API, vc-diff did
 ;;   not take an async-mode flag as a fourth optional argument.  (This
 ;;   change eliminated a particularly ugly global.)
 ;;
@@ -563,12 +563,12 @@
 ;;   SVN.)
 ;;
 ;; - INCOMPATIBLE CHANGE: The old fourth 'default-state' argument of
-;;   vc-dir-status-files is gone; none of the back ends actually used it.
+;;   dir-status-files is gone; none of the back ends actually used it.
 ;;
-;; - vc-dir-status is no longer a public method; it has been replaced
-;;   by vc-dir-status-files.
+;; - dir-status is no longer a public method; it has been replaced by
+;;   dir-status-files.
 ;;
-;; - vc-state-heuristic is no longer a public method (the CVS backend
+;; - state-heuristic is no longer a public method (the CVS backend
 ;;   retains it as a private one).
 ;;
 ;; - the vc-mistrust-permissions configuration variable is gone; the
@@ -577,8 +577,8 @@
 ;;   only affected back ends were SCCS and RCS.
 ;;
 ;; - vc-stay-local-p and repository-hostname are no longer part
-;;   of the public API. The vc-stay-local configuration variable
-;;   remains but only affects the CVS back end.
+;;   of the public API. The vc-cvs-stay-local configuration variable
+;;   remains and only affects the CVS back end.
 ;;
 ;; - The init-revision function and the default-initial-revision
 ;;   variable are gone.  These have't made sense on anything shipped

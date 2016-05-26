@@ -2677,9 +2677,10 @@ FRAME 0 means change the face on all frames, and change the default
     {
       if (NILP (frame))
 	frame = selected_frame;
-      f = XFRAME (frame);
 
       CHECK_LIVE_FRAME (frame);
+      f = XFRAME (frame);
+
       lface = lface_from_face_name (f, face, false);
 
       /* If a frame-local face doesn't exist yet, create one.  */

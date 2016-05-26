@@ -3455,9 +3455,18 @@ highlighted range in the spreadsheet."
     (setq cell (or cell (ses-get-cell row col))
 	  old-name (ses-cell-symbol cell)
 	  new-rowcol (ses-decode-cell-symbol (symbol-name new-name)))
+    ;; when ses-rename-cell is called interactively, then 'sym' is the
+    ;; 'cursor-intangible' property of text at cursor position, while
+    ;; 'old-name' is the symbol stored in array cell at coordinate
+    ;; 'rowcol' corresponding to 'ses-cell' property of symbol
+    ;; 'sym'. Both must be the same.
+    (unless (eq sym old-name)
+      (error "Spreadsheet is broken, both symbols %S and %S refering to cell (%d,%d)" sym old-name row col))
     (if new-rowcol
+        ;; the new name is of A1 type, so we test that the coordinate
+        ;; inferred from new name
 	(if (equal new-rowcol rowcol)
-	  (put new-name 'ses-cell rowcol)
+            (put new-name 'ses-cell rowcol)
 	  (error "Not a valid name for this cell location"))
       (setq ses--named-cell-hashmap
             (or ses--named-cell-hashmap (make-hash-table :test 'eq)))
@@ -3471,7 +3480,7 @@ highlighted range in the spreadsheet."
 	(setf (ses-cell-formula xcell)
               (ses-replace-name-in-formula
                (ses-cell-formula xcell)
-               sym
+               old-name
                new-name))))
     ;; Replace name by new name in reference list of cells to which renamed
     ;; cell refers to.
@@ -3479,11 +3488,14 @@ highlighted range in the spreadsheet."
       (let* ((x (ses-sym-rowcol ref))
 	     (xcell (ses-get-cell (car x) (cdr x))))
 	(setf (ses-cell-references xcell)
-              (cons new-name (delq sym
+              (cons new-name (delq old-name
                                    (ses-cell-references xcell))))))
     (set (make-local-variable new-name) (symbol-value sym))
     (setf (ses-cell--symbol cell) new-name)
-    (makunbound sym)
+    ;; Unbind old name
+    (if (eq (get old-name 'ses-cell) :ses-named)
+        (ses--unbind-cell-name old-name)
+      (kill-local-variable old-name))
     (and curcell (setq ses--curcell new-name))
     (save-excursion
       (or curcell (ses-goto-print row col))

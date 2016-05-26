@@ -71,28 +71,29 @@ string bytes that can be copied is 3/4 of this value."
 (defconst xterm-paste-ending-sequence "\e[201~"
   "Characters send by the terminal to end a bracketed paste.")
 
+(defun xterm--pasted-text ()
+  "Handle the rest of a terminal paste operation.
+Return the pasted text as a string."
+  (let ((end-marker-length (length xterm-paste-ending-sequence)))
+    (with-temp-buffer
+      (set-buffer-multibyte nil)
+      (while (not (search-backward xterm-paste-ending-sequence
+                                   (- (point) end-marker-length) t))
+	(let ((event (read-event nil nil
+                                 ;; Use finite timeout to avoid glomming the
+                                 ;; event onto this-command-keys.
+                                 most-positive-fixnum)))
+	  (when (eql event ?\r)
+	    (setf event ?\n))
+	  (insert event)))
+      (let ((last-coding-system-used))
+	(decode-coding-region (point-min) (point) (keyboard-coding-system)
+                              t)))))
+
 (defun xterm-paste ()
   "Handle the start of a terminal paste operation."
   (interactive)
-  (let* ((end-marker-length (length xterm-paste-ending-sequence))
-         (pasted-text (with-temp-buffer
-                        (set-buffer-multibyte nil)
-                        (while (not (search-backward
-                                     xterm-paste-ending-sequence
-                                     (- (point) end-marker-length) t))
-                          (let ((event (read-event
-                                        nil nil
-                                        ;; Use finite timeout to avoid
-                                        ;; glomming the event onto
-                                        ;; this-command-keys.
-                                        most-positive-fixnum)))
-                            (when (eql event ?\r)
-                              (setf event ?\n))
-                            (insert event)))
-                        (let ((last-coding-system-used))
-                          (decode-coding-region
-                           (point-min) (point)
-                           (keyboard-coding-system) t))))
+  (let* ((pasted-text (xterm--pasted-text))
          (interprogram-paste-function (lambda () pasted-text)))
     (yank)))
 
