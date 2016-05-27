@@ -2172,44 +2172,49 @@ Byte-compiling a file often produces warnings about functions that the
 compiler doesn't know about (@pxref{Compiler Errors}).  Sometimes this
 indicates a real problem, but usually the functions in question are
 defined in other files which would be loaded if that code is run.  For
-example, byte-compiling @file{fortran.el} used to warn:
+example, byte-compiling @file{simple.el} used to warn:
 
 @example
-In end of data:
-fortran.el:2152:1:Warning: the function ‘gud-find-c-expr’ is not
-    known to be defined.
+simple.el:8727:1:Warning: the function ‘shell-mode’ is not known to be
+    defined.
 @end example
 
-In fact, @code{gud-find-c-expr} is only used in the function that
-Fortran mode uses for the local value of
-@code{gud-find-expr-function}, which is a callback from GUD; if it is
-called, the GUD functions will be loaded.  When you know that such a
-warning does not indicate a real problem, it is good to suppress the
-warning.  That makes new warnings which might mean real problems more
-visible.  You do that with @code{declare-function}.
+In fact, @code{shell-mode} is used only in a function that executes
+@code{(require 'shell)} before calling @code{shell-mode}, so
+@code{shell-mode} will be defined properly at run-time.  When you know
+that such a warning does not indicate a real problem, it is good to
+suppress the warning.  That makes new warnings which might mean real
+problems more visible.  You do that with @code{declare-function}.
 
 All you need to do is add a @code{declare-function} statement before the
 first use of the function in question:
 
 @example
-(declare-function gud-find-c-expr "gud.el" nil)
+(declare-function shell-mode "shell" ())
 @end example
 
-This says that @code{gud-find-c-expr} is defined in @file{gud.el} (the
+This says that @code{shell-mode} is defined in @file{shell.el} (the
 @samp{.el} can be omitted).  The compiler takes for granted that that file
 really defines the function, and does not check.
 
   The optional third argument specifies the argument list of
-@code{gud-find-c-expr}.  In this case, it takes no arguments
+@code{shell-mode}.  In this case, it takes no arguments
 (@code{nil} is different from not specifying a value).  In other
 cases, this might be something like @code{(file &optional overwrite)}.
 You don't have to specify the argument list, but if you do the
 byte compiler can check that the calls match the declaration.
 
-@defmac declare-function function file &optional arglist fileonly
-Tell the byte compiler to assume that @var{function} is defined, with
-arguments @var{arglist}, and that the definition should come from the
-file @var{file}.  @var{fileonly} non-@code{nil} means only check that
+@defmac declare-function function file &rest args
+Tell the byte compiler to assume that @var{function} is defined in the
+file @var{file}.  The trailing arguments @var{args} can contain one or
+two optional arguments.  The first optional argument @var{arglist} is
+either @code{t}, meaning the argument list is unspecified, or a list
+of formal parameters in the same style as @code{defun}.@footnote{An
+omitted @var{arglist} defaults to @code{t}, not @code{nil}; this
+atypical behavior is why @code{declare-function} is defined to have
+the formal parameters @code{(function file &rest args)}, not
+@code{(function file &optional arglist fileonly)}.}  The second
+optional argument @var{fileonly} non-@code{nil} means only check that
 @var{file} exists, not that it actually defines @var{function}.
 @end defmac
 
