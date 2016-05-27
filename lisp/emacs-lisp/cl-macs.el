@@ -2672,15 +2672,17 @@ non-nil value, that slot cannot be set via `setf'.
 	    (let ((accessor (intern (format "%s%s" conc-name slot))))
 	      (push slot slots)
 	      (push (nth 1 desc) defaults)
-	      (push `(cl-defsubst ,accessor (cl-x)
+	      (push `(cl-defsubst ,accessor (x)
+                       ,(format "Access slot \"%s\" of `%s' struct X."
+                                slot struct)
                        (declare (side-effect-free t))
                        ,@(and pred-check
 			      (list `(or ,pred-check
                                          (signal 'wrong-type-argument
-                                                 (list ',name cl-x)))))
-                       ,(if (memq type '(nil vector)) `(aref cl-x ,pos)
-                          (if (= pos 0) '(car cl-x)
-                            `(nth ,pos cl-x))))
+                                                 (list ',name x)))))
+                       ,(if (memq type '(nil vector)) `(aref x ,pos)
+                          (if (= pos 0) '(car x)
+                            `(nth ,pos x))))
                     forms)
               (if (cadr (memq :read-only (cddr desc)))
                   (push `(gv-define-expander ,accessor
