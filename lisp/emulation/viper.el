@@ -647,10 +647,14 @@ This startup message appears whenever you load Viper, unless you type `y' now."
 
 (defun viper--advice-add (function where advice)
   (advice-add function where advice)
-  (push (list function advice) viper--advice-list))
+  (push (cons function advice) viper--advice-list))
 
 (defun viper--deactivate-advice-list ()
-  (mapc #'advice-remove viper--advice-list)
+  (mapc (lambda (n)
+          (advice-remove
+           (car n)
+           (cdr n)))
+        viper--advice-list)
   (setq viper--advice-list nil))
 
 (defun viper-go-away ()
