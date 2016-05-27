@@ -851,11 +851,14 @@ main (int argc, char **argv)
 	  /* Round the new limit to a page boundary; this is needed
 	     for Darwin kernel 15.4.0 (see Bug#23622) and perhaps
 	     other systems.  Do not shrink the stack and do not exceed
-	     rlim_max.  Don't worry about values like RLIM_INFINITY
-	     since in practice they are so large that the code does
-	     the right thing anyway.  */
+	     rlim_max.  Don't worry about exact values of
+	     RLIM_INFINITY etc. since in practice when they are
+	     nonnegative they are so large that the code does the
+	     right thing anyway.  */
 	  long pagesize = getpagesize ();
-	  newlim = min (newlim + pagesize - 1, rlim.rlim_max);
+	  newlim += pagesize - 1;
+	  if (0 <= rlim.rlim_max && rlim.rlim_max < newlim)
+	    newlim = rlim.rlim_max;
 	  newlim -= newlim % pagesize;
 
 	  if (pagesize <= newlim - lim)
