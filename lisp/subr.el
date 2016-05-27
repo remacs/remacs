@@ -5155,7 +5155,16 @@ as a list.")
 
 (defvar definition-prefixes (make-hash-table :test 'equal)
   "Hash table mapping prefixes to the files in which they're used.
-This can be used to automatically fetch not-yet-loaded definitions.")
+This can be used to automatically fetch not-yet-loaded definitions.
+More specifically, if there is a value of the form (FILES...) for a string PREFIX
+it means that the FILES define variables or functions with names that start
+with PREFIX.
+
+Note that it does not imply that all definitions starting with PREFIX can
+be found in those files.  E.g. if prefix is \"gnus-article-\" there might
+still be definitions of the form \"gnus-article-toto-titi\" in other files, which would
+presumably appear in this table under another prefix such as \"gnus-\"
+or \"gnus-article-toto-\".")
 
 (defun register-definition-prefixes (file prefixes)
   "Register that FILE uses PREFIXES."

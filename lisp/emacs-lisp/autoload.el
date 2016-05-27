@@ -513,15 +513,6 @@ Return non-nil in the case where no autoloads were added at point."
          (t (setcdr cell (cons tail (cdr cell)))))))
     prefixes))
 
-(defun autoload--split-prefixes (prefixes)
-  (apply #'nconc
-         (mapcar (lambda (cell)
-                   (let ((prefix (car cell)))
-                     (mapcar (lambda (cell)
-                               (cons (concat prefix (car cell)) (cdr cell)))
-                             (autoload--split-prefixes-1 (cdr cell)))))
-                 prefixes)))
-
 (defvar autoload-compute-prefixes t
   "If non-nil, autoload will add code to register the prefixes used in a file.
 Standard prefixes won't be registered anyway.  I.e. if a file \"foo.el\" defines
@@ -538,6 +529,13 @@ cost more memory use).")
 (defvar autoload-popular-prefixes nil)
 
 (defun autoload--make-defs-autoload (defs file)
+  ;; FIXME: avoid redundant entries.  E.g. opascal currently has
+  ;; "opascal-" "opascal--literal-start-re" "opascal--syntax-propertize"
+  ;; where only the first one should be kept.
+  ;; FIXME: Avoid keeping too-long-prefixes.  E.g. ob-scheme currently has
+  ;; "org-babel-scheme-" "org-babel-default-header-args:scheme"
+  ;; "org-babel-expand-body:scheme" "org-babel-execute:scheme".
+
   ;; Remove the defs that obey the rule that file foo.el (or
   ;; foo-mode.el) uses "foo-" as prefix.
   ;; FIXME: help--symbol-completion-table still doesn't know how to use

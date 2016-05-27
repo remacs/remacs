@@ -385,6 +385,10 @@ function 'check-declare-errmsg' has been removed.
 
 * Lisp Changes in Emacs 25.2
 
+** New var `definition-prefixes' is a hashtable mapping prefixes to the
+files where corresponding definitions can be found.  This can be used
+to fetch definitions that are not yet loaded, for example for `C-h f'.
+
 ** New var syntax-ppss-table to control the syntax-table used in syntax-ppss.
 
 +++
