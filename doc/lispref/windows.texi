@@ -2171,8 +2171,9 @@ This option does not affect non-interactive calls of
 @code{switch-to-buffer}.
 @end defopt
 
-By default, @code{switch-to-buffer} shows the buffer at its position of
-@code{point}.  This behavior can be tuned using the following option.
+By default, @code{switch-to-buffer} tries to preserve
+@code{window-point}.  This behavior can be tuned using the following
+option.
 
 @defopt switch-to-buffer-preserve-window-point
 If this variable is @code{nil}, @code{switch-to-buffer} displays the

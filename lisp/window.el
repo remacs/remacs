@@ -7147,7 +7147,7 @@ buffer with the name BUFFER-OR-NAME and return that buffer."
 	    buffer))
     (other-buffer)))
 
-(defcustom switch-to-buffer-preserve-window-point nil
+(defcustom switch-to-buffer-preserve-window-point t
   "If non-nil, `switch-to-buffer' tries to preserve `window-point'.
 If this is nil, `switch-to-buffer' displays the buffer at that
 buffer's `point'.  If this is `already-displayed', it tries to
