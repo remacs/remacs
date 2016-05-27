@@ -91,6 +91,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "systime.h"
 #include "puresize.h"
 
+#include "getpagesize.h"
 #include "gnutls.h"
 
 #if (defined PROFILING \
@@ -672,9 +673,6 @@ main (int argc, char **argv)
   bool do_initial_setlocale;
   bool dumping;
   int skip_args = 0;
-#ifdef HAVE_SETRLIMIT
-  struct rlimit rlim;
-#endif
   bool no_loadup = 0;
   char *junk = 0;
   char *dname_arg = 0;
@@ -825,38 +823,51 @@ main (int argc, char **argv)
      is built with an 8MB stack.  Moreover, the setrlimit call can
      cause problems on Cygwin
      (https://www.cygwin.com/ml/cygwin/2015-07/msg00096.html).  */
-  if (1
-#ifndef CANNOT_DUMP
-      && (!noninteractive || initialized)
-#endif
-      && !getrlimit (RLIMIT_STACK, &rlim))
+  struct rlimit rlim;
+  if (getrlimit (RLIMIT_STACK, &rlim) == 0
+      && 0 <= rlim.rlim_cur && rlim.rlim_cur <= LONG_MAX)
     {
-      long newlim;
-      /* Approximate the amount regex.c needs per unit of re_max_failures.  */
-      int ratio = 20 * sizeof (char *);
-      /* Then add 33% to cover the size of the smaller stacks that regex.c
-	 successively allocates and discards, on its way to the maximum.  */
-      ratio += ratio / 3;
-      /* Add in some extra to cover
-	 what we're likely to use for other reasons.  */
-      newlim = re_max_failures * ratio + 200000;
-#ifdef __NetBSD__
-      /* NetBSD (at least NetBSD 1.2G and former) has a bug in its
-       stack allocation routine for new process that the allocation
-       fails if stack limit is not on page boundary.  So, round up the
-       new limit to page boundary.  */
-      newlim = (newlim + getpagesize () - 1) / getpagesize () * getpagesize ();
-#endif
-      if (newlim > rlim.rlim_max)
-	{
-	  newlim = rlim.rlim_max;
-	  /* Don't let regex.c overflow the stack we have.  */
-	  re_max_failures = (newlim - 200000) / ratio;
-	}
-      if (rlim.rlim_cur < newlim)
-	rlim.rlim_cur = newlim;
+      long lim = rlim.rlim_cur;
 
-      setrlimit (RLIMIT_STACK, &rlim);
+      /* Approximate the amount regex.c needs per unit of
+	 re_max_failures, then add 33% to cover the size of the
+	 smaller stacks that regex.c successively allocates and
+	 discards on its way to the maximum.  */
+      int ratio = 20 * sizeof (char *);
+      ratio += ratio / 3;
+
+      /* Extra space to cover what we're likely to use for other reasons.  */
+      int extra = 200000;
+
+      bool try_to_grow_stack = true;
+#ifndef CANNOT_DUMP
+      try_to_grow_stack = !noninteractive || initialized;
+#endif
+
+      if (try_to_grow_stack)
+	{
+	  long newlim = re_max_failures * ratio + extra;
+
+	  /* Round the new limit to a page boundary; this is needed
+	     for Darwin kernel 15.4.0 (see Bug#23622) and perhaps
+	     other systems.  Do not shrink the stack and do not exceed
+	     rlim_max.  Don't worry about values like RLIM_INFINITY
+	     since in practice they are so large that the code does
+	     the right thing anyway.  */
+	  long pagesize = getpagesize ();
+	  newlim = min (newlim + pagesize - 1, rlim.rlim_max);
+	  newlim -= newlim % pagesize;
+
+	  if (pagesize <= newlim - lim)
+	    {
+	      rlim.rlim_cur = newlim;
+	      if (setrlimit (RLIMIT_STACK, &rlim) == 0)
+		lim = newlim;
+	    }
+	}
+
+      /* Don't let regex.c overflow the stack.  */
+      re_max_failures = lim < extra ? 0 : min (lim - extra, SIZE_MAX) / ratio;
     }
 #endif /* HAVE_SETRLIMIT and RLIMIT_STACK and not CYGWIN */
 
