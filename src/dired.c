@@ -424,8 +424,7 @@ DEFUN ("file-name-all-completions", Ffile_name_all_completions,
 These are all file names in directory DIRECTORY which begin with FILE.
 
 This function ignores some of the possible completions as determined
-by the variables `completion-regexp-list' and
-`completion-ignored-extensions', which see.  `completion-regexp-list'
+by `completion-regexp-list', which see.  `completion-regexp-list'
 is matched against file and directory names relative to DIRECTORY.  */)
   (Lisp_Object file, Lisp_Object directory)
 {
