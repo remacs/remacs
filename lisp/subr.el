@@ -29,13 +29,13 @@
 ;; Beware: while this file has tag `utf-8', before it's compiled, it gets
 ;; loaded as "raw-text", so non-ASCII chars won't work right during bootstrap.
 
-(defmacro declare-function (_fn _file &optional _arglist _fileonly)
+(defmacro declare-function (_fn _file &rest _args)
   "Tell the byte-compiler that function FN is defined, in FILE.
 Optional ARGLIST is the argument list used by the function.
 The FILE argument is not used by the byte-compiler, but by the
 `check-declare' package, which checks that FILE contains a
-definition for FN.  ARGLIST is used by both the byte-compiler
-and `check-declare' to check for consistency.
+definition for FN.  Remaining ARGS are used by both the
+byte-compiler and `check-declare' to check for consistency.
 
 FILE can be either a Lisp file (in which case the \".el\"
 extension is optional), or a C file.  C files are expanded
@@ -46,6 +46,8 @@ declaration.  A FILE with an \"ext:\" prefix is an external file.
 `check-declare' will check such files if they are found, and skip
 them without error if they are not.
 
+ARGS can contain one or two optional args.  First optional arg
+ARGLIST specifies the function arguments.  Second optional arg
 FILEONLY non-nil means that `check-declare' will only check that
 FILE exists, not that it defines FN.  This is intended for
 function-definitions that `check-declare' does not recognize, e.g.
