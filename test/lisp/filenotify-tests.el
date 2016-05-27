@@ -73,7 +73,6 @@ It is different for local and remote file notification libraries.")
   (cond
    ((file-remote-p temporary-file-directory) 6)
    ((string-equal (file-notify--test-library) "w32notify") 4)
-   ((eq system-type 'cygwin) 10)
    (t 3)))
 
 (defun file-notify--test-cleanup ()
@@ -861,6 +860,9 @@ longer than timeout seconds for the events to be delivered."
         (should (file-notify-valid-p file-notify--test-desc))
         (file-notify--test-with-events
 	    (cond
+             ;; On Cygwin there is one `changed' event in both the
+             ;; local and remote cases.
+             ((eq system-type 'cygwin) '(changed))
              ;; For w32notify and in the remote case, there are two
              ;; `changed' events.
              ((or (string-equal (file-notify--test-library) "w32notify")
@@ -902,7 +904,11 @@ longer than timeout seconds for the events to be delivered."
 		  file-notify--test-tmpfile
 		  '(change) #'file-notify--test-event-handler)))
 	  (should (file-notify-valid-p file-notify--test-desc))
-	  (file-notify--test-with-events '(renamed created changed)
+	  (file-notify--test-with-events
+            (cond
+             ;; On Cygwin we only get the `changed' event.
+             ((eq system-type 'cygwin) '(changed))
+             (t '(renamed created changed)))
 	    ;; The file is renamed when creating a backup.  It shall
 	    ;; still be watched.
 	    (with-temp-buffer
