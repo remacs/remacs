@@ -8899,6 +8899,22 @@ comment at the start of cc-engine.el for more info."
 		  (c-syntactic-skip-backward c-block-prefix-charset limit t)
 		  (eq (char-before) ?>))))))
 
+    ;; Skip back over noise clauses.
+    (while (and
+	    c-opt-cpp-prefix
+	    (eq (char-before) ?\))
+	    (let ((after-paren (point)))
+	      (if (and (c-go-list-backward)
+		       (progn (c-backward-syntactic-ws)
+			      (c-simple-skip-symbol-backward))
+		       (or (looking-at c-paren-nontype-key)
+			   (looking-at c-noise-macro-with-parens-name-re)))
+		  (progn
+		    (c-syntactic-skip-backward c-block-prefix-charset limit t)
+		    t)
+		(goto-char after-paren)
+		nil))))
+
     ;; Note: Can't get bogus hits inside template arglists below since they
     ;; have gotten paren syntax above.
     (when (and

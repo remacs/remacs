@@ -2264,6 +2264,10 @@ contain type identifiers."
 	    ;; MSVC extension.
 	    "__declspec"))
 
+(c-lang-defconst c-paren-nontype-key
+  t (c-make-keywords-re t (c-lang-const c-paren-nontype-kwds)))
+(c-lang-defvar c-paren-nontype-key (c-lang-const c-paren-nontype-key))
+
 (c-lang-defconst c-paren-type-kwds
   "Keywords that may be followed by a parenthesis expression containing
 type identifiers separated by arbitrary tokens."
