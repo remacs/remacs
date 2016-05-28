@@ -33,8 +33,7 @@
   "Tell the byte-compiler that function FN is defined, in FILE.
 The FILE argument is not used by the byte-compiler, but by the
 `check-declare' package, which checks that FILE contains a
-definition for FN.  Remaining ARGS are used by both the
-byte-compiler and `check-declare' to check for consistency.
+definition for FN.
 
 FILE can be either a Lisp file (in which case the \".el\"
 extension is optional), or a C file.  C files are expanded
@@ -45,20 +44,22 @@ declaration.  A FILE with an \"ext:\" prefix is an external file.
 `check-declare' will check such files if they are found, and skip
 them without error if they are not.
 
-ARGS can contain one or two optional args.  First optional arg
-ARGLIST specifies FN's arguments, or is t to not specify FN's
-arguments.  An omitted ARGLIST defaults to t, not nil: a nil
+Optional ARGLIST specifies FN's arguments, or is t to not specify
+FN's arguments.  An omitted ARGLIST defaults to t, not nil: a nil
 ARGLIST specifies an empty argument list, and an explicit t
 ARGLIST is a placeholder that allows supplying a later arg.
-Second optional arg FILEONLY non-nil means that `check-declare'
-will check only that FILE exists, not that it defines FN.  This
-is intended for function definitions that `check-declare' does
-not recognize, e.g., `defstruct'.
+
+Optional FILEONLY non-nil means that `check-declare' will check
+only that FILE exists, not that it defines FN.  This is intended
+for function definitions that `check-declare' does not recognize,
+e.g., `defstruct'.
 
 Note that for the purposes of `check-declare', this statement
 must be the first non-whitespace on a line.
 
 For more information, see Info node `(elisp)Declaring Functions'."
+  (declare (advertised-calling-convention
+	    (fn file &optional arglist fileonly) nil))
   ;; Does nothing - byte-compile-declare-function does the work.
   nil)
 
