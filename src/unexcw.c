@@ -147,7 +147,7 @@ fixup_executable (int fd)
 	  assert (ret == my_edata - (char *) start_address);
 	  ++found_data;
 	  if (debug_unexcw)
-	    printf ("         .data, mem start %#lx mem length %d\n",
+	    printf ("         .data, mem start %#lx mem length %td\n",
 		    start_address, my_edata - (char *) start_address);
 	  if (debug_unexcw)
 	    printf ("         .data, file start %d file length %d\n",
@@ -213,7 +213,7 @@ fixup_executable (int fd)
 		       sizeof (exe_header->section_header[i]));
 	      assert (ret == sizeof (exe_header->section_header[i]));
 	      if (debug_unexcw)
-		printf ("         seek to %ld, write %d\n",
+		printf ("         seek to %ld, write %zu\n",
 			(long) ((char *) &exe_header->section_header[i] -
 				(char *) exe_header),
 			sizeof (exe_header->section_header[i]));
@@ -228,7 +228,7 @@ fixup_executable (int fd)
 		   my_endbss - (char *) start_address);
 	  assert (ret == (my_endbss - (char *) start_address));
 	  if (debug_unexcw)
-	    printf ("         .bss, mem start %#lx mem length %d\n",
+	    printf ("         .bss, mem start %#lx mem length %td\n",
 		    start_address, my_endbss - (char *) start_address);
 	  if (debug_unexcw)
 	    printf ("         .bss, file start %d file length %d\n",
