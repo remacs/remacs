@@ -1468,7 +1468,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should (zerop (process-file "ls" nil t nil fnnd)))
 	    ;; `ls' could produce colorized output.
 	    (goto-char (point-min))
-	    (while (re-search-forward tramp-color-escape-sequence-regexp nil t)
+	    (while
+		(re-search-forward tramp-display-escape-sequence-regexp nil t)
 	      (replace-match "" nil nil))
 	    (should (string-equal (format "%s\n" fnnd) (buffer-string)))
 	    (should-not (get-buffer-window (current-buffer) t))
@@ -1478,7 +1479,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should (zerop (process-file "ls" nil t t fnnd)))
 	    ;; `ls' could produce colorized output.
 	    (goto-char (point-min))
-	    (while (re-search-forward tramp-color-escape-sequence-regexp nil t)
+	    (while
+		(re-search-forward tramp-display-escape-sequence-regexp nil t)
 	      (replace-match "" nil nil))
 	    (should
 	     (string-equal (format "%s\n%s\n" fnnd fnnd) (buffer-string)))
@@ -1581,7 +1583,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	   (format "ls %s" (file-name-nondirectory tmp-name)) (current-buffer))
 	  ;; `ls' could produce colorized output.
 	  (goto-char (point-min))
-	  (while (re-search-forward tramp-color-escape-sequence-regexp nil t)
+	  (while (re-search-forward tramp-display-escape-sequence-regexp nil t)
 	    (replace-match "" nil nil))
 	  (should
 	   (string-equal
@@ -1604,7 +1606,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (accept-process-output (get-buffer-process (current-buffer)) 1)))
 	  ;; `ls' could produce colorized output.
 	  (goto-char (point-min))
-	  (while (re-search-forward tramp-color-escape-sequence-regexp nil t)
+	  (while (re-search-forward tramp-display-escape-sequence-regexp nil t)
 	    (replace-match "" nil nil))
 	  ;; There might be a nasty "Process *Async Shell* finished" message.
 	  (goto-char (point-min))
@@ -1633,7 +1635,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (accept-process-output (get-buffer-process (current-buffer)) 1)))
 	  ;; `ls' could produce colorized output.
 	  (goto-char (point-min))
-	  (while (re-search-forward tramp-color-escape-sequence-regexp nil t)
+	  (while (re-search-forward tramp-display-escape-sequence-regexp nil t)
 	    (replace-match "" nil nil))
 	  ;; There might be a nasty "Process *Async Shell* finished" message.
 	  (goto-char (point-min))

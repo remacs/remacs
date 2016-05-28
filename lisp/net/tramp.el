@@ -774,6 +774,12 @@ Derived from `tramp-postfix-host-format'.")
 (defconst tramp-localname-regexp ".*$"
   "Regexp matching localnames.")
 
+(defconst tramp-unknown-id-string "UNKNOWN"
+  "String used to denote an unknown user or group")
+
+(defconst tramp-unknown-id-integer -1
+  "Integer used to denote an unknown user or group")
+
 ;;; File name format:
 
 (defconst tramp-remote-file-name-spec-regexp
@@ -3834,7 +3840,10 @@ be granted."
                 vec (concat "uid-" suffix) nil))
               (remote-gid
                (tramp-get-connection-property
-                vec (concat "gid-" suffix) nil)))
+                vec (concat "gid-" suffix) nil))
+	      (unknown-id
+	       (if (string-equal suffix "string")
+		   tramp-unknown-id-string tramp-unknown-id-integer)))
           (and
            file-attr
            (or
@@ -3847,12 +3856,14 @@ be granted."
             ;; User accessible and owned by user.
             (and
              (eq access (aref (nth 8 file-attr) offset))
-             (equal remote-uid (nth 2 file-attr)))
+	     (or (equal remote-uid (nth 2 file-attr))
+		 (equal unknown-id (nth 2 file-attr))))
             ;; Group accessible and owned by user's
             ;; principal group.
             (and
              (eq access (aref (nth 8 file-attr) (+ offset 3)))
-             (equal remote-gid (nth 3 file-attr)))))))))))
+             (or (equal remote-gid (nth 3 file-attr))
+		 (equal unknown-id (nth 3 file-attr))))))))))))
 
 ;;;###tramp-autoload
 (defun tramp-local-host-p (vec)

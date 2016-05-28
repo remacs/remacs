@@ -84,8 +84,12 @@ e.g. \"$HOME/.sh_history\"."
                  (string :tag "Redirect to a file")))
 
 ;;;###tramp-autoload
-(defconst tramp-color-escape-sequence-regexp "\e[[;0-9]+m"
-  "Escape sequences produced by the \"ls\" command.")
+(defconst tramp-display-escape-sequence-regexp "\e[[;0-9]+m"
+  "Terminal control escape sequences for display attributes.")
+
+;;;###tramp-autoload
+(defconst tramp-device-escape-sequence-regexp "\e[[0-9]+n"
+  "Terminal control escape sequences for device status.")
 
 ;; ksh on OpenBSD 4.5 requires that $PS1 contains a `#' character for
 ;; root users.  It uses the `$' character for other users.  In order
@@ -1339,8 +1343,10 @@ target of the symlink differ."
           (setq res-gid (read (current-buffer)))
           (if (eq id-format 'integer)
               (progn
-                (unless (numberp res-uid) (setq res-uid -1))
-                (unless (numberp res-gid) (setq res-gid -1)))
+                (unless (numberp res-uid)
+		  (setq res-uid tramp-unknown-id-integer))
+                (unless (numberp res-gid)
+		  (setq res-gid tramp-unknown-id-integer)))
             (progn
               (unless (stringp res-uid) (setq res-uid (symbol-name res-uid)))
               (unless (stringp res-gid) (setq res-gid (symbol-name res-gid)))))
@@ -2836,7 +2842,8 @@ The method used must be an out-of-band method."
 	  (unless
 	      (string-match "color" (tramp-get-connection-property v "ls" ""))
 	    (goto-char beg)
-	    (while (re-search-forward tramp-color-escape-sequence-regexp nil t)
+	    (while
+		(re-search-forward tramp-display-escape-sequence-regexp nil t)
 	      (replace-match "")))
 
 	  ;; Decode the output, it could be multibyte.
@@ -2934,7 +2941,12 @@ the result will be a local, non-Tramp, file name."
 (defun tramp-sh-handle-start-file-process (name buffer program &rest args)
   "Like `start-file-process' for Tramp files."
   (with-parsed-tramp-file-name (expand-file-name default-directory) nil
-    (let* (;; When PROGRAM matches "*sh", and the first arg is "-c",
+    (let* ((buffer
+	    (if buffer
+		(get-buffer-create buffer)
+	      ;; BUFFER can be nil.  We use a temporary buffer.
+	      (generate-new-buffer tramp-temp-buffer-name)))
+	   ;; When PROGRAM matches "*sh", and the first arg is "-c",
 	   ;; it might be that the arguments exceed the command line
 	   ;; length.  Therefore, we modify the command.
 	   (heredoc (and (stringp program)
@@ -2992,9 +3004,6 @@ the result will be a local, non-Tramp, file name."
 	   ;; `eshell' and friends.
 	   (tramp-current-connection nil))
 
-      (unless buffer
-	;; BUFFER can be nil.  We use a temporary buffer.
-	(setq buffer (generate-new-buffer tramp-temp-buffer-name)))
       (while (get-process name1)
 	;; NAME must be unique as process name.
 	(setq i (1+ i)
@@ -4030,7 +4039,7 @@ file exists and nonzero exit status otherwise."
 	  shell)
       (setq shell
 	    (with-tramp-connection-property vec "remote-shell"
-	      ;; CCC: "root" does not exist always, see QNAP 459.
+	      ;; CCC: "root" does not exist always, see my QNAP TS-459.
 	      ;; Which check could we apply instead?
 	      (tramp-send-command vec "echo ~root" t)
 	      (if (or (string-match "^~root$" (buffer-string))
@@ -5000,7 +5009,12 @@ function waits for output unless NOOUTPUT is set."
   (with-current-buffer (process-buffer proc)
     (let* (;; Initially, `tramp-end-of-output' is "#$ ".  There might
 	   ;; be leading escape sequences, which must be ignored.
-	   (regexp (format "[^#$\n]*%s\r?$" (regexp-quote tramp-end-of-output)))
+	   ;; Busyboxes built with the EDITING_ASK_TERMINAL config
+	   ;; option send also escape sequences, which must be
+	   ;; ignored.
+	   (regexp (format "[^#$\n]*%s\\(%s\\)?\r?$"
+			   (regexp-quote tramp-end-of-output)
+			   tramp-device-escape-sequence-regexp))
 	   ;; Sometimes, the commands do not return a newline but a
 	   ;; null byte before the shell prompt, for example "git
 	   ;; ls-files -c -z ...".
@@ -5103,16 +5117,17 @@ Return ATTR."
   (when attr
     ;; Remove color escape sequences from symlink.
     (when (stringp (car attr))
-      (while (string-match tramp-color-escape-sequence-regexp (car attr))
+      (while (string-match tramp-display-escape-sequence-regexp (car attr))
 	(setcar attr (replace-match "" nil nil (car attr)))))
-    ;; Convert uid and gid.  Use -1 as indication of unusable value.
+    ;; Convert uid and gid.  Use `tramp-unknown-id-integer' as
+    ;; indication of unusable value.
     (when (and (numberp (nth 2 attr)) (< (nth 2 attr) 0))
-      (setcar (nthcdr 2 attr) -1))
+      (setcar (nthcdr 2 attr) tramp-unknown-id-integer))
     (when (and (floatp (nth 2 attr))
                (<= (nth 2 attr) most-positive-fixnum))
       (setcar (nthcdr 2 attr) (round (nth 2 attr))))
     (when (and (numberp (nth 3 attr)) (< (nth 3 attr) 0))
-      (setcar (nthcdr 3 attr) -1))
+      (setcar (nthcdr 3 attr) tramp-unknown-id-integer))
     (when (and (floatp (nth 3 attr))
                (<= (nth 3 attr) most-positive-fixnum))
       (setcar (nthcdr 3 attr) (round (nth 3 attr))))
@@ -5556,8 +5571,10 @@ Return ATTR."
 	       (tramp-get-remote-uid-with-python vec id-format))))))
       ;; Ensure there is a valid result.
       (cond
-       ((and (equal id-format 'integer) (not (integerp res))) -1)
-       ((and (equal id-format 'string) (not (stringp res))) "UNKNOWN")
+       ((and (equal id-format 'integer) (not (integerp res)))
+	tramp-unknown-id-integer)
+       ((and (equal id-format 'string) (not (stringp res)))
+	tramp-unknown-id-string)
        (t res)))))
 
 (defun tramp-get-remote-gid-with-id (vec id-format)
@@ -5600,8 +5617,10 @@ Return ATTR."
 	       (tramp-get-remote-gid-with-python vec id-format))))))
       ;; Ensure there is a valid result.
       (cond
-       ((and (equal id-format 'integer) (not (integerp res))) -1)
-       ((and (equal id-format 'string) (not (stringp res))) "UNKNOWN")
+       ((and (equal id-format 'integer) (not (integerp res)))
+	tramp-unknown-id-integer)
+       ((and (equal id-format 'string) (not (stringp res)))
+	tramp-unknown-id-string)
        (t res)))))
 
 ;; Some predefined connection properties.

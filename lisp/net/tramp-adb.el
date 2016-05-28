@@ -934,20 +934,22 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
     (unless (stringp program)
       (tramp-error v 'file-error "PROGRAM must be a string"))
 
-    (let ((command
-	   (format "cd %s; %s"
-		   (tramp-shell-quote-argument localname)
-		   (mapconcat 'tramp-shell-quote-argument
-			      (cons program args) " ")))
-	  (tramp-process-connection-type
-	   (or (null program) tramp-process-connection-type))
-	  (bmp (and (buffer-live-p buffer) (buffer-modified-p buffer)))
-	  (name1 name)
-	  (i 0))
+    (let* ((buffer
+	    (if buffer
+		(get-buffer-create buffer)
+	      ;; BUFFER can be nil.  We use a temporary buffer.
+	      (generate-new-buffer tramp-temp-buffer-name)))
+	   (command
+	    (format "cd %s; %s"
+		    (tramp-shell-quote-argument localname)
+		    (mapconcat 'tramp-shell-quote-argument
+			       (cons program args) " ")))
+	   (tramp-process-connection-type
+	    (or (null program) tramp-process-connection-type))
+	   (bmp (and (buffer-live-p buffer) (buffer-modified-p buffer)))
+	   (name1 name)
+	   (i 0))
 
-      (unless buffer
-	;; BUFFER can be nil.  We use a temporary buffer.
-	(setq buffer (generate-new-buffer tramp-temp-buffer-name)))
       (while (get-process name1)
 	;; NAME must be unique as process name.
 	(setq i (1+ i)
