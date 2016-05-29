@@ -4545,7 +4545,7 @@ This function could be useful in `message-setup-hook'."
 	  (setq message-options options)
 	  ;; Avoid copying text props (except hard newlines).
 	  (insert (with-current-buffer mailbuf
-		    (mml-buffer-substring-no-properties-except-hard-newlines
+		    (mml-buffer-substring-no-properties-except-some
 		     (point-min) (point-max))))
 	  ;; Remove some headers.
 	  (message-encode-message-body)
@@ -4909,7 +4909,7 @@ Otherwise, generate and save a value for `canlock-password' first."
 	      ;; Avoid copying text props (except hard newlines).
 	      (insert
 	       (with-current-buffer messbuf
-		 (mml-buffer-substring-no-properties-except-hard-newlines
+		 (mml-buffer-substring-no-properties-except-some
 		  (point-min) (point-max))))
 	      (message-encode-message-body)
 	      ;; Remove some headers.
