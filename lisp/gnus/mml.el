@@ -413,12 +413,21 @@ A message part needs to be split into %d charset parts.  Really send? "
     (setq contents (append (list (cons 'tag-location orig-point)) contents))
     (cons (intern name) (nreverse contents))))
 
-(defun mml-buffer-substring-no-properties-except-hard-newlines (start end)
+(defun mml-buffer-substring-no-properties-except-some (start end)
   (let ((str (buffer-substring-no-properties start end))
-	(bufstart start) tmp)
-    (while (setq tmp (text-property-any start end 'hard 't))
-      (set-text-properties (- tmp bufstart) (- tmp bufstart -1)
-			   '(hard t) str)
+	(bufstart start)
+	tmp)
+    ;; Copy over all hard newlines.
+    (while (setq tmp (text-property-any start end 'hard t))
+      (put-text-property (- tmp bufstart) (- tmp bufstart -1)
+			 'hard t str)
+      (setq start (1+ tmp)))
+    ;; Copy over all `display' properties (which are usually images).
+    (setq start bufstart)
+    (while (setq tmp (text-property-not-all start end 'display nil))
+      (put-text-property (- tmp bufstart) (- tmp bufstart -1)
+			 'display (get-text-property tmp 'display)
+			 str)
       (setq start (1+ tmp)))
     str))
 
@@ -435,21 +444,21 @@ If MML is non-nil, return the buffer up till the correspondent mml tag."
 	    (if (re-search-forward "<#\\(/\\)?mml." nil t)
 		(setq count (+ count (if (match-beginning 1) -1 1)))
 	      (goto-char (point-max))))
-	  (mml-buffer-substring-no-properties-except-hard-newlines
+	  (mml-buffer-substring-no-properties-except-some
 	   beg (if (> count 0)
 		   (point)
 		 (match-beginning 0))))
       (if (re-search-forward
 	   "<#\\(/\\)?\\(multipart\\|part\\|external\\|mml\\)." nil t)
 	  (prog1
-	      (mml-buffer-substring-no-properties-except-hard-newlines
+	      (mml-buffer-substring-no-properties-except-some
 	       beg (match-beginning 0))
 	    (if (or (not (match-beginning 1))
 		    (equal (match-string 2) "multipart"))
 		(goto-char (match-beginning 0))
 	      (when (looking-at "[ \t]*\n")
 		(forward-line 1))))
-	(mml-buffer-substring-no-properties-except-hard-newlines
+	(mml-buffer-substring-no-properties-except-some
 	 beg (goto-char (point-max)))))))
 
 (defvar mml-boundary nil)
@@ -514,7 +523,9 @@ be \"related\" or \"alternate\"."
 	      (when (search-forward (url-filename parsed) end t)
 		(let ((cid (format "fsf.%d" cid)))
 		  (replace-match (concat "cid:" cid) t t)
-		  (push (list cid (url-filename parsed)) new-parts))
+		  (push (list cid (url-filename parsed)
+			      (get-text-property start 'display))
+			new-parts))
 		(setq cid (1+ cid)))))))
       ;; We have local images that we want to include.
       (if (not new-parts)
@@ -527,10 +538,40 @@ be \"related\" or \"alternate\"."
 	  (setq cont
 		(nconc cont
 		       (list `(part (type . "image/png")
-				    (filename . ,(nth 1 new-part))
+				    ,@(mml--possibly-alter-image
+				       (nth 1 new-part)
+				       (nth 2 new-part))
 				    (id . ,(concat "<" (nth 0 new-part)
 						   ">")))))))
 	cont))))
+
+(defun mml--possibly-alter-image (file-name image)
+  (if (or (null image)
+	  (not (consp image))
+	  (not (eq (car image) 'image))
+	  (not (image-property image :rotation))
+	  (not (executable-find "exiftool")))
+      `((filename . ,file-name))
+    `((filename . ,file-name)
+      (buffer
+       .
+       ,(with-current-buffer (mml-generate-new-buffer " *mml rotation*")
+	  (set-buffer-multibyte nil)
+	  (call-process "exiftool"
+			file-name
+			(list (current-buffer) nil)
+			nil
+			(format "-Orientation#=%d"
+				(cl-case (truncate
+					  (image-property image :rotation))
+				  (0 0)
+				  (90 6)
+				  (180 3)
+				  (270 8)
+				  (otherwise 0)))
+			"-o" "-"
+			"-")
+	  (current-buffer))))))
 
 (defun mml-generate-mime-1 (cont)
   (let ((mm-use-ultra-safe-encoding
