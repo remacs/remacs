@@ -105,6 +105,8 @@
 		 specs)))))
     (edebug-match cursor (cons '&or specs))))
 
+(fset 'pcase--canon #'identity)
+
 ;;;###autoload
 (defmacro pcase (exp &rest cases)
   "Evaluate EXP and attempt to match it against structural patterns.
@@ -332,7 +334,8 @@ any kind of error."
                   ;; to a separate function if that number is too high.
                   ;;
                   ;; We've already used this branch.  So it is shared.
-                  (let* ((code (car prev))         (cdrprev (cdr prev))
+                  (let* (;; (code (car prev))
+                         (cdrprev (cdr prev))
                          (prevvars (car cdrprev))  (cddrprev (cdr cdrprev))
                          (res (car cddrprev)))
                     (unless (symbolp res)
@@ -434,8 +437,10 @@ to this macro."
   ;; Don't use let*, otherwise macroexp-let* may merge it with some surrounding
   ;; let* which might prevent the setcar/setcdr in pcase--expand's fancy
   ;; codegen from later metamorphosing this let into a funcall.
-  `(let ,(mapcar (lambda (b) (list (car b) (cdr b))) vars)
-     ,@code))
+  (if vars
+      `(let ,(mapcar (lambda (b) (list (car b) (cdr b))) vars)
+         ,@code)
+    `(progn ,@code)))
 
 (defun pcase--small-branch-p (code)
   (and (= 1 (length code))
@@ -451,7 +456,36 @@ to this macro."
   (cond
    ((eq else :pcase--dontcare) then)
    ((eq then :pcase--dontcare) (debug) else) ;Can/should this ever happen?
-   (t (macroexp-if test then else))))
+   ;; FIXME: The code below shows that there are some opportunities for sharing,
+   ;; but it's rarely useful to do it here, since almost all sharing found
+   ;; shares a trivial expression.
+   ;; But among the common trivial expressions are those of the form
+   ;; (funcall pcase-0).  For this case, there could be a significant payoff
+   ;; if we could find the sharing-opportunity earlier so as to avoid
+   ;; the creation of pcase-0.
+   ;; ((and (eq 'if (car-safe then))
+   ;;       (equal (macroexp-unprogn (macroexp-progn (nthcdr 3 then)))
+   ;;              (macroexp-unprogn else)))
+   ;;  (let ((res (macroexp-if `(and ,test ,(nth 1 then))
+   ;;                        (nth 2 then) else)))
+   ;;    (message "if+if => if-and: sharing %S" else)
+   ;;    res))
+   ;; ((and (eq 'if (car-safe else))
+   ;;       (equal (nth 2 else) then))
+   ;;  (let ((res (macroexp-if `(or ,test ,(nth 1 else))
+   ;;                          then (macroexp-progn (nthcdr 3 else)))))
+   ;;    (message "if+if => if-or: sharing %S" then)
+   ;;    res))
+   (t
+    ;; (cond
+    ;;  ((and (eq 'cond (car-safe then))
+    ;;        (equal `(cond ,@(nthcdr 2 then)) else))
+    ;;   (message "if+cond => cond-and: sharing %S" else))
+    ;;  ((and (eq 'cond (car-safe else))
+    ;;        (equal (macroexp-unprogn (macroexp-progn (cdr (nth 1 else))))
+    ;;               (macroexp-unprogn then)))
+    ;;   (message "if+cond => cond-or: sharing %S" then)))
+    (macroexp-if test then else))))
 
 ;; Note about MATCH:
 ;; When we have patterns like `(PAT1 . PAT2), after performing the `consp'
@@ -509,6 +543,7 @@ MATCH is the pattern that needs to be matched, of the form:
     (numberp . stringp)
     (numberp . byte-code-function-p)
     (consp . arrayp)
+    (consp . atom)
     (consp . vectorp)
     (consp . stringp)
     (consp . byte-code-function-p)
@@ -917,6 +952,14 @@ QPAT can take the following forms:
           (app cdr ,(list '\` (cdr qpat)))))
    ((or (stringp qpat) (integerp qpat) (symbolp qpat)) `',qpat)
    (t (error "Unknown QPAT: %S" qpat))))
+
+;;; Extra definitions that use pcase.
+
+(defun pcase--canon (e)
+  (pcase e
+    (`(progn ,e) (pcase--canon e))
+    (`(cond (,test . ,then) (t . ,else))
+     `(if ,test ,(macroexp-progn then) ,(macroexp-progn else)))))
 
 
 (provide 'pcase)
