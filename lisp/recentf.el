@@ -1187,6 +1187,9 @@ IGNORE other arguments."
            :format "%[%t\n%]"
            :help-echo ,(concat "Open " (cdr menu-element))
            :action recentf-open-files-action
+           ;; Override the (problematic) follow-link property of the
+           ;; `link' widget (bug#22434).
+           :follow-link nil
            ,(cdr menu-element))))
 
 (defun recentf-open-files-items (files)
