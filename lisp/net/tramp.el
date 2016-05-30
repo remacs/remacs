@@ -2867,11 +2867,21 @@ User is always nil."
     (error
      "tramp-handle-file-name-completion invoked on non-tramp directory `%s'"
      directory))
-  (try-completion
-   filename
-   (mapcar 'list (file-name-all-completions filename directory))
-   (when predicate
-     (lambda (x) (funcall predicate (expand-file-name (car x) directory))))))
+  (let (hits-ignored-extensions)
+    (or
+     (try-completion
+      filename (file-name-all-completions filename directory)
+      (lambda (x)
+	(when (funcall (or predicate 'identity) (expand-file-name x directory))
+	  (not
+	   (and
+	    completion-ignored-extensions
+	    (string-match
+	     (concat (regexp-opt completion-ignored-extensions 'paren) "$") x)
+	    ;; We remember the hit.
+	    (push x hits-ignored-extensions))))))
+     ;; No match.  So we try again for ignored files.
+     (try-completion filename hits-ignored-extensions))))
 
 (defun tramp-handle-file-name-directory (file)
   "Like `file-name-directory' but aware of Tramp files."

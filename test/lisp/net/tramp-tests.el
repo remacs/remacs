@@ -1405,10 +1405,15 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (make-directory tmp-name)
 	    (should (file-directory-p tmp-name))
 	    (write-region "foo" nil (expand-file-name "foo" tmp-name))
+	    (should (file-exists-p (expand-file-name "foo" tmp-name)))
 	    (write-region "bar" nil (expand-file-name "bold" tmp-name))
+	    (should (file-exists-p (expand-file-name "bold" tmp-name)))
 	    (make-directory (expand-file-name "boz" tmp-name))
+	    (should (file-directory-p (expand-file-name "boz" tmp-name)))
 	    (should (equal (file-name-completion "fo" tmp-name) "foo"))
+	    (should (equal (file-name-completion "foo" tmp-name) t))
 	    (should (equal (file-name-completion "b" tmp-name) "bo"))
+	    (should-not (file-name-completion "a" tmp-name))
 	    (should
 	     (equal
 	      (file-name-completion "b" tmp-name 'file-directory-p) "boz/"))
@@ -1416,7 +1421,32 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should
 	     (equal
 	      (sort (file-name-all-completions "b" tmp-name) 'string-lessp)
-	      '("bold" "boz/"))))
+	      '("bold" "boz/")))
+	    (should-not (file-name-all-completions "a" tmp-name))
+	    ;; `completion-regexp-list' restricts the completion to
+	    ;; files which match all expressions in this list.
+	    (let ((completion-regexp-list
+		   `(,directory-files-no-dot-files-regexp "b")))
+	      (should
+	       (equal (file-name-completion "" tmp-name) "bo"))
+	      (should
+	       (equal
+		(sort (file-name-all-completions "" tmp-name) 'string-lessp)
+		'("bold" "boz/"))))
+	    ;; `file-name-completion' ignores file names that end in
+	    ;; any string in `completion-ignored-extensions'.
+	    (let ((completion-ignored-extensions '(".ext")))
+	      (write-region "foo" nil (expand-file-name "foo.ext" tmp-name))
+	      (should (file-exists-p (expand-file-name "foo.ext" tmp-name)))
+	      (should (equal (file-name-completion "fo" tmp-name) "foo"))
+	      (should (equal (file-name-completion "foo" tmp-name) t))
+	      (should (equal (file-name-completion "foo." tmp-name) "foo.ext"))
+	      (should (equal (file-name-completion "foo.ext" tmp-name) t))
+	      ;; `file-name-all-completions' is not affected.
+	      (should
+	       (equal
+		(sort (file-name-all-completions "" tmp-name) 'string-lessp)
+		'("../" "./" "bold" "boz/" "foo" "foo.ext")))))
 
 	;; Cleanup.
 	(ignore-errors (delete-directory tmp-name 'recursive))))))

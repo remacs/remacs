@@ -535,7 +535,7 @@ Emacs dired can't find files."
   "Like `file-name-all-completions' for Tramp files."
   (all-completions
    filename
-   (with-parsed-tramp-file-name directory nil
+   (with-parsed-tramp-file-name (expand-file-name directory) nil
      (with-tramp-file-property v localname "file-name-all-completions"
        (save-match-data
 	 (tramp-adb-send-command

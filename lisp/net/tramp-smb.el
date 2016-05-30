@@ -663,8 +663,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	     result)))
     ;; Sort them if necessary.
     (unless nosort (setq result (sort result 'string-lessp)))
-    ;; Remove double entries.
-    (delete-dups result)))
+    result))
 
 (defun tramp-smb-handle-expand-file-name (name &optional dir)
   "Like `expand-file-name' for Tramp files."
@@ -907,16 +906,17 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
   "Like `file-name-all-completions' for Tramp files."
   (all-completions
    filename
-   (with-parsed-tramp-file-name directory nil
+   (with-parsed-tramp-file-name (expand-file-name directory) nil
      (with-tramp-file-property v localname "file-name-all-completions"
        (save-match-data
-	 (mapcar
-	  (lambda (x)
-	    (list
-	     (if (string-match "d" (nth 1 x))
-		 (file-name-as-directory (nth 0 x))
-	       (nth 0 x))))
-	  (tramp-smb-get-file-entries directory)))))))
+	 (delete-dups
+	  (mapcar
+	   (lambda (x)
+	     (list
+	      (if (string-match "d" (nth 1 x))
+		  (file-name-as-directory (nth 0 x))
+		(nth 0 x))))
+	   (tramp-smb-get-file-entries directory))))))))
 
 (defun tramp-smb-handle-file-writable-p (filename)
   "Like `file-writable-p' for Tramp files."

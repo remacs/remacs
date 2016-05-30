@@ -1020,69 +1020,21 @@ file names."
 (defun tramp-gvfs-handle-file-name-all-completions (filename directory)
   "Like `file-name-all-completions' for Tramp files."
   (unless (save-match-data (string-match "/" filename))
-    (with-parsed-tramp-file-name (expand-file-name directory) nil
-
-      (all-completions
-       filename
-       (mapcar
-	'list
-        (or
-	 ;; Try cache entries for filename, filename with last
-	 ;; character removed, filename with last two characters
-	 ;; removed, ..., and finally the empty string - all
-	 ;; concatenated to the local directory name.
-         (let ((remote-file-name-inhibit-cache
-		(or remote-file-name-inhibit-cache
-		    tramp-completion-reread-directory-timeout)))
-
-	   ;; This is inefficient for very long filenames, pity
-	   ;; `reduce' is not available...
-	   (car
-	    (apply
-	     'append
-	     (mapcar
-	      (lambda (x)
-		(let ((cache-hit
-		       (tramp-get-file-property
-			v
-			(concat localname (substring filename 0 x))
-			"file-name-all-completions"
-			nil)))
-		  (when cache-hit (list cache-hit))))
-	      ;; We cannot use a length of 0, because file properties
-	      ;; for "foo" and "foo/" are identical.
-	      (number-sequence (length filename) 1 -1)))))
-
-         ;; Cache expired or no matching cache entry found so we need
-         ;; to perform a remote operation.
+    (all-completions
+     filename
+     (with-parsed-tramp-file-name (expand-file-name directory) nil
+       (with-tramp-file-property v localname "file-name-all-completions"
          (let ((result '("./" "../"))
 	       entry)
            ;; Get a list of directories and files.
-	   (dolist (item (tramp-gvfs-get-directory-attributes directory))
+	   (dolist (item (tramp-gvfs-get-directory-attributes directory) result)
 	     (setq entry
 		   (or ;; Use display-name if available (google-drive).
 		    ;(cdr (assoc "standard::display-name" item))
 		    (car item)))
-	     (when (string-match filename entry)
-	       (if (string-equal (cdr (assoc "type" item)) "directory")
-		   (push (file-name-as-directory entry) result)
-		 (push entry result))))
-
-           ;; Because the remote op went through OK we know the
-           ;; directory we `cd'-ed to exists.
-           (tramp-set-file-property v localname "file-exists-p" t)
-
-           ;; Because the remote op went through OK we know every
-           ;; file listed by `ls' exists.
-           (mapc (lambda (entry)
-		   (tramp-set-file-property
-		    v (concat localname entry) "file-exists-p" t))
-		 result)
-
-           ;; Store result in the cache.
-           (tramp-set-file-property
-            v (concat localname filename)
-	    "file-name-all-completions" result))))))))
+	     (if (string-equal (cdr (assoc "type" item)) "directory")
+		 (push (file-name-as-directory entry) result)
+	       (push entry result)))))))))
 
 (defun tramp-gvfs-handle-file-notify-add-watch (file-name flags _callback)
   "Like `file-notify-add-watch' for Tramp files."
