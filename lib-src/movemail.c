@@ -338,7 +338,7 @@ main (int argc, char **argv)
       int lockcount = 0;
       int status = 0;
 #if defined (MAIL_USE_MAILLOCK) && defined (HAVE_TOUCHLOCK)
-      time_t touched_lock IF_LINT (= 0);
+      time_t touched_lock;
 #endif
 
       if (setuid (getuid ()) < 0 || setregid (-1, real_gid) < 0)

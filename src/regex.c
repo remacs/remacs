@@ -2465,9 +2465,9 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
 
   /* These hold the values of p, pattern, and pend from the main
      pattern when we have pushed into a subpattern.  */
-  re_char *main_p IF_LINT (= NULL);
-  re_char *main_pattern IF_LINT (= NULL);
-  re_char *main_pend IF_LINT (= NULL);
+  re_char *main_p;
+  re_char *main_pattern;
+  re_char *main_pend;
 
 #ifdef DEBUG
   debug++;

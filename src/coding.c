@@ -8015,12 +8015,12 @@ decode_coding_object (struct coding_system *coding,
 		      Lisp_Object dst_object)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
-  unsigned char *destination IF_LINT (= NULL);
-  ptrdiff_t dst_bytes IF_LINT (= 0);
+  unsigned char *destination;
+  ptrdiff_t dst_bytes;
   ptrdiff_t chars = to - from;
   ptrdiff_t bytes = to_byte - from_byte;
   Lisp_Object attrs;
-  ptrdiff_t saved_pt = -1, saved_pt_byte IF_LINT (= 0);
+  ptrdiff_t saved_pt = -1, saved_pt_byte;
   bool need_marker_adjustment = 0;
   Lisp_Object old_deactivate_mark;
 
@@ -8198,7 +8198,7 @@ encode_coding_object (struct coding_system *coding,
   ptrdiff_t chars = to - from;
   ptrdiff_t bytes = to_byte - from_byte;
   Lisp_Object attrs;
-  ptrdiff_t saved_pt = -1, saved_pt_byte IF_LINT (= 0);
+  ptrdiff_t saved_pt = -1, saved_pt_byte;
   bool need_marker_adjustment = 0;
   bool kill_src_buffer = 0;
   Lisp_Object old_deactivate_mark;

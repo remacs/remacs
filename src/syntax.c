@@ -708,7 +708,7 @@ back_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
   ptrdiff_t comment_end = from;
   ptrdiff_t comment_end_byte = from_byte;
   ptrdiff_t comstart_pos = 0;
-  ptrdiff_t comstart_byte IF_LINT (= 0);
+  ptrdiff_t comstart_byte;
   /* Place where the containing defun starts,
      or 0 if we didn't come across it yet.  */
   ptrdiff_t defun_start = 0;
