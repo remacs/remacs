@@ -1403,10 +1403,6 @@ elements
 **** In rng-valid, instead of using modification-hooks and
 insert-behind-hooks on dependent overlays, use same technique as nxml-mode.
 
-**** Port to XEmacs.  Issues include: Unicode (XEmacs seems to be based on
-Mule-UCS); overlays/text properties vs extents; absence of
-fontification-functions hook.
-
 *** Fontification
 
 **** Allow face to depend on element qname, attribute qname, attribute
