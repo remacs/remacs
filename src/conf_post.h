@@ -343,9 +343,8 @@ extern int emacs_setenv_TZ (char const *);
 # define FLEXIBLE_ARRAY_MEMBER
 #endif
 
-/* Use this to suppress gcc's `...may be used before initialized' warnings. */
-#ifdef lint
 /* Use CODE only if lint checking is in effect.  */
+#if defined GCC_LINT || defined lint
 # define IF_LINT(Code) Code
 #else
 # define IF_LINT(Code) /* empty */
