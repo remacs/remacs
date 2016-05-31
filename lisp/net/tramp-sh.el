@@ -4717,7 +4717,7 @@ connection if a previous connection has died for some reason."
 		     (options (tramp-ssh-controlmaster-options vec))
 		     (process-connection-type tramp-process-connection-type)
 		     (process-adaptive-read-buffering nil)
-		     ;; There are unfortune settings for "cmdproxy" on
+		     ;; There are unfortunate settings for "cmdproxy" on
 		     ;; W32 systems.
 		     (process-coding-system-alist nil)
 		     (coding-system-for-read nil)

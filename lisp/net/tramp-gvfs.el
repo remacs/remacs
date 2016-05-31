@@ -410,7 +410,7 @@ Every entry is a list (NAME ADDRESS).")
 (defconst tramp-gvfs-file-attributes
   '("type"
     "standard::display-name"
-    ;; We don't need this one.  It is used as delimeter in case the
+    ;; We don't need this one.  It is used as delimiter in case the
     ;; display name contains spaces, which is hard to parse.
     "standard::icon"
     "standard::symlink-target"

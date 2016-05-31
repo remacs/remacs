@@ -967,7 +967,7 @@ write its autoloads into the specified file instead."
 						  t files-re))
 			       dirs)))
          (done ())                      ;Files processed; to remove duplicates.
-         (changed nil)                  ;Non-nil if some change occured.
+         (changed nil)                  ;Non-nil if some change occurred.
 	 (last-time)
          ;; Files with no autoload cookies or whose autoloads go to other
          ;; files because of file-local autoload-generated-file settings.

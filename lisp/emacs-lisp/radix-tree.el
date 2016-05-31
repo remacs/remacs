@@ -38,7 +38,7 @@
 ;; of array, so every level's lookup is O(N) rather than O(1).  We could easily
 ;; solve this by using char-tables instead of alists, but that would make every
 ;; level take up a lot more memory, and it would make the resulting
-;; datastructure harder to read (by a human) when printed out.
+;; data structure harder to read (by a human) when printed out.
 
 ;;; Code:
 
