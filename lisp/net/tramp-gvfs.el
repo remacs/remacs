@@ -680,7 +680,7 @@ file names."
 		 'tramp-gvfs-send-command v gvfs-operation
 		 (append
 		  (and (eq op 'copy) (or keep-date preserve-uid-gid)
-		       (list "--preserve"))
+		       '("--preserve"))
 		  (list
 		   (tramp-gvfs-url-file-name filename)
 		   (tramp-gvfs-url-file-name newname))))

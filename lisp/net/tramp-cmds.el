@@ -345,7 +345,7 @@ names.  Passwords will never be included there.")
 Please note that you have set `tramp-verbose' to a value of at
 least 6.  Therefore, the contents of files might be included in
 the debug buffer(s).")
-	    (add-text-properties start (point) (list 'face 'italic))))
+	    (add-text-properties start (point) '(face italic))))
 
 	(set-buffer-modified-p nil)
 	(setq buffer-read-only t)
