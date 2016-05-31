@@ -500,41 +500,26 @@ Return non-nil in the case where no autoloads were added at point."
   (let ((generated-autoload-file buffer-file-name))
     (autoload-generate-file-autoloads file (current-buffer))))
 
-(defun autoload--split-prefixes-1 (strs)
-  (let ((prefixes ()))
-    (dolist (str strs)
-      (string-match "\\`[^-:/_]*[-:/_]*" str)
-      (let* ((prefix (match-string 0 str))
-             (tail (substring str (match-end 0)))
-             (cell (assoc prefix prefixes)))
-        (cond
-         ((null cell) (push (list prefix tail) prefixes))
-         ((equal (cadr cell) tail) nil)
-         (t (setcdr cell (cons tail (cdr cell)))))))
-    prefixes))
-
 (defvar autoload-compute-prefixes t
   "If non-nil, autoload will add code to register the prefixes used in a file.
 Standard prefixes won't be registered anyway.  I.e. if a file \"foo.el\" defines
 variables or functions that use \"foo-\" as prefix, that will not be registered.
 But all other prefixes will be included.")
 
-(defconst autoload-defs-autoload-max-size 5
+(defconst autoload-def-prefixes-max-entries 5
   "Target length of the list of definition prefixes per file.
 If set too small, the prefixes will be too generic (i.e. they'll use little
 memory, we'll end up looking in too many files when we need a particular
 prefix), and if set too large, they will be too specific (i.e. they will
 cost more memory use).")
 
-(defvar autoload-popular-prefixes nil)
+(defconst autoload-def-prefixes-max-length 12
+  "Target size of definition prefixes.
+Don't try to split prefixes that are already longer than that.")
+
+(require 'radix-tree)
 
 (defun autoload--make-defs-autoload (defs file)
-  ;; FIXME: avoid redundant entries.  E.g. opascal currently has
-  ;; "opascal-" "opascal--literal-start-re" "opascal--syntax-propertize"
-  ;; where only the first one should be kept.
-  ;; FIXME: Avoid keeping too-long-prefixes.  E.g. ob-scheme currently has
-  ;; "org-babel-scheme-" "org-babel-default-header-args:scheme"
-  ;; "org-babel-expand-body:scheme" "org-babel-execute:scheme".
 
   ;; Remove the defs that obey the rule that file foo.el (or
   ;; foo-mode.el) uses "foo-" as prefix.
@@ -548,39 +533,32 @@ cost more memory use).")
 
   ;; Then compute a small set of prefixes that cover all the
   ;; remaining definitions.
-  (let ((prefixes (autoload--split-prefixes-1 defs))
-        (again t))
-    ;; (message "Initial prefixes %s : %S" file (mapcar #'car prefixes))
-    (while again
-      (setq again nil)
-      (let ((newprefixes
-             (sort
-              (mapcar (lambda (cell)
-                        (cons cell
-                              (autoload--split-prefixes-1 (cdr cell))))
-                      prefixes)
-              (lambda (x y) (< (length (cdr x)) (length (cdr y)))))))
-        (setq prefixes nil)
-        (while newprefixes
-          (let ((x (pop newprefixes)))
-            (if (or (equal '("") (cdar x))
-                    (and (cddr x)
-                         (not (member (caar x)
-                                      autoload-popular-prefixes))
-                         (> (+ (length prefixes) (length newprefixes)
-                               (length (cdr x)))
-                            autoload-defs-autoload-max-size)))
-                ;; Nothing to split or would split too deep.
-                (push (car x) prefixes)
-              ;; (message "Expand %S to %S" (caar x) (cdr x))
-              (setq again t)
-              (setq prefixes
-                    (nconc (mapcar (lambda (cell)
-                                     (cons (concat (caar x)
-                                                   (car cell))
-                                           (cdr cell)))
-                                   (cdr x))
-                           prefixes)))))))
+  (let* ((tree (let ((tree radix-tree-empty))
+                 (dolist (def defs)
+                   (setq tree (radix-tree-insert tree def t)))
+                 tree))
+         (prefixes (list (cons "" tree))))
+    (while
+        (let ((newprefixes nil)
+              (changes nil))
+          (dolist (pair prefixes)
+            (let ((prefix (car pair)))
+              (if (or (> (length prefix) autoload-def-prefixes-max-length)
+                      (radix-tree-lookup (cdr pair) ""))
+                  ;; No point splitting it any further.
+                  (push pair newprefixes)
+                (setq changes t)
+                (radix-tree-iter-subtrees
+                 (cdr pair) (lambda (sprefix subtree)
+                              (push (cons (concat prefix sprefix) subtree)
+                                    newprefixes))))))
+          (and changes
+               (or (and (null (cdr prefixes)) (equal "" (caar prefixes)))
+                   (<= (length newprefixes)
+                       autoload-def-prefixes-max-entries))
+               (setq prefixes newprefixes)
+               (< (length prefixes) autoload-def-prefixes-max-entries))))
+
     ;; (message "Final prefixes %s : %S" file (mapcar #'car prefixes))
     (when prefixes
       `(if (fboundp 'register-definition-prefixes)
@@ -989,7 +967,7 @@ write its autoloads into the specified file instead."
 						  t files-re))
 			       dirs)))
          (done ())                      ;Files processed; to remove duplicates.
-         (changed nil)                  ;Non-nil if some change occured.
+         (changed nil)                  ;Non-nil if some change occurred.
 	 (last-time)
          ;; Files with no autoload cookies or whose autoloads go to other
          ;; files because of file-local autoload-generated-file settings.

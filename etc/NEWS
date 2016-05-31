@@ -276,6 +276,13 @@ for the ChangeLog file, if none already exists.  Customize
 built-in IDNA support now).
 
 ---
+*** When sending HTML messages with embedded images, and you have
+exiftool installed, and you rotate images with EXIF data (i.e.,
+JPEGs), the rotational information will be inserted into the outgoing
+image in the message.  (The original image will not have its
+orientation affected.)
+
+---
 *** The 'message-valid-fqdn-regexp' variable has been removed, since
 there are now top-level domains added all the time.  Message will no
 longer warn about sending emails to top-level domains it hasn't heard
@@ -352,6 +359,8 @@ See the 'vc-faces' customization group.
 
 
 * New Modes and Packages in Emacs 25.2
+
+** New Elisp data-structure library `radix-tree'.
 
 
 * Incompatible Lisp Changes in Emacs 25.2

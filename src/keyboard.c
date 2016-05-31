@@ -2122,7 +2122,7 @@ read_event_from_main_queue (struct timespec *end_time,
 {
   Lisp_Object c = Qnil;
   sys_jmp_buf save_jump;
-  KBOARD *kb IF_LINT (= NULL);
+  KBOARD *kb;
 
  start:
 
@@ -2280,11 +2280,6 @@ read_decoded_event_from_main_queue (struct timespec *end_time,
     }
 }
 
-#if 4 < __GNUC__ + (6 <= __GNUC_MINOR__)
-# pragma GCC diagnostic push
-# pragma GCC diagnostic ignored "-Wclobbered"
-#endif
-
 /* Read a character from the keyboard; call the redisplay if needed.  */
 /* commandflag 0 means do not autosave, but do redisplay.
    -1 means do not redisplay, but do autosave.
@@ -2317,7 +2312,9 @@ read_char (int commandflag, Lisp_Object map,
 	   Lisp_Object prev_event,
 	   bool *used_mouse_menu, struct timespec *end_time)
 {
-  Lisp_Object c;
+  /* IF_LINT (volatile) works around GCC bug 54561.  */
+  Lisp_Object IF_LINT (volatile) c;
+
   ptrdiff_t jmpcount;
   sys_jmp_buf local_getcjmp;
   sys_jmp_buf save_jump;
@@ -3124,10 +3121,6 @@ read_char (int commandflag, Lisp_Object map,
   input_was_pending = input_pending;
   return c;
 }
-
-#if 4 < __GNUC__ + (6 <= __GNUC_MINOR__)
-# pragma GCC diagnostic pop
-#endif
 
 /* Record a key that came from a mouse menu.
    Record it for echoing, for this-command-keys, and so on.  */

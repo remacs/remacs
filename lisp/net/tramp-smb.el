@@ -663,8 +663,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	     result)))
     ;; Sort them if necessary.
     (unless nosort (setq result (sort result 'string-lessp)))
-    ;; Remove double entries.
-    (delete-dups result)))
+    result))
 
 (defun tramp-smb-handle-expand-file-name (name &optional dir)
   "Like `expand-file-name' for Tramp files."
@@ -907,17 +906,17 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
   "Like `file-name-all-completions' for Tramp files."
   (all-completions
    filename
-   (with-parsed-tramp-file-name directory nil
+   (with-parsed-tramp-file-name (expand-file-name directory) nil
      (with-tramp-file-property v localname "file-name-all-completions"
        (save-match-data
-	 (let ((entries (tramp-smb-get-file-entries directory)))
-	   (mapcar
-	    (lambda (x)
-	      (list
-	       (if (string-match "d" (nth 1 x))
-		   (file-name-as-directory (nth 0 x))
-		 (nth 0 x))))
-	    entries)))))))
+	 (delete-dups
+	  (mapcar
+	   (lambda (x)
+	     (list
+	      (if (string-match "d" (nth 1 x))
+		  (file-name-as-directory (nth 0 x))
+		(nth 0 x))))
+	   (tramp-smb-get-file-entries directory))))))))
 
 (defun tramp-smb-handle-file-writable-p (filename)
   "Like `file-writable-p' for Tramp files."
@@ -1389,16 +1388,18 @@ target of the symlink differ."
 (defun tramp-smb-handle-start-file-process (name buffer program &rest args)
   "Like `start-file-process' for Tramp files."
   (with-parsed-tramp-file-name default-directory nil
-    (let ((command (mapconcat 'identity (cons program args) " "))
-	  (bmp (and (buffer-live-p buffer) (buffer-modified-p buffer)))
-	  (name1 name)
-	  (i 0))
+    (let* ((buffer
+	    (if buffer
+		(get-buffer-create buffer)
+	      ;; BUFFER can be nil.  We use a temporary buffer.
+	      (generate-new-buffer tramp-temp-buffer-name)))
+	   (command (mapconcat 'identity (cons program args) " "))
+	   (bmp (and (buffer-live-p buffer) (buffer-modified-p buffer)))
+	   (name1 name)
+	   (i 0))
       (unwind-protect
 	  (save-excursion
 	    (save-restriction
-	      (unless buffer
-		;; BUFFER can be nil.  We use a temporary buffer.
-		(setq buffer (generate-new-buffer tramp-temp-buffer-name)))
 	      (while (get-process name1)
 		;; NAME must be unique as process name.
 		(setq i (1+ i)

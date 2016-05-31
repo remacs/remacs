@@ -4545,7 +4545,7 @@ This function could be useful in `message-setup-hook'."
 	  (setq message-options options)
 	  ;; Avoid copying text props (except hard newlines).
 	  (insert (with-current-buffer mailbuf
-		    (mml-buffer-substring-no-properties-except-hard-newlines
+		    (mml-buffer-substring-no-properties-except-some
 		     (point-min) (point-max))))
 	  ;; Remove some headers.
 	  (message-encode-message-body)
@@ -4909,7 +4909,7 @@ Otherwise, generate and save a value for `canlock-password' first."
 	      ;; Avoid copying text props (except hard newlines).
 	      (insert
 	       (with-current-buffer messbuf
-		 (mml-buffer-substring-no-properties-except-hard-newlines
+		 (mml-buffer-substring-no-properties-except-some
 		  (point-min) (point-max))))
 	      (message-encode-message-body)
 	      ;; Remove some headers.
@@ -8386,30 +8386,32 @@ Used in `message-simplify-recipients'."
 (defun message-toggle-image-thumbnails ()
   "For any included image files, insert a thumbnail of that image."
   (interactive)
-  (let ((overlays (overlays-in (point-min) (point-max)))
-	(displayed nil))
-    (while overlays
-      (let ((overlay (car overlays)))
-	(when (overlay-get overlay 'put-image)
-	  (delete-overlay overlay)
-	  (setq displayed t)))
-      (setq overlays (cdr overlays)))
+  (let ((displayed nil))
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (eobp))
+	(when-let ((props (get-text-property (point) 'display)))
+	  (when (and (consp props)
+		     (eq (car props) 'image))
+	    (put-text-property (point) (1+ (point)) 'display nil)
+	    (setq displayed t)))))
     (unless displayed
       (save-excursion
 	(goto-char (point-min))
-	(while (re-search-forward "<img.*src=\"\\([^\"]+\\)" nil t)
-	  (let ((file (match-string 1))
+	(while (re-search-forward "<img.*src=\"\\([^\"]+\\).*>" nil t)
+	  (let ((string (match-string 0))
+		(file (match-string 1))
 		(edges (window-inside-pixel-edges
 			(get-buffer-window (current-buffer)))))
-	    (put-image
+	    (delete-region (match-beginning 0) (match-end 0))
+	    (insert-image
 	     (create-image
 	      file 'imagemagick nil
 	      :max-width (truncate
 			  (* 0.7 (- (nth 2 edges) (nth 0 edges))))
 	      :max-height (truncate
 			   (* 0.5 (- (nth 3 edges) (nth 1 edges)))))
-	     (match-beginning 0)
-	     " ")))))))
+	     string)))))))
 
 (provide 'message)
 

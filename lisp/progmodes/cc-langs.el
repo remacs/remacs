@@ -476,7 +476,8 @@ so that all identifiers are recognized as words.")
   c++ '(c-extend-region-for-CPP
 	c-before-change-check-<>-operators
 	c-invalidate-macro-cache)
-  (c objc) '(c-extend-region-for-CPP c-invalidate-macro-cache)
+  (c objc) '(c-extend-region-for-CPP
+	     c-invalidate-macro-cache)
   ;; java 'c-before-change-check-<>-operators
   awk 'c-awk-record-region-clear-NL)
 (c-lang-defvar c-get-state-before-change-functions
@@ -505,9 +506,11 @@ parameters \(point-min) and \(point-max).")
   ;; For documentation see the following c-lang-defvar of the same name.
   ;; The value here may be a list of functions or a single function.
   t 'c-change-expand-fl-region
-  (c objc) '(c-neutralize-syntax-in-and-mark-CPP
+  (c objc) '(c-extend-font-lock-region-for-macros
+	     c-neutralize-syntax-in-and-mark-CPP
 	     c-change-expand-fl-region)
-  c++ '(c-neutralize-syntax-in-and-mark-CPP
+  c++ '(c-extend-font-lock-region-for-macros
+	c-neutralize-syntax-in-and-mark-CPP
 	c-restore-<>-properties
 	c-change-expand-fl-region)
   java '(c-restore-<>-properties
@@ -2263,6 +2266,10 @@ contain type identifiers."
 	    "__attribute__"
 	    ;; MSVC extension.
 	    "__declspec"))
+
+(c-lang-defconst c-paren-nontype-key
+  t (c-make-keywords-re t (c-lang-const c-paren-nontype-kwds)))
+(c-lang-defvar c-paren-nontype-key (c-lang-const c-paren-nontype-key))
 
 (c-lang-defconst c-paren-type-kwds
   "Keywords that may be followed by a parenthesis expression containing

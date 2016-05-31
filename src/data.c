@@ -1614,8 +1614,8 @@ The function `default-value' gets the default value and `set-default' sets it.  
 {
   struct Lisp_Symbol *sym;
   struct Lisp_Buffer_Local_Value *blv = NULL;
-  union Lisp_Val_Fwd valcontents IF_LINT (= {LISP_INITIALLY_ZERO});
-  bool forwarded IF_LINT (= 0);
+  union Lisp_Val_Fwd valcontents;
+  bool forwarded;
 
   CHECK_SYMBOL (variable);
   sym = XSYMBOL (variable);
@@ -1692,8 +1692,8 @@ Instead, use `add-hook' and specify t for the LOCAL argument.  */)
   (Lisp_Object variable)
 {
   Lisp_Object tem;
-  bool forwarded IF_LINT (= 0);
-  union Lisp_Val_Fwd valcontents IF_LINT (= {LISP_INITIALLY_ZERO});
+  bool forwarded;
+  union Lisp_Val_Fwd valcontents;
   struct Lisp_Symbol *sym;
   struct Lisp_Buffer_Local_Value *blv = NULL;
 
@@ -2458,7 +2458,7 @@ uintmax_t
 cons_to_unsigned (Lisp_Object c, uintmax_t max)
 {
   bool valid = 0;
-  uintmax_t val IF_LINT (= 0);
+  uintmax_t val;
   if (INTEGERP (c))
     {
       valid = 0 <= XINT (c);
@@ -2511,7 +2511,7 @@ intmax_t
 cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
 {
   bool valid = 0;
-  intmax_t val IF_LINT (= 0);
+  intmax_t val;
   if (INTEGERP (c))
     {
       val = XINT (c);

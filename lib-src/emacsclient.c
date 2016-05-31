@@ -1195,7 +1195,7 @@ set_local_socket (const char *local_socket_name)
     int use_tmpdir = 0;
     int saved_errno;
     const char *server_name = local_socket_name;
-    const char *tmpdir IF_LINT ( = NULL);
+    const char *tmpdir;
     char *tmpdir_storage = NULL;
     char *socket_name_storage = NULL;
 

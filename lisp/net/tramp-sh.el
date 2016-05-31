@@ -84,8 +84,12 @@ e.g. \"$HOME/.sh_history\"."
                  (string :tag "Redirect to a file")))
 
 ;;;###tramp-autoload
-(defconst tramp-color-escape-sequence-regexp "\e[[;0-9]+m"
-  "Escape sequences produced by the \"ls\" command.")
+(defconst tramp-display-escape-sequence-regexp "\e[[;0-9]+m"
+  "Terminal control escape sequences for display attributes.")
+
+;;;###tramp-autoload
+(defconst tramp-device-escape-sequence-regexp "\e[[0-9]+n"
+  "Terminal control escape sequences for device status.")
 
 ;; ksh on OpenBSD 4.5 requires that $PS1 contains a `#' character for
 ;; root users.  It uses the `$' character for other users.  In order
@@ -658,29 +662,19 @@ Escape sequence %s is replaced with name of Perl binary.
 This string is passed to `format', so percent characters need to be doubled.")
 
 (defconst tramp-perl-file-name-all-completions
-  "%s -e 'sub case {
- my $str = shift;
- if ($ARGV[2]) {
-  return lc($str);
- }
- else {
-  return $str;
- }
-}
+  "%s -e '
 opendir(d, $ARGV[0]) || die(\"$ARGV[0]: $!\\nfail\\n\");
 @files = readdir(d); closedir(d);
 foreach $f (@files) {
- if (case(substr($f, 0, length($ARGV[1]))) eq case($ARGV[1])) {
-  if (-d \"$ARGV[0]/$f\") {
-   print \"$f/\\n\";
-  }
-  else {
-   print \"$f\\n\";
-  }
+ if (-d \"$ARGV[0]/$f\") {
+  print \"$f/\\n\";
+ }
+ else {
+  print \"$f\\n\";
  }
 }
 print \"ok\\n\"
-' \"$1\" \"$2\" \"$3\" 2>/dev/null"
+' \"$1\" 2>/dev/null"
   "Perl script to produce output suitable for use with
 `file-name-all-completions' on the remote file system.  Escape
 sequence %s is replaced with name of Perl binary.  This string is
@@ -1339,8 +1333,10 @@ target of the symlink differ."
           (setq res-gid (read (current-buffer)))
           (if (eq id-format 'integer)
               (progn
-                (unless (numberp res-uid) (setq res-uid -1))
-                (unless (numberp res-gid) (setq res-gid -1)))
+                (unless (numberp res-uid)
+		  (setq res-uid tramp-unknown-id-integer))
+                (unless (numberp res-gid)
+		  (setq res-gid tramp-unknown-id-integer)))
             (progn
               (unless (stringp res-uid) (setq res-uid (symbol-name res-uid)))
               (unless (stringp res-gid) (setq res-gid (symbol-name res-gid)))))
@@ -1862,135 +1858,63 @@ be non-negative integers."
 (defun tramp-sh-handle-file-name-all-completions (filename directory)
   "Like `file-name-all-completions' for Tramp files."
   (unless (save-match-data (string-match "/" filename))
-    (with-parsed-tramp-file-name (expand-file-name directory) nil
+    (all-completions
+     filename
+     (with-parsed-tramp-file-name (expand-file-name directory) nil
+       (with-tramp-file-property v localname "file-name-all-completions"
+	 (let (result)
+	   ;; Get a list of directories and files, including reliably
+	   ;; tagging the directories with a trailing "/".  Because I
+	   ;; rock.  --daniel@danann.net
+	   (tramp-send-command
+	    v
+	    (if (tramp-get-remote-perl v)
+		(progn
+		  (tramp-maybe-send-script
+		   v tramp-perl-file-name-all-completions
+		   "tramp_perl_file_name_all_completions")
+		  (format "tramp_perl_file_name_all_completions %s"
+			  (tramp-shell-quote-argument localname)))
 
-      (all-completions
-       filename
-       (mapcar
-	'list
-        (or
-	 ;; Try cache entries for `filename', `filename' with last
-	 ;; character removed, `filename' with last two characters
-	 ;; removed, ..., and finally the empty string - all
-	 ;; concatenated to the local directory name.
-         (let ((remote-file-name-inhibit-cache
-		(or remote-file-name-inhibit-cache
-		    tramp-completion-reread-directory-timeout)))
+	      (format (concat
+		       "(cd %s 2>&1 && %s -a 2>/dev/null"
+		       " | while IFS= read f; do"
+		       " if %s -d \"$f\" 2>/dev/null;"
+		       " then \\echo \"$f/\"; else \\echo \"$f\"; fi; done"
+		       " && \\echo ok) || \\echo fail")
+		      (tramp-shell-quote-argument localname)
+		      (tramp-get-ls-command v)
+		      (tramp-get-test-command v))))
 
-	   ;; This is inefficient for very long file names, pity
-	   ;; `reduce' is not available...
-	   (car
-	    (apply
-	     'append
-	     (mapcar
-	      (lambda (x)
-		(let ((cache-hit
-		       (tramp-get-file-property
-			v
-			(concat localname (substring filename 0 x))
-			"file-name-all-completions"
-			nil)))
-		  (when cache-hit (list cache-hit))))
-	      ;; We cannot use a length of 0, because file properties
-	      ;; for "foo" and "foo/" are identical.
-	      (number-sequence (length filename) 1 -1)))))
+	   ;; Now grab the output.
+	   (with-current-buffer (tramp-get-buffer v)
+	     (goto-char (point-max))
 
-         ;; Cache expired or no matching cache entry found so we need
-         ;; to perform a remote operation.
-         (let (result)
-           ;; Get a list of directories and files, including reliably
-           ;; tagging the directories with a trailing '/'.  Because I
-           ;; rock.  --daniel@danann.net
-
-           ;; Changed to perform `cd' in the same remote op and only
-           ;; get entries starting with `filename'.  Capture any `cd'
-           ;; error messages.  Ensure any `cd' and `echo' aliases are
-           ;; ignored.
-           (tramp-send-command
-            v
-            (if (tramp-get-remote-perl v)
-                (progn
-                  (tramp-maybe-send-script
-                   v tramp-perl-file-name-all-completions
-                   "tramp_perl_file_name_all_completions")
-                  (format "tramp_perl_file_name_all_completions %s %s %d"
-                          (tramp-shell-quote-argument localname)
-                          (tramp-shell-quote-argument filename)
-                          (if read-file-name-completion-ignore-case 1 0)))
-
-              (format (concat
-                       "(cd %s 2>&1 && (%s -a %s 2>/dev/null"
-                       ;; `ls' with wildcard might fail with `Argument
-                       ;; list too long' error in some corner cases; if
-                       ;; `ls' fails after `cd' succeeded, chances are
-                       ;; that's the case, so let's retry without
-                       ;; wildcard.  This will return "too many" entries
-                       ;; but that isn't harmful.
-                       " || %s -a 2>/dev/null)"
-                       " | while IFS= read f; do"
-                       " if %s -d \"$f\" 2>/dev/null;"
-                       " then \\echo \"$f/\"; else \\echo \"$f\"; fi; done"
-                       " && \\echo ok) || \\echo fail")
-                      (tramp-shell-quote-argument localname)
-                      (tramp-get-ls-command v)
-                      ;; When `filename' is empty, just `ls' without
-                      ;; `filename' argument is more efficient than `ls *'
-                      ;; for very large directories and might avoid the
-                      ;; `Argument list too long' error.
-                      ;;
-                      ;; With and only with wildcard, we need to add
-                      ;; `-d' to prevent `ls' from descending into
-                      ;; sub-directories.
-                      (if (zerop (length filename))
-                          "."
-                        (format "-d %s*" (tramp-shell-quote-argument filename)))
-                      (tramp-get-ls-command v)
-                      (tramp-get-test-command v))))
-
-           ;; Now grab the output.
-           (with-current-buffer (tramp-get-buffer v)
-             (goto-char (point-max))
-
-             ;; Check result code, found in last line of output.
-             (forward-line -1)
-             (if (looking-at "^fail$")
-                 (progn
-                   ;; Grab error message from line before last line
-                   ;; (it was put there by `cd 2>&1').
-                   (forward-line -1)
-                   (tramp-error
-                    v 'file-error
-                    "tramp-sh-handle-file-name-all-completions: %s"
-                    (buffer-substring (point) (point-at-eol))))
-               ;; For peace of mind, if buffer doesn't end in `fail'
-               ;; then it should end in `ok'.  If neither are in the
-               ;; buffer something went seriously wrong on the remote
-               ;; side.
-               (unless (looking-at "^ok$")
-                 (tramp-error
-                  v 'file-error
-                  "\
+	     ;; Check result code, found in last line of output.
+	     (forward-line -1)
+	     (if (looking-at "^fail$")
+		 (progn
+		   ;; Grab error message from line before last line
+		   ;; (it was put there by `cd 2>&1').
+		   (forward-line -1)
+		   (tramp-error
+		    v 'file-error
+		    "tramp-sh-handle-file-name-all-completions: %s"
+		    (buffer-substring (point) (point-at-eol))))
+	       ;; For peace of mind, if buffer doesn't end in `fail'
+	       ;; then it should end in `ok'.  If neither are in the
+	       ;; buffer something went seriously wrong on the remote
+	       ;; side.
+	       (unless (looking-at "^ok$")
+		 (tramp-error
+		  v 'file-error
+		  "\
 tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
-                  (tramp-shell-quote-argument localname) (buffer-string))))
+		  (tramp-shell-quote-argument localname) (buffer-string))))
 
-             (while (zerop (forward-line -1))
-               (push (buffer-substring (point) (point-at-eol)) result)))
-
-           ;; Because the remote op went through OK we know the
-           ;; directory we `cd'-ed to exists.
-           (tramp-set-file-property v localname "file-exists-p" t)
-
-           ;; Because the remote op went through OK we know every
-           ;; file listed by `ls' exists.
-           (mapc (lambda (entry)
-		   (tramp-set-file-property
-		    v (concat localname entry) "file-exists-p" t))
-		 result)
-
-           ;; Store result in the cache.
-           (tramp-set-file-property
-            v (concat localname filename)
-	    "file-name-all-completions" result))))))))
+	     (while (zerop (forward-line -1))
+	       (push (buffer-substring (point) (point-at-eol)) result)))
+	   result))))))
 
 ;; cp, mv and ln
 
@@ -2836,7 +2760,8 @@ The method used must be an out-of-band method."
 	  (unless
 	      (string-match "color" (tramp-get-connection-property v "ls" ""))
 	    (goto-char beg)
-	    (while (re-search-forward tramp-color-escape-sequence-regexp nil t)
+	    (while
+		(re-search-forward tramp-display-escape-sequence-regexp nil t)
 	      (replace-match "")))
 
 	  ;; Decode the output, it could be multibyte.
@@ -2934,7 +2859,12 @@ the result will be a local, non-Tramp, file name."
 (defun tramp-sh-handle-start-file-process (name buffer program &rest args)
   "Like `start-file-process' for Tramp files."
   (with-parsed-tramp-file-name (expand-file-name default-directory) nil
-    (let* (;; When PROGRAM matches "*sh", and the first arg is "-c",
+    (let* ((buffer
+	    (if buffer
+		(get-buffer-create buffer)
+	      ;; BUFFER can be nil.  We use a temporary buffer.
+	      (generate-new-buffer tramp-temp-buffer-name)))
+	   ;; When PROGRAM matches "*sh", and the first arg is "-c",
 	   ;; it might be that the arguments exceed the command line
 	   ;; length.  Therefore, we modify the command.
 	   (heredoc (and (stringp program)
@@ -2992,9 +2922,6 @@ the result will be a local, non-Tramp, file name."
 	   ;; `eshell' and friends.
 	   (tramp-current-connection nil))
 
-      (unless buffer
-	;; BUFFER can be nil.  We use a temporary buffer.
-	(setq buffer (generate-new-buffer tramp-temp-buffer-name)))
       (while (get-process name1)
 	;; NAME must be unique as process name.
 	(setq i (1+ i)
@@ -4030,7 +3957,7 @@ file exists and nonzero exit status otherwise."
 	  shell)
       (setq shell
 	    (with-tramp-connection-property vec "remote-shell"
-	      ;; CCC: "root" does not exist always, see QNAP 459.
+	      ;; CCC: "root" does not exist always, see my QNAP TS-459.
 	      ;; Which check could we apply instead?
 	      (tramp-send-command vec "echo ~root" t)
 	      (if (or (string-match "^~root$" (buffer-string))
@@ -4790,7 +4717,7 @@ connection if a previous connection has died for some reason."
 		     (options (tramp-ssh-controlmaster-options vec))
 		     (process-connection-type tramp-process-connection-type)
 		     (process-adaptive-read-buffering nil)
-		     ;; There are unfortune settings for "cmdproxy" on
+		     ;; There are unfortunate settings for "cmdproxy" on
 		     ;; W32 systems.
 		     (process-coding-system-alist nil)
 		     (coding-system-for-read nil)
@@ -5000,7 +4927,12 @@ function waits for output unless NOOUTPUT is set."
   (with-current-buffer (process-buffer proc)
     (let* (;; Initially, `tramp-end-of-output' is "#$ ".  There might
 	   ;; be leading escape sequences, which must be ignored.
-	   (regexp (format "[^#$\n]*%s\r?$" (regexp-quote tramp-end-of-output)))
+	   ;; Busyboxes built with the EDITING_ASK_TERMINAL config
+	   ;; option send also escape sequences, which must be
+	   ;; ignored.
+	   (regexp (format "[^#$\n]*%s\\(%s\\)?\r?$"
+			   (regexp-quote tramp-end-of-output)
+			   tramp-device-escape-sequence-regexp))
 	   ;; Sometimes, the commands do not return a newline but a
 	   ;; null byte before the shell prompt, for example "git
 	   ;; ls-files -c -z ...".
@@ -5103,16 +5035,17 @@ Return ATTR."
   (when attr
     ;; Remove color escape sequences from symlink.
     (when (stringp (car attr))
-      (while (string-match tramp-color-escape-sequence-regexp (car attr))
+      (while (string-match tramp-display-escape-sequence-regexp (car attr))
 	(setcar attr (replace-match "" nil nil (car attr)))))
-    ;; Convert uid and gid.  Use -1 as indication of unusable value.
+    ;; Convert uid and gid.  Use `tramp-unknown-id-integer' as
+    ;; indication of unusable value.
     (when (and (numberp (nth 2 attr)) (< (nth 2 attr) 0))
-      (setcar (nthcdr 2 attr) -1))
+      (setcar (nthcdr 2 attr) tramp-unknown-id-integer))
     (when (and (floatp (nth 2 attr))
                (<= (nth 2 attr) most-positive-fixnum))
       (setcar (nthcdr 2 attr) (round (nth 2 attr))))
     (when (and (numberp (nth 3 attr)) (< (nth 3 attr) 0))
-      (setcar (nthcdr 3 attr) -1))
+      (setcar (nthcdr 3 attr) tramp-unknown-id-integer))
     (when (and (floatp (nth 3 attr))
                (<= (nth 3 attr) most-positive-fixnum))
       (setcar (nthcdr 3 attr) (round (nth 3 attr))))
@@ -5556,8 +5489,10 @@ Return ATTR."
 	       (tramp-get-remote-uid-with-python vec id-format))))))
       ;; Ensure there is a valid result.
       (cond
-       ((and (equal id-format 'integer) (not (integerp res))) -1)
-       ((and (equal id-format 'string) (not (stringp res))) "UNKNOWN")
+       ((and (equal id-format 'integer) (not (integerp res)))
+	tramp-unknown-id-integer)
+       ((and (equal id-format 'string) (not (stringp res)))
+	tramp-unknown-id-string)
        (t res)))))
 
 (defun tramp-get-remote-gid-with-id (vec id-format)
@@ -5600,8 +5535,10 @@ Return ATTR."
 	       (tramp-get-remote-gid-with-python vec id-format))))))
       ;; Ensure there is a valid result.
       (cond
-       ((and (equal id-format 'integer) (not (integerp res))) -1)
-       ((and (equal id-format 'string) (not (stringp res))) "UNKNOWN")
+       ((and (equal id-format 'integer) (not (integerp res)))
+	tramp-unknown-id-integer)
+       ((and (equal id-format 'string) (not (stringp res)))
+	tramp-unknown-id-string)
        (t res)))))
 
 ;; Some predefined connection properties.

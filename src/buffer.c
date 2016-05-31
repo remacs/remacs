@@ -3552,8 +3552,8 @@ void
 fix_start_end_in_overlays (register ptrdiff_t start, register ptrdiff_t end)
 {
   Lisp_Object overlay;
-  struct Lisp_Overlay *before_list IF_LINT (= NULL);
-  struct Lisp_Overlay *after_list IF_LINT (= NULL);
+  struct Lisp_Overlay *before_list;
+  struct Lisp_Overlay *after_list;
   /* These are either nil, indicating that before_list or after_list
      should be assigned, or the cons cell the cdr of which should be
      assigned.  */
@@ -3700,7 +3700,7 @@ fix_overlays_before (struct buffer *bp, ptrdiff_t prev, ptrdiff_t pos)
   /* If parent is nil, replace overlays_before; otherwise, parent->next.  */
   struct Lisp_Overlay *tail = bp->overlays_before, *parent = NULL, *right_pair;
   Lisp_Object tem;
-  ptrdiff_t end IF_LINT (= 0);
+  ptrdiff_t end;
 
   /* After the insertion, the several overlays may be in incorrect
      order.  The possibility is that, in the list `overlays_before',

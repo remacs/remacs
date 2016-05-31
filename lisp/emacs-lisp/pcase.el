@@ -509,6 +509,7 @@ MATCH is the pattern that needs to be matched, of the form:
     (numberp . stringp)
     (numberp . byte-code-function-p)
     (consp . arrayp)
+    (consp . atom)
     (consp . vectorp)
     (consp . stringp)
     (consp . byte-code-function-p)

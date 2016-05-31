@@ -196,7 +196,7 @@ casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e)
   ptrdiff_t start_byte;
 
   /* Position of first and last changes.  */
-  ptrdiff_t first = -1, last IF_LINT (= 0);
+  ptrdiff_t first = -1, last;
 
   ptrdiff_t opoint = PT;
   ptrdiff_t opoint_byte = PT_BYTE;

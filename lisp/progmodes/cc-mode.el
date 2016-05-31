@@ -865,14 +865,6 @@ Note that the style variables are always made local to the buffer."
 
 ;;; Change hooks, linking with Font Lock and electric-indent-mode.
 
-;; Buffer local variables recording Beginning/End-of-Macro position before a
-;; change, when a macro straddles, respectively, the BEG or END (or both) of
-;; the change region.  Otherwise these have the values BEG/END.
-(defvar c-old-BOM 0)
-(make-variable-buffer-local 'c-old-BOM)
-(defvar c-old-EOM 0)
-(make-variable-buffer-local 'c-old-EOM)
-
 (defun c-called-from-text-property-change-p ()
   ;; Is the primitive which invoked `before-change-functions' or
   ;; `after-change-functions' one which merely changes text properties?  This
@@ -886,8 +878,8 @@ Note that the style variables are always made local to the buffer."
 	'(put-text-property remove-list-of-text-properties)))
 
 (defun c-extend-region-for-CPP (beg end)
-  ;; Set c-old-BOM or c-old-EOM respectively to BEG, END, each extended to the
-  ;; beginning/end of any preprocessor construct they may be in.
+  ;; Adjust `c-new-BEG', `c-new-END' respectively to the beginning and end of
+  ;; any preprocessor construct they may be in. 
   ;;
   ;; Point is undefined both before and after this function call; the buffer
   ;; has already been widened, and match-data saved.  The return value is
@@ -896,45 +888,33 @@ Note that the style variables are always made local to the buffer."
   ;; This function is in the C/C++/ObjC values of
   ;; `c-get-state-before-change-functions' and is called exclusively as a
   ;; before change function.
-  (goto-char beg)
+  (goto-char c-new-BEG)
   (c-beginning-of-macro)
-  (setq c-old-BOM (point))
+  (setq c-new-BEG (point))
 
-  (goto-char end)
+  (goto-char c-new-END)
   (when (c-beginning-of-macro)
     (c-end-of-macro)
     (or (eobp) (forward-char)))	 ; Over the terminating NL which may be marked
 				 ; with a c-cpp-delimiter category property
-  (setq c-old-EOM (point)))
+  (setq c-new-END (point)))
 
-(defun c-extend-font-lock-region-for-macros (begg endd &optional old-len)
-  ;; Extend the region (BEGG ENDD) to cover all (possibly changed)
-  ;; preprocessor macros; return the cons (new-BEG . new-END).  OLD-LEN should
-  ;; be either the old length parameter when called from an
-  ;; after-change-function, or nil otherwise.  This defun uses the variables
-  ;; c-old-BOM, c-new-BOM.
+(defun c-extend-font-lock-region-for-macros (begg endd old-len)
+  ;; Extend the region (c-new-BEG c-new-END) to cover all (possibly changed)
+  ;; preprocessor macros; The return value has no significance.
   ;;
   ;; Point is undefined on both entry and exit to this function.  The buffer
   ;; will have been widened on entry.
-  (let (limits new-beg new-end)
-    (goto-char c-old-BOM)	  ; already set to old start of macro or begg.
-    (setq new-beg
-	  (min begg
-	       (if (setq limits (c-state-literal-at (point)))
-		   (cdr limits)	    ; go forward out of any string or comment.
-		 (point))))
-
-    (goto-char endd)
-    (if (setq limits (c-state-literal-at (point)))
-	(goto-char (car limits)))  ; go backward out of any string or comment.
-    (if (c-beginning-of-macro)
-	(c-end-of-macro))
-    (setq new-end (max endd
-		       (if old-len
-			   (+ (- c-old-EOM old-len) (- endd begg))
-			 c-old-EOM)
-		       (point)))
-    (cons new-beg new-end)))
+  ;;
+  ;; This function is in the C/C++/ObjC value of `c-before-font-lock-functions'.
+  (goto-char endd)
+  (if (c-beginning-of-macro)
+      (c-end-of-macro))
+  (setq c-new-END (max endd c-new-END (point)))
+  ;; Determine the region, (c-new-BEG c-new-END), which will get font
+  ;; locked.  This restricts the region should there be long macros.
+  (setq c-new-BEG (max c-new-BEG (c-determine-limit 500 begg))
+	c-new-END (min c-new-END (c-determine-+ve-limit 500 endd))))
 
 (defun c-neutralize-CPP-line (beg end)
   ;; BEG and END bound a region, typically a preprocessor line.  Put a
@@ -963,19 +943,14 @@ Note that the style variables are always made local to the buffer."
 	     (t nil)))))))
 
 (defun c-neutralize-syntax-in-and-mark-CPP (begg endd old-len)
-  ;; (i) Extend the font lock region to cover all changed preprocessor
-  ;; regions; it does this by setting the variables `c-new-BEG' and
-  ;; `c-new-END' to the new boundaries.
+  ;; (i) "Neutralize" every preprocessor line wholly or partially in the
+  ;; changed region.  "Restore" lines which were CPP lines before the change
+  ;; and are no longer so.
   ;;
-  ;; (ii) "Neutralize" every preprocessor line wholly or partially in the
-  ;; extended changed region.  "Restore" lines which were CPP lines before the
-  ;; change and are no longer so; these can be located from the Buffer local
-  ;; variables `c-old-BOM' and `c-old-EOM'.
-  ;;
-  ;; (iii) Mark every CPP construct by placing a `category' property value
+  ;; (ii) Mark each CPP construct by placing a `category' property value
   ;; `c-cpp-delimiter' at its start and end.  The marked characters are the
   ;; opening # and usually the terminating EOL, but sometimes the character
-  ;; before a comment/string delimiter.
+  ;; before a comment delimiter.
   ;;
   ;; That is, set syntax-table properties on characters that would otherwise
   ;; interact syntactically with those outside the CPP line(s).
@@ -992,15 +967,8 @@ Note that the style variables are always made local to the buffer."
   ;; Note: SPEED _MATTERS_ IN THIS FUNCTION!!!
   ;;
   ;; This function might make hidden buffer changes.
-  (c-save-buffer-state (new-bounds)
-    ;; First determine the region, (c-new-BEG c-new-END), which will get font
-    ;; locked.  It might need "neutralizing".  This region may not start
-    ;; inside a string, comment, or macro.
-    (setq new-bounds (c-extend-font-lock-region-for-macros
-		      c-new-BEG c-new-END old-len))
-    (setq c-new-BEG (max (car new-bounds) (c-determine-limit 500 begg))
-	  c-new-END (min (cdr new-bounds) (c-determine-+ve-limit 500 endd)))
-    ;; Clear all old relevant properties.
+  (c-save-buffer-state (limits )
+    ;; Clear 'syntax-table properties "punctuation":
     (c-clear-char-property-with-value c-new-BEG c-new-END 'syntax-table '(1))
 
     ;; CPP "comment" markers:
@@ -1011,6 +979,8 @@ Note that the style variables are always made local to the buffer."
 
     ;; Add needed properties to each CPP construct in the region.
     (goto-char c-new-BEG)
+    (if (setq limits (c-literal-limits)) ; Go past any literal.
+	(goto-char (cdr limits)))
     (skip-chars-backward " \t")
     (let ((pps-position (point))  pps-state mbeg)
       (while (and (< (point) c-new-END)
@@ -1030,7 +1000,7 @@ Note that the style variables are always made local to the buffer."
 		      (nth 4 pps-state)))) ; in a comment?
 	  (goto-char (match-beginning 1))
 	  (setq mbeg (point))
-	  (if (> (c-syntactic-end-of-macro) mbeg)
+	  (if (> (c-no-comment-end-of-macro) mbeg)
 	      (progn
 		(c-neutralize-CPP-line mbeg (point)) ; "punctuation" properties
 		(if (eval-when-compile
@@ -1256,10 +1226,15 @@ Note that the style variables are always made local to the buffer."
   ;;
   ;; This is called from an after-change-function, but the parameters BEG END
   ;; and OLD-LEN are not used.
-   (if font-lock-mode
-       (setq c-new-BEG
-	     (or (c-fl-decl-start c-new-BEG) (c-point 'bol c-new-BEG))
-	     c-new-END (c-point 'bonl c-new-END))))
+  (if font-lock-mode
+      (setq c-new-BEG
+	    (or (c-fl-decl-start c-new-BEG) (c-point 'bol c-new-BEG))
+	    c-new-END
+	    (save-excursion
+	      (goto-char c-new-END)
+	      (if (bolp)
+		  (point)
+		(c-point 'bonl c-new-END))))))
 
 (defun c-context-expand-fl-region (beg end)
   ;; Return a cons (NEW-BEG . NEW-END), where NEW-BEG is the beginning of a

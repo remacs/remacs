@@ -229,8 +229,12 @@
 ;; The starting position from where we determined `c-macro-cache'.
 (defvar c-macro-cache-syntactic nil)
 (make-variable-buffer-local 'c-macro-cache-syntactic)
-;; non-nil iff `c-macro-cache' has both elements set AND the cdr is at a
-;; syntactic end of macro, not merely an apparent one.
+;; Either nil, or the syntactic end of the macro currently represented by
+;; `c-macro-cache'.
+(defvar c-macro-cache-no-comment nil)
+(make-variable-buffer-local 'c-macro-cache-no-comment)
+;; Either nil, or the last character of the macro currently represented by
+;; `c-macro-cache' which isn't in a comment. */
 
 (defun c-invalidate-macro-cache (beg end)
   ;; Called from a before-change function.  If the change region is before or
@@ -242,12 +246,14 @@
    ((< beg (car c-macro-cache))
     (setq c-macro-cache nil
 	  c-macro-cache-start-pos nil
-	  c-macro-cache-syntactic nil))
+	  c-macro-cache-syntactic nil
+	  c-macro-cache-no-comment nil))
    ((and (cdr c-macro-cache)
 	 (< beg (cdr c-macro-cache)))
     (setcdr c-macro-cache nil)
     (setq c-macro-cache-start-pos beg
-	  c-macro-cache-syntactic nil))))
+	  c-macro-cache-syntactic nil
+	  c-macro-cache-no-comment nil))))
 
 (defun c-macro-is-genuine-p ()
   ;; Check that the ostensible CPP construct at point is a real one.  In
@@ -288,7 +294,8 @@ comment at the start of cc-engine.el for more info."
 		   t))
 	(setq c-macro-cache nil
 	      c-macro-cache-start-pos nil
-	      c-macro-cache-syntactic nil)
+	      c-macro-cache-syntactic nil
+	      c-macro-cache-no-comment nil)
 
 	(save-restriction
 	  (if lim (narrow-to-region lim (point-max)))
@@ -323,7 +330,8 @@ comment at the start of cc-engine.el for more info."
 		  (>= (point) (car c-macro-cache)))
        (setq c-macro-cache nil
 	     c-macro-cache-start-pos nil
-	     c-macro-cache-syntactic nil))
+	     c-macro-cache-syntactic nil
+	     c-macro-cache-no-comment nil))
      (while (progn
 	      (end-of-line)
 	      (when (and (eq (char-before) ?\\)
@@ -347,14 +355,38 @@ comment at the start of cc-engine.el for more info."
   (let* ((here (point))
 	 (there (progn (c-end-of-macro) (point)))
 	 s)
-    (unless c-macro-cache-syntactic
+    (if c-macro-cache-syntactic
+	(goto-char c-macro-cache-syntactic)
       (setq s (parse-partial-sexp here there))
       (while (and (or (nth 3 s)	 ; in a string
 		      (nth 4 s)) ; in a comment (maybe at end of line comment)
 		  (> there here))	; No infinite loops, please.
 	(setq there (1- (nth 8 s)))
 	(setq s (parse-partial-sexp here there)))
-      (setq c-macro-cache-syntactic (car c-macro-cache)))
+      (setq c-macro-cache-syntactic (point)))
+    (point)))
+
+(defun c-no-comment-end-of-macro ()
+  ;; Go to the end of a CPP directive, or a pos just before which isn't in a
+  ;; comment.  For this purpose, open strings are ignored.
+  ;;
+  ;; This function must only be called from the beginning of a CPP construct.
+  ;;
+  ;; Note that this function might do hidden buffer changes.  See the comment
+  ;; at the start of cc-engine.el for more info.
+  (let* ((here (point))
+	 (there (progn (c-end-of-macro) (point)))
+	 s)
+    (if c-macro-cache-no-comment
+	(goto-char c-macro-cache-no-comment)
+      (setq s (parse-partial-sexp here there))
+      (while (and (nth 3 s)	 ; in a string
+		  (> there here))	; No infinite loops, please.
+	(setq here (1+ (nth 8 s)))
+	(setq s (parse-partial-sexp here there)))
+      (when (nth 4 s)
+	(goto-char (1- (nth 8 s))))
+      (setq c-macro-cache-no-comment (point)))
     (point)))
 
 (defun c-forward-over-cpp-define-id ()
@@ -8898,6 +8930,22 @@ comment at the start of cc-engine.el for more info."
 		(progn
 		  (c-syntactic-skip-backward c-block-prefix-charset limit t)
 		  (eq (char-before) ?>))))))
+
+    ;; Skip back over noise clauses.
+    (while (and
+	    c-opt-cpp-prefix
+	    (eq (char-before) ?\))
+	    (let ((after-paren (point)))
+	      (if (and (c-go-list-backward)
+		       (progn (c-backward-syntactic-ws)
+			      (c-simple-skip-symbol-backward))
+		       (or (looking-at c-paren-nontype-key)
+			   (looking-at c-noise-macro-with-parens-name-re)))
+		  (progn
+		    (c-syntactic-skip-backward c-block-prefix-charset limit t)
+		    t)
+		(goto-char after-paren)
+		nil))))
 
     ;; Note: Can't get bogus hits inside template arglists below since they
     ;; have gotten paren syntax above.

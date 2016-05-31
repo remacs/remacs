@@ -1789,7 +1789,13 @@ If END is omitted, it defaults to the length of LIST."
   "An embedded link."
   :button-prefix 'widget-link-prefix
   :button-suffix 'widget-link-suffix
-  :follow-link 'mouse-face
+  ;; The `follow-link' property should only be used in those contexts where the
+  ;; mouse-1 event normally doesn't follow the link, yet the `link' widget
+  ;; seems to almost always be used in contexts where (down-)mouse-1 is bound
+  ;; to `widget-button-click' and hence the "mouse-1 to mouse-2" remapping is
+  ;; not necessary (and can even be harmful).  So let's not add a :follow-link
+  ;; by default.  See (bug#22434).
+  ;; :follow-link 'mouse-face
   :help-echo "Follow the link."
   :format "%[%t%]")
 
