@@ -854,6 +854,10 @@ recommended to do this as soon as you have firmly upgraded to Emacs
 25.1 (or later).  Should you ever need to downgrade your desktop file
 to version 206, you can do this with 'C-u C-u M-x desktop-save'.
 
+---
+*** desktop-restore-in-current-display now defaults to t, not nil.
+That is, Emacs by default now restores frames into the current display.
+
 +++
 ** New function 'bookmark-set-no-overwrite' bound to 'C-x r M'.
 It raises an error if a bookmark of that name already exists,
