@@ -6947,18 +6947,21 @@ get_translation_table (Lisp_Object attrs, bool encodep, int *max_lookup)
 
 
 /* Return a translation of character(s) at BUF according to TRANS.
-   TRANS is TO-CHAR or ((FROM .  TO) ...) where
-   FROM = [FROM-CHAR ...], TO is TO-CHAR or [TO-CHAR ...].
-   The return value is TO-CHAR or ([FROM-CHAR ...] . TO) if a
-   translation is found, and Qnil if not found..
-   If BUF is too short to lookup characters in FROM, return Qt.  */
+   TRANS is TO-CHAR, [TO-CHAR ...], or ((FROM .  TO) ...) where FROM =
+   [FROM-CHAR ...], TO is TO-CHAR or [TO-CHAR ...].  The return value
+   is TO-CHAR or [TO-CHAR ...] if a translation is found, Qnil if not
+   found, or Qt if BUF is too short to lookup characters in FROM.  As
+   a side effect, if a translation is found, *NCHARS is set to the
+   number of characters being translated.  */
 
 static Lisp_Object
-get_translation (Lisp_Object trans, int *buf, int *buf_end)
+get_translation (Lisp_Object trans, int *buf, int *buf_end, ptrdiff_t *nchars)
 {
-
-  if (INTEGERP (trans))
-    return trans;
+  if (INTEGERP (trans) || VECTORP (trans))
+    {
+      *nchars = 1;
+      return trans;
+    }
   for (; CONSP (trans); trans = XCDR (trans))
     {
       Lisp_Object val = XCAR (trans);
@@ -6974,7 +6977,10 @@ get_translation (Lisp_Object trans, int *buf, int *buf_end)
 	    break;
 	}
       if (i == len)
-	return val;
+	{
+	  *nchars = len;
+	  return XCDR (val);
+	}
     }
   return Qnil;
 }
@@ -7017,20 +7023,13 @@ produce_chars (struct coding_system *coding, Lisp_Object translation_table,
 	      LOOKUP_TRANSLATION_TABLE (translation_table, c, trans);
 	      if (! NILP (trans))
 		{
-		  trans = get_translation (trans, buf, buf_end);
+		  trans = get_translation (trans, buf, buf_end, &from_nchars);
 		  if (INTEGERP (trans))
 		    c = XINT (trans);
-		  else if (CONSP (trans))
+		  else if (VECTORP (trans))
 		    {
-		      from_nchars = ASIZE (XCAR (trans));
-		      trans = XCDR (trans);
-		      if (INTEGERP (trans))
-			c = XINT (trans);
-		      else
-			{
-			  to_nchars = ASIZE (trans);
-			  c = XINT (AREF (trans, 0));
-			}
+		      to_nchars = ASIZE (trans);
+		      c = XINT (AREF (trans, 0));
 		    }
 		  else if (EQ (trans, Qt) && ! last_block)
 		    break;
@@ -7671,22 +7670,16 @@ consume_chars (struct coding_system *coding, Lisp_Object translation_table,
 	  for (i = 1; i < max_lookup && p < src_end; i++)
 	    lookup_buf[i] = STRING_CHAR_ADVANCE (p);
 	  lookup_buf_end = lookup_buf + i;
-	  trans = get_translation (trans, lookup_buf, lookup_buf_end);
+	  trans = get_translation (trans, lookup_buf, lookup_buf_end,
+				   &from_nchars);
 	  if (INTEGERP (trans))
 	    c = XINT (trans);
-	  else if (CONSP (trans))
+	  else if (VECTORP (trans))
 	    {
-	      from_nchars = ASIZE (XCAR (trans));
-	      trans = XCDR (trans);
-	      if (INTEGERP (trans))
-		c = XINT (trans);
-	      else
-		{
-		  to_nchars = ASIZE (trans);
-		  if (buf_end - buf < to_nchars)
-		    break;
-		  c = XINT (AREF (trans, 0));
-		}
+	      to_nchars = ASIZE (trans);
+	      if (buf_end - buf < to_nchars)
+		break;
+	      c = XINT (AREF (trans, 0));
 	    }
 	  else
 	    break;
