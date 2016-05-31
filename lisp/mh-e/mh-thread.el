@@ -647,7 +647,7 @@ Only information about messages in MSG-LIST are added to the tree."
 
 (defun mh-thread-set-tables (folder)
   "Use the tables of FOLDER in current buffer."
-  (mh-cl-flet
+  (mh-flet
    ((mh-get-table (symbol)
                   (with-current-buffer folder
                     (symbol-value symbol))))

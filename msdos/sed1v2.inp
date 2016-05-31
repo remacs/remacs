@@ -155,7 +155,8 @@ s/ *@LIBXPM@//
 /^[Aa][Mm]_/s/@AM_V@/$(V)/
 /^[Aa][Mm]_/s/@AM_DEFAULT_V@/$(AM_DEFAULT_VERBOSITY)/
 /^AUTO_DEPEND *=/s/@AUTO_DEPEND@/yes/
-/^PAXCTL_if_present *=/s/=.*$/=@Rem/
+/^PAXCTL_dumped *=/s/=.*$/=/
+/^PAXCTL_notdumped *=/s/=.*$/=/
 /^lisp\.mk:/,/^$/c\
 lisp.mk: $(lispsource)/loadup.el\
 	@rm -f $@\
@@ -174,7 +175,8 @@ lisp.mk: $(lispsource)/loadup.el\
 /^\$(leimdir)\/leim-list.el: /s/bootstrap-emacs\$(EXEEXT)/b-emacs$(EXEEXT)/
 /^	if test -f/,/^	fi$/c\
 	command.com /c if exist .gdbinit rm -f _gdbinit
-/^	 *\$(PAXCTL_if_present) -zex/d
+/^	 *ifneq (\$(PAXCTL_notdumped),)/,/^	 *endif/d
+/^	 *ifneq (\$(PAXCTL_dumped),)/,/^	 *endif/d
 /^	 *ln /s/ln /cp /
 /^	 *\$(SETFATTR_if_present) -n/d
 /^	fi/d
