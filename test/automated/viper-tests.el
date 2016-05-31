@@ -65,6 +65,7 @@ after itself, although it will leave a buffer called
             rtn))
       ;; Switch everything off and restore the buffer.
       (toggle-viper-mode)
+      (delete-file viper-custom-file-name)
       (switch-to-buffer before-buffer))))
 
 (ert-deftest viper-test-go ()
