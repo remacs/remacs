@@ -181,7 +181,7 @@ You lose; /* Emacs for DOS must be compiled with DJGPP */
 #endif
 
 #ifdef CYGWIN
-#define SYSTEM_PURESIZE_EXTRA 10000
+#define SYSTEM_PURESIZE_EXTRA 50000
 #endif
 
 #if defined HAVE_NTGUI && !defined DebPrint
