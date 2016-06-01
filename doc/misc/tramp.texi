@@ -1529,16 +1529,6 @@ can they extend beyond the lifetime of the current Emacs session.  Set
 
 Set @code{password-cache} to @code{nil} to disable password caching.
 
-@strong{Implementation Note}: password caching depends on
-@file{password-cache.el} package.  @value{tramp} activates password
-caching only if @value{tramp} can discover, while Emacs is loading,
-the package through @code{load-path}.
-
-@ifset installchapter
-@file{password.el} is available from No Gnus or from the @value{tramp}
-@file{contrib} directory, see @ref{Installation parameters}.
-@end ifset
-
 
 @node Connection caching
 @section Reusing connection related information
