@@ -163,14 +163,23 @@ the VCS if we cannot find any information ourselves."
         (or (if in-linked-worktree
                 (emacs-repository--version-git-1
                  (expand-file-name "HEAD" sub-dir) base-dir)
-              (let ((files '("HEAD" "refs/heads/master"))
-                    file rev)
-                (while (and (not rev)
-                            (setq file (car files)))
-                  (setq file (expand-file-name file base-dir)
-                        files (cdr files)
-                        rev (emacs-repository--version-git-1 file base-dir)))
-                rev))
+              (or
+               (let ((packed-refs (expand-file-name "packed-refs" base-dir)))
+                 (if (file-readable-p packed-refs)
+                     (with-temp-buffer
+                       (insert-file-contents packed-refs)
+                       (when (re-search-forward
+                              "^\\([0-9a-fA-F]\\{40\\}\\) refs/heads/master$"
+                              nil t)
+                         (match-string 1)))))
+               (let ((files '("HEAD" "refs/heads/master"))
+                     file rev)
+                 (while (and (not rev)
+                             (setq file (car files)))
+                   (setq file (expand-file-name file base-dir)
+                         files (cdr files)
+                         rev (emacs-repository--version-git-1 file base-dir)))
+                 rev)))
             ;; AFAICS this doesn't work during dumping (bug#20799).
             (emacs-repository-version-git dir))))))
 
