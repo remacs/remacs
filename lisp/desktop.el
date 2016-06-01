@@ -408,7 +408,7 @@ See related options `desktop-restore-reuses-frames',
   :group 'desktop
   :version "24.4")
 
-(defcustom desktop-restore-in-current-display nil
+(defcustom desktop-restore-in-current-display t
   "Controls how restoring of frames treats displays.
 If t, restores frames into the current display.
 If nil, restores frames into their original displays (if possible).

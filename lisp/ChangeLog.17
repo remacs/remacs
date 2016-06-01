@@ -3737,7 +3737,7 @@
 	* net/tramp.el (tramp-read-passwd): Ignore errors from `auth-source-*'.
 
 	* net/tramp-sh.el (tramp-do-copy-or-rename-file-out-of-band): Use "\n"
-	as end-of-line delimeter for passwords, when running on MS Windows.
+	as end-of-line delimiter for passwords, when running on MS Windows.
 
 2014-12-27  Stefan Monnier  <monnier@iro.umontreal.ca>
 

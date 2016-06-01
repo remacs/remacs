@@ -33,7 +33,7 @@ after itself, although it will leave a buffer called
   (let (
         ;; Viper just turns itself off during batch use.
         (noninteractive nil)
-        ;; Switch off start up message or it will chew the key presses
+        ;; Switch off start up message or it will chew the key presses.
         (viper-inhibit-startup-message 't)
         ;; Select an expert-level for the same reason.
         (viper-expert-level 5)
@@ -42,7 +42,7 @@ after itself, although it will leave a buffer called
         (before-buffer (current-buffer)))
     (unwind-protect
         (progn
-          ;; viper-mode is essentially global, so set it here
+          ;; viper-mode is essentially global, so set it here.
           (viper-mode)
           ;; We must switch to buffer because we are using a keyboard macro
           ;; which appears to not go to the current-buffer but what ever is
@@ -54,16 +54,16 @@ after itself, although it will leave a buffer called
           (erase-buffer)
           ;; The new buffer fails to enter vi state so set it.
           (viper-change-state-to-vi)
-          ;; Run the macro
+          ;; Run the macro.
           (execute-kbd-macro kmacro)
           (let ((rtn
                  (buffer-substring-no-properties
                   (point-min)
                   (point-max))))
-            ;; Kill the buffer iff the macro succeeds
+            ;; Kill the buffer iff the macro succeeds.
             (kill-buffer)
             rtn))
-      ;; switch everthing off and restore the buffer
+      ;; Switch everything off and restore the buffer.
       (toggle-viper-mode)
       (switch-to-buffer before-buffer))))
 
