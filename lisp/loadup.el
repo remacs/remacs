@@ -78,10 +78,6 @@
 			    (expand-file-name "textmodes" dir)
 			    (expand-file-name "vc" dir)))))
 
-;; Prevent build-time PATH getting stored in the binary.
-;; Mainly cosmetic, but helpful for Guix.  (Bug#20330)
-(setq exec-path nil)
-
 (if (eq t purify-flag)
     ;; Hash consing saved around 11% of pure space in my tests.
     (setq purify-flag (make-hash-table :test 'equal :size 80000)))
@@ -430,6 +426,12 @@ lost after dumping")))
              purify-flag)
     (message "Pure-hashed: %d strings, %d vectors, %d conses, %d bytecodes, %d others"
              strings vectors conses bytecodes others)))
+
+;; Prevent build-time PATH getting stored in the binary.
+;; Mainly cosmetic, but helpful for Guix.  (Bug#20330)
+;; Do this here, rather than earlier, so that the above code
+;; can invoke Git commands and the like.
+(setq exec-path nil)
 
 ;; Avoid error if user loads some more libraries now and make sure the
 ;; hash-consing hash table is GC'd.

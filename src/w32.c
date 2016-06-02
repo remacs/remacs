@@ -2505,6 +2505,35 @@ sys_putenv (char *str)
       return unsetenv (str);
     }
 
+  if (strncmp (str, "TZ=<", 4) == 0)
+    {
+      /* MS-Windows does not support POSIX.1-2001 angle-bracket TZ
+	 abbreviation syntax.  Convert to POSIX.1-1988 syntax if possible,
+	 and to the undocumented placeholder "ZZZ" otherwise.  */
+      bool supported_abbr = true;
+      for (char *p = str + 4; *p; p++)
+	{
+	  if (('0' <= *p && *p <= '9') || *p == '-' || *p == '+')
+	    supported_abbr = false;
+	  else if (*p == '>')
+	    {
+	      ptrdiff_t abbrlen;
+	      if (supported_abbr)
+		{
+		  abbrlen = p - (str + 4);
+		  memmove (str + 3, str + 4, abbrlen);
+		}
+	      else
+		{
+		  abbrlen = 3;
+		  memset (str + 3, 'Z', abbrlen);
+		}
+	      memmove (str + 3 + abbrlen, p + 1, strlen (p));
+	      break;
+	    }
+	}
+    }
+
   return _putenv (str);
 }
 

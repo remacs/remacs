@@ -1327,7 +1327,8 @@ If it is @code{t}, the conversion uses Universal Time.  If it is
 a string, the conversion uses the time zone rule equivalent to setting
 @env{TZ} to that string.  If it is an integer @var{offset}, the
 conversion uses a fixed time zone with the given offset and a numeric
-abbreviation.  If it is a list (@var{offset} @var{abbr}), where
+abbreviation on POSIX-compatible platforms and an unspecified abbreviation
+on MS-Windows.  If it is a list (@var{offset} @var{abbr}), where
 @var{offset} is an integer number of seconds east of Universal Time
 and @var{abbr} is a string, the conversion uses a fixed time zone with
 the given offset and abbreviation.
