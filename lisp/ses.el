@@ -2201,7 +2201,17 @@ Based on the current set of columns and `window-hscroll' position."
 
 (defun ses-jump (sym)
   "Move point to cell SYM."
-  (interactive "SJump to cell: ")
+  (interactive (let* (names
+		      (s (completing-read
+			  "Jump to cell: "
+			  (and ses--named-cell-hashmap
+			       (progn (maphash (lambda (key val) (push (symbol-name key) names))
+					       ses--named-cell-hashmap)
+				      names)))))
+		 (if
+		     (string= s "")
+		     (error "Invalid cell name")
+		   (list (intern s)))))
   (let ((rowcol (ses-sym-rowcol sym)))
     (or rowcol (error "Invalid cell name"))
     (if (eq (symbol-value sym) '*skip*)
