@@ -3098,8 +3098,9 @@ the prefix syntax flag (p).  */)
       opoint = pos;
       opoint_byte = pos_byte;
 
-      if (pos + 1 > beg)
-	DEC_BOTH (pos, pos_byte);
+      if (pos <= beg)
+        break;
+      DEC_BOTH (pos, pos_byte);
     }
 
   SET_PT_BOTH (opoint, opoint_byte);
