@@ -380,6 +380,11 @@ and the hook `eshell-exit-hook'."
     (make-local-variable 'eshell-modules-list)
     (setq eshell-modules-list modules-list))
 
+  ;; This is to avoid making the paragraph base direction
+  ;; right-to-left if the first word just happens to start with a
+  ;; strong R2L character.
+  (setq bidi-paragraph-direction 'left-to-right)
+
   ;; load extension modules into memory.  This will cause any global
   ;; variables they define to be visible, since some of the core
   ;; modules sometimes take advantage of their functionality if used.
