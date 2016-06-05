@@ -2691,7 +2691,8 @@ since only regular expressions have distinguished subexpressions.  */)
 
   if (case_action == all_caps)
     Fupcase_region (make_number (search_regs.start[sub]),
-		    make_number (newpoint));
+		    make_number (newpoint),
+		    Qnil);
   else if (case_action == cap_initial)
     Fupcase_initials_region (make_number (search_regs.start[sub]),
 			     make_number (newpoint));
