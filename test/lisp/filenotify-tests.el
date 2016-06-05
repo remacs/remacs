@@ -75,6 +75,35 @@ It is different for local and remote file notification libraries.")
    ((string-equal (file-notify--test-library) "w32notify") 4)
    (t 3)))
 
+(defun file-notify--test-no-descriptors ()
+  "Check that `file-notify-descriptors' is an empty hash table.
+Return nil when any other file notification watch is still active."
+  ;; Give read events a last chance.
+  (unless (zerop (hash-table-count file-notify-descriptors))
+    (read-event nil nil file-notify--test-read-event-timeout))
+  ;; Now check.
+  (zerop (hash-table-count file-notify-descriptors)))
+
+(defun file-notify--test-no-descriptors-explainer ()
+  "Explain why `file-notify--test-no-descriptors' fails."
+  (let ((result (list "Watch descriptor(s) existent:")))
+    (maphash
+     (lambda (key value) (push (cons key value) result))
+     file-notify-descriptors)
+    (nreverse result)))
+
+(put 'file-notify--test-no-descriptors 'ert-explainer
+     'file-notify--test-no-descriptors-explainer)
+
+(defun file-notify--test-cleanup-p ()
+  "Check, that the test has cleaned up the environment as much as needed."
+  ;; `file-notify--test-event' should not be set but bound
+  ;; dynamically.
+  (should-not file-notify--test-event)
+  ;; The test should have cleaned up this already.  Let's check
+  ;; nevertheless.
+  (should (file-notify--test-no-descriptors)))
+
 (defun file-notify--test-cleanup ()
   "Cleanup after a test."
   (file-notify-rm-watch file-notify--test-desc)
@@ -102,9 +131,7 @@ It is different for local and remote file notification libraries.")
         file-notify--test-desc1 nil
         file-notify--test-desc2 nil
         file-notify--test-results nil
-        file-notify--test-events nil)
-  (when file-notify--test-event
-    (error "file-notify--test-event should not be set but bound dynamically")))
+        file-notify--test-events nil))
 
 (setq password-cache-expiry nil
       tramp-verbose 0
@@ -175,14 +202,22 @@ remote host, or nil."
 (ert-deftest file-notify-test00-availability ()
   "Test availability of `file-notify'."
   (skip-unless (file-notify--test-local-enabled))
-  ;; Report the native library which has been used.
-  (message "Library: `%s'" (file-notify--test-library))
-  (should
-   (setq file-notify--test-desc
-         (file-notify-add-watch temporary-file-directory '(change) #'ignore)))
 
-  ;; Cleanup.
-  (file-notify--test-cleanup))
+  (unwind-protect
+      (progn
+        ;; Report the native library which has been used.
+        (message "Library: `%s'" (file-notify--test-library))
+        (should
+         (setq file-notify--test-desc
+               (file-notify-add-watch
+                temporary-file-directory '(change) #'ignore)))
+        (file-notify-rm-watch file-notify--test-desc)
+
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
+
+    ;; Cleanup.
+    (file-notify--test-cleanup)))
 
 (file-notify--deftest-remote file-notify-test00-availability
   "Test availability of `file-notify' for remote files.")
@@ -191,58 +226,66 @@ remote host, or nil."
   "Check `file-notify-add-watch'."
   (skip-unless (file-notify--test-local-enabled))
 
-  (setq file-notify--test-tmpfile  (file-notify--test-make-temp-name)
-        file-notify--test-tmpfile1
-        (format "%s/%s" file-notify--test-tmpfile (md5 (current-time-string))))
+  (unwind-protect
+      (progn
+        (setq file-notify--test-tmpfile  (file-notify--test-make-temp-name)
+              file-notify--test-tmpfile1
+              (format
+               "%s/%s" file-notify--test-tmpfile (md5 (current-time-string))))
 
-  ;; Check, that different valid parameters are accepted.
-  (should
-   (setq file-notify--test-desc
-         (file-notify-add-watch temporary-file-directory '(change) #'ignore)))
-  (file-notify-rm-watch file-notify--test-desc)
-  (should
-   (setq file-notify--test-desc
-         (file-notify-add-watch
-          temporary-file-directory '(attribute-change) #'ignore)))
-  (file-notify-rm-watch file-notify--test-desc)
-  (should
-   (setq file-notify--test-desc
-         (file-notify-add-watch
-          temporary-file-directory '(change attribute-change) #'ignore)))
-  (file-notify-rm-watch file-notify--test-desc)
-  (write-region "any text" nil file-notify--test-tmpfile nil 'no-message)
-  (should
-   (setq file-notify--test-desc
-         (file-notify-add-watch
-          file-notify--test-tmpfile '(change attribute-change) #'ignore)))
-  (file-notify-rm-watch file-notify--test-desc)
-  (delete-file file-notify--test-tmpfile)
+        ;; Check, that different valid parameters are accepted.
+        (should
+         (setq file-notify--test-desc
+               (file-notify-add-watch
+                temporary-file-directory '(change) #'ignore)))
+        (file-notify-rm-watch file-notify--test-desc)
+        (should
+         (setq file-notify--test-desc
+               (file-notify-add-watch
+                temporary-file-directory '(attribute-change) #'ignore)))
+        (file-notify-rm-watch file-notify--test-desc)
+        (should
+         (setq file-notify--test-desc
+               (file-notify-add-watch
+                temporary-file-directory '(change attribute-change) #'ignore)))
+        (file-notify-rm-watch file-notify--test-desc)
+        (write-region "any text" nil file-notify--test-tmpfile nil 'no-message)
+        (should
+         (setq file-notify--test-desc
+               (file-notify-add-watch
+                file-notify--test-tmpfile '(change attribute-change) #'ignore)))
+        (file-notify-rm-watch file-notify--test-desc)
+        (delete-file file-notify--test-tmpfile)
 
-  ;; Check error handling.
-  (should-error (file-notify-add-watch 1 2 3 4)
-                :type 'wrong-number-of-arguments)
-  (should
-   (equal (should-error
-           (file-notify-add-watch 1 2 3))
-          '(wrong-type-argument 1)))
-  (should
-   (equal (should-error
-           (file-notify-add-watch temporary-file-directory 2 3))
-          '(wrong-type-argument 2)))
-  (should
-   (equal (should-error
-           (file-notify-add-watch temporary-file-directory '(change) 3))
-          '(wrong-type-argument 3)))
-  ;; The upper directory of a file must exist.
-  (should
-   (equal (should-error
-           (file-notify-add-watch
-            file-notify--test-tmpfile1 '(change attribute-change) #'ignore))
-          `(file-notify-error
-            "Directory does not exist" ,file-notify--test-tmpfile)))
+        ;; Check error handling.
+        (should-error (file-notify-add-watch 1 2 3 4)
+                      :type 'wrong-number-of-arguments)
+        (should
+         (equal (should-error
+                 (file-notify-add-watch 1 2 3))
+                '(wrong-type-argument 1)))
+        (should
+         (equal (should-error
+                 (file-notify-add-watch temporary-file-directory 2 3))
+                '(wrong-type-argument 2)))
+        (should
+         (equal (should-error
+                 (file-notify-add-watch temporary-file-directory '(change) 3))
+                '(wrong-type-argument 3)))
+        ;; The upper directory of a file must exist.
+        (should
+         (equal (should-error
+                 (file-notify-add-watch
+                  file-notify--test-tmpfile1
+                  '(change attribute-change) #'ignore))
+                `(file-notify-error
+                  "Directory does not exist" ,file-notify--test-tmpfile)))
 
-  ;; Cleanup.
-  (file-notify--test-cleanup))
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
+
+    ;; Cleanup.
+    (file-notify--test-cleanup)))
 
 (file-notify--deftest-remote file-notify-test01-add-watch
   "Check `file-notify-add-watch' for remote files.")
@@ -301,15 +344,19 @@ TIMEOUT is the maximum time to wait for, in seconds."
     (dolist (elt events result)
       (setq result
             (or result
-                (equal elt (mapcar #'cadr file-notify--test-events)))))))
+                (if (eq (car elt) 'random)
+                    (equal (sort (cdr elt) 'string-lessp)
+                           (sort (mapcar #'cadr file-notify--test-events)
+                                 'string-lessp))
+                  (equal elt (mapcar #'cadr file-notify--test-events))))))))
 
 (defun file-notify--test-with-events-explainer (events)
   "Explain why `file-notify--test-with-events-check' fails."
   (if (null (cdr events))
-      (format "Received events `%s' do not match expected events `%s'"
+      (format "Received events do not match expected events\n%s\n%s"
               (mapcar #'cadr file-notify--test-events) (car events))
     (format
-     "Received events `%s' do not match any sequence of expected events `%s'"
+     "Received events do not match any sequence of expected events\n%s\n%s"
      (mapcar #'cadr file-notify--test-events) events)))
 
 (put 'file-notify--test-with-events-check 'ert-explainer
@@ -318,11 +365,20 @@ TIMEOUT is the maximum time to wait for, in seconds."
 (defmacro file-notify--test-with-events (events &rest body)
   "Run BODY collecting events and then compare with EVENTS.
 EVENTS is either a simple list of events, or a list of lists of
-events, which represent different possible results.  Don't wait
-longer than timeout seconds for the events to be delivered."
+events, which represent different possible results.  The first
+event of a list could be the pseudo event `random', which is
+just an indicator for comparison.
+
+Don't wait longer than timeout seconds for the events to be
+delivered."
   (declare (indent 1))
   `(let* ((events (if (consp (car ,events)) ,events (list ,events)))
-          (max-length (apply 'max (mapcar 'length events)))
+          (max-length
+           (apply
+            'max
+            (mapcar
+             (lambda (x) (length (if (eq (car x) 'random) (cdr x) x)))
+             events)))
           create-lockfiles)
      ;; Flush pending events.
      (file-notify--wait-for-events
@@ -540,7 +596,10 @@ longer than timeout seconds for the events to be delivered."
 	    (set-file-times file-notify--test-tmpfile '(0 0))
 	    (read-event nil nil file-notify--test-read-event-timeout)
 	    (delete-file file-notify--test-tmpfile))
-          (file-notify-rm-watch file-notify--test-desc)))
+          (file-notify-rm-watch file-notify--test-desc))
+
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
 
     ;; Cleanup.
     (file-notify--test-cleanup)))
@@ -556,6 +615,7 @@ longer than timeout seconds for the events to be delivered."
 (ert-deftest file-notify-test03-autorevert ()
   "Check autorevert via file notification."
   (skip-unless (file-notify--test-local-enabled))
+
   ;; `auto-revert-buffers' runs every 5".  And we must wait, until the
   ;; file has been reverted.
   (let ((timeout (if (file-remote-p temporary-file-directory) 60 10))
@@ -563,7 +623,6 @@ longer than timeout seconds for the events to be delivered."
     (unwind-protect
 	(progn
 	  (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
-
 	  (write-region
 	   "any text" nil file-notify--test-tmpfile nil 'no-message)
 	  (setq buf (find-file-noselect file-notify--test-tmpfile))
@@ -625,7 +684,10 @@ longer than timeout seconds for the events to be delivered."
 	       (string-match
 		(format-message "Reverting buffer `%s'." (buffer-name buf))
 		(buffer-string))))
-	    (should (string-match "foo bla" (buffer-string)))))
+	    (should (string-match "foo bla" (buffer-string))))
+
+          ;; The environment shall be cleaned up.
+          (file-notify--test-cleanup-p))
 
       ;; Cleanup.
       (with-current-buffer "*Messages*" (widen))
@@ -646,14 +708,16 @@ longer than timeout seconds for the events to be delivered."
 	(should
 	 (setq file-notify--test-desc
 	       (file-notify-add-watch
-		file-notify--test-tmpfile
-		'(change) #'file-notify--test-event-handler)))
+                file-notify--test-tmpfile '(change) #'ignore)))
         (should (file-notify-valid-p file-notify--test-desc))
 	;; After calling `file-notify-rm-watch', the descriptor is not
 	;; valid anymore.
         (file-notify-rm-watch file-notify--test-desc)
         (should-not (file-notify-valid-p file-notify--test-desc))
-	(delete-file file-notify--test-tmpfile))
+	(delete-file file-notify--test-tmpfile)
+
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
 
     ;; Cleanup.
     (file-notify--test-cleanup))
@@ -689,7 +753,10 @@ longer than timeout seconds for the events to be delivered."
 	  (delete-file file-notify--test-tmpfile))
 	;; After deleting the file, the descriptor is not valid anymore.
         (should-not (file-notify-valid-p file-notify--test-desc))
-        (file-notify-rm-watch file-notify--test-desc))
+        (file-notify-rm-watch file-notify--test-desc)
+
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
 
     ;; Cleanup.
     (file-notify--test-cleanup))
@@ -724,7 +791,10 @@ longer than timeout seconds for the events to be delivered."
 	 (delete-directory temporary-file-directory t))
 	;; After deleting the parent directory, the descriptor must
 	;; not be valid anymore.
-	(should-not (file-notify-valid-p file-notify--test-desc)))
+	(should-not (file-notify-valid-p file-notify--test-desc))
+
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
 
     ;; Cleanup.
     (file-notify--test-cleanup)))
@@ -744,8 +814,7 @@ longer than timeout seconds for the events to be delivered."
 	(should
 	 (setq file-notify--test-desc
 	       (file-notify-add-watch
-		file-notify--test-tmpfile
-		'(change) #'file-notify--test-event-handler)))
+                file-notify--test-tmpfile '(change) #'ignore)))
         (should (file-notify-valid-p file-notify--test-desc))
         ;; After removing the watch, the descriptor must not be valid
         ;; anymore.
@@ -753,7 +822,11 @@ longer than timeout seconds for the events to be delivered."
         (file-notify--wait-for-events
          (file-notify--test-timeout)
 	 (not (file-notify-valid-p file-notify--test-desc)))
-        (should-not (file-notify-valid-p file-notify--test-desc)))
+        (should-not (file-notify-valid-p file-notify--test-desc))
+        (delete-directory file-notify--test-tmpfile t)
+
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
 
     ;; Cleanup.
     (file-notify--test-cleanup))
@@ -766,8 +839,7 @@ longer than timeout seconds for the events to be delivered."
 	(should
 	 (setq file-notify--test-desc
 	       (file-notify-add-watch
-		file-notify--test-tmpfile
-		'(change) #'file-notify--test-event-handler)))
+		file-notify--test-tmpfile '(change) #'ignore)))
         (should (file-notify-valid-p file-notify--test-desc))
         ;; After deleting the directory, the descriptor must not be
         ;; valid anymore.
@@ -775,7 +847,10 @@ longer than timeout seconds for the events to be delivered."
         (file-notify--wait-for-events
 	 (file-notify--test-timeout)
 	 (not (file-notify-valid-p file-notify--test-desc)))
-        (should-not (file-notify-valid-p file-notify--test-desc)))
+        (should-not (file-notify-valid-p file-notify--test-desc))
+
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
 
     ;; Cleanup.
     (file-notify--test-cleanup)))
@@ -836,7 +911,11 @@ longer than timeout seconds for the events to be delivered."
         (file-notify--test-with-events (make-list n 'deleted)
           (dolist (file target-file-list)
             (read-event nil nil file-notify--test-read-event-timeout)
-            (delete-file file) file-notify--test-read-event-timeout)))
+            (delete-file file) file-notify--test-read-event-timeout))
+        (delete-directory file-notify--test-tmpfile)
+
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
 
     ;; Cleanup.
     (file-notify--test-cleanup)))
@@ -885,44 +964,49 @@ longer than timeout seconds for the events to be delivered."
               (save-buffer))))
         ;; After saving the buffer, the descriptor is still valid.
         (should (file-notify-valid-p file-notify--test-desc))
-	(delete-file file-notify--test-tmpfile))
+	(delete-file file-notify--test-tmpfile)
+
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
 
     ;; Cleanup.
     (file-notify--test-cleanup))
 
   (unwind-protect
-      (progn
-        ;; It doesn't work for kqueue, because we don't use an
-        ;; implicit directory monitor.
-        (unless (string-equal (file-notify--test-library) "kqueue")
-	  (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
-	  (write-region
-	   "any text" nil file-notify--test-tmpfile nil 'no-message)
-	  (should
-	   (setq file-notify--test-desc
-		 (file-notify-add-watch
-		  file-notify--test-tmpfile
-		  '(change) #'file-notify--test-event-handler)))
-	  (should (file-notify-valid-p file-notify--test-desc))
-	  (file-notify--test-with-events
+      ;; It doesn't work for kqueue, because we don't use an implicit
+      ;; directory monitor.
+      (unless (string-equal (file-notify--test-library) "kqueue")
+        (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
+        (write-region
+         "any text" nil file-notify--test-tmpfile nil 'no-message)
+        (should
+         (setq file-notify--test-desc
+               (file-notify-add-watch
+                file-notify--test-tmpfile
+                '(change) #'file-notify--test-event-handler)))
+        (should (file-notify-valid-p file-notify--test-desc))
+        (file-notify--test-with-events
             (cond
              ;; On Cygwin we only get the `changed' event.
              ((eq system-type 'cygwin) '(changed))
              (t '(renamed created changed)))
-	    ;; The file is renamed when creating a backup.  It shall
-	    ;; still be watched.
-	    (with-temp-buffer
-	      (let ((buffer-file-name file-notify--test-tmpfile)
-		    (make-backup-files t)
-		    (backup-by-copying nil)
-		    (backup-by-copying-when-mismatch nil)
-		    (kept-new-versions 1)
-		    (delete-old-versions t))
-		(insert "another text")
-		(save-buffer))))
-	  ;; After saving the buffer, the descriptor is still valid.
-	  (should (file-notify-valid-p file-notify--test-desc))
-	  (delete-file file-notify--test-tmpfile)))
+          ;; The file is renamed when creating a backup.  It shall
+          ;; still be watched.
+          (with-temp-buffer
+            (let ((buffer-file-name file-notify--test-tmpfile)
+                  (make-backup-files t)
+                  (backup-by-copying nil)
+                  (backup-by-copying-when-mismatch nil)
+                  (kept-new-versions 1)
+                  (delete-old-versions t))
+              (insert "another text")
+              (save-buffer))))
+        ;; After saving the buffer, the descriptor is still valid.
+        (should (file-notify-valid-p file-notify--test-desc))
+        (delete-file file-notify--test-tmpfile)
+
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
 
     ;; Cleanup.
     (file-notify--test-cleanup)))
@@ -995,6 +1079,7 @@ the file watch."
                        ;; Otherwise, both monitors report the
                        ;; `changed' event.
                        (t '(changed changed)))
+
                       ;; Just the directory monitor.
                       (cond
                        ;; In kqueue, there is an additional `changed'
@@ -1003,6 +1088,9 @@ the file watch."
                         '(changed created changed))
                        (t '(created changed))))
                      events)))
+            ;; gvfs-monitor-dir returns the events in random order.
+            (when (string-equal "gvfs-monitor-dir" (file-notify--test-library))
+              (setq events (cons 'random events)))
 
             ;; Run the test.
             (file-notify--test-with-events events
@@ -1021,9 +1109,7 @@ the file watch."
         ;; directory and the file monitor.  The `stopped' event is
         ;; from the file monitor.  It's undecided in which order the
         ;; the directory and the file monitor are triggered.
-        (file-notify--test-with-events
-            '((deleted deleted stopped)
-              (deleted stopped deleted))
+        (file-notify--test-with-events '(random deleted deleted stopped)
           (delete-file file-notify--test-tmpfile1))
         (should (file-notify-valid-p file-notify--test-desc1))
         (should-not (file-notify-valid-p file-notify--test-desc2))
@@ -1053,7 +1139,10 @@ the file watch."
                   (t '(deleted stopped))))))
           (delete-directory file-notify--test-tmpfile 'recursive))
         (should-not (file-notify-valid-p file-notify--test-desc1))
-        (should-not (file-notify-valid-p file-notify--test-desc2)))
+        (should-not (file-notify-valid-p file-notify--test-desc2))
+
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
 
     ;; Cleanup.
     (file-notify--test-cleanup)))
@@ -1094,7 +1183,10 @@ the file watch."
 	(dolist (desc descs)
 	 (file-notify-rm-watch desc))
 	;; Remove directories.
-        (delete-directory file-notify--test-tmpfile 'recursive))
+        (delete-directory file-notify--test-tmpfile 'recursive)
+
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
 
     ;; Cleanup.
     (file-notify--test-cleanup)))
