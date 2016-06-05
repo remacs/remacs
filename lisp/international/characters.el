@@ -194,6 +194,7 @@ with L, LRE, or LRO Unicode bidi character type.")
 
 (dolist (l '(katakana-jisx0201 japanese-jisx0208 japanese-jisx0212
 			       japanese-jisx0213-1 japanese-jisx0213-2
+                               japanese-jisx0213.2004-1
 			       cp932-2-byte))
   (map-charset-chars #'modify-category-entry l ?j))
 
