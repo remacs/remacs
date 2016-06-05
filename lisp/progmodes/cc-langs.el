@@ -1794,7 +1794,7 @@ but they don't build a type of themselves.  Unlike the keywords on
 not the type face."
   t    nil
   c    '("const" "restrict" "volatile")
-  c++  '("const" "constexpr" "noexcept" "volatile" "throw" "final" "override")
+  c++  '("const" "noexcept" "volatile" "throw" "final" "override")
   objc '("const" "volatile"))
 
 (c-lang-defconst c-opt-type-modifier-key
@@ -1996,8 +1996,8 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 will be handled."
   t    nil
   (c c++) '("auto" "extern" "inline" "register" "static")
-  c++  (append '("explicit" "friend" "mutable" "template" "thread_local"
-                 "using" "virtual")
+  c++  (append '("constexpr" "explicit" "friend" "mutable" "template"
+		 "thread_local" "using" "virtual")
 	       (c-lang-const c-modifier-kwds))
   objc '("auto" "bycopy" "byref" "extern" "in" "inout" "oneway" "out" "static")
   ;; FIXME: Some of those below ought to be on `c-other-decl-kwds' instead.

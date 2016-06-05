@@ -1259,6 +1259,11 @@ You can update the global isearch variables by setting new values to
 	      (isearch-adjusted isearch-adjusted)
 	      (isearch-yank-flag isearch-yank-flag)
 	      (isearch-error isearch-error)
+
+	      (multi-isearch-file-list-new multi-isearch-file-list)
+	      (multi-isearch-buffer-list-new multi-isearch-buffer-list)
+	      (multi-isearch-next-buffer-function multi-isearch-next-buffer-current-function)
+	      (multi-isearch-current-buffer-new multi-isearch-current-buffer)
   ;;; Don't bind this.  We want isearch-search, below, to set it.
   ;;; And the old value won't matter after that.
   ;;;	    (isearch-other-end isearch-other-end)
@@ -1313,7 +1318,10 @@ You can update the global isearch variables by setting new values to
 		  isearch-message isearch-new-message
 		  isearch-forward isearch-new-forward
 		  isearch-regexp-function isearch-new-regexp-function
-		  isearch-case-fold-search isearch-new-case-fold)
+		  isearch-case-fold-search isearch-new-case-fold
+		  multi-isearch-current-buffer multi-isearch-current-buffer-new
+		  multi-isearch-file-list multi-isearch-file-list-new
+		  multi-isearch-buffer-list multi-isearch-buffer-list-new)
 
 	    ;; Restore the minibuffer message before moving point.
             (funcall (or isearch-message-function #'isearch-message) nil t)

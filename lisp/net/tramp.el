@@ -3445,7 +3445,7 @@ The terminal type can be configured with `tramp-terminal-type'."
 		 (tramp-message vec 3 "Process has finished.")
 		 (throw 'tramp-action 'ok))
 	     (tramp-message vec 3 "Process has died.")
-	     (throw 'tramp-action 'process-died))))
+	     (throw 'tramp-action 'out-of-band-failed))))
 	(t nil)))
 
 ;;; Functions for processing the actions:
@@ -3506,6 +3506,10 @@ connection buffer."
 	   (tramp-get-connection-buffer vec) vec 'file-error
 	   (cond
 	    ((eq exit 'permission-denied) "Permission denied")
+	    ((eq exit 'out-of-band-failed)
+	     (format-message
+	      "Copy failed, see buffer `%s' for details"
+	      (tramp-get-connection-buffer vec)))
 	    ((eq exit 'process-died)
              (substitute-command-keys
               (concat
@@ -4003,7 +4007,8 @@ ALIST is of the form ((FROM . TO) ...)."
 It always returns a return code.  The Lisp error raised when
 PROGRAM is nil is trapped also, returning 1.  Furthermore, traces
 are written with verbosity of 6."
-  (let ((v (or vec
+  (let ((default-directory  (tramp-compat-temporary-file-directory))
+	(v (or vec
 	       (vector tramp-current-method tramp-current-user
 		       tramp-current-host nil nil)))
 	(destination (if (eq destination t) (current-buffer) destination))
@@ -4033,7 +4038,8 @@ are written with verbosity of 6."
 It always returns a return code.  The Lisp error raised when
 PROGRAM is nil is trapped also, returning 1.  Furthermore, traces
 are written with verbosity of 6."
-  (let ((v (or vec
+  (let ((default-directory  (tramp-compat-temporary-file-directory))
+	(v (or vec
 	       (vector tramp-current-method tramp-current-user
 		       tramp-current-host nil nil)))
 	(buffer (if (eq buffer t) (current-buffer) buffer))

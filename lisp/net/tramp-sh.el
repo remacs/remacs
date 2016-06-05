@@ -2517,19 +2517,18 @@ The method used must be an out-of-band method."
 
 		;; Use an asynchronous process.  By this, password can
 		;; be handled.  We don't set a timeout, because the
-		;; copying of large files can last longer than 60
-		;; secs.
-		(let ((p (apply 'start-process-shell-command
-				(tramp-get-connection-name v)
-				(tramp-get-connection-buffer v)
-				copy-program
-				(append
-				 copy-args
-				 (list "&&" "echo" "tramp_exit_status" "0"
-				       "||" "echo" "tramp_exit_status" "1")))))
-		  (tramp-message
-		   orig-vec 6 "%s"
-		   (mapconcat 'identity (process-command p) " "))
+		;; copying of large files can last longer than 60 secs.
+		(let* ((command
+			(mapconcat
+			 'identity (append (list copy-program) copy-args)
+			 " "))
+		       (p (let ((default-directory
+				  (tramp-compat-temporary-file-directory)))
+			    (start-process-shell-command
+			     (tramp-get-connection-name v)
+			     (tramp-get-connection-buffer v)
+			     command))))
+		  (tramp-message orig-vec 6 "%s" command)
 		  (tramp-set-connection-property p "vector" orig-vec)
 		  (set-process-query-on-exit-flag p nil)
 
@@ -2537,23 +2536,7 @@ The method used must be an out-of-band method."
 		  ;; sending the password.
 		  (let ((tramp-local-end-of-line tramp-rsh-end-of-line))
 		    (tramp-process-actions
-		     p v nil tramp-actions-copy-out-of-band))
-
-		  ;; Check the return code.
-		  (goto-char (point-max))
-		  (unless
-		      (re-search-backward "tramp_exit_status [0-9]+" nil t)
-		    (tramp-error
-		     orig-vec 'file-error
-		     "Couldn't find exit status of `%s'"
-		     (mapconcat 'identity (process-command p) " ")))
-		  (skip-chars-forward "^ ")
-		  (unless (zerop (read (current-buffer)))
-		    (forward-line -1)
-		    (tramp-error
-		     orig-vec 'file-error
-		     "Error copying: `%s'"
-		     (buffer-substring (point-min) (point-at-eol))))))
+		     p v nil tramp-actions-copy-out-of-band))))
 
 	    ;; Reset the transfer process properties.
 	    (tramp-set-connection-property v "process-name" nil)
@@ -5597,18 +5580,14 @@ function cell is returned to be applied on a buffer."
 	      `(lambda (beg end)
 		 (,coding beg end)
 		 (let ((coding-system-for-write 'binary)
-		       (coding-system-for-read 'binary)
-		       (default-directory
-			 (tramp-compat-temporary-file-directory)))
+		       (coding-system-for-read 'binary))
 		   (apply
 		    'tramp-call-process-region ,vec (point-min) (point-max)
 		    (car (split-string ,compress)) t t nil
 		    (cdr (split-string ,compress)))))
 	    `(lambda (beg end)
 	       (let ((coding-system-for-write 'binary)
-		     (coding-system-for-read 'binary)
-		     (default-directory
-		       (tramp-compat-temporary-file-directory)))
+		     (coding-system-for-read 'binary))
 		 (apply
 		  'tramp-call-process-region ,vec beg end
 		  (car (split-string ,compress)) t t nil

@@ -1430,8 +1430,17 @@ manpage command."
 			(quit-restore-window
 			 (get-buffer-window (current-buffer) t) 'kill)
 		      (kill-buffer (current-buffer)))
-		    (message "Can't find the %s manpage"
-			     (Man-page-from-arguments args)))
+                    ;; Entries hyphenated due to the window's width
+                    ;; won't be found in the man database, so remove
+                    ;; the hyphenation -- assuming Groff hyphenates
+                    ;; either with hyphen-minus (ASCII 45, #x2d),
+                    ;; hyphen (#x2010) or soft hyphen (#xad) -- and
+                    ;; look again.
+		    (if (string-match "[-‐­]" args)
+			(let ((str (replace-match "" nil nil args)))
+			  (Man-getpage-in-background str))
+                      (message "Can't find the %s manpage"
+                               (Man-page-from-arguments args))))
 
 		(if Man-fontify-manpage-flag
 		    (message "%s man page formatted"

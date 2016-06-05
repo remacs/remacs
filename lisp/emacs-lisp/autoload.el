@@ -537,32 +537,79 @@ Don't try to split prefixes that are already longer than that.")
                  (dolist (def defs)
                    (setq tree (radix-tree-insert tree def t)))
                  tree))
-         (prefixes (list (cons "" tree))))
-    (while
-        (let ((newprefixes nil)
-              (changes nil))
-          (dolist (pair prefixes)
-            (let ((prefix (car pair)))
-              (if (or (> (length prefix) autoload-def-prefixes-max-length)
-                      (radix-tree-lookup (cdr pair) ""))
-                  ;; No point splitting it any further.
-                  (push pair newprefixes)
-                (setq changes t)
-                (radix-tree-iter-subtrees
-                 (cdr pair) (lambda (sprefix subtree)
-                              (push (cons (concat prefix sprefix) subtree)
-                                    newprefixes))))))
-          (and changes
-               (or (and (null (cdr prefixes)) (equal "" (caar prefixes)))
-                   (<= (length newprefixes)
-                       autoload-def-prefixes-max-entries))
-               (setq prefixes newprefixes)
-               (< (length prefixes) autoload-def-prefixes-max-entries))))
+         (prefixes nil))
+    ;; Get the root prefixes, that we should include in any case.
+    (radix-tree-iter-subtrees
+     tree (lambda (prefix subtree)
+            (push (cons prefix subtree) prefixes)))
+    ;; In some cases, the root prefixes are too short, e.g. if you define
+    ;; "cc-helper" and "c-mode", you'll get "c" in the root prefixes.
+    (dolist (pair (prog1 prefixes (setq prefixes nil)))
+      (let ((s (car pair)))
+        (if (or (> (length s) 2)                  ;Long enough!
+                (string-match ".[[:punct:]]\\'" s) ;A real (tho short) prefix?
+                (radix-tree-lookup (cdr pair) "")) ;Nothing to expand!
+            (push pair prefixes) ;Keep it as is.
+          (radix-tree-iter-subtrees
+           (cdr pair) (lambda (prefix subtree)
+                        (push (cons (concat s prefix) subtree) prefixes))))))
+    ;; FIXME: The expansions done below are mostly pointless, such as
+    ;; for `yenc', where we replace "yenc-" with an exhaustive list (5
+    ;; elements).
+    ;; (while
+    ;;     (let ((newprefixes nil)
+    ;;           (changes nil))
+    ;;       (dolist (pair prefixes)
+    ;;         (let ((prefix (car pair)))
+    ;;           (if (or (> (length prefix) autoload-def-prefixes-max-length)
+    ;;                   (radix-tree-lookup (cdr pair) ""))
+    ;;               ;; No point splitting it any further.
+    ;;               (push pair newprefixes)
+    ;;             (setq changes t)
+    ;;             (radix-tree-iter-subtrees
+    ;;              (cdr pair) (lambda (sprefix subtree)
+    ;;                           (push (cons (concat prefix sprefix) subtree)
+    ;;                                 newprefixes))))))
+    ;;       (and changes
+    ;;            (<= (length newprefixes)
+    ;;                autoload-def-prefixes-max-entries)
+    ;;            (let ((new nil)
+    ;;                  (old nil))
+    ;;              (dolist (pair prefixes)
+    ;;                (unless (memq pair newprefixes) ;Not old
+    ;;                  (push pair old)))
+    ;;              (dolist (pair newprefixes)
+    ;;                (unless (memq pair prefixes) ;Not new
+    ;;                  (push pair new)))
+    ;;              (cl-assert new)
+    ;;              (message "Expanding %S to %S"
+    ;;                       (mapcar #'car old) (mapcar #'car new))
+    ;;              t)
+    ;;            (setq prefixes newprefixes)
+    ;;            (< (length prefixes) autoload-def-prefixes-max-entries))))
 
     ;; (message "Final prefixes %s : %S" file (mapcar #'car prefixes))
     (when prefixes
-      `(if (fboundp 'register-definition-prefixes)
-           (register-definition-prefixes ,file ',(mapcar #'car prefixes))))))
+      (let ((strings
+             (mapcar
+              (lambda (x)
+                (let ((prefix (car x)))
+                  (if (or (> (length prefix) 2) ;Long enough!
+                          (string-match ".[[:punct:]]\\'" prefix))
+                      prefix
+                    ;; Some packages really don't follow the rules.
+                    ;; Drop the most egregious cases such as the
+                    ;; one-letter prefixes.
+                    (let ((dropped ()))
+                      (radix-tree-iter-mappings
+                       (cdr x) (lambda (s _)
+                                 (push (concat prefix s) dropped)))
+                      (message "Not registering prefix \"%s\" from %s.  Affects: %S"
+                               prefix file dropped)
+                      nil))))
+              prefixes)))
+        `(if (fboundp 'register-definition-prefixes)
+             (register-definition-prefixes ,file ',(delq nil strings)))))))
 
 (defun autoload--setup-output (otherbuf outbuf absfile load-name)
   (let ((outbuf
@@ -714,8 +761,10 @@ FILE's modification time."
                                      "define-obsolete-variable-alias"
                                      "define-category" "define-key"
                                      "defgroup" "defface" "defadvice"
+                                     "def-edebug-spec"
                                      ;; Hmm... this is getting ugly:
                                      "define-widget"
+                                     "define-erc-response-handler"
                                      "defun-rcirc-command"))))
                     (push (match-string 2) defs))
                           (forward-sexp 1)
