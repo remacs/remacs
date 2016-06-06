@@ -73,14 +73,23 @@ It is different for local and remote file notification libraries.")
   (cond
    ((file-remote-p temporary-file-directory) 6)
    ((string-equal (file-notify--test-library) "w32notify") 4)
+   ((eq system-type 'cygwin) 6)
    (t 3)))
+
+(defmacro file-notify--wait-for-events (timeout until)
+  "Wait for and return file notification events until form UNTIL is true.
+TIMEOUT is the maximum time to wait for, in seconds."
+  `(with-timeout (,timeout (ignore))
+     (while (null ,until)
+       (read-event nil nil file-notify--test-read-event-timeout))))
 
 (defun file-notify--test-no-descriptors ()
   "Check that `file-notify-descriptors' is an empty hash table.
 Return nil when any other file notification watch is still active."
   ;; Give read events a last chance.
-  (unless (zerop (hash-table-count file-notify-descriptors))
-    (read-event nil nil file-notify--test-read-event-timeout))
+  (file-notify--wait-for-events
+   (file-notify--test-timeout)
+   (zerop (hash-table-count file-notify-descriptors)))
   ;; Now check.
   (zerop (hash-table-count file-notify-descriptors)))
 
@@ -331,20 +340,13 @@ and the event to `file-notify--test-events'."
   (expand-file-name
    (make-temp-name "file-notify-test") temporary-file-directory))
 
-(defmacro file-notify--wait-for-events (timeout until)
-  "Wait for and return file notification events until form UNTIL is true.
-TIMEOUT is the maximum time to wait for, in seconds."
-  `(with-timeout (,timeout (ignore))
-     (while (null ,until)
-       (read-event nil nil file-notify--test-read-event-timeout))))
-
 (defun file-notify--test-with-events-check (events)
   "Check whether received events match one of the EVENTS alternatives."
   (let (result)
     (dolist (elt events result)
       (setq result
             (or result
-                (if (eq (car elt) 'random)
+                (if (eq (car elt) :random)
                     (equal (sort (cdr elt) 'string-lessp)
                            (sort (mapcar #'cadr file-notify--test-events)
                                  'string-lessp))
@@ -366,7 +368,7 @@ TIMEOUT is the maximum time to wait for, in seconds."
   "Run BODY collecting events and then compare with EVENTS.
 EVENTS is either a simple list of events, or a list of lists of
 events, which represent different possible results.  The first
-event of a list could be the pseudo event `random', which is
+event of a list could be the pseudo event `:random', which is
 just an indicator for comparison.
 
 Don't wait longer than timeout seconds for the events to be
@@ -377,7 +379,7 @@ delivered."
            (apply
             'max
             (mapcar
-             (lambda (x) (length (if (eq (car x) 'random) (cdr x) x)))
+             (lambda (x) (length (if (eq (car x) :random) (cdr x) x)))
              events)))
           create-lockfiles)
      ;; Flush pending events.
@@ -862,8 +864,6 @@ delivered."
   "Check that events are not dropped."
   :tags '(:expensive-test)
   (skip-unless (file-notify--test-local-enabled))
-  ;; Under cygwin events arrive in random order.  Impossible to define a test.
-  (skip-unless (not (eq system-type 'cygwin)))
 
   (should
    (setq file-notify--test-tmpfile
@@ -902,6 +902,12 @@ delivered."
 	      (let (r)
 		(dotimes (_i n r)
 		  (setq r (append '(deleted renamed) r)))))
+	     ;; cygwin fires `changed' and `deleted' events, sometimes
+	     ;; in random order.
+	     ((eq system-type 'cygwin)
+	      (let ((r '(:random)))
+		(dotimes (_i n r)
+		  (setq r (append r '(changed deleted))))))
 	     (t (make-list n 'renamed)))
           (let ((source-file-list source-file-list)
                 (target-file-list target-file-list))
@@ -1090,7 +1096,7 @@ the file watch."
                      events)))
             ;; gvfs-monitor-dir returns the events in random order.
             (when (string-equal "gvfs-monitor-dir" (file-notify--test-library))
-              (setq events (cons 'random events)))
+              (setq events (cons :random events)))
 
             ;; Run the test.
             (file-notify--test-with-events events
@@ -1109,7 +1115,7 @@ the file watch."
         ;; directory and the file monitor.  The `stopped' event is
         ;; from the file monitor.  It's undecided in which order the
         ;; the directory and the file monitor are triggered.
-        (file-notify--test-with-events '(random deleted deleted stopped)
+        (file-notify--test-with-events '(:random deleted deleted stopped)
           (delete-file file-notify--test-tmpfile1))
         (should (file-notify-valid-p file-notify--test-desc1))
         (should-not (file-notify-valid-p file-notify--test-desc2))
