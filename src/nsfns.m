@@ -3125,7 +3125,7 @@ Example: Install an icon Gnus.tiff and execute the following code
 
   (setq ns-icon-type-alist
         (append ns-icon-type-alist
-                '((\"^\\\\*\\\\(Group\\\\*$\\\\|Summary \\\\|Article\\\\*$\\\\)\"
+                \\='((\"^\\\\*\\\\(Group\\\\*$\\\\|Summary \\\\|Article\\\\*$\\\\)\"
                    . \"Gnus\"))))
 
 When you miniaturize a Group, Summary or Article frame, Gnus.tiff will

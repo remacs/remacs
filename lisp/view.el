@@ -429,7 +429,7 @@ x	exchanges point and mark.
 	  Mark ring is pushed at start of every successful search and when
 	  jump to line occurs.  The mark is set on jump to buffer start or end.
 \\[point-to-register]	save current position in character register.
-'	go to position saved in character register.
+\\='	go to position saved in character register.
 s	do forward incremental search.
 r	do reverse incremental search.
 \\[View-search-regexp-forward]	searches forward for regular expression, starting after current page.
