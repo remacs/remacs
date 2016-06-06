@@ -308,7 +308,7 @@ This regular expression should start with a `^' character.")
 
 (defvar Man-reference-regexp
   (concat "\\(" Man-name-regexp
-	  "\\(\n[ \t]+" Man-name-regexp "\\)*\\)[ \t]*(\\("
+	  "\\(‐?\n[ \t]+" Man-name-regexp "\\)*\\)[ \t]*(\\("
 	  Man-section-regexp "\\))")
   "Regular expression describing a reference to another manpage.")
 
@@ -779,7 +779,7 @@ POS defaults to `point'."
       ;;     see this-
       ;;     command-here(1)
       ;; Note: This code gets executed iff our entry is after POS.
-      (when (looking-at "[ \t\r\n]+\\([-a-zA-Z0-9._+:]+\\)([0-9])")
+      (when (looking-at "‐?[ \t\r\n]+\\([-a-zA-Z0-9._+:]+\\)([0-9])")
 	(setq word (concat word (match-string-no-properties 1)))
 	;; Make sure the section number gets included by the code below.
 	(goto-char (match-end 1)))
