@@ -310,6 +310,38 @@
    (= 6
       (undo-test-point-after-forward-kill))))
 
+(defmacro simple-test-undo-with-switched-buffer (buffer &rest body)
+  (let ((before-buffer (make-symbol "before-buffer")))
+    `(let ((,before-buffer (current-buffer)))
+       (unwind-protect
+           (progn
+             (switch-to-buffer ,buffer)
+             ,@body)
+         (switch-to-buffer ,before-buffer)))))
+
+;; This tests for a regression in emacs 25.0 see bug #23632
+(ert-deftest simple-test-undo-extra-boundary-in-tex ()
+  (should
+   (string=
+    ""
+    (simple-test-undo-with-switched-buffer
+        "temp.tex"
+      (latex-mode)
+      ;; This macro calls `latex-insert-block'
+      (execute-kbd-macro
+       (read-kbd-macro
+        "
+C-c C-o			;; latex-insert-block
+RET			;; newline
+C-/                     ;; undo
+"
+        ))
+      (buffer-substring-no-properties
+       (point-min)
+       (point-max))))))
+
+
+
 
 (provide 'simple-test)
 ;;; simple-test.el ends here

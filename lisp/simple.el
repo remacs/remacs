@@ -2910,9 +2910,7 @@ REASON describes the reason that the boundary is being added; see
 
 This list is maintained by `undo-auto--undoable-change' and
 `undo-auto--boundaries' and can be affected by changes to their
-default values.
-
-See also `undo-auto--buffer-undoably-changed'.")
+default values.")
 
 (defun undo-auto--add-boundary ()
   "Add an `undo-boundary' in appropriate buffers."

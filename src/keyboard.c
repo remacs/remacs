@@ -681,6 +681,14 @@ recursive_edit_1 (void)
   specbind (Qinhibit_redisplay, Qnil);
   redisplaying_p = 0;
 
+  /* This variable stores buffers that have changed so that an undo
+     boundary can be added. specbind this so that changes in the
+     recursive edit will not result in undo boundaries in buffers
+     changed before we entered there recursive edit.
+     See Bug #23632.
+  */
+  specbind (Qundo_auto__undoably_changed_buffers, Qnil);
+
   val = command_loop ();
   if (EQ (val, Qt))
     Fsignal (Qquit, Qnil);
@@ -10956,6 +10964,8 @@ syms_of_keyboard (void)
   DEFSYM (Qpost_command_hook, "post-command-hook");
 
   DEFSYM (Qundo_auto__add_boundary, "undo-auto--add-boundary");
+  DEFSYM (Qundo_auto__undoably_changed_buffers,
+          "undo-auto--undoably-changed-buffers");
 
   DEFSYM (Qdeferred_action_function, "deferred-action-function");
   DEFSYM (Qdelayed_warnings_hook, "delayed-warnings-hook");
