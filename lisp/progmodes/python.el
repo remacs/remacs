@@ -2678,6 +2678,7 @@ variable.
 \(Type \\[describe-mode] in the process buffer for a list of commands.)"
   (when python-shell--parent-buffer
     (python-util-clone-local-variables python-shell--parent-buffer))
+  (set (make-local-variable 'indent-tabs-mode) nil)
   ;; Users can interactively override default values for
   ;; `python-shell-interpreter' and `python-shell-interpreter-args'
   ;; when calling `run-python'.  This ensures values let-bound in
