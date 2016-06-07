@@ -2171,63 +2171,51 @@ skip_syntaxes (bool forwardp, Lisp_Object string, Lisp_Object lim)
     ptrdiff_t start_point = PT;
     ptrdiff_t pos = PT;
     ptrdiff_t pos_byte = PT_BYTE;
-    unsigned char *p = PT_ADDR, *endp, *stop;
-
-    if (forwardp)
-      {
-	endp = (XINT (lim) == GPT) ? GPT_ADDR : CHAR_POS_ADDR (XINT (lim));
-	stop = (pos < GPT && GPT < XINT (lim)) ? GPT_ADDR : endp;
-      }
-    else
-      {
-	endp = CHAR_POS_ADDR (XINT (lim));
-	stop = (pos >= GPT && GPT > XINT (lim)) ? GAP_END_ADDR : endp;
-      }
+    unsigned char *p, *endp, *stop;
 
     immediate_quit = 1;
     SETUP_SYNTAX_TABLE (pos, forwardp ? 1 : -1);
+
     if (forwardp)
       {
-	if (multibyte)
+	while (true)
 	  {
-	    while (1)
+	    p = BYTE_POS_ADDR (pos_byte);
+	    endp = XINT (lim) == GPT ? GPT_ADDR : CHAR_POS_ADDR (XINT (lim));
+	    stop = pos < GPT && GPT < XINT (lim) ? GPT_ADDR : endp;
+
+	    do
 	      {
 		int nbytes;
 
 		if (p >= stop)
 		  {
 		    if (p >= endp)
-		      break;
+		      goto done;
 		    p = GAP_END_ADDR;
 		    stop = endp;
 		  }
-		c = STRING_CHAR_AND_LENGTH (p, nbytes);
+		if (multibyte)
+		  c = STRING_CHAR_AND_LENGTH (p, nbytes);
+		else
+		  c = *p, nbytes = 1;
 		if (! fastmap[SYNTAX (c)])
-		  break;
+		  goto done;
 		p += nbytes, pos++, pos_byte += nbytes;
-		UPDATE_SYNTAX_TABLE_FORWARD (pos);
 	      }
-	  }
-	else
-	  {
-	    while (1)
-	      {
-		if (p >= stop)
-		  {
-		    if (p >= endp)
-		      break;
-		    p = GAP_END_ADDR;
-		    stop = endp;
-		  }
-		if (! fastmap[SYNTAX (*p)])
-		  break;
-		p++, pos++, pos_byte++;
-		UPDATE_SYNTAX_TABLE_FORWARD (pos);
-	      }
+	    while (!parse_sexp_lookup_properties
+		   || pos < gl_state.e_property);
+
+	    update_syntax_table_forward (pos + gl_state.offset,
+					 false, gl_state.object);
 	  }
       }
     else
       {
+	p = BYTE_POS_ADDR (pos_byte);
+	endp = CHAR_POS_ADDR (XINT (lim));
+	stop = pos >= GPT && GPT > XINT (lim) ? GAP_END_ADDR : endp;
+
 	if (multibyte)
 	  {
 	    while (1)
@@ -2269,6 +2257,7 @@ skip_syntaxes (bool forwardp, Lisp_Object string, Lisp_Object lim)
 	  }
       }
 
+  done:
     SET_PT_BOTH (pos, pos_byte);
     immediate_quit = 0;
 
