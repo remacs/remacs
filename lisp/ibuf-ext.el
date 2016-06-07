@@ -347,10 +347,14 @@ the mode if ARG is omitted or nil."
    :modifier-p nil)
   (shell-command (concat command " "
 			 (shell-quote-argument
-			  (if buffer-file-name
-			      buffer-file-name
-			    (make-temp-file
-			     (substring (buffer-name) 0 (min 10 (length (buffer-name))))))))))
+			  (or buffer-file-name
+			      (let ((file
+				     (make-temp-file
+				      (substring
+				       (buffer-name) 0
+				       (min 10 (length (buffer-name)))))))
+				(write-region nil nil file nil 0)
+				file))))))
 
 ;;;###autoload (autoload 'ibuffer-do-eval "ibuf-ext")
 (define-ibuffer-op eval (form)
