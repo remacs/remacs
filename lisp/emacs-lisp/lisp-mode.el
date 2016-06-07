@@ -58,7 +58,7 @@
       (setq i (1+ i)))
     (modify-syntax-entry ?\s "    " table)
     ;; Non-break space acts as whitespace.
-    (modify-syntax-entry ?\x8a0 "    " table)
+    (modify-syntax-entry ?\xa0 "    " table)
     (modify-syntax-entry ?\t "    " table)
     (modify-syntax-entry ?\f "    " table)
     (modify-syntax-entry ?\n ">   " table)
