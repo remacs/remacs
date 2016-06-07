@@ -64,6 +64,15 @@ typedef bool bool_bf;
     (4 < __GNUC__ + (8 <= __GNUC_MINOR__))
 #endif
 
+/* Simulate __has_builtin on compilers that lack it.  It is used only
+   on arguments like __builtin_assume_aligned that are handled in this
+   simulation.  */
+#ifndef __has_builtin
+# define __has_builtin(a) __has_builtin_##a
+# define __has_builtin___builtin_assume_aligned \
+    (4 < __GNUC__ + (7 <= __GNUC_MINOR__))
+#endif
+
 /* Simulate __has_feature on compilers that lack it.  It is used only
    to define ADDRESS_SANITIZER below.  */
 #ifndef __has_feature
@@ -75,6 +84,11 @@ typedef bool bool_bf;
 # define ADDRESS_SANITIZER true
 #else
 # define ADDRESS_SANITIZER false
+#endif
+
+/* Yield PTR, which must be aligned to ALIGNMENT.  */
+#if ! __has_builtin (__builtin_assume_aligned)
+# define __builtin_assume_aligned(ptr, alignment, ...) ((void *) (ptr))
 #endif
 
 #ifdef DARWIN_OS

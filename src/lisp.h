@@ -341,7 +341,9 @@ error !;
      (struct Lisp_Symbol *) ((intptr_t) XLI (a) - Lisp_Symbol \
 			     + (char *) lispsym))
 # define lisp_h_XTYPE(a) ((enum Lisp_Type) (XLI (a) & ~VALMASK))
-# define lisp_h_XUNTAG(a, type) ((void *) (intptr_t) (XLI (a) - (type)))
+# define lisp_h_XUNTAG(a, type) \
+    __builtin_assume_aligned ((void *) (intptr_t) (XLI (a) - (type)), \
+			      GCALIGNMENT)
 #endif
 
 /* When compiling via gcc -O0, define the key operations as macros, as
