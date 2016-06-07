@@ -912,7 +912,7 @@ Note that the style variables are always made local to the buffer."
 
 (defun c-extend-region-for-CPP (beg end)
   ;; Adjust `c-new-BEG', `c-new-END' respectively to the beginning and end of
-  ;; any preprocessor construct they may be in. 
+  ;; any preprocessor construct they may be in.
   ;;
   ;; Point is undefined both before and after this function call; the buffer
   ;; has already been widened, and match-data saved.  The return value is
@@ -1477,7 +1477,8 @@ This function is called from `c-common-init', once per mode initialization."
 ;;;###autoload (add-to-list 'auto-mode-alist '("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . c++-mode))
 ;;;###autoload (add-to-list 'auto-mode-alist '("\\.\\(CC?\\|HH?\\)\\'" . c++-mode))
 
-;;;###autoload (add-to-list 'auto-mode-alist '("\\.[ch]\\'" . c-mode))
+;;;###autoload (add-to-list 'auto-mode-alist '("\\.c\\'" . c-mode))
+;;;###autoload (add-to-list 'auto-mode-alist '("\\.h\\'" . c-or-c++-mode))
 
 ;; NB: The following two associate yacc and lex files to C Mode, which
 ;; is not really suitable for those formats.  Anyway, afaik there's
@@ -1517,6 +1518,40 @@ Key bindings:
   (easy-menu-add c-c-menu)
   (cc-imenu-init cc-imenu-c-generic-expression)
   (c-run-mode-hooks 'c-mode-common-hook))
+
+(defconst c-or-c++-mode--regexp
+  (eval-when-compile
+    (let ((id "[a-zA-Z0-9_]+") (ws "[ \t\r]+") (ws-maybe "[ \t\r]*"))
+      (concat "^" ws-maybe "\\(?:"
+                    "using"     ws "\\(?:namespace" ws "std;\\|std::\\)"
+              "\\|" "namespace" "\\(:?" ws id "\\)?" ws-maybe "{"
+              "\\|" "class"     ws id ws-maybe "[:{\n]"
+              "\\|" "template"  ws-maybe "<.*>"
+              "\\|" "#include"  ws-maybe "<\\(?:string\\|iostream\\|map\\)>"
+              "\\)")))
+  "A regexp applied to C header files to check if they are really C++.")
+
+;;;###autoload
+(defun c-or-c++-mode ()
+  "Analyse buffer and enable either C or C++ mode.
+
+Some people and projects use .h extension for C++ header files
+which is also the one used for C header files.  This makes
+matching on file name insufficient for detecting major mode that
+should be used.
+
+This function attempts to use file contents to determine whether
+the code is C or C++ and based on that chooses whether to enable
+`c-mode' or `c++-mode'."
+  (if (save-excursion
+        (save-restriction
+          (save-match-data
+            (widen)
+            (goto-char (point-min))
+            (re-search-forward c-or-c++-mode--regexp
+                               (+ (point) c-guess-region-max) t))))
+      (c++-mode)
+    (c-mode)))
 
 
 ;; Support for C++

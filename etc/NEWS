@@ -357,6 +357,13 @@ string is computed dynamically based on 'url-privacy-level'.
 colorful faces to make it more obvious to the user what the state is.
 See the 'vc-faces' customization group.
 
+** CC mode
+
+*** Opening a .h file will turn C or C++ mode depending on language used.
+This is done with the help of 'c-or-c++-mode' function which analyses
+contents of the buffer to determine whether it's a C or C++ source
+file.
+
 
 * New Modes and Packages in Emacs 25.2
 
