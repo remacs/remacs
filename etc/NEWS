@@ -411,9 +411,6 @@ by setting 'autoload-timestamps' to nil.
 FIXME As an experiment, nil is the current default.
 If no insurmountable problems before next release, it can stay that way.
 
-** 'ert-with-function-mocked' of 'ert-x package allows mocking of functions
-in unit tests.
-
 ---
 ** 'gnutls-boot' now takes a parameter :complete-negotiation that says
 that negotiation should complete even on non-blocking sockets.
