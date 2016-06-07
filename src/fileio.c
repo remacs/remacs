@@ -5387,14 +5387,8 @@ auto_save_error (Lisp_Object error_val)
   msg = CALLN (Fformat, format, BVAR (current_buffer, name),
 	       Ferror_message_string (error_val));
 
-  for (i = 0; i < 3; ++i)
-    {
-      if (i == 0)
-	message3 (msg);
-      else
-	message3_nolog (msg);
-      Fsleep_for (make_number (1), Qnil);
-    }
+  call3 (intern ("display-warning"),
+         intern ("auto-save"), msg, intern ("error"));
 
   return Qnil;
 }
