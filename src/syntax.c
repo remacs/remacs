@@ -3701,7 +3701,7 @@ In both cases, LIMIT bounds the search. */);
   Vfind_word_boundary_function_table = Fmake_char_table (Qnil, Qnil);
 
   DEFVAR_BOOL ("comment-end-can-be-escaped", Vcomment_end_can_be_escaped,
-               doc: /* Non-nil means an escaped ender inside a comment doesn'tend the comment.  */);
+               doc: /* Non-nil means an escaped ender inside a comment doesn't end the comment.  */);
   Vcomment_end_can_be_escaped = 0;
   DEFSYM (Qcomment_end_can_be_escaped, "comment-end-can-be-escaped");
   Fmake_variable_buffer_local (Qcomment_end_can_be_escaped);
