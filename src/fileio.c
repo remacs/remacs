@@ -5376,17 +5376,13 @@ An argument specifies the modification time value to use
 static Lisp_Object
 auto_save_error (Lisp_Object error_val)
 {
-  Lisp_Object msg;
-  int i;
-
   auto_save_error_occurred = 1;
 
   ring_bell (XFRAME (selected_frame));
 
   AUTO_STRING (format, "Auto-saving %s: %s");
-  msg = CALLN (Fformat, format, BVAR (current_buffer, name),
-	       Ferror_message_string (error_val));
-
+  Lisp_Object msg = CALLN (Fformat, format, BVAR (current_buffer, name),
+			   Ferror_message_string (error_val));
   call3 (intern ("display-warning"),
          intern ("auto-save"), msg, intern ("error"));
 
