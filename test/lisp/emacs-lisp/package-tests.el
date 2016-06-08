@@ -372,16 +372,28 @@ Must called from within a `tar-mode' buffer."
   (skip-unless (executable-find "python2"))
   ;; For some reason this test doesn't work reliably on hydra.nixos.org.
   (skip-unless (not (getenv "NIX_STORE")))
-  (with-package-test (:basedir
-                      package-test-data-dir
-                      :location "http://0.0.0.0:8000/")
-    (let* ((package-menu-async t)
-           (process (start-process
-                     "package-server" "package-server-buffer"
-                     (executable-find "python2")
-                     (expand-file-name "package-test-server.py"))))
-      (unwind-protect
-          (progn
+  (let* ((package-menu-async t)
+         (default-directory package-test-data-dir)
+         (process (start-process
+                   "package-server" "package-server-buffer"
+                   (executable-find "python2")
+                   "package-test-server.py"))
+         port)
+    (unwind-protect
+        (progn
+          (with-current-buffer "package-server-buffer"
+            (should
+             (with-timeout (10 nil)
+               (while (not port)
+                 (accept-process-output nil 1)
+                 (goto-char (point-min))
+                 (if (re-search-forward "Serving HTTP on .* port \\([0-9]+\\) "
+                                        nil t)
+                     (setq port (match-string 1))))
+               port)))
+          (with-package-test (:basedir
+                              package-test-data-dir
+                              :location (format "http://0.0.0.0:%s/" port))
             (list-packages)
             (should package--downloads-in-progress)
             (should mode-line-process)
@@ -395,8 +407,8 @@ Must called from within a `tar-mode' buffer."
             (skip-unless (process-live-p process))
             (goto-char (point-min))
             (should
-             (search-forward-regexp "^ +simple-single" nil t)))
-        (if (process-live-p process) (kill-process process))))))
+             (search-forward-regexp "^ +simple-single" nil t))))
+      (if (process-live-p process) (kill-process process)))))
 
 (ert-deftest package-test-describe-package ()
   "Test displaying help for a package."
