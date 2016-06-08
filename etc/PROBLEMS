@@ -2419,6 +2419,13 @@ files are installed.  Then use:
 
 (using the location of the 32-bit X libraries on your system).
 
+*** Building on FreeBSD 11 fails at link time due to unresolved symbol
+
+The symbol is sendmmsg@FBSD_1.4.  This is due to a faulty libgio
+library on these systems.  The solution is to reconfigure Emacs while
+disabling all the features that require libgio: rsvg, dbus, gconf, and
+imagemagick.
+
 *** Building Emacs for Cygwin can fail with GCC 3
 
 As of Emacs 22.1, there have been stability problems with Cygwin

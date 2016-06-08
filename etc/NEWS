@@ -103,8 +103,8 @@ have been added.  They are: 'file-attribute-type',
 'file-attribute-device-number'.
 
 +++
-** The new function 'buffer-hash' computes compute a fast, non-consing
-hash of a buffer's contents.
+** The new function 'buffer-hash' computes a fast, non-consing hash of
+a buffer's contents.
 
 ---
 ** 'fill-paragraph' no longer marks the buffer as changed unless it

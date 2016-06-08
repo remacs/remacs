@@ -986,10 +986,8 @@ AS_IF([test $gl_gcc_warnings = no],
 
   # More things that clang is unduly picky about.
   if test $emacs_cv_clang = yes; then
-    gl_WARN_ADD([-Wno-format-extra-args])
+    gl_WARN_ADD([-Wno-tautological-compare])
     gl_WARN_ADD([-Wno-tautological-constant-out-of-range-compare])
-    gl_WARN_ADD([-Wno-unused-command-line-argument])
-    gl_WARN_ADD([-Wno-unused-value])
   fi
 
   # This causes too much noise in the MinGW build
@@ -5238,9 +5236,10 @@ emacs_config_features=
 for opt in XAW3D XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
   GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
   LIBOTF XFT ZLIB TOOLKIT_SCROLL_BARS X_TOOLKIT X11 NS MODULES \
-  XWIDGETS LIBSYSTEMD; do
+  XWIDGETS LIBSYSTEMD CANNOT_DUMP; do
 
     case $opt in
+      CANNOT_DUMP) eval val=\${$opt} ;;
       NOTIFY|ACL) eval val=\${${opt}_SUMMARY} ;;
       TOOLKIT_SCROLL_BARS|X_TOOLKIT) eval val=\${USE_$opt} ;;
       *) eval val=\${HAVE_$opt} ;;

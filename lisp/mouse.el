@@ -415,7 +415,15 @@ must be one of the symbols `header', `mode', or `vertical'."
 			   (or (not resize-mini-windows)
 			       (eq minibuffer-window
 				   (active-minibuffer-window)))))))
-	  (setq draggable nil))))
+	  (setq draggable nil)))
+     ((eq line 'vertical)
+      (let ((divider-width (frame-right-divider-width frame)))
+        (when (and (or (not (numberp divider-width))
+                       (zerop divider-width))
+                   (eq (cdr (assq 'vertical-scroll-bars
+                                  (frame-parameters frame)))
+                       'left))
+	(setq window (window-in-direction 'left window t))))))
 
     (let* ((exitfun nil)
            (move

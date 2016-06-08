@@ -1,4 +1,4 @@
-;;; wdired.el --- Rename files editing their names in dired buffers
+;;; wdired.el --- Rename files editing their names in dired buffers -*- coding: utf-8; -*-
 
 ;; Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
@@ -590,7 +590,7 @@ Optional arguments are ignored."
   "Move down lines then position at filename or the current column.
 See `wdired-use-dired-vertical-movement'.  Optional prefix ARG
 says how many lines to move; default is one line."
-  (interactive "p")
+  (interactive "^p")
   (with-no-warnings (next-line arg))
   (if (or (eq wdired-use-dired-vertical-movement t)
 	  (and wdired-use-dired-vertical-movement
@@ -603,7 +603,7 @@ says how many lines to move; default is one line."
   "Move up lines then position at filename or the current column.
 See `wdired-use-dired-vertical-movement'.  Optional prefix ARG
 says how many lines to move; default is one line."
-  (interactive "p")
+  (interactive "^p")
   (with-no-warnings (previous-line arg))
   (if (or (eq wdired-use-dired-vertical-movement t)
 	  (and wdired-use-dired-vertical-movement
