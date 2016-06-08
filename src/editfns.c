@@ -2176,17 +2176,16 @@ usage: (decode-time &optional TIME ZONE)  */)
 }
 
 /* Return OBJ - OFFSET, checking that OBJ is a valid fixnum and that
-   the result is representable as an int.  Assume OFFSET is small and
-   nonnegative.  */
+   the result is representable as an int.  */
 static int
 check_tm_member (Lisp_Object obj, int offset)
 {
-  EMACS_INT n;
   CHECK_NUMBER (obj);
-  n = XINT (obj);
-  if (! (INT_MIN + offset <= n && n - offset <= INT_MAX))
+  EMACS_INT n = XINT (obj);
+  int result;
+  if (INT_SUBTRACT_WRAPV (n, offset, &result))
     time_overflow ();
-  return n - offset;
+  return result;
 }
 
 DEFUN ("encode-time", Fencode_time, Sencode_time, 6, MANY, 0,
