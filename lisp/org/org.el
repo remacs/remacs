@@ -16296,10 +16296,10 @@ So these are more for recording a certain time/date."
                   (message "")))
     (org-defkey map ">"
                 (lambda () (interactive)
-                  (org-eval-in-calendar '(scroll-calendar-left 1))))
+                  (org-eval-in-calendar '(calendar-scroll-left 1))))
     (org-defkey map "<"
                 (lambda () (interactive)
-                  (org-eval-in-calendar '(scroll-calendar-right 1))))
+                  (org-eval-in-calendar '(calendar-scroll-right 1))))
     (org-defkey map "\C-v"
                 (lambda () (interactive)
                   (org-eval-in-calendar
