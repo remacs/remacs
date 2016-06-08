@@ -1142,7 +1142,8 @@ static RGB_PIXEL_COLOR
 four_corners_best (XImagePtr_or_DC ximg, int *corners,
 		   unsigned long width, unsigned long height)
 {
-  RGB_PIXEL_COLOR corner_pixels[4], best IF_LINT (= 0);
+  RGB_PIXEL_COLOR corner_pixels[4];
+  RGB_PIXEL_COLOR best UNINIT;
   int i, best_count;
 
   if (corners && corners[BOT_CORNER] >= 0)
@@ -5895,9 +5896,8 @@ static bool
 png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 {
   Lisp_Object specified_file;
-  /* IF_LINT (volatile) works around GCC bug 54561.  */
-  Lisp_Object IF_LINT (volatile) specified_data;
-  FILE * IF_LINT (volatile) fp = NULL;
+  Lisp_Object NONVOLATILE specified_data;
+  FILE *NONVOLATILE fp = NULL;
   int x, y;
   ptrdiff_t i;
   png_struct *png_ptr;
@@ -6668,8 +6668,7 @@ jpeg_load_body (struct frame *f, struct image *img,
 		struct my_jpeg_error_mgr *mgr)
 {
   Lisp_Object specified_file;
-  /* IF_LINT (volatile) works around GCC bug 54561.  */
-  Lisp_Object IF_LINT (volatile) specified_data;
+  Lisp_Object NONVOLATILE specified_data;
   FILE *volatile fp = NULL;
   JSAMPARRAY buffer;
   int row_stride, x, y;

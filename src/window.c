@@ -2910,9 +2910,11 @@ window-start value is reasonable when this function is called.  */)
 {
   struct window *w, *r, *s;
   struct frame *f;
-  Lisp_Object sibling, pwindow, swindow IF_LINT (= Qnil), delta;
-  ptrdiff_t startpos IF_LINT (= 0), startbyte IF_LINT (= 0);
-  int top IF_LINT (= 0), new_top;
+  Lisp_Object sibling, pwindow, delta;
+  Lisp_Object swindow UNINIT;
+  ptrdiff_t startpos UNINIT, startbyte UNINIT;
+  int top UNINIT;
+  int new_top;
   bool resize_failed = false;
 
   w = decode_valid_window (window);

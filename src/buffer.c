@@ -3907,7 +3907,8 @@ buffer.  */)
   struct buffer *b, *ob = 0;
   Lisp_Object obuffer;
   ptrdiff_t count = SPECPDL_INDEX ();
-  ptrdiff_t n_beg, n_end, o_beg IF_LINT (= 0), o_end IF_LINT (= 0);
+  ptrdiff_t n_beg, n_end;
+  ptrdiff_t o_beg UNINIT, o_end UNINIT;
 
   CHECK_OVERLAY (overlay);
   if (NILP (buffer))

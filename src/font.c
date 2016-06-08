@@ -2234,7 +2234,8 @@ font_sort_entities (Lisp_Object list, Lisp_Object prefer,
   struct font_sort_data *data;
   unsigned best_score;
   Lisp_Object best_entity;
-  Lisp_Object tail, vec IF_LINT (= Qnil);
+  Lisp_Object tail;
+  Lisp_Object vec UNINIT;
   USE_SAFE_ALLOCA;
 
   for (i = FONT_WEIGHT_INDEX; i <= FONT_AVGWIDTH_INDEX; i++)

@@ -491,7 +491,7 @@ write_c_args (char *func, char *buf, int minargs, int maxargs)
 {
   char *p;
   bool in_ident = false;
-  char *ident_start IF_LINT (= NULL);
+  char *ident_start UNINIT;
   ptrdiff_t ident_length = 0;
 
   fputs ("(fn", stdout);

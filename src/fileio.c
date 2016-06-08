@@ -4687,7 +4687,7 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
 {
   int open_flags;
   int mode;
-  off_t offset IF_LINT (= 0);
+  off_t offset UNINIT;
   bool open_and_close_file = desc < 0;
   bool ok;
   int save_errno = 0;
@@ -4695,7 +4695,7 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
   struct stat st;
   struct timespec modtime;
   ptrdiff_t count = SPECPDL_INDEX ();
-  ptrdiff_t count1 IF_LINT (= 0);
+  ptrdiff_t count1 UNINIT;
   Lisp_Object handler;
   Lisp_Object visit_file;
   Lisp_Object annotations;

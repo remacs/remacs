@@ -1829,7 +1829,8 @@ xg_get_file_with_chooser (struct frame *f,
 {
   char msgbuf[1024];
 
-  GtkWidget *filewin, *wtoggle, *wbox, *wmessage IF_LINT (= NULL);
+  GtkWidget *filewin, *wtoggle, *wbox;
+  GtkWidget *wmessage UNINIT;
   GtkWindow *gwin = GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f));
   GtkFileChooserAction action = (mustmatch_p ?
                                  GTK_FILE_CHOOSER_ACTION_OPEN :

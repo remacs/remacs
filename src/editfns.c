@@ -3362,7 +3362,7 @@ It returns the number of characters changed.  */)
   ptrdiff_t size;		/* Size of translate table. */
   ptrdiff_t pos, pos_byte, end_pos;
   bool multibyte = !NILP (BVAR (current_buffer, enable_multibyte_characters));
-  bool string_multibyte IF_LINT (= 0);
+  bool string_multibyte UNINIT;
 
   validate_region (&start, &end);
   if (CHAR_TABLE_P (table))
@@ -3917,7 +3917,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
   ptrdiff_t bufsize = sizeof initial_buffer;
   ptrdiff_t max_bufsize = STRING_BYTES_BOUND + 1;
   char *p;
-  ptrdiff_t buf_save_value_index IF_LINT (= 0);
+  ptrdiff_t buf_save_value_index UNINIT;
   char *format, *end;
   ptrdiff_t nchars;
   /* When we make a multibyte string, we must pay attention to the

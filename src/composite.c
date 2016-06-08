@@ -1308,7 +1308,8 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 int
 composition_update_it (struct composition_it *cmp_it, ptrdiff_t charpos, ptrdiff_t bytepos, Lisp_Object string)
 {
-  int i, c IF_LINT (= 0);
+  int i;
+  int c UNINIT;
 
   if (cmp_it->ch < 0)
     {

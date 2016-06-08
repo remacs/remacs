@@ -1995,7 +1995,7 @@ whether or not it is currently displayed in some window.  */)
   struct text_pos pt;
   struct window *w;
   Lisp_Object old_buffer;
-  EMACS_INT old_charpos IF_LINT (= 0), old_bytepos IF_LINT (= 0);
+  EMACS_INT old_charpos UNINIT, old_bytepos UNINIT;
   Lisp_Object lcols;
   void *itdata = NULL;
 
@@ -2036,8 +2036,8 @@ whether or not it is currently displayed in some window.  */)
       bool disp_string_at_start_p = 0;
       ptrdiff_t nlines = XINT (lines);
       int vpos_init = 0;
-      double start_col IF_LINT (= 0);
-      int start_x IF_LINT (= 0);
+      double start_col UNINIT;
+      int start_x UNINIT;
       int to_x = -1;
 
       bool start_x_given = !NILP (cur_col);

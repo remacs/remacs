@@ -1633,7 +1633,7 @@ skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
   int c;
   char fastmap[0400];
   /* Store the ranges of non-ASCII characters.  */
-  int *char_ranges IF_LINT (= NULL);
+  int *char_ranges UNINIT;
   int n_char_ranges = 0;
   bool negate = 0;
   ptrdiff_t i, i_byte;

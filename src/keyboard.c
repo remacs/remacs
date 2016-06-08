@@ -2312,9 +2312,7 @@ read_char (int commandflag, Lisp_Object map,
 	   Lisp_Object prev_event,
 	   bool *used_mouse_menu, struct timespec *end_time)
 {
-  /* IF_LINT (volatile) works around GCC bug 54561.  */
-  Lisp_Object IF_LINT (volatile) c;
-
+  Lisp_Object NONVOLATILE c;
   ptrdiff_t jmpcount;
   sys_jmp_buf local_getcjmp;
   sys_jmp_buf save_jump;
@@ -8843,7 +8841,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 
   /* The length of the echo buffer when we started reading, and
      the length of this_command_keys when we started reading.  */
-  ptrdiff_t echo_start IF_LINT (= 0);
+  ptrdiff_t echo_start UNINIT;
   ptrdiff_t keys_start;
 
   Lisp_Object current_binding = Qnil;
@@ -8891,7 +8889,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
      While we're reading, we keep the event here.  */
   Lisp_Object delayed_switch_frame;
 
-  Lisp_Object original_uppercase IF_LINT (= Qnil);
+  Lisp_Object original_uppercase UNINIT;
   int original_uppercase_position = -1;
 
   /* Gets around Microsoft compiler limitations.  */
@@ -9001,7 +8999,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	 while those allow us to restart the entire key sequence,
 	 echo_local_start and keys_local_start allow us to throw away
 	 just one key.  */
-      ptrdiff_t echo_local_start IF_LINT (= 0);
+      ptrdiff_t echo_local_start UNINIT;
       int keys_local_start;
       Lisp_Object new_binding;
 

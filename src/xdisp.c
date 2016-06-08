@@ -8558,7 +8558,8 @@ move_it_in_display_line_to (struct it *it,
   void *ppos_data = NULL;
   bool may_wrap = false;
   enum it_method prev_method = it->method;
-  ptrdiff_t closest_pos IF_LINT (= 0), prev_pos = IT_CHARPOS (*it);
+  ptrdiff_t closest_pos UNINIT;
+  ptrdiff_t prev_pos = IT_CHARPOS (*it);
   bool saw_smaller_pos = prev_pos < to_charpos;
 
   /* Don't produce glyphs in produce_glyphs.  */
@@ -20416,16 +20417,16 @@ display_line (struct it *it)
   struct it wrap_it;
   void *wrap_data = NULL;
   bool may_wrap = false;
-  int wrap_x IF_LINT (= 0);
+  int wrap_x UNINIT;
   int wrap_row_used = -1;
-  int wrap_row_ascent IF_LINT (= 0), wrap_row_height IF_LINT (= 0);
-  int wrap_row_phys_ascent IF_LINT (= 0), wrap_row_phys_height IF_LINT (= 0);
-  int wrap_row_extra_line_spacing IF_LINT (= 0);
-  ptrdiff_t wrap_row_min_pos IF_LINT (= 0), wrap_row_min_bpos IF_LINT (= 0);
-  ptrdiff_t wrap_row_max_pos IF_LINT (= 0), wrap_row_max_bpos IF_LINT (= 0);
+  int wrap_row_ascent UNINIT, wrap_row_height UNINIT;
+  int wrap_row_phys_ascent UNINIT, wrap_row_phys_height UNINIT;
+  int wrap_row_extra_line_spacing UNINIT;
+  ptrdiff_t wrap_row_min_pos UNINIT, wrap_row_min_bpos UNINIT;
+  ptrdiff_t wrap_row_max_pos UNINIT, wrap_row_max_bpos UNINIT;
   int cvpos;
   ptrdiff_t min_pos = ZV + 1, max_pos = 0;
-  ptrdiff_t min_bpos IF_LINT (= 0), max_bpos IF_LINT (= 0);
+  ptrdiff_t min_bpos UNINIT, max_bpos UNINIT;
   bool pending_handle_line_prefix = false;
 
   /* We always start displaying at hpos zero even if hscrolled.  */
@@ -25595,7 +25596,7 @@ draw_glyphs (struct window *w, int x, struct glyph_row *row,
     {
       struct glyph_string *h, *t;
       Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
-      int mouse_beg_col IF_LINT (= 0), mouse_end_col IF_LINT (= 0);
+      int mouse_beg_col UNINIT, mouse_end_col UNINIT;
       bool check_mouse_face = false;
       int dummy_x = 0;
 
@@ -29702,12 +29703,11 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
   int dx, dy, width, height;
   ptrdiff_t charpos;
   Lisp_Object string, object = Qnil;
-  Lisp_Object pos IF_LINT (= Qnil), help;
-
+  Lisp_Object pos UNINIT;
   Lisp_Object mouse_face;
   int original_x_pixel = x;
   struct glyph * glyph = NULL, * row_start_glyph = NULL;
-  struct glyph_row *row IF_LINT (= 0);
+  struct glyph_row *row UNINIT;
 
   if (area == ON_MODE_LINE || area == ON_HEADER_LINE)
     {
@@ -29747,7 +29747,7 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 				     &object, &dx, &dy, &width, &height);
     }
 
-  help = Qnil;
+  Lisp_Object help = Qnil;
 
 #ifdef HAVE_WINDOW_SYSTEM
   if (IMAGEP (object))
@@ -30322,8 +30322,8 @@ note_mouse_highlight (struct frame *f, int x, int y)
 	    {
 	      /* The mouse-highlighting, if any, comes from an overlay
 		 or text property in the buffer.  */
-	      Lisp_Object buffer IF_LINT (= Qnil);
-	      Lisp_Object disp_string IF_LINT (= Qnil);
+	      Lisp_Object buffer UNINIT;
+	      Lisp_Object disp_string UNINIT;
 
 	      if (STRINGP (object))
 		{

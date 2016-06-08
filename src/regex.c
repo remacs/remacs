@@ -5444,7 +5444,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 
 	    /* Start of actual range_table, or end of bitmap if there is no
 	       range table.  */
-	    re_char *range_table IF_LINT (= NULL);
+	    re_char *range_table UNINIT;
 
 	    /* Nonzero if there is a range table.  */
 	    int range_table_exists;

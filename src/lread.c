@@ -1040,7 +1040,7 @@ Return t if the file exists and loads successfully.  */)
 {
   FILE *stream;
   int fd;
-  int fd_index;
+  int fd_index UNINIT;
   ptrdiff_t count = SPECPDL_INDEX ();
   Lisp_Object found, efound, hist_file_name;
   /* True means we printed the ".el is newer" message.  */
@@ -1156,12 +1156,7 @@ Return t if the file exists and loads successfully.  */)
 #endif
     }
 
-  if (fd < 0)
-    {
-      /* Pacify older GCC with --enable-gcc-warnings.  */
-      IF_LINT (fd_index = 0);
-    }
-  else
+  if (0 <= fd)
     {
       fd_index = SPECPDL_INDEX ();
       record_unwind_protect_int (close_file_unwind, fd);

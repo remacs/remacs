@@ -194,7 +194,7 @@ read_minibuf_noninteractive (Lisp_Object map, Lisp_Object initial,
   int c;
   unsigned char hide_char = 0;
   struct emacs_tty etty;
-  bool etty_valid IF_LINT (= false);
+  bool etty_valid UNINIT;
 
   /* Check, whether we need to suppress echoing.  */
   if (CHARACTERP (Vread_hide_char))

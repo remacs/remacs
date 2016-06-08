@@ -2365,7 +2365,8 @@ decode_coding_emacs_mule (struct coding_system *coding)
 
   while (1)
     {
-      int c, id IF_LINT (= 0);
+      int c;
+      int id UNINIT;
 
       src_base = src;
       consumed_chars_base = consumed_chars;
@@ -2410,7 +2411,7 @@ decode_coding_emacs_mule (struct coding_system *coding)
 	}
       else
 	{
-	  int nchars IF_LINT (= 0), nbytes IF_LINT (= 0);
+	  int nchars UNINIT, nbytes UNINIT;
 	  /* emacs_mule_char can load a charset map from a file, which
 	     allocates a large structure and might cause buffer text
 	     to be relocated as result.  Thus, we need to remember the
@@ -8565,8 +8566,8 @@ detect_coding_system (const unsigned char *src,
   base_category = XINT (CODING_ATTR_CATEGORY (attrs));
   if (base_category == coding_category_undecided)
     {
-      enum coding_category category IF_LINT (= 0);
-      struct coding_system *this IF_LINT (= NULL);
+      enum coding_category category UNINIT;
+      struct coding_system *this UNINIT;
       int c, i;
       bool inhibit_nbd = inhibit_flag (coding.spec.undecided.inhibit_nbd,
 				       inhibit_null_byte_detection);
