@@ -83,8 +83,9 @@
 ;;
 ;; 'syntax-table
 ;;   Used to modify the syntax of some characters.  It is used to
-;;   mark the "<" and ">" of angle bracket parens with paren syntax, and
-;;   to "hide" obtrusive characters in preprocessor lines.
+;;   mark the "<" and ">" of angle bracket parens with paren syntax, to
+;;   "hide" obtrusive characters in preprocessor lines, and to mark C++
+;;   raw strings to enable their fontification.
 ;;
 ;;   This property is used on single characters and is therefore
 ;;   always treated as front and rear nonsticky (or start and end open
@@ -2293,7 +2294,8 @@ comment at the start of cc-engine.el for more info."
   ;;     (STATE TYPE (BEG . END))     if TO is in a literal; or
   ;;     (STATE)                      otherwise,
   ;; where STATE is the parsing state at TO, TYPE is the type of the literal
-  ;; (one of 'c, 'c++, 'string) and (BEG . END) is the boundaries of the literal.
+  ;; (one of 'c, 'c++, 'string) and (BEG . END) is the boundaries of the literal,
+  ;; including the delimiters.
   ;;
   ;; Unless NOT-IN-DELIMITER is non-nil, when TO is inside a two-character
   ;; comment opener, this is recognized as being in a comment literal.
@@ -5657,6 +5659,9 @@ comment at the start of cc-engine.el for more info."
 ;; Set by c-common-init in cc-mode.el.
 (defvar c-new-BEG)
 (defvar c-new-END)
+;; Set by c-after-change in cc-mode.el.
+(defvar c-old-BEG)
+(defvar c-old-END)
 
 (defun c-before-change-check-<>-operators (beg end)
   ;; Unmark certain pairs of "< .... >" which are currently marked as
@@ -5777,6 +5782,333 @@ comment at the start of cc-engine.el for more info."
 				       'c-decl-arg-start)))))))
       (or (c-forward-<>-arglist nil)
 	  (forward-char)))))
+
+
+;; Functions to handle C++ raw strings.
+;;
+;; A valid C++ raw string looks like
+;;     R"<id>(<contents>)<id>"
+;; , where <id> is an identifier from 0 to 16 characters long, not containing
+;; spaces, control characters, double quote or left/right paren.  <contents>
+;; can include anything which isn't the terminating )<id>", including new
+;; lines, "s, parentheses, etc.
+;;
+;; CC Mode handles C++ raw strings by the use of `syntax-table' text
+;; properties as follows:
+;;
+;; (i) On a validly terminated raw string, no `syntax-table' text properties
+;;   are applied to the opening and closing delimiters, but any " in the
+;;   contents is given the property value "punctuation" (`(1)') to prevent it
+;;   interacting with the "s in the delimiters.
+;;
+;;   The font locking routine `c-font-lock-c++-raw-strings' (in cc-fonts.el)
+;;   recognizes valid raw strings, and fontifies the delimiters (apart from
+;;   the parentheses) with the default face and the parentheses and the
+;;   <contents> with font-lock-string-face.
+;;
+;; (ii) A valid, but unterminated, raw string opening delimiter gets the
+;;   "punctuation" value (`(1)') of the `syntax-table' text property, and the
+;;   open parenthesis gets the "string fence" value (`(15)').
+;;
+;;   `c-font-lock-c++-raw-strings' puts c-font-lock-warning-face on the entire
+;;   unmatched opening delimiter (from the R up to the open paren), and allows
+;;   the rest of the buffer to get font-lock-string-face, caused by the
+;;   unmatched "string fence" `syntax-table' text property value.
+;;
+;; (iii) Inside a macro, a valid raw string is handled as in (i).  An
+;;   unmatched opening delimiter is handled slightly differently.  In addition
+;;   to the "punctuation" and "string fence" properties on the delimiter,
+;;   another "string fence" `syntax-table' property is applied to the last
+;;   possible character of the macro before the terminating linefeed (if there
+;;   is such a character after the "(").  This "last possible" character is
+;;   never a backslash escaping the end of line.  If the character preceding
+;;   this "last possible" character is itself a backslash, this preceding
+;;   character gets a "punctuation" `syntax-table' value.  If the "(" is
+;;   already at the end of the macro, it gets the "punctuaion" value, and no
+;;   "string fence"s are used.
+;;
+;;   The effect on the fontification of either of these tactics is that rest of
+;;   the macro (if any) after the "(" gets font-lock-string-face, but the rest
+;;   of the file is fontified normally.
+
+
+(defun c-raw-string-pos ()
+  ;; Get POINT's relationship to any containing raw string.
+  ;; If point isn't in a raw string, return nil.
+  ;; Otherwise, return the following list:
+  ;;
+  ;;   (POS B\" B\( E\) E\")
+  ;;
+  ;; , where POS is the symbol `open-delim' if point is in the opening
+  ;; delimiter, the symbol `close-delim' if it's in the closing delimiter, and
+  ;; nil if it's in the string body.  B\", B\(, E\), E\" are the positions of
+  ;; the opening and closing quotes and parentheses of a correctly terminated
+  ;; raw string.  (N.B.: E\) and E\" are NOT on the "outside" of these
+  ;; characters.)  If the raw string is not terminated, E\) and E\" are set to
+  ;; nil.
+  ;;
+  ;; Note: this routine is dependant upon the correct syntax-table text
+  ;; properties being set.
+  (let* ((safe (c-state-semi-safe-place (point)))
+	 (state (c-state-pp-to-literal safe (point)))
+	 open-quote-pos open-paren-pos close-paren-pos close-quote-pos id)
+    (save-excursion
+      (when
+	  (and
+	   (cond
+	    ((null (cadr state))
+	     (or (eq (char-after) ?\")
+		 (search-backward "\"" (max (- (point) 17) (point-min)) t)))
+	    ((and (eq (cadr state) 'string)
+		  (goto-char (car (nth 2 state)))
+		  (or (eq (char-after) ?\")
+		      (search-backward "\"" (max (- (point) 17) (point-min)) t))
+		  (not (bobp)))))
+	   (eq (char-before) ?R)
+	   (looking-at "\"\\([^ ()\\\n\r\t]\\{,16\\}\\)("))
+	(setq open-quote-pos (point)
+	      open-paren-pos (match-end 1)
+	      id (match-string-no-properties 1))
+	(goto-char (1+ open-paren-pos))
+	(when (and (not (c-get-char-property open-paren-pos 'syntax-table))
+		   (search-forward (concat ")" id "\"") nil t))
+	  (setq close-paren-pos (match-beginning 0)
+		close-quote-pos (1- (point))))))
+    (and open-quote-pos
+	 (list
+	  (cond
+	   ((<= (point) open-paren-pos)
+	    'open-delim)
+	   ((and close-paren-pos
+		 (> (point) close-paren-pos))
+	    'close-delim)
+	   (t nil))
+	  open-quote-pos open-paren-pos close-paren-pos close-quote-pos))))
+
+(defun c-depropertize-raw-string (id open-quote open-paren bound)
+  ;; Point is immediately after a raw string opening delimiter.  Remove any
+  ;; `syntax-table' text properties associated with the delimiter (if it's
+  ;; unmatched) or the raw string.
+  ;;
+  ;; ID, a string, is the delimiter's identifier.  OPEN-QUOTE and OPEN-PAREN
+  ;; are the buffer positions of the delimiter's components.  BOUND is the
+  ;; bound for searching for a matching closing delimiter; it is usually nil,
+  ;; but if we're inside a macro, it's the end of the macro.
+  ;;
+  ;; Point is moved to after the (terminated) raw string, or left after the
+  ;; unmatched opening delimiter, as the case may be.  The return value is of
+  ;; no significance.
+  (let ((open-paren-prop (c-get-char-property open-paren 'syntax-table)))
+    (cond
+     ((null open-paren-prop)
+      ;; A terminated raw string
+      (if (search-forward (concat ")" id "\"") nil t)
+	  (c-clear-char-property-with-value
+	   (1+ open-paren) (match-beginning 0) 'syntax-table '(1))))
+     ((or (and (equal open-paren-prop '(15)) (null bound))
+	  (equal open-paren-prop '(1)))
+      ;; An unterminated raw string either not in a macro, or in a macro with
+      ;; the open parenthesis right up against the end of macro
+      (c-clear-char-property open-quote 'syntax-table)
+      (c-clear-char-property open-paren 'syntax-table))
+     (t
+      ;; An unterminated string in a macro, with at least one char after the
+      ;; open paren
+      (c-clear-char-property open-quote 'syntax-table)
+      (c-clear-char-property open-paren 'syntax-table)
+      (let ((after-string-fence-pos
+	     (save-excursion
+	       (goto-char (1+ open-paren))
+	       (c-search-forward-char-property 'syntax-table '(15) bound))))
+	(when after-string-fence-pos
+	  (c-clear-char-property (1- after-string-fence-pos) 'syntax-table)))
+      ))))
+
+(defun c-depropertize-raw-strings-in-region (start finish)
+  ;; Remove any `syntax-table' text properties associated with C++ raw strings
+  ;; contained in the region (START FINISH).  Point is undefined at entry and
+  ;; exit, and the return value has no significance.
+  (goto-char start)
+  (while (and (< (point) finish)
+	      (re-search-forward
+	       (concat "\\("				     ; 1
+		       c-anchored-cpp-prefix		     ; 2
+		       "\\)\\|\\("			     ; 3
+		       "R\"\\([^ ()\\\n\r\t]\\{,16\\}\\)("   ; 4
+		       "\\)")
+	       finish t))
+    (when (save-excursion
+	    (goto-char (match-beginning 0)) (not (c-in-literal)))
+      (if (match-beginning 4)		; the id
+	  ;; We've found a raw string
+	  (c-depropertize-raw-string
+	   (match-string-no-properties 4) ; id
+	   (1+ (match-beginning 3))	  ; open quote
+	   (match-end 4)		  ; open paren
+	   nil)				  ; bound
+	;; We've found a CPP construct.  Search for raw strings within it.
+	(goto-char (match-beginning 2)) ; the "#"
+	(c-end-of-macro)
+	(let ((eom (point)))
+	  (goto-char (match-end 2))	; after the "#".
+	  (while (and (< (point) eom)
+		      (c-syntactic-re-search-forward
+		       "R\"\\([^ ()\\\n\r\t]\\{,16\\}\\)(" eom t))
+	    (c-depropertize-raw-string
+	     (match-string-no-properties 1) ; id
+	     (1+ (match-beginning 0))	    ; open quote
+	     (match-end 1)		    ; open paren
+	     eom)))))))			    ; bound.
+
+(defun c-before-change-check-raw-strings (beg end)
+  ;; This function clears `syntax-table' text properties from C++ raw strings
+  ;; in the region (c-new-BEG c-new-END).  BEG and END are the standard
+  ;; arguments supplied to any before-change function.
+  ;;
+  ;; Point is undefined on both entry and exit, and the return value has no
+  ;; significance.
+  ;;
+  ;; This function is called as a before-change function solely due to its
+  ;; membership of the C++ value of `c-get-state-before-change-functions'.
+  (c-save-buffer-state
+      ((beg-rs (progn (goto-char beg) (c-raw-string-pos)))
+       (beg-plus (if (null beg-rs)
+		     beg
+		   (max beg
+			(1+ (or (nth 4 beg-rs) (nth 2 beg-rs))))))
+       (end-rs (progn (goto-char end) (c-raw-string-pos))) ; FIXME!!!
+					; Optimize this so that we don't call
+					; `c-raw-string-pos' twice when once
+					; will do.  (2016-06-02).
+       (end-minus (if (null end-rs)
+		      end
+		    (min end (cadr end-rs))))
+       )
+    (when beg-rs
+      (setq c-new-BEG (min c-new-BEG (1- (cadr beg-rs)))))
+    (c-depropertize-raw-strings-in-region c-new-BEG beg-plus)
+
+    (when end-rs
+      (setq c-new-END (max c-new-END
+			   (1+ (or (nth 4 end-rs)
+				   (nth 2 end-rs))))))
+    (c-depropertize-raw-strings-in-region end-minus c-new-END)))
+
+(defun c-propertize-raw-string-opener (id open-quote open-paren bound)
+  ;; Point is immediately after a raw string opening delimiter.  Apply any
+  ;; pertinent `syntax-table' text properties to the delimiter and also the
+  ;; raw string, should there be a valid matching closing delimiter.
+  ;;
+  ;; ID, a string, is the delimiter's identifier.  OPEN-QUOTE and OPEN-PAREN
+  ;; are the buffer positions of the delimiter's components.  BOUND is the
+  ;; bound for searching for a matching closing delimiter; it is usually nil,
+  ;; but if we're inside a macro, it's the end of the macro.
+  ;;
+  ;; Point is moved to after the (terminated) raw string, or left after the
+  ;; unmatched opening delimiter, as the case may be.  The return value is of
+  ;; no significance.
+  (if (search-forward (concat ")" id "\"") bound t)
+      (let ((end-string (match-beginning 0))
+	    (after-quote (match-end 0)))
+	(goto-char open-paren)
+	(while (progn (skip-syntax-forward "^\"" end-string)
+		      (< (point) end-string))
+	  (c-put-char-property (point) 'syntax-table '(1)) ; punctuation
+	  (forward-char))
+	(goto-char after-quote))
+    (c-put-char-property open-quote 'syntax-table '(1))	     ; punctuation
+    (c-put-char-property open-paren 'syntax-table '(15))     ; generic string
+    (when bound
+      ;; In a CPP construct, we try to apply a generic-string `syntax-table'
+      ;; text property to the last possible character in the string, so that
+      ;; only characters within the macro get "stringed out".
+      (goto-char bound)
+      (if (save-restriction
+	    (narrow-to-region (1+ open-paren) (point-max))
+	    (re-search-backward
+	     (eval-when-compile
+	       ;; This regular expression matches either an escape pair (which
+	       ;; isn't an escaped NL) (submatch 5) or a non-escaped character
+	       ;; (which isn't itself a backslash) (submatch 10).  The long
+	       ;; preambles to these (respectively submatches 2-4 and 6-9)
+	       ;; ensure that we have the correct parity for sequences of
+	       ;; backslashes, etc..
+	       (concat "\\("		; 1
+		       "\\(\\`[^\\]?\\|[^\\][^\\]\\)\\(\\\\\\(.\\|\n\\)\\)*" ; 2-4
+		       "\\(\\\\.\\)"	; 5
+		       "\\|"
+		       "\\(\\`\\|[^\\]\\|\\(\\`[^\\]?\\|[^\\][^\\]\\)\\(\\\\\\(.\\|\n\\)\\)+\\)" ; 6-9
+		       "\\([^\\]\\)"	; 10
+		       "\\)"
+		       "\\(\\\\\n\\)*\\=")) ; 11
+             (1+ open-paren) t))
+	  (if (match-beginning 10)
+	      (c-put-char-property (match-beginning 10) 'syntax-table '(15))
+	    (c-put-char-property (match-beginning 5) 'syntax-table '(1))
+	    (c-put-char-property (1+ (match-beginning 5)) 'syntax-table '(15)))
+	(c-put-char-property open-paren 'syntax-table '(1)))
+      (goto-char bound))))
+
+(defun c-after-change-re-mark-raw-strings (beg end old-len)
+  ;; This function applies `syntax-table' text properties to C++ raw strings
+  ;; beginning in the region (c-new-BEG c-new-END).  BEG, END, and OLD-LEN are
+  ;; the standard arguments supplied to any after-change function.
+  ;;
+  ;; Point is undefined on both entry and exit, and the return value has no
+  ;; significance.
+  ;; 
+  ;; This function is called as an after-change function solely due to its
+  ;; membership of the C++ value of `c-before-font-lock-functions'.
+  (c-save-buffer-state ()
+    ;; If the region (c-new-BEG c-new-END) has expanded, remove
+    ;; `syntax-table' text-properties from the new piece(s).
+    (when (< c-new-BEG c-old-BEG)
+      (let ((beg-rs (progn (goto-char c-old-BEG) (c-raw-string-pos))))
+	(c-depropertize-raw-strings-in-region
+	 c-new-BEG
+	 (if beg-rs
+	     (1+ (or (nth 4 beg-rs) (nth 2 beg-rs)))
+	   c-old-BEG))))
+    (when (> c-new-END c-old-END)
+      (let ((end-rs (progn (goto-char c-old-END) (c-raw-string-pos))))
+	(c-depropertize-raw-strings-in-region
+	 (if end-rs
+	     (cadr end-rs)
+	   c-old-END)
+	 c-new-END)))
+
+    (goto-char c-new-BEG)
+    (while (and (< (point) c-new-END)
+		(re-search-forward
+		 (concat "\\("				       ; 1
+			 c-anchored-cpp-prefix		       ; 2
+			 "\\)\\|\\("			       ; 3
+			 "R\"\\([^ ()\\\n\r\t]\\{,16\\}\\)("   ; 4
+			 "\\)")
+		 c-new-END t))
+      (when (save-excursion
+	      (goto-char (match-beginning 0)) (not (c-in-literal)))
+	(if (match-beginning 4)		; the id
+	    ;; We've found a raw string.
+	    (c-propertize-raw-string-opener
+	     (match-string-no-properties 4) ; id
+	     (1+ (match-beginning 3))	    ; open quote
+	     (match-end 4)		    ; open paren
+	     nil)			    ; bound
+	  ;; We've found a CPP construct.  Search for raw strings within it.
+	  (goto-char (match-beginning 2)) ; the "#"
+	  (c-end-of-macro)
+	  (let ((eom (point)))
+	    (goto-char (match-end 2))	; after the "#".
+	    (while (and (< (point) eom)
+			(c-syntactic-re-search-forward
+			 "R\"\\([^ ()\\\n\r\t]\\{,16\\}\\)(" eom t))
+	      (c-propertize-raw-string-opener
+	       (match-string-no-properties 1) ; id
+	       (1+ (match-beginning 0))	      ; open quote
+	       (match-end 1)		      ; open paren
+	       eom))))))))		      ; bound
+
 
 ;; Handling of small scale constructs like types and names.
 

@@ -723,6 +723,10 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	(concat ".\\(" c-string-limit-regexp "\\)")
 	'((c-font-lock-invalid-string)))
 
+      ;; Fontify C++ raw strings.
+      ,@(when (c-major-mode-is 'c++-mode)
+	  '(c-font-lock-raw-strings))
+
       ;; Fontify keyword constants.
       ,@(when (c-lang-const c-constant-kwds)
 	  (let ((re (c-make-keywords-re nil (c-lang-const c-constant-kwds))))
@@ -1570,6 +1574,43 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  (when (c-safe (c-forward-sexp))
 	    (c-forward-syntactic-ws)
 	    (c-font-lock-declarators limit t in-typedef)))))))
+
+(defun c-font-lock-raw-strings (limit)
+  ;; Fontify C++ raw strings.
+  ;;
+  ;; This function will be called from font-lock for a region bounded by POINT
+  ;; and LIMIT, as though it were to identify a keyword for
+  ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
+  ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
+  ;; Fontification".
+  (while (search-forward-regexp
+	  "R\\(\"\\)\\([^ ()\\\n\r\t]\\{,16\\}\\)(" limit t)
+    (when
+	(or (and (eobp)
+		 (eq (c-get-char-property (1- (point)) 'face)
+		     'font-lock-warning-face))
+	    (eq (c-get-char-property (point) 'face) 'font-lock-string-face)
+	    (and (equal (c-get-char-property (match-end 2) 'syntax-table) '(1))
+		 (equal (c-get-char-property (match-beginning 1) 'syntax-table)
+			'(1))))
+      (let ((paren-prop (c-get-char-property (1- (point)) 'syntax-table)))
+	(if paren-prop
+	    (progn
+	      (c-put-font-lock-face (match-beginning 0) (match-end 0)
+				    'font-lock-warning-face)
+	      (when
+		  (and
+		   (equal paren-prop '(15))
+		   (not (c-search-forward-char-property 'syntax-table '(15) limit)))
+		(goto-char limit)))
+	  (c-put-font-lock-face (match-beginning 1) (match-end 2) 'default)
+	  (when (search-forward-regexp
+		 (concat ")\\(" (regexp-quote (match-string-no-properties 2))
+			 "\\)\"")
+		 limit t)
+	    (c-put-font-lock-face (match-beginning 1) (point)
+				  'default))))))
+  nil)
 
 (c-lang-defconst c-simple-decl-matchers
   "Simple font lock matchers for types and declarations.  These are used

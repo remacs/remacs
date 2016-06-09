@@ -665,6 +665,14 @@ that requires a literal mode spec at compile time."
 (make-variable-buffer-local 'c-new-BEG)
 (defvar c-new-END 0)
 (make-variable-buffer-local 'c-new-END)
+;; The following two variables record the values of `c-new-BEG' and
+;; `c-new-END' just after `c-new-END' has been adjusted for the length of text
+;; inserted or removed.  They may be read by any after-change function (but
+;; should not be altered by one).
+(defvar c-old-BEG 0)
+(make-variable-buffer-local 'c-old-BEG)
+(defvar c-old-END 0)
+(make-variable-buffer-local 'c-old-END)
 
 (defun c-common-init (&optional mode)
   "Common initialization for all CC Mode modes.
@@ -877,6 +885,31 @@ Note that the style variables are always made local to the buffer."
   (memq (cadr (backtrace-frame 3))
 	'(put-text-property remove-list-of-text-properties)))
 
+(defun c-depropertize-CPP (beg end)
+  ;; Remove the punctuation syntax-table text property from the CPP parts of
+  ;; (c-new-BEG c-new-END).
+  ;;
+  ;; This function is in the C/C++/ObjC values of
+  ;; `c-get-state-before-change-functions' and is called exclusively as a
+  ;; before change function.
+  (goto-char c-new-BEG)
+  (while (and (< (point) beg)
+	      (search-forward-regexp c-anchored-cpp-prefix beg t))
+    (goto-char (match-beginning 1))
+    (let ((m-beg (point)))
+      (c-end-of-macro)
+      (c-clear-char-property-with-value
+       m-beg (min (point) beg) 'syntax-table '(1))))
+
+  (goto-char end)
+  (while (and (< (point) c-new-END)
+	      (search-forward-regexp c-anchored-cpp-prefix c-new-END t))
+    (goto-char (match-beginning 1))
+    (let ((m-beg (point)))
+      (c-end-of-macro)
+      (c-clear-char-property-with-value
+       m-beg (min (point) c-new-END) 'syntax-table '(1)))))
+
 (defun c-extend-region-for-CPP (beg end)
   ;; Adjust `c-new-BEG', `c-new-END' respectively to the beginning and end of
   ;; any preprocessor construct they may be in. 
@@ -967,9 +1000,9 @@ Note that the style variables are always made local to the buffer."
   ;; Note: SPEED _MATTERS_ IN THIS FUNCTION!!!
   ;;
   ;; This function might make hidden buffer changes.
-  (c-save-buffer-state (limits )
+  (c-save-buffer-state (limits)
     ;; Clear 'syntax-table properties "punctuation":
-    (c-clear-char-property-with-value c-new-BEG c-new-END 'syntax-table '(1))
+    ;; (c-clear-char-property-with-value c-new-BEG c-new-END 'syntax-table '(1))
 
     ;; CPP "comment" markers:
     (if (eval-when-compile (memq 'category-properties c-emacs-features));Emacs.
@@ -1125,8 +1158,8 @@ Note that the style variables are always made local to the buffer."
 
   ;; (c-new-BEG c-new-END) will be the region to fontify.  It may become
   ;; larger than (beg end).
-  ;; (setq c-new-BEG beg  c-new-END end)
   (setq c-new-END (- (+ c-new-END (- end beg)) old-len))
+  (setq c-old-BEG c-new-BEG  c-old-END c-new-END)
 
   (unless (c-called-from-text-property-change-p)
     (setq c-just-done-before-change nil)
