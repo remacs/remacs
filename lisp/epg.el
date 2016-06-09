@@ -604,9 +604,13 @@ callback data (if any)."
       (setq process-environment
 	    (cons (concat "GPG_TTY=" terminal-name)
 		  (cons "TERM=xterm" process-environment))))
-    ;; Start the Emacs Pinentry server if allow-emacs-pinentry is set
-    ;; in ~/.gnupg/gpg-agent.conf.
+    ;; Automatically start the Emacs Pinentry server if appropriate.
     (when (and (fboundp 'pinentry-start)
+               ;; Emacs Pinentry is useless if Emacs has no interactive session.
+               (not noninteractive)
+               ;; Prefer pinentry-mode over Emacs Pinentry.
+               (null (epg-context-pinentry-mode context))
+               ;; Check if the allow-emacs-pinentry option is set.
 	       (executable-find epg-gpgconf-program)
 	       (with-temp-buffer
 		 (when (= (call-process epg-gpgconf-program nil t nil
