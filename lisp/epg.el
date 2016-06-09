@@ -1753,12 +1753,7 @@ If optional 3rd argument MODE is t or `detached', it makes a detached signature.
 If it is nil or `normal', it makes a normal signature.
 Otherwise, it makes a cleartext signature."
   (let ((input-file
-	 (unless (or (eq (epg-context-protocol context) 'CMS)
-		     (condition-case nil
-			 (progn
-			   (epg-check-configuration (epg-configuration))
-			   t)
-		       (error)))
+	 (unless (eq (epg-context-protocol context) 'CMS)
 	   (epg--make-temp-file "epg-input")))
 	(coding-system-for-write 'binary))
     (unwind-protect
@@ -1865,12 +1860,7 @@ If RECIPIENTS is nil, it performs symmetric encryption."
 If RECIPIENTS is nil, it performs symmetric encryption."
   (let ((input-file
 	 (unless (or (not sign)
-		     (eq (epg-context-protocol context) 'CMS)
-		     (condition-case nil
-			 (progn
-			   (epg-check-configuration (epg-configuration))
-			   t)
-		       (error)))
+		     (eq (epg-context-protocol context) 'CMS))
 	   (epg--make-temp-file "epg-input")))
 	(coding-system-for-write 'binary))
     (unwind-protect
