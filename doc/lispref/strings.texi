@@ -833,7 +833,8 @@ arguments @var{objects} are the computed values to be formatted.
 
 The characters in @var{string}, other than the format specifications,
 are copied directly into the output, including their text properties,
-if any.
+if any.  Any text properties of the format specifications are copied
+to the produced string representations of the argument @var{objects}.
 @end defun
 
 @defun format-message string &rest objects
