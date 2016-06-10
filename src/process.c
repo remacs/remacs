@@ -537,21 +537,22 @@ status_convert (int w)
    and store them individually through the three pointers.  */
 
 static void
-decode_status (Lisp_Object l, Lisp_Object *symbol, int *code, bool *coredump)
+decode_status (Lisp_Object l, Lisp_Object *symbol, Lisp_Object *code,
+	       bool *coredump)
 {
   Lisp_Object tem;
 
   if (SYMBOLP (l))
     {
       *symbol = l;
-      *code = 0;
+      *code = make_number (0);
       *coredump = 0;
     }
   else
     {
       *symbol = XCAR (l);
       tem = XCDR (l);
-      *code = XFASTINT (XCAR (tem));
+      *code = XCAR (tem);
       tem = XCDR (tem);
       *coredump = !NILP (tem);
     }
@@ -563,8 +564,7 @@ static Lisp_Object
 status_message (struct Lisp_Process *p)
 {
   Lisp_Object status = p->status;
-  Lisp_Object symbol;
-  int code;
+  Lisp_Object symbol, code;
   bool coredump;
   Lisp_Object string;
 
@@ -574,7 +574,7 @@ status_message (struct Lisp_Process *p)
     {
       char const *signame;
       synchronize_system_messages_locale ();
-      signame = strsignal (code);
+      signame = strsignal (XFASTINT (code));
       if (signame == 0)
 	string = build_string ("unknown");
       else
@@ -596,20 +596,20 @@ status_message (struct Lisp_Process *p)
   else if (EQ (symbol, Qexit))
     {
       if (NETCONN1_P (p))
-	return build_string (code == 0 ? "deleted\n" : "connection broken by remote peer\n");
-      if (code == 0)
+	return build_string (XFASTINT (code) == 0
+			     ? "deleted\n"
+			     : "connection broken by remote peer\n");
+      if (XFASTINT (code) == 0)
 	return build_string ("finished\n");
       AUTO_STRING (prefix, "exited abnormally with code ");
-      string = Fnumber_to_string (make_number (code));
+      string = Fnumber_to_string (code);
       AUTO_STRING (suffix, coredump ? " (core dumped)\n" : "\n");
       return concat3 (prefix, string, suffix);
     }
   else if (EQ (symbol, Qfailed))
     {
-      AUTO_STRING (prefix, "failed with code ");
-      string = Fnumber_to_string (make_number (code));
-      AUTO_STRING (suffix, "\n");
-      return concat3 (prefix, string, suffix);
+      AUTO_STRING (format, "failed with code %s\n");
+      return CALLN (Fformat, format, code);
     }
   else
     return Fcopy_sequence (Fsymbol_name (symbol));
