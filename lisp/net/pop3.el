@@ -70,8 +70,10 @@
   :group 'pop3)
 
 ;; Should this be customizable?
-(defvar pop3-password nil
-  "*Password to use when connecting to POP server.")
+(defcustom pop3-password nil
+  "Password to use when connecting to POP server."
+  :type '(choice (const nil) string)
+  :group 'pop3)
 
 (defcustom pop3-authentication-scheme 'pass
   "POP3 authentication scheme.

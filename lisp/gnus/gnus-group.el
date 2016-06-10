@@ -448,10 +448,12 @@ used when no prefix argument is given to `gnus-group-jump-to-group'."
 		 (repeat (cons (integer :tag "Argument")
 			       (string :tag "Prompt string")))))
 
-(defvar gnus-group-listing-limit 1000
-  "*A limit of the number of groups when listing.
+(defcustom gnus-group-listing-limit 1000
+  "A limit of the number of groups when listing.
 If the number of groups is larger than the limit, list them in a
-simple manner.")
+simple manner."
+  :group 'gnus-group-listing
+  :type 'integer)
 
 ;;; Internal variables
 

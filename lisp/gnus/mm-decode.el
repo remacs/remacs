@@ -425,13 +425,15 @@ functions), `mm-file-name-delete-whitespace',
   :group 'mime-display)
 
 
-(defvar mm-path-name-rewrite-functions nil
-  "*List of functions for rewriting the full file names of MIME parts.
+(defcustom mm-path-name-rewrite-functions nil
+  "List of functions for rewriting the full file names of MIME parts.
 This is used when viewing parts externally, and is meant for
 transforming the absolute name so that non-compliant programs can find
 the file where it's saved.
 
-Each function takes a file name as input and returns a file name.")
+Each function takes a file name as input and returns a file name."
+  :type '(repeat function)
+  :group 'mime-display)
 
 (defvar mm-file-name-replace-whitespace nil
   "String used for replacing whitespace characters; default is `\"_\"'.")

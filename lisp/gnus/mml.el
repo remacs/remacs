@@ -148,17 +148,19 @@ is called.  FUNCTION is a Lisp function which is called with the MML
 handle to tweak the part.")
 
 (defvar mml-externalize-attachments nil
-  "*If non-nil, local-file attachments are generated as external parts.")
+  "If non-nil, local-file attachments are generated as external parts.")
 
-(defvar mml-generate-multipart-alist nil
-  "*Alist of multipart generation functions.
+(defcustom mml-generate-multipart-alist nil
+  "Alist of multipart generation functions.
 Each entry has the form (NAME . FUNCTION), where
 NAME is a string containing the name of the part (without the
 leading \"/multipart/\"),
 FUNCTION is a Lisp function which is called to generate the part.
 
 The Lisp function has to supply the appropriate MIME headers and the
-contents of this part.")
+contents of this part."
+  :group 'message
+  :type '(alist :key-type string :value-type function))
 
 (defvar mml-syntax-table
   (let ((table (copy-syntax-table emacs-lisp-mode-syntax-table)))

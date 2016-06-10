@@ -109,8 +109,10 @@ If nil, a faster, but more primitive, buffer is used instead."
 
 (defvar gnus-server-mode-map)
 
-(defvar gnus-server-menu-hook nil
-  "*Hook run after the creation of the server mode menu.")
+(defcustom gnus-server-menu-hook nil
+  "Hook run after the creation of the server mode menu."
+  :type 'hook
+  :group 'gnus-server)
 
 (defun gnus-server-make-menu-bar ()
   (gnus-turn-off-edit-menu 'server)
@@ -684,8 +686,10 @@ The following commands are available:
 ;;; Browse Server Mode
 ;;;
 
-(defvar gnus-browse-menu-hook nil
-  "*Hook run after the creation of the browse mode menu.")
+(defcustom gnus-browse-menu-hook nil
+  "Hook run after the creation of the browse mode menu."
+  :group 'gnus-server
+  :type 'hook)
 
 (defcustom gnus-browse-subscribe-newsgroup-method
   'gnus-subscribe-alphabetically

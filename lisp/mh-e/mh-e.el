@@ -317,8 +317,8 @@ This list will always include the current folder
 `mh-current-folder'. This variable can be used by
 `mh-after-commands-processed-hook'.")
 
-(defvar mh-mail-header-separator "--------"
-  "*Line used by MH to separate headers from text in messages being composed.
+(defcustom mh-mail-header-separator "--------"
+  "Line used by MH to separate headers from text in messages being composed.
 
 This variable should not be used directly in programs. Programs
 should use `mail-header-separator' instead.
@@ -328,7 +328,9 @@ contexts, you may have to perform this initialization yourself.
 
 Do not make this a regular expression as it may be the argument
 to `insert' and it is passed through `regexp-quote' before being
-used by functions like `re-search-forward'.")
+used by functions like `re-search-forward'."
+  :group 'mh-e                          ; FIXME?
+  :type 'string)
 
 (defvar mh-sent-from-folder nil
   "Folder of msg assoc with this letter.")
@@ -385,11 +387,12 @@ This is the original map that is stored when the folder is
 narrowed.")
 (make-variable-buffer-local 'mh-thread-scan-line-map-stack)
 
-(defvar mh-x-mailer-string nil
-  "*String containing the contents of the X-Mailer header field.
+(defcustom mh-x-mailer-string nil
+  "String containing the contents of the X-Mailer header field.
 If nil, this variable is initialized to show the version of MH-E,
-Emacs, and MH the first time a message is composed.")
-
+Emacs, and MH the first time a message is composed."
+  :group 'mh-e                          ; FIXME?
+  :type '(choice (const :tag "Default" nil) string))
 
 
 ;;; MH-E Entry Points
@@ -2860,7 +2863,7 @@ update SF #1916032 (see URL
   :package-version '(MH-E . "8.0"))
 
 (defvar mh-invisible-header-fields-compiled nil
-  "*Regexp matching lines in a message header that are not to be shown.
+  "Regexp matching lines in a message header that are not to be shown.
 Do not alter this variable directly. Instead, customize
 `mh-invisible-header-fields-default' checking for fields normally
 hidden that you wish to display, and add extra entries to hide in

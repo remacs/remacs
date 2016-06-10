@@ -1372,8 +1372,8 @@ If a function email is passed as the argument."
       message-dont-reply-to-names
     (gmm-regexp-concat message-dont-reply-to-names)))
 
-(defvar message-shoot-gnksa-feet nil
-  "*A list of GNKSA feet you are allowed to shoot.
+(defcustom message-shoot-gnksa-feet nil
+  "A list of GNKSA feet you are allowed to shoot.
 Gnus gives you all the opportunity you could possibly want for
 shooting yourself in the foot.  Also, Gnus allows you to shoot the
 feet of Good Net-Keeping Seal of Approval.  The following are foot
@@ -1383,7 +1383,11 @@ candidates:
 `multiple-copies'   Allow you to post multiple copies;
 `cancel-messages'   Allow you to cancel or supersede messages from
 		    your other email addresses;
-`canlock-verify'    Allow you to cancel messages without verifying canlock.")
+`canlock-verify'    Allow you to cancel messages without verifying canlock."
+  :group 'message
+  :type '(set (const empty-article) (const quoted-text-only)
+	      (const multiple-copies) (const cancel-messages)
+	      (const canlock-verify)))
 
 (defsubst message-gnksa-enable-p (feature)
   (or (not (listp message-shoot-gnksa-feet))

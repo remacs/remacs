@@ -781,7 +781,7 @@ Related buffers can be cycled through via :R and :P commands."
 	  "^@end \\|"						; texinfo
 	  ")\n\n[ \t\n]*\\|"					; lisp
 	  "\\.\\s-*$")						; prolog
-      "*Regexps to end Headings/Sections.  Used by [].")
+  "Regexps to end Headings/Sections.  Used by [].")
 
 
 ;; These two vars control the interaction of jumps performed by ' and `.

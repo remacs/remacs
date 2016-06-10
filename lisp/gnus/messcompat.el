@@ -34,58 +34,21 @@
 
 (require 'sendmail)
 
-(defvar message-from-style mail-from-style
-  "*Specifies how \"From\" headers look.
-
-If nil, they contain just the return address like:
-	king@grassland.com
-If `parens', they look like:
-	king@grassland.com (Elvis Parsley)
-If `angles', they look like:
-	Elvis Parsley <king@grassland.com>
-
-Otherwise, most addresses look like `angles', but they look like
-`parens' if `angles' would need quoting and `parens' would not.")
-
-(defvar message-interactive mail-interactive
-  "Non-nil means when sending a message wait for and display errors.
-nil means let mailer mail back a message to report errors.")
-
-(defvar message-setup-hook mail-setup-hook
-  "Normal hook, run each time a new outgoing message is initialized.
-The function `message-setup' runs this hook.")
-
-(if (boundp 'mail-mode-hook)
-    (defvar message-mode-hook mail-mode-hook
-      "Hook run in message mode buffers."))
-
-(defvar message-indentation-spaces mail-indentation-spaces
-  "*Number of spaces to insert at the beginning of each cited line.
-Used by `message-yank-original' via `message-yank-cite'.")
-
-(defvar message-signature mail-signature
-  "*String to be inserted at the end of the message buffer.
-If t, the `message-signature-file' file will be inserted instead.
-If a function, the result from the function will be used instead.
-If a form, the result from the form will be used instead.")
-
-;; Deleted the autoload cookie because this crashes in loaddefs.el.
-(defvar message-signature-file mail-signature-file
-  "*File containing the text inserted at end of the message buffer.")
-
-(defvar message-default-headers mail-default-headers
-  "*A string containing header lines to be inserted in outgoing messages.
-It is inserted before you edit the message, so you can edit or delete
-these lines.")
-
-(defvar message-send-hook mail-send-hook
-  "Hook run before sending messages.")
-
-(defvar message-send-mail-function send-mail-function
-  "Function to call to send the current buffer as mail.
-The headers should be delimited by a line whose contents match the
-variable `mail-header-separator'.")
+;(setq message-from-style mail-from-style)
+;(setq message-interactive mail-interactive)
+(setq message-setup-hook mail-setup-hook)
+(setq message-mode-hook mail-mode-hook)
+;(setq message-indentation-spaces mail-indentation-spaces)
+;(setq message-signature mail-signature)
+;(setq message-signature-file mail-signature-file)
+(setq message-default-headers mail-default-headers)
+(setq message-send-hook mail-send-hook)
+(setq message-send-mail-function send-mail-function)
 
 (provide 'messcompat)
 
 ;;; messcompat.el ends here
+
+;; Local Variables:
+;; no-byte-compile: t
+;; End:

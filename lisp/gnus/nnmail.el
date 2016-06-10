@@ -601,8 +601,10 @@ using different case (i.e. mailing-list@domain vs Mailing-List@Domain)."
   mm-text-coding-system
   "Coding system used in reading inbox")
 
-(defvar nnmail-pathname-coding-system nil
-  "*Coding system for file name.")
+(defcustom nnmail-pathname-coding-system nil
+  "Coding system for file name."
+  :group 'nnmail-various
+  :type 'coding-system)
 
 (defun nnmail-find-file (file)
   "Insert FILE in server buffer safely."
@@ -670,8 +672,10 @@ nn*-request-list should have been called before calling this function."
       (forward-line 1))
     group-assoc))
 
-(defvar nnmail-active-file-coding-system 'raw-text
-  "*Coding system for active file.")
+(defcustom nnmail-active-file-coding-system 'raw-text
+  "Coding system for active file."
+  :group 'nnmail-various
+  :type 'coding-system)
 
 (defun nnmail-save-active (group-assoc file-name)
   "Save GROUP-ASSOC in ACTIVE-FILE."

@@ -1499,8 +1499,8 @@ This variable only has effect in XEmacs."
   :type 'boolean
   :group 'c)
 
-(defvar c-old-style-variable-behavior nil
-  "*Enables the old style variable behavior when non-nil.
+(defcustom c-old-style-variable-behavior nil
+  "Enables the old style variable behavior when non-nil.
 
 Normally the values of the style variables will override the style
 settings specified by the variables `c-default-style' and
@@ -1513,7 +1513,9 @@ It's believed that despite this change, the new behavior will still
 produce the same results for most old CC Mode configurations, since
 all style variables are per default set in a special non-override
 state.  Set this variable only if your configuration has stopped
-working due to this change.")
+working due to this change."
+  :type 'boolean
+  :group 'c)
 
 (define-widget 'c-extra-types-widget 'radio
   "Internal CC Mode widget for the `*-font-lock-extra-types' variables."

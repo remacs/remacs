@@ -1306,8 +1306,10 @@ where a valid symbol is 'system, or nil."
 ;;
 ;; These routines are for saving macro lists into an EIEIO persistent
 ;; file.
-(defvar semantic-lex-spp-macro-max-length-to-save 200
-  "*Maximum length of an SPP macro before we opt to not save it.")
+(defcustom semantic-lex-spp-macro-max-length-to-save 200
+  "Maximum length of an SPP macro before we opt to not save it."
+  :type 'integer
+  :group 'semantic)
 
 ;;;###autoload
 (defun semantic-lex-spp-table-write-slot-value (value)

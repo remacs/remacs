@@ -245,7 +245,7 @@ Likely values are `wget', `w3m', `lynx' and `curl'."
     ;; To be done
     ;; (shy      . ????) ; soft hyphen
     )
-  "*An assoc list of entity names and how to actually display them.")
+  "An assoc list of entity names and how to actually display them.")
 
 (defconst mm-url-unreserved-chars
   '(
