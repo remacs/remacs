@@ -351,14 +351,13 @@ and changed ada-mode.texi frames.texi generic-x.el texinfo.el
 
 Artem Chuprina: changed message.el
 
-Artur Malabarba: wrote character-fold-tests.el faces-tests.el
-  isearch-tests.el let-alist.el simple-test.el sort-tests.el
-  tabulated-list-test.el
-and changed package.el isearch.el character-fold.el files.el
-  tabulated-list.el package-test.el menu-bar.el faces.el files-x.el
-  help-fns.el replace.el align.el bytecomp.el custom.texi cl-lib-tests.el
-  custom.el map.el simple.el subr-tests.el variables.texi bindings.el
-  and 39 other files
+Artur Malabarba: wrote char-fold-tests.el faces-tests.el isearch-tests.el
+  let-alist.el simple-test.el sort-tests.el tabulated-list-test.el
+and changed package.el isearch.el lisp/char-fold.el files.el
+  tabulated-list.el package-test.el menu-bar.el
+  test/automated/char-fold-tests.el faces.el files-x.el help-fns.el
+  replace.el align.el bytecomp.el custom.texi cl-lib-tests.el custom.el
+  map.el simple.el subr-tests.el variables.texi and 40 other files
 
 Arun Persaud: changed org-agenda.el org-src.el
 
