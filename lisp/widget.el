@@ -91,7 +91,7 @@ The third argument DOC is a documentation string for the widget."
   name)
 
 ;; This is used by external widget code (in W3, at least).
-(define-obsolete-function-alias 'widget-plist-member #'plist-member "26.1")
+(define-obsolete-function-alias 'widget-plist-member #'plist-member "25.2")
 
 ;;; The End.
 

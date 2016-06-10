@@ -1500,7 +1500,7 @@ of the line.  This expects the xmltok-* variables to be set up as by
 	(t (back-to-indentation)))
   (current-column))
 
-(define-obsolete-function-alias 'nxml-complete #'completion-at-point "26.1")
+(define-obsolete-function-alias 'nxml-complete #'completion-at-point "25.2")
 
 ;;; Movement
 
