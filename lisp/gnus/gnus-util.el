@@ -417,7 +417,7 @@ Cache the result as a text property stored in DATE."
     i))
 
 (defcustom gnus-verbose 6
-  "*Integer that says how verbose Gnus should be.
+  "Integer that says how verbose Gnus should be.
 The higher the number, the more messages Gnus will flash to say what
 it's doing.  At zero, Gnus will be totally mute; at five, Gnus will
 display most important messages; and at ten, Gnus will keep on

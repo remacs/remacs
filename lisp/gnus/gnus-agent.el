@@ -161,7 +161,7 @@ enable expiration per categories, topics, and groups."
                 (const :format "Disable " DISABLE)))
 
 (defcustom gnus-agent-expire-unagentized-dirs t
-  "*Whether expiration should expire in unagentized directories.
+  "Whether expiration should expire in unagentized directories.
 Have gnus-agent-expire scan the directories under
 \(gnus-agent-directory) for groups that are no longer agentized.
 When found, offer to remove them."

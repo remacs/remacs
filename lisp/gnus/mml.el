@@ -58,7 +58,7 @@
 
 (defcustom mml-content-type-parameters
   '(name access-type expiration size permission format)
-  "*A list of acceptable parameters in MML tag.
+  "A list of acceptable parameters in MML tag.
 These parameters are generated in Content-Type header if exists."
   :version "22.1"
   :type '(repeat (symbol :tag "Parameter"))
@@ -66,7 +66,7 @@ These parameters are generated in Content-Type header if exists."
 
 (defcustom mml-content-disposition-parameters
   '(filename creation-date modification-date read-date)
-  "*A list of acceptable parameters in MML tag.
+  "A list of acceptable parameters in MML tag.
 These parameters are generated in Content-Disposition header if exists."
   :version "22.1"
   :type '(repeat (symbol :tag "Parameter"))

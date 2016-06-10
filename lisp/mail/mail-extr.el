@@ -234,7 +234,7 @@ we will act as though we couldn't find a full name in the address."
   :group 'mail-extr)
 
 (defcustom mail-extr-ignore-realname-equals-mailbox-name t
-"*Whether to ignore a name that is equal to the mailbox name.
+"Whether to ignore a name that is equal to the mailbox name.
 If true, then when the address is like \"Single <single@address.com>\"
 we will act as though we couldn't find a full name in the address."
   :type 'boolean

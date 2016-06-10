@@ -1239,7 +1239,7 @@ of type `spp-macro-undef' is to be created."
 ;; written yet.
 ;;
 (defcustom semantic-lex-spp-use-headers-flag nil
-  "*Non-nil means to pre-parse headers as we go.
+  "Non-nil means to pre-parse headers as we go.
 For languages that use the Semantic pre-processor, this can
 improve the accuracy of parsed files where include files
 can change the state of what's parsed in the current file.

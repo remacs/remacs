@@ -45,7 +45,7 @@
 				(condition-case nil
 				    (require 'url)
 				  (error nil)))
-  "*If non-nil, use external grab program `mm-url-program'."
+  "If non-nil, use external grab program `mm-url-program'."
   :version "22.1"
   :type 'boolean
   :group 'mm-url)

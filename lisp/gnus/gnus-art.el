@@ -158,7 +158,7 @@
      "Envelope-To" "X-Spam-Score" "System-Type" "X-Injected-Via-Gmane"
      "X-Gmane-NNTP-Posting-Host" "Jabber-ID" "Archived-At"
      "Envelope-Sender" "Envelope-Recipients"))
-  "*All headers that start with this regexp will be hidden.
+  "All headers that start with this regexp will be hidden.
 This variable can also be a list of regexps of headers to be ignored.
 If `gnus-visible-headers' is non-nil, this variable will be ignored."
   :type '(choice regexp
@@ -167,7 +167,7 @@ If `gnus-visible-headers' is non-nil, this variable will be ignored."
 
 (defcustom gnus-visible-headers
   "^From:\\|^Newsgroups:\\|^Subject:\\|^Date:\\|^Followup-To:\\|^Reply-To:\\|^Organization:\\|^Summary:\\|^Keywords:\\|^To:\\|^[BGF]?Cc:\\|^Posted-To:\\|^Mail-Copies-To:\\|^Mail-Followup-To:\\|^Apparently-To:\\|^Gnus-Warning:\\|^Resent-From:"
-  "*All headers that do not match this regexp will be hidden.
+  "All headers that do not match this regexp will be hidden.
 This variable can also be a list of regexp of headers to remain visible.
 If this variable is non-nil, `gnus-ignored-headers' will be ignored."
   :type '(choice
@@ -184,7 +184,7 @@ If this variable is non-nil, `gnus-ignored-headers' will be ignored."
 (defcustom gnus-sorted-header-list
   '("^From:" "^Subject:" "^Summary:" "^Keywords:" "^Newsgroups:"
     "^Followup-To:" "^To:" "^Cc:" "^Date:" "^Organization:")
-  "*This variable is a list of regular expressions.
+  "This variable is a list of regular expressions.
 If it is non-nil, headers that match the regular expressions will
 be placed first in the article buffer in the sequence specified by
 this list."
@@ -271,7 +271,7 @@ This can also be a list of the above values."
     "{ echo \
 '/* Format_version=1, Width=48, Height=48, Depth=1, Valid_bits_per_item=16 */'\
 ; uncompface; } | icontopbm | display -")
-  "*String or function to be executed to display an X-Face header.
+  "String or function to be executed to display an X-Face header.
 If it is a string, the command will be executed in a sub-shell
 asynchronously.  The compressed face will be piped to this command."
   :type `(choice string
@@ -389,7 +389,7 @@ advertisements.  For example:
        ;; 2 3 gnus-emphasis-strikethru)
        ("\\(\\s-\\|^\\)\\(_\\(\\(\\w\\|_[^_]\\)+\\)_\\)\\(\\s-\\|[?!.,;]\\)"
 	2 3 gnus-emphasis-underline))))
-  "*Alist that says how to fontify certain phrases.
+  "Alist that says how to fontify certain phrases.
 Each item looks like this:
 
   (\"_\\\\(\\\\w+\\\\)_\" 0 1 \\='underline)
@@ -498,7 +498,7 @@ be fed to `format-time-string'."
   :group 'gnus-article-washing)
 
 (defcustom gnus-save-all-headers t
-  "*If non-nil, don't remove any headers before saving.
+  "If non-nil, don't remove any headers before saving.
 This will be overridden by the `:headers' property that the symbol of
 the saver function, which is specified by `gnus-default-article-saver',
 might have."
@@ -506,7 +506,7 @@ might have."
   :type 'boolean)
 
 (defcustom gnus-prompt-before-saving 'always
-  "*This variable says how much prompting is to be done when saving articles.
+  "This variable says how much prompting is to be done when saving articles.
 If it is nil, no prompting will be done, and the articles will be
 saved to the default files.  If this variable is `always', each and
 every article that is saved will be preceded by a prompt, even when
@@ -653,7 +653,7 @@ LAST-FILE."
 (defcustom gnus-split-methods
   '((gnus-article-archive-name)
     (gnus-article-nndoc-name))
-  "*Variable used to suggest where articles are to be saved.
+  "Variable used to suggest where articles are to be saved.
 For instance, if you would like to save articles related to Gnus in
 the file \"gnus-stuff\", and articles related to VM in \"vm-stuff\",
 you could set this variable to something like:
@@ -679,14 +679,14 @@ used as possible file names."
 			 (sexp :value nil))))
 
 (defcustom gnus-page-delimiter "^\^L"
-  "*Regexp describing what to use as article page delimiters.
+  "Regexp describing what to use as article page delimiters.
 The default value is \"^\^L\", which is a form linefeed at the
 beginning of a line."
   :type 'regexp
   :group 'gnus-article-various)
 
 (defcustom gnus-article-mode-line-format "Gnus: %g %S%m"
-  "*The format specification for the article mode line.
+  "The format specification for the article mode line.
 See `gnus-summary-mode-line-format' for a closer description.
 
 The following additional specs are available:
@@ -698,17 +698,17 @@ The following additional specs are available:
   :group 'gnus-article-various)
 
 (defcustom gnus-article-mode-hook nil
-  "*A hook for Gnus article mode."
+  "A hook for Gnus article mode."
   :type 'hook
   :group 'gnus-article-various)
 
 (defcustom gnus-article-menu-hook nil
-  "*Hook run after the creation of the article mode menu."
+  "Hook run after the creation of the article mode menu."
   :type 'hook
   :group 'gnus-article-various)
 
 (defcustom gnus-article-prepare-hook nil
-  "*A hook called after an article has been prepared in the article buffer."
+  "A hook called after an article has been prepared in the article buffer."
   :type 'hook
   :group 'gnus-article-various)
 
@@ -846,7 +846,7 @@ articles."
     ("Subject" nil gnus-header-subject)
     ("Newsgroups:.*," nil gnus-header-newsgroups)
     ("" gnus-header-name gnus-header-content))
-  "*Controls highlighting of article headers.
+  "Controls highlighting of article headers.
 
 An alist of the form (HEADER NAME CONTENT).
 
@@ -892,7 +892,7 @@ images in Emacs."
 (defcustom gnus-article-decode-hook
   '(article-decode-charset article-decode-encoded-words
 			   article-decode-group-name article-decode-idna-rhs)
-  "*Hook run to decode charsets in articles."
+  "Hook run to decode charsets in articles."
   :group 'gnus-article-headers
   :type 'hook)
 
@@ -7643,7 +7643,7 @@ Calls `describe-variable' or `describe-function'."
       (find-file-read-only file))))
 
 (defcustom gnus-button-man-level 5
-  "*Integer that says how many man-related buttons Gnus will show.
+  "Integer that says how many man-related buttons Gnus will show.
 The higher the number, the more buttons will appear and the more false
 positives are possible.  Note that you can set this variable local to
 specific groups.  Setting it higher in Unix groups is probably a good idea.
@@ -7655,7 +7655,7 @@ how to set variables in specific groups."
   :type 'integer)
 
 (defcustom gnus-button-emacs-level 5
-  "*Integer that says how many emacs-related buttons Gnus will show.
+  "Integer that says how many emacs-related buttons Gnus will show.
 The higher the number, the more buttons will appear and the more false
 positives are possible.  Note that you can set this variable local to
 specific groups.  Setting it higher in Emacs or Gnus related groups is
@@ -7667,7 +7667,7 @@ probably a good idea.  See Info node `(gnus)Group Parameters' and the variable
   :type 'integer)
 
 (defcustom gnus-button-message-level 5
-  "*Integer that says how many buttons for news or mail messages will appear.
+  "Integer that says how many buttons for news or mail messages will appear.
 The higher the number, the more buttons will appear and the more false
 positives are possible."
   ;; mail addresses, MIDs, URLs for news, ...
@@ -7676,7 +7676,7 @@ positives are possible."
   :type 'integer)
 
 (defcustom gnus-button-browse-level 5
-  "*Integer that says how many buttons for browsing will appear.
+  "Integer that says how many buttons for browsing will appear.
 The higher the number, the more buttons will appear and the more false
 positives are possible."
   ;; stuff handled by `browse-url' or `gnus-button-embedded-url'
@@ -7797,7 +7797,7 @@ positives are possible."
     ;; so that non-ambiguous entries (see above) match first.
     (gnus-button-mid-or-mail-regexp
      0 (>= gnus-button-message-level 5) gnus-button-handle-mid-or-mail 1))
-  "*Alist of regexps matching buttons in article bodies.
+  "Alist of regexps matching buttons in article bodies.
 
 Each entry has the form (REGEXP BUTTON FORM CALLBACK PAR...), where
 REGEXP: is the string (case insensitive) matching text around the button (can
@@ -7839,7 +7839,7 @@ variable it the real callback function."
      0 (>= gnus-button-message-level 0) gnus-url-mailto 1)
     ("^[^:]+:" "\\(<\\(url: \\)?\\(nntp\\|news\\):\\([^>\n ]*\\)>\\)"
      1 (>= gnus-button-message-level 0) gnus-button-message-id 4))
-  "*Alist of headers and regexps to match buttons in article heads.
+  "Alist of headers and regexps to match buttons in article heads.
 
 This alist is very similar to `gnus-button-alist', except that each
 alist has an additional HEADER element first in each entry:
