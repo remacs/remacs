@@ -88,7 +88,7 @@ typedef bool bool_bf;
 
 /* Yield PTR, which must be aligned to ALIGNMENT.  */
 #if ! __has_builtin (__builtin_assume_aligned)
-# define __builtin_assume_aligned(ptr, alignment, ...) ((void *) (ptr))
+# define __builtin_assume_aligned(ptr, ...) ((void *) (ptr))
 #endif
 
 #ifdef DARWIN_OS
