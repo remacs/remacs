@@ -1715,8 +1715,9 @@ invokes the command before that, etc."
       (let ((inhibit-quit t)
 	    tmp tmp2)
 	(setq viper-undo-needs-adjustment nil)
-	(if (listp buffer-undo-list)
-	    (if (setq tmp (memq viper-buffer-undo-list-mark buffer-undo-list))
+	(when (listp buffer-undo-list)
+          (let ((had-boundary (null (car buffer-undo-list))))
+            (if (setq tmp (memq viper-buffer-undo-list-mark buffer-undo-list))
 		(progn
 		  (setq tmp2 (cdr tmp)) ; the part after mark
 
@@ -1729,8 +1730,11 @@ invokes the command before that, etc."
 			(delq viper-buffer-undo-list-mark buffer-undo-list))
 		  ;; restore tail of buffer-undo-list
 		  (setq buffer-undo-list (nconc buffer-undo-list tmp2)))
-	      (setq buffer-undo-list (delq nil buffer-undo-list)))))
-    ))
+	      (setq buffer-undo-list (delq nil buffer-undo-list)))
+            ;; The top-level loop only adds boundaries if there has been
+            ;; modifications in the buffer, so make sure we don't accidentally
+            ;; drop the "final" boundary (bug#22295).
+	    (if had-boundary (undo-boundary)))))))
 
 
 (defun viper-set-complex-command-for-undo ()
