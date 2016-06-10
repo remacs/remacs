@@ -5492,15 +5492,16 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 
 	      p = XPROCESS (proc);
 
-#ifdef GNU_LINUX
-	      /* getsockopt(,,SO_ERROR,,) is said to hang on some systems.
-		 So only use it on systems where it is known to work.  */
+#ifndef WINDOWSNT
 	      {
 		socklen_t xlen = sizeof (xerrno);
 		if (getsockopt (channel, SOL_SOCKET, SO_ERROR, &xerrno, &xlen))
 		  xerrno = errno;
 	      }
 #else
+	      /* On MS-Windows, getsockopt clears the error for the
+		 entire process, which may not be the right thing; see
+		 w32.c.  Use getpeername instead.  */
 	      {
 		struct sockaddr pname;
 		socklen_t pnamelen = sizeof (pname);

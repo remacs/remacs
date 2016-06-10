@@ -3848,7 +3848,7 @@ lrand48 random rint \
 select getpagesize setlocale newlocale \
 getrlimit setrlimit shutdown \
 pthread_sigmask strsignal setitimer \
-sendto recvfrom getsockname getpeername getifaddrs freeifaddrs \
+sendto recvfrom getsockname getifaddrs freeifaddrs \
 gai_strerror sync \
 getpwent endpwent getgrent endgrent \
 cfmakeraw cfsetspeed copysign __executable_start log2)
