@@ -614,13 +614,7 @@ COMPOSITION-PREDICATE will be used to compose region."
 
 ;; Pre-write conversion for `utf-8-hfs'.
 (defun ucs-normalize-hfs-nfd-pre-write-conversion (from to)
-  (let ((old-buf (current-buffer)))
-    (set-buffer (generate-new-buffer " *temp*"))
-    (if (stringp from)
-        (insert from)
-      (insert-buffer-substring old-buf from to))
-    (ucs-normalize-HFS-NFD-region (point-min) (point-max))
-    nil))
+  (ucs-normalize-HFS-NFD-region (point-min) (point-max)))
 
 ;;; coding-system definition
 (define-coding-system 'utf-8-hfs
