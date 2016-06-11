@@ -943,7 +943,7 @@ xd_get_connection_references (DBusConnection *connection)
 static DBusConnection*
 xd_lisp_dbus_to_dbus (Lisp_Object bus)
 {
-  return (DBusConnection *) (intptr_t) XFASTINT (bus);
+  return (DBusConnection *) XSAVE_POINTER (bus, 0);
 }
 
 /* Return D-Bus connection address.  BUS is either a Lisp symbol,
@@ -1187,7 +1187,7 @@ this connection to those buses.  */)
 	XD_SIGNAL1 (build_string ("Cannot add watch functions"));
 
       /* Add bus to list of registered buses.  */
-      XSETFASTINT (val, (intptr_t) connection);
+      val = make_save_ptr (connection);
       xd_registered_buses = Fcons (Fcons (bus, val), xd_registered_buses);
 
       /* Cleanup.  */
