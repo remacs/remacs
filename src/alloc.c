@@ -20,6 +20,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
+#include <errno.h>
 #include <stdio.h>
 #include <limits.h>		/* For CHAR_BIT.  */
 #include <signal.h>		/* For SIGABRT, SIGDANGER.  */
@@ -150,7 +151,8 @@ malloc_initialize_hook (void)
 		}
 	}
 
-      malloc_set_state (malloc_state_ptr);
+      if (malloc_set_state (malloc_state_ptr) != 0)
+	emacs_abort ();
 # ifndef XMALLOC_OVERRUN_CHECK
       alloc_unexec_post ();
 # endif
@@ -174,6 +176,8 @@ alloc_unexec_pre (void)
 {
 #ifdef DOUG_LEA_MALLOC
   malloc_state_ptr = malloc_get_state ();
+  if (!malloc_state_ptr)
+    fatal ("malloc_get_state: %s", strerror (errno));
 #endif
 #ifdef HYBRID_MALLOC
   bss_sbrk_did_unexec = true;
