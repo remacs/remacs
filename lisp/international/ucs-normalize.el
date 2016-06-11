@@ -613,7 +613,8 @@ COMPOSITION-PREDICATE will be used to compose region."
       (- (point-max) (point-min)))))
 
 ;; Pre-write conversion for `utf-8-hfs'.
-(defun ucs-normalize-hfs-nfd-pre-write-conversion (from to)
+;; _from and _to are legacy arguments (see `define-coding-system').
+(defun ucs-normalize-hfs-nfd-pre-write-conversion (_from _to)
   (ucs-normalize-HFS-NFD-region (point-min) (point-max)))
 
 ;;; coding-system definition
