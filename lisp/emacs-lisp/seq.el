@@ -4,7 +4,7 @@
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: sequences
-;; Version: 2.14
+;; Version: 2.16
 ;; Package: seq
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -471,10 +471,7 @@ If no element is found, return nil."
 
 (cl-defmethod seq-drop ((list list) n)
   "Optimized implementation of `seq-drop' for lists."
-  (while (and list (> n 0))
-    (setq list (cdr list)
-          n (1- n)))
-  list)
+  (nthcdr n list))
 
 (cl-defmethod seq-take ((list list) n)
   "Optimized implementation of `seq-take' for lists."
