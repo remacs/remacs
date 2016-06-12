@@ -130,10 +130,10 @@ extern int sys_select (int, fd_set *, fd_set *, fd_set *,
 		       struct timespec *, void *);
 #endif
 
-/* Work around GCC 4.7.0 bug with strict overflow checking; see
+/* Work around GCC 4.3.0 bug with strict overflow checking; see
    <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=52904>.
    This bug appears to be fixed in GCC 5.1, so don't work around it there.  */
-#if __GNUC__ == 4 && __GNUC_MINOR__ >= 3
+#if GNUC_PREREQ (4, 3, 0) && ! GNUC_PREREQ (5, 1, 0)
 # pragma GCC diagnostic ignored "-Wstrict-overflow"
 #endif
 

@@ -1470,7 +1470,7 @@ INLINE_HEADER_END
 /* Suppress -Wsuggest-attribute=const if there are no scroll bars.
    This is for functions like x_set_horizontal_scroll_bars that have
    no effect in this case.  */
-#if ! USE_HORIZONTAL_SCROLL_BARS && 4 < __GNUC__ + (6 <= __GNUC_MINOR__)
+#if ! USE_HORIZONTAL_SCROLL_BARS && GNUC_PREREQ (4, 6, 0)
 # pragma GCC diagnostic ignored "-Wsuggest-attribute=const"
 #endif
 

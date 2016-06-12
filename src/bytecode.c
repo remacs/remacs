@@ -637,7 +637,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	 the table clearer.  */
 #define LABEL(OP) [OP] = &&insn_ ## OP
 
-#if 4 < __GNUC__ + (6 <= __GNUC_MINOR__)
+#if GNUC_PREREQ (4, 6, 0)
 # pragma GCC diagnostic push
 # pragma GCC diagnostic ignored "-Woverride-init"
 #elif defined __clang__
@@ -656,7 +656,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 #undef DEFINE
 	};
 
-#if 4 < __GNUC__ + (6 <= __GNUC_MINOR__) || defined __clang__
+#if GNUC_PREREQ (4, 6, 0) || defined __clang__
 # pragma GCC diagnostic pop
 #endif
 

@@ -44,7 +44,7 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 #ifdef HAVE_MALLOC_H
-# if 4 < __GNUC__ + (2 <= __GNUC_MINOR__)
+# if GNUC_PREREQ (4, 2, 0)
 #  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 # endif
 # include <malloc.h>

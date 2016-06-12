@@ -4172,8 +4172,8 @@ extern void kill_buffer_processes (Lisp_Object);
 extern int wait_reading_process_output (intmax_t, int, int, bool, Lisp_Object,
 					struct Lisp_Process *, int);
 /* Max value for the first argument of wait_reading_process_output.  */
-#if __GNUC__ == 3 || (__GNUC__ == 4 && __GNUC_MINOR__ <= 5)
-/* Work around a bug in GCC 3.4.2, known to be fixed in GCC 4.6.3.
+#if GNUC_PREREQ (3, 0, 0) && ! GNUC_PREREQ (4, 6, 0)
+/* Work around a bug in GCC 3.4.2, known to be fixed in GCC 4.6.0.
    The bug merely causes a bogus warning, but the warning is annoying.  */
 # define WAIT_READING_MAX min (TYPE_MAXIMUM (time_t), INTMAX_MAX)
 #else
@@ -4546,8 +4546,7 @@ extern void *record_xmalloc (size_t) ATTRIBUTE_ALLOC_SIZE ((1));
    Build with CPPFLAGS='-DUSE_STACK_LISP_OBJECTS=0' to disable it.  */
 
 #if (!defined USE_STACK_LISP_OBJECTS \
-     && defined __GNUC__ && !defined __clang__ \
-     && !(4 < __GNUC__ + (3 < __GNUC_MINOR__ + (2 <= __GNUC_PATCHLEVEL__))))
+     && defined __GNUC__ && !defined __clang__ && ! GNUC_PREREQ (4, 3, 2))
   /* Work around GCC bugs 36584 and 35271, which were fixed in GCC 4.3.2.  */
 # define USE_STACK_LISP_OBJECTS false
 #endif
