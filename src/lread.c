@@ -36,7 +36,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "character.h"
 #include "buffer.h"
 #include "charset.h"
-#include "coding.h"
 #include <epaths.h>
 #include "commands.h"
 #include "keyboard.h"
@@ -4484,18 +4483,24 @@ void
 dir_warning (char const *use, Lisp_Object dirname)
 {
   static char const format[] = "Warning: %s '%s': %s\n";
-  int access_errno = errno;
-  fprintf (stderr, format, use, SSDATA (ENCODE_SYSTEM (dirname)),
-	   strerror (access_errno));
+  char *diagnostic = emacs_strerror (errno);
+  fprintf (stderr, format, use, SSDATA (ENCODE_SYSTEM (dirname)), diagnostic);
 
   /* Don't log the warning before we've initialized!!  */
   if (initialized)
     {
-      char const *diagnostic = emacs_strerror (access_errno);
+      ptrdiff_t diaglen = strlen (diagnostic);
+      AUTO_STRING_WITH_LEN (diag, diagnostic, diaglen);
+      if (! NILP (Vlocale_coding_system))
+	{
+	  Lisp_Object s
+	    = code_convert_string_norecord (diag, Vlocale_coding_system, false);
+	  diagnostic = SSDATA (s);
+	  diaglen = SBYTES (s);
+	}
       USE_SAFE_ALLOCA;
       char *buffer = SAFE_ALLOCA (sizeof format - 3 * (sizeof "%s" - 1)
-				  + strlen (use) + SBYTES (dirname)
-				  + strlen (diagnostic));
+				  + strlen (use) + SBYTES (dirname) + diaglen);
       ptrdiff_t message_len = esprintf (buffer, format, use, SSDATA (dirname),
 					diagnostic);
       message_dolog (buffer, message_len, 0, STRING_MULTIBYTE (dirname));

@@ -11303,24 +11303,4 @@ internal character representation.  */);
 #endif
   staticpro (&system_eol_type);
 }
-
-char *
-emacs_strerror (int error_number)
-{
-  char *str;
-
-  synchronize_system_messages_locale ();
-  str = strerror (error_number);
-
-  if (! NILP (Vlocale_coding_system))
-    {
-      Lisp_Object dec = code_convert_string_norecord (build_string (str),
-						      Vlocale_coding_system,
-						      0);
-      str = SSDATA (dec);
-    }
-
-  return str;
-}
-
 #endif /* emacs */

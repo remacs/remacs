@@ -185,8 +185,7 @@ void
 report_file_errno (char const *string, Lisp_Object name, int errorno)
 {
   Lisp_Object data = CONSP (name) || NILP (name) ? name : list1 (name);
-  synchronize_system_messages_locale ();
-  char *str = strerror (errorno);
+  char *str = emacs_strerror (errorno);
   AUTO_STRING (unibyte_str, str);
   Lisp_Object errstring
     = code_convert_string_norecord (unibyte_str, Vlocale_coding_system, 0);
@@ -214,12 +213,11 @@ report_file_error (char const *string, Lisp_Object name)
 void
 report_file_notify_error (const char *string, Lisp_Object name)
 {
-  Lisp_Object data = CONSP (name) || NILP (name) ? name : list1 (name);
-  synchronize_system_messages_locale ();
-  char *str = strerror (errno);
+  char *str = emacs_strerror (errno);
   AUTO_STRING (unibyte_str, str);
   Lisp_Object errstring
     = code_convert_string_norecord (unibyte_str, Vlocale_coding_system, 0);
+  Lisp_Object data = CONSP (name) || NILP (name) ? name : list1 (name);
   Lisp_Object errdata = Fcons (errstring, data);
 
   xsignal (Qfile_notify_error, Fcons (build_string (string), errdata));

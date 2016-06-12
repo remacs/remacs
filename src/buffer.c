@@ -30,7 +30,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <verify.h>
 
 #include "lisp.h"
-#include "coding.h"
 #include "intervals.h"
 #include "systime.h"
 #include "window.h"

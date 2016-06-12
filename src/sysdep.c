@@ -2498,7 +2498,7 @@ void
 emacs_perror (char const *message)
 {
   int err = errno;
-  char const *error_string = strerror (err);
+  char const *error_string = emacs_strerror (err);
   char const *command = (initial_argv && initial_argv[0]
 			 ? initial_argv[0] : "emacs");
   /* Write it out all at once, if it's short; this is less likely to
@@ -3865,7 +3865,7 @@ str_collate (Lisp_Object s1, Lisp_Object s2,
       locale_t loc = newlocale (LC_COLLATE_MASK | LC_CTYPE_MASK,
 				SSDATA (locale), 0);
       if (!loc)
-	error ("Invalid locale %s: %s", SSDATA (locale), strerror (errno));
+	error ("Invalid locale %s: %s", SSDATA (locale), emacs_strerror (errno));
 
       if (! NILP (ignore_case))
 	for (int i = 1; i < 3; i++)
@@ -3896,10 +3896,10 @@ str_collate (Lisp_Object s1, Lisp_Object s2,
     }
 #  ifndef HAVE_NEWLOCALE
   if (err)
-    error ("Invalid locale or string for collation: %s", strerror (err));
+    error ("Invalid locale or string for collation: %s", emacs_strerror (err));
 #  else
   if (err)
-    error ("Invalid string for collation: %s", strerror (err));
+    error ("Invalid string for collation: %s", emacs_strerror (err));
 #  endif
 
   SAFE_FREE ();

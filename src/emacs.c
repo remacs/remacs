@@ -66,7 +66,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
-#include "coding.h"
 #include "intervals.h"
 #include "character.h"
 #include "buffer.h"
@@ -2226,6 +2225,15 @@ synchronize_system_messages_locale (void)
 #endif
 }
 #endif /* HAVE_SETLOCALE */
+
+/* Return a diagnostic string for ERROR_NUMBER, in the wording
+   and encoding appropriate for the current locale.  */
+char *
+emacs_strerror (int error_number)
+{
+  synchronize_system_messages_locale ();
+  return strerror (error_number);
+}
 
 
 Lisp_Object
