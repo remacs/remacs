@@ -88,7 +88,11 @@ typedef unsigned long EMACS_UINT;
 typedef long long int EMACS_INT;
 typedef unsigned long long int EMACS_UINT;
 #  define EMACS_INT_MAX LLONG_MAX
-#  define pI "ll"
+#  ifdef __MINGW32__
+#   define pI "I64"
+#  else
+#   define pI "ll"
+#  endif
 # else
 #  error "INTPTR_MAX too large"
 # endif

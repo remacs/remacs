@@ -252,12 +252,17 @@ extern int emacs_setenv_TZ (char const *);
 #endif
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4)
-# define ATTRIBUTE_FORMAT_PRINTF(formatstring_parameter, first_argument) \
-   ATTRIBUTE_FORMAT ((__gnu_printf__, formatstring_parameter, first_argument))
-#else
+# ifdef __MINGW32__
+#  define ATTRIBUTE_FORMAT_PRINTF(formatstring_parameter, first_argument) \
+    ATTRIBUTE_FORMAT ((__ms_printf__, formatstring_parameter, first_argument))
+#else  /* !__MINGW32__ */
+#  define ATTRIBUTE_FORMAT_PRINTF(formatstring_parameter, first_argument) \
+    ATTRIBUTE_FORMAT ((__gnu_printf__, formatstring_parameter, first_argument))
+#endif	/* !__MINGW32__ */
+#else	/* __GNUC__ < 4.4 */
 # define ATTRIBUTE_FORMAT_PRINTF(formatstring_parameter, first_argument) \
    ATTRIBUTE_FORMAT ((__printf__, formatstring_parameter, first_argument))
-#endif
+#endif	/* __GNUC__ < 4.4 */
 
 #define ATTRIBUTE_CONST _GL_ATTRIBUTE_CONST
 #define ATTRIBUTE_UNUSED _GL_UNUSED
