@@ -3382,7 +3382,7 @@ deliver_wm_chars (int do_translate, HWND hwnd, UINT msg, UINT wParam,
       W32Msg wmsg;
       DWORD console_modifiers = construct_console_modifiers ();
       int *b = buf, strip_ExtraMods = 1, hairy = 0;
-      char *type_CtrlAlt = NULL;
+      const char *type_CtrlAlt = NULL;
 
       /*  XXXX In fact, there may be another case when we need to do the same:
 	       What happens if the string defined in the LIGATURES has length
