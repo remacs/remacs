@@ -1977,7 +1977,7 @@ in @code{event-modifiers}.  For example:
 
 @defun mouse-movement-p object
 This function returns non-@code{nil} if @var{object} is a mouse movement
-event.
+event.  @xref{Motion Events}.
 @end defun
 
 @defun event-convert-list list
