@@ -506,7 +506,7 @@ inputinput@point{}
 @defun call-process-shell-command command &optional infile destination display
 This function executes the shell command @var{command} synchronously.
 The arguments are handled as in @code{call-process}.  An old calling
-convention allowed to pass any number of additional arguments after
+convention allowed passing any number of additional arguments after
 @var{display}, which were concatenated to @var{command}; this is still
 supported, but strongly discouraged.
 @end defun
@@ -515,7 +515,7 @@ supported, but strongly discouraged.
 This function is like @code{call-process-shell-command}, but uses
 @code{process-file} internally.  Depending on @code{default-directory},
 @var{command} can be executed also on remote hosts.  An old calling
-convention allowed to pass any number of additional arguments after
+convention allowed passing any number of additional arguments after
 @var{display}, which were concatenated to @var{command}; this is still
 supported, but strongly discouraged.
 @end defun
