@@ -1885,7 +1885,7 @@ Like @code{lpr-buffer} but print only the current region.
 @findex lpr-region
 @vindex lpr-switches
 @vindex lpr-commands
-  On most operating system, the above hardcopy commands submit files
+  On most operating systems, the above hardcopy commands submit files
 for printing by calling the @command{lpr} program.  To change the
 printer program, customize the variable @code{lpr-command}.  To
 specify extra switches to give the printer program, customize the list

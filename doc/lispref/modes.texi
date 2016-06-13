@@ -899,7 +899,7 @@ follow these conventions: they may run the parent's mode hook too early,
 or fail to run @code{after-change-major-mode-hook}.  If you encounter
 such a major mode, please correct it to follow these conventions.
 
-  When you defined a major mode using @code{define-derived-mode}, it
+  When you define a major mode using @code{define-derived-mode}, it
 automatically makes sure these conventions are followed.  If you
 define a major mode ``by hand'', not using @code{define-derived-mode},
 use the following functions to handle these conventions automatically.
@@ -1048,7 +1048,7 @@ to invert the sort order.
 @defun tabulated-list-init-header
 This function computes and sets @code{header-line-format} for the
 Tabulated List buffer (@pxref{Header Lines}), and assigns a keymap to
-the header line to allow sort entries by clicking on column headers.
+the header line to allow sorting entries by clicking on column headers.
 
 Modes derived from Tabulated List mode should call this after setting
 the above variables (in particular, only after setting

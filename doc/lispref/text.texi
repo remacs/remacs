@@ -1376,10 +1376,10 @@ before executing each key sequence, so that each undo normally undoes
 the effects of one command.  A few exceptional commands are
 @dfn{amalgamating}: these commands generally cause small changes to
 buffers, so with these a boundary is inserted only every 20th command,
-allowing to undo them as a group.  By default, commands
+allowing the changes to be undone as a group.  By default, the commands
 @code{self-insert-command}, which produces self-inserting input
-characters (@pxref{Commands for Insertion}), and @code{delete-char}
-which deletes characters (@pxref{Deletion}) are amalgamating.
+characters (@pxref{Commands for Insertion}), and @code{delete-char},
+which deletes characters (@pxref{Deletion}), are amalgamating.
 Where a command affects the contents of several buffers, as may happen,
 for example, when a function on the @code{post-command-hook} affects a
 buffer other than the @code{current-buffer}, then @code{undo-boundary}

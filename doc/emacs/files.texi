@@ -701,7 +701,7 @@ after it visits the file.  (This marks the buffer as modified, and you
 can undo it.)  If the value is @code{visit-save}, Emacs adds such
 newlines both on visiting and on saving.  If the value is @code{nil},
 Emacs leaves the end of the file unchanged; any other non-@code{nil}
-value means to asks you whether to add a newline.  The default is
+value means Emacs asks you whether to add a newline.  The default is
 @code{nil}.
 
 @vindex mode-require-final-newline

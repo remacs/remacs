@@ -1011,7 +1011,7 @@ scroll bar height, change the @code{scroll-bar-height} frame parameter
 
   On graphical displays, you can use @dfn{window dividers} in order to
 separate windows visually.  Window dividers are bars that can be dragged
-with the mouse, thus allowing to easily resize adjacent windows.
+with the mouse, thus allowing you to easily resize adjacent windows.
 
 @findex window-divider-mode
   To toggle the display of window dividers, use the command @kbd{M-x
