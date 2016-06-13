@@ -216,6 +216,7 @@ tzlookup (Lisp_Object zone, bool settz)
     {
       block_input ();
       emacs_setenv_TZ (zone_string);
+      tzset ();
       timezone_t old_tz = local_tz;
       local_tz = new_tz;
       tzfree (old_tz);
@@ -2458,23 +2459,24 @@ emacs_setenv_TZ (const char *tzstring)
       tzval[tzeqlen] = 0;
     }
 
-  if (new_tzvalbuf
-#ifdef WINDOWSNT
-      /* MS-Windows implementation of 'putenv' copies the argument
-	 string into a block it allocates, so modifying tzval string
-	 does not change the environment.  OTOH, the other threads run
-	 by Emacs on MS-Windows never call 'xputenv' or 'putenv' or
-	 'unsetenv', so the original cause for the dicey in-place
-	 modification technique doesn't exist there in the first
-	 place.  */
-      || 1
+
+#ifndef WINDOWSNT
+  /* Modifying *TZVAL merely requires calling tzset (which is the
+     caller's responsibility).  However, modifying TZVAL requires
+     calling putenv; although this is not thread-safe, in practice this
+     runs only on startup when there is only one thread.  */
+  bool need_putenv = new_tzvalbuf;
+#else
+  /* MS-Windows 'putenv' copies the argument string into a block it
+     allocates, so modifying *TZVAL will not change the environment.
+     However, the other threads run by Emacs on MS-Windows never call
+     'xputenv' or 'putenv' or 'unsetenv', so the original cause for the
+     dicey in-place modification technique doesn't exist there in the
+     first place.  */
+  bool need_putenv = true;
 #endif
-      )
-    {
-      /* Although this is not thread-safe, in practice this runs only
-	 on startup when there is only one thread.  */
-      xputenv (tzval);
-    }
+  if (need_putenv)
+    xputenv (tzval);
 
   return 0;
 }
