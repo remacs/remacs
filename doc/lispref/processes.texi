@@ -1382,10 +1382,10 @@ subprocess with a @code{SIGHUP} signal (@pxref{Signals to Processes}).
 @end defun
 
 If the process's buffer is displayed in a window, your Lisp program
-may wish telling the process the dimensions of that window, so that
+may wish to tell the process the dimensions of that window, so that
 the process could adapt its output to those dimensions, much as it
-adapts to the screen dimensions.  The following functions allow to
-communicate this kind of information to processes; however, not all
+adapts to the screen dimensions.  The following functions allow
+communicating this kind of information to processes; however, not all
 systems support the underlying functionality, so it is best to provide
 fallbacks, e.g., via command-line arguments or environment variables.
 
