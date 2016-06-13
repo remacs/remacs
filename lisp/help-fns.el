@@ -514,7 +514,8 @@ FILE is the file where FUNCTION was probably defined."
 		real-function))
 	 (aliased (or (symbolp def)
 		      ;; Advised & aliased function.
-		      (and advised (symbolp real-function))))
+		      (and advised (symbolp real-function)
+			   (not (eq 'autoload (car-safe def))))))
 	 (real-def (cond
 		    (aliased (let ((f real-function))
 			       (while (and (fboundp f)
