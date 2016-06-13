@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2016-05-28.16}
+\def\texinfoversion{2016-06-07.21}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -1192,6 +1192,7 @@ where each line of input produces a line of output.}
   \ifx\pdfescapestring\thisisundefined
     % No primitive available; should we give a warning or log?
     % Many times it won't matter.
+    \xdef#1{#1}%
   \else
     % The expandable \pdfescapestring primitive escapes parentheses,
     % backslashes, and other special chars.
@@ -1311,8 +1312,10 @@ output) for that.)}
     % We have to set dummies so commands such as @code, and characters
     % such as \, aren't expanded when present in a section title.
     \indexnofonts
-    \turnoffactive
     \makevalueexpandable
+    \turnoffactive
+    % Use ASCII approximations in destination names.
+    \passthroughcharsfalse
     \def\pdfdestname{#1}%
     \txiescapepdf\pdfdestname
     \safewhatsit{\pdfdest name{\pdfdestname} xyz}%
@@ -1357,8 +1360,21 @@ output) for that.)}
       \fi
       %
       % Also escape PDF chars in the display string.
-      \edef\pdfoutlinetext{#1}%
-      \txiescapepdf\pdfoutlinetext
+      \bgroup
+        \ifx \declaredencoding \latone
+          % The PDF format can use an extended form of Latin-1 in bookmark
+          % strings.  See Appendix D of the PDF Reference, Sixth Edition, for
+          % the "PDFDocEncoding".
+          \passthroughcharstrue
+        \fi
+        \ifx \declaredencoding \utfeight
+          % TODO: the PDF format can use UTF-16 in bookmark strings, but the
+          % code for this isn't done yet.
+        \fi
+        \globaldefs=1
+        \edef\pdfoutlinetext{#1}%
+        \txiescapepdf\pdfoutlinetext
+      \egroup
       %
       \pdfoutline goto name{\pdfmkpgn{\pdfoutlinedest}}#2{\pdfoutlinetext}%
     }
@@ -10250,7 +10266,7 @@ directory should work if nowhere else does.}
   \countUTFx = "80
   \countUTFy = "C2
   \def\UTFviiiTmp{%
-    \gdef~{
+    \gdef~{%
         \ifpassthroughchars $\fi}}%
   \UTFviiiLoop
 
@@ -10301,6 +10317,15 @@ directory should work if nowhere else does.}
   \fi
 }
 
+% These macros are used here to construct the name of a control
+% sequence to be defined.
+\def\UTFviiiTwoOctetsName#1#2{%
+  \csname u8:#1\string #2\endcsname}%
+\def\UTFviiiThreeOctetsName#1#2#3{%
+  \csname u8:#1\string #2\string #3\endcsname}%
+\def\UTFviiiFourOctetsName#1#2#3#4{%
+  \csname u8:#1\string #2\string #3\string #4\endcsname}%
+
 % For UTF-8 byte sequence (TeX, e-TeX and pdfTeX)
 % Definition macro to replace the Unicode character
 % Definition macro that is used by @U command
@@ -10317,17 +10342,18 @@ directory should work if nowhere else does.}
     \countUTFz = "#1\relax
     \begingroup
       \parseXMLCharref
+    
+      % Give \u8:... its definition.  The sequence of seven \expandafter's
+      % expands after the \gdef three times, e.g.
       %
-      % Access definitions of characters given UTF-8 sequences
-      \def\UTFviiiTwoOctets##1##2{%
-        \csname u8:##1\string ##2\endcsname}%
-      \def\UTFviiiThreeOctets##1##2##3{%
-        \csname u8:##1\string ##2\string ##3\endcsname}%
-      \def\UTFviiiFourOctets##1##2##3##4{%
-        \csname u8:##1\string ##2\string ##3\string ##4\endcsname}%
-      \expandafter\expandafter\expandafter\expandafter
-       \expandafter\expandafter\expandafter
-       \gdef\UTFviiiTmp{#2}%
+      % 1.  \UTFviiTwoOctetsName B1 B2
+      % 2.  \csname u8:B1 \string B2 \endcsname
+      % 3.  \u8: B1 B2  (a single control sequence token)
+      %
+      \expandafter\expandafter
+      \expandafter\expandafter
+      \expandafter\expandafter
+      \expandafter\gdef       \UTFviiiTmp{#2}%
       % 
       \expandafter\ifx\csname uni:#1\endcsname \relax \else
        \message{Internal error, already defined: #1}%
@@ -10337,37 +10363,53 @@ directory should work if nowhere else does.}
       \expandafter\globallet\csname uni:#1\endcsname \UTFviiiTmp
     \endgroup}
   %
-  % Given the value in \countUTFz as a Unicode code point, set \UTFviiiTmp.
+  % Given the value in \countUTFz as a Unicode code point, set \UTFviiiTmp
+  % to the corresponding UTF-8 sequence.
   \gdef\parseXMLCharref{%
     \ifnum\countUTFz < "A0\relax
       \errhelp = \EMsimple
       \errmessage{Cannot define Unicode char value < 00A0}%
     \else\ifnum\countUTFz < "800\relax
       \parseUTFviiiA,%
-      \parseUTFviiiB C\UTFviiiTwoOctets.,%
+      \parseUTFviiiB C\UTFviiiTwoOctetsName.,%
     \else\ifnum\countUTFz < "10000\relax
       \parseUTFviiiA;%
       \parseUTFviiiA,%
-      \parseUTFviiiB E\UTFviiiThreeOctets.{,;}%
+      \parseUTFviiiB E\UTFviiiThreeOctetsName.{,;}%
     \else
       \parseUTFviiiA;%
       \parseUTFviiiA,%
       \parseUTFviiiA!%
-      \parseUTFviiiB F\UTFviiiFourOctets.{!,;}%
+      \parseUTFviiiB F\UTFviiiFourOctetsName.{!,;}%
     \fi\fi\fi
   }
 
+  % Extract a byte from the end of the UTF-8 representation of \countUTFx.
+  % It must be a non-initial byte in the sequence.
+  % Change \uccode of #1 for it to be used in \parseUTFviiiB as one
+  % of the bytes.
   \gdef\parseUTFviiiA#1{%
     \countUTFx = \countUTFz
     \divide\countUTFz by 64
-    \countUTFy = \countUTFz
+    \countUTFy = \countUTFz  % Save to be the future value of \countUTFz.
     \multiply\countUTFz by 64
+    
+    % \countUTFz is now \countUTFx with the last 5 bits cleared.  Subtract
+    % in order to get the last five bits.
     \advance\countUTFx by -\countUTFz
+
+    % Convert this to the byte in the UTF-8 sequence.
     \advance\countUTFx by 128
     \uccode `#1\countUTFx
     \countUTFz = \countUTFy}
 
-  % Used to set \UTFviiiTmp to a UTF-8 byte sequence
+  % Used to put a UTF-8 byte sequence into \UTFviiiTmp
+  % #1 is the increment for \countUTFz to yield a the first byte of the UTF-8
+  %    sequence.
+  % #2 is one of the \UTFviii*OctetsName macros.
+  % #3 is always a full stop (.)
+  % #4 is a template for the other bytes in the sequence.  The values for these
+  %    bytes is substituted in here with \uppercase using the \uccode's.
   \gdef\parseUTFviiiB#1#2#3#4{%
     \advance\countUTFz by "#10\relax
     \uccode `#3\countUTFz
