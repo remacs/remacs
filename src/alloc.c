@@ -468,6 +468,11 @@ static void *pure_alloc (size_t, int);
 		       ? ((x) + (y) - 1) - ((x) + (y) - 1) % (y)	\
 		       : ((x) + (y) - 1) & ~ ((y) - 1))
 
+/* Bug#23764  */
+#ifdef ALIGN
+# undef ALIGN
+#endif
+
 /* Return PTR rounded up to the next multiple of ALIGNMENT.  */
 
 static void *
