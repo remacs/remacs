@@ -481,15 +481,10 @@ store_function_docstring (Lisp_Object obj, ptrdiff_t offset)
 
   /* The type determines where the docstring is stored.  */
 
-  /* Lisp_Subrs have a slot for it.  */
-  if (SUBRP (fun))
-    {
-      intptr_t negative_offset = - offset;
-      XSUBR (fun)->doc = (char *) negative_offset;
-    }
-
   /* If it's a lisp form, stick it in the form.  */
-  else if (CONSP (fun))
+  if (CONSP (fun) && EQ (XCAR (fun), Qmacro))
+    fun = XCDR (fun);
+  if (CONSP (fun))
     {
       Lisp_Object tem;
 
@@ -503,8 +498,13 @@ store_function_docstring (Lisp_Object obj, ptrdiff_t offset)
 	       correctness is quite delicate.  */
 	    XSETCAR (tem, make_number (offset));
 	}
-      else if (EQ (tem, Qmacro))
-	store_function_docstring (XCDR (fun), offset);
+    }
+
+  /* Lisp_Subrs have a slot for it.  */
+  else if (SUBRP (fun))
+    {
+      intptr_t negative_offset = - offset;
+      XSUBR (fun)->doc = (char *) negative_offset;
     }
 
   /* Bytecode objects sometimes have slots for it.  */
