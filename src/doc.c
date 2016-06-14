@@ -339,16 +339,7 @@ string is passed through `substitute-command-keys'.  */)
   if (CONSP (fun) && EQ (XCAR (fun), Qmacro))
     fun = XCDR (fun);
   if (SUBRP (fun))
-    {
-      if (XSUBR (fun)->doc == 0)
-	return Qnil;
-      /* FIXME: This is not portable, as it assumes that string
-	 pointers have the top bit clear.  */
-      else if ((intptr_t) XSUBR (fun)->doc >= 0)
-	doc = build_string (XSUBR (fun)->doc);
-      else
-	doc = make_number ((intptr_t) XSUBR (fun)->doc);
-    }
+    doc = make_number (XSUBR (fun)->doc);
   else if (COMPILEDP (fun))
     {
       if ((ASIZE (fun) & PSEUDOVECTOR_SIZE_MASK) <= COMPILED_DOC_STRING)
@@ -473,7 +464,7 @@ aren't strings.  */)
 /* Scanning the DOC files and placing docstring offsets into functions.  */
 
 static void
-store_function_docstring (Lisp_Object obj, ptrdiff_t offset)
+store_function_docstring (Lisp_Object obj, EMACS_INT offset)
 {
   /* Don't use indirect_function here, or defaliases will apply their
      docstrings to the base functions (Bug#2603).  */
@@ -502,10 +493,7 @@ store_function_docstring (Lisp_Object obj, ptrdiff_t offset)
 
   /* Lisp_Subrs have a slot for it.  */
   else if (SUBRP (fun))
-    {
-      intptr_t negative_offset = - offset;
-      XSUBR (fun)->doc = (char *) negative_offset;
-    }
+    XSUBR (fun)->doc = offset;
 
   /* Bytecode objects sometimes have slots for it.  */
   else if (COMPILEDP (fun))

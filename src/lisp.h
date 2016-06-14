@@ -1752,7 +1752,7 @@ struct Lisp_Subr
     short min_args, max_args;
     const char *symbol_name;
     const char *intspec;
-    const char *doc;
+    EMACS_INT doc;
   };
 
 enum char_table_specials
