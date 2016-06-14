@@ -5750,8 +5750,9 @@ With non-nil argument FILE prompt for a file and complete only
 against categories in that file; otherwise complete against all
 categories from `todo-category-completions-files'."
   ;; Allow SPC to insert spaces, for adding new category names.
-  (let ((map minibuffer-local-completion-map))
-    (define-key map " " nil)
+  (let ((minibuffer-local-completion-map
+         (copy-keymap minibuffer-local-completion-map)))
+    (define-key minibuffer-local-completion-map " " 'self-insert-command)
     (let* ((add (eq match-type 'add))
 	   (archive (eq match-type 'archive))
 	   (file0 (when (and file (> (length todo-files) 1))
