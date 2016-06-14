@@ -3245,34 +3245,29 @@ fi
 
 ### Use -lXpm if available, unless '--with-xpm=no'.
 ### mingw32 doesn't use -lXpm, since it loads the library dynamically.
-### In the Cygwin-w32 build, we need to use /usr/include/noX/X11/xpm.h
-### rather than /usr/include/X11/xpm.h, so we set CPPFLAGS (and
-### LDFLAGS) accordingly.
+### The Cygwin-w32 build uses <noX/xpm.h> instead of <X11/xpm.h>, so
+### we need to set LDFLAGS accordingly.
 HAVE_XPM=no
 LIBXPM=
 if test "${HAVE_W32}" = "yes" && test "${opsys}" = "cygwin"; then
   if test "${with_xpm}" != "no"; then
-    SAVE_CPPFLAGS="$CPPFLAGS"
     SAVE_LDFLAGS="$LDFLAGS"
-    CPPFLAGS="$CPPFLAGS -I/usr/include/noX"
     LDFLAGS="$LDFLAGS -L/usr/lib/noX"
-    AC_CHECK_HEADER(X11/xpm.h,
+    AC_CHECK_HEADER(noX/xpm.h,
       [AC_CHECK_LIB(Xpm, XpmReadFileToImage, HAVE_XPM=yes)])
     if test "${HAVE_XPM}" = "yes"; then
       AC_MSG_CHECKING(for XpmReturnAllocPixels preprocessor define)
       AC_EGREP_CPP(no_return_alloc_pixels,
-      [#include "X11/xpm.h"
+      [#include "noX/xpm.h"
 #ifndef XpmReturnAllocPixels
 no_return_alloc_pixels
 #endif
       ], HAVE_XPM=no, HAVE_XPM=yes)
 
       if test "${HAVE_XPM}" = "yes"; then
-        REAL_CPPFLAGS="$REAL_CPPFLAGS -I/usr/include/noX"
 	AC_MSG_RESULT(yes)
       else
 	AC_MSG_RESULT(no)
-        CPPFLAGS="$SAVE_CPPFLAGS"
         LDFLAGS="$SAVE_LDFLAGS"
       fi
     fi

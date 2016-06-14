@@ -3159,16 +3159,18 @@ static bool xpm_load (struct frame *f, struct image *img);
 #define XColor xpm_XColor
 #define XImage xpm_XImage
 #define Display xpm_Display
-#define PIXEL_ALREADY_TYPEDEFED
+#ifdef CYGWIN
+#include "noX/xpm.h"
+#else  /* not CYGWIN */
 #include "X11/xpm.h"
+#endif	/* not CYGWIN */
 #undef FOR_MSW
 #undef XColor
 #undef XImage
 #undef Display
-#undef PIXEL_ALREADY_TYPEDEFED
-#else
+#else  /* not HAVE_NTGUI */
 #include "X11/xpm.h"
-#endif /* HAVE_NTGUI */
+#endif /* not HAVE_NTGUI */
 #endif /* HAVE_XPM */
 
 #if defined (HAVE_XPM) || defined (HAVE_NS)
