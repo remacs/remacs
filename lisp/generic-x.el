@@ -655,6 +655,10 @@ like an INI file.  You can add this hook to `find-file-hook'."
   nil
   '(("^\\s-*\\(\\[.*\\]\\)" 1 font-lock-constant-face)
     ("^\\s-*\\([^ \n\r]*\\)" 1 font-lock-function-name-face)
+    ;; Variable assignments must be x=y, so highlight as warning if
+    ;; the value is missing.
+    ("\\s-\\([^ =\n\r]+\\)[\n\r ]" 1 font-lock-warning-face)
+    ;; Variable assignments: x=y
     ("\\([^ =\n\r]+\\)=\\([^ \n\r]*\\)"
      (1 font-lock-variable-name-face)
      (2 font-lock-keyword-face)))
