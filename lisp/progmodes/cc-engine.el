@@ -7128,6 +7128,31 @@ comment at the start of cc-engine.el for more info."
      (prog1 (car ,ps)
        (setq ,ps (cdr ,ps)))))
 
+(defun c-back-over-compound-identifier ()
+  ;; Point is putatively just after a "compound identifier", i.e. something
+  ;; looking (in C++) like this "FQN::of::base::Class".  Move to the start of
+  ;; this construct and return t.  If the parsing fails, return nil, leaving
+  ;; point unchanged.
+  (let ((here (point))
+	end
+	)
+    (if (not (c-simple-skip-symbol-backward))
+	nil
+      (while
+	  (progn
+	    (setq end (point))
+	    (c-backward-syntactic-ws)
+	    (c-backward-token-2)
+	    (and
+	     c-opt-identifier-concat-key
+	     (looking-at c-opt-identifier-concat-key)
+	     (progn
+	       (c-backward-syntactic-ws)
+	       (c-simple-skip-symbol-backward))))
+	(setq end (point)))
+      (goto-char end)
+      t)))
+
 (defun c-back-over-member-initializer-braces ()
   ;; Point is just after a closing brace/parenthesis.  Try to parse this as a
   ;; C++ member initializer list, going back to just after the introducing ":"
@@ -7138,7 +7163,7 @@ comment at the start of cc-engine.el for more info."
 	  (when (not (c-go-list-backward))
 	    (throw 'done nil))
 	  (c-backward-syntactic-ws)
-	  (when (not (c-simple-skip-symbol-backward))
+	  (when (not (c-back-over-compound-identifier))
 	    (throw 'done nil))
 	  (c-backward-syntactic-ws)
 
@@ -7150,7 +7175,7 @@ comment at the start of cc-engine.el for more info."
 	    (when (not (c-go-list-backward))
 	      (throw 'done nil))
 	    (c-backward-syntactic-ws)
-	    (when (not (c-simple-skip-symbol-backward))
+	    (when (not (c-back-over-compound-identifier))
 	      (throw 'done nil))
 	    (c-backward-syntactic-ws))
 
@@ -7174,7 +7199,7 @@ comment at the start of cc-engine.el for more info."
      (when (not (c-go-list-backward))
        (throw 'done nil))
      (c-backward-syntactic-ws)
-     (when (not (c-simple-skip-symbol-backward))
+     (when (not (c-back-over-compound-identifier))
        (throw 'level nil))
      (c-backward-syntactic-ws)))
 
@@ -7196,7 +7221,7 @@ comment at the start of cc-engine.el for more info."
 		      (when (not (c-go-list-backward))
 			(throw 'done nil))
 		      (c-backward-syntactic-ws))
-		    (when (c-simple-skip-symbol-backward)
+		    (when (c-back-over-compound-identifier)
 		      (c-backward-syntactic-ws))
 		    (c-back-over-list-of-member-inits)
 		    (and (eq (char-before) ?:)
@@ -7212,7 +7237,7 @@ comment at the start of cc-engine.el for more info."
 		    (catch 'level
 		      (goto-char pos)
 		      (c-backward-syntactic-ws)
-		      (when (not (c-simple-skip-symbol-backward))
+		      (when (not (c-back-over-compound-identifier))
 			(throw 'level nil))
 		      (c-backward-syntactic-ws)
 		      (c-back-over-list-of-member-inits)
