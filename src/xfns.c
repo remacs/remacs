@@ -4286,7 +4286,7 @@ x_get_monitor_attributes_xrandr (struct x_display_info *dpyinfo)
   n_monitors = resources->noutput;
   monitors = xzalloc (n_monitors * sizeof *monitors);
 
-#ifdef RANDR13_LIBRARY
+#if RANDR13_LIBRARY
   if (randr13_avail)
     pxid = XRRGetOutputPrimary (dpy, dpyinfo->root_window);
 #endif
