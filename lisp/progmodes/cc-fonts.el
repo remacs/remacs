@@ -1447,48 +1447,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			(c-backward-over-enum-header)))))
 	      (c-forward-token-2)
 	      nil)
-
-	     (t
-	      ;; Are we at a declarator?  Try to go back to the declaration
-	      ;; to check this.  If we get there, check whether a "typedef"
-	      ;; is there, then fontify the declarators accordingly.
-	      (let ((decl-search-lim (c-determine-limit 1000))
-		    paren-state bod-res encl-pos is-typedef
-		    c-recognize-knr-p) ; Strictly speaking, bogus, but it
-				       ; speeds up lisp.h tremendously.
-		(save-excursion
-		  (if (c-back-over-member-initializers)
-		     t			; Can't be at a declarator
-		    (unless (or (eobp)
-				(looking-at "\\s(\\|\\s)"))
-		      (forward-char))
-		    (setq bod-res (car (c-beginning-of-decl-1 decl-search-lim)))
-		    (if (and (eq bod-res 'same)
-			     (save-excursion
-			       (c-backward-syntactic-ws)
-			       (eq (char-before) ?\})))
-			(c-beginning-of-decl-1 decl-search-lim))
-
-		    ;; We're now putatively at the declaration.
-		    (setq paren-state (c-parse-state))
-		    ;; At top level or inside a "{"?
-		    (if (or (not (setq encl-pos
-				       (c-most-enclosing-brace paren-state)))
-			    (eq (char-after encl-pos) ?\{))
-			(progn
-			  (when (looking-at c-typedef-key) ; "typedef"
-			    (setq is-typedef t)
-			    (goto-char (match-end 0))
-			    (c-forward-syntactic-ws))
-			  ;; At a real declaration?
-			  (if (memq (c-forward-type t) '(t known found decltype))
-			      (progn
-				(c-font-lock-declarators (point-max) t is-typedef)
-				nil)
-			    ;; False alarm.  Return t to go on to the next check.
-			    (goto-char start-pos)
-			    t))
-		      t)))))))
+	     (t t)))
 
 	  ;; It was a false alarm.  Check if we're in a label (or other
 	  ;; construct with `:' except bitfield) instead.
@@ -1544,6 +1503,47 @@ casts and declarations are fontified.  Used on level 2 and higher."
       (c-forward-syntactic-ws)
       (c-font-lock-declarators limit t nil)))
   nil)
+
+(defun c-font-lock-cut-off-declarators (limit)
+  ;; Fontify any declarators "cut off" from their declaring type at the start
+  ;; of the region being fontified.
+  ;;
+  ;; This function will be called from font-lock- for a region bounded by
+  ;; POINT and LIMIT, as though it were to identify a keyword for
+  ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
+  ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
+  ;; fontification".
+  (let ((decl-search-lim (c-determine-limit 1000))
+	paren-state bod-res is-typedef encl-pos
+	c-recognize-knr-p)		; Strictly speaking, bogus, but it
+					; speeds up lisp.h tremendously.
+    (save-excursion
+      (when (not (c-back-over-member-initializers))
+	(unless (or (eobp)
+		    (looking-at "\\s(\\|\\s)"))
+	  (forward-char))
+	(setq bod-res (car (c-beginning-of-decl-1 decl-search-lim)))
+	(if (and (eq bod-res 'same)
+		 (save-excursion
+		   (c-backward-syntactic-ws)
+		   (eq (char-before) ?\})))
+	    (c-beginning-of-decl-1 decl-search-lim))
+
+	;; We're now putatively at the declaration.
+	(setq paren-state (c-parse-state))
+	;; At top level or inside a "{"?
+	(if (or (not (setq encl-pos
+			   (c-most-enclosing-brace paren-state)))
+		(eq (char-after encl-pos) ?\{))
+	    (progn
+	      (when (looking-at c-typedef-key) ; "typedef"
+		(setq is-typedef t)
+		(goto-char (match-end 0))
+		(c-forward-syntactic-ws))
+	      ;; At a real declaration?
+	      (if (memq (c-forward-type t) '(t known found decltype))
+		  (c-font-lock-declarators (point-max) t is-typedef)))
+	  nil)))))
 
 (defun c-font-lock-enclosing-decls (limit)
   ;; Fontify the declarators of (nested) declarations we're in the middle of.
@@ -1714,6 +1714,10 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		'((c-put-char-property (1- (match-end 1))
 				       'c-type 'c-decl-end)))
 	      c-font-lock-objc-methods))
+
+      ;; Fontify declarators which have been cut off from their declaring
+      ;; types at the start of the region.
+      c-font-lock-cut-off-declarators
 
       ;; Fontify all declarations, casts and normal labels.
       c-font-lock-declarations
