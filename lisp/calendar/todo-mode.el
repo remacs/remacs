@@ -5753,7 +5753,8 @@ categories from `todo-category-completions-files'."
   (let ((minibuffer-local-completion-map
          (let ((map (make-sparse-keymap)))
            (set-keymap-parent map minibuffer-local-completion-map)
-           (define-key map " " nil))))
+           (define-key map " " nil)
+           map)))
     (let* ((add (eq match-type 'add))
 	   (archive (eq match-type 'archive))
 	   (file0 (when (and file (> (length todo-files) 1))
