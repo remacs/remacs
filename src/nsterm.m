@@ -3640,6 +3640,32 @@ ns_dumpglyphs_stretch (struct glyph_string *s)
 
 
 static void
+ns_draw_glyph_string_foreground (struct glyph_string *s)
+{
+  int x, flags;
+  struct font *font = s->font;
+
+  /* If first glyph of S has a left box line, start drawing the text
+     of S to the right of that box line.  */
+  if (s->face && s->face->box != FACE_NO_BOX
+      && s->first_glyph->left_box_line_p)
+    x = s->x + eabs (s->face->box_line_width);
+  else
+    x = s->x;
+
+  flags = s->hl == DRAW_CURSOR ? NS_DUMPGLYPH_CURSOR :
+    (s->hl == DRAW_MOUSE_FACE ? NS_DUMPGLYPH_MOUSEFACE :
+     (s->for_overlaps ? NS_DUMPGLYPH_FOREGROUND :
+      NS_DUMPGLYPH_NORMAL));
+
+  font->driver->draw
+    (s, s->cmp_from, s->nchars, x, s->ybase,
+     (flags == NS_DUMPGLYPH_NORMAL && !s->background_filled_p)
+     || flags == NS_DUMPGLYPH_MOUSEFACE);
+}
+
+
+static void
 ns_draw_composite_glyph_string_foreground (struct glyph_string *s)
 {
   int i, j, x;
@@ -3737,7 +3763,7 @@ ns_draw_glyph_string (struct glyph_string *s)
 {
   /* TODO (optimize): focus for box and contents draw */
   NSRect r[2];
-  int n, flags;
+  int n;
   char box_drawn_p = 0;
   struct font *font = s->face->font;
   if (! font) font = FRAME_FONT (s->f);
@@ -3807,11 +3833,6 @@ ns_draw_glyph_string (struct glyph_string *s)
         ns_maybe_dumpglyphs_background
           (s, s->first_glyph->type == COMPOSITE_GLYPH);
 
-      flags = s->hl == DRAW_CURSOR ? NS_DUMPGLYPH_CURSOR :
-        (s->hl == DRAW_MOUSE_FACE ? NS_DUMPGLYPH_MOUSEFACE :
-         (s->for_overlaps ? NS_DUMPGLYPH_FOREGROUND :
-          NS_DUMPGLYPH_NORMAL));
-
       if (s->hl == DRAW_CURSOR && s->w->phys_cursor_type == FILLED_BOX_CURSOR)
         {
           unsigned long tmp = NS_FACE_BACKGROUND (s->face);
@@ -3825,10 +3846,7 @@ ns_draw_glyph_string (struct glyph_string *s)
         if (isComposite)
           ns_draw_composite_glyph_string_foreground (s);
         else
-          font->driver->draw
-            (s, s->cmp_from, s->nchars, s->x, s->ybase,
-             (flags == NS_DUMPGLYPH_NORMAL && !s->background_filled_p)
-             || flags == NS_DUMPGLYPH_MOUSEFACE);
+          ns_draw_glyph_string_foreground (s);
       }
 
       {
