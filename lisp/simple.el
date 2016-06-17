@@ -2884,6 +2884,10 @@ REASON describes the reason that the boundary is being added; see
   "Check recently changed buffers and add a boundary if necessary.
 REASON describes the reason that the boundary is being added; see
 `undo-last-boundary' for more information."
+  ;; (Bug #23785) All commands should ensure that there is an undo
+  ;; boundary whether they have changed the current buffer or not.
+  (when (eq cause 'command)
+    (add-to-list 'undo-auto--undoably-changed-buffers (current-buffer)))
   (dolist (b undo-auto--undoably-changed-buffers)
           (when (buffer-live-p b)
             (with-current-buffer b
