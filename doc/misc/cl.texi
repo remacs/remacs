@@ -148,6 +148,11 @@ the beginning:
 You may wish to add such a statement to your init file, if you
 make frequent use of features from this package.
 
+Code that only uses macros from this package can enclose the above in
+@code{eval-when-compile}.  Internally, this library is divided into
+several files, @pxref{Organization}.  Your code should only ever load
+the main @file{cl-lib} file, which will load the others as needed.
+
 @node Organization
 @section Organization
 
