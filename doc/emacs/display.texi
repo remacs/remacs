@@ -853,9 +853,15 @@ to alter the amount of fontification applied by Font Lock mode, for
 major modes that support this feature.  The value should be a number
 (with 1 representing a minimal amount of fontification; some modes
 support levels as high as 3); or @code{t}, meaning ``as high as
-possible'' (the default).  You can also specify different numbers for
-particular major modes; for example, to use level 1 for C/C++ modes,
-and the default level otherwise, use the value
+possible'' (the default).  To be effective for a given file buffer,
+the customization of @code{font-lock-maximum-decoration} should be
+done @emph{before} the file is visited; if you already have the file
+visited in a buffer when you customize this variable, kill the buffer
+and visit the file again after the customization.
+
+You can also specify different numbers for particular major modes; for
+example, to use level 1 for C/C++ modes, and the default level
+otherwise, use the value
 
 @example
 '((c-mode . 1) (c++-mode . 1)))

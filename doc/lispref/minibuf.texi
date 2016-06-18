@@ -750,8 +750,8 @@ list contains elements of any other type, those are ignored.
 If @var{collection} is an obarray (@pxref{Creating Symbols}), the names
 of all symbols in the obarray form the set of permissible completions.
 
-If @var{collection} is a hash table, then the keys that are strings
-are the possible completions.  Other keys are ignored.
+If @var{collection} is a hash table, then the keys that are strings or
+symbols are the possible completions.  Other keys are ignored.
 
 You can also use a function as @var{collection}.  Then the function is
 solely responsible for performing completion; @code{try-completion}
