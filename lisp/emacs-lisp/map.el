@@ -43,6 +43,7 @@
 ;;; Code:
 
 (require 'seq)
+(eval-when-compile (require 'cl-lib))
 
 (pcase-defmacro map (&rest args)
   "Build a `pcase' pattern matching map elements.
@@ -282,27 +283,33 @@ MAP can be a list, hash-table or array."
   "Merge into a map of type TYPE all the key/value pairs in MAPS.
 
 MAP can be a list, hash-table or array."
-  (let (result)
+  (let ((result (map-into (pop maps) type)))
     (while maps
+      ;; FIXME: When `type' is `list', we get an O(N^2) behavior.
+      ;; For small tables, this is fine, but for large tables, we
+      ;; should probably use a hash-table internally which we convert
+      ;; to an alist in the end.
       (map-apply (lambda (key value)
-                (setf (map-elt result key) value))
-              (pop maps)))
-    (map-into result type)))
+                   (setf (map-elt result key) value))
+                 (pop maps)))
+    result))
 
 (defun map-merge-with (type function &rest maps)
   "Merge into a map of type TYPE all the key/value pairs in MAPS.
 When two maps contain the same key, call FUNCTION on the two
 values and use the value returned by it.
 MAP can be a list, hash-table or array."
-  (let (result)
+  (let ((result (map-into (pop maps) type))
+        (not-found (cons nil nil)))
     (while maps
       (map-apply (lambda (key value)
-                (setf (map-elt result key)
-                      (if (map-contains-key result key)
-                          (funcall function (map-elt result key) value)
-                        value)))
-              (pop maps)))
-    (map-into result type)))
+                   (cl-callf (lambda (old)
+                               (if (eq old not-found)
+                                   value
+                                 (funcall function old value)))
+                       (map-elt result key not-found)))
+                 (pop maps)))
+    result))
 
 (defun map-into (map type)
   "Convert the map MAP into a map of type TYPE.
