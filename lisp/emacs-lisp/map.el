@@ -260,7 +260,7 @@ MAP can be a list, hash-table or array."
     :hash-table (zerop (hash-table-count map))))
 
 (defun map-contains-key (map key &optional testfn)
-  "Return non-nil if MAP contain KEY, nil otherwise.
+  "If MAP contain KEY return KEY, nil otherwise.
 Equality is defined by TESTFN if non-nil or by `equal' if nil.
 
 MAP can be a list, hash-table or array."
