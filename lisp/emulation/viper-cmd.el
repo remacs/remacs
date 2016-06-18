@@ -631,7 +631,7 @@
 	     (viper-over-whitespace-line))
 	(indent-to-left-margin))
     (viper-add-newline-at-eob-if-necessary)
-    (viper-complete-complex-command-for-undo)
+    (viper-adjust-undo)
 
     (if (eq viper-current-state 'emacs-state)
 	(viper-restore-cursor-color 'after-emacs-mode)
@@ -1570,7 +1570,7 @@ If the prefix argument ARG is non-nil, it is used instead of `val'."
 	(if (and (eolp) (not (bolp)))
 	    (backward-char 1))
      ))
-  (viper-complete-complex-command-for-undo) ; take care of undo
+  (viper-adjust-undo) ; take care of undo
   ;; If the prev cmd was rotating the command ring, this means that `.' has
   ;; just executed a command from that ring.  So, push it on the ring again.
   ;; If we are just executing previous command , then don't push viper-d-com
@@ -1670,7 +1670,6 @@ invokes the command before that, etc."
 
     (undo-start)
     (undo-more 2)
-    (viper-complete-complex-command-for-undo)
     ;;(setq undo-beg-posn (or undo-beg-posn (point))
     ;;    undo-end-posn (or undo-end-posn (point)))
     ;;(setq undo-beg-posn (or undo-beg-posn before-undo-pt)
@@ -1710,17 +1709,41 @@ invokes the command before that, etc."
 ;; The following two functions are used to set up undo properly.
 ;; In VI, unlike Emacs, if you open a line, say, and add a bunch of lines,
 ;; they are undone all at once.
-(defun viper-complete-complex-command-for-undo ()
-  (setq undo-auto-disable-boundaries nil)
-  (setq viper-undo-in-complex-command nil)
-  (undo-boundary))
+(defun viper-adjust-undo ()
+  (if viper-undo-needs-adjustment
+      (let ((inhibit-quit t)
+	    tmp tmp2)
+	(setq viper-undo-needs-adjustment nil)
+	(when (listp buffer-undo-list)
+          (let ((had-boundary (null (car buffer-undo-list))))
+            (if (setq tmp (memq viper-buffer-undo-list-mark buffer-undo-list))
+		(progn
+		  (setq tmp2 (cdr tmp)) ; the part after mark
+
+		  ;; cut tail from buffer-undo-list temporarily by direct
+		  ;; manipulation with pointers in buffer-undo-list
+		  (setcdr tmp nil)
+
+		  (setq buffer-undo-list (delq nil buffer-undo-list))
+		  (setq buffer-undo-list
+			(delq viper-buffer-undo-list-mark buffer-undo-list))
+		  ;; restore tail of buffer-undo-list
+		  (setq buffer-undo-list (nconc buffer-undo-list tmp2)))
+	      (setq buffer-undo-list (delq nil buffer-undo-list)))
+            ;; The top-level loop only adds boundaries if there has been
+            ;; modifications in the buffer, so make sure we don't accidentally
+            ;; drop the "final" boundary (bug#22295).
+	    (if had-boundary (undo-boundary)))))))
 
 
 (defun viper-set-complex-command-for-undo ()
-  (when (not viper-undo-in-complex-command)
-    (setq undo-auto-disable-boundaries t)
-    (setq viper-undo-in-complex-command t)
-    (undo-boundary)))
+  (if (listp buffer-undo-list)
+      (if (not viper-undo-needs-adjustment)
+	  (let ((inhibit-quit t))
+	    (setq buffer-undo-list
+		  (cons viper-buffer-undo-list-mark buffer-undo-list))
+	    (setq viper-undo-needs-adjustment t)))))
+
 
 ;;; Viper's destructive Command ring utilities
 
@@ -2588,7 +2611,7 @@ These keys are ESC, RET, and LineFeed."
 		(delete-char 1 t)
 		(insert char))
 
-    (viper-complete-complex-command-for-undo)
+    (viper-adjust-undo)
     (backward-char arg)
     ))
 

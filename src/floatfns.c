@@ -185,8 +185,8 @@ If X is zero, both parts (SGNFCAND and EXP) are zero.  */)
 }
 
 DEFUN ("ldexp", Fldexp, Sldexp, 2, 2, 0,
-       doc: /* Return X * 2**EXP, as a floating point number.
-EXP must be an integer.   */)
+       doc: /* Return SGNFCAND * 2**EXPONENT, as a floating point number.
+EXPONENT must be an integer.   */)
   (Lisp_Object sgnfcand, Lisp_Object exponent)
 {
   CHECK_NUMBER (exponent);

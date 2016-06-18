@@ -6494,8 +6494,8 @@ REPLACEMENT is a face specification, i.e. one of the following:
   (3) a list in which each element has the form of (1) or (2).
 
 List values for REPLACEMENT are merged to form the final face
-specification, with earlier entries taking precedence, in the same as
-as in the `face' text property.
+specification, with earlier entries taking precedence, in the same way
+as with the `face' text property.
 
 Face-name remapping cycles are suppressed; recursive references use
 the underlying face instead of the remapped face.  So a remapping of

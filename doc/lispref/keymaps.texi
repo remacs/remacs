@@ -1382,7 +1382,7 @@ default global map.
   The function @code{substitute-key-definition} scans a keymap for
 keys that have a certain binding and rebinds them with a different
 binding.  Another feature which is cleaner and can often produce the
-same results to remap one command into another (@pxref{Remapping
+same results is to remap one command into another (@pxref{Remapping
 Commands}).
 
 @defun substitute-key-definition olddef newdef keymap &optional oldmap

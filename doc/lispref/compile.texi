@@ -438,7 +438,7 @@ Emacs commands for operating on compiler output can be used on these
 messages.
 
   When an error is due to invalid syntax in the program, the byte
-compiler might get confused about the errors' exact location.  One way
+compiler might get confused about the error's exact location.  One way
 to investigate is to switch to the buffer @w{@file{ *Compiler
 Input*}}.  (This buffer name starts with a space, so it does not show
 up in the Buffer Menu.)  This buffer contains the program being
