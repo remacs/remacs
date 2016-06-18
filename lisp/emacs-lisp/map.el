@@ -4,7 +4,7 @@
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: convenience, map, hash-table, alist, array
-;; Version: 1.0
+;; Version: 1.1
 ;; Package: map
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -201,6 +201,16 @@ MAP can be a list, hash-table or array."
            function
            map))
 
+(defun map-do (function map)
+  "Apply FUNCTION to each element of MAP and return nil.
+FUNCTION.is called with two arguments, the key and the value."
+  (funcall (map--dispatch map
+             :list #'map--do-alist
+             :hash-table #'maphash
+             :array #'map--do-array)
+           function
+           map))
+
 (defun map-keys-apply (function map)
   "Return the result of applying FUNCTION to each key of MAP.
 
@@ -353,6 +363,20 @@ MAP can be a list, hash-table or array."
                    (funcall function index elt)
                  (setq index (1+ index))))
              map)))
+
+(defun map--do-alist (function alist)
+  "Private function used to iterate over ALIST using FUNCTION."
+  (seq-do (lambda (pair)
+            (funcall function
+                     (car pair)
+                     (cdr pair)))
+          alist))
+
+(defun map--do-array (function array)
+  "Private function usde to iterate over ARRAY using FUNCTION."
+  (seq-do-indexed (lambda (elt index)
+                     (funcall function index elt))
+                   array))
 
 (defun map--into-hash-table (map)
   "Convert MAP into a hash-table."
