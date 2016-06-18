@@ -886,6 +886,8 @@ in the repository.")
     ("ED.WORSHIP" . "JOKES")
     ("GNU.JOKES" . "JOKES")
     ("CHARACTERS" . "TODO")
+    ("lisp/character-fold.el" . "lisp/char-fold.el")
+    ("test/automated/character-fold-tests.el" . "test/automated/char-fold-tests.el")
     ("images/gnus/mail_send.xpm" . "mail-send.xpm") ; still in images/gnus
     ;; Renamed within same directory.
     ("schema/xhtml-basic-form.rnc" . "xhtml-bform.rnc" )

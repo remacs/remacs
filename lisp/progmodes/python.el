@@ -2700,6 +2700,7 @@ variable.
 \(Type \\[describe-mode] in the process buffer for a list of commands.)"
   (when python-shell--parent-buffer
     (python-util-clone-local-variables python-shell--parent-buffer))
+  (set (make-local-variable 'indent-tabs-mode) nil)
   ;; Users can interactively override default values for
   ;; `python-shell-interpreter' and `python-shell-interpreter-args'
   ;; when calling `run-python'.  This ensures values let-bound in
@@ -4313,12 +4314,47 @@ returns will be used.  If not FORCE-PROCESS is passed what
         (unless (zerop (length docstring))
           docstring)))))
 
+(defvar-local python-eldoc-get-doc t
+  "Non-nil means eldoc should fetch the documentation
+  automatically. Set to nil by `python-eldoc-function' if
+  `python-eldoc-function-timeout-permanent' is non-nil and
+  `python-eldoc-function' times out.")
+
+(defcustom python-eldoc-function-timeout 1
+  "Timeout for `python-eldoc-function' in seconds."
+  :group 'python
+  :type 'integer
+  :version "25.1")
+
+(defcustom python-eldoc-function-timeout-permanent t
+  "Non-nil means that when `python-eldoc-function' times out
+`python-eldoc-get-doc' will be set to nil"
+  :group 'python
+  :type 'boolean
+  :version "25.1")
+
 (defun python-eldoc-function ()
   "`eldoc-documentation-function' for Python.
 For this to work as best as possible you should call
 `python-shell-send-buffer' from time to time so context in
-inferior Python process is updated properly."
-  (python-eldoc--get-doc-at-point))
+inferior Python process is updated properly.
+
+If `python-eldoc-function-timeout' seconds elapse before this
+function returns then if
+`python-eldoc-function-timeout-permanent' is non-nil
+`python-eldoc-get-doc' will be set to nil and eldoc will no
+longer return the documentation at the point automatically.
+
+Set `python-eldoc-get-doc' to t to reenable eldoc documentation
+fetching"
+  (when python-eldoc-get-doc
+    (with-timeout (python-eldoc-function-timeout
+                   (if python-eldoc-function-timeout-permanent
+                       (progn
+                         (message "Eldoc echo-area display muted in this buffer, see `python-eldoc-function'")
+                         (setq python-eldoc-get-doc nil))
+                     (message "`python-eldoc-function' timed out, see `python-eldoc-function-timeout'")))
+      (python-eldoc--get-doc-at-point))))
 
 (defun python-eldoc-at-point (symbol)
   "Get help on SYMBOL using `help'.

@@ -575,7 +575,12 @@ command alters the kill ring or not."
   (mouse-minibuffer-check click)
   (select-window (posn-window (event-start click)))
   (let ((beg (posn-point (event-start click)))
-	(end (posn-point (event-end click)))
+        (end
+         (if (eq (posn-window (event-end click)) (selected-window))
+             (posn-point (event-end click))
+           ;; If the mouse ends up in any other window or on the menu
+           ;; bar, use `window-point' of selected window (Bug#23707).
+           (window-point)))
         (click-count (event-click-count click)))
     (let ((drag-start (terminal-parameter nil 'mouse-drag-start)))
       (when drag-start

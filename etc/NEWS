@@ -2177,7 +2177,8 @@ codeset is "UTF-8" (as in "en_US.UTF-8").  This is needed because
 MS-Windows doesn't support UTF-8 as codeset in its locales.
 
 +++
-** New function 'alist-get', which is also a valid place (aka lvalue).
+** New function 'alist-get', which is a generalized variable
+suitable for use with 'setf'.
 
 +++
 ** New function 'funcall-interactively', which works like 'funcall'

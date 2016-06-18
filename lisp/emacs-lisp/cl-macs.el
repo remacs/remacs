@@ -851,9 +851,9 @@ This is compatible with Common Lisp, but note that `defun' and
   "The Common Lisp `loop' macro.
 Valid clauses include:
   For clauses:
-    for VAR from/upfrom/downfrom EXPR1 to/upto/downto/above/below EXPR2 by EXPR3
+    for VAR from/upfrom/downfrom EXPR1 to/upto/downto/above/below EXPR2 [by EXPR3]
     for VAR = EXPR1 then EXPR2
-    for VAR in/on/in-ref LIST by FUNC
+    for VAR in/on/in-ref LIST [by FUNC]
     for VAR across/across-ref ARRAY
     for VAR being:
       the elements of/of-ref SEQUENCE [using (index VAR2)]
