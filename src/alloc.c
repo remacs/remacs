@@ -486,15 +486,10 @@ static void *pure_alloc (size_t, int);
 		       ? ((x) + (y) - 1) - ((x) + (y) - 1) % (y)	\
 		       : ((x) + (y) - 1) & ~ ((y) - 1))
 
-/* Bug#23764  */
-#ifdef ALIGN
-# undef ALIGN
-#endif
-
 /* Return PTR rounded up to the next multiple of ALIGNMENT.  */
 
 static void *
-ALIGN (void *ptr, int alignment)
+pointer_align (void *ptr, int alignment)
 {
   return (void *) ROUNDUP ((uintptr_t) ptr, alignment);
 }
@@ -1259,7 +1254,7 @@ lisp_align_malloc (size_t nbytes, enum mem_type type)
       abase = base = aligned_alloc (BLOCK_ALIGN, ABLOCKS_BYTES);
 #else
       base = malloc (ABLOCKS_BYTES);
-      abase = ALIGN (base, BLOCK_ALIGN);
+      abase = pointer_align (base, BLOCK_ALIGN);
 #endif
 
       if (base == 0)
@@ -5178,7 +5173,7 @@ pure_alloc (size_t size, int type)
     {
       /* Allocate space for a Lisp object from the beginning of the free
 	 space with taking account of alignment.  */
-      result = ALIGN (purebeg + pure_bytes_used_lisp, GCALIGNMENT);
+      result = pointer_align (purebeg + pure_bytes_used_lisp, GCALIGNMENT);
       pure_bytes_used_lisp = ((char *)result - (char *)purebeg) + size;
     }
   else
