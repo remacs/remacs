@@ -4,7 +4,7 @@
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: sequences
-;; Version: 2.16
+;; Version: 2.17
 ;; Package: seq
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -116,6 +116,16 @@ Return SEQUENCE."
   (mapc function sequence))
 
 (defalias 'seq-each #'seq-do)
+
+(defun seq-do-indexed (function sequence)
+  "Apply FUNCTION to each element of SEQUENCE and return nil.
+Unlike `seq-map', FUNCTION takes two arguments: the element of
+the sequence, and its index within the sequence."
+  (let ((index 0))
+    (seq-do (lambda (elt)
+               (funcall function elt index)
+               (setq index (1+ index)))
+             sequence)))
 
 (cl-defgeneric seqp (sequence)
   "Return non-nil if SEQUENCE is a sequence, nil otherwise."
