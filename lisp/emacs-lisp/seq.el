@@ -4,7 +4,7 @@
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: sequences
-;; Version: 2.17
+;; Version: 2.18
 ;; Package: seq
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -349,7 +349,8 @@ found or not."
   "Return the first element in SEQUENCE that is equal to ELT.
 Equality is defined by TESTFN if non-nil or by `equal' if nil."
   (seq-some (lambda (e)
-              (funcall (or testfn #'equal) elt e))
+              (when (funcall (or testfn #'equal) elt e)
+                e))
             sequence))
 
 (cl-defgeneric seq-position (sequence elt &optional testfn)

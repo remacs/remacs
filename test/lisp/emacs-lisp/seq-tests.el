@@ -181,6 +181,10 @@ Evaluate BODY for each created sequence.
     (should-not (seq-contains seq 3))
     (should-not (seq-contains seq nil))))
 
+(ert-deftest test-seq-contains-should-return-the-elt ()
+  (with-test-sequences (seq '(3 4 5 6))
+    (should (= 5 (seq-contains seq 5)))))
+
 (ert-deftest test-seq-every-p ()
   (with-test-sequences (seq '(43 54 22 1))
     (should (seq-every-p (lambda (elt) t) seq))
