@@ -7966,16 +7966,32 @@ comment at the start of cc-engine.el for more info."
 			      maybe-typeless
 			      backup-maybe-typeless
 			      (eq at-decl-or-cast t)
+			      ;; Check whether we have "bar (gnu);" where we
+			      ;; are directly inside a class (etc.) called "bar".
 			      (save-excursion
-				(goto-char name-start)
-				(not (memq (c-forward-type) '(nil maybe))))))
+				(and
+				 (progn
+				   (goto-char name-start)
+				   (not (memq (c-forward-type) '(nil maybe))))
+				 (progn
+				  (goto-char id-start)
+				  (c-directly-in-class-called-p
+				   (buffer-substring
+				    type-start
+				    (progn
+				      (goto-char type-start)
+				      (c-forward-type)
+				      (c-backward-syntactic-ws)
+				      (point)))))))))
 		 ;; Got a declaration of the form "foo bar (gnu);" or "bar
 		 ;; (gnu);" where we've recognized "bar" as the type and "gnu"
-		 ;; as the declarator.  In this case it's however more likely
-		 ;; that "bar" is the declarator and "gnu" a function argument
-		 ;; or initializer (if `c-recognize-paren-inits' is set),
-		 ;; since the parens around "gnu" would be superfluous if it's
-		 ;; a declarator.  Shift the type one step backward.
+		 ;; as the declarator, and in the latter case, checked that
+		 ;; "bar (gnu)" appears directly inside the class "bar".  In
+		 ;; this case it's however more likely that "bar" is the
+		 ;; declarator and "gnu" a function argument or initializer
+		 ;; (if `c-recognize-paren-inits' is set), since the parens
+		 ;; around "gnu" would be superfluous if it's a declarator.
+		 ;; Shift the type one step backward.
 		 (c-fdoc-shift-type-backward)))
 
 	   ;; Found no identifier.
@@ -9413,6 +9429,26 @@ comment at the start of cc-engine.el for more info."
 	(goto-char kwd-start))
 
       kwd-start)))
+
+(defun c-directly-in-class-called-p (name)
+  ;; Check whether point is directly inside a brace block which is the brace
+  ;; block of a class, struct, or union which is called NAME, a string.
+  (let* ((paren-state (c-parse-state))
+	 (brace-pos (c-pull-open-brace paren-state))
+	)
+    (when (eq (char-after brace-pos) ?{)
+      (goto-char brace-pos)
+      (save-excursion
+					; *c-looking-at-decl-block
+					; containing-sexp goto-start &optional
+					; limit)
+	(when (and (c-looking-at-decl-block
+		    (c-pull-open-brace paren-state)
+		    nil)
+		   (looking-at c-class-key))
+	  (goto-char (match-end 1))
+	  (c-forward-syntactic-ws)
+	  (looking-at name))))))
 
 (defun c-search-uplist-for-classkey (paren-state)
   ;; Check if the closest containing paren sexp is a declaration
