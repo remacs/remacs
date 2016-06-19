@@ -2752,7 +2752,11 @@ comment at the start of cc-engine.el for more info."
 	(setq ptr (cdr ptr)))
 
       (when (consp ptr)
-	(if (eq (cdr ptr) c-state-cache)
+	(if (or (eq (cdr ptr) c-state-cache)
+		(and (consp (cadr ptr))
+		     (> (cdr (cadr ptr)) (point-min)))) ; Our new point-min is
+							; inside a recorded
+							; brace pair.
 	    (setq c-state-cache nil
 		  c-state-cache-good-pos c-state-min-scan-pos)
 	  (setcdr ptr nil)
@@ -3603,7 +3607,7 @@ comment at the start of cc-engine.el for more info."
     conses-not-ok))
 
 (defun c-debug-parse-state ()
-  (let ((here (point)) (res1 (c-real-parse-state)) res2)
+  (let ((here (point)) (min-point (point-min)) (res1 (c-real-parse-state)) res2)
     (let ((c-state-cache nil)
 	  (c-state-cache-good-pos 1)
 	  (c-state-nonlit-pos-cache nil)
@@ -3630,8 +3634,8 @@ comment at the start of cc-engine.el for more info."
       ;; 			   "using cache: %s, from scratch: %s")
       ;; 		   here res1 res2)))
       (message (concat "c-parse-state inconsistency at %s: "
-		       "using cache: %s, from scratch: %s")
-	       here res1 res2)
+		       "using cache: %s, from scratch: %s.  POINT-MIN: %s")
+	       here res1 res2 min-point)
       (message "Old state:")
       (c-replay-parse-state-state))
 
