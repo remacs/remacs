@@ -45,7 +45,9 @@ files.")
   '(
     (nil "A\\. N\\. Other")  ; unknown author 2014-12-03, later removed
     ("Aaron S. Hawley" "Aaron Hawley")
+    ("Alan Third" "Alan J Third")
     ("Alexandru Harsanyi" "Alex Harsanyi")
+    ("Álvar Jesús Ibeas Martín" "Álvar Ibeas")
     ("Andrew Csillag" "Drew Csillag")
     ("Anna M. Bigatti" "Anna Bigatti")
     ("Barry A. Warsaw" "Barry A. Warsaw, Century Computing, Inc."
@@ -61,6 +63,7 @@ files.")
     ("David J. Biesack" "David Biesack")
     ("David De La Harpe Golden" "David Golden")
     ("David Gillespie" "Dave Gillespie")
+    ("David S. Goldberg" "Dave Goldberg")
     ("David Kågedal" "David K..edal")
     ("David M. Koppelman" "David Koppelman")
     ("David M. Smith" "David Smith" "David M Smith")
@@ -72,6 +75,7 @@ files.")
     ("Eric M. Ludlam" "Eric Ludlam")
     ("Eric S. Raymond" "Eric Raymond")
     ("Fabián Ezequiel Gallina" "Fabian Ezequiel Gallina" "Fabi.n E\\. Gallina")
+    ("Francis Litterio" "Fran Litterio")
     ("Francis J. Wright" "Dr Francis J. Wright" "Francis Wright")
     ("François Pinard" "Francois Pinard")
     ("Francesco Potortì" "Francesco Potorti" "Francesco Potorti`")
@@ -122,11 +126,12 @@ files.")
     ("Michaël Cadilhac" "Michael Cadilhac")
     ("Michael I. Bushnell" "Michael I Bushnell" "Michael I. Bushnell, p/BSG")
     ("Michael R. Cook" "Michael Cook")
-    ("Michael Sperber" "Michael Sperber \\[Mr. Preprocessor\\]")
+    ("Michael Sperber" "Mike Sperber" "Michael Sperber \\[Mr. Preprocessor\\]")
     ("Mikio Nakajima" "Nakajima Mikio")
     ("Nelson Jose dos Santos Ferreira" "Nelson Ferreira")
     ("Noorul Islam" "Noorul Islam K M")
 ;;;    ("Tetsurou Okazaki" "OKAZAKI Tetsurou") ; FIXME?
+    ("Óscar Fuentes" "Oscar Fuentes")
     ("Paul Eggert" "Paul R\\. Eggert")
     ("Pavel Janík" "Pavel Janík Ml." "Pavel Janik Ml." "Pavel Janik")
     ("Pavel Kobiakov" "Pavel Kobyakov")
@@ -136,6 +141,7 @@ files.")
     ("Peter S. Galbraith" "Peter S Galbraith" "Peter Galbraith")
     ("Peter Runestig" "Peter 'luna' Runestig")
     ("Piotr Zieliński" "Piotr Zielinski")
+    ("Przemysław Wojnowski" "Przemyslaw Wojnowski")
     ("Rainer Schöpf" "Rainer Schoepf")
     ("Raja R. Harinath" "Raja R Harinath")
     ("Richard G. Bielawski" "Richard G Bielawski" "Richard Bielawski")
@@ -143,13 +149,16 @@ files.")
     ("Richard M. Stallman" "Richard Stallman" "rms@gnu.org")
     ("Robert J. Chassell" "Bob Chassell")
     ("Roberto Huelga Díaz" "Roberto Huelga")
+    ("Rodney J. Whitby" "Rod Whitby")
     ("Roland B. Roberts" "Roland B Roberts" "Roland Roberts")
+    ("Ron Schnell" "Ronnie Schnell")
     ("Rui-Tao Dong" "Rui-Tao Dong ~{6-HpLN~}")
     ("Sacha Chua" "Sandra Jean Chua")
     ("Sam Steingold" "Sam Shteingold")
     ("Satyaki Das" "Indexed search by Satyaki Das")
     ("Sébastien Vauban" "Sebastien Vauban")
     ("Sergey Litvinov" "Litvinov Sergey")
+    ("Shun-ichi Goto" "Shun-ichi GOTO")
     ;; There are other Stefans.
 ;;;    ("Stefan Monnier" "Stefan")
     ("Steven L. Baur" "SL Baur" "Steven L Baur")
@@ -186,12 +195,14 @@ If REALNAME is nil, ignore that author.")
 ;; FIXME seems it would be less fragile to check for O', Mc, etc.
 (defconst authors-fixed-case
   '("Barry O'Reilly"
+    "Brian McKenna"
     "Brian van den Broek"
     "Bryan O'Sullivan"
     "Christian von Roques"
     "Christophe de Dinechin"
     "Craig McDaniel"
     "Daniel LaLiberte"
+    "Daniel McClanahan"
     "David J. MacKenzie"
     "David McCabe"
     "David O'Toole"
@@ -222,6 +233,7 @@ If REALNAME is nil, ignore that author.")
     "Shun-ichi Goto"
     "Thomas DeWeese"
     "Tijs van Bakel"
+    "Titus von der Malsburg"
     "Yu-ji Hosokawa")
   "List of authors whose names cannot be simply capitalized.")
 
