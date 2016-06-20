@@ -1040,26 +1040,25 @@ the file watch."
           ;; Run the test.
           (file-notify--test-with-events
               ;; There could be one or two `changed' events.
-              (append
-               (list
-                (append
-                 '(:random)
-                 ;; Directory monitor and file monitor.
-                 (make-list (/ n 2) 'changed)
-                 (make-list (/ n 2) 'changed)
-                 ;; Just the directory monitor.
-                 (make-list (/ n 2) 'created)
-                 (make-list (/ n 2) 'changed))
-                (append
-                 '(:random)
-                 ;; Directory monitor and file monitor.
-                 (make-list (/ n 2) 'changed)
-                 (make-list (/ n 2) 'changed)
-                 (make-list (/ n 2) 'changed)
-                 (make-list (/ n 2) 'changed)
-                 ;; Just the directory monitor.
-                 (make-list (/ n 2) 'created)
-                 (make-list (/ n 2) 'changed))))
+              (list
+               (append
+                '(:random)
+                ;; Directory monitor and file monitor.
+                (make-list (/ n 2) 'changed)
+                (make-list (/ n 2) 'changed)
+                ;; Just the directory monitor.
+                (make-list (/ n 2) 'created)
+                (make-list (/ n 2) 'changed))
+               (append
+                '(:random)
+                ;; Directory monitor and file monitor.
+                (make-list (/ n 2) 'changed)
+                (make-list (/ n 2) 'changed)
+                (make-list (/ n 2) 'changed)
+                (make-list (/ n 2) 'changed)
+                ;; Just the directory monitor.
+                (make-list (/ n 2) 'created)
+                (make-list (/ n 2) 'changed)))
             (dotimes (i n)
               (read-event nil nil file-notify--test-read-event-timeout)
               (if (zerop (mod i 2))
