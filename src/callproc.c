@@ -1099,7 +1099,7 @@ add_env (char **env, char **new_env, char *string)
       char *p = *ep, *q = string;
       while (ok)
 	{
-	  if (*q != *p)
+	  if (*p && *q != *p)
 	    break;
 	  if (*q == 0)
 	    /* The string is a lone variable name; keep it for now, we
