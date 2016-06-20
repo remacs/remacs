@@ -292,6 +292,7 @@ Changes to files matching one of the regexps in this list are not listed.")
     "gfdl.1"
     "texi/Makefile.in"
     "autodeps.mk"
+    "lwlib/autodeps.mk"
     "oldXMenu/autodeps.mk"
     "src/autodeps.mk"
     "Imakefile" "icons/sink.ico" "aixcc.lex"
@@ -383,9 +384,11 @@ Changes to files matching one of the regexps in this list are not listed.")
     "lib/qset-acl.c" "lib/qcopy-acl.c" "lib/file-has-acl.c"
     ;; files from old MS Windows build procedures
     "makefile.w32-in"
+    "admin/unidata/makefile.w32-in"
     "unidata/makefile.w32-in"
     "lib/makefile.w32-in"
     "leim/makefile.w32-in"
+    "lisp/makefile.w32-in"
     "src/makefile.w32-in"
     "nt/emacs-src.tags"
     "doc/emacs/makefile.w32-in"
@@ -704,8 +707,9 @@ Changes to files in this list are not listed.")
     "net/zone-mode.el" "xesam.el"
     "term/mac-win.el" "sup-mouse.el"
     "term/apollo.el"
-    "term/vt102.el" "term/vt125.el" "term/vt201.el" "term/vt220.el" "term/vt300.el"
-    "term/vt320.el" "term/vt400.el" "term/vt420.el"
+    "term/vt102.el" "term/vt125.el" "term/vt201.el" "term/vt220.el"
+    "term/vt240.el" "term/vt300.el" "term/vt320.el" "term/vt400.el"
+    "term/vt420.el"
     "url-https.el"
     "org-mac-message.el" "org-mew.el" "org-w3m.el" "org-vm.el" "org-wl.el"
     "org-mks.el" "org-remember.el" "org-xoxo.el" "org-docbook.el"
@@ -750,6 +754,7 @@ Changes to files in this list are not listed.")
     "emacsclient.c" "etags.c" "hexl.c" "make-docfile.c" "movemail.c"
     "test-distrib.c" "testfile"
     "tpu-edt.doc"			; see below
+    "lisp/obsolete/vc-mcvs.el"
     )
   "File names which are valid, but no longer exist (or cannot be found)
 in the repository.")
@@ -841,11 +846,14 @@ in the repository.")
     ("emulation/crisp.el" . "crisp.el")
     ("emulation/tpu-edt.el" . "tpu-edt.el")
     ("emulation/tpu-extras.el" . "tpu-extras.el")
+    ("emulation/tpu-mapper.el" . "tpu-mapper.el")
     ("emulation/vi.el" . "vi.el")
     ("emulation/vip.el" . "vip.el")
     ("emulation/ws-mode.el" . "ws-mode.el")
     ("mail/mailpost.el" . "mailpost.el")
+    ("net/eudcb-ph.el" . "eudcb-ph.el")
     ("play/bruce.el" . "bruce.el")
+    ("lisp/play/landmark.el" . "landmark.el")
     ("play/yow.el" . "yow.el")
     ("patcomp.el" . "patcomp.el")
     ("emulation/ws-mode.el" . "ws-mode.el")
@@ -926,6 +934,7 @@ in the repository.")
     ("grammars" . "grammars")
     ;; Moved from lisp/emacs-lisp/ to admin/.
     ("emacs-lisp/authors.el" . "authors.el")
+    ("emacs-lisp/find-gc.el" . "admin/find-gc.el")
     ;; From etc to lisp/cedet/semantic/.
     ("grammars/bovine-grammar.el" . "bovine/grammar.el")
     ("grammars/wisent-grammar.el" . "wisent/grammar.el")
