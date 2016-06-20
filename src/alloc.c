@@ -1178,16 +1178,18 @@ struct ablock
     char payload[BLOCK_BYTES];
     struct ablock *next_free;
   } x;
-  /* `abase' is the aligned base of the ablocks.  */
-  /* It is overloaded to hold the virtual `busy' field that counts
-     the number of used ablock in the parent ablocks.
-     The first ablock has the `busy' field, the others have the `abase'
-     field.  To tell the difference, we assume that pointers will have
-     integer values larger than 2 * ABLOCKS_SIZE.  The lowest bit of `busy'
-     is used to tell whether the real base of the parent ablocks is `abase'
-     (if not, the word before the first ablock holds a pointer to the
-     real base).  */
+
+  /* ABASE is the aligned base of the ablocks.  It is overloaded to
+     hold a virtual "busy" field that counts twice the number of used
+     ablock values in the parent ablocks, plus one if the real base of
+     the parent ablocks is ABASE (if the "busy" field is even, the
+     word before the first ablock holds a pointer to the real base).
+     The first ablock has a "busy" ABASE, and the others have an
+     ordinary pointer ABASE.  To tell the difference, the code assumes
+     that pointers, when cast to uintptr_t, are at least 2 *
+     ABLOCKS_SIZE + 1.  */
   struct ablocks *abase;
+
   /* The padding of all but the last ablock is unused.  The padding of
      the last ablock in an ablocks is not allocated.  */
 #if BLOCK_PADDING
@@ -1206,18 +1208,18 @@ struct ablocks
 
 #define ABLOCK_ABASE(block) \
   (((uintptr_t) (block)->abase) <= (1 + 2 * ABLOCKS_SIZE)	\
-   ? (struct ablocks *)(block)					\
+   ? (struct ablocks *) (block)					\
    : (block)->abase)
 
 /* Virtual `busy' field.  */
-#define ABLOCKS_BUSY(abase) ((abase)->blocks[0].abase)
+#define ABLOCKS_BUSY(a_base) ((a_base)->blocks[0].abase)
 
 /* Pointer to the (not necessarily aligned) malloc block.  */
 #ifdef USE_ALIGNED_ALLOC
 #define ABLOCKS_BASE(abase) (abase)
 #else
 #define ABLOCKS_BASE(abase) \
-  (1 & (intptr_t) ABLOCKS_BUSY (abase) ? abase : ((void **)abase)[-1])
+  (1 & (intptr_t) ABLOCKS_BUSY (abase) ? abase : ((void **) (abase))[-1])
 #endif
 
 /* The list of free ablock.   */
@@ -1243,7 +1245,7 @@ lisp_align_malloc (size_t nbytes, enum mem_type type)
   if (!free_ablock)
     {
       int i;
-      intptr_t aligned; /* int gets warning casting to 64-bit pointer.  */
+      bool aligned;
 
 #ifdef DOUG_LEA_MALLOC
       if (!mmap_lisp_allowed_p ())
@@ -1299,13 +1301,14 @@ lisp_align_malloc (size_t nbytes, enum mem_type type)
 	  abase->blocks[i].x.next_free = free_ablock;
 	  free_ablock = &abase->blocks[i];
 	}
-      ABLOCKS_BUSY (abase) = (struct ablocks *) aligned;
+      intptr_t ialigned = aligned;
+      ABLOCKS_BUSY (abase) = (struct ablocks *) ialigned;
 
-      eassert (0 == ((uintptr_t) abase) % BLOCK_ALIGN);
+      eassert ((uintptr_t) abase % BLOCK_ALIGN == 0);
       eassert (ABLOCK_ABASE (&abase->blocks[3]) == abase); /* 3 is arbitrary */
       eassert (ABLOCK_ABASE (&abase->blocks[0]) == abase);
       eassert (ABLOCKS_BASE (abase) == base);
-      eassert (aligned == (intptr_t) ABLOCKS_BUSY (abase));
+      eassert ((intptr_t) ABLOCKS_BUSY (abase) == aligned);
     }
 
   abase = ABLOCK_ABASE (free_ablock);
@@ -1341,12 +1344,14 @@ lisp_align_free (void *block)
   ablock->x.next_free = free_ablock;
   free_ablock = ablock;
   /* Update busy count.  */
-  ABLOCKS_BUSY (abase)
-    = (struct ablocks *) (-2 + (intptr_t) ABLOCKS_BUSY (abase));
+  intptr_t busy = (intptr_t) ABLOCKS_BUSY (abase) - 2;
+  eassume (0 <= busy && busy <= 2 * ABLOCKS_SIZE - 1);
+  ABLOCKS_BUSY (abase) = (struct ablocks *) busy;
 
-  if (2 > (intptr_t) ABLOCKS_BUSY (abase))
+  if (busy < 2)
     { /* All the blocks are free.  */
-      int i = 0, aligned = (intptr_t) ABLOCKS_BUSY (abase);
+      int i = 0;
+      bool aligned = busy;
       struct ablock **tem = &free_ablock;
       struct ablock *atop = &abase->blocks[aligned ? ABLOCKS_SIZE : ABLOCKS_SIZE - 1];
 
