@@ -4047,8 +4047,14 @@ by calling `format-decode', which see.  */)
 	 being called in insert_from_buffer (via in
 	 prepare_to_modify_buffer).  */
       specbind (intern ("buffer-file-name"), Qnil);
+
+      /* Temporarily enable the undo-buffer to ensure that the change
+         is marked as an undoable one. Bug #23785. */
+      bset_undo_list(current_buffer,Qnil);
       insert_from_buffer (XBUFFER (conversion_buffer),
 			  same_at_start_charpos, inserted_chars, 0);
+      bset_undo_list(current_buffer,Qt);
+
       /* Set `inserted' to the number of inserted characters.  */
       inserted = PT - temp;
       /* Set point before the inserted characters.  */
