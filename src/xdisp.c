@@ -5017,8 +5017,6 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	  || EQ (XCAR (spec), Qright_fringe))
       && CONSP (XCDR (spec)))
     {
-      int fringe_bitmap;
-
       if (it)
 	{
 	  if (!FRAME_WINDOW_P (it->f))
@@ -5042,6 +5040,8 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	return 1;
 
 #ifdef HAVE_WINDOW_SYSTEM
+      int fringe_bitmap;
+
       value = XCAR (XCDR (spec));
       if (!SYMBOLP (value)
 	  || !(fringe_bitmap = lookup_fringe_bitmap (value)))
@@ -19509,7 +19509,6 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	  struct text_pos saved_pos;
 	  Lisp_Object saved_object;
 	  struct face *face;
-	  struct glyph *g;
 
 	  saved_object = it->object;
 	  saved_pos = it->position;
@@ -19545,7 +19544,7 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	  /* Make sure this space glyph has the right ascent and
 	     descent values, or else cursor at end of line will look
 	     funny, and height of empty lines will be incorrect.  */
-	  g = it->glyph_row->glyphs[TEXT_AREA] + n;
+	  struct glyph *g = it->glyph_row->glyphs[TEXT_AREA] + n;
 	  struct font *font = face->font ? face->font : FRAME_FONT (it->f);
 	  if (n == 0)
 	    {
@@ -21687,7 +21686,9 @@ Value is the new character position of point.  */)
       int pt_x, target_x, pixel_width, pt_vpos;
       bool at_eol_p;
       bool overshoot_expected = false;
+#ifdef HAVE_WINDOW_SYSTEM
       bool target_is_eol_p = false;
+#endif
 
       /* Setup the arena.  */
       SET_TEXT_POS (pt, PT, PT_BYTE);
@@ -21802,7 +21803,9 @@ Value is the new character position of point.  */)
 	    {
 	      move_it_by_lines (&it, -1);
 	      target_x = it.last_visible_x - !FRAME_WINDOW_P (it.f);
+#ifdef HAVE_WINDOW_SYSTEM
 	      target_is_eol_p = true;
+#endif
 	      /* Under word-wrap, we don't know the x coordinate of
 		 the last character displayed on the previous line,
 		 which immediately precedes the wrap point.  To find
@@ -28594,7 +28597,11 @@ static void
 show_mouse_face (Mouse_HLInfo *hlinfo, enum draw_glyphs_face draw)
 {
   struct window *w = XWINDOW (hlinfo->mouse_face_window);
+#ifdef HAVE_WINDOW_SYSTEM
   struct frame *f = XFRAME (WINDOW_FRAME (w));
+#else
+  (void) XFRAME (WINDOW_FRAME (w));
+#endif
 
   if (/* If window is in the process of being destroyed, don't bother
 	 to do anything.  */
@@ -28605,7 +28612,9 @@ show_mouse_face (Mouse_HLInfo *hlinfo, enum draw_glyphs_face draw)
 	 anymore.  This can happen when a window is split.  */
       && hlinfo->mouse_face_end_row < w->current_matrix->nrows)
     {
+#ifdef HAVE_WINDOW_SYSTEM
       bool phys_cursor_on_p = w->phys_cursor_on_p;
+#endif
       struct glyph_row *row, *first, *last;
 
       first = MATRIX_ROW (w->current_matrix, hlinfo->mouse_face_beg_row);
@@ -29697,9 +29706,9 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
   Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
 #ifdef HAVE_WINDOW_SYSTEM
   Display_Info *dpyinfo;
-#endif
   Cursor cursor = No_Cursor;
   Lisp_Object pointer = Qnil;
+#endif
   int dx, dy, width, height;
   ptrdiff_t charpos;
   Lisp_Object string, object = Qnil;
@@ -29950,8 +29959,12 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 	       && hlinfo->mouse_face_beg_row == vpos )
 	    return;
 
+#ifdef HAVE_WINDOW_SYSTEM
 	  if (clear_mouse_face (hlinfo))
 	    cursor = No_Cursor;
+#else
+	  (void) clear_mouse_face (hlinfo);
+#endif
 
 	  if (!row->reversed_p)
 	    {
@@ -29985,8 +29998,10 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 	  show_mouse_face (hlinfo, DRAW_MOUSE_FACE);
 	  mouse_face_shown = true;
 
+#ifdef HAVE_WINDOW_SYSTEM
 	  if (NILP (pointer))
 	    pointer = Qhand;
+#endif
 	}
     }
 
@@ -30017,8 +30032,10 @@ note_mouse_highlight (struct frame *f, int x, int y)
   enum window_part part = ON_NOTHING;
   Lisp_Object window;
   struct window *w;
+#ifdef HAVE_WINDOW_SYSTEM
   Cursor cursor = No_Cursor;
   Lisp_Object pointer = Qnil;  /* Takes precedence over cursor!  */
+#endif
   struct buffer *b;
 
   /* When a menu is active, don't highlight because this looks odd.  */
@@ -30201,9 +30218,11 @@ note_mouse_highlight (struct frame *f, int x, int y)
 	      && glyph->type == STRETCH_GLYPH
 	      && glyph->avoid_cursor_p))
 	{
+#ifndef HAVE_WINDOW_SYSTEM
+	  (void) clear_mouse_face (hlinfo);
+#else  /* HAVE_WINDOW_SYSTEM */
 	  if (clear_mouse_face (hlinfo))
 	    cursor = No_Cursor;
-#ifdef HAVE_WINDOW_SYSTEM
 	  if (FRAME_WINDOW_P (f) && NILP (pointer))
 	    {
 	      if (area != TEXT_AREA)
@@ -30211,7 +30230,7 @@ note_mouse_highlight (struct frame *f, int x, int y)
 	      else
 		pointer = Vvoid_text_area_pointer;
 	    }
-#endif
+#endif	/* HAVE_WINDOW_SYSTEM */
 	  goto set_cursor;
 	}
 
@@ -30256,8 +30275,10 @@ note_mouse_highlight (struct frame *f, int x, int y)
 
       same_region = coords_in_mouse_face_p (w, hpos, vpos);
 
+#ifdef HAVE_WINDOW_SYSTEM
       if (same_region)
 	cursor = No_Cursor;
+#endif
 
       /* Check mouse-face highlighting.  */
       if (! same_region
@@ -30284,8 +30305,12 @@ note_mouse_highlight (struct frame *f, int x, int y)
 	  hlinfo->mouse_face_overlay = overlay;
 
 	  /* Clear the display of the old active region, if any.  */
+#ifdef HAVE_WINDOW_SYSTEM
 	  if (clear_mouse_face (hlinfo))
 	    cursor = No_Cursor;
+#else
+	  (void) clear_mouse_face (hlinfo);
+#endif
 
 	  /* If no overlay applies, get a text property.  */
 	  if (NILP (overlay))
@@ -30316,7 +30341,9 @@ note_mouse_highlight (struct frame *f, int x, int y)
 		= face_at_string_position (w, object, pos, 0, &ignore,
 					   glyph->face_id, true);
 	      show_mouse_face (hlinfo, DRAW_MOUSE_FACE);
+#ifdef HAVE_WINDOW_SYSTEM
 	      cursor = No_Cursor;
+#endif
 	    }
 	  else
 	    {
@@ -30400,7 +30427,9 @@ note_mouse_highlight (struct frame *f, int x, int y)
 					      : XFASTINT (after),
 					      before_string, after_string,
 					      disp_string);
+#ifdef HAVE_WINDOW_SYSTEM
 		  cursor = No_Cursor;
+#endif
 		}
 	    }
 	}

@@ -867,7 +867,11 @@ autocmp_chars (Lisp_Object rule, ptrdiff_t charpos, ptrdiff_t bytepos,
 	       Lisp_Object string)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
+#ifdef HAVE_WINDOW_SYSTEM
   struct frame *f = XFRAME (win->frame);
+#else
+  (void) XFRAME (win->frame);
+#endif
   Lisp_Object pos = make_number (charpos);
   ptrdiff_t to;
   ptrdiff_t pt = PT, pt_byte = PT_BYTE;

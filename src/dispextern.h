@@ -1843,8 +1843,11 @@ struct face_cache
 
 #else /* not HAVE_WINDOW_SYSTEM */
 
-#define FACE_SUITABLE_FOR_ASCII_CHAR_P(FACE, CHAR) true
-#define FACE_FOR_CHAR(F, FACE, CHAR, POS, OBJECT) ((FACE)->id)
+#define FACE_SUITABLE_FOR_ASCII_CHAR_P(FACE, CHAR)	   \
+  ((void) (FACE), (void) (CHAR), true)
+#define FACE_FOR_CHAR(F, FACE, CHAR, POS, OBJECT)	   \
+  ((void) (F), (void) (FACE), (void) (CHAR), (void) (POS), \
+   (void) (OBJECT), (FACE)->id)
 
 #endif /* not HAVE_WINDOW_SYSTEM */
 

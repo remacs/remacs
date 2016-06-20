@@ -2863,7 +2863,7 @@ font_open_entity (struct frame *f, Lisp_Object entity, int pixel_size)
   struct font_driver_list *driver_list;
   Lisp_Object objlist, size, val, font_object;
   struct font *font;
-  int min_width, height, psize;
+  int height, psize;
 
   eassert (FONT_ENTITY_P (entity));
   size = AREF (entity, FONT_SIZE_INDEX);
@@ -2907,10 +2907,12 @@ font_open_entity (struct frame *f, Lisp_Object entity, int pixel_size)
 	Fcons (font_object, AREF (entity, FONT_OBJLIST_INDEX)));
 
   font = XFONT_OBJECT (font_object);
-  min_width = (font->min_width ? font->min_width
-	       : font->average_width ? font->average_width
-	       : font->space_width ? font->space_width
-	       : 1);
+#ifdef HAVE_WINDOW_SYSTEM
+  int min_width = (font->min_width ? font->min_width
+		   : font->average_width ? font->average_width
+		   : font->space_width ? font->space_width
+		   : 1);
+#endif
 
   int font_ascent, font_descent;
   get_font_ascent_descent (font, &font_ascent, &font_descent);

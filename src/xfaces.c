@@ -5198,7 +5198,6 @@ realize_default_face (struct frame *f)
   struct face_cache *c = FRAME_FACE_CACHE (f);
   Lisp_Object lface;
   Lisp_Object attrs[LFACE_VECTOR_SIZE];
-  struct face *face;
 
   /* If the `default' face is not yet known, create it.  */
   lface = lface_from_face_name (f, Qdefault, false);
@@ -5288,10 +5287,11 @@ realize_default_face (struct frame *f)
   eassert (lface_fully_specified_p (XVECTOR (lface)->contents));
   check_lface (lface);
   memcpy (attrs, XVECTOR (lface)->contents, sizeof attrs);
-  face = realize_face (c, attrs, DEFAULT_FACE_ID);
 
-#ifdef HAVE_WINDOW_SYSTEM
-#ifdef HAVE_X_WINDOWS
+#ifndef HAVE_X_WINDOWS
+  (void) realize_face (c, attrs, DEFAULT_FACE_ID);
+#else  /* HAVE_X_WINDOWS */
+  struct face *face = realize_face (c, attrs, DEFAULT_FACE_ID);
   if (FRAME_X_P (f) && face->font != FRAME_FONT (f))
     {
       /* This can happen when making a frame on a display that does
@@ -5306,7 +5306,6 @@ realize_default_face (struct frame *f)
       x_set_font (f, LFACE_FONT (lface), Qnil);
     }
 #endif	/* HAVE_X_WINDOWS */
-#endif	/* HAVE_WINDOW_SYSTEM */
   return true;
 }
 

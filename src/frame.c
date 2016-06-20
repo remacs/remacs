@@ -113,8 +113,6 @@ window_system_available (struct frame *f)
   return f ? FRAME_WINDOW_P (f) || FRAME_MSDOS_P (f) : x_display_list != NULL;
 }
 
-#endif /* HAVE_WINDOW_SYSTEM */
-
 struct frame *
 decode_window_system_frame (Lisp_Object frame)
 {
@@ -125,6 +123,16 @@ decode_window_system_frame (Lisp_Object frame)
   return f;
 }
 
+#else  /* not HAVE_WINDOW_SYSTEM */
+
+_Noreturn void
+decode_window_system_frame (Lisp_Object frame)
+{
+  error ("Window system is not in use");
+}
+
+_Noreturn
+#endif	/* not HAVE_WINDOW_SYSTEM */
 void
 check_window_system (struct frame *f)
 {
@@ -2129,7 +2137,11 @@ DEFUN ("iconify-frame", Ficonify_frame, Siconify_frame,
 If omitted, FRAME defaults to the currently selected frame.  */)
   (Lisp_Object frame)
 {
+#ifdef HAVE_WINDOW_SYSTEM
   struct frame *f = decode_live_frame (frame);
+#else
+  (void) decode_live_frame (frame);
+#endif
 
   /* Don't allow minibuf_window to remain on an iconified frame.  */
   check_minibuf_window (frame, EQ (minibuf_window, selected_window));
@@ -3001,7 +3013,11 @@ or bottom edge of the outer frame of FRAME relative to the right or
 bottom edge of FRAME's display.  */)
   (Lisp_Object frame, Lisp_Object x, Lisp_Object y)
 {
+#ifdef HAVE_WINDOW_SYSTEM
   register struct frame *f = decode_live_frame (frame);
+#else
+  (void) decode_live_frame (frame);
+#endif
 
   CHECK_TYPE_RANGED_INTEGER (int, x);
   CHECK_TYPE_RANGED_INTEGER (int, y);

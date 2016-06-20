@@ -1102,21 +1102,23 @@ extern Lisp_Object selected_frame;
 extern int frame_default_tool_bar_height;
 #endif
 
-extern struct frame *decode_window_system_frame (Lisp_Object);
 extern struct frame *decode_live_frame (Lisp_Object);
 extern struct frame *decode_any_frame (Lisp_Object);
 extern struct frame *make_initial_frame (void);
 extern struct frame *make_frame (bool);
 #ifdef HAVE_WINDOW_SYSTEM
+extern void check_window_system (struct frame *);
+extern struct frame *decode_window_system_frame (Lisp_Object);
 extern struct frame *make_minibuffer_frame (void);
 extern struct frame *make_frame_without_minibuffer (Lisp_Object,
                                                     struct kboard *,
                                                     Lisp_Object);
 extern bool window_system_available (struct frame *);
 #else /* not HAVE_WINDOW_SYSTEM */
+extern _Noreturn void check_window_system (struct frame *);
+extern _Noreturn void decode_window_system_frame (Lisp_Object);
 #define window_system_available(f) ((void) (f), false)
 #endif /* HAVE_WINDOW_SYSTEM */
-extern void check_window_system (struct frame *);
 extern void frame_make_pointer_invisible (struct frame *);
 extern void frame_make_pointer_visible (struct frame *);
 extern Lisp_Object delete_frame (Lisp_Object, Lisp_Object);
@@ -1181,13 +1183,13 @@ extern Lisp_Object Vframe_list;
 
 #else /* not HAVE_WINDOW_SYSTEM */
 
-#define FRAME_FRINGE_COLS(F)	0
-#define FRAME_TOTAL_FRINGE_WIDTH(F)	0
-#define FRAME_LEFT_FRINGE_WIDTH(F)  0
-#define FRAME_RIGHT_FRINGE_WIDTH(F) 0
-#define FRAME_INTERNAL_BORDER_WIDTH(F) 0
-#define FRAME_RIGHT_DIVIDER_WIDTH(F) 0
-#define FRAME_BOTTOM_DIVIDER_WIDTH(F) 0
+#define FRAME_FRINGE_COLS(F) ((void) (F), 0)
+#define FRAME_TOTAL_FRINGE_WIDTH(F) ((void) (F), 0)
+#define FRAME_LEFT_FRINGE_WIDTH(F) ((void) (F), 0)
+#define FRAME_RIGHT_FRINGE_WIDTH(F) ((void) (F), 0)
+#define FRAME_INTERNAL_BORDER_WIDTH(F) ((void) (F), 0)
+#define FRAME_RIGHT_DIVIDER_WIDTH(F) ((void) (F), 0)
+#define FRAME_BOTTOM_DIVIDER_WIDTH(F) ((void) (F), 0)
 
 #endif /* not HAVE_WINDOW_SYSTEM */
 
