@@ -1423,7 +1423,8 @@ The difference to vc-do-command is that this function always invokes
   (let ((coding-system-for-read
          (or coding-system-for-read vc-git-log-output-coding-system))
 	(coding-system-for-write
-         (or coding-system-for-write vc-git-commits-coding-system)))
+         (or coding-system-for-write vc-git-commits-coding-system))
+        (process-environment (cons "GIT_DIR" process-environment)))
     (apply 'vc-do-command (or buffer "*vc*") okstatus vc-git-program
 	   ;; http://debbugs.gnu.org/16897
 	   (unless (and (not (cdr-safe file-or-list))
@@ -1451,6 +1452,7 @@ The difference to vc-do-command is that this function always invokes
 	(coding-system-for-write
          (or coding-system-for-write vc-git-commits-coding-system))
 	(process-environment (cons "PAGER=" process-environment)))
+    (push "GIT_DIR" process-environment)
     (apply 'process-file vc-git-program nil buffer nil command args)))
 
 (defun vc-git--out-ok (command &rest args)
