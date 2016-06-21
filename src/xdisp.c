@@ -9038,6 +9038,11 @@ move_it_in_display_line_to (struct it *it,
 	    }
 	  else
 	    result = MOVE_NEWLINE_OR_CR;
+	  /* If we've processed the newline, make sure this flag is
+	     reset, as it must only be set when the newline itself is
+	     processed.  */
+	  if (result == MOVE_NEWLINE_OR_CR)
+	    it->constrain_row_ascent_descent_p = false;
 	  break;
 	}
 
