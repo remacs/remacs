@@ -235,7 +235,8 @@
       (insert " \f \n \f \f \n\nlast\n")
       (delete-trailing-whitespace)
       (should (string-equal (buffer-string) " \f\n \f \f\n\nlast\n"))
-      (should (equal ?\s (char-syntax ?\f))))))
+      (should (equal ?\s (char-syntax ?\f)))
+      (should (equal ?\s (char-syntax ?\n))))))
 
 
 ;;; auto-boundary tests

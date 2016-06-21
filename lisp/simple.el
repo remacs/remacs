@@ -607,9 +607,10 @@ buffer if the variable `delete-trailing-lines' is non-nil."
         (with-syntax-table (make-syntax-table (syntax-table))
           ;; Don't delete formfeeds, even if they are considered whitespace.
           (modify-syntax-entry ?\f "_")
-          (while (re-search-forward "\\s-$" end-marker t)
-            (skip-syntax-backward "-" (line-beginning-position))
-            (delete-region (point) (match-end 0))))
+          ;; Treating \n as non-whitespace makes things easier.
+          (modify-syntax-entry ?\n "_")
+          (while (re-search-forward "\\s-+$" end-marker t)
+            (delete-region (match-beginning 0) (match-end 0))))
         ;; Delete trailing empty lines.
         (goto-char end-marker)
         (when (and (not end)
