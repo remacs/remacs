@@ -602,15 +602,14 @@ buffer if the variable `delete-trailing-lines' is non-nil."
                    (list nil nil))))
   (save-match-data
     (save-excursion
-      (let ((end-marker (copy-marker (or end (point-max))))
-            (start (or start (point-min))))
-        (goto-char start)
-        (while (re-search-forward "\\s-$" end-marker t)
-          (skip-syntax-backward "-" (line-beginning-position))
+      (let ((end-marker (copy-marker (or end (point-max)))))
+        (goto-char (or start (point-min)))
+        (with-syntax-table (make-syntax-table (syntax-table))
           ;; Don't delete formfeeds, even if they are considered whitespace.
-          (if (looking-at-p ".*\f")
-              (goto-char (match-end 0)))
-          (delete-region (point) (match-end 0)))
+          (modify-syntax-entry ?\f "_")
+          (while (re-search-forward "\\s-$" end-marker t)
+            (skip-syntax-backward "-" (line-beginning-position))
+            (delete-region (point) (match-end 0))))
         ;; Delete trailing empty lines.
         (goto-char end-marker)
         (when (and (not end)

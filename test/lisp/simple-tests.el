@@ -204,7 +204,7 @@
 
 
 ;;; `delete-trailing-whitespace'
-(ert-deftest simple-delete-trailing-whitespace ()
+(ert-deftest simple-delete-trailing-whitespace--bug-21766 ()
   "Test bug#21766: delete-whitespace sometimes deletes non-whitespace."
   (defvar python-indent-guess-indent-offset)  ; to avoid a warning
   (let ((python (featurep 'python))
@@ -219,10 +219,23 @@
                           "\n"
                           "\n"))
           (delete-trailing-whitespace)
-          (should (equal (count-lines (point-min) (point-max)) 3)))
+          (should (string-equal (buffer-string)
+                                (concat "query = \"\"\"WITH filtered AS\n"
+                                        "WHERE\n"
+                                        "\"\"\".format(fv_)\n"))))
       ;; Let's clean up if running interactive
       (unless (or noninteractive python)
         (unload-feature 'python)))))
+
+(ert-deftest simple-delete-trailing-whitespace--formfeeds ()
+  "Test formfeeds are not deleted but whitespace past them is."
+  (with-temp-buffer
+    (with-syntax-table (make-syntax-table)
+      (modify-syntax-entry ?\f " ")     ; Make sure \f is whitespace
+      (insert " \f \n \f \f \n\nlast\n")
+      (delete-trailing-whitespace)
+      (should (string-equal (buffer-string) " \f\n \f \f\n\nlast\n"))
+      (should (equal ?\s (char-syntax ?\f))))))
 
 
 ;;; auto-boundary tests

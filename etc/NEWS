@@ -187,6 +187,12 @@ questions, with a handy way to display help texts.
 'undo', undo the last replacement; bound to 'u'.
 'undo-all', undo all replacements; bound to 'U'.
 
+** 'delete-trailing-whitespace' deletes whitespace after form feed.
+In modes where form feed was treated as a whitespace character,
+'delete-trailing-whitespace' would keep lines containing it unchanged.
+It now deletes whitespace after the last form feed thus behaving the
+same as in modes where the character is not whitespace.
+
 
 * Changes in Specialized Modes and Packages in Emacs 25.2
 
