@@ -186,11 +186,7 @@ MonitorFromWindow_Proc monitor_from_window_fn = NULL;
 EnumDisplayMonitors_Proc enum_display_monitors_fn = NULL;
 GetTitleBarInfo_Proc get_title_bar_info_fn = NULL;
 
-#ifdef NTGUI_UNICODE
-#define unicode_append_menu AppendMenuW
-#else /* !NTGUI_UNICODE */
 extern AppendMenuW_Proc unicode_append_menu;
-#endif /* NTGUI_UNICODE */
 
 /* Flag to selectively ignore WM_IME_CHAR messages.  */
 static int ignore_ime_char = 0;
@@ -2406,6 +2402,7 @@ hook_w32_key (int hook, int modifier, int vkey)
     }
 }
 
+#ifdef WINDOWSNT
 /* Check the current Win key pressed state.  */
 int
 check_w32_winkey_state (int vkey)
@@ -2433,6 +2430,7 @@ check_w32_winkey_state (int vkey)
     }
   return 0;
 }
+#endif	/* WINDOWSNT */
 
 /* Reset the keyboard hook state.  Locking the workstation with Win-L
    leaves the Win key(s) "down" from the hook's point of view - the
@@ -2623,8 +2621,10 @@ modifier_set (int vkey)
       else
 	return (GetKeyState (vkey) & 0x1);
     }
+#ifdef WINDOWSNT
   if (w32_kbdhook_active && (vkey == VK_LWIN || vkey == VK_RWIN))
     return check_w32_winkey_state (vkey);
+#endif
 
   if (!modifiers_recorded)
     return (GetKeyState (vkey) & 0x8000);
@@ -7043,6 +7043,7 @@ Text larger than the specified size is clipped.  */)
 
       /* Create a frame for the tooltip, and record it in the global
 	 variable tip_frame.  */
+      struct frame *f;		/* The value is unused.  */
       if (NILP (tip_frame = x_create_tip_frame (FRAME_DISPLAY_INFO (f), parms)))
 	{
 	  /* Creating the tip frame failed.  */
@@ -7288,7 +7289,9 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
 {
   /* Filter index: 1: All Files, 2: Directories only  */
   static const wchar_t filter_w[] = L"All Files (*.*)\0*.*\0Directories\0*|*\0";
+#ifndef NTGUI_UNICODE
   static const char filter_a[] = "All Files (*.*)\0*.*\0Directories\0*|*\0";
+#endif
 
   Lisp_Object filename = default_filename;
   struct frame *f = SELECTED_FRAME ();
@@ -8962,7 +8965,7 @@ w32_strerror (int error_no)
       --ret;
   buf[ret] = '\0';
   if (!ret)
-    sprintf (buf, "w32 error %u", error_no);
+    sprintf (buf, "w32 error %d", error_no);
 
   return buf;
 }
@@ -10331,8 +10334,8 @@ emacs_abort (void)
 	       but not on Windows 7.  addr2line doesn't mind a missing
 	       "0x", but will be confused by an extra one.  */
 	    if (except_addr)
-	      sprintf (buf, "\r\nException 0x%lx at this address:\r\n%p\r\n",
-		       except_code, except_addr);
+	      sprintf (buf, "\r\nException 0x%x at this address:\r\n%p\r\n",
+		       (unsigned int) except_code, except_addr);
 	    if (stderr_fd >= 0)
 	      {
 		if (except_addr)

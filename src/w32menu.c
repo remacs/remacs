@@ -77,10 +77,10 @@ typedef int (WINAPI * MessageBoxW_Proc) (
     IN UINT type);
 
 #ifdef NTGUI_UNICODE
-#define get_menu_item_info GetMenuItemInfoA
-#define set_menu_item_info SetMenuItemInfoA
-#define unicode_append_menu AppendMenuW
-#define unicode_message_box MessageBoxW
+GetMenuItemInfoA_Proc get_menu_item_info = GetMenuItemInfoA;
+SetMenuItemInfoA_Proc set_menu_item_info = SetMenuItemInfoA;
+AppendMenuW_Proc unicode_append_menu = AppendMenuW;
+MessageBoxW_Proc unicode_message_box = MessageBoxW;
 #else /* !NTGUI_UNICODE */
 GetMenuItemInfoA_Proc get_menu_item_info = NULL;
 SetMenuItemInfoA_Proc set_menu_item_info = NULL;

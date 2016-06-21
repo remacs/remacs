@@ -4634,8 +4634,10 @@ enum
    STR's value is not necessarily copied.  The resulting Lisp string
    should not be modified or made visible to user code.  */
 
+/* Avoid initializing NAME to prevent "jump-misses-init" compiler
+   warnings.  */
 #define AUTO_STRING_WITH_LEN(name, str, len)				\
-  Lisp_Object name =							\
+  Lisp_Object name; name =						\
     (USE_STACK_STRING							\
      ? (make_lisp_ptr							\
 	((&(union Aligned_String)					\

@@ -80,7 +80,9 @@ typedef struct w32_bitmap_record Bitmap_Record;
 #define PIX_MASK_DRAW	1
 
 #define x_defined_color w32_defined_color
+#if 0				/* unused */
 #define DefaultDepthOfScreen(screen) (one_w32_display_info.n_cbits)
+#endif
 
 #endif /* HAVE_NTGUI */
 
@@ -223,6 +225,7 @@ x_create_bitmap_from_data (struct frame *f, char *bits, unsigned int width, unsi
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef HAVE_NTGUI
+  Lisp_Object frame UNINIT;	/* The value is not used.  */
   Pixmap bitmap;
   bitmap = CreateBitmap (width, height,
 			 FRAME_DISPLAY_INFO (XFRAME (frame))->n_planes,
@@ -272,9 +275,9 @@ x_create_bitmap_from_file (struct frame *f, Lisp_Object file)
 {
 #ifdef HAVE_NTGUI
   return -1;  /* W32_TODO : bitmap support */
-#endif /* HAVE_NTGUI */
-
+#else
   Display_Info *dpyinfo = FRAME_DISPLAY_INFO (f);
+#endif
 
 #ifdef HAVE_NS
   ptrdiff_t id;

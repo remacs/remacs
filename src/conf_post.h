@@ -211,7 +211,8 @@ You lose; /* Emacs for DOS must be compiled with DJGPP */
 extern void _DebPrint (const char *fmt, ...);
 #  define DebPrint(stuff) _DebPrint stuff
 # else
-#  define DebPrint(stuff)
+/* Avoid compiler warnings about empty body of 'if' statement.  */
+#  define DebPrint(stuff) do {} while (false)
 # endif
 #endif
 

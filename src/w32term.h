@@ -399,7 +399,7 @@ extern struct w32_output w32term_display;
 #define FRAME_BASELINE_OFFSET(f) ((f)->output_data.w32->baseline_offset)
 
 /* This gives the w32_display_info structure for the display F is on.  */
-#define FRAME_DISPLAY_INFO(f) (&one_w32_display_info)
+#define FRAME_DISPLAY_INFO(f) ((void) (f), (&one_w32_display_info))
 
 /* This is the `Display *' which frame F is on.  */
 #define FRAME_X_DISPLAY(f) (0)
