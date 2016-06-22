@@ -310,10 +310,14 @@ The string is based on `url-privacy-level' and `url-user-agent'."
           ;; We used to concat directly, but if one of the strings happens
           ;; to being multibyte (even if it only contains pure ASCII) then
           ;; every string gets converted with `string-MAKE-multibyte' which
-          ;; turns the 127-255 codes into things like latin-1 accented chars.
+          ;; turns the 127-255 codes into things like latin-1 accented chars
+          ;; (it would work right if it used `string-TO-multibyte' instead).
           ;; So to avoid the problem we force every string to be unibyte.
           (mapconcat
-           'string-to-unibyte
+           ;; FIXME: Instead of `string-AS-unibyte' we'd want
+           ;; `string-to-unibyte', so as to properly signal an error if one
+           ;; of the strings contains a multibyte char.
+           'string-as-unibyte
            (delq nil
             (list
              ;; The request
