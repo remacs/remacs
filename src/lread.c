@@ -1204,7 +1204,11 @@ Return t if the file exists and loads successfully.  */)
   specbind (Qold_style_backquotes, Qnil);
   record_unwind_protect (load_warn_old_style_backquotes, file);
 
-  if (suffix_p (found, ".elc") || (fd >= 0 && (version = safe_to_load_version (fd)) > 0))
+  int is_elc;
+  if ((is_elc = suffix_p (found, ".elc")) != 0
+      /* version = 1 means the file is empty, in which case we can
+	 treat it as not byte-compiled.  */
+      || (fd >= 0 && (version = safe_to_load_version (fd)) > 1))
     /* Load .elc files directly, but not when they are
        remote and have no handler!  */
     {
@@ -1231,7 +1235,7 @@ Return t if the file exists and loads successfully.  */)
           /* openp already checked for newness, no point doing it again.
              FIXME would be nice to get a message when openp
              ignores suffix order due to load_prefer_newer.  */
-          if (!load_prefer_newer)
+          if (!load_prefer_newer && is_elc)
             {
               result = stat (SSDATA (efound), &s1);
               if (result == 0)
