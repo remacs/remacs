@@ -275,19 +275,7 @@ request.")
     ;; allows us to elide null lines directly, at the cost of making
     ;; the layout less clear.
     (setq request
-          ;; We used to concat directly, but if one of the strings happens
-          ;; to being multibyte (even if it only contains pure ASCII) then
-          ;; every string gets converted with `string-MAKE-multibyte' which
-          ;; turns the 127-255 codes into things like latin-1 accented chars
-          ;; (it would work right if it used `string-TO-multibyte' instead).
-          ;; So to avoid the problem we force every string to be unibyte.
-          (mapconcat
-           ;; FIXME: Instead of `string-AS-unibyte' we'd want
-           ;; `string-to-unibyte', so as to properly signal an error if one
-           ;; of the strings contains a multibyte char.
-           'string-as-unibyte
-           (delq nil
-            (list
+          (concat
              ;; The request
              (or url-http-method "GET") " "
              (if using-proxy (url-recreate-url url-http-target-url) real-fname)
@@ -365,7 +353,10 @@ request.")
              "\r\n"
              ;; Any data
              url-http-data))
-           ""))
+    ;; Bug#23750
+    (unless (= (string-bytes request)
+               (length request))
+      (error "Multibyte text in HTTP request: %s" request))
     (url-http-debug "Request is: \n%s" request)
     request))
 
