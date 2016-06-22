@@ -6826,7 +6826,14 @@ decode_eol (struct coding_system *coding)
 
       while (pos_byte < pos_end)
 	{
+	  int incr;
+
 	  p = BYTE_POS_ADDR (pos_byte);
+	  if (coding->dst_multibyte)
+	    incr = BYTES_BY_CHAR_HEAD (*p);
+	  else
+	    incr = 1;
+
 	  if (*p == '\r' && p[1] == '\n')
 	    {
 	      del_range_2 (pos, pos_byte, pos + 1, pos_byte + 1, 0);
@@ -6834,10 +6841,7 @@ decode_eol (struct coding_system *coding)
 	      pos_end--;
 	    }
 	  pos++;
-	  if (coding->dst_multibyte)
-	    pos_byte += BYTES_BY_CHAR_HEAD (*p);
-	  else
-	    pos_byte++;
+	  pos_byte += incr;
 	}
       coding->produced -= n;
       coding->produced_char -= n;
