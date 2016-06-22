@@ -6898,6 +6898,7 @@ Text larger than the specified size is clipped.  */)
   ptrdiff_t count = SPECPDL_INDEX ();
   ptrdiff_t count_1;
   Lisp_Object window, size;
+  AUTO_STRING (tip, " *tip*");
 
   specbind (Qinhibit_redisplay, Qt);
 
@@ -7054,7 +7055,6 @@ Text larger than the specified size is clipped.  */)
 
   tip_f = XFRAME (tip_frame);
   window = FRAME_ROOT_WINDOW (tip_f);
-  AUTO_STRING (tip, " *tip*");
   set_window_buffer (window, Fget_buffer_create (tip), false, false);
   w = XWINDOW (window);
   w->pseudo_window_p = true;
