@@ -1434,7 +1434,7 @@ x_set_internal_border_width (struct frame *f, Lisp_Object arg, Lisp_Object oldva
 
   if (border != FRAME_INTERNAL_BORDER_WIDTH (f))
     {
-      FRAME_INTERNAL_BORDER_WIDTH (f) = border;
+      f->internal_border_width = border;
 
 #ifdef USE_X_TOOLKIT
       if (FRAME_X_OUTPUT (f)->edit_widget)

@@ -82,6 +82,7 @@ typedef XImagePtr XImagePtr_or_DC;
 
 #ifdef HAVE_WINDOW_SYSTEM
 # include <time.h>
+# include "fontset.h"
 #endif
 
 #ifndef HAVE_WINDOW_SYSTEM
@@ -1825,31 +1826,32 @@ struct face_cache
    ? FACE_FROM_ID (F, ID)				\
    : NULL)
 
+/* True if FACE is suitable for displaying ASCII characters.  */
+INLINE bool
+FACE_SUITABLE_FOR_ASCII_CHAR_P (struct face *face)
+{
 #ifdef HAVE_WINDOW_SYSTEM
-
-/* Non-zero if FACE is suitable for displaying character CHAR.  */
-
-#define FACE_SUITABLE_FOR_ASCII_CHAR_P(FACE, CHAR)	\
-  ((FACE) == (FACE)->ascii_face)
+  return face == face->ascii_face;
+#else
+  return true;
+#endif
+}
 
 /* Return the id of the realized face on frame F that is like the face
-   FACE, but is suitable for displaying character CHAR at buffer or
+   FACE, but is suitable for displaying character CHARACTER at buffer or
    string position POS.  OBJECT is the string object, or nil for
    buffer.  This macro is only meaningful for multibyte character
    CHAR.  */
-
-#define FACE_FOR_CHAR(F, FACE, CHAR, POS, OBJECT)	\
-  face_for_char ((F), (FACE), (CHAR), (POS), (OBJECT))
-
-#else /* not HAVE_WINDOW_SYSTEM */
-
-#define FACE_SUITABLE_FOR_ASCII_CHAR_P(FACE, CHAR)	   \
-  ((void) (FACE), (void) (CHAR), true)
-#define FACE_FOR_CHAR(F, FACE, CHAR, POS, OBJECT)	   \
-  ((void) (F), (void) (FACE), (void) (CHAR), (void) (POS), \
-   (void) (OBJECT), (FACE)->id)
-
-#endif /* not HAVE_WINDOW_SYSTEM */
+INLINE int
+FACE_FOR_CHAR (struct frame *f, struct face *face, int character,
+	       ptrdiff_t pos, Lisp_Object object)
+{
+#ifdef HAVE_WINDOW_SYSTEM
+  return face_for_char (f, face, character, pos, object);
+#else
+  return face->id;
+#endif
+}
 
 /* Return true if G contains a valid character code.  */
 INLINE bool

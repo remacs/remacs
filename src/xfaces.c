@@ -5287,11 +5287,11 @@ realize_default_face (struct frame *f)
   eassert (lface_fully_specified_p (XVECTOR (lface)->contents));
   check_lface (lface);
   memcpy (attrs, XVECTOR (lface)->contents, sizeof attrs);
-
-#ifndef HAVE_X_WINDOWS
-  (void) realize_face (c, attrs, DEFAULT_FACE_ID);
-#else  /* HAVE_X_WINDOWS */
   struct face *face = realize_face (c, attrs, DEFAULT_FACE_ID);
+
+#ifndef HAVE_WINDOW_SYSTEM
+  (void) face;
+#else
   if (FRAME_X_P (f) && face->font != FRAME_FONT (f))
     {
       /* This can happen when making a frame on a display that does
@@ -5305,7 +5305,7 @@ realize_default_face (struct frame *f)
 	 font.  */
       x_set_font (f, LFACE_FONT (lface), Qnil);
     }
-#endif	/* HAVE_X_WINDOWS */
+#endif
   return true;
 }
 
@@ -6093,7 +6093,7 @@ face_at_string_position (struct window *w, Lisp_Object string,
 	     if we don't have fonts, so we can stop here if not working
 	     on a window-system frame.  */
 	  || !FRAME_WINDOW_P (f)
-	  || FACE_SUITABLE_FOR_ASCII_CHAR_P (base_face, 0)))
+	  || FACE_SUITABLE_FOR_ASCII_CHAR_P (base_face)))
     return base_face->id;
 
   /* Begin with attributes from the base face.  */

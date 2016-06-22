@@ -867,11 +867,7 @@ autocmp_chars (Lisp_Object rule, ptrdiff_t charpos, ptrdiff_t bytepos,
 	       Lisp_Object string)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
-#ifdef HAVE_WINDOW_SYSTEM
   struct frame *f = XFRAME (win->frame);
-#else
-  (void) XFRAME (win->frame);
-#endif
   Lisp_Object pos = make_number (charpos);
   ptrdiff_t to;
   ptrdiff_t pt = PT, pt_byte = PT_BYTE;
@@ -895,7 +891,6 @@ autocmp_chars (Lisp_Object rule, ptrdiff_t charpos, ptrdiff_t bytepos,
   if (len <= 0)
     return unbind_to (count, Qnil);
   to = limit = charpos + len;
-#ifdef HAVE_WINDOW_SYSTEM
   if (FRAME_WINDOW_P (f))
     {
       font_object = font_range (charpos, bytepos, &to, win, face, string);
@@ -906,7 +901,6 @@ autocmp_chars (Lisp_Object rule, ptrdiff_t charpos, ptrdiff_t bytepos,
 	return unbind_to (count, Qnil);
     }
   else
-#endif	/* not HAVE_WINDOW_SYSTEM */
     font_object = win->frame;
   lgstring = Fcomposition_get_gstring (pos, make_number (to), font_object,
 				       string);

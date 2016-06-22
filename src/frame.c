@@ -106,39 +106,32 @@ decode_any_frame (register Lisp_Object frame)
 }
 
 #ifdef HAVE_WINDOW_SYSTEM
-
 bool
-window_system_available (struct frame *f)
+display_available (void)
 {
-  return f ? FRAME_WINDOW_P (f) || FRAME_MSDOS_P (f) : x_display_list != NULL;
+  return x_display_list != NULL;
 }
+#endif
 
 struct frame *
 decode_window_system_frame (Lisp_Object frame)
 {
   struct frame *f = decode_live_frame (frame);
-
-  if (!window_system_available (f))
-    error ("Window system frame should be used");
+  check_window_system (f);
+#ifdef HAVE_WINDOW_SYSTEM
   return f;
+#endif
 }
 
-#else  /* not HAVE_WINDOW_SYSTEM */
-
-_Noreturn void
-decode_window_system_frame (Lisp_Object frame)
-{
-  error ("Window system is not in use");
-}
-
-_Noreturn
-#endif	/* not HAVE_WINDOW_SYSTEM */
 void
 check_window_system (struct frame *f)
 {
-  if (!window_system_available (f))
-    error (f ? "Window system frame should be used"
-	   : "Window system is not in use or not initialized");
+#ifdef HAVE_WINDOW_SYSTEM
+  if (window_system_available (f))
+    return;
+#endif
+  error (f ? "Window system frame should be used"
+	 : "Window system is not in use or not initialized");
 }
 
 /* Return the value of frame parameter PROP in frame FRAME.  */
@@ -2137,20 +2130,18 @@ DEFUN ("iconify-frame", Ficonify_frame, Siconify_frame,
 If omitted, FRAME defaults to the currently selected frame.  */)
   (Lisp_Object frame)
 {
-#ifdef HAVE_WINDOW_SYSTEM
   struct frame *f = decode_live_frame (frame);
-#else
-  (void) decode_live_frame (frame);
-#endif
 
   /* Don't allow minibuf_window to remain on an iconified frame.  */
   check_minibuf_window (frame, EQ (minibuf_window, selected_window));
 
   /* I think this should be done with a hook.  */
-#ifdef HAVE_WINDOW_SYSTEM
   if (FRAME_WINDOW_P (f))
+    {
+#ifdef HAVE_WINDOW_SYSTEM
       x_iconify_frame (f);
 #endif
+    }
 
   /* Make menu bar update for the Buffers and Frames menus.  */
   windows_or_buffers_changed = 17;
@@ -3013,20 +3004,18 @@ or bottom edge of the outer frame of FRAME relative to the right or
 bottom edge of FRAME's display.  */)
   (Lisp_Object frame, Lisp_Object x, Lisp_Object y)
 {
-#ifdef HAVE_WINDOW_SYSTEM
-  register struct frame *f = decode_live_frame (frame);
-#else
-  (void) decode_live_frame (frame);
-#endif
+  struct frame *f = decode_live_frame (frame);
 
   CHECK_TYPE_RANGED_INTEGER (int, x);
   CHECK_TYPE_RANGED_INTEGER (int, y);
 
   /* I think this should be done with a hook.  */
-#ifdef HAVE_WINDOW_SYSTEM
   if (FRAME_WINDOW_P (f))
-    x_set_offset (f, XINT (x), XINT (y), 1);
+    {
+#ifdef HAVE_WINDOW_SYSTEM
+      x_set_offset (f, XINT (x), XINT (y), 1);
 #endif
+    }
 
   return Qt;
 }
@@ -3755,8 +3744,8 @@ x_set_left_fringe (struct frame *f, Lisp_Object new_value, Lisp_Object old_value
 
   if (new_width != old_width)
     {
-      FRAME_LEFT_FRINGE_WIDTH (f) = new_width;
-      FRAME_FRINGE_COLS (f) /* Round up.  */
+      f->left_fringe_width = new_width;
+      f->fringe_cols /* Round up.  */
 	= (new_width + FRAME_RIGHT_FRINGE_WIDTH (f) + unit - 1) / unit;
 
       if (FRAME_X_WINDOW (f) != 0)
@@ -3779,8 +3768,8 @@ x_set_right_fringe (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
 
   if (new_width != old_width)
     {
-      FRAME_RIGHT_FRINGE_WIDTH (f) = new_width;
-      FRAME_FRINGE_COLS (f) /* Round up.  */
+      f->right_fringe_width = new_width;
+      f->fringe_cols /* Round up.  */
 	= (new_width + FRAME_LEFT_FRINGE_WIDTH (f) + unit - 1) / unit;
 
       if (FRAME_X_WINDOW (f) != 0)
@@ -3809,13 +3798,11 @@ void
 x_set_right_divider_width (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
   int old = FRAME_RIGHT_DIVIDER_WIDTH (f);
-
   CHECK_TYPE_RANGED_INTEGER (int, arg);
-  FRAME_RIGHT_DIVIDER_WIDTH (f) = XINT (arg);
-  if (FRAME_RIGHT_DIVIDER_WIDTH (f) < 0)
-    FRAME_RIGHT_DIVIDER_WIDTH (f) = 0;
-  if (FRAME_RIGHT_DIVIDER_WIDTH (f) != old)
+  int new = max (0, XINT (arg));
+  if (new != old)
     {
+      f->right_divider_width = new;
       adjust_frame_size (f, -1, -1, 4, 0, Qright_divider_width);
       adjust_frame_glyphs (f);
       SET_FRAME_GARBAGED (f);
@@ -3827,13 +3814,11 @@ void
 x_set_bottom_divider_width (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
   int old = FRAME_BOTTOM_DIVIDER_WIDTH (f);
-
   CHECK_TYPE_RANGED_INTEGER (int, arg);
-  FRAME_BOTTOM_DIVIDER_WIDTH (f) = XINT (arg);
-  if (FRAME_BOTTOM_DIVIDER_WIDTH (f) < 0)
-    FRAME_BOTTOM_DIVIDER_WIDTH (f) = 0;
-  if (FRAME_BOTTOM_DIVIDER_WIDTH (f) != old)
+  int new = max (0, XINT (arg));
+  if (new != old)
     {
+      f->bottom_divider_width = new;
       adjust_frame_size (f, -1, -1, 4, 0, Qbottom_divider_width);
       adjust_frame_glyphs (f);
       SET_FRAME_GARBAGED (f);

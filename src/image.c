@@ -80,9 +80,6 @@ typedef struct w32_bitmap_record Bitmap_Record;
 #define PIX_MASK_DRAW	1
 
 #define x_defined_color w32_defined_color
-#if 0				/* unused */
-#define DefaultDepthOfScreen(screen) (one_w32_display_info.n_cbits)
-#endif
 
 #endif /* HAVE_NTGUI */
 
