@@ -623,16 +623,21 @@ with L, LRE, or LRO Unicode bidi character type.")
   (set-case-syntax-pair ?Ʊ ?ʊ tbl)
   (set-case-syntax-pair ?Ʋ ?ʋ tbl)
   (set-case-syntax-pair ?Ʒ ?ʒ tbl)
-  (set-case-syntax-pair ?Ǆ ?ǆ tbl)
+  ;; The order of the next 6 lines is important, since we want
+  ;; upcase of ǆ return Ǆ, not ǅ, and the same for the rest.
   (set-case-syntax-pair ?ǅ ?ǆ tbl)
-  (set-case-syntax-pair ?Ǉ ?ǉ tbl)
+  (set-case-syntax-pair ?Ǆ ?ǆ tbl)
   (set-case-syntax-pair ?ǈ ?ǉ tbl)
-  (set-case-syntax-pair ?Ǌ ?ǌ tbl)
+  (set-case-syntax-pair ?Ǉ ?ǉ tbl)
   (set-case-syntax-pair ?ǋ ?ǌ tbl)
+  (set-case-syntax-pair ?Ǌ ?ǌ tbl)
 
   ;; 01F0; F; 006A 030C; # LATIN SMALL LETTER J WITH CARON
-  (set-case-syntax-pair ?Ǳ ?ǳ tbl)
+
+  ;; The order of the next two lines is important, since we want
+  ;; upcase of ǳ return Ǳ, not ǲ.
   (set-case-syntax-pair ?ǲ ?ǳ tbl)
+  (set-case-syntax-pair ?Ǳ ?ǳ tbl)
   (set-case-syntax-pair ?Ƕ ?ƕ tbl)
   (set-case-syntax-pair ?Ƿ ?ƿ tbl)
   (set-case-syntax-pair ?Ⱥ ?ⱥ tbl)
