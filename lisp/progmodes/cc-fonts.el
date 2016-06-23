@@ -1396,7 +1396,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 					     'c-decl-id-start)))))
 
 		(c-font-lock-declarators
-		 (point-max) decl-list (cadr decl-or-cast)))
+		 (min limit (point-max)) decl-list (cadr decl-or-cast)))
 
 	      ;; A declaration has been successfully identified, so do all the
 	      ;; fontification of types and refs that've been recorded.
@@ -1542,7 +1542,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		(c-forward-syntactic-ws))
 	      ;; At a real declaration?
 	      (if (memq (c-forward-type t) '(t known found decltype))
-		  (c-font-lock-declarators (point-max) t is-typedef)))
+		  (c-font-lock-declarators limit t is-typedef)))
 	  nil)))))
 
 (defun c-font-lock-enclosing-decls (limit)

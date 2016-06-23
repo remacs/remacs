@@ -305,7 +305,7 @@ comment at the start of cc-engine.el for more info."
 	    (forward-line -1))
 	  (back-to-indentation)
 	  (if (and (<= (point) here)
-		   (looking-at c-opt-cpp-start)
+		   (save-match-data (looking-at c-opt-cpp-start))
 		   (c-macro-is-genuine-p))
 	      (progn
 		(setq c-macro-cache (cons (point) nil)
@@ -2304,32 +2304,33 @@ comment at the start of cc-engine.el for more info."
   ;; 7 (comment type) and 8 (start of comment/string) (and possibly 9) of
   ;; STATE are valid.
   (save-excursion
-    (let ((s (parse-partial-sexp from to))
-	  ty co-st)
-      (cond
-       ((or (nth 3 s) (nth 4 s))	; in a string or comment
-	(setq ty (cond
-		  ((nth 3 s) 'string)
-		  ((nth 7 s) 'c++)
-		  (t 'c)))
-	(parse-partial-sexp (point) (point-max)
-			    nil		   ; TARGETDEPTH
-			    nil		   ; STOPBEFORE
-			    s		   ; OLDSTATE
-			    'syntax-table) ; stop at end of literal
-	`(,s ,ty (,(nth 8 s) . ,(point))))
+    (save-match-data
+      (let ((s (parse-partial-sexp from to))
+	    ty co-st)
+	(cond
+	 ((or (nth 3 s) (nth 4 s))	; in a string or comment
+	  (setq ty (cond
+		    ((nth 3 s) 'string)
+		    ((nth 7 s) 'c++)
+		    (t 'c)))
+	  (parse-partial-sexp (point) (point-max)
+			      nil	   ; TARGETDEPTH
+			      nil	   ; STOPBEFORE
+			      s		   ; OLDSTATE
+			      'syntax-table) ; stop at end of literal
+	  `(,s ,ty (,(nth 8 s) . ,(point))))
 
-       ((and (not not-in-delimiter)	; inside a comment starter
-	     (not (bobp))
-	     (progn (backward-char)
-		    (and (not (looking-at "\\s!"))
-			 (looking-at c-comment-start-regexp))))
-	(setq ty (if (looking-at c-block-comment-start-regexp) 'c 'c++)
-	      co-st (point))
-	(forward-comment 1)
-	`(,s ,ty (,co-st . ,(point))))
+	 ((and (not not-in-delimiter)	; inside a comment starter
+	       (not (bobp))
+	       (progn (backward-char)
+		      (and (not (looking-at "\\s!"))
+			   (looking-at c-comment-start-regexp))))
+	  (setq ty (if (looking-at c-block-comment-start-regexp) 'c 'c++)
+		co-st (point))
+	  (forward-comment 1)
+	  `(,s ,ty (,co-st . ,(point))))
 
-       (t `(,s))))))
+	 (t `(,s)))))))
 
 (defun c-state-safe-place (here)
   ;; Return a buffer position before HERE which is "safe", i.e. outside any
