@@ -2178,7 +2178,7 @@ funhook (int code, WPARAM w, LPARAM l)
 		     can prevent this by setting the
 		     w32-pass-[lr]window-to-system variable to
 		     NIL.  */
-		  if (hs->vkCode == (VK_LWIN && !NILP (Vw32_pass_lwindow_to_system)) ||
+		  if ((hs->vkCode == VK_LWIN && !NILP (Vw32_pass_lwindow_to_system)) ||
 		      (hs->vkCode == VK_RWIN && !NILP (Vw32_pass_rwindow_to_system)))
 		    {
 		      /* Not prevented - Simulate the keypress to the system.  */
