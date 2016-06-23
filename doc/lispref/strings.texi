@@ -660,7 +660,7 @@ The strings are compared by the numeric values of their characters.
 For instance, @var{str1} is considered less than @var{str2} if
 its first differing character has a smaller numeric value.  If
 @var{ignore-case} is non-@code{nil}, characters are converted to
-lower-case before comparing them.  Unibyte strings are converted to
+upper-case before comparing them.  Unibyte strings are converted to
 multibyte for comparison (@pxref{Text Representations}), so that a
 unibyte string and its conversion to multibyte are always regarded as
 equal.
@@ -677,7 +677,8 @@ specified portion) is less.
 This function works like @code{assoc}, except that @var{key} must be a
 string or symbol, and comparison is done using @code{compare-strings}.
 Symbols are converted to strings before testing.
-If @var{case-fold} is non-@code{nil}, it ignores case differences.
+If @var{case-fold} is non-@code{nil}, @var{key} and the elements of
+@var{alist} are converted to upper-case before comparison.
 Unlike @code{assoc}, this function can also match elements of the alist
 that are strings or symbols rather than conses.  In particular, @var{alist} can
 be a list of strings or symbols rather than an actual alist.

@@ -1817,8 +1817,8 @@ DEFUN ("assoc-string", Fassoc_string, Sassoc_string, 2, 3, 0,
 This returns the first element of LIST whose car matches the string or
 symbol KEY, or nil if no match exists.  When performing the
 comparison, symbols are first converted to strings, and unibyte
-strings to multibyte.  If the optional arg CASE-FOLD is non-nil, case
-is ignored.
+strings to multibyte.  If the optional arg CASE-FOLD is non-nil, both
+KEY and the elements of LIST are upcased for comparison.
 
 Unlike `assoc', KEY can also match an entry in LIST consisting of a
 single string, rather than a cons cell whose car is a string.  */)
