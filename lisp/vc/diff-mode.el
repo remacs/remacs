@@ -243,8 +243,6 @@ well."
     (t :weight bold))
   "`diff-mode' face inherited by hunk and index header faces."
   :group 'diff-mode)
-(define-obsolete-face-alias 'diff-header-face 'diff-header "22.1")
-(defvar diff-header-face 'diff-header)
 
 (defface diff-file-header
   '((((class color) (min-colors 88) (background light))
@@ -256,22 +254,16 @@ well."
     (t :weight bold))			; :height 1.3
   "`diff-mode' face used to highlight file header lines."
   :group 'diff-mode)
-(define-obsolete-face-alias 'diff-file-header-face 'diff-file-header "22.1")
-(defvar diff-file-header-face 'diff-file-header)
 
 (defface diff-index
   '((t :inherit diff-file-header))
   "`diff-mode' face used to highlight index header lines."
   :group 'diff-mode)
-(define-obsolete-face-alias 'diff-index-face 'diff-index "22.1")
-(defvar diff-index-face 'diff-index)
 
 (defface diff-hunk-header
   '((t :inherit diff-header))
   "`diff-mode' face used to highlight hunk header lines."
   :group 'diff-mode)
-(define-obsolete-face-alias 'diff-hunk-header-face 'diff-hunk-header "22.1")
-(defvar diff-hunk-header-face 'diff-hunk-header)
 
 (defface diff-removed
   '((default
@@ -284,8 +276,6 @@ well."
      :foreground "red"))
   "`diff-mode' face used to highlight removed lines."
   :group 'diff-mode)
-(define-obsolete-face-alias 'diff-removed-face 'diff-removed "22.1")
-(defvar diff-removed-face 'diff-removed)
 
 (defface diff-added
   '((default
@@ -298,16 +288,12 @@ well."
      :foreground "green"))
   "`diff-mode' face used to highlight added lines."
   :group 'diff-mode)
-(define-obsolete-face-alias 'diff-added-face 'diff-added "22.1")
-(defvar diff-added-face 'diff-added)
 
 (defface diff-changed
   '((t nil))
   "`diff-mode' face used to highlight changed lines."
   :version "25.1"
   :group 'diff-mode)
-(define-obsolete-face-alias 'diff-changed-face 'diff-changed "22.1")
-(defvar diff-changed-face 'diff-changed)
 
 (defface diff-indicator-removed
   '((t :inherit diff-removed))
@@ -334,8 +320,6 @@ well."
   '((t :inherit diff-header))
   "`diff-mode' face used to highlight function names produced by \"diff -p\"."
   :group 'diff-mode)
-(define-obsolete-face-alias 'diff-function-face 'diff-function "22.1")
-(defvar diff-function-face 'diff-function)
 
 (defface diff-context
   '((((class color grayscale) (min-colors 88) (background light))
@@ -345,15 +329,11 @@ well."
   "`diff-mode' face used to highlight context and other side-information."
   :version "25.1"
   :group 'diff-mode)
-(define-obsolete-face-alias 'diff-context-face 'diff-context "22.1")
-(defvar diff-context-face 'diff-context)
 
 (defface diff-nonexistent
   '((t :inherit diff-file-header))
   "`diff-mode' face used to highlight nonexistent files in recursive diffs."
   :group 'diff-mode)
-(define-obsolete-face-alias 'diff-nonexistent-face 'diff-nonexistent "22.1")
-(defvar diff-nonexistent-face 'diff-nonexistent)
 
 (defconst diff-yank-handler '(diff-yank-function))
 (defun diff-yank-function (text)
@@ -382,57 +362,57 @@ well."
 (defconst diff-context-mid-hunk-header-re
   "--- \\([0-9]+\\)\\(?:,\\([0-9]+\\)\\)? ----$")
 
-(defvar diff-use-changed-face (and (face-differs-from-default-p diff-changed-face)
-				   (not (face-equal diff-changed-face diff-added-face))
-				   (not (face-equal diff-changed-face diff-removed-face)))
+(defvar diff-use-changed-face (and (face-differs-from-default-p 'diff-changed)
+				   (not (face-equal 'diff-changed 'diff-added))
+				   (not (face-equal 'diff-changed 'diff-removed)))
   "If non-nil, use the face `diff-changed' for changed lines in context diffs.
 Otherwise, use the face `diff-removed' for removed lines,
 and the face `diff-added' for added lines.")
 
 (defvar diff-font-lock-keywords
   `((,(concat "\\(" diff-hunk-header-re-unified "\\)\\(.*\\)$")
-     (1 diff-hunk-header-face) (6 diff-function-face))
+     (1 diff-hunk-header) (6 diff-function))
     ("^\\(\\*\\{15\\}\\)\\(.*\\)$"                        ;context
-     (1 diff-hunk-header-face) (2 diff-function-face))
-    ("^\\*\\*\\* .+ \\*\\*\\*\\*". diff-hunk-header-face) ;context
-    (,diff-context-mid-hunk-header-re . diff-hunk-header-face) ;context
-    ("^[0-9,]+[acd][0-9,]+$"     . diff-hunk-header-face) ;normal
-    ("^---$"                     . diff-hunk-header-face) ;normal
+     (1 diff-hunk-header) (2 diff-function))
+    ("^\\*\\*\\* .+ \\*\\*\\*\\*". diff-hunk-header) ;context
+    (,diff-context-mid-hunk-header-re . diff-hunk-header) ;context
+    ("^[0-9,]+[acd][0-9,]+$"     . diff-hunk-header) ;normal
+    ("^---$"                     . diff-hunk-header) ;normal
     ;; For file headers, accept files with spaces, but be careful to rule
     ;; out false-positives when matching hunk headers.
     ("^\\(---\\|\\+\\+\\+\\|\\*\\*\\*\\) \\([^\t\n]+?\\)\\(?:\t.*\\| \\(\\*\\*\\*\\*\\|----\\)\\)?\n"
-     (0 diff-header-face)
-     (2 (if (not (match-end 3)) diff-file-header-face) prepend))
+     (0 diff-header)
+     (2 (if (not (match-end 3)) diff-file-header) prepend))
     ("^\\([-<]\\)\\(.*\n\\)"
-     (1 diff-indicator-removed-face) (2 diff-removed-face))
+     (1 diff-indicator-removed-face) (2 diff-removed))
     ("^\\([+>]\\)\\(.*\n\\)"
-     (1 diff-indicator-added-face) (2 diff-added-face))
+     (1 diff-indicator-added-face) (2 diff-added))
     ("^\\(!\\)\\(.*\n\\)"
      (1 (if diff-use-changed-face
 	    diff-indicator-changed-face
 	  ;; Otherwise, search for `diff-context-mid-hunk-header-re' and
-	  ;; if the line of context diff is above, use `diff-removed-face';
-	  ;; if below, use `diff-added-face'.
+	  ;; if the line of context diff is above, use `diff-removed';
+	  ;; if below, use `diff-added'.
 	  (save-match-data
 	    (let ((limit (save-excursion (diff-beginning-of-hunk))))
 	      (if (save-excursion (re-search-backward diff-context-mid-hunk-header-re limit t))
 		  diff-indicator-added-face
 		diff-indicator-removed-face)))))
      (2 (if diff-use-changed-face
-	    diff-changed-face
+	    diff-changed
 	  ;; Otherwise, use the same method as above.
 	  (save-match-data
 	    (let ((limit (save-excursion (diff-beginning-of-hunk))))
 	      (if (save-excursion (re-search-backward diff-context-mid-hunk-header-re limit t))
-		  diff-added-face
-		diff-removed-face))))))
+		  diff-added
+		diff-removed))))))
     ("^\\(?:Index\\|revno\\): \\(.+\\).*\n"
-     (0 diff-header-face) (1 diff-index-face prepend))
-    ("^Only in .*\n" . diff-nonexistent-face)
+     (0 diff-header) (1 diff-index prepend))
+    ("^Only in .*\n" . diff-nonexistent)
     ("^\\(#\\)\\(.*\\)"
      (1 font-lock-comment-delimiter-face)
      (2 font-lock-comment-face))
-    ("^[^-=+*!<>#].*\n" (0 diff-context-face))))
+    ("^[^-=+*!<>#].*\n" (0 diff-context))))
 
 (defconst diff-font-lock-defaults
   '(diff-font-lock-keywords t nil nil nil (font-lock-multiline . nil)))
@@ -820,7 +800,7 @@ If the OLD prefix arg is passed, tell the file NAME of the old file."
 		     (error (point-min)))))
 	  (header-files
            ;; handle filenames with spaces;
-           ;; cf. diff-font-lock-keywords / diff-file-header-face
+           ;; cf. diff-font-lock-keywords / diff-file-header
 	   (if (looking-at "[-*][-*][-*] \\([^\t\n]+\\).*\n[-+][-+][-+] \\([^\t\n]+\\)")
 	       (list (if old (match-string 1) (match-string 2))
 		     (if old (match-string 2) (match-string 1)))
@@ -1936,11 +1916,10 @@ For use in `add-log-current-defun-function'."
     (t :inverse-video t))
   "Face used for char-based changes shown by `diff-refine-hunk'."
   :group 'diff-mode)
-(define-obsolete-face-alias 'diff-refine-change 'diff-refine-changed "24.5")
 
 (defface diff-refine-removed
   '((default
-     :inherit diff-refine-change)
+     :inherit diff-refine-changed)
     (((class color) (min-colors 88) (background light))
      :background "#ffbbbb")
     (((class color) (min-colors 88) (background dark))
@@ -1951,7 +1930,7 @@ For use in `add-log-current-defun-function'."
 
 (defface diff-refine-added
   '((default
-     :inherit diff-refine-change)
+     :inherit diff-refine-changed)
     (((class color) (min-colors 88) (background light))
      :background "#aaffaa")
     (((class color) (min-colors 88) (background dark))
@@ -1984,7 +1963,7 @@ For use in `add-log-current-defun-function'."
     (let* ((start (point))
            (style (diff-hunk-style))    ;Skips the hunk header as well.
            (beg (point))
-           (props-c '((diff-mode . fine) (face diff-refine-change)))
+           (props-c '((diff-mode . fine) (face diff-refine-changed)))
            (props-r '((diff-mode . fine) (face diff-refine-removed)))
            (props-a '((diff-mode . fine) (face diff-refine-added)))
            ;; Be careful to go back to `start' so diff-end-of-hunk gets

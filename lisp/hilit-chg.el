@@ -194,8 +194,6 @@
     (t (:inverse-video t)))
   "Face used for highlighting changes."
   :group 'highlight-changes)
-(define-obsolete-face-alias 'highlight-changes-face
-  'highlight-changes "22.1")
 
 ;; This looks pretty ugly, actually.  Maybe the underline should be removed.
 (defface highlight-changes-delete
@@ -204,9 +202,6 @@
     (t (:inverse-video t)))
   "Face used for highlighting deletions."
   :group 'highlight-changes)
-(define-obsolete-face-alias 'highlight-changes-delete-face
-  'highlight-changes-delete "22.1")
-
 
 ;; A (not very good) default list of colors to rotate through.
 (define-obsolete-variable-alias 'highlight-changes-colours
