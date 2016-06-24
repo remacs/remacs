@@ -908,7 +908,7 @@ changes are made, so \\[highlight-changes-next-change] and
   (let (hilit-e hilit-x hilit-y)
     (ediff-setup buf-a file-a buf-b file-b
 	       nil nil   ; buf-c file-C
-	       'hilit-chg-get-diff-list-hk
+	       '(hilit-chg-get-diff-list-hk)
 	       (list (cons 'ediff-job-name 'something))
 	       )
     (ediff-with-current-buffer hilit-e (ediff-really-quit nil))
