@@ -9979,18 +9979,21 @@ include the height of both, if present, in the return value.  */)
       it.last_visible_x = max_x;
       /* Actually, we never want move_it_to stop at to_x.  But to make
 	 sure that move_it_in_display_line_to always moves far enough,
-	 we set it to INT_MAX and specify MOVE_TO_X.  Also bound width
-	 value by X-LIMIT.  */
-      x = min (move_it_to (&it, end, INT_MAX, max_y, -1,
-			   MOVE_TO_POS | MOVE_TO_X | MOVE_TO_Y),
-	       max_x);
+	 we set it to INT_MAX and specify MOVE_TO_X.  */
+      x = move_it_to (&it, end, INT_MAX, max_y, -1,
+		      MOVE_TO_POS | MOVE_TO_X | MOVE_TO_Y);
+      /* Don't return more than X-LIMIT.  */
+      if (x > max_x)
+        x = max_x;
     }
 
   /* Subtract height of header-line which was counted automatically by
      start_display.  */
-  y = min (it.current_y + it.max_ascent + it.max_descent
-	   - WINDOW_HEADER_LINE_HEIGHT (w),
-	   max_y);
+  y = it.current_y + it.max_ascent + it.max_descent
+    - WINDOW_HEADER_LINE_HEIGHT (w);
+  /* Don't return more than Y-LIMIT.  */
+  if (y > max_y)
+    y = max_y;
 
   if (EQ (mode_and_header_line, Qheader_line)
       || EQ (mode_and_header_line, Qt))
