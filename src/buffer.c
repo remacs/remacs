@@ -1984,7 +1984,9 @@ the current buffer's major mode.  */)
 	function = BVAR (current_buffer, major_mode);
     }
 
-  if (NILP (function) || EQ (function, Qfundamental_mode))
+  if (NILP (function)) /* If function is `fundamental-mode', allow it to run
+                          so that `run-mode-hooks' and thus
+                          `hack-local-variables' get run. */
     return Qnil;
 
   count = SPECPDL_INDEX ();
