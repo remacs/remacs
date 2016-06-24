@@ -477,6 +477,7 @@ so that all identifiers are recognized as words.")
 	c-before-change-check-raw-strings
 	c-before-change-check-<>-operators
 	c-depropertize-CPP
+	c-before-after-change-digit-quote
 	c-invalidate-macro-cache)
   (c objc) '(c-extend-region-for-CPP
 	     c-depropertize-CPP
@@ -508,18 +509,24 @@ parameters \(point-min) and \(point-max).")
 (c-lang-defconst c-before-font-lock-functions
   ;; For documentation see the following c-lang-defvar of the same name.
   ;; The value here may be a list of functions or a single function.
-  t 'c-change-expand-fl-region
-  (c objc) '(c-extend-font-lock-region-for-macros
+  t '(c-depropertize-new-text
+      c-change-expand-fl-region)
+  (c objc) '(c-depropertize-new-text
+	     c-extend-font-lock-region-for-macros
 	     c-neutralize-syntax-in-and-mark-CPP
 	     c-change-expand-fl-region)
-  c++ '(c-extend-font-lock-region-for-macros
+  c++ '(c-depropertize-new-text
+	c-extend-font-lock-region-for-macros
+	c-before-after-change-digit-quote
 	c-after-change-re-mark-raw-strings
 	c-neutralize-syntax-in-and-mark-CPP
 	c-restore-<>-properties
 	c-change-expand-fl-region)
-  java '(c-restore-<>-properties
+  java '(c-depropertize-new-text
+	 c-restore-<>-properties
 	 c-change-expand-fl-region)
-  awk 'c-awk-extend-and-syntax-tablify-region)
+  awk '(c-depropertize-new-text
+	c-awk-extend-and-syntax-tablify-region))
 (c-lang-defvar c-before-font-lock-functions
 	       (let ((fs (c-lang-const c-before-font-lock-functions)))
 		 (if (listp fs)

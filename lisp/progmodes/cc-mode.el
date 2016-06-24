@@ -892,23 +892,24 @@ Note that the style variables are always made local to the buffer."
   ;; This function is in the C/C++/ObjC values of
   ;; `c-get-state-before-change-functions' and is called exclusively as a
   ;; before change function.
-  (goto-char c-new-BEG)
-  (while (and (< (point) beg)
-	      (search-forward-regexp c-anchored-cpp-prefix beg t))
-    (goto-char (match-beginning 1))
-    (let ((m-beg (point)))
-      (c-end-of-macro)
-      (c-clear-char-property-with-value
-       m-beg (min (point) beg) 'syntax-table '(1))))
+  (c-save-buffer-state ()
+    (goto-char c-new-BEG)
+    (while (and (< (point) beg)
+		(search-forward-regexp c-anchored-cpp-prefix beg t))
+      (goto-char (match-beginning 1))
+      (let ((m-beg (point)))
+	(c-end-of-macro)
+	(c-clear-char-property-with-value
+	 m-beg (min (point) beg) 'syntax-table '(1))))
 
-  (goto-char end)
-  (while (and (< (point) c-new-END)
-	      (search-forward-regexp c-anchored-cpp-prefix c-new-END t))
-    (goto-char (match-beginning 1))
-    (let ((m-beg (point)))
-      (c-end-of-macro)
-      (c-clear-char-property-with-value
-       m-beg (min (point) c-new-END) 'syntax-table '(1)))))
+    (goto-char end)
+    (while (and (< (point) c-new-END)
+		(search-forward-regexp c-anchored-cpp-prefix c-new-END t))
+      (goto-char (match-beginning 1))
+      (let ((m-beg (point)))
+	(c-end-of-macro)
+	(c-clear-char-property-with-value
+	 m-beg (min (point) c-new-END) 'syntax-table '(1))))))
 
 (defun c-extend-region-for-CPP (beg end)
   ;; Adjust `c-new-BEG', `c-new-END' respectively to the beginning and end of
@@ -931,6 +932,25 @@ Note that the style variables are always made local to the buffer."
     (or (eobp) (forward-char)))	 ; Over the terminating NL which may be marked
 				 ; with a c-cpp-delimiter category property
   (setq c-new-END (point)))
+
+(defun c-depropertize-new-text (beg end old-len)
+  ;; Remove from the new text in (BEG END) any and all text properties which
+  ;; might interfere with CC Mode's proper working.
+  ;;
+  ;; This function is called exclusively as an after-change function.  It
+  ;; appears in the value (for all languages) of
+  ;; `c-before-font-lock-functions'.  The value of point is undefined both on
+  ;; entry and exit, and the return value has no significance.  The parameters
+  ;; BEG, END, and OLD-LEN are the standard ones supplied to all after-change
+  ;; functions.
+  (c-save-buffer-state ()
+    (when (> end beg)
+      (c-clear-char-properties beg end 'syntax-table)
+      (c-clear-char-properties beg end 'category)
+      (c-clear-char-properties beg end 'c-is-sws)
+      (c-clear-char-properties beg end 'c-in-sws)
+      (c-clear-char-properties beg end 'c-type)
+      (c-clear-char-properties beg end 'c-awk-NL-prop))))
 
 (defun c-extend-font-lock-region-for-macros (begg endd old-len)
   ;; Extend the region (c-new-BEG c-new-END) to cover all (possibly changed)
@@ -1041,6 +1061,70 @@ Note that the style variables are always made local to the buffer."
 		    (c-set-cpp-delimiters mbeg (point)))) ; "comment" markers
 	    (forward-line))	      ; no infinite loop with, e.g., "#//"
 	  )))))
+
+(defun c-before-after-change-digit-quote (beg end &optional old-len)
+  ;; This function either removes or applies the punctuation value ('(1)) of
+  ;; the `syntax-table' text property on single quote marks which are
+  ;; separator characters in long integer literals, e.g. "4'294'967'295".  It
+  ;; applies to both decimal/octal and hex literals.  (FIXME (2016-06-10): it
+  ;; should also apply to binary literals.)
+  ;;
+  ;; In both uses of the function, the `syntax-table' properties are
+  ;; removed/applied only on quote marks which appear to be digit separators.
+  ;;
+  ;; Point is undefined on both entry and exit to this function, and the
+  ;; return value has no significance.  The function is called solely as a
+  ;; before-change function (see `c-get-state-before-change-functions') and as
+  ;; an after change function (see `c-before-font-lock-functions', with the
+  ;; parameters BEG, END, and (optionally) OLD-LEN being given the standard
+  ;; values for before/after-change functions.
+  (c-save-buffer-state ((num-begin c-new-BEG) digit-re try-end)
+    (goto-char c-new-END)
+    (when (looking-at "\\(x\\)?[0-9a-fA-F']+")
+      (setq c-new-END (match-end 0)))
+    (goto-char c-new-BEG)
+    (when (looking-at "\\(x?\\)[0-9a-fA-F']")
+      (if (re-search-backward "\\(0x\\)?[0-9a-fA-F]*\\=" nil t)
+	  (setq c-new-BEG (point))))
+
+    (while
+	(re-search-forward "[0-9a-fA-F]'[0-9a-fA-F]" c-new-END t)
+      (setq try-end (1- (point)))
+      (re-search-backward "[^0-9a-fA-F']" num-begin t)
+      (setq digit-re
+	    (cond
+	     ((and (not (bobp)) (eq (char-before) ?0) (memq (char-after) '(?x ?X)))
+	      "[0-9a-fA-F]")
+	     ((and (eq (char-after (1+ (point))) ?0)
+		   (memq (char-after (+ 2 (point))) '(?b ?B)))
+	      "[01]")
+	     ((memq (char-after (1+ (point))) '(?0 ?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9))
+	      "[0-9]")
+	     (t nil)))
+      (when digit-re
+	(cond ((eq (char-after) ?x) (forward-char))
+	      ((looking-at ".?0[Bb]") (goto-char (match-end 0)))
+	      ((looking-at digit-re))
+	      (t (forward-char)))
+	(when (not (c-in-literal))
+	  (let ((num-end	     ; End of valid sequence of digits/quotes.
+		 (save-excursion
+		   (re-search-forward
+		    (concat "\\=\\(" digit-re "+'\\)*" digit-re "+") nil t)
+		   (point))))
+	    (setq try-end		; End of sequence of digits/quotes
+		  (save-excursion
+		    (re-search-forward
+		     (concat "\\=\\(" digit-re "\\|'\\)+") nil t)
+		    (point)))
+	    (while (re-search-forward
+		    (concat digit-re "\\('\\)" digit-re) num-end t)
+	      (if old-len	    ; i.e. are we in an after-change function?
+		  (c-put-char-property (match-beginning 1) 'syntax-table '(1))
+		(c-clear-char-property (match-beginning 1) 'syntax-table))
+	      (backward-char)))))
+      (goto-char try-end)
+      (setq num-begin (point)))))
 
 (defun c-before-change (beg end)
   ;; Function to be put on `before-change-functions'.  Primarily, this calls
