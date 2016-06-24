@@ -1812,7 +1812,7 @@ struct face_cache
   bool_bf menu_face_changed_p : 1;
 };
 
-/* Return a pointer to the cached face with ID on frame F.  */
+/* Return a non-null pointer to the cached face with ID on frame F.  */
 
 #define FACE_FROM_ID(F, ID)					\
   (eassert (UNSIGNED_CMP (ID, <, FRAME_FACE_CACHE (F)->used)),	\
@@ -1823,7 +1823,7 @@ struct face_cache
 
 #define FACE_OPT_FROM_ID(F, ID)				\
   (UNSIGNED_CMP (ID, <, FRAME_FACE_CACHE (F)->used)	\
-   ? FACE_FROM_ID (F, ID)				\
+   ? FRAME_FACE_CACHE (F)->faces_by_id[ID]		\
    : NULL)
 
 /* True if FACE is suitable for displaying ASCII characters.  */
@@ -3093,7 +3093,7 @@ struct image_cache
 };
 
 
-/* A pointer to the image with id ID on frame F.  */
+/* A non-null pointer to the image with id ID on frame F.  */
 
 #define IMAGE_FROM_ID(F, ID)					\
   (eassert (UNSIGNED_CMP (ID, <, FRAME_IMAGE_CACHE (F)->used)),	\
@@ -3104,7 +3104,7 @@ struct image_cache
 
 #define IMAGE_OPT_FROM_ID(F, ID)				\
   (UNSIGNED_CMP (ID, <, FRAME_IMAGE_CACHE (F)->used)		\
-   ? IMAGE_FROM_ID (F, ID)					\
+   ? FRAME_IMAGE_CACHE (F)->images[ID]				\
    : NULL)
 
 /* Size of bucket vector of image caches.  Should be prime.  */
