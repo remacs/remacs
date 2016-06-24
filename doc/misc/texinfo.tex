@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2016-06-07.21}
+\def\texinfoversion{2016-06-18.21}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -5964,18 +5964,32 @@ end
         \global\advance\dimen@ by 1pt
       \repeat
     }%
-    \multiply\dimen@ii by 4
-    \divide\dimen@ii by 5
-    \ifdim\ht3<\dimen@ii
-      % Column heights are too different, so don't make their bottoms
-      % flush with each other.  The glue at the end of the second column
-      % allows a second column to stretch, reducing the difference in
-      % height between the two.
-      \setbox0=\vbox to\dimen@{\unvbox1\vfill}%
-      \setbox2=\vbox to\dimen@{\unvbox3\vskip 0pt plus 0.3\ht0}%
+    \ifdim2\ht1>\vsize
+      % The left column has come out longer than the page itself.  (Note
+      % that we have doubled \vsize for the double columns, so
+      % the actual height of the page is 0.5\vsize).  Just split the last
+      % of the double column material roughly in half.
+      \setbox2=\box0
+      \setbox0 = \vsplit2 to \dimen@ii
+      \setbox0=\vbox to\dimen@ii{\unvbox0}%
+      \setbox2=\vbox to\dimen@ii{\unvbox2}%
     \else
-      \setbox0=\vbox to\dimen@{\unvbox1}%
-      \setbox2=\vbox to\dimen@{\unvbox3}%
+      \multiply\dimen@ii by 5
+      \divide\dimen@ii by 4
+      \global\setbox3 = \copy0
+      \global\setbox1 = \vsplit3 to \dimen@ii
+      \global\setbox\balancedcolumns=\vbox{\pagesofar}%
+      \ifdim\ht3<\dimen@ii
+        % Column heights are too different, so don't make their bottoms
+        % flush with each other.  The glue at the end of the second column
+        % allows a second column to stretch, reducing the difference in
+        % height between the two.
+        \setbox0=\vbox to\dimen@{\unvbox1\vfill}%
+        \setbox2=\vbox to\dimen@{\unvbox3\vskip 0pt plus 0.3\ht0}%
+      \else
+        \setbox0=\vbox to\dimen@{\unvbox1}%
+        \setbox2=\vbox to\dimen@{\unvbox3}%
+      \fi
     \fi
   \fi
   %

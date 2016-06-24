@@ -222,24 +222,35 @@ verify (TYPE_MAXIMUM (long long int) == LLONG_MAX);
    ? (a) < (min) >> (b)                                 \
    : (max) >> (b) < (a))
 
+/* True if __builtin_add_overflow (A, B, P) works when P is null.  */
+#define _GL_HAS_BUILTIN_OVERFLOW_WITH_NULL (7 <= __GNUC__)
 
 /* The _GL*_OVERFLOW macros have the same restrictions as the
    *_RANGE_OVERFLOW macros, except that they do not assume that operands
    (e.g., A and B) have the same type as MIN and MAX.  Instead, they assume
    that the result (e.g., A + B) has that type.  */
-#define _GL_ADD_OVERFLOW(a, b, min, max)                                \
-  ((min) < 0 ? INT_ADD_RANGE_OVERFLOW (a, b, min, max)                  \
-   : (a) < 0 ? (b) <= (a) + (b)                                         \
-   : (b) < 0 ? (a) <= (a) + (b)                                         \
-   : (a) + (b) < (b))
-#define _GL_SUBTRACT_OVERFLOW(a, b, min, max)                           \
-  ((min) < 0 ? INT_SUBTRACT_RANGE_OVERFLOW (a, b, min, max)             \
-   : (a) < 0 ? 1                                                        \
-   : (b) < 0 ? (a) - (b) <= (a)                                         \
-   : (a) < (b))
-#define _GL_MULTIPLY_OVERFLOW(a, b, min, max)                           \
-  (((min) == 0 && (((a) < 0 && 0 < (b)) || ((b) < 0 && 0 < (a))))       \
-   || INT_MULTIPLY_RANGE_OVERFLOW (a, b, min, max))
+#if _GL_HAS_BUILTIN_OVERFLOW_WITH_NULL
+# define _GL_ADD_OVERFLOW(a, b, min, max)
+   __builtin_add_overflow (a, b, (__typeof__ ((a) + (b)) *) 0)
+# define _GL_SUBTRACT_OVERFLOW(a, b, min, max)
+   __builtin_sub_overflow (a, b, (__typeof__ ((a) - (b)) *) 0)
+# define _GL_MULTIPLY_OVERFLOW(a, b, min, max)
+   __builtin_mul_overflow (a, b, (__typeof__ ((a) * (b)) *) 0)
+#else
+# define _GL_ADD_OVERFLOW(a, b, min, max)                                \
+   ((min) < 0 ? INT_ADD_RANGE_OVERFLOW (a, b, min, max)                  \
+    : (a) < 0 ? (b) <= (a) + (b)                                         \
+    : (b) < 0 ? (a) <= (a) + (b)                                         \
+    : (a) + (b) < (b))
+# define _GL_SUBTRACT_OVERFLOW(a, b, min, max)                           \
+   ((min) < 0 ? INT_SUBTRACT_RANGE_OVERFLOW (a, b, min, max)             \
+    : (a) < 0 ? 1                                                        \
+    : (b) < 0 ? (a) - (b) <= (a)                                         \
+    : (a) < (b))
+# define _GL_MULTIPLY_OVERFLOW(a, b, min, max)                           \
+   (((min) == 0 && (((a) < 0 && 0 < (b)) || ((b) < 0 && 0 < (a))))       \
+    || INT_MULTIPLY_RANGE_OVERFLOW (a, b, min, max))
+#endif
 #define _GL_DIVIDE_OVERFLOW(a, b, min, max)                             \
   ((min) < 0 ? (b) == _GL_INT_NEGATE_CONVERT (min, 1) && (a) < - (max)  \
    : (a) < 0 ? (b) <= (a) + (b) - 1                                     \
@@ -304,8 +315,12 @@ verify (TYPE_MAXIMUM (long long int) == LLONG_MAX);
   _GL_BINARY_OP_OVERFLOW (a, b, _GL_ADD_OVERFLOW)
 #define INT_SUBTRACT_OVERFLOW(a, b) \
   _GL_BINARY_OP_OVERFLOW (a, b, _GL_SUBTRACT_OVERFLOW)
-#define INT_NEGATE_OVERFLOW(a) \
-  INT_NEGATE_RANGE_OVERFLOW (a, _GL_INT_MINIMUM (a), _GL_INT_MAXIMUM (a))
+#if _GL_HAS_BUILTIN_OVERFLOW_WITH_NULL
+# define INT_NEGATE_OVERFLOW(a) INT_SUBTRACT_OVERFLOW (0, a)
+#else
+# define INT_NEGATE_OVERFLOW(a) \
+   INT_NEGATE_RANGE_OVERFLOW (a, _GL_INT_MINIMUM (a), _GL_INT_MAXIMUM (a))
+#endif
 #define INT_MULTIPLY_OVERFLOW(a, b) \
   _GL_BINARY_OP_OVERFLOW (a, b, _GL_MULTIPLY_OVERFLOW)
 #define INT_DIVIDE_OVERFLOW(a, b) \
@@ -325,7 +340,7 @@ verify (TYPE_MAXIMUM (long long int) == LLONG_MAX);
                       _GL_INT_MINIMUM (0 * (b) + (a)),          \
                       _GL_INT_MAXIMUM (0 * (b) + (a)))
 
-/* Compute A + B, A - B, A * B, respectively, storing the result into *R.
+/* Store the low-order bits of A + B, A - B, A * B, respectively, into *R.
    Return 1 if the result overflows.  See above for restrictions.  */
 #define INT_ADD_WRAPV(a, b, r) \
   _GL_INT_OP_WRAPV (a, b, r, +, __builtin_add_overflow, INT_ADD_OVERFLOW)
@@ -350,9 +365,10 @@ verify (TYPE_MAXIMUM (long long int) == LLONG_MAX);
 # define _GL__GENERIC_BOGUS 0
 #endif
 
-/* Store A <op> B into *R, where OP specifies the operation.
-   BUILTIN is the builtin operation, and OVERFLOW the overflow predicate.
-   See above for restrictions.  */
+/* Store the low-order bits of A <op> B into *R, where OP specifies
+   the operation.  BUILTIN is the builtin operation, and OVERFLOW the
+   overflow predicate.  Return 1 if the result overflows.  See above
+   for restrictions.  */
 #if 5 <= __GNUC__ || __has_builtin (__builtin_add_overflow)
 # define _GL_INT_OP_WRAPV(a, b, r, op, builtin, overflow) builtin (a, b, r)
 #elif 201112 <= __STDC_VERSION__ && !_GL__GENERIC_BOGUS
@@ -403,7 +419,8 @@ verify (TYPE_MAXIMUM (long long int) == LLONG_MAX);
 /* Store the low-order bits of A <op> B into *R, where the operation
    is given by OP.  Use the unsigned type UT for calculation to avoid
    overflow problems.  *R's type is T, with extremal values TMIN and
-   TMAX.  T must be a signed integer type.  */
+   TMAX.  T must be a signed integer type.  Return 1 if the result
+   overflows.  */
 #define _GL_INT_OP_CALC(a, b, r, op, overflow, ut, t, tmin, tmax) \
   (sizeof ((a) op (b)) < sizeof (t) \
    ? _GL_INT_OP_CALC1 ((t) (a), (t) (b), r, op, overflow, ut, t, tmin, tmax) \
