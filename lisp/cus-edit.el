@@ -1072,9 +1072,10 @@ are shown; the contents of those subgroups are initially hidden."
 
 ;;;###autoload
 (defun customize-mode (mode)
-  "Customize options related to the current major mode.
-If a prefix \\[universal-argument] was given (or if the current major mode has no known group),
-then prompt for the MODE to customize."
+  "Customize options related to a major or minor mode.
+By default the current major mode is used.  With a prefix
+argument or if the current major mode has no known group, prompt
+for the MODE to customize."
   (interactive
    (list
     (let ((completion-regexp-list '("-mode\\'"))
@@ -1083,8 +1084,8 @@ then prompt for the MODE to customize."
 	  major-mode
 	(intern
 	 (completing-read (if group
-			      (format "Major mode (default %s): " major-mode)
-			    "Major mode: ")
+			      (format "Mode (default %s): " major-mode)
+			    "Mode: ")
 			  obarray
 			  'custom-group-of-mode
 			  t nil nil (if group (symbol-name major-mode))))))))

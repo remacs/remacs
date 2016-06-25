@@ -794,10 +794,9 @@ if @var{parent} is @code{nil}.  (Again, a @code{nil} value is
 
 @item :group
 If this is specified, the value should be the customization group for
-this mode.  (Not all major modes have one.)  Only the (still
-experimental and unadvertised) command @code{customize-mode} currently
-uses this.  @code{define-derived-mode} does @emph{not} automatically
-define the specified customization group.
+this mode.  (Not all major modes have one.)  The command
+@code{customize-mode} uses this.  @code{define-derived-mode} does
+@emph{not} automatically define the specified customization group.
 @end table
 
 Here is a hypothetical example:
