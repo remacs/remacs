@@ -38,7 +38,7 @@ after itself, although it will leave a buffer called
         ;; Select an expert-level for the same reason.
         (viper-expert-level 5)
         ;; viper loads this even with -q so make sure it's empty!
-        (viper-custom-file-name (make-temp-file "viper-tests"))
+        (viper-custom-file-name (make-temp-file "viper-tests" nil ".elc"))
         (before-buffer (current-buffer)))
     (unwind-protect
         (progn

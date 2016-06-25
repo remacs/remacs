@@ -45,7 +45,9 @@ files.")
   '(
     (nil "A\\. N\\. Other")  ; unknown author 2014-12-03, later removed
     ("Aaron S. Hawley" "Aaron Hawley")
+    ("Alan Third" "Alan J Third")
     ("Alexandru Harsanyi" "Alex Harsanyi")
+    ("Álvar Jesús Ibeas Martín" "Álvar Ibeas")
     ("Andrew Csillag" "Drew Csillag")
     ("Anna M. Bigatti" "Anna Bigatti")
     ("Barry A. Warsaw" "Barry A. Warsaw, Century Computing, Inc."
@@ -61,6 +63,7 @@ files.")
     ("David J. Biesack" "David Biesack")
     ("David De La Harpe Golden" "David Golden")
     ("David Gillespie" "Dave Gillespie")
+    ("David S. Goldberg" "Dave Goldberg")
     ("David Kågedal" "David K..edal")
     ("David M. Koppelman" "David Koppelman")
     ("David M. Smith" "David Smith" "David M Smith")
@@ -72,6 +75,7 @@ files.")
     ("Eric M. Ludlam" "Eric Ludlam")
     ("Eric S. Raymond" "Eric Raymond")
     ("Fabián Ezequiel Gallina" "Fabian Ezequiel Gallina" "Fabi.n E\\. Gallina")
+    ("Francis Litterio" "Fran Litterio")
     ("Francis J. Wright" "Dr Francis J. Wright" "Francis Wright")
     ("François Pinard" "Francois Pinard")
     ("Francesco Potortì" "Francesco Potorti" "Francesco Potorti`")
@@ -122,11 +126,12 @@ files.")
     ("Michaël Cadilhac" "Michael Cadilhac")
     ("Michael I. Bushnell" "Michael I Bushnell" "Michael I. Bushnell, p/BSG")
     ("Michael R. Cook" "Michael Cook")
-    ("Michael Sperber" "Michael Sperber \\[Mr. Preprocessor\\]")
+    ("Michael Sperber" "Mike Sperber" "Michael Sperber \\[Mr. Preprocessor\\]")
     ("Mikio Nakajima" "Nakajima Mikio")
     ("Nelson Jose dos Santos Ferreira" "Nelson Ferreira")
     ("Noorul Islam" "Noorul Islam K M")
 ;;;    ("Tetsurou Okazaki" "OKAZAKI Tetsurou") ; FIXME?
+    ("Óscar Fuentes" "Oscar Fuentes")
     ("Paul Eggert" "Paul R\\. Eggert")
     ("Pavel Janík" "Pavel Janík Ml." "Pavel Janik Ml." "Pavel Janik")
     ("Pavel Kobiakov" "Pavel Kobyakov")
@@ -136,6 +141,7 @@ files.")
     ("Peter S. Galbraith" "Peter S Galbraith" "Peter Galbraith")
     ("Peter Runestig" "Peter 'luna' Runestig")
     ("Piotr Zieliński" "Piotr Zielinski")
+    ("Przemysław Wojnowski" "Przemyslaw Wojnowski")
     ("Rainer Schöpf" "Rainer Schoepf")
     ("Raja R. Harinath" "Raja R Harinath")
     ("Richard G. Bielawski" "Richard G Bielawski" "Richard Bielawski")
@@ -143,13 +149,16 @@ files.")
     ("Richard M. Stallman" "Richard Stallman" "rms@gnu.org")
     ("Robert J. Chassell" "Bob Chassell")
     ("Roberto Huelga Díaz" "Roberto Huelga")
+    ("Rodney J. Whitby" "Rod Whitby")
     ("Roland B. Roberts" "Roland B Roberts" "Roland Roberts")
+    ("Ron Schnell" "Ronnie Schnell")
     ("Rui-Tao Dong" "Rui-Tao Dong ~{6-HpLN~}")
     ("Sacha Chua" "Sandra Jean Chua")
     ("Sam Steingold" "Sam Shteingold")
     ("Satyaki Das" "Indexed search by Satyaki Das")
     ("Sébastien Vauban" "Sebastien Vauban")
     ("Sergey Litvinov" "Litvinov Sergey")
+    ("Shun-ichi Goto" "Shun-ichi GOTO")
     ;; There are other Stefans.
 ;;;    ("Stefan Monnier" "Stefan")
     ("Steven L. Baur" "SL Baur" "Steven L Baur")
@@ -186,12 +195,14 @@ If REALNAME is nil, ignore that author.")
 ;; FIXME seems it would be less fragile to check for O', Mc, etc.
 (defconst authors-fixed-case
   '("Barry O'Reilly"
+    "Brian McKenna"
     "Brian van den Broek"
     "Bryan O'Sullivan"
     "Christian von Roques"
     "Christophe de Dinechin"
     "Craig McDaniel"
     "Daniel LaLiberte"
+    "Daniel McClanahan"
     "David J. MacKenzie"
     "David McCabe"
     "David O'Toole"
@@ -222,6 +233,7 @@ If REALNAME is nil, ignore that author.")
     "Shun-ichi Goto"
     "Thomas DeWeese"
     "Tijs van Bakel"
+    "Titus von der Malsburg"
     "Yu-ji Hosokawa")
   "List of authors whose names cannot be simply capitalized.")
 
@@ -280,6 +292,7 @@ Changes to files matching one of the regexps in this list are not listed.")
     "gfdl.1"
     "texi/Makefile.in"
     "autodeps.mk"
+    "lwlib/autodeps.mk"
     "oldXMenu/autodeps.mk"
     "src/autodeps.mk"
     "Imakefile" "icons/sink.ico" "aixcc.lex"
@@ -371,9 +384,11 @@ Changes to files matching one of the regexps in this list are not listed.")
     "lib/qset-acl.c" "lib/qcopy-acl.c" "lib/file-has-acl.c"
     ;; files from old MS Windows build procedures
     "makefile.w32-in"
+    "admin/unidata/makefile.w32-in"
     "unidata/makefile.w32-in"
     "lib/makefile.w32-in"
     "leim/makefile.w32-in"
+    "lisp/makefile.w32-in"
     "src/makefile.w32-in"
     "nt/emacs-src.tags"
     "doc/emacs/makefile.w32-in"
@@ -692,8 +707,9 @@ Changes to files in this list are not listed.")
     "net/zone-mode.el" "xesam.el"
     "term/mac-win.el" "sup-mouse.el"
     "term/apollo.el"
-    "term/vt102.el" "term/vt125.el" "term/vt201.el" "term/vt220.el" "term/vt300.el"
-    "term/vt320.el" "term/vt400.el" "term/vt420.el"
+    "term/vt102.el" "term/vt125.el" "term/vt201.el" "term/vt220.el"
+    "term/vt240.el" "term/vt300.el" "term/vt320.el" "term/vt400.el"
+    "term/vt420.el"
     "url-https.el"
     "org-mac-message.el" "org-mew.el" "org-w3m.el" "org-vm.el" "org-wl.el"
     "org-mks.el" "org-remember.el" "org-xoxo.el" "org-docbook.el"
@@ -738,6 +754,7 @@ Changes to files in this list are not listed.")
     "emacsclient.c" "etags.c" "hexl.c" "make-docfile.c" "movemail.c"
     "test-distrib.c" "testfile"
     "tpu-edt.doc"			; see below
+    "lisp/obsolete/vc-mcvs.el"
     )
   "File names which are valid, but no longer exist (or cannot be found)
 in the repository.")
@@ -829,11 +846,14 @@ in the repository.")
     ("emulation/crisp.el" . "crisp.el")
     ("emulation/tpu-edt.el" . "tpu-edt.el")
     ("emulation/tpu-extras.el" . "tpu-extras.el")
+    ("emulation/tpu-mapper.el" . "tpu-mapper.el")
     ("emulation/vi.el" . "vi.el")
     ("emulation/vip.el" . "vip.el")
     ("emulation/ws-mode.el" . "ws-mode.el")
     ("mail/mailpost.el" . "mailpost.el")
+    ("net/eudcb-ph.el" . "eudcb-ph.el")
     ("play/bruce.el" . "bruce.el")
+    ("lisp/play/landmark.el" . "landmark.el")
     ("play/yow.el" . "yow.el")
     ("patcomp.el" . "patcomp.el")
     ("emulation/ws-mode.el" . "ws-mode.el")
@@ -914,6 +934,7 @@ in the repository.")
     ("grammars" . "grammars")
     ;; Moved from lisp/emacs-lisp/ to admin/.
     ("emacs-lisp/authors.el" . "authors.el")
+    ("emacs-lisp/find-gc.el" . "admin/find-gc.el")
     ;; From etc to lisp/cedet/semantic/.
     ("grammars/bovine-grammar.el" . "bovine/grammar.el")
     ("grammars/wisent-grammar.el" . "wisent/grammar.el")

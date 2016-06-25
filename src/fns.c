@@ -226,7 +226,7 @@ Like in `substring', negative values are counted from the end.
 The strings are compared by the numeric values of their characters.
 For instance, STR1 is "less than" STR2 if its first differing
 character has a smaller numeric value.  If IGNORE-CASE is non-nil,
-characters are converted to lower-case before comparing them.  Unibyte
+characters are converted to upper-case before comparing them.  Unibyte
 strings are converted to multibyte for comparison.
 
 The value is t if the strings (or specified portions) match.

@@ -1840,10 +1840,11 @@ If RECURSIVE, search recursively."
 (defvar shr-image-map)
 
 (autoload 'widget-convert-button "wid-edit")
+(defvar widget-keymap)
 
 (defun mm-convert-shr-links ()
   (let ((start (point-min))
-	end)
+	end keymap)
     (while (and start
 		(< start (point-max)))
       (when (setq start (text-property-not-all start (point-max) 'shr-url nil))
@@ -1851,10 +1852,16 @@ If RECURSIVE, search recursively."
 	(widget-convert-button
 	 'url-link start end
 	 :help-echo (get-text-property start 'help-echo)
-	 ;;; FIXME Should only use the image map on images.
-	 :keymap shr-image-map
+	 :keymap (setq keymap (copy-keymap shr-map))
 	 (get-text-property start 'shr-url))
-	(put-text-property start end 'local-map nil)
+	;; Remove keymap that `shr-urlify' adds.
+	(put-text-property start end 'keymap nil)
+	;; Mask keys that launch `widget-button-click'.
+	;; Those bindings are provided by `widget-keymap'
+	;; that is a parent of `gnus-article-mode-map'.
+	(dolist (key (where-is-internal #'widget-button-click widget-keymap))
+	  (unless (lookup-key keymap key)
+	    (define-key keymap key #'ignore)))
 	(dolist (overlay (overlays-at start))
 	  (overlay-put overlay 'face nil))
 	(setq start end)))))
