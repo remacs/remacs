@@ -1686,6 +1686,8 @@ the values STRING, PREDICATE and `lambda'.  */)
       tem = Fassoc_string (string, collection, completion_ignore_case ? Qt : Qnil);
       if (NILP (tem))
 	return Qnil;
+      else if (CONSP (tem))
+        tem = XCAR (tem);
     }
   else if (VECTORP (collection))
     {
