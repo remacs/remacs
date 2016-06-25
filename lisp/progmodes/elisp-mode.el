@@ -455,7 +455,13 @@ It can be quoted, or be inside a quoted form."
      ((facep sym) (find-definition-noselect sym 'defface)))))
 
 (defun elisp-completion-at-point ()
-  "Function used for `completion-at-point-functions' in `emacs-lisp-mode'."
+  "Function used for `completion-at-point-functions' in `emacs-lisp-mode'.
+If the context at point allows only a certain category of
+symbols (e.g. functions, or variables) then the returned
+completions are restricted to that category.  In contexts where
+any symbol is possible (following a quote, for example),
+functions are annotated with \"<f>\" via the
+`:annotation-function' property."
   (with-syntax-table emacs-lisp-mode-syntax-table
     (let* ((pos (point))
 	   (beg (condition-case nil
