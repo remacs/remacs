@@ -4098,6 +4098,9 @@ ns_read_socket (struct terminal *terminal, struct input_event *hold_quit)
 
   NSTRACE_WHEN (NSTRACE_GROUP_EVENTS, "ns_read_socket");
 
+  if (apploopnr > 0)
+    return -1; /* Already within event loop. */
+
 #ifdef HAVE_NATIVE_FS
   check_native_fs ();
 #endif
@@ -4181,6 +4184,9 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
   char c;
 
   NSTRACE_WHEN (NSTRACE_GROUP_EVENTS, "ns_select");
+
+  if (apploopnr > 0)
+    return -1; /* Already within event loop. */
 
 #ifdef HAVE_NATIVE_FS
   check_native_fs ();
