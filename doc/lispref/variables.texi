@@ -974,7 +974,7 @@ itself.
 
 @cindex lexical environment
   Here is how lexical binding works.  Each binding construct defines a
-@dfn{lexical environment}, specifying the symbols that are bound
+@dfn{lexical environment}, specifying the variables that are bound
 within the construct and their local values.  When the Lisp evaluator
 wants the current value of a variable, it looks first in the lexical
 environment; if the variable is not specified in there, it looks in
@@ -1032,11 +1032,13 @@ lives on even after the @code{let} binding construct has exited.  Each
 time we evaluate the closure, it increments @code{x}, using the
 binding of @code{x} in that lexical environment.
 
-  Note that functions like @code{symbol-value}, @code{boundp}, and
-@code{set} only retrieve or modify a variable's dynamic binding
-(i.e., the contents of its symbol's value cell).  Also, the code in
-the body of a @code{defun} or @code{defmacro} cannot refer to
-surrounding lexical variables.
+  Note that unlike dynamic variables which are tied to the symbol
+object itself, the relationship between lexical variables and symbols
+is only present in the interpreter (or compiler).  Therefore,
+functions which take a symbol argument (like @code{symbol-value},
+@code{boundp}, and @code{set}) can only retrieve or modify a
+variable's dynamic binding (i.e., the contents of its symbol's value
+cell).
 
 @node Using Lexical Binding
 @subsection Using Lexical Binding
