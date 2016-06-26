@@ -362,7 +362,7 @@ recommended to do this as soon as you have firmly upgraded to Emacs
 to version 206, you can do this with 'C-u C-u M-x desktop-save'.
 
 ---
-*** desktop-restore-in-current-display now defaults to t, not nil.
+*** 'desktop-restore-in-current-display' now defaults to t, not nil.
 That is, Emacs by default now restores frames into the current display.
 
 +++
