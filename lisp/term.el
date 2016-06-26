@@ -1098,6 +1098,11 @@ Entry to this mode runs the hooks on `term-mode-hook'."
                     (term-reset-size (cdr size) (car size)))
                   size))
 
+  ;; Without the below setting, term-mode and ansi-term behave
+  ;; sluggishly when the buffer includes a lot of whitespace
+  ;; characters.
+  (setq bidi-paragraph-direction 'left-to-right)
+
   (easy-menu-add term-terminal-menu)
   (easy-menu-add term-signals-menu)
   (or term-input-ring
@@ -4138,17 +4143,7 @@ the process.  Any more args are arguments to PROGRAM."
     ;; .emacs ...
     (term-set-escape-char ?\C-x))
 
-  (switch-to-buffer term-ansi-buffer-name)
-  ;; For some reason, without the below setting, ansi-term behaves
-  ;; sluggishly, not clear why, since the buffer is typically very
-  ;; small.
-  ;;
-  ;; There's a larger problem here with supporting bidirectional text:
-  ;; the application that writes to the terminal could have its own
-  ;; ideas about displaying bidirectional text, and might not want us
-  ;; reordering the text or deciding on base paragraph direction.  One
-  ;; such application is Emacs in TTY mode...  FIXME.
-  (setq bidi-paragraph-direction 'left-to-right))
+  (switch-to-buffer term-ansi-buffer-name))
 
 
 ;;; Serial terminals
