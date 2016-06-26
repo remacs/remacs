@@ -242,7 +242,7 @@ random values; in particular, the Emacs server now uses this facility
 to produce its authentication key.
 
 ---
-** New input methods: 'tamil-dvorak' and 'programmer-dvorak'.
+** New input methods: 'tamil-dvorak', 'programmer-dvorak' and 'probhat'.
 
 
 * Editing Changes in Emacs 25.1
