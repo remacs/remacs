@@ -533,6 +533,14 @@ status_convert (int w)
     return Qrun;
 }
 
+/* True if STATUS is that of a process attempting connection.  */
+
+static bool
+connecting_status (Lisp_Object status)
+{
+  return CONSP (status) && EQ (XCAR (status), Qconnect);
+}
+
 /* Given a status-list, extract the three pieces of information
    and store them individually through the three pointers.  */
 
@@ -541,6 +549,9 @@ decode_status (Lisp_Object l, Lisp_Object *symbol, Lisp_Object *code,
 	       bool *coredump)
 {
   Lisp_Object tem;
+
+  if (connecting_status (l))
+    l = XCAR (l);
 
   if (SYMBOLP (l))
     {
@@ -3288,9 +3299,10 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 	  eassert (FD_ISSET (s, &fdset));
 	  if (getsockopt (s, SOL_SOCKET, SO_ERROR, &xerrno, &len) < 0)
 	    report_file_error ("Failed getsockopt", Qnil);
-	  if (xerrno)
+	  if (xerrno == 0)
+	    break;
+	  if (NILP (addrinfos))
 	    report_file_errno ("Failed connect", Qnil, xerrno);
-	  break;
 	}
 #endif /* !WINDOWSNT */
 
@@ -3399,7 +3411,9 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
       /* We may get here if connect did succeed immediately.  However,
 	 in that case, we still need to signal this like a non-blocking
 	 connection.  */
-      pset_status (p, Qconnect);
+      if (! (connecting_status (p->status)
+	     && EQ (XCDR (p->status), addrinfos)))
+	pset_status (p, Fcons (Qconnect, addrinfos));
       if (!FD_ISSET (inch, &connect_wait_mask))
 	{
 	  FD_SET (inch, &connect_wait_mask);
@@ -3960,7 +3974,7 @@ usage: (make-network-process &rest ARGS)  */)
   if (!p->is_server && NILP (addrinfos))
     {
       p->dns_request = dns_request;
-      p->status = Qconnect;
+      p->status = list1 (Qconnect);
       return proc;
     }
 #endif
@@ -4673,7 +4687,7 @@ check_for_dns (Lisp_Object proc)
       addrinfos = Fnreverse (addrinfos);
     }
   /* The DNS lookup failed. */
-  else if (EQ (p->status, Qconnect))
+  else if (connecting_status (p->status))
     {
       deactivate_process (proc);
       pset_status (p, (list2
@@ -4686,7 +4700,7 @@ check_for_dns (Lisp_Object proc)
   free_dns_request (proc);
 
   /* This process should not already be connected (or killed). */
-  if (!EQ (p->status, Qconnect))
+  if (! connecting_status (p->status))
     return Qnil;
 
   return addrinfos;
@@ -4698,7 +4712,7 @@ static void
 wait_for_socket_fds (Lisp_Object process, char const *name)
 {
   while (XPROCESS (process)->infd < 0
-	 && EQ (XPROCESS (process)->status, Qconnect))
+	 && connecting_status (XPROCESS (process)->status))
     {
       add_to_log ("Waiting for socket from %s...", build_string (name));
       wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
@@ -4708,7 +4722,7 @@ wait_for_socket_fds (Lisp_Object process, char const *name)
 static void
 wait_while_connecting (Lisp_Object process)
 {
-  while (EQ (XPROCESS (process)->status, Qconnect))
+  while (connecting_status (XPROCESS (process)->status))
     {
       add_to_log ("Waiting for connection...");
       wait_reading_process_output (0, 20 * 1000 * 1000, 0, 0, Qnil, NULL, 0);
@@ -5010,7 +5024,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	update_status (wait_proc);
       if (wait_proc
 	  && ! EQ (wait_proc->status, Qrun)
-	  && ! EQ (wait_proc->status, Qconnect))
+	  && ! connecting_status (wait_proc->status))
 	{
 	  bool read_some_bytes = false;
 
@@ -5520,9 +5534,18 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 #endif
 	      if (xerrno)
 		{
-		  p->tick = ++process_tick;
-		  pset_status (p, list2 (Qfailed, make_number (xerrno)));
+		  Lisp_Object addrinfos
+		    = connecting_status (p->status) ? XCDR (p->status) : Qnil;
+		  if (!NILP (addrinfos))
+		    XSETCDR (p->status, XCDR (addrinfos));
+		  else
+		    {
+		      p->tick = ++process_tick;
+		      pset_status (p, list2 (Qfailed, make_number (xerrno)));
+		    }
 		  deactivate_process (proc);
+		  if (!NILP (addrinfos))
+		    connect_network_socket (proc, addrinfos, Qnil);
 		}
 	      else
 		{
@@ -6999,7 +7022,7 @@ status_notify (struct Lisp_Process *deleting_process,
 
 	  /* If process is still active, read any output that remains.  */
 	  while (! EQ (p->filter, Qt)
-		 && ! EQ (p->status, Qconnect)
+		 && ! connecting_status (p->status)
 		 && ! EQ (p->status, Qlisten)
 		 /* Network or serial process not stopped:  */
 		 && ! EQ (p->command, Qt)
