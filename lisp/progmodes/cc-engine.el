@@ -5829,7 +5829,7 @@ comment at the start of cc-engine.el for more info."
 ;;   never a backslash escaping the end of line.  If the character preceding
 ;;   this "last possible" character is itself a backslash, this preceding
 ;;   character gets a "punctuation" `syntax-table' value.  If the "(" is
-;;   already at the end of the macro, it gets the "punctuaion" value, and no
+;;   already at the end of the macro, it gets the "punctuation" value, and no
 ;;   "string fence"s are used.
 ;;
 ;;   The effect on the fontification of either of these tactics is that rest of
@@ -6061,7 +6061,7 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;; Point is undefined on both entry and exit, and the return value has no
   ;; significance.
-  ;; 
+  ;;
   ;; This function is called as an after-change function solely due to its
   ;; membership of the C++ value of `c-before-font-lock-functions'.
   (c-save-buffer-state ()

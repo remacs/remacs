@@ -373,7 +373,7 @@ MAP can be a list, hash-table or array."
           alist))
 
 (defun map--do-array (function array)
-  "Private function usde to iterate over ARRAY using FUNCTION."
+  "Private function used to iterate over ARRAY using FUNCTION."
   (seq-do-indexed (lambda (elt index)
                      (funcall function index elt))
                    array))
