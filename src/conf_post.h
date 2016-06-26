@@ -39,7 +39,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef __GNUC_MINOR__
 # define GNUC_PREREQ(v, w, x) false
 #elif ! defined __GNUC_PATCHLEVEL__
-# define GNUC_PREREQ(v, w, x) ((v) < __GNUC__ + ((w) <= __GNUC_MINOR__))
+# define GNUC_PREREQ(v, w, x) \
+    ((v) < __GNUC__ + ((w) < __GNUC_MINOR__ + ((x) == 0))
 #else
 # define GNUC_PREREQ(v, w, x) \
     ((v) < __GNUC__ + ((w) < __GNUC_MINOR__ + ((x) <= __GNUC_PATCHLEVEL__)))
