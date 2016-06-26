@@ -1300,6 +1300,12 @@ be a list of the form returned by `event-start' and `event-end'."
 (make-obsolete 'forward-point "use (+ (point) N) instead." "23.1")
 (make-obsolete 'buffer-has-markers-at nil "24.3")
 
+;; bug#23850
+(make-obsolete 'string-to-unibyte   "use `encode-coding-string'." "25.2")
+(make-obsolete 'string-as-unibyte   "use `encode-coding-string'." "25.2")
+(make-obsolete 'string-to-multibyte "use `decode-coding-string'." "25.2")
+(make-obsolete 'string-as-multibyte "use `decode-coding-string'." "25.2")
+
 (defun insert-string (&rest args)
   "Mocklisp-compatibility insert function.
 Like the function `insert' except that any argument that is a number
