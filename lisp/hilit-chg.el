@@ -777,7 +777,7 @@ is non-nil."
 	   a-start a-end len-a
 	   b-start b-end len-b
 	   (bufa-modified (buffer-modified-p buf-a))
-	   (bufb-modified (buffer-modified-p buf-b))
+	   (bufb-modified (and (not (eq buf-a buf-b)) (buffer-modified-p buf-b)))
 	   (buf-a-read-only (with-current-buffer buf-a buffer-read-only))
 	   (buf-b-read-only (with-current-buffer buf-b buffer-read-only))
 	   temp-a temp-b)
