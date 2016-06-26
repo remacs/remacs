@@ -203,7 +203,7 @@ The string is used in `tramp-methods'.")
     (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-copy-program         "rsync")
-    (tramp-copy-args            (("-t" "%k") ("-r")))
+    (tramp-copy-args            (("-t" "%k") ("-p") ("-r") ("-s")))
     (tramp-copy-env             (("RSYNC_RSH") ("ssh" "%c")))
     (tramp-copy-keep-date       t)
     (tramp-copy-keep-tmpfile    t)
@@ -2378,17 +2378,16 @@ The method used must be an out-of-band method."
 	(setq source (if t1
 			 (tramp-make-copy-program-file-name v)
 		       (shell-quote-argument filename))
-          target (if t2
-                     (tramp-make-copy-program-file-name v)
-                   (shell-quote-argument
-                    (funcall
+	      target (funcall
 		      (if (and (file-directory-p filename)
 			       (string-equal
 				(file-name-nondirectory filename)
 				(file-name-nondirectory newname)))
 			  'file-name-directory
 			'identity)
-                     newname))))
+		      (if t2
+			  (tramp-make-copy-program-file-name v)
+			(shell-quote-argument newname))))
 
 	;; Check for host and port number.  We cannot use
 	;; `tramp-file-name-port', because this returns also
