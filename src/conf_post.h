@@ -42,7 +42,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 # define GNUC_PREREQ(v, w, x) ((v) < __GNUC__ + ((w) <= __GNUC_MINOR__))
 #else
 # define GNUC_PREREQ(v, w, x) \
-    ((v) < __GNUC__ + ((w) <= __GNUC_MINOR__ + ((x) <= __GNUC_PATCHLEVEL__)))
+    ((v) < __GNUC__ + ((w) < __GNUC_MINOR__ + ((x) <= __GNUC_PATCHLEVEL__)))
 #endif
 
 /* The type of bool bitfields.  Needed to compile Objective-C with
