@@ -5651,21 +5651,14 @@ displayed_window_lines (struct window *w)
   bottom_y = line_bottom_y (&it);
   bidi_unshelve_cache (itdata, false);
 
-  /* rms: On a non-window display,
-     the value of it.vpos at the bottom of the screen
-     seems to be 1 larger than window_box_height (w).
-     This kludge fixes a bug whereby (move-to-window-line -1)
-     when ZV is on the last screen line
-     moves to the previous screen line instead of the last one.  */
-  if (! FRAME_WINDOW_P (XFRAME (w->frame)))
-    height++;
-
   /* Add in empty lines at the bottom of the window.  */
   if (bottom_y < height)
     {
       int uy = FRAME_LINE_HEIGHT (it.f);
       it.vpos += (height - bottom_y + uy - 1) / uy;
     }
+  else if (bottom_y == height)
+    it.vpos++;
 
   if (old_buffer)
     set_buffer_internal (old_buffer);
@@ -5940,7 +5933,12 @@ DEFUN ("move-to-window-line", Fmove_to_window_line, Smove_to_window_line,
        doc: /* Position point relative to window.
 ARG nil means position point at center of window.
 Else, ARG specifies vertical position within the window;
-zero means top of window, negative means relative to bottom of window.  */)
+zero means top of window, negative means relative to bottom
+of window, -1 meaning the last fully visible display line
+of the window.
+
+Value is the screen line of the window point moved to, counting
+from the top of the window.  */)
   (Lisp_Object arg)
 {
   struct window *w = XWINDOW (selected_window);
