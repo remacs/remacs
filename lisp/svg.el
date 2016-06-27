@@ -27,6 +27,7 @@
 (require 'cl-lib)
 (require 'xml)
 (require 'dom)
+(require 'subr-x)
 
 (defun svg-create (width height &rest args)
   "Create a new, empty SVG image with dimensions WIDTHxHEIGHT.
@@ -149,13 +150,22 @@ otherwise.  IMAGE-TYPE should be a MIME image type, like
     `((xlink:href . ,(svg--image-data image image-type datap))
       ,@(svg--arguments svg args)))))
 
+(defun svg-text (svg text &rest args)
+  "Add TEXT to SVG."
+  (svg--append
+   svg
+   (dom-node
+    'text
+    `(,@(svg--arguments svg args))
+    text)))
+
 (defun svg--append (svg node)
   (let ((old (and (dom-attr node 'id)
 		  (dom-by-id svg
                              (concat "\\`" (regexp-quote (dom-attr node 'id))
                                      "\\'")))))
     (if old
-	(dom-set-attributes old (dom-attributes node))
+	(setcdr (car old) (cdr node))
       (dom-append-child svg node)))
   (svg-possibly-update-image svg))
 
@@ -237,16 +247,26 @@ If the SVG is later changed, the image will also be updated."
 
 (defun svg-print (dom)
   "Convert DOM into a string containing the xml representation."
-  (insert (format "<%s" (car dom)))
-  (dolist (attr (nth 1 dom))
-    ;; Ignore attributes that start with a colon.
-    (unless (= (aref (format "%s" (car attr)) 0) ?:)
-      (insert (format " %s=\"%s\"" (car attr) (cdr attr)))))
-  (insert ">")
-  (dolist (elem (nthcdr 2 dom))
-    (insert " ")
-    (svg-print elem))
-  (insert (format "</%s>" (car dom))))
+  (if (stringp dom)
+      (insert dom)
+    (insert (format "<%s" (car dom)))
+    (dolist (attr (nth 1 dom))
+      ;; Ignore attributes that start with a colon.
+      (unless (= (aref (format "%s" (car attr)) 0) ?:)
+        (insert (format " %s=\"%s\"" (car attr) (cdr attr)))))
+    (insert ">")
+    (dolist (elem (nthcdr 2 dom))
+      (insert " ")
+      (svg-print elem))
+    (insert (format "</%s>" (car dom)))))
+
+(defun svg-remove (svg id)
+  "Remove the element identified by ID from SVG."
+  (when-let ((node (car (dom-by-id
+                         svg
+                         (concat "\\`" (regexp-quote id)
+                                 "\\'")))))
+    (dom-remove-node svg node)))
 
 (provide 'svg)
 

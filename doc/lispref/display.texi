@@ -5350,6 +5350,24 @@ that describe the outer circumference of the polygon.
 @end lisp
 @end defun
 
+@defun svg-text svg text &rest args
+Add a text to @var{svg}.
+
+@lisp
+(svg-text
+ svg "This is a text"
+ :font-size "40"
+ :font-weight "bold"
+ :stroke "black"
+ :fill "white"
+ :font-family "impact"
+ :letter-spacing "4pt"
+ :x 300
+ :y 400
+ :stroke-width 1)
+@end lisp
+@end defun
+
 @defun svg-embed svg image image-type datap &rest args
 Add an embedded (raster) image to @var{svg}.  If @var{datap} is
 @code{nil}, @var{IMAGE} should be a file name; if not, it should be a
@@ -5361,6 +5379,10 @@ binary string containing the image data.  @var{image-type} should be a
            :width "100px" :height "100px"
            :x "50px" :y "75px")
 @end lisp
+@end defun
+
+@defun svg-remove svg id
+Remove the element with identifier @code{id} from the @code{svg}.
 @end defun
 
 Finally, the @code{svg-image} takes an SVG object as its parameter and
