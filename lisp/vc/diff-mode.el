@@ -371,22 +371,22 @@ and the face `diff-added' for added lines.")
 
 (defvar diff-font-lock-keywords
   `((,(concat "\\(" diff-hunk-header-re-unified "\\)\\(.*\\)$")
-     (1 diff-hunk-header) (6 diff-function))
+     (1 'diff-hunk-header) (6 'diff-function))
     ("^\\(\\*\\{15\\}\\)\\(.*\\)$"                        ;context
-     (1 diff-hunk-header) (2 diff-function))
-    ("^\\*\\*\\* .+ \\*\\*\\*\\*". diff-hunk-header) ;context
-    (,diff-context-mid-hunk-header-re . diff-hunk-header) ;context
-    ("^[0-9,]+[acd][0-9,]+$"     . diff-hunk-header) ;normal
-    ("^---$"                     . diff-hunk-header) ;normal
+     (1 'diff-hunk-header) (2 'diff-function))
+    ("^\\*\\*\\* .+ \\*\\*\\*\\*". 'diff-hunk-header) ;context
+    (,diff-context-mid-hunk-header-re . 'diff-hunk-header) ;context
+    ("^[0-9,]+[acd][0-9,]+$"     . 'diff-hunk-header) ;normal
+    ("^---$"                     . 'diff-hunk-header) ;normal
     ;; For file headers, accept files with spaces, but be careful to rule
     ;; out false-positives when matching hunk headers.
     ("^\\(---\\|\\+\\+\\+\\|\\*\\*\\*\\) \\([^\t\n]+?\\)\\(?:\t.*\\| \\(\\*\\*\\*\\*\\|----\\)\\)?\n"
-     (0 diff-header)
-     (2 (if (not (match-end 3)) diff-file-header) prepend))
+     (0 'diff-header)
+     (2 (if (not (match-end 3)) 'diff-file-header) prepend))
     ("^\\([-<]\\)\\(.*\n\\)"
-     (1 diff-indicator-removed-face) (2 diff-removed))
+     (1 diff-indicator-removed-face) (2 'diff-removed))
     ("^\\([+>]\\)\\(.*\n\\)"
-     (1 diff-indicator-added-face) (2 diff-added))
+     (1 diff-indicator-added-face) (2 'diff-added))
     ("^\\(!\\)\\(.*\n\\)"
      (1 (if diff-use-changed-face
 	    diff-indicator-changed-face
@@ -399,20 +399,20 @@ and the face `diff-added' for added lines.")
 		  diff-indicator-added-face
 		diff-indicator-removed-face)))))
      (2 (if diff-use-changed-face
-	    diff-changed
+	    'diff-changed
 	  ;; Otherwise, use the same method as above.
 	  (save-match-data
 	    (let ((limit (save-excursion (diff-beginning-of-hunk))))
 	      (if (save-excursion (re-search-backward diff-context-mid-hunk-header-re limit t))
-		  diff-added
-		diff-removed))))))
+		  'diff-added
+		'diff-removed))))))
     ("^\\(?:Index\\|revno\\): \\(.+\\).*\n"
-     (0 diff-header) (1 diff-index prepend))
-    ("^Only in .*\n" . diff-nonexistent)
+     (0 'diff-header) (1 'diff-index prepend))
+    ("^Only in .*\n" . 'diff-nonexistent)
     ("^\\(#\\)\\(.*\\)"
      (1 font-lock-comment-delimiter-face)
      (2 font-lock-comment-face))
-    ("^[^-=+*!<>#].*\n" (0 diff-context))))
+    ("^[^-=+*!<>#].*\n" (0 'diff-context))))
 
 (defconst diff-font-lock-defaults
   '(diff-font-lock-keywords t nil nil nil (font-lock-multiline . nil)))
