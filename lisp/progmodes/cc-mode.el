@@ -1299,12 +1299,12 @@ Note that the style variables are always made local to the buffer."
   ;; This function is called indirectly from font locking stuff - either from
   ;; c-after-change (to prepare for after-change font-locking) or from font
   ;; lock context (etc.) fontification.
-  (let ((lit-limits (c-literal-limits))
+  (let ((lit-start (c-literal-start))
 	(new-pos pos)
 	bod-lim bo-decl)
     (goto-char (c-point 'bol new-pos))
-    (when lit-limits			; Comment or string.
-      (goto-char (car lit-limits)))
+    (when lit-start			; Comment or string.
+      (goto-char lit-start))
     (setq bod-lim (c-determine-limit 500))
 
     (while

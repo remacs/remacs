@@ -2480,10 +2480,10 @@ need for `pike-font-lock-extra-types'.")
 	    'font-lock-comment-face)
 	;; Handle the case when the fontified region starts inside a
 	;; comment.
-	(let ((range (c-literal-limits)))
+	(let ((start (c-literal-start)))
 	  (setq region-beg (point))
-	  (when range
-	    (goto-char (car range)))
+	  (when start
+	    (goto-char start))
 	  (when (looking-at prefix)
 	    (setq comment-beg (point)))))
 

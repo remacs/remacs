@@ -1300,7 +1300,7 @@ comment at the start of cc-engine.el for more info."
 	    c-stmt-delim-chars))
 	 (non-skip-list
 	  (append (substring skip-chars 1) nil)) ; e.g. (?# ?\; ?{ ?} ?? ?:)
-	 lit-range vsemi-pos)
+	 lit-range lit-start vsemi-pos)
     (save-restriction
       (widen)
       (save-excursion
@@ -1315,8 +1315,8 @@ comment at the start of cc-engine.el for more info."
 	     ((and (bolp)
 		   (save-excursion
 		     (progn
-		       (if (setq lit-range (c-literal-limits from)) ; Have we landed in a string/comment?
-			   (goto-char (car lit-range)))
+		       (if (setq lit-start (c-literal-start from)) ; Have we landed in a string/comment?
+			   (goto-char lit-start))
 		       (c-backward-syntactic-ws) ; ? put a limit here, maybe?
 		       (setq vsemi-pos (point))
 		       (c-at-vsemi-p))))
@@ -2279,15 +2279,110 @@ comment at the start of cc-engine.el for more info."
 
 (defvar c-state-semi-nonlit-pos-cache nil)
 (make-variable-buffer-local 'c-state-semi-nonlit-pos-cache)
-;; A list of buffer positions which are known not to be in a literal.  This is
-;; ordered with higher positions at the front of the list.  Only those which
-;; are less than `c-state-semi-nonlit-pos-cache-limit' are valid.
+;; A list of elements which are either buffer positions (when such positions
+;; are not in literals) or lists of the form (POS TYPE START), where POS is
+;; a buffer position inside a literal, TYPE is the type of the literal
+;; ('string, 'c, or 'c++) and START is the start of the literal.
 
 (defvar c-state-semi-nonlit-pos-cache-limit 1)
 (make-variable-buffer-local 'c-state-semi-nonlit-pos-cache-limit)
-;; An upper limit on valid entries in `c-state-semi-nonlit-pos-cache'.  This is
-;; reduced by buffer changes, and increased by invocations of
-;; `c-state-literal-at'.  FIXME!!!
+;; An upper limit on valid entries in `c-state-semi-nonlit-pos-cache'.  This
+;; is reduced by buffer changes, and increased by invocations of
+;; `c-parse-ps-state-below'.
+
+(defun c-state-semi-pp-to-literal (here &optional not-in-delimiter)
+  ;; Do a parse-partial-sexp from a position in the buffer before HERE which
+  ;; isn't in a literal, and return information about HERE, either:
+  ;; (STATE TYPE BEG)          if HERE is in a literal; or
+  ;; (STATE)                   otherwise,
+  ;; where STATE is the parsing state at HERE, TYPE is the type of the literal
+  ;; enclosing HERE, (one of 'string, 'c, 'c++) and BEG is the starting
+  ;; position of that literal (including the delimiter).
+  ;;
+  ;; Unless NOT-IN-DELIMITER is non-nil, when TO is inside a two-character
+  ;; comment opener, this is recognized as being in a comment literal.
+  ;;
+  ;; Only elements 3 (in a string), 4 (in a comment), 5 (following a quote), 7
+  ;; (comment type), and 8 (start of comment/string), and possibly 10 (in
+  ;; newer Emacsen only, the syntax of a position after a potential first char
+  ;; of a two char construct) of STATE are valid.
+  (save-excursion
+    (save-match-data
+      (let* ((base-and-state (c-parse-ps-state-below here))
+	     (base (car base-and-state))
+	     (s (cdr base-and-state))
+	     (s (parse-partial-sexp base here nil nil s))
+	     ty)
+	(cond
+	 ((or (nth 3 s) (nth 4 s))	; in a string or comment
+	  (setq ty (cond
+		    ((nth 3 s) 'string)
+		    ((nth 7 s) 'c++)
+		    (t 'c)))
+	  (list s ty (nth 8 s)))
+	 
+	 ((and (not not-in-delimiter)	; inside a comment starter
+	       (not (bobp))
+	       (progn (backward-char)
+		      (and (not (and (memq 'category-properties c-emacs-features)
+				     (looking-at "\\s!")))
+			   (looking-at c-comment-start-regexp))))
+	  (setq ty (if (looking-at c-block-comment-start-regexp) 'c 'c++))
+	  (list s ty (point)))
+	 
+	 (t (list s)))))))
+
+(defun c-state-full-pp-to-literal (here &optional not-in-delimiter)
+  ;; This function will supersede c-state-pp-to-literal.
+  ;; 
+  ;; Do a parse-partial-sexp from a position in the buffer before HERE which
+  ;; isn't in a literal, and return information about HERE, either:
+  ;; (STATE TYPE (BEG . END))   if HERE is in a literal; or
+  ;; (STATE)                    otherwise,
+  ;; where STATE is the parsing state at HERE, TYPE is the type of the literal
+  ;; enclosing HERE, (one of 'string, 'c, 'c++) and (BEG . END) is the
+  ;; boundaries of that literal (including the delimiters).
+  ;;
+  ;; Unless NOT-IN-DELIMITER is non-nil, when TO is inside a two-character
+  ;; comment opener, this is recognized as being in a comment literal.
+  ;;
+  ;; Only elements 3 (in a string), 4 (in a comment), 5 (following a quote), 7
+  ;; (comment type), and 8 (start of comment/string), and possibly 10 (in
+  ;; newer Emacsen only, the syntax of a position after a potential first char
+  ;; of a two char construct) of STATE are valid.
+  (save-excursion
+    (save-match-data
+      (let* ((base-and-state (c-parse-ps-state-below here))
+	     (base (car base-and-state))
+	     (s (cdr base-and-state))
+	     (s (parse-partial-sexp base here nil nil s))
+	     ty start)
+	(cond
+	 ((or (nth 3 s) (nth 4 s))	; in a string or comment
+	  (setq ty (cond
+		    ((nth 3 s) 'string)
+		    ((nth 7 s) 'c++)
+		    (t 'c)))
+	  (setq start (nth 8 s))
+	  (parse-partial-sexp here (point-max)
+			      nil			      ; TARGETDEPTH
+			      nil			      ; STOPBEFORE
+			      s				      ; OLDSTATE
+			      'syntax-table) ; stop at end of literal
+	  (list s ty (cons start (point))))
+
+	 ((and (not not-in-delimiter)	; inside a comment starter
+	       (not (bobp))
+	       (progn (backward-char)
+		      (and (not (and (memq 'category-properties c-emacs-features)
+				     (looking-at "\\s!")))
+			   (looking-at c-comment-start-regexp))))
+	  (setq ty (if (looking-at c-block-comment-start-regexp) 'c 'c++)
+		start (point))
+	  (forward-comment 1)
+	  (list s ty (cons start (point))))
+
+	 (t (list s)))))))
 
 (defsubst c-state-pp-to-literal (from to &optional not-in-delimiter)
   ;; Do a parse-partial-sexp from FROM to TO, returning either
@@ -2331,6 +2426,103 @@ comment at the start of cc-engine.el for more info."
 	  `(,s ,ty (,co-st . ,(point))))
 
 	 (t `(,s)))))))
+
+(defun c-cache-to-parse-ps-state (elt)
+  ;; Create a list suitable to use as the old-state parameter to
+  ;; `parse-partial-sexp', out of ELT.  ELT is either just a number, a buffer
+  ;; position, or it is a list (POS TYPE STARTING-POS).  Here POS is the
+  ;; buffer position the other elements are pertinent for, TYPE is either 'c
+  ;; or 'c++ (for a comment) or a character (for a string delimiter) or t
+  ;; (meaning a string fence opened the string), STARTING-POS is the starting
+  ;; position of the comment or string.
+  (if (consp elt)
+      (let ((depth 0) (containing nil) (last nil)
+	    in-string in-comment (after-quote nil)
+	    (min-depth 0) com-style com-str-start (intermediate nil)
+	    (between-syntax nil)
+	    (type (cadr elt)))
+	(setq com-str-start (car (cddr elt)))
+	(cond
+	 ((or (numberp type) (eq type t)) ; A string
+	  (setq in-string type))
+	 ((memq type '(c c++))		; A comment
+	  (setq in-comment t
+		com-style (if (eq type 'c++) 1 nil)))
+	 (t (c-benign-error "Invalid type %s in c-cache-to-parse-ps-state"
+			    elt)))
+	(list depth containing last
+	      in-string in-comment after-quote
+	      min-depth com-style com-str-start
+	      intermediate nil))
+    (copy-tree '(0 nil nil nil nil nil 0 nil nil nil nil))))
+
+(defun c-parse-ps-state-to-cache (state)
+  ;; Convert STATE, a `parse-partial-sexp' state valid at POINT, to an element
+  ;; for the `c-state-semi-nonlit-pos-cache' cache.  This is either POINT
+  ;; (when point is not in a literal) or a list (POINT TYPE STARTING-POS),
+  ;; where TYPE is the type of the literal, either 'string, 'c, or 'c++, and
+  ;; STARTING-POS is the starting position of the comment or string.
+  (cond
+   ((nth 3 state)			; A string
+    (list (point) (nth 3 state) (nth 8 state)))
+   ((nth 4 state)			; A comment
+    (list (point)
+	  (if (eq (nth 7 state) 1) 'c++ 'c)
+	  (nth 8 state)))
+   (t					; Neither string nor comment.
+    (point))))
+
+(defsubst c-ps-state-cache-pos (elt)
+  ;; Get the buffer position from ELT, an element from the cache
+  ;; `c-state-semi-nonlit-pos-cache'.
+  (if (atom elt)
+      elt
+    (car elt)))
+
+(defun c-parse-ps-state-below (here)
+  ;; Given a buffer position HERE, Return a cons (CACHE-POS . STATE), where
+  ;; CACHE-POS is a position not very far before HERE for which the
+  ;; parse-partial-sexp STATE is valid.  Note that the only valid elements of
+  ;; STATE are those concerning comments and strings; STATE is the state of a
+  ;; null `parse-partial-sexp' scan when CACHE-POS is not in a comment or
+  ;; string.
+  (save-restriction
+    (widen)
+    (save-excursion
+      (let ((c c-state-semi-nonlit-pos-cache)
+	    elt state pos npos high-elt)
+	;; Trim the cache to take account of buffer changes.
+	(while (and c (> (c-ps-state-cache-pos (c-ps-state-cache-pos (car c)))
+			 c-state-semi-nonlit-pos-cache-limit))
+	  (setq c (cdr c)))
+	(setq c-state-semi-nonlit-pos-cache c)
+
+	(while (and c (> (c-ps-state-cache-pos (car c)) here))
+	  (setq high-elt (car c))
+	  (setq c (cdr c)))
+	(setq pos (or (and c (c-ps-state-cache-pos (car c)))
+		      (point-min)))
+
+	(if high-elt
+	    (setq state (c-cache-to-parse-ps-state (car c)))
+	  (setq elt (if c (car c) (point-min)))
+	  (setq state
+		(if c
+		    (c-cache-to-parse-ps-state (car c))
+		  (copy-tree '(0 nil nil nil nil nil 0 nil nil nil nil))))
+	  (while
+	      ;; Add an element to `c-state-semi-nonlit-pos-cache' each iteration.
+	      (<= (setq npos (+ pos c-state-nonlit-pos-interval)) here)
+	    (setq state (parse-partial-sexp pos npos nil nil state))
+	    (setq elt (c-parse-ps-state-to-cache state))
+	    (setq c-state-semi-nonlit-pos-cache
+		  (cons elt c-state-semi-nonlit-pos-cache))
+	    (setq pos npos)))
+
+	(if (> pos c-state-semi-nonlit-pos-cache-limit)
+	    (setq c-state-semi-nonlit-pos-cache-limit pos))
+
+	(cons pos state)))))
 
 (defun c-state-safe-place (here)
   ;; Return a buffer position before HERE which is "safe", i.e. outside any
@@ -2395,45 +2587,6 @@ comment at the start of cc-engine.el for more info."
 
 	(if (> pos c-state-nonlit-pos-cache-limit)
 	    (setq c-state-nonlit-pos-cache-limit pos))
-	pos))))
-
-(defun c-state-semi-safe-place (here)
-  ;; Return a buffer position before HERE which is "safe", i.e. outside any
-  ;; string or comment.  It may be in a macro.
-  (save-restriction
-    (widen)
-    (save-excursion
-      (let ((c c-state-semi-nonlit-pos-cache)
-	    pos npos high-pos lit macro-beg macro-end)
-	;; Trim the cache to take account of buffer changes.
-	(while (and c (> (car c) c-state-semi-nonlit-pos-cache-limit))
-	  (setq c (cdr c)))
-	(setq c-state-semi-nonlit-pos-cache c)
-
-	(while (and c (> (car c) here))
-	  (setq high-pos (car c))
-	  (setq c (cdr c)))
-	(setq pos (or (car c) (point-min)))
-
-	(unless high-pos
-	  (while
-	      ;; Add an element to `c-state-semi-nonlit-pos-cache' each iteration.
-	      (and
-	       (<= (setq npos (+ pos c-state-nonlit-pos-interval)) here)
-
-	       ;; Test for being in a literal.  If so, go to after it.
-	       (progn
-		 (setq lit (car (cddr (c-state-pp-to-literal pos npos))))
-		 (or (null lit)
-		     (prog1 (<= (cdr lit) here)
-		       (setq npos (cdr lit))))))
-
-	    (setq pos npos)
-	    (setq c-state-semi-nonlit-pos-cache
-		  (cons pos c-state-semi-nonlit-pos-cache))))
-
-	(if (> pos c-state-semi-nonlit-pos-cache-limit)
-	    (setq c-state-semi-nonlit-pos-cache-limit pos))
 	pos))))
 
 (defun c-state-literal-at (here)
@@ -4633,8 +4786,7 @@ Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
   (save-restriction
     (widen)
-    (let* ((safe-place (c-state-semi-safe-place (point)))
-	   (lit (c-state-pp-to-literal safe-place (point))))
+    (let ((lit (c-state-semi-pp-to-literal (point))))
       (or (cadr lit)
 	  (and detect-cpp
 	       (save-excursion (c-beginning-of-macro))
@@ -4656,14 +4808,19 @@ Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
 
   (save-excursion
-    (let* ((pos (point))
-	   (lim (or lim (c-state-semi-safe-place pos)))
-	   (pp-to-lit (save-restriction
-			(widen)
-			(c-state-pp-to-literal lim pos not-in-delimiter)))
-	   (state (car pp-to-lit))
-	   (lit-limits (car (cddr pp-to-lit))))
-
+    (let*
+	((pos (point))
+	 (lit-limits
+	  (if lim
+	      (let ((s (parse-partial-sexp lim (point))))
+		(when (or (nth 3 s) (nth 4 s))
+		  (cons (nth 8 s)
+			(progn (parse-partial-sexp (point) (point-max)
+						   nil 'syntax-table
+						   s)
+			       (point)))))
+	    (let ((pp-to-lit (c-state-full-pp-to-literal pos not-in-delimiter)))
+	      (car (cddr pp-to-lit))))))
       (cond
        (lit-limits)
 
@@ -4701,6 +4858,16 @@ comment at the start of cc-engine.el for more info."
 
 	    (if beg (cons beg end))))))
        ))))
+
+(defun c-literal-start (&optional safe-pos)
+  "Return the start of the string or comment surrounding point, or nil if
+point isn't in one.  SAFE-POS, if non-nil, is a position before point which is
+a known \"safe position\", i.e. outside of any string or comment."
+  (if safe-pos
+      (let ((s (parse-partial-sexp safe-pos (point))))
+	(and (or (nth 3 s) (nth 4 s))
+	     (nth 8 s)))
+    (car (cddr (c-state-semi-pp-to-literal (point))))))
 
 ;; In case external callers use this; it did have a docstring.
 (defalias 'c-literal-limits-fast 'c-literal-limits)
@@ -4766,13 +4933,10 @@ comment at the start of cc-engine.el for more info."
 
 (defsubst c-determine-limit-get-base (start try-size)
   ;; Get a "safe place" approximately TRY-SIZE characters before START.
-  ;; This doesn't preserve point.
+  ;; This defsubst doesn't preserve point.
   (let* ((pos (max (- start try-size) (point-min)))
-	 (base (c-state-semi-safe-place pos))
-	 (s (parse-partial-sexp base pos)))
-    (if (or (nth 4 s) (nth 3 s))	; comment or string
-	(nth 8 s)
-      (point))))
+	 (s (c-state-semi-pp-to-literal pos)))
+    (or (car (cddr s)) pos)))
 
 (defun c-determine-limit (how-far-back &optional start try-size)
   ;; Return a buffer position HOW-FAR-BACK non-literal characters from START
@@ -5152,8 +5316,9 @@ comment at the start of cc-engine.el for more info."
 	   ;; arrived at something that looks like a start or else
 	   ;; resort to `c-literal-limits'.
 	   (unless (looking-at c-literal-start-regexp)
-	     (let ((range (c-literal-limits)))
-	       (if range (goto-char (car range)))))
+	     (let ((lit-start (c-literal-start)))
+	       (if lit-start (goto-char lit-start)))
+	     )
 
 	   (setq start-in-literal (point))) ; end of `and' arm.
 
@@ -5690,12 +5855,12 @@ comment at the start of cc-engine.el for more info."
   ;; 2010-01-29.
   (save-excursion
     (c-save-buffer-state
-	((beg-lit-limits (progn (goto-char beg) (c-literal-limits)))
+	((beg-lit-start (progn (goto-char beg) (c-literal-start)))
 	 (end-lit-limits (progn (goto-char end) (c-literal-limits)))
 	 new-beg new-end beg-limit end-limit)
       ;; Locate the earliest < after the barrier before the changed region,
       ;; which isn't already marked as a paren.
-      (goto-char  (if beg-lit-limits (car beg-lit-limits) beg))
+      (goto-char (or beg-lit-start beg))
       (setq beg-limit (c-determine-limit 512))
 
       ;; Remove the syntax-table/category properties from each pertinent <...>
@@ -5854,9 +6019,8 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;; Note: this routine is dependant upon the correct syntax-table text
   ;; properties being set.
-  (let* ((safe (c-state-semi-safe-place (point)))
-	 (state (c-state-pp-to-literal safe (point)))
-	 open-quote-pos open-paren-pos close-paren-pos close-quote-pos id)
+  (let ((state (c-state-semi-pp-to-literal (point)))
+	open-quote-pos open-paren-pos close-paren-pos close-quote-pos id)
     (save-excursion
       (when
 	  (and
@@ -5865,7 +6029,7 @@ comment at the start of cc-engine.el for more info."
 	     (or (eq (char-after) ?\")
 		 (search-backward "\"" (max (- (point) 17) (point-min)) t)))
 	    ((and (eq (cadr state) 'string)
-		  (goto-char (car (nth 2 state)))
+		  (goto-char (nth 2 state))
 		  (or (eq (char-after) ?\")
 		      (search-backward "\"" (max (- (point) 17) (point-min)) t))
 		  (not (bobp)))))
@@ -10551,8 +10715,8 @@ comment at the start of cc-engine.el for more info."
 	     ;; versions, which results in that we get nil from
 	     ;; `c-literal-limits' even when `c-in-literal' claims
 	     ;; we're inside a comment.
-	     (setq placeholder (c-literal-limits lim)))
-	(c-add-syntax literal (car placeholder)))
+	     (setq placeholder (c-literal-start lim)))
+	(c-add-syntax literal placeholder))
 
        ;; CASE 3: in a cpp preprocessor macro continuation.
        ((and (save-excursion
