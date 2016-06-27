@@ -718,8 +718,8 @@ VALUES-PLIST is a list with alternating index and value elements."
 
 (ert-deftest ruby-toggle-string-quotes-quotes-correctly ()
   (let ((pairs
-         '(("puts 'foo\"\\''" . "puts \"foo\\\"'\"")
-           ("puts \"foo'\\\"\"" . "puts 'foo\\'\"'"))))
+         '(("puts '\"foo\"\\''" . "puts \"\\\"foo\\\"'\"")
+           ("puts \"'foo'\\\"\"" . "puts '\\'foo\\'\"'"))))
     (dolist (pair pairs)
       (ruby-with-temp-buffer (car pair)
         (beginning-of-line)
