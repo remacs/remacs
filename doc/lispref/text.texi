@@ -4614,6 +4614,9 @@ to be inserted between the textual elements.
 
 @item dom-parent @var{dom} @var{node}
 Return the parent of @var{node} in @var{dom}.
+
+@item dom-remove @var{dom} @var{node}
+Remove @var{node} from @var{dom}.
 @end table
 
 The following are functions for altering the @acronym{DOM}.
