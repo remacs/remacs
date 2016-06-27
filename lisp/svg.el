@@ -137,6 +137,18 @@ POINTS is a list of x/y pairs."
 			    ", "))
       ,@(svg--arguments svg args)))))
 
+(defun svg-embed (svg image image-type datap &rest args)
+  "Insert IMAGE into the SVG structure.
+IMAGE should be a file name if DATAP is nil, and a binary string
+otherwise.  IMAGE-TYPE should be a MIME image type, like
+\"image/jpeg\" or the like."
+  (svg--append
+   svg
+   (dom-node
+    'image
+    `((xlink:href . ,(svg--image-data image image-type datap))
+      ,@(svg--arguments svg args)))))
+
 (defun svg--append (svg node)
   (let ((old (and (dom-attr node 'id)
 		  (dom-by-id svg
@@ -146,6 +158,17 @@ POINTS is a list of x/y pairs."
 	(dom-set-attributes old (dom-attributes node))
       (dom-append-child svg node)))
   (svg-possibly-update-image svg))
+
+(defun svg--image-data (image image-type datap)
+  (with-temp-buffer
+    (set-buffer-multibyte nil)
+    (if datap
+        (insert image)
+      (insert-file-contents image))
+    (base64-encode-region (point-min) (point-max) t)
+    (goto-char (point-min))
+    (insert "data:" image-type ";base64,")
+    (buffer-string)))
 
 (defun svg--arguments (svg args)
   (let ((stroke-width (or (plist-get args :stroke-width)

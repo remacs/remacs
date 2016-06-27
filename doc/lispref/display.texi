@@ -5350,6 +5350,19 @@ that describe the outer circumference of the polygon.
 @end lisp
 @end defun
 
+@defun svg-embed svg image image-type datap &rest args
+Add an embedded (raster) image to @var{svg}.  If @var{datap} is
+@code{nil}, @var{IMAGE} should be a file name; if not, it should be a
+binary string containing the image data.  @var{image-type} should be a
+@acronym{MIME} image type, for instance @samp{"image/jpeg"}.
+
+@lisp
+(svg-embed svg "~/rms.jpg" "image/jpeg" nil
+           :width "100px" :height "100px"
+           :x "50px" :y "75px")
+@end lisp
+@end defun
+
 Finally, the @code{svg-image} takes an SVG object as its parameter and
 returns an image object suitable for use in functions like
 @code{insert-image}.  Here's a complete example that creates and
