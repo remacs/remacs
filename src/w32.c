@@ -2778,8 +2778,8 @@ init_environment (char ** argv)
                             intern ("initialization"), build_string
                             ("Use of `C:\\.emacs' without defining `HOME' "
                              "in the environment is deprecated,\n"
-                             "see `Windows Home' in the Emacs manual."))),
-                    Vdelayed_warnings_list);
+                             "see `Windows Home' in the Emacs manual.")),
+                     Vdelayed_warnings_list);
 	      }
 
 	    if (lpval)
