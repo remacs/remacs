@@ -296,8 +296,10 @@ image under point instead.
 If called twice, then try to fetch the URL and see whether it
 redirects somewhere else."
   (interactive "P")
-  (let ((url (or (get-text-property (point) 'shr-url)
-		 (get-text-property (point) 'image-url))))
+  (let ((url (if image-url
+                 (get-text-property (point) 'image-url)
+               (or (get-text-property (point) 'shr-url)
+                   (get-text-property (point) 'image-url)))))
     (cond
      ((not url)
       (message "No URL under point"))
