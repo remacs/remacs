@@ -472,7 +472,7 @@ Full key sequences are listed below:")
 
 ;; Probhat Input Method
 (quail-define-package
- "bengali-probhat" "Bengali" "BngProbhat" t
+ "bengali-probhat" "Bengali" "BngPB" t
  "Probhat keyboard for Bengali/Bangla" nil t nil nil nil nil nil nil nil nil t)
 
 (quail-define-rules
