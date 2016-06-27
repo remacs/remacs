@@ -15465,7 +15465,7 @@ Here is the function:
 @group
       (cond
        ;; check to see whether filename ends in '.el'
-       ;; and if so, append its name to a list.
+       ;; and if so, add its name to a list.
        ((equal ".el" (substring (car (car current-directory-list)) -3))
         (setq el-files-list
               (cons (car (car current-directory-list)) el-files-list)))
