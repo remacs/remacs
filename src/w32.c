@@ -2776,9 +2776,9 @@ init_environment (char ** argv)
                     = Fcons
                     (listn (CONSTYPE_HEAP, 2,
                             intern ("initialization"), build_string
-                            ("Use of `C:\\.emacs' without defining `HOME' "
-                             "in the environment is deprecated,\n"
-                             "see `Windows Home' in the Emacs manual.")),
+                            ("Use of `C:\\.emacs' without defining `HOME'\n"
+                             "in the environment is deprecated, "
+                             "see `Windows HOME' in the Emacs manual.")),
                      Vdelayed_warnings_list);
 	      }
 
