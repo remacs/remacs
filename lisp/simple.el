@@ -2940,9 +2940,17 @@ behavior."
                         (cdr buffer-undo-list))))))
         (setq undo-auto--last-boundary-cause 0)))))
 
+;; This function is called also from one place in fileio.c. We call
+;; this function, rather than undoable-change because it reduces the
+;; number of lisp functions we have to use fboundp for to avoid
+;; bootstrap issues.
+(defun undo-auto--undoable-change-no-timer ()
+  "Record `current-buffer' as changed."
+  (add-to-list 'undo-auto--undoably-changed-buffers (current-buffer)))
+
 (defun undo-auto--undoable-change ()
   "Called after every undoable buffer change."
-  (add-to-list 'undo-auto--undoably-changed-buffers (current-buffer))
+  (undo-auto--undoable-change-no-timer)
   (undo-auto--boundary-ensure-timer))
 ;; End auto-boundary section
 

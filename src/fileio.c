@@ -3436,6 +3436,9 @@ by calling `format-decode', which see.  */)
   if (!NILP (BVAR (current_buffer, read_only)))
     Fbarf_if_buffer_read_only (Qnil);
 
+  if (!NILP (Ffboundp (Qundo_auto__undoable_change_no_timer)))
+    call0 (Qundo_auto__undoable_change_no_timer);
+
   val = Qnil;
   p = Qnil;
   orig_filename = Qnil;
@@ -5796,6 +5799,8 @@ syms_of_fileio (void)
   /* Property name of a file name handler,
      which gives a list of operations it handles.  */
   DEFSYM (Qoperations, "operations");
+
+  DEFSYM (Qundo_auto__undoable_change_no_timer, "undo-auto--undoable-change-no-timer");
 
   DEFSYM (Qexpand_file_name, "expand-file-name");
   DEFSYM (Qsubstitute_in_file_name, "substitute-in-file-name");
