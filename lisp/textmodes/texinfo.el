@@ -379,7 +379,7 @@ Subexpression 1 is what goes into the corresponding `@end' statement.")
     ;;  1 (texinfo-clone-environment (match-beginning 1) (match-end 1)) keep)
     (,(concat "^@" (regexp-opt (mapcar 'car texinfo-section-list) t)
 	       ".*\n")
-     0 texinfo-heading t))
+     0 'texinfo-heading t))
   "Additional expressions to highlight in Texinfo mode.")
 
 (defun texinfo-clone-environment (start end)
