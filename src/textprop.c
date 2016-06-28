@@ -2065,9 +2065,14 @@ extend_property_ranges (Lisp_Object list, Lisp_Object new_end)
 	  else
 	    XSETCDR (prev, XCDR (list));
 	}
-      else if (XINT (end) > max)
-	/* The end-point is past the end of the new string.  */
-	XSETCAR (XCDR (item), new_end);
+      else if (XINT (end) != max)
+	{
+	  /* Either the end-point is past the end of the new string,
+	     and we need to discard the properties past the new end,
+	     or the caller is extending the property range, and we
+	     should update the end-point to reflect that.  */
+	  XSETCAR (XCDR (item), new_end);
+	}
     }
 
   return head;
