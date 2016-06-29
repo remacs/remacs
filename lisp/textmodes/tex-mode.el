@@ -505,7 +505,7 @@ An alternative value is \" . \", if you use a font with a narrow period."
                   (funcall inbraces-re
                            (concat "{" (funcall inbraces-re "{[^}]*}") "*}"))
                   "*}\\)+\\$?\\$")
-         (0 tex-math))
+         (0 'tex-math))
         ;; Heading args.
         (,(concat slash headings "\\*?" opt arg)
          ;; If ARG ends up matching too much (if the {} don't match, e.g.)

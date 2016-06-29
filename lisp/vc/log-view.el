@@ -241,8 +241,8 @@ The match group number 1 should match the revision number itself.")
   ;; and log-view-message-re, if applicable.
   '((eval . `(,log-view-file-re
               (1 (if (boundp 'cvs-filename-face) cvs-filename-face))
-              (0 log-view-file append)))
-    (eval . `(,log-view-message-re . log-view-message))))
+              (0 'log-view-file append)))
+    (eval . `(,log-view-message-re . 'log-view-message))))
 
 (defconst log-view-font-lock-defaults
   '(log-view-font-lock-keywords t nil nil nil))
