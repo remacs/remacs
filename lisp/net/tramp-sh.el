@@ -506,10 +506,12 @@ the command \"getconf PATH\".  It is recommended to use this
 entry on top of this list, because these are the default
 directories for POSIX compatible commands.  On remote hosts which
 do not offer the getconf command (like cygwin), the value
-\"/bin:/usr/bin\" is used instead of.
+\"/bin:/usr/bin\" is used instead of.  This entry is represented in
+the list by the special value `tramp-default-remote-path'.
 
 `Private Directories' are the settings of the $PATH environment,
-as given in your `~/.profile'."
+as given in your `~/.profile'.  This entry is represented in
+the list by the special value `tramp-own-remote-path'."
   :group 'tramp
   :type '(repeat (choice
 		  (const :tag "Default Directories" tramp-default-remote-path)
