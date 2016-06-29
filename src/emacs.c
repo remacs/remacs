@@ -1349,16 +1349,6 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
   globals_of_gfilenotify ();
 #endif
 
-#ifdef WINDOWSNT
-  globals_of_w32 ();
-#ifdef HAVE_W32NOTIFY
-  globals_of_w32notify ();
-#endif
-  /* Initialize environment from registry settings.  */
-  init_environment (argv);
-  init_ntproc (dumping); /* must precede init_editfns.  */
-#endif
-
 #ifdef HAVE_NS
   /* Initialize the locale from user defaults.  */
   ns_init_locale ();
@@ -1374,6 +1364,20 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
      until calling init_callproc.  Do not do it when dumping.  */
   if (! dumping)
     set_initial_environment ();
+
+#ifdef WINDOWSNT
+  globals_of_w32 ();
+#ifdef HAVE_W32NOTIFY
+  globals_of_w32notify ();
+#endif
+  /* Initialize environment from registry settings.  Make sure to do
+     this only after calling set_initial_environment so that
+     Vinitial_environment and Vprocess_environment will contain only
+     variables from the parent process without modifications from
+     Emacs.  */
+  init_environment (argv);
+  init_ntproc (dumping); /* must precede init_editfns.  */
+#endif
 
   /* AIX crashes are reported in system versions 3.2.3 and 3.2.4
      if this is not done.  Do it after set_global_environment so that we

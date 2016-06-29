@@ -1375,6 +1375,20 @@ getenv_internal (const char *var, ptrdiff_t varlen, char **value,
 			 Vprocess_environment))
     return *value ? 1 : 0;
 
+  /* On Windows we make some modifications to Emacs' enviroment
+     without recording them in Vprocess_environment.  */
+#ifdef WINDOWSNT
+  {
+    char* tmpval = getenv (var);
+    if (tmpval)
+      {
+        *value = tmpval;
+        *valuelen = strlen (tmpval);
+        return 1;
+      }
+  }
+#endif
+
   /* For DISPLAY try to get the values from the frame or the initial env.  */
   if (strcmp (var, "DISPLAY") == 0)
     {
