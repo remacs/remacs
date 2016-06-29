@@ -1702,10 +1702,7 @@ the regular expression must match only valid identifiers.
 
 If you change this variable's value, call the function
 `c-make-macros-with-semi-re' to set the necessary internal
-variables.
-
-Note that currently \(2008-11-04) this variable is a prototype,
-and is likely to disappear or change its form soon.")
+variables.")
 (make-variable-buffer-local 'c-macro-names-with-semicolon)
 (put 'c-macro-names-with-semicolon 'safe-local-variable
      #'c-string-or-string-list-p)

@@ -9298,7 +9298,8 @@ comment at the start of cc-engine.el for more info."
 		(/= last-stmt-start (point))
 		(progn
 		  (c-backward-syntactic-ws lim)
-		  (not (memq (char-before) '(?\; ?} ?: nil))))
+		  (not (or (memq (char-before) '(?\; ?} ?: nil))
+			   (c-at-vsemi-p))))
 		(save-excursion
 		  (backward-char)
 		  (not (looking-at "\\s(")))
