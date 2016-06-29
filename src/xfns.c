@@ -4295,8 +4295,8 @@ x_get_monitor_attributes_xrandr (struct x_display_info *dpyinfo)
     {
       XRROutputInfo *info = XRRGetOutputInfo (dpy, resources,
                                               resources->outputs[i]);
-      Connection conn = info ? info->connection : RR_Disconnected;
-      RRCrtc id = info ? info->crtc : None;
+      if (!info)
+	continue;
 
       if (strcmp (info->name, "default") == 0)
         {
@@ -4307,9 +4307,9 @@ x_get_monitor_attributes_xrandr (struct x_display_info *dpyinfo)
           return Qnil;
         }
 
-      if (conn != RR_Disconnected && id != None)
+      if (info->connection != RR_Disconnected && info->crtc != None)
         {
-          XRRCrtcInfo *crtc = XRRGetCrtcInfo (dpy, resources, id);
+          XRRCrtcInfo *crtc = XRRGetCrtcInfo (dpy, resources, info->crtc);
           struct MonitorInfo *mi = &monitors[i];
           XRectangle workarea_r;
 
