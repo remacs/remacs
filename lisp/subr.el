@@ -1335,8 +1335,6 @@ is converted into a string by expressing it in decimal."
 (set-advertised-calling-convention 'unintern '(name obarray) "23.3")
 (set-advertised-calling-convention 'indirect-function '(object) "25.1")
 (set-advertised-calling-convention 'redirect-frame-focus '(frame focus-frame) "24.3")
-(set-advertised-calling-convention 'decode-char '(ch charset) "21.4")
-(set-advertised-calling-convention 'encode-char '(ch charset) "21.4")
 
 ;;;; Obsolescence declarations for variables, and aliases.
 

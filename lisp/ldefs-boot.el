@@ -21527,7 +21527,7 @@ The default is 20.  If LIMIT is negative, do not limit the listing.
 
 \(fn &optional LIMIT)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "mule-diag" '("print-" "list-" "sort-listed-character-sets" "non-iso-charset-alist" "decode-codepage-char" "charset-history" "describe-font-internal" "insert-section")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "mule-diag" '("print-" "list-" "sort-listed-character-sets" "non-iso-charset-alist" "charset-history" "describe-font-internal" "insert-section")))
 
 ;;;***
 
