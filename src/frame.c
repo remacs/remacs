@@ -3110,70 +3110,58 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
   /* Record in these vectors all the parms specified.  */
   Lisp_Object *parms;
   Lisp_Object *values;
-  ptrdiff_t i, p;
+  ptrdiff_t i, j, size;
   bool left_no_change = 0, top_no_change = 0;
 #ifdef HAVE_X_WINDOWS
   bool icon_left_no_change = 0, icon_top_no_change = 0;
 #endif
 
-  i = 0;
-  for (tail = alist; CONSP (tail); tail = XCDR (tail))
-    i++;
+  for (size = 0, tail = alist; CONSP (tail); tail = XCDR (tail))
+    size++;
 
   USE_SAFE_ALLOCA;
-  SAFE_ALLOCA_LISP (parms, 2 * i);
-  values = parms + i;
+  SAFE_ALLOCA_LISP (parms, 2 * size);
+  values = parms + size;
 
   /* Extract parm names and values into those vectors.  */
 
-  i = 0;
+  i = 0, j = size - 1;
   for (tail = alist; CONSP (tail); tail = XCDR (tail))
     {
-      Lisp_Object elt;
+      Lisp_Object elt = XCAR (tail), prop = Fcar (elt), val = Fcdr (elt);
 
-      elt = XCAR (tail);
-      parms[i] = Fcar (elt);
-      values[i] = Fcdr (elt);
-      i++;
+      /* Some properties are independent of other properties, but other
+	 properties are dependent upon them.  These special properties
+	 are foreground_color, background_color (affects cursor_color)
+	 and font (affects fringe widths); they're recorded starting
+	 from the end of PARMS and VALUES to process them first by using
+	 reverse iteration.  */
+
+      if (EQ (prop, Qforeground_color)
+	  || EQ (prop, Qbackground_color)
+	  || EQ (prop, Qfont))
+	{
+	  parms[j] = prop;
+	  values[j] = val;
+	  j--;
+	}
+      else
+	{
+	  parms[i] = prop;
+	  values[i] = val;
+	  i++;
+	}
     }
+
   /* TAIL and ALIST are not used again below here.  */
   alist = tail = Qnil;
 
   top = left = Qunbound;
   icon_left = icon_top = Qunbound;
 
-  /* Process foreground_color and background_color before anything else.
-     They are independent of other properties, but other properties (e.g.,
-     cursor_color) are dependent upon them.  */
-  /* Process default font as well, since fringe widths depends on it.  */
-  for (p = 0; p < i; p++)
-    {
-      Lisp_Object prop, val;
-
-      prop = parms[p];
-      val = values[p];
-      if (EQ (prop, Qforeground_color)
-	  || EQ (prop, Qbackground_color)
-	  || EQ (prop, Qfont))
-	{
-	  register Lisp_Object param_index, old_value;
-
-	  old_value = get_frame_param (f, prop);
-	  if (NILP (Fequal (val, old_value)))
-	    {
-	      store_frame_param (f, prop, val);
-
-	      param_index = Fget (prop, Qx_frame_parameter);
-	      if (NATNUMP (param_index)
-		  && XFASTINT (param_index) < ARRAYELTS (frame_parms)
-                  && FRAME_RIF (f)->frame_parm_handlers[XINT (param_index)])
-                (*(FRAME_RIF (f)->frame_parm_handlers[XINT (param_index)])) (f, val, old_value);
-	    }
-	}
-    }
-
-  /* Now process them in reverse of specified order.  */
-  while (i-- != 0)
+  /* Reverse order is used to make sure that special
+     properties noticed above are processed first.  */
+  for (i = size - 1; i >= 0; i--)
     {
       Lisp_Object prop, val;
 
@@ -3221,11 +3209,6 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
 	  fullscreen = val;
 	  fullscreen_change = true;
 	}
-      else if (EQ (prop, Qforeground_color)
-	       || EQ (prop, Qbackground_color)
-	       || EQ (prop, Qfont))
-	/* Processed above.  */
-	continue;
       else
 	{
 	  register Lisp_Object param_index, old_value;
