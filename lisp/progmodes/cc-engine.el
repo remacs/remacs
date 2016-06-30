@@ -2290,6 +2290,12 @@ comment at the start of cc-engine.el for more info."
 ;; is reduced by buffer changes, and increased by invocations of
 ;; `c-parse-ps-state-below'.
 
+(defsubst c-truncate-semi-nonlit-pos-cache (pos)
+  ;; Truncate the upper bound of the cache `c-state-semi-nonlit-pos-cache' to
+  ;; POS, if it is higher than that position.
+  (setq c-state-semi-nonlit-pos-cache-limit
+	(min c-state-semi-nonlit-pos-cache-limit pos)))
+
 (defun c-state-semi-pp-to-literal (here &optional not-in-delimiter)
   ;; Do a parse-partial-sexp from a position in the buffer before HERE which
   ;; isn't in a literal, and return information about HERE, either:
@@ -2492,7 +2498,7 @@ comment at the start of cc-engine.el for more info."
       (let ((c c-state-semi-nonlit-pos-cache)
 	    elt state pos npos high-elt)
 	;; Trim the cache to take account of buffer changes.
-	(while (and c (> (c-ps-state-cache-pos (c-ps-state-cache-pos (car c)))
+	(while (and c (> (c-ps-state-cache-pos (car c))
 			 c-state-semi-nonlit-pos-cache-limit))
 	  (setq c (cdr c)))
 	(setq c-state-semi-nonlit-pos-cache c)
@@ -3489,8 +3495,7 @@ comment at the start of cc-engine.el for more info."
   ;; HERE.
   (if (<= here c-state-nonlit-pos-cache-limit)
       (setq c-state-nonlit-pos-cache-limit (1- here)))
-  (if (<= here c-state-semi-nonlit-pos-cache-limit)
-      (setq c-state-semi-nonlit-pos-cache-limit (1- here)))
+  (c-truncate-semi-nonlit-pos-cache here)
 
   ;; `c-state-cache':
   ;; Case 1: if `here' is in a literal containing point-min, everything
@@ -6071,19 +6076,32 @@ comment at the start of cc-engine.el for more info."
     (cond
      ((null open-paren-prop)
       ;; A terminated raw string
-      (if (search-forward (concat ")" id "\"") nil t)
-	  (c-clear-char-property-with-value
-	   (1+ open-paren) (match-beginning 0) 'syntax-table '(1))))
+      (when (search-forward (concat ")" id "\"") nil t)
+	(let* ((closing-paren (match-beginning 0))
+	       (first-punctuation
+		(save-match-data
+		  (goto-char (1+ open-paren))
+		  (and (c-search-forward-char-property 'syntax-table '(1)
+						       closing-paren)
+		       (1- (point)))))
+	       )
+	  (when first-punctuation
+	    (c-clear-char-property-with-value
+	     first-punctuation (match-beginning 0) 'syntax-table '(1))
+	    (c-truncate-semi-nonlit-pos-cache first-punctuation)
+	    ))))
      ((or (and (equal open-paren-prop '(15)) (null bound))
 	  (equal open-paren-prop '(1)))
       ;; An unterminated raw string either not in a macro, or in a macro with
       ;; the open parenthesis right up against the end of macro
       (c-clear-char-property open-quote 'syntax-table)
+      (c-truncate-semi-nonlit-pos-cache open-quote)
       (c-clear-char-property open-paren 'syntax-table))
      (t
       ;; An unterminated string in a macro, with at least one char after the
       ;; open paren
       (c-clear-char-property open-quote 'syntax-table)
+      (c-truncate-semi-nonlit-pos-cache open-quote)
       (c-clear-char-property open-paren 'syntax-table)
       (let ((after-string-fence-pos
 	     (save-excursion
@@ -6183,9 +6201,11 @@ comment at the start of cc-engine.el for more info."
 	(while (progn (skip-syntax-forward "^\"" end-string)
 		      (< (point) end-string))
 	  (c-put-char-property (point) 'syntax-table '(1)) ; punctuation
+	  (c-truncate-semi-nonlit-pos-cache (point))
 	  (forward-char))
 	(goto-char after-quote))
     (c-put-char-property open-quote 'syntax-table '(1))	     ; punctuation
+    (c-truncate-semi-nonlit-pos-cache open-quote)
     (c-put-char-property open-paren 'syntax-table '(15))     ; generic string
     (when bound
       ;; In a CPP construct, we try to apply a generic-string `syntax-table'
@@ -6212,9 +6232,12 @@ comment at the start of cc-engine.el for more info."
 		       "\\(\\\\\n\\)*\\=")) ; 11
              (1+ open-paren) t))
 	  (if (match-beginning 10)
-	      (c-put-char-property (match-beginning 10) 'syntax-table '(15))
+	      (progn
+		(c-put-char-property (match-beginning 10) 'syntax-table '(15))
+		(c-truncate-semi-nonlit-pos-cache (match-beginning 10)))
 	    (c-put-char-property (match-beginning 5) 'syntax-table '(1))
-	    (c-put-char-property (1+ (match-beginning 5)) 'syntax-table '(15)))
+	    (c-put-char-property (1+ (match-beginning 5)) 'syntax-table '(15))
+	    (c-truncate-semi-nonlit-pos-cache (1+ (match-beginning 5))))
 	(c-put-char-property open-paren 'syntax-table '(1)))
       (goto-char bound))))
 
