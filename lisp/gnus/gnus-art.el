@@ -4398,7 +4398,7 @@ If variable `gnus-use-long-file-name' is non-nil, it is
 (defvar gnus-article-send-map)
 (gnus-define-keys (gnus-article-send-map "S" gnus-article-mode-map)
   "W" gnus-article-wide-reply-with-original
-  [t] 'gnus-article-read-summary-send-keys)
+  [t] gnus-article-read-summary-send-keys)
 
 (defun gnus-article-make-menu-bar ()
   (unless (boundp 'gnus-article-commands-menu)
