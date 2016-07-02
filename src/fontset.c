@@ -1305,7 +1305,7 @@ free_realized_fontsets (Lisp_Object base)
 	    {
 	      struct frame *f = XFRAME (FONTSET_FRAME (this));
 	      int face_id = XINT (XCDR (XCAR (tail)));
-	      struct face *face = FACE_OPT_FROM_ID (f, face_id);
+	      struct face *face = FACE_FROM_ID_OR_NULL (f, face_id);
 
 	      /* Face THIS itself is also freed by the following call.  */
 	      free_realized_face (f, face);
@@ -1637,7 +1637,7 @@ appended.  By default, FONT-SPEC overrides the previous settings.  */)
 	    continue;
 	  if (fontset_id != FRAME_FONTSET (f))
 	    continue;
-	  face = FACE_OPT_FROM_ID (f, DEFAULT_FACE_ID);
+	  face = FACE_FROM_ID_OR_NULL (f, DEFAULT_FACE_ID);
 	  if (face)
 	    font_object = font_load_for_lface (f, face->lface, font_spec);
 	  else

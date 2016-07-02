@@ -6135,7 +6135,7 @@ mark_face_cache (struct face_cache *c)
       int i, j;
       for (i = 0; i < c->used; ++i)
 	{
-	  struct face *face = FACE_OPT_FROM_ID (c->f, i);
+	  struct face *face = FACE_FROM_ID_OR_NULL (c->f, i);
 
 	  if (face)
 	    {

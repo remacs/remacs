@@ -1821,7 +1821,7 @@ struct face_cache
 /* Return a pointer to the face with ID on frame F, or null if such a
    face doesn't exist.  */
 
-#define FACE_OPT_FROM_ID(F, ID)				\
+#define FACE_FROM_ID_OR_NULL(F, ID)			\
   (UNSIGNED_CMP (ID, <, FRAME_FACE_CACHE (F)->used)	\
    ? FRAME_FACE_CACHE (F)->faces_by_id[ID]		\
    : NULL)

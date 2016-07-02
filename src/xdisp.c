@@ -1813,7 +1813,7 @@ estimate_mode_line_height (struct frame *f, enum face_id face_id)
 	 cache and mode line face are not yet initialized.  */
       if (FRAME_FACE_CACHE (f))
 	{
-	  struct face *face = FACE_OPT_FROM_ID (f, face_id);
+	  struct face *face = FACE_FROM_ID_OR_NULL (f, face_id);
 	  if (face)
 	    {
 	      if (face->font)
@@ -2918,7 +2918,7 @@ init_iterator (struct it *it, struct window *w,
 
       /* If we have a boxed mode line, make the first character appear
 	 with a left box line.  */
-      face = FACE_OPT_FROM_ID (it->f, remapped_base_face_id);
+      face = FACE_FROM_ID_OR_NULL (it->f, remapped_base_face_id);
       if (face && face->box != FACE_NO_BOX)
 	it->start_of_box_run_p = true;
     }
@@ -3877,9 +3877,9 @@ handle_face_prop (struct it *it)
 	{
 	  struct face *new_face = FACE_FROM_ID (it->f, new_face_id);
 	  /* If it->face_id is -1, old_face below will be NULL, see
-	     the definition of FACE_OPT_FROM_ID.  This will happen if this
-	     is the initial call that gets the face.  */
-	  struct face *old_face = FACE_OPT_FROM_ID (it->f, it->face_id);
+	     the definition of FACE_FROM_ID_OR_NULL.  This will happen
+	     if this is the initial call that gets the face.  */
+	  struct face *old_face = FACE_FROM_ID_OR_NULL (it->f, it->face_id);
 
 	  /* If the value of face_id of the iterator is -1, we have to
 	     look in front of IT's position and see whether there is a
@@ -3888,7 +3888,7 @@ handle_face_prop (struct it *it)
 	    {
 	      int prev_face_id = face_before_it_pos (it);
 
-	      old_face = FACE_OPT_FROM_ID (it->f, prev_face_id);
+	      old_face = FACE_FROM_ID_OR_NULL (it->f, prev_face_id);
 	    }
 
 	  /* If the new face has a box, but the old face does not,
@@ -3988,7 +3988,7 @@ handle_face_prop (struct it *it)
       if (new_face_id != it->face_id)
 	{
 	  struct face *new_face = FACE_FROM_ID (it->f, new_face_id);
-	  struct face *old_face = FACE_OPT_FROM_ID (it->f, it->face_id);
+	  struct face *old_face = FACE_FROM_ID_OR_NULL (it->f, it->face_id);
 
 	  /* If new face has a box but old face hasn't, this is the
 	     start of a run of characters with box, i.e. it has a
@@ -6095,7 +6095,7 @@ pop_it (struct it *it)
       break;
     case GET_FROM_STRING:
       {
-	struct face *face = FACE_OPT_FROM_ID (it->f, it->face_id);
+	struct face *face = FACE_FROM_ID_OR_NULL (it->f, it->face_id);
 
 	/* Restore the face_box_p flag, since it could have been
 	   overwritten by the face of the object that we just finished
@@ -6776,7 +6776,8 @@ static next_element_function const get_next_element[NUM_IT_METHODS] =
    || ((IT)->cmp_it.stop_pos == (CHARPOS)				\
        && composition_reseat_it (&(IT)->cmp_it, CHARPOS, BYTEPOS,	\
 				 END_CHARPOS, (IT)->w,			\
-				 FACE_OPT_FROM_ID ((IT)->f, (IT)->face_id),	\
+				 FACE_FROM_ID_OR_NULL ((IT)->f,		\
+						       (IT)->face_id),	\
 				 (IT)->string)))
 
 
@@ -7205,7 +7206,7 @@ get_next_display_element (struct it *it)
       if (it->method == GET_FROM_STRING && it->sp)
 	{
 	  int face_id = underlying_face_id (it);
-	  struct face *face = FACE_OPT_FROM_ID (it->f, face_id);
+	  struct face *face = FACE_FROM_ID_OR_NULL (it->f, face_id);
 
 	  if (face)
 	    {
@@ -7738,8 +7739,8 @@ next_element_from_display_vector (struct it *it)
       /* Glyphs in the display vector could have the box face, so we
 	 need to set the related flags in the iterator, as
 	 appropriate.  */
-      this_face = FACE_OPT_FROM_ID (it->f, it->face_id);
-      prev_face = FACE_OPT_FROM_ID (it->f, prev_face_id);
+      this_face = FACE_FROM_ID_OR_NULL (it->f, it->face_id);
+      prev_face = FACE_FROM_ID_OR_NULL (it->f, prev_face_id);
 
       /* Is this character the first character of a box-face run?  */
       it->start_of_box_run_p = (this_face && this_face->box != FACE_NO_BOX
@@ -7764,7 +7765,7 @@ next_element_from_display_vector (struct it *it)
 					    it->saved_face_id);
 	    }
 	}
-      next_face = FACE_OPT_FROM_ID (it->f, next_face_id);
+      next_face = FACE_FROM_ID_OR_NULL (it->f, next_face_id);
       it->end_of_box_run_p = (this_face && this_face->box != FACE_NO_BOX
 			      && (!next_face
 				  || next_face->box == FACE_NO_BOX));
@@ -19675,14 +19676,15 @@ extend_face_to_end_of_line (struct it *it)
     return;
 
   /* The default face, possibly remapped. */
-  default_face = FACE_OPT_FROM_ID (f, lookup_basic_face (f, DEFAULT_FACE_ID));
+  default_face = FACE_FROM_ID_OR_NULL (f,
+				       lookup_basic_face (f, DEFAULT_FACE_ID));
 
   /* Face extension extends the background and box of IT->face_id
      to the end of the line.  If the background equals the background
      of the frame, we don't have to do anything.  */
-  face = FACE_OPT_FROM_ID (f, (it->face_before_selective_p
-			       ? it->saved_face_id
-			       : it->face_id));
+  face = FACE_FROM_ID (f, (it->face_before_selective_p
+			   ? it->saved_face_id
+			   : it->face_id));
 
   if (FRAME_WINDOW_P (f)
       && MATRIX_ROW_DISPLAYS_TEXT_P (it->glyph_row)
@@ -24784,7 +24786,7 @@ fill_gstring_glyph_string (struct glyph_string *s, int face_id,
   s->cmp_id = glyph->u.cmp.id;
   s->cmp_from = glyph->slice.cmp.from;
   s->cmp_to = glyph->slice.cmp.to + 1;
-  s->face = FACE_OPT_FROM_ID (s->f, face_id);
+  s->face = FACE_FROM_ID (s->f, face_id);
   lgstring = composition_gstring_from_id (s->cmp_id);
   s->font = XFONT_OBJECT (LGSTRING_FONT (lgstring));
   glyph++;
@@ -25377,7 +25379,7 @@ compute_overhangs_and_x (struct glyph_string *s, int x, bool backward_p)
 #define BUILD_COMPOSITE_GLYPH_STRING(START, END, HEAD, TAIL, HL, X, LAST_X) \
   do {									    \
     int face_id = (row)->glyphs[area][START].face_id;			    \
-    struct face *base_face = FACE_OPT_FROM_ID (f, face_id);		    \
+    struct face *base_face = FACE_FROM_ID (f, face_id);		    \
     ptrdiff_t cmp_id = (row)->glyphs[area][START].u.cmp.id;		    \
     struct composition *cmp = composition_table[cmp_id];		    \
     XChar2b *char2b;							    \
@@ -26694,12 +26696,8 @@ calc_line_height_property (struct it *it, Lisp_Object val, struct font *font,
       struct face *face;
 
       face_id = lookup_named_face (it->f, face_name, false);
-      if (face_id < 0)
-	return make_number (-1);
-
-      face = FACE_FROM_ID (it->f, face_id);
-      font = face->font;
-      if (font == NULL)
+      face = FACE_FROM_ID_OR_NULL (it->f, face_id);
+      if (face == NULL || ((font = face->font) == NULL))
 	return make_number (-1);
       boff = font->baseline_offset;
       if (font->vertical_centering)

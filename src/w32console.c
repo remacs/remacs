@@ -611,8 +611,6 @@ w32_face_attributes (struct frame *f, int face_id)
   WORD char_attr;
   struct face *face = FACE_FROM_ID (f, face_id);
 
-  eassert (face != NULL);
-
   char_attr = char_attr_normal;
 
   /* Reverse the default color if requested. If background and
