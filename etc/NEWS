@@ -1887,11 +1887,11 @@ scroll bars on the selected frame.
 for individual frames and in 'default-frame-alist'.
 
 ***** The 'horizontal-scroll-bars' parameter was already present and non-nil
-by default in Emacs 24 (although it didn't have any effect).  This
-could cause a problem if you share your desktop files with Emacs 24:
-saving desktop in v24, then restoring it in v25.1 would turn on
-horizontal scroll bars in all buffers.  To resolve this issue, put
-this in your ~/.emacs init file
+by default in Emacs 24 and before (although it didn't have any
+effect).  This could cause a problem if you share your desktop files
+with older versions of Emacs: saving desktop in Emacs before v25.1,
+then restoring it in v25.1 would turn on horizontal scroll bars in all
+buffers.  To resolve this issue, put this in your ~/.emacs init file:
 
   (modify-all-frames-parameters '((horizontal-scroll-bars . nil)))
 
