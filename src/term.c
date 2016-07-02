@@ -1496,6 +1496,8 @@ append_glyph (struct it *it)
       glyph->pixel_width = 1;
       glyph->u.ch = it->char_to_display;
       glyph->face_id = it->face_id;
+      glyph->avoid_cursor_p = it->avoid_cursor_p;
+      glyph->multibyte_p = it->multibyte_p;
       glyph->padding_p = i > 0;
       glyph->charpos = CHARPOS (it->position);
       glyph->object = it->object;
@@ -1692,8 +1694,10 @@ append_composite_glyph (struct it *it)
 	  glyph->slice.cmp.to = it->cmp_it.to - 1;
 	}
 
+      glyph->avoid_cursor_p = it->avoid_cursor_p;
+      glyph->multibyte_p = it->multibyte_p;
       glyph->face_id = it->face_id;
-      glyph->padding_p = 0;
+      glyph->padding_p = false;
       glyph->charpos = CHARPOS (it->position);
       glyph->object = it->object;
       if (it->bidi_p)
@@ -1776,8 +1780,10 @@ append_glyphless_glyph (struct it *it, int face_id, const char *str)
     return;
   glyph->type = CHAR_GLYPH;
   glyph->pixel_width = 1;
+  glyph->avoid_cursor_p = it->avoid_cursor_p;
+  glyph->multibyte_p = it->multibyte_p;
   glyph->face_id = face_id;
-  glyph->padding_p = 0;
+  glyph->padding_p = false;
   glyph->charpos = CHARPOS (it->position);
   glyph->object = it->object;
   if (it->bidi_p)
