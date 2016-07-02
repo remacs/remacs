@@ -327,6 +327,20 @@ FORM is of the form (ARGS . BODY)."
 Like normal `defun', except ARGLIST allows full Common Lisp conventions,
 and BODY is implicitly surrounded by (cl-block NAME ...).
 
+The full form of a Common Lisp function argument list is
+
+   (VAR...
+    [&optional (VAR [INITFORM [SVAR]])...]
+    [&rest|&body VAR]
+    [&key (([KEYWORD] VAR) [INITFORM [SVAR]])... [&allow-other-keys]]
+    [&aux (VAR [INITFORM])...])
+
+VAR maybe be replaced recursively with an argument list for
+destructing, `&whole' is supported within these sublists.  If
+SVAR, INITFORM, and KEYWORD are all omitted, then `(VAR)' may be
+written simply `VAR'.  See the Info node `(cl)Argument Lists' for
+more details.
+
 \(fn NAME ARGLIST [DOCSTRING] BODY...)"
   (declare (debug
             ;; Same as defun but use cl-lambda-list.
@@ -405,6 +419,21 @@ and BODY is implicitly surrounded by (cl-block NAME ...).
   "Define NAME as a macro.
 Like normal `defmacro', except ARGLIST allows full Common Lisp conventions,
 and BODY is implicitly surrounded by (cl-block NAME ...).
+
+The full form of a Common Lisp macro argument list is
+
+   (VAR...
+    [&optional (VAR [INITFORM [SVAR]])...]
+    [&rest|&body VAR]
+    [&key (([KEYWORD] VAR) [INITFORM [SVAR]])... [&allow-other-keys]]
+    [&aux (VAR [INITFORM])...]
+    [&environment VAR])
+
+VAR maybe be replaced recursively with an argument list for
+destructing, `&whole' is supported within these sublists.  If
+SVAR, INITFORM, and KEYWORD are all omitted, then `(VAR)' may be
+written simply `VAR'.  See the Info node `(cl)Argument Lists' for
+more details.
 
 \(fn NAME ARGLIST [DOCSTRING] BODY...)"
   (declare (debug
