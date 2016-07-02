@@ -2000,16 +2000,16 @@ Does not preserve point."
 Continued lines can either be indented as \"one long wrapped line\" without
 paying attention to the actual syntactic structure, as in:
 
-   for f \
-       in a; do \
-       toto; \
+   for f \\
+       in a; do \\
+       toto; \\
        done
 
 or as lines that just don't have implicit semi-colons between them, as in:
 
-   for f \
-   in a; do \
-       toto; \
+   for f \\
+   in a; do \\
+       toto; \\
    done
 
 With `always' you get the former behavior whereas with nil you get the latter.
