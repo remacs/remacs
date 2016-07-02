@@ -8609,8 +8609,7 @@ move_it_in_display_line_to (struct it *it,
 	   && it->dpvec + it->current.dpvec_index + 1 >= it->dpend)))
 
   /* If there's a line-/wrap-prefix, handle it.  */
-  if (it->hpos == 0 && it->method == GET_FROM_BUFFER
-      && it->current_y < it->last_visible_y)
+  if (it->hpos == 0 && it->method == GET_FROM_BUFFER)
     handle_line_prefix (it);
 
   if (IT_CHARPOS (*it) < CHARPOS (this_line_min_pos))

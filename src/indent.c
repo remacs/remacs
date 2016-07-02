@@ -2178,6 +2178,7 @@ whether or not it is currently displayed in some window.  */)
       if (nlines <= 0)
 	{
 	  it.vpos = vpos_init;
+	  it.current_y = 0;
 	  /* Do this even if LINES is 0, so that we move back to the
 	     beginning of the current line as we ought.  */
 	  if ((nlines < 0 && IT_CHARPOS (it) > 0)
@@ -2187,6 +2188,7 @@ whether or not it is currently displayed in some window.  */)
       else if (overshoot_handled)
 	{
 	  it.vpos = vpos_init;
+	  it.current_y = 0;
 	  move_it_by_lines (&it, min (PTRDIFF_MAX, nlines));
 	}
       else
@@ -2200,6 +2202,7 @@ whether or not it is currently displayed in some window.  */)
 	      while (IT_CHARPOS (it) <= it_start)
 		{
 		  it.vpos = 0;
+		  it.current_y = 0;
 		  move_it_by_lines (&it, 1);
 		}
 	      if (nlines > 1)
@@ -2208,6 +2211,7 @@ whether or not it is currently displayed in some window.  */)
 	  else	/* it_start = ZV */
 	    {
 	      it.vpos = 0;
+	      it.current_y = 0;
 	      move_it_by_lines (&it, min (PTRDIFF_MAX, nlines));
 	      /* We could have some display or overlay string at ZV,
 		 in which case it.vpos will be nonzero now, while
