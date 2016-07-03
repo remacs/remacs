@@ -5269,16 +5269,20 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
              haven't lowered our timeout due to timers or SIGIO and
              have waited a long amount of time due to repeated
              timers.  */
+	  struct timespec cmp_time;
+	  bool have_cmp_time = false;
 	  if (wait < TIMEOUT)
 	    break;
-	  struct timespec cmp_time
-	    = (wait == TIMEOUT
-	       ? end_time
-	       : (!process_skipped && got_some_output > 0
-		  && (timeout.tv_sec > 0 || timeout.tv_nsec > 0))
-	       ? got_output_end_time
-	       : invalid_timespec ());
-	  if (timespec_valid_p (cmp_time))
+	  else if (wait == TIMEOUT)
+	    cmp_time = end_time, have_cmp_time = true;
+	  else if (!process_skipped && got_some_output > 0
+		   && (timeout.tv_sec > 0 || timeout.tv_nsec > 0))
+	    {
+	      if (!timespec_valid_p (got_output_end_time))
+		break;
+	      cmp_time = got_output_end_time, have_cmp_time = true;
+	    }
+	  if (have_cmp_time)
 	    {
 	      now = current_timespec ();
 	      if (timespec_cmp (cmp_time, now) <= 0)
