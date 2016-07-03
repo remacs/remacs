@@ -5223,6 +5223,7 @@ store it in a Lisp variable.  Example:
 (defmacro save-mark-and-excursion (&rest body)
   "Like `save-excursion', but also save and restore the mark state.
 This macro does what `save-excursion' did before Emacs 25.1."
+  (declare (indent 0) (debug t))
   (let ((saved-marker-sym (make-symbol "saved-marker")))
     `(let ((,saved-marker-sym (save-mark-and-excursion--save)))
        (unwind-protect
