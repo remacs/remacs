@@ -1310,9 +1310,10 @@ Note that the style variables are always made local to the buffer."
     (while
 	;; Go to a less nested declaration each time round this loop.
 	(and
-	 (eq (car (c-beginning-of-decl-1 bod-lim)) 'same)
+	 (c-syntactic-skip-backward "^;{}" bod-lim t)
 	 (> (point) bod-lim)
-	 (progn (setq bo-decl (point))
+	 (progn (c-forward-syntactic-ws)
+		(setq bo-decl (point))
 		;; Are we looking at a keyword such as "template" or
 		;; "typedef" which can decorate a type, or the type itself?
 		(when (or (looking-at c-prefix-spec-kwds-re)

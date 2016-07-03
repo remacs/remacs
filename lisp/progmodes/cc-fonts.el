@@ -1522,28 +1522,28 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	(unless (or (eobp)
 		    (looking-at "\\s(\\|\\s)"))
 	  (forward-char))
-	(setq bod-res (car (c-beginning-of-decl-1 decl-search-lim)))
-	(if (and (eq bod-res 'same)
-		 (save-excursion
-		   (c-backward-syntactic-ws)
-		   (eq (char-before) ?\})))
-	    (c-beginning-of-decl-1 decl-search-lim))
-
-	;; We're now putatively at the declaration.
-	(setq paren-state (c-parse-state))
-	;; At top level or inside a "{"?
-	(if (or (not (setq encl-pos
-			   (c-most-enclosing-brace paren-state)))
-		(eq (char-after encl-pos) ?\{))
-	    (progn
-	      (when (looking-at c-typedef-key) ; "typedef"
-		(setq is-typedef t)
-		(goto-char (match-end 0))
-		(c-forward-syntactic-ws))
-	      ;; At a real declaration?
-	      (if (memq (c-forward-type t) '(t known found decltype))
-		  (c-font-lock-declarators limit t is-typedef)))
-	  nil)))))
+	(c-syntactic-skip-backward "^;{}" decl-search-lim t)
+	(when (eq (char-before) ?})
+	  (c-go-list-backward)	; brace block of struct, etc.?
+	  (c-syntactic-skip-backward "^;{}" decl-search-lim t))
+	(when (or (bobp)
+		  (memq (char-before) '(?\; ?{ ?})))
+	  (c-forward-syntactic-ws)
+	  ;; We're now putatively at the declaration.
+	  (setq paren-state (c-parse-state))
+	  ;; At top level or inside a "{"?
+	  (if (or (not (setq encl-pos
+			     (c-most-enclosing-brace paren-state)))
+		  (eq (char-after encl-pos) ?\{))
+	      (progn
+		(when (looking-at c-typedef-key) ; "typedef"
+		  (setq is-typedef t)
+		  (goto-char (match-end 0))
+		  (c-forward-syntactic-ws))
+		;; At a real declaration?
+		(if (memq (c-forward-type t) '(t known found decltype))
+		    (c-font-lock-declarators limit t is-typedef)))))))
+    nil))
 
 (defun c-font-lock-enclosing-decls (limit)
   ;; Fontify the declarators of (nested) declarations we're in the middle of.
@@ -1557,7 +1557,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; Fontification".
   (let* ((paren-state (c-parse-state))
 	 (decl-search-lim (c-determine-limit 1000))
-	 decl-context in-typedef ps-elt)
+	 in-typedef ps-elt)
     ;; Are we in any nested struct/union/class/etc. braces?
     (while paren-state
       (setq ps-elt (car paren-state)
@@ -1565,15 +1565,18 @@ casts and declarations are fontified.  Used on level 2 and higher."
       (when (and (atom ps-elt)
 		 (eq (char-after ps-elt) ?\{))
 	(goto-char ps-elt)
-	(setq decl-context (c-beginning-of-decl-1 decl-search-lim)
-	      in-typedef (looking-at c-typedef-key))
-	(if in-typedef (c-forward-token-2))
-	(when (and c-opt-block-decls-with-vars-key
-		   (looking-at c-opt-block-decls-with-vars-key))
-	  (goto-char ps-elt)
-	  (when (c-safe (c-forward-sexp))
-	    (c-forward-syntactic-ws)
-	    (c-font-lock-declarators limit t in-typedef)))))))
+	(c-syntactic-skip-backward "^;{}" decl-search-lim)
+	(when (or (bobp)
+		  (memq (char-before) '(?\; ?})))
+	  (c-forward-syntactic-ws)
+	  (setq in-typedef (looking-at c-typedef-key))
+	  (if in-typedef (c-forward-token-2))
+	  (when (and c-opt-block-decls-with-vars-key
+		     (looking-at c-opt-block-decls-with-vars-key))
+	    (goto-char ps-elt)
+	    (when (c-safe (c-forward-sexp))
+	      (c-forward-syntactic-ws)
+	      (c-font-lock-declarators limit t in-typedef))))))))
 
 (defun c-font-lock-raw-strings (limit)
   ;; Fontify C++ raw strings.
