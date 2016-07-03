@@ -3706,7 +3706,10 @@ Modifies the match data; use `save-match-data' if necessary."
   "Concatenate the STRINGS, adding the SEPARATOR (default \" \").
 This tries to quote the strings to avoid ambiguity such that
   (split-string-and-unquote (combine-and-quote-strings strs)) == strs
-Only some SEPARATORs will work properly."
+Only some SEPARATORs will work properly.
+
+Note that this is not intended to protect STRINGS from
+interpretation by shells, use `shell-quote-argument' for that."
   (let* ((sep (or separator " "))
          (re (concat "[\\\"]" "\\|" (regexp-quote sep))))
     (mapconcat
