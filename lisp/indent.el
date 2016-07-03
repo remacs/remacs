@@ -218,7 +218,7 @@ indentation by specifying a large negative ARG."
         (message
 	 (substitute-command-keys
 	  "Indent region with \\<indent-rigidly-map>\\[indent-rigidly-left], \\[indent-rigidly-right], \\[indent-rigidly-left-to-tab-stop], or \\[indent-rigidly-right-to-tab-stop]."))
-        (set-transient-map indent-rigidly-map t))
+        (set-transient-map indent-rigidly-map t #'deactivate-mark))
     (save-excursion
       (goto-char end)
       (setq end (point-marker))
