@@ -1403,50 +1403,6 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	      (c-fontify-recorded-types-and-refs)
 	      nil))
 
-	     ;; Restore point, since at this point in the code it has been
-	     ;; left undefined by c-forward-decl-or-cast-1 above.
-	     ((progn (goto-char start-pos) nil))
-
-	     ;; If point is inside a bracelist, there's no point checking it
-	     ;; being at a declarator.
-	     ((let ((paren-state (c-parse-state)))
-		(setq lbrace (c-cheap-inside-bracelist-p paren-state)))
-	      ;; Move past this bracelist to prevent an endless loop.
-	      (goto-char lbrace)
-	      (unless (c-safe (progn (forward-list) t))
-		(goto-char start-pos)
-		(c-forward-token-2))
-	      nil)
-
-	     ;; If point is just after a ")" which is followed by an
-	     ;; identifier which isn't a label, or at the matching "(", we're
-	     ;; at either a macro invocation, a cast, or a
-	     ;; for/while/etc. statement.  The cast case is handled above.
-	     ;; None of these cases can contain a declarator.
-	     ((or (and (eq (char-before match-pos) ?\))
-	     	       (c-on-identifier)
-	     	       (save-excursion (not (c-forward-label))))
-	     	  (and (eq (char-after) ?\()
-	     	       (save-excursion
-	     		 (and
-	     		  (progn (c-backward-token-2) (c-on-identifier))
-	     		  (save-excursion (not (c-forward-label)))
-	     		  (progn (c-backward-token-2)
-	     			 (eq (char-after) ?\())))))
-	      (c-forward-token-2)	; Must prevent looping.
-	      nil)
-
-	     ((and (not c-enums-contain-decls)
-		   ;; An optimization quickly to eliminate scans of long enum
-		   ;; declarations in the next cond arm.
-		   (let ((paren-state (c-parse-state)))
-		     (and
-		      (numberp (car paren-state))
-		      (save-excursion
-			(goto-char (car paren-state))
-			(c-backward-over-enum-header)))))
-	      (c-forward-token-2)
-	      nil)
 	     (t t)))
 
 	  ;; It was a false alarm.  Check if we're in a label (or other
