@@ -545,6 +545,8 @@ directory, like `default-directory'."
     (define-key map (kbd "% n") 'ibuffer-mark-by-name-regexp)
     (define-key map (kbd "% m") 'ibuffer-mark-by-mode-regexp)
     (define-key map (kbd "% f") 'ibuffer-mark-by-file-name-regexp)
+    (define-key map (kbd "% c") 'ibuffer-mark-by-content-regexp)
+    (define-key map (kbd "% g") 'ibuffer-mark-by-content-regexp)
 
     (define-key map (kbd "C-t") 'ibuffer-visit-tags-table)
 
@@ -765,6 +767,10 @@ directory, like `default-directory'."
       '(menu-item "Mark by file name (regexp)..."
         ibuffer-mark-by-file-name-regexp
         :help "Mark buffers whose file name matches a regexp"))
+    (define-key-after map [menu-bar mark ibuffer-mark-by-content-regexp]
+      '(menu-item "Mark by content (regexp)..."
+        ibuffer-mark-by-content-regexp
+        :help "Mark buffers whose content matches a regexp"))
 
     map))
 
@@ -2438,6 +2444,7 @@ Marking commands:
   `\\[ibuffer-mark-by-name-regexp]' - Mark buffers by their name, using a regexp.
   `\\[ibuffer-mark-by-mode-regexp]' - Mark buffers by their major mode, using a regexp.
   `\\[ibuffer-mark-by-file-name-regexp]' - Mark buffers by their filename, using a regexp.
+  `\\[ibuffer-mark-by-content-regexp]' - Mark buffers by their content, using a regexp.
 
 Filtering commands:
 

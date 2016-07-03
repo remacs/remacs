@@ -85,6 +85,32 @@ regardless of any active filters in this buffer."
   :type '(repeat (choice regexp function))
   :group 'ibuffer)
 
+(defcustom ibuffer-never-search-content-name
+  (let* ((names    '("Completions" "Help" "Messages" "Pp Eval Output"
+                     "CompileLog" "Info" "Buffer List" "Ibuffer" "Apropos"))
+         (partial  '("Customize Option: " "Async Shell Command\\*"
+                     "Shell Command Output\\*" "ediff "))
+         (beg      "\\`\\*")
+         (end      "\\*\\'")
+         (excluded (mapcar (lambda (x)
+                             (format "%s%s" beg x)) partial)))
+    (dolist (str names (nreverse excluded))
+      (push (format "%s%s%s" beg str end) excluded)))
+  "A list of regexps for buffers ignored by `ibuffer-mark-by-content-regexp'.
+Buffers whose name matches a regexp in this list, are not searched."
+  :version "25.2"
+  :type '(repeat regexp)
+  :require 'ibuf-ext
+  :group 'ibuffer)
+
+(defcustom ibuffer-never-search-content-mode '(dired-mode)
+  "A list of major modes ignored by `ibuffer-mark-by-content-regexp'.
+Buffers whose major mode is in this list, are not searched."
+  :version "25.2"
+  :type '(repeat regexp)
+  :require 'ibuf-ext
+  :group 'ibuffer)
+
 (defvar ibuffer-tmp-hide-regexps nil
   "A list of regexps which should match buffer names to not show.")
 
@@ -1481,6 +1507,31 @@ You can then feed the file name(s) to other commands with \\[yank]."
 			  dired-directory)))))
 	 (when name
 	   (string-match regexp name))))))
+
+;;;###autoload
+(defun ibuffer-mark-by-content-regexp (regexp &optional all-buffers)
+  "Mark all buffers whose content matches REGEXP.
+Optional arg ALL-BUFFERS, if non-nil, then search in all buffers.
+Otherwise buffers whose name matches an element of
+`ibuffer-never-search-content-name' or whose major mode is on
+`ibuffer-never-search-content-mode' are excluded."
+  (interactive (let ((reg (read-string "Mark by content (regexp): ")))
+                 (list reg current-prefix-arg)))
+  (ibuffer-mark-on-buffer
+   #'(lambda (buf)
+       (let ((mode (with-current-buffer buf major-mode))
+             res)
+         (cond ((and (not all-buffers)
+                     (or
+                      (memq mode ibuffer-never-search-content-mode)
+                      (cl-some (lambda (x) (string-match x (buffer-name buf)))
+                               ibuffer-never-search-content-name)))
+                (setq res nil))
+               (t
+                (with-current-buffer buf
+                  (save-mark-and-excursion
+                   (goto-char (point-min))
+                   (setq res (re-search-forward regexp nil t)))))) res))))
 
 ;;;###autoload
 (defun ibuffer-mark-by-mode (mode)

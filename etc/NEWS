@@ -190,6 +190,17 @@ questions, with a handy way to display help texts.
 
 * Changes in Specialized Modes and Packages in Emacs 25.2
 
+** Ibuffer
+
+---
+*** A new command `ibuffer-mark-by-content-regexp' to mark buffers
+whose content matches a regexp; bound to '% c' and '% g'.
+
+---
+*** Two new options `ibuffer-never-search-content-name' and
+`ibuffer-never-search-content-mode' used by
+`ibuffer-mark-by-content-regexp'.
+
 ** Compilation mode
 
 ---
