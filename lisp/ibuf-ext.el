@@ -1406,7 +1406,7 @@ You can then feed the file name(s) to other commands with \\[yank]."
   (interactive "p")
   (if (zerop (ibuffer-count-marked-lines))
       (message "No buffers marked; use 'm' to mark a buffer")
-    (let ((ibuffer-copy-filename-as-kill-result "")
+    (let ((result "")
 	  (type (cond ((or (null arg) (zerop arg))
 		       'full)
 		      ((= arg 4)
@@ -1415,8 +1415,8 @@ You can then feed the file name(s) to other commands with \\[yank]."
 		       'name))))
       (ibuffer-map-marked-lines
        #'(lambda (buf _mark)
-	   (setq ibuffer-copy-filename-as-kill-result
-                 (concat ibuffer-copy-filename-as-kill-result
+	   (setq result
+                 (concat result
                          (let ((name (buffer-file-name buf)))
                            (cond (name
                                   (concat
@@ -1430,10 +1430,11 @@ You can then feed the file name(s) to other commands with \\[yank]."
                                      (_
                                       (file-name-nondirectory name))) " "))
                                  (t "")))))))
-      (when (not (zerop (length ibuffer-copy-filename-as-kill-result)))
-        (setq ibuffer-copy-filename-as-kill-result
-              (substring ibuffer-copy-filename-as-kill-result 0 -1)))
-      (kill-new ibuffer-copy-filename-as-kill-result))))
+      (when (not (zerop (length result)))
+        (setq result
+              (substring result 0 -1)))
+      (kill-new result)
+      (message "%s" result))))
 
 (defun ibuffer-mark-on-buffer (func &optional ibuffer-mark-on-buffer-mark group)
   (let ((count
