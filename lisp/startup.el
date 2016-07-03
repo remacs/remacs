@@ -2360,7 +2360,14 @@ nil default-directory" name)
 
                     ((member argi '("-eval" "-execute"))
                      (setq inhibit-startup-screen t)
-                     (eval (read (or argval (pop command-line-args-left)))))
+                     (let* ((str-expr (or argval (pop command-line-args-left)))
+                            (read-data (read-from-string str-expr))
+                            (expr (car read-data))
+                            (end (cdr read-data)))
+                       (unless (= end (length str-expr))
+                         (error "Trailing garbage following expression: %s"
+                                (substring str-expr end)))
+                       (eval expr)))
 
                     ((member argi '("-L" "-directory"))
                      ;; -L :/foo adds /foo to the _end_ of load-path.
