@@ -471,6 +471,7 @@ directory, like `default-directory'."
     (define-key map (kbd "DEL") 'ibuffer-unmark-backward)
     (define-key map (kbd "M-DEL") 'ibuffer-unmark-all)
     (define-key map (kbd "* *") 'ibuffer-unmark-all)
+    (define-key map (kbd "U") 'ibuffer-unmark-all-marks)
     (define-key map (kbd "* M") 'ibuffer-mark-by-mode)
     (define-key map (kbd "* m") 'ibuffer-mark-modified-buffers)
     (define-key map (kbd "* u") 'ibuffer-mark-unsaved-buffers)
@@ -568,7 +569,7 @@ directory, like `default-directory'."
     (define-key map (kbd "R") 'ibuffer-do-rename-uniquely)
     (define-key map (kbd "S") 'ibuffer-do-save)
     (define-key map (kbd "T") 'ibuffer-do-toggle-read-only)
-    (define-key map (kbd "U") 'ibuffer-do-replace-regexp)
+    (define-key map (kbd "r") 'ibuffer-do-replace-regexp)
     (define-key map (kbd "V") 'ibuffer-do-revert)
     (define-key map (kbd "W") 'ibuffer-do-view-and-eval)
     (define-key map (kbd "X") 'ibuffer-do-shell-command-pipe)
@@ -753,6 +754,8 @@ directory, like `default-directory'."
         :help "Mark buffers which have not been viewed recently"))
     (define-key-after map [menu-bar mark unmark-all]
       '(menu-item "Unmark All" ibuffer-unmark-all))
+    (define-key-after map [menu-bar mark unmark-all-marks]
+      '(menu-item "Unmark All buffers" ibuffer-unmark-all-marks))
 
     (define-key-after map [menu-bar mark dashes]
       '("--"))
@@ -973,8 +976,7 @@ width and the longest string in LIST."
 	      (popup-menu ibuffer-mode-groups-popup))
 	  (let ((inhibit-read-only t))
 	    (ibuffer-save-marks
-	      ;; hm.  we could probably do this in a better fashion
-	      (ibuffer-unmark-all ?\r)
+	      (ibuffer-unmark-all-marks)
 	      (save-excursion
 		(goto-char eventpt)
 		(ibuffer-set-mark ibuffer-marked-char))
@@ -1334,6 +1336,12 @@ With optional ARG, make read-only only if ARG is not negative."
 	   (ibuffer-set-mark-1 ?\s))
 	 t)))))
   (ibuffer-redisplay t))
+
+(defun ibuffer-unmark-all-marks ()
+  "Remove all marks from all marked buffers in Ibuffer."
+  (interactive)
+  ;; hm.  we could probably do this in a better fashion
+  (ibuffer-unmark-all ?\r))
 
 (defun ibuffer-toggle-marks (&optional group)
   "Toggle which buffers are marked.
@@ -2426,7 +2434,8 @@ Marking commands:
   `\\[ibuffer-unmark-forward]' - Unmark the buffer at point.
   `\\[ibuffer-unmark-backward]' - Unmark the buffer at point, and move to the
           previous line.
-  `\\[ibuffer-unmark-all]' - Unmark all marked buffers.
+  `\\[ibuffer-unmark-all]' - Unmark buffers marked with MARK.
+  `\\[ibuffer-unmark-all-marks]' - Unmark all marked buffers.
   `\\[ibuffer-mark-by-mode]' - Mark buffers by major mode.
   `\\[ibuffer-mark-unsaved-buffers]' - Mark all \"unsaved\" buffers.
           This means that the buffer is modified, and has an associated file.

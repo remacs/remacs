@@ -193,6 +193,11 @@ questions, with a handy way to display help texts.
 ** Ibuffer
 
 ---
+*** A new command 'ibuffer-unmark-all-marks' to unmark
+all buffers without asking confirmation;  bound to
+'U'; 'ibuffer-do-replace-regexp' bound to 'r'.
+
+---
 *** A new command `ibuffer-mark-by-content-regexp' to mark buffers
 whose content matches a regexp; bound to '% c' and '% g'.
 
