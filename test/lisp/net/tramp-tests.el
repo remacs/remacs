@@ -119,7 +119,6 @@ eval properly in `should', `should-not' or `should-error'.  BODY
 shall not contain a timeout."
   (declare (indent 1) (debug (natnump body)))
   `(let ((tramp-verbose ,verbose)
-	 (tramp-message-show-message t)
 	 (tramp-debug-on-error t)
 	 (debug-ignored-errors
 	  (cons "^make-symbolic-link not supported$" debug-ignored-errors)))
@@ -932,7 +931,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	  (make-directory tmp-name1)
 	  (should (file-directory-p tmp-name1))
 	  (should (file-accessible-directory-p tmp-name1))
-	  (should-error (make-directory tmp-name2) :type 'file-error)
+	  (should-error (make-directory tmp-name2))
 	  (make-directory tmp-name2 'parents)
 	  (should (file-directory-p tmp-name2))
 	  (should (file-accessible-directory-p tmp-name2)))
@@ -953,7 +952,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
     ;; Delete non-empty directory.
     (make-directory tmp-name)
     (write-region "foo" nil (expand-file-name "bla" tmp-name))
-    (should-error (delete-directory tmp-name) :type 'file-error)
+    (should-error (delete-directory tmp-name))
     (delete-directory tmp-name 'recursive)
     (should-not (file-directory-p tmp-name))))
 

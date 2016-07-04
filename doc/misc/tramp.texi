@@ -957,6 +957,22 @@ syntax requires a leading volume (share) name, for example:
 based on standard protocols, such as HTTP@.  @option{davs} does the same
 but with SSL encryption.  Both methods support the port numbers.
 
+@item @option{gdrive}
+@cindex method gdrive
+@cindex gdrive method
+@cindex Google Drive
+
+Via the @option{gdrive} method it is possible to access your Google
+Drive online storage.  User and host name of the remote file name are
+your email address of the Google Drive credentials, like
+@file{@trampfn{gdrive,john.doe@@gmail.com,/}}.  These credentials must
+be populated in your @command{Online Accounts} application outside Emacs.
+
+Since Google Drive uses cryptic blob file names internally,
+@value{tramp} works with the @code{display-name} of the files.  This
+could produce unexpected behaviour in case two files in the same
+directory have the same @code{display-name}, such a situation must be avoided.
+
 @item @option{obex}
 @cindex method obex
 @cindex obex method
@@ -986,8 +1002,8 @@ requires the SYNCE-GVFS plugin.
 @vindex tramp-gvfs-methods
 This custom option is a list of external methods for GVFS@.  By
 default, this list includes @option{afp}, @option{dav}, @option{davs},
-@option{obex}, @option{sftp} and @option{synce}.  Other methods to
-include are: @option{ftp} and @option{smb}.
+@option{gdrive}, @option{obex}, @option{sftp} and @option{synce}.
+Other methods to include are: @option{ftp} and @option{smb}.
 @end defopt
 
 

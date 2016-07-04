@@ -4012,7 +4012,7 @@ are written with verbosity of 6."
 	       (vector tramp-current-method tramp-current-user
 		       tramp-current-host nil nil)))
 	(destination (if (eq destination t) (current-buffer) destination))
-	result)
+	output error result)
     (tramp-message
      v 6 "`%s %s' %s %s"
      program (mapconcat 'identity args " ") infile destination)
@@ -4023,13 +4023,17 @@ are written with verbosity of 6."
 		 'call-process program infile (or destination t) display args))
 	  ;; `result' could also be an error string.
 	  (when (stringp result)
-	    (signal 'file-error (list result)))
+	    (setq error result
+		  result 1))
 	  (with-current-buffer
 	      (if (bufferp destination) destination (current-buffer))
-	    (tramp-message v 6 "%d\n%s" result (buffer-string))))
+	    (setq output (buffer-string))))
       (error
-       (setq result 1)
-       (tramp-message v 6 "%d\n%s" result (error-message-string err))))
+       (setq error (error-message-string err)
+	     result 1)))
+    (if (zerop (length error))
+	(tramp-message v 6 "%d\n%s" result output)
+      (tramp-message v 6 "%d\n%s\n%s" result output error))
     result))
 
 (defun tramp-call-process-region

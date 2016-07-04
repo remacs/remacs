@@ -318,6 +318,10 @@ different group ID.
 +++
 *** New connection method "doas" for OpenBSD hosts.
 
++++
+*** New connection method "gdrive", which allows to access Google
+Drive onsite repositories.
+
 ---
 ** 'auto-revert-use-notify' is set back to t in 'global-auto-revert-mode'.
 
