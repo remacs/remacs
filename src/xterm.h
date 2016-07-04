@@ -38,6 +38,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <X11/CoreP.h>		/* foul, but we need this to use our own
 				   window inside a widget instead of one
 				   that Xt creates... */
+#ifdef X_TOOLKIT_EDITRES
+#include <X11/Xmu/Editres.h>
+#endif
+
 typedef Widget xt_or_gtk_widget;
 #endif
 

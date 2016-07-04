@@ -95,10 +95,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 #ifdef USE_X_TOOLKIT
-#if !defined (NO_EDITRES)
-#define HACK_EDITRES
-extern void _XEditResCheckMessages (Widget, XtPointer, XEvent *, Boolean *);
-#endif /* not NO_EDITRES */
 
 /* Include toolkit specific headers for the scroll bar widget.  */
 
@@ -7610,7 +7606,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 	    goto done;
           }
 
-#ifdef HACK_EDITRES
+#ifdef X_TOOLKIT_EDITRES
         if (event->xclient.message_type == dpyinfo->Xatom_editres)
           {
 	    f = any;
@@ -7619,7 +7615,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 				      NULL, (XEvent *) event, NULL);
 	    goto done;
           }
-#endif /* HACK_EDITRES */
+#endif /* X_TOOLKIT_EDITRES */
 
         if (event->xclient.message_type == dpyinfo->Xatom_DONE
 	    || event->xclient.message_type == dpyinfo->Xatom_PAGE)
