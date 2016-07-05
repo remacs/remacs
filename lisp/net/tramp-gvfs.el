@@ -746,14 +746,18 @@ file names."
 
 (defun tramp-gvfs-handle-delete-directory (directory &optional recursive trash)
   "Like `delete-directory' for Tramp files."
-  (when (and recursive (not (file-symlink-p directory)))
-    (mapc (lambda (file)
-	    (if (eq t (car (file-attributes file)))
-		(tramp-compat-delete-directory file recursive trash)
-	      (tramp-compat-delete-file file trash)))
-	  (directory-files
-	   directory 'full "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*")))
   (with-parsed-tramp-file-name directory nil
+    (if (and recursive (not (file-symlink-p directory)))
+	(mapc (lambda (file)
+		(if (eq t (car (file-attributes file)))
+		    (tramp-compat-delete-directory file recursive trash)
+		  (tramp-compat-delete-file file trash)))
+	      (directory-files
+	       directory 'full directory-files-no-dot-files-regexp))
+      (when (directory-files directory nil directory-files-no-dot-files-regexp)
+	(tramp-error
+	 v 'file-error "Couldn't delete non-empty %s" directory)))
+
     (tramp-flush-file-property v (file-name-directory localname))
     (tramp-flush-directory-property v localname)
     (unless
@@ -1409,7 +1413,7 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	   signal-name (tramp-gvfs-stringify-dbus-message mount-info))
 	  (tramp-set-file-property v "/" "list-mounts" 'undef)
 	  (if (string-equal (downcase signal-name) "unmounted")
-	      (tramp-set-file-property v "/" "fuse-mountpoint" nil)
+	      (tramp-flush-file-property v "/")
 	    ;; Set prefix, mountpoint and location.
 	    (unless (string-equal prefix "/")
 	      (tramp-set-file-property v "/" "prefix" prefix))
@@ -1701,7 +1705,9 @@ COMMAND is usually a command from the gvfs-* utilities.
     (with-current-buffer (tramp-get-connection-buffer vec)
       (tramp-gvfs-maybe-open-connection vec)
       (erase-buffer)
-      (zerop (apply 'tramp-call-process vec command nil t nil args)))))
+      (or (zerop (apply 'tramp-call-process vec command nil t nil args))
+	  ;; Remove information about mounted connection.
+	  (and (tramp-flush-file-property vec "/") nil)))))
 
 
 ;; D-Bus BLUEZ functions.

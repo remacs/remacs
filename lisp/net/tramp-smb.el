@@ -597,15 +597,14 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
   "Like `delete-directory' for Tramp files."
   (setq directory (directory-file-name (expand-file-name directory)))
   (when (file-exists-p directory)
-    (if recursive
-	(mapc
-	 (lambda (file)
-	   (if (file-directory-p file)
-	       (delete-directory file recursive)
-	     (delete-file file)))
-	 ;; We do not want to delete "." and "..".
-	 (directory-files
-	  directory 'full "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*")))
+    (when recursive
+      (mapc
+       (lambda (file)
+	 (if (file-directory-p file)
+	     (delete-directory file recursive)
+	   (delete-file file)))
+       ;; We do not want to delete "." and "..".
+       (directory-files directory 'full directory-files-no-dot-files-regexp)))
 
     (with-parsed-tramp-file-name directory nil
       ;; We must also flush the cache of the directory, because
