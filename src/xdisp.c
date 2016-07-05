@@ -1321,6 +1321,11 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
   if (CHARPOS (top) > ZV)
     SET_TEXT_POS (top, BEGV, BEGV_BYTE);
 
+  /* If the top of the window is after CHARPOS, the latter is surely
+     not visible.  */
+  if (charpos >= 0 && CHARPOS (top) > charpos)
+    return visible_p;
+
   /* Compute exact mode line heights.  */
   if (WINDOW_WANTS_MODELINE_P (w))
     w->mode_line_height
@@ -15512,12 +15517,14 @@ try_scrolling (Lisp_Object window, bool just_this_one_p,
 
    The new window start will be computed, based on W's width, starting
    from the start of the continued line.  It is the start of the
-   screen line with the minimum distance from the old start W->start.  */
+   screen line with the minimum distance from the old start W->start,
+   which is still before point (otherwise point will definitely not
+   be visible in the window).  */
 
 static bool
 compute_window_start_on_continuation_line (struct window *w)
 {
-  struct text_pos pos, start_pos;
+  struct text_pos pos, start_pos, pos_before_pt;
   bool window_start_changed_p = false;
 
   SET_TEXT_POS_FROM_MARKER (start_pos, w->start);
@@ -15545,10 +15552,14 @@ compute_window_start_on_continuation_line (struct window *w)
       reseat_at_previous_visible_line_start (&it);
 
       /* If the line start is "too far" away from the window start,
-         say it takes too much time to compute a new window start.  */
-      if (CHARPOS (start_pos) - IT_CHARPOS (it)
-	  /* PXW: Do we need upper bounds here?  */
-	  < WINDOW_TOTAL_LINES (w) * WINDOW_TOTAL_COLS (w))
+         say it takes too much time to compute a new window start.
+         Also, give up if the line start is after point, as in that
+         case point will not be visible with any window start we
+         compute.  */
+      if (IT_CHARPOS (it) <= PT
+	  || (CHARPOS (start_pos) - IT_CHARPOS (it)
+	      /* PXW: Do we need upper bounds here?  */
+	      < WINDOW_TOTAL_LINES (w) * WINDOW_TOTAL_COLS (w)))
 	{
 	  int min_distance, distance;
 
@@ -15558,12 +15569,14 @@ compute_window_start_on_continuation_line (struct window *w)
 	     decreased, the new window start will be < the old start.
 	     So, we're looking for the display line start with the
 	     minimum distance from the old window start.  */
-	  pos = it.current.pos;
+	  pos_before_pt = pos = it.current.pos;
 	  min_distance = INFINITY;
 	  while ((distance = eabs (CHARPOS (start_pos) - IT_CHARPOS (it))),
 		 distance < min_distance)
 	    {
 	      min_distance = distance;
+	      if (CHARPOS (pos) <= PT)
+		pos_before_pt = pos;
 	      pos = it.current.pos;
 	      if (it.line_wrap == WORD_WRAP)
 		{
@@ -15585,6 +15598,13 @@ compute_window_start_on_continuation_line (struct window *w)
 	      else
 		move_it_by_lines (&it, 1);
 	    }
+
+	  /* It makes very little sense to make the new window start
+	     after point, as point won't be visible.  If that's what
+	     the loop above finds, fall back on the candidate before
+	     or at point that is closest to the old window start.  */
+	  if (CHARPOS (pos) > PT)
+	    pos = pos_before_pt;
 
 	  /* Set the window start there.  */
 	  SET_MARKER_FROM_TEXT_POS (w->start, pos);
