@@ -77,6 +77,7 @@ Return first line of the output of (describe-function-1 FUNC)."
 
 (ert-deftest help-fns-test-bug23887 ()
   "Test for http://debbugs.gnu.org/23887 ."
+  :expected-result :failed
   (let ((regexp "an alias for .re-search-forward. in .subr\.el")
         (result (help-fns-tests--describe-function 'search-forward-regexp)))
     (should (string-match regexp result))))
