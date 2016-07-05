@@ -1114,7 +1114,7 @@ system which uses fontsets)."
       (insert "\n\n")
 
       (if window-system
-	  (let ((font (cdr (assq 'font (frame-parameters)))))
+	  (let ((font (frame-parameter nil 'font)))
 	    (insert "The font and fontset of the selected frame are:\n"
 		    "     font: " font "\n"
 		    "  fontset: " (face-attribute 'default :fontset) "\n"))

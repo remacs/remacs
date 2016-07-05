@@ -420,10 +420,8 @@ must be one of the symbols `header', `mode', or `vertical'."
       (let ((divider-width (frame-right-divider-width frame)))
         (when (and (or (not (numberp divider-width))
                        (zerop divider-width))
-                   (eq (cdr (assq 'vertical-scroll-bars
-                                  (frame-parameters frame)))
-                       'left))
-	(setq window (window-in-direction 'left window t))))))
+                   (eq (frame-parameter frame 'vertical-scroll-bars) 'left))
+          (setq window (window-in-direction 'left window t))))))
 
     (let* ((exitfun nil)
            (move
@@ -1705,7 +1703,7 @@ and selects that window."
 ;; Font selection.
 
 (defun font-menu-add-default ()
-  (let* ((default (cdr (assq 'font (frame-parameters (selected-frame)))))
+  (let* ((default (frame-parameter nil 'font))
 	 (font-alist x-fixed-font-alist)
 	 (elt (or (assoc "Misc" font-alist) (nth 1 font-alist))))
     (if (assoc "Default" elt)
