@@ -111,7 +111,8 @@
     (let ((completions (css-mode-tests--completions)))
       (should
        (equal (seq-sort #'string-lessp completions)
-              '("absolute" "fixed" "inherit" "relative" "static"))))))
+              '("absolute" "fixed" "inherit" "initial" "relative"
+                "static" "unset"))))))
 
 (ert-deftest css-test-complete-pseudo-class ()
   (with-temp-buffer
