@@ -1526,7 +1526,7 @@ It was \"a(say)\", but has changed to \"a{sv})\"."
 	 (localname (tramp-file-name-localname vec))
 	 (share (when (string-match "^/?\\([^/]+\\)" localname)
 		  (match-string 1 localname)))
-	 (ssl (when (string-match "^davs" method) "true" "false"))
+	 (ssl (if (string-match "^davs" method) "true" "false"))
 	 (mount-spec
           `(:array
             ,@(cond
