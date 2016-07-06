@@ -986,7 +986,8 @@ Gtk-CRITICAL **: gtk_distribute_natural_allocation: assertion 'extra_space >= 0'
 
 It's not clear whether the GTK version used has any impact on the
 occurrence of the failure.  So far, the failure has been observed with
-GTK+ versions 3.14.5 and and 3.18.7.
+GTK+ versions 3.4.2, 3.14.5 and 3.18.7.  However, another 3.4.2 build
+does not exhibit the bug.
 
 Some window managers (xfce) apparently work around this failure by
 cropping the menu bar.  With other windows managers, it's possible to
@@ -995,6 +996,11 @@ frame's border with the mouse.  However, some window managers have been
 reported to refuse such attempts and snap back to the width needed to
 show the full menu bar (wmii) or at least cause the screen to flicker
 during such resizing attempts (i3, icewm).
+
+See also http://debbugs.gnu.org/cgi/bugreport.cgi?bug=15700,
+http://debbugs.gnu.org/cgi/bugreport.cgi?bug=22000,
+http://debbugs.gnu.org/cgi/bugreport.cgi?bug=22898 and
+http://lists.gnu.org/archive/html/emacs-devel/2016-07/msg00154.html.
 
 *** Metacity: Resizing Emacs or ALT-Tab causes X to be unresponsive.
 
