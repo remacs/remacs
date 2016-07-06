@@ -2607,6 +2607,22 @@ If FRAME is nil, describe the currently selected frame.  */)
       /* Avoid consing in frequent cases.  */
       if (EQ (parameter, Qname))
 	value = f->name;
+#ifdef HAVE_WINDOW_SYSTEM
+      /* These are used by vertical motion commands.  */
+      else if (EQ (parameter, Qvertical_scroll_bars))
+	value = (f->vertical_scroll_bar_type == vertical_scroll_bar_none
+		 ? Qnil
+		 : (f->vertical_scroll_bar_type == vertical_scroll_bar_left
+		    ? Qleft : Qright));
+      else if (EQ (parameter, Qhorizontal_scroll_bars))
+	value = f->horizontal_scroll_bars ? Qt : Qnil;
+      else if (EQ (parameter, Qline_spacing) && f->extra_line_spacing == 0)
+	/* If this is non-zero, we can't determine whether the user specified
+	   an integer or float value without looking through 'param_alist'.  */
+	value = make_number (0);
+      else if (EQ (parameter, Qfont) && FRAME_X_P (f))
+	value = FRAME_FONT (f)->props[FONT_NAME_INDEX];
+#endif /* HAVE_WINDOW_SYSTEM */
 #ifdef HAVE_X_WINDOWS
       else if (EQ (parameter, Qdisplay) && FRAME_X_P (f))
 	value = XCAR (FRAME_DISPLAY_INFO (f)->name_list_element);
