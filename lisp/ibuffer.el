@@ -160,7 +160,8 @@ elisp byte-compiler."
 	     (null buffer-file-name))
 	italic)
     (30 (memq major-mode ibuffer-help-buffer-modes) font-lock-comment-face)
-    (35 (derived-mode-p 'dired-mode) font-lock-function-name-face))
+    (35 (derived-mode-p 'dired-mode) font-lock-function-name-face)
+    (40 (and (boundp 'emacs-lock-mode) emacs-lock-mode) ibuffer-locked-buffer))
   "An alist describing how to fontify buffers.
 Each element should be of the form (PRIORITY FORM FACE), where
 PRIORITY is an integer, FORM is an arbitrary form to evaluate in the
@@ -1733,6 +1734,15 @@ If point is on a group name, this function operates on that group."
 
 (defvar ibuffer-inline-columns nil)
 
+(defface ibuffer-locked-buffer
+  '((((background dark)) (:foreground "RosyBrown"))
+    (t (:foreground "brown4")))
+  "*Face used for locked buffers in Ibuffer."
+  :version "25.2"
+  :group 'ibuffer
+  :group 'font-lock-highlighting-faces)
+(defvar ibuffer-locked-buffer 'ibuffer-locked-buffer)
+
 (define-ibuffer-column mark (:name " " :inline t)
   (string mark))
 
@@ -1741,7 +1751,8 @@ If point is on a group name, this function operates on that group."
       (string ibuffer-read-only-char)
     " "))
 
-(define-ibuffer-column locked (:name "L" :inline t)
+(define-ibuffer-column locked
+  (:name "L" :inline t :props ('font-lock-face 'ibuffer-locked-buffer))
   (if (and (boundp 'emacs-lock-mode) emacs-lock-mode)
       (string ibuffer-locked-char)
     " "))
