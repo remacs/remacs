@@ -2375,19 +2375,17 @@ The method used must be an out-of-band method."
 	(aset v 3 localname)
 
 	;; Check which ones of source and target are Tramp files.
-	(setq source (if t1
-			 (tramp-make-copy-program-file-name v)
-		       (shell-quote-argument filename))
-	      target (funcall
+	(setq source (funcall
 		      (if (and (file-directory-p filename)
-			       (string-equal
-				(file-name-nondirectory filename)
-				(file-name-nondirectory newname)))
-			  'file-name-directory
+			       (not (file-exists-p newname)))
+			  'file-name-as-directory
 			'identity)
-		      (if t2
+		      (if t1
 			  (tramp-make-copy-program-file-name v)
-			(shell-quote-argument newname))))
+			(shell-quote-argument filename)))
+	      target (if t2
+			 (tramp-make-copy-program-file-name v)
+		       (shell-quote-argument newname)))
 
 	;; Check for host and port number.  We cannot use
 	;; `tramp-file-name-port', because this returns also
@@ -5102,7 +5100,7 @@ Return ATTR."
   (let ((method (tramp-file-name-method vec))
 	(user (tramp-file-name-user vec))
 	(host (tramp-file-name-real-host vec))
-	(localname (tramp-file-name-localname vec)))
+	(localname (directory-file-name (tramp-file-name-localname vec))))
     (when (string-match tramp-ipv6-regexp host)
       (setq host (format "[%s]" host)))
     (unless (string-match "ftp$" method)
