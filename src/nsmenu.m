@@ -136,12 +136,6 @@ ns_update_menubar (struct frame *f, bool deep_p, EmacsMenu *submenu)
       menu = [[EmacsMenu alloc] initWithTitle: ns_app_name];
       needsSet = YES;
     }
-  else
-    {  /* close up anything on there */
-      id attMenu = [menu attachedMenu];
-      if (attMenu != nil)
-        [attMenu close];
-    }
 
 #if NSMENUPROFILE
   ftime (&tb);

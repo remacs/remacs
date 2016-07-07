@@ -6191,8 +6191,14 @@ not_in_argv (NSString *arg)
                                        +FRAME_LINE_HEIGHT (emacsframe));
 
   pt = [self convertPoint: pt toView: nil];
+#if !defined (NS_IMPL_COCOA) || \
+  MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
   pt = [[self window] convertBaseToScreen: pt];
   rect.origin = pt;
+#else
+  rect.origin = pt;
+  rect = [[self window] convertRectToScreen: rect];
+#endif
   return rect;
 }
 
