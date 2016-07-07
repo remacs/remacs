@@ -71,7 +71,8 @@ and filter displayed buffers by various criteria."
   :version "22.1"
   :group 'convenience)
 
-(defcustom ibuffer-formats '((mark modified read-only " " (name 18 18 :left :elide)
+(defcustom ibuffer-formats '((mark modified read-only locked
+                                   " " (name 18 18 :left :elide)
 				   " " (size 9 -1 :right)
 				   " " (mode 16 16 :left :elide) " " filename-and-process)
 			     (mark " " (name 16 -1) " " filename))
@@ -137,6 +138,7 @@ value for this variable would be
 
 Using \\[ibuffer-switch-format], you can rotate the display between
 the specified formats in the list."
+  :version "25.2"
   :type '(repeat sexp)
   :group 'ibuffer)
 
@@ -158,7 +160,8 @@ elisp byte-compiler."
 	     (null buffer-file-name))
 	italic)
     (30 (memq major-mode ibuffer-help-buffer-modes) font-lock-comment-face)
-    (35 (derived-mode-p 'dired-mode) font-lock-function-name-face))
+    (35 (derived-mode-p 'dired-mode) font-lock-function-name-face)
+    (40 (and (boundp 'emacs-lock-mode) emacs-lock-mode) ibuffer-locked-buffer))
   "An alist describing how to fontify buffers.
 Each element should be of the form (PRIORITY FORM FACE), where
 PRIORITY is an integer, FORM is an arbitrary form to evaluate in the
@@ -277,6 +280,12 @@ Note that this specialized filtering occurs before real filtering."
 
 (defcustom ibuffer-marked-char ?>
   "The character to display for marked buffers."
+  :type 'character
+  :group 'ibuffer)
+
+(defcustom ibuffer-locked-char ?L
+  "The character to display for locked buffers."
+  :version "25.2"
   :type 'character
   :group 'ibuffer)
 
@@ -547,6 +556,7 @@ directory, like `default-directory'."
     (define-key map (kbd "% m") 'ibuffer-mark-by-mode-regexp)
     (define-key map (kbd "% f") 'ibuffer-mark-by-file-name-regexp)
     (define-key map (kbd "% g") 'ibuffer-mark-by-content-regexp)
+    (define-key map (kbd "% L") 'ibuffer-mark-by-locked)
 
     (define-key map (kbd "C-t") 'ibuffer-visit-tags-table)
 
@@ -773,6 +783,9 @@ directory, like `default-directory'."
       '(menu-item "Mark by content (regexp)..."
         ibuffer-mark-by-content-regexp
         :help "Mark buffers whose content matches a regexp"))
+    (define-key-after map [menu-bar mark mark-by-locked]
+      '(menu-item "Mark by locked buffers..." ibuffer-mark-by-locked
+        :help "Mark all locked buffers"))
 
     map))
 
@@ -1725,12 +1738,27 @@ If point is on a group name, this function operates on that group."
 
 (defvar ibuffer-inline-columns nil)
 
+(defface ibuffer-locked-buffer
+  '((((background dark)) (:foreground "RosyBrown"))
+    (t (:foreground "brown4")))
+  "*Face used for locked buffers in Ibuffer."
+  :version "25.2"
+  :group 'ibuffer
+  :group 'font-lock-highlighting-faces)
+(defvar ibuffer-locked-buffer 'ibuffer-locked-buffer)
+
 (define-ibuffer-column mark (:name " " :inline t)
   (string mark))
 
 (define-ibuffer-column read-only (:name "R" :inline t)
   (if buffer-read-only
       (string ibuffer-read-only-char)
+    " "))
+
+(define-ibuffer-column locked
+  (:name "L" :inline t :props ('font-lock-face 'ibuffer-locked-buffer))
+  (if (and (boundp 'emacs-lock-mode) emacs-lock-mode)
+      (string ibuffer-locked-char)
     " "))
 
 (define-ibuffer-column modified (:name "M" :inline t)
@@ -2452,6 +2480,7 @@ Marking commands:
   `\\[ibuffer-mark-by-mode-regexp]' - Mark buffers by their major mode, using a regexp.
   `\\[ibuffer-mark-by-file-name-regexp]' - Mark buffers by their filename, using a regexp.
   `\\[ibuffer-mark-by-content-regexp]' - Mark buffers by their content, using a regexp.
+  `\\[ibuffer-mark-by-locked]' - Mark all locked buffers.
 
 Filtering commands:
 
