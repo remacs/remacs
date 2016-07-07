@@ -1484,6 +1484,24 @@ You can then feed the file name(s) to other commands with \\[yank]."
    #'(lambda (buf)
        (string-match regexp (buffer-name buf)))))
 
+(defun ibuffer-locked-buffer-p (&optional buf)
+  "Return non-nil if BUF is locked.
+When BUF nil, default to the buffer at current line."
+  (let ((_buffer (or buf (ibuffer-current-buffer)))
+        char)
+    (when _buffer
+      (with-current-buffer _buffer
+        (and (boundp 'emacs-lock-mode) emacs-lock-mode)))))
+
+;;;###autoload
+(defun ibuffer-mark-by-locked ()
+  "Mark all locked buffers."
+  (interactive)
+  (when (featurep 'emacs-lock)
+    (ibuffer-mark-on-buffer
+     (lambda (buf)
+       (ibuffer-locked-buffer-p buf)))))
+
 ;;;###autoload
 (defun ibuffer-mark-by-mode-regexp (regexp)
   "Mark all buffers whose major mode matches REGEXP."

@@ -199,6 +199,15 @@ same as in modes where the character is not whitespace.
 ** Ibuffer
 
 ---
+*** A new command 'ibuffer-mark-by-locked' to mark
+all locked buffers;  bound to '% L'.
+
+---
+*** A new option 'ibuffer-locked-char' to indicate
+locked buffers; Ibuffer shows a new column displaying
+'ibuffer-locked-char' for locked buffers.
+
+---
 *** A new command 'ibuffer-unmark-all-marks' to unmark
 all buffers without asking confirmation;  bound to
 'U'; 'ibuffer-do-replace-regexp' bound to 'r'.
