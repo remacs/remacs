@@ -205,7 +205,7 @@ all buffers without asking confirmation;  bound to
 
 ---
 *** A new command `ibuffer-mark-by-content-regexp' to mark buffers
-whose content matches a regexp; bound to '% c' and '% g'.
+whose content matches a regexp; bound to '% g'.
 
 ---
 *** Two new options `ibuffer-never-search-content-name' and
