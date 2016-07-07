@@ -546,7 +546,6 @@ directory, like `default-directory'."
     (define-key map (kbd "% n") 'ibuffer-mark-by-name-regexp)
     (define-key map (kbd "% m") 'ibuffer-mark-by-mode-regexp)
     (define-key map (kbd "% f") 'ibuffer-mark-by-file-name-regexp)
-    (define-key map (kbd "% c") 'ibuffer-mark-by-content-regexp)
     (define-key map (kbd "% g") 'ibuffer-mark-by-content-regexp)
 
     (define-key map (kbd "C-t") 'ibuffer-visit-tags-table)
