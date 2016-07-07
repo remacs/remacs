@@ -71,7 +71,8 @@ and filter displayed buffers by various criteria."
   :version "22.1"
   :group 'convenience)
 
-(defcustom ibuffer-formats '((mark modified read-only " " (name 18 18 :left :elide)
+(defcustom ibuffer-formats '((mark modified read-only locked
+                                   " " (name 18 18 :left :elide)
 				   " " (size 9 -1 :right)
 				   " " (mode 16 16 :left :elide) " " filename-and-process)
 			     (mark " " (name 16 -1) " " filename))
@@ -137,6 +138,7 @@ value for this variable would be
 
 Using \\[ibuffer-switch-format], you can rotate the display between
 the specified formats in the list."
+  :version "25.2"
   :type '(repeat sexp)
   :group 'ibuffer)
 
@@ -277,6 +279,12 @@ Note that this specialized filtering occurs before real filtering."
 
 (defcustom ibuffer-marked-char ?>
   "The character to display for marked buffers."
+  :type 'character
+  :group 'ibuffer)
+
+(defcustom ibuffer-locked-char ?L
+  "The character to display for locked buffers."
+  :version "25.2"
   :type 'character
   :group 'ibuffer)
 
@@ -1731,6 +1739,11 @@ If point is on a group name, this function operates on that group."
 (define-ibuffer-column read-only (:name "R" :inline t)
   (if buffer-read-only
       (string ibuffer-read-only-char)
+    " "))
+
+(define-ibuffer-column locked (:name "L" :inline t)
+  (if (and (boundp 'emacs-lock-mode) emacs-lock-mode)
+      (string ibuffer-locked-char)
     " "))
 
 (define-ibuffer-column modified (:name "M" :inline t)
