@@ -43,7 +43,7 @@
 
 ;; Major modes for other languages may use ElDoc by defining an
 ;; appropriate function as the buffer-local value of
-;; `eldoc-documentation-function'.
+;; `eldoc-documentation-functions'.
 
 ;;; Code:
 
@@ -80,7 +80,7 @@ Actually, any name of a function which takes a string as an argument and
 returns another string is acceptable.
 
 Note that this variable has no effect, unless
-`eldoc-documentation-function' handles it explicitly."
+`eldoc-documentation-functions' handle it explicitly."
   :type '(radio (function-item upcase)
 		(function-item downcase)
                 function)
@@ -103,7 +103,7 @@ display in the echo area.  Function or variable symbol name may be
 truncated to make more of the arglist or documentation string visible.
 
 Note that this variable has no effect, unless
-`eldoc-documentation-function' handles it explicitly."
+`eldoc-documentation-functions' handle it explicitly."
   :type '(radio (const :tag "Always" t)
                 (const :tag "Never" nil)
                 (const :tag "Yes, but truncate symbol names if it will\
@@ -113,8 +113,8 @@ Note that this variable has no effect, unless
 (defface eldoc-highlight-function-argument
   '((t (:inherit bold)))
   "Face used for the argument at point in a function's argument list.
-Note that this face has no effect unless the `eldoc-documentation-function'
-handles it explicitly."
+Note that this face has no effect unless the `eldoc-documentation-functions'
+handle it explicitly."
   :group 'eldoc)
 
 ;;; No user options below here.
@@ -186,7 +186,7 @@ expression point is on."
   :group 'eldoc :lighter eldoc-minor-mode-string
   (setq eldoc-last-message nil)
   (cond
-   ((memq eldoc-documentation-function '(nil ignore))
+   ((not (eldoc-supported-p))
     (message "There is no ElDoc support in this buffer")
     (setq eldoc-mode nil))
    (eldoc-mode
@@ -211,7 +211,7 @@ the mode if ARG is omitted or nil, and toggle it if ARG is ‘toggle’.
 
 If Global Eldoc mode is on, `eldoc-mode' will be enabled in all
 buffers where it's applicable.  These are buffers that have modes
-that have enabled eldoc support.  See `eldoc-documentation-function'."
+that have enabled eldoc support.  See `eldoc-documentation-functions'."
   :group 'eldoc
   :global t
   :initialize 'custom-initialize-delay
@@ -236,9 +236,7 @@ that have enabled eldoc support.  See `eldoc-documentation-function'."
 	     eldoc-idle-delay nil
 	     (lambda ()
                (when (or eldoc-mode
-                         (and global-eldoc-mode
-                              (not (memq eldoc-documentation-function
-                                         '(nil ignore)))))
+                         (and global-eldoc-mode (eldoc-supported-p)))
                  (eldoc-print-current-symbol-info))))))
 
   ;; If user has changed the idle delay, update the timer.
@@ -334,10 +332,11 @@ Otherwise work like `message'."
 
 
 ;;;###autoload
-(defvar eldoc-documentation-function #'ignore
-  "Function to call to return doc string.
-The function of no args should return a one-line string for displaying
-doc about a function etc. appropriate to the context around point.
+(defvar eldoc-documentation-functions #'ignore
+  "Hook to run to return doc string.
+A function in this hook should accept no args and return a
+one-line string for displaying documentation of a function,
+variable, etc. appropriate to the context around point.
 It should return nil if there's no doc appropriate for the context.
 Typically doc is returned if point is on a function-like name or in its
 arg list.
@@ -347,12 +346,14 @@ the variables `eldoc-argument-case' and `eldoc-echo-area-use-multiline-p',
 and the face `eldoc-highlight-function-argument', if they are to have any
 effect.
 
-Major modes should modify this variable using `add-function', for example:
-  (add-function :before-until (local \\='eldoc-documentation-function)
-                #\\='foo-mode-eldoc-function)
+Major modes should modify this variable using `add-hook', for example:
+  (add-hook \\='eldoc-documentation-functions #\\='foo-eldoc nil t)
 so that the global documentation function (i.e. the default value of the
 variable) is taken into account if the major mode specific function does not
 return any documentation.")
+
+(define-obsolete-variable-alias 'eldoc-documentation-function
+  'eldoc-documentation-functions "25.2")
 
 (defun eldoc-print-current-symbol-info ()
   ;; This is run from post-command-hook or some idle timer thing,
@@ -363,7 +364,20 @@ return any documentation.")
              (when eldoc-last-message
                (eldoc-message nil)
                nil))
-	 (eldoc-message (funcall eldoc-documentation-function)))))
+	 (eldoc-message
+          (run-hook-with-args-until-success 'eldoc-documentation-functions)))))
+
+(defun eldoc-supported-p ()
+  "Return t if `eldoc-documentation-functions' has non-null elements."
+  (if (listp eldoc-documentation-functions)
+      (catch :eldoc-supported
+        (mapc
+         (lambda (fun)
+           (when (not (memq fun '(nil ignore)))
+             (throw :eldoc-supported t)))
+         eldoc-documentation-functions)
+        nil)
+    (not (memq eldoc-documentation-functions '(nil ignore)))))
 
 ;; If the entire line cannot fit in the echo area, the symbol name may be
 ;; truncated or eliminated entirely from the output to make room for the
