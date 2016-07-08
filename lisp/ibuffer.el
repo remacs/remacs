@@ -480,6 +480,7 @@ directory, like `default-directory'."
     (define-key map (kbd "DEL") 'ibuffer-unmark-backward)
     (define-key map (kbd "M-DEL") 'ibuffer-unmark-all)
     (define-key map (kbd "* *") 'ibuffer-unmark-all)
+    (define-key map (kbd "* c") 'ibuffer-change-marks)
     (define-key map (kbd "U") 'ibuffer-unmark-all-marks)
     (define-key map (kbd "* M") 'ibuffer-mark-by-mode)
     (define-key map (kbd "* m") 'ibuffer-mark-modified-buffers)
@@ -724,6 +725,9 @@ directory, like `default-directory'."
     (define-key-after map [menu-bar mark toggle-marks]
       '(menu-item "Toggle marks" ibuffer-toggle-marks
         :help "Unmark marked buffers, and mark unmarked buffers"))
+    (define-key-after map [menu-bar mark change-marks]
+      '(menu-item "Change marks" ibuffer-change-marks
+        :help "Change OLD mark for marked buffers with NEW"))
     (define-key-after map [menu-bar mark mark-forward]
       '(menu-item "Mark" ibuffer-mark-forward
         :help "Mark the buffer at point"))
@@ -1378,6 +1382,24 @@ group."
 	  nil group)))
     (message "%s buffers marked" count))
   (ibuffer-redisplay t))
+
+(defun ibuffer-change-marks (&optional old new)
+  "Change all OLD marks to NEW marks.
+OLD and NEW are both characters used to mark buffers."
+  (interactive
+   (let* ((cursor-in-echo-area t)
+	  (old (progn (message "Change (old mark): ") (read-char)))
+	  (new (progn (message  "Change %c marks to (new mark): " old)
+		      (read-char))))
+     (list old new)))
+  (if (or (eq old ?\r) (eq new ?\r))
+      (ding)
+    (let ((count
+           (ibuffer-map-lines
+            (lambda (_buf mark)
+              (when (eq mark old)
+                (ibuffer-set-mark new) t)))))
+      (message "%s marks changed" count))))
 
 (defsubst ibuffer-get-region-and-prefix ()
   (let ((arg (prefix-numeric-value current-prefix-arg)))
@@ -2457,6 +2479,7 @@ Marking commands:
   `\\[ibuffer-mark-forward]' - Mark the buffer at point.
   `\\[ibuffer-toggle-marks]' - Unmark all currently marked buffers, and mark
           all unmarked buffers.
+  `\\[ibuffer-change-marks]' - Change the mark used on marked buffers.
   `\\[ibuffer-unmark-forward]' - Unmark the buffer at point.
   `\\[ibuffer-unmark-backward]' - Unmark the buffer at point, and move to the
           previous line.

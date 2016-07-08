@@ -199,6 +199,9 @@ same as in modes where the character is not whitespace.
 ** Ibuffer
 
 ---
+*** New command 'ibuffer-change-marks'; bound to '* c'.
+
+---
 *** A new command 'ibuffer-mark-by-locked' to mark
 all locked buffers;  bound to '% L'.
 
