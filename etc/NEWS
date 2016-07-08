@@ -56,6 +56,13 @@ affected by this, as SGI stopped supporting IRIX in December 2013.
 
 * Changes in Emacs 25.2
 
++++
+** The new user option 'mouse-select-region-move-to-beginning'
+controls the position of point when double-clicking mouse-1 on the end
+of a parenthetical grouping or string-delimiter: the default value nil
+keeps point at the end of the region, setting it to non-nil moves
+point to the beginning of the region.
+
 ---
 ** 'find-library-name' will now fall back on looking at 'load-history'
 to try to locate libraries that have been loaded with an explicit path

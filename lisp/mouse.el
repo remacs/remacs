@@ -538,15 +538,28 @@ must be one of the symbols `header', `mode', or `vertical'."
   (interactive "e")
   (mouse-drag-line start-event 'vertical))
 
+(defcustom mouse-select-region-move-to-beginning nil
+  "Effect of selecting a region extending backward from double click.
+Nil means keep point at the position clicked (region end);
+non-nil means move point to beginning of region."
+  :version "25.2"
+  :type '(choice (const :tag "Don't move point" nil)
+		 (const :tag "Move point to beginning of region" t)))
+
 (defun mouse-set-point (event &optional promote-to-region)
   "Move point to the position clicked on with the mouse.
 This should be bound to a mouse click event type.
-If PROMOTE-TO-REGION is non-nil and event is a multiple-click,
-select the corresponding element around point."
+If PROMOTE-TO-REGION is non-nil and event is a multiple-click, select
+the corresponding element around point, with the resulting position of
+point determined by `mouse-select-region-move-to-beginning'."
   (interactive "e\np")
   (mouse-minibuffer-check event)
   (if (and promote-to-region (> (event-click-count event) 1))
-      (mouse-set-region event)
+      (progn
+        (mouse-set-region event)
+        (when mouse-select-region-move-to-beginning
+          (when (> (posn-point (event-start event)) (region-beginning))
+            (exchange-point-and-mark))))
     ;; Use event-end in case called from mouse-drag-region.
     ;; If EVENT is a click, event-end and event-start give same value.
     (posn-set-point (event-end event))))
