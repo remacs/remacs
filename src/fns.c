@@ -403,8 +403,7 @@ the codeset part of the locale cannot be \"UTF-8\" on MS-Windows.
 If your system does not support a locale environment, this function
 behaves like `string-equal'.
 
-Do NOT use this function to compare file names for equality, only
-for sorting them.  */)
+Do NOT use this function to compare file names for equality.  */)
   (Lisp_Object s1, Lisp_Object s2, Lisp_Object locale, Lisp_Object ignore_case)
 {
 #if defined __STDC_ISO_10646__ || defined WINDOWSNT
