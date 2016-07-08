@@ -2430,8 +2430,8 @@ whose value is the shell name (don't quote it)."
                       (funcall mksym "rules")
                       :forward-token  (funcall mksym "forward-token")
                       :backward-token (funcall mksym "backward-token")))
+        (setq-local parse-sexp-lookup-properties t)
         (unless sh-use-smie
-          (setq-local parse-sexp-lookup-properties t)
           (setq-local sh-kw-alist (sh-feature sh-kw))
           (let ((regexp (sh-feature sh-kws-for-done)))
             (if regexp
