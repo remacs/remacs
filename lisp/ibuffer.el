@@ -1345,6 +1345,12 @@ With optional ARG, make read-only only if ARG is not negative."
        (lambda (_buf _mark)
 	 (ibuffer-set-mark-1 ?\s)
 	 t)))
+     ((not (char-equal mark ?\r))
+      (ibuffer-map-lines
+       (lambda (_buf _mark)
+	 (when (char-equal _mark mark)
+	   (ibuffer-set-mark-1 ?\s))
+	 t)))
      (t
       (ibuffer-map-lines
        (lambda (_buf mark)
