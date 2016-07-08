@@ -54,4 +54,14 @@
   ;; Bug #23859
   (should (ert-equal-including-properties
            (format "%4s" (propertize "hi" 'face 'bold))
-           #("  hi" 0 4 (face bold)))))
+           #("  hi" 0 4 (face bold))))
+
+  ;; Bug #23897
+  (should (ert-equal-including-properties
+           (format "%s" (concat (propertize "01234" 'face 'bold) "56789"))
+           #("0123456789" 0 5 (face bold))))
+  (should (ert-equal-including-properties
+           (format "%s" (concat (propertize "01" 'face 'bold)
+                                (propertize "23" 'face 'underline)
+                                "45"))
+           #("012345" 0 2 (face bold) 2 4 (face underline)))))

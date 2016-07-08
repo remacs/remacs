@@ -4631,7 +4631,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      len = make_number (SCHARS (args[i]));
 	      Lisp_Object new_len = make_number (info[i].end - info[i].start);
 	      props = text_property_list (args[i], make_number (0), len, Qnil);
-	      props = extend_property_ranges (props, new_len);
+	      props = extend_property_ranges (props, len, new_len);
 	      /* If successive arguments have properties, be sure that
 		 the value of `composition' property be the copy.  */
 	      if (1 < i && info[i - 1].end)
