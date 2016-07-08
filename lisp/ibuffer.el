@@ -586,6 +586,7 @@ directory, like `default-directory'."
 
     (define-key map (kbd "k") 'ibuffer-do-kill-lines)
     (define-key map (kbd "w") 'ibuffer-copy-filename-as-kill)
+    (define-key map (kbd "B") 'ibuffer-copy-buffername-as-kill)
 
     (define-key map (kbd "RET") 'ibuffer-visit-buffer)
     (define-key map (kbd "e") 'ibuffer-visit-buffer)

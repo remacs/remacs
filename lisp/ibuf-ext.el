@@ -1462,6 +1462,23 @@ You can then feed the file name(s) to other commands with \\[yank]."
       (kill-new result)
       (message "%s" result))))
 
+;;;###autoload
+(defun ibuffer-copy-buffername-as-kill ()
+  "Copy buffer names of marked buffers into the kill ring.
+The names are separated by a space.
+You can then feed the file name(s) to other commands with \\[yank]."
+  (interactive)
+  (if (zerop (ibuffer-count-marked-lines))
+      (message "No buffers marked; use 'm' to mark a buffer")
+    (let ((res ""))
+      (ibuffer-map-marked-lines
+       #'(lambda (buf _mark)
+           (setq res (concat res (buffer-name buf) " "))))
+      (when (not (zerop (length res)))
+        (setq res (substring res 0 -1)))
+      (kill-new res)
+      (message res))))
+
 (defun ibuffer-mark-on-buffer (func &optional ibuffer-mark-on-buffer-mark group)
   (let ((count
 	 (ibuffer-map-lines

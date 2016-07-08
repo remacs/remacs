@@ -199,6 +199,10 @@ same as in modes where the character is not whitespace.
 ** Ibuffer
 
 ---
+*** A new command 'ibuffer-copy-buffername-as-kill'; bound
+to 'B'.
+
+---
 *** New command 'ibuffer-change-marks'; bound to '* c'.
 
 ---
