@@ -39,7 +39,6 @@
 ;; We need macros in dired.el to compile properly,
 ;; and we call subroutines in it too.
 (require 'dired)
-(require 'cl-lib)  ; for cl-mapcan
 
 (defvar dired-create-files-failures nil
   "Variable where `dired-create-files' records failing file names.
