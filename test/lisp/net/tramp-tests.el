@@ -1113,12 +1113,12 @@ This tests also `file-readable-p' and `file-regular-p'."
 	(progn
 	  (write-region "foo" nil tmp-name1)
 	  (should (file-exists-p tmp-name1))
-	  (setq attr (file-attributes tmp-name1))
-	  (should (consp attr))
-	  (should (file-exists-p tmp-name1))
 	  (should (file-readable-p tmp-name1))
 	  (should (file-regular-p tmp-name1))
+
 	  ;; We do not test inodes and device numbers.
+	  (setq attr (file-attributes tmp-name1))
+	  (should (consp attr))
 	  (should (null (car attr)))
           (should (numberp (nth 1 attr))) ;; Link.
           (should (numberp (nth 2 attr))) ;; Uid.

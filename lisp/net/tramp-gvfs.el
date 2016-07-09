@@ -1607,6 +1607,9 @@ ID-FORMAT valid values are `string' and `integer'."
        ((equal id-format 'integer) tramp-unknown-id-integer)
        ((equal id-format 'string) tramp-unknown-id-string)))))
 
+(defvar tramp-gvfs-get-remote-uid-gid-in-progress nil
+  "Indication, that remote uid and gid determination is in progress.")
+
 (defun tramp-gvfs-maybe-open-connection (vec)
   "Maybe open a connection VEC.
 Does not do anything if a connection is already open, but re-opens the
@@ -1717,14 +1720,12 @@ connection if a previous connection has died for some reason."
 
   ;; In `tramp-check-cached-permissions', the connection properties
   ;; {uig,gid}-{integer,string} are used.  We set them to proper values.
-  (unless (tramp-get-connection-property vec "uid-integer" nil)
-    (tramp-gvfs-get-remote-uid vec 'integer))
-  (unless (tramp-get-connection-property vec "gid-integer" nil)
-    (tramp-gvfs-get-remote-gid vec 'integer))
-  (unless (tramp-get-connection-property vec "uid-string" nil)
-    (tramp-gvfs-get-remote-uid vec 'string))
-  (unless (tramp-get-connection-property vec "gid-string" nil)
-    (tramp-gvfs-get-remote-gid vec 'string)))
+  (unless tramp-gvfs-get-remote-uid-gid-in-progress
+    (let ((tramp-gvfs-get-remote-uid-gid-in-progress t))
+      (tramp-gvfs-get-remote-uid vec 'integer)
+      (tramp-gvfs-get-remote-gid vec 'integer)
+      (tramp-gvfs-get-remote-uid vec 'string)
+      (tramp-gvfs-get-remote-gid vec 'string))))
 
 (defun tramp-gvfs-send-command (vec command &rest args)
   "Send the COMMAND with its ARGS to connection VEC.
