@@ -734,32 +734,29 @@ If there is no such item, or the item doesn't own this attribute, return nil."
 
 ;;; Visualization.
 
-(define-derived-mode secrets-mode nil "Secrets"
+(defvar secrets-mode-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map (make-composed-keymap special-mode-map widget-keymap))
+    (define-key map "n" 'next-line)
+    (define-key map "p" 'previous-line)
+    (define-key map "z" 'kill-this-buffer)
+    map)
+  "Keymap used in `secrets-mode' buffers.")
+
+(define-derived-mode secrets-mode special-mode "Secrets"
   "Major mode for presenting password entries retrieved by Security Service.
 In this mode, widgets represent the search results.
 
 \\{secrets-mode-map}"
-  ;; Keymap.
-  (setq secrets-mode-map (copy-keymap special-mode-map))
-  (set-keymap-parent secrets-mode-map widget-keymap)
-  (define-key secrets-mode-map "z" 'kill-this-buffer)
-
+  (setq buffer-undo-list t)
+  (set (make-local-variable 'revert-buffer-function)
+       #'secrets-show-collections)
   ;; When we toggle, we must set temporary widgets.
   (set (make-local-variable 'tree-widget-after-toggle-functions)
-       '(secrets-tree-widget-after-toggle-function))
-
-  (when (not (called-interactively-p 'interactive))
-    ;; Initialize buffer.
-    (setq buffer-read-only t)
-    (let ((inhibit-read-only t))
-      (erase-buffer))))
+       '(secrets-tree-widget-after-toggle-function)))
 
 ;; It doesn't make sense to call it interactively.
 (put 'secrets-mode 'disabled t)
-
-;; The very first buffer created with `secrets-mode' does not have the
-;; keymap etc.  So we create a dummy buffer.  Stupid.
-(with-temp-buffer (secrets-mode))
 
 ;; We autoload `secrets-show-secrets' only on systems with D-Bus support.
 ;;;###autoload(when (featurep 'dbusbind)
@@ -783,7 +780,7 @@ to their attributes."
       (secrets-mode)
       (secrets-show-collections))))
 
-(defun secrets-show-collections ()
+(defun secrets-show-collections (&optional _ignore _noconfirm)
   "Show all available collections."
   (let ((inhibit-read-only t)
 	(alias (secrets-get-alias "default")))
