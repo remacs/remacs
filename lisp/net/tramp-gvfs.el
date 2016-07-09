@@ -803,7 +803,7 @@ file names."
 	  (tramp-gvfs-maybe-open-connection (vector method user host "/" hop)))
 	(setq localname
 	      (replace-match
-	       (tramp-get-file-property  v "/" "default-location" "~")
+	       (tramp-get-connection-property v "default-location" "~")
 	       nil t localname 1)))
       ;; Tilde expansion is not possible.
       (when (string-match "\\`\\(~[^/]*\\)\\(.*\\)\\'" localname)
@@ -1418,8 +1418,8 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	    (unless (string-equal prefix "/")
 	      (tramp-set-file-property v "/" "prefix" prefix))
 	    (tramp-set-file-property v "/" "fuse-mountpoint" fuse-mountpoint)
-	    (tramp-set-file-property
-	     v "/" "default-location" default-location)))))))
+	    (tramp-set-connection-property
+	     v "default-location" default-location)))))))
 
 (when tramp-gvfs-enabled
   (dbus-register-signal
@@ -1505,7 +1505,8 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	   (unless (string-equal prefix "/")
 	     (tramp-set-file-property vec "/" "prefix" prefix))
 	   (tramp-set-file-property vec "/" "fuse-mountpoint" fuse-mountpoint)
-	   (tramp-set-file-property vec "/" "default-location" default-location)
+	   (tramp-set-connection-property
+	    vec "default-location" default-location)
 	   (throw 'mounted t)))))))
 
 (defun tramp-gvfs-mount-spec-entry (key value)
@@ -1571,6 +1572,41 @@ It was \"a(say)\", but has changed to \"a{sv})\"."
 
 ;; Connection functions.
 
+(defun tramp-gvfs-get-remote-uid (vec id-format)
+  "The uid of the remote connection VEC, in ID-FORMAT.
+ID-FORMAT valid values are `string' and `integer'."
+  (with-tramp-connection-property vec (format "uid-%s" id-format)
+    (let ((method (tramp-file-name-method vec))
+	  (user (tramp-file-name-user vec))
+	  (host (tramp-file-name-host vec))
+	  (localname
+	   (tramp-get-connection-property vec "default-location" nil)))
+      (cond
+       ((and user (equal id-format 'string)) user)
+       (localname
+	(nth 2 (file-attributes
+		(tramp-make-tramp-file-name method user host localname)
+		id-format)))
+       ((equal id-format 'integer) tramp-unknown-id-integer)
+       ((equal id-format 'string) tramp-unknown-id-string)))))
+
+(defun tramp-gvfs-get-remote-gid (vec id-format)
+  "The gid of the remote connection VEC, in ID-FORMAT.
+ID-FORMAT valid values are `string' and `integer'."
+  (with-tramp-connection-property vec (format "gid-%s" id-format)
+    (let ((method (tramp-file-name-method vec))
+	  (user (tramp-file-name-user vec))
+	  (host (tramp-file-name-host vec))
+	  (localname
+	   (tramp-get-connection-property vec "default-location" nil)))
+      (cond
+       (localname
+	(nth 3 (file-attributes
+		(tramp-make-tramp-file-name method user host localname)
+		id-format)))
+       ((equal id-format 'integer) tramp-unknown-id-integer)
+       ((equal id-format 'string) tramp-unknown-id-string)))))
+
 (defun tramp-gvfs-maybe-open-connection (vec)
   "Maybe open a connection VEC.
 Does not do anything if a connection is already open, but re-opens the
@@ -1600,13 +1636,13 @@ connection if a previous connection has died for some reason."
 	    (tramp-gvfs-object-path
 	     (tramp-make-tramp-file-name method user host ""))))
 
-      (when (and (string-equal method "smb")
-		 (string-equal localname "/"))
-	(tramp-error vec 'file-error "Filename must contain a Windows share"))
-
       (when (and (string-equal method "afp")
 		 (string-equal localname "/"))
 	(tramp-error vec 'file-error "Filename must contain an AFP volume"))
+
+      (when (and (string-equal method "smb")
+		 (string-equal localname "/"))
+	(tramp-error vec 'file-error "Filename must contain a Windows share"))
 
       (with-tramp-progress-reporter
 	  vec 3
@@ -1680,16 +1716,15 @@ connection if a previous connection has died for some reason."
 	 (tramp-get-connection-process vec) "connected" t))))
 
   ;; In `tramp-check-cached-permissions', the connection properties
-  ;; {uig,gid}-{integer,string} are used.  We set them to their local
-  ;; counterparts.
-  (with-tramp-connection-property
-   vec "uid-integer" (tramp-get-local-uid 'integer))
-  (with-tramp-connection-property
-   vec "gid-integer" (tramp-get-local-gid 'integer))
-  (with-tramp-connection-property
-   vec "uid-string" (tramp-get-local-uid 'string))
-  (with-tramp-connection-property
-   vec "gid-string" (tramp-get-local-gid 'string)))
+  ;; {uig,gid}-{integer,string} are used.  We set them to proper values.
+  (unless (tramp-get-connection-property vec "uid-integer" nil)
+    (tramp-gvfs-get-remote-uid vec 'integer))
+  (unless (tramp-get-connection-property vec "gid-integer" nil)
+    (tramp-gvfs-get-remote-gid vec 'integer))
+  (unless (tramp-get-connection-property vec "uid-string" nil)
+    (tramp-gvfs-get-remote-uid vec 'string))
+  (unless (tramp-get-connection-property vec "gid-string" nil)
+    (tramp-gvfs-get-remote-gid vec 'string)))
 
 (defun tramp-gvfs-send-command (vec command &rest args)
   "Send the COMMAND with its ARGS to connection VEC.
