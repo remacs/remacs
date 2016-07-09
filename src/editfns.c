@@ -4175,13 +4175,13 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      convbytes += padding;
 	      if (convbytes <= buf + bufsize - p)
 		{
-                  info[n].start = nchars;
 		  if (! minus_flag)
 		    {
 		      memset (p, ' ', padding);
 		      p += padding;
 		      nchars += padding;
 		    }
+                  info[n].start = nchars;
 
 		  if (p > buf
 		      && multibyte
