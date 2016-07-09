@@ -1,4 +1,4 @@
-;;; secrets.el --- Client interface to gnome-keyring and kwallet.
+;;; secrets.el --- Client interface to gnome-keyring and kwallet. -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2010-2016 Free Software Foundation, Inc.
 
@@ -433,7 +433,7 @@ returned, and it will be stored in `secrets-session-path'."
   "Handler for signals emitted by `secrets-interface-service'."
   (cond
    ((string-equal (dbus-event-member-name last-input-event) "CollectionCreated")
-    (add-to-list 'secrets-collection-paths (car args)))
+    (cl-pushnew (car args) secrets-collection-paths))
    ((string-equal (dbus-event-member-name last-input-event) "CollectionDeleted")
     (setq secrets-collection-paths
 	  (delete (car args) secrets-collection-paths)))))
@@ -610,12 +610,11 @@ The object labels of the found items are returned as list."
 	  (error 'wrong-type-argument (car attributes)))
         (unless (stringp (cadr attributes))
           (error 'wrong-type-argument (cadr attributes)))
-	(setq props (add-to-list
-		     'props
+	(setq props (append
+		     props
 		     (list :dict-entry
 			   (substring (symbol-name (car attributes)) 1)
-			   (cadr attributes))
-		     'append)
+			   (cadr attributes)))
 	      attributes (cddr attributes)))
       ;; Search.  The result is a list of object paths.
       (setq result
@@ -649,12 +648,11 @@ The object path of the created item is returned."
 	    (error 'wrong-type-argument (car attributes)))
           (unless (stringp (cadr attributes))
             (error 'wrong-type-argument (cadr attributes)))
-	  (setq props (add-to-list
-		       'props
+	  (setq props (append
+		       props
 		       (list :dict-entry
 			     (substring (symbol-name (car attributes)) 1)
-			     (cadr attributes))
-		       'append)
+			     (cadr attributes)))
 		attributes (cddr attributes)))
 	;; Create the item.
 	(setq result
@@ -782,8 +780,7 @@ to their attributes."
 
 (defun secrets-show-collections (&optional _ignore _noconfirm)
   "Show all available collections."
-  (let ((inhibit-read-only t)
-	(alias (secrets-get-alias "default")))
+  (let ((inhibit-read-only t))
     (erase-buffer)
     (tree-widget-set-theme "folder")
     (dolist (coll (secrets-list-collections))
@@ -852,7 +849,7 @@ to their attributes."
 				     "%v\n"))))
       attributes))))
 
-(defun secrets-tree-widget-after-toggle-function (widget &rest ignore)
+(defun secrets-tree-widget-after-toggle-function (widget &rest _ignore)
   "Add a temporary widget to show the password."
   (dolist (child (widget-get widget :children))
     (when (widget-member child :secret)
@@ -864,7 +861,7 @@ to their attributes."
        "Show password")))
   (widget-setup))
 
-(defun secrets-tree-widget-show-password (widget &rest ignore)
+(defun secrets-tree-widget-show-password (widget &rest _ignore)
   "Show password, and remove temporary widget."
   (let ((parent (widget-get widget :parent)))
     (widget-put parent :secret nil)
