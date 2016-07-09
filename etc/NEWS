@@ -557,6 +557,9 @@ ABBR is a time zone abbreviation.  The affected functions are
 *** New basic face 'fixed-pitch-serif', for a fixed-width font with serifs.
 The Info-quoted and tex-verbatim faces now default to inheriting from it.
 
+** New built-in function `mapcan' which avoids unnecessary consing (and garbage
+   collection).
+
 
 * Changes in Emacs 25.2 on Non-Free Operating Systems
 

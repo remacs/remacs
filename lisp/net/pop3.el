@@ -402,8 +402,7 @@ Return non-nil if it is necessary to update the local UIDL file."
 	       (push uidl new))
 	     (decf i)))
 	  (pop3-uidl
-	   (setq new (apply 'nconc (mapcar (lambda (elt) (list elt ctime))
-					   pop3-uidl)))))
+	   (setq new (mapcan (lambda (elt) (list elt ctime)) pop3-uidl))))
     (when new (setq mod t))
     ;; List expirable messages and delete them from the data to be saved.
     (setq ctime (when (numberp pop3-leave-mail-on-server)

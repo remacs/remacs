@@ -2654,6 +2654,30 @@ SEQUENCE may be a list, a vector, a bool-vector, or a string.  */)
 
   return sequence;
 }
+
+DEFUN ("mapcan", Fmapcan, Smapcan, 2, 2, 0,
+       doc: /* Apply FUNCTION to each element of SEQUENCE, and concatenate
+the results by altering them (using `nconc').
+SEQUENCE may be a list, a vector, a bool-vector, or a string. */)
+     (Lisp_Object function, Lisp_Object sequence)
+{
+  register EMACS_INT leni;
+  register Lisp_Object *args;
+  Lisp_Object ret;
+  USE_SAFE_ALLOCA;
+
+  if (CHAR_TABLE_P (sequence))
+    wrong_type_argument (Qlistp, sequence);
+
+  leni = XFASTINT (Flength (sequence));
+  SAFE_ALLOCA_LISP (args, leni);
+  mapcar1 (leni, args, function, sequence);
+  ret = Fnconc (leni, args);
+
+  SAFE_FREE ();
+
+  return ret;
+}
 
 /* This is how C code calls `yes-or-no-p' and allows the user
    to redefine it.  */
@@ -5203,6 +5227,7 @@ this variable.  */);
   defsubr (&Snconc);
   defsubr (&Smapcar);
   defsubr (&Smapc);
+  defsubr (&Smapcan);
   defsubr (&Smapconcat);
   defsubr (&Syes_or_no_p);
   defsubr (&Sload_average);

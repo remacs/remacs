@@ -1372,7 +1372,7 @@ See the documentation for the variable `nnmail-split-fancy' for details."
 
      ;; Builtin & operation.
      ((eq (car split) '&)
-      (apply 'nconc (mapcar 'nnmail-split-it (cdr split))))
+      (mapcan 'nnmail-split-it (cdr split)))
 
      ;; Builtin | operation.
      ((eq (car split) '|)

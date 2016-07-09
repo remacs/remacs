@@ -414,9 +414,8 @@
 	       (substring arg 0 (match-end 1))
 	     arg))))
 
-(require 'cl-lib)
-
 (eval-when-compile			; to avoid compiler warnings
+  (require 'cl-lib)
   (require 'dired)
   (require 'apropos))
 
@@ -434,7 +433,7 @@ As a special case, if PATHS is nil then replace it by calling
 	     (mapcar 'woman-Cyg-to-Win (woman-parse-man.conf)))
 	    ((string-match-p ";" paths)
 	     ;; Assume DOS-style path-list...
-	     (cl-mapcan			; splice list into list
+	     (mapcan			; splice list into list
 	      (lambda (x)
 		(if x
 		    (list x)
@@ -445,14 +444,14 @@ As a special case, if PATHS is nil then replace it by calling
 	     (list paths))
 	    (t
 	     ;; Assume UNIX/Cygwin-style path-list...
-	     (cl-mapcan			; splice list into list
+	     (mapcan			; splice list into list
 	      (lambda (x)
 		(mapcar 'woman-Cyg-to-Win
 			(if x (list x) (woman-parse-man.conf))))
 	      (let ((path-separator ":"))
 		(parse-colon-path paths)))))
     ;; Assume host-default-style path-list...
-    (cl-mapcan				; splice list into list
+    (mapcan				; splice list into list
      (lambda (x) (if x (list x) (woman-parse-man.conf)))
      (parse-colon-path (or paths "")))))
 

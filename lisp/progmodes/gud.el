@@ -1947,10 +1947,10 @@ the source code display in sync with the debugging session.")
 PATH gives the directories in which to search for files with
 extension EXTN.  Normally EXTN is given as the regular expression
  \"\\.java$\" ."
-  (apply 'nconc (mapcar (lambda (d)
-			  (when (file-directory-p d)
-			    (directory-files d t extn nil)))
-			path)))
+  (mapcan (lambda (d)
+            (when (file-directory-p d)
+              (directory-files d t extn nil)))
+          path))
 
 ;; Move point past whitespace.
 (defun gud-jdb-skip-whitespace ()

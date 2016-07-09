@@ -1638,8 +1638,8 @@ and selects that window."
 	      (let ((others-list
 		     (mouse-buffer-menu-alist
 		      ;; we don't need split-by-major-mode any more,
-		      ;; so we can ditch it with nconc.
-		      (apply 'nconc (mapcar 'cddr split-by-major-mode)))))
+		      ;; so we can ditch it with nconc (mapcan).
+		      (mapcan 'cddr split-by-major-mode))))
 		(and others-list
 		     (setq subdivided-menus
 			   (cons (cons "Others" others-list)

@@ -1599,7 +1599,7 @@ sequence, this is like `mapcar'.  With several, it is like the Common Lisp
 							   heads))
 					nil))
 	     (setq ,result-tail (cdr ,result-tail)
-		   ,@(apply 'nconc (mapcar (lambda (h) (list h (list 'cdr h))) heads))))
+		   ,@(mapcan (lambda (h) (list h (list 'cdr h))) heads)))
 	   (cdr ,result)))
     `(mapcar ,function ,seq1)))
 

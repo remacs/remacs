@@ -2762,7 +2762,7 @@ REGEXP should use constructs supported by your local `grep' command."
                           (lambda (s) (concat s "/"))
                           grep-find-ignored-directories)
                          grep-find-ignored-files))
-         (xrefs (cl-mapcan
+         (xrefs (mapcan
                  (lambda (file)
                    (xref-collect-matches regexp "*" file
                                          (and (file-directory-p file)
