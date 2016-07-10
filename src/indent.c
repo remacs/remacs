@@ -2027,6 +2027,7 @@ whether or not it is currently displayed in some window.  */)
       struct position pos;
       pos = *vmotion (PT, PT_BYTE, XINT (lines), w);
       SET_PT_BOTH (pos.bufpos, pos.bytepos);
+      it.vpos = pos.vpos;
     }
   else
     {
