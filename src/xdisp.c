@@ -27369,8 +27369,8 @@ x_produce_glyphs (struct it *it)
 
 	  eassume (0 < glyph_len); /* See Bug#8512.  */
 	  do
-	    c = COMPOSITION_GLYPH (cmp, --glyph_len);
-	  while (c == '\t' && 0 < glyph_len);
+	    c = COMPOSITION_GLYPH (cmp, glyph_len - 1);
+	  while (c == '\t' && 0 < --glyph_len);
 
 	  bool right_padded = glyph_len < cmp->glyph_len;
 	  for (i = 0; i < glyph_len; i++)
