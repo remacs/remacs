@@ -1211,6 +1211,12 @@ swapped as well: the positions of point and mark, all the markers, the
 overlays, the text properties, the undo list, the value of the
 @code{enable-multibyte-characters} flag (@pxref{Text Representations,
 enable-multibyte-characters}), etc.
+
+@strong{Warning:} If this function is called from within a
+@code{save-excursion} form, the current buffer will be set to
+@var{buffer} upon leaving the form, since the marker used by
+@code{save-excursion} to save the position and buffer will be swapped
+as well.
 @end defun
 
   If you use @code{buffer-swap-text} on a file-visiting buffer, you
