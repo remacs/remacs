@@ -2439,7 +2439,9 @@ temporarily reverses the meaning of this variable."
   ;; restore buffer mode line id's in buffer-A/B/C
   (let ((control-buffer ediff-control-buffer)
 	(meta-buffer ediff-meta-buffer)
-	(after-quit-hook-internal ediff-after-quit-hook-internal)
+        ;; FIXME: Here we ignore the global part of the
+        ;; ediff-after-quit-hook-internal hook.
+        (after-quit-hook-internal (remq t ediff-after-quit-hook-internal))
 	(session-number ediff-meta-session-number)
 	;; suitable working frame
 	(warp-frame (if (and (ediff-window-display-p) (eq ediff-grab-mouse t))
