@@ -1504,10 +1504,9 @@ You can then feed the file name(s) to other commands with \\[yank]."
 (defun ibuffer-locked-buffer-p (&optional buf)
   "Return non-nil if BUF is locked.
 When BUF nil, default to the buffer at current line."
-  (let ((_buffer (or buf (ibuffer-current-buffer)))
-        char)
-    (when _buffer
-      (with-current-buffer _buffer
+  (let ((cbuffer (or buf (ibuffer-current-buffer))))
+    (when cbuffer
+      (with-current-buffer cbuffer
         (and (boundp 'emacs-lock-mode) emacs-lock-mode)))))
 
 ;;;###autoload
