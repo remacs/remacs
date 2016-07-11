@@ -3239,7 +3239,7 @@ If OUTPUT-BUFFER is a buffer or buffer name, erase that buffer
 and insert the output there.
 If OUTPUT-BUFFER is not a buffer and not nil, insert the output
 in current buffer after point leaving mark after it.
-(This cannot be done asynchronously).
+This cannot be done asynchronously.
 
 If the command terminates without error, but generates output,
 and you did not specify \"insert it in the current buffer\",
