@@ -51,6 +51,9 @@
 
 (autoload 'gnus-group-make-nnir-group "nnir")
 
+(autoload 'gnus-cloud-upload-all-data "gnus-cloud")
+(autoload 'gnus-cloud-download-all-data "gnus-cloud")
+
 (defcustom gnus-no-groups-message "No news is good news"
   "Message displayed by Gnus when no groups are available."
   :group 'gnus-start
@@ -635,6 +638,12 @@ simple manner."
   "\M-&" gnus-group-universal-argument
   "#" gnus-group-mark-group
   "\M-#" gnus-group-unmark-group)
+
+(gnus-define-keys (gnus-group-cloud-map "~" gnus-group-mode-map)
+  "u" gnus-cloud-upload-all-data
+  "~" gnus-cloud-upload-all-data
+  "d" gnus-cloud-download-all-data
+  "\r" gnus-cloud-download-all-data)
 
 (gnus-define-keys (gnus-group-mark-map "M" gnus-group-mode-map)
   "m" gnus-group-mark-group
