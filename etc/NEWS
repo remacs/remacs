@@ -243,6 +243,14 @@ whose content matches a regexp; bound to '% g'.
 ** Dired
 
 +++
+*** A New option 'dired-always-read-filesystem' default to nil.
+If non-nil, buffers visiting files are reverted before search them;
+for instance, in 'dired-mark-files-containing-regexp' a non-nil value
+of this option means the file is revisited in a temporary buffer;
+this temporary buffer is the actual buffer searched: the original buffer
+visiting the file is not modified.
+
++++
 *** In wdired, when editing files to contain slash characters,
 the resulting directories are automatically created.  Whether to do
 this is controlled by the 'wdired-create-parent-directories' variable.

@@ -550,13 +550,16 @@ Mark (with @samp{*}) all files whose @emph{contents} contain a match for
 the regular expression @var{regexp}
 (@code{dired-mark-files-containing-regexp}).  This command is like
 @kbd{% m}, except that it searches the file contents instead of the file
-name.  Note that if a file is visited in an Emacs buffer, this command
-will look in the buffer without revisiting the file, so the results
+name.  Note that if a file is visited in an Emacs buffer,
+and @code{dired-always-read-filesystem} is @code{nil} (the default), this
+command will look in the buffer without revisiting the file, so the results
 might be inconsistent with the file on disk if its contents has changed
 since it was last visited.  If you don't want this, you may wish
 reverting the files you have visited in your buffers, or turning on
 the @code{auto-revert} mode in those buffers, before invoking this
-command.  @xref{Reverting}.
+command.  @xref{Reverting}.  If you prefer that this command always revisit
+the file, without having to revert the file or enable @code{auto-revert}
+mode, you might want to set @code{dired-always-read-filesystem} to non-@code{nil}.
 
 @item C-/
 @itemx C-x u
