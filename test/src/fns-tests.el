@@ -235,3 +235,13 @@
                    (backward-delete-char 1)
                    (buffer-hash))
                  (sha1 "foo"))))
+
+(ert-deftest fns-tests-mapcan ()
+  (should-error (mapcan))
+  (should-error (mapcan #'identity))
+  (should-error (mapcan #'identity (make-char-table 'foo)))
+  (should (equal (mapcan #'list '(1 2 3)) '(1 2 3)))
+  ;; `mapcan' is destructive
+  (let ((data '((foo) (bar))))
+    (should (equal (mapcan #'identity data) '(foo bar)))
+    (should (equal data                     '((foo bar) (bar))))))
