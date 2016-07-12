@@ -27,11 +27,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "syntax.h"
 #include "window.h"
 
-#ifdef CHECK_FRAME_FONT
-#include "frame.h"
-#include "xterm.h"
-#endif
-
 /* Work around GCC bug 54561.  */
 #if GNUC_PREREQ (4, 3, 0)
 # pragma GCC diagnostic ignored "-Wclobbered"
@@ -438,16 +433,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
   Lisp_Object *top;
   Lisp_Object result;
   enum handlertype type;
-
-#if 0 /* CHECK_FRAME_FONT */
- {
-   struct frame *f = SELECTED_FRAME ();
-   if (FRAME_X_P (f)
-       && FRAME_FONT (f)->direction != 0
-       && FRAME_FONT (f)->direction != 1)
-     emacs_abort ();
- }
-#endif
 
   CHECK_STRING (bytestr);
   CHECK_VECTOR (vector);
