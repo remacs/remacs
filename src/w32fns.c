@@ -276,6 +276,8 @@ static struct
 } kbdhook;
 typedef HWND (WINAPI *GetConsoleWindow_Proc) (void);
 
+typedef BOOL (WINAPI *IsDebuggerPresent_Proc) (void);
+
 /* stdin, from w32console.c */
 extern HANDLE keyboard_handle;
 
@@ -2302,6 +2304,19 @@ void
 setup_w32_kbdhook (void)
 {
   kbdhook.hook_count++;
+
+  /* This hook gets in the way of debugging, since when Emacs stops,
+     its input thread stops, and there's nothing to process keyboard
+     events, whereas this hook is global, and is invoked in the
+     context of the thread that installed it.  So we don't install the
+     hook if the process is being debugged. */
+  if (w32_kbdhook_active)
+    {
+      IsDebuggerPresent_Proc is_debugger_present = (IsDebuggerPresent_Proc)
+	GetProcAddress (GetModuleHandle ("kernel32.dll"), "IsDebuggerPresent");
+      if (is_debugger_present && is_debugger_present ())
+	return;
+    }
 
   /* Hooking is only available on NT architecture systems, as
      indicated by the w32_kbdhook_active variable.  */
