@@ -1624,10 +1624,17 @@ Used in `word-search-forward', `word-search-backward',
   "Search backward from point for STRING, ignoring differences in punctuation.
 Set point to the beginning of the occurrence found, and return point.
 An optional second argument bounds the search; it is a buffer position.
-The match found must not extend before that position.
+  The match found must not begin before that position.  A value of nil
+  means search to the beginning of the accessible portion of the buffer.
 Optional third argument, if t, means if fail just return nil (no error).
-  If not nil and not t, move to limit of search and return nil.
-Optional fourth argument is repeat count--search for successive occurrences.
+  If not nil and not t, position at limit of search and return nil.
+Optional fourth argument COUNT, if a positive number, means to search
+  for COUNT successive occurrences.  If COUNT is negative, search
+  forward, instead of backward, for -COUNT occurrences.  A value of
+  nil means the same as 1.
+With COUNT positive, the match found is the COUNTth to last one (or
+  last, if COUNT is 1 or nil) in the buffer located entirely before
+  the origin of the search; correspondingly with COUNT negative.
 
 Relies on the function `word-search-regexp' to convert a sequence
 of words in STRING to a regexp used to search words without regard
@@ -1641,10 +1648,17 @@ has no effect on it."
   "Search forward from point for STRING, ignoring differences in punctuation.
 Set point to the end of the occurrence found, and return point.
 An optional second argument bounds the search; it is a buffer position.
-The match found must not extend after that position.
+  The match found must not end after that position.  A value of nil
+  means search to the end of the accessible portion of the buffer.
 Optional third argument, if t, means if fail just return nil (no error).
   If not nil and not t, move to limit of search and return nil.
-Optional fourth argument is repeat count--search for successive occurrences.
+Optional fourth argument COUNT, if a positive number, means to search
+  for COUNT successive occurrences.  If COUNT is negative, search
+  backward, instead of forward, for -COUNT occurrences.  A value of
+  nil means the same as 1.
+With COUNT positive, the match found is the COUNTth one (or first,
+  if COUNT is 1 or nil) in the buffer located entirely after the
+  origin of the search; correspondingly with COUNT negative.
 
 Relies on the function `word-search-regexp' to convert a sequence
 of words in STRING to a regexp used to search words without regard
@@ -1662,10 +1676,17 @@ Unlike `word-search-backward', the end of STRING need not match a word
 boundary, unless STRING ends in whitespace.
 
 An optional second argument bounds the search; it is a buffer position.
-The match found must not extend before that position.
+  The match found must not begin before that position.  A value of nil
+  means search to the beginning of the accessible portion of the buffer.
 Optional third argument, if t, means if fail just return nil (no error).
-  If not nil and not t, move to limit of search and return nil.
-Optional fourth argument is repeat count--search for successive occurrences.
+  If not nil and not t, position at limit of search and return nil.
+Optional fourth argument COUNT, if a positive number, means to search
+  for COUNT successive occurrences.  If COUNT is negative, search
+  forward, instead of backward, for -COUNT occurrences.  A value of
+  nil means the same as 1.
+With COUNT positive, the match found is the COUNTth to last one (or
+  last, if COUNT is 1 or nil) in the buffer located entirely before
+  the origin of the search; correspondingly with COUNT negative.
 
 Relies on the function `word-search-regexp' to convert a sequence
 of words in STRING to a regexp used to search words without regard
@@ -1683,10 +1704,17 @@ Unlike `word-search-forward', the end of STRING need not match a word
 boundary, unless STRING ends in whitespace.
 
 An optional second argument bounds the search; it is a buffer position.
-The match found must not extend after that position.
+  The match found must not end after that position.  A value of nil
+  means search to the end of the accessible portion of the buffer.
 Optional third argument, if t, means if fail just return nil (no error).
   If not nil and not t, move to limit of search and return nil.
-Optional fourth argument is repeat count--search for successive occurrences.
+Optional fourth argument COUNT, if a positive number, means to search
+  for COUNT successive occurrences.  If COUNT is negative, search
+  backward, instead of forward, for -COUNT occurrences.  A value of
+  nil means the same as 1.
+With COUNT positive, the match found is the COUNTth one (or first,
+  if COUNT is 1 or nil) in the buffer located entirely after the
+  origin of the search; correspondingly with COUNT negative.
 
 Relies on the function `word-search-regexp' to convert a sequence
 of words in STRING to a regexp used to search words without regard
