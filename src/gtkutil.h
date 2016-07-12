@@ -178,6 +178,7 @@ extern bool xg_prepare_tooltip (struct frame *f,
 				int *height);
 extern void xg_show_tooltip (struct frame *f, int root_x, int root_y);
 extern bool xg_hide_tooltip (struct frame *f);
+extern gboolean xg_hide_tip (gpointer data);
 
 #ifdef USE_CAIRO
 extern void xg_page_setup_dialog (void);

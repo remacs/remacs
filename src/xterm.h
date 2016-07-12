@@ -362,6 +362,9 @@ struct x_display_info
   /* The frame waiting to be auto-raised in XTread_socket.  */
   struct frame *x_pending_autoraise_frame;
 
+  /* Tooltip frame on this display.  */
+  struct frame *x_tooltip_frame;
+
   /* The frame where the mouse was last time we reported a ButtonPress event.  */
   struct frame *last_mouse_frame;
 
@@ -575,6 +578,7 @@ struct x_output
   GtkTooltip *ttip_widget;
   GtkWidget *ttip_lbl;
   GtkWindow *ttip_window;
+  guint ttip_timeout;
 #endif /* USE_GTK_TOOLTIP */
 
 #endif /* USE_GTK */

@@ -186,6 +186,9 @@ struct w32_display_info
   /* The frame waiting to be auto-raised in w32_read_socket.  */
   struct frame *w32_pending_autoraise_frame;
 
+  /* Tooltip frame on this display.  */
+  struct frame *w32_tooltip_frame;
+
   /* The frame where the mouse was last time we reported a mouse event.  */
   struct frame *last_mouse_frame;
 

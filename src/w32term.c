@@ -5024,11 +5024,10 @@ w32_read_socket (struct terminal *terminal,
 	  /* wParam non-zero means Window is about to be shown, 0 means
 	     about to be hidden.  */
 	  /* Redo the mouse-highlight after the tooltip has gone.  */
-	  if (!msg.msg.wParam && msg.msg.hwnd == tip_window)
-	    {
-	      tip_window = NULL;
-	      x_redo_mouse_highlight (dpyinfo);
-	    }
+	  if (!msg.msg.wParam
+	      && dpyinfo->w32_tooltip_frame
+	      && FRAME_W32_WINDOW (dpyinfo->w32_tooltip_frame) == msg.msg.hwnd)
+	    x_redo_mouse_highlight (dpyinfo);
 
 	  /* If window has been obscured or exposed by another window
 	     being maximized or minimized/restored, then recheck
@@ -5394,7 +5393,7 @@ w32_read_socket (struct terminal *terminal,
 	struct frame *f = XFRAME (frame);
 	/* The tooltip has been drawn already.  Avoid the
 	   SET_FRAME_GARBAGED below.  */
-	if (EQ (frame, tip_frame))
+	if (FRAME_TOOLTIP_P (f))
 	  continue;
 
 	/* Check "visible" frames and mark each as obscured or not.
@@ -5871,7 +5870,7 @@ x_new_font (struct frame *f, Lisp_Object font_object, int fontset)
       /* Don't change the size of a tip frame; there's no point in
 	 doing it because it's done in Fx_show_tip, and it leads to
 	 problems because the tip frame has no widget.  */
-      if (NILP (tip_frame) || XFRAME (tip_frame) != f)
+      if (!FRAME_TOOLTIP_P (f))
 	adjust_frame_size (f, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
 			   FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 3,
 			   false, Qfont);
@@ -6569,6 +6568,8 @@ x_free_frame_resources (struct frame *f)
     dpyinfo->w32_focus_event_frame = 0;
   if (f == dpyinfo->x_highlight_frame)
     dpyinfo->x_highlight_frame = 0;
+  if (f == dpyinfo->w32_tooltip_frame)
+    dpyinfo->w32_tooltip_frame = 0;
   if (f == hlinfo->mouse_face_mouse_frame)
     reset_mouse_highlight (hlinfo);
 

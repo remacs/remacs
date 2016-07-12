@@ -309,6 +309,9 @@ struct frame
   ENUM_BF (output_method) output_method : 3;
 
 #ifdef HAVE_WINDOW_SYSTEM
+  /* True if this frame is a tooltip frame.  */
+  bool_bf tooltip : 1;
+
   /* See FULLSCREEN_ enum on top.  */
   ENUM_BF (fullscreen_type) want_fullscreen : 4;
 
@@ -861,6 +864,9 @@ default_pixels_per_inch_y (void)
 #define FRAME_HAS_VERTICAL_SCROLL_BARS_ON_RIGHT(f) \
   ((f)->vertical_scroll_bar_type == vertical_scroll_bar_right)
 
+/* Whether F is a tooltip frame.  */
+#define FRAME_TOOLTIP_P(f) ((f)->tooltip)
+
 #else /* not HAVE_WINDOW_SYSTEM */
 
 /* If there is no window system, there are no scroll bars.  */
@@ -868,6 +874,9 @@ default_pixels_per_inch_y (void)
 #define FRAME_HAS_VERTICAL_SCROLL_BARS(f) ((void) f, 0)
 #define FRAME_HAS_VERTICAL_SCROLL_BARS_ON_LEFT(f) ((void) f, 0)
 #define FRAME_HAS_VERTICAL_SCROLL_BARS_ON_RIGHT(f) ((void) f, 0)
+
+/* If there is no window system, there are no tooltips.  */
+#define FRAME_TOOLTIP_P(f) ((void) f, 0)
 
 #endif /* HAVE_WINDOW_SYSTEM */
 

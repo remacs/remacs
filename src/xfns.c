@@ -4151,7 +4151,7 @@ x_make_monitor_attribute_list (struct MonitorInfo *monitors,
       struct frame *f = XFRAME (frame);
 
       if (FRAME_X_P (f) && FRAME_DISPLAY_INFO (f) == dpyinfo
-	  && !EQ (frame, tip_frame))
+	  && !FRAME_TOOLTIP_P (f))
 	{
 	  int i = x_get_monitor_for_frame (f, monitors, n_monitors);
 	  ASET (monitor_frames, i, Fcons (frame, AREF (monitor_frames, i)));
@@ -4447,7 +4447,7 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
       struct frame *f = XFRAME (frame);
 
       if (FRAME_X_P (f) && FRAME_DISPLAY_INFO (f) == dpyinfo
-	  && !EQ (frame, tip_frame))
+	  && !FRAME_TOOLTIP_P (f))
 	{
 	  GdkWindow *gwin = gtk_widget_get_window (FRAME_GTK_WIDGET (f));
 
@@ -5312,39 +5312,6 @@ no value of TYPE (always string in the MS Windows case).  */)
 				Tool tips
  ***********************************************************************/
 
-static void compute_tip_xy (struct frame *, Lisp_Object, Lisp_Object,
-                            Lisp_Object, int, int, int *, int *);
-
-/* The frame of a currently visible tooltip.  */
-
-Lisp_Object tip_frame;
-
-/* If non-nil, a timer started that hides the last tooltip when it
-   fires.  */
-
-static Lisp_Object tip_timer;
-Window tip_window;
-
-/* If non-nil, a vector of 3 elements containing the last args
-   with which x-show-tip was called.  See there.  */
-
-static Lisp_Object last_show_tip_args;
-
-
-static void
-unwind_create_tip_frame (Lisp_Object frame)
-{
-  Lisp_Object deleted;
-
-  deleted = unwind_create_frame (frame);
-  if (EQ (deleted, Qt))
-    {
-      tip_window = None;
-      tip_frame = Qnil;
-    }
-}
-
-
 /* Create a frame for a tooltip on the display described by DPYINFO.
    PARMS is a list of frame parameters.  TEXT is the string to
    display in the tip frame.  Value is the frame.
@@ -5381,7 +5348,7 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
   f = make_frame (false);
   f->wants_modeline = false;
   XSETFRAME (frame, f);
-  record_unwind_protect (unwind_create_tip_frame, frame);
+  record_unwind_protect (do_unwind_create_frame, frame);
 
   f->terminal = dpyinfo->terminal;
 
@@ -5402,6 +5369,7 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
   f->output_data.x->white_relief.pixel = -1;
   f->output_data.x->black_relief.pixel = -1;
 
+  f->tooltip = true;
   fset_icon_name (f, Qnil);
   FRAME_DISPLAY_INFO (f) = dpyinfo;
   f->output_data.x->parent_desc = FRAME_DISPLAY_INFO (f)->root_window;
@@ -5545,8 +5513,7 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
       = f->output_data.x->text_cursor;
     /* Arrange for getting MapNotify and UnmapNotify events.  */
     attrs.event_mask = StructureNotifyMask;
-    tip_window
-      = FRAME_X_WINDOW (f)
+    FRAME_X_WINDOW (f)
       = XCreateWindow (FRAME_X_DISPLAY (f),
 		       FRAME_DISPLAY_INFO (f)->root_window,
 		       /* x, y, width, height */
@@ -5555,7 +5522,7 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
 		       f->border_width,
 		       CopyFromParent, InputOutput, CopyFromParent,
 		       mask, &attrs);
-    XChangeProperty (FRAME_X_DISPLAY (f), tip_window,
+    XChangeProperty (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
                      FRAME_DISPLAY_INFO (f)->Xatom_net_window_type,
                      XA_ATOM, 32, PropModeReplace,
                      (unsigned char *)&type, 1);
@@ -5581,13 +5548,6 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
   SET_FRAME_COLS (f, 0);
   SET_FRAME_LINES (f, 0);
   change_frame_size (f, width, height, true, false, false, false);
-
-  /* Add `tooltip' frame parameter's default value. */
-  if (NILP (Fframe_parameter (frame, Qtooltip)))
-    {
-      AUTO_FRAME_ARG (arg, Qtooltip, Qt);
-      Fmodify_frame_parameters (frame, arg);
-    }
 
   /* FIXME - can this be done in a similar way to normal frames?
      http://lists.gnu.org/archive/html/emacs-devel/2007-10/msg00641.html */
@@ -5633,6 +5593,9 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
 
   f->no_split = true;
 
+  /* Now this is an official tooltip frame on this display.  */
+  dpyinfo->x_tooltip_frame = f;
+
   /* Now that the frame will be official, it counts as a reference to
      its display and terminal.  */
   FRAME_DISPLAY_INFO (f)->reference_count++;
@@ -5663,7 +5626,9 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
    the display in *ROOT_X, and *ROOT_Y.  */
 
 static void
-compute_tip_xy (struct frame *f, Lisp_Object parms, Lisp_Object dx, Lisp_Object dy, int width, int height, int *root_x, int *root_y)
+compute_tip_xy (struct frame *f,
+		Lisp_Object parms, Lisp_Object dx, Lisp_Object dy,
+		int width, int height, int *root_x, int *root_y)
 {
   Lisp_Object left, top, right, bottom;
   int win_x, win_y;
@@ -5759,56 +5724,39 @@ compute_tip_xy (struct frame *f, Lisp_Object parms, Lisp_Object dx, Lisp_Object 
     *root_x = min_x;
 }
 
+/* Hide tooltip frame F and delete it if DELETE is true.  */
 
-/* Hide tooltip.  Delete its frame if DELETE is true.  */
 static Lisp_Object
-x_hide_tip (bool delete)
+x_hide_tip (struct frame *f, bool delete)
 {
-  if (!NILP (tip_timer))
+  if (f)
     {
-      call1 (Qcancel_timer, tip_timer);
-      tip_timer = Qnil;
-    }
+      Lisp_Object frame, timer;
 
+      XSETFRAME (frame, f);
+      timer = Fframe_parameter (frame, Qtooltip_timer);
 
-  if (NILP (tip_frame)
-      || (!delete && FRAMEP (tip_frame)
-	  && !FRAME_VISIBLE_P (XFRAME (tip_frame))))
-    return Qnil;
-  else
-    {
-      ptrdiff_t count;
-      Lisp_Object was_open = Qnil;
+      if (!NILP (timer))
+	call1 (Qcancel_timer, timer);
 
-      count = SPECPDL_INDEX ();
-      specbind (Qinhibit_redisplay, Qt);
-      specbind (Qinhibit_quit, Qt);
+      if (!delete && !FRAME_VISIBLE_P (f))
+	return Qnil;
+      else
+	{
+	  ptrdiff_t count = SPECPDL_INDEX ();
+
+	  specbind (Qinhibit_redisplay, Qt);
+	  specbind (Qinhibit_quit, Qt);
 
 #ifdef USE_GTK
-      {
-	/* When using system tooltip, tip_frame is the Emacs frame on
-	   which the tip is shown.  */
-	struct frame *f = XFRAME (tip_frame);
-
-	if (FRAME_LIVE_P (f) && xg_hide_tooltip (f))
-	  {
-	    tip_frame = Qnil;
-	    was_open = Qt;
-	  }
-      }
+	  if (x_gtk_use_system_tooltips)
+	    /* Should be handled by xg_hide_tooltip.  */
+	    emacs_abort ();
 #endif
-
-      if (FRAMEP (tip_frame))
-	{
 	  if (delete)
-	    {
-	      delete_frame (tip_frame, Qnil);
-	      tip_frame = Qnil;
-	    }
+	    delete_frame (frame, Qnil);
 	  else
-	    x_make_frame_invisible (XFRAME (tip_frame));
-
-	  was_open = Qt;
+	    x_make_frame_invisible (f);
 
 #ifdef USE_LUCID
 	  /* Bloodcurdling hack alert: The Lucid menu bar widget's
@@ -5816,12 +5764,12 @@ x_hide_tip (bool delete)
 	     menu items is unmapped.  Redisplay the menu manually...  */
 	  {
 	    Widget w;
-	    struct frame *f = SELECTED_FRAME ();
-	    if (FRAME_X_P (f) && FRAME_LIVE_P (f))
+	    struct frame *sf = SELECTED_FRAME ();
+	    if (FRAME_X_P (sf) && FRAME_LIVE_P (sf))
 	      {
-		w = f->output_data.x->menubar_widget;
+		w = sf->output_data.x->menubar_widget;
 
-		if (!DoesSaveUnders (FRAME_DISPLAY_INFO (f)->screen)
+		if (!DoesSaveUnders (FRAME_DISPLAY_INFO (sf)->screen)
 		    && w != NULL)
 		  {
 		    block_input ();
@@ -5831,12 +5779,10 @@ x_hide_tip (bool delete)
 	      }
 	  }
 #endif /* USE_LUCID */
+	  return unbind_to (count, Qt);
 	}
-      else
-	tip_frame = Qnil;
-
-      return unbind_to (count, was_open);
     }
+  return Qnil;
 }
 
 DEFUN ("x-show-tip", Fx_show_tip, Sx_show_tip, 1, 6, 0,
@@ -5869,7 +5815,8 @@ with offset DY added (default is -10).
 
 A tooltip's maximum size is specified by `x-max-tooltip-size'.
 Text larger than the specified size is clipped.  */)
-  (Lisp_Object string, Lisp_Object frame, Lisp_Object parms, Lisp_Object timeout, Lisp_Object dx, Lisp_Object dy)
+  (Lisp_Object string, Lisp_Object frame, Lisp_Object parms,
+   Lisp_Object timeout, Lisp_Object dx, Lisp_Object dy)
 {
   struct frame *f, *tip_f;
   struct window *w;
@@ -5880,7 +5827,7 @@ Text larger than the specified size is clipped.  */)
   int old_windows_or_buffers_changed = windows_or_buffers_changed;
   ptrdiff_t count = SPECPDL_INDEX ();
   ptrdiff_t count_1;
-  Lisp_Object window, size;
+  Lisp_Object window, size, tip_frame, parameters;
   AUTO_STRING (tip, " *tip*");
 
   specbind (Qinhibit_redisplay, Qt);
@@ -5910,8 +5857,8 @@ Text larger than the specified size is clipped.  */)
     {
       bool ok;
 
-      /* Hide a previous tip, if any.  */
-      Fx_hide_tip ();
+      /* Hide a previous tip on this frame, if any.  */
+      xg_hide_tooltip (f);
 
       block_input ();
       ok = xg_prepare_tooltip (f, string, &width, &height);
@@ -5919,37 +5866,47 @@ Text larger than the specified size is clipped.  */)
         {
 	  compute_tip_xy (f, parms, dx, dy, width, height, &root_x, &root_y);
           xg_show_tooltip (f, root_x, root_y);
-          /* This is used in Fx_hide_tip.  */
-          XSETFRAME (tip_frame, f);
         }
       unblock_input ();
-      if (ok) goto start_timer;
+      if (ok)
+	/* Schedule call to xg_hide_tip from GTK event loop
+	   to allow the tip disappear after timeout seconds.  */
+	FRAME_X_OUTPUT (f)->ttip_timeout
+	  = g_timeout_add_seconds (XINT (timeout), xg_hide_tip, (gpointer) f);
+      else
+	/* FIXME: what if not ok?  */
+	FRAME_X_OUTPUT (f)->ttip_timeout = 0;
+      return unbind_to (count, Qnil);
     }
 #endif /* USE_GTK */
 
-  if (NILP (last_show_tip_args))
-    last_show_tip_args = Fmake_vector (make_number (3), Qnil);
+  parameters = Fframe_parameter (frame, Qtooltip_parameters);
+  if (NILP (parameters))
+    parameters = Fmake_vector (make_number (3), Qnil);
 
-  if (FRAMEP (tip_frame) && FRAME_LIVE_P (XFRAME (tip_frame)))
+  /* Look at current tooltip frame, if any.  */
+  tip_f = FRAME_DISPLAY_INFO (f)->x_tooltip_frame;
+  if (tip_f)
+    XSETFRAME (tip_frame, tip_f);
+  else
+    tip_frame = Qnil;
+
+  if (tip_f && FRAME_LIVE_P (tip_f))
     {
-      Lisp_Object last_string = AREF (last_show_tip_args, 0);
-      Lisp_Object last_frame = AREF (last_show_tip_args, 1);
-      Lisp_Object last_parms = AREF (last_show_tip_args, 2);
+      Lisp_Object last_string = AREF (parameters, 0);
+      Lisp_Object last_frame = AREF (parameters, 1);
+      Lisp_Object last_parms = AREF (parameters, 2);
 
-      if (FRAME_VISIBLE_P (XFRAME (tip_frame))
+      if (FRAME_VISIBLE_P (tip_f)
 	  && EQ (frame, last_frame)
 	  && !NILP (Fequal_including_properties (last_string, string))
 	  && !NILP (Fequal (last_parms, parms)))
 	{
 	  /* Only DX and DY have changed.  */
-	  tip_f = XFRAME (tip_frame);
-	  if (!NILP (tip_timer))
-	    {
-	      Lisp_Object timer = tip_timer;
+	  Lisp_Object timer = Fframe_parameter (tip_frame, Qtooltip_timer);
 
-	      tip_timer = Qnil;
-	      call1 (Qcancel_timer, timer);
-	    }
+	  if (!NILP (timer))
+	    call1 (Qcancel_timer, timer);
 
 	  block_input ();
 	  compute_tip_xy (tip_f, parms, dx, dy, FRAME_PIXEL_WIDTH (tip_f),
@@ -6009,17 +5966,22 @@ Text larger than the specified size is clipped.  */)
 		}
 	    }
 
-	  x_hide_tip (delete);
+	  x_hide_tip (tip_f, delete);
 	}
       else
-	x_hide_tip (true);
+	x_hide_tip (tip_f, true);
     }
   else
-    x_hide_tip (true);
+    x_hide_tip (tip_f, true);
 
-  ASET (last_show_tip_args, 0, string);
-  ASET (last_show_tip_args, 1, frame);
-  ASET (last_show_tip_args, 2, parms);
+  /* Update tooltip parameters.  */
+  {
+    AUTO_FRAME_ARG (arg, Qtooltip_parameters, parameters);
+    ASET (parameters, 0, string);
+    ASET (parameters, 1, frame);
+    ASET (parameters, 2, parms);
+    Fmodify_frame_parameters (frame, arg);
+  }
 
   if (!FRAMEP (tip_frame) || !FRAME_LIVE_P (XFRAME (tip_frame)))
     {
@@ -6035,9 +5997,6 @@ Text larger than the specified size is clipped.  */)
       if (NILP (Fassq (Qbackground_color, parms)))
 	parms = Fcons (Fcons (Qbackground_color, build_string ("lightyellow")),
 		       parms);
-
-      /* Create a frame for the tooltip, and record it in the global
-	 variable tip_frame.  */
       if (NILP (tip_frame = x_create_tip_frame (FRAME_DISPLAY_INFO (f), parms)))
 	/* Creating the tip frame failed.  */
 	return unbind_to (count, Qnil);
@@ -6115,20 +6074,69 @@ Text larger than the specified size is clipped.  */)
   windows_or_buffers_changed = old_windows_or_buffers_changed;
 
  start_timer:
-  /* Let the tip disappear after timeout seconds.  */
-  tip_timer = call3 (intern ("run-at-time"), timeout, Qnil,
-		     intern ("x-hide-tip"));
-
+  {
+    /* Let the tip disappear after timeout seconds.  */
+    AUTO_FRAME_ARG (arg, Qtooltip_timer,
+		    call3 (intern ("run-at-time"), timeout,
+			   Qnil, intern ("x-hide-tip")));
+    Fmodify_frame_parameters (tip_frame, arg);
+  }
   return unbind_to (count, Qnil);
 }
 
-
-DEFUN ("x-hide-tip", Fx_hide_tip, Sx_hide_tip, 0, 0, 0,
+DEFUN ("x-hide-tip", Fx_hide_tip, Sx_hide_tip, 0, 1, 0,
        doc: /* Hide the current tooltip window, if there is any.
+Optional FRAME is the frame to hide tooltip on.
 Value is t if tooltip was open, nil otherwise.  */)
-  (void)
+  (Lisp_Object frame)
 {
-  return x_hide_tip (!tooltip_reuse_hidden_frame);
+  Lisp_Object obj = Qnil;
+
+#ifdef USE_GTK
+  if (x_gtk_use_system_tooltips)
+    {
+      if (NILP (frame))
+	{
+	  Lisp_Object tail, frame;
+
+	  FOR_EACH_FRAME (tail, frame)
+	    if (FRAME_X_P (XFRAME (frame)))
+	      if (xg_hide_tooltip (XFRAME (frame)))
+		obj = Qt;
+	}
+      else
+	{
+	  CHECK_FRAME (frame);
+	  if (FRAME_X_P (XFRAME (frame)))
+	    if (xg_hide_tooltip (XFRAME (frame)))
+	      obj = Qt;
+	}
+      return obj;
+    }
+#endif /* USE_GTK */
+
+  if (NILP (frame))
+    {
+      struct x_display_info *dpyinfo;
+
+      for (dpyinfo = x_display_list; dpyinfo; dpyinfo = dpyinfo->next)
+	if (dpyinfo->x_tooltip_frame)
+	  if (!NILP (x_hide_tip (dpyinfo->x_tooltip_frame,
+				 !tooltip_reuse_hidden_frame)))
+	    obj = Qt;
+    }
+  else
+    {
+      struct frame *f;
+
+      CHECK_FRAME (frame);
+      f = XFRAME (frame);
+      if (FRAME_DISPLAY_INFO (f)
+	  && FRAME_DISPLAY_INFO (f)->x_tooltip_frame)
+	obj = x_hide_tip (FRAME_DISPLAY_INFO (f)->x_tooltip_frame,
+			  !tooltip_reuse_hidden_frame);
+    }
+  return obj;
 }
 
 
@@ -6997,13 +7005,6 @@ When using Gtk+ tooltips, the tooltip face is not used.  */);
 
   defsubr (&Sx_show_tip);
   defsubr (&Sx_hide_tip);
-  tip_timer = Qnil;
-  staticpro (&tip_timer);
-  tip_frame = Qnil;
-  staticpro (&tip_frame);
-
-  last_show_tip_args = Qnil;
-  staticpro (&last_show_tip_args);
 
   defsubr (&Sx_uses_old_gtk_dialog);
 #if defined (USE_MOTIF) || defined (USE_GTK)

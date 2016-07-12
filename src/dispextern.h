@@ -3461,8 +3461,6 @@ void gamma_correct (struct frame *, COLORREF *);
 void x_implicitly_set_name (struct frame *, Lisp_Object, Lisp_Object);
 void x_change_tool_bar_height (struct frame *f, int);
 
-extern Lisp_Object tip_frame;
-extern Window tip_window;
 extern frame_parm_handler x_frame_parm_handlers[];
 
 extern void start_hourglass (void);
