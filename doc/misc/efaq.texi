@@ -931,6 +931,7 @@ status of its latest version.
 @menu
 * Origin of the term Emacs::
 * Latest version of Emacs::
+* New in Emacs 25::
 * New in Emacs 24::
 * New in Emacs 23::
 * New in Emacs 22::
@@ -977,9 +978,9 @@ conventions}).
 @cindex Bazaar repository, Emacs
 
 Emacs @value{EMACSVER} is the current version as of this writing.  A version
-number with two components (e.g., @samp{22.1}) indicates a released
+number with two components (e.g., @samp{24.5}) indicates a released
 version; three components indicate a development
-version (e.g., @samp{23.0.50} is what will eventually become @samp{23.1}).
+version (e.g., @samp{26.0.50} is what will eventually become @samp{26.1}).
 
 Emacs is under active development, hosted at
 @uref{http://savannah.gnu.org/projects/emacs/, Savannah}.
@@ -997,6 +998,106 @@ few Emacs releases.  For full details of the changes in any version of
 Emacs, type @kbd{C-h C-n} (@kbd{M-x view-emacs-news}).  As of Emacs 22,
 you can give this command a prefix argument to read about which features
 were new in older versions.
+
+@node New in Emacs 25
+@section What is different about Emacs 25?
+@cindex Differences between Emacs 24 and Emacs 25
+@cindex Emacs 25, new features in
+
+@itemize
+@cindex xwidgets
+@item
+Emacs can now embed native widgets inside Emacs buffers, if you have
+gtk3 and webkitgtk3 installed.  E.g., to access the embedded webkit
+browser widget, type @kbd{M-x xwidget-webkit-browse-url}.
+
+@cindex loadable modules
+@item
+Emacs can now dynamically load external modules compiled as shared
+libraries.
+
+@cindex Unicode characters, typing easily
+@item
+@kbd{C-x 8} has new shorthands for several popular characters, type
+@kbd{C-x 8 C-h} to list shorthands.
+
+@cindex automatic display of Lisp APIs
+@item
+A new minor mode @code{global-eldoc-mode} is enabled by default, and
+shows in the echo area or in the mode line the argument list of the
+Emacs Lisp form at point.
+
+@cindex pasting text on text terminals
+@cindex bracketed paste mode
+@item
+On text terminals that support the ``bracketed paste mode'' EMacs now
+uses that mode by default.  This mode allows Emacs to distinguish
+between pasted text and text typed by the user.
+
+@cindex Unicode 9.0.0
+@item
+Emacs 25 comes with data files imported from the latest Unicode
+Standard version 9.0.0.
+
+@cindex bidirectional editing
+@item
+The support for bidirectional editing was updated to include all the
+features mandated by the latest Unicode Standard version 9.0.0.
+
+@cindex character folding in searches
+@item
+Search command can now perform character folding in matches.  This is
+analogous to case folding, but instead of disregarding case variants,
+it disregards wider classes of distinctions between similar
+characters, such as matching different variants of double quote
+characters, ignoring diacriticals, etc.
+
+@cindex eww
+@item
+The Emacs Web Browser EWW was extended to render text using
+variable-pitch fonts, and got other new features.
+
+@cindex rmail, and HTML mails
+@item
+Rmail can now render HTML mail messages, if Emacs is built with
+libxml2 or if you have the Lynx browser installed.
+
+@cindex support for push commands in VC
+@item
+VC now has basic support for @code{push} commands, implemented for
+Bzr, Git, and Hg.
+
+@cindex hide-ifdef, C/C@t{++} expressions in macros
+@item
+Hide-IfDef mode now support full C/C@t{++} expressions in macros,
+macro argument expansion, interactive macro evaluation and automatic
+scanning of @code{#define}d symbols.
+
+@cindex xref
+@item
+New package Xref replaces Etags's front-end and UI.  Xref provides a
+generic framework and new commands to find and move to definitions of
+functions, macros, data structures etc., as well as go back to the
+location where you were before moving to a definition.  It supersedes
+and obsoletes many Etags commands, while still using the etags.el code
+that reads the TAGS tables as one of its back-ends.  As result, the
+popular key bindings @kbd{M-.} and @kbd{M-,} have been changed to
+invoke Xref commands.
+
+@cindex project
+@item
+The new package Project provides generic infrastructure for dealing
+with projects.
+
+@cindex horizontal scroll bars
+@item
+Emacs can now draw horizontal scroll bars on some platforms that
+provide toolkit scroll bars, namely Gtk+, Lucid, Motif and Windows.
+
+@end itemize
+
+Consult the Emacs @file{NEWS} file (@kbd{C-h n}) for the full list of
+changes in Emacs 25.
 
 @node New in Emacs 24
 @section What is different about Emacs 24?
