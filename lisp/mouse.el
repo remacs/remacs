@@ -542,9 +542,10 @@ must be one of the symbols `header', `mode', or `vertical'."
   "Effect of selecting a region extending backward from double click.
 Nil means keep point at the position clicked (region end);
 non-nil means move point to beginning of region."
-  :version "25.2"
   :type '(choice (const :tag "Don't move point" nil)
-		 (const :tag "Move point to beginning of region" t)))
+		 (const :tag "Move point to beginning of region" t))
+  :group 'mouse
+  :version "25.2")
 
 (defun mouse-set-point (event &optional promote-to-region)
   "Move point to the position clicked on with the mouse.
