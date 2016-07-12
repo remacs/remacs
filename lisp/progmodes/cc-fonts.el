@@ -1542,33 +1542,45 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
   ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
   ;; Fontification".
-  (while (search-forward-regexp
-	  "R\\(\"\\)\\([^ ()\\\n\r\t]\\{,16\\}\\)(" limit t)
-    (when
-	(or (and (eobp)
-		 (eq (c-get-char-property (1- (point)) 'face)
-		     'font-lock-warning-face))
-	    (eq (c-get-char-property (point) 'face) 'font-lock-string-face)
-	    (and (equal (c-get-char-property (match-end 2) 'syntax-table) '(1))
-		 (equal (c-get-char-property (match-beginning 1) 'syntax-table)
-			'(1))))
-      (let ((paren-prop (c-get-char-property (1- (point)) 'syntax-table)))
-	(if paren-prop
-	    (progn
-	      (c-put-font-lock-face (match-beginning 0) (match-end 0)
-				    'font-lock-warning-face)
-	      (when
-		  (and
-		   (equal paren-prop '(15))
-		   (not (c-search-forward-char-property 'syntax-table '(15) limit)))
-		(goto-char limit)))
-	  (c-put-font-lock-face (match-beginning 1) (match-end 2) 'default)
-	  (when (search-forward-regexp
-		 (concat ")\\(" (regexp-quote (match-string-no-properties 2))
-			 "\\)\"")
-		 limit t)
-	    (c-put-font-lock-face (match-beginning 1) (point)
-				  'default))))))
+  (let* ((state (c-state-semi-pp-to-literal (point)))
+	 (string-start (and (eq (cadr state) 'string)
+			    (car (cddr state))))
+	 (raw-id (and string-start
+		      (save-excursion
+			(goto-char string-start)
+			(and (eq (char-before) ?R)
+			     (looking-at "\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)(")
+			     (match-string-no-properties 1))))))
+    (while (< (point) limit)
+      (if raw-id
+	  (progn
+	    (if (search-forward-regexp (concat ")\\(" (regexp-quote raw-id) "\\)\"")
+				       limit 'limit)
+		(c-put-font-lock-face (match-beginning 1) (point) 'default))
+	    (setq raw-id nil))
+
+	(when (search-forward-regexp
+	       "R\\(\"\\)\\([^ ()\\\n\r\t]\\{0,16\\}\\)(" limit 'limit)
+	  (when
+	      (or (and (eobp)
+		       (eq (c-get-char-property (1- (point)) 'face)
+			   'font-lock-warning-face))
+		  (eq (c-get-char-property (point) 'face) 'font-lock-string-face)
+		  (and (equal (c-get-char-property (match-end 2) 'syntax-table) '(1))
+		       (equal (c-get-char-property (match-beginning 1) 'syntax-table)
+			      '(1))))
+	    (let ((paren-prop (c-get-char-property (1- (point)) 'syntax-table)))
+	      (if paren-prop
+		  (progn
+		    (c-put-font-lock-face (match-beginning 0) (match-end 0)
+					  'font-lock-warning-face)
+		    (when
+			(and
+			 (equal paren-prop '(15))
+			 (not (c-search-forward-char-property 'syntax-table '(15) limit)))
+		      (goto-char limit)))
+		(c-put-font-lock-face (match-beginning 1) (match-end 2) 'default)
+		(setq raw-id (match-string-no-properties 2)))))))))
   nil)
 
 (c-lang-defconst c-simple-decl-matchers

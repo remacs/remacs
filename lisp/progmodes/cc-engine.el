@@ -6039,7 +6039,7 @@ comment at the start of cc-engine.el for more info."
 		      (search-backward "\"" (max (- (point) 17) (point-min)) t))
 		  (not (bobp)))))
 	   (eq (char-before) ?R)
-	   (looking-at "\"\\([^ ()\\\n\r\t]\\{,16\\}\\)("))
+	   (looking-at "\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)("))
 	(setq open-quote-pos (point)
 	      open-paren-pos (match-end 1)
 	      id (match-string-no-properties 1))
@@ -6121,7 +6121,7 @@ comment at the start of cc-engine.el for more info."
 	       (concat "\\("				     ; 1
 		       c-anchored-cpp-prefix		     ; 2
 		       "\\)\\|\\("			     ; 3
-		       "R\"\\([^ ()\\\n\r\t]\\{,16\\}\\)("   ; 4
+		       "R\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)("  ; 4
 		       "\\)")
 	       finish t))
     (when (save-excursion
@@ -6140,7 +6140,7 @@ comment at the start of cc-engine.el for more info."
 	  (goto-char (match-end 2))	; after the "#".
 	  (while (and (< (point) eom)
 		      (c-syntactic-re-search-forward
-		       "R\"\\([^ ()\\\n\r\t]\\{,16\\}\\)(" eom t))
+		       "R\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)(" eom t))
 	    (c-depropertize-raw-string
 	     (match-string-no-properties 1) ; id
 	     (1+ (match-beginning 0))	    ; open quote
@@ -6275,7 +6275,7 @@ comment at the start of cc-engine.el for more info."
 		 (concat "\\("				       ; 1
 			 c-anchored-cpp-prefix		       ; 2
 			 "\\)\\|\\("			       ; 3
-			 "R\"\\([^ ()\\\n\r\t]\\{,16\\}\\)("   ; 4
+			 "R\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)("  ; 4
 			 "\\)")
 		 c-new-END t))
       (when (save-excursion
@@ -6294,7 +6294,7 @@ comment at the start of cc-engine.el for more info."
 	    (goto-char (match-end 2))	; after the "#".
 	    (while (and (< (point) eom)
 			(c-syntactic-re-search-forward
-			 "R\"\\([^ ()\\\n\r\t]\\{,16\\}\\)(" eom t))
+			 "R\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)(" eom t))
 	      (c-propertize-raw-string-opener
 	       (match-string-no-properties 1) ; id
 	       (1+ (match-beginning 0))	      ; open quote
