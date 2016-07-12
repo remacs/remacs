@@ -3027,18 +3027,23 @@ the result will be a local, non-Tramp, file name."
 			   tramp-initial-end-of-output))
 	   ;; We use as environment the difference to toplevel
 	   ;; `process-environment'.
-	   env
-	   (env
-	    (dolist
-		(elt
-		 (cons prompt (nreverse (copy-sequence process-environment)))
-		 env)
-	      (or (member elt (default-toplevel-value 'process-environment))
-		  (setq env (cons elt env)))))
+	   env uenv
+	   (env (dolist (elt (cons prompt process-environment) env)
+                  (or (member elt (default-toplevel-value 'process-environment))
+                      (if (string-match "=" elt)
+                          (setq env (append env `(,elt)))
+                        (if (tramp-get-env-with-u-option v)
+                            (setq env (append `("-u" ,elt) env))
+                          (setq uenv (cons elt uenv)))))))
 	   (command
 	    (when (stringp program)
-	      (format "cd %s && exec %s env %s %s"
+	      (format "cd %s && %s exec %s env %s %s"
 		      (tramp-shell-quote-argument localname)
+                      (if uenv
+                          (format
+                           "unset %s &&"
+                           (mapconcat 'tramp-shell-quote-argument uenv " "))
+                        "")
 		      (if heredoc (format "<<'%s'" tramp-end-of-heredoc) "")
 		      (mapconcat 'tramp-shell-quote-argument env " ")
 		      (if heredoc
@@ -3127,20 +3132,28 @@ the result will be a local, non-Tramp, file name."
     (error "Implementation does not handle immediate return"))
 
   (with-parsed-tramp-file-name default-directory nil
-    (let (command env input tmpinput stderr tmpstderr outbuf ret)
+    (let (command env uenv input tmpinput stderr tmpstderr outbuf ret)
       ;; Compute command.
       (setq command (mapconcat 'tramp-shell-quote-argument
 			       (cons program args) " "))
       ;; We use as environment the difference to toplevel `process-environment'.
-      (setq env
-	    (dolist (elt (nreverse (copy-sequence process-environment)) env)
-	      (or (member elt (default-toplevel-value 'process-environment))
-		  (setq env (cons elt env)))))
+      (dolist (elt process-environment)
+        (or (member elt (default-toplevel-value 'process-environment))
+            (if (string-match "=" elt)
+                (setq env (append env `(,elt)))
+              (if (tramp-get-env-with-u-option v)
+                  (setq env (append `("-u" ,elt) env))
+                (setq uenv (cons elt uenv))))))
       (when env
 	(setq command
 	      (format
 	       "env %s %s"
 	       (mapconcat 'tramp-shell-quote-argument env " ") command)))
+      (when uenv
+        (setq command
+              (format
+               "unset %s && %s"
+               (mapconcat 'tramp-shell-quote-argument uenv " ") command)))
       ;; Determine input.
       (if (null infile)
 	  (setq input "/dev/null")
@@ -5694,6 +5707,13 @@ Return ATTR."
        ((and (equal id-format 'integer) (not (integerp res))) -1)
        ((and (equal id-format 'string) (not (stringp res))) "UNKNOWN")
        (t res)))))
+
+(defun tramp-get-env-with-u-option (vec)
+  (with-tramp-connection-property vec "env-u-option"
+    (tramp-message vec 5 "Checking, whether `env -u' works")
+    ;; Option "-u" is a GNU extension.
+    (tramp-send-command-and-check
+     vec "env FOO=foo env -u FOO 2>/dev/null | grep -qv FOO" t)))
 
 ;; Some predefined connection properties.
 (defun tramp-get-inline-compress (vec prop size)
