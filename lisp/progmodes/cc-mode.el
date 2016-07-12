@@ -924,14 +924,16 @@ Note that the style variables are always made local to the buffer."
   ;; before change function.
   (goto-char c-new-BEG)
   (c-beginning-of-macro)
-  (setq c-new-BEG (point))
+  (when (< (point) c-new-BEG)
+    (setq c-new-BEG (max (point) (c-determine-limit 500 c-new-BEG))))
 
   (goto-char c-new-END)
   (when (c-beginning-of-macro)
     (c-end-of-macro)
     (or (eobp) (forward-char)))	 ; Over the terminating NL which may be marked
 				 ; with a c-cpp-delimiter category property
-  (setq c-new-END (point)))
+  (when (> (point) c-new-END)
+    (setq c-new-END (min (point) (c-determine-+ve-limit 500 c-new-END)))))
 
 (defun c-depropertize-new-text (beg end old-len)
   ;; Remove from the new text in (BEG END) any and all text properties which
@@ -959,15 +961,17 @@ Note that the style variables are always made local to the buffer."
   ;; Point is undefined on both entry and exit to this function.  The buffer
   ;; will have been widened on entry.
   ;;
+  ;; c-new-BEG has already been extended in `c-extend-region-for-CPP' so we
+  ;; don't need to repeat the exercise here.
+  ;;
   ;; This function is in the C/C++/ObjC value of `c-before-font-lock-functions'.
   (goto-char endd)
-  (if (c-beginning-of-macro)
-      (c-end-of-macro))
-  (setq c-new-END (max endd c-new-END (point)))
-  ;; Determine the region, (c-new-BEG c-new-END), which will get font
-  ;; locked.  This restricts the region should there be long macros.
-  (setq c-new-BEG (max c-new-BEG (c-determine-limit 500 begg))
-	c-new-END (min c-new-END (c-determine-+ve-limit 500 endd))))
+  (when (c-beginning-of-macro)
+    (c-end-of-macro)
+    ;; Determine the region, (c-new-BEG c-new-END), which will get font
+    ;; locked.  This restricts the region should there be long macros.
+    (setq c-new-END (min (max c-new-END (point))
+			 (c-determine-+ve-limit 500 c-new-END)))))
 
 (defun c-neutralize-CPP-line (beg end)
   ;; BEG and END bound a region, typically a preprocessor line.  Put a
