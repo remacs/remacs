@@ -1400,12 +1400,7 @@ no quit occurs and `x-popup-menu' returns nil.  */)
 #ifdef HAVE_WINDOW_SYSTEM
   /* Hide a previous tip, if any.  */
   if (!FRAME_TERMCAP_P (f))
-    {
-      Lisp_Object frame;
-
-      XSETFRAME (frame, f);
-      Fx_hide_tip (frame);
-    }
+    Fx_hide_tip ();
 #endif
 
 #ifdef HAVE_NTGUI     /* FIXME: Is it really w32-specific?  --Stef  */

@@ -2841,7 +2841,11 @@ init_iterator (struct it *it, struct window *w,
      frames when the fringes are turned off.  But leave the dimensions
      zero for tooltip frames, as these glyphs look ugly there and also
      sabotage calculations of tooltip dimensions in x-show-tip.  */
-  if (!FRAME_TOOLTIP_P (it->f))
+#ifdef HAVE_WINDOW_SYSTEM
+  if (!(FRAME_WINDOW_P (it->f)
+	&& FRAMEP (tip_frame)
+	&& it->f == XFRAME (tip_frame)))
+#endif
     {
       if (it->line_wrap == TRUNCATE)
 	{
@@ -11709,7 +11713,7 @@ x_consider_frame_title (Lisp_Object frame)
   if ((FRAME_WINDOW_P (f)
        || FRAME_MINIBUF_ONLY_P (f)
        || f->explicit_name)
-      && !FRAME_TOOLTIP_P (f))
+      && NILP (Fframe_parameter (frame, Qtooltip)))
     {
       /* Do we have more than one visible frame on this X display?  */
       Lisp_Object tail, other_frame, fmt;
@@ -11726,7 +11730,7 @@ x_consider_frame_title (Lisp_Object frame)
 	  if (tf != f
 	      && FRAME_KBOARD (tf) == FRAME_KBOARD (f)
 	      && !FRAME_MINIBUF_ONLY_P (tf)
-	      && !FRAME_TOOLTIP_P (tf)
+	      && !EQ (other_frame, tip_frame)
 	      && (FRAME_VISIBLE_P (tf) || FRAME_ICONIFIED_P (tf)))
 	    break;
 	}
@@ -11789,6 +11793,13 @@ prepare_menu_bars (void)
 {
   bool all_windows = windows_or_buffers_changed || update_mode_lines;
   bool some_windows = REDISPLAY_SOME_P ();
+  Lisp_Object tooltip_frame;
+
+#ifdef HAVE_WINDOW_SYSTEM
+  tooltip_frame = tip_frame;
+#else
+  tooltip_frame = Qnil;
+#endif
 
   if (FUNCTIONP (Vpre_redisplay_function))
     {
@@ -11829,7 +11840,7 @@ prepare_menu_bars (void)
 	      && !XBUFFER (w->contents)->text->redisplay)
 	    continue;
 
-	  if (!FRAME_TOOLTIP_P (f)
+	  if (!EQ (frame, tooltip_frame)
 	      && (FRAME_ICONIFIED_P (f)
 		  || FRAME_VISIBLE_P (f) == 1
 		  /* Exclude TTY frames that are obscured because they
@@ -11866,7 +11877,7 @@ prepare_menu_bars (void)
 	  struct window *w = XWINDOW (FRAME_SELECTED_WINDOW (f));
 
 	  /* Ignore tooltip frame.  */
-	  if (FRAME_TOOLTIP_P (f))
+	  if (EQ (frame, tooltip_frame))
 	    continue;
 
 	  if (some_windows

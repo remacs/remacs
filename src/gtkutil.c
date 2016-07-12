@@ -731,22 +731,13 @@ xg_show_tooltip (struct frame *f, int root_x, int root_y)
 bool
 xg_hide_tooltip (struct frame *f)
 {
+  bool ret = 0;
 #ifdef USE_GTK_TOOLTIP
-  struct x_output *x = FRAME_X_OUTPUT (f);
-
-  if (x->ttip_window)
+  if (f->output_data.x->ttip_window)
     {
       GtkWindow *win = f->output_data.x->ttip_window;
-
       block_input ();
       gtk_widget_hide (GTK_WIDGET (win));
-
-      /* Cancel call to xg_hide_tip.  */
-      if (x->ttip_timeout != 0)
-	{
-	  g_source_remove (x->ttip_timeout);
-	  x->ttip_timeout = 0;
-	}
 
       if (g_object_get_data (G_OBJECT (win), "restore-tt"))
         {
@@ -756,21 +747,11 @@ xg_hide_tooltip (struct frame *f)
           g_object_set (settings, "gtk-enable-tooltips", TRUE, NULL);
         }
       unblock_input ();
-      return 1;
+
+      ret = 1;
     }
 #endif
-  return 0;
-}
-
-/* One-shot timeout handler attached to GTK event loop in Fx_show_tip.  */
-
-gboolean
-xg_hide_tip (gpointer data)
-{
-#ifdef USE_GTK_TOOLTIP
-  xg_hide_tooltip ((struct frame *) data);
-#endif
-  return FALSE;
+  return ret;
 }
 
 

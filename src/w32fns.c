@@ -343,6 +343,7 @@ x_window_to_frame (struct w32_display_info *dpyinfo, HWND wdesc)
 
 
 static Lisp_Object unwind_create_frame (Lisp_Object);
+static void unwind_create_tip_frame (Lisp_Object);
 static void my_create_window (struct frame *);
 static void my_create_tip_window (struct frame *);
 
@@ -5067,7 +5068,6 @@ static void
 my_create_tip_window (struct frame *f)
 {
   RECT rect;
-  Window tip_window;
 
   rect.left = rect.top = 0;
   rect.right = FRAME_PIXEL_WIDTH (f);
@@ -5215,8 +5215,9 @@ x_make_gc (struct frame *f)
 }
 
 
-/* Handler for signals raised during x_create_frame.
-   FRAME is the frame which is partially constructed.  */
+/* Handler for signals raised during x_create_frame and
+   x_create_tip_frame.  FRAME is the frame which is partially
+   constructed.  */
 
 static Lisp_Object
 unwind_create_frame (Lisp_Object frame)
@@ -5990,7 +5991,7 @@ w32_display_monitor_attributes_list (void)
     {
       struct frame *f = XFRAME (frame);
 
-      if (FRAME_W32_P (f) && !FRAME_TOOLTIP_P (f))
+      if (FRAME_W32_P (f) && !EQ (frame, tip_frame))
 	{
 	  HMONITOR monitor =
 	    monitor_from_window_fn (FRAME_W32_WINDOW (f),
@@ -6077,7 +6078,7 @@ w32_display_monitor_attributes_list_fallback (struct w32_display_info *dpyinfo)
     {
       struct frame *f = XFRAME (frame);
 
-      if (FRAME_W32_P (f) && FRAME_TOOLTIP_P (f))
+      if (FRAME_W32_P (f) && !EQ (frame, tip_frame))
 	frames = Fcons (frame, frames);
     }
   attributes = Fcons (Fcons (Qframes, frames), attributes);
@@ -6480,6 +6481,39 @@ no value of TYPE (always string in the MS Windows case).  */)
 				Tool tips
  ***********************************************************************/
 
+static void compute_tip_xy (struct frame *, Lisp_Object, Lisp_Object,
+			    Lisp_Object, int, int, int *, int *);
+
+/* The frame of a currently visible tooltip.  */
+
+Lisp_Object tip_frame;
+
+/* If non-nil, a timer started that hides the last tooltip when it
+   fires.  */
+
+Lisp_Object tip_timer;
+Window tip_window;
+
+/* If non-nil, a vector of 3 elements containing the last args
+   with which x-show-tip was called.  See there.  */
+
+Lisp_Object last_show_tip_args;
+
+
+static void
+unwind_create_tip_frame (Lisp_Object frame)
+{
+  Lisp_Object deleted;
+
+  deleted = unwind_create_frame (frame);
+  if (EQ (deleted, Qt))
+    {
+      tip_window = NULL;
+      tip_frame = Qnil;
+    }
+}
+
+
 /* Create a frame for a tooltip on the display described by DPYINFO.
    PARMS is a list of frame parameters.  Value is the frame.
 
@@ -6524,7 +6558,7 @@ x_create_tip_frame (struct w32_display_info *dpyinfo, Lisp_Object parms)
   f->wants_modeline = false;
   XSETFRAME (frame, f);
 
-  record_unwind_protect (do_unwind_create_frame, frame);
+  record_unwind_protect (unwind_create_tip_frame, frame);
 
   /* By setting the output method, we're essentially saying that
      the frame is live, as per FRAME_LIVE_P.  If we get a signal
@@ -6536,7 +6570,6 @@ x_create_tip_frame (struct w32_display_info *dpyinfo, Lisp_Object parms)
 
   FRAME_FONTSET (f)  = -1;
   fset_icon_name (f, Qnil);
-  f->tooltip = true;
 
 #ifdef GLYPH_DEBUG
   image_cache_refcount =
@@ -6645,7 +6678,11 @@ x_create_tip_frame (struct w32_display_info *dpyinfo, Lisp_Object parms)
   height = FRAME_LINES (f);
   SET_FRAME_COLS (f, 0);
   SET_FRAME_LINES (f, 0);
-  change_frame_size (f, width, height, true, false, false, false);
+  adjust_frame_size (f, width * FRAME_COLUMN_WIDTH (f),
+		     height * FRAME_LINE_HEIGHT (f), 0, true, Qtip_frame);
+  /* Add `tooltip' frame parameter's default value. */
+  if (NILP (Fframe_parameter (frame, Qtooltip)))
+    Fmodify_frame_parameters (frame, Fcons (Fcons (Qtooltip, Qt), Qnil));
 
   /* Set up faces after all frame parameters are known.  This call
      also merges in face attributes specified for new frames.
@@ -6672,9 +6709,6 @@ x_create_tip_frame (struct w32_display_info *dpyinfo, Lisp_Object parms)
   }
 
   f->no_split = true;
-
-  /* Now this is an official tooltip frame on this display.  */
-  dpyinfo->w32_tooltip_frame = f;
 
   /* Now that the frame is official, it counts as a reference to
      its display.  */
@@ -6794,39 +6828,46 @@ compute_tip_xy (struct frame *f,
     *root_x = min_x;
 }
 
-/* Hide tooltip frame F and delete it if DELETE is true.  */
-
+/* Hide tooltip.  Delete its frame if DELETE is true.  */
 static Lisp_Object
-x_hide_tip (struct frame *f, bool delete)
+x_hide_tip (bool delete)
 {
-  if (f)
+  if (!NILP (tip_timer))
     {
-      Lisp_Object frame, timer;
-
-      XSETFRAME (frame, f);
-      timer = Fframe_parameter (frame, Qtooltip_timer);
-
-      if (!NILP (timer))
-	call1 (Qcancel_timer, timer);
-
-      if (!delete && !FRAME_VISIBLE_P (f))
-	return Qnil;
-      else
-	{
-	  ptrdiff_t count = SPECPDL_INDEX ();
-
-	  specbind (Qinhibit_redisplay, Qt);
-	  specbind (Qinhibit_quit, Qt);
-
-	  if (delete)
-	    delete_frame (frame, Qnil);
-	  else
-	    x_make_frame_invisible (f);
-
-	  return unbind_to (count, Qt);
-	}
+      call1 (Qcancel_timer, tip_timer);
+      tip_timer = Qnil;
     }
-  return Qnil;
+
+  if (NILP (tip_frame)
+      || (!delete && FRAMEP (tip_frame)
+	  && !FRAME_VISIBLE_P (XFRAME (tip_frame))))
+    return Qnil;
+  else
+    {
+      ptrdiff_t count;
+      Lisp_Object was_open = Qnil;
+
+      count = SPECPDL_INDEX ();
+      specbind (Qinhibit_redisplay, Qt);
+      specbind (Qinhibit_quit, Qt);
+
+      if (FRAMEP (tip_frame))
+	{
+	  if (delete)
+	    {
+	      delete_frame (tip_frame, Qnil);
+	      tip_frame = Qnil;
+	    }
+	  else
+	    x_make_frame_invisible (XFRAME (tip_frame));
+
+	  was_open = Qt;
+	}
+      else
+	tip_frame = Qnil;
+
+      return unbind_to (count, was_open);
+    }
 }
 
 
@@ -6860,8 +6901,7 @@ with offset DY added (default is -10).
 
 A tooltip's maximum size is specified by `x-max-tooltip-size'.
 Text larger than the specified size is clipped.  */)
-  (Lisp_Object string, Lisp_Object frame, Lisp_Object parms,
-   Lisp_Object timeout, Lisp_Object dx, Lisp_Object dy)
+  (Lisp_Object string, Lisp_Object frame, Lisp_Object parms, Lisp_Object timeout, Lisp_Object dx, Lisp_Object dy)
 {
   struct frame *tip_f;
   struct window *w;
@@ -6872,7 +6912,7 @@ Text larger than the specified size is clipped.  */)
   int old_windows_or_buffers_changed = windows_or_buffers_changed;
   ptrdiff_t count = SPECPDL_INDEX ();
   ptrdiff_t count_1;
-  Lisp_Object window, size, tip_frame, parameters;
+  Lisp_Object window, size;
   AUTO_STRING (tip, " *tip*");
 
   specbind (Qinhibit_redisplay, Qt);
@@ -6894,22 +6934,14 @@ Text larger than the specified size is clipped.  */)
   else
     CHECK_NUMBER (dy);
 
-  parameters = Fframe_parameter (frame, Qtooltip_parameters);
-  if (NILP (parameters))
-    parameters = Fmake_vector (make_number (3), Qnil);
+  if (NILP (last_show_tip_args))
+    last_show_tip_args = Fmake_vector (make_number (3), Qnil);
 
-  /* Look at current tooltip frame, if any.  */
-  tip_f = FRAME_DISPLAY_INFO (XFRAME (frame))->w32_tooltip_frame;
-  if (tip_f)
-    XSETFRAME (tip_frame, tip_f);
-  else
-    tip_frame = Qnil;
-
-  if (tip_f && FRAME_LIVE_P (tip_f))
+  if (FRAMEP (tip_frame) && FRAME_LIVE_P (XFRAME (tip_frame)))
     {
-      Lisp_Object last_string = AREF (parameters, 0);
-      Lisp_Object last_frame = AREF (parameters, 1);
-      Lisp_Object last_parms = AREF (parameters, 2);
+      Lisp_Object last_string = AREF (last_show_tip_args, 0);
+      Lisp_Object last_frame = AREF (last_show_tip_args, 1);
+      Lisp_Object last_parms = AREF (last_show_tip_args, 2);
 
       if (FRAME_VISIBLE_P (XFRAME (tip_frame))
 	  && EQ (frame, last_frame)
@@ -6917,10 +6949,14 @@ Text larger than the specified size is clipped.  */)
 	  && !NILP (Fequal (last_parms, parms)))
 	{
 	  /* Only DX and DY have changed.  */
-	  Lisp_Object timer = Fframe_parameter (tip_frame, Qtooltip_timer);
+	  tip_f = XFRAME (tip_frame);
+	  if (!NILP (tip_timer))
+	    {
+	      Lisp_Object timer = tip_timer;
 
-	  if (!NILP (timer))
-	    call1 (Qcancel_timer, timer);
+	      tip_timer = Qnil;
+	      call1 (Qcancel_timer, timer);
+	    }
 
 	  block_input ();
 	  compute_tip_xy (tip_f, parms, dx, dy, FRAME_PIXEL_WIDTH (tip_f),
@@ -6990,22 +7026,17 @@ Text larger than the specified size is clipped.  */)
 		}
 	    }
 
-	  x_hide_tip (tip_f, delete);
+	  x_hide_tip (delete);
 	}
       else
-	x_hide_tip (tip_f, true);
+	x_hide_tip (true);
     }
   else
-    x_hide_tip (tip_f, true);
+    x_hide_tip (true);
 
-  /* Update tooltip parameters.  */
-  {
-    AUTO_FRAME_ARG (arg, Qtooltip_parameters, parameters);
-    ASET (parameters, 0, string);
-    ASET (parameters, 1, frame);
-    ASET (parameters, 2, parms);
-    Fmodify_frame_parameters (frame, arg);
-  }
+  ASET (last_show_tip_args, 0, string);
+  ASET (last_show_tip_args, 1, frame);
+  ASET (last_show_tip_args, 2, parms);
 
   /* Block input until the tip has been fully drawn, to avoid crashes
      when drawing tips in menus.  */
@@ -7025,8 +7056,11 @@ Text larger than the specified size is clipped.  */)
       if (NILP (Fassq (Qbackground_color, parms)))
 	parms = Fcons (Fcons (Qbackground_color, build_string ("lightyellow")),
 		       parms);
-      if (NILP (tip_frame
-		= x_create_tip_frame (FRAME_DISPLAY_INFO (XFRAME (frame)), parms)))
+
+      /* Create a frame for the tooltip, and record it in the global
+	 variable tip_frame.  */
+      struct frame *f;		/* The value is unused.  */
+      if (NILP (tip_frame = x_create_tip_frame (FRAME_DISPLAY_INFO (f), parms)))
 	{
 	  /* Creating the tip frame failed.  */
 	  unblock_input ();
@@ -7130,47 +7164,20 @@ Text larger than the specified size is clipped.  */)
   windows_or_buffers_changed = old_windows_or_buffers_changed;
 
  start_timer:
-  {
-    /* Let the tip disappear after timeout seconds.  */
-    AUTO_FRAME_ARG (arg, Qtooltip_timer,
-		    call3 (intern ("run-at-time"), timeout,
-			   Qnil, intern ("x-hide-tip")));
-    Fmodify_frame_parameters (tip_frame, arg);
-  }
+  /* Let the tip disappear after timeout seconds.  */
+  tip_timer = call3 (intern ("run-at-time"), timeout, Qnil,
+		     intern ("x-hide-tip"));
+
   return unbind_to (count, Qnil);
 }
 
 
-DEFUN ("x-hide-tip", Fx_hide_tip, Sx_hide_tip, 0, 1, 0,
+DEFUN ("x-hide-tip", Fx_hide_tip, Sx_hide_tip, 0, 0, 0,
        doc: /* Hide the current tooltip window, if there is any.
-Optional FRAME is the frame to hide tooltip on.
 Value is t if tooltip was open, nil otherwise.  */)
-  (Lisp_Object frame)
+  (void)
 {
-  Lisp_Object obj = Qnil;
-
-  if (NILP (frame))
-    {
-      struct w32_display_info *dpyinfo;
-
-      for (dpyinfo = x_display_list; dpyinfo; dpyinfo = dpyinfo->next)
-	if (dpyinfo->w32_tooltip_frame)
-	  if (!NILP (x_hide_tip (dpyinfo->w32_tooltip_frame,
-				 !tooltip_reuse_hidden_frame)))
-	    obj = Qt;
-    }
-  else
-    {
-      struct frame *f;
-
-      CHECK_FRAME (frame);
-      f = XFRAME (frame);
-      if (FRAME_DISPLAY_INFO (f)
-	  && FRAME_DISPLAY_INFO (f)->w32_tooltip_frame)
-	obj = x_hide_tip (FRAME_DISPLAY_INFO (f)->w32_tooltip_frame,
-			  !tooltip_reuse_hidden_frame);
-    }
-  return obj;
+  return x_hide_tip (!tooltip_reuse_hidden_frame);
 }
 
 /***********************************************************************
@@ -9773,6 +9780,7 @@ syms_of_w32fns (void)
   DEFSYM (Qworkarea, "workarea");
   DEFSYM (Qmm_size, "mm-size");
   DEFSYM (Qframes, "frames");
+  DEFSYM (Qtip_frame, "tip-frame");
   DEFSYM (Qassq_delete_all, "assq-delete-all");
   DEFSYM (Qunicode_sip, "unicode-sip");
 #if defined WINDOWSNT && !defined HAVE_DBUS
@@ -10158,6 +10166,13 @@ tip frame.  */);
   defsubr (&Sset_message_beep);
   defsubr (&Sx_show_tip);
   defsubr (&Sx_hide_tip);
+  tip_timer = Qnil;
+  staticpro (&tip_timer);
+  tip_frame = Qnil;
+  staticpro (&tip_frame);
+
+  last_show_tip_args = Qnil;
+  staticpro (&last_show_tip_args);
 
   defsubr (&Sx_file_dialog);
 #ifdef WINDOWSNT

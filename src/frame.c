@@ -642,7 +642,6 @@ make_frame (bool mini_p)
   f->vertical_scroll_bar_type = vertical_scroll_bar_none;
   f->horizontal_scroll_bars = false;
   f->want_fullscreen = FULLSCREEN_NONE;
-  f->tooltip = false;
 #if ! defined (USE_GTK) && ! defined (HAVE_NS)
   f->last_tool_bar_item = -1;
 #endif
@@ -1261,16 +1260,13 @@ DEFUN ("frame-list", Fframe_list, Sframe_list,
        doc: /* Return a list of all live frames.  */)
   (void)
 {
+  Lisp_Object frames;
+  frames = Fcopy_sequence (Vframe_list);
 #ifdef HAVE_WINDOW_SYSTEM
-  Lisp_Object list = Qnil, tail, frame;
-
-  FOR_EACH_FRAME (tail, frame)
-    if (!FRAME_TOOLTIP_P (XFRAME (frame)))
-      list = Fcons (frame, list);
-  return list;
-#else /* !HAVE_WINDOW_SYSTEM */
-  return Fcopy_sequence (Vframe_list);
+  if (FRAMEP (tip_frame))
+    frames = Fdelq (tip_frame, frames);
 #endif
+  return frames;
 }
 
 /* Return CANDIDATE if it can be used as 'other-than-FRAME' frame on the
@@ -1561,7 +1557,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 	}
     }
 
-  is_tooltip_frame = FRAME_TOOLTIP_P (f);
+  is_tooltip_frame = !NILP (Fframe_parameter (frame, Qtooltip));
 
   /* Run `delete-frame-functions' unless FORCE is `noelisp' or
      frame is a tooltip.  FORCE is set to `noelisp' when handling
@@ -4904,6 +4900,7 @@ syms_of_frame (void)
   DEFSYM (Qgeometry, "geometry");
   DEFSYM (Qicon_left, "icon-left");
   DEFSYM (Qicon_top, "icon-top");
+  DEFSYM (Qtooltip, "tooltip");
   DEFSYM (Quser_position, "user-position");
   DEFSYM (Quser_size, "user-size");
   DEFSYM (Qwindow_id, "window-id");
@@ -5025,8 +5022,6 @@ syms_of_frame (void)
   DEFSYM (Qvertical_scroll_bars, "vertical-scroll-bars");
   DEFSYM (Qvisibility, "visibility");
   DEFSYM (Qwait_for_wm, "wait-for-wm");
-  DEFSYM (Qtooltip_timer, "tooltip-timer");
-  DEFSYM (Qtooltip_parameters, "tooltip-parameters");
 
   {
     int i;
