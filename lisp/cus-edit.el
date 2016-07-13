@@ -197,10 +197,6 @@
   :link '(custom-manual "(emacs)Emulation")
   :group 'editing)
 
-(defgroup mouse nil
-  "Mouse support."
-  :group 'editing)
-
 (defgroup outlines nil
   "Support for hierarchical outlining."
   :group 'wp)
@@ -404,10 +400,6 @@
 
 (defgroup keyboard nil
   "Input from the keyboard."
-  :group 'environment)
-
-(defgroup mouse nil
-  "Input from the mouse."
   :group 'environment)
 
 (defgroup menu nil

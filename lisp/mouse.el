@@ -34,6 +34,11 @@
 ;; Indent track-mouse like progn.
 (put 'track-mouse 'lisp-indent-function 0)
 
+(defgroup mouse nil
+  "Input from the mouse."  ;; "Mouse support."
+  :group 'environment
+  :group 'editing)
+
 (defcustom mouse-yank-at-point nil
   "If non-nil, mouse yank commands yank at point instead of at click."
   :type 'boolean
