@@ -2255,13 +2255,13 @@ Otherwise no newline is inserted."
     (package--print-help-section "Status")
     (cond (built-in
            (insert (propertize (capitalize status)
-                               'font-lock-face 'package-status-builtin-face)
+                               'font-lock-face 'package-status-built-in)
                    "."))
           (pkg-dir
            (insert (propertize (if (member status '("unsigned" "dependency"))
                                    "Installed"
                                  (capitalize status))
-                               'font-lock-face 'package-status-builtin-face))
+                               'font-lock-face 'package-status-built-in))
            (insert (substitute-command-keys " in `"))
            (let ((dir (abbreviate-file-name
                        (file-name-as-directory
@@ -2274,7 +2274,7 @@ Otherwise no newline is inserted."
                (insert (substitute-command-keys
                         "',\n             shadowing a ")
                        (propertize "built-in package"
-                                   'font-lock-face 'package-status-builtin-face))
+                                   'font-lock-face 'package-status-built-in))
              (insert (substitute-command-keys "'")))
            (if signed
                (insert ".")
@@ -2826,13 +2826,14 @@ Return (PKG-DESC [NAME VERSION STATUS DOC])."
   "Face used on package description summaries in the package menu."
   :version "25.1")
 
+;; Shame this hyphenates "built-in", when "font-lock-builtin-face" doesn't.
 (defface package-status-built-in
   '((t :inherit font-lock-builtin-face))
   "Face used on the status and version of built-in packages."
   :version "25.1")
 
 (defface package-status-external
-  '((t :inherit package-status-builtin-face))
+  '((t :inherit package-status-built-in))
   "Face used on the status and version of external packages."
   :version "25.1")
 
