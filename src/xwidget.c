@@ -565,11 +565,15 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
      xwidget on screen.  Moving and clipping is done here.  Also view
      initialization.  */
   struct xwidget *xww = s->xwidget;
-  struct xwidget_view *xv = xwidget_view_lookup (xww, s->w);
+  struct xwidget_view *xv;
   int clip_right;
   int clip_bottom;
   int clip_top;
   int clip_left;
+
+  /* FIXME: The result of this call is discarded.
+     What if the lookup fails?  */
+  xwidget_view_lookup (xww, s->w);
 
   int x = s->x;
   int y = s->y + (s->height / 2) - (xww->height / 2);
@@ -1145,7 +1149,13 @@ xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix)
 		{
 		  /* The only call to xwidget_end_redisplay is in dispnew.
 		     xwidget_end_redisplay (w->current_matrix);  */
-		  xwidget_touch (xwidget_view_lookup (glyph->u.xwidget, w));
+		  struct xwidget_view *xv
+		    = xwidget_view_lookup (glyph->u.xwidget, w);
+		  /* FIXME: Is it safe to assume xwidget_view_lookup
+		     always succeeds here?  If so, this comment can be removed.
+		     If not, the code probably needs fixing.  */
+		  eassume (xv);
+		  xwidget_touch (xv);
 		}
 	  }
     }
