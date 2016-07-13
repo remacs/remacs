@@ -989,13 +989,13 @@ occurrence of the failure.  So far, the failure has been observed with
 GTK+ versions 3.4.2, 3.14.5 and 3.18.7.  However, another 3.4.2 build
 does not exhibit the bug.
 
-Some window managers (xfce) apparently work around this failure by
+Some window managers (Xfce) apparently work around this failure by
 cropping the menu bar.  With other windows managers, it's possible to
 shrink the frame manually after the problem occurs, e.g. by dragging the
 frame's border with the mouse.  However, some window managers have been
 reported to refuse such attempts and snap back to the width needed to
 show the full menu bar (wmii) or at least cause the screen to flicker
-during such resizing attempts (i3, icewm).
+during such resizing attempts (i3, IceWM).
 
 See also http://debbugs.gnu.org/cgi/bugreport.cgi?bug=15700,
 http://debbugs.gnu.org/cgi/bugreport.cgi?bug=22000,

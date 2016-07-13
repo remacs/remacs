@@ -1050,7 +1050,7 @@ Search command can now perform character folding in matches.  This is
 analogous to case folding, but instead of disregarding case variants,
 it disregards wider classes of distinctions between similar
 characters, such as matching different variants of double quote
-characters, ignoring diacriticals, etc.
+characters, ignoring diacritics, etc.
 
 @cindex eww
 @item
