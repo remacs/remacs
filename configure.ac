@@ -2177,8 +2177,8 @@ elif test "$hybrid_malloc" = yes; then
   AC_DEFINE(HYBRID_MALLOC, 1,
     [Define to use gmalloc before dumping and the system malloc after.])
   HYBRID_MALLOC=1
-  GNU_MALLOC=
-  GNU_MALLOC_reason="only before dumping"
+  GNU_MALLOC=no
+  GNU_MALLOC_reason=" (only before dumping)"
   GMALLOC_OBJ=gmalloc.o
   VMLIMIT_OBJ=
 else
