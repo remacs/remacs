@@ -942,8 +942,8 @@ command with a prefix argument (the value does not matter)."
     ;; Solaris10 version of tar. Solaris10 becomes obsolete in 2021.
     ;; Same thing on AIX 7.1.
     ("\\.tar\\.gz\\'" "" "gzip -dc %i | tar -xv")
+    ("\\.tgz\\'" "" "gzip -dc %i | tar -xv")
     ("\\.gz\\'" "" "gunzip")
-    ("\\.tgz\\'" ".tar" "gunzip")
     ("\\.Z\\'" "" "uncompress")
     ;; For .z, try gunzip.  It might be an old gzip file,
     ;; or it might be from compact? pack? (which?) but gunzip handles both.
