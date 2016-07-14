@@ -976,7 +976,7 @@ If a consistent order does not exist, signal an error."
 
 (defun eieio--class-precedence-c3 (class)
   "Return all parents of CLASS in c3 order."
-  (let ((parents (eieio--class-parents (cl--find-class class))))
+  (let ((parents (eieio--class-parents class)))
     (eieio--c3-merge-lists
      (list class)
      (append
@@ -1101,7 +1101,7 @@ method invocation orders of the involved classes."
   (list eieio--generic-subclass-generalizer))
 
 
-;;;### (autoloads nil "eieio-compat" "eieio-compat.el" "6aca3c1b5f751a01331761da45fc4f5c")
+;;;### (autoloads nil "eieio-compat" "eieio-compat.el" "dba4205b1a0d7133f1311d975b4d0ebe")
 ;;; Generated autoloads from eieio-compat.el
 
 (autoload 'eieio--defalias "eieio-compat" "\

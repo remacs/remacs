@@ -671,6 +671,15 @@ FUN is the function that should be called when METHOD calls
           (setq fun (cl-generic-call-method generic method fun)))
         fun)))))
 
+(defun cl-generic-apply (generic args)
+  "Like `apply' but takes a cl-generic object rather than a function."
+  ;; Handy in cl-no-applicable-method, for example.
+  ;; In Common Lisp, generic-function objects are funcallable.  Ideally
+  ;; we'd want the same in Elisp, but it would either require using a very
+  ;; different (and less efficient) representation of cl--generic objects,
+  ;; or non-trivial changes in the general infrastructure (compiler and such).
+  (apply (cl--generic-name generic) args))
+
 (defun cl--generic-arg-specializer (method dispatch-arg)
   (or (if (integerp dispatch-arg)
           (nth dispatch-arg
