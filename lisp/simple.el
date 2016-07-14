@@ -3328,6 +3328,8 @@ the use of a shell (with its need to quote arguments)."
 				     (current-buffer)))))
 	;; Output goes in a separate buffer.
 	;; Preserve the match data in case called from a program.
+        ;; FIXME: It'd be ridiculous for an Elisp function to call
+        ;; shell-command and assume that it won't mess the match-data!
 	(save-match-data
 	  (if (string-match "[ \t]*&[ \t]*\\'" command)
 	      ;; Command ending with ampersand means asynchronous.
