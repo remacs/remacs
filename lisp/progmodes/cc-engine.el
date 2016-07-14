@@ -2326,7 +2326,7 @@ comment at the start of cc-engine.el for more info."
 		    ((nth 7 s) 'c++)
 		    (t 'c)))
 	  (list s ty (nth 8 s)))
-	 
+
 	 ((and (not not-in-delimiter)	; inside a comment starter
 	       (not (bobp))
 	       (progn (backward-char)
@@ -2335,12 +2335,12 @@ comment at the start of cc-engine.el for more info."
 			   (looking-at c-comment-start-regexp))))
 	  (setq ty (if (looking-at c-block-comment-start-regexp) 'c 'c++))
 	  (list s ty (point)))
-	 
+
 	 (t (list s)))))))
 
 (defun c-state-full-pp-to-literal (here &optional not-in-delimiter)
   ;; This function will supersede c-state-pp-to-literal.
-  ;; 
+  ;;
   ;; Do a parse-partial-sexp from a position in the buffer before HERE which
   ;; isn't in a literal, and return information about HERE, either:
   ;; (STATE TYPE (BEG . END))   if HERE is in a literal; or
@@ -4821,8 +4821,9 @@ comment at the start of cc-engine.el for more info."
 		(when (or (nth 3 s) (nth 4 s))
 		  (cons (nth 8 s)
 			(progn (parse-partial-sexp (point) (point-max)
-						   nil 'syntax-table
-						   s)
+						   nil nil
+						   s
+						   'syntax-table)
 			       (point)))))
 	    (let ((pp-to-lit (c-state-full-pp-to-literal pos not-in-delimiter)))
 	      (car (cddr pp-to-lit))))))
