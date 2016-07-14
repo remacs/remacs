@@ -1836,7 +1836,6 @@ If RECURSIVE, search recursively."
 	    (delete-region ,(point-min-marker)
 			   ,(point-max-marker))))))))
 
-(defvar shr-map)
 (defvar shr-image-map)
 
 (autoload 'widget-convert-button "wid-edit")
@@ -1852,7 +1851,7 @@ If RECURSIVE, search recursively."
 	(widget-convert-button
 	 'url-link start end
 	 :help-echo (get-text-property start 'help-echo)
-	 :keymap (setq keymap (copy-keymap shr-map))
+	 :keymap (setq keymap (copy-keymap shr-image-map))
 	 (get-text-property start 'shr-url))
 	;; Remove keymap that `shr-urlify' adds.
 	(put-text-property start end 'keymap nil)
