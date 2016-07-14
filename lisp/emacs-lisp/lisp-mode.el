@@ -168,10 +168,7 @@
 (defvar lisp-doc-string-elt-property 'doc-string-elt
   "The symbol property that holds the docstring position info.")
 
-(defconst lisp-prettify-symbols-alist
-  '(("lambda" . ?λ)
-    ("sqrt" . ?√)
-    ("not" . ?¬))
+(defconst lisp-prettify-symbols-alist '(("lambda"  . ?λ))
   "Alist of symbol/\"pretty\" characters to be displayed.")
 
 ;;;; Font-lock support.
