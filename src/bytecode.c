@@ -17,22 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
-/*
-hacked on by jwz@lucid.com 17-jun-91
-  o  added a compile-time switch to turn on simple sanity checking;
-  o  put back the obsolete byte-codes for error-detection;
-  o  added a new instruction, unbind_all, which I will use for
-     tail-recursion elimination;
-  o  made temp_output_buffer_show be called with the right number
-     of args;
-  o  made the new bytecodes be called with args in the right order;
-  o  added metering support.
-
-by Hallvard:
-  o  added relative jump instructions;
-  o  all conditionals now only do QUIT if they jump.
- */
-
 #include <config.h>
 
 #include "lisp.h"
@@ -314,8 +298,7 @@ struct byte_stack
 #endif
 
   /* The string containing the byte-code, and its current address.
-     Storing this here protects it from GC because mark_byte_stack
-     marks it.  */
+     Storing this here protects it from GC.  */
   Lisp_Object byte_string;
   const unsigned char *byte_string_start;
 
