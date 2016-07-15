@@ -278,9 +278,6 @@ enum byte_code_op
     Bset_mark = 0163, /* this loser is no longer generated as of v18 */
 #endif
 };
-
-/* Whether to maintain a `top' and `bottom' field in the stack frame.  */
-#define BYTE_MAINTAIN_TOP BYTE_CODE_SAFE
 
 /* Structure describing a value stack used during byte-code execution
    in Fbyte_code.  */
@@ -290,12 +287,6 @@ struct byte_stack
   /* Program counter.  This points into the byte_string below
      and is relocated when that string is relocated.  */
   const unsigned char *pc;
-
-  /* Top and bottom of stack.  The bottom points to an area of memory
-     allocated with alloca in Fbyte_code.  */
-#if BYTE_MAINTAIN_TOP
-  Lisp_Object *top, *bottom;
-#endif
 
   /* The string containing the byte-code, and its current address.
      Storing this here protects it from GC.  */
@@ -367,27 +358,6 @@ relocate_byte_stack (void)
 
 #define TOP (*top)
 
-/* Actions that must be performed before and after calling a function
-   that might GC.  */
-
-#if !BYTE_MAINTAIN_TOP
-#define BEFORE_POTENTIAL_GC()	((void)0)
-#define AFTER_POTENTIAL_GC()	((void)0)
-#else
-#define BEFORE_POTENTIAL_GC()	stack.top = top
-#define AFTER_POTENTIAL_GC()	stack.top = NULL
-#endif
-
-/* Garbage collect if we have consed enough since the last time.
-   We do this at every branch, to avoid loops that never GC.  */
-
-#define MAYBE_GC()		\
-  do {				\
-   BEFORE_POTENTIAL_GC ();	\
-   maybe_gc ();			\
-   AFTER_POTENTIAL_GC ();	\
- } while (0)
-
 /* Check for jumping out of range.  */
 
 #ifdef BYTE_CODE_SAFE
@@ -410,11 +380,9 @@ relocate_byte_stack (void)
       {							\
         Lisp_Object flag = Vquit_flag;			\
 	Vquit_flag = Qnil;				\
-        BEFORE_POTENTIAL_GC ();				\
 	if (EQ (Vthrow_on_input, flag))			\
 	  Fthrow (Vthrow_on_input, Qt);			\
 	Fsignal (Qquit, Qnil);				\
-	AFTER_POTENTIAL_GC ();				\
       }							\
     else if (pending_signals)				\
       process_pending_signals ();			\
@@ -504,10 +472,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
   if (MAX_ALLOCA / word_size <= XFASTINT (maxdepth))
     memory_full (SIZE_MAX);
   top = alloca ((XFASTINT (maxdepth) + 1) * sizeof *top);
-#if BYTE_MAINTAIN_TOP
-  stack.bottom = top + 1;
-  stack.top = NULL;
-#endif
   stack.next = byte_stack_list;
   byte_stack_list = &stack;
 
@@ -676,16 +640,12 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 		    || (v2 = SYMBOL_VAL (XSYMBOL (v1)),
 			EQ (v2, Qunbound)))
 		  {
-		    BEFORE_POTENTIAL_GC ();
 		    v2 = Fsymbol_value (v1);
-		    AFTER_POTENTIAL_GC ();
 		  }
 	      }
 	    else
 	      {
-		BEFORE_POTENTIAL_GC ();
 		v2 = Fsymbol_value (v1);
-		AFTER_POTENTIAL_GC ();
 	      }
 	    PUSH (v2);
 	    NEXT;
@@ -694,7 +654,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Bgotoifnil):
 	  {
 	    Lisp_Object v1;
-	    MAYBE_GC ();
+	    maybe_gc ();
 	    op = FETCH2;
 	    v1 = POP;
 	    if (NILP (v1))
@@ -716,7 +676,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	      TOP = Qnil;
 	    else
 	      {
-		BEFORE_POTENTIAL_GC ();
 		wrong_type_argument (Qlistp, v1);
 	      }
 	    NEXT;
@@ -733,10 +692,8 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Bmemq):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Fmemq (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
@@ -750,7 +707,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	      TOP = Qnil;
 	    else
 	      {
-		BEFORE_POTENTIAL_GC ();
 		wrong_type_argument (Qlistp, v1);
 	      }
 	    NEXT;
@@ -786,9 +742,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	      SET_SYMBOL_VAL (XSYMBOL (sym), val);
 	    else
 	      {
-		BEFORE_POTENTIAL_GC ();
 		set_internal (sym, val, Qnil, 0);
-		AFTER_POTENTIAL_GC ();
 	      }
 	  }
 	  (void) POP;
@@ -821,9 +775,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  op -= Bvarbind;
 	varbind:
 	  /* Specbind can signal and thus GC.  */
-	  BEFORE_POTENTIAL_GC ();
 	  specbind (vectorp[op], POP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bcall6):
@@ -843,7 +795,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  op -= Bcall;
 	docall:
 	  {
-	    BEFORE_POTENTIAL_GC ();
 	    DISCARD (op);
 #ifdef BYTE_CODE_METER
 	    if (byte_metering_on && SYMBOLP (TOP))
@@ -861,7 +812,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	      }
 #endif
 	    TOP = Ffuncall (op + 1, &TOP);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
@@ -881,21 +831,17 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Bunbind5):
 	  op -= Bunbind;
 	dounbind:
-	  BEFORE_POTENTIAL_GC ();
 	  unbind_to (SPECPDL_INDEX () - op, Qnil);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bunbind_all):	/* Obsolete.  Never used.  */
 	  /* To unbind back to the beginning of this frame.  Not used yet,
 	     but will be needed for tail-recursion elimination.  */
-	  BEFORE_POTENTIAL_GC ();
 	  unbind_to (count, Qnil);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bgoto):
-	  MAYBE_GC ();
+	  maybe_gc ();
 	  BYTE_CODE_QUIT;
 	  op = FETCH2;    /* pc = FETCH2 loses since FETCH2 contains pc++ */
 	  CHECK_RANGE (op);
@@ -905,7 +851,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Bgotoifnonnil):
 	  {
 	    Lisp_Object v1;
-	    MAYBE_GC ();
+	    maybe_gc ();
 	    op = FETCH2;
 	    v1 = POP;
 	    if (!NILP (v1))
@@ -918,7 +864,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  }
 
 	CASE (Bgotoifnilelsepop):
-	  MAYBE_GC ();
+	  maybe_gc ();
 	  op = FETCH2;
 	  if (NILP (TOP))
 	    {
@@ -930,7 +876,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Bgotoifnonnilelsepop):
-	  MAYBE_GC ();
+	  maybe_gc ();
 	  op = FETCH2;
 	  if (!NILP (TOP))
 	    {
@@ -942,7 +888,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (BRgoto):
-	  MAYBE_GC ();
+	  maybe_gc ();
 	  BYTE_CODE_QUIT;
 	  stack.pc += (int) *stack.pc - 127;
 	  NEXT;
@@ -950,7 +896,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (BRgotoifnil):
 	  {
 	    Lisp_Object v1;
-	    MAYBE_GC ();
+	    maybe_gc ();
 	    v1 = POP;
 	    if (NILP (v1))
 	      {
@@ -964,7 +910,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (BRgotoifnonnil):
 	  {
 	    Lisp_Object v1;
-	    MAYBE_GC ();
+	    maybe_gc ();
 	    v1 = POP;
 	    if (!NILP (v1))
 	      {
@@ -976,7 +922,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  }
 
 	CASE (BRgotoifnilelsepop):
-	  MAYBE_GC ();
+	  maybe_gc ();
 	  op = *stack.pc++;
 	  if (NILP (TOP))
 	    {
@@ -987,7 +933,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (BRgotoifnonnilelsepop):
-	  MAYBE_GC ();
+	  maybe_gc ();
 	  op = *stack.pc++;
 	  if (!NILP (TOP))
 	    {
@@ -1024,10 +970,8 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	    ptrdiff_t count1 = SPECPDL_INDEX ();
 	    record_unwind_protect (restore_window_configuration,
 				   Fcurrent_window_configuration (Qnil));
-	    BEFORE_POTENTIAL_GC ();
 	    TOP = Fprogn (TOP);
 	    unbind_to (count1, TOP);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
@@ -1039,10 +983,8 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Bcatch):		/* Obsolete since 24.4.  */
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = internal_catch (TOP, eval_sub, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
@@ -1098,30 +1040,24 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	    Lisp_Object handlers, body;
 	    handlers = POP;
 	    body = POP;
-	    BEFORE_POTENTIAL_GC ();
 	    TOP = internal_lisp_condition_case (TOP, body, handlers);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Btemp_output_buffer_setup): /* Obsolete since 24.1.  */
-	  BEFORE_POTENTIAL_GC ();
 	  CHECK_STRING (TOP);
 	  temp_output_buffer_setup (SSDATA (TOP));
-	  AFTER_POTENTIAL_GC ();
 	  TOP = Vstandard_output;
 	  NEXT;
 
 	CASE (Btemp_output_buffer_show): /* Obsolete since 24.1.  */
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    temp_output_buffer_show (TOP);
 	    TOP = v1;
 	    /* pop binding of standard-output */
 	    unbind_to (SPECPDL_INDEX () - 1, Qnil);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
@@ -1129,7 +1065,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  {
 	    Lisp_Object v1, v2;
 	    EMACS_INT n;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    v2 = TOP;
 	    CHECK_NUMBER (v2);
@@ -1139,7 +1074,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	      v1 = XCDR (v1);
 	    immediate_quit = 0;
 	    TOP = CAR (v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
@@ -1200,110 +1134,84 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Blength):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Flength (TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Baref):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Faref (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Baset):
 	  {
 	    Lisp_Object v1, v2;
-	    BEFORE_POTENTIAL_GC ();
 	    v2 = POP; v1 = POP;
 	    TOP = Faset (TOP, v1, v2);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bsymbol_value):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Fsymbol_value (TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bsymbol_function):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Fsymbol_function (TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bset):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Fset (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bfset):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Ffset (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bget):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Fget (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bsubstring):
 	  {
 	    Lisp_Object v1, v2;
-	    BEFORE_POTENTIAL_GC ();
 	    v2 = POP; v1 = POP;
 	    TOP = Fsubstring (TOP, v1, v2);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bconcat2):
-	  BEFORE_POTENTIAL_GC ();
 	  DISCARD (1);
 	  TOP = Fconcat (2, &TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bconcat3):
-	  BEFORE_POTENTIAL_GC ();
 	  DISCARD (2);
 	  TOP = Fconcat (3, &TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bconcat4):
-	  BEFORE_POTENTIAL_GC ();
 	  DISCARD (3);
 	  TOP = Fconcat (4, &TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (BconcatN):
 	  op = FETCH;
-	  BEFORE_POTENTIAL_GC ();
 	  DISCARD (op - 1);
 	  TOP = Fconcat (op, &TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bsub1):
@@ -1317,9 +1225,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	      }
 	    else
 	      {
-		BEFORE_POTENTIAL_GC ();
 		TOP = Fsub1 (v1);
-		AFTER_POTENTIAL_GC ();
 	      }
 	    NEXT;
 	  }
@@ -1335,9 +1241,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	      }
 	    else
 	      {
-		BEFORE_POTENTIAL_GC ();
 		TOP = Fadd1 (v1);
-		AFTER_POTENTIAL_GC ();
 	      }
 	    NEXT;
 	  }
@@ -1345,11 +1249,9 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Beqlsign):
 	  {
 	    Lisp_Object v1, v2;
-	    BEFORE_POTENTIAL_GC ();
 	    v2 = POP; v1 = TOP;
 	    CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (v1);
 	    CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (v2);
-	    AFTER_POTENTIAL_GC ();
 	    if (FLOATP (v1) || FLOATP (v2))
 	      {
 		double f1, f2;
@@ -1366,48 +1268,38 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Bgtr):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = arithcompare (TOP, v1, ARITH_GRTR);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Blss):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = arithcompare (TOP, v1, ARITH_LESS);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bleq):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = arithcompare (TOP, v1, ARITH_LESS_OR_EQUAL);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bgeq):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = arithcompare (TOP, v1, ARITH_GRTR_OR_EQUAL);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bdiff):
-	  BEFORE_POTENTIAL_GC ();
 	  DISCARD (1);
 	  TOP = Fminus (2, &TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bnegate):
@@ -1421,55 +1313,41 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	      }
 	    else
 	      {
-		BEFORE_POTENTIAL_GC ();
 		TOP = Fminus (1, &TOP);
-		AFTER_POTENTIAL_GC ();
 	      }
 	    NEXT;
 	  }
 
 	CASE (Bplus):
-	  BEFORE_POTENTIAL_GC ();
 	  DISCARD (1);
 	  TOP = Fplus (2, &TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bmax):
-	  BEFORE_POTENTIAL_GC ();
 	  DISCARD (1);
 	  TOP = Fmax (2, &TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bmin):
-	  BEFORE_POTENTIAL_GC ();
 	  DISCARD (1);
 	  TOP = Fmin (2, &TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bmult):
-	  BEFORE_POTENTIAL_GC ();
 	  DISCARD (1);
 	  TOP = Ftimes (2, &TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bquo):
-	  BEFORE_POTENTIAL_GC ();
 	  DISCARD (1);
 	  TOP = Fquo (2, &TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Brem):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Frem (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
@@ -1482,23 +1360,17 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  }
 
 	CASE (Bgoto_char):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Fgoto_char (TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Binsert):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Finsert (1, &TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (BinsertN):
 	  op = FETCH;
-	  BEFORE_POTENTIAL_GC ();
 	  DISCARD (op - 1);
 	  TOP = Finsert (op, &TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bpoint_max):
@@ -1518,17 +1390,13 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  }
 
 	CASE (Bchar_after):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Fchar_after (TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bfollowing_char):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = Ffollowing_char ();
-	    AFTER_POTENTIAL_GC ();
 	    PUSH (v1);
 	    NEXT;
 	  }
@@ -1536,9 +1404,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Bpreceding_char):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = Fprevious_char ();
-	    AFTER_POTENTIAL_GC ();
 	    PUSH (v1);
 	    NEXT;
 	  }
@@ -1546,17 +1412,13 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Bcurrent_column):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    XSETFASTINT (v1, current_column ());
-	    AFTER_POTENTIAL_GC ();
 	    PUSH (v1);
 	    NEXT;
 	  }
 
 	CASE (Bindent_to):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Findent_to (TOP, Qnil);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Beolp):
@@ -1580,62 +1442,46 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Bset_buffer):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Fset_buffer (TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Binteractive_p):	/* Obsolete since 24.1.  */
-	  BEFORE_POTENTIAL_GC ();
 	  PUSH (call0 (intern ("interactive-p")));
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bforward_char):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Fforward_char (TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bforward_word):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Fforward_word (TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bskip_chars_forward):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Fskip_chars_forward (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bskip_chars_backward):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Fskip_chars_backward (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bforward_line):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Fforward_line (TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bchar_syntax):
 	  {
 	    int c;
 
-	    BEFORE_POTENTIAL_GC ();
 	    CHECK_CHARACTER (TOP);
-	    AFTER_POTENTIAL_GC ();
 	    c = XFASTINT (TOP);
 	    if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
 	      MAKE_CHAR_MULTIBYTE (c);
@@ -1646,97 +1492,73 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Bbuffer_substring):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Fbuffer_substring (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bdelete_region):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Fdelete_region (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bnarrow_to_region):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Fnarrow_to_region (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bwiden):
-	  BEFORE_POTENTIAL_GC ();
 	  PUSH (Fwiden ());
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bend_of_line):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Fend_of_line (TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bset_marker):
 	  {
 	    Lisp_Object v1, v2;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    v2 = POP;
 	    TOP = Fset_marker (TOP, v2, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bmatch_beginning):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Fmatch_beginning (TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bmatch_end):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Fmatch_end (TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bupcase):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Fupcase (TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bdowncase):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Fdowncase (TOP);
-	  AFTER_POTENTIAL_GC ();
 	NEXT;
 
       CASE (Bstringeqlsign):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Fstring_equal (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bstringlss):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Fstring_lessp (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
@@ -1751,10 +1573,8 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Bnthcdr):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Fnthcdr (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
@@ -1765,11 +1585,9 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	      {
 		/* Exchange args and then do nth.  */
 		EMACS_INT n;
-		BEFORE_POTENTIAL_GC ();
 		v2 = POP;
 		v1 = TOP;
 		CHECK_NUMBER (v2);
-		AFTER_POTENTIAL_GC ();
 		n = XINT (v2);
 		immediate_quit = 1;
 		while (--n >= 0 && CONSP (v1))
@@ -1779,10 +1597,8 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	      }
 	    else
 	      {
-		BEFORE_POTENTIAL_GC ();
 		v1 = POP;
 		TOP = Felt (TOP, v1);
-		AFTER_POTENTIAL_GC ();
 	      }
 	    NEXT;
 	  }
@@ -1790,46 +1606,36 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Bmember):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Fmember (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bassq):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Fassq (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bnreverse):
-	  BEFORE_POTENTIAL_GC ();
 	  TOP = Fnreverse (TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bsetcar):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Fsetcar (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
 	CASE (Bsetcdr):
 	  {
 	    Lisp_Object v1;
-	    BEFORE_POTENTIAL_GC ();
 	    v1 = POP;
 	    TOP = Fsetcdr (TOP, v1);
-	    AFTER_POTENTIAL_GC ();
 	    NEXT;
 	  }
 
@@ -1850,10 +1656,8 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  }
 
 	CASE (Bnconc):
-	  BEFORE_POTENTIAL_GC ();
 	  DISCARD (1);
 	  TOP = Fnconc (2, &TOP);
-	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bnumberp):
@@ -1870,14 +1674,10 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	     interpreter.  */
 
 	case Bset_mark:
-	  BEFORE_POTENTIAL_GC ();
 	  error ("set-mark is an obsolete bytecode");
-	  AFTER_POTENTIAL_GC ();
 	  break;
 	case Bscan_buffer:
-	  BEFORE_POTENTIAL_GC ();
 	  error ("scan-buffer is an obsolete bytecode");
-	  AFTER_POTENTIAL_GC ();
 	  break;
 #endif
 
