@@ -1643,15 +1643,17 @@ AC_CHECK_HEADERS_ONCE(
   sys/resource.h
   sys/utsname.h pwd.h utmp.h util.h)
 
-AC_MSG_CHECKING(if personality LINUX32 can be set)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/personality.h>]], [[personality (PER_LINUX32)]])],
-               emacs_cv_personality_linux32=yes,
-	       emacs_cv_personality_linux32=no)
-AC_MSG_RESULT($emacs_cv_personality_linux32)
-
-if test $emacs_cv_personality_linux32 = yes; then
-  AC_DEFINE(HAVE_PERSONALITY_LINUX32, 1,
-            [Define to 1 if personality LINUX32 can be set.])
+AC_CACHE_CHECK([for ADDR_NO_RANDOMIZE],
+  [emacs_cv_personality_addr_no_randomize],
+  [AC_COMPILE_IFELSE(
+     [AC_LANG_PROGRAM([[#include <sys/personality.h>]],
+		      [[personality (personality (0xffffffff)
+				     | ADDR_NO_RANDOMIZE)]])],
+     [emacs_cv_personality_addr_no_randomize=yes],
+     [emacs_cv_personality_addr_no_randomize=no])])
+if test $emacs_cv_personality_addr_no_randomize = yes; then
+  AC_DEFINE([HAVE_PERSONALITY_ADDR_NO_RANDOMIZE], [1],
+            [Define to 1 if personality flag ADDR_NO_RANDOMIZE exists.])
 fi
 
 # Note that Solaris has sys/sysinfo.h which defines struct

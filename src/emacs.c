@@ -112,7 +112,7 @@ extern void moncontrol (int mode);
 #include <sys/resource.h>
 #endif
 
-#ifdef HAVE_PERSONALITY_LINUX32
+#ifdef HAVE_PERSONALITY_ADDR_NO_RANDOMIZE
 #include <sys/personality.h>
 #endif
 
@@ -796,24 +796,22 @@ main (int argc, char **argv)
   dumping = !initialized && (strcmp (argv[argc - 1], "dump") == 0
 			     || strcmp (argv[argc - 1], "bootstrap") == 0);
 
-#ifdef HAVE_PERSONALITY_LINUX32
-  if (dumping && ! getenv ("EMACS_HEAP_EXEC"))
+#ifdef HAVE_PERSONALITY_ADDR_NO_RANDOMIZE
+  if (dumping)
     {
-      /* Set this so we only do this once.  */
-      xputenv ("EMACS_HEAP_EXEC=true");
+      int pers = personality (0xffffffff);
+      if (! (pers & ADDR_NO_RANDOMIZE)
+	  && 0 <= personality (pers | ADDR_NO_RANDOMIZE))
+	{
+	  /* Address randomization was enabled, but is now disabled.
+	     Re-execute Emacs to get a clean slate.  */
+	  execvp (argv[0], argv);
 
-      /* A flag to turn off address randomization which is introduced
-         in linux kernel shipped with fedora core 4 */
-#define ADD_NO_RANDOMIZE 0x0040000
-      personality (PER_LINUX32 | ADD_NO_RANDOMIZE);
-#undef  ADD_NO_RANDOMIZE
-
-      execvp (argv[0], argv);
-
-      /* If the exec fails, try to dump anyway.  */
-      emacs_perror (argv[0]);
+	  /* If the exec fails, warn and then try without a clean slate.  */
+	  perror (argv[0]);
+	}
     }
-#endif /* HAVE_PERSONALITY_LINUX32 */
+#endif
 
 #if defined (HAVE_SETRLIMIT) && defined (RLIMIT_STACK) && !defined (CYGWIN)
   /* Extend the stack space available.  Don't do that if dumping,
