@@ -2237,7 +2237,7 @@ get_phys_cursor_geometry (struct window *w, struct glyph_row *row,
   ascent = row->ascent;
   if (row->ascent < glyph->ascent)
     {
-      y =- glyph->ascent - row->ascent;
+      y -= glyph->ascent - row->ascent;
       ascent = glyph->ascent;
     }
 
