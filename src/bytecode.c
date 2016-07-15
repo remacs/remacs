@@ -338,12 +338,10 @@ relocate_byte_stack (void)
 
 #define FETCH2 (op = FETCH, op + (FETCH << 8))
 
-/* Push x onto the execution stack.  This used to be #define PUSH(x)
-   (*++stackp = (x)) This oddity is necessary because Alliant can't be
-   bothered to compile the preincrement operator properly, as of 4/91.
-   -JimB */
+/* Push X onto the execution stack.  The expression X should not
+   contain TOP, to avoid competing side effects.  */
 
-#define PUSH(x) (top++, *top = (x))
+#define PUSH(x) (*++top = (x))
 
 /* Pop a value off the execution stack.  */
 
