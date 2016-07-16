@@ -14,6 +14,7 @@ Emacs uses the following files from the Unicode Character Database
   . BidiMirroring.txt
   . BidiBrackets.txt
   . IVD_Sequences.txt
+  . NormalizationTest.txt
 
 First, these files need to be copied into admin/unidata/, and then
 Emacs should be rebuilt for them to take effect.  Rebuilding Emacs
@@ -47,6 +48,14 @@ The function 'ucs-names', defined in lisp/international/mule-cmds.el,
 might need to be updated because it knows about used and unused ranges
 of Unicode codepoints, which a new release of the Unicode Standard
 could change.
+
+Finally, test normalization functions against NormalizationTests.txt,
+in the test/ directory run:
+
+  make lisp/international/ucs-normalize-tests
+
+See commentary in test/lisp/international/ucs-normalize-tests.el
+regarding failing lines.
 
 Problems, fixmes and other unicode-related issues
 -------------------------------------------------------------
@@ -130,8 +139,6 @@ regard to completeness.
 
  * Need multibyte text in menus, e.g. for the above.  (Not specific to
    Unicode -- see Emacs etc/TODO, but now mostly works with gtk.)
-
- * There's currently no support for Unicode normalization.
 
  * Populate char-width-table correctly for Unicode characters and
    worry about what happens when double-width charsets covering
