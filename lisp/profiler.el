@@ -692,7 +692,8 @@ With a prefix argument, expand the whole subtree."
 
 (defun profiler-report-toggle-entry (&optional arg)
   "Expand entry at point if the tree is collapsed,
-otherwise collapse."
+otherwise collapse.  With prefix argument, expand all subentries
+below entry at point."
   (interactive "P")
   (or (profiler-report-expand-entry arg)
       (profiler-report-collapse-entry)))
