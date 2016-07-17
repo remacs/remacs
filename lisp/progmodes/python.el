@@ -5153,14 +5153,12 @@ returned as is."
                                                  (current-column))))
          (^ '(- (1+ (current-indentation))))))
 
-  (if (boundp 'eldoc-documentation-functions)
-      (add-hook 'eldoc-documentation-functions #'python-eldoc-function nil t)
-    (if (null eldoc-documentation-function)
-        ;; Emacs<25
-        (set (make-local-variable 'eldoc-documentation-function)
-             #'python-eldoc-function)
-      (add-function :before-until (local 'eldoc-documentation-function)
-                    #'python-eldoc-function)))
+  (if (null eldoc-documentation-function)
+      ;; Emacs<25
+      (set (make-local-variable 'eldoc-documentation-function)
+           #'python-eldoc-function)
+    (add-function :before-until (local 'eldoc-documentation-function)
+                  #'python-eldoc-function))
 
   (add-to-list
    'hs-special-modes-alist
