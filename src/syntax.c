@@ -1691,44 +1691,22 @@ skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
       /* At first setup fastmap.  */
       while (i_byte < size_byte)
 	{
-	  c = str[i_byte++];
-
-	  if (handle_iso_classes && c == '['
-	      && i_byte < size_byte
-	      && str[i_byte] == ':')
+	  if (handle_iso_classes)
 	    {
-	      const unsigned char *class_beg = str + i_byte + 1;
-	      const unsigned char *class_end = class_beg;
-	      const unsigned char *class_limit = str + size_byte - 2;
-	      /* Leave room for the null.  */
-	      unsigned char class_name[CHAR_CLASS_MAX_LENGTH + 1];
-	      re_wctype_t cc;
-
-	      if (class_limit - class_beg > CHAR_CLASS_MAX_LENGTH)
-		class_limit = class_beg + CHAR_CLASS_MAX_LENGTH;
-
-	      while (class_end < class_limit
-		     && *class_end >= 'a' && *class_end <= 'z')
-		class_end++;
-
-	      if (class_end == class_beg
-		  || *class_end != ':' || class_end[1] != ']')
-		goto not_a_class_name;
-
-	      memcpy (class_name, class_beg, class_end - class_beg);
-	      class_name[class_end - class_beg] = 0;
-
-	      cc = re_wctype (class_name);
+	      const unsigned char *ch = str + i_byte;
+	      re_wctype_t cc = re_wctype_parse (&ch, size_byte - i_byte);
 	      if (cc == 0)
 		error ("Invalid ISO C character class");
-
-	      iso_classes = Fcons (make_number (cc), iso_classes);
-
-	      i_byte = class_end + 2 - str;
-	      continue;
+	      if (cc != -1)
+		{
+		  iso_classes = Fcons (make_number (cc), iso_classes);
+		  i_byte = ch - str;
+		  continue;
+		}
 	    }
 
-	not_a_class_name:
+	  c = str[i_byte++];
+
 	  if (c == '\\')
 	    {
 	      if (i_byte == size_byte)
@@ -1808,54 +1786,32 @@ skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
       while (i_byte < size_byte)
 	{
 	  int leading_code = str[i_byte];
-	  c = STRING_CHAR_AND_LENGTH (str + i_byte, len);
-	  i_byte += len;
 
-	  if (handle_iso_classes && c == '['
-	      && i_byte < size_byte
-	      && STRING_CHAR (str + i_byte) == ':')
+	  if (handle_iso_classes)
 	    {
-	      const unsigned char *class_beg = str + i_byte + 1;
-	      const unsigned char *class_end = class_beg;
-	      const unsigned char *class_limit = str + size_byte - 2;
-	      /* Leave room for the null.	 */
-	      unsigned char class_name[CHAR_CLASS_MAX_LENGTH + 1];
-	      re_wctype_t cc;
-
-	      if (class_limit - class_beg > CHAR_CLASS_MAX_LENGTH)
-		class_limit = class_beg + CHAR_CLASS_MAX_LENGTH;
-
-	      while (class_end < class_limit
-		     && *class_end >= 'a' && *class_end <= 'z')
-		class_end++;
-
-	      if (class_end == class_beg
-		  || *class_end != ':' || class_end[1] != ']')
-		goto not_a_class_name_multibyte;
-
-	      memcpy (class_name, class_beg, class_end - class_beg);
-	      class_name[class_end - class_beg] = 0;
-
-	      cc = re_wctype (class_name);
+	      const unsigned char *ch = str + i_byte;
+	      re_wctype_t cc = re_wctype_parse (&ch, size_byte - i_byte);
 	      if (cc == 0)
 		error ("Invalid ISO C character class");
-
-	      iso_classes = Fcons (make_number (cc), iso_classes);
-
-	      i_byte = class_end + 2 - str;
-	      continue;
+	      if (cc != -1)
+		{
+		  iso_classes = Fcons (make_number (cc), iso_classes);
+		  i_byte = ch - str;
+		  continue;
+		}
 	    }
 
-	not_a_class_name_multibyte:
-	  if (c == '\\')
+	  if (leading_code== '\\')
 	    {
-	      if (i_byte == size_byte)
+	      if (++i_byte == size_byte)
 		break;
 
 	      leading_code = str[i_byte];
-	      c = STRING_CHAR_AND_LENGTH (str + i_byte, len);
-	      i_byte += len;
 	    }
+	  c = STRING_CHAR_AND_LENGTH (str + i_byte, len);
+	  i_byte += len;
+
+
 	  /* Treat `-' as range character only if another character
 	     follows.  */
 	  if (i_byte + 1 < size_byte

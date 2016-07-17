@@ -1969,29 +1969,96 @@ struct range_table_work_area
 
 #if ! WIDE_CHAR_SUPPORT
 
-/* Map a string to the char class it names (if any).  */
+/* Parse a character class, i.e. string such as "[:name:]".  *strp
+   points to the string to be parsed and limit is length, in bytes, of
+   that string.
+
+   If *strp point to a string that begins with "[:name:]", where name is
+   a non-empty sequence of lower case letters, *strp will be advanced past the
+   closing square bracket and RECC_* constant which maps to the name will be
+   returned.  If name is not a valid character class name zero, or RECC_ERROR,
+   is returned.
+
+   Otherwise, if *strp doesn’t begin with "[:name:]", -1 is returned.
+
+   The function can be used on ASCII and multibyte (UTF-8-encoded) strings.
+ */
 re_wctype_t
-re_wctype (const_re_char *str)
+re_wctype_parse (const unsigned char **strp, unsigned limit)
 {
-  const char *string = (const char *) str;
-  if      (STREQ (string, "alnum"))	return RECC_ALNUM;
-  else if (STREQ (string, "alpha"))	return RECC_ALPHA;
-  else if (STREQ (string, "word"))	return RECC_WORD;
-  else if (STREQ (string, "ascii"))	return RECC_ASCII;
-  else if (STREQ (string, "nonascii"))	return RECC_NONASCII;
-  else if (STREQ (string, "graph"))	return RECC_GRAPH;
-  else if (STREQ (string, "lower"))	return RECC_LOWER;
-  else if (STREQ (string, "print"))	return RECC_PRINT;
-  else if (STREQ (string, "punct"))	return RECC_PUNCT;
-  else if (STREQ (string, "space"))	return RECC_SPACE;
-  else if (STREQ (string, "upper"))	return RECC_UPPER;
-  else if (STREQ (string, "unibyte"))	return RECC_UNIBYTE;
-  else if (STREQ (string, "multibyte"))	return RECC_MULTIBYTE;
-  else if (STREQ (string, "digit"))	return RECC_DIGIT;
-  else if (STREQ (string, "xdigit"))	return RECC_XDIGIT;
-  else if (STREQ (string, "cntrl"))	return RECC_CNTRL;
-  else if (STREQ (string, "blank"))	return RECC_BLANK;
-  else return 0;
+  const char *beg = (const char *)*strp, *it;
+
+  if (limit < 4 || beg[0] != '[' || beg[1] != ':')
+    return -1;
+
+  beg += 2;  /* skip opening ‘[:’ */
+  limit -= 3;  /* opening ‘[:’ and half of closing ‘:]’; --limit handles rest */
+  for (it = beg; it[0] != ':' || it[1] != ']'; ++it)
+    if (!--limit)
+      return -1;
+
+  *strp = (const unsigned char *)(it + 2);
+
+  /* Sort tests in the length=five case by frequency the classes to minimise
+     number of times we fail the comparison.  The frequencies of character class
+     names used in Emacs sources as of 2016-07-27:
+
+     $ find \( -name \*.c -o -name \*.el \) -exec grep -h '\[:[a-z]*:]' {} + |
+           sed 's/]/]\n/g' |grep -o '\[:[a-z]*:]' |sort |uniq -c |sort -nr
+         213 [:alnum:]
+         104 [:alpha:]
+          62 [:space:]
+          39 [:digit:]
+          36 [:blank:]
+          26 [:word:]
+          26 [:upper:]
+          21 [:lower:]
+          10 [:xdigit:]
+          10 [:punct:]
+          10 [:ascii:]
+           4 [:nonascii:]
+           4 [:graph:]
+           2 [:print:]
+           2 [:cntrl:]
+           1 [:ff:]
+
+     If you update this list, consider also updating chain of or’ed conditions
+     in execute_charset function.
+   */
+
+  switch (it - beg) {
+  case 4:
+    if (!memcmp (beg, "word", 4))      return RECC_WORD;
+    break;
+  case 5:
+    if (!memcmp (beg, "alnum", 5))     return RECC_ALNUM;
+    if (!memcmp (beg, "alpha", 5))     return RECC_ALPHA;
+    if (!memcmp (beg, "space", 5))     return RECC_SPACE;
+    if (!memcmp (beg, "digit", 5))     return RECC_DIGIT;
+    if (!memcmp (beg, "blank", 5))     return RECC_BLANK;
+    if (!memcmp (beg, "upper", 5))     return RECC_UPPER;
+    if (!memcmp (beg, "lower", 5))     return RECC_LOWER;
+    if (!memcmp (beg, "punct", 5))     return RECC_PUNCT;
+    if (!memcmp (beg, "ascii", 5))     return RECC_ASCII;
+    if (!memcmp (beg, "graph", 5))     return RECC_GRAPH;
+    if (!memcmp (beg, "print", 5))     return RECC_PRINT;
+    if (!memcmp (beg, "cntrl", 5))     return RECC_CNTRL;
+    break;
+  case 6:
+    if (!memcmp (beg, "xdigit", 6))    return RECC_XDIGIT;
+    break;
+  case 7:
+    if (!memcmp (beg, "unibyte", 7))   return RECC_UNIBYTE;
+    break;
+  case 8:
+    if (!memcmp (beg, "nonascii", 8))  return RECC_NONASCII;
+    break;
+  case 9:
+    if (!memcmp (beg, "multibyte", 9)) return RECC_MULTIBYTE;
+    break;
+  }
+
+  return RECC_ERROR;
 }
 
 /* True if CH is in the char class CC.  */
@@ -2776,9 +2843,73 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
 	      {
 		boolean escaped_char = false;
 		const unsigned char *p2 = p;
+		re_wctype_t cc;
 		re_wchar_t ch;
 
 		if (p == pend) FREE_STACK_RETURN (REG_EBRACK);
+
+		/* See if we're at the beginning of a possible character
+		   class.  */
+		if (syntax & RE_CHAR_CLASSES &&
+		    (cc = re_wctype_parse(&p, pend - p)) != -1)
+		  {
+		    if (cc == 0)
+		      FREE_STACK_RETURN (REG_ECTYPE);
+
+		    if (p == pend)
+		      FREE_STACK_RETURN (REG_EBRACK);
+
+#ifndef emacs
+		    for (ch = 0; ch < (1 << BYTEWIDTH); ++ch)
+		      if (re_iswctype (btowc (ch), cc))
+			{
+			  c = TRANSLATE (ch);
+			  if (c < (1 << BYTEWIDTH))
+			    SET_LIST_BIT (c);
+			}
+#else  /* emacs */
+		    /* Most character classes in a multibyte match just set
+		       a flag.  Exceptions are is_blank, is_digit, is_cntrl, and
+		       is_xdigit, since they can only match ASCII characters.
+		       We don't need to handle them for multibyte.  They are
+		       distinguished by a negative wctype.  */
+
+		    /* Setup the gl_state object to its buffer-defined value.
+		       This hardcodes the buffer-global syntax-table for ASCII
+		       chars, while the other chars will obey syntax-table
+		       properties.  It's not ideal, but it's the way it's been
+		       done until now.  */
+		    SETUP_BUFFER_SYNTAX_TABLE ();
+
+		    for (ch = 0; ch < 256; ++ch)
+		      {
+			c = RE_CHAR_TO_MULTIBYTE (ch);
+			if (! CHAR_BYTE8_P (c)
+			    && re_iswctype (c, cc))
+			  {
+			    SET_LIST_BIT (ch);
+			    c1 = TRANSLATE (c);
+			    if (c1 == c)
+			      continue;
+			    if (ASCII_CHAR_P (c1))
+			      SET_LIST_BIT (c1);
+			    else if ((c1 = RE_CHAR_TO_UNIBYTE (c1)) >= 0)
+			      SET_LIST_BIT (c1);
+			  }
+		      }
+		    SET_RANGE_TABLE_WORK_AREA_BIT
+		      (range_table_work, re_wctype_to_bit (cc));
+#endif	/* emacs */
+		    /* In most cases the matching rule for char classes only
+		       uses the syntax table for multibyte chars, so that the
+		       content of the syntax-table is not hardcoded in the
+		       range_table.  SPACE and WORD are the two exceptions.  */
+		    if ((1 << cc) & ((1 << RECC_SPACE) | (1 << RECC_WORD)))
+		      bufp->used_syntax = 1;
+
+		    /* Repeat the loop. */
+		    continue;
+		  }
 
 		/* Don't translate yet.  The range TRANSLATE(X..Y) cannot
 		   always be determined from TRANSLATE(X) and TRANSLATE(Y)
@@ -2801,119 +2932,6 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
 		       far), the ']' character bit gets set way below.  */
 		    if (c == ']' && p2 != p1)
 		      break;
-		  }
-
-		/* See if we're at the beginning of a possible character
-		   class.  */
-
-		if (!escaped_char &&
-		    syntax & RE_CHAR_CLASSES && c == '[' && *p == ':')
-		  {
-		    /* Leave room for the null.  */
-		    unsigned char str[CHAR_CLASS_MAX_LENGTH + 1];
-		    const unsigned char *class_beg;
-
-		    PATFETCH (c);
-		    c1 = 0;
-		    class_beg = p;
-
-		    /* If pattern is `[[:'.  */
-		    if (p == pend) FREE_STACK_RETURN (REG_EBRACK);
-
-		    for (;;)
-		      {
-		        PATFETCH (c);
-		        if ((c == ':' && *p == ']') || p == pend)
-		          break;
-			if (c1 < CHAR_CLASS_MAX_LENGTH)
-			  str[c1++] = c;
-			else
-			  /* This is in any case an invalid class name.  */
-			  str[0] = '\0';
-		      }
-		    str[c1] = '\0';
-
-		    /* If isn't a word bracketed by `[:' and `:]':
-		       undo the ending character, the letters, and
-		       leave the leading `:' and `[' (but set bits for
-		       them).  */
-		    if (c == ':' && *p == ']')
-		      {
-			re_wctype_t cc = re_wctype (str);
-
-			if (cc == 0)
-			  FREE_STACK_RETURN (REG_ECTYPE);
-
-                        /* Throw away the ] at the end of the character
-                           class.  */
-                        PATFETCH (c);
-
-                        if (p == pend) FREE_STACK_RETURN (REG_EBRACK);
-
-#ifndef emacs
-			for (ch = 0; ch < (1 << BYTEWIDTH); ++ch)
-			  if (re_iswctype (btowc (ch), cc))
-			    {
-			      c = TRANSLATE (ch);
-			      if (c < (1 << BYTEWIDTH))
-				SET_LIST_BIT (c);
-			    }
-#else  /* emacs */
-			/* Most character classes in a multibyte match
-			   just set a flag.  Exceptions are is_blank,
-			   is_digit, is_cntrl, and is_xdigit, since
-			   they can only match ASCII characters.  We
-			   don't need to handle them for multibyte.
-			   They are distinguished by a negative wctype.  */
-
-			/* Setup the gl_state object to its buffer-defined
-			   value.  This hardcodes the buffer-global
-			   syntax-table for ASCII chars, while the other chars
-			   will obey syntax-table properties.  It's not ideal,
-			   but it's the way it's been done until now.  */
-			SETUP_BUFFER_SYNTAX_TABLE ();
-
-			for (ch = 0; ch < 256; ++ch)
-			  {
-			    c = RE_CHAR_TO_MULTIBYTE (ch);
-			    if (! CHAR_BYTE8_P (c)
-				&& re_iswctype (c, cc))
-			      {
-				SET_LIST_BIT (ch);
-				c1 = TRANSLATE (c);
-				if (c1 == c)
-				  continue;
-				if (ASCII_CHAR_P (c1))
-				  SET_LIST_BIT (c1);
-				else if ((c1 = RE_CHAR_TO_UNIBYTE (c1)) >= 0)
-				  SET_LIST_BIT (c1);
-			      }
-			  }
-			SET_RANGE_TABLE_WORK_AREA_BIT
-			  (range_table_work, re_wctype_to_bit (cc));
-#endif	/* emacs */
-			/* In most cases the matching rule for char classes
-			   only uses the syntax table for multibyte chars,
-			   so that the content of the syntax-table is not
-			   hardcoded in the range_table.  SPACE and WORD are
-			   the two exceptions.  */
-			if ((1 << cc) & ((1 << RECC_SPACE) | (1 << RECC_WORD)))
-			  bufp->used_syntax = 1;
-
-			/* Repeat the loop. */
-			continue;
-		      }
-		    else
-		      {
-			/* Go back to right after the "[:".  */
-			p = class_beg;
-			SET_LIST_BIT ('[');
-
-			/* Because the `:' may start the range, we
-			   can't simply set bit and repeat the loop.
-			   Instead, just set it to C and handle below.  */
-			c = ':';
-		      }
 		  }
 
 		if (p < pend && p[0] == '-' && p[1] != ']')
@@ -4659,28 +4677,8 @@ execute_charset (const_re_char **pp, unsigned c, unsigned corig, bool unibyte)
       re_wchar_t range_start, range_end;
 
   /* Sort tests by the most commonly used classes with some adjustment to which
-     tests are easiest to perform.  Frequencies of character class names used in
-     Emacs sources as of 2016-07-15:
-
-     $ find \( -name \*.c -o -name \*.el \) -exec grep -h '\[:[a-z]*:]' {} + |
-           sed 's/]/]\n/g' |grep -o '\[:[a-z]*:]' |sort |uniq -c |sort -nr
-         213 [:alnum:]
-         104 [:alpha:]
-          62 [:space:]
-          39 [:digit:]
-          36 [:blank:]
-          26 [:upper:]
-          24 [:word:]
-          21 [:lower:]
-          10 [:punct:]
-          10 [:ascii:]
-           9 [:xdigit:]
-           4 [:nonascii:]
-           4 [:graph:]
-           2 [:print:]
-           2 [:cntrl:]
-           1 [:ff:]
-   */
+     tests are easiest to perform.  Take a look at comment in re_wctype_parse
+     for table with frequencies of character class names. */
 
       if ((class_bits & BIT_MULTIBYTE) ||
 	  (class_bits & BIT_ALNUM && ISALNUM (c)) ||

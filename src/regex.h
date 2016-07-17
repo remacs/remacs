@@ -585,25 +585,13 @@ extern void regfree (regex_t *__preg);
 /* Solaris 2.5 has a bug: <wchar.h> must be included before <wctype.h>.  */
 # include <wchar.h>
 # include <wctype.h>
-#endif
 
-#if WIDE_CHAR_SUPPORT
-/* The GNU C library provides support for user-defined character classes
-   and the functions from ISO C amendment 1.  */
-# ifdef CHARCLASS_NAME_MAX
-#  define CHAR_CLASS_MAX_LENGTH CHARCLASS_NAME_MAX
-# else
-/* This shouldn't happen but some implementation might still have this
-   problem.  Use a reasonable default value.  */
-#  define CHAR_CLASS_MAX_LENGTH 256
-# endif
 typedef wctype_t re_wctype_t;
 typedef wchar_t re_wchar_t;
 # define re_wctype wctype
 # define re_iswctype iswctype
 # define re_wctype_to_bit(cc) 0
 #else
-# define CHAR_CLASS_MAX_LENGTH  9 /* Namely, `multibyte'.  */
 # ifndef emacs
 #  define btowc(c) c
 # endif
@@ -621,7 +609,7 @@ typedef enum { RECC_ERROR = 0,
 } re_wctype_t;
 
 extern char re_iswctype (int ch,    re_wctype_t cc);
-extern re_wctype_t re_wctype (const unsigned char* str);
+extern re_wctype_t re_wctype_parse (const unsigned char **strp, unsigned limit);
 
 typedef int re_wchar_t;
 
