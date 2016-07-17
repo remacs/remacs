@@ -596,8 +596,7 @@ Key bindings:
   (add-hook 'before-save-hook 'octave-sync-function-file-names nil t)
   (setq-local beginning-of-defun-function 'octave-beginning-of-defun)
   (and octave-font-lock-texinfo-comment (octave-font-lock-texinfo-comment))
-  (add-function :before-until (local 'eldoc-documentation-function)
-                'octave-eldoc-function)
+  (add-hook 'eldoc-documentation-functions 'octave-eldoc-function nil t)
 
   (easy-menu-add octave-mode-menu))
 
@@ -733,7 +732,7 @@ Key bindings:
   (setq font-lock-defaults '(inferior-octave-font-lock-keywords nil nil))
 
   (setq-local info-lookup-mode 'octave-mode)
-  (setq-local eldoc-documentation-function 'octave-eldoc-function)
+  (add-hook 'eldoc-documentation-functions 'octave-eldoc-function nil t)
 
   (setq-local comint-input-ring-file-name
               (or (getenv "OCTAVE_HISTFILE") "~/.octave_hist"))

@@ -1443,8 +1443,8 @@ result of expression evaluation."
     (minibuffer-with-setup-hook
         (lambda ()
           ;; FIXME: call emacs-lisp-mode?
-          (add-function :before-until (local 'eldoc-documentation-function)
-                        #'elisp-eldoc-documentation-function)
+          (add-hook 'eldoc-documentation-functions
+                    #'elisp-eldoc-documentation-function nil t)
           (add-hook 'completion-at-point-functions
                     #'elisp-completion-at-point nil t)
           (run-hooks 'eval-expression-minibuffer-setup-hook))
