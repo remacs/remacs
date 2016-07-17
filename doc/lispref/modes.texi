@@ -417,7 +417,7 @@ variable @code{imenu-generic-expression}, for the two variables
 
 @item
 The mode can specify a local value for
-@code{eldoc-documentation-functions} to tell ElDoc mode how to handle
+@code{eldoc-documentation-function} to tell ElDoc mode how to handle
 this mode.
 
 @item
