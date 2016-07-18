@@ -116,6 +116,16 @@
 (defun cl-reduce (cl-func cl-seq &rest cl-keys)
   "Reduce two-argument FUNCTION across SEQ.
 \nKeywords supported:  :start :end :from-end :initial-value :key
+
+Return the result of calling FUNCTION with the first and the
+second element of SEQ, then calling FUNCTION with that result and
+the third element of SEQ, then with that result and the fourth
+element of SEQ, etc.
+
+If :INITIAL-VALUE is specified, it is added to the front of SEQ.
+If SEQ is empty, return :INITIAL-VALUE and FUNCTION is not
+called.
+
 \n(fn FUNCTION SEQ [KEYWORD VALUE]...)"
   (cl--parsing-keywords (:from-end (:start 0) :end :initial-value :key) ()
     (or (listp cl-seq) (setq cl-seq (append cl-seq nil)))
