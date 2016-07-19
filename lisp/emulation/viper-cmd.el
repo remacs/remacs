@@ -1709,40 +1709,20 @@ invokes the command before that, etc."
 ;; The following two functions are used to set up undo properly.
 ;; In VI, unlike Emacs, if you open a line, say, and add a bunch of lines,
 ;; they are undone all at once.
+(viper-deflocalvar viper--undo-change-group-handle nil)
+(put 'viper--undo-change-group-handle 'permanent-local t)
+
 (defun viper-adjust-undo ()
-  (if viper-undo-needs-adjustment
-      (let ((inhibit-quit t)
-	    tmp tmp2)
-	(setq viper-undo-needs-adjustment nil)
-	(when (listp buffer-undo-list)
-          (let ((had-boundary (null (car buffer-undo-list))))
-            (if (setq tmp (memq viper-buffer-undo-list-mark buffer-undo-list))
-		(progn
-		  (setq tmp2 (cdr tmp)) ; the part after mark
-
-		  ;; cut tail from buffer-undo-list temporarily by direct
-		  ;; manipulation with pointers in buffer-undo-list
-		  (setcdr tmp nil)
-
-		  (setq buffer-undo-list (delq nil buffer-undo-list))
-		  (setq buffer-undo-list
-			(delq viper-buffer-undo-list-mark buffer-undo-list))
-		  ;; restore tail of buffer-undo-list
-		  (setq buffer-undo-list (nconc buffer-undo-list tmp2)))
-	      (setq buffer-undo-list (delq nil buffer-undo-list)))
-            ;; The top-level loop only adds boundaries if there has been
-            ;; modifications in the buffer, so make sure we don't accidentally
-            ;; drop the "final" boundary (bug#22295).
-	    (if had-boundary (undo-boundary)))))))
-
+  (when viper--undo-change-group-handle
+    (undo-amalgamate-change-group
+     (prog1 viper--undo-change-group-handle
+       (setq viper--undo-change-group-handle nil)))))
 
 (defun viper-set-complex-command-for-undo ()
-  (if (listp buffer-undo-list)
-      (if (not viper-undo-needs-adjustment)
-	  (let ((inhibit-quit t))
-	    (setq buffer-undo-list
-		  (cons viper-buffer-undo-list-mark buffer-undo-list))
-	    (setq viper-undo-needs-adjustment t)))))
+  (and (listp buffer-undo-list)
+       (not viper--undo-change-group-handle)
+       (setq viper--undo-change-group-handle
+             (prepare-change-group))))
 
 
 ;;; Viper's destructive Command ring utilities

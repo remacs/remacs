@@ -2958,6 +2958,41 @@ behavior."
   (undo-auto--boundary-ensure-timer))
 ;; End auto-boundary section
 
+(defun undo-amalgamate-change-group (handle)
+  "Amalgamate changes in change-group since HANDLE.
+Remove all undo boundaries between the state of HANDLE and now.
+HANDLE is as returned by `prepare-change-group'."
+  (dolist (elt handle)
+    (with-current-buffer (car elt)
+      (setq elt (cdr elt))
+      (when (consp buffer-undo-list)
+        (let ((old-car (car-safe elt))
+              (old-cdr (cdr-safe elt)))
+          (unwind-protect
+              (progn
+                ;; Temporarily truncate the undo log at ELT.
+                (when (consp elt)
+                  (setcar elt t) (setcdr elt nil))
+                (when
+                    (or (null elt)        ;The undo-log was empty.
+                        ;; `elt' is still in the log: normal case.
+                        (eq elt (last buffer-undo-list))
+                        ;; `elt' is not in the log any more, but that's because
+                        ;; the log is "all new", so we should remove all
+                        ;; boundaries from it.
+                        (not (eq (last buffer-undo-list) (last old-cdr))))
+                  (cl-callf (lambda (x) (delq nil x))
+                      (if (car buffer-undo-list)
+                          buffer-undo-list
+                        ;; Preserve the undo-boundaries at either ends of the
+                        ;; change-groups.
+                        (cdr buffer-undo-list)))))
+            ;; Reset the modified cons cell ELT to its original content.
+            (when (consp elt)
+              (setcar elt old-car)
+              (setcdr elt old-cdr))))))))
+
+
 (defcustom undo-ask-before-discard nil
   "If non-nil ask about discarding undo info for the current command.
 Normally, Emacs discards the undo info for the current command if

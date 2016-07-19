@@ -458,6 +458,9 @@ function 'check-declare-errmsg' has been removed.
 
 * Lisp Changes in Emacs 25.2
 
+** New function undo-amalgamate-change-group to get rid of undo-boundaries
+between two states.
+
 ** New var `definition-prefixes' is a hashtable mapping prefixes to the
 files where corresponding definitions can be found.  This can be used
 to fetch definitions that are not yet loaded, for example for `C-h f'.
