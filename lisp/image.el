@@ -792,9 +792,10 @@ If the image has a non-nil :speed property, it acts as a multiplier
 for the animation speed.  A negative value means to animate in reverse."
   (when (and (buffer-live-p (plist-get (cdr image) :animate-buffer))
              ;; Delayed more than two seconds more than expected.
-             (when (> (- (float-time) target-time) 2)
-               (message "Stopping animation; animation possibly too big")
-               nil))
+	     (or (<= (- (float-time) target-time) 2)
+		 (progn
+		   (message "Stopping animation; animation possibly too big")
+		   nil)))
     (image-show-frame image n t)
     (let* ((speed (image-animate-get-speed image))
 	   (time (float-time))
