@@ -674,6 +674,26 @@ main (int argc, char **argv)
 
   stack_base = &dummy;
 
+#if defined HAVE_PERSONALITY_LINUX32 && defined __PPC64__
+  /* This code partly duplicates the HAVE_PERSONALITY_LINUX32 code
+     below.  This duplication is planned to be fixed in a later
+     Emacs release.  */
+# define ADD_NO_RANDOMIZE 0x0040000
+  int pers = personality (0xffffffff);
+  if (! (pers & ADD_NO_RANDOMIZE)
+      && 0 <= personality (pers | ADD_NO_RANDOMIZE))
+    {
+      /* Address randomization was enabled, but is now disabled.
+	 Re-execute Emacs to get a clean slate.  */
+      execvp (argv[0], argv);
+
+      /* If the exec fails, warn the user and then try without a
+	 clean slate.  */
+      perror (argv[0]);
+    }
+# undef ADD_NO_RANDOMIZE
+#endif
+
 #ifndef CANNOT_DUMP
   might_dump = !initialized;
 #endif
@@ -784,7 +804,7 @@ main (int argc, char **argv)
   dumping = !initialized && (strcmp (argv[argc - 1], "dump") == 0
 			     || strcmp (argv[argc - 1], "bootstrap") == 0);
 
-#ifdef HAVE_PERSONALITY_LINUX32
+#if defined HAVE_PERSONALITY_LINUX32 && !defined __PPC64__
   if (dumping && ! getenv ("EMACS_HEAP_EXEC"))
     {
       /* Set this so we only do this once.  */
@@ -801,7 +821,7 @@ main (int argc, char **argv)
       /* If the exec fails, try to dump anyway.  */
       emacs_perror (argv[0]);
     }
-#endif /* HAVE_PERSONALITY_LINUX32 */
+#endif
 
 #if defined (HAVE_SETRLIMIT) && defined (RLIMIT_STACK) && !defined (CYGWIN)
   /* Extend the stack space available.  Don't do that if dumping,
