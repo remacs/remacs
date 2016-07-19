@@ -5058,6 +5058,14 @@ Transposing beyond buffer boundaries is an error.  */)
 			 start2_byte, start2_byte + len2_byte);
       fix_start_end_in_overlays (start1, end2);
     }
+  else
+    {
+      /* The character positions of the markers remain intact, but we
+	 still need to update their byte positions, because the
+	 transposed regions might include multibyte sequences which
+	 make some original byte positions of the markers invalid.  */
+      adjust_markers_bytepos (start1, start1_byte, end2, end2_byte, 0);
+    }
 
   signal_after_change (start1, end2 - start1, end2 - start1);
   return Qnil;

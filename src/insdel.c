@@ -364,6 +364,78 @@ adjust_markers_for_replace (ptrdiff_t from, ptrdiff_t from_byte,
   check_markers ();
 }
 
+/* Starting at POS (BYTEPOS), find the byte position corresponding to
+   ENDPOS, which could be either before or after POS.  */
+static ptrdiff_t
+count_bytes (ptrdiff_t pos, ptrdiff_t bytepos, ptrdiff_t endpos)
+{
+  eassert (BEG_BYTE <= bytepos && bytepos <= Z_BYTE
+	   && BEG <= endpos && endpos <= Z);
+
+  if (pos <= endpos)
+    for ( ; pos < endpos; pos++)
+      INC_POS (bytepos);
+  else
+    for ( ; pos > endpos; pos--)
+      DEC_POS (bytepos);
+
+  return bytepos;
+}
+
+/* Adjust byte positions of markers when their character positions
+   didn't change.  This is used in several places that replace text,
+   but keep the character positions of the markers unchanged -- the
+   byte positions could still change due to different numbers of bytes
+   in the new text.
+
+   FROM (FROM_BYTE) and TO (TO_BYTE) specify the region of text where
+   changes have been done.  TO_Z, if non-zero, means all the markers
+   whose positions are after TO should also be adjusted.  */
+void
+adjust_markers_bytepos (ptrdiff_t from, ptrdiff_t from_byte,
+			ptrdiff_t to, ptrdiff_t to_byte, int to_z)
+{
+  register struct Lisp_Marker *m;
+  ptrdiff_t beg = from, begbyte = from_byte;
+
+  adjust_suspend_auto_hscroll (from, to);
+
+  if (Z == Z_BYTE || (!to_z && to == to_byte))
+    {
+      /* Make sure each affected marker's bytepos is equal to
+	 its charpos.  */
+      for (m = BUF_MARKERS (current_buffer); m; m = m->next)
+	{
+	  if (m->bytepos > from_byte
+	      && (to_z || m->bytepos <= to_byte))
+	    m->bytepos = m->charpos;
+	}
+    }
+  else
+    {
+      for (m = BUF_MARKERS (current_buffer); m; m = m->next)
+	{
+	  /* Recompute each affected marker's bytepos.  */
+	  if (m->bytepos > from_byte
+	      && (to_z || m->bytepos <= to_byte))
+	    {
+	      if (m->charpos < beg
+		  && beg - m->charpos > m->charpos - from)
+		{
+		  beg = from;
+		  begbyte = from_byte;
+		}
+	      m->bytepos = count_bytes (beg, begbyte, m->charpos);
+	      beg = m->charpos;
+	      begbyte = m->bytepos;
+	    }
+	}
+    }
+
+  /* Make sure cached charpos/bytepos is invalid.  */
+  clear_charpos_cache (current_buffer);
+}
+
 
 void
 buffer_overflow (void)
@@ -1397,6 +1469,16 @@ replace_range (ptrdiff_t from, ptrdiff_t to, Lisp_Object new,
   if (markers)
     adjust_markers_for_replace (from, from_byte, nchars_del, nbytes_del,
 				inschars, outgoing_insbytes);
+  else
+    {
+      /* The character positions of the markers remain intact, but we
+	 still need to update their byte positions, because the
+	 deleted and the inserted text might have multibyte sequences
+	 which make the original byte positions of the markers
+	 invalid.  */
+      adjust_markers_bytepos (from, from_byte, from + inschars,
+			      from_byte + outgoing_insbytes, 1);
+    }
 
   /* Adjust the overlay center as needed.  This must be done after
      adjusting the markers that bound the overlays.  */
@@ -1509,10 +1591,22 @@ replace_range_2 (ptrdiff_t from, ptrdiff_t from_byte,
   eassert (GPT <= GPT_BYTE);
 
   /* Adjust markers for the deletion and the insertion.  */
-  if (markers
-      && ! (nchars_del == 1 && inschars == 1 && nbytes_del == insbytes))
-    adjust_markers_for_replace (from, from_byte, nchars_del, nbytes_del,
-				inschars, insbytes);
+  if (! (nchars_del == 1 && inschars == 1 && nbytes_del == insbytes))
+    {
+      if (markers)
+	adjust_markers_for_replace (from, from_byte, nchars_del, nbytes_del,
+				    inschars, insbytes);
+      else
+	{
+	  /* The character positions of the markers remain intact, but
+	     we still need to update their byte positions, because the
+	     deleted and the inserted text might have multibyte
+	     sequences which make the original byte positions of the
+	     markers invalid.  */
+	  adjust_markers_bytepos (from, from_byte, from + inschars,
+				  from_byte + insbytes, 1);
+	}
+    }
 
   /* Adjust the overlay center as needed.  This must be done after
      adjusting the markers that bound the overlays.  */

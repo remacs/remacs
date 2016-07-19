@@ -89,3 +89,48 @@
                                    (propertize "23" 'face 'underline)
                                    (propertize "45" 'face 'italic)))
            #("012345    " 0 2 (face bold) 2 4 (face underline) 4 10 (face italic)))))
+
+;; Tests for bug#5131.
+(defun transpose-test-reverse-word (start end)
+  "Reverse characters in a word by transposing pairs of characters."
+  (let ((begm (make-marker))
+        (endm (make-marker)))
+    (set-marker begm start)
+    (set-marker endm end)
+    (while (> endm begm)
+      (progn (transpose-regions begm (1+ begm) endm (1+ endm) t)
+             (set-marker begm (1+ begm))
+             (set-marker endm (1- endm))))))
+
+(defun transpose-test-get-byte-positions (len)
+  "Validate character position to byte position translation."
+  (let ((bytes '()))
+    (dotimes (pos len)
+      (setq bytes (add-to-list 'bytes (position-bytes (1+ pos)) t)))
+    bytes))
+
+(ert-deftest transpose-ascii-regions-test ()
+  (with-temp-buffer
+    (erase-buffer)
+    (insert "abcd")
+    (transpose-test-reverse-word 1 4)
+    (should (string= (buffer-string) "dcba"))
+    (should (equal (transpose-test-get-byte-positions 5) '(1 2 3 4 5)))))
+
+(ert-deftest transpose-nonascii-regions-test-1 ()
+  (with-temp-buffer
+    (erase-buffer)
+    (insert "÷bcd")
+    (transpose-test-reverse-word 1 4)
+    (should (string= (buffer-string) "dcb÷"))
+    (should (equal (transpose-test-get-byte-positions 5) '(1 2 3 4 6)))))
+
+(ert-deftest transpose-nonascii-regions-test-2 ()
+  (with-temp-buffer
+    (erase-buffer)
+    (insert "÷ab\"äé")
+    (transpose-test-reverse-word 1 6)
+    (should (string= (buffer-string) "éä\"ba÷"))
+    (should (equal (transpose-test-get-byte-positions 7) '(1 3 5 6 7 8 10)))))
+
+;;; editfns-tests.el ends here
