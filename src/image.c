@@ -56,6 +56,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
+/* Work around GCC bug 54561.  */
+#if GNUC_PREREQ (4, 3, 0)
+# pragma GCC diagnostic ignored "-Wclobbered"
+#endif
+
 #ifdef HAVE_X_WINDOWS
 typedef struct x_bitmap_record Bitmap_Record;
 #define GET_PIXEL(ximg, x, y) XGetPixel (ximg, x, y)
@@ -5897,9 +5902,8 @@ struct png_load_context
 static bool
 png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 {
-  Lisp_Object specified_file;
-  Lisp_Object NONVOLATILE specified_data;
-  FILE *NONVOLATILE fp = NULL;
+  Lisp_Object specified_file, specified_data;
+  FILE *fp = NULL;
   int x, y;
   ptrdiff_t i;
   png_struct *png_ptr;
@@ -6669,8 +6673,7 @@ static bool
 jpeg_load_body (struct frame *f, struct image *img,
 		struct my_jpeg_error_mgr *mgr)
 {
-  Lisp_Object specified_file;
-  Lisp_Object NONVOLATILE specified_data;
+  Lisp_Object specified_file, specified_data;
   FILE *volatile fp = NULL;
   JSAMPARRAY buffer;
   int row_stride, x, y;

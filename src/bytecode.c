@@ -32,6 +32,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "xterm.h"
 #endif
 
+/* Work around GCC bug 54561.  */
+#if GNUC_PREREQ (4, 3, 0)
+# pragma GCC diagnostic ignored "-Wclobbered"
+#endif
+
 /*
  * define BYTE_CODE_SAFE to enable some minor sanity checking (useful for
  * debugging the byte compiler...)

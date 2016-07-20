@@ -368,15 +368,6 @@ extern int emacs_setenv_TZ (char const *);
 # define FLEXIBLE_ARRAY_MEMBER
 #endif
 
-/* When used in place of 'volatile', 'NONVOLATILE' is equivalent to nothing,
-   except it cajoles GCC into not warning incorrectly that a variable needs to
-   be volatile.  This works around GCC bug 54561.  */
-#if defined GCC_LINT || defined lint
-# define NONVOLATILE volatile
-#else
-# define NONVOLATILE /* empty */
-#endif
-
 /* 'int x UNINIT;' is equivalent to 'int x;', except it cajoles GCC
    into not warning incorrectly about use of an uninitialized variable.  */
 #if defined GCC_LINT || defined lint
