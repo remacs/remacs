@@ -403,7 +403,7 @@ With a prefix (or a FILL) argument, also fill too short lines."
   :version "25.1")
 
 (defcustom rectangle-preview t
-  "If non-nil, `string-rectangle' will show an-the-fly preview."
+  "If non-nil, `string-rectangle' will show an on-the-fly preview."
   :version "25.1"
   :type 'boolean)
 
