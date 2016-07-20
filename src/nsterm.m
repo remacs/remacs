@@ -3918,8 +3918,8 @@ ns_send_appdefined (int value)
 {
   NSTRACE_WHEN (NSTRACE_GROUP_EVENTS, "ns_send_appdefined(%d)", value);
 
-#ifdef NS_IMPL_GNUSTEP
   // GNUstep needs postEvent to happen on the main thread.
+  // Cocoa needs nextEventMatchingMask to happen on the main thread too.
   if (! [[NSThread currentThread] isMainThread])
     {
       EmacsApp *app = (EmacsApp *)NSApp;
@@ -3929,7 +3929,6 @@ ns_send_appdefined (int value)
                          waitUntilDone:YES];
       return;
     }
-#endif
 
   /* Only post this event if we haven't already posted one.  This will end
        the [NXApp run] main loop after having processed all events queued at
@@ -5542,12 +5541,10 @@ not_in_argv (NSString *arg)
   ns_send_appdefined (-2);
 }
 
-#ifdef NS_IMPL_GNUSTEP
 - (void)sendFromMainThread:(id)unused
 {
   ns_send_appdefined (nextappdefined);
 }
-#endif
 
 - (void)fd_handler:(id)unused
 /* --------------------------------------------------------------------------

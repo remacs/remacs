@@ -380,9 +380,9 @@ char const * nstrace_fullscreen_type_name (int);
 #endif
 #ifdef NS_IMPL_GNUSTEP
   BOOL applicationDidFinishLaunchingCalled;
+#endif
 @public
   int nextappdefined;
-#endif
 }
 - (void)logNotification: (NSNotification *)notification;
 - (void)antialiasThresholdDidChange:(NSNotification *)notification;
