@@ -146,6 +146,9 @@ xtzfree (timezone_t tz)
 static timezone_t
 tzlookup (Lisp_Object zone, bool settz)
 {
+  static char const tzbuf_format[] = "<%+.*"pI"d>%s%"pI"d:%02d:%02d";
+  char const *trailing_tzbuf_format = tzbuf_format + sizeof "<%+.*"pI"d" - 1;
+  char tzbuf[sizeof tzbuf_format + 2 * INT_STRLEN_BOUND (EMACS_INT)];
   char const *zone_string;
   timezone_t new_tz;
 
@@ -158,9 +161,6 @@ tzlookup (Lisp_Object zone, bool settz)
     }
   else
     {
-      static char const tzbuf_format[] = "<%+.*"pI"d>%s%"pI"d:%02d:%02d";
-      char const *trailing_tzbuf_format = tzbuf_format + sizeof "<%+.*"pI"d" - 1;
-      char tzbuf[sizeof tzbuf_format + 2 * INT_STRLEN_BOUND (EMACS_INT)];
       bool plain_integer = INTEGERP (zone);
 
       if (EQ (zone, Qwall))
