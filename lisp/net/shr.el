@@ -37,6 +37,7 @@
 (require 'dom)
 (require 'seq)
 (require 'svg)
+(require 'image)
 
 (defgroup shr nil
   "Simple HTML Renderer"
