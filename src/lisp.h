@@ -4261,6 +4261,12 @@ struct tty_display_info;
 struct terminal;
 
 /* Defined in sysdep.c.  */
+#ifdef HAVE_PERSONALITY_ADDR_NO_RANDOMIZE
+extern bool disable_address_randomization (void);
+#else
+INLINE bool disable_address_randomization (void) { return false; }
+#endif
+extern int emacs_exec_file (char const *, char *const *, char *const *);
 extern void init_standard_fds (void);
 extern char *emacs_get_current_dir_name (void);
 extern void stuff_char (char c);

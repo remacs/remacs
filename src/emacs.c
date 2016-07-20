@@ -112,10 +112,6 @@ extern void moncontrol (int mode);
 #include <sys/resource.h>
 #endif
 
-#ifdef HAVE_PERSONALITY_ADDR_NO_RANDOMIZE
-#include <sys/personality.h>
-#endif
-
 static const char emacs_version[] = PACKAGE_VERSION;
 static const char emacs_copyright[] = COPYRIGHT;
 static const char emacs_bugreport[] = PACKAGE_BUGREPORT;
@@ -685,6 +681,30 @@ main (int argc, char **argv)
 
   stack_base = &dummy;
 
+  dumping = !initialized && (strcmp (argv[argc - 1], "dump") == 0
+			     || strcmp (argv[argc - 1], "bootstrap") == 0);
+
+  /* True if address randomization interferes with memory allocaiton.  */
+# ifdef __PPC64__
+  bool disable_aslr = true;
+# else
+  bool disable_aslr = dumping;
+# endif
+
+  if (disable_aslr && disable_address_randomization ())
+    {
+      /* Set this so the personality will be reverted before execs
+	 after this one.  */
+      xputenv ("EMACS_HEAP_EXEC=true");
+
+      /* Address randomization was enabled, but is now disabled.
+	 Re-execute Emacs to get a clean slate.  */
+      execvp (argv[0], argv);
+
+      /* If the exec fails, warn and then try anyway.  */
+      perror (argv[0]);
+    }
+
 #ifndef CANNOT_DUMP
   might_dump = !initialized;
 #endif
@@ -792,26 +812,6 @@ main (int argc, char **argv)
           exit (1);
         }
     }
-
-  dumping = !initialized && (strcmp (argv[argc - 1], "dump") == 0
-			     || strcmp (argv[argc - 1], "bootstrap") == 0);
-
-#ifdef HAVE_PERSONALITY_ADDR_NO_RANDOMIZE
-  if (dumping)
-    {
-      int pers = personality (0xffffffff);
-      if (! (pers & ADDR_NO_RANDOMIZE)
-	  && 0 <= personality (pers | ADDR_NO_RANDOMIZE))
-	{
-	  /* Address randomization was enabled, but is now disabled.
-	     Re-execute Emacs to get a clean slate.  */
-	  execvp (argv[0], argv);
-
-	  /* If the exec fails, warn and then try without a clean slate.  */
-	  perror (argv[0]);
-	}
-    }
-#endif
 
 #if defined (HAVE_SETRLIMIT) && defined (RLIMIT_STACK) && !defined (CYGWIN)
   /* Extend the stack space available.  Don't do that if dumping,

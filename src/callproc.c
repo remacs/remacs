@@ -1317,8 +1317,8 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
   setpgid (0, 0);
   tcsetpgrp (0, pid);
 
-  execve (new_argv[0], new_argv, env);
-  exec_failed (new_argv[0], errno);
+  int errnum = emacs_exec_file (new_argv[0], new_argv, env);
+  exec_failed (new_argv[0], errnum);
 
 #else /* MSDOS */
   pid = run_msdos_command (new_argv, pwd_var + 4, in, out, err, env);

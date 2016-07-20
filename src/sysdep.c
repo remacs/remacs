@@ -129,6 +129,48 @@ static const int baud_convert[] =
     1800, 2400, 4800, 9600, 19200, 38400
   };
 
+#ifdef HAVE_PERSONALITY_ADDR_NO_RANDOMIZE
+# include <sys/personality.h>
+
+/* Disable address randomization in the current process.  Return true
+   if addresses were randomized but this has been disabled, false
+   otherwise. */
+bool
+disable_address_randomization (void)
+{
+  bool disabled = false;
+  int pers = personality (0xffffffff);
+  disabled = (! (pers & ADDR_NO_RANDOMIZE)
+	      && 0 <= personality (pers | ADDR_NO_RANDOMIZE));
+  return disabled;
+}
+#endif
+
+/* Execute the program in FILE, with argument vector ARGV and environ
+   ENVP.  Return an error number if unsuccessful.  This is like execve
+   except it reenables ASLR in the executed program if necessary, and
+   on error it returns an error number rather than -1.  */
+int
+emacs_exec_file (char const *file, char *const *argv, char *const *envp)
+{
+#ifdef HAVE_PERSONALITY_ADDR_NO_RANDOMIZE
+  int pers = getenv ("EMACS_HEAP_EXEC") ? personality (0xffffffff) : -1;
+  bool change_personality = 0 <= pers && pers & ADDR_NO_RANDOMIZE;
+  if (change_personality)
+    personality (pers & ~ADDR_NO_RANDOMIZE);
+#endif
+
+  execve (file, argv, envp);
+  int err = errno;
+
+#ifdef HAVE_PERSONALITY_ADDR_NO_RANDOMIZE
+  if (change_personality)
+    personality (pers);
+#endif
+
+  return err;
+}
+
 /* If FD is not already open, arrange for it to be open with FLAGS.  */
 static void
 force_open (int fd, int flags)
