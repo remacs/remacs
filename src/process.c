@@ -3185,6 +3185,8 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 	      xerrno = errno;
 	      emacs_close (s);
 	      s = -1;
+	      if (socket_to_use < 0)
+		break;
 	      continue;
 	    }
 	}
@@ -3312,6 +3314,8 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
       specpdl_ptr = specpdl + count1;
       emacs_close (s);
       s = -1;
+      if (socket_to_use < 0)
+	break;
 
 #ifdef WINDOWSNT
       if (xerrno == EINTR)
