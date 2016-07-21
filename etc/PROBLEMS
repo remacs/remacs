@@ -1070,6 +1070,28 @@ while, Emacs may print a message:
 A workaround is to not use 'klipper'.  Upgrading 'klipper' to the one
 coming with KDE 3.3 or later also solves the problem.
 
+*** KDE / Plasma 5: Emacs exhausts memory and needs to be killed
+
+This problem occurs when large selections contain mixed line endings
+(i.e. the buffer has LF line endings, but in some parts CRLF is used).
+The source of the problem is currently under investigation, older
+versions of Emacs up to 24.5 just hang for a few seconds and then
+return with the message "Timed out waiting for property-notify event"
+as described in the previous note.  As a workaround, go to the
+settings dialog for the Clipboard widget and select the option "Ignore
+Selection".
+
+Note: Plasma 5 has replaced the separate klipper process from earlier
+KDE versions with functionality directly integrated into plasmashell,
+so even if you've previously did not use klipper this will affect you.
+Also, all configuration you might have done to klipper is not used by
+the new Clipboard widget / plasmoid since it uses its own settings.
+You can hide the Clipboard widget by removing its entry from the
+system tray settings "Extra Items", but it's not clear if the
+underlying functionality in plasmashell gets fully disabled as well.
+At least a restart of plasmashell is required for the clipboard
+history to be cleared.
+
 *** CDE: Frames may cover dialogs they created when using CDE.
 
 This can happen if you have "Allow Primary Windows On Top" enabled which
