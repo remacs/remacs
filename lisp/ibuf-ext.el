@@ -350,8 +350,7 @@ the mode if ARG is omitted or nil."
    :opstring "Shell command executed on"
    :modifier-p nil)
   (shell-command-on-region
-   (point-min) (point-max) command
-   (get-buffer-create "* ibuffer-shell-output*")))
+   (point-min) (point-max) command))
 
 ;;;###autoload (autoload 'ibuffer-do-shell-command-pipe-replace "ibuf-ext")
 (define-ibuffer-op shell-command-pipe-replace (command)
