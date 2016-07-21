@@ -288,6 +288,12 @@ struct byte_stack
      and is relocated when that string is relocated.  */
   const unsigned char *pc;
 
+  /* bottom of stack.  The bottom points to an area of memory
+     allocated with alloca in Fbyte_code.  */
+#ifdef BYTE_CODE_SAFE
+  Lisp_Object *bottom;
+#endif
+
   /* The string containing the byte-code, and its current address.
      Storing this here protects it from GC.  */
   Lisp_Object byte_string;
@@ -460,6 +466,9 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
   if (MAX_ALLOCA / word_size <= XFASTINT (maxdepth))
     memory_full (SIZE_MAX);
   top = alloca ((XFASTINT (maxdepth) + 1) * sizeof *top);
+#ifdef BYTE_CODE_SAFE
+  stack.bottom = top + 1;
+#endif
   stack.next = byte_stack_list;
   byte_stack_list = &stack;
 
