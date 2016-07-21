@@ -24,6 +24,7 @@
 
 (require 'ert)
 (require 'erc-track)
+(require 'font-core)
 
 (ert-deftest erc-track--shorten-aggressive-nil ()
   "Test non-aggressive erc track buffer name shortening."
@@ -107,9 +108,12 @@
 (ert-deftest erc-track--erc-faces-in ()
   "`erc-faces-in' should pick up both 'face and 'font-lock-face properties."
   (let ((str0 "is bold")
-        (str1 "is bold")
-        ;;(char-property-alias-alist '((face font-lock-face)))
-        )
+        (str1 "is bold"))
+    ;; Turn on Font Lock mode: this initialize `char-property-alias-alist'
+    ;; to '((face font-lock-face)).  Note that `font-lock-mode' don't
+    ;; turn on the mode if the test is run on batch mode or if the
+    ;; buffer name starts with ?\s (Bug#23954).
+    (unless font-lock-mode (font-lock-default-function 1))
     (put-text-property 3 (length str0) 'font-lock-face
                        '(bold erc-current-nick-face) str0)
     (put-text-property 3 (length str1) 'face
