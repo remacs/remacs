@@ -636,12 +636,13 @@ size, and full-buffer size."
       ;; Success; continue.
       (when (= (preceding-char) ?\s)
 	(delete-char -1))
-      (let ((props (text-properties-at (point)))
-	    (gap-start (point)))
+      (let ((face (get-text-property (point) 'face))
+	    (background-start (point)))
 	(insert "\n")
 	(shr-indent)
-	(when props
-	  (add-text-properties gap-start (point) props)))
+	(when face
+	  (put-text-property background-start (point) 'face
+			     `,(shr-face-background face))))
       (setq start (point))
       (shr-vertical-motion shr-internal-width)
       (when (looking-at " $")
