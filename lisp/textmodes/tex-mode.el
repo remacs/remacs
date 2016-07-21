@@ -1259,8 +1259,7 @@ Entering SliTeX mode runs the hook `text-mode-hook', then the hook
 		(font-lock-unfontify-region-function
 		 . tex-font-lock-unfontify-region)))
   (setq-local prettify-symbols-alist tex--prettify-symbols-alist)
-  (add-function :override (local 'prettify-symbols-compose-predicate)
-                #'tex--prettify-symbols-compose-p)
+  (setq-local prettify-symbols-compose-predicate #'tex--prettify-symbols-compose-p)
   (setq-local syntax-propertize-function
 	      (syntax-propertize-rules latex-syntax-propertize-rules))
   ;; TABs in verbatim environments don't do what you think.
