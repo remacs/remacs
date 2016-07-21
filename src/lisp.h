@@ -3516,7 +3516,7 @@ extern void adjust_after_insert (ptrdiff_t, ptrdiff_t, ptrdiff_t,
 				 ptrdiff_t, ptrdiff_t);
 extern void adjust_markers_for_delete (ptrdiff_t, ptrdiff_t,
 				       ptrdiff_t, ptrdiff_t);
-extern void replace_range (ptrdiff_t, ptrdiff_t, Lisp_Object, bool, bool, bool);
+extern void replace_range (ptrdiff_t, ptrdiff_t, Lisp_Object, bool, bool, bool, bool);
 extern void replace_range_2 (ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t,
 			     const char *, ptrdiff_t, ptrdiff_t, bool);
 extern void syms_of_insdel (void);
@@ -3994,6 +3994,8 @@ extern Lisp_Object make_temp_name (Lisp_Object, bool);
 /* Defined in search.c.  */
 extern void shrink_regexp_cache (void);
 extern void restore_search_regs (void);
+extern void update_search_regs (ptrdiff_t oldstart,
+                                ptrdiff_t oldend, ptrdiff_t newend);
 extern void record_unwind_save_match_data (void);
 struct re_registers;
 extern struct re_pattern_buffer *compile_pattern (Lisp_Object,
