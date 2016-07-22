@@ -3288,9 +3288,6 @@ If there is output and an error, and you did not specify \"insert it
 in the current buffer\", a message about the error goes at the end
 of the output.
 
-If there is no output, or if output is inserted in the current buffer,
-then `*Shell Command Output*' is deleted.
-
 If the optional third argument ERROR-BUFFER is non-nil, it is a buffer
 or buffer name to which to direct the command's standard error output.
 If it is nil, error output is mingled with regular output.
@@ -3535,9 +3532,7 @@ Otherwise it is displayed in the buffer `*Shell Command Output*'.
 The output is available in that buffer in both cases.
 
 If there is output and an error, a message about the error
-appears at the end of the output.  If there is no output, or if
-output is inserted in the current buffer, the buffer `*Shell
-Command Output*' is deleted.
+appears at the end of the output.
 
 Optional fourth arg OUTPUT-BUFFER specifies where to put the
 command's output.  If the value is a buffer or buffer name,
