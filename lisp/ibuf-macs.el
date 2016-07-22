@@ -203,7 +203,8 @@ evaluates once for each marked buffer, MBUF, with MBUF current
 and saving the point.  If COMPLEX is non-nil, BODY evaluates
 without requiring MBUF current.
 BODY define the operation; they are forms to evaluate per each
-marked buffer.
+marked buffer.  BODY is evaluated with `buf' bound to the
+buffer object.
 
 \(fn OP ARGS DOCUMENTATION (&key INTERACTIVE MARK MODIFIER-P DANGEROUS OPSTRING ACTIVE-OPSTRING COMPLEX) &rest BODY)"
   (declare (indent 2) (doc-string 3))
