@@ -388,7 +388,6 @@ w32_window_app (void)
   directly into the argv array of the child process.  */
 
 int w32_execvp (const char *, char **);
-extern int execvp (const char*, char **);
 
 int
 w32_execvp (const char *path, char **argv)
