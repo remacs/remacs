@@ -7091,6 +7091,9 @@ comment at the start of cc-engine.el for more info."
       (while (cond
 	      ((looking-at c-decl-hangon-key)
 	       (c-forward-keyword-clause 1))
+	      ((looking-at c-pack-key)
+	       (goto-char (match-end 1))
+	       (c-forward-syntactic-ws))
 	      ((and c-opt-cpp-prefix
 		    (looking-at c-noise-macro-with-parens-name-re))
 	       (c-forward-noise-clause))))

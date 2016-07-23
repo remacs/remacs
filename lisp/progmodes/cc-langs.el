@@ -1329,6 +1329,14 @@ operators."
 (c-lang-defvar c-stmt-delim-chars-with-comma
   (c-lang-const c-stmt-delim-chars-with-comma))
 
+(c-lang-defconst c-pack-ops
+  "Ops which signal C++11's \"parameter pack\""
+  t nil
+  c++ '("..."))
+(c-lang-defconst c-pack-key
+  t (c-make-keywords-re 'appendable (c-lang-const c-pack-ops)))
+(c-lang-defvar c-pack-key (c-lang-const c-pack-key))
+
 (c-lang-defconst c-auto-ops
   ;; Ops which signal C++11's new auto uses.
   t nil
@@ -2958,6 +2966,10 @@ Identifier syntax is in effect when this is matched \(see
 		   "\\)"
 		   "\\([^=]\\|$\\)")
   c++  (concat "\\("
+	       "&&"
+	       "\\|"
+	       "\\.\\.\\."
+	       "\\|"
 	       "[*(&]"
 	       "\\|"
 	       (c-lang-const c-type-decl-prefix-key)
