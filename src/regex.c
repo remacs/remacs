@@ -669,9 +669,7 @@ typedef enum
   notsyntaxspec
 
 #ifdef emacs
-  ,before_dot,	/* Succeeds if before point.  */
-  at_dot,	/* Succeeds if at point.  */
-  after_dot,	/* Succeeds if after point.  */
+  , at_dot,	/* Succeeds if at point.  */
 
   /* Matches any character whose category-set contains the specified
      category.  The operator is followed by a byte which contains a
@@ -1053,16 +1051,8 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
 	  break;
 
 # ifdef emacs
-	case before_dot:
-	  fprintf (stderr, "/before_dot");
-	  break;
-
 	case at_dot:
 	  fprintf (stderr, "/at_dot");
-	  break;
-
-	case after_dot:
-	  fprintf (stderr, "/after_dot");
 	  break;
 
 	case categoryspec:
@@ -3440,8 +3430,6 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
 		 goto normal_char;
 
 #ifdef emacs
-	    /* There is no way to specify the before_dot and after_dot
-	       operators.  rms says this is ok.  --karl  */
 	    case '=':
 	      laststart = b;
 	      BUF_PUSH (at_dot);
@@ -4018,9 +4006,7 @@ analyze_first (const_re_char *p, const_re_char *pend, char *fastmap,
       /* All cases after this match the empty string.  These end with
 	 `continue'.  */
 
-	case before_dot:
 	case at_dot:
-	case after_dot:
 #endif /* !emacs */
 	case no_op:
 	case begline:
@@ -6148,21 +6134,9 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 	  break;
 
 #ifdef emacs
-	case before_dot:
-	  DEBUG_PRINT ("EXECUTING before_dot.\n");
-	  if (PTR_BYTE_POS (d) >= PT_BYTE)
-	    goto fail;
-	  break;
-
 	case at_dot:
 	  DEBUG_PRINT ("EXECUTING at_dot.\n");
 	  if (PTR_BYTE_POS (d) != PT_BYTE)
-	    goto fail;
-	  break;
-
-	case after_dot:
-	  DEBUG_PRINT ("EXECUTING after_dot.\n");
-	  if (PTR_BYTE_POS (d) <= PT_BYTE)
 	    goto fail;
 	  break;
 
