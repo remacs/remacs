@@ -542,9 +542,9 @@ functions are annotated with \"<f>\" via the
                                         (delete-dups
                                          ;; FIXME: We should include some
                                          ;; docstring with each entry.
-                                         (append
-                                          macro-declarations-alist
-                                          defun-declarations-alist)))))
+                                         (append macro-declarations-alist
+                                                 defun-declarations-alist
+                                                 nil))))) ; Copy both alists.
                        ((and (or `condition-case `condition-case-unless-debug)
                              (guard (save-excursion
                                       (ignore-errors
