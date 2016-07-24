@@ -1431,6 +1431,7 @@ push_handler_nosignal (Lisp_Object tag_ch_val, enum handlertype handlertype)
 }
 
 
+static Lisp_Object signal_or_quit (Lisp_Object, Lisp_Object, bool);
 static Lisp_Object find_handler_clause (Lisp_Object, Lisp_Object);
 static bool maybe_call_debugger (Lisp_Object conditions, Lisp_Object sig,
 				 Lisp_Object data);
@@ -1444,7 +1445,7 @@ process_quit_flag (void)
     Fkill_emacs (Qnil);
   if (EQ (Vthrow_on_input, flag))
     Fthrow (Vthrow_on_input, Qt);
-  Fsignal (Qquit, Qnil);
+  quit ();
 }
 
 DEFUN ("signal", Fsignal, Ssignal, 2, 2, 0,
@@ -1460,8 +1461,28 @@ DATA should be a list.  Its elements are printed as part of the error message.
 See Info anchor `(elisp)Definition of signal' for some details on how this
 error message is constructed.
 If the signal is handled, DATA is made available to the handler.
-See also the function `condition-case'.  */)
+See also the function `condition-case'.  */
+       attributes: noreturn)
   (Lisp_Object error_symbol, Lisp_Object data)
+{
+  signal_or_quit (error_symbol, data, false);
+  eassume (false);
+}
+
+/* Quit, in response to a keyboard quit request.  */
+Lisp_Object
+quit (void)
+{
+  return signal_or_quit (Qquit, Qnil, true);
+}
+
+/* Signal an error, or quit.  ERROR_SYMBOL and DATA are as with Fsignal.
+   If KEYBOARD_QUIT, this is a quit; ERROR_SYMBOL should be
+   Qquit and DATA should be Qnil, and this function may return.
+   Otherwise this function is like Fsignal and does not return.  */
+
+static Lisp_Object
+signal_or_quit (Lisp_Object error_symbol, Lisp_Object data, bool keyboard_quit)
 {
   /* When memory is full, ERROR-SYMBOL is nil,
      and DATA is (REAL-ERROR-SYMBOL . REAL-DATA).
@@ -1542,7 +1563,7 @@ See also the function `condition-case'.  */)
 	= maybe_call_debugger (conditions, error_symbol, data);
       /* We can't return values to code which signaled an error, but we
 	 can continue code which has signaled a quit.  */
-      if (debugger_called && EQ (real_error_symbol, Qquit))
+      if (keyboard_quit && debugger_called && EQ (real_error_symbol, Qquit))
 	return Qnil;
     }
 
@@ -1567,16 +1588,6 @@ See also the function `condition-case'.  */)
 
   string = Ferror_message_string (data);
   fatal ("%s", SDATA (string));
-}
-
-/* Internal version of Fsignal that never returns.
-   Used for anything but Qquit (which can return from Fsignal).  */
-
-void
-xsignal (Lisp_Object error_symbol, Lisp_Object data)
-{
-  Fsignal (error_symbol, data);
-  emacs_abort ();
 }
 
 /* Like xsignal, but takes 0, 1, 2, or 3 args instead of a list.  */

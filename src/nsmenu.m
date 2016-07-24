@@ -1843,7 +1843,7 @@ ns_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
 
   if (EQ (ret, Qundefined) && window_closed)
     /* Make close button pressed equivalent to C-g.  */
-    Fsignal (Qquit, Qnil);
+    quit ();
 
   return ret;
 }

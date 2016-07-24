@@ -827,7 +827,7 @@ w32_menu_show (struct frame *f, int x, int y, int menuflags,
     {
       unblock_input ();
       /* Make "Cancel" equivalent to C-g.  */
-      Fsignal (Qquit, Qnil);
+      quit ();
     }
 
   unblock_input ();
@@ -1019,7 +1019,7 @@ w32_dialog_show (struct frame *f, Lisp_Object title,
     }
   else
     /* Make "Cancel" equivalent to C-g.  */
-    Fsignal (Qquit, Qnil);
+    quit ();
 
   return Qnil;
 }
@@ -1155,7 +1155,7 @@ simple_dialog_show (struct frame *f, Lisp_Object contents, Lisp_Object header)
   else if (answer == IDNO)
     lispy_answer = build_string ("No");
   else
-    Fsignal (Qquit, Qnil);
+    quit ();
 
   for (temp = XCDR (contents); CONSP (temp); temp = XCDR (temp))
     {
@@ -1177,8 +1177,7 @@ simple_dialog_show (struct frame *f, Lisp_Object contents, Lisp_Object header)
 	  return value;
 	}
     }
-  Fsignal (Qquit, Qnil);
-  return Qnil;
+  return quit ();
 }
 #endif  /* !HAVE_DIALOGS  */
 

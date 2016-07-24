@@ -3879,7 +3879,12 @@ extern void run_hook_with_args_2 (Lisp_Object, Lisp_Object, Lisp_Object);
 extern Lisp_Object run_hook_with_args (ptrdiff_t nargs, Lisp_Object *args,
 				       Lisp_Object (*funcall)
 				       (ptrdiff_t nargs, Lisp_Object *args));
-extern _Noreturn void xsignal (Lisp_Object, Lisp_Object);
+extern Lisp_Object quit (void);
+INLINE _Noreturn void
+xsignal (Lisp_Object error_symbol, Lisp_Object data)
+{
+  Fsignal (error_symbol, data);
+}
 extern _Noreturn void xsignal0 (Lisp_Object);
 extern _Noreturn void xsignal1 (Lisp_Object, Lisp_Object);
 extern _Noreturn void xsignal2 (Lisp_Object, Lisp_Object, Lisp_Object);

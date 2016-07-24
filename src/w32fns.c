@@ -7584,7 +7584,7 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
 
   /* Make "Cancel" equivalent to C-g.  */
   if (NILP (filename))
-    Fsignal (Qquit, Qnil);
+    quit ();
 
   return filename;
 }

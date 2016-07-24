@@ -6346,7 +6346,7 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
 
   /* Make "Cancel" equivalent to C-g.  */
   if (NILP (file))
-    Fsignal (Qquit, Qnil);
+    quit ();
 
   decoded_file = DECODE_FILE (file);
 
@@ -6418,7 +6418,7 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
 
   /* Make "Cancel" equivalent to C-g.  */
   if (NILP (file))
-    Fsignal (Qquit, Qnil);
+    quit ();
 
   decoded_file = DECODE_FILE (file);
 
@@ -6469,7 +6469,7 @@ nil, it defaults to the selected frame. */)
   unblock_input ();
 
   if (NILP (font))
-    Fsignal (Qquit, Qnil);
+    quit ();
 
   return unbind_to (count, font);
 }

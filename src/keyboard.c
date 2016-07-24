@@ -696,7 +696,7 @@ recursive_edit_1 (void)
 
   val = command_loop ();
   if (EQ (val, Qt))
-    Fsignal (Qquit, Qnil);
+    quit ();
   /* Handle throw from read_minibuf when using minibuffer
      while it's active but we're in another window.  */
   if (STRINGP (val))
@@ -7581,7 +7581,7 @@ menu_item_eval_property_1 (Lisp_Object arg)
   /* If we got a quit from within the menu computation,
      quit all the way out of it.  This takes care of C-] in the debugger.  */
   if (CONSP (arg) && EQ (XCAR (arg), Qquit))
-    Fsignal (Qquit, Qnil);
+    quit ();
 
   return Qnil;
 }
@@ -10407,7 +10407,7 @@ handle_interrupt (bool in_signal_handler)
 	  immediate_quit = false;
 	  pthread_sigmask (SIG_SETMASK, &empty_mask, 0);
 	  saved = gl_state;
-	  Fsignal (Qquit, Qnil);
+	  quit ();
 	  gl_state = saved;
 	}
       else

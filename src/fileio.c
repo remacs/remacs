@@ -4513,7 +4513,7 @@ by calling `format-decode', which see.  */)
                              PT - BEG, Z - PT - inserted);
 
   if (read_quit)
-    Fsignal (Qquit, Qnil);
+    quit ();
 
   /* Retval needs to be dealt with in all cases consistently.  */
   if (NILP (val))

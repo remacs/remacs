@@ -3759,7 +3759,7 @@ tty_menu_show (struct frame *f, int x, int y, int menuflags,
       /* Make "Cancel" equivalent to C-g unless FOR_CLICK (which means
 	 the menu was invoked with a mouse event as POSITION).  */
       if (!(menuflags & MENU_FOR_CLICK))
-        Fsignal (Qquit, Qnil);
+	quit ();
       break;
     }
 

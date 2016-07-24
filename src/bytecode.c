@@ -386,7 +386,7 @@ relocate_byte_stack (void)
 	Vquit_flag = Qnil;				\
 	if (EQ (Vthrow_on_input, flag))			\
 	  Fthrow (Vthrow_on_input, Qt);			\
-	Fsignal (Qquit, Qnil);				\
+	quit ();					\
       }							\
     else if (pending_signals)				\
       process_pending_signals ();			\
