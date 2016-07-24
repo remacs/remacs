@@ -6026,7 +6026,7 @@
 
 2014-11-01  Michael R. Mauger  <michael@mauger.com>
 
-	* sql.el (sql-mode-oracle-font-lock-keywords): Correct regexp
+	* progmodes/sql.el (sql-mode-oracle-font-lock-keywords): Correct regexp
 	syntax, add new keywords, and parse longer keywords first.
 	(sql-redirect-one): Protect against empty command.
 	(sql-mode, sql-interactive-mode): Set `custom-mode-group' property
@@ -6034,7 +6034,7 @@
 
 2014-11-01  Michael R. Mauger  <michael@mauger.com>
 
-	* sql.el (sql-interactive-mode, sql-stop): Correct fix for
+	* progmodes/sql.el (sql-interactive-mode, sql-stop): Correct fix for
 	Bug#16814 with let-bind of comint-input-ring variables around read
 	and save functions.
 

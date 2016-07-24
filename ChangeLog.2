@@ -169,11 +169,11 @@
 
 	Correct cl-flet usage (Bug#22317)
 
-	* mh-compat.el: Rename mh-cl-flet to mh-flet and convert alias to
+	* lisp/mh-e/mh-compat.el: Rename mh-cl-flet to mh-flet and convert alias to
 	macro using patch from Katsumi Yamaoka <yamaoka@jpl.org>.
-	* mh-thread.el (mh-thread-set-tables):
-	* mh-show.el (mh-gnus-article-highlight-citation):
-	* mh-mime.el (mh-display-with-external-viewer):
+	* lisp/mh-e/mh-thread.el (mh-thread-set-tables):
+	* lisp/mh-e/mh-show.el (mh-gnus-article-highlight-citation):
+	* lisp/mh-e/mh-mime.el (mh-display-with-external-viewer):
 	(mh-mime-display, mh-press-button, mh-push-button):
 	(mh-display-emphasis): Call mh-flet instead of mh-cl-flet.
 
@@ -274,7 +274,7 @@
 	then 'ses--unbind-cell-name' must be used in order to remove the old
 	name from the name hashmap.
 
-	* ses.el (ses-rename-cell): check consistency of cell symbol from
+	* lisp/ses.el (ses-rename-cell): check consistency of cell symbol from
 	text-property and from array object. Instead of 'makunbound', use
 	either 'ses--unbind-cell-name' or 'kill-local-variable' depending on
 	whether the cell old name is a named cell or an A1 type cell
@@ -1572,7 +1572,7 @@
 
 	org-map-entries: Fix org-agenda-prepare-buffers call
 
-	* lisp/org.el (org-map-entries): Check that buffer-file-name is non-nil
+	* lisp/org/org.el (org-map-entries): Check that buffer-file-name is non-nil
 	  before passing to org-agenda-prepare-buffers.
 
 	This is a backport of commit 44c8cd7136e3fcd1e6bfa08895cac437b7a691fa
@@ -2202,7 +2202,7 @@
 
 	Prevent bootstrap autoload backup files
 
-	 * lisp/emacs-lisp/autoload (autoload-find-generated-file): Suppress
+	 * lisp/emacs-lisp/autoload.el (autoload-find-generated-file): Suppress
 	   backups in newly created file.
 
 	  (autoload-ensure-default-file): Function split into two.
@@ -2514,10 +2514,10 @@
 
 	The arguments BEG and END were unused, and are now removed.
 
-	* display.texi (Xwidgets): Document the change
-	* xwidget.el (make-xwidget, xwidget-insert)
+	* doc/emacs/display.texi (Xwidgets): Document the change
+	* lisp/xwidget.el (make-xwidget, xwidget-insert)
 	(xwidget-webkit-new-session): Reflect changed arguments
-	* xwidget.c (Fmake_xwidget, syms_of_xwidget): Reflect changed arguments
+	* src/xwidget.c (Fmake_xwidget, syms_of_xwidget): Reflect changed arguments
 
 2016-04-02  Eli Zaretskii  <eliz@gnu.org>
 
@@ -2752,7 +2752,7 @@
 
 	* lisp/emacs-lisp/map.el (map-put): Do not bind the evaluated place
 	expression to a new symbol.
-	* test/lisp/emacs-lisp/map-tests.el: Add a regression test.
+	* test/automated/map-tests.el: Add a regression test.
 
 2016-03-25  Eli Zaretskii  <eliz@gnu.org>
 
@@ -2805,7 +2805,7 @@
 
 	Fix display of Indic scripts
 
-	* ftfont.c (ftfont_shape_by_flt): For combining characters out
+	* src/ftfont.c (ftfont_shape_by_flt): For combining characters out
 	of the range U+300...U+36F, use the "combining" FLT only with
 	non-OTF fonts.
 
@@ -2953,7 +2953,7 @@
 
 	Fix an Isearch var to be a string (Bug#23038)
 
-	* isearch.el (isearch--describe-regexp-mode): The `description' var
+	* lisp/isearch.el (isearch--describe-regexp-mode): The `description' var
 	  needs to always be a string.  Add the missing default case for the
 	  cond form that ensures that.
 
@@ -3353,7 +3353,7 @@
 
 	Simplify "Visit New File" to "New File"
 
-	* doc/emacs/files.texi,lisp/menu-bar.el (menu-bar-file-menu),
+	* doc/emacs/files.texi, lisp/menu-bar.el (menu-bar-file-menu),
 	  lisp/startup.el(normal-mouse-start-screen,
 	  normal-no-mouse-startup-screen): Change label "Visit New File" to "New
 	  File".
@@ -3438,7 +3438,7 @@
 
 	Update Emacs manual section related to character folding
 
-	* search.texi: Character folding is not on by default.
+	* doc/emacs/search.texi: Character folding is not on by default.
 
 2016-03-11  Eli Zaretskii  <eliz@gnu.org>
 
