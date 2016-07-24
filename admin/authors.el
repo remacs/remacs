@@ -652,6 +652,7 @@ Changes to files in this list are not listed.")
     "ebuild.bat" "install.bat" "fast-install.bat"
     "debug.bat.in" "emacs.bat.in" "addsection.c"
     "inc/sys/dir.h" "inc/gettext.h"
+    "time.h"
     ".gdbinit-union"
     "alloca.s"
     "make-delta"
