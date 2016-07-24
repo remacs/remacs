@@ -25,6 +25,9 @@ otherwise leave it unmarked.
 
 * Installation Changes in Emacs 25.2
 
+** By default libgnutls is now required when building Emacs.
+Use 'configure --with-gnutls=no' to build even when GnuTLS is missing.
+
 ** The new option 'configure --enable-gcc-warnings=warn-only' causes
 GCC to issue warnings without stopping the build.  This behavior is
 now the default in developer builds.  As before, use

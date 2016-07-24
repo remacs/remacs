@@ -3568,9 +3568,9 @@ fi
 AC_SUBST(LIBGIF)
 
 dnl Check for required libraries.
+MISSING=
+WITH_NO=
 if test "${HAVE_X11}" = "yes"; then
-  MISSING=""
-  WITH_NO=""
   test "${with_xpm}" != "no" && test "${HAVE_XPM}" != "yes" &&
     MISSING="libXpm" && WITH_NO="--with-xpm=no"
   test "${with_jpeg}" != "no" && test "${HAVE_JPEG}" != "yes" &&
@@ -3581,15 +3581,16 @@ if test "${HAVE_X11}" = "yes"; then
     MISSING="$MISSING libgif/libungif" && WITH_NO="$WITH_NO --with-gif=no"
   test "${with_tiff}" != "no" && test "${HAVE_TIFF}" != "yes" &&
     MISSING="$MISSING libtiff" && WITH_NO="$WITH_NO --with-tiff=no"
-
-  if test "X${MISSING}" != X; then
-    AC_MSG_ERROR([The following required libraries were not found:
+fi
+test "${with_gnutls}" != "no" && test "${HAVE_GNUTLS}" != "yes" &&
+  MISSING="$MISSING gnutls" && WITH_NO="$WITH_NO --with-gnutls=no"
+if test "X${MISSING}" != X; then
+  AC_MSG_ERROR([The following required libraries were not found:
     $MISSING
 Maybe some development libraries/packages are missing?
 If you don't want to link with them give
     $WITH_NO
 as options to configure])
-  fi
 fi
 
 ### Use -lgpm if available, unless '--with-gpm=no'.
