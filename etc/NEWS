@@ -861,6 +861,7 @@ fitting for use in money calculations
 
 ** Hide-IfDef mode
 
+*** Hide-IfDef mode now support full C/C++ expressions in macros,
 macro argument expansion, interactive macro evaluation and automatic
 scanning of #define'd symbols.
 
@@ -870,7 +871,9 @@ result of evaluating a macro.
 *** New command 'hif-clear-all-ifdef-define', bound to 'C-c @ C', clears
 all defined symbols in 'hide-ifdef-env'.
 
+*** New custom variable 'hide-ifdef-header-regexp' to define C/C++ header
 file name patterns.  Defaults to files whose extension is one of '.h',
+'.hh', '.hpp', '.hxx', or '.h++', matched case-insensitively.
 
 *** New custom variable 'hide-ifdef-expand-reinclusion-protection' to prevent
 reinclusion protected (a.k.a. "idempotent") header files from being hidden.
@@ -990,9 +993,9 @@ to avoid interfering with the kill ring.
 allow overriding the regular expression that recognizes the ldapsearch
 command line's password prompt.
 
-EUDC's BBDB backend now supports BBDB 3.
+*** EUDC's BBDB backend now supports BBDB 3.
 
-EUDC's PH backend (eudcb-ph.el) is obsolete.
+*** EUDC's PH backend (eudcb-ph.el) is obsolete.
 
 ** Eshell
 
@@ -1326,6 +1329,7 @@ area.  The output is still logged to the '*Messages*' buffer.
 buffers to allow certain parts of the text to be writable.
 
 ** A new variable 'comment-end-can-be-escaped' is useful in languages
+such as C and C++ where line comments with escaped newlines are
 continued to the next line.
 
 ** New macro 'define-advice'.
@@ -1651,6 +1655,7 @@ names it puts in TAGS files.  This is so the etags.el back-end for
 positives.
 
 Use --class-qualify (-Q) if you want the old default behavior of
+qualifying class members in C++, Java, Objective C, and Perl.  Note
 that using -Q might make some class members become "unknown" to 'M-.'
 ('xref-find-definitions'); if so, you can use 'C-u M-.' to specify the
 qualified names by hand.
