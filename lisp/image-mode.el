@@ -784,6 +784,9 @@ Otherwise, display the image by calling `image-mode'"
   (kill-buffer (current-buffer)))
 
 (defun image-after-revert-hook ()
+  ;; Fixes bug#21598
+  (when (not (image-get-display-property))
+    (image-toggle-display-image))
   (when (image-get-display-property)
     (image-toggle-display-text)
     ;; Update image display.
