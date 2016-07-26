@@ -112,11 +112,13 @@ easy interactive way to set this from the Server buffer."
 (defun gnus-cloud-encode-data ()
   (cond
    ((eq gnus-cloud-storage-method 'base64-gzip)
-    (call-process-region (point-min) (point-max) "gzip"
-                         t (current-buffer) nil
-                         "-c"))
+    (progn
+      (call-process-region (point-min) (point-max) "gzip"
+                           t (current-buffer) nil
+                           "-c")
+      (base64-encode-region (point-min) (point-max))))
 
-   ((memq gnus-cloud-storage-method '(base64 base64-gzip))
+   ((eq gnus-cloud-storage-method 'base64)
     (base64-encode-region (point-min) (point-max)))
 
    ((eq gnus-cloud-storage-method 'epg)
