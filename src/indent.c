@@ -1162,7 +1162,7 @@ compute_motion (ptrdiff_t from, ptrdiff_t frombyte, EMACS_INT fromvpos,
   int prev_tab_offset;		/* Previous tab offset.  */
   int continuation_glyph_width;
   struct buffer *cache_buffer = current_buffer;
-  struct region_cache *width_cache;
+  struct region_cache *width_cache = NULL;
 
   struct composition_it cmp_it;
 
@@ -1170,11 +1170,14 @@ compute_motion (ptrdiff_t from, ptrdiff_t frombyte, EMACS_INT fromvpos,
 
   if (cache_buffer->base_buffer)
     cache_buffer = cache_buffer->base_buffer;
-  width_cache = width_run_cache_on_off ();
   if (dp == buffer_display_table ())
-    width_table = (VECTORP (BVAR (current_buffer, width_table))
-                   ? XVECTOR (BVAR (current_buffer, width_table))->contents
-                   : 0);
+    {
+      width_table = (VECTORP (BVAR (current_buffer, width_table))
+		     ? XVECTOR (BVAR (current_buffer, width_table))->contents
+		     : 0);
+      if (width_table)
+	width_cache = width_run_cache_on_off ();
+    }
   else
     /* If the window has its own display table, we can't use the width
        run cache, because that's based on the buffer's display table.  */
