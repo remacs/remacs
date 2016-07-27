@@ -4767,7 +4767,7 @@ mutually_exclusive_p (struct re_pattern_buffer *bufp, const_re_char *p1,
 	else if ((re_opcode_t) *p1 == charset
 		 || (re_opcode_t) *p1 == charset_not)
 	  {
-	    if (!execute_charset (&p1, c, c, !multibyte))
+	    if (!execute_charset (&p1, c, c, !multibyte || IS_REAL_ASCII (c)))
 	      {
 		DEBUG_PRINT ("	 No match => fast loop.\n");
 		return 1;
