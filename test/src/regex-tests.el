@@ -651,12 +651,24 @@ differences in behavior.")
        (error "Error parsing TESTS file line: '%s'" (buffer-string))))
     failures))
 
-(ert-deftest regex-tests ()
-  "Tests of the regular expression engine.  This evaluates the
-BOOST, PCRE, PTESTS and TESTS test cases from glibc."
-  (should-not (regex-tests-BOOST))
-  (should-not (regex-tests-PCRE))
-  (should-not (regex-tests-PTESTS))
+(ert-deftest regex-tests-BOOST ()
+  "Tests of the regular expression engine.
+This evaluates the BOOST test cases from glibc."
+  (should-not (regex-tests-BOOST)))
+
+(ert-deftest regex-tests-PCRE ()
+  "Tests of the regular expression engine.
+This evaluates the PCRE test cases from glibc."
+  (should-not (regex-tests-PCRE)))
+
+(ert-deftest regex-tests-PTESTS ()
+  "Tests of the regular expression engine.
+This evaluates the PTESTS test cases from glibc."
+  (should-not (regex-tests-PTESTS)))
+
+(ert-deftest regex-tests-TESTS ()
+  "Tests of the regular expression engine.
+This evaluates the TESTS test cases from glibc."
   (should-not (regex-tests-TESTS)))
 
 ;;; regex-tests.el ends here
