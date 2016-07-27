@@ -1108,7 +1108,9 @@ print_compiled_pattern (struct re_pattern_buffer *bufp)
   printf ("no_sub: %d\t", bufp->no_sub);
   printf ("not_bol: %d\t", bufp->not_bol);
   printf ("not_eol: %d\t", bufp->not_eol);
+#ifndef emacs
   printf ("syntax: %lx\n", bufp->syntax);
+#endif
   fflush (stdout);
   /* Perhaps we should print the translate table?  */
 }
@@ -1558,9 +1560,11 @@ do {									\
 /* Subroutine declarations and macros for regex_compile.  */
 
 static reg_errcode_t regex_compile (re_char *pattern, size_t size,
-				    reg_syntax_t syntax,
 #ifdef emacs
+				    bool posix_backtracking,
 				    const char *whitespace_regexp,
+#else
+				    reg_syntax_t syntax,
 #endif
 				    struct re_pattern_buffer *bufp);
 static void store_op1 (re_opcode_t op, unsigned char *loc, int arg);
@@ -2426,9 +2430,14 @@ do {									\
   } while (0)
 
 static reg_errcode_t
-regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
+regex_compile (const_re_char *pattern, size_t size,
 #ifdef emacs
+# define syntax RE_SYNTAX_EMACS
+	       bool posix_backtracking,
 	       const char *whitespace_regexp,
+#else
+	       reg_syntax_t syntax,
+# define posix_backtracking (!(syntax & RE_NO_POSIX_BACKTRACKING))
 #endif
 	       struct re_pattern_buffer *bufp)
 {
@@ -2518,7 +2527,9 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
   range_table_work.allocated = 0;
 
   /* Initialize the pattern buffer.  */
+#ifndef emacs
   bufp->syntax = syntax;
+#endif
   bufp->fastmap_accurate = 0;
   bufp->not_bol = bufp->not_eol = 0;
   bufp->used_syntax = 0;
@@ -3645,7 +3656,7 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
 
   /* If we don't want backtracking, force success
      the first time we reach the end of the compiled pattern.  */
-  if (syntax & RE_NO_POSIX_BACKTRACKING)
+  if (!posix_backtracking)
     BUF_PUSH (succeed);
 
   /* We have succeeded; set the length of the buffer.  */
@@ -3680,6 +3691,12 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
 #endif /* not MATCH_MAY_ALLOCATE */
 
   FREE_STACK_RETURN (REG_NOERROR);
+
+#ifdef emacs
+# undef syntax
+#else
+# undef posix_backtracking
+#endif
 } /* regex_compile */
 
 /* Subroutines for `regex_compile'.  */
@@ -5442,6 +5459,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 	  {
 	    int buf_charlen;
 	    re_wchar_t buf_ch;
+	    reg_syntax_t syntax;
 
 	    DEBUG_PRINT ("EXECUTING anychar.\n");
 
@@ -5450,10 +5468,14 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 						target_multibyte);
 	    buf_ch = TRANSLATE (buf_ch);
 
-	    if ((!(bufp->syntax & RE_DOT_NEWLINE)
-		 && buf_ch == '\n')
-		|| ((bufp->syntax & RE_DOT_NOT_NULL)
-		    && buf_ch == '\000'))
+#ifdef emacs
+	    syntax = RE_SYNTAX_EMACS;
+#else
+	    syntax = bufp->syntax;
+#endif
+
+	    if ((!(syntax & RE_DOT_NEWLINE) && buf_ch == '\n')
+		|| ((syntax & RE_DOT_NOT_NULL) && buf_ch == '\000'))
 	      goto fail;
 
 	    DEBUG_PRINT ("  Matched \"%d\".\n", *d);
@@ -6281,7 +6303,7 @@ bcmp_translate (const_re_char *s1, const_re_char *s2, register ssize_t len,
 const char *
 re_compile_pattern (const char *pattern, size_t length,
 #ifdef emacs
-		    reg_syntax_t syntax, const char *whitespace_regexp,
+		    bool posix_backtracking, const char *whitespace_regexp,
 #endif
 		    struct re_pattern_buffer *bufp)
 {
@@ -6298,7 +6320,7 @@ re_compile_pattern (const char *pattern, size_t length,
 
   ret = regex_compile ((re_char*) pattern, length,
 #ifdef emacs
-		       syntax,
+		       posix_backtracking,
 		       whitespace_regexp,
 #else
 		       re_syntax_options,

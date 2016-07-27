@@ -354,9 +354,10 @@ struct re_pattern_buffer
 	/* Number of bytes actually used in `buffer'.  */
   size_t used;
 
+#ifndef emacs
         /* Syntax setting with which the pattern was compiled.  */
   reg_syntax_t syntax;
-
+#endif
         /* Pointer to a fastmap, if any, otherwise zero.  re_search uses
            the fastmap, if there is one, to skip over impossible
            starting points for matches.  */
@@ -473,7 +474,7 @@ extern reg_syntax_t re_set_syntax (reg_syntax_t __syntax);
    BUFFER.  Return NULL if successful, and an error string if not.  */
 extern const char *re_compile_pattern (const char *__pattern, size_t __length,
 #ifdef emacs
-				       reg_syntax_t syntax,
+				       bool posix_backtracking,
 				       const char *whitespace_regexp,
 #endif
 				       struct re_pattern_buffer *__buffer);

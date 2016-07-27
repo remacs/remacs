@@ -114,7 +114,6 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
 		   Lisp_Object translate, bool posix)
 {
   const char *whitespace_regexp;
-  reg_syntax_t syntax;
   char *val;
 
   cp->regexp = Qnil;
@@ -133,12 +132,11 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
      So let's turn it off.  */
   /*  BLOCK_INPUT;  */
 
-  syntax = RE_SYNTAX_EMACS | (posix ? 0 : RE_NO_POSIX_BACKTRACKING);
   whitespace_regexp = STRINGP (Vsearch_spaces_regexp) ?
     SSDATA (Vsearch_spaces_regexp) : NULL;
 
   val = (char *) re_compile_pattern (SSDATA (pattern), SBYTES (pattern),
-				     syntax, whitespace_regexp, &cp->buf);
+				     posix, whitespace_regexp, &cp->buf);
 
   /* If the compiled pattern hard codes some of the contents of the
      syntax-table, it can only be reused with *this* syntax table.  */
