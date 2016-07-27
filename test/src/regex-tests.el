@@ -20,7 +20,6 @@
 ;;; Code:
 
 (require 'ert)
-(require 'cl)
 
 (ert-deftest regex-word-cc-fallback-test ()
   "Test that ‘[[:cc:]]*x’ matches ‘x’ (bug#24020).
@@ -516,9 +515,9 @@ differences in behavior.")
                  ('invalid-regexp 'compilation-failed))
 
                matches-observed
-               (loop for x from 0 to 20
-                     collect (and (not what-failed)
-                                  (or (match-string x string) "<unset>")))))
+               (cl-loop for x from 0 to 20
+                        collect (and (not what-failed)
+                                     (or (match-string x string) "<unset>")))))
        nil)
 
       ;; verification line: failed match
