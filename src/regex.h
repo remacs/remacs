@@ -474,6 +474,7 @@ extern reg_syntax_t re_set_syntax (reg_syntax_t __syntax);
 extern const char *re_compile_pattern (const char *__pattern, size_t __length,
 #ifdef emacs
 				       reg_syntax_t syntax,
+				       const char *whitespace_regexp,
 #endif
 				       struct re_pattern_buffer *__buffer);
 
@@ -626,8 +627,6 @@ extern char re_iswctype (int ch,    re_wctype_t cc);
 extern re_wctype_t re_wctype_parse (const unsigned char **strp, unsigned limit);
 
 typedef int re_wchar_t;
-
-extern void re_set_whitespace_regexp (const char *regexp);
 
 #endif /* not WIDE_CHAR_SUPPORT */
 

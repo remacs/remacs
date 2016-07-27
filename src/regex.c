@@ -1177,16 +1177,6 @@ re_set_syntax (reg_syntax_t syntax)
 WEAK_ALIAS (__re_set_syntax, re_set_syntax)
 
 #endif
-
-/* Regexp to use to replace spaces, or NULL meaning don't.  */
-static const_re_char *whitespace_regexp;
-
-void
-re_set_whitespace_regexp (const char *regexp)
-{
-  whitespace_regexp = (const_re_char *) regexp;
-}
-WEAK_ALIAS (__re_set_syntax, re_set_syntax)
 
 /* This table gives an error message for each of the error codes listed
    in regex.h.  Obviously the order here has to be same as there.
@@ -1569,6 +1559,9 @@ do {									\
 
 static reg_errcode_t regex_compile (re_char *pattern, size_t size,
 				    reg_syntax_t syntax,
+#ifdef emacs
+				    const char *whitespace_regexp,
+#endif
 				    struct re_pattern_buffer *bufp);
 static void store_op1 (re_opcode_t op, unsigned char *loc, int arg);
 static void store_op2 (re_opcode_t op, unsigned char *loc, int arg1, int arg2);
@@ -2398,6 +2391,9 @@ static boolean group_in_compile_stack (compile_stack_type compile_stack,
 /* `regex_compile' compiles PATTERN (of length SIZE) according to SYNTAX.
    Returns one of error codes defined in `regex.h', or zero for success.
 
+   If WHITESPACE_REGEXP is given (only #ifdef emacs), it is used instead of
+   a space character in PATTERN.
+
    Assumes the `allocated' (and perhaps `buffer') and `translate'
    fields are set in BUFP on entry.
 
@@ -2431,6 +2427,9 @@ do {									\
 
 static reg_errcode_t
 regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
+#ifdef emacs
+	       const char *whitespace_regexp,
+#endif
 	       struct re_pattern_buffer *bufp)
 {
   /* We fetch characters from PATTERN here.  */
@@ -2483,6 +2482,7 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
   /* If the object matched can contain multibyte characters.  */
   const boolean multibyte = RE_MULTIBYTE_P (bufp);
 
+#ifdef emacs
   /* Nonzero if we have pushed down into a subpattern.  */
   int in_subpattern = 0;
 
@@ -2491,6 +2491,7 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
   re_char *main_p;
   re_char *main_pattern;
   re_char *main_pend;
+#endif
 
 #ifdef DEBUG
   debug++;
@@ -2559,6 +2560,7 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
     {
       if (p == pend)
 	{
+#ifdef emacs
 	  /* If this is the end of an included regexp,
 	     pop back to the main regexp and try again.  */
 	  if (in_subpattern)
@@ -2569,6 +2571,7 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
 	      pend = main_pend;
 	      continue;
 	    }
+#endif
 	  /* If this is the end of the main regexp, we are done.  */
 	  break;
 	}
@@ -2577,6 +2580,7 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
 
       switch (c)
 	{
+#ifdef emacs
 	case ' ':
 	  {
 	    re_char *p1 = p;
@@ -2609,6 +2613,7 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
 	    pend = p + strlen ((const char *) p);
 	    break;
 	  }
+#endif
 
 	case '^':
 	  {
@@ -6276,13 +6281,10 @@ bcmp_translate (const_re_char *s1, const_re_char *s2, register ssize_t len,
 const char *
 re_compile_pattern (const char *pattern, size_t length,
 #ifdef emacs
-		    reg_syntax_t syntax,
+		    reg_syntax_t syntax, const char *whitespace_regexp,
 #endif
 		    struct re_pattern_buffer *bufp)
 {
-#ifndef emacs
-  const reg_syntax_t syntax = re_syntax_options;
-#endif
   reg_errcode_t ret;
 
   /* GNU code is written to assume at least RE_NREGS registers will be set
@@ -6294,7 +6296,14 @@ re_compile_pattern (const char *pattern, size_t length,
      setting no_sub.  */
   bufp->no_sub = 0;
 
-  ret = regex_compile ((re_char*) pattern, length, syntax, bufp);
+  ret = regex_compile ((re_char*) pattern, length,
+#ifdef emacs
+		       syntax,
+		       whitespace_regexp,
+#else
+		       re_syntax_options,
+#endif
+		       bufp);
 
   if (!ret)
     return NULL;
