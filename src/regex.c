@@ -1149,6 +1149,8 @@ print_double_string (re_char *where, re_char *string1, ssize_t size1,
 
 #endif /* not DEBUG */
 
+#ifndef emacs
+
 /* Set by `re_set_syntax' to the current regexp syntax to recognize.  Can
    also be assigned to arbitrarily: each pattern buffer stores its own
    syntax, so it can be changed between regex compilations.  */
@@ -1173,6 +1175,8 @@ re_set_syntax (reg_syntax_t syntax)
   return ret;
 }
 WEAK_ALIAS (__re_set_syntax, re_set_syntax)
+
+#endif
 
 /* Regexp to use to replace spaces, or NULL meaning don't.  */
 static const_re_char *whitespace_regexp;
@@ -6271,8 +6275,14 @@ bcmp_translate (const_re_char *s1, const_re_char *s2, register ssize_t len,
 
 const char *
 re_compile_pattern (const char *pattern, size_t length,
+#ifdef emacs
+		    reg_syntax_t syntax,
+#endif
 		    struct re_pattern_buffer *bufp)
 {
+#ifndef emacs
+  const reg_syntax_t syntax = re_syntax_options;
+#endif
   reg_errcode_t ret;
 
   /* GNU code is written to assume at least RE_NREGS registers will be set
@@ -6284,7 +6294,7 @@ re_compile_pattern (const char *pattern, size_t length,
      setting no_sub.  */
   bufp->no_sub = 0;
 
-  ret = regex_compile ((re_char*) pattern, length, re_syntax_options, bufp);
+  ret = regex_compile ((re_char*) pattern, length, syntax, bufp);
 
   if (!ret)
     return NULL;

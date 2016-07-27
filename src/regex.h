@@ -20,6 +20,13 @@
 #ifndef _REGEX_H
 #define _REGEX_H 1
 
+#if defined emacs && (defined _REGEX_RE_COMP || defined _LIBC)
+/* We’re not defining re_set_syntax and using a different prototype of
+   re_compile_pattern when building Emacs so fail compilation early with
+   a (somewhat helpful) error message when conflict is detected. */
+# error "_REGEX_RE_COMP nor _LIBC can be defined if emacs is defined."
+#endif
+
 /* Allow the use in C++ code.  */
 #ifdef __cplusplus
 extern "C" {
@@ -453,14 +460,21 @@ typedef struct
 
 /* Declarations for routines.  */
 
+#ifndef emacs
+
 /* Sets the current default syntax to SYNTAX, and return the old syntax.
    You can also simply assign to the `re_syntax_options' variable.  */
 extern reg_syntax_t re_set_syntax (reg_syntax_t __syntax);
+
+#endif
 
 /* Compile the regular expression PATTERN, with length LENGTH
    and syntax given by the global `re_syntax_options', into the buffer
    BUFFER.  Return NULL if successful, and an error string if not.  */
 extern const char *re_compile_pattern (const char *__pattern, size_t __length,
+#ifdef emacs
+				       reg_syntax_t syntax,
+#endif
 				       struct re_pattern_buffer *__buffer);
 
 

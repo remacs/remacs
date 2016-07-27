@@ -113,8 +113,8 @@ static void
 compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
 		   Lisp_Object translate, bool posix)
 {
+  reg_syntax_t syntax;
   char *val;
-  reg_syntax_t old;
 
   cp->regexp = Qnil;
   cp->buf.translate = (! NILP (translate) ? translate : make_number (0));
@@ -131,16 +131,15 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
      Using BLOCK_INPUT here means the debugger won't run if an error occurs.
      So let's turn it off.  */
   /*  BLOCK_INPUT;  */
-  old = re_set_syntax (RE_SYNTAX_EMACS
-		       | (posix ? 0 : RE_NO_POSIX_BACKTRACKING));
 
   if (STRINGP (Vsearch_spaces_regexp))
     re_set_whitespace_regexp (SSDATA (Vsearch_spaces_regexp));
   else
     re_set_whitespace_regexp (NULL);
 
-  val = (char *) re_compile_pattern (SSDATA (pattern),
-				     SBYTES (pattern), &cp->buf);
+  syntax = RE_SYNTAX_EMACS | (posix ? 0 : RE_NO_POSIX_BACKTRACKING);
+  val = (char *) re_compile_pattern (SSDATA (pattern), SBYTES (pattern),
+				     syntax, &cp->buf);
 
   /* If the compiled pattern hard codes some of the contents of the
      syntax-table, it can only be reused with *this* syntax table.  */
@@ -148,7 +147,6 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
 
   re_set_whitespace_regexp (NULL);
 
-  re_set_syntax (old);
   /* unblock_input ();  */
   if (val)
     xsignal1 (Qinvalid_regexp, build_string (val));
