@@ -38,6 +38,8 @@
          (full-name (expand-file-name file dir))
          (regexp    "bar")
          (dired-always-read-filesystem t))
+    (if (file-exists-p dir)
+        (delete-directory dir 'recursive))
     (make-directory dir)
     (with-temp-file full-name (insert "foo"))
     (find-file-noselect full-name)
