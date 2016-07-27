@@ -1156,7 +1156,12 @@ Requesting compaction of %s... (this may take a long time)"
     (unless (gnus-cloud-host-acceptable-method-p server)
       (error "The server under point can't host the Emacs Cloud"))
 
-    (custom-set-variables '(gnus-cloud-method server))
+    (when (not (string-equal gnus-cloud-method server))
+      (custom-set-variables '(gnus-cloud-method server))
+      ;; Note we can't use `Custom-save' here.
+      (when (gnus-yes-or-no-p
+             (format "The new cloud host server is %S now. Save it? " server))
+        (customize-save-variable 'gnus-cloud-method server)))
     (when (gnus-yes-or-no-p (format "Upload Cloud data to %S now? " server))
       (gnus-message 1 "Uploading all data to Emacs Cloud server %S" server)
       (gnus-cloud-upload-data t))))
