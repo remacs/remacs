@@ -99,8 +99,7 @@ are known failures, and are skipped."
 
   `(with-temp-buffer
     (modify-syntax-entry ?_ "w;; ") ; tests expect _ to be a word
-    (insert-file-contents ,(concat (file-name-directory (buffer-file-name)) test-file))
-
+    (insert-file-contents ,(concat "src/regex-resources/" test-file))
     (let ((case-fold-search nil)
           (line-number 1)
           (whitelist-idx 0))
@@ -419,7 +418,7 @@ differences in behavior.")
   (let (failures
         basic icase newline notbol noteol)
     (regex-tests-generic-line
-     ?; "regex-resources/BOOST.tests" regex-tests-BOOST-whitelist
+     ?; "BOOST.tests" regex-tests-BOOST-whitelist
      (if (save-excursion (re-search-forward "^-" nil t))
          (setq basic   (save-excursion (re-search-forward "REG_BASIC" nil t))
                icase   (save-excursion (re-search-forward "REG_ICASE" nil t))
@@ -496,7 +495,7 @@ differences in behavior.")
   (let (failures
         pattern icase string what-failed matches-observed)
     (regex-tests-generic-line
-     ?# "regex-resources/PCRE.tests" regex-tests-PCRE-whitelist
+     ?# "PCRE.tests" regex-tests-PCRE-whitelist
 
      (cond
 
@@ -570,7 +569,7 @@ differences in behavior.")
 (defun regex-tests-PTESTS ()
   (let (failures)
     (regex-tests-generic-line
-     ?# "regex-resources/PTESTS" regex-tests-PTESTS-whitelist
+     ?# "PTESTS" regex-tests-PTESTS-whitelist
      (let* ((fields (split-string (buffer-string) "¦"))
 
             ;; string has 1-based index of first char in the
@@ -632,7 +631,7 @@ differences in behavior.")
 (defun regex-tests-TESTS ()
   (let (failures)
     (regex-tests-generic-line
-     ?# "regex-resources/TESTS" regex-tests-TESTS-whitelist
+     ?# "TESTS" regex-tests-TESTS-whitelist
      (if (save-excursion (re-search-forward "^\\([^:]+\\):\\(.*\\):\\([^:]*\\)$" nil t))
          (let* ((what-failed
                  (let ((raw (string-to-number (match-string 1))))
