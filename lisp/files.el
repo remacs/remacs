@@ -7105,61 +7105,61 @@ Otherwise, trash FILENAME using the freedesktop.org conventions,
 		   (rename-file fn new-fn)))))))))
 
 (defsubst file-attribute-type (attributes)
-  "The type field in ATTRIBUTES returned by `file-attribute'.
+  "The type field in ATTRIBUTES returned by `file-attributes'.
 The value is either t for directory, string (name linked to) for
 symbolic link, or nil."
   (nth 0 attributes))
 
 (defsubst file-attribute-link-number (attributes)
-  "Return the number of links in ATTRIBUTES returned by `file-attribute'."
+  "Return the number of links in ATTRIBUTES returned by `file-attributes'."
   (nth 1 attributes))
 
 (defsubst file-attribute-user-id (attributes)
-  "The UID field in ATTRIBUTES returned by `file-attribute'.
+  "The UID field in ATTRIBUTES returned by `file-attributes'.
 This is either a string or a number.  If a string value cannot be
 looked up, a numeric value, either an integer or a float, is
 returned."
   (nth 2 attributes))
 
 (defsubst file-attribute-group-id (attributes)
-  "The GID field in ATTRIBUTES returned by `file-attribute'.
+  "The GID field in ATTRIBUTES returned by `file-attributes'.
 This is either a string or a number.  If a string value cannot be
 looked up, a numeric value, either an integer or a float, is
 returned."
   (nth 3 attributes))
 
 (defsubst file-attribute-access-time (attributes)
-  "The last access time in ATTRIBUTES returned by `file-attribute'.
+  "The last access time in ATTRIBUTES returned by `file-attributes'.
 This a list of integers (HIGH LOW USEC PSEC) in the same style
 as (current-time)."
   (nth 4 attributes))
 
 (defsubst file-attribute-modification-time (attributes)
-  "The modification time in ATTRIBUTES returned by `file-attribute'.
+  "The modification time in ATTRIBUTES returned by `file-attributes'.
 This is the time of the last change to the file's contents, and
 is a list of integers (HIGH LOW USEC PSEC) in the same style
 as (current-time)."
   (nth 5 attributes))
 
 (defsubst file-attribute-status-change-time (attributes)
-  "The status modification time in ATTRIBUTES returned by `file-attribute'.
+  "The status modification time in ATTRIBUTES returned by `file-attributes'.
 This is the time of last change to the file's attributes: owner
 and group, access mode bits, etc, and is a list of integers (HIGH
 LOW USEC PSEC) in the same style as (current-time)."
   (nth 6 attributes))
 
 (defsubst file-attribute-size (attributes)
-  "The size (in bytes) in ATTRIBUTES returned by `file-attribute'.
+  "The size (in bytes) in ATTRIBUTES returned by `file-attributes'.
 This is a floating point number if the size is too large for an integer."
   (nth 7 attributes))
 
 (defsubst file-attribute-modes (attributes)
-  "The file modes in ATTRIBUTES returned by `file-attribute'.
+  "The file modes in ATTRIBUTES returned by `file-attributes'.
 This is a string of ten letters or dashes as in ls -l."
   (nth 8 attributes))
 
 (defsubst file-attribute-inode-number (attributes)
-  "The inode number in ATTRIBUTES returned by `file-attribute'.
+  "The inode number in ATTRIBUTES returned by `file-attributes'.
 If it is larger than what an Emacs integer can hold, this is of
 the form (HIGH . LOW): first the high bits, then the low 16 bits.
 If even HIGH is too large for an Emacs integer, this is instead
@@ -7168,7 +7168,7 @@ middle 24 bits, and finally the low 16 bits."
   (nth 10 attributes))
 
 (defsubst file-attribute-device-number (attributes)
-  "The file system device number in ATTRIBUTES returned by `file-attribute'.
+  "The file system device number in ATTRIBUTES returned by `file-attributes'.
 If it is larger than what an Emacs integer can hold, this is of
 the form (HIGH . LOW): first the high bits, then the low 16 bits.
 If even HIGH is too large for an Emacs integer, this is instead
