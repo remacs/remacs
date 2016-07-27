@@ -250,8 +250,11 @@ the mode if ARG is omitted or nil."
   nil nil nil
   (unless (derived-mode-p 'ibuffer-mode)
     (error "This buffer is not in Ibuffer mode"))
-  (frame-or-buffer-changed-p 'ibuffer-auto-buffers-changed) ; Initialize state vector
-  (add-hook 'post-command-hook 'ibuffer-auto-update-changed))
+  (cond (ibuffer-auto-mode
+         (frame-or-buffer-changed-p 'ibuffer-auto-buffers-changed) ; Initialize state vector
+         (add-hook 'post-command-hook 'ibuffer-auto-update-changed))
+        (t
+         (remove-hook 'post-command-hook 'ibuffer-auto-update-changed))))
 
 (defun ibuffer-auto-update-changed ()
   (when (frame-or-buffer-changed-p 'ibuffer-auto-buffers-changed)
