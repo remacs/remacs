@@ -611,7 +611,7 @@ w32_draw_vertical_window_border (struct window *w, int x, int y0, int y1)
   r.bottom = y1;
 
   hdc = get_frame_dc (f);
-  face = FACE_OPT_FROM_ID (f, VERTICAL_BORDER_FACE_ID);
+  face = FACE_FROM_ID_OR_NULL (f, VERTICAL_BORDER_FACE_ID);
   if (face)
     w32_fill_rect (f, hdc, face->foreground, &r);
   else
@@ -628,11 +628,11 @@ w32_draw_window_divider (struct window *w, int x0, int x1, int y0, int y1)
 {
   struct frame *f = XFRAME (WINDOW_FRAME (w));
   HDC hdc = get_frame_dc (f);
-  struct face *face = FACE_OPT_FROM_ID (f, WINDOW_DIVIDER_FACE_ID);
+  struct face *face = FACE_FROM_ID_OR_NULL (f, WINDOW_DIVIDER_FACE_ID);
   struct face *face_first
-    = FACE_OPT_FROM_ID (f, WINDOW_DIVIDER_FIRST_PIXEL_FACE_ID);
+    = FACE_FROM_ID_OR_NULL (f, WINDOW_DIVIDER_FIRST_PIXEL_FACE_ID);
   struct face *face_last
-    = FACE_OPT_FROM_ID (f, WINDOW_DIVIDER_LAST_PIXEL_FACE_ID);
+    = FACE_FROM_ID_OR_NULL (f, WINDOW_DIVIDER_LAST_PIXEL_FACE_ID);
   unsigned long color = face ? face->foreground : FRAME_FOREGROUND_PIXEL (f);
   unsigned long color_first = (face_first
 			       ? face_first->foreground
@@ -991,7 +991,7 @@ x_set_mouse_face_gc (struct glyph_string *s)
 
   /* What face has to be used last for the mouse face?  */
   face_id = MOUSE_HL_INFO (s->f)->mouse_face_face_id;
-  face = FACE_OPT_FROM_ID (s->f, face_id);
+  face = FACE_FROM_ID_OR_NULL (s->f, face_id);
   if (face == NULL)
     face = FACE_FROM_ID (s->f, MOUSE_FACE_ID);
 
@@ -1434,7 +1434,7 @@ x_draw_glyphless_glyph_string_foreground (struct glyph_string *s)
 	{
 	  sprintf ((char *) buf, "%0*X",
 		   glyph->u.glyphless.ch < 0x10000 ? 4 : 6,
-		   glyph->u.glyphless.ch);
+		   (unsigned int) glyph->u.glyphless.ch);
 	  str = buf;
 	}
 
@@ -4198,6 +4198,7 @@ w32_scroll_bar_handle_click (struct scroll_bar *bar, W32Msg *msg,
       y = si.nPos;
 
     bar->dragging = 0;
+    struct frame *f;		/* Value is not used.  */
     FRAME_DISPLAY_INFO (f)->last_mouse_scroll_bar_pos = msg->msg.wParam;
 
     switch (sb_event)
@@ -4313,6 +4314,7 @@ w32_horizontal_scroll_bar_handle_click (struct scroll_bar *bar, W32Msg *msg,
     y = si.nMax - si.nPage;
 
     bar->dragging = 0;
+    struct frame *f;		/* Value is not used.  */
     FRAME_DISPLAY_INFO (f)->last_mouse_scroll_bar_pos = msg->msg.wParam;
 
     switch (sb_event)

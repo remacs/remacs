@@ -2518,7 +2518,6 @@ If you set `term-file-prefix' to nil, this function does nothing."
   :version "22.1"
   :group 'mode-line-faces
   :group 'basic-faces)
-(define-obsolete-face-alias 'modeline-inactive 'mode-line-inactive "22.1")
 
 (defface mode-line-highlight
   '((((class color) (min-colors 88))
@@ -2529,7 +2528,6 @@ If you set `term-file-prefix' to nil, this function does nothing."
   :version "22.1"
   :group 'mode-line-faces
   :group 'basic-faces)
-(define-obsolete-face-alias 'modeline-highlight 'mode-line-highlight "22.1")
 
 (defface mode-line-emphasis
   '((t (:weight bold)))
@@ -2545,7 +2543,6 @@ Use the face `mode-line-highlight' for features that can be selected."
   :version "22.1"
   :group 'mode-line-faces
   :group 'basic-faces)
-(define-obsolete-face-alias 'modeline-buffer-id 'mode-line-buffer-id "22.1")
 
 (defface header-line
   '((default
@@ -2752,7 +2749,7 @@ It is used for characters of no fonts too."
 (defface read-multiple-choice-face
   '((t (:inherit underline
         :weight bold)))
-  "Face for the symbol name in Apropos output."
+  "Face for the symbol name in `read-multiple-choice' output."
   :group 'basic-faces
   :version "25.2")
 
@@ -2884,7 +2881,7 @@ also the same size as FACE on FRAME, or fail."
 			   pattern face)))
 	      (error "No fonts match `%s'" pattern)))
 	(car fonts))
-    (cdr (assq 'font (frame-parameters (selected-frame))))))
+    (frame-parameter nil 'font)))
 
 (defcustom font-list-limit 100
   "This variable is obsolete and has no effect."

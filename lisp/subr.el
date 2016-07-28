@@ -600,10 +600,12 @@ Elements of ALIST that are not conses are ignored."
   alist)
 
 (defun alist-get (key alist &optional default remove)
-  "Get the value associated to KEY in ALIST.
-DEFAULT is the value to return if KEY is not found in ALIST.
-REMOVE, if non-nil, means that when setting this element, we should
-remove the entry if the new value is `eql' to DEFAULT."
+  "Return the value associated with KEY in ALIST, using `assq'.
+If KEY is not found in ALIST, return DEFAULT.
+
+This is a generalized variable suitable for use with `setf'.
+When using it to set a value, optional argument REMOVE non-nil
+means to remove KEY from ALIST if the new value is `eql' to DEFAULT."
   (ignore remove) ;;Silence byte-compiler.
   (let ((x (assq key alist)))
     (if x (cdr x) default)))
@@ -1298,6 +1300,12 @@ be a list of the form returned by `event-start' and `event-end'."
 (make-obsolete 'forward-point "use (+ (point) N) instead." "23.1")
 (make-obsolete 'buffer-has-markers-at nil "24.3")
 
+;; bug#23850
+(make-obsolete 'string-to-unibyte   "use `encode-coding-string'." "25.2")
+(make-obsolete 'string-as-unibyte   "use `encode-coding-string'." "25.2")
+(make-obsolete 'string-to-multibyte "use `decode-coding-string'." "25.2")
+(make-obsolete 'string-as-multibyte "use `decode-coding-string'." "25.2")
+
 (defun insert-string (&rest args)
   "Mocklisp-compatibility insert function.
 Like the function `insert' except that any argument that is a number
@@ -1327,8 +1335,6 @@ is converted into a string by expressing it in decimal."
 (set-advertised-calling-convention 'unintern '(name obarray) "23.3")
 (set-advertised-calling-convention 'indirect-function '(object) "25.1")
 (set-advertised-calling-convention 'redirect-frame-focus '(frame focus-frame) "24.3")
-(set-advertised-calling-convention 'decode-char '(ch charset) "21.4")
-(set-advertised-calling-convention 'encode-char '(ch charset) "21.4")
 
 ;;;; Obsolescence declarations for variables, and aliases.
 
@@ -2280,171 +2286,6 @@ keyboard-quit events while waiting for a valid input."
     (message "%s%s" prompt (char-to-string char))
     char))
 
-(defun read-multiple-choice (prompt choices)
-  "Ask user a multiple choice question.
-PROMPT should be a string that will be displayed as the prompt.
-
-CHOICES is an alist where the first element in each entry is a
-character to be entered, the second element is a short name for
-the entry to be displayed while prompting (if there's room, it
-might be shortened), and the third, optional entry is a longer
-explanation that will be displayed in a help buffer if the user
-requests more help.
-
-This function translates user input into responses by consulting
-the bindings in `query-replace-map'; see the documentation of
-that variable for more information.  In this case, the useful
-bindings are `recenter', `scroll-up', and `scroll-down'.  If the
-user enters `recenter', `scroll-up', or `scroll-down' responses,
-perform the requested window recentering or scrolling and ask
-again.
-
-The return value is the matching entry from the CHOICES list.
-
-Usage example:
-
-\(read-multiple-choice \"Continue connecting?\"
-                      '((?a \"always\")
-                        (?s \"session only\")
-                        (?n \"no\")))"
-  (let* ((altered-names nil)
-         (full-prompt
-          (format
-           "%s (%s): "
-           prompt
-           (mapconcat
-            (lambda (elem)
-              (let* ((name (cadr elem))
-                     (pos (seq-position name (car elem)))
-                     (altered-name
-                      (cond
-                       ;; Not in the name string.
-                       ((not pos)
-                        (format "[%c] %s" (car elem) name))
-                       ;; The prompt character is in the name, so highlight
-                       ;; it on graphical terminals...
-                       ((display-supports-face-attributes-p
-                         '(:underline t) (window-frame))
-                        (setq name (copy-sequence name))
-                        (put-text-property pos (1+ pos)
-                                           'face 'read-multiple-choice-face
-                                           name)
-                        name)
-                       ;; And put it in [bracket] on non-graphical terminals.
-                       (t
-                        (concat
-                         (substring name 0 pos)
-                         "["
-                         (upcase (substring name pos (1+ pos)))
-                         "]"
-                         (substring name (1+ pos)))))))
-                (push (cons (car elem) altered-name)
-                      altered-names)
-                altered-name))
-            (append choices '((?? "?")))
-            ", ")))
-         tchar buf wrong-char answer)
-    (save-window-excursion
-      (save-excursion
-	(while (not tchar)
-	  (message "%s%s"
-                   (if wrong-char
-                       "Invalid choice.  "
-                     "")
-                   full-prompt)
-          (setq tchar
-                (if (and (display-popup-menus-p)
-                         last-input-event ; not during startup
-                         (listp last-nonmenu-event)
-                         use-dialog-box)
-                    (x-popup-dialog
-                     t
-                     (cons prompt
-                           (mapcar
-                            (lambda (elem)
-                              (cons (capitalize (cadr elem))
-                                    (car elem)))
-                            choices)))
-                  (condition-case nil
-                      (let ((cursor-in-echo-area t))
-                        (read-char))
-                    (error nil))))
-          (setq answer (lookup-key query-replace-map (vector tchar) t))
-          (setq tchar
-                (cond
-                 ((eq answer 'recenter)
-                  (recenter) t)
-                 ((eq answer 'scroll-up)
-                  (ignore-errors (scroll-up-command)) t)
-                 ((eq answer 'scroll-down)
-                  (ignore-errors (scroll-down-command)) t)
-                 ((eq answer 'scroll-other-window)
-                  (ignore-errors (scroll-other-window)) t)
-                 ((eq answer 'scroll-other-window-down)
-                  (ignore-errors (scroll-other-window-down)) t)
-                 (t tchar)))
-          (when (eq tchar t)
-            (setq wrong-char nil
-                  tchar nil))
-          ;; The user has entered an invalid choice, so display the
-          ;; help messages.
-          (when (and (not (eq tchar nil))
-                     (not (assq tchar choices)))
-	    (setq wrong-char (not (memq tchar '(?? ?\C-h)))
-                  tchar nil)
-            (when wrong-char
-              (ding))
-            (with-help-window (setq buf (get-buffer-create
-                                         "*Multiple Choice Help*"))
-              (with-current-buffer buf
-                (erase-buffer)
-                (pop-to-buffer buf)
-                (insert prompt "\n\n")
-                (let* ((columns (/ (window-width) 25))
-                       (fill-column 21)
-                       (times 0)
-                       (start (point)))
-                  (dolist (elem choices)
-                    (goto-char start)
-                    (unless (zerop times)
-                      (if (zerop (mod times columns))
-                          ;; Go to the next "line".
-                          (goto-char (setq start (point-max)))
-                        ;; Add padding.
-                        (while (not (eobp))
-                          (end-of-line)
-                          (insert (make-string (max (- (* (mod times columns)
-                                                          (+ fill-column 4))
-                                                       (current-column))
-                                                    0)
-                                               ?\s))
-                          (forward-line 1))))
-                    (setq times (1+ times))
-                    (let ((text
-                           (with-temp-buffer
-                             (insert (format
-                                      "%c: %s\n"
-                                      (car elem)
-                                      (cdr (assq (car elem) altered-names))))
-                             (fill-region (point-min) (point-max))
-                             (when (nth 2 elem)
-                               (let ((start (point)))
-                                 (insert (nth 2 elem))
-                                 (unless (bolp)
-                                   (insert "\n"))
-                                 (fill-region start (point-max))))
-                             (buffer-string))))
-                      (goto-char start)
-                      (dolist (line (split-string text "\n"))
-                        (end-of-line)
-                        (if (bolp)
-                            (insert line "\n")
-                          (insert line))
-                        (forward-line 1)))))))))))
-    (when (buffer-live-p buf)
-      (kill-buffer buf))
-    (assq tchar choices)))
-
 (defun sit-for (seconds &optional nodisp obsolete)
   "Redisplay, then wait for SECONDS seconds.  Stop when input is available.
 SECONDS may be a floating-point value.
@@ -2694,26 +2535,27 @@ This finishes the change group by reverting all of its changes."
 	;; Widen buffer temporarily so if the buffer was narrowed within
 	;; the body of `atomic-change-group' all changes can be undone.
 	(widen)
-	(let ((old-car
-	       (if (consp elt) (car elt)))
-	      (old-cdr
-	       (if (consp elt) (cdr elt))))
-	  ;; Temporarily truncate the undo log at ELT.
-	  (when (consp elt)
-	    (setcar elt nil) (setcdr elt nil))
-	  (unless (eq last-command 'undo) (undo-start))
-	  ;; Make sure there's no confusion.
-	  (when (and (consp elt) (not (eq elt (last pending-undo-list))))
-	    (error "Undoing to some unrelated state"))
-	  ;; Undo it all.
-	  (save-excursion
-	    (while (listp pending-undo-list) (undo-more 1)))
-	  ;; Reset the modified cons cell ELT to its original content.
-	  (when (consp elt)
-	    (setcar elt old-car)
-	    (setcdr elt old-cdr))
-	  ;; Revert the undo info to what it was when we grabbed the state.
-	  (setq buffer-undo-list elt))))))
+	(let ((old-car (car-safe elt))
+	      (old-cdr (cdr-safe elt)))
+          (unwind-protect
+              (progn
+                ;; Temporarily truncate the undo log at ELT.
+                (when (consp elt)
+                  (setcar elt nil) (setcdr elt nil))
+                (unless (eq last-command 'undo) (undo-start))
+                ;; Make sure there's no confusion.
+                (when (and (consp elt) (not (eq elt (last pending-undo-list))))
+                  (error "Undoing to some unrelated state"))
+                ;; Undo it all.
+                (save-excursion
+                  (while (listp pending-undo-list) (undo-more 1)))
+                ;; Revert the undo info to what it was when we grabbed
+                ;; the state.
+                (setq buffer-undo-list elt))
+            ;; Reset the modified cons cell ELT to its original content.
+            (when (consp elt)
+              (setcar elt old-car)
+              (setcdr elt old-cdr))))))))
 
 ;;;; Display-related functions.
 

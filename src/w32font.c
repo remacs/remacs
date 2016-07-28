@@ -1747,7 +1747,7 @@ w32_to_x_charset (int fncharset, char *matching)
 
     default:
       /* Encode numerical value of unknown charset.  */
-      sprintf (buf, "*-#%u", fncharset);
+      sprintf (buf, "*-#%d", fncharset);
       return buf;
     }
 
@@ -1834,7 +1834,7 @@ w32_to_x_charset (int fncharset, char *matching)
     /* If no match, encode the numeric value. */
     if (!best_match)
       {
-        sprintf (buf, "*-#%u", fncharset);
+        sprintf (buf, "*-#%d", fncharset);
         return buf;
       }
 

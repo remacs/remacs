@@ -925,8 +925,6 @@ See `sh-feature'.")
      (:weight bold)))
   "Face to show quoted execs like \\=`blabla\\=`."
   :group 'sh-indentation)
-(define-obsolete-face-alias 'sh-heredoc-face 'sh-heredoc "22.1")
-(defvar sh-heredoc-face 'sh-heredoc)
 
 (defface sh-escaped-newline '((t :inherit font-lock-string-face))
   "Face used for (non-escaped) backslash at end of a line in Shell-script mode."
@@ -1207,7 +1205,7 @@ subshells can nest."
     (if q
         (if (characterp q)
             (if (eq q ?\`) 'sh-quoted-exec font-lock-string-face)
-          sh-heredoc-face)
+          'sh-heredoc)
       font-lock-comment-face)))
 
 (defgroup sh-indentation nil
@@ -2902,7 +2900,7 @@ STRING	     This is ignored for the purposes of calculating
       ;;(This function never returns just t.)
       (cond
        ((or (nth 3 (syntax-ppss (point)))
-	    (eq (get-text-property (point) 'face) sh-heredoc-face))
+	    (eq (get-text-property (point) 'face) 'sh-heredoc))
 	;; String continuation -- don't indent
 	(setq result t)
 	(setq have-result t))
@@ -3108,8 +3106,7 @@ we go to the end of the previous line and do not check for continuations."
     (forward-comment (- (point-max)))
     (unless end (beginning-of-line))
     (when (and (not (bobp))
-	       (equal (get-text-property (1- (point)) 'face)
-		      sh-heredoc-face))
+	       (eq (get-text-property (1- (point)) 'face) 'sh-heredoc))
       (let ((p1 (previous-single-property-change (1- (point)) 'face)))
 	(when p1
 	  (goto-char p1)

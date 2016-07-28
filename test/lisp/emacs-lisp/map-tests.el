@@ -192,6 +192,14 @@ Evaluate BODY for each created map.
                      (2 . b)
                      (3 . c))))))
 
+(ert-deftest test-map-do ()
+  (with-maps-do map
+    (let ((result nil))
+      (map-do (lambda (k v)
+                (add-to-list 'result (list (int-to-string k) v)))
+              map)
+      (should (equal result '(("2" 5) ("1" 4) ("0" 3)))))))
+
 (ert-deftest test-map-keys-apply ()
   (with-maps-do map
     (should (equal (map-keys-apply (lambda (k) (int-to-string k))

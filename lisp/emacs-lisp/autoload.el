@@ -736,20 +736,22 @@ FILE's modification time."
                                                package--builtin-versions))
                                  (princ "\n")))))
 
-                      (goto-char (point-min))
-                      (while (not (eobp))
-                        (skip-chars-forward " \t\n\f")
-                        (cond
-                         ((looking-at (regexp-quote generate-autoload-cookie))
-                          ;; If not done yet, figure out where to insert this text.
-                          (unless output-start
-                            (setq output-start (autoload--setup-output
-                                                otherbuf outbuf absfile load-name)))
-                          (autoload--print-cookie-text output-start load-name file))
-                         ((looking-at ";")
-                          ;; Don't read the comment.
-                          (forward-line 1))
-                         (t
+                      ;; Do not insert autoload entries for excluded files.
+                      (unless (member absfile autoload-excludes)
+                        (goto-char (point-min))
+                        (while (not (eobp))
+                          (skip-chars-forward " \t\n\f")
+                          (cond
+                           ((looking-at (regexp-quote generate-autoload-cookie))
+                            ;; If not done yet, figure out where to insert this text.
+                            (unless output-start
+                              (setq output-start (autoload--setup-output
+                                                  otherbuf outbuf absfile load-name)))
+                            (autoload--print-cookie-text output-start load-name file))
+                           ((looking-at ";")
+                            ;; Don't read the comment.
+                            (forward-line 1))
+                           (t
                   ;; Avoid (defvar <foo>) by requiring a trailing space.
                   ;; Also, ignore this prefix business
                   ;; for ;;;###tramp-autoload and friends.
@@ -767,8 +769,8 @@ FILE's modification time."
                                      "define-erc-response-handler"
                                      "defun-rcirc-command"))))
                     (push (match-string 2) defs))
-                          (forward-sexp 1)
-                          (forward-line 1))))))
+                            (forward-sexp 1)
+                            (forward-line 1)))))))
 
           (when (and autoload-compute-prefixes defs)
             ;; This output needs to always go in the main loaddefs.el,
@@ -1058,9 +1060,7 @@ write its autoloads into the specified file instead."
 		  ((not (stringp file)))
 		  ((or (not (file-exists-p file))
                        ;; Remove duplicates as well, just in case.
-                       (member file done)
-                       ;; If the file is actually excluded.
-                       (member (expand-file-name file) autoload-excludes))
+                       (member file done))
                    ;; Remove the obsolete section.
                    (setq changed t)
 		   (autoload-remove-section (match-beginning 0)))
@@ -1086,7 +1086,6 @@ write its autoloads into the specified file instead."
       (let ((no-autoloads-time (or last-time '(0 0 0 0))) file-time)
 	(dolist (file files)
 	  (cond
-	   ((member (expand-file-name file) autoload-excludes) nil)
 	   ;; Passing nil as second argument forces
 	   ;; autoload-generate-file-autoloads to look for the right
 	   ;; spot where to insert each autoloads section.

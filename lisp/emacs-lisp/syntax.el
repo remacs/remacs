@@ -316,6 +316,9 @@ END) suitable for `syntax-propertize-function'."
                   (unless (eq funs
                               (cdr syntax-propertize-extend-region-functions))
                     (setq funs syntax-propertize-extend-region-functions)))))
+            ;; Flush ppss cache between the original value of `start' and that
+            ;; set above by syntax-propertize-extend-region-functions.
+            (syntax-ppss-flush-cache start)
             ;; Move the limit before calling the function, so the function
             ;; can use syntax-ppss.
             (setq syntax-propertize--done end)

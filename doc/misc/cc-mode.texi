@@ -6727,9 +6727,11 @@ Macros which needn't (or mustn't) be followed by a semicolon when you
 invoke them, @dfn{macros with semicolons}, are very common.  These can
 cause @ccmode{} to parse the next line wrongly as a
 @code{statement-cont} (@pxref{Function Symbols}) and thus mis-indent
-it.
+it.  At the top level, a macro invocation before a defun start can
+cause, for example, @code{c-beginning-of-defun} (@kbd{C-M-a}) not to
+find the correct start of the current function.
 
-You can prevent this by specifying which macros have semicolons.  It
+You can prevent these by specifying which macros have semicolons.  It
 doesn't matter whether or not such a macro has a parameter list:
 
 @defopt c-macro-names-with-semicolon

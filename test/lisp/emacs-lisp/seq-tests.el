@@ -107,6 +107,21 @@ Evaluate BODY for each created sequence.
                                   '(a b c d))
                  '((a 0) (b 1) (c 2) (d 3)))))
 
+(ert-deftest test-seq-do-indexed ()
+  (let ((result nil))
+    (seq-do-indexed (lambda (elt i)
+                      (add-to-list 'result (list elt i)))
+                    nil)
+    (should (equal result nil)))
+  (with-test-sequences (seq '(4 5 6))
+    (let ((result nil))
+      (seq-do-indexed (lambda (elt i)
+                        (add-to-list 'result (list elt i)))
+                      seq)
+      (should (equal (seq-elt result 0) '(6 2)))
+      (should (equal (seq-elt result 1) '(5 1)))
+      (should (equal (seq-elt result 2) '(4 0))))))
+
 (ert-deftest test-seq-filter ()
   (with-test-sequences (seq '(6 7 8 9 10))
     (should (equal (seq-filter #'test-sequences-evenp seq) '(6 8 10)))
@@ -165,6 +180,10 @@ Evaluate BODY for each created sequence.
   (with-test-sequences (seq '())
     (should-not (seq-contains seq 3))
     (should-not (seq-contains seq nil))))
+
+(ert-deftest test-seq-contains-should-return-the-elt ()
+  (with-test-sequences (seq '(3 4 5 6))
+    (should (= 5 (seq-contains seq 5)))))
 
 (ert-deftest test-seq-every-p ()
   (with-test-sequences (seq '(43 54 22 1))

@@ -61,9 +61,6 @@
 
 ;; Font-lock
 
-(defvar sieve-control-commands-face 'sieve-control-commands
-  "Face name used for Sieve Control Commands.")
-
 (defface sieve-control-commands
   '((((type tty) (class color)) (:foreground "blue" :weight light))
     (((class grayscale) (background light)) (:foreground "LightGray" :bold t))
@@ -72,12 +69,6 @@
     (((class color) (background dark)) (:foreground "LightSteelBlue"))
     (t (:bold t)))
   "Face used for Sieve Control Commands.")
-;; backward-compatibility alias
-(put 'sieve-control-commands-face 'face-alias 'sieve-control-commands)
-(put 'sieve-control-commands-face 'obsolete-face "22.1")
-
-(defvar sieve-action-commands-face 'sieve-action-commands
-  "Face name used for Sieve Action Commands.")
 
 (defface sieve-action-commands
   '((((type tty) (class color)) (:foreground "blue" :weight bold))
@@ -85,12 +76,6 @@
     (((class color) (background dark)) (:foreground "LightSkyBlue"))
     (t (:inverse-video t :bold t)))
   "Face used for Sieve Action Commands.")
-;; backward-compatibility alias
-(put 'sieve-action-commands-face 'face-alias 'sieve-action-commands)
-(put 'sieve-action-commands-face 'obsolete-face "22.1")
-
-(defvar sieve-test-commands-face 'sieve-test-commands
-  "Face name used for Sieve Test Commands.")
 
 (defface sieve-test-commands
   '((((type tty) (class color)) (:foreground "magenta"))
@@ -102,12 +87,6 @@
     (((class color) (background dark)) (:foreground "Aquamarine"))
     (t (:bold t :underline t)))
   "Face used for Sieve Test Commands.")
-;; backward-compatibility alias
-(put 'sieve-test-commands-face 'face-alias 'sieve-test-commands)
-(put 'sieve-test-commands-face 'obsolete-face "22.1")
-
-(defvar sieve-tagged-arguments-face 'sieve-tagged-arguments
-  "Face name used for Sieve Tagged Arguments.")
 
 (defface sieve-tagged-arguments
   '((((type tty) (class color)) (:foreground "cyan" :weight bold))
@@ -117,9 +96,6 @@
     (((class color) (background dark)) (:foreground "Cyan"))
     (t (:bold t)))
   "Face used for Sieve Tagged Arguments.")
-;; backward-compatibility alias
-(put 'sieve-tagged-arguments-face 'face-alias 'sieve-tagged-arguments)
-(put 'sieve-tagged-arguments-face 'obsolete-face "22.1")
 
 
 (defconst sieve-font-lock-keywords
@@ -128,19 +104,19 @@
      ;; control commands
      (cons (regexp-opt '("require" "if" "else" "elsif" "stop")
                        'words)
-	   'sieve-control-commands-face)
+	   'sieve-control-commands)
      ;; action commands
      (cons (regexp-opt '("fileinto" "redirect" "reject" "keep" "discard")
                        'words)
-	   'sieve-action-commands-face)
+	   'sieve-action-commands)
      ;; test commands
      (cons (regexp-opt '("address" "allof" "anyof" "exists" "false"
 			 "true" "header" "not" "size" "envelope"
                          "body")
                        'words)
-	   'sieve-test-commands-face)
+	   'sieve-test-commands)
      (cons "\\Sw+:\\sw+"
-	   'sieve-tagged-arguments-face))))
+	   'sieve-tagged-arguments))))
 
 ;; Syntax table
 

@@ -291,6 +291,9 @@ extern int sys_umask (int);
 /* Map to MSVC names.  */
 #define execlp    _execlp
 #define execvp    _execvp
+#include <stdint.h>		/* for intptr_t */
+extern intptr_t _execvp (const char *, char **);
+extern intptr_t execve (const char *, char * const *, char * const *);
 #define fdatasync _commit
 #define fdopen	  _fdopen
 #define fsync	  _commit

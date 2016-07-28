@@ -106,14 +106,17 @@ else
 SELECTOR_ACTUAL=$(SELECTOR_EXPENSIVE)
 endif
 
+## Byte-compile all test files to test for errors (unless explicitly
+## told not to), but then evaluate the un-byte-compiled files, because
+## they give cleaner stacktraces.
 
+## Beware: it approximates 'no-byte-compile', so watch out for false-positives!
 %.log: %.el
-	@if grep '^;.*no-byte-compile: t' $< > /dev/null; then \
-	  loadfile=$<; \
-	else \
-	  loadfile=$<c; \
-	  ${MAKE} $$loadfile; \
+	elc=$<c; \
+	if ! grep '^;.*no-byte-compile: t' $< > /dev/null; then \
+	  ${MAKE} $$elc; \
 	fi; \
+	loadfile=$<; \
 	echo Testing $$loadfile; \
 	stat=OK ; \
 	${MKDIR_P} $(dir $@) ; \

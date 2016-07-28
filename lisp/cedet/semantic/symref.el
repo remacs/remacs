@@ -76,10 +76,12 @@
 (declare-function ede-up-directory "ede/files")
 
 ;;; Code:
-(defvar semantic-symref-tool 'detect
-  "*The active symbol reference tool name.
+(defcustom semantic-symref-tool 'detect
+  "The active symbol reference tool name.
 The tool symbol can be 'detect, or a symbol that is the name of
-a tool that can be used for symbol referencing.")
+a tool that can be used for symbol referencing."
+  :type 'symbol
+  :group 'semantic)
 (make-variable-buffer-local 'semantic-symref-tool)
 
 ;;; TOOL SETUP

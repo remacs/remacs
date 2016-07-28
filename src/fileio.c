@@ -185,8 +185,7 @@ void
 report_file_errno (char const *string, Lisp_Object name, int errorno)
 {
   Lisp_Object data = CONSP (name) || NILP (name) ? name : list1 (name);
-  synchronize_system_messages_locale ();
-  char *str = strerror (errorno);
+  char *str = emacs_strerror (errorno);
   AUTO_STRING (unibyte_str, str);
   Lisp_Object errstring
     = code_convert_string_norecord (unibyte_str, Vlocale_coding_system, 0);
@@ -214,12 +213,11 @@ report_file_error (char const *string, Lisp_Object name)
 void
 report_file_notify_error (const char *string, Lisp_Object name)
 {
-  Lisp_Object data = CONSP (name) || NILP (name) ? name : list1 (name);
-  synchronize_system_messages_locale ();
-  char *str = strerror (errno);
+  char *str = emacs_strerror (errno);
   AUTO_STRING (unibyte_str, str);
   Lisp_Object errstring
     = code_convert_string_norecord (unibyte_str, Vlocale_coding_system, 0);
+  Lisp_Object data = CONSP (name) || NILP (name) ? name : list1 (name);
   Lisp_Object errdata = Fcons (errstring, data);
 
   xsignal (Qfile_notify_error, Fcons (build_string (string), errdata));
@@ -3361,6 +3359,21 @@ restore_window_points (Lisp_Object window_markers, ptrdiff_t inserted,
       }
 }
 
+/* Make sure the gap is at Z_BYTE.  This is required to treat buffer
+   text as a linear C char array.  */
+static void
+maybe_move_gap (struct buffer *b)
+{
+  if (BUF_GPT_BYTE (b) != BUF_Z_BYTE (b))
+    {
+      struct buffer *cb = current_buffer;
+
+      set_buffer_internal (b);
+      move_gap_both (Z, Z_BYTE);
+      set_buffer_internal (cb);
+    }
+}
+
 /* FIXME: insert-file-contents should be split with the top-level moved to
    Elisp and only the core kept in C.  */
 
@@ -3944,6 +3957,7 @@ by calling `format-decode', which see.  */)
 
       coding_system = CODING_ID_NAME (coding.id);
       set_coding_system = true;
+      maybe_move_gap (XBUFFER (conversion_buffer));
       decoded = BUF_BEG_ADDR (XBUFFER (conversion_buffer));
       inserted = (BUF_Z_BYTE (XBUFFER (conversion_buffer))
 		  - BUF_BEG_BYTE (XBUFFER (conversion_buffer)));
@@ -4499,7 +4513,7 @@ by calling `format-decode', which see.  */)
                              PT - BEG, Z - PT - inserted);
 
   if (read_quit)
-    Fsignal (Qquit, Qnil);
+    quit ();
 
   /* Retval needs to be dealt with in all cases consistently.  */
   if (NILP (val))
@@ -4687,7 +4701,7 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
 {
   int open_flags;
   int mode;
-  off_t offset IF_LINT (= 0);
+  off_t offset UNINIT;
   bool open_and_close_file = desc < 0;
   bool ok;
   int save_errno = 0;
@@ -4695,7 +4709,7 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
   struct stat st;
   struct timespec modtime;
   ptrdiff_t count = SPECPDL_INDEX ();
-  ptrdiff_t count1 IF_LINT (= 0);
+  ptrdiff_t count1 UNINIT;
   Lisp_Object handler;
   Lisp_Object visit_file;
   Lisp_Object annotations;
@@ -5376,17 +5390,13 @@ An argument specifies the modification time value to use
 static Lisp_Object
 auto_save_error (Lisp_Object error_val)
 {
-  Lisp_Object msg;
-  int i;
-
   auto_save_error_occurred = 1;
 
   ring_bell (XFRAME (selected_frame));
 
   AUTO_STRING (format, "Auto-saving %s: %s");
-  msg = CALLN (Fformat, format, BVAR (current_buffer, name),
-	       Ferror_message_string (error_val));
-
+  Lisp_Object msg = CALLN (Fformat, format, BVAR (current_buffer, name),
+			   Ferror_message_string (error_val));
   call3 (intern ("display-warning"),
          intern ("auto-save"), msg, intern ("error"));
 

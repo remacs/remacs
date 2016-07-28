@@ -505,7 +505,7 @@ An alternative value is \" . \", if you use a font with a narrow period."
                   (funcall inbraces-re
                            (concat "{" (funcall inbraces-re "{[^}]*}") "*}"))
                   "*}\\)+\\$?\\$")
-         (0 tex-math-face))
+         (0 'tex-math))
         ;; Heading args.
         (,(concat slash headings "\\*?" opt arg)
          ;; If ARG ends up matching too much (if the {} don't match, e.g.)
@@ -800,15 +800,11 @@ Not smaller than the value set by `tex-suscript-height-minimum'."
   '((t :inherit font-lock-string-face))
   "Face used to highlight TeX math expressions."
   :group 'tex)
-(define-obsolete-face-alias 'tex-math-face 'tex-math "22.1")
-(defvar tex-math-face 'tex-math)
 
 (defface tex-verbatim
   '((t :inherit fixed-pitch-serif))
   "Face used to highlight TeX verbatim environments."
   :group 'tex)
-(define-obsolete-face-alias 'tex-verbatim-face 'tex-verbatim "22.1")
-(defvar tex-verbatim-face 'tex-verbatim)
 
 (defun tex-font-lock-verb (start delim)
   "Place syntax table properties on the \\verb construct.
@@ -836,10 +832,10 @@ START is the position of the \\ and DELIM is the delimiter char."
   (let ((char (nth 3 state)))
     (cond
      ((not char)
-      (if (eq 2 (nth 7 state)) tex-verbatim-face font-lock-comment-face))
-     ((eq char ?$) tex-math-face)
+      (if (eq 2 (nth 7 state)) 'tex-verbatim font-lock-comment-face))
+     ((eq char ?$) 'tex-math)
      ;; A \verb element.
-     (t tex-verbatim-face))))
+     (t 'tex-verbatim))))
 
 
 (defun tex-define-common-keys (keymap)

@@ -370,8 +370,6 @@ Must called from within a `tar-mode' buffer."
 (ert-deftest package-test-update-archives-async ()
   "Test updating package archives asynchronously."
   (skip-unless (executable-find "python2"))
-  ;; For some reason this test doesn't work reliably on hydra.nixos.org.
-  (skip-unless (not (getenv "NIX_STORE")))
   (let* ((package-menu-async t)
          (default-directory package-test-data-dir)
          (process (start-process

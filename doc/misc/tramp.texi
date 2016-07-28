@@ -565,7 +565,7 @@ remote host.
 @command{ssh} can also take extra parameters as port numbers.  For
 example, a host on port 42 is specified as @file{host#42} (the real
 host name, a hash sign, then a port number).  It is the same as passing
-@code{-p 42} to the @command{ssh} command.
+@samp{-p 42} to the @command{ssh} command.
 
 @item @option{telnet}
 @cindex method telnet
@@ -832,7 +832,7 @@ Since SMB shares end in the @code{$} character, @value{tramp} must use
 substitutions.
 
 When @value{tramp} is not specific about the share name or uses the
-generic remote directory @code{/}, @command{smbclient} returns all
+generic remote directory @file{/}, @command{smbclient} returns all
 available shares.
 
 Since SMB authentication is based on each SMB share, @value{tramp}
@@ -957,6 +957,22 @@ syntax requires a leading volume (share) name, for example:
 based on standard protocols, such as HTTP@.  @option{davs} does the same
 but with SSL encryption.  Both methods support the port numbers.
 
+@item @option{gdrive}
+@cindex method gdrive
+@cindex gdrive method
+@cindex Google Drive
+
+Via the @option{gdrive} method it is possible to access your Google
+Drive online storage.  User and host name of the remote file name are
+your email address of the Google Drive credentials, like
+@file{@trampfn{gdrive,john.doe@@gmail.com,/}}.  These credentials must
+be populated in your @command{Online Accounts} application outside Emacs.
+
+Since Google Drive uses cryptic blob file names internally,
+@value{tramp} works with the @code{display-name} of the files.  This
+could produce unexpected behaviour in case two files in the same
+directory have the same @code{display-name}, such a situation must be avoided.
+
 @item @option{obex}
 @cindex method obex
 @cindex obex method
@@ -986,8 +1002,8 @@ requires the SYNCE-GVFS plugin.
 @vindex tramp-gvfs-methods
 This custom option is a list of external methods for GVFS@.  By
 default, this list includes @option{afp}, @option{dav}, @option{davs},
-@option{obex}, @option{sftp} and @option{synce}.  Other methods to
-include are: @option{ftp} and @option{smb}.
+@option{gdrive}, @option{obex}, @option{sftp} and @option{synce}.
+Other methods to include are: @option{ftp} and @option{smb}.
 @end defopt
 
 
@@ -1650,13 +1666,16 @@ shown below for @value{tramp} to use when connecting.
 
 Another way to find the remote path is to use the path assigned to the
 remote user by the remote host.  @value{tramp} does not normally retain
-this remote path after logging.  However, @code{tramp-own-remote-path}
+this remote path after login.  However, @code{tramp-own-remote-path}
 preserves the path value, which can be used to update
 @code{tramp-remote-path}.
 
 @lisp
 (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 @end lisp
+
+@strong{Note} that this works only if your remote @command{/bin/sh}
+shell supports the login argument @samp{-l}.
 @end defopt
 
 When remote search paths are changed, local @value{tramp} caches must
@@ -1848,7 +1867,7 @@ install and execute a listener as follows (see @code{tramp-methods}):
 @end example
 
 The above command-line syntax has changed with @command{busybox}
-versions.  If @command{nc} refuses the @command{-p} parameter, then
+versions.  If @command{nc} refuses the @samp{-p} parameter, then
 overwrite as follows:
 
 @lisp
@@ -1876,9 +1895,9 @@ Applications such as @code{SSHDroid} that run @command{sshd} process
 on the Android device can accept any @option{ssh}-based methods
 provided these settings are adjusted:
 
-@code{sh} must be specified for remote shell since Android devices do
-not provide @code{/bin/sh}.  @code{sh} will then invoke whatever shell is
-installed on the device with this setting:
+@command{sh} must be specified for remote shell since Android devices
+do not provide @command{/bin/sh}.  @command{sh} will then invoke
+whatever shell is installed on the device with this setting:
 
 @lisp
 (add-to-list 'tramp-connection-properties
@@ -2854,9 +2873,9 @@ To test if this is the case, open a remote shell and check if the output
 of @command{ls} is in color.
 
 To disable @acronym{ANSI} escape sequences from the remote hosts,
-disable @option{--color=yes} or @option{--color=auto} in the remote
-host's @file{.bashrc} or @file{.profile}.  Turn this alias on and off
-to see if file name completion works.
+disable @samp{--color=yes} or @samp{--color=auto} in the remote host's
+@file{.bashrc} or @file{.profile}.  Turn this alias on and off to see
+if file name completion works.
 
 @item
 File name completion does not work in directories with large number of
@@ -2869,7 +2888,7 @@ shell's limit on length of command lines and hang.  @value{tramp} uses
 globbing.
 
 To test if globbing hangs, open a shell on the remote host and then
-run @samp{ls -d * ..?* > /dev/null}.
+run @command{ls -d * ..?* > /dev/null}.
 
 When testing, ensure the remote shell is the same shell
 (@command{/bin/sh}, @command{ksh} or @command{bash}), that

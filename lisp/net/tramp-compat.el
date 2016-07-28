@@ -174,8 +174,7 @@ Add the extension of F, if existing."
 		(tramp-compat-copy-directory file newname keep-time parents)
 	      (copy-file file newname t keep-time)))
 	  ;; We do not want to delete "." and "..".
-	  (directory-files
-	   directory 'full "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*"))
+	  (directory-files directory 'full directory-files-no-dot-files-regexp))
 
 	 ;; Set directory attributes.
 	 (set-file-modes newname (file-modes directory))
@@ -209,13 +208,13 @@ Add the extension of F, if existing."
     ;; implementation from Emacs 23.2.
     (wrong-number-of-arguments
      (setq directory (directory-file-name (expand-file-name directory)))
-     (if (not (file-symlink-p directory))
-	 (mapc (lambda (file)
-		 (if (eq t (car (file-attributes file)))
-		     (tramp-compat-delete-directory file recursive trash)
-		   (tramp-compat-delete-file file trash)))
-	       (directory-files
-		directory 'full "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*")))
+     (when (not (file-symlink-p directory))
+       (mapc (lambda (file)
+	       (if (eq t (car (file-attributes file)))
+		   (tramp-compat-delete-directory file recursive trash)
+		 (tramp-compat-delete-file file trash)))
+	     (directory-files
+	      directory 'full directory-files-no-dot-files-regexp)))
      (delete-directory directory))))
 
 (defun tramp-compat-process-running-p (process-name)

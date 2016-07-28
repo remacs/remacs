@@ -194,7 +194,7 @@ read_minibuf_noninteractive (Lisp_Object map, Lisp_Object initial,
   int c;
   unsigned char hide_char = 0;
   struct emacs_tty etty;
-  bool etty_valid IF_LINT (= false);
+  bool etty_valid UNINIT;
 
   /* Check, whether we need to suppress echoing.  */
   if (CHARACTERP (Vread_hide_char))
@@ -1686,6 +1686,8 @@ the values STRING, PREDICATE and `lambda'.  */)
       tem = Fassoc_string (string, collection, completion_ignore_case ? Qt : Qnil);
       if (NILP (tem))
 	return Qnil;
+      else if (CONSP (tem))
+        tem = XCAR (tem);
     }
   else if (VECTORP (collection))
     {
@@ -1838,8 +1840,8 @@ DEFUN ("assoc-string", Fassoc_string, Sassoc_string, 2, 3, 0,
 This returns the first element of LIST whose car matches the string or
 symbol KEY, or nil if no match exists.  When performing the
 comparison, symbols are first converted to strings, and unibyte
-strings to multibyte.  If the optional arg CASE-FOLD is non-nil, case
-is ignored.
+strings to multibyte.  If the optional arg CASE-FOLD is non-nil, both
+KEY and the elements of LIST are upcased for comparison.
 
 Unlike `assoc', KEY can also match an entry in LIST consisting of a
 single string, rather than a cons cell whose car is a string.  */)

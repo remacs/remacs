@@ -103,6 +103,47 @@
          (if (integerp val) `(t . ,val) val)
        i))))
 
+;; (defun radix-tree--trim (tree string i)
+;;   (if (= i (length string))
+;;       tree
+;;     (pcase tree
+;;       (`((,prefix . ,ptree) . ,rtree)
+;;        (let* ((ni (+ i (length prefix)))
+;;               (cmp (compare-strings prefix nil nil string i ni))
+;;               ;; FIXME: We could compute nrtree more efficiently
+;;               ;; whenever cmp is not -1 or 1.
+;;               (nrtree (radix-tree--trim rtree string i)))
+;;          (if (eq t cmp)
+;;              (pcase (radix-tree--trim ptree string ni)
+;;                (`nil nrtree)
+;;                (`((,pprefix . ,pptree))
+;;                 `((,(concat prefix pprefix) . ,pptree) . ,nrtree))
+;;                (nptree `((,prefix . ,nptree) . ,nrtree)))
+;;            (let ((n (if (< cmp 0) (- -1 cmp) (- cmp 1))))
+;;              (cond
+;;               ((equal (+ n i) (length string))
+;;                `((,prefix . ,ptree) . ,nrtree))
+;;               (t nrtree))))))
+;;       (val val))))
+
+(defun radix-tree--prefixes (tree string i prefixes)
+  (pcase tree
+    (`((,prefix . ,ptree) . ,rtree)
+     (let* ((ni (+ i (length prefix)))
+            (cmp (compare-strings prefix nil nil string i ni))
+            ;; FIXME: We could compute prefixes more efficiently
+            ;; whenever cmp is not -1 or 1.
+            (prefixes (radix-tree--prefixes rtree string i prefixes)))
+       (if (eq t cmp)
+           (radix-tree--prefixes ptree string ni prefixes)
+         prefixes)))
+    (val
+     (if (null val)
+         prefixes
+       (cons (cons (substring string 0 i)
+                   (if (eq (car-safe val) t) (cdr val) val))
+             prefixes)))))
+
 (defun radix-tree--subtree (tree string i)
   (if (equal (length string) i) tree
     (pcase tree
@@ -143,6 +184,16 @@ If not found, return nil."
   "Return the subtree of TREE rooted at the prefix STRING."
   (radix-tree--subtree tree string 0))
 
+;; (defun radix-tree-trim (tree string)
+;;   "Return a TREE which only holds entries \"related\" to STRING.
+;; \"Related\" is here defined as entries where there's a `string-prefix-p' relation
+;; between STRING and the key."
+;;   (radix-tree-trim tree string 0))
+
+(defun radix-tree-prefixes (tree string)
+  "Return an alist of all bindings in TREE for prefixes of STRING."
+  (radix-tree--prefixes tree string 0 nil))
+
 (eval-and-compile
   (pcase-defmacro radix-tree-leaf (vpat)
     ;; FIXME: We'd like to use a negative pattern (not consp), but pcase
@@ -181,8 +232,15 @@ PREFIX is only used internally."
 
 (defun radix-tree-count (tree)
   (let ((i 0))
-    (radix-tree-iter-mappings tree (lambda (_ _) (setq i (1+ i))))
+    (radix-tree-iter-mappings tree (lambda (_k _v) (setq i (1+ i))))
     i))
+
+(defun radix-tree-from-map (map)
+  ;; Aka (cl-defmethod map-into (map (type (eql radix-tree)))) ...)
+  (require 'map)
+  (let ((rt nil))
+    (map-apply (lambda (k v) (setq rt (radix-tree-insert rt k v))) map)
+    rt))
 
 (provide 'radix-tree)
 ;;; radix-tree.el ends here

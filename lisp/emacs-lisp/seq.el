@@ -4,7 +4,7 @@
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: sequences
-;; Version: 2.14
+;; Version: 2.18
 ;; Package: seq
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -116,6 +116,16 @@ Return SEQUENCE."
   (mapc function sequence))
 
 (defalias 'seq-each #'seq-do)
+
+(defun seq-do-indexed (function sequence)
+  "Apply FUNCTION to each element of SEQUENCE and return nil.
+Unlike `seq-map', FUNCTION takes two arguments: the element of
+the sequence, and its index within the sequence."
+  (let ((index 0))
+    (seq-do (lambda (elt)
+               (funcall function elt index)
+               (setq index (1+ index)))
+             sequence)))
 
 (cl-defgeneric seqp (sequence)
   "Return non-nil if SEQUENCE is a sequence, nil otherwise."
@@ -339,7 +349,8 @@ found or not."
   "Return the first element in SEQUENCE that is equal to ELT.
 Equality is defined by TESTFN if non-nil or by `equal' if nil."
   (seq-some (lambda (e)
-              (funcall (or testfn #'equal) elt e))
+              (when (funcall (or testfn #'equal) elt e)
+                e))
             sequence))
 
 (cl-defgeneric seq-position (sequence elt &optional testfn)
@@ -471,10 +482,7 @@ If no element is found, return nil."
 
 (cl-defmethod seq-drop ((list list) n)
   "Optimized implementation of `seq-drop' for lists."
-  (while (and list (> n 0))
-    (setq list (cdr list)
-          n (1- n)))
-  list)
+  (nthcdr n list))
 
 (cl-defmethod seq-take ((list list) n)
   "Optimized implementation of `seq-take' for lists."

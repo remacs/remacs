@@ -1065,6 +1065,7 @@ method invocation orders of the involved classes."
                  (eieio--class-precedence-list (symbol-value tag))))))
 
 (cl-defmethod cl-generic-generalizers :extra "class" (specializer)
+  "Support for dispatch on types defined by EIEIO's `defclass'."
   ;; CLHS says:
   ;;    A class must be defined before it can be used as a parameter
   ;;    specializer in a defmethod form.
@@ -1093,6 +1094,8 @@ method invocation orders of the involved classes."
   #'eieio--generic-subclass-specializers)
 
 (cl-defmethod cl-generic-generalizers ((_specializer (head subclass)))
+  "Support for (subclass CLASS) specializers.
+These match if the argument is the name of a subclass of CLASS."
   (list eieio--generic-subclass-generalizer))
 
 (provide 'eieio-core)

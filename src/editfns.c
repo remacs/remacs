@@ -146,6 +146,9 @@ xtzfree (timezone_t tz)
 static timezone_t
 tzlookup (Lisp_Object zone, bool settz)
 {
+  static char const tzbuf_format[] = "<%+.*"pI"d>%s%"pI"d:%02d:%02d";
+  char const *trailing_tzbuf_format = tzbuf_format + sizeof "<%+.*"pI"d" - 1;
+  char tzbuf[sizeof tzbuf_format + 2 * INT_STRLEN_BOUND (EMACS_INT)];
   char const *zone_string;
   timezone_t new_tz;
 
@@ -158,9 +161,6 @@ tzlookup (Lisp_Object zone, bool settz)
     }
   else
     {
-      static char const tzbuf_format[] = "<%+.*"pI"d>%s%"pI"d:%02d:%02d";
-      char const *trailing_tzbuf_format = tzbuf_format + sizeof "<%+.*"pI"d" - 1;
-      char tzbuf[sizeof tzbuf_format + 2 * INT_STRLEN_BOUND (EMACS_INT)];
       bool plain_integer = INTEGERP (zone);
 
       if (EQ (zone, Qwall))
@@ -216,6 +216,7 @@ tzlookup (Lisp_Object zone, bool settz)
     {
       block_input ();
       emacs_setenv_TZ (zone_string);
+      tzset ();
       timezone_t old_tz = local_tz;
       local_tz = new_tz;
       tzfree (old_tz);
@@ -2176,17 +2177,16 @@ usage: (decode-time &optional TIME ZONE)  */)
 }
 
 /* Return OBJ - OFFSET, checking that OBJ is a valid fixnum and that
-   the result is representable as an int.  Assume OFFSET is small and
-   nonnegative.  */
+   the result is representable as an int.  */
 static int
 check_tm_member (Lisp_Object obj, int offset)
 {
-  EMACS_INT n;
   CHECK_NUMBER (obj);
-  n = XINT (obj);
-  if (! (INT_MIN + offset <= n && n - offset <= INT_MAX))
+  EMACS_INT n = XINT (obj);
+  int result;
+  if (INT_SUBTRACT_WRAPV (n, offset, &result))
     time_overflow ();
-  return n - offset;
+  return result;
 }
 
 DEFUN ("encode-time", Fencode_time, Sencode_time, 6, MANY, 0,
@@ -2459,23 +2459,24 @@ emacs_setenv_TZ (const char *tzstring)
       tzval[tzeqlen] = 0;
     }
 
-  if (new_tzvalbuf
-#ifdef WINDOWSNT
-      /* MS-Windows implementation of 'putenv' copies the argument
-	 string into a block it allocates, so modifying tzval string
-	 does not change the environment.  OTOH, the other threads run
-	 by Emacs on MS-Windows never call 'xputenv' or 'putenv' or
-	 'unsetenv', so the original cause for the dicey in-place
-	 modification technique doesn't exist there in the first
-	 place.  */
-      || 1
+
+#ifndef WINDOWSNT
+  /* Modifying *TZVAL merely requires calling tzset (which is the
+     caller's responsibility).  However, modifying TZVAL requires
+     calling putenv; although this is not thread-safe, in practice this
+     runs only on startup when there is only one thread.  */
+  bool need_putenv = new_tzvalbuf;
+#else
+  /* MS-Windows 'putenv' copies the argument string into a block it
+     allocates, so modifying *TZVAL will not change the environment.
+     However, the other threads run by Emacs on MS-Windows never call
+     'xputenv' or 'putenv' or 'unsetenv', so the original cause for the
+     dicey in-place modification technique doesn't exist there in the
+     first place.  */
+  bool need_putenv = true;
 #endif
-      )
-    {
-      /* Although this is not thread-safe, in practice this runs only
-	 on startup when there is only one thread.  */
-      xputenv (tzval);
-    }
+  if (need_putenv)
+    xputenv (tzval);
 
   return 0;
 }
@@ -3363,7 +3364,7 @@ It returns the number of characters changed.  */)
   ptrdiff_t size;		/* Size of translate table. */
   ptrdiff_t pos, pos_byte, end_pos;
   bool multibyte = !NILP (BVAR (current_buffer, enable_multibyte_characters));
-  bool string_multibyte IF_LINT (= 0);
+  bool string_multibyte UNINIT;
 
   validate_region (&start, &end);
   if (CHAR_TABLE_P (table))
@@ -3884,6 +3885,9 @@ precision specifier says how many decimal places to show; if zero, the
 decimal point itself is omitted.  For %s and %S, the precision
 specifier truncates the string to the given width.
 
+Text properties, if any, are copied from the format-string to the
+produced text.
+
 usage: (format STRING &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
@@ -3918,7 +3922,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
   ptrdiff_t bufsize = sizeof initial_buffer;
   ptrdiff_t max_bufsize = STRING_BYTES_BOUND + 1;
   char *p;
-  ptrdiff_t buf_save_value_index IF_LINT (= 0);
+  ptrdiff_t buf_save_value_index UNINIT;
   char *format, *end;
   ptrdiff_t nchars;
   /* When we make a multibyte string, we must pay attention to the
@@ -4177,6 +4181,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		      p += padding;
 		      nchars += padding;
 		    }
+                  info[n].start = nchars;
 
 		  if (p > buf
 		      && multibyte
@@ -4189,9 +4194,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 				  nbytes,
 				  STRING_MULTIBYTE (args[n]), multibyte);
 
-                  info[n].start = nchars;
 		  nchars += nchars_string;
-		  info[n].end = nchars;
 
 		  if (minus_flag)
 		    {
@@ -4199,6 +4202,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		      p += padding;
 		      nchars += padding;
 		    }
+		  info[n].end = nchars;
 
 		  /* If this argument has text properties, record where
 		     in the result string it appears.  */
@@ -4416,6 +4420,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 			exponent_bytes = src + sprintf_bytes - e;
 		    }
 
+                  info[n].start = nchars;
 		  if (! minus_flag)
 		    {
 		      memset (p, ' ', padding);
@@ -4438,9 +4443,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  memcpy (p, src, exponent_bytes);
 		  p += exponent_bytes;
 
-                  info[n].start = nchars;
 		  nchars += leading_zeros + sprintf_bytes + trailing_zeros;
-		  info[n].end = nchars;
 
 		  if (minus_flag)
 		    {
@@ -4448,6 +4451,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		      p += padding;
 		      nchars += padding;
 		    }
+		  info[n].end = nchars;
 
 		  continue;
 		}
@@ -4627,7 +4631,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      len = make_number (SCHARS (args[i]));
 	      Lisp_Object new_len = make_number (info[i].end - info[i].start);
 	      props = text_property_list (args[i], make_number (0), len, Qnil);
-	      props = extend_property_ranges (props, new_len);
+	      props = extend_property_ranges (props, len, new_len);
 	      /* If successive arguments have properties, be sure that
 		 the value of `composition' property be the copy.  */
 	      if (1 < i && info[i - 1].end)
@@ -5053,6 +5057,14 @@ Transposing beyond buffer boundaries is an error.  */)
 			 start1_byte, start1_byte + len1_byte,
 			 start2_byte, start2_byte + len2_byte);
       fix_start_end_in_overlays (start1, end2);
+    }
+  else
+    {
+      /* The character positions of the markers remain intact, but we
+	 still need to update their byte positions, because the
+	 transposed regions might include multibyte sequences which
+	 make some original byte positions of the markers invalid.  */
+      adjust_markers_bytepos (start1, start1_byte, end2, end2_byte, 0);
     }
 
   signal_after_change (start1, end2 - start1, end2 - start1);

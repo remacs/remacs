@@ -1633,7 +1633,7 @@ skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
   int c;
   char fastmap[0400];
   /* Store the ranges of non-ASCII characters.  */
-  int *char_ranges IF_LINT (= NULL);
+  int *char_ranges UNINIT;
   int n_char_ranges = 0;
   bool negate = 0;
   ptrdiff_t i, i_byte;
@@ -3128,8 +3128,9 @@ the prefix syntax flag (p).  */)
       opoint = pos;
       opoint_byte = pos_byte;
 
-      if (pos + 1 > beg)
-	DEC_BOTH (pos, pos_byte);
+      if (pos <= beg)
+        break;
+      DEC_BOTH (pos, pos_byte);
     }
 
   SET_PT_BOTH (opoint, opoint_byte);
@@ -3771,7 +3772,7 @@ In both cases, LIMIT bounds the search. */);
   Vfind_word_boundary_function_table = Fmake_char_table (Qnil, Qnil);
 
   DEFVAR_BOOL ("comment-end-can-be-escaped", Vcomment_end_can_be_escaped,
-               doc: /* Non-nil means an escaped ender inside a comment doesn'tend the comment.  */);
+               doc: /* Non-nil means an escaped ender inside a comment doesn't end the comment.  */);
   Vcomment_end_can_be_escaped = 0;
   DEFSYM (Qcomment_end_can_be_escaped, "comment-end-can-be-escaped");
   Fmake_variable_buffer_local (Qcomment_end_can_be_escaped);

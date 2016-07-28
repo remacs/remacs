@@ -136,12 +136,6 @@ ns_update_menubar (struct frame *f, bool deep_p, EmacsMenu *submenu)
       menu = [[EmacsMenu alloc] initWithTitle: ns_app_name];
       needsSet = YES;
     }
-  else
-    {  /* close up anything on there */
-      id attMenu = [menu attachedMenu];
-      if (attMenu != nil)
-        [attMenu close];
-    }
 
 #if NSMENUPROFILE
   ftime (&tb);
@@ -1426,29 +1420,19 @@ update_frame_tool_bar (struct frame *f)
 
    ========================================================================== */
 
-struct Popdown_data
-{
-  NSAutoreleasePool *pool;
-  EmacsDialogPanel *dialog;
-};
-
 static void
 pop_down_menu (void *arg)
 {
-  struct Popdown_data *unwind_data = arg;
+  EmacsDialogPanel *panel = arg;
 
-  block_input ();
   if (popup_activated_flag)
     {
-      EmacsDialogPanel *panel = unwind_data->dialog;
+      block_input ();
       popup_activated_flag = 0;
       [panel close];
-      [unwind_data->pool release];
       [[FRAME_NS_VIEW (SELECTED_FRAME ()) window] makeKeyWindow];
+      unblock_input ();
     }
-
-  xfree (unwind_data);
-  unblock_input ();
 }
 
 
@@ -1459,7 +1443,6 @@ ns_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
   Lisp_Object tem, title;
   NSPoint p;
   BOOL isQ;
-  NSAutoreleasePool *pool;
 
   NSTRACE ("ns_popup_dialog");
 
@@ -1479,18 +1462,13 @@ ns_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
     contents = list2 (title, Fcons (build_string ("Ok"), Qt));
 
   block_input ();
-  pool = [[NSAutoreleasePool alloc] init];
   dialog = [[EmacsDialogPanel alloc] initFromContents: contents
                                            isQuestion: isQ];
 
   {
     ptrdiff_t specpdl_count = SPECPDL_INDEX ();
-    struct Popdown_data *unwind_data = xmalloc (sizeof (*unwind_data));
 
-    unwind_data->pool = pool;
-    unwind_data->dialog = dialog;
-
-    record_unwind_protect_ptr (pop_down_menu, unwind_data);
+    record_unwind_protect_ptr (pop_down_menu, dialog);
     popup_activated_flag = 1;
     tem = [dialog runDialogAt: p];
     unbind_to (specpdl_count, Qnil);  /* calls pop_down_menu */
@@ -1865,7 +1843,7 @@ ns_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
 
   if (EQ (ret, Qundefined) && window_closed)
     /* Make close button pressed equivalent to C-g.  */
-    Fsignal (Qquit, Qnil);
+    quit ();
 
   return ret;
 }

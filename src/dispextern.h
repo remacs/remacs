@@ -82,6 +82,7 @@ typedef XImagePtr XImagePtr_or_DC;
 
 #ifdef HAVE_WINDOW_SYSTEM
 # include <time.h>
+# include "fontset.h"
 #endif
 
 #ifndef HAVE_WINDOW_SYSTEM
@@ -1811,7 +1812,7 @@ struct face_cache
   bool_bf menu_face_changed_p : 1;
 };
 
-/* Return a pointer to the cached face with ID on frame F.  */
+/* Return a non-null pointer to the cached face with ID on frame F.  */
 
 #define FACE_FROM_ID(F, ID)					\
   (eassert (UNSIGNED_CMP (ID, <, FRAME_FACE_CACHE (F)->used)),	\
@@ -1820,33 +1821,37 @@ struct face_cache
 /* Return a pointer to the face with ID on frame F, or null if such a
    face doesn't exist.  */
 
-#define FACE_OPT_FROM_ID(F, ID)				\
+#define FACE_FROM_ID_OR_NULL(F, ID)			\
   (UNSIGNED_CMP (ID, <, FRAME_FACE_CACHE (F)->used)	\
-   ? FACE_FROM_ID (F, ID)				\
+   ? FRAME_FACE_CACHE (F)->faces_by_id[ID]		\
    : NULL)
 
+/* True if FACE is suitable for displaying ASCII characters.  */
+INLINE bool
+FACE_SUITABLE_FOR_ASCII_CHAR_P (struct face *face)
+{
 #ifdef HAVE_WINDOW_SYSTEM
-
-/* Non-zero if FACE is suitable for displaying character CHAR.  */
-
-#define FACE_SUITABLE_FOR_ASCII_CHAR_P(FACE, CHAR)	\
-  ((FACE) == (FACE)->ascii_face)
+  return face == face->ascii_face;
+#else
+  return true;
+#endif
+}
 
 /* Return the id of the realized face on frame F that is like the face
-   FACE, but is suitable for displaying character CHAR at buffer or
+   FACE, but is suitable for displaying character CHARACTER at buffer or
    string position POS.  OBJECT is the string object, or nil for
    buffer.  This macro is only meaningful for multibyte character
    CHAR.  */
-
-#define FACE_FOR_CHAR(F, FACE, CHAR, POS, OBJECT)	\
-  face_for_char ((F), (FACE), (CHAR), (POS), (OBJECT))
-
-#else /* not HAVE_WINDOW_SYSTEM */
-
-#define FACE_SUITABLE_FOR_ASCII_CHAR_P(FACE, CHAR) true
-#define FACE_FOR_CHAR(F, FACE, CHAR, POS, OBJECT) ((FACE)->id)
-
-#endif /* not HAVE_WINDOW_SYSTEM */
+INLINE int
+FACE_FOR_CHAR (struct frame *f, struct face *face, int character,
+	       ptrdiff_t pos, Lisp_Object object)
+{
+#ifdef HAVE_WINDOW_SYSTEM
+  return face_for_char (f, face, character, pos, object);
+#else
+  return face->id;
+#endif
+}
 
 /* Return true if G contains a valid character code.  */
 INLINE bool
@@ -3088,7 +3093,7 @@ struct image_cache
 };
 
 
-/* A pointer to the image with id ID on frame F.  */
+/* A non-null pointer to the image with id ID on frame F.  */
 
 #define IMAGE_FROM_ID(F, ID)					\
   (eassert (UNSIGNED_CMP (ID, <, FRAME_IMAGE_CACHE (F)->used)),	\
@@ -3099,7 +3104,7 @@ struct image_cache
 
 #define IMAGE_OPT_FROM_ID(F, ID)				\
   (UNSIGNED_CMP (ID, <, FRAME_IMAGE_CACHE (F)->used)		\
-   ? IMAGE_FROM_ID (F, ID)					\
+   ? FRAME_IMAGE_CACHE (F)->images[ID]				\
    : NULL)
 
 /* Size of bucket vector of image caches.  Should be prime.  */

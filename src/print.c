@@ -203,7 +203,7 @@ print_unwind (Lisp_Object saved_text)
 static void
 printchar_to_stream (unsigned int ch, FILE *stream)
 {
-  Lisp_Object dv IF_LINT (= Qnil);
+  Lisp_Object dv UNINIT;
   ptrdiff_t i = 0, n = 1;
   Lisp_Object coding_system = Vlocale_coding_system;
   bool encode_p = false;

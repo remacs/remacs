@@ -88,7 +88,11 @@ typedef unsigned long EMACS_UINT;
 typedef long long int EMACS_INT;
 typedef unsigned long long int EMACS_UINT;
 #  define EMACS_INT_MAX LLONG_MAX
-#  define pI "ll"
+#  ifdef __MINGW32__
+#   define pI "I64"
+#  else
+#   define pI "ll"
+#  endif
 # else
 #  error "INTPTR_MAX too large"
 # endif
@@ -1748,7 +1752,7 @@ struct Lisp_Subr
     short min_args, max_args;
     const char *symbol_name;
     const char *intspec;
-    const char *doc;
+    EMACS_INT doc;
   };
 
 enum char_table_specials
@@ -3524,6 +3528,8 @@ extern void adjust_after_insert (ptrdiff_t, ptrdiff_t, ptrdiff_t,
 				 ptrdiff_t, ptrdiff_t);
 extern void adjust_markers_for_delete (ptrdiff_t, ptrdiff_t,
 				       ptrdiff_t, ptrdiff_t);
+extern void adjust_markers_bytepos (ptrdiff_t, ptrdiff_t,
+				    ptrdiff_t, ptrdiff_t, int);
 extern void replace_range (ptrdiff_t, ptrdiff_t, Lisp_Object, bool, bool, bool);
 extern void replace_range_2 (ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t,
 			     const char *, ptrdiff_t, ptrdiff_t, bool);
@@ -3873,7 +3879,12 @@ extern void run_hook_with_args_2 (Lisp_Object, Lisp_Object, Lisp_Object);
 extern Lisp_Object run_hook_with_args (ptrdiff_t nargs, Lisp_Object *args,
 				       Lisp_Object (*funcall)
 				       (ptrdiff_t nargs, Lisp_Object *args));
-extern _Noreturn void xsignal (Lisp_Object, Lisp_Object);
+extern Lisp_Object quit (void);
+INLINE _Noreturn void
+xsignal (Lisp_Object error_symbol, Lisp_Object data)
+{
+  Fsignal (error_symbol, data);
+}
 extern _Noreturn void xsignal0 (Lisp_Object);
 extern _Noreturn void xsignal1 (Lisp_Object, Lisp_Object);
 extern _Noreturn void xsignal2 (Lisp_Object, Lisp_Object, Lisp_Object);
@@ -4131,6 +4142,7 @@ INLINE void fixup_locale (void) {}
 INLINE void synchronize_system_messages_locale (void) {}
 INLINE void synchronize_system_time_locale (void) {}
 #endif
+extern char *emacs_strerror (int);
 extern void shut_down_emacs (int, Lisp_Object);
 
 /* True means don't do interactive redisplay and don't change tty modes.  */
@@ -4167,8 +4179,8 @@ extern void kill_buffer_processes (Lisp_Object);
 extern int wait_reading_process_output (intmax_t, int, int, bool, Lisp_Object,
 					struct Lisp_Process *, int);
 /* Max value for the first argument of wait_reading_process_output.  */
-#if __GNUC__ == 3 || (__GNUC__ == 4 && __GNUC_MINOR__ <= 5)
-/* Work around a bug in GCC 3.4.2, known to be fixed in GCC 4.6.3.
+#if GNUC_PREREQ (3, 0, 0) && ! GNUC_PREREQ (4, 6, 0)
+/* Work around a bug in GCC 3.4.2, known to be fixed in GCC 4.6.0.
    The bug merely causes a bogus warning, but the warning is annoying.  */
 # define WAIT_READING_MAX min (TYPE_MAXIMUM (time_t), INTMAX_MAX)
 #else
@@ -4254,6 +4266,12 @@ struct tty_display_info;
 struct terminal;
 
 /* Defined in sysdep.c.  */
+#ifdef HAVE_PERSONALITY_ADDR_NO_RANDOMIZE
+extern bool disable_address_randomization (void);
+#else
+INLINE bool disable_address_randomization (void) { return false; }
+#endif
+extern int emacs_exec_file (char const *, char *const *, char *const *);
 extern void init_standard_fds (void);
 extern char *emacs_get_current_dir_name (void);
 extern void stuff_char (char c);
@@ -4541,8 +4559,7 @@ extern void *record_xmalloc (size_t) ATTRIBUTE_ALLOC_SIZE ((1));
    Build with CPPFLAGS='-DUSE_STACK_LISP_OBJECTS=0' to disable it.  */
 
 #if (!defined USE_STACK_LISP_OBJECTS \
-     && defined __GNUC__ && !defined __clang__ \
-     && !(4 < __GNUC__ + (3 < __GNUC_MINOR__ + (2 <= __GNUC_PATCHLEVEL__))))
+     && defined __GNUC__ && !defined __clang__ && ! GNUC_PREREQ (4, 3, 2))
   /* Work around GCC bugs 36584 and 35271, which were fixed in GCC 4.3.2.  */
 # define USE_STACK_LISP_OBJECTS false
 #endif

@@ -154,7 +154,6 @@
                every
                some
                mapcon
-               mapcan
                mapl
                maplist
                map

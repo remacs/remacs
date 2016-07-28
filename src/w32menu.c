@@ -77,10 +77,10 @@ typedef int (WINAPI * MessageBoxW_Proc) (
     IN UINT type);
 
 #ifdef NTGUI_UNICODE
-#define get_menu_item_info GetMenuItemInfoA
-#define set_menu_item_info SetMenuItemInfoA
-#define unicode_append_menu AppendMenuW
-#define unicode_message_box MessageBoxW
+GetMenuItemInfoA_Proc get_menu_item_info = GetMenuItemInfoA;
+SetMenuItemInfoA_Proc set_menu_item_info = SetMenuItemInfoA;
+AppendMenuW_Proc unicode_append_menu = AppendMenuW;
+MessageBoxW_Proc unicode_message_box = MessageBoxW;
 #else /* !NTGUI_UNICODE */
 GetMenuItemInfoA_Proc get_menu_item_info = NULL;
 SetMenuItemInfoA_Proc set_menu_item_info = NULL;
@@ -827,7 +827,7 @@ w32_menu_show (struct frame *f, int x, int y, int menuflags,
     {
       unblock_input ();
       /* Make "Cancel" equivalent to C-g.  */
-      Fsignal (Qquit, Qnil);
+      quit ();
     }
 
   unblock_input ();
@@ -1019,7 +1019,7 @@ w32_dialog_show (struct frame *f, Lisp_Object title,
     }
   else
     /* Make "Cancel" equivalent to C-g.  */
-    Fsignal (Qquit, Qnil);
+    quit ();
 
   return Qnil;
 }
@@ -1155,7 +1155,7 @@ simple_dialog_show (struct frame *f, Lisp_Object contents, Lisp_Object header)
   else if (answer == IDNO)
     lispy_answer = build_string ("No");
   else
-    Fsignal (Qquit, Qnil);
+    quit ();
 
   for (temp = XCDR (contents); CONSP (temp); temp = XCDR (temp))
     {
@@ -1177,8 +1177,7 @@ simple_dialog_show (struct frame *f, Lisp_Object contents, Lisp_Object header)
 	  return value;
 	}
     }
-  Fsignal (Qquit, Qnil);
-  return Qnil;
+  return quit ();
 }
 #endif  /* !HAVE_DIALOGS  */
 

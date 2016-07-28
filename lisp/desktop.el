@@ -1402,7 +1402,7 @@ after that many seconds of idle time."
 		(or coding-system-for-read
 		    (cdr (assq 'buffer-file-coding-system
 			       desktop-buffer-locals))))
-	       (buf (find-file-noselect buffer-filename)))
+	       (buf (find-file-noselect buffer-filename :nowarn)))
 	  (condition-case nil
 	      (switch-to-buffer buf)
 	    (error (pop-to-buffer buf)))

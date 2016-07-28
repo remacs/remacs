@@ -474,9 +474,13 @@ so that all identifiers are recognized as words.")
   ;; The value here may be a list of functions or a single function.
   t nil
   c++ '(c-extend-region-for-CPP
+	c-before-change-check-raw-strings
 	c-before-change-check-<>-operators
+	c-depropertize-CPP
+	c-before-after-change-digit-quote
 	c-invalidate-macro-cache)
   (c objc) '(c-extend-region-for-CPP
+	     c-depropertize-CPP
 	     c-invalidate-macro-cache)
   ;; java 'c-before-change-check-<>-operators
   awk 'c-awk-record-region-clear-NL)
@@ -505,17 +509,24 @@ parameters \(point-min) and \(point-max).")
 (c-lang-defconst c-before-font-lock-functions
   ;; For documentation see the following c-lang-defvar of the same name.
   ;; The value here may be a list of functions or a single function.
-  t 'c-change-expand-fl-region
-  (c objc) '(c-extend-font-lock-region-for-macros
+  t '(c-depropertize-new-text
+      c-change-expand-fl-region)
+  (c objc) '(c-depropertize-new-text
+	     c-extend-font-lock-region-for-macros
 	     c-neutralize-syntax-in-and-mark-CPP
 	     c-change-expand-fl-region)
-  c++ '(c-extend-font-lock-region-for-macros
+  c++ '(c-depropertize-new-text
+	c-extend-font-lock-region-for-macros
+	c-before-after-change-digit-quote
+	c-after-change-re-mark-raw-strings
 	c-neutralize-syntax-in-and-mark-CPP
 	c-restore-<>-properties
 	c-change-expand-fl-region)
-  java '(c-restore-<>-properties
+  java '(c-depropertize-new-text
+	 c-restore-<>-properties
 	 c-change-expand-fl-region)
-  awk 'c-awk-extend-and-syntax-tablify-region)
+  awk '(c-depropertize-new-text
+	c-awk-extend-and-syntax-tablify-region))
 (c-lang-defvar c-before-font-lock-functions
 	       (let ((fs (c-lang-const c-before-font-lock-functions)))
 		 (if (listp fs)
@@ -1317,6 +1328,14 @@ operators."
   t    "^;,{}?:")
 (c-lang-defvar c-stmt-delim-chars-with-comma
   (c-lang-const c-stmt-delim-chars-with-comma))
+
+(c-lang-defconst c-pack-ops
+  "Ops which signal C++11's \"parameter pack\""
+  t nil
+  c++ '("..."))
+(c-lang-defconst c-pack-key
+  t (c-make-keywords-re 'appendable (c-lang-const c-pack-ops)))
+(c-lang-defvar c-pack-key (c-lang-const c-pack-key))
 
 (c-lang-defconst c-auto-ops
   ;; Ops which signal C++11's new auto uses.
@@ -2947,6 +2966,10 @@ Identifier syntax is in effect when this is matched \(see
 		   "\\)"
 		   "\\([^=]\\|$\\)")
   c++  (concat "\\("
+	       "&&"
+	       "\\|"
+	       "\\.\\.\\."
+	       "\\|"
 	       "[*(&]"
 	       "\\|"
 	       (c-lang-const c-type-decl-prefix-key)
@@ -3242,8 +3265,8 @@ i.e. before \":\".  Only used if `c-recognize-colon-labels' is set."
 			  (append (c-lang-const c-label-kwds)
 				  (c-lang-const c-protection-kwds))
 			  :test 'string-equal)))
-  ;; Don't allow string literals, except in AWK.  Character constants are OK.
-  (c objc java pike idl) (concat "\"\\|"
+  ;; Don't allow string literals, except in AWK and Java.  Character constants are OK.
+  (c objc pike idl) (concat "\"\\|"
 				 (c-lang-const c-nonlabel-token-key))
   ;; Also check for open parens in C++, to catch member init lists in
   ;; constructors.  We normally allow it so that macros with arguments

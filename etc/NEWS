@@ -25,6 +25,9 @@ otherwise leave it unmarked.
 
 * Installation Changes in Emacs 25.2
 
+** By default libgnutls is now required when building Emacs.
+Use 'configure --with-gnutls=no' to build even when GnuTLS is missing.
+
 ** The new option 'configure --enable-gcc-warnings=warn-only' causes
 GCC to issue warnings without stopping the build.  This behavior is
 now the default in developer builds.  As before, use
@@ -55,6 +58,13 @@ affected by this, as SGI stopped supporting IRIX in December 2013.
 
 
 * Changes in Emacs 25.2
+
++++
+** The new user option 'mouse-select-region-move-to-beginning'
+controls the position of point when double-clicking mouse-1 on the end
+of a parenthetical grouping or string-delimiter: the default value nil
+keeps point at the end of the region, setting it to non-nil moves
+point to the beginning of the region.
 
 ---
 ** 'find-library-name' will now fall back on looking at 'load-history'
@@ -187,8 +197,46 @@ questions, with a handy way to display help texts.
 'undo', undo the last replacement; bound to 'u'.
 'undo-all', undo all replacements; bound to 'U'.
 
+** 'delete-trailing-whitespace' deletes whitespace after form feed.
+In modes where form feed was treated as a whitespace character,
+'delete-trailing-whitespace' would keep lines containing it unchanged.
+It now deletes whitespace after the last form feed thus behaving the
+same as in modes where the character is not whitespace.
+
 
 * Changes in Specialized Modes and Packages in Emacs 25.2
+
+** Ibuffer
+
+---
+*** A new command 'ibuffer-copy-buffername-as-kill'; bound
+to 'B'.
+
+---
+*** New command 'ibuffer-change-marks'; bound to '* c'.
+
+---
+*** A new command 'ibuffer-mark-by-locked' to mark
+all locked buffers;  bound to '% L'.
+
+---
+*** A new option 'ibuffer-locked-char' to indicate
+locked buffers; Ibuffer shows a new column displaying
+'ibuffer-locked-char' for locked buffers.
+
+---
+*** A new command 'ibuffer-unmark-all-marks' to unmark
+all buffers without asking confirmation;  bound to
+'U'; 'ibuffer-do-replace-regexp' bound to 'r'.
+
+---
+*** A new command `ibuffer-mark-by-content-regexp' to mark buffers
+whose content matches a regexp; bound to '% g'.
+
+---
+*** Two new options `ibuffer-never-search-content-name' and
+`ibuffer-never-search-content-mode' used by
+`ibuffer-mark-by-content-regexp'.
 
 ** Compilation mode
 
@@ -196,6 +244,14 @@ questions, with a handy way to display help texts.
 *** Messages from CMake are now recognized.
 
 ** Dired
+
++++
+*** A New option 'dired-always-read-filesystem' default to nil.
+If non-nil, buffers visiting files are reverted before search them;
+for instance, in 'dired-mark-files-containing-regexp' a non-nil value
+of this option means the file is revisited in a temporary buffer;
+this temporary buffer is the actual buffer searched: the original buffer
+visiting the file is not modified.
 
 +++
 *** In wdired, when editing files to contain slash characters,
@@ -302,6 +358,10 @@ different group ID.
 +++
 *** New connection method "doas" for OpenBSD hosts.
 
++++
+*** New connection method "gdrive", which allows to access Google
+Drive onsite repositories.
+
 ---
 ** 'auto-revert-use-notify' is set back to t in 'global-auto-revert-mode'.
 
@@ -357,6 +417,13 @@ string is computed dynamically based on 'url-privacy-level'.
 colorful faces to make it more obvious to the user what the state is.
 See the 'vc-faces' customization group.
 
+** CC mode
+
+*** Opening a .h file will turn C or C++ mode depending on language used.
+This is done with the help of 'c-or-c++-mode' function which analyses
+contents of the buffer to determine whether it's a C or C++ source
+file.
+
 
 * New Modes and Packages in Emacs 25.2
 
@@ -394,6 +461,9 @@ function 'check-declare-errmsg' has been removed.
 
 * Lisp Changes in Emacs 25.2
 
+** New function undo-amalgamate-change-group to get rid of undo-boundaries
+between two states.
+
 ** New var `definition-prefixes' is a hashtable mapping prefixes to the
 files where corresponding definitions can be found.  This can be used
 to fetch definitions that are not yet loaded, for example for `C-h f'.
@@ -410,9 +480,6 @@ mode's setup.
 by setting 'autoload-timestamps' to nil.
 FIXME As an experiment, nil is the current default.
 If no insurmountable problems before next release, it can stay that way.
-
-** 'ert-with-function-mocked' of 'ert-x package allows mocking of functions
-in unit tests.
 
 ---
 ** 'gnutls-boot' now takes a parameter :complete-negotiation that says
@@ -498,6 +565,9 @@ ABBR is a time zone abbreviation.  The affected functions are
 +++
 *** New basic face 'fixed-pitch-serif', for a fixed-width font with serifs.
 The Info-quoted and tex-verbatim faces now default to inheriting from it.
+
+** New built-in function `mapcan' which avoids unnecessary consing (and garbage
+   collection).
 
 
 * Changes in Emacs 25.2 on Non-Free Operating Systems
@@ -2173,7 +2243,8 @@ codeset is "UTF-8" (as in "en_US.UTF-8").  This is needed because
 MS-Windows doesn't support UTF-8 as codeset in its locales.
 
 +++
-** New function 'alist-get', which is also a valid place (aka lvalue).
+** New function 'alist-get', which is a generalized variable
+suitable for use with 'setf'.
 
 +++
 ** New function 'funcall-interactively', which works like 'funcall'

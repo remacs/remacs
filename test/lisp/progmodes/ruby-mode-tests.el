@@ -716,6 +716,17 @@ VALUES-PLIST is a list with alternating index and value elements."
     (ruby-backward-sexp)
     (should (= 2 (line-number-at-pos)))))
 
+(ert-deftest ruby-toggle-string-quotes-quotes-correctly ()
+  (let ((pairs
+         '(("puts '\"foo\"\\''" . "puts \"\\\"foo\\\"'\"")
+           ("puts \"'foo'\\\"\"" . "puts '\\'foo\\'\"'"))))
+    (dolist (pair pairs)
+      (ruby-with-temp-buffer (car pair)
+        (beginning-of-line)
+        (search-forward "foo")
+        (ruby-toggle-string-quotes)
+        (should (string= (buffer-string) (cdr pair)))))))
+
 (ert-deftest ruby--insert-coding-comment-ruby-style ()
   (with-temp-buffer
     (let ((ruby-encoding-magic-comment-style 'ruby))

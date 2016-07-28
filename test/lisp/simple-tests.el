@@ -204,7 +204,7 @@
 
 
 ;;; `delete-trailing-whitespace'
-(ert-deftest simple-delete-trailing-whitespace ()
+(ert-deftest simple-delete-trailing-whitespace--bug-21766 ()
   "Test bug#21766: delete-whitespace sometimes deletes non-whitespace."
   (defvar python-indent-guess-indent-offset)  ; to avoid a warning
   (let ((python (featurep 'python))
@@ -219,10 +219,24 @@
                           "\n"
                           "\n"))
           (delete-trailing-whitespace)
-          (should (equal (count-lines (point-min) (point-max)) 3)))
+          (should (string-equal (buffer-string)
+                                (concat "query = \"\"\"WITH filtered AS\n"
+                                        "WHERE\n"
+                                        "\"\"\".format(fv_)\n"))))
       ;; Let's clean up if running interactive
       (unless (or noninteractive python)
         (unload-feature 'python)))))
+
+(ert-deftest simple-delete-trailing-whitespace--formfeeds ()
+  "Test formfeeds are not deleted but whitespace past them is."
+  (with-temp-buffer
+    (with-syntax-table (make-syntax-table)
+      (modify-syntax-entry ?\f " ")     ; Make sure \f is whitespace
+      (insert " \f \n \f \f \n\nlast\n")
+      (delete-trailing-whitespace)
+      (should (string-equal (buffer-string) " \f\n \f \f\n\nlast\n"))
+      (should (equal ?\s (char-syntax ?\f)))
+      (should (equal ?\s (char-syntax ?\n))))))
 
 
 ;;; auto-boundary tests
@@ -309,6 +323,38 @@
   (should
    (= 6
       (undo-test-point-after-forward-kill))))
+
+(defmacro simple-test-undo-with-switched-buffer (buffer &rest body)
+  (let ((before-buffer (make-symbol "before-buffer")))
+    `(let ((,before-buffer (current-buffer)))
+       (unwind-protect
+           (progn
+             (switch-to-buffer ,buffer)
+             ,@body)
+         (switch-to-buffer ,before-buffer)))))
+
+;; This tests for a regression in emacs 25.0 see bug #23632
+(ert-deftest simple-test-undo-extra-boundary-in-tex ()
+  (should
+   (string=
+    ""
+    (simple-test-undo-with-switched-buffer
+        "temp.tex"
+      (latex-mode)
+      ;; This macro calls `latex-insert-block'
+      (execute-kbd-macro
+       (read-kbd-macro
+        "
+C-c C-o			;; latex-insert-block
+RET			;; newline
+C-/                     ;; undo
+"
+        ))
+      (buffer-substring-no-properties
+       (point-min)
+       (point-max))))))
+
+
 
 
 (provide 'simple-test)

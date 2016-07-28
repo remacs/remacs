@@ -354,11 +354,7 @@ A value of nil means highlight all matches."
   "Face for lazy highlighting of matches other than the current one."
   :group 'lazy-highlight
   :group 'basic-faces)
-(define-obsolete-face-alias 'isearch-lazy-highlight-face 'lazy-highlight "22.1")
-(define-obsolete-variable-alias 'isearch-lazy-highlight-face
-                                'lazy-highlight-face
-                                "22.1")
-(defvar lazy-highlight-face 'lazy-highlight)
+
 
 ;; Define isearch help map.
 
@@ -3259,7 +3255,7 @@ Attempt to do the search exactly the way the pending Isearch would."
 			  ;; 1000 is higher than ediff's 100+,
 			  ;; but lower than isearch main overlay's 1001
 			  (overlay-put ov 'priority 1000)
-			  (overlay-put ov 'face lazy-highlight-face)))
+			  (overlay-put ov 'face 'lazy-highlight)))
 			  ;(overlay-put ov 'window (selected-window))))
 		      ;; Remember the current position of point for
 		      ;; the next call of `isearch-lazy-highlight-update'

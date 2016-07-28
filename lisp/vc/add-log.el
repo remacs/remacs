@@ -184,51 +184,42 @@ a case simply use the directory containing the changed file."
   "Face used to highlight dates in date lines."
   :version "21.1"
   :group 'change-log)
-(define-obsolete-face-alias 'change-log-date-face 'change-log-date "22.1")
 
 (defface change-log-name
   '((t (:inherit font-lock-constant-face)))
   "Face for highlighting author names."
   :version "21.1"
   :group 'change-log)
-(define-obsolete-face-alias 'change-log-name-face 'change-log-name "22.1")
 
 (defface change-log-email
   '((t (:inherit font-lock-variable-name-face)))
   "Face for highlighting author email addresses."
   :version "21.1"
   :group 'change-log)
-(define-obsolete-face-alias 'change-log-email-face 'change-log-email "22.1")
 
 (defface change-log-file
   '((t (:inherit font-lock-function-name-face)))
   "Face for highlighting file names."
   :version "21.1"
   :group 'change-log)
-(define-obsolete-face-alias 'change-log-file-face 'change-log-file "22.1")
 
 (defface change-log-list
   '((t (:inherit font-lock-keyword-face)))
   "Face for highlighting parenthesized lists of functions or variables."
   :version "21.1"
   :group 'change-log)
-(define-obsolete-face-alias 'change-log-list-face 'change-log-list "22.1")
 
 (defface change-log-conditionals
   '((t (:inherit font-lock-variable-name-face)))
   "Face for highlighting conditionals of the form `[...]'."
   :version "21.1"
   :group 'change-log)
-(define-obsolete-face-alias 'change-log-conditionals-face
-  'change-log-conditionals "22.1")
 
 (defface change-log-function
   '((t (:inherit font-lock-variable-name-face)))
   "Face for highlighting items of the form `<....>'."
   :version "21.1"
   :group 'change-log)
-(define-obsolete-face-alias 'change-log-function-face
-  'change-log-function "22.1")
 
 (defface change-log-acknowledgment
   '((t (:inherit font-lock-comment-face)))
@@ -237,8 +228,6 @@ a case simply use the directory containing the changed file."
   :group 'change-log)
 (define-obsolete-face-alias 'change-log-acknowledgement
   'change-log-acknowledgment "24.3")
-(define-obsolete-face-alias 'change-log-acknowledgement-face
-  'change-log-acknowledgment "22.1")
 
 (defconst change-log-file-names-re "^\\( +\\|\t\\)\\* \\([^ ,:([\n]+\\)")
 (defconst change-log-start-entry-re "^\\sw.........[0-9:+ ]*")

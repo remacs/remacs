@@ -129,7 +129,8 @@ call, letting the SMB client use the default one."
 	 "ERRnosuchshare"
 	 ;; Windows 4.0 (Windows NT), Windows 5.0 (Windows 2000),
 	 ;; Windows 5.1 (Windows XP), Windows 5.2 (Windows Server 2003),
-	 ;; Windows 6.0 (Windows Vista), Windows 6.1 (Windows 7).
+	 ;; Windows 6.0 (Windows Vista), Windows 6.1 (Windows 7),
+	 ;; Windows 6.3 (Windows 10).
 	 "NT_STATUS_ACCESS_DENIED"
 	 "NT_STATUS_ACCOUNT_LOCKED_OUT"
 	 "NT_STATUS_BAD_NETWORK_NAME"
@@ -425,7 +426,7 @@ pass to the OPERATION."
 		(delete-directory tmpdir 'recursive))))
 
 	   ;; We can copy recursively.
-	   ((or t1 t2)
+	   ((and (or t1 t2) (tramp-smb-get-cifs-capabilities v))
 	    (when (and (file-directory-p newname)
 		       (not (string-equal (file-name-nondirectory dirname)
 					  (file-name-nondirectory newname))))
@@ -596,15 +597,14 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
   "Like `delete-directory' for Tramp files."
   (setq directory (directory-file-name (expand-file-name directory)))
   (when (file-exists-p directory)
-    (if recursive
-	(mapc
-	 (lambda (file)
-	   (if (file-directory-p file)
-	       (delete-directory file recursive)
-	     (delete-file file)))
-	 ;; We do not want to delete "." and "..".
-	 (directory-files
-	  directory 'full "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*")))
+    (when recursive
+      (mapc
+       (lambda (file)
+	 (if (file-directory-p file)
+	     (delete-directory file recursive)
+	   (delete-file file)))
+       ;; We do not want to delete "." and "..".
+       (directory-files directory 'full directory-files-no-dot-files-regexp)))
 
     (with-parsed-tramp-file-name directory nil
       ;; We must also flush the cache of the directory, because

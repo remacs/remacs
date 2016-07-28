@@ -226,7 +226,7 @@ Like in `substring', negative values are counted from the end.
 The strings are compared by the numeric values of their characters.
 For instance, STR1 is "less than" STR2 if its first differing
 character has a smaller numeric value.  If IGNORE-CASE is non-nil,
-characters are converted to lower-case before comparing them.  Unibyte
+characters are converted to upper-case before comparing them.  Unibyte
 strings are converted to multibyte for comparison.
 
 The value is t if the strings (or specified portions) match.
@@ -2653,6 +2653,30 @@ SEQUENCE may be a list, a vector, a bool-vector, or a string.  */)
   mapcar1 (leni, 0, function, sequence);
 
   return sequence;
+}
+
+DEFUN ("mapcan", Fmapcan, Smapcan, 2, 2, 0,
+       doc: /* Apply FUNCTION to each element of SEQUENCE, and concatenate
+the results by altering them (using `nconc').
+SEQUENCE may be a list, a vector, a bool-vector, or a string. */)
+     (Lisp_Object function, Lisp_Object sequence)
+{
+  register EMACS_INT leni;
+  register Lisp_Object *args;
+  Lisp_Object ret;
+  USE_SAFE_ALLOCA;
+
+  if (CHAR_TABLE_P (sequence))
+    wrong_type_argument (Qlistp, sequence);
+
+  leni = XFASTINT (Flength (sequence));
+  SAFE_ALLOCA_LISP (args, leni);
+  mapcar1 (leni, args, function, sequence);
+  ret = Fnconc (leni, args);
+
+  SAFE_FREE ();
+
+  return ret;
 }
 
 /* This is how C code calls `yes-or-no-p' and allows the user
@@ -5123,6 +5147,9 @@ syms_of_fns (void)
     doc: /* A list of symbols which are the features of the executing Emacs.
 Used by `featurep' and `require', and altered by `provide'.  */);
   Vfeatures = list1 (Qemacs);
+  DEFSYM (Qfeatures, "features");
+  /* Let people use lexically scoped vars named `features'.  */
+  Fmake_var_non_special (Qfeatures);
   DEFSYM (Qsubfeatures, "subfeatures");
   DEFSYM (Qfuncall, "funcall");
 
@@ -5203,6 +5230,7 @@ this variable.  */);
   defsubr (&Snconc);
   defsubr (&Smapcar);
   defsubr (&Smapc);
+  defsubr (&Smapcan);
   defsubr (&Smapconcat);
   defsubr (&Syes_or_no_p);
   defsubr (&Sload_average);

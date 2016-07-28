@@ -369,10 +369,6 @@ Use `\\[viper-set-expert-level]' to change this.")
 
 ;; VI-style Undo
 
-;; Used to 'undo' complex commands, such as replace and insert commands.
-(viper-deflocalvar viper-undo-in-complex-command nil)
-(put 'viper-undo-in-complex-command 'permanent-local t)
-
 (defcustom viper-keep-point-on-undo nil
   "Non-nil means not to move point while undoing commands.
 This style is different from Emacs and Vi.  Try it to see if
@@ -781,7 +777,7 @@ Related buffers can be cycled through via :R and :P commands."
 	  "^@end \\|"						; texinfo
 	  ")\n\n[ \t\n]*\\|"					; lisp
 	  "\\.\\s-*$")						; prolog
-      "*Regexps to end Headings/Sections.  Used by [].")
+  "Regexps to end Headings/Sections.  Used by [].")
 
 
 ;; These two vars control the interaction of jumps performed by ' and `.

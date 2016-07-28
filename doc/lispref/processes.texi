@@ -506,7 +506,7 @@ inputinput@point{}
 @defun call-process-shell-command command &optional infile destination display
 This function executes the shell command @var{command} synchronously.
 The arguments are handled as in @code{call-process}.  An old calling
-convention allowed to pass any number of additional arguments after
+convention allowed passing any number of additional arguments after
 @var{display}, which were concatenated to @var{command}; this is still
 supported, but strongly discouraged.
 @end defun
@@ -515,7 +515,7 @@ supported, but strongly discouraged.
 This function is like @code{call-process-shell-command}, but uses
 @code{process-file} internally.  Depending on @code{default-directory},
 @var{command} can be executed also on remote hosts.  An old calling
-convention allowed to pass any number of additional arguments after
+convention allowed passing any number of additional arguments after
 @var{display}, which were concatenated to @var{command}; this is still
 supported, but strongly discouraged.
 @end defun
@@ -1382,10 +1382,10 @@ subprocess with a @code{SIGHUP} signal (@pxref{Signals to Processes}).
 @end defun
 
 If the process's buffer is displayed in a window, your Lisp program
-may wish telling the process the dimensions of that window, so that
+may wish to tell the process the dimensions of that window, so that
 the process could adapt its output to those dimensions, much as it
-adapts to the screen dimensions.  The following functions allow to
-communicate this kind of information to processes; however, not all
+adapts to the screen dimensions.  The following functions allow
+communicating this kind of information to processes; however, not all
 systems support the underlying functionality, so it is best to provide
 fallbacks, e.g., via command-line arguments or environment variables.
 

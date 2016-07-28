@@ -106,31 +106,32 @@ decode_any_frame (register Lisp_Object frame)
 }
 
 #ifdef HAVE_WINDOW_SYSTEM
-
 bool
-window_system_available (struct frame *f)
+display_available (void)
 {
-  return f ? FRAME_WINDOW_P (f) || FRAME_MSDOS_P (f) : x_display_list != NULL;
+  return x_display_list != NULL;
 }
-
-#endif /* HAVE_WINDOW_SYSTEM */
+#endif
 
 struct frame *
 decode_window_system_frame (Lisp_Object frame)
 {
   struct frame *f = decode_live_frame (frame);
-
-  if (!window_system_available (f))
-    error ("Window system frame should be used");
+  check_window_system (f);
+#ifdef HAVE_WINDOW_SYSTEM
   return f;
+#endif
 }
 
 void
 check_window_system (struct frame *f)
 {
-  if (!window_system_available (f))
-    error (f ? "Window system frame should be used"
-	   : "Window system is not in use or not initialized");
+#ifdef HAVE_WINDOW_SYSTEM
+  if (window_system_available (f))
+    return;
+#endif
+  error (f ? "Window system frame should be used"
+	 : "Window system is not in use or not initialized");
 }
 
 /* Return the value of frame parameter PROP in frame FRAME.  */
@@ -2135,10 +2136,12 @@ If omitted, FRAME defaults to the currently selected frame.  */)
   check_minibuf_window (frame, EQ (minibuf_window, selected_window));
 
   /* I think this should be done with a hook.  */
-#ifdef HAVE_WINDOW_SYSTEM
   if (FRAME_WINDOW_P (f))
+    {
+#ifdef HAVE_WINDOW_SYSTEM
       x_iconify_frame (f);
 #endif
+    }
 
   /* Make menu bar update for the Buffers and Frames menus.  */
   windows_or_buffers_changed = 17;
@@ -2604,6 +2607,22 @@ If FRAME is nil, describe the currently selected frame.  */)
       /* Avoid consing in frequent cases.  */
       if (EQ (parameter, Qname))
 	value = f->name;
+#ifdef HAVE_WINDOW_SYSTEM
+      /* These are used by vertical motion commands.  */
+      else if (EQ (parameter, Qvertical_scroll_bars))
+	value = (f->vertical_scroll_bar_type == vertical_scroll_bar_none
+		 ? Qnil
+		 : (f->vertical_scroll_bar_type == vertical_scroll_bar_left
+		    ? Qleft : Qright));
+      else if (EQ (parameter, Qhorizontal_scroll_bars))
+	value = f->horizontal_scroll_bars ? Qt : Qnil;
+      else if (EQ (parameter, Qline_spacing) && f->extra_line_spacing == 0)
+	/* If this is non-zero, we can't determine whether the user specified
+	   an integer or float value without looking through 'param_alist'.  */
+	value = make_number (0);
+      else if (EQ (parameter, Qfont) && FRAME_X_P (f))
+	value = FRAME_FONT (f)->props[FONT_NAME_INDEX];
+#endif /* HAVE_WINDOW_SYSTEM */
 #ifdef HAVE_X_WINDOWS
       else if (EQ (parameter, Qdisplay) && FRAME_X_P (f))
 	value = XCAR (FRAME_DISPLAY_INFO (f)->name_list_element);
@@ -3001,16 +3020,18 @@ or bottom edge of the outer frame of FRAME relative to the right or
 bottom edge of FRAME's display.  */)
   (Lisp_Object frame, Lisp_Object x, Lisp_Object y)
 {
-  register struct frame *f = decode_live_frame (frame);
+  struct frame *f = decode_live_frame (frame);
 
   CHECK_TYPE_RANGED_INTEGER (int, x);
   CHECK_TYPE_RANGED_INTEGER (int, y);
 
   /* I think this should be done with a hook.  */
-#ifdef HAVE_WINDOW_SYSTEM
   if (FRAME_WINDOW_P (f))
-    x_set_offset (f, XINT (x), XINT (y), 1);
+    {
+#ifdef HAVE_WINDOW_SYSTEM
+      x_set_offset (f, XINT (x), XINT (y), 1);
 #endif
+    }
 
   return Qt;
 }
@@ -3105,70 +3126,58 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
   /* Record in these vectors all the parms specified.  */
   Lisp_Object *parms;
   Lisp_Object *values;
-  ptrdiff_t i, p;
+  ptrdiff_t i, j, size;
   bool left_no_change = 0, top_no_change = 0;
 #ifdef HAVE_X_WINDOWS
   bool icon_left_no_change = 0, icon_top_no_change = 0;
 #endif
 
-  i = 0;
-  for (tail = alist; CONSP (tail); tail = XCDR (tail))
-    i++;
+  for (size = 0, tail = alist; CONSP (tail); tail = XCDR (tail))
+    size++;
 
   USE_SAFE_ALLOCA;
-  SAFE_ALLOCA_LISP (parms, 2 * i);
-  values = parms + i;
+  SAFE_ALLOCA_LISP (parms, 2 * size);
+  values = parms + size;
 
   /* Extract parm names and values into those vectors.  */
 
-  i = 0;
+  i = 0, j = size - 1;
   for (tail = alist; CONSP (tail); tail = XCDR (tail))
     {
-      Lisp_Object elt;
+      Lisp_Object elt = XCAR (tail), prop = Fcar (elt), val = Fcdr (elt);
 
-      elt = XCAR (tail);
-      parms[i] = Fcar (elt);
-      values[i] = Fcdr (elt);
-      i++;
+      /* Some properties are independent of other properties, but other
+	 properties are dependent upon them.  These special properties
+	 are foreground_color, background_color (affects cursor_color)
+	 and font (affects fringe widths); they're recorded starting
+	 from the end of PARMS and VALUES to process them first by using
+	 reverse iteration.  */
+
+      if (EQ (prop, Qforeground_color)
+	  || EQ (prop, Qbackground_color)
+	  || EQ (prop, Qfont))
+	{
+	  parms[j] = prop;
+	  values[j] = val;
+	  j--;
+	}
+      else
+	{
+	  parms[i] = prop;
+	  values[i] = val;
+	  i++;
+	}
     }
+
   /* TAIL and ALIST are not used again below here.  */
   alist = tail = Qnil;
 
   top = left = Qunbound;
   icon_left = icon_top = Qunbound;
 
-  /* Process foreground_color and background_color before anything else.
-     They are independent of other properties, but other properties (e.g.,
-     cursor_color) are dependent upon them.  */
-  /* Process default font as well, since fringe widths depends on it.  */
-  for (p = 0; p < i; p++)
-    {
-      Lisp_Object prop, val;
-
-      prop = parms[p];
-      val = values[p];
-      if (EQ (prop, Qforeground_color)
-	  || EQ (prop, Qbackground_color)
-	  || EQ (prop, Qfont))
-	{
-	  register Lisp_Object param_index, old_value;
-
-	  old_value = get_frame_param (f, prop);
-	  if (NILP (Fequal (val, old_value)))
-	    {
-	      store_frame_param (f, prop, val);
-
-	      param_index = Fget (prop, Qx_frame_parameter);
-	      if (NATNUMP (param_index)
-		  && XFASTINT (param_index) < ARRAYELTS (frame_parms)
-                  && FRAME_RIF (f)->frame_parm_handlers[XINT (param_index)])
-                (*(FRAME_RIF (f)->frame_parm_handlers[XINT (param_index)])) (f, val, old_value);
-	    }
-	}
-    }
-
-  /* Now process them in reverse of specified order.  */
-  while (i-- != 0)
+  /* Reverse order is used to make sure that special
+     properties noticed above are processed first.  */
+  for (i = size - 1; i >= 0; i--)
     {
       Lisp_Object prop, val;
 
@@ -3216,11 +3225,6 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
 	  fullscreen = val;
 	  fullscreen_change = true;
 	}
-      else if (EQ (prop, Qforeground_color)
-	       || EQ (prop, Qbackground_color)
-	       || EQ (prop, Qfont))
-	/* Processed above.  */
-	continue;
       else
 	{
 	  register Lisp_Object param_index, old_value;
@@ -3739,8 +3743,8 @@ x_set_left_fringe (struct frame *f, Lisp_Object new_value, Lisp_Object old_value
 
   if (new_width != old_width)
     {
-      FRAME_LEFT_FRINGE_WIDTH (f) = new_width;
-      FRAME_FRINGE_COLS (f) /* Round up.  */
+      f->left_fringe_width = new_width;
+      f->fringe_cols /* Round up.  */
 	= (new_width + FRAME_RIGHT_FRINGE_WIDTH (f) + unit - 1) / unit;
 
       if (FRAME_X_WINDOW (f) != 0)
@@ -3763,8 +3767,8 @@ x_set_right_fringe (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
 
   if (new_width != old_width)
     {
-      FRAME_RIGHT_FRINGE_WIDTH (f) = new_width;
-      FRAME_FRINGE_COLS (f) /* Round up.  */
+      f->right_fringe_width = new_width;
+      f->fringe_cols /* Round up.  */
 	= (new_width + FRAME_LEFT_FRINGE_WIDTH (f) + unit - 1) / unit;
 
       if (FRAME_X_WINDOW (f) != 0)
@@ -3793,13 +3797,11 @@ void
 x_set_right_divider_width (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
   int old = FRAME_RIGHT_DIVIDER_WIDTH (f);
-
   CHECK_TYPE_RANGED_INTEGER (int, arg);
-  FRAME_RIGHT_DIVIDER_WIDTH (f) = XINT (arg);
-  if (FRAME_RIGHT_DIVIDER_WIDTH (f) < 0)
-    FRAME_RIGHT_DIVIDER_WIDTH (f) = 0;
-  if (FRAME_RIGHT_DIVIDER_WIDTH (f) != old)
+  int new = max (0, XINT (arg));
+  if (new != old)
     {
+      f->right_divider_width = new;
       adjust_frame_size (f, -1, -1, 4, 0, Qright_divider_width);
       adjust_frame_glyphs (f);
       SET_FRAME_GARBAGED (f);
@@ -3811,13 +3813,11 @@ void
 x_set_bottom_divider_width (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
   int old = FRAME_BOTTOM_DIVIDER_WIDTH (f);
-
   CHECK_TYPE_RANGED_INTEGER (int, arg);
-  FRAME_BOTTOM_DIVIDER_WIDTH (f) = XINT (arg);
-  if (FRAME_BOTTOM_DIVIDER_WIDTH (f) < 0)
-    FRAME_BOTTOM_DIVIDER_WIDTH (f) = 0;
-  if (FRAME_BOTTOM_DIVIDER_WIDTH (f) != old)
+  int new = max (0, XINT (arg));
+  if (new != old)
     {
+      f->bottom_divider_width = new;
       adjust_frame_size (f, -1, -1, 4, 0, Qbottom_divider_width);
       adjust_frame_glyphs (f);
       SET_FRAME_GARBAGED (f);

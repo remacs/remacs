@@ -2856,8 +2856,8 @@ macfont_draw (struct glyph_string *s, int from, int to, int x, int y,
     {
       if (s->hl == DRAW_MOUSE_FACE)
         {
-          face = FACE_OPT_FROM_ID (s->f,
-				   MOUSE_HL_INFO (s->f)->mouse_face_face_id);
+          face = FACE_FROM_ID_OR_NULL (s->f,
+				       MOUSE_HL_INFO (s->f)->mouse_face_face_id);
           if (!face)
             face = FACE_FROM_ID (s->f, MOUSE_FACE_ID);
         }
@@ -3767,6 +3767,7 @@ mac_font_shape (CTFontRef font, CFStringRef string,
             {
               struct mac_glyph_layout *gl;
               CGPoint position;
+	      CGFloat max_x;
 
               if (!RIGHT_TO_LEFT_P)
                 gl = glbuf + range.location;
@@ -3788,12 +3789,13 @@ mac_font_shape (CTFontRef font, CFStringRef string,
               CTRunGetGlyphs (ctrun, range, &gl->glyph_id);
 
               CTRunGetPositions (ctrun, range, &position);
+	      max_x = position.x + CTRunGetTypographicBounds (ctrun, range,
+							      NULL, NULL, NULL);
+	      max_x = max (max_x, total_advance);
               gl->advance_delta = position.x - total_advance;
               gl->baseline_delta = position.y;
-              gl->advance = (gl->advance_delta
-                             + CTRunGetTypographicBounds (ctrun, range,
-                                                          NULL, NULL, NULL));
-              total_advance += gl->advance;
+              gl->advance = max_x - total_advance;
+              total_advance = max_x;
             }
 
           if (RIGHT_TO_LEFT_P)

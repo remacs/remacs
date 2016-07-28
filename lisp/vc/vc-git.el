@@ -1084,6 +1084,13 @@ or BRANCH^ (where \"^\" can be repeated)."
               (cons 'vc-git-region-history-font-lock-keywords
                     (cdr font-lock-defaults))))
 
+(defun vc-git--asciify-coding-system ()
+  ;; Try to reconcile the content encoding with the encoding of Git's
+  ;; auxiliary output (which is ASCII or ASCII-compatible), bug#23595.
+  (unless (let ((samp "Binary files differ"))
+            (string-equal samp (decode-coding-string
+                                samp coding-system-for-read t)))
+    (setq coding-system-for-read 'undecided)))
 
 (autoload 'vc-switches "vc")
 
@@ -1091,6 +1098,7 @@ or BRANCH^ (where \"^\" can be repeated)."
   "Get a difference report using Git between two revisions of FILES."
   (let (process-file-side-effects
         (command "diff-tree"))
+    (vc-git--asciify-coding-system)
     (if rev2
         ;; Diffing against the empty tree.
         (unless rev1 (setq rev1 "4b825dc642cb6eb9a060e54bf8d69288fbee4904"))
@@ -1129,6 +1137,7 @@ or BRANCH^ (where \"^\" can be repeated)."
     table))
 
 (defun vc-git-annotate-command (file buf &optional rev)
+  (vc-git--asciify-coding-system)
   (let ((name (file-relative-name file)))
     (apply #'vc-git-command buf 'async nil "blame" "--date=short"
 	   (append (vc-switches 'git 'annotate)
@@ -1425,7 +1434,8 @@ The difference to vc-do-command is that this function always invokes
   (let ((coding-system-for-read
          (or coding-system-for-read vc-git-log-output-coding-system))
 	(coding-system-for-write
-         (or coding-system-for-write vc-git-commits-coding-system)))
+         (or coding-system-for-write vc-git-commits-coding-system))
+        (process-environment (cons "GIT_DIR" process-environment)))
     (apply 'vc-do-command (or buffer "*vc*") okstatus vc-git-program
 	   ;; http://debbugs.gnu.org/16897
 	   (unless (and (not (cdr-safe file-or-list))
@@ -1453,6 +1463,7 @@ The difference to vc-do-command is that this function always invokes
 	(coding-system-for-write
          (or coding-system-for-write vc-git-commits-coding-system))
 	(process-environment (cons "PAGER=" process-environment)))
+    (push "GIT_DIR" process-environment)
     (apply 'process-file vc-git-program nil buffer nil command args)))
 
 (defun vc-git--out-ok (command &rest args)

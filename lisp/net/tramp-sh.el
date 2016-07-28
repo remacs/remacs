@@ -203,7 +203,7 @@ The string is used in `tramp-methods'.")
     (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-copy-program         "rsync")
-    (tramp-copy-args            (("-t" "%k") ("-r")))
+    (tramp-copy-args            (("-t" "%k") ("-p") ("-r") ("-s")))
     (tramp-copy-env             (("RSYNC_RSH") ("ssh" "%c")))
     (tramp-copy-keep-date       t)
     (tramp-copy-keep-tmpfile    t)
@@ -2375,20 +2375,17 @@ The method used must be an out-of-band method."
 	(aset v 3 localname)
 
 	;; Check which ones of source and target are Tramp files.
-	(setq source (if t1
-			 (tramp-make-copy-program-file-name v)
-		       (shell-quote-argument filename))
-          target (if t2
-                     (tramp-make-copy-program-file-name v)
-                   (shell-quote-argument
-                    (funcall
+	(setq source (funcall
 		      (if (and (file-directory-p filename)
-			       (string-equal
-				(file-name-nondirectory filename)
-				(file-name-nondirectory newname)))
-			  'file-name-directory
+			       (not (file-exists-p newname)))
+			  'file-name-as-directory
 			'identity)
-                     newname))))
+		      (if t1
+			  (tramp-make-copy-program-file-name v)
+			(shell-quote-argument filename)))
+	      target (if t2
+			 (tramp-make-copy-program-file-name v)
+		       (shell-quote-argument newname)))
 
 	;; Check for host and port number.  We cannot use
 	;; `tramp-file-name-port', because this returns also
@@ -2658,6 +2655,8 @@ The method used must be an out-of-band method."
 	 filename switches wildcard full-directory-p)
       (when (stringp switches)
         (setq switches (split-string switches)))
+      (when (tramp-get-ls-command-with-quoting-style v)
+	(setq switches (append switches '("--quoting-style=literal"))))
       (when (and (member "--dired" switches)
 		 (not (tramp-get-ls-command-with-dired v)))
 	(setq switches (delete "--dired" switches)))
@@ -5103,7 +5102,7 @@ Return ATTR."
   (let ((method (tramp-file-name-method vec))
 	(user (tramp-file-name-user vec))
 	(host (tramp-file-name-real-host vec))
-	(localname (tramp-file-name-localname vec)))
+	(localname (directory-file-name (tramp-file-name-localname vec))))
     (when (string-match tramp-ipv6-regexp host)
       (setq host (format "[%s]" host)))
     (unless (string-match "ftp$" method)

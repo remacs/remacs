@@ -240,7 +240,8 @@ struct charset_map_entries
 static void
 load_charset_map (struct charset *charset, struct charset_map_entries *entries, int n_entries, int control_flag)
 {
-  Lisp_Object vec, table IF_LINT (= Qnil);
+  Lisp_Object vec;
+  Lisp_Object table UNINIT;
   unsigned max_code = CHARSET_MAX_CODE (charset);
   bool ascii_compatible_p = charset->ascii_compatible_p;
   int min_char, max_char, nonascii_min_char;
@@ -842,9 +843,9 @@ usage: (define-charset-internal ...)  */)
   int nchars;
 
   if (nargs != charset_arg_max)
-    return Fsignal (Qwrong_number_of_arguments,
-		    Fcons (intern ("define-charset-internal"),
-			   make_number (nargs)));
+    Fsignal (Qwrong_number_of_arguments,
+	     Fcons (intern ("define-charset-internal"),
+		    make_number (nargs)));
 
   attrs = Fmake_vector (make_number (charset_attr_max), Qnil);
 
@@ -1838,12 +1839,12 @@ encode_char (struct charset *charset, int c)
 }
 
 
-DEFUN ("decode-char", Fdecode_char, Sdecode_char, 2, 3, 0,
+DEFUN ("decode-char", Fdecode_char, Sdecode_char, 2, 2, 0,
        doc: /* Decode the pair of CHARSET and CODE-POINT into a character.
 Return nil if CODE-POINT is not valid in CHARSET.
 
 CODE-POINT may be a cons (HIGHER-16-BIT-VALUE . LOWER-16-BIT-VALUE).  */)
-  (Lisp_Object charset, Lisp_Object code_point, Lisp_Object restriction)
+  (Lisp_Object charset, Lisp_Object code_point)
 {
   int c, id;
   unsigned code;
@@ -1857,10 +1858,10 @@ CODE-POINT may be a cons (HIGHER-16-BIT-VALUE . LOWER-16-BIT-VALUE).  */)
 }
 
 
-DEFUN ("encode-char", Fencode_char, Sencode_char, 2, 3, 0,
+DEFUN ("encode-char", Fencode_char, Sencode_char, 2, 2, 0,
        doc: /* Encode the character CH into a code-point of CHARSET.
 Return nil if CHARSET doesn't include CH.  */)
-  (Lisp_Object ch, Lisp_Object charset, Lisp_Object restriction)
+  (Lisp_Object ch, Lisp_Object charset)
 {
   int c, id;
   unsigned code;

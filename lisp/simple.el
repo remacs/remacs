@@ -602,24 +602,23 @@ buffer if the variable `delete-trailing-lines' is non-nil."
                    (list nil nil))))
   (save-match-data
     (save-excursion
-      (let ((end-marker (copy-marker (or end (point-max))))
-            (start (or start (point-min))))
-        (goto-char start)
-        (while (re-search-forward "\\s-$" end-marker t)
-          (skip-syntax-backward "-" (line-beginning-position))
+      (let ((end-marker (and end (copy-marker end))))
+        (goto-char (or start (point-min)))
+        (with-syntax-table (make-syntax-table (syntax-table))
           ;; Don't delete formfeeds, even if they are considered whitespace.
-          (if (looking-at-p ".*\f")
-              (goto-char (match-end 0)))
-          (delete-region (point) (match-end 0)))
-        ;; Delete trailing empty lines.
-        (goto-char end-marker)
-        (when (and (not end)
-		   delete-trailing-lines
-                   ;; Really the end of buffer.
-		   (= (point-max) (1+ (buffer-size)))
-                   (<= (skip-chars-backward "\n") -2))
-          (delete-region (1+ (point)) end-marker))
-        (set-marker end-marker nil))))
+          (modify-syntax-entry ?\f "_")
+          ;; Treating \n as non-whitespace makes things easier.
+          (modify-syntax-entry ?\n "_")
+          (while (re-search-forward "\\s-+$" end-marker t)
+            (delete-region (match-beginning 0) (match-end 0))))
+        (if end
+            (set-marker end-marker nil)
+          ;; Delete trailing empty lines.
+          (and delete-trailing-lines
+               ;; Really the end of buffer.
+               (= (goto-char (point-max)) (1+ (buffer-size)))
+               (<= (skip-chars-backward "\n") -2)
+               (delete-region (1+ (point)) (point-max)))))))
   ;; Return nil for the benefit of `write-file-functions'.
   nil)
 
@@ -2848,18 +2847,6 @@ buffers that were changed during the last command.")
 
 If set to non-nil, this will effectively disable the timer.")
 
-(defvar-local undo-auto-disable-boundaries nil
-  "Disable the automatic addition of boundaries.
-
-If set to non-nil, `undo-boundary' will not be called
-automatically in a buffer either at the end of a command, or as a
-result of `undo-auto-current-boundary-timer'.
-
-When this is set to non-nil, it is important to ensure that
-`undo-boundary' is called frequently enough. Failure to do so
-will result in user-visible warnings that the situation is
-probably a bug.")
-
 (defvar undo-auto--this-command-amalgamating nil
   "Non-nil if `this-command' should be amalgamated.
 This variable is set to nil by `undo-auto--boundaries' and is set
@@ -2896,11 +2883,14 @@ REASON describes the reason that the boundary is being added; see
   "Check recently changed buffers and add a boundary if necessary.
 REASON describes the reason that the boundary is being added; see
 `undo-last-boundary' for more information."
+  ;; (Bug #23785) All commands should ensure that there is an undo
+  ;; boundary whether they have changed the current buffer or not.
+  (when (eq cause 'command)
+    (add-to-list 'undo-auto--undoably-changed-buffers (current-buffer)))
   (dolist (b undo-auto--undoably-changed-buffers)
           (when (buffer-live-p b)
             (with-current-buffer b
-              (unless undo-auto-disable-boundaries
-                (undo-auto--ensure-boundary cause)))))
+              (undo-auto--ensure-boundary cause))))
   (setq undo-auto--undoably-changed-buffers nil))
 
 (defun undo-auto--boundary-timer ()
@@ -2919,18 +2909,16 @@ REASON describes the reason that the boundary is being added; see
 
 This list is maintained by `undo-auto--undoable-change' and
 `undo-auto--boundaries' and can be affected by changes to their
-default values.
-
-See also `undo-auto--buffer-undoably-changed'.")
+default values.")
 
 (defun undo-auto--add-boundary ()
   "Add an `undo-boundary' in appropriate buffers."
   (undo-auto--boundaries
    (let ((amal undo-auto--this-command-amalgamating))
-     (setq undo-auto--this-command-amalgamating nil)
-     (if amal
-         'amalgamate
-       'command))))
+       (setq undo-auto--this-command-amalgamating nil)
+       (if amal
+           'amalgamate
+         'command))))
 
 (defun undo-auto-amalgamate ()
   "Amalgamate undo if necessary.
@@ -2969,6 +2957,41 @@ behavior."
   (add-to-list 'undo-auto--undoably-changed-buffers (current-buffer))
   (undo-auto--boundary-ensure-timer))
 ;; End auto-boundary section
+
+(defun undo-amalgamate-change-group (handle)
+  "Amalgamate changes in change-group since HANDLE.
+Remove all undo boundaries between the state of HANDLE and now.
+HANDLE is as returned by `prepare-change-group'."
+  (dolist (elt handle)
+    (with-current-buffer (car elt)
+      (setq elt (cdr elt))
+      (when (consp buffer-undo-list)
+        (let ((old-car (car-safe elt))
+              (old-cdr (cdr-safe elt)))
+          (unwind-protect
+              (progn
+                ;; Temporarily truncate the undo log at ELT.
+                (when (consp elt)
+                  (setcar elt t) (setcdr elt nil))
+                (when
+                    (or (null elt)        ;The undo-log was empty.
+                        ;; `elt' is still in the log: normal case.
+                        (eq elt (last buffer-undo-list))
+                        ;; `elt' is not in the log any more, but that's because
+                        ;; the log is "all new", so we should remove all
+                        ;; boundaries from it.
+                        (not (eq (last buffer-undo-list) (last old-cdr))))
+                  (cl-callf (lambda (x) (delq nil x))
+                      (if (car buffer-undo-list)
+                          buffer-undo-list
+                        ;; Preserve the undo-boundaries at either ends of the
+                        ;; change-groups.
+                        (cdr buffer-undo-list)))))
+            ;; Reset the modified cons cell ELT to its original content.
+            (when (consp elt)
+              (setcar elt old-car)
+              (setcdr elt old-cdr))))))))
+
 
 (defcustom undo-ask-before-discard nil
   "If non-nil ask about discarding undo info for the current command.
@@ -3247,11 +3270,11 @@ Noninteractive callers can specify coding systems by binding
 
 The optional second argument OUTPUT-BUFFER, if non-nil,
 says to put the output in some other buffer.
-If OUTPUT-BUFFER is a buffer or buffer name, put the output there.
-If OUTPUT-BUFFER is not a buffer and not nil,
-insert output in current buffer.  (This cannot be done asynchronously.)
-In either case, the buffer is first erased, and the output is
-inserted after point (leaving mark after it).
+If OUTPUT-BUFFER is a buffer or buffer name, erase that buffer
+and insert the output there.
+If OUTPUT-BUFFER is not a buffer and not nil, insert the output
+in current buffer after point leaving mark after it.
+This cannot be done asynchronously.
 
 If the command terminates without error, but generates output,
 and you did not specify \"insert it in the current buffer\",
@@ -3264,9 +3287,6 @@ Otherwise,the buffer containing the output is displayed.
 If there is output and an error, and you did not specify \"insert it
 in the current buffer\", a message about the error goes at the end
 of the output.
-
-If there is no output, or if output is inserted in the current buffer,
-then `*Shell Command Output*' is deleted.
 
 If the optional third argument ERROR-BUFFER is non-nil, it is a buffer
 or buffer name to which to direct the command's standard error output.
@@ -3340,6 +3360,8 @@ the use of a shell (with its need to quote arguments)."
 				     (current-buffer)))))
 	;; Output goes in a separate buffer.
 	;; Preserve the match data in case called from a program.
+        ;; FIXME: It'd be ridiculous for an Elisp function to call
+        ;; shell-command and assume that it won't mess the match-data!
 	(save-match-data
 	  (if (string-match "[ \t]*&[ \t]*\\'" command)
 	      ;; Command ending with ampersand means asynchronous.
@@ -3510,16 +3532,14 @@ Otherwise it is displayed in the buffer `*Shell Command Output*'.
 The output is available in that buffer in both cases.
 
 If there is output and an error, a message about the error
-appears at the end of the output.  If there is no output, or if
-output is inserted in the current buffer, the buffer `*Shell
-Command Output*' is deleted.
+appears at the end of the output.
 
 Optional fourth arg OUTPUT-BUFFER specifies where to put the
 command's output.  If the value is a buffer or buffer name,
-put the output there.  If the value is nil, use the buffer
-`*Shell Command Output*'.  Any other value, excluding nil,
-means to insert the output in the current buffer.  In either case,
-the output is inserted after point (leaving mark after it).
+erase that buffer and insert the output there.
+If the value is nil, use the buffer `*Shell Command Output*'.
+Any other non-nil value means to insert the output in the
+current buffer after START.
 
 Optional fifth arg REPLACE, if non-nil, means to insert the
 output in place of text from START to END, putting point and mark
@@ -5234,6 +5254,7 @@ store it in a Lisp variable.  Example:
 (defmacro save-mark-and-excursion (&rest body)
   "Like `save-excursion', but also save and restore the mark state.
 This macro does what `save-excursion' did before Emacs 25.1."
+  (declare (indent 0) (debug t))
   (let ((saved-marker-sym (make-symbol "saved-marker")))
     `(let ((,saved-marker-sym (save-mark-and-excursion--save)))
        (unwind-protect

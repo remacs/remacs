@@ -34,6 +34,7 @@
 
 (require 'cl-lib)
 (require 'help-mode)
+(require 'radix-tree)
 
 (defvar help-fns-describe-function-functions nil
   "List of functions to run in help buffer in `describe-function'.
@@ -42,6 +43,61 @@ list was inserted, and before the documentation will be inserted.
 The functions will receive the function name as argument.")
 
 ;; Functions
+
+(defvar help-definition-prefixes nil
+  ;; FIXME: We keep `definition-prefixes' as a hash-table so as to
+  ;; avoid pre-loading radix-tree and because it takes slightly less
+  ;; memory.  But when we use this table it's more efficient to
+  ;; represent it as a radix tree, since the main operation is to do
+  ;; `radix-tree-prefixes'.  Maybe we should just bite the bullet and
+  ;; use a radix tree for `definition-prefixes' (it's not *that*
+  ;; costly, really).
+  "Radix-tree representation replacing `definition-prefixes'.")
+
+(defun help-definition-prefixes ()
+  "Return the up-to-date radix-tree form of `definition-prefixes'."
+  (when (> (hash-table-count definition-prefixes) 0)
+    (maphash (lambda (prefix files)
+               (let ((old (radix-tree-lookup help-definition-prefixes prefix)))
+                 (setq help-definition-prefixes
+                       (radix-tree-insert help-definition-prefixes
+                                          prefix (append old files)))))
+             definition-prefixes)
+    (clrhash definition-prefixes))
+  help-definition-prefixes)
+
+(defun help--loaded-p (file)
+  "Try and figure out if FILE has already been loaded."
+  (or (let ((feature (intern-soft file)))
+        (and feature (featurep feature)))
+      (let* ((re (load-history-regexp file))
+             (done nil))
+        (dolist (x load-history)
+          (if (string-match-p re (car x)) (setq done t)))
+        done)))
+
+(defun help--load-prefixes (prefixes)
+  (pcase-dolist (`(,prefix . ,files) prefixes)
+    (setq help-definition-prefixes
+          (radix-tree-insert help-definition-prefixes prefix nil))
+    (dolist (file files)
+      ;; FIXME: Should we scan help-definition-prefixes to remove
+      ;; other prefixes of the same file?
+      ;; FIXME: this regexp business is not good enough: for file
+      ;; `toto', it will say `toto' is loaded when in reality it was
+      ;; just cedet/semantic/toto that has been loaded.
+      (unless (help--loaded-p file)
+        (load file 'noerror 'nomessage)))))
+
+(defun help--symbol-completion-table (string pred action)
+  (let ((prefixes (radix-tree-prefixes (help-definition-prefixes) string)))
+    (help--load-prefixes prefixes))
+  (let ((prefix-completions
+         (mapcar #'intern (all-completions string definition-prefixes))))
+    (complete-with-action action obarray string
+                          (if pred (lambda (sym)
+                                     (or (funcall pred sym)
+                                         (memq sym prefix-completions)))))))
 
 (defvar describe-function-orig-buffer nil
   "Buffer that was current when `describe-function' was invoked.
@@ -58,8 +114,9 @@ to get buffer-local values.")
      (setq val (completing-read (if fn
 				    (format "Describe function (default %s): " fn)
 				  "Describe function: ")
-				obarray 'fboundp t nil nil
-				(and fn (symbol-name fn))))
+				#'help--symbol-completion-table
+                                #'fboundp
+                                t nil nil (and fn (symbol-name fn))))
      (list (if (equal val "")
 	       fn (intern val)))))
   (or (and function (symbolp function))
@@ -514,19 +571,25 @@ FILE is the file where FUNCTION was probably defined."
 		real-function))
 	 (aliased (or (symbolp def)
 		      ;; Advised & aliased function.
-		      (and advised (symbolp real-function))))
+		      (and advised (symbolp real-function)
+			   (not (eq 'autoload (car-safe def))))
+                      (and (subrp def)
+                           (not (string= (subr-name def)
+                                         (symbol-name function))))))
 	 (real-def (cond
-		    (aliased (let ((f real-function))
-			       (while (and (fboundp f)
-					   (symbolp (symbol-function f)))
-				 (setq f (symbol-function f)))
-			       f))
+                    ((and aliased (not (subrp def)))
+                     (let ((f real-function))
+                       (while (and (fboundp f)
+                                   (symbolp (symbol-function f)))
+                         (setq f (symbol-function f)))
+                       f))
 		    ((subrp def) (intern (subr-name def)))
 		    (t def)))
 	 (sig-key (if (subrp def)
                       (indirect-function real-def)
                     real-def))
-	 (file-name (find-lisp-object-file-name function def))
+	 (file-name (find-lisp-object-file-name function (if aliased 'defun
+                                                           def)))
          (pt1 (with-current-buffer (help-buffer) (point)))
 	 (beg (if (and (or (byte-code-function-p def)
 			   (keymapp def)
@@ -706,7 +769,7 @@ it is displayed along with the global value."
                     (format
                      "Describe variable (default %s): " v)
                   "Describe variable: ")
-                obarray
+                #'help--symbol-completion-table
                 (lambda (vv)
                   ;; In case the variable only exists in the buffer
                   ;; the command we switch back to that buffer before

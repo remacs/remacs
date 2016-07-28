@@ -635,7 +635,7 @@ xfont_list_family (struct frame *f)
   char **names;
   int num_fonts, i;
   Lisp_Object list;
-  char *last_family IF_LINT (= 0);
+  char *last_family UNINIT;
   int last_len;
 
   block_input ();

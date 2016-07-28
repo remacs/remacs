@@ -611,7 +611,7 @@ If ARG is non-nil, instead prompt for connection parameters."
   `(with-current-buffer rcirc-server-buffer
      ,@body))
 
-(define-obsolete-function-alias 'rcirc-float-time 'float-time "26.1")
+(define-obsolete-function-alias 'rcirc-float-time 'float-time "25.2")
 
 (defun rcirc-prompt-for-encryption (server-plist)
   "Prompt the user for the encryption method to use.

@@ -115,11 +115,10 @@ being the result.")
 (defmacro tramp--instrument-test-case (verbose &rest body)
   "Run BODY with `tramp-verbose' equal VERBOSE.
 Print the the content of the Tramp debug buffer, if BODY does not
-eval properly in `should', `should-not' or `should-error'.  BODY
-shall not contain a timeout."
+eval properly in `should' or `should-not'.  `should-error' is not
+handled properly.  BODY shall not contain a timeout."
   (declare (indent 1) (debug (natnump body)))
   `(let ((tramp-verbose ,verbose)
-	 (tramp-message-show-message t)
 	 (tramp-debug-on-error t)
 	 (debug-ignored-errors
 	  (cons "^make-symbolic-link not supported$" debug-ignored-errors)))
@@ -932,7 +931,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	  (make-directory tmp-name1)
 	  (should (file-directory-p tmp-name1))
 	  (should (file-accessible-directory-p tmp-name1))
-	  (should-error (make-directory tmp-name2) :type 'file-error)
+	  (should-error (make-directory tmp-name2))
 	  (make-directory tmp-name2 'parents)
 	  (should (file-directory-p tmp-name2))
 	  (should (file-accessible-directory-p tmp-name2)))
@@ -952,19 +951,16 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
     (should-not (file-directory-p tmp-name))
     ;; Delete non-empty directory.
     (make-directory tmp-name)
+    (should (file-directory-p tmp-name))
     (write-region "foo" nil (expand-file-name "bla" tmp-name))
-    (should-error (delete-directory tmp-name) :type 'file-error)
+    (should (file-exists-p (expand-file-name "bla" tmp-name)))
+    (should-error (delete-directory tmp-name))
     (delete-directory tmp-name 'recursive)
     (should-not (file-directory-p tmp-name))))
 
 (ert-deftest tramp-test15-copy-directory ()
   "Check `copy-directory'."
   (skip-unless (tramp--test-enabled))
-  (skip-unless
-   (not
-    (eq
-     (tramp-find-foreign-file-name-handler tramp-test-temporary-file-directory)
-     'tramp-smb-file-name-handler)))
 
   (let* ((tmp-name1 (tramp--test-make-temp-name))
 	 (tmp-name2 (tramp--test-make-temp-name))
@@ -973,6 +969,8 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	 (tmp-name4 (expand-file-name "foo" tmp-name1))
 	 (tmp-name5 (expand-file-name "foo" tmp-name2))
 	 (tmp-name6 (expand-file-name "foo" tmp-name3)))
+
+    ;; Copy complete directory.
     (unwind-protect
 	(progn
 	  ;; Copy empty directory.
@@ -987,6 +985,31 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	  (copy-directory tmp-name1 tmp-name2)
 	  (should (file-directory-p tmp-name3))
 	  (should (file-exists-p tmp-name6)))
+
+      ;; Cleanup.
+      (ignore-errors
+	(delete-directory tmp-name1 'recursive)
+	(delete-directory tmp-name2 'recursive)))
+
+    ;; Copy directory contents.
+    (unwind-protect
+	(progn
+	  ;; Copy empty directory.
+	  (make-directory tmp-name1)
+	  (write-region "foo" nil tmp-name4)
+	  (should (file-directory-p tmp-name1))
+	  (should (file-exists-p tmp-name4))
+	  (copy-directory tmp-name1 tmp-name2 nil 'parents 'contents)
+	  (should (file-directory-p tmp-name2))
+	  (should (file-exists-p tmp-name5))
+	  ;; Target directory does exist already.
+	  (delete-file tmp-name5)
+	  (should-not (file-exists-p tmp-name5))
+	  (copy-directory tmp-name1 tmp-name2 nil 'parents 'contents)
+	  (should (file-directory-p tmp-name2))
+	  (should (file-exists-p tmp-name5))
+	  (should-not (file-directory-p tmp-name3))
+	  (should-not (file-exists-p tmp-name6)))
 
       ;; Cleanup.
       (ignore-errors
@@ -1090,12 +1113,12 @@ This tests also `file-readable-p' and `file-regular-p'."
 	(progn
 	  (write-region "foo" nil tmp-name1)
 	  (should (file-exists-p tmp-name1))
-	  (setq attr (file-attributes tmp-name1))
-	  (should (consp attr))
-	  (should (file-exists-p tmp-name1))
 	  (should (file-readable-p tmp-name1))
 	  (should (file-regular-p tmp-name1))
+
 	  ;; We do not test inodes and device numbers.
+	  (setq attr (file-attributes tmp-name1))
+	  (should (consp attr))
 	  (should (null (car attr)))
           (should (numberp (nth 1 attr))) ;; Link.
           (should (numberp (nth 2 attr))) ;; Uid.
@@ -1390,10 +1413,11 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		  (format "%s:" method)
 		  (file-name-all-completions (substring method 0 1) "/"))))
 	      (unless (zerop (length host))
-		(should
-		 (member
-		  (format "%s:" host)
-		  (file-name-all-completions (substring host 0 1) "/"))))
+		(let ((tramp-default-method (or method tramp-default-method)))
+		  (should
+		   (member
+		    (format "%s:" host)
+		    (file-name-all-completions (substring host 0 1) "/")))))
 	      (unless (or (zerop (length method)) (zerop (length host)))
 		(should
 		 (member
@@ -1846,6 +1870,12 @@ This does not support globbing characters in file names (yet)."
        (string-match
 	"ftp$" (file-remote-p tramp-test-temporary-file-directory 'method))))
 
+(defun tramp--test-rsync-p ()
+  "Check, whether the rsync method is used.
+This does not support special file names."
+  (string-equal
+   "rsync" (file-remote-p tramp-test-temporary-file-directory 'method)))
+
 (defun tramp--test-gvfs-p ()
   "Check, whether the remote host runs a GVFS based method.
 This requires restrictions of file name syntax."
@@ -2045,6 +2075,7 @@ Several special characters do not work properly there."
 (ert-deftest tramp-test31-special-characters ()
   "Check special characters in file names."
   (skip-unless (tramp--test-enabled))
+  (skip-unless (not (tramp--test-rsync-p)))
 
   (tramp--test-special-characters))
 
@@ -2053,6 +2084,7 @@ Several special characters do not work properly there."
 Use the `stat' command."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
+  (skip-unless (not (tramp--test-rsync-p)))
   (skip-unless
    (eq
     (tramp-find-foreign-file-name-handler tramp-test-temporary-file-directory)
@@ -2072,6 +2104,7 @@ Use the `stat' command."
 Use the `perl' command."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
+  (skip-unless (not (tramp--test-rsync-p)))
   (skip-unless
    (eq
     (tramp-find-foreign-file-name-handler tramp-test-temporary-file-directory)
@@ -2094,6 +2127,7 @@ Use the `perl' command."
 Use the `ls' command."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
+  (skip-unless (not (tramp--test-rsync-p)))
   (skip-unless
    (eq
     (tramp-find-foreign-file-name-handler tramp-test-temporary-file-directory)
@@ -2129,6 +2163,7 @@ Use the `ls' command."
 (ert-deftest tramp-test32-utf8 ()
   "Check UTF8 encoding in file names and file contents."
   (skip-unless (tramp--test-enabled))
+  (skip-unless (not (tramp--test-rsync-p)))
 
   (tramp--test-utf8))
 
@@ -2137,6 +2172,7 @@ Use the `ls' command."
 Use the `stat' command."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
+  (skip-unless (not (tramp--test-rsync-p)))
   (skip-unless
    (eq
     (tramp-find-foreign-file-name-handler tramp-test-temporary-file-directory)
@@ -2156,6 +2192,7 @@ Use the `stat' command."
 Use the `perl' command."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
+  (skip-unless (not (tramp--test-rsync-p)))
   (skip-unless
    (eq
     (tramp-find-foreign-file-name-handler tramp-test-temporary-file-directory)
@@ -2178,6 +2215,7 @@ Use the `perl' command."
 Use the `ls' command."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
+  (skip-unless (not (tramp--test-rsync-p)))
   (skip-unless
    (eq
     (tramp-find-foreign-file-name-handler tramp-test-temporary-file-directory)
@@ -2355,8 +2393,7 @@ Since it unloads Tramp, it shall be the last test to run."
 
 ;; * Work on skipped tests.  Make a comment, when it is impossible.
 ;; * Fix `tramp-test06-directory-file-name' for `ftp'.
-;; * Fix `tramp-test15-copy-directory' for `smb'.  Using tar in a pipe
-;;   doesn't work well when an interactive password must be provided.
+;; * Fix `tramp-test15-copy-directory' for `rsync'.
 ;; * Fix `tramp-test27-start-file-process' on MS Windows (`process-send-eof'?).
 ;; * Fix Bug#16928.  Set expected error of `tramp-test33-asynchronous-requests'.
 ;; * Fix `tramp-test35-unload' (Not all symbols are unbound).  Set

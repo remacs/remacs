@@ -98,7 +98,7 @@ getppid (void)
       getppid_parent = OpenProcess (SYNCHRONIZE, FALSE, atoi (ppid));
       if (!getppid_parent)
 	{
-	  printf ("Failed to open handle to parent process: %d\n",
+	  printf ("Failed to open handle to parent process: %lu\n",
 		 GetLastError ());
 	  exit (1);
 	}
@@ -115,7 +115,7 @@ getppid (void)
       return 1;
     case WAIT_FAILED:
     default:
-      printf ("Checking parent status failed: %d\n", GetLastError ());
+      printf ("Checking parent status failed: %lu\n", GetLastError ());
       exit (1);
     }
 }
@@ -256,16 +256,6 @@ int
 fchown (int fd, unsigned uid, unsigned gid)
 {
   return 0;
-}
-
-/* Place a wrapper around the MSVC version of ctime.  It returns NULL
-   on network directories, so we handle that case here.
-   (Ulrich Leodolter, 1/11/95).  */
-char *
-sys_ctime (const time_t *t)
-{
-  char *str = (char *) ctime (t);
-  return (str ? str : "Sun Jan 01 00:00:00 1970");
 }
 
 FILE *

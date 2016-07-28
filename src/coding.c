@@ -2365,7 +2365,8 @@ decode_coding_emacs_mule (struct coding_system *coding)
 
   while (1)
     {
-      int c, id IF_LINT (= 0);
+      int c;
+      int id UNINIT;
 
       src_base = src;
       consumed_chars_base = consumed_chars;
@@ -2410,7 +2411,7 @@ decode_coding_emacs_mule (struct coding_system *coding)
 	}
       else
 	{
-	  int nchars IF_LINT (= 0), nbytes IF_LINT (= 0);
+	  int nchars UNINIT, nbytes UNINIT;
 	  /* emacs_mule_char can load a charset map from a file, which
 	     allocates a large structure and might cause buffer text
 	     to be relocated as result.  Thus, we need to remember the
@@ -6825,7 +6826,14 @@ decode_eol (struct coding_system *coding)
 
       while (pos_byte < pos_end)
 	{
+	  int incr;
+
 	  p = BYTE_POS_ADDR (pos_byte);
+	  if (coding->dst_multibyte)
+	    incr = BYTES_BY_CHAR_HEAD (*p);
+	  else
+	    incr = 1;
+
 	  if (*p == '\r' && p[1] == '\n')
 	    {
 	      del_range_2 (pos, pos_byte, pos + 1, pos_byte + 1, 0);
@@ -6833,10 +6841,7 @@ decode_eol (struct coding_system *coding)
 	      pos_end--;
 	    }
 	  pos++;
-	  if (coding->dst_multibyte)
-	    pos_byte += BYTES_BY_CHAR_HEAD (*p);
-	  else
-	    pos_byte++;
+	  pos_byte += incr;
 	}
       coding->produced -= n;
       coding->produced_char -= n;
@@ -8565,8 +8570,8 @@ detect_coding_system (const unsigned char *src,
   base_category = XINT (CODING_ATTR_CATEGORY (attrs));
   if (base_category == coding_category_undecided)
     {
-      enum coding_category category IF_LINT (= 0);
-      struct coding_system *this IF_LINT (= NULL);
+      enum coding_category category UNINIT;
+      struct coding_system *this UNINIT;
       int c, i;
       bool inhibit_nbd = inhibit_flag (coding.spec.undecided.inhibit_nbd,
 				       inhibit_null_byte_detection);
@@ -10541,9 +10546,9 @@ usage: (define-coding-system-internal ...)  */)
   return Qnil;
 
  short_args:
-  return Fsignal (Qwrong_number_of_arguments,
-		  Fcons (intern ("define-coding-system-internal"),
-			 make_number (nargs)));
+  Fsignal (Qwrong_number_of_arguments,
+	   Fcons (intern ("define-coding-system-internal"),
+		  make_number (nargs)));
 }
 
 
@@ -11302,24 +11307,4 @@ internal character representation.  */);
 #endif
   staticpro (&system_eol_type);
 }
-
-char *
-emacs_strerror (int error_number)
-{
-  char *str;
-
-  synchronize_system_messages_locale ();
-  str = strerror (error_number);
-
-  if (! NILP (Vlocale_coding_system))
-    {
-      Lisp_Object dec = code_convert_string_norecord (build_string (str),
-						      Vlocale_coding_system,
-						      0);
-      str = SSDATA (dec);
-    }
-
-  return str;
-}
-
 #endif /* emacs */

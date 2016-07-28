@@ -853,7 +853,8 @@ the string PROPERTY."
         (save-excursion
           (skip-chars-backward "[:graph:]")
           (list (point) end
-                (cons "inherit" (css--property-values property))))))))
+                (append '("inherit" "initial" "unset")
+                        (css--property-values property))))))))
 
 (defvar css--html-tags (mapcar #'car html-tag-alist)
   "List of HTML tags.

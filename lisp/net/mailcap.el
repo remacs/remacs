@@ -337,7 +337,7 @@ to return a true or false shell value for the validity.")
 (put 'mailcap-mime-data 'risky-local-variable t)
 
 (defcustom mailcap-download-directory nil
-  "*Directory to which `mailcap-save-binary-file' downloads files by default.
+  "Directory to which `mailcap-save-binary-file' downloads files by default.
 nil means your home directory."
   :type '(choice (const :tag "Home directory" nil)
 		 directory)

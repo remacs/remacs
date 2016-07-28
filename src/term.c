@@ -548,8 +548,8 @@ encode_terminal_code (struct glyph *src, int src_len,
     {
       if (src->type == COMPOSITE_GLYPH)
 	{
-	  struct composition *cmp IF_LINT (= NULL);
-	  Lisp_Object gstring IF_LINT (= Qnil);
+	  struct composition *cmp UNINIT;
+	  Lisp_Object gstring UNINIT;
 	  int i;
 
 	  nbytes = buf - encode_terminal_src;
@@ -614,7 +614,7 @@ encode_terminal_code (struct glyph *src, int src_len,
       else if (! CHAR_GLYPH_PADDING_P (*src))
 	{
 	  GLYPH g;
-	  int c IF_LINT (= 0);
+	  int c UNINIT;
 	  Lisp_Object string;
 
 	  string = Qnil;
@@ -1496,6 +1496,8 @@ append_glyph (struct it *it)
       glyph->pixel_width = 1;
       glyph->u.ch = it->char_to_display;
       glyph->face_id = it->face_id;
+      glyph->avoid_cursor_p = it->avoid_cursor_p;
+      glyph->multibyte_p = it->multibyte_p;
       glyph->padding_p = i > 0;
       glyph->charpos = CHARPOS (it->position);
       glyph->object = it->object;
@@ -1692,8 +1694,10 @@ append_composite_glyph (struct it *it)
 	  glyph->slice.cmp.to = it->cmp_it.to - 1;
 	}
 
+      glyph->avoid_cursor_p = it->avoid_cursor_p;
+      glyph->multibyte_p = it->multibyte_p;
       glyph->face_id = it->face_id;
-      glyph->padding_p = 0;
+      glyph->padding_p = false;
       glyph->charpos = CHARPOS (it->position);
       glyph->object = it->object;
       if (it->bidi_p)
@@ -1776,8 +1780,10 @@ append_glyphless_glyph (struct it *it, int face_id, const char *str)
     return;
   glyph->type = CHAR_GLYPH;
   glyph->pixel_width = 1;
+  glyph->avoid_cursor_p = it->avoid_cursor_p;
+  glyph->multibyte_p = it->multibyte_p;
   glyph->face_id = face_id;
-  glyph->padding_p = 0;
+  glyph->padding_p = false;
   glyph->charpos = CHARPOS (it->position);
   glyph->object = it->object;
   if (it->bidi_p)
@@ -3099,7 +3105,7 @@ tty_menu_activate (tty_menu *menu, int *pane, int *selidx,
   struct tty_menu_state *state;
   int statecount, x, y, i;
   bool leave, onepane;
-  int result IF_LINT (= 0);
+  int result UNINIT;
   int title_faces[4];		/* Face to display the menu title.  */
   int faces[4], buffers_num_deleted = 0;
   struct frame *sf = SELECTED_FRAME ();
@@ -3753,7 +3759,7 @@ tty_menu_show (struct frame *f, int x, int y, int menuflags,
       /* Make "Cancel" equivalent to C-g unless FOR_CLICK (which means
 	 the menu was invoked with a mouse event as POSITION).  */
       if (!(menuflags & MENU_FOR_CLICK))
-        Fsignal (Qquit, Qnil);
+	quit ();
       break;
     }
 

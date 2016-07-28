@@ -191,7 +191,7 @@ TIME should be either a time value or a date-time string."
   (time-subtract nil time))
 
 ;;;###autoload
-(define-obsolete-function-alias 'subtract-time 'time-subtract "26.1")
+(define-obsolete-function-alias 'subtract-time 'time-subtract "25.2")
 
 ;;;###autoload
 (defun date-to-day (date)

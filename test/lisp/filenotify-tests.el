@@ -1,4 +1,4 @@
-;;; file-notify-tests.el --- Tests of file notifications  -*- lexical-binding: t; -*-
+;;; filenotify-tests.el --- Tests of file notifications  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
@@ -385,7 +385,7 @@ delivered."
      ;; Flush pending events.
      (file-notify--wait-for-events
       (file-notify--test-timeout)
-      (input-pending-p))
+      (not (input-pending-p)))
      (setq file-notify--test-events nil
            file-notify--test-results nil)
      ,@body
@@ -444,16 +444,9 @@ delivered."
 	     ;; cygwin recognizes only `deleted' and `stopped' events.
 	     ((eq system-type 'cygwin)
 	      '(deleted stopped))
-             ;; inotify and kqueue raise just one `changed' event.
-             ((or (string-equal "inotify" (file-notify--test-library))
-                  (string-equal "kqueue" (file-notify--test-library)))
-	      '(changed deleted stopped))
-             ;; gfilenotify raises one or two `changed' events
-             ;; randomly, no chance to test.  So we accept both cases.
-             ((string-equal "gfilenotify" (file-notify--test-library))
-              '((changed deleted stopped)
-                (changed changed deleted stopped)))
-	     (t '(changed changed deleted stopped)))
+             ;; There could be one or two `changed' events.
+             (t '((changed deleted stopped)
+                  (changed changed deleted stopped))))
           (write-region
            "another text" nil file-notify--test-tmpfile nil 'no-message)
           (read-event nil nil file-notify--test-read-event-timeout)
@@ -739,16 +732,9 @@ delivered."
              ;; cygwin recognizes only `deleted' and `stopped' events.
 	     ((eq system-type 'cygwin)
 	      '(deleted stopped))
-             ;; inotify and kqueue raise just one `changed' event.
-             ((or (string-equal "inotify" (file-notify--test-library))
-                  (string-equal "kqueue" (file-notify--test-library)))
-	      '(changed deleted stopped))
-             ;; gfilenotify raises one or two `changed' events
-             ;; randomly, no chance to test.  So we accept both cases.
-             ((string-equal "gfilenotify" (file-notify--test-library))
-              '((changed deleted stopped)
-                (changed changed deleted stopped)))
-	     (t '(changed changed deleted stopped)))
+             ;; There could be one or two `changed' events.
+             (t '((changed deleted stopped)
+                  (changed changed deleted stopped))))
           (write-region
            "another text" nil file-notify--test-tmpfile nil 'no-message)
 	  (read-event nil nil file-notify--test-read-event-timeout)
@@ -944,21 +930,9 @@ delivered."
 		'(change) #'file-notify--test-event-handler)))
         (should (file-notify-valid-p file-notify--test-desc))
         (file-notify--test-with-events
-	    (cond
-             ;; On Cygwin there is one `changed' event in both the
-             ;; local and remote cases.
-             ((eq system-type 'cygwin) '(changed))
-             ;; For w32notify and in the remote case, there are two
-             ;; `changed' events.
-             ((or (string-equal (file-notify--test-library) "w32notify")
-                  (file-remote-p temporary-file-directory))
-              '(changed changed))
-             ;; gfilenotify raises one or two `changed' events
-             ;; randomly, no chance to test.  So we accept both cases.
-             ((string-equal "gfilenotify" (file-notify--test-library))
-              '((changed)
-                (changed changed)))
-             (t '(changed)))
+            ;; There could be one or two `changed' events.
+            '((changed)
+              (changed changed))
           ;; There shouldn't be any problem, because the file is kept.
           (with-temp-buffer
             (let ((buffer-file-name file-notify--test-tmpfile)
@@ -993,7 +967,7 @@ delivered."
         (should (file-notify-valid-p file-notify--test-desc))
         (file-notify--test-with-events
             (cond
-             ;; On Cygwin we only get the `changed' event.
+             ;; On cygwin we only get the `changed' event.
              ((eq system-type 'cygwin) '(changed))
              (t '(renamed created changed)))
           ;; The file is renamed when creating a backup.  It shall
@@ -1062,53 +1036,38 @@ the file watch."
         (should (file-notify-valid-p file-notify--test-desc1))
         (should (file-notify-valid-p file-notify--test-desc2))
         (should-not (equal file-notify--test-desc1 file-notify--test-desc2))
-        ;; gfilenotify raises one or two `changed' events randomly in
-        ;; the file monitor, no chance to test.
-        (unless (string-equal "gfilenotify" (file-notify--test-library))
-          (let ((n 100) events)
-            ;; Compute the expected events.
-            (dotimes (_i (/ n 2))
-              (setq events
-                    (append
-                     (append
-                      ;; Directory monitor and file monitor.
-                      (cond
-                       ;; In the remote case, there are two `changed'
-                       ;; events.
-		       ((file-remote-p temporary-file-directory)
-                        '(changed changed changed changed))
-                       ;; The directory monitor in kqueue does not
-                       ;; raise any `changed' event.  Just the file
-                       ;; monitor event is received.
-                       ((string-equal (file-notify--test-library) "kqueue")
-                        '(changed))
-                       ;; Otherwise, both monitors report the
-                       ;; `changed' event.
-                       (t '(changed changed)))
-
-                      ;; Just the directory monitor.
-                      (cond
-                       ;; In kqueue, there is an additional `changed'
-                       ;; event.  Why?
-                       ((string-equal (file-notify--test-library) "kqueue")
-                        '(changed created changed))
-                       (t '(created changed))))
-                     events)))
-            ;; gvfs-monitor-dir returns the events in random order.
-            (when (string-equal "gvfs-monitor-dir" (file-notify--test-library))
-              (setq events (cons :random events)))
-
-            ;; Run the test.
-            (file-notify--test-with-events events
-              (dotimes (i n)
-                (read-event nil nil file-notify--test-read-event-timeout)
-                (if (zerop (mod i 2))
-                    (write-region
-                     "any text" nil file-notify--test-tmpfile1 t 'no-message)
-                  (let ((temporary-file-directory file-notify--test-tmpfile))
-                    (write-region
-                     "any text" nil
-                     (file-notify--test-make-temp-name) nil 'no-message)))))))
+        (let ((n 100))
+          ;; Run the test.
+          (file-notify--test-with-events
+              ;; There could be one or two `changed' events.
+              (list
+               (append
+                '(:random)
+                ;; Directory monitor and file monitor.
+                (make-list (/ n 2) 'changed)
+                (make-list (/ n 2) 'changed)
+                ;; Just the directory monitor.
+                (make-list (/ n 2) 'created)
+                (make-list (/ n 2) 'changed))
+               (append
+                '(:random)
+                ;; Directory monitor and file monitor.
+                (make-list (/ n 2) 'changed)
+                (make-list (/ n 2) 'changed)
+                (make-list (/ n 2) 'changed)
+                (make-list (/ n 2) 'changed)
+                ;; Just the directory monitor.
+                (make-list (/ n 2) 'created)
+                (make-list (/ n 2) 'changed)))
+            (dotimes (i n)
+              (read-event nil nil file-notify--test-read-event-timeout)
+              (if (zerop (mod i 2))
+                  (write-region
+                   "any text" nil file-notify--test-tmpfile1 t 'no-message)
+                (let ((temporary-file-directory file-notify--test-tmpfile))
+                  (write-region
+                   "any text" nil
+                   (file-notify--test-make-temp-name) nil 'no-message))))))
 
         ;; If we delete the file, the directory monitor shall still be
         ;; active.  We receive the `deleted' event from both the
@@ -1218,4 +1177,4 @@ the file watch."
 ;; * Check, why cygwin recognizes only `deleted' and `stopped' events.
 
 (provide 'file-notify-tests)
-;;; file-notify-tests.el ends here
+;;; filenotify-tests.el ends here

@@ -186,11 +186,7 @@ MonitorFromWindow_Proc monitor_from_window_fn = NULL;
 EnumDisplayMonitors_Proc enum_display_monitors_fn = NULL;
 GetTitleBarInfo_Proc get_title_bar_info_fn = NULL;
 
-#ifdef NTGUI_UNICODE
-#define unicode_append_menu AppendMenuW
-#else /* !NTGUI_UNICODE */
 extern AppendMenuW_Proc unicode_append_menu;
-#endif /* NTGUI_UNICODE */
 
 /* Flag to selectively ignore WM_IME_CHAR messages.  */
 static int ignore_ime_char = 0;
@@ -279,6 +275,8 @@ static struct
   char rwin_hooked[256]; /* hook right Win+[this key]? */
 } kbdhook;
 typedef HWND (WINAPI *GetConsoleWindow_Proc) (void);
+
+typedef BOOL (WINAPI *IsDebuggerPresent_Proc) (void);
 
 /* stdin, from w32console.c */
 extern HANDLE keyboard_handle;
@@ -1662,7 +1660,7 @@ x_set_internal_border_width (struct frame *f, Lisp_Object arg, Lisp_Object oldva
 
   if (border != FRAME_INTERNAL_BORDER_WIDTH (f))
     {
-      FRAME_INTERNAL_BORDER_WIDTH (f) = border;
+      f->internal_border_width = border;
 
       if (FRAME_X_WINDOW (f) != 0)
 	{
@@ -2182,7 +2180,7 @@ funhook (int code, WPARAM w, LPARAM l)
 		     can prevent this by setting the
 		     w32-pass-[lr]window-to-system variable to
 		     NIL.  */
-		  if (hs->vkCode == (VK_LWIN && !NILP (Vw32_pass_lwindow_to_system)) ||
+		  if ((hs->vkCode == VK_LWIN && !NILP (Vw32_pass_lwindow_to_system)) ||
 		      (hs->vkCode == VK_RWIN && !NILP (Vw32_pass_rwindow_to_system)))
 		    {
 		      /* Not prevented - Simulate the keypress to the system.  */
@@ -2308,6 +2306,19 @@ setup_w32_kbdhook (void)
 {
   kbdhook.hook_count++;
 
+  /* This hook gets in the way of debugging, since when Emacs stops,
+     its input thread stops, and there's nothing to process keyboard
+     events, whereas this hook is global, and is invoked in the
+     context of the thread that installed it.  So we don't install the
+     hook if the process is being debugged. */
+  if (w32_kbdhook_active)
+    {
+      IsDebuggerPresent_Proc is_debugger_present = (IsDebuggerPresent_Proc)
+	GetProcAddress (GetModuleHandle ("kernel32.dll"), "IsDebuggerPresent");
+      if (is_debugger_present && is_debugger_present ())
+	return;
+    }
+
   /* Hooking is only available on NT architecture systems, as
      indicated by the w32_kbdhook_active variable.  */
   if (kbdhook.hook_count == 1 && w32_kbdhook_active)
@@ -2406,6 +2417,7 @@ hook_w32_key (int hook, int modifier, int vkey)
     }
 }
 
+#ifdef WINDOWSNT
 /* Check the current Win key pressed state.  */
 int
 check_w32_winkey_state (int vkey)
@@ -2433,6 +2445,7 @@ check_w32_winkey_state (int vkey)
     }
   return 0;
 }
+#endif	/* WINDOWSNT */
 
 /* Reset the keyboard hook state.  Locking the workstation with Win-L
    leaves the Win key(s) "down" from the hook's point of view - the
@@ -2623,8 +2636,10 @@ modifier_set (int vkey)
       else
 	return (GetKeyState (vkey) & 0x1);
     }
+#ifdef WINDOWSNT
   if (w32_kbdhook_active && (vkey == VK_LWIN || vkey == VK_RWIN))
     return check_w32_winkey_state (vkey);
+#endif
 
   if (!modifiers_recorded)
     return (GetKeyState (vkey) & 0x8000);
@@ -3382,7 +3397,7 @@ deliver_wm_chars (int do_translate, HWND hwnd, UINT msg, UINT wParam,
       W32Msg wmsg;
       DWORD console_modifiers = construct_console_modifiers ();
       int *b = buf, strip_ExtraMods = 1, hairy = 0;
-      char *type_CtrlAlt = NULL;
+      const char *type_CtrlAlt = NULL;
 
       /*  XXXX In fact, there may be another case when we need to do the same:
 	       What happens if the string defined in the LIGATURES has length
@@ -6898,6 +6913,7 @@ Text larger than the specified size is clipped.  */)
   ptrdiff_t count = SPECPDL_INDEX ();
   ptrdiff_t count_1;
   Lisp_Object window, size;
+  AUTO_STRING (tip, " *tip*");
 
   specbind (Qinhibit_redisplay, Qt);
 
@@ -7043,6 +7059,7 @@ Text larger than the specified size is clipped.  */)
 
       /* Create a frame for the tooltip, and record it in the global
 	 variable tip_frame.  */
+      struct frame *f;		/* The value is unused.  */
       if (NILP (tip_frame = x_create_tip_frame (FRAME_DISPLAY_INFO (f), parms)))
 	{
 	  /* Creating the tip frame failed.  */
@@ -7053,7 +7070,6 @@ Text larger than the specified size is clipped.  */)
 
   tip_f = XFRAME (tip_frame);
   window = FRAME_ROOT_WINDOW (tip_f);
-  AUTO_STRING (tip, " *tip*");
   set_window_buffer (window, Fget_buffer_create (tip), false, false);
   w = XWINDOW (window);
   w->pseudo_window_p = true;
@@ -7288,7 +7304,9 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
 {
   /* Filter index: 1: All Files, 2: Directories only  */
   static const wchar_t filter_w[] = L"All Files (*.*)\0*.*\0Directories\0*|*\0";
+#ifndef NTGUI_UNICODE
   static const char filter_a[] = "All Files (*.*)\0*.*\0Directories\0*|*\0";
+#endif
 
   Lisp_Object filename = default_filename;
   struct frame *f = SELECTED_FRAME ();
@@ -7566,7 +7584,7 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
 
   /* Make "Cancel" equivalent to C-g.  */
   if (NILP (filename))
-    Fsignal (Qquit, Qnil);
+    quit ();
 
   return filename;
 }
@@ -8962,7 +8980,7 @@ w32_strerror (int error_no)
       --ret;
   buf[ret] = '\0';
   if (!ret)
-    sprintf (buf, "w32 error %u", error_no);
+    sprintf (buf, "w32 error %d", error_no);
 
   return buf;
 }
@@ -10331,8 +10349,8 @@ emacs_abort (void)
 	       but not on Windows 7.  addr2line doesn't mind a missing
 	       "0x", but will be confused by an extra one.  */
 	    if (except_addr)
-	      sprintf (buf, "\r\nException 0x%lx at this address:\r\n%p\r\n",
-		       except_code, except_addr);
+	      sprintf (buf, "\r\nException 0x%x at this address:\r\n%p\r\n",
+		       (unsigned int) except_code, except_addr);
 	    if (stderr_fd >= 0)
 	      {
 		if (except_addr)

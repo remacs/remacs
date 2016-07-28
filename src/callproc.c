@@ -1094,7 +1094,7 @@ add_env (char **env, char **new_env, char *string)
       char *p = *ep, *q = string;
       while (ok)
 	{
-	  if (*q != *p)
+	  if (*p && *q != *p)
 	    break;
 	  if (*q == 0)
 	    /* The string is a lone variable name; keep it for now, we
@@ -1317,8 +1317,8 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
   setpgid (0, 0);
   tcsetpgrp (0, pid);
 
-  execve (new_argv[0], new_argv, env);
-  exec_failed (new_argv[0], errno);
+  int errnum = emacs_exec_file (new_argv[0], new_argv, env);
+  exec_failed (new_argv[0], errnum);
 
 #else /* MSDOS */
   pid = run_msdos_command (new_argv, pwd_var + 4, in, out, err, env);
@@ -1374,6 +1374,20 @@ getenv_internal (const char *var, ptrdiff_t varlen, char **value,
   if (getenv_internal_1 (var, varlen, value, valuelen,
 			 Vprocess_environment))
     return *value ? 1 : 0;
+
+  /* On Windows we make some modifications to Emacs' environment
+     without recording them in Vprocess_environment.  */
+#ifdef WINDOWSNT
+  {
+    char* tmpval = getenv (var);
+    if (tmpval)
+      {
+        *value = tmpval;
+        *valuelen = strlen (tmpval);
+        return 1;
+      }
+  }
+#endif
 
   /* For DISPLAY try to get the values from the frame or the initial env.  */
   if (strcmp (var, "DISPLAY") == 0)

@@ -3238,7 +3238,9 @@ end position.
 
 One responsibility of @var{from-fn} is to make sure that the beginning
 of the file no longer matches @var{regexp}.  Otherwise it is likely to
-get called again.
+get called again.  Also, @var{from-fn} must not involve buffers or
+files other than the one being decoded, otherwise the internal buffer
+used for formatting might be overwritten.
 
 @item to-fn
 A shell command or function to encode data in this format---that is, to
@@ -3268,6 +3270,10 @@ When @code{write-region} actually writes the text from the buffer to the
 file, it intermixes the specified annotations at the corresponding
 positions.  All this takes place without modifying the buffer.
 @end itemize
+
+@var{to-fn} must not involve buffers or files other than the one being
+encoded, otherwise the internal buffer used for formatting might be
+overwritten.
 
 @item modify
 A flag, @code{t} if the encoding function modifies the buffer, and

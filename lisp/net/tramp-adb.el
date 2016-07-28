@@ -52,7 +52,7 @@ It is used for TCP/IP devices."
 
 ;;;###tramp-autoload
 (defconst tramp-adb-method "adb"
-  "*When this method name is used, forward all calls to Android Debug Bridge.")
+  "When this method name is used, forward all calls to Android Debug Bridge.")
 
 ;;;###tramp-autoload
 (defcustom tramp-adb-prompt

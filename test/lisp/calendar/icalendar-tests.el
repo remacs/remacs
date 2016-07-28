@@ -32,7 +32,6 @@
 ;;; Code:
 
 (require 'ert)
-(require 'ert-x)
 (require 'icalendar)
 
 ;; ======================================================================
@@ -64,7 +63,7 @@
          (hash (format "%d" (abs (sxhash entry-full))))
          (contents "DTSTART:19640630T070100\nblahblah")
          (username (or user-login-name "UNKNOWN_USER")))
-    (ert-with-function-mocked current-time (lambda () '(1 2 3))
+    (cl-letf (((symbol-function 'current-time) (lambda () '(1 2 3))))
       (should (= 77 icalendar--uid-count))
       (should (string=  (concat "xxx-123-77-" hash "-" username "-19640630")
                         (icalendar--create-uid entry-full contents)))

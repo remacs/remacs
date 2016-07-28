@@ -34,6 +34,11 @@
 ;; Indent track-mouse like progn.
 (put 'track-mouse 'lisp-indent-function 0)
 
+(defgroup mouse nil
+  "Input from the mouse."  ;; "Mouse support."
+  :group 'environment
+  :group 'editing)
+
 (defcustom mouse-yank-at-point nil
   "If non-nil, mouse yank commands yank at point instead of at click."
   :type 'boolean
@@ -420,10 +425,8 @@ must be one of the symbols `header', `mode', or `vertical'."
       (let ((divider-width (frame-right-divider-width frame)))
         (when (and (or (not (numberp divider-width))
                        (zerop divider-width))
-                   (eq (cdr (assq 'vertical-scroll-bars
-                                  (frame-parameters frame)))
-                       'left))
-	(setq window (window-in-direction 'left window t))))))
+                   (eq (frame-parameter frame 'vertical-scroll-bars) 'left))
+          (setq window (window-in-direction 'left window t))))))
 
     (let* ((exitfun nil)
            (move
@@ -540,15 +543,29 @@ must be one of the symbols `header', `mode', or `vertical'."
   (interactive "e")
   (mouse-drag-line start-event 'vertical))
 
+(defcustom mouse-select-region-move-to-beginning nil
+  "Effect of selecting a region extending backward from double click.
+Nil means keep point at the position clicked (region end);
+non-nil means move point to beginning of region."
+  :type '(choice (const :tag "Don't move point" nil)
+		 (const :tag "Move point to beginning of region" t))
+  :group 'mouse
+  :version "25.2")
+
 (defun mouse-set-point (event &optional promote-to-region)
   "Move point to the position clicked on with the mouse.
 This should be bound to a mouse click event type.
-If PROMOTE-TO-REGION is non-nil and event is a multiple-click,
-select the corresponding element around point."
+If PROMOTE-TO-REGION is non-nil and event is a multiple-click, select
+the corresponding element around point, with the resulting position of
+point determined by `mouse-select-region-move-to-beginning'."
   (interactive "e\np")
   (mouse-minibuffer-check event)
   (if (and promote-to-region (> (event-click-count event) 1))
-      (mouse-set-region event)
+      (progn
+        (mouse-set-region event)
+        (when mouse-select-region-move-to-beginning
+          (when (> (posn-point (event-start event)) (region-beginning))
+            (exchange-point-and-mark))))
     ;; Use event-end in case called from mouse-drag-region.
     ;; If EVENT is a click, event-end and event-start give same value.
     (posn-set-point (event-end event))))
@@ -575,7 +592,12 @@ command alters the kill ring or not."
   (mouse-minibuffer-check click)
   (select-window (posn-window (event-start click)))
   (let ((beg (posn-point (event-start click)))
-	(end (posn-point (event-end click)))
+        (end
+         (if (eq (posn-window (event-end click)) (selected-window))
+             (posn-point (event-end click))
+           ;; If the mouse ends up in any other window or on the menu
+           ;; bar, use `window-point' of selected window (Bug#23707).
+           (window-point)))
         (click-count (event-click-count click)))
     (let ((drag-start (terminal-parameter nil 'mouse-drag-start)))
       (when drag-start
@@ -1622,8 +1644,8 @@ and selects that window."
 	      (let ((others-list
 		     (mouse-buffer-menu-alist
 		      ;; we don't need split-by-major-mode any more,
-		      ;; so we can ditch it with nconc.
-		      (apply 'nconc (mapcar 'cddr split-by-major-mode)))))
+		      ;; so we can ditch it with nconc (mapcan).
+		      (mapcan 'cddr split-by-major-mode))))
 		(and others-list
 		     (setq subdivided-menus
 			   (cons (cons "Others" others-list)
@@ -1700,7 +1722,7 @@ and selects that window."
 ;; Font selection.
 
 (defun font-menu-add-default ()
-  (let* ((default (cdr (assq 'font (frame-parameters (selected-frame)))))
+  (let* ((default (frame-parameter nil 'font))
 	 (font-alist x-fixed-font-alist)
 	 (elt (or (assoc "Misc" font-alist) (nth 1 font-alist))))
     (if (assoc "Default" elt)

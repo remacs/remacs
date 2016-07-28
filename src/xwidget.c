@@ -21,87 +21,13 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "xwidget.h"
 
-#include <signal.h>
-
-#include <stdio.h>
-#include <setjmp.h>
-#ifdef HAVE_X_WINDOWS
-
 #include "lisp.h"
 #include "blockinput.h"
-#include "syssignal.h"
-
-#include "xterm.h"
-#include <X11/cursorfont.h>
-
-#ifndef makedev
-# include <sys/types.h>
-#endif
-
-#ifdef BSD_SYSTEM
-# include <sys/ioctl.h>
-#endif
-
-#include "systime.h"
-
-#ifndef INCLUDED_FCNTL
-# include <fcntl.h>
-#endif
-#include <ctype.h>
-#include <errno.h>
-#include <setjmp.h>
-#include <sys/stat.h>
-
-#include "charset.h"
-#include "character.h"
-#include "coding.h"
-#include "ccl.h"
 #include "frame.h"
-#include "dispextern.h"
-#include "fontset.h"
-#include "termhooks.h"
-#include "termopts.h"
-#include "termchar.h"
-#include "disptab.h"
-#include "buffer.h"
-#include "window.h"
 #include "keyboard.h"
-#include "intervals.h"
-#include "process.h"
-#include "atimer.h"
-#include "keymap.h"
-
-
-#ifdef USE_X_TOOLKIT
-#include <X11/Shell.h>
-#endif
-#include <X11/extensions/Xcomposite.h>
-#include <X11/extensions/Xrender.h>
-#include <cairo.h>
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
 #include "gtkutil.h"
-#include "font.h"
-#endif /* HAVE_X_WINDOWS */
-
-#include <gtk/gtk.h>
-#include <gdk/gdk.h>
-
-#include <gtk/gtkx.h>
-
-#include "emacsgtkfixed.h"
-
-#include <wchar.h>
 
 #include <webkit/webkitwebview.h>
-#include <webkit/webkitwebplugindatabase.h>
-#include <webkit/webkitwebplugin.h>
-#include <webkit/webkitglobals.h>
 #include <webkit/webkitwebnavigationaction.h>
 #include <webkit/webkitdownload.h>
 #include <webkit/webkitwebpolicydecision.h>
@@ -565,11 +491,15 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
      xwidget on screen.  Moving and clipping is done here.  Also view
      initialization.  */
   struct xwidget *xww = s->xwidget;
-  struct xwidget_view *xv = xwidget_view_lookup (xww, s->w);
+  struct xwidget_view *xv;
   int clip_right;
   int clip_bottom;
   int clip_top;
   int clip_left;
+
+  /* FIXME: The result of this call is discarded.
+     What if the lookup fails?  */
+  xwidget_view_lookup (xww, s->w);
 
   int x = s->x;
   int y = s->y + (s->height / 2) - (xww->height / 2);
@@ -1145,7 +1075,13 @@ xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix)
 		{
 		  /* The only call to xwidget_end_redisplay is in dispnew.
 		     xwidget_end_redisplay (w->current_matrix);  */
-		  xwidget_touch (xwidget_view_lookup (glyph->u.xwidget, w));
+		  struct xwidget_view *xv
+		    = xwidget_view_lookup (glyph->u.xwidget, w);
+		  /* FIXME: Is it safe to assume xwidget_view_lookup
+		     always succeeds here?  If so, this comment can be removed.
+		     If not, the code probably needs fixing.  */
+		  eassume (xv);
+		  xwidget_touch (xv);
 		}
 	  }
     }

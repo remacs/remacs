@@ -310,7 +310,7 @@ sound_perror (const char *msg)
   }
 #endif
   if (saved_errno != 0)
-    error ("%s: %s", msg, strerror (saved_errno));
+    error ("%s: %s", msg, emacs_strerror (saved_errno));
   else
     error ("%s", msg);
 }

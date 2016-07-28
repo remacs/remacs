@@ -723,6 +723,10 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	(concat ".\\(" c-string-limit-regexp "\\)")
 	'((c-font-lock-invalid-string)))
 
+      ;; Fontify C++ raw strings.
+      ,@(when (c-major-mode-is 'c++-mode)
+	  '(c-font-lock-raw-strings))
+
       ;; Fontify keyword constants.
       ,@(when (c-lang-const c-constant-kwds)
 	  (let ((re (c-make-keywords-re nil (c-lang-const c-constant-kwds))))
@@ -1392,99 +1396,14 @@ casts and declarations are fontified.  Used on level 2 and higher."
 					     'c-decl-id-start)))))
 
 		(c-font-lock-declarators
-		 (point-max) decl-list (cadr decl-or-cast)))
+		 (min limit (point-max)) decl-list (cadr decl-or-cast)))
 
 	      ;; A declaration has been successfully identified, so do all the
 	      ;; fontification of types and refs that've been recorded.
 	      (c-fontify-recorded-types-and-refs)
 	      nil))
 
-	     ;; Restore point, since at this point in the code it has been
-	     ;; left undefined by c-forward-decl-or-cast-1 above.
-	     ((progn (goto-char start-pos) nil))
-
-	     ;; If point is inside a bracelist, there's no point checking it
-	     ;; being at a declarator.
-	     ((let ((paren-state (c-parse-state)))
-		(setq lbrace (c-cheap-inside-bracelist-p paren-state)))
-	      ;; Move past this bracelist to prevent an endless loop.
-	      (goto-char lbrace)
-	      (unless (c-safe (progn (forward-list) t))
-		(goto-char start-pos)
-		(c-forward-token-2))
-	      nil)
-
-	     ;; If point is just after a ")" which is followed by an
-	     ;; identifier which isn't a label, or at the matching "(", we're
-	     ;; at either a macro invocation, a cast, or a
-	     ;; for/while/etc. statement.  The cast case is handled above.
-	     ;; None of these cases can contain a declarator.
-	     ((or (and (eq (char-before match-pos) ?\))
-	     	       (c-on-identifier)
-	     	       (save-excursion (not (c-forward-label))))
-	     	  (and (eq (char-after) ?\()
-	     	       (save-excursion
-	     		 (and
-	     		  (progn (c-backward-token-2) (c-on-identifier))
-	     		  (save-excursion (not (c-forward-label)))
-	     		  (progn (c-backward-token-2)
-	     			 (eq (char-after) ?\())))))
-	      (c-forward-token-2)	; Must prevent looping.
-	      nil)
-
-	     ((and (not c-enums-contain-decls)
-		   ;; An optimization quickly to eliminate scans of long enum
-		   ;; declarations in the next cond arm.
-		   (let ((paren-state (c-parse-state)))
-		     (and
-		      (numberp (car paren-state))
-		      (save-excursion
-			(goto-char (car paren-state))
-			(c-backward-over-enum-header)))))
-	      (c-forward-token-2)
-	      nil)
-
-	     (t
-	      ;; Are we at a declarator?  Try to go back to the declaration
-	      ;; to check this.  If we get there, check whether a "typedef"
-	      ;; is there, then fontify the declarators accordingly.
-	      (let ((decl-search-lim (c-determine-limit 1000))
-		    paren-state bod-res encl-pos is-typedef
-		    c-recognize-knr-p) ; Strictly speaking, bogus, but it
-				       ; speeds up lisp.h tremendously.
-		(save-excursion
-		  (if (c-back-over-member-initializers)
-		     t			; Can't be at a declarator
-		    (unless (or (eobp)
-				(looking-at "\\s(\\|\\s)"))
-		      (forward-char))
-		    (setq bod-res (car (c-beginning-of-decl-1 decl-search-lim)))
-		    (if (and (eq bod-res 'same)
-			     (save-excursion
-			       (c-backward-syntactic-ws)
-			       (eq (char-before) ?\})))
-			(c-beginning-of-decl-1 decl-search-lim))
-
-		    ;; We're now putatively at the declaration.
-		    (setq paren-state (c-parse-state))
-		    ;; At top level or inside a "{"?
-		    (if (or (not (setq encl-pos
-				       (c-most-enclosing-brace paren-state)))
-			    (eq (char-after encl-pos) ?\{))
-			(progn
-			  (when (looking-at c-typedef-key) ; "typedef"
-			    (setq is-typedef t)
-			    (goto-char (match-end 0))
-			    (c-forward-syntactic-ws))
-			  ;; At a real declaration?
-			  (if (memq (c-forward-type t) '(t known found decltype))
-			      (progn
-				(c-font-lock-declarators (point-max) t is-typedef)
-				nil)
-			    ;; False alarm.  Return t to go on to the next check.
-			    (goto-char start-pos)
-			    t))
-		      t)))))))
+	     (t t)))
 
 	  ;; It was a false alarm.  Check if we're in a label (or other
 	  ;; construct with `:' except bitfield) instead.
@@ -1541,6 +1460,47 @@ casts and declarations are fontified.  Used on level 2 and higher."
       (c-font-lock-declarators limit t nil)))
   nil)
 
+(defun c-font-lock-cut-off-declarators (limit)
+  ;; Fontify any declarators "cut off" from their declaring type at the start
+  ;; of the region being fontified.
+  ;;
+  ;; This function will be called from font-lock- for a region bounded by
+  ;; POINT and LIMIT, as though it were to identify a keyword for
+  ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
+  ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
+  ;; fontification".
+  (let ((decl-search-lim (c-determine-limit 1000))
+	paren-state bod-res is-typedef encl-pos
+	c-recognize-knr-p)		; Strictly speaking, bogus, but it
+					; speeds up lisp.h tremendously.
+    (save-excursion
+      (when (not (c-back-over-member-initializers))
+	(unless (or (eobp)
+		    (looking-at "\\s(\\|\\s)"))
+	  (forward-char))
+	(c-syntactic-skip-backward "^;{}" decl-search-lim t)
+	(when (eq (char-before) ?})
+	  (c-go-list-backward)	; brace block of struct, etc.?
+	  (c-syntactic-skip-backward "^;{}" decl-search-lim t))
+	(when (or (bobp)
+		  (memq (char-before) '(?\; ?{ ?})))
+	  (c-forward-syntactic-ws)
+	  ;; We're now putatively at the declaration.
+	  (setq paren-state (c-parse-state))
+	  ;; At top level or inside a "{"?
+	  (if (or (not (setq encl-pos
+			     (c-most-enclosing-brace paren-state)))
+		  (eq (char-after encl-pos) ?\{))
+	      (progn
+		(when (looking-at c-typedef-key) ; "typedef"
+		  (setq is-typedef t)
+		  (goto-char (match-end 0))
+		  (c-forward-syntactic-ws))
+		;; At a real declaration?
+		(if (memq (c-forward-type t) '(t known found decltype))
+		    (c-font-lock-declarators limit t is-typedef)))))))
+    nil))
+
 (defun c-font-lock-enclosing-decls (limit)
   ;; Fontify the declarators of (nested) declarations we're in the middle of.
   ;; This is mainly for when a jit-lock etc. chunk starts inside the brace
@@ -1553,7 +1513,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; Fontification".
   (let* ((paren-state (c-parse-state))
 	 (decl-search-lim (c-determine-limit 1000))
-	 decl-context in-typedef ps-elt)
+	 in-typedef ps-elt)
     ;; Are we in any nested struct/union/class/etc. braces?
     (while paren-state
       (setq ps-elt (car paren-state)
@@ -1561,15 +1521,67 @@ casts and declarations are fontified.  Used on level 2 and higher."
       (when (and (atom ps-elt)
 		 (eq (char-after ps-elt) ?\{))
 	(goto-char ps-elt)
-	(setq decl-context (c-beginning-of-decl-1 decl-search-lim)
-	      in-typedef (looking-at c-typedef-key))
-	(if in-typedef (c-forward-token-2))
-	(when (and c-opt-block-decls-with-vars-key
-		   (looking-at c-opt-block-decls-with-vars-key))
-	  (goto-char ps-elt)
-	  (when (c-safe (c-forward-sexp))
-	    (c-forward-syntactic-ws)
-	    (c-font-lock-declarators limit t in-typedef)))))))
+	(c-syntactic-skip-backward "^;{}" decl-search-lim)
+	(when (or (bobp)
+		  (memq (char-before) '(?\; ?})))
+	  (c-forward-syntactic-ws)
+	  (setq in-typedef (looking-at c-typedef-key))
+	  (if in-typedef (c-forward-token-2))
+	  (when (and c-opt-block-decls-with-vars-key
+		     (looking-at c-opt-block-decls-with-vars-key))
+	    (goto-char ps-elt)
+	    (when (c-safe (c-forward-sexp))
+	      (c-forward-syntactic-ws)
+	      (c-font-lock-declarators limit t in-typedef))))))))
+
+(defun c-font-lock-raw-strings (limit)
+  ;; Fontify C++ raw strings.
+  ;;
+  ;; This function will be called from font-lock for a region bounded by POINT
+  ;; and LIMIT, as though it were to identify a keyword for
+  ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
+  ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
+  ;; Fontification".
+  (let* ((state (c-state-semi-pp-to-literal (point)))
+	 (string-start (and (eq (cadr state) 'string)
+			    (car (cddr state))))
+	 (raw-id (and string-start
+		      (save-excursion
+			(goto-char string-start)
+			(and (eq (char-before) ?R)
+			     (looking-at "\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)(")
+			     (match-string-no-properties 1))))))
+    (while (< (point) limit)
+      (if raw-id
+	  (progn
+	    (if (search-forward-regexp (concat ")\\(" (regexp-quote raw-id) "\\)\"")
+				       limit 'limit)
+		(c-put-font-lock-face (match-beginning 1) (point) 'default))
+	    (setq raw-id nil))
+
+	(when (search-forward-regexp
+	       "R\\(\"\\)\\([^ ()\\\n\r\t]\\{0,16\\}\\)(" limit 'limit)
+	  (when
+	      (or (and (eobp)
+		       (eq (c-get-char-property (1- (point)) 'face)
+			   'font-lock-warning-face))
+		  (eq (c-get-char-property (point) 'face) 'font-lock-string-face)
+		  (and (equal (c-get-char-property (match-end 2) 'syntax-table) '(1))
+		       (equal (c-get-char-property (match-beginning 1) 'syntax-table)
+			      '(1))))
+	    (let ((paren-prop (c-get-char-property (1- (point)) 'syntax-table)))
+	      (if paren-prop
+		  (progn
+		    (c-put-font-lock-face (match-beginning 0) (match-end 0)
+					  'font-lock-warning-face)
+		    (when
+			(and
+			 (equal paren-prop '(15))
+			 (not (c-search-forward-char-property 'syntax-table '(15) limit)))
+		      (goto-char limit)))
+		(c-put-font-lock-face (match-beginning 1) (match-end 2) 'default)
+		(setq raw-id (match-string-no-properties 2)))))))))
+  nil)
 
 (c-lang-defconst c-simple-decl-matchers
   "Simple font lock matchers for types and declarations.  These are used
@@ -1673,6 +1685,10 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		'((c-put-char-property (1- (match-end 1))
 				       'c-type 'c-decl-end)))
 	      c-font-lock-objc-methods))
+
+      ;; Fontify declarators which have been cut off from their declaring
+      ;; types at the start of the region.
+      c-font-lock-cut-off-declarators
 
       ;; Fontify all declarations, casts and normal labels.
       c-font-lock-declarations
@@ -2435,10 +2451,10 @@ need for `pike-font-lock-extra-types'.")
 	    'font-lock-comment-face)
 	;; Handle the case when the fontified region starts inside a
 	;; comment.
-	(let ((range (c-literal-limits)))
+	(let ((start (c-literal-start)))
 	  (setq region-beg (point))
-	  (when range
-	    (goto-char (car range)))
+	  (when start
+	    (goto-char start))
 	  (when (looking-at prefix)
 	    (setq comment-beg (point)))))
 

@@ -1996,15 +1996,17 @@ newline.
 
   If the property value is @code{t}, the newline character has no
 effect on the displayed height of the line---the visible contents
-alone determine the height.  This is useful for tiling small images
-(or image slices) without adding blank areas between the images.
+alone determine the height.  The @code{line-spacing} property,
+described below, is also ignored in this case.  This is useful for
+tiling small images (or image slices) without adding blank areas
+between the images.
 
   If the property value is a list of the form @code{(@var{height}
 @var{total})}, that adds extra space @emph{below} the display line.
 First Emacs uses @var{height} as a height spec to control extra space
 @emph{above} the line; then it adds enough space @emph{below} the line
-to bring the total line height up to @var{total}.  In this case, the
-other ways to specify the line spacing are ignored.
+to bring the total line height up to @var{total}.  In this case, any
+value of @code{line-spacing} property for the newline is ignored.
 
 @cindex height spec
   Any other kind of property value is a height spec, which translates
@@ -2054,9 +2056,10 @@ overrides line spacings specified for the frame.
 
 @kindex line-spacing @r{(text property)}
   Finally, a newline can have a @code{line-spacing} text or overlay
-property that overrides the default frame line spacing and the buffer
-local @code{line-spacing} variable, for the display line ending in
-that newline.
+property that can enlarge the default frame line spacing and the
+buffer local @code{line-spacing} variable: if its value is larger than
+the buffer or frame defaults, that larger value is used instead, for
+the display line ending in that newline.
 
   One way or another, these mechanisms specify a Lisp value for the
 spacing of each line.  The value is a height spec, and it translates
@@ -5345,6 +5348,41 @@ that describe the outer circumference of the polygon.
 (svg-polygon svg '((100 . 100) (200 . 150) (150 . 90))
              :stroke-color "blue" :fill-color "red"")
 @end lisp
+@end defun
+
+@defun svg-text svg text &rest args
+Add a text to @var{svg}.
+
+@lisp
+(svg-text
+ svg "This is a text"
+ :font-size "40"
+ :font-weight "bold"
+ :stroke "black"
+ :fill "white"
+ :font-family "impact"
+ :letter-spacing "4pt"
+ :x 300
+ :y 400
+ :stroke-width 1)
+@end lisp
+@end defun
+
+@defun svg-embed svg image image-type datap &rest args
+Add an embedded (raster) image to @var{svg}.  If @var{datap} is
+@code{nil}, @var{IMAGE} should be a file name; if not, it should be a
+binary string containing the image data.  @var{image-type} should be a
+@acronym{MIME} image type, for instance @samp{"image/jpeg"}.
+
+@lisp
+(svg-embed svg "~/rms.jpg" "image/jpeg" nil
+           :width "100px" :height "100px"
+           :x "50px" :y "75px")
+@end lisp
+@end defun
+
+@defun svg-remove svg id
+Remove the element with identifier @code{id} from the @code{svg}.
 @end defun
 
 Finally, the @code{svg-image} takes an SVG object as its parameter and

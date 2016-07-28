@@ -783,44 +783,6 @@ extract_number_and_incr (re_char **source)
    and end.  */
 #define CHARSET_RANGE_TABLE_END(range_table, count)	\
   ((range_table) + (count) * 2 * 3)
-
-/* Test if C is in RANGE_TABLE.  A flag NOT is negated if C is in.
-   COUNT is number of ranges in RANGE_TABLE.  */
-#define CHARSET_LOOKUP_RANGE_TABLE_RAW(not, c, range_table, count)	\
-  do									\
-    {									\
-      re_wchar_t range_start, range_end;				\
-      re_char *rtp;							\
-      re_char *range_table_end						\
-	= CHARSET_RANGE_TABLE_END ((range_table), (count));		\
-									\
-      for (rtp = (range_table); rtp < range_table_end; rtp += 2 * 3)	\
-	{								\
-	  EXTRACT_CHARACTER (range_start, rtp);				\
-	  EXTRACT_CHARACTER (range_end, rtp + 3);			\
-									\
-	  if (range_start <= (c) && (c) <= range_end)			\
-	    {								\
-	      (not) = !(not);						\
-	      break;							\
-	    }								\
-	}								\
-    }									\
-  while (0)
-
-/* Test if C is in range table of CHARSET.  The flag NOT is negated if
-   C is listed in it.  */
-#define CHARSET_LOOKUP_RANGE_TABLE(not, c, charset)			\
-  do									\
-    {									\
-      /* Number of ranges in range table. */				\
-      int count;							\
-      re_char *range_table = CHARSET_RANGE_TABLE (charset);		\
-      									\
-      EXTRACT_NUMBER_AND_INCR (count, range_table);			\
-      CHARSET_LOOKUP_RANGE_TABLE_RAW ((not), (c), range_table, count);	\
-    }									\
-  while (0)
 
 /* If DEBUG is defined, Regex prints many voluminous messages about what
    it is doing (if the variable `debug' is nonzero).  If linked with the
@@ -4661,6 +4623,93 @@ skip_noops (const_re_char *p, const_re_char *pend)
   return p;
 }
 
+/* Test if C matches charset op.  *PP points to the charset or chraset_not
+   opcode.  When the function finishes, *PP will be advanced past that opcode.
+   C is character to test (possibly after translations) and CORIG is original
+   character (i.e. without any translations).  UNIBYTE denotes whether c is
+   unibyte or multibyte character. */
+static bool
+execute_charset (const_re_char **pp, unsigned c, unsigned corig, bool unibyte)
+{
+  re_char *p = *pp, *rtp = NULL;
+  bool not = (re_opcode_t) *p == charset_not;
+
+  if (CHARSET_RANGE_TABLE_EXISTS_P (p))
+    {
+      int count;
+      rtp = CHARSET_RANGE_TABLE (p);
+      EXTRACT_NUMBER_AND_INCR (count, rtp);
+      *pp = CHARSET_RANGE_TABLE_END ((rtp), (count));
+    }
+  else
+    *pp += 2 + CHARSET_BITMAP_SIZE (p);
+
+  if (unibyte && c < (1 << BYTEWIDTH))
+    {			/* Lookup bitmap.  */
+      /* Cast to `unsigned' instead of `unsigned char' in
+	 case the bit list is a full 32 bytes long.  */
+      if (c < (unsigned) (CHARSET_BITMAP_SIZE (p) * BYTEWIDTH)
+	  && p[2 + c / BYTEWIDTH] & (1 << (c % BYTEWIDTH)))
+	return !not;
+    }
+#ifdef emacs
+  else if (rtp)
+    {
+      int class_bits = CHARSET_RANGE_TABLE_BITS (p);
+      re_wchar_t range_start, range_end;
+
+  /* Sort tests by the most commonly used classes with some adjustment to which
+     tests are easiest to perform.  Frequencies of character class names used in
+     Emacs sources as of 2016-07-15:
+
+     $ find \( -name \*.c -o -name \*.el \) -exec grep -h '\[:[a-z]*:]' {} + |
+           sed 's/]/]\n/g' |grep -o '\[:[a-z]*:]' |sort |uniq -c |sort -nr
+         213 [:alnum:]
+         104 [:alpha:]
+          62 [:space:]
+          39 [:digit:]
+          36 [:blank:]
+          26 [:upper:]
+          24 [:word:]
+          21 [:lower:]
+          10 [:punct:]
+          10 [:ascii:]
+           9 [:xdigit:]
+           4 [:nonascii:]
+           4 [:graph:]
+           2 [:print:]
+           2 [:cntrl:]
+           1 [:ff:]
+   */
+
+      if ((class_bits & BIT_MULTIBYTE) ||
+	  (class_bits & BIT_ALNUM && ISALNUM (c)) ||
+	  (class_bits & BIT_ALPHA && ISALPHA (c)) ||
+	  (class_bits & BIT_SPACE && ISSPACE (c)) ||
+	  (class_bits & BIT_WORD  && ISWORD  (c)) ||
+	  ((class_bits & BIT_UPPER) &&
+	   (ISUPPER (c) || (corig != c &&
+			    c == downcase (corig) && ISLOWER (c)))) ||
+	  ((class_bits & BIT_LOWER) &&
+	   (ISLOWER (c) || (corig != c &&
+			    c == upcase (corig) && ISUPPER(c)))) ||
+	  (class_bits & BIT_PUNCT && ISPUNCT (c)) ||
+	  (class_bits & BIT_GRAPH && ISGRAPH (c)) ||
+	  (class_bits & BIT_PRINT && ISPRINT (c)))
+	return !not;
+
+      for (p = *pp; rtp < p; rtp += 2 * 3)
+	{
+	  EXTRACT_CHARACTER (range_start, rtp);
+	  EXTRACT_CHARACTER (range_end, rtp + 3);
+	  if (range_start <= c && c <= range_end)
+	    return !not;
+	}
+    }
+#endif /* emacs */
+  return not;
+}
+
 /* Non-zero if "p1 matches something" implies "p2 fails".  */
 static int
 mutually_exclusive_p (struct re_pattern_buffer *bufp, const_re_char *p1,
@@ -4718,22 +4767,7 @@ mutually_exclusive_p (struct re_pattern_buffer *bufp, const_re_char *p1,
 	else if ((re_opcode_t) *p1 == charset
 		 || (re_opcode_t) *p1 == charset_not)
 	  {
-	    int not = (re_opcode_t) *p1 == charset_not;
-
-	    /* Test if C is listed in charset (or charset_not)
-	       at `p1'.  */
-	    if (! multibyte || IS_REAL_ASCII (c))
-	      {
-		if (c < CHARSET_BITMAP_SIZE (p1) * BYTEWIDTH
-		    && p1[2 + c / BYTEWIDTH] & (1 << (c % BYTEWIDTH)))
-		  not = !not;
-	      }
-	    else if (CHARSET_RANGE_TABLE_EXISTS_P (p1))
-	      CHARSET_LOOKUP_RANGE_TABLE (not, c, p1);
-
-	    /* `not' is equal to 1 if c would match, which means
-	       that we can't change to pop_failure_jump.  */
-	    if (!not)
+	    if (!execute_charset (&p1, c, c, !multibyte || IS_REAL_ASCII (c)))
 	      {
 		DEBUG_PRINT ("	 No match => fast loop.\n");
 		return 1;
@@ -5439,32 +5473,13 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 	case charset_not:
 	  {
 	    register unsigned int c, corig;
-	    boolean not = (re_opcode_t) *(p - 1) == charset_not;
 	    int len;
-
-	    /* Start of actual range_table, or end of bitmap if there is no
-	       range table.  */
-	    re_char *range_table IF_LINT (= NULL);
-
-	    /* Nonzero if there is a range table.  */
-	    int range_table_exists;
-
-	    /* Number of ranges of range table.  This is not included
-	       in the initial byte-length of the command.  */
-	    int count = 0;
 
 	    /* Whether matching against a unibyte character.  */
 	    boolean unibyte_char = false;
 
-	    DEBUG_PRINT ("EXECUTING charset%s.\n", not ? "_not" : "");
-
-	    range_table_exists = CHARSET_RANGE_TABLE_EXISTS_P (&p[-1]);
-
-	    if (range_table_exists)
-	      {
-		range_table = CHARSET_RANGE_TABLE (&p[-1]); /* Past the bitmap.  */
-		EXTRACT_NUMBER_AND_INCR (count, range_table);
-	      }
+	    DEBUG_PRINT ("EXECUTING charset%s.\n",
+			 (re_opcode_t) *(p - 1) == charset_not ? "_not" : "");
 
 	    PREFETCH ();
 	    corig = c = RE_STRING_CHAR_AND_LENGTH (d, len, target_multibyte);
@@ -5498,47 +5513,9 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 		  unibyte_char = true;
 	      }
 
-	    if (unibyte_char && c < (1 << BYTEWIDTH))
-	      {			/* Lookup bitmap.  */
-		/* Cast to `unsigned' instead of `unsigned char' in
-		   case the bit list is a full 32 bytes long.  */
-		if (c < (unsigned) (CHARSET_BITMAP_SIZE (&p[-1]) * BYTEWIDTH)
-		    && p[1 + c / BYTEWIDTH] & (1 << (c % BYTEWIDTH)))
-		  not = !not;
-	      }
-#ifdef emacs
-	    else if (range_table_exists)
-	      {
-		int class_bits = CHARSET_RANGE_TABLE_BITS (&p[-1]);
-
-		if (  (class_bits & BIT_LOWER
-		       && (ISLOWER (c)
-			   || (corig != c
-			       && c == upcase (corig) && ISUPPER(c))))
-		    | (class_bits & BIT_MULTIBYTE)
-		    | (class_bits & BIT_PUNCT && ISPUNCT (c))
-		    | (class_bits & BIT_SPACE && ISSPACE (c))
-		    | (class_bits & BIT_UPPER
-		       && (ISUPPER (c)
-			   || (corig != c
-			       && c == downcase (corig) && ISLOWER (c))))
-		    | (class_bits & BIT_WORD  && ISWORD  (c))
-		    | (class_bits & BIT_ALPHA && ISALPHA (c))
-		    | (class_bits & BIT_ALNUM && ISALNUM (c))
-		    | (class_bits & BIT_GRAPH && ISGRAPH (c))
-		    | (class_bits & BIT_PRINT && ISPRINT (c)))
-		  not = !not;
-		else
-		  CHARSET_LOOKUP_RANGE_TABLE_RAW (not, c, range_table, count);
-	      }
-#endif /* emacs */
-
-	    if (range_table_exists)
-	      p = CHARSET_RANGE_TABLE_END (range_table, count);
-	    else
-	      p += CHARSET_BITMAP_SIZE (&p[-1]) + 1;
-
-	    if (!not) goto fail;
+	    p -= 1;
+	    if (!execute_charset (&p, c, corig, unibyte_char))
+	      goto fail;
 
 	    d += len;
 	  }

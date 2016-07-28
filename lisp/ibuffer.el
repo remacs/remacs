@@ -71,7 +71,8 @@ and filter displayed buffers by various criteria."
   :version "22.1"
   :group 'convenience)
 
-(defcustom ibuffer-formats '((mark modified read-only " " (name 18 18 :left :elide)
+(defcustom ibuffer-formats '((mark modified read-only locked
+                                   " " (name 18 18 :left :elide)
 				   " " (size 9 -1 :right)
 				   " " (mode 16 16 :left :elide) " " filename-and-process)
 			     (mark " " (name 16 -1) " " filename))
@@ -137,6 +138,7 @@ value for this variable would be
 
 Using \\[ibuffer-switch-format], you can rotate the display between
 the specified formats in the list."
+  :version "25.2"
   :type '(repeat sexp)
   :group 'ibuffer)
 
@@ -158,7 +160,8 @@ elisp byte-compiler."
 	     (null buffer-file-name))
 	italic)
     (30 (memq major-mode ibuffer-help-buffer-modes) font-lock-comment-face)
-    (35 (derived-mode-p 'dired-mode) font-lock-function-name-face))
+    (35 (derived-mode-p 'dired-mode) font-lock-function-name-face)
+    (40 (and (boundp 'emacs-lock-mode) emacs-lock-mode) ibuffer-locked-buffer))
   "An alist describing how to fontify buffers.
 Each element should be of the form (PRIORITY FORM FACE), where
 PRIORITY is an integer, FORM is an arbitrary form to evaluate in the
@@ -277,6 +280,12 @@ Note that this specialized filtering occurs before real filtering."
 
 (defcustom ibuffer-marked-char ?>
   "The character to display for marked buffers."
+  :type 'character
+  :group 'ibuffer)
+
+(defcustom ibuffer-locked-char ?L
+  "The character to display for locked buffers."
+  :version "25.2"
   :type 'character
   :group 'ibuffer)
 
@@ -471,6 +480,8 @@ directory, like `default-directory'."
     (define-key map (kbd "DEL") 'ibuffer-unmark-backward)
     (define-key map (kbd "M-DEL") 'ibuffer-unmark-all)
     (define-key map (kbd "* *") 'ibuffer-unmark-all)
+    (define-key map (kbd "* c") 'ibuffer-change-marks)
+    (define-key map (kbd "U") 'ibuffer-unmark-all-marks)
     (define-key map (kbd "* M") 'ibuffer-mark-by-mode)
     (define-key map (kbd "* m") 'ibuffer-mark-modified-buffers)
     (define-key map (kbd "* u") 'ibuffer-mark-unsaved-buffers)
@@ -545,6 +556,8 @@ directory, like `default-directory'."
     (define-key map (kbd "% n") 'ibuffer-mark-by-name-regexp)
     (define-key map (kbd "% m") 'ibuffer-mark-by-mode-regexp)
     (define-key map (kbd "% f") 'ibuffer-mark-by-file-name-regexp)
+    (define-key map (kbd "% g") 'ibuffer-mark-by-content-regexp)
+    (define-key map (kbd "% L") 'ibuffer-mark-by-locked)
 
     (define-key map (kbd "C-t") 'ibuffer-visit-tags-table)
 
@@ -566,13 +579,14 @@ directory, like `default-directory'."
     (define-key map (kbd "R") 'ibuffer-do-rename-uniquely)
     (define-key map (kbd "S") 'ibuffer-do-save)
     (define-key map (kbd "T") 'ibuffer-do-toggle-read-only)
-    (define-key map (kbd "U") 'ibuffer-do-replace-regexp)
+    (define-key map (kbd "r") 'ibuffer-do-replace-regexp)
     (define-key map (kbd "V") 'ibuffer-do-revert)
     (define-key map (kbd "W") 'ibuffer-do-view-and-eval)
     (define-key map (kbd "X") 'ibuffer-do-shell-command-pipe)
 
     (define-key map (kbd "k") 'ibuffer-do-kill-lines)
     (define-key map (kbd "w") 'ibuffer-copy-filename-as-kill)
+    (define-key map (kbd "B") 'ibuffer-copy-buffername-as-kill)
 
     (define-key map (kbd "RET") 'ibuffer-visit-buffer)
     (define-key map (kbd "e") 'ibuffer-visit-buffer)
@@ -712,6 +726,9 @@ directory, like `default-directory'."
     (define-key-after map [menu-bar mark toggle-marks]
       '(menu-item "Toggle marks" ibuffer-toggle-marks
         :help "Unmark marked buffers, and mark unmarked buffers"))
+    (define-key-after map [menu-bar mark change-marks]
+      '(menu-item "Change marks" ibuffer-change-marks
+        :help "Change OLD mark for marked buffers with NEW"))
     (define-key-after map [menu-bar mark mark-forward]
       '(menu-item "Mark" ibuffer-mark-forward
         :help "Mark the buffer at point"))
@@ -751,6 +768,8 @@ directory, like `default-directory'."
         :help "Mark buffers which have not been viewed recently"))
     (define-key-after map [menu-bar mark unmark-all]
       '(menu-item "Unmark All" ibuffer-unmark-all))
+    (define-key-after map [menu-bar mark unmark-all-marks]
+      '(menu-item "Unmark All buffers" ibuffer-unmark-all-marks))
 
     (define-key-after map [menu-bar mark dashes]
       '("--"))
@@ -765,6 +784,13 @@ directory, like `default-directory'."
       '(menu-item "Mark by file name (regexp)..."
         ibuffer-mark-by-file-name-regexp
         :help "Mark buffers whose file name matches a regexp"))
+    (define-key-after map [menu-bar mark ibuffer-mark-by-content-regexp]
+      '(menu-item "Mark by content (regexp)..."
+        ibuffer-mark-by-content-regexp
+        :help "Mark buffers whose content matches a regexp"))
+    (define-key-after map [menu-bar mark mark-by-locked]
+      '(menu-item "Mark by locked buffers..." ibuffer-mark-by-locked
+        :help "Mark all locked buffers"))
 
     map))
 
@@ -967,8 +993,7 @@ width and the longest string in LIST."
 	      (popup-menu ibuffer-mode-groups-popup))
 	  (let ((inhibit-read-only t))
 	    (ibuffer-save-marks
-	      ;; hm.  we could probably do this in a better fashion
-	      (ibuffer-unmark-all ?\r)
+	      (ibuffer-unmark-all-marks)
 	      (save-excursion
 		(goto-char eventpt)
 		(ibuffer-set-mark ibuffer-marked-char))
@@ -1321,6 +1346,12 @@ With optional ARG, make read-only only if ARG is not negative."
        (lambda (_buf _mark)
 	 (ibuffer-set-mark-1 ?\s)
 	 t)))
+     ((not (char-equal mark ?\r))
+      (ibuffer-map-lines
+       (lambda (_buf cmark)
+	 (when (char-equal cmark mark)
+	   (ibuffer-set-mark-1 ?\s))
+	 t)))
      (t
       (ibuffer-map-lines
        (lambda (_buf mark)
@@ -1328,6 +1359,12 @@ With optional ARG, make read-only only if ARG is not negative."
 	   (ibuffer-set-mark-1 ?\s))
 	 t)))))
   (ibuffer-redisplay t))
+
+(defun ibuffer-unmark-all-marks ()
+  "Remove all marks from all marked buffers in Ibuffer."
+  (interactive)
+  ;; hm.  we could probably do this in a better fashion
+  (ibuffer-unmark-all ?\r))
 
 (defun ibuffer-toggle-marks (&optional group)
   "Toggle which buffers are marked.
@@ -1352,6 +1389,24 @@ group."
 	  nil group)))
     (message "%s buffers marked" count))
   (ibuffer-redisplay t))
+
+(defun ibuffer-change-marks (&optional old new)
+  "Change all OLD marks to NEW marks.
+OLD and NEW are both characters used to mark buffers."
+  (interactive
+   (let* ((cursor-in-echo-area t)
+	  (old (progn (message "Change (old mark): ") (read-char)))
+	  (new (progn (message  "Change %c marks to (new mark): " old)
+		      (read-char))))
+     (list old new)))
+  (if (or (eq old ?\r) (eq new ?\r))
+      (ding)
+    (let ((count
+           (ibuffer-map-lines
+            (lambda (_buf mark)
+              (when (eq mark old)
+                (ibuffer-set-mark new) t)))))
+      (message "%s marks changed" count))))
 
 (defsubst ibuffer-get-region-and-prefix ()
   (let ((arg (prefix-numeric-value current-prefix-arg)))
@@ -1396,15 +1451,14 @@ If point is on a group name, this function operates on that group."
 	(require 'ibuf-ext)
 	(ibuffer-mark-on-buffer #'identity mark it))
     (ibuffer-forward-line 0 t)
-    (let ((inhibit-read-only t))
-      (while (> arg 0)
-	(ibuffer-set-mark mark)
-	(ibuffer-forward-line 1 t)
-	(setq arg (1- arg)))
-      (while (< arg 0)
-	(ibuffer-forward-line -1 t)
-	(ibuffer-set-mark mark)
-	(setq arg (1+ arg))))))
+    (while (> arg 0)
+      (ibuffer-set-mark mark)
+      (ibuffer-forward-line 1 t)
+      (setq arg (1- arg)))
+    (while (< arg 0)
+      (ibuffer-forward-line -1 t)
+      (ibuffer-set-mark mark)
+      (setq arg (1+ arg)))))
 
 (defun ibuffer-set-mark (mark)
   (ibuffer-assert-ibuffer-mode)
@@ -1713,12 +1767,27 @@ If point is on a group name, this function operates on that group."
 
 (defvar ibuffer-inline-columns nil)
 
+(defface ibuffer-locked-buffer
+  '((((background dark)) (:foreground "RosyBrown"))
+    (t (:foreground "brown4")))
+  "*Face used for locked buffers in Ibuffer."
+  :version "25.2"
+  :group 'ibuffer
+  :group 'font-lock-highlighting-faces)
+(defvar ibuffer-locked-buffer 'ibuffer-locked-buffer)
+
 (define-ibuffer-column mark (:name " " :inline t)
   (string mark))
 
 (define-ibuffer-column read-only (:name "R" :inline t)
   (if buffer-read-only
       (string ibuffer-read-only-char)
+    " "))
+
+(define-ibuffer-column locked
+  (:name "L" :inline t :props ('font-lock-face 'ibuffer-locked-buffer))
+  (if (and (boundp 'emacs-lock-mode) emacs-lock-mode)
+      (string ibuffer-locked-char)
     " "))
 
 (define-ibuffer-column modified (:name "M" :inline t)
@@ -2417,10 +2486,12 @@ Marking commands:
   `\\[ibuffer-mark-forward]' - Mark the buffer at point.
   `\\[ibuffer-toggle-marks]' - Unmark all currently marked buffers, and mark
           all unmarked buffers.
+  `\\[ibuffer-change-marks]' - Change the mark used on marked buffers.
   `\\[ibuffer-unmark-forward]' - Unmark the buffer at point.
   `\\[ibuffer-unmark-backward]' - Unmark the buffer at point, and move to the
           previous line.
-  `\\[ibuffer-unmark-all]' - Unmark all marked buffers.
+  `\\[ibuffer-unmark-all]' - Unmark buffers marked with MARK.
+  `\\[ibuffer-unmark-all-marks]' - Unmark all marked buffers.
   `\\[ibuffer-mark-by-mode]' - Mark buffers by major mode.
   `\\[ibuffer-mark-unsaved-buffers]' - Mark all \"unsaved\" buffers.
           This means that the buffer is modified, and has an associated file.
@@ -2438,6 +2509,8 @@ Marking commands:
   `\\[ibuffer-mark-by-name-regexp]' - Mark buffers by their name, using a regexp.
   `\\[ibuffer-mark-by-mode-regexp]' - Mark buffers by their major mode, using a regexp.
   `\\[ibuffer-mark-by-file-name-regexp]' - Mark buffers by their filename, using a regexp.
+  `\\[ibuffer-mark-by-content-regexp]' - Mark buffers by their content, using a regexp.
+  `\\[ibuffer-mark-by-locked]' - Mark all locked buffers.
 
 Filtering commands:
 

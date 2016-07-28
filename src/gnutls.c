@@ -383,13 +383,6 @@ gnutls_log_function2 (int level, const char *string, const char *extra)
   message ("gnutls.c: [%d] %s %s", level, string, extra);
 }
 
-/* Log a message and an integer.  */
-static void
-gnutls_log_function2i (int level, const char *string, int extra)
-{
-  message ("gnutls.c: [%d] %s %d", level, string, extra);
-}
-
 int
 gnutls_try_handshake (struct Lisp_Process *proc)
 {

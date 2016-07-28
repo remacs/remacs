@@ -1162,7 +1162,7 @@ compute_motion (ptrdiff_t from, ptrdiff_t frombyte, EMACS_INT fromvpos,
   int prev_tab_offset;		/* Previous tab offset.  */
   int continuation_glyph_width;
   struct buffer *cache_buffer = current_buffer;
-  struct region_cache *width_cache;
+  struct region_cache *width_cache = NULL;
 
   struct composition_it cmp_it;
 
@@ -1170,11 +1170,14 @@ compute_motion (ptrdiff_t from, ptrdiff_t frombyte, EMACS_INT fromvpos,
 
   if (cache_buffer->base_buffer)
     cache_buffer = cache_buffer->base_buffer;
-  width_cache = width_run_cache_on_off ();
   if (dp == buffer_display_table ())
-    width_table = (VECTORP (BVAR (current_buffer, width_table))
-                   ? XVECTOR (BVAR (current_buffer, width_table))->contents
-                   : 0);
+    {
+      width_table = (VECTORP (BVAR (current_buffer, width_table))
+		     ? XVECTOR (BVAR (current_buffer, width_table))->contents
+		     : 0);
+      if (width_table)
+	width_cache = width_run_cache_on_off ();
+    }
   else
     /* If the window has its own display table, we can't use the width
        run cache, because that's based on the buffer's display table.  */
@@ -1995,7 +1998,7 @@ whether or not it is currently displayed in some window.  */)
   struct text_pos pt;
   struct window *w;
   Lisp_Object old_buffer;
-  EMACS_INT old_charpos IF_LINT (= 0), old_bytepos IF_LINT (= 0);
+  EMACS_INT old_charpos UNINIT, old_bytepos UNINIT;
   Lisp_Object lcols;
   void *itdata = NULL;
 
@@ -2036,8 +2039,8 @@ whether or not it is currently displayed in some window.  */)
       bool disp_string_at_start_p = 0;
       ptrdiff_t nlines = XINT (lines);
       int vpos_init = 0;
-      double start_col IF_LINT (= 0);
-      int start_x IF_LINT (= 0);
+      double start_col UNINIT;
+      int start_x UNINIT;
       int to_x = -1;
 
       bool start_x_given = !NILP (cur_col);
@@ -2178,6 +2181,7 @@ whether or not it is currently displayed in some window.  */)
       if (nlines <= 0)
 	{
 	  it.vpos = vpos_init;
+	  it.current_y = 0;
 	  /* Do this even if LINES is 0, so that we move back to the
 	     beginning of the current line as we ought.  */
 	  if ((nlines < 0 && IT_CHARPOS (it) > 0)
@@ -2187,6 +2191,7 @@ whether or not it is currently displayed in some window.  */)
       else if (overshoot_handled)
 	{
 	  it.vpos = vpos_init;
+	  it.current_y = 0;
 	  move_it_by_lines (&it, min (PTRDIFF_MAX, nlines));
 	}
       else
@@ -2200,6 +2205,7 @@ whether or not it is currently displayed in some window.  */)
 	      while (IT_CHARPOS (it) <= it_start)
 		{
 		  it.vpos = 0;
+		  it.current_y = 0;
 		  move_it_by_lines (&it, 1);
 		}
 	      if (nlines > 1)
@@ -2208,6 +2214,7 @@ whether or not it is currently displayed in some window.  */)
 	  else	/* it_start = ZV */
 	    {
 	      it.vpos = 0;
+	      it.current_y = 0;
 	      move_it_by_lines (&it, min (PTRDIFF_MAX, nlines));
 	      /* We could have some display or overlay string at ZV,
 		 in which case it.vpos will be nonzero now, while

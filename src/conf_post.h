@@ -34,6 +34,18 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdbool.h>
 
+/* GNUC_PREREQ (V, W, X) is true if this is GNU C version V.W.X or later.
+   It can be used in a preprocessor expression.  */
+#ifndef __GNUC_MINOR__
+# define GNUC_PREREQ(v, w, x) false
+#elif ! defined __GNUC_PATCHLEVEL__
+# define GNUC_PREREQ(v, w, x) \
+    ((v) < __GNUC__ + ((w) < __GNUC_MINOR__ + ((x) == 0))
+#else
+# define GNUC_PREREQ(v, w, x) \
+    ((v) < __GNUC__ + ((w) < __GNUC_MINOR__ + ((x) <= __GNUC_PATCHLEVEL__)))
+#endif
+
 /* The type of bool bitfields.  Needed to compile Objective-C with
    standard GCC.  It was also needed to port to pre-C99 compilers,
    although we don't care about that any more.  */
@@ -55,13 +67,11 @@ typedef bool bool_bf;
    on arguments like alloc_size that are handled in this simulation.  */
 #ifndef __has_attribute
 # define __has_attribute(a) __has_attribute_##a
-# define __has_attribute_alloc_size (4 < __GNUC__ + (3 <= __GNUC_MINOR__))
-# define __has_attribute_cleanup (3 < __GNUC__ + (4 <= __GNUC_MINOR__))
-# define __has_attribute_externally_visible \
-    (4 < __GNUC__ + (1 <= __GNUC_MINOR__))
+# define __has_attribute_alloc_size GNUC_PREREQ (4, 3, 0)
+# define __has_attribute_cleanup GNUC_PREREQ (3, 4, 0)
+# define __has_attribute_externally_visible GNUC_PREREQ (4, 1, 0)
 # define __has_attribute_no_address_safety_analysis false
-# define __has_attribute_no_sanitize_address \
-    (4 < __GNUC__ + (8 <= __GNUC_MINOR__))
+# define __has_attribute_no_sanitize_address GNUC_PREREQ (4, 8, 0)
 #endif
 
 /* Simulate __has_builtin on compilers that lack it.  It is used only
@@ -69,8 +79,7 @@ typedef bool bool_bf;
    simulation.  */
 #ifndef __has_builtin
 # define __has_builtin(a) __has_builtin_##a
-# define __has_builtin___builtin_assume_aligned \
-    (4 < __GNUC__ + (7 <= __GNUC_MINOR__))
+# define __has_builtin___builtin_assume_aligned GNUC_PREREQ (4, 7, 0)
 #endif
 
 /* Simulate __has_feature on compilers that lack it.  It is used only
@@ -88,7 +97,7 @@ typedef bool bool_bf;
 
 /* Yield PTR, which must be aligned to ALIGNMENT.  */
 #if ! __has_builtin (__builtin_assume_aligned)
-# define __builtin_assume_aligned(ptr, alignment, ...) ((void *) (ptr))
+# define __builtin_assume_aligned(ptr, ...) ((void *) (ptr))
 #endif
 
 #ifdef DARWIN_OS
@@ -203,7 +212,7 @@ You lose; /* Emacs for DOS must be compiled with DJGPP */
 extern void _DebPrint (const char *fmt, ...);
 #  define DebPrint(stuff) _DebPrint stuff
 # else
-#  define DebPrint(stuff)
+#  define DebPrint(stuff) ((void) 0)
 # endif
 #endif
 
@@ -245,19 +254,21 @@ extern int emacs_setenv_TZ (char const *);
 #define EXTERNALLY_VISIBLE
 #endif
 
-#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
+#if GNUC_PREREQ (2, 7, 0)
 # define ATTRIBUTE_FORMAT(spec) __attribute__ ((__format__ spec))
 #else
 # define ATTRIBUTE_FORMAT(spec) /* empty */
 #endif
 
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4)
-# define ATTRIBUTE_FORMAT_PRINTF(formatstring_parameter, first_argument) \
-   ATTRIBUTE_FORMAT ((__gnu_printf__, formatstring_parameter, first_argument))
+#if GNUC_PREREQ (4, 4, 0) && defined __GLIBC_MINOR__
+# define PRINTF_ARCHETYPE __gnu_printf__
+#elif GNUC_PREREQ (4, 4, 0) && defined __MINGW32__
+# define PRINTF_ARCHETYPE __ms_printf__
 #else
-# define ATTRIBUTE_FORMAT_PRINTF(formatstring_parameter, first_argument) \
-   ATTRIBUTE_FORMAT ((__printf__, formatstring_parameter, first_argument))
+# define PRINTF_ARCHETYPE __printf__
 #endif
+#define ATTRIBUTE_FORMAT_PRINTF(string_index, first_to_check) \
+  ATTRIBUTE_FORMAT ((PRINTF_ARCHETYPE, string_index, first_to_check))
 
 #define ATTRIBUTE_CONST _GL_ATTRIBUTE_CONST
 #define ATTRIBUTE_UNUSED _GL_UNUSED
@@ -281,7 +292,7 @@ extern int emacs_setenv_TZ (char const *);
    no_sanitize_address attribute.  This bug is fixed in GCC 4.9.0 and
    clang 3.4.  */
 #if (! ADDRESS_SANITIZER \
-     || ((4 < __GNUC__ + (9 <= __GNUC_MINOR__)) \
+     || (GNUC_PREREQ (4, 9, 0) \
 	 || 3 < __clang_major__ + (4 <= __clang_minor__)))
 # define ADDRESS_SANITIZER_WORKAROUND /* No workaround needed.  */
 #else
@@ -357,11 +368,12 @@ extern int emacs_setenv_TZ (char const *);
 # define FLEXIBLE_ARRAY_MEMBER
 #endif
 
-/* Use CODE only if lint checking is in effect.  */
+/* 'int x UNINIT;' is equivalent to 'int x;', except it cajoles GCC
+   into not warning incorrectly about use of an uninitialized variable.  */
 #if defined GCC_LINT || defined lint
-# define IF_LINT(Code) Code
+# define UNINIT = {0,}
 #else
-# define IF_LINT(Code) /* empty */
+# define UNINIT /* empty */
 #endif
 
 /* conf_post.h ends here */

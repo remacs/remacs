@@ -56,6 +56,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
+/* Work around GCC bug 54561.  */
+#if GNUC_PREREQ (4, 3, 0)
+# pragma GCC diagnostic ignored "-Wclobbered"
+#endif
+
 #ifdef HAVE_X_WINDOWS
 typedef struct x_bitmap_record Bitmap_Record;
 #define GET_PIXEL(ximg, x, y) XGetPixel (ximg, x, y)
@@ -80,7 +85,6 @@ typedef struct w32_bitmap_record Bitmap_Record;
 #define PIX_MASK_DRAW	1
 
 #define x_defined_color w32_defined_color
-#define DefaultDepthOfScreen(screen) (one_w32_display_info.n_cbits)
 
 #endif /* HAVE_NTGUI */
 
@@ -223,6 +227,7 @@ x_create_bitmap_from_data (struct frame *f, char *bits, unsigned int width, unsi
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef HAVE_NTGUI
+  Lisp_Object frame UNINIT;	/* The value is not used.  */
   Pixmap bitmap;
   bitmap = CreateBitmap (width, height,
 			 FRAME_DISPLAY_INFO (XFRAME (frame))->n_planes,
@@ -272,9 +277,9 @@ x_create_bitmap_from_file (struct frame *f, Lisp_Object file)
 {
 #ifdef HAVE_NTGUI
   return -1;  /* W32_TODO : bitmap support */
-#endif /* HAVE_NTGUI */
-
+#else
   Display_Info *dpyinfo = FRAME_DISPLAY_INFO (f);
+#endif
 
 #ifdef HAVE_NS
   ptrdiff_t id;
@@ -1142,7 +1147,8 @@ static RGB_PIXEL_COLOR
 four_corners_best (XImagePtr_or_DC ximg, int *corners,
 		   unsigned long width, unsigned long height)
 {
-  RGB_PIXEL_COLOR corner_pixels[4], best IF_LINT (= 0);
+  RGB_PIXEL_COLOR corner_pixels[4];
+  RGB_PIXEL_COLOR best UNINIT;
   int i, best_count;
 
   if (corners && corners[BOT_CORNER] >= 0)
@@ -3158,16 +3164,18 @@ static bool xpm_load (struct frame *f, struct image *img);
 #define XColor xpm_XColor
 #define XImage xpm_XImage
 #define Display xpm_Display
-#define PIXEL_ALREADY_TYPEDEFED
+#ifdef CYGWIN
+#include "noX/xpm.h"
+#else  /* not CYGWIN */
 #include "X11/xpm.h"
+#endif	/* not CYGWIN */
 #undef FOR_MSW
 #undef XColor
 #undef XImage
 #undef Display
-#undef PIXEL_ALREADY_TYPEDEFED
-#else
+#else  /* not HAVE_NTGUI */
 #include "X11/xpm.h"
-#endif /* HAVE_NTGUI */
+#endif /* not HAVE_NTGUI */
 #endif /* HAVE_XPM */
 
 #if defined (HAVE_XPM) || defined (HAVE_NS)
@@ -5894,10 +5902,8 @@ struct png_load_context
 static bool
 png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 {
-  Lisp_Object specified_file;
-  /* IF_LINT (volatile) works around GCC bug 54561.  */
-  Lisp_Object IF_LINT (volatile) specified_data;
-  FILE * IF_LINT (volatile) fp = NULL;
+  Lisp_Object specified_file, specified_data;
+  FILE *fp = NULL;
   int x, y;
   ptrdiff_t i;
   png_struct *png_ptr;
@@ -6667,9 +6673,7 @@ static bool
 jpeg_load_body (struct frame *f, struct image *img,
 		struct my_jpeg_error_mgr *mgr)
 {
-  Lisp_Object specified_file;
-  /* IF_LINT (volatile) works around GCC bug 54561.  */
-  Lisp_Object IF_LINT (volatile) specified_data;
+  Lisp_Object specified_file, specified_data;
   FILE *volatile fp = NULL;
   JSAMPARRAY buffer;
   int row_stride, x, y;
