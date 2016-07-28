@@ -374,26 +374,62 @@ Undo previous action (@code{(undo)}).
 @cindex printer functions
 @cindex cell formatting
 @cindex formatting cells
-@findex ses-read-cell-printer
-@findex ses-read-column-printer
-@findex ses-read-default-printer
-@findex ses-define-local-printer
-@findex ses-center
-@findex ses-center-span
-@findex ses-dashfill
-@findex ses-dashfill-span
-@findex ses-tildefill-span
-
 
 Printer functions convert binary cell values into the print forms that
 Emacs will display on the screen.
 
-A printer can be a format string, like @samp{"$%.2f"}.  The result
+@menu
+* Various kinds of printer functions::
+* Configuring what printer function applies::
+* Standard printer functions::
+* Local printer functions::
+* Writing a lambda printer function::
+@end menu
+
+@node Various kinds of printer functions
+@subsection Various kinds of printer functions
+
+When configuring what printer function applies (@pxref{Configuring
+what printer function applies}), you can enter a printer function as
+one of the following:
+
+@itemize
+@item
+A format string, like @samp{"$%.2f"}.  The result
 string is right-aligned within the print cell.  To get left-alignment,
-use parentheses: @samp{("$%.2f")}.  A printer can also be a
-one-argument function (a symbol or a lambda), whose result is a string
-(right-aligned) or list of one string (left-aligned).  While typing in
-a lambda, you can use @kbd{M-@key{TAB}} to complete the names of symbols.
+use parentheses: @samp{("$%.2f")}.
+@item
+A printer can also be a one-argument function, the result of which is
+a string (right-aligned) or list of one string (left-aligned). Such a
+function can be in turn configured as:
+@itemize
+@item
+A lambda expression, for instance:
+
+@lisp
+(lambda (x)
+  (cond
+     ((null x) "")
+     ((numberp x) (format "%.2f" x))
+     (t (ses-center-span x ?# 'ses-prin1))))
+@end lisp
+
+While typing in a lambda, you can use @kbd{M-@key{TAB}} to complete
+the names of symbols.
+@item
+A symbol referring to a standard printer function (@pxref{Standard
+printer functions}).
+@item
+A symbol referring to a local printer function (@pxref{Local printer
+functions}).
+@end itemize
+
+
+@end itemize
+
+
+@node Configuring what printer function applies
+@subsection Configuring what printer function applies
 
 Each cell has a printer.  If @code{nil}, the column-printer for the cell's
 column is used.  If that is also @code{nil}, the default-printer for the
@@ -401,25 +437,35 @@ spreadsheet is used.
 
 @table @kbd
 @item p
+@findex ses-read-cell-printer
 Enter a printer for current cell or range (@code{ses-read-cell-printer}).
 
 @item M-p
+@findex ses-read-column-printer
 Enter a printer for the current column (@code{ses-read-column-printer}).
 
 @item C-c C-p
+@findex ses-read-default-printer
 Enter the default printer for the spreadsheet
 (@code{ses-read-default-printer}).
 @end table
 
-The @code{ses-read-@r{XXX}-printer} commands have their own minibuffer
-history, which is preloaded with the set of all printers used in this
-spreadsheet, plus the standard printers.
+The @code{ses-read-@var{xxx}-printer} commands have their own
+minibuffer history, which is preloaded with the set of all printers
+used in this spreadsheet, plus the standard printers (@pxref{Standard
+printer functions}) and the local printers (@pxref{Local printer
+functions}).
 
-The standard printers are suitable only for cells, not columns or
-default, because they format the value using the column-printer (or
-default-printer if @code{nil}) and then center the result:
+@node Standard printer functions
+@subsection Standard printer functions
 
-@table @code
+
+Except for @code{ses-prin1}, the other standard printers are suitable
+only for cells, not columns or default, because they format the value
+using the column-printer (or default-printer if @code{nil}) and then
+center the result:
+
+@ftable @code
 @item ses-center
 Just centering.
 
@@ -434,8 +480,16 @@ Centering with dashes and spill-over.
 
 @item ses-tildefill-span
 Centering with tildes (~) and spill-over.
-@end table
 
+@item ses-prin1
+This is the fallback printer, used when calling the configured printer
+throws some error.
+@end ftable
+
+@node Local printer functions
+@subsection Local printer functions
+
+@findex ses-define-local-printer
 You can define printer function local to a sheet with the command
 @code{ses-define-local-printer}.  For instance, define a printer
 @samp{foo} to @code{"%.2f"}, and then use symbol @samp{foo} as a
@@ -444,9 +498,50 @@ printer function.  Then, if you call again
 @code{"%.3f"}, all the cells using printer @samp{foo} will be
 reprinted accordingly.
 
-When you define a printer function with a lambda expression taking one
-argument, please take care that the returned value is a string, or a
-list containing a string, even when the input argument has an
+Sometimes there are local printers that you want to define or
+re-define automatically every time you open a sheet. For instance
+imagine that you want to define/re-define automatically a local
+printer @code{euro} to display a number like an amount of euros, that
+is to say number @code{3.1} would be displayed as
+@code{3.10@dmn{}@euro{}}. To do so in any non read-only SES buffer,
+you can add some code like this to your @file{.emacs} init file:
+
+@lisp
+(defun my-ses-mode-hook ()
+  (unless buffer-read-only
+    (ses-define-local-printer
+     'euro
+     (lambda (x)
+       (cond
+	((null x) "")
+	((numberp x) (format "%.2f€" x))
+	(t (ses-center-span x ?# 'ses-prin1)))))))
+(add-hook 'ses-mode-hook 'my-ses-mode-hook)
+@end lisp
+
+If you replace command @code{ses-define-local-printer} by function
+@code{ses-define-if-new-local-printer}
+@findex ses-define-if-new-local-printer
+the definition will occur only if a local printer with the same name
+in not already defined.
+
+
+@node Writing a lambda printer function
+@subsection Writing a lambda printer function
+
+You can write a printer function with a lambda expression taking one
+argument in two cases:
+
+@itemize
+@item
+when you configure the printer function applying to a cell or column, or
+@item
+when you define a local printer function with command
+@code{ses-define-local-printer}.
+@end itemize
+
+When doing so, please take care that the returned value is a string,
+or a list containing a string, even when the input argument has an
 unexpected value. Here is an example:
 
 @example
@@ -454,10 +549,11 @@ unexpected value. Here is an example:
    (cond
       ((null val) "")
       ((and (numberp val) (>= val 0)) (format "%.1f" val))
-      (t (ses-center-span (format "%S" val) ?#))))
+      (t (ses-center-span val ?# 'ses-prin1))))
 @end example
 
 This example will:
+
 @itemize
 @item
 When the cell is empty (ie.@: when @code{val} is @code{nil}), print an
@@ -467,12 +563,47 @@ When the cell value is a non negative number, format the the value in
 fixed-point notation with one decimal after point
 @item
 Otherwise, handle the value as erroneous by printing it as an
-s-expression (using @code{prin1}), centered and surrounded by @code{#}
-filling.
+s-expression (using @code{ses-prin1}), centered and surrounded by
+@code{#} filling.
 @end itemize
 
+Another precaution to take is to avoid stack-overflow (due to a
+printer function indefintely recursively re-calling itself). This can
+happen mistakenly when you use a local printer as a column printer,
+and this local printer implicitely call the current column printer, so
+will call itself recursively.  Imagine for instance that you want to
+create some local printer @code{=fill} that would center the content
+of a cell and surround it by equal signs @code{=}, and you do it this
+way:
 
+@lisp
+(lambda (x)
+  (cond
+   ((null x) "")
+   (t (ses-center x 0 ?=))))
+@end lisp
 
+Because @code{=fill} uses standard printer @code{ses-center} without
+passing explicitely any printer to it, @code{ses-center} will call the
+current column printer if any or the spreadsheet default printer
+otherwise. So using @code{=fill} as a column printer will result in a
+stack overflow in this column. SES does not make any check for that,
+you just have to be careful. For instance re-write @code{=fill} like
+this:
+
+@lisp
+(lambda (x)
+  (cond
+   ((null x) "")
+   ((stringp x) (ses-center x 0 ?= " %s "))
+   (t (ses-center-span x ?# 'ses-prin1))))
+@end lisp
+
+The code above applies the @code{=} filling only to strings, it also
+surrounds the string by one space on each side before filling with
+@code{=} signs. So string @samp{Foo} will be displayed like @samp{@w{===
+Foo ===}} in an 11 character wide column. Anything else than empty cell
+or non string is displayed like errouneous by using @code{#} filling.
 
 @node Clearing cells
 @section Clearing cells
