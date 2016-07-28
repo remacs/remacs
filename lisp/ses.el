@@ -562,6 +562,10 @@ definition."
    ((functionp printer) printer)
    ((stringp printer)
     `(lambda (x) (format ,printer x)))
+   ((stringp (car-safe printer))
+    `(lambda (x)
+       (setq ses-call-printer-return t)
+       (format ,(car printer) x)))
    (t (error "Invalid printer %S" printer))))
 
 (defun ses--local-printer (name def)
