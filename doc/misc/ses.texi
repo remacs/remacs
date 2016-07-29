@@ -1010,9 +1010,9 @@ Cells that do not have an A1-like name style are not relocated on
 yank. Using this method, the concerned cells won't be relocated
 whatever formula they appear in. Please note however that when a
 formula contains some range @code{(ses-range @var{cell1} @var{cell2})}
-then in the yanked formula each range bound @var{cell1} and
-@var{cell2} are relocated, or not, indepently, depending on whether
-they are A1-like or renamed.
+then in the yanked formula each bound @var{cell1} and @var{cell2} is
+relocated, or not, indepently, depending on whether it is A1-like or
+renamed.
 
 An alternative method is to use
 @lisp
