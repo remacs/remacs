@@ -1,3 +1,4 @@
+
 ;;; ses.el -- Simple Emacs Spreadsheet  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2002-2016 Free Software Foundation, Inc.
@@ -3746,7 +3747,7 @@ Use `math-format-value' as a printer for Calc objects."
   "Return ARGS reversed, with the blank elements (nil and *skip*) removed."
   (let (result)
     (dolist (cur args)
-      (unless (memq cur '(nil *skip* *error*))
+      (unless (memq cur '(nil *skip*))
 	(push cur result)))
     result))
 
