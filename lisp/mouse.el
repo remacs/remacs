@@ -832,14 +832,16 @@ The region will be defined with mark and point."
   (setq mouse-selection-click-count-buffer (current-buffer))
   (deactivate-mark)
   (let* ((scroll-margin 0) ; Avoid margin scrolling (Bug#9541).
+	 (start-posn (event-start start-event))
+	 (start-point (posn-point start-posn))
+	 (start-window (posn-window start-posn))
+	 (_ (with-current-buffer (window-buffer start-window)
+	      (setq deactivate-mark nil)))
          ;; We've recorded what we needed from the current buffer and
          ;; window, now let's jump to the place of the event, where things
          ;; are happening.
          (_ (mouse-set-point start-event))
          (echo-keystrokes 0)
-	 (start-posn (event-start start-event))
-	 (start-point (posn-point start-posn))
-	 (start-window (posn-window start-posn))
 	 (bounds (window-edges start-window))
 	 (make-cursor-line-fully-visible nil)
 	 (top (nth 1 bounds))
