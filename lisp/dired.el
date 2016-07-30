@@ -2467,10 +2467,11 @@ You can then feed the file name(s) to other commands with \\[yank]."
 				    'no-dir (prefix-numeric-value arg))))
                           (dired-get-marked-files 'no-dir))
                         " "))))
-    (if (eq last-command 'kill-region)
-	(kill-append string nil)
-      (kill-new string))
-    (message "%s" string)))
+    (unless (string= string "")
+      (if (eq last-command 'kill-region)
+          (kill-append string nil)
+        (kill-new string))
+      (message "%s" string))))
 
 
 ;; Keeping Dired buffers in sync with the filesystem and with each other
