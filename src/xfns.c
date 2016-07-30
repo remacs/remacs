@@ -4626,7 +4626,9 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
     }
 #else
   tool_bar_height = FRAME_TOOL_BAR_HEIGHT (f);
-  tool_bar_width = tool_bar_height ? native_width : 0;
+  tool_bar_width = (tool_bar_height
+		    ? native_width - 2 * internal_border_width
+		    : 0);
   inner_top += tool_bar_height;
 #endif
 

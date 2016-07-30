@@ -8465,24 +8465,25 @@ and width values are in pixels.
 		Fcons (Qouter_size,
 		       Fcons (make_number (right - left),
 			      make_number (bottom - top))),
-	   Fcons (Qexternal_border_size,
+		Fcons (Qexternal_border_size,
 		       Fcons (make_number (external_border_width),
 			      make_number (external_border_height))),
 		Fcons (Qtitle_bar_size,
 		       Fcons (make_number (title_bar_width),
 			      make_number (title_bar_height))),
-	   Fcons (Qmenu_bar_external, Qt),
-	   Fcons (Qmenu_bar_size,
-		  Fcons (make_number
-			 (menu_bar.rcBar.right - menu_bar.rcBar.left),
-			 make_number (menu_bar_height))),
-	   Fcons (Qtool_bar_external, Qnil),
+		Fcons (Qmenu_bar_external, Qt),
+		Fcons (Qmenu_bar_size,
+		       Fcons (make_number
+			      (menu_bar.rcBar.right - menu_bar.rcBar.left),
+			      make_number (menu_bar_height))),
+		Fcons (Qtool_bar_external, Qnil),
 		Fcons (Qtool_bar_position, tool_bar_height ? Qtop : Qnil),
-	   Fcons (Qtool_bar_size,
+		Fcons (Qtool_bar_size,
 		       Fcons (make_number
 			      (tool_bar_height
-			       ? right - left - 2 * internal_border_width
-				      : 0),
+			       ? (right - left - 2 * external_border_width
+				  - 2 * internal_border_width)
+			       : 0),
 			      make_number (tool_bar_height))),
 		Fcons (Qinternal_border_width,
 		       make_number (internal_border_width)));
