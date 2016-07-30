@@ -7851,6 +7851,15 @@ code_conversion_save (bool with_work_buf, bool multibyte)
   return workbuf;
 }
 
+static void
+coding_restore_undo_list (Lisp_Object arg)
+{
+  Lisp_Object undo_list = XCAR (arg);
+  struct buffer *buf = XBUFFER (XCDR (arg));
+
+  bset_undo_list (buf, undo_list);
+}
+
 void
 decode_coding_gap (struct coding_system *coding,
 		   ptrdiff_t chars, ptrdiff_t bytes)
@@ -7963,13 +7972,19 @@ decode_coding_gap (struct coding_system *coding,
     {
       ptrdiff_t prev_Z = Z, prev_Z_BYTE = Z_BYTE;
       Lisp_Object val;
+      Lisp_Object undo_list = BVAR (current_buffer, undo_list);
+      ptrdiff_t count1 = SPECPDL_INDEX ();
 
+      record_unwind_protect (coding_restore_undo_list,
+			     Fcons (undo_list, Fcurrent_buffer ()));
+      bset_undo_list (current_buffer, Qt);
       TEMP_SET_PT_BOTH (coding->dst_pos, coding->dst_pos_byte);
       val = call1 (CODING_ATTR_POST_READ (attrs),
 		   make_number (coding->produced_char));
       CHECK_NATNUM (val);
       coding->produced_char += Z - prev_Z;
       coding->produced += Z_BYTE - prev_Z_BYTE;
+      unbind_to (count1, Qnil);
     }
 
   unbind_to (count, Qnil);
@@ -8110,13 +8125,19 @@ decode_coding_object (struct coding_system *coding,
     {
       ptrdiff_t prev_Z = Z, prev_Z_BYTE = Z_BYTE;
       Lisp_Object val;
+      Lisp_Object undo_list = BVAR (current_buffer, undo_list);
+      ptrdiff_t count1 = SPECPDL_INDEX ();
 
+      record_unwind_protect (coding_restore_undo_list,
+			     Fcons (undo_list, Fcurrent_buffer ()));
+      bset_undo_list (current_buffer, Qt);
       TEMP_SET_PT_BOTH (coding->dst_pos, coding->dst_pos_byte);
       val = safe_call1 (CODING_ATTR_POST_READ (attrs),
 			make_number (coding->produced_char));
       CHECK_NATNUM (val);
       coding->produced_char += Z - prev_Z;
       coding->produced += Z_BYTE - prev_Z_BYTE;
+      unbind_to (count1, Qnil);
     }
 
   if (EQ (dst_object, Qt))
