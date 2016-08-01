@@ -812,7 +812,9 @@ FILE's modification time."
                         (autoload-insert-section-header
                          (marker-buffer other-output-start)
                          "actual autoloads are elsewhere" load-name relfile
-                         (nth 5 (file-attributes absfile)))
+			 (if autoload-timestamps
+			     (nth 5 (file-attributes absfile))
+			   autoload--non-timestamp))
                         (insert ";;; Generated autoloads from " relfile "\n")))
                     (insert generate-autoload-section-trailer)))))))
 
