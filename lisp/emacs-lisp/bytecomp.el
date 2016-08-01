@@ -2582,7 +2582,13 @@ FUN should be either a `lambda' value or a `closure' value."
   (pcase-let* (((or (and `(lambda ,args . ,body) (let env nil))
                     `(closure ,env ,args . ,body))
                 fun)
+               (preamble nil)
                (renv ()))
+    ;; Split docstring and `interactive' form from body.
+    (when (stringp (car body))
+      (push (pop body) preamble))
+    (when (eq (car-safe (car body)) 'interactive)
+      (push (pop body) preamble))
     ;; Turn the function's closed vars (if any) into local let bindings.
     (dolist (binding env)
       (cond
@@ -2595,8 +2601,8 @@ FUN should be either a `lambda' value or a `closure' value."
        ((eq binding t))
        (t (push `(defvar ,binding) body))))
     (if (null renv)
-        `(lambda ,args ,@body)
-      `(lambda ,args (let ,(nreverse renv) ,@body)))))
+        `(lambda ,args ,@preamble ,@body)
+      `(lambda ,args ,@preamble (let ,(nreverse renv) ,@body)))))
 
 ;;;###autoload
 (defun byte-compile (form)
