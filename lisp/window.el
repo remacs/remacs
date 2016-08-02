@@ -1,4 +1,4 @@
-;;; window.el --- GNU Emacs window commands aside from those written in C
+;;; window.el --- GNU Emacs window commands aside from those written in C  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1985, 1989, 1992-1994, 2000-2016 Free Software
 ;; Foundation, Inc.
@@ -1333,10 +1333,8 @@ return the minimum pixel-size of WINDOW."
   (window--min-size-1
    (window-normalize-window window) horizontal ignore pixelwise))
 
-(defun window--min-size-ignore-p (window horizontal ignore)
-  "Return non-nil if IGNORE says to ignore height restrictions for WINDOW.
-HORIZONTAL non-nil means to return non-nil if IGNORE says to
-ignore width restrictions for WINDOW."
+(defun window--min-size-ignore-p (window ignore)
+  "Return non-nil if IGNORE says to ignore height restrictions for WINDOW."
   (if (window-valid-p ignore)
       (eq window ignore)
     (not (memq ignore '(nil preserved)))))
@@ -1396,12 +1394,12 @@ ignore width restrictions for WINDOW."
 		     pixel-width
 		   ;; Round up to next integral of columns.
 		   (* (ceiling pixel-width char-size) char-size))
-		 (if (window--min-size-ignore-p window horizontal ignore)
+		 (if (window--min-size-ignore-p window ignore)
 		     0
 		   (window-min-pixel-width window)))
 	      (max
 	       (ceiling pixel-width char-size)
-	       (if (window--min-size-ignore-p window horizontal ignore)
+	       (if (window--min-size-ignore-p window ignore)
 		   0
 		 window-min-width)))))
 	 ((let ((char-size (frame-char-size window))
@@ -1417,11 +1415,11 @@ ignore width restrictions for WINDOW."
 		     pixel-height
 		   ;; Round up to next integral of lines.
 		   (* (ceiling pixel-height char-size) char-size))
-		 (if (window--min-size-ignore-p window horizontal ignore)
+		 (if (window--min-size-ignore-p window ignore)
 		     0
 		   (window-min-pixel-height window)))
 	      (max (ceiling pixel-height char-size)
-		   (if (window--min-size-ignore-p window horizontal ignore)
+		   (if (window--min-size-ignore-p window ignore)
 		       0
 		     window-min-height))))))))))
 
@@ -3129,8 +3127,8 @@ routines."
 	 pixel-delta
        (/ pixel-delta (frame-char-height frame)))))
 
-(defun window--sanitize-window-sizes (frame horizontal)
-  "Assert that all windows on FRAME are large enough.
+(defun window--sanitize-window-sizes (horizontal)
+  "Assert that all windows on selected frame are large enough.
 If necessary and possible, make sure that every window on frame
 FRAME has its minimum height.  Optional argument HORIZONTAL
 non-nil means to make sure that every window on frame FRAME has
@@ -3508,8 +3506,7 @@ ABSOLUTE is non-nil, PIXELWISE is implicitly non-nil too."
 	 (bottom (+ top (if pixelwise
 			    (window-pixel-height window)
 			  (window-total-height window))))
-	 (bottom-body (and body (+ top-body (window-body-height window t))))
-	 left-off right-off)
+	 (bottom-body (and body (+ top-body (window-body-height window t)))))
     (if absolute
 	(let* ((native-edges (frame-edges frame 'native-edges))
 	       (left-off (nth 0 native-edges))
@@ -4878,7 +4875,7 @@ frame.  The selected window is not changed by this function."
 
 	  ;; Sanitize sizes unless SIZE was specified.
 	  (unless size
-            (window--sanitize-window-sizes frame horizontal))
+            (window--sanitize-window-sizes horizontal))
 
 	  (run-window-configuration-change-hook frame)
 	  (run-window-scroll-functions new)
@@ -6785,23 +6782,22 @@ The behaviour is also controlled by entries for
           derived-mode-same-frame
           derived-mode-other-frame)
       (dolist (window windows)
-        (let (mode? frame?)
-          (with-current-buffer (window-buffer window)
-            (setq mode?
-                  (cond ((memq major-mode allowed-modes)
-                         'same)
-                        ((derived-mode-p allowed-modes)
-                         'derived))))
+        (let ((mode?
+               (with-current-buffer (window-buffer window)
+                 (cond ((memq major-mode allowed-modes)
+                        'same)
+                       ((derived-mode-p allowed-modes)
+                        'derived)))))
           (when (and mode?
                      (not (and inhibit-same-window-p
                                (eq window curwin))))
-            (if (eq curframe (window-frame window))
-                (if (eq mode? 'same)
-                    (push window same-mode-same-frame)
-                  (push window derived-mode-same-frame))
-              (if (eq mode? 'same)
-                  (push window same-mode-other-frame)
-                (push window derived-mode-other-frame))))))
+            (push window (if (eq curframe (window-frame window))
+                             (if (eq mode? 'same)
+                                 same-mode-same-frame
+                               derived-mode-same-frame)
+                           (if (eq mode? 'same)
+                               same-mode-other-frame
+                             derived-mode-other-frame))))))
       (let ((window (car (nconc same-mode-same-frame
                                 same-mode-other-frame
                                 derived-mode-same-frame
@@ -7548,8 +7544,7 @@ FRAME."
   (setq frame (window-normalize-frame frame))
   (when (window-live-p (frame-root-window frame))
     (with-selected-window (frame-root-window frame)
-      (let* ((window (frame-root-window frame))
-	     (char-width (frame-char-width))
+      (let* ((char-width (frame-char-width))
 	     (char-height (frame-char-height))
 	     (monitor-attributes (car (display-monitor-attributes-list
 				       (frame-parameter frame 'display))))
@@ -7596,8 +7591,6 @@ FRAME."
 	     ;; and the window's body width.  This is the space we can't
 	     ;; use for fitting.
 	     (extra-width (- frame-width window-body-width))
-	     ;; The maximum width we can use for fitting.
-	     (fit-width (- workarea-width extra-width))
 	     ;; The pixel position of FRAME's left border.  We usually
 	     ;; try to leave this alone.
 	     (left
@@ -7616,23 +7609,6 @@ FRAME."
 	     ;; The difference in pixels between the frame's pixel
 	     ;; height and the window's height.
 	     (extra-height (- frame-height window-height))
-	     ;; When tool-bar-mode is enabled and we just created a new
-	     ;; frame, reserve lines for toolbar resizing.  Needed
-	     ;; because for reasons unknown to me Emacs (1) reserves one
-	     ;; line for the toolbar when making the initial frame and
-	     ;; toolbars are enabled, and (2) later adds the remaining
-	     ;; lines needed.  Our code runs IN BETWEEN (1) and (2).
-	     ;; YMMV when you're on a system that behaves differently.
-	     (toolbar-extra-height
-	      (let ((quit-restore (window-parameter window 'quit-restore))
-		    ;; This may have to change when we allow arbitrary
-		    ;; pixel height toolbars.
-		    (lines (tool-bar-height)))
-		(* char-height
-		   (if (and quit-restore (eq (car quit-restore) 'frame)
-			    (not (zerop lines)))
-		       (1- lines)
-		     0))))
 	     ;; The pixel position of FRAME's top border.
 	     (top
 	      (let ((top (frame-parameter nil 'top)))
@@ -8554,9 +8530,9 @@ overrides the global or buffer-local value of
   :group 'windows
   :version "25.1")
 
-(defun window-adjust-process-window-size (reducer process windows)
-  "Adjust the process window size of PROCESS.
-WINDOWS is a list of windows associated with PROCESS.  REDUCER is
+(defun window-adjust-process-window-size (reducer windows)
+  "Adjust the window sizes of a process.
+WINDOWS is a list of windows associated with that process.  REDUCER is
 a two-argument function used to combine the widths and heights of
 the given windows."
   (when windows
@@ -8567,17 +8543,17 @@ the given windows."
         (setf height (funcall reducer height (window-body-height window))))
       (cons width height))))
 
-(defun window-adjust-process-window-size-smallest (process windows)
+(defun window-adjust-process-window-size-smallest (_process windows)
   "Adjust the process window size of PROCESS.
 WINDOWS is a list of windows associated with PROCESS.  Choose the
 smallest area available for displaying PROCESS's output."
-  (window-adjust-process-window-size #'min process windows))
+  (window-adjust-process-window-size #'min windows))
 
-(defun window-adjust-process-window-size-largest (process windows)
+(defun window-adjust-process-window-size-largest (_process windows)
   "Adjust the process window size of PROCESS.
 WINDOWS is a list of windows associated with PROCESS.  Choose the
 largest area available for displaying PROCESS's output."
-  (window-adjust-process-window-size #'max process windows))
+  (window-adjust-process-window-size #'max windows))
 
 (defun window--process-window-list ()
   "Return an alist mapping processes to associated windows.
