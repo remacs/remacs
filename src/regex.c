@@ -2618,8 +2618,8 @@ regex_compile (const_re_char *pattern, size_t size,
 	    main_p = p1;
 	    main_pend = pend;
 	    main_pattern = pattern;
-	    p = pattern = whitespace_regexp;
-	    pend = p + strlen ((const char *) p);
+	    p = pattern = (re_char *) whitespace_regexp;
+	    pend = p + strlen (whitespace_regexp);
 	    break;
 	  }
 #endif
