@@ -513,8 +513,6 @@ init_syntax_once (void)
 
 #define BYTEWIDTH 8 /* In bits.  */
 
-#define STREQ(s1, s2) ((strcmp (s1, s2) == 0))
-
 #ifndef emacs
 # undef max
 # undef min
