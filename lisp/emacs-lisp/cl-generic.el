@@ -446,6 +446,12 @@ The set of acceptable TYPEs (also called \"specializers\") is defined
     (setq methods (cdr methods)))
   methods)
 
+(defun cl--generic-load-hist-format (name qualifiers specializers)
+  ;; FIXME: This function is used in elisp-mode.el and
+  ;; elisp-mode-tests.el, but I still decided to use an internal name
+  ;; because these uses should be removed or moved into cl-generic.el.
+  `(,name ,qualifiers . ,specializers))
+
 ;;;###autoload
 (defun cl-generic-define-method (name qualifiers args uses-cnm function)
   (pcase-let*
@@ -486,8 +492,9 @@ The set of acceptable TYPEs (also called \"specializers\") is defined
               (cons method mt)
             ;; Keep the ordering; important for methods with :extra qualifiers.
             (mapcar (lambda (x) (if (eq x (car me)) method x)) mt)))
-    (cl-pushnew `(cl-defmethod . (,(cl--generic-name generic)
-                                  ,qualifiers . ,specializers))
+    (cl-pushnew `(cl-defmethod . ,(cl--generic-load-hist-format
+                                   (cl--generic-name generic)
+                                   qualifiers specializers))
                 current-load-list :test #'equal)
     ;; FIXME: Try to avoid re-constructing a new function if the old one
     ;; is still valid (e.g. still empty method cache)?
@@ -864,18 +871,22 @@ Can only be used from within the lexical body of a primary or around method."
 
 (defun cl--generic-search-method (met-name)
   "For `find-function-regexp-alist'. Searches for a cl-defmethod.
-MET-NAME is a cons (SYMBOL . SPECIALIZERS)."
+MET-NAME is as returned by `cl--generic-load-hist-format'."
   (let ((base-re (concat "(\\(?:cl-\\)?defmethod[ \t]+"
                          (regexp-quote (format "%s" (car met-name)))
 			 "\\_>")))
     (or
      (re-search-forward
       (concat base-re "[^&\"\n]*"
+              (mapconcat (lambda (qualifier)
+                           (regexp-quote (format "%S" qualifier)))
+                         (cadr met-name)
+                         "[ \t\n]*")
               (mapconcat (lambda (specializer)
                            (regexp-quote
                             (format "%S" (if (consp specializer)
                                              (nth 1 specializer) specializer))))
-                         (remq t (cdr met-name))
+                         (remq t (cddr met-name))
                          "[ \t\n]*)[^&\"\n]*"))
       nil t)
      (re-search-forward base-re nil t))))
@@ -932,9 +943,10 @@ MET-NAME is a cons (SYMBOL . SPECIALIZERS)."
           (let* ((info (cl--generic-method-info method)))
             ;; FIXME: Add hyperlinks for the types as well.
             (insert (format "%s%S" (nth 0 info) (nth 1 info)))
-            (let* ((met-name `(,function
-                               ,(cl--generic-method-qualifiers method)
-                               . ,(cl--generic-method-specializers method)))
+            (let* ((met-name (cl--generic-load-hist-format
+                              function
+                              (cl--generic-method-qualifiers method)
+                              (cl--generic-method-specializers method)))
                    (file (find-lisp-object-file-name met-name 'cl-defmethod)))
               (when file
                 (insert (substitute-command-keys " in `"))

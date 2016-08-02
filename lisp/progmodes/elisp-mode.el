@@ -712,7 +712,10 @@ non-nil result supercedes the xrefs produced by
                 (let* ((info (cl--generic-method-info method));; qual-string combined-args doconly
                        (specializers (cl--generic-method-specializers method))
                        (non-default nil)
-                       (met-name (cons symbol specializers))
+                       (met-name (cl--generic-load-hist-format
+                                  symbol
+                                  (cl--generic-method-qualifiers method)
+                                  specializers))
                        (file (find-lisp-object-file-name met-name 'cl-defmethod)))
                   (dolist (item specializers)
                     ;; default method has all 't' in specializers
