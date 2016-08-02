@@ -399,7 +399,7 @@ differences in behavior.")
 ;;     - if no "REG_BASIC" is found, with have an extended regex
 ;;     - These set a flag:
 ;;       - REG_ICASE
-;;       - REG_NEWLINE
+;;       - REG_NEWLINE  (ignored by this function)
 ;;       - REG_NOTBOL
 ;;       - REG_NOTEOL
 ;;
@@ -415,13 +415,12 @@ differences in behavior.")
 ;;   - end   is the 0-based index of the first character past the group
 (defun regex-tests-BOOST ()
   (let (failures
-        basic icase newline notbol noteol)
+        basic icase notbol noteol)
     (regex-tests-generic-line
      ?; "BOOST.tests" regex-tests-BOOST-whitelist
      (if (save-excursion (re-search-forward "^-" nil t))
          (setq basic   (save-excursion (re-search-forward "REG_BASIC" nil t))
                icase   (save-excursion (re-search-forward "REG_ICASE" nil t))
-               newline (save-excursion (re-search-forward "REG_NEWLINE" nil t))
                notbol  (save-excursion (re-search-forward "REG_NOTBOL" nil t))
                noteol  (save-excursion (re-search-forward "REG_NOTEOL" nil t)))
 
