@@ -2867,20 +2867,11 @@ resize_root_window (Lisp_Object window, Lisp_Object delta,
 		horizontal, ignore, pixelwise);
 }
 
-/* Placeholder used by temacs -nw before window.el is loaded.  */
-DEFUN ("window--sanitize-window-sizes", Fwindow__sanitize_window_sizes,
-       Swindow__sanitize_window_sizes, 2, 2, 0,
-       doc: /* */
-       attributes: const)
-     (Lisp_Object frame, Lisp_Object horizontal)
-{
-  return Qnil;
-}
-
 Lisp_Object
 sanitize_window_sizes (Lisp_Object frame, Lisp_Object horizontal)
 {
-  return call2 (Qwindow__sanitize_window_sizes, frame, horizontal);
+  if (!NILP (Fsymbol_function (Qwindow__sanitize_window_sizes)))
+    return call1 (Qwindow__sanitize_window_sizes, horizontal);
 }
 
 
@@ -7576,7 +7567,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_window_display_table);
   defsubr (&Snext_window);
   defsubr (&Sprevious_window);
-  defsubr (&Swindow__sanitize_window_sizes);
   defsubr (&Sget_buffer_window);
   defsubr (&Sdelete_other_windows_internal);
   defsubr (&Sdelete_window_internal);
