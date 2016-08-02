@@ -4853,7 +4853,10 @@ connection if a previous connection has died for some reason."
 		    (tramp-message vec 3 "Sending command `%s'" command)
 		    (tramp-send-command vec command t t)
 		    (tramp-process-actions
-		     p vec pos tramp-actions-before-shell
+		     p vec
+		     (min
+		      pos (with-current-buffer (process-buffer p) (point-max)))
+		     tramp-actions-before-shell
 		     (or connection-timeout tramp-connection-timeout))
 		    (tramp-message
 		     vec 3 "Found remote shell prompt on `%s'" l-host))
