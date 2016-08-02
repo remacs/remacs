@@ -187,14 +187,6 @@ the end-points, e.g.:
 (The @code{apply} is necessary because @code{ses-range} produces a
 @emph{list} of values.  This allows for more complex possibilities.)
 
-Alternatively you can use the @code{!} modifier of @code{ses-range} to
-remove blank cells which allows to use @code{+} instead of
-@code{ses+}:
-
-@lisp
-(apply '+ (ses-range A2 A5 !))
-@end lisp
-
 @c ===================================================================
 
 @node The Basics
@@ -603,8 +595,8 @@ Pops up a menu to set the current row as the header, or revert to
 column letters.
 @item M-x ses-rename-cell
 @findex ses-rename-cell
-Rename a cell from a standard A1-like name to any string that can be a
-valid local variable name (See also @ref{Nonrelocatable references}).
+Rename a cell from a standard A1-like name to any
+string.
 @item M-x ses-repair-cell-reference-all
 @findex ses-repair-cell-reference-all
 When you interrupt a cell formula update by clicking @kbd{C-g}, then
@@ -799,17 +791,8 @@ are some useful functions to call from your formulas:
 
 @table @code
 @item (ses-delete-blanks &rest @var{args})
-Returns a list from which all blank cells (value is either @code{nil}
-or '*skip*) have been deleted. Order of args is reverted. Please note
-that @code{ses-range} has a @code{!} modifier that allows to remove
-blanks, so it is possible to write:
-@lisp
-(ses-range A1 A5 !)
-@end lisp
-instead of
-@lisp
-(apply 'ses-delete-blanks (ses-range A1 A5 <))
-@end lisp
+Returns a list from which all blank cells (value is either @code{nil} or
+'*skip*) have been deleted.
 
 @item (ses+ &rest @var{args})
 Sum of non-blank arguments.
@@ -859,9 +842,9 @@ this to undo the effect of @kbd{t}.
 @end table
 
 When a printer function signals an error, the fallback printer
-@samp{"%S"} is substituted.  This is useful when your column printer
+@samp{"%s"} is substituted.  This is useful when your column printer
 is numeric-only and you use a string as a cell value.  Note that the
-standard default printer is @samp{"%.7g"} which is numeric-only, so cells
+standard default printer is ``%.7g'' which is numeric-only, so cells
 that are empty of contain strings will use the fallback printer.
 @kbd{c} on such cells will display ``Format specifier doesn't match
 argument type''.
@@ -1003,18 +986,7 @@ can type ahead without worrying about the glitch.
 @kbd{C-u C-y} relocates none of the cell-references.  What about mixed
 cases?
 
-The best way is to rename cells that you do not want to be relocatable
-by using @code{ses-rename-cell}.
-@findex ses-rename-cell
-Cells that do not have an A1-like name style are not relocated on
-yank. Using this method, the concerned cells won't be relocated
-whatever formula they appear in. Please note however that when a
-formula contains some range @code{(ses-range @var{cell1} @var{cell2})}
-then in the yanked formula each range bound @var{cell1} and
-@var{cell2} are relocated, or not, indepently, depending on whether
-they are A1-like or renamed.
-
-An alternative method is to use
+You can use
 @lisp
 (symbol-value 'B3)
 @end lisp
@@ -1022,8 +994,7 @@ to make an @dfn{absolute reference}.  The formula relocator skips over
 quoted things, so this will not be relocated when pasted or when
 rows/columns are inserted/deleted.  However, B3 will not be recorded
 as a dependency of this cell, so this cell will not be updated
-automatically when B3 is changed, this is why using
-@code{ses-rename-cell} is most of the time preferable.
+automatically when B3 is changed.
 
 The variables @code{row} and @code{col} are dynamically bound while a
 cell formula is being evaluated.  You can use
@@ -1040,13 +1011,12 @@ kind of dependency is also not recorded.
 @findex ses-reconstruct-all
 
 Begins with an 014 character, followed by sets of cell-definition
-macros for each row, followed by the set of local printer
-defintitions, followed by column-widths, column-printers,
+macros for each row, followed by column-widths, column-printers,
 default-printer, and header-row.  Then there's the global parameters
-(file-format ID, row count, column count, local printer count) and the
-local variables (specifying @acronym{SES} mode for the buffer, etc.).
+(file-format ID, numrows, numcols) and the local variables (specifying
+@acronym{SES} mode for the buffer, etc.).
 
-When a @acronym{SES} file is loaded, first the global parameters are
+When a @acronym{SES} file is loaded, first the numrows and numcols values are
 loaded, then the entire data area is @code{eval}ed, and finally the local
 variables are processed.
 
