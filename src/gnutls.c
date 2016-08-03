@@ -1602,8 +1602,12 @@ one trustfile (usually a CA bundle).  */)
   /* Call gnutls_init here: */
 
   GNUTLS_LOG (1, max_log_level, "gnutls_init");
-  int nonblock = XPROCESS (proc)->is_non_blocking_client ? GNUTLS_NONBLOCK : 0;
-  ret = gnutls_init (&state, GNUTLS_CLIENT | nonblock);
+  int gnutls_flags = GNUTLS_CLIENT;
+#ifdef GNUTLS_NONBLOCK
+  if (XPROCESS (proc)->is_non_blocking_client)
+    gnutls_flags |= GNUTLS_NONBLOCK;
+#endif
+  ret = gnutls_init (&state, gnutls_flags);
   XPROCESS (proc)->gnutls_state = state;
   if (ret < GNUTLS_E_SUCCESS)
     return gnutls_make_error (ret);
