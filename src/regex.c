@@ -2888,22 +2888,18 @@ regex_compile (const_re_char *pattern, size_t size,
 		       done until now.  */
 		    SETUP_BUFFER_SYNTAX_TABLE ();
 
-		    for (ch = 0; ch < 256; ++ch)
-		      {
-			c = RE_CHAR_TO_MULTIBYTE (ch);
-			if (! CHAR_BYTE8_P (c)
-			    && re_iswctype (c, cc))
-			  {
-			    SET_LIST_BIT (ch);
-			    c1 = TRANSLATE (c);
-			    if (c1 == c)
-			      continue;
-			    if (ASCII_CHAR_P (c1))
-			      SET_LIST_BIT (c1);
-			    else if ((c1 = RE_CHAR_TO_UNIBYTE (c1)) >= 0)
-			      SET_LIST_BIT (c1);
-			  }
-		      }
+		    for (c = 0; c < 0x80; ++c)
+		      if (re_iswctype (c, cc))
+			{
+			  SET_LIST_BIT (c);
+			  c1 = TRANSLATE (c);
+			  if (c1 == c)
+			    continue;
+			  if (ASCII_CHAR_P (c1))
+			    SET_LIST_BIT (c1);
+			  else if ((c1 = RE_CHAR_TO_UNIBYTE (c1)) >= 0)
+			    SET_LIST_BIT (c1);
+			}
 		    SET_RANGE_TABLE_WORK_AREA_BIT
 		      (range_table_work, re_wctype_to_bit (cc));
 #endif	/* emacs */
