@@ -1,4 +1,4 @@
-# serial 26
+# serial 27
 dnl Copyright (C) 2002-2003, 2005-2007, 2009-2016 Free Software Foundation,
 dnl Inc.
 dnl This file is free software; the Free Software Foundation
@@ -30,6 +30,7 @@ AC_DEFUN([gl_FUNC_MKTIME],
   dnl in Autoconf and because it invokes AC_LIBOBJ.
   AC_CHECK_HEADERS_ONCE([unistd.h])
   AC_CHECK_DECLS_ONCE([alarm])
+  AC_CHECK_FUNCS_ONCE([tzset])
   AC_REQUIRE([gl_MULTIARCH])
   if test $APPLE_UNIVERSAL_BUILD = 1; then
     # A universal build on Apple Mac OS X platforms.

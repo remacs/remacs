@@ -470,6 +470,8 @@ mktime (struct tm *tp)
      time zone names contained in the external variable 'tzname' shall
      be set as if the tzset() function had been called.  */
   __tzset ();
+#elif HAVE_TZSET
+  tzset ();
 #endif
 
   return __mktime_internal (tp, __localtime_r, &localtime_offset);
