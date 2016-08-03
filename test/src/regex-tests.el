@@ -21,6 +21,11 @@
 
 (require 'ert)
 
+(defvar regex-tests--resources-dir
+  (concat (concat (file-name-directory (or load-file-name buffer-file-name))
+                  "/regex-resources/"))
+  "Path to regex-resources directory next to the \"regex-tests.el\" file.")
+
 (ert-deftest regex-word-cc-fallback-test ()
   "Test that ‘[[:cc:]]*x’ matches ‘x’ (bug#24020).
 
@@ -98,7 +103,7 @@ are known failures, and are skipped."
 
   `(with-temp-buffer
     (modify-syntax-entry ?_ "w;; ") ; tests expect _ to be a word
-    (insert-file-contents ,(concat "src/regex-resources/" test-file))
+    (insert-file-contents (concat regex-tests--resources-dir ,test-file))
     (let ((case-fold-search nil)
           (line-number 1)
           (whitelist-idx 0))
