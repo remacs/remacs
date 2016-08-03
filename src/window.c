@@ -2867,11 +2867,11 @@ resize_root_window (Lisp_Object window, Lisp_Object delta,
 		horizontal, ignore, pixelwise);
 }
 
-Lisp_Object
+void
 sanitize_window_sizes (Lisp_Object frame, Lisp_Object horizontal)
 {
   if (!NILP (Fsymbol_function (Qwindow__sanitize_window_sizes)))
-    return call1 (Qwindow__sanitize_window_sizes, horizontal);
+    call1 (Qwindow__sanitize_window_sizes, horizontal);
 }
 
 
