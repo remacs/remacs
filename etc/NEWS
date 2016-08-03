@@ -28,6 +28,9 @@ otherwise leave it unmarked.
 ** By default libgnutls is now required when building Emacs.
 Use 'configure --with-gnutls=no' to build even when GnuTLS is missing.
 
+** GnuTLS version 2.12.2 or later is now required, instead of merely
+version 2.6.6 or later.
+
 ** The new option 'configure --enable-gcc-warnings=warn-only' causes
 GCC to issue warnings without stopping the build.  This behavior is
 now the default in developer builds.  As before, use

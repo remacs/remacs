@@ -2748,7 +2748,7 @@ AC_SUBST(LIBSELINUX_LIBS)
 
 HAVE_GNUTLS=no
 if test "${with_gnutls}" = "yes" ; then
-  EMACS_CHECK_MODULES([LIBGNUTLS], [gnutls >= 2.6.6],
+  EMACS_CHECK_MODULES([LIBGNUTLS], [gnutls >= 2.12.2],
     [HAVE_GNUTLS=yes], [HAVE_GNUTLS=no])
   if test "${HAVE_GNUTLS}" = "yes"; then
     AC_DEFINE(HAVE_GNUTLS, 1, [Define if using GnuTLS.])

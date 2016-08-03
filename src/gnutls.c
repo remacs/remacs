@@ -110,8 +110,6 @@ DEF_DLL_FN (ssize_t, gnutls_record_send,
 	    (gnutls_session_t, const void *, size_t));
 DEF_DLL_FN (const char *, gnutls_strerror, (int));
 DEF_DLL_FN (void, gnutls_transport_set_errno, (gnutls_session_t, int));
-DEF_DLL_FN (const char *, gnutls_check_version, (const char *));
-DEF_DLL_FN (void, gnutls_transport_set_lowat, (gnutls_session_t, int));
 DEF_DLL_FN (void, gnutls_transport_set_ptr2,
 	    (gnutls_session_t, gnutls_transport_ptr_t,
 	     gnutls_transport_ptr_t));
@@ -225,11 +223,6 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_record_send);
   LOAD_DLL_FN (library, gnutls_strerror);
   LOAD_DLL_FN (library, gnutls_transport_set_errno);
-  LOAD_DLL_FN (library, gnutls_check_version);
-  /* We don't need to call gnutls_transport_set_lowat in GnuTLS 2.11.1
-     and later, and the function was removed entirely in 3.0.0.  */
-  if (!fn_gnutls_check_version ("2.11.1"))
-    LOAD_DLL_FN (library, gnutls_transport_set_lowat);
   LOAD_DLL_FN (library, gnutls_transport_set_ptr2);
   LOAD_DLL_FN (library, gnutls_transport_set_pull_function);
   LOAD_DLL_FN (library, gnutls_transport_set_push_function);
@@ -290,7 +283,6 @@ init_gnutls_functions (void)
 # define gnutls_certificate_set_x509_trust_file fn_gnutls_certificate_set_x509_trust_file
 # define gnutls_certificate_type_get fn_gnutls_certificate_type_get
 # define gnutls_certificate_verify_peers2 fn_gnutls_certificate_verify_peers2
-# define gnutls_check_version fn_gnutls_check_version
 # define gnutls_cipher_get fn_gnutls_cipher_get
 # define gnutls_cipher_get_name fn_gnutls_cipher_get_name
 # define gnutls_credentials_set fn_gnutls_credentials_set
@@ -321,7 +313,6 @@ init_gnutls_functions (void)
 # define gnutls_sign_get_name fn_gnutls_sign_get_name
 # define gnutls_strerror fn_gnutls_strerror
 # define gnutls_transport_set_errno fn_gnutls_transport_set_errno
-# define gnutls_transport_set_lowat fn_gnutls_transport_set_lowat
 # define gnutls_transport_set_ptr2 fn_gnutls_transport_set_ptr2
 # define gnutls_transport_set_pull_function fn_gnutls_transport_set_pull_function
 # define gnutls_transport_set_push_function fn_gnutls_transport_set_push_function
@@ -439,20 +430,6 @@ emacs_gnutls_handshake (struct Lisp_Process *proc)
 				 (gnutls_transport_ptr_t) proc);
       gnutls_transport_set_push_function (state, &emacs_gnutls_push);
       gnutls_transport_set_pull_function (state, &emacs_gnutls_pull);
-
-      /* For non blocking sockets or other custom made pull/push
-	 functions the gnutls_transport_set_lowat must be called, with
-	 a zero low water mark value. (GnuTLS 2.10.4 documentation)
-
-	 (Note: this is probably not strictly necessary as the lowat
-	  value is only used when no custom pull/push functions are
-	  set.)  */
-      /* According to GnuTLS NEWS file, lowat level has been set to
-	 zero by default in version 2.11.1, and the function
-	 gnutls_transport_set_lowat was removed from the library in
-	 version 2.99.0.  */
-      if (!gnutls_check_version ("2.11.1"))
-	gnutls_transport_set_lowat (state, 0);
 #else
       /* This is how GnuTLS takes sockets: as file descriptors passed
 	 in.  For an Emacs process socket, infd and outfd are the
