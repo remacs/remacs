@@ -2879,8 +2879,7 @@ regex_compile (const_re_char *pattern, size_t size,
 		    /* Most character classes in a multibyte match just set
 		       a flag.  Exceptions are is_blank, is_digit, is_cntrl, and
 		       is_xdigit, since they can only match ASCII characters.
-		       We don't need to handle them for multibyte.  They are
-		       distinguished by a negative wctype.  */
+		       We don't need to handle them for multibyte.  */
 
 		    /* Setup the gl_state object to its buffer-defined value.
 		       This hardcodes the buffer-global syntax-table for ASCII
