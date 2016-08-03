@@ -2868,8 +2868,9 @@ resize_root_window (Lisp_Object window, Lisp_Object delta,
 }
 
 void
-sanitize_window_sizes (Lisp_Object frame, Lisp_Object horizontal)
+sanitize_window_sizes (Lisp_Object horizontal)
 {
+  /* Don't burp in temacs -nw before window.el is loaded.  */
   if (!NILP (Fsymbol_function (Qwindow__sanitize_window_sizes)))
     call1 (Qwindow__sanitize_window_sizes, horizontal);
 }

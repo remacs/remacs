@@ -501,8 +501,8 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
       && new_lines == old_lines)
     /* No change.  Sanitize window sizes and return.  */
     {
-      sanitize_window_sizes (frame, Qt);
-      sanitize_window_sizes (frame, Qnil);
+      sanitize_window_sizes (Qt);
+      sanitize_window_sizes (Qnil);
 
       return;
     }
@@ -582,8 +582,8 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
   }
 
   /* Sanitize window sizes.  */
-  sanitize_window_sizes (frame, Qt);
-  sanitize_window_sizes (frame, Qnil);
+  sanitize_window_sizes (Qt);
+  sanitize_window_sizes (Qnil);
 
   adjust_frame_glyphs (f);
   calculate_costs (f);
