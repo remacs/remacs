@@ -411,6 +411,31 @@ gnutls_try_handshake (struct Lisp_Process *proc)
   return ret;
 }
 
+#ifndef WINDOWSNT
+static int
+emacs_gnutls_nonblock_errno (gnutls_transport_ptr_t ptr)
+{
+  int err = errno;
+
+  switch (err)
+    {
+# ifdef _AIX
+      /* This is taken from the GnuTLS system_errno function circa 2016;
+	 see <http://savannah.gnu.org/support/?107464>.  */
+    case 0:
+      errno = EAGAIN;
+      /* Fall through.  */
+# endif
+    case EINPROGRESS:
+    case ENOTCONN:
+      return EAGAIN;
+
+    default:
+      return err;
+    }
+}
+#endif
+
 static int
 emacs_gnutls_handshake (struct Lisp_Process *proc)
 {
@@ -437,6 +462,9 @@ emacs_gnutls_handshake (struct Lisp_Process *proc)
       gnutls_transport_set_ptr2 (state,
 				 (void *) (intptr_t) proc->infd,
 				 (void *) (intptr_t) proc->outfd);
+      if (proc->is_non_blocking_client)
+	gnutls_transport_set_errno_function (state,
+					     emacs_gnutls_nonblock_errno);
 #endif
 
       proc->gnutls_initstage = GNUTLS_STAGE_TRANSPORT_POINTERS_SET;
@@ -1574,7 +1602,8 @@ one trustfile (usually a CA bundle).  */)
   /* Call gnutls_init here: */
 
   GNUTLS_LOG (1, max_log_level, "gnutls_init");
-  ret = gnutls_init (&state, GNUTLS_CLIENT);
+  int nonblock = XPROCESS (proc)->is_non_blocking_client ? GNUTLS_NONBLOCK : 0;
+  ret = gnutls_init (&state, GNUTLS_CLIENT | nonblock);
   XPROCESS (proc)->gnutls_state = state;
   if (ret < GNUTLS_E_SUCCESS)
     return gnutls_make_error (ret);
