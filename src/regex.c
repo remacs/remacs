@@ -324,7 +324,7 @@ enum syntaxcode { Swhitespace = 0, Sword = 1, Ssymbol = 2 };
 		    ? (((c) >= 'a' && (c) <= 'z')	\
 		       || ((c) >= 'A' && (c) <= 'Z')	\
 		       || ((c) >= '0' && (c) <= '9'))	\
-		    : (alphabeticp (c) || decimalnump (c)))
+		    : alphanumericp (c))
 
 # define ISALPHA(c) (IS_REAL_ASCII (c)			\
 		    ? (((c) >= 'a' && (c) <= 'z')	\

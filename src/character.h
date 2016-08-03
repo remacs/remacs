@@ -676,7 +676,7 @@ extern Lisp_Object Vchar_unify_table;
 extern Lisp_Object string_escape_byte8 (Lisp_Object);
 
 extern bool alphabeticp (int);
-extern bool decimalnump (int);
+extern bool alphanumericp (int);
 extern bool graphicp (int);
 extern bool printablep (int);
 
