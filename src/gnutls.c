@@ -883,8 +883,6 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
       xfree (dn);
     }
 
-  /* Versions older than 2.11 doesn't have these four functions. */
-#if GNUTLS_VERSION_NUMBER >= 0x020b00
   /* SubjectPublicKeyInfo. */
   {
     unsigned int bits;
@@ -933,7 +931,6 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
 				  make_string (buf, buf_size)));
       xfree (buf);
     }
-#endif
 
   /* Signature. */
   err = gnutls_x509_crt_get_signature_algorithm (cert);
