@@ -26,7 +26,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "coding.h"
 
 #ifdef HAVE_GNUTLS
-#include <gnutls/gnutls.h>
 
 #ifdef WINDOWSNT
 #include <windows.h>

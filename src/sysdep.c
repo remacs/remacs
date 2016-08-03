@@ -95,7 +95,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "gnutls.h"
 /* MS-Windows loads GnuTLS at run time, if available; we don't want to
    do that during startup just to call gnutls_rnd.  */
-#ifndef WINDOWSNT
+#if defined HAVE_GNUTLS && !defined WINDOWSNT
 # include <gnutls/crypto.h>
 #else
 # define emacs_gnutls_global_init() Qnil
