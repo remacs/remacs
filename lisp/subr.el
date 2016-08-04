@@ -4542,7 +4542,8 @@ to deactivate this transient map, regardless of KEEP-PRED."
             (with-demoted-errors "set-transient-map PCH: %S"
               (unless (cond
                        ((null keep-pred) nil)
-                       ((not (eq map (cadr overriding-terminal-local-map)))
+                       ((and (not (eq map (cadr overriding-terminal-local-map)))
+                             (memq map (cddr overriding-terminal-local-map)))
                         ;; There's presumably some other transient-map in
                         ;; effect.  Wait for that one to terminate before we
                         ;; remove ourselves.
