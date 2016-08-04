@@ -2313,30 +2313,32 @@ comment at the start of cc-engine.el for more info."
   ;; newer Emacsen only, the syntax of a position after a potential first char
   ;; of a two char construct) of STATE are valid.
   (save-excursion
-    (save-match-data
-      (let* ((base-and-state (c-parse-ps-state-below here))
-	     (base (car base-and-state))
-	     (s (cdr base-and-state))
-	     (s (parse-partial-sexp base here nil nil s))
-	     ty)
-	(cond
-	 ((or (nth 3 s) (nth 4 s))	; in a string or comment
-	  (setq ty (cond
-		    ((nth 3 s) 'string)
-		    ((nth 7 s) 'c++)
-		    (t 'c)))
-	  (list s ty (nth 8 s)))
+    (save-restriction
+      (widen)
+      (save-match-data
+	(let* ((base-and-state (c-parse-ps-state-below here))
+	       (base (car base-and-state))
+	       (s (cdr base-and-state))
+	       (s (parse-partial-sexp base here nil nil s))
+	       ty)
+	  (cond
+	   ((or (nth 3 s) (nth 4 s))	; in a string or comment
+	    (setq ty (cond
+		      ((nth 3 s) 'string)
+		      ((nth 7 s) 'c++)
+		      (t 'c)))
+	    (list s ty (nth 8 s)))
 
-	 ((and (not not-in-delimiter)	; inside a comment starter
-	       (not (bobp))
-	       (progn (backward-char)
-		      (and (not (and (memq 'category-properties c-emacs-features)
-				     (looking-at "\\s!")))
-			   (looking-at c-comment-start-regexp))))
-	  (setq ty (if (looking-at c-block-comment-start-regexp) 'c 'c++))
-	  (list s ty (point)))
+	   ((and (not not-in-delimiter)	; inside a comment starter
+		 (not (bobp))
+		 (progn (backward-char)
+			(and (not (and (memq 'category-properties c-emacs-features)
+				       (looking-at "\\s!")))
+			     (looking-at c-comment-start-regexp))))
+	    (setq ty (if (looking-at c-block-comment-start-regexp) 'c 'c++))
+	    (list s ty (point)))
 
-	 (t (list s)))))))
+	   (t (list s))))))))
 
 (defun c-state-full-pp-to-literal (here &optional not-in-delimiter)
   ;; This function will supersede c-state-pp-to-literal.
@@ -2357,38 +2359,40 @@ comment at the start of cc-engine.el for more info."
   ;; newer Emacsen only, the syntax of a position after a potential first char
   ;; of a two char construct) of STATE are valid.
   (save-excursion
-    (save-match-data
-      (let* ((base-and-state (c-parse-ps-state-below here))
-	     (base (car base-and-state))
-	     (s (cdr base-and-state))
-	     (s (parse-partial-sexp base here nil nil s))
-	     ty start)
-	(cond
-	 ((or (nth 3 s) (nth 4 s))	; in a string or comment
-	  (setq ty (cond
-		    ((nth 3 s) 'string)
-		    ((nth 7 s) 'c++)
-		    (t 'c)))
-	  (setq start (nth 8 s))
-	  (parse-partial-sexp here (point-max)
-			      nil			      ; TARGETDEPTH
-			      nil			      ; STOPBEFORE
-			      s				      ; OLDSTATE
-			      'syntax-table) ; stop at end of literal
-	  (list s ty (cons start (point))))
+    (save-restriction
+      (widen)
+      (save-match-data
+	(let* ((base-and-state (c-parse-ps-state-below here))
+	       (base (car base-and-state))
+	       (s (cdr base-and-state))
+	       (s (parse-partial-sexp base here nil nil s))
+	       ty start)
+	  (cond
+	   ((or (nth 3 s) (nth 4 s))	; in a string or comment
+	    (setq ty (cond
+		      ((nth 3 s) 'string)
+		      ((nth 7 s) 'c++)
+		      (t 'c)))
+	    (setq start (nth 8 s))
+	    (parse-partial-sexp here (point-max)
+				nil	     ; TARGETDEPTH
+				nil	     ; STOPBEFORE
+				s	     ; OLDSTATE
+				'syntax-table) ; stop at end of literal
+	    (list s ty (cons start (point))))
 
-	 ((and (not not-in-delimiter)	; inside a comment starter
-	       (not (bobp))
-	       (progn (backward-char)
-		      (and (not (and (memq 'category-properties c-emacs-features)
-				     (looking-at "\\s!")))
-			   (looking-at c-comment-start-regexp))))
-	  (setq ty (if (looking-at c-block-comment-start-regexp) 'c 'c++)
-		start (point))
-	  (forward-comment 1)
-	  (list s ty (cons start (point))))
+	   ((and (not not-in-delimiter)	; inside a comment starter
+		 (not (bobp))
+		 (progn (backward-char)
+			(and (not (and (memq 'category-properties c-emacs-features)
+				       (looking-at "\\s!")))
+			     (looking-at c-comment-start-regexp))))
+	    (setq ty (if (looking-at c-block-comment-start-regexp) 'c 'c++)
+		  start (point))
+	    (forward-comment 1)
+	    (list s ty (cons start (point))))
 
-	 (t (list s)))))))
+	   (t (list s))))))))
 
 (defsubst c-state-pp-to-literal (from to &optional not-in-delimiter)
   ;; Do a parse-partial-sexp from FROM to TO, returning either
@@ -2492,9 +2496,9 @@ comment at the start of cc-engine.el for more info."
   ;; STATE are those concerning comments and strings; STATE is the state of a
   ;; null `parse-partial-sexp' scan when CACHE-POS is not in a comment or
   ;; string.
-  (save-restriction
-    (widen)
-    (save-excursion
+  (save-excursion
+    (save-restriction
+      (widen)
       (let ((c c-state-semi-nonlit-pos-cache)
 	    elt state pos npos high-elt)
 	;; Trim the cache to take account of buffer changes.
