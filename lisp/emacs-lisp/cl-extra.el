@@ -593,13 +593,7 @@ too large if positive or too small if negative)."
 \n(fn SYMBOL PROPNAME &optional DEFAULT)"
   (declare (compiler-macro cl--compiler-macro-get)
            (gv-setter (lambda (store) (ignore def) `(put ,sym ,tag ,store))))
-  (or (get sym tag)
-      (and def
-           ;; Make sure `def' is really absent as opposed to set to nil.
-	   (let ((plist (symbol-plist sym)))
-	     (while (and plist (not (eq (car plist) tag)))
-	       (setq plist (cdr (cdr plist))))
-	     (if plist (car (cdr plist)) def)))))
+  (cl-getf (symbol-plist sym) tag def))
 (autoload 'cl--compiler-macro-get "cl-macs")
 
 ;;;###autoload
@@ -618,26 +612,20 @@ PROPLIST is a list of the sort returned by `symbol-plist'.
 				  ,(funcall setter
 					    `(cl--set-getf ,getter ,k ,val))
 				  ,val)))))))))
-  (setplist '--cl-getf-symbol-- plist)
-  (or (get '--cl-getf-symbol-- tag)
-      ;; Originally we called cl-get here,
-      ;; but that fails, because cl-get has a compiler macro
-      ;; definition that uses getf!
-      (when def
-        ;; Make sure `def' is really absent as opposed to set to nil.
-	(while (and plist (not (eq (car plist) tag)))
-	  (setq plist (cdr (cdr plist))))
-	(if plist (car (cdr plist)) def))))
+  (let ((val-tail (cdr-safe (plist-member plist tag))))
+    (if val-tail (car val-tail) def)))
 
 ;;;###autoload
 (defun cl--set-getf (plist tag val)
-  (let ((p plist))
-    (while (and p (not (eq (car p) tag))) (setq p (cdr (cdr p))))
-    (if p (progn (setcar (cdr p) val) plist) (cl-list* tag val plist))))
+  (let ((val-tail (cdr-safe (plist-member plist tag))))
+    (if val-tail (progn (setcar val-tail val) plist)
+      (cl-list* tag val plist))))
 
 ;;;###autoload
 (defun cl--do-remf (plist tag)
   (let ((p (cdr plist)))
+    ;; Can't use `plist-member' here because it goes to the cons-cell
+    ;; of TAG and we need the one before.
     (while (and (cdr p) (not (eq (car (cdr p)) tag))) (setq p (cdr (cdr p))))
     (and (cdr p) (progn (setcdr p (cdr (cdr (cdr p)))) t))))
 
