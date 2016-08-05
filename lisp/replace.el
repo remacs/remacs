@@ -391,9 +391,10 @@ replace backward.
 
 Fourth and fifth arg START and END specify the region to operate on.
 
-In TO-STRING, `\\&' stands for whatever matched the whole of REGEXP,
-and `\\=\\N' (where N is a digit) stands for
-whatever what matched the Nth `\\(...\\)' in REGEXP.
+In TO-STRING, `\\&' or `\\0' stands for whatever matched the whole of
+REGEXP, and `\\=\\N' (where N is a digit) stands for whatever matched
+the Nth `\\(...\\)' (1-based) in REGEXP.  The `\\(...\\)' groups are
+counted from 1.
 `\\?' lets you edit the replacement text in the minibuffer
 at the given position for each replacement.
 
@@ -451,7 +452,9 @@ If the result of TO-EXPR is not a string, it is converted to one using
 
 For convenience, when entering TO-EXPR interactively, you can use `\\&' or
 `\\0' to stand for whatever matched the whole of REGEXP, and `\\N' (where
-N is a digit) to stand for whatever matched the Nth `\\(...\\)' in REGEXP.
+N is a digit) to stand for whatever matched the Nth `\\(...\\)' (1-based)
+in REGEXP.
+
 Use `\\#&' or `\\#N' if you want a number instead of a string.
 In interactive use, `\\#' in itself stands for `replace-count'.
 
@@ -635,9 +638,9 @@ replace backward.
 
 Fourth and fifth arg START and END specify the region to operate on.
 
-In TO-STRING, `\\&' stands for whatever matched the whole of REGEXP,
-and `\\=\\N' (where N is a digit) stands for
-whatever what matched the Nth `\\(...\\)' in REGEXP.
+In TO-STRING, `\\&' or `\\0' stands for whatever matched the whole of
+REGEXP, and `\\=\\N' (where N is a digit) stands for
+whatever matched the Nth `\\(...\\)' (1-based) in REGEXP.
 `\\?' lets you edit the replacement text in the minibuffer
 at the given position for each replacement.
 

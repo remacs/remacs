@@ -2677,6 +2677,14 @@ since only regular expressions have distinguished subexpressions.  */)
       xfree (substed);
     }
 
+  /* The functions below modify the buffer, so they could trigger
+     various modification hooks (see signal_before_change and
+     signal_after_change), which might clobber the match data we need
+     to adjust after the replacement.  If that happens, we error out.  */
+  ptrdiff_t sub_start = search_regs.start[sub];
+  ptrdiff_t sub_end = search_regs.end[sub];
+  unsigned  num_regs = search_regs.num_regs;
+
   /* Replace the old text with the new in the cleanest possible way.  */
   replace_range (search_regs.start[sub], search_regs.end[sub],
 		 newtext, 1, 0, 1);
@@ -2689,6 +2697,11 @@ since only regular expressions have distinguished subexpressions.  */)
   else if (case_action == cap_initial)
     Fupcase_initials_region (make_number (search_regs.start[sub]),
 			     make_number (newpoint));
+
+  if (search_regs.start[sub] != sub_start
+      || search_regs.end[sub] != sub_end
+      || search_regs.num_regs != num_regs)
+    error ("Match data clobbered by buffer modification hooks");
 
   /* Adjust search data for this change.  */
   {

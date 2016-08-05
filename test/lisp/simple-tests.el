@@ -325,6 +325,7 @@
       (undo-test-point-after-forward-kill))))
 
 (defmacro simple-test-undo-with-switched-buffer (buffer &rest body)
+  (declare (indent 1) (debug t))
   (let ((before-buffer (make-symbol "before-buffer")))
     `(let ((,before-buffer (current-buffer)))
        (unwind-protect
@@ -354,8 +355,24 @@ C-/                     ;; undo
        (point-min)
        (point-max))))))
 
+(ert-deftest missing-record-point-in-undo ()
+  "Check point is being restored correctly.
 
-
+See Bug#21722."
+  (should
+   (= 5
+      (with-temp-buffer
+       (generate-new-buffer " *temp*")
+       (emacs-lisp-mode)
+       (setq buffer-undo-list nil)
+       (insert "(progn (end-of-line) (insert \"hello\"))")
+       (beginning-of-line)
+       (forward-char 4)
+       (undo-boundary)
+       (eval-defun nil)
+       (undo-boundary)
+       (undo)
+       (point)))))
 
 (provide 'simple-test)
 ;;; simple-test.el ends here
