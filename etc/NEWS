@@ -808,7 +808,7 @@ random values; in particular, the Emacs server now uses this facility
 to produce its authentication key.
 
 ---
-** New input methods: 'tamil-dvorak' and 'programmer-dvorak'.
+** New input methods: 'tamil-dvorak', 'programmer-dvorak' and 'probhat'.
 
 
 * Editing Changes in Emacs 25.1
@@ -928,7 +928,7 @@ recommended to do this as soon as you have firmly upgraded to Emacs
 to version 206, you can do this with 'C-u C-u M-x desktop-save'.
 
 ---
-*** desktop-restore-in-current-display now defaults to t, not nil.
+*** 'desktop-restore-in-current-display' now defaults to t, not nil.
 That is, Emacs by default now restores frames into the current display.
 
 +++
