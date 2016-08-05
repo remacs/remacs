@@ -1340,7 +1340,9 @@ adjust_after_insert (ptrdiff_t from, ptrdiff_t from_byte,
 /* Replace the text from character positions FROM to TO with NEW,
    If PREPARE, call prepare_to_modify_buffer.
    If INHERIT, the newly inserted text should inherit text properties
-   from the surrounding non-deleted text.  */
+   from the surrounding non-deleted text.
+   If ADJUST_MATCH_DATA, then adjust the match data before calling
+   signal_after_change.  */
 
 /* Note that this does not yet handle markers quite right.
    Also it needs to record a single undo-entry that does a replacement
@@ -1351,7 +1353,8 @@ adjust_after_insert (ptrdiff_t from, ptrdiff_t from_byte,
 
 void
 replace_range (ptrdiff_t from, ptrdiff_t to, Lisp_Object new,
-	       bool prepare, bool inherit, bool markers)
+               bool prepare, bool inherit, bool markers,
+               bool adjust_match_data)
 {
   ptrdiff_t inschars = SCHARS (new);
   ptrdiff_t insbytes = SBYTES (new);
@@ -1507,6 +1510,9 @@ replace_range (ptrdiff_t from, ptrdiff_t to, Lisp_Object new,
 
   MODIFF++;
   CHARS_MODIFF = MODIFF;
+
+  if (adjust_match_data)
+    update_search_regs (from, to, from + SCHARS (new));
 
   signal_after_change (from, nchars_del, GPT - from);
   update_compositions (from, GPT, CHECK_BORDER);

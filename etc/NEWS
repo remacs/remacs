@@ -601,8 +601,10 @@ file names into backslashes.  It no longer does that.
 ** New configure option --with-cairo.
 This builds Emacs with Cairo drawing.  As a side effect, it provides
 support for built-in printing, when Emacs was built with GTK+.
-Cairo drawing is an experimental feature in Emacs, and subject to
-change in future releases.
+The Emacs Cairo drawing is experimental and still has some known
+display problems.  We encourage more testing of this build and
+reporting any problems you find, but it is not recommended for
+production.
 
 +++
 ** New configure option --with-modules.

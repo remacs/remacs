@@ -2712,16 +2712,23 @@ since only regular expressions have distinguished subexpressions.  */)
 
   /* The functions below modify the buffer, so they could trigger
      various modification hooks (see signal_before_change and
-     signal_after_change), which might clobber the match data we need
-     to adjust after the replacement.  If that happens, we error out.  */
+     signal_after_change).  If these hooks clobber the match data we
+     error out since otherwise this will result in confusing bugs.  */
   ptrdiff_t sub_start = search_regs.start[sub];
   ptrdiff_t sub_end = search_regs.end[sub];
   unsigned  num_regs = search_regs.num_regs;
+  newpoint = search_regs.start[sub] + SCHARS (newtext);
 
   /* Replace the old text with the new in the cleanest possible way.  */
   replace_range (search_regs.start[sub], search_regs.end[sub],
-		 newtext, 1, 0, 1);
-  newpoint = search_regs.start[sub] + SCHARS (newtext);
+                 newtext, 1, 0, 1, 1);
+  /* Update saved data to match adjustment made by replace_range.  */
+  {
+    ptrdiff_t change = newpoint - sub_end;
+    if (sub_start >= sub_end)
+      sub_start += change;
+    sub_end += change;
+  }
 
   if (case_action == all_caps)
     Fupcase_region (make_number (search_regs.start[sub]),
@@ -2735,26 +2742,6 @@ since only regular expressions have distinguished subexpressions.  */)
       || search_regs.end[sub] != sub_end
       || search_regs.num_regs != num_regs)
     error ("Match data clobbered by buffer modification hooks");
-
-  /* Adjust search data for this change.  */
-  {
-    ptrdiff_t oldend = search_regs.end[sub];
-    ptrdiff_t oldstart = search_regs.start[sub];
-    ptrdiff_t change = newpoint - search_regs.end[sub];
-    ptrdiff_t i;
-
-    for (i = 0; i < search_regs.num_regs; i++)
-      {
-	if (search_regs.start[i] >= oldend)
-	  search_regs.start[i] += change;
-	else if (search_regs.start[i] > oldstart)
-	  search_regs.start[i] = oldstart;
-	if (search_regs.end[i] >= oldend)
-	  search_regs.end[i] += change;
-	else if (search_regs.end[i] > oldstart)
-	  search_regs.end[i] = oldstart;
-      }
-  }
 
   /* Put point back where it was in the text.  */
   if (opoint <= 0)
@@ -3093,6 +3080,27 @@ restore_search_regs (void)
       last_thing_searched = saved_last_thing_searched;
       saved_last_thing_searched = Qnil;
       search_regs_saved = 0;
+    }
+}
+
+/* Called from replace-match via replace_range.  */
+void
+update_search_regs (ptrdiff_t oldstart, ptrdiff_t oldend, ptrdiff_t newend)
+{
+  /* Adjust search data for this change.  */
+  ptrdiff_t change = newend - oldend;
+  ptrdiff_t i;
+
+  for (i = 0; i < search_regs.num_regs; i++)
+    {
+      if (search_regs.start[i] >= oldend)
+        search_regs.start[i] += change;
+      else if (search_regs.start[i] > oldstart)
+        search_regs.start[i] = oldstart;
+      if (search_regs.end[i] >= oldend)
+        search_regs.end[i] += change;
+      else if (search_regs.end[i] > oldstart)
+        search_regs.end[i] = oldstart;
     }
 }
 
