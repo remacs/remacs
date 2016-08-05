@@ -938,6 +938,39 @@ Emacs, for example (from a Posix shell prompt):
 
   $ GDK_SCALE=1 GDK_DPI_SCALE=1 emacs
 
+*** Emacs built with GTK+ toolkit can unexpectedly widen frames
+
+This resizing takes place when a frame is not wide enough to accommodate
+its entire menu bar.  Typically, it occurs when switching buffers or
+changing a buffer's major mode and the new mode adds entries to the menu
+bar.  The frame is then widened by the window manager so that the menu
+bar is fully shown.  Subsequently switching to another buffer or
+changing the buffer's mode will not shrink the frame back to its
+previous width.  The height of the frame remains unaltered.  Apparently,
+the failure is also dependent on the chosen font.
+
+The resizing is usually accompanied by console output like
+
+Gtk-CRITICAL **: gtk_distribute_natural_allocation: assertion 'extra_space >= 0' failed
+
+It's not clear whether the GTK version used has any impact on the
+occurrence of the failure.  So far, the failure has been observed with
+GTK+ versions 3.4.2, 3.14.5 and 3.18.7.  However, another 3.4.2 build
+does not exhibit the bug.
+
+Some window managers (xfce) apparently work around this failure by
+cropping the menu bar.  With other windows managers, it's possible to
+shrink the frame manually after the problem occurs, e.g. by dragging the
+frame's border with the mouse.  However, some window managers have been
+reported to refuse such attempts and snap back to the width needed to
+show the full menu bar (wmii) or at least cause the screen to flicker
+during such resizing attempts (i3, icewm).
+
+See also http://debbugs.gnu.org/cgi/bugreport.cgi?bug=15700,
+http://debbugs.gnu.org/cgi/bugreport.cgi?bug=22000,
+http://debbugs.gnu.org/cgi/bugreport.cgi?bug=22898 and
+http://lists.gnu.org/archive/html/emacs-devel/2016-07/msg00154.html.
+
 *** Metacity: Resizing Emacs or ALT-Tab causes X to be unresponsive.
 
 This happens sometimes when using Metacity.  Resizing Emacs or ALT-Tab:bing
