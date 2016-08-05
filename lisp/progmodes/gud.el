@@ -733,9 +733,15 @@ It should return a list of completion strings.")
 ;; The old gdb command (text command mode).  The new one is in gdb-mi.el.
 ;;;###autoload
 (defun gud-gdb (command-line)
-  "Run gdb on program FILE in buffer *gud-FILE*.
-The directory containing FILE becomes the initial working
-directory and source-file directory for your debugger."
+  "Run gdb passing it COMMAND-LINE as arguments.
+If COMMAND-LINE names a program FILE to debug, gdb will run in
+a buffer named *gud-FILE*, and the directory containing FILE
+becomes the initial working directory and source-file directory
+for your debugger.
+If COMMAND-LINE requests that gdb attaches to a process PID, gdb
+will run in *gud-PID*, otherwise it will run in *gud*; in these
+cases the initial working directory is the default-directory of
+the buffer in which this command was invoked."
   (interactive (list (gud-query-cmdline 'gud-gdb)))
 
   (when (and gud-comint-buffer

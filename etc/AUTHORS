@@ -486,7 +486,7 @@ Bob Rogers: changed vc-dir.el vc-svn.el cperl-mode.el diff.el ewoc.el
   ffap.el files.el maintaining.texi sql.el thingatpt.el vc.el
   vc1-xtra.texi
 
-Bob Weiner: changed info.el quail.el
+Bob Weiner: changed dframe.el etags.c info.el rmail.el rmailsum.el speedbar.el
 
 Bojan Petrovic: changed pop3.el
 

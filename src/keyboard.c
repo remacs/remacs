@@ -11689,7 +11689,8 @@ suppressed only after special commands that leave
 
   DEFVAR_LISP ("minibuffer-message-timeout", Vminibuffer_message_timeout,
 	       doc: /* How long to display an echo-area message when the minibuffer is active.
-If the value is not a number, such messages don't time out.  */);
+If the value is a number, it should be specified in seconds.
+If the value is not a number, such messages never time out.  */);
   Vminibuffer_message_timeout = make_number (2);
 
   DEFVAR_LISP ("throw-on-input", Vthrow_on_input,
