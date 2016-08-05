@@ -78,7 +78,7 @@ after itself, although it will leave a buffer called
    (viper-test-undo-kmacro [])))
 
 (ert-deftest viper-test-undo-1 ()
-  "Test for VI like undo behaviour.
+  "Test for VI like undo behavior.
 
 Insert 1, then 2 on consecutive lines, followed by undo. This
 should leave just 1 in the buffer.
@@ -100,7 +100,7 @@ Test for Bug #22295"
      ))))
 
 (ert-deftest viper-test-undo-2 ()
-  "Test for VI like undo behaviour.
+  "Test for VI like undo behavior.
 
 Insert \"1 2 3 4 5\" then delete the 2, then the 4, and undo.
 Should restore the 4, but leave the 2 deleted.
@@ -120,7 +120,7 @@ Test for Bug #22295"
       ]))))
 
 (ert-deftest viper-test-undo-3 ()
-  "Test for VI like undo behaviour.
+  "Test for VI like undo behavior.
 
 Insert \"1 2 3 4 5 6\", delete the 2, then the 3 4 and 5.
 Should restore the 3 4 and 5 but not the 2.

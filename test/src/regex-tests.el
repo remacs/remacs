@@ -285,10 +285,10 @@ on success"
 
 
 (defun regex-tests-unextend (pattern)
-  "Basic conversion from extended regexen to emacs ones.  This is
+  "Basic conversion from extended regexes to emacs ones.  This is
 mostly a hack that adds \\ to () and | and {}, and removes it if
 it already exists.  We also change \\S (and \\s) to \\S- (and
-\\s-) because extended regexen see the former as whitespace, but
+\\s-) because extended regexes see the former as whitespace, but
 emacs requires an extra symbol character"
 
   (with-temp-buffer
@@ -364,7 +364,7 @@ pattern)"
 
 (defconst regex-tests-BOOST-whitelist
   [
-   ;; emacs is more stringent with regexen involving unbalanced )
+   ;; emacs is more stringent with regexes involving unbalanced )
    63 65 69
 
    ;; in emacs, regex . doesn't match \n
@@ -374,7 +374,7 @@ pattern)"
    ;; characters
    107 108 109 122 123 124 140 141 142
 
-   ;; emacs accepts regexen with {}
+   ;; emacs accepts regexes with {}
    161
 
    ;; emacs doesn't fail on bogus ranges such as [3-1] or [1-3-5]
@@ -616,7 +616,7 @@ differences in behavior.")
    ;; characters
    57 58 59 60
 
-   ;; emacs is more stringent with regexen involving unbalanced )
+   ;; emacs is more stringent with regexes involving unbalanced )
    67
   ]
   "Line numbers in the TESTS test that should be skipped.  These

@@ -567,10 +567,10 @@ s-expression (using @code{ses-prin1}), centered and surrounded by
 @code{#} filling.
 @end itemize
 
-Another precaution to take is to avoid stack-overflow (due to a
-printer function indefintely recursively re-calling itself). This can
-happen mistakenly when you use a local printer as a column printer,
-and this local printer implicitely call the current column printer, so
+Another precaution to take is to avoid stack overflow due to a
+printer function calling itself indefinitely.  This mistake can
+happen when you use a local printer as a column printer,
+and this local printer implicitly calls the current column printer, so it
 will call itself recursively.  Imagine for instance that you want to
 create some local printer @code{=fill} that would center the content
 of a cell and surround it by equal signs @code{=}, and you do it this
@@ -583,12 +583,12 @@ way:
    (t (ses-center x 0 ?=))))
 @end lisp
 
-Because @code{=fill} uses standard printer @code{ses-center} without
-passing explicitely any printer to it, @code{ses-center} will call the
-current column printer if any or the spreadsheet default printer
-otherwise. So using @code{=fill} as a column printer will result in a
-stack overflow in this column. SES does not make any check for that,
-you just have to be careful. For instance re-write @code{=fill} like
+Because @code{=fill} uses the standard printer @code{ses-center} without
+explicitly passing any printer to it, @code{ses-center} will call the
+current column printer if any, or the spreadsheet default printer
+otherwise.  So using @code{=fill} as a column printer will result in a
+stack overflow in this column.  SES does not check for that;
+you just have to be careful.  For instance, re-write @code{=fill} like
 this:
 
 @lisp
@@ -599,11 +599,11 @@ this:
    (t (ses-center-span x ?# 'ses-prin1))))
 @end lisp
 
-The code above applies the @code{=} filling only to strings, it also
+The code above applies the @code{=} filling only to strings; it also
 surrounds the string by one space on each side before filling with
-@code{=} signs. So string @samp{Foo} will be displayed like @samp{@w{===
-Foo ===}} in an 11 character wide column. Anything else than empty cell
-or non string is displayed like errouneous by using @code{#} filling.
+@code{=} signs.  So the string @samp{Foo} will be displayed like @samp{@w{===
+Foo ===}} in an 11 character wide column.  Anything other than an empty cell
+or a non-string is displayed as an error by using @code{#} filling.
 
 @node Clearing cells
 @section Clearing cells

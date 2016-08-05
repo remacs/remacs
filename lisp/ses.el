@@ -3625,9 +3625,8 @@ function is redefined."
 that the definition occurs only when the local printer does not
 already exists.
 
-Function `ses-define-if-new-local-printer' is not interactive, it
-is intended for mode hooks to programatically automatically add
-local printers."
+Function `ses-define-if-new-local-printer' is not interactive; it
+is intended for mode hooks to add local printers automatically."
   (unless  (gethash name ses--local-printer-hashmap)
     (ses-define-local-printer name def)))
 
@@ -3891,7 +3890,7 @@ current column and continues until the next nonblank column."
 
 (defun ses-prin1 (value)
   "Shorthand for  '(prin1-to-string VALUE t)'.
-Usefull to handle the default behaviour in custom lambda based
+Useful to handle the default behavior in custom lambda based
 printer functions."
   (prin1-to-string value t))
 

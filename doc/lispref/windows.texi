@@ -2426,7 +2426,7 @@ If @var{alist} contains a @code{mode} entry, its value is a major mode
 window is a candidate if it displays a buffer that derives from one of
 the given modes.
 
-The behaviour is also controlled by entries for
+The behavior is also controlled by entries for
 @code{inhibit-same-window}, @code{reusable-frames} and
 @code{inhibit-switch-frame} as is done in the function
 @code{display-buffer-reuse-window}.

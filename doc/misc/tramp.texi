@@ -970,7 +970,7 @@ be populated in your @command{Online Accounts} application outside Emacs.
 
 Since Google Drive uses cryptic blob file names internally,
 @value{tramp} works with the @code{display-name} of the files.  This
-could produce unexpected behaviour in case two files in the same
+could produce unexpected behavior in case two files in the same
 directory have the same @code{display-name}, such a situation must be avoided.
 
 @item @option{obex}

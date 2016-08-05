@@ -558,7 +558,7 @@ The symbol property `isearch-message-prefix' put on this function
 specifies the prefix string displayed in the search message.
 
 This variable is set and changed during isearch.  To change the
-default behaviour used for searches, see `search-default-mode'
+default behavior used for searches, see `search-default-mode'
 instead.")
 ;; We still support setting this to t for backwards compatibility.
 (define-obsolete-variable-alias 'isearch-word

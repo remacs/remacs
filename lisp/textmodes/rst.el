@@ -623,7 +623,7 @@ After interpretation of ARGS the results are concatenated as for
 ;;
 ;; In addition a reStructuredText section header in the buffer is called
 ;; "section".
-;; 
+;;
 ;; For lists a "s" is added to the name of the concepts.
 
 
@@ -856,10 +856,10 @@ Return ADO if so or signal an error otherwise."
   (let ((pos (rst-Ado-position (rst-Hdr-ado self) (rst-Hdr-ado-map hdrs))))
     (and pos (nthcdr pos hdrs))))
 
-(defun rst-Hdr-ado-map (selfs)
+(defun rst-Hdr-ado-map (selves)
   ;; testcover: ok.
-  "Return `rst-Ado' list extracted from elements of SELFS."
-  (mapcar 'rst-Hdr-ado selfs))
+  "Return `rst-Ado' list extracted from elements of SELVES."
+  (mapcar 'rst-Hdr-ado selves))
 
 (defun rst-Hdr-get-char (self)
   ;; testcover: ok.
@@ -2583,7 +2583,7 @@ If PREFER-ROMAN roman numbering is preferred over using letters."
 		     (1+ (string-to-char (match-string 0 curitem))))
 		    nil nil curitem)))))
 
-;; FIXME: At least the contiunation may be fold into
+;; FIXME: At least the continuation may be folded into
 ;;        `newline-and-indent`. However, this may not be wanted by everyone so
 ;;        it should be possible to switch this off.
 (defun rst-insert-list (&optional prefer-roman)

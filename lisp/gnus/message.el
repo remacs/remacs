@@ -6241,7 +6241,7 @@ When point is at the first header line, moves it after the colon
 and spaces separating header name and header value.
 
 When point is in a continuation line of a folded header (i.e. the
-line starts with a space), the behaviour depends on HANDLE-FOLDED
+line starts with a space), the behavior depends on HANDLE-FOLDED
 argument.  If it’s nil, function moves the point to the start of
 the header continuation; otherwise, function locates the
 beginning of the header and moves point past the colon as is the

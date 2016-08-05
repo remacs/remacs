@@ -1988,7 +1988,7 @@ re_wctype_parse (const unsigned char **strp, unsigned limit)
 
   *strp = (const unsigned char *)(it + 2);
 
-  /* Sort tests in the length=five case by frequency the classes to minimise
+  /* Sort tests in the length=five case by frequency the classes to minimize
      number of times we fail the comparison.  The frequencies of character class
      names used in Emacs sources as of 2016-07-27:
 
@@ -4651,7 +4651,7 @@ skip_noops (const_re_char *p, const_re_char *pend)
   return p;
 }
 
-/* Test if C matches charset op.  *PP points to the charset or chraset_not
+/* Test if C matches charset op.  *PP points to the charset or charset_not
    opcode.  When the function finishes, *PP will be advanced past that opcode.
    C is character to test (possibly after translations) and CORIG is original
    character (i.e. without any translations).  UNIBYTE denotes whether c is

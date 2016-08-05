@@ -6754,7 +6754,7 @@ displays a buffer that derives from one of the given modes.  When
 ALIST contains no `mode' entry, the current major mode of BUFFER
 is used.
 
-The behaviour is also controlled by entries for
+The behavior is also controlled by entries for
 `inhibit-same-window', `reusable-frames' and
 `inhibit-switch-frame' as is done in the function
 `display-buffer-reuse-window'."

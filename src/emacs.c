@@ -684,7 +684,7 @@ main (int argc, char **argv)
   dumping = !initialized && (strcmp (argv[argc - 1], "dump") == 0
 			     || strcmp (argv[argc - 1], "bootstrap") == 0);
 
-  /* True if address randomization interferes with memory allocaiton.  */
+  /* True if address randomization interferes with memory allocation.  */
 # ifdef __PPC64__
   bool disable_aslr = true;
 # else
