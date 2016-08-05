@@ -2822,10 +2822,13 @@ init_environment (char ** argv)
 		  }
 		if (strcmp (env_vars[i].name, "HOME") == 0 && !appdata)
 		  Vdelayed_warnings_list
-		    = Fcons (listn (CONSTYPE_HEAP, 2,
-				    intern ("initialization"),
-				    build_string ("Setting HOME to C:\\ by default is deprecated")),
-			     Vdelayed_warnings_list);
+                    = Fcons
+                    (listn (CONSTYPE_HEAP, 2,
+                            intern ("initialization"), build_string
+                            ("Use of `C:\\.emacs' without defining `HOME'\n"
+                             "in the environment is deprecated, "
+                             "see `Windows HOME' in the Emacs manual.")),
+                     Vdelayed_warnings_list);
 	      }
 
 	    if (lpval)
