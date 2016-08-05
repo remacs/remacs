@@ -2971,15 +2971,13 @@ bidi_resolve_neutral (struct bidi_it *bidi_it)
       /* N1-N2/Retaining */
       || type == WEAK_BN)
     {
-      if (bidi_it->next_for_neutral.type != UNKNOWN_BT)
+      if (bidi_it->next_for_neutral.type != UNKNOWN_BT
+	  && (bidi_it->next_for_neutral.charpos > bidi_it->charpos
+	      /* PDI defines an eos, so it's OK for it to serve as its
+		 own next_for_neutral.  */
+	      || (bidi_it->next_for_neutral.charpos == bidi_it->charpos
+		  && bidi_it->type == PDI)))
 	{
-	  /* Make sure the data for resolving neutrals we are
-	     about to use is valid.  */
-	  eassert (bidi_it->next_for_neutral.charpos > bidi_it->charpos
-		   /* PDI defines an eos, so it's OK for it to
-		      serve as its own next_for_neutral.  */
-		   || (bidi_it->next_for_neutral.charpos == bidi_it->charpos
-		       && bidi_it->type == PDI));
 	  type = bidi_resolve_neutral_1 (bidi_it->prev_for_neutral.type,
 					 bidi_it->next_for_neutral.type,
 					 current_level);

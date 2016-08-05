@@ -284,7 +284,7 @@ With a prefix (or a FILL) argument, also fill lines where nothing has to be
 deleted.
 
 If the buffer is read-only, Emacs will beep and refrain from deleting
-the rectangle, but put it in the kill ring anyway.  This means that
+the rectangle, but put it in `killed-rectangle' anyway.  This means that
 you can use this command to copy text from a read-only buffer.
 \(If the variable `kill-read-only-ok' is non-nil, then this won't
 even beep.)"
@@ -295,7 +295,7 @@ even beep.)"
      (setq deactivate-mark t)
      (setq killed-rectangle (extract-rectangle start end))
      (if kill-read-only-ok
-	 (progn (message "Read only text copied to kill ring") nil)
+         (progn (message "Read only text copied to `killed-rectangle'") nil)
        (barf-if-buffer-read-only)
        (signal 'text-read-only (list (current-buffer)))))))
 
@@ -403,7 +403,7 @@ With a prefix (or a FILL) argument, also fill too short lines."
   :version "25.1")
 
 (defcustom rectangle-preview t
-  "If non-nil, `string-rectangle' will show an-the-fly preview."
+  "If non-nil, `string-rectangle' will show an on-the-fly preview."
   :version "25.1"
   :type 'boolean)
 
