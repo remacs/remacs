@@ -503,8 +503,9 @@ the codeset part of the locale cannot be @code{"UTF-8"} on MS-Windows.
 If your system does not support a locale environment, this function
 behaves like @code{string-equal}.
 
-Do @emph{not} use this function to compare file names for equality, only
-for sorting them.
+Do @emph{not} use this function to compare file names for equality, as
+filesystems generally don't honor linguistic equivalence of strings
+that collation implements.
 @end defun
 
 @defun string-prefix-p string1 string2 &optional ignore-case

@@ -86,6 +86,11 @@
 
 ;;; Code:
 
+;; The autoloads.el mechanism which adds package--builtin-versions
+;; maintenance to loaddefs.el doesn't work for preloaded packages (such
+;; as this one), so we have to do it by hand!
+(push (purecopy '(cl-generic 1 0)) package--builtin-versions)
+
 ;; Note: For generic functions that dispatch on several arguments (i.e. those
 ;; which use the multiple-dispatch feature), we always use the same "tagcodes"
 ;; and the same set of arguments on which to dispatch.  This works, but is
@@ -696,6 +701,15 @@ FUN is the function that should be called when METHOD calls
         (dolist (method (cdr (assoc :around mets-by-qual)))
           (setq fun (cl-generic-call-method generic method fun)))
         fun)))))
+
+(defun cl-generic-apply (generic args)
+  "Like `apply' but takes a cl-generic object rather than a function."
+  ;; Handy in cl-no-applicable-method, for example.
+  ;; In Common Lisp, generic-function objects are funcallable.  Ideally
+  ;; we'd want the same in Elisp, but it would either require using a very
+  ;; different (and less efficient) representation of cl--generic objects,
+  ;; or non-trivial changes in the general infrastructure (compiler and such).
+  (apply (cl--generic-name generic) args))
 
 (defun cl--generic-arg-specializer (method dispatch-arg)
   (or (if (integerp dispatch-arg)

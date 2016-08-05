@@ -1702,7 +1702,99 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
       ;; Cleanup.
       (ignore-errors (delete-file tmp-name)))))
 
-(ert-deftest tramp-test29-vc-registered ()
+(defun tramp-test--shell-command-to-string-asynchronously (command)
+  "Like `shell-command-to-string', but for asynchronous processes."
+  (with-temp-buffer
+    (async-shell-command command (current-buffer))
+    ;; Suppress nasty messages.
+    (set-process-sentinel (get-buffer-process (current-buffer)) nil)
+    (while (get-buffer-process (current-buffer))
+      (accept-process-output (get-buffer-process (current-buffer)) 0.1))
+    (accept-process-output)
+    (buffer-substring-no-properties (point-min) (point-max))))
+
+;; This test is inspired by Bug#23952.
+(ert-deftest tramp-test29-environment-variables ()
+  "Check that remote processes set / unset environment variables properly."
+  :tags '(:expensive-test)
+  (skip-unless (tramp--test-enabled))
+  (skip-unless
+   (eq
+    (tramp-find-foreign-file-name-handler tramp-test-temporary-file-directory)
+    'tramp-sh-file-name-handler))
+
+  (dolist (this-shell-command-to-string
+	   '(;; Synchronously.
+	     shell-command-to-string
+	     ;; Asynchronously.
+	     tramp-test--shell-command-to-string-asynchronously))
+
+    (let ((default-directory tramp-test-temporary-file-directory)
+	  (shell-file-name "/bin/sh")
+	  (envvar (concat "VAR_" (upcase (md5 (current-time-string)))))
+	  kill-buffer-query-functions)
+
+      (unwind-protect
+	  ;; Set a value.
+	  (let ((process-environment
+		 (cons (concat envvar "=foo") process-environment)))
+	    ;; Default value.
+	    (should
+	     (string-match
+	      "foo"
+	      (funcall
+	       this-shell-command-to-string
+	       (format "echo -n ${%s:?bla}" envvar))))))
+
+      (unwind-protect
+	  ;; Set the empty value.
+	  (let ((process-environment
+		 (cons (concat envvar "=") process-environment)))
+	    ;; Value is null.
+	    (should
+	     (string-match
+	      "bla"
+	      (funcall
+	       this-shell-command-to-string
+	       (format "echo -n ${%s:?bla}" envvar))))
+	    ;; Variable is set.
+	    (should
+	     (string-match
+	      (regexp-quote envvar)
+	      (funcall this-shell-command-to-string "set")))))
+
+      ;; We force a reconnect, in order to have a clean environment.
+      (tramp-cleanup-connection
+       (tramp-dissect-file-name tramp-test-temporary-file-directory)
+       'keep-debug 'keep-password)
+      (unwind-protect
+	  ;; Unset the variable.
+	  (let ((tramp-remote-process-environment
+		 (cons (concat envvar "=foo")
+		       tramp-remote-process-environment)))
+	    ;; Set the initial value, we want to unset below.
+	    (should
+	     (string-match
+	      "foo"
+	      (funcall
+	       this-shell-command-to-string
+	       (format "echo -n ${%s:?bla}" envvar))))
+	    (let ((process-environment
+		   (cons envvar process-environment)))
+	      ;; Variable is unset.
+	      (should
+	       (string-match
+		"bla"
+		(funcall
+		 this-shell-command-to-string
+		 (format "echo -n ${%s:?bla}" envvar))))
+	      ;; Variable is unset.
+	      (should-not
+	       (string-match
+		(regexp-quote envvar)
+		(funcall this-shell-command-to-string "set")))))))))
+
+(ert-deftest tramp-test30-vc-registered ()
   "Check `vc-registered'."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
@@ -1771,7 +1863,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
       ;; Cleanup.
       (ignore-errors (delete-directory tmp-name1 'recursive)))))
 
-(ert-deftest tramp-test30-make-auto-save-file-name ()
+(ert-deftest tramp-test31-make-auto-save-file-name ()
   "Check `make-auto-save-file-name'."
   (skip-unless (tramp--test-enabled))
 
@@ -2031,7 +2123,7 @@ Several special characters do not work properly there."
       (ignore-errors (delete-directory tmp-name2 'recursive)))))
 
 (defun tramp--test-special-characters ()
-  "Perform the test in `tramp-test31-special-characters*'."
+  "Perform the test in `tramp-test32-special-characters*'."
   ;; Newlines, slashes and backslashes in file names are not
   ;; supported.  So we don't test.  And we don't test the tab
   ;; character on Windows or Cygwin, because the backslash is
@@ -2072,14 +2164,14 @@ Several special characters do not work properly there."
    "{foo}bar{baz}"))
 
 ;; These tests are inspired by Bug#17238.
-(ert-deftest tramp-test31-special-characters ()
+(ert-deftest tramp-test32-special-characters ()
   "Check special characters in file names."
   (skip-unless (tramp--test-enabled))
   (skip-unless (not (tramp--test-rsync-p)))
 
   (tramp--test-special-characters))
 
-(ert-deftest tramp-test31-special-characters-with-stat ()
+(ert-deftest tramp-test32-special-characters-with-stat ()
   "Check special characters in file names.
 Use the `stat' command."
   :tags '(:expensive-test)
@@ -2099,7 +2191,7 @@ Use the `stat' command."
 	  tramp-connection-properties)))
     (tramp--test-special-characters)))
 
-(ert-deftest tramp-test31-special-characters-with-perl ()
+(ert-deftest tramp-test32-special-characters-with-perl ()
   "Check special characters in file names.
 Use the `perl' command."
   :tags '(:expensive-test)
@@ -2122,7 +2214,7 @@ Use the `perl' command."
 	  tramp-connection-properties)))
     (tramp--test-special-characters)))
 
-(ert-deftest tramp-test31-special-characters-with-ls ()
+(ert-deftest tramp-test32-special-characters-with-ls ()
   "Check special characters in file names.
 Use the `ls' command."
   :tags '(:expensive-test)
@@ -2146,7 +2238,7 @@ Use the `ls' command."
     (tramp--test-special-characters)))
 
 (defun tramp--test-utf8 ()
-  "Perform the test in `tramp-test32-utf8*'."
+  "Perform the test in `tramp-test33-utf8*'."
   (let* ((utf8 (if (and (eq system-type 'darwin)
 			(memq 'utf-8-hfs (coding-system-list)))
 		   'utf-8-hfs 'utf-8))
@@ -2160,14 +2252,14 @@ Use the `ls' command."
      "银河系漫游指南系列"
      "Автостопом по гала́ктике")))
 
-(ert-deftest tramp-test32-utf8 ()
+(ert-deftest tramp-test33-utf8 ()
   "Check UTF8 encoding in file names and file contents."
   (skip-unless (tramp--test-enabled))
   (skip-unless (not (tramp--test-rsync-p)))
 
   (tramp--test-utf8))
 
-(ert-deftest tramp-test32-utf8-with-stat ()
+(ert-deftest tramp-test33-utf8-with-stat ()
   "Check UTF8 encoding in file names and file contents.
 Use the `stat' command."
   :tags '(:expensive-test)
@@ -2187,7 +2279,7 @@ Use the `stat' command."
 	  tramp-connection-properties)))
     (tramp--test-utf8)))
 
-(ert-deftest tramp-test32-utf8-with-perl ()
+(ert-deftest tramp-test33-utf8-with-perl ()
   "Check UTF8 encoding in file names and file contents.
 Use the `perl' command."
   :tags '(:expensive-test)
@@ -2210,7 +2302,7 @@ Use the `perl' command."
 	  tramp-connection-properties)))
     (tramp--test-utf8)))
 
-(ert-deftest tramp-test32-utf8-with-ls ()
+(ert-deftest tramp-test33-utf8-with-ls ()
   "Check UTF8 encoding in file names and file contents.
 Use the `ls' command."
   :tags '(:expensive-test)
@@ -2234,7 +2326,7 @@ Use the `ls' command."
     (tramp--test-utf8)))
 
 ;; This test is inspired by Bug#16928.
-(ert-deftest tramp-test33-asynchronous-requests ()
+(ert-deftest tramp-test34-asynchronous-requests ()
   "Check parallel asynchronous requests.
 Such requests could arrive from timers, process filters and
 process sentinels.  They shall not disturb each other."
@@ -2324,7 +2416,7 @@ process sentinels.  They shall not disturb each other."
       (dolist (buf buffers)
 	(ignore-errors (kill-buffer buf)))))))
 
-(ert-deftest tramp-test34-recursive-load ()
+(ert-deftest tramp-test35-recursive-load ()
   "Check that Tramp does not fail due to recursive load."
   (skip-unless (tramp--test-enabled))
 
@@ -2347,7 +2439,7 @@ process sentinels.  They shall not disturb each other."
 	(mapconcat 'shell-quote-argument load-path " -L ")
 	(shell-quote-argument code)))))))
 
-(ert-deftest tramp-test35-unload ()
+(ert-deftest tramp-test36-unload ()
   "Check that Tramp and its subpackages unload completely.
 Since it unloads Tramp, it shall be the last test to run."
   ;; Mark as failed until all symbols are unbound.
@@ -2395,8 +2487,8 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * Fix `tramp-test06-directory-file-name' for `ftp'.
 ;; * Fix `tramp-test15-copy-directory' for `rsync'.
 ;; * Fix `tramp-test27-start-file-process' on MS Windows (`process-send-eof'?).
-;; * Fix Bug#16928.  Set expected error of `tramp-test33-asynchronous-requests'.
-;; * Fix `tramp-test35-unload' (Not all symbols are unbound).  Set
+;; * Fix Bug#16928.  Set expected error of `tramp-test34-asynchronous-requests'.
+;; * Fix `tramp-test36-unload' (Not all symbols are unbound).  Set
 ;;   expected error.
 
 (defun tramp-test-all (&optional interactive)

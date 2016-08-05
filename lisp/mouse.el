@@ -744,8 +744,9 @@ its value is returned."
 
 (defun mouse-on-link-p (pos)
   "Return non-nil if POS is on a link in the current buffer.
-POS must be a buffer position in the current buffer or a mouse
-event location in the selected window (see `event-start').
+POS must specify a buffer position in the current buffer, as a list
+of the form returned by the `event-start' and `event-end' functions,
+or a mouse event location in the selected window (see `event-start').
 However, if `mouse-1-click-in-non-selected-windows' is non-nil,
 POS may be a mouse event location in any window.
 

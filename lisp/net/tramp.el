@@ -3524,7 +3524,7 @@ connection buffer."
 	(with-current-buffer (tramp-get-connection-buffer vec)
 	  (let (buffer-read-only) (delete-region pos (point))))))))
 
-:;; Utility functions:
+;;; Utility functions:
 
 (defun tramp-accept-process-output (&optional proc timeout timeout-msecs)
   "Like `accept-process-output' for Tramp processes.

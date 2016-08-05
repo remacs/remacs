@@ -4700,13 +4700,19 @@ By default, makes the previous version into a backup file
 Prefixed with one \\[universal-argument], marks this version
  to become a backup when the next save is done.
 Prefixed with two \\[universal-argument]'s,
- unconditionally makes the previous version into a backup file.
+ makes the previous version into a backup file.
 Prefixed with three \\[universal-argument]'s, marks this version
  to become a backup when the next save is done,
- and unconditionally makes the previous version into a backup file.
+ and makes the previous version into a backup file.
 
 With a numeric prefix argument of 0, never make the previous version
 into a backup file.
+
+Note that the various variables that control backups, such
+as `version-control', `backup-enable-predicate', `vc-make-backup-files',
+and `backup-inhibited', to name just the more popular ones, still
+control whether a backup will actually be produced, even when you
+invoke this command prefixed with two or three \\[universal-argument]'s.
 
 If a file's name is FOO, the names of its numbered backup versions are
  FOO.~i~ for various integers i.  A non-numbered backup file is called FOO~.

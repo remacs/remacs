@@ -971,7 +971,7 @@ If a consistent order does not exist, signal an error."
 
 (defun eieio--class-precedence-c3 (class)
   "Return all parents of CLASS in c3 order."
-  (let ((parents (eieio--class-parents (cl--find-class class))))
+  (let ((parents (eieio--class-parents class)))
     (eieio--c3-merge-lists
      (list class)
      (append
