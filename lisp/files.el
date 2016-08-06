@@ -277,8 +277,7 @@ The value `never' means do not make them."
   :type '(choice (const :tag "Never" never)
 		 (const :tag "If existing" nil)
 		 (other :tag "Always" t))
-  :group 'backup
-  :group 'vc)
+  :group 'backup)
 (put 'version-control 'safe-local-variable
      (lambda (x) (or (booleanp x) (equal x 'never))))
 
