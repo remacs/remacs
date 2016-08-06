@@ -279,6 +279,14 @@ List has a form of (file-name full-file-name (attribute-list))."
 						      ((eq op-symbol 'chgrp)
 						       (system-groups)))))
 	 (operation (concat program " " new-attribute))
+         ;; When file-name-coding-system is set to something different
+         ;; from locale-coding-system, leaving the encoding
+         ;; determination to call-process will do the wrong thing,
+         ;; because the arguments in this case are file names, not
+         ;; just some arbitrary text.  (This must be bound last, to
+         ;; avoid adverse effects on any of the preceding forms.)
+         (coding-system-for-write (or file-name-coding-system
+                                      default-file-name-coding-system))
 	 failures)
     (setq failures
 	  (dired-bunch-files 10000
