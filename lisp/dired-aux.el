@@ -54,19 +54,23 @@ into this list; they also should call `dired-log' to log the errors.")
 
 ;;;###autoload
 (defun dired-diff (file &optional switches)
-  "Compare file at point with file FILE using `diff'.
-If called interactively, prompt for FILE.  If the file at point
-has a backup file, use that as the default.  If the file at point
-is a backup file, use its original.  If the mark is active
-in Transient Mark mode, use the file at the mark as the default.
-\(That's the mark set by \\[set-mark-command], not by Dired's
-\\[dired-mark] command.)
+  "Compare file at point with FILE using `diff'.
+If called interactively, prompt for FILE.
+If the mark is active in Transient Mark mode, use the file at the mark
+as the default for FILE.  (That's the mark set by \\[set-mark-command],
+not by Dired's \\[dired-mark] command.)
+If the file at point has a backup file, use that as the default FILE.
+If the file at point is a backup file, use its original, if that exists
+and can be found.  Note that customizations of `backup-directory-alist'
+and `make-backup-file-name-function' change where this function searches
+for the backup file, and affect its ability to find the original of a
+backup file.
 
-FILE is the first file given to `diff'.  The file at point
-is the second file given to `diff'.
+FILE is the first argument given to the `diff' function.  The file at
+point is the second argument given to `diff'.
 
 With prefix arg, prompt for second argument SWITCHES, which is
-the string of command switches for the third argument of `diff'."
+the string of command switches used as the third argument of `diff'."
   (interactive
    (let* ((current (dired-get-filename t))
 	  ;; Get the latest existing backup file or its original.
@@ -77,8 +81,20 @@ the string of command switches for the third argument of `diff'."
 	  (file-at-mark (if (and transient-mark-mode mark-active)
 			    (save-excursion (goto-char (mark t))
 					    (dired-get-filename t t))))
+          (separate-dir (and oldf
+                             (not (equal (file-name-directory oldf)
+                                         (dired-current-directory)))))
 	  (default-file (or file-at-mark
-			    (and oldf (file-name-nondirectory oldf))))
+                            ;; If the file with which to compare
+                            ;; doesn't exist, or we cannot intuit it,
+                            ;; we forget that name and don't show it
+                            ;; as the default, as an indication to the
+                            ;; user that she should type the file
+                            ;; name.
+			    (and (if (and oldf (file-readable-p oldf)) oldf)
+                                 (if separate-dir
+                                     oldf
+                                   (file-name-nondirectory oldf)))))
 	  ;; Use it as default if it's not the same as the current file,
 	  ;; and the target dir is current or there is a default file.
 	  (default (if (and (not (equal default-file current))
@@ -87,7 +103,9 @@ the string of command switches for the third argument of `diff'."
 				default-file))
 		       default-file))
 	  (target-dir (if default
-			  (dired-current-directory)
+                          (if separate-dir
+                              (file-name-directory default)
+                            (dired-current-directory))
 			(dired-dwim-target-directory)))
 	  (defaults (dired-dwim-target-defaults (list current) target-dir)))
      (list
