@@ -54,6 +54,7 @@
 ;; changed argument list, there are compiler warnings.  We want to
 ;; avoid them in cases we know what we do.
 (defmacro tramp-compat-funcall (function &rest arguments)
+  "Call FUNCTION if it exists.  Do not raise compiler warnings."
   `(when (or (subrp ,function) (functionp ,function))
      (with-no-warnings (funcall ,function ,@arguments))))
 
@@ -121,7 +122,7 @@ Add the extension of F, if existing."
 ;; (as PRESERVE-SELINUX-CONTEXT), and renamed in Emacs 24.3.
 (defun tramp-compat-copy-file
   (filename newname &optional ok-if-already-exists keep-date
-	    preserve-uid-gid preserve-extended-attributes)
+   preserve-uid-gid preserve-extended-attributes)
   "Like `copy-file' for Tramp files (compat function)."
   (cond
    (preserve-extended-attributes

@@ -63,7 +63,8 @@ It is used for TCP/IP devices."
   :group 'tramp)
 
 (defconst tramp-adb-ls-date-regexp
-  "[[:space:]][0-9]\\{4\\}-[0-9][0-9]-[0-9][0-9][[:space:]][0-9][0-9]:[0-9][0-9][[:space:]]")
+  "[[:space:]][0-9]\\{4\\}-[0-9][0-9]-[0-9][0-9][[:space:]][0-9][0-9]:[0-9][0-9][[:space:]]"
+  "Regexp for date format in ls output.")
 
 (defconst tramp-adb-ls-toolbox-regexp
   (concat
@@ -72,7 +73,8 @@ It is used for TCP/IP devices."
    "[[:space:]]+\\([^[:space:]]+\\)"	; \3 group
    "[[:space:]]+\\([[:digit:]]+\\)"	; \4 size
    "[[:space:]]+\\([-[:digit:]]+[[:space:]][:[:digit:]]+\\)" ; \5 date
-   "[[:space:]]\\(.*\\)$"))		; \6 filename
+   "[[:space:]]\\(.*\\)$")		; \6 filename
+  "Regexp for ls output.")
 
 ;;;###tramp-autoload
 (add-to-list 'tramp-methods
@@ -424,6 +426,7 @@ pass to the OPERATION."
 			   result)))))))))
 
 (defun tramp-adb-get-ls-command (vec)
+  "Determine `ls' command at its arguments."
   (with-tramp-connection-property vec "ls"
     (tramp-message vec 5 "Finding a suitable `ls' command")
     (if (tramp-adb-send-command-and-check vec "ls --color=never -al /dev/null")
@@ -433,8 +436,7 @@ pass to the OPERATION."
 	"ls --color=never"
       "ls")))
 
-(defun tramp-adb--gnu-switches-to-ash
-  (switches)
+(defun tramp-adb--gnu-switches-to-ash (switches)
   "Almquist shell can't handle multiple arguments.
 Convert (\"-al\") to (\"-a\" \"-l\").  Remove arguments like \"--dired\"."
   (split-string
@@ -662,7 +664,7 @@ But handle the case, if the \"test\" command is not available."
 
 (defun tramp-adb-handle-copy-file
   (filename newname &optional ok-if-already-exists keep-date
-	    _preserve-uid-gid _preserve-extended-attributes)
+   _preserve-uid-gid _preserve-extended-attributes)
   "Like `copy-file' for Tramp files.
 PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
   (setq filename (expand-file-name filename)
@@ -1082,8 +1084,7 @@ This happens for Android >= 4.0."
       (while (re-search-forward "\r+$" nil t)
 	(replace-match "" nil nil)))))
 
-(defun tramp-adb-send-command-and-check
-  (vec command)
+(defun tramp-adb-send-command-and-check (vec command)
   "Run COMMAND and check its exit status.
 Sends `echo $?' along with the COMMAND for checking the exit
 status.  If COMMAND is nil, just sends `echo $?'.  Returns nil if

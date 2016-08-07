@@ -625,7 +625,7 @@ is no information where to trace the message.")
 
 (defun tramp-gvfs-do-copy-or-rename-file
   (op filename newname &optional ok-if-already-exists keep-date
-      preserve-uid-gid preserve-extended-attributes)
+   preserve-uid-gid preserve-extended-attributes)
   "Copy or rename a remote file.
 OP must be `copy' or `rename' and indicates the operation to perform.
 FILENAME specifies the file to copy or rename, NEWNAME is the name of
@@ -720,7 +720,7 @@ file names."
 
 (defun tramp-gvfs-handle-copy-file
   (filename newname &optional ok-if-already-exists keep-date
-	    preserve-uid-gid preserve-extended-attributes)
+   preserve-uid-gid preserve-extended-attributes)
   "Like `copy-file' for Tramp files."
   (setq filename (expand-file-name filename))
   (setq newname (expand-file-name newname))

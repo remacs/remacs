@@ -130,7 +130,7 @@ call, letting the SMB client use the default one."
 	 ;; Windows 4.0 (Windows NT), Windows 5.0 (Windows 2000),
 	 ;; Windows 5.1 (Windows XP), Windows 5.2 (Windows Server 2003),
 	 ;; Windows 6.0 (Windows Vista), Windows 6.1 (Windows 7),
-	 ;; Windows 6.3 (Windows 10).
+	 ;; Windows 6.3 (Windows Server 2012, Windows 10).
 	 "NT_STATUS_ACCESS_DENIED"
 	 "NT_STATUS_ACCOUNT_LOCKED_OUT"
 	 "NT_STATUS_BAD_NETWORK_NAME"
@@ -542,7 +542,7 @@ pass to the OPERATION."
 
 (defun tramp-smb-handle-copy-file
   (filename newname &optional ok-if-already-exists keep-date
-	    _preserve-uid-gid _preserve-extended-attributes)
+   _preserve-uid-gid _preserve-extended-attributes)
   "Like `copy-file' for Tramp files.
 KEEP-DATE has no effect in case NEWNAME resides on an SMB server.
 PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."

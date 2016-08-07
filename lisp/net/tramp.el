@@ -790,7 +790,7 @@ Derived from `tramp-postfix-host-format'.")
 	           tramp-prefix-ipv6-regexp  "\\(?:" tramp-ipv6-regexp "\\)?"
 		 			     tramp-postfix-ipv6-regexp "\\)"
 	   "\\(?:" tramp-prefix-port-regexp  tramp-port-regexp "\\)?" "\\)?")
-"Regular expression matching a Tramp file name between prefix and postfix.")
+  "Regular expression matching a Tramp file name between prefix and postfix.")
 
 (defconst tramp-file-name-structure
   (list
@@ -1032,6 +1032,7 @@ calling HANDLER.")
 
 ;;; Internal functions which must come first:
 
+;; `user-error' has appeared in Emacs 24.3.
 (defsubst tramp-user-error (vec-or-proc format &rest args)
   "Signal a pilot error."
   (apply
@@ -1128,19 +1129,10 @@ entry does not exist, return nil."
     (and (stringp name)
 	 (string-match tramp-file-name-regexp name))))
 
-;; Obsoleted with Tramp 2.2.7.
-(defconst tramp-obsolete-methods
-  '("ssh1" "ssh2" "scp1" "scp2" "scpc" "rsyncc" "plink1")
-  "Obsolete methods.")
-
-(defvar tramp-warned-obsolete-methods nil
-  "Which methods the user has been warned to be obsolete.")
-
 (defun tramp-find-method (method user host)
   "Return the right method string to use.
 This is METHOD, if non-nil. Otherwise, do a lookup in
-`tramp-default-method-alist'.  It maps also obsolete methods to
-their replacement."
+`tramp-default-method-alist'."
   (let ((result
 	 (or method
 	     (let ((choices tramp-default-method-alist)
@@ -1153,19 +1145,6 @@ their replacement."
 		   (setq choices nil)))
 	       lmethod)
 	     tramp-default-method)))
-    ;; This is needed for a transition period only.
-    (when (member result tramp-obsolete-methods)
-      (unless (member result tramp-warned-obsolete-methods)
-	(if noninteractive
-	    (warn "Method %s is obsolete, using %s"
-		  result (substring result 0 -1))
-	  (unless (y-or-n-p (format "Method \"%s\" is obsolete, use \"%s\"? "
-				    result (substring result 0 -1)))
-	    (tramp-user-error nil "Method \"%s\" not supported" result)))
-	(add-to-list 'tramp-warned-obsolete-methods result))
-      ;; This works with the current set of `tramp-obsolete-methods'.
-      ;; Must be improved, if their are more sophisticated replacements.
-      (setq result (substring result 0 -1)))
     ;; We must mark, whether a default value has been used.
     (if (or method (null result))
 	result
@@ -1586,6 +1565,7 @@ If VAR is nil, then we bind `v' to the structure and `method', `user',
 (font-lock-add-keywords 'emacs-lisp-mode '("\\<with-parsed-tramp-file-name\\>"))
 
 (defun tramp-progress-reporter-update (reporter &optional value)
+  "Report progress of an operation for Tramp."
   (let* ((parameters (cdr reporter))
 	 (message (aref parameters 3)))
     (when (string-match message (or (current-message) ""))
@@ -2214,6 +2194,7 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 
 ;;;###autoload
 (defun tramp-unload-file-name-handlers ()
+  "Unload Tramp file name handlers from `file-name-handler-alist'."
   (setq file-name-handler-alist
 	(delete (rassoc 'tramp-file-name-handler
 			file-name-handler-alist)
@@ -2271,8 +2252,7 @@ not in completion mode."
 		    (p (tramp-get-connection-process v)))
 	       (and p (processp p) (memq (process-status p) '(run open))))))))
 
-(defun tramp-completion-handle-expand-file-name
-    (name &optional dir)
+(defun tramp-completion-handle-expand-file-name (name &optional dir)
   "Like `expand-file-name' for Tramp files."
   (if (tramp-completion-mode-p)
       (progn
@@ -3792,16 +3772,22 @@ This is used internally by `tramp-file-mode-from-int'."
 
 ;;;###tramp-autoload
 (defun tramp-get-local-uid (id-format)
+  "The uid of the local user, in ID-FORMAT.
+ID-FORMAT valid values are `string' and `integer'."
   (if (equal id-format 'integer) (user-uid) (user-login-name)))
 
 ;;;###tramp-autoload
 (defun tramp-get-local-gid (id-format)
+  "The gid of the local user, in ID-FORMAT.
+ID-FORMAT valid values are `string' and `integer'."
   ;; `group-gid' has been introduced with Emacs 24.4.
   (if (and (fboundp 'group-gid) (equal id-format 'integer))
       (tramp-compat-funcall 'group-gid)
     (nth 3 (file-attributes "~/" id-format))))
 
 (defun tramp-get-local-locale (&optional vec)
+  "Determine locale, supporting UTF8 if possible.
+VEC is used for tracing."
   ;; We use key nil for local connection properties.
   (with-tramp-connection-property nil "locale"
     (let ((candidates '("en_US.utf8" "C.utf8" "en_US.UTF-8"))

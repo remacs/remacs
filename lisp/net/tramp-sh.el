@@ -1909,8 +1909,7 @@ be non-negative integers."
 	       ;; side.
 	       (unless (looking-at "^ok$")
 		 (tramp-error
-		  v 'file-error
-		  "\
+		  v 'file-error "\
 tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
 		  (tramp-shell-quote-argument localname) (buffer-string))))
 
@@ -1954,7 +1953,7 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
 
 (defun tramp-sh-handle-copy-file
   (filename newname &optional ok-if-already-exists keep-date
-	    preserve-uid-gid preserve-extended-attributes)
+   preserve-uid-gid preserve-extended-attributes)
   "Like `copy-file' for Tramp files."
   (setq filename (expand-file-name filename))
   (setq newname (expand-file-name newname))
@@ -2038,7 +2037,7 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
 
 (defun tramp-do-copy-or-rename-file
   (op filename newname &optional ok-if-already-exists keep-date
-      preserve-uid-gid preserve-extended-attributes)
+   preserve-uid-gid preserve-extended-attributes)
   "Copy or rename a remote file.
 OP must be `copy' or `rename' and indicates the operation to perform.
 FILENAME specifies the file to copy or rename, NEWNAME is the name of
@@ -5148,6 +5147,8 @@ Return ATTR."
 ;; Variables local to connection.
 
 (defun tramp-get-remote-path (vec)
+  "Compile list of remote directories for $PATH.
+Nonexisting directories are removed from spec."
   (with-tramp-connection-property
       ;; When `tramp-own-remote-path' is in `tramp-remote-path', we
       ;; cache the result for the session only.  Otherwise, the result
@@ -5236,6 +5237,7 @@ Return ATTR."
 	remote-path)))))
 
 (defun tramp-get-remote-locale (vec)
+  "Determine remote locale, supporting UTF8 if possible."
   (with-tramp-connection-property vec "locale"
     (tramp-send-command vec "locale -a")
     (let ((candidates '("en_US.utf8" "C.utf8" "en_US.UTF-8"))
@@ -5252,6 +5254,7 @@ Return ATTR."
       (format "LC_ALL=%s" (or locale "C")))))
 
 (defun tramp-get-ls-command (vec)
+  "Determine remote `ls' command."
   (with-tramp-connection-property vec "ls"
     (tramp-message vec 5 "Finding a suitable `ls' command")
     (or
@@ -5277,6 +5280,7 @@ Return ATTR."
      (tramp-error vec 'file-error "Couldn't find a proper `ls' command"))))
 
 (defun tramp-get-ls-command-with-dired (vec)
+  "Check, whether the remote `ls' command supports the --dired option."
   (save-match-data
     (with-tramp-connection-property vec "ls-dired"
       (tramp-message vec 5 "Checking, whether `ls --dired' works")
@@ -5287,6 +5291,7 @@ Return ATTR."
        vec (format "%s --dired -al /dev/null" (tramp-get-ls-command vec))))))
 
 (defun tramp-get-ls-command-with-quoting-style (vec)
+  "Check, whether the remote `ls' command supports the --quoting-style option."
   (save-match-data
     (with-tramp-connection-property vec "ls-quoting-style"
       (tramp-message vec 5 "Checking, whether `ls --quoting-style=shell' works")
@@ -5295,6 +5300,7 @@ Return ATTR."
 		   (tramp-get-ls-command vec))))))
 
 (defun tramp-get-ls-command-with-w-option (vec)
+  "Check, whether the remote `ls' command supports the -w option."
   (save-match-data
     (with-tramp-connection-property vec "ls-w-option"
       (tramp-message vec 5 "Checking, whether `ls -w' works")
@@ -5305,6 +5311,7 @@ Return ATTR."
        vec (format "%s -alw" (tramp-get-ls-command vec))))))
 
 (defun tramp-get-test-command (vec)
+  "Determine remote `test' command."
   (with-tramp-connection-property vec "test"
     (tramp-message vec 5 "Finding a suitable `test' command")
     (if (tramp-send-command-and-check vec "test 0")
@@ -5312,6 +5319,7 @@ Return ATTR."
       (tramp-find-executable vec "test" (tramp-get-remote-path vec)))))
 
 (defun tramp-get-test-nt-command (vec)
+  "Check, whether the remote `test' command supports the -nt option."
   ;; Does `test A -nt B' work?  Use abominable `find' construct if it
   ;; doesn't.  BSD/OS 4.0 wants the parentheses around the command,
   ;; for otherwise the shell crashes.
@@ -5333,16 +5341,19 @@ Return ATTR."
        "tramp_test_nt %s %s"))))
 
 (defun tramp-get-file-exists-command (vec)
+  "Determine remote command for file existing check."
   (with-tramp-connection-property vec "file-exists"
     (tramp-message vec 5 "Finding command to check if file exists")
     (tramp-find-file-exists-command vec)))
 
 (defun tramp-get-remote-ln (vec)
+  "Determine remote `ln' command."
   (with-tramp-connection-property vec "ln"
     (tramp-message vec 5 "Finding a suitable `ln' command")
     (tramp-find-executable vec "ln" (tramp-get-remote-path vec))))
 
 (defun tramp-get-remote-perl (vec)
+  "Determine remote `perl' command."
   (with-tramp-connection-property vec "perl"
     (tramp-message vec 5 "Finding a suitable `perl' command")
     (let ((result
@@ -5360,6 +5371,7 @@ Return ATTR."
       result)))
 
 (defun tramp-get-remote-stat (vec)
+  "Determine remote `stat' command."
   (with-tramp-connection-property vec "stat"
     (tramp-message vec 5 "Finding a suitable `stat' command")
     (let ((result (tramp-find-executable
@@ -5380,6 +5392,7 @@ Return ATTR."
       result)))
 
 (defun tramp-get-remote-readlink (vec)
+  "Determine remote `readlink' command."
   (with-tramp-connection-property vec "readlink"
     (tramp-message vec 5 "Finding a suitable `readlink' command")
     (let ((result (tramp-find-executable
@@ -5390,11 +5403,13 @@ Return ATTR."
 	result))))
 
 (defun tramp-get-remote-trash (vec)
+  "Determine remote `trash' command."
   (with-tramp-connection-property vec "trash"
     (tramp-message vec 5 "Finding a suitable `trash' command")
     (tramp-find-executable vec "trash" (tramp-get-remote-path vec))))
 
 (defun tramp-get-remote-touch (vec)
+  "Determine remote `touch' command."
   (with-tramp-connection-property vec "touch"
     (tramp-message vec 5 "Finding a suitable `touch' command")
     (let ((result (tramp-find-executable
@@ -5419,17 +5434,20 @@ Return ATTR."
       result)))
 
 (defun tramp-get-remote-gvfs-monitor-dir (vec)
+  "Determine remote `gvfs-monitor-dir' command."
   (with-tramp-connection-property vec "gvfs-monitor-dir"
     (tramp-message vec 5 "Finding a suitable `gvfs-monitor-dir' command")
     (tramp-find-executable
      vec "gvfs-monitor-dir" (tramp-get-remote-path vec) t t)))
 
 (defun tramp-get-remote-inotifywait (vec)
+  "Determine remote `inotifywait' command."
   (with-tramp-connection-property vec "inotifywait"
     (tramp-message vec 5 "Finding a suitable `inotifywait' command")
     (tramp-find-executable vec "inotifywait" (tramp-get-remote-path vec) t t)))
 
 (defun tramp-get-remote-id (vec)
+  "Determine remote `id' command."
   (with-tramp-connection-property vec "id"
     (tramp-message vec 5 "Finding POSIX `id' command")
     (catch 'id-found
@@ -5443,6 +5461,7 @@ Return ATTR."
 	    (setq dl (cdr dl))))))))
 
 (defun tramp-get-remote-uid-with-id (vec id-format)
+  "Implement `tramp-get-remote-uid' for Tramp files using `id'."
   (tramp-send-command-and-read
    vec
    (format "%s -u%s %s"
@@ -5452,6 +5471,7 @@ Return ATTR."
 	       "" "| sed -e s/^/\\\"/ -e s/\\$/\\\"/"))))
 
 (defun tramp-get-remote-uid-with-perl (vec id-format)
+  "Implement `tramp-get-remote-uid' for Tramp files using a Perl script."
   (tramp-send-command-and-read
    vec
    (format "%s -le '%s'"
@@ -5461,6 +5481,7 @@ Return ATTR."
 	     "print \"\\\"\", scalar getpwuid($>), \"\\\"\""))))
 
 (defun tramp-get-remote-python (vec)
+  "Determine remote `python' command."
   (with-tramp-connection-property vec "python"
     (tramp-message vec 5 "Finding a suitable `python' command")
     (or (tramp-find-executable vec "python" (tramp-get-remote-path vec))
@@ -5468,6 +5489,7 @@ Return ATTR."
         (tramp-find-executable vec "python3" (tramp-get-remote-path vec)))))
 
 (defun tramp-get-remote-uid-with-python (vec id-format)
+  "Implement `tramp-get-remote-uid' for Tramp files using `python'."
   (tramp-send-command-and-read
    vec
    (format "%s -c \"%s\""
@@ -5477,6 +5499,8 @@ Return ATTR."
 	     "import os, pwd; print ('\\\"' + pwd.getpwuid(os.getuid())[0] + '\\\"')"))))
 
 (defun tramp-get-remote-uid (vec id-format)
+  "The uid of the remote connection VEC, in ID-FORMAT.
+ID-FORMAT valid values are `string' and `integer'."
   (with-tramp-connection-property vec (format "uid-%s" id-format)
     (let ((res
 	   (ignore-errors
@@ -5496,6 +5520,7 @@ Return ATTR."
        (t res)))))
 
 (defun tramp-get-remote-gid-with-id (vec id-format)
+  "Implement `tramp-get-remote-gid' for Tramp files using `id'."
   (tramp-send-command-and-read
    vec
    (format "%s -g%s %s"
@@ -5505,6 +5530,7 @@ Return ATTR."
 	       "" "| sed -e s/^/\\\"/ -e s/\\$/\\\"/"))))
 
 (defun tramp-get-remote-gid-with-perl (vec id-format)
+  "Implement `tramp-get-remote-gid' for Tramp files using a Perl script."
   (tramp-send-command-and-read
    vec
    (format "%s -le '%s'"
@@ -5514,6 +5540,7 @@ Return ATTR."
 	     "print \"\\\"\", scalar getgrgid($)), \"\\\"\""))))
 
 (defun tramp-get-remote-gid-with-python (vec id-format)
+  "Implement `tramp-get-remote-gid' for Tramp files using `python'."
   (tramp-send-command-and-read
    vec
    (format "%s -c \"%s\""
@@ -5523,6 +5550,8 @@ Return ATTR."
 	     "import os, grp; print ('\\\"' + grp.getgrgid(os.getgid())[0] + '\\\"')"))))
 
 (defun tramp-get-remote-gid (vec id-format)
+  "The gid of the remote connection VEC, in ID-FORMAT.
+ID-FORMAT valid values are `string' and `integer'."
   (with-tramp-connection-property vec (format "gid-%s" id-format)
     (let ((res
 	   (ignore-errors
@@ -5542,6 +5571,7 @@ Return ATTR."
        (t res)))))
 
 (defun tramp-get-env-with-u-option (vec)
+  "Check, whether the remote `env' command supports the -u option."
   (with-tramp-connection-property vec "env-u-option"
     (tramp-message vec 5 "Checking, whether `env -u' works")
     ;; Option "-u" is a GNU extension.
@@ -5704,5 +5734,6 @@ function cell is returned to be applied on a buffer."
 ;;   rsync).
 ;; * Keep a second connection open for out-of-band methods like scp or
 ;;   rsync.
+;; * Implement completion for "/method:user@host:~<abc> TAB".
 
 ;;; tramp-sh.el ends here
