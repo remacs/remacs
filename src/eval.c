@@ -2863,14 +2863,14 @@ funcall_lambda (Lisp_Object fun, ptrdiff_t nargs,
 	xsignal1 (Qinvalid_function, fun);
       syms_left = AREF (fun, COMPILED_ARGLIST);
       if (INTEGERP (syms_left))
-	/* A byte-code object with a non-nil `push args' slot means we
+	/* A byte-code object with an integer args template means we
 	   shouldn't bind any arguments, instead just call the byte-code
 	   interpreter directly; it will push arguments as necessary.
 
-	   Byte-code objects with either a non-existent, or a nil value for
-	   the `push args' slot (the default), have dynamically-bound
-	   arguments, and use the argument-binding code below instead (as do
-	   all interpreted functions, even lexically bound ones).  */
+	   Byte-code objects with a nil args template (the default)
+	   have dynamically-bound arguments, and use the
+	   argument-binding code below instead (as do all interpreted
+	   functions, even lexically bound ones).  */
 	{
 	  /* If we have not actually read the bytecode string
 	     and constants vector yet, fetch them from the file.  */

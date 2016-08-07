@@ -476,49 +476,26 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
   stacke = stack.bottom - 1 + XFASTINT (maxdepth);
 #endif
 
-  if (INTEGERP (args_template))
+  if (!NILP (args_template))
     {
+      eassert (INTEGERP (args_template));
       ptrdiff_t at = XINT (args_template);
       bool rest = (at & 128) != 0;
       int mandatory = at & 127;
       ptrdiff_t nonrest = at >> 8;
-      eassert (mandatory <= nonrest);
-      if (nargs <= nonrest)
-	{
-	  ptrdiff_t i;
-	  for (i = 0 ; i < nargs; i++, args++)
-	    PUSH (*args);
-	  if (nargs < mandatory)
-	    /* Too few arguments.  */
-	    Fsignal (Qwrong_number_of_arguments,
-		     list2 (Fcons (make_number (mandatory),
-				   rest ? Qand_rest : make_number (nonrest)),
-			    make_number (nargs)));
-	  else
-	    {
-	      for (; i < nonrest; i++)
-		PUSH (Qnil);
-	      if (rest)
-		PUSH (Qnil);
-	    }
-	}
-      else if (rest)
-	{
-	  ptrdiff_t i;
-	  for (i = 0 ; i < nonrest; i++, args++)
-	    PUSH (*args);
-	  PUSH (Flist (nargs - nonrest, args));
-	}
-      else
-	/* Too many arguments.  */
+      ptrdiff_t maxargs = rest ? PTRDIFF_MAX : nonrest;
+      if (! (mandatory <= nargs && nargs <= maxargs))
 	Fsignal (Qwrong_number_of_arguments,
 		 list2 (Fcons (make_number (mandatory), make_number (nonrest)),
 			make_number (nargs)));
-    }
-  else if (! NILP (args_template))
-    /* We should push some arguments on the stack.  */
-    {
-      error ("Unknown args template!");
+      ptrdiff_t pushedargs = min (nonrest, nargs);
+      for (ptrdiff_t i = 0; i < pushedargs; i++, args++)
+	PUSH (*args);
+      if (nonrest < nargs)
+	PUSH (Flist (nargs - nonrest, args));
+      else
+	for (ptrdiff_t i = nargs - rest; i < nonrest; i++)
+	  PUSH (Qnil);
     }
 
   while (1)
