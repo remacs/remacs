@@ -2440,6 +2440,50 @@ condition, between the @code{make-temp-name} call and the creation of
 the file, which in some cases may cause a security hole.
 @end defun
 
+Sometimes, it is necessary to create a temporary file on a remote host
+or a mounted directory.  The following two functions support this.
+
+@defun make-nearby-temp-file prefix &optional dir-flag suffix
+This function is similar to @code{make-temp-file}, but it creates a
+temporary file as close as possible to @code{default-directory}.  If
+@var{prefix} is a relative file name, and @code{default-directory} is
+a remote file name or located on a mounted file systems, the temporary
+file is created in the directory returned by the function
+@code{temporary-file-directory}.  Otherwise, the function
+@code{make-temp-file} is used.  @var{prefix}, @var{dir-flag} and
+@var{suffix} have the same meaning as in @code{make-temp-file}.
+
+@example
+@group
+(let ((default-directory "/ssh:remotehost:"))
+  (make-nearby-temp-file "foo"))
+     @result{} "/ssh:remotehost:/tmp/foo232J6v"
+@end group
+@end example
+@end defun
+
+@defun temporary-file-directory
+The directory for writing temporary files via
+@code{make-nearby-temp-file}.  In case of a remote
+@code{default-directory}, this is a directory for temporary files on
+that remote host.  If such a directory does not exist, or
+@code{default-directory} ought to be located on a mounted file system
+(see @code{mounted-file-systems}), the function returns
+@code{default-directory}.  For a non-remote and non-mounted
+@code{default-directory}, the value of the variable
+@code{temporary-file-directory} is returned.
+@end defun
+
+In order to extract the local part of the path name from a temporary
+file, the following code could be used:
+
+@example
+@group
+(let ((tmpfile (make-nearby-temp-file "foo")))
+  (or (file-remote-p tmpfile 'localname) tmpfile))
+@end group
+@end example
+
 @node File Name Completion
 @subsection File Name Completion
 @cindex file name completion subroutines
@@ -2903,6 +2947,7 @@ first, before handlers for jobs such as remote file access.
 @code{make-auto-save-file-name},
 @code{make-directory},
 @code{make-directory-internal},
+@code{make-nearby-temp-file},
 @code{make-symbolic-link},@*
 @code{process-file},
 @code{rename-file}, @code{set-file-acl}, @code{set-file-modes},
@@ -2910,6 +2955,7 @@ first, before handlers for jobs such as remote file access.
 @code{set-visited-file-modtime}, @code{shell-command},
 @code{start-file-process},
 @code{substitute-in-file-name},@*
+@code{temporary-file-directory},
 @code{unhandled-file-name-directory},
 @code{vc-registered},
 @code{verify-visited-file-modtime},@*

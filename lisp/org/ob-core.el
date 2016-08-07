@@ -43,11 +43,6 @@
 (declare-function org-mark-ring-push "org" (&optional pos buffer))
 (declare-function tramp-compat-make-temp-file "tramp-compat"
                   (filename &optional dir-flag))
-(declare-function tramp-dissect-file-name "tramp" (name &optional nodefault))
-(declare-function tramp-file-name-user "tramp" (vec))
-(declare-function tramp-file-name-host "tramp" (vec))
-(declare-function with-parsed-tramp-file-name "tramp" (filename var &rest body)
-                  t)
 (declare-function org-icompleting-read "org" (&rest args))
 (declare-function org-edit-src-code "org-src"
                   (&optional context code edit-buffer-name))
@@ -2670,7 +2665,7 @@ of the string."
   (start end program &optional delete buffer display &rest args)
   "Use Tramp to handle `call-process-region'.
 Fixes a bug in `tramp-handle-call-process-region'."
-  (if (and (featurep 'tramp) (file-remote-p default-directory))
+  (if (file-remote-p default-directory)
       (let ((tmpfile (tramp-compat-make-temp-file "")))
 	(write-region start end tmpfile)
 	(when delete (delete-region start end))
@@ -2687,11 +2682,7 @@ Fixes a bug in `tramp-handle-call-process-region'."
 
 (defun org-babel-local-file-name (file)
   "Return the local name component of FILE."
-  (if (file-remote-p file)
-      (let (localname)
-	(with-parsed-tramp-file-name file nil
-				     localname))
-    file))
+  (or (file-remote-p file 'localname) file))
 
 (defun org-babel-process-file-name (name &optional no-quote-p)
   "Prepare NAME to be used in an external process.

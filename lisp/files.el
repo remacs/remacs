@@ -1314,6 +1314,36 @@ Optional second argument FLAVOR controls the units and the display format:
 	      (car post-fixes))
 	    (if (eq flavor 'iec) "iB" ""))))
 
+(defcustom mounted-file-systems
+  (if (memq system-type '(windows-nt cygwin))
+      "^//[^/]+/"
+    ;; regexp-opt.el is not dumped into emacs binary.
+    ;;(concat
+    ;; "^" (regexp-opt '("/afs/" "/media/" "/mnt" "/net/" "/tmp_mnt/"))))
+    "^\\(?:/\\(?:afs/\\|m\\(?:edia/\\|nt\\)\\|\\(?:ne\\|tmp_mn\\)t/\\)\\)")
+  "File systems which ought to be mounted."
+  :group 'files
+  :version "25.2"
+  :require 'regexp-opt
+  :type 'regexp)
+
+(defun temporary-file-directory ()
+  "The directory for writing temporary files.
+In case of a remote `default-directory', this is a directory for
+temporary files on that remote host.  If such a directory does
+not exist, or `default-directory' ought to be located on a
+mounted file system (see `mounted-file-systems'), the function
+returns `default-directory'.
+For a non-remote and non-mounted `default-directory', the value of
+the variable `temporary-file-directory' is returned."
+  (let ((handler (find-file-name-handler
+                  default-directory 'temporary-file-directory)))
+    (if handler
+	(funcall handler 'temporary-file-directory)
+      (if (string-match mounted-file-systems default-directory)
+          default-directory
+        temporary-file-directory))))
+
 (defun make-temp-file (prefix &optional dir-flag suffix)
   "Create a temporary file.
 The returned file name (created by appending some random characters at the end
@@ -1349,6 +1379,21 @@ If SUFFIX is non-nil, add that at the end of the file name."
 	;; `make-temp-name' and `write-region', let's try again.
 	nil)
       file)))
+
+(defun make-nearby-temp-file (prefix &optional dir-flag suffix)
+  "Create a temporary file as close as possible to `default-directory'.
+If PREFIX is a relative file name, and `default-directory' is a
+remote file name or located on a mounted file systems, the
+temporary file is created in the directory returned by the
+function `temporary-file-directory'.  Otherwise, the function
+`make-temp-file' is used.  PREFIX, DIR-FLAG and SUFFIX have the
+same meaning as in `make-temp-file'."
+  (let ((handler (find-file-name-handler
+                  default-directory 'make-nearby-temp-file)))
+    (if (and handler (not (file-name-absolute-p default-directory)))
+	(funcall handler 'make-nearby-temp-file prefix dir-flag suffix)
+      (let ((temporary-file-directory (temporary-file-directory)))
+        (make-temp-file prefix dir-flag suffix)))))
 
 (defun recode-file-name (file coding new-coding &optional ok-if-already-exists)
   "Change the encoding of FILE's name from CODING to NEW-CODING.
@@ -4404,7 +4449,7 @@ ignored."
 (defun normal-backup-enable-predicate (name)
   "Default `backup-enable-predicate' function.
 Checks for files in `temporary-file-directory',
-`small-temporary-file-directory', and /tmp."
+`small-temporary-file-directory', and \"/tmp\"."
   (let ((temporary-file-directory temporary-file-directory)
 	caseless)
     ;; On MS-Windows, file-truename will convert short 8+3 aliases to

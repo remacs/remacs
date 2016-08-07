@@ -394,7 +394,7 @@ For registered files, the possible values are:
 
 (defun vc-user-login-name (file)
   "Return the name under which the user accesses the given FILE."
-  (or (and (eq (string-match tramp-file-name-regexp file) 0)
+  (or (and (file-remote-p file)
            ;; tramp case: execute "whoami" via tramp
            (let ((default-directory (file-name-directory file))
 		 process-file-side-effects)

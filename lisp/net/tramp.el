@@ -1917,7 +1917,9 @@ ARGS are the arguments OPERATION has been called with."
      (if (bufferp (nth 0 args)) (nth 0 args) (current-buffer))))
    ;; COMMAND.
    ((member operation
-	    '(process-file shell-command start-file-process))
+	    '(process-file shell-command start-file-process
+	      ;; Emacs 25.2+ only.
+	      make-nearby-temp-file temporary-file-directory))
     default-directory)
    ;; PROC.
    ((member operation
@@ -3893,9 +3895,6 @@ be granted."
 
 (defun tramp-get-remote-tmpdir (vec)
   "Return directory for temporary files on the remote host identified by VEC."
-  (when (file-remote-p (tramp-get-connection-property vec "tmpdir" ""))
-    ;; Compatibility code: Cached value shall be the local path only.
-    (tramp-set-connection-property vec "tmpdir" 'undef))
   (let ((dir (tramp-make-tramp-file-name
 	      (tramp-file-name-method vec)
 	      (tramp-file-name-user vec)
@@ -3984,6 +3983,21 @@ ALIST is of the form ((FROM . TO) ...)."
           (setq string (replace-match to t t string)))
         (setq alist (cdr alist))))
     string))
+
+(defun tramp-handle-temporary-file-directory ()
+  "Like `temporary-file-directory' for Tramp files."
+  (catch 'result
+    (dolist (dir `(,(ignore-errors
+		      (tramp-get-remote-tmpdir
+		       (tramp-dissect-file-name default-directory)))
+		   ,default-directory))
+      (when (and (stringp dir) (file-directory-p dir) (file-writable-p dir))
+	(throw 'result (expand-file-name dir))))))
+
+(defun tramp-handle-make-nearby-temp-file (prefix &optional dir-flag suffix)
+  "Like `make-nearby-temp-file' for Tramp files."
+  (let ((temporary-file-directory (temporary-file-directory)))
+    (make-temp-file prefix dir-flag suffix)))
 
 ;;; Compatibility functions section:
 
