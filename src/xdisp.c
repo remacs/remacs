@@ -15313,6 +15313,40 @@ try_scrolling (Lisp_Object window, bool just_this_one_p,
 	  if (dy > 0)
 	    scroll_down_p = true;
 	}
+      else if (PT == IT_CHARPOS (it)
+	       && IT_CHARPOS (it) < ZV
+	       && it.method == GET_FROM_STRING
+	       && arg_scroll_conservatively > scroll_limit
+	       && it.current_x == 0)
+	{
+	  enum move_it_result skip;
+	  int y1 = it.current_y;
+	  int vpos;
+
+	  /* A before-string that includes newlines and is displayed
+	     on the last visible screen line could fail us under
+	     scroll-conservatively > 100, because we will be unable to
+	     position the cursor on that last visible line.  Try to
+	     recover by finding the first screen line that has some
+	     glyphs coming from the buffer text.  */
+	  do {
+	    skip = move_it_in_display_line_to (&it, ZV, -1, MOVE_TO_POS);
+	    if (skip != MOVE_NEWLINE_OR_CR
+		|| IT_CHARPOS (it) != PT
+		|| it.method == GET_FROM_BUFFER)
+	      break;
+	    vpos = it.vpos;
+	    move_it_to (&it, -1, -1, -1, vpos + 1, MOVE_TO_VPOS);
+	  } while (it.vpos > vpos);
+
+	  dy = it.current_y - y1;
+
+	  if (dy > scroll_max)
+	    return SCROLLING_FAILED;
+
+	  if (dy > 0)
+	    scroll_down_p = true;
+	}
     }
 
   if (scroll_down_p)
