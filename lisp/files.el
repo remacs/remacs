@@ -4325,8 +4325,7 @@ See also `file-name-version-regexp'."
 
 (defun file-ownership-preserved-p (file &optional group)
   "Return t if deleting FILE and rewriting it would preserve the owner.
-Return nil if FILE does not exist, or if deleting and recreating it
-might not preserve the owner.  If GROUP is non-nil, check whether
+Return also t if FILE does not exist.  If GROUP is non-nil, check whether
 the group would be preserved too."
   (let ((handler (find-file-name-handler file 'file-ownership-preserved-p)))
     (if handler
