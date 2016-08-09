@@ -413,7 +413,7 @@ Lisp_Object
 exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 		Lisp_Object args_template, ptrdiff_t nargs, Lisp_Object *args)
 {
-  ptrdiff_t count = SPECPDL_INDEX ();
+  USE_SAFE_ALLOCA;
 #ifdef BYTE_CODE_METER
   int volatile this_op = 0;
   int prev_op;
@@ -447,15 +447,15 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 
   stack.byte_string = bytestr;
   stack.pc = stack.byte_string_start = SDATA (bytestr);
-  if (MAX_ALLOCA / word_size <= XFASTINT (maxdepth))
-    memory_full (SIZE_MAX);
   unsigned char quitcounter = 0;
-  int stack_items = XFASTINT (maxdepth) + 1;
-  Lisp_Object *stack_base = alloca (stack_items * sizeof *top);
+  EMACS_INT stack_items = XFASTINT (maxdepth) + 1;
+  Lisp_Object *stack_base;
+  SAFE_ALLOCA_LISP (stack_base, stack_items);
   Lisp_Object *stack_lim = stack_base + stack_items;
   top = stack_base;
   stack.next = byte_stack_list;
   byte_stack_list = &stack;
+  ptrdiff_t count = SPECPDL_INDEX ();
 
   if (!NILP (args_template))
     {
@@ -1699,6 +1699,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
       error ("binding stack not balanced (serious byte compiler bug)");
     }
 
+  SAFE_FREE ();
   return result;
 }
 
