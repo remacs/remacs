@@ -3202,7 +3202,6 @@ struct handler
   ptrdiff_t pdlcount;
   int poll_suppress_count;
   int interrupt_input_blocked;
-  struct byte_stack *byte_stack;
 };
 
 extern Lisp_Object memory_signal_data;
@@ -4231,8 +4230,6 @@ extern int read_bytecode_char (bool);
 
 /* Defined in bytecode.c.  */
 extern void syms_of_bytecode (void);
-extern struct byte_stack *byte_stack_list;
-extern void relocate_byte_stack (void);
 extern Lisp_Object exec_byte_code (Lisp_Object, Lisp_Object, Lisp_Object,
 				   Lisp_Object, ptrdiff_t, Lisp_Object *);
 extern Lisp_Object get_byte_code_arity (Lisp_Object);
@@ -4530,12 +4527,14 @@ extern void *record_xmalloc (size_t) ATTRIBUTE_ALLOC_SIZE ((1));
     }					\
   } while (false)
 
-/* SAFE_ALLOCA_LISP allocates an array of Lisp_Objects.  */
+/* Set BUF to point to an allocated array of NELT Lisp_Objects,
+   immediately followed by EXTRA spare bytes.  */
 
-#define SAFE_ALLOCA_LISP(buf, nelt)			       \
+#define SAFE_ALLOCA_LISP_EXTRA(buf, nelt, extra)	       \
   do {							       \
     ptrdiff_t alloca_nbytes;				       \
     if (INT_MULTIPLY_WRAPV (nelt, word_size, &alloca_nbytes)   \
+	|| INT_ADD_WRAPV (alloca_nbytes, extra, &alloca_nbytes) \
 	|| SIZE_MAX < alloca_nbytes)			       \
       memory_full (SIZE_MAX);				       \
     else if (alloca_nbytes <= sa_avail)			       \
@@ -4549,6 +4548,10 @@ extern void *record_xmalloc (size_t) ATTRIBUTE_ALLOC_SIZE ((1));
 	record_unwind_protect (free_save_value, arg_);	       \
       }							       \
   } while (false)
+
+/* Set BUF to point to an allocated array of NELT Lisp_Objects.  */
+
+#define SAFE_ALLOCA_LISP(buf, nelt) SAFE_ALLOCA_LISP_EXTRA (buf, nelt, 0)
 
 
 /* If USE_STACK_LISP_OBJECTS, define macros that and functions that allocate

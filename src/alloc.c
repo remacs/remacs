@@ -5799,8 +5799,6 @@ garbage_collect_1 (void *end)
 
   gc_sweep ();
 
-  relocate_byte_stack ();
-
   /* Clear the mark bits that we set in certain root slots.  */
   VECTOR_UNMARK (&buffer_defaults);
   VECTOR_UNMARK (&buffer_local_symbols);

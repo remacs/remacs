@@ -281,59 +281,9 @@ enum byte_code_op
 #endif
 };
 
-/* Structure describing a value stack used during byte-code execution
-   in Fbyte_code.  */
-
-struct byte_stack
-{
-  /* Program counter.  This points into the byte_string below
-     and is relocated when that string is relocated.  */
-  const unsigned char *pc;
-
-  /* The string containing the byte-code, and its current address.
-     Storing this here protects it from GC.  */
-  Lisp_Object byte_string;
-  const unsigned char *byte_string_start;
-
-  /* Next entry in byte_stack_list.  */
-  struct byte_stack *next;
-};
-
-/* A list of currently active byte-code execution value stacks.
-   Fbyte_code adds an entry to the head of this list before it starts
-   processing byte-code, and it removes the entry again when it is
-   done.  Signaling an error truncates the list.  */
-
-struct byte_stack *byte_stack_list;
-
-
-/* Relocate program counters in the stacks on byte_stack_list.  Called
-   when GC has completed.  */
-
-void
-relocate_byte_stack (void)
-{
-  struct byte_stack *stack;
-
-  for (stack = byte_stack_list; stack; stack = stack->next)
-    {
-      if (stack->byte_string_start != SDATA (stack->byte_string))
-	{
-	  ptrdiff_t offset = stack->pc - stack->byte_string_start;
-	  stack->byte_string_start = SDATA (stack->byte_string);
-	  stack->pc = stack->byte_string_start + offset;
-	}
-    }
-}
-
-
 /* Fetch the next byte from the bytecode stream.  */
 
-#if BYTE_CODE_SAFE
-#define FETCH (eassert (stack.byte_string_start == SDATA (stack.byte_string)), *stack.pc++)
-#else
-#define FETCH *stack.pc++
-#endif
+#define FETCH (*pc++)
 
 /* Fetch two bytes from the bytecode stream and make a 16-bit number
    out of them.  */
@@ -357,32 +307,6 @@ relocate_byte_stack (void)
    pop it.  */
 
 #define TOP (*top)
-
-/* Check for jumping out of range.  */
-
-#define CHECK_RANGE(ARG) \
-  (BYTE_CODE_SAFE && bytestr_length <= (ARG) ? emacs_abort () : (void) 0)
-
-/* A version of the QUIT macro which makes sure that the stack top is
-   set before signaling `quit'.  */
-
-#define BYTE_CODE_QUIT					\
-  do {							\
-    if (quitcounter++)					\
-      break;						\
-    maybe_gc ();					\
-    if (!NILP (Vquit_flag) && NILP (Vinhibit_quit))	\
-      {							\
-        Lisp_Object flag = Vquit_flag;			\
-	Vquit_flag = Qnil;				\
-	if (EQ (Vthrow_on_input, flag))			\
-	  Fthrow (Vthrow_on_input, Qt);			\
-	quit ();					\
-      }							\
-    else if (pending_signals)				\
-      process_pending_signals ();			\
-  } while (0)
-
 
 DEFUN ("byte-code", Fbyte_code, Sbyte_code, 3, 3, 0,
        doc: /* Function used internally in byte-compiled code.
@@ -423,7 +347,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
   Lisp_Object *vectorp;
   ptrdiff_t const_length;
   ptrdiff_t bytestr_length;
-  struct byte_stack stack;
   Lisp_Object *top;
   Lisp_Object result;
   enum handlertype type;
@@ -445,16 +368,16 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
   bytestr_length = SBYTES (bytestr);
   vectorp = XVECTOR (vector)->contents;
 
-  stack.byte_string = bytestr;
-  stack.pc = stack.byte_string_start = SDATA (bytestr);
-  unsigned char quitcounter = 0;
+  unsigned char quitcounter = 1;
   EMACS_INT stack_items = XFASTINT (maxdepth) + 1;
   Lisp_Object *stack_base;
-  SAFE_ALLOCA_LISP (stack_base, stack_items);
+  SAFE_ALLOCA_LISP_EXTRA (stack_base, stack_items, bytestr_length);
   Lisp_Object *stack_lim = stack_base + stack_items;
   top = stack_base;
-  stack.next = byte_stack_list;
-  byte_stack_list = &stack;
+  memcpy (stack_lim, SDATA (bytestr), bytestr_length);
+  void *void_stack_lim = stack_lim;
+  unsigned char const *bytestr_data = void_stack_lim;
+  unsigned char const *pc = bytestr_data;
   ptrdiff_t count = SPECPDL_INDEX ();
 
   if (!NILP (args_template))
@@ -608,11 +531,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	    op = FETCH2;
 	    v1 = POP;
 	    if (NILP (v1))
-	      {
-		BYTE_CODE_QUIT;
-		CHECK_RANGE (op);
-		stack.pc = stack.byte_string_start + op;
-	      }
+	      goto op_branch;
 	    NEXT;
 	  }
 
@@ -791,10 +710,22 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Bgoto):
-	  BYTE_CODE_QUIT;
-	  op = FETCH2;    /* pc = FETCH2 loses since FETCH2 contains pc++ */
-	  CHECK_RANGE (op);
-	  stack.pc = stack.byte_string_start + op;
+	  op = FETCH2;
+	op_branch:
+	  op -= pc - bytestr_data;
+	op_relative_branch:
+	  if (BYTE_CODE_SAFE
+	      && ! (bytestr_data - pc <= op
+		    && op < bytestr_data + bytestr_length - pc))
+	    emacs_abort ();
+	  quitcounter += op < 0;
+	  if (!quitcounter)
+	    {
+	      quitcounter = 1;
+	      maybe_gc ();
+	      QUIT;
+	    }
+	  pc += op;
 	  NEXT;
 
 	CASE (Bgotoifnonnil):
@@ -803,51 +734,35 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	    op = FETCH2;
 	    v1 = POP;
 	    if (!NILP (v1))
-	      {
-		BYTE_CODE_QUIT;
-		CHECK_RANGE (op);
-		stack.pc = stack.byte_string_start + op;
-	      }
+	      goto op_branch;
 	    NEXT;
 	  }
 
 	CASE (Bgotoifnilelsepop):
 	  op = FETCH2;
 	  if (NILP (TOP))
-	    {
-	      BYTE_CODE_QUIT;
-	      CHECK_RANGE (op);
-	      stack.pc = stack.byte_string_start + op;
-	    }
-	  else DISCARD (1);
+	    goto op_branch;
+	  DISCARD (1);
 	  NEXT;
 
 	CASE (Bgotoifnonnilelsepop):
 	  op = FETCH2;
 	  if (!NILP (TOP))
-	    {
-	      BYTE_CODE_QUIT;
-	      CHECK_RANGE (op);
-	      stack.pc = stack.byte_string_start + op;
-	    }
-	  else DISCARD (1);
+	    goto op_branch;
+	  DISCARD (1);
 	  NEXT;
 
 	CASE (BRgoto):
-	  BYTE_CODE_QUIT;
-	  stack.pc += (int) *stack.pc - 127;
-	  NEXT;
+	  op = FETCH - 128;
+	  goto op_relative_branch;
 
 	CASE (BRgotoifnil):
 	  {
 	    Lisp_Object v1;
 	    v1 = POP;
+	    op = FETCH - 128;
 	    if (NILP (v1))
-	      {
-		BYTE_CODE_QUIT;
-		stack.pc += (int) *stack.pc - 128;
-	      }
-	    stack.pc++;
+	      goto op_relative_branch;
 	    NEXT;
 	  }
 
@@ -855,33 +770,24 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  {
 	    Lisp_Object v1;
 	    v1 = POP;
+	    op = FETCH - 128;
 	    if (!NILP (v1))
-	      {
-		BYTE_CODE_QUIT;
-		stack.pc += (int) *stack.pc - 128;
-	      }
-	    stack.pc++;
+	      goto op_relative_branch;
 	    NEXT;
 	  }
 
 	CASE (BRgotoifnilelsepop):
-	  op = *stack.pc++;
+	  op = FETCH - 128;
 	  if (NILP (TOP))
-	    {
-	      BYTE_CODE_QUIT;
-	      stack.pc += op - 128;
-	    }
-	  else DISCARD (1);
+	    goto op_relative_branch;
+	  DISCARD (1);
 	  NEXT;
 
 	CASE (BRgotoifnonnilelsepop):
-	  op = *stack.pc++;
+	  op = FETCH - 128;
 	  if (!NILP (TOP))
-	    {
-	      BYTE_CODE_QUIT;
-	      stack.pc += op - 128;
-	    }
-	  else DISCARD (1);
+	    goto op_relative_branch;
+	  DISCARD (1);
 	  NEXT;
 
 	CASE (Breturn):
@@ -946,15 +852,11 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	    if (sys_setjmp (c->jmp))
 	      {
 		struct handler *c = handlerlist;
-		int dest;
 		top = c->bytecode_top;
-		dest = c->bytecode_dest;
+		op = c->bytecode_dest;
 		handlerlist = c->next;
 		PUSH (c->val);
-		CHECK_RANGE (dest);
-		/* Might have been re-set by longjmp!  */
-		stack.byte_string_start = SDATA (stack.byte_string);
-		stack.pc = stack.byte_string_start + dest;
+		goto op_branch;
 	      }
 
 	    NEXT;
@@ -1629,7 +1531,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  call3 (Qerror,
 		 build_string ("Invalid byte opcode: op=%s, ptr=%d"),
 		 make_number (op),
-		 make_number ((stack.pc - 1) - stack.byte_string_start));
+		 make_number (pc - 1 - bytestr_data));
 
 	  /* Handy byte-codes for lexical binding.  */
 	CASE (Bstack_ref1):
@@ -1688,8 +1590,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
     }
 
  exit:
-
-  byte_stack_list = byte_stack_list->next;
 
   /* Binds and unbinds are supposed to be compiled balanced.  */
   if (SPECPDL_INDEX () != count)
