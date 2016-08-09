@@ -2369,9 +2369,9 @@ program's environment for the remote host.
 structured similar to @code{process-environment}, where each element
 is a string of the form @samp{ENVVARNAME=VALUE}.
 
-To avoid any conflicts with local host variables set through local
-configuration files, such as @file{~/.profile}, use @samp{ENVVARNAME=}
-to unset them for the remote environment.
+To avoid any conflicts with local host environment variables set
+through local configuration files, such as @file{~/.profile}, use
+@samp{ENVVARNAME=} to unset them for the remote environment.
 
 @noindent
 Use @code{add-to-list} to add entries:
@@ -2383,14 +2383,24 @@ Use @code{add-to-list} to add entries:
 Modifying or deleting already existing values in the
 @code{tramp-remote-process-environment} list may not be feasible on
 restricted remote hosts.  For example, some system administrators
-disallow changing @env{HISTORY} variable.  To accommodate such
-restrictions when using @value{tramp}, fix the
+disallow changing @env{HISTORY} environment variable.  To accommodate
+such restrictions when using @value{tramp}, fix the
 @code{tramp-remote-process-environment} by the following code in the
 local @file{.emacs} file:
 
 @lisp
 (let ((process-environment tramp-remote-process-environment))
   (setenv "HISTORY" nil)
+  (setq tramp-remote-process-environment process-environment))
+@end lisp
+
+Setting the @env{ENV} environment variable instructs some shells to
+read an initialization file.  Per default, @value{tramp} has disabled
+this.  You could overwrite this behaviour by evaluating
+
+@lisp
+(let ((process-environment tramp-remote-process-environment))
+  (setenv "ENV" "$HOME/.profile")
   (setq tramp-remote-process-environment process-environment))
 @end lisp
 

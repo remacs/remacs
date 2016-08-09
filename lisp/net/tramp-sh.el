@@ -546,7 +546,7 @@ the list by the special value `tramp-own-remote-path'."
 
 ;;;###tramp-autoload
 (defcustom tramp-remote-process-environment
-  `("TMOUT=0" "LC_CTYPE=''"
+  `("ENV=''" "TMOUT=0" "LC_CTYPE=''"
     ,(format "TERM=%s" tramp-terminal-type)
     ,(format "INSIDE_EMACS='%s,tramp:%s'" emacs-version tramp-version)
     "CDPATH=" "HISTORY=" "MAIL=" "MAILCHECK=" "MAILPATH=" "PAGER=cat"
@@ -560,7 +560,7 @@ which might have been set in the init files like ~/.profile.
 Special handling is applied to the PATH environment, which should
 not be set here. Instead, it should be set via `tramp-remote-path'."
   :group 'tramp
-  :version "24.4"
+  :version "25.2"
   :type '(repeat string))
 
 ;;;###tramp-autoload
@@ -3935,7 +3935,8 @@ file exists and nonzero exit status otherwise."
       ;; $HISTFILE is set according to `tramp-histfile-override'.
       (tramp-send-command
        vec (format
-	    "exec env ENV='' %s PROMPT_COMMAND='' PS1=%s PS2='' PS3='' %s %s"
+	    "exec env ENV=%s %s PROMPT_COMMAND='' PS1=%s PS2='' PS3='' %s %s"
+            (or (getenv-internal "ENV" tramp-remote-process-environment) "")
 	    (if (stringp tramp-histfile-override)
 		(format "HISTFILE=%s"
 			(tramp-shell-quote-argument tramp-histfile-override))
@@ -4153,16 +4154,15 @@ process to set up.  VEC specifies the connection."
   ;; Set the environment.
   (tramp-message vec 5 "Setting default environment")
 
-  (let ((env (append `(,(tramp-get-remote-locale vec))
-		     (copy-sequence tramp-remote-process-environment)))
-	unset vars item)
-    (while env
-      (setq item (split-string (car env) "=" 'omit))
+  (let (unset vars)
+    (dolist (item (reverse
+		   (append `(,(tramp-get-remote-locale vec))
+			   (copy-sequence tramp-remote-process-environment))))
+      (setq item (split-string item "=" 'omit))
       (setcdr item (mapconcat 'identity (cdr item) "="))
       (if (and (stringp (cdr item)) (not (string-equal (cdr item) "")))
 	  (push (format "%s %s" (car item) (cdr item)) vars)
-	(push (car item) unset))
-      (setq env (cdr env)))
+	(push (car item) unset)))
     (when vars
       (tramp-send-command
        vec

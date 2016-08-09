@@ -358,6 +358,10 @@ different group ID.
 *** New connection method "gdrive", which allows to access Google
 Drive onsite repositories.
 
++++
+Setting the "ENV" environment variable in `tramp-remote-process-environment'
+enables reading of shell initialization files.
+
 ---
 ** 'auto-revert-use-notify' is set back to t in 'global-auto-revert-mode'.
 
