@@ -892,24 +892,31 @@ Note that the style variables are always made local to the buffer."
   ;; This function is in the C/C++/ObjC values of
   ;; `c-get-state-before-change-functions' and is called exclusively as a
   ;; before change function.
-  (c-save-buffer-state ()
+  (c-save-buffer-state (m-beg ss-found)
     (goto-char c-new-BEG)
     (while (and (< (point) beg)
-		(search-forward-regexp c-anchored-cpp-prefix beg t))
+		(search-forward-regexp c-anchored-cpp-prefix beg 'bound))
       (goto-char (match-beginning 1))
-      (let ((m-beg (point)))
-	(c-end-of-macro)
-	(c-clear-char-property-with-value
-	 m-beg (min (point) beg) 'syntax-table '(1))))
+      (setq m-beg (point))
+      (c-end-of-macro)
+      (c-clear-char-property-with-value m-beg (point) 'syntax-table '(1)))
 
-    (goto-char end)
-    (while (and (< (point) c-new-END)
-		(search-forward-regexp c-anchored-cpp-prefix c-new-END t))
+    (while (and (< (point) end)
+		(setq ss-found
+		      (search-forward-regexp c-anchored-cpp-prefix end 'bound)))
       (goto-char (match-beginning 1))
-      (let ((m-beg (point)))
-	(c-end-of-macro)
-	(c-clear-char-property-with-value
-	 m-beg (min (point) c-new-END) 'syntax-table '(1))))))
+      (setq m-beg (point))
+      (c-end-of-macro))
+    (if (and ss-found (> (point) end))
+	(c-clear-char-property-with-value m-beg (point) 'syntax-table '(1)))
+
+    (while (and (< (point) c-new-END)
+		(search-forward-regexp c-anchored-cpp-prefix c-new-END 'bound))
+      (goto-char (match-beginning 1))
+      (setq m-beg (point))
+      (c-end-of-macro)
+      (c-clear-char-property-with-value
+       m-beg (point) 'syntax-table '(1)))))
 
 (defun c-extend-region-for-CPP (beg end)
   ;; Adjust `c-new-BEG', `c-new-END' respectively to the beginning and end of
