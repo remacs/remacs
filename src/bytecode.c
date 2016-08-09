@@ -53,7 +53,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef BYTE_CODE_METER
 
-#define METER_2(code1, code2) AREF (AREF (Vbyte_code_meter, code1), code2)
+#define METER_2(code1, code2) \
+  (*aref_addr (AREF (Vbyte_code_meter, code1), code2))
 #define METER_1(code) METER_2 (0, code)
 
 #define METER_CODE(last_code, this_code)				\
