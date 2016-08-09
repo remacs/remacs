@@ -32,13 +32,14 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 # pragma GCC diagnostic ignored "-Wclobbered"
 #endif
 
-/*
- * define BYTE_CODE_SAFE to enable some minor sanity checking (useful for
- * debugging the byte compiler...)
- *
- * define BYTE_CODE_METER to enable generation of a byte-op usage histogram.
- */
-/* #define BYTE_CODE_SAFE */
+/* Define BYTE_CODE_SAFE true to enable some minor sanity checking,
+   useful for debugging the byte compiler.  It defaults to false.  */
+
+#ifndef BYTE_CODE_SAFE
+# define BYTE_CODE_SAFE false
+#endif
+
+/* Define BYTE_CODE_METER to generate a byte-op usage histogram.  */
 /* #define BYTE_CODE_METER */
 
 /* If BYTE_CODE_THREADED is defined, then the interpreter will be
@@ -46,7 +47,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    as currently implemented, is incompatible with BYTE_CODE_SAFE and
    BYTE_CODE_METER.  */
 #if (defined __GNUC__ && !defined __STRICT_ANSI__ \
-     && !defined BYTE_CODE_SAFE && !defined BYTE_CODE_METER)
+     && !BYTE_CODE_SAFE && !defined BYTE_CODE_METER)
 #define BYTE_CODE_THREADED
 #endif
 
@@ -274,7 +275,7 @@ enum byte_code_op
     BYTE_CODES
 #undef DEFINE
 
-#ifdef BYTE_CODE_SAFE
+#if BYTE_CODE_SAFE
     Bscan_buffer = 0153, /* No longer generated as of v18.  */
     Bset_mark = 0163, /* this loser is no longer generated as of v18 */
 #endif
@@ -288,12 +289,6 @@ struct byte_stack
   /* Program counter.  This points into the byte_string below
      and is relocated when that string is relocated.  */
   const unsigned char *pc;
-
-  /* bottom of stack.  The bottom points to an area of memory
-     allocated with alloca in Fbyte_code.  */
-#ifdef BYTE_CODE_SAFE
-  Lisp_Object *bottom;
-#endif
 
   /* The string containing the byte-code, and its current address.
      Storing this here protects it from GC.  */
@@ -334,7 +329,7 @@ relocate_byte_stack (void)
 
 /* Fetch the next byte from the bytecode stream.  */
 
-#ifdef BYTE_CODE_SAFE
+#if BYTE_CODE_SAFE
 #define FETCH (eassert (stack.byte_string_start == SDATA (stack.byte_string)), *stack.pc++)
 #else
 #define FETCH *stack.pc++
@@ -365,16 +360,8 @@ relocate_byte_stack (void)
 
 /* Check for jumping out of range.  */
 
-#ifdef BYTE_CODE_SAFE
-
 #define CHECK_RANGE(ARG) \
-  if (ARG >= bytestr_length) emacs_abort ()
-
-#else /* not BYTE_CODE_SAFE */
-
-#define CHECK_RANGE(ARG)
-
-#endif /* not BYTE_CODE_SAFE */
+  (BYTE_CODE_SAFE && bytestr_length <= (ARG) ? emacs_abort () : (void) 0)
 
 /* A version of the QUIT macro which makes sure that the stack top is
    set before signaling `quit'.  */
@@ -431,11 +418,8 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
   int op;
   /* Lisp_Object v1, v2; */
   Lisp_Object *vectorp;
-#ifdef BYTE_CODE_SAFE
   ptrdiff_t const_length;
-  Lisp_Object *stacke;
   ptrdiff_t bytestr_length;
-#endif
   struct byte_stack stack;
   Lisp_Object *top;
   Lisp_Object result;
@@ -445,9 +429,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
   CHECK_VECTOR (vector);
   CHECK_NATNUM (maxdepth);
 
-#ifdef BYTE_CODE_SAFE
   const_length = ASIZE (vector);
-#endif
 
   if (STRING_MULTIBYTE (bytestr))
     /* BYTESTR must have been produced by Emacs 20.2 or the earlier
@@ -457,25 +439,19 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
        convert them back to the originally intended unibyte form.  */
     bytestr = Fstring_as_unibyte (bytestr);
 
-#ifdef BYTE_CODE_SAFE
   bytestr_length = SBYTES (bytestr);
-#endif
   vectorp = XVECTOR (vector)->contents;
 
   stack.byte_string = bytestr;
   stack.pc = stack.byte_string_start = SDATA (bytestr);
   if (MAX_ALLOCA / word_size <= XFASTINT (maxdepth))
     memory_full (SIZE_MAX);
-  top = alloca ((XFASTINT (maxdepth) + 1) * sizeof *top);
-#ifdef BYTE_CODE_SAFE
-  stack.bottom = top + 1;
-#endif
+  int stack_items = XFASTINT (maxdepth) + 1;
+  Lisp_Object *stack_base = alloca (stack_items * sizeof *top);
+  Lisp_Object *stack_lim = stack_base + stack_items;
+  top = stack_base;
   stack.next = byte_stack_list;
   byte_stack_list = &stack;
-
-#ifdef BYTE_CODE_SAFE
-  stacke = stack.bottom - 1 + XFASTINT (maxdepth);
-#endif
 
   if (!NILP (args_template))
     {
@@ -501,12 +477,8 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 
   while (1)
     {
-#ifdef BYTE_CODE_SAFE
-      if (top > stacke)
+      if (BYTE_CODE_SAFE && ! (stack_base <= top && top < stack_lim))
 	emacs_abort ();
-      else if (top < stack.bottom - 1)
-	emacs_abort ();
-#endif
 
 #ifdef BYTE_CODE_METER
       prev_op = this_op;
@@ -1643,7 +1615,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  TOP = INTEGERP (TOP) ? Qt : Qnil;
 	  NEXT;
 
-#ifdef BYTE_CODE_SAFE
+#if BYTE_CODE_SAFE
 	  /* These are intentionally written using 'case' syntax,
 	     because they are incompatible with the threaded
 	     interpreter.  */
@@ -1713,19 +1685,10 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 
 	CASE_DEFAULT
 	CASE (Bconstant):
-#ifdef BYTE_CODE_SAFE
-	  if (op < Bconstant)
-	    {
-	      emacs_abort ();
-	    }
-	  if ((op -= Bconstant) >= const_length)
-	    {
-	      emacs_abort ();
-	    }
-	  PUSH (vectorp[op]);
-#else
+	  if (BYTE_CODE_SAFE
+	      && ! (Bconstant <= op && op < Bconstant + const_length))
+	    emacs_abort ();
 	  PUSH (vectorp[op - Bconstant]);
-#endif
 	  NEXT;
 	}
     }
