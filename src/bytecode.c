@@ -368,6 +368,9 @@ relocate_byte_stack (void)
 
 #define BYTE_CODE_QUIT					\
   do {							\
+    if (quitcounter++)					\
+      break;						\
+    maybe_gc ();					\
     if (!NILP (Vquit_flag) && NILP (Vinhibit_quit))	\
       {							\
         Lisp_Object flag = Vquit_flag;			\
@@ -446,6 +449,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
   stack.pc = stack.byte_string_start = SDATA (bytestr);
   if (MAX_ALLOCA / word_size <= XFASTINT (maxdepth))
     memory_full (SIZE_MAX);
+  unsigned char quitcounter = 0;
   int stack_items = XFASTINT (maxdepth) + 1;
   Lisp_Object *stack_base = alloca (stack_items * sizeof *top);
   Lisp_Object *stack_lim = stack_base + stack_items;
@@ -601,7 +605,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Bgotoifnil):
 	  {
 	    Lisp_Object v1;
-	    maybe_gc ();
 	    op = FETCH2;
 	    v1 = POP;
 	    if (NILP (v1))
@@ -788,7 +791,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Bgoto):
-	  maybe_gc ();
 	  BYTE_CODE_QUIT;
 	  op = FETCH2;    /* pc = FETCH2 loses since FETCH2 contains pc++ */
 	  CHECK_RANGE (op);
@@ -798,7 +800,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Bgotoifnonnil):
 	  {
 	    Lisp_Object v1;
-	    maybe_gc ();
 	    op = FETCH2;
 	    v1 = POP;
 	    if (!NILP (v1))
@@ -811,7 +812,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  }
 
 	CASE (Bgotoifnilelsepop):
-	  maybe_gc ();
 	  op = FETCH2;
 	  if (NILP (TOP))
 	    {
@@ -823,7 +823,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Bgotoifnonnilelsepop):
-	  maybe_gc ();
 	  op = FETCH2;
 	  if (!NILP (TOP))
 	    {
@@ -835,7 +834,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (BRgoto):
-	  maybe_gc ();
 	  BYTE_CODE_QUIT;
 	  stack.pc += (int) *stack.pc - 127;
 	  NEXT;
@@ -843,7 +841,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (BRgotoifnil):
 	  {
 	    Lisp_Object v1;
-	    maybe_gc ();
 	    v1 = POP;
 	    if (NILP (v1))
 	      {
@@ -857,7 +854,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (BRgotoifnonnil):
 	  {
 	    Lisp_Object v1;
-	    maybe_gc ();
 	    v1 = POP;
 	    if (!NILP (v1))
 	      {
@@ -869,7 +865,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  }
 
 	CASE (BRgotoifnilelsepop):
-	  maybe_gc ();
 	  op = *stack.pc++;
 	  if (NILP (TOP))
 	    {
@@ -880,7 +875,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (BRgotoifnonnilelsepop):
-	  maybe_gc ();
 	  op = *stack.pc++;
 	  if (!NILP (TOP))
 	    {
