@@ -1,3 +1,4 @@
+
 ;;; ses.el -- Simple Emacs Spreadsheet  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2002-2016 Free Software Foundation, Inc.
@@ -565,6 +566,10 @@ definition."
    ((functionp printer) printer)
    ((stringp printer)
     `(lambda (x) (format ,printer x)))
+   ((stringp (car-safe printer))
+    `(lambda (x)
+       (setq ses-call-printer-return t)
+       (format ,(car printer) x)))
    (t (error "Invalid printer %S" printer))))
 
 (defun ses--local-printer (name def)
@@ -3798,7 +3803,7 @@ Use `math-format-value' as a printer for Calc objects."
   "Return ARGS reversed, with the blank elements (nil and *skip*) removed."
   (let (result)
     (dolist (cur args)
-      (unless (memq cur '(nil *skip* *error*))
+      (unless (memq cur '(nil *skip*))
 	(push cur result)))
     result))
 
