@@ -253,6 +253,32 @@ Returns a form where all lambdas don't have any free variables."
       `(internal-make-closure
         ,args ,envector ,docstring . ,body-new)))))
 
+(defun cconv--remap-llv (new-env var closedsym)
+  ;; In a case such as:
+  ;;   (let* ((fun (lambda (x) (+ x y))) (y 1)) (funcall fun 1))
+  ;; A naive lambda-lifting would return
+  ;;   (let* ((fun (lambda (y x) (+ x y))) (y 1)) (funcall fun y 1))
+  ;; Where the external `y' is mistakenly captured by the inner one.
+  ;; So when we detect that case, we rewrite it to:
+  ;;   (let* ((closed-y y) (fun (lambda (y x) (+ x y))) (y 1))
+  ;;     (funcall fun closed-y 1))
+  ;; We do that even if there's no `funcall' that uses `fun' in the scope
+  ;; where `y' is shadowed by another variable because, to treat
+  ;; this case better, we'd need to traverse the tree one more time to
+  ;; collect this data, and I think that it's not worth it.
+  (mapcar (lambda (mapping)
+            (if (not (eq (cadr mapping) 'apply-partially))
+                mapping
+              (cl-assert (eq (car mapping) (nth 2 mapping)))
+              `(,(car mapping)
+                apply-partially
+                ,(car mapping)
+                ,@(mapcar (lambda (arg)
+                            (if (eq var arg)
+                                closedsym arg))
+                          (nthcdr 3 mapping)))))
+          new-env))
+
 (defun cconv-convert (form env extend)
   ;; This function actually rewrites the tree.
   "Return FORM with all its lambdas changed so they are closed.
@@ -350,34 +376,13 @@ places where they originally did not directly appear."
                    (if (assq var new-env) (push `(,var) new-env))
                    (cconv-convert value env extend)))))
 
-           ;; The piece of code below letbinds free variables of a λ-lifted
-           ;; function if they are redefined in this let, example:
-           ;;   (let* ((fun (lambda (x) (+ x y))) (y 1)) (funcall fun 1))
-           ;; Here we can not pass y as parameter because it is redefined.
-           ;; So we add a (closed-y y) declaration.  We do that even if the
-           ;; function is not used inside this let(*).  The reason why we
-           ;; ignore this case is that we can't "look forward" to see if the
-           ;; function is called there or not.  To treat this case better we'd
-           ;; need to traverse the tree one more time to collect this data, and
-           ;; I think that it's not worth it.
-           (when (memq var new-extend)
-             (let ((closedsym
-                    (make-symbol (concat "closed-" (symbol-name var)))))
-               (setq new-env
-                     (mapcar (lambda (mapping)
-                               (if (not (eq (cadr mapping) 'apply-partially))
-                                   mapping
-                                 (cl-assert (eq (car mapping) (nth 2 mapping)))
-                                 `(,(car mapping)
-                                   apply-partially
-                                   ,(car mapping)
-                                   ,@(mapcar (lambda (arg)
-                                               (if (eq var arg)
-                                                   closedsym arg))
-                                             (nthcdr 3 mapping)))))
-                             new-env))
-               (setq new-extend (remq var new-extend))
-               (push closedsym new-extend)
+           (when (and (eq letsym 'let*) (memq var new-extend))
+             ;; One of the lambda-lifted vars is shadowed, so add
+             ;; a reference to the outside binding and arrange to use
+             ;; that reference.
+             (let ((closedsym (make-symbol (format "closed-%s" var))))
+               (setq new-env (cconv--remap-llv new-env var closedsym))
+               (setq new-extend (cons closedsym (remq var new-extend)))
                (push `(,closedsym ,var) binders-new)))
 
            ;; We push the element after redefined free variables are
@@ -389,6 +394,21 @@ places where they originally did not directly appear."
              (setq env new-env)
              (setq extend new-extend))
            ))                           ; end of dolist over binders
+
+       (when (not (eq letsym 'let*))
+         ;; We can't do the cconv--remap-llv at the same place for let and
+         ;; let* because in the case of `let', the shadowing may occur
+         ;; before we know that the var will be in `new-extend' (bug#24171).
+         (dolist (binder binders-new)
+           (when (memq (car-safe binder) new-extend)
+             ;; One of the lambda-lifted vars is shadowed, so add
+             ;; a reference to the outside binding and arrange to use
+             ;; that reference.
+             (let* ((var (car-safe binder))
+                    (closedsym (make-symbol (format "closed-%s" var))))
+               (setq new-env (cconv--remap-llv new-env var closedsym))
+               (setq new-extend (cons closedsym (remq var new-extend)))
+               (push `(,closedsym ,var) binders-new)))))
 
        `(,letsym ,(nreverse binders-new)
                  . ,(mapcar (lambda (form)
