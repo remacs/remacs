@@ -492,10 +492,15 @@ preferably use the `c-mode-menu' language constant directly."
 (defvar c-just-done-before-change nil)
 (make-variable-buffer-local 'c-just-done-before-change)
 ;; This variable is set to t by `c-before-change' and to nil by
-;; `c-after-change'.  It is used to detect a spurious invocation of
-;; `before-change-functions' directly following on from a correct one.  This
-;; happens in some Emacsen, for example when `basic-save-buffer' does (insert
-;; ?\n) when `require-final-newline' is non-nil.
+;; `c-after-change'.  It is used for two purposes: (i) to detect a spurious
+;; invocation of `before-change-functions' directly following on from a
+;; correct one.  This happens in some Emacsen, for example when
+;; `basic-save-buffer' does (insert ?\n) when `require-final-newline' is
+;; non-nil; (ii) to detect when Emacs fails to invoke
+;; `before-change-functions'.  This can happend when reverting a buffer - see
+;; bug #24094.  It seems these failures happen only in GNU Emacs; XEmacs
+;; seems to maintain the strict alternation of calls to
+;; `before-change-functions' and `after-change-functions'.
 
 (defun c-basic-common-init (mode default-style)
   "Do the necessary initialization for the syntax handling routines
@@ -1250,6 +1255,18 @@ Note that the style variables are always made local to the buffer."
   ;;
   ;; This calls the language variable c-before-font-lock-functions, if non nil.
   ;; This typically sets `syntax-table' properties.
+
+  ;; We can sometimes get two consecutive calls to `after-change-functions'
+  ;; without an intervening call to `before-change-functions' when reverting
+  ;; the buffer (see bug #24094).  Whatever the cause, assume that the entire
+  ;; buffer has changed.
+  (when (not c-just-done-before-change)
+    (save-restriction
+      (widen)
+      (c-before-change (point-min) (point-max))
+      (setq beg (point-min)
+	    end (point-max)
+	    old-len (- end beg))))
 
   ;; (c-new-BEG c-new-END) will be the region to fontify.  It may become
   ;; larger than (beg end).
