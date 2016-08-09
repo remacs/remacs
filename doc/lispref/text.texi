@@ -4676,10 +4676,10 @@ group you start for any given buffer should be the last one finished.
 @cindex change hooks
 @cindex hooks for text changes
 
-  These hook variables let you arrange to take notice of all changes in
-all buffers (or in a particular buffer, if you make them buffer-local).
-See also @ref{Special Properties}, for how to detect changes to specific
-parts of the text.
+  These hook variables let you arrange to take notice of changes in
+buffers (or in a particular buffer, if you make them buffer-local).
+See also @ref{Special Properties}, for how to detect changes to
+specific parts of the text.
 
   The functions you use in these hooks should save and restore the match
 data if they do anything that uses regular expressions; otherwise, they
@@ -4687,8 +4687,8 @@ will interfere in bizarre ways with the editing operations that call
 them.
 
 @defvar before-change-functions
-This variable holds a list of functions to call before any buffer
-modification.  Each function gets two arguments, the beginning and end
+This variable holds a list of functions to call before most buffer
+modifications.  Each function gets two arguments, the beginning and end
 of the region that is about to change, represented as integers.  The
 buffer that is about to change is always the current buffer.
 @end defvar
@@ -4706,8 +4706,15 @@ for the changed text, its length is simply the difference between the
 first two arguments.
 @end defvar
 
-  Output of messages into the @file{*Messages*} buffer does not
-call these functions.
+  Output of messages into the @file{*Messages*} buffer does not call
+these functions, and neither do certain internal buffer changes, such
+as changes in buffers created by Emacs internally for certain jobs,
+that should not be visible to Lisp programs.
+
+  Do @emph{not} expect the before-change hooks and the after-change
+hooks be called in balanced pairs around each buffer change.  These
+hooks are provided on the assumption that Lisp programs will use
+either before- or the after-change hooks, but not both.
 
 @defmac combine-after-change-calls body@dots{}
 The macro executes @var{body} normally, but arranges to call the
