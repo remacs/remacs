@@ -3996,7 +3996,8 @@ ALIST is of the form ((FROM . TO) ...)."
 
 (defun tramp-handle-make-nearby-temp-file (prefix &optional dir-flag suffix)
   "Like `make-nearby-temp-file' for Tramp files."
-  (let ((temporary-file-directory (temporary-file-directory)))
+  (let ((temporary-file-directory
+	 (tramp-compat-temporary-file-directory-function)))
     (make-temp-file prefix dir-flag suffix)))
 
 ;;; Compatibility functions section:

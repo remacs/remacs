@@ -1934,9 +1934,12 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
       (ignore-errors (delete-file tmp-name1))
       (ignore-errors (delete-directory tmp-name2 'recursive)))))
 
+;; The functions have been introduced in Emacs 25.2.
 (ert-deftest tramp-test32-make-nearby-temp-file ()
   "Check `make-nearby-temp-file' and `temporary-file-directory'."
   (skip-unless (tramp--test-enabled))
+  (skip-unless
+   (and (fboundp 'make-nearby-temp-file) (fboundp 'temporary-file-directory)))
 
   (let ((default-directory tramp-test-temporary-file-directory)
 	tmp-file)

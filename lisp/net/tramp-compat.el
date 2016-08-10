@@ -118,6 +118,12 @@ Add the extension of F, if existing."
 	 (extension (file-name-extension f t)))
     (make-temp-file prefix dir-flag extension)))
 
+;; `temporary-file-directory' as function is introduced with Emacs 25.2.
+(defalias 'tramp-compat-temporary-file-directory-function
+  (if (fboundp 'temporary-file-directory)
+      'temporary-file-directory
+    'tramp-handle-temporary-file-directory))
+
 ;; PRESERVE-EXTENDED-ATTRIBUTES has been introduced with Emacs 24.1
 ;; (as PRESERVE-SELINUX-CONTEXT), and renamed in Emacs 24.3.
 (defun tramp-compat-copy-file
