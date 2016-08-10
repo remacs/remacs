@@ -720,8 +720,9 @@ make_process (Lisp_Object name)
     p->open_fd[i] = -1;
 
 #ifdef HAVE_GNUTLS
-  p->gnutls_initstage = GNUTLS_STAGE_EMPTY;
-  p->gnutls_boot_parameters = Qnil;
+  verify (GNUTLS_STAGE_EMPTY == 0);
+  eassert (p->gnutls_initstage == GNUTLS_STAGE_EMPTY);
+  eassert (NILP (p->gnutls_boot_parameters));
 #endif
 
   /* If name is already in use, modify it until it is unused.  */
@@ -1514,7 +1515,7 @@ usage: (make-process &rest ARGS)  */)
   record_unwind_protect (start_process_unwind, proc);
 
   pset_childp (XPROCESS (proc), Qt);
-  pset_plist (XPROCESS (proc), Qnil);
+  eassert (NILP (XPROCESS (proc)->plist));
   pset_type (XPROCESS (proc), Qreal);
   pset_buffer (XPROCESS (proc), buffer);
   pset_sentinel (XPROCESS (proc), Fplist_get (contact, QCsentinel));
@@ -1545,8 +1546,9 @@ usage: (make-process &rest ARGS)  */)
 
 #ifdef HAVE_GNUTLS
   /* AKA GNUTLS_INITSTAGE(proc).  */
-  XPROCESS (proc)->gnutls_initstage = GNUTLS_STAGE_EMPTY;
-  pset_gnutls_cred_type (XPROCESS (proc), Qnil);
+  verify (GNUTLS_STAGE_EMPTY == 0);
+  eassert (XPROCESS (proc)->gnutls_initstage == GNUTLS_STAGE_EMPTY);
+  eassert (NILP (XPROCESS (proc)->gnutls_cred_type));
 #endif
 
   XPROCESS (proc)->adaptive_read_buffering
@@ -1636,7 +1638,7 @@ usage: (make-process &rest ARGS)  */)
 
 
   pset_decoding_buf (XPROCESS (proc), empty_unibyte_string);
-  XPROCESS (proc)->decoding_carryover = 0;
+  eassert (XPROCESS (proc)->decoding_carryover == 0);
   pset_encoding_buf (XPROCESS (proc), empty_unibyte_string);
 
   XPROCESS (proc)->inherit_coding_system_flag
@@ -2186,7 +2188,7 @@ usage:  (make-pipe-process &rest ARGS)  */)
   pset_type (p, Qpipe);
   pset_sentinel (p, Fplist_get (contact, QCsentinel));
   pset_filter (p, Fplist_get (contact, QCfilter));
-  pset_log (p, Qnil);
+  eassert (NILP (p->log));
   if (tem = Fplist_get (contact, QCnoquery), !NILP (tem))
     p->kill_without_query = 1;
   if (tem = Fplist_get (contact, QCstop), !NILP (tem))
@@ -2925,7 +2927,7 @@ usage:  (make-serial-process &rest ARGS)  */)
   pset_type (p, Qserial);
   pset_sentinel (p, Fplist_get (contact, QCsentinel));
   pset_filter (p, Fplist_get (contact, QCfilter));
-  pset_log (p, Qnil);
+  eassert (NILP (p->log));
   if (tem = Fplist_get (contact, QCnoquery), !NILP (tem))
     p->kill_without_query = 1;
   if (tem = Fplist_get (contact, QCstop), !NILP (tem))
@@ -2979,7 +2981,7 @@ usage:  (make-serial-process &rest ARGS)  */)
 
   setup_process_coding_systems (proc);
   pset_decoding_buf (p, empty_unibyte_string);
-  p->decoding_carryover = 0;
+  eassert (p->decoding_carryover == 0);
   pset_encoding_buf (p, empty_unibyte_string);
   p->inherit_coding_system_flag
     = !(!NILP (tem) || NILP (buffer) || !inherit_process_coding_system);
@@ -3937,14 +3939,14 @@ usage: (make-network-process &rest ARGS)  */)
     p->kill_without_query = 1;
   if ((tem = Fplist_get (contact, QCstop), !NILP (tem)))
     pset_command (p, Qt);
-  p->pid = 0;
+  eassert (p->pid == 0);
   p->backlog = 5;
-  p->is_non_blocking_client = false;
-  p->is_server = false;
+  eassert (! p->is_non_blocking_client);
+  eassert (! p->is_server);
   p->port = port;
   p->socktype = socktype;
 #ifdef HAVE_GETADDRINFO_A
-  p->dns_request = NULL;
+  eassert (! p->dns_request);
 #endif
 #ifdef HAVE_GNUTLS
   tem = Fplist_get (contact, QCtls_parameters);
@@ -4614,8 +4616,8 @@ server_accept_connection (Lisp_Object server, int channel)
   pset_buffer (p, buffer);
   pset_sentinel (p, ps->sentinel);
   pset_filter (p, ps->filter);
-  pset_command (p, Qnil);
-  p->pid = 0;
+  eassert (NILP (p->command));
+  eassert (p->pid == 0);
 
   /* Discard the unwind protect for closing S.  */
   specpdl_ptr = specpdl + count;
@@ -4645,7 +4647,7 @@ server_accept_connection (Lisp_Object server, int channel)
   setup_process_coding_systems (proc);
 
   pset_decoding_buf (p, empty_unibyte_string);
-  p->decoding_carryover = 0;
+  eassert (p->decoding_carryover == 0);
   pset_encoding_buf (p, empty_unibyte_string);
 
   p->inherit_coding_system_flag
