@@ -568,11 +568,11 @@ or
 			    "\
 ^[ \t]*\\(?:\\(?:MANDATORY_\\|OPTIONAL_\\)?MANPATH[ \t]+\\(\\S-+\\)\\|\
 MANPATH_MAP[ \t]+\\(\\S-+\\)[ \t]+\\(\\S-+\\)\\)" nil t)
-		      (add-to-list 'manpath
-				   (if (match-beginning 1)
-				       (match-string 1)
-				     (cons (match-string 2)
-					   (match-string 3)))))
+                      (cl-pushnew (if (match-beginning 1)
+                                      (match-string 1)
+                                    (cons (match-string 2)
+                                          (match-string 3)))
+                                  manpath))
 		    manpath))
 		 ))
       (setq path (cdr path)))
@@ -623,11 +623,12 @@ of `woman-expand-locale' on `woman-locale' added, where they exist."
                                                (if (consp elem)
                                                    (cdr elem)
                                                  elem))))))
-            (add-to-list 'lst (if (consp elem)
-                                  (cons (car elem) dir)
-                                dir))))
+            (cl-pushnew (if (consp elem)
+                            (cons (car elem) dir)
+                          dir)
+                        lst)))
         ;; Non-locale-specific has lowest precedence.
-        (add-to-list 'lst elem)))))
+        (cl-pushnew elem lst)))))
 
 (defcustom woman-manpath
   ;; Locales could also be added in woman-expand-directory-path.
@@ -1021,8 +1022,7 @@ Under MS-Windows, the default is
 
 ;;; Internal variables:
 
-(defconst woman-justify-list
-  '(left right center full)
+(defconst woman-justify-styles [left right center full]
   "Justify styles for `fill-region-as-paragraph'.")
 (defconst woman-adjust-left 0		; == adjust off, noadjust
   "Adjustment indicator `l' -- adjust left margin only.")
@@ -1037,8 +1037,7 @@ Under MS-Windows, the default is
   "Current adjustment number-register value.")
 (defvar woman-adjust-previous woman-adjust
   "Previous adjustment number-register value.")
-(defvar woman-justify
-  (nth woman-adjust woman-justify-list)	; use vector?
+(defvar woman-justify (aref woman-justify-styles woman-adjust)
   "Current justification style for `fill-region-as-paragraph'.")
 (defvar woman-justify-previous woman-justify
   "Previous justification style for `fill-region-as-paragraph'.")
@@ -1198,7 +1197,7 @@ Called both to generate and to check the cache!"
 		(setq path
 		      (split-string (getenv "PATH") path-separator t)))
 	      (setq dir (and (member (car dir) path) (cdr dir))))
-	    (when dir (add-to-list 'lst (substitute-in-file-name dir)))))
+	    (when dir (cl-pushnew (substitute-in-file-name dir) lst))))
 	(mapcar 'substitute-in-file-name woman-path)))
 
 (defun woman-read-directory-cache ()
@@ -2237,7 +2236,7 @@ Currently set only from \\='\\\" t in the first line of the source file.")
 	  woman-RS-left-margin nil
 	  woman-RS-prevailing-indent nil
 	  woman-adjust woman-adjust-both
-	  woman-justify (nth woman-adjust woman-justify-list)
+	  woman-justify (aref woman-justify-styles woman-adjust)
 	  woman-nofill nil)
 
     (setq woman-if-conditions-true
@@ -4032,7 +4031,7 @@ Format paragraphs upto TO.  (Breaks, but should not.)"
 	      ((memq (following-char) '(?b ?n)) woman-adjust-both)
 	      (t (woman-get-numeric-arg))
 	      )
-	woman-justify (nth woman-adjust woman-justify-list))
+	woman-justify (aref woman-justify-styles woman-adjust))
   (woman-delete-line 1)			; ignore any remaining arguments
   (woman2-format-paragraphs to))
 
@@ -4042,7 +4041,7 @@ Format paragraphs upto TO.  (Breaks, but should not.)"
   (setq woman-adjust-previous woman-adjust
 	woman-justify-previous woman-justify
 	woman-adjust woman-adjust-left	; fill but do not adjust
-	woman-justify (nth woman-adjust woman-justify-list))
+	woman-justify (aref woman-justify-styles woman-adjust))
   (woman-delete-line 1)			; ignore any arguments
   (woman2-format-paragraphs to))
 
