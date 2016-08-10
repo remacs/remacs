@@ -345,7 +345,8 @@ This variable is buffer-local."
    (regexp-opt
     '("Enter" "enter" "Enter same" "enter same" "Enter the" "enter the"
       "Old" "old" "New" "new" "'s" "login"
-      "Kerberos" "CVS" "UNIX" " SMB" "LDAP" "[sudo]" "Repeat" "Bad" "Retype")
+      "Kerberos" "CVS" "UNIX" " SMB" "LDAP" "PEM"
+      "[sudo]" "Repeat" "Bad" "Retype")
     t)
    " +\\)"
    "\\(?:" (regexp-opt password-word-equivalents) "\\|Response\\)"
