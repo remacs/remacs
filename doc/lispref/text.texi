@@ -4687,18 +4687,20 @@ will interfere in bizarre ways with the editing operations that call
 them.
 
 @defvar before-change-functions
-This variable holds a list of functions to call before most buffer
-modifications.  Each function gets two arguments, the beginning and end
-of the region that is about to change, represented as integers.  The
-buffer that is about to change is always the current buffer.
+This variable holds a list of functions to call when Emacs is about to
+modify a buffer.  Each function gets two arguments, the beginning and
+end of the region that is about to change, represented as integers.
+The buffer that is about to change is always the current buffer when
+the function is called.
 @end defvar
 
 @defvar after-change-functions
-This variable holds a list of functions to call after any buffer
-modification.  Each function receives three arguments: the beginning
-and end of the region just changed, and the length of the text that
-existed before the change.  All three arguments are integers.  The
-buffer that has been changed is always the current buffer.
+This variable holds a list of functions to call after Emacs modifies a
+buffer.  Each function receives three arguments: the beginning and end
+of the region just changed, and the length of the text that existed
+before the change.  All three arguments are integers.  The buffer that
+has been changed is always the current buffer when the function is
+called.
 
 The length of the old text is the difference between the buffer
 positions before and after that text as it was before the change.  As
@@ -4712,9 +4714,13 @@ as changes in buffers created by Emacs internally for certain jobs,
 that should not be visible to Lisp programs.
 
   Do @emph{not} expect the before-change hooks and the after-change
-hooks be called in balanced pairs around each buffer change.  These
-hooks are provided on the assumption that Lisp programs will use
-either before- or the after-change hooks, but not both.
+hooks be called in balanced pairs around each buffer change.  Also
+don't expect the before-change hooks to be called for every chunk of
+text Emacs is about to delete.  These hooks are provided on the
+assumption that Lisp programs will use either before- or the
+after-change hooks, but not both, and the boundaries of the region
+where the changes happen might include more than just the actual
+changed text, or even lump together several changes done piecemeal.
 
 @defmac combine-after-change-calls body@dots{}
 The macro executes @var{body} normally, but arranges to call the
