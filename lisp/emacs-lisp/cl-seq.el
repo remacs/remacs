@@ -347,7 +347,8 @@ This is a destructive function; it reuses the storage of SEQ whenever possible.
 (defun cl--delete-duplicates (cl-seq cl-keys cl-copy)
   (if (listp cl-seq)
       (cl--parsing-keywords
-          (:test :test-not :key (:start 0) :end :from-end)
+          ;; We need to parse :if, otherwise `cl-if' is unbound.
+          (:test :test-not :key (:start 0) :end :from-end :if)
 	  ()
 	(if cl-from-end
 	    (let ((cl-p (nthcdr cl-start cl-seq)) cl-i)
