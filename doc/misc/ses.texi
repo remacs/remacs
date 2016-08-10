@@ -188,8 +188,8 @@ the end-points, e.g.:
 @emph{list} of values.  This allows for more complex possibilities.)
 
 Alternatively you can use the @code{!} modifier of @code{ses-range} to
-remove blank cells which allows to use @code{+} instead of
-@code{ses+}:
+remove blank cells from the returned list, which allows to use
+@code{+} instead of @code{ses+}:
 
 @lisp
 (apply '+ (ses-range A2 A5 !))
@@ -1020,7 +1020,8 @@ this to undo the effect of @kbd{t}.
 @end table
 
 When a printer function signals an error, the fallback printer
-@samp{"%S"} is substituted.  This is useful when your column printer
+@findex ses-prin1
+@code{ses-prin1} is substituted.  This is useful when your column printer
 is numeric-only and you use a string as a cell value.  Note that the
 standard default printer is @samp{"%.7g"} which is numeric-only, so cells
 that are empty of contain strings will use the fallback printer.
