@@ -33,6 +33,9 @@ enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP};
 
 /* State for casing individual characters.  */
 struct casing_context {
+  /* A char-table with title-case character mappings or nil.  Non-nil implies
+     flag is CASE_CAPITALIZE or CASE_CAPITALIZE_UP.  */
+  Lisp_Object titlecase_char_table;
   /* User-requested action. */
   enum case_action flag;
   /* If true, function operates on a buffer as opposed to a string or character.
@@ -53,6 +56,8 @@ prepare_casing_context (struct casing_context *ctx,
   ctx->flag = flag;
   ctx->inbuffer = inbuffer;
   ctx->inword = flag == CASE_DOWN;
+  ctx->titlecase_char_table = (int)flag < (int)CASE_CAPITALIZE ? Qnil :
+    uniprop_table (intern_c_string ("titlecase"));
 
   /* If the case table is flagged as modified, rescan it.  */
   if (NILP (XCHAR_TABLE (BVAR (current_buffer, downcase_table))->extras[1]))
@@ -67,10 +72,16 @@ prepare_casing_context (struct casing_context *ctx,
 static int
 case_character (struct casing_context *ctx, int ch)
 {
+  Lisp_Object prop;
+
   if (ctx->inword)
     ch = ctx->flag == CASE_CAPITALIZE_UP ? ch : downcase (ch);
+  else if (!NILP (ctx->titlecase_char_table) &&
+	   CHARACTERP (prop = CHAR_TABLE_REF (ctx->titlecase_char_table, ch)))
+    ch = XFASTINT (prop);
   else
     ch = upcase(ch);
+
   if ((int) ctx->flag >= (int) CASE_CAPITALIZE)
     ctx->inword = SYNTAX (ch) == Sword &&
       (!ctx->inbuffer || ctx->inword || !syntax_prefix_flag_p (ch));
@@ -198,8 +209,8 @@ The argument object is not altered--the value is a copy.  */)
 
 DEFUN ("capitalize", Fcapitalize, Scapitalize, 1, 1, 0,
        doc: /* Convert argument to capitalized form and return that.
-This means that each word's first character is upper case
-and the rest is lower case.
+This means that each word's first character is converted to either
+title case or upper case, and the rest to lower case.
 The argument may be a character or string.  The result has the same type.
 The argument object is not altered--the value is a copy.  */)
   (Lisp_Object obj)
@@ -211,7 +222,8 @@ The argument object is not altered--the value is a copy.  */)
 
 DEFUN ("upcase-initials", Fupcase_initials, Supcase_initials, 1, 1, 0,
        doc: /* Convert the initial of each word in the argument to upper case.
-Do not change the other letters of each word.
+This means that each word's first character is converted to either
+title case or upper case, and the rest are left unchanged.
 The argument may be a character or string.  The result has the same type.
 The argument object is not altered--the value is a copy.  */)
   (Lisp_Object obj)
@@ -375,8 +387,8 @@ point and the mark is operated on.  */)
 
 DEFUN ("capitalize-region", Fcapitalize_region, Scapitalize_region, 2, 2, "r",
        doc: /* Convert the region to capitalized form.
-Capitalized form means each word's first character is upper case
-and the rest of it is lower case.
+This means that each word's first character is converted to either
+title case or upper case, and the rest to lower case.
 In programs, give two arguments, the starting and ending
 character positions to operate on.  */)
   (Lisp_Object beg, Lisp_Object end)
@@ -390,7 +402,8 @@ character positions to operate on.  */)
 DEFUN ("upcase-initials-region", Fupcase_initials_region,
        Supcase_initials_region, 2, 2, "r",
        doc: /* Upcase the initial of each word in the region.
-Subsequent letters of each word are not changed.
+This means that each word's first character is converted to either
+title case or upper case, and the rest are left unchanged.
 In programs, give two arguments, the starting and ending
 character positions to operate on.  */)
   (Lisp_Object beg, Lisp_Object end)

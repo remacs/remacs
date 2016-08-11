@@ -63,13 +63,9 @@
     (?Ł ?Ł ?ł ?Ł)
     (?ł ?Ł ?ł ?Ł)
 
-    ;; FIXME(bug#24603): Commented ones are what we want.
-    ;;(?Ǆ ?Ǆ ?ǆ ?ǅ)
-    (?Ǆ ?Ǆ ?ǆ ?Ǆ)
-    ;;(?ǅ ?Ǆ ?ǆ ?ǅ)
-    (?ǅ ?Ǆ ?ǆ ?Ǆ)
-    ;;(?ǆ ?Ǆ ?ǆ ?ǅ)
-    (?ǆ ?Ǆ ?ǆ ?Ǆ)
+    (?Ǆ ?Ǆ ?ǆ ?ǅ)
+    (?ǅ ?Ǆ ?ǆ ?ǅ)
+    (?ǆ ?Ǆ ?ǆ ?ǅ)
 
     (?Σ ?Σ ?σ ?Σ)
     (?σ ?Σ ?σ ?Σ)
@@ -186,19 +182,19 @@
       ;; input     upper     lower    capitalize up-initials
       '(("Foo baR" "FOO BAR" "foo bar" "Foo Bar" "Foo BaR")
         ("Ⅷ ⅷ" "Ⅷ Ⅷ" "ⅷ ⅷ" "Ⅷ Ⅷ" "Ⅷ Ⅷ")
+        ;; "ǅUNGLA" is an unfortunate result but it’s really best we can
+        ;; do while still being consistent.  Hopefully, users only ever
+        ;; use upcase-initials on camelCase identifiers not real words.
+        ("ǄUNGLA" "ǄUNGLA" "ǆungla" "ǅungla" "ǅUNGLA")
+        ("ǅungla" "ǄUNGLA" "ǆungla" "ǅungla" "ǅungla")
+        ("ǆungla" "ǄUNGLA" "ǆungla" "ǅungla" "ǅungla")
         ;; FIXME(bug#24603): Everything below is broken at the moment.
         ;; Here’s what should happen:
-        ;;("ǄUNGLA" "ǄUNGLA" "ǆungla" "ǅungla" "ǅUNGLA")
-        ;;("ǅungla" "ǄUNGLA" "ǆungla" "ǅungla" "ǅungla")
-        ;;("ǆungla" "ǄUNGLA" "ǆungla" "ǅungla" "ǅungla")
         ;;("deﬁne" "DEFINE" "deﬁne" "Deﬁne" "Deﬁne")
         ;;("ﬁsh" "FIsh" "ﬁsh" "Fish" "Fish")
         ;;("Straße" "STRASSE" "straße" "Straße" "Straße")
         ;;("ΌΣΟΣ" "ΌΣΟΣ" "όσος" "Όσος" "Όσος")
         ;; And here’s what is actually happening:
-        ("ǄUNGLA" "ǄUNGLA" "ǆungla" "Ǆungla" "ǄUNGLA")
-        ("ǅungla" "ǄUNGLA" "ǆungla" "Ǆungla" "Ǆungla")
-        ("ǆungla" "ǄUNGLA" "ǆungla" "Ǆungla" "Ǆungla")
         ("deﬁne" "DEﬁNE" "deﬁne" "Deﬁne" "Deﬁne")
         ("ﬁsh" "ﬁSH" "ﬁsh" "ﬁsh" "ﬁsh")
         ("Straße" "STRAßE" "straße" "Straße" "Straße")
@@ -241,6 +237,23 @@
                 "\xff\xff\xff zażółć gęślą \xcf\xcf"
                 "\xef\xff\xff Zażółć Gęślą \xcf\xcf"
                 "\xef\xff\xef Zażółć GĘŚlą \xcf\xcf")))))))
+
+
+(ert-deftest casefiddle-tests-char-casing ()
+  ;;             input upcase downcase [titlecase]
+  (dolist (test '((?a ?A ?a) (?A ?A ?a)
+                  (?ł ?Ł ?ł) (?Ł ?Ł ?ł)
+                  (?ß ?ß ?ß) (?ẞ ?ẞ ?ß)
+                  (?ⅷ ?Ⅷ ?ⅷ) (?Ⅷ ?Ⅷ ?ⅷ)
+                  (?Ǆ ?Ǆ ?ǆ ?ǅ) (?ǅ ?Ǆ ?ǆ ?ǅ) (?ǆ ?Ǆ ?ǆ ?ǅ)))
+    (let ((ch (car test))
+          (up (nth 1 test))
+          (lo (nth 2 test))
+          (tc (or (nth 3 test) (nth 1 test))))
+      (should (eq up (upcase ch)))
+      (should (eq lo (downcase ch)))
+      (should (eq tc (capitalize ch)))
+      (should (eq tc (upcase-initials ch))))))
 
 
 ;;; casefiddle-tests.el ends here

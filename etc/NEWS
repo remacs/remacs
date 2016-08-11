@@ -355,7 +355,7 @@ same as in modes where the character is not whitespace.
 Instead of only checking the modification time, Emacs now also checks
 the file's actual content before prompting the user.
 
-** Title case characters are properly converted to upper case.
+** Title case characters are properly cased (from and into).
 'upcase', 'upcase-region' et al. convert title case characters (such
 as the single character "ǲ") into their upper case form (such as "Ǳ").
 As a downside, 'capitalize' and 'upcase-initials' produce awkward
