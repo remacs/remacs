@@ -16122,6 +16122,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
   bool last_line_misfit = false;
   ptrdiff_t beg_unchanged, end_unchanged;
   int frame_line_height;
+  void *itdata = NULL;
 
   SET_TEXT_POS (lpoint, PT, PT_BYTE);
   opoint = lpoint;
@@ -16843,6 +16844,11 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
   /* Run scroll hooks.  */
   startp = run_window_scroll_functions (window, it.current.pos);
 
+  /* We invoke try_window and try_window_reusing_current_matrix below,
+     and they manipulate the bidi cache.  Save and restore the cache
+     state of our iterator, so we could continue using it after that.  */
+  itdata = bidi_shelve_cache ();
+
   /* Redisplay the window.  */
   bool use_desired_matrix = false;
   if (!current_matrix_up_to_date_p
@@ -16856,6 +16862,8 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
       || !(used_current_matrix_p
 	   = try_window_reusing_current_matrix (w)))
     use_desired_matrix = (try_window (window, startp, 0) == 1);
+
+  bidi_unshelve_cache (itdata, false);
 
   /* If new fonts have been loaded (due to fontsets), give up.  We
      have to start a new redisplay since we need to re-adjust glyph
