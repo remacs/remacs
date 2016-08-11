@@ -238,6 +238,7 @@ static int process_output_delay_count;
 
 static bool process_output_skip;
 
+static void start_process_unwind (Lisp_Object);
 static void create_process (Lisp_Object, char **, Lisp_Object);
 #ifdef USABLE_SIGIO
 static bool keyboard_bit_set (fd_set *);
@@ -245,11 +246,8 @@ static bool keyboard_bit_set (fd_set *);
 static void deactivate_process (Lisp_Object);
 static int status_notify (struct Lisp_Process *, struct Lisp_Process *);
 static int read_process_output (Lisp_Object, int);
-static void handle_child_signal (int);
 static void create_pty (Lisp_Object);
-
-static Lisp_Object get_process (register Lisp_Object name);
-static void exec_sentinel (Lisp_Object proc, Lisp_Object reason);
+static void exec_sentinel (Lisp_Object, Lisp_Object);
 
 /* Mask of bits indicating the descriptors that we wait for input on.  */
 
@@ -1407,8 +1405,6 @@ DEFUN ("process-list", Fprocess_list, Sprocess_list, 0, 0, 0,
 
 /* Starting asynchronous inferior processes.  */
 
-static void start_process_unwind (Lisp_Object proc);
-
 DEFUN ("make-process", Fmake_process, Smake_process, 0, MANY, 0,
        doc: /* Start a program in a subprocess.  Return the process object for it.
 
@@ -1459,7 +1455,6 @@ usage: (make-process &rest ARGS)  */)
   Lisp_Object buffer, name, command, program, proc, contact, current_dir, tem;
   Lisp_Object xstderr, stderrproc;
   ptrdiff_t count = SPECPDL_INDEX ();
-  USE_SAFE_ALLOCA;
 
   if (nargs == 0)
     return Qnil;
@@ -1508,10 +1503,6 @@ usage: (make-process &rest ARGS)  */)
     }
 
   proc = make_process (name);
-  /* If an error occurs and we can't start the process, we want to
-     remove it from the process list.  This means that each error
-     check in create_process doesn't need to call remove_process
-     itself; it's all taken care of here.  */
   record_unwind_protect (start_process_unwind, proc);
 
   pset_childp (XPROCESS (proc), Qt);
@@ -1560,6 +1551,8 @@ usage: (make-process &rest ARGS)  */)
     set_marker_both (XPROCESS (proc)->mark, buffer,
 		     BUF_ZV (XBUFFER (buffer)),
 		     BUF_ZV_BYTE (XBUFFER (buffer)));
+
+  USE_SAFE_ALLOCA;
 
   {
     /* Decide coding systems for communicating with the process.  Here
@@ -1719,18 +1712,11 @@ usage: (make-process &rest ARGS)  */)
   return unbind_to (count, proc);
 }
 
-/* This function is the unwind_protect form for Fstart_process.  If
-   PROC doesn't have its pid set, then we know someone has signaled
-   an error and the process wasn't started successfully, so we should
-   remove it from the process list.  */
+/* If PROC doesn't have its pid set, then an error was signaled and
+   the process wasn't started successfully, so remove it.  */
 static void
 start_process_unwind (Lisp_Object proc)
 {
-  if (!PROCESSP (proc))
-    emacs_abort ();
-
-  /* Was PROC started successfully?
-     -2 is used for a pty with no process, eg for gdb.  */
   if (XPROCESS (proc)->pid <= 0 && XPROCESS (proc)->pid != -2)
     remove_process (proc);
 }
@@ -3124,7 +3110,6 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
                         Lisp_Object use_external_socket_p)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
-  ptrdiff_t count1;
   int s = -1, outch, inch;
   int xerrno = 0;
   int family;
@@ -3145,7 +3130,6 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
     }
 
   /* Do this in case we never enter the while-loop below.  */
-  count1 = SPECPDL_INDEX ();
   s = -1;
 
   while (!NILP (addrinfos))
@@ -3313,7 +3297,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
       immediate_quit = 0;
 
       /* Discard the unwind protect closing S.  */
-      specpdl_ptr = specpdl + count1;
+      specpdl_ptr = specpdl + count;
       emacs_close (s);
       s = -1;
       if (0 <= socket_to_use)
@@ -3398,10 +3382,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
   p->outfd = outch;
 
   /* Discard the unwind protect for closing S, if any.  */
-  specpdl_ptr = specpdl + count1;
-
-  /* Unwind bind_polling_period and request_sigio.  */
-  unbind_to (count, Qnil);
+  specpdl_ptr = specpdl + count;
 
   if (p->is_server && p->socktype != SOCK_DGRAM)
     pset_status (p, Qlisten);
@@ -3925,7 +3906,12 @@ usage: (make-network-process &rest ARGS)  */)
 
   if (!NILP (buffer))
     buffer = Fget_buffer_create (buffer);
+
+  /* Unwind bind_polling_period.  */
+  unbind_to (count, Qnil);
+
   proc = make_process (name);
+  record_unwind_protect (remove_process, proc);
   p = XPROCESS (proc);
   pset_childp (p, contact);
   pset_plist (p, Fcopy_sequence (Fplist_get (contact, QCplist)));
@@ -3956,8 +3942,6 @@ usage: (make-network-process &rest ARGS)  */)
 
   set_network_socket_coding_system (proc, host, service, name);
 
-  unbind_to (count, Qnil);
-
   /* :server BOOL */
   tem = Fplist_get (contact, QCserver);
   if (!NILP (tem))
@@ -3974,6 +3958,7 @@ usage: (make-network-process &rest ARGS)  */)
       && !NILP (Fplist_get (contact, QCnowait)))
     p->is_non_blocking_client = true;
 
+  bool postpone_connection = false;
 #ifdef HAVE_GETADDRINFO_A
   /* With async address resolution, the list of addresses is empty, so
      postpone connecting to the server. */
@@ -3981,11 +3966,13 @@ usage: (make-network-process &rest ARGS)  */)
     {
       p->dns_request = dns_request;
       p->status = list1 (Qconnect);
-      return proc;
+      postpone_connection = true;
     }
 #endif
+  if (! postpone_connection)
+    connect_network_socket (proc, addrinfos, use_external_socket_p);
 
-  connect_network_socket (proc, addrinfos, use_external_socket_p);
+  specpdl_ptr = specpdl + count;
   return proc;
 }
 
