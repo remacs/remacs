@@ -1457,16 +1457,16 @@ result of expression evaluation."
   "Evaluate EXP and print value in the echo area.
 When called interactively, read an Emacs Lisp expression and evaluate it.
 Value is also consed on to front of the variable `values'.
-Optional argument INSERT-VALUE non-nil (interactively, with prefix
-argument) means insert the result into the current buffer instead of
-printing it in the echo area.
+If the resulting value is an integer, it will be printed in
+several additional formats (octal, hexadecimal, and character).
+Optional argument INSERT-VALUE non-nil (interactively, with
+prefix argument) means insert the result into the current buffer
+instead of printing it in the echo area.
 
 Normally, this function truncates long output according to the value
 of the variables `eval-expression-print-length' and
 `eval-expression-print-level'.  With a prefix argument of zero,
-however, there is no such truncation.  Such a prefix argument
-also causes integers to be printed in several additional formats
-\(octal, hexadecimal, and character).
+however, there is no such truncation.
 
 Runs the hook `eval-expression-minibuffer-setup-hook' on entering the
 minibuffer.
