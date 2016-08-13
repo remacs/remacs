@@ -2524,10 +2524,17 @@ parameter; @pxref{Buffer Parameters}).
 
 @defun display-buffer-below-selected buffer alist
 This function tries to display @var{buffer} in a window below the
-selected window.  This means to either split the selected window or use
-the window below the selected one.  If it does create a new window, it
-will also adjust its size provided @var{alist} contains a suitable
+selected window.  If there is a window below the selected one and that
+window already displays @var{buffer}, it reuses that window.
+
+If there is no such window, this function tries to create a new window
+by splitting the selected one and display @var{buffer} there.  It will
+also adjust that window's size provided @var{alist} contains a suitable
 @code{window-height} or @code{window-width} entry, see above.
+
+If splitting the selected window fails and there is a non-dedicated
+window below the selected one showing some other buffer, it uses that
+window for showing @var{buffer}.
 @end defun
 
 @defun display-buffer-in-previous-window buffer alist

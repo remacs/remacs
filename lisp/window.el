@@ -6879,7 +6879,6 @@ raising the frame."
 
 (defun display-buffer--maybe-pop-up-frame-or-window (buffer alist)
   "Try displaying BUFFER based on `pop-up-frames' or `pop-up-windows'.
-
 If `pop-up-frames' is non-nil (and not `graphic-only' on a
 text-only terminal), try with `display-buffer-pop-up-frame'.
 
@@ -6894,8 +6893,11 @@ again with `display-buffer-pop-up-window'."
 
 (defun display-buffer-below-selected (buffer alist)
   "Try displaying BUFFER in a window below the selected window.
-This either splits the selected window or reuses the window below
-the selected one."
+If there is a window below the selected one and that window
+already displays BUFFER, use that window.  Otherwise, try to
+create a new window below the selected one and show BUFFER there.
+If that attempt fails as well and there is a non-dedicated window
+below the selected one, use that window."
   (let (window)
     (or (and (setq window (window-in-direction 'below))
 	     (eq buffer (window-buffer window))
