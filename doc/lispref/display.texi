@@ -2094,7 +2094,7 @@ is equivalent to a Lisp symbol with the same name.}.  Named faces are
 defined using the @code{defface} macro (@pxref{Defining Faces}).
 Emacs comes with several standard named faces (@pxref{Basic Faces}).
 
-  Many parts of Emacs required named faces, and do not accept
+  Many parts of Emacs require named faces, and do not accept
 anonymous faces.  These include the functions documented in
 @ref{Attribute Functions}, and the variable @code{font-lock-keywords}
 (@pxref{Search-based Fontification}).  Unless otherwise stated, we
