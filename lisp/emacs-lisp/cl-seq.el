@@ -144,24 +144,24 @@ called.
       cl-accum)))
 
 ;;;###autoload
-(defun cl-fill (seq item &rest cl-keys)
+(defun cl-fill (cl-seq cl-item &rest cl-keys)
   "Fill the elements of SEQ with ITEM.
 \nKeywords supported:  :start :end
 \n(fn SEQ ITEM [KEYWORD VALUE]...)"
   (cl--parsing-keywords ((:start 0) :end) ()
-    (if (listp seq)
-	(let ((p (nthcdr cl-start seq))
+    (if (listp cl-seq)
+	(let ((p (nthcdr cl-start cl-seq))
 	      (n (if cl-end (- cl-end cl-start) 8000000)))
 	  (while (and p (>= (setq n (1- n)) 0))
-	    (setcar p item)
+	    (setcar p cl-item)
 	    (setq p (cdr p))))
-      (or cl-end (setq cl-end (length seq)))
-      (if (and (= cl-start 0) (= cl-end (length seq)))
-	  (fillarray seq item)
+      (or cl-end (setq cl-end (length cl-seq)))
+      (if (and (= cl-start 0) (= cl-end (length cl-seq)))
+	  (fillarray cl-seq cl-item)
 	(while (< cl-start cl-end)
-	  (aset seq cl-start item)
+	  (aset cl-seq cl-start cl-item)
 	  (setq cl-start (1+ cl-start)))))
-    seq))
+    cl-seq))
 
 ;;;###autoload
 (defun cl-replace (cl-seq1 cl-seq2 &rest cl-keys)
