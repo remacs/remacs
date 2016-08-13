@@ -315,7 +315,9 @@ request.")
                   "Accept-encoding: " url-mime-encoding-string "\r\n"))
              (if url-mime-charset-string
                  (concat
-                  "Accept-charset: " url-mime-charset-string "\r\n"))
+                  "Accept-charset: "
+                  (url-http--encode-string url-mime-charset-string)
+                  "\r\n"))
              ;; Languages we understand
              (if url-mime-language-string
                  (concat
