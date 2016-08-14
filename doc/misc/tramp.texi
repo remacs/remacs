@@ -433,8 +433,8 @@ to connect to the remote host.  Just type @kbd{C-x C-f} and then enter
 file name @file{@trampf{user@@host,/path/to.file}}.  For details,
 @xref{Default Method}, @xref{Default User}, @xref{Default Host}.
 
-For problems related to the behavior of remote shell, @xref{Remote
-shell setup} for details.
+For problems related to the behavior of the remote shell, @xref{Remote
+shell setup}.
 
 For changing the connection type and file access method from the
 defaults to one of several other options, @xref{Connection types}.
