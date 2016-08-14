@@ -16957,7 +16957,8 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	  try_window (window, it.current.pos, 0);
 	}
       else if (scroll_conservatively > SCROLL_LIMIT
-	       && it.method == GET_FROM_STRING
+	       && (it.method == GET_FROM_STRING
+		   || overlay_touches_p (IT_CHARPOS (it)))
 	       && IT_CHARPOS (it) < ZV)
 	{
 	  /* If the window starts with a before-string that spans more
@@ -16973,7 +16974,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	  clear_glyph_matrix (w->desired_matrix);
 	  do {
 	    move_it_by_lines (&it, 1);
-	  } while (IT_CHARPOS (it) == pos0 && it.method == GET_FROM_STRING);
+	  } while (IT_CHARPOS (it) == pos0);
 	  try_window (window, it.current.pos, 0);
 	}
       else
