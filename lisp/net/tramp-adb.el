@@ -40,7 +40,8 @@
   "Name of the Android Debug Bridge program."
   :group 'tramp
   :version "24.4"
-  :type 'string)
+  :type 'string
+  :require 'tramp)
 
 ;;;###tramp-autoload
 (defcustom tramp-adb-connect-if-not-connected nil
@@ -48,7 +49,8 @@
 It is used for TCP/IP devices."
   :group 'tramp
   :version "25.1"
-  :type 'boolean)
+  :type 'boolean
+  :require 'tramp)
 
 ;;;###tramp-autoload
 (defconst tramp-adb-method "adb"
@@ -60,7 +62,8 @@ It is used for TCP/IP devices."
   "Regexp used as prompt in almquist shell."
   :type 'string
   :version "24.4"
-  :group 'tramp)
+  :group 'tramp
+  :require 'tramp)
 
 (defconst tramp-adb-ls-date-regexp
   "[[:space:]][0-9]\\{4\\}-[0-9][0-9]-[0-9][0-9][[:space:]][0-9][0-9]:[0-9][0-9][[:space:]]"

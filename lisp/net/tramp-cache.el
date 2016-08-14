@@ -72,13 +72,16 @@ details see the info pages."
   :version "24.4"
   :type '(repeat (list (choice :tag "File Name regexp" regexp (const nil))
 		       (choice :tag "        Property" string)
-		       (choice :tag "           Value" sexp))))
+		       (choice :tag "           Value" sexp)))
+  :require 'tramp)
 
+;;;###tramp-autoload
 (defcustom tramp-persistency-file-name
   (expand-file-name (locate-user-emacs-file "tramp"))
   "File which keeps connection history for Tramp connections."
   :group 'tramp
-  :type 'file)
+  :type 'file
+  :require 'tramp)
 
 (defvar tramp-cache-data-changed nil
   "Whether persistent cache data have been changed.")
