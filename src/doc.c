@@ -738,20 +738,18 @@ Otherwise, return a new string.  */)
   unsigned char const *start;
   ptrdiff_t length, length_byte;
   Lisp_Object name;
-  bool multibyte;
   ptrdiff_t nchars;
 
   if (NILP (string))
     return Qnil;
 
-  CHECK_STRING (string);
+  Lisp_Object str = Fstring_make_multibyte (string);
   tem = Qnil;
   keymap = Qnil;
   name = Qnil;
 
   enum text_quoting_style quoting_style = text_quoting_style ();
 
-  multibyte = STRING_MULTIBYTE (string);
   nchars = 0;
 
   /* KEYMAP is either nil (which means search all the active keymaps)
@@ -760,59 +758,53 @@ Otherwise, return a new string.  */)
      or from a \\<mapname> construct in STRING itself..  */
   keymap = Voverriding_local_map;
 
-  bsize = SBYTES (string);
+  ptrdiff_t strbytes = SBYTES (str);
+  bsize = strbytes;
 
-  /* Add some room for expansion due to quote replacement.  */
-  enum { EXTRA_ROOM = 20 };
-  if (bsize <= STRING_BYTES_BOUND - EXTRA_ROOM)
-    bsize += EXTRA_ROOM;
+  /* Fixed-size stack buffer.  */
+  char sbuf[MAX_ALLOCA];
 
-  bufp = buf = xmalloc (bsize);
+  /* Heap-allocated buffer, if any.  */
+  char *abuf;
 
-  strp = SDATA (string);
-  while (strp < SDATA (string) + SBYTES (string))
+  /* Extra room for expansion due to replacing ‘\[]’ with ‘M-x ’.  */
+  enum { EXTRA_ROOM = sizeof "M-x " - sizeof "\\[]" };
+
+  if (bsize <= sizeof sbuf - EXTRA_ROOM)
     {
-      if (strp[0] == '\\' && strp[1] == '=')
+      abuf = NULL;
+      buf = sbuf;
+      bsize = sizeof sbuf;
+    }
+  else
+    buf = abuf = xpalloc (NULL, &bsize, EXTRA_ROOM, STRING_BYTES_BOUND, 1);
+  bufp = buf;
+
+  strp = SDATA (str);
+  while (strp < SDATA (str) + strbytes)
+    {
+      unsigned char *close_bracket;
+
+      if (strp[0] == '\\' && strp[1] == '='
+	  && strp + 2 < SDATA (str) + strbytes)
 	{
 	  /* \= quotes the next character;
 	     thus, to put in \[ without its special meaning, use \=\[.  */
 	  changed = nonquotes_changed = true;
 	  strp += 2;
-	  if (multibyte)
-	    {
-	      int len;
-
-	      STRING_CHAR_AND_LENGTH (strp, len);
-	      if (len == 1)
-		*bufp = *strp;
-	      else
-		memcpy (bufp, strp, len);
-	      strp += len;
-	      bufp += len;
-	      nchars++;
-	    }
-	  else
-	    *bufp++ = *strp++, nchars++;
+	  /* Fall through to copy one char.  */
 	}
-      else if (strp[0] == '\\' && strp[1] == '[')
+      else if (strp[0] == '\\' && strp[1] == '['
+	       && (close_bracket
+		   = memchr (strp + 2, ']',
+			     SDATA (str) + strbytes - (strp + 2))))
 	{
-	  ptrdiff_t start_idx;
 	  bool follow_remap = 1;
 
-	  strp += 2;		/* skip \[ */
-	  start = strp;
-	  start_idx = start - SDATA (string);
+	  start = strp + 2;
+	  length_byte = close_bracket - start;
+	  idx = close_bracket + 1 - SDATA (str);
 
-	  while ((strp - SDATA (string)
-		  < SBYTES (string))
-		 && *strp != ']')
-	    strp++;
-	  length_byte = strp - start;
-
-	  strp++;		/* skip ] */
-
-	  /* Save STRP in IDX.  */
-	  idx = strp - SDATA (string);
 	  name = Fintern (make_string ((char *) start, length_byte), Qnil);
 
 	do_remap:
@@ -827,25 +819,16 @@ Otherwise, return a new string.  */)
 	      goto do_remap;
 	    }
 
-	  /* Note the Fwhere_is_internal can GC, so we have to take
-	     relocation of string contents into account.  */
-	  strp = SDATA (string) + idx;
-	  start = SDATA (string) + start_idx;
+	  /* Take relocation of string contents into account.  */
+	  strp = SDATA (str) + idx;
+	  start = strp - length_byte - 1;
 
 	  if (NILP (tem))	/* but not on any keys */
 	    {
-	      ptrdiff_t offset = bufp - buf;
-	      if (STRING_BYTES_BOUND - 4 < bsize)
-		string_overflow ();
-	      buf = xrealloc (buf, bsize += 4);
-	      bufp = buf + offset;
 	      memcpy (bufp, "M-x ", 4);
 	      bufp += 4;
 	      nchars += 4;
-	      if (multibyte)
-		length = multibyte_chars_in_text (start, length_byte);
-	      else
-		length = length_byte;
+	      length = multibyte_chars_in_text (start, length_byte);
 	      goto subst;
 	    }
 	  else
@@ -856,26 +839,20 @@ Otherwise, return a new string.  */)
 	}
       /* \{foo} is replaced with a summary of the keymap (symbol-value foo).
 	 \<foo> just sets the keymap used for \[cmd].  */
-      else if (strp[0] == '\\' && (strp[1] == '{' || strp[1] == '<'))
+      else if (strp[0] == '\\' && (strp[1] == '{' || strp[1] == '<')
+	       && (close_bracket
+		   = memchr (strp + 2, strp[1] == '{' ? '}' : '>',
+			     SDATA (str) + strbytes - (strp + 2))))
 	{
 	 {
+	  bool generate_summary = strp[1] == '{';
 	  /* This is for computing the SHADOWS arg for describe_map_tree.  */
 	  Lisp_Object active_maps = Fcurrent_active_maps (Qnil, Qnil);
 	  ptrdiff_t count = SPECPDL_INDEX ();
 
-	  strp += 2;		/* skip \{ or \< */
-	  start = strp;
-	  ptrdiff_t start_idx = start - SDATA (string);
-
-	  while ((strp - SDATA (string) < SBYTES (string))
-		 && *strp != '}' && *strp != '>')
-	    strp++;
-
-	  length_byte = strp - start;
-	  strp++;			/* skip } or > */
-
-	  /* Save STRP in IDX.  */
-	  idx = strp - SDATA (string);
+	  start = strp + 2;
+	  length_byte = close_bracket - start;
+	  idx = close_bracket + 1 - SDATA (str);
 
 	  /* Get the value of the keymap in TEM, or nil if undefined.
 	     Do this while still in the user's current buffer
@@ -886,12 +863,7 @@ Otherwise, return a new string.  */)
 	    {
 	      tem = Fsymbol_value (name);
 	      if (! NILP (tem))
-		{
-		  tem = get_keymap (tem, 0, 1);
-		  /* Note that get_keymap can GC.  */
-		  strp = SDATA (string) + idx;
-		  start = SDATA (string) + start_idx;
-		}
+		tem = get_keymap (tem, 0, 1);
 	    }
 
 	  /* Now switch to a temp buffer.  */
@@ -912,9 +884,10 @@ Otherwise, return a new string.  */)
 				  SBYTES (name), 1);
 	      AUTO_STRING (msg_suffix, "', which is not currently defined.\n");
 	      insert1 (Fsubstitute_command_keys (msg_suffix));
-	      if (start[-1] == '<') keymap = Qnil;
+	      if (!generate_summary)
+		keymap = Qnil;
 	    }
-	  else if (start[-1] == '<')
+	  else if (!generate_summary)
 	    keymap = tem;
 	  else
 	    {
@@ -932,6 +905,7 @@ Otherwise, return a new string.  */)
 	 }
 
 	subst_string:
+	  tem = Fstring_make_multibyte (tem);
 	  start = SDATA (tem);
 	  length = SCHARS (tem);
 	  length_byte = SBYTES (tem);
@@ -941,15 +915,27 @@ Otherwise, return a new string.  */)
 	  changed = true;
 	  {
 	    ptrdiff_t offset = bufp - buf;
-	    if (STRING_BYTES_BOUND - length_byte < bsize)
+	    ptrdiff_t avail = bsize - offset;
+	    ptrdiff_t need = strbytes - idx;
+	    if (INT_ADD_WRAPV (need, length_byte + EXTRA_ROOM, &need))
 	      string_overflow ();
-	    buf = xrealloc (buf, bsize += length_byte);
-	    bufp = buf + offset;
+	    if (avail < need)
+	      {
+		abuf = xpalloc (abuf, &bsize, need - avail,
+				STRING_BYTES_BOUND, 1);
+		if (buf == sbuf)
+		  memcpy (abuf, sbuf, offset);
+		buf = abuf;
+		bufp = buf + offset;
+	      }
 	    memcpy (bufp, start, length_byte);
 	    bufp += length_byte;
 	    nchars += length;
-	    /* Check STRING again in case gc relocated it.  */
-	    strp = SDATA (string) + idx;
+
+	    /* Take relocation of string contents into account.  */
+	    strp = SDATA (str) + idx;
+
+	    continue;
 	  }
 	}
       else if ((strp[0] == '`' || strp[0] == '\'')
@@ -958,7 +944,7 @@ Otherwise, return a new string.  */)
 	  start = (unsigned char const *) (strp[0] == '`' ? uLSQM : uRSQM);
 	  length = 1;
 	  length_byte = sizeof uLSQM - 1;
-	  idx = strp - SDATA (string) + 1;
+	  idx = strp - SDATA (str) + 1;
 	  goto subst_quote;
 	}
       else if (strp[0] == '`' && quoting_style == STRAIGHT_QUOTING_STYLE)
@@ -967,15 +953,14 @@ Otherwise, return a new string.  */)
 	  strp++;
 	  nchars++;
 	  changed = true;
+	  continue;
 	}
-      else
-	{
-	  *bufp++ = *strp++;
-	  if (multibyte)
-	    while (! CHAR_HEAD_P (*strp))
-	      *bufp++ = *strp++;
-	  nchars++;
-	}
+
+      /* Copy one char.  */
+      do
+	*bufp++ = *strp++;
+      while (! CHAR_HEAD_P (*strp));
+      nchars++;
     }
 
   if (changed)			/* don't bother if nothing substituted */
@@ -997,7 +982,7 @@ Otherwise, return a new string.  */)
     }
   else
     tem = string;
-  xfree (buf);
+  xfree (abuf);
   return tem;
 }
 
