@@ -714,13 +714,13 @@ summary).
 Each substring of the form \\=\\<MAPVAR> specifies the use of MAPVAR
 as the keymap for future \\=\\[COMMAND] substrings.
 
-Each \\=‘ and \\=` is replaced by left quote, and each \\=’ and \\='
+Each grave accent \\=` is replaced by left quote, and each apostrophe \\='
 is replaced by right quote.  Left and right quote characters are
 specified by `text-quoting-style'.
 
-\\=\\= quotes the following character and is discarded; thus,
-\\=\\=\\=\\= puts \\=\\= into the output, \\=\\=\\=\\[ puts \\=\\[ into the output, and
-\\=\\=\\=` puts \\=` into the output.
+\\=\\= quotes the following character and is discarded; thus, \\=\\=\\=\\= puts \\=\\=
+into the output, \\=\\=\\=\\[ puts \\=\\[ into the output, and \\=\\=\\=` puts \\=` into the
+output.
 
 Return the original STRING if no substitutions are made.
 Otherwise, return a new string.  */)

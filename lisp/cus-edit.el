@@ -1617,7 +1617,9 @@ Otherwise use brackets."
     ;; Insert verbose help at the top of the custom buffer.
     (when custom-buffer-verbose-help
       (unless init-file
-	(widget-insert "Custom settings cannot be saved; maybe you started Emacs with `-q'.\n"))
+	(widget-insert
+         (format-message
+          "Custom settings cannot be saved; maybe you started Emacs with `-q'.\n")))
       (widget-insert "For help using this buffer, see ")
       (widget-create 'custom-manual
 		     :tag "Easy Customization"
