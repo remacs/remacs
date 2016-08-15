@@ -10005,11 +10005,26 @@ comment at the start of cc-engine.el for more info."
   ;; This function might do hidden buffer changes.
 
   (save-excursion
-    (let ((res 'maybe) passed-paren
+    (let ((res 'maybe) (passed-bracket-pairs 0) bracket-pos passed-paren
+	  haskell-op-pos
 	  (closest-lim (or containing-sexp lim (point-min)))
 	  ;; Look at the character after point only as a last resort
 	  ;; when we can't disambiguate.
 	  (block-follows (and (eq (char-after) ?{) (point))))
+
+      ;; Search for a C++11 "->" which suggests a lambda declaration.
+      (when (and (c-major-mode-is 'c++-mode)
+		 (setq haskell-op-pos
+		       (save-excursion
+			 (while
+			     (progn
+			       (c-syntactic-skip-backward "^;=}>" closest-lim t)
+			       (and (eq (char-before) ?>)
+				    (c-backward-token-2)
+				    (not (looking-at c-haskell-op-re)))))
+			 (and (looking-at c-haskell-op-re)
+			      (point)))))
+	(goto-char haskell-op-pos))
 
       (while (and (eq res 'maybe)
 		  (progn (c-backward-syntactic-ws)
@@ -10048,6 +10063,11 @@ comment at the start of cc-engine.el for more info."
 					     (zerop (c-forward-token-2 1 t)))
 				      (eq (char-after) ?\())))
 			   (cons 'inexpr-class (point))))
+		     ((c-keyword-member kw-sym 'c-paren-any-kwds) ; e.g. C++11 "throw" or "noexcept"
+		      (setq passed-paren nil)
+		      (setq passed-bracket-pairs 0)
+		      (setq bracket-pos nil)
+		      'maybe)
 		     ((c-keyword-member kw-sym 'c-inexpr-block-kwds)
 		      (when (not passed-paren)
 			(cons 'inexpr-statement (point))))
@@ -10062,20 +10082,49 @@ comment at the start of cc-engine.el for more info."
 
 		(if (looking-at "\\s(")
 		    (if passed-paren
-			(if (and (eq passed-paren ?\[)
-				 (eq (char-after) ?\[))
-			    ;; Accept several square bracket sexps for
-			    ;; Java array initializations.
-			    'maybe)
-		      (setq passed-paren (char-after))
+			(cond
+			 ((and (eq passed-paren ?\[)
+			       (eq (char-after) ?\[)
+			       (not (eq (char-after (1+ (point))) ?\[))) ; C++ attribute.
+			  ;; Accept several square bracket sexps for
+			  ;; Java array initializations.
+			  (setq passed-bracket-pairs (1+ passed-bracket-pairs))
+			  'maybe)
+			 ((and (eq passed-paren ?\()
+			       (eq (char-after) ?\[)
+			       (not (eq (char-after (1+ (point))) ?\[))
+			       (eq passed-bracket-pairs 0))
+			  ;; C++11 lambda function declaration
+			  (setq passed-bracket-pairs 1)
+			  (setq bracket-pos (point))
+			  'maybe)
+			 (t nil))
+		      (when (not (looking-at "\\[\\["))
+			(setq passed-paren (char-after))
+			(when (eq passed-paren ?\[)
+			  (setq passed-bracket-pairs 1)
+			  (setq bracket-pos (point))))
 		      'maybe)
 		  'maybe))))
 
       (if (eq res 'maybe)
-	  (when (and c-recognize-paren-inexpr-blocks
-		     block-follows
-		     containing-sexp
-		     (eq (char-after containing-sexp) ?\())
+	  (cond
+	   ((and (c-major-mode-is 'c++-mode)
+		 block-follows
+		 (eq passed-bracket-pairs 1)
+		 (save-excursion
+		   (goto-char bracket-pos)
+		   (or (<= (point) (or lim (point-min)))
+		       (progn
+			 (c-backward-token-2 1 nil lim)
+			 (and
+			  (not (c-on-identifier))
+			  (not (looking-at c-opt-op-identifier-prefix)))))))
+	    (cons 'inlambda bracket-pos))
+	   ((and c-recognize-paren-inexpr-blocks
+		 block-follows
+		 containing-sexp
+		 (eq (char-after containing-sexp) ?\())
 	    (goto-char containing-sexp)
 	    (if (or (save-excursion
 		      (c-backward-syntactic-ws lim)
@@ -10089,7 +10138,7 @@ comment at the start of cc-engine.el for more info."
 		    (and c-special-brace-lists
 			 (c-looking-at-special-brace-list)))
 		nil
-	      (cons 'inexpr-statement (point))))
+	      (cons 'inexpr-statement (point)))))
 
 	res))))
 
@@ -10114,6 +10163,18 @@ comment at the start of cc-engine.el for more info."
 	(c-looking-at-inexpr-block (c-safe-position containing-sexp
 						    paren-state)
 				   containing-sexp)))))
+
+(defun c-looking-at-c++-lambda-capture-list ()
+  ;; Return non-nil if we're at the opening "[" of the capture list of a C++
+  ;; lambda function, nil otherwise.
+  (and
+   (eq (char-after) ?\[)
+   (not (eq (char-before) ?\[))
+   (not (eq (char-after (1+ (point))) ?\[))
+   (save-excursion
+     (or (eq (c-backward-token-2 1) 1)
+	 (looking-at c-pre-lambda-tokens-re)))
+   (not (c-in-literal))))
 
 (defun c-at-macro-vsemi-p (&optional pos)
   ;; Is there a "virtual semicolon" at POS or point?

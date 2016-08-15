@@ -1142,6 +1142,38 @@ Note that the style variables are always made local to the buffer."
       (goto-char try-end)
       (setq num-begin (point)))))
 
+;; The following doesn't seem needed at the moment (2016-08-15).
+;; (defun c-before-after-change-extend-region-for-lambda-capture
+;;     (_beg _end &optional _old-len)
+;;   ;; In C++ Mode, extend the region (c-new-BEG c-new-END) to cover any lambda
+;;   ;; function capture lists we happen to be inside.  This function is expected
+;;   ;; to be called both as a before-change and after change function.
+;;   ;;
+;;   ;; Note that these things _might_ be nested, with a capture list looking
+;;   ;; like:
+;;   ;;
+;;   ;;     [ ...., &foo = [..](){...}(..), ... ]
+;;   ;;
+;;   ;; .  What a wonderful language is C++.  ;-)
+;;   (c-save-buffer-state (paren-state pos)
+;;     (goto-char c-new-BEG)
+;;     (setq paren-state (c-parse-state))
+;;     (while (setq pos (c-pull-open-brace paren-state))
+;;       (goto-char pos)
+;;       (when (c-looking-at-c++-lambda-capture-list)
+;; 	(setq c-new-BEG (min c-new-BEG pos))
+;; 	(if (c-go-list-forward)
+;; 	    (setq c-new-END (max c-new-END (point))))))
+
+;;     (goto-char c-new-END)
+;;     (setq paren-state (c-parse-state))
+;;     (while (setq pos (c-pull-open-brace paren-state))
+;;       (goto-char pos)
+;;       (when (c-looking-at-c++-lambda-capture-list)
+;; 	(setq c-new-BEG (min c-new-BEG pos))
+;; 	(if (c-go-list-forward)
+;; 	    (setq c-new-END (max c-new-END (point))))))))
+
 (defun c-before-change (beg end)
   ;; Function to be put on `before-change-functions'.  Primarily, this calls
   ;; the language dependent `c-get-state-before-change-functions'.  It is
@@ -1329,11 +1361,23 @@ Note that the style variables are always made local to the buffer."
   ;; lock context (etc.) fontification.
   (let ((lit-start (c-literal-start))
 	(new-pos pos)
+	capture-opener
 	bod-lim bo-decl)
     (goto-char (c-point 'bol new-pos))
     (when lit-start			; Comment or string.
       (goto-char lit-start))
     (setq bod-lim (c-determine-limit 500))
+
+    ;; In C++ Mode, first check if we are within a (possibly nested) lambda
+    ;; form capture list.
+    (when (c-major-mode-is 'c++-mode)
+      (let ((paren-state (c-parse-state))
+	    opener)
+	(save-excursion
+	  (while (setq opener (c-pull-open-brace paren-state))
+	    (goto-char opener)
+	    (if (c-looking-at-c++-lambda-capture-list)
+		(setq capture-opener (point)))))))
 
     (while
 	;; Go to a less nested declaration each time round this loop.
@@ -1361,6 +1405,8 @@ Note that the style variables are always made local to the buffer."
 			     c-<-as-paren-syntax)))))
 	 (not (bobp)))
       (backward-char))			; back over (, [, <.
+    (when (and capture-opener (< capture-opener new-pos))
+      (setq new-pos capture-opener))
     (and (/= new-pos pos) new-pos)))
 
 (defun c-change-expand-fl-region (_beg _end _old-len)

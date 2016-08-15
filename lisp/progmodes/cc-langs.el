@@ -474,6 +474,7 @@ so that all identifiers are recognized as words.")
   ;; The value here may be a list of functions or a single function.
   t nil
   c++ '(c-extend-region-for-CPP
+;	c-before-after-change-extend-region-for-lambda-capture ; doesn't seem needed.
 	c-before-change-check-raw-strings
 	c-before-change-check-<>-operators
 	c-depropertize-CPP
@@ -517,6 +518,7 @@ parameters \(point-min) and \(point-max).")
 	     c-change-expand-fl-region)
   c++ '(c-depropertize-new-text
 	c-extend-font-lock-region-for-macros
+;	c-before-after-change-extend-region-for-lambda-capture ; doens't seem needed.
 	c-before-after-change-digit-quote
 	c-after-change-re-mark-raw-strings
 	c-neutralize-syntax-in-and-mark-CPP
@@ -1360,6 +1362,25 @@ operators."
   t '(";" "{" "}"))
 (c-lang-defvar c-pre-start-tokens (c-lang-const c-pre-start-tokens))
 
+(c-lang-defconst c-pre-lambda-tokens
+  "List of tokens which may precede a lambda declaration.
+In C++ this is something like \"[a,b] (foo, bar) -> int { ... };\".
+Currently (2016-08) only used in C++ mode."
+  t (c--set-difference
+     (c--delete-duplicates
+      (append (c-lang-const c-operator-list)
+	      (c-lang-const c-other-op-syntax-tokens)))
+     (append
+      '("#" "%:" "??=" "##" "%:%:" "??=??=" "::" "." "->"
+	"]" "<:" ":>" "??(" "??)" "??-" "new" "delete"
+	")" ".*" "->*" "??'" "??!" "??!??!" "??!=" "??'=")
+      '("<%" "%>" "<:" ":>" "%:" "%:%:" "#" "##" "::" "..."))
+     :test #'string-equal))
+
+(c-lang-defconst c-pre-lambda-tokens-re
+  ;; Regexp matching any token in the list `c-pre-lambda-tokens'.
+  t (regexp-opt (c-lang-const c-pre-lambda-tokens)))
+(c-lang-defvar c-pre-lambda-tokens-re (c-lang-const c-pre-lambda-tokens-re))
 
 ;;; Syntactic whitespace.
 
@@ -2284,7 +2305,8 @@ contain type identifiers."
   (c c++) '(;; GCC extension.
 	    "__attribute__"
 	    ;; MSVC extension.
-	    "__declspec"))
+	    "__declspec")
+  c++ (append (c-lang-const c-paren-nontype-kwds) '("noexcept")))
 
 (c-lang-defconst c-paren-nontype-key
   t (c-make-keywords-re t (c-lang-const c-paren-nontype-kwds)))

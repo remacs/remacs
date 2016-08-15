@@ -1242,6 +1242,20 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		    ((eq type 'c-decl-arg-start)
 		     (setq context 'decl
 			   c-restricted-<>-arglists nil))
+		    ;; Inside a C++11 lambda function arglist.
+		    ((and (c-major-mode-is 'c++-mode)
+			  (eq (char-before match-pos) ?\()
+			  (save-excursion
+			    (goto-char match-pos)
+			    (c-backward-token-2)
+			    (and
+			     (c-safe (goto-char (scan-sexps (point) -1)))
+			     (c-looking-at-c++-lambda-capture-list))))
+		     (setq context 'decl
+			   c-restricted-<>-arglists nil)
+		     (c-put-char-property (1- match-pos) 'c-type
+					  'c-decl-arg-start))
+
 		    ;; Inside an angle bracket arglist.
 		    ((or (eq type 'c-<>-arg-sep)
 			 (eq (char-before match-pos) ?<))
@@ -1583,6 +1597,90 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		(setq raw-id (match-string-no-properties 2)))))))))
   nil)
 
+(defun c-font-lock-c++-lambda-captures (limit)
+  ;; Fontify the lambda capture component of C++ lambda declarations.
+  ;;
+  ;; This function will be called from font-lock for a region bounded by POINT
+  ;; and LIMIT, as though it were to identify a keyword for
+  ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
+  ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
+  ;; Fontification".
+  (let (mode capture-default id-start id-end declaration sub-begin sub-end)
+    (while (and (< (point) limit)
+		(search-forward "[" limit t))
+      (when (progn (backward-char)
+		   (prog1
+		       (c-looking-at-c++-lambda-capture-list)
+		     (forward-char)))
+	(c-forward-syntactic-ws)
+	(setq mode (and (memq (char-after) '(?= ?&))
+			(char-after)))
+	;; Is the first element of the list a bare "=" or "&"?
+	(when mode
+	  (forward-char)
+	  (c-forward-syntactic-ws)
+	  (if (memq (char-after) '(?, ?\]))
+	      (progn
+		(setq capture-default mode)
+		(when (eq (char-after) ?,)
+		  (forward-char)
+		  (c-forward-syntactic-ws)))
+	    (c-backward-token-2)))
+
+	;; Go round the following loop once per captured item.
+	(while (and (not (eq (char-after) ?\]))
+		    (< (point) limit))
+	  (if (eq (char-after) ?&)
+	      (progn (setq mode ?&)
+		     (forward-char)
+		     (c-forward-syntactic-ws))
+	    (setq mode ?=))
+	  (if (c-on-identifier)
+	      (progn
+		(setq id-start (point))
+		(forward-char)
+		(c-end-of-current-token)
+		(setq id-end (point))
+		(c-forward-syntactic-ws)
+
+		(setq declaration (eq (char-after) ?=))
+		(when declaration
+		  (forward-char)	; over "="
+		  (c-forward-syntactic-ws)
+		  (setq sub-begin (point)))
+		(if (or (and (< (point) limit)
+			     (c-syntactic-re-search-forward "," limit t t))
+			(and (c-go-up-list-forward nil limit)
+			     (eq (char-before) ?\])))
+		    (backward-char)
+		  (goto-char limit))
+		(when declaration
+		  (save-excursion
+		    (setq sub-end (point))
+		    (goto-char sub-begin)
+		    (c-font-lock-c++-lambda-captures sub-end)))
+
+		(c-put-font-lock-face id-start id-end
+				      (cond
+				       (declaration
+					'font-lock-variable-name-face)
+				       ((and capture-default
+					     (eq mode capture-default))
+					'font-lock-warning-face)
+				       ((eq mode ?=) font-lock-constant-face)
+				       (t 'font-lock-variable-name-face))))
+	    (c-syntactic-re-search-forward "," limit 'bound t))
+
+	  (c-forward-syntactic-ws)
+	  (when (eq (char-after) ?,)
+	    (forward-char)
+	    (c-forward-syntactic-ws)))
+
+	(setq capture-default nil)
+	(forward-char))))			; over the terminating "]".
+  nil)
+
+
 (c-lang-defconst c-simple-decl-matchers
   "Simple font lock matchers for types and declarations.  These are used
 on level 2 only and so aren't combined with `c-complex-decl-matchers'."
@@ -1699,6 +1797,9 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
       ;; Fontify angle bracket arglists like templates in C++.
       ,@(when (c-lang-const c-recognize-<>-arglists)
 	  `(c-font-lock-<>-arglists))
+
+      ,@(when (c-major-mode-is 'c++-mode)
+	  `(c-font-lock-c++-lambda-captures))
 
       ;; The first two rules here mostly find occurrences that
       ;; `c-font-lock-declarations' has found already, but not
