@@ -4337,7 +4337,19 @@ comment at the start of cc-engine.el for more info."
 	    (and
 	     (progn
 	       (setq search-pos (point))
-	       (re-search-forward regexp bound noerror))
+	       (if (re-search-forward regexp bound noerror)
+		   t
+		 ;; Without the following, when PAREN-LEVEL it non-nil, and
+		 ;; NOERROR is not nil or t, and the very first search above
+		 ;; has just failed, point would end up at BOUND rather than
+		 ;; just before the next close paren.
+		 (when (and (eq search-pos start)
+			    paren-level
+			    (not (memq noerror '(nil t))))
+		   (setq state (parse-partial-sexp start bound -1))
+		   (if (eq (car state) -1)
+		       (setq bound (1- (point)))))
+		 nil))
 
 	     (progn
 	       (setq state (parse-partial-sexp
