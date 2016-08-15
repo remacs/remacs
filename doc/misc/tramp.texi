@@ -65,8 +65,8 @@ copy and modify this GNU manual.''
 @contents
 
 
-@node Top, Overview, (dir), (dir)
 @ifnottex
+@node Top, Overview, (dir), (dir)
 @top @value{tramp} version @value{trampver} User Manual
 
 This file documents @value{tramp} version @value{trampver}, a remote file
