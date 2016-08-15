@@ -237,9 +237,14 @@ connection, returns DEFAULT."
     (aset key 3 nil)
     (aset key 4 nil))
   (let* ((hash (tramp-get-hash-table key))
-	 (value (if (hash-table-p hash)
-		    (gethash property hash default)
-		  default)))
+	 (value
+	  ;; If the key is an auxiliary process object, check whether
+	  ;; the process is still alive.
+	  (if (and (processp key) (not (memq (process-status key) '(run open))))
+	      default
+	    (if (hash-table-p hash)
+		(gethash property hash default)
+	      default))))
     (tramp-message key 7 "%s %s" property value)
     value))
 
