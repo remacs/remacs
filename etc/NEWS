@@ -1631,6 +1631,14 @@ frames.
 'window-divider-default-places', 'window-divider-default-bottom-width'
 and 'window-divider-default-right-width'.
 
+*** When a window is shrunk horizontally its margins are no more removed
+automatically.  Rather, Emacs refuses to split or resize windows when
+this would cause margins to no more fit into the width reserved for the
+corresponding window.  An application can override this behavior for a
+particular window by setting that window's 'min-margins' parameter.  As
+a consequence, the application becomes fully responsible for trimming
+the margin sizes of that window and any window inheriting these margins.
+
 *** The window displaying the '*Completions*' buffer with minibuffer
 completion candidates is now shown at the bottom of the selected
 frame.  The size of that window is always as large as required to
