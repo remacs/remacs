@@ -508,7 +508,8 @@ This operation exists because a directory is also a file, but its name as
 a directory is different from its name as a file.
 The result can be used as the value of `default-directory'
 or passed as second argument to `expand-file-name'.
-For a Unix-syntax file name, just appends a slash.  */)
+For a Unix-syntax file name, just appends a slash unless a trailing slash
+is already present.  */)
   (Lisp_Object file)
 {
   char *buf;
