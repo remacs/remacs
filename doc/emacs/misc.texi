@@ -771,6 +771,14 @@ the output buffer.  But if you change the value of the variable
 @code{shell-command-default-error-buffer} to a string, error output is
 inserted into a buffer of that name.
 
+@vindex shell-command-not-erase-buffer
+  By default, the output buffer is erased between shell commands.
+If you change the value of the variable
+@code{shell-command-not-erase-buffer} to a non-@code{nil} value,
+the output buffer is not erased.  This variable also controls where to
+set the point in the output buffer after the command completes; see the
+documentation of the variable for details.
+
 @node Interactive Shell
 @subsection Interactive Subshell
 
