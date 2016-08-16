@@ -743,10 +743,12 @@ Otherwise, return a new string.  */)
   if (NILP (string))
     return Qnil;
 
+  /* If STRING contains non-ASCII unibyte data, process its
+     properly-encoded multibyte equivalent instead.  This simplifies
+     the implementation and is OK since substitute-command-keys is
+     intended for use only on text strings.  Keep STRING around, since
+     it will be returned if no changes occur.  */
   Lisp_Object str = Fstring_make_multibyte (string);
-  tem = Qnil;
-  keymap = Qnil;
-  name = Qnil;
 
   enum text_quoting_style quoting_style = text_quoting_style ();
 
@@ -905,6 +907,8 @@ Otherwise, return a new string.  */)
 	 }
 
 	subst_string:
+	  /* Convert non-ASCII unibyte data to properly-encoded multibyte,
+	     for the same reason STRING was converted to STR.  */
 	  tem = Fstring_make_multibyte (tem);
 	  start = SDATA (tem);
 	  length = SCHARS (tem);
