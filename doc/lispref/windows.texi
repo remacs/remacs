@@ -4358,11 +4358,11 @@ values instead of the actual margin widths for determining whether a
 window can be split or shrunk horizontally.
 
 Emacs never auto-adjusts the margins of any window after splitting or
-resizing it.  It is sole responsibility of the application that has set
+resizing it.  It is the sole responsibility of any application setting
 this parameter to adjust the margins of this window as well as those of
 any new window that inherits this window's margins due to a split.
-Both, @code{window-configuration-change-hook} and
-@code{window-size-change-functions} (@pxref{Window Hooks}), should be
+Both @code{window-configuration-change-hook} and
+@code{window-size-change-functions} (@pxref{Window Hooks}) should be
 employed for this purpose.
 
 This parameter was introduced in Emacs version 25.1 to support
