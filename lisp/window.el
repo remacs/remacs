@@ -1383,10 +1383,21 @@ ignore width restrictions for WINDOW."
 	  (let* ((char-size (frame-char-size window t))
 		 (fringes (window-fringes window))
 		 (margins (window-margins window))
+                 ;; Let the 'min-margins' parameter override the actual
+                 ;; widths of the margins.  We allow any number to
+                 ;; replace the values specified by `window-margins'.
+                 ;; See bug#24193 for the rationale of this parameter.
+                 (min-margins (window-parameter window 'min-margins))
+                 (left-min-margin (and min-margins
+                                       (numberp (car min-margins))
+                                       (car min-margins)))
+                 (right-min-margin (and min-margins
+                                        (numberp (cdr min-margins))
+                                        (cdr min-margins)))
 		 (pixel-width
 		  (+ (window-safe-min-size window t t)
-		     (* (or (car margins) 0) char-size)
-		     (* (or (cdr margins) 0) char-size)
+		     (* (or left-min-margin (car margins) 0) char-size)
+		     (* (or right-min-margin(cdr margins) 0) char-size)
 		     (car fringes) (cadr fringes)
 		     (window-scroll-bar-width window)
 		     (window-right-divider-width window))))
@@ -4774,7 +4785,7 @@ frame.  The selected window is not changed by this function."
 			(window-sizable-p
 			 parent (- (+ new-pixel-size divider-width)) horizontal
 			 (setq ignore 'preserved) t))
-	      (error "Window %s too small for splitting (1)" parent)))
+	      (error "Window %s too small for splitting" parent)))
 	   ((and (> (+ new-pixel-size divider-width
 		       (window-min-size window horizontal nil t))
 		    old-pixel-size)
@@ -4783,7 +4794,7 @@ frame.  The selected window is not changed by this function."
 			window horizontal (setq ignore 'preserved) t))
 		    old-pixel-size))
 	    ;; SIZE unspecified, no resizing.
-	    (error "Window %s too small for splitting (2)" window))))
+	    (error "Window %s too small for splitting" window))))
 	 ((and (>= pixel-size 0)
 	       (or (>= pixel-size old-pixel-size)
 		   (< new-pixel-size
@@ -4791,7 +4802,7 @@ frame.  The selected window is not changed by this function."
 	  ;; SIZE specified as new size of old window.  If the new size
 	  ;; is larger than the old size or the size of the new window
 	  ;; would be less than the safe minimum, signal an error.
-	  (error "Window %s too small for splitting (3)" window))
+	  (error "Window %s too small for splitting" window))
 	 (resize
 	  ;; SIZE specified, resizing.
 	  (unless (or (window-sizable-p
@@ -4801,13 +4812,13 @@ frame.  The selected window is not changed by this function."
 		       parent (- (+ new-pixel-size divider-width)) horizontal
 		       (setq ignore 'preserved) t))
 	    ;; If we cannot resize the parent give up.
-	    (error "Window %s too small for splitting (4)" parent)))
+	    (error "Window %s too small for splitting" parent)))
 	 ((or (< new-pixel-size
 		 (window-safe-min-pixel-size window horizontal))
 	      (< (- old-pixel-size new-pixel-size)
 		 (window-safe-min-pixel-size window horizontal)))
 	  ;; SIZE specification violates minimum size restrictions.
-	  (error "Window %s too small for splitting (5)" window)))
+	  (error "Window %s too small for splitting" window)))
 
 	(window--resize-reset frame horizontal)
 

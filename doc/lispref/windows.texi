@@ -4349,6 +4349,27 @@ window when it deletes the window passed to it as argument.
 The fourth element is the buffer whose display caused the creation of
 this parameter.  @code{quit-restore-window} deletes the specified window
 only if it still shows that buffer.
+
+@item @code{min-margins}
+The value of this parameter is a cons cell whose @sc{car} and @sc{cdr},
+if non-@code{nil}, specify the minimum values (in columns) for the left
+and right margin of this window.  When present, Emacs will use these
+values instead of the actual margin widths for determining whether a
+window can be split or shrunk horizontally.
+
+Emacs never auto-adjusts the margins of any window after splitting or
+resizing it.  It is sole responsibility of the application that has set
+this parameter to adjust the margins of this window as well as those of
+any new window that inherits this window's margins due to a split.
+Both, @code{window-configuration-change-hook} and
+@code{window-size-change-functions} (@pxref{Window Hooks}), should be
+employed for this purpose.
+
+This parameter was introduced in Emacs version 25.1 to support
+applications that use large margins to center buffer text within a
+window and should be used, with due care, exclusively by those
+applications.  It might be replaced by an improved solution in future
+versions of Emacs.
 @end table
 
 There are additional parameters @code{window-atom} and @code{window-side};
