@@ -974,7 +974,7 @@ Otherwise, return a new string.  */)
 	}
       else if ((strp[0] == '`' || strp[0] == '\'')
 	       && quoting_style == CURVE_QUOTING_STYLE
-	       && multibyte)
+	       && (multibyte || pure_ascii))
 	{
 	  start = (unsigned char const *) (strp[0] == '`' ? uLSQM : uRSQM);
 	  length_byte = sizeof uLSQM - 1;
