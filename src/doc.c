@@ -750,7 +750,7 @@ Otherwise, return a new string.  */)
   unsigned char const *start;
   ptrdiff_t length, length_byte;
   Lisp_Object name;
-  bool multibyte;
+  bool multibyte, pure_ascii;
   ptrdiff_t nchars;
 
   if (NILP (string))
@@ -764,6 +764,11 @@ Otherwise, return a new string.  */)
   enum text_quoting_style quoting_style = text_quoting_style ();
 
   multibyte = STRING_MULTIBYTE (string);
+  /* Pure-ASCII unibyte input strings should produce unibyte strings
+     if substitution doesn't yield non-ASCII bytes, otherwise they
+     should produce multibyte strings.  */
+  pure_ascii = SBYTES (string) == count_size_as_multibyte (SDATA (string),
+							   SCHARS (string));
   nchars = 0;
 
   /* KEYMAP is either nil (which means search all the active keymaps)
@@ -945,8 +950,11 @@ Otherwise, return a new string.  */)
 
 	subst_string:
 	  start = SDATA (tem);
-	  length = SCHARS (tem);
 	  length_byte = SBYTES (tem);
+	  if (multibyte || pure_ascii)
+	    length = SCHARS (tem);
+	  else
+	    length = length_byte;
 	subst:
 	  nonquotes_changed = true;
 	subst_quote:
@@ -965,11 +973,15 @@ Otherwise, return a new string.  */)
 	  }
 	}
       else if ((strp[0] == '`' || strp[0] == '\'')
-	       && quoting_style == CURVE_QUOTING_STYLE)
+	       && quoting_style == CURVE_QUOTING_STYLE
+	       && multibyte)
 	{
 	  start = (unsigned char const *) (strp[0] == '`' ? uLSQM : uRSQM);
-	  length = 1;
 	  length_byte = sizeof uLSQM - 1;
+	  if (multibyte || pure_ascii)
+	    length = 1;
+	  else
+	    length = length_byte;
 	  idx = strp - SDATA (string) + 1;
 	  goto subst_quote;
 	}
