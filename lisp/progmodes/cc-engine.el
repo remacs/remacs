@@ -5168,6 +5168,13 @@ comment at the start of cc-engine.el for more info."
 			(and (< (point) cfd-limit)
 			     (c-got-face-at (point) c-literal-faces))))
 	       t)		      ; Continue the loop over pseudo matches.
+	      ((and c-opt-identifier-concat-key
+		    (match-string 1)
+		    (save-excursion
+		      (goto-char (match-beginning 1))
+		      (looking-at c-opt-identifier-concat-key)))
+	       ;; Found, e.g., "::" in C++
+	       t)
 	      ((and (match-string 1)
 		    (string= (match-string 1) ":")
 		    (save-excursion
