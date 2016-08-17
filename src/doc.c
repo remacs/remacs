@@ -821,7 +821,8 @@ Otherwise, return a new string.  */)
 	      goto do_remap;
 	    }
 
-	  /* Take relocation of string contents into account.  */
+	  /* Fwhere_is_internal can GC, so take relocation of string
+	     contents into account.  */
 	  strp = SDATA (str) + idx;
 	  start = strp - length_byte - 1;
 
@@ -936,7 +937,8 @@ Otherwise, return a new string.  */)
 	    bufp += length_byte;
 	    nchars += length;
 
-	    /* Take relocation of string contents into account.  */
+	    /* Some of the previous code can GC, so take relocation of
+	       string contents into account.  */
 	    strp = SDATA (str) + idx;
 
 	    continue;
