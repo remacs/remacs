@@ -5172,7 +5172,8 @@ comment at the start of cc-engine.el for more info."
 		    (match-string 1)
 		    (save-excursion
 		      (goto-char (match-beginning 1))
-		      (looking-at c-opt-identifier-concat-key)))
+		      (save-match-data
+			(looking-at c-opt-identifier-concat-key))))
 	       ;; Found, e.g., "::" in C++
 	       t)
 	      ((and (match-string 1)
