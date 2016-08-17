@@ -329,6 +329,9 @@ GnuTLS encryption functions if possible.
 
 ** JSON
 
+*** 'json-encode-string' now only escapes the characters it has to.
+Which means that the encoded strings can contain non-ASCII characters.
+
 *** 'json-pretty-print' and 'json-pretty-print-buffer' now maintain
 the ordering of object keys by default.
 
