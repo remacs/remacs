@@ -115,8 +115,8 @@ have been added.  They are: 'file-attribute-type',
 'file-attribute-group-id', 'file-attribute-access-time',
 'file-attribute-modification-time',
 'file-attribute-status-change-time', 'file-attribute-size',
-'file-attribute-modes', 'file-attribute-inode-number', and
-'file-attribute-device-number'.
+'file-attribute-modes', 'file-attribute-inode-number',
+'file-attribute-device-number' and 'file-attribute-collect'.
 
 +++
 ** The new function 'buffer-hash' computes a fast, non-consing hash of

@@ -7225,6 +7225,26 @@ of the form (HIGH MIDDLE . LOW): first the high bits, then the
 middle 24 bits, and finally the low 16 bits."
   (nth 11 attributes))
 
+(defun file-attribute-collect (attributes &rest attr-names)
+  "Return a sublist of ATTRIBUTES returned by `file-attributes'.
+ATTR-NAMES are symbols with the selected attribute names.
+
+Valid attribute names are: type, link-number, user-id, group-id,
+access-time, modification-time, status-change-time, size, modes,
+inode-number and device-number."
+  (let ((all '(type link-number user-id group-id access-time
+               modification-time status-change-time
+               size modes inode-number device-number))
+        result)
+    (while attr-names
+      (let ((attr (pop attr-names)))
+        (if (memq attr all)
+            (push (funcall
+                   (intern (format "file-attribute-%s" (symbol-name attr)))
+                   attributes)
+                  result)
+          (error "Wrong attribute name '%S'" attr))))
+    (nreverse result)))
 
 (define-key ctl-x-map "\C-f" 'find-file)
 (define-key ctl-x-map "\C-r" 'find-file-read-only)
