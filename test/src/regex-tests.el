@@ -45,54 +45,56 @@ character) must match a string \"\u2420\"."
                                   (concat string suffix)))))))))
 
 (defun regex--test-cc (name matching not-matching)
-  (should (string-match-p (concat "^[[:" name ":]]*$") matching))
-  (should (string-match-p (concat "^[[:" name ":]]*?\u2622$")
-                          (concat matching "\u2622")))
-  (should (string-match-p (concat "^[^[:" name ":]]*$") not-matching))
-  (should (string-match-p (concat "^[^[:" name ":]]*\u2622$")
-                          (concat not-matching "\u2622")))
-  (with-temp-buffer
-    (insert matching)
-    (let ((p (point)))
-      (insert not-matching)
-      (goto-char (point-min))
-      (skip-chars-forward (concat "[:" name ":]"))
-      (should (equal (point) p))
-      (skip-chars-forward (concat "^[:" name ":]"))
-      (should (equal (point) (point-max)))
-      (goto-char (point-min))
-      (skip-chars-forward (concat "[:" name ":]\u2622"))
-      (should (or (equal (point) p) (equal (point) (1+ p)))))))
+  (let (case-fold-search)
+    (should (string-match-p (concat "^[[:" name ":]]*$") matching))
+    (should (string-match-p (concat "^[[:" name ":]]*?\u2622$")
+                            (concat matching "\u2622")))
+    (should (string-match-p (concat "^[^[:" name ":]]*$") not-matching))
+    (should (string-match-p (concat "^[^[:" name ":]]*\u2622$")
+                            (concat not-matching "\u2622")))
+    (with-temp-buffer
+      (insert matching)
+      (let ((p (point)))
+        (insert not-matching)
+        (goto-char (point-min))
+        (skip-chars-forward (concat "[:" name ":]"))
+        (should (equal (point) p))
+        (skip-chars-forward (concat "^[:" name ":]"))
+        (should (equal (point) (point-max)))
+        (goto-char (point-min))
+        (skip-chars-forward (concat "[:" name ":]\u2622"))
+        (should (or (equal (point) p) (equal (point) (1+ p))))))))
 
-(ert-deftest regex-character-classes ()
-  "Perform sanity test of regexes using character classes.
+(dolist (test '(("alnum" "abcABC012łąka" "-, \t\n")
+                ("alpha" "abcABCłąka" "-,012 \t\n")
+                ("digit" "012" "abcABCłąka-, \t\n")
+                ("xdigit" "0123aBc" "łąk-, \t\n")
+                ("upper" "ABCŁĄKA" "abc012-, \t\n")
+                ("lower" "abcłąka" "ABC012-, \t\n")
+
+                ("word" "abcABC012\u2620" "-, \t\n")
+
+                ("punct" ".,-" "abcABC012\u2620 \t\n")
+                ("cntrl" "\1\2\t\n" ".,-abcABC012\u2620 ")
+                ("graph" "abcłąka\u2620-," " \t\n\1")
+                ("print" "abcłąka\u2620-, " "\t\n\1")
+
+                ("space" " \t\n\u2001" "abcABCł0123")
+                ("blank" " \t" "\n\u2001")
+
+                ("ascii" "abcABC012 \t\n\1" "łą\u2620")
+                ("nonascii" "łą\u2622" "abcABC012 \t\n\1")
+                ("unibyte" "abcABC012 \t\n\1" "łą\u2622")
+                ("multibyte" "łą\u2622" "abcABC012 \t\n\1")))
+  (let ((name (intern (concat "regex-tests-" (car test) "-character-class")))
+        (doc (concat "Perform sanity test of regexes using " (car test)
+                     " character class.
 
 Go over all the supported character classes and test whether the
 classes and their inversions match what they are supposed to
 match.  The test is done using `string-match-p' as well as
-`skip-chars-forward'."
-  (let (case-fold-search)
-    (regex--test-cc "alnum" "abcABC012łąka" "-, \t\n")
-    (regex--test-cc "alpha" "abcABCłąka" "-,012 \t\n")
-    (regex--test-cc "digit" "012" "abcABCłąka-, \t\n")
-    (regex--test-cc "xdigit" "0123aBc" "łąk-, \t\n")
-    (regex--test-cc "upper" "ABCŁĄKA" "abc012-, \t\n")
-    (regex--test-cc "lower" "abcłąka" "ABC012-, \t\n")
-
-    (regex--test-cc "word" "abcABC012\u2620" "-, \t\n")
-
-    (regex--test-cc "punct" ".,-" "abcABC012\u2620 \t\n")
-    (regex--test-cc "cntrl" "\1\2\t\n" ".,-abcABC012\u2620 ")
-    (regex--test-cc "graph" "abcłąka\u2620-," " \t\n\1")
-    (regex--test-cc "print" "abcłąka\u2620-, " "\t\n\1")
-
-    (regex--test-cc "space" " \t\n\u2001" "abcABCł0123")
-    (regex--test-cc "blank" " \t" "\n\u2001")
-
-    (regex--test-cc "ascii" "abcABC012 \t\n\1" "łą\u2620")
-    (regex--test-cc "nonascii" "łą\u2622" "abcABC012 \t\n\1")
-    (regex--test-cc "unibyte" "abcABC012 \t\n\1" "łą\u2622")
-    (regex--test-cc "multibyte" "łą\u2622" "abcABC012 \t\n\1")))
+`skip-chars-forward'.")))
+    (eval `(ert-deftest ,name () ,doc ,(cons 'regex--test-cc test)) t)))
 
 
 (defmacro regex-tests-generic-line (comment-char test-file whitelist &rest body)
