@@ -1269,9 +1269,9 @@ that happen, 'unhandled-file-name-directory' now defaults to calling
 'file-name-as-directory'.
 
 ** The URL package now insists on sending only unibyte strings to server
-This means packages that use URL cannot bind `url-request-data' to
+This means packages that use URL cannot bind 'url-request-data' to
 multibyte strings.  If non-ASCII characters should be part of the URL
-payload, then `url-request-data' should be encoded to become a unibyte
+payload, then 'url-request-data' should be encoded to become a unibyte
 string.
 
 
