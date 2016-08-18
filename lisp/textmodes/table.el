@@ -2968,8 +2968,7 @@ CALS (DocBook DTD):
 	  (default (car table-source-language-history))
 	  (language (downcase (completing-read
 			       (format "Language (default %s): " default)
-			       (mapcar (lambda (s) (list (symbol-name s)))
-				       table-source-languages)
+			       table-source-languages
 			       nil t nil 'table-source-language-history default))))
      (list
       (intern language)
