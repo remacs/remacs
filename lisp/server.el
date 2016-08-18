@@ -784,7 +784,7 @@ This handles splitting the command if it would be bigger than
       ;; We have to split the string
       (setq part (substring qtext 0 (- server-msg-size (length prefix) 1)))
       ;; Don't split in the middle of a quote sequence
-      (if (string-match "\\(^\\|[^&]\\)\\(&&\\)+$" part)
+      (if (string-match "\\(^\\|[^&]\\)&\\(&&\\)*$" part)
 	  ;; There is an uneven number of & at the end
 	  (setq part (substring part 0 -1)))
       (setq qtext (substring qtext (length part)))
