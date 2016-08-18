@@ -5497,7 +5497,9 @@ value can be also stored on disk and read back in a new session."
 		;; Install positions (maybe we should do this after all
 		;; windows have been created and sized).
 		(ignore-errors
-		  (set-window-start window (cdr (assq 'start state)))
+                  ;; Set 'noforce argument to avoid that window start
+                  ;; overrides window point set below (Bug#24240).
+		  (set-window-start window (cdr (assq 'start state)) 'noforce)
 		  (set-window-point window (cdr (assq 'point state))))
 		;; Select window if it's the selected one.
 		(when (cdr (assq 'selected state))
