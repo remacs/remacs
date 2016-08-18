@@ -39,6 +39,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef MAC_OS_X_VERSION_10_9
 #define MAC_OS_X_VERSION_10_9 1090
 #endif
+#ifndef MAC_OS_X_VERSION_10_12
+#define MAC_OS_X_VERSION_10_12 101200
+#endif
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
 #define HAVE_NATIVE_FS
@@ -1232,5 +1235,43 @@ extern char gnustep_base_version[];  /* version tracking */
 #define IN_BOUND(min, x, max) (((x) < (min)) \
                                 ? (min) : (((x)>(max)) ? (max) : (x)))
 #define SCREENMAXBOUND(x) (IN_BOUND (-SCREENMAX, x, SCREENMAX))
+
+/* macOS 10.12 deprecates a bunch of constants. */
+#if !defined (NS_IMPL_COCOA) || \
+  MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12
+#define NSEventModifierFlagCommand         NSCommandKeyMask
+#define NSEventModifierFlagControl         NSControlKeyMask
+#define NSEventModifierFlagHelp            NSHelpKeyMask
+#define NSEventModifierFlagNumericPad      NSNumericPadKeyMask
+#define NSEventModifierFlagOption          NSAlternateKeyMask
+#define NSEventModifierFlagShift           NSShiftKeyMask
+#define NSCompositingOperationSourceOver   NSCompositeSourceOver
+#define NSEventMaskApplicationDefined      NSApplicationDefinedMask
+#define NSEventTypeApplicationDefined      NSApplicationDefined
+#define NSEventTypeCursorUpdate            NSCursorUpdate
+#define NSEventTypeMouseMoved              NSMouseMoved
+#define NSEventTypeLeftMouseDown           NSLeftMouseDown
+#define NSEventTypeRightMouseDown          NSRightMouseDown
+#define NSEventTypeOtherMouseDown          NSOtherMouseDown
+#define NSEventTypeLeftMouseUp             NSLeftMouseUp
+#define NSEventTypeRightMouseUp            NSRightMouseUp
+#define NSEventTypeOtherMouseUp            NSOtherMouseUp
+#define NSEventTypeLeftMouseDragged        NSLeftMouseDragged
+#define NSEventTypeRightMouseDragged       NSRightMouseDragged
+#define NSEventTypeOtherMouseDragged       NSOtherMouseDragged
+#define NSEventTypeScrollWheel             NSScrollWheel
+#define NSEventTypeKeyDown                 NSKeyDown
+#define NSEventTypeKeyUp                   NSKeyUp
+#define NSEventTypeFlagsChanged            NSFlagsChanged
+#define NSEventMaskAny                     NSAnyEventMask
+#define NSWindowStyleMaskBorderless        NSBorderlessWindowMask
+#define NSWindowStyleMaskClosable          NSClosableWindowMask
+#define NSWindowStyleMaskFullScreen        NSFullScreenWindowMask
+#define NSWindowStyleMaskMiniaturizable    NSMiniaturizableWindowMask
+#define NSWindowStyleMaskResizable         NSResizableWindowMask
+#define NSWindowStyleMaskTitled            NSTitledWindowMask
+#define NSAlertStyleCritical               NSCriticalAlertStyle
+#define NSControlSizeRegular               NSRegularControlSize
+#endif
 
 #endif	/* HAVE_NS */

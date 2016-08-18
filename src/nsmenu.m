@@ -604,7 +604,7 @@ x_activate_menubar (struct frame *f)
 -(NSString *)parseKeyEquiv: (const char *)key
 {
   const char *tpos = key;
-  keyEquivModMask = NSCommandKeyMask;
+  keyEquivModMask = NSEventModifierFlagCommand;
 
   if (!key || !strlen (key))
     return @"";
@@ -692,7 +692,6 @@ x_activate_menubar (struct frame *f)
   widget_value *wv = (widget_value *)wvptr;
 
   /* clear existing contents */
-  [self setMenuChangedMessagesEnabled: NO];
   [self clear];
 
   /* add new contents */
@@ -716,7 +715,6 @@ x_activate_menubar (struct frame *f)
         }
     }
 
-  [self setMenuChangedMessagesEnabled: YES];
 #ifdef NS_IMPL_GNUSTEP
   if ([[self window] isVisible])
     [self sizeToFit];
@@ -748,7 +746,7 @@ x_activate_menubar (struct frame *f)
 /*   p = [view convertPoint:p fromView: nil]; */
   p.y = NSHeight ([view frame]) - p.y;
   e = [[view window] currentEvent];
-   event = [NSEvent mouseEventWithType: NSRightMouseDown
+   event = [NSEvent mouseEventWithType: NSEventTypeRightMouseDown
                               location: p
                          modifierFlags: 0
                              timestamp: [e timestamp]
@@ -1534,7 +1532,7 @@ ns_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
   [img autorelease];
   [imgView autorelease];
 
-  aStyle = NSTitledWindowMask|NSClosableWindowMask|NSUtilityWindowMask;
+  aStyle = NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSUtilityWindowMask;
   flag = YES;
   rows = 0;
   cols = 1;
@@ -1792,7 +1790,7 @@ ns_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
 
 - (void)timeout_handler: (NSTimer *)timedEntry
 {
-  NSEvent *nxev = [NSEvent otherEventWithType: NSApplicationDefined
+  NSEvent *nxev = [NSEvent otherEventWithType: NSEventTypeApplicationDefined
                             location: NSMakePoint (0, 0)
                        modifierFlags: 0
                            timestamp: 0
