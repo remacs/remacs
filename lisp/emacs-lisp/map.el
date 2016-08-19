@@ -79,14 +79,14 @@ MAP can be a list, hash-table or array."
 
 (eval-when-compile
   (defmacro map--dispatch (map-var &rest args)
-    "Evaluate one of the forms specified by ARGS based on the type of MAP.
+    "Evaluate one of the forms specified by ARGS based on the type of MAP-VAR.
 
 The following keyword types are meaningful: `:list',
 `:hash-table' and `:array'.
 
-An error is thrown if MAP is neither a list, hash-table nor array.
+An error is thrown if MAP-VAR is neither a list, hash-table nor array.
 
-Return RESULT if non-nil or the result of evaluation of the form."
+Returns the result of evaluating the form associated with MAP-VAR's type."
     (declare (debug t) (indent 1))
     `(cond ((listp ,map-var) ,(plist-get args :list))
            ((hash-table-p ,map-var) ,(plist-get args :hash-table))
