@@ -4644,7 +4644,8 @@ DEFUN ("write-region", Fwrite_region, Swrite_region, 3, 7,
 When called from a program, requires three arguments:
 START, END and FILENAME.  START and END are normally buffer positions
 specifying the part of the buffer to write.
-If START is nil, that means to use the entire buffer contents.
+If START is nil, that means to use the entire buffer contents; END is
+ignored.
 If START is a string, then output that string to the file
 instead of any buffer contents; END is ignored.
 
