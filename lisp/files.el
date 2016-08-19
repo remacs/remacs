@@ -3223,16 +3223,21 @@ n  -- to ignore the local variables list.")
 (defconst hack-local-variable-regexp
   "[ \t]*\\([^][;\"'?()\\ \t\n]+\\)[ \t]*:[ \t]*")
 
-(defun hack-local-variables-prop-line (&optional mode-only)
+(defun hack-local-variables-prop-line (&optional handle-mode)
   "Return local variables specified in the -*- line.
-Returns an alist of elements (VAR . VAL), where VAR is a variable
-and VAL is the specified value.  Ignores any specification for
-`mode:' and `coding:' (which should have already been handled
-by `set-auto-mode' and `set-auto-coding', respectively).
-Return nil if the -*- line is malformed.
+Usually returns an alist of elements (VAR . VAL), where VAR is a
+variable and VAL is the specified value.  Ignores any
+specification for `coding:', and sometimes for `mode' (which
+should have already been handled by `set-auto-coding' and
+`set-auto-mode', respectively).  Return nil if the -*- line is
+malformed.
 
-If MODE-ONLY is non-nil, just returns the symbol specifying the
-mode, if there is one, otherwise nil."
+If HANDLE-MODE is nil, we return the alist of all the local
+variables in the line except `coding' as described above.  If it
+is neither nil nor t, we do the same, except that any settings of
+`mode' and `coding' are ignored.  If HANDLE-MODE is t, we ignore
+all settings in the line except for `mode', which \(if present) we
+return as the symbol specifying the mode."
   (catch 'malformed-line
     (save-excursion
       (goto-char (point-min))
@@ -3242,14 +3247,14 @@ mode, if there is one, otherwise nil."
 	       nil)
 	      ((looking-at "[ \t]*\\([^ \t\n\r:;]+\\)\\([ \t]*-\\*-\\)")
 	       ;; Simple form: "-*- MODENAME -*-".
-	       (if mode-only
+	       (if (memq handle-mode '(nil t))
 		   (intern (concat (match-string 1) "-mode"))))
 	      (t
 	       ;; Hairy form: '-*-' [ <variable> ':' <value> ';' ]* '-*-'
 	       ;; (last ";" is optional).
-	       ;; If MODE-ONLY, just check for `mode'.
+	       ;; If HANDLE-MODE is t, just check for `mode'.
 	       ;; Otherwise, parse the -*- line into the RESULT alist.
-	       (while (not (or (and mode-only result)
+	       (while (not (or (and (eq handle-mode t) result)
                                (>= (point) end)))
 		 (unless (looking-at hack-local-variable-regexp)
 		   (message "Malformed mode-line: %S"
@@ -3270,19 +3275,24 @@ mode, if there is one, otherwise nil."
 			;; That is inconsistent, but we're stuck with it.
 			;; The same can be said for `coding' in set-auto-coding.
 			(keyname (downcase (symbol-name key))))
-		   (if mode-only
-		       (and (equal keyname "mode")
-			    (setq result
-				  (intern (concat (downcase (symbol-name val))
-						  "-mode"))))
-		     (or (equal keyname "coding")
-			 (condition-case nil
-			     (push (cons (cond ((eq key 'eval) 'eval)
-					       ;; Downcase "Mode:".
-					       ((equal keyname "mode") 'mode)
-					       (t (indirect-variable key)))
-					 val) result)
-			   (error nil))))
+                   (cond
+                    ((eq handle-mode t)
+                     (and (equal keyname "mode")
+                          (setq result
+                                (intern (concat (downcase (symbol-name val))
+                                                "-mode")))))
+                    ((equal keyname "coding"))
+                    (t
+                     (when (or (not handle-mode)
+                               (not (equal keyname "mode")))
+                       (condition-case nil
+                           (push (cons (cond ((eq key 'eval) 'eval)
+                                             ;; Downcase "Mode:".
+                                             ((equal keyname "mode") 'mode)
+                                             (t (indirect-variable key)))
+                                       val)
+                                 result)
+                         (error nil)))))
 		   (skip-chars-forward " \t;")))
 	       result))))))
 
@@ -3393,7 +3403,7 @@ local variables, but directory-local variables may still be applied."
 		  ;; If HANDLE-MODE is t, and the prop line specifies a
 		  ;; mode, then we're done, and have no need to scan further.
 		  (and (setq result (hack-local-variables-prop-line
-                                     (eq handle-mode t)))
+                                     handle-mode))
 		       (eq handle-mode t)))
 	;; Look for "Local variables:" line in last page.
 	(save-excursion
