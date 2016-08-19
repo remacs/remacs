@@ -44,13 +44,17 @@
 (defcustom epg-gpg-program (if (executable-find "gpg2")
                                "gpg2"
                              "gpg")
-  "The `gpg' executable."
+  "The `gpg' executable.
+Setting this variable directly does not take effect;
+instead use \\[customize] (see the info node `Easy Customization')."
   :version "25.1"
   :group 'epg
   :type 'string)
 
 (defcustom epg-gpgsm-program "gpgsm"
-  "The `gpgsm' executable."
+  "The `gpgsm' executable.
+Setting this variable directly does not take effect;
+instead use \\[customize] (see the info node `Easy Customization')."
   :group 'epg
   :type 'string)
 
