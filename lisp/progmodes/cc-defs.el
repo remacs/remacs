@@ -640,7 +640,7 @@ right side of it."
   (let ((res (if (featurep 'xemacs)
 		 `(scan-lists ,from ,count ,depth nil t)
 	       `(c-safe (scan-lists ,from ,count ,depth)))))
-    (if (and limit (not (eq limit nil)))
+    (if limit
 	`(save-restriction
 	   (when ,limit
 	     ,(if (numberp count)
