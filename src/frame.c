@@ -2412,7 +2412,7 @@ store_frame_param (struct frame *f, Lisp_Object prop, Lisp_Object val)
       if (WINDOWP (val))
 	{
 	  if (!MINI_WINDOW_P (XWINDOW (val)))
-	    error ("The 'minibuffer' parameter does not specify a valid minibuffer window");
+	    error ("The `minibuffer' parameter does not specify a valid minibuffer window");
 	  else if (FRAME_MINIBUF_ONLY_P (f))
 	    {
 	      if (EQ (val, FRAME_MINIBUF_WINDOW (f)))
@@ -2442,7 +2442,7 @@ store_frame_param (struct frame *f, Lisp_Object prop, Lisp_Object val)
 		   only nil was specified as new value.  */
 		val = old_val;
 	      else if (!EQ (old_val, val))
-		error ("Can't change the 'minibuffer' parameter of this frame");
+		error ("Can't change the `minibuffer' parameter of this frame");
 	    }
 	}
     }

@@ -2296,13 +2296,13 @@ x_fill_property_data (Display *dpy, Lisp_Object data, void *ret, int format)
       if (format == 8)
 	{
 	  if ((1 << 8) < val && val <= X_ULONG_MAX - (1 << 7))
-	    error ("Out of 'char' range");
+	    error ("Out of `char' range");
 	  *d08++ = val;
 	}
       else if (format == 16)
 	{
 	  if ((1 << 16) < val && val <= X_ULONG_MAX - (1 << 15))
-	    error ("Out of 'short' range");
+	    error ("Out of `short' range");
 	  *d16++ = val;
 	}
       else
