@@ -2393,7 +2393,7 @@ nil default-directory" name)
                             ;; Take file from default dir if it exists there;
                             ;; otherwise let `load' search for it.
                             (file-ex (expand-file-name file)))
-                       (when (file-exists-p file-ex)
+                       (when (file-regular-p file-ex)
                          (setq file file-ex))
                        (load file nil t)))
 
