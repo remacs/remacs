@@ -1612,11 +1612,24 @@ selection_data_to_lisp_data (struct x_display_info *dpyinfo,
   /* Convert a single 16-bit number or a small 32-bit number to a Lisp_Int.
      If the number is 32 bits and won't fit in a Lisp_Int,
      convert it to a cons of integers, 16 bits in each half.
+
+     INTEGER is a signed type, CARDINAL is unsigned.
+     Assume any other types are unsigned as well.
    */
   else if (format == 32 && size == sizeof (int))
-    return INTEGER_TO_CONS (((int *) data) [0]);
+    {
+      if (type == XA_INTEGER)
+        return INTEGER_TO_CONS (((int *) data) [0]);
+      else
+        return INTEGER_TO_CONS (((unsigned int *) data) [0]);
+    }
   else if (format == 16 && size == sizeof (short))
-    return make_number (((short *) data) [0]);
+    {
+      if (type == XA_INTEGER)
+        return make_number (((short *) data) [0]);
+      else
+        return make_number (((unsigned short *) data) [0]);
+    }
 
   /* Convert any other kind of data to a vector of numbers, represented
      as above (as an integer, or a cons of two 16 bit integers.)
@@ -1626,11 +1639,22 @@ selection_data_to_lisp_data (struct x_display_info *dpyinfo,
       ptrdiff_t i;
       Lisp_Object v = make_uninit_vector (size / 2);
 
-      for (i = 0; i < size / 2; i++)
-	{
-	  short j = ((short *) data) [i];
-	  ASET (v, i, make_number (j));
-	}
+      if (type == XA_INTEGER)
+        {
+          for (i = 0; i < size / 2; i++)
+            {
+              short j = ((short *) data) [i];
+              ASET (v, i, make_number (j));
+            }
+        }
+      else
+        {
+          for (i = 0; i < size / 2; i++)
+            {
+              unsigned short j = ((unsigned short *) data) [i];
+              ASET (v, i, make_number (j));
+            }
+        }
       return v;
     }
   else
@@ -1638,11 +1662,22 @@ selection_data_to_lisp_data (struct x_display_info *dpyinfo,
       ptrdiff_t i;
       Lisp_Object v = make_uninit_vector (size / X_LONG_SIZE);
 
-      for (i = 0; i < size / X_LONG_SIZE; i++)
-	{
-	  int j = ((int *) data) [i];
-	  ASET (v, i, INTEGER_TO_CONS (j));
-	}
+      if (type == XA_INTEGER)
+        {
+          for (i = 0; i < size / X_LONG_SIZE; i++)
+            {
+              int j = ((int *) data) [i];
+              ASET (v, i, INTEGER_TO_CONS (j));
+            }
+        }
+      else
+        {
+          for (i = 0; i < size / X_LONG_SIZE; i++)
+            {
+              unsigned int j = ((unsigned int *) data) [i];
+              ASET (v, i, INTEGER_TO_CONS (j));
+            }
+        }
       return v;
     }
 }

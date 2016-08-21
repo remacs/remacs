@@ -5113,6 +5113,7 @@ FRAME.  Default is to change on the edit X window.  */)
       if (INT_MAX < SBYTES (value))
 	error ("VALUE too long");
       nelements = SBYTES (value);
+      element_format = 8; /* ignore any provided format */
     }
 
   block_input ();
@@ -5223,7 +5224,7 @@ x_window_property_intern (struct frame *f,
             }
 
           if (NILP (vector_ret_p))
-            prop_value = make_string ((char *) tmp_data, actual_size);
+            prop_value = make_string ((char *) tmp_data, (actual_format / 8) * actual_size);
           else
             prop_value = x_property_data_to_lisp (f,
                                                   tmp_data,
@@ -5308,6 +5309,62 @@ no value of TYPE (always string in the MS Windows case).  */)
 
   unblock_input ();
   return prop_value;
+}
+
+DEFUN ("x-window-property-attributes", Fx_window_property_attributes, Sx_window_property_attributes,
+       1, 3, 0,
+       doc: /* Retrieve metadata about window property PROP on FRAME.
+If FRAME is nil or omitted, use the selected frame.
+If SOURCE is non-nil, get the property on that window instead of from
+FRAME.  The number 0 denotes the root window.
+
+Return value is nil if FRAME hasn't a property with name PROP.
+Otherwise, the return value is a vector with the following fields:
+
+0. The property type, as an integer.  The symbolic name of
+ the type can be obtained with `x-get-atom-name'.
+1. The format of each element; one of 8, 16, or 32.
+2. The length of the property, in number of elements. */)
+  (Lisp_Object prop, Lisp_Object frame, Lisp_Object source)
+{
+  struct frame *f = decode_window_system_frame (frame);
+  Window target_window = FRAME_X_WINDOW (f);
+  Atom prop_atom;
+  Lisp_Object prop_attr = Qnil;
+  Atom actual_type;
+  int actual_format;
+  unsigned long actual_size, bytes_remaining;
+  unsigned char *tmp_data = NULL;
+  int rc;
+
+  CHECK_STRING (prop);
+
+  if (! NILP (source))
+    {
+      CONS_TO_INTEGER (source, Window, target_window);
+      if (! target_window)
+	target_window = FRAME_DISPLAY_INFO (f)->root_window;
+    }
+
+  block_input ();
+
+  prop_atom = XInternAtom (FRAME_X_DISPLAY (f), SSDATA (prop), False);
+  rc = XGetWindowProperty (FRAME_X_DISPLAY (f), target_window,
+			   prop_atom, 0, 0, False, AnyPropertyType,
+			   &actual_type, &actual_format, &actual_size,
+			   &bytes_remaining, &tmp_data);
+  if (rc == Success && actual_format != 0)
+    {
+      XFree (tmp_data);
+
+      prop_attr = Fmake_vector (make_number (3), Qnil);
+      ASET (prop_attr, 0, make_number (actual_type));
+      ASET (prop_attr, 1, make_number (actual_format));
+      ASET (prop_attr, 2, make_number (bytes_remaining / (actual_format / 8)));
+    }
+
+  unblock_input ();
+  return prop_attr;
 }
 
 /***********************************************************************
@@ -6966,6 +7023,7 @@ When using Gtk+ tooltips, the tooltip face is not used.  */);
   defsubr (&Sx_change_window_property);
   defsubr (&Sx_delete_window_property);
   defsubr (&Sx_window_property);
+  defsubr (&Sx_window_property_attributes);
 
   defsubr (&Sxw_display_color_p);
   defsubr (&Sx_display_grayscale_p);
