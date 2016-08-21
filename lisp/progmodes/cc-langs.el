@@ -1772,6 +1772,16 @@ the appropriate place for that."
 	 "array" "float" "function" "int" "mapping" "mixed" "multiset"
 	 "object" "program" "string" "this_program" "void"))
 
+(c-lang-defconst c-return-kwds
+  "Keywords which return a value to the calling function."
+  t '("return")
+  idl nil)
+
+(c-lang-defconst c-return-key
+  ;; Adorned regexp matching `c-return-kwds'.
+  t (c-make-keywords-re t (c-lang-const c-return-kwds)))
+(c-lang-defvar c-return-key (c-lang-const c-return-key))
+
 (c-lang-defconst c-primitive-type-key
   ;; An adorned regexp that matches `c-primitive-type-kwds'.
   t (c-make-keywords-re t (c-lang-const c-primitive-type-kwds)))
@@ -3149,6 +3159,13 @@ list."
   t nil
   c t)
 (c-lang-defvar c-recognize-knr-p (c-lang-const c-recognize-knr-p))
+
+(c-lang-defconst c-pre-id-bracelist-key
+  "A regexp matching tokens which, preceding an identifier, signify a bracelist.
+"
+  t "\\<\\>"
+  c++ "new\\([^[:alnum:]_$]\\|$\\)\\|&&?\\(\\S.\\|$\\)")
+(c-lang-defvar c-pre-id-bracelist-key (c-lang-const c-pre-id-bracelist-key))
 
 (c-lang-defconst c-recognize-typeless-decls
   "Non-nil means function declarations without return type should be

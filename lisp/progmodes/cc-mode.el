@@ -1351,10 +1351,10 @@ Note that the style variables are always made local to the buffer."
 
 (defun c-fl-decl-start (pos)
   ;; If the beginning of the line containing POS is in the middle of a "local"
-  ;; declaration (i.e. one which does not start outside of braces enclosing
-  ;; POS, such as a struct), return the beginning of that declaration.
-  ;; Otherwise return nil.  Note that declarations, in this sense, can be
-  ;; nested.
+  ;; declaration, return the beginning of that declaration.  Otherwise return
+  ;; nil.  Note that declarations, in this sense, can be nested.  (A local
+  ;; declaration is one which does not start outside of struct braces (and
+  ;; similar) enclosing POS.  Brace list braces here are not "similar".
   ;;
   ;; This function is called indirectly from font locking stuff - either from
   ;; c-after-change (to prepare for after-change font-locking) or from font
@@ -1402,7 +1402,12 @@ Note that the style variables are always made local to the buffer."
 		    (and (eq (char-before) ?\<)
 			 (eq (c-get-char-property
 			      (1- (point)) 'syntax-table)
-			     c-<-as-paren-syntax)))))
+			     c-<-as-paren-syntax))
+		    (and (eq (char-before) ?{)
+			 (save-excursion
+			   (backward-char)
+			   (numberp (c-looking-at-or-maybe-in-bracelist nil))))
+		    )))
 	 (not (bobp)))
       (backward-char))			; back over (, [, <.
     (when (and capture-opener (< capture-opener new-pos))
