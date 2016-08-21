@@ -1,3 +1,251 @@
+2016-08-20  Philipp Stephani  <phst@google.com>
+
+	Some assorted documentation clarifications
+
+	* src/fileio.c (Fwrite_region): Clarify that END is ignored if
+	START is nil.
+	* src/editfns.c (Fbuffer_size): Add short discussion about
+	narrowing.
+	* src/callproc.c (Fcall_process_region): Discuss behavior when
+	START and END are not buffer positions.
+
+2016-08-18  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve commentary in src/character.h
+
+	* src/character.h (BYTES_BY_CHAR_HEAD, MULTIBYTE_LENGTH)
+	(MULTIBYTE_LENGTH_NO_CHECK, STRING_CHAR_AND_LENGTH): Remove stale
+	info from commentary and improve it.
+
+2016-08-17  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* etc/NEWS: Mention the change in json-encode-string.
+
+	The change was made to fix bug#20154, and came up again in bug#24239.
+
+2016-08-16  Eli Zaretskii  <eliz@gnu.org>
+
+	* src/doc.c (Fsubstitute_command_keys): Another fix for smart quotes.
+
+	(Bug#24206)
+
+2016-08-16  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid segfaults due to quoting in 'substitute-command-keys'
+
+	* src/doc.c (Fsubstitute_command_keys): Correct character counts
+	when the input string is unibyte.  (Bug#24206)
+
+2016-08-16  Martin Rudalics  <rudalics@gmx.at>
+
+	In NEWS describe new handling of window margins (Bug#24193)
+
+	* etc/NEWS: Describe new handling of margins when splitting or
+	resizing windows (Bug#24193).
+
+2016-08-16  Martin Rudalics  <rudalics@gmx.at>
+
+	Facultatively ignore margins when splitting and resizing windows (Bug#24193)
+
+	Provide a new window parameter 'min-margins' which allows to
+	ignore the actual widths of a window's margins when splitting or
+	resizing that window horizontally.  This should serve as a
+	workaround for handling the problems raised by Bug#24193.
+
+	* lisp/window.el (window--min-size-1): Handle new window
+	parameter 'min-margins'.
+	(split-window): Fix text of error messages.
+	* doc/lispref/windows.texi (Window Parameters): Describe new
+	parameter 'min-margins'.
+
+2016-08-14  Noam Postavsky  <npostavs@gmail.com>
+
+	Document CATEGORY arg to modify-category-entry
+
+	* src/category.c (Fmodify_category_entry): Document CATEGORY argument.
+
+2016-08-13  Noam Postavsky  <npostavs@gmail.com>
+
+	Document char-script-table's effect on word motion
+
+	* doc/lispref/positions.texi (Word Motion): Talk about
+	char-script-table (Bug #10494).
+
+2016-08-13  Eli Zaretskii  <eliz@gnu.org>
+
+	Further fix for 'url-http-create-request' and multibyte strings
+
+	* lisp/url/url-http.el (url-http-create-request): Run
+	url-mime-charset-string through url-http--encode-string.
+	(Bug#24117)
+
+2016-08-13  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix docstring of eval-expression
+
+	* lisp/simple.el (eval-expression): Fix the docstring to reflect the
+	fact that the prefix argument does not affect formatting for
+	integers (Bug #20691).
+
+2016-08-11  Eli Zaretskii  <eliz@gnu.org>
+
+	Clarify when 'cursor' property is in effect
+
+	* doc/lispref/text.texi (Special Properties): Minor copyedits.
+	(Bug#24179)
+
+2016-08-11  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Convert the remaining strings to unibyte before concatenating
+
+	* lisp/url/url-http.el (url-http--encode-string): New function.
+	(url-http-create-request): Use it to convert ASCII to unibyte.
+	(Bug#24117)
+
+2016-08-11  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix bug with handling the bidi cache
+
+	* src/xdisp.c (redisplay_window): Save and restore the state of
+	the bidi cache before reusing the iterator after calls to
+	try_window and try_window_reusing_current_matrix.
+
+2016-08-10  Eli Zaretskii  <eliz@gnu.org>
+
+	* doc/lispref/text.texi (Change Hooks): Minor copyedits.
+
+2016-08-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Clarify documentation of before/after-change-functions
+
+	* doc/lispref/text.texi (Change Hooks): Clarify that the hooks are
+	not called in balanced pairs.
+
+2016-08-06  Noam Postavsky  <npostavs@gmail.com>
+
+	Document use of vectors in keymaps
+
+	* doc/lispref/keymaps.texi (Format of Keymaps): Mention vector
+	format (Bug #14797).
+
+2016-08-03  Alan Third  <alan@idiocy.org>
+
+	Post AppDefined events from the main thread ONLY (bug#23934)
+
+	* src/nsterm.h: Make nextappdefined var not just GNUStep.
+	* src/nsterm.m (ns_send_appdefined, sendFromMainThread): Remove GNUStep
+
+2016-08-03  John Wiegley  <johnw@newartisans.com>
+
+	Update to the AUTHORS file for Bob Weiner
+
+		* etc/AUTHORS: Update the packages attributed to Bob Weiner
+
+2016-08-02  John Wiegley  <johnw@newartisans.com>
+
+	Revert "Fix local printer set to left aligned string formatter."
+
+	This reverts commit 8a38e948b039516e70176ebe20c5349e2ade6ac5.
+
+2016-08-02  John Wiegley  <johnw@newartisans.com>
+
+	Revert "Fix ses-delete-blanks to delete only blanks + documentation."
+
+	This reverts commit 3c97b0f7589e06aeb1ab0147f0ee32974c32926d.
+
+2016-08-02  John Wiegley  <johnw@newartisans.com>
+
+	Revert "Fix English."
+
+	This reverts commit b275cc76f0c5ab49e81445fcc3420c8772aefd42.
+
+2016-08-01  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve doc strings of 'gud-gdb' and 'gdb'
+
+	* lisp/progmodes/gdb-mi.el (gdb):
+	* lisp/progmodes/gud.el (gud-gdb): Doc fix.  (Bug#24125)
+
+2016-08-01  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix doc string of 'minibuffer-message-timeout'
+
+	* src/keyboard.c (syms_of_keyboard) <minibuffer-message-timeout>:
+	Doc fix.  (Bug#24123)
+
+2016-07-29  Vincent Belaïche  <vincentb1@users.sourceforge.net>
+
+	Fix English.
+
+	* doc/misc/ses.texi (Nonrelocatable references): Fix grammatically
+	  incorrect English.
+
+2016-07-29  Vincent Belaïche  <vincentb1@users.sourceforge.net>
+
+	Fix ses-delete-blanks to delete only blanks + documentation.
+
+	* doc/misc/ses.texi (Quick Tutorial): Mention the '!'
+	'ses-range' modifier as an alternative to 'ses+'.
+	(Advanced Features): Add a refernce to node 'Nonrelocatable
+	references' concerning function 'ses-rename-cell'.
+	(Standard formula functions): Mention the '!' 'ses-range'
+	modifier as an alternative to 'ses-delete-blanks'.
+	(More on cell printing): Fix fallback printer
+	definition.  Minor editorial formatting changes.
+	(Nonrelocatable references): Document the use of
+	'ses-rename-cell' as a better way to make cell reference
+	non-relocatable.
+	(The data area): Document the presence of local printer
+	definitions in the data area.
+
+	* lisp/ses.el (ses-delete-blanks): Do not remove
+	*error*.  Any error in an argument should propagate into the
+	using formula rather than being silently hidden !
+
+2016-07-29  Noam Postavsky  <npostavs@gmail.com>
+
+	profiler: document prefix arg for tree expansion
+
+	* doc/lispref/debugging.texi (Profiling):
+	* lisp/profiler.el (profiler-report-toggle-entry): Document use of
+	prefix argument to expand whole call trees.
+
+2016-07-29  Noam Postavsky  <npostavs@gmail.com>
+
+	Clarify usage of eshell-visual-options
+
+	* lisp/eshell/em-term.el (eshell-visual-options): Add second option to
+	example usage (Bug #19627).
+
+2016-07-29  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix comment in files-in-below-directory
+
+	* doc/lispintro/emacs-lisp-intro.texi (Files List): Comment should not
+	say append, since the code is adding to front of list (Bug #21589).
+
+2016-07-28  Vincent Belaïche  <vincentb1@users.sourceforge.net>
+
+	Fix local printer set to left aligned string formatter.
+
+	* lisp/ses.el (ses-local-printer-compile): Add missing case
+	for left-aligned string formatter.
+
+2016-07-24  Nicolas Petton  <nicolas@petton.fr>
+
+	Bump Emacs version to 25.1 for the first RC
+
+	* README:
+	* configure.ac:
+	* lisp/ldefs-boot.el:
+	* msdos/sed2v2.inp: Bump Emacs version to 25.1.
+
+2016-07-24  Nicolas Petton  <nicolas@petton.fr>
+
+	* etc/AUTHORS: Update the AUTHORS file
+
+	;; * ChangeLog.2: ChangeLog update.
+
 2016-07-24  Nicolas Petton  <nicolas@petton.fr>
 
 	* admin/authors.el (authors-valid-file-names): Addition.
@@ -33115,7 +33363,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 7acfaead6df626b3737c10f98e9c4964232aa6b9 (inclusive).
+commit 73cbb813cfea53e4162409f2adc0a793ab301894 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:

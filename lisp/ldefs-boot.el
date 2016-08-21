@@ -11751,8 +11751,8 @@ Interactively, reads the register using `register-read-with-preview'.
 
 ;;;***
 
-;;;### (autoloads nil "gdb-mi" "progmodes/gdb-mi.el" (22388 6386
-;;;;;;  402286 73000))
+;;;### (autoloads nil "gdb-mi" "progmodes/gdb-mi.el" (22431 53468
+;;;;;;  724634 231000))
 ;;; Generated autoloads from progmodes/gdb-mi.el
 
 (defvar gdb-enable-debug nil "\
@@ -11773,14 +11773,18 @@ the list) is deleted every time a new one is added (at the front).
 \(fn &optional ARG)" t nil)
 
 (autoload 'gdb "gdb-mi" "\
-Run gdb on program FILE in buffer *gud-FILE*.
-The directory containing FILE becomes the initial working directory
-and source-file directory for your debugger.
+Run gdb passing it COMMAND-LINE as arguments.
 
-COMMAND-LINE is the shell command for starting the gdb session.
-It should be a string consisting of the name of the gdb
-executable followed by command line options.  The command line
-options should include \"-i=mi\" to use gdb's MI text interface.
+If COMMAND-LINE names a program FILE to debug, gdb will run in
+a buffer named *gud-FILE*, and the directory containing FILE
+becomes the initial working directory and source-file directory
+for your debugger.
+If COMMAND-LINE requests that gdb attaches to a process PID, gdb
+will run in *gud-PID*, otherwise it will run in *gud*; in these
+cases the initial working directory is the default-directory of
+the buffer in which this command was invoked.
+
+COMMAND-LINE should include \"-i=mi\" to use gdb's MI text interface.
 Note that the old \"--annotate\" option is no longer supported.
 
 If option `gdb-many-windows' is nil (the default value) then gdb just
@@ -13055,14 +13059,20 @@ the form \"WINDOW-ID PIXMAP-ID\".  Value is non-nil if successful.
 
 ;;;***
 
-;;;### (autoloads nil "gud" "progmodes/gud.el" (22388 6386 606288
-;;;;;;  79000))
+;;;### (autoloads nil "gud" "progmodes/gud.el" (22431 53468 725634
+;;;;;;  240000))
 ;;; Generated autoloads from progmodes/gud.el
 
 (autoload 'gud-gdb "gud" "\
-Run gdb on program FILE in buffer *gud-FILE*.
-The directory containing FILE becomes the initial working
-directory and source-file directory for your debugger.
+Run gdb passing it COMMAND-LINE as arguments.
+If COMMAND-LINE names a program FILE to debug, gdb will run in
+a buffer named *gud-FILE*, and the directory containing FILE
+becomes the initial working directory and source-file directory
+for your debugger.
+If COMMAND-LINE requests that gdb attaches to a process PID, gdb
+will run in *gud-PID*, otherwise it will run in *gud*; in these
+cases the initial working directory is the default-directory of
+the buffer in which this command was invoked.
 
 \(fn COMMAND-LINE)" t nil)
 
@@ -21990,8 +22000,8 @@ Proced buffers.
 
 ;;;***
 
-;;;### (autoloads nil "profiler" "profiler.el" (22388 5707 707611
-;;;;;;  601000))
+;;;### (autoloads nil "profiler" "profiler.el" (22431 53468 722634
+;;;;;;  211000))
 ;;; Generated autoloads from profiler.el
 
 (autoload 'profiler-start "profiler" "\
@@ -24761,7 +24771,7 @@ only these files will be asked to be saved.
 
 ;;;***
 
-;;;### (autoloads nil "ses" "ses.el" (22388 5708 753621 888000))
+;;;### (autoloads nil "ses" "ses.el" (22457 44247 406108 197000))
 ;;; Generated autoloads from ses.el
 
 (autoload 'ses-mode "ses" "\
@@ -29416,8 +29426,8 @@ if it had been inserted from a file named URL.
 
 ;;;***
 
-;;;### (autoloads nil "url-http" "url/url-http.el" (22420 38537 297424
-;;;;;;  708000))
+;;;### (autoloads nil "url-http" "url/url-http.el" (22457 44247 409108
+;;;;;;  239000))
 ;;; Generated autoloads from url/url-http.el
  (autoload 'url-default-expander "url-expand")
 
@@ -32585,27 +32595,26 @@ Zone out, completely.
 ;;;;;;  "international/fontset.el" "international/iso-ascii.el" "international/ja-dic-cnv.el"
 ;;;;;;  "international/ja-dic-utl.el" "international/ogonek.el" "kermit.el"
 ;;;;;;  "language/hanja-util.el" "language/thai-word.el" "ldefs-boot.el"
-;;;;;;  "leim/ja-dic/ja-dic.el" "leim/quail/arabic.el" "leim/quail/croatian.el"
-;;;;;;  "leim/quail/cyril-jis.el" "leim/quail/cyrillic.el" "leim/quail/czech.el"
-;;;;;;  "leim/quail/ethiopic.el" "leim/quail/georgian.el" "leim/quail/greek.el"
-;;;;;;  "leim/quail/hanja-jis.el" "leim/quail/hanja.el" "leim/quail/hanja3.el"
-;;;;;;  "leim/quail/hebrew.el" "leim/quail/indian.el" "leim/quail/ipa-praat.el"
-;;;;;;  "leim/quail/ipa.el" "leim/quail/japanese.el" "leim/quail/lao.el"
-;;;;;;  "leim/quail/latin-alt.el" "leim/quail/latin-ltx.el" "leim/quail/latin-post.el"
-;;;;;;  "leim/quail/latin-pre.el" "leim/quail/lrt.el" "leim/quail/persian.el"
-;;;;;;  "leim/quail/programmer-dvorak.el" "leim/quail/py-punct.el"
-;;;;;;  "leim/quail/pypunct-b5.el" "leim/quail/rfc1345.el" "leim/quail/sgml-input.el"
-;;;;;;  "leim/quail/sisheng.el" "leim/quail/slovak.el" "leim/quail/symbol-ksc.el"
-;;;;;;  "leim/quail/tamil-dvorak.el" "leim/quail/thai.el" "leim/quail/tibetan.el"
-;;;;;;  "leim/quail/viqr.el" "leim/quail/vntelex.el" "leim/quail/vnvni.el"
-;;;;;;  "leim/quail/welsh.el" "loadup.el" "mail/blessmail.el" "mail/mailheader.el"
-;;;;;;  "mail/mspools.el" "mail/rfc2368.el" "mail/rfc822.el" "mail/rmail-spam-filter.el"
-;;;;;;  "mail/rmailedit.el" "mail/rmailkwd.el" "mail/rmailmm.el"
-;;;;;;  "mail/rmailmsc.el" "mail/rmailsort.el" "mail/rmailsum.el"
-;;;;;;  "mail/undigest.el" "mh-e/mh-acros.el" "mh-e/mh-alias.el"
-;;;;;;  "mh-e/mh-buffers.el" "mh-e/mh-compat.el" "mh-e/mh-funcs.el"
-;;;;;;  "mh-e/mh-gnus.el" "mh-e/mh-identity.el" "mh-e/mh-inc.el"
-;;;;;;  "mh-e/mh-junk.el" "mh-e/mh-letter.el" "mh-e/mh-limit.el"
+;;;;;;  "leim/quail/arabic.el" "leim/quail/croatian.el" "leim/quail/cyril-jis.el"
+;;;;;;  "leim/quail/cyrillic.el" "leim/quail/czech.el" "leim/quail/ethiopic.el"
+;;;;;;  "leim/quail/georgian.el" "leim/quail/greek.el" "leim/quail/hanja-jis.el"
+;;;;;;  "leim/quail/hanja.el" "leim/quail/hanja3.el" "leim/quail/hebrew.el"
+;;;;;;  "leim/quail/indian.el" "leim/quail/ipa-praat.el" "leim/quail/ipa.el"
+;;;;;;  "leim/quail/japanese.el" "leim/quail/lao.el" "leim/quail/latin-alt.el"
+;;;;;;  "leim/quail/latin-ltx.el" "leim/quail/latin-post.el" "leim/quail/latin-pre.el"
+;;;;;;  "leim/quail/lrt.el" "leim/quail/persian.el" "leim/quail/programmer-dvorak.el"
+;;;;;;  "leim/quail/py-punct.el" "leim/quail/pypunct-b5.el" "leim/quail/rfc1345.el"
+;;;;;;  "leim/quail/sgml-input.el" "leim/quail/sisheng.el" "leim/quail/slovak.el"
+;;;;;;  "leim/quail/symbol-ksc.el" "leim/quail/tamil-dvorak.el" "leim/quail/thai.el"
+;;;;;;  "leim/quail/tibetan.el" "leim/quail/viqr.el" "leim/quail/vntelex.el"
+;;;;;;  "leim/quail/vnvni.el" "leim/quail/welsh.el" "loadup.el" "mail/blessmail.el"
+;;;;;;  "mail/mailheader.el" "mail/mspools.el" "mail/rfc2368.el"
+;;;;;;  "mail/rfc822.el" "mail/rmail-spam-filter.el" "mail/rmailedit.el"
+;;;;;;  "mail/rmailkwd.el" "mail/rmailmm.el" "mail/rmailmsc.el" "mail/rmailsort.el"
+;;;;;;  "mail/rmailsum.el" "mail/undigest.el" "mh-e/mh-acros.el"
+;;;;;;  "mh-e/mh-alias.el" "mh-e/mh-buffers.el" "mh-e/mh-compat.el"
+;;;;;;  "mh-e/mh-funcs.el" "mh-e/mh-gnus.el" "mh-e/mh-identity.el"
+;;;;;;  "mh-e/mh-inc.el" "mh-e/mh-junk.el" "mh-e/mh-letter.el" "mh-e/mh-limit.el"
 ;;;;;;  "mh-e/mh-loaddefs.el" "mh-e/mh-mime.el" "mh-e/mh-print.el"
 ;;;;;;  "mh-e/mh-scan.el" "mh-e/mh-search.el" "mh-e/mh-seq.el" "mh-e/mh-show.el"
 ;;;;;;  "mh-e/mh-speed.el" "mh-e/mh-thread.el" "mh-e/mh-tool-bar.el"
@@ -32674,7 +32683,7 @@ Zone out, completely.
 ;;;;;;  "vc/ediff-vers.el" "vc/ediff-wind.el" "vc/pcvs-info.el" "vc/pcvs-parse.el"
 ;;;;;;  "vc/pcvs-util.el" "vc/vc-dav.el" "vc/vc-filewise.el" "vcursor.el"
 ;;;;;;  "vt-control.el" "vt100-led.el" "w32-fns.el" "w32-vars.el"
-;;;;;;  "x-dnd.el") (22420 55670 291981 354000))
+;;;;;;  "x-dnd.el") (22458 6108 204266 576000))
 
 ;;;***
 
