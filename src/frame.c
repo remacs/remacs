@@ -658,6 +658,7 @@ make_frame (bool mini_p)
       mw->mini = 1;
       wset_frame (mw, frame);
       fset_minibuffer_window (f, mini_window);
+      store_frame_param (f, Qminibuffer, Qt);
     }
   else
     {
@@ -770,6 +771,7 @@ make_frame_without_minibuffer (Lisp_Object mini_window, KBOARD *kb,
     }
 
   fset_minibuffer_window (f, mini_window);
+  store_frame_param (f, Qminibuffer, mini_window);
 
   /* Make the chosen minibuffer window display the proper minibuffer,
      unless it is already showing a minibuffer.  */
@@ -807,6 +809,7 @@ make_minibuffer_frame (void)
 
   mini_window = f->root_window;
   fset_minibuffer_window (f, mini_window);
+  store_frame_param (f, Qminibuffer, Qonly);
   XWINDOW (mini_window)->mini = 1;
   wset_next (XWINDOW (mini_window), Qnil);
   wset_prev (XWINDOW (mini_window), Qnil);
@@ -2404,6 +2407,46 @@ store_frame_param (struct frame *f, Lisp_Object prop, Lisp_Object val)
 {
   register Lisp_Object old_alist_elt;
 
+  if (EQ (prop, Qminibuffer))
+    {
+      if (WINDOWP (val))
+	{
+	  if (!MINI_WINDOW_P (XWINDOW (val)))
+	    error ("The 'minibuffer' parameter does not specify a valid minibuffer window");
+	  else if (FRAME_MINIBUF_ONLY_P (f))
+	    {
+	      if (EQ (val, FRAME_MINIBUF_WINDOW (f)))
+		val = Qonly;
+	      else
+		error ("Can't change the minibuffer window of a minibuffer-only frame");
+	    }
+	  else if (FRAME_HAS_MINIBUF_P (f))
+	    {
+	      if (EQ (val, FRAME_MINIBUF_WINDOW (f)))
+		val = Qt;
+	      else
+		error ("Can't change the minibuffer window of a frame with its own minibuffer");
+	    }
+	  else
+	    /* Store the chosen minibuffer window.  */
+	    fset_minibuffer_window (f, val);
+	}
+      else
+	{
+	  Lisp_Object old_val = Fcdr (Fassq (Qminibuffer, f->param_alist));
+
+	  if (!NILP (old_val))
+	    {
+	      if (WINDOWP (old_val) && NILP (val))
+		/* Don't change the value for a minibuffer-less frame if
+		   only nil was specified as new value.  */
+		val = old_val;
+	      else if (!EQ (old_val, val))
+		error ("Can't change the 'minibuffer' parameter of this frame");
+	    }
+	}
+    }
+
   /* The buffer-list parameters are stored in a special place and not
      in the alist.  All buffers must be live.  */
   if (EQ (prop, Qbuffer_list))
@@ -2474,19 +2517,6 @@ store_frame_param (struct frame *f, Lisp_Object prop, Lisp_Object val)
 	set_menu_bar_lines (f, val, make_number (FRAME_MENU_BAR_LINES (f)));
       else if (EQ (prop, Qname))
 	set_term_frame_name (f, val);
-    }
-
-  if (EQ (prop, Qminibuffer) && WINDOWP (val))
-    {
-      if (! MINI_WINDOW_P (XWINDOW (val)))
-	error ("Surrogate minibuffer windows must be minibuffer windows");
-
-      if ((FRAME_HAS_MINIBUF_P (f) || FRAME_MINIBUF_ONLY_P (f))
-	  && !EQ (val, f->minibuffer_window))
-	error ("Can't change the surrogate minibuffer of a frame with its own minibuffer");
-
-      /* Install the chosen minibuffer window, with proper buffer.  */
-      fset_minibuffer_window (f, val);
     }
 }
 
@@ -2565,10 +2595,6 @@ If FRAME is omitted or nil, return information on the currently selected frame. 
 	   : FRAME_COLS (f));
   store_in_alist (&alist, Qwidth, make_number (width));
   store_in_alist (&alist, Qmodeline, (FRAME_WANTS_MODELINE_P (f) ? Qt : Qnil));
-  store_in_alist (&alist, Qminibuffer,
-		  (! FRAME_HAS_MINIBUF_P (f) ? Qnil
-		   : FRAME_MINIBUF_ONLY_P (f) ? Qonly
-		   : FRAME_MINIBUF_WINDOW (f)));
   store_in_alist (&alist, Qunsplittable, (FRAME_NO_SPLIT_P (f) ? Qt : Qnil));
   store_in_alist (&alist, Qbuffer_list, f->buffer_list);
   store_in_alist (&alist, Qburied_buffer_list, f->buried_buffer_list);
