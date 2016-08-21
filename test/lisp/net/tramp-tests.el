@@ -1943,7 +1943,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 
   (let ((default-directory tramp-test-temporary-file-directory)
 	tmp-file)
-    ;; The remote host shall know a tempory file directory.
+    ;; The remote host shall know a temporary file directory.
     (should (stringp (temporary-file-directory)))
     (should
      (string-equal

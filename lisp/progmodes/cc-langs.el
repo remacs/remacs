@@ -518,7 +518,7 @@ parameters \(point-min) and \(point-max).")
 	     c-change-expand-fl-region)
   c++ '(c-depropertize-new-text
 	c-extend-font-lock-region-for-macros
-;	c-before-after-change-extend-region-for-lambda-capture ; doens't seem needed.
+;	c-before-after-change-extend-region-for-lambda-capture ; doesn't seem needed.
 	c-before-after-change-digit-quote
 	c-after-change-re-mark-raw-strings
 	c-neutralize-syntax-in-and-mark-CPP

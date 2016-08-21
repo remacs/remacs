@@ -497,7 +497,7 @@ preferably use the `c-mode-menu' language constant directly."
 ;; correct one.  This happens in some Emacsen, for example when
 ;; `basic-save-buffer' does (insert ?\n) when `require-final-newline' is
 ;; non-nil; (ii) to detect when Emacs fails to invoke
-;; `before-change-functions'.  This can happend when reverting a buffer - see
+;; `before-change-functions'.  This can happen when reverting a buffer - see
 ;; bug #24094.  It seems these failures happen only in GNU Emacs; XEmacs
 ;; seems to maintain the strict alternation of calls to
 ;; `before-change-functions' and `after-change-functions'.

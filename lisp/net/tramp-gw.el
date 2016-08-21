@@ -125,7 +125,7 @@
 	  (tramp-gw-process-filter tramp-gw-gw-proc s))))))
 
 (defun tramp-gw-process-filter (proc string)
-  "Resend the string to the other pocess."
+  "Resend the string to the other process."
   (let ((tramp-verbose 0))
     ;; The other process might have been stopped already.  We don't
     ;; want to be interrupted then.
