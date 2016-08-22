@@ -1004,6 +1004,13 @@ create_temp_file (ptrdiff_t nargs, Lisp_Object *args,
 DEFUN ("call-process-region", Fcall_process_region, Scall_process_region,
        3, MANY, 0,
        doc: /* Send text from START to END to a synchronous process running PROGRAM.
+
+START and END are normally buffer positions specifying the part of the
+buffer to send to the process.
+If START is nil, that means to use the entire buffer contents; END is
+ignored.
+If START is a string, then send that string to the process
+instead of any buffer contents; END is ignored.
 The remaining arguments are optional.
 Delete the text if fourth arg DELETE is non-nil.
 

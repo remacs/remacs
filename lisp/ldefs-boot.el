@@ -13449,7 +13449,8 @@ Interactively, reads the register using `register-read-with-preview'.
 
 ;;;***
 
-;;;### (autoloads nil "gdb-mi" "progmodes/gdb-mi.el" (0 0 0 0))
+;;;### (autoloads nil "gdb-mi" "progmodes/gdb-mi.el" (22431 53468
+;;;;;;  724634 231000))
 ;;; Generated autoloads from progmodes/gdb-mi.el
 
 (defvar gdb-enable-debug nil "\
@@ -13470,14 +13471,18 @@ the list) is deleted every time a new one is added (at the front).
 \(fn &optional ARG)" t nil)
 
 (autoload 'gdb "gdb-mi" "\
-Run gdb on program FILE in buffer *gud-FILE*.
-The directory containing FILE becomes the initial working directory
-and source-file directory for your debugger.
+Run gdb passing it COMMAND-LINE as arguments.
 
-COMMAND-LINE is the shell command for starting the gdb session.
-It should be a string consisting of the name of the gdb
-executable followed by command line options.  The command line
-options should include \"-i=mi\" to use gdb's MI text interface.
+If COMMAND-LINE names a program FILE to debug, gdb will run in
+a buffer named *gud-FILE*, and the directory containing FILE
+becomes the initial working directory and source-file directory
+for your debugger.
+If COMMAND-LINE requests that gdb attaches to a process PID, gdb
+will run in *gud-PID*, otherwise it will run in *gud*; in these
+cases the initial working directory is the default-directory of
+the buffer in which this command was invoked.
+
+COMMAND-LINE should include \"-i=mi\" to use gdb's MI text interface.
 Note that the old \"--annotate\" option is no longer supported.
 
 If option `gdb-many-windows' is nil (the default value) then gdb just
@@ -14950,13 +14955,20 @@ the form \"WINDOW-ID PIXMAP-ID\".  Value is non-nil if successful.
 
 ;;;***
 
-;;;### (autoloads nil "gud" "progmodes/gud.el" (0 0 0 0))
+;;;### (autoloads nil "gud" "progmodes/gud.el" (22431 53468 725634
+;;;;;;  240000))
 ;;; Generated autoloads from progmodes/gud.el
 
 (autoload 'gud-gdb "gud" "\
-Run gdb on program FILE in buffer *gud-FILE*.
-The directory containing FILE becomes the initial working
-directory and source-file directory for your debugger.
+Run gdb passing it COMMAND-LINE as arguments.
+If COMMAND-LINE names a program FILE to debug, gdb will run in
+a buffer named *gud-FILE*, and the directory containing FILE
+becomes the initial working directory and source-file directory
+for your debugger.
+If COMMAND-LINE requests that gdb attaches to a process PID, gdb
+will run in *gud-PID*, otherwise it will run in *gud*; in these
+cases the initial working directory is the default-directory of
+the buffer in which this command was invoked.
 
 \(fn COMMAND-LINE)" t nil)
 
@@ -25473,7 +25485,8 @@ Proced buffers.
 
 ;;;***
 
-;;;### (autoloads nil "profiler" "profiler.el" (0 0 0 0))
+;;;### (autoloads nil "profiler" "profiler.el" (22431 53468 722634
+;;;;;;  211000))
 ;;; Generated autoloads from profiler.el
 
 (autoload 'profiler-start "profiler" "\
@@ -29302,7 +29315,7 @@ only these files will be asked to be saved.
 
 ;;;***
 
-;;;### (autoloads nil "ses" "ses.el" (0 0 0 0))
+;;;### (autoloads nil "ses" "ses.el" (22457 44247 406108 197000))
 ;;; Generated autoloads from ses.el
 
 (autoload 'ses-mode "ses" "\
@@ -34509,7 +34522,8 @@ if it had been inserted from a file named URL.
 
 ;;;***
 
-;;;### (autoloads nil "url-http" "url/url-http.el" (0 0 0 0))
+;;;### (autoloads nil "url-http" "url/url-http.el" (22457 44247 409108
+;;;;;;  239000))
 ;;; Generated autoloads from url/url-http.el
  (autoload 'url-default-expander "url-expand")
 
@@ -37848,65 +37862,123 @@ Zone out, completely.
 ;;;;;;  "eshell/em-pred.el" "eshell/em-prompt.el" "eshell/em-rebind.el"
 ;;;;;;  "eshell/em-script.el" "eshell/em-smart.el" "eshell/em-term.el"
 ;;;;;;  "eshell/em-tramp.el" "eshell/em-unix.el" "eshell/em-xtra.el"
-;;;;;;  "eshell/esh-groups.el" "facemenu.el" "faces.el" "files.el"
-;;;;;;  "font-core.el" "font-lock.el" "format.el" "frame.el" "help.el"
-;;;;;;  "hfy-cmap.el" "htmlfontify-loaddefs.el" "ibuf-ext.el" "ibuffer-loaddefs.el"
-;;;;;;  "indent.el" "international/characters.el" "international/charprop.el"
-;;;;;;  "international/charscript.el" "international/cp51932.el"
-;;;;;;  "international/eucjp-ms.el" "international/mule-cmds.el"
-;;;;;;  "international/mule-conf.el" "international/mule.el" "international/uni-bidi.el"
-;;;;;;  "international/uni-brackets.el" "international/uni-category.el"
-;;;;;;  "international/uni-combining.el" "international/uni-comment.el"
-;;;;;;  "international/uni-decimal.el" "international/uni-decomposition.el"
-;;;;;;  "international/uni-digit.el" "international/uni-lowercase.el"
-;;;;;;  "international/uni-mirrored.el" "international/uni-name.el"
-;;;;;;  "international/uni-numeric.el" "international/uni-old-name.el"
-;;;;;;  "international/uni-titlecase.el" "international/uni-uppercase.el"
-;;;;;;  "isearch.el" "jit-lock.el" "jka-cmpr-hook.el" "language/burmese.el"
-;;;;;;  "language/cham.el" "language/chinese.el" "language/cyrillic.el"
-;;;;;;  "language/czech.el" "language/english.el" "language/ethiopic.el"
-;;;;;;  "language/european.el" "language/georgian.el" "language/greek.el"
-;;;;;;  "language/hebrew.el" "language/indian.el" "language/japanese.el"
-;;;;;;  "language/khmer.el" "language/korean.el" "language/lao.el"
-;;;;;;  "language/misc-lang.el" "language/romanian.el" "language/sinhala.el"
-;;;;;;  "language/slovak.el" "language/tai-viet.el" "language/thai.el"
-;;;;;;  "language/tibetan.el" "language/utf-8-lang.el" "language/vietnamese.el"
-;;;;;;  "ldefs-boot.el" "leim/quail/arabic.el" "leim/quail/croatian.el"
-;;;;;;  "leim/quail/cyril-jis.el" "leim/quail/cyrillic.el" "leim/quail/czech.el"
+;;;;;;  "eshell/esh-arg.el" "eshell/esh-cmd.el" "eshell/esh-ext.el"
+;;;;;;  "eshell/esh-io.el" "eshell/esh-module.el" "eshell/esh-opt.el"
+;;;;;;  "eshell/esh-proc.el" "eshell/esh-util.el" "eshell/esh-var.el"
+;;;;;;  "ezimage.el" "format-spec.el" "fringe.el" "generic-x.el"
+;;;;;;  "gnus/compface.el" "gnus/gnus-async.el" "gnus/gnus-bcklg.el"
+;;;;;;  "gnus/gnus-cite.el" "gnus/gnus-cloud.el" "gnus/gnus-cus.el"
+;;;;;;  "gnus/gnus-demon.el" "gnus/gnus-dup.el" "gnus/gnus-eform.el"
+;;;;;;  "gnus/gnus-ems.el" "gnus/gnus-icalendar.el" "gnus/gnus-int.el"
+;;;;;;  "gnus/gnus-logic.el" "gnus/gnus-mh.el" "gnus/gnus-salt.el"
+;;;;;;  "gnus/gnus-score.el" "gnus/gnus-srvr.el" "gnus/gnus-topic.el"
+;;;;;;  "gnus/gnus-undo.el" "gnus/gnus-util.el" "gnus/gnus-uu.el"
+;;;;;;  "gnus/gnus-vm.el" "gnus/gssapi.el" "gnus/ietf-drums.el" "gnus/legacy-gnus-agent.el"
+;;;;;;  "gnus/mail-parse.el" "gnus/mail-prsvr.el" "gnus/mail-source.el"
+;;;;;;  "gnus/mailcap.el" "gnus/messcompat.el" "gnus/mm-archive.el"
+;;;;;;  "gnus/mm-bodies.el" "gnus/mm-decode.el" "gnus/mm-util.el"
+;;;;;;  "gnus/mm-view.el" "gnus/mml-sec.el" "gnus/mml-smime.el" "gnus/nnagent.el"
+;;;;;;  "gnus/nnbabyl.el" "gnus/nndir.el" "gnus/nndraft.el" "gnus/nneething.el"
+;;;;;;  "gnus/nngateway.el" "gnus/nnheader.el" "gnus/nnimap.el" "gnus/nnir.el"
+;;;;;;  "gnus/nnmail.el" "gnus/nnmaildir.el" "gnus/nnmairix.el" "gnus/nnmbox.el"
+;;;;;;  "gnus/nnmh.el" "gnus/nnnil.el" "gnus/nnoo.el" "gnus/nnregistry.el"
+;;;;;;  "gnus/nnrss.el" "gnus/nnspool.el" "gnus/nntp.el" "gnus/nnvirtual.el"
+;;;;;;  "gnus/nnweb.el" "gnus/registry.el" "gnus/rfc1843.el" "gnus/rfc2045.el"
+;;;;;;  "gnus/rfc2047.el" "gnus/rfc2231.el" "gnus/rtree.el" "gnus/sieve-manage.el"
+;;;;;;  "gnus/smime.el" "gnus/spam-stat.el" "gnus/spam-wash.el" "hex-util.el"
+;;;;;;  "hfy-cmap.el" "ibuf-ext.el" "international/charscript.el"
+;;;;;;  "international/fontset.el" "international/iso-ascii.el" "international/ja-dic-cnv.el"
+;;;;;;  "international/ja-dic-utl.el" "international/ogonek.el" "kermit.el"
+;;;;;;  "language/hanja-util.el" "language/thai-word.el" "ldefs-boot.el"
+;;;;;;  "leim/quail/arabic.el" "leim/quail/croatian.el" "leim/quail/cyril-jis.el"
+;;;;;;  "leim/quail/cyrillic.el" "leim/quail/czech.el" "leim/quail/ethiopic.el"
 ;;;;;;  "leim/quail/georgian.el" "leim/quail/greek.el" "leim/quail/hanja-jis.el"
 ;;;;;;  "leim/quail/hanja.el" "leim/quail/hanja3.el" "leim/quail/hebrew.el"
-;;;;;;  "leim/quail/ipa-praat.el" "leim/quail/latin-alt.el" "leim/quail/latin-ltx.el"
-;;;;;;  "leim/quail/latin-post.el" "leim/quail/latin-pre.el" "leim/quail/persian.el"
-;;;;;;  "leim/quail/programmer-dvorak.el" "leim/quail/py-punct.el"
-;;;;;;  "leim/quail/pypunct-b5.el" "leim/quail/rfc1345.el" "leim/quail/sgml-input.el"
-;;;;;;  "leim/quail/slovak.el" "leim/quail/symbol-ksc.el" "leim/quail/tamil-dvorak.el"
-;;;;;;  "leim/quail/vntelex.el" "leim/quail/vnvni.el" "leim/quail/welsh.el"
-;;;;;;  "loadup.el" "mail/blessmail.el" "mail/rmail-loaddefs.el"
-;;;;;;  "mail/rmailedit.el" "mail/rmailkwd.el" "mail/rmailmm.el"
-;;;;;;  "mail/rmailmsc.el" "mail/rmailsort.el" "mail/rmailsum.el"
-;;;;;;  "mail/undigest.el" "menu-bar.el" "mh-e/mh-gnus.el" "mh-e/mh-loaddefs.el"
-;;;;;;  "minibuffer.el" "mouse.el" "net/tramp-loaddefs.el" "newcomment.el"
-;;;;;;  "obarray.el" "org/ob-core.el" "org/ob-keys.el" "org/ob-lob.el"
-;;;;;;  "org/ob-matlab.el" "org/ob-tangle.el" "org/ob.el" "org/org-archive.el"
-;;;;;;  "org/org-attach.el" "org/org-bbdb.el" "org/org-clock.el"
-;;;;;;  "org/org-datetree.el" "org/org-element.el" "org/org-feed.el"
-;;;;;;  "org/org-footnote.el" "org/org-id.el" "org/org-indent.el"
-;;;;;;  "org/org-install.el" "org/org-irc.el" "org/org-loaddefs.el"
-;;;;;;  "org/org-mobile.el" "org/org-plot.el" "org/org-table.el"
-;;;;;;  "org/org-timer.el" "org/ox-ascii.el" "org/ox-beamer.el" "org/ox-html.el"
-;;;;;;  "org/ox-icalendar.el" "org/ox-latex.el" "org/ox-man.el" "org/ox-md.el"
-;;;;;;  "org/ox-odt.el" "org/ox-org.el" "org/ox-publish.el" "org/ox-texinfo.el"
-;;;;;;  "org/ox.el" "progmodes/elisp-mode.el" "progmodes/prog-mode.el"
-;;;;;;  "ps-def.el" "ps-mule.el" "ps-print-loaddefs.el" "register.el"
-;;;;;;  "replace.el" "rfn-eshadow.el" "select.el" "simple.el" "startup.el"
-;;;;;;  "subdirs.el" "subr.el" "textmodes/fill.el" "textmodes/page.el"
-;;;;;;  "textmodes/paragraphs.el" "textmodes/reftex-auc.el" "textmodes/reftex-cite.el"
-;;;;;;  "textmodes/reftex-dcr.el" "textmodes/reftex-global.el" "textmodes/reftex-index.el"
-;;;;;;  "textmodes/reftex-loaddefs.el" "textmodes/reftex-parse.el"
-;;;;;;  "textmodes/reftex-ref.el" "textmodes/reftex-sel.el" "textmodes/reftex-toc.el"
-;;;;;;  "textmodes/text-mode.el" "uniquify.el" "vc/ediff-hook.el"
-;;;;;;  "vc/vc-hooks.el" "version.el" "widget.el" "window.el") (0
-;;;;;;  0 0 0))
+;;;;;;  "leim/quail/indian.el" "leim/quail/ipa-praat.el" "leim/quail/ipa.el"
+;;;;;;  "leim/quail/japanese.el" "leim/quail/lao.el" "leim/quail/latin-alt.el"
+;;;;;;  "leim/quail/latin-ltx.el" "leim/quail/latin-post.el" "leim/quail/latin-pre.el"
+;;;;;;  "leim/quail/lrt.el" "leim/quail/persian.el" "leim/quail/programmer-dvorak.el"
+;;;;;;  "leim/quail/py-punct.el" "leim/quail/pypunct-b5.el" "leim/quail/rfc1345.el"
+;;;;;;  "leim/quail/sgml-input.el" "leim/quail/sisheng.el" "leim/quail/slovak.el"
+;;;;;;  "leim/quail/symbol-ksc.el" "leim/quail/tamil-dvorak.el" "leim/quail/thai.el"
+;;;;;;  "leim/quail/tibetan.el" "leim/quail/viqr.el" "leim/quail/vntelex.el"
+;;;;;;  "leim/quail/vnvni.el" "leim/quail/welsh.el" "loadup.el" "mail/blessmail.el"
+;;;;;;  "mail/mailheader.el" "mail/mspools.el" "mail/rfc2368.el"
+;;;;;;  "mail/rfc822.el" "mail/rmail-spam-filter.el" "mail/rmailedit.el"
+;;;;;;  "mail/rmailkwd.el" "mail/rmailmm.el" "mail/rmailmsc.el" "mail/rmailsort.el"
+;;;;;;  "mail/rmailsum.el" "mail/undigest.el" "mh-e/mh-acros.el"
+;;;;;;  "mh-e/mh-alias.el" "mh-e/mh-buffers.el" "mh-e/mh-compat.el"
+;;;;;;  "mh-e/mh-funcs.el" "mh-e/mh-gnus.el" "mh-e/mh-identity.el"
+;;;;;;  "mh-e/mh-inc.el" "mh-e/mh-junk.el" "mh-e/mh-letter.el" "mh-e/mh-limit.el"
+;;;;;;  "mh-e/mh-loaddefs.el" "mh-e/mh-mime.el" "mh-e/mh-print.el"
+;;;;;;  "mh-e/mh-scan.el" "mh-e/mh-search.el" "mh-e/mh-seq.el" "mh-e/mh-show.el"
+;;;;;;  "mh-e/mh-speed.el" "mh-e/mh-thread.el" "mh-e/mh-tool-bar.el"
+;;;;;;  "mh-e/mh-utils.el" "mh-e/mh-xface.el" "mouse-copy.el" "mwheel.el"
+;;;;;;  "net/dns.el" "net/eudc-vars.el" "net/eudcb-bbdb.el" "net/eudcb-ldap.el"
+;;;;;;  "net/eudcb-mab.el" "net/hmac-def.el" "net/hmac-md5.el" "net/imap.el"
+;;;;;;  "net/ldap.el" "net/mairix.el" "net/newsticker.el" "net/nsm.el"
+;;;;;;  "net/rfc2104.el" "net/sasl-cram.el" "net/sasl-digest.el"
+;;;;;;  "net/sasl-scram-rfc.el" "net/sasl.el" "net/shr-color.el"
+;;;;;;  "net/soap-inspect.el" "net/socks.el" "net/tls.el" "net/tramp-adb.el"
+;;;;;;  "net/tramp-cache.el" "net/tramp-cmds.el" "net/tramp-compat.el"
+;;;;;;  "net/tramp-gvfs.el" "net/tramp-gw.el" "net/tramp-loaddefs.el"
+;;;;;;  "net/tramp-sh.el" "net/tramp-smb.el" "net/tramp-uu.el" "net/zeroconf.el"
+;;;;;;  "notifications.el" "nxml/nxml-enc.el" "nxml/nxml-maint.el"
+;;;;;;  "nxml/nxml-ns.el" "nxml/nxml-outln.el" "nxml/nxml-parse.el"
+;;;;;;  "nxml/nxml-rap.el" "nxml/nxml-util.el" "nxml/rng-dt.el" "nxml/rng-loc.el"
+;;;;;;  "nxml/rng-maint.el" "nxml/rng-match.el" "nxml/rng-parse.el"
+;;;;;;  "nxml/rng-pttrn.el" "nxml/rng-uri.el" "nxml/rng-util.el"
+;;;;;;  "nxml/xsd-regexp.el" "obarray.el" "org/ob-C.el" "org/ob-R.el"
+;;;;;;  "org/ob-asymptote.el" "org/ob-awk.el" "org/ob-calc.el" "org/ob-clojure.el"
+;;;;;;  "org/ob-comint.el" "org/ob-core.el" "org/ob-css.el" "org/ob-ditaa.el"
+;;;;;;  "org/ob-dot.el" "org/ob-emacs-lisp.el" "org/ob-eval.el" "org/ob-exp.el"
+;;;;;;  "org/ob-fortran.el" "org/ob-gnuplot.el" "org/ob-haskell.el"
+;;;;;;  "org/ob-io.el" "org/ob-java.el" "org/ob-js.el" "org/ob-keys.el"
+;;;;;;  "org/ob-latex.el" "org/ob-ledger.el" "org/ob-lilypond.el"
+;;;;;;  "org/ob-lisp.el" "org/ob-lob.el" "org/ob-makefile.el" "org/ob-matlab.el"
+;;;;;;  "org/ob-maxima.el" "org/ob-mscgen.el" "org/ob-ocaml.el" "org/ob-octave.el"
+;;;;;;  "org/ob-org.el" "org/ob-perl.el" "org/ob-picolisp.el" "org/ob-plantuml.el"
+;;;;;;  "org/ob-python.el" "org/ob-ref.el" "org/ob-ruby.el" "org/ob-sass.el"
+;;;;;;  "org/ob-scala.el" "org/ob-scheme.el" "org/ob-screen.el" "org/ob-sh.el"
+;;;;;;  "org/ob-shen.el" "org/ob-sql.el" "org/ob-sqlite.el" "org/ob-table.el"
+;;;;;;  "org/ob-tangle.el" "org/ob.el" "org/org-archive.el" "org/org-attach.el"
+;;;;;;  "org/org-bbdb.el" "org/org-bibtex.el" "org/org-clock.el"
+;;;;;;  "org/org-crypt.el" "org/org-ctags.el" "org/org-datetree.el"
+;;;;;;  "org/org-docview.el" "org/org-element.el" "org/org-entities.el"
+;;;;;;  "org/org-eshell.el" "org/org-faces.el" "org/org-feed.el"
+;;;;;;  "org/org-footnote.el" "org/org-gnus.el" "org/org-habit.el"
+;;;;;;  "org/org-id.el" "org/org-indent.el" "org/org-info.el" "org/org-inlinetask.el"
+;;;;;;  "org/org-install.el" "org/org-irc.el" "org/org-list.el" "org/org-macro.el"
+;;;;;;  "org/org-mhe.el" "org/org-mobile.el" "org/org-mouse.el" "org/org-pcomplete.el"
+;;;;;;  "org/org-plot.el" "org/org-protocol.el" "org/org-rmail.el"
+;;;;;;  "org/org-src.el" "org/org-table.el" "org/org-timer.el" "org/org-w3m.el"
+;;;;;;  "org/ox-ascii.el" "org/ox-beamer.el" "org/ox-html.el" "org/ox-icalendar.el"
+;;;;;;  "org/ox-latex.el" "org/ox-man.el" "org/ox-md.el" "org/ox-odt.el"
+;;;;;;  "org/ox-org.el" "org/ox-publish.el" "org/ox-texinfo.el" "org/ox.el"
+;;;;;;  "play/gametree.el" "progmodes/ada-prj.el" "progmodes/cc-align.el"
+;;;;;;  "progmodes/cc-awk.el" "progmodes/cc-bytecomp.el" "progmodes/cc-cmds.el"
+;;;;;;  "progmodes/cc-defs.el" "progmodes/cc-fonts.el" "progmodes/cc-langs.el"
+;;;;;;  "progmodes/cc-menus.el" "progmodes/ebnf-abn.el" "progmodes/ebnf-bnf.el"
+;;;;;;  "progmodes/ebnf-dtd.el" "progmodes/ebnf-ebx.el" "progmodes/ebnf-iso.el"
+;;;;;;  "progmodes/ebnf-otz.el" "progmodes/ebnf-yac.el" "progmodes/idlw-complete-structtag.el"
+;;;;;;  "progmodes/idlw-help.el" "progmodes/idlw-toolbar.el" "progmodes/mantemp.el"
+;;;;;;  "progmodes/xscheme.el" "ps-def.el" "ps-mule.el" "ps-samp.el"
+;;;;;;  "sb-image.el" "scroll-bar.el" "soundex.el" "subdirs.el" "tempo.el"
+;;;;;;  "textmodes/bib-mode.el" "textmodes/makeinfo.el" "textmodes/page-ext.el"
+;;;;;;  "textmodes/refbib.el" "textmodes/refer.el" "textmodes/reftex-auc.el"
+;;;;;;  "textmodes/reftex-cite.el" "textmodes/reftex-dcr.el" "textmodes/reftex-global.el"
+;;;;;;  "textmodes/reftex-index.el" "textmodes/reftex-parse.el" "textmodes/reftex-ref.el"
+;;;;;;  "textmodes/reftex-sel.el" "textmodes/reftex-toc.el" "textmodes/texnfo-upd.el"
+;;;;;;  "timezone.el" "tooltip.el" "tree-widget.el" "url/url-about.el"
+;;;;;;  "url/url-cookie.el" "url/url-dired.el" "url/url-domsuf.el"
+;;;;;;  "url/url-expand.el" "url/url-ftp.el" "url/url-future.el"
+;;;;;;  "url/url-history.el" "url/url-imap.el" "url/url-methods.el"
+;;;;;;  "url/url-nfs.el" "url/url-proxy.el" "url/url-vars.el" "vc/ediff-diff.el"
+;;;;;;  "vc/ediff-init.el" "vc/ediff-merg.el" "vc/ediff-ptch.el"
+;;;;;;  "vc/ediff-vers.el" "vc/ediff-wind.el" "vc/pcvs-info.el" "vc/pcvs-parse.el"
+;;;;;;  "vc/pcvs-util.el" "vc/vc-dav.el" "vc/vc-filewise.el" "vcursor.el"
+;;;;;;  "vt-control.el" "vt100-led.el" "w32-fns.el" "w32-vars.el"
+;;;;;;  "x-dnd.el") (22458 6108 204266 576000))
 
 ;;;***
 

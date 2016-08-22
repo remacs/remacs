@@ -237,7 +237,8 @@ enum
 #define CHAR_HEAD_P(byte) (((byte) & 0xC0) != 0x80)
 
 /* How many bytes a character that starts with BYTE occupies in a
-   multibyte form.  */
+   multibyte form.  Unlike MULTIBYTE_LENGTH below, this macro does not
+   validate the multibyte form, but looks only at its first byte.  */
 #define BYTES_BY_CHAR_HEAD(byte)	\
   (!((byte) & 0x80) ? 1			\
    : !((byte) & 0x20) ? 2		\
@@ -247,7 +248,9 @@ enum
 
 
 /* The byte length of multibyte form at unibyte string P ending at
-   PEND.  If STR doesn't point to a valid multibyte form, return 0.  */
+   PEND.  If the string doesn't point to a valid multibyte form,
+   return 0.  Unlike BYTES_BY_CHAR_HEAD, this macro validates the
+   multibyte form.  */
 
 #define MULTIBYTE_LENGTH(p, pend)				\
   (p >= pend ? 0						\
@@ -263,7 +266,8 @@ enum
    : 0)
 
 
-/* Like MULTIBYTE_LENGTH, but don't check the ending address.  */
+/* Like MULTIBYTE_LENGTH, but don't check the ending address.  The
+   multibyte form is still validated, unlike BYTES_BY_CHAR_HEAD.  */
 
 #define MULTIBYTE_LENGTH_NO_CHECK(p)			\
   (!((p)[0] & 0x80) ? 1					\
@@ -324,15 +328,7 @@ enum
 
 
 /* Like STRING_CHAR, but set ACTUAL_LEN to the length of multibyte
-   form.
-
-   Note: This macro returns the actual length of the character's
-   multibyte sequence as it is stored in a buffer or string.  The
-   character it returns might have a different codepoint that has a
-   different multibyte sequence of a different length, due to possible
-   unification of CJK characters inside string_char.  Therefore do NOT
-   assume that the length returned by this macro is identical to the
-   length of the multibyte sequence of the character it returns.  */
+   form.  */
 
 #define STRING_CHAR_AND_LENGTH(p, actual_len)			\
   (!((p)[0] & 0x80)						\

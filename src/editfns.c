@@ -1065,7 +1065,14 @@ usage: (save-current-buffer &rest BODY)  */)
 
 DEFUN ("buffer-size", Fbuffer_size, Sbuffer_size, 0, 1, 0,
        doc: /* Return the number of characters in the current buffer.
-If BUFFER, return the number of characters in that buffer instead.  */)
+If BUFFER is not nil, return the number of characters in that buffer
+instead.
+
+This does not take narrowing into account; to count the number of
+characters in the accessible portion of the current buffer, use
+`(- (point-max) (point-min))', and to count the number of characters
+in some other BUFFER, use
+`(with-current-buffer BUFFER (- (point-max) (point-min)))'.  */)
   (Lisp_Object buffer)
 {
   if (NILP (buffer))
