@@ -1308,7 +1308,7 @@ candidate_frame (Lisp_Object candidate, Lisp_Object frame, Lisp_Object minibuf)
 		     FRAME_FOCUS_FRAME (c)))
 	    return candidate;
 	}
-      else if (XFASTINT (minibuf) == 0)
+      else if (INTEGERP (minibuf) && XINT (minibuf) == 0)
 	{
 	  if (FRAME_VISIBLE_P (c) || FRAME_ICONIFIED_P (c))
 	    return candidate;
