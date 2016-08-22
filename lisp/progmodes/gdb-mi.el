@@ -2661,8 +2661,15 @@ responses.
 If FIX-LIST is non-nil, \"FIX-LIST={..}\" is replaced with
 \"FIX-LIST=[..]\" prior to parsing. This is used to fix broken
 -break-info output when it contains breakpoint script field
-incompatible with GDB/MI output syntax."
+incompatible with GDB/MI output syntax.
+
+If `default-directory' is remote, full file names are adapted accordingly."
   (save-excursion
+    (let ((remote (file-remote-p default-directory)))
+      (when remote
+        (goto-char (point-min))
+        (while (re-search-forward "[\\[,]fullname=\"\\(.+\\)\"" nil t)
+          (replace-match (concat remote "\\1") nil nil nil 1))))
     (goto-char (point-min))
     (when fix-key
       (save-excursion
