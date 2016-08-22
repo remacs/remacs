@@ -1081,6 +1081,8 @@ The return result is a `package-desc'."
               (setq files nil)
               ;; set the 'dir kind,
               (setf (package-desc-kind info) 'dir))))
+        (unless info
+          (error "No .el files with package headers in `%s'" default-directory))
         ;; and return the info.
         info))))
 

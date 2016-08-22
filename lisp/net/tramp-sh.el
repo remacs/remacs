@@ -5158,7 +5158,7 @@ Return ATTR."
 
 (defun tramp-get-remote-path (vec)
   "Compile list of remote directories for $PATH.
-Nonexisting directories are removed from spec."
+Nonexistent directories are removed from spec."
   (with-tramp-connection-property
       ;; When `tramp-own-remote-path' is in `tramp-remote-path', we
       ;; cache the result for the session only.  Otherwise, the result

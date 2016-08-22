@@ -1166,7 +1166,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; `parse-sexp-lookup-properties' (when it exists).
 	  (parse-sexp-lookup-properties
 	   (cc-eval-when-compile
-	     (boundp 'parse-sexp-lookup-properties))))
+	     (boundp 'parse-sexp-lookup-properties))
+	   ))
 
       ;; Below we fontify a whole declaration even when it crosses the limit,
       ;; to avoid gaps when jit/lazy-lock fontifies the file a block at a
@@ -1204,7 +1205,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	 (setq start-pos (point))
 	 (when
 	  ;; The result of the form below is true when we don't recognize a
-	  ;; declaration or cast.
+	  ;; declaration or cast, and we don't recognise a "non-decl",
+	  ;; typically a brace list.
 	  (if (or (and (eq (get-text-property (point) 'face)
 			   'font-lock-keyword-face)
 		       (looking-at c-not-decl-init-keywords))
@@ -1220,7 +1222,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	    ;; (e.g. "for (").
 	    (let ((type (and (> match-pos (point-min))
 			     (c-get-char-property (1- match-pos) 'c-type))))
-	      (cond ((not (memq (char-before match-pos) '(?\( ?, ?\[ ?<)))
+	      (cond ((not (memq (char-before match-pos) '(?\( ?, ?\[ ?< ?{)))
 		     (setq context nil
 			   c-restricted-<>-arglists nil))
 		    ;; A control flow expression or a decltype
@@ -1242,6 +1244,10 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		    ((eq type 'c-decl-arg-start)
 		     (setq context 'decl
 			   c-restricted-<>-arglists nil))
+		    ;; We're inside (probably) a brace list.
+		    ((eq type 'c-not-decl)
+		     (setq context 'not-decl
+			   c-restricted-<>-arglists nil))
 		    ;; Inside a C++11 lambda function arglist.
 		    ((and (c-major-mode-is 'c++-mode)
 			  (eq (char-before match-pos) ?\()
@@ -1255,7 +1261,20 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			   c-restricted-<>-arglists nil)
 		     (c-put-char-property (1- match-pos) 'c-type
 					  'c-decl-arg-start))
-
+		    ;; We're inside an brace list.
+		    ((and (eq (char-before match-pos) ?{)
+			  (save-excursion
+			    (goto-char (1- match-pos))
+			    (numberp
+			     (c-looking-at-or-maybe-in-bracelist nil))))
+		     (setq context 'not-decl
+			   c-restricted-<>-arglists nil)
+		     (c-put-char-property (1- match-pos) 'c-type
+					  'c-not-decl))
+		    ;; We're inside an "ordinary" open brace.
+		    ((eq (char-before match-pos) ?{)
+		     (setq context nil
+			   c-restricted-<>-arglists nil))
 		    ;; Inside an angle bracket arglist.
 		    ((or (eq type 'c-<>-arg-sep)
 			 (eq (char-before match-pos) ?<))
@@ -1301,123 +1320,131 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	      (c-forward-syntactic-ws))
 
 	    ;; Now analyze the construct.
-	    (setq decl-or-cast (c-forward-decl-or-cast-1
-				match-pos context last-cast-end))
+	    (if (eq context 'not-decl)
+		(progn
+		  (setq decl-or-cast nil)
+		  (if (c-syntactic-re-search-forward
+		       "," (min limit (point-max)) 'at-limit t)
+		      (c-put-char-property (1- (point)) 'c-type 'c-not-decl))
+		  nil)
+	      (setq decl-or-cast
+		    (c-forward-decl-or-cast-1
+		     match-pos context last-cast-end))
 
-	    ;; Ensure that c-<>-arg-sep c-type properties are in place on the
-	    ;; commas separating the arguments inside template/generic <..>s.
-	    (when (and (eq (char-before match-pos) ?<)
-		       (> match-pos max-<>-end))
-	      (save-excursion
-		(goto-char match-pos)
-		(c-backward-token-2)
-		(if (and
-		     (eq (char-after) ?<)
-		     (let ((c-restricted-<>-arglists
-			    (save-excursion
-			      (c-backward-token-2)
-			      (and
-			       (not (looking-at c-opt-<>-sexp-key))
-			       (progn (c-backward-syntactic-ws)
-				      (memq (char-before) '(?\( ?,)))
-			       (not (eq (c-get-char-property (1- (point))
-							     'c-type)
-					'c-decl-arg-start))))))
-		       (c-forward-<>-arglist nil)))
-		    (setq max-<>-end (point)))))
+	      ;; Ensure that c-<>-arg-sep c-type properties are in place on the
+	      ;; commas separating the arguments inside template/generic <..>s.
+	      (when (and (eq (char-before match-pos) ?<)
+			 (> match-pos max-<>-end))
+		(save-excursion
+		  (goto-char match-pos)
+		  (c-backward-token-2)
+		  (if (and
+		       (eq (char-after) ?<)
+		       (let ((c-restricted-<>-arglists
+			      (save-excursion
+				(c-backward-token-2)
+				(and
+				 (not (looking-at c-opt-<>-sexp-key))
+				 (progn (c-backward-syntactic-ws)
+					(memq (char-before) '(?\( ?,)))
+				 (not (eq (c-get-char-property (1- (point))
+							       'c-type)
+					  'c-decl-arg-start))))))
+			 (c-forward-<>-arglist nil)))
+		      (setq max-<>-end (point)))))
 
-	    (cond
-	     ((eq decl-or-cast 'cast)
-	      ;; Save the position after the previous cast so we can feed
-	      ;; it to `c-forward-decl-or-cast-1' in the next round.  That
-	      ;; helps it discover cast chains like "(a) (b) c".
-	      (setq last-cast-end (point))
-	      (c-fontify-recorded-types-and-refs)
-	      nil)
+	      (cond
+	       ((eq decl-or-cast 'cast)
+		;; Save the position after the previous cast so we can feed
+		;; it to `c-forward-decl-or-cast-1' in the next round.  That
+		;; helps it discover cast chains like "(a) (b) c".
+		(setq last-cast-end (point))
+		(c-fontify-recorded-types-and-refs)
+		nil)
 
-	     (decl-or-cast
-	      ;; We've found a declaration.
+	       (decl-or-cast
+		;; We've found a declaration.
 
-	      ;; Set `max-type-decl-end' or `max-type-decl-end-before-token'
-	      ;; under the assumption that we're after the first type decl
-	      ;; expression in the declaration now.  That's not really true;
-	      ;; we could also be after a parenthesized initializer
-	      ;; expression in C++, but this is only used as a last resort
-	      ;; to slant ambiguous expression/declarations, and overall
-	      ;; it's worth the risk to occasionally fontify an expression
-	      ;; as a declaration in an initializer expression compared to
-	      ;; getting ambiguous things in normal function prototypes
-	      ;; fontified as expressions.
-	      (if inside-macro
-		  (when (> (point) max-type-decl-end-before-token)
-		    (setq max-type-decl-end-before-token (point)))
-		(when (> (point) max-type-decl-end)
-		  (setq max-type-decl-end (point))))
+		;; Set `max-type-decl-end' or `max-type-decl-end-before-token'
+		;; under the assumption that we're after the first type decl
+		;; expression in the declaration now.  That's not really true;
+		;; we could also be after a parenthesized initializer
+		;; expression in C++, but this is only used as a last resort
+		;; to slant ambiguous expression/declarations, and overall
+		;; it's worth the risk to occasionally fontify an expression
+		;; as a declaration in an initializer expression compared to
+		;; getting ambiguous things in normal function prototypes
+		;; fontified as expressions.
+		(if inside-macro
+		    (when (> (point) max-type-decl-end-before-token)
+		      (setq max-type-decl-end-before-token (point)))
+		  (when (> (point) max-type-decl-end)
+		    (setq max-type-decl-end (point))))
 
-	      ;; Do we have an expression as the second or third clause of
-	      ;; a "for" paren expression?
-	      (if (save-excursion
-		    (and
-		     (car (cddr decl-or-cast)) ; maybe-expression flag.
-		     (goto-char start-pos)
-		     (c-go-up-list-backward)
-		     (eq (char-after) ?\()
-		     (progn (c-backward-syntactic-ws)
-			    (c-simple-skip-symbol-backward))
-		     (looking-at c-paren-stmt-key)
-		     (progn (goto-char match-pos)
-			    (while (and (eq (char-before) ?\))
-					(c-go-list-backward))
-			      (c-backward-syntactic-ws))
-			    (eq (char-before) ?\;))))
-		  ;; We've got an expression in "for" parens.  Remove the
-		  ;; "type" that would spuriously get fontified.
-		  (let ((elt (and (consp c-record-type-identifiers)
-				  (assq (cadr (cddr decl-or-cast))
-					c-record-type-identifiers))))
-		    (when elt
-		      (setq c-record-type-identifiers
-			    (c-delq-from-dotted-list
-			     elt c-record-type-identifiers)))
-		    t)
-	      ;; Back up to the type to fontify the declarator(s).
-	      (goto-char (car decl-or-cast))
+		;; Do we have an expression as the second or third clause of
+		;; a "for" paren expression?
+		(if (save-excursion
+		      (and
+		       (car (cddr decl-or-cast)) ; maybe-expression flag.
+		       (goto-char start-pos)
+		       (c-go-up-list-backward)
+		       (eq (char-after) ?\()
+		       (progn (c-backward-syntactic-ws)
+			      (c-simple-skip-symbol-backward))
+		       (looking-at c-paren-stmt-key)
+		       (progn (goto-char match-pos)
+			      (while (and (eq (char-before) ?\))
+					  (c-go-list-backward))
+				(c-backward-syntactic-ws))
+			      (eq (char-before) ?\;))))
+		    ;; We've got an expression in "for" parens.  Remove the
+		    ;; "type" that would spuriously get fontified.
+		    (let ((elt (and (consp c-record-type-identifiers)
+				    (assq (cadr (cddr decl-or-cast))
+					  c-record-type-identifiers))))
+		      (when elt
+			(setq c-record-type-identifiers
+			      (c-delq-from-dotted-list
+			       elt c-record-type-identifiers)))
+		      t)
+		  ;; Back up to the type to fontify the declarator(s).
+		  (goto-char (car decl-or-cast))
 
-	      (let ((decl-list
-		     (if context
-			 ;; Should normally not fontify a list of
-			 ;; declarators inside an arglist, but the first
-			 ;; argument in the ';' separated list of a "for"
-			 ;; statement is an exception.
-			 (when (eq (char-before match-pos) ?\()
-			   (save-excursion
-			     (goto-char (1- match-pos))
-			     (c-backward-syntactic-ws)
-			     (and (c-simple-skip-symbol-backward)
-				  (looking-at c-paren-stmt-key))))
-		       t)))
+		  (let ((decl-list
+			 (if context
+			     ;; Should normally not fontify a list of
+			     ;; declarators inside an arglist, but the first
+			     ;; argument in the ';' separated list of a "for"
+			     ;; statement is an exception.
+			     (when (eq (char-before match-pos) ?\()
+			       (save-excursion
+				 (goto-char (1- match-pos))
+				 (c-backward-syntactic-ws)
+				 (and (c-simple-skip-symbol-backward)
+				      (looking-at c-paren-stmt-key))))
+			   t)))
 
-		;; Fix the `c-decl-id-start' or `c-decl-type-start' property
-		;; before the first declarator if it's a list.
-		;; `c-font-lock-declarators' handles the rest.
-		(when decl-list
-		  (save-excursion
-		    (c-backward-syntactic-ws)
-		    (unless (bobp)
-		      (c-put-char-property (1- (point)) 'c-type
-					   (if (cadr decl-or-cast)
-					       'c-decl-type-start
-					     'c-decl-id-start)))))
+		    ;; Fix the `c-decl-id-start' or `c-decl-type-start' property
+		    ;; before the first declarator if it's a list.
+		    ;; `c-font-lock-declarators' handles the rest.
+		    (when decl-list
+		      (save-excursion
+			(c-backward-syntactic-ws)
+			(unless (bobp)
+			  (c-put-char-property (1- (point)) 'c-type
+					       (if (cadr decl-or-cast)
+						   'c-decl-type-start
+						 'c-decl-id-start)))))
 
-		(c-font-lock-declarators
-		 (min limit (point-max)) decl-list (cadr decl-or-cast)))
+		    (c-font-lock-declarators
+		     (min limit (point-max)) decl-list (cadr decl-or-cast)))
 
-	      ;; A declaration has been successfully identified, so do all the
-	      ;; fontification of types and refs that've been recorded.
-	      (c-fontify-recorded-types-and-refs)
-	      nil))
+		  ;; A declaration has been successfully identified, so do all the
+		  ;; fontification of types and refs that've been recorded.
+		  (c-fontify-recorded-types-and-refs)
+		  nil))
 
-	     (t t)))
+	       (t t))))
 
 	  ;; It was a false alarm.  Check if we're in a label (or other
 	  ;; construct with `:' except bitfield) instead.

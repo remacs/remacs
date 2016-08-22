@@ -1401,7 +1401,7 @@ check_iso_charset_parameter (Lisp_Object dimension, Lisp_Object chars,
 
   int final_ch = XFASTINT (final_char);
   if (! ('0' <= final_ch && final_ch <= '~'))
-    error ("Invalid FINAL-CHAR '%c', it should be '0'..'~'", final_ch);
+    error ("Invalid FINAL-CHAR `%c', it should be `0'..`~'", final_ch);
 
   return chars_flag;
 }

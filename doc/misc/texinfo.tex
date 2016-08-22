@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2016-08-03.13}
+\def\texinfoversion{2016-08-16.20}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -1108,9 +1108,14 @@ where each line of input produces a line of output.}
 % For LuaTeX
 %
 
+\newif\iftxiuseunicodedestname
+\txiuseunicodedestnamefalse % For pdfTeX etc.
+
 \ifx\luatexversion\thisisundefined
 \else
-  % Escape PDF strings UTF-8 to UTF-16
+  % Use Unicode destination names
+  \txiuseunicodedestnametrue
+  % Escape PDF strings with converting UTF-16 from UTF-8
   \begingroup
     \catcode`\%=12
     \directlua{
@@ -1138,7 +1143,24 @@ where each line of input produces a line of output.}
       end
     }
   \endgroup
-  \def\pdfescapestring#1{\directlua{UTF16oct('\luaescapestring{#1}')}}
+  \def\pdfescapestrutfsixteen#1{\directlua{UTF16oct('\luaescapestring{#1}')}}
+  % Escape PDF strings without converting
+  \begingroup
+    \directlua{
+      function PDFescstr(str)
+        for c in string.bytes(str) do
+          if c <= 0x20 or c >= 0x80 or c == 0x28 or c == 0x29 or c == 0x5c then
+            tex.sprint(
+              string.format(string.char(0x5c) .. string.char(0x25) .. '03o',
+                            c))
+          else
+            tex.sprint(string.char(c))
+          end
+        end
+      end
+    }
+  \endgroup
+  \def\pdfescapestring#1{\directlua{PDFescstr('\luaescapestring{#1}')}}
   \ifnum\luatexversion>84
     % For LuaTeX >= 0.85
     \def\pdfdest{\pdfextension dest}
@@ -1197,6 +1219,14 @@ where each line of input produces a line of output.}
     % The expandable \pdfescapestring primitive escapes parentheses,
     % backslashes, and other special chars.
     \xdef#1{\pdfescapestring{#1}}%
+  \fi
+}
+\def\txiescapepdfutfsixteen#1{%
+  \ifx\pdfescapestrutfsixteen\thisisundefined
+    % No UTF-16 converting macro available.
+    \txiescapepdf{#1}%
+  \else
+    \xdef#1{\pdfescapestrutfsixteen{#1}}%
   \fi
 }
 
@@ -1308,18 +1338,76 @@ output) for that.)}
       \pdfrefximage \pdflastximage
     \fi}
   %
-  \def\pdfmkdest#1{{%
+  \def\setpdfdestname#1{{%
     % We have to set dummies so commands such as @code, and characters
     % such as \, aren't expanded when present in a section title.
     \indexnofonts
     \makevalueexpandable
     \turnoffactive
-    % Use ASCII approximations in destination names.
-    \passthroughcharsfalse
+    \iftxiuseunicodedestname
+      \ifx \declaredencoding \latone
+        % Pass through Latin-1 characters.
+        % LuaTeX with byte wise I/O converts Latin-1 characters to Unicode.
+      \else
+        \ifx \declaredencoding \utfeight
+          % Pass through Unicode characters.
+        \else
+          % Use ASCII approximations in destination names.
+          \passthroughcharsfalse
+        \fi
+      \fi
+    \else
+      % Use ASCII approximations in destination names.
+      \passthroughcharsfalse
+    \fi
     \def\pdfdestname{#1}%
     \txiescapepdf\pdfdestname
-    \safewhatsit{\pdfdest name{\pdfdestname} xyz}%
   }}
+  %
+  \def\setpdfoutlinetext#1{{%
+    \indexnofonts
+    \makevalueexpandable
+    \turnoffactive
+    \ifx \declaredencoding \latone
+      % The PDF format can use an extended form of Latin-1 in bookmark
+      % strings.  See Appendix D of the PDF Reference, Sixth Edition, for
+      % the "PDFDocEncoding".
+      \passthroughcharstrue
+      % Pass through Latin-1 characters.
+      %   LuaTeX: Convert to Unicode
+      %   pdfTeX: Use Latin-1 as PDFDocEncoding
+      \def\pdfoutlinetext{#1}%
+    \else
+      \ifx \declaredencoding \utfeight
+        \ifx\luatexversion\thisisundefined
+          % For pdfTeX  with UTF-8.
+          % TODO: the PDF format can use UTF-16 in bookmark strings,
+          % but the code for this isn't done yet.
+          % Use ASCII approximations.
+          \passthroughcharsfalse
+          \def\pdfoutlinetext{#1}%
+        \else
+          % For LuaTeX with UTF-8.
+          % Pass through Unicode characters for title texts.
+          \passthroughcharstrue
+          \def\pdfoutlinetext{#1}%
+        \fi
+      \else
+        % For non-Latin-1 or non-UTF-8 encodings.
+        % Use ASCII approximations.
+        \passthroughcharsfalse
+        \def\pdfoutlinetext{#1}%
+      \fi
+    \fi
+    % LuaTeX: Convert to UTF-16
+    % pdfTeX: Use Latin-1 as PDFDocEncoding
+    \txiescapepdfutfsixteen\pdfoutlinetext
+  }}
+  %
+  \def\pdfmkdest#1{%
+    \setpdfdestname{#1}%
+    \safewhatsit{\pdfdest name{\pdfdestname} xyz}%
+  }
   %
   % used to mark target names; must be expandable.
   \def\pdfmkpgn#1{#1}
@@ -1348,36 +1436,13 @@ output) for that.)}
     % page number.  We could generate a destination for the section
     % text in the case where a section has no node, but it doesn't
     % seem worth the trouble, since most documents are normally structured.
-    {
-      \ifx\luatexversion\thisisundefined \else
-        \turnoffactive % LuaTeX can use Unicode strings for PDF
-      \fi
-      \edef\pdfoutlinedest{#3}%
-      \ifx\pdfoutlinedest\empty
-        \def\pdfoutlinedest{#4}%
-      \else
-        \txiescapepdf\pdfoutlinedest
-      \fi
-      %
-      % Also escape PDF chars in the display string.
-      \bgroup
-        \ifx \declaredencoding \latone
-          % The PDF format can use an extended form of Latin-1 in bookmark
-          % strings.  See Appendix D of the PDF Reference, Sixth Edition, for
-          % the "PDFDocEncoding".
-          \passthroughcharstrue
-        \fi
-        \ifx \declaredencoding \utfeight
-          % TODO: the PDF format can use UTF-16 in bookmark strings, but the
-          % code for this isn't done yet.
-        \fi
-        \globaldefs=1
-        \edef\pdfoutlinetext{#1}%
-        \txiescapepdf\pdfoutlinetext
-      \egroup
-      %
-      \pdfoutline goto name{\pdfmkpgn{\pdfoutlinedest}}#2{\pdfoutlinetext}%
-    }
+    \setpdfoutlinetext{#1}
+    \setpdfdestname{#3}
+    \ifx\pdfdestname\empty
+      \def\pdfdestname{#4}%
+    \fi
+    %
+    \pdfoutline goto name{\pdfmkpgn{\pdfdestname}}#2{\pdfoutlinetext}%
   }
   %
   \def\pdfmakeoutlines{%
@@ -1535,7 +1600,6 @@ output) for that.)}
 %
 % For XeTeX
 %
-\newif\iftxiuseunicodedestname
 \ifx\XeTeXrevision\thisisundefined
 \else
   %
@@ -1608,20 +1672,36 @@ output) for that.)}
   \def\pdfdest name#1 xyz{%
     \special{pdf:dest (#1) [@thispage /XYZ @xpos @ypos null]}%
   }
-  \def\pdfmkdest#1{{%
+  %
+  \def\setpdfdestname#1{{%
     % We have to set dummies so commands such as @code, and characters
     % such as \, aren't expanded when present in a section title.
     \indexnofonts
-    \iftxiuseunicodedestname
-      \def\pdfdestname{#1}% Pass through Unicode characters.
-    \else
-      \edef\pdfdestname{#1}% Replace Unicode characters with ASCII.
-    \fi
-    \turnoffactive
     \makevalueexpandable
+    \turnoffactive
+    \iftxiuseunicodedestname
+      % Pass through Unicode characters.
+    \else
+      % Use ASCII approximations in destination names.
+      \passthroughcharsfalse
+    \fi
+    \def\pdfdestname{#1}%
     \txiescapepdf\pdfdestname
-    \safewhatsit{\pdfdest name{\pdfdestname} xyz}%
   }}
+  %
+  \def\setpdfoutlinetext#1{{%
+    \turnoffactive
+    % Always use Unicode characters in title texts.
+    \def\pdfoutlinetext{#1}%
+    % For XeTeX, xdvipdfmx converts to UTF-16.
+    % So we do not convert.
+    \txiescapepdf\pdfoutlinetext
+  }}
+  %
+  \def\pdfmkdest#1{%
+    \setpdfdestname{#1}%
+    \safewhatsit{\pdfdest name{\pdfdestname} xyz}%
+  }
   %
   % by default, use black for everything.
   \def\urlcolor{\rgbBlack}
@@ -1629,23 +1709,14 @@ output) for that.)}
   \def\endlink{\setcolor{\maincolor}\pdfendlink}
   %
   \def\dopdfoutline#1#2#3#4{%
-    \iftxiuseunicodedestname
-      \def\pdfoutlinedest{#3}% Pass through Unicode characters.
-    \else
-      \edef\pdfoutlinedest{#3}% Replace Unicode characters with ASCII.
+    \setpdfoutlinetext{#1}
+    \setpdfdestname{#3}
+    \ifx\pdfdestname\empty
+      \def\pdfdestname{#4}%
     \fi
-    \ifx\pdfoutlinedest\empty
-      \def\pdfoutlinedest{#4}%
-    \fi
-    {
-      \turnoffactive
-      \txiescapepdf\pdfoutlinedest
-      \edef\pdfoutlinetext{#1}%
-      \txiescapepdf\pdfoutlinetext
-      %
-      \special{pdf:out [-] #2 << /Title (\pdfoutlinetext) /A
-        << /S /GoTo /D (\pdfoutlinedest) >> >> }%
-    }
+    %
+    \special{pdf:out [-] #2 << /Title (\pdfoutlinetext) /A
+      << /S /GoTo /D (\pdfdestname) >> >> }%
   }
   %
   \def\pdfmakeoutlines{%
@@ -4842,8 +4913,8 @@ end
   \definedummyletter\ %
   %
   % For texindex which always views { and } as separators.
-  \def\{{\lbracechar}%
-  \def\}{\rbracechar}%
+  \def\{{\lbracechar{}}%
+  \def\}{\rbracechar{}}%
   %
   % Do the redefinitions.
   \definedummies
@@ -4927,6 +4998,7 @@ end
   \definedummyword\TeX
   %
   % Assorted special characters.
+  \definedummyword\atchar
   \definedummyword\arrow
   \definedummyword\bullet
   \definedummyword\comma
@@ -5143,37 +5215,40 @@ end
   \def\LaTeX{LaTeX}%
   \def\TeX{TeX}%
   %
-  % Assorted special characters.
-  % (The following {} will end up in the sort string, but that's ok.)
-  \def\arrow{->}%
-  \def\bullet{bullet}%
-  \def\comma{,}%
-  \def\copyright{copyright}%
-  \def\dots{...}%
-  \def\enddots{...}%
-  \def\equiv{==}%
-  \def\error{error}%
-  \def\euro{euro}%
-  \def\expansion{==>}%
-  \def\geq{>=}%
-  \def\guillemetleft{<<}%
-  \def\guillemetright{>>}%
-  \def\guilsinglleft{<}%
-  \def\guilsinglright{>}%
-  \def\leq{<=}%
-  \def\minus{-}%
-  \def\point{.}%
-  \def\pounds{pounds}%
-  \def\print{-|}%
-  \def\quotedblbase{"}%
-  \def\quotedblleft{"}%
-  \def\quotedblright{"}%
-  \def\quoteleft{`}%
-  \def\quoteright{'}%
-  \def\quotesinglbase{,}%
-  \def\registeredsymbol{R}%
-  \def\result{=>}%
-  \def\textdegree{o}%
+  % Assorted special characters.  \defglyph gives the control sequence a
+  % definition that removes the {} that follows its use.
+  \defglyph\atchar{@}%
+  \defglyph\arrow{->}%
+  \defglyph\bullet{bullet}%
+  \defglyph\comma{,}%
+  \defglyph\copyright{copyright}%
+  \defglyph\dots{...}%
+  \defglyph\enddots{...}%
+  \defglyph\equiv{==}%
+  \defglyph\error{error}%
+  \defglyph\euro{euro}%
+  \defglyph\expansion{==>}%
+  \defglyph\geq{>=}%
+  \defglyph\guillemetleft{<<}%
+  \defglyph\guillemetright{>>}%
+  \defglyph\guilsinglleft{<}%
+  \defglyph\guilsinglright{>}%
+  \defglyph\leq{<=}%
+  \defglyph\lbracechar{\{}%
+  \defglyph\minus{-}%
+  \defglyph\point{.}%
+  \defglyph\pounds{pounds}%
+  \defglyph\print{-|}%
+  \defglyph\quotedblbase{"}%
+  \defglyph\quotedblleft{"}%
+  \defglyph\quotedblright{"}%
+  \defglyph\quoteleft{`}%
+  \defglyph\quoteright{'}%
+  \defglyph\quotesinglbase{,}%
+  \defglyph\rbracechar{\}}%
+  \defglyph\registeredsymbol{R}%
+  \defglyph\result{=>}%
+  \defglyph\textdegree{o}%
   %
   % We need to get rid of all macros, leaving only the arguments (if present).
   % Of course this is not nearly correct, but it is the best we can do for now.
@@ -5188,6 +5263,7 @@ end
   \macrolist
   \let\value\indexnofontsvalue
 }
+\def\defglyph#1#2{\def#1##1{#2}} % see above
 
 
 
@@ -5465,7 +5541,7 @@ end
       \let\indexlbrace\{   % Likewise, set these sequences for braces
       \let\indexrbrace\}   % used in the sort key.
       \begindoublecolumns
-      \let\entryorphanpenalty=\indexorphanpenalty
+      \let\entrywidowpenalty=\indexwidowpenalty
       %
       % Read input from the index file line by line.
       \loopdo
@@ -5566,6 +5642,12 @@ end
 \def\entry{%
   \begingroup
     %
+    % For pdfTeX and XeTeX.
+    % The redefinition of \domark stops marks being added in \pdflink to 
+    % preserve coloured links across page boundaries.  Otherwise the marks
+    % would get in the way of \lastbox in \insertindexentrybox.
+    \let\domark\relax
+    %
     % Start a new paragraph if necessary, so our assignments below can't
     % affect previous text.
     \par
@@ -5578,10 +5660,6 @@ end
     % titles, for instance.
     \def\*{\unskip\space\ignorespaces}%
     \def\entrybreak{\hfil\break}% An undocumented command
-    %
-    % A bit of stretch before each entry for the benefit of balancing
-    % columns.
-    \vskip 0pt plus0.5pt
     %
     % Swallow the left brace of the text (first parameter):
     \afterassignment\doentry
@@ -5616,20 +5694,13 @@ end
       %
       \ifpdf
         \pdfgettoks#1.%
-        \bgroup\let\domark\relax
-          \hskip\skip\thinshrinkable\the\toksA
-        \egroup
-        % The redefinion of \domark stops marks being added in \pdflink to 
-        % preserve coloured links across page boundaries.  Otherwise the marks
-        % would get in the way of \lastbox in \insertindexentrybox.
+        \hskip\skip\thinshrinkable\the\toksA
       \else
         \ifx\XeTeXrevision\thisisundefined
           \hskip\skip\thinshrinkable #1%
         \else
           \pdfgettoks#1.%
-          \bgroup\let\domark\relax
-            \hskip\skip\thinshrinkable\the\toksA
-          \egroup
+          \hskip\skip\thinshrinkable\the\toksA
         \fi
       \fi
     \fi
@@ -5638,11 +5709,10 @@ end
       \global\setbox\entryindexbox=\vbox{\unhbox\boxA}%
     \else
     \global\setbox\entryindexbox=\vbox\bgroup
-      \prevdepth=\entrylinedepth
-      \noindent
       % We want the text of the entries to be aligned to the left, and the
       % page numbers to be aligned to the right.
       %
+      \parindent = 0pt
       \advance\leftskip by 0pt plus 1fil
       \advance\leftskip by 0pt plus -1fill
       \rightskip = 0pt plus -1fil
@@ -5650,8 +5720,6 @@ end
       % Cause last line, which could consist of page numbers on their own
       % if the list of page numbers is long, to be aligned to the right.
       \parfillskip=0pt plus -1fill
-      %
-      \hangindent=1em
       %
       \advance\rightskip by \entryrightmargin
       % Determine how far we can stretch into the margin.
@@ -5672,17 +5740,21 @@ end
       \ifdim\dimen@ > 0.8\dimen@ii   % due to long index text
         \dimen@ = 0.7\dimen@ % Try to split the text roughly evenly
         \dimen@ii = \hsize
-        \advance \dimen@ii by -1em
         \ifnum\dimen@>\dimen@ii
           % If the entry is too long, use the whole line
           \dimen@ = \dimen@ii
         \fi
         \advance\leftskip by 0pt plus 1fill % ragged right
         \advance \dimen@ by 1\rightskip
-        \parshape = 2 0pt \dimen@ 1em \dimen@ii
-        % Ideally we'd add a finite glue at the end of the first line only, but
-        % TeX doesn't seem to provide a way to do such a thing.
+        \parshape = 2 0pt \dimen@ 0em \dimen@ii
+        % Ideally we'd add a finite glue at the end of the first line only,
+        % instead of using \parshape with explicit line lengths, but TeX
+        % doesn't seem to provide a way to do such a thing.
+        %
+        \leftskip = 1em
+        \parindent = -1em
       \fi\fi
+      \indent % start paragraph
       \unhbox\boxA
       %
       % Do not prefer a separate line ending with a hyphen to fewer lines.
@@ -5700,7 +5772,7 @@ end
   \endgroup
   % delay text of entry until after penalty
   \bgroup\aftergroup\insertindexentrybox
-  \entryorphanpenalty
+  \entrywidowpenalty
 }}
 
 \newskip\thinshrinkable
@@ -5708,40 +5780,43 @@ end
 
 \newbox\entryindexbox
 \def\insertindexentrybox{%
-  \copy\entryindexbox
-  % The following gets the depth of the last box.  This is for even
-  % line spacing when entries span several lines.
-  \setbox\dummybox\vbox{%
-    \unvbox\entryindexbox
-    \nointerlineskip
-    \lastbox
-    \global\entrylinedepth=\prevdepth
-  }%
-  % Note that we couldn't simply \unvbox\entryindexbox followed by 
-  % \nointerlineskip\lastbox to remove the last box and then reinstate it, 
-  % because this resets how far the box has been \moveleft'ed to 0.  \unvbox
-  % doesn't affect \prevdepth either.
+  \ourunvbox\entryindexbox
 }
-\newdimen\entrylinedepth
+
+% Use \lastbox to take apart vbox box by box, and add each sub-box
+% to the current vertical list.
+\def\ourunvbox#1{%
+\bgroup % for local binding of \delayedbox
+  % Remove the last box from box #1
+  \global\setbox#1=\vbox{%
+    \unvbox#1%
+    \unskip % remove any glue
+    \unpenalty
+    \global\setbox\interbox=\lastbox
+  }%
+  \setbox\delayedbox=\box\interbox
+  \ifdim\ht#1=0pt\else
+    \ourunvbox#1 % Repeat on what's left of the box
+    \nobreak
+  \fi
+  \box\delayedbox
+\egroup
+}
+\newbox\delayedbox
+\newbox\interbox
 
 % Default is no penalty
-\let\entryorphanpenalty\egroup
+\let\entrywidowpenalty\egroup
 
 % Used from \printindex.  \firsttoken should be the first token
 % after the \entry.  If it's not another \entry, we are at the last
 % line of a group of index entries, so insert a penalty to discourage
-% orphaned index entries.
-\long\def\indexorphanpenalty{%
+% widowed index entries.
+\long\def\indexwidowpenalty{%
   \def\isentry{\entry}%
   \ifx\firsttoken\isentry
   \else
-    \unskip\penalty 9000
-    % The \unskip here stops breaking before the glue.  It relies on the
-    % \vskip above being there, otherwise there is an error
-    % "You can't use `\unskip' in vertical mode".  There has to be glue
-    % in the current vertical list that hasn't been added to the
-    % "current page".  See Chapter 24 of the TeXbook.  This contradicts
-    % Section 8.3.7 in "TeX by Topic," though.
+    \penalty 9000
   \fi
   \egroup % now comes the box added with \aftergroup
 }
@@ -5781,8 +5856,6 @@ end
 
 \newbox\partialpage
 \newdimen\doublecolumnhsize
-\newdimen\doublecolumntopgap
-\doublecolumntopgap = 0pt
 
 % Use inside an output routine to save \topmark and \firstmark
 \def\savemarks{%
@@ -5865,12 +5938,10 @@ end
   %
   % Double the \vsize as well.  (We don't need a separate register here,
   % since nobody clobbers \vsize.)
-  \global\doublecolumntopgap = \topskip
-  \global\advance\doublecolumntopgap by -1\baselineskip
-  \advance\vsize by -1\doublecolumntopgap
   \vsize = 2\vsize
-  \topskip=0pt
-  \global\entrylinedepth=0pt\relax
+  %
+  % For the benefit of balancing columns
+  \advance\baselineskip by 0pt plus 0.5pt
 }
 
 % The double-column output routine for all double-column pages except
@@ -5900,9 +5971,7 @@ end
   %
   \hsize = \doublecolumnhsize
   \wd0=\hsize \wd2=\hsize
-  \vbox{%
-    \vskip\doublecolumntopgap
-    \hbox to\txipagewidth{\box0\hfil\box2}}%
+  \hbox to\txipagewidth{\box0\hfil\box2}%
 }
 
 
@@ -5982,10 +6051,6 @@ end
       \loop
         \global\setbox3 = \copy0
         \global\setbox1 = \vsplit3 to \dimen@
-        % Remove glue from bottom of columns to compare
-        % apparent heights.
-        \global\setbox1 = \vbox{\unvbox1\unpenalty\unskip}%
-        \global\setbox3 = \vbox{\unvbox3\unpenalty\unskip}%
       \ifdim\ht1<\ht3
         \global\advance\dimen@ by 1pt
       \repeat
@@ -5998,8 +6063,8 @@ end
       % Just split the last of the double column material roughly in half.
       \setbox2=\box0
       \setbox0 = \vsplit2 to \dimen@ii
-      \setbox0=\vbox to\dimen@ii{\unvbox0}%
-      \setbox2=\vbox to\dimen@ii{\unvbox2}%
+      \setbox0=\vbox to \dimen@ii {\unvbox0\vfill}%
+      \setbox2=\vbox to \dimen@ii {\unvbox2\vfill}%
     \else
       % Compare the heights of the two columns.
       \ifdim4\ht1>5\ht3
@@ -6009,8 +6074,8 @@ end
         \setbox0=\vbox to \ht1 {\unvbox1\vfill}%
       \else
         % Make column bottoms flush with each other.
-        \setbox0=\vbox to\dimen@{\unvbox1}%
-        \setbox2=\vbox to\dimen@{\unvbox3}%
+        \setbox2=\vbox to\ht1{\unvbox3\unskip}%
+        \setbox0=\vbox to\ht1{\unvbox1\unskip}%
       \fi
     \fi
   \fi
@@ -8846,32 +8911,26 @@ end
     % For pdfTeX and LuaTeX
     {\indexnofonts
      \makevalueexpandable
-     %
-     % This (wrongly) does not take account of leading or trailing
-     % spaces in #1, which should be ignored.
-     \ifx\luatexversion\thisisundefined
-       \edef\pdfxrefdest{#1}% pdfTeX: Replace Unicode characters with ASCII.
-     \else
-       \def\pdfxrefdest{#1}% LuaTeX: Pass through Unicode characters.
-     \fi
      \turnoffactive
      % This expands tokens, so do it after making catcode changes, so _
      % etc. don't get their TeX definitions.  This ignores all spaces in
      % #4, including (wrongly) those in the middle of the filename.
      \getfilename{#4}%
      %
-     \ifx\pdfxrefdest\empty
-       \def\pdfxrefdest{Top}% no empty targets
-     \else
-       \txiescapepdf\pdfxrefdest  % escape PDF special chars
+     % This (wrongly) does not take account of leading or trailing
+     % spaces in #1, which should be ignored.
+     \setpdfdestname{#1}%
+     %
+     \ifx\pdfdestname\empty
+       \def\pdfdestname{Top}% no empty targets
      \fi
      %
      \leavevmode
      \startlink attr{/Border [0 0 0]}%
      \ifnum\filenamelength>0
-       goto file{\the\filename.pdf} name{\pdfxrefdest}%
+       goto file{\the\filename.pdf} name{\pdfdestname}%
      \else
-       goto name{\pdfmkpgn{\pdfxrefdest}}%
+       goto name{\pdfmkpgn{\pdfdestname}}%
      \fi
     }%
     \setcolor{\linkcolor}%
@@ -8881,24 +8940,18 @@ end
       % For XeTeX
       {\indexnofonts
        \makevalueexpandable
-       %
-       % This (wrongly) does not take account of leading or trailing
-       % spaces in #1, which should be ignored.
-       \iftxiuseunicodedestname
-         \def\pdfxrefdest{#1}% Pass through Unicode characters.
-       \else
-         \edef\pdfxrefdest{#1}% Replace Unicode characters with ASCII.
-       \fi
        \turnoffactive
        % This expands tokens, so do it after making catcode changes, so _
        % etc. don't get their TeX definitions.  This ignores all spaces in
        % #4, including (wrongly) those in the middle of the filename.
        \getfilename{#4}%
        %
-       \ifx\pdfxrefdest\empty
-         \def\pdfxrefdest{Top}% no empty targets
-       \else
-         \txiescapepdf\pdfxrefdest  % escape PDF special chars
+       % This (wrongly) does not take account of leading or trailing
+       % spaces in #1, which should be ignored.
+       \setpdfdestname{#1}%
+       %
+       \ifx\pdfdestname\empty
+         \def\pdfdestname{Top}% no empty targets
        \fi
        %
        \leavevmode
@@ -8912,10 +8965,10 @@ end
          % this command line option is no longer necessary
          % because we can use the `dvipdfmx:config' special.
          \special{pdf:bann << /Border [0 0 0] /Type /Annot /Subtype /Link /A
-           << /S /GoToR /F (\the\filename.pdf) /D (\pdfxrefdest) >> >>}%
+           << /S /GoToR /F (\the\filename.pdf) /D (\pdfdestname) >> >>}%
        \else
          \special{pdf:bann << /Border [0 0 0] /Type /Annot /Subtype /Link /A
-           << /S /GoTo /D (\pdfxrefdest) >> >>}%
+           << /S /GoTo /D (\pdfdestname) >> >>}%
        \fi
       }%
       \setcolor{\linkcolor}%
@@ -9975,7 +10028,7 @@ directory should work if nowhere else does.}
       \ifx \declaredencoding \ascii
       \else
         \message{Warning: XeTeX with non-UTF-8 encodings cannot handle %
-        non-ASCII characters in auxiallity files.}%
+        non-ASCII characters in auxiliary files.}%
       \fi
     \fi
   \fi
