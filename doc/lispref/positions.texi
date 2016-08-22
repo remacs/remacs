@@ -192,8 +192,9 @@ in the opposite direction.
 @subsection Motion by Words
 
   The functions for parsing words described below use the syntax table
-to decide whether a given character is part of a word.  @xref{Syntax
-Tables}.
+and @code{char-script-table} to decide whether a given character is
+part of a word.  @xref{Syntax Tables}, and see @ref{Character
+Properties}.
 
 @deffn Command forward-word &optional count
 This function moves point forward @var{count} words (or backward if
@@ -207,11 +208,13 @@ and then continue moving until the word ends.  By default, characters
 that begin and end words, known as @dfn{word boundaries}, are defined
 by the current buffer's syntax table (@pxref{Syntax Class Table}), but
 modes can override that by setting up a suitable
-@code{find-word-boundary-function-table}, described below.  In any
-case, this function cannot move point past the boundary of the
-accessible portion of the buffer, or across a field boundary
-(@pxref{Fields}).  The most common case of a field boundary is the end
-of the prompt in the minibuffer.
+@code{find-word-boundary-function-table}, described below.  Characters
+that belong to different scripts (as defined by
+@code{char-syntax-table}), also define a word boundary
+(@pxref{Character Properties}).  In any case, this function cannot
+move point past the boundary of the accessible portion of the buffer,
+or across a field boundary (@pxref{Fields}).  The most common case of
+a field boundary is the end of the prompt in the minibuffer.
 
 If it is possible to move @var{count} words, without being stopped
 prematurely by the buffer boundary or a field boundary, the value is

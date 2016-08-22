@@ -194,10 +194,19 @@ explicitly bound to @code{nil} (see below).
 @item @var{char-table}
 If an element of a keymap is a char-table, it counts as holding
 bindings for all character events with no modifier bits
-(@pxref{modifier bits}): element @var{n} is the binding for the
-character with code @var{n}.  This is a compact way to record lots of
-bindings.  A keymap with such a char-table is called a @dfn{full
-keymap}.  Other keymaps are called @dfn{sparse keymaps}.
+(@pxref{modifier bits}): the element whose index is @var{c} is the
+binding for the character @var{c}.  This is a compact way to record
+lots of bindings.  A keymap with such a char-table is called a
+@dfn{full keymap}.  Other keymaps are called @dfn{sparse keymaps}.
+
+@item @var{vector}
+This kind of element is similar to a char-table: the element whose
+index is @var{c} is the binding for the character @var{c}.  Since the
+range of characters that can be bound this way is limited by the
+vector size, and vector creation allocates space for all character
+codes from 0 up, this format should not be used except for creating
+menu keymaps (@pxref{Menu Keymaps}), where the bindings themselves
+don't matter.
 
 @item @var{string}
 @cindex keymap prompt string

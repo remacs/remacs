@@ -267,7 +267,7 @@ The string is based on `url-privacy-level' and `url-user-agent'."
 			      'url-http-proxy-basic-auth-storage))
 			 (url-get-authentication url-http-proxy nil 'any nil))))
 	 (real-fname (url-filename url-http-target-url))
-	 (host (url-host url-http-target-url))
+	 (host (url-http--encode-string (url-host url-http-target-url)))
 	 (auth (if (cdr-safe (assoc "Authorization" url-http-extra-headers))
 		   nil
 		 (url-get-authentication (or
@@ -310,7 +310,8 @@ The string is based on `url-privacy-level' and `url-user-agent'."
           (concat
              ;; The request
              (or url-http-method "GET") " "
-             (if using-proxy (url-recreate-url url-http-target-url) real-fname)
+             (url-http--encode-string
+              (if using-proxy (url-recreate-url url-http-target-url) real-fname))
              " HTTP/" url-http-version "\r\n"
              ;; Version of MIME we speak
              "MIME-Version: 1.0\r\n"
@@ -347,7 +348,9 @@ The string is based on `url-privacy-level' and `url-user-agent'."
                   "Accept-encoding: " url-mime-encoding-string "\r\n"))
              (if url-mime-charset-string
                  (concat
-                  "Accept-charset: " url-mime-charset-string "\r\n"))
+                  "Accept-charset: "
+                  (url-http--encode-string url-mime-charset-string)
+                  "\r\n"))
              ;; Languages we understand
              (if url-mime-language-string
                  (concat
@@ -392,6 +395,11 @@ The string is based on `url-privacy-level' and `url-user-agent'."
       (error "Multibyte text in HTTP request: %s" request))
     (url-http-debug "Request is: \n%s" request)
     request))
+
+(defun url-http--encode-string (s)
+  (if (multibyte-string-p s)
+      (encode-coding-string s 'us-ascii)
+    s))
 
 ;; Parsing routines
 (defun url-http-clean-headers ()
