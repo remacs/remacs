@@ -2604,8 +2604,16 @@ with a remote file name:
 @example
 @group
 @kbd{M-x gdb @key{RET}}
-@b{Run gdb (like this):} gdb --annotate=3 @trampfn{ssh,host,~/myprog} @key{RET}
+@b{Run gdb (like this):} gdb -i=mi @trampfn{ssh,host,~/myprog} @key{RET}
 @end group
+@end example
+
+Since the remote @code{gdb} and @code{gdb-inferior} processes do not
+belong to the same process group on the remote host, there will be a
+warning, which can be ignored:
+
+@example
+&"warning: GDB: Failed to set controlling terminal: Operation not permitted\n"
 @end example
 
 Relative file names are based on the remote default directory.  When
