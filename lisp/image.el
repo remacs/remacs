@@ -1013,7 +1013,11 @@ default is 20%."
   (interactive)
   (let ((image (image--get-imagemagick-and-warn)))
     (plist-put (cdr image) :rotation
-               (float (+ (or (plist-get (cdr image) :rotation) 0) 90)))))
+               (float (mod (+ (or (plist-get (cdr image) :rotation) 0) 90)
+                           ;; We don't want to exceed 360 degrees
+                           ;; rotation, because it's not seen as valid
+                           ;; in exif data.
+                           360)))))
 
 (defun image-save ()
   "Save the image under point."
