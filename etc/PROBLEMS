@@ -609,6 +609,14 @@ could run out of file descriptors.  You won't be able to open new files.
 
 auto-revert-use-notify is set to nil in global-auto-revert-mode, therefore.
 
+*** TLS problems, e.g., Gnus hangs when fetching via imaps
+http://debbugs.gnu.org/24247
+
+gnutls-cli 3.5.3 (2016-08-09) does not generate a "- Handshake was
+completed" message that tls.el relies upon, causing affected Emacs
+functions to hang.  To work around the problem, use older or newer
+versions of gnutls-cli, or use Emacs's built-in gnutls support.
+
 * Runtime problems related to font handling
 
 ** Characters are displayed as empty boxes or with wrong font under X.
