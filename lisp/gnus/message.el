@@ -8399,7 +8399,8 @@ Used in `message-simplify-recipients'."
 	  (when (and (consp props)
 		     (eq (car props) 'image))
 	    (put-text-property (point) (1+ (point)) 'display nil)
-	    (setq displayed t)))))
+	    (setq displayed t)))
+	(forward-char 1)))
     (unless displayed
       (save-excursion
 	(goto-char (point-min))
