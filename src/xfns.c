@@ -5108,12 +5108,18 @@ FRAME.  Default is to change on the edit X window.  */)
     }
   else
     {
+      ptrdiff_t elsize;
+
       CHECK_STRING (value);
       data = SDATA (value);
       if (INT_MAX < SBYTES (value))
 	error ("VALUE too long");
-      nelements = SBYTES (value);
-      element_format = 8; /* ignore any provided format */
+
+      /* See comment above about longs and format=32 */
+      elsize = element_format == 32 ? sizeof (long) : element_format >> 3;
+      if (SBYTES (value) % elsize != 0)
+        error ("VALUE must contain an integral number of octets for FORMAT");
+      nelements = SBYTES (value) / elsize;
     }
 
   block_input ();
@@ -5224,7 +5230,8 @@ x_window_property_intern (struct frame *f,
             }
 
           if (NILP (vector_ret_p))
-            prop_value = make_string ((char *) tmp_data, (actual_format / 8) * actual_size);
+            prop_value = make_string ((char *) tmp_data,
+                                      (actual_format >> 3) * actual_size);
           else
             prop_value = x_property_data_to_lisp (f,
                                                   tmp_data,
@@ -5353,14 +5360,29 @@ Otherwise, the return value is a vector with the following fields:
 			   prop_atom, 0, 0, False, AnyPropertyType,
 			   &actual_type, &actual_format, &actual_size,
 			   &bytes_remaining, &tmp_data);
+  if (rc == Success          /* no invalid params */
+      && actual_format == 0  /* but prop not found */
+      && NILP (source)
+      && target_window != FRAME_OUTER_WINDOW (f))
+    {
+      /* analogous behavior to x-window-property: if property isn't found
+         on the frame's inner window and no alternate window id was
+         provided, try the frame's outer window. */
+      target_window = FRAME_OUTER_WINDOW (f);
+      rc = XGetWindowProperty (FRAME_X_DISPLAY (f), target_window,
+                               prop_atom, 0, 0, False, AnyPropertyType,
+                               &actual_type, &actual_format, &actual_size,
+                               &bytes_remaining, &tmp_data);
+    }
+
   if (rc == Success && actual_format != 0)
     {
       XFree (tmp_data);
 
-      prop_attr = Fmake_vector (make_number (3), Qnil);
+      prop_attr = make_uninit_vector (3);
       ASET (prop_attr, 0, make_number (actual_type));
       ASET (prop_attr, 1, make_number (actual_format));
-      ASET (prop_attr, 2, make_number (bytes_remaining / (actual_format / 8)));
+      ASET (prop_attr, 2, make_number (bytes_remaining / (actual_format >> 3)));
     }
 
   unblock_input ();
