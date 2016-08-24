@@ -9756,7 +9756,10 @@ comment at the start of cc-engine.el for more info."
 		((and (eql (char-after) ?:)
 		      (save-excursion
 			(c-backward-syntactic-ws)
-			(c-on-identifier)))
+			(or (c-on-identifier)
+			    (progn
+			      (c-backward-token-2)
+			      (looking-at c-brace-list-key)))))
 		 (setq colon-pos (point))
 		 (forward-char)
 		 (c-forward-syntactic-ws)
