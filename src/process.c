@@ -928,7 +928,7 @@ If PROCESS has not yet exited or died, return 0.  */)
 DEFUN ("process-id", Fprocess_id, Sprocess_id, 1, 1, 0,
        doc: /* Return the process id of PROCESS.
 This is the pid of the external process which PROCESS uses or talks to.
-For a network connection, this value is nil.  */)
+For a network, serial, and pipe connections, this value is nil.  */)
   (register Lisp_Object process)
 {
   pid_t pid;
@@ -952,8 +952,8 @@ DEFUN ("process-command", Fprocess_command, Sprocess_command, 1, 1, 0,
        doc: /* Return the command that was executed to start PROCESS.
 This is a list of strings, the first string being the program executed
 and the rest of the strings being the arguments given to it.
-For a network or serial process, this is nil (process is running) or t
-\(process is stopped).  */)
+For a network or serial or pipe connection, this is nil (process is running)
+or t (process is stopped).  */)
   (register Lisp_Object process)
 {
   CHECK_PROCESS (process);
@@ -1181,13 +1181,13 @@ DEFUN ("process-query-on-exit-flag",
 DEFUN ("process-contact", Fprocess_contact, Sprocess_contact,
        1, 2, 0,
        doc: /* Return the contact info of PROCESS; t for a real child.
-For a network or serial connection, the value depends on the optional
-KEY arg.  If KEY is nil, value is a cons cell of the form (HOST
-SERVICE) for a network connection or (PORT SPEED) for a serial
-connection.  If KEY is t, the complete contact information for the
-connection is returned, else the specific value for the keyword KEY is
-returned.  See `make-network-process' or `make-serial-process' for a
-list of keywords.  */)
+For a network or serial or pipe connection, the value depends on the
+optional KEY arg.  If KEY is nil, value is a cons cell of the form
+\(HOST SERVICE) for a network connection or (PORT SPEED) for a serial
+connection; it is t for a pipe connection.  If KEY is t, the complete
+contact information for the connection is returned, else the specific
+value for the keyword KEY is returned.  See `make-network-process',
+\`make-serial-process', or `make-pipe-process' for the list of keywords.  */)
   (register Lisp_Object process, Lisp_Object key)
 {
   Lisp_Object contact;
@@ -1254,7 +1254,7 @@ a socket connection.  */)
 
 DEFUN ("process-type", Fprocess_type, Sprocess_type, 1, 1, 0,
        doc: /* Return the connection type of PROCESS.
-The value is either the symbol `real', `network', or `serial'.
+The value is either the symbol `real', `network', `serial', or `pipe'.
 PROCESS may be a process, a buffer, the name of a process or buffer, or
 nil, indicating the current buffer's process.  */)
   (Lisp_Object process)
@@ -6156,8 +6156,8 @@ See function `interrupt-process' for more details on usage.  */)
 DEFUN ("stop-process", Fstop_process, Sstop_process, 0, 2, 0,
        doc: /* Stop process PROCESS.  May be process or name of one.
 See function `interrupt-process' for more details on usage.
-If PROCESS is a network or serial process, inhibit handling of incoming
-traffic.  */)
+If PROCESS is a network or serial or pipe connection, inhibit handling
+of incoming traffic.  */)
   (Lisp_Object process, Lisp_Object current_group)
 {
   if (PROCESSP (process) && (NETCONN_P (process) || SERIALCONN_P (process)
