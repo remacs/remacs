@@ -8419,7 +8419,7 @@ Returns the newly created indirect buffer."
     (with-current-buffer buffer
       (run-hooks 'clone-indirect-buffer-hook))
     (when display-flag
-      (pop-to-buffer buffer norecord))
+      (pop-to-buffer buffer nil norecord))
     buffer))
 
 
