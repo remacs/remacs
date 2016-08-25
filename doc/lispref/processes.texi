@@ -492,20 +492,17 @@ inputinput@point{}
 @end smallexample
 
   For example, the @code{shell-command-on-region} command uses
-@code{call-process-region} in a manner similar to this:
+@code{call-shell-region} in a manner similar to this:
 
 @smallexample
 @group
-(call-process-region
+(call-shell-region
  start end
- shell-file-name      ; @r{name of program}
+ command              ; @r{shell command}
  nil                  ; @r{do not delete region}
- buffer               ; @r{send output to @code{buffer}}
- nil                  ; @r{no redisplay during output}
- "-c" command)        ; @r{arguments for the shell}
+ buffer)              ; @r{send output to @code{buffer}}
 @end group
 @end smallexample
-@c It actually uses shell-command-switch, but no need to mention that here.
 @end defun
 
 @defun call-process-shell-command command &optional infile destination display
@@ -523,6 +520,15 @@ This function is like @code{call-process-shell-command}, but uses
 convention allowed passing any number of additional arguments after
 @var{display}, which were concatenated to @var{command}; this is still
 supported, but strongly discouraged.
+@end defun
+
+@defun call-shell-region start end command &optional delete destination
+This function sends the text from @var{start} to @var{end} as
+standard input to an inferior shell running @var{command}.  This function
+is similar than @code{call-process-region}, with process being a shell.
+The arguments @code{delete}, @code{destination} and the return value
+are like in @code{call-process-region}.
+Note that this funtion doesn't accept additional arguments.
 @end defun
 
 @defun shell-command-to-string command

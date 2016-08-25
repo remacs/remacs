@@ -3667,11 +3667,10 @@ interactively, this is t."
             (goto-char start)
             (and replace (push-mark (point) 'nomsg))
             (setq exit-status
-                  (call-process-region start end shell-file-name replace
+                  (call-shell-region start end command replace
                                        (if error-file
                                            (list t error-file)
-                                         t)
-                                       nil shell-command-switch command))
+                                         t)))
             ;; It is rude to delete a buffer which the command is not using.
             ;; (let ((shell-buffer (get-buffer "*Shell Command Output*")))
             ;;   (and shell-buffer (not (eq shell-buffer (current-buffer)))
@@ -3709,11 +3708,10 @@ interactively, this is t."
                         (setq default-directory directory))
                     (shell-command--save-pos-or-erase)))
                 (setq exit-status
-                      (call-process-region start end shell-file-name nil
+                      (call-shell-region start end command nil
                                            (if error-file
                                                (list buffer error-file)
-                                             buffer)
-                                           nil shell-command-switch command)))
+                                             buffer))))
             ;; Report the output.
             (with-current-buffer buffer
               (setq mode-line-process

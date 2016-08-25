@@ -5409,9 +5409,7 @@ Otherwise, generate and save a value for `canlock-password' first."
 	  (setq file (pop list))
 	  (if (string-match "^[ \t]*|[ \t]*\\(.*\\)[ \t]*$" file)
 	      ;; Pipe the article to the program in question.
-	      (call-process-region (point-min) (point-max) shell-file-name
-				   nil nil nil shell-command-switch
-				   (match-string 1 file))
+	      (call-shell-region (point-min) (point-max) (match-string 1 file))
 	    ;; Save the article.
 	    (setq file (expand-file-name file))
 	    (unless (file-exists-p (file-name-directory file))

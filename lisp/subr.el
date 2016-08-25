@@ -3078,6 +3078,28 @@ Similar to `call-process-shell-command', but calls `process-file'."
    infile buffer display
    (if (file-remote-p default-directory) "-c" shell-command-switch)
    (mapconcat 'identity (cons command args) " ")))
+
+(defun call-shell-region (start end command &optional delete buffer)
+  "Send text from START to END as input to an inferior shell running COMMAND.
+Delete the text if fourth arg DELETE is non-nil.
+
+Insert output in BUFFER before point; t means current buffer; nil for
+ BUFFER means discard it; 0 means discard and don't wait; and `(:file
+ FILE)', where FILE is a file name string, means that it should be
+ written to that file (if the file already exists it is overwritten).
+BUFFER can also have the form (REAL-BUFFER STDERR-FILE); in that case,
+REAL-BUFFER says what to do with standard output, as above,
+while STDERR-FILE says what to do with standard error in the child.
+STDERR-FILE may be nil (discard standard error output),
+t (mix it with ordinary output), or a file name string.
+
+If BUFFER is 0, `call-shell-region' returns immediately with value nil.
+Otherwise it waits for COMMAND to terminate
+and returns a numeric exit status or a signal description string.
+If you quit, the process is killed with SIGINT, or SIGKILL if you quit again."
+  (call-process-region start end
+                       shell-file-name delete buffer nil
+                       shell-command-switch command))
 
 ;;;; Lisp macros to do various things temporarily.
 
