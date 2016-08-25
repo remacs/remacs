@@ -1654,8 +1654,13 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  (c-forward-syntactic-ws)))
 	    (c-backward-token-2)))
 
-	;; Go round the following loop once per captured item.
-	(while (and (not (eq (char-after) ?\]))
+	;; Go round the following loop once per captured item.  We use "\\s)"
+	;; rather than "\\]" here to avoid infinite looping in this situation:
+	;; "unsigned items [] { [ }".  The second "[" triggers this function,
+	;; but if we don't match the "}" with an "\\s)", the
+	;; `c-syntactic-re-search-forward' at the end of the loop fails to
+	;; move forward over it, leaving point stuck at the "}".
+	(while (and (not (looking-at "\\s)"))
 		    (< (point) limit))
 	  (if (eq (char-after) ?&)
 	      (progn (setq mode ?&)
@@ -1704,7 +1709,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	    (c-forward-syntactic-ws)))
 
 	(setq capture-default nil)
-	(forward-char))))			; over the terminating "]".
+	(if (< (point) limit)
+	    (forward-char))))) ; over the terminating "]" or other close paren.
   nil)
 
 
