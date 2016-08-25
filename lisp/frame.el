@@ -1874,30 +1874,29 @@ In the 3rd, 4th, and 6th examples, the returned value is relative to
 the opposite frame edge from the edge indicated in the input spec."
   (cons (car spec) (frame-geom-value-cons (car spec) (cdr spec) frame)))
 
-
 (defun delete-other-frames (&optional frame)
-  "Delete all frames on the current terminal, except FRAME.
+  "Delete all frames on FRAME's terminal, except FRAME.
 If FRAME uses another frame's minibuffer, the minibuffer frame is
-left untouched.  FRAME nil or omitted means use the selected frame."
+left untouched.  FRAME must be a live frame and defaults to the
+selected one."
   (interactive)
-  (unless frame
-    (setq frame (selected-frame)))
-  (let* ((mini-frame (window-frame (minibuffer-window frame)))
-	 (frames (delq mini-frame (delq frame (frame-list)))))
-    ;; Only consider frames on the same terminal.
-    (dolist (frame (prog1 frames (setq frames nil)))
-      (if (eq (frame-terminal) (frame-terminal frame))
-          (push frame frames)))
-    ;; Delete mon-minibuffer-only frames first, because `delete-frame'
-    ;; signals an error when trying to delete a mini-frame that's
-    ;; still in use by another frame.
-    (dolist (frame frames)
-      (unless (eq (frame-parameter frame 'minibuffer) 'only)
-	(delete-frame frame)))
-    ;; Delete minibuffer-only frames.
-    (dolist (frame frames)
-      (when (eq (frame-parameter frame 'minibuffer) 'only)
-	(delete-frame frame)))))
+  (setq frame (window-normalize-frame frame))
+  (let ((minibuffer-frame (window-frame (minibuffer-window frame)))
+        (this (next-frame frame t))
+        next)
+    ;; In a first round consider minibuffer-less frames only.
+    (while (not (eq this frame))
+      (setq next (next-frame this t))
+      (unless (eq (window-frame (minibuffer-window this)) this)
+        (delete-frame this))
+      (setq this next))
+    ;; In a second round consider all remaining frames.
+    (setq this (next-frame frame t))
+    (while (not (eq this frame))
+      (setq next (next-frame this t))
+      (unless (eq this minibuffer-frame)
+        (delete-frame this))
+      (setq this next))))
 
 ;; miscellaneous obsolescence declarations
 (define-obsolete-variable-alias 'delete-frame-hook
