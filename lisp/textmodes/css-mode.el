@@ -56,7 +56,7 @@
 
 (defconst css-at-ids
   '("charset" "font-face" "import" "keyframes" "media" "namespace"
-    "page")
+    "page" "supports")
   "Identifiers that appear in the form @foo.")
 
 (defconst scss-at-ids
