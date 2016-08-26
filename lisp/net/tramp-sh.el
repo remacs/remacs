@@ -5368,16 +5368,20 @@ Nonexistent directories are removed from spec."
     (tramp-message vec 5 "Finding a suitable `perl' command")
     (let ((result
 	   (or (tramp-find-executable vec "perl5" (tramp-get-remote-path vec))
-	       (tramp-find-executable
-		vec "perl" (tramp-get-remote-path vec)))))
+	       (tramp-find-executable vec "perl" (tramp-get-remote-path vec)))))
+      ;; Perform a basic check.
+      (and result
+	   (null (tramp-send-command-and-check
+		  vec (format "%s -e 'print \"Hello\n\";'" result)))
+	   (setq result nil))
       ;; We must check also for some Perl modules.
       (when result
 	(with-tramp-connection-property vec "perl-file-spec"
-	   (tramp-send-command-and-check
-	    vec (format "%s -e 'use File::Spec;'" result)))
+	  (tramp-send-command-and-check
+	   vec (format "%s -e 'use File::Spec;'" result)))
 	(with-tramp-connection-property vec "perl-cwd-realpath"
-	   (tramp-send-command-and-check
-	    vec (format "%s -e 'use Cwd \"realpath\";'" result))))
+	  (tramp-send-command-and-check
+	   vec (format "%s -e 'use Cwd \"realpath\";'" result))))
       result)))
 
 (defun tramp-get-remote-stat (vec)
