@@ -37,7 +37,7 @@
 (defvar compilation-current-error)
 (defvar compilation-context-lines)
 
-(defcustom shell-command-not-erase-buffer nil
+(defcustom shell-command-dont-erase-buffer nil
   "If non-nil, output buffer is not erased between shell commands.
 Also, a non-nil value set the point in the output buffer
 once the command complete.
@@ -56,7 +56,7 @@ restore the buffer position before the command."
   "Point position in the output buffer after command complete.
 It is an alist (BUFFER . POS), where BUFFER is the output
 buffer, and POS is the point position in BUFFER once the command finish.
-This variable is used when `shell-command-not-erase-buffer' is non-nil.")
+This variable is used when `shell-command-dont-erase-buffer' is non-nil.")
 
 (defcustom idle-update-delay 0.5
   "Idle time delay before updating various things on the screen.
@@ -3233,8 +3233,8 @@ output buffer and running a new command in the default buffer,
 
 (defun shell-command--save-pos-or-erase ()
   "Store a buffer position or erase the buffer.
-See `shell-command-not-erase-buffer'."
-  (let ((sym shell-command-not-erase-buffer)
+See `shell-command-dont-erase-buffer'."
+  (let ((sym shell-command-dont-erase-buffer)
         pos)
     (setq buffer-read-only nil)
     ;; Setting buffer-read-only to nil doesn't suffice
@@ -3257,8 +3257,8 @@ BUFFER is the output buffer of the command; if nil, then defaults
 to the current BUFFER.
 Set point to the `cdr' of the element in `shell-command-saved-pos'
 whose `car' is BUFFER."
-  (when shell-command-not-erase-buffer
-    (let* ((sym  shell-command-not-erase-buffer)
+  (when shell-command-dont-erase-buffer
+    (let* ((sym  shell-command-dont-erase-buffer)
            (buf  (or buffer (current-buffer)))
            (pos  (alist-get buf shell-command-saved-pos)))
       (setq shell-command-saved-pos
@@ -3340,7 +3340,7 @@ The optional second argument OUTPUT-BUFFER, if non-nil,
 says to put the output in some other buffer.
 If OUTPUT-BUFFER is a buffer or buffer name, erase that buffer
 and insert the output there; a non-nil value of
-`shell-command-not-erase-buffer' prevent to erase the buffer.
+`shell-command-dont-erase-buffer' prevent to erase the buffer.
 If OUTPUT-BUFFER is not a buffer and not nil, insert the output
 in current buffer after point leaving mark after it.
 This cannot be done asynchronously.
@@ -3562,7 +3562,7 @@ and are only used if a pop-up buffer is displayed."
 
 ;; We have a sentinel to prevent insertion of a termination message
 ;; in the buffer itself, and to set the point in the buffer when
-;; `shell-command-not-erase-buffer' is non-nil.
+;; `shell-command-dont-erase-buffer' is non-nil.
 (defun shell-command-sentinel (process signal)
   (when (memq (process-status process) '(exit signal))
     (shell-command--set-point-after-cmd (process-buffer process))
@@ -3603,7 +3603,7 @@ appears at the end of the output.
 Optional fourth arg OUTPUT-BUFFER specifies where to put the
 command's output.  If the value is a buffer or buffer name,
 erase that buffer and insert the output there; a non-nil value of
-`shell-command-not-erase-buffer' prevent to erase the buffer.
+`shell-command-dont-erase-buffer' prevent to erase the buffer.
 If the value is nil, use the buffer `*Shell Command Output*'.
 Any other non-nil value means to insert the output in the
 current buffer after START.
@@ -3683,7 +3683,7 @@ interactively, this is t."
                        (or output-buffer "*Shell Command Output*"))))
           (unwind-protect
               (if (and (eq buffer (current-buffer))
-                       (or (not shell-command-not-erase-buffer)
+                       (or (not shell-command-dont-erase-buffer)
                            (and (not (eq buffer (get-buffer "*Shell Command Output*")))
                                 (not (region-active-p)))))
                   ;; If the input is the same buffer as the output,

@@ -60,12 +60,12 @@ affected by this, as SGI stopped supporting IRIX in December 2013.
 inferior shell with the buffer region as input.
 
 +++
-** The new user option 'shell-command-not-erase-buffer' controls
+** The new user option 'shell-command-dont-erase-buffer' controls
 if the output buffer is erased between shell commands; if non-nil,
 the output buffer is not erased; this variable also controls where
 to set the point in the output buffer: beginning of the output,
 end of the buffer or save the point.
-When 'shell-command-not-erase-buffer' is nil, the default value,
+When 'shell-command-dont-erase-buffer' is nil, the default value,
 the behaviour of 'shell-command', 'shell-command-on-region' and
 'async-shell-command' is as usual.
 
