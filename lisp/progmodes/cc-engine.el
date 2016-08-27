@@ -7410,7 +7410,8 @@ comment at the start of cc-engine.el for more info."
 (defmacro c-back-over-list-of-member-inits ()
   ;; Go back over a list of elements, each looking like:
   ;; <symbol> (<expression>) ,
-  ;; or <symbol> {<expression>} ,
+  ;; or <symbol> {<expression>} , (with possibly a <....> expressions
+  ;; following the <symbol>).
   ;; when we are putatively immediately after a comma.  Stop when we don't see
   ;; a comma.  If either of <symbol> or bracketed <expression> is missing,
   ;; throw nil to 'level.  If the terminating } or ) is unmatched, throw nil
@@ -7422,6 +7423,11 @@ comment at the start of cc-engine.el for more info."
        (throw 'level nil))
      (when (not (c-go-list-backward))
        (throw 'done nil))
+     (c-backward-syntactic-ws)
+     (while (eq (char-before) ?>)
+       (when (not (c-backward-<>-arglist nil))
+	 (throw 'done nil))
+       (c-backward-syntactic-ws))
      (c-backward-syntactic-ws)
      (when (not (c-back-over-compound-identifier))
        (throw 'level nil))
