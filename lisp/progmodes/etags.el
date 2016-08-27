@@ -1880,8 +1880,6 @@ Third arg DELIMITED (prefix arg) means replace only word-delimited matches.
 If you exit (\\[keyboard-quit], RET or q), you can resume the query replace
 with the command \\[tags-loop-continue].
 Fourth arg FILE-LIST-FORM non-nil means initialize the replacement loop.
-Fifth and sixth arguments START and END are accepted, for compatibility
-with `query-replace-regexp', and ignored.
 
 If FILE-LIST-FORM is non-nil, it is a form to evaluate to
 produce the list of files to search.
