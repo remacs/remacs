@@ -1844,7 +1844,7 @@ but they don't build a type of themselves.  Unlike the keywords on
 not the type face."
   t    nil
   c    '("const" "restrict" "volatile")
-  c++  '("const" "noexcept" "volatile" "throw" "final" "override")
+  c++  '("const" "noexcept" "volatile" "throw")
   objc '("const" "volatile"))
 
 (c-lang-defconst c-opt-type-modifier-key
@@ -1872,6 +1872,18 @@ not the type face."
 				  (c-lang-const c-type-prefix-kwds)
 				  (c-lang-const c-type-modifier-kwds))
 			  :test 'string-equal))
+
+(c-lang-defconst c-type-decl-suffix-ws-ids-kwds
+  "\"Identifiers\" that when immediately following a declarator have semantic
+effect in the declaration, but are syntactically like whitespace."
+  t    nil
+  c++  '("final" "override"))
+
+(c-lang-defconst c-type-decl-suffix-ws-ids-key
+  ;; An adorned regexp matching `c-type-decl-suffix-ws-ids-kwds'.
+  t (c-make-keywords-re t (c-lang-const c-type-decl-suffix-ws-ids-kwds)))
+(c-lang-defvar c-type-decl-suffix-ws-ids-key
+  (c-lang-const c-type-decl-suffix-ws-ids-key))
 
 (c-lang-defconst c-class-decl-kwds
   "Keywords introducing declarations where the following block (if any)

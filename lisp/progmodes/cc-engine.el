@@ -7263,6 +7263,12 @@ comment at the start of cc-engine.el for more info."
 	  (goto-char (match-end 1))
 	  (c-forward-syntactic-ws)))
 
+      ;; Skip any "WS" identifiers (e.g. "final" or "override" in C++)
+      (while (looking-at c-type-decl-suffix-ws-ids-key)
+	(goto-char (match-end 1))
+	(c-forward-syntactic-ws)
+	(setq res t))
+
       (when c-opt-type-concat-key	; Only/mainly for pike.
 	;; Look for a trailing operator that concatenates the type
 	;; with a following one, and if so step past that one through
@@ -8164,6 +8170,11 @@ comment at the start of cc-engine.el for more info."
 	  (c-forward-syntactic-ws)
 	  (setq type-start (point))
 	  (setq at-type (c-forward-type))))
+
+      ;; Move forward over any "WS" ids (like "final" or "override" in C++)
+      (while (looking-at c-type-decl-suffix-ws-ids-key)
+	(goto-char (match-end 1))
+	(c-forward-syntactic-ws))
 
       (setq
        at-decl-or-cast
