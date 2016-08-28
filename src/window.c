@@ -4800,10 +4800,8 @@ window_scroll_margin (struct window *window, enum margin_unit unit)
   if (scroll_margin > 0)
     {
       int frame_line_height = default_line_pixel_height (window);
-      int window_total_lines
-        = window->total_lines * WINDOW_FRAME_LINE_HEIGHT (window)
-        / frame_line_height;
-      int margin = min (scroll_margin, window_total_lines / 4);
+      int window_lines = window_box_height (window) / frame_line_height;
+      int margin = min (scroll_margin, window_lines / 4);
       if (unit == MARGIN_IN_PIXELS)
         return margin * frame_line_height;
       else
