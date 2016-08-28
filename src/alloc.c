@@ -478,13 +478,18 @@ static int staticidx;
 
 static void *pure_alloc (size_t, int);
 
-/* Return X rounded to the next multiple of Y.  Arguments should not
-   have side effects, as they are evaluated more than once.  Assume X
-   + Y - 1 does not overflow.  Tune for Y being a power of 2.  */
+/* True if N is a power of 2.  N should be positive.  */
 
-#define ROUNDUP(x, y) ((y) & ((y) - 1)					\
-		       ? ((x) + (y) - 1) - ((x) + (y) - 1) % (y)	\
-		       : ((x) + (y) - 1) & ~ ((y) - 1))
+#define POWER_OF_2(n) (((n) & ((n) - 1)) == 0)
+
+/* Return X rounded to the next multiple of Y.  Y should be positive,
+   and Y - 1 + X should not overflow.  Arguments should not have side
+   effects, as they are evaluated more than once.  Tune for Y being a
+   power of 2.  */
+
+#define ROUNDUP(x, y) (POWER_OF_2 (y)					\
+		       ? ((y) - 1 + (x)) & ~ ((y) - 1)			\
+		       : ((y) - 1 + (x)) - ((y) - 1 + (x)) % (y))
 
 /* Return PTR rounded up to the next multiple of ALIGNMENT.  */
 
@@ -639,13 +644,14 @@ buffer_memory_full (ptrdiff_t nbytes)
 #define XMALLOC_OVERRUN_CHECK_OVERHEAD \
   (2 * XMALLOC_OVERRUN_CHECK_SIZE + XMALLOC_OVERRUN_SIZE_SIZE)
 
-/* Define XMALLOC_OVERRUN_SIZE_SIZE so that (1) it's large enough to
-   hold a size_t value and (2) the header size is a multiple of the
-   alignment that Emacs needs for C types and for USE_LSB_TAG.  */
 #define XMALLOC_BASE_ALIGNMENT alignof (max_align_t)
 
 #define XMALLOC_HEADER_ALIGNMENT \
    COMMON_MULTIPLE (GCALIGNMENT, XMALLOC_BASE_ALIGNMENT)
+
+/* Define XMALLOC_OVERRUN_SIZE_SIZE so that (1) it's large enough to
+   hold a size_t value and (2) the header size is a multiple of the
+   alignment that Emacs needs for C types and for USE_LSB_TAG.  */
 #define XMALLOC_OVERRUN_SIZE_SIZE				\
    (((XMALLOC_OVERRUN_CHECK_SIZE + sizeof (size_t)		\
       + XMALLOC_HEADER_ALIGNMENT - 1)				\
@@ -1126,6 +1132,10 @@ lisp_free (void *block)
 /* The entry point is lisp_align_malloc which returns blocks of at most
    BLOCK_BYTES and guarantees they are aligned on a BLOCK_ALIGN boundary.  */
 
+/* Byte alignment of storage blocks.  */
+#define BLOCK_ALIGN (1 << 10)
+verify (POWER_OF_2 (BLOCK_ALIGN));
+
 /* Use aligned_alloc if it or a simple substitute is available.
    Address sanitization breaks aligned allocation, as of gcc 4.8.2 and
    clang 3.3 anyway.  Aligned allocation is incompatible with
@@ -1143,14 +1153,19 @@ lisp_free (void *block)
 static void *
 aligned_alloc (size_t alignment, size_t size)
 {
+  /* POSIX says the alignment must be a power-of-2 multiple of sizeof (void *).
+     Verify this for all arguments this function is given.  */
+  verify (BLOCK_ALIGN % sizeof (void *) == 0
+	  && POWER_OF_2 (BLOCK_ALIGN / sizeof (void *)));
+  verify (GCALIGNMENT % sizeof (void *) == 0
+	  && POWER_OF_2 (GCALIGNMENT / sizeof (void *)));
+  eassert (alignment == BLOCK_ALIGN || alignment == GCALIGNMENT);
+
   void *p;
   return posix_memalign (&p, alignment, size) == 0 ? p : 0;
 }
 # endif
 #endif
-
-/* BLOCK_ALIGN has to be a power of 2.  */
-#define BLOCK_ALIGN (1 << 10)
 
 /* Padding to leave at the end of a malloc'd block.  This is to give
    malloc a chance to minimize the amount of memory wasted to alignment.
@@ -1253,6 +1268,7 @@ lisp_align_malloc (size_t nbytes, enum mem_type type)
 #endif
 
 #ifdef USE_ALIGNED_ALLOC
+      verify (ABLOCKS_BYTES % BLOCK_ALIGN == 0);
       abase = base = aligned_alloc (BLOCK_ALIGN, ABLOCKS_BYTES);
 #else
       base = malloc (ABLOCKS_BYTES);
@@ -1379,15 +1395,21 @@ lisp_align_free (void *block)
 # define __alignof__(type) alignof (type)
 #endif
 
-/* True if malloc returns a multiple of GCALIGNMENT.  In practice this
-   holds if __alignof__ (max_align_t) is a multiple.  Use __alignof__
-   if available, as otherwise this check would fail with GCC x86.
+/* True if malloc (N) is known to return a multiple of GCALIGNMENT
+   whenever N is also a multiple.  In practice this is true if
+   __alignof__ (max_align_t) is a multiple as well, assuming
+   GCALIGNMENT is 8; other values of GCALIGNMENT have not been looked
+   into.  Use __alignof__ if available, as otherwise
+   MALLOC_IS_GC_ALIGNED would be false on GCC x86 even though the
+   alignment is OK there.
+
    This is a macro, not an enum constant, for portability to HP-UX
    10.20 cc and AIX 3.2.5 xlc.  */
-#define MALLOC_IS_GC_ALIGNED (__alignof__ (max_align_t) % GCALIGNMENT == 0)
+#define MALLOC_IS_GC_ALIGNED \
+  (GCALIGNMENT == 8 && __alignof__ (max_align_t) % GCALIGNMENT == 0)
 
-/* True if P is suitably aligned for SIZE, where Lisp alignment may be
-   needed if SIZE is Lisp-aligned.  */
+/* True if a malloc-returned pointer P is suitably aligned for SIZE,
+   where Lisp alignment may be needed if SIZE is Lisp-aligned.  */
 
 static bool
 laligned (void *p, size_t size)
@@ -1416,24 +1438,20 @@ static void *
 lmalloc (size_t size)
 {
 #if USE_ALIGNED_ALLOC
-  if (! MALLOC_IS_GC_ALIGNED)
+  if (! MALLOC_IS_GC_ALIGNED && size % GCALIGNMENT == 0)
     return aligned_alloc (GCALIGNMENT, size);
 #endif
 
-  void *p;
   while (true)
     {
-      p = malloc (size);
+      void *p = malloc (size);
       if (laligned (p, size))
-	break;
+	return p;
       free (p);
-      size_t bigger;
-      if (! INT_ADD_WRAPV (size, GCALIGNMENT, &bigger))
+      size_t bigger = size + GCALIGNMENT;
+      if (size < bigger)
 	size = bigger;
     }
-
-  eassert ((intptr_t) p % GCALIGNMENT == 0);
-  return p;
 }
 
 static void *
@@ -1443,14 +1461,11 @@ lrealloc (void *p, size_t size)
     {
       p = realloc (p, size);
       if (laligned (p, size))
-	break;
-      size_t bigger;
-      if (! INT_ADD_WRAPV (size, GCALIGNMENT, &bigger))
+	return p;
+      size_t bigger = size + GCALIGNMENT;
+      if (size < bigger)
 	size = bigger;
     }
-
-  eassert ((intptr_t) p % GCALIGNMENT == 0);
-  return p;
 }
 
 
