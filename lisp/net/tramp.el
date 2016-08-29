@@ -939,14 +939,14 @@ checked via the following code:
         (erase-buffer)
         (let ((proc (start-process (buffer-name) (current-buffer)
                                    \"ssh\" \"-l\" user host \"wc\" \"-c\")))
-          (when (memq (process-status proc) \\='(run open))
+          (when (process-live-p proc)
             (process-send-string proc (make-string sent ?\\ ))
             (process-send-eof proc)
             (process-send-eof proc))
           (while (not (progn (goto-char (point-min))
                              (re-search-forward \"\\\\w+\" (point-max) t)))
             (accept-process-output proc 1))
-          (when (memq (process-status proc) \\='(run open))
+          (when (process-live-p proc)
             (setq received (string-to-number (match-string 0)))
             (delete-process proc)
             (message \"Bytes sent: %s\\tBytes received: %s\" sent received)
@@ -2284,11 +2284,10 @@ should never be set globally, the intention is to let-bind it.")
 This is true, if either the remote host is already connected, or if we are
 not in completion mode."
   (and (tramp-tramp-file-p filename)
-       (with-parsed-tramp-file-name filename nil
-	 (or (not (tramp-completion-mode-p))
-	     (let* ((tramp-verbose 0)
-		    (p (tramp-get-connection-process v)))
-	       (and p (processp p) (memq (process-status p) '(run open))))))))
+       (or (not (tramp-completion-mode-p))
+	   (tramp-compat-process-live-p
+	    (tramp-get-connection-process
+	     (tramp-dissect-file-name filename))))))
 
 (defun tramp-completion-handle-expand-file-name (name &optional dir)
   "Like `expand-file-name' for Tramp files."
@@ -2942,7 +2941,7 @@ User is always nil."
     (when (tramp-tramp-file-p filename)
       (let* ((v (tramp-dissect-file-name filename))
 	     (p (tramp-get-connection-process v))
-	     (c (and p (processp p) (memq (process-status p) '(run open))
+	     (c (and (tramp-compat-process-live-p p)
 		     (tramp-get-connection-property p "connected" nil))))
 	;; We expand the file name only, if there is already a connection.
 	(with-parsed-tramp-file-name
@@ -3344,7 +3343,7 @@ of."
 
 (defun tramp-handle-file-notify-valid-p (proc)
   "Like `file-notify-valid-p' for Tramp files."
-  (and proc (processp proc) (memq (process-status proc) '(run open))
+  (and (tramp-compat-process-live-p proc)
        ;; Sometimes, the process is still in status `run' when the
        ;; file or directory to be watched is deleted already.
        (with-current-buffer (process-buffer proc)
@@ -3439,14 +3438,14 @@ The terminal type can be configured with `tramp-terminal-type'."
 
 (defun tramp-action-process-alive (proc _vec)
   "Check, whether a process has finished."
-  (unless (memq (process-status proc) '(run open))
+  (unless (tramp-compat-process-live-p proc)
     (throw 'tramp-action 'process-died)))
 
 (defun tramp-action-out-of-band (proc vec)
   "Check, whether an out-of-band copy has finished."
   ;; There might be pending output for the exit status.
   (tramp-accept-process-output proc 0.1)
-  (cond ((and (memq (process-status proc) '(stop exit))
+  (cond ((and (not (tramp-compat-process-live-p proc))
 	      (zerop (process-exit-status proc)))
 	 (tramp-message	vec 3 "Process has finished.")
 	 (throw 'tramp-action 'ok))
@@ -3608,14 +3607,14 @@ nil."
 	     (with-timeout (timeout)
 	       (while (not found)
 		 (tramp-accept-process-output proc 1)
-		 (unless (memq (process-status proc) '(run open))
+		 (unless (tramp-compat-process-live-p proc)
 		   (tramp-error-with-buffer
 		    nil proc 'file-error "Process has died"))
 		 (setq found (tramp-check-for-regexp proc regexp)))))
 	    (t
 	     (while (not found)
 	       (tramp-accept-process-output proc 1)
-	       (unless (memq (process-status proc) '(run open))
+	       (unless (tramp-compat-process-live-p proc)
 		 (tramp-error-with-buffer
 		  nil proc 'file-error "Process has died"))
 	       (setq found (tramp-check-for-regexp proc regexp)))))

@@ -240,7 +240,7 @@ connection, returns DEFAULT."
 	 (value
 	  ;; If the key is an auxiliary process object, check whether
 	  ;; the process is still alive.
-	  (if (and (processp key) (not (memq (process-status key) '(run open))))
+	  (if (and (processp key) (not (tramp-compat-process-live-p key)))
 	      default
 	    (if (hash-table-p hash)
 		(gethash property hash default)

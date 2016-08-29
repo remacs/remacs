@@ -1084,7 +1084,7 @@ file names."
 	;; There might be an error if the monitor is not supported.
 	;; Give the filter a chance to read the output.
 	(tramp-accept-process-output p 1)
-	(unless (memq (process-status p) '(run open))
+	(unless (tramp-compat-process-live-p p)
 	  (tramp-error
 	   v 'file-notify-error "Monitoring not supported for `%s'" file-name))
 	p))))

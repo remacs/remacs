@@ -248,6 +248,19 @@ Add the extension of F, if existing."
                                     process-name))))
 	      (setq result t)))))))))
 
+;; `process-running-live-p' is introduced in Emacs 24.
+(defalias 'tramp-compat-process-live-p
+  (if (fboundp 'process-running-live-p)
+      'process-running-live-p
+    (lambda (process)
+      "Returns non-nil if PROCESS is alive.
+A process is considered alive if its status is `run', `open',
+`listen', `connect' or `stop'.  Value is nil if PROCESS is not a
+process."
+      (and (processp process)
+	   (memq (process-status process)
+		 '(run open listen connect stop))))))
+
 ;; `default-toplevel-value' has been declared in Emacs 24.
 (unless (fboundp 'default-toplevel-value)
   (defalias 'default-toplevel-value 'symbol-value))

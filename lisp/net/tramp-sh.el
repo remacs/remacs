@@ -2839,7 +2839,7 @@ the result will be a local, non-Tramp, file name."
 
 (defun tramp-process-sentinel (proc event)
   "Flush file caches."
-  (unless (memq (process-status proc) '(run open))
+  (unless (tramp-compat-process-live-p proc)
     (let ((vec (tramp-get-connection-property proc "vector" nil)))
       (when vec
 	(tramp-message vec 5 "Sentinel called: `%S' `%s'" proc event)
@@ -3641,7 +3641,7 @@ Fall back to normal file name handler if no Tramp handler exists."
 	;; There might be an error if the monitor is not supported.
 	;; Give the filter a chance to read the output.
 	(tramp-accept-process-output p 1)
-	(unless (memq (process-status p) '(run open))
+	(unless (tramp-compat-process-live-p p)
 	  (tramp-error
 	   v 'file-notify-error "Monitoring not supported for `%s'" file-name))
 	p))))
@@ -4649,7 +4649,7 @@ connection if a previous connection has died for some reason."
 
     ;; If Tramp opens the same connection within a short time frame,
     ;; there is a problem.  We shall signal this.
-    (unless (or (and p (processp p) (memq (process-status p) '(run open)))
+    (unless (or (tramp-compat-process-live-p p)
 		(not (equal (butlast (append vec nil) 2)
 			    (car tramp-current-connection)))
 		(> (tramp-time-diff
@@ -4670,9 +4670,9 @@ connection if a previous connection has died for some reason."
 		       (tramp-get-connection-property
 			p "last-cmd-time" '(0 0 0)))
 		      60)
-		   p (processp p) (memq (process-status p) '(run open)))
+		   (tramp-compat-process-live-p p))
 	  (tramp-send-command vec "echo are you awake" t t)
-	  (unless (and (memq (process-status p) '(run open))
+	  (unless (and (tramp-compat-process-live-p p)
 		       (tramp-wait-for-output p 10))
 	    ;; The error will be caught locally.
 	    (tramp-error vec 'file-error "Awake did fail")))
@@ -4682,7 +4682,7 @@ connection if a previous connection has died for some reason."
 
     ;; New connection must be opened.
     (condition-case err
-	(unless (and p (processp p) (memq (process-status p) '(run open)))
+	(unless (tramp-compat-process-live-p p)
 
 	  ;; If `non-essential' is non-nil, don't reopen a new connection.
 	  ;; This variable has been introduced with Emacs 24.1.
