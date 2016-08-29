@@ -1049,10 +1049,12 @@ Return nil if no change in files."
                (prog1 (setq newname (file-name-as-directory newname))
                  (dired-shell-command
                   (replace-regexp-in-string
-                   "%o" newname
+                   "%o" (shell-quote-argument newname)
                    (replace-regexp-in-string
-                    "%i" file
-                    command))))
+                    "%i" (shell-quote-argument file)
+                    command
+                    nil t)
+                   nil t)))
              ;; We found an uncompression rule.
              (when (not
                     (dired-check-process
@@ -1072,10 +1074,12 @@ Return nil if no change in files."
                              (default-directory (file-name-directory file)))
                          (dired-shell-command
                           (replace-regexp-in-string
-                           "%o" out-name
+                           "%o" (shell-quote-argument out-name)
                            (replace-regexp-in-string
-                            "%i" (file-name-nondirectory file)
-                            (cadr suffix))))
+                            "%i" (shell-quote-argument (file-name-nondirectory file))
+                            (cadr suffix)
+                            nil t)
+                           nil t))
                          out-name)))
                  (let ((out-name (concat file ".gz")))
                    (and (or (not (file-exists-p out-name))
