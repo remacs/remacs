@@ -6621,7 +6621,12 @@ has the same base event type and all the specified modifiers.  */)
 int
 parse_solitary_modifier (Lisp_Object symbol)
 {
-  Lisp_Object name = SYMBOL_NAME (symbol);
+  Lisp_Object name;
+
+  if (!SYMBOLP (symbol))
+    return 0;
+
+  name = SYMBOL_NAME (symbol);
 
   switch (SREF (name, 0))
     {
