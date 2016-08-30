@@ -361,7 +361,8 @@ Pass arguments REGEXP REP STRING FIXEDCASE LITERAL to
 INVALUE gives the current iCalendar element we are reading.
 INPARAMS gives the current parameters.....
 This function calls itself recursively for each nested calendar element
-it finds."
+it finds.  The current buffer should be an unfolded buffer as returned
+from `icalendar--get-unfolded-buffer'."
   (let (element children line name params param param-name param-value
                 value
                 (continue t))
@@ -391,8 +392,9 @@ it finds."
       (unless (looking-at ":")
         (error "Oops"))
       (forward-char 1)
-      (re-search-forward  "\\(.*\\)\\(\r?\n[ \t].*\\)*" nil t)
-      (setq value (icalendar--rris "\r?\n[ \t]" "" (match-string 0)))
+      (let ((start (point)))
+        (end-of-line)
+        (setq value (buffer-substring start (point))))
       (setq line (list name params value))
       (cond ((eq name 'BEGIN)
              (setq children
