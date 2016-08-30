@@ -578,6 +578,7 @@ baz\"\""
 (define-electric-pair-test autowrapping-7
   "foo" "\"" :expected-string "``foo''" :expected-point 8
   :modes '(tex-mode)
+  :test-in-comments nil
   :fixture-fn #'(lambda ()
                   (electric-pair-mode 1)
                   (goto-char (point-max))

@@ -1477,6 +1477,9 @@ looking for macro definitions.  By default, no symbols are ignored.
 
 ** TeX mode
 
+*** When in a TeX (LaTeX, etc) comment, insert a normal double quote (")
+instead of defaulting to TeX-style open (``) or close ('') quote marks.
+
 *** New custom variable 'tex-print-file-extension' to help users who
 use PDF instead of DVI.
 
