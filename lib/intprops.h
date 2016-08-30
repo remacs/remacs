@@ -23,6 +23,10 @@
 #include <limits.h>
 #include <verify.h>
 
+#ifndef __has_builtin
+# define __has_builtin(x) 0
+#endif
+
 /* Return a value with the common real type of E and V and the value of V.  */
 #define _GL_INT_CONVERT(e, v) (0 * (e) + (v))
 
@@ -66,6 +70,12 @@
    : _GL_INT_NEGATE_CONVERT (e, 1))
 #define _GL_SIGNED_INT_MAXIMUM(e)                                       \
   (((_GL_INT_CONVERT (e, 1) << (sizeof ((e) + 0) * CHAR_BIT - 2)) - 1) * 2 + 1)
+
+/* Work around OpenVMS incompatibility with C99.  */
+#if !defined LLONG_MAX && defined __INT64_MAX
+# define LLONG_MAX __INT64_MAX
+# define LLONG_MIN __INT64_MIN
+#endif
 
 /* This include file assumes that signed types are two's complement without
    padding bits; the above macros have undefined behavior otherwise.
@@ -222,20 +232,25 @@ verify (TYPE_MAXIMUM (long long int) == LLONG_MAX);
    ? (a) < (min) >> (b)                                 \
    : (max) >> (b) < (a))
 
-/* True if __builtin_add_overflow (A, B, P) works when P is null.  */
-#define _GL_HAS_BUILTIN_OVERFLOW_WITH_NULL (7 <= __GNUC__)
+/* True if __builtin_add_overflow (A, B, P) works when P is non-null.  */
+#define _GL_HAS_BUILTIN_OVERFLOW \
+  (5 <= __GNUC__ || __has_builtin (__builtin_add_overflow))
+
+/* True if __builtin_add_overflow_p (A, B, C) works.  */
+#define _GL_HAS_BUILTIN_OVERFLOW_P \
+  (7 <= __GNUC__ || __has_builtin (__builtin_add_overflow_p))
 
 /* The _GL*_OVERFLOW macros have the same restrictions as the
    *_RANGE_OVERFLOW macros, except that they do not assume that operands
    (e.g., A and B) have the same type as MIN and MAX.  Instead, they assume
    that the result (e.g., A + B) has that type.  */
-#if _GL_HAS_BUILTIN_OVERFLOW_WITH_NULL
-# define _GL_ADD_OVERFLOW(a, b, min, max)
-   __builtin_add_overflow (a, b, (__typeof__ ((a) + (b)) *) 0)
-# define _GL_SUBTRACT_OVERFLOW(a, b, min, max)
-   __builtin_sub_overflow (a, b, (__typeof__ ((a) - (b)) *) 0)
-# define _GL_MULTIPLY_OVERFLOW(a, b, min, max)
-   __builtin_mul_overflow (a, b, (__typeof__ ((a) * (b)) *) 0)
+#if _GL_HAS_BUILTIN_OVERFLOW_P
+# define _GL_ADD_OVERFLOW(a, b, min, max)                               \
+   __builtin_add_overflow_p (a, b, (__typeof__ ((a) + (b))) 0)
+# define _GL_SUBTRACT_OVERFLOW(a, b, min, max)                          \
+   __builtin_sub_overflow_p (a, b, (__typeof__ ((a) - (b))) 0)
+# define _GL_MULTIPLY_OVERFLOW(a, b, min, max)                          \
+   __builtin_mul_overflow_p (a, b, (__typeof__ ((a) * (b))) 0)
 #else
 # define _GL_ADD_OVERFLOW(a, b, min, max)                                \
    ((min) < 0 ? INT_ADD_RANGE_OVERFLOW (a, b, min, max)                  \
@@ -315,7 +330,7 @@ verify (TYPE_MAXIMUM (long long int) == LLONG_MAX);
   _GL_BINARY_OP_OVERFLOW (a, b, _GL_ADD_OVERFLOW)
 #define INT_SUBTRACT_OVERFLOW(a, b) \
   _GL_BINARY_OP_OVERFLOW (a, b, _GL_SUBTRACT_OVERFLOW)
-#if _GL_HAS_BUILTIN_OVERFLOW_WITH_NULL
+#if _GL_HAS_BUILTIN_OVERFLOW_P
 # define INT_NEGATE_OVERFLOW(a) INT_SUBTRACT_OVERFLOW (0, a)
 #else
 # define INT_NEGATE_OVERFLOW(a) \
@@ -349,10 +364,6 @@ verify (TYPE_MAXIMUM (long long int) == LLONG_MAX);
 #define INT_MULTIPLY_WRAPV(a, b, r) \
   _GL_INT_OP_WRAPV (a, b, r, *, __builtin_mul_overflow, INT_MULTIPLY_OVERFLOW)
 
-#ifndef __has_builtin
-# define __has_builtin(x) 0
-#endif
-
 /* Nonzero if this compiler has GCC bug 68193 or Clang bug 25390.  See:
    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=68193
    https://llvm.org/bugs/show_bug.cgi?id=25390
@@ -369,7 +380,7 @@ verify (TYPE_MAXIMUM (long long int) == LLONG_MAX);
    the operation.  BUILTIN is the builtin operation, and OVERFLOW the
    overflow predicate.  Return 1 if the result overflows.  See above
    for restrictions.  */
-#if 5 <= __GNUC__ || __has_builtin (__builtin_add_overflow)
+#if _GL_HAS_BUILTIN_OVERFLOW
 # define _GL_INT_OP_WRAPV(a, b, r, op, builtin, overflow) builtin (a, b, r)
 #elif 201112 <= __STDC_VERSION__ && !_GL__GENERIC_BOGUS
 # define _GL_INT_OP_WRAPV(a, b, r, op, builtin, overflow) \
@@ -412,7 +423,7 @@ verify (TYPE_MAXIMUM (long long int) == LLONG_MAX);
 # else
 #  define _GL_INT_OP_WRAPV_LONGISH(a, b, r, op, overflow) \
     _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned long int, \
-                     long int, LONG_MIN, LONG_MAX))
+                     long int, LONG_MIN, LONG_MAX)
 # endif
 #endif
 
