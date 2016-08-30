@@ -2233,15 +2233,15 @@ This function makes @var{buffer-or-name} the current buffer and
 displays it in some window, preferably not the window currently
 selected.  It then selects the displaying window.  If that window is
 on a different graphical frame, that frame is given input focus if
-possible (@pxref{Input Focus}).  The return value is the buffer that
-was switched to.
+possible (@pxref{Input Focus}).
 
 If @var{buffer-or-name} is @code{nil}, it defaults to the buffer
 returned by @code{other-buffer} (@pxref{Buffer List}).  If
 @var{buffer-or-name} is a string that is not the name of any existing
 buffer, this function creates a new buffer with that name; the new
 buffer's major mode is determined by the variable @code{major-mode}
-(@pxref{Major Modes}).
+(@pxref{Major Modes}).  In any case, that buffer is made current and
+returned, even when no suitable window was found to display it.
 
 If @var{action} is non-@code{nil}, it should be a display action to
 pass to @code{display-buffer} (@pxref{Choosing Window}).

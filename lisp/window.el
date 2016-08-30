@@ -6692,8 +6692,7 @@ that allows the selected frame)."
           (window--display-buffer
            buffer window 'frame alist display-buffer-mark-dedicated)
         (unless (cdr (assq 'inhibit-switch-frame alist))
-          (window--maybe-raise-frame frame))))
-    ))
+          (window--maybe-raise-frame frame))))))
 
 (defun display-buffer-same-window (buffer alist)
   "Display BUFFER in the selected window.
@@ -7074,12 +7073,12 @@ returned from `display-buffer' in this case."
     'fail))
 
 ;;; Display + selection commands:
-(defun pop-to-buffer (buffer &optional action norecord)
-  "Select buffer BUFFER in some window, preferably a different one.
-BUFFER may be a buffer, a string (a buffer name), or nil.  If it
-is a string not naming an existent buffer, create a buffer with
-that name.  If BUFFER is nil, choose some other buffer.  Return
-the buffer.
+(defun pop-to-buffer (buffer-or-name &optional action norecord)
+  "Display buffer specified by BUFFER-OR-NAME and select its window.
+BUFFER-OR-NAME may be a buffer, a string (a buffer name), or nil.
+If it is a string not naming an existent buffer, create a buffer
+with that name.  If BUFFER-OR-NAME is nil, choose some other
+buffer.  In either case, make that buffer current and return it.
 
 This uses `display-buffer' as a subroutine.  The optional ACTION
 argument is passed to `display-buffer' as its ACTION argument.
@@ -7088,24 +7087,30 @@ interactively with a prefix argument, which means to pop to a
 window other than the selected one even if the buffer is already
 displayed in the selected window.
 
-If the window to show BUFFER is not on the selected
-frame, raise that window's frame and give it input focus.
+If a suitable window is found, select that window.  If it is not
+on the selected frame, raise that window's frame and give it
+input focus.
 
 Optional third arg NORECORD non-nil means do not put this buffer
 at the front of the list of recently selected ones."
   (interactive (list (read-buffer "Pop to buffer: " (other-buffer))
 		     (if current-prefix-arg t)))
-  (setq buffer (window-normalize-buffer-to-switch-to buffer))
-  ;; This should be done by `select-window' below.
-  ;; (set-buffer buffer)
-  (let* ((old-frame (selected-frame))
-	 (window (display-buffer buffer action))
-	 (frame (window-frame window)))
-    ;; If we chose another frame, make sure it gets input focus.
-    (unless (eq frame old-frame)
-      (select-frame-set-input-focus frame norecord))
-    ;; Make sure new window is selected (Bug#8615), (Bug#6954).
-    (select-window window norecord)
+  (let* ((buffer (window-normalize-buffer-to-switch-to buffer-or-name))
+         (old-frame (selected-frame))
+	 (window (display-buffer buffer action)))
+    ;; Don't assume that `display-buffer' has supplied us with a window
+    ;; (Bug#24332).
+    (if window
+        (let ((frame (window-frame window)))
+          ;; If we chose another frame, make sure it gets input focus.
+          (unless (eq frame old-frame)
+            (select-frame-set-input-focus frame norecord))
+          ;; Make sure the window is selected (Bug#8615), (Bug#6954)
+          (select-window window norecord))
+      ;; If `display-buffer' failed to supply a window, just make the
+      ;; buffer current.
+      (set-buffer buffer))
+    ;; Return BUFFER even when we got no window.
     buffer))
 
 (defun pop-to-buffer-same-window (buffer &optional norecord)
