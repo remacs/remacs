@@ -2856,7 +2856,8 @@ User is always nil."
   "Like `file-modes' for Tramp files."
   (let ((truename (or (file-truename filename) filename)))
     (when (file-exists-p truename)
-      (tramp-mode-string-to-int (nth 8 (file-attributes truename))))))
+      (tramp-mode-string-to-int
+       (tramp-compat-file-attribute-modes (file-attributes truename))))))
 
 ;; Localname manipulation functions that grok Tramp localnames...
 (defun tramp-handle-file-name-as-directory (file)
@@ -2926,13 +2927,17 @@ User is always nil."
   (cond
    ((not (file-exists-p file1)) nil)
    ((not (file-exists-p file2)) t)
-   (t (time-less-p (nth 5 (file-attributes file2))
-		   (nth 5 (file-attributes file1))))))
+   (t (time-less-p (tramp-compat-file-attribute-modification-time
+		    (file-attributes file2))
+		   (tramp-compat-file-attribute-modification-time
+		    (file-attributes file1))))))
 
 (defun tramp-handle-file-regular-p (filename)
   "Like `file-regular-p' for Tramp files."
   (and (file-exists-p filename)
-       (eq ?- (aref (nth 8 (file-attributes filename)) 0))))
+       (eq ?-
+	   (aref (tramp-compat-file-attribute-modes (file-attributes filename))
+		 0))))
 
 (defun tramp-handle-file-remote-p (filename &optional identification connected)
   "Like `file-remote-p' for Tramp files."
@@ -2958,7 +2963,7 @@ User is always nil."
 (defun tramp-handle-file-symlink-p (filename)
   "Like `file-symlink-p' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (let ((x (car (file-attributes filename))))
+    (let ((x (tramp-compat-file-attribute-type (file-attributes filename))))
       (when (stringp x)
 	(if (file-name-absolute-p x)
 	    (tramp-make-tramp-file-name method user host x)
@@ -3279,7 +3284,9 @@ User is always nil."
     (let ((remote-file-name-inhibit-cache t))
       ;; '(-1 65535) means file doesn't exists yet.
       (setq time-list
-	    (or (nth 5 (file-attributes (buffer-file-name))) '(-1 65535)))))
+	    (or (tramp-compat-file-attribute-modification-time
+		 (file-attributes (buffer-file-name)))
+		'(-1 65535)))))
   ;; We use '(0 0) as a don't-know value.
   (unless (equal time-list '(0 0))
     (tramp-run-real-handler 'set-visited-file-modtime (list time-list))))
@@ -3303,7 +3310,7 @@ of."
 	(with-parsed-tramp-file-name f nil
 	  (let* ((remote-file-name-inhibit-cache t)
 		 (attr (file-attributes f))
-		 (modtime (nth 5 attr))
+		 (modtime (tramp-compat-file-attribute-modification-time attr))
 		 (mt (visited-file-modtime)))
 
 	    (cond
@@ -3820,7 +3827,7 @@ ID-FORMAT valid values are `string' and `integer'."
   ;; `group-gid' has been introduced with Emacs 24.4.
   (if (and (fboundp 'group-gid) (equal id-format 'integer))
       (tramp-compat-funcall 'group-gid)
-    (nth 3 (file-attributes "~/" id-format))))
+    (tramp-compat-file-attribute-group-id (file-attributes "~/" id-format))))
 
 (defun tramp-get-local-locale (&optional vec)
   "Determine locale, supporting UTF8 if possible.
@@ -3884,23 +3891,32 @@ be granted."
           (and
            file-attr
            (or
-            ;; Not a symlink
-            (eq t (car file-attr))
-            (null (car file-attr)))
+            ;; Not a symlink.
+            (eq t (tramp-compat-file-attribute-type file-attr))
+            (null (tramp-compat-file-attribute-type file-attr)))
            (or
             ;; World accessible.
-            (eq access (aref (nth 8 file-attr) (+ offset 6)))
+            (eq access
+		(aref (tramp-compat-file-attribute-modes file-attr)
+		      (+ offset 6)))
             ;; User accessible and owned by user.
             (and
-             (eq access (aref (nth 8 file-attr) offset))
-	     (or (equal remote-uid (nth 2 file-attr))
-		 (equal unknown-id (nth 2 file-attr))))
-            ;; Group accessible and owned by user's
-            ;; principal group.
+             (eq access
+		 (aref (tramp-compat-file-attribute-modes file-attr) offset))
+	     (or (equal remote-uid
+			(tramp-compat-file-attribute-user-id file-attr))
+		 (equal unknown-id
+			(tramp-compat-file-attribute-user-id file-attr))))
+            ;; Group accessible and owned by user's principal group.
             (and
-             (eq access (aref (nth 8 file-attr) (+ offset 3)))
-             (or (equal remote-gid (nth 3 file-attr))
-		 (equal unknown-id (nth 3 file-attr))))))))))))
+             (eq access
+		 (aref (tramp-compat-file-attribute-modes file-attr)
+		       (+ offset 3)))
+             (or (equal remote-gid
+			(tramp-compat-file-attribute-group-id file-attr))
+		 (equal unknown-id
+			(tramp-compat-file-attribute-group-id
+			 file-attr))))))))))))
 
 ;;;###tramp-autoload
 (defun tramp-local-host-p (vec)

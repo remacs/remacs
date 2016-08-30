@@ -246,7 +246,9 @@ pass to the OPERATION."
 
 (defun tramp-adb-handle-file-directory-p (filename)
   "Like `file-directory-p' for Tramp files."
-  (car (file-attributes (file-truename filename))))
+  (eq (tramp-compat-file-attribute-type
+       (file-attributes (file-truename filename)))
+      t))
 
 ;; This is derived from `tramp-sh-handle-file-truename'.  Maybe the
 ;; code could be shared?
@@ -281,14 +283,15 @@ pass to the OPERATION."
 			  (append '("") (reverse result) (list thisstep))
 			  "/"))
 	      (setq symlink-target
-		    (nth 0 (file-attributes
-			    (tramp-make-tramp-file-name
-			     method user host
-			     (mapconcat 'identity
-					(append '("")
-						(reverse result)
-						(list thisstep))
-					"/")))))
+		    (tramp-compat-file-attribute-type
+		     (file-attributes
+		      (tramp-make-tramp-file-name
+		       method user host
+		       (mapconcat 'identity
+				  (append '("")
+					  (reverse result)
+					  (list thisstep))
+				  "/")))))
 	      (cond ((string= "." thisstep)
 		     (tramp-message v 5 "Ignoring step `.'"))
 		    ((string= ".." thisstep)
@@ -712,7 +715,10 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 
     ;; KEEP-DATE handling.
     (when keep-date
-      (set-file-times newname (nth 5 (file-attributes filename))))))
+      (set-file-times
+       newname
+       (tramp-compat-file-attribute-modification-time
+	(file-attributes filename))))))
 
 (defun tramp-adb-handle-rename-file
   (filename newname &optional ok-if-already-exists)

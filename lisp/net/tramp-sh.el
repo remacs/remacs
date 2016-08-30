@@ -1190,14 +1190,15 @@ target of the symlink differ."
 			      (append '("") (reverse result) (list thisstep))
 			      "/"))
 		  (setq symlink-target
-			(nth 0 (file-attributes
-				(tramp-make-tramp-file-name
-				 method user host
-				 (mapconcat 'identity
-					    (append '("")
-						    (reverse result)
-						    (list thisstep))
-					    "/")))))
+			(tramp-compat-file-attribute-type
+			 (file-attributes
+			  (tramp-make-tramp-file-name
+			   method user host
+			   (mapconcat 'identity
+				      (append '("")
+					      (reverse result)
+					      (list thisstep))
+				     "/")))))
 		  (cond ((string= "." thisstep)
 			 (tramp-message v 5 "Ignoring step `.'"))
 			((string= ".." thisstep)
@@ -1448,7 +1449,8 @@ target of the symlink differ."
 	(let* ((remote-file-name-inhibit-cache t)
 	       (attr (file-attributes f))
 	       ;; '(-1 65535) means file doesn't exists yet.
-	       (modtime (or (nth 5 attr) '(-1 65535))))
+	       (modtime (or (tramp-compat-file-attribute-modification-time attr)
+			    '(-1 65535))))
 	  (setq coding-system-used last-coding-system-used)
 	  ;; We use '(0 0) as a don't-know value.  See also
 	  ;; `tramp-do-file-attributes-with-ls'.
@@ -1487,7 +1489,7 @@ of."
 	(with-parsed-tramp-file-name f nil
 	  (let* ((remote-file-name-inhibit-cache t)
 		 (attr (file-attributes f))
-		 (modtime (nth 5 attr))
+		 (modtime (tramp-compat-file-attribute-modification-time attr))
 		 (mt (visited-file-modtime)))
 
 	    (cond
@@ -1711,9 +1713,16 @@ be non-negative integers."
 	   ;; and obtain the result.
 	   (let ((fa1 (file-attributes file1))
 		 (fa2 (file-attributes file2)))
-	     (if (and (not (equal (nth 5 fa1) '(0 0)))
-		      (not (equal (nth 5 fa2) '(0 0))))
-		 (> 0 (tramp-time-diff (nth 5 fa2) (nth 5 fa1)))
+	     (if (and
+		  (not
+		   (equal (tramp-compat-file-attribute-modification-time fa1)
+			  '(0 0)))
+		  (not
+		   (equal (tramp-compat-file-attribute-modification-time fa2)
+			  '(0 0))))
+		 (> 0 (tramp-time-diff
+		       (tramp-compat-file-attribute-modification-time fa2)
+		       (tramp-compat-file-attribute-modification-time fa1)))
 	       ;; If one of them is the dont-know value, then we can
 	       ;; still try to run a shell command on the remote host.
 	       ;; However, this only works if both files are Tramp
@@ -1765,9 +1774,11 @@ be non-negative integers."
 	;; information would be lost by an (attempted) delete and create.
 	(or (null attributes)
 	    (and
-	     (= (nth 2 attributes) (tramp-get-remote-uid v 'integer))
+	     (= (tramp-compat-file-attribute-user-id attributes)
+		(tramp-get-remote-uid v 'integer))
 	     (or (not group)
-		 (= (nth 3 attributes) (tramp-get-remote-gid v 'integer)))))))))
+		 (= (tramp-compat-file-attribute-group-id attributes)
+		    (tramp-get-remote-gid v 'integer)))))))))
 
 ;; Directory listings.
 
@@ -2066,7 +2077,8 @@ file names."
     (error "Unknown operation `%s', must be `copy' or `rename'" op))
   (let ((t1 (tramp-tramp-file-p filename))
 	(t2 (tramp-tramp-file-p newname))
-	(length (nth 7 (file-attributes (file-truename filename))))
+	(length (tramp-compat-file-attribute-size
+		 (file-attributes (file-truename filename))))
 	(attributes (and preserve-extended-attributes
 			 (apply 'file-extended-attributes (list filename)))))
 
@@ -2177,7 +2189,11 @@ KEEP-DATE is non-nil if NEWNAME should have the same timestamp as FILENAME."
       (set-buffer-multibyte nil)
       (insert-file-contents-literally filename)))
   ;; KEEP-DATE handling.
-  (when keep-date (set-file-times newname (nth 5 (file-attributes filename))))
+  (when keep-date
+    (set-file-times
+     newname
+     (tramp-compat-file-attribute-modification-time
+      (file-attributes filename))))
   ;; Set the mode.
   (set-file-modes newname (tramp-default-file-modes filename))
   ;; If the operation was `rename', delete the original file.
@@ -2195,7 +2211,8 @@ as FILENAME.  PRESERVE-UID-GID, when non-nil, instructs to keep
 the uid and gid from FILENAME."
   (let ((t1 (tramp-tramp-file-p filename))
 	(t2 (tramp-tramp-file-p newname))
-	(file-times (nth 5 (file-attributes filename)))
+	(file-times (tramp-compat-file-attribute-modification-time
+		     (file-attributes filename)))
 	(file-modes (tramp-default-file-modes filename)))
     (with-parsed-tramp-file-name (if t1 filename newname) nil
       (let* ((cmd (cond ((and (eq op 'copy) preserve-uid-gid) "cp -f -p")
@@ -2559,7 +2576,10 @@ The method used must be an out-of-band method."
 
 	;; Handle KEEP-DATE argument.
 	(when (and keep-date (not copy-keep-date))
-	  (set-file-times newname (nth 5 (file-attributes filename))))
+	  (set-file-times
+	   newname
+	   (tramp-compat-file-attribute-modification-time
+	    (file-attributes filename))))
 
 	;; Set the mode.
 	(unless (and keep-date copy-keep-date)
@@ -3114,7 +3134,8 @@ the result will be a local, non-Tramp, file name."
        v 'file-error
        "Cannot make local copy of non-existing file `%s'" filename))
 
-    (let* ((size (nth 7 (file-attributes (file-truename filename))))
+    (let* ((size (tramp-compat-file-attribute-size
+		  (file-attributes (file-truename filename))))
 	   (rem-enc (tramp-get-inline-coding v "remote-encoding" size))
 	   (loc-dec (tramp-get-inline-coding v "local-decoding" size))
 	   (tmpfile (tramp-compat-make-temp-file filename)))
@@ -3205,9 +3226,11 @@ the result will be a local, non-Tramp, file name."
       (unless (y-or-n-p (format "File %s exists; overwrite anyway? " filename))
 	(tramp-error v 'file-error "File not overwritten")))
 
-    (let ((uid (or (nth 2 (file-attributes filename 'integer))
+    (let ((uid (or (tramp-compat-file-attribute-user-id
+		    (file-attributes filename 'integer))
 		   (tramp-get-remote-uid v 'integer)))
-	  (gid (or (nth 3 (file-attributes filename 'integer))
+	  (gid (or (tramp-compat-file-attribute-group-id
+		    (file-attributes filename 'integer))
 		   (tramp-get-remote-gid v 'integer))))
 
       (if (and (tramp-local-host-p v)
@@ -3284,7 +3307,8 @@ the result will be a local, non-Tramp, file name."
 	  ;; specified.  However, if the method _also_ specifies an
 	  ;; encoding function, then that is used for encoding the
 	  ;; contents of the tmp file.
-	  (let* ((size (nth 7 (file-attributes tmpfile)))
+	  (let* ((size (tramp-compat-file-attribute-size
+			(file-attributes tmpfile)))
 		 (rem-dec (tramp-get-inline-coding v "remote-decoding" size))
 		 (loc-enc (tramp-get-inline-coding v "local-encoding" size)))
 	    (cond
@@ -3420,9 +3444,9 @@ the result will be a local, non-Tramp, file name."
              ;; We must pass modtime explicitly, because FILENAME can
              ;; be different from (buffer-file-name), f.e. if
              ;; `file-precious-flag' is set.
-             (nth 5 file-attr))
-            (when (and (= (nth 2 file-attr) uid)
-                       (= (nth 3 file-attr) gid))
+             (tramp-compat-file-attribute-modification-time file-attr))
+            (when (and (= (tramp-compat-file-attribute-user-id file-attr) uid)
+                       (= (tramp-compat-file-attribute-group-id file-attr) gid))
               (setq need-chown nil))))
 
 	;; Set the ownership.

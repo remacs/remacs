@@ -531,7 +531,10 @@ pass to the OPERATION."
 
 	    ;; Handle KEEP-DATE argument.
 	    (when keep-date
-	      (set-file-times newname (nth 5 (file-attributes dirname))))
+	      (set-file-times
+	       newname
+	       (tramp-compat-file-attribute-modification-time
+		(file-attributes dirname))))
 
 	    ;; Set the mode.
 	    (unless keep-date
@@ -599,7 +602,10 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 
     ;; KEEP-DATE handling.
     (when keep-date
-      (set-file-times newname (nth 5 (file-attributes filename))))))
+      (set-file-times
+       newname
+       (tramp-compat-file-attribute-modification-time
+	(file-attributes filename))))))
 
 (defun tramp-smb-handle-delete-directory (directory &optional recursive)
   "Like `delete-directory' for Tramp files."
@@ -887,7 +893,9 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 (defun tramp-smb-handle-file-directory-p (filename)
   "Like `file-directory-p' for Tramp files."
   (and (file-exists-p filename)
-       (eq ?d (aref (nth 8 (file-attributes filename)) 0))))
+       (eq ?d
+	   (aref (tramp-compat-file-attribute-modes (file-attributes filename))
+		 0))))
 
 (defun tramp-smb-handle-file-local-copy (filename)
   "Like `file-local-copy' for Tramp files."
@@ -929,7 +937,9 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 (defun tramp-smb-handle-file-writable-p (filename)
   "Like `file-writable-p' for Tramp files."
   (if (file-exists-p filename)
-      (string-match "w" (or (nth 8 (file-attributes filename)) ""))
+      (string-match
+       "w"
+       (or (tramp-compat-file-attribute-modes (file-attributes filename)) ""))
     (let ((dir (file-name-directory filename)))
       (and (file-exists-p dir)
 	   (file-writable-p dir)))))
@@ -1014,11 +1024,11 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		   (insert
 		    (format
 		     "%10s %3d %-8s %-8s %8s %s "
-		     (or (nth 8 attr) (nth 1 x)) ; mode
-		     (or (nth 1 attr) 1) ; inode
-		     (or (nth 2 attr) "nobody") ; uid
-		     (or (nth 3 attr) "nogroup") ; gid
-		     (or (nth 7 attr) (nth 2 x)) ; size
+		     (or (tramp-compat-file-attribute-modes attr) (nth 1 x))
+		     (or (tramp-compat-file-attribute-link-number attr) 1)
+		     (or (tramp-compat-file-attribute-user-id attr) "nobody")
+		     (or (tramp-compat-file-attribute-group-id attr) "nogroup")
+		     (or (tramp-compat-file-attribute-size attr) (nth 2 x))
 		     (format-time-string
 		      (if (time-less-p (time-subtract (current-time) (nth 3 x))
 			   tramp-half-a-year)

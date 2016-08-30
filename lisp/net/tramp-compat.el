@@ -261,6 +261,65 @@ process."
 	   (memq (process-status process)
 		 '(run open listen connect stop))))))
 
+;; `file-attribute-*' are introduced in Emacs 25.1.
+
+(if (fboundp 'file-attribute-type)
+    (defalias 'tramp-compat-file-attribute-type 'file-attribute-type)
+  (defsubst tramp-compat-file-attribute-type (attributes)
+    "The type field in ATTRIBUTES returned by `file-attributes'.
+The value is either t for directory, string (name linked to) for
+symbolic link, or nil."
+    (nth 0 attributes)))
+
+(if (fboundp 'file-attribute-link-number)
+    (defalias 'tramp-compat-file-attribute-link-number
+      'file-attribute-link-number)
+  (defsubst tramp-compat-file-attribute-link-number (attributes)
+    "Return the number of links in ATTRIBUTES returned by `file-attributes'."
+    (nth 1 attributes)))
+
+(if (fboundp 'file-attribute-user-id)
+    (defalias 'tramp-compat-file-attribute-user-id 'file-attribute-user-id)
+  (defsubst tramp-compat-file-attribute-user-id (attributes)
+    "The UID field in ATTRIBUTES returned by `file-attributes'.
+This is either a string or a number.  If a string value cannot be
+looked up, a numeric value, either an integer or a float, is
+returned."
+    (nth 2 attributes)))
+
+(if (fboundp 'file-attribute-group-id)
+    (defalias 'tramp-compat-file-attribute-group-id 'file-attribute-group-id)
+  (defsubst tramp-compat-file-attribute-group-id (attributes)
+    "The GID field in ATTRIBUTES returned by `file-attributes'.
+This is either a string or a number.  If a string value cannot be
+looked up, a numeric value, either an integer or a float, is
+returned."
+    (nth 3 attributes)))
+
+(if (fboundp 'file-attribute-modification-time)
+    (defalias 'tramp-compat-file-attribute-modification-time
+      'file-attribute-modification-time)
+  (defsubst tramp-compat-file-attribute-modification-time (attributes)
+    "The modification time in ATTRIBUTES returned by `file-attributes'.
+This is the time of the last change to the file's contents, and
+is a list of integers (HIGH LOW USEC PSEC) in the same style
+as (current-time)."
+    (nth 5 attributes)))
+
+(if (fboundp 'file-attribute-size)
+    (defalias 'tramp-compat-file-attribute-size 'file-attribute-size)
+  (defsubst tramp-compat-file-attribute-size (attributes)
+    "The size (in bytes) in ATTRIBUTES returned by `file-attributes'.
+This is a floating point number if the size is too large for an integer."
+    (nth 7 attributes)))
+
+(if (fboundp 'file-attribute-modes)
+    (defalias 'tramp-compat-file-attribute-modes 'file-attribute-modes)
+  (defsubst tramp-compat-file-attribute-modes (attributes)
+    "The file modes in ATTRIBUTES returned by `file-attributes'.
+This is a string of ten letters or dashes as in ls -l."
+    (nth 8 attributes)))
+
 ;; `default-toplevel-value' has been declared in Emacs 24.
 (unless (fboundp 'default-toplevel-value)
   (defalias 'default-toplevel-value 'symbol-value))

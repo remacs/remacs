@@ -754,7 +754,8 @@ file names."
   (with-parsed-tramp-file-name directory nil
     (if (and recursive (not (file-symlink-p directory)))
 	(mapc (lambda (file)
-		(if (eq t (car (file-attributes file)))
+		(if (eq t (tramp-compat-file-attribute-type
+			   (file-attributes file)))
 		    (tramp-compat-delete-directory file recursive trash)
 		  (tramp-compat-delete-file file trash)))
 	      (directory-files
@@ -1017,7 +1018,8 @@ file names."
 
 (defun tramp-gvfs-handle-file-directory-p (filename)
   "Like `file-directory-p' for Tramp files."
-  (eq t (car (file-attributes (file-truename filename)))))
+  (eq t (tramp-compat-file-attribute-type
+	 (file-attributes (file-truename filename)))))
 
 (defun tramp-gvfs-handle-file-executable-p (filename)
   "Like `file-executable-p' for Tramp files."
@@ -1214,7 +1216,9 @@ file-notify events."
 
     ;; Set file modification time.
     (when (or (eq visit t) (stringp visit))
-      (set-visited-file-modtime (nth 5 (file-attributes filename))))
+      (set-visited-file-modtime
+       (tramp-compat-file-attribute-modification-time
+	(file-attributes filename))))
 
     ;; The end.
     (when (or (eq visit t) (null visit) (stringp visit))
@@ -1589,9 +1593,9 @@ ID-FORMAT valid values are `string' and `integer'."
       (cond
        ((and user (equal id-format 'string)) user)
        (localname
-	(nth 2 (file-attributes
-		(tramp-make-tramp-file-name method user host localname)
-		id-format)))
+	(tramp-compat-file-attribute-user-id
+	 (file-attributes
+	  (tramp-make-tramp-file-name method user host localname) id-format)))
        ((equal id-format 'integer) tramp-unknown-id-integer)
        ((equal id-format 'string) tramp-unknown-id-string)))))
 
@@ -1606,9 +1610,9 @@ ID-FORMAT valid values are `string' and `integer'."
 	   (tramp-get-connection-property vec "default-location" nil)))
       (cond
        (localname
-	(nth 3 (file-attributes
-		(tramp-make-tramp-file-name method user host localname)
-		id-format)))
+	(tramp-compat-file-attribute-group-id
+	 (file-attributes
+	  (tramp-make-tramp-file-name method user host localname) id-format)))
        ((equal id-format 'integer) tramp-unknown-id-integer)
        ((equal id-format 'string) tramp-unknown-id-string)))))
 
