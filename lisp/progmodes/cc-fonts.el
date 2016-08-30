@@ -1261,12 +1261,12 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			   c-restricted-<>-arglists nil)
 		     (c-put-char-property (1- match-pos) 'c-type
 					  'c-decl-arg-start))
-		    ;; We're inside an brace list.
+		    ;; We're inside a brace list.
 		    ((and (eq (char-before match-pos) ?{)
 			  (save-excursion
 			    (goto-char (1- match-pos))
-			    (numberp
-			     (c-looking-at-or-maybe-in-bracelist nil))))
+			    (consp
+			     (c-looking-at-or-maybe-in-bracelist))))
 		     (setq context 'not-decl
 			   c-restricted-<>-arglists nil)
 		     (c-put-char-property (1- match-pos) 'c-type

@@ -7434,7 +7434,6 @@ comment at the start of cc-engine.el for more info."
        (when (not (c-backward-<>-arglist nil))
 	 (throw 'done nil))
        (c-backward-syntactic-ws))
-     (c-backward-syntactic-ws)
      (when (not (c-back-over-compound-identifier))
        (throw 'level nil))
      (c-backward-syntactic-ws)))
@@ -9831,15 +9830,18 @@ comment at the start of cc-engine.el for more info."
     (or (looking-at c-brace-list-key)
 	(progn (goto-char here) nil))))
 
-(defun c-looking-at-or-maybe-in-bracelist (containing-sexp &optional lim)
-  ;; Point is at an open brace.  If this starts a brace list, return the
-  ;; buffer position of the start of the construct which introduces the list.
-  ;; Otherwise, if point might be inside an enclosing brace list, return t.
-  ;; If point is definitely neither at nor in a brace list, return nil.
+(defun c-looking-at-or-maybe-in-bracelist (&optional containing-sexp lim)
+  ;; Point is at an open brace.  If this starts a brace list, return a list
+  ;; whose car is the buffer position of the start of the construct which
+  ;; introduces the list, and whose cdr is t if we have parsed a keyword
+  ;; matching `c-opt-inexpr-brace-list-key' (e.g. Java's "new"), nil
+  ;; otherwise.  Otherwise, if point might be inside an enclosing brace list,
+  ;; return t.  If point is definitely neither at nor in a brace list, return
+  ;; nil.
   ;;
   ;; CONTAINING-SEXP is the position of the brace/paren/braacket enclosing
-  ;; POINT, or nil if there is no such position.  LIM is a backward search
-  ;; limit.
+  ;; POINT, or nil if there is no such position, or we do not know it.  LIM is
+  ;; a backward search limit.
   ;;
   ;; Here, "brace list" does not include the body of an enum.
   (save-excursion
@@ -9850,7 +9852,7 @@ comment at the start of cc-engine.el for more info."
 	   (and (c-major-mode-is 'pike-mode)
 		c-decl-block-key))
 	  (braceassignp 'dontknow)
-	  bufpos macro-start res after-type-id-pos)
+	  inexpr-brace-list bufpos macro-start res pos after-type-id-pos)
 
       (setq res (c-backward-token-2 1 t lim))
       ;; Checks to do only on the first sexp before the brace.
@@ -9886,7 +9888,9 @@ comment at the start of cc-engine.el for more info."
 	(while (eq braceassignp 'dontknow)
 	  (setq braceassignp
 		(cond ((/= (c-backward-token-2 1 t lim) 0) nil)
-		      ((looking-at c-opt-inexpr-brace-list-key) t)
+		      ((looking-at c-opt-inexpr-brace-list-key)
+		       (setq inexpr-brace-list t)
+		       t)
 		      ((looking-at "\\sw\\|\\s_\\|[.[]")
 		       ;; Carry on looking if this is an
 		       ;; identifier (may contain "." in Java)
@@ -9894,104 +9898,116 @@ comment at the start of cc-engine.el for more info."
 		       'dontknow)
 		      (t nil)))))
 
-      ;; Checks to do on all sexps before the brace, up to the
-      ;; beginning of the statement.
-      (while (eq braceassignp 'dontknow)
-	(cond ((eq (char-after) ?\;)
-	       (setq braceassignp nil))
-	      ((and class-key
-		    (looking-at class-key))
-	       (setq braceassignp nil))
-	      ((eq (char-after) ?=)
-	       ;; We've seen a =, but must check earlier tokens so
-	       ;; that it isn't something that should be ignored.
-	       (setq braceassignp 'maybe)
-	       (while (and (eq braceassignp 'maybe)
-			   (zerop (c-backward-token-2 1 t lim)))
-		 (setq braceassignp
-		       (cond
-			;; Check for operator =
-			((and c-opt-op-identifier-prefix
-			      (looking-at c-opt-op-identifier-prefix))
-			 nil)
-			;; Check for `<opchar>= in Pike.
-			((and (c-major-mode-is 'pike-mode)
-			      (or (eq (char-after) ?`)
-				  ;; Special case for Pikes
-				  ;; `[]=, since '[' is not in
-				  ;; the punctuation class.
-				  (and (eq (char-after) ?\[)
-				       (eq (char-before) ?`))))
-			 nil)
-			((looking-at "\\s.") 'maybe)
-			;; make sure we're not in a C++ template
-			;; argument assignment
-			((and
-			  (c-major-mode-is 'c++-mode)
-			  (save-excursion
-			    (let ((here (point))
-				  (pos< (progn
-					  (skip-chars-backward "^<>")
-					  (point))))
-			      (and (eq (char-before) ?<)
-				   (not (c-crosses-statement-barrier-p
-					 pos< here))
-				   (not (c-in-literal))
-				   ))))
-			 nil)
-			(t t))))))
-	(if (and (eq braceassignp 'dontknow)
-		 (/= (c-backward-token-2 1 t lim) 0))
-	    (setq braceassignp nil)))
+      (setq pos (point))
+      (if (and after-type-id-pos
+	       (goto-char after-type-id-pos)
+	       (setq res (c-back-over-member-initializers))
+	       (goto-char res)
+	       (eq (car (c-beginning-of-decl-1 lim)) 'same))
+	  (cons (point) nil)		; Return value.
+      
+	(goto-char pos)
+	;; Checks to do on all sexps before the brace, up to the
+	;; beginning of the statement.
+	(while (eq braceassignp 'dontknow)
+	  (cond ((eq (char-after) ?\;)
+		 (setq braceassignp nil))
+		((and class-key
+		      (looking-at class-key))
+		 (setq braceassignp nil))
+		((eq (char-after) ?=)
+		 ;; We've seen a =, but must check earlier tokens so
+		 ;; that it isn't something that should be ignored.
+		 (setq braceassignp 'maybe)
+		 (while (and (eq braceassignp 'maybe)
+			     (zerop (c-backward-token-2 1 t lim)))
+		   (setq braceassignp
+			 (cond
+			  ;; Check for operator =
+			  ((and c-opt-op-identifier-prefix
+				(looking-at c-opt-op-identifier-prefix))
+			   nil)
+			  ;; Check for `<opchar>= in Pike.
+			  ((and (c-major-mode-is 'pike-mode)
+				(or (eq (char-after) ?`)
+				    ;; Special case for Pikes
+				    ;; `[]=, since '[' is not in
+				    ;; the punctuation class.
+				    (and (eq (char-after) ?\[)
+					 (eq (char-before) ?`))))
+			   nil)
+			  ((looking-at "\\s.") 'maybe)
+			  ;; make sure we're not in a C++ template
+			  ;; argument assignment
+			  ((and
+			    (c-major-mode-is 'c++-mode)
+			    (save-excursion
+			      (let ((here (point))
+				    (pos< (progn
+					    (skip-chars-backward "^<>")
+					    (point))))
+				(and (eq (char-before) ?<)
+				     (not (c-crosses-statement-barrier-p
+					   pos< here))
+				     (not (c-in-literal))
+				     ))))
+			   nil)
+			  (t t))))))
+	  (if (and (eq braceassignp 'dontknow)
+		   (/= (c-backward-token-2 1 t lim) 0))
+	      (setq braceassignp nil)))
 
-      (cond
-       (braceassignp
-	;; We've hit the beginning of the aggregate list.
-	(c-beginning-of-statement-1 containing-sexp)
-	(point))
-       ((and after-type-id-pos
-	     (save-excursion
-	       (when (eq (char-after) ?\;)
-		 (c-forward-token-2 1 t))
-	       (setq bufpos (point))
-	       (when (looking-at c-opt-<>-sexp-key)
-		 (c-forward-token-2)
-		 (when (and (eq (char-after) ?<)
-			    (c-get-char-property (point) 'syntax-table))
-		   (c-go-list-forward nil after-type-id-pos)
-		   (c-forward-syntactic-ws)))
-	       (and
-		(or (not (looking-at c-class-key))
-		    (save-excursion
-		      (goto-char (match-end 1))
-		      (c-forward-syntactic-ws)
-		      (not (eq (point) after-type-id-pos))))
-		(progn
-		  (setq res
-			(c-forward-decl-or-cast-1
-			 (save-excursion (c-backward-syntactic-ws) (point))
-			 nil nil))
-		  (and (consp res)
-		       (eq (car res) after-type-id-pos))))))
-	bufpos)
-       ((eq (char-after) ?\;)
-	;; Brace lists can't contain a semicolon, so we're done.
-	;; (setq containing-sexp nil)
-	nil)
-       ((and (setq macro-start (point))
-	     (c-forward-to-cpp-define-body)
-	     (eq (point) start))
-	;; We've a macro whose expansion starts with the '{'.
-	;; Heuristically, if we have a ';' in it we've not got a
-	;; brace list, otherwise we have.
-	(let ((macro-end (progn (c-end-of-macro) (point))))
-	  (goto-char start)
-	  (forward-char)
-	  (if (and (c-syntactic-re-search-forward "[;,]" macro-end t t)
-		   (eq (char-before) ?\;))
-	      nil
-	    macro-start)))
-       (t t)) ;; The caller can go up one level.
+	(cond
+	 (braceassignp
+	  ;; We've hit the beginning of the aggregate list.
+	  (c-beginning-of-statement-1 containing-sexp)
+	  (cons (point) inexpr-brace-list))
+	 ((and after-type-id-pos
+	       (save-excursion
+		 (when (eq (char-after) ?\;)
+		   (c-forward-token-2 1 t))
+		 (setq bufpos (point))
+		 (when (looking-at c-opt-<>-sexp-key)
+		   (c-forward-token-2)
+		   (when (and (eq (char-after) ?<)
+			      (c-get-char-property (point) 'syntax-table))
+		     (c-go-list-forward nil after-type-id-pos)
+		     (c-forward-syntactic-ws)))
+		 (and
+		  (or (not (looking-at c-class-key))
+		      (save-excursion
+			(goto-char (match-end 1))
+			(c-forward-syntactic-ws)
+			(not (eq (point) after-type-id-pos))))
+		  (progn
+		    (setq res
+			  (c-forward-decl-or-cast-1
+			   (save-excursion (c-backward-syntactic-ws) (point))
+			   nil nil))
+		    (and (consp res)
+			 (eq (car res) after-type-id-pos))))))
+	  (cons bufpos inexpr-brace-list))
+	 ((eq (char-after) ?\;)
+	  ;; Brace lists can't contain a semicolon, so we're done.
+	  ;; (setq containing-sexp nil)
+	  nil)
+	 ((and (setq macro-start (point))
+	       (c-forward-to-cpp-define-body)
+	       (eq (point) start))
+	  ;; We've a macro whose expansion starts with the '{'.
+	  ;; Heuristically, if we have a ';' in it we've not got a
+	  ;; brace list, otherwise we have.
+	  (let ((macro-end (progn (c-end-of-macro) (point))))
+	    (goto-char start)
+	    (forward-char)
+	    (if (and (c-syntactic-re-search-forward "[;,]" macro-end t t)
+		     (eq (char-before) ?\;))
+		nil
+	      (cons macro-start nil)))) ; (2016-08-30): Lazy! We have no
+					; languages where
+					; `c-opt-inexpr-brace-list-key' is
+					; non-nil and we have macros.
+	 (t t)))			;; The caller can go up one level.
       )))
 
 (defun c-inside-bracelist-p (containing-sexp paren-state)
@@ -10040,7 +10056,7 @@ comment at the start of cc-engine.el for more info."
 	     (setq containing-sexp next-containing
 		   lim nil
 		   next-containing nil))))
-       (and (numberp bufpos) bufpos)))))
+       (and (consp bufpos) (car bufpos))))))
 
 (defun c-looking-at-special-brace-list (&optional lim)
   ;; If we're looking at the start of a pike-style list, i.e., `({ })',
@@ -10688,7 +10704,7 @@ comment at the start of cc-engine.el for more info."
 
        ;; CASE B.2: brace-list-open
        ((or (consp special-brace-list)
-	    (numberp
+	    (consp
 	     (c-looking-at-or-maybe-in-bracelist
 	      containing-sexp beg-of-same-or-containing-stmt))
 	    )
@@ -11231,42 +11247,18 @@ comment at the start of cc-engine.el for more info."
 
 	   ;; CASE 5A.3: brace list open
 	   ((save-excursion
-	      (c-beginning-of-decl-1 lim)
-	      (while (cond
-		      ((looking-at c-specifier-key)
-		       (c-forward-keyword-clause 1))
-		      ((and c-opt-cpp-prefix
-			    (looking-at c-noise-macro-with-parens-name-re))
-		       (c-forward-noise-clause))))
-	      (setq placeholder (c-point 'boi))
-	      (or (consp special-brace-list)
-		  (and (or (save-excursion
-			     (goto-char indent-point)
-			     (setq tmpsymbol nil)
-			     (while (and (> (point) placeholder)
-					 (zerop (c-backward-token-2 1 t))
-					 (not (looking-at "=\\([^=]\\|$\\)")))
-			       (and c-opt-inexpr-brace-list-key
-				    (not tmpsymbol)
-				    (looking-at c-opt-inexpr-brace-list-key)
-				    (setq tmpsymbol 'topmost-intro-cont)))
-			     (looking-at "=\\([^=]\\|$\\)"))
-			   (looking-at c-brace-list-key)
-			   (looking-at c-return-key)
-			   (save-excursion
-			     (and (c-forward-type)
-				  (looking-at c-identifier-start)
-				  (not (looking-at c-keywords-regexp))
-				  (c-forward-token-2)
-				  (eq (point) (c-point 'boi indent-point)))))
-		       (save-excursion
-			 (while (and (< (point) indent-point)
-				     (zerop (c-forward-token-2 1 t))
-				     (not (memq (char-after) '(?\; ?\()))))
-			 (not (memq (char-after) '(?\; ?\()))
-			 ))))
+	      (goto-char indent-point)
+	      (skip-chars-forward " \t")
+	      (cond
+	       ((c-backward-over-enum-header)
+		(setq placeholder (c-point 'boi)))
+	       ((consp (setq placeholder 
+			     (c-looking-at-or-maybe-in-bracelist
+			      containing-sexp lim)))
+		(setq tmpsymbol (and (cdr placeholder) 'topmost-intro-cont))
+		(setq placeholder (c-point 'boi (car placeholder))))))
 	    (if (and (not c-auto-newline-analysis)
-		     (c-major-mode-is 'java-mode)
+		     ;(c-major-mode-is 'java-mode)  ; Not needed anymore (2016-08-30).
 		     (eq tmpsymbol 'topmost-intro-cont))
 		;; We're in Java and have found that the open brace
 		;; belongs to a "new Foo[]" initialization list,

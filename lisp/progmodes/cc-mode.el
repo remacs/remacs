@@ -1406,7 +1406,7 @@ Note that the style variables are always made local to the buffer."
 		    (and (eq (char-before) ?{)
 			 (save-excursion
 			   (backward-char)
-			   (numberp (c-looking-at-or-maybe-in-bracelist nil))))
+			   (consp (c-looking-at-or-maybe-in-bracelist))))
 		    )))
 	 (not (bobp)))
       (backward-char))			; back over (, [, <.
