@@ -1205,7 +1205,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	 (setq start-pos (point))
 	 (when
 	  ;; The result of the form below is true when we don't recognize a
-	  ;; declaration or cast, and we don't recognise a "non-decl",
+	  ;; declaration or cast, and we don't recognize a "non-decl",
 	  ;; typically a brace list.
 	  (if (or (and (eq (get-text-property (point) 'face)
 			   'font-lock-keyword-face)

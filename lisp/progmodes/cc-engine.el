@@ -8136,7 +8136,7 @@ comment at the start of cc-engine.el for more info."
 				(and (not context)
 				     ;; Deal with C++11's "copy-initialization"
 				     ;; where we have <type>(<constant>), by
-				     ;; contraasting with a typeless
+				     ;; contrasting with a typeless
 				     ;; <name>(<type><parameter>, ...).
 				     (save-excursion
 				       (goto-char after-paren-pos)
@@ -9839,7 +9839,7 @@ comment at the start of cc-engine.el for more info."
   ;; return t.  If point is definitely neither at nor in a brace list, return
   ;; nil.
   ;;
-  ;; CONTAINING-SEXP is the position of the brace/paren/braacket enclosing
+  ;; CONTAINING-SEXP is the position of the brace/paren/bracket enclosing
   ;; POINT, or nil if there is no such position, or we do not know it.  LIM is
   ;; a backward search limit.
   ;;
@@ -9856,7 +9856,7 @@ comment at the start of cc-engine.el for more info."
 
       (setq res (c-backward-token-2 1 t lim))
       ;; Checks to do only on the first sexp before the brace.
-      ;; Have we a C++ initialisation, without an "="?
+      ;; Have we a C++ initialization, without an "="?
       (if (and (c-major-mode-is 'c++-mode)
 	       (cond
 		((and (not (eq res 0))

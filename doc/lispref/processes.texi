@@ -528,7 +528,7 @@ standard input to an inferior shell running @var{command}.  This function
 is similar than @code{call-process-region}, with process being a shell.
 The arguments @code{delete}, @code{destination} and the return value
 are like in @code{call-process-region}.
-Note that this funtion doesn't accept additional arguments.
+Note that this function doesn't accept additional arguments.
 @end defun
 
 @defun shell-command-to-string command
