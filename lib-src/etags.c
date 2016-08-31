@@ -2224,7 +2224,7 @@ invalidate_nodes (fdesc *badfdp, node **npp)
 	  /* Push all the left children on the stack.  */
 	  while (np->left != NULL)
 	    {
-	      push_node (np->left, &stack);
+	      push_node (np, &stack);
 	      np = np->left;
 	    }
 	  /* Invalidate this node.  */
