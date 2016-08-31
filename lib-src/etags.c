@@ -2006,19 +2006,80 @@ pfnote (char *name, bool is_func, char *linestart, int linelen, int lno,
 }
 
 /*
+ * Utility functions and data to avoid recursion.
+ */
+
+typedef struct stack_entry {
+  node *np;
+  struct stack_entry *next;
+} stkentry;
+
+static void
+push_node (node *np, stkentry **stack_top)
+{
+  if (np)
+    {
+      stkentry *new = xnew (1, stkentry);
+
+      new->np = np;
+      new->next = *stack_top;
+      *stack_top = new;
+    }
+}
+
+static node *
+pop_node (stkentry **stack_top)
+{
+  node *ret = NULL;
+
+  if (*stack_top)
+    {
+      stkentry *old_start = *stack_top;
+
+      ret = (*stack_top)->np;
+      *stack_top = (*stack_top)->next;
+      free (old_start);
+    }
+  return ret;
+}
+
+/*
  * free_tree ()
- *	recurse on left children, iterate on right children.
+ *	emulate recursion on left children, iterate on right children.
  */
 static void
 free_tree (register node *np)
 {
+  stkentry *stack = NULL;
+
   while (np)
     {
-      register node *node_right = np->right;
-      free_tree (np->left);
+      register node *node_right;
+
+      /* Descent on left children.  */
+      while (np->left)
+	{
+	  push_node (np, &stack);
+	  np = np->left;
+	}
+      /* Free node without left children.  */
+      node_right = np->right;
       free (np->name);
       free (np->regex);
       free (np);
+      if (!node_right)
+	{
+	  /* Backtrack to find a node with right children, while freeing nodes
+	     that don't have right children.  */
+	  while (node_right == NULL && (np = pop_node (&stack)) != NULL)
+	    {
+	      node_right = np->right;
+	      free (np->name);
+	      free (np->regex);
+	      free (np);
+	    }
+	}
+      /* Free right children.  */
       np = node_right;
     }
 }
@@ -2050,9 +2111,9 @@ free_fdesc (register fdesc *fdp)
 static void
 add_node (node *np, node **cur_node_p)
 {
-  register int dif;
-  register node *cur_node = *cur_node_p;
+  node *cur_node = *cur_node_p;
 
+  /* Make the first node.  */
   if (cur_node == NULL)
     {
       *cur_node_p = np;
@@ -2074,51 +2135,77 @@ add_node (node *np, node **cur_node_p)
 	  last_node->right = np;
 	  last_node = np;
 	}
-      else if (cur_node->fdp == np->fdp)
-	{
-	  /* Scanning the list we found the head of a sublist which is
-	     good for us.  Let's scan this sublist. */
-	  add_node (np, &cur_node->right);
-	}
       else
-	/* The head of this sublist is not good for us.  Let's try the
-	   next one. */
-	add_node (np, &cur_node->left);
+	{
+	   while (cur_node->fdp != np->fdp)
+	     {
+	       if (cur_node->left == NULL)
+		 break;
+	       /* The head of this sublist is not good for us.  Let's try the
+		  next one. */
+	       cur_node = cur_node->left;
+	     }
+	   if (cur_node->left)
+	     {
+	       /* Scanning the list we found the head of a sublist which is
+		  good for us.  Let's scan this sublist. */
+	       if (cur_node->right)
+		 {
+		   cur_node = cur_node->right;
+		   while (cur_node->right)
+		     cur_node = cur_node->right;
+		 }
+	       /* Make a new node in this sublist.  */
+	       cur_node->right = np;
+	     }
+	   else
+	     {
+	       /* Make a new sublist.  */
+	       cur_node->left = np;
+	     }
+	   last_node = np;
+	}
     } /* if ETAGS mode */
-
   else
     {
       /* Ctags Mode */
-      dif = strcmp (np->name, cur_node->name);
+      register int dif;
+      node **next_node = &cur_node;
 
-      /*
-       * If this tag name matches an existing one, then
-       * do not add the node, but maybe print a warning.
-       */
-      if (no_duplicates && !dif)
+      while ((cur_node = *next_node) != NULL)
 	{
-	  if (np->fdp == cur_node->fdp)
+	  dif = strcmp (np->name, cur_node->name);
+	  /*
+	   * If this tag name matches an existing one, then
+	   * do not add the node, but maybe print a warning.
+	   */
+	  if (!dif && no_duplicates)
 	    {
-	      if (!no_warnings)
+	      if (np->fdp == cur_node->fdp)
 		{
-		  fprintf (stderr, "Duplicate entry in file %s, line %d: %s\n",
-			   np->fdp->infname, lineno, np->name);
-		  fprintf (stderr, "Second entry ignored\n");
+		  if (!no_warnings)
+		    {
+		      fprintf (stderr,
+			       "Duplicate entry in file %s, line %d: %s\n",
+			       np->fdp->infname, lineno, np->name);
+		      fprintf (stderr, "Second entry ignored\n");
+		    }
 		}
+	      else if (!cur_node->been_warned && !no_warnings)
+		{
+		  fprintf
+		    (stderr,
+		     "Duplicate entry in files %s and %s: %s (Warning only)\n",
+		     np->fdp->infname, cur_node->fdp->infname, np->name);
+		  cur_node->been_warned = true;
+		}
+	      return;
 	    }
-	  else if (!cur_node->been_warned && !no_warnings)
-	    {
-	      fprintf
-		(stderr,
-		 "Duplicate entry in files %s and %s: %s (Warning only)\n",
-		 np->fdp->infname, cur_node->fdp->infname, np->name);
-	      cur_node->been_warned = true;
-	    }
-	  return;
+	  else
+	    next_node = dif < 0 ? &cur_node->left : &cur_node->right;
 	}
-
-      /* Actually add the node */
-      add_node (np, dif < 0 ? &cur_node->left : &cur_node->right);
+      *next_node = np;
+      last_node = np;
     } /* if CTAGS mode */
 }
 
@@ -2131,31 +2218,65 @@ static void
 invalidate_nodes (fdesc *badfdp, node **npp)
 {
   node *np = *npp;
+  stkentry *stack = NULL;
 
   if (np == NULL)
     return;
 
   if (CTAGS)
     {
-      if (np->left != NULL)
-	invalidate_nodes (badfdp, &np->left);
-      if (np->fdp == badfdp)
-	np->valid = false;
-      if (np->right != NULL)
-	invalidate_nodes (badfdp, &np->right);
+      while (np)
+	{
+	  /* Push all the left children on the stack.  */
+	  while (np->left != NULL)
+	    {
+	      push_node (np->left, &stack);
+	      np = np->left;
+	    }
+	  /* Invalidate this node.  */
+	  if (np->fdp == badfdp)
+	    np->valid = false;
+	  if (!np->right)
+	    {
+	      /* Pop nodes from stack, invalidating them, until we find one
+		 with a right child.  */
+	      do {
+		np = pop_node (&stack);
+		if (np->fdp == badfdp)
+		  np->valid = false;
+	      } while (np && np->right == NULL);
+	    }
+	  /* Process the right child, if any.  */
+	  if (np)
+	    np = np->right;
+	}
     }
   else
     {
-      assert (np->fdp != NULL);
-      if (np->fdp == badfdp)
+      node super_root, *np_parent;
+
+      super_root.left = np;
+      super_root.fdp = (fdesc *)-1;
+      np = &super_root;
+
+      while (np)
 	{
-	  *npp = np->left;	/* detach the sublist from the list */
-	  np->left = NULL;	/* isolate it */
-	  free_tree (np);	/* free it */
-	  invalidate_nodes (badfdp, npp);
+	  /* Descent on left children until node with BADFP.  */
+	  while (np && np->fdp != badfdp)
+	    {
+	      assert (np->fdp != NULL);
+	      np_parent = np;
+	      np = np->left;
+	    }
+	  if (np)
+	    {
+	      np_parent->left = np->left; /* detach subtree from the tree */
+	      np->left = NULL;		  /* isolate it */
+	      free_tree (np);		  /* free it */
+	      np = np_parent->left;	  /* continue with rest of tree */
+	    }
 	}
-      else
-	invalidate_nodes (badfdp, &np->left);
+      *npp = super_root.left;
     }
 }
 
@@ -2200,20 +2321,13 @@ total_size_of_entries (register node *np)
 }
 
 static void
-put_entries (register node *np)
+put_entry (register node *np)
 {
   register char *sp;
   static fdesc *fdp = NULL;
 
-  if (np == NULL)
-    return;
-
-  /* Output subentries that precede this one */
-  if (CTAGS)
-    put_entries (np->left);
-
   /* Output this entry */
-  if (np->valid)
+  if (np && np->valid)
     {
       if (!CTAGS)
 	{
@@ -2277,11 +2391,59 @@ put_entries (register node *np)
 	    }
 	}
     } /* if this node contains a valid tag */
+}
 
-  /* Output subentries that follow this one */
-  put_entries (np->right);
-  if (!CTAGS)
-    put_entries (np->left);
+static void
+put_entries (register node *np)
+{
+  stkentry *stack = NULL;
+
+  if (np == NULL)
+    return;
+
+  if (CTAGS)
+    {
+      while (np)
+	{
+	  /* Stack subentries that precede this one.  */
+	  while (np->left)
+	    {
+	      push_node (np, &stack);
+	      np = np->left;
+	    }
+	  /* Output this subentry.  */
+	  put_entry (np);
+	  /* Stack subentries that follow this one.  */
+	  if (!np->right)
+	    {
+	      /* Output subentries that precede the next one.  */
+	      do {
+		np = pop_node (&stack);
+		put_entry (np);
+	      } while (np && np->right == NULL);
+	    }
+	  if (np)
+	    np = np->right;
+	}
+    }
+  else
+    {
+      push_node (np, &stack);
+      while ((np = pop_node (&stack)) != NULL)
+	{
+	  /* Output this subentry.  */
+	  put_entry (np);
+	  while (np->right)
+	    {
+	      /* Output subentries that follow this one.  */
+	      put_entry (np->right);
+	      /* Stack subentries from the following files.  */
+	      push_node (np->left, &stack);
+	      np = np->right;
+	    }
+	  push_node (np->left, &stack);
+	}
+    }
 }
 
 
