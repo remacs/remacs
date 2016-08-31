@@ -1014,7 +1014,7 @@ quotes for grave accent and apostrophe.  This is done in help output
 and in functions like `message' and `format-message'.  It is not done
 in `format'.
 
-`curve' means quote with curved single quotes \\=‘like this\\=’.
+`curve' means quote with curved single quotes ‘like this’.
 `straight' means quote with straight apostrophes \\='like this\\='.
 `grave' means quote with grave accent and apostrophe \\=`like this\\=';
 i.e., do not alter quote marks.  The default value nil acts like

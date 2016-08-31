@@ -491,7 +491,7 @@ With a prefix argument ARG, enable Electric Quote mode if
 ARG is positive, and disable it otherwise.  If called from Lisp,
 enable the mode if ARG is omitted or nil.
 
-When enabled, as you type this replaces \\=` with \\=‘, \\=' with \\=’,
+When enabled, as you type this replaces \\=` with ‘, \\=' with ’,
 \\=`\\=` with “, and \\='\\=' with ”.  This occurs only in comments, strings,
 and text paragraphs, and these are selectively controlled with
 `electric-quote-comment', `electric-quote-string', and
