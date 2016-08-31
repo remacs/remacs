@@ -2242,7 +2242,7 @@ invalidate_nodes (fdesc *badfdp, node **npp)
 		 with a right child.  */
 	      do {
 		np = pop_node (&stack);
-		if (np->fdp == badfdp)
+		if (np && np->fdp == badfdp)
 		  np->valid = false;
 	      } while (np && np->right == NULL);
 	    }
