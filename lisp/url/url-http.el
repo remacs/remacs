@@ -128,6 +128,7 @@ request.")
     (422 unprocessable-entity            "Unprocessable Entity (Added by DAV)")
     (423 locked                          "Locked")
     (424 failed-Dependency               "Failed Dependency")
+    (451 unavailable-for-legal-reasons   "Unavailable for legal reasons") ;RFC 7725
     (500 internal-server-error           "Internal server error")
     (501 not-implemented                 "Not implemented")
     (502 bad-gateway                     "Bad gateway")
