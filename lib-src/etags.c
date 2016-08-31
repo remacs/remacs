@@ -2054,8 +2054,6 @@ free_tree (register node *np)
 
   while (np)
     {
-      register node *node_right;
-
       /* Descent on left children.  */
       while (np->left)
 	{
@@ -2063,7 +2061,7 @@ free_tree (register node *np)
 	  np = np->left;
 	}
       /* Free node without left children.  */
-      node_right = np->right;
+      node *node_right = np->right;
       free (np->name);
       free (np->regex);
       free (np);
@@ -2169,12 +2167,11 @@ add_node (node *np, node **cur_node_p)
   else
     {
       /* Ctags Mode */
-      register int dif;
       node **next_node = &cur_node;
 
       while ((cur_node = *next_node) != NULL)
 	{
-	  dif = strcmp (np->name, cur_node->name);
+	  int dif = strcmp (np->name, cur_node->name);
 	  /*
 	   * If this tag name matches an existing one, then
 	   * do not add the node, but maybe print a warning.
@@ -2220,9 +2217,6 @@ invalidate_nodes (fdesc *badfdp, node **npp)
   node *np = *npp;
   stkentry *stack = NULL;
 
-  if (np == NULL)
-    return;
-
   if (CTAGS)
     {
       while (np)
@@ -2240,11 +2234,13 @@ invalidate_nodes (fdesc *badfdp, node **npp)
 	    {
 	      /* Pop nodes from stack, invalidating them, until we find one
 		 with a right child.  */
-	      do {
-		np = pop_node (&stack);
-		if (np && np->fdp == badfdp)
-		  np->valid = false;
-	      } while (np && np->right == NULL);
+	      while ((np = pop_node (&stack)) != NULL)
+		{
+		  if (np->fdp == badfdp)
+		    np->valid = false;
+		  if (np->right != NULL)
+		    break;
+		}
 	    }
 	  /* Process the right child, if any.  */
 	  if (np)
@@ -2253,10 +2249,10 @@ invalidate_nodes (fdesc *badfdp, node **npp)
     }
   else
     {
-      node super_root, *np_parent;
+      node super_root, *np_parent = NULL;
 
       super_root.left = np;
-      super_root.fdp = (fdesc *)-1;
+      super_root.fdp = (fdesc *) -1;
       np = &super_root;
 
       while (np)
@@ -2273,7 +2269,9 @@ invalidate_nodes (fdesc *badfdp, node **npp)
 	      np_parent->left = np->left; /* detach subtree from the tree */
 	      np->left = NULL;		  /* isolate it */
 	      free_tree (np);		  /* free it */
-	      np = np_parent->left;	  /* continue with rest of tree */
+
+	      /* Continue with rest of tree.  */
+	      np = np_parent ? np_parent->left : NULL;
 	    }
 	}
       *npp = super_root.left;
@@ -2321,13 +2319,13 @@ total_size_of_entries (register node *np)
 }
 
 static void
-put_entry (register node *np)
+put_entry (node *np)
 {
   register char *sp;
   static fdesc *fdp = NULL;
 
   /* Output this entry */
-  if (np && np->valid)
+  if (np->valid)
     {
       if (!CTAGS)
 	{
@@ -2394,7 +2392,7 @@ put_entry (register node *np)
 }
 
 static void
-put_entries (register node *np)
+put_entries (node *np)
 {
   stkentry *stack = NULL;
 
@@ -2414,13 +2412,13 @@ put_entries (register node *np)
 	  /* Output this subentry.  */
 	  put_entry (np);
 	  /* Stack subentries that follow this one.  */
-	  if (!np->right)
+	  while (!np->right)
 	    {
 	      /* Output subentries that precede the next one.  */
-	      do {
-		np = pop_node (&stack);
-		put_entry (np);
-	      } while (np && np->right == NULL);
+	      np = pop_node (&stack);
+	      if (!np)
+		break;
+	      put_entry (np);
 	    }
 	  if (np)
 	    np = np->right;
