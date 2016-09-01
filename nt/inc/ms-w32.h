@@ -293,7 +293,16 @@ extern int sys_umask (int);
 #define execvp    _execvp
 #include <stdint.h>		/* for intptr_t */
 extern intptr_t _execvp (const char *, char **);
+#ifdef MINGW_W64
+/* MinGW64 GCC 6 has a builtin execve with the prototype shown below.
+   The return value is wrong, and is a bug in GCC, but using the
+   correct prototype causes GCC to emit warnings.  Fortunately, execve
+   is not used in the MinGW build, but the code that references it is
+   still compiled.  */
+extern int execve (const char *, char * const *, char * const *);
+#else
 extern intptr_t execve (const char *, char * const *, char * const *);
+#endif
 #define fdatasync _commit
 #define fdopen	  _fdopen
 #define fsync	  _commit
