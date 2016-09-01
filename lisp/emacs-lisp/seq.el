@@ -127,7 +127,7 @@ Return SEQUENCE."
 
 (cl-defgeneric seq-subseq (sequence start &optional end)
   "Return the sequence of elements of SEQUENCE from START to END.
-END is inclusive.
+END is exclusive.
 
 If END is omitted, it defaults to the length of the sequence.  If
 START or END is negative, it counts from the end.  Signal an
