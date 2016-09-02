@@ -39,6 +39,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#ifdef HAVE_SETRLIMIT
+# include <sys/resource.h>
+#endif
+
 /* Are local (unix) sockets supported?  */
 #if defined (HAVE_SYS_UN_H)
 #if !defined (AF_LOCAL) && defined (AF_UNIX)
@@ -7783,6 +7787,16 @@ init_process_emacs (int sockfd)
 #endif
       catch_child_signal ();
     }
+
+#ifdef HAVE_SETRLIMIT
+  /* Don't allocate more than FD_SETSIZE file descriptors.  */
+  struct rlimit rlim;
+  if (getrlimit (RLIMIT_NOFILE, &rlim) == 0 && FD_SETSIZE < rlim.rlim_cur)
+    {
+      rlim.rlim_cur = FD_SETSIZE;
+      setrlimit (RLIMIT_NOFILE, &rlim);
+    }
+#endif
 
   FD_ZERO (&input_wait_mask);
   FD_ZERO (&non_keyboard_wait_mask);
