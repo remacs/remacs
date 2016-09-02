@@ -2109,6 +2109,12 @@ Some older versions of Cygwin's @command{ssh} work with the
 @option{sshx} access method.  Consult Cygwin's FAQ at
 @uref{http://cygwin.com/faq/} for details.
 
+@cindex Cygwin and fakecygpty
+@cindex fakecygpty and Cygwin
+
+On @uref{https://www.emacswiki.org/emacs/SshWithNTEmacs, the Emacs
+Wiki} it is explained how to use the helper program @code{fakecygpty}
+to fix this problem.
 
 @cindex method scpx with Cygwin
 @cindex scpx method with Cygwin
@@ -3184,8 +3190,8 @@ Redefine another key sequence in Emacs for @kbd{C-x C-f}:
 Simply typing @kbd{C-x C-y} would prepare minibuffer editing of file
 name.
 
-See @uref{http://www.emacswiki.org/cgi-bin/wiki/TrampMode, the Emacs
-Wiki} for a more comprehensive example.
+See @uref{https://www.emacswiki.org/emacs/TrampMode, the Emacs Wiki}
+for a more comprehensive example.
 
 @item
 Define own abbreviation (1):
