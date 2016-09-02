@@ -684,7 +684,7 @@ lock_file (Lisp_Object fn)
     if (!NILP (subject_buf)
 	&& NILP (Fverify_visited_file_modtime (subject_buf))
 	&& !NILP (Ffile_exists_p (fn)))
-      call1 (intern ("ask-user-about-supersession-threat"), fn);
+      call1 (intern ("userlock--ask-user-about-supersession-threat"), fn);
 
   }
 

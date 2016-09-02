@@ -213,6 +213,10 @@ In modes where form feed was treated as a whitespace character,
 It now deletes whitespace after the last form feed thus behaving the
 same as in modes where the character is not whitespace.
 
+** No more prompt about changed file when the file's content is unchanged.
+Instead of only checking the modification time, Emacs now also checks
+the file's actual content before prompting the user.
+
 
 * Changes in Specialized Modes and Packages in Emacs 25.2
 
