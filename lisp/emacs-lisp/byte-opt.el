@@ -288,8 +288,8 @@
            (if (eq (car-safe newfn) 'function)
                (byte-compile-unfold-lambda `(,(cadr newfn) ,@(cdr form)))
              ;; This can happen because of macroexp-warn-and-return &co.
-             (byte-compile-log-warning
-              (format "Inlining closure %S failed" name))
+             (byte-compile-warn
+              "Inlining closure %S failed" name)
              form))))
 
       (_ ;; Give up on inlining.

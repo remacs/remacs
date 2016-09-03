@@ -325,9 +325,9 @@ places where they originally did not directly appear."
 		(var (if (not (consp binder))
 			 (prog1 binder (setq binder (list binder)))
                        (when (cddr binder)
-                         (byte-compile-log-warning
-                          (format-message "Malformed `%S' binding: %S"
-                                          letsym binder)))
+                         (byte-compile-warn
+                          "Malformed `%S' binding: %S"
+                          letsym binder))
 		       (setq value (cadr binder))
 		       (car binder)))
 		(new-val
@@ -568,8 +568,8 @@ FORM is the parent form that binds this var."
     (`(,_ nil nil nil nil) nil)
     (`((,(and var (guard (eq ?_ (aref (symbol-name var) 0)))) . ,_)
        ,_ ,_ ,_ ,_)
-     (byte-compile-log-warning
-      (format-message "%s `%S' not left unused" varkind var))))
+     (byte-compile-warn
+      "%s `%S' not left unused" varkind var)))
   (pcase vardata
     (`((,var . ,_) nil ,_ ,_ nil)
      ;; FIXME: This gives warnings in the wrong order, with imprecise line
@@ -581,8 +581,8 @@ FORM is the parent form that binds this var."
               (eq ?_ (aref (symbol-name var) 0))
 	      ;; As a special exception, ignore "ignore".
 	      (eq var 'ignored))
-       (byte-compile-log-warning (format-message "Unused lexical %s `%S'"
-                                                 varkind var))))
+       (byte-compile-warn "Unused lexical %s `%S'"
+                          varkind var)))
     ;; If it's unused, there's no point converting it into a cons-cell, even if
     ;; it's captured and mutated.
     (`(,binder ,_ t t ,_)
@@ -606,9 +606,9 @@ FORM is the parent form that binds this var."
     (dolist (arg args)
       (cond
        ((byte-compile-not-lexical-var-p arg)
-        (byte-compile-log-warning
-         (format "Lexical argument shadows the dynamic variable %S"
-                 arg)))
+        (byte-compile-warn
+         "Lexical argument shadows the dynamic variable %S"
+         arg))
        ((eq ?& (aref (symbol-name arg) 0)) nil) ;Ignore &rest, &optional, ...
        (t (let ((varstruct (list arg nil nil nil nil)))
             (cl-pushnew arg byte-compile-lexical-variables)
@@ -690,9 +690,8 @@ and updates the data stored in ENV."
        (setq forms (cddr forms))))
 
     (`((lambda . ,_) . ,_)             ; First element is lambda expression.
-     (byte-compile-log-warning
-      (format "Use of deprecated ((lambda %s ...) ...) form" (nth 1 (car form)))
-      t :warning)
+     (byte-compile-warn
+      "Use of deprecated ((lambda %s ...) ...) form" (nth 1 (car form)))
      (dolist (exp `((function ,(car form)) . ,(cdr form)))
        (cconv-analyze-form exp env)))
 
@@ -701,8 +700,8 @@ and updates the data stored in ENV."
        (dolist (form forms) (cconv-analyze-form form env))))
 
     ;; ((and `(quote ,v . ,_) (guard (assq v env)))
-    ;;  (byte-compile-log-warning
-    ;;   (format-message "Possible confusion variable/symbol for `%S'" v)))
+    ;;  (byte-compile-warn
+    ;;   "Possible confusion variable/symbol for `%S'" v))
 
     (`(quote . ,_) nil)                 ; quote form
     (`(function . ,_) nil)              ; same as quote
@@ -719,8 +718,8 @@ and updates the data stored in ENV."
     (`(condition-case ,var ,protected-form . ,handlers)
      (cconv-analyze-form protected-form env)
      (when (and var (symbolp var) (byte-compile-not-lexical-var-p var))
-       (byte-compile-log-warning
-        (format "Lexical variable shadows the dynamic variable %S" var)))
+       (byte-compile-warn
+        "Lexical variable shadows the dynamic variable %S" var))
      (let* ((varstruct (list var nil nil nil nil)))
        (if var (push varstruct env))
        (dolist (handler handlers)
