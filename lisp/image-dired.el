@@ -224,7 +224,7 @@ expects to find pictures in this directory."
   :group 'image-dired)
 
 (defcustom image-dired-cmd-create-thumbnail-program
-  "convert"
+  (executable-find "convert")
   "Executable used to create thumbnail.
 Used together with `image-dired-cmd-create-thumbnail-options'."
   :type 'string
@@ -242,7 +242,7 @@ which is replaced by the file name of the thumbnail file."
   :group 'image-dired)
 
 (defcustom image-dired-cmd-create-temp-image-program
-  "convert"
+  (executable-find "convert")
   "Executable used to create temporary image.
 Used together with `image-dired-cmd-create-temp-image-options'."
   :type 'string
@@ -308,7 +308,7 @@ with the information required by the Thumbnail Managing Standard."
   :group 'image-dired)
 
 (defcustom image-dired-cmd-rotate-thumbnail-program
-  "mogrify"
+  (executable-find "mogrify")
   "Executable used to rotate thumbnail.
 Used together with `image-dired-cmd-rotate-thumbnail-options'."
   :type 'string
@@ -326,14 +326,20 @@ of the thumbnail file."
   :group 'image-dired)
 
 (defcustom image-dired-cmd-rotate-original-program
-  "jpegtran"
+  (cond ((executable-find "jpegtran"))
+        ((executable-find "convert")))
   "Executable used to rotate original image.
 Used together with `image-dired-cmd-rotate-original-options'."
   :type 'string
   :group 'image-dired)
 
 (defcustom image-dired-cmd-rotate-original-options
-  "%p -rotate %d -copy all -outfile %t \"%o\""
+  (when image-dired-cmd-rotate-original-program
+    (pcase image-dired-cmd-rotate-original-program
+      ((pred (lambda (x) (string-match-p "jpegtran" x)))
+       "%p -rotate %d -copy all -outfile %t \"%o\"")
+      ((pred (lambda (x) (string-match-p "convert" x)))
+       "%p -rotate %d \"%o\" %t")))
   "Format of command used to rotate original image.
 Available options are %p which is replaced by
 `image-dired-cmd-rotate-original-program', %d which is replaced by the
@@ -358,7 +364,7 @@ original file with `image-dired-temp-rotate-image-file'."
   :group 'image-dired)
 
 (defcustom image-dired-cmd-write-exif-data-program
-  "exiftool"
+  (executable-find "exiftool")
   "Program used to write EXIF data to image.
 Used together with `image-dired-cmd-write-exif-data-options'."
   :type 'string
@@ -375,7 +381,7 @@ which is replaced by the tag value."
   :group 'image-dired)
 
 (defcustom image-dired-cmd-read-exif-data-program
-  "exiftool"
+  (executable-find "exiftool")
   "Program used to read EXIF data to image.
 Used together with `image-dired-cmd-read-exif-data-program-options'."
   :type 'string
@@ -615,6 +621,8 @@ according to the Thumbnail Managing Standard."
 
 (defun image-dired-create-thumb (original-file thumbnail-file)
   "For ORIGINAL-FILE, create thumbnail image named THUMBNAIL-FILE."
+  (unless image-dired-cmd-create-thumbnail-program
+    (error "image-dired-cmd-create-thumbnail-program is nil"))
   (let* ((width (int-to-string image-dired-thumb-width))
          (height (int-to-string image-dired-thumb-height))
          (modif-time (format "%.0f" (float-time (nth 5 (file-attributes
@@ -1144,7 +1152,8 @@ image."
   "Move to next line and display properties."
   (interactive)
   (let ((goal-column (current-column)))
-    (next-line))
+    (forward-line 1)
+    (move-to-column goal-column))
   ;; If we end up in an empty spot, back up to the next thumbnail.
   (if (not (image-dired-image-at-point-p))
       (image-dired-backward-image))
@@ -1157,7 +1166,8 @@ image."
   "Move to previous line and display properties."
   (interactive)
   (let ((goal-column (current-column)))
-    (previous-line))
+    (forward-line -1)
+    (move-to-column goal-column))
   ;; If we end up in an empty spot, back up to the next
   ;; thumbnail. This should only happen if the user deleted a
   ;; thumbnail and did not refresh, so it is not very common. But we
@@ -1810,6 +1820,8 @@ original size."
         (progn
           (setq width (image-dired-display-window-width))
           (setq height (image-dired-display-window-height))
+          (unless image-dired-cmd-create-temp-image-program
+            (error "image-dired-cmd-create-temp-image-program is nil"))
           (setq command
                 (format-spec
                  image-dired-cmd-create-temp-image-options
@@ -1866,6 +1878,8 @@ With prefix argument ARG, display image in its original size."
 
 (defun image-dired-rotate-thumbnail (degrees)
   "Rotate thumbnail DEGREES degrees."
+  (unless image-dired-cmd-rotate-thumbnail-program
+    (error "image-dired-cmd-rotate-thumbnail-program is nil"))
   (if (not (image-dired-image-at-point-p))
       (message "No thumbnail at point")
     (let ((file (image-dired-thumb-name (image-dired-original-file-name)))
@@ -1908,31 +1922,33 @@ overwritten.  This confirmation can be turned off using
 
 (defun image-dired-rotate-original (degrees)
   "Rotate original image DEGREES degrees."
-  (if (not (image-dired-image-at-point-p))
-      (message "No image at point")
-    (let ((file (image-dired-original-file-name))
-          command)
-      (unless (eq 'jpeg (image-type file))
-        (error "Only JPEG images can be rotated!"))
-      (setq command (format-spec
-                     image-dired-cmd-rotate-original-options
-                     (list
-                      (cons ?p image-dired-cmd-rotate-original-program)
-                      (cons ?d degrees)
-                      (cons ?o (expand-file-name file))
-                      (cons ?t image-dired-temp-rotate-image-file))))
-      (if (not (= 0 (call-process shell-file-name nil nil nil
-				  shell-command-switch command)))
-          (error "Could not rotate image")
-        (image-dired-display-image image-dired-temp-rotate-image-file)
-        (if (or (and image-dired-rotate-original-ask-before-overwrite
-                     (y-or-n-p
-		      "Rotate to temp file OK.  Overwrite original image? "))
-                (not image-dired-rotate-original-ask-before-overwrite))
-            (progn
-              (copy-file image-dired-temp-rotate-image-file file t)
-              (image-dired-refresh-thumb))
-          (image-dired-display-image file))))))
+  (unless (image-dired-image-at-point-p)
+    (message "No image at point"))
+  (unless image-dired-cmd-rotate-original-program
+    (error "image-dired-cmd-rotate-original-program is nil"))
+  (let ((file (image-dired-original-file-name))
+        command)
+    (unless (eq 'jpeg (image-type file))
+      (error "Only JPEG images can be rotated!"))
+    (setq command (format-spec
+                   image-dired-cmd-rotate-original-options
+                   (list
+                    (cons ?p image-dired-cmd-rotate-original-program)
+                    (cons ?d degrees)
+                    (cons ?o (expand-file-name file))
+                    (cons ?t image-dired-temp-rotate-image-file))))
+    (if (not (= 0 (call-process shell-file-name nil nil nil
+                                shell-command-switch command)))
+        (error "Could not rotate image")
+      (image-dired-display-image image-dired-temp-rotate-image-file)
+      (if (or (and image-dired-rotate-original-ask-before-overwrite
+                   (y-or-n-p
+                    "Rotate to temp file OK.  Overwrite original image? "))
+              (not image-dired-rotate-original-ask-before-overwrite))
+          (progn
+            (copy-file image-dired-temp-rotate-image-file file t)
+            (image-dired-refresh-thumb))
+        (image-dired-display-image file)))))
 
 (defun image-dired-rotate-original-left ()
   "Rotate original image left (counter clockwise) 90 degrees."
@@ -1979,13 +1995,15 @@ default value at the prompt."
            (old-value (image-dired-get-exif-data file "ImageDescription")))
       (if (eq 0
               (image-dired-set-exif-data file "ImageDescription"
-                                   (read-string "Value of ImageDescription: "
-						old-value)))
+                                         (read-string "Value of ImageDescription: "
+                                                      old-value)))
           (message "Successfully wrote ImageDescription tag.")
         (error "Could not write ImageDescription tag")))))
 
 (defun image-dired-set-exif-data (file tag-name tag-value)
   "In FILE, set EXIF tag TAG-NAME to value TAG-VALUE."
+  (unless image-dired-cmd-write-exif-data-program
+    (error "image-dired-cmd-write-exif-data-program is nil"))
   (let (command)
     (setq command (format-spec
                    image-dired-cmd-write-exif-data-options
@@ -1998,6 +2016,8 @@ default value at the prompt."
 
 (defun image-dired-get-exif-data (file tag-name)
   "From FILE, return EXIF tag TAG-NAME."
+  (unless image-dired-cmd-read-exif-data-program
+    (error "image-dired-cmd-read-exif-data-program is nil"))
   (let ((buf (get-buffer-create "*image-dired-get-exif-data*"))
         command tag-value)
     (setq command (format-spec
