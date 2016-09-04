@@ -957,7 +957,7 @@ If N is 3, then the image size will be increased by 30%.  The
 default is 20%."
   (interactive "P")
   (image--change-size (if n
-                          (1+ (/ n 10))
+                          (1+ (/ n 10.0))
                         1.2)))
 
 (defun image-decrease-size (n)
@@ -966,7 +966,7 @@ If N is 3, then the image size will be decreased by 30%.  The
 default is 20%."
   (interactive "P")
   (image--change-size (if n
-                          (- 1 (/ n 10))
+                          (- 1 (/ n 10.0))
                         0.8)))
 
 (defun image--get-image ()
