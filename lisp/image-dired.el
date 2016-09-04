@@ -1912,8 +1912,8 @@ overwritten.  This confirmation can be turned off using
       (message "No image at point")
     (let ((file (image-dired-original-file-name))
           command)
-      (if (not (string-match "\\.[jJ][pP[eE]?[gG]$" file))
-          (error "Only JPEG images can be rotated!"))
+      (unless (eq 'jpeg (image-type file))
+        (error "Only JPEG images can be rotated!"))
       (setq command (format-spec
                      image-dired-cmd-rotate-original-options
                      (list
@@ -1952,15 +1952,14 @@ for traceability.  The format of the returned file name is
 YYYY_MM_DD_HH_MM_DD_ORIG_FILE_NAME.jpg.  Used from
 `image-dired-copy-with-exif-file-name'."
   (let (data no-exif-data-found)
-    (if (not (string-match "\\.[Jj][Pp][Ee]?[Gg]$" (expand-file-name file)))
-        (progn
-          (setq no-exif-data-found t)
-          (setq data
-                (format-time-string
-                 "%Y:%m:%d %H:%M:%S"
-                 (nth 5 (file-attributes (expand-file-name file))))))
+    (if (not (eq 'jpeg (image-type (expand-file-name file))))
+        (setq no-exif-data-found t
+              data (format-time-string
+                    "%Y:%m:%d %H:%M:%S"
+                    (file-attribute-modification-time
+                     (file-attributes (expand-file-name file)))))
       (setq data (image-dired-get-exif-data (expand-file-name file)
-				      "DateTimeOriginal")))
+                                            "DateTimeOriginal")))
     (while (string-match "[ :]" data)
       (setq data (replace-match "_" nil nil data)))
     (format "%s%s%s" data

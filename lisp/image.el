@@ -343,7 +343,7 @@ be determined."
   "Determine the type of image file FILE from its name.
 Value is a symbol specifying the image type, or nil if type cannot
 be determined."
-  (let (type first)
+  (let (type first (case-fold-search t))
     (catch 'found
       (dolist (elem image-type-file-name-regexps first)
 	(when (string-match-p (car elem) file)
