@@ -10241,7 +10241,7 @@ static void
 handle_interrupt_signal (int sig)
 {
   /* See if we have an active terminal on our controlling tty.  */
-  struct terminal *terminal = get_named_terminal ("/dev/tty");
+  struct terminal *terminal = get_named_terminal (DEV_TTY);
   if (!terminal)
     {
       /* If there are no frames there, let's pretend that we are a

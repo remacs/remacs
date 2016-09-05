@@ -607,6 +607,13 @@ still apply.)
 Previously, on MS-Windows this function converted slash characters in
 file names into backslashes.  It no longer does that.
 
+** GUI sessions now treat SIGINT like Posix platforms do.
+The effect of delivering a Ctrl-C (SIGINT) signal to a GUI Emacs on
+MS-Windows is now the same as on Posix platforms -- Emacs saves the
+session and exits.  In particular, this will happen if you start
+emacs.exe from the Windows shell, then type Ctrl-C into that shell's
+window.
+
 
 * Installation Changes in Emacs 25.1
 

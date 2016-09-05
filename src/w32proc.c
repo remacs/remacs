@@ -86,9 +86,9 @@ sys_signal (int sig, signal_handler handler)
   /* SIGCHLD is needed for supporting subprocesses, see sys_kill
      below.  SIGALRM and SIGPROF are used by setitimer.  All the
      others are the only ones supported by the MS runtime.  */
-  if (!(sig == SIGCHLD || sig == SIGSEGV || sig == SIGILL
+  if (!(sig == SIGINT || sig == SIGSEGV || sig == SIGILL
 	|| sig == SIGFPE || sig == SIGABRT || sig == SIGTERM
-	|| sig == SIGALRM || sig == SIGPROF))
+	|| sig == SIGCHLD || sig == SIGALRM || sig == SIGPROF))
     {
       errno = EINVAL;
       return SIG_ERR;

@@ -58,10 +58,7 @@ static int been_here = -1;
 
 /* The name of the default console device.  */
 #ifdef WINDOWSNT
-#define DEV_TTY  "CONOUT$"
 #include "w32term.h"
-#else
-#define DEV_TTY  "/dev/tty"
 #endif
 
 static void tty_set_scroll_region (struct frame *f, int start, int stop);
