@@ -4516,11 +4516,12 @@ comment at the start of cc-engine.el for more info."
        ((not (memq noerror '(before-literal after-literal)))
 	(goto-char bound))
        (t (setq state (parse-partial-sexp state-pos bound nil nil state))
-	  (when (or (elt state 3) (elt state 4))
-	    (if (eq noerror 'before-literal)
-		(goto-char (elt state 8))
-	      (parse-partial-sexp bound (point-max) nil nil
-				  state 'syntax-table)))))
+	  (if (or (elt state 3) (elt state 4))
+	      (if (eq noerror 'before-literal)
+		  (goto-char (elt state 8))
+		(parse-partial-sexp bound (point-max) nil nil
+				    state 'syntax-table))
+	    (goto-char bound))))
 
       nil)))
 
