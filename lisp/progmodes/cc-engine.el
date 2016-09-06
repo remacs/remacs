@@ -4278,6 +4278,15 @@ or string literals are ignored.  The start point is assumed to be
 outside any comment, macro or string literal, or else the content of
 that region is taken as syntactically significant text.
 
+NOERROR, in addition to the values nil, t, and <anything else>
+used in `re-search-forward' can also take the values
+'before-literal and 'after-literal.  In these cases, when BOUND
+is also given and is inside a literal, and a search fails, point
+will be left, respectively before or after the literal.  Be aware
+that with 'after-literal, if a string or comment is unclosed at
+the end of the buffer, point may be left there, even though it is
+inside a literal there.
+
 If PAREN-LEVEL is non-nil, an additional restriction is added to
 ignore matches in nested paren sexps.  The search will also not go
 outside the current list sexp, which has the effect that if the point
@@ -4343,7 +4352,7 @@ comment at the start of cc-engine.el for more info."
 	       (setq search-pos (point))
 	       (if (re-search-forward regexp bound noerror)
 		   t
-		 ;; Without the following, when PAREN-LEVEL it non-nil, and
+		 ;; Without the following, when PAREN-LEVEL is non-nil, and
 		 ;; NOERROR is not nil or t, and the very first search above
 		 ;; has just failed, point would end up at BOUND rather than
 		 ;; just before the next close paren.
@@ -4501,9 +4510,18 @@ comment at the start of cc-engine.el for more info."
 	  (match-end 0))
 
       ;; Search failed.  Set point as appropriate.
-      (if (eq noerror t)
-	  (goto-char start)
+      (cond
+       ((eq noerror t)
+	(goto-char start))
+       ((not (memq noerror '(before-literal after-literal)))
 	(goto-char bound))
+       (t (setq state (parse-partial-sexp state-pos bound nil nil state))
+	  (when (or (elt state 3) (elt state 4))
+	    (if (eq noerror 'before-literal)
+		(goto-char (elt state 8))
+	      (parse-partial-sexp bound (point-max) nil nil
+				  state 'syntax-table)))))
+
       nil)))
 
 (defvar safe-pos-list)		  ; bound in c-syntactic-skip-backward
