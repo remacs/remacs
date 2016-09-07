@@ -208,10 +208,14 @@ is Fredraw_display, which you can invoke at will interactively with
 It is also useful to have a guaranteed way to return to the debugger
 at any arbitrary time.  When using X, this is easy: type C-z at the
 window where you are interacting with GDB, and it will stop Emacs just
-as it would stop any ordinary program.  When Emacs is displaying on a
-text terminal, things are not so easy, so we describe the various
-alternatives below (however, those of them that use signals only work
-on Posix systems).
+as it would stop any ordinary program.  (This doesn't work if GDB was
+attached to a running Emacs process; in that case, you will need to
+type C-z to the shell window from which Emacs was started, or use the
+"kill -TSTP" method described below.)
+
+When Emacs is displaying on a text terminal, things are not so easy,
+so we describe the various alternatives below (however, those of them
+that use signals only work on Posix systems).
 
 The src/.gdbinit file in the Emacs distribution arranges for SIGINT
 (C-g in Emacs on a text-mode frame) to be passed to Emacs and not give
