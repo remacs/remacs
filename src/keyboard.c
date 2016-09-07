@@ -75,6 +75,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 # pragma GCC diagnostic ignored "-Wclobbered"
 #endif
 
+#ifdef WINDOWSNT
+char const DEV_TTY[] = "CONOUT$";
+#else
+char const DEV_TTY[] = "/dev/tty";
+#endif
+
 /* Variables for blockinput.h:  */
 
 /* Positive if interrupt input is blocked right now.  */
@@ -10310,7 +10316,7 @@ handle_interrupt (bool in_signal_handler)
   cancel_echoing ();
 
   /* XXX This code needs to be revised for multi-tty support.  */
-  if (!NILP (Vquit_flag) && get_named_terminal ("/dev/tty"))
+  if (!NILP (Vquit_flag) && get_named_terminal (DEV_TTY))
     {
       if (! in_signal_handler)
 	{
@@ -10609,7 +10615,7 @@ process.
 See also `current-input-mode'.  */)
   (Lisp_Object quit)
 {
-  struct terminal *t = get_named_terminal ("/dev/tty");
+  struct terminal *t = get_named_terminal (DEV_TTY);
   struct tty_display_info *tty;
 
   if (!t)

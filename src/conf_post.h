@@ -140,10 +140,6 @@ typedef bool bool_bf;
 #undef HAVE_RINT
 #endif  /* HPUX */
 
-#ifdef WINDOWSNT
-# define DEV_TTY "CONOUT$"
-#endif
-
 #ifdef MSDOS
 #ifndef __DJGPP__
 You lose; /* Emacs for DOS must be compiled with DJGPP */
@@ -245,11 +241,6 @@ extern int emacs_setenv_TZ (char const *);
 
 #include <string.h>
 #include <stdlib.h>
-
-#ifndef DEV_TTY
-# define DEV_TTY "/dev/tty"
-#endif
-
 
 #if __GNUC__ >= 3  /* On GCC 3.0 we might get a warning.  */
 #define NO_INLINE __attribute__((noinline))

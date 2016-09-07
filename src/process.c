@@ -1917,7 +1917,7 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 	{
 	  /* I wonder: would just ioctl (0, TIOCNOTTY, 0) work here?
 	     I can't test it since I don't have 4.3.  */
-	  int j = emacs_open ("/dev/tty", O_RDWR, 0);
+	  int j = emacs_open (DEV_TTY, O_RDWR, 0);
 	  if (j >= 0)
 	    {
 	      ioctl (j, TIOCNOTTY, 0);

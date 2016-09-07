@@ -3905,7 +3905,7 @@ dissociate_if_controlling_tty (int fd)
 /* Create a termcap display on the tty device with the given name and
    type.
 
-   If NAME is NULL, then use the controlling tty, i.e., "/dev/tty".
+   If NAME is NULL, then use the controlling tty, i.e., DEV_TTY.
    Otherwise NAME should be a path to the tty device file,
    e.g. "/dev/pts/7".
 
