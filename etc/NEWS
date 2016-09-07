@@ -338,6 +338,12 @@ same as in modes where the character is not whitespace.
 Instead of only checking the modification time, Emacs now also checks
 the file's actual content before prompting the user.
 
+** Title case characters are properly converted to upper case.
+'upcase', 'upcase-region' et al. convert title case characters (such
+as ǲ) into their upper case form (such as Ǳ).  As a downside,
+'capitalize' and 'upcase-initials' produce awkward words where first
+two letters are upper case, e.g. Ǆungla (instead of ǅungla).
+
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
@@ -1028,7 +1034,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 
 Local variables:
-coding: us-ascii
+coding: utf-8
 mode: outline
 paragraph-separate: "[ 	]*$"
 end:

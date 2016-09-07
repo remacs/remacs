@@ -9642,21 +9642,25 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	 use the corresponding lower-case letter instead.  */
       if (NILP (current_binding)
 	  && /* indec.start >= t && fkey.start >= t && */ keytran.start >= t
-	  && INTEGERP (key)
-	  && ((CHARACTERP (make_number (XINT (key) & ~CHAR_MODIFIER_MASK))
-	       && uppercasep (XINT (key) & ~CHAR_MODIFIER_MASK))
-	      || (XINT (key) & shift_modifier)))
+	  && INTEGERP (key))
 	{
 	  Lisp_Object new_key;
+	  int k = XINT (key);
+
+	  if (k & shift_modifier)
+	    XSETINT (new_key, k & ~shift_modifier);
+	  else if (CHARACTERP (make_number (k & ~CHAR_MODIFIER_MASK)))
+	    {
+	      int dc = downcase(k & ~CHAR_MODIFIER_MASK);
+	      if (dc == (k & ~CHAR_MODIFIER_MASK))
+		goto not_upcase;
+	      XSETINT (new_key, dc | (k & CHAR_MODIFIER_MASK));
+	    }
+	  else
+	    goto not_upcase;
 
 	  original_uppercase = key;
 	  original_uppercase_position = t - 1;
-
-	  if (XINT (key) & shift_modifier)
-	    XSETINT (new_key, XINT (key) & ~shift_modifier);
-	  else
-	    XSETINT (new_key, (downcase (XINT (key) & ~CHAR_MODIFIER_MASK)
-			       | (XINT (key) & CHAR_MODIFIER_MASK)));
 
 	  /* We have to do this unconditionally, regardless of whether
 	     the lower-case char is defined in the keymaps, because they
@@ -9668,6 +9672,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	  goto replay_sequence;
 	}
 
+    not_upcase:
       if (NILP (current_binding)
 	  && help_char_p (EVENT_HEAD (key)) && t > 1)
 	    {

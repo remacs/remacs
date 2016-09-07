@@ -63,13 +63,13 @@
     (?Ł ?Ł ?ł ?Ł)
     (?ł ?Ł ?ł ?Ł)
 
-    ;; FIXME(bug#24603): We should have:
+    ;; FIXME(bug#24603): Commented ones are what we want.
     ;;(?Ǆ ?Ǆ ?ǆ ?ǅ)
-    ;; but instead we have:
     (?Ǆ ?Ǆ ?ǆ ?Ǆ)
-    ;; FIXME(bug#24603): Those two are broken at the moment:
     ;;(?ǅ ?Ǆ ?ǆ ?ǅ)
+    (?ǅ ?Ǆ ?ǆ ?Ǆ)
     ;;(?ǆ ?Ǆ ?ǆ ?ǅ)
+    (?ǆ ?Ǆ ?ǆ ?Ǆ)
 
     (?Σ ?Σ ?σ ?Σ)
     (?σ ?Σ ?σ ?Σ)
@@ -197,7 +197,7 @@
         ;;("ΌΣΟΣ" "ΌΣΟΣ" "όσος" "Όσος" "Όσος")
         ;; And here’s what is actually happening:
         ("ǄUNGLA" "ǄUNGLA" "ǆungla" "Ǆungla" "ǄUNGLA")
-        ("ǅungla" "ǅUNGLA" "ǆungla" "ǅungla" "ǅungla")
+        ("ǅungla" "ǄUNGLA" "ǆungla" "Ǆungla" "Ǆungla")
         ("ǆungla" "ǄUNGLA" "ǆungla" "Ǆungla" "Ǆungla")
         ("deﬁne" "DEﬁNE" "deﬁne" "Deﬁne" "Deﬁne")
         ("ﬁsh" "ﬁSH" "ﬁsh" "ﬁsh" "ﬁsh")
