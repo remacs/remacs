@@ -32,108 +32,120 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP};
 
 static Lisp_Object
+do_casify_natnum (enum case_action flag, Lisp_Object obj)
+{
+  int flagbits = (CHAR_ALT | CHAR_SUPER | CHAR_HYPER
+		  | CHAR_SHIFT | CHAR_CTL | CHAR_META);
+  int flags, ch = XFASTINT (obj), cased;
+  bool multibyte;
+
+  /* If the character has higher bits set above the flags, return it unchanged.
+     It is not a real character.  */
+  if (UNSIGNED_CMP (ch, >, flagbits))
+    return obj;
+
+  flags = ch & flagbits;
+  ch = ch & ~flagbits;
+
+  /* FIXME: Even if enable-multibyte-characters is nil, we may manipulate
+     multibyte chars.  This means we have a bug for latin-1 chars since when we
+     receive an int 128-255 we can't tell whether it's an eight-bit byte or
+     a latin-1 char.  */
+  multibyte = ch >= 256
+    || !NILP (BVAR (current_buffer, enable_multibyte_characters));
+  if (! multibyte)
+    MAKE_CHAR_MULTIBYTE (ch);
+  cased = flag == CASE_DOWN ? downcase (ch) : upcase (ch);
+  if (cased == ch)
+    return obj;
+
+  if (! multibyte)
+    MAKE_CHAR_UNIBYTE (cased);
+  XSETFASTINT (obj, cased | flags);
+  return obj;
+}
+
+static Lisp_Object
+do_casify_multibyte_string (enum case_action flag, Lisp_Object obj)
+{
+  ptrdiff_t i, i_byte, size = SCHARS (obj);
+  bool inword = flag == CASE_DOWN;
+  int len, ch, cased;
+  USE_SAFE_ALLOCA;
+  ptrdiff_t o_size;
+  if (INT_MULTIPLY_WRAPV (size, MAX_MULTIBYTE_LENGTH, &o_size))
+    o_size = PTRDIFF_MAX;
+  unsigned char *dst = SAFE_ALLOCA (o_size);
+  unsigned char *o = dst;
+
+  for (i = i_byte = 0; i < size; i++, i_byte += len)
+    {
+      if (o_size - MAX_MULTIBYTE_LENGTH < o - dst)
+	string_overflow ();
+      ch = STRING_CHAR_AND_LENGTH (SDATA (obj) + i_byte, len);
+      if (inword && flag != CASE_CAPITALIZE_UP)
+	cased = downcase (ch);
+      else if (!inword || flag != CASE_CAPITALIZE_UP)
+	cased = upcase (ch);
+      else
+	cased = ch;
+      if ((int) flag >= (int) CASE_CAPITALIZE)
+	inword = (SYNTAX (ch) == Sword);
+      o += CHAR_STRING (cased, o);
+    }
+  eassert (o - dst <= o_size);
+  obj = make_multibyte_string ((char *) dst, size, o - dst);
+  SAFE_FREE ();
+  return obj;
+}
+
+static Lisp_Object
+do_casify_unibyte_string (enum case_action flag, Lisp_Object obj)
+{
+  ptrdiff_t i, size = SCHARS (obj);
+  bool inword = flag == CASE_DOWN;
+  int ch, cased;
+
+  obj = Fcopy_sequence (obj);
+  for (i = 0; i < size; i++)
+    {
+      ch = SREF (obj, i);
+      MAKE_CHAR_MULTIBYTE (ch);
+      cased = ch;
+      if (inword && flag != CASE_CAPITALIZE_UP)
+	ch = downcase (ch);
+      else if (!uppercasep (ch)
+	       && (!inword || flag != CASE_CAPITALIZE_UP))
+	ch = upcase (cased);
+      if ((int) flag >= (int) CASE_CAPITALIZE)
+	inword = (SYNTAX (ch) == Sword);
+      if (ch == cased)
+	continue;
+      MAKE_CHAR_UNIBYTE (ch);
+      /* If the char can't be converted to a valid byte, just don't change it */
+      if (ch >= 0 && ch < 256)
+	SSET (obj, i, ch);
+    }
+  return obj;
+}
+
+static Lisp_Object
 casify_object (enum case_action flag, Lisp_Object obj)
 {
-  int c, c1;
-  bool inword = flag == CASE_DOWN;
-
   /* If the case table is flagged as modified, rescan it.  */
   if (NILP (XCHAR_TABLE (BVAR (current_buffer, downcase_table))->extras[1]))
     Fset_case_table (BVAR (current_buffer, downcase_table));
 
   if (NATNUMP (obj))
-    {
-      int flagbits = (CHAR_ALT | CHAR_SUPER | CHAR_HYPER
-		      | CHAR_SHIFT | CHAR_CTL | CHAR_META);
-      int flags = XINT (obj) & flagbits;
-      bool multibyte = ! NILP (BVAR (current_buffer,
-				     enable_multibyte_characters));
-
-      /* If the character has higher bits set
-	 above the flags, return it unchanged.
-	 It is not a real character.  */
-      if (UNSIGNED_CMP (XFASTINT (obj), >, flagbits))
-	return obj;
-
-      c1 = XFASTINT (obj) & ~flagbits;
-      /* FIXME: Even if enable-multibyte-characters is nil, we may
-	 manipulate multibyte chars.  This means we have a bug for latin-1
-	 chars since when we receive an int 128-255 we can't tell whether
-	 it's an eight-bit byte or a latin-1 char.  */
-      if (c1 >= 256)
-	multibyte = 1;
-      if (! multibyte)
-	MAKE_CHAR_MULTIBYTE (c1);
-      c = flag == CASE_DOWN ? downcase (c1) : upcase (c1);
-      if (c != c1)
-	{
-	  if (! multibyte)
-	    MAKE_CHAR_UNIBYTE (c);
-	  XSETFASTINT (obj, c | flags);
-	}
-      return obj;
-    }
-
-  if (!STRINGP (obj))
+    return do_casify_natnum (flag, obj);
+  else if (!STRINGP (obj))
     wrong_type_argument (Qchar_or_string_p, obj);
-  else if (!STRING_MULTIBYTE (obj))
-    {
-      ptrdiff_t i;
-      ptrdiff_t size = SCHARS (obj);
-
-      obj = Fcopy_sequence (obj);
-      for (i = 0; i < size; i++)
-	{
-	  c = SREF (obj, i);
-	  MAKE_CHAR_MULTIBYTE (c);
-	  c1 = c;
-	  if (inword && flag != CASE_CAPITALIZE_UP)
-	    c = downcase (c);
-	  else if (!uppercasep (c)
-		   && (!inword || flag != CASE_CAPITALIZE_UP))
-	    c = upcase (c1);
-	  if ((int) flag >= (int) CASE_CAPITALIZE)
-	    inword = (SYNTAX (c) == Sword);
-	  if (c != c1)
-	    {
-	      MAKE_CHAR_UNIBYTE (c);
-	      /* If the char can't be converted to a valid byte, just don't
-		 change it.  */
-	      if (c >= 0 && c < 256)
-		SSET (obj, i, c);
-	    }
-	}
-      return obj;
-    }
+  else if (!SCHARS (obj))
+    return obj;
+  else if (STRING_MULTIBYTE (obj))
+    return do_casify_multibyte_string (flag, obj);
   else
-    {
-      ptrdiff_t i, i_byte, size = SCHARS (obj);
-      int len;
-      USE_SAFE_ALLOCA;
-      ptrdiff_t o_size;
-      if (INT_MULTIPLY_WRAPV (size, MAX_MULTIBYTE_LENGTH, &o_size))
-	o_size = PTRDIFF_MAX;
-      unsigned char *dst = SAFE_ALLOCA (o_size);
-      unsigned char *o = dst;
-
-      for (i = i_byte = 0; i < size; i++, i_byte += len)
-	{
-	  if (o_size - MAX_MULTIBYTE_LENGTH < o - dst)
-	    string_overflow ();
-	  c = STRING_CHAR_AND_LENGTH (SDATA (obj) + i_byte, len);
-	  if (inword && flag != CASE_CAPITALIZE_UP)
-	    c = downcase (c);
-	  else if (!inword || flag != CASE_CAPITALIZE_UP)
-	    c = upcase (c);
-	  if ((int) flag >= (int) CASE_CAPITALIZE)
-	    inword = (SYNTAX (c) == Sword);
-	  o += CHAR_STRING (c, o);
-	}
-      eassert (o - dst <= o_size);
-      obj = make_multibyte_string ((char *) dst, size, o - dst);
-      SAFE_FREE ();
-      return obj;
-    }
+    return do_casify_unibyte_string (flag, obj);
 }
 
 DEFUN ("upcase", Fupcase, Supcase, 1, 1, 0,
