@@ -30,9 +30,55 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 
 enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP};
+
+/* State for casing individual characters.  */
+struct casing_context {
+  /* User-requested action. */
+  enum case_action flag;
+  /* If true, function operates on a buffer as opposed to a string or character.
+     When run on a buffer, syntax_prefix_flag_p is taken into account when
+     determined inword flag. */
+  bool inbuffer;
+  /* Conceptually, this denotes whether we are inside of a word except
+     that if flag is CASE_UP it’s always false and if flag is CASE_DOWN
+     this is always true. */
+  bool inword;
+};
+
+/* Initialise CTX structure for casing characters. */
+static void
+prepare_casing_context (struct casing_context *ctx,
+			enum case_action flag, bool inbuffer)
+{
+  ctx->flag = flag;
+  ctx->inbuffer = inbuffer;
+  ctx->inword = flag == CASE_DOWN;
+
+  /* If the case table is flagged as modified, rescan it.  */
+  if (NILP (XCHAR_TABLE (BVAR (current_buffer, downcase_table))->extras[1]))
+    Fset_case_table (BVAR (current_buffer, downcase_table));
+
+  if (inbuffer && (int) flag >= (int) CASE_CAPITALIZE)
+    SETUP_BUFFER_SYNTAX_TABLE ();	/* For syntax_prefix_flag_p.  */
+}
+
+/* Based on CTX, case character CH accordingly.  Update CTX as necessary.
+   Return cased character. */
+static int
+case_character (struct casing_context *ctx, int ch)
+{
+  if (ctx->inword)
+    ch = ctx->flag == CASE_CAPITALIZE_UP ? ch : downcase (ch);
+  else
+    ch = upcase(ch);
+  if ((int) ctx->flag >= (int) CASE_CAPITALIZE)
+    ctx->inword = SYNTAX (ch) == Sword &&
+      (!ctx->inbuffer || ctx->inword || !syntax_prefix_flag_p (ch));
+  return ch;
+}
 
 static Lisp_Object
-do_casify_natnum (enum case_action flag, Lisp_Object obj)
+do_casify_natnum (struct casing_context *ctx, Lisp_Object obj)
 {
   int flagbits = (CHAR_ALT | CHAR_SUPER | CHAR_HYPER
 		  | CHAR_SHIFT | CHAR_CTL | CHAR_META);
@@ -55,7 +101,7 @@ do_casify_natnum (enum case_action flag, Lisp_Object obj)
     || !NILP (BVAR (current_buffer, enable_multibyte_characters));
   if (! multibyte)
     MAKE_CHAR_MULTIBYTE (ch);
-  cased = flag == CASE_DOWN ? downcase (ch) : upcase (ch);
+  cased = case_character (ctx, ch);
   if (cased == ch)
     return obj;
 
@@ -66,10 +112,9 @@ do_casify_natnum (enum case_action flag, Lisp_Object obj)
 }
 
 static Lisp_Object
-do_casify_multibyte_string (enum case_action flag, Lisp_Object obj)
+do_casify_multibyte_string (struct casing_context *ctx, Lisp_Object obj)
 {
   ptrdiff_t i, i_byte, size = SCHARS (obj);
-  bool inword = flag == CASE_DOWN;
   int len, ch, cased;
   USE_SAFE_ALLOCA;
   ptrdiff_t o_size;
@@ -83,14 +128,7 @@ do_casify_multibyte_string (enum case_action flag, Lisp_Object obj)
       if (o_size - MAX_MULTIBYTE_LENGTH < o - dst)
 	string_overflow ();
       ch = STRING_CHAR_AND_LENGTH (SDATA (obj) + i_byte, len);
-      if (inword && flag != CASE_CAPITALIZE_UP)
-	cased = downcase (ch);
-      else if (!inword || flag != CASE_CAPITALIZE_UP)
-	cased = upcase (ch);
-      else
-	cased = ch;
-      if ((int) flag >= (int) CASE_CAPITALIZE)
-	inword = (SYNTAX (ch) == Sword);
+      cased = case_character (ctx, ch);
       o += CHAR_STRING (cased, o);
     }
   eassert (o - dst <= o_size);
@@ -100,10 +138,9 @@ do_casify_multibyte_string (enum case_action flag, Lisp_Object obj)
 }
 
 static Lisp_Object
-do_casify_unibyte_string (enum case_action flag, Lisp_Object obj)
+do_casify_unibyte_string (struct casing_context *ctx, Lisp_Object obj)
 {
   ptrdiff_t i, size = SCHARS (obj);
-  bool inword = flag == CASE_DOWN;
   int ch, cased;
 
   obj = Fcopy_sequence (obj);
@@ -111,20 +148,13 @@ do_casify_unibyte_string (enum case_action flag, Lisp_Object obj)
     {
       ch = SREF (obj, i);
       MAKE_CHAR_MULTIBYTE (ch);
-      cased = ch;
-      if (inword && flag != CASE_CAPITALIZE_UP)
-	ch = downcase (ch);
-      else if (!uppercasep (ch)
-	       && (!inword || flag != CASE_CAPITALIZE_UP))
-	ch = upcase (cased);
-      if ((int) flag >= (int) CASE_CAPITALIZE)
-	inword = (SYNTAX (ch) == Sword);
+      cased = case_character (ctx, ch);
       if (ch == cased)
 	continue;
-      MAKE_CHAR_UNIBYTE (ch);
+      MAKE_CHAR_UNIBYTE (cased);
       /* If the char can't be converted to a valid byte, just don't change it */
-      if (ch >= 0 && ch < 256)
-	SSET (obj, i, ch);
+      if (cased >= 0 && cased < 256)
+	SSET (obj, i, cased);
     }
   return obj;
 }
@@ -132,20 +162,19 @@ do_casify_unibyte_string (enum case_action flag, Lisp_Object obj)
 static Lisp_Object
 casify_object (enum case_action flag, Lisp_Object obj)
 {
-  /* If the case table is flagged as modified, rescan it.  */
-  if (NILP (XCHAR_TABLE (BVAR (current_buffer, downcase_table))->extras[1]))
-    Fset_case_table (BVAR (current_buffer, downcase_table));
+  struct casing_context ctx;
+  prepare_casing_context (&ctx, flag, false);
 
   if (NATNUMP (obj))
-    return do_casify_natnum (flag, obj);
+    return do_casify_natnum (&ctx, obj);
   else if (!STRINGP (obj))
     wrong_type_argument (Qchar_or_string_p, obj);
   else if (!SCHARS (obj))
     return obj;
   else if (STRING_MULTIBYTE (obj))
-    return do_casify_multibyte_string (flag, obj);
+    return do_casify_multibyte_string (&ctx, obj);
   else
-    return do_casify_unibyte_string (flag, obj);
+    return do_casify_unibyte_string (&ctx, obj);
 }
 
 DEFUN ("upcase", Fupcase, Supcase, 1, 1, 0,
@@ -196,8 +225,6 @@ The argument object is not altered--the value is a copy.  */)
 static void
 casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e)
 {
-  int c;
-  bool inword = flag == CASE_DOWN;
   bool multibyte = !NILP (BVAR (current_buffer, enable_multibyte_characters));
   ptrdiff_t start, end;
   ptrdiff_t start_byte;
@@ -208,13 +235,11 @@ casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e)
   ptrdiff_t opoint = PT;
   ptrdiff_t opoint_byte = PT_BYTE;
 
+  struct casing_context ctx;
+
   if (EQ (b, e))
     /* Not modifying because nothing marked */
     return;
-
-  /* If the case table is flagged as modified, rescan it.  */
-  if (NILP (XCHAR_TABLE (BVAR (current_buffer, downcase_table))->extras[1]))
-    Fset_case_table (BVAR (current_buffer, downcase_table));
 
   validate_region (&b, &e);
   start = XFASTINT (b);
@@ -223,32 +248,25 @@ casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e)
   record_change (start, end - start);
   start_byte = CHAR_TO_BYTE (start);
 
-  SETUP_BUFFER_SYNTAX_TABLE ();	/* For syntax_prefix_flag_p.  */
+  prepare_casing_context (&ctx, flag, true);
 
   while (start < end)
     {
-      int c2, len;
+      int ch, cased, len;
 
       if (multibyte)
 	{
-	  c = FETCH_MULTIBYTE_CHAR (start_byte);
-	  len = CHAR_BYTES (c);
+	  ch = FETCH_MULTIBYTE_CHAR (start_byte);
+	  len = CHAR_BYTES (ch);
 	}
       else
 	{
-	  c = FETCH_BYTE (start_byte);
-	  MAKE_CHAR_MULTIBYTE (c);
+	  ch = FETCH_BYTE (start_byte);
+	  MAKE_CHAR_MULTIBYTE (ch);
 	  len = 1;
 	}
-      c2 = c;
-      if (inword && flag != CASE_CAPITALIZE_UP)
-	c = downcase (c);
-      else if (!inword || flag != CASE_CAPITALIZE_UP)
-	c = upcase (c);
-      if ((int) flag >= (int) CASE_CAPITALIZE)
-	inword = ((SYNTAX (c) == Sword)
-		  && (inword || !syntax_prefix_flag_p (c)));
-      if (c != c2)
+      cased = case_character (&ctx, ch);
+      if (ch != cased)
 	{
 	  last = start;
 	  if (first < 0)
@@ -256,18 +274,18 @@ casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e)
 
 	  if (! multibyte)
 	    {
-	      MAKE_CHAR_UNIBYTE (c);
-	      FETCH_BYTE (start_byte) = c;
+	      MAKE_CHAR_UNIBYTE (cased);
+	      FETCH_BYTE (start_byte) = cased;
 	    }
-	  else if (ASCII_CHAR_P (c2) && ASCII_CHAR_P (c))
-	    FETCH_BYTE (start_byte) = c;
+	  else if (ASCII_CHAR_P (cased) && ASCII_CHAR_P (ch))
+	    FETCH_BYTE (start_byte) = cased;
 	  else
 	    {
-	      int tolen = CHAR_BYTES (c);
+	      int tolen = CHAR_BYTES (cased);
 	      int j;
 	      unsigned char str[MAX_MULTIBYTE_LENGTH];
 
-	      CHAR_STRING (c, str);
+	      CHAR_STRING (cased, str);
 	      if (len == tolen)
 		{
 		  /* Length is unchanged.  */
