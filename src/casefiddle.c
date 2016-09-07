@@ -376,22 +376,27 @@ character positions to operate on.  */)
 }
 
 static Lisp_Object
-operate_on_word (Lisp_Object arg, ptrdiff_t *newpoint)
+casify_word (enum case_action flag, Lisp_Object arg)
 {
-  Lisp_Object val;
-  ptrdiff_t farend;
+  Lisp_Object beg, end;
+  ptrdiff_t newpoint;
   EMACS_INT iarg;
 
   CHECK_NUMBER (arg);
   iarg = XINT (arg);
-  farend = scan_words (PT, iarg);
-  if (!farend)
-    farend = iarg > 0 ? ZV : BEGV;
 
-  *newpoint = PT > farend ? PT : farend;
-  XSETFASTINT (val, farend);
+  newpoint = scan_words (PT, iarg);
+  if (!newpoint)
+    newpoint = iarg > 0 ? ZV : BEGV;
 
-  return val;
+  XSETFASTINT (beg, PT);
+  XSETFASTINT (end, newpoint);
+  if (PT > newpoint)
+    newpoint = PT;
+
+  casify_region (flag, beg, end);
+
+  SET_PT (newpoint);
 }
 
 DEFUN ("upcase-word", Fupcase_word, Supcase_word, 1, 1, "p",
@@ -404,12 +409,7 @@ With negative argument, convert previous words but do not move.
 See also `capitalize-word'.  */)
   (Lisp_Object arg)
 {
-  Lisp_Object beg, end;
-  ptrdiff_t newpoint;
-  XSETFASTINT (beg, PT);
-  end = operate_on_word (arg, &newpoint);
-  casify_region (CASE_UP, beg, end);
-  SET_PT (newpoint);
+  casify_word (CASE_UP, arg);
   return Qnil;
 }
 
@@ -422,12 +422,7 @@ is ignored when moving forward.
 With negative argument, convert previous words but do not move.  */)
   (Lisp_Object arg)
 {
-  Lisp_Object beg, end;
-  ptrdiff_t newpoint;
-  XSETFASTINT (beg, PT);
-  end = operate_on_word (arg, &newpoint);
-  casify_region (CASE_DOWN, beg, end);
-  SET_PT (newpoint);
+  casify_word (CASE_DOWN, arg);
   return Qnil;
 }
 
@@ -443,12 +438,7 @@ is ignored when moving forward.
 With negative argument, capitalize previous words but do not move.  */)
   (Lisp_Object arg)
 {
-  Lisp_Object beg, end;
-  ptrdiff_t newpoint;
-  XSETFASTINT (beg, PT);
-  end = operate_on_word (arg, &newpoint);
-  casify_region (CASE_CAPITALIZE, beg, end);
-  SET_PT (newpoint);
+  casify_word (CASE_CAPITALIZE, arg);
   return Qnil;
 }
 
