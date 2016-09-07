@@ -605,7 +605,16 @@ still apply.)
 
 ** 'convert-standard-filename' no longer mirrors slashes on MS-Windows.
 Previously, on MS-Windows this function converted slash characters in
-file names into backslashes.  It no longer does that.
+file names into backslashes.  It no longer does that.  If your Lisp
+program used 'convert-standard-filename' to prepare file names to be
+passed to subprocesses (which is not the recommended usage of that
+function), you will now have to mirror slashes in your application
+code.  One possible way is this:
+
+         (let ((start 0))
+           (while (string-match "/" file-name start)
+             (aset file-name (match-beginning 0) ?\\)
+             (setq start (match-end 0))))
 
 ** GUI sessions now treat SIGINT like Posix platforms do.
 The effect of delivering a Ctrl-C (SIGINT) signal to a GUI Emacs on

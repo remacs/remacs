@@ -609,9 +609,7 @@ is a valid DOS file name, but c:/bar/c:/foo is not.
 This function's standard definition is trivial; it just returns
 the argument.  However, on Windows and DOS, replace invalid
 characters.  On DOS, make sure to obey the 8.3 limitations.
-In the native Windows build, turn Cygwin names into native names,
-and also turn slashes into backslashes if the shell requires it (see
-`w32-shell-dos-semantics').
+In the native Windows build, turn Cygwin names into native names.
 
 See Info node `(elisp)Standard File Names' for more details."
   (cond
