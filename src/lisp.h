@@ -1429,13 +1429,6 @@ struct Lisp_Vector
     Lisp_Object contents[FLEXIBLE_ARRAY_MEMBER];
   };
 
-/* C11 prohibits alignof (struct Lisp_Vector), so compute it manually.  */
-enum
-  {
-    ALIGNOF_STRUCT_LISP_VECTOR
-      = alignof (union { struct vectorlike_header a; Lisp_Object b; })
-  };
-
 /* A boolvector is a kind of vectorlike, with contents like a string.  */
 
 struct Lisp_Bool_Vector

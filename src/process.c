@@ -88,6 +88,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 #include <c-ctype.h>
+#include <flexmember.h>
 #include <sig2str.h>
 #include <verify.h>
 
@@ -3807,8 +3808,8 @@ usage: (make-network-process &rest ARGS)  */)
 	struct gaicb gaicb;
 	struct addrinfo hints;
 	char str[FLEXIBLE_ARRAY_MEMBER];
-      } *req = xmalloc (offsetof (struct req, str)
-			+ hostlen + 1 + portstringlen + 1);
+      } *req = xmalloc (FLEXSIZEOF (struct req, str,
+				    hostlen + 1 + portstringlen + 1));
       dns_request = &req->gaicb;
       dns_request->ar_name = req->str;
       dns_request->ar_service = req->str + hostlen + 1;

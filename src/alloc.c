@@ -46,6 +46,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
+#include <flexmember.h>
 #include <verify.h>
 #include <execinfo.h>           /* For backtrace.  */
 
@@ -1757,27 +1758,23 @@ static char const string_overrun_cookie[GC_STRING_OVERRUN_COOKIE_SIZE] =
 
 #ifdef GC_CHECK_STRING_BYTES
 
-#define SDATA_SIZE(NBYTES)			\
-     ((SDATA_DATA_OFFSET			\
-       + (NBYTES) + 1				\
-       + sizeof (ptrdiff_t) - 1)		\
-      & ~(sizeof (ptrdiff_t) - 1))
+#define SDATA_SIZE(NBYTES) FLEXSIZEOF (struct sdata, data, NBYTES)
 
 #else /* not GC_CHECK_STRING_BYTES */
 
 /* The 'max' reserves space for the nbytes union member even when NBYTES + 1 is
    less than the size of that member.  The 'max' is not needed when
-   SDATA_DATA_OFFSET is a multiple of sizeof (ptrdiff_t), because then the
-   alignment code reserves enough space.  */
+   SDATA_DATA_OFFSET is a multiple of FLEXALIGNOF (struct sdata),
+   because then the alignment code reserves enough space.  */
 
 #define SDATA_SIZE(NBYTES)				      \
      ((SDATA_DATA_OFFSET				      \
-       + (SDATA_DATA_OFFSET % sizeof (ptrdiff_t) == 0	      \
+       + (SDATA_DATA_OFFSET % FLEXALIGNOF (struct sdata) == 0 \
 	  ? NBYTES					      \
-	  : max (NBYTES, sizeof (ptrdiff_t) - 1))	      \
+	  : max (NBYTES, FLEXALIGNOF (struct sdata) - 1))     \
        + 1						      \
-       + sizeof (ptrdiff_t) - 1)			      \
-      & ~(sizeof (ptrdiff_t) - 1))
+       + FLEXALIGNOF (struct sdata) - 1)		      \
+      & ~(FLEXALIGNOF (struct sdata) - 1))
 
 #endif /* not GC_CHECK_STRING_BYTES */
 
@@ -1997,7 +1994,7 @@ allocate_string_data (struct Lisp_String *s,
 
   if (nbytes > LARGE_STRING_BYTES)
     {
-      size_t size = offsetof (struct sblock, data) + needed;
+      size_t size = FLEXSIZEOF (struct sblock, data, needed);
 
 #ifdef DOUG_LEA_MALLOC
       if (!mmap_lisp_allowed_p ())
@@ -2953,15 +2950,15 @@ set_next_vector (struct Lisp_Vector *v, struct Lisp_Vector *p)
 enum
   {
     /* Alignment of struct Lisp_Vector objects.  */
-    vector_alignment = COMMON_MULTIPLE (ALIGNOF_STRUCT_LISP_VECTOR,
-					GCALIGNMENT),
+    vector_alignment = COMMON_MULTIPLE (FLEXALIGNOF (struct Lisp_Vector),
+					 GCALIGNMENT),
 
     /* Vector size requests are a multiple of this.  */
     roundup_size = COMMON_MULTIPLE (vector_alignment, word_size)
   };
 
 /* Verify assumptions described above.  */
-verify ((VECTOR_BLOCK_SIZE % roundup_size) == 0);
+verify (VECTOR_BLOCK_SIZE % roundup_size == 0);
 verify (VECTOR_BLOCK_SIZE <= (1 << PSEUDOVECTOR_SIZE_BITS));
 
 /* Round up X to nearest mult-of-ROUNDUP_SIZE --- use at compile time.  */

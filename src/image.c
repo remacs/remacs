@@ -30,7 +30,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 #include <setjmp.h>
+
 #include <c-ctype.h>
+#include <flexmember.h>
 
 #include "lisp.h"
 #include "frame.h"
@@ -3347,7 +3349,7 @@ xpm_cache_color (struct frame *f, char *color_name, XColor *color, int bucket)
   if (bucket < 0)
     bucket = xpm_color_bucket (color_name);
 
-  nbytes = offsetof (struct xpm_cached_color, name) + strlen (color_name) + 1;
+  nbytes = FLEXSIZEOF (struct xpm_cached_color, name, strlen (color_name) + 1);
   p = xmalloc (nbytes);
   strcpy (p->name, color_name);
   p->color = *color;
@@ -8328,8 +8330,8 @@ static struct animation_cache *
 imagemagick_create_cache (char *signature)
 {
   struct animation_cache *cache
-    = xmalloc (offsetof (struct animation_cache, signature)
-	       + strlen (signature) + 1);
+    = xmalloc (FLEXSIZEOF (struct animation_cache, signature,
+			   strlen (signature) + 1));
   cache->wand = 0;
   cache->index = 0;
   cache->next = 0;
