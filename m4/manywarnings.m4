@@ -103,6 +103,7 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
 
   gl_manywarn_set=
   for gl_manywarn_item in \
+    -fno-common \
     -W \
     -Wabi \
     -Waddress \

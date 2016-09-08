@@ -775,6 +775,8 @@ dnl alternative to lib/gnulib.mk, so as to avoid generating header files
 dnl that clash with MinGW.
 AM_CONDITIONAL([BUILDING_FOR_WINDOWSNT], [test "x$opsys" = "xmingw32"])
 
+# Skip gnulib's tests for flexible array members, as Emacs assumes C99.
+AC_DEFUN([AC_C_FLEXIBLE_ARRAY_MEMBER])
 # Avoid gnulib's tests for -lcrypto, so that there's no static dependency on it.
 AC_DEFUN([gl_CRYPTO_CHECK])
 # Avoid gnulib's tests for HAVE_WORKING_O_NOATIME and HAVE_WORKING_O_NOFOLLOW,

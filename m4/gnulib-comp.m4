@@ -79,6 +79,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module fdopendir:
   # Code from module filemode:
   # Code from module filevercmp:
+  # Code from module flexmember:
   # Code from module fpending:
   # Code from module fstatat:
   # Code from module fsync:
@@ -413,6 +414,7 @@ AC_DEFUN([gl_INIT],
   gl_gnulib_enabled_dirfd=false
   gl_gnulib_enabled_dosname=false
   gl_gnulib_enabled_euidaccess=false
+  gl_gnulib_enabled_flexmember=false
   gl_gnulib_enabled_getdtablesize=false
   gl_gnulib_enabled_getgroups=false
   gl_gnulib_enabled_be453cec5eecf5731a274f2de7f2db36=false
@@ -470,6 +472,13 @@ AC_DEFUN([gl_INIT],
       if test $HAVE_EUIDACCESS = 0; then
         func_gl_gnulib_m4code_stat
       fi
+    fi
+  }
+  func_gl_gnulib_m4code_flexmember ()
+  {
+    if ! $gl_gnulib_enabled_flexmember; then
+      AC_C_FLEXIBLE_ARRAY_MEMBER
+      gl_gnulib_enabled_flexmember=true
     fi
   }
   func_gl_gnulib_m4code_getdtablesize ()
@@ -679,6 +688,9 @@ AC_DEFUN([gl_INIT],
   if { test $HAVE_DECL_STRTOUMAX = 0 || test $REPLACE_STRTOUMAX = 1; } && test $ac_cv_type_unsigned_long_long_int = yes; then
     func_gl_gnulib_m4code_strtoull
   fi
+  if test "$HAVE_TIMEZONE_T" = 0; then
+    func_gl_gnulib_m4code_flexmember
+  fi
   if test $HAVE_TIMEGM = 0 || test $REPLACE_TIMEGM = 1; then
     func_gl_gnulib_m4code_5264294aa0a5557541b53c8c741f7f31
   fi
@@ -687,6 +699,7 @@ AC_DEFUN([gl_INIT],
   AM_CONDITIONAL([gl_GNULIB_ENABLED_dirfd], [$gl_gnulib_enabled_dirfd])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_dosname], [$gl_gnulib_enabled_dosname])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_euidaccess], [$gl_gnulib_enabled_euidaccess])
+  AM_CONDITIONAL([gl_GNULIB_ENABLED_flexmember], [$gl_gnulib_enabled_flexmember])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_getdtablesize], [$gl_gnulib_enabled_getdtablesize])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_getgroups], [$gl_gnulib_enabled_getgroups])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_be453cec5eecf5731a274f2de7f2db36], [$gl_gnulib_enabled_be453cec5eecf5731a274f2de7f2db36])
@@ -892,6 +905,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/filemode.h
   lib/filevercmp.c
   lib/filevercmp.h
+  lib/flexmember.h
   lib/fpending.c
   lib/fpending.h
   lib/fstatat.c
@@ -1013,6 +1027,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/fdatasync.m4
   m4/fdopendir.m4
   m4/filemode.m4
+  m4/flexmember.m4
   m4/fpending.m4
   m4/fstatat.m4
   m4/fsync.m4
