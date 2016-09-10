@@ -332,9 +332,10 @@ request.")
              auth
              ;; Cookies
 	     (when (url-use-cookies url-http-target-url)
-	       (url-cookie-generate-header-lines
-		host real-fname
-		(equal "https" (url-type url-http-target-url))))
+               (url-http--encode-string
+                (url-cookie-generate-header-lines
+                 host real-fname
+                 (equal "https" (url-type url-http-target-url)))))
              ;; If-modified-since
              (if (and (not no-cache)
                       (member url-http-method '("GET" nil)))
