@@ -3478,7 +3478,8 @@ ns_dumpglyphs_image (struct glyph_string *s, NSRect r)
     {
 #ifdef NS_IMPL_COCOA
       NSRect dr = NSMakeRect (x, y, s->slice.width, s->slice.height);
-      NSRect ir = NSMakeRect (s->slice.x, s->slice.y,
+      NSRect ir = NSMakeRect (s->slice.x,
+                              s->img->height - s->slice.y - s->slice.height,
                               s->slice.width, s->slice.height);
       [img drawInRect: dr
              fromRect: ir
