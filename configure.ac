@@ -1638,6 +1638,7 @@ fi
 
 dnl checks for header files
 AC_CHECK_HEADERS_ONCE(
+  linux/fs.h
   malloc.h
   sys/systeminfo.h
   sys/sysinfo.h

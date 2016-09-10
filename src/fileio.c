@@ -52,6 +52,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "region-cache.h"
 #include "frame.h"
 
+#ifdef HAVE_LINUX_FS_H
+# include <sys/ioctl.h>
+# include <linux/fs.h>
+#endif
+
 #ifdef WINDOWSNT
 #define NOMINMAX 1
 #include <windows.h>
@@ -1829,6 +1834,16 @@ barf_or_query_if_file_exists (Lisp_Object absname, bool known_to_exist,
     }
 }
 
+/* Copy data to DEST from SOURCE if possible.  Return true if OK.  */
+static bool
+clone_file (int dest, int source)
+{
+#ifdef FICLONE
+  return ioctl (dest, FICLONE, source) == 0;
+#endif
+  return false;
+}
+
 DEFUN ("copy-file", Fcopy_file, Scopy_file, 2, 6,
        "fCopy file: \nGCopy %s to file: \np\nP",
        doc: /* Copy FILE to NEWNAME.  Both args must be strings.
@@ -1975,7 +1990,7 @@ permissions.  */)
 
   record_unwind_protect_int (close_file_unwind, ofd);
 
-  off_t oldsize = 0, newsize = 0;
+  off_t oldsize = 0, newsize;
 
   if (already_exists)
     {
@@ -1991,17 +2006,19 @@ permissions.  */)
 
   immediate_quit = 1;
   QUIT;
-  while (true)
+
+  if (clone_file (ofd, ifd))
+    newsize = st.st_size;
+  else
     {
       char buf[MAX_ALLOCA];
-      ptrdiff_t n = emacs_read (ifd, buf, sizeof buf);
+      ptrdiff_t n;
+      for (newsize = 0; 0 < (n = emacs_read (ifd, buf, sizeof buf));
+	   newsize += n)
+	if (emacs_write_sig (ofd, buf, n) != n)
+	  report_file_error ("Write error", newname);
       if (n < 0)
 	report_file_error ("Read error", file);
-      if (n == 0)
-	break;
-      if (emacs_write_sig (ofd, buf, n) != n)
-	report_file_error ("Write error", newname);
-      newsize += n;
     }
 
   /* Truncate any existing output file after writing the data.  This
