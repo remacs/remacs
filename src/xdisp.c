@@ -31520,6 +31520,14 @@ Recenter the window whenever point gets within this many lines
 of the top or bottom of the window.  */);
   scroll_margin = 0;
 
+  DEFVAR_LISP ("maximum-scroll-margin", Vmaximum_scroll_margin,
+    doc: /* Maximum effective value of `scroll-margin'.
+Given as a fraction of the current window's lines.  The value should
+be a floating point number between 0.0 and 0.5.  The effective maximum
+is limited to (/ (1- window-lines) 2).  Non-float values for this
+variable are ignored and the default 0.25 is used instead.  */);
+  Vmaximum_scroll_margin = make_float (0.25);
+
   DEFVAR_LISP ("display-pixels-per-inch",  Vdisplay_pixels_per_inch,
     doc: /* Pixels per inch value for non-window system displays.
 Value is a number or a cons (WIDTH-DPI . HEIGHT-DPI).  */);

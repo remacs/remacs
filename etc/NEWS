@@ -307,6 +307,11 @@ local part of a remote file name.  Thus, if you have a directory named
 "/~" on the remote host "foo", you can prevent it from being
 substituted by a home directory by writing it as "/foo:/:/~/file".
 
++++
+** The new variable 'maximum-scroll-margin' allows having effective
+settings of 'scroll-margin' up to half the window size, instead of
+always restricting the margin to a quarter of the window.
+
 
 * Editing Changes in Emacs 26.1
 

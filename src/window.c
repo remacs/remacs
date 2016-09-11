@@ -4801,11 +4801,20 @@ window_scroll_margin (struct window *window, enum margin_unit unit)
     {
       int frame_line_height = default_line_pixel_height (window);
       int window_lines = window_box_height (window) / frame_line_height;
-      int margin = min (scroll_margin, window_lines / 4);
-      if (unit == MARGIN_IN_PIXELS)
-        return margin * frame_line_height;
-      else
-        return margin;
+
+      double ratio = 0.25;
+      if (FLOATP (Vmaximum_scroll_margin))
+        {
+          ratio = XFLOAT_DATA (Vmaximum_scroll_margin);
+          ratio = max (0.0, ratio);
+          ratio = min (ratio, 0.5);
+        }
+      int max_margin = min ((window_lines - 1)/2,
+                            (int) (window_lines * ratio));
+      int margin = clip_to_bounds (0, scroll_margin, max_margin);
+      return (unit == MARGIN_IN_PIXELS)
+        ? margin * frame_line_height
+        : margin;
     }
   else
     return 0;
