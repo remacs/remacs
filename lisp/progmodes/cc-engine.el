@@ -5128,6 +5128,211 @@ comment at the start of cc-engine.el for more info."
        (c-debug-remove-face ,beg ,end 'c-debug-decl-spot-face)
        (c-debug-remove-face ,beg ,end 'c-debug-decl-sws-face))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Machinery for determining when we're at top level (this including being
+;; directly inside a class or namespace, etc.)
+;;
+;; We maintain a stack of brace depths in structures like classes and
+;; namespaces.  The car of this structure, when non-nil, indicates that the
+;; associated position is within a template (etc.) structure, and the value is
+;; the position where the (outermost) template ends.  The other elements in
+;; the structure are stacked elements, one each for each enclosing "top level"
+;; structure.
+;;
+;; At the very outermost level, the value of the stack would be (nil 1), the
+;; "1" indicating an enclosure in a notional all-enclosing block.  After
+;; passing a keyword such as "namespace", the value would become (nil 0 1).
+;; At this point, passing a semicolon would cause the 0 to be dropped from the
+;; stack (at any other time, a semicolon is ignored).  Alternatively, on
+;; passing an opening brace, the stack would become (nil 1 1).  Each opening
+;; brace passed causes the cadr to be incremented, and passing closing braces
+;; causes it to be decremented until it reaches 1.  On passing a closing brace
+;; when the cadr of the stack is at 1, this causes it to be removed from the
+;; stack, the corresponding namespace (etc.) structure having been closed.
+;;
+;; There is a special stack value -1 which means the C++ colon operator
+;; introducing a list of inherited classes has just been parsed.  The value
+;; persists on the stack until the next open brace or semicolon.
+;;
+;; When the car of the stack is non-nil, i.e. when we're in a template (etc.)
+;; structure, braces are not counted.  The counting resumes only after passing
+;; the template's closing position, which is recorded in the car of the stack.
+;;
+;; The test for being at top level consists of the cadr being 0 or 1.
+;;
+;; The values of this stack throughout a buffer are cached in a simple linear
+;; cache, every 5000 characters.
+;;
+;; Note to maintainers: This cache mechanism is MUCH faster than recalculating
+;; the stack at every entry to `c-find-decl-spots' using `c-at-toplevel-p' or
+;; the like.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; The approximate interval at which we cache the value of the brace stack.
+(defconst c-bs-interval 5000)
+;; The list of cached values of the brace stack.  Each value in the list is a
+;; cons of the position it is valid for and the value of the stack as
+;; described above.
+(defvar c-bs-cache nil)
+(make-variable-buffer-local 'c-bs-cache)
+;; The position of the buffer at and below which entries in `c-bs-cache' are
+;; valid.
+(defvar c-bs-cache-limit 1)
+(make-variable-buffer-local 'c-bs-cache-limit)
+;; The previous buffer position for which the brace stack value was
+;; determined.
+(defvar c-bs-prev-pos most-positive-fixnum)
+(make-variable-buffer-local 'c-bs-prev-pos)
+;; The value of the brace stack at `c-bs-prev-pos'.
+(defvar c-bs-prev-stack nil)
+(make-variable-buffer-local 'c-bs-prev-stack)
+
+(defun c-init-bs-cache ()
+  ;; Initialize the cache in `c-bs-cache' and related variables.
+  (setq c-bs-cache nil
+	c-bs-cache-limit 1
+	c-bs-prev-pos most-positive-fixnum
+	c-bs-prev-stack nil))
+
+(defun c-truncate-bs-cache (pos &rest _ignore)
+  ;; Truncate the upper bound of the cache `c-bs-cache' to POS, if it is
+  ;; higher than that position.  This is called as either a before- or
+  ;; after-change-function.
+  (setq c-bs-cache-limit
+	(min c-bs-cache-limit pos)))
+
+(defun c-update-brace-stack (stack from to)
+  ;; Give a brace-stack which has the value STACK at position FROM, update it
+  ;; to it's value at position TO, where TO is after (or equal to) FROM.
+  ;; Return a cons of either TO (if it is outside a literal) and this new
+  ;; value, or of the next position after TO outside a literal and the new
+  ;; value.
+  (let (match kwd-sym (prev-match-pos 1)
+	      (s (cdr stack))
+	      (bound-<> (car stack))
+	      )
+    (save-excursion
+      (cond
+       ((and bound-<> (<= to bound-<>))
+	(goto-char to))			; Nothing to do.
+       (bound-<>
+	(goto-char bound-<>)
+	(setq bound-<> nil))
+       (t (goto-char from)))
+      (while (and (< (point) to)
+		  (c-syntactic-re-search-forward
+		   (if (<= (car s) 0)
+		       c-brace-stack-thing-key
+		     c-brace-stack-no-semi-key)
+		   to 'after-literal)
+		  (> (point) prev-match-pos)) ; prevent infinite loop.
+	(setq prev-match-pos (point))
+	(setq match (match-string-no-properties 1)
+	      kwd-sym (c-keyword-sym match))
+	(cond
+	 ((and (equal match "{")
+	       (progn (backward-char)
+		      (prog1 (looking-at "\\s(")
+			(forward-char))))
+	  (setq s (if s
+		      (cons (if (<= (car s) 0)
+				1
+			      (1+ (car s)))
+			    (cdr s))
+		    (list 1))))
+	 ((and (equal match "}")
+	       (progn (backward-char)
+		      (prog1 (looking-at "\\s)")
+			(forward-char))))
+	  (setq s
+		(cond
+		 ((and s (> (car s) 1))
+		  (cons (1- (car s)) (cdr s)))
+		 ((and (cdr s) (eq (car s) 1))
+		  (cdr s))
+		 (t s))))
+	 ((and (equal match "<")
+	       (progn (backward-char)
+		      (prog1 (looking-at "\\s(")
+			(forward-char))))
+	  (backward-char)
+	  (if (c-forward-<>-arglist nil) ; Should always work.
+	      (when (> (point) to)
+		(setq bound-<> (point)))
+	    (forward-char)))
+	 ((and (equal match ":")
+	       s
+	       (eq (car s) 0))
+	  (setq s (cons -1 (cdr s))))
+	 ((and (equal match ",")
+	       (eq (car s) -1)))	; at "," in "class foo : bar, ..."
+	 ((member match '(";" "," ")"))
+	  (when (and s (cdr s) (<= (car s) 0))
+	    (setq s (cdr s))))
+	 ((c-keyword-member kwd-sym 'c-flat-decl-block-kwds)
+	  (push 0 s))))
+      (cons (point)
+	    (cons bound-<> s)))))
+
+(defun c-brace-stack-at (here)
+  ;; Given a buffer position HERE, Return the value of the brace stack there.
+  (save-excursion
+    (save-restriction
+      (widen)
+      (let ((c c-bs-cache)
+	    (can-use-prev (<= c-bs-prev-pos c-bs-cache-limit))
+	    elt stack pos npos high-elt)
+	;; Trim the cache to take account of buffer changes.
+	(while (and c
+		    (> (caar c) c-bs-cache-limit))
+	  (setq c (cdr c)))
+	(setq c-bs-cache c)
+
+	(while (and c
+		    (> (caar c) here))
+	  (setq high-elt (car c))
+	  (setq c (cdr c)))
+	(setq pos (or (and c (caar c))
+		      (point-min)))
+
+	(setq elt (if c
+		      (car c)
+		    (cons (point-min)
+			  (cons nil (list 1)))))
+	(when (not high-elt)
+	  (setq stack (cdr elt))
+	  (while
+	      ;; Add an element to `c-state-semi-nonlit-pos-cache' each iteration.
+	      (<= (setq npos (+ pos c-bs-interval)) here)
+	    (setq elt (c-update-brace-stack stack pos npos))
+	    (setq npos (car elt))
+	    (setq stack (cdr elt))
+	    (unless (eq npos (point-max)) ; NPOS could be in a literal at EOB.
+	      (setq c-bs-cache (cons elt c-bs-cache)))
+	    (setq pos npos)))
+
+	(if (> pos c-bs-cache-limit)
+	    (setq c-bs-cache-limit pos))
+
+	;; Can we just use the previous value?
+	(if (and can-use-prev
+		 (<= c-bs-prev-pos here)
+		 (> c-bs-prev-pos (car elt)))
+	    (setq pos c-bs-prev-pos
+		  stack c-bs-prev-stack)
+	  (setq pos (car elt)
+		stack (cdr elt)))
+	(if (> here c-bs-cache-limit)
+	    (setq c-bs-cache-limit here))
+	(setq elt (c-update-brace-stack stack pos here)
+	      c-bs-prev-pos (car elt)
+	      c-bs-prev-stack (cdr elt))))))
+
+(defun c-bs-at-toplevel-p (here)
+  ;; Is position HERE at the top level, as indicated by the brace stack?
+  (let ((stack (c-brace-stack-at here)))
+    (or (null stack)			; Probably unnecessary.
+	(<= (cadr stack) 1))))
+
 (defmacro c-find-decl-prefix-search ()
   ;; Macro used inside `c-find-decl-spots'.  It ought to be a defun,
   ;; but it contains lots of free variables that refer to things
@@ -5221,6 +5426,7 @@ comment at the start of cc-engine.el for more info."
 	       cfd-re-match nil)
        (setq cfd-match-pos cfd-prop-match
 	     cfd-prop-match nil))
+     (setq cfd-top-level (c-bs-at-toplevel-p cfd-match-pos))
 
      (goto-char cfd-match-pos)
 
@@ -5319,7 +5525,11 @@ comment at the start of cc-engine.el for more info."
 	;; comments.
 	(cfd-token-pos 0)
 	;; The end position of the last entered macro.
-	(cfd-macro-end 0))
+	(cfd-macro-end 0)
+	;; Whether the last position returned from `c-find-decl-prefix-search'
+	;; is at the top-level (including directly in a class or namespace,
+	;; etc.).
+	cfd-top-level)
 
     ;; Initialize by finding a syntactically relevant start position
     ;; before the point, and do the first `c-decl-prefix-or-start-re'
@@ -5627,7 +5837,7 @@ comment at the start of cc-engine.el for more info."
 		   nil))))		; end of when condition
 
 	(c-debug-put-decl-spot-faces cfd-match-pos (point))
-	(if (funcall cfd-fun cfd-match-pos (/= cfd-macro-end 0))
+	(if (funcall cfd-fun cfd-match-pos (/= cfd-macro-end 0) cfd-top-level)
 	    (setq cfd-prop-match nil))
 
 	(when (/= cfd-macro-end 0)
@@ -7552,10 +7762,12 @@ comment at the start of cc-engine.el for more info."
   ;; Assuming point is at the start of a declarator, move forward over it,
   ;; leaving point at the next token after it (e.g. a ) or a ; or a ,).
   ;;
-  ;; Return a list (ID-START ID-END BRACKETS-AFTER-ID GOT-INIT), where ID-START and
-  ;; ID-END are the bounds of the declarator's identifier, and
-  ;; BRACKETS-AFTER-ID is non-nil if a [...] pair is present after the id.
-  ;; GOT-INIT is non-nil when the declarator is followed by "=" or "(".
+  ;; Return a list (ID-START ID-END BRACKETS-AFTER-ID GOT-INIT DECORATED),
+  ;; where ID-START and ID-END are the bounds of the declarator's identifier,
+  ;; and BRACKETS-AFTER-ID is non-nil if a [...] pair is present after the id.
+  ;; GOT-INIT is non-nil when the declarator is followed by "=" or "(",
+  ;; DECORATED is non-nil when the identifier is embellished by an operator,
+  ;; like "*x", or "(*x)".
   ;;
   ;; If ACCEPT-ANON is non-nil, move forward over any "anonymous declarator",
   ;; i.e. something like the (*) in int (*), such as might be found in a
@@ -7574,7 +7786,7 @@ comment at the start of cc-engine.el for more info."
   ;; array/struct initialization) or "=" or terminating delimiter
   ;; (e.g. "," or ";" or "}").
   (let ((here (point))
-	id-start id-end brackets-after-id paren-depth)
+	id-start id-end brackets-after-id paren-depth decorated)
     (or limit (setq limit (point-max)))
     (if	(and
 	 (< (point) limit)
@@ -7614,6 +7826,8 @@ comment at the start of cc-engine.el for more info."
 				 (setq got-identifier t)
 				 nil))
 			   t))
+		    (if (looking-at c-type-decl-operator-prefix-key)
+			(setq decorated t))
 		    (if (eq (char-after) ?\()
 			(progn
 			  (setq paren-depth (1+ paren-depth))
@@ -7668,7 +7882,7 @@ comment at the start of cc-engine.el for more info."
 	     (setq brackets-after-id t))
 	   (backward-char)
 	   found))
-	(list id-start id-end brackets-after-id (match-beginning 1))
+	(list id-start id-end brackets-after-id (match-beginning 1) decorated)
 
       (goto-char here)
       nil)))
@@ -7744,6 +7958,9 @@ comment at the start of cc-engine.el for more info."
   ;;           inside a function declaration arglist).
   ;; '<>       In an angle bracket arglist.
   ;; 'arglist  Some other type of arglist.
+  ;; 'top      Some other context and point is at the top-level (either
+  ;;           outside any braces or directly inside a class or namespace,
+  ;;           etc.)
   ;; nil       Some other context or unknown context.  Includes
   ;;           within the parens of an if, for, ... construct.
   ;; 'not-decl This value is never supplied to this function.  It
@@ -8152,7 +8369,7 @@ comment at the start of cc-engine.el for more info."
 			      maybe-typeless
 			      backup-maybe-typeless
 			      (when c-recognize-typeless-decls
-				(and (not context)
+				(and (memq context '(nil top))
 				     ;; Deal with C++11's "copy-initialization"
 				     ;; where we have <type>(<constant>), by
 				     ;; contrasting with a typeless
@@ -8215,7 +8432,7 @@ comment at the start of cc-engine.el for more info."
 
 	 (setq at-decl-end
 	       (looking-at (cond ((eq context '<>) "[,>]")
-				 (context "[,)]")
+				 ((not (memq context '(nil top))) "[,\)]")
 				 (t "[,;]"))))
 
 	 ;; Now we've collected info about various characteristics of
@@ -8344,7 +8561,7 @@ comment at the start of cc-engine.el for more info."
 
 	   (if (and got-parens
 		    (not got-prefix)
-		    (not context)
+		    (memq context '(nil top))
 		    (not (eq at-type t))
 		    (or backup-at-type
 			maybe-typeless
@@ -8394,6 +8611,18 @@ comment at the start of cc-engine.el for more info."
 	       ;; instantiation expression).
 	       (throw 'at-decl-or-cast nil))))
 
+	 ;; CASE 9.5
+	 (when (and (not context)	; i.e. not at top level.
+		    (c-major-mode-is 'c++-mode)
+		    (eq at-decl-or-cast 'ids)
+		    after-paren-pos)
+	   ;; We've got something like "foo bar (...)" in C++ which isn't at
+	   ;; the top level.  This is probably a uniform initialization of bar
+	   ;; to the contents of the parens.  In this case the declarator ends
+	   ;; at the open paren.
+	   (goto-char (1- after-paren-pos))
+	   (throw 'at-decl-or-cast t))
+
 	 ;; CASE 10
 	 (when at-decl-or-cast
 	   ;; By now we've located the type in the declaration that we know
@@ -8402,7 +8631,7 @@ comment at the start of cc-engine.el for more info."
 
 	 ;; CASE 11
 	 (when (and got-identifier
-		    (not context)
+		    (memq context '(nil top))
 		    (looking-at c-after-suffixed-type-decl-key)
 		    (if (and got-parens
 			     (not got-prefix)
@@ -8498,7 +8727,7 @@ comment at the start of cc-engine.el for more info."
 	       (when (and got-prefix-before-parens
 			  at-type
 			  (or at-decl-end (looking-at "=[^=]"))
-			  (not context)
+			  (memq context '(nil top))
 			  (or (not got-suffix)
 			      at-decl-start))
 		 ;; Got something like "foo * bar;".  Since we're not inside
@@ -8524,7 +8753,7 @@ comment at the start of cc-engine.el for more info."
 		 (throw 'at-decl-or-cast t)))
 
 	   ;; CASE 18
-	   (when (and context
+	   (when (and (not (memq context '(nil top)))
 		      (or got-prefix
 			  (and (eq context 'decl)
 			       (not c-recognize-paren-inits)

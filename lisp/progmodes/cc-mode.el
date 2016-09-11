@@ -557,6 +557,8 @@ that requires a literal mode spec at compile time."
 
   ;; Initialize the cache of brace pairs, and opening braces/brackets/parens.
   (c-state-cache-init)
+  ;; Initialize the "brace stack" cache.
+  (c-init-bs-cache)
 
   (when (or c-recognize-<>-arglists
 	    (c-major-mode-is 'awk-mode)

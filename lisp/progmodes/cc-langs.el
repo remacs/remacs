@@ -479,10 +479,12 @@ so that all identifiers are recognized as words.")
 	c-before-change-check-<>-operators
 	c-depropertize-CPP
 	c-before-after-change-digit-quote
-	c-invalidate-macro-cache)
+	c-invalidate-macro-cache
+	c-truncate-bs-cache)
   (c objc) '(c-extend-region-for-CPP
 	     c-depropertize-CPP
-	     c-invalidate-macro-cache)
+	     c-invalidate-macro-cache
+	     c-truncate-bs-cache)
   ;; java 'c-before-change-check-<>-operators
   awk 'c-awk-record-region-clear-NL)
 (c-lang-defvar c-get-state-before-change-functions
@@ -2588,6 +2590,41 @@ Note that Java specific rules are currently applied to tell this from
 (c-lang-defvar c-opt-inexpr-brace-list-key
   (c-lang-const c-opt-inexpr-brace-list-key))
 
+(c-lang-defconst c-flat-decl-block-kwds
+  ;; Keywords that can introduce another declaration level, i.e. where a
+  ;; following "{" isn't a function block or brace list.  Note that, for
+  ;; historical reasons, `c-decl-block-key' is NOT constructed from this lang
+  ;; const.
+  t (c--delete-duplicates
+     (append (c-lang-const c-class-decl-kwds)
+	     (c-lang-const c-other-block-decl-kwds)
+	     (c-lang-const c-inexpr-class-kwds))
+     :test 'string-equal))
+
+(c-lang-defconst c-brace-stack-thing-key
+  ;; Regexp matching any keyword or operator relevant to the brace stack (see
+  ;; `c-update-brace-stack' in cc-engine.el).
+  t (c-make-keywords-re 'appendable
+      (append
+       (c-lang-const c-flat-decl-block-kwds)
+       (if (c-lang-const c-recognize-<>-arglists)
+	   '("{" "}" ";" "," ")" ":" "<")
+	 '("{" "}" ";" "," ")" ":")))))
+(c-lang-defvar c-brace-stack-thing-key (c-lang-const c-brace-stack-thing-key))
+
+(c-lang-defconst c-brace-stack-no-semi-key
+  ;; Regexp matching any keyword or operator relevant to the brace stack when
+  ;; a semicolon is not relevant (see `c-update-brace-stack' in
+  ;; cc-engine.el).
+  t (c-make-keywords-re 'appendable
+      (append
+       (c-lang-const c-flat-decl-block-kwds)
+       (if (c-lang-const c-recognize-<>-arglists)
+	   '("{" "}" "<")
+	 '("{" "}")))))
+(c-lang-defvar c-brace-stack-no-semi-key
+  (c-lang-const c-brace-stack-no-semi-key))
+
 (c-lang-defconst c-decl-block-key
   ;; Regexp matching keywords in any construct that contain another
   ;; declaration level, i.e. that isn't followed by a function block
@@ -3030,6 +3067,28 @@ Identifier syntax is in effect when this is matched \(see
   pike "\\(\\*\\)\\([^=]\\|$\\)")
 (c-lang-defvar c-type-decl-prefix-key (c-lang-const c-type-decl-prefix-key)
   'dont-doc)
+
+(c-lang-defconst c-type-decl-operator-prefix-key
+  "Regexp matching any declarator operator which isn't a keyword
+that might precede the identifier in a declaration, e.g. the
+\"*\" in \"char *argv\".  The end of the first submatch is taken
+as the end of the operator.  Identifier syntax is in effect when
+this is matched \(see `c-identifier-syntax-table')."
+  t ;; Default to a regexp that never matches.
+    "\\<\\>"
+  ;; Check that there's no "=" afterwards to avoid matching tokens
+  ;; like "*=".
+  (c objc) (concat "\\(\\*\\)"
+		   "\\([^=]\\|$\\)")
+  c++  (concat "\\("
+	       "\\.\\.\\."
+	       "\\|"
+	       "\\*"
+	       "\\)"
+	       "\\([^=]\\|$\\)")
+  pike "\\(\\*\\)\\([^=]\\|$\\)")
+(c-lang-defvar c-type-decl-operator-prefix-key
+  (c-lang-const c-type-decl-operator-prefix-key))
 
 (c-lang-defconst c-type-decl-suffix-key
   "Regexp matching the declarator operators that might follow after the
