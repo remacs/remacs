@@ -15,6 +15,13 @@ and NEWS.1-17 for changes in older Emacs versions.
 You can narrow news to a specific version by calling 'view-emacs-news'
 with a prefix argument or by typing C-u C-h C-n.
 
+Temporary note:
++++ indicates that all necessary documentation updates are complete.
+    (This means all relevant manuals in doc/ AND lisp doc-strings.)
+--- means no change in the manuals is needed.
+When you add a new item, use the appropriate mark if you are sure it applies,
+otherwise leave it unmarked.
+
 
 * Installation Changes in Emacs 25.2
 
