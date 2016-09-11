@@ -913,7 +913,7 @@ wset_next_buffers (struct window *w, Lisp_Object val)
    ? WINDOW_CONFIG_SCROLL_BAR_HEIGHT (W)	\
    : 0)
 
-/* Height in pixels, and in lines, of the mode line.
+/* Height in pixels of the mode line.
    May be zero if W doesn't have a mode line.  */
 #define WINDOW_MODE_LINE_HEIGHT(W)	\
   (WINDOW_WANTS_MODELINE_P ((W))	\
@@ -923,7 +923,7 @@ wset_next_buffers (struct window *w, Lisp_Object val)
 #define WINDOW_MODE_LINE_LINES(W)	\
   WINDOW_WANTS_MODELINE_P (W)
 
-/* Height in pixels, and in lines, of the header line.
+/* Height in pixels of the header line.
    Zero if W doesn't have a header line.  */
 #define WINDOW_HEADER_LINE_HEIGHT(W)	\
   (WINDOW_WANTS_HEADER_LINE_P (W)	\
