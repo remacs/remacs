@@ -1976,6 +1976,7 @@ is running."
             (not gdb-non-stop))
            gud-running)
       (and gdb-gud-control-all-threads
+           (not (null gdb-running-threads-count))
            (> gdb-running-threads-count 0))))
 
 ;; GUD displays the selected GDB frame.  This might might not be the current
