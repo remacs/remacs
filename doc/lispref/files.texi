@@ -661,6 +661,15 @@ feature is useful for programs that use files for internal purposes,
 files that the user does not need to know about.
 @end deffn
 
+@defvar write-region-inhibit-fsync
+If this variable's value is @code{nil}, @code{write-region} uses the
+@code{fsync} system call after writing a file.  Although this slows
+Emacs down, it lessens the risk of data loss after power failure.  If
+the value is @code{t}, Emacs does not use @code{fsync}.  The default
+value is @code{nil} when Emacs is interactive, and @code{t} when Emacs
+runs in batch mode.  @xref{Files and Storage}.
+@end defvar
+
 @defmac with-temp-file file body@dots{}
 @anchor{Definition of with-temp-file}
 The @code{with-temp-file} macro evaluates the @var{body} forms with a
@@ -1812,12 +1821,15 @@ copy on secondary storage is lost due to media failure.  Second, the
 operating system might not write data to secondary storage
 immediately, which will lose the data if power is lost.
 
+@findex write-region
+@vindex write-region-inhibit-fsync
 Although both sorts of failures can largely be avoided by a suitably
 configured file system, such systems are typically more expensive or
 less efficient.  In more-typical systems, to survive media failure you
 can copy the file to a different device, and to survive a power
-failure you can invoke the @command{sync} utility (@pxref{sync
-invocation,,, coreutils, The @sc{gnu} @code{Coreutils} Manual}).
+failure you can use the @code{write-region} function with the
+@code{write-region-inhibit-fsync} variable set to @code{nil}.
+@xref{Writing to Files}.
 
 @node File Names
 @section File Names
