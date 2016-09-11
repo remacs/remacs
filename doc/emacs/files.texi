@@ -1554,8 +1554,8 @@ delete-file}.  @xref{VC Delete/Rename}.
 
 @findex copy-file
 @cindex copying files
-  @kbd{M-x copy-file} reads the file @var{old} and writes a new file
-named @var{new} with the same contents.
+  @kbd{M-x copy-file} copies the contents of the file @var{old} to the
+file @var{new}.
 
 @findex copy-directory
   @kbd{M-x copy-directory} copies directories, similar to the

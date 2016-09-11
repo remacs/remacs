@@ -41,6 +41,7 @@ to locale @code{system-messages-locale}, and decoded using coding system
                                simultaneous editing by two people.
 * Information about Files::  Testing existence, accessibility, size of files.
 * Changing Files::           Renaming files, changing permissions, etc.
+* Files and Storage::        Surviving power and media failures
 * File Names::               Decomposing and expanding file names.
 * Contents of Directories::  Getting a list of the files in a directory.
 * Create/Delete Dirs::       Creating and Deleting Directories.
@@ -1496,6 +1497,10 @@ error if they fail to perform their function, reporting the
 system-dependent error message that describes the reason for the
 failure.
 
+  For performance, the operating system may cache or alias changes
+made by these functions instead of writing them immediately to
+secondary storage.  @xref{Files and Storage}.
+
   In the functions that have an argument @var{newname}, if a file by the
 name of @var{newname} already exists, the actions taken depend on the
 value of the argument @var{ok-if-already-exists}:
@@ -1793,6 +1798,26 @@ by the function @code{file-acl}.  @xref{Extended Attributes}.
 The function returns @code{t} if it successfully sets the ACL of
 @var{filename}, @code{nil} otherwise.
 @end defun
+
+@node Files and Storage
+@section Files and Secondary Storage
+@cindex secondary storage
+
+After Emacs changes a file, there are two reasons the changes might
+not survive later failures of power or media, both having to do with
+efficiency.  First, the operating system might alias written data with
+data already stored elsewhere on secondary storage until one file or
+the other is later modified; this will lose both files if the only
+copy on secondary storage is lost due to media failure.  Second, the
+operating system might not write data to secondary storage
+immediately, which will lose the data if power is lost.
+
+Although both sorts of failures can largely be avoided by a suitably
+configured file system, such systems are typically more expensive or
+less efficient.  In more-typical systems, to survive media failure you
+can copy the file to a different device, and to survive a power
+failure you can invoke the @command{sync} utility (@pxref{sync
+invocation,,, coreutils, The @sc{gnu} @code{Coreutils} Manual}).
 
 @node File Names
 @section File Names
