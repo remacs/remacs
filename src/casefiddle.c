@@ -378,24 +378,12 @@ character positions to operate on.  */)
 static Lisp_Object
 casify_word (enum case_action flag, Lisp_Object arg)
 {
-  Lisp_Object beg, end;
-  ptrdiff_t newpoint;
-  EMACS_INT iarg;
-
   CHECK_NUMBER (arg);
-  iarg = XINT (arg);
-
-  newpoint = scan_words (PT, iarg);
-  if (!newpoint)
-    newpoint = iarg > 0 ? ZV : BEGV;
-
-  XSETFASTINT (beg, PT);
-  XSETFASTINT (end, newpoint);
-  if (PT > newpoint)
-    newpoint = PT;
-
-  casify_region (flag, beg, end);
-
+  ptrdiff_t farend = scan_words (PT, XINT (arg));
+  if (!farend)
+    farend = XINT (arg) <= 0 ? BEGV : ZV;
+  ptrdiff_t newpoint = max (PT, farend);
+  casify_region (flag, make_number (PT), make_number (farend));
   SET_PT (newpoint);
   return Qnil;
 }
