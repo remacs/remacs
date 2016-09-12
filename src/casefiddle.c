@@ -397,6 +397,7 @@ casify_word (enum case_action flag, Lisp_Object arg)
   casify_region (flag, beg, end);
 
   SET_PT (newpoint);
+  return Qnil;
 }
 
 DEFUN ("upcase-word", Fupcase_word, Supcase_word, 1, 1, "p",
@@ -409,8 +410,7 @@ With negative argument, convert previous words but do not move.
 See also `capitalize-word'.  */)
   (Lisp_Object arg)
 {
-  casify_word (CASE_UP, arg);
-  return Qnil;
+  return casify_word (CASE_UP, arg);
 }
 
 DEFUN ("downcase-word", Fdowncase_word, Sdowncase_word, 1, 1, "p",
@@ -422,8 +422,7 @@ is ignored when moving forward.
 With negative argument, convert previous words but do not move.  */)
   (Lisp_Object arg)
 {
-  casify_word (CASE_DOWN, arg);
-  return Qnil;
+  return casify_word (CASE_DOWN, arg);
 }
 
 DEFUN ("capitalize-word", Fcapitalize_word, Scapitalize_word, 1, 1, "p",
@@ -438,8 +437,7 @@ is ignored when moving forward.
 With negative argument, capitalize previous words but do not move.  */)
   (Lisp_Object arg)
 {
-  casify_word (CASE_CAPITALIZE, arg);
-  return Qnil;
+  return casify_word (CASE_CAPITALIZE, arg);
 }
 
 void
