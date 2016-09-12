@@ -648,7 +648,12 @@ server or call `\\[server-force-delete]' to forcibly disconnect it."))
 	  (add-hook 'delete-frame-functions 'server-handle-delete-frame)
 	  (add-hook 'kill-emacs-query-functions
                     'server-kill-emacs-query-function)
-	  (add-hook 'kill-emacs-hook 'server-force-stop) ;Cleanup upon exit.
+          ;; We put server's kill-emacs-hook after the others, so that
+          ;; frames are not deleted too early, because doing that
+          ;; would severely degrade our abilities to communicate with
+          ;; the user, while some hooks may wish to ask the user
+          ;; questions (e.g., desktop-kill).
+	  (add-hook 'kill-emacs-hook 'server-force-stop t) ;Cleanup upon exit.
 	  (setq server-process
 		(apply #'make-network-process
 		       :name server-name
