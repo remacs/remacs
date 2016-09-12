@@ -148,6 +148,7 @@ for doing the actual authentication."
 
 (defcustom sieve-manage-ignore-broken-tls nil
   "Ignore STARTTLS even if STARTTLS capability is provided."
+  :version "25.2"
   :type 'boolean
   :group 'sieve-manage)
 
