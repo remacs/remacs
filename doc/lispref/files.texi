@@ -1822,7 +1822,6 @@ operating system might not write data to secondary storage
 immediately, which will lose the data if power is lost.
 
 @findex write-region
-@vindex write-region-inhibit-fsync
 Although both sorts of failures can largely be avoided by a suitably
 configured file system, such systems are typically more expensive or
 less efficient.  In more-typical systems, to survive media failure you
