@@ -3136,8 +3136,7 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
   /* If both of these parameters are present, it's more efficient to
      set them both at once.  So we wait until we've looked at the
      entire list before we set them.  */
-  int width, height;
-  bool width_change = false, height_change = false;
+  int width = -1, height = -1;  /* -1 denotes they were not changed. */
 
   /* Same here.  */
   Lisp_Object left, top;
@@ -3213,30 +3212,18 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
       if (EQ (prop, Qwidth))
         {
 	  if (RANGED_INTEGERP (0, val, INT_MAX))
-	    {
-	      width = XFASTINT (val) * FRAME_COLUMN_WIDTH (f) ;
-	      width_change = true;
-	    }
+	    width = XFASTINT (val) * FRAME_COLUMN_WIDTH (f) ;
 	  else if (CONSP (val) && EQ (XCAR (val), Qtext_pixels)
 		   && RANGED_INTEGERP (0, XCDR (val), INT_MAX))
-	    {
-	      width = XFASTINT (XCDR (val));
-	      width_change = true;
-	    }
+	    width = XFASTINT (XCDR (val));
         }
       else if (EQ (prop, Qheight))
         {
 	  if (RANGED_INTEGERP (0, val, INT_MAX))
-	    {
-	      height = XFASTINT (val) * FRAME_LINE_HEIGHT (f);
-	      height_change = true;
-	    }
+	    height = XFASTINT (val) * FRAME_LINE_HEIGHT (f);
 	  else if (CONSP (val) && EQ (XCAR (val), Qtext_pixels)
 		   && RANGED_INTEGERP (0, XCDR (val), INT_MAX))
-	    {
-	      height = XFASTINT (XCDR (val));
-	      height_change = true;
-	    }
+	    height = XFASTINT (XCDR (val));
         }
       else if (EQ (prop, Qtop))
 	top = val;
@@ -3318,16 +3305,15 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
 
     XSETFRAME (frame, f);
 
-    if ((width_change && width != FRAME_TEXT_WIDTH (f))
-	|| (height_change && height != FRAME_TEXT_HEIGHT (f)))
+    if ((width != -1 && width != FRAME_TEXT_WIDTH (f))
+	|| (height != -1 && height != FRAME_TEXT_HEIGHT (f)))
       /* We could consider checking f->after_make_frame here, but I
 	 don't have the faintest idea why the following is needed at
 	 all.  With the old setting it can get a Heisenbug when
 	 EmacsFrameResize intermittently provokes a delayed
 	 change_frame_size in the middle of adjust_frame_size.  */
       /** 	|| (f->can_x_set_window_size && (f->new_height || f->new_width))) **/
-      adjust_frame_size (f, width_change ? width : -1,
-			 height_change ? height : -1, 1, 0, Qx_set_frame_parameters);
+      adjust_frame_size (f, width, height, 1, 0, Qx_set_frame_parameters);
 
     if ((!NILP (left) || !NILP (top))
 	&& ! (left_no_change && top_no_change)
