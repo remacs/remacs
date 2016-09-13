@@ -169,4 +169,32 @@ form.")
 ;; Stop the above "Local Var..." confusing Emacs.
 
 
+(ert-deftest files-test-bug-21454 ()
+  "Test for http://debbugs.gnu.org/21454 ."
+  :expected-result :failed
+  (let ((input-result
+         '(("/foo/bar//baz/:/bar/foo/baz//" nil ("/foo/bar/baz/" "/bar/foo/baz/"))
+           ("/foo/bar/:/bar/qux/:/qux/foo" nil ("/foo/bar/" "/bar/qux/" "/qux/foo/"))
+           ("//foo/bar/:/bar/qux/:/qux/foo/" nil ("/foo/bar/" "/bar/qux/" "/qux/foo/"))
+           ("/foo/bar/:/bar/qux/:/qux/foo/" nil ("/foo/bar/" "/bar/qux/" "/qux/foo/"))
+           ("/foo//bar/:/bar/qux/:/qux/foo/" nil ("/foo/bar/" "/bar/qux/" "/qux/foo/"))
+           ("/foo//bar/:/bar/qux/:/qux/foo" nil ("/foo/bar/" "/bar/qux/" "/qux/foo/"))
+           ("/foo/bar" "$FOO/baz/:/qux/foo/" ("/foo/bar/baz/" "/qux/foo/"))
+           ("//foo/bar/" "$FOO/baz/:/qux/foo/" ("/foo/bar/baz/" "/qux/foo/"))))
+        (foo-env (getenv "FOO"))
+        (bar-env (getenv "BAR")))
+    (unwind-protect
+        (dolist (test input-result)
+          (let ((foo (nth 0 test))
+                (bar (nth 1 test))
+                (res (nth 2 test)))
+            (setenv "FOO" foo)
+            (if bar
+                (progn
+                  (setenv "BAR" bar)
+                  (should (equal res (parse-colon-path (getenv "BAR")))))
+              (should (equal res (parse-colon-path "$FOO"))))))
+      (setenv "FOO" foo-env)
+      (setenv "BAR" bar-env))))
+
 ;;; files.el ends here
