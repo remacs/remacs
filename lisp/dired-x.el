@@ -413,14 +413,19 @@ If in Dired already, pop up a level and goto old directory's line.
 In case the proper Dired file line cannot be found, refresh the dired
 buffer and try again.
 When OTHER-WINDOW is non-nil, jump to Dired buffer in other window.
-Interactively with prefix argument, read FILE-NAME and
-move to its line in dired."
+When FILE-NAME is non-nil, jump to its line in Dired.
+Interactively with prefix argument, read FILE-NAME."
   (interactive
    (list nil (and current-prefix-arg
                   (read-file-name "Jump to Dired file: "))))
   (if (bound-and-true-p tar-subfile-mode)
       (switch-to-buffer tar-superior-buffer)
-    (let* ((file (or file-name buffer-file-name))
+    ;; Expand file-name before `dired-goto-file' call:
+    ;; `dired-goto-file' requires its argument to be an absolute
+    ;; file name; the result of `read-file-name' could be
+    ;; an abbreviated file name (Bug#24409).
+    (let* ((file (or (and file-name (expand-file-name file-name))
+                     buffer-file-name))
            (dir (if file (file-name-directory file) default-directory)))
       (if (and (eq major-mode 'dired-mode) (null file-name))
           (progn
