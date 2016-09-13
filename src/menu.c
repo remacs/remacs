@@ -1045,7 +1045,7 @@ menu_item_width (const unsigned char *str)
       int ch_len;
       int ch = STRING_CHAR_AND_LENGTH (p, ch_len);
 
-      len += CHAR_WIDTH (ch);
+      len += CHARACTER_WIDTH (ch);
       p += ch_len;
     }
   return len;

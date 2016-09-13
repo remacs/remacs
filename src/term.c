@@ -593,7 +593,7 @@ encode_terminal_code (struct glyph *src, int src_len,
 		  continue;
 		if (char_charset (c, charset_list, NULL))
 		  {
-		    if (CHAR_WIDTH (c) == 0
+		    if (CHARACTER_WIDTH (c) == 0
 			&& i > 0 && COMPOSITION_GLYPH (cmp, i - 1) == '\t')
 		      /* Should be left-padded */
 		      {
@@ -1626,7 +1626,7 @@ produce_glyphs (struct it *it)
 
       if (char_charset (it->char_to_display, charset_list, NULL))
 	{
-	  it->pixel_width = CHAR_WIDTH (it->char_to_display);
+	  it->pixel_width = CHARACTER_WIDTH (it->char_to_display);
 	  it->nglyphs = it->pixel_width;
 	  if (it->glyph_row)
 	    append_glyph (it);
@@ -1832,7 +1832,7 @@ produce_glyphless_glyph (struct it *it, Lisp_Object acronym)
     }
   else if (it->glyphless_method == GLYPHLESS_DISPLAY_EMPTY_BOX)
     {
-      len = CHAR_WIDTH (it->c);
+      len = CHARACTER_WIDTH (it->c);
       if (len == 0)
 	len = 1;
       else if (len > 4)

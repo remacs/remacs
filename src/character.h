@@ -588,9 +588,10 @@ sanitize_char_width (EMACS_INT width)
 
 /* Return the width of character C.  The width is measured by how many
    columns C will occupy on the screen when displayed in the current
-   buffer.  */
+   buffer.  The name CHARACTER_WIDTH avoids a collision with <limits.h>
+   CHAR_WIDTH when enabled; see ISO/IEC TS 18661-1:2014.  */
 
-#define CHAR_WIDTH(c)		\
+#define CHARACTER_WIDTH(c)	\
   (ASCII_CHAR_P (c)		\
    ? ASCII_CHAR_WIDTH (c)	\
    : sanitize_char_width (XINT (CHAR_TABLE_REF (Vchar_width_table, c))))

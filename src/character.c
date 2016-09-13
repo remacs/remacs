@@ -278,7 +278,7 @@ If the multibyte character does not represent a byte, return -1.  */)
 static ptrdiff_t
 char_width (int c, struct Lisp_Char_Table *dp)
 {
-  ptrdiff_t width = CHAR_WIDTH (c);
+  ptrdiff_t width = CHARACTER_WIDTH (c);
 
   if (dp)
     {
@@ -291,7 +291,7 @@ char_width (int c, struct Lisp_Char_Table *dp)
 	    ch = AREF (disp, i);
 	    if (CHARACTERP (ch))
 	      {
-		int w = CHAR_WIDTH (XFASTINT (ch));
+		int w = CHARACTER_WIDTH (XFASTINT (ch));
 		if (INT_ADD_WRAPV (width, w, &width))
 		  string_overflow ();
 	      }
