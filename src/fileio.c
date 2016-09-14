@@ -1834,6 +1834,7 @@ barf_or_query_if_file_exists (Lisp_Object absname, bool known_to_exist,
     }
 }
 
+#ifndef WINDOWSNT
 /* Copy data to DEST from SOURCE if possible.  Return true if OK.  */
 static bool
 clone_file (int dest, int source)
@@ -1843,6 +1844,7 @@ clone_file (int dest, int source)
 #endif
   return false;
 }
+#endif
 
 DEFUN ("copy-file", Fcopy_file, Scopy_file, 2, 6,
        "fCopy file: \nGCopy %s to file: \np\nP",
