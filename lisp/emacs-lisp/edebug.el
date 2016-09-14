@@ -1933,6 +1933,7 @@ expressions; a `progn' form will be returned enclosing these forms."
 (def-edebug-spec defun
   (&define name lambda-list
 	   [&optional stringp]
+           [&optional ("declare" &rest sexp)]
 	   [&optional ("interactive" interactive)]
 	   def-body))
 (def-edebug-spec defmacro
