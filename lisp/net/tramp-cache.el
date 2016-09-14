@@ -430,7 +430,8 @@ for all methods.  Resulting data are derived from connection history."
 	      ;; `tramp-connection-properties'.  The cache is
 	      ;; initialized properly by side effect.
 	      (unless (tramp-connection-property-p key (car item))
-		(tramp-set-connection-property key (pop item) (car item))))))
+		(tramp-set-connection-property key (pop item) (car item))))
+	    (tramp-set-connection-property key "active" 'undef)))
 	(setq tramp-cache-data-changed nil))
     (file-error
      ;; Most likely because the file doesn't exist yet.  No message.
