@@ -146,7 +146,7 @@ for doing the actual authentication."
   :type 'symbol
   :group 'sieve-manage)
 
-(defcustom sieve-manage-ignore-broken-tls nil
+(defcustom sieve-manage-ignore-starttls nil
   "Ignore STARTTLS even if STARTTLS capability is provided."
   :version "25.2"
   :type 'boolean
@@ -216,14 +216,14 @@ Return the buffer associated with the connection."
          :return-list t
          :starttls-function
          (lambda (capabilities)
-	   (when (and (not sieve-manage-ignore-broken-tls)
+	   (when (and (not sieve-manage-ignore-starttls)
 		      (string-match "\\bSTARTTLS\\b" capabilities))
 	     "STARTTLS\r\n")))
       (setq sieve-manage-process proc)
       (setq sieve-manage-capability
             (sieve-manage-parse-capability (plist-get props :capabilities)))
       ;; Ignore new capabilities issues after successful STARTTLS
-      (when (or sieve-manage-ignore-broken-tls
+      (when (or sieve-manage-ignore-starttls
 		(and (memq stream '(nil network starttls))
 		     (eq (plist-get props :type) 'tls)))
         (sieve-manage-drop-next-answer))
