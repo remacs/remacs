@@ -2578,16 +2578,16 @@ non-nil value, that slot cannot be set via `setf'.
              [&or symbolp
                   (gate
                    symbolp &rest
-                   (&or [":conc-name" symbolp]
-                        [":constructor" symbolp &optional cl-lambda-list]
-                        [":copier" symbolp]
-                        [":predicate" symbolp]
-                        [":include" symbolp &rest sexp] ;; Not finished.
-                        ;; The following are not supported.
-                        ;; [":print-function" ...]
-                        ;; [":type" ...]
-                        ;; [":initial-offset" ...]
-                        ))]
+                   [&or symbolp
+                        (&or [":conc-name" symbolp]
+                             [":constructor" symbolp &optional cl-lambda-list]
+                             [":copier" symbolp]
+                             [":predicate" symbolp]
+                             [":include" symbolp &rest sexp] ;; Not finished.
+                             [":print-function" sexp]
+                             [":type" symbolp]
+                             [":named"]
+                             [":initial-offset" natnump])])]
              [&optional stringp]
              ;; All the above is for the following def-form.
              &rest &or symbolp (symbolp def-form
