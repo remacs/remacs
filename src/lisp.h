@@ -3729,7 +3729,6 @@ extern struct Lisp_Vector *allocate_pseudovector (int, int, int,
 				   VECSIZE (type), tag))
 
 extern bool gc_in_progress;
-extern bool abort_on_gc;
 extern Lisp_Object make_float (double);
 extern void display_malloc_warning (void);
 extern ptrdiff_t inhibit_garbage_collection (void);

@@ -1497,7 +1497,6 @@ signal_or_quit (Lisp_Object error_symbol, Lisp_Object data, bool keyboard_quit)
   struct handler *h;
 
   immediate_quit = 0;
-  abort_on_gc = 0;
   if (gc_in_progress || waiting_for_input)
     emacs_abort ();
 

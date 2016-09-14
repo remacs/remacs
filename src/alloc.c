@@ -231,12 +231,6 @@ EMACS_INT memory_full_cons_threshold;
 
 bool gc_in_progress;
 
-/* True means abort if try to GC.
-   This is for code which is written on the assumption that
-   no GC will happen, so as to verify that assumption.  */
-
-bool abort_on_gc;
-
 /* Number of live and free conses etc.  */
 
 static EMACS_INT total_conses, total_markers, total_symbols, total_buffers;
@@ -5674,9 +5668,6 @@ garbage_collect_1 (void *end)
   struct timespec start;
   Lisp_Object retval = Qnil;
   size_t tot_before = 0;
-
-  if (abort_on_gc)
-    emacs_abort ();
 
   /* Can't GC if pure storage overflowed because we can't determine
      if something is a pure object or not.  */

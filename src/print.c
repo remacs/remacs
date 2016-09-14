@@ -664,8 +664,6 @@ A printed representation of an object is text which describes that object.  */)
      but we don't want to deactivate the mark just for that.
      No need for specbind, since errors deactivate the mark.  */
   Lisp_Object save_deactivate_mark = Vdeactivate_mark;
-  bool prev_abort_on_gc = abort_on_gc;
-  abort_on_gc = true;
 
   Lisp_Object printcharfun = Vprin1_to_string_buffer;
   PRINTPREPARE;
@@ -687,7 +685,6 @@ A printed representation of an object is text which describes that object.  */)
 
   Vdeactivate_mark = save_deactivate_mark;
 
-  abort_on_gc = prev_abort_on_gc;
   return unbind_to (count, object);
 }
 
