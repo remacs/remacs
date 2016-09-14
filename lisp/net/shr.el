@@ -788,11 +788,12 @@ size, and full-buffer size."
   ;; Strip leading whitespace
   (and url (string-match "\\`\\s-+" url)
        (setq url (substring url (match-end 0))))
-  (cond ((or (not url)
-	     (not base)
+  (cond ((zerop (length url))
+         (nth 3 base))
+        ((or (not base)
 	     (string-match "\\`[a-z]*:" url))
 	 ;; Absolute or empty URI
-	 (or url (nth 3 base)))
+	 url)
 	((eq (aref url 0) ?/)
 	 (if (and (> (length url) 1)
 		  (eq (aref url 1) ?/))
