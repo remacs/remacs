@@ -705,6 +705,18 @@ this is controlled by the 'wdired-create-parent-directories' variable.
 *** 'W' is now bound to 'browse-url-of-dired-file', and is useful for
 viewing HTML files and the like.
 
+** Grep
+
+---
+*** Grep commands will now use GNU grep's '--null' option if
+available, which allows distinguishing the filename from contents if
+they contain colons.  This can be controlled by the new custom option
+'grep-use-null-filename-separator'.
+
+*** The grep/rgrep/lgrep functions will now ask about saving files
+before running.  This is controlled by the 'grep-save-buffers'
+variable.
+
 ** Edebug
 
 *** Edebug can be prevented from pausing 1 second after reaching a
@@ -1052,10 +1064,6 @@ things like forward-word in readline work.
 ---
 ** hideshow mode got four key bindings that are analogous to outline
 mode bindings: 'C-c @ C-a', 'C-c @ C-t', 'C-c @ C-d', and 'C-c @ C-e.'
-
-** The grep/rgrep/lgrep functions will now ask about saving files
-before running.  This is controlled by the 'grep-save-buffers'
-variable.
 
 ---
 ** Customizable variable 'query-replace-from-to-separator'

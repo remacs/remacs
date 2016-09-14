@@ -47,8 +47,8 @@ to avoid computing them again.")
 (defun grep-apply-setting (symbol value)
   "Set SYMBOL to VALUE, and update `grep-host-defaults-alist'.
 SYMBOL should be one of `grep-command', `grep-template',
-`grep-use-null-device', `grep-find-command',
-`grep-find-template', `grep-find-use-xargs', or
+`grep-use-null-device', `grep-find-command' `grep-find-template',
+`grep-find-use-xargs', `grep-use-null-filename-separator', or
 `grep-highlight-matches'."
   (when grep-host-defaults-alist
     (let* ((host-id
@@ -157,6 +157,15 @@ Customize or call the function `grep-apply-setting'."
   :type '(choice (const :tag "Do Not Append Null Device" nil)
 		 (const :tag "Append Null Device" t)
 		 (other :tag "Not Set" auto-detect))
+  :set 'grep-apply-setting
+  :group 'grep)
+
+(defcustom grep-use-null-filename-separator 'auto-detect
+  "If non-nil, use `grep's `--null' option.
+This is done to disambiguate file names in `grep's output."
+  :type '(choice (const :tag "Do Not Use `--null'" nil)
+                 (const :tag "Use `--null'" t)
+                 (other :tag "Not Set" auto-detect))
   :set 'grep-apply-setting
   :group 'grep)
 
@@ -357,33 +366,53 @@ A grep buffer becomes most recent when you select Grep mode in it.
 Notice that using \\[next-error] or \\[compile-goto-error] modifies
 `compilation-last-buffer' rather than `grep-last-buffer'.")
 
-;;;###autoload
-(defconst grep-regexp-alist
-  '(
-    ;; Use a tight regexp to handle weird file names (with colons
+(defconst grep--regexp-alist-column
+  ;; Calculate column positions (col . end-col) of first grep match on a line
+  (cons
+   (lambda ()
+     (when grep-highlight-matches
+       (let* ((beg (match-end 0))
+              (end (save-excursion (goto-char beg) (line-end-position)))
+              (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face)))
+         (when mbeg
+           (- mbeg beg)))))
+   (lambda ()
+     (when grep-highlight-matches
+       (let* ((beg (match-end 0))
+              (end (save-excursion (goto-char beg) (line-end-position)))
+              (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face))
+              (mend (and mbeg (next-single-property-change mbeg 'font-lock-face nil end))))
+         (when mend
+           (- mend beg)))))))
+(defconst grep--regexp-alist-bin-matcher
+  '("^Binary file \\(.+\\) matches$" 1 nil nil 0 1))
+(defconst grep-with-null-regexp-alist
+  `(("^\\([^\0]+\\)\\(\0\\)\\([0-9]+\\):" 1 3 ,grep--regexp-alist-column nil nil
+     (2 '(face unspecified display ":")))
+    ,grep--regexp-alist-bin-matcher)
+  "Regexp used to match grep hits.
+See `compilation-error-regexp-alist'.")
+(defconst grep-fallback-regexp-alist
+  `(;; Use a tight regexp to handle weird file names (with colons
     ;; in them) as well as possible.  E.g., use [1-9][0-9]* rather
     ;; than [0-9]+ so as to accept ":034:" in file names.
     ("^\\(.*?[^/\n]\\):[ \t]*\\([1-9][0-9]*\\)[ \t]*:"
-     1 2
-     ;; Calculate column positions (col . end-col) of first grep match on a line
-     ((lambda ()
-	(when grep-highlight-matches
-	  (let* ((beg (match-end 0))
-		 (end (save-excursion (goto-char beg) (line-end-position)))
-		 (mbeg (text-property-any beg end 'font-lock-face grep-match-face)))
-	    (when mbeg
-	      (- mbeg beg)))))
-      .
-      (lambda ()
-	(when grep-highlight-matches
-	  (let* ((beg (match-end 0))
-		 (end (save-excursion (goto-char beg) (line-end-position)))
-		 (mbeg (text-property-any beg end 'font-lock-face grep-match-face))
-		 (mend (and mbeg (next-single-property-change mbeg 'font-lock-face nil end))))
-	    (when mend
-	      (- mend beg)))))))
-    ("^Binary file \\(.+\\) matches$" 1 nil nil 0 1))
-  "Regexp used to match grep hits.  See `compilation-error-regexp-alist'.")
+     1 2 ,grep--regexp-alist-column)
+    ,grep--regexp-alist-bin-matcher)
+  "Regexp used to match grep hits when `--null' is not supported.
+See `compilation-error-regexp-alist'.")
+
+(defvaralias 'grep-regex-alist 'grep-with-null-regexp-alist)
+(make-obsolete-variable
+ 'grep-regex-alist "Call `grep-regexp-alist' instead." "26.1")
+
+;;;###autoload
+(defun grep-regexp-alist ()
+  "Return a regexp alist to match grep hits.
+The regexp used depends on `grep-use-null-filename-separator'.
+See `compilation-error-regexp-alist' for format details."
+  (if grep-use-null-filename-separator
+      grep-with-null-regexp-alist grep-fallback-regexp-alist))
 
 (defvar grep-first-column 0		; bug#10594
   "Value to use for `compilation-first-column' in grep buffers.")
@@ -538,6 +567,8 @@ This function is called from `compilation-filter-hook'."
 	     (grep-use-null-device ,grep-use-null-device)
 	     (grep-find-command ,grep-find-command)
 	     (grep-find-template ,grep-find-template)
+             (grep-use-null-filename-separator
+              ,grep-use-null-filename-separator)
 	     (grep-find-use-xargs ,grep-find-use-xargs)
 	     (grep-highlight-matches ,grep-highlight-matches)))))
   (let* ((host-id
@@ -550,7 +581,8 @@ This function is called from `compilation-filter-hook'."
     ;; computed for every host once.
     (dolist (setting '(grep-command grep-template
 		       grep-use-null-device grep-find-command
-		       grep-find-template grep-find-use-xargs
+                       grep-use-null-filename-separator
+                       grep-find-template grep-find-use-xargs
 		       grep-highlight-matches))
       (set setting
 	   (cadr (or (assq setting host-defaults)
@@ -576,6 +608,21 @@ This function is called from `compilation-filter-hook'."
 			 (concat (regexp-quote hello-file)
 				 ":[0-9]+:English")))))))))
 
+    (when (eq grep-use-null-filename-separator 'auto-detect)
+      (setq grep-use-null-filename-separator
+            (with-temp-buffer
+              (let* ((hello-file (expand-file-name "HELLO" data-directory))
+                     (args `("--null" "-ne" "^English" ,hello-file)))
+                (if grep-use-null-device
+                    (setq args (append args (list null-device)))
+                  (push "-H" args))
+                (and (grep-probe grep-program `(nil t nil ,@args))
+                     (progn
+                       (goto-char (point-min))
+                       (looking-at
+                        (concat (regexp-quote hello-file)
+                                "\0[0-9]+:English"))))))))
+
     (when (eq grep-highlight-matches 'auto-detect)
       (setq grep-highlight-matches
 	    (with-temp-buffer
@@ -591,6 +638,7 @@ This function is called from `compilation-filter-hook'."
 		 grep-template grep-find-template)
       (let ((grep-options
 	     (concat (if grep-use-null-device "-n" "-nH")
+                     (if grep-use-null-filename-separator " --null")
 		     (if (grep-probe grep-program
 				     `(nil nil nil "-e" "foo" ,null-device)
 				     nil 1)
@@ -733,7 +781,7 @@ This function is called from `compilation-filter-hook'."
   (set (make-local-variable 'compilation-error-face)
        grep-hit-face)
   (set (make-local-variable 'compilation-error-regexp-alist)
-       grep-regexp-alist)
+       (grep-regexp-alist))
   ;; compilation-directory-matcher can't be nil, so we set it to a regexp that
   ;; can never match.
   (set (make-local-variable 'compilation-directory-matcher) '("\\`a\\`"))
