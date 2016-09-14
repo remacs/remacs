@@ -99,7 +99,8 @@ matching entries of `tramp-connection-properties'."
 		   (or (nth 0 elt) "")
 		   (tramp-make-tramp-file-name
 		    (aref key 0) (aref key 1) (aref key 2) nil))
-	      (tramp-set-connection-property key (nth 1 elt) (nth 2 elt)))))
+	      (tramp-set-connection-property key (nth 1 elt) (nth 2 elt))))
+	  (tramp-set-connection-property key "active" 'undef))
 	hash)))
 
 ;;;###tramp-autoload
@@ -262,6 +263,7 @@ KEY is a vector."
     (aset key 3 nil)
     (aset key 4 nil))
   (let ((hash (tramp-get-hash-table key)))
+    (puthash "active" t hash)
     (puthash property value hash)
     (setq tramp-cache-data-changed t)
     (tramp-message key 7 "%s %s" property value)
@@ -334,14 +336,15 @@ properties of the local machine."
     (let (result)
       (maphash
        (lambda (key _value)
-	 (when (and (vectorp key) (null (aref key 3)))
+	 (when (and (vectorp key) (null (aref key 3))
+		    (tramp-connection-property-p key "active"))
 	   (add-to-list 'result key)))
        tramp-cache-data)
       result))
 
 (defun tramp-dump-connection-properties ()
   "Write persistent connection properties into file `tramp-persistency-file-name'."
-  ;; We shouldn't fail, otherwise (X)Emacs might not be able to be closed.
+  ;; We shouldn't fail, otherwise Emacs might not be able to be closed.
   (ignore-errors
     (when (and (hash-table-p tramp-cache-data)
 	       (not (zerop (hash-table-count tramp-cache-data)))
@@ -359,6 +362,7 @@ properties of the local machine."
 		    (not (tramp-file-name-localname key))
 		    (not (gethash "login-as" value)))
 	       (progn
+		 (remhash "active" value)
 		 (remhash "process-name" value)
 		 (remhash "process-buffer" value)
 		 (remhash "first-password-request" value))
@@ -368,7 +372,7 @@ properties of the local machine."
 	(with-temp-file tramp-persistency-file-name
 	  (insert
 	   ";; -*- emacs-lisp -*-"
-	   ;; `time-stamp-string' might not exist in all (X)Emacs flavors.
+	   ;; `time-stamp-string' might not exist in all Emacs flavors.
 	   (condition-case nil
 	       (progn
 		 (format
