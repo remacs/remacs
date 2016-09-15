@@ -621,6 +621,8 @@ Changes to files in this list are not listed.")
     ;; windowsnt.h to ms-w32.h.
     ("Geoff Voelker" :wrote "w32-fns.el" "w32.c" "w32.h" "w32heap.c"
      "w32heap.h" "w32inevt.c" "w32proc.c" "w32term.c" "ms-w32.h")
+    ("Bob Weiner" :changed "dframe.el" "etags.c" "info.el" "quail.el"
+     "rmail.el" "rmailsum.el" "speedbar.el")
     ("Morten Welinder" :wrote "dosfns.c" "[many MS-DOS files]" "msdos.h")
     ("Eli Zaretskii" :wrote "bidi.c" "[bidirectional display in xdisp.c]"
      "[tty menus in term.c]")
