@@ -1314,6 +1314,7 @@ necessary only.  This function will be used in file name completion."
   "Get the connection buffer to be used for VEC."
   (or (get-buffer (tramp-buffer-name vec))
       (with-current-buffer (get-buffer-create (tramp-buffer-name vec))
+	(tramp-set-connection-property vec "process-buffer" nil)
 	(setq buffer-undo-list t)
 	(setq default-directory
 	      (tramp-make-tramp-file-name
@@ -4306,30 +4307,40 @@ Only works for Bourne-like shells."
 
 ;; * In Emacs 21, `insert-directory' shows total number of bytes used
 ;;   by the files in that directory.  Add this here.
+;;
 ;; * Avoid screen blanking when hitting `g' in dired.  (Eli Tziperman)
+;;
 ;; * Better error checking.  At least whenever we see something
 ;;   strange when doing zerop, we should kill the process and start
 ;;   again.  (Greg Stark)
-;; * Username and hostname completion.
-;; ** Try to avoid usage of `last-input-event' in `tramp-completion-mode-p'.
-;; * Make `tramp-default-user' obsolete.
+;;
 ;; * Implement a general server-local-variable mechanism, as there are
 ;;   probably other variables that need different values for different
 ;;   servers too.  The user could then configure a variable (such as
 ;;   tramp-server-local-variable-alist) to define any such variables
 ;;   that they need to, which would then be let bound as appropriate
 ;;   in tramp functions.  (Jason Rumney)
+;;
 ;; * Make shadowfile.el grok Tramp filenames.  (Bug#4526, Bug#4846)
+;;
 ;; * I was wondering if it would be possible to use tramp even if I'm
 ;;   actually using sshfs.  But when I launch a command I would like
 ;;   to get it executed on the remote machine where the files really
 ;;   are.  (Andrea Crotti)
+;;
 ;; * Run emerge on two remote files.  Bug is described here:
 ;;   <http://www.mail-archive.com/tramp-devel@nongnu.org/msg01041.html>.
 ;;   (Bug#6850)
+;;
 ;; * Use also port to distinguish connections.  This is needed for
 ;;   different hosts sitting behind a single router (distinguished by
 ;;   different port numbers).  (Tzvi Edelman)
+;;
+;; * Refactor code from different handlers.  Start with
+;;   *-process-file.  One idea is to generalize `tramp-send-command'
+;;   and friends, for most of the handlers this is the major
+;;   difference between the different backends.  Other handlers but
+;;   *-process-file would profit from this as well.
 
 ;;; tramp.el ends here
 

@@ -99,8 +99,7 @@ matching entries of `tramp-connection-properties'."
 		   (or (nth 0 elt) "")
 		   (tramp-make-tramp-file-name
 		    (aref key 0) (aref key 1) (aref key 2) nil))
-	      (tramp-set-connection-property key (nth 1 elt) (nth 2 elt))))
-	  (tramp-set-connection-property key "active" 'undef))
+	      (tramp-set-connection-property key (nth 1 elt) (nth 2 elt)))))
 	hash)))
 
 ;;;###tramp-autoload
@@ -263,7 +262,6 @@ KEY is a vector."
     (aset key 3 nil)
     (aset key 4 nil))
   (let ((hash (tramp-get-hash-table key)))
-    (puthash "active" t hash)
     (puthash property value hash)
     (setq tramp-cache-data-changed t)
     (tramp-message key 7 "%s %s" property value)
@@ -333,11 +331,11 @@ properties of the local machine."
 ;;;###tramp-autoload
 (defun tramp-list-connections ()
   "Return a list of all known connection vectors according to `tramp-cache'."
-    (let (result)
+    (let (result tramp-verbose)
       (maphash
        (lambda (key _value)
 	 (when (and (vectorp key) (null (aref key 3))
-		    (tramp-connection-property-p key "active"))
+		    (tramp-connection-property-p key "process-buffer"))
 	   (add-to-list 'result key)))
        tramp-cache-data)
       result))
@@ -362,7 +360,6 @@ properties of the local machine."
 		    (not (tramp-file-name-localname key))
 		    (not (gethash "login-as" value)))
 	       (progn
-		 (remhash "active" value)
 		 (remhash "process-name" value)
 		 (remhash "process-buffer" value)
 		 (remhash "first-password-request" value))
@@ -430,8 +427,7 @@ for all methods.  Resulting data are derived from connection history."
 	      ;; `tramp-connection-properties'.  The cache is
 	      ;; initialized properly by side effect.
 	      (unless (tramp-connection-property-p key (car item))
-		(tramp-set-connection-property key (pop item) (car item))))
-	    (tramp-set-connection-property key "active" 'undef)))
+		(tramp-set-connection-property key (pop item) (car item))))))
 	(setq tramp-cache-data-changed nil))
     (file-error
      ;; Most likely because the file doesn't exist yet.  No message.
