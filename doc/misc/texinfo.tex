@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2016-08-16.20}
+\def\texinfoversion{2016-09-12.20}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -860,36 +860,6 @@ where each line of input produces a line of output.}
     \def\temp{\inleftmargin\lefttext}%
   \fi
   \temp
-}
-
-% @| inserts a changebar to the left of the current line.  It should
-% surround any changed text.  This approach does *not* work if the
-% change spans more than two lines of output.  To handle that, we would
-% have adopt a much more difficult approach (putting marks into the main
-% vertical list for the beginning and end of each change).  This command
-% is not documented, not supported, and doesn't work.
-%
-\def\|{%
-  % \vadjust can only be used in horizontal mode.
-  \leavevmode
-  %
-  % Append this vertical mode material after the current line in the output.
-  \vadjust{%
-    % We want to insert a rule with the height and depth of the current
-    % leading; that is exactly what \strutbox is supposed to record.
-    \vskip-\baselineskip
-    %
-    % \vadjust-items are inserted at the left edge of the type.  So
-    % the \llap here moves out into the left-hand margin.
-    \llap{%
-      %
-      % For a thicker or thinner bar, change the `1pt'.
-      \vrule height\baselineskip width1pt
-      %
-      % This is the space between the bar and the text.
-      \hskip 12pt
-    }%
-  }%
 }
 
 % @include FILE -- \input text of FILE.
@@ -1885,40 +1855,9 @@ output) for that.)}
   }
 \fi
 
+
+%
 \message{fonts,}
-
-% Change the current font style to #1, remembering it in \curfontstyle.
-% For now, we do not accumulate font styles: @b{@i{foo}} prints foo in
-% italics, not bold italics.
-%
-\def\setfontstyle#1{%
-  \def\curfontstyle{#1}% not as a control sequence, because we are \edef'd.
-  \csname ten#1\endcsname  % change the current font
-}
-
-% Select #1 fonts with the current style.
-%
-\def\selectfonts#1{\csname #1fonts\endcsname \csname\curfontstyle\endcsname}
-
-\def\rm{\fam=0 \setfontstyle{rm}}
-\def\it{\fam=\itfam \setfontstyle{it}}
-\def\sl{\fam=\slfam \setfontstyle{sl}}
-\def\bf{\fam=\bffam \setfontstyle{bf}}\def\bfstylename{bf}
-\def\tt{\fam=\ttfam \setfontstyle{tt}}
-
-% Unfortunately, we have to override this for titles and the like, since
-% in those cases "rm" is bold.  Sigh.
-\def\rmisbold{\rm\def\curfontstyle{bf}}
-
-% Texinfo sort of supports the sans serif font style, which plain TeX does not.
-% So we set up a \sf.
-\newfam\sffam
-\def\sf{\fam=\sffam \setfontstyle{sf}}
-\let\li = \sf % Sometimes we call it \li, not \sf.
-
-% We don't need math for this font style.
-\def\ttsl{\setfontstyle{ttsl}}
-
 
 % Set the baselineskip to #1, and the lineskip and strut size
 % correspondingly.  There is no deep meaning behind these magic numbers
@@ -2269,8 +2208,8 @@ end
 \setfont\deftt\ttshape{10}{\magstep1}{OT1TT}
 \setfont\defsl\slshape{10}{\magstep1}{OT1TT}
 \setfont\defttsl\ttslshape{10}{\magstep1}{OT1TT}
-\def\df{\let\tentt=\deftt \let\tenbf = \defbf
-\let\tenttsl=\defttsl \let\tensl=\defsl \bf}
+\def\df{\let\ttfont=\deftt \let\bffont = \defbf
+\let\ttfontsl=\defttsl \let\slfont=\defsl \bf}
 
 % Fonts for indices, footnotes, small examples (9pt).
 \def\smallnominalsize{9pt}
@@ -2403,8 +2342,8 @@ end
 \setfont\deftt\ttshape{10}{\magstephalf}{OT1TT}
 \setfont\defsl\slshape{10}{\magstephalf}{OT1TT}
 \setfont\defttsl\ttslshape{10}{\magstephalf}{OT1TT}
-\def\df{\let\tentt=\deftt \let\tenbf = \defbf
-\let\tensl=\defsl \let\tenttsl=\defttsl \bf}
+\def\df{\let\ttfont=\deftt \let\bffont = \defbf
+\let\slfont=\defsl \let\ttfontsl=\defttsl \bf}
 
 % Fonts for indices, footnotes, small examples (9pt).
 \def\smallnominalsize{9pt}
@@ -2510,6 +2449,12 @@ end
 \rm
 } % end of 10pt text font size definitions, \definetextfontsizex
 
+% Fonts for short table of contents.
+\setfont\shortcontrm\rmshape{12}{1000}{OT1}
+\setfont\shortcontbf\bfshape{10}{\magstep1}{OT1}  % no cmb12
+\setfont\shortcontsl\slshape{12}{1000}{OT1}
+\setfont\shortconttt\ttshape{12}{1000}{OT1TT}
+
 
 % We provide the user-level command
 %   @fonttextsize 10
@@ -2536,20 +2481,55 @@ end
  \endgroup
 }
 
+%
+% Change the current font style to #1, remembering it in \curfontstyle.
+% For now, we do not accumulate font styles: @b{@i{foo}} prints foo in
+% italics, not bold italics.
+%
+\def\setfontstyle#1{%
+  \def\curfontstyle{#1}% not as a control sequence, because we are \edef'd.
+  \csname #1font\endcsname  % change the current font
+}
+
+\def\rm{\fam=0 \setfontstyle{rm}}
+\def\it{\fam=\itfam \setfontstyle{it}}
+\def\sl{\fam=\slfam \setfontstyle{sl}}
+\def\bf{\fam=\bffam \setfontstyle{bf}}\def\bfstylename{bf}
+\def\tt{\fam=\ttfam \setfontstyle{tt}}
+
+% Unfortunately, we have to override this for titles and the like, since
+% in those cases "rm" is bold.  Sigh.
+\def\rmisbold{\rm\def\curfontstyle{bf}}
+
+% Texinfo sort of supports the sans serif font style, which plain TeX does not.
+% So we set up a \sf.
+\newfam\sffam
+\def\sf{\fam=\sffam \setfontstyle{sf}}
+
+% We don't need math for this font style.
+\def\ttsl{\setfontstyle{ttsl}}
+
+
 % In order for the font changes to affect most math symbols and letters,
 % we have to define the \textfont of the standard families.  We don't
 % bother to reset \scriptfont and \scriptscriptfont; awaiting user need.
 %
 \def\resetmathfonts{%
-  \textfont0=\tenrm \textfont1=\teni \textfont2=\tensy
-  \textfont\itfam=\tenit \textfont\slfam=\tensl \textfont\bffam=\tenbf
-  \textfont\ttfam=\tentt \textfont\sffam=\tensf
+  \textfont0=\rmfont \textfont1=\ifont \textfont2=\syfont
+  \textfont\itfam=\itfont \textfont\slfam=\slfont \textfont\bffam=\bffont
+  \textfont\ttfam=\ttfont \textfont\sffam=\sffont
 }
 
-% The font-changing commands redefine the meanings of \tenSTYLE, instead
+% Select #1 fonts with the current style.  Used to change font size
+% in, e.g., the LaTeX logo and acronyms.
+%
+\def\selectfonts#1{\csname #1fonts\endcsname \csname\curfontstyle\endcsname}
+
+% The font-changing commands (all called \...fonts) redefine the meanings of 
+% \STYLEfont, instead
 % of just \STYLE.  We do this because \STYLE needs to also set the
 % current \fam for math mode.  Our \STYLE (e.g., \rm) commands hardwire
-% \tenSTYLE to set the current font.
+% \STYLEfont to set the current font.
 %
 % Each font-changing command also sets the names \lsize (one size lower)
 % and \lllsize (three sizes lower).  These relative commands are used
@@ -2558,77 +2538,71 @@ end
 % This all needs generalizing, badly.
 %
 \def\textfonts{%
-  \let\tenrm=\textrm \let\tenit=\textit \let\tensl=\textsl
-  \let\tenbf=\textbf \let\tentt=\texttt \let\smallcaps=\textsc
-  \let\tensf=\textsf \let\teni=\texti \let\tensy=\textsy
-  \let\tenttsl=\textttsl
+  \let\rmfont=\textrm \let\itfont=\textit \let\slfont=\textsl
+  \let\bffont=\textbf \let\ttfont=\texttt \let\smallcaps=\textsc
+  \let\sffont=\textsf \let\ifont=\texti \let\syfont=\textsy
+  \let\ttfontsl=\textttsl
   \def\curfontsize{text}%
   \def\lsize{reduced}\def\lllsize{smaller}%
   \resetmathfonts \setleading{\textleading}}
 \def\titlefonts{%
-  \let\tenrm=\titlerm \let\tenit=\titleit \let\tensl=\titlesl
-  \let\tenbf=\titlebf \let\tentt=\titlett \let\smallcaps=\titlesc
-  \let\tensf=\titlesf \let\teni=\titlei \let\tensy=\titlesy
-  \let\tenttsl=\titlettsl
+  \let\rmfont=\titlerm \let\itfont=\titleit \let\slfont=\titlesl
+  \let\bffont=\titlebf \let\ttfont=\titlett \let\smallcaps=\titlesc
+  \let\sffont=\titlesf \let\ifont=\titlei \let\syfont=\titlesy
+  \let\ttfontsl=\titlettsl
   \def\curfontsize{title}%
   \def\lsize{chap}\def\lllsize{subsec}%
   \resetmathfonts \setleading{27pt}}
 \def\titlefont#1{{\titlefonts\rmisbold #1}}
 \def\chapfonts{%
-  \let\tenrm=\chaprm \let\tenit=\chapit \let\tensl=\chapsl
-  \let\tenbf=\chapbf \let\tentt=\chaptt \let\smallcaps=\chapsc
-  \let\tensf=\chapsf \let\teni=\chapi \let\tensy=\chapsy
-  \let\tenttsl=\chapttsl
+  \let\rmfont=\chaprm \let\itfont=\chapit \let\slfont=\chapsl
+  \let\bffont=\chapbf \let\ttfont=\chaptt \let\smallcaps=\chapsc
+  \let\sffont=\chapsf \let\ifont=\chapi \let\syfont=\chapsy
+  \let\ttfontsl=\chapttsl
   \def\curfontsize{chap}%
   \def\lsize{sec}\def\lllsize{text}%
   \resetmathfonts \setleading{19pt}}
 \def\secfonts{%
-  \let\tenrm=\secrm \let\tenit=\secit \let\tensl=\secsl
-  \let\tenbf=\secbf \let\tentt=\sectt \let\smallcaps=\secsc
-  \let\tensf=\secsf \let\teni=\seci \let\tensy=\secsy
-  \let\tenttsl=\secttsl
+  \let\rmfont=\secrm \let\itfont=\secit \let\slfont=\secsl
+  \let\bffont=\secbf \let\ttfont=\sectt \let\smallcaps=\secsc
+  \let\sffont=\secsf \let\ifont=\seci \let\syfont=\secsy
+  \let\ttfontsl=\secttsl
   \def\curfontsize{sec}%
   \def\lsize{subsec}\def\lllsize{reduced}%
   \resetmathfonts \setleading{17pt}}
 \def\subsecfonts{%
-  \let\tenrm=\ssecrm \let\tenit=\ssecit \let\tensl=\ssecsl
-  \let\tenbf=\ssecbf \let\tentt=\ssectt \let\smallcaps=\ssecsc
-  \let\tensf=\ssecsf \let\teni=\sseci \let\tensy=\ssecsy
-  \let\tenttsl=\ssecttsl
+  \let\rmfont=\ssecrm \let\itfont=\ssecit \let\slfont=\ssecsl
+  \let\bffont=\ssecbf \let\ttfont=\ssectt \let\smallcaps=\ssecsc
+  \let\sffont=\ssecsf \let\ifont=\sseci \let\syfont=\ssecsy
+  \let\ttfontsl=\ssecttsl
   \def\curfontsize{ssec}%
   \def\lsize{text}\def\lllsize{small}%
   \resetmathfonts \setleading{15pt}}
 \let\subsubsecfonts = \subsecfonts
 \def\reducedfonts{%
-  \let\tenrm=\reducedrm \let\tenit=\reducedit \let\tensl=\reducedsl
-  \let\tenbf=\reducedbf \let\tentt=\reducedtt \let\reducedcaps=\reducedsc
-  \let\tensf=\reducedsf \let\teni=\reducedi \let\tensy=\reducedsy
-  \let\tenttsl=\reducedttsl
+  \let\rmfont=\reducedrm \let\itfont=\reducedit \let\slfont=\reducedsl
+  \let\bffont=\reducedbf \let\ttfont=\reducedtt \let\reducedcaps=\reducedsc
+  \let\sffont=\reducedsf \let\ifont=\reducedi \let\syfont=\reducedsy
+  \let\ttfontsl=\reducedttsl
   \def\curfontsize{reduced}%
   \def\lsize{small}\def\lllsize{smaller}%
   \resetmathfonts \setleading{10.5pt}}
 \def\smallfonts{%
-  \let\tenrm=\smallrm \let\tenit=\smallit \let\tensl=\smallsl
-  \let\tenbf=\smallbf \let\tentt=\smalltt \let\smallcaps=\smallsc
-  \let\tensf=\smallsf \let\teni=\smalli \let\tensy=\smallsy
-  \let\tenttsl=\smallttsl
+  \let\rmfont=\smallrm \let\itfont=\smallit \let\slfont=\smallsl
+  \let\bffont=\smallbf \let\ttfont=\smalltt \let\smallcaps=\smallsc
+  \let\sffont=\smallsf \let\ifont=\smalli \let\syfont=\smallsy
+  \let\ttfontsl=\smallttsl
   \def\curfontsize{small}%
   \def\lsize{smaller}\def\lllsize{smaller}%
   \resetmathfonts \setleading{10.5pt}}
 \def\smallerfonts{%
-  \let\tenrm=\smallerrm \let\tenit=\smallerit \let\tensl=\smallersl
-  \let\tenbf=\smallerbf \let\tentt=\smallertt \let\smallcaps=\smallersc
-  \let\tensf=\smallersf \let\teni=\smalleri \let\tensy=\smallersy
-  \let\tenttsl=\smallerttsl
+  \let\rmfont=\smallerrm \let\itfont=\smallerit \let\slfont=\smallersl
+  \let\bffont=\smallerbf \let\ttfont=\smallertt \let\smallcaps=\smallersc
+  \let\sffont=\smallersf \let\ifont=\smalleri \let\syfont=\smallersy
+  \let\ttfontsl=\smallerttsl
   \def\curfontsize{smaller}%
   \def\lsize{smaller}\def\lllsize{smaller}%
   \resetmathfonts \setleading{9.5pt}}
-
-% Fonts for short table of contents.
-\setfont\shortcontrm\rmshape{12}{1000}{OT1}
-\setfont\shortcontbf\bfshape{10}{\magstep1}{OT1}  % no cmb12
-\setfont\shortcontsl\slshape{12}{1000}{OT1}
-\setfont\shortconttt\ttshape{12}{1000}{OT1TT}
 
 % Define these just so they can be easily changed for other fonts.
 \def\angleleft{$\langle$}
@@ -3535,7 +3509,7 @@ end
 %
 \newbox\errorbox
 %
-{\tentt \global\dimen0 = 3em}% Width of the box.
+{\ttfont \global\dimen0 = 3em}% Width of the box.
 \dimen2 = .55pt % Thickness of rules
 % The text. (`r' is open on the right, `e' somewhat less so on the left.)
 \setbox0 = \hbox{\kern-.75pt \reducedsf \putworderror\kern-1.5pt}
@@ -3794,7 +3768,7 @@ end
 
 % Macros to be used within @titlepage:
 
-\let\subtitlerm=\tenrm
+\let\subtitlerm=\rmfont
 \def\subtitlefont{\subtitlerm \normalbaselineskip = 13pt \normalbaselines}
 
 \parseargdef\title{%
@@ -7946,7 +7920,7 @@ end
     \fi           % no return type
     #3% output function name
   }%
-  {\rm\enskip}% hskip 0.5 em of \tenrm
+  {\rm\enskip}% hskip 0.5 em of \rmfont
   %
   \boldbrax
   % arguments will be output next, if any.
@@ -11717,7 +11691,4 @@ directory should work if nowhere else does.}
 
 @c vim:sw=2:
 
-@ignore
-   arch-tag: e1b36e32-c96e-4135-a41a-0b2efa2ea115
-@end ignore
 @enablebackslashhack

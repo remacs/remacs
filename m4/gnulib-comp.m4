@@ -99,6 +99,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module inttypes-incomplete:
   # Code from module largefile:
   AC_REQUIRE([AC_SYS_LARGEFILE])
+  # Code from module limits-h:
   # Code from module lstat:
   # Code from module manywarnings:
   # Code from module memrchr:
@@ -283,6 +284,7 @@ AC_DEFUN([gl_INIT],
   gl_SYS_TIME_MODULE_INDICATOR([gettimeofday])
   gl_INTTYPES_INCOMPLETE
   AC_REQUIRE([gl_LARGEFILE])
+  gl_LIMITS_H
   gl_FUNC_LSTAT
   if test $REPLACE_LSTAT = 1; then
     AC_LIBOBJ([lstat])
@@ -928,6 +930,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/ignore-value.h
   lib/intprops.h
   lib/inttypes.in.h
+  lib/limits.in.h
   lib/lstat.c
   lib/md5.c
   lib/md5.h
@@ -1043,6 +1046,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/include_next.m4
   m4/inttypes.m4
   m4/largefile.m4
+  m4/limits-h.m4
   m4/longlong.m4
   m4/lstat.m4
   m4/manywarnings.m4

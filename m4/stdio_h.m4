@@ -1,4 +1,4 @@
-# stdio_h.m4 serial 46
+# stdio_h.m4 serial 47
 dnl Copyright (C) 2007-2016 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -6,9 +6,7 @@ dnl with or without modifications, as long as this notice is preserved.
 
 AC_DEFUN([gl_STDIO_H],
 [
-  dnl For __USE_MINGW_ANSI_STDIO
-  AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
-
+  AC_DEFINE([__USE_MINGW_ANSI_STDIO], 1, [Use GNU style printf and scanf.])
   AC_REQUIRE([gl_STDIO_H_DEFAULTS])
   gl_NEXT_HEADERS([stdio.h])
 

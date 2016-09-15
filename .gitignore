@@ -67,6 +67,7 @@ lib/fcntl.h
 lib/getopt.h
 lib/inttypes.h
 lib/libgnu.a
+lib/limits.h
 lib/signal.h
 lib/std*.h
 !lib/std*.in.h
