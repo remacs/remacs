@@ -3049,8 +3049,8 @@ See the documentation for `calculator-mode' for more information.
 
 ;;;***
 
-;;;### (autoloads nil "calendar" "calendar/calendar.el" (22388 6368
-;;;;;;  10105 200000))
+;;;### (autoloads nil "calendar" "calendar/calendar.el" (22489 43024
+;;;;;;  125096 768000))
 ;;; Generated autoloads from calendar/calendar.el
 
 (autoload 'calendar "calendar" "\
@@ -9480,8 +9480,8 @@ corresponding to a successful execution.
 
 ;;;***
 
-;;;### (autoloads nil "etags" "progmodes/etags.el" (22388 6386 65282
-;;;;;;  759000))
+;;;### (autoloads nil "etags" "progmodes/etags.el" (22489 43024 128096
+;;;;;;  697000))
 ;;; Generated autoloads from progmodes/etags.el
 
 (defvar tags-file-name nil "\
@@ -9749,8 +9749,6 @@ Third arg DELIMITED (prefix arg) means replace only word-delimited matches.
 If you exit (\\[keyboard-quit], RET or q), you can resume the query replace
 with the command \\[tags-loop-continue].
 Fourth arg FILE-LIST-FORM non-nil means initialize the replacement loop.
-Fifth and sixth arguments START and END are accepted, for compatibility
-with `query-replace-regexp', and ignored.
 
 If FILE-LIST-FORM is non-nil, it is a form to evaluate to
 produce the list of files to search.
@@ -13162,8 +13160,8 @@ it if ARG is omitted or nil.
 
 ;;;***
 
-;;;### (autoloads nil "gv" "emacs-lisp/gv.el" (22388 6369 428119
-;;;;;;  144000))
+;;;### (autoloads nil "gv" "emacs-lisp/gv.el" (22489 43024 126096
+;;;;;;  745000))
 ;;; Generated autoloads from emacs-lisp/gv.el
 
 (autoload 'gv-get "gv" "\
@@ -13258,7 +13256,7 @@ The return value is the last VAL in the list.
 Return a reference to PLACE.
 This is like the `&' operator of the C language.
 Note: this only works reliably with lexical binding mode, except for very
-simple PLACEs such as (function-symbol \\='foo) which will also work in dynamic
+simple PLACEs such as (symbol-function \\='foo) which will also work in dynamic
 binding mode.
 
 \(fn PLACE)" nil t)
@@ -23079,24 +23077,50 @@ This enforces rescanning the buffer on next use.
 
 ;;;***
 
-;;;### (autoloads nil "regexp-opt" "emacs-lisp/regexp-opt.el" (22388
-;;;;;;  6369 632121 150000))
+;;;### (autoloads nil "regexp-opt" "emacs-lisp/regexp-opt.el" (22489
+;;;;;;  43024 126096 745000))
 ;;; Generated autoloads from emacs-lisp/regexp-opt.el
 
 (autoload 'regexp-opt "regexp-opt" "\
 Return a regexp to match a string in the list STRINGS.
-Each string should be unique in STRINGS and should not contain any regexps,
-quoted or not.  If optional PAREN is non-nil, ensure that the returned regexp
-is enclosed by at least one regexp grouping construct.
-The returned regexp is typically more efficient than the equivalent regexp:
+Each string should be unique in STRINGS and should not contain
+any regexps, quoted or not.  Optional PAREN specifies how the
+returned regexp is surrounded by grouping constructs.
 
- (let ((open (if PAREN \"\\\\(\" \"\")) (close (if PAREN \"\\\\)\" \"\")))
-   (concat open (mapconcat \\='regexp-quote STRINGS \"\\\\|\") close))
+The optional argument PAREN can be any of the following:
 
-If PAREN is `words', then the resulting regexp is additionally surrounded
-by \\=\\< and \\>.
-If PAREN is `symbols', then the resulting regexp is additionally surrounded
-by \\=\\_< and \\_>.
+a string
+    the resulting regexp is preceded by PAREN and followed by
+    \\), e.g.  use \"\\\\(?1:\" to produce an explicitly numbered
+    group.
+
+`words'
+    the resulting regexp is surrounded by \\=\\<\\( and \\)\\>.
+
+`symbols'
+    the resulting regexp is surrounded by \\_<\\( and \\)\\_>.
+
+non-nil
+    the resulting regexp is surrounded by \\( and \\).
+
+nil
+    the resulting regexp is surrounded by \\(?: and \\), if it is
+    necessary to ensure that a postfix operator appended to it will
+    apply to the whole expression.
+
+The resulting regexp is equivalent to but usually more efficient
+than that of a simplified version:
+
+ (defun simplified-regexp-opt (strings &optional paren)
+   (let ((parens
+          (cond ((stringp paren)       (cons paren \"\\\\)\"))
+                ((eq paren 'words)    '(\"\\\\\\=<\\\\(\" . \"\\\\)\\\\>\"))
+                ((eq paren 'symbols) '(\"\\\\_<\\\\(\" . \"\\\\)\\\\_>\"))
+                ((null paren)          '(\"\\\\(?:\" . \"\\\\)\"))
+                (t                       '(\"\\\\(\" . \"\\\\)\")))))
+     (concat (car paren)
+             (mapconcat 'regexp-quote strings \"\\\\|\")
+             (cdr paren))))
 
 \(fn STRINGS &optional PAREN)" nil nil)
 
@@ -24696,8 +24720,8 @@ Like `mail' command, but display mail buffer in another frame.
 
 ;;;***
 
-;;;### (autoloads nil "seq" "emacs-lisp/seq.el" (22388 6369 666121
-;;;;;;  485000))
+;;;### (autoloads nil "seq" "emacs-lisp/seq.el" (22489 43024 126096
+;;;;;;  745000))
 ;;; Generated autoloads from emacs-lisp/seq.el
 (push (purecopy '(seq 2 3)) package--builtin-versions)
 
@@ -29426,8 +29450,8 @@ if it had been inserted from a file named URL.
 
 ;;;***
 
-;;;### (autoloads nil "url-http" "url/url-http.el" (22457 44247 409108
-;;;;;;  239000))
+;;;### (autoloads nil "url-http" "url/url-http.el" (22489 43024 129096
+;;;;;;  674000))
 ;;; Generated autoloads from url/url-http.el
  (autoload 'url-default-expander "url-expand")
 
@@ -32513,14 +32537,16 @@ Zone out, completely.
 ;;;;;;  "cedet/semantic/analyze.el" "cedet/semantic/analyze/complete.el"
 ;;;;;;  "cedet/semantic/analyze/debug.el" "cedet/semantic/analyze/fcn.el"
 ;;;;;;  "cedet/semantic/analyze/refs.el" "cedet/semantic/bovine.el"
-;;;;;;  "cedet/semantic/bovine/c.el" "cedet/semantic/bovine/debug.el"
-;;;;;;  "cedet/semantic/bovine/el.el" "cedet/semantic/bovine/gcc.el"
-;;;;;;  "cedet/semantic/bovine/make.el" "cedet/semantic/bovine/scm.el"
-;;;;;;  "cedet/semantic/chart.el" "cedet/semantic/complete.el" "cedet/semantic/ctxt.el"
-;;;;;;  "cedet/semantic/db-debug.el" "cedet/semantic/db-ebrowse.el"
-;;;;;;  "cedet/semantic/db-el.el" "cedet/semantic/db-file.el" "cedet/semantic/db-find.el"
-;;;;;;  "cedet/semantic/db-global.el" "cedet/semantic/db-javascript.el"
-;;;;;;  "cedet/semantic/db-mode.el" "cedet/semantic/db-ref.el" "cedet/semantic/db-typecache.el"
+;;;;;;  "cedet/semantic/bovine/c-by.el" "cedet/semantic/bovine/c.el"
+;;;;;;  "cedet/semantic/bovine/debug.el" "cedet/semantic/bovine/el.el"
+;;;;;;  "cedet/semantic/bovine/gcc.el" "cedet/semantic/bovine/make-by.el"
+;;;;;;  "cedet/semantic/bovine/make.el" "cedet/semantic/bovine/scm-by.el"
+;;;;;;  "cedet/semantic/bovine/scm.el" "cedet/semantic/chart.el"
+;;;;;;  "cedet/semantic/complete.el" "cedet/semantic/ctxt.el" "cedet/semantic/db-debug.el"
+;;;;;;  "cedet/semantic/db-ebrowse.el" "cedet/semantic/db-el.el"
+;;;;;;  "cedet/semantic/db-file.el" "cedet/semantic/db-find.el" "cedet/semantic/db-global.el"
+;;;;;;  "cedet/semantic/db-javascript.el" "cedet/semantic/db-mode.el"
+;;;;;;  "cedet/semantic/db-ref.el" "cedet/semantic/db-typecache.el"
 ;;;;;;  "cedet/semantic/db.el" "cedet/semantic/debug.el" "cedet/semantic/decorate.el"
 ;;;;;;  "cedet/semantic/decorate/include.el" "cedet/semantic/decorate/mode.el"
 ;;;;;;  "cedet/semantic/dep.el" "cedet/semantic/doc.el" "cedet/semantic/ede-grammar.el"
@@ -32538,20 +32564,22 @@ Zone out, completely.
 ;;;;;;  "cedet/semantic/tag.el" "cedet/semantic/texi.el" "cedet/semantic/util-modes.el"
 ;;;;;;  "cedet/semantic/util.el" "cedet/semantic/wisent.el" "cedet/semantic/wisent/comp.el"
 ;;;;;;  "cedet/semantic/wisent/java-tags.el" "cedet/semantic/wisent/javascript.el"
-;;;;;;  "cedet/semantic/wisent/python.el" "cedet/semantic/wisent/wisent.el"
-;;;;;;  "cedet/srecode/args.el" "cedet/srecode/compile.el" "cedet/srecode/cpp.el"
-;;;;;;  "cedet/srecode/ctxt.el" "cedet/srecode/dictionary.el" "cedet/srecode/document.el"
+;;;;;;  "cedet/semantic/wisent/javat-wy.el" "cedet/semantic/wisent/js-wy.el"
+;;;;;;  "cedet/semantic/wisent/python-wy.el" "cedet/semantic/wisent/python.el"
+;;;;;;  "cedet/semantic/wisent/wisent.el" "cedet/srecode/args.el"
+;;;;;;  "cedet/srecode/compile.el" "cedet/srecode/cpp.el" "cedet/srecode/ctxt.el"
+;;;;;;  "cedet/srecode/dictionary.el" "cedet/srecode/document.el"
 ;;;;;;  "cedet/srecode/el.el" "cedet/srecode/expandproto.el" "cedet/srecode/extract.el"
 ;;;;;;  "cedet/srecode/fields.el" "cedet/srecode/filters.el" "cedet/srecode/find.el"
 ;;;;;;  "cedet/srecode/getset.el" "cedet/srecode/insert.el" "cedet/srecode/java.el"
 ;;;;;;  "cedet/srecode/map.el" "cedet/srecode/mode.el" "cedet/srecode/semantic.el"
-;;;;;;  "cedet/srecode/srt.el" "cedet/srecode/table.el" "cedet/srecode/template.el"
-;;;;;;  "cedet/srecode/texi.el" "cus-dep.el" "dframe.el" "dired-aux.el"
-;;;;;;  "dired-x.el" "dom.el" "dos-fns.el" "dos-vars.el" "dos-w32.el"
-;;;;;;  "dynamic-setting.el" "emacs-lisp/avl-tree.el" "emacs-lisp/bindat.el"
-;;;;;;  "emacs-lisp/byte-opt.el" "emacs-lisp/cl-extra.el" "emacs-lisp/cl-macs.el"
-;;;;;;  "emacs-lisp/cl-seq.el" "emacs-lisp/cl.el" "emacs-lisp/eieio-base.el"
-;;;;;;  "emacs-lisp/eieio-compat.el" "emacs-lisp/eieio-custom.el"
+;;;;;;  "cedet/srecode/srt-wy.el" "cedet/srecode/srt.el" "cedet/srecode/table.el"
+;;;;;;  "cedet/srecode/template.el" "cedet/srecode/texi.el" "cus-dep.el"
+;;;;;;  "dframe.el" "dired-aux.el" "dired-x.el" "dom.el" "dos-fns.el"
+;;;;;;  "dos-vars.el" "dos-w32.el" "dynamic-setting.el" "emacs-lisp/avl-tree.el"
+;;;;;;  "emacs-lisp/bindat.el" "emacs-lisp/byte-opt.el" "emacs-lisp/cl-extra.el"
+;;;;;;  "emacs-lisp/cl-macs.el" "emacs-lisp/cl-seq.el" "emacs-lisp/cl.el"
+;;;;;;  "emacs-lisp/eieio-base.el" "emacs-lisp/eieio-compat.el" "emacs-lisp/eieio-custom.el"
 ;;;;;;  "emacs-lisp/eieio-datadebug.el" "emacs-lisp/eieio-opt.el"
 ;;;;;;  "emacs-lisp/eieio-speedbar.el" "emacs-lisp/generator.el"
 ;;;;;;  "emacs-lisp/lisp-mnt.el" "emacs-lisp/package-x.el" "emacs-lisp/smie.el"
@@ -32591,18 +32619,26 @@ Zone out, completely.
 ;;;;;;  "gnus/nnweb.el" "gnus/registry.el" "gnus/rfc1843.el" "gnus/rfc2045.el"
 ;;;;;;  "gnus/rfc2047.el" "gnus/rfc2231.el" "gnus/rtree.el" "gnus/sieve-manage.el"
 ;;;;;;  "gnus/smime.el" "gnus/spam-stat.el" "gnus/spam-wash.el" "hex-util.el"
-;;;;;;  "hfy-cmap.el" "ibuf-ext.el" "international/charscript.el"
+;;;;;;  "hfy-cmap.el" "ibuf-ext.el" "international/charprop.el" "international/charscript.el"
 ;;;;;;  "international/fontset.el" "international/iso-ascii.el" "international/ja-dic-cnv.el"
-;;;;;;  "international/ja-dic-utl.el" "international/ogonek.el" "kermit.el"
-;;;;;;  "language/hanja-util.el" "language/thai-word.el" "ldefs-boot.el"
-;;;;;;  "leim/quail/arabic.el" "leim/quail/croatian.el" "leim/quail/cyril-jis.el"
-;;;;;;  "leim/quail/cyrillic.el" "leim/quail/czech.el" "leim/quail/ethiopic.el"
-;;;;;;  "leim/quail/georgian.el" "leim/quail/greek.el" "leim/quail/hanja-jis.el"
-;;;;;;  "leim/quail/hanja.el" "leim/quail/hanja3.el" "leim/quail/hebrew.el"
-;;;;;;  "leim/quail/indian.el" "leim/quail/ipa-praat.el" "leim/quail/ipa.el"
-;;;;;;  "leim/quail/japanese.el" "leim/quail/lao.el" "leim/quail/latin-alt.el"
-;;;;;;  "leim/quail/latin-ltx.el" "leim/quail/latin-post.el" "leim/quail/latin-pre.el"
-;;;;;;  "leim/quail/lrt.el" "leim/quail/persian.el" "leim/quail/programmer-dvorak.el"
+;;;;;;  "international/ja-dic-utl.el" "international/ogonek.el" "international/uni-bidi.el"
+;;;;;;  "international/uni-brackets.el" "international/uni-category.el"
+;;;;;;  "international/uni-combining.el" "international/uni-comment.el"
+;;;;;;  "international/uni-decimal.el" "international/uni-decomposition.el"
+;;;;;;  "international/uni-digit.el" "international/uni-lowercase.el"
+;;;;;;  "international/uni-mirrored.el" "international/uni-name.el"
+;;;;;;  "international/uni-numeric.el" "international/uni-old-name.el"
+;;;;;;  "international/uni-titlecase.el" "international/uni-uppercase.el"
+;;;;;;  "kermit.el" "language/hanja-util.el" "language/thai-word.el"
+;;;;;;  "ldefs-boot.el" "leim/ja-dic/ja-dic.el" "leim/quail/arabic.el"
+;;;;;;  "leim/quail/croatian.el" "leim/quail/cyril-jis.el" "leim/quail/cyrillic.el"
+;;;;;;  "leim/quail/czech.el" "leim/quail/ethiopic.el" "leim/quail/georgian.el"
+;;;;;;  "leim/quail/greek.el" "leim/quail/hanja-jis.el" "leim/quail/hanja.el"
+;;;;;;  "leim/quail/hanja3.el" "leim/quail/hebrew.el" "leim/quail/indian.el"
+;;;;;;  "leim/quail/ipa-praat.el" "leim/quail/ipa.el" "leim/quail/japanese.el"
+;;;;;;  "leim/quail/lao.el" "leim/quail/latin-alt.el" "leim/quail/latin-ltx.el"
+;;;;;;  "leim/quail/latin-post.el" "leim/quail/latin-pre.el" "leim/quail/lrt.el"
+;;;;;;  "leim/quail/persian.el" "leim/quail/programmer-dvorak.el"
 ;;;;;;  "leim/quail/py-punct.el" "leim/quail/pypunct-b5.el" "leim/quail/rfc1345.el"
 ;;;;;;  "leim/quail/sgml-input.el" "leim/quail/sisheng.el" "leim/quail/slovak.el"
 ;;;;;;  "leim/quail/symbol-ksc.el" "leim/quail/tamil-dvorak.el" "leim/quail/thai.el"
@@ -32683,7 +32719,7 @@ Zone out, completely.
 ;;;;;;  "vc/ediff-vers.el" "vc/ediff-wind.el" "vc/pcvs-info.el" "vc/pcvs-parse.el"
 ;;;;;;  "vc/pcvs-util.el" "vc/vc-dav.el" "vc/vc-filewise.el" "vcursor.el"
 ;;;;;;  "vt-control.el" "vt100-led.el" "w32-fns.el" "w32-vars.el"
-;;;;;;  "x-dnd.el") (22458 6108 204266 576000))
+;;;;;;  "x-dnd.el") (22491 3984 174622 61000))
 
 ;;;***
 
