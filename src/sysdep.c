@@ -2223,8 +2223,8 @@ get_random (void)
   int i;
   for (i = 0; i < (FIXNUM_BITS + RAND_BITS - 1) / RAND_BITS; i++)
     val = (random () ^ (val << RAND_BITS)
-	   ^ (val >> (BITS_PER_EMACS_INT - RAND_BITS)));
-  val ^= val >> (BITS_PER_EMACS_INT - FIXNUM_BITS);
+	   ^ (val >> (EMACS_INT_WIDTH - RAND_BITS)));
+  val ^= val >> (EMACS_INT_WIDTH - FIXNUM_BITS);
   return val & INTMASK;
 }
 

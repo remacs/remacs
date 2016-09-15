@@ -1876,9 +1876,9 @@ vmotion (register ptrdiff_t from, register ptrdiff_t from_byte,
 	    }
 	  pos = *compute_motion (prevline, bytepos, 0, lmargin, 0, from,
 				 /* Don't care for VPOS...  */
-				 1 << (BITS_PER_SHORT - 1),
+				 1 << (SHRT_WIDTH - 1),
 				 /* ... nor HPOS.  */
-				 1 << (BITS_PER_SHORT - 1),
+				 1 << (SHRT_WIDTH - 1),
 				 -1, hscroll, 0, w);
 	  vpos -= pos.vpos;
 	  first = 0;
@@ -1926,9 +1926,9 @@ vmotion (register ptrdiff_t from, register ptrdiff_t from_byte,
 	}
       pos = *compute_motion (prevline, bytepos, 0, lmargin, 0, from,
 			     /* Don't care for VPOS...  */
-			     1 << (BITS_PER_SHORT - 1),
+			     1 << (SHRT_WIDTH - 1),
 			     /* ... nor HPOS.  */
-			     1 << (BITS_PER_SHORT - 1),
+			     1 << (SHRT_WIDTH - 1),
 			     -1, hscroll, 0, w);
       did_motion = 1;
     }
@@ -1939,7 +1939,7 @@ vmotion (register ptrdiff_t from, register ptrdiff_t from_byte,
       did_motion = 0;
     }
   return compute_motion (from, from_byte, vpos, pos.hpos, did_motion,
-			 ZV, vtarget, - (1 << (BITS_PER_SHORT - 1)),
+			 ZV, vtarget, - (1 << (SHRT_WIDTH - 1)),
 			 -1, hscroll, 0, w);
 }
 

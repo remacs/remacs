@@ -5219,7 +5219,7 @@ x_window_property_intern (struct frame *f,
              property and those are indeed in 32 bit quantities if format is
              32.  */
 
-          if (BITS_PER_LONG > 32 && actual_format == 32)
+          if (LONG_WIDTH > 32 && actual_format == 32)
             {
               unsigned long i;
               int  *idata = (int *) tmp_data;

@@ -68,6 +68,7 @@ DEFINE_GDB_SYMBOL_BEGIN (int, GCTYPEBITS)
 DEFINE_GDB_SYMBOL_END (GCTYPEBITS)
 
 /* EMACS_INT - signed integer wide enough to hold an Emacs value
+   EMACS_INT_WIDTH - width in bits of EMACS_INT
    EMACS_INT_MAX - maximum value of EMACS_INT; can be used in #if
    pI - printf length modifier for EMACS_INT
    EMACS_UINT - unsigned variant of EMACS_INT */
@@ -77,16 +78,19 @@ DEFINE_GDB_SYMBOL_END (GCTYPEBITS)
 # elif INTPTR_MAX <= INT_MAX && !defined WIDE_EMACS_INT
 typedef int EMACS_INT;
 typedef unsigned int EMACS_UINT;
+enum { EMACS_INT_WIDTH = INT_WIDTH };
 #  define EMACS_INT_MAX INT_MAX
 #  define pI ""
 # elif INTPTR_MAX <= LONG_MAX && !defined WIDE_EMACS_INT
 typedef long int EMACS_INT;
 typedef unsigned long EMACS_UINT;
+enum { EMACS_INT_WIDTH = LONG_WIDTH };
 #  define EMACS_INT_MAX LONG_MAX
 #  define pI "l"
 # elif INTPTR_MAX <= LLONG_MAX
 typedef long long int EMACS_INT;
 typedef unsigned long long int EMACS_UINT;
+enum { EMACS_INT_WIDTH = LLONG_WIDTH };
 #  define EMACS_INT_MAX LLONG_MAX
 #  ifdef __MINGW32__
 #   define pI "I64"
@@ -107,26 +111,18 @@ enum {  BOOL_VECTOR_BITS_PER_CHAR =
 
 /* An unsigned integer type representing a fixed-length bit sequence,
    suitable for bool vector words, GC mark bits, etc.  Normally it is size_t
-   for speed, but it is unsigned char on weird platforms.  */
+   for speed, but on weird platforms it is unsigned char and not all
+   its bits are used.  */
 #if BOOL_VECTOR_BITS_PER_CHAR == CHAR_BIT
 typedef size_t bits_word;
 # define BITS_WORD_MAX SIZE_MAX
-enum { BITS_PER_BITS_WORD = CHAR_BIT * sizeof (bits_word) };
+enum { BITS_PER_BITS_WORD = SIZE_WIDTH };
 #else
 typedef unsigned char bits_word;
 # define BITS_WORD_MAX ((1u << BOOL_VECTOR_BITS_PER_CHAR) - 1)
 enum { BITS_PER_BITS_WORD = BOOL_VECTOR_BITS_PER_CHAR };
 #endif
 verify (BITS_WORD_MAX >> (BITS_PER_BITS_WORD - 1) == 1);
-
-/* Number of bits in some machine integer types.  */
-enum
-  {
-    BITS_PER_CHAR      = CHAR_BIT,
-    BITS_PER_SHORT     = CHAR_BIT * sizeof (short),
-    BITS_PER_LONG      = CHAR_BIT * sizeof (long int),
-    BITS_PER_EMACS_INT = CHAR_BIT * sizeof (EMACS_INT)
-  };
 
 /* printmax_t and uprintmax_t are types for printing large integers.
    These are the widest integers that are supported for printing.
@@ -232,7 +228,7 @@ enum Lisp_Bits
 #define GCALIGNMENT 8
 
     /* Number of bits in a Lisp_Object value, not counting the tag.  */
-    VALBITS = BITS_PER_EMACS_INT - GCTYPEBITS,
+    VALBITS = EMACS_INT_WIDTH - GCTYPEBITS,
 
     /* Number of bits in a Lisp fixnum tag.  */
     INTTYPEBITS = GCTYPEBITS - 1,
@@ -2027,7 +2023,7 @@ static double const DEFAULT_REHASH_SIZE = 1.5;
 INLINE EMACS_UINT
 sxhash_combine (EMACS_UINT x, EMACS_UINT y)
 {
-  return (x << 4) + (x >> (BITS_PER_EMACS_INT - 4)) + y;
+  return (x << 4) + (x >> (EMACS_INT_WIDTH - 4)) + y;
 }
 
 /* Hash X, returning a value that fits into a fixnum.  */
@@ -2035,7 +2031,7 @@ sxhash_combine (EMACS_UINT x, EMACS_UINT y)
 INLINE EMACS_UINT
 SXHASH_REDUCE (EMACS_UINT x)
 {
-  return (x ^ x >> (BITS_PER_EMACS_INT - FIXNUM_BITS)) & INTMASK;
+  return (x ^ x >> (EMACS_INT_WIDTH - FIXNUM_BITS)) & INTMASK;
 }
 
 /* These structures are used for various misc types.  */

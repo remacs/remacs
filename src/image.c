@@ -2525,7 +2525,7 @@ xbm_image_p (Lisp_Object object)
 	      if (STRINGP (elt))
 		{
 		  if (SCHARS (elt)
-		      < (width + BITS_PER_CHAR - 1) / BITS_PER_CHAR)
+		      < (width + CHAR_BIT - 1) / CHAR_BIT)
 		    return 0;
 		}
 	      else if (BOOL_VECTOR_P (elt))
@@ -2540,7 +2540,7 @@ xbm_image_p (Lisp_Object object)
       else if (STRINGP (data))
 	{
 	  if (SCHARS (data)
-	      < (width + BITS_PER_CHAR - 1) / BITS_PER_CHAR * height)
+	      < (width + CHAR_BIT - 1) / CHAR_BIT * height)
 	    return 0;
 	}
       else if (BOOL_VECTOR_P (data))
@@ -3089,7 +3089,7 @@ xbm_load (struct frame *f, struct image *img)
 	    {
 	      int i;
 	      char *p;
-	      int nbytes = (img->width + BITS_PER_CHAR - 1) / BITS_PER_CHAR;
+	      int nbytes = (img->width + CHAR_BIT - 1) / CHAR_BIT;
 
 	      SAFE_NALLOCA (bits, nbytes, img->height);
 	      p = bits;
@@ -3113,7 +3113,7 @@ xbm_load (struct frame *f, struct image *img)
             int nbytes, i;
             /* Windows mono bitmaps are reversed compared with X.  */
             invertedBits = bits;
-            nbytes = (img->width + BITS_PER_CHAR - 1) / BITS_PER_CHAR;
+            nbytes = (img->width + CHAR_BIT - 1) / CHAR_BIT;
             SAFE_NALLOCA (bits, nbytes, img->height);
             for (i = 0; i < nbytes; i++)
               bits[i] = XBM_BIT_SHUFFLE (invertedBits[i]);

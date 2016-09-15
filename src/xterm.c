@@ -5245,9 +5245,8 @@ x_send_scroll_bar_event (Lisp_Object window, enum scroll_bar_part part,
   struct window *w = XWINDOW (window);
   struct frame *f = XFRAME (w->frame);
   intptr_t iw = (intptr_t) w;
-  enum { BITS_PER_INTPTR = CHAR_BIT * sizeof iw };
-  verify (BITS_PER_INTPTR <= 64);
-  int sign_shift = BITS_PER_INTPTR - 32;
+  verify (INTPTR_WIDTH <= 64);
+  int sign_shift = INTPTR_WIDTH - 32;
 
   block_input ();
 

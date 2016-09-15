@@ -1318,7 +1318,7 @@ x_get_window_property (Display *display, Window window, Atom property,
 	  data = data1;
 	}
 
-      if (BITS_PER_LONG > 32 && *actual_format_ret == 32)
+      if (LONG_WIDTH > 32 && *actual_format_ret == 32)
         {
           unsigned long i;
 	  int  *idata = (int *) (data + offset);
@@ -2473,7 +2473,7 @@ x_handle_dnd_message (struct frame *f, const XClientMessageEvent *event,
      function expects them to be of size int (i.e. 32).  So to be able to
      use that function, put the data in the form it expects if format is 32. */
 
-  if (BITS_PER_LONG > 32 && event->format == 32)
+  if (LONG_WIDTH > 32 && event->format == 32)
     {
       for (i = 0; i < 5; ++i) /* There are only 5 longs in a ClientMessage. */
 	idata[i] = event->data.l[i];

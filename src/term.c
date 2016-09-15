@@ -1821,7 +1821,7 @@ static void
 produce_glyphless_glyph (struct it *it, Lisp_Object acronym)
 {
   int len, face_id = merge_glyphless_glyph_face (it);
-  char buf[sizeof "\\x" + max (6, (sizeof it->c * CHAR_BIT + 3) / 4)];
+  char buf[sizeof "\\x" + max (6, (INT_WIDTH + 3) / 4)];
   char const *str = "    ";
 
   if (it->glyphless_method == GLYPHLESS_DISPLAY_THIN_SPACE)

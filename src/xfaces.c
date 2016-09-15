@@ -737,8 +737,7 @@ the pixmap.  Bits are stored row by row, each row occupies
 	  && RANGED_INTEGERP (1, width, INT_MAX)
 	  && RANGED_INTEGERP (1, height, INT_MAX))
 	{
-	  int bytes_per_row = ((XINT (width) + BITS_PER_CHAR - 1)
-			       / BITS_PER_CHAR);
+	  int bytes_per_row = (XINT (width) + CHAR_BIT - 1) / CHAR_BIT;
 	  if (XINT (height) <= SBYTES (data) / bytes_per_row)
 	    pixmap_p = true;
 	}
