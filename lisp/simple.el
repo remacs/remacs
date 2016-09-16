@@ -5755,6 +5755,7 @@ cursor to the end of the buffer.
 If the variable `line-move-visual' is non-nil, this command moves
 by display lines.  Otherwise, it moves by buffer lines, without
 taking variable-width characters or continued lines into account.
+See \\[next-logical-line] for a command that always moves by buffer lines.
 
 The command \\[set-goal-column] can be used to create
 a semipermanent goal column for this command.
@@ -5798,6 +5799,7 @@ column, or at the end of the line if it is not long enough.
 If the variable `line-move-visual' is non-nil, this command moves
 by display lines.  Otherwise, it moves by buffer lines, without
 taking variable-width characters or continued lines into account.
+See \\[previous-logical-line] for a command that always moves by buffer lines.
 
 The command \\[set-goal-column] can be used to create
 a semipermanent goal column for this command.
