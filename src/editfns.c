@@ -3867,7 +3867,8 @@ specifiers, as follows:
 
   %<flags><width><precision>character
 
-where flags is [+ #-0]+, width is [0-9]+, and precision is .[0-9]+
+where flags is [+ #-0]+, width is [0-9]+, and precision is a literal
+period "." followed by [0-9]+
 
 The + flag character inserts a + before any positive number, while a
 space inserts a space before any positive number; these flags only
