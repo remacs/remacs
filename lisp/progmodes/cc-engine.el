@@ -8631,8 +8631,10 @@ comment at the start of cc-engine.el for more info."
 
 	 ;; CASE 11
 	 (when (and got-identifier
-		    (memq context '(nil top))
 		    (looking-at c-after-suffixed-type-decl-key)
+		    (or (eq context 'top)
+			(and eq context nil
+			     (match-beginning 1)))
 		    (if (and got-parens
 			     (not got-prefix)
 			     (not got-suffix)
@@ -9310,7 +9312,7 @@ comment at the start of cc-engine.el for more info."
 	       (c-forward-objc-directive)))
 
      (setq id-start
-	   (car-safe (c-forward-decl-or-cast-1 (c-point 'bosws) nil nil)))
+	   (car-safe (c-forward-decl-or-cast-1 (c-point 'bosws) 'top nil)))
      (< id-start beg)
 
      ;; There should not be a '=' or ',' between beg and the
