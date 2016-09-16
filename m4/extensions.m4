@@ -1,4 +1,4 @@
-# serial 14  -*- Autoconf -*-
+# serial 15  -*- Autoconf -*-
 # Enable extensions on systems that normally disable them.
 
 # Copyright (C) 2003, 2006-2016 Free Software Foundation, Inc.
