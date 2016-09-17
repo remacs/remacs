@@ -22,6 +22,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
      Adapted from alarm.c by Tim Fleehart
 */
 
+/* Enable GNU extensions in gnulib replacement headers.  */
+#define _GNU_SOURCE 1
+
 #include <mingw_time.h>
 #include <stdio.h>
 #include <stdlib.h>

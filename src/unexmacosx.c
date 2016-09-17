@@ -85,11 +85,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    be changed accordingly.
 */
 
-/* Make symbols like LLONG_WIDTH visible when the Gnulib <limits.h>
-   is included before <config.h>.  */
-#ifndef _GNU_SOURCE
+/* Enable GNU extensions in gnulib replacement headers.  */
 #define _GNU_SOURCE 1
-#endif
 
 /* config.h #define:s malloc/realloc/free and then includes stdlib.h.
    We want the undefined versions, but if config.h includes stdlib.h

@@ -81,6 +81,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    thread to exit.  The main thread waits for some time for the worker
    thread to exit, and if it doesn't, terminates it forcibly.  */
 
+/* Enable GNU extensions in gnulib replacement headers.  */
+#define _GNU_SOURCE 1
+
 #include <stddef.h>
 #include <errno.h>
 
