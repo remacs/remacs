@@ -1314,7 +1314,11 @@ necessary only.  This function will be used in file name completion."
   "Get the connection buffer to be used for VEC."
   (or (get-buffer (tramp-buffer-name vec))
       (with-current-buffer (get-buffer-create (tramp-buffer-name vec))
-	(tramp-set-connection-property vec "process-buffer" nil)
+	;; We use existence of connection property "process-buffer" as
+	;; indication, whether a connection is active.
+	(tramp-set-connection-property
+	 vec "process-buffer"
+	 (tramp-get-connection-property vec "process-buffer" nil))
 	(setq buffer-undo-list t)
 	(setq default-directory
 	      (tramp-make-tramp-file-name
@@ -2284,11 +2288,12 @@ should never be set globally, the intention is to let-bind it.")
   "Check, whether it is possible to connect the remote host w/o side-effects.
 This is true, if either the remote host is already connected, or if we are
 not in completion mode."
-  (and (tramp-tramp-file-p filename)
-       (or (not (tramp-completion-mode-p))
-	   (tramp-compat-process-live-p
-	    (tramp-get-connection-process
-	     (tramp-dissect-file-name filename))))))
+  (let (tramp-verbose)
+    (and (tramp-tramp-file-p filename)
+	 (or (not (tramp-completion-mode-p))
+	     (tramp-compat-process-live-p
+	      (tramp-get-connection-process
+	       (tramp-dissect-file-name filename)))))))
 
 (defun tramp-completion-handle-expand-file-name (name &optional dir)
   "Like `expand-file-name' for Tramp files."
