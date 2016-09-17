@@ -1299,13 +1299,15 @@ a new window in the current frame, splitting vertically."
    :modifier-p t)
   (set-buffer-modified-p (not (buffer-modified-p))))
 
-(define-ibuffer-op ibuffer-do-toggle-read-only (&optional _arg);FIXME:arg unused!
+(define-ibuffer-op ibuffer-do-toggle-read-only (&optional arg)
   "Toggle read only status in marked buffers.
-With optional ARG, make read-only only if ARG is not negative."
+If optional ARG is a non-negative integer, make buffers read only.
+If ARG is a negative integer or 0, make buffers writable.
+Otherwise, toggle read only status."
   (:opstring "toggled read only status in"
    :interactive "P"
    :modifier-p t)
-  (read-only-mode 'toggle))
+  (read-only-mode (if (integerp arg) arg 'toggle)))
 
 (define-ibuffer-op ibuffer-do-delete ()
   "Kill marked buffers as with `kill-this-buffer'."
