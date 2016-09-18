@@ -367,6 +367,11 @@ of incorrect Ǆungla).
 *** Characters which turn into multiple ones when cased are correctly handled.
 For example, ﬁ ligature is converted to FI when upper cased.
 
+*** Greek small sigma is correctly handled when at the end of the word.
+Strings such as ΌΣΟΣ are now correctly converted to Όσος when
+capitalized instead of incorrect Όσοσ (compare lowercase sigma at the
+end of the word).
+
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
 

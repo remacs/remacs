@@ -195,13 +195,16 @@
         ("deﬁne" "DEFINE" "deﬁne" "Deﬁne" "Deﬁne")
         ("ﬁsh" "FISH" "ﬁsh" "Fish" "Fish")
         ("Straße" "STRASSE" "straße" "Straße" "Straße")
-        ;; FIXME(bug#24603): Everything below is broken at the moment.
-        ;; Here’s what should happen:
-        ;;("ΌΣΟΣ" "ΌΣΟΣ" "όσος" "Όσος" "Όσος")
-        ;; And here’s what is actually happening:
-        ("ΌΣΟΣ" "ΌΣΟΣ" "όσοσ" "Όσοσ" "ΌΣΟΣ")
 
-        ("όσος" "ΌΣΟΣ" "όσος" "Όσος" "Όσος"))))))
+        ;; The word repeated twice to test behaviour at the end of a word
+        ;; inside of an input string as well as at the end of the string.
+        ("ΌΣΟΣ ΌΣΟΣ" "ΌΣΟΣ ΌΣΟΣ" "όσος όσος" "Όσος Όσος" "ΌΣΟΣ ΌΣΟΣ")
+        ;; What should be done with sole sigma?  It is ‘final’ but on the
+        ;; other hand it does not form a word.  We’re using regular sigma.
+        ("Σ Σ" "Σ Σ" "σ σ" "Σ Σ" "Σ Σ")
+        ("όσος" "ΌΣΟΣ" "όσος" "Όσος" "Όσος")
+        ;; If sigma is already lower case, we don’t want to change it.
+        ("όσοσ" "ΌΣΟΣ" "όσοσ" "Όσοσ" "Όσοσ"))))))
 
 (ert-deftest casefiddle-tests-casing-byte8 ()
   (should-not
