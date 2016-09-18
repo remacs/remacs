@@ -543,10 +543,6 @@ with L, LRE, or LRO Unicode bidi character type.")
   (set-case-syntax ?½ "_" tbl)
   (set-case-syntax ?¾ "_" tbl)
   (set-case-syntax ?¿ "." tbl)
-  (let ((c 192))
-    (while (<= c 222)
-      (set-case-syntax-pair c (+ c 32) tbl)
-      (setq c (1+ c))))
   (set-case-syntax ?× "_" tbl)
   (set-case-syntax ?ß "w" tbl)
   (set-case-syntax ?÷ "_" tbl)
@@ -558,101 +554,8 @@ with L, LRE, or LRO Unicode bidi character type.")
     (modify-category-entry c ?l)
     (setq c (1+ c)))
 
-  (let ((pair-ranges '((#x0100 . #x012F)
-		       (#x0132 . #x0137)
-		       (#x0139 . #x0148)
-		       (#x014a . #x0177)
-		       (#x0179 . #x017E)
-		       (#x0182 . #x0185)
-		       (#x0187 . #x0188)
-		       (#x018B . #x018C)
-		       (#x0191 . #x0192)
-		       (#x0198 . #x0199)
-		       (#x01A0 . #x01A5)
-		       (#x01A7 . #x01A8)
-		       (#x01AC . #x01AD)
-		       (#x01AF . #x01B0)
-		       (#x01B3 . #x01B6)
-		       (#x01B8 . #x01B9)
-		       (#x01BC . #x01BD)
-		       (#x01CD . #x01DC)
-		       (#x01DE . #x01EF)
-		       (#x01F4 . #x01F5)
-		       (#x01F8 . #x021F)
-		       (#x0222 . #x0233)
-		       (#x023B . #x023C)
-		       (#x0241 . #x0242)
-		       (#x0246 . #x024F))))
-    (dolist (elt pair-ranges)
-      (let ((from (car elt)) (to (cdr elt)))
-	(while (< from to)
-	  (set-case-syntax-pair from (1+ from) tbl)
-	  (setq from (+ from 2))))))
-
-  (set-case-syntax-pair ?Ÿ ?ÿ tbl)
-
-  ;; In some languages, such as Turkish, U+0049 LATIN CAPITAL LETTER I
-  ;; and U+0131 LATIN SMALL LETTER DOTLESS I make a case pair, and so
-  ;; do U+0130 LATIN CAPITAL LETTER I WITH DOT ABOVE and U+0069 LATIN
-  ;; SMALL LETTER I.
-
-  ;; We used to set up half of those correspondence unconditionally,
-  ;; but that makes searches slow.  So now we don't set up either half
-  ;; of these correspondences by default.
-
-  ;; (set-downcase-syntax  ?İ ?i tbl)
-  ;; (set-upcase-syntax    ?I ?ı tbl)
-
-  (set-case-syntax-pair ?Ɓ ?ɓ tbl)
-  (set-case-syntax-pair ?Ɔ ?ɔ tbl)
-  (set-case-syntax-pair ?Ɖ ?ɖ tbl)
-  (set-case-syntax-pair ?Ɗ ?ɗ tbl)
-  (set-case-syntax-pair ?Ǝ ?ǝ tbl)
-  (set-case-syntax-pair ?Ə ?ə tbl)
-  (set-case-syntax-pair ?Ɛ ?ɛ tbl)
-  (set-case-syntax-pair ?Ɠ ?ɠ tbl)
-  (set-case-syntax-pair ?Ɣ ?ɣ tbl)
-  (set-case-syntax-pair ?Ɩ ?ɩ tbl)
-  (set-case-syntax-pair ?Ɨ ?ɨ tbl)
-  (set-case-syntax-pair ?Ɯ ?ɯ tbl)
-  (set-case-syntax-pair ?Ɲ ?ɲ tbl)
-  (set-case-syntax-pair ?Ɵ ?ɵ tbl)
-  (set-case-syntax-pair ?Ʀ ?ʀ tbl)
-  (set-case-syntax-pair ?Ʃ ?ʃ tbl)
-  (set-case-syntax-pair ?Ʈ ?ʈ tbl)
-  (set-case-syntax-pair ?Ʊ ?ʊ tbl)
-  (set-case-syntax-pair ?Ʋ ?ʋ tbl)
-  (set-case-syntax-pair ?Ʒ ?ʒ tbl)
-  ;; We use set-downcase-syntax below, since we want upcase of ǆ
-  ;; return Ǆ, not ǅ, and the same for the rest.
-  (set-case-syntax-pair ?Ǆ ?ǆ tbl)
-  (set-downcase-syntax ?ǅ ?ǆ tbl)
-  (set-case-syntax-pair ?Ǉ ?ǉ tbl)
-  (set-downcase-syntax ?ǈ ?ǉ tbl)
-  (set-case-syntax-pair ?Ǌ ?ǌ tbl)
-  (set-downcase-syntax ?ǋ ?ǌ tbl)
-
-  ;; 01F0; F; 006A 030C; # LATIN SMALL LETTER J WITH CARON
-
-  (set-case-syntax-pair ?Ǳ ?ǳ tbl)
-  (set-downcase-syntax ?ǲ ?ǳ tbl)
-  (set-case-syntax-pair ?Ƕ ?ƕ tbl)
-  (set-case-syntax-pair ?Ƿ ?ƿ tbl)
-  (set-case-syntax-pair ?Ⱥ ?ⱥ tbl)
-  (set-case-syntax-pair ?Ƚ ?ƚ tbl)
-  (set-case-syntax-pair ?Ⱦ ?ⱦ tbl)
-  (set-case-syntax-pair ?Ƀ ?ƀ tbl)
-  (set-case-syntax-pair ?Ʉ ?ʉ tbl)
-  (set-case-syntax-pair ?Ʌ ?ʌ tbl)
-
   ;; Latin Extended Additional
   (modify-category-entry '(#x1e00 . #x1ef9) ?l)
-  (setq c #x1e00)
-  (while (<= c #x1ef9)
-    (and (zerop (% c 2))
-	 (or (<= c #x1e94) (>= c #x1ea0))
-	 (set-case-syntax-pair c (1+ c) tbl))
-    (setq c (1+ c)))
 
   ;; Latin Extended-C
   (setq c #x2C60)
@@ -660,56 +563,11 @@ with L, LRE, or LRO Unicode bidi character type.")
     (modify-category-entry c ?l)
     (setq c (1+ c)))
 
-  (let ((pair-ranges '((#x2C60 . #x2C61)
-                       (#x2C67 . #x2C6C)
-                       (#x2C72 . #x2C73)
-                       (#x2C75 . #x2C76))))
-    (dolist (elt pair-ranges)
-      (let ((from (car elt)) (to (cdr elt)))
-        (while (< from to)
-          (set-case-syntax-pair from (1+ from) tbl)
-          (setq from (+ from 2))))))
-
-  (set-case-syntax-pair ?Ɫ ?ɫ tbl)
-  (set-case-syntax-pair ?Ᵽ ?ᵽ tbl)
-  (set-case-syntax-pair ?Ɽ ?ɽ tbl)
-  (set-case-syntax-pair ?Ɑ ?ɑ tbl)
-  (set-case-syntax-pair ?Ɱ ?ɱ tbl)
-  (set-case-syntax-pair ?Ɐ ?ɐ tbl)
-  (set-case-syntax-pair ?Ɒ ?ɒ tbl)
-  (set-case-syntax-pair ?Ȿ ?ȿ tbl)
-  (set-case-syntax-pair ?Ɀ ?ɀ tbl)
-
   ;; Latin Extended-D
   (setq c #xA720)
   (while (<= c #xA7FF)
     (modify-category-entry c ?l)
     (setq c (1+ c)))
-
-  (let ((pair-ranges '((#xA722 . #xA72F)
-                       (#xA732 . #xA76F)
-                       (#xA779 . #xA77C)
-                       (#xA77E . #xA787)
-                       (#xA78B . #xA78E)
-                       (#xA790 . #xA793)
-                       (#xA796 . #xA7A9)
-                       (#xA7B4 . #xA7B7))))
-    (dolist (elt pair-ranges)
-      (let ((from (car elt)) (to (cdr elt)))
-        (while (< from to)
-          (set-case-syntax-pair from (1+ from) tbl)
-          (setq from (+ from 2))))))
-
-  (set-case-syntax-pair ?Ᵹ ?ᵹ tbl)
-  (set-case-syntax-pair ?Ɦ ?ɦ tbl)
-  (set-case-syntax-pair ?Ɜ ?ɜ tbl)
-  (set-case-syntax-pair ?Ɡ ?ɡ tbl)
-  (set-case-syntax-pair ?Ɬ ?ɬ tbl)
-  (set-case-syntax-pair ?Ɪ ?ɪ tbl)
-  (set-case-syntax-pair ?Ʞ ?ʞ tbl)
-  (set-case-syntax-pair ?Ʇ ?ʇ tbl)
-  (set-case-syntax-pair ?Ʝ ?ʝ tbl)
-  (set-case-syntax-pair ?Ꭓ ?ꭓ tbl)
 
   ;; Latin Extended-E
   (setq c #xAB30)
@@ -719,102 +577,19 @@ with L, LRE, or LRO Unicode bidi character type.")
 
   ;; Greek
   (modify-category-entry '(#x0370 . #x03ff) ?g)
-  (setq c #x0370)
-  (while (<= c #x03ff)
-    (if (or (and (>= c #x0391) (<= c #x03a1))
-	    (and (>= c #x03a3) (<= c #x03ab)))
-	(set-case-syntax-pair c (+ c 32) tbl))
-    (and (>= c #x03da)
-	 (<= c #x03ee)
-	 (zerop (% c 2))
-	 (set-case-syntax-pair c (1+ c) tbl))
-    (setq c (1+ c)))
-  (set-case-syntax-pair ?Ά ?ά tbl)
-  (set-case-syntax-pair ?Έ ?έ tbl)
-  (set-case-syntax-pair ?Ή ?ή tbl)
-  (set-case-syntax-pair ?Ί ?ί tbl)
-  (set-case-syntax-pair ?Ό ?ό tbl)
-  (set-case-syntax-pair ?Ύ ?ύ tbl)
-  (set-case-syntax-pair ?Ώ ?ώ tbl)
 
   ;; Armenian
   (setq c #x531)
-  (while (<= c #x556)
-    (set-case-syntax-pair c (+ c #x30) tbl)
-    (setq c (1+ c)))
 
   ;; Greek Extended
   (modify-category-entry '(#x1f00 . #x1fff) ?g)
-  (setq c #x1f00)
-  (while (<= c #x1fff)
-    (and (<= (logand c #x000f) 7)
-	 (<= c #x1fa7)
-	 (not (memq c '(#x1f16 #x1f17 #x1f56 #x1f57
-			       #x1f50 #x1f52 #x1f54 #x1f56)))
-	 (/= (logand c #x00f0) #x70)
-	 (set-case-syntax-pair (+ c 8) c tbl))
-    (setq c (1+ c)))
-  (set-case-syntax-pair ?Ᾰ ?ᾰ tbl)
-  (set-case-syntax-pair ?Ᾱ ?ᾱ tbl)
-  (set-case-syntax-pair ?Ὰ ?ὰ tbl)
-  (set-case-syntax-pair ?Ά ?ά tbl)
-  (set-case-syntax-pair ?ᾼ ?ᾳ tbl)
-  (set-case-syntax-pair ?Ὲ ?ὲ tbl)
-  (set-case-syntax-pair ?Έ ?έ tbl)
-  (set-case-syntax-pair ?Ὴ ?ὴ tbl)
-  (set-case-syntax-pair ?Ή ?ή tbl)
-  (set-case-syntax-pair ?ῌ ?ῃ tbl)
-  (set-case-syntax-pair ?Ῐ ?ῐ tbl)
-  (set-case-syntax-pair ?Ῑ ?ῑ tbl)
-  (set-case-syntax-pair ?Ὶ ?ὶ tbl)
-  (set-case-syntax-pair ?Ί ?ί tbl)
-  (set-case-syntax-pair ?Ῠ ?ῠ tbl)
-  (set-case-syntax-pair ?Ῡ ?ῡ tbl)
-  (set-case-syntax-pair ?Ὺ ?ὺ tbl)
-  (set-case-syntax-pair ?Ύ ?ύ tbl)
-  (set-case-syntax-pair ?Ῥ ?ῥ tbl)
-  (set-case-syntax-pair ?Ὸ ?ὸ tbl)
-  (set-case-syntax-pair ?Ό ?ό tbl)
-  (set-case-syntax-pair ?Ὼ ?ὼ tbl)
-  (set-case-syntax-pair ?Ώ ?ώ tbl)
-  (set-case-syntax-pair ?ῼ ?ῳ tbl)
 
   ;; cyrillic
   (modify-category-entry '(#x0400 . #x04FF) ?y)
-  (setq c #x0400)
-  (while (<= c #x04ff)
-    (and (>= c #x0400)
-	 (<= c #x040f)
-	 (set-case-syntax-pair c (+ c 80) tbl))
-    (and (>= c #x0410)
-	 (<= c #x042f)
-	 (set-case-syntax-pair c (+ c 32) tbl))
-    (and (zerop (% c 2))
-	 (or (and (>= c #x0460) (<= c #x0480))
-	     (and (>= c #x048c) (<= c #x04be))
-	     (and (>= c #x04d0) (<= c #x052e)))
-	 (set-case-syntax-pair c (1+ c) tbl))
-    (setq c (1+ c)))
-  (set-case-syntax-pair ?Ӂ ?ӂ tbl)
-  (set-case-syntax-pair ?Ӄ ?ӄ tbl)
-  (set-case-syntax-pair ?Ӈ ?ӈ tbl)
-  (set-case-syntax-pair ?Ӌ ?ӌ tbl)
-
   (modify-category-entry '(#xA640 . #xA69F) ?y)
-  (setq c #xA640)
-  (while (<= c #xA66C)
-    (set-case-syntax-pair c (+ c 1) tbl)
-    (setq c (+ c 2)))
-  (setq c #xA680)
-  (while (<= c #xA69A)
-    (set-case-syntax-pair c (+ c 1) tbl)
-    (setq c (+ c 2)))
 
   ;; Georgian
   (setq c #x10A0)
-  (while (<= c #x10CD)
-    (set-case-syntax-pair c (+ c #x1C60) tbl)
-    (setq c (1+ c)))
 
   ;; Cyrillic Extended-C
   (modify-category-entry '(#x1C80 . #x1C8F) ?y)
@@ -844,12 +619,6 @@ with L, LRE, or LRO Unicode bidi character type.")
     (set-case-syntax c "." tbl)
     (setq c (1+ c)))
 
-  ;; Roman numerals
-  (setq c #x2160)
-  (while (<= c #x216f)
-    (set-case-syntax-pair c (+ c #x10) tbl)
-    (setq c (1+ c)))
-
   ;; Fixme: The following blocks might be better as symbol rather than
   ;; punctuation.
   ;; Arrows
@@ -873,25 +642,11 @@ with L, LRE, or LRO Unicode bidi character type.")
   ;; Circled Latin
   (setq c #x24b6)
   (while (<= c #x24cf)
-    (set-case-syntax-pair c (+ c 26) tbl)
     (modify-category-entry c ?l)
     (modify-category-entry (+ c 26) ?l)
     (setq c (1+ c)))
 
-  ;; Glagolitic
-  (setq c #x2C00)
-  (while (<= c #x2C2E)
-    (set-case-syntax-pair c (+ c 48) tbl)
-    (setq c (1+ c)))
-
   ;; Coptic
-  (let ((pair-ranges '((#x2C80 . #x2CE2)
-		       (#x2CEB . #x2CF2))))
-    (dolist (elt pair-ranges)
-      (let ((from (car elt)) (to (cdr elt)))
-	(while (< from to)
-	  (set-case-syntax-pair from (1+ from) tbl)
-	  (setq from (+ from 2))))))
   ;; There's no Coptic category.  However, Coptic letters that are
   ;; part of the Greek block above get the Greek category, and those
   ;; in this block are derived from Greek letters, so let's be
@@ -901,45 +656,85 @@ with L, LRE, or LRO Unicode bidi character type.")
   ;; Fullwidth Latin
   (setq c #xff21)
   (while (<= c #xff3a)
-    (set-case-syntax-pair c (+ c #x20) tbl)
     (modify-category-entry c ?l)
     (modify-category-entry (+ c #x20) ?l)
-    (setq c (1+ c)))
-
-  ;; Deseret
-  (setq c #x10400)
-  (while (<= c #x10427)
-    (set-case-syntax-pair c (+ c 28) tbl)
-    (setq c (1+ c)))
-
-  ;; Osage
-  (setq c #x104B0)
-  (while (<= c #x104D3)
-    (set-case-syntax-pair c (+ c 40) tbl)
-    (setq c (1+ c)))
-
-  ;; Old Hungarian
-  (setq c #x10c80)
-  (while (<= c #x10cb2)
-    (set-case-syntax-pair c (+ c #x40) tbl)
-    (setq c (1+ c)))
-
-  ;; Warang Citi
-  (setq c #x118a0)
-  (while (<= c #x118bf)
-    (set-case-syntax-pair c (+ c #x20) tbl)
-    (setq c (1+ c)))
-
-  ;; Adlam
-  (setq c #x1e900)
-  (while (<= c #x1e921)
-    (set-case-syntax-pair c (+ c #x22) tbl)
     (setq c (1+ c)))
 
   ;; Combining diacritics
   (modify-category-entry '(#x300 . #x362) ?^)
   ;; Combining marks
   (modify-category-entry '(#x20d0 . #x20ff) ?^)
+
+  ;; Set all Letter, uppercase; Letter, lowercase and Letter, titlecase syntax
+  ;; to word.
+  (let ((syn-tab (standard-syntax-table)))
+    (map-char-table
+     (lambda (ch cat)
+       (when (memq cat '(Lu Ll Lt))
+         (modify-syntax-entry ch "w   " syn-tab)))
+     (unicode-property-table-internal 'general-category))
+
+    ;; Ⅰ through Ⅻ had word syntax in the past so set it here as well.
+    ;; General category of those characers is Number, Letter.
+    (modify-syntax-entry '(#x2160 . #x216b) "w   " syn-tab)
+
+    ;; ⓐ thourgh ⓩ are symbols, other according to Unicode but Emacs set
+    ;; their syntax to word in the past so keep backwards compatibility.
+    (modify-syntax-entry '(#x24D0 . #x24E9) "w   " syn-tab))
+
+  ;; Set downcase and upcase from Unicode properties
+
+  ;; In some languages, such as Turkish, U+0049 LATIN CAPITAL LETTER I and
+  ;; U+0131 LATIN SMALL LETTER DOTLESS I make a case pair, and so do U+0130
+  ;; LATIN CAPITAL LETTER I WITH DOT ABOVE and U+0069 LATIN SMALL LETTER I.
+
+  ;; We used to set up half of those correspondence unconditionally, but that
+  ;; makes searches slow.  So now we don't set up either half of these
+  ;; correspondences by default.
+
+  ;; (set-downcase-syntax  ?İ ?i tbl)
+  ;; (set-upcase-syntax    ?I ?ı tbl)
+
+  (let ((map-unicode-property
+         (lambda (property func)
+           (map-char-table
+            (lambda (ch cased)
+              ;; ASCII characters skipped due to reasons outlined above.  As of
+              ;; Unicode 9.0, this exception affects the following:
+              ;;   lc(U+0130 İ) = i
+              ;;   uc(U+0131 ı) = I
+              ;;   uc(U+017F ſ) = S
+              ;;   uc(U+212A K) = k
+              (when (> cased 127)
+                (let ((end (if (consp ch) (cdr ch) ch)))
+                  (setq ch (max 128 (if (consp ch) (car ch) ch)))
+                  (while (<= ch end)
+                    (funcall func ch cased)
+                    (setq ch (1+ ch))))))
+            (unicode-property-table-internal property))))
+        (down tbl)
+        (up (case-table-get-table tbl 'up)))
+
+    ;; This works on an assumption that if toUpper(x) != x then toLower(x) ==
+    ;; x (and the opposite for toLower/toUpper).  This doesn’t hold for title
+    ;; case characters but those incorrect mappings will be overwritten later.
+    (funcall map-unicode-property 'uppercase
+             (lambda (lc uc) (aset down lc lc) (aset up uc uc)))
+    (funcall map-unicode-property 'lowercase
+             (lambda (uc lc) (aset down lc lc) (aset up uc uc)))
+
+    ;; Now deal with the actual mapping.  This will correctly assign casing for
+    ;; title-case characters.
+    (funcall map-unicode-property 'uppercase
+             (lambda (lc uc) (aset up lc uc) (aset up uc uc)))
+    (funcall map-unicode-property 'lowercase
+             (lambda (uc lc) (aset down uc lc) (aset down lc lc))))
+
+  ;; Clear out the extra slots so that they will be recomputed from the main
+  ;; (downcase) table and upcase table.  Since we’re side-stepping the usual
+  ;; set-case-syntax-* functions, we need to do it explicitly.
+  (set-char-table-extra-slot tbl 1 nil)
+  (set-char-table-extra-slot tbl 2 nil)
 
   ;; Fixme: syntax for symbols &c
   )

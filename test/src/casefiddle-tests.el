@@ -73,8 +73,7 @@
 
     (?Σ ?Σ ?σ ?Σ)
     (?σ ?Σ ?σ ?Σ)
-    ;; FIXME(bug#24603): Another broken one:
-    ;;(?ς ?Σ ?ς ?Σ)
+    (?ς ?Σ ?ς ?Σ)
 
     (?Ⅷ ?Ⅷ ?ⅷ ?Ⅷ)
     (?ⅷ ?Ⅷ ?ⅷ ?Ⅷ)))
@@ -196,7 +195,6 @@
         ;;("ﬁsh" "FIsh" "ﬁsh" "Fish" "Fish")
         ;;("Straße" "STRASSE" "straße" "Straße" "Straße")
         ;;("ΌΣΟΣ" "ΌΣΟΣ" "όσος" "Όσος" "Όσος")
-        ;;("όσος" "ΌΣΟΣ" "όσος" "Όσος" "Όσος")
         ;; And here’s what is actually happening:
         ("ǄUNGLA" "ǄUNGLA" "ǆungla" "Ǆungla" "ǄUNGLA")
         ("ǅungla" "ǅUNGLA" "ǆungla" "ǅungla" "ǅungla")
@@ -205,7 +203,8 @@
         ("ﬁsh" "ﬁSH" "ﬁsh" "ﬁsh" "ﬁsh")
         ("Straße" "STRAßE" "straße" "Straße" "Straße")
         ("ΌΣΟΣ" "ΌΣΟΣ" "όσοσ" "Όσοσ" "ΌΣΟΣ")
-        ("όσος" "ΌΣΟς" "όσος" "Όσος" "Όσος"))))))
+
+        ("όσος" "ΌΣΟΣ" "όσος" "Όσος" "Όσος"))))))
 
 (ert-deftest casefiddle-tests-casing-byte8 ()
   (should-not
