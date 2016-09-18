@@ -231,23 +231,94 @@ The argument object is not altered--the value is a copy.  */)
   return casify_object (CASE_CAPITALIZE_UP, obj);
 }
 
+/* Based on CTX, case region in a unibyte buffer from POS to *ENDP.  Return
+   first position that has changed and save last position in *ENDP.  If no
+   characters were changed, return -1 and *ENDP is unspecified. */
+static ptrdiff_t
+do_casify_unibyte_region (struct casing_context *ctx,
+			  ptrdiff_t pos, ptrdiff_t *endp)
+{
+  ptrdiff_t first = -1, last = -1;  /* Position of first and last changes. */
+  ptrdiff_t end = *endp;
+  int ch, cased;
+
+  for (; pos < end; ++pos)
+    {
+      ch = FETCH_BYTE (pos);
+      MAKE_CHAR_MULTIBYTE (ch);
+
+      cased = case_character (ctx, ch);
+      if (cased == ch)
+	continue;
+
+      last = pos;
+      if (first < 0)
+	first = pos;
+
+      MAKE_CHAR_UNIBYTE (cased);
+      FETCH_BYTE (pos) = cased;
+    }
+
+  *endp = last + 1;
+  return first;
+}
+
+/* Based on CTX, case region in a multibyte buffer from POS to *ENDP.  Return
+   first position that has changed and save last position in *ENDP.  If no
+   characters were changed, return -1 and *ENDP is unspecified. */
+static ptrdiff_t
+do_casify_multibyte_region (struct casing_context *ctx,
+                           ptrdiff_t pos, ptrdiff_t *endp)
+{
+  ptrdiff_t first = -1, last = -1;  /* Position of first and last changes. */
+  ptrdiff_t pos_byte = CHAR_TO_BYTE (pos), end = *endp;
+  ptrdiff_t opoint = PT;
+  int ch, cased, len;
+
+  while (pos < end)
+    {
+      ch = STRING_CHAR_AND_LENGTH (BYTE_POS_ADDR (pos_byte), len);
+      cased = case_character (ctx, ch);
+      if (cased != ch)
+	{
+	  last = pos;
+	  if (first < 0)
+	    first = pos;
+
+	  if (ASCII_CHAR_P (cased) && ASCII_CHAR_P (ch))
+	    FETCH_BYTE (pos_byte) = cased;
+	  else
+	    {
+	      unsigned char str[MAX_MULTIBYTE_LENGTH];
+	      int totlen = CHAR_STRING (cased, str);
+	      if (len == totlen)
+		memcpy (BYTE_POS_ADDR (pos_byte), str, len);
+	      else
+		/* Replace one character with the other(s), keeping text
+		   properties the same.  */
+		replace_range_2 (pos, pos_byte, pos + 1, pos_byte + len,
+				 (char *) str, 9, totlen, 0);
+	      len = totlen;
+	    }
+	}
+      pos++;
+      pos_byte += len;
+    }
+
+  if (PT != opoint)
+    TEMP_SET_PT_BOTH (opoint, CHAR_TO_BYTE (opoint));
+
+  *endp = last;
+  return first;
+}
+
 /* flag is CASE_UP, CASE_DOWN or CASE_CAPITALIZE or CASE_CAPITALIZE_UP.
    b and e specify range of buffer to operate on. */
-
 static void
 casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e)
 {
-  bool multibyte = !NILP (BVAR (current_buffer, enable_multibyte_characters));
-  ptrdiff_t start, end;
-  ptrdiff_t start_byte;
-
-  /* Position of first and last changes.  */
-  ptrdiff_t first = -1, last;
-
-  ptrdiff_t opoint = PT;
-  ptrdiff_t opoint_byte = PT_BYTE;
-
   struct casing_context ctx;
+  ptrdiff_t start, end;
 
   if (EQ (b, e))
     /* Not modifying because nothing marked */
@@ -258,75 +329,17 @@ casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e)
   end = XFASTINT (e);
   modify_text (start, end);
   record_change (start, end - start);
-  start_byte = CHAR_TO_BYTE (start);
-
   prepare_casing_context (&ctx, flag, true);
 
-  while (start < end)
+  if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
+    start = do_casify_unibyte_region (&ctx, start, &end);
+  else
+    start = do_casify_multibyte_region (&ctx, start, &end);
+
+  if (start >= 0)
     {
-      int ch, cased, len;
-
-      if (multibyte)
-	{
-	  ch = FETCH_MULTIBYTE_CHAR (start_byte);
-	  len = CHAR_BYTES (ch);
-	}
-      else
-	{
-	  ch = FETCH_BYTE (start_byte);
-	  MAKE_CHAR_MULTIBYTE (ch);
-	  len = 1;
-	}
-      cased = case_character (&ctx, ch);
-      if (ch != cased)
-	{
-	  last = start;
-	  if (first < 0)
-	    first = start;
-
-	  if (! multibyte)
-	    {
-	      MAKE_CHAR_UNIBYTE (cased);
-	      FETCH_BYTE (start_byte) = cased;
-	    }
-	  else if (ASCII_CHAR_P (cased) && ASCII_CHAR_P (ch))
-	    FETCH_BYTE (start_byte) = cased;
-	  else
-	    {
-	      int tolen = CHAR_BYTES (cased);
-	      int j;
-	      unsigned char str[MAX_MULTIBYTE_LENGTH];
-
-	      CHAR_STRING (cased, str);
-	      if (len == tolen)
-		{
-		  /* Length is unchanged.  */
-		  for (j = 0; j < len; ++j)
-		    FETCH_BYTE (start_byte + j) = str[j];
-		}
-	      else
-		{
-		  /* Replace one character with the other,
-		     keeping text properties the same.  */
-		  replace_range_2 (start, start_byte,
-				   start + 1, start_byte + len,
-				   (char *) str, 1, tolen,
-				   0);
-		  len = tolen;
-		}
-	    }
-	}
-      start++;
-      start_byte += len;
-    }
-
-  if (PT != opoint)
-    TEMP_SET_PT_BOTH (opoint, opoint_byte);
-
-  if (first >= 0)
-    {
-      signal_after_change (first, last + 1 - first, last + 1 - first);
-      update_compositions (first, last + 1, CHECK_ALL);
+      signal_after_change (start, end + 1 - start, end + 1 - start);
+      update_compositions (start, end + 1, CHECK_ALL);
     }
 }
 
