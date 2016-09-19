@@ -2809,8 +2809,7 @@ the result will be a local, non-Tramp, file name."
     (setq name (concat (file-name-as-directory dir) name)))
   ;; If connection is not established yet, run the real handler.
   (if (not (tramp-connectable-p name))
-      (tramp-drop-volume-letter
-       (tramp-run-real-handler 'expand-file-name (list name nil)))
+      (tramp-run-real-handler 'expand-file-name (list name nil))
     ;; Dissect NAME.
     (with-parsed-tramp-file-name name nil
       (unless (tramp-run-real-handler 'file-name-absolute-p (list localname))
@@ -5727,14 +5726,18 @@ function cell is returned to be applied on a buffer."
 ;; * Don't use globbing for directories with many files, as this is
 ;;   likely to produce long command lines, and some shells choke on
 ;;   long command lines.
+;;
 ;; * Don't search for perl5 and perl.  Instead, only search for perl and
 ;;   then look if it's the right version (with `perl -v').
+;;
 ;; * When editing a remote CVS controlled file as a different user, VC
 ;;   gets confused about the file locking status.  Try to find out why
 ;;   the workaround doesn't work.
+;;
 ;; * Allow out-of-band methods as _last_ multi-hop.  Open a connection
 ;;   until the last but one hop via `start-file-process'.  Apply it
 ;;   also for ftp and smb.
+;;
 ;; * WIBNI if we had a command "trampclient"?  If I was editing in
 ;;   some shell with root privileges, it would be nice if I could
 ;;   just call
@@ -5756,22 +5759,60 @@ function cell is returned to be applied on a buffer."
 ;;   reasonably unproblematic.  And maybe trampclient should have some
 ;;   way of passing credentials, like by using an SSL socket or
 ;;   something.  (David Kastrup)
+;;
 ;; * Reconnect directly to a compliant shell without first going
 ;;   through the user's default shell.  (Pete Forman)
+;;
 ;; * How can I interrupt the remote process with a signal
 ;;   (interrupt-process seems not to work)?  (Markus Triska)
+;;
 ;; * Avoid the local shell entirely for starting remote processes.  If
 ;;   so, I think even a signal, when delivered directly to the local
 ;;   SSH instance, would correctly be propagated to the remote process
 ;;   automatically; possibly SSH would have to be started with
 ;;   "-t".  (Markus Triska)
+;;
 ;; * It makes me wonder if tramp couldn't fall back to ssh when scp
 ;;   isn't on the remote host.  (Mark A. Hershberger)
+;;
 ;; * Use lsh instead of ssh.  (Alfred M. Szmidt)
+;;
 ;; * Optimize out-of-band copying when both methods are scp-like (not
 ;;   rsync).
+;;
 ;; * Keep a second connection open for out-of-band methods like scp or
 ;;   rsync.
+;;
 ;; * Implement completion for "/method:user@host:~<abc> TAB".
+;;
+;; * I think you could get the best of both worlds by using an
+;;   approach similar to Tramp but running a little tramp-daemon on
+;;   the other end, such that we can use a more efficient
+;;   communication protocol (e.g. when saving a file we could locally
+;;   diff it against the last version (of which the remote daemon
+;;   would also keep a copy), and then only send the diff).
+;;
+;;   This said, even using such a daemon it might be difficult to get
+;;   good performance: part of the problem is the number of
+;;   round-trips.  E.g. when saving a file we have to check if the
+;;   file was modified in the mean time and whether saving into a new
+;;   inode would change the owner (etc...), which each require a
+;;   round-trip.  To get rid of these round-trips, we'd have to
+;;   shortcut this code and delegate the higher-level "save file"
+;;   operation to the remote server, which then has to perform those
+;;   tasks but still obeying the locally set customizations about how
+;;   to do each one of those tasks.
+;;
+;;   We could either put higher-level ops in there (like
+;;   `save-buffer'), which implies replicating the whole `save-buffer'
+;;   behavior, which is a lot of work and likely to be not 100%
+;;   faithful.
+;;
+;;   Or we could introduce new low-level ops that are asynchronous,
+;;   and then rewrite save-buffer to use them.  IOW save-buffer would
+;;   start with a bunch of calls like `start-getting-file-attributes'
+;;   which could immediately be passed on to the remote side, and
+;;   later on checks the return value of those calls as and when
+;;   needed.  (Stefan Monnier)
 
 ;;; tramp-sh.el ends here
