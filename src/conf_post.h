@@ -358,16 +358,6 @@ extern int emacs_setenv_TZ (char const *);
 #define INLINE_HEADER_BEGIN _GL_INLINE_HEADER_BEGIN
 #define INLINE_HEADER_END _GL_INLINE_HEADER_END
 
-/* To use the struct hack with N elements, declare the struct like this:
-     struct s { ...; t name[FLEXIBLE_ARRAY_MEMBER]; };
-   and allocate (offsetof (struct s, name) + N * sizeof (t)) bytes.
-   IBM xlc 12.1 claims to do C99 but mishandles flexible array members.  */
-#ifdef __IBMC__
-# define FLEXIBLE_ARRAY_MEMBER 1
-#else
-# define FLEXIBLE_ARRAY_MEMBER
-#endif
-
 /* 'int x UNINIT;' is equivalent to 'int x;', except it cajoles GCC
    into not warning incorrectly about use of an uninitialized variable.  */
 #if defined GCC_LINT || defined lint
