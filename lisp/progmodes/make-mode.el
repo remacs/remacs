@@ -713,6 +713,7 @@ The function must satisfy this calling convention:
     (modify-syntax-entry ?#  "<     " st)
     (modify-syntax-entry ?\n ">     " st)
     (modify-syntax-entry ?= "." st)
+    (modify-syntax-entry ?$ "." st)
     st)
   "Syntax table used in `makefile-mode'.")
 
