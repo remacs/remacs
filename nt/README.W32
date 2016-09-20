@@ -139,19 +139,21 @@ See the end of the file for license conditions.
   libraries.  These libraries are all available on the following sites:
 
   1. http://sourceforge.net/projects/ezwinports/files/
-     -- leaner, more up-to-date builds, only for 32-bit Emacs
-  2. http://www.gtk.org/download/win32.php
-     http://www.gtk.org/download/win64.php
-     -- the GTK project site; offers much fatter builds, but includes
-        64-bit DLLs (from the 2nd URL)
-  3. GnuWin32 project -- very old builds, not recommended
+     -- up-to-date builds, self-contained archives, only for 32-bit Emacs
+  2. The MSYS2 project -- for 64-bit Emacs:
+     http://msys2.github.io/
+     https://sourceforge.net/projects/msys2/files/REPOS/MINGW/x86_64/
+  3. GnuWin32 project -- very old 32-bit builds, not recommended
 
   The libraries to download are mentioned below.  Some libraries
   depend on others that need to be downloaded separately from the same
   site; please consult the download instructions on each site for the
   details.  In general, the ezwinports site mentioned above has all
   the dependencies bundled in the same zip archive, so installing from
-  there is the easiest.
+  there is the easiest.  For MSYS2 builds, we recommend that you
+  install and use the 'pacman' utility (available from the MSYS2
+  site), see the instructions below -- it will automatically install
+  all the dependencies.
 
   Emacs will find these libraries if the directory they are installed
   in is on the PATH or in the same directory where you have emacs.exe.
@@ -209,6 +211,55 @@ See the end of the file for license conditions.
 
   You can get pre-built binaries (including any required DLL and the
   header files) at http://sourceforge.net/projects/ezwinports/files/.
+
+* Installing 64-bit optional libraries from the MSYS2 site
+
+  We recommend that you use the 'pacman' utility to download the
+  libraries you need and all of their dependencies.  If you don't have
+  'pacman' installed, proceed as follows:
+
+  . Install the MSYS2 64-bit (x86_64) installer, named
+    msys2-x86_64-YYYYMMDD.exe (where "YYYYMMDD" is the release date,
+    like 20160205) from http://msys2.github.io/.
+
+  . Run the installer, select the installation directory, make sure
+    "Run MSYS2 now" checkbox is checked, and click "Finish".  A Bash
+    window will open.
+
+  . Type into the Bash window the following command:
+
+    pacman -Sy pacman
+
+    When asked whether to proceed with installation, type Y.
+
+  To install the optional libraries, start the MSYS2 Bash window and
+  type the following command:
+
+    pacman -S PACKAGES
+
+  where PACKAGES is the list of packages you want to install.  The
+  full list is as follows:
+
+   mingw-w64-x86_64-xpm-nox mingw-w64-x86_64-libtiff mingw-w64-x86_64-giflib
+   mingw-w64-x86_64-libpng mingw-w64-x86_64-libjpeg-turbo
+   mingw-w64-x86_64-librsvg mingw-w64-x86_64-libxml2 mingw-w64-x86_64-gnutls
+   mingw-w64-x86_64-zlib
+
+  You can type any subset of this list.  Once again, when asked
+  whether to proceed with installation, answer Y.
+
+  Alternatively, you could install the packages manually from this
+  page:
+
+   https://sourceforge.net/projects/msys2/files/REPOS/MINGW/x86_64/
+
+  However, the packages there are not self-contained, so you will need
+  to download all their dependencies as well.
+
+  After the installation, if you will be installing Emacs in a
+  directory different from where the DLLs were installed, we recommend
+  to add the directory with DLLs to your PATH, so that Emacs will be
+  able to find those DLLs.
 
 * Uninstalling Emacs
 
