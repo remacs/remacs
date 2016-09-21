@@ -602,22 +602,67 @@ FUNCTION_KEY_OFFSET	c-src/emacs/src/keyboard.c	4766
 FUNCTION_KEY_OFFSET	c-src/emacs/src/keyboard.c	5061
 F_getit	c-src/etags.c	/^F_getit (FILE *inf)$/
 F_takeprec	c-src/etags.c	/^F_takeprec (void)$/
+Fabbrev_expansion	c-src/abbrev.c	/^DEFUN ("abbrev-expansion", Fabbrev_expansion, Sabb/
+Fabbrev_symbol	c-src/abbrev.c	/^DEFUN ("abbrev-symbol", Fabbrev_symbol, Sabbrev_sy/
+Fabort_recursive_edit	c-src/emacs/src/keyboard.c	/^DEFUN ("abort-recursive-edit", Fabort_recursive_ed/
 Fails_t	c-src/h.h	5
+Fclear_abbrev_table	c-src/abbrev.c	/^DEFUN ("clear-abbrev-table", Fclear_abbrev_table, /
+Fclear_this_command_keys	c-src/emacs/src/keyboard.c	/^DEFUN ("clear-this-command-keys", Fclear_this_comm/
+Fcommand_error_default_function	c-src/emacs/src/keyboard.c	/^DEFUN ("command-error-default-function", Fcommand_/
+Fcurrent_idle_time	c-src/emacs/src/keyboard.c	/^DEFUN ("current-idle-time", Fcurrent_idle_time, Sc/
+Fcurrent_input_mode	c-src/emacs/src/keyboard.c	/^DEFUN ("current-input-mode", Fcurrent_input_mode, /
+Fdefine_abbrev	c-src/abbrev.c	/^DEFUN ("define-abbrev", Fdefine_abbrev, Sdefine_ab/
+Fdefine_abbrev_table	c-src/abbrev.c	/^DEFUN ("define-abbrev-table", Fdefine_abbrev_table/
+Fdefine_global_abbrev	c-src/abbrev.c	/^DEFUN ("define-global-abbrev", Fdefine_global_abbr/
+Fdefine_mode_abbrev	c-src/abbrev.c	/^DEFUN ("define-mode-abbrev", Fdefine_mode_abbrev, /
+Fdiscard_input	c-src/emacs/src/keyboard.c	/^DEFUN ("discard-input", Fdiscard_input, Sdiscard_i/
+Fevent_convert_list	c-src/emacs/src/keyboard.c	/^DEFUN ("event-convert-list", Fevent_convert_list, /
+Fevent_symbol_parse_modifiers	c-src/emacs/src/keyboard.c	/^DEFUN ("internal-event-symbol-parse-modifiers", Fe/
+Fexit_recursive_edit	c-src/emacs/src/keyboard.c	/^DEFUN ("exit-recursive-edit", Fexit_recursive_edit/
+Fexpand_abbrev	c-src/abbrev.c	/^DEFUN ("expand-abbrev", Fexpand_abbrev, Sexpand_ab/
 Finalize_Cond/p	ada-src/2ataspri.adb	/^   procedure Finalize_Cond (Cond : in out Conditio/
 Finalize_Cond/p	ada-src/2ataspri.ads	/^   procedure Finalize_Cond (Cond : in out Conditio/
 Finalize_Lock/p	ada-src/2ataspri.adb	/^   procedure Finalize_Lock (L : in out Lock) is$/
 Finalize_Lock/p	ada-src/2ataspri.ads	/^   procedure Finalize_Lock (L : in out Lock);$/
 Finalize_TAS_Cell/p	ada-src/2ataspri.adb	/^   procedure Finalize_TAS_Cell (Cell : in out TAS_/
 Finalize_TAS_Cell/p	ada-src/2ataspri.ads	/^   procedure Finalize_TAS_Cell   (Cell : in out TA/
+Finput_pending_p	c-src/emacs/src/keyboard.c	/^DEFUN ("input-pending-p", Finput_pending_p, Sinput/
+Finsert_abbrev_table_description	c-src/abbrev.c	/^DEFUN ("insert-abbrev-table-description", Finsert_/
 First100Chars	pas-src/common.pas	/^procedure First100Chars; (*($/
+Fmake_abbrev_table	c-src/abbrev.c	/^DEFUN ("make-abbrev-table", Fmake_abbrev_table, Sm/
 Foo	perl-src/kai-test.pl	/^package Foo;$/
 Foo::Bar	perl-src/kai-test.pl	/^package Foo::Bar;$/
+Fopen_dribble_file	c-src/emacs/src/keyboard.c	/^DEFUN ("open-dribble-file", Fopen_dribble_file, So/
 Forth_help	c-src/etags.c	573
 Forth_suffixes	c-src/etags.c	571
 Forth_words	c-src/etags.c	/^Forth_words (FILE *inf)$/
 Fortran_functions	c-src/etags.c	/^Fortran_functions (FILE *inf)$/
 Fortran_help	c-src/etags.c	579
 Fortran_suffixes	c-src/etags.c	577
+Fposn_at_point	c-src/emacs/src/keyboard.c	/^DEFUN ("posn-at-point", Fposn_at_point, Sposn_at_p/
+Fposn_at_x_y	c-src/emacs/src/keyboard.c	/^DEFUN ("posn-at-x-y", Fposn_at_x_y, Sposn_at_x_y, /
+Fread_key_sequence	c-src/emacs/src/keyboard.c	/^DEFUN ("read-key-sequence", Fread_key_sequence, Sr/
+Fread_key_sequence_vector	c-src/emacs/src/keyboard.c	/^DEFUN ("read-key-sequence-vector", Fread_key_seque/
+Frecent_keys	c-src/emacs/src/keyboard.c	/^DEFUN ("recent-keys", Frecent_keys, Srecent_keys, /
+Frecursion_depth	c-src/emacs/src/keyboard.c	/^DEFUN ("recursion-depth", Frecursion_depth, Srecur/
+Frecursive_edit	c-src/emacs/src/keyboard.c	/^DEFUN ("recursive-edit", Frecursive_edit, Srecursi/
+Freset_this_command_lengths	c-src/emacs/src/keyboard.c	/^DEFUN ("reset-this-command-lengths", Freset_this_c/
+Fset_input_interrupt_mode	c-src/emacs/src/keyboard.c	/^DEFUN ("set-input-interrupt-mode", Fset_input_inte/
+Fset_input_meta_mode	c-src/emacs/src/keyboard.c	/^DEFUN ("set-input-meta-mode", Fset_input_meta_mode/
+Fset_input_mode	c-src/emacs/src/keyboard.c	/^DEFUN ("set-input-mode", Fset_input_mode, Sset_inp/
+Fset_output_flow_control	c-src/emacs/src/keyboard.c	/^DEFUN ("set-output-flow-control", Fset_output_flow/
+Fset_quit_char	c-src/emacs/src/keyboard.c	/^DEFUN ("set-quit-char", Fset_quit_char, Sset_quit_/
+Fsuspend_emacs	c-src/emacs/src/keyboard.c	/^DEFUN ("suspend-emacs", Fsuspend_emacs, Ssuspend_e/
+Fthis_command_keys	c-src/emacs/src/keyboard.c	/^DEFUN ("this-command-keys", Fthis_command_keys, St/
+Fthis_command_keys_vector	c-src/emacs/src/keyboard.c	/^DEFUN ("this-command-keys-vector", Fthis_command_k/
+Fthis_single_command_keys	c-src/emacs/src/keyboard.c	/^DEFUN ("this-single-command-keys", Fthis_single_co/
+Fthis_single_command_raw_keys	c-src/emacs/src/keyboard.c	/^DEFUN ("this-single-command-raw-keys", Fthis_singl/
+Ftop_level	c-src/emacs/src/keyboard.c	/^DEFUN ("top-level", Ftop_level, Stop_level, 0, 0, /
+Ftrack_mouse	c-src/emacs/src/keyboard.c	/^DEFUN ("internal--track-mouse", Ftrack_mouse, Stra/
+Funexpand_abbrev	c-src/abbrev.c	/^DEFUN ("unexpand-abbrev", Funexpand_abbrev, Sunexp/
+Fx_get_selection_internal	c.c	/^DEFUN ("x-get-selection-internal", Fx_get_selectio/
+Fx_get_selection_internal	c.c	/^       Fx_get_selection_internal, Sx_get_selection/
+Fy_get_selection_internal	c.c	/^      Fy_get_selection_internal, Sy_get_selection_/
 GCALIGNED	c-src/emacs/src/lisp.h	288
 GCALIGNED	c-src/emacs/src/lisp.h	290
 GCALIGNMENT	c-src/emacs/src/lisp.h	243
