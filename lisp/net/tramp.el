@@ -1314,8 +1314,8 @@ necessary only.  This function will be used in file name completion."
   "Get the connection buffer to be used for VEC."
   (or (get-buffer (tramp-buffer-name vec))
       (with-current-buffer (get-buffer-create (tramp-buffer-name vec))
-	;; We use existence of connection property "process-buffer" as
-	;; indication, whether a connection is active.
+	;; We use the existence of connection property "process-buffer"
+	;; as indication, whether a connection is active.
 	(tramp-set-connection-property
 	 vec "process-buffer"
 	 (tramp-get-connection-property vec "process-buffer" nil))
@@ -4194,6 +4194,14 @@ Invokes `password-read' if available, `read-passwd' else."
 	 (replace-regexp-in-string
 	  (concat tramp-postfix-hop-regexp "$")
 	  tramp-postfix-host-format hop))))))
+  ;; `auth-source-forget' has been obsoleted with Emacs 24.1.  But
+  ;; there is no known replacement.
+  (when (fboundp 'auth-source-forget)
+    (auth-source-forget
+     `(:max 1
+       :user ,(or (tramp-file-name-user vec) t)
+       :host ,(tramp-file-name-host vec)
+       :port ,(tramp-file-name-method vec))))
   (password-cache-remove
    (tramp-make-tramp-file-name
     (tramp-file-name-method vec)
