@@ -4169,7 +4169,8 @@ Invokes `password-read' if available, `read-passwd' else."
 				auth-passwd (if (functionp auth-passwd)
 						(funcall auth-passwd)
 					      auth-passwd))
-			(tramp-compat-funcall 'auth-source-user-or-password
+			(tramp-compat-funcall
+			 'auth-source-user-or-password
 			 "password" tramp-current-host tramp-current-method))))
 	       ;; Try the password cache.
 	       (let ((password (password-read pw-prompt key)))
@@ -4184,7 +4185,10 @@ Invokes `password-read' if available, `read-passwd' else."
 ;;;###tramp-autoload
 (defun tramp-clear-passwd (vec)
   "Clear password cache for connection related to VEC."
-  (let ((hop (tramp-file-name-hop vec)))
+  (let ((method (tramp-file-name-method vec))
+	(user (tramp-file-name-user vec))
+	(host (tramp-file-name-host vec))
+	(hop (tramp-file-name-hop vec)))
     (when hop
       ;; Clear also the passwords of the hops.
       (tramp-clear-passwd
@@ -4193,21 +4197,15 @@ Invokes `password-read' if available, `read-passwd' else."
 	 tramp-prefix-format
 	 (replace-regexp-in-string
 	  (concat tramp-postfix-hop-regexp "$")
-	  tramp-postfix-host-format hop))))))
-  ;; `auth-source-forget' has been obsoleted with Emacs 24.1.  But
-  ;; there is no known replacement.
-  (when (fboundp 'auth-source-forget)
-    (auth-source-forget
-     `(:max 1
-       :user ,(or (tramp-file-name-user vec) t)
-       :host ,(tramp-file-name-host vec)
-       :port ,(tramp-file-name-method vec))))
-  (password-cache-remove
-   (tramp-make-tramp-file-name
-    (tramp-file-name-method vec)
-    (tramp-file-name-user vec)
-    (tramp-file-name-host vec)
-    "")))
+	  tramp-postfix-host-format hop)))))
+    ;; `auth-source-forget-user-or-password' is an obsoleted function
+    ;; since Emacs 24.1, it has been replaced by `auth-source-forget'.
+    (if (fboundp 'auth-source-forget)
+	(auth-source-forget
+	 `(:max 1 :user ,(or user t) :host ,host :port ,method))
+      (tramp-compat-funcall
+       'auth-source-forget-user-or-password "password" host method))
+    (password-cache-remove (tramp-make-tramp-file-name method user host ""))))
 
 ;; Snarfed code from time-date.el and parse-time.el
 
