@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2016-09-18.11}
+\def\texinfoversion{2016-09-18.18}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -2296,7 +2296,7 @@ end
 \font\ssecsy=cmsy10 scaled 1315
 \def\ssececsize{1200}
 
-% Reduced fonts for @acro in text (10pt).
+% Reduced fonts for @acronym in text (10pt).
 \def\reducednominalsize{10pt}
 \setfont\reducedrm\rmshape{10}{1000}{OT1}
 \setfont\reducedtt\ttshape{10}{1000}{OT1TT}
@@ -2429,7 +2429,7 @@ end
 \font\ssecsy=cmsy10
 \def\ssececsize{1000}
 
-% Reduced fonts for @acro in text (9pt).
+% Reduced fonts for @acronym in text (9pt).
 \def\reducednominalsize{9pt}
 \setfont\reducedrm\rmshape{9}{1000}{OT1}
 \setfont\reducedtt\ttshape{9}{1000}{OT1TT}
@@ -2564,56 +2564,28 @@ end
    \csname\curfontstyle\endcsname
 }%
 
-\def\textfonts{%
-  \def\curfontsize{text}%
-  \def\lsize{reduced}\def\lllsize{smaller}%
-  \rmisboldfalse
-  \assignfonts{text}%
-  \resetmathfonts \setleading{\textleading}}
-\def\titlefonts{%
-  \def\curfontsize{title}%
-  \def\lsize{chap}\def\lllsize{subsec}%
-  \rmisboldtrue
-  \assignfonts{title}%
-  \resetmathfonts \setleading{27pt}}
+\def\definefontsetatsize#1#2#3#4#5{%
+\expandafter\def\csname #1fonts\endcsname{%
+  \def\curfontsize{#1}%
+  \def\lsize{#2}\def\lllsize{#3}%
+  \csname rmisbold#5\endcsname
+  \assignfonts{#1}%
+  \resetmathfonts
+  \setleading{#4}%
+}}
+
+\definefontsetatsize{text}   {reduced}{smaller}{\textleading}{false}
+\definefontsetatsize{title}  {chap}   {subsec} {27pt}  {true}
+\definefontsetatsize{chap}   {sec}    {text}   {19pt}  {true}
+\definefontsetatsize{sec}    {subsec} {reduced}{17pt}  {true}
+\definefontsetatsize{ssec}   {text}   {small}  {15pt}  {true}
+\definefontsetatsize{reduced}{small}  {smaller}{10.5pt}{false}
+\definefontsetatsize{small}  {smaller}{smaller}{10.5pt}{false}
+\definefontsetatsize{smaller}{smaller}{smaller}{9.5pt} {false}
+
 \def\titlefont#1{{\titlefonts\rm #1}}
-\def\chapfonts{%
-  \def\curfontsize{chap}%
-  \def\lsize{sec}\def\lllsize{text}%
-  \rmisboldtrue
-  \assignfonts{chap}%
-  \resetmathfonts \setleading{19pt}}
-\def\secfonts{%
-  \def\curfontsize{sec}%
-  \def\lsize{subsec}\def\lllsize{reduced}%
-  \rmisboldtrue
-  \assignfonts{sec}%
-  \resetmathfonts \setleading{17pt}}
-\def\subsecfonts{%
-  \def\curfontsize{ssec}%
-  \def\lsize{text}\def\lllsize{small}%
-  \rmisboldtrue
-  \assignfonts{ssec}%
-  \resetmathfonts \setleading{15pt}}
-\let\subsubsecfonts = \subsecfonts
-\def\reducedfonts{%
-  \def\curfontsize{reduced}%
-  \def\lsize{small}\def\lllsize{smaller}%
-  \rmisboldfalse
-  \assignfonts{reduced}%
-  \resetmathfonts \setleading{10.5pt}}
-\def\smallfonts{%
-  \def\curfontsize{small}%
-  \def\lsize{smaller}\def\lllsize{smaller}%
-  \rmisboldfalse
-  \assignfonts{small}%
-  \resetmathfonts \setleading{10.5pt}}
-\def\smallerfonts{%
-  \def\curfontsize{smaller}%
-  \def\lsize{smaller}\def\lllsize{smaller}%
-  \rmisboldfalse
-  \assignfonts{smaller}%
-  \resetmathfonts \setleading{9.5pt}}
+\let\subsecfonts = \ssecfonts
+\let\subsubsecfonts = \ssecfonts
 
 % Define these just so they can be easily changed for other fonts.
 \def\angleleft{$\langle$}

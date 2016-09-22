@@ -14,7 +14,9 @@ AC_DEFUN_ONCE([gl_LIMITS_H],
   AC_CACHE_CHECK([whether limits.h has ULLONG_WIDTH etc.],
     [gl_cv_header_limits_width],
     [AC_COMPILE_IFELSE(
-       [AC_LANG_PROGRAM([[#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+       [AC_LANG_PROGRAM([[#ifndef __STDC_WANT_IEC_60559_BFP_EXT__
+                           #define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+                          #endif
                           #include <limits.h>
                           int ullw = ULLONG_WIDTH;]])],
        [gl_cv_header_limits_width=yes],

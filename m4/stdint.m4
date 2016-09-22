@@ -1,4 +1,4 @@
-# stdint.m4 serial 45
+# stdint.m4 serial 47
 dnl Copyright (C) 2001-2016 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -321,6 +321,9 @@ int32_t i32 = INT32_C (0x7fffffff);
          [AC_LANG_PROGRAM([[
             /* Work if build is not clean.  */
             #define _GL_JUST_INCLUDE_SYSTEM_STDINT_H 1
+            #ifndef __STDC_WANT_IEC_60559_BFP_EXT__
+             #define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+            #endif
             #include <stdint.h>
             ]gl_STDINT_INCLUDES[
             int iw = UINTMAX_WIDTH;
@@ -343,7 +346,8 @@ int32_t i32 = INT32_C (0x7fffffff);
   fi
 
   # The substitute stdint.h needs the substitute limit.h's _GL_INTEGER_WIDTH.
-  test -z "$STDINT_H" || LIMITS_H=limits.h
+  LIMITS_H=limits.h
+  AM_CONDITIONAL([GL_GENERATE_LIMITS_H], [test -n "$LIMITS_H"])
 
   AC_SUBST([HAVE_C99_STDINT_H])
   AC_SUBST([HAVE_SYS_BITYPES_H])
