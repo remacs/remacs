@@ -8633,7 +8633,7 @@ comment at the start of cc-engine.el for more info."
 	 (when (and got-identifier
 		    (looking-at c-after-suffixed-type-decl-key)
 		    (or (eq context 'top)
-			(and eq context nil
+			(and (eq context nil)
 			     (match-beginning 1)))
 		    (if (and got-parens
 			     (not got-prefix)
