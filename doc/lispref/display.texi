@@ -1553,10 +1553,8 @@ the buffer's undo list.
 
   Since more than one overlay can specify a property value for the
 same character, Emacs lets you specify a priority value of each
-overlay.  In case two overlays have the same priority value, and one
-is nested in the other, then the inner one will have priority over the
-outer one.  If neither is nested in the other then you should not make
-assumptions about which overlay will prevail.
+overlay.  The priority value is used to decide which of the
+overlapping overlays will ``win''.
 
   These functions read and set the properties of an overlay:
 
@@ -1593,17 +1591,26 @@ If you want to specify a priority value, use either @code{nil}
 
 The priority matters when two or more overlays cover the same
 character and both specify the same property; the one whose
-@code{priority} value is larger overrides the other.  For the
+@code{priority} value is larger overrides the other.  (For the
 @code{face} property, the higher priority overlay's value does not
 completely override the other value; instead, its face attributes
 override the face attributes of the lower priority @code{face}
-property.
+property.)  If two overlays have the same priority value, and one is
+nested in the other, then the inner one will prevail over the outer
+one.  If neither is nested in the other then you should not make
+assumptions about which overlay will prevail.
 
 Currently, all overlays take priority over text properties.
 
 Note that Emacs sometimes uses non-numeric priority values for some of
-its internal overlays, so do not try to do arithmetic on the
-priority of an overlay (unless it is one that you created).  If you
+its internal overlays, so do not try to do arithmetic on the priority
+of an overlay (unless it is one that you created).  In particular, the
+overlay used for showing the region uses a priority value of the form
+@w{@code{(@var{primary} . @var{secondary})}}, where the @var{primary}
+value is used as described above, and @var{secondary} is the fallback
+value used when @var{primary} and the nesting considerations fail to
+resolve the precedence between overlays.  However, you are advised not
+to design Lisp programs based on this implementation detail; if you
 need to put overlays in priority order, use the @var{sorted} argument
 of @code{overlays-at}.  @xref{Finding Overlays}.
 

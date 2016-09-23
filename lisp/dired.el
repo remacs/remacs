@@ -3919,7 +3919,7 @@ Ask means pop up a menu for the user to select one of copy, move or link."
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads nil "dired-aux" "dired-aux.el" "c1ea036dd5d740f00b18a76bfb32f887")
+;;;### (autoloads nil "dired-aux" "dired-aux.el" "daa0a32a5bdfcf4de80c31cf7833b26d")
 ;;; Generated autoloads from dired-aux.el
 
 (autoload 'dired-diff "dired-aux" "\
@@ -4113,9 +4113,9 @@ command with a prefix argument (the value does not matter).
 
 (autoload 'dired-do-compress-to "dired-aux" "\
 Compress selected files and directories to an archive.
-You are prompted for the archive name.
-The archiving command is chosen based on the archive name extension and
-`dired-compress-files-alist'.
+Prompt for the archive file name.
+Choose the archiving command based on the archive file-name extension
+and `dired-compress-files-alist'.
 
 \(fn)" t nil)
 
