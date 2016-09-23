@@ -16,6 +16,10 @@ You can narrow news to a specific version by calling 'view-emacs-news'
 with a prefix argument or by typing C-u C-h C-n.
 
 
+* Changes in Emacs 25.2
+This is a bug-fix release with no new features.
+
+
 * Installation Changes in Emacs 25.1
 
 ** Building Emacs now requires C99 or later.
