@@ -308,10 +308,7 @@ enum
       }									\
   } while (false)
 
-/* Return the character code of character whose multibyte form is at
-   P.  Note that this macro unifies CJK characters whose codepoints
-   are in the Private Use Areas (PUAs), so it might return a different
-   codepoint from the one actually stored at P.  */
+/* Return the character code of character whose multibyte form is at P.  */
 
 #define STRING_CHAR(p)						\
   (!((p)[0] & 0x80)						\
