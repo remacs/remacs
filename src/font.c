@@ -264,14 +264,13 @@ font_intern_prop (const char *str, ptrdiff_t len, bool force_symbol)
 	  break;
       if (i == len)
 	{
-	  EMACS_INT n;
-
 	  i = 0;
-	  for (n = 0; (n += str[i++] - '0') <= MOST_POSITIVE_FIXNUM; n *= 10)
+	  for (EMACS_INT n = 0;
+	       (n += str[i++] - '0') <= MOST_POSITIVE_FIXNUM; )
 	    {
 	      if (i == len)
 		return make_number (n);
-	      if (MOST_POSITIVE_FIXNUM / 10 < n)
+	      if (INT_MULTIPLY_WRAPV (n, 10, &n))
 		break;
 	    }
 

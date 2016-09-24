@@ -10058,11 +10058,9 @@ DEFUN ("recursion-depth", Frecursion_depth, Srecursion_depth, 0, 0, 0,
        doc: /* Return the current depth in recursive edits.  */)
   (void)
 {
-  Lisp_Object temp;
-  /* Wrap around reliably on integer overflow.  */
-  EMACS_INT sum = (command_loop_level & INTMASK) + (minibuf_level & INTMASK);
-  XSETINT (temp, sum);
-  return temp;
+  EMACS_INT sum;
+  INT_ADD_WRAPV (command_loop_level, minibuf_level, &sum);
+  return make_number (sum);
 }
 
 DEFUN ("open-dribble-file", Fopen_dribble_file, Sopen_dribble_file, 1, 1,

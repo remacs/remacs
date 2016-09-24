@@ -1523,17 +1523,8 @@ static EMACS_INT
 hi_time (time_t t)
 {
   time_t hi = t >> LO_TIME_BITS;
-
-  /* Check for overflow, helping the compiler for common cases where
-     no runtime check is needed, and taking care not to convert
-     negative numbers to unsigned before comparing them.  */
-  if (! ((! TYPE_SIGNED (time_t)
-	  || MOST_NEGATIVE_FIXNUM <= TIME_T_MIN >> LO_TIME_BITS
-	  || MOST_NEGATIVE_FIXNUM <= hi)
-	 && (TIME_T_MAX >> LO_TIME_BITS <= MOST_POSITIVE_FIXNUM
-	     || hi <= MOST_POSITIVE_FIXNUM)))
+  if (FIXNUM_OVERFLOW_P (hi))
     time_overflow ();
-
   return hi;
 }
 
@@ -1595,7 +1586,7 @@ time_arith (Lisp_Object a, Lisp_Object b,
   struct lisp_time ta = lisp_time_struct (a, &alen);
   struct lisp_time tb = lisp_time_struct (b, &blen);
   struct lisp_time t = op (ta, tb);
-  if (! (MOST_NEGATIVE_FIXNUM <= t.hi && t.hi <= MOST_POSITIVE_FIXNUM))
+  if (FIXNUM_OVERFLOW_P (t.hi))
     time_overflow ();
   Lisp_Object val = Qnil;
 
@@ -1853,7 +1844,7 @@ decode_time_components (Lisp_Object high, Lisp_Object low, Lisp_Object usec,
 
   if (result)
     {
-      if (! (MOST_NEGATIVE_FIXNUM <= hi && hi <= MOST_POSITIVE_FIXNUM))
+      if (FIXNUM_OVERFLOW_P (hi))
 	return -1;
       result->hi = hi;
       result->lo = lo;
