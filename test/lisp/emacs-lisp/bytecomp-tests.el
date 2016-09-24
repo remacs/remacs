@@ -1,4 +1,4 @@
-;;; bytecomp-testsuite.el
+;;; bytecomp-tests.el
 
 ;; Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
@@ -425,4 +425,5 @@ Subtests signal errors if something goes wrong."
 ;; no-byte-compile: t
 ;; End:
 
-(provide 'byte-opt-testsuite)
+(provide 'bytecomp-tests)
+;; bytecomp-tests.el ends here.
