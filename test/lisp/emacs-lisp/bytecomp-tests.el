@@ -2,7 +2,8 @@
 
 ;; Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
-;; Author:         Shigeru Fukaya <shigeru.fukaya@gmail.com>
+;; Author: Shigeru Fukaya <shigeru.fukaya@gmail.com>
+;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Created:        November 2008
 ;; Keywords:       internal
 ;; Human-Keywords: internal
@@ -420,6 +421,46 @@ Subtests signal errors if something goes wrong."
       (defun def () (m))))
   (should (equal (funcall 'def) 4)))
 
+(defconst bytecomp-lexbind-tests
+  `(
+    (let ((f #'car))
+      (let ((f (lambda (x) (cons (funcall f x) (cdr x)))))
+        (funcall f '(1 . 2))))
+    )
+  "List of expression for test.
+Each element will be executed by interpreter and with
+bytecompiled code, and their results compared.")
+
+(defun bytecomp-lexbind-check-1 (pat)
+  "Return non-nil if PAT is the same whether directly evalled or compiled."
+  (let ((warning-minimum-log-level :emergency)
+	(byte-compile-warnings nil)
+	(v0 (condition-case nil
+		(eval pat t)
+	      (error nil)))
+	(v1 (condition-case nil
+		(funcall (let ((lexical-binding t))
+                           (byte-compile `(lambda nil ,pat))))
+	      (error nil))))
+    (equal v0 v1)))
+
+(put 'bytecomp-lexbind-check-1 'ert-explainer 'bytecomp-lexbind-explain-1)
+
+(defun bytecomp-lexbind-explain-1 (pat)
+  (let ((v0 (condition-case nil
+		(eval pat t)
+	      (error nil)))
+	(v1 (condition-case nil
+		(funcall (let ((lexical-binding t))
+                           (byte-compile (list 'lambda nil pat))))
+	      (error nil))))
+    (format "Expression `%s' gives `%s' if directly evalled, `%s' if compiled."
+	    pat v0 v1)))
+
+(ert-deftest bytecomp-lexbind-tests ()
+  "Test the Emacs byte compiler lexbind handling."
+  (dolist (pat bytecomp-lexbind-tests)
+    (should (bytecomp-lexbind-check-1 pat))))
 
 ;; Local Variables:
 ;; no-byte-compile: t
