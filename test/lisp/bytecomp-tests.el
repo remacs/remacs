@@ -426,4 +426,3 @@ Subtests signal errors if something goes wrong."
 ;; End:
 
 (provide 'byte-opt-testsuite)
-
