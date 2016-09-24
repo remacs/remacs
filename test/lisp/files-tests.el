@@ -1,4 +1,4 @@
-;;; files.el --- tests for file handling.
+;;; files-tests.el --- tests for files.el.
 
 ;; Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
@@ -197,4 +197,5 @@ form.")
       (setenv "FOO" foo-env)
       (setenv "BAR" bar-env))))
 
-;;; files.el ends here
+(provide 'files-tests)
+;;; files-tests.el ends here
