@@ -36,9 +36,6 @@ appended, such as ~/test/lisp/emacs-lisp/eieio-tests~
 Where features of the C source are tested using Emacs-Lisp test files, these
 should reside in ~/test/src~ and be named after the C file.
 
-A few test suites which predate this scheme and do not fit cleanly
-into it are placed in ~/test/lisp/legacy~.
-
 There are also some test materials that cannot be run automatically
 (i.e. via ert). These should be placed in ~/test/manual~
 
