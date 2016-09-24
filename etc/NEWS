@@ -392,8 +392,10 @@ enables reading of shell initialization files.
 ** CSS mode
 
 ---
-*** Support for completing attribute values, at-rules, bang-rules, and
-HTML tags using the 'completion-at-point' command.
+*** Support for completing attribute values, at-rules, bang-rules,
+HTML tags, classes and IDs using the 'completion-at-point' command.
+Completion candidates for HTML classes and IDs are retrieved from open
+HTML mode buffers.
 
 +++
 ** Emacs now supports character name escape sequences in character and

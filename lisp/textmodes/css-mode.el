@@ -30,7 +30,6 @@
 ;; - electric ; and }
 ;; - filling code with auto-fill-mode
 ;; - fix font-lock errors with multi-line selectors
-;; - support completion of user-defined classes names and IDs
 
 ;;; Code:
 
@@ -864,16 +863,46 @@ Used to provide completion of HTML tags in selectors.")
   "Non-nil if nested selectors are allowed in the current mode.")
 (make-variable-buffer-local 'css--nested-selectors-allowed)
 
-;; TODO: Currently only supports completion of HTML tags.  By looking
-;; at open HTML mode buffers we should be able to provide completion
-;; of user-defined classes and IDs too.
+(defvar css-class-list-function #'ignore
+  "Called to provide completions of class names.
+This can be bound by buffers that are able to suggest class name
+completions, such as HTML mode buffers.")
+
+(defvar css-id-list-function #'ignore
+  "Called to provide completions of IDs.
+This can be bound by buffers that are able to suggest ID
+completions, such as HTML mode buffers.")
+
+(defun css--foreign-completions (extractor)
+  "Return a list of completions provided by other buffers.
+EXTRACTOR should be the name of a function that may be defined in
+one or more buffers.  In each of the buffers where EXTRACTOR is
+defined, EXTRACTOR is called and the results are accumulated into
+a list of completions."
+  (delete-dups
+   (seq-mapcat
+    (lambda (buf)
+      (with-current-buffer buf
+        (funcall (symbol-value extractor))))
+    (buffer-list))))
+
 (defun css--complete-selector ()
   "Complete part of a CSS selector at point."
   (when (or (= (nth 0 (syntax-ppss)) 0) css--nested-selectors-allowed)
-    (save-excursion
-      (let ((end (point)))
+    (let ((end (point)))
+      (save-excursion
         (skip-chars-backward "-[:alnum:]")
-        (list (point) end css--html-tags)))))
+        (let ((start-char (char-before)))
+          (list
+           (point) end
+           (completion-table-dynamic
+            (lambda (_)
+              (cond
+               ((eq start-char ?.)
+                (css--foreign-completions 'css-class-list-function))
+               ((eq start-char ?#)
+                (css--foreign-completions 'css-id-list-function))
+               (t css--html-tags))))))))))
 
 (defun css-completion-at-point ()
   "Complete current symbol at point.
