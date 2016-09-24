@@ -163,3 +163,4 @@
     (should (equal path samepath))))
 
 (provide 'process-tests)
+;; process-tests.el ends here.
