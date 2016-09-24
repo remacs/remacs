@@ -1005,7 +1005,7 @@ rather than every 1024 byte block, but nobody seems to care."
        ((and (> (plist-get erc-dcc-entry-data :size) 0)
              (> received-bytes (plist-get erc-dcc-entry-data :size)))
         (erc-display-message
-         nil '(error notice) 'active
+         nil '(notice error) 'active
          'dcc-get-file-too-long
          ?f (file-name-nondirectory buffer-file-name))
         (delete-process proc))

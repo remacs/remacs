@@ -2002,7 +2002,7 @@ See `erc-display-server-message'." nil
   "You need to be a channel operator to do that." nil
   (let ((channel (cadr (erc-response.command-args parsed)))
         (message (erc-response.contents parsed)))
-    (erc-display-message parsed '(error notice) 'active 's482
+    (erc-display-message parsed '(notice error) 'active 's482
                          ?c channel ?m message)))
 
 (define-erc-response-handler (671)
