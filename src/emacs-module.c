@@ -30,7 +30,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "dynlib.h"
 #include "coding.h"
-#include "verify.h"
+
+#include <intprops.h>
+#include <verify.h>
 
 
 /* Feature tests.  */
@@ -424,13 +426,14 @@ module_funcall (emacs_env *env, emacs_value fun, ptrdiff_t nargs,
      first arg, because that's what Ffuncall takes.  */
   Lisp_Object *newargs;
   USE_SAFE_ALLOCA;
-  if (nargs == PTRDIFF_MAX)
+  ptrdiff_t nargs1;
+  if (INT_ADD_WRAPV (nargs, 1, &nargs1))
     xsignal0 (Qoverflow_error);
-  SAFE_ALLOCA_LISP (newargs, nargs + 1);
+  SAFE_ALLOCA_LISP (newargs, nargs1);
   newargs[0] = value_to_lisp (fun);
   for (ptrdiff_t i = 0; i < nargs; i++)
     newargs[1 + i] = value_to_lisp (args[i]);
-  emacs_value result = lisp_to_value (Ffuncall (nargs + 1, newargs));
+  emacs_value result = lisp_to_value (Ffuncall (nargs1, newargs));
   SAFE_FREE ();
   return result;
 }
@@ -665,7 +668,7 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
 
   if (r != 0)
     {
-      if (! (MOST_NEGATIVE_FIXNUM <= r && r <= MOST_POSITIVE_FIXNUM))
+      if (FIXNUM_OVERFLOW_P (r))
         xsignal0 (Qoverflow_error);
       xsignal2 (Qmodule_load_failed, file, make_number (r));
     }

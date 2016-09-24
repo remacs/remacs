@@ -2894,19 +2894,17 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	{
 	  EMACS_INT n = 0;
 	  Lisp_Object tem;
+	  bool overflow = false;
 
 	  /* Read a non-negative integer.  */
 	  while (c >= '0' && c <= '9')
 	    {
-	      if (MOST_POSITIVE_FIXNUM / 10 < n
-		  || MOST_POSITIVE_FIXNUM < n * 10 + c - '0')
-		n = MOST_POSITIVE_FIXNUM + 1;
-	      else
-		n = n * 10 + c - '0';
+	      overflow |= INT_MULTIPLY_WRAPV (n, 10, &n);
+	      overflow |= INT_ADD_WRAPV (n, c - '0', &n);
 	      c = READCHAR;
 	    }
 
-	  if (n <= MOST_POSITIVE_FIXNUM)
+	  if (!overflow && n <= MOST_POSITIVE_FIXNUM)
 	    {
 	      if (c == 'r' || c == 'R')
 		return read_integer (readcharfun, n);
