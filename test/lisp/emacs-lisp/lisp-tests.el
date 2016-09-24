@@ -3,6 +3,7 @@
 ;; Copyright (C) 2013-2016  Free Software Foundation, Inc.
 
 ;; Author: Aaron S. Hawley <aaron.s.hawley@gmail.com>
+;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: internal
 
 ;; GNU Emacs is free software: you can redistribute it and/or modify
@@ -206,6 +207,34 @@
     (insert "(insert ?\")")
     (goto-char (point-min))
     (should-error (forward-sexp)))) ;; FIXME: Shouldn't be an error.
+
+;; Test some core Elisp rules.
+(ert-deftest core-elisp-tests-1-defvar-in-let ()
+  "Test some core Elisp rules."
+  (with-temp-buffer
+    ;; Check that when defvar is run within a let-binding, the toplevel default
+    ;; is properly initialized.
+    (should (equal (list (let ((c-e-x 1)) (defvar c-e-x 2) c-e-x) c-e-x)
+                   '(1 2)))
+    (should (equal (list (let ((c-e-x 1))
+                           (defcustom c-e-x 2 "doc" :group 'blah :type 'integer) c-e-x)
+                         c-e-x)
+                   '(1 2)))))
+
+(ert-deftest core-elisp-tests-2-window-configurations ()
+  "Test properties of window-configurations."
+  (let ((wc (current-window-configuration)))
+    (with-current-buffer (window-buffer (frame-selected-window))
+      (push-mark)
+      (activate-mark))
+    (set-window-configuration wc)
+    (should (or (not mark-active) (mark)))))
+
+(ert-deftest core-elisp-tests-3-backquote ()
+  (should (eq 3 (eval ``,,'(+ 1 2)))))
+
+(provide 'core-elisp-tests)
+;;; core-elisp-tests.el ends here
 
 (provide 'lisp-tests)
 ;;; lisp-tests.el ends here
