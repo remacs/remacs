@@ -67,3 +67,6 @@
     ;; (message "%S" (car stack))
     (should (and (equal-including-properties (pop stack) string)
 		 (null stack)))))
+
+(provide 'textprop-tests)
+;; textprop-tests.el ends here.
