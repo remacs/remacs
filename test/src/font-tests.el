@@ -1,4 +1,4 @@
-;;; font-parse-tests.el --- Test suite for font parsing.
+;;; font-tests.el --- Test suite for font-related functions.
 
 ;; Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
@@ -163,4 +163,5 @@ expected font properties from parsing NAME.")
 ;; no-byte-compile: t
 ;; End:
 
-;;; font-parse-tests.el ends here.
+(provide 'font-tests)
+;;; font-tests.el ends here.
