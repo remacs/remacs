@@ -333,8 +333,18 @@ See also the functions:
   "Mark all files with a certain EXTENSION for use in later commands.
 A `.' is *not* automatically prepended to the string entered.
 EXTENSION may also be a list of extensions instead of a single one.
-Optional MARKER-CHAR is marker to use."
-  (interactive "sMarking extension: \nP")
+Optional MARKER-CHAR is marker to use.
+Interactively, ask for EXTENSION, and if invoked with a prefix
+argument, for MARKER-CHAR as well."
+  (interactive
+   (list (read-string "Marking extension: ")
+         (and current-prefix-arg
+              (let* ((dflt (char-to-string dired-marker-char))
+                     (input (read-string
+                             (format
+                              "Marker character to use (default %s): " dflt)
+                             nil nil dflt)))
+                (aref input 0)))))
   (or (listp extension)
       (setq extension (list extension)))
   (dired-mark-files-regexp

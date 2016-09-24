@@ -710,7 +710,8 @@ variable @code{window-min-height}.
 @findex dired-mark-extension
 Mark all files with a certain extension for use in later commands.  A @samp{.}
 is not automatically prepended to the string entered, you must type it
-explicitly.
+explicitly.  If invoked with a prefix argument, this command asks for
+a character to use as the marker.
 
 When called from Lisp, @var{extension} may also be a list of extensions
 and an optional argument @var{marker-char} specifies the marker used.
