@@ -4009,7 +4009,8 @@ These commands include \\[set-mark-command] and \\[start-kbd-macro]."
 
 
 (defvar filter-buffer-substring-functions nil
-  "This variable is a wrapper hook around `buffer-substring--filter'.")
+  "This variable is a wrapper hook around `buffer-substring--filter'.
+\(See `with-wrapper-hook' for details about wrapper hooks.)")
 (make-obsolete-variable 'filter-buffer-substring-functions
                         'filter-buffer-substring-function "24.4")
 
@@ -4050,7 +4051,8 @@ that are special to a buffer, and should not be copied into other buffers."
 (defun buffer-substring--filter (beg end &optional delete)
   "Default function to use for `filter-buffer-substring-function'.
 Its arguments and return value are as specified for `filter-buffer-substring'.
-This respects the wrapper hook `filter-buffer-substring-functions',
+Also respects the obsolete wrapper hook `filter-buffer-substring-functions'
+\(see `with-wrapper-hook' for details about wrapper hooks),
 and the abnormal hook `buffer-substring-filters'.
 No filtering is done unless a hook says to."
   (with-wrapper-hook filter-buffer-substring-functions (beg end delete)
