@@ -2114,7 +2114,11 @@ This is done when a frame gets focus.  Blink timers may be stopped by
 	     (not blink-cursor-idle-timer))
     (remove-hook 'post-command-hook 'blink-cursor-check)
     (setq blink-cursor-idle-timer
-          (run-with-idle-timer blink-cursor-delay
+          ;; The 0.2 sec limitation from below is to avoid erratic
+          ;; behavior (or downright failure to display the cursor
+          ;; during command execution) if they set blink-cursor-delay
+          ;; to a very small or even zero value.
+          (run-with-idle-timer (max 0.2 blink-cursor-delay)
                                blink-cursor-delay
                                'blink-cursor-start))))
 
@@ -2148,7 +2152,11 @@ terminals, cursor blinking is controlled by the terminal."
     (add-hook 'focus-in-hook #'blink-cursor-check)
     (add-hook 'focus-out-hook #'blink-cursor-suspend)
     (setq blink-cursor-idle-timer
-          (run-with-idle-timer blink-cursor-delay
+          ;; The 0.2 sec limitation from below is to avoid erratic
+          ;; behavior (or downright failure to display the cursor
+          ;; during command execution) if they set blink-cursor-delay
+          ;; to a very small or even zero value.
+          (run-with-idle-timer (max 0.2 blink-cursor-delay)
                                blink-cursor-delay
                                #'blink-cursor-start))))
 

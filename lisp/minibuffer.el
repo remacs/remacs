@@ -1925,7 +1925,8 @@ variables.")
   (exit-minibuffer))
 
 (defvar completion-in-region-functions nil
-  "Wrapper hook around `completion--in-region'.")
+  "Wrapper hook around `completion--in-region'.
+\(See `with-wrapper-hook' for details about wrapper hooks.)")
 (make-obsolete-variable 'completion-in-region-functions
                         'completion-in-region-function "24.4")
 
@@ -1969,7 +1970,8 @@ if there was no valid completion, else t."
 (defun completion--in-region (start end collection &optional predicate)
   "Default function to use for `completion-in-region-function'.
 Its arguments and return value are as specified for `completion-in-region'.
-This respects the wrapper hook `completion-in-region-functions'."
+Also respects the obsolete wrapper hook `completion-in-region-functions'.
+\(See `with-wrapper-hook' for details about wrapper hooks.)"
   (subr--with-wrapper-hook-no-warnings
       ;; FIXME: Maybe we should use this hook to provide a "display
       ;; completions" operation as well.

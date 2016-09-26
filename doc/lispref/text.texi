@@ -232,7 +232,9 @@ using a function specified by the variable
 @code{filter-buffer-substring-function}, and returns the result.
 
 The default filter function consults the obsolete wrapper hook
-@code{filter-buffer-substring-functions}, and the obsolete variable
+@code{filter-buffer-substring-functions} (see the documentation string
+of the macro @code{with-wrapper-hook} for the details about this
+obsolete facility), and the obsolete variable
 @code{buffer-substring-filters}.  If both of these are @code{nil}, it
 returns the unaltered text from the buffer, i.e., what
 @code{buffer-substring} would return.
