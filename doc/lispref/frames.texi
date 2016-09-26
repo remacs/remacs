@@ -1992,8 +1992,7 @@ Window Ordering}.
 
 Normally, each frame has its own minibuffer window at the bottom, which
 is used whenever that frame is selected.  If the frame has a minibuffer,
-you can get it with @code{minibuffer-window} (@pxref{Definition of
-minibuffer-window}).
+you can get it with @code{minibuffer-window} (@pxref{Minibuffer Windows}).
 
 @cindex frame without a minibuffer
 @cindex surrogate minibuffer frame

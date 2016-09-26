@@ -905,7 +905,7 @@ styles."
   '(propertize (format "%s %d" (calendar-month-name month) year)
                'font-lock-face 'calendar-month-header)
   "Default format for calendar month headings with the American date style.
-Normally you should not customize this, but `calender-month-header'."
+Normally you should not customize this, but `calendar-month-header'."
   :group 'calendar
   :risky t
   :type 'sexp
@@ -915,7 +915,7 @@ Normally you should not customize this, but `calender-month-header'."
   '(propertize (format "%s %d" (calendar-month-name month) year)
                'font-lock-face 'calendar-month-header)
   "Default format for calendar month headings with the European date style.
-Normally you should not customize this, but `calender-month-header'."
+Normally you should not customize this, but `calendar-month-header'."
   :group 'calendar
   :risky t
   :type 'sexp
@@ -925,7 +925,7 @@ Normally you should not customize this, but `calender-month-header'."
   '(propertize (format "%d %s" year (calendar-month-name month))
                'font-lock-face 'calendar-month-header)
   "Default format for calendar month headings with the ISO date style.
-Normally you should not customize this, but `calender-month-header'."
+Normally you should not customize this, but `calendar-month-header'."
   :group 'calendar
   :risky t
   :type 'sexp

@@ -1060,8 +1060,9 @@ precision specifies how many decimal places to show; if zero, the
 decimal-point itself is also omitted.  For @samp{%s} and @samp{%S},
 the precision truncates the string to the given width, so @samp{%.3s}
 shows only the first three characters of the representation for
-@var{object}.  Precision has no effect for other specification
-characters.
+@var{object}.  For other specification characters, the effect of
+precision is what the local library functions of the @code{printf}
+family produce.
 
 @node Case Conversion
 @section Case Conversion in Lisp
