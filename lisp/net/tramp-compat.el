@@ -55,7 +55,7 @@
 ;; avoid them in cases we know what we do.
 (defmacro tramp-compat-funcall (function &rest arguments)
   "Call FUNCTION if it exists.  Do not raise compiler warnings."
-  `(when (or (subrp ,function) (functionp ,function))
+  `(when (functionp ,function)
      (with-no-warnings (funcall ,function ,@arguments))))
 
 ;; We currently use "[" and "]" in the filename format for IPv6 hosts
