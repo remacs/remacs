@@ -784,6 +784,15 @@ build will run on Windows 9X and newer systems).
   You need the libiconv-X.Y.Z-N-mingw32-dev.tar.lzma tarball from that
   site.
 
+* Optional support for decompressing text
+
+  Emacs can decompress text if compiled with the zlib library.
+  Prebuilt binaries of zlib DLL (for 32-bit builds of Emacs) are
+  available from the ezwinports site; see above for the URL.
+
+  (This library is also a prerequisite for several image libraries, so
+  you may already have it; look for zlib1.dll or libz-1.dll.)
+
 
 This file is part of GNU Emacs.
 

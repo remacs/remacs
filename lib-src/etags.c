@@ -3595,13 +3595,27 @@ C_entries (int c_ext, FILE *inf)
 			      int off = tokoff;
 			      int len = toklen;
 
-			      /* Rewrite the tag so that emacs lisp DEFUNs
-				 can be found by their elisp name */
 			      if (defun)
 				{
 				  off += 1;
 				  len -= 1;
+
+				  /* First, tag it as its C name */
+				  linebuffer_setlen (&token_name, toklen);
+				  memcpy (token_name.buffer,
+					  newlb.buffer + tokoff, toklen);
+				  token_name.buffer[toklen] = '\0';
+				  token.named = true;
+				  token.lineno = lineno;
+				  token.offset = tokoff;
+				  token.length = toklen;
+				  token.line = newlb.buffer;
+				  token.linepos = newlinepos;
+				  token.valid = true;
+				  make_C_tag (funorvar);
 				}
+			      /* Rewrite the tag so that emacs lisp DEFUNs
+				 can be found also by their elisp name */
 			      linebuffer_setlen (&token_name, len);
 			      memcpy (token_name.buffer,
 				      newlb.buffer + off, len);

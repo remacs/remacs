@@ -1,3 +1,110 @@
+2016-09-26  Nicolas Petton  <nicolas@petton.fr>
+
+	* Version 25.1 released.
+
+2016-09-26  Nicolas Petton  <nicolas@petton.fr>
+
+	* etc/AUTHORS: Regenerate the AUTHORS file
+
+2016-09-26  Eli Zaretskii  <eliz@gnu.org>
+
+	Update admin/authors.el
+
+	* admin/authors.el (authors-fixed-entries): Add an entry for Bob
+	Weiner.
+
+2016-09-26  Eli Zaretskii  <eliz@gnu.org>
+
+	Update Antinews in ELisp manual
+
+	* doc/lispref/anti.texi (Antinews): Update for Emacs 25.1.
+	* doc/lispref/elisp.texi (Top): Update the main menu entry for
+	Antinews.
+
+2016-09-26  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix comments on window height macros
+
+	* src/window.h (WINDOW_MODE_LINE_HEIGHT, WINDOW_HEADER_LINE_HEIGHT): Fix
+	confusing claim that "height is in pixels and in lines"; in fact it's in
+	pixels.
+
+2016-09-26  Toke Høiland-Jørgensen  <toke@toke.dk>  (tiny change)
+
+	Fix 'url-http-create-request' when cookies are used
+
+	* lisp/url/url-http.el (url-http-create-request): Make sure the
+	cookie headers are a unibyte string.  For the details, see
+	http://lists.gnu.org/archive/html/emacs-devel/2016-09/msg00202.html.
+
+2016-09-26  Martin Rudalics  <rudalics@gmx.at>
+
+	Fix cross reference in frames.texi
+
+	* doc/lispref/frames.texi (Minibuffers and Frames): Fix cross
+	reference.
+
+2016-09-26  immerrr  <immerrr@gmail.com>
+
+	Fix regexp-opt documentation (bug #17862)
+
+	* lisp/emacs-lisp/regexp-opt.el (regexp-opt):
+	* doc/lispref/searching.texi (Regexp Functions): Update PAREN doc.
+
+2016-09-26  Nicolas Richard  <youngfrog@members.fsf.org>
+
+	* lisp/emacs-lisp/gv.el (gv-ref): Fix example of PLACE in docstring.
+
+2016-09-26  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix tags-query-replace docstring
+
+	* lisp/progmodes/etags.el (tags-query-replace): Remove incorrect info
+	regarding non-existent parameters.
+
+2016-09-26  Eli Zaretskii  <eliz@gnu.org>
+
+	Clarify documentation of precision in format specs
+
+	* doc/lispref/strings.texi (Formatting Strings): Be less
+	definitive wrt what precision means in format specs other than
+	floating-point, %s and %S.  (Bug#24314)
+
+2016-09-26  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve and clarify documentation of subprocesses
+
+	* doc/lispref/processes.texi (Subprocess Creation, Shell Arguments):
+	Mention 'make-process' rather than 'start-process'.  Update wrt
+	standard destinations of standard output/error streams and due to
+	different formats of arguments accepted by 'make-process'.
+	(Processes): Mention process objects that represent connections.
+	(Synchronous Processes): Minor clarifications.
+	(Asynchronous Processes): Describe 'make-process' and
+	'make-pipe-process' before 'start-process'.  Update and expand the
+	documentation.
+	(Deleting Processes, Process Information, Input to Processes)
+	(Signals to Processes, Query Before Exit, Network): Update and
+	expand the documentation, especially wrt process objects that
+	represent connections.
+	(Output from Processes): Mention the possibility of separating
+	stderr via 'make-process'.
+	(Filter Functions): Mention that stderr by default arrives at the
+	filter function together with stdout.  (Bug#24287)
+
+	* src/process.c (Fprocess_id, Fprocess_command)
+	(Fprocess_contact, Fprocess_type, Fstop_process): Doc fixes for
+	process objects that represent connections.
+
+2016-09-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* etc/PROBLEMS: Mention gnutls-cli 3.5.3 (Bug#24247).
+
+2016-09-26  Nicolas Petton  <nicolas@petton.fr>
+
+	* etc/AUTHORS: Update the AUTHORS file
+
+2016-09-26  Philipp Stephani  <phst@google.com>
 2016-08-22  Philipp Stephani  <phst@google.com>
 
 	Some assorted documentation clarifications
@@ -37627,6 +37734,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
+2016-09-26c9cef49b0fceb3c5e904837ea5675fe4306ac (inclusive).
 2016-08-22bb813cfea53e4162409f2adc0a793ab301894 (inclusive).
 2016-08-05faead6df626b3737c10f98e9c4964232aa6b9 (inclusive).
 2016-06-19d77d8dbd5b051bb681bacaee4a6faffbbdde9 (inclusive).

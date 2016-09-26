@@ -493,7 +493,8 @@ must be one of the symbols `header', `mode', or `vertical'."
 						(window-pixel-height window)))))
 		  (setq dragged t)
 		  (adjust-window-trailing-edge window growth nil t))
-		(setq last-position position))))))
+		(setq last-position position)))))
+           (old-track-mouse track-mouse))
       ;; Start tracking.  The special value 'dragging' signals the
       ;; display engine to freeze the mouse pointer shape for as long
       ;; as we drag.
@@ -526,7 +527,7 @@ must be one of the symbols `header', `mode', or `vertical'."
 	       (define-key map [right-divider] map)
 	       (define-key map [bottom-divider] map)
 	       map)
-	     t (lambda () (setq track-mouse nil)))))))
+	     t (lambda () (setq track-mouse old-track-mouse)))))))
 
 (defun mouse-drag-mode-line (start-event)
   "Change the height of a window by dragging on the mode line."
@@ -853,7 +854,8 @@ The region will be defined with mark and point."
 	 (click-count (1- (event-click-count start-event)))
 	 ;; Suppress automatic hscrolling, because that is a nuisance
 	 ;; when setting point near the right fringe (but see below).
-	 (auto-hscroll-mode-saved auto-hscroll-mode))
+	 (auto-hscroll-mode-saved auto-hscroll-mode)
+         (old-track-mouse track-mouse))
 
     (setq mouse-selection-click-count click-count)
     ;; In case the down click is in the middle of some intangible text,
@@ -905,7 +907,7 @@ The region will be defined with mark and point."
                                       nil start-point))))))))
        map)
      t (lambda ()
-         (setq track-mouse nil)
+         (setq track-mouse old-track-mouse)
          (setq auto-hscroll-mode auto-hscroll-mode-saved)
           (deactivate-mark)
          (pop-mark)))))
