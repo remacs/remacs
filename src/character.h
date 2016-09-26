@@ -308,7 +308,7 @@ enum
       }									\
   } while (false)
 
-/* Return the character code of character whose multibyte form is at P. */
+/* Return the character code of character whose multibyte form is at P.  */
 
 #define STRING_CHAR(p)						\
   (!((p)[0] & 0x80)						\

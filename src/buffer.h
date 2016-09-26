@@ -1182,7 +1182,7 @@ buffer_has_overlays (void)
 
 /* Return character code of multi-byte form at byte position POS.  If POS
    doesn't point the head of valid multi-byte form, only the byte at
-   POS is returned.  No range checking. */
+   POS is returned.  No range checking.  */
 
 INLINE int
 FETCH_MULTIBYTE_CHAR (ptrdiff_t pos)

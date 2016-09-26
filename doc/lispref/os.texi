@@ -1726,10 +1726,17 @@ This function returns @code{t} if @var{year} is a leap year.
 
 @node Timers
 @section Timers for Delayed Execution
-@cindex timer
+@cindex timers
 
   You can set up a @dfn{timer} to call a function at a specified
-future time or after a certain length of idleness.
+future time or after a certain length of idleness.  A timer is a
+special object that stores the information about the next invocation
+times and the function to invoke.
+
+@defun timerp object
+This predicate function returns non-@code{nil} of @code{object} is a
+timer.
+@end defun
 
   Emacs cannot run timers at any arbitrary point in a Lisp program; it
 can run them only when Emacs could accept output from a subprocess:
