@@ -572,7 +572,7 @@ MANPATH_MAP[ \t]+\\(\\S-+\\)[ \t]+\\(\\S-+\\)\\)" nil t)
                                       (match-string 1)
                                     (cons (match-string 2)
                                           (match-string 3)))
-                                  manpath))
+                                  manpath :test #'equal))
 		    manpath))
 		 ))
       (setq path (cdr path)))
@@ -626,9 +626,9 @@ of `woman-expand-locale' on `woman-locale' added, where they exist."
             (cl-pushnew (if (consp elem)
                             (cons (car elem) dir)
                           dir)
-                        lst)))
+                        lst :test #'equal)))
         ;; Non-locale-specific has lowest precedence.
-        (cl-pushnew elem lst)))))
+        (cl-pushnew elem lst :test #'equal)))))
 
 (defcustom woman-manpath
   ;; Locales could also be added in woman-expand-directory-path.
@@ -1197,7 +1197,8 @@ Called both to generate and to check the cache!"
 		(setq path
 		      (split-string (getenv "PATH") path-separator t)))
 	      (setq dir (and (member (car dir) path) (cdr dir))))
-	    (when dir (cl-pushnew (substitute-in-file-name dir) lst))))
+	    (when dir
+              (cl-pushnew (substitute-in-file-name dir) lst :test #'equal))))
 	(mapcar 'substitute-in-file-name woman-path)))
 
 (defun woman-read-directory-cache ()
