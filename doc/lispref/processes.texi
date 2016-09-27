@@ -1970,6 +1970,13 @@ shell process to avoid querying:
 @end smallexample
 @end defun
 
+@defopt confirm-kill-processes
+If this user option is set to @code{t} (the default), then Emacs asks
+for confirmation before killing processes on exit.  If it is
+@code{nil}, Emacs kills processes without confirmation, i.e., the
+query flag of all processes is ignored.
+@end defopt
+
 @node System Processes
 @section Accessing Other Processes
 @cindex system processes

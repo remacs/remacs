@@ -6757,11 +6757,22 @@ be a predicate function; for example `yes-or-no-p'."
   :group 'convenience
   :version "21.1")
 
+(defcustom confirm-kill-processes t
+  "Non-nil if Emacs should confirm killing processes on exit.
+If this variable is nil, the value of
+`process-query-on-exit-flag' is ignored.  Otherwise, if there are
+processes with a non-nil `process-query-on-exit-flag', Emacs will
+prompt the user before killing them."
+  :type 'boolean
+  :group 'convenience
+  :version "26.1")
+
 (defun save-buffers-kill-emacs (&optional arg)
   "Offer to save each buffer, then kill this Emacs process.
 With prefix ARG, silently save all file-visiting buffers without asking.
 If there are active processes where `process-query-on-exit-flag'
-returns non-nil, asks whether processes should be killed.
+returns non-nil and `confirm-kill-processes' is non-nil,
+asks whether processes should be killed.
 Runs the members of `kill-emacs-query-functions' in turn and stops
 if any returns nil.  If `confirm-kill-emacs' is non-nil, calls it."
   (interactive "P")
@@ -6776,6 +6787,7 @@ if any returns nil.  If `confirm-kill-emacs' is non-nil, calls it."
                 (yes-or-no-p "Modified buffers exist; exit anyway? ")))
      (or (not (fboundp 'process-list))
          ;; process-list is not defined on MSDOS.
+         (not confirm-kill-processes)
          (let ((processes (process-list))
                active)
            (while processes
