@@ -30,12 +30,12 @@ the ones that are not reproducible on the current release.
      [ ] Make sure there's enough information to reproduce the bug.
          It should be very clear how to reproduce.  If not, please ask
          for specific steps to reproduce.  If you don't get them, and
-         you can't reproduce without them, you can close as
-         "doneunreproducible".  Sometimes there is specific hardware
-         involved, such as particular models of keyboards, or it may
-         simply involve a platform you don't have access to.  It's
-         fine to ignore those, and let a future triager that is better
-         equipped to reproduce it handle it.
+         you can't reproduce without them, you can tag the bug report
+         as "unreproducible" and close the bug report.  Sometimes this
+         involves specific hardware such as particular models of
+         keyboards, or it may simply involve a platform you don't have
+         access to.  It's fine to ignore those, and let a future
+         triager that is better equipped to reproduce it handle it.
 
          An example reply asking for clear reproduction steps would be
          something like: "Hi!  In the interest of seeing whether this
@@ -61,9 +61,9 @@ the ones that are not reproducible on the current release.
 
          If you can't reproduce, state that you can't reproduce it on
          the current release, ask if they can try again against the
-         current release.  Tag the bug as "unreproducable".  Wait a
+         current release.  Tag the bug as "unreproducible".  Wait a
          few weeks for their reply - if they can reproduce it, then
-         that's great, otherwise close as "doneunreproducible".
+         that's great, otherwise close the bug report.
 
          Example reply: "I've attempted to reproduce this on the
          latest version of emacs, Emacs 25, but haven't been able to.
