@@ -14,9 +14,7 @@ the ones that are not reproducible on the current release.
   1. To start, enter debbugs mode (either debbugs-gnu, debbugs-org, or via the
      web browser), and accept the default list option of bugs that have severity
      serious, important, or normal.
-  2. This will also show closed bugs that have yet to be archived.  You can
-     filter these out in debbugs-gnu with "x" (debbugs-gnu-toggle-suppress).
-  3. For each bug, we want to primarily make sure it is still
+  2. For each bug, we want to primarily make sure it is still
      reproducible.  A bug can and should stay open as long as it is
      still a bug and no one has fixed it.  The following is a
      suggested checklist to follow for handling these bugs, along with
@@ -73,7 +71,7 @@ the ones that are not reproducible on the current release.
      [ ] Check that the priority is reasonable.  Most bugs should be
          marked as normal, but crashers and security issues can be
          marked as serious.
-  4. Your changes will take some time to take effect.  After a period of minutes
+  3. Your changes will take some time to take effect.  After a period of minutes
      to hours, you will get a mail telling you the control message has been
      processed.  At this point, if there were no errors detected, you and
      everyone else can see your changes. If there are errors, read the error
