@@ -1,4 +1,4 @@
-;;; htmlfontify.el --- htmlize a buffer/source tree with optional hyperlinks
+;;; htmlfontify.el --- htmlize a buffer/source tree with optional hyperlinks -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2002-2003, 2009-2016 Free Software Foundation, Inc.
 
@@ -1805,8 +1805,7 @@ It is assumed that STRING has text properties that allow it to be
 fontified.  This is a simple convenience wrapper around
 `htmlfontify-buffer'."
   (let* ((hfy-optimizations-1 (copy-sequence hfy-optimizations))
-         (hfy-optimizations (add-to-list 'hfy-optimizations-1
-                                         'skip-refontification)))
+         (hfy-optimizations (pushnew 'skip-refontification hfy-optimizations-1)))
     (with-temp-buffer
       (insert string)
       (htmlfontify-buffer)

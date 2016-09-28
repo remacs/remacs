@@ -1,4 +1,4 @@
-;;; man.el --- browse UNIX manual pages
+;;; man.el --- browse UNIX manual pages -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1993-1994, 1996-1997, 2001-2016 Free Software
 ;; Foundation, Inc.

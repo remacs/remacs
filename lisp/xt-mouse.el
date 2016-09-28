@@ -1,4 +1,4 @@
-;;; xt-mouse.el --- support the mouse when emacs run in an xterm
+;;; xt-mouse.el --- support the mouse when emacs run in an xterm -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1994, 2000-2016 Free Software Foundation, Inc.
 

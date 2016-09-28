@@ -1,4 +1,4 @@
-;;; isearch.el --- incremental search minor mode
+;;; isearch.el --- incremental search minor mode -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1992-1997, 1999-2016 Free Software Foundation, Inc.
 

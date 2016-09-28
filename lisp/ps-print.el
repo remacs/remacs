@@ -1,4 +1,4 @@
-;;; ps-print.el --- print text from the buffer as PostScript
+;;; ps-print.el --- print text from the buffer as PostScript -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1993-2016 Free Software Foundation, Inc.
 

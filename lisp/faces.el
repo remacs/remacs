@@ -1,4 +1,4 @@
-;;; faces.el --- Lisp faces
+;;; faces.el --- Lisp faces -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1992-1996, 1998-2016 Free Software Foundation, Inc.
 

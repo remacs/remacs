@@ -1,4 +1,4 @@
-;;; dom.el --- XML/HTML (etc.) DOM manipulation and searching functions
+;;; dom.el --- XML/HTML (etc.) DOM manipulation and searching functions -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
