@@ -625,7 +625,7 @@ The following %-sequences are provided:
       (goto-char (point-min))
       (when (re-search-forward "\\(?:Currentl?y\\|Now\\) drawing from '\\(AC\\|Battery\\) Power'" nil t)
 	(setq power-source (match-string 1))
-	(when (re-search-forward "^ -InternalBattery-0[ \t]+" nil t)
+	(when (re-search-forward "^ -InternalBattery-0\\([ \t]+(id=[0-9]+)\\)*[ \t]+" nil t)
 	  (when (looking-at "\\([0-9]\\{1,3\\}\\)%")
 	    (setq load-percentage (match-string 1))
 	    (goto-char (match-end 0))
