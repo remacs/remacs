@@ -7738,7 +7738,7 @@ Calls `describe-variable' or `describe-function'."
   (let* ((lib (locate-library url))
 	 (file (gnus-replace-in-string (or lib "") "\\.elc" ".el")))
     (if (not lib)
-	(gnus-message 1 "Cannot locale library `%s'." url)
+	(gnus-message 1 "Cannot locate library `%s'." url)
       (find-file-read-only file))))
 
 (defcustom gnus-button-man-level 5
