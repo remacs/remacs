@@ -21,6 +21,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include "sysstdio.h"
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "lisp.h"

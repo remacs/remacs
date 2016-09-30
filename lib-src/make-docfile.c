@@ -37,11 +37,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>   /* config.h unconditionally includes this anyway */
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef WINDOWSNT
 /* Defined to be sys_fopen in ms-w32.h, but only #ifdef emacs, so this

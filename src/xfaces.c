@@ -200,6 +200,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    used to fill in unspecified attributes of the default face.  */
 
 #include <config.h>
+#include <stdlib.h>
 #include "sysstdio.h"
 #include <sys/types.h>
 #include <sys/stat.h>

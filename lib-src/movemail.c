@@ -59,8 +59,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
-#include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <time.h>
 

@@ -18,21 +18,22 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
-/* Commentary:
+/* Put the code here rather than in configure.ac using AH_BOTTOM.
+   This way, the code does not get processed by autoheader.  For
+   example, undefs here are not commented out.
 
-   Rather than writing this code directly in AH_BOTTOM, we include it
-   via this file.  This is so that it does not get processed by
-   autoheader.  Eg, any undefs here would otherwise be commented out.
-*/
-
-/* Code: */
-
-/* Include any platform specific configuration file.  */
-#ifdef config_opsysfile
-# include config_opsysfile
-#endif
+   To help make dependencies clearer elsewhere, this file typically
+   does not #include other files.  The exceptions are first stdbool.h
+   because it is unlikely to interfere with configuration and bool is
+   such a core part of the C language, and second ms-w32.h (DOS_NT
+   only) because it historically was included here and changing that
+   would take some work.  */
 
 #include <stdbool.h>
+
+#if defined DOS_NT && !defined DEFER_MS_W32_H
+# include <ms-w32.h>
+#endif
 
 /* GNUC_PREREQ (V, W, X) is true if this is GNU C version V.W.X or later.
    It can be used in a preprocessor expression.  */
@@ -53,14 +54,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 typedef unsigned int bool_bf;
 #else
 typedef bool bool_bf;
-#endif
-
-#ifndef WINDOWSNT
-/* On AIX 3 this must be included before any other include file.  */
-#include <alloca.h>
-#if ! HAVE_ALLOCA
-# error "alloca not available on this machine"
-#endif
 #endif
 
 /* Simulate __has_attribute on compilers that lack it.  It is used only
@@ -239,9 +232,6 @@ extern void _DebPrint (const char *fmt, ...);
 extern char *emacs_getenv_TZ (void);
 extern int emacs_setenv_TZ (char const *);
 
-#include <string.h>
-#include <stdlib.h>
-
 #if __GNUC__ >= 3  /* On GCC 3.0 we might get a warning.  */
 #define NO_INLINE __attribute__((noinline))
 #else
@@ -365,5 +355,3 @@ extern int emacs_setenv_TZ (char const *);
 #else
 # define UNINIT /* empty */
 #endif
-
-/* conf_post.h ends here */

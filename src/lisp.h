@@ -21,10 +21,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef EMACS_LISP_H
 #define EMACS_LISP_H
 
+#include <alloca.h>
 #include <setjmp.h>
 #include <stdalign.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <string.h>
 #include <float.h>
 #include <inttypes.h>
 #include <limits.h>

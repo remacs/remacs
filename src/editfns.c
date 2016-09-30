@@ -49,6 +49,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <limits.h>
 
 #include <intprops.h>
+#include <stdlib.h>
 #include <strftime.h>
 #include <verify.h>
 

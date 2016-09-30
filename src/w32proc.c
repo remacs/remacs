@@ -22,8 +22,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
      Adapted from alarm.c by Tim Fleehart
 */
 
-/* Enable GNU extensions in gnulib replacement headers.  */
-#define _GNU_SOURCE 1
+#define DEFER_MS_W32_H
+#include <config.h>
 
 #include <mingw_time.h>
 #include <stdio.h>
@@ -38,8 +38,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <mbstring.h>
 #include <locale.h>
 
-/* must include CRT headers *before* config.h */
-#include <config.h>
+/* Include CRT headers *before* ms-w32.h.  */
+#include <ms-w32.h>
 
 #undef signal
 #undef wait

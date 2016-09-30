@@ -20,6 +20,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
+#include <stdlib.h>
 #include <unistd.h>
 #include <filevercmp.h>
 #include <intprops.h>

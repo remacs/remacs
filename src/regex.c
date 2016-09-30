@@ -50,6 +50,7 @@
 #include <config.h>
 
 #include <stddef.h>
+#include <stdlib.h>
 
 #ifdef emacs
 /* We need this for `regex.h', and perhaps for the Emacs include files.  */
@@ -443,25 +444,12 @@ init_syntax_once (void)
 
 #else /* not REGEX_MALLOC  */
 
-/* Emacs already defines alloca, sometimes.  */
-# ifndef alloca
-
-/* Make alloca work the best possible way.  */
-#  ifdef __GNUC__
-#   define alloca __builtin_alloca
-#  else /* not __GNUC__ */
-#   ifdef HAVE_ALLOCA_H
-#    include <alloca.h>
-#   endif /* HAVE_ALLOCA_H */
-#  endif /* not __GNUC__ */
-
-# endif /* not alloca */
-
 # ifdef emacs
 #  define REGEX_USE_SAFE_ALLOCA USE_SAFE_ALLOCA
 #  define REGEX_SAFE_FREE() SAFE_FREE ()
 #  define REGEX_ALLOCATE SAFE_ALLOCA
 # else
+#  include <alloca.h>
 #  define REGEX_ALLOCATE alloca
 # endif
 

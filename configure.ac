@@ -4882,14 +4882,6 @@ AC_DEFINE_UNQUOTED(EMACS_CONFIGURATION,  "${canonical}",
 		   [Define to the canonical Emacs configuration name.])
 AC_DEFINE_UNQUOTED(EMACS_CONFIG_OPTIONS, "${emacs_config_options}",
 		   [Define to the options passed to configure.])
-AH_TEMPLATE(config_opsysfile, [Some platforms that do not use configure
-  define this to include extra configuration information.])
-
-case $opsys in
-  mingw32)
-    AC_DEFINE(config_opsysfile, <ms-w32.h>, [])
-    ;;
-esac
 
 XMENU_OBJ=
 XOBJ=

@@ -21,8 +21,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    Geoff Voelker (voelker@cs.washington.edu)                         7-29-94
 */
 
-/* Enable GNU extensions in gnulib replacement headers.  */
-#define _GNU_SOURCE 1
+#define DEFER_MS_W32_H
+#include <config.h>
 
 #include <mingw_time.h>
 #include <stddef.h> /* for offsetof */
@@ -40,9 +40,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/utime.h>
 #include <math.h>
 
-/* must include CRT headers *before* config.h */
+/* Include CRT headers *before* ms-w32.h.  */
+#include <ms-w32.h>
 
-#include <config.h>
 #include <mbstring.h>	/* for _mbspbrk, _mbslwr, _mbsrchr, ... */
 
 #undef access

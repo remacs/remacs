@@ -63,10 +63,12 @@ void sys_freeaddrinfo (struct addrinfo * ai);
 extern struct servent *hes_getservbyname (/* char *, char * */);
 #endif
 
+#include <alloca.h>
 #include <pwd.h>
 #include <netdb.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 

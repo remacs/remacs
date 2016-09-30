@@ -81,14 +81,14 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    thread to exit.  The main thread waits for some time for the worker
    thread to exit, and if it doesn't, terminates it forcibly.  */
 
-/* Enable GNU extensions in gnulib replacement headers.  */
-#define _GNU_SOURCE 1
+#define DEFER_MS_W32_H
+#include <config.h>
 
 #include <stddef.h>
 #include <errno.h>
 
-/* must include CRT headers *before* config.h */
-#include <config.h>
+/* Include CRT headers *before* ms-w32.h.  */
+#include <ms-w32.h>
 
 #include <windows.h>
 
