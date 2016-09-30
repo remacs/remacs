@@ -8789,7 +8789,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
 #endif
 	  x_destroy_x_image (ximg);
           image_error ("Imagemagick pixel iterator creation failed");
-          g9113oto imagemagick_error;
+          goto imagemagick_error;
         }
 
       image_height = MagickGetImageHeight (image_wand);
