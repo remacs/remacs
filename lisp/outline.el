@@ -388,9 +388,9 @@ at the end of the buffer."
 		      nil 'move))
 
 (defsubst outline-invisible-p (&optional pos)
-  "Non-nil if the character after POS is invisible.
+  "Non-nil if the character after POS has outline invisible property.
 If POS is nil, use `point' instead."
-  (get-char-property (or pos (point)) 'invisible))
+  (eq (get-char-property (or pos (point)) 'invisible) 'outline))
 
 (defun outline-back-to-heading (&optional invisible-ok)
   "Move to previous heading line, or beg of this line if it's a heading.
