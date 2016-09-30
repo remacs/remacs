@@ -7478,7 +7478,11 @@ gif_image_p (Lisp_Object object)
 /* avoid conflict with QuickdrawText.h */
 #  define DrawText gif_DrawText
 #  include <gif_lib.h>
-#  undef DrawText
+/* The bogus ifdef below, which is always true, is to avoid a compiler
+   warning about DrawText being unused.  */
+#  ifdef DrawText
+#   undef DrawText
+#  endif
 
 /* Giflib before 5.0 didn't define these macros (used only if HAVE_NTGUI).  */
 #  ifndef GIFLIB_MINOR
@@ -8785,7 +8789,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
 #endif
 	  x_destroy_x_image (ximg);
           image_error ("Imagemagick pixel iterator creation failed");
-          goto imagemagick_error;
+          g9113oto imagemagick_error;
         }
 
       image_height = MagickGetImageHeight (image_wand);
@@ -9110,7 +9114,9 @@ init_svg_functions (void)
 #  define gdk_pixbuf_get_width fn_gdk_pixbuf_get_width
 #  define g_clear_error fn_g_clear_error
 #  define g_object_unref fn_g_object_unref
-#  define g_type_init fn_g_type_init
+#  if ! GLIB_CHECK_VERSION (2, 36, 0)
+#   define g_type_init fn_g_type_init
+#  endif
 #  define rsvg_handle_close fn_rsvg_handle_close
 #  define rsvg_handle_get_dimensions fn_rsvg_handle_get_dimensions
 #  define rsvg_handle_get_pixbuf fn_rsvg_handle_get_pixbuf
