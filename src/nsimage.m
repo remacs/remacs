@@ -46,11 +46,11 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
    ========================================================================== */
 
 void *
-ns_image_from_XBM (unsigned char *bits, int width, int height,
+ns_image_from_XBM (char *bits, int width, int height,
                    unsigned long fg, unsigned long bg)
 {
   NSTRACE ("ns_image_from_XBM");
-  return [[EmacsImage alloc] initFromXBM: bits
+  return [[EmacsImage alloc] initFromXBM: (unsigned char *) bits
                                    width: width height: height
                                       fg: fg bg: bg];
 }

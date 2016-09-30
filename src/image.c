@@ -97,11 +97,9 @@ typedef struct ns_bitmap_record Bitmap_Record;
 #define NO_PIXMAP 0
 
 #define PIX_MASK_RETAIN	0
-#define PIX_MASK_DRAW	1
 
 #define x_defined_color(f, name, color_def, alloc) \
   ns_defined_color (f, name, color_def, alloc, 0)
-#define DefaultDepthOfScreen(screen) x_display_list->n_planes
 #endif /* HAVE_NS */
 
 #if (defined HAVE_X_WINDOWS \
@@ -2333,12 +2331,12 @@ x_find_image_file (Lisp_Object file)
    occurred.  FD is a file descriptor open for reading FILE.  Set
    *SIZE to the size of the file.  */
 
-static unsigned char *
+static char *
 slurp_file (int fd, ptrdiff_t *size)
 {
   FILE *fp = fdopen (fd, "rb");
 
-  unsigned char *buf = NULL;
+  char *buf = NULL;
   struct stat st;
 
   if (fp)
@@ -2563,9 +2561,9 @@ xbm_image_p (Lisp_Object object)
    scanning a number, store its value in *IVAL.  */
 
 static int
-xbm_scan (unsigned char **s, unsigned char *end, char *sval, int *ival)
+xbm_scan (char **s, char *end, char *sval, int *ival)
 {
-  unsigned int c;
+  unsigned char c;
 
  loop:
 
@@ -2617,7 +2615,7 @@ xbm_scan (unsigned char **s, unsigned char *end, char *sval, int *ival)
       if (*s < end)
 	*s = *s - 1;
       *ival = value;
-      c = XBM_TK_NUMBER;
+      return XBM_TK_NUMBER;
     }
   else if (c_isalpha (c) || c == '_')
     {
@@ -2628,7 +2626,7 @@ xbm_scan (unsigned char **s, unsigned char *end, char *sval, int *ival)
       *sval = 0;
       if (*s < end)
 	*s = *s - 1;
-      c = XBM_TK_IDENT;
+      return XBM_TK_IDENT;
     }
   else if (c == '/' && **s == '*')
     {
@@ -2765,11 +2763,11 @@ Create_Pixmap_From_Bitmap_Data (struct frame *f, struct image *img, char *data,
    bitmap remains unread).  */
 
 static bool
-xbm_read_bitmap_data (struct frame *f, unsigned char *contents, unsigned char *end,
+xbm_read_bitmap_data (struct frame *f, char *contents, char *end,
 		      int *width, int *height, char **data,
 		      bool inhibit_image_error)
 {
-  unsigned char *s = contents;
+  char *s = contents;
   char buffer[BUFSIZ];
   bool padding_p = 0;
   bool v10 = 0;
@@ -2926,8 +2924,7 @@ xbm_read_bitmap_data (struct frame *f, unsigned char *contents, unsigned char *e
    successful.  */
 
 static bool
-xbm_load_image (struct frame *f, struct image *img, unsigned char *contents,
-		unsigned char *end)
+xbm_load_image (struct frame *f, struct image *img, char *contents, char *end)
 {
   bool rc;
   char *data;
@@ -2987,8 +2984,8 @@ xbm_file_p (Lisp_Object data)
 {
   int w, h;
   return (STRINGP (data)
-	  && xbm_read_bitmap_data (NULL, SDATA (data),
-				   (SDATA (data) + SBYTES (data)),
+	  && xbm_read_bitmap_data (NULL, SSDATA (data),
+				   SSDATA (data) + SBYTES (data),
 				   &w, &h, NULL, 1));
 }
 
@@ -3017,7 +3014,7 @@ xbm_load (struct frame *f, struct image *img)
 	}
 
       ptrdiff_t size;
-      unsigned char *contents = slurp_file (fd, &size);
+      char *contents = slurp_file (fd, &size);
       if (contents == NULL)
 	{
 	  image_error ("Error loading XBM image `%s'", file);
@@ -3078,9 +3075,8 @@ xbm_load (struct frame *f, struct image *img)
 	}
 
       if (in_memory_file_p)
-	success_p = xbm_load_image (f, img, SDATA (data),
-				    (SDATA (data)
-				     + SBYTES (data)));
+	success_p = xbm_load_image (f, img, SSDATA (data),
+				    SSDATA (data) + SBYTES (data));
       else
 	{
 	  USE_SAFE_ALLOCA;
@@ -3894,14 +3890,12 @@ xpm_load (struct frame *f, struct image *img)
 /* XPM support functions for NS where libxpm is not available.
    Only XPM version 3 (without any extensions) is supported.  */
 
-static void xpm_put_color_table_v (Lisp_Object, const unsigned char *,
+static void xpm_put_color_table_v (Lisp_Object, const char *,
                                    int, Lisp_Object);
-static Lisp_Object xpm_get_color_table_v (Lisp_Object,
-                                          const unsigned char *, int);
-static void xpm_put_color_table_h (Lisp_Object, const unsigned char *,
+static Lisp_Object xpm_get_color_table_v (Lisp_Object, const char *, int);
+static void xpm_put_color_table_h (Lisp_Object, const char *,
                                    int, Lisp_Object);
-static Lisp_Object xpm_get_color_table_h (Lisp_Object,
-                                          const unsigned char *, int);
+static Lisp_Object xpm_get_color_table_h (Lisp_Object, const char *, int);
 
 /* Tokens returned from xpm_scan.  */
 
@@ -3920,12 +3914,9 @@ enum xpm_token
    length of the corresponding token, respectively.  */
 
 static int
-xpm_scan (const unsigned char **s,
-          const unsigned char *end,
-          const unsigned char **beg,
-          ptrdiff_t *len)
+xpm_scan (const char **s, const char *end, const char **beg, ptrdiff_t *len)
 {
-  int c;
+  unsigned char c;
 
   while (*s < end)
     {
@@ -3988,12 +3979,9 @@ xpm_scan (const unsigned char **s,
    hash table is used.  */
 
 static Lisp_Object
-xpm_make_color_table_v (void (**put_func) (Lisp_Object,
-                                           const unsigned char *,
-                                           int,
+xpm_make_color_table_v (void (**put_func) (Lisp_Object, const char *, int,
                                            Lisp_Object),
-                        Lisp_Object (**get_func) (Lisp_Object,
-                                                  const unsigned char *,
+                        Lisp_Object (**get_func) (Lisp_Object, const char *,
                                                   int))
 {
   *put_func = xpm_put_color_table_v;
@@ -4003,28 +3991,27 @@ xpm_make_color_table_v (void (**put_func) (Lisp_Object,
 
 static void
 xpm_put_color_table_v (Lisp_Object color_table,
-                       const unsigned char *chars_start,
+                       const char *chars_start,
                        int chars_len,
                        Lisp_Object color)
 {
-  ASET (color_table, *chars_start, color);
+  unsigned char uc = *chars_start;
+  ASET (color_table, uc, color);
 }
 
 static Lisp_Object
 xpm_get_color_table_v (Lisp_Object color_table,
-                       const unsigned char *chars_start,
+                       const char *chars_start,
                        int chars_len)
 {
-  return AREF (color_table, *chars_start);
+  unsigned char uc = *chars_start;
+  return AREF (color_table, uc);
 }
 
 static Lisp_Object
-xpm_make_color_table_h (void (**put_func) (Lisp_Object,
-                                           const unsigned char *,
-                                           int,
+xpm_make_color_table_h (void (**put_func) (Lisp_Object, const char *, int,
                                            Lisp_Object),
-                        Lisp_Object (**get_func) (Lisp_Object,
-                                                  const unsigned char *,
+                        Lisp_Object (**get_func) (Lisp_Object, const char *,
                                                   int))
 {
   *put_func = xpm_put_color_table_h;
@@ -4037,7 +4024,7 @@ xpm_make_color_table_h (void (**put_func) (Lisp_Object,
 
 static void
 xpm_put_color_table_h (Lisp_Object color_table,
-                       const unsigned char *chars_start,
+                       const char *chars_start,
                        int chars_len,
                        Lisp_Object color)
 {
@@ -4051,7 +4038,7 @@ xpm_put_color_table_h (Lisp_Object color_table,
 
 static Lisp_Object
 xpm_get_color_table_h (Lisp_Object color_table,
-                       const unsigned char *chars_start,
+                       const char *chars_start,
                        int chars_len)
 {
   struct Lisp_Hash_Table *table = XHASH_TABLE (color_table);
@@ -4085,20 +4072,22 @@ xpm_str_to_color_key (const char *s)
 static bool
 xpm_load_image (struct frame *f,
                 struct image *img,
-                const unsigned char *contents,
-                const unsigned char *end)
+                const char *contents,
+                const char *end)
 {
-  const unsigned char *s = contents, *beg, *str;
-  unsigned char buffer[BUFSIZ];
+  const char *s = contents, *beg, *str;
+  char buffer[BUFSIZ];
   int width, height, x, y;
   int num_colors, chars_per_pixel;
   ptrdiff_t len;
   int LA1;
-  void (*put_color_table) (Lisp_Object, const unsigned char *, int, Lisp_Object);
-  Lisp_Object (*get_color_table) (Lisp_Object, const unsigned char *, int);
+  void (*put_color_table) (Lisp_Object, const char *, int, Lisp_Object);
+  Lisp_Object (*get_color_table) (Lisp_Object, const char *, int);
   Lisp_Object frame, color_symbols, color_table;
   int best_key;
+#ifndef HAVE_NS
   bool have_mask = false;
+#endif
   XImagePtr ximg = NULL, mask_img = NULL;
 
 #define match() \
@@ -4337,7 +4326,7 @@ xpm_load (struct frame *f,
 	}
 
       ptrdiff_t size;
-      unsigned char *contents = slurp_file (fd, &size);
+      char *contents = slurp_file (fd, &size);
       if (contents == NULL)
 	{
 	  image_error ("Error loading XPM image `%s'", file);
@@ -4357,8 +4346,8 @@ xpm_load (struct frame *f,
 	  image_error ("Invalid image data `%s'", data);
 	  return 0;
 	}
-      success_p = xpm_load_image (f, img, SDATA (data),
-				  SDATA (data) + SBYTES (data));
+      success_p = xpm_load_image (f, img, SSDATA (data),
+				  SSDATA (data) + SBYTES (data));
     }
 
   return success_p;
@@ -5051,13 +5040,13 @@ static void
 x_build_heuristic_mask (struct frame *f, struct image *img, Lisp_Object how)
 {
   XImagePtr_or_DC ximg;
-#ifndef HAVE_NTGUI
-  XImagePtr mask_img;
-#else
+#ifdef HAVE_NTGUI
   HGDIOBJ prev;
   char *mask_img;
   int row_width;
-#endif /* HAVE_NTGUI */
+#elif !defined HAVE_NS
+  XImagePtr mask_img;
+#endif
   int x, y;
   bool use_img_background;
   unsigned long bg = 0;
@@ -5232,20 +5221,22 @@ pbm_image_p (Lisp_Object object)
    end of input.  */
 
 static int
-pbm_next_char (unsigned char **s, unsigned char *end)
+pbm_next_char (char **s, char *end)
 {
-  int c = -1;
-
-  while (*s < end && (c = *(*s)++, c == '#'))
+  while (*s < end)
     {
-      /* Skip to the next line break.  */
-      while (*s < end && (c = *(*s)++, c != '\n' && c != '\r'))
-        ;
-
-      c = -1;
+      unsigned char c = *(*s)++;
+      if (c != '#')
+	return c;
+      while (*s < end)
+	{
+	  c = *(*s)++;
+	  if (c == '\n' || c == '\r')
+	    break;
+	}
     }
 
-  return c;
+  return -1;
 }
 
 
@@ -5254,7 +5245,7 @@ pbm_next_char (unsigned char **s, unsigned char *end)
    end of input.  */
 
 static int
-pbm_scan_number (unsigned char **s, unsigned char *end)
+pbm_scan_number (char **s, char *end)
 {
   int c = 0, val = -1;
 
@@ -5284,12 +5275,9 @@ pbm_load (struct frame *f, struct image *img)
   int width, height, max_color_idx = 0;
   Lisp_Object specified_file;
   enum {PBM_MONO, PBM_GRAY, PBM_COLOR} type;
-  unsigned char *contents = NULL;
-  unsigned char *end, *p;
-#ifdef USE_CAIRO
-  unsigned char *data = 0;
-  uint32_t *dataptr;
-#else
+  char *contents = NULL;
+  char *end, *p;
+#ifndef USE_CAIRO
   XImagePtr ximg;
 #endif
 
@@ -5325,7 +5313,7 @@ pbm_load (struct frame *f, struct image *img)
 	  image_error ("Invalid image data `%s'", data);
 	  return 0;
 	}
-      p = SDATA (data);
+      p = SSDATA (data);
       end = p + SBYTES (data);
     }
 
@@ -5376,8 +5364,8 @@ pbm_load (struct frame *f, struct image *img)
   height = pbm_scan_number (&p, end);
 
 #ifdef USE_CAIRO
-  data = (unsigned char *) xmalloc (width * height * 4);
-  dataptr = (uint32_t *) data;
+  uint32_t *data = xmalloc (width * height * 4);
+  uint32_t *dataptr = data;
 #endif
 
   if (type != PBM_MONO)
@@ -5406,7 +5394,8 @@ pbm_load (struct frame *f, struct image *img)
 
   if (type == PBM_MONO)
     {
-      int c = 0, g;
+      unsigned char c = 0;
+      int g;
       struct image_keyword fmt[PBM_LAST];
       unsigned long fg = FRAME_FOREGROUND_PIXEL (f);
       unsigned long bg = FRAME_BACKGROUND_PIXEL (f);
@@ -8534,7 +8523,6 @@ imagemagick_load_image (struct frame *f, struct image *img,
   EMACS_INT ino;
   int desired_width, desired_height;
   double rotation;
-  int pixelwidth;
   char hint_buffer[MaxTextExtent];
   char *filename_hint = NULL;
 
@@ -8763,7 +8751,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
         on rgb display.
         seems about 3 times as fast as pixel pushing(not carefully measured)
       */
-      pixelwidth = CharPixel; /*??? TODO figure out*/
+      int pixelwidth = CharPixel; /*??? TODO figure out*/
       MagickExportImagePixels (image_wand, 0, 0, width, height,
 			       exportdepth, pixelwidth, ximg->data);
     }
@@ -8947,7 +8935,7 @@ static bool svg_image_p (Lisp_Object object);
 static bool svg_load (struct frame *f, struct image *img);
 
 static bool svg_load_image (struct frame *, struct image *,
-			    unsigned char *, ptrdiff_t, char *);
+			    char *, ptrdiff_t, char *);
 
 /* Indices of image specification fields in svg_format, below.  */
 
@@ -9155,7 +9143,7 @@ svg_load (struct frame *f, struct image *img)
 
       /* Read the entire file into memory.  */
       ptrdiff_t size;
-      unsigned char *contents = slurp_file (fd, &size);
+      char *contents = slurp_file (fd, &size);
       if (contents == NULL)
 	{
 	  image_error ("Error loading SVG image `%s'", file);
@@ -9179,7 +9167,7 @@ svg_load (struct frame *f, struct image *img)
 	  return 0;
 	}
       original_filename = BVAR (current_buffer, filename);
-      success_p = svg_load_image (f, img, SDATA (data), SBYTES (data),
+      success_p = svg_load_image (f, img, SSDATA (data), SBYTES (data),
                                   (NILP (original_filename) ? NULL
 				   : SSDATA (original_filename)));
     }
@@ -9187,19 +9175,16 @@ svg_load (struct frame *f, struct image *img)
   return success_p;
 }
 
-/* svg_load_image is a helper function for svg_load, which does the
-   actual loading given contents and size, apart from frame and image
-   structures, passed from svg_load.
+/* Load frame F and image IMG.  CONTENTS contains the SVG XML data to
+   be parsed, SIZE is its size, and FILENAME is the name of the SVG
+   file being loaded.
 
-   Uses librsvg to do most of the image processing.
+   Use librsvg to do most of the image processing.
 
-   Returns true when successful.  */
+   Return true when successful.  */
 static bool
-svg_load_image (struct frame *f,         /* Pointer to emacs frame structure.  */
-		struct image *img,       /* Pointer to emacs image structure.  */
-		unsigned char *contents, /* String containing the SVG XML data to be parsed.  */
-		ptrdiff_t size,          /* Size of data in bytes.  */
-		char *filename)          /* Name of SVG file being loaded.  */
+svg_load_image (struct frame *f, struct image *img, char *contents,
+		ptrdiff_t size, char *filename)
 {
   RsvgHandle *rsvg_handle;
   RsvgDimensionData dimension_data;
@@ -9226,7 +9211,7 @@ svg_load_image (struct frame *f,         /* Pointer to emacs frame structure.  *
     rsvg_handle_set_base_uri(rsvg_handle, filename);
 
   /* Parse the contents argument and fill in the rsvg_handle.  */
-  rsvg_handle_write (rsvg_handle, contents, size, &err);
+  rsvg_handle_write (rsvg_handle, (unsigned char *) contents, size, &err);
   if (err) goto rsvg_error;
 
   /* The parsing is complete, rsvg_handle is ready to used, close it

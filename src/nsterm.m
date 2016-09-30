@@ -68,9 +68,10 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 #include "macfont.h"
 #endif
 
-
-extern NSString *NSMenuDidBeginTrackingNotification;
-
+static EmacsMenu *dockMenu;
+#ifdef NS_IMPL_COCOA
+static EmacsMenu *mainMenu;
+#endif
 
 /* ==========================================================================
 
@@ -255,7 +256,8 @@ static unsigned convert_ns_to_X_keysym[] =
    no way to control this behavior. */
 float ns_antialias_threshold;
 
-NSArray *ns_send_types =0, *ns_return_types =0, *ns_drag_types =0;
+NSArray *ns_send_types = 0, *ns_return_types = 0;
+static NSArray *ns_drag_types = 0;
 NSString *ns_app_name = @"Emacs";  /* default changed later */
 
 /* Display variables */
@@ -413,7 +415,6 @@ static CGPoint menu_mouse_point;
 /* TODO: get rid of need for these forward declarations */
 static void ns_condemn_scroll_bars (struct frame *f);
 static void ns_judge_scroll_bars (struct frame *f);
-void x_set_frame_alpha (struct frame *f);
 
 
 /* ==========================================================================
@@ -437,7 +438,7 @@ ns_init_events (struct input_event* ev)
 }
 
 void
-ns_finish_events ()
+ns_finish_events (void)
 {
   emacs_event = NULL;
 }
@@ -1423,7 +1424,8 @@ ns_ring_bell (struct frame *f)
 }
 
 
-static void hide_bell ()
+static void
+hide_bell (void)
 /* --------------------------------------------------------------------------
      Ensure the bell is hidden.
    -------------------------------------------------------------------------- */
@@ -1897,37 +1899,6 @@ ns_index_color (NSColor *color, struct frame *f)
 }
 
 
-void
-ns_free_indexed_color (unsigned long idx, struct frame *f)
-{
-  struct ns_color_table *color_table;
-  NSColor *color;
-  NSNumber *index;
-
-  if (!f)
-    return;
-
-  color_table = FRAME_DISPLAY_INFO (f)->color_table;
-
-  if (idx <= 0 || idx >= color_table->size) {
-    message1 ("ns_free_indexed_color: Color index out of range.\n");
-    return;
-  }
-
-  index = [NSNumber numberWithUnsignedInt: idx];
-  if ([color_table->empty_indices containsObject: index]) {
-    message1 ("ns_free_indexed_color: attempt to free already freed color.\n");
-    return;
-  }
-
-  color = color_table->colors[idx];
-  [color release];
-  color_table->colors[idx] = nil;
-  [color_table->empty_indices addObject: index];
-/*fprintf(stderr, "color_table: FREED %d\n",idx);*/
-}
-
-
 static int
 ns_get_color (const char *name, NSColor **col)
 /* --------------------------------------------------------------------------
@@ -2009,7 +1980,7 @@ ns_get_color (const char *name, NSColor **col)
 
   if (hex[0])
     {
-      int rr, gg, bb;
+      unsigned int rr, gg, bb;
       float fscale = scaling == 4 ? 65535.0 : (scaling == 2 ? 255.0 : 15.0);
       if (sscanf (hex, "%x/%x/%x", &rr, &gg, &bb))
         {
@@ -2071,46 +2042,6 @@ ns_lisp_to_color (Lisp_Object color, NSColor **col)
   else if (SYMBOLP (color))
     return ns_get_color (SSDATA (SYMBOL_NAME (color)), col);
   return 1;
-}
-
-
-Lisp_Object
-ns_color_to_lisp (NSColor *col)
-/* --------------------------------------------------------------------------
-     Convert a color to a lisp string with the RGB equivalent
-   -------------------------------------------------------------------------- */
-{
-  EmacsCGFloat red, green, blue, alpha, gray;
-  char buf[1024];
-  const char *str;
-  NSTRACE ("ns_color_to_lisp");
-
-  block_input ();
-  if ([[col colorSpaceName] isEqualToString: NSNamedColorSpace])
-
-      if ((str =[[col colorNameComponent] UTF8String]))
-        {
-          unblock_input ();
-          return build_string ((char *)str);
-        }
-
-    [[col colorUsingDefaultColorSpace]
-        getRed: &red green: &green blue: &blue alpha: &alpha];
-  if (red == green && red == blue)
-    {
-      [[col colorUsingColorSpaceName: NSCalibratedWhiteColorSpace]
-            getWhite: &gray alpha: &alpha];
-      snprintf (buf, sizeof (buf), "#%2.2lx%2.2lx%2.2lx",
-		lrint (gray * 0xff), lrint (gray * 0xff), lrint (gray * 0xff));
-      unblock_input ();
-      return build_string (buf);
-    }
-
-  snprintf (buf, sizeof (buf), "#%2.2lx%2.2lx%2.2lx",
-            lrint (red*0xff), lrint (green*0xff), lrint (blue*0xff));
-
-  unblock_input ();
-  return build_string (buf);
 }
 
 
@@ -2462,7 +2393,8 @@ ns_clear_frame (struct frame *f)
 
   block_input ();
   ns_focus (f, &r, 1);
-  [ns_lookup_indexed_color (NS_FACE_BACKGROUND (FRAME_DEFAULT_FACE (f)), f) set];
+  [ns_lookup_indexed_color (NS_FACE_BACKGROUND
+			    (FACE_FROM_ID (f, DEFAULT_FACE_ID)), f) set];
   NSRectFill (r);
   ns_unfocus (f);
 
@@ -3074,7 +3006,7 @@ ns_draw_underwave (struct glyph_string *s, EmacsCGFloat width, EmacsCGFloat x)
 
 
 
-void
+static void
 ns_draw_text_decoration (struct glyph_string *s, struct face *face,
                          NSColor *defaultCol, CGFloat width, CGFloat x)
 /* --------------------------------------------------------------------------
@@ -3317,7 +3249,7 @@ ns_dumpglyphs_box_or_relief (struct glyph_string *s)
       face = FACE_FROM_ID_OR_NULL (s->f,
 				   MOUSE_HL_INFO (s->f)->mouse_face_face_id);
       if (!face)
-        face = FACE_FROM_ID_OR_NULL (s->f, MOUSE_FACE_ID);
+        face = FACE_FROM_ID (s->f, MOUSE_FACE_ID);
     }
   else
     face = s->face;
@@ -5433,15 +5365,11 @@ runAlertPanel(NSString *title,
   if (NILP (ns_confirm_quit)) //   || ns_shutdown_properly  --> TO DO
     return NSTerminateNow;
 
-    ret = runAlertPanel(ns_app_name,
-                        @"Exit requested.  Would you like to Save Buffers and Exit, or Cancel the request?",
-                        @"Save Buffers and Exit", @"Cancel");
+  ret = runAlertPanel(ns_app_name,
+		      @"Exit requested.  Would you like to Save Buffers and Exit, or Cancel the request?",
+		      @"Save Buffers and Exit", @"Cancel");
 
-    if (ret)
-        return NSTerminateNow;
-    else
-        return NSTerminateCancel;
-    return NSTerminateNow;  /* just in case */
+  return ret ? NSTerminateNow : NSTerminateCancel;
 }
 
 static int
@@ -5722,7 +5650,7 @@ not_in_argv (NSString *arg)
 - (void)changeFont: (id)sender
 {
   NSEvent *e = [[self window] currentEvent];
-  struct face *face = FRAME_DEFAULT_FACE (emacsframe);
+  struct face *face = FACE_FROM_ID (emacsframe, DEFAULT_FACE_ID);
   struct font *font = face->font;
   id newFont;
   CGFloat size;
@@ -5992,7 +5920,7 @@ not_in_argv (NSString *arg)
 
   if (NS_KEYLOG)
     fprintf (stderr, "keyDown: code =%x\tfnKey =%x\tflags = %x\tmods = %x\n",
-             code, fnKeysym, flags, emacs_event->modifiers);
+             (unsigned) code, fnKeysym, flags, emacs_event->modifiers);
 
       /* if it was a function key or had modifiers, pass it directly to emacs */
       if (fnKeysym || (emacs_event->modifiers
@@ -6930,7 +6858,8 @@ not_in_argv (NSString *arg)
   [win makeFirstResponder: self];
 
   col = ns_lookup_indexed_color (NS_FACE_BACKGROUND
-                                  (FRAME_DEFAULT_FACE (emacsframe)), emacsframe);
+				 (FACE_FROM_ID (emacsframe, DEFAULT_FACE_ID)),
+				 emacsframe);
   [win setBackgroundColor: col];
   if ([col alphaComponent] != (EmacsCGFloat) 1.0)
     [win setOpaque: NO];
@@ -7332,7 +7261,7 @@ not_in_argv (NSString *arg)
   f = emacsframe;
   wr = [w frame];
   col = ns_lookup_indexed_color (NS_FACE_BACKGROUND
-                                 (FRAME_DEFAULT_FACE (f)),
+				 (FACE_FROM_ID (f, DEFAULT_FACE_ID)),
                                  f);
 
   if (fs_state != FULLSCREEN_BOTH)
@@ -8394,7 +8323,7 @@ not_in_argv (NSString *arg)
   NSRect sr, kr;
   /* hitPart is only updated AFTER event is passed on */
   NSScrollerPart part = [self testPart: [e locationInWindow]];
-  CGFloat inc = 0.0, loc, kloc, pos;
+  CGFloat loc, kloc, pos UNINIT;
   int edge = 0;
 
   NSTRACE ("[EmacsScroller mouseDown:]");
