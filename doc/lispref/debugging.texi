@@ -623,6 +623,37 @@ forms are elided.
 @end smallexample
 @end deffn
 
+@defvar debugger-stack-frame-as-list
+If this variable is non-@code{nil}, every stack frame of the backtrace
+is displayed as a list.  This aims at improving the backtrace
+readability at the cost of special forms no longer being visually
+different from regular function calls.
+
+With @code{debugger-stack-frame-as-list} non-@code{nil}, the above
+example would look as follows:
+
+@smallexample
+@group
+----------- Buffer: backtrace-output ------------
+  (backtrace)
+  (list ...computing arguments...)
+@end group
+  (progn ...)
+  (eval (progn (1+ var) (list (quote testing) (backtrace))))
+  (setq ...)
+  (save-excursion ...)
+  (let ...)
+  (with-output-to-temp-buffer ...)
+  (eval (with-output-to-temp-buffer ...))
+  (eval-last-sexp-1 nil)
+@group
+  (eval-last-sexp nil)
+  (call-interactively eval-last-sexp)
+----------- Buffer: backtrace-output ------------
+@end group
+@end smallexample
+@end defvar
+
 @defvar debug-on-next-call
 @cindex @code{eval}, and debugging
 @cindex @code{apply}, and debugging

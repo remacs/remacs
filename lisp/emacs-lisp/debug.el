@@ -279,7 +279,9 @@ That buffer should be current already."
   (goto-char (point-min))
   (delete-region (point)
 		 (progn
-		   (search-forward "\n  debug(")
+		   (search-forward (if debugger-stack-frame-as-list
+                                       "\n  (debug "
+                                     "\n  debug("))
 		   (forward-line (if (eq (car args) 'debug)
                                      ;; Remove debug--implement-debug-on-entry
                                      ;; and the advice's `apply' frame.

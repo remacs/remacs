@@ -205,6 +205,11 @@ questions, with a handy way to display help texts.
 +++
 ** 'switch-to-buffer-preserve-window-point' now defaults to t.
 
++++
+** The new variable 'debugger-stack-frame-as-list' allows displaying
+all call stack frames in a Lisp backtrace buffer as lists.  Both
+debug.el and edebug.el have been updated to heed to this variable.
+
 
 * Editing Changes in Emacs 25.3
 

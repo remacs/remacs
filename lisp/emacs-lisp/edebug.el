@@ -3798,7 +3798,9 @@ Otherwise call `debug' normally."
 	  (forward-line 1)
 	  (delete-region last-ok-point (point)))
 
-	 ((looking-at "^  edebug")
+	 ((looking-at (if debugger-stack-frame-as-list
+                          "^  (edebug"
+                        "^  edebug"))
 	  (forward-line 1)
 	  (delete-region last-ok-point (point))
 	  )))

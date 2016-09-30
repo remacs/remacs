@@ -246,6 +246,7 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 	     (debug-ignored-errors debug (repeat (choice symbol regexp)))
 	     (debug-on-quit debug boolean)
 	     (debug-on-signal debug boolean)
+             (debugger-stack-frame-as-list debugger boolean)
 	     ;; fileio.c
 	     (delete-by-moving-to-trash auto-save boolean "23.1")
 	     (auto-save-visited-file-name auto-save boolean)

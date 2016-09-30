@@ -3421,13 +3421,17 @@ Output stream used is value of `standard-output'.  */)
       else
 	{
 	  tem = backtrace_function (pdl);
+	  if (debugger_stack_frame_as_list)
+	    write_string ("(");
 	  Fprin1 (tem, Qnil);	/* This can QUIT.  */
-	  write_string ("(");
+	  if (!debugger_stack_frame_as_list)
+	    write_string ("(");
 	  {
 	    ptrdiff_t i;
 	    for (i = 0; i < backtrace_nargs (pdl); i++)
 	      {
-		if (i) write_string (" ");
+		if (i || debugger_stack_frame_as_list)
+		  write_string(" ");
 		Fprin1 (backtrace_args (pdl)[i], Qnil);
 	      }
 	  }
@@ -3849,6 +3853,10 @@ Does not apply if quit is handled by a `condition-case'.  */);
 This is nil when the debugger is called under circumstances where it
 might not be safe to continue.  */);
   debugger_may_continue = 1;
+
+  DEFVAR_BOOL ("debugger-stack-frame-as-list", debugger_stack_frame_as_list,
+	       doc: /* Non-nil means display call stack frames as lists. */);
+  debugger_stack_frame_as_list = 0;
 
   DEFVAR_LISP ("debugger", Vdebugger,
 	       doc: /* Function to call to invoke debugger.
