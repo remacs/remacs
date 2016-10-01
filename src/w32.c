@@ -40,9 +40,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/utime.h>
 #include <math.h>
 
-/* Include CRT headers *before* ms-w32.h.  */
+/* Include (most) CRT headers *before* ms-w32.h.  */
 #include <ms-w32.h>
 
+#include <string.h>	/* for strerror, needed by sys_strerror */
 #include <mbstring.h>	/* for _mbspbrk, _mbslwr, _mbsrchr, ... */
 
 #undef access
