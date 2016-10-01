@@ -2119,8 +2119,7 @@ This is done when a frame gets focus.  Blink timers may be stopped by
           ;; during command execution) if they set blink-cursor-delay
           ;; to a very small or even zero value.
           (run-with-idle-timer (max 0.2 blink-cursor-delay)
-                               blink-cursor-delay
-                               'blink-cursor-start))))
+                               :repeat #'blink-cursor-start))))
 
 (define-obsolete-variable-alias 'blink-cursor 'blink-cursor-mode "22.1")
 
@@ -2157,8 +2156,7 @@ terminals, cursor blinking is controlled by the terminal."
           ;; during command execution) if they set blink-cursor-delay
           ;; to a very small or even zero value.
           (run-with-idle-timer (max 0.2 blink-cursor-delay)
-                               blink-cursor-delay
-                               #'blink-cursor-start))))
+                               :repeat #'blink-cursor-start))))
 
 
 ;; Frame maximization/fullscreen
