@@ -2021,6 +2021,15 @@ widths."
 
 ;; Blinking cursor
 
+(defvar blink-cursor-idle-timer nil
+  "Timer started after `blink-cursor-delay' seconds of Emacs idle time.
+The function `blink-cursor-start' is called when the timer fires.")
+
+(defvar blink-cursor-timer nil
+  "Timer started from `blink-cursor-start'.
+This timer calls `blink-cursor-timer-function' every
+`blink-cursor-interval' seconds.")
+
 (defgroup cursor nil
   "Displaying text cursors."
   :version "21.1"
@@ -2051,15 +2060,6 @@ Use 0 or negative value to blink forever."
 
 (defvar blink-cursor-blinks-done 1
   "Number of blinks done since we started blinking on NS, X, and MS-Windows.")
-
-(defvar blink-cursor-idle-timer nil
-  "Timer started after `blink-cursor-delay' seconds of Emacs idle time.
-The function `blink-cursor-start' is called when the timer fires.")
-
-(defvar blink-cursor-timer nil
-  "Timer started from `blink-cursor-start'.
-This timer calls `blink-cursor-timer-function' every
-`blink-cursor-interval' seconds.")
 
 (defun blink-cursor--start-idle-timer ()
   "Start the `blink-cursor-idle-timer'."
