@@ -5,7 +5,7 @@
 ;; Author: Taro Kawagishi <tarok@transpulse.org>
 ;; Maintainer: Thomas Fitzsimmons <fitzsim@fitzsim.org>
 ;; Keywords: NTLM, SASL, comm
-;; Version: 2.0.0
+;; Version: 2.1.0
 ;; Created: February 2001
 
 ;; This file is part of GNU Emacs.
