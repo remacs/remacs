@@ -49,10 +49,12 @@
 ;;
 ;;  1. Open a network connection to the Exchange server at the IMAP port (143)
 ;;  2. Receive an opening message such as:
-;;     "* OK Microsoft Exchange IMAP4rev1 server version 5.5.2653.7 (XXXX) ready"
+;;     "* OK Microsoft Exchange IMAP4rev1 server
+;;        version 5.5.2653.7 (XXXX) ready"
 ;;  3. Ask for IMAP server capability by sending "NNN capability"
 ;;  4. Receive a capability message such as:
-;;     "* CAPABILITY IMAP4 IMAP4rev1 IDLE LITERAL+ LOGIN-REFERRALS MAILBOX-REFERRALS NAMESPACE AUTH=NTLM"
+;;     "* CAPABILITY IMAP4 IMAP4rev1 IDLE LITERAL+
+;;        LOGIN-REFERRALS MAILBOX-REFERRALS NAMESPACE AUTH=NTLM"
 ;;  5. Ask for NTLM authentication by sending a string
 ;;     "NNN authenticate ntlm"
 ;;  6. Receive continuation acknowledgment "+"
@@ -118,17 +120,17 @@ is not given."
     (setq off-u 32)			;offset to the string 'user
     (setq off-d (+ 32 lu))		;offset to the string 'domain
     ;; pack the request struct in a string
-    (concat request-ident		;8 bytes
-	    request-msgType	;4 bytes
-	    request-flags		;4 bytes
-	    (md4-pack-int16 lu)	;user field, count field
-	    (md4-pack-int16 lu)	;user field, max count field
-	    (md4-pack-int32 (cons 0 off-u)) ;user field, offset field
-	    (md4-pack-int16 ld)	;domain field, count field
-	    (md4-pack-int16 ld)	;domain field, max count field
-	    (md4-pack-int32 (cons 0 off-d)) ;domain field, offset field
-	    user			;buffer field
-	    domain		;buffer field
+    (concat request-ident			;8 bytes
+	    request-msgType			;4 bytes
+	    request-flags			;4 bytes
+	    (md4-pack-int16 lu)			;user field, count field
+	    (md4-pack-int16 lu)			;user field, max count field
+	    (md4-pack-int32 (cons 0 off-u))	;user field, offset field
+	    (md4-pack-int16 ld)			;domain field, count field
+	    (md4-pack-int16 ld)			;domain field, max count field
+	    (md4-pack-int32 (cons 0 off-d))	;domain field, offset field
+	    user				;buffer field
+	    domain				;buffer field
 	    )))
 
 (eval-when-compile
@@ -239,12 +241,12 @@ by PASSWORD-HASHES.  PASSWORD-HASHES should be a return value of
 					(cadr password-hashes)))
 		 (nonce (ntlm-generate-nonce))
 		 (blob (concat (make-string 2 1)
-			       (make-string 2 0)	; blob signature
-			       (make-string 4 0)	; reserved value
-			       (ntlm-compute-timestamp) ; timestamp
-			       nonce			; client nonce
-			       (make-string 4 0)	; unknown
-			       targetInfo))		; target info
+			       (make-string 2 0)	;blob signature
+			       (make-string 4 0)	;reserved value
+			       (ntlm-compute-timestamp)	;timestamp
+			       nonce			;client nonce
+			       (make-string 4 0)	;unknown
+			       targetInfo))		;target info
 		 ;; for reference: LMv2 interim calculation
 		 (lm-interim (hmac-md5 (concat challengeData nonce)
 				       ntlmv2-hash))
@@ -288,58 +290,58 @@ by PASSWORD-HASHES.  PASSWORD-HASHES should be a return value of
     (setq off-lm (+ off-w (* 2 lw)))	;offset to string 'lmResponse
     (setq off-nt (+ off-lm ll))		;offset to string 'ntResponse
     ;; pack the response struct in a string
-    (concat "NTLMSSP\0"			;response ident field, 8 bytes
-	    (md4-pack-int32 '(0 . 3))	;response msgType field, 4 bytes
+    (concat "NTLMSSP\0"				;response ident field, 8 bytes
+	    (md4-pack-int32 '(0 . 3))		;response msgType field, 4 bytes
 
 	    ;; lmResponse field, 8 bytes
 	    ;;AddBytes(response,lmResponse,lmRespData,24);
-	    (md4-pack-int16 ll)		;len field
-	    (md4-pack-int16 ll)		;maxlen field
-	    (md4-pack-int32 (cons 0 off-lm)) ;field offset
+	    (md4-pack-int16 ll)			;len field
+	    (md4-pack-int16 ll)			;maxlen field
+	    (md4-pack-int32 (cons 0 off-lm))	;field offset
 
 	    ;; ntResponse field, 8 bytes
 	    ;;AddBytes(response,ntResponse,ntRespData,ln);
-	    (md4-pack-int16 ln)	;len field
-	    (md4-pack-int16 ln)	;maxlen field
-	    (md4-pack-int32 (cons 0 off-nt)) ;field offset
+	    (md4-pack-int16 ln)			;len field
+	    (md4-pack-int16 ln)			;maxlen field
+	    (md4-pack-int32 (cons 0 off-nt))	;field offset
 
 	    ;; uDomain field, 8 bytes
 	    ;;AddUnicodeString(response,uDomain,domain);
 	    ;;AddBytes(response, uDomain, udomain, 2*ld);
-	    (md4-pack-int16 (* 2 ld))	;len field
-	    (md4-pack-int16 (* 2 ld))	;maxlen field
+	    (md4-pack-int16 (* 2 ld))		;len field
+	    (md4-pack-int16 (* 2 ld))		;maxlen field
 	    ;; match Mozilla behavior, which is to hard-code the
 	    ;; domain offset to 64
-	    (md4-pack-int32 (cons 0 64)) ;field offset
+	    (md4-pack-int32 (cons 0 64))	;field offset
 
 	    ;; uUser field, 8 bytes
 	    ;;AddUnicodeString(response,uUser,u);
 	    ;;AddBytes(response, uUser, uuser, 2*lu);
-	    (md4-pack-int16 (* 2 lu))	;len field
-	    (md4-pack-int16 (* 2 lu))	;maxlen field
-	    (md4-pack-int32 (cons 0 off-u)) ;field offset
+	    (md4-pack-int16 (* 2 lu))		;len field
+	    (md4-pack-int16 (* 2 lu))		;maxlen field
+	    (md4-pack-int32 (cons 0 off-u))	;field offset
 
 	    ;; uWks field, 8 bytes
 	    ;;AddUnicodeString(response,uWks,u);
-	    (md4-pack-int16 (* 2 lw))	;len field
-	    (md4-pack-int16 (* 2 lw))	;maxlen field
-	    (md4-pack-int32 (cons 0 off-w)) ;field offset
+	    (md4-pack-int16 (* 2 lw))		;len field
+	    (md4-pack-int16 (* 2 lw))		;maxlen field
+	    (md4-pack-int32 (cons 0 off-w))	;field offset
 
 	    ;; sessionKey field, blank, 8 bytes
 	    ;;AddString(response,sessionKey,NULL);
-	    (md4-pack-int16 0)		;len field
-	    (md4-pack-int16 0)		;maxlen field
-	    (md4-pack-int32 (cons 0 0)) ;field offset
+	    (md4-pack-int16 0)			;len field
+	    (md4-pack-int16 0)			;maxlen field
+	    (md4-pack-int32 (cons 0 0))		;field offset
 
 	    ;; flags field, 4 bytes
-	    flags			;
+	    flags
 
 	    ;; buffer field
 	    (ntlm-ascii2unicode user lu)	;Unicode user, 2*lu bytes
 	    (ntlm-ascii2unicode domain ld)	;Unicode domain, 2*ld bytes
 	    (ntlm-ascii2unicode workstation lw)	;Unicode workstation, 2*lw bytes
-	    lmRespData			;lmResponse, 24 bytes
-	    ntRespData			;ntResponse, ln bytes
+	    lmRespData				;lmResponse, 24 bytes
+	    ntRespData				;ntResponse, ln bytes
 	    )))
 
 (defun ntlm-get-password-hashes (password)
@@ -558,7 +560,7 @@ length of STR is LEN."
     (concat (substring str c len) (substring str 0 c))))
 
 (defsubst ntlm-string-xor (in1 in2 n)
-  "Return exclusive-or of sequences in1 and in2"
+  "Return exclusive-or of sequences in1 and in2."
   (let ((w (make-string n 0)) (i 0))
     (while (< i n)
       (aset w i (logxor (aref in1 i) (aref in2 i)))
