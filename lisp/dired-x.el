@@ -334,17 +334,27 @@ See also the functions:
 A `.' is *not* automatically prepended to the string entered.
 EXTENSION may also be a list of extensions instead of a single one.
 Optional MARKER-CHAR is marker to use.
-Interactively, ask for EXTENSION, and if invoked with a prefix
-argument, for MARKER-CHAR as well."
+Interactively, ask for EXTENSION.
+Prefixed with one C-u, unmark files instead.
+Prefixed with two C-u's, prompt for MARKER-CHAR and mark files with it."
   (interactive
-   (list (read-string "Marking extension: ")
-         (and current-prefix-arg
-              (let* ((dflt (char-to-string dired-marker-char))
-                     (input (read-string
-                             (format
-                              "Marker character to use (default %s): " dflt)
-                             nil nil dflt)))
-                (aref input 0)))))
+   (let ((suffix
+          (read-string (format "%s extension: "
+                               (if (equal current-prefix-arg '(4))
+                                   "UNmarking"
+                                 "Marking"))))
+         (marker
+          (pcase current-prefix-arg
+            ('(4) ?\s)
+            ('(16)
+             (let* ((dflt (char-to-string dired-marker-char))
+                    (input (read-string
+                            (format
+                             "Marker character to use (default %s): " dflt)
+                            nil nil dflt)))
+               (aref input 0)))
+            (_ dired-marker-char))))
+     (list suffix marker)))
   (or (listp extension)
       (setq extension (list extension)))
   (dired-mark-files-regexp
@@ -1470,7 +1480,13 @@ refer at all to the underlying file system.  Contrast this with
   ;; (string-match "foo" sym) into which a user would soon fall.
   ;; Give `equal' instead of `=' in the example, as this works on
   ;; integers and strings.
-  (interactive "xMark if (lisp expr): \nP")
+  (interactive
+   (list (read--expression
+          (format "%s if (lisp expr): "
+                  (if current-prefix-arg
+                      "UNmark"
+                    "Mark")))
+         current-prefix-arg))
   (message "%s" predicate)
   (let ((dired-marker-char (if unflag-p ?\040 dired-marker-char))
         inode s mode nlink uid gid size time name sym)
