@@ -1690,7 +1690,7 @@ del_range_1 (ptrdiff_t from, ptrdiff_t to, bool prepare, bool ret_string)
 /* Like del_range_1 but args are byte positions, not char positions.  */
 
 void
-del_range_byte (ptrdiff_t from_byte, ptrdiff_t to_byte, bool prepare)
+del_range_byte (ptrdiff_t from_byte, ptrdiff_t to_byte)
 {
   ptrdiff_t from, to;
 
@@ -1706,23 +1706,22 @@ del_range_byte (ptrdiff_t from_byte, ptrdiff_t to_byte, bool prepare)
   from = BYTE_TO_CHAR (from_byte);
   to = BYTE_TO_CHAR (to_byte);
 
-  if (prepare)
-    {
-      ptrdiff_t old_from = from, old_to = Z - to;
-      ptrdiff_t range_length = to - from;
-      prepare_to_modify_buffer (from, to, &from);
-      to = from + range_length;
+  {
+    ptrdiff_t old_from = from, old_to = Z - to;
+    ptrdiff_t range_length = to - from;
+    prepare_to_modify_buffer (from, to, &from);
+    to = from + range_length;
 
-      if (old_from != from)
-	from_byte = CHAR_TO_BYTE (from);
-      if (to > ZV)
-	{
-	  to = ZV;
-	  to_byte = ZV_BYTE;
-	}
-      else if (old_to == Z - to)
-	to_byte = CHAR_TO_BYTE (to);
-    }
+    if (old_from != from)
+      from_byte = CHAR_TO_BYTE (from);
+    if (to > ZV)
+      {
+	to = ZV;
+	to_byte = ZV_BYTE;
+      }
+    else if (old_to == Z - to)
+      to_byte = CHAR_TO_BYTE (to);
+  }
 
   del_range_2 (from, from_byte, to, to_byte, 0);
   signal_after_change (from, to - from, 0);

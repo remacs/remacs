@@ -3858,6 +3858,7 @@ by calling `format-decode', which see.  */)
       if (! giveup_match_end)
 	{
 	  ptrdiff_t temp;
+          ptrdiff_t this_count = SPECPDL_INDEX ();
 
 	  /* We win!  We can handle REPLACE the optimized way.  */
 
@@ -3887,13 +3888,19 @@ by calling `format-decode', which see.  */)
 	  beg_offset += same_at_start - BEGV_BYTE;
 	  end_offset -= ZV_BYTE - same_at_end;
 
-	  invalidate_buffer_caches (current_buffer,
-				    BYTE_TO_CHAR (same_at_start),
-				    same_at_end_charpos);
-	  del_range_byte (same_at_start, same_at_end, 0);
+          /* This binding is to avoid ask-user-about-supersession-threat
+	     being called in insert_from_buffer or del_range_bytes (via
+	     prepare_to_modify_buffer).
+             AFAICT we could avoid ask-user-about-supersession-threat by setting
+             current_buffer->modtime earlier, but we could still end up calling
+             ask-user-about-supersession-threat if the file is modified while
+             we read it, so we bind buffer-file-name instead.  */
+          specbind (intern ("buffer-file-name"), Qnil);
+	  del_range_byte (same_at_start, same_at_end);
 	  /* Insert from the file at the proper position.  */
 	  temp = BYTE_TO_CHAR (same_at_start);
 	  SET_PT_BOTH (temp, same_at_start);
+          unbind_to (this_count, Qnil);
 
 	  /* If display currently starts at beginning of line,
 	     keep it that way.  */
@@ -3998,10 +4005,9 @@ by calling `format-decode', which see.  */)
 	  /* Truncate the buffer to the size of the file.  */
 	  if (same_at_start != same_at_end)
 	    {
-	      invalidate_buffer_caches (current_buffer,
-					BYTE_TO_CHAR (same_at_start),
-					BYTE_TO_CHAR (same_at_end));
-	      del_range_byte (same_at_start, same_at_end, 0);
+              /* See previous specbind for the reason behind this.  */
+              specbind (intern ("buffer-file-name"), Qnil);
+	      del_range_byte (same_at_start, same_at_end);
 	    }
 	  inserted = 0;
 
@@ -4049,12 +4055,11 @@ by calling `format-decode', which see.  */)
 	 we are taking from the decoded string.  */
       inserted -= (ZV_BYTE - same_at_end) + (same_at_start - BEGV_BYTE);
 
+      /* See previous specbind for the reason behind this.  */
+      specbind (intern ("buffer-file-name"), Qnil);
       if (same_at_end != same_at_start)
 	{
-	  invalidate_buffer_caches (current_buffer,
-				    BYTE_TO_CHAR (same_at_start),
-				    same_at_end_charpos);
-	  del_range_byte (same_at_start, same_at_end, 0);
+	  del_range_byte (same_at_start, same_at_end);
 	  temp = GPT;
 	  eassert (same_at_start == GPT_BYTE);
 	  same_at_start = GPT_BYTE;
@@ -4075,10 +4080,6 @@ by calling `format-decode', which see.  */)
 				   same_at_start + inserted - BEGV_BYTE
 				  + BUF_BEG_BYTE (XBUFFER (conversion_buffer)))
 	   - same_at_start_charpos);
-      /* This binding is to avoid ask-user-about-supersession-threat
-	 being called in insert_from_buffer (via in
-	 prepare_to_modify_buffer).  */
-      specbind (intern ("buffer-file-name"), Qnil);
       insert_from_buffer (XBUFFER (conversion_buffer),
 			  same_at_start_charpos, inserted_chars, 0);
       /* Set `inserted' to the number of inserted characters.  */

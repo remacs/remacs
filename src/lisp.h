@@ -3505,7 +3505,7 @@ extern void insert_from_string_before_markers (Lisp_Object, ptrdiff_t,
 					       ptrdiff_t, bool);
 extern void del_range (ptrdiff_t, ptrdiff_t);
 extern Lisp_Object del_range_1 (ptrdiff_t, ptrdiff_t, bool, bool);
-extern void del_range_byte (ptrdiff_t, ptrdiff_t, bool);
+extern void del_range_byte (ptrdiff_t, ptrdiff_t);
 extern void del_range_both (ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t, bool);
 extern Lisp_Object del_range_2 (ptrdiff_t, ptrdiff_t,
 				ptrdiff_t, ptrdiff_t, bool);

@@ -3193,7 +3193,7 @@ into shorter lines.  */)
   SET_PT_BOTH (XFASTINT (beg), ibeg);
   insert (encoded, encoded_length);
   SAFE_FREE ();
-  del_range_byte (ibeg + encoded_length, iend + encoded_length, 1);
+  del_range_byte (ibeg + encoded_length, iend + encoded_length);
 
   /* If point was outside of the region, restore it exactly; else just
      move to the beginning of the region.  */
