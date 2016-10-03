@@ -2022,6 +2022,16 @@ the buffer object itself and the current mark symbol."
 	(ibuffer-forward-line 0)
 	(ibuffer-forward-line (1- target-line-offset))))))
 
+;; Return buffers around current line.
+(defun ibuffer--near-buffers (n)
+  (delq nil
+        (mapcar
+         (lambda (x)
+           (car (get-text-property
+                 (line-beginning-position (if (natnump n) x (- (1- x))))
+                 'ibuffer-properties)))
+         (number-sequence 1 (abs n)))))
+
 (defun ibuffer-get-marked-buffers ()
   "Return a list of buffer objects currently marked."
   (delq nil

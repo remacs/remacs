@@ -1420,7 +1420,7 @@ This requires the external program \"diff\" to be in your `exec-path'."
 
 ;;;###autoload
 (defun ibuffer-copy-filename-as-kill (&optional arg)
-  "Copy filenames of marked buffers into the kill ring.
+  "Copy filenames of marked (or next ARG) buffers into the kill ring.
 
 The names are separated by a space.
 If a buffer has no filename, it is ignored.
@@ -1431,55 +1431,51 @@ With \\[universal-argument], use the filename of each marked file relative
 to `ibuffer-default-directory' if non-nil, otherwise `default-directory'.
 
 You can then feed the file name(s) to other commands with \\[yank]."
-  (interactive "p")
-  (if (zerop (ibuffer-count-marked-lines))
-      (message "No buffers marked; use 'm' to mark a buffer")
-    (let ((result "")
-	  (type (cond ((or (null arg) (zerop arg))
-		       'full)
-		      ((= arg 4)
-		       'relative)
-		      (t
-		       'name))))
-      (ibuffer-map-marked-lines
-       #'(lambda (buf _mark)
-	   (setq result
-                 (concat result
-                         (let ((name (buffer-file-name buf)))
-                           (cond (name
-                                  (concat
-                                   (pcase type
-                                     (`full
-                                      name)
-                                     (`relative
-                                      (file-relative-name
-                                       name (or ibuffer-default-directory
-                                                default-directory)))
-                                     (_
-                                      (file-name-nondirectory name))) " "))
-                                 (t "")))))))
-      (when (not (zerop (length result)))
-        (setq result
-              (substring result 0 -1)))
-      (kill-new result)
-      (message "%s" result))))
+  (interactive "P")
+  (let* ((buffers (cond ((and (integerp arg) (not (zerop arg)))
+                         (ibuffer--near-buffers arg))
+                        (t
+                         (or (ibuffer-get-marked-buffers)
+                             (list (ibuffer-current-buffer))))))
+         (file-names
+          (mapcar
+           (lambda (buf)
+             (let ((name (with-current-buffer buf
+                           (ibuffer-buffer-file-name))))
+               (if (null name)
+                   ""
+                 (cond ((and (integerp arg) (zerop arg)) name)
+                       ((consp arg)
+                        (file-relative-name
+                         name (or ibuffer-default-directory
+                                  default-directory)))
+                       (t (file-name-nondirectory name))))))
+           buffers))
+         (string
+          (mapconcat 'identity (delete "" file-names) " ")))
+    (unless (string= string "")
+      (if (eq last-command 'kill-region)
+          (kill-append string nil)
+        (kill-new string))
+      (message "%s" string))))
 
 ;;;###autoload
-(defun ibuffer-copy-buffername-as-kill ()
-  "Copy buffer names of marked buffers into the kill ring.
+(defun ibuffer-copy-buffername-as-kill (&optional arg)
+  "Copy buffer names of marked (or next ARG) buffers into the kill ring.
 The names are separated by a space.
 You can then feed the file name(s) to other commands with \\[yank]."
-  (interactive)
-  (if (zerop (ibuffer-count-marked-lines))
-      (message "No buffers marked; use 'm' to mark a buffer")
-    (let ((res ""))
-      (ibuffer-map-marked-lines
-       #'(lambda (buf _mark)
-           (setq res (concat res (buffer-name buf) " "))))
-      (when (not (zerop (length res)))
-        (setq res (substring res 0 -1)))
-      (kill-new res)
-      (message res))))
+  (interactive "P")
+  (let* ((buffers (cond ((and (integerp arg) (not (zerop arg)))
+                         (ibuffer--near-buffers arg))
+                        (t
+                         (or (ibuffer-get-marked-buffers)
+                             (list (ibuffer-current-buffer))))))
+         (string (mapconcat #'buffer-name buffers " ")))
+    (unless (string= string "")
+      (if (eq last-command 'kill-region)
+          (kill-append string nil)
+        (kill-new string))
+      (message "%s" string))))
 
 (defun ibuffer-mark-on-buffer (func &optional ibuffer-mark-on-buffer-mark group)
   (let ((count
