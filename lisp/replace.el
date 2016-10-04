@@ -174,7 +174,7 @@ wants to replace FROM with TO."
 	      (propertize "\0"
 			  'display query-replace-from-to-separator
 			  'separator t)))
-	   (query-replace-from-to-history
+	   (minibuffer-history
 	    (append
 	     (when separator
 	       (mapcar (lambda (from-to)
@@ -186,7 +186,7 @@ wants to replace FROM with TO."
 	   (minibuffer-allow-text-properties t) ; separator uses text-properties
 	   (prompt
 	    (if (and query-replace-defaults separator)
-		(format "%s (default %s): " prompt (car query-replace-from-to-history))
+		(format "%s (default %s): " prompt (car minibuffer-history))
 	      (format "%s: " prompt)))
 	   (from
 	    ;; The save-excursion here is in case the user marks and copies
@@ -198,9 +198,9 @@ wants to replace FROM with TO."
                     (setq-local text-property-default-nonsticky
                                 (cons '(separator . t) text-property-default-nonsticky)))
                 (if regexp-flag
-                    (read-regexp prompt nil 'query-replace-from-to-history)
+                    (read-regexp prompt)
                   (read-from-minibuffer
-                   prompt nil nil nil 'query-replace-from-to-history
+                   prompt nil nil nil nil
                    (car (if regexp-flag regexp-search-ring search-ring)) t)))))
            (to))
       (if (and (zerop (length from)) query-replace-defaults)
