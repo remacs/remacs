@@ -28486,8 +28486,7 @@ display_and_set_cursor (struct window *w, bool on,
     }
 
   glyph = NULL;
-  if (!glyph_row->exact_window_width_line_p
-      || (0 <= hpos && hpos < glyph_row->used[TEXT_AREA]))
+  if (0 <= hpos && hpos < glyph_row->used[TEXT_AREA])
     glyph = glyph_row->glyphs[TEXT_AREA] + hpos;
 
   eassert (input_blocked_p ());
