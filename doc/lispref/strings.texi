@@ -1177,6 +1177,33 @@ When the argument to @code{upcase-initials} is a character,
 @end example
 @end defun
 
+  Note that case conversion is not a one-to-one mapping of codepoints
+and length of the result may differ from length of the argument.
+Furthermore, because passing a character forces return type to be
+a character, functions are unable to perform proper substitution and
+result may differ compared to treating a one-character string.  For
+example:
+
+@example
+@group
+(upcase "ﬁ")  ; note: single character, ligature "fi"
+     @result{} "FI"
+@end group
+@group
+(upcase ?ﬁ)
+     @result{} 64257  ; i.e. ?ﬁ
+@end group
+@end example
+
+  To avoid this, a character must first be converted into a string,
+using @code{string} function, before being passed to one of the casing
+functions.  Of course, no assumptions on the length of the result may
+be made.
+
+  Mapping for such special cases are taken from
+@code{special-uppercase}, @code{special-lowercase} and
+@code{special-titlecase} @xref{Character Properties}.
+
   @xref{Text Comparison}, for functions that compare strings; some of
 them ignore case differences, or can optionally ignore case differences.
 

@@ -355,12 +355,17 @@ same as in modes where the character is not whitespace.
 Instead of only checking the modification time, Emacs now also checks
 the file's actual content before prompting the user.
 
-** Title case characters are properly cased (from and into).
-'upcase', 'upcase-region' et al. convert title case characters (such
-as the single character "ǲ") into their upper case form (such as "Ǳ").
-As a downside, 'capitalize' and 'upcase-initials' produce awkward
-words where first character is upper rather than title case, e.g.,
-"Ǆungla" instead of "ǅungla".
+** Various casing improvements.
+
+*** 'upcase', 'upcase-region' et al. convert title case characters
+(such as ǲ) into their upper case form (such as Ǳ).
+
+*** 'capitalize', 'upcase-initials' et al. make use of title-case forms
+of initial characters (correctly producing for example ǅungla instead
+of incorrect Ǆungla).
+
+*** Characters which turn into multiple ones when cased are correctly handled.
+For example, ﬁ ligature is converted to FI when upper cased.
 
 
 * Changes in Specialized Modes and Packages in Emacs 26.1

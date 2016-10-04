@@ -24,3 +24,7 @@ http://www.unicode.org/Public/8.0.0/ucd/Blocks.txt
 NormalizationTest.txt
 http://www.unicode.org/Public/UNIDATA/NormalizationTest.txt
 2016-07-16
+
+SpecialCasing.txt
+http://unicode.org/Public/UNIDATA/SpecialCasing.txt
+2016-03-03

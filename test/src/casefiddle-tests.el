@@ -24,36 +24,40 @@
 
 (ert-deftest casefiddle-tests-char-properties ()
   "Sanity check of character Unicode properties."
-  (should-not
-   (let (errors)
-     ;;            character  uppercase  lowercase  titlecase
-     (dolist (test '((?A nil ?a nil)
-                     (?a ?A nil ?A)
-                     (?Ł nil ?ł nil)
-                     (?ł ?Ł nil ?Ł)
+  (let ((props '(uppercase lowercase titlecase
+                 special-uppercase special-lowercase special-titlecase))
+        (tests '((?A nil ?a  nil  nil  nil  nil)
+                 (?a ?A  nil ?A   nil  nil  nil)
+                 (?Ł nil ?ł  nil  nil  nil  nil)
+                 (?ł ?Ł  nil ?Ł   nil  nil  nil)
 
-                     (?Ǆ nil ?ǆ ?ǅ)
-                     (?ǅ ?Ǆ ?ǆ ?ǅ)
-                     (?ǆ ?Ǆ nil ?ǅ)
+                 (?Ǆ nil ?ǆ  ?ǅ   nil  nil  nil)
+                 (?ǅ ?Ǆ  ?ǆ  ?ǅ   nil  nil  nil)
+                 (?ǆ ?Ǆ  nil ?ǅ   nil  nil  nil)
 
-                     (?Σ nil ?σ nil)
-                     (?σ ?Σ nil ?Σ)
-                     (?ς ?Σ nil ?Σ)
+                 (?Σ nil ?σ  nil  nil  nil  nil)
+                 (?σ ?Σ  nil ?Σ   nil  nil  nil)
+                 (?ς ?Σ  nil ?Σ   nil  nil  nil)
 
-                     (?ⅷ ?Ⅷ nil ?Ⅷ)
-                     (?Ⅷ nil ?ⅷ nil)))
-       (let ((ch (car test))
-             (expected (cdr test))
-             (props '(uppercase lowercase titlecase)))
-         (while props
-           (let ((got (get-char-code-property ch (car props))))
-             (unless (equal (car expected) got)
-               (push (format "\n%c %s; expected: %s but got: %s"
-                             ch (car props) (car expected) got)
-                     errors)))
-           (setq props (cdr props) expected (cdr expected)))))
-     (when errors
-       (mapconcat (lambda (line) line) (nreverse errors) "")))))
+                 (?ⅷ ?Ⅷ  nil ?Ⅷ   nil  nil  nil)
+                 (?Ⅷ nil ?ⅷ  nil  nil  nil  nil)
+
+                 (?ﬁ nil nil nil  "FI" nil "Fi")
+                 (?ß nil nil nil  "SS" nil "Ss")
+                 (?İ nil ?i  nil  nil "i\u0307" nil)))
+        errors)
+    (dolist (test tests)
+      (let ((ch (car test))
+            (expected (cdr test)))
+        (dolist (prop props)
+          (let ((got (get-char-code-property ch prop)))
+            (unless (equal (car expected) got)
+              (push (format "\n%c %s; expected: %s but got: %s"
+                            ch prop (car expected) got)
+                    errors)))
+          (setq expected (cdr expected)))))
+    (when errors
+      (ert-fail (mapconcat (lambda (line) line) (nreverse errors) "")))))
 
 
 (defconst casefiddle-tests--characters
@@ -188,16 +192,13 @@
         ("ǄUNGLA" "ǄUNGLA" "ǆungla" "ǅungla" "ǅUNGLA")
         ("ǅungla" "ǄUNGLA" "ǆungla" "ǅungla" "ǅungla")
         ("ǆungla" "ǄUNGLA" "ǆungla" "ǅungla" "ǅungla")
+        ("deﬁne" "DEFINE" "deﬁne" "Deﬁne" "Deﬁne")
+        ("ﬁsh" "FISH" "ﬁsh" "Fish" "Fish")
+        ("Straße" "STRASSE" "straße" "Straße" "Straße")
         ;; FIXME(bug#24603): Everything below is broken at the moment.
         ;; Here’s what should happen:
-        ;;("deﬁne" "DEFINE" "deﬁne" "Deﬁne" "Deﬁne")
-        ;;("ﬁsh" "FIsh" "ﬁsh" "Fish" "Fish")
-        ;;("Straße" "STRASSE" "straße" "Straße" "Straße")
         ;;("ΌΣΟΣ" "ΌΣΟΣ" "όσος" "Όσος" "Όσος")
         ;; And here’s what is actually happening:
-        ("deﬁne" "DEﬁNE" "deﬁne" "Deﬁne" "Deﬁne")
-        ("ﬁsh" "ﬁSH" "ﬁsh" "ﬁsh" "ﬁsh")
-        ("Straße" "STRAßE" "straße" "Straße" "Straße")
         ("ΌΣΟΣ" "ΌΣΟΣ" "όσοσ" "Όσοσ" "ΌΣΟΣ")
 
         ("όσος" "ΌΣΟΣ" "όσος" "Όσος" "Όσος"))))))

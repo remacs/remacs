@@ -268,6 +268,42 @@ Property value is a character or nil.
 The value nil means that the actual property value of a character
 is the character itself."
      string)
+    (special-uppercase
+     2 unidata-gen-table-special-casing "uni-special-uppercase.el"
+     "Unicode unconditional special casing mapping.
+
+Property value is (possibly empty) string or nil.  The value nil denotes that
+`uppercase' property should be consulted instead.  A string denotes what
+sequence of characters given character maps into.
+
+This mapping includes language- and context-independent special casing rules
+defined by Unicode only.  It also does not include association which would
+duplicate information from `uppercase' property."
+     nil)
+    (special-lowercase
+     0 unidata-gen-table-special-casing "uni-special-lowercase.el"
+     "Unicode unconditional special casing mapping.
+
+Property value is (possibly empty) string or nil.  The value nil denotes that
+`lowercase' property should be consulted instead.  A string denotes what
+sequence of characters given character maps into.
+
+This mapping includes language- and context-independent special casing rules
+defined by Unicode only.  It also does not include association which would
+duplicate information from `lowercase' property."
+     nil)
+    (special-titlecase
+     1 unidata-gen-table-special-casing "uni-special-titlecase.el"
+     "Unicode unconditional special casing mapping.
+
+Property value is (possibly empty) string or nil.  The value nil denotes that
+`titlecase' property should be consulted instead.  A string denotes what
+sequence of characters given character maps into.
+
+This mapping includes language- and context-independent special casing rules
+defined by Unicode only.  It also does not include association which would
+duplicate information from `titlecase' property."
+     nil)
     (mirroring
      unidata-gen-mirroring-list unidata-gen-table-character "uni-mirrored.el"
      "Unicode bidi-mirroring characters.
@@ -1082,6 +1118,51 @@ Property value is a symbol `o' (Open), `c' (Close), or `n' (None)."
     (set-char-table-extra-slot table 4 (car word-tables))
     table))
 
+
+
+
+(defvar unidata-gen-table-special-casing--cache nil
+  "Cached value for `unidata-gen-table-special-casing' function.")
+
+(defun unidata-gen-table-special-casing--do-load ()
+  (let (result)
+    (with-temp-buffer
+      (insert-file-contents (expand-file-name "SpecialCasing.txt" unidata-dir))
+      (goto-char (point-min))
+      (while (not (eobp))
+        ;; Ignore empty lines and comments.
+        (unless (or (eq (char-after) ?\n) (eq (char-after) ?#))
+          (let ((line (split-string
+                       (buffer-substring (point) (progn (end-of-line) (point)))
+                       ";" "")))
+            ;; Ignore entries with conditions, i.e. those with six values.
+            (when (= (length line) 5)
+              (let ((ch (string-to-number (pop line) 16)))
+                (setcdr (cddr line) nil) ; strip comment
+                (push
+                 (cons ch
+                       (mapcar (lambda (entry)
+                                 (mapcar (lambda (n) (string-to-number n 16))
+                                         (split-string entry)))
+                               line))
+                 result)))))
+        (forward-line)))
+    result))
+
+(defun unidata-gen-table-special-casing (prop &rest ignore)
+  (let ((table (make-char-table 'char-code-property-table))
+        (prop-idx (unidata-prop-index prop)))
+    (set-char-table-extra-slot table 0 prop)
+    (mapc (lambda (entry)
+            (let ((ch (car entry)) (v (nth prop-idx (cdr entry))))
+              ;; If character maps to a single character, the mapping is already
+              ;; covered by regular casing property.  Don’t store those.
+              (when (/= (length v) 1)
+                (set-char-table-range table ch (apply 'string v)))))
+          (or unidata-gen-table-special-casing--cache
+              (setq unidata-gen-table-special-casing--cache
+                    (unidata-gen-table-special-casing--do-load))))
+    table))
 
 
 (defun unidata-describe-general-category (val)
