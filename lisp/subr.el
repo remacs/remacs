@@ -1377,6 +1377,9 @@ is converted into a string by expressing it in decimal."
 (make-obsolete 'process-filter-multibyte-p nil "23.1")
 (make-obsolete 'set-process-filter-multibyte nil "23.1")
 
+(make-obsolete-variable 'command-debug-status
+                        "expect it to be removed in a future version." "25.2")
+
 ;; Lisp manual only updated in 22.1.
 (define-obsolete-variable-alias 'executing-macro 'executing-kbd-macro
   "before 19.34")

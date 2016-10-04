@@ -654,6 +654,8 @@ invocation.
 The advantage of using this variable rather than an ordinary global
 variable is that the data will never carry over to a subsequent command
 invocation.
+
+This variable is obsolete and will be removed in future versions.
 @end defvar
 
 @defun backtrace-frame frame-number
