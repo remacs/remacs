@@ -189,6 +189,10 @@ If you are fixing a bug that exists in the current release, be sure to
 commit it to the release branch; it will be merged to the master
 branch later by the gitmerge function.
 
+Documentation fixes (in doc strings, in manuals, and in comments)
+should always go to the release branch, if the documentation to be
+fixed exists and is relevant to the release-branch codebase.
+
 However, if you know that the change will be difficult to merge to the
 master (e.g., because the code on master has changed a lot), you can
 apply the change to both master and branch yourself.  It could also
