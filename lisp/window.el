@@ -979,8 +979,8 @@ be reused and have its `window-slot' parameter value accordingly
 modified.
 
 Unless `display-buffer-mark-dedicated' is non-nil, softly
-dedicate the side window used to BUFFER.  Return nil if no
-suitable window is found.
+dedicate the side window used to BUFFER.  Return the window used
+for displaying BUFFER, nil if no suitable window can be found.
 
 This function installs the `window-side' and `window-slot'
 parameters and makes them persistent.  It neither modifies ALIST

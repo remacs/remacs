@@ -3117,7 +3117,10 @@ specified buffer.
 
 @defun display-buffer-in-side-window buffer alist
 This function displays @var{buffer} in a side window of the selected
-frame.  @var{alist} is an association list of symbols and values as for
+frame.  It returns the window used for displaying @var{buffer},
+@code{nil} if no such window can be found or created.
+
+@var{alist} is an association list of symbols and values as for
 @code{display-buffer}.  The following symbols in @var{alist} are special
 for this function:
 
