@@ -611,6 +611,27 @@ collection).
 ** The new functions 'make-nearby-temp-file' and 'temporary-file-directory'
 can be used for creation of temporary files of remote or mounted directories.
 
+** Changes in Frame- and Window- Handling
+
++++
+*** Support for side windows is now official.  The display action
+function `display-buffer-in-side-window' will display its buffer in a
+side window.  Functions for toggling all side windows on a frame,
+changing and reversing the layout of side windows and returning the main
+(major non-side) window of a frame are provided.  For details consult
+the section "Side Windows" in the Elisp manual.
+
++++
+*** New `display-buffer' alist entry `window-parameters' allows to
+assign window parameters to the window used for displaying the buffer.
+
++++
+*** New window parameter `no-delete-other-window' prevents that
+its window gets deleted by `delete-other-windows'.
+
++++
+*** New command `window-swap-states' swaps the states of two live
+windows.
 
 * Changes in Emacs 26.1 on Non-Free Operating Systems
 
