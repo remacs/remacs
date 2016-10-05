@@ -3160,7 +3160,7 @@ its frame (@pxref{Deleting Windows}).
 @code{switch-to-prev-buffer} and @code{switch-to-next-buffer}
 (@pxref{Window History}).  In particular, these commands will refrain
 from showing, in a side window, buffers that have not been displayed in
-that window before.  And, they will refrain from having a normal,
+that window before.  They will also refrain from having a normal,
 non-side window show a buffer that has been already displayed in a side
 window.  A notable exception to the latter rule occurs when an
 application, after displaying a buffer, resets that buffer's local
@@ -3174,24 +3174,22 @@ The following options provide additional control over the placement of
 side windows.
 
 @defopt window-sides-vertical
-If non-@code{nil}, this means that the side windows on the left and
-right of a frame occupy the frame's full height.  Otherwise, the side
-windows on the top and bottom of the frame occupy the frame's full
-width.
+If non-@code{nil}, the side windows on the left and right of a frame
+occupy the frame's full height.  Otherwise, the side windows on the top
+and bottom of the frame occupy the frame's full width.
 @end defopt
 
 @defopt window-sides-slots
 This option specifies the maximum number of side windows on each side of
 a frame.  The value is a list of four elements specifying the number of
 side window slots on (in this order) the left, top, right and bottom of
-each frame.  If an element is a number, this means to display at most
-that many windows on the corresponding side.  If an element is
-@code{nil}, this means there's no bound on the number of slots on that
-side.
+each frame.  If an element is a number, it means to display at most that
+many windows on the corresponding side.  If an element is @code{nil}, it
+means there's no bound on the number of slots on that side.
 
 If any of the specified values is zero, no window can be created on the
 corresponding side.  @code{display-buffer-in-side-window} will not
-signal an error in that case but return @code{nil}.  If a specified
+signal an error in that case, but will return @code{nil}.  If a specified
 value just forbids the creation of an additional side window, the most
 suitable window on that side is reused and may have its
 @code{window-slot} parameter changed accordingly.
@@ -3206,11 +3204,12 @@ side windows on the top and bottom of a frame are drawn from right to
 left with increasing slot values.
 
 When this is @code{bidi}, the drawing order is reversed if and only if
-the value of @code{bidi-paragraph-direction} is @code{right-to-left} in
-the buffer displayed in the window most recently selected within the
-main window area of this frame.  Sometimes that window may be hard to
-find, so heuristics are used to avoid that the drawing order changes
-inadvertently when another window gets selected.
+the value of @code{bidi-paragraph-direction} (@pxref{Bidirectional
+Display}) is @code{right-to-left} in the buffer displayed in the window
+most recently selected within the main window area of this frame.
+Sometimes that window may be hard to find, so heuristics are used to
+avoid that the drawing order changes inadvertently when another window
+gets selected.
 
 The layout of side windows on the left or right of a frame is not
 affected by the value of this variable.
@@ -3244,12 +3243,12 @@ state of @var{frame}'s root window in the @var{frame}'s
 @code{window-state} frame parameter and deletes all side windows on
 @var{frame} afterwards.
 
-If @var{frame} has no side window but a @code{window-state} parameter,
-it uses that parameter's value to restore the side windows on
-@var{frame} leaving @var{frame}'s main window alone.
+If @var{frame} has no side windows, but does have a @code{window-state}
+parameter, this command uses that parameter's value to restore the side
+windows on @var{frame} leaving @var{frame}'s main window alone.
 
-An error is signaled if @var{frame} has no side window and no saved
-state is found.
+An error is signaled if @var{frame} has no side windows and no saved
+state is found for it.
 @end deffn
 
 
@@ -3293,7 +3292,7 @@ or buffers, help information, search or grep results or shell output.
 The following example illustrates how window parameters (@pxref{Window
 Parameters}) can be used with @code{display-buffer-in-side-window}
 (@pxref{Displaying Buffers in Side Windows}) to set up code for
-producing the frame sketched above.
+producing the frame layout sketched above.
 
 @example
 @group
@@ -3329,19 +3328,18 @@ in a window on the bottom right side of the frame.
 
    Note that the option @code{fit-window-to-buffer-horizontally} must
 have a non-@code{nil} value in order to allow horizontal adjustment of
-windows.  We also added entries that ask for preserving the height of
+windows.  Entries are also added that ask for preserving the height of
 side windows at the top and bottom of the frame and the width of side
 windows at the left or right of the frame.  To assure that side windows
-retain their respective sizes when maximizing the associated frame, we
-have also set the variable @code{window-resize-pixelwise}.
+retain their respective sizes when maximizing the frame, the variable
+@code{window-resize-pixelwise} is set to a non-@code{nil} value.
 @xref{Resizing Windows}.
 
-   The last form also makes sure that none of the side windows it
-creates are accessible via @kbd{C-x o} by installing a
-@code{no-other-window} parameter for each of these windows.  In addition
-it also makes sure that side windows are not deleted via @kbd{C-x 1} by
-installing a @code{no-delete-other-window} parameter on each of these
-windows.
+   The last form also makes sure that none of the created side windows
+are accessible via @kbd{C-x o} by installing the @code{no-other-window}
+parameter for each of these windows.  In addition, it makes sure that
+side windows are not deleted via @kbd{C-x 1} by installing the
+@code{no-delete-other-window} parameter for each of these windows.
 
    Since @code{dired} buffers have no fixed names, we use a special
 function @code{dired-default-directory-on-left} in order to display a
@@ -3361,10 +3359,10 @@ lean directory buffer on the left side of the frame.
 @end group
 @end example
 
-Evaluating the preceding forms and typing, in any order, @kbd{M-x
-list-buffers}, @kbd{C-h f}, @kbd{M-x shell}, @kbd{M-x list-tags} and
-@kbd{M-x dired-default-directory-on-left} should now reproduce the frame
-layout sketched above.
+Evaluating the preceding forms and typing, in any order, @w{@kbd{M-x
+list-buffers}}, @kbd{C-h f}, @kbd{M-x shell}, @w{@kbd{M-x list-tags}},
+and @kbd{M-x dired-default-directory-on-left} should now reproduce the
+frame layout sketched above.
 
 
 @node Window Point
