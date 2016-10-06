@@ -224,7 +224,7 @@ parses to
 				 fragment nil full))))))
 
 (defmacro url-bit-for-url (method lookfor url)
-  `(let* ((urlobj (url-generic-parse-url url))
+  `(let* ((urlobj (url-generic-parse-url ,url))
           (bit (funcall ,method urlobj))
           (methods (list 'url-recreate-url
                          'url-host))
