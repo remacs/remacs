@@ -177,12 +177,15 @@ the last file dropped is selected."
 
  ;;; make f10 activate the real menubar rather than the mini-buffer menu
  ;;; navigation feature.
- (defun w32-menu-bar-open (&optional frame)
+(defun w32-menu-bar-open (&optional frame)
    "Start key navigation of the menu bar in FRAME.
 
 This initially activates the first menu-bar item, and you can then navigate
 with the arrow keys, select a menu entry with the Return key or cancel with
-the Escape key.  If FRAME has no menu bar, this function does nothing.
+one or two Escape keypresses.  (Two Escape keypresses are needed when a
+menu was already dropped down by pressing Return.)
+
+If FRAME has no menu bar, this function does nothing.
 
 If FRAME is nil or not given, use the selected frame.
 If FRAME does not have the menu bar enabled, display a text menu using

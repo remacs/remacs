@@ -304,7 +304,10 @@ the usual way (@pxref{Key Help}).
 item by pressing @key{F10} (to run the command @code{menu-bar-open}).
 You can then navigate the menus with the arrow keys.  To activate a
 selected menu item, press @key{RET}; to cancel menu navigation, press
-@kbd{C-g} or @kbd{@key{ESC} @key{ESC} @key{ESC}}.
+@kbd{C-g} or @kbd{@key{ESC} @key{ESC} @key{ESC}}.  (However, note that
+when Emacs was built with a GUI toolkit, the menus are drawn and
+controlled by the toolkit, and the key sequences to cancel menu
+navigation might be different from the above description.)
 
 @kindex M-`
 @findex tmm-menubar
