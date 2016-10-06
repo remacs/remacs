@@ -8994,9 +8994,26 @@ svg_image_p (Lisp_Object object)
   return fmt[SVG_FILE].count + fmt[SVG_DATA].count == 1;
 }
 
+/* Some versions of glib's gatomic.h define MemoryBarrier, but MinGW
+   w32api 3.18 and later has its own definition.  The following gross
+   hack avoids the clash.  */
+# ifdef WINDOWSNT
+#  if (__W32API_MAJOR_VERSION + (__W32API_MINOR_VERSION >= 18)) >= 4
+#   define W32_SAVE_MINGW_VERSION __MINGW_MAJOR_VERSION
+#   undef __MINGW_MAJOR_VERSION
+#   define __MINGW_MAJOR_VERSION 4
+#  endif
+# endif
+
 # include <librsvg/rsvg.h>
 
 # ifdef WINDOWSNT
+
+# ifdef W32_SAVE_MINGW_VERSION
+#  undef __MINGW_MAJOR_VERSION
+#  define __MINGW_MAJOR_VERSION W32_SAVE_MINGW_VERSION
+#  undef W32_SAVE_MINGW_VERSION
+# endif
 
 /* SVG library functions.  */
 DEF_DLL_FN (RsvgHandle *, rsvg_handle_new, (void));
