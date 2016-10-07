@@ -2,7 +2,7 @@
 
 # Copyright (C) 2005-2016 Free Software Foundation, Inc.
 
-# Maintainer: Noah Friedman <friedman@splode.com>
+# Author: Noah Friedman <friedman@splode.com>
 # Created: 2005-04-28
 
 # This file is part of GNU Emacs.
