@@ -1049,9 +1049,10 @@ NOPUSH is t and EDIT is t."
   (remove-hook 'mouse-leave-buffer-hook 'isearch-done)
   (remove-hook 'kbd-macro-termination-hook 'isearch-done)
   (setq isearch-lazy-highlight-start nil)
-  (with-current-buffer isearch--current-buffer
-    (setq isearch--current-buffer nil)
-    (setq cursor-sensor-inhibit (delq 'isearch cursor-sensor-inhibit)))
+  (when (buffer-live-p isearch--current-buffer)
+    (with-current-buffer isearch--current-buffer
+      (setq isearch--current-buffer nil)
+      (setq cursor-sensor-inhibit (delq 'isearch cursor-sensor-inhibit))))
 
   ;; Called by all commands that terminate isearch-mode.
   ;; If NOPUSH is non-nil, we don't push the string on the search ring.
