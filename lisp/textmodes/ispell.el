@@ -838,7 +838,12 @@ Otherwise returns the library directory name, if that is defined."
   (let ((default-directory (or (and (boundp 'temporary-file-directory)
 				    temporary-file-directory)
 			       default-directory))
-	result status ispell-program-version)
+	(get-config-var
+	 (lambda (var)
+	   (when (re-search-forward
+		  (concat var " = \\\"\\(.+?\\)\\\"") nil t)
+	     (match-string 1))))
+	result libvar status ispell-program-version)
 
     (with-temp-buffer
       (setq status (ispell-call-process
@@ -860,9 +865,13 @@ Otherwise returns the library directory name, if that is defined."
 				 ", "
 				 ispell-version))
 	    (message "%s" result))
-	;; return library directory.
-	(if (re-search-forward "LIBDIR = \\\"\\([^ \t\n]*\\)\\\"" nil t)
-	    (setq result (match-string 1))))
+	;; return LIBDIR or LIBRARYVAR (overrides LIBDIR) env.
+	(progn
+	  (setq result (funcall get-config-var "LIBDIR")
+		libvar (funcall get-config-var "LIBRARYVAR"))
+	  (when libvar
+	    (setq libvar (getenv libvar))
+	    (unless (member libvar '(nil "")) (setq result libvar)))))
       (goto-char (point-min))
       (if (not (memq status '(0 nil)))
 	  (error "%s exited with %s %s" ispell-program-name
@@ -1490,23 +1499,29 @@ The variable `ispell-library-directory' defines their location."
 
   (let ((dicts (append ispell-local-dictionary-alist ispell-dictionary-alist))
 	(dict-list (cons "default" nil))
-	name dict-bname)
+	(dict-locate
+	 (lambda (dict &optional dir)
+	   (locate-file (file-name-nondirectory dict)
+			`(,(or dir (file-name-directory dict)))
+			(unless (file-name-extension dict) '(".hash" ".has")))))
+	name dict-explt dict-bname)
     (dolist (dict dicts)
       (setq name (car dict)
-	    dict-bname (or (car (cdr (member "-d" (nth 5 dict))))
-			   name))
-      ;; Include if the dictionary is in the library, or dir not defined.
-      (if (and
-	   name
-	   ;; For Aspell, we already know which dictionaries exist.
-	   (or ispell-really-aspell
-	       ;; Include all dictionaries if lib directory not known.
-	       ;; Same for Hunspell, where ispell-library-directory is nil.
-	       (not ispell-library-directory)
-	       (file-exists-p (concat ispell-library-directory
-				      "/" dict-bname ".hash"))
-	       (file-exists-p (concat ispell-library-directory
-				      "/" dict-bname ".has"))))
+	    ;; Explicitly (via ispell-args) specified dictionary.
+	    dict-explt (car (cdr (member "-d" (nth 5 dict))))
+	    dict-bname (or dict-explt name))
+      (if (and name
+	       (or
+		;; Include all for Aspell (we already know existing dicts)
+		ispell-really-aspell
+		;; Include all if `ispell-library-directory' is nil (Hunspell)
+		(not ispell-library-directory)
+		;; If explicit (-d with an absolute path) and existing dict.
+		(and dict-explt
+		     (file-name-absolute-p dict-explt)
+		     (funcall dict-locate dict-explt))
+		;; If dict located in `ispell-library-directory'.
+		(funcall dict-locate dict-bname ispell-library-directory)))
 	  (push name dict-list)))
     dict-list))
 
