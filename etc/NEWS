@@ -38,6 +38,12 @@ fontsets if the default font supports these characters.  Set this
 variable to nil to disable the new behavior and get back the old
 behavior.
 
+---
+** New variable 'inhibit-compacting-font-caches'.
+Set this variable to a non-nil value to speed up display of characters
+using large fonts, at the price of a larger memory footprint of the
+Emacs session.
+
 
 * Installation Changes in Emacs 25.1
 

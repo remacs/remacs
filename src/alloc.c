@@ -5584,7 +5584,11 @@ compact_font_caches (void)
   for (t = terminal_list; t; t = t->next_terminal)
     {
       Lisp_Object cache = TERMINAL_FONT_CACHE (t);
-      if (CONSP (cache))
+      /* Inhibit compacting the caches if the user so wishes.  Some of
+	 the users don't mind a larger memory footprint, but do mind
+	 slower redisplay.  */
+      if (!inhibit_compacting_font_caches
+	  && CONSP (cache))
 	{
 	  Lisp_Object entry;
 
