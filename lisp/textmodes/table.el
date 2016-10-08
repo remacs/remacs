@@ -641,7 +641,7 @@
   "Text based table manipulation utilities."
   :tag "Table"
   :prefix "table-"
-  :group 'wp
+  :group 'text
   :version "22.1")
 
 (defgroup table-hooks nil

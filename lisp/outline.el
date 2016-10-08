@@ -38,7 +38,7 @@
 (defgroup outlines nil
   "Support for hierarchical outlining."
   :prefix "outline-"
-  :group 'wp)
+  :group 'text)
 
 (defvar outline-regexp "[*\^L]+"
   "Regular expression to match the beginning of a heading.

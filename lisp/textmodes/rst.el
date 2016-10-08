@@ -292,7 +292,7 @@ in parentheses follows the development revision and the time stamp.")
 ;; Initialize customization
 
 (defgroup rst nil "Support for reStructuredText documents."
-  :group 'wp
+  :group 'text
   :version "23.1"
   :link '(url-link "http://docutils.sourceforge.net/rst.html"))
 
