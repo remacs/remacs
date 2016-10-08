@@ -310,6 +310,7 @@ stored as symbol function definitions to produce named functions
 
 @node Argument List
 @subsection Other Features of Argument Lists
+@kindex wrong-number-of-arguments
 @cindex argument binding
 @cindex binding arguments
 @cindex argument lists, features
