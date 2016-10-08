@@ -69,6 +69,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 	    + (filedata).file_base))
 
 extern BOOL g_b_init_compare_string_w;
+extern BOOL g_b_init_debug_break_process;
+
 int sys_select (int, SELECT_TYPE *, SELECT_TYPE *, SELECT_TYPE *,
 		struct timespec *, void *);
 
@@ -2497,6 +2499,9 @@ find_child_console (HWND hwnd, LPARAM arg)
   return TRUE;
 }
 
+typedef BOOL (WINAPI * DebugBreakProcess_Proc) (
+    HANDLE hProcess);
+
 /* Emulate 'kill', but only for other processes.  */
 int
 sys_kill (pid_t pid, int sig)
@@ -2510,9 +2515,9 @@ sys_kill (pid_t pid, int sig)
   if (pid < 0)
     pid = -pid;
 
-  /* Only handle signals that will result in the process dying */
+  /* Only handle signals that can be mapped to a similar behavior on Windows */
   if (sig != 0
-      && sig != SIGINT && sig != SIGKILL && sig != SIGQUIT && sig != SIGHUP)
+      && sig != SIGINT && sig != SIGKILL && sig != SIGQUIT && sig != SIGHUP && sig != SIGTRAP)
     {
       errno = EINVAL;
       return -1;
@@ -2555,7 +2560,11 @@ sys_kill (pid_t pid, int sig)
 	 close the selected frame, which does not necessarily
 	 terminates Emacs.  But then we are not supposed to call
 	 sys_kill with our own PID.  */
-      proc_hand = OpenProcess (PROCESS_TERMINATE, 0, pid);
+
+      DWORD desiredAccess =
+	(sig == SIGTRAP) ? PROCESS_ALL_ACCESS : PROCESS_TERMINATE;
+
+      proc_hand = OpenProcess (desiredAccess, 0, pid);
       if (proc_hand == NULL)
         {
 	  errno = EPERM;
@@ -2648,6 +2657,43 @@ sys_kill (pid_t pid, int sig)
 	  DebPrint (("sys_kill.GenerateConsoleCtrlEvent return %d "
 		     "for pid %lu\n", GetLastError (), pid));
 	  errno = EINVAL;
+	  rc = -1;
+	}
+    }
+  else if (sig == SIGTRAP)
+    {
+      static DebugBreakProcess_Proc s_pfn_Debug_Break_Process = NULL;
+
+      if (g_b_init_debug_break_process == 0)
+	{
+	  g_b_init_debug_break_process = 1;
+	  s_pfn_Debug_Break_Process = (DebugBreakProcess_Proc)
+	    GetProcAddress (GetModuleHandle ("kernel32.dll"),
+			    "DebugBreakProcess");
+	}
+
+      if (s_pfn_Debug_Break_Process == NULL)
+	{
+	  errno = ENOTSUP;
+	  rc = -1;
+	}
+      else if (!s_pfn_Debug_Break_Process (proc_hand))
+	{
+	  DWORD err = GetLastError ();
+
+	  DebPrint (("sys_kill.DebugBreakProcess return %d "
+		     "for pid %lu\n", err, pid));
+
+	  switch (err)
+	    {
+	    case ERROR_ACCESS_DENIED:
+	      errno = EPERM;
+	      break;
+	    default:
+	      errno = EINVAL;
+	      break;
+	    }
+
 	  rc = -1;
 	}
     }

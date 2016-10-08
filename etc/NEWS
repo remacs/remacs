@@ -668,6 +668,16 @@ session and exits.  In particular, this will happen if you start
 emacs.exe from the Windows shell, then type Ctrl-C into that shell's
 window.
 
+---
+** 'signal-process' supports SIGTRAP on Windows XP and later.
+The 'kill' emulation on Windows now maps SIGTRAP to a call to the
+'DebugBreakProcess' API.  This causes the receiving process to break
+execution and return control to the debugger.  If no debugger is
+attached to the receiving process, the call is typically ignored.
+This is in contrast to the default action on POSIX Systems, where it
+causes the receiving process to terminate with a core dump if no
+debugger has been attached to it.
+
 
 ----------------------------------------------------------------------
 This file is part of GNU Emacs.

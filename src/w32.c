@@ -334,6 +334,7 @@ static BOOL g_b_init_set_named_security_info_a;
 static BOOL g_b_init_get_adapters_info;
 
 BOOL g_b_init_compare_string_w;
+BOOL g_b_init_debug_break_process;
 
 /*
   BEGIN: Wrapper functions around OpenProcessToken
@@ -9657,6 +9658,7 @@ globals_of_w32 (void)
   g_b_init_set_named_security_info_a = 0;
   g_b_init_get_adapters_info = 0;
   g_b_init_compare_string_w = 0;
+  g_b_init_debug_break_process = 0;
   num_of_processors = 0;
   /* The following sets a handler for shutdown notifications for
      console apps. This actually applies to Emacs in both console and
