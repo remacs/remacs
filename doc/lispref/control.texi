@@ -805,6 +805,7 @@ The following piece of code demonstrates some important principles of
 working with iterators.
 
 @example
+(require 'generator)
 (iter-defun my-iter (x)
   (iter-yield (1+ (iter-yield (1+ x))))
    ;; Return normally
