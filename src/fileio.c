@@ -60,6 +60,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef WINDOWSNT
 #define NOMINMAX 1
 #include <windows.h>
+/* The redundant #ifdef is to avoid compiler warning about unused macro.  */
+#ifdef NOMINMAX
+#undef NOMINMAX
+#endif
 #include <sys/file.h>
 #include "w32.h"
 #endif /* not WINDOWSNT */

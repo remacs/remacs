@@ -94,13 +94,6 @@ extern void dynlib_reset_last_error (void);
 #include <pwd.h>
 #include <grp.h>
 
-/* MinGW64 defines these in its _mingw.h.  */
-#ifndef _ANONYMOUS_UNION
-# define _ANONYMOUS_UNION
-#endif
-#ifndef _ANONYMOUS_STRUCT
-# define _ANONYMOUS_STRUCT
-#endif
 #include <windows.h>
 /* Some versions of compiler define MEMORYSTATUSEX, some don't, so we
    use a different name to avoid compilation problems.  */
@@ -281,8 +274,6 @@ extern void *e_malloc (size_t);
 extern int sys_select (int, SELECT_TYPE *, SELECT_TYPE *, SELECT_TYPE *,
 		       struct timespec *, void *);
 extern int sys_dup (int);
-
-
 
 
 /* Initialization states.
