@@ -4630,8 +4630,9 @@ may fail with an @code{invalid-read-syntax} error.
 Some functions (notably @code{delete-window},
 @code{delete-other-windows} and @code{split-window}), may behave
 specially when the window specified by their @var{window} argument has
-the homonymous parameter set.  You can override such special behavior by
-binding the following variable to a non-@code{nil} value:
+a parameter whose name is equal to the function's name.  You can
+override such special behavior by binding the following variable to a
+non-@code{nil} value:
 
 @defvar ignore-window-parameters
 If this variable is non-@code{nil}, some standard functions do not
@@ -4737,7 +4738,7 @@ applications.  It might be replaced by an improved solution in future
 versions of Emacs.
 @end table
 
-The @code{window-atom} parameter is used for implemeting atomic windows.
+The @code{window-atom} parameter is used for implementing atomic windows.
 
 
 @node Window Hooks
