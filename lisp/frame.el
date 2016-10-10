@@ -2036,7 +2036,8 @@ This timer calls `blink-cursor-timer-function' every
   :group 'frames)
 
 (defcustom blink-cursor-delay 0.5
-  "Seconds of idle time after which cursor starts to blink."
+  "Seconds of idle time before the first blink of the cursor.
+Values smaller than 0.2 sec are treated as 0.2 sec."
   :type 'number
   :group 'cursor
   :set (lambda (symbol value)
