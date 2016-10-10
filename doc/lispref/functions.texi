@@ -346,7 +346,8 @@ stored as symbol function definitions to produce named functions
   Our simple sample function, @code{(lambda (a b c) (+ a b c))},
 specifies three argument variables, so it must be called with three
 arguments: if you try to call it with only two arguments or four
-arguments, you get a @code{wrong-number-of-arguments} error.
+arguments, you get a @code{wrong-number-of-arguments} error
+(@pxref{Errors}).
 
   It is often convenient to write a function that allows certain
 arguments to be omitted.  For example, the function @code{substring}

@@ -1008,7 +1008,8 @@ The last thing is to trigger a new round of lazy highlighting."
 		    ;; pos-visible-in-window-group-p returns non-nil, but
 		    ;; the X coordinate it returns is 1 pixel beyond
 		    ;; the last visible one.
-		    (>= (car visible-p) (window-body-width nil t)))
+		    (>= (car visible-p)
+                        (* (window-max-chars-per-line) (frame-char-width))))
 		(set-window-hscroll (selected-window) current-scroll))))
 	(if isearch-other-end
             (if (< isearch-other-end (point)) ; isearch-forward?

@@ -5434,6 +5434,19 @@ Set it to nil to enable logging.  If the environment variable
 EMACS_FONT_LOG is set at startup, it defaults to nil.  */);
   Vfont_log = Qnil;
 
+  DEFVAR_BOOL ("inhibit-compacting-font-caches", inhibit_compacting_font_caches,
+	       doc: /*
+If non-nil, don't compact font caches during GC.
+Some large fonts cause lots of consing and trigger GC.  If they
+are removed from the font caches, they will need to be opened
+again during redisplay, which slows down redisplay.  If you
+see font-related delays in displaying some special characters,
+and cannot switch to a smaller font for those characters, set
+this variable non-nil.
+Disabling compaction of font caches might enlarge the Emacs memory
+footprint in sessions that use lots of different fonts.  */);
+  inhibit_compacting_font_caches = 0;
+
 #ifdef HAVE_WINDOW_SYSTEM
 #ifdef HAVE_FREETYPE
   syms_of_ftfont ();

@@ -15,12 +15,34 @@ and NEWS.1-17 for changes in older Emacs versions.
 You can narrow news to a specific version by calling 'view-emacs-news'
 with a prefix argument or by typing C-u C-h C-n.
 
-Temporary note:
-+++ indicates that all necessary documentation updates are complete.
-    (This means all relevant manuals in doc/ AND lisp doc-strings.)
---- means no change in the manuals is needed.
-When you add a new item, use the appropriate mark if you are sure it applies,
-otherwise leave it unmarked.
+
+* Changes in Emacs 25.2
+This is a bug-fix release with (almost) no new features.
+
+---
+** `find-library', `help-function-def' and `help-variable-def' now run
+`find-function-after-hook'.
+
++++
+** New basic face 'fixed-pitch-serif', for a fixed-width font with serifs.
+The Info-quoted and tex-verbatim faces now default to inheriting from
+it.
+
+---
+** New variable 'use-default-font-for-symbols' for backward compatibility.
+This variable allows to get back pre-Emacs 25 behavior whereby the
+font for displaying symbol and punctuation characters was always
+selected according to your fontset setup.  Emacs 25 by default tries
+to use the default face's font for such characters, disregarding the
+fontsets if the default font supports these characters.  Set this
+variable to nil to disable the new behavior and get back the old
+behavior.
+
+---
+** New variable 'inhibit-compacting-font-caches'.
+Set this variable to a non-nil value to speed up display of characters
+using large fonts, at the price of a larger memory footprint of the
+Emacs session.
 
 
 * Installation Changes in Emacs 25.1
@@ -895,9 +917,6 @@ name patterns (e.g. all "FOR_DOXYGEN_ONLY_*") to be ignored when
 looking for macro definitions.  By default, no symbols are ignored.
 
 ** TeX mode
-
-*** When in a TeX (LaTeX, etc) comment, insert a normal double quote (")
-instead of defaulting to TeX-style open (``) or close ('') quote marks.
 
 *** New custom variable 'tex-print-file-extension' to help users who
 use PDF instead of DVI.

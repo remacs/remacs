@@ -3544,10 +3544,11 @@ use, add this function to the front of the
 @example
 (defun c-semi&comma-no-newlines-before-nonblanks ()
   (save-excursion
-    (if (and (eq last-command-char ?\;)
-             (zerop (forward-line 1))
-             (not (looking-at "^[ \t]*$")))
-        'stop
+    (if (and (= (c-last-command-char) ?\;)
+	     (zerop (forward-line 1))
+	     (bolp)      ; forward-line has funny behavior at eob.
+	     (not (looking-at "^[ \t]*$")))
+	'stop
       nil)))
 @end example
 @end defun

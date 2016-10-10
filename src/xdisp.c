@@ -6304,9 +6304,10 @@ forward_to_next_line_start (struct it *it, bool *skipped_p,
 	}
       else
 	{
-	  while (get_next_display_element (it)
-		 && !newline_found_p)
+	  while (!newline_found_p)
 	    {
+	      if (!get_next_display_element (it))
+		break;
 	      newline_found_p = ITERATOR_AT_END_OF_LINE_P (it);
 	      if (newline_found_p && it->bidi_p && bidi_it_prev)
 		*bidi_it_prev = it->bidi_it;

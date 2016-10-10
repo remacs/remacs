@@ -190,8 +190,7 @@ The message is @samp{Symbol's value as variable is void}.
 @xref{Accessing Variables}.
 
 @item wrong-number-of-arguments
-The message is @samp{Wrong number of arguments}.  @xref{Classifying
-Lists}.
+The message is @samp{Wrong number of arguments}.  @xref{Argument List}.
 
 @item wrong-type-argument
 The message is @samp{Wrong type argument}.  @xref{Type Predicates}.
