@@ -2936,6 +2936,10 @@ Return -N if first string is less after N-1 chars, +N if first string is
 greater after N-1 chars, or 0 if strings match.
 The first substring is in BUFFER1 from START1 to END1 and the second
 is in BUFFER2 from START2 to END2.
+All arguments may be nil.  If BUFFER1 or BUFFER2 is nil, the current
+buffer is used.  If START1 or START2 is nil, the value of `point-min'
+in the respective buffers is used.  If END1 or END2 is nil, the value
+of `point-max' in the respective buffers is used.
 The value of `case-fold-search' in the current buffer
 determines whether case is significant or ignored.  */)
   (Lisp_Object buffer1, Lisp_Object start1, Lisp_Object end1, Lisp_Object buffer2, Lisp_Object start2, Lisp_Object end2)
