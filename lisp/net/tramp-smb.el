@@ -2042,8 +2042,10 @@ Returns nil if an error message has appeared."
 ;;; TODO:
 
 ;; * Return more comprehensive file permission string.
+;;
 ;; * Try to remove the inclusion of dummy "" directory.  Seems to be at
 ;;   several places, especially in `tramp-smb-handle-insert-directory'.
+;;
 ;; * Ignore case in file names.
 
 ;;; tramp-smb.el ends here

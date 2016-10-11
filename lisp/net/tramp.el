@@ -1959,7 +1959,7 @@ ARGS are the arguments OPERATION has been called with."
    ;; COMMAND.
    ((member operation
 	    '(process-file shell-command start-file-process
-	      ;; Emacs 25.2+ only.
+	      ;; Emacs 26+ only.
 	      make-nearby-temp-file temporary-file-directory))
     default-directory)
    ;; PROC.

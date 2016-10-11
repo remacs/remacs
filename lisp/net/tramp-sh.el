@@ -566,7 +566,7 @@ which might have been set in the init files like ~/.profile.
 Special handling is applied to the PATH environment, which should
 not be set here. Instead, it should be set via `tramp-remote-path'."
   :group 'tramp
-  :version "25.2"
+  :version "26.1"
   :type '(repeat string)
   :require 'tramp)
 

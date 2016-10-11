@@ -118,7 +118,7 @@ Add the extension of F, if existing."
 	 (extension (file-name-extension f t)))
     (make-temp-file prefix dir-flag extension)))
 
-;; `temporary-file-directory' as function is introduced with Emacs 25.2.
+;; `temporary-file-directory' as function is introduced with Emacs 26.1.
 (defalias 'tramp-compat-temporary-file-directory-function
   (if (fboundp 'temporary-file-directory)
       'temporary-file-directory

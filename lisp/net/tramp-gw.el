@@ -331,6 +331,7 @@ password in password cache.  This is done for the first try only."
 ;;; TODO:
 
 ;; * Provide descriptive Commentary.
+;;
 ;; * Enable it for several gateway processes in parallel.
 
 ;;; tramp-gw.el ends here
