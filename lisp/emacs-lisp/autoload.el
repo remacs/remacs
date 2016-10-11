@@ -1112,7 +1112,8 @@ write its autoloads into the specified file instead."
 
       ;; Don't modify the file if its content has not been changed, so `make'
       ;; dependencies don't trigger unnecessarily.
-      (when changed
+      (if (not changed)
+          (set-buffer-modified-p nil)
         (let ((version-control 'never))
           (save-buffer)))
 
