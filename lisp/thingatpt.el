@@ -586,9 +586,11 @@ Signal an error if the entire string was not used."
   "This is an internal thingatpt function and should not be used.")
 
 (defun form-at-point (&optional thing pred)
-  (let ((sexp (ignore-errors
-		(thing-at-point--read-from-whole-string
-		 (thing-at-point (or thing 'sexp))))))
+  (let* ((obj (thing-at-point (or thing 'sexp)))
+         (sexp (if (stringp obj)
+                   (ignore-errors
+                     (thing-at-point--read-from-whole-string obj))
+                 obj)))
     (if (or (not pred) (funcall pred sexp)) sexp)))
 
 ;;;###autoload
