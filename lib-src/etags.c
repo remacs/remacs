@@ -2267,7 +2267,7 @@ invalidate_nodes (fdesc *badfdp, node **npp)
 	      free_tree (np);		  /* free it */
 
 	      /* Continue with rest of tree.  */
-	      np = np_parent ? np_parent->left : NULL;
+	      np = np_parent->left;
 	    }
 	}
       *npp = super_root.left;
