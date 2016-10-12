@@ -2825,9 +2825,11 @@ funcall_lambda (Lisp_Object fun, ptrdiff_t nargs,
     {
       if (EQ (XCAR (fun), Qclosure))
 	{
-	  fun = XCDR (fun);	/* Drop `closure'.  */
+	  Lisp_Object cdr = XCDR (fun);	/* Drop `closure'.  */
+	  if (! CONSP (cdr))
+	    xsignal1 (Qinvalid_function, fun);
+	  fun = cdr;
 	  lexenv = XCAR (fun);
-	  CHECK_LIST_CONS (fun, fun);
 	}
       else
 	lexenv = Qnil;
