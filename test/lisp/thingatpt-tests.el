@@ -84,4 +84,19 @@ position to retrieve THING.")
       (goto-char (nth 1 test))
       (should (equal (thing-at-point (nth 2 test)) (nth 3 test))))))
 
+(ert-deftest thing-at-point-bug24627 ()
+  "Test for http://debbugs.gnu.org/24627 ."
+  :expected-result :failed
+  (let ((file
+         (expand-file-name "lisp/thingatpt.el" source-directory))
+        buf)
+    (when (file-exists-p file)
+      (unwind-protect
+          (progn
+            (setq buf (find-file file))
+            (goto-char (point-max))
+            (forward-line -1)
+            (should-not (thing-at-point 'list)))
+        (kill-buffer buf)))))
+
 ;;; thingatpt.el ends here
