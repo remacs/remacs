@@ -314,7 +314,7 @@ For example, the form
     (if mail \" Mail\" \"\"))
 
 would give mode line times like `94/12/30 21:07:48 (UTC)'."
-  :type 'sexp
+  :type '(repeat sexp)
   :group 'display-time)
 
 (defun display-time-event-handler ()
