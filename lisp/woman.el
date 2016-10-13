@@ -1657,7 +1657,7 @@ Do not call directly!"
     (woman-insert-file-contents filename compressed)
     ;; Set buffer's default directory to that of the file.
     (setq default-directory (file-name-directory filename))
-    (set (make-local-variable 'backup-inhibited) t)
+    (setq-local backup-inhibited t)
     (set-visited-file-name "")
     (woman-process-buffer)))
 
@@ -1780,7 +1780,7 @@ Leave point at end of new text.  Return length of inserted text."
     (define-key map [remap man] 'woman)
     (define-key map [remap man-follow] 'woman-follow)
     map)
-  "Keymap for woman mode.")
+  "Keymap for `woman-mode'.")
 
 (defun woman-follow (topic)
   "Get a Un*x manual page of the item under point and put it in a buffer."
@@ -1872,15 +1872,15 @@ Argument EVENT is the invoking mouse event."
   (woman-reformat-last-file))
 
 (defvar bookmark-make-record-function)
-(put 'woman-mode 'mode-class 'special)
 
-(defun woman-mode ()
+(define-derived-mode woman-mode special-mode "WoMan"
   "Turn on (most of) Man mode to browse a buffer formatted by WoMan.
 WoMan is an ELisp emulation of much of the functionality of the Emacs
 `man' command running the standard UN*X man and ?roff programs.
 WoMan author: F.J.Wright@Maths.QMW.ac.uk
 WoMan version: see `woman-version'.
-See `Man-mode' for additional details."
+See `Man-mode' for additional details.
+\\{woman-mode-map}"
   (let ((Man-build-page-list (symbol-function 'Man-build-page-list))
 	(Man-strip-page-headers (symbol-function 'Man-strip-page-headers))
 	(Man-unindent (symbol-function 'Man-unindent))
@@ -1905,13 +1905,10 @@ See `Man-mode' for additional details."
   (kill-local-variable 'mode-line-buffer-identification)
   (use-local-map woman-mode-map)
   ;; Imenu support:
-  (set (make-local-variable 'imenu-generic-expression)
-       ;; `make-local-variable' in case imenu not yet loaded!
-       woman-imenu-generic-expression)
-  (set (make-local-variable 'imenu-space-replacement) " ")
+  (setq imenu-generic-expression woman-imenu-generic-expression)
+  (setq-local imenu-space-replacement " ")
   ;; Bookmark support.
-  (set (make-local-variable 'bookmark-make-record-function)
-       'woman-bookmark-make-record)
+  (setq-local bookmark-make-record-function 'woman-bookmark-make-record)
   ;; For reformat ...
   ;; necessary when reformatting a file in its old buffer:
   (setq imenu--last-menubar-index-alist nil)
@@ -1919,9 +1916,7 @@ See `Man-mode' for additional details."
   (setq woman-imenu-done nil)
   (if woman-imenu (woman-imenu))
   (let ((inhibit-read-only t))
-    (Man-highlight-references 'WoMan-xref-man-page))
-  (set-buffer-modified-p nil)
-  (run-mode-hooks 'woman-mode-hook))
+    (Man-highlight-references 'WoMan-xref-man-page)))
 
 (defun woman-imenu (&optional redraw)
   "Add a \"Contents\" menu to the menubar.
@@ -3884,7 +3879,7 @@ Leave 1 blank line.  Format paragraphs upto TO."
 		((eq c ?\t)		; skip
 		 (if (eq (following-char) ?\t)
 		     (forward-char)	; both tabs, just skip
-		   (dotimes (i woman-tab-width)
+		   (dotimes (_ woman-tab-width)
                      (if (eolp)
                          (insert ?\s)	; extend line
                        (forward-char)) ; skip

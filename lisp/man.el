@@ -432,29 +432,23 @@ Otherwise, the value is whatever the function
 (defvar Man-mode-map
   (let ((map (make-sparse-keymap)))
     (suppress-keymap map)
-    (set-keymap-parent map button-buffer-map)
+    (set-keymap-parent map
+      (make-composed-keymap button-buffer-map special-mode-map))
 
-    (define-key map [?\S-\ ] 'scroll-down-command)
-    (define-key map " "    'scroll-up-command)
-    (define-key map "\177" 'scroll-down-command)
     (define-key map "n"    'Man-next-section)
     (define-key map "p"    'Man-previous-section)
     (define-key map "\en"  'Man-next-manpage)
     (define-key map "\ep"  'Man-previous-manpage)
-    (define-key map ">"    'end-of-buffer)
-    (define-key map "<"    'beginning-of-buffer)
     (define-key map "."    'beginning-of-buffer)
     (define-key map "r"    'Man-follow-manual-reference)
     (define-key map "g"    'Man-goto-section)
     (define-key map "s"    'Man-goto-see-also-section)
     (define-key map "k"    'Man-kill)
-    (define-key map "q"    'Man-quit)
     (define-key map "u"    'Man-update-manpage)
     (define-key map "m"    'man)
     ;; Not all the man references get buttons currently.  The text in the
     ;; manual page can contain references to other man pages
     (define-key map "\r"   'man-follow)
-    (define-key map "?"    'describe-mode)
 
     (easy-menu-define nil map
       "`Man-mode' menu."
@@ -476,7 +470,7 @@ Otherwise, the value is whatever the function
         "--"
         ["Man..." man t]
         ["Kill Buffer" Man-kill t]
-        ["Quit" Man-quit t]))
+        ["Quit" quit-window t]))
     map)
   "Keymap for Man mode.")
 
@@ -1474,9 +1468,7 @@ manpage command."
 
 (defvar bookmark-make-record-function)
 
-(put 'Man-mode 'mode-class 'special)
-
-(define-derived-mode Man-mode fundamental-mode "Man"
+(define-derived-mode Man-mode special-mode "Man"
   "A mode for browsing Un*x manual pages.
 
 The following man commands are available in the buffer.  Try
@@ -1490,7 +1482,7 @@ The following man commands are available in the buffer.  Try
 \\[Man-previous-section]       Jump to previous manpage section.
 \\[Man-goto-section]       Go to a manpage section.
 \\[Man-goto-see-also-section]       Jumps to the SEE ALSO manpage section.
-\\[Man-quit]       Deletes the manpage window, bury its buffer.
+\\[quit-window]       Deletes the manpage window, bury its buffer.
 \\[Man-kill]       Deletes the manpage window, kill its buffer.
 \\[describe-mode]       Prints this help text.
 
@@ -1517,8 +1509,7 @@ The following key bindings are currently in effect in the buffer:
 	mode-line-buffer-identification
 	(list (default-value 'mode-line-buffer-identification)
 	      " {" 'Man-page-mode-string "}")
-	truncate-lines t
-	buffer-read-only t)
+	truncate-lines t)
   (buffer-disable-undo)
   (auto-fill-mode -1)
   (setq imenu-generic-expression (list (list nil Man-heading-regexp 0)))
@@ -1793,11 +1784,6 @@ Specify which REFERENCE to use; default is based on word at point."
   "Kill the buffer containing the manpage."
   (interactive)
   (quit-window t))
-
-(defun Man-quit ()
-  "Bury the buffer containing the manpage."
-  (interactive)
-  (quit-window))
 
 (defun Man-goto-page (page &optional noerror)
   "Go to the manual page on page PAGE."
