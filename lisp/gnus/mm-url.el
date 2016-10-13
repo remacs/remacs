@@ -411,41 +411,43 @@ DATA is a list where the elements can have the following form:
              (\"filename\" . \"FILENAME\")
              (\"content-type\" . \"CONTENT-TYPE\")
              (\"filedata\" . \"FILEDATA\")))
-Lowercase names above are literals and uppercase can
-be various values."
+Lowercase strings above are literals and uppercase are not."
   ;; RFC1867
-  ;; Get a good boundary
+  ;; Get a good boundary.
   (unless boundary
     (setq boundary (mml-compute-boundary '())))
   (with-temp-buffer
     (set-buffer-multibyte nil)
-    (cl-loop for (name . value) in data
-	     do (insert "--" boundary "\r\n")
-	        (cond
-		 ((equal name "file")
-		  (insert (format "Content-Disposition: form-data; name=%S; filename=%S\r\n"
-				  (or (cdr (assoc "name" value)) name)
-				  (cdr (assoc "filename" value))))
-		  (insert "Content-Transfer-Encoding: binary\r\n")
-		  (insert (format "Content-Type: %s\r\n\r\n"
-				  (or (cdr (assoc "content-type" value))
-				      "text/plain")))
-		  (let ((filedata (cdr (assoc "filedata" value))))
-		    (cond
-		     ((stringp filedata)
-		      (insert filedata))
-		     ;; How can this possibly be useful?
-		     ((integerp filedata)
-		      (insert (number-to-string filedata))))))
-		 ((equal name "submit")
-		  (insert
-		   "Content-Disposition: form-data; name=\"submit\"\r\n\r\nSubmit\r\n"))
-		 (t
-		  (insert (format "Content-Disposition: form-data; name=%S\r\n\r\n"
-				  name))
-		  (insert value)))
-		(unless (bolp)
-		  (insert "\r\n")))
+    (dolist (elem data)
+      (let ((name (car elem))
+	    (value (cdr elem)))
+	(insert "--" boundary "\r\n")
+	(cond
+	 ((equal name "file")
+	  (insert (format
+		   "Content-Disposition: form-data; name=%S; filename=%S\r\n"
+		   (or (cdr (assoc "name" value)) name)
+		   (cdr (assoc "filename" value))))
+	  (insert "Content-Transfer-Encoding: binary\r\n")
+	  (insert (format "Content-Type: %s\r\n\r\n"
+			  (or (cdr (assoc "content-type" value))
+			      "text/plain")))
+	  (let ((filedata (cdr (assoc "filedata" value))))
+	    (cond
+	     ((stringp filedata)
+	      (insert filedata))
+	     ;; How can this possibly be useful?
+	     ((integerp filedata)
+	      (insert (number-to-string filedata))))))
+	 ((equal name "submit")
+	  (insert
+	   "Content-Disposition: form-data; name=\"submit\"\r\n\r\nSubmit\r\n"))
+	 (t
+	  (insert (format "Content-Disposition: form-data; name=%S\r\n\r\n"
+			  name))
+	  (insert value)))
+	(unless (bolp)
+	  (insert "\r\n"))))
     (insert "--" boundary "--\r\n")
     (buffer-string)))
 
