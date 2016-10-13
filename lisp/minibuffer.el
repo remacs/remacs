@@ -2052,22 +2052,22 @@ Also respects the obsolete wrapper hook `completion-in-region-functions'.
             minor-mode-map-alist))
 
 (defvar completion-at-point-functions '(tags-completion-at-point-function)
-  "Special hook to find the completion table for the thing at point.
-Each function on this hook is called in turn without any argument and should
-return either nil to mean that it is not applicable at point,
-or a function of no argument to perform completion (discouraged),
-or a list of the form (START END COLLECTION . PROPS) where
+  "Special hook to find the completion table for the entity at point.
+Each function on this hook is called in turn without any argument and
+should return either nil, meaning it is not applicable at point,
+or a function of no arguments to perform completion (discouraged),
+or a list of the form (START END COLLECTION . PROPS), where:
  START and END delimit the entity to complete and should include point,
- COLLECTION is the completion table to use to complete it, and
+ COLLECTION is the completion table to use to complete the entity, and
  PROPS is a property list for additional information.
 Currently supported properties are all the properties that can appear in
 `completion-extra-properties' plus:
  `:predicate'	a predicate that completion candidates need to satisfy.
- `:exclusive'	If `no', means that if the completion table fails to
+ `:exclusive'	value of `no' means that if the completion table fails to
    match the text at point, then instead of reporting a completion
    failure, the completion should try the next completion function.
-As is the case with most hooks, the functions are responsible to preserve
-things like point and current buffer.")
+As is the case with most hooks, the functions are responsible for
+preserving things like point and current buffer.")
 
 (defvar completion--capf-misbehave-funs nil
   "List of functions found on `completion-at-point-functions' that misbehave.
