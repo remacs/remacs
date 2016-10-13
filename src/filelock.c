@@ -574,10 +574,10 @@ current_lock_owner (lock_info_type *owner, char *lfname)
       break;
 
     case '\357':
-      /* Treat "\357\200\242" (U+F022 in UTF-8) as if it were ":".
-	 This works around a bug in Samba, which can mistakenly
-	 transliterate ':' to U+F022 in symlink contents (Bug#24656).
-	 See <https://bugzilla.redhat.com/show_bug.cgi?id=1271407#c8>.  */
+      /* Treat "\357\200\242" (U+F022 in UTF-8) as if it were ":" (Bug#24656).
+	 This works around a bug in the Linux CIFS kernel client, which can
+	 mistakenly transliterate ':' to U+F022 in symlink contents.
+	 See <https://bugzilla.redhat.com/show_bug.cgi?id=1384153>.  */
       if (! (boot[0] == '\200' && boot[1] == '\242'))
 	return -1;
       boot += 2;
