@@ -1116,12 +1116,16 @@ Entry to this mode runs the hooks on `term-mode-hook'."
   (term-update-mode-line))
 
 (defun term-reset-size (height width)
-  (setq term-height height)
-  (setq term-width width)
-  (setq term-start-line-column nil)
-  (setq term-current-row nil)
-  (setq term-current-column nil)
-  (term-set-scroll-region 0 height))
+  (when (or (/= height term-height)
+            (/= width term-width))
+    (let ((point (point)))
+      (setq term-height height)
+      (setq term-width width)
+      (setq term-start-line-column nil)
+      (setq term-current-row nil)
+      (setq term-current-column nil)
+      (term-set-scroll-region 0 height)
+      (goto-char point))))
 
 ;; Recursive routine used to check if any string in term-kill-echo-list
 ;; matches part of the buffer before point.
