@@ -36,6 +36,10 @@ and char-width-table.  The additional scripts should cause automatic
 updates in charscript.el, but it is a good idea to look at the results
 and see if any changes in admin/unidata/blocks.awk are required.
 
+The setting of char-width-table around line 1200 of characters.el
+should be checked against the latest version of the Unicode file
+EastAsianWidth.txt, and any discrepancies fixed.
+
 Any new scripts added by UnicodeData.txt will also need updates to
 script-representative-chars defined in fontset.el, and also the list
 of OTF script tags in otf-script-alist, whose source is on this page:
