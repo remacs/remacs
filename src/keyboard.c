@@ -5417,6 +5417,36 @@ make_lispy_event (struct input_event *event)
 	  {
 	    c &= 0377;
 	    eassert (c == event->code);
+          }
+
+        /* Caps-lock shouldn't affect interpretation of key chords:
+           Control+s should produce C-s whether caps-lock is on or
+           not.  And Control+Shift+s should produce C-S-s whether
+           caps-lock is on or not. */
+        if (event->modifiers & ~shift_modifier)
+        {
+            /* this is a key chord: some non-shift modifier is
+               depressed */
+
+            if (uppercasep (c) &&
+                !(event->modifiers & shift_modifier))
+            {
+                /* Got a capital letter without a shift.  The caps
+                   lock is on.   Un-capitalize the letter */
+                c = downcase(c);
+            }
+            else if (lowercasep (c) &&
+                     (event->modifiers & shift_modifier))
+            {
+                /* Got a lower-case letter even though shift is
+                   depressed.  The caps lock is on.  Capitalize the
+                   letter */
+                c = upcase(c);
+            }
+        }
+
+	if (event->kind == ASCII_KEYSTROKE_EVENT)
+	  {
 	    /* Turn ASCII characters into control characters
 	       when proper.  */
 	    if (event->modifiers & ctrl_modifier)
