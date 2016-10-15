@@ -697,7 +697,8 @@ The command line (command name and the list of arguments) for launching a proces
 initialization function.  Flymake then just calls @code{start-process}
 to start an asynchronous process and configures a process filter and
 sentinel, which are used for processing the output of the syntax check
-tool.
+tool.  When exiting Emacs, running Flymake processes will be killed
+without prompting the user.
 
 @node Parsing the output
 @section Parsing the output

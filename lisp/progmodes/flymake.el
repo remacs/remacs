@@ -1072,6 +1072,7 @@ For the format of LINE-ERR-INFO, see `flymake-ler-make-ler'."
                        "flymake-proc" (current-buffer) cmd args))))
         (set-process-sentinel process 'flymake-process-sentinel)
         (set-process-filter process 'flymake-process-filter)
+        (set-process-query-on-exit-flag process nil)
         (push process flymake-processes)
 
         (setq flymake-is-running t)

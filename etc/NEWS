@@ -478,6 +478,12 @@ This is done with the help of 'c-or-c++-mode' function which analyses
 contents of the buffer to determine whether it's a C or C++ source
 file.
 
+** Flymake
+
++++
+*** Emacs does no longer prompt the user before killing Flymake
+processes on exit.
+
 
 * New Modes and Packages in Emacs 26.1
 
