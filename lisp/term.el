@@ -1243,6 +1243,11 @@ intervention from Emacs, except for the escape character (usually C-c)."
 	      (end-of-line)
 	      (term-send-input))
 	  (setq term-input-sender save-input-sender))))
+
+    ;; Turn off XTerm bracketed paste (Bug#24639).
+    (when (fboundp 'xterm-inhibit-bracketed-paste-mode)
+      (xterm-inhibit-bracketed-paste-mode))
+
     (term-update-mode-line)))
 
 (defun term-line-mode  ()
@@ -1252,6 +1257,8 @@ you type \\[term-send-input] which sends the current line to the inferior."
   (interactive)
   (when (term-in-char-mode)
     (use-local-map term-old-mode-map)
+    (when (fboundp 'xterm-inhibit-bracketed-paste-mode)
+      (xterm-inhibit-bracketed-paste-mode 0))
     (term-update-mode-line)))
 
 (defun term-update-mode-line ()

@@ -765,6 +765,78 @@ We run the first FUNCTION whose STRING matches the input events."
    basemap
    (make-composed-keymap map (keymap-parent basemap))))
 
+(define-minor-mode xterm-inhibit-bracketed-paste-mode
+  "Toggle whether XTerm bracketed paste should be allowed in this bugger.
+With a prefix argument ARG, forbid bracketed paste if ARG is
+positive, and allow it otherwise.  If called from Lisp, forbid
+bracketed paste if ARG is omitted or nil, and toggle the state of
+ARG is `toggle'.  If XTerm bracketed paste is allowed (the
+default), it will be used to paste text from an X selection upon
+reception of the `xterm-paste' event.  Otherwise the selection
+will be inserted character by character, which is much slower.
+Therefore, bracketed paste should only be disabled in buffers
+that can't deal with the `xterm-paste' event, such as terminal
+emulation buffers."
+  :group xterm
+  ;; Update the bracketed paste flag in all terminals that display the
+  ;; current buffer.
+  (mapc #'xterm--update-bracketed-paste (xterm--buffer-terminals)))
+
+(defun xterm--buffer-terminals (&optional buffer)
+  "Return all terminals that contain a window that displays BUFFER.
+BUFFER defaults to the current buffer."
+  (cl-delete-duplicates
+   (cl-loop for window in (get-buffer-window-list buffer nil t)
+            for terminal = (frame-terminal (window-frame window))
+            collect terminal)
+   :test 'eq))
+
+(defun xterm--update-bracketed-paste (&optional terminal)
+  "Enable or disable bracketed paste for TERMINAL.
+TERMINAL must be a live terminal; it defaults to the terminal
+displaying the selected frame.  If any buffer displayed on the
+frames of TERMINAL inhibits bracketed paste by enabling
+`xterm-inhibit-bracketed-paste-mode', disable bracketed paste for
+TERMINAL.  If there is no such buffer, enable bracketed paste."
+  (unless terminal (setq terminal (frame-terminal)))
+  (cl-check-type terminal terminal-live)
+  (when (xterm--is-xterm terminal)
+    (cl-symbol-macrolet
+        ((enabled-param (terminal-parameter terminal 'xterm--bracketed-paste))
+         (set-strings-param (terminal-parameter terminal 'tty-mode-set-strings))
+         (reset-strings-param
+          (terminal-parameter terminal 'tty-mode-reset-strings)))
+      (let ((is-enabled enabled-param)
+            (should-enable (xterm--bracketed-paste-possible terminal))
+            (enable-seq "\e[?2004h")
+            (disable-seq "\e[?2004l"))
+        (cond
+         ;; Unconditionally send terminal sequences: terminals that
+         ;; don't support bracketed paste just ignore the sequences.
+         ((and (not is-enabled) should-enable)
+          (send-string-to-terminal enable-seq terminal)
+          (push disable-seq reset-strings-param)
+          (push enable-seq set-strings-param)
+          (setq enabled-param t))
+         ((and is-enabled (not should-enable))
+          (send-string-to-terminal disable-seq)
+          (cl-callf2 delete disable-seq reset-strings-param)
+          (cl-callf2 delete enable-seq set-strings-param)
+          (setq enabled-param nil)))))))
+
+(defun xterm--bracketed-paste-possible (terminal)
+  "Return non-nil if bracketed paste could be enabled on TERMINAL.
+If any buffer displayed on the frames of TERMINAL inhibits
+bracketed paste by enabling `xterm-inhibit-bracketed-paste-mode',
+return nil.  If there is no such buffer, return non-nil."
+  (cl-check-type terminal terminal-live)
+  (cl-loop for frame being the frames
+           if (eq (frame-terminal frame) terminal)
+           always (cl-loop
+                   for window being the windows of frame
+                   never (buffer-local-value 'xterm-inhibit-bracketed-paste-mode
+                                             (window-buffer window)))))
+
 (defun terminal-init-xterm ()
   "Terminal initialization function for xterm."
   ;; rxvt terminals sometimes set the TERM variable to "xterm", but
@@ -802,9 +874,8 @@ We run the first FUNCTION whose STRING matches the input events."
     (when (memq 'setSelection xterm-extra-capabilities)
       (xterm--init-activate-set-selection)))
 
-  ;; Unconditionally enable bracketed paste mode: terminals that don't
-  ;; support it just ignore the sequence.
-  (xterm--init-bracketed-paste-mode)
+  (add-hook 'window-configuration-change-hook #'xterm--update-bracketed-paste)
+  (xterm--update-bracketed-paste)
 
   (run-hooks 'terminal-init-xterm-hook))
 
@@ -813,12 +884,6 @@ We run the first FUNCTION whose STRING matches the input events."
   (send-string-to-terminal "\e[>4;1m")
   (push "\e[>4m" (terminal-parameter nil 'tty-mode-reset-strings))
   (push "\e[>4;1m" (terminal-parameter nil 'tty-mode-set-strings)))
-
-(defun xterm--init-bracketed-paste-mode ()
-  "Terminal initialization for bracketed paste mode."
-  (send-string-to-terminal "\e[?2004h")
-  (push "\e[?2004l" (terminal-parameter nil 'tty-mode-reset-strings))
-  (push "\e[?2004h" (terminal-parameter nil 'tty-mode-set-strings)))
 
 (defun xterm--init-activate-get-selection ()
   "Terminal initialization for `gui-get-selection'."
@@ -999,6 +1064,11 @@ versions of xterm."
   (when (< (+ redc greenc bluec) (* .6 (+ 65535 65535 65535)))
     (set-terminal-parameter nil 'background-mode 'dark)
     t))
+
+(defun xterm--is-xterm (&optional terminal)
+  "Return non-nil if TERMINAL is an XTerm-like terminal.
+TERMINAL defaults to the terminal of the selected frame."
+  (eq (terminal-parameter terminal 'terminal-initted) 'terminal-init-xterm))
 
 (provide 'xterm)                        ;Backward compatibility.
 (provide 'term/xterm)
