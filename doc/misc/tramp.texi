@@ -677,7 +677,7 @@ files smaller than @var{tramp-copy-size-limit} still use inline
 methods.
 
 @table @asis
-@item @option{rcp}---@command{rsh} and @command{rcp}
+@item @option{rcp}
 @cindex method rcp
 @cindex rcp method
 @cindex rcp (with rcp method)
@@ -690,7 +690,7 @@ access method available.
 The alternative method @option{remcp} uses the @command{remsh} and
 @command{rcp} commands.
 
-@item @option{scp}---@command{ssh} and @command{scp}
+@item @option{scp}
 @cindex method scp
 @cindex scp method
 @cindex scp (with scp method)
@@ -707,7 +707,7 @@ port numbers.  For example, @file{host#42} passes @samp{-p 42} in the
 argument list to @command{ssh}, and @samp{-P 42} in the argument list
 to @command{scp}.
 
-@item @option{rsync}---@command{ssh} and @command{rsync}
+@item @option{rsync}
 @cindex method rsync
 @cindex rsync method
 @cindex rsync (with rsync method)
@@ -722,7 +722,7 @@ is lost if the file exists only on one side of the connection.
 
 This method supports the @samp{-p} argument.
 
-@item @option{scpx}---@command{ssh} and @command{scp}
+@item @option{scpx}
 @cindex method scpx
 @cindex scpx method
 @cindex scp (with scpx method)
@@ -732,14 +732,14 @@ This method supports the @samp{-p} argument.
 in performance to @option{scp}.  @option{scpx} uses @samp{ssh -t -t
 @var{host} -l @var{user} /bin/sh} to open a connection.
 
-@option{sshx} is useful for Windows users when @command{ssh} triggers
+@option{scpx} is useful for Windows users when @command{ssh} triggers
 an error about allocating a pseudo tty.  This happens due to missing
 shell prompts that confuses @value{tramp}.
 
 This method supports the @samp{-p} argument.
 
-@item @option{pscp}---@command{plink} and @command{pscp}
-@item @option{psftp}---@command{plink} and @command{psftp}
+@item @option{pscp}
+@item @option{psftp}
 @cindex method pscp
 @cindex pscp method
 @cindex pscp (with pscp method)
@@ -761,7 +761,7 @@ session.
 
 These methods support the @samp{-P} argument.
 
-@item @option{fcp}---@command{fsh} and @command{fcp}
+@item @option{fcp}
 @cindex method fcp
 @cindex fcp method
 @cindex fsh (with fcp method)
@@ -784,7 +784,7 @@ The command used for this connection is: @samp{fsh @var{host} -l
 not useful for @value{tramp}.  @command{fsh} connects to remote host
 and @value{tramp} keeps that one connection open.
 
-@item @option{nc}---@command{telnet} and @command{nc}
+@item @option{nc}
 @cindex method nc
 @cindex nc method
 @cindex nc (with nc method)
@@ -804,7 +804,7 @@ When @value{tramp} uses @option{ftp}, it forwards requests to whatever
 ftp program is specified by Ange FTP.  This external program must be
 capable of servicing requests from @value{tramp}.
 
-@item @option{smb}---@command{smbclient}
+@item @option{smb}
 @cindex method smb
 @cindex smb method
 
