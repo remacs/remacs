@@ -5123,25 +5123,29 @@ case "$opsys" in
   *) LD_SWITCH_SYSTEM_TEMACS= ;;
 esac
 
-# -nopie fixes a temacs segfault on Gentoo, OpenBSD, and other systems
-# with "hardened" GCC configurations for some reason (Bug#18784).
-# We don't know why -nopie works, but not segfaulting is better than
-# segfaulting.  Use ac_c_werror_flag=yes when trying -nopie, otherwise
-# clang keeps warning that it does not understand -nopie, and pre-4.6
-# GCC has a similar problem (Bug#20338).
-AC_CACHE_CHECK([whether $CC accepts -nopie],
-  [emacs_cv_prog_cc_nopie],
+# -no-pie or -nopie fixes a temacs segfault on Gentoo, OpenBSD,
+# Ubuntu, and other systems with "hardened" GCC configurations for
+# some reason (Bug#18784).  We don't know why this works, but not
+# segfaulting is better than segfaulting.  Use ac_c_werror_flag=yes
+# when trying the option, otherwise clang keeps warning that it does
+# not understand it, and pre-4.6 GCC has a similar problem
+# (Bug#20338).  Prefer -no-pie to -nopie, as -no-pie is the
+# spelling used by GCC 6.1.0 and later (Bug#24682).
+AC_CACHE_CHECK(
+  [for $CC option to disable position independent executables],
+  [emacs_cv_prog_cc_no_pie],
   [emacs_save_c_werror_flag=$ac_c_werror_flag
    emacs_save_LDFLAGS=$LDFLAGS
    ac_c_werror_flag=yes
-   LDFLAGS="$LDFLAGS -nopie"
-   AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
-     [emacs_cv_prog_cc_nopie=yes],
-     [emacs_cv_prog_cc_nopie=no])
+   for emacs_cv_prog_cc_no_pie in -no-pie -nopie no; do
+     test $emacs_cv_prog_cc_no_pie = no && break
+     LDFLAGS="$emacs_save_LDFLAGS $emacs_cv_prog_cc_no_pie"
+     AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])], [break])
+   done
    ac_c_werror_flag=$emacs_save_c_werror_flag
    LDFLAGS=$emacs_save_LDFLAGS])
-if test "$emacs_cv_prog_cc_nopie" = yes; then
-  LD_SWITCH_SYSTEM_TEMACS="$LD_SWITCH_SYSTEM_TEMACS -nopie"
+if test "$emacs_cv_prog_cc_no_pie" != no; then
+  LD_SWITCH_SYSTEM_TEMACS="$LD_SWITCH_SYSTEM_TEMACS $emacs_cv_prog_cc_no_pie"
 fi
 
 if test x$ac_enable_profiling != x ; then
