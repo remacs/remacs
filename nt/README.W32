@@ -140,8 +140,10 @@ See the end of the file for license conditions.
 
   1. http://sourceforge.net/projects/ezwinports/files/
      -- up-to-date builds, self-contained archives, only for 32-bit Emacs
-  2. Libraries from the MSYS2 project on alpha.gnu.org:
-     http://alpha.gnu.org/gnu/emacs/pretest/windows/.
+  2. Libraries from the MSYS2 project on ftp.gnu.org:
+     http://ftp.gnu.org/gnu/emacs/windows/emacs-NN-i686-deps.zip (32-bit)
+     http://ftp.gnu.org/gnu/emacs/windows/emacs-NN-x86_64-deps.zip (64-bit)
+     where NN is the Emacs version to which the libraries correspond.
   3. The MSYS2 project -- for 64-bit Emacs:
      http://msys2.github.io/
      https://sourceforge.net/projects/msys2/files/REPOS/MINGW/x86_64/
@@ -200,7 +202,7 @@ See the end of the file for license conditions.
 
   You can get pre-built binaries (including any dependency DLLs) at
   http://sourceforge.net/projects/ezwinports/files/ and on
-  http://alpha.gnu.org/gnu/emacs/pretest/windows/.
+  http://ftp.gnu.org/gnu/emacs/windows/
 
 * libxml2 support
 
@@ -214,8 +216,7 @@ See the end of the file for license conditions.
 
   You can get pre-built binaries (including any required DLL and the
   header files) at http://sourceforge.net/projects/ezwinports/files/ and
-  http://alpha.gnu.org/gnu/emacs/pretest/windows/.
-
+  http://ftp.gnu.org/gnu/emacs/windows/
 
 * zlib support
 
@@ -223,7 +224,7 @@ See the end of the file for license conditions.
   the zlib-decompress-region primitive.
 
   Prebuilt binaries of zlib DLL (for 32-bit builds of Emacs) are
-  available from the ezwinports site and on alpha.gnu; see above for
+  available from the ezwinports site and on ftp.gnu.org; see above for
   the URLs.  For the 64-bit DLL, see the instructions below for
   installing from MSYS2 site.
 
