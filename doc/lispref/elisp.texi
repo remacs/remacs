@@ -1039,6 +1039,7 @@ Windows
 * Quitting Windows::        How to restore the state prior to displaying a
                               buffer.
 * Side Windows::            Special windows on a frame's sides.
+* Atomic Windows::          Preserving parts of the window layout.
 * Window Point::            Each window has its own location of point.
 * Window Start and End::    Buffer positions indicating which text is
                               on-screen in a window.

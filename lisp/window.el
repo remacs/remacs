@@ -651,7 +651,7 @@ failed."
 	 (window-combination-limit t)
 	 (window-combination-resize 'atom)
 	 (window (cdr (assq 'window alist)))
-	 (side (cdr (assq 'side alist)))
+	 (side (or (cdr (assq 'side alist)) 'below))
 	 (atom (when window (window-parameter window 'window-atom)))
 	 root new)
     (setq window (window-normalize-window window))

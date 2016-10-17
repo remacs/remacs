@@ -34,6 +34,7 @@ is displayed in windows.
 * Quitting Windows::        How to restore the state prior to displaying a
                               buffer.
 * Side Windows::            Special windows on a frame's sides.
+* Atomic Windows::          Preserving parts of the window layout.
 * Window Point::            Each window has its own location of point.
 * Window Start and End::    Buffer positions indicating which text is
                               on-screen in a window.
@@ -3368,6 +3369,138 @@ and @kbd{M-x dired-default-directory-on-left} should now reproduce the
 frame layout sketched above.
 
 
+@node Atomic Windows
+@section Atomic Windows
+@cindex atomic windows
+
+Atomic windows are rectangular compositions of at least two live
+windows.  They have the following distinctive characteristics:
+
+@itemize @bullet
+@item
+The function @code{split-window} (@pxref{Splitting Windows}), when
+applied to a constituent of an atomic window, will try to create the new
+window outside of the atomic window.
+
+@item
+The function @code{delete-window} (@pxref{Deleting Windows}), when
+applied to a constituent of an atomic window, will try to delete the
+entire atomic window instead.
+
+@item
+The function @code{delete-other-windows} (@pxref{Deleting Windows}),
+when applied to a constituent of an atomic window, will try to make the
+atomic window fill its frame or main window (@pxref{Side Windows}).
+@end itemize
+
+This means that the basic groups of functions that alter the window
+structure treat an atomic window like a live one, thus preserving the
+internal structure of the atomic window.
+
+   Atomic windows are useful to construct and preserve window layouts
+that are meaningful only when all involved buffers are shown
+simultaneously in a specific manner, such as when showing differences
+between file revisions, or the same text in different languages or
+markups.  They can also be used to permanently display information
+pertinent to a specific window in bars on that window's sides.
+
+@cindex root window of atomic window
+   Atomic windows are implemented with the help of the reserved
+@code{window-atom} window parameter (@pxref{Window Parameters}) and an
+internal window (@pxref{Basic Windows}) called the root window of the
+atomic window.  All windows that are part of the same atomic window have
+this root window as their common ancestor and are assigned a
+non-@code{nil} @code{window-atom} parameter.
+
+  The following function returns the root of the atomic window a
+specified window is part of:
+
+@defun window-atom-root &optional window
+This functions returns the root of the atomic window @var{window} is a
+part of.  The specified @var{window} must be a valid window and defaults
+to the selected one.  It returns @code{nil} if @var{window} is not part
+of an atomic window.
+@end defun
+
+The most simple approach to make a new atomic window is to take an
+existing internal window and apply the following function:
+
+@defun window-make-atom window
+This function converts @var{window} into an atomic window.  The
+specified @var{window} must be an internal window.  All this function
+does is to set the @code{window-atom} parameter of each descendant of
+@var{window} to @code{t}.
+@end defun
+
+To create a new atomic window from an existing live window or to add a
+new window to an existing atomic window, the following buffer display
+action function (@pxref{Display Action Functions}) can be used:
+
+@defun display-buffer-in-atom-window buffer alist
+This function tries to display @var{buffer} in a new window that will be
+combined with an existing window to form an atomic window.  If the
+existing window is already part of an atomic window, it adds the new
+window to that atomic window.
+
+The specified @var{alist} is an association list of symbols and values.
+The following symbols have a special meaning:
+
+@table @code
+@item window
+The value of such an element specifies an existing window the new window
+shall be combined with.  If it specifies an internal window, all
+children of that window become part of the atomic window too.  If no
+window is specified, the new window becomes a sibling of the selected
+window.  The @code{window-atom} parameter of the existing window is set
+to @code{main} provided that window is live and its @code{window-atom}
+parameter was not already set.
+
+@item side
+The value of such an element denotes the side of the existing window
+where the new window shall be located.  Valid values are @code{below},
+@code{right}, @code{above} and @code{left}.  The default is
+@code{below}.  The @code{window-atom} parameter of the new window is set
+to this value.
+@end table
+
+The return value is the new window, @code{nil} when creating that window
+failed.
+@end defun
+
+Note that the value of the @code{window-atom} parameter does not really
+matter as long as it is non-@code{nil}.  The values assigned by
+@code{display-buffer-in-atom-window} just allow for easy retrieval of
+the original and the new window after that function has been applied.
+Note also that the @code{window-atom} parameter is the only window
+parameter assigned by @code{display-buffer-in-atom-window}.  Further
+parameters have to be set by the application explicitly via a
+@code{window-parameters} entry in @var{alist}.
+
+   The following code snippet, when applied to a single-window frame,
+first splits the selected window and makes the selected and the new
+window constituents of an atomic window with their parent as root.  It
+then displays the buffer @file{*Messages*} in a new window at the
+frame's bottom and makes that new window part of the atomic window just
+created.
+
+@example
+@group
+(let ((window (split-window-right)))
+  (window-make-atom (window-parent window))
+  (display-buffer-in-atom-window
+   (get-buffer-create "*Messages*")
+   `((window . ,(window-parent window)) (window-height . 5))))
+@end group
+@end example
+
+At this moment typing @w{@kbd{C-x 2}} in any window of that frame
+produces a new window at the bottom of the frame.  Typing @w{@kbd{C-x
+3}} instead will put the new window at the frame's right.  In either
+case, typing now @w{@kbd{C-x 1}} in any window of the atomic window will
+remove the new window only.  Typing @w{@kbd{C-x 0}} in any window of the
+atomic window will make that new window fill the frame.
+
+
 @node Window Point
 @section Windows and Point
 @cindex window position
@@ -4715,6 +4848,10 @@ only if it still shows that buffer.
 @item @code{window-side} @code{window-slot}
 These parameters are used for implementing side windows (@pxref{Side
 Windows}).
+
+@item @code{window-atom}
+This parameter is used for implementing atomic windows, see @ref{Atomic
+Windows}.
 
 @item @code{min-margins}
 The value of this parameter is a cons cell whose @sc{car} and @sc{cdr},
