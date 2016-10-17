@@ -3749,6 +3749,7 @@ support pty association, if PROGRAM is nil."
 (define-derived-mode process-menu-mode tabulated-list-mode "Process Menu"
   "Major mode for listing the processes called by Emacs."
   (setq tabulated-list-format [("Process" 15 t)
+			       ("PID"      7 t)
 			       ("Status"   7 t)
 			       ("Buffer"  15 t)
 			       ("TTY"     12 t)
@@ -3775,6 +3776,7 @@ Also, delete any process that is exited or signaled."
 	       (process-query-on-exit-flag p))
 	   (let* ((buf (process-buffer p))
 		  (type (process-type p))
+		  (pid  (if (process-id p) (format "%d" (process-id p)) "--"))
 		  (name (process-name p))
 		  (status (symbol-name (process-status p)))
 		  (buf-label (if (buffer-live-p buf)
@@ -3810,7 +3812,7 @@ Also, delete any process that is exited or signaled."
 					 (format " at %s b/s" speed)
 				       "")))))
 		     (mapconcat 'identity (process-command p) " "))))
-	     (push (list p (vector name status buf-label tty cmd))
+	     (push (list p (vector name pid status buf-label tty cmd))
 		   tabulated-list-entries))))))
 
 (defun process-menu-visit-buffer (button)

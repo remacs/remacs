@@ -2336,7 +2336,8 @@ FORMATS is the value to use for `ibuffer-formats'.
     (setq other-window-p t))
   (let ((buf (get-buffer-create (or name "*Ibuffer*"))))
     (if other-window-p
-	(funcall (if noselect (lambda (buf) (display-buffer buf t)) #'pop-to-buffer) buf)
+	(or (and noselect (display-buffer buf t))
+	    (pop-to-buffer buf t))
       (funcall (if noselect #'display-buffer #'switch-to-buffer) buf))
     (with-current-buffer buf
       (save-selected-window
