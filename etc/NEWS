@@ -630,6 +630,12 @@ changing and reversing the layout of side windows and returning the main
 the section "Side Windows" in the Elisp manual.
 
 +++
+*** Support for atomic windows - rectangular compositions of windows
+treated by `split-window', `delete-window' and `delete-other-windows'
+like a single live window - is now official.  For details consult the
+section "Atomic Windows" in the Elisp manual.
+
++++
 *** New `display-buffer' alist entry `window-parameters' allows to
 assign window parameters to the window used for displaying the buffer.
 
