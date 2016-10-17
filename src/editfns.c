@@ -2085,7 +2085,11 @@ format_time_string (char const *format, ptrdiff_t formatlen,
   USE_SAFE_ALLOCA;
 
   timezone_t tz = tzlookup (zone, false);
-  tmp = emacs_localtime_rz (tz, &t.tv_sec, tmp);
+  /* On some systems, like 32-bit MinGW, tv_sec of struct timespec is
+     a 64-bit type, but time_t is a 32-bit type.  emacs_localtime_rz
+     expects a pointer to time_t value.  */
+  time_t tsec = t.tv_sec;
+  tmp = emacs_localtime_rz (tz, &tsec, tmp);
   if (! tmp)
     {
       xtzfree (tz);
@@ -2353,7 +2357,10 @@ the data it can't find.  */)
   zone_name = format_time_string ("%Z", sizeof "%Z" - 1, value,
 				  zone, &local_tm);
 
-  if (HAVE_TM_GMTOFF || gmtime_r (&value.tv_sec, &gmt_tm))
+  /* gmtime_r expects a pointer to time_t, but tv_sec of struct
+     timespec on some systems (MinGW) is a 64-bit field.  */
+  time_t tsec = value.tv_sec;
+  if (HAVE_TM_GMTOFF || gmtime_r (&tsec, &gmt_tm))
     {
       long int offset = (HAVE_TM_GMTOFF
 			 ? tm_gmtoff (&local_tm)
