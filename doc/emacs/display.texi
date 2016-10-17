@@ -657,6 +657,10 @@ Whitespace}).
 @item escape-glyph
 The face for displaying control characters and escape sequences
 (@pxref{Text Display}).
+@item homoglyph
+The face for displaying lookalike characters, i.e., characters that
+look like but are not the characters being represented
+(@pxref{Text Display}).
 @item nobreak-space
 The face for displaying no-break space characters (@pxref{Text
 Display}).
@@ -1520,12 +1524,12 @@ for details.
 
 @cindex curly quotes
 @cindex curved quotes
-@cindex escape-glyph face
+@cindex homoglyph face
   If the curved quotes @samp{‘}, @samp{’}, @samp{“}, and @samp{”} are
 known to look just like @acronym{ASCII} characters, they are shown
-with the @code{escape-glyph} face.  Curved quotes that cannot be
+with the @code{homoglyph} face.  Curved quotes that cannot be
 displayed are shown as their @acronym{ASCII} approximations @samp{`},
-@samp{'}, and @samp{"} with the @code{escape-glyph} face.
+@samp{'}, and @samp{"} with the @code{homoglyph} face.
 
 @node Cursor Display
 @section Displaying the Cursor

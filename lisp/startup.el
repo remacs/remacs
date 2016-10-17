@@ -870,7 +870,7 @@ If STYLE is nil, display appropriately for the terminal."
         (if repl
             (aset (or standard-display-table
                       (setq standard-display-table (make-display-table)))
-                  char (vector (make-glyph-code repl 'escape-glyph)))
+                  char (vector (make-glyph-code repl 'homoglyph)))
           (when standard-display-table
             (aset standard-display-table char nil)))))))
 

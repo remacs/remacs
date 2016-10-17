@@ -115,6 +115,10 @@ to control whether to suggest shorter 'M-x' commands or not.
 ** Non-breaking hyphens are now displayed with the 'nobreak-hyphen'
 face instead of the 'escape-glyph' face.
 
++++
+** Approximations to quotes are now displayed with the new 'homoglyph'
+face instead of the 'escape-glyph' face.
+
 ---
 ** 'C-x h' ('mark-whole-buffer') will now avoid marking the prompt
 part of minibuffers.

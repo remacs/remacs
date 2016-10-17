@@ -482,6 +482,7 @@ jarring angry fruit salad look to reduce eye fatigue.")
  '(epa-validity-medium ((t (:italic t :foreground "PaleTurquoise" :slant italic))))
 
  '(escape-glyph ((t (:foreground "cyan"))))
+ '(homoglyph ((t (:foreground "cyan"))))
 
  '(eshell-ls-archive-face ((t (:bold t :foreground "IndianRed"))))
  '(eshell-ls-backup-face ((t (:foreground "Grey"))))

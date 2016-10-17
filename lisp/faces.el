@@ -2470,6 +2470,14 @@ If you set `term-file-prefix' to nil, this function does nothing."
   :group 'basic-faces
   :version "22.1")
 
+(defface homoglyph
+  '((((background dark)) :foreground "cyan")
+    (((type pc)) :foreground "magenta")
+    (t :foreground "brown"))
+  "Face for lookalike characters."
+  :group 'basic-faces
+  :version "25.2")
+
 (defface nobreak-space
   '((((class color) (min-colors 88)) :inherit escape-glyph :underline t)
     (((class color) (min-colors 8)) :background "magenta")
