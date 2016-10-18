@@ -308,6 +308,13 @@ viewing HTML files and the like.
 breakpoint (e.g. with "f" and "o") by customizing the new option
 'edebug-sit-on-break'.
 
+** Eshell
+
+*** 'eshell-input-filter's value is now a named function
+'eshell-input-filter-default', and has a new custom option
+'eshell-input-filter-initial-space' to ignore adding commands prefixed
+with blank space to eshell history.
+
 ** eww
 
 +++
