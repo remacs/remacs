@@ -29,7 +29,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 (autoload 'mail-header-parse-content-type "mail-parse")
 
 (defgroup mailcap nil
@@ -62,20 +62,20 @@
   (let ((val (default-value sym))
 	res)
     (dolist (entry val)
-      (setq res (cons (list (cdr (assq 'viewer entry))
-			    (cdr (assq 'type entry))
-			    (cdr (assq 'test entry)))
-		      res)))
+      (push (list (cdr (assq 'viewer entry))
+                  (cdr (assq 'type entry))
+                  (cdr (assq 'test entry)))
+            res))
     (nreverse res)))
 
 (defun mailcap--set-user-mime-data (sym val)
   (let (res)
     (dolist (entry val)
-      (setq res (cons `((viewer . ,(car entry))
-			(type . ,(cadr entry))
-			,@(when (caddr entry)
-			    `((test . ,(caddr entry)))))
-		      res)))
+      (push `((viewer . ,(car entry))
+              (type . ,(cadr entry))
+              ,@(when (cl-caddr entry)
+                  `((test . ,(cl-caddr entry)))))
+            res))
     (set-default sym (nreverse res))))
 
 (defcustom mailcap-user-mime-data nil
@@ -430,18 +430,14 @@ MAILCAPS if set; otherwise (on Unix) use the path from RFC 1524, plus
 	      ;; with /usr before /usr/local.
 	      '("~/.mailcap" "/etc/mailcap" "/usr/etc/mailcap"
 		"/usr/local/etc/mailcap"))))
-    (let ((fnames (reverse
-		   (if (stringp path)
-		       (split-string path path-separator t)
-		     path)))
-	  fname)
-      (while fnames
-	(setq fname (car fnames))
-	(if (and (file-readable-p fname)
-		 (file-regular-p fname))
-	    (mailcap-parse-mailcap fname))
-	(setq fnames (cdr fnames))))
-      (setq mailcap-parsed-p t)))
+    (dolist (fname (reverse
+                    (if (stringp path)
+                        (split-string path path-separator t)
+                      path)))
+      (if (and (file-readable-p fname)
+               (file-regular-p fname))
+          (mailcap-parse-mailcap fname)))
+    (setq mailcap-parsed-p t)))
 
 (defun mailcap-parse-mailcap (fname)
   "Parse out the mailcap file specified by FNAME."
@@ -560,10 +556,7 @@ MAILCAPS if set; otherwise (on Unix) use the path from RFC 1524, plus
 	  (setq	value (buffer-substring val-pos (point))))
 	;; `test' as symbol, others like "copiousoutput" and "needsx11" as
 	;; strings
-	(setq results (cons (cons (if (string-equal name "test")
-                                      'test
-                                    name)
-                                  value) results))
+	(push (cons (if (string-equal name "test") 'test name) value) results)
 	(skip-chars-forward " \";\n\t"))
       results)))
 
@@ -607,9 +600,9 @@ the test clause will be unchanged."
     (while major
       (cond
        ((equal (car (car major)) minor)
-	(setq exact (cons (cdr (car major)) exact)))
+	(push (cdr (car major)) exact))
        ((and minor (string-match (concat "^" (car (car major)) "$") minor))
-	(setq wildcard (cons (cdr (car major)) wildcard))))
+	(push (cdr (car major)) wildcard)))
       (setq major (cdr major)))
     (nconc exact wildcard)))
 
@@ -672,7 +665,7 @@ to supply to the test."
 	 (otest test)
 	 (viewer (cdr (assq 'viewer viewer-info)))
 	 (default-directory (expand-file-name "~/"))
-	 status parsed-test cache result)
+	 status cache result)
     (cond ((not (or (stringp viewer) (fboundp viewer)))
 	   nil)				; Non-existent Lisp function
 	  ((setq cache (assoc test mailcap-viewer-test-cache))
@@ -704,9 +697,7 @@ to supply to the test."
 (defun mailcap-add-mailcap-entry (major minor info)
   (let ((old-major (assoc major mailcap-mime-data)))
     (if (null old-major)		; New major area
-	(setq mailcap-mime-data
-	      (cons (cons major (list (cons minor info)))
-		    mailcap-mime-data))
+	(push (cons major (list (cons minor info))) mailcap-mime-data)
       (let ((cur-minor (assoc minor old-major)))
 	(cond
 	 ((or (null cur-minor)		; New minor area, or
@@ -786,10 +777,7 @@ If NO-DECODE is non-nil, don't decode STRING."
 	major				; Major encoding (text, etc)
 	minor				; Minor encoding (html, etc)
 	info				; Other info
-	save-pos			; Misc. position during parse
 	major-info			; (assoc major mailcap-mime-data)
-	minor-info			; (assoc minor major-info)
-	test				; current test proc.
 	viewers				; Possible viewers
 	passed				; Viewers that passed the test
 	viewer				; The one and only viewer
@@ -815,7 +803,7 @@ If NO-DECODE is non-nil, don't decode STRING."
                                (cdr ctl)))
             (while viewers
               (if (mailcap-viewer-passes-test (car viewers) info)
-                  (setq passed (cons (car viewers) passed)))
+                  (push (car viewers) passed))
               (setq viewers (cdr viewers)))
             (setq passed (sort passed 'mailcap-viewer-lessp))
             (setq viewer (car passed))))
@@ -980,15 +968,11 @@ If FORCE, re-parse even if already parsed."
 		"/usr/etc/mime-types"
 		"/usr/local/etc/mime-types"
 		"/usr/local/www/conf/mime-types"))))
-    (let ((fnames (reverse (if (stringp path)
-			       (split-string path path-separator t)
-			     path)))
-	  fname)
-      (while fnames
-	(setq fname (car fnames))
-	(if (and (file-readable-p fname))
-	    (mailcap-parse-mimetype-file fname))
-	(setq fnames (cdr fnames))))
+    (dolist (fname (reverse (if (stringp path)
+                                (split-string path path-separator t)
+                              path)))
+      (if (and (file-readable-p fname))
+          (mailcap-parse-mimetype-file fname)))
     (setq mailcap-mimetypes-parsed-p t)))
 
 (defun mailcap-parse-mimetype-file (fname)
