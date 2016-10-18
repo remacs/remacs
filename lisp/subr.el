@@ -1966,7 +1966,7 @@ this process is not associated with any buffer.
 
 PROGRAM is the program file name.  It is searched for in `exec-path'
 \(which see).  If nil, just associate a pty with the buffer.  Remaining
-arguments are strings to give program as arguments.
+arguments PROGRAM-ARGS are strings to give program as arguments.
 
 If you want to separate standard output from standard error, use
 `make-process' or invoke the command through a shell and redirect
