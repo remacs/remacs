@@ -4186,10 +4186,10 @@ process to set up.  VEC specifies the connection."
 	(case-fold-search t))
     (tramp-open-shell vec (tramp-get-method-parameter vec 'tramp-remote-shell))
 
-    ;; Disable tab and echo expansion.
+    ;; Disable echo expansion.
     (tramp-message vec 5 "Setting up remote shell environment")
     (tramp-send-command
-     vec "stty tab0 -inlcr -onlcr -echo kill '^U' erase '^H'" t)
+     vec "stty -inlcr -onlcr -echo kill '^U' erase '^H'" t)
     ;; Check whether the echo has really been disabled.  Some
     ;; implementations, like busybox of embedded GNU/Linux, don't
     ;; support disabling.
@@ -4206,7 +4206,8 @@ process to set up.  VEC specifies the connection."
   (tramp-message vec 5 "Setting shell prompt")
   (tramp-send-command
    vec (format "PS1=%s PS2='' PS3='' PROMPT_COMMAND=''"
-	       (tramp-shell-quote-argument tramp-end-of-output)) t)
+	       (tramp-shell-quote-argument tramp-end-of-output))
+   t)
 
   ;; Check whether the output of "uname -sr" has been changed.  If
   ;; yes, this is a strong indication that we must expire all
@@ -4214,148 +4215,142 @@ process to set up.  VEC specifies the connection."
   ;; `tramp-maybe-open-connection', it will be caught there.
   (tramp-message vec 5 "Checking system information")
   (let ((old-uname (tramp-get-connection-property vec "uname" nil))
-	(new-uname
+	(uname
 	 (tramp-set-connection-property
 	  vec "uname"
 	  (tramp-send-command-and-read vec "echo \\\"`uname -sr`\\\""))))
-    (when (and (stringp old-uname) (not (string-equal old-uname new-uname)))
+    (when (and (stringp old-uname) (not (string-equal old-uname uname)))
       (tramp-message
        vec 3
        "Connection reset, because remote host changed from `%s' to `%s'"
-       old-uname new-uname)
+       old-uname uname)
       ;; We want to keep the password.
       (tramp-cleanup-connection vec t t)
-      (throw 'uname-changed (tramp-maybe-open-connection vec))))
+      (throw 'uname-changed (tramp-maybe-open-connection vec)))
 
-  ;; Try to set up the coding system correctly.
-  ;; CCC this can't be the right way to do it.  Hm.
-  (tramp-message vec 5 "Determining coding system")
-  (with-current-buffer (process-buffer proc)
-    (if (featurep 'mule)
-	;; Use MULE to select the right EOL convention for communicating
-	;; with the process.
-	(let ((cs (or (and (memq 'utf-8 (coding-system-list))
-			   (string-match "utf-?8" (tramp-get-remote-locale vec))
-			   (cons 'utf-8 'utf-8))
-		      (tramp-compat-funcall 'process-coding-system proc)
-		      (cons 'undecided 'undecided)))
-	      cs-decode cs-encode)
-	  (when (symbolp cs) (setq cs (cons cs cs)))
-	  (setq cs-decode (or (car cs) 'undecided)
-                cs-encode (or (cdr cs) 'undecided))
-	  (setq cs-encode
-		(tramp-compat-coding-system-change-eol-conversion
-		 cs-encode
-		 (if (string-match
-		      "^Darwin" (tramp-get-connection-property vec "uname" ""))
-		     'mac 'unix)))
-	  (tramp-send-command vec "echo foo ; echo bar" t)
-	  (goto-char (point-min))
-	  (when (search-forward "\r" nil t)
-	    (setq cs-decode (tramp-compat-coding-system-change-eol-conversion
-			     cs-decode 'dos)))
-          ;; Special setting for Mac OS X.
-          (when (and (string-match
-                      "^Darwin" (tramp-get-connection-property vec "uname" ""))
-                     (memq 'utf-8-hfs (coding-system-list)))
-            (setq cs-decode 'utf-8-hfs
-                  cs-encode 'utf-8-hfs))
-          (tramp-compat-funcall
-	   'set-buffer-process-coding-system cs-decode cs-encode)
-	  (tramp-message
-	   vec 5 "Setting coding system to `%s' and `%s'" cs-decode cs-encode))
-      ;; Look for ^M and do something useful if found.
-      (when (search-forward "\r" nil t)
-	;; We have found a ^M but cannot frob the process coding system
-	;; because we're running on a non-MULE Emacs.  Let's try
-	;; stty, instead.
-	(tramp-send-command vec "stty -onlcr" t))))
+    ;; Try to set up the coding system correctly.
+    ;; CCC this can't be the right way to do it.  Hm.
+    (tramp-message vec 5 "Determining coding system")
+    (with-current-buffer (process-buffer proc)
+      (if (featurep 'mule)
+          ;; Use MULE to select the right EOL convention for
+          ;; communicating with the process.
+          (let ((cs (or (and (memq 'utf-8 (coding-system-list))
+                             (string-match "utf-?8" (tramp-get-remote-locale vec))
+                             (cons 'utf-8 'utf-8))
+                        (tramp-compat-funcall 'process-coding-system proc)
+                        (cons 'undecided 'undecided)))
+                cs-decode cs-encode)
+            (when (symbolp cs) (setq cs (cons cs cs)))
+            (setq cs-decode (or (car cs) 'undecided)
+                  cs-encode (or (cdr cs) 'undecided))
+            (setq cs-encode
+                  (tramp-compat-coding-system-change-eol-conversion
+                   cs-encode (if (string-match "^Darwin" uname) 'mac 'unix)))
+            (tramp-send-command vec "echo foo ; echo bar" t)
+            (goto-char (point-min))
+            (when (search-forward "\r" nil t)
+              (setq cs-decode (tramp-compat-coding-system-change-eol-conversion
+                               cs-decode 'dos)))
+            ;; Special setting for Mac OS X.
+            (when (and (string-match "^Darwin" uname)
+                       (memq 'utf-8-hfs (coding-system-list)))
+              (setq cs-decode 'utf-8-hfs
+                    cs-encode 'utf-8-hfs))
+            (tramp-compat-funcall
+             'set-buffer-process-coding-system cs-decode cs-encode)
+            (tramp-message
+             vec 5 "Setting coding system to `%s' and `%s'" cs-decode cs-encode))
+        ;; Look for ^M and do something useful if found.
+        (when (search-forward "\r" nil t)
+          ;; We have found a ^M but cannot frob the process coding
+          ;; system because we're running on a non-MULE Emacs.  Let's
+          ;; try stty, instead.
+          (tramp-send-command vec "stty -onlcr" t))))
 
-  (tramp-send-command vec "set +o vi +o emacs" t)
+    (tramp-send-command vec "set +o vi +o emacs" t)
 
-  ;; Check whether the remote host suffers from buggy
-  ;; `send-process-string'.  This is known for FreeBSD (see comment in
-  ;; `send_process', file process.c).  I've tested sending 624 bytes
-  ;; successfully, sending 625 bytes failed.  Emacs makes a hack when
-  ;; this host type is detected locally.  It cannot handle remote
-  ;; hosts, though.
-  (with-tramp-connection-property proc "chunksize"
-    (cond
-     ((and (integerp tramp-chunksize) (> tramp-chunksize 0))
-      tramp-chunksize)
-     (t
-      (tramp-message
-       vec 5 "Checking remote host type for `send-process-string' bug")
-      (if (string-match
-	   "^FreeBSD" (tramp-get-connection-property vec "uname" ""))
-	  500 0))))
+    ;; Check whether the remote host suffers from buggy
+    ;; `send-process-string'.  This is known for FreeBSD (see comment
+    ;; in `send_process', file process.c).  I've tested sending 624
+    ;; bytes successfully, sending 625 bytes failed.  Emacs makes a
+    ;; hack when this host type is detected locally.  It cannot handle
+    ;; remote hosts, though.
+    (with-tramp-connection-property proc "chunksize"
+      (cond
+       ((and (integerp tramp-chunksize) (> tramp-chunksize 0))
+	tramp-chunksize)
+       (t
+	(tramp-message
+	 vec 5 "Checking remote host type for `send-process-string' bug")
+	(if (string-match "^FreeBSD" uname) 500 0))))
 
-  ;; Set remote PATH variable.
-  (tramp-set-remote-path vec)
+    ;; Set remote PATH variable.
+    (tramp-set-remote-path vec)
 
-  ;; Search for a good shell before searching for a command which
-  ;; checks if a file exists.  This is done because Tramp wants to use
-  ;; "test foo; echo $?" to check if various conditions hold, and
-  ;; there are buggy /bin/sh implementations which don't execute the
-  ;; "echo $?"  part if the "test" part has an error.  In particular,
-  ;; the OpenSolaris /bin/sh is a problem.  There are also other
-  ;; problems with /bin/sh of OpenSolaris, like redirection of stderr
-  ;; in function declarations, or changing HISTFILE in place.
-  ;; Therefore, OpenSolaris' /bin/sh is replaced by bash, when
-  ;; detected.
-  (tramp-find-shell vec)
+    ;; Search for a good shell before searching for a command which
+    ;; checks if a file exists.  This is done because Tramp wants to
+    ;; use "test foo; echo $?" to check if various conditions hold,
+    ;; and there are buggy /bin/sh implementations which don't execute
+    ;; the "echo $?"  part if the "test" part has an error.  In
+    ;; particular, the OpenSolaris /bin/sh is a problem.  There are
+    ;; also other problems with /bin/sh of OpenSolaris, like
+    ;; redirection of stderr in function declarations, or changing
+    ;; HISTFILE in place.  Therefore, OpenSolaris' /bin/sh is replaced
+    ;; by bash, when detected.
+    (tramp-find-shell vec)
 
-  ;; Disable unexpected output.
-  (tramp-send-command vec "mesg n 2>/dev/null; biff n 2>/dev/null" t)
+    ;; Disable unexpected output.
+    (tramp-send-command vec "mesg n 2>/dev/null; biff n 2>/dev/null" t)
 
-  ;; IRIX64 bash expands "!" even when in single quotes.  This
-  ;; destroys our shell functions, we must disable it.  See
-  ;; <http://stackoverflow.com/questions/3291692/irix-bash-shell-expands-expression-in-single-quotes-yet-shouldnt>.
-  (when (string-match "^IRIX64" (tramp-get-connection-property vec "uname" ""))
-    (tramp-send-command vec "set +H" t))
+    ;; IRIX64 bash expands "!" even when in single quotes.  This
+    ;; destroys our shell functions, we must disable it.  See
+    ;; <http://stackoverflow.com/questions/3291692/irix-bash-shell-expands-expression-in-single-quotes-yet-shouldnt>.
+    (when (string-match "^IRIX64" uname)
+      (tramp-send-command vec "set +H" t))
 
-  ;; On BSD-like systems, ?\t is expanded to spaces.  Suppress this.
-  (when (string-match "BSD\\|Darwin"
-		      (tramp-get-connection-property vec "uname" ""))
-    (tramp-send-command vec "stty -oxtabs" t))
+    ;; Disable tab expansion.
+    (if (string-match "BSD\\|Darwin" uname)
+	(tramp-send-command vec "stty tabs" t)
+      (tramp-send-command vec "stty tab0" t))
 
-  ;; Set utf8 encoding.  Needed for Mac OS X, for example.  This is
-  ;; non-POSIX, so we must expect errors on some systems.
-  (tramp-send-command vec "stty iutf8 2>/dev/null" t)
+    ;; Set utf8 encoding.  Needed for Mac OS X, for example.  This is
+    ;; non-POSIX, so we must expect errors on some systems.
+    (tramp-send-command vec "stty iutf8 2>/dev/null" t)
 
-  ;; Set `remote-tty' process property.
-  (let ((tty (tramp-send-command-and-read vec "echo \\\"`tty`\\\"" 'noerror)))
-    (unless (zerop (length tty))
-      (tramp-compat-process-put proc 'remote-tty tty)))
+    ;; Set `remote-tty' process property.
+    (let ((tty (tramp-send-command-and-read vec "echo \\\"`tty`\\\"" 'noerror)))
+      (unless (zerop (length tty))
+        (tramp-compat-process-put proc 'remote-tty tty)))
 
-  ;; Dump stty settings in the traces.
-  (when (>= tramp-verbose 9)
-    (tramp-send-command vec "stty -a" t))
+    ;; Dump stty settings in the traces.
+    (when (>= tramp-verbose 9)
+      (tramp-send-command vec "stty -a" t))
 
-  ;; Set the environment.
-  (tramp-message vec 5 "Setting default environment")
+    ;; Set the environment.
+    (tramp-message vec 5 "Setting default environment")
 
-  (let ((env (append `(,(tramp-get-remote-locale vec))
-		     (copy-sequence tramp-remote-process-environment)))
-	unset vars item)
-    (while env
-      (setq item (tramp-compat-split-string (car env) "="))
-      (setcdr item (mapconcat 'identity (cdr item) "="))
-      (if (and (stringp (cdr item)) (not (string-equal (cdr item) "")))
-	  (push (format "%s %s" (car item) (cdr item)) vars)
-	(push (car item) unset))
-      (setq env (cdr env)))
-    (when vars
-      (tramp-send-command
-       vec
-       (format "while read var val; do export $var=$val; done <<'%s'\n%s\n%s"
-	       tramp-end-of-heredoc
-	       (mapconcat 'identity vars "\n")
-	       tramp-end-of-heredoc)
-       t))
-    (when unset
-      (tramp-send-command
-       vec (format "unset %s" (mapconcat 'identity unset " ")) t))))
+    (let ((env (append `(,(tramp-get-remote-locale vec))
+                       (copy-sequence tramp-remote-process-environment)))
+          unset vars item)
+      (while env
+        (setq item (tramp-compat-split-string (car env) "="))
+        (setcdr item (mapconcat 'identity (cdr item) "="))
+        (if (and (stringp (cdr item)) (not (string-equal (cdr item) "")))
+            (push (format "%s %s" (car item) (cdr item)) vars)
+          (push (car item) unset))
+        (setq env (cdr env)))
+      (when vars
+	(tramp-send-command
+	 vec
+	 (format "while read var val; do export $var=$val; done <<'%s'\n%s\n%s"
+		 tramp-end-of-heredoc
+		 (mapconcat 'identity vars "\n")
+		 tramp-end-of-heredoc)
+	 t))
+      (when unset
+	(tramp-send-command
+	 vec (format "unset %s" (mapconcat 'identity unset " ")) t)))))
 
 ;; Old text from documentation of tramp-methods:
 ;; Using a uuencode/uudecode inline method is discouraged, please use one
