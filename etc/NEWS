@@ -619,6 +619,11 @@ collection).
 ** The new functions 'make-nearby-temp-file' and 'temporary-file-directory'
 can be used for creation of temporary files of remote or mounted directories.
 
++++
+** The function 'delete-directory' no longer signals an error when
+operating recursively and when some other process deletes the directory
+or its files before 'delete-directory' gets to them.
+
 ** Changes in Frame- and Window- Handling
 
 +++

@@ -2855,6 +2855,9 @@ This command deletes the directory named @var{dirname}.  The function
 must use @code{delete-directory} for them.  If @var{recursive} is
 @code{nil}, and the directory contains any files,
 @code{delete-directory} signals an error.
+If recursive is non-@code{nil}, there is no error merely because the
+directory or its files are deleted by some other process before
+@code{delete-directory} gets to them.
 
 @code{delete-directory} only follows symbolic links at the level of
 parent directories.
