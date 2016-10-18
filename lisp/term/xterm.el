@@ -766,7 +766,7 @@ We run the first FUNCTION whose STRING matches the input events."
    (make-composed-keymap map (keymap-parent basemap))))
 
 (define-minor-mode xterm-inhibit-bracketed-paste-mode
-  "Toggle whether XTerm bracketed paste should be allowed in this bugger.
+  "Toggle whether XTerm bracketed paste should be allowed in this buffer.
 With a prefix argument ARG, forbid bracketed paste if ARG is
 positive, and allow it otherwise.  If called from Lisp, forbid
 bracketed paste if ARG is omitted or nil, and toggle the state of
