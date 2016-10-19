@@ -20,13 +20,13 @@ with a prefix argument or by typing C-u C-h C-n.
 This is a bug-fix release with (almost) no new features.
 
 ---
-** `find-library', `help-function-def' and `help-variable-def' now run
-`find-function-after-hook'.
+** 'find-library', 'help-function-def' and 'help-variable-def' now run
+'find-function-after-hook'.
 
 +++
 ** New basic face 'fixed-pitch-serif', for a fixed-width font with serifs.
-The Info-quoted and tex-verbatim faces now default to inheriting from
-it.
+The 'Info-quoted' and 'tex-verbatim' faces now default to inheriting
+from it.
 
 ---
 ** New variable 'use-default-font-for-symbols' for backward compatibility.
