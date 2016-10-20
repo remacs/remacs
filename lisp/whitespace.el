@@ -828,7 +828,7 @@ Used when `whitespace-style' includes `indentation',
   :group 'whitespace)
 
 
-(defcustom whitespace-empty-at-bob-regexp "^\\(\\([ \t]*\n\\)+\\)"
+(defcustom whitespace-empty-at-bob-regexp "\\`\\(\\([ \t]*\n\\)+\\)"
   "Specify regexp for empty lines at beginning of buffer.
 
 Used when `whitespace-style' includes `empty'."
@@ -836,7 +836,7 @@ Used when `whitespace-style' includes `empty'."
   :group 'whitespace)
 
 
-(defcustom whitespace-empty-at-eob-regexp "^\\([ \t\n]+\\)"
+(defcustom whitespace-empty-at-eob-regexp "^\\([ \t\n]*\\(\n\\{2,\\}\\|[ \t]+\\)\\)\\'"
   "Specify regexp for empty lines at end of buffer.
 
 Used when `whitespace-style' includes `empty'."
@@ -1515,7 +1515,7 @@ documentation."
 	    (when (looking-at whitespace-empty-at-bob-regexp)
 	      (delete-region (match-beginning 1) (match-end 1)))
 	    (when (re-search-forward
-		   (concat whitespace-empty-at-eob-regexp "\\'") nil t)
+                   whitespace-empty-at-eob-regexp nil t)
 	      (delete-region (match-beginning 1) (match-end 1)))))))
     ;; PROBLEM 3: 8 or more SPACEs at bol
     ;; PROBLEM 4: SPACEs before TAB
