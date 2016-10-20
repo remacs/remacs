@@ -127,9 +127,6 @@ part of minibuffers.
 ** 'find-library' now takes a prefix argument to pop to a different
 window.
 
-** 'find-library', 'help-function-def' and 'help-variable-def' now run
-'find-function-after-hook'.
-
 ---
 ** 'process-attributes' on Darwin systems now returns more information.
 
@@ -286,7 +283,7 @@ whose content matches a regexp; bound to '% g'.
 ** Dired
 
 +++
-*** A New option 'dired-always-read-filesystem' default to nil.
+*** A new option 'dired-always-read-filesystem' default to nil.
 If non-nil, buffers visiting files are reverted before search them;
 for instance, in 'dired-mark-files-containing-regexp' a non-nil value
 of this option means the file is revisited in a temporary buffer;
@@ -302,9 +299,9 @@ this is controlled by the 'wdired-create-parent-directories' variable.
 *** 'W' is now bound to 'browse-url-of-dired-file', and is useful for
 viewing HTML files and the like.
 
-** Ediff
+** Edebug
 
-*** Ediff can be prevented from pausing 1 second after reaching a
+*** Edebug can be prevented from pausing 1 second after reaching a
 breakpoint (e.g. with "f" and "o") by customizing the new option
 'edebug-sit-on-break'.
 
@@ -514,14 +511,15 @@ function 'check-declare-errmsg' has been removed.
 
 * Lisp Changes in Emacs 26.1
 
-** New function undo-amalgamate-change-group to get rid of undo-boundaries
-between two states.
+** New function 'undo-amalgamate-change-group' to get rid of
+undo-boundaries between two states.
 
 ** New var 'definition-prefixes' is a hashtable mapping prefixes to the
 files where corresponding definitions can be found.  This can be used
 to fetch definitions that are not yet loaded, for example for 'C-h f'.
 
-** New var syntax-ppss-table to control the syntax-table used in syntax-ppss.
+** New var 'syntax-ppss-table' to control the syntax-table used in
+'syntax-ppss'.
 
 +++
 ** 'define-derived-mode' can now specify an :after-hook form, which
@@ -535,8 +533,8 @@ FIXME As an experiment, nil is the current default.
 If no insurmountable problems before next release, it can stay that way.
 
 ---
-** 'gnutls-boot' now takes a parameter :complete-negotiation that says
-that negotiation should complete even on non-blocking sockets.
+** 'gnutls-boot' now takes a parameter ':complete-negotiation' that
+says that negotiation should complete even on non-blocking sockets.
 
 +++
 ** New functions 'window-pixel-width-before-size-change' and
@@ -574,7 +572,7 @@ of a two character construct, i.e., a comment delimiter or escaped
 character.  Its value is the syntax of that last character.
 
 +++
-** 'parse-partial-sexp''s state, element 9, has now been confirmed as
+** 'parse-partial-sexp's state, element 9, has now been confirmed as
 permanent and documented, and may be used by Lisp programs.  Its value
 is a list of currently open parenthesis positions, starting with the
 outermost parenthesis.
@@ -615,10 +613,6 @@ ABBR is a time zone abbreviation.  The affected functions are
 'current-time-string', 'current-time-zone', 'decode-time',
 'format-time-string', and 'set-time-zone-rule'.
 
-+++
-*** New basic face 'fixed-pitch-serif', for a fixed-width font with serifs.
-The Info-quoted and tex-verbatim faces now default to inheriting from it.
-
 ** New built-in function 'mapcan' which avoids unnecessary consing (and garbage
 collection).
 
@@ -635,7 +629,7 @@ or its files before 'delete-directory' gets to them.
 
 +++
 *** Support for side windows is now official.  The display action
-function `display-buffer-in-side-window' will display its buffer in a
+function 'display-buffer-in-side-window' will display its buffer in a
 side window.  Functions for toggling all side windows on a frame,
 changing and reversing the layout of side windows and returning the main
 (major non-side) window of a frame are provided.  For details consult
@@ -643,21 +637,22 @@ the section "Side Windows" in the Elisp manual.
 
 +++
 *** Support for atomic windows - rectangular compositions of windows
-treated by `split-window', `delete-window' and `delete-other-windows'
+treated by 'split-window', 'delete-window' and 'delete-other-windows'
 like a single live window - is now official.  For details consult the
 section "Atomic Windows" in the Elisp manual.
 
 +++
-*** New `display-buffer' alist entry `window-parameters' allows to
+*** New 'display-buffer' alist entry 'window-parameters' allows to
 assign window parameters to the window used for displaying the buffer.
 
 +++
-*** New window parameter `no-delete-other-window' prevents that
-its window gets deleted by `delete-other-windows'.
+*** New window parameter 'no-delete-other-window' prevents that
+its window gets deleted by 'delete-other-windows'.
 
 +++
-*** New command `window-swap-states' swaps the states of two live
+*** New command 'window-swap-states' swaps the states of two live
 windows.
+
 
 * Changes in Emacs 26.1 on Non-Free Operating Systems
 
