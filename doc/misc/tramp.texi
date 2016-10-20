@@ -2886,8 +2886,21 @@ end
 @end group
 @end example
 
-When using WinSSHD on remote hosts, @value{tramp} do not recognize the
-strange prompt settings.
+When using WinSSHD on remote hosts, @value{tramp} does not recognize
+the strange prompt settings.
+
+A similar problem exist with the iTerm2 shell integration, which sends
+proprietary escape codes when starting a shell.  This can be
+suppressed by changing the respective integration snippet in your
+@file{~/.profile} like this:
+
+@example
+@group
+[ $TERM = "dumb" ] || \
+test -e "$@{HOME@}/.iterm2_shell_integration.bash" && \
+source "$@{HOME@}/.iterm2_shell_integration.bash"
+@end group
+@end example
 
 @item
 Echoed characters after login
