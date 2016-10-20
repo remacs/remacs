@@ -1,4 +1,4 @@
-;;; cc-mode-tests.el --- Test suite for cc-mode.  -*- lexical-binning: t -*-
+;;; cc-mode-tests.el --- Test suite for cc-mode.  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2016 Free Software Foundation, Inc.
 
@@ -20,6 +20,11 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
+
+;;; Commentary:
+
+;; Unit tests for cc-mode.el.
 
 ;;; Code:
 
@@ -63,3 +68,5 @@
             '("struct \t Blah_42 \t {"
               "struct template {"
               "#include <string.h>")))))
+
+;;; cc-mode-tests.el ends here
