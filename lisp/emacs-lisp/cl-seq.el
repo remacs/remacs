@@ -151,8 +151,8 @@ called.
   (cl--parsing-keywords ((:start 0) :end) ()
     (if (listp cl-seq)
 	(let ((p (nthcdr cl-start cl-seq))
-	      (n (if cl-end (- cl-end cl-start) 8000000)))
-	  (while (and p (>= (setq n (1- n)) 0))
+	      (n (and cl-end (- cl-end cl-start))))
+	  (while (and p (or (null n) (>= (cl-decf n) 0)))
 	    (setcar p cl-item)
 	    (setq p (cdr p))))
       (or cl-end (setq cl-end (length cl-seq)))
@@ -180,16 +180,20 @@ SEQ1 is destructively modified, then returned.
 			    (elt cl-seq2 (+ cl-start2 cl-n))))))
       (if (listp cl-seq1)
 	  (let ((cl-p1 (nthcdr cl-start1 cl-seq1))
-		(cl-n1 (if cl-end1 (- cl-end1 cl-start1) 4000000)))
+		(cl-n1 (and cl-end1 (- cl-end1 cl-start1))))
 	    (if (listp cl-seq2)
 		(let ((cl-p2 (nthcdr cl-start2 cl-seq2))
-		      (cl-n (min cl-n1
-				 (if cl-end2 (- cl-end2 cl-start2) 4000000))))
-		  (while (and cl-p1 cl-p2 (>= (setq cl-n (1- cl-n)) 0))
+		      (cl-n (cond ((and cl-n1 cl-end2)
+				   (min cl-n1 (- cl-end2 cl-start2)))
+				  ((and cl-n1 (null cl-end2)) cl-n1)
+				  ((and (null cl-n1) cl-end2) (- cl-end2 cl-start2)))))
+		  (while (and cl-p1 cl-p2 (or (null cl-n) (>= (cl-decf cl-n) 0)))
 		    (setcar cl-p1 (car cl-p2))
 		    (setq cl-p1 (cdr cl-p1) cl-p2 (cdr cl-p2))))
-	      (setq cl-end2 (min (or cl-end2 (length cl-seq2))
-				 (+ cl-start2 cl-n1)))
+	      (setq cl-end2 (if (null cl-n1)
+				(or cl-end2 (length cl-seq2))
+			      (min (or cl-end2 (length cl-seq2))
+				   (+ cl-start2 cl-n1))))
 	      (while (and cl-p1 (< cl-start2 cl-end2))
 		(setcar cl-p1 (aref cl-seq2 cl-start2))
 		(setq cl-p1 (cdr cl-p1) cl-start2 (1+ cl-start2)))))
@@ -215,9 +219,10 @@ to avoid corrupting the original SEQ.
 \n(fn ITEM SEQ [KEYWORD VALUE]...)"
   (cl--parsing-keywords (:test :test-not :key :if :if-not :count :from-end
 			(:start 0) :end) ()
-    (if (<= (or cl-count (setq cl-count 8000000)) 0)
+    (let ((len (length cl-seq)))
+      (if (<= (or cl-count (setq cl-count len)) 0)
 	cl-seq
-      (if (or (nlistp cl-seq) (and cl-from-end (< cl-count 4000000)))
+        (if (or (nlistp cl-seq) (and cl-from-end (< cl-count (/ len 2))))
 	  (let ((cl-i (cl--position cl-item cl-seq cl-start cl-end
                                     cl-from-end)))
 	    (if cl-i
@@ -229,7 +234,7 @@ to avoid corrupting the original SEQ.
 		  (if (listp cl-seq) cl-res
 		    (if (stringp cl-seq) (concat cl-res) (vconcat cl-res))))
 	      cl-seq))
-	(setq cl-end (- (or cl-end 8000000) cl-start))
+	  (setq cl-end (- (or cl-end len) cl-start))
 	(if (= cl-start 0)
 	    (while (and cl-seq (> cl-end 0)
 			(cl--check-test cl-item (car cl-seq))
@@ -250,7 +255,7 @@ to avoid corrupting the original SEQ.
 				       :start 0 :end (1- cl-end)
 				       :count (1- cl-count) cl-keys))))
 		cl-seq))
-	  cl-seq)))))
+	  cl-seq))))))
 
 ;;;###autoload
 (defun cl-remove-if (cl-pred cl-list &rest cl-keys)
@@ -278,20 +283,21 @@ This is a destructive function; it reuses the storage of SEQ whenever possible.
 \n(fn ITEM SEQ [KEYWORD VALUE]...)"
   (cl--parsing-keywords (:test :test-not :key :if :if-not :count :from-end
 			(:start 0) :end) ()
-    (if (<= (or cl-count (setq cl-count 8000000)) 0)
+    (let ((len (length cl-seq)))
+      (if (<= (or cl-count (setq cl-count len)) 0)
 	cl-seq
       (if (listp cl-seq)
-	  (if (and cl-from-end (< cl-count 4000000))
+	  (if (and cl-from-end (< cl-count (/ len 2)))
 	      (let (cl-i)
 		(while (and (>= (setq cl-count (1- cl-count)) 0)
 			    (setq cl-i (cl--position cl-item cl-seq cl-start
-                                                     cl-end cl-from-end)))
+						     cl-end cl-from-end)))
 		  (if (= cl-i 0) (setq cl-seq (cdr cl-seq))
 		    (let ((cl-tail (nthcdr (1- cl-i) cl-seq)))
 		      (setcdr cl-tail (cdr (cdr cl-tail)))))
 		  (setq cl-end cl-i))
 		cl-seq)
-	    (setq cl-end (- (or cl-end 8000000) cl-start))
+	    (setq cl-end (- (or cl-end len) cl-start))
 	    (if (= cl-start 0)
 		(progn
 		  (while (and cl-seq
@@ -312,7 +318,7 @@ This is a destructive function; it reuses the storage of SEQ whenever possible.
 		      (setq cl-p (cdr cl-p)))
 		    (setq cl-end (1- cl-end)))))
 	    cl-seq)
-	(apply 'cl-remove cl-item cl-seq cl-keys)))))
+	(apply 'cl-remove cl-item cl-seq cl-keys))))))
 
 ;;;###autoload
 (defun cl-delete-if (cl-pred cl-list &rest cl-keys)
@@ -396,15 +402,17 @@ to avoid corrupting the original SEQ.
   (cl--parsing-keywords (:test :test-not :key :if :if-not :count
 			(:start 0) :end :from-end) ()
     (if (or (eq cl-old cl-new)
-	    (<= (or cl-count (setq cl-from-end nil cl-count 8000000)) 0))
+	    (<= (or cl-count (setq cl-from-end nil
+				   cl-count (length cl-seq))) 0))
 	cl-seq
       (let ((cl-i (cl--position cl-old cl-seq cl-start cl-end)))
 	(if (not cl-i)
 	    cl-seq
 	  (setq cl-seq (copy-sequence cl-seq))
-	  (or cl-from-end
-	      (progn (setf (elt cl-seq cl-i) cl-new)
-		     (setq cl-i (1+ cl-i) cl-count (1- cl-count))))
+	  (unless cl-from-end
+	    (setf (elt cl-seq cl-i) cl-new)
+	    (cl-incf cl-i)
+	    (cl-decf cl-count))
 	  (apply 'cl-nsubstitute cl-new cl-old cl-seq :count cl-count
 		 :start cl-i cl-keys))))))
 
@@ -434,17 +442,18 @@ This is a destructive function; it reuses the storage of SEQ whenever possible.
 \n(fn NEW OLD SEQ [KEYWORD VALUE]...)"
   (cl--parsing-keywords (:test :test-not :key :if :if-not :count
 			(:start 0) :end :from-end) ()
-    (or (eq cl-old cl-new) (<= (or cl-count (setq cl-count 8000000)) 0)
-	(if (and (listp cl-seq) (or (not cl-from-end) (> cl-count 4000000)))
+    (let ((len (length cl-seq)))
+      (or (eq cl-old cl-new) (<= (or cl-count (setq cl-count len)) 0)
+	  (if (and (listp cl-seq) (or (not cl-from-end) (> cl-count (/ len 2))))
 	    (let ((cl-p (nthcdr cl-start cl-seq)))
-	      (setq cl-end (- (or cl-end 8000000) cl-start))
+	      (setq cl-end (- (or cl-end len) cl-start))
 	      (while (and cl-p (> cl-end 0) (> cl-count 0))
 		(if (cl--check-test cl-old (car cl-p))
 		    (progn
 		      (setcar cl-p cl-new)
 		      (setq cl-count (1- cl-count))))
 		(setq cl-p (cdr cl-p) cl-end (1- cl-end))))
-	  (or cl-end (setq cl-end (length cl-seq)))
+	    (or cl-end (setq cl-end len))
 	  (if cl-from-end
 	      (while (and (< cl-start cl-end) (> cl-count 0))
 		(setq cl-end (1- cl-end))
@@ -457,7 +466,7 @@ This is a destructive function; it reuses the storage of SEQ whenever possible.
 		  (progn
 		    (aset cl-seq cl-start cl-new)
 		    (setq cl-count (1- cl-count))))
-	      (setq cl-start (1+ cl-start))))))
+	      (setq cl-start (1+ cl-start)))))))
     cl-seq))
 
 ;;;###autoload
@@ -513,14 +522,13 @@ Return the index of the matching item, or nil if not found.
 
 (defun cl--position (cl-item cl-seq cl-start &optional cl-end cl-from-end)
   (if (listp cl-seq)
-      (let ((cl-p (nthcdr cl-start cl-seq)))
-	(or cl-end (setq cl-end 8000000))
-	(let ((cl-res nil))
-	  (while (and cl-p (< cl-start cl-end) (or (not cl-res) cl-from-end))
+      (let ((cl-p (nthcdr cl-start cl-seq))
+	    cl-res)
+	(while (and cl-p (or (null cl-end) (< cl-start cl-end)) (or (null cl-res) cl-from-end))
 	    (if (cl--check-test cl-item (car cl-p))
 		(setq cl-res cl-start))
 	    (setq cl-p (cdr cl-p) cl-start (1+ cl-start)))
-	  cl-res))
+	cl-res)
     (or cl-end (setq cl-end (length cl-seq)))
     (if cl-from-end
 	(progn
