@@ -5336,14 +5336,26 @@ raised."
   "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*"
   "Regexp matching any file name except \".\" and \"..\".")
 
+(defun files--force (no-such fn &rest args)
+  "Use NO-SUCH to affect behavior of function FN applied to list ARGS.
+This acts like (apply FN ARGS) except it returns NO-SUCH if it is
+non-nil and if FN fails due to a missing file or directory."
+  (condition-case err
+      (apply fn args)
+    (file-error
+     (or (pcase err (`(,_ ,_ "No such file or directory" . ,_) no-such))
+	 (signal (car err) (cdr err))))))
+
 (defun delete-directory (directory &optional recursive trash)
   "Delete the directory named DIRECTORY.  Does not follow symlinks.
-If RECURSIVE is non-nil, all files in DIRECTORY are deleted as well.
+If RECURSIVE is non-nil, delete files in DIRECTORY as well, with
+no error if something else is simultaneously deleting them.
 TRASH non-nil means to trash the directory instead, provided
 `delete-by-moving-to-trash' is non-nil.
 
-When called interactively, TRASH is t if no prefix argument is
-given.  With a prefix argument, TRASH is nil."
+When called interactively, TRASH is nil if and only if a prefix
+argument is given, and a further prompt asks the user for
+RECURSIVE if DIRECTORY is nonempty."
   (interactive
    (let* ((trashing (and delete-by-moving-to-trash
 			 (null current-prefix-arg)))
@@ -5381,18 +5393,22 @@ given.  With a prefix argument, TRASH is nil."
 	(move-file-to-trash directory)))
      ;; Otherwise, call ourselves recursively if needed.
      (t
-      (if (and recursive (not (file-symlink-p directory)))
-	  (mapc (lambda (file)
-		  ;; This test is equivalent to
-		  ;; (and (file-directory-p fn) (not (file-symlink-p fn)))
-		  ;; but more efficient
-		  (if (eq t (car (file-attributes file)))
-		      (delete-directory file recursive nil)
-		    (delete-file file nil)))
-		;; We do not want to delete "." and "..".
-		(directory-files
-		 directory 'full directory-files-no-dot-files-regexp)))
-      (delete-directory-internal directory)))))
+      (when (or (not recursive) (file-symlink-p directory)
+		(let* ((files
+			(files--force t #'directory-files directory 'full
+				      directory-files-no-dot-files-regexp))
+		       (directory-exists (listp files)))
+		  (when directory-exists
+		    (mapc (lambda (file)
+			    ;; This test is equivalent to but more efficient
+			    ;; than (and (file-directory-p fn)
+			    ;;		 (not (file-symlink-p fn))).
+			    (if (eq t (car (file-attributes file)))
+				(delete-directory file recursive)
+			      (files--force t #'delete-file file)))
+			  files))
+		  directory-exists))
+	(files--force recursive #'delete-directory-internal directory))))))
 
 (defun file-equal-p (file1 file2)
   "Return non-nil if files FILE1 and FILE2 name the same file.

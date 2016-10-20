@@ -1160,7 +1160,12 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
       if (FRAMEP (xfocus))
 	{
 	  focus = FRAME_FOCUS_FRAME (XFRAME (xfocus));
-	  if (FRAMEP (focus) && XFRAME (focus) == SELECTED_FRAME ())
+	  if ((FRAMEP (focus) && XFRAME (focus) == SELECTED_FRAME ())
+	      /* Redirect frame focus also when FRAME has its minibuffer
+		 window on the selected frame (see Bug#24500).  */
+	      || (NILP (focus)
+		  && EQ (FRAME_MINIBUF_WINDOW (XFRAME (frame)),
+			 sf->selected_window)))
 	    Fredirect_frame_focus (xfocus, frame);
 	}
     }

@@ -2377,8 +2377,10 @@ candidate_window_p (Lisp_Object window, Lisp_Object owindow,
 	    == FRAME_TERMINAL (XFRAME (selected_frame)));
     }
   else if (WINDOWP (all_frames))
-    candidate_p = (EQ (FRAME_MINIBUF_WINDOW (f), all_frames)
-		   || EQ (XWINDOW (all_frames)->frame, w->frame)
+    /* 	To qualify as candidate, it's not sufficient for WINDOW's frame
+	to just share the minibuffer window - it must be active as well
+	(see Bug#24500).  */
+    candidate_p = (EQ (XWINDOW (all_frames)->frame, w->frame)
 		   || EQ (XWINDOW (all_frames)->frame, FRAME_FOCUS_FRAME (f)));
   else if (FRAMEP (all_frames))
     candidate_p = EQ (all_frames, w->frame);

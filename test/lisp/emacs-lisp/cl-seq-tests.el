@@ -294,7 +294,6 @@ Body are forms defining the test."
 
 (ert-deftest cl-seq-test-bug24264 ()
   "Test for http://debbugs.gnu.org/24264 ."
-  :expected-result :failed
   (let ((list  (append (make-list 8000005 1) '(8)))
         (list2 (make-list 8000005 2)))
     (should (cl-position 8 list))

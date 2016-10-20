@@ -1,4 +1,4 @@
-;;; auth-source.el --- authentication sources for Gnus and Emacs
+;;; auth-source.el --- authentication sources for Gnus and Emacs -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
@@ -1002,7 +1002,7 @@ Note that the MAX parameter is used so we can exit the parse early."
             (auth-source--aput
              auth-source-netrc-cache file
              (list :mtime (nth 5 (file-attributes file))
-                   :secret (lexical-let ((v (mapcar #'1+ (buffer-string))))
+                   :secret (let ((v (mapcar #'1+ (buffer-string))))
                              (lambda () (apply #'string (mapcar #'1- v)))))))
           (goto-char (point-min))
           (let ((entries (auth-source-netrc-parse-entries check max))
@@ -1118,7 +1118,7 @@ Note that the MAX parameter is used so we can exit the parse early."
 		(read-passwd
 		 (format "Passphrase for %s tokens: " file)
 		 t))
-	  (setcdr entry (lexical-let ((p (copy-sequence passphrase)))
+	  (setcdr entry (let ((p (copy-sequence passphrase)))
 			  (lambda () p)))
 	  passphrase))))
 
@@ -1174,8 +1174,8 @@ FILE is the file from which we obtained this token."
 
                   ;; send back the secret in a function (lexical binding)
                   (when (equal k "secret")
-                    (setq v (lexical-let ((lexv v)
-                                          (token-decoder nil))
+                    (setq v (let ((lexv v)
+                                  (token-decoder nil))
                               (when (string-match "^gpg:" lexv)
                                 ;; it's a GPG token: create a token decoder
                                 ;; which unsets itself once
@@ -1384,7 +1384,7 @@ See `auth-source-search' for details on SPEC."
           (setq artificial (plist-put artificial
                                       (auth-source--symbol-keyword r)
                                       (if (eq r 'secret)
-                                          (lexical-let ((data data))
+                                          (let ((data data))
                                             (lambda () data))
                                         data))))
 
@@ -1414,8 +1414,8 @@ See `auth-source-search' for details on SPEC."
     (plist-put
      artificial
      :save-function
-     (lexical-let ((file file)
-                   (add add))
+     (let ((file file)
+           (add add))
        (lambda () (auth-source-netrc-saver file add))))
 
     (list artificial)))
@@ -1611,7 +1611,7 @@ authentication tokens:
                            ;; make an entry for the secret (password) element
                            (list
                             :secret
-                            (lexical-let ((v (secrets-get-secret coll item)))
+                            (let ((v (secrets-get-secret coll item)))
                               (lambda () v)))
                            ;; rewrite the entry from ((k1 v1) (k2 v2)) to plist
                            (apply #'append
@@ -1813,8 +1813,8 @@ entries for git.gnus.org:
                        ret
                        keychain-generic
                        "secret"
-                       (lexical-let ((v (auth-source--decode-octal-string
-                                         (match-string 1))))
+                       (let ((v (auth-source--decode-octal-string
+                                 (match-string 1))))
                          (lambda () v)))))
            ;; TODO: check if this is really the label
            ;; match 0x00000007 <blob>="AppleID"
@@ -1896,7 +1896,7 @@ entries for git.gnus.org:
                             (if secret
                                 (setcar
                                  (cdr secret)
-                                 (lexical-let ((v (car (cdr secret))))
+                                 (let ((v (car (cdr secret))))
                                    (lambda () v))))
                             plist))
                         items))
