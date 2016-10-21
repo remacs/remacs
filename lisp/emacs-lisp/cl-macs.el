@@ -2134,7 +2134,7 @@ Within the body FORMs, references to the variable NAME will be replaced
 by EXPANSION, and (setq NAME ...) will act like (setf EXPANSION ...).
 
 \(fn ((NAME EXPANSION) ...) FORM...)"
-  (declare (indent 1) (debug ((&rest (symbol sexp)) cl-declarations body)))
+  (declare (indent 1) (debug ((&rest (symbolp sexp)) cl-declarations body)))
   (cond
    ((cdr bindings)
     `(cl-symbol-macrolet (,(car bindings))
