@@ -178,48 +178,17 @@
 ;;
 ;; `whitespace-cleanup'
 ;;    Cleanup some blank problems in all buffer or at region.
+;;    See the function's docstring for more information.
 ;;
 ;; `whitespace-cleanup-region'
 ;;    Cleanup some blank problems at region.
 ;;
-;; The problems, which are cleaned up, are:
 ;;
-;; 1. empty lines at beginning of buffer.
-;; 2. empty lines at end of buffer.
-;;    If `whitespace-style' includes the value `empty', remove all
-;;    empty lines at beginning and/or end of buffer.
+;; Options
+;; -------
 ;;
-;; 3. 8 or more SPACEs at beginning of line.
-;;    If `whitespace-style' includes the value `indentation':
-;;    replace 8 or more SPACEs at beginning of line by TABs, if
-;;    `indent-tabs-mode' is non-nil; otherwise, replace TABs by
-;;    SPACEs.
-;;    If `whitespace-style' includes the value `indentation::tab',
-;;    replace 8 or more SPACEs at beginning of line by TABs.
-;;    If `whitespace-style' includes the value `indentation::space',
-;;    replace TABs by SPACEs.
-;;
-;; 4. SPACEs before TAB.
-;;    If `whitespace-style' includes the value `space-before-tab':
-;;    replace SPACEs by TABs, if `indent-tabs-mode' is non-nil;
-;;    otherwise, replace TABs by SPACEs.
-;;    If `whitespace-style' includes the value
-;;    `space-before-tab::tab', replace SPACEs by TABs.
-;;    If `whitespace-style' includes the value
-;;    `space-before-tab::space', replace TABs by SPACEs.
-;;
-;; 5. SPACEs or TABs at end of line.
-;;    If `whitespace-style' includes the value `trailing', remove all
-;;    SPACEs or TABs at end of line.
-;;
-;; 6. 8 or more SPACEs after TAB.
-;;    If `whitespace-style' includes the value `space-after-tab':
-;;    replace SPACEs by TABs, if `indent-tabs-mode' is non-nil;
-;;    otherwise, replace TABs by SPACEs.
-;;    If `whitespace-style' includes the value `space-after-tab::tab',
-;;    replace SPACEs by TABs.
-;;    If `whitespace-style' includes the value
-;;    `space-after-tab::space', replace TABs by SPACEs.
+;; Whitespace's behavior can be changed with `M-x customize-group
+;; whitespace', which see for the full list of options.
 ;;
 ;;
 ;; Hooks
@@ -235,83 +204,6 @@
 ;;
 ;; `whitespace-load-hook'
 ;;    It is evaluated after whitespace package is loaded.
-;;
-;;
-;; Options
-;; -------
-;;
-;; Below it's shown a brief description of whitespace options, please,
-;; see the options declaration in the code for a long documentation.
-;;
-;; `whitespace-style'		Specify which kind of blank is
-;;				visualized.
-;;
-;; `whitespace-space'		Face used to visualize SPACE.
-;;
-;; `whitespace-hspace'		Face used to visualize HARD SPACE.
-;;
-;; `whitespace-tab'		Face used to visualize TAB.
-;;
-;; `whitespace-newline'		Face used to visualize NEWLINE char
-;;				mapping.
-;;
-;; `whitespace-trailing'	Face used to visualize trailing
-;;				blanks.
-;;
-;; `whitespace-line'		Face used to visualize "long" lines.
-;;
-;; `whitespace-space-before-tab'	Face used to visualize SPACEs
-;;					before TAB.
-;;
-;; `whitespace-indentation'	Face used to visualize 8 or more
-;;				SPACEs at beginning of line.
-;;
-;; `whitespace-big-indent'	Face used to visualize big indentation.
-;;
-;; `whitespace-empty'		Face used to visualize empty lines at
-;;				beginning and/or end of buffer.
-;;
-;; `whitespace-space-after-tab'	Face used to visualize 8 or more
-;;				SPACEs after TAB.
-;;
-;; `whitespace-space-regexp'	Specify SPACE characters regexp.
-;;
-;; `whitespace-hspace-regexp'	Specify HARD SPACE characters regexp.
-;;
-;; `whitespace-tab-regexp'	Specify TAB characters regexp.
-;;
-;; `whitespace-trailing-regexp'	Specify trailing characters regexp.
-;;
-;; `whitespace-space-before-tab-regexp'	Specify SPACEs before TAB
-;;					regexp.
-;;
-;; `whitespace-indentation-regexp'	Specify regexp for 8 or more
-;;					SPACEs at beginning of line.
-;;
-;; `whitespace-big-indent-regexp'	Specify big indentation at beginning of line
-;;					regexp.
-;;
-;; `whitespace-empty-at-bob-regexp'	Specify regexp for empty lines
-;;					at beginning of buffer.
-;;
-;; `whitespace-empty-at-eob-regexp'	Specify regexp for empty lines
-;;					at end of buffer.
-;;
-;; `whitespace-space-after-tab-regexp'	Specify regexp for 8 or more
-;;					SPACEs after TAB.
-;;
-;; `whitespace-line-column'	Specify column beyond which the line
-;;				is highlighted.
-;;
-;; `whitespace-display-mappings'	Specify an alist of mappings
-;;					for displaying characters.
-;;
-;; `whitespace-global-modes'	Modes for which global
-;;				`whitespace-mode' is automagically
-;;				turned on.
-;;
-;; `whitespace-action'		Specify which action is taken when a
-;;				buffer is visited or written.
 ;;
 ;;
 ;; Acknowledgments
