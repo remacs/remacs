@@ -737,8 +737,8 @@ Used when `whitespace-style' includes `empty'."
 
 
 (defcustom whitespace-space-after-tab-regexp
-  '("\t+\\(\\( \\{%d\\}\\)+\\)"
-    . "\\(\t+\\) +")
+  '("\t+\\(\\( \\{%d,\\}\\)+\\)"
+    . "\\(\t+\\) \\{%d,\\}")
   "Specify regexp for 8 or more SPACEs after TAB.
 
 It is a cons where the cons car is used for SPACEs visualization
@@ -1566,13 +1566,15 @@ See also `tab-width'."
 
 (defun whitespace-regexp (regexp &optional kind)
   "Return REGEXP depending on `whitespace-indent-tabs-mode'."
-  (cond
-   ((or (eq kind 'tab)
-	whitespace-indent-tabs-mode)
-    (format (car regexp) whitespace-tab-width))
-   ((or (eq kind 'space)
-	(not whitespace-indent-tabs-mode))
-    (cdr regexp))))
+  (format
+   (cond
+    ((or (eq kind 'tab)
+         whitespace-indent-tabs-mode)
+     (car regexp))
+    ((or (eq kind 'space)
+         (not whitespace-indent-tabs-mode))
+     (cdr regexp)))
+   whitespace-tab-width))
 
 
 (defun whitespace-indentation-regexp (&optional kind)
