@@ -4,7 +4,7 @@
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: sequences
-;; Version: 2.18
+;; Version: 2.19
 ;; Package: seq
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -476,6 +476,13 @@ SEQUENCE must be a sequence of numbers or markers."
   "Return element of SEQUENCE at the index N.
 If no element is found, return nil."
   (ignore-errors (seq-elt sequence n)))
+
+(cl-defgeneric seq-random-elt (sequence)
+  "Return a random element from SEQUENCE.
+Return nil if SEQUENCE is nil."
+  (if (seq-empty-p sequence)
+      (error "Sequence cannot be empty")
+    (seq-elt sequence (random (seq-length sequence)))))
 
 
 ;;; Optimized implementations for lists

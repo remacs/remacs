@@ -1037,6 +1037,26 @@ followed by a variable name to be bound to the rest of
 @end example
 @end defmac
 
+@defun seq-random-elt sequence
+  This function returns an element of @var{sequence} taken at random. If @var{sequence} is nil, the function returns nil.
+
+@example
+@group
+(seq-random-elt [1 2 3 4])
+@result{} 3
+(seq-random-elt [1 2 3 4])
+@result{} 2
+(seq-random-elt [1 2 3 4])
+@result{} 4
+(seq-random-elt [1 2 3 4])
+@result{} 2
+(seq-random-elt [1 2 3 4])
+@result{} 1
+@end group
+@end example
+
+  If @var{sequence} is empty, the function signals an error.
+@end defun
 
 @node Arrays
 @section Arrays
