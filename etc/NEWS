@@ -275,6 +275,10 @@ whose content matches a regexp; bound to '% g'.
 'ibuffer-never-search-content-mode' used by
 'ibuffer-mark-by-content-regexp'.
 
+** Browse-URL
+
+*** Support for opening links to man pages in Man or WoMan mode.
+
 ** Compilation mode
 
 ---
