@@ -5001,17 +5001,29 @@ first line or header line, and for breadcrumb links.")
       ;; Fontify footnotes
       (goto-char (point-min))
       (when (and not-fontified-p (re-search-forward "^[ \t]*-+ Footnotes -+$" nil t))
-        (let ((limit (point)))
+        (let ((limit (point))
+              (fncount 0))
+          ;; How many footnotes do we have in this node?
+          (while (re-search-forward "^ [ \t]*([0-9]+) " nil t)
+            (setq fncount (1+ fncount)))
           (goto-char (point-min))
-          (while (re-search-forward "\\(([0-9]+)\\)" nil t)
-            (add-text-properties (match-beginning 0) (match-end 0)
-                                 `(font-lock-face info-xref
-                                   link t
-                                   mouse-face highlight
-                                   help-echo
-                                   ,(if (< (point) limit)
-                                        "mouse-2: go to footnote definition"
-                                      "mouse-2: go to footnote reference"))))))
+          (while (re-search-forward "\\((\\([0-9]+\\))\\)" nil t)
+            (let ((footnote-num (string-to-number (match-string 2))))
+              ;; Don't fontify parenthesized numbers that cannot
+              ;; possibly be one of this node's footnotes.  This still
+              ;; doesn't catch unrelated numbers that happen to be
+              ;; small enough, but in that case they should use
+              ;; "@footnotestyle separate" in the Texinfo sources.
+              (when (and (> footnote-num 0)
+                         (<= footnote-num fncount))
+                (add-text-properties (match-beginning 0) (match-end 0)
+                                     `(font-lock-face info-xref
+                                       link t
+                                       mouse-face highlight
+                                       help-echo
+                                       ,(if (< (point) limit)
+                                          "mouse-2: go to footnote definition"
+                                         "mouse-2: go to footnote reference"))))))))
 
       ;; Hide empty lines at the end of the node.
       (goto-char (point-max))
