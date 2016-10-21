@@ -1501,10 +1501,11 @@ in @code{exec-path}, and tries all the file-name extensions in
 @cindex setting modes of files
 
   The functions in this section rename, copy, delete, link, and set
-the modes (permissions) of files.  They all signal a @code{file-error}
-error if they fail to perform their function, reporting the
-system-dependent error message that describes the reason for the
-failure.
+the modes (permissions) of files.  Typically, they signal a
+@code{file-error} error if they fail to perform their function,
+reporting the system-dependent error message that describes the reason
+for the failure.  If they fail because a file is missing, they signal
+a @code{file-missing} error instead.
 
   For performance, the operating system may cache or alias changes
 made by these functions instead of writing them immediately to

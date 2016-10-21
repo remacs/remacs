@@ -625,6 +625,11 @@ collection).
 can be used for creation of temporary files of remote or mounted directories.
 
 +++
+** The new error 'file-missing', a subcategory of 'file-error', is now
+signaled instead of 'file-error' if a file operation acts on a file
+that does not exist.
+
++++
 ** The function 'delete-directory' no longer signals an error when
 operating recursively and when some other process deletes the directory
 or its files before 'delete-directory' gets to them.

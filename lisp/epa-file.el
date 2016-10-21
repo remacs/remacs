@@ -120,7 +120,7 @@ encryption is used."
   (let ((error epa-file-error))
     (save-window-excursion
       (kill-buffer))
-    (signal 'file-error
+    (signal (car error)
 	    (cons "Opening input file" (cdr error)))))
 
 (defvar last-coding-system-used)
@@ -161,7 +161,7 @@ encryption is used."
 	     ;; signal that as a non-file error
 	     ;; so that find-file-noselect-1 won't handle it.
 	     ;; Borrowed from jka-compr.el.
-	     (if (and (eq (car error) 'file-error)
+	     (if (and (memq 'file-error (get (car error) 'error-conditions))
 		      (equal (cadr error) "Searching for program"))
 		 (error "Decryption program `%s' not found"
 			(nth 3 error)))
@@ -175,7 +175,7 @@ encryption is used."
 			 'epa-file--find-file-not-found-function
 			 nil t)
 	       (epa-display-error context))
-	     (signal 'file-error
+	     (signal (car error)
 		     (cons "Opening input file" (cdr error)))))
           (set-buffer buf) ;In case timer/filter changed/killed it (bug#16029)!
 	  (setq-local epa-file-encrypt-to
@@ -272,7 +272,7 @@ If no one is selected, symmetric encryption will be performed.  "
        (epa-display-error context)
        (if (setq entry (assoc file epa-file-passphrase-alist))
 	   (setcdr entry nil))
-       (signal 'file-error (cons "Opening output file" (cdr error)))))
+       (signal (car error) (cons "Opening output file" (cdr error)))))
     (epa-file-run-real-handler
      #'write-region
      (list string nil file append visit lockname mustbenew))

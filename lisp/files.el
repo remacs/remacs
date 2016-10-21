@@ -5342,9 +5342,7 @@ This acts like (apply FN ARGS) except it returns NO-SUCH if it is
 non-nil and if FN fails due to a missing file or directory."
   (condition-case err
       (apply fn args)
-    (file-error
-     (or (pcase err (`(,_ ,_ "No such file or directory" . ,_) no-such))
-	 (signal (car err) (cdr err))))))
+    (file-missing (or no-such (signal (car err) (cdr err))))))
 
 (defun delete-directory (directory &optional recursive trash)
   "Delete the directory named DIRECTORY.  Does not follow symlinks.

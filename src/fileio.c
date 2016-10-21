@@ -203,7 +203,8 @@ report_file_errno (char const *string, Lisp_Object name, int errorno)
   if (errorno == EEXIST)
     xsignal (Qfile_already_exists, errdata);
   else
-    xsignal (Qfile_error, Fcons (build_string (string), errdata));
+    xsignal (errorno == ENOENT ? Qfile_missing : Qfile_error,
+	     Fcons (build_string (string), errdata));
 }
 
 /* Signal a file-access failure that set errno.  STRING describes the
@@ -5874,6 +5875,7 @@ syms_of_fileio (void)
   DEFSYM (Qfile_error, "file-error");
   DEFSYM (Qfile_already_exists, "file-already-exists");
   DEFSYM (Qfile_date_error, "file-date-error");
+  DEFSYM (Qfile_missing, "file-missing");
   DEFSYM (Qfile_notify_error, "file-notify-error");
   DEFSYM (Qexcl, "excl");
 
@@ -5925,6 +5927,11 @@ behaves as if file names were encoded in `utf-8'.  */);
 	Fpurecopy (list3 (Qfile_date_error, Qfile_error, Qerror)));
   Fput (Qfile_date_error, Qerror_message,
 	build_pure_c_string ("Cannot set file date"));
+
+  Fput (Qfile_missing, Qerror_conditions,
+	Fpurecopy (list3 (Qfile_missing, Qfile_error, Qerror)));
+  Fput (Qfile_missing, Qerror_message,
+	build_pure_c_string ("File is missing"));
 
   Fput (Qfile_notify_error, Qerror_conditions,
 	Fpurecopy (list3 (Qfile_notify_error, Qfile_error, Qerror)));

@@ -371,8 +371,7 @@ This variable is set by `nnmaildir-request-article'.")
        (string= (downcase (caddr err)) "too many links")))
 
 (defun nnmaildir--enoent-p (err)
-  (and (eq (car err) 'file-error)
-       (string= (downcase (caddr err)) "no such file or directory")))
+  (eq (car err) 'file-missing))
 
 (defun nnmaildir--eexist-p (err)
   (eq (car err) 'file-already-exists))

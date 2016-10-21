@@ -1892,12 +1892,13 @@ The value is non-nil if there were no errors, nil if errors."
 		(rename-file tempfile target-file t)
 		(or noninteractive (message "Wrote %s" target-file)))
 	    ;; This is just to give a better error message than write-region
-	    (signal 'file-error
-		    (list "Opening output file"
-			  (if (file-exists-p target-file)
-			      "Cannot overwrite file"
-			    "Directory not writable or nonexistent")
-			  target-file)))
+	    (let ((exists (file-exists-p target-file)))
+	      (signal (if exists 'file-error 'file-missing)
+		      (list "Opening output file"
+			    (if exists
+				"Cannot overwrite file"
+			      "Directory not writable or nonexistent")
+			    target-file))))
 	  (kill-buffer (current-buffer)))
 	(if (and byte-compile-generate-call-tree
 		 (or (eq t byte-compile-generate-call-tree)
