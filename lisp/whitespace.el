@@ -1740,8 +1740,10 @@ cleaning up these problems."
 			    (whitespace-space-after-tab-regexp 'space))
 			   (t
 			    (cdr option)))))
-		     (and (re-search-forward regexp rend t)
-			  (setq has-bogus t))))
+		     (when (re-search-forward regexp rend t)
+                       (unless has-bogus
+                         (setq has-bogus (memq (car option) whitespace-style)))
+                       t)))
 	       whitespace-report-list)))
 	(when (pcase report-if-bogus (`nil t) (`never nil) (_ has-bogus))
 	  (whitespace-kill-buffer whitespace-report-buffer-name)
