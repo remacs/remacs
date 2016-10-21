@@ -497,6 +497,9 @@ and text paragraphs, and these are selectively controlled with
 `electric-quote-comment', `electric-quote-string', and
 `electric-quote-paragraph'.
 
+Electric quoting is suppressed in a buffer whose coding system
+cannot represent the replacement characters.
+
 This is a global minor mode.  To toggle the mode in a single buffer,
 use `electric-quote-local-mode'."
   :global t :group 'electricity
