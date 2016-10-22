@@ -152,6 +152,13 @@ presence of @code{condition-case}.  (To invoke the debugger, the error
 must still fulfill the criteria specified by @code{debug-on-error} and
 @code{debug-ignored-errors}.)
 
+@cindex emacsclient, getting a backtrace
+@cindex backtrace from emacsclient's @option{--eval}
+For example, setting this variable is useful to get a backtrace from
+code evaluated by emacsclient's @option{--eval} option.  If Lisp code
+evaluated by emacsclient signals an error while this variable is
+non-@code{nil}, the backtrace will popup in the running Emacs.
+
 @strong{Warning:} Setting this variable to non-@code{nil} may have
 annoying effects.  Various parts of Emacs catch errors in the normal
 course of affairs, and you may not even realize that errors happen
