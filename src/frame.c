@@ -1067,6 +1067,10 @@ affects all frames on the same terminal device.  */)
 		  (t->display_info.tty->name
 		   ? build_string (t->display_info.tty->name)
 		   : Qnil));
+  /* On terminal frames the `minibuffer' frame parameter is always
+     virtually t.  Avoid that a different value in parms causes
+     complaints, see Bug#24758.  */
+  store_in_alist (&parms, Qminibuffer, Qt);
   Fmodify_frame_parameters (frame, parms);
 
   /* Make the frame face alist be frame-specific, so that each
