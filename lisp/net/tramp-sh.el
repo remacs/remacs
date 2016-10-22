@@ -1960,7 +1960,8 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
 		     "File %s already exists; make it a new name anyway? "
 		     newname)))
 	  (tramp-error
-	   v2 'file-error "add-name-to-file: file %s already exists" newname))
+	   v2 'file-already-exists
+	   "add-name-to-file: file %s already exists" newname))
 	(when ok-if-already-exists (setq ln (concat ln " -f")))
 	(tramp-flush-file-property v2 (file-name-directory v2-localname))
 	(tramp-flush-file-property v2 v2-localname)
@@ -3130,7 +3131,7 @@ the result will be a local, non-Tramp, file name."
   (with-parsed-tramp-file-name filename nil
     (unless (file-exists-p filename)
       (tramp-error
-       v 'file-error
+       v tramp-file-missing
        "Cannot make local copy of non-existing file `%s'" filename))
 
     (let* ((size (tramp-compat-file-attribute-size

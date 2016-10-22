@@ -902,7 +902,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
   (with-parsed-tramp-file-name filename nil
     (unless (file-exists-p filename)
       (tramp-error
-       v 'file-error
+       v tramp-file-missing
        "Cannot make local copy of non-existing file `%s'" filename))
     (let ((tmpfile (tramp-compat-make-temp-file filename)))
       (with-tramp-progress-reporter
@@ -1125,7 +1125,7 @@ target of the symlink differ."
 		   "File %s already exists; make it a new name anyway? "
 		   linkname)))
 	(tramp-error
-	 v2 'file-error
+	 v2 'file-already-exists
 	 "make-symbolic-link: file %s already exists" linkname))
       (unless (tramp-smb-get-cifs-capabilities v1)
 	(tramp-error v2 'file-error "make-symbolic-link not supported"))

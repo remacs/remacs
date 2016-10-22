@@ -1068,13 +1068,6 @@ calling HANDLER.")
 
 ;;; Internal functions which must come first:
 
-;; `user-error' has appeared in Emacs 24.3.
-(defsubst tramp-user-error (vec-or-proc format &rest args)
-  "Signal a pilot error."
-  (apply
-   'tramp-error vec-or-proc
-   (if (fboundp 'user-error) 'user-error 'error) format args))
-
 ;; Conversion functions between external representation and
 ;; internal data structure.  Convenience functions for internal
 ;; data structure.
@@ -1230,13 +1223,14 @@ This is HOST, if non-nil. Otherwise, it is `tramp-default-host'."
 	(methods (mapcar 'car tramp-methods)))
     (when (and method (not (member method methods)))
       (tramp-cleanup-connection vec)
-      (tramp-user-error vec "Unknown method \"%s\"" method))
+      (tramp-compat-user-error vec "Unknown method \"%s\"" method))
     (when (and (equal tramp-syntax 'ftp) host
 	       (or (null method) (get-text-property 0 'tramp-default method))
 	       (or (null user) (get-text-property 0 'tramp-default user))
 	       (member host methods))
       (tramp-cleanup-connection vec)
-      (tramp-user-error vec "Host name must not match method \"%s\"" host))))
+      (tramp-compat-user-error
+       vec "Host name must not match method \"%s\"" host))))
 
 (defun tramp-dissect-file-name (name &optional nodefault)
   "Return a `tramp-file-name' structure.
@@ -1246,7 +1240,8 @@ non-nil, the file name parts are not expanded to their default
 values."
   (save-match-data
     (let ((match (string-match (nth 0 tramp-file-name-structure) name)))
-      (unless match (tramp-user-error nil "Not a Tramp file name: \"%s\"" name))
+      (unless match
+	(tramp-compat-user-error nil "Not a Tramp file name: \"%s\"" name))
       (let ((method    (match-string (nth 1 tramp-file-name-structure) name))
 	    (user      (match-string (nth 2 tramp-file-name-structure) name))
 	    (host      (match-string (nth 3 tramp-file-name-structure) name))
@@ -1434,12 +1429,12 @@ ARGUMENTS to actually emit the message (if applicable)."
 		     '("tramp-backtrace"
 		       "tramp-compat-condition-case-unless-debug"
 		       "tramp-compat-funcall"
+		       "tramp-compat-user-error"
 		       "tramp-condition-case-unless-debug"
 		       "tramp-debug-message"
 		       "tramp-error"
 		       "tramp-error-with-buffer"
-		       "tramp-message"
-		       "tramp-user-error")
+		       "tramp-message")
 		     t)
 		    "$")
 		   fn)))
@@ -3035,7 +3030,8 @@ User is always nil."
       (unwind-protect
 	  (if (not (file-exists-p filename))
 	      (tramp-error
-	       v 'file-error "File `%s' not found on remote host" filename)
+	       v tramp-file-missing
+	       "File `%s' not found on remote host" filename)
 
 	    (with-tramp-progress-reporter
 		v 3 (format-message "Inserting `%s'" filename)
@@ -3160,7 +3156,8 @@ User is always nil."
 	 "File `%s' does not include a `.el' or `.elc' suffix" file)))
     (unless noerror
       (when (not (file-exists-p file))
-	(tramp-error v 'file-error "Cannot load nonexistent file `%s'" file)))
+	(tramp-error
+	 v tramp-file-missing "Cannot load nonexistent file `%s'" file)))
     (if (not (file-exists-p file))
 	nil
       (let ((tramp-message-show-message (not nomessage)))
@@ -3221,7 +3218,7 @@ User is always nil."
     (when p
       (if (yes-or-no-p "A command is running.  Kill it? ")
 	  (ignore-errors (kill-process p))
-	(tramp-user-error p "Shell command in progress")))
+	(tramp-compat-user-error p "Shell command in progress")))
 
     (if current-buffer-p
 	(progn
