@@ -1012,7 +1012,12 @@ write its autoloads into the specified file instead."
   (interactive "DUpdate autoloads from directory: ")
   (let* ((files-re (let ((tmp nil))
 		     (dolist (suf (get-load-suffixes))
-		       (unless (string-match "\\.elc" suf) (push suf tmp)))
+                       ;; We don't use module-file-suffix below because
+                       ;; we don't want to depend on whether Emacs was
+                       ;; built with or without modules support, nor
+                       ;; what is the suffix for the underlying OS.
+		       (unless (string-match "\\.\\(elc\\|\\so\\|dll\\)" suf)
+                         (push suf tmp)))
                      (concat "^[^=.].*" (regexp-opt tmp t) "\\'")))
 	 (files (apply #'nconc
 		       (mapcar (lambda (dir)
