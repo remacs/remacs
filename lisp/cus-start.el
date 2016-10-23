@@ -173,7 +173,9 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 					(directory :format "%v")))
                         nil
                         :standard
-                        (mapcar 'directory-file-name
+                        (mapcar (lambda (f)
+                                  (if f (directory-file-name f)
+                                    "."))
                                 (append (parse-colon-path (getenv "PATH"))
                                         (list exec-directory))))
 	     (exec-suffixes execute (repeat string))

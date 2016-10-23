@@ -1744,7 +1744,10 @@ This adds rules for comments and assignments."
 (defun sh--cmd-completion-table (string pred action)
   (let ((cmds
          (append (when (fboundp 'imenu--make-index-alist)
-                   (mapcar #'car (imenu--make-index-alist)))
+                   (mapcar #'car
+                           (condition-case nil
+                               (imenu--make-index-alist)
+                             (imenu-unavailable nil))))
                  (mapcar (lambda (v) (concat v "="))
                          (sh--vars-before-point))
                  (locate-file-completion-table
