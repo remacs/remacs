@@ -4380,6 +4380,10 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1, size_t size1,
   /* Loop through the string, looking for a place to start matching.  */
   for (;;)
     {
+      ptrdiff_t offset1, offset2;
+      re_char *orig_base;
+      bool might_relocate;
+
       /* If the pattern is anchored,
 	 skip quickly past places we cannot match.
 	 We don't bother to treat startpos == 0 specially
@@ -4498,10 +4502,9 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1, size_t size1,
 
       /* re_match_2_internal may allocate, relocating the Lisp text
 	 object that we're searching.  */
-      ptrdiff_t offset1, offset2;
       IF_LINT (offset2 = 0);  /* Work around GCC bug 78081.  */
-      re_char *orig_base = STR_BASE_PTR (re_match_object);
-      bool might_relocate = orig_base != NULL;
+      orig_base = STR_BASE_PTR (re_match_object);
+      might_relocate = orig_base != NULL;
       if (might_relocate)
         {
           if (string1) offset1 = string1 - orig_base;
