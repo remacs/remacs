@@ -4346,7 +4346,8 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1, size_t size1,
   /* Loop through the string, looking for a place to start matching.  */
   for (;;)
     {
-      ptrdiff_t offset1, offset2;
+      ptrdiff_t offset1;
+      ptrdiff_t offset2 UNINIT; /* The UNINIT works around GCC bug 78081.  */
       re_char *orig_base;
       bool might_relocate;
 
@@ -4468,7 +4469,6 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1, size_t size1,
 
       /* re_match_2_internal may allocate, relocating the Lisp text
 	 object that we're searching.  */
-      IF_LINT (offset2 = 0);  /* Work around GCC bug 78081.  */
       orig_base = STR_BASE_PTR (re_match_object);
       might_relocate = orig_base != NULL;
       if (might_relocate)
