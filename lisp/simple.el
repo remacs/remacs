@@ -4957,8 +4957,8 @@ To kill a whole line, when point is not at the beginning, type \
 \\[move-beginning-of-line] \\[kill-line] \\[kill-line].
 
 If `show-trailing-whitespace' is non-nil, this command will just
-kill the rest of the current line, even if there are only
-nonblanks there.
+kill the rest of the current line, even if there are no nonblanks
+there.
 
 If option `kill-whole-line' is non-nil, then this command kills the whole line
 including its terminating newline, when used at the beginning of a line

@@ -422,9 +422,7 @@ portable; curved quotes are less ambiguous and typically look nicer.
 
   Electric Quote mode makes it easier to type curved quotes.  As you
 type characters it optionally converts @t{`} to @t{‘}, @t{'} to @t{’},
-@t{``} to @t{“}, and @t{''} to @t{”}.  These conversions are
-suppressed in buffers whose coding systems cannot represent curved
-quote characters.
+@t{``} to @t{“}, and @t{''} to @t{”}.
 
 @vindex electric-quote-paragraph
 @vindex electric-quote-comment

@@ -430,12 +430,6 @@ The variable `electric-layout-rules' says when and how to insert newlines."
   :version "25.1"
   :type 'boolean :safe 'booleanp :group 'electricity)
 
-(defun electric--insertable-p (string)
-  (or (not buffer-file-coding-system)
-      (eq (coding-system-base buffer-file-coding-system) 'undecided)
-      (not (unencodable-char-position nil nil buffer-file-coding-system
-                                      nil string))))
-
 (defun electric-quote-post-self-insert-function ()
   "Function that `electric-quote-mode' adds to `post-self-insert-hook'.
 This requotes when a quoting key is typed."
@@ -460,8 +454,7 @@ This requotes when a quoting key is typed."
       (when start
         (save-excursion
           (if (eq last-command-event ?\`)
-              (cond ((and (electric--insertable-p "“")
-                          (search-backward "‘`" (- (point) 2) t))
+              (cond ((search-backward "‘`" (- (point) 2) t)
                      (replace-match "“")
                      (when (and electric-pair-mode
                                 (eq (cdr-safe
@@ -469,16 +462,13 @@ This requotes when a quoting key is typed."
                                     (char-after)))
                        (delete-char 1))
                      (setq last-command-event ?“))
-                    ((and (electric--insertable-p "‘")
-                          (search-backward "`" (1- (point)) t))
+                    ((search-backward "`" (1- (point)) t)
                      (replace-match "‘")
                      (setq last-command-event ?‘)))
-            (cond ((and (electric--insertable-p "”")
-                        (search-backward "’'" (- (point) 2) t))
+            (cond ((search-backward "’'" (- (point) 2) t)
                    (replace-match "”")
                    (setq last-command-event ?”))
-                  ((and (electric--insertable-p "’")
-                        (search-backward "'" (1- (point)) t))
+                  ((search-backward "'" (1- (point)) t)
                    (replace-match "’")
                    (setq last-command-event ?’)))))))))
 

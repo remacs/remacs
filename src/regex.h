@@ -175,8 +175,14 @@ extern reg_syntax_t re_syntax_options;
 
 #ifdef emacs
 # include "lisp.h"
-/* In Emacs, this is the string or buffer in which we
-   are matching.  It is used for looking up syntax properties.  */
+/* In Emacs, this is the string or buffer in which we are matching.
+   It is used for looking up syntax properties, and also to recompute
+   pointers in case the object is relocated as a side effect of
+   calling malloc (if it calls r_alloc_sbrk in ralloc.c).
+
+   If the value is a Lisp string object, we are matching text in that
+   string; if it's nil, we are matching text in the current buffer; if
+   it's t, we are matching text in a C string.  */
 extern Lisp_Object re_match_object;
 #endif
 
