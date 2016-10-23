@@ -39,10 +39,6 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
 #include <pthread.h>
 #endif
 
-#ifdef WINDOWSNT
-#include <w32heap.h>	/* for sbrk */
-#endif
-
 #ifdef emacs
 extern void emacs_abort (void);
 #endif
