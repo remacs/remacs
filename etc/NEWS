@@ -38,6 +38,12 @@ fontsets if the default font supports these characters.  Set this
 variable to nil to disable the new behavior and get back the old
 behavior.
 
++++
+** 'electric-quote-mode' is no longer suppressed in a buffer whose
+whose coding system cannot represent curved quote characters.
+Instead, users can deal with the unrepresentable characters in the
+usual way when they save the buffer.
+
 ---
 ** New variable 'inhibit-compacting-font-caches'.
 Set this variable to a non-nil value to speed up display of characters
