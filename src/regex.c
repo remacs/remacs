@@ -1439,21 +1439,22 @@ typedef struct
 #define TOP_FAILURE_HANDLE() fail_stack.frame
 
 #ifdef emacs
-#define STR_BASE_PTR(obj)                     \
-  (NILP (obj) ? current_buffer->text->beg :   \
-   STRINGP (obj) ? SDATA (obj) :              \
-   NULL)
+# define STR_BASE_PTR(obj)			 \
+   (NILP (obj) ? current_buffer->text->beg	 \
+    : STRINGP (obj) ? SDATA (obj)		 \
+    : NULL)
 #else
-#define STR_BASE_PTR(obj) NULL
+# define STR_BASE_PTR(obj) NULL
 #endif
 
 #define ENSURE_FAIL_STACK(space)					\
 while (REMAINING_AVAIL_SLOTS <= space) {				\
-  re_char* orig_base = STR_BASE_PTR (re_match_object);                  \
+  re_char *orig_base = STR_BASE_PTR (re_match_object);                  \
+  bool might_relocate = orig_base != NULL;				\
   ptrdiff_t string1_off, end1_off, end_match_1_off;                     \
   ptrdiff_t string2_off, end2_off, end_match_2_off;                     \
   ptrdiff_t d_off, dend_off, dfail_off;                                 \
-  if (orig_base)                                                        \
+  if (might_relocate)							\
     {                                                                   \
       if (string1)                                                      \
         {                                                               \
@@ -1472,12 +1473,11 @@ while (REMAINING_AVAIL_SLOTS <= space) {				\
       dfail_off = dfail - orig_base;                                    \
     }                                                                   \
   if (!GROW_FAIL_STACK (fail_stack))					\
-    return -2;                                                          \
-  /* GROW_FAIL_STACK may call malloc and relocate the string */         \
-  /* pointers.  */                                                      \
-  re_char* new_base = STR_BASE_PTR (re_match_object);                   \
-  if (new_base && new_base != orig_base)                                \
+    return -2;								\
+  /* In Emacs, GROW_FAIL_STACK might relocate string pointers.  */	\
+  if (might_relocate)							\
     {                                                                   \
+      re_char *new_base = STR_BASE_PTR (re_match_object);		\
       if (string1)                                                      \
         {                                                               \
           string1 = new_base + string1_off;                             \
@@ -4496,11 +4496,13 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1, size_t size1,
 	  && !bufp->can_be_null)
 	return -1;
 
-      /* re_match_2_internal may allocate, causing a relocation of the
-         lisp text object that we're searching.  */
+      /* re_match_2_internal may allocate, relocating the Lisp text
+	 object that we're searching.  */
       ptrdiff_t offset1, offset2;
+      IF_LINT (offset2 = 0);  /* Work around GCC bug 78081.  */
       re_char *orig_base = STR_BASE_PTR (re_match_object);
-      if (orig_base)
+      bool might_relocate = orig_base != NULL;
+      if (might_relocate)
         {
           if (string1) offset1 = string1 - orig_base;
           if (string2) offset2 = string2 - orig_base;
@@ -4515,9 +4517,9 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1, size_t size1,
       if (val == -2)
 	return -2;
 
-      re_char *new_base = STR_BASE_PTR (re_match_object);
-      if (new_base && new_base != orig_base)
+      if (might_relocate)
         {
+	  re_char *new_base = STR_BASE_PTR (re_match_object);
           if (string1) string1 = offset1 + new_base;
           if (string2) string2 = offset2 + new_base;
         }
