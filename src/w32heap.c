@@ -129,18 +129,18 @@ static DWORD_PTR committed = 0;
 /* The maximum block size that can be handled by a non-growable w32
    heap is limited by the MaxBlockSize value below.
 
-   This point deserves and explanation.
+   This point deserves an explanation.
 
-   The W32 heap allocator can be used for a growable
-   heap or a non-growable one.
+   The W32 heap allocator can be used for a growable heap or a
+   non-growable one.
 
    A growable heap is not compatible with a fixed base address for the
    heap.  Only a non-growable one is.  One drawback of non-growable
    heaps is that they can hold only objects smaller than a certain
-   size (the one defined below).  Most of the largest blocks are GC'ed
-   before dumping.  In any case and to be safe, we implement a simple
+   size (the one defined below).  Most of the larger blocks are GC'ed
+   before dumping.  In any case, and to be safe, we implement a simple
    first-fit allocation algorithm starting at the end of the
-   dumped_data[] array like depicted below:
+   dumped_data[] array as depicted below:
 
   ----------------------------------------------
   |               |              |             |
@@ -273,7 +273,7 @@ init_heap (void)
   else
     {
       /* Find the RtlCreateHeap function.  Headers for this function
-         are provided with the w32 ddk, but the function is available
+         are provided with the w32 DDK, but the function is available
          in ntdll.dll since XP.  */
       HMODULE hm_ntdll = LoadLibrary ("ntdll.dll");
       RtlCreateHeap_Proc s_pfn_Rtl_Create_Heap
