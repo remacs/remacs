@@ -6023,7 +6023,7 @@ mark_glyph_matrix (struct glyph_matrix *matrix)
    all the references contained in it.  */
 
 #define LAST_MARKED_SIZE 500
-static Lisp_Object last_marked[LAST_MARKED_SIZE];
+Lisp_Object last_marked[LAST_MARKED_SIZE] EXTERNALLY_VISIBLE;
 static int last_marked_index;
 
 /* For debugging--call abort when we cdr down this many

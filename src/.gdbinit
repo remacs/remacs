@@ -1252,8 +1252,7 @@ break terminate_due_to_signal
 tbreak init_sys_modes
 commands
   silent
-  xgetptr globals.f_Vinitial_window_system
-  xsymname $ptr
+  xsymname globals.f_Vinitial_window_system
   xgetptr $symname
   set $tem = (struct Lisp_String *) $ptr
   set $tem = (char *) $tem->data
