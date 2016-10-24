@@ -167,6 +167,9 @@ Point is moved to beginning of the buffer."
     (should (equal (json-read-string) "abcαβγ")))
   (json-tests--with-temp-buffer "\"\\nasd\\u0444\\u044b\\u0432fgh\\t\""
     (should (equal (json-read-string) "\nasdфывfgh\t")))
+  ;; Bug#24784
+  (json-tests--with-temp-buffer "\"\\uD834\\uDD1E\""
+    (should (equal (json-read-string) "\U0001D11E")))
   (json-tests--with-temp-buffer "foo"
     (should-error (json-read-string) :type 'json-string-format)))
 
