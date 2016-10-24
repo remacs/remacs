@@ -2231,7 +2231,7 @@ fi
 
 use_mmap_for_buffers=no
 case "$opsys" in
-  cygwin|mingw32) use_mmap_for_buffers=yes ;;
+  mingw32) use_mmap_for_buffers=yes ;;
 esac
 
 AC_FUNC_MMAP
