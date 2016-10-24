@@ -2158,7 +2158,10 @@ elif test "$hybrid_malloc" = yes; then
   GMALLOC_OBJ=gmalloc.o
   VMLIMIT_OBJ=
 else
-  test "$doug_lea_malloc" != "yes" && GMALLOC_OBJ=gmalloc.o
+  if test "$doug_lea_malloc" != "yes"; then
+    GMALLOC_OBJ=gmalloc.o
+    AC_CHECK_DECLS([valloc])
+  fi
   VMLIMIT_OBJ=vm-limit.o
 
   AC_CHECK_HEADERS([sys/vlimit.h])

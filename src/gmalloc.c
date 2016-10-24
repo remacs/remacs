@@ -40,7 +40,7 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 #ifdef emacs
-extern void emacs_abort (void);
+extern _Noreturn void emacs_abort (void) NO_INLINE;
 #endif
 
 /* If HYBRID_MALLOC is defined, then temacs will use malloc,
@@ -59,6 +59,7 @@ extern void emacs_abort (void);
 #undef malloc
 #undef realloc
 #undef calloc
+#undef aligned_alloc
 #undef free
 #define malloc gmalloc
 #define realloc grealloc
@@ -95,19 +96,15 @@ extern void *calloc (size_t nmemb, size_t size) ATTRIBUTE_MALLOC_SIZE ((1,2));
 extern void free (void *ptr);
 
 /* Allocate SIZE bytes allocated to ALIGNMENT bytes.  */
-#ifdef MSDOS
 extern void *aligned_alloc (size_t, size_t);
 extern void *memalign (size_t, size_t);
+#ifdef MSDOS
 extern int posix_memalign (void **, size_t, size_t);
 #endif
 
 #ifdef USE_PTHREAD
 /* Set up mutexes and make malloc etc. thread-safe.  */
 extern void malloc_enable_thread (void);
-#endif
-
-#ifdef emacs
-extern void emacs_abort (void);
 #endif
 
 /* The allocator divides the heap into blocks of fixed size; large
@@ -1686,7 +1683,9 @@ License along with this library.  If not, see <http://www.gnu.org/licenses/>.
    or (US mail) as Mike Haertel c/o Free Software Foundation.  */
 
 /* Allocate SIZE bytes on a page boundary.  */
+#ifndef HAVE_DECL_VALLOC
 extern void *valloc (size_t);
+#endif
 
 #if defined _SC_PAGESIZE || !defined HAVE_GETPAGESIZE
 # include "getpagesize.h"
@@ -1769,7 +1768,7 @@ hybrid_aligned_alloc (size_t alignment, size_t size)
 #endif
 }
 #endif
-  
+
 void *
 hybrid_realloc (void *ptr, size_t size)
 {
