@@ -259,11 +259,9 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
       QUIT;
 
       bool wanted = (NILP (match)
-		     || (re_match_object = name,
-                         re_search (bufp, SSDATA (name), len, 0, len, 0) >= 0));
+		     || re_search (bufp, SSDATA (name), len, 0, len, 0) >= 0);
 
       immediate_quit = 0;
-      re_match_object = Qnil;   /* Stop protecting name from GC.  */
 
       if (wanted)
 	{

@@ -1438,62 +1438,11 @@ typedef struct
 #define NEXT_FAILURE_HANDLE(h) fail_stack.stack[(h) - 3].integer
 #define TOP_FAILURE_HANDLE() fail_stack.frame
 
-#ifdef emacs
-# define STR_BASE_PTR(obj)			 \
-   (NILP (obj) ? current_buffer->text->beg	 \
-    : STRINGP (obj) ? SDATA (obj)		 \
-    : NULL)
-#else
-# define STR_BASE_PTR(obj) NULL
-#endif
 
 #define ENSURE_FAIL_STACK(space)					\
 while (REMAINING_AVAIL_SLOTS <= space) {				\
-  re_char *orig_base = STR_BASE_PTR (re_match_object);                  \
-  bool might_relocate = orig_base != NULL;				\
-  ptrdiff_t string1_off, end1_off, end_match_1_off;                     \
-  ptrdiff_t string2_off, end2_off, end_match_2_off;                     \
-  ptrdiff_t d_off, dend_off, dfail_off;                                 \
-  if (might_relocate)							\
-    {                                                                   \
-      if (string1)                                                      \
-        {                                                               \
-          string1_off = string1 - orig_base;                            \
-          end1_off = end1 - orig_base;                                  \
-          end_match_1_off = end_match_1 - orig_base;                    \
-        }                                                               \
-      if (string2)                                                      \
-        {                                                               \
-          string2_off = string2 - orig_base;                            \
-          end2_off = end2 - orig_base;                                  \
-          end_match_2_off = end_match_2 - orig_base;                    \
-        }                                                               \
-      d_off = d - orig_base;                                            \
-      dend_off = dend - orig_base;                                      \
-      dfail_off = dfail - orig_base;                                    \
-    }                                                                   \
   if (!GROW_FAIL_STACK (fail_stack))					\
     return -2;								\
-  /* In Emacs, GROW_FAIL_STACK might relocate string pointers.  */	\
-  if (might_relocate)							\
-    {                                                                   \
-      re_char *new_base = STR_BASE_PTR (re_match_object);		\
-      if (string1)                                                      \
-        {                                                               \
-          string1 = new_base + string1_off;                             \
-          end1 = new_base + end1_off;                                   \
-          end_match_1 = new_base + end_match_1_off;                     \
-        }                                                               \
-      if (string2)                                                      \
-        {                                                               \
-          string2 = new_base + string2_off;                             \
-          end2 = new_base + end2_off;                                   \
-          end_match_2 = new_base + end_match_2_off;                     \
-        }                                                               \
-      d = new_base + d_off;                                             \
-      dend = new_base + dend_off;                                       \
-      dfail = new_base + dfail_off;                                     \
-    }                                                                   \
   DEBUG_PRINT ("\n  Doubled stack; size now: %zd\n", (fail_stack).size);\
   DEBUG_PRINT ("	 slots available: %zd\n", REMAINING_AVAIL_SLOTS);\
 }
@@ -4380,10 +4329,6 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1, size_t size1,
   /* Loop through the string, looking for a place to start matching.  */
   for (;;)
     {
-      ptrdiff_t offset1, offset2;
-      re_char *orig_base;
-      bool might_relocate;
-
       /* If the pattern is anchored,
 	 skip quickly past places we cannot match.
 	 We don't bother to treat startpos == 0 specially
@@ -4500,17 +4445,6 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1, size_t size1,
 	  && !bufp->can_be_null)
 	return -1;
 
-      /* re_match_2_internal may allocate, relocating the Lisp text
-	 object that we're searching.  */
-      IF_LINT (offset2 = 0);  /* Work around GCC bug 78081.  */
-      orig_base = STR_BASE_PTR (re_match_object);
-      might_relocate = orig_base != NULL;
-      if (might_relocate)
-        {
-          if (string1) offset1 = string1 - orig_base;
-          if (string2) offset2 = string2 - orig_base;
-        }
-
       val = re_match_2_internal (bufp, string1, size1, string2, size2,
 				 startpos, regs, stop);
 
@@ -4519,13 +4453,6 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1, size_t size1,
 
       if (val == -2)
 	return -2;
-
-      if (might_relocate)
-        {
-	  re_char *new_base = STR_BASE_PTR (re_match_object);
-          if (string1) string1 = offset1 + new_base;
-          if (string2) string2 = offset2 + new_base;
-        }
 
     advance:
       if (!range)
