@@ -87,7 +87,7 @@ given, and the match does not fail."
 
 ARGS can also include the `&rest' marker followed by a variable
 name to be bound to the rest of SEQUENCE."
-  (declare (indent 2) (debug t))
+  (declare (indent 2) (debug (sexp form body)))
   `(pcase-let ((,(seq--make-pcase-patterns args) ,sequence))
      ,@body))
 
