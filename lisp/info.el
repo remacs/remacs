@@ -4239,6 +4239,9 @@ With a zero prefix arg, put the name inside a function call to `info'."
   '((t :inherit fixed-pitch-serif))
   "Face used for quoted elements.")
 
+;; We deliberately fontify only ‘..’ quoting, and not `..', because
+;; the former can be done much more reliably, i.e. without risking
+;; false positives.
 (defvar Info-mode-font-lock-keywords
   '(("‘\\([^’]*\\)’" (1 'Info-quoted))))
 
