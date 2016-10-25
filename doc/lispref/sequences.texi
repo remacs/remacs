@@ -1038,7 +1038,8 @@ followed by a variable name to be bound to the rest of
 @end defmac
 
 @defun seq-random-elt sequence
-  This function returns an element of @var{sequence} taken at random. If @var{sequence} is nil, the function returns nil.
+  This function returns an element of @var{sequence} taken at random.
+If @var{sequence} is @code{nil}, the function returns @code{nil}.
 
 @example
 @group
@@ -1055,7 +1056,7 @@ followed by a variable name to be bound to the rest of
 @end group
 @end example
 
-  If @var{sequence} is empty, the function signals an error.
+  If @var{sequence} is empty, this function signals an error.
 @end defun
 
 @node Arrays
