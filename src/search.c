@@ -308,12 +308,20 @@ looking_at_1 (Lisp_Object string, bool posix)
 
   re_match_object = Qnil;
 
+#ifdef REL_ALLOC
+  /* Prevent ralloc.c from relocating the current buffer while
+     searching it.  */
+  r_alloc_inhibit_buffer_relocation (1);
+#endif
   i = re_match_2 (bufp, (char *) p1, s1, (char *) p2, s2,
 		  PT_BYTE - BEGV_BYTE,
 		  (NILP (Vinhibit_changing_match_data)
 		   ? &search_regs : NULL),
 		  ZV_BYTE - BEGV_BYTE);
   immediate_quit = 0;
+#ifdef REL_ALLOC
+  r_alloc_inhibit_buffer_relocation (0);
+#endif
 
   if (i == -2)
     matcher_overflow ();
@@ -561,8 +569,16 @@ fast_looking_at (Lisp_Object regexp, ptrdiff_t pos, ptrdiff_t pos_byte,
 
   buf = compile_pattern (regexp, 0, Qnil, 0, multibyte);
   immediate_quit = 1;
+#ifdef REL_ALLOC
+  /* Prevent ralloc.c from relocating the current buffer while
+     searching it.  */
+  r_alloc_inhibit_buffer_relocation (1);
+#endif
   len = re_match_2 (buf, (char *) p1, s1, (char *) p2, s2,
 		    pos_byte, NULL, limit_byte);
+#ifdef REL_ALLOC
+  r_alloc_inhibit_buffer_relocation (0);
+#endif
   immediate_quit = 0;
 
   return len;
@@ -1213,6 +1229,12 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 	}
       re_match_object = Qnil;
 
+#ifdef REL_ALLOC
+  /* Prevent ralloc.c from relocating the current buffer while
+     searching it.  */
+  r_alloc_inhibit_buffer_relocation (1);
+#endif
+
       while (n < 0)
 	{
 	  ptrdiff_t val;
@@ -1254,6 +1276,9 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 	  else
 	    {
 	      immediate_quit = 0;
+#ifdef REL_ALLOC
+              r_alloc_inhibit_buffer_relocation (0);
+#endif
 	      return (n);
 	    }
 	  n++;
@@ -1296,11 +1321,17 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 	  else
 	    {
 	      immediate_quit = 0;
+#ifdef REL_ALLOC
+              r_alloc_inhibit_buffer_relocation (0);
+#endif
 	      return (0 - n);
 	    }
 	  n--;
 	}
       immediate_quit = 0;
+#ifdef REL_ALLOC
+      r_alloc_inhibit_buffer_relocation (0);
+#endif
       return (pos);
     }
   else				/* non-RE case */
