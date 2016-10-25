@@ -2189,18 +2189,10 @@ if test "$doug_lea_malloc" = "yes" ; then
   AC_DEFINE(DOUG_LEA_MALLOC, 1,
     [Define to 1 if the system memory allocator is Doug Lea style,
      with malloc hooks and malloc_set_state.])
-
-  ## Use mmap directly for allocating larger buffers.
-  ## FIXME this comes from src/s/{gnu,gnu-linux}.h:
-  ## #ifdef DOUG_LEA_MALLOC; #undef REL_ALLOC; #endif
-  ## Does the AC_FUNC_MMAP test below make this check unnecessary?
-  case "$opsys" in
-    mingw32|gnu*) REL_ALLOC=no ;;
-  esac
 fi
 
 if test x"${REL_ALLOC}" = x; then
-  REL_ALLOC=${GNU_MALLOC}
+  REL_ALLOC=no
 fi
 
 use_mmap_for_buffers=no
