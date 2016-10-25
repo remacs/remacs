@@ -1039,7 +1039,6 @@ followed by a variable name to be bound to the rest of
 
 @defun seq-random-elt sequence
   This function returns an element of @var{sequence} taken at random.
-If @var{sequence} is @code{nil}, the function returns @code{nil}.
 
 @example
 @group
