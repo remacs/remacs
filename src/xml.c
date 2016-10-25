@@ -181,6 +181,7 @@ parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url,
   Lisp_Object result = Qnil;
   const char *burl = "";
   ptrdiff_t istart, iend, istart_byte, iend_byte;
+  unsigned char *buftext;
 
   xmlCheckVersion (LIBXML_VERSION);
 
@@ -200,17 +201,31 @@ parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url,
       burl = SSDATA (base_url);
     }
 
+  buftext = BYTE_POS_ADDR (istart_byte);
+#ifdef REL_ALLOC
+  /* Prevent ralloc.c from relocating the current buffer while libxml2
+     functions below read its text.  */
+  r_alloc_inhibit_buffer_relocation (1);
+#endif
   if (htmlp)
-    doc = htmlReadMemory ((char *) BYTE_POS_ADDR (istart_byte),
+    doc = htmlReadMemory ((char *)buftext,
 			  iend_byte - istart_byte, burl, "utf-8",
 			  HTML_PARSE_RECOVER|HTML_PARSE_NONET|
 			  HTML_PARSE_NOWARNING|HTML_PARSE_NOERROR|
 			  HTML_PARSE_NOBLANKS);
   else
-    doc = xmlReadMemory ((char *) BYTE_POS_ADDR (istart_byte),
+    doc = xmlReadMemory ((char *)buftext,
 			 iend_byte - istart_byte, burl, "utf-8",
 			 XML_PARSE_NONET|XML_PARSE_NOWARNING|
 			 XML_PARSE_NOBLANKS |XML_PARSE_NOERROR);
+
+#ifdef REL_ALLOC
+  r_alloc_inhibit_buffer_relocation (0);
+#endif
+  /* If the assertion below fails, malloc was called inside the above
+     libxml2 functions, and ralloc.c caused relocation of buffer text,
+     so we could have read from unrelated memory.  */
+  eassert (buftext == BYTE_POS_ADDR (istart_byte));
 
   if (doc != NULL)
     {

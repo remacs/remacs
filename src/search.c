@@ -1226,6 +1226,8 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 			      ? &search_regs : &search_regs_1),
 			     /* Don't allow match past current point */
 			     pos_byte - BEGV_BYTE);
+	  /* Update 'base' due to possible relocation inside re_search_2.  */
+	  base = current_buffer->text->beg;
 	  if (val == -2)
 	    {
 	      matcher_overflow ();
@@ -1272,6 +1274,8 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 			     (NILP (Vinhibit_changing_match_data)
 			      ? &search_regs : &search_regs_1),
 			     lim_byte - BEGV_BYTE);
+	  /* Update 'base' due to possible relocation inside re_search_2.  */
+	  base = current_buffer->text->beg;
 	  if (val == -2)
 	    {
 	      matcher_overflow ();
