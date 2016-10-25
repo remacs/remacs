@@ -24,6 +24,8 @@
 
 ;;; Code:
 
+(require 'cl-lib)
+
 (defgroup xterm nil
   "XTerm support."
   :version "24.1"
