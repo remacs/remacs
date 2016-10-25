@@ -69,19 +69,18 @@ files conditionalize this setup based on the TERM environment variable."
   :require 'tramp)
 
 ;;;###tramp-autoload
-(defcustom tramp-histfile-override ".tramp_history"
+(defcustom tramp-histfile-override "~/.tramp_history"
   "When invoking a shell, override the HISTFILE with this value.
 When setting to a string, it redirects the shell history to that
 file.  Be careful when setting to \"/dev/null\"; this might
 result in undesired results when using \"bash\" as shell.
 
-The value t, the default value, unsets any setting of HISTFILE,
-and sets both HISTFILESIZE and HISTSIZE to 0.  If you set this
-variable to nil, however, the *override* is disabled, so the
-history will go to the default storage location,
-e.g. \"$HOME/.sh_history\"."
+The value t unsets any setting of HISTFILE, and sets both
+HISTFILESIZE and HISTSIZE to 0.  If you set this variable to nil,
+however, the *override* is disabled, so the history will go to
+the default storage location, e.g. \"$HOME/.sh_history\"."
   :group 'tramp
-  :version "25.1"
+  :version "25.2"
   :type '(choice (const :tag "Do not override HISTFILE" nil)
                  (const :tag "Unset HISTFILE" t)
                  (string :tag "Redirect to a file"))
@@ -3977,7 +3976,19 @@ file exists and nonzero exit status otherwise."
 		""))
 	    (tramp-shell-quote-argument tramp-end-of-output)
 	    shell (or extra-args ""))
-       t))
+       t)
+      ;; Check proper HISTFILE setting.  We give up when not working.
+      (when (and (stringp tramp-histfile-override)
+		 (file-name-directory tramp-histfile-override))
+	(tramp-barf-unless-okay
+	 vec
+	 (format
+	  "(cd %s)"
+	  (tramp-shell-quote-argument
+	   (file-name-directory tramp-histfile-override)))
+	 "`tramp-histfile-override' uses invalid file `%s'"
+	 tramp-histfile-override)))
+
     (tramp-set-connection-property
      (tramp-get-connection-process vec) "remote-shell" shell)))
 
@@ -4913,10 +4924,9 @@ connection if a previous connection has died for some reason."
 		;; Mark it as connected.
 		(tramp-set-connection-property p "connected" t)))))
 
-      ;; When the user did interrupt, we must cleanup.
-      (quit
+      ;; Cleanup, and propagate the signal.
+      ((error quit)
        (tramp-cleanup-connection vec t)
-       ;; Propagate the quit signal.
        (signal (car err) (cdr err))))))
 
 (defun tramp-send-command (vec command &optional neveropen nooutput)
