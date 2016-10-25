@@ -1679,13 +1679,8 @@ non-nil.
 
 If FORCE is non-nil or \\[universal-argument] was pressed just
 before calling `whitespace-report-region' interactively, it
-forces `whitespace-style' to have:
-
-   empty
-   trailing
-   indentation
-   space-before-tab
-   space-after-tab
+forces all classes of whitespace problem to be considered
+significant.
 
 If REPORT-IF-BOGUS is t, it reports only when there are any
 whitespace problems in buffer; if it is `never', it does not
@@ -1719,11 +1714,15 @@ cleaning up these problems."
       (let* ((has-bogus nil)
 	     (rstart    (min start end))
 	     (rend      (max start end))
+             ;; Fall back to whitespace-style so we can run before
+             ;; before the mode is active.
+             (style     (copy-sequence
+                         (or whitespace-active-style whitespace-style)))
 	     (bogus-list
 	      (mapcar
 	       #'(lambda (option)
 		   (when force
-		     (add-to-list 'whitespace-style (car option)))
+		     (add-to-list 'style (car option)))
 		   (goto-char rstart)
 		   (let ((regexp
 			  (cond
@@ -1743,7 +1742,7 @@ cleaning up these problems."
 			    (cdr option)))))
 		     (when (re-search-forward regexp rend t)
                        (unless has-bogus
-                         (setq has-bogus (memq (car option) whitespace-style)))
+                         (setq has-bogus (memq (car option) style)))
                        t)))
 	       whitespace-report-list)))
 	(when (pcase report-if-bogus (`nil t) (`never nil) (_ has-bogus))
@@ -1763,7 +1762,7 @@ cleaning up these problems."
 	      (dolist (option whitespace-report-list)
 		(forward-line 1)
 		(whitespace-mark-x
-		 27 (memq (car option) whitespace-style))
+		 27 (memq (car option) style))
 		(whitespace-mark-x 7 (car bogus-list))
 		(setq bogus-list (cdr bogus-list)))
 	      (forward-line 1)
