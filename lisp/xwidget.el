@@ -474,11 +474,11 @@ For example, use this to display an anchor."
 (defun xwidget-webkit-current-url ()
   "Get the webkit url and place it on the kill-ring."
   (interactive)
-  (let* ((rv (xwidget-webkit-execute-script-rv (xwidget-webkit-current-session)
-                                               "document.URL"))
-         (url (kill-new (or rv ""))))
-    (message "url: %s" url)
-    url))
+  (xwidget-webkit-execute-script
+   (xwidget-webkit-current-session)
+   "document.URL" (lambda (rv)
+                    (let ((url (kill-new (or rv ""))))
+                      (message "url: %s" url)))))
 
 (defun xwidget-webkit-execute-script-rv (xw script &optional default)
   "Same as `xwidget-webkit-execute-script' but with return value.
