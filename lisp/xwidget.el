@@ -504,15 +504,17 @@ DEFAULT is the default return value."
     title))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun xwidget-webkit-get-selection ()
-  "Get the webkit selection."
-  (xwidget-webkit-execute-script-rv (xwidget-webkit-current-session)
-                                    "window.getSelection().toString();"))
+(defun xwidget-webkit-get-selection (proc)
+  "Get the webkit selection and pass it to PROC."
+  (xwidget-webkit-execute-script
+   (xwidget-webkit-current-session)
+   "window.getSelection().toString();"
+   proc))
 
 (defun xwidget-webkit-copy-selection-as-kill ()
   "Get the webkit selection and put it on the kill-ring."
   (interactive)
-  (kill-new (xwidget-webkit-get-selection)))
+  (xwidget-webkit-get-selection (lambda (selection) (kill-new selection))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
