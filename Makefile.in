@@ -584,7 +584,7 @@ install-arch-indep: lisp install-info install-man ${INSTALL_ARCH_INDEP_EXTRA}
 	  if [ "$${dir}" = "${srcdir}/etc" ]; then \
 	      rm -f "$${dest}/DOC"* ; \
 	      rm -f "$${dest}/refcards"/*.aux "$${dest}/refcards"/*.dvi; \
-	      rm -f "$${dest}/refcards"/*.log; \
+	      rm -f "$${dest}/refcards"/*.log "$${dest}/refcards"/*.in; \
 	  else true; \
 	  fi; \
 	  (cd "$${dest}" || exit 1; \
