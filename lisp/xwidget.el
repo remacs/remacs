@@ -339,62 +339,53 @@ XW is the xwidget identifier, TEXT is retrieved from the webkit."
 For example, use this to display an anchor."
   (interactive (list (xwidget-webkit-current-session)
                      (read-string "Element name: ")))
-  ;;TODO since an xwidget is an Emacs object, it is not trivial to do
-  ;; some things that are taken for granted in a normal browser.
-  ;; scrolling an anchor/named-element into view is one such thing.
-  ;; This function implements a proof-of-concept for this.  Problems
-  ;; remaining: - The selected window is scrolled but this is not
-  ;; always correct - This needs to be interfaced into browse-url
-  ;; somehow.  The tricky part is that we need to do this in two steps:
-  ;; A: load the base url, wait for load signal to arrive B: navigate
-  ;; to the anchor when the base url is finished rendering
-
-  ;; This part figures out the Y coordinate of the element
-  (let ((y (string-to-number
-            (xwidget-webkit-execute-script-rv
-             xw
-             (format
-              "document.getElementsByName('%s')[0].getBoundingClientRect().top"
-              element-name)
-             0))))
-    ;; Now we need to tell Emacs to scroll the element into view.
-    (xwidget-log "scroll: %d" y)
-    (set-window-vscroll (selected-window) y t)))
+  ;; TODO: This needs to be interfaced into browse-url somehow.  The
+  ;; tricky part is that we need to do this in two steps: A: load the
+  ;; base url, wait for load signal to arrive B: navigate to the
+  ;; anchor when the base url is finished rendering
+  (xwidget-webkit-execute-script
+   xw
+   (format "
+(function (query) {
+  var el = document.getElementsByName(query)[0];
+  if (el !== undefined) {
+    window.scrollTo(0, el.offsetTop);
+  }
+})('%s');"
+    element-name)))
 
 (defun xwidget-webkit-show-id-element (xw element-id)
   "Make webkit xwidget XW show an id-element ELEMENT-ID.
 For example, use this to display an anchor."
   (interactive (list (xwidget-webkit-current-session)
                      (read-string "Element id: ")))
-  (let ((y (string-to-number
-            (xwidget-webkit-execute-script-rv
-             xw
-             (format "document.getElementById('%s').getBoundingClientRect().top"
-                     element-id)
-             0))))
-    ;; Now we need to tell Emacs to scroll the element into view.
-    (xwidget-log "scroll: %d" y)
-    (set-window-vscroll (selected-window) y t)))
+  (xwidget-webkit-execute-script
+   xw
+   (format "
+(function (query) {
+  var el = document.getElementById(query);
+  if (el !== null) {
+    window.scrollTo(0, el.offsetTop);
+  }
+})('%s');"
+    element-id)))
 
 (defun xwidget-webkit-show-id-or-named-element (xw element-id)
    "Make webkit xwidget XW show a name or element id ELEMENT-ID.
 For example, use this to display an anchor."
   (interactive (list (xwidget-webkit-current-session)
                      (read-string "Name or element id: ")))
-  (let* ((y1 (string-to-number
-              (xwidget-webkit-execute-script-rv
-               xw
-               (format "document.getElementsByName('%s')[0].getBoundingClientRect().top" element-id)
-               "0")))
-         (y2 (string-to-number
-              (xwidget-webkit-execute-script-rv
-               xw
-               (format "document.getElementById('%s').getBoundingClientRect().top" element-id)
-               "0")))
-         (y3 (max y1 y2)))
-    ;; Now we need to tell Emacs to scroll the element into view.
-    (xwidget-log "scroll: %d" y3)
-    (set-window-vscroll (selected-window) y3 t)))
+  (xwidget-webkit-execute-script
+   xw
+   (format "
+(function (query) {
+  var el = document.getElementById(query) ||
+           document.getElementsByName(query)[0];
+  if (el !== undefined) {
+    window.scrollTo(0, el.offsetTop);
+  }
+})('%s');"
+    element-id)))
 
 (defun xwidget-webkit-adjust-size-to-content ()
   "Adjust webkit to content size."
