@@ -199,7 +199,7 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
                 (xwidget-log "webkit finished loading: '%s'" title)
                 ;;TODO - check the native/internal scroll
                 ;;(xwidget-adjust-size-to-content xwidget)
-                (xwidget-webkit-adjust-size-dispatch) ;;TODO xwidget arg
+                (xwidget-webkit-adjust-size-to-window xwidget)
                 (rename-buffer (format "*xwidget webkit: %s *" title))))
              (pop-to-buffer (current-buffer)))
             ((eq xwidget-event-type 'decide-policy)
@@ -411,18 +411,18 @@ For example, use this to display an anchor."
 (defun xwidget-webkit-adjust-size-dispatch ()
   "Adjust size according to mode."
   (interactive)
-  (xwidget-webkit-adjust-size-to-window)
+  (xwidget-webkit-adjust-size-to-window (xwidget-webkit-current-session))
   ;; The recenter is intended to correct a visual glitch.
   ;; It errors out if the buffer isn't visible, but then we don't get
   ;; the glitch, so silence errors.
   (ignore-errors
     (recenter-top-bottom)))
 
-(defun xwidget-webkit-adjust-size-to-window ()
-  "Adjust webkit to window."
-  (interactive)
-  (xwidget-resize (xwidget-webkit-current-session) (window-pixel-width)
-                  (window-pixel-height)))
+(defun xwidget-webkit-adjust-size-to-window (xwidget &optional window)
+  "Adjust the size of the webkit XWIDGET to fit the WINDOW."
+  (xwidget-resize xwidget
+                  (window-pixel-width window)
+                  (window-pixel-height window)))
 
 (defun xwidget-webkit-adjust-size (w h)
   "Manually set webkit size to width W, height H."
@@ -437,6 +437,21 @@ For example, use this to display an anchor."
                                  (car (window-inside-pixel-edges)))
                               1000))
 
+(defun xwidget-webkit-auto-adjust-size (window)
+  "Adjust the size of the webkit widget in the given WINDOW."
+  (with-current-buffer (window-buffer window)
+    (when (eq major-mode 'xwidget-webkit-mode)
+      (let ((xwidget (xwidget-webkit-current-session)))
+        (xwidget-webkit-adjust-size-to-window xwidget window)))))
+
+(defun xwidget-webkit-adjust-size-in-frame (frame)
+  "Dynamically adjust webkit widget for all windows of the FRAME."
+  (walk-windows 'xwidget-webkit-auto-adjust-size 'no-minibuf frame))
+
+(eval-after-load 'xwidget-webkit-mode
+  (add-to-list 'window-size-change-functions
+               'xwidget-webkit-adjust-size-in-frame))
+
 (defun xwidget-webkit-new-session (url)
   "Create a new webkit session buffer with URL."
   (let*
@@ -444,7 +459,9 @@ For example, use this to display an anchor."
        xw)
     (setq xwidget-webkit-last-session-buffer (switch-to-buffer
                                               (get-buffer-create bufname)))
-    (insert " 'a' adjusts the xwidget size.")
+    ;; The xwidget id is stored in a text property, so we need to have
+    ;; at least character in this buffer.
+    (insert " ")
     (setq xw (xwidget-insert 1 'webkit bufname
                              (window-pixel-width)
                              (window-pixel-height)))
