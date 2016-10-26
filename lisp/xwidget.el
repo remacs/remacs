@@ -124,8 +124,8 @@ Interactively, URL defaults to the string looking like a url around point."
     (define-key map [remap backward-char]       'xwidget-webkit-scroll-backward)
     (define-key map [remap right-char]          'xwidget-webkit-scroll-forward)
     (define-key map [remap left-char]           'xwidget-webkit-scroll-backward)
-    ;; (define-key map [remap previous-line]          'image-previous-line)
-    ;; (define-key map [remap next-line]              'image-next-line)
+    (define-key map [remap previous-line]       'xwidget-webkit-scroll-down)
+    (define-key map [remap next-line]           'xwidget-webkit-scroll-up)
 
     ;; (define-key map [remap move-beginning-of-line] 'image-bol)
     ;; (define-key map [remap move-end-of-line]       'image-eol)
