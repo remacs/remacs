@@ -27,10 +27,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "keyboard.h"
 #include "gtkutil.h"
 
-#include <webkit/webkitwebview.h>
-#include <webkit/webkitwebnavigationaction.h>
-#include <webkit/webkitdownload.h>
-#include <webkit/webkitwebpolicydecision.h>
+#include <webkit2/webkit2.h>
 
 static struct xwidget *
 allocate_xwidget (void)
@@ -50,34 +47,16 @@ allocate_xwidget_view (void)
 
 static struct xwidget_view *xwidget_view_lookup (struct xwidget *,
 						 struct window *);
-static void webkit_document_load_finished_cb (WebKitWebView *, WebKitWebFrame *,
-					      gpointer);
-static gboolean webkit_download_cb (WebKitWebView *, WebKitDownload *, gpointer);
+static void webkit_view_load_changed_cb (WebKitWebView *,
+                                         WebKitLoadEvent,
+                                         gpointer);
+static gboolean webkit_download_cb (WebKitWebContext *, WebKitDownload *, gpointer);
 
 static gboolean
-webkit_mime_type_policy_typedecision_requested_cb (WebKitWebView *,
-                                                   WebKitWebFrame *,
-                                                   WebKitNetworkRequest *,
-                                                   gchar *,
-                                                   WebKitWebPolicyDecision *,
-                                                   gpointer);
-
-static gboolean
-webkit_new_window_policy_decision_requested_cb (WebKitWebView *,
-                                                WebKitWebFrame *,
-                                                WebKitNetworkRequest *,
-                                                WebKitWebNavigationAction *,
-                                                WebKitWebPolicyDecision *,
-                                                gpointer);
-
-static gboolean
-webkit_navigation_policy_decision_requested_cb (WebKitWebView *,
-                                                WebKitWebFrame *,
-                                                WebKitNetworkRequest *,
-                                                WebKitWebNavigationAction *,
-                                                WebKitWebPolicyDecision *,
-                                                gpointer);
-
+webkit_decide_policy_cb (WebKitWebView *,
+                         WebKitPolicyDecision *,
+                         WebKitPolicyDecisionType,
+                         gpointer);
 
 
 DEFUN ("make-xwidget",
@@ -168,29 +147,17 @@ Returns the newly constructed xwidget, or nil if construction fails.  */)
       if (EQ (xw->type, Qwebkit))
         {
           g_signal_connect (G_OBJECT (xw->widget_osr),
-                            "document-load-finished",
-                            G_CALLBACK (webkit_document_load_finished_cb), xw);
+                            "load-changed",
+                            G_CALLBACK (webkit_view_load_changed_cb), xw);
 
-          g_signal_connect (G_OBJECT (xw->widget_osr),
-                            "download-requested",
+          g_signal_connect (G_OBJECT (webkit_web_context_get_default ()),
+                            "download-started",
                             G_CALLBACK (webkit_download_cb), xw);
 
           g_signal_connect (G_OBJECT (xw->widget_osr),
-                            "mime-type-policy-decision-requested",
+                            "decide-policy",
                             G_CALLBACK
-                            (webkit_mime_type_policy_typedecision_requested_cb),
-                            xw);
-
-          g_signal_connect (G_OBJECT (xw->widget_osr),
-                            "new-window-policy-decision-requested",
-                            G_CALLBACK
-                            (webkit_new_window_policy_decision_requested_cb),
-                            xw);
-
-          g_signal_connect (G_OBJECT (xw->widget_osr),
-                            "navigation-policy-decision-requested",
-                            G_CALLBACK
-                            (webkit_navigation_policy_decision_requested_cb),
+                            (webkit_decide_policy_cb),
                             xw);
         }
 
@@ -284,81 +251,83 @@ store_xwidget_event_string (struct xwidget *xw, const char *eventname,
   kbd_buffer_store_event (&event);
 }
 
-/* TODO deprecated, use load-status.  */
 void
-webkit_document_load_finished_cb (WebKitWebView *webkitwebview,
-                                  WebKitWebFrame *arg1,
-                                  gpointer data)
+webkit_view_load_changed_cb (WebKitWebView *webkitwebview,
+                             WebKitLoadEvent load_event,
+                             gpointer data)
 {
-  struct xwidget *xw = g_object_get_data (G_OBJECT (webkitwebview),
-                                          XG_XWIDGET);
-
-  store_xwidget_event_string (xw, "document-load-finished", "");
+  switch (load_event) {
+  case WEBKIT_LOAD_FINISHED:
+    {
+      struct xwidget *xw = g_object_get_data (G_OBJECT (webkitwebview),
+                                              XG_XWIDGET);
+      store_xwidget_event_string (xw, "load-changed", "");
+      break;
+    }
+  default:
+    break;
+  }
 }
 
 gboolean
-webkit_download_cb (WebKitWebView *webkitwebview,
+webkit_download_cb (WebKitWebContext *webkitwebcontext,
                     WebKitDownload *arg1,
                     gpointer data)
 {
-  struct xwidget *xw = g_object_get_data (G_OBJECT (webkitwebview),
+  WebKitWebView *view = webkit_download_get_web_view(arg1);
+  WebKitURIRequest *request = webkit_download_get_request(arg1);
+  struct xwidget *xw = g_object_get_data (G_OBJECT (view),
                                           XG_XWIDGET);
-  store_xwidget_event_string (xw, "download-requested",
-                              webkit_download_get_uri (arg1));
+
+  store_xwidget_event_string (xw, "download-started",
+                              webkit_uri_request_get_uri(request));
   return FALSE;
 }
 
 static gboolean
-webkit_mime_type_policy_typedecision_requested_cb (WebKitWebView *webView,
-						   WebKitWebFrame *frame,
-						   WebKitNetworkRequest *request,
-						   gchar *mimetype,
-						   WebKitWebPolicyDecision *policy_decision,
-						   gpointer user_data)
+webkit_decide_policy_cb (WebKitWebView *webView,
+                         WebKitPolicyDecision *decision,
+                         WebKitPolicyDecisionType type,
+                         gpointer user_data)
 {
-  /* This function makes webkit send a download signal for all unknown
-     mime types.  TODO: Defer the decision to Lisp, so that it's
-     possible to make Emacs handle mime text for instance.  */
-  if (!webkit_web_view_can_show_mime_type (webView, mimetype))
+  switch (type) {
+  case WEBKIT_POLICY_DECISION_TYPE_RESPONSE:
+    /* This function makes webkit send a download signal for all unknown
+       mime types.  TODO: Defer the decision to Lisp, so that it's
+       possible to make Emacs handle mime text for instance.  */
     {
-      webkit_web_policy_decision_download (policy_decision);
-      return TRUE;
+      WebKitResponsePolicyDecision *response =
+        WEBKIT_RESPONSE_POLICY_DECISION (decision);
+      if (!webkit_response_policy_decision_is_mime_type_supported (response))
+        {
+          webkit_policy_decision_download (decision);
+          return TRUE;
+        }
+      else
+        return FALSE;
+      break;
     }
-  else
+  case WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION:
+  case WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION:
+    {
+      WebKitNavigationPolicyDecision *navigation_decision =
+        WEBKIT_NAVIGATION_POLICY_DECISION (decision);
+      WebKitNavigationAction *navigation_action =
+        webkit_navigation_policy_decision_get_navigation_action (navigation_decision);
+      WebKitURIRequest *request =
+        webkit_navigation_action_get_request (navigation_action);
+
+      struct xwidget *xw = g_object_get_data (G_OBJECT (webView), XG_XWIDGET);
+      store_xwidget_event_string (xw, "decide-policy",
+                                  webkit_uri_request_get_uri (request));
+      return FALSE;
+      break;
+    }
+  default:
     return FALSE;
+  }
 }
 
-static gboolean
-webkit_new_window_policy_decision_requested_cb (WebKitWebView *webView,
-						WebKitWebFrame *frame,
-						WebKitNetworkRequest *request,
-						WebKitWebNavigationAction *navigation_action,
-						WebKitWebPolicyDecision *policy_decision,
-						gpointer user_data)
-{
-  struct xwidget *xw = g_object_get_data (G_OBJECT (webView), XG_XWIDGET);
-  webkit_web_navigation_action_get_original_uri (navigation_action);
-
-  store_xwidget_event_string (xw, "new-window-policy-decision-requested",
-                              webkit_web_navigation_action_get_original_uri
-                              (navigation_action));
-  return FALSE;
-}
-
-static gboolean
-webkit_navigation_policy_decision_requested_cb (WebKitWebView *webView,
-						WebKitWebFrame *frame,
-						WebKitNetworkRequest *request,
-						WebKitWebNavigationAction *navigation_action,
-						WebKitWebPolicyDecision *policy_decision,
-						gpointer user_data)
-{
-  struct xwidget *xw = g_object_get_data (G_OBJECT (webView), XG_XWIDGET);
-  store_xwidget_event_string (xw, "navigation-policy-decision-requested",
-                              webkit_web_navigation_action_get_original_uri
-                              (navigation_action));
-  return FALSE;
-}
 
 /* For gtk3 offscreen rendered widgets.  */
 static gboolean
@@ -599,8 +568,13 @@ DEFUN ("xwidget-webkit-execute-script",
 {
   WEBKIT_FN_INIT ();
   CHECK_STRING (script);
-  webkit_web_view_execute_script (WEBKIT_WEB_VIEW (xw->widget_osr),
-                                  SSDATA (script));
+  // TODO: provide callback function to do something with the return
+  // value!  This allows us to get rid of the title hack.
+  webkit_web_view_run_javascript (WEBKIT_WEB_VIEW (xw->widget_osr),
+                                  SSDATA (script),
+                                  NULL, /*cancellable*/
+                                  NULL, /*callback*/
+                                  NULL /*user data*/);
   return Qnil;
 }
 

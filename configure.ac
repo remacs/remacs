@@ -2630,8 +2630,8 @@ if test "$with_xwidgets" != "no"; then
   test "$USE_GTK_TOOLKIT" = "GTK3" && test "$window_system" != "none" ||
     AC_MSG_ERROR([xwidgets requested but gtk3 not used.])
 
-  WEBKIT_REQUIRED=1.4.0
-  WEBKIT_MODULES="webkitgtk-3.0 >= $WEBKIT_REQUIRED"
+  WEBKIT_REQUIRED=2.12
+  WEBKIT_MODULES="webkit2gtk-4.0 >= $WEBKIT_REQUIRED"
   EMACS_CHECK_MODULES([WEBKIT], [$WEBKIT_MODULES])
   HAVE_XWIDGETS=$HAVE_WEBKIT
   test $HAVE_XWIDGETS = yes ||
