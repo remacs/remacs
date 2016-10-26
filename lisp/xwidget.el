@@ -42,6 +42,7 @@
 (declare-function xwidget-webkit-execute-script "xwidget.c"
                   (xwidget script &optional callback))
 (declare-function xwidget-webkit-goto-uri "xwidget.c" (xwidget uri))
+(declare-function xwidget-webkit-zoom "xwidget.c" (xwidget factor))
 (declare-function xwidget-plist "xwidget.c" (xwidget))
 (declare-function set-xwidget-plist "xwidget.c" (xwidget plist))
 (declare-function xwidget-view-window "xwidget.c" (xwidget-view))
@@ -106,6 +107,8 @@ Interactively, URL defaults to the string looking like a url around point."
     (define-key map "t" (lambda () (interactive) (message "o"))) ;FIXME: ?!?
     (define-key map "\C-m" 'xwidget-webkit-insert-string)
     (define-key map "w" 'xwidget-webkit-current-url)
+    (define-key map "+" 'xwidget-webkit-zoom-in)
+    (define-key map "-" 'xwidget-webkit-zoom-out)
 
     ;;similar to image mode bindings
     (define-key map (kbd "SPC")                 'xwidget-webkit-scroll-up)
@@ -130,6 +133,16 @@ Interactively, URL defaults to the string looking like a url around point."
     ;; (define-key map [remap end-of-buffer]          'image-eob)
     map)
   "Keymap for `xwidget-webkit-mode'.")
+
+(defun xwidget-webkit-zoom-in ()
+  "Increase webkit view zoom factor."
+  (interactive)
+  (xwidget-webkit-zoom (xwidget-webkit-current-session) 0.1))
+
+(defun xwidget-webkit-zoom-out ()
+  "Decrease webkit view zoom factor."
+  (interactive)
+  (xwidget-webkit-zoom (xwidget-webkit-current-session) -0.1))
 
 (defun xwidget-webkit-scroll-up ()
   "Scroll webkit up."

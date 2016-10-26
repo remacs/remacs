@@ -681,6 +681,25 @@ DEFUN ("xwidget-webkit-goto-uri",
   return Qnil;
 }
 
+DEFUN ("xwidget-webkit-zoom",
+       Fxwidget_webkit_zoom, Sxwidget_webkit_zoom,
+       2, 2, 0,
+       doc: /* Change the zoom factor of the xwidget webkit instance
+referenced by XWIDGET.  */)
+  (Lisp_Object xwidget, Lisp_Object factor)
+{
+  WEBKIT_FN_INIT ();
+  if (FLOATP (factor))
+    {
+      double zoom_change = XFLOAT_DATA (factor);
+      webkit_web_view_set_zoom_level
+        (WEBKIT_WEB_VIEW (xw->widget_osr),
+         webkit_web_view_get_zoom_level
+         (WEBKIT_WEB_VIEW (xw->widget_osr)) + zoom_change);
+    }
+  return Qnil;
+}
+
 
 DEFUN ("xwidget-webkit-execute-script",
        Fxwidget_webkit_execute_script, Sxwidget_webkit_execute_script,
@@ -953,6 +972,7 @@ syms_of_xwidget (void)
   defsubr (&Sset_xwidget_query_on_exit_flag);
 
   defsubr (&Sxwidget_webkit_goto_uri);
+  defsubr (&Sxwidget_webkit_zoom);
   defsubr (&Sxwidget_webkit_execute_script);
   DEFSYM (Qwebkit, "webkit");
 
