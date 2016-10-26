@@ -334,6 +334,23 @@ XW is the xwidget identifier, TEXT is retrieved from the webkit."
   ;;TODO convert linefeed to \n
   )
 
+(defun xwidget-webkit-show-element (xw element-selector)
+  "Make webkit xwidget XW show a named element ELEMENT-SELECTOR.
+The ELEMENT-SELECTOR must be a valid CSS selector.  For example,
+use this to display an anchor."
+  (interactive (list (xwidget-webkit-current-session)
+                     (read-string "Element selector: ")))
+  (xwidget-webkit-execute-script
+   xw
+   (format "
+(function (query) {
+  var el = document.querySelector(query);
+  if (el !== null) {
+    window.scrollTo(0, el.offsetTop);
+  }
+})('%s');"
+    element-selector)))
+
 (defun xwidget-webkit-show-named-element (xw element-name)
   "Make webkit xwidget XW show a named element ELEMENT-NAME.
 For example, use this to display an anchor."
