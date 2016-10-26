@@ -337,6 +337,12 @@ whose content matches a regexp; bound to '% g'.
 
 *** Support for opening links to man pages in Man or WoMan mode.
 
+** Comint
+
+---
+*** New user option 'comint-move-point-for-matching-input' to control
+where to place point after C-c M-r and C-c M-s.
+
 ** Compilation mode
 
 ---
