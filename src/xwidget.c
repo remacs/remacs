@@ -28,6 +28,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "gtkutil.h"
 
 #include <webkit2/webkit2.h>
+#include <JavaScriptCore/JavaScript.h>
 
 static struct xwidget *
 allocate_xwidget (void)
@@ -50,6 +51,9 @@ static struct xwidget_view *xwidget_view_lookup (struct xwidget *,
 static void webkit_view_load_changed_cb (WebKitWebView *,
                                          WebKitLoadEvent,
                                          gpointer);
+static void webkit_javascript_finished_cb (GObject *,
+                                           GAsyncResult *,
+                                           gpointer);
 static gboolean webkit_download_cb (WebKitWebContext *, WebKitDownload *, gpointer);
 
 static gboolean
@@ -251,6 +255,22 @@ store_xwidget_event_string (struct xwidget *xw, const char *eventname,
   kbd_buffer_store_event (&event);
 }
 
+static void
+store_xwidget_js_callback_event (struct xwidget *xw,
+                                 Lisp_Object proc,
+                                 Lisp_Object argument)
+{
+  struct input_event event;
+  Lisp_Object xwl;
+  XSETXWIDGET (xwl, xw);
+  EVENT_INIT (event);
+  event.kind = XWIDGET_EVENT;
+  event.frame_or_window = Qnil;
+  event.arg = list4 (intern ("javascript-callback"), xwl, proc, argument);
+  kbd_buffer_store_event (&event);
+}
+
+
 void
 webkit_view_load_changed_cb (WebKitWebView *webkitwebview,
                              WebKitLoadEvent load_event,
@@ -268,6 +288,128 @@ webkit_view_load_changed_cb (WebKitWebView *webkitwebview,
     break;
   }
 }
+
+/* Recursively convert a JavaScript value to a Lisp value. */
+Lisp_Object
+webkit_js_to_lisp (JSContextRef context, JSValueRef value)
+{
+  switch (JSValueGetType (context, value))
+    {
+    case kJSTypeString:
+      {
+        JSStringRef js_str_value;
+        gchar *str_value;
+        gsize str_length;
+
+        js_str_value = JSValueToStringCopy (context, value, NULL);
+        str_length = JSStringGetMaximumUTF8CStringSize (js_str_value);
+        str_value = (gchar *)g_malloc (str_length);
+        JSStringGetUTF8CString (js_str_value, str_value, str_length);
+        JSStringRelease (js_str_value);
+        return build_string (str_value);
+      }
+    case kJSTypeBoolean:
+      return (JSValueToBoolean (context, value)) ? Qt : Qnil;
+    case kJSTypeNumber:
+      return make_number (JSValueToNumber (context, value, NULL));
+    case kJSTypeObject:
+      {
+        if (JSValueIsArray (context, value))
+          {
+            JSStringRef pname = JSStringCreateWithUTF8CString("length");
+            JSValueRef len = JSObjectGetProperty (context, (JSObjectRef) value, pname, NULL);
+            int n = JSValueToNumber (context, len, NULL);
+            JSStringRelease(pname);
+
+            Lisp_Object obj;
+            struct Lisp_Vector *p = allocate_vector (n);
+
+            for (int i = 0; i < n; ++i)
+              {
+                p->contents[i] =
+                  webkit_js_to_lisp (context,
+                                     JSObjectGetPropertyAtIndex (context,
+                                                                 (JSObjectRef) value,
+                                                                 i, NULL));
+              }
+            XSETVECTOR (obj, p);
+            return obj;
+          }
+        else
+          {
+            JSPropertyNameArrayRef properties =
+              JSObjectCopyPropertyNames (context, (JSObjectRef) value);
+
+            int n = JSPropertyNameArrayGetCount (properties);
+            Lisp_Object obj;
+
+            // TODO: can we use a regular list here?
+            struct Lisp_Vector *p = allocate_vector (n);
+
+            for (int i = 0; i < n; ++i)
+              {
+                JSStringRef name = JSPropertyNameArrayGetNameAtIndex (properties, i);
+                JSValueRef property = JSObjectGetProperty (context,
+                                                           (JSObjectRef) value,
+                                                           name, NULL);
+                gchar *str_name;
+                gsize str_length;
+                str_length = JSStringGetMaximumUTF8CStringSize (name);
+                str_name = (gchar *)g_malloc (str_length);
+                JSStringGetUTF8CString (name, str_name, str_length);
+                JSStringRelease (name);
+
+                p->contents[i] =
+                  Fcons (build_string (str_name),
+                         webkit_js_to_lisp (context, property));
+              }
+
+            JSPropertyNameArrayRelease (properties);
+            XSETVECTOR (obj, p);
+            return obj;
+          }
+      }
+    case kJSTypeUndefined:
+    case kJSTypeNull:
+    default:
+      return Qnil;
+    }
+}
+
+static void
+webkit_javascript_finished_cb (GObject      *webview,
+                               GAsyncResult *result,
+                               gpointer      lisp_callback)
+{
+    WebKitJavascriptResult *js_result;
+    JSValueRef value;
+    JSGlobalContextRef context;
+    GError *error = NULL;
+    struct xwidget *xw = g_object_get_data (G_OBJECT (webview),
+                                            XG_XWIDGET);
+
+    js_result = webkit_web_view_run_javascript_finish
+      (WEBKIT_WEB_VIEW (webview), result, &error);
+
+    if (!js_result)
+      {
+        g_warning ("Error running javascript: %s", error->message);
+        g_error_free (error);
+        return;
+      }
+
+    context = webkit_javascript_result_get_global_context (js_result);
+    value = webkit_javascript_result_get_value (js_result);
+    Lisp_Object lisp_value = webkit_js_to_lisp (context, value);
+    webkit_javascript_result_unref (js_result);
+
+    // Register an xwidget event here, which then runs the callback.
+    // This ensures that the callback runs in sync with the Emacs
+    // event loop.
+    store_xwidget_js_callback_event (xw, (Lisp_Object)lisp_callback,
+                                     lisp_value);
+}
+
 
 gboolean
 webkit_download_cb (WebKitWebContext *webkitwebcontext,
@@ -562,19 +704,28 @@ DEFUN ("xwidget-webkit-goto-uri",
 
 DEFUN ("xwidget-webkit-execute-script",
        Fxwidget_webkit_execute_script, Sxwidget_webkit_execute_script,
-       2, 2, 0,
-       doc: /* Make the Webkit XWIDGET execute JavaScript SCRIPT.  */)
-  (Lisp_Object xwidget, Lisp_Object script)
+       2, 3, 0,
+       doc: /* Make the Webkit XWIDGET execute JavaScript SCRIPT.  If
+FUN is provided, feed the JavaScript return value to the single
+argument procedure FUN.*/)
+  (Lisp_Object xwidget, Lisp_Object script, Lisp_Object fun)
 {
   WEBKIT_FN_INIT ();
   CHECK_STRING (script);
-  // TODO: provide callback function to do something with the return
-  // value!  This allows us to get rid of the title hack.
+  if (!NILP (fun) && (!FUNCTIONP (fun)))
+    wrong_type_argument (Qinvalid_function, fun);
+
+  void *callback = (FUNCTIONP (fun)) ?
+    &webkit_javascript_finished_cb : NULL;
+
+  // JavaScript execution happens asynchronously.  If an elisp
+  // callback function is provided we pass it to the C callback
+  // procedure that retrieves the return value.
   webkit_web_view_run_javascript (WEBKIT_WEB_VIEW (xw->widget_osr),
                                   SSDATA (script),
                                   NULL, /*cancellable*/
-                                  NULL, /*callback*/
-                                  NULL /*user data*/);
+                                  callback,
+                                  (gpointer) fun);
   return Qnil;
 }
 

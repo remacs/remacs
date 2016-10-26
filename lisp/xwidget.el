@@ -42,7 +42,8 @@
 (declare-function xwidget-webkit-get-title "xwidget.c" (xwidget))
 (declare-function xwidget-size-request "xwidget.c" (xwidget))
 (declare-function xwidget-resize "xwidget.c" (xwidget new-width new-height))
-(declare-function xwidget-webkit-execute-script "xwidget.c" (xwidget script))
+(declare-function xwidget-webkit-execute-script "xwidget.c"
+                  (xwidget script &optional callback))
 (declare-function xwidget-webkit-goto-uri "xwidget.c" (xwidget uri))
 (declare-function xwidget-plist "xwidget.c" (xwidget))
 (declare-function set-xwidget-plist "xwidget.c" (xwidget plist))
@@ -186,22 +187,26 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
       (xwidget-log
        "error: callback called for xwidget with dead buffer")
     (with-current-buffer (xwidget-buffer xwidget)
-      (let* ((strarg  (nth 3 last-input-event)))
-        (cond ((eq xwidget-event-type 'load-changed)
-               (xwidget-log "webkit finished loading: '%s'"
-                            (xwidget-webkit-get-title xwidget))
-               ;;TODO - check the native/internal scroll
-               ;;(xwidget-adjust-size-to-content xwidget)
-               (xwidget-webkit-adjust-size-dispatch) ;;TODO xwidget arg
-               (rename-buffer (format "*xwidget webkit: %s *"
-                                      (xwidget-webkit-get-title xwidget)))
-               (pop-to-buffer (current-buffer)))
-              ((eq xwidget-event-type 'decide-policy)
+      (cond ((eq xwidget-event-type 'load-changed)
+             (xwidget-log "webkit finished loading: '%s'"
+                          (xwidget-webkit-get-title xwidget))
+             ;;TODO - check the native/internal scroll
+             ;;(xwidget-adjust-size-to-content xwidget)
+             (xwidget-webkit-adjust-size-dispatch) ;;TODO xwidget arg
+             (rename-buffer (format "*xwidget webkit: %s *"
+                                    (xwidget-webkit-get-title xwidget)))
+             (pop-to-buffer (current-buffer)))
+            ((eq xwidget-event-type 'decide-policy)
+             (let ((strarg  (nth 3 last-input-event)))
                (if (string-match ".*#\\(.*\\)" strarg)
                    (xwidget-webkit-show-id-or-named-element
                     xwidget
-                    (match-string 1 strarg))))
-              (t (xwidget-log "unhandled event:%s" xwidget-event-type)))))))
+                    (match-string 1 strarg)))))
+            ((eq xwidget-event-type 'javascript-callback)
+             (let ((proc (nth 3 last-input-event))
+                   (arg  (nth 4 last-input-event)))
+               (funcall proc arg)))
+            (t (xwidget-log "unhandled event:%s" xwidget-event-type))))))
 
 (defvar bookmark-make-record-function)
 (define-derived-mode xwidget-webkit-mode
