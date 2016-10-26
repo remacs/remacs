@@ -445,7 +445,9 @@ For example, use this to display an anchor."
     (setq xwidget-webkit-last-session-buffer (switch-to-buffer
                                               (get-buffer-create bufname)))
     (insert " 'a' adjusts the xwidget size.")
-    (setq xw (xwidget-insert 1 'webkit  bufname 1000 1000))
+    (setq xw (xwidget-insert 1 'webkit bufname
+                             (window-pixel-width)
+                             (window-pixel-height)))
     (xwidget-put xw 'callback 'xwidget-webkit-callback)
     (xwidget-webkit-mode)
     (xwidget-webkit-goto-uri (xwidget-webkit-last-session) url)))
