@@ -273,7 +273,7 @@ webkit_view_load_changed_cb (WebKitWebView *webkitwebview,
 }
 
 /* Recursively convert a JavaScript value to a Lisp value. */
-Lisp_Object
+static Lisp_Object
 webkit_js_to_lisp (JSContextRef context, JSValueRef value)
 {
   switch (JSValueGetType (context, value))
