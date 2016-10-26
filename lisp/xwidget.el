@@ -286,31 +286,30 @@ function findactiveelement(doc){
   ;;TODO the activeelement type needs to be examined, for iframe, etc.
   )
 
-(defun xwidget-webkit-insert-string (xw str)
-  "Insert string STR in the active field in the webkit XW."
+(defun xwidget-webkit-insert-string ()
+  "Prompt for a string and insert it in the active field in the
+current webkit widget."
   ;; Read out the string in the field first and provide for edit.
-  (interactive
-   (let* ((xww (xwidget-webkit-current-session))
-
-          (field-value
-           (progn
-             (xwidget-webkit-execute-script xww xwidget-webkit-activeelement-js)
-             (xwidget-webkit-execute-script-rv
-              xww
-              "findactiveelement(document).value;")))
-          (field-type (xwidget-webkit-execute-script-rv
-                       xww
-                       "findactiveelement(document).type;")))
-     (list xww
-           (cond ((equal "text" field-type)
-                  (read-string "Text: " field-value))
-                 ((equal "password" field-type)
-                  (read-passwd "Password: " nil field-value))
-                 ((equal "textarea" field-type)
-                  (xwidget-webkit-begin-edit-textarea xww field-value))))))
-  (xwidget-webkit-execute-script
-   xw
-   (format "findactiveelement(document).value='%s'" str)))
+  (interactive)
+  (let ((xww (xwidget-webkit-current-session)))
+    (xwidget-webkit-execute-script
+     xww
+     (concat xwidget-webkit-activeelement-js "
+(function () {
+  var res = findactiveelement(document);
+  return [res.value, res.type];
+})();")
+     (lambda (field)
+       (let ((str (pcase field
+                    (`[,val "text"]
+                     (read-string "Text: " val))
+                    (`[,val "password"]
+                     (read-passwd "Password: " nil val))
+                    (`[,val "textarea"]
+                     (xwidget-webkit-begin-edit-textarea xww val)))))
+         (xwidget-webkit-execute-script
+          xww
+          (format "findactiveelement(document).value='%s'" str)))))))
 
 (defvar xwidget-xwbl)
 (defun xwidget-webkit-begin-edit-textarea (xw text)
