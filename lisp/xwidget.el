@@ -37,7 +37,6 @@
 (declare-function make-xwidget "xwidget.c"
                   (type title width height arguments &optional buffer))
 (declare-function xwidget-buffer "xwidget.c" (xwidget))
-(declare-function xwidget-webkit-get-title "xwidget.c" (xwidget))
 (declare-function xwidget-size-request "xwidget.c" (xwidget))
 (declare-function xwidget-resize "xwidget.c" (xwidget new-width new-height))
 (declare-function xwidget-webkit-execute-script "xwidget.c"
@@ -479,29 +478,6 @@ For example, use this to display an anchor."
    "document.URL" (lambda (rv)
                     (let ((url (kill-new (or rv ""))))
                       (message "url: %s" url)))))
-
-(defun xwidget-webkit-execute-script-rv (xw script &optional default)
-  "Same as `xwidget-webkit-execute-script' but with return value.
-XW is the webkit instance.  SCRIPT is the script to execute.
-DEFAULT is the default return value."
-  ;; Notice the ugly "title" hack.  It is needed because the Webkit
-  ;; API at the time of writing didn't support returning values.  This
-  ;; is a wrapper for the title hack so it's easy to remove should
-  ;; Webkit someday support JS return values or we find some other way
-  ;; to access the DOM.
-
-  ;; Reset webkit title.  Not very nice.
-  (let* ((emptytag "titlecantbewhitespaceohthehorror")
-         title)
-    (xwidget-webkit-execute-script xw (format "document.title=\"%s\";"
-                                              (or default emptytag)))
-    (xwidget-webkit-execute-script xw (format "document.title=%s;" script))
-    (setq title (xwidget-webkit-get-title xw))
-    (if (equal emptytag title)
-        (setq title ""))
-    (unless title
-      (setq title default))
-    title))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun xwidget-webkit-get-selection (proc)

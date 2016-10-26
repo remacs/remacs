@@ -709,27 +709,6 @@ argument procedure FUN.*/)
   return Qnil;
 }
 
-DEFUN ("xwidget-webkit-get-title",
-       Fxwidget_webkit_get_title, Sxwidget_webkit_get_title,
-       1, 1, 0,
-       doc: /* Return the title from the Webkit instance in XWIDGET.
-This can be used to work around the lack of a return value from the
-exec method.  */ )
-  (Lisp_Object xwidget)
-{
-  /* TODO support multibyte strings.  */
-  WEBKIT_FN_INIT ();
-  const gchar *str =
-    webkit_web_view_get_title (WEBKIT_WEB_VIEW (xw->widget_osr));
-  if (str == 0)
-    {
-      /* TODO maybe return Qnil instead.  I suppose webkit returns
-	 null pointer when doc is not properly loaded or something.  */
-      return build_string ("");
-    }
-  return build_string (str);
-}
-
 DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0,
        doc: /* Resize XWIDGET.  NEW_WIDTH, NEW_HEIGHT define the new size.  */ )
   (Lisp_Object xwidget, Lisp_Object new_width, Lisp_Object new_height)
@@ -975,7 +954,6 @@ syms_of_xwidget (void)
 
   defsubr (&Sxwidget_webkit_goto_uri);
   defsubr (&Sxwidget_webkit_execute_script);
-  defsubr (&Sxwidget_webkit_get_title);
   DEFSYM (Qwebkit, "webkit");
 
   defsubr (&Sxwidget_size_request);
