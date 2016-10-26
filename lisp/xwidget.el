@@ -36,8 +36,6 @@
 
 (declare-function make-xwidget "xwidget.c"
                   (type title width height arguments &optional buffer))
-(declare-function xwidget-set-adjustment "xwidget.c"
-                  (xwidget axis relative value))
 (declare-function xwidget-buffer "xwidget.c" (xwidget))
 (declare-function xwidget-webkit-get-title "xwidget.c" (xwidget))
 (declare-function xwidget-size-request "xwidget.c" (xwidget))
@@ -137,22 +135,30 @@ Interactively, URL defaults to the string looking like a url around point."
 (defun xwidget-webkit-scroll-up ()
   "Scroll webkit up."
   (interactive)
-  (xwidget-set-adjustment (xwidget-webkit-last-session) 'vertical t 50))
+  (xwidget-webkit-execute-script
+   (xwidget-webkit-current-session)
+   "window.scrollBy(0, 50);"))
 
 (defun xwidget-webkit-scroll-down ()
   "Scroll webkit down."
   (interactive)
-  (xwidget-set-adjustment (xwidget-webkit-last-session) 'vertical t -50))
+  (xwidget-webkit-execute-script
+   (xwidget-webkit-current-session)
+   "window.scrollBy(0, -50);"))
 
 (defun xwidget-webkit-scroll-forward ()
   "Scroll webkit forwards."
   (interactive)
-  (xwidget-set-adjustment (xwidget-webkit-last-session) 'horizontal t 50))
+  (xwidget-webkit-execute-script
+   (xwidget-webkit-current-session)
+   "window.scrollBy(50, 0);"))
 
 (defun xwidget-webkit-scroll-backward ()
   "Scroll webkit backwards."
   (interactive)
-  (xwidget-set-adjustment (xwidget-webkit-last-session) 'horizontal t -50))
+  (xwidget-webkit-execute-script
+   (xwidget-webkit-current-session)
+   "window.scrollBy(-50, 0);"))
 
 
 ;; The xwidget event needs to go into a higher level handler

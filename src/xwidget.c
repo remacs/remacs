@@ -103,25 +103,9 @@ Returns the newly constructed xwidget, or nil if construction fails.  */)
       gtk_window_resize (GTK_WINDOW (xw->widgetwindow_osr), xw->width,
                          xw->height);
 
-      /* WebKit OSR is the only scrolled component at the moment.  */
-      xw->widgetscrolledwindow_osr = NULL;
-
       if (EQ (xw->type, Qwebkit))
         {
-          xw->widgetscrolledwindow_osr = gtk_scrolled_window_new (NULL, NULL);
-          gtk_scrolled_window_set_min_content_height
-	    (GTK_SCROLLED_WINDOW (xw->widgetscrolledwindow_osr),
-	     xw->height);
-          gtk_scrolled_window_set_min_content_width
-	    (GTK_SCROLLED_WINDOW (xw->widgetscrolledwindow_osr),
-	     xw->width);
-          gtk_scrolled_window_set_policy
-	    (GTK_SCROLLED_WINDOW (xw->widgetscrolledwindow_osr),
-	     GTK_POLICY_ALWAYS, GTK_POLICY_ALWAYS);
-
           xw->widget_osr = webkit_web_view_new ();
-          gtk_container_add (GTK_CONTAINER (xw->widgetscrolledwindow_osr),
-                             GTK_WIDGET (WEBKIT_WEB_VIEW (xw->widget_osr)));
         }
 
       gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width,
@@ -130,7 +114,7 @@ Returns the newly constructed xwidget, or nil if construction fails.  */)
       if (EQ (xw->type, Qwebkit))
         {
           gtk_container_add (GTK_CONTAINER (xw->widgetwindow_osr),
-                             xw->widgetscrolledwindow_osr);
+                             GTK_WIDGET (WEBKIT_WEB_VIEW (xw->widget_osr)));
         }
       else
         {
@@ -140,7 +124,6 @@ Returns the newly constructed xwidget, or nil if construction fails.  */)
 
       gtk_widget_show (xw->widget_osr);
       gtk_widget_show (xw->widgetwindow_osr);
-      gtk_widget_show (xw->widgetscrolledwindow_osr);
 
       /* Store some xwidget data in the gtk widgets for convenient
          retrieval in the event handlers.  */
@@ -482,10 +465,7 @@ xwidget_osr_draw_cb (GtkWidget *widget, cairo_t *cr, gpointer data)
   cairo_rectangle (cr, 0, 0, xv->clip_right, xv->clip_bottom);
   cairo_clip (cr);
 
-  if (xw->widgetscrolledwindow_osr != NULL)
-    gtk_widget_draw (xw->widgetscrolledwindow_osr, cr);
-  else
-    gtk_widget_draw (xw->widget_osr, cr);
+  gtk_widget_draw (xw->widget_osr, cr);
   return FALSE;
 }
 
@@ -767,21 +747,11 @@ DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0,
   /* If there is an offscreen widget resize it first.  */
   if (xw->widget_osr)
     {
-      /* Use minimum size.  */
-      gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr),
-                                   xw->width, xw->height);
-
       gtk_window_resize (GTK_WINDOW (xw->widgetwindow_osr), xw->width,
                          xw->height);
-      gtk_scrolled_window_set_min_content_height
-	(GTK_SCROLLED_WINDOW (xw->widgetscrolledwindow_osr),
-	 xw->height);
-      gtk_scrolled_window_set_min_content_width
-	(GTK_SCROLLED_WINDOW (xw->widgetscrolledwindow_osr),
-	 xw->width);
-
       gtk_container_resize_children (GTK_CONTAINER (xw->widgetwindow_osr));
-
+      gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width,
+                                   xw->height);
     }
 
   for (Lisp_Object tail = Vxwidget_view_list; CONSP (tail); tail = XCDR (tail))
@@ -799,30 +769,6 @@ DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0,
 }
 
 
-
-DEFUN ("xwidget-set-adjustment",
-       Fxwidget_set_adjustment, Sxwidget_set_adjustment, 4, 4, 0,
-       doc: /* Set native scrolling for XWIDGET.
-AXIS can be `vertical' or `horizontal'.
-If RELATIVE is t, scroll relative, otherwise absolutely.
-VALUE is the amount to scroll, either relatively or absolutely.  */)
-  (Lisp_Object xwidget, Lisp_Object axis, Lisp_Object relative,
-   Lisp_Object value)
-{
-  CHECK_XWIDGET (xwidget);
-  CHECK_NUMBER (value);
-  struct xwidget *xw = XXWIDGET (xwidget);
-  GtkAdjustment *adjustment
-    = ((EQ (Qhorizontal, axis)
-	? gtk_scrolled_window_get_hadjustment
-	: gtk_scrolled_window_get_vadjustment)
-       (GTK_SCROLLED_WINDOW (xw->widgetscrolledwindow_osr)));
-  double final_value = XINT (value);
-  if (EQ (Qt, relative))
-    final_value += gtk_adjustment_get_value (adjustment);
-  gtk_adjustment_set_value (adjustment, final_value);
-  return Qnil;
-}
 
 
 DEFUN ("xwidget-size-request",
@@ -1038,8 +984,6 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_plist);
   defsubr (&Sxwidget_buffer);
   defsubr (&Sset_xwidget_plist);
-
-  defsubr (&Sxwidget_set_adjustment);
 
   DEFSYM (Qxwidget, "xwidget");
 
