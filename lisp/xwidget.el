@@ -194,13 +194,14 @@ XWIDGET instance, XWIDGET-EVENT-TYPE depends on the originating xwidget."
        "error: callback called for xwidget with dead buffer")
     (with-current-buffer (xwidget-buffer xwidget)
       (cond ((eq xwidget-event-type 'load-changed)
-             (xwidget-log "webkit finished loading: '%s'"
-                          (xwidget-webkit-get-title xwidget))
-             ;;TODO - check the native/internal scroll
-             ;;(xwidget-adjust-size-to-content xwidget)
-             (xwidget-webkit-adjust-size-dispatch) ;;TODO xwidget arg
-             (rename-buffer (format "*xwidget webkit: %s *"
-                                    (xwidget-webkit-get-title xwidget)))
+             (xwidget-webkit-execute-script
+              xwidget "document.title"
+              (lambda (title)
+                (xwidget-log "webkit finished loading: '%s'" title)
+                ;;TODO - check the native/internal scroll
+                ;;(xwidget-adjust-size-to-content xwidget)
+                (xwidget-webkit-adjust-size-dispatch) ;;TODO xwidget arg
+                (rename-buffer (format "*xwidget webkit: %s *" title))))
              (pop-to-buffer (current-buffer)))
             ((eq xwidget-event-type 'decide-policy)
              (let ((strarg  (nth 3 last-input-event)))
