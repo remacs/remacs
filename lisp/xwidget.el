@@ -129,8 +129,8 @@ Interactively, URL defaults to the string looking like a url around point."
 
     ;; (define-key map [remap move-beginning-of-line] 'image-bol)
     ;; (define-key map [remap move-end-of-line]       'image-eol)
-    ;; (define-key map [remap beginning-of-buffer]    'image-bob)
-    ;; (define-key map [remap end-of-buffer]          'image-eob)
+    (define-key map [remap beginning-of-buffer] 'xwidget-webkit-scroll-top)
+    (define-key map [remap end-of-buffer]       'xwidget-webkit-scroll-bottom)
     map)
   "Keymap for `xwidget-webkit-mode'.")
 
@@ -172,6 +172,19 @@ Interactively, URL defaults to the string looking like a url around point."
    (xwidget-webkit-current-session)
    "window.scrollBy(-50, 0);"))
 
+(defun xwidget-webkit-scroll-top ()
+  "Scroll webkit to the very top."
+  (interactive)
+  (xwidget-webkit-execute-script
+   (xwidget-webkit-current-session)
+   "window.scrollTo(pageXOffset, 0);"))
+
+(defun xwidget-webkit-scroll-bottom ()
+  "Scroll webkit to the very bottom."
+  (interactive)
+  (xwidget-webkit-execute-script
+   (xwidget-webkit-current-session)
+   "window.scrollTo(pageXOffset, window.document.body.clientHeight);"))
 
 ;; The xwidget event needs to go into a higher level handler
 ;; since the xwidget can generate an event even if it's offscreen.
