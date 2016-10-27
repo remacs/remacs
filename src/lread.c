@@ -3414,6 +3414,13 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
   if (EQ (placeholder, subtree))
     return object;
 
+  /* For common object types that can't contain other objects, don't
+     bother looking them up; we're done.  */
+  if (SYMBOLP (subtree)
+      || (STRINGP (subtree) && !string_intervals (subtree))
+      || NUMBERP (subtree))
+    return subtree;
+
   /* If we've been to this node before, don't explore it again.  */
   if (!EQ (Qnil, Fmemq (subtree, seen_list)))
     return subtree;
