@@ -2990,12 +2990,21 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		      tem = read0 (readcharfun);
 
 		      /* Now put it everywhere the placeholder was...  */
-		      Fsubstitute_object_in_subtree (tem, placeholder);
+                      if (CONSP (tem))
+                        {
+                          Fsetcar (placeholder, XCAR (tem));
+                          Fsetcdr (placeholder, XCDR (tem));
+                          return placeholder;
+                        }
+                      else
+                        {
+		          Fsubstitute_object_in_subtree (tem, placeholder);
 
-		      /* ...and #n# will use the real value from now on.  */
-		      Fsetcdr (cell, tem);
+		          /* ...and #n# will use the real value from now on.  */
+		          Fsetcdr (cell, tem);
 
-		      return tem;
+		          return tem;
+                        }
 		    }
 
 		  /* #n# returns a previously read object.  */
