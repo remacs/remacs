@@ -425,6 +425,13 @@ The variable `electric-layout-rules' says when and how to insert newlines."
   :version "25.1"
   :type 'boolean :safe 'booleanp :group 'electricity)
 
+(defcustom electric-quote-chars '(?‘ ?’ ?“ ?”)
+  "Curved quote characters for `electric-quote-mode'.
+The items correspond to the left single quote, the right single
+quote, the left double quote, and the right double quote, respectively."
+  :version "25.1"
+  :type 'list :safe 'listp :group 'electricity)
+
 (defcustom electric-quote-paragraph t
   "Non-nil means to use electric quoting in text paragraphs."
   :version "25.1"
@@ -451,26 +458,29 @@ This requotes when a quoting key is typed."
                   (derived-mode-p 'text-mode)
                   (or (eq last-command-event ?\`)
                       (save-excursion (backward-paragraph) (point)))))))
-      (when start
-        (save-excursion
-          (if (eq last-command-event ?\`)
-              (cond ((search-backward "‘`" (- (point) 2) t)
-                     (replace-match "“")
-                     (when (and electric-pair-mode
-                                (eq (cdr-safe
-                                     (assq ?‘ electric-pair-text-pairs))
-                                    (char-after)))
-                       (delete-char 1))
-                     (setq last-command-event ?“))
-                    ((search-backward "`" (1- (point)) t)
-                     (replace-match "‘")
-                     (setq last-command-event ?‘)))
-            (cond ((search-backward "’'" (- (point) 2) t)
-                   (replace-match "”")
-                   (setq last-command-event ?”))
-                  ((search-backward "'" (1- (point)) t)
-                   (replace-match "’")
-                   (setq last-command-event ?’)))))))))
+      (pcase electric-quote-chars
+        (`(,q1 ,q2 ,q3 ,q4)
+         (when start
+           (save-excursion
+             (if (eq last-command-event ?\`)
+                 (cond ((search-backward (string q1 ?`) (- (point) 2) t)
+                        (replace-match (string q3))
+                        (when (and electric-pair-mode
+                                   (eq (cdr-safe
+                                        (assq q1 electric-pair-text-pairs))
+                                       (char-after)))
+                          (delete-char 1))
+                        (setq last-command-event q3))
+                       ((search-backward "`" (1- (point)) t)
+                        (replace-match (string q1))
+                        (setq last-command-event q1)))
+               (cond ((search-backward (string q2 ?') (- (point) 2) t)
+                      (replace-match (string q4))
+                      (setq last-command-event q4))
+                     ((search-backward "'" (1- (point)) t)
+                      (replace-match (string q2))
+                      (setq last-command-event q2)))))))
+        (_ (error "‘electric-quote-chars’ must contain exactly 4 characters."))))))
 
 (put 'electric-quote-post-self-insert-function 'priority 10)
 
@@ -486,6 +496,9 @@ When enabled, as you type this replaces \\=` with ‘, \\=' with ’,
 and text paragraphs, and these are selectively controlled with
 `electric-quote-comment', `electric-quote-string', and
 `electric-quote-paragraph'.
+
+Customize `electric-quote-chars' in order to use quote chars
+other than the ones listed here.
 
 This is a global minor mode.  To toggle the mode in a single buffer,
 use `electric-quote-local-mode'."
