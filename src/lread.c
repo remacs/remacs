@@ -72,6 +72,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define file_tell ftell
 #endif
 
+#ifndef HAVE_GETC_UNLOCKED
+#define getc_unlocked getc
+#endif
+
 /* The association list of objects read with the #n=object form.
    Each member of the list has the form (n . object), and is used to
    look up the object for the corresponding #n# construct.
@@ -445,7 +449,7 @@ readbyte_from_file (int c, Lisp_Object readcharfun)
     }
 
   block_input ();
-  c = getc (instream);
+  c = getc_unlocked (instream);
 
   /* Interrupted reads have been observed while reading over the network.  */
   while (c == EOF && ferror (instream) && errno == EINTR)
@@ -454,7 +458,7 @@ readbyte_from_file (int c, Lisp_Object readcharfun)
       maybe_quit ();
       block_input ();
       clearerr (instream);
-      c = getc (instream);
+      c = getc_unlocked (instream);
     }
 
   unblock_input ();
@@ -757,7 +761,7 @@ DEFUN ("get-file-char", Fget_file_char, Sget_file_char, 0, 0, 0,
 {
   register Lisp_Object val;
   block_input ();
-  XSETINT (val, getc (instream));
+  XSETINT (val, getc_unlocked (instream));
   unblock_input ();
   return val;
 }
@@ -2901,7 +2905,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	      /* Copy that many characters into saved_doc_string.  */
 	      block_input ();
 	      for (i = 0; i < nskip && c >= 0; i++)
-		saved_doc_string[i] = c = getc (instream);
+		saved_doc_string[i] = c = getc_unlocked (instream);
 	      unblock_input ();
 
 	      saved_doc_string_length = i;
