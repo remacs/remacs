@@ -619,6 +619,8 @@ extern bool might_dump;
    Used during startup to detect startup of dumped Emacs.  */
 extern bool initialized;
 
+extern bool generating_ldefs_boot;
+
 /* Defined in floatfns.c.  */
 extern double extract_float (Lisp_Object);
 
