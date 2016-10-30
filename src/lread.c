@@ -76,11 +76,36 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define getc_unlocked getc
 #endif
 
-/* The association list of objects read with the #n=object form.
-   Each member of the list has the form (n . object), and is used to
-   look up the object for the corresponding #n# construct.
-   It must be set to nil before all top-level calls to read0.  */
-static Lisp_Object read_objects;
+/* The objects or placeholders read with the #n=object form.
+
+   A hash table maps a number to either a placeholder (while the
+   object is still being parsed, in case it's referenced within its
+   own definition) or to the completed object.  With small integers
+   for keys, it's effectively little more than a vector, but it'll
+   manage any needed resizing for us.
+
+   The variable must be reset to an empty hash table before all
+   top-level calls to read0.  In between calls, it may be an empty
+   hash table left unused from the previous call (to reduce
+   allocations), or nil.  */
+static Lisp_Object read_objects_map;
+
+/* The recursive objects read with the #n=object form.
+
+   Objects that might have circular references are stored here, so
+   that recursive substitution knows not to keep processing them
+   multiple times.
+
+   Only objects that are completely processed, including substituting
+   references to themselves (but not necessarily replacing
+   placeholders for other objects still being read), are stored.
+
+   A hash table is used for efficient lookups of keys.  We don't care
+   what the value slots hold.  The variable must be set to an empty
+   hash table before all top-level calls to read0.  In between calls,
+   it may be an empty hash table left unused from the previous call
+   (to reduce allocations), or nil.  */
+static Lisp_Object read_objects_completed;
 
 /* File for get_file_char to read from.  Use by load.  */
 static FILE *instream;
@@ -1912,6 +1937,18 @@ readevalloop (Lisp_Object readcharfun,
 	  || c == NO_BREAK_SPACE)
 	goto read_next;
 
+      if (! HASH_TABLE_P (read_objects_map)
+	  || XHASH_TABLE (read_objects_map)->count)
+	read_objects_map
+	  = make_hash_table (hashtest_eq, DEFAULT_HASH_SIZE,
+			     DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
+			     Qnil, Qnil);
+      if (! HASH_TABLE_P (read_objects_completed)
+	  || XHASH_TABLE (read_objects_completed)->count)
+	read_objects_completed
+	  = make_hash_table (hashtest_eq, DEFAULT_HASH_SIZE,
+			     DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
+			     Qnil, Qnil);
       if (!NILP (Vpurify_flag) && c == '(')
 	{
 	  val = read_list (0, readcharfun);
@@ -1919,7 +1956,6 @@ readevalloop (Lisp_Object readcharfun,
       else
 	{
 	  UNREAD (c);
-	  read_objects = Qnil;
 	  if (!NILP (readfun))
 	    {
 	      val = call1 (readfun, readcharfun);
@@ -1939,6 +1975,13 @@ readevalloop (Lisp_Object readcharfun,
 	  else
 	    val = read_internal_start (readcharfun, Qnil, Qnil);
 	}
+      /* Empty hashes can be reused; otherwise, reset on next call.  */
+      if (HASH_TABLE_P (read_objects_map)
+	  && XHASH_TABLE (read_objects_map)->count > 0)
+	read_objects_map = Qnil;
+      if (HASH_TABLE_P (read_objects_completed)
+	  && XHASH_TABLE (read_objects_completed)->count > 0)
+	read_objects_completed = Qnil;
 
       if (!NILP (start) && continue_reading_p)
 	start = Fpoint_marker ();
@@ -2110,7 +2153,18 @@ read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end)
 
   readchar_count = 0;
   new_backquote_flag = 0;
-  read_objects = Qnil;
+  /* We can get called from readevalloop which may have set these
+     already.  */
+  if (! HASH_TABLE_P (read_objects_map)
+      || XHASH_TABLE (read_objects_map)->count)
+    read_objects_map
+      = make_hash_table (hashtest_eq, DEFAULT_HASH_SIZE, DEFAULT_REHASH_SIZE,
+			 DEFAULT_REHASH_THRESHOLD, Qnil, Qnil);
+  if (! HASH_TABLE_P (read_objects_completed)
+      || XHASH_TABLE (read_objects_completed)->count)
+    read_objects_completed
+      = make_hash_table (hashtest_eq, DEFAULT_HASH_SIZE, DEFAULT_REHASH_SIZE,
+			 DEFAULT_REHASH_THRESHOLD, Qnil, Qnil);
   if (EQ (Vread_with_symbol_positions, Qt)
       || EQ (Vread_with_symbol_positions, stream))
     Vread_symbol_positions_list = Qnil;
@@ -2138,6 +2192,13 @@ read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end)
   if (EQ (Vread_with_symbol_positions, Qt)
       || EQ (Vread_with_symbol_positions, stream))
     Vread_symbol_positions_list = Fnreverse (Vread_symbol_positions_list);
+  /* Empty hashes can be reused; otherwise, reset on next call.  */
+  if (HASH_TABLE_P (read_objects_map)
+      && XHASH_TABLE (read_objects_map)->count > 0)
+    read_objects_map = Qnil;
+  if (HASH_TABLE_P (read_objects_completed)
+      && XHASH_TABLE (read_objects_completed)->count > 0)
+    read_objects_completed = Qnil;
   return retval;
 }
 
@@ -2978,7 +3039,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		      /* Note: We used to use AUTO_CONS to allocate
 			 placeholder, but that is a bad idea, since it
 			 will place a stack-allocated cons cell into
-			 the list in read_objects, which is a
+			 the list in read_objects_map, which is a
 			 staticpro'd global variable, and thus each of
 			 its elements is marked during each GC.  A
 			 stack-allocated object will become garbled
@@ -2987,11 +3048,33 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 			 different purposes, which will cause crashes
 			 in GC.  */
 		      Lisp_Object placeholder = Fcons (Qnil, Qnil);
-		      Lisp_Object cell = Fcons (make_number (n), placeholder);
-		      read_objects = Fcons (cell, read_objects);
+		      struct Lisp_Hash_Table *h
+			= XHASH_TABLE (read_objects_map);
+		      EMACS_UINT hash;
+		      Lisp_Object number = make_number (n);
+
+		      ptrdiff_t i = hash_lookup (h, number, &hash);
+		      if (i >= 0)
+			/* Not normal, but input could be malformed.  */
+			set_hash_value_slot (h, i, placeholder);
+		      else
+			hash_put (h, number, placeholder, hash);
 
 		      /* Read the object itself.  */
 		      tem = read0 (readcharfun);
+
+		      /* If it can be recursive, remember it for
+			 future substitutions.  */
+		      if (! SYMBOLP (tem)
+			  && ! NUMBERP (tem)
+			  && ! (STRINGP (tem) && !string_intervals (tem)))
+			{
+			  struct Lisp_Hash_Table *h2
+			    = XHASH_TABLE (read_objects_completed);
+			  i = hash_lookup (h2, tem, &hash);
+			  eassert (i < 0);
+			  hash_put (h2, tem, Qnil, hash);
+			}
 
 		      /* Now put it everywhere the placeholder was...  */
                       if (CONSP (tem))
@@ -3005,7 +3088,9 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		          Fsubstitute_object_in_subtree (tem, placeholder);
 
 		          /* ...and #n# will use the real value from now on.  */
-		          Fsetcdr (cell, tem);
+			  i = hash_lookup (h, number, &hash);
+			  eassert (i >= 0);
+			  set_hash_value_slot (h, i, tem);
 
 		          return tem;
                         }
@@ -3014,9 +3099,11 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		  /* #n# returns a previously read object.  */
 		  if (c == '#')
 		    {
-		      tem = Fassq (make_number (n), read_objects);
-		      if (CONSP (tem))
-			return XCDR (tem);
+		      struct Lisp_Hash_Table *h
+			= XHASH_TABLE (read_objects_map);
+		      ptrdiff_t i = hash_lookup (h, make_number (n), NULL);
+		      if (i >= 0)
+			return HASH_VALUE (h, i);
 		    }
 		}
 	    }
@@ -3441,8 +3528,8 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
   /* If this node can be the entry point to a cycle, remember that
      we've seen it.  It can only be such an entry point if it was made
      by #n=, which means that we can find it as a value in
-     read_objects.  */
-  if (!EQ (Qnil, Frassq (subtree, read_objects)))
+     read_objects_completed.  */
+  if (hash_lookup (XHASH_TABLE (read_objects_completed), subtree, NULL) >= 0)
     seen_list = Fcons (subtree, seen_list);
 
   /* Recurse according to subtree's type.
@@ -4917,8 +5004,10 @@ that are loaded before your customizations are read!  */);
   DEFSYM (Qdir_ok, "dir-ok");
   DEFSYM (Qdo_after_load_evaluation, "do-after-load-evaluation");
 
-  staticpro (&read_objects);
-  read_objects = Qnil;
+  staticpro (&read_objects_map);
+  read_objects_map = Qnil;
+  staticpro (&read_objects_completed);
+  read_objects_completed = Qnil;
   staticpro (&seen_list);
   seen_list = Qnil;
 
