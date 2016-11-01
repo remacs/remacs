@@ -6853,7 +6853,7 @@ For further details, see info node `(emacs)Saving Emacs Sessions'.
 
 \(fn &optional ARG)" t nil)
 
-(defvar desktop-locals-to-save '(desktop-locals-to-save truncate-lines case-fold-search case-replace fill-column overwrite-mode change-log-default-name line-number-mode column-number-mode size-indication-mode buffer-file-coding-system indent-tabs-mode tab-width indicate-buffer-boundaries indicate-empty-lines show-trailing-whitespace) "\
+(defvar desktop-locals-to-save '(desktop-locals-to-save truncate-lines case-fold-search case-replace fill-column overwrite-mode change-log-default-name line-number-mode column-number-mode size-indication-mode buffer-file-coding-system buffer-display-time indent-tabs-mode tab-width indicate-buffer-boundaries indicate-empty-lines show-trailing-whitespace) "\
 List of local variables to save for each buffer.
 The variables are saved only when they really are local.  Conventional minor
 modes are restored automatically; they should not be listed here.")
@@ -15394,6 +15394,7 @@ different regions.  With numeric argument ARG, behaves like
 
 (autoload 'describe-function "help-fns" "\
 Display the full documentation of FUNCTION (a symbol).
+When called from lisp, FUNCTION may also be a function object.
 
 \(fn FUNCTION)" t nil)
 
@@ -20864,6 +20865,49 @@ is modified to remove the default indication.
 ;;;### (autoloads nil "misc" "misc.el" (0 0 0 0))
 ;;; Generated autoloads from misc.el
 
+(autoload 'copy-from-above-command "misc" "\
+Copy characters from previous nonblank line, starting just above point.
+Copy ARG characters, but not past the end of that line.
+If no argument given, copy the entire rest of the line.
+The characters copied are inserted in the buffer before point.
+
+\(fn &optional ARG)" t nil)
+
+(autoload 'zap-up-to-char "misc" "\
+Kill up to, but not including ARGth occurrence of CHAR.
+Case is ignored if `case-fold-search' is non-nil in the current buffer.
+Goes backward if ARG is negative; error if CHAR not found.
+Ignores CHAR at point.
+
+\(fn ARG CHAR)" t nil)
+
+(autoload 'mark-beginning-of-buffer "misc" "\
+Set mark at the beginning of the buffer.
+
+\(fn)" t nil)
+
+(autoload 'mark-end-of-buffer "misc" "\
+Set mark at the end of the buffer.
+
+\(fn)" t nil)
+
+(autoload 'upcase-char "misc" "\
+Uppercasify ARG chars starting from point.  Point doesn't move.
+
+\(fn ARG)" t nil)
+
+(autoload 'forward-to-word "misc" "\
+Move forward until encountering the beginning of a word.
+With argument, do this that many times.
+
+\(fn ARG)" t nil)
+
+(autoload 'backward-to-word "misc" "\
+Move backward until encountering the end of a word.
+With argument, do this that many times.
+
+\(fn ARG)" t nil)
+
 (autoload 'butterfly "misc" "\
 Use butterflies to flip the desired bit on the drive platter.
 Open hands and let the delicate wings flap once.  The disturbance
@@ -20887,7 +20931,7 @@ The return value is always nil.
 
 \(fn &optional LOADED-ONLY-P BUFFER)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "misc" '("list-dynamic-libraries--" "backward-to-word" "forward-to-word" "upcase-char" "mark-" "zap-up-to-char" "copy-from-above-command")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "misc" '("list-dynamic-libraries--")))
 
 ;;;***
 
@@ -22288,7 +22332,7 @@ closing requests for requests that are used in matched pairs.
 
 ;;;### (autoloads nil "ntlm" "net/ntlm.el" (0 0 0 0))
 ;;; Generated autoloads from net/ntlm.el
-(push (purecopy '(ntlm 2 0 0)) package--builtin-versions)
+(push (purecopy '(ntlm 2 1 0)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ntlm" '("ntlm-")))
 
@@ -29253,7 +29297,7 @@ Like `mail' command, but display mail buffer in another frame.
 
 ;;;### (autoloads nil "seq" "emacs-lisp/seq.el" (0 0 0 0))
 ;;; Generated autoloads from emacs-lisp/seq.el
-(push (purecopy '(seq 2 18)) package--builtin-versions)
+(push (purecopy '(seq 2 19)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "seq" '("seq-")))
 
@@ -32262,6 +32306,14 @@ use in that buffer.
 ;;;;;;  0 0))
 ;;; Generated autoloads from emacs-lisp/testcover.el
 
+(autoload 'testcover-start "testcover" "\
+Uses edebug to instrument all macros and functions in FILENAME, then
+changes the instrumentation from edebug to testcover--much faster, no
+problems with type-ahead or post-command-hook, etc.  If BYTE-COMPILE is
+non-nil, byte-compiles each function after instrumenting.
+
+\(fn FILENAME &optional BYTE-COMPILE)" t nil)
+
 (autoload 'testcover-this-defun "testcover" "\
 Start coverage on function under point.
 
@@ -33782,7 +33834,7 @@ Discard Tramp from loading remote files.
 ;;;;;;  0))
 ;;; Generated autoloads from net/tramp-compat.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tramp-compat" '("tramp-compat-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tramp-compat" '("tramp-")))
 
 ;;;***
 
