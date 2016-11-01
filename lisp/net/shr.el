@@ -1,4 +1,4 @@
-;;; shr.el --- Simple HTML Renderer
+;;; shr.el --- Simple HTML Renderer -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2010-2016 Free Software Foundation, Inc.
 
@@ -1582,7 +1582,7 @@ The preference is a float determined from `shr-prefer-media-type'."
          (max-height (and edges
                           (truncate (* shr-max-image-proportion
                                        (- (nth 3 edges) (nth 1 edges))))))
-         svg image)
+         svg)
     (when (and max-width
                (> width max-width))
       (setq height (truncate (* (/ (float max-width) width) height))
@@ -1919,7 +1919,7 @@ The preference is a float determined from `shr-prefer-media-type'."
 		      (dolist (column row)
 			(setq max (max max (nth 2 column))))
 		      max)))
-	(dotimes (i (max height 1))
+	(dotimes (_ (max height 1))
 	  (shr-indent)
 	  (insert shr-table-vertical-line "\n"))
 	(dolist (column row)
@@ -1927,7 +1927,7 @@ The preference is a float determined from `shr-prefer-media-type'."
 	    (goto-char start)
 	    ;; Sum up all the widths from the column.  (There may be
 	    ;; more than one if this is a "colspan" column.)
-	    (dotimes (i (nth 4 column))
+	    (dotimes (_ (nth 4 column))
 	      ;; The colspan directive may be wrong and there may not be
 	      ;; that number of columns.
 	      (when (<= column-number (1- (length widths)))
@@ -1958,7 +1958,7 @@ The preference is a float determined from `shr-prefer-media-type'."
 		(forward-line 1))
 	      ;; Add blank lines at padding at the bottom of the TD,
 	      ;; possibly.
-	      (dotimes (i (- height (length lines)))
+	      (dotimes (_ (- height (length lines)))
 		(end-of-line)
 		(let ((start (point)))
 		  (insert (propertize " "
@@ -2140,7 +2140,7 @@ The preference is a float determined from `shr-prefer-media-type'."
 		      (push data tds)))))
 	      (when (and colspan
 			 (> colspan 1))
-		(dotimes (c (1- colspan))
+		(dotimes (_ (1- colspan))
 		  (setq i (1+ i))
 		  (push
 		   (if fill

@@ -1,4 +1,4 @@
-;;; network-stream.el --- open network processes, possibly with encryption
+;;; network-stream.el --- open network processes, possibly with encryption -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2010-2016 Free Software Foundation, Inc.
 
