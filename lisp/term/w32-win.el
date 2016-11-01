@@ -400,11 +400,15 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
     (put 'x-selections (or type 'PRIMARY) value)))
 
 (defun w32--get-selection  (&optional type data-type)
-  (if (and (eq type 'CLIPBOARD)
-           (eq data-type 'STRING))
-      (with-demoted-errors "w32-get-clipboard-data:%S"
-        (w32-get-clipboard-data))
-    (get 'x-selections (or type 'PRIMARY))))
+  (cond ((and (eq type 'CLIPBOARD)
+              (eq data-type 'STRING))
+         (with-demoted-errors "w32-get-clipboard-data:%S"
+           (w32-get-clipboard-data)))
+        ((eq data-type 'TARGETS)
+         (if (eq type 'CLIPBOARD)
+             (w32-selection-targets type)
+           (if (get 'x-selections (or type 'PRIMARY)) '[STRING])))
+        (t (get 'x-selections (or type 'PRIMARY)))))
 
 (defun w32--selection-owner-p (selection)
   (and (memq selection '(nil PRIMARY SECONDARY))
