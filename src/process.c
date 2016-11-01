@@ -3094,19 +3094,24 @@ finish_after_tls_connection (Lisp_Object proc)
 			     build_string ("The Network Security Manager stopped the connections")));
       deactivate_process (proc);
     }
-  else
+  else if (p->outfd < 0)
     {
-      /* If we cleared the connection wait mask before we did
-	 the TLS setup, then we have to say that the process
-	 is finally "open" here. */
-      if (! FD_ISSET (p->outfd, &connect_wait_mask))
-	{
-	  pset_status (p, Qrun);
-	  /* Execute the sentinel here.  If we had relied on
-	     status_notify to do it later, it will read input
-	     from the process before calling the sentinel.  */
-	  exec_sentinel (proc, build_string ("open\n"));
-	}
+      /* The counterparty may have closed the connection (especially
+	 if the NSM promt above take a long time), so recheck the file
+	 descriptor here. */
+      pset_status (p, Qfailed);
+      deactivate_process (proc);
+    }
+  else if (! FD_ISSET (p->outfd, &connect_wait_mask))
+    {
+      /* If we cleared the connection wait mask before we did the TLS
+	 setup, then we have to say that the process is finally "open"
+	 here. */
+      pset_status (p, Qrun);
+      /* Execute the sentinel here.  If we had relied on status_notify
+	 to do it later, it will read input from the process before
+	 calling the sentinel.  */
+      exec_sentinel (proc, build_string ("open\n"));
     }
 }
 #endif
