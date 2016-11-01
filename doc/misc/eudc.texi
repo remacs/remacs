@@ -733,8 +733,7 @@ upon an inline expansion request.  It is a list whose first element is a
 string passed to @code{format}.  Remaining elements are symbols
 corresponding to directory attribute names.  The corresponding attribute
 values are passed as additional arguments to @code{format}.  Default is
-@code{("%s" email)} but you may want to consider a value like @code{("%s
-<%s>" name email)}
+@code{("%s %s <%s>" firstname name email)}.
 @end defvar
 
 @defvar eudc-multiple-match-handling-method
