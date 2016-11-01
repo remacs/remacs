@@ -1,4 +1,4 @@
-;;; message.el --- composing mail and news messages
+;;; message.el --- composing mail and news messages -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1996-2016 Free Software Foundation, Inc.
 

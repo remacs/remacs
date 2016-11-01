@@ -1,4 +1,4 @@
-;;; icalendar.el --- iCalendar implementation
+;;; icalendar.el --- iCalendar implementation -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
