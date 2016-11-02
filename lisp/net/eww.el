@@ -64,18 +64,16 @@
 ;;;###autoload
 (defcustom eww-suggest-uris
   '(eww-links-at-point
-    url-get-url-at-point
-    eww-current-url)
+    url-get-url-at-point)
   "List of functions called to form the list of default URIs for `eww'.
 Each of the elements is a function returning either a string or a list
 of strings.  The results will be joined into a single list with
 duplicate entries (if any) removed."
-  :version "25.1"
+  :version "26.1"
   :group 'eww
   :type 'hook
   :options '(eww-links-at-point
-	     url-get-url-at-point
-	     eww-current-url))
+	     url-get-url-at-point))
 
 (defcustom eww-bookmarks-directory user-emacs-directory
   "Directory where bookmark files will be stored."
@@ -246,7 +244,7 @@ This list can be customized via `eww-suggest-uris'."
 If the input doesn't look like an URL or a domain name, the
 word(s) will be searched for via `eww-search-prefix'."
   (interactive
-   (let* ((uris (eww-suggested-uris))
+   (let* ((uris (append (eww-suggested-uris) (list (eww-current-url))))
 	  (prompt (concat "Enter URL or keywords"
 			  (if uris (format " (default %s)" (car uris)) "")
 			  ": ")))
@@ -313,6 +311,18 @@ word(s) will be searched for via `eww-search-prefix'."
 See the `eww-search-prefix' variable for the search engine used."
   (interactive "r")
   (eww (buffer-substring beg end)))
+
+(defun eww-open-in-new-buffer ()
+  "Fetch link at point in a new EWW buffer."
+  (interactive)
+  (let ((url (eww-suggested-uris)))
+    (if (null url) (user-error "No link at point")
+      ;; clone useful to keep history, but
+      ;; should not clone from non-eww buffer
+      (with-current-buffer
+          (if (eq major-mode 'eww-mode) (clone-buffer)
+            (generate-new-buffer "*eww*"))
+        (eww (if (consp url) (car url) url))))))
 
 (defun eww-html-p (content-type)
   "Return non-nil if CONTENT-TYPE designates an HTML content type.
@@ -697,6 +707,7 @@ the like."
   (let ((map (make-sparse-keymap)))
     (define-key map "g" 'eww-reload) ;FIXME: revert-buffer-function instead!
     (define-key map "G" 'eww)
+    (define-key map [?\M-\r] 'eww-open-in-new-buffer)
     (define-key map [?\t] 'shr-next-link)
     (define-key map [?\M-\t] 'shr-previous-link)
     (define-key map [backtab] 'shr-previous-link)
@@ -731,6 +742,7 @@ the like."
 	["Exit" quit-window t]
 	["Close browser" quit-window t]
 	["Reload" eww-reload t]
+	["Follow URL in new buffer" eww-open-in-new-buffer]
 	["Back to previous page" eww-back-url
 	 :active (not (zerop (length eww-history)))]
 	["Forward to next page" eww-forward-url

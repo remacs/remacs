@@ -330,6 +330,9 @@ with blank space to eshell history.
 ** eww
 
 +++
+*** New 'M-RET' command for opening a link at point in a new eww buffer.
+
++++
 *** A new 's' command for switching to another eww buffer via the minibuffer.
 
 ---
