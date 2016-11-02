@@ -5136,7 +5136,7 @@ returned as is."
   (add-to-list
    'hs-special-modes-alist
    `(python-mode
-     "\\s-*\\(?:def\\|class\\)\\>"
+     "\\s-*\\_<\\(?:def\\|class\\)\\_>"
      ;; Use the empty string as end regexp so it doesn't default to
      ;; "\\s)".  This way parens at end of defun are properly hidden.
      ""
