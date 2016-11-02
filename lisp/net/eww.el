@@ -24,7 +24,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(require 'cl-lib)
 (require 'format-spec)
 (require 'shr)
 (require 'url)
@@ -64,16 +64,18 @@
 ;;;###autoload
 (defcustom eww-suggest-uris
   '(eww-links-at-point
-    url-get-url-at-point)
+    url-get-url-at-point
+    eww-current-url)
   "List of functions called to form the list of default URIs for `eww'.
 Each of the elements is a function returning either a string or a list
 of strings.  The results will be joined into a single list with
 duplicate entries (if any) removed."
-  :version "26.1"
+  :version "25.1"
   :group 'eww
   :type 'hook
   :options '(eww-links-at-point
-	     url-get-url-at-point))
+             url-get-url-at-point
+             eww-current-url))
 
 (defcustom eww-bookmarks-directory user-emacs-directory
   "Directory where bookmark files will be stored."
@@ -244,7 +246,7 @@ This list can be customized via `eww-suggest-uris'."
 If the input doesn't look like an URL or a domain name, the
 word(s) will be searched for via `eww-search-prefix'."
   (interactive
-   (let* ((uris (append (eww-suggested-uris) (list (eww-current-url))))
+   (let* ((uris (eww-suggested-uris))
 	  (prompt (concat "Enter URL or keywords"
 			  (if uris (format " (default %s)" (car uris)) "")
 			  ": ")))
@@ -322,7 +324,9 @@ See the `eww-search-prefix' variable for the search engine used."
       (with-current-buffer
           (if (eq major-mode 'eww-mode) (clone-buffer)
             (generate-new-buffer "*eww*"))
-        (eww (if (consp url) (car url) url))))))
+        (unless (equal url (eww-current-url))
+          (eww-mode)
+          (eww (if (consp url) (car url) url)))))))
 
 (defun eww-html-p (content-type)
   "Return non-nil if CONTENT-TYPE designates an HTML content type.
