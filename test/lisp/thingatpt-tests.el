@@ -88,7 +88,6 @@ position to retrieve THING.")
 ;; `thing-at-point-bounds-of-list-at-point'.
 (ert-deftest thing-at-point-bug24627 ()
   "Test for http://debbugs.gnu.org/24627 ."
-  :expected-result :failed
   (let ((string-result '(("(a \"b\" c)" . (a "b" c))
                          (";(a \"b\" c)")
                          ("(a \"b\" c\n)" . (a "b" c))
