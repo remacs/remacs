@@ -223,7 +223,7 @@ basic editing operations under Bazaar.
 @cindex SRC
 @cindex src
 @item
-SRC (src) is RCS, reloaded - a specialized version-control system
+SRC (src) is RCS, reloaded---a specialized version-control system
 designed for single-file projects worked on by only one person.  It
 allows multiple files with independent version-control histories to
 exist in one directory, and is thus particularly well suited for
