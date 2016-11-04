@@ -298,6 +298,8 @@ any kind of error."
 
 ;;;###autoload
 (defmacro pcase-dolist (spec &rest body)
+  "Like `dolist' but where the binding can be a `pcase' pattern.
+\n(fn (PATTERN LIST) BODY...)"
   (declare (indent 1) (debug ((pcase-PAT form) body)))
   (if (pcase--trivial-upat-p (car spec))
       `(dolist ,spec ,@body)
