@@ -84,7 +84,7 @@ position to retrieve THING.")
       (goto-char (nth 1 test))
       (should (equal (thing-at-point (nth 2 test)) (nth 3 test))))))
 
-;; These tests reflect the actual behaviour of
+;; These tests reflect the actual behavior of
 ;; `thing-at-point-bounds-of-list-at-point'.
 (ert-deftest thing-at-point-bug24627 ()
   "Test for http://debbugs.gnu.org/24627 ."

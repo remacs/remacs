@@ -35,11 +35,11 @@
 
 ;; tracked: a list of symbols
 
-;; tracker: a hashtable tuned for 100 symbols to track (you should
+;; tracker: a hash table tuned for 100 symbols to track (you should
 ;; only access this with the :lookup2-function and the
 ;; :lookup2+-function)
 
-;; data: a hashtable with default size 10K and resize threshold 2.0
+;; data: a hash table with default size 10K and resize threshold 2.0
 ;; (this reflects the expected usage so override it if you know better)
 
 ;; ...plus methods to do all the work: `registry-search',
@@ -124,10 +124,10 @@
              :documentation "The precious fields, a list of symbols.")
    (tracker :initarg :tracker
             :type hash-table
-            :documentation "The field tracking hashtable.")
+            :documentation "The field tracking hash table.")
    (data :initarg :data
          :type hash-table
-         :documentation "The data hashtable.")))
+         :documentation "The data hash table.")))
 
 (cl-defmethod initialize-instance :before ((this registry-db) slots)
   "Check whether a registry object needs to be upgraded."
@@ -178,7 +178,7 @@ Returns an alist of the key followed by the entry in a list, not a cons cell."
 (cl-defmethod registry-lookup-secondary ((db registry-db) tracksym
 					 &optional create)
   "Search for TRACKSYM in the registry-db THIS.
-When CREATE is not nil, create the secondary index hashtable if needed."
+When CREATE is not nil, create the secondary index hash table if needed."
   (let ((h (gethash tracksym (oref db tracker))))
     (if h
 	h

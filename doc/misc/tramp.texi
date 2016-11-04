@@ -2459,7 +2459,7 @@ local @file{.emacs} file:
 
 Setting the @env{ENV} environment variable instructs some shells to
 read an initialization file.  Per default, @value{tramp} has disabled
-this.  You could overwrite this behaviour by evaluating
+this.  You could overwrite this behavior by evaluating
 
 @lisp
 @group

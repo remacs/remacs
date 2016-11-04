@@ -87,7 +87,7 @@ the output buffer is not erased; this variable also controls where
 to set the point in the output buffer: beginning of the output,
 end of the buffer or save the point.
 When 'shell-command-dont-erase-buffer' is nil, the default value,
-the behaviour of 'shell-command', 'shell-command-on-region' and
+the behavior of 'shell-command', 'shell-command-on-region' and
 'async-shell-command' is as usual.
 
 +++
@@ -234,7 +234,7 @@ all call stack frames in a Lisp backtrace buffer as lists.  Both
 debug.el and edebug.el have been updated to heed to this variable.
 
 +++
-** The new variable `x-ctrl-keysym` has been added to the existing
+** The new variable 'x-ctrl-keysym' has been added to the existing
 roster of X keysyms.  It can be used in combination with another
 variable of this kind to swap modifiers in Emacs.
 
@@ -372,7 +372,7 @@ also available in 'image-mode'.
 
 +++
 *** A new library for creating and manipulating SVG images has been
-added.  See the "SVG Images" section in the lispref manual for
+added.  See the "SVG Images" section in the Lisp reference manual for
 details.
 
 +++
@@ -543,9 +543,10 @@ function 'check-declare-errmsg' has been removed.
 ** New function 'undo-amalgamate-change-group' to get rid of
 undo-boundaries between two states.
 
-** New var 'definition-prefixes' is a hashtable mapping prefixes to the
-files where corresponding definitions can be found.  This can be used
-to fetch definitions that are not yet loaded, for example for 'C-h f'.
+** New var 'definition-prefixes' is a hash table mapping prefixes to
+the files where corresponding definitions can be found.  This can be
+used to fetch definitions that are not yet loaded, for example for
+'C-h f'.
 
 ** New var 'syntax-ppss-table' to control the syntax-table used in
 'syntax-ppss'.
