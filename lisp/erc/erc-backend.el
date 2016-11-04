@@ -108,7 +108,7 @@
 ;;;; Variables and options
 
 (defvar erc-server-responses (make-hash-table :test #'equal)
-  "Hashtable mapping server responses to their handler hooks.")
+  "Hash table mapping server responses to their handler hooks.")
 
 (cl-defstruct (erc-response (:conc-name erc-response.))
   (unparsed "" :type string)
@@ -1064,7 +1064,7 @@ See also `erc-server-responses'."
 (defun erc-call-hooks (process message)
   "Call hooks associated with MESSAGE in PROCESS.
 
-Finds hooks by looking in the `erc-server-responses' hashtable."
+Finds hooks by looking in the `erc-server-responses' hash table."
   (let ((hook (or (erc-get-hook (erc-response.command message))
                   'erc-default-server-functions)))
     (run-hook-with-args-until-success hook process message)
@@ -1220,7 +1220,7 @@ add things to `%s' instead."
        (put ',fn-name 'definition-name ',name)
        (put ',hook-name 'definition-name ',name)
 
-       ;; Hashtable map of responses to hook variables
+       ;; Hash table map of responses to hook variables
        ,@(cl-loop for response in (cons name aliases)
                   for var in (cons hook-name var-alternates)
                   collect `(puthash ,(format "%s" response) ',var

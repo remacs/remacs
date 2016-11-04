@@ -903,7 +903,7 @@ KEY is a string or vector representing a sequence of keystrokes."
 
 (defun substitute-key-definition (olddef newdef keymap &optional oldmap prefix)
   "Replace OLDDEF with NEWDEF for any keys in KEYMAP now defined as OLDDEF.
-In other words, OLDDEF is replaced with NEWDEF where ever it appears.
+In other words, OLDDEF is replaced with NEWDEF wherever it appears.
 Alternatively, if optional fourth argument OLDMAP is specified, we redefine
 in KEYMAP as NEWDEF those keys which are defined as OLDDEF in OLDMAP.
 

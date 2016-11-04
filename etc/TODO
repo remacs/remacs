@@ -38,7 +38,7 @@ stay within exec_byte_code.
 ** Add new 'switch' byte-code
 This byte-code would take one argument from the stack (the object to test)
 and one argument from the constant-pool (a switch table, implemented as an
-eq-hashtable) and would jump to the "label" contained in the hashtable.
+'eq' hash table) and would jump to the "label" contained in the hash table.
 
 Then add a 'case' special-form that can be compiled to this byte-code.
 This would behave just like cl-case, but instead of expanding to cond+eq it
