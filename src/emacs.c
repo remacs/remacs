@@ -1193,7 +1193,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 
       /* Called before syms_of_fileio, because it sets up Qerror_condition.  */
       syms_of_data ();
-      syms_of_fns ();	   /* Before syms_of_charset which uses hashtables.  */
+      syms_of_fns ();  /* Before syms_of_charset which uses hash tables.  */
       syms_of_fileio ();
       /* Before syms_of_coding to initialize Vgc_cons_threshold.  */
       syms_of_alloc ();

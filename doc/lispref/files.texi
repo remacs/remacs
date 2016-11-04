@@ -1148,6 +1148,21 @@ compares the truenames of the two directories.  If @var{dir} does not
 name an existing directory, the return value is @code{nil}.
 @end defun
 
+@defun vc-responsible-backend file
+This function determines the responsible VC backend of the given
+@var{file}.  For example, if @file{emacs.c} is a file tracked by Git,
+@w{@code{(vc-responsible-backend "emacs.c")}} returns @samp{Git}.
+Note that if @var{file} is a symbolic link,
+@code{vc-responsible-backend} will not resolve it---the backend of the
+symbolic link file itself is reported.  To get the backend VC of the
+file to which @var{file} refers, wrap @var{file} with a symbolic link
+resolving function such as @code{file-chase-links}:
+
+@smallexample
+(vc-responsible-backend (file-chase-links "emacs.c"))
+@end smallexample
+@end defun
+
 @node File Attributes
 @subsection File Attributes
 @cindex file attributes

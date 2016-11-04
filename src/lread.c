@@ -2574,7 +2574,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	  c = READCHAR;
 	  if (c == '(')
 	    {
-	      /* Accept extended format for hashtables (extensible to
+	      /* Accept extended format for hash tables (extensible to
 		 other types), e.g.
 		 #s(hash-table size 2 test equal data (k1 v1 k2 v2))  */
 	      Lisp_Object tmp = read_list (0, readcharfun);
@@ -2620,10 +2620,10 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	      if (!NILP (params[param_count + 1]))
 		param_count += 2;
 
-	      /* This is the hashtable data.  */
+	      /* This is the hash table data.  */
 	      data = Fplist_get (tmp, Qdata);
 
-	      /* Now use params to make a new hashtable and fill it.  */
+	      /* Now use params to make a new hash table and fill it.  */
 	      ht = Fmake_hash_table (param_count, params);
 
 	      while (CONSP (data))
@@ -2631,7 +2631,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	      	  key = XCAR (data);
 	      	  data = XCDR (data);
 	      	  if (!CONSP (data))
-	      	    error ("Odd number of elements in hashtable data");
+		    error ("Odd number of elements in hash table data");
 	      	  val = XCAR (data);
 	      	  data = XCDR (data);
 	      	  Fputhash (key, val, ht);

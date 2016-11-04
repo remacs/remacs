@@ -365,10 +365,7 @@ If non-nil, then open the URL in a new tab rather than a new window if
 (defcustom browse-url-firefox-new-window-is-tab nil
   "Whether to open up new windows in a tab or a new window.
 If non-nil, then open the URL in a new tab rather than a new window if
-`browse-url-firefox' is asked to open it in a new window.
-
-This option is currently ignored on MS-Windows, since the necessary
-functionality is not available there."
+`browse-url-firefox' is asked to open it in a new window."
   :type 'boolean
   :group 'browse-url)
 

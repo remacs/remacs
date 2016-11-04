@@ -227,7 +227,7 @@
     table))
 
 (defvar ucs-normalize-decomposition-pair-to-primary-composite nil
-  "Hashtable of decomposed pair to primary composite.
+  "Hash table of decomposed pair to primary composite.
 Note that Hangul are excluded.")
   (setq ucs-normalize-decomposition-pair-to-primary-composite
         (ucs-normalize-make-hash-table-from-alist
