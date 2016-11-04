@@ -4701,12 +4701,15 @@ x_find_modifier_meanings (struct x_display_info *dpyinfo)
 int
 x_x_to_emacs_modifiers (struct x_display_info *dpyinfo, int state)
 {
+  int mod_ctrl = ctrl_modifier;
   int mod_meta = meta_modifier;
   int mod_alt  = alt_modifier;
   int mod_hyper = hyper_modifier;
   int mod_super = super_modifier;
   Lisp_Object tem;
 
+  tem = Fget (Vx_ctrl_keysym, Qmodifier_value);
+  if (INTEGERP (tem)) mod_ctrl = XINT (tem) & INT_MAX;
   tem = Fget (Vx_alt_keysym, Qmodifier_value);
   if (INTEGERP (tem)) mod_alt = XINT (tem) & INT_MAX;
   tem = Fget (Vx_meta_keysym, Qmodifier_value);
@@ -4717,7 +4720,7 @@ x_x_to_emacs_modifiers (struct x_display_info *dpyinfo, int state)
   if (INTEGERP (tem)) mod_super = XINT (tem) & INT_MAX;
 
   return (  ((state & (ShiftMask | dpyinfo->shift_lock_mask)) ? shift_modifier : 0)
-            | ((state & ControlMask)			? ctrl_modifier	: 0)
+            | ((state & ControlMask)			? mod_ctrl	: 0)
             | ((state & dpyinfo->meta_mod_mask)		? mod_meta	: 0)
             | ((state & dpyinfo->alt_mod_mask)		? mod_alt	: 0)
             | ((state & dpyinfo->super_mod_mask)	? mod_super	: 0)
@@ -4727,6 +4730,7 @@ x_x_to_emacs_modifiers (struct x_display_info *dpyinfo, int state)
 static int
 x_emacs_to_x_modifiers (struct x_display_info *dpyinfo, EMACS_INT state)
 {
+  EMACS_INT mod_ctrl = ctrl_modifier;
   EMACS_INT mod_meta = meta_modifier;
   EMACS_INT mod_alt  = alt_modifier;
   EMACS_INT mod_hyper = hyper_modifier;
@@ -4734,6 +4738,8 @@ x_emacs_to_x_modifiers (struct x_display_info *dpyinfo, EMACS_INT state)
 
   Lisp_Object tem;
 
+  tem = Fget (Vx_ctrl_keysym, Qmodifier_value);
+  if (INTEGERP (tem)) mod_ctrl = XINT (tem);
   tem = Fget (Vx_alt_keysym, Qmodifier_value);
   if (INTEGERP (tem)) mod_alt = XINT (tem);
   tem = Fget (Vx_meta_keysym, Qmodifier_value);
@@ -4748,7 +4754,7 @@ x_emacs_to_x_modifiers (struct x_display_info *dpyinfo, EMACS_INT state)
             | ((state & mod_super)	? dpyinfo->super_mod_mask : 0)
             | ((state & mod_hyper)	? dpyinfo->hyper_mod_mask : 0)
             | ((state & shift_modifier)	? ShiftMask        : 0)
-            | ((state & ctrl_modifier)	? ControlMask      : 0)
+            | ((state & mod_ctrl)	? ControlMask      : 0)
             | ((state & mod_meta)	? dpyinfo->meta_mod_mask  : 0));
 }
 
@@ -12863,6 +12869,8 @@ With MS Windows or Nextstep, the value is t.  */);
 #endif
 
   DEFSYM (Qmodifier_value, "modifier-value");
+  DEFSYM (Qctrl, "ctrl");
+  Fput (Qctrl, Qmodifier_value, make_number (ctrl_modifier));
   DEFSYM (Qalt, "alt");
   Fput (Qalt, Qmodifier_value, make_number (alt_modifier));
   DEFSYM (Qhyper, "hyper");
@@ -12872,32 +12880,39 @@ With MS Windows or Nextstep, the value is t.  */);
   DEFSYM (Qsuper, "super");
   Fput (Qsuper, Qmodifier_value, make_number (super_modifier));
 
+  DEFVAR_LISP ("x-ctrl-keysym", Vx_ctrl_keysym,
+    doc: /* Which keys Emacs uses for the ctrl modifier.
+This should be one of the symbols `ctrl', `alt', `hyper', `meta',
+`super'.  For example, `ctrl' means use the Ctrl_L and Ctrl_R keysyms.
+The default is nil, which is the same as `ctrl'.  */);
+  Vx_ctrl_keysym = Qnil;
+
   DEFVAR_LISP ("x-alt-keysym", Vx_alt_keysym,
     doc: /* Which keys Emacs uses for the alt modifier.
-This should be one of the symbols `alt', `hyper', `meta', `super'.
-For example, `alt' means use the Alt_L and Alt_R keysyms.  The default
-is nil, which is the same as `alt'.  */);
+This should be one of the symbols `ctrl', `alt', `hyper', `meta',
+`super'.  For example, `alt' means use the Alt_L and Alt_R keysyms.
+The default is nil, which is the same as `alt'.  */);
   Vx_alt_keysym = Qnil;
 
   DEFVAR_LISP ("x-hyper-keysym", Vx_hyper_keysym,
     doc: /* Which keys Emacs uses for the hyper modifier.
-This should be one of the symbols `alt', `hyper', `meta', `super'.
-For example, `hyper' means use the Hyper_L and Hyper_R keysyms.  The
-default is nil, which is the same as `hyper'.  */);
+This should be one of the symbols `ctrl', `alt', `hyper', `meta',
+`super'.  For example, `hyper' means use the Hyper_L and Hyper_R
+keysyms.  The default is nil, which is the same as `hyper'.  */);
   Vx_hyper_keysym = Qnil;
 
   DEFVAR_LISP ("x-meta-keysym", Vx_meta_keysym,
     doc: /* Which keys Emacs uses for the meta modifier.
-This should be one of the symbols `alt', `hyper', `meta', `super'.
-For example, `meta' means use the Meta_L and Meta_R keysyms.  The
-default is nil, which is the same as `meta'.  */);
+This should be one of the symbols `ctrl', `alt', `hyper', `meta',
+`super'.  For example, `meta' means use the Meta_L and Meta_R keysyms.
+The default is nil, which is the same as `meta'.  */);
   Vx_meta_keysym = Qnil;
 
   DEFVAR_LISP ("x-super-keysym", Vx_super_keysym,
     doc: /* Which keys Emacs uses for the super modifier.
-This should be one of the symbols `alt', `hyper', `meta', `super'.
-For example, `super' means use the Super_L and Super_R keysyms.  The
-default is nil, which is the same as `super'.  */);
+This should be one of the symbols `ctrl', `alt', `hyper', `meta',
+`super'.  For example, `super' means use the Super_L and Super_R
+keysyms.  The default is nil, which is the same as `super'.  */);
   Vx_super_keysym = Qnil;
 
   DEFVAR_LISP ("x-keysym-table", Vx_keysym_table,

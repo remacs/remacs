@@ -2254,14 +2254,16 @@ The variable is always local to the current terminal, and cannot be
 buffer-local.  @xref{Multiple Terminals}.
 @end defvar
 
-You can specify which keysyms Emacs should use for the Meta, Alt, Hyper, and Super modifiers by setting these variables:
+You can specify which keysyms Emacs should use for the Control, Meta,
+Alt, Hyper, and Super modifiers by setting these variables:
 
-@defvar x-alt-keysym
+@defvar x-ctrl-keysym
+@defvarx x-alt-keysym
 @defvarx x-meta-keysym
 @defvarx x-hyper-keysym
 @defvarx x-super-keysym
-The name of the keysym that should stand for the Alt modifier
-(respectively, for Meta, Hyper, and Super).  For example, here is
+The name of the keysym that should stand for the Control modifier
+(respectively, for Alt, Meta, Hyper, and Super).  For example, here is
 how to swap the Meta and Alt modifiers within Emacs:
 @lisp
 (setq x-alt-keysym 'meta)
