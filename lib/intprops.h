@@ -105,7 +105,8 @@ verify (TYPE_WIDTH (unsigned int) == UINT_WIDTH);
 
 /* Does the __typeof__ keyword work?  This could be done by
    'configure', but for now it's easier to do it by hand.  */
-#if (2 <= __GNUC__ || defined __IBM__TYPEOF__ \
+#if (2 <= __GNUC__ \
+     || (1210 <= __IBMC__ && defined __IBM__TYPEOF__) \
      || (0x5110 <= __SUNPRO_C && !__STDC__))
 # define _GL_HAVE___TYPEOF__ 1
 #else
