@@ -2029,20 +2029,27 @@ boyer_moore (EMACS_INT n, unsigned char *base_pat,
 	      cursor += dirlen - i - direction;	/* fix cursor */
 	      if (i + direction == 0)
 		{
-		  ptrdiff_t position, start, end, cursor_off;
+		  ptrdiff_t position, start, end;
+#ifdef REL_ALLOC
+		  ptrdiff_t cursor_off;
+#endif
 
 		  cursor -= direction;
 
 		  position = pos_byte + cursor - p2 + ((direction > 0)
 						       ? 1 - len_byte : 0);
+#ifdef REL_ALLOC
 		  /* set_search_regs might call malloc, which could
 		     cause ralloc.c relocate buffer text.  We need to
 		     update pointers into buffer text due to that.  */
 		  cursor_off = cursor - p2;
+#endif
 		  set_search_regs (position, len_byte);
+#ifdef REL_ALLOC
 		  p_limit = BYTE_POS_ADDR (limit);
 		  p2 = BYTE_POS_ADDR (pos_byte);
 		  cursor = p2 + cursor_off;
+#endif
 
 		  if (NILP (Vinhibit_changing_match_data))
 		    {
