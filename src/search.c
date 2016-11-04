@@ -280,10 +280,8 @@ looking_at_1 (Lisp_Object string, bool posix)
   immediate_quit = 1;
   QUIT;			/* Do a pending quit right away, to avoid paradoxical behavior */
 
-  /* Get pointers and sizes of the two strings that make up the
-     visible portion of the buffer.  Note that we can use pointers
-     here, unlike in search_buffer, because we only call re_match_2
-     once, after which we never use the pointers again.  */
+  /* Get pointers and sizes of the two strings
+     that make up the visible portion of the buffer. */
 
   p1 = BEGV_ADDR;
   s1 = GPT_BYTE - BEGV_BYTE;
@@ -303,12 +301,20 @@ looking_at_1 (Lisp_Object string, bool posix)
 
   re_match_object = Qnil;
 
+#ifdef REL_ALLOC
+  /* Prevent ralloc.c from relocating the current buffer while
+     searching it.  */
+  r_alloc_inhibit_buffer_relocation (1);
+#endif
   i = re_match_2 (bufp, (char *) p1, s1, (char *) p2, s2,
 		  PT_BYTE - BEGV_BYTE,
 		  (NILP (Vinhibit_changing_match_data)
 		   ? &search_regs : NULL),
 		  ZV_BYTE - BEGV_BYTE);
   immediate_quit = 0;
+#ifdef REL_ALLOC
+  r_alloc_inhibit_buffer_relocation (0);
+#endif
 
   if (i == -2)
     matcher_overflow ();
@@ -402,7 +408,6 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
 		   (NILP (Vinhibit_changing_match_data)
 		    ? &search_regs : NULL));
   immediate_quit = 0;
-  re_match_object = Qnil;       /* Stop protecting string from GC.  */
 
   /* Set last_thing_searched only when match data is changed.  */
   if (NILP (Vinhibit_changing_match_data))
@@ -473,7 +478,6 @@ fast_string_match_internal (Lisp_Object regexp, Lisp_Object string,
 		   SBYTES (string), 0,
 		   SBYTES (string), 0);
   immediate_quit = 0;
-  re_match_object = Qnil;       /* Stop protecting string from GC.  */
   return val;
 }
 
@@ -558,10 +562,17 @@ fast_looking_at (Lisp_Object regexp, ptrdiff_t pos, ptrdiff_t pos_byte,
 
   buf = compile_pattern (regexp, 0, Qnil, 0, multibyte);
   immediate_quit = 1;
+#ifdef REL_ALLOC
+  /* Prevent ralloc.c from relocating the current buffer while
+     searching it.  */
+  r_alloc_inhibit_buffer_relocation (1);
+#endif
   len = re_match_2 (buf, (char *) p1, s1, (char *) p2, s2,
 		    pos_byte, NULL, limit_byte);
+#ifdef REL_ALLOC
+  r_alloc_inhibit_buffer_relocation (0);
+#endif
   immediate_quit = 0;
-  re_match_object = Qnil;       /* Stop protecting string from GC.  */
 
   return len;
 }
@@ -1176,8 +1187,8 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 
   if (RE && !(trivial_regexp_p (string) && NILP (Vsearch_spaces_regexp)))
     {
-      unsigned char *base;
-      ptrdiff_t off1, off2, s1, s2;
+      unsigned char *p1, *p2;
+      ptrdiff_t s1, s2;
       struct re_pattern_buffer *bufp;
 
       bufp = compile_pattern (string,
@@ -1191,19 +1202,16 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 				   can take too long. */
       QUIT;			/* Do a pending quit right away,
 				   to avoid paradoxical behavior */
-      /* Get offsets and sizes of the two strings that make up the
-         visible portion of the buffer.  We compute offsets instead of
-         pointers because re_search_2 may call malloc and therefore
-         change the buffer text address.  */
+      /* Get pointers and sizes of the two strings
+	 that make up the visible portion of the buffer. */
 
-      base = current_buffer->text->beg;
-      off1 = BEGV_ADDR - base;
+      p1 = BEGV_ADDR;
       s1 = GPT_BYTE - BEGV_BYTE;
-      off2 = GAP_END_ADDR - base;
+      p2 = GAP_END_ADDR;
       s2 = ZV_BYTE - GPT_BYTE;
       if (s1 < 0)
 	{
-          off2 = off1;
+	  p2 = p1;
 	  s2 = ZV_BYTE - BEGV_BYTE;
 	  s1 = 0;
 	}
@@ -1214,20 +1222,22 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 	}
       re_match_object = Qnil;
 
+#ifdef REL_ALLOC
+  /* Prevent ralloc.c from relocating the current buffer while
+     searching it.  */
+  r_alloc_inhibit_buffer_relocation (1);
+#endif
+
       while (n < 0)
 	{
 	  ptrdiff_t val;
 
-          val = re_search_2 (bufp,
-                             (char*) (base + off1), s1,
-                             (char*) (base + off2), s2,
+	  val = re_search_2 (bufp, (char *) p1, s1, (char *) p2, s2,
 			     pos_byte - BEGV_BYTE, lim_byte - pos_byte,
 			     (NILP (Vinhibit_changing_match_data)
 			      ? &search_regs : &search_regs_1),
 			     /* Don't allow match past current point */
 			     pos_byte - BEGV_BYTE);
-	  /* Update 'base' due to possible relocation inside re_search_2.  */
-	  base = current_buffer->text->beg;
 	  if (val == -2)
 	    {
 	      matcher_overflow ();
@@ -1259,6 +1269,9 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 	  else
 	    {
 	      immediate_quit = 0;
+#ifdef REL_ALLOC
+              r_alloc_inhibit_buffer_relocation (0);
+#endif
 	      return (n);
 	    }
 	  n++;
@@ -1267,15 +1280,11 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 	{
 	  ptrdiff_t val;
 
-          val = re_search_2 (bufp,
-                             (char*) (base + off1), s1,
-                             (char*) (base + off2), s2,
-                             pos_byte - BEGV_BYTE, lim_byte - pos_byte,
+	  val = re_search_2 (bufp, (char *) p1, s1, (char *) p2, s2,
+			     pos_byte - BEGV_BYTE, lim_byte - pos_byte,
 			     (NILP (Vinhibit_changing_match_data)
 			      ? &search_regs : &search_regs_1),
 			     lim_byte - BEGV_BYTE);
-	  /* Update 'base' due to possible relocation inside re_search_2.  */
-	  base = current_buffer->text->beg;
 	  if (val == -2)
 	    {
 	      matcher_overflow ();
@@ -1305,11 +1314,17 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 	  else
 	    {
 	      immediate_quit = 0;
+#ifdef REL_ALLOC
+              r_alloc_inhibit_buffer_relocation (0);
+#endif
 	      return (0 - n);
 	    }
 	  n--;
 	}
       immediate_quit = 0;
+#ifdef REL_ALLOC
+      r_alloc_inhibit_buffer_relocation (0);
+#endif
       return (pos);
     }
   else				/* non-RE case */

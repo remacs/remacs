@@ -3318,7 +3318,7 @@ When a match is found, native completion is disabled."
          python-shell-completion-native-try-output-timeout))
     (python-shell-completion-native-get-completions
      (get-buffer-process (current-buffer))
-     nil "")))
+     nil "_")))
 
 (defun python-shell-completion-native-setup ()
   "Try to setup native completion, return non-nil on success."
