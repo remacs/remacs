@@ -1897,10 +1897,47 @@ The preference is a float determined from `shr-prefer-media-type'."
     (when (zerop shr-table-depth)
       (save-excursion
 	(shr-expand-alignments start (point)))
+      ;; Insert also non-td/th strings excluding comments and styles.
+      (save-restriction
+	(narrow-to-region (point) (point))
+	(insert (mapconcat #'identity
+			   (shr-collect-extra-strings-in-table dom)
+			   "\n"))
+	(shr-fill-lines (point-min) (point-max)))
       (dolist (elem (dom-by-tag dom 'object))
 	(shr-tag-object elem))
       (dolist (elem (dom-by-tag dom 'img))
 	(shr-tag-img elem)))))
+
+(defun shr-collect-extra-strings-in-table (dom &optional flags)
+  "Return extra strings in DOM of which the root is a table clause.
+FLAGS is a cons of two flags that control whether to collect strings."
+  ;; If and only if the cdr is not set, the car will be set to t when
+  ;; a <td> or a <th> clause is found in the children of DOM, and reset
+  ;; to nil when a <table> clause is found in the children of DOM.
+  ;; The cdr will be set to t when a <table> clause is found if the car
+  ;; is not set then, and will never be reset.
+  ;; This function collects strings if the car of FLAGS is not set.
+  (unless flags (setq flags (cons nil nil)))
+  (cl-loop for child in (dom-children dom)
+	   if (stringp child)
+	     when (and (not (car flags))
+		       (string-match "\\(?:[^\t\n\r ]+[\t\n\r ]+\\)*[^\t\n\r ]+"
+				     child))
+	       collect (match-string 0 child)
+	     end
+	   else
+	     unless (let ((tag (dom-tag child)))
+		      (or (memq tag '(comment style))
+			  (progn
+			    (cond ((memq tag '(td th))
+				   (unless (cdr flags) (setcar flags t)))
+				  ((eq tag 'table)
+				   (if (car flags)
+				       (unless (cdr flags) (setcar flags nil))
+				     (setcdr flags t))))
+			    nil)))
+	       append (shr-collect-extra-strings-in-table child flags)))
 
 (defun shr-insert-table (table widths)
   (let* ((collapse (equal (cdr (assq 'border-collapse shr-stylesheet))
