@@ -3,23 +3,29 @@ See the end of the file for license conditions.
 
 			   Emacs for Windows
 
-  This README.W32 file describes how to set up and run a precompiled
+  This README file describes how to set up and run a precompiled
   distribution of GNU Emacs for Windows.  You can find the precompiled
   distribution on the ftp.gnu.org server and its mirrors:
 
-   	ftp://ftp.gnu.org/gnu/emacs/windows/
+       ftp://ftp.gnu.org/gnu/emacs/windows/
 
   This server contains other distributions, including the full Emacs
   source distribution, as well as older releases of Emacs for Windows.
 
   Information on how to compile Emacs from sources on Windows is in
   the files README and INSTALL in the nt/ sub-directory of the
-  top-level Emacs directory in the source distribution.  If you
-  received this file as part of the Emacs source distribution, and are
-  looking for information on how to build Emacs on MS-Windows, please
-  read those 2 files and not this one.
+  top-level Emacs directory in the source distribution, as is this
+  file as README.precompiled.  If you received this file as part of
+  the Emacs source distribution, and are looking for information on
+  how to build Emacs on MS-Windows, please read those 2 files and not
+  this one.
 
 * Preliminaries
+
+  There are two binary distributions named
+  emacs-n-x86_64-w64-mingw32.zip and
+  emacs-n-i686-w64-mingw32.zip. These are for 64-bit and 32-bit
+  machines respectively.
 
   The binary distribution has these top-level directories:
   + bin
@@ -30,32 +36,23 @@ See the end of the file for license conditions.
 * Setting up Emacs
 
   To install Emacs, simply unpack the binary package into a directory
-  of your choice.  To complete the installation process, you can
-  optionally run the program addpm.exe in the bin subdirectory.  This
-  will put an icon for Emacs in the Start Menu under
-  "Start -> Programs -> Gnu Emacs".
+  of your choice. If you use File Explorer and "Extract" by default
+  this will be in a top-level directory with the same name as the zip
+  file.
 
-  Some users have reported that the Start Menu item is not created for
-  them.  If this happens, just create your own shortcut to runemacs.exe,
-  eg. by dragging it on to the desktop or the Start button.
+  We also provide a set of optional dependencies, in
+  emacs-25-x86_64-deps.zip or emacs-25-i686-deps.zip respectively,
+  which provide Emacs with an number of additional capabilities. To
+  add these, unpack them directly over the emacs directory structure.
 
-  Note that running addpm is now an optional step; Emacs is able to
-  locate all of its files without needing any information to be set in
-  the environment or the registry, although such settings will still
-  be obeyed if present.  This is convenient for running Emacs on a
-  machine which disallows registry changes, or on which software
-  should not be installed.  For instance, you can now run Emacs
-  directly from a CD or USB flash drive without copying or installing
+  Finally, and also optionally, you can run the program addpm.exe in
+  the bin subdirectory which will place an icon for Emacs on the start
+  page.
+
+  Emacs is completely portable. You can create your own shortcut to
+  runemacs.exe and place this where ever you find it convienient, or
+  run it from a USB or network drive without copying or installing
   anything on the machine itself.
-
-* Prerequisites for Windows 9X
-
-  To run Emacs on Windows 9X (Windows 95/98/Me), you will need to have
-  the Microsoft Layer for Unicode (MSLU) installed.  It can be
-  downloaded from the Microsoft site, and comes in a form of a single
-  dynamic library called UNICOWS.DLL.  If this library is not
-  accessible to Emacs, it will pop up a dialog saying that it cannot
-  find the library, and will refuse to start up.
 
 * Starting Emacs
 
@@ -93,8 +90,7 @@ See the end of the file for license conditions.
   + emacsclientw.exe - A version of emacsclient that does not open
     a command-line window.
 
-  + addpm.exe - A basic installer that creates Start Menu icons for Emacs.
-    Running this is optional.
+  + addpm.exe - The installer that adds Emacs to "Start".
 
   + ctags.exe, etags.exe - Tools for generating tag files.  See the
     `Tags' node of the Emacs manual.
@@ -128,128 +124,26 @@ See the end of the file for license conditions.
   + update-game-score.exe - A utility for updating the score files of
     Emacs games.
 
-* Image support
+* Optional Dependencies
 
   Emacs has built in support for XBM and PPM/PGM/PBM images, and the
   libXpm library is bundled, providing XPM support (required for color
-  toolbar icons and splash screen).  Source for libXpm should be available
-  from the same place from which you got this binary distribution.
+  toolbar icons and splash screen). Source for libXpm should be
+  available from the same place from which you got this binary
+  distribution.
 
-  Emacs can also support some other image formats with appropriate
-  libraries.  These libraries are all available on the following sites:
+  In addition, as described, there is a separate dependency bundle
+  providing support for many images formats, TLS, XML parsing and
+  compression.
 
-  1. http://sourceforge.net/projects/ezwinports/files/
-     -- up-to-date builds, self-contained archives, only for 32-bit Emacs
-  2. Libraries from the MSYS2 project on ftp.gnu.org:
-     http://ftp.gnu.org/gnu/emacs/windows/emacs-NN-i686-deps.zip (32-bit)
-     http://ftp.gnu.org/gnu/emacs/windows/emacs-NN-x86_64-deps.zip (64-bit)
-     where NN is the Emacs version to which the libraries correspond.
-  3. The MSYS2 project -- for 64-bit Emacs:
-     http://msys2.github.io/
-     https://sourceforge.net/projects/msys2/files/REPOS/MINGW/x86_64/
-  4. GnuWin32 project -- very old 32-bit builds, not recommended
+* Installing with an existing MSYS2 installation.
 
-  The libraries to download are mentioned below.  Some libraries
-  depend on others that need to be downloaded separately from the same
-  site; please consult the download instructions on each site for the
-  details.  In general, the ezwinports site mentioned above has all
-  the dependencies bundled in the same zip archive, so installing from
-  there is the easiest.  For MSYS2 builds, we recommend that you
-  install and use the 'pacman' utility (available from the MSYS2
-  site), see the instructions below -- it will automatically install
-  all the dependencies.
-
-  Emacs will find these libraries if the directory they are installed
-  in is on the PATH or in the same directory where you have emacs.exe.
-  Here are some specific comments about each image type:
-
-      PNG: requires the PNG reference library 1.4 or later, which will
-      be named libpngNN.dll or libpngNN-NN.dll.  LibPNG requires zlib,
-      which should come from the same source as you got libpng.
-      Starting with Emacs 23.3, the precompiled Emacs binaries are
-      built with libpng 1.4.x and later, and are incompatible with
-      earlier versions of libpng DLLs.  So if you have libpng 1.2.x,
-      the PNG support will not work, and you will have to download
-      newer versions.
-
-      JPEG: requires the Independent JPEG Group's libjpeg 6b or later,
-      which will be called jpeg62.dll, libjpeg.dll, jpeg-62.dll or jpeg.dll.
-
-      TIFF: requires libTIFF 3.0 or later, which will be called libtiffN.dll
-      or libtiff-N.dll or libtiff.dll.
-
-      GIF: requires libungif or giflib 4.1 or later, which will be
-      called libgif-6.dll, giflib4.dll, libungif4.dll or libungif.dll.
-
-      SVG: requires librsvg 2.x whose DLL will be called
-      librsvg-2-2.dll.  SVG also requires several dependency DLLs,
-      such as Pango, Cairo, and Glib, all of them found on the
-      above-mentioned sites.  If you download from the ezwinports
-      site, you need only librsvg-2.nn.mm-x-w32-bin.zip, it comes with
-      all the other dependencies bundled.
-
-   If you have image support DLLs under different names, customize the
-   value of `dynamic-library-alist'.
-
-* GnuTLS support
-
-  GnuTLS provides SSL/TLS network support for Emacs (https, imaps and
-  so on.)
-
-  In order to support GnuTLS at runtime, Emacs must be able to find
-  the relevant DLLs during startup; failure to do so is not an error,
-  but GnuTLS won't be available to the running session.
-
-  You can get pre-built binaries (including any dependency DLLs) at
-  http://sourceforge.net/projects/ezwinports/files/ and on
-  http://ftp.gnu.org/gnu/emacs/windows/
-
-* libxml2 support
-
-  libxml2 provides HTML parsing support for Emacs, which is necessary
-  to use the built-in eww browser.
-
-  In order to support libxml2 at runtime, a libxml2-enabled Emacs must
-  be able to find the relevant DLLs during startup; failure to do so
-  is not an error, but libxml2 features won't be available to the
-  running session.
-
-  You can get pre-built binaries (including any required DLL and the
-  header files) at http://sourceforge.net/projects/ezwinports/files/ and
-  http://ftp.gnu.org/gnu/emacs/windows/
-
-* zlib support
-
-  zlib provides support for decompressing text, which is necessary for
-  the zlib-decompress-region primitive.
-
-  Prebuilt binaries of zlib DLL (for 32-bit builds of Emacs) are
-  available from the ezwinports site and on ftp.gnu.org; see above for
-  the URLs.  For the 64-bit DLL, see the instructions below for
-  installing from MSYS2 site.
-
-  (This library is also a prerequisite for several image libraries, so
-  you may already have it; look for zlib1.dll or libz-1.dll.)
-
-* Installing 64-bit optional libraries from the MSYS2 site
-
-  We recommend that you use the 'pacman' utility to download the
-  libraries you need and all of their dependencies.  If you don't have
-  'pacman' installed, proceed as follows:
-
-  . Install the MSYS2 64-bit (x86_64) installer, named
-    msys2-x86_64-YYYYMMDD.exe (where "YYYYMMDD" is the release date,
-    like 20160205) from http://msys2.github.io/.
-
-  . Run the installer, select the installation directory, make sure
-    "Run MSYS2 now" checkbox is checked, and click "Finish".  A Bash
-    window will open.
-
-  . Type into the Bash window the following command:
-
-    pacman -Sy pacman
-
-    When asked whether to proceed with installation, type Y.
+  You may also use Emacs with an existing MSYS2 installation by simply
+  unpacking the Emacs distribution over MSYS2. You can then use the
+  'pacman' utility to install dependencies. You should not use the
+  optional dependencies bundle, as this will overwrite MSYS2 files
+  (the dependency bundle derives from MSYS2, but may be a different
+  version).
 
   To install the optional libraries, start the MSYS2 Bash window and
   type the following command:
@@ -259,72 +153,36 @@ See the end of the file for license conditions.
   where PACKAGES is the list of packages you want to install.  The
   full list is as follows:
 
-   mingw-w64-x86_64-xpm-nox mingw-w64-x86_64-libtiff mingw-w64-x86_64-giflib
-   mingw-w64-x86_64-libpng mingw-w64-x86_64-libjpeg-turbo
-   mingw-w64-x86_64-librsvg mingw-w64-x86_64-libxml2 mingw-w64-x86_64-gnutls
-   mingw-w64-x86_64-zlib
+  mingw-w64-x86_64-giflib
+  mingw-w64-x86_64-gnutls
+  mingw-w64-x86_64-libjpeg-turbo
+  mingw-w64-x86_64-libpng
+  mingw-w64-x86_64-librsvg
+  mingw-w64-x86_64-libtiff
+  mingw-w64-x86_64-libxml2
+  mingw-w64-x86_64-xpm-nox
 
   You can type any subset of this list.  Once again, when asked
   whether to proceed with installation, answer Y.
-
-  Alternatively, you could install the packages manually from this
-  page:
-
-   https://sourceforge.net/projects/msys2/files/REPOS/MINGW/x86_64/
-
-  However, the packages there are not self-contained, so you will need
-  to download all their dependencies as well.
-
-  After the installation, if you will be installing Emacs in a
-  directory different from where the DLLs were installed, we recommend
-  to add the directory with DLLs to your PATH, so that Emacs will be
-  able to find those DLLs.
 
 * Uninstalling Emacs
 
   If you should need to uninstall Emacs, simply delete all the files
   and subdirectories from the directory where it was unpacked (Emacs
   does not install or update any files in system directories or
-  anywhere else).  If you ran the addpm.exe program to create the
-  registry entries and the Start menu icon, then you can remove the
-  registry entries using regedit.  All of the settings are written
-  under the Software\GNU\Emacs key in HKEY_LOCAL_MACHINE, or if you
-  didn't have administrator privileges when you installed, the same
-  key in HKEY_CURRENT_USER.  Just delete the whole Software\GNU\Emacs
-  key.
+  anywhere else).
 
-  The Start menu entry can be removed by right-clicking on the Taskbar
-  and selecting Properties, then using the Remove option on the Start
-  Menu Programs page.  (If you installed under an account with
-  administrator privileges, then you need to click the Advanced button
-  and look for the Gnu Emacs menu item under All Users.)
+  If you ran the addpm.exe program to create the Start menu icon, this
+  can be removed by right-clicking and "Uninstall".
+
+  Finally, addpm.exe also creates a few registry entries; these can be
+  safely left, but if you really wish to remove them, all of the
+  settings are written under the Software\GNU\Emacs key in
+  HKEY_LOCAL_MACHINE, or if you didn't have administrator privileges
+  when you installed, the same key in HKEY_CURRENT_USER.  Just delete
+  the whole Software\GNU\Emacs key.
 
 * Troubleshooting
-
-  Unpacking the distributions
-
-  If you encounter trouble trying to run Emacs, there are a number of
-  possible causes.  Check the following for indications that the
-  distribution was not corrupted by the tools used to unpack it:
-
-    * Be sure to disable CR/LF translation or the executables will
-      be unusable.  Older versions of WinZipNT would enable this
-      translation by default.  If you are using WinZipNT, disable it.
-      (I don't have WinZipNT myself, and I do not know the specific
-      commands necessary to disable it.)
-
-    * Check that filenames were not truncated to 8.3.  For example,
-      there should be a file lisp\abbrevlist.elc; if this has been
-      truncated to abbrevli.elc, your distribution has been corrupted
-      while unpacking and Emacs will not start.
-
-    * On Windows 9X, make sure you have the UNICOWS.DLL library either
-      in the same directory where you have emacs.exe or in the
-      directory where system-wide DLLs are kept.
-
-  If you believe you have unpacked the distributions correctly and are
-  still encountering problems, see the section on Further Information
-  below.
 
   Virus scanners
 
@@ -345,31 +203,21 @@ See the end of the file for license conditions.
 
         http://www.gnu.org/software/emacs/manual/html_mono/emacs.html#Microsoft-Windows
 
-  In addition to the manual, there is a mailing list for discussing
-  issues related to the Windows port of Emacs.  For information about
-  the list, see this Web page:
+  In addition to the manual, there is a mailing list for help with
+  Emacs here:
+
+       https://lists.gnu.org/mailman/listinfo/help-gnu-emacs
+
+  To ask questions on the mailing list, send email to
+  help-gnu-emacs@gnu.org.
+
+  And a more specific one for issues related to the Windows port of
+  Emacs.  For information about the list, see this Web page:
 
 	http://lists.gnu.org/mailman/listinfo/help-emacs-windows
 
   To ask questions on the mailing list, send email to
-  help-emacs-windows@gnu.org.  (You don't need to subscribe for that.)
-  To subscribe to the list or unsubscribe from it, fill the form you
-  find at http://lists.gnu.org/mailman/listinfo/help-emacs-windows as
-  explained there.
-
-  Another valuable source of information and help which should not be
-  overlooked is the various Usenet news groups dedicated to Emacs.
-  These are particularly good for help with general issues which aren't
-  specific to the Windows port of Emacs.  The main news groups to use
-  for seeking help are:
-
-	gnu.emacs.help
-	comp.emacs
-
-  There are also fairly regular postings and announcements of new or
-  updated Emacs packages on this group:
-
-	gnu.emacs.sources
+  help-emacs-windows@gnu.org.
 
 * Reporting bugs
 
