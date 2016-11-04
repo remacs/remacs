@@ -1988,7 +1988,8 @@ it defines a macro.  */)
       Lisp_Object fun = Findirect_function (funname, Qnil);
 
       if (!NILP (Fequal (fun, fundef)))
-	error ("Autoloading failed to define function %s",
+	error ("Autoloading file %s failed to define function %s",
+	       SDATA (Fcar (Fcar (Vload_history))),
 	       SDATA (SYMBOL_NAME (funname)));
       else
 	return fun;
