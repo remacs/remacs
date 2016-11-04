@@ -812,7 +812,9 @@ Returns the deleted entries."
   "Forget all cached auth-source data."
   (interactive)
   (cl-do-symbols (sym password-data)
+    ;; when the symbol name starts with auth-source-magic
     (when (string-match (concat "^" auth-source-magic) (symbol-name sym))
+      ;; remove that key
       (password-cache-remove (symbol-name sym))))
   (setq auth-source-netrc-cache nil))
 
