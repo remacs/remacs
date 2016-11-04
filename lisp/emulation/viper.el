@@ -683,7 +683,7 @@ It also can't undo some Viper settings."
    (delq 'viper-mode-string global-mode-string))
 
   (setq-default major-mode
-                (viper-standard-value 'default-major-mode
+                (viper-standard-value 'major-mode
                                       viper-saved-non-viper-variables))
 
   (if (featurep 'emacs)

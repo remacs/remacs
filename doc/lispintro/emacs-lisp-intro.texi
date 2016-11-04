@@ -17647,7 +17647,7 @@ Set the shape and color of the mouse cursor:
       (setq mpointer "132")) ; top_left_arrow
 @end group
 @group
-  (setq x-pointer-shape (string-to-int mpointer))
+  (setq x-pointer-shape (string-to-number mpointer))
   (set-mouse-color "white"))
 @end group
 @end smallexample

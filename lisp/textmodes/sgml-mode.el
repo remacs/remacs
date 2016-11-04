@@ -1926,7 +1926,7 @@ This takes effect when first loading the library.")
       ("hgroup" \n)
       ("html" (\n
 	       "<head>\n"
-	       "<title>" (setq str (read-input "Title: ")) "</title>\n"
+	       "<title>" (setq str (read-string "Title: ")) "</title>\n"
 	       "</head>\n"
 	       "<body>\n<h1>" str "</h1>\n" _
 	       "\n<address>\n<a href=\"mailto:"

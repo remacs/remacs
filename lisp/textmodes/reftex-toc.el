@@ -942,17 +942,17 @@ label prefix determines the wording of a reference."
       (with-selected-window toc-window
         (reftex-unhighlight 0)))
      ((eq final 'hide)
-      (let ((show-window (selected-window))
-            (show-buffer (window-buffer)))
-        (unless (eq show-window toc-window) ;FIXME: Can this happen?
+      (let ((window (selected-window))
+            (buffer (window-buffer)))
+        (unless (eq window toc-window) ;FIXME: Can this happen?
           (with-selected-window toc-window
             (reftex-unhighlight 0)
             (or (one-window-p) (delete-window))))
-        ;; If `show-window' is still live, show-buffer is already visible
+        ;; If window is still live, buffer is already visible
         ;; so let's not make it visible in yet-another-window.
-        (unless (window-live-p show-window)
-          ;; FIXME: How could show-window not be live?
-          (switch-to-buffer show-buffer))
+        (unless (window-live-p window)
+          ;; FIXME: How could window not be live?
+          (pop-to-buffer-same-window buffer))
         (reftex-re-enlarge)))
      (t
       (unless (eq (selected-frame) (window-frame toc-window))
