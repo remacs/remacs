@@ -2916,7 +2916,9 @@ This function removes @var{keywords} from @code{font-lock-keywords}
 for the current buffer or for major mode @var{mode}.  As in
 @code{font-lock-add-keywords}, @var{mode} should be a major mode
 command name or @code{nil}.  All the caveats and requirements for
-@code{font-lock-add-keywords} apply here too.
+@code{font-lock-add-keywords} apply here too.  The argument
+@var{keywords} must exactly match the one used by the corresponding
+@code{font-lock-add-keywords}.
 @end defun
 
   For example, the following code adds two fontification patterns for C
