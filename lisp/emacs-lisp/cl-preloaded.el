@@ -44,11 +44,9 @@
 (define-error 'cl-assertion-failed (purecopy "Assertion failed"))
 
 (defun cl--assertion-failed (form &optional string sargs args)
-  (if debug-on-error
-      (debug `(cl-assertion-failed ,form ,string ,@sargs))
-    (if string
-        (apply #'error string (append sargs args))
-      (signal 'cl-assertion-failed `(,form ,@sargs)))))
+  (if string
+      (apply #'error string (append sargs args))
+    (signal 'cl-assertion-failed `(,form ,@sargs))))
 
 ;; When we load this (compiled) file during pre-loading, the cl--struct-class
 ;; code below will need to access the `cl-struct' info, since it's considered
