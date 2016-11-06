@@ -1,11 +1,12 @@
 Copyright (C) 2001-2016 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
-			   Emacs for MS-Windows
+		Emacs version 25.1.50 for MS-Windows
 
   This README file describes how to set up and run a precompiled
-  distribution of GNU Emacs for MS-Windows.  You can find the
-  precompiled distribution on the ftp.gnu.org server and its mirrors:
+  distribution of the latest version of GNU Emacs for MS-Windows.  You
+  can find the precompiled distribution on the ftp.gnu.org server and
+  its mirrors:
 
        ftp://ftp.gnu.org/gnu/emacs/windows/
 
