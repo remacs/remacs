@@ -326,7 +326,7 @@ webkit_js_to_lisp (JSContextRef context, JSValueRef value)
             int n = JSPropertyNameArrayGetCount (properties);
             Lisp_Object obj;
 
-            // TODO: can we use a regular list here?
+            /* TODO: can we use a regular list here?  */
             struct Lisp_Vector *p = allocate_vector (n);
 
             for (int i = 0; i < n; ++i)
@@ -386,9 +386,9 @@ webkit_javascript_finished_cb (GObject      *webview,
     Lisp_Object lisp_value = webkit_js_to_lisp (context, value);
     webkit_javascript_result_unref (js_result);
 
-    // Register an xwidget event here, which then runs the callback.
-    // This ensures that the callback runs in sync with the Emacs
-    // event loop.
+    /* Register an xwidget event here, which then runs the callback.
+       This ensures that the callback runs in sync with the Emacs
+       event loop.  */
     store_xwidget_js_callback_event (xw, (Lisp_Object)lisp_callback,
                                      lisp_value);
 }
@@ -717,9 +717,9 @@ argument procedure FUN.*/)
   void *callback = (FUNCTIONP (fun)) ?
     &webkit_javascript_finished_cb : NULL;
 
-  // JavaScript execution happens asynchronously.  If an elisp
-  // callback function is provided we pass it to the C callback
-  // procedure that retrieves the return value.
+  /* JavaScript execution happens asynchronously.  If an elisp
+     callback function is provided we pass it to the C callback
+     procedure that retrieves the return value.  */
   webkit_web_view_run_javascript (WEBKIT_WEB_VIEW (xw->widget_osr),
                                   SSDATA (script),
                                   NULL, /* cancelable */
