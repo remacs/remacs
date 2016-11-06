@@ -170,7 +170,7 @@ smc_save_yourself_CB (SmcConn smcConn,
   char *smid_opt, *chdir_opt = NULL;
   Lisp_Object user_login_name = Fuser_login_name (Qnil);
 
-  // Must have these.
+  /* Must have these.  */
   if (! STRINGP (Vinvocation_name) || ! STRINGP (user_login_name))
     return;
 

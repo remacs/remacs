@@ -693,7 +693,7 @@ x_reply_selection_request (struct selection_input_event *event,
 			     : format_bytes);
 	    XFlush (display);
 	    had_errors_p = x_had_errors_p (display);
-            // See comment above about property_change_reply.
+            /* See comment above about property_change_reply.  */
             set_property_change_object (cs->wait_object);
 	    unblock_input ();
 
@@ -1393,7 +1393,7 @@ receive_incremental_selection (struct x_display_info *dpyinfo,
   wait_object = expect_property_change (display, window, property,
 					PropertyNewValue);
   XFlush (display);
-  // See comment in x_reply_selection_request about property_change_reply.
+  /* See comment in x_reply_selection_request about property_change_reply.  */
   set_property_change_object (wait_object);
   unblock_input ();
 
@@ -1433,7 +1433,8 @@ receive_incremental_selection (struct x_display_info *dpyinfo,
       XDeleteProperty (display, window, property);
       wait_object = expect_property_change (display, window, property,
 					    PropertyNewValue);
-      // See comment in x_reply_selection_request about property_change_reply.
+      /* See comment in x_reply_selection_request about
+	 property_change_reply.  */
       set_property_change_object (wait_object);
       XFlush (display);
       unblock_input ();

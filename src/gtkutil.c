@@ -185,7 +185,7 @@ xg_display_open (char *display_name, Display **dpy)
 {
   GdkDisplay *gdpy;
 
-  unrequest_sigio ();  // See comment in x_display_ok, xterm.c.
+  unrequest_sigio ();  /* See comment in x_display_ok, xterm.c.  */
   gdpy = gdk_display_open (display_name);
   request_sigio ();
   if (!gdpy_def && gdpy)

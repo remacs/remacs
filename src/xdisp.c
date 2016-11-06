@@ -24461,7 +24461,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	    }
 	  if (FRAME_WINDOW_P (it->f) && valid_xwidget_spec_p (prop))
 	    {
-              // TODO: Don't return dummy size.
+              /* TODO: Don't return dummy size.  */
               return OK_PIXELS (100);
             }
 #endif
