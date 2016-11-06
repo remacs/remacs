@@ -527,6 +527,11 @@ mode bindings: 'C-c @ C-a', 'C-c @ C-t', 'C-c @ C-d', and 'C-c @ C-e.'
 before running.  This is controlled by the 'grep-save-buffers'
 variable.
 
+** Some obsolete functions, variables, and faces have been removed:
+*** From subr.el: window-dot, set-window-dot, read-input, show-buffer,
+eval-current-buffer, string-to-int
+*** Many variables pointing to face symbols obsoleted in 22.1
+
 +++
 ** The variable 'text-quoting-style' no longer affects the treatment
 of curved quotes in format arguments to functions like 'message' and
