@@ -1,4 +1,4 @@
-;;; ns-win.el --- lisp side of interface with NeXT/Open/GNUstep/MacOS X window system  -*- lexical-binding: t -*-
+;;; ns-win.el --- lisp side of interface with NeXT/Open/GNUstep/macOS window system  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1993-1994, 2005-2016 Free Software Foundation, Inc.
 
@@ -41,7 +41,7 @@
 ;;; Code:
 (eval-when-compile (require 'cl-lib))
 (or (featurep 'ns)
-    (error "%s: Loading ns-win.el but not compiled for GNUstep/MacOS"
+    (error "%s: Loading ns-win.el but not compiled for GNUstep/macOS"
            (invocation-name)))
 
 ;; Documentation-purposes only: actually loaded in loadup.el.
@@ -54,7 +54,7 @@
 (require 'ucs-normalize)
 
 (defgroup ns nil
-  "GNUstep/Mac OS X specific features."
+  "GNUstep/macOS specific features."
   :group 'environment)
 
 ;;;; Command line argument handling.
@@ -338,7 +338,7 @@ See `ns-insert-working-text'."
   (setq ns-working-overlay nil))
 
 
-;; OS X file system Unicode UTF-8 NFD (decomposed form) support.
+;; macOS file system Unicode UTF-8 NFD (decomposed form) support.
 (when (eq system-type 'darwin)
   ;; Used prior to Emacs 25.
   (define-coding-system-alias 'utf-8-nfd 'utf-8-hfs)
@@ -641,7 +641,7 @@ This function has been overloaded in Nextstep.")
   (set-frame-font ns-input-font))
 
 
-;; Default fontset for Mac OS X.  This is mainly here to show how a fontset
+;; Default fontset for macOS.  This is mainly here to show how a fontset
 ;; can be set up manually.  Ordinarily, fontsets are auto-created whenever
 ;; a font is chosen by
 (defvar ns-standard-fontset-spec
@@ -655,7 +655,7 @@ This function has been overloaded in Nextstep.")
              ",")
   "String of fontset spec of the standard fontset.
 This defines a fontset consisting of the Courier and other fonts that
-come with OS X.
+come with macOS.
 See the documentation of `create-fontset-from-fontset-spec' for the format.")
 
 (defvar ns-reg-to-script)               ; nsfont.m
@@ -892,7 +892,7 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
                     (setq default-process-coding-system
                           '(utf-8-unix . utf-8-unix)))))
 
-  ;; OS X Lion introduces PressAndHold, which is unsupported by this port.
+  ;; Mac OS X Lion introduces PressAndHold, which is unsupported by this port.
   ;; See this thread for more details:
   ;; http://lists.gnu.org/archive/html/emacs-devel/2011-06/msg00505.html
   (ns-set-resource nil "ApplePressAndHoldEnabled" "NO")

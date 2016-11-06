@@ -1,4 +1,4 @@
-/* NeXT/Open/GNUstep / MacOSX communication module.      -*- coding: utf-8 -*-
+/* NeXT/Open/GNUstep / macOS communication module.      -*- coding: utf-8 -*-
 
 Copyright (C) 1989, 1993-1994, 2005-2006, 2008-2016 Free Software
 Foundation, Inc.
@@ -22,7 +22,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 Originally by Carl Edman
 Updated by Christian Limpach (chris@nice.ch)
 OpenStep/Rhapsody port by Scott Bender (sbender@harmony-ds.com)
-MacOSX/Aqua port by Christophe de Dinechin (descubes@earthlink.net)
+macOS/Aqua port by Christophe de Dinechin (descubes@earthlink.net)
 GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 */
 
@@ -250,7 +250,7 @@ static unsigned convert_ns_to_X_keysym[] =
   0x1B,				0x1B   /* escape */
 };
 
-/* On OS X picks up the default NSGlobalDomain AppleAntiAliasingThreshold,
+/* On macOS picks up the default NSGlobalDomain AppleAntiAliasingThreshold,
    the maximum font size to NOT antialias.  On GNUstep there is currently
    no way to control this behavior. */
 float ns_antialias_threshold;
@@ -587,7 +587,7 @@ ns_load_path (void)
 
 void
 ns_init_locale (void)
-/* OS X doesn't set any environment variables for the locale when run
+/* macOS doesn't set any environment variables for the locale when run
    from the GUI. Get the locale from the OS and set LANG. */
 {
   NSLocale *locale = [NSLocale currentLocale];
@@ -596,7 +596,7 @@ ns_init_locale (void)
 
   @try
     {
-      /* It seems OS X should probably use UTF-8 everywhere.
+      /* It seems macOS should probably use UTF-8 everywhere.
          'localeIdentifier' does not specify the encoding, and I can't
          find any way to get the OS to tell us which encoding to use,
          so hard-code '.UTF-8'. */
@@ -718,7 +718,7 @@ ns_screen_margins (NSScreen *screen)
 
 
 /* A screen margin between 1 and DOCK_IGNORE_LIMIT (inclusive) is
-   assumed to contain a hidden dock.  OS X currently use 4 pixels for
+   assumed to contain a hidden dock.  macOS currently use 4 pixels for
    this, however, to be future compatible, a larger value is used.  */
 #define DOCK_IGNORE_LIMIT 6
 
@@ -731,7 +731,7 @@ reserved for an hidden dock.  */
 
   struct EmacsMargins margins = ns_screen_margins(screen);
 
-  /* OS X (currently) reserved 4 pixels along the edge where a hidden
+  /* macOS (currently) reserved 4 pixels along the edge where a hidden
      dock is located.  Unfortunately, it's not possible to find the
      location and information about if the dock is hidden.  Instead,
      it is assumed that if the margin of an edge is less than
@@ -748,7 +748,7 @@ reserved for an hidden dock.  */
     {
       margins.top = 0;
     }
-  /* Note: This doesn't occur in current versions of OS X, but
+  /* Note: This doesn't occur in current versions of macOS, but
      included for completeness and future compatibility.  */
   if (margins.bottom <= DOCK_IGNORE_LIMIT)
     {
@@ -1027,7 +1027,7 @@ ns_update_begin (struct frame *f)
 #ifdef NS_IMPL_COCOA
   if ([view isFullscreen] && [view fsIsNative])
   {
-    // Fix reappearing tool bar in fullscreen for OSX 10.7
+    // Fix reappearing tool bar in fullscreen for Mac OS X 10.7
     BOOL tbar_visible = FRAME_EXTERNAL_TOOL_BAR (f) ? YES : NO;
     NSToolbar *toolbar = [FRAME_NS_VIEW (f) toolbar];
     if (! tbar_visible != ! [toolbar isVisible])
@@ -1986,8 +1986,8 @@ ns_get_color (const char *name, NSColor **col)
     }
   else if ([nsname isEqualToString: @"ns_selection_fg_color"])
     {
-      /* NOTE: OSX applications normally don't set foreground selection, but
-         text may be unreadable if we don't.
+      /* NOTE: macOS applications normally don't set foreground
+         selection, but text may be unreadable if we don't.
       */
       if ((new = [NSColor selectedTextColor]) != nil)
         {
@@ -3937,7 +3937,7 @@ ns_send_appdefined (int value)
 #ifdef NS_IMPL_COCOA
   if (! send_appdefined)
     {
-      /* OSX 10.10.1 swallows the AppDefined event we are sending ourselves
+      /* OS X 10.10.1 swallows the AppDefined event we are sending ourselves
          in certain situations (rapid incoming events).
          So check if we have one, if not add one.  */
       NSEvent *appev = [NSApp nextEventMatchingMask:NSApplicationDefinedMask
@@ -4816,7 +4816,7 @@ ns_term_init (Lisp_Object display_name)
   [outerpool release];
   outerpool = [[NSAutoreleasePool alloc] init];
 
-  /* count object allocs (About, click icon); on OS X use ObjectAlloc tool */
+  /* count object allocs (About, click icon); on macOS use ObjectAlloc tool */
   /*GSDebugAllocationActive (YES); */
   block_input ();
 
@@ -4945,7 +4945,7 @@ ns_term_init (Lisp_Object display_name)
 
   ns_app_name = [[NSProcessInfo processInfo] processName];
 
-  /* Set up OS X app menu */
+  /* Set up macOS app menu */
 
   NSTRACE_MSG ("Menu init");
 
@@ -5017,7 +5017,7 @@ ns_term_init (Lisp_Object display_name)
          selector: @selector (trackingNotification:)
              name: NSMenuDidEndTrackingNotification object: mainMenu];
   }
-#endif /* MAC OS X menu setup */
+#endif /* macOS menu setup */
 
   /* Register our external input/output types, used for determining
      applicable services and also drag/drop eligibility. */
@@ -5245,7 +5245,7 @@ ns_term_shutdown (int sig)
 
 #ifdef NS_IMPL_COCOA
   /* If no dialog and none of our frames have focus and it is a move, skip it.
-     It is a mouse move in an auxiliary menu, i.e. on the top right on OSX,
+     It is a mouse move in an auxiliary menu, i.e. on the top right on macOS,
      such as Wifi, sound, date or similar.
      This prevents "spooky" highlighting in the frame under the menu.  */
   if (type == NSMouseMoved && [NSApp modalWindow] == nil)
@@ -5784,7 +5784,7 @@ not_in_argv (NSString *arg)
 
   NSTRACE ("[EmacsView keyDown:]");
 
-  /* Rhapsody and OS X give up and down events for the arrow keys */
+  /* Rhapsody and macOS give up and down events for the arrow keys */
   if (ns_fake_keydown == YES)
     ns_fake_keydown = NO;
   else if ([theEvent type] != NSKeyDown)
@@ -6018,7 +6018,7 @@ not_in_argv (NSString *arg)
 
 
 #ifdef NS_IMPL_COCOA
-/* Needed to pick up Ctrl-tab and possibly other events that OS X has
+/* Needed to pick up Ctrl-tab and possibly other events that Mac OS X
    decided not to send key-down for.
    See http://osdir.com/ml/editors.vim.mac/2007-10/msg00141.html
    This only applies on Tiger and earlier.
@@ -7176,8 +7176,8 @@ not_in_argv (NSString *arg)
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
       unsigned val = (unsigned)[NSApp presentationOptions];
 
-      // OSX 10.7 bug fix, the menu won't appear without this.
-      // val is non-zero on other OSX versions.
+      // Mac OS X 10.7 bug fix, the menu won't appear without this.
+      // val is non-zero on other macOS versions.
       if (val == 0)
         {
           NSApplicationPresentationOptions options
@@ -7601,7 +7601,7 @@ not_in_argv (NSString *arg)
   unblock_input ();
 
   /*
-    drawRect: may be called (at least in OS X 10.5) for invisible
+    drawRect: may be called (at least in Mac OS X 10.5) for invisible
     views as well for some reason.  Thus, do not infer visibility
     here.
 
@@ -8123,7 +8123,7 @@ not_in_argv (NSString *arg)
   [self setEnabled: YES];
 
   /* Ensure auto resizing of scrollbars occurs within the emacs frame's view
-     locked against the top and bottom edges, and right edge on OS X, where
+     locked against the top and bottom edges, and right edge on macOS, where
      scrollers are on right. */
 #ifdef NS_IMPL_GNUSTEP
   [self setAutoresizingMask: NSViewMaxXMargin | NSViewHeightSizable];
@@ -8730,14 +8730,14 @@ allowing it to be used at a lower level for accented character entry.");
 
   DEFVAR_LISP ("ns-auto-hide-menu-bar", ns_auto_hide_menu_bar,
                doc: /* Non-nil means that the menu bar is hidden, but appears when the mouse is near.
-Only works on OSX 10.6 or later.  */);
+Only works on Mac OS X 10.6 or later.  */);
   ns_auto_hide_menu_bar = Qnil;
 
   DEFVAR_BOOL ("ns-use-native-fullscreen", ns_use_native_fullscreen,
-     doc: /*Non-nil means to use native fullscreen on OSX >= 10.7.
+     doc: /*Non-nil means to use native fullscreen on Mac OS X 10.7 and later.
 Nil means use fullscreen the old (< 10.7) way.  The old way works better with
-multiple monitors, but lacks tool bar.  This variable is ignored on OSX < 10.7.
-Default is t for OSX >= 10.7, nil otherwise.  */);
+multiple monitors, but lacks tool bar.  This variable is ignored on
+Mac OS X < 10.7.  Default is t for 10.7 and later, nil otherwise.  */);
 #ifdef HAVE_NATIVE_FS
   ns_use_native_fullscreen = YES;
 #else
@@ -8752,9 +8752,9 @@ Default is nil.  */);
   ns_use_fullscreen_animation = NO;
 
   DEFVAR_BOOL ("ns-use-srgb-colorspace", ns_use_srgb_colorspace,
-     doc: /*Non-nil means to use sRGB colorspace on OSX >= 10.7.
+     doc: /*Non-nil means to use sRGB colorspace on Mac OS X 10.7 and later.
 Note that this does not apply to images.
-This variable is ignored on OSX < 10.7 and GNUstep.  */);
+This variable is ignored on Mac OS X < 10.7 and GNUstep.  */);
   ns_use_srgb_colorspace = YES;
 
   /* TODO: move to common code */

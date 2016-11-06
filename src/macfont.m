@@ -1,4 +1,4 @@
-/* Font driver on Mac OSX Core text.
+/* Font driver on macOS Core text.
    Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -1005,7 +1005,7 @@ macfont_set_family_cache (Lisp_Object symbol, CFStringRef string)
 and those start with ".".  NULL means the cache has been invalidated.
 Otherwise, the value is CFArray of CFStrings and the elements are
 sorted in the canonical order (CTFontManagerCompareFontFamilyNames on
-OS X 10.6 and later).  */
+Mac OS X 10.6 and later).  */
 
 static CFArrayRef macfont_available_families_cache = NULL;
 
@@ -4042,7 +4042,7 @@ mac_register_font_driver (struct frame *f)
 void
 syms_of_macfont (void)
 {
-  /* Core Text, for Mac OS X.  */
+  /* Core Text, for macOS.  */
   DEFSYM (Qmac_ct, "mac-ct");
   macfont_driver.type = Qmac_ct;
   register_font_driver (&macfont_driver, NULL);

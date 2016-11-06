@@ -604,7 +604,7 @@ See <http://debbugs.gnu.org/22814>.
 When you have a large number of buffers running auto-revert-mode, and
 Emacs is configured to use the kqueue file notification library, it
 uses an own file descriptor for every watched file.  On systems with a
-small limit of file descriptors allowed per process, like OS X, you
+small limit of file descriptors allowed per process, like macOS, you
 could run out of file descriptors.  You won't be able to open new files.
 
 auto-revert-use-notify is set to nil in global-auto-revert-mode, therefore.

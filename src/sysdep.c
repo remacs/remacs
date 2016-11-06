@@ -2337,7 +2337,7 @@ posix_close (int fd, int flag)
      closed, and retrying the close could inadvertently close a file
      descriptor allocated by some other thread.  In other systems
      (e.g., HP/UX) FD is not closed.  And in still other systems
-     (e.g., OS X, Solaris), maybe FD is closed, maybe not, and in a
+     (e.g., macOS, Solaris), maybe FD is closed, maybe not, and in a
      multithreaded program there can be no way to tell.
 
      So, in this case, pretend that the close succeeded.  This works

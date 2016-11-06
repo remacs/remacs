@@ -1,4 +1,4 @@
-/* Functions for the NeXT/Open/GNUstep and MacOSX window system.
+/* Functions for the NeXT/Open/GNUstep and macOS window system.
 
 Copyright (C) 1989, 1992-1994, 2005-2006, 2008-2016 Free Software
 Foundation, Inc.
@@ -22,7 +22,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 Originally by Carl Edman
 Updated by Christian Limpach (chris@nice.ch)
 OpenStep/Rhapsody port by Scott Bender (sbender@harmony-ds.com)
-MacOSX/Aqua port by Christophe de Dinechin (descubes@earthlink.net)
+macOS/Aqua port by Christophe de Dinechin (descubes@earthlink.net)
 GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 */
 
@@ -942,7 +942,7 @@ static void
 x_icon (struct frame *f, Lisp_Object parms)
 /* --------------------------------------------------------------------------
    Strangely-named function to set icon position parameters in frame.
-   This is irrelevant under OS X, but might be needed under GNUstep,
+   This is irrelevant under macOS, but might be needed under GNUstep,
    depending on the window manager used.  Note, this is not a standard
    frame parameter-setter; it is called directly from x-create-frame.
    -------------------------------------------------------------------------- */
@@ -2060,7 +2060,7 @@ DEFUN ("ns-list-services", Fns_list_services, Sns_list_services, 0, 0, 0,
 
   [svcs setAutoenablesItems: NO];
 #ifdef NS_IMPL_COCOA
-  [svcs update]; /* on OS X, converts from '/' structure */
+  [svcs update]; /* on macOS, converts from '/' structure */
 #endif
 
   ret = interpret_services_menu (svcs, Qnil, ret);

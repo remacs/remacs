@@ -423,13 +423,13 @@ with \"[a/b/c] \" if CHOICES is \(?a ?b ?c)."
     ;; Keychain collection matching any user, host, and protocol
     ((eq entry 'macos-keychain-generic)
      (auth-source-backend-parse '(:source (:macos-keychain-generic default))))
-    ;; take macos-keychain-internet:XYZ and recurse to get it as MacOS
+    ;; take macos-keychain-internet:XYZ and recurse to get it as macOS
     ;; Keychain "XYZ" matching any user, host, and protocol
     ((and (stringp entry) (string-match "^macos-keychain-internet:\\(.+\\)"
                                         entry))
      (auth-source-backend-parse `(:source (:macos-keychain-internet
                                            ,(match-string 1 entry)))))
-    ;; take macos-keychain-generic:XYZ and recurse to get it as MacOS
+    ;; take macos-keychain-generic:XYZ and recurse to get it as macOS
     ;; Keychain "XYZ" matching any user, host, and protocol
     ((and (stringp entry) (string-match "^macos-keychain-generic:\\(.+\\)"
                                         entry))
@@ -458,7 +458,7 @@ with \"[a/b/c] \" if CHOICES is \(?a ?b ?c)."
         :search-function #'auth-source-netrc-search
         :create-function #'auth-source-netrc-create)))
 
-    ;; the MacOS Keychain
+    ;; the macOS Keychain
     ((and
       (not (null (plist-get entry :source))) ; the source must not be nil
       (listp (plist-get entry :source))      ; and it must be a list
@@ -1666,7 +1666,7 @@ authentication tokens:
                                     &key backend create delete
                                     type max
                                     &allow-other-keys)
-  "Search the MacOS Keychain; spec is like `auth-source'.
+  "Search the macOS Keychain; spec is like `auth-source'.
 
 All search keys must match exactly.  If you need substring
 matching, do a wider search and narrow it down yourself.
@@ -1688,13 +1688,13 @@ Similarly, :host maps to \"-c HOST\" (the \"creator\" keychain
 field), :user maps to \"-a USER\", and :port maps to \"-s PORT\".
 
 Here's an example that looks for the first item in the default
-generic MacOS Keychain:
+generic macOS Keychain:
 
  (let ((auth-sources \\='(macos-keychain-generic)))
     (auth-source-search :max 1)
 
 Here's another that looks for the first item in the internet
-MacOS Keychain collection whose label is `gnus':
+macOS Keychain collection whose label is `gnus':
 
  (let ((auth-sources \\='(macos-keychain-internet)))
     (auth-source-search :max 1 :label \"gnus\")
@@ -1707,11 +1707,11 @@ entries for git.gnus.org:
 "
   ;; TODO
   (assert (not create) nil
-          "The MacOS Keychain auth-source backend doesn't support creation yet")
+          "The macOS Keychain auth-source backend doesn't support creation yet")
   ;; TODO
   ;; (macos-keychain-delete-item coll elt)
   (assert (not delete) nil
-          "The MacOS Keychain auth-source backend doesn't support deletion yet")
+          "The macOS Keychain auth-source backend doesn't support deletion yet")
 
   (let* ((coll (oref backend source))
          (max (or max 5000))     ; sanity check: default to stop at 5K

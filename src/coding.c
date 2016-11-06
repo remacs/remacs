@@ -122,7 +122,7 @@ END-OF-LINE FORMAT
   How text end-of-line is encoded depends on operating system.  For
   instance, Unix's format is just one byte of LF (line-feed) code,
   whereas DOS's format is two-byte sequence of `carriage-return' and
-  `line-feed' codes.  MacOS's format is usually one byte of
+  `line-feed' codes.  Classic Mac OS's format is usually one byte of
   `carriage-return'.
 
   Since text character encoding and end-of-line encoding are

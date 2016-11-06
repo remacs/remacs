@@ -624,7 +624,7 @@ COMPOSITION-PREDICATE will be used to compose region."
 
 ;;; coding-system definition
 (define-coding-system 'utf-8-hfs
-  "UTF-8 based coding system for MacOS HFS file names.
+  "UTF-8 based coding system for macOS HFS file names.
 The singleton characters in HFS normalization exclusion will not
 be decomposed."
   :coding-type 'utf-8

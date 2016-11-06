@@ -1865,7 +1865,7 @@ key, a click, or a menu-item"))
       '(menu-item "Emacs Tutorial" help-with-tutorial
                   :help "Learn how to use Emacs"))
 
-    ;; In OS X it's in the app menu already.
+    ;; In macOS it's in the app menu already.
     ;; FIXME? There already is an "About Emacs" (sans ...) entry in the Help menu.
     (and (featurep 'ns)
          (not (eq system-type 'darwin))

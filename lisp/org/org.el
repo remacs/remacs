@@ -1937,7 +1937,7 @@ See `org-file-apps'.")
     ("eps.gz" . "gv %s")
     ("dvi"    . "xdvi %s")
     ("fig"    . "xfig %s"))
-  "Default file applications on a MacOS X system.
+  "Default file applications on a macOS system.
 The system \"open\" is known as a default, but we use X11 applications
 for some files for which the OS does not have a good default.
 See `org-file-apps'.")
@@ -2012,7 +2012,7 @@ file identifier are
                (\"html\" . default) to the list as well.
  t             Default for files not matched by any of the other options.
  `system'      The system command to open files, like `open' on Windows
-               and Mac OS X, and mailcap under GNU/Linux.  This is the command
+               and macOS, and mailcap under GNU/Linux.  This is the command
                that will be selected if you call `C-c C-o' with a double
                \\[universal-argument] \\[universal-argument] prefix.
 

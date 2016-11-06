@@ -1,4 +1,4 @@
-/* Font back-end driver for the NeXT/Open/GNUstep and MacOSX window system.
+/* Font back-end driver for the NeXT/Open/GNUstep and macOS window system.
    See font.h
    Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
@@ -500,7 +500,7 @@ static NSSet
 		  {
 		    NSCharacterSet *fset = [[fontMgr fontWithFamily: family
                         traits: 0 weight: 5 size: 12.0]	coveredCharacterSet];
-                    /* Some fonts on OS X, maybe many on GNUstep, return nil. */
+                    /* Some fonts on macOS, maybe many on GNUstep, return nil. */
                     if (fset == nil)
                       fset = [NSCharacterSet characterSetWithRange:
                                                NSMakeRange (0, 127)];

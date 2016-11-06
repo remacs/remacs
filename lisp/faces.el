@@ -108,7 +108,7 @@ a font height that isn't optimal."
      "Courier 10 Pitch"
      ;; This looks good on MS-Windows and OS X.
      "Consolas"
-     ;; This looks good on OS X.  "Courier" looks good too, but is
+     ;; This looks good on macOS.  "Courier" looks good too, but is
      ;; jagged on GNU/Linux and so is listed later as "courier".
      "Courier Std"
      ;; Although these are anti-aliased, they are a bit faint compared

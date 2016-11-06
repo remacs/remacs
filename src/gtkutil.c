@@ -2370,7 +2370,7 @@ make_widget_for_menu_item (const char *utf8_label, const char *utf8_key)
    in the group.  On exit, *GROUP contains the radio item group.
 
    Unfortunately, keys don't line up as nicely as in Motif,
-   but the MacOS X version doesn't either, so I guess that is OK.  */
+   but the macOS version doesn't either, so I guess that is OK.  */
 
 static GtkWidget *
 make_menu_item (const char *utf8_label,

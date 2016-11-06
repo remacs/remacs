@@ -645,7 +645,7 @@ as well but give an additional message."
     ;;
     ;; The adjustment function that adorns or rotates a section title.
     (rst-define-key map [?\C-c ?\C-=] 'rst-adjust [?\C-c ?\C-a t])
-    (rst-define-key map [?\C-=] 'rst-adjust) ; Does not work on the Mac OSX and
+    (rst-define-key map [?\C-=] 'rst-adjust) ; Does not work on macOS and
 					     ; on consoles.
 
     ;; \C-c \C-a is the keymap for adornments.

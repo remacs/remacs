@@ -86,9 +86,8 @@ There are several subdirectories:
                 in Emacs Lisp manual.
 'msdos'     holds configuration files for compiling Emacs under MS-DOS.
 'nextstep'  holds instructions and some other files for compiling the
-            Nextstep port of Emacs, for GNUstep and Mac OS X Cocoa.
-'nt'        holds various command files and documentation files that pertain
-            to building and running Emacs on Windows 9X/ME/NT/2000/XP.
+            Nextstep port of Emacs, for GNUstep and macOS Cocoa.
+'nt'        holds code and documentation for building Emacs on MS-Windows.
 'test'      holds tests for various aspects of Emacs's functionality.
 
    Building Emacs on non-Posix platforms requires tools that aren't part

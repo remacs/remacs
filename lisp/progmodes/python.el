@@ -2414,7 +2414,7 @@ banner and the initial prompt are received separately."
 (defun python-shell-comint-end-of-output-p (output)
   "Return non-nil if OUTPUT is ends with input prompt."
   (string-match
-   ;; XXX: It seems on OSX an extra carriage return is attached
+   ;; XXX: It seems on macOS an extra carriage return is attached
    ;; at the end of output, this handles that too.
    (concat
     "\r?\n?"

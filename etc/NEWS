@@ -88,7 +88,7 @@ If gnustep-config is not available, the old heuristics are used.
 unless gfile is explicitly requested via --with-file-notification='gfile'.
 
 ** 'configure' detects the kqueue file notification library on *BSD
-and Mac OS X machines.
+and macOS machines.
 
 ** The configure option '--with-pkg-config-prog' has been removed.
 Use './configure PKG_CONFIG=/full/name/of/pkg-config' if you need to.
@@ -202,10 +202,10 @@ the 'network-security-level' variable.
 
 ** 'x-select-enable-clipboard' is renamed 'select-enable-clipboard'
 and 'x-select-enable-primary' is renamed 'select-enable-primary'.
-Additionally they both now apply to all systems (OSX, GNUstep, Windows, you
-name it), with the proviso that on some systems (e.g. Windows)
-'select-enable-primary' is ineffective since the system doesn't
-have the equivalent of a primary selection.
+Additionally they both now apply to all systems (macOS, GNUstep,
+MS-Windows, you name it), with the proviso that on some systems (e.g.,
+MS-Windows) 'select-enable-primary' is ineffective since the system
+doesn't have the equivalent of a primary selection.
 
 ** New option 'switch-to-buffer-in-dedicated-window' allows you to
 customize how 'switch-to-buffer' proceeds interactively when the
@@ -817,7 +817,7 @@ PLIST will contain a :peer element that has the output of
 
 ** Tramp
 
-*** New connection method "afp", which allows you to access Mac OS X
+*** New connection method "afp", which allows you to access macOS
 volumes via the Apple Filing Protocol.
 
 *** New connection method "nc", which allows you to access dumb
@@ -1076,7 +1076,7 @@ See <http://debbugs.gnu.org/22814>.
 
 ** File Notifications
 
-*** The kqueue library is integrated for *BSD and Mac OS X machines.
+*** The kqueue library is integrated for *BSD and macOS machines.
 
 *** The new event 'stopped' signals, that a file notification watch is
 not active any longer.
@@ -1743,19 +1743,19 @@ of Windows starting with Windows 9X.
 ** The byte counts in etags-generated TAGS files are now the same on
 MS-Windows as they are on other platforms.
 
-** On OS X, configure creates a Cocoa ("Nextstep") build by default.
+** On macOS, configure creates a Cocoa ("Nextstep") build by default.
 Pass '--without-ns' to configure to create an X11 build, the old default.
 
-** OS X 10.5 or older is no longer supported.
+** Mac OS X 10.5 or older is no longer supported.
 
-** OS X on PowerPC is no longer supported.
+** Mac OS X on PowerPC is no longer supported.
 
 ** New variable 'ns-use-fullscreen-animation' controls animation for
 non-native NS fullscreen.  The default is nil.  Set to t to enable
-animation when entering and leaving fullscreen.  For native OSX fullscreen
-this has no effect.
+animation when entering and leaving fullscreen.  For native macOS
+fullscreen this has no effect.
 
-** On the OS X Cocoa ("Nextstep") port, multicolor font (such as color
+** On the macOS Cocoa ("Nextstep") port, multicolor font (such as color
 emoji) display is disabled.  This feature was accidentally added when
 Emacs 24.4 included the new Core Text based font backend code that was
 originally implemented for a non-mainline port.  This will be enabled
