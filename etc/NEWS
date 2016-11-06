@@ -530,7 +530,7 @@ variable.
 ** Some obsolete functions, variables, and faces have been removed:
 *** From subr.el: window-dot, set-window-dot, read-input, show-buffer,
 eval-current-buffer, string-to-int
-*** Many variables pointing to face symbols obsoleted in 22.1
+*** Many variables obsoleted in 22.1 referring to face symbols
 
 +++
 ** The variable 'text-quoting-style' no longer affects the treatment
