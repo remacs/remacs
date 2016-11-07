@@ -1078,92 +1078,101 @@ header line.
 
 @table @kbd
 @item C-c C-c
-Make the current heading line's body invisible (@code{hide-entry}).
+Make the current heading line's body invisible
+(@code{outline-hide-entry}).
 @item C-c C-e
-Make the current heading line's body visible (@code{show-entry}).
+Make the current heading line's body visible
+(@code{outline-show-entry}).
 @item C-c C-d
 Make everything under the current heading invisible, not including the
-heading itself (@code{hide-subtree}).
+heading itself (@code{outline-hide-subtree}).
 @item C-c C-s
 Make everything under the current heading visible, including body,
-subheadings, and their bodies (@code{show-subtree}).
+subheadings, and their bodies (@code{outline-show-subtree}).
 @item C-c C-l
 Make the body of the current heading line, and of all its subheadings,
-invisible (@code{hide-leaves}).
+invisible (@code{outline-hide-leaves}).
 @item C-c C-k
 Make all subheadings of the current heading line, at all levels,
-visible (@code{show-branches}).
+visible (@code{outline-show-branches}).
 @item C-c C-i
 Make immediate subheadings (one level down) of the current heading
-line visible (@code{show-children}).
+line visible (@code{outline-show-children}).
 @item C-c C-t
-Make all body lines in the buffer invisible (@code{hide-body}).
+Make all body lines in the buffer invisible
+(@code{outline-hide-body}).
 @item C-c C-a
-Make all lines in the buffer visible (@code{show-all}).
+Make all lines in the buffer visible (@code{outline-show-all}).
 @item C-c C-q
 Hide everything except the top @var{n} levels of heading lines
-(@code{hide-sublevels}).
+(@code{outline-hide-sublevels}).
 @item C-c C-o
 Hide everything except for the heading or body that point is in, plus
 the headings leading up from there to the top level of the outline
-(@code{hide-other}).
+(@code{outline-hide-other}).
 @end table
 
-@findex hide-entry
-@findex show-entry
+@findex outline-hide-entry
+@findex outline-show-entry
 @kindex C-c C-c @r{(Outline mode)}
 @kindex C-c C-e @r{(Outline mode)}
   The simplest of these commands are @kbd{C-c C-c}
-(@code{hide-entry}), which hides the body lines directly following the
-current heading line, and @kbd{C-c C-e} (@code{show-entry}), which
-reveals them.  Subheadings and their bodies are not affected.
+(@code{outline-hide-entry}), which hides the body lines directly
+following the current heading line, and @kbd{C-c C-e}
+(@code{outline-show-entry}), which reveals them.  Subheadings and
+their bodies are not affected.
 
-@findex hide-subtree
-@findex show-subtree
+@findex outline-hide-subtree
+@findex outline-show-subtree
 @kindex C-c C-s @r{(Outline mode)}
 @kindex C-c C-d @r{(Outline mode)}
 @cindex subtree (Outline mode)
-  The commands @kbd{C-c C-d} (@code{hide-subtree}) and @kbd{C-c C-s}
-(@code{show-subtree}) are more powerful.  They apply to the current
-heading line's @dfn{subtree}: its body, all of its subheadings, both
-direct and indirect, and all of their bodies.
+  The commands @kbd{C-c C-d} (@code{outline-hide-subtree}) and
+@kbd{C-c C-s} (@code{outline-show-subtree}) are more powerful.  They
+apply to the current heading line's @dfn{subtree}: its body, all of
+its subheadings, both direct and indirect, and all of their bodies.
 
-@findex hide-leaves
-@findex show-branches
-@findex show-children
+@findex outline-hide-leaves
+@findex outline-show-branches
+@findex outline-show-children
 @kindex C-c C-l @r{(Outline mode)}
 @kindex C-c C-k @r{(Outline mode)}
 @kindex C-c C-i @r{(Outline mode)}
-  The command @kbd{C-c C-l} (@code{hide-leaves}) hides the body of the
-current heading line as well as all the bodies in its subtree; the
-subheadings themselves are left visible.  The command @kbd{C-c C-k}
-(@code{show-branches}) reveals the subheadings, if they had previously
-been hidden (e.g., by @kbd{C-c C-d}).  The command @kbd{C-c C-i}
-(@code{show-children}) is a weaker version of this; it reveals just
-the direct subheadings, i.e., those one level down.
+  The command @kbd{C-c C-l} (@code{outline-hide-leaves}) hides the
+body of the current heading line as well as all the bodies in its
+subtree; the subheadings themselves are left visible.  The command
+@kbd{C-c C-k} (@code{outline-show-branches}) reveals the subheadings,
+if they had previously been hidden (e.g., by @kbd{C-c C-d}).  The
+command @kbd{C-c C-i} (@code{outline-show-children}) is a weaker
+version of this; it reveals just the direct subheadings, i.e., those
+one level down.
 
-@findex hide-other
+@findex outline-hide-other
 @kindex C-c C-o @r{(Outline mode)}
-  The command @kbd{C-c C-o} (@code{hide-other}) hides everything
-except the entry that point is in, plus its parents (the headers
-leading up from there to top level in the outline) and the top level
-headings.
+  The command @kbd{C-c C-o} (@code{outline-hide-other}) hides
+everything except the entry that point is in, plus its parents (the
+headers leading up from there to top level in the outline) and the top
+level headings.  It also reveals body lines preceding the first
+heading in the buffer.
 
-@findex hide-body
-@findex show-all
+@findex outline-hide-body
+@findex outline-show-all
 @kindex C-c C-t @r{(Outline mode)}
 @kindex C-c C-a @r{(Outline mode)}
 @findex hide-sublevels
 @kindex C-c C-q @r{(Outline mode)}
   The remaining commands affect the whole buffer.  @kbd{C-c C-t}
-(@code{hide-body}) makes all body lines invisible, so that you see
-just the outline structure (as a special exception, it will not hide
-lines at the top of the file, preceding the first header line, even
-though these are technically body lines).  @kbd{C-c C-a}
-(@code{show-all}) makes all lines visible.  @kbd{C-c C-q}
-(@code{hide-sublevels}) hides all but the top level headings; with a
-numeric argument @var{n}, it hides everything except the top @var{n}
-levels of heading lines.
+(@code{outline-hide-body}) makes all body lines invisible, so that you
+see just the outline structure (as a special exception, it will not
+hide lines at the top of the file, preceding the first header line,
+even though these are technically body lines).  @kbd{C-c C-a}
+(@code{outline-show-all}) makes all lines visible.  @kbd{C-c C-q}
+(@code{outline-hide-sublevels}) hides all but the top level headings
+at and above the level of the current heading line (defaulting to 1 if
+point is not on a heading); with a numeric argument @var{n}, it hides
+everything except the top @var{n} levels of heading lines.  Note that
+it completely reveals all the @var{n} top levels and the body lines
+before the first heading.
 
 @anchor{Outline Search}
 @findex reveal-mode
