@@ -1315,6 +1315,9 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
 #else  /* not WINDOWSNT */
 
 #ifndef MSDOS
+
+  restore_nofile_limit ();
+
   /* Redirect file descriptors and clear the close-on-exec flag on the
      redirected ones.  IN, OUT, and ERR are close-on-exec so they
      need not be closed explicitly.  */

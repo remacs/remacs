@@ -42,6 +42,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef HAVE_SETRLIMIT
 # include <sys/resource.h>
+
+/* If NOFILE_LIMIT.rlim_cur is greater than FD_SETSIZE, then
+   NOFILE_LIMIT is the initial limit on the number of open files,
+   which should be restored in child processes.  */
+static struct rlimit nofile_limit;
 #endif
 
 /* Are local (unix) sockets supported?  */
@@ -7770,6 +7775,17 @@ catch_child_signal (void)
 }
 #endif	/* subprocesses */
 
+/* Limit the number of open files to the value it had at startup.  */
+
+void
+restore_nofile_limit (void)
+{
+#ifdef HAVE_SETRLIMIT
+  if (FD_SETSIZE < nofile_limit.rlim_cur)
+    setrlimit (RLIMIT_NOFILE, &nofile_limit);
+#endif
+}
+
 
 /* This is not called "init_process" because that is the name of a
    Mach system call, so it would cause problems on Darwin systems.  */
@@ -7796,12 +7812,15 @@ init_process_emacs (int sockfd)
     }
 
 #ifdef HAVE_SETRLIMIT
-  /* Don't allocate more than FD_SETSIZE file descriptors.  */
-  struct rlimit rlim;
-  if (getrlimit (RLIMIT_NOFILE, &rlim) == 0 && FD_SETSIZE < rlim.rlim_cur)
+  /* Don't allocate more than FD_SETSIZE file descriptors for Emacs itself.  */
+  if (getrlimit (RLIMIT_NOFILE, &nofile_limit) != 0)
+    nofile_limit.rlim_cur = 0;
+  else if (FD_SETSIZE < nofile_limit.rlim_cur)
     {
+      struct rlimit rlim = nofile_limit;
       rlim.rlim_cur = FD_SETSIZE;
-      setrlimit (RLIMIT_NOFILE, &rlim);
+      if (setrlimit (RLIMIT_NOFILE, &rlim) != 0)
+	nofile_limit.rlim_cur = 0;
     }
 #endif
 
