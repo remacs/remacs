@@ -469,8 +469,8 @@ separately.  (For example, when completing command names,
 @samp{em-l-m} completes to @samp{emacs-lisp-mode}.)
 
 Furthermore, a @samp{*} in the minibuffer text is treated as a
-@dfn{wildcard}---it matches any character at the corresponding
-position in the completion alternative.
+@dfn{wildcard}---it matches any string of characters at the
+corresponding position in the completion alternative.
 
 @item emacs22
 This completion style is similar to @code{basic}, except that it
