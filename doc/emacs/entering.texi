@@ -100,7 +100,7 @@ display them initially.
 Kill Emacs (@code{save-buffers-kill-terminal}).
 @item C-z
 On a text terminal, suspend Emacs; on a graphical display,
-iconify (or ``minimize'') the selected frame (@code{suspend-emacs}).
+iconify (or ``minimize'') the selected frame (@code{suspend-frame}).
 @end table
 
 @kindex C-x C-c
