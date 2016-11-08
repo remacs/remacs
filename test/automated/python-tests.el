@@ -2452,6 +2452,13 @@ if x:
                 (line-beginning-position) (line-end-position))
                "abcdef")))))
 
+(ert-deftest python-bob-infloop-avoid ()
+  "Test that strings at BOB don't confuse syntax analysis.  Bug#24905"
+  (python-tests-with-temp-buffer
+      " \"\n"
+    (goto-char (point-min))
+    (font-lock-fontify-buffer)))
+
 
 ;;; Shell integration
 
