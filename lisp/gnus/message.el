@@ -4481,7 +4481,7 @@ This function could be useful in `message-setup-hook'."
 
 (declare-function hashcash-wait-async "hashcash" (&optional buffer))
 
-(defun message-send-mail (&optional arg)
+(defun message-send-mail (&optional _)
   (require 'mail-utils)
   (let* ((tembuf (message-generate-new-buffer-clone-locals " message temp"))
 	 (case-fold-search nil)
@@ -4638,6 +4638,8 @@ If you always want Gnus to send messages in one piece, set
     (push 'mail message-sent-message-via)))
 
 (defvar sendmail-program)
+(defvar smtpmail-smtp-server)
+(defvar smtpmail-smtp-service)
 (defvar smtpmail-smtp-user)
 
 (defun message-multi-smtp-send-mail ()
@@ -4816,6 +4818,8 @@ The only difference from `mailclient-send-it' is that this
 command evaluates `message-send-mail-hook' just before sending a message."
   (run-hooks 'message-send-mail-hook)
   (mailclient-send-it))
+
+(defvar sha1-maximum-internal-length)
 
 (defun message-canlock-generate ()
   "Return a string that is non-trivial to guess.
