@@ -369,6 +369,18 @@ and @code{dired-texinfo-unclean-extensions}.
 If non-@code{nil}, a list of extensions (strings) to omit from Dired listings.
 Its format is the same as that of @code{completion-ignored-extensions}.
 
+@vindex dired-omit-case-fold
+@item dired-omit-case-fold
+
+Default:  @code{filesystem}
+
+By default, when @code{dired-omit-case-fold} is set to @code{filesystem},
+@code{dired-omit-mode} will match filenames and extensions
+case-sensitively on Dired buffers visiting case-sensitive filesystems,
+and case-insensitively on case-insensitive filesystems.  Set it to
+@code{nil} to be always case-sensitive, and to @code{t} to be always
+case-insensitive.
+
 @vindex dired-omit-localp
 @item dired-omit-localp
 

@@ -83,6 +83,12 @@ of curved quotes for 'electric-quote-mode', allowing user to choose
 the types of quotes to be used.
 
 +++
+** The new user variable 'dired-omit-case-fold' allows the user to
+customize the case-sensitivity of dired-omit-mode.  It defaults to
+the same sensitivity as that of the filesystem for the corresponding
+dired buffer.
+
++++
 ** Emacs now uses double buffering to reduce flicker when editing and
 resizing graphical Emacs frames on the X Window System.  This support
 requires the DOUBLE-BUFFER extension, which major X servers have

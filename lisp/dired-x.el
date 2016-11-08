@@ -133,6 +133,26 @@ If nil, there is no maximum size."
   :type '(choice (const :tag "no maximum" nil) integer)
   :group 'dired-x)
 
+(defcustom dired-omit-case-fold 'filesystem
+  "Determine whether `dired-omit-mode' will use case-folding to
+match the regexp of files to omit.  When nil, always be
+case-sensitive; when t, always be case-insensitive; the default
+value, 'filesystem, causes case folding to be used on
+case-insensitive filesystems only."
+  :type '(choice (const :tag "Always case-sensitive" nil)
+		 (const :tag "Always case-insensitive" t)
+		 (const :tag "According to filesystem" filesystem))
+  :group 'dired-x
+  :version "26.1")
+
+(defun dired-omit-case-fold-p (dir)
+  "Return t if, according to `dired-omit-case-fold',
+  `dired-omit-mode' should use case folding to interpret its
+  regexp in directory DIR, or nil otherwise."
+  (if (eq dired-omit-case-fold 'filesystem)
+      (file-name-case-sensitive-p dir)
+    dired-omit-case-fold))
+
 ;; For backward compatibility
 (define-obsolete-variable-alias 'dired-omit-files-p 'dired-omit-mode "22.1")
 (define-minor-mode dired-omit-mode
@@ -507,7 +527,8 @@ Should never be used as marker by the user or other packages.")
   "Mark files matching `dired-omit-files' and `dired-omit-extensions'."
   (interactive)
   (let ((dired-omit-mode nil)) (revert-buffer)) ;; Show omitted files
-  (dired-mark-unmarked-files (dired-omit-regexp) nil nil dired-omit-localp))
+  (dired-mark-unmarked-files (dired-omit-regexp) nil nil dired-omit-localp
+                             (dired-omit-case-fold-p dired-directory)))
 
 (defcustom dired-omit-extensions
   (append completion-ignored-extensions
@@ -551,7 +572,8 @@ This functions works by temporarily binding `dired-marker-char' to
         (or (string= omit-re "")
             (let ((dired-marker-char dired-omit-marker-char))
               (when dired-omit-verbose (message "Omitting..."))
-              (if (dired-mark-unmarked-files omit-re nil nil dired-omit-localp)
+              (if (dired-mark-unmarked-files omit-re nil nil dired-omit-localp
+                                             (dired-omit-case-fold-p dired-directory))
                   (progn
                     (setq count (dired-do-kill-lines
 				 nil
@@ -577,12 +599,14 @@ This functions works by temporarily binding `dired-marker-char' to
             "")))
 
 ;; Returns t if any work was done, nil otherwise.
-(defun dired-mark-unmarked-files (regexp msg &optional unflag-p localp)
+(defun dired-mark-unmarked-files (regexp msg &optional unflag-p localp case-fold-p)
   "Mark unmarked files matching REGEXP, displaying MSG.
 REGEXP is matched against the entire file name.  When called
 interactively, prompt for REGEXP.
 With prefix argument, unflag all those files.
-Optional fourth argument LOCALP is as in `dired-get-filename'."
+Optional fourth argument LOCALP is as in `dired-get-filename'.
+Optional fifth argument CASE-FOLD-P specifies the value of
+`case-fold-search' used for matching REGEXP."
   (interactive
    (list (read-regexp
 	  "Mark unmarked files matching regexp (default all): "
@@ -594,7 +618,10 @@ Optional fourth argument LOCALP is as in `dired-get-filename'."
       ;; not already marked
       (looking-at-p " ")
       ;; uninteresting
-      (let ((fn (dired-get-filename localp t)))
+      (let ((fn (dired-get-filename localp t))
+            ;; Match patterns case-insensitively on case-insensitive
+            ;; systems
+            (case-fold-search case-fold-p))
         (and fn (string-match-p regexp fn))))
      msg)))
 
