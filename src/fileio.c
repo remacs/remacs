@@ -4649,8 +4649,7 @@ choose_write_coding_system (Lisp_Object start, Lisp_Object end, Lisp_Object file
 	}
 
       /* If the decided coding-system doesn't specify end-of-line
-	 format, we use that of
-	 `default-buffer-file-coding-system'.  */
+	 format, we use that of `buffer-file-coding-system'.  */
       if (! using_default_coding)
 	{
 	  Lisp_Object dflt = BVAR (&buffer_defaults, buffer_file_coding_system);

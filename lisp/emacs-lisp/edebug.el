@@ -2363,7 +2363,7 @@ MSG is printed after `::::} '."
 (defvar edebug-window-data)  ; window and window-start for current function
 (defvar edebug-outside-windows) ; outside window configuration
 (defvar edebug-eval-buffer) ; for the evaluation list.
-(defvar edebug-outside-d-c-i-n-s-w) ; outside default-cursor-in-non-selected-windows
+(defvar edebug-outside-d-c-i-n-s-w) ; outside default cursor-in-non-selected-windows
 
 (defvar edebug-eval-list nil) ;; List of expressions to evaluate.
 

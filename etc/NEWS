@@ -530,6 +530,23 @@ variable.
 ** Some obsolete functions, variables, and faces have been removed:
 *** From subr.el: window-dot, set-window-dot, read-input, show-buffer,
 eval-current-buffer, string-to-int
+*** All the default-FOO variables that hold the default value of the
+FOO variable.  Use 'default-value' and 'setq-default' to access and
+change FOO, repectively.  The exhaustive list of removed variables is:
+'default-mode-line-format', 'default-header-line-format',
+'default-line-spacing', 'default-abbrev-mode', 'default-ctl-arrow',
+'default-truncate-lines', 'default-left-margin', 'default-tab-width',
+'default-case-fold-search', 'default-left-margin-width',
+'default-right-margin-width', 'default-left-fringe-width',
+'default-right-fringe-width', 'default-fringes-outside-margins',
+'default-scroll-bar-width', 'default-vertical-scroll-bar',
+'default-indicate-empty-lines', 'default-indicate-buffer-boundaries',
+'default-fringe-indicator-alist', 'default-fringe-cursor-alist',
+'default-scroll-up-aggressively', 'default-scroll-down-aggressively',
+'default-fill-column', 'default-cursor-type',
+'default-cursor-in-non-selected-windows',
+'default-buffer-file-coding-system', 'default-major-mode', and
+'default-enable-multibyte-characters'.
 *** Many variables obsoleted in 22.1 referring to face symbols
 
 +++
