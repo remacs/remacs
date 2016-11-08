@@ -867,24 +867,14 @@ On W32 systems, the volume letter must be ignored.")
 See `tramp-file-name-structure' for more explanations.")
 
 ;;;###autoload
-(defconst tramp-file-name-regexp
+(defvar tramp-file-name-regexp
   (cond ((equal tramp-syntax 'ftp) tramp-file-name-regexp-unified)
 	((equal tramp-syntax 'sep) tramp-file-name-regexp-separate)
 	(t (error "Wrong `tramp-syntax' defined")))
   "Regular expression matching file names handled by Tramp.
-This regexp should match Tramp file names but no other file names.
-When tramp.el is loaded, this regular expression is prepended to
-`file-name-handler-alist', and that is searched sequentially.  Thus,
-if the Tramp entry appears rather early in the `file-name-handler-alist'
-and is a bit too general, then some files might be considered Tramp
-files which are not really Tramp files.
-
-Please note that the entry in `file-name-handler-alist' is made when
-this file \(tramp.el) is loaded.  This means that this variable must be set
-before loading tramp.el.  Alternatively, `file-name-handler-alist' can be
-updated after changing this variable.
-
-Also see `tramp-file-name-structure'.")
+This regexp should match Tramp file names but no other file
+names.  When calling `tramp-register-file-name-handlers', the
+initial value is overwritten by the car of `tramp-file-name-structure'.")
 
 ;;;###autoload
 (defconst tramp-completion-file-name-regexp-unified
@@ -1055,9 +1045,9 @@ means to use always cached values for the directory contents."
      . tramp-completion-handle-file-name-all-completions)
     (file-name-completion . tramp-completion-handle-file-name-completion))
   "Alist of completion handler functions.
-Used for file names matching `tramp-file-name-regexp'. Operations
-not mentioned here will be handled by Tramp's file name handler
-functions, or the normal Emacs functions.")
+Used for file names matching `tramp-completion-file-name-regexp'.
+Operations not mentioned here will be handled by Tramp's file
+name handler functions, or the normal Emacs functions.")
 
 ;; Handlers for foreign methods, like FTP or SMB, shall be plugged here.
 ;;;###tramp-autoload
@@ -2192,6 +2182,10 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 		 tramp-autoload-file-name-handler))
     (let ((a1 (rassq fnh file-name-handler-alist)))
       (setq file-name-handler-alist (delq a1 file-name-handler-alist))))
+  ;; The initial value of `tramp-file-name-regexp' is too simple
+  ;; minded, but we cannot give it the real value in the autoload
+  ;; pattern.  See Bug#24889.
+  (setq tramp-file-name-regexp (car tramp-file-name-structure))
   ;; Add the handlers.
   (add-to-list 'file-name-handler-alist
 	       (cons tramp-file-name-regexp 'tramp-file-name-handler))
