@@ -198,7 +198,7 @@ wants to replace FROM with TO."
                     (setq-local text-property-default-nonsticky
                                 (cons '(separator . t) text-property-default-nonsticky)))
                 (if regexp-flag
-                    (read-regexp prompt)
+                    (read-regexp prompt nil 'minibuffer-history)
                   (read-from-minibuffer
                    prompt nil nil nil nil
                    (car (if regexp-flag regexp-search-ring search-ring)) t)))))
