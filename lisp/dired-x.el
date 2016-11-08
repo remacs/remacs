@@ -29,20 +29,6 @@
 ;; This is based on Sebastian Kremer's excellent dired-x.el (Dired Extra),
 ;; version 1.191, adapted for GNU Emacs.  See the `dired-x' info pages.
 
-;; USAGE: In your ~/.emacs,
-;;
-;; (add-hook 'dired-load-hook
-;;           (lambda ()
-;;                       (load "dired-x")
-;;                       ;; Set global variables here.  For example:
-;;                       ;; (setq dired-guess-shell-gnutar "gtar")
-;;                       ))
-;; (add-hook 'dired-mode-hook
-;;           (lambda ()
-;;                       ;; Set buffer-local variables here.  For example:
-;;                       ;; (dired-omit-mode 1)
-;;                       ))
-;;
 ;; At load time dired-x.el will install itself and bind some dired keys.
 ;; Some dired.el and dired-aux.el functions have extra features if
 ;; dired-x is loaded.
@@ -1106,17 +1092,7 @@ and the rest will be added temporarily to the history and can be retrieved
 with \\[previous-history-element] (M-p) .
 
 The variable `dired-guess-shell-case-fold-search' controls whether
-REGEXP is matched case-sensitively.
-
-You can set this variable in your ~/.emacs.  For example, to add rules for
-`.foo' and `.bar' files, write
-
- (setq dired-guess-shell-alist-user
-        '((\"\\\\.foo\\\\'\" \"FOO-COMMAND\")
-          (\"\\\\.bar\\\\'\"
-           (if condition
-              \"BAR-COMMAND-1\"
-            \"BAR-COMMAND-2\"))))"
+REGEXP is matched case-sensitively."
   :group 'dired-x
   :type '(alist :key-type regexp :value-type (repeat sexp)))
 
