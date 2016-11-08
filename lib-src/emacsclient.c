@@ -75,6 +75,7 @@ char *w32_getenv (const char *);
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <getopt.h>
 #include <unistd.h>
 
