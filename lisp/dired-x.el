@@ -1400,29 +1400,6 @@ Considers buffers closer to the car of `buffer-list' to be more recent."
        (memq buffer1 (buffer-list))
        (not (memq buffer1 (memq buffer2 (buffer-list))))))
 
-;; Same thing as `dired-buffers-for-dir' of dired.el? - lrd 11/23/93
-;; (defun dired-buffers-for-dir-exact (dir)
-;; ;; Return a list of buffers that dired DIR (a directory or wildcard)
-;; ;; at top level, or as subdirectory.
-;; ;; Top level matches must match the wildcard part too, if any.
-;; ;; The list is in reverse order of buffer creation, most recent last.
-;; ;; As a side effect, killed dired buffers for DIR are removed from
-;; ;; dired-buffers.
-;;   (let ((alist dired-buffers) result elt)
-;;     (while alist
-;;       (setq elt (car alist)
-;;             alist (cdr alist))
-;;       (let ((buf (cdr elt)))
-;;         (if (buffer-name buf)
-;;             ;; Top level must match exactly against dired-directory in
-;;             ;; case one of them is a wildcard.
-;;             (if (or (equal dir (with-current-buffer buf dired-directory))
-;;                     (assoc dir (with-current-buffer buf dired-subdir-alist)))
-;;                 (setq result (cons buf result)))
-;;           ;; else buffer is killed - clean up:
-;;           (setq dired-buffers (delq elt dired-buffers)))))
-;;     result))
-
 
 ;; Needed if ls -lh is supported and also for GNU ls -ls.
 (defun dired-x--string-to-number (str)
@@ -1439,9 +1416,6 @@ sure that a trailing letter in STR is one of BKkMGTPEZY."
         (while (and units (/= (pop units) u))
           (setq val (* 1024.0 val)))))
     val))
-
-;; Does anyone use this? - lrd 6/29/93.
-;; Apparently people do use it. - lrd 12/22/97.
 
 (defun dired-mark-sexp (predicate &optional unflag-p)
   "Mark files for which PREDICATE returns non-nil.
