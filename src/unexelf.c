@@ -329,7 +329,11 @@ unexec (const char *new_name, const char *old_name)
   if (old_bss_index == -1)
     fatal ("no bss section found");
 
+#ifdef HAVE_SBRK
   new_break = sbrk (0);
+#else
+  new_break = (byte *) old_bss_addr + old_bss_size;
+#endif
   new_bss_addr = (ElfW (Addr)) new_break;
   bss_size_growth = new_bss_addr - old_bss_addr;
   new_data2_size = bss_size_growth;

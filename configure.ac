@@ -2151,14 +2151,14 @@ AC_CACHE_CHECK(
    fi])
 doug_lea_malloc=$emacs_cv_var_doug_lea_malloc
 
-system_malloc=$emacs_cv_sanitize_address
-
 hybrid_malloc=
+system_malloc=yes
 
 case "$opsys" in
   ## darwin ld insists on the use of malloc routines in the System framework.
-  darwin | mingw32 | nacl | sol2-10) system_malloc=yes ;;
+  darwin | mingw32 | nacl | sol2-10) ;;
   cygwin) hybrid_malloc=yes;;
+  *) test "$ac_cv_func_sbrk" = yes && system_malloc=$emacs_cv_sanitize_address;;
 esac
 
 if test "${system_malloc}" != yes && test "${doug_lea_malloc}" != yes \
@@ -4155,7 +4155,7 @@ AC_CHECK_HEADERS(valgrind/valgrind.h)
 
 AC_CHECK_MEMBERS([struct unipair.unicode], [], [], [[#include <linux/kd.h>]])
 
-AC_CHECK_FUNCS_ONCE(tzset)
+AC_CHECK_FUNCS_ONCE([sbrk tzset])
 
 ok_so_far=yes
 AC_CHECK_FUNC(socket, , ok_so_far=no)

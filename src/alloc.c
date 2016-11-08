@@ -97,7 +97,7 @@ static bool valgrind_p;
 #include "w32heap.h"	/* for sbrk */
 #endif
 
-#if defined DOUG_LEA_MALLOC || defined GNU_LINUX
+#ifdef GNU_LINUX
 /* The address where the heap starts.  */
 void *
 my_heap_start (void)
@@ -130,7 +130,9 @@ malloc_initialize_hook (void)
 
   if (! initialized)
     {
+#ifdef GNU_LINUX
       my_heap_start ();
+#endif
       malloc_using_checking = getenv ("MALLOC_CHECK_") != NULL;
     }
   else
@@ -7053,7 +7055,7 @@ We divide the value by 1024 to make sure it fits in a Lisp integer.  */)
 {
   Lisp_Object end;
 
-#ifdef HAVE_NS
+#if defined HAVE_NS || !HAVE_SBRK
   /* Avoid warning.  sbrk has no relation to memory allocated anyway.  */
   XSETINT (end, 0);
 #else
