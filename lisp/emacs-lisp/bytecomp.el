@@ -2672,8 +2672,11 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	       (when (cddr list)
 		 (error "Garbage following &rest VAR in lambda-list")))
 	      ((eq arg '&optional)
-	       (unless (cdr list)
-		 (error "Variable name missing after &optional")))
+	       (when (or (null (cdr list))
+                         (memq (cadr list) '(&optional &rest)))
+		 (error "Variable name missing after &optional"))
+               (when (memq '&optional (cddr list))
+                 (error "Duplicate &optional")))
 	      ((memq arg vars)
 	       (byte-compile-warn "repeated variable %s in lambda-list" arg))
 	      (t

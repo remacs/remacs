@@ -32,4 +32,19 @@
   ;; This should not crash.
   (should-error (funcall '(closure)) :type 'invalid-function))
 
+(ert-deftest eval-tests--bugs-24912-and-24913 ()
+  "Checks that Emacs doesn’t accept weird argument lists.
+Bug#24912 and Bug#24913."
+  (dolist (args '((&optional) (&rest) (&optional &rest) (&rest &optional)
+                  (&optional &rest a) (&optional a &rest)
+                  (&rest a &optional) (&rest &optional a)
+                  (&optional &optional) (&optional &optional a)
+                  (&optional a &optional b)
+                  (&rest &rest) (&rest &rest a)
+                  (&rest a &rest b)))
+    (should-error (eval `(funcall (lambda ,args)) t) :type 'invalid-function)
+    (should-error (byte-compile-check-lambda-list args))
+    (let ((byte-compile-debug t))
+      (should-error (eval `(byte-compile (lambda ,args)) t)))))
+
 ;;; eval-tests.el ends here
