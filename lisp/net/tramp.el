@@ -1146,6 +1146,11 @@ entry does not exist, return nil."
   "Return t if NAME is a string with Tramp file name syntax."
   (save-match-data
     (and (stringp name)
+	 ;; No "/:" and "/c:".  This is not covered by `tramp-file-name-regexp'.
+	 (not (string-match
+	       (if (memq system-type '(cygwin windows-nt))
+		   "^/[[:alpha:]]?:" "^/:")
+	       name))
 	 (string-match tramp-file-name-regexp name))))
 
 (defun tramp-find-method (method user host)

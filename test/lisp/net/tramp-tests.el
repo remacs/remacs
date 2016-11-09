@@ -185,6 +185,8 @@ handled properly.  BODY shall not contain a timeout."
   (should (tramp-tramp-file-p "/method1:user1@host1|method2:user2@host2:"))
   (should (tramp-tramp-file-p
 	   "/method1:user1@host1|method2:user2@host2|method3:user3@host3:"))
+  (should (tramp-tramp-file-p "/host1|host2:"))
+  (should (tramp-tramp-file-p "/user1@host1|user2@host2:"))
 
   ;; No strings.
   (should-not (tramp-tramp-file-p nil))
@@ -193,12 +195,13 @@ handled properly.  BODY shall not contain a timeout."
   (should-not (tramp-tramp-file-p "/::"))
   (should-not (tramp-tramp-file-p "/:@:"))
   (should-not (tramp-tramp-file-p "/:[]:"))
-  ;; Multihops require a method.
-  (should-not (tramp-tramp-file-p "/host1|host2:"))
   ;; Methods or hostnames shall be at least two characters on MS Windows.
-  (when (memq system-type '(cygwin windows-nt))
-      (should-not (tramp-tramp-file-p "/c:/path/to/file"))
-      (should-not (tramp-tramp-file-p "/c::/path/to/file"))))
+  (let ((system-type 'windows-nt))
+    (should-not (tramp-tramp-file-p "/c:/path/to/file"))
+    (should-not (tramp-tramp-file-p "/c::/path/to/file")))
+  (let ((system-type 'gnu/linux))
+    (should (tramp-tramp-file-p "/h:/path/to/file"))
+    (should (tramp-tramp-file-p "/m::/path/to/file"))))
 
 (ert-deftest tramp-test02-file-name-dissect ()
   "Check remote file name components."
