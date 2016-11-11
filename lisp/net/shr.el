@@ -1529,7 +1529,7 @@ The preference is a float determined from `shr-prefer-media-type'."
       (setq srcset
             (sort (mapcar
                    (lambda (elem)
-                     (let ((spec (split-string elem " ")))
+                     (let ((spec (split-string elem "[\t\n ]+")))
                        (cond
                         ((= (length spec) 1)
                          ;; Make sure it's well formed.
@@ -1543,7 +1543,9 @@ The preference is a float determined from `shr-prefer-media-type'."
                         (t
                          (list (car spec)
                                (string-to-number (cadr spec)))))))
-                   (split-string srcset ", "))
+                   (split-string (replace-regexp-in-string
+				  "\\`[\t\n ]+\\|[\t\n ]+\\'" "" srcset)
+				 "[\t\n ]*,[\t\n ]*"))
                   (lambda (e1 e2)
                     (> (cadr e1) (cadr e2)))))
       ;; Choose the smallest picture that's bigger than the current
