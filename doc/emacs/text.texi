@@ -1218,8 +1218,9 @@ levels.
 
   Consider an Outline mode buffer with all the text and subheadings under
 level-1 headings hidden.  To look at what is hidden under one of these
-headings, you could use @kbd{C-c C-e} (@kbd{M-x show-entry}) to expose
-the body, or @kbd{C-c C-i} to expose the child (level-2) headings.
+headings, you could use @kbd{C-c C-e} (@kbd{M-x outline-show-entry})
+to expose the body, or @kbd{C-c C-i} to expose the child (level-2)
+headings.
 
 @kindex C-c C-z
 @findex foldout-zoom-subtree
@@ -1234,11 +1235,12 @@ in the mode line shows how deep you've gone.
 
   When zooming in on a heading, to see only the child subheadings specify
 a numeric argument: @kbd{C-u C-c C-z}.  The number of levels of children
-can be specified too (compare @kbd{M-x show-children}), e.g., @kbd{M-2
-C-c C-z} exposes two levels of child subheadings.  Alternatively, the
-body can be specified with a negative argument: @kbd{M-- C-c C-z}.  The
-whole subtree can be expanded, similarly to @kbd{C-c C-s} (@kbd{M-x
-show-subtree}), by specifying a zero argument: @kbd{M-0 C-c C-z}.
+can be specified too (compare @kbd{M-x outline-show-children}), e.g.,
+@w{@kbd{M-2 C-c C-z}} exposes two levels of child subheadings.
+Alternatively, the body can be specified with a negative argument:
+@w{@kbd{M-- C-c C-z}}.  The whole subtree can be expanded, similarly to
+@kbd{C-c C-s} (@kbd{M-x outline-show-subtree}), by specifying a zero
+argument: @w{@kbd{M-0 C-c C-z}}.
 
   While you're zoomed in, you can still use Outline mode's exposure and
 hiding functions without disturbing Foldout.  Also, since the buffer is
@@ -1255,8 +1257,8 @@ argument exits that many levels of folds.  Specifying a zero argument
 exits all folds.
 
   To cancel the narrowing of a fold without hiding the text and
-subheadings, specify a negative argument.  For example, @kbd{M--2 C-c
-C-x} exits two folds and leaves the text and subheadings exposed.
+subheadings, specify a negative argument.  For example, @w{@kbd{M--2 C-c
+C-x}} exits two folds and leaves the text and subheadings exposed.
 
   Foldout mode also provides mouse commands for entering and exiting
 folds, and for showing and hiding text:
