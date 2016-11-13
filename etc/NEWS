@@ -62,6 +62,10 @@ affected by this, as SGI stopped supporting IRIX in December 2013.
 * Changes in Emacs 26.1
 
 +++
+** The new function 'file-name-case-insensitive-p' tests whether a
+given file is on a case-insensitive filesystem.
+
++++
 ** The new user variable 'electric-quote-chars' provides a list
 of curved quotes for 'electric-quote-mode', allowing user to choose
 the types of quotes to be used.

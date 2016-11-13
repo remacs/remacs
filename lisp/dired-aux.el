@@ -1801,13 +1801,14 @@ Optional arg HOW-TO determines how to treat the target.
 		     (concat (if dired-one-file op1 operation) " %s to: ")
 		     target-dir op-symbol arg rfn-list default))))
 	 (into-dir (cond ((null how-to)
-			  ;; Allow DOS/Windows users to change the letter
-			  ;; case of a directory.  If we don't test these
-			  ;; conditions up front, file-directory-p below
-			  ;; will return t because the filesystem is
-			  ;; case-insensitive, and Emacs will try to move
+			  ;; Allow users to change the letter case of
+			  ;; a directory on a case-insensitive
+			  ;; filesystem.  If we don't test these
+			  ;; conditions up front, file-directory-p
+			  ;; below will return t on a case-insensitive
+			  ;; filesystem, and Emacs will try to move
 			  ;; foo -> foo/foo, which fails.
-			  (if (and (memq system-type '(ms-dos windows-nt cygwin))
+			  (if (and (file-name-case-insensitive-p (car fn-list))
 				   (eq op-symbol 'move)
 				   dired-one-file
 				   (string= (downcase

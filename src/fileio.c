@@ -25,6 +25,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef DARWIN_OS
+#include <sys/attr.h>
+#endif
+
 #ifdef HAVE_PWD_H
 #include <pwd.h>
 #endif
@@ -2232,6 +2236,72 @@ internal_delete_file (Lisp_Object filename)
   return NILP (tem);
 }
 
+/* Filesystems are case-sensitive on all supported systems except
+   MS-Windows, MS-DOS, Cygwin, and Mac OS X.  They are always
+   case-insensitive on the first two, but they may or may not be
+   case-insensitive on Cygwin and OS X.  The following function
+   attempts to provide a runtime test on those two systems.  If the
+   test is not conclusive, we assume case-insensitivity on Cygwin and
+   case-sensitivity on Mac OS X.
+
+   FIXME: Mounted filesystems on Posix hosts, like Samba shares or
+   NFS-mounted Windows volumes, might be case-insensitive.  Can we
+   detect this?  */
+
+static bool
+file_name_case_insensitive_p (const char *filename)
+{
+#ifdef DOS_NT
+  return 1;
+#elif defined CYGWIN
+/* As of Cygwin-2.6.1, pathconf supports _PC_CASE_INSENSITIVE.  */
+# ifdef _PC_CASE_INSENSITIVE
+  int res = pathconf (filename, _PC_CASE_INSENSITIVE);
+  if (res < 0)
+    return 1;
+  return res > 0;
+# else
+  return 1;
+# endif
+#elif defined DARWIN_OS
+  /* The following is based on
+     http://lists.apple.com/archives/darwin-dev/2007/Apr/msg00010.html.  */
+  struct attrlist alist;
+  unsigned char buffer[sizeof (vol_capabilities_attr_t) + sizeof (size_t)];
+
+  memset (&alist, 0, sizeof (alist));
+  alist.volattr = ATTR_VOL_CAPABILITIES;
+  if (getattrlist (filename, &alist, buffer, sizeof (buffer), 0)
+      || !(alist.volattr & ATTR_VOL_CAPABILITIES))
+    return 0;
+  vol_capabilities_attr_t *vcaps = buffer;
+  return !(vcaps->capabilities[0] & VOL_CAP_FMT_CASE_SENSITIVE);
+#else
+  return 0;
+#endif
+}
+
+DEFUN ("file-name-case-insensitive-p", Ffile_name_case_insensitive_p,
+       Sfile_name_case_insensitive_p, 1, 1, 0,
+       doc: /* Return t if file FILENAME is on a case-insensitive filesystem.
+The arg must be a string.  */)
+  (Lisp_Object filename)
+{
+  Lisp_Object handler;
+
+  CHECK_STRING (filename);
+  filename = Fexpand_file_name (filename, Qnil);
+
+  /* If the file name has special constructs in it,
+     call the corresponding file handler.  */
+  handler = Ffind_file_name_handler (filename, Qfile_name_case_insensitive_p);
+  if (!NILP (handler))
+    return call2 (handler, Qfile_name_case_insensitive_p, filename);
+
+  filename = ENCODE_FILE (filename);
+  return file_name_case_insensitive_p (SSDATA (filename)) ? Qt : Qnil;
+}
+
 DEFUN ("rename-file", Frename_file, Srename_file, 2, 3,
        "fRename file: \nGRename %s to file: \np",
        doc: /* Rename FILE as NEWNAME.  Both args must be strings.
@@ -2251,12 +2321,11 @@ This is what happens in interactive use with M-x.  */)
   file = Fexpand_file_name (file, Qnil);
 
   if ((!NILP (Ffile_directory_p (newname)))
-#ifdef DOS_NT
-      /* If the file names are identical but for the case,
-	 don't attempt to move directory to itself. */
-      && (NILP (Fstring_equal (Fdowncase (file), Fdowncase (newname))))
-#endif
-      )
+      /* If the filesystem is case-insensitive and the file names are
+	 identical but for the case, don't attempt to move directory
+	 to itself.  */
+      && (NILP (Ffile_name_case_insensitive_p (file))
+	  || NILP (Fstring_equal (Fdowncase (file), Fdowncase (newname)))))
     {
       Lisp_Object fname = (NILP (Ffile_directory_p (file))
 			   ? file : Fdirectory_file_name (file));
@@ -2277,14 +2346,12 @@ This is what happens in interactive use with M-x.  */)
   encoded_file = ENCODE_FILE (file);
   encoded_newname = ENCODE_FILE (newname);
 
-#ifdef DOS_NT
-  /* If the file names are identical but for the case, don't ask for
-     confirmation: they simply want to change the letter-case of the
-     file name.  */
-  if (NILP (Fstring_equal (Fdowncase (file), Fdowncase (newname))))
-#endif
-  if (NILP (ok_if_already_exists)
-      || INTEGERP (ok_if_already_exists))
+  /* If the filesystem is case-insensitive and the file names are
+     identical but for the case, don't ask for confirmation: they
+     simply want to change the letter-case of the file name.  */
+  if ((!(file_name_case_insensitive_p (SSDATA (encoded_file)))
+       || NILP (Fstring_equal (Fdowncase (file), Fdowncase (newname))))
+      && ((NILP (ok_if_already_exists) || INTEGERP (ok_if_already_exists))))
     barf_or_query_if_file_exists (newname, false, "rename to it",
 				  INTEGERP (ok_if_already_exists), false);
   if (rename (SSDATA (encoded_file), SSDATA (encoded_newname)) < 0)
@@ -5836,6 +5903,7 @@ syms_of_fileio (void)
   DEFSYM (Qmake_directory_internal, "make-directory-internal");
   DEFSYM (Qmake_directory, "make-directory");
   DEFSYM (Qdelete_file, "delete-file");
+  DEFSYM (Qfile_name_case_insensitive_p, "file-name-case-insensitive-p");
   DEFSYM (Qrename_file, "rename-file");
   DEFSYM (Qadd_name_to_file, "add-name-to-file");
   DEFSYM (Qmake_symbolic_link, "make-symbolic-link");
@@ -6099,6 +6167,7 @@ This includes interactive calls to `delete-file' and
   defsubr (&Smake_directory_internal);
   defsubr (&Sdelete_directory_internal);
   defsubr (&Sdelete_file);
+  defsubr (&Sfile_name_case_insensitive_p);
   defsubr (&Srename_file);
   defsubr (&Sadd_name_to_file);
   defsubr (&Smake_symbolic_link);
