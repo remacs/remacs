@@ -1910,7 +1910,8 @@ ARGS are the arguments OPERATION has been called with."
 	      file-accessible-directory-p file-attributes
 	      file-directory-p file-executable-p file-exists-p
 	      file-local-copy file-modes
-	      file-name-as-directory file-name-directory
+	      file-name-as-directory file-name-case-insensitive-p
+	      file-name-directory
 	      file-name-nondirectory file-name-sans-versions
 	      file-ownership-preserved-p file-readable-p
 	      file-regular-p file-remote-p file-symlink-p file-truename
