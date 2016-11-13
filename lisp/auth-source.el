@@ -704,7 +704,7 @@ must call it to obtain the actual value."
 
       (setq filtered-backends (copy-sequence backends))
       (dolist (backend backends)
-        (dolist (key keys)
+        (cl-dolist (key keys)
           ;; ignore invalid slots
           (condition-case nil
               (unless (auth-source-search-collection
