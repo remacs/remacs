@@ -44,6 +44,12 @@ hand the socket over to Emacs.  Emacs uses this socket to service
 emacsclient commands.  This new functionality can be disabled with the
 configure option '--disable-libsystemd'.
 
++++
+** A systemd user unit file is provided.  Use it in the standard way:
+systemctl --user enable emacs
+(If your Emacs is installed in a non-standard location, you may
+need to copy the emacs.service file to eg ~/.config/systemd/user/)
+
 ** New configure option '--disable-build-details' attempts to build an
 Emacs that is more likely to be reproducible; that is, if you build
 and install Emacs twice, the second Emacs is a copy of the first.

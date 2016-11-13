@@ -1570,7 +1570,7 @@ process.
 
   You can solve this problem by setting up Emacs as an @dfn{edit
 server}, so that it ``listens'' for external edit requests and acts
-accordingly.  There are two ways to start an Emacs server:
+accordingly.  There are various ways to start an Emacs server:
 
 @itemize
 @findex server-start
@@ -1589,31 +1589,28 @@ calls @code{server-start} after initialization, and returns control to
 the calling terminal instead of opening an initial frame; it then
 waits in the background, listening for edit requests.
 
+@cindex systemd unit file
+@item
+If your operating system uses @command{systemd} to manage startup,
+you can automatically start Emacs in daemon mode when you login
+using the supplied @dfn{systemd unit file}.  To activate this:
+@example
+systemctl --user enable emacs
+@end example
+(If your Emacs was installed into a non-standard location, you may
+need to copy the @file{emacs.service} file to a standard directory
+such as @file{~/.config/systemd/user/}.)
+
 @cindex socket activation, systemd, Emacs
 @item
 An external process can invoke the Emacs server when a connection
 event occurs upon a specified socket and pass the socket to the new
-Emacs server process.  An instance of this is @command{systemd}'s
-socket functionality: the @command{systemd} service creates a socket and
+Emacs server process.  An instance of this is the socket functionality
+of @command{systemd}: the @command{systemd} service creates a socket and
 listens for connections on it; when @command{emacsclient} connects to
 it for the first time, @command{systemd} can launch the Emacs server
 and hand over the socket to it for servicing @command{emacsclient}
 connections.  A setup to use this functionality could be:
-
-@file{~/.config/systemd/user/emacs.service}:
-@example
-[Unit]
-Description=Emacs
-
-[Service]
-Type=forking
-ExecStart=/path/to/emacs --daemon
-ExecStop=/path/to/emacsclient --eval "(kill-emacs)"
-Restart=always
-
-[Install]
-WantedBy=default.target
-@end example
 
 @file{~/.config/systemd/user/emacs.socket}:
 @example
@@ -1624,12 +1621,14 @@ ListenStream=/path/to/.emacs.socket
 WantedBy=sockets.target
 @end example
 
+(The @file{emacs.service} file described above must also be installed.)
+
 The @code{ListenStream} path will be the path that Emacs listens for
 connections from @command{emacsclient}; this is a file of your choice.
 @end itemize
 
 @cindex @env{TEXEDIT} environment variable
-  Either way, once an Emacs server is started, you can use a shell
+  Once an Emacs server is started, you can use a shell
 command called @command{emacsclient} to connect to the Emacs process
 and tell it to visit a file.  You can then set the @env{EDITOR}
 environment variable to @samp{emacsclient}, so that external programs
