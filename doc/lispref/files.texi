@@ -1144,9 +1144,17 @@ return value is unspecified.
 Sometimes file names or their parts need to be compared as strings, in
 which case it's important to know whether the underlying filesystem is
 case-insensitive.  This function returns @code{t} if file
-@var{filename} is on a case-insensitive filesystem.  On platforms where
-this information is not available, this function guesses based on
-common practice.
+@var{filename} is on a case-insensitive filesystem.  It always returns
+@code{t} on MS-DOS and MS-Windows.  On Cygwin and Mac OS X,
+filesystems may or may not be case-insensitive, and the function tries
+to determine case-sensitivity by a runtime test.  If the test is
+inconclusive, the function returns @code{t} on Cygwin and @code{nil}
+on Mac OS X.
+
+Currently this function always returns @code{nil} on platforms other
+than MS-DOS, MS-Windows, Cygwin, and Mac OS X.  It does not detect
+case-insensitivity of mounted filesystems, such as Samba shares or
+NFS-mounted Windows volumes.
 @end defun
 
 @defun file-in-directory-p file dir
