@@ -123,7 +123,7 @@
 ;;
 
 ;; This variable will always hold the version number of the mode
-(defconst verilog-mode-version "2016-03-22-7547e76-vpo-GNU"
+(defconst verilog-mode-version "2016-11-14-26d3540-vpo-GNU"
   "Version of this Verilog mode.")
 (defconst verilog-mode-release-emacs t
   "If non-nil, this version of Verilog mode was released with Emacs itself.")
@@ -753,6 +753,13 @@ mode is experimental."
   :type 'boolean)
 (put 'verilog-auto-declare-nettype 'safe-local-variable `stringp)
 
+(defcustom verilog-auto-wire-comment t
+  "Non-nil indicates to insert to/from comments with `verilog-auto-wire' etc."
+  :version "25.1"
+  :group 'verilog-mode-actions
+  :type 'boolean)
+(put 'verilog-auto-wire-comment 'safe-local-variable `verilog-booleanp)
+
 (defcustom verilog-auto-wire-type nil
   "Non-nil specifies the data type to use with `verilog-auto-wire' etc.
 Set this to \"logic\" for SystemVerilog code, or use `verilog-auto-logic'."
@@ -1131,31 +1138,66 @@ be replaced, and will remain symbolic.
 For example, imagine a submodule uses parameters to declare the size of its
 inputs.  This is then used by an upper module:
 
-	module InstModule (o,i);
-	   parameter WIDTH;
-	   input [WIDTH-1:0] i;
-	endmodule
+        module InstModule (o,i);
+           parameter WIDTH;
+           input [WIDTH-1:0] i;
+           parameter type OUT_t;
+           output OUT_t o;
+        endmodule
 
-	module ExampInst;
-	   InstModule
-	     #(.PARAM(10))
-	    instName
-	     (/*AUTOINST*/
-	      .i 	(i[PARAM-1:0]));
+        module ExampInst;
+           /*AUTOOUTPUT*/
+           // Beginning of automatic outputs
+           output OUT_t o;
+           // End of automatics
 
-Note even though PARAM=10, the AUTOINST has left the parameter as a
-symbolic name.  If `verilog-auto-inst-param-value' is set, this will
+           InstModule
+             #(.WIDTH(10),
+               ,.OUT_t(upper_t))
+            instName
+             (/*AUTOINST*/
+              .i        (i[WIDTH-1:0]),
+              .o        (o));
+
+Note even though WIDTH=10, the AUTOINST has left the parameter as
+a symbolic name.  Likewise the OUT_t is preserved as the name
+from the instantiated module.
+
+If `verilog-auto-inst-param-value' is set, this will
 instead expand to:
 
 	module ExampInst;
-	   InstModule
-	     #(.PARAM(10))
-	    instName
-	     (/*AUTOINST*/
-	      .i 	(i[9:0]));"
+           /*AUTOOUTPUT*/
+           // Beginning of automatic outputs
+           output upper_t o;
+           // End of automatics
+
+           InstModule
+             #(.WIDTH(10),
+               ,.OUT_t(upper_t))
+            instName
+             (/*AUTOINST*/
+              .i        (i[9:0]),
+              .o        (o));
+
+Note that the instantiation now has \"i[9:0]\" as the WIDTH
+was expanded.  Likewise the data type of \"o\" in the AUTOOUTPUT
+is now upper_t, from the OUT_t parameter override.
+This second expansion of parameter types can be overridden with
+`verilog-auto-inst-param-value-type'."
   :group 'verilog-mode-auto
   :type 'boolean)
 (put 'verilog-auto-inst-param-value 'safe-local-variable 'verilog-booleanp)
+
+(defcustom verilog-auto-inst-param-value-type t
+  "Non-nil means expand parameter type in instantiations.
+If nil, leave parameter types as symbolic names.
+
+See `verilog-auto-inst-param-value'."
+  :version "25.1"
+  :group 'verilog-mode-auto
+  :type 'boolean)
+(put 'verilog-auto-inst-param-value-type 'safe-local-variable 'verilog-booleanp)
 
 (defcustom verilog-auto-inst-sort nil
   "Non-nil means AUTOINST signals will be sorted, not in declaration order.
@@ -1761,7 +1803,7 @@ so there may be a large up front penalty for the first search."
   (let (pt)
     (while (and (not pt)
 		(re-search-forward regexp bound noerror))
-      (if (verilog-inside-comment-or-string-p)
+      (if (verilog-inside-comment-or-string-p (match-beginning 0))
           (re-search-forward "[/\"\n]" nil t)  ; Only way a comment or quote can end
 	(setq pt (match-end 0))))
     pt))
@@ -1775,7 +1817,7 @@ so there may be a large up front penalty for the first search."
   (let (pt)
     (while (and (not pt)
 		(re-search-backward regexp bound noerror))
-      (if (verilog-inside-comment-or-string-p)
+      (if (verilog-inside-comment-or-string-p (match-beginning 0))
           (re-search-backward "[/\"]" nil t)  ; Only way a comment or quote can begin
 	(setq pt (match-beginning 0))))
     pt))
@@ -2561,15 +2603,15 @@ find the errors."
 	   "\\|\\(\\<table\\>\\)"		;7
 	   "\\|\\(\\<specify\\>\\)"		;8
 	   "\\|\\(\\<function\\>\\)"		;9
-	   "\\|\\(\\(\\(\\<virtual\\>\\s-+\\)\\|\\(\\<protected\\>\\s-+\\)\\)*\\<function\\>\\)"	;10
-	   "\\|\\(\\<task\\>\\)"		;14
-	   "\\|\\(\\(\\(\\<virtual\\>\\s-+\\)\\|\\(\\<protected\\>\\s-+\\)\\)*\\<task\\>\\)"	;15
-	   "\\|\\(\\<generate\\>\\)"		;18
-	   "\\|\\(\\<covergroup\\>\\)"	;16 20
-	   "\\|\\(\\(\\(\\<cover\\>\\s-+\\)\\|\\(\\<assert\\>\\s-+\\)\\)*\\<property\\>\\)"	;17 21
-	   "\\|\\(\\<\\(rand\\)?sequence\\>\\)" ;21 25
-	   "\\|\\(\\<clocking\\>\\)"          ;22 27
-	   "\\|\\(\\<`[ou]vm_[a-z_]+_begin\\>\\)" ;28
+           "\\|\\(\\(?:\\<\\(?:virtual\\|protected\\|static\\)\\>\\s-+\\)*\\<function\\>\\)"  ;10
+           "\\|\\(\\<task\\>\\)"                ;11
+           "\\|\\(\\(?:\\<\\(?:virtual\\|protected\\|static\\)\\>\\s-+\\)*\\<task\\>\\)"      ;12
+           "\\|\\(\\<generate\\>\\)"            ;13
+           "\\|\\(\\<covergroup\\>\\)"          ;14
+           "\\|\\(\\(?:\\(?:\\<cover\\>\\s-+\\)\\|\\(?:\\<assert\\>\\s-+\\)\\)*\\<property\\>\\)" ;15
+           "\\|\\(\\<\\(?:rand\\)?sequence\\>\\)" ;16
+           "\\|\\(\\<clocking\\>\\)"              ;17
+           "\\|\\(\\<`[ou]vm_[a-z_]+_begin\\>\\)" ;18
            "\\|\\(\\<`vmm_[a-z_]+_member_begin\\>\\)"
 	   ;;
 	   ))
@@ -2812,10 +2854,12 @@ find the errors."
     "\\(\\<\\(import\\|export\\)\\>\\s-+\"DPI\\(-C\\)?\"\\s-+\\(\\<\\(context\\|pure\\)\\>\\s-+\\)?\\([A-Za-z_][A-Za-z0-9_]*\\s-*=\\s-*\\)?\\<\\(function\\|task\\)\\>\\)"
     ))
 
+(defconst verilog-default-clocking-re "\\<default\\s-+clocking\\>")
 (defconst verilog-disable-fork-re "\\(disable\\|wait\\)\\s-+fork\\>")
-(defconst verilog-extended-case-re "\\(\\(unique0?\\s-+\\|priority\\s-+\\)?case[xz]?\\)")
+(defconst verilog-extended-case-re "\\(\\(unique0?\\s-+\\|priority\\s-+\\)?case[xz]?\\|randcase\\)")
 (defconst verilog-extended-complete-re
-  (concat "\\(\\(\\<extern\\s-+\\|\\<\\(\\<\\(pure\\|context\\)\\>\\s-+\\)?virtual\\s-+\\|\\<protected\\s-+\\)*\\(\\<function\\>\\|\\<task\\>\\)\\)"
+  ;; verilog-beg-of-statement also looks backward one token to extend this match
+  (concat "\\(\\(\\<extern\\s-+\\|\\<\\(\\<\\(pure\\|context\\)\\>\\s-+\\)?virtual\\s-+\\|\\<protected\\s-+\\|\\<static\\s-+\\)*\\(\\<function\\>\\|\\<task\\>\\)\\)"
 	  "\\|\\(\\(\\<typedef\\>\\s-+\\)*\\(\\<struct\\>\\|\\<union\\>\\|\\<class\\>\\)\\)"
 	  "\\|\\(\\(\\<\\(import\\|export\\)\\>\\s-+\\)?\\(\"DPI\\(-C\\)?\"\\s-+\\)?\\(\\<\\(pure\\|context\\)\\>\\s-+\\)?\\([A-Za-z_][A-Za-z0-9_]*\\s-*=\\s-*\\)?\\(function\\>\\|task\\>\\)\\)"
 	  "\\|" verilog-extended-case-re ))
@@ -3584,28 +3628,28 @@ Use filename, if current buffer being edited shorten to just buffer name."
         ;; Search forward for matching endfunction
         (setq reg "\\<endfunction\\>" )
         (setq nest 'no))
-       ((match-end 14)
+       ((match-end 11)
         ;; Search forward for matching endtask
         (setq reg "\\<endtask\\>" )
         (setq nest 'no))
-       ((match-end 15)
+       ((match-end 12)
         ;; Search forward for matching endtask
         (setq reg "\\<endtask\\>" )
         (setq nest 'no))
-       ((match-end 19)
+       ((match-end 12)
         ;; Search forward for matching endgenerate
         (setq reg "\\(\\<generate\\>\\)\\|\\(\\<endgenerate\\>\\)" ))
-       ((match-end 20)
+       ((match-end 13)
         ;; Search forward for matching endgroup
         (setq reg "\\(\\<covergroup\\>\\)\\|\\(\\<endgroup\\>\\)" ))
-       ((match-end 21)
+       ((match-end 14)
         ;; Search forward for matching endproperty
         (setq reg "\\(\\<property\\>\\)\\|\\(\\<endproperty\\>\\)" ))
-       ((match-end 25)
+       ((match-end 15)
         ;; Search forward for matching endsequence
         (setq reg "\\(\\<\\(rand\\)?sequence\\>\\)\\|\\(\\<endsequence\\>\\)" )
         (setq md 3)) ; 3 to get to endsequence in the reg above
-       ((match-end 27)
+       ((match-end 17)
         ;; Search forward for matching endclocking
         (setq reg "\\(\\<clocking\\>\\)\\|\\(\\<endclocking\\>\\)" )))
       (if (and reg
@@ -3884,7 +3928,10 @@ Key bindings specific to `verilog-mode-map' are:
 ;;; Integration with the speedbar
 ;;
 
-(declare-function speedbar-add-supported-extension "speedbar" (extension))
+;; Avoid problems with XEmacs byte-compiles.
+;; For GNU Emacs, the eval-after-load will handle if it isn't loaded yet.
+(when (eval-when-compile (fboundp 'declare-function))
+  (declare-function speedbar-add-supported-extension "speedbar" (extension)))
 
 (defun verilog-speedbar-initialize ()
   "Initialize speedbar to understand `verilog-mode'."
@@ -4566,7 +4613,7 @@ Limit search to point LIM."
 		(progn
 		  (if
 		      (verilog-re-search-backward
-		       "\\<\\(case[zx]?\\)\\>\\|;\\|\\<end\\>" nil 'move)
+		       "\\<\\(randcase\\|case[zx]?\\)\\>\\|;\\|\\<end\\>" nil 'move)
 		      (progn
 			(cond
 			 ((match-end 1)
@@ -5692,13 +5739,17 @@ Return a list of two elements: (INDENT-TYPE INDENT-LEVEL)."
                     (goto-char here)
                     (throw 'nesting 'block)))))
 
-             ((match-end 27)  ; *sigh* might be a clocking declaration
+             ((match-end 17)  ; *sigh* might be a clocking declaration
               (let ((here (point)))
-                (if (verilog-in-paren)
-                    t ; this is a normal statement
-                  (progn ; or is fork, starts a new block
-                    (goto-char here)
-                    (throw 'nesting 'block)))))
+                (cond ((verilog-in-paren)
+                       t) ; this is a normal statement
+                      ((save-excursion
+                        (verilog-beg-of-statement)
+                        (looking-at verilog-default-clocking-re))
+                       t) ; default clocking, normal statement
+                      (t
+                       (goto-char here) ; or is clocking, starts a new block
+                       (throw 'nesting 'block)))))
 
              ;; need to consider typedef struct here...
              ((looking-at "\\<class\\|struct\\|function\\|task\\>")
@@ -5826,7 +5877,7 @@ Jump from end to matching begin, from endcase to matching case, and so on."
 			"\\(\\<endcase\\>\\)\\|\\(\\<join\\(_any\\|_none\\)?\\>\\)" )))
      ((looking-at "\\<endtask\\>")
       ;; 2: Search back for matching task
-      (setq reg "\\(\\<task\\>\\)\\|\\(\\(\\(\\<virtual\\>\\s-+\\)\\|\\(\\<protected\\>\\s-+\\)\\)+\\<task\\>\\)")
+      (setq reg "\\(\\<task\\>\\)\\|\\(\\(\\<\\(virtual\\|protected\\|static\\)\\>\\s-+\\)+\\<task\\>\\)")
       (setq nesting 'no))
      ((looking-at "\\<endcase\\>")
       (catch 'nesting
@@ -5848,7 +5899,7 @@ Jump from end to matching begin, from endcase to matching case, and so on."
       (setq reg "\\(\\<specify\\>\\)\\|\\(\\<endspecify\\>\\)" ))
      ((looking-at "\\<endfunction\\>")
       ;; 8: Search back for matching function
-      (setq reg "\\(\\<function\\>\\)\\|\\(\\(\\(\\<virtual\\>\\s-+\\)\\|\\(\\<protected\\>\\s-+\\)\\)+\\<function\\>\\)")
+      (setq reg "\\(\\<function\\>\\)\\|\\(\\(\\<\\(virtual\\|protected\\|static\\)\\>\\s-+\\)+\\<function\\>\\)")
       (setq nesting 'no))
      ;;(setq reg "\\(\\<function\\>\\)\\|\\(\\<endfunction\\>\\)" ))
      ((looking-at "\\<endgenerate\\>")
@@ -6300,7 +6351,7 @@ Return >0 for nested struct."
 	(let ((p (point)))
           (and
            (equal (char-after) ?\{)
-           (forward-list)
+           (ignore-errors (forward-list))
            (progn (backward-char 1)
                   (verilog-backward-ws&directives)
                   (and
@@ -7831,7 +7882,7 @@ See also `verilog-sk-header' for an alternative format."
   (if (verilog-sig-multidim sig)
       (let ((str "") (args (verilog-sig-multidim sig)))
 	(while args
-	  (setq str (concat str (car args)))
+	  (setq str (concat (car args) str))
 	  (setq args (cdr args)))
 	str)))
 (defsubst verilog-sig-modport (sig)
@@ -8352,7 +8403,8 @@ Return an array of [outputs inouts inputs wire reg assign const]."
 	in-modport in-clocking in-ign-to-semi ptype ign-prop
 	sigs-in sigs-out sigs-inout sigs-var sigs-assign sigs-const
 	sigs-gparam sigs-intf sigs-modports
-	vec expect-signal keywd newsig rvalue enum io signed typedefed multidim
+	vec expect-signal keywd last-keywd newsig rvalue enum io
+	signed typedefed multidim
 	modport
 	varstack tmp)
     ;;(if dbg (setq dbg (concat dbg (format "\n\nverilog-read-decls START PT %s END %s\n" (point) end-mod-point))))
@@ -8433,7 +8485,8 @@ Return an array of [outputs inouts inputs wire reg assign const]."
 	 ;; Normal or escaped identifier -- note we remember the \ if escaped
 	 ((looking-at "\\s-*\\([a-zA-Z0-9`_$]+\\|\\\\[^ \t\n\f]+\\)")
 	  (goto-char (match-end 0))
-	  (setq keywd (match-string-no-properties 1))
+	  (setq last-keywd keywd
+                keywd (match-string-no-properties 1))
 	  (when (string-match "^\\\\" (match-string 1))
             (setq keywd (concat keywd " ")))  ; Escaped ID needs space at end
 	  ;; Add any :: package names to same identifier
@@ -8498,7 +8551,8 @@ Return an array of [outputs inouts inputs wire reg assign const]."
 		 (setq functask (1- functask)))
 		((equal keywd "modport")
 		 (setq in-modport t))
-		((equal keywd "clocking")
+		((and (equal keywd "clocking")
+                      (not (equal last-keywd "default")))
 		 (setq in-clocking t))
 		((equal keywd "import")
                  (if v2kargs-ok  ; import in module header, not a modport import
@@ -8623,12 +8677,20 @@ Return an array of [outputs inouts inputs wire reg assign const]."
   (defvar create-lockfiles)
   (defvar which-func-modes))
 
-(defun verilog-read-sub-decls-sig (submoddecls comment port sig vec multidim mem)
+(defun verilog-read-sub-decls-type (par-values portdata)
+  "For `verilog-read-sub-decls-line', decode a signal type."
+  (let* ((type (verilog-sig-type portdata))
+         (pvassoc (assoc type par-values)))
+    (cond ((member type '("wire" "reg")) nil)
+          (pvassoc (nth 1 pvassoc))
+          (t type))))
+
+(defun verilog-read-sub-decls-sig (submoddecls par-values comment port sig vec multidim mem)
   "For `verilog-read-sub-decls-line', add a signal."
   ;; sig eq t to indicate .name syntax
   ;;(message "vrsds: %s(%S)" port sig)
   (let ((dotname (eq sig t))
-	portdata)
+        portdata)
     (when sig
       (setq port (verilog-symbol-detick-denumber port))
       (setq sig  (if dotname port (verilog-symbol-detick-denumber sig)))
@@ -8647,8 +8709,7 @@ Return an array of [outputs inouts inputs wire reg assign const]."
                             mem
 			    nil
 			    (verilog-sig-signed portdata)
-			    (unless (member (verilog-sig-type portdata) '("wire" "reg"))
-			      (verilog-sig-type portdata))
+                            (verilog-read-sub-decls-type par-values portdata)
 			    multidim nil)
 			   sigs-inout)))
 	      ((or (setq portdata (assoc port (verilog-decls-get-outputs submoddecls)))
@@ -8666,8 +8727,7 @@ Return an array of [outputs inouts inputs wire reg assign const]."
 			    ;; Also for backwards compatibility we don't propagate
 			    ;;  "input wire" upwards.
 			    ;; See also `verilog-signals-edit-wire-reg'.
-			    (unless (member (verilog-sig-type portdata) '("wire" "reg"))
-			      (verilog-sig-type portdata))
+                            (verilog-read-sub-decls-type par-values portdata)
 			    multidim nil)
 			   sigs-out)))
 	      ((or (setq portdata (assoc port (verilog-decls-get-inputs submoddecls)))
@@ -8680,8 +8740,7 @@ Return an array of [outputs inouts inputs wire reg assign const]."
 			    mem
 			    nil
 			    (verilog-sig-signed portdata)
-			    (unless (member (verilog-sig-type portdata) '("wire" "reg"))
-			      (verilog-sig-type portdata))
+                            (verilog-read-sub-decls-type par-values portdata)
 			    multidim nil)
 			   sigs-in)))
 	      ((setq portdata (assoc port (verilog-decls-get-interfaces submoddecls)))
@@ -8693,7 +8752,7 @@ Return an array of [outputs inouts inputs wire reg assign const]."
 			    mem
 			    nil
 			    (verilog-sig-signed portdata)
-			    (verilog-sig-type portdata)
+                            (verilog-read-sub-decls-type par-values portdata)
 			    multidim nil)
 			   sigs-intf)))
 	      ((setq portdata (and verilog-read-sub-decls-in-interfaced
@@ -8706,13 +8765,13 @@ Return an array of [outputs inouts inputs wire reg assign const]."
 			    mem
 			    nil
 			    (verilog-sig-signed portdata)
-			    (verilog-sig-type portdata)
+                            (verilog-read-sub-decls-type par-values portdata)
 			    multidim nil)
 			   sigs-intf)))
 	      ;; (t  -- warning pin isn't defined.)   ; Leave for lint tool
 	      )))))
 
-(defun verilog-read-sub-decls-expr (submoddecls comment port expr)
+(defun verilog-read-sub-decls-expr (submoddecls par-values comment port expr)
   "For `verilog-read-sub-decls-line', parse a subexpression and add signals."
   ;;(message "vrsde: `%s'" expr)
   ;; Replace special /*[....]*/ comments inserted by verilog-auto-inst-port
@@ -8728,7 +8787,7 @@ Return an array of [outputs inouts inputs wire reg assign const]."
       (let ((mlst (split-string (match-string 1 expr) "[{},]"))
 	    mstr)
 	(while (setq mstr (pop mlst))
-	  (verilog-read-sub-decls-expr submoddecls comment port mstr)))))
+          (verilog-read-sub-decls-expr submoddecls par-values comment port mstr)))))
    (t
     (let (sig vec multidim mem)
       ;; Remove leading reduction operators, etc
@@ -8751,16 +8810,16 @@ Return an array of [outputs inouts inputs wire reg assign const]."
 	(setq vec (match-string 1 expr)
 	      expr (substring expr (match-end 0))))
       ;; Find .[unpacked_memory] or .[unpacked][unpacked]...
-      (while (string-match "^\\s-*\\.\\(\\[[^]]+\\]\\)" expr)
+      (while (string-match "^\\s-*\\.\\(\\(\\[[^]]+\\]\\)+\\)" expr)
 	;;(message "vrsde-m: `%s'" (match-string 1 expr))
 	(setq mem (match-string 1 expr)
 	      expr (substring expr (match-end 0))))
       ;; If found signal, and nothing unrecognized, add the signal
       ;;(message "vrsde-rem: `%s'" expr)
       (when (and sig (string-match "^\\s-*$" expr))
-	(verilog-read-sub-decls-sig submoddecls comment port sig vec multidim mem))))))
+        (verilog-read-sub-decls-sig submoddecls par-values comment port sig vec multidim mem))))))
 
-(defun verilog-read-sub-decls-line (submoddecls comment)
+(defun verilog-read-sub-decls-line (submoddecls par-values comment)
   "For `verilog-read-sub-decls', read lines of port defs until none match.
 Inserts the list of signals found, using submodi to look up each port."
   (let (done port)
@@ -8778,13 +8837,13 @@ Inserts the list of signals found, using submodi to look up each port."
 	      ;; .name
 	      ((looking-at "\\s-*\\.\\s-*\\([a-zA-Z0-9`_$]*\\)\\s-*[,)/]")
 	       (verilog-read-sub-decls-sig
-		submoddecls comment (match-string-no-properties 1) t ; sig==t for .name
+                submoddecls par-values comment (match-string-no-properties 1) t ; sig==t for .name
 		nil nil nil) ; vec multidim mem
 	       (setq port nil))
 	      ;; .\escaped_name
 	      ((looking-at "\\s-*\\.\\s-*\\(\\\\[^ \t\n\f]*\\)\\s-*[,)/]")
 	       (verilog-read-sub-decls-sig
-		submoddecls comment (concat (match-string-no-properties 1) " ") t ; sig==t for .name
+                submoddecls par-values comment (concat (match-string-no-properties 1) " ") t ; sig==t for .name
 		nil nil nil) ; vec multidim mem
 	       (setq port nil))
 	      ;; random
@@ -8799,28 +8858,29 @@ Inserts the list of signals found, using submodi to look up each port."
 	(when port
 	  (cond ((looking-at "\\([a-zA-Z_][a-zA-Z_0-9]*\\)\\s-*)")
 		 (verilog-read-sub-decls-sig
-		  submoddecls comment port
+                  submoddecls par-values comment port
 		  (verilog-string-remove-spaces (match-string-no-properties 1)) ; sig
 		  nil nil nil)) ; vec multidim mem
 		;;
 		((looking-at "\\([a-zA-Z_][a-zA-Z_0-9]*\\)\\s-*\\(\\[[^]]+\\]\\)\\s-*)")
 		 (verilog-read-sub-decls-sig
-		  submoddecls comment port
+                  submoddecls par-values comment port
 		  (verilog-string-remove-spaces (match-string-no-properties 1)) ; sig
 		  (match-string-no-properties 2) nil nil)) ; vec multidim mem
 		;; Fastpath was above looking-at's.
 		;; For something more complicated invoke a parser
 		((looking-at "[^)]+")
 		 (verilog-read-sub-decls-expr
-		  submoddecls comment port
+                  submoddecls par-values comment port
 		  (buffer-substring-no-properties
 		   (point) (1- (progn (search-backward "(") ; start at (
 				      (verilog-forward-sexp-ign-cmt 1)
 				      (point)))))))) ; expr
 	;;
 	(forward-line 1)))))
+;;(verilog-read-sub-decls-line (verilog-subdecls-new nil nil nil nil nil) nil "Cmt")
 
-(defun verilog-read-sub-decls-gate (submoddecls comment submod end-inst-point)
+(defun verilog-read-sub-decls-gate (submoddecls par-values comment submod end-inst-point)
   "For `verilog-read-sub-decls', read lines of UDP gate decl until none match.
 Inserts the list of signals found."
   (save-excursion
@@ -8844,7 +8904,7 @@ Inserts the list of signals found."
 	       (setq verilog-read-sub-decls-gate-ios (or (car iolist) "input")
 		     iolist (cdr iolist))
 	       (verilog-read-sub-decls-expr
-		submoddecls comment "primitive_port"
+                submoddecls par-values comment "primitive_port"
 		(match-string 0)))
 	      (t
 	       (forward-char 1)
@@ -8870,13 +8930,16 @@ Outputs comments above subcell signals, for example:
 	    .in  (in));"
   (save-excursion
     (let ((end-mod-point (verilog-get-end-of-defun))
-	  st-point end-inst-point
+          st-point end-inst-point par-values
 	  ;; below 3 modified by verilog-read-sub-decls-line
 	  sigs-out sigs-inout sigs-in sigs-intf sigs-intfd)
       (verilog-beg-of-defun-quick)
       (while (verilog-re-search-forward-quick "\\(/\\*AUTOINST\\*/\\|\\.\\*\\)" end-mod-point t)
 	(save-excursion
 	  (goto-char (match-beginning 0))
+          (setq par-values (and verilog-auto-inst-param-value
+                                verilog-auto-inst-param-value-type
+                                (verilog-read-inst-param-value)))
 	  (unless (verilog-inside-comment-or-string-p)
 	    ;; Attempt to snarf a comment
 	    (let* ((submod (verilog-read-inst-module))
@@ -8894,7 +8957,7 @@ Outputs comments above subcell signals, for example:
 						     (point))
 		      st-point (point))
 		(forward-char 1)
-		(verilog-read-sub-decls-gate submoddecls comment submod end-inst-point))
+                (verilog-read-sub-decls-gate submoddecls par-values comment submod end-inst-point))
 	       ;; Non-primitive
 	       (t
 		(when (setq submodi (verilog-modi-lookup submod t))
@@ -8908,19 +8971,19 @@ Outputs comments above subcell signals, for example:
 		  ;; However I want it to be runnable even on user's manually added signals
 		  (let ((verilog-read-sub-decls-in-interfaced t))
 		    (while (re-search-forward "\\s *(?\\s *// Interfaced" end-inst-point t)
-                      (verilog-read-sub-decls-line submoddecls comment)))  ; Modifies sigs-ifd
+                      (verilog-read-sub-decls-line submoddecls par-values comment)))  ; Modifies sigs-ifd
 		  (goto-char st-point)
 		  (while (re-search-forward "\\s *(?\\s *// Interfaces" end-inst-point t)
-                    (verilog-read-sub-decls-line submoddecls comment))  ; Modifies sigs-out
+                    (verilog-read-sub-decls-line submoddecls par-values comment))  ; Modifies sigs-out
 		  (goto-char st-point)
 		  (while (re-search-forward "\\s *(?\\s *// Outputs" end-inst-point t)
-                    (verilog-read-sub-decls-line submoddecls comment))  ; Modifies sigs-out
+                    (verilog-read-sub-decls-line submoddecls par-values comment))  ; Modifies sigs-out
 		  (goto-char st-point)
 		  (while (re-search-forward "\\s *(?\\s *// Inouts" end-inst-point t)
-                    (verilog-read-sub-decls-line submoddecls comment))  ; Modifies sigs-inout
+                    (verilog-read-sub-decls-line submoddecls par-values comment))  ; Modifies sigs-inout
 		  (goto-char st-point)
 		  (while (re-search-forward "\\s *(?\\s *// Inputs" end-inst-point t)
-                    (verilog-read-sub-decls-line submoddecls comment))  ; Modifies sigs-in
+                    (verilog-read-sub-decls-line submoddecls par-values comment))  ; Modifies sigs-in
 		  )))))))
       ;; Combine duplicate bits
       ;;(setq rr (vector sigs-out sigs-inout sigs-in))
@@ -9111,7 +9174,7 @@ IGNORE-NEXT is true to ignore next token, fake from inside case statement."
 	    ;;(if dbg (setq dbg (concat dbg (format "\tgot-end %s\n" exit-keywd))))
 	    (setq ignore-next nil  rvalue semi-rvalue)
 	    (if (not exit-keywd) (setq end-else-check t)))
-	   ((member keywd '("case" "casex" "casez"))
+	   ((member keywd '("case" "casex" "casez" "randcase"))
 	    (skip-syntax-forward "w_")
 	    (verilog-read-always-signals-recurse "endcase" t nil)
 	    (setq ignore-next nil  rvalue semi-rvalue)
@@ -9337,29 +9400,43 @@ Optionally associate it with the specified enumeration ENUMNAME."
 If the filename is provided, `verilog-library-flags' will be used to
 resolve it.  If optional RECURSE is non-nil, recurse through \\=`includes.
 
-Parameters must be simple assignments to constants, or have their own
-\"parameter\" label rather than a list of parameters.  Thus:
+Localparams must be simple assignments to constants, or have their own
+\"localparam\" label rather than a list of localparams.  Thus:
 
-    parameter X = 5, Y = 10;	// Ok
-    parameter X = {1\\='b1, 2\\='h2};	// Ok
-    parameter X = {1\\='b1, 2\\='h2}, Y = 10;	// Bad, make into 2 parameter lines
+    localparam X = 5, Y = 10;	// Ok
+    localparam X = {1\\='b1, 2\\='h2};	// Ok
+    localparam X = {1\\='b1, 2\\='h2}, Y = 10;	// Bad, make into 2 localparam lines
 
 Defines must be simple text substitutions, one on a line, starting
 at the beginning of the line.  Any ifdefs or multiline comments around the
 define are ignored.
 
-Defines are stored inside Emacs variables using the name vh-{definename}.
+Defines are stored inside Emacs variables using the name
+vh-{definename}.
 
-This function is useful for setting vh-* variables.  The file variables
-feature can be used to set defines that `verilog-mode' can see; put at the
-*END* of your file something like:
+Localparams define what symbols are constants so that AUTOSENSE
+will not include them in sensitivity lists.  However any
+parameters in the include file are not considered ports in the
+including file, thus will not appear in AUTOINSTPARAM lists for a
+parent module..
+
+The file variables feature can be used to set defines that
+`verilog-mode' can see; put at the *END* of your file something
+like:
 
     // Local Variables:
     // vh-macro:\"macro_definition\"
     // End:
 
 If macros are defined earlier in the same file and you want their values,
-you can read them automatically (provided `enable-local-eval' is on):
+you can read them automatically with:
+
+    // Local Variables:
+    // verilog-auto-read-includes:t
+    // End:
+
+Or a more specific alternative example, which requires haing
+`enable-local-eval' non-nil:
 
     // Local Variables:
     // eval:(verilog-read-defines)
@@ -9425,6 +9502,13 @@ ignoring any ifdefs or multiline comments around them.
 file.
 
 It is often useful put at the *END* of your file something like:
+
+    // Local Variables:
+    // verilog-auto-read-includes:t
+    // End:
+
+Or the equivalent longer version, which requires having
+`enable-local-eval' non-nil:
 
     // Local Variables:
     // eval:(verilog-read-defines)
@@ -9848,9 +9932,14 @@ Uses the CURRENT filename, `verilog-library-extensions',
 `verilog-library-directories' and `verilog-library-files'
 variables to build the path."
   ;; Return search locations for it
-  (append (list current)		; first, current buffer
-	  (verilog-library-filenames module current t)
-	  verilog-library-files))	; finally, any libraries
+  (append (list current)                ; first, current buffer
+          (verilog-library-filenames module current t)
+          ;; Finally any libraries; fixed up if using e.g. tramp
+          (mapcar (lambda (fname)
+                    (if (file-name-absolute-p fname)
+                        (concat (file-remote-p current) fname)
+                      fname))
+                  verilog-library-files)))
 
 ;;
 ;; Module Information
@@ -10270,8 +10359,9 @@ When MODI is non-null, also add to modi-cache, for tracking."
 	      direction))
        indent-pt)
       (insert (if v2k "," ";"))
-      (if (or (not (verilog-sig-comment sig))
-	      (equal "" (verilog-sig-comment sig)))
+      (if (or (not verilog-auto-wire-comment)
+              (not (verilog-sig-comment sig))
+              (equal "" (verilog-sig-comment sig)))
 	  (insert "\n")
 	(indent-to (max 48 (+ indent-pt 40)))
 	(verilog-insert "// " (verilog-sig-comment sig) "\n"))
@@ -10821,9 +10911,9 @@ Ignores WHITESPACE if t, and writes output to stdout if SHOW."
 Differences are between buffers B1 and B2, starting at point
 DIFFPT.  This function is called via `verilog-diff-function'."
   (let ((name1 (with-current-buffer b1 (buffer-file-name))))
-    (verilog-warn "%s:%d: Difference in AUTO expansion found"
-		  name1 (with-current-buffer b1
-			  (count-lines (point-min) diffpt)))
+    (verilog-warn-error "%s:%d: Difference in AUTO expansion found"
+                        name1 (with-current-buffer b1
+                                (count-lines (point-min) diffpt)))
     (cond (noninteractive
 	   (verilog-diff-file-with-buffer name1 b2 t t))
 	  (t
@@ -13040,7 +13130,7 @@ Typing \\[verilog-auto] will make this into:
 			     (verilog-read-signals
 			      (save-excursion
 				(verilog-re-search-backward-quick
-				 "\\(@\\|\\<\\(begin\\|if\\|case\\|always\\(_latch\\|_ff\\|_comb\\)?\\)\\>\\)" nil t)
+				 "\\(@\\|\\<\\(begin\\|if\\|case[xz]?\\|always\\(_latch\\|_ff\\|_comb\\)?\\)\\>\\)" nil t)
 				(point))
 			      (point)))))
       (save-excursion
