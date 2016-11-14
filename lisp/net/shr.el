@@ -1948,8 +1948,8 @@ boolean flags that control whether to collect or render objects."
 		     do (setq recurse nil)
 			(shr-tag-table child)
 		   end end end end end end end end end
-	       when recurse
-		 append (shr-collect-extra-strings-in-table child flags)))
+	   when recurse
+	     append (shr-collect-extra-strings-in-table child flags)))
 
 (defun shr-insert-table (table widths)
   (let* ((collapse (equal (cdr (assq 'border-collapse shr-stylesheet))
