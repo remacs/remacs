@@ -2236,13 +2236,10 @@ internal_delete_file (Lisp_Object filename)
   return NILP (tem);
 }
 
-/* Filesystems are case-sensitive on all supported systems except
-   MS-Windows, MS-DOS, Cygwin, and Mac OS X.  They are always
-   case-insensitive on the first two, but they may or may not be
-   case-insensitive on Cygwin and OS X.  The following function
-   attempts to provide a runtime test on those two systems.  If the
-   test is not conclusive, we assume case-insensitivity on Cygwin and
-   case-sensitivity on Mac OS X.
+/* Return true if FILENAME is on a case-insensitive file system.
+   Use a runtime test if available.  Otherwise, assume the file system
+   is case-insensitive on Microsoft-based platforms and case-sensitive
+   elsewhere.
 
    FIXME: Mounted filesystems on Posix hosts, like Samba shares or
    NFS-mounted Windows volumes, might be case-insensitive.  Can we
@@ -2251,33 +2248,65 @@ internal_delete_file (Lisp_Object filename)
 static bool
 file_name_case_insensitive_p (const char *filename)
 {
-#ifdef DOS_NT
-  return 1;
-#elif defined CYGWIN
-/* As of Cygwin-2.6.1, pathconf supports _PC_CASE_INSENSITIVE.  */
-# ifdef _PC_CASE_INSENSITIVE
+#ifdef _PC_CASE_INSENSITIVE
   int res = pathconf (filename, _PC_CASE_INSENSITIVE);
-  if (res < 0)
-    return 1;
-  return res > 0;
-# else
-  return 1;
-# endif
-#elif defined DARWIN_OS
-  /* The following is based on
-     http://lists.apple.com/archives/darwin-dev/2007/Apr/msg00010.html.  */
-  struct attrlist alist;
-  unsigned char buffer[sizeof (vol_capabilities_attr_t) + sizeof (size_t)];
+  if (0 < res)
+    return true;
+  if (res == 0 || errno != EINVAL)
+    return false;
+#elif defined _PC_CASE_SENSITIVE
+  int res = pathconf (filename, _PC_CASE_SENSITIVE);
+  if (res == 0)
+    return true;
+  if (0 < res || errno != EINVAL)
+    return false;
+#endif
 
-  memset (&alist, 0, sizeof (alist));
-  alist.volattr = ATTR_VOL_CAPABILITIES;
-  if (getattrlist (filename, &alist, buffer, sizeof (buffer), 0)
-      || !(alist.volattr & ATTR_VOL_CAPABILITIES))
-    return 0;
-  vol_capabilities_attr_t *vcaps = buffer;
-  return !(vcaps->capabilities[0] & VOL_CAP_FMT_CASE_SENSITIVE);
+#ifdef DARWIN_OS
+  /* It is not clear whether this section is needed.  For now, rely on
+     pathconf and skip this section.  If pathconf does not work,
+     please recompile Emacs with -DDARWIN_OS_CASE_SENSITIVE_FIXME=1 or
+     -DDARWIN_OS_CASE_SENSITIVE_FIXME=2, and file a bug report saying
+     whether this fixed your problem.  */
+# ifndef DARWIN_OS_CASE_SENSITIVE_FIXME
+  int DARWIN_OS_CASE_SENSITIVE_FIXME = 0;
+# endif
+
+  if (DARWIN_OS_CASE_SENSITIVE_FIXME == 1)
+    {
+      /* This is based on developer.apple.com's getattrlist man page.  */
+      struct attrlist alist = {.volattr = ATTR_VOL_CAPABILITIES};
+      struct vol_capabilities_attr_t vcaps;
+      if (getattrlist (filename, &alist, &vcaps, sizeof vcaps, 0) == 0)
+	{
+	  if (vcaps.valid[VOL_CAPABILITIES_FORMAT] & VOL_CAP_FMT_CASE_SENSITIVE)
+	    return ! (vcaps.capabilities[VOL_CAPABILITIES_FORMAT]
+		      & VOL_CAP_FMT_CASE_SENSITIVE);
+	}
+      else if (errno != EINVAL)
+	return false;
+    }
+  else if (DARWIN_OS_CASE_SENSITIVE_FIXME == 2)
+    {
+      /* The following is based on
+	 http://lists.apple.com/archives/darwin-dev/2007/Apr/msg00010.html.  */
+      struct attrlist alist;
+      unsigned char buffer[sizeof (vol_capabilities_attr_t) + sizeof (size_t)];
+
+      memset (&alist, 0, sizeof (alist));
+      alist.volattr = ATTR_VOL_CAPABILITIES;
+      if (getattrlist (filename, &alist, buffer, sizeof (buffer), 0)
+	  || !(alist.volattr & ATTR_VOL_CAPABILITIES))
+	return 0;
+      vol_capabilities_attr_t *vcaps = buffer;
+      return !(vcaps->capabilities[0] & VOL_CAP_FMT_CASE_SENSITIVE);
+    }
+#endif
+
+#if defined CYGWIN || defined DOS_NT
+  return true;
 #else
-  return 0;
+  return false;
 #endif
 }
 
@@ -2349,7 +2378,7 @@ This is what happens in interactive use with M-x.  */)
   /* If the filesystem is case-insensitive and the file names are
      identical but for the case, don't ask for confirmation: they
      simply want to change the letter-case of the file name.  */
-  if ((!(file_name_case_insensitive_p (SSDATA (encoded_file)))
+  if ((! file_name_case_insensitive_p (SSDATA (encoded_file))
        || NILP (Fstring_equal (Fdowncase (file), Fdowncase (newname))))
       && ((NILP (ok_if_already_exists) || INTEGERP (ok_if_already_exists))))
     barf_or_query_if_file_exists (newname, false, "rename to it",
