@@ -2001,10 +2001,10 @@ buffers, it could be called by any mode.
 
 @defmac with-connection-local-classes classes &rest body
 All connection-local variables, which are specified by a class in
-@var{CLASSES}, are applied.  An implicit binding of the classes to the
+@var{classes}, are applied.  An implicit binding of the classes to the
 remote connection is enabled.
 
-After that, @var{BODY} is executed, and the connection-local variables
+After that, @var{body} is executed, and the connection-local variables
 are unwound.  Example:
 
 @example

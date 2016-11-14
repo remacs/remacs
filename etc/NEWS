@@ -225,8 +225,8 @@ See the variable 'dir-locals-file-2' for more information.
 
 +++
 ** Connection-local variables can be used to specify local variables
-with a value depending on the connected remote server. For details, see
-(info "(elisp)Connection Local Variables")
+with a value depending on the connected remote server.  For details,
+see the node "Connection Local Variables" in the ELisp manual.
 
 ---
 ** International domain names (IDNA) are now encoded via the new
