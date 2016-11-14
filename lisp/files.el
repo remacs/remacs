@@ -1212,7 +1212,7 @@ containing it, until no links are left at any level.
 	    (setq dirfile (directory-file-name dir))
 	    ;; If these are equal, we have the (or a) root directory.
 	    (or (string= dir dirfile)
-		(and (memq system-type '(windows-nt ms-dos cygwin nacl))
+		(and (file-name-case-insensitive-p dir)
 		     (eq (compare-strings dir 0 nil dirfile 0 nil t) t))
 		;; If this is the same dir we last got the truename for,
 		;; save time--don't recalculate.
@@ -1793,10 +1793,7 @@ home directory is a root directory) and removes automounter prefixes
 			     (substring filename (1- (match-end 0))))))
 	(setq filename (substring filename (1- (match-end 0)))))
     ;; Avoid treating /home/foo as /home/Foo during `~' substitution.
-    ;; To fix this right, we need a `file-name-case-sensitive-p'
-    ;; function, but we don't have that yet, so just guess.
-    (let ((case-fold-search
-	   (memq system-type '(ms-dos windows-nt darwin cygwin))))
+    (let ((case-fold-search (file-name-case-insensitive-p filename)))
       ;; If any elt of directory-abbrev-alist matches this name,
       ;; abbreviate accordingly.
       (dolist (dir-abbrev directory-abbrev-alist)
@@ -2898,7 +2895,9 @@ we don't actually set it to the same mode the buffer already has."
     (unless done
       (if buffer-file-name
 	  (let ((name buffer-file-name)
-		(remote-id (file-remote-p buffer-file-name)))
+		(remote-id (file-remote-p buffer-file-name))
+		(case-insensitive-p (file-name-case-insensitive-p
+				     buffer-file-name)))
 	    ;; Remove backup-suffixes from file name.
 	    (setq name (file-name-sans-versions name))
 	    ;; Remove remote file name identification.
@@ -2908,12 +2907,12 @@ we don't actually set it to the same mode the buffer already has."
 	    (while name
 	      ;; Find first matching alist entry.
 	      (setq mode
-		    (if (memq system-type '(windows-nt cygwin))
-			;; System is case-insensitive.
+		    (if case-insensitive-p
+			;; Filesystem is case-insensitive.
 			(let ((case-fold-search t))
 			  (assoc-default name auto-mode-alist
 					 'string-match))
-		      ;; System is case-sensitive.
+		      ;; Filesystem is case-sensitive.
 		      (or
 		       ;; First match case-sensitively.
 		       (let ((case-fold-search nil))
@@ -4691,7 +4690,7 @@ on a DOS/Windows machine, it returns FILENAME in expanded form."
     (setq filename (expand-file-name filename))
     (let ((fremote (file-remote-p filename))
 	  (dremote (file-remote-p directory))
-	  (fold-case (or (memq system-type '(ms-dos cygwin windows-nt))
+	  (fold-case (or (file-name-case-insensitive-p filename)
 			 read-file-name-completion-ignore-case)))
       (if ;; Conditions for separate trees
 	  (or

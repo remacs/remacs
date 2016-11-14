@@ -792,7 +792,7 @@ untar into a directory named DIR; otherwise, signal an error."
   (tar-mode)
   ;; Make sure everything extracts into DIR.
   (let ((regexp (concat "\\`" (regexp-quote (expand-file-name dir)) "/"))
-        (case-fold-search (memq system-type '(windows-nt ms-dos cygwin))))
+        (case-fold-search (file-name-case-insensitive-p dir)))
     (dolist (tar-data tar-parse-info)
       (let ((name (expand-file-name (tar-header-name tar-data))))
         (or (string-match regexp name)
