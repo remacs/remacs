@@ -1243,6 +1243,9 @@ connection if a previous connection has died for some reason."
 		(read (current-buffer)))
 	      ":" 'omit))
 
+	    ;; Set connection-local variables.
+	    (tramp-set-connection-local-variables vec)
+
 	    ;; Mark it as connected.
 	    (tramp-set-connection-property p "connected" t)))))))
 

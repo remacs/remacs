@@ -1723,6 +1723,9 @@ connection if a previous connection has died for some reason."
 	       (tramp-get-file-property vec "/" "fuse-mountpoint" "") "/")
 	  (tramp-error vec 'file-error "FUSE mount denied"))
 
+	;; Set connection-local variables.
+	(tramp-set-connection-local-variables vec)
+
 	;; Mark it as connected.
 	(tramp-set-connection-property
 	 (tramp-get-connection-process vec) "connected" t))))

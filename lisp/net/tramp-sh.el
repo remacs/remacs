@@ -518,6 +518,7 @@ The string is used in `tramp-methods'.")
 ;; FreeBSD: /usr/bin:/bin:/usr/sbin:/sbin: - beware trailing ":"!
 ;; Darwin: /usr/bin:/bin:/usr/sbin:/sbin
 ;; IRIX64: /usr/bin
+;; QNAP QTS: ---
 ;;;###tramp-autoload
 (defcustom tramp-remote-path
   '(tramp-default-remote-path "/bin" "/usr/bin" "/sbin" "/usr/sbin"
@@ -4917,6 +4918,9 @@ connection if a previous connection has died for some reason."
 		  ;; Next hop.
 		  (setq options ""
 			target-alist (cdr target-alist)))
+
+		;; Set connection-local variables.
+		(tramp-set-connection-local-variables vec)
 
 		;; Make initial shell settings.
 		(tramp-open-connection-setup-interactive-shell p vec)

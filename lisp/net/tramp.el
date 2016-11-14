@@ -1338,6 +1338,15 @@ In case a second asynchronous communication has been started, it is different
 from the default one."
   (get-process (tramp-get-connection-name vec)))
 
+(defun tramp-set-connection-local-variables (vec)
+  "Set connection-local variables in the connection buffer used for VEC.
+If connection-local variables are not supported by this Emacs
+version, the function does nothing."
+  ;; `tramp-get-connection-buffer' sets proper `default-directory'."
+  (with-current-buffer (tramp-get-connection-buffer vec)
+    ;; `hack-connection-local-variables-apply' exists since Emacs 26.1.
+    (tramp-compat-funcall 'hack-connection-local-variables-apply)))
+
 (defun tramp-debug-buffer-name (vec)
   "A name for the debug buffer for VEC."
   ;; We must use `tramp-file-name-real-host', because for gateway
@@ -4324,13 +4333,6 @@ Only works for Bourne-like shells."
 ;; * Better error checking.  At least whenever we see something
 ;;   strange when doing zerop, we should kill the process and start
 ;;   again.  (Greg Stark)
-;;
-;; * Implement a general server-local-variable mechanism, as there are
-;;   probably other variables that need different values for different
-;;   servers too.  The user could then configure a variable (such as
-;;   tramp-server-local-variable-alist) to define any such variables
-;;   that they need to, which would then be let bound as appropriate
-;;   in tramp functions.  (Jason Rumney)
 ;;
 ;; * Make shadowfile.el grok Tramp filenames.  (Bug#4526, Bug#4846)
 ;;

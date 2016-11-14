@@ -333,5 +333,7 @@ password in password cache.  This is done for the first try only."
 ;; * Provide descriptive Commentary.
 ;;
 ;; * Enable it for several gateway processes in parallel.
+;;
+;; * Use `url-https-proxy-connect' as of Emacs 26.
 
 ;;; tramp-gw.el ends here

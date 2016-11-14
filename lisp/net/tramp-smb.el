@@ -1916,6 +1916,9 @@ If ARGUMENT is non-nil, use it as argument for
 		    (tramp-set-connection-property p "smb-share" share)
 		    (tramp-set-connection-property p "chunksize" 1)
 
+		    ;; Set connection-local variables.
+		    (tramp-set-connection-local-variables vec)
+
 		    ;; Mark it as connected.
 		    (tramp-set-connection-property p "connected" t))
 
