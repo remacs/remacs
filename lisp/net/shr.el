@@ -1895,65 +1895,61 @@ The preference is a float determined from `shr-prefer-media-type'."
 			   bgcolor))
     ;; Finally, insert all the images after the table.  The Emacs buffer
     ;; model isn't strong enough to allow us to put the images actually
-    ;; into the tables.
+    ;; into the tables.  It inserts also non-td/th objects.
     (when (zerop shr-table-depth)
       (save-excursion
 	(shr-expand-alignments start (point)))
-      ;; Insert also non-td/th objects.
       (save-restriction
 	(narrow-to-region (point) (point))
 	(insert (mapconcat #'identity
 			   (shr-collect-extra-strings-in-table dom)
 			   "\n"))
-	(shr-fill-lines (point-min) (point-max)))
-      (dolist (elem (dom-by-tag dom 'object))
-	(shr-tag-object elem))
-      (dolist (elem (dom-by-tag dom 'img))
-	(shr-tag-img elem)))))
+	(shr-fill-lines (point-min) (point-max))))))
 
 (defun shr-collect-extra-strings-in-table (dom &optional flags)
   "Return extra strings in DOM of which the root is a table clause.
-Render extra child tables of which the parent is not td or th as well.
-FLAGS is a cons of two boolean flags that control whether to collect
-or render objects."
-  ;; Currently this function supports extra strings and <table>s that
-  ;; are children of <table> or <tr> clauses, not <td> nor <th>.
-  ;; It runs recursively and collects strings or renders <table>s if
-  ;; the cdr of FLAGS is nil.  FLAGS becomes (t . nil) if a <tr>
-  ;; clause is found in the children of DOM, and becomes (t . t) if
-  ;; a <td> or a <th> clause is found and the car is t then.
-  ;; When a <table> clause is found, FLAGS becomes nil if the cdr is t
-  ;; then.  But if the cdr is nil then, render the <table>.
-  (cl-loop for child in (dom-children dom) with tag with recurse
+Render <img>s and <object>s, and strings and child <table>s of which
+the parent is not <td> or <th> as well.  FLAGS is a cons of two
+boolean flags that control whether to collect or render objects."
+  ;; As for strings and child <table>s, it runs recursively and
+  ;; collects or renders those objects if the cdr of FLAGS is nil.
+  ;; FLAGS becomes (t . nil) if a <tr> clause is found in the children
+  ;; of DOM, and becomes (t . t) if a <td> or a <th> clause is found
+  ;; and the car is t then.  When a <table> clause is found, FLAGS
+  ;; becomes nil if the cdr is t then.  But if the cdr is nil then,
+  ;; it renders the <table>.
+  (cl-loop for child in (dom-children dom) with recurse with tag
+	   do (setq recurse nil)
 	   if (stringp child)
 	     unless (cdr flags)
 	       when (string-match "\\(?:[^\t\n\r ]+[\t\n\r ]+\\)*[^\t\n\r ]+"
 				  child)
 		 collect (match-string 0 child)
 	       end end
-	   else
-	     do (setq tag (dom-tag child)
-		      recurse t)
-	     and
-	     if (eq tag 'tr)
-	       do (setq flags '(t . nil))
-	     else if (memq tag '(td th))
-	       when (car flags)
-		 do (setq flags '(t . t))
-	       end
-	     else if (eq tag 'table)
-	       if (cdr flags)
-		 do (setq flags nil)
+	   else if (consp child)
+	     do (setq tag (dom-tag child)) and
+	     unless (memq tag '(comment style))
+	       if (eq tag 'img)
+		 do (shr-tag-img child)
+	       else if (eq tag 'object)
+		 do (shr-tag-object child)
 	       else
-		 do (setq recurse nil)
-		    (shr-tag-table child)
-	       end
-	     else
-	       when (memq tag '(comment style))
-		 do (setq recurse nil)
-	       end end end end and
-	     when recurse
-	       append (shr-collect-extra-strings-in-table child flags)))
+		 do (setq recurse t) and
+		 if (eq tag 'tr)
+		   do (setq flags '(t . nil))
+		 else if (memq tag '(td th))
+		   when (car flags)
+		     do (setq flags '(t . t))
+		   end
+		 else if (eq tag 'table)
+		   if (cdr flags)
+		     do (setq flags nil)
+		   else
+		     do (setq recurse nil)
+			(shr-tag-table child)
+		   end end end end end end end end end
+	       when recurse
+		 append (shr-collect-extra-strings-in-table child flags)))
 
 (defun shr-insert-table (table widths)
   (let* ((collapse (equal (cdr (assq 'border-collapse shr-stylesheet))
