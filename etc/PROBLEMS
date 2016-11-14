@@ -2415,6 +2415,18 @@ If this does not work, please inform bug-gnu-emacs@gnu.org.  Then
 please call support for your X-server and see if you can get a fix.
 If you do, please send it to bug-gnu-emacs@gnu.org so we can list it here.
 
+
+* Runtime problems specific to Mac OS X
+
+** On Mac OS X, file-name-case-insensitive-p may be unreliable
+
+The implementation of that function on Mac OS X uses pathconf with the
+_PC_CASE_SENSITIVE flag.  There have been reports that this use of
+pathconf does not work reliably.  If you have a problem, please
+recompile Emacs with -DDARWIN_OS_CASE_SENSITIVE_FIXME=1 or
+-DDARWIN_OS_CASE_SENSITIVE_FIXME=2, and file a bug report saying
+whether this fixed your problem.
+
 * Build-time problems
 
 ** Configuration
