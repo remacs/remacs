@@ -1870,9 +1870,13 @@ sort_args (int argc, char **argv)
 		    fatal ("Option '%s' requires an argument\n", argv[from]);
 		  from += options[from];
 		}
-	      /* FIXME When match < 0, shouldn't there be some error,
-		 or at least indication to the user that there was a
-		 problem?  */
+	      else if (match == -2)
+		{
+		  /* This is an internal error.
+		     Eg if one long option is a prefix of another.  */
+		  fprintf (stderr, "Option '%s' matched multiple standard arguments\n", argv[from]);
+		}
+	      /* Should we not also warn if there was no match?	 */
 	    }
 	done: ;
 	}
