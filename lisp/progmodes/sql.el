@@ -1072,13 +1072,25 @@ add your name with a \"-U\" prefix (such as \"-Umark\") to the list."
   :version "20.8"
   :group 'SQL)
 
-(defcustom sql-postgres-login-params `((user :default ,(user-login-name))
-                                       (database :default ,(user-login-name))
-                                       server)
+(defcustom sql-postgres-login-params
+  `((user :default ,(user-login-name))
+    (database :default ,(user-login-name)
+              :completion ,(completion-table-dynamic
+                            (lambda (_) (sql-postgres-list-databases))))
+    server)
   "List of login parameters needed to connect to Postgres."
   :type 'sql-login-params
   :version "24.1"
   :group 'SQL)
+
+(defun sql-postgres-list-databases ()
+  "Return a list of available PostgreSQL databases."
+  (when (executable-find sql-postgres-program)
+    (let ((res '()))
+      (dolist (row (process-lines sql-postgres-program "-ltX"))
+        (when (string-match "^ \\([[:alnum:]-_]+\\) +|.*" row)
+          (push (match-string 1 row) res)))
+      (nreverse res))))
 
 ;; Customization for Interbase
 
