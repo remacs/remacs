@@ -1888,7 +1888,7 @@ increase the score of each group you read."
   "&" gnus-summary-execute-command
   "c" gnus-summary-catchup-and-exit
   "\C-w" gnus-summary-mark-region-as-read
-  "\C-t" gnus-summary-toggle-truncation
+  "\C-t" toggle-truncate-lines
   "?" gnus-summary-mark-as-dormant
   "\C-c\M-\C-s" gnus-summary-limit-include-expunged
   "\C-c\C-s\C-n" gnus-summary-sort-by-number
@@ -2768,7 +2768,7 @@ gnus-summary-show-article-from-menu-as-charset-%s" cs))))
 	["Run command on articles..." gnus-summary-universal-argument t]
 	["Search articles forward..." gnus-summary-search-article-forward t]
 	["Search articles backward..." gnus-summary-search-article-backward t]
-	["Toggle line truncation" gnus-summary-toggle-truncation t]
+	["Toggle line truncation" toggle-truncate-lines t]
 	["Expand window" gnus-summary-expand-window t]
 	["Expire expirable articles" gnus-summary-expire-articles
 	 (gnus-check-backend-function
@@ -7059,14 +7059,8 @@ buffer."
 	  (gnus-summary-remove-process-mark article)))))
   (gnus-summary-position-point))
 
-(defun gnus-summary-toggle-truncation (&optional arg)
-  "Toggle truncation of summary lines.
-With ARG, turn line truncation on if ARG is positive."
-  (interactive "P")
-  (setq truncate-lines
-	(if (null arg) (not truncate-lines)
-	  (> (prefix-numeric-value arg) 0)))
-  (redraw-display))
+(define-obsolete-function-alias
+    'gnus-summary-toggle-truncation 'toggle-truncate-lines "26.1")
 
 (defun gnus-summary-find-for-reselect ()
   "Return the number of an article to stay on across a reselect.
