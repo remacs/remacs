@@ -255,6 +255,11 @@ pair of the form (KEY VALUE).  The following KEYs are defined:
     In general, the global default value shall be used, but for
     some methods, like \"su\" or \"sudo\", a shorter timeout
     might be desirable.
+  * `tramp-case-insensitive'
+    Whether the remote file system handles file names case insensitive.
+    Only a non-nil value counts, the default value nil means to
+    perform further checks on the remote host.  See
+    `tramp-connection-properties' for a way to overwrite this.
 
 What does all this mean?  Well, you should specify `tramp-login-program'
 for all methods; this program is used to log in to the remote site.  Then,
@@ -1919,8 +1924,7 @@ ARGS are the arguments OPERATION has been called with."
 	      file-accessible-directory-p file-attributes
 	      file-directory-p file-executable-p file-exists-p
 	      file-local-copy file-modes
-	      file-name-as-directory file-name-case-insensitive-p
-	      file-name-directory
+	      file-name-as-directory file-name-directory
 	      file-name-nondirectory file-name-sans-versions
 	      file-ownership-preserved-p file-readable-p
 	      file-regular-p file-remote-p file-symlink-p file-truename
@@ -1931,7 +1935,9 @@ ARGS are the arguments OPERATION has been called with."
 	      unhandled-file-name-directory vc-registered
 	      ;; Emacs 24+ only.
 	      file-acl file-notify-add-watch file-selinux-context
-	      set-file-acl set-file-selinux-context))
+	      set-file-acl set-file-selinux-context
+	      ;; Emacs 26+ only.
+	      file-name-case-insensitive-p))
     (if (file-name-absolute-p (nth 0 args))
 	(nth 0 args)
       (expand-file-name (nth 0 args))))
@@ -2887,6 +2893,47 @@ User is always nil."
        (tramp-run-real-handler
 	'file-name-as-directory (list (or (tramp-file-name-localname v) ""))))
      (tramp-file-name-hop v))))
+
+(defun tramp-handle-file-name-case-insensitive-p (filename)
+  "Like `file-name-case-insensitive-p' for Tramp files."
+  ;; We make it a connection property, assuming that all file systems
+  ;; on the remote host behave similar.  This might be wrong for
+  ;; mounted NFS directories or SMB/AFP shares; such more granular
+  ;; tests will be added in case they are needed.
+  (setq filename (expand-file-name filename))
+  (with-parsed-tramp-file-name filename nil
+    (or ;; Maybe there is a default value.
+     (tramp-get-method-parameter v 'tramp-case-insensitive)
+
+     ;; There isn't. So we must check.
+     (with-tramp-connection-property v "case-insensitive"
+       ;; The idea is to compare a file with lower case letters with
+       ;; the same file with upper case letters.
+       (let ((candidate (directory-file-name filename))
+	     tmpfile)
+	 ;; Check, whether we find an existing file with lower case
+	 ;; letters.  This avoids us to create a temporary file.
+	 (while (and (string-match "[a-z]" (file-remote-p candidate 'localname))
+		     (not (file-exists-p candidate)))
+	   (setq candidate
+		 (directory-file-name (file-name-directory candidate))))
+	 ;; Nothing found, so we must use a temporary file for
+	 ;; comparision.  `make-nearby-temp-file' is added to Emacs
+	 ;; 26+ like `file-name-case-insensitive-p', so there is no
+	 ;; compatibility problem calling it.
+	 (unless (string-match "[a-z]" (file-remote-p candidate 'localname))
+	   (setq tmpfile
+		 (let ((default-directory (file-name-directory filename)))
+		   (tramp-compat-funcall 'make-nearby-temp-file "tramp."))
+		 candidate tmpfile))
+	 ;; Check for the existence of the same file with upper case letters.
+	 (unwind-protect
+	     (file-exists-p
+	      (concat
+	       (file-remote-p candidate)
+	       (upcase (file-remote-p candidate 'localname))))
+	   ;; Cleanup.
+	   (when tmpfile (delete-file tmpfile))))))))
 
 (defun tramp-handle-file-name-completion
   (filename directory &optional predicate)

@@ -49,7 +49,9 @@
       ;; This is just a guess.  We don't know whether the share "C$"
       ;; is available for public use, and whether the user has write
       ;; access.
-      (tramp-tmpdir "/C$/Temp"))))
+      (tramp-tmpdir "/C$/Temp")
+      ;; Another guess.  We might implement a better check later on.
+      (tramp-case-insensitive t))))
 
 ;; Add a default for `tramp-default-method-alist'. Rule: If there is
 ;; a domain in USER, it must be the SMB method.
@@ -243,6 +245,7 @@ See `tramp-actions-before-shell' for more info.")
     (file-modes . tramp-handle-file-modes)
     (file-name-all-completions . tramp-smb-handle-file-name-all-completions)
     (file-name-as-directory . tramp-handle-file-name-as-directory)
+    (file-name-case-insensitive-p . tramp-handle-file-name-case-insensitive-p)
     (file-name-completion . tramp-handle-file-name-completion)
     (file-name-directory . tramp-handle-file-name-directory)
     (file-name-nondirectory . tramp-handle-file-name-nondirectory)
@@ -501,7 +504,8 @@ pass to the OPERATION."
 		      ;; target.
 		      (make-directory
 		       (expand-file-name
-			".." (concat tmpdir localname)) 'parents)
+			".." (concat tmpdir localname))
+		       'parents)
 		      (make-symbolic-link
 		       newname (directory-file-name (concat tmpdir localname))))
 
