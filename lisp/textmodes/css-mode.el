@@ -429,6 +429,10 @@
     ("transition-property" "none" single-transition-property "all")
     ("transition-timing-function" single-transition-timing-function)
 
+    ;; CSS Will Change Module Level 1
+    ;; (https://www.w3.org/TR/css-will-change-1/#property-index)
+    ("will-change" "auto" animateable-feature)
+
     ;; Filter Effects Module Level 1
     ;; (http://www.w3.org/TR/filter-effects/#property-index)
     ("color-interpolation-filters" "auto" "sRGB" "linearRGB")
@@ -456,6 +460,7 @@ further value candidates, since that list would be infinite.")
      "xx-large")
     (alphavalue number)
     (angle "calc()")
+    (animateable-feature "scroll-position" "contents" custom-ident)
     (attachment "scroll" "fixed" "local")
     (bg-image image "none")
     (bg-layer bg-image position repeat-style attachment box)
@@ -581,8 +586,9 @@ a class of values, and that symbols in the CDRs always refer to
 other entries in this list, not to properties.
 
 The following classes have been left out above because they
-cannot be completed sensibly: `element-reference', `id',
-`identifier', `percentage', and `string'.")
+cannot be completed sensibly: `custom-ident',
+`element-reference', `id', `identifier', `percentage', and
+`string'.")
 
 (defcustom css-electric-keys '(?\} ?\;) ;; '()
   "Self inserting keys which should trigger re-indentation."
