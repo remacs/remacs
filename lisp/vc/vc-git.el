@@ -886,6 +886,11 @@ This prompts for a branch to merge from."
 
 (autoload 'vc-setup-buffer "vc-dispatcher")
 
+(defcustom vc-git-print-log-follow nil
+  "If true, follow renames in Git logs for files."
+  :type 'boolean
+  :version "26.1")
+
 (defun vc-git-print-log (files buffer &optional shortlog start-revision limit)
   "Print commit log associated with FILES into specified BUFFER.
 If SHORTLOG is non-nil, use a short format based on `vc-git-root-log-format'.
@@ -905,7 +910,13 @@ If LIMIT is non-nil, show no more than this many entries."
 	(apply 'vc-git-command buffer
 	       'async files
 	       (append
-		'("log" "--no-color" "--follow")
+		'("log" "--no-color")
+                (when (and vc-git-print-log-follow
+                           (not (cl-some #'file-directory-p files)))
+                  ;; "--follow" on directories is broken
+                  ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=8756
+                  ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=16422
+                  (list "--follow"))
 		(when shortlog
 		  `("--graph" "--decorate" "--date=short"
                     ,(format "--pretty=tformat:%s"
