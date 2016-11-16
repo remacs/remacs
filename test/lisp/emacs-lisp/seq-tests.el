@@ -28,7 +28,6 @@
 
 (require 'ert)
 (require 'seq)
-(require 'map)
 
 (defmacro with-test-sequences (spec &rest body)
   "Successively bind VAR to a list, vector, and string built from SEQ.
@@ -374,14 +373,13 @@ Evaluate BODY for each created sequence.
 
 (ert-deftest test-seq-random-elt-take-all ()
   (let ((seq '(a b c d e))
-        (count '()))
-    (should (= 0 (map-length count)))
+        (elts '()))
+    (should (= 0 (length elts)))
     (dotimes (_ 1000)
       (let ((random-elt (seq-random-elt seq)))
-        (map-put count
-                 random-elt
-                 (map-elt count random-elt 0))))
-    (should (= 5 (map-length count)))))
+        (add-to-list 'elts
+                     random-elt)))
+    (should (= 5 (length elts)))))
 
 (ert-deftest test-seq-random-elt-signal-on-empty ()
   (should-error (seq-random-elt nil))
