@@ -4179,12 +4179,12 @@ bar.)  @var{horizontal-type} is either @code{bottom} or @code{nil}
 (which means no horizontal scroll bar).
 @end defun
 
-@defun frame-scroll-bar-width &optional Lisp_Object &optional frame
+@defun frame-scroll-bar-width &optional frame
 This function returns the width of vertical scroll bars of @var{frame}
 in pixels.
 @end defun
 
-@defun frame-scroll-bar-height &optional Lisp_Object &optional frame
+@defun frame-scroll-bar-height &optional frame
 This function returns the height of horizontal scroll bars of
 @var{frame} in pixels.
 @end defun

@@ -549,7 +549,7 @@ children.
 @cindex pixel width of a window
 @cindex total pixel width of a window
 
-@defun window-pixel-width &optional Lisp_Object &optional window
+@defun window-pixel-width &optional window
 This function returns the width of window @var{window} in pixels.
 @var{window} must be a valid window and defaults to the selected one.
 
