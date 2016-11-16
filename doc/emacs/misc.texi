@@ -1583,11 +1583,10 @@ dies with the Emacs process.
 
 @cindex daemon, Emacs
 @item
-Run Emacs as a @dfn{daemon}, using the @samp{--daemon} command-line
-option.  @xref{Initial Options}.  When Emacs is started this way, it
-calls @code{server-start} after initialization, and returns control to
-the calling terminal instead of opening an initial frame; it then
-waits in the background, listening for edit requests.
+Run Emacs as a @dfn{daemon}, using one of the @samp{--daemon} command-line
+options.  @xref{Initial Options}.  When Emacs is started this way, it
+calls @code{server-start} after initialization and does not open an
+initial frame.  It then waits for edit requests from clients.
 
 @cindex systemd unit file
 @item

@@ -112,8 +112,8 @@ compiled into the Emacs executable when it was built.
 It runs the normal hook @code{before-init-hook}.
 
 @item
-If appropriate, it creates a graphical frame.  This is not done if the
-options @samp{--batch} or @samp{--daemon} were specified.
+If appropriate, it creates a graphical frame.  This is not done in
+batch (noninteractive) or daemon mode.
 
 @item
 It initializes the initial frame's faces, and sets up the menu bar
@@ -256,10 +256,10 @@ options were specified.
 @c last few bits of command-line-1 are not done in batch mode.
 
 @item
-If the option @code{--daemon} was specified, it calls
-@code{server-start}, and on Posix systems also detaches from the
-controlling terminal.  @xref{Emacs Server,,, emacs, The GNU Emacs
-Manual}.
+If a daemon was requested, it calls @code{server-start}.
+(On Posix systems, if a background daemon was requested, it then
+detaches from the controlling terminal.)  @xref{Emacs
+Server,,, emacs, The GNU Emacs Manual}.
 
 @item
 If started by the X session manager, it calls
@@ -337,7 +337,10 @@ Do not display a splash screen.
 Run without an interactive terminal.  @xref{Batch Mode}.
 
 @item --daemon
-Do not initialize any display; just start a server in the background.
+@itemx --old-daemon
+@itemx --new-daemon
+Do not initialize any display; just start a server.
+(An ``old-style'' daemon automatically runs in the background.)
 
 @item --no-init-file
 @itemx -q

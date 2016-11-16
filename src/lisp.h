@@ -4139,12 +4139,11 @@ extern bool no_site_lisp;
 /* True means put details like time stamps into builds.  */
 extern bool build_details;
 
-/* Pipe used to send exit notification to the daemon parent at
-   startup.  On Windows, we use a kernel event instead.  */
 #ifndef WINDOWSNT
-extern int daemon_pipe[2];
-#define IS_DAEMON (daemon_pipe[1] != 0)
-#define DAEMON_RUNNING (daemon_pipe[1] >= 0)
+/* 0 not a daemon, 1 new-style (foreground), 2 old-style (background).  */
+extern int daemon_type;
+#define IS_DAEMON (daemon_type != 0)
+#define DAEMON_RUNNING (daemon_type >= 0)
 #else  /* WINDOWSNT */
 extern void *w32_daemon_event;
 #define IS_DAEMON (w32_daemon_event != NULL)

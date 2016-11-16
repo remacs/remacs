@@ -162,8 +162,8 @@ char *stack_bottom;
 static uprintmax_t heap_bss_diff;
 #endif
 
-/* To run as a daemon under Cocoa or Windows, we must do a fork+exec,
-   not a simple fork.
+/* To run as a background daemon under Cocoa or Windows,
+   we must do a fork+exec, not a simple fork.
 
    On Cocoa, CoreFoundation lib fails in forked process:
    http://developer.apple.com/ReleaseNotes/
@@ -190,9 +190,12 @@ bool build_details;
 /* Name for the server started by the daemon.*/
 static char *daemon_name;
 
+/* 0 not a daemon, 1 new-style (foreground), 2 old-style (background).  */
+int daemon_type;
+
 #ifndef WINDOWSNT
-/* Pipe used to send exit notification to the daemon parent at
-   startup.  */
+/* Pipe used to send exit notification to the background daemon parent at
+   startup.  On Windows, we use a kernel event instead.  */
 int daemon_pipe[2];
 #else
 HANDLE w32_daemon_event;
@@ -223,7 +226,8 @@ Initialization options:\n\
     "\
 --batch                     do not do interactive display; implies -q\n\
 --chdir DIR                 change to directory DIR\n\
---daemon[=NAME]             start a (named) server in the background\n\
+--daemon, --old-daemon[=NAME] start a (named) server in the background\n\
+--new-daemon[=NAME]         start a (named) server in the foreground\n\
 --debug-init                enable Emacs Lisp debugger for init file\n\
 --display, -d DISPLAY       use X server DISPLAY\n\
 ",
@@ -977,6 +981,8 @@ main (int argc, char **argv)
       exit (0);
     }
 
+  daemon_type = 0;
+
 #ifndef WINDOWSNT
   /* Make sure IS_DAEMON starts up as false.  */
   daemon_pipe[1] = 0;
@@ -987,38 +993,52 @@ main (int argc, char **argv)
 
   int sockfd = -1;
 
-  if (argmatch (argv, argc, "-daemon", "--daemon", 5, NULL, &skip_args)
-      || argmatch (argv, argc, "-daemon", "--daemon", 5, &dname_arg, &skip_args))
+  if (argmatch (argv, argc, "-new-daemon", "--new-daemon", 10, NULL, &skip_args)
+      || argmatch (argv, argc, "-new-daemon", "--new-daemon", 10, &dname_arg, &skip_args))
+    {
+      daemon_type = 1;           /* foreground */
+    }
+  else if (argmatch (argv, argc, "-daemon", "--daemon", 5, NULL, &skip_args)
+      || argmatch (argv, argc, "-daemon", "--daemon", 5, &dname_arg, &skip_args)
+      || argmatch (argv, argc, "-old-daemon", "--old-daemon", 10, NULL, &skip_args)
+      || argmatch (argv, argc, "-old-daemon", "--old-daemon", 10, &dname_arg, &skip_args))
+    {
+      daemon_type = 2;          /* background */
+    }
+
+
+  if (daemon_type > 0)
     {
 #ifndef DOS_NT
-      pid_t f;
+      if (daemon_type == 2)
+        {
+          /* Start as a background daemon: fork a new child process which
+             will run the rest of the initialization code, then exit.
 
-      /* Start as a daemon: fork a new child process which will run the
-	 rest of the initialization code, then exit.
+             Detaching a daemon requires the following steps:
+             - fork
+             - setsid
+             - exit the parent
+             - close the tty file-descriptors
 
-	 Detaching a daemon requires the following steps:
-	 - fork
-	 - setsid
-	 - exit the parent
-	 - close the tty file-descriptors
+             We only want to do the last 2 steps once the daemon is ready to
+             serve requests, i.e. after loading .emacs (initialization).
+             OTOH initialization may start subprocesses (e.g. ispell) and these
+             should be run from the proper process (the one that will end up
+             running as daemon) and with the proper "session id" in order for
+             them to keep working after detaching, so fork and setsid need to be
+             performed before initialization.
 
-	 We only want to do the last 2 steps once the daemon is ready to
-	 serve requests, i.e. after loading .emacs (initialization).
-	 OTOH initialization may start subprocesses (e.g. ispell) and these
-	 should be run from the proper process (the one that will end up
-	 running as daemon) and with the proper "session id" in order for
-	 them to keep working after detaching, so fork and setsid need to be
-	 performed before initialization.
-
-	 We want to avoid exiting before the server socket is ready, so
-	 use a pipe for synchronization.  The parent waits for the child
-	 to close its end of the pipe (using `daemon-initialized')
-	 before exiting.  */
-      if (emacs_pipe (daemon_pipe) != 0)
-	{
-	  fprintf (stderr, "Cannot pipe!\n");
-	  exit (1);
-	}
+             We want to avoid exiting before the server socket is ready, so
+             use a pipe for synchronization.  The parent waits for the child
+             to close its end of the pipe (using `daemon-initialized')
+             before exiting.  */
+          if (emacs_pipe (daemon_pipe) != 0)
+            {
+              fprintf (stderr, "Cannot pipe!\n");
+              exit (1);
+            }
+        } /* daemon_type == 2 */
 
 #ifdef HAVE_LIBSYSTEMD
       /* Read the number of sockets passed through by systemd.  */
@@ -1035,99 +1055,105 @@ main (int argc, char **argv)
 	sockfd = SD_LISTEN_FDS_START;
 #endif /* HAVE_LIBSYSTEMD */
 
-#ifndef DAEMON_MUST_EXEC
 #ifdef USE_GTK
       fprintf (stderr, "\nWarning: due to a long standing Gtk+ bug\nhttp://bugzilla.gnome.org/show_bug.cgi?id=85715\n\
 Emacs might crash when run in daemon mode and the X11 connection is unexpectedly lost.\n\
 Using an Emacs configured with --with-x-toolkit=lucid does not have this problem.\n");
 #endif /* USE_GTK */
-      f = fork ();
+
+      if (daemon_type == 2)
+        {
+          pid_t f;
+#ifndef DAEMON_MUST_EXEC
+
+          f = fork ();
 #else /* DAEMON_MUST_EXEC */
-      if (!dname_arg || !strchr (dname_arg, '\n'))
-	  f = fork ();  /* in orig */
-      else
-	  f = 0;  /* in exec'd */
+          if (!dname_arg || !strchr (dname_arg, '\n'))
+            f = fork ();  /* in orig */
+          else
+            f = 0;  /* in exec'd */
 #endif /* !DAEMON_MUST_EXEC */
-      if (f > 0)
-	{
-	  int retval;
-	  char buf[1];
+          if (f > 0)
+            {
+              int retval;
+              char buf[1];
 
-	  /* Close unused writing end of the pipe.  */
-	  emacs_close (daemon_pipe[1]);
+              /* Close unused writing end of the pipe.  */
+              emacs_close (daemon_pipe[1]);
 
-	  /* Just wait for the child to close its end of the pipe.  */
-	  do
-	    {
-	      retval = read (daemon_pipe[0], &buf, 1);
-	    }
-	  while (retval == -1 && errno == EINTR);
+              /* Just wait for the child to close its end of the pipe.  */
+              do
+                {
+                  retval = read (daemon_pipe[0], &buf, 1);
+                }
+              while (retval == -1 && errno == EINTR);
 
-	  if (retval < 0)
-	    {
-	      fprintf (stderr, "Error reading status from child\n");
-	      exit (1);
-	    }
-	  else if (retval == 0)
-	    {
-	      fprintf (stderr, "Error: server did not start correctly\n");
-	      exit (1);
-	    }
+              if (retval < 0)
+                {
+                  fprintf (stderr, "Error reading status from child\n");
+                  exit (1);
+                }
+              else if (retval == 0)
+                {
+                  fprintf (stderr, "Error: server did not start correctly\n");
+                  exit (1);
+                }
 
-	  emacs_close (daemon_pipe[0]);
-	  exit (0);
-	}
-      if (f < 0)
-	{
-	  emacs_perror ("fork");
-	  exit (EXIT_CANCELED);
-	}
+              emacs_close (daemon_pipe[0]);
+              exit (0);
+            }
+          if (f < 0)
+            {
+              emacs_perror ("fork");
+              exit (EXIT_CANCELED);
+            }
 
 #ifdef DAEMON_MUST_EXEC
-      {
-        /* In orig process, forked as child, OR in exec'd. */
-        if (!dname_arg || !strchr (dname_arg, '\n'))
-          {  /* In orig, child: now exec w/special daemon name. */
-            char fdStr[80];
-	    int fdStrlen =
-	      snprintf (fdStr, sizeof fdStr,
-			"--daemon=\n%d,%d\n%s", daemon_pipe[0],
-			daemon_pipe[1], dname_arg ? dname_arg : "");
+          {
+            /* In orig process, forked as child, OR in exec'd. */
+            if (!dname_arg || !strchr (dname_arg, '\n'))
+              {  /* In orig, child: now exec w/special daemon name. */
+                char fdStr[80];
+                int fdStrlen =
+                  snprintf (fdStr, sizeof fdStr,
+                            "--old-daemon=\n%d,%d\n%s", daemon_pipe[0],
+                            daemon_pipe[1], dname_arg ? dname_arg : "");
 
-	    if (! (0 <= fdStrlen && fdStrlen < sizeof fdStr))
-              {
-                fprintf (stderr, "daemon: child name too long\n");
-                exit (EXIT_CANNOT_INVOKE);
+                if (! (0 <= fdStrlen && fdStrlen < sizeof fdStr))
+                  {
+                    fprintf (stderr, "daemon: child name too long\n");
+                    exit (EXIT_CANNOT_INVOKE);
+                  }
+
+                argv[skip_args] = fdStr;
+
+                fcntl (daemon_pipe[0], F_SETFD, 0);
+                fcntl (daemon_pipe[1], F_SETFD, 0);
+                execvp (argv[0], argv);
+                emacs_perror (argv[0]);
+                exit (errno == ENOENT ? EXIT_ENOENT : EXIT_CANNOT_INVOKE);
               }
 
-            argv[skip_args] = fdStr;
-
-	    fcntl (daemon_pipe[0], F_SETFD, 0);
-	    fcntl (daemon_pipe[1], F_SETFD, 0);
-            execvp (argv[0], argv);
-	    emacs_perror (argv[0]);
-	    exit (errno == ENOENT ? EXIT_ENOENT : EXIT_CANNOT_INVOKE);
-          }
-
-        /* In exec'd: parse special dname into pipe and name info. */
-        if (!dname_arg || !strchr (dname_arg, '\n')
-            || strlen (dname_arg) < 1 || strlen (dname_arg) > 70)
+            /* In exec'd: parse special dname into pipe and name info. */
+            if (!dname_arg || !strchr (dname_arg, '\n')
+                || strlen (dname_arg) < 1 || strlen (dname_arg) > 70)
           {
             fprintf (stderr, "emacs daemon: daemon name absent or too long\n");
             exit (EXIT_CANNOT_INVOKE);
           }
-        dname_arg2[0] = '\0';
-        sscanf (dname_arg, "\n%d,%d\n%s", &(daemon_pipe[0]), &(daemon_pipe[1]),
-                dname_arg2);
-        dname_arg = *dname_arg2 ? dname_arg2 : NULL;
-	fcntl (daemon_pipe[1], F_SETFD, FD_CLOEXEC);
-      }
+            dname_arg2[0] = '\0';
+            sscanf (dname_arg, "\n%d,%d\n%s", &(daemon_pipe[0]), &(daemon_pipe[1]),
+                    dname_arg2);
+            dname_arg = *dname_arg2 ? dname_arg2 : NULL;
+            fcntl (daemon_pipe[1], F_SETFD, FD_CLOEXEC);
+          }
 #endif /* DAEMON_MUST_EXEC */
 
-      /* Close unused reading end of the pipe.  */
-      emacs_close (daemon_pipe[0]);
+          /* Close unused reading end of the pipe.  */
+          emacs_close (daemon_pipe[0]);
 
-      setsid ();
+          setsid ();
+        } /* daemon_type == 2 */
 #elif defined(WINDOWSNT)
       /* Indicate that we want daemon mode.  */
       w32_daemon_event = CreateEvent (NULL, TRUE, FALSE, W32_DAEMON_EVENT);
@@ -1138,7 +1164,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
           exit (1);
         }
 #else /* MSDOS */
-      fprintf (stderr, "This platform does not support the -daemon flag.\n");
+      fprintf (stderr, "This platform does not support daemon mode.\n");
       exit (1);
 #endif /* MSDOS */
       if (dname_arg)
@@ -1684,6 +1710,8 @@ static const struct standard_args standard_args[] =
   { "-batch", "--batch", 100, 0 },
   { "-script", "--script", 100, 1 },
   { "-daemon", "--daemon", 99, 0 },
+  { "-old-daemon", "--old-daemon", 99, 0 },
+  { "-new-daemon", "--new-daemon", 99, 0 },
   { "-help", "--help", 90, 0 },
   { "-nl", "--no-loadup", 70, 0 },
   { "-nsl", "--no-site-lisp", 65, 0 },
@@ -2407,27 +2435,33 @@ from the parent process and its tty file descriptors.  */)
   if (NILP (Vafter_init_time))
     error ("This function can only be called after loading the init files");
 #ifndef WINDOWSNT
-  int nfd;
 
-  /* Get rid of stdin, stdout and stderr.  */
-  nfd = emacs_open ("/dev/null", O_RDWR, 0);
-  err |= nfd < 0;
-  err |= dup2 (nfd, STDIN_FILENO) < 0;
-  err |= dup2 (nfd, STDOUT_FILENO) < 0;
-  err |= dup2 (nfd, STDERR_FILENO) < 0;
-  err |= emacs_close (nfd) != 0;
+  if (daemon_type == 2)
+    {
+      int nfd;
 
-  /* Closing the pipe will notify the parent that it can exit.
-     FIXME: In case some other process inherited the pipe, closing it here
-     won't notify the parent because it's still open elsewhere, so we
-     additionally send a byte, just to make sure the parent really exits.
-     Instead, we should probably close the pipe in start-process and
-     call-process to make sure the pipe is never inherited by
-     subprocesses.  */
-  err |= write (daemon_pipe[1], "\n", 1) < 0;
-  err |= emacs_close (daemon_pipe[1]) != 0;
+      /* Get rid of stdin, stdout and stderr.  */
+      nfd = emacs_open ("/dev/null", O_RDWR, 0);
+      err |= nfd < 0;
+      err |= dup2 (nfd, STDIN_FILENO) < 0;
+      err |= dup2 (nfd, STDOUT_FILENO) < 0;
+      err |= dup2 (nfd, STDERR_FILENO) < 0;
+      err |= emacs_close (nfd) != 0;
+
+      /* Closing the pipe will notify the parent that it can exit.
+         FIXME: In case some other process inherited the pipe, closing it here
+         won't notify the parent because it's still open elsewhere, so we
+         additionally send a byte, just to make sure the parent really exits.
+         Instead, we should probably close the pipe in start-process and
+         call-process to make sure the pipe is never inherited by
+         subprocesses.  */
+      err |= write (daemon_pipe[1], "\n", 1) < 0;
+      err |= emacs_close (daemon_pipe[1]) != 0;
+    }
+
   /* Set it to an invalid value so we know we've already run this function.  */
-  daemon_pipe[1] = -1;
+  daemon_type = -1;
+
 #else  /* WINDOWSNT */
   /* Signal the waiting emacsclient process.  */
   err |= SetEvent (w32_daemon_event) == 0;
