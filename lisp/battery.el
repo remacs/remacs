@@ -41,7 +41,7 @@
 (defcustom battery-linux-sysfs-regexp "[bB][aA][tT][0-9]?$"
   "Regexp for folder names to be searched under
   /sys/class/power_supply/ that contain battery information."
-  :version "25.2"
+  :version "26.1"
   :type 'regexp
   :group 'battery)
 

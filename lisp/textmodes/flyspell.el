@@ -102,7 +102,7 @@ This only happens if `flyspell-sort-corrections' is non-nil.  The
 function takes three parameters -- the two correction candidates
 to be sorted, and the third parameter is the word that's being
 corrected."
-  :version "25.2"
+  :version "26.1"
   :type 'function
   :group 'flyspell)
 

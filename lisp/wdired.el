@@ -158,7 +158,7 @@ If non-nil, when you rename a file to a destination path within a
 nonexistent directory, wdired will create any parent directories
 necessary.  When nil, attempts to rename a file into a
 nonexistent directory will fail."
-  :version "25.2"
+  :version "26.1"
   :type 'boolean
   :group 'wdired)
 

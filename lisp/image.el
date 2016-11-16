@@ -135,7 +135,7 @@ size), or the symbol `auto', which will compute a scaling factor
 based on the font pixel size."
   :type '(choice number
                  (const :tag "Automatically compute" auto))
-  :version "25.2")
+  :version "26.1")
 
 ;; Map put into text properties on images.
 (defvar image-map

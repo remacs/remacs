@@ -1764,7 +1764,7 @@ no, only reply back to the author."
 
 (defcustom message-use-idna t
   "Whether to encode non-ASCII in domain names into ASCII according to IDNA."
-  :version "25.2"
+  :version "26.1"
   :group 'message-headers
   :link '(custom-manual "(message)IDNA")
   :type '(choice (const :tag "Ask" ask)

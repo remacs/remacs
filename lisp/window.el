@@ -7519,7 +7519,7 @@ the selected window or never appeared in it before, or if
 	  (const :tag "If already displayed elsewhere" already-displayed)
 	  (const :tag "Always" t))
   :group 'windows
-  :version "25.2")
+  :version "26.1")
 
 (defcustom switch-to-buffer-in-dedicated-window nil
   "Allow switching to buffer in strongly dedicated windows.

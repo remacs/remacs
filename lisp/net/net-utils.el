@@ -119,7 +119,7 @@ These options can be used to limit how many ICMP packets are emitted."
   "Program to print wireless network configuration information."
   :group 'net-utils
   :type 'string
-  :version "25.2")
+  :version "26.1")
 
 (defcustom iwconfig-program-options
   (cond ((string-match-p "iw\\'" iwconfig-program) (list "dev"))
@@ -127,7 +127,7 @@ These options can be used to limit how many ICMP packets are emitted."
  "Options for the iwconfig program."
  :group 'net-utils
  :type '(repeat string)
- :version "25.2")
+ :version "26.1")
 
 (defcustom netstat-program
   (cond ((executable-find "netstat") "netstat")
@@ -136,7 +136,7 @@ These options can be used to limit how many ICMP packets are emitted."
   "Program to print network statistics."
   :group 'net-utils
   :type  'string
-  :version "25.2")
+  :version "26.1")
 
 (defcustom netstat-program-options
   (list "-a")
@@ -165,7 +165,7 @@ These options can be used to limit how many ICMP packets are emitted."
   "Program to print routing tables."
   :group 'net-utils
   :type  'string
-  :version "25.2")
+  :version "26.1")
 
 (defcustom route-program-options
   (cond ((eq system-type 'windows-nt) (list "print"))
@@ -174,7 +174,7 @@ These options can be used to limit how many ICMP packets are emitted."
   "Options for the route program."
   :group 'net-utils
   :type  '(repeat string)
-  :version "25.2")
+  :version "26.1")
 
 (defcustom nslookup-program "nslookup"
   "Program to interactively query DNS information."

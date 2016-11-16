@@ -2476,7 +2476,7 @@ If you set `term-file-prefix' to nil, this function does nothing."
     (t :foreground "brown"))
   "Face for lookalike characters."
   :group 'basic-faces
-  :version "25.2")
+  :version "26.1")
 
 (defface nobreak-space
   '((((class color) (min-colors 88)) :inherit escape-glyph :underline t)
@@ -2492,7 +2492,7 @@ If you set `term-file-prefix' to nil, this function does nothing."
     (t :foreground "brown"))
   "Face for displaying nobreak hyphens."
   :group 'basic-faces
-  :version "25.2")
+  :version "26.1")
 
 (defgroup mode-line-faces nil
   "Faces used in the mode line."
@@ -2759,7 +2759,7 @@ It is used for characters of no fonts too."
         :weight bold)))
   "Face for the symbol name in `read-multiple-choice' output."
   :group 'basic-faces
-  :version "25.2")
+  :version "26.1")
 
 ;; Faces for TTY menus.
 (defface tty-menu-enabled-face

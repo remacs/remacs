@@ -98,7 +98,7 @@ regardless of any active filters in this buffer."
       (push (format "%s%s%s" beg str end) excluded)))
   "A list of regexps for buffers ignored by `ibuffer-mark-by-content-regexp'.
 Buffers whose name matches a regexp in this list, are not searched."
-  :version "25.2"
+  :version "26.1"
   :type '(repeat regexp)
   :require 'ibuf-ext
   :group 'ibuffer)
@@ -106,7 +106,7 @@ Buffers whose name matches a regexp in this list, are not searched."
 (defcustom ibuffer-never-search-content-mode '(dired-mode)
   "A list of major modes ignored by `ibuffer-mark-by-content-regexp'.
 Buffers whose major mode is in this list, are not searched."
-  :version "25.2"
+  :version "26.1"
   :type '(repeat regexp)
   :require 'ibuf-ext
   :group 'ibuffer)

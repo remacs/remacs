@@ -354,7 +354,7 @@ This variable is buffer-local."
    "\\(?: for .+\\)?[:：៖]\\s *\\'")
   "Regexp matching prompts for passwords in the inferior process.
 This is used by `comint-watch-for-password-prompt'."
-  :version "25.2"
+  :version "26.1"
   :type 'regexp
   :group 'comint)
 

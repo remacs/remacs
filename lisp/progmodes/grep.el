@@ -235,7 +235,7 @@ buffer should be saved or not.  E.g., one can set this to
   (lambda ()
     (string-prefix-p my-grep-root (file-truename (buffer-file-name))))
 to limit saving to files located under `my-grep-root'."
-  :version "25.2"
+  :version "26.1"
   :type '(choice
           (const :tag "Ask before saving" ask)
           (const :tag "Don't save buffers" nil)

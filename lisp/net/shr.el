@@ -68,7 +68,7 @@ fit these criteria."
 
 (defcustom shr-use-colors t
   "If non-nil, respect color specifications in the HTML."
-  :version "25.2"
+  :version "26.1"
   :group 'shr
   :type 'boolean)
 

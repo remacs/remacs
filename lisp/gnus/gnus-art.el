@@ -1612,7 +1612,7 @@ It is a string, such as \"PGP\". If nil, ask user."
 
 (defcustom gnus-use-idna t
   "Whether IDNA decoding of headers is used when viewing messages."
-  :version "25.2"
+  :version "26.1"
   :group 'gnus-article-headers
   :type 'boolean)
 
@@ -7368,7 +7368,7 @@ groups."
 
 (defcustom gnus-button-valid-fqdn-regexp "\\([-A-Za-z0-9]+\\.\\)+[A-Za-z]+"
   "Regular expression that matches a valid FQDN."
-  :version "25.2"
+  :version "26.1"
   :group 'gnus-article-buttons
   :type 'regexp)
 

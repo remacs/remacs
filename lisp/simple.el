@@ -50,7 +50,7 @@ restore the buffer position before the command."
           (const :tag "Set point to end of last output" end-last-out)
           (const :tag "Save point" save-point))
   :group 'shell
-  :version "25.2")
+  :version "26.1")
 
 (defvar shell-command-saved-pos nil
   "Point position in the output buffer after command complete.
@@ -1659,7 +1659,7 @@ If the value is non-nil and not a number, we wait 2 seconds."
   "If non-nil, show a shorter M-x invocation when there is one."
   :group 'keyboard
   :type 'boolean
-  :version "25.2")
+  :version "26.1")
 
 (defun execute-extended-command--shorter-1 (name length)
   (cond

@@ -148,7 +148,7 @@ for doing the actual authentication."
 
 (defcustom sieve-manage-ignore-starttls nil
   "Ignore STARTTLS even if STARTTLS capability is provided."
-  :version "25.2"
+  :version "26.1"
   :type 'boolean
   :group 'sieve-manage)
 

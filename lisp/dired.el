@@ -264,7 +264,7 @@ new Dired buffers."
  them: the search is performed on the temporary buffer, the original
  buffer visiting the file is not modified."
   :type 'boolean
-  :version "25.2"
+  :version "26.1"
   :group 'dired)
 
 ;; Internal variables

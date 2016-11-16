@@ -1321,7 +1321,7 @@ Optional second argument FLAVOR controls the units and the display format:
     "^\\(?:/\\(?:afs/\\|m\\(?:edia/\\|nt\\)\\|\\(?:ne\\|tmp_mn\\)t/\\)\\)")
   "File systems which ought to be mounted."
   :group 'files
-  :version "25.2"
+  :version "26.1"
   :require 'regexp-opt
   :type 'regexp)
 
@@ -6756,7 +6756,7 @@ If any of these functions returns nil, killing Emacs is canceled.
 `save-buffers-kill-emacs' calls these functions, but `kill-emacs',
 the low level primitive, does not.  See also `kill-emacs-hook'."
   :type 'hook
-  :version "25.2"
+  :version "26.1"
   :group 'convenience)
 
 (defcustom confirm-kill-emacs nil

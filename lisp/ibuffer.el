@@ -138,7 +138,7 @@ value for this variable would be
 
 Using \\[ibuffer-switch-format], you can rotate the display between
 the specified formats in the list."
-  :version "25.2"
+  :version "26.1"
   :type '(repeat sexp)
   :group 'ibuffer)
 
@@ -285,7 +285,7 @@ Note that this specialized filtering occurs before real filtering."
 
 (defcustom ibuffer-locked-char ?L
   "The character to display for locked buffers."
-  :version "25.2"
+  :version "26.1"
   :type 'character
   :group 'ibuffer)
 
@@ -1773,7 +1773,7 @@ If point is on a group name, this function operates on that group."
   '((((background dark)) (:foreground "RosyBrown"))
     (t (:foreground "brown4")))
   "*Face used for locked buffers in Ibuffer."
-  :version "25.2"
+  :version "26.1"
   :group 'ibuffer
   :group 'font-lock-highlighting-faces)
 (defvar ibuffer-locked-buffer 'ibuffer-locked-buffer)

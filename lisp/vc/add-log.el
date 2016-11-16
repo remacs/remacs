@@ -175,7 +175,7 @@ Note: The search is conducted only within 10%, at the beginning of the file."
   "List of files that cause `find-change-log' to stop in containing directory.
 This applies if no pre-existing ChangeLog is found.  If nil, then in such
 a case simply use the directory containing the changed file."
-  :version "25.2"
+  :version "26.1"
   :type '(repeat file)
   :group 'change-log)
 
