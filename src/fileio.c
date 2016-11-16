@@ -2282,7 +2282,7 @@ file_name_case_insensitive_p (const char *filename)
     {
       /* This is based on developer.apple.com's getattrlist man page.  */
       struct attrlist alist = {.volattr = ATTR_VOL_CAPABILITIES};
-      struct vol_capabilities_attr_t vcaps;
+      vol_capabilities_attr_t vcaps;
       if (getattrlist (filename, &alist, &vcaps, sizeof vcaps, 0) == 0)
 	{
 	  if (vcaps.valid[VOL_CAPABILITIES_FORMAT] & VOL_CAP_FMT_CASE_SENSITIVE)
@@ -2295,7 +2295,7 @@ file_name_case_insensitive_p (const char *filename)
       /* The following is based on
 	 http://lists.apple.com/archives/darwin-dev/2007/Apr/msg00010.html.  */
       struct attrlist alist;
-      unsigned char buffer[sizeof (vol_capabilities_attr_t)  sizeof (size_t)];
+      unsigned char buffer[sizeof (vol_capabilities_attr_t) + sizeof (size_t)];
 
       memset (&alist, 0, sizeof (alist));
       alist.volattr = ATTR_VOL_CAPABILITIES;
