@@ -2905,35 +2905,39 @@ User is always nil."
     (or ;; Maybe there is a default value.
      (tramp-get-method-parameter v 'tramp-case-insensitive)
 
-     ;; There isn't. So we must check.
-     (with-tramp-connection-property v "case-insensitive"
-       ;; The idea is to compare a file with lower case letters with
-       ;; the same file with upper case letters.
-       (let ((candidate (directory-file-name filename))
-	     tmpfile)
-	 ;; Check, whether we find an existing file with lower case
-	 ;; letters.  This avoids us to create a temporary file.
-	 (while (and (string-match "[a-z]" (file-remote-p candidate 'localname))
-		     (not (file-exists-p candidate)))
-	   (setq candidate
-		 (directory-file-name (file-name-directory candidate))))
-	 ;; Nothing found, so we must use a temporary file for
-	 ;; comparision.  `make-nearby-temp-file' is added to Emacs
-	 ;; 26+ like `file-name-case-insensitive-p', so there is no
-	 ;; compatibility problem calling it.
-	 (unless (string-match "[a-z]" (file-remote-p candidate 'localname))
-	   (setq tmpfile
-		 (let ((default-directory (file-name-directory filename)))
-		   (tramp-compat-funcall 'make-nearby-temp-file "tramp."))
-		 candidate tmpfile))
-	 ;; Check for the existence of the same file with upper case letters.
-	 (unwind-protect
-	     (file-exists-p
-	      (concat
-	       (file-remote-p candidate)
-	       (upcase (file-remote-p candidate 'localname))))
-	   ;; Cleanup.
-	   (when tmpfile (delete-file tmpfile))))))))
+     ;; There isn't. So we must check, in case there's a connection already.
+     (and (tramp-connectable-p filename)
+          (with-tramp-connection-property v "case-insensitive"
+            ;; The idea is to compare a file with lower case letters
+            ;; with the same file with upper case letters.
+            (let ((candidate (directory-file-name filename))
+                  tmpfile)
+              ;; Check, whether we find an existing file with lower case
+              ;; letters.  This avoids us to create a temporary file.
+              (while (and (string-match
+                           "[a-z]" (file-remote-p candidate 'localname))
+                          (not (file-exists-p candidate)))
+                (setq candidate
+                      (directory-file-name (file-name-directory candidate))))
+              ;; Nothing found, so we must use a temporary file for
+              ;; comparision.  `make-nearby-temp-file' is added to
+              ;; Emacs 26+ like `file-name-case-insensitive-p', so
+              ;; there is no compatibility problem calling it.
+              (unless
+                  (string-match "[a-z]" (file-remote-p candidate 'localname))
+                (setq tmpfile
+                      (let ((default-directory (file-name-directory filename)))
+                        (tramp-compat-funcall 'make-nearby-temp-file "tramp."))
+                      candidate tmpfile))
+              ;; Check for the existence of the same file with upper
+              ;; case letters.
+              (unwind-protect
+                  (file-exists-p
+                   (concat
+                    (file-remote-p candidate)
+                    (upcase (file-remote-p candidate 'localname))))
+                ;; Cleanup.
+                (when tmpfile (delete-file tmpfile)))))))))
 
 (defun tramp-handle-file-name-completion
   (filename directory &optional predicate)
