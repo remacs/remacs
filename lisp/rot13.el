@@ -63,7 +63,10 @@
 
 ;;;###autoload
 (defun rot13 (object &optional start end)
-  "Return ROT13 encryption of OBJECT, a buffer or string."
+  "ROT13 encrypt OBJECT, a buffer or string.
+If OBJECT is a buffer, encrypt the region between START and END.
+If OBJECT is a string, encrypt it in its entirety, ignoring START
+and END, and return the encrypted string."
   (if (bufferp object)
       (with-current-buffer object
 	(rot13-region start end))
