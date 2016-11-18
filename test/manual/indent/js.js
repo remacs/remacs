@@ -69,6 +69,9 @@ a++
 b +=
   c
 
+var re = /some value/
+str.match(re)
+
 baz(`http://foo.bar/${tee}`)
   .qux();
 
