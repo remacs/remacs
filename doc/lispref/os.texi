@@ -1472,7 +1472,7 @@ corresponding time value.
 @defun format-time-string format-string &optional time zone
 
 This function converts @var{time} (or the current time, if
-@var{time} is omitted) to a string according to
+@var{time} is omitted or @code{nil}) to a string according to
 @var{format-string}.  The conversion uses the time zone rule @var{zone}, which
 defaults to the current time zone rule.  @xref{Time Zone Rules}.  The argument
 @var{format-string} may contain @samp{%}-sequences which say to
@@ -1690,7 +1690,9 @@ interactively, it prints the duration in the echo area.
 @cindex calendrical computations
 
   These functions perform calendrical computations using time values
-(@pxref{Time of Day}).
+(@pxref{Time of Day}).  A value of @code{nil} for any of their
+time-value arguments stands for the current system time, and a single
+integer number stands for the number of seconds since the epoch.
 
 @defun time-less-p t1 t2
 This returns @code{t} if time value @var{t1} is less than time value
@@ -1699,12 +1701,15 @@ This returns @code{t} if time value @var{t1} is less than time value
 
 @defun time-subtract t1 t2
 This returns the time difference @var{t1} @minus{} @var{t2} between
-two time values, as a time value.
+two time values, as a time value.  If you need the difference in units
+of elapsed seconds, use @code{float-time} (@pxref{Time of Day,
+float-time}) to convert the result into seconds.
 @end defun
 
 @defun time-add t1 t2
 This returns the sum of two time values, as a time value.
-One argument should represent a time difference rather than a point in time.
+One argument should represent a time difference rather than a point in time,
+either as a list or as a single number of elapsed seconds.
 Here is how to add a number of seconds to a time value:
 
 @example
