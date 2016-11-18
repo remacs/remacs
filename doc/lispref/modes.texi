@@ -528,7 +528,7 @@ It also processes local variables specified in the file text.
 @deffn Command normal-mode &optional find-file
 This function establishes the proper major mode and buffer-local
 variable bindings for the current buffer.  It calls
-@code{set-auto-mode} (see below).  As from Emacs 25.2, it no longer
+@code{set-auto-mode} (see below).  As of Emacs 26.1, it no longer
 runs @code{hack-local-variables}, this now being done in
 @code{run-mode-hooks} at the initialization of major modes
 (@pxref{Mode Hooks}).

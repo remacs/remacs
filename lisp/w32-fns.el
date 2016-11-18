@@ -143,7 +143,7 @@ You should set this to t when using a non-system shell.\n\n"))))
 			'(undecided-dos . undecided-dos)
 		      '(raw-text-dos . raw-text-dos)))))
 (define-obsolete-function-alias 'set-default-process-coding-system
-  #'w32-set-default-process-coding-system "25.2")
+  #'w32-set-default-process-coding-system "26.1")
 (add-hook 'before-init-hook #'w32-set-default-process-coding-system)
 
 
@@ -235,7 +235,7 @@ This function is provided for backward compatibility, since
   (check-coding-system coding-system)
   (setq locale-coding-system coding-system))
 (define-obsolete-function-alias 'set-w32-system-coding-system
-  #'w32-set-system-coding-system "25.2")
+  #'w32-set-system-coding-system "26.1")
 
 ;; locale-coding-system was introduced to do the same thing as
 ;; w32-system-coding-system. Use that instead.

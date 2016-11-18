@@ -1353,7 +1353,7 @@ If nil, you might be asked to input the charset."
   :type 'symbol)
 (make-obsolete-variable
  'message-default-charset
- "The default charset comes from the language environment" "25.2")
+ "The default charset comes from the language environment" "26.1")
 
 (defcustom message-dont-reply-to-names mail-dont-reply-to-names
   "Addresses to prune when doing wide replies.

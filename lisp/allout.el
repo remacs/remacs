@@ -1242,7 +1242,7 @@ Also refresh various data structures that hinge on the regexp."
                             "[^" allout-primary-bullet "]"))
                   "\\)"
                   ))))
-(define-obsolete-function-alias 'set-allout-regexp 'allout-set-regexp "25.2")
+(define-obsolete-function-alias 'set-allout-regexp 'allout-set-regexp "26.1")
 ;;;_  : Menu bar
 (defvar allout-mode-exposure-menu)
 (defvar allout-mode-editing-menu)

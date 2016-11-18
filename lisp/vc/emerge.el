@@ -3177,7 +3177,7 @@ See also `auto-save-file-name-p'."
   "Obsolete, emerge now uses `shell-quote-argument'."
   :type 'regexp
   :group 'emerge)
-(make-obsolete-variable 'emerge-metachars nil "25.2")
+(make-obsolete-variable 'emerge-metachars nil "26.1")
 
 (provide 'emerge)
 

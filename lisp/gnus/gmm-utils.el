@@ -257,7 +257,7 @@ If mode is nil, use `major-mode' of the current buffer."
 		 (match-string 1 mode))))))
 
 (define-obsolete-function-alias 'gmm-format-time-string 'format-time-string
-  "25.2")
+  "26.1")
 
 (provide 'gmm-utils)
 

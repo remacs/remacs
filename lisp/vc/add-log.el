@@ -579,7 +579,7 @@ If a string, interpret as the ZONE argument of `format-time-string'.")
      (lambda (x) (or (booleanp x) (stringp x))))
 
 (defun add-log-iso8601-time-zone (&optional time zone)
-  (declare (obsolete nil "25.2"))
+  (declare (obsolete nil "26.1"))
   (format-time-string "%:::z" time zone))
 
 (defvar add-log-iso8601-with-time-zone nil)

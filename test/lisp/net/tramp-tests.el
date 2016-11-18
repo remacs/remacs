@@ -1937,7 +1937,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
       (ignore-errors (delete-file tmp-name1))
       (ignore-errors (delete-directory tmp-name2 'recursive)))))
 
-;; The functions have been introduced in Emacs 25.2.
+;; The functions were introduced in Emacs 26.1.
 (ert-deftest tramp-test32-make-nearby-temp-file ()
   "Check `make-nearby-temp-file' and `temporary-file-directory'."
   (skip-unless (tramp--test-enabled))

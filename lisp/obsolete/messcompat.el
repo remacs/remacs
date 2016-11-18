@@ -4,7 +4,7 @@
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: mail, news
-;; Obsolete-since: 25.2
+;; Obsolete-since: 26.1
 
 ;; This file is part of GNU Emacs.
 

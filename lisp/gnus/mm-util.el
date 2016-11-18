@@ -757,7 +757,7 @@ If INHIBIT is non-nil, inhibit `mm-inhibit-file-name-handlers'."
     (write-region start end filename append visit lockname)))
 
 (defalias 'mm-make-temp-file 'make-temp-file)
-(define-obsolete-function-alias 'mm-make-temp-file 'make-temp-file "25.2")
+(define-obsolete-function-alias 'mm-make-temp-file 'make-temp-file "26.1")
 
 (defvar mm-image-load-path-cache nil)
 

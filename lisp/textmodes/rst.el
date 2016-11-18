@@ -277,7 +277,7 @@ in parentheses follows the development revision and the time stamp.")
     ("1.4.0" . "24.3")
     ("1.4.1" . "24.5")
     ("1.4.2" . "24.5")
-    ("1.5.0" . "25.2")
+    ("1.5.0" . "26.1")
     ))
 
 (unless (assoc rst-official-version rst-package-emacs-version-alist)

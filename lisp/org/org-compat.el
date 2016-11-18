@@ -409,9 +409,9 @@ Pass BUFFER to the XEmacs version of `move-to-column'."
 	 (when focus-follows-mouse
 	   (set-mouse-position frame (1- (frame-width frame)) 0)))))
 
-(define-obsolete-function-alias 'org-float-time 'float-time "25.2")
+(define-obsolete-function-alias 'org-float-time 'float-time "26.1")
 
-;; `user-error' is only available from 24.2.50 on
+;; `user-error' is only available from 24.3 on
 (unless (fboundp 'user-error)
   (defalias 'user-error 'error))
 
