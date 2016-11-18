@@ -2863,12 +2863,29 @@ init_environment (char ** argv)
      The same applies to COMSPEC.  */
   {
     char ** envp;
+    const char *path = "PATH=";
+    int path_len = strlen (path);
+    const char *comspec = "COMSPEC=";
+    int comspec_len = strlen (comspec);
 
     for (envp = environ; *envp; envp++)
-      if (_strnicmp (*envp, "PATH=", 5) == 0)
-	memcpy (*envp, "PATH=", 5);
-      else if (_strnicmp (*envp, "COMSPEC=", 8) == 0)
-	memcpy (*envp, "COMSPEC=", 8);
+      if (_strnicmp (*envp, path, path_len) == 0)
+        memcpy (*envp, path, path_len);
+      else if (_strnicmp (*envp, comspec, comspec_len) == 0)
+        memcpy (*envp, comspec, comspec_len);
+
+    /* Make the same modification to `process-environment' which has
+       already been initialized in set_initial_environment.  */
+    for (Lisp_Object env = Vprocess_environment; CONSP (env); env = XCDR (env))
+    {
+      Lisp_Object entry = XCAR (env);
+      if (_strnicmp (SDATA (entry), path, path_len) == 0)
+        for (int i = 0; i < path_len; i++)
+          SSET (entry, i, path[i]);
+      else if (_strnicmp (SDATA (entry), comspec, comspec_len) == 0)
+        for (int i = 0; i < comspec_len; i++)
+          SSET (entry, i, comspec[i]);
+    }
   }
 
   /* Remember the initial working directory for getcwd.  */
