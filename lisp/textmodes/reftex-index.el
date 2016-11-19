@@ -24,7 +24,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 (declare-function texmathp "ext:texmathp" ())
 
 (require 'reftex)
@@ -128,7 +128,7 @@ will prompt for other arguments."
 
     ;; Insert the macro and ask for any additional args
     (insert macro)
-    (loop for i from 1 to nargs do
+    (cl-loop for i from 1 to nargs do
       (setq opt (member i opt-args)
             value (cond ((= nindex i) key)
                         ((equal ntag i) tag1)
@@ -214,16 +214,16 @@ will prompt for other arguments."
                 i -1
                 val nil)
           (catch 'exit
-            (while (and (< (incf i) len) (null val))
+            (while (and (< (cl-incf i) len) (null val))
               (unless (assq (aref tag i) tag-alist)
                 (push (list (aref tag i)
                             tag
                             (concat (substring tag 0 i)
-                                    "[" (substring tag i (incf i)) "]"
+                                    "[" (substring tag i (cl-incf i)) "]"
                                     (substring tag i)))
                       tag-alist)
                 (throw 'exit t)))
-            (push (list (+ ?0 (incf cnt)) tag
+            (push (list (+ ?0 (cl-incf cnt)) tag
                         (concat "[" (int-to-string cnt) "]:" tag))
                   tag-alist)))
         (setq tag-alist (nreverse tag-alist))
@@ -317,10 +317,10 @@ will prompt for other arguments."
     (define-key map "c" 'reftex-index-toggle-context)
 
     ;; The capital letters and the exclamation mark
-    (loop for key across (concat "!" reftex-index-section-letters) do
-          (define-key map (vector (list key))
-            (list 'lambda '() '(interactive)
-                  (list 'reftex-index-goto-letter key))))
+    (cl-loop for key across (concat "!" reftex-index-section-letters) do
+             (define-key map (vector (list key))
+               (list 'lambda '() '(interactive)
+                     (list 'reftex-index-goto-letter key))))
 
     (easy-menu-define reftex-index-menu map
       "Menu for Index buffer"
@@ -1426,7 +1426,7 @@ Here are all local bindings.
   (interactive "p")
   (reftex-index-phrases-parse-header t)
   (while (> arg 0)
-    (decf arg)
+    (cl-decf arg)
     (end-of-line)
     (if (re-search-forward reftex-index-phrases-phrase-regexp12 nil t)
         (progn
@@ -1655,11 +1655,11 @@ this function repeatedly."
           (widen)
           (goto-char (point-min))
           (while (re-search-forward re1 nil t)
-            (incf ntimes1))
+            (cl-incf ntimes1))
           (goto-char (point-min))
           (while (re-search-forward re2 nil t)
             (push (cons (count-lines 1 (point)) (match-string 1)) superphrases)
-            (incf ntimes2))))
+            (cl-incf ntimes2))))
       (save-current-buffer
         (while (setq file (pop files))
           (setq buf (reftex-get-file-buffer-force file))
@@ -1672,7 +1672,7 @@ this function repeatedly."
                 (let ((case-fold-search reftex-index-phrases-case-fold-search))
                   (while (re-search-forward re nil t)
                     (or (reftex-in-comment)
-                        (incf nmatches)))))))))
+                        (cl-incf nmatches)))))))))
       (with-output-to-temp-buffer "*Help*"
         (princ (format "       Phrase:  %s\n" phrase))
         (princ (format "    Macro key:  %s\n" char))
@@ -1682,7 +1682,7 @@ this function repeatedly."
          (index-key
           (let ((iks index-keys) (cnt 0) ik)
             (while (setq ik (pop iks))
-              (princ (format "Index entry %d:  %s\n" (incf cnt) ik)))))
+              (princ (format "Index entry %d:  %s\n" (cl-incf cnt) ik)))))
          (repeat
           (princ (format "  Index entry:  %s\n" phrase)))
          (t
@@ -1943,7 +1943,7 @@ both ends."
                    (cond ((member char '(?y ?Y ?\ ))
                           ;; Yes!
                           (replace-match rpl t t)
-                          (incf replace-count)
+                          (cl-incf replace-count)
                           ;; See if we should insert newlines to shorten lines
                           (and reftex-index-phrases-wrap-long-lines
                                (reftex-index-phrases-fixup-line beg end))

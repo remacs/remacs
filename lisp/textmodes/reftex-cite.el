@@ -24,7 +24,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (require 'reftex)
 
@@ -744,7 +744,7 @@ While entering the regexp, completion on knows citation keys is possible.
       (if (> arg 1)
           (progn
             (skip-chars-backward "}")
-            (decf arg)
+            (cl-decf arg)
             (reftex-do-citation arg))
         (forward-char 1)))
 
@@ -1210,7 +1210,7 @@ created files in the variables `reftex-create-bibtex-header' or
                  ;; check for crossref entries
                  (let* ((attr-list (reftex-parse-bibtex-entry nil beg end))
                         (xref-key (cdr (assoc "crossref" attr-list))))
-                   (if xref-key (pushnew xref-key keys)))
+                   (if xref-key (cl-pushnew xref-key keys)))
                  ;; check for string references
                  (let* ((raw-fields (reftex-parse-bibtex-entry nil beg end t))
                         (string-fields (reftex-get-string-refs raw-fields)))
