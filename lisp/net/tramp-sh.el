@@ -1293,7 +1293,7 @@ target of the symlink differ."
 		 res-uid res-gid res-size res-symlink-target)
     (tramp-message vec 5 "file attributes with ls: %s" localname)
     ;; We cannot send all three commands combined, it could exceed
-    ;; NAME_MAX or PATH_MAX.  Happened on Mac OS X, for example.
+    ;; NAME_MAX or PATH_MAX.  Happened on macOS, for example.
     (when (or (tramp-send-command-and-check
                vec
                (format "%s %s"
@@ -4123,7 +4123,7 @@ process to set up.  VEC specifies the connection."
 	(goto-char (point-min))
 	(when (search-forward "\r" nil t)
 	  (setq cs-decode (coding-system-change-eol-conversion cs-decode 'dos)))
-	;; Special setting for Mac OS X.
+	;; Special setting for macOS.
 	(when (and (string-match "^Darwin" uname)
 		   (memq 'utf-8-hfs (coding-system-list)))
 	  (setq cs-decode 'utf-8-hfs
@@ -4178,7 +4178,7 @@ process to set up.  VEC specifies the connection."
 	(tramp-send-command vec "stty tabs" t)
       (tramp-send-command vec "stty tab0" t))
 
-    ;; Set utf8 encoding.  Needed for Mac OS X, for example.  This is
+    ;; Set utf8 encoding.  Needed for macOS, for example.  This is
     ;; non-POSIX, so we must expect errors on some systems.
     (tramp-send-command vec "stty iutf8 2>/dev/null" t)
 

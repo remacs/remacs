@@ -610,8 +610,8 @@ and @code{define-global-minor-mode}.
 
 @item Other definition types:
 @code{defcustom}, @code{defgroup}, @code{defclass}
-(@pxref{Top,EIEIO,,eieio,EIEIO}), and @code{define-skeleton} (see the
-commentary in @file{skeleton.el}).
+(@pxref{Top,EIEIO,,eieio,EIEIO}), and @code{define-skeleton}
+(@pxref{Top,Autotyping,,autotype,Autotyping}).
 @end table
 
   You can also use a magic comment to execute a form at build time

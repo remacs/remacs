@@ -1,11 +1,12 @@
 Copyright (C) 2001-2016 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
-			   Emacs for Windows
+		Emacs version 25.1.50 for MS-Windows
 
   This README file describes how to set up and run a precompiled
-  distribution of GNU Emacs for Windows.  You can find the precompiled
-  distribution on the ftp.gnu.org server and its mirrors:
+  distribution of the latest version of GNU Emacs for MS-Windows.  You
+  can find the precompiled distribution on the ftp.gnu.org server and
+  its mirrors:
 
        ftp://ftp.gnu.org/gnu/emacs/windows/
 
@@ -15,19 +16,23 @@ See the end of the file for license conditions.
   Information on how to compile Emacs from sources on Windows is in
   the files README and INSTALL in the nt/ sub-directory of the
   top-level Emacs directory in the source distribution, as is this
-  file as README.precompiled.  If you received this file as part of
-  the Emacs source distribution, and are looking for information on
+  file under the name README.W32.  If you received this file as part
+  of the Emacs source distribution, and are looking for information on
   how to build Emacs on MS-Windows, please read those 2 files and not
   this one.
 
 * Preliminaries
 
   There are two binary distributions named
-  emacs-n-x86_64-w64-mingw32.zip and
-  emacs-n-i686-w64-mingw32.zip. These are for 64-bit and 32-bit
-  machines respectively.
+  emacs-VER-x86_64-w64-mingw32.zip and emacs-VER-i686-w64-mingw32.zip,
+  where VER is the Emacs version.  These are 64-bit and 32-bit builds,
+  respectively.  If you are running a 32-bit version of MS-Windows,
+  you need to install the 32-bit build; users of 64-bit Windows can
+  use either build, but we recommend to install the 64-bit one, as it
+  will be able to edit larger buffers and will generally run faster.
 
   The binary distribution has these top-level directories:
+
   + bin
   + libexec
   + share
@@ -36,23 +41,42 @@ See the end of the file for license conditions.
 * Setting up Emacs
 
   To install Emacs, simply unpack the binary package into a directory
-  of your choice. If you use File Explorer and "Extract" by default
-  this will be in a top-level directory with the same name as the zip
-  file.
+  of your choice.  If you use the Windows Explorer and its "Extract"
+  action, by default this will be in a top-level directory with the
+  same name as the zip file.
 
   We also provide a set of optional dependencies, in
-  emacs-25-x86_64-deps.zip or emacs-25-i686-deps.zip respectively,
-  which provide Emacs with an number of additional capabilities. To
-  add these, unpack them directly over the emacs directory structure.
+  emacs-MVER-x86_64-deps.zip or emacs-MVER-i686-deps.zip respectively,
+  where MVER is the major Emacs version that should use these
+  libraries.  These provide Emacs with a number of additional optional
+  capabilities, described in detail below.  To use these, unpack them
+  directly over the emacs directory structure.  Note that, if
+  extracting with the Windows Explorer, you will have to override the
+  directory where it wants to put the file with the same directory
+  where you extracted the Emacs binary package.
 
   Finally, and also optionally, you can run the program addpm.exe in
   the bin subdirectory which will place an icon for Emacs on the start
-  page.
+  page.  (This is no longer needed in latest versions of Emacs, so we
+  recommend you not do that, as running addpm.exe will insert entries
+  into the Registry which might get in the way if you upgrade to later
+  versions without updating those entries, or would like to uninstall
+  Emacs.)
 
-  Emacs is completely portable. You can create your own shortcut to
-  runemacs.exe and place this wherever you find it convenient, or
-  run it from a USB or network drive without copying or installing
-  anything on the machine itself.
+  Emacs is completely portable.  You can create your own shortcut to
+  runemacs.exe and place this wherever you find it convenient (the
+  desktop and/or the Taskbar), or run it from a USB or network drive
+  without copying or installing anything on the machine itself.
+
+* Prerequisites for Windows 9X
+
+  The 32-bit build supports MS-Windows 9X (Windows 95/98/Me).  To run
+  Emacs on these versions of Windows, you will need to have the
+  Microsoft Layer for Unicode (MSLU) installed.  It can be downloaded
+  from the Microsoft site, and comes in a form of a single dynamic
+  library called UNICOWS.DLL.  If this library is not accessible to
+  Emacs on Windows 9X, it will pop up a dialog saying that it cannot
+  find the UNICOWS library, and will refuse to start up.
 
 * Starting Emacs
 
@@ -66,7 +90,7 @@ See the end of the file for license conditions.
   If you want to use Emacs in tty or character mode within a command
   window, you can start it by typing "emacs -nw" at the command prompt.
   (Obviously, you need to ensure that the Emacs bin subdirectory is in
-  your PATH first, or specify the path to emacs.exe.)  The -nw
+  your Path first, or specify the path to emacs.exe.)  The -nw
   (non-windowed) mode of operation is most useful if you have a telnet
   server on your machine, allowing you to run Emacs remotely.
 
@@ -90,7 +114,8 @@ See the end of the file for license conditions.
   + emacsclientw.exe - A version of emacsclient that does not open
     a command-line window.
 
-  + addpm.exe - The installer that adds Emacs to "Start".
+  + addpm.exe - A basic installer that adds Emacs to "Start" menus and
+    adds Emacs-related entries to the Windows Registry.
 
   + ctags.exe, etags.exe - Tools for generating tag files.  See the
     `Tags' node of the Emacs manual.
@@ -124,26 +149,56 @@ See the end of the file for license conditions.
   + update-game-score.exe - A utility for updating the score files of
     Emacs games.
 
-* Optional Dependencies
+* Optional dependency libraries
 
   Emacs has built in support for XBM and PPM/PGM/PBM images, and the
   libXpm library is bundled, providing XPM support (required for color
-  toolbar icons and splash screen). Source for libXpm should be
+  toolbar icons and splash screen).  Source for libXpm should be
   available from the same place from which you got this binary
   distribution.
 
-  In addition, as described, there is a separate dependency bundle
-  providing support for many images formats, TLS, XML parsing and
-  compression.
+  Emacs has a number of optional features which need additional
+  libraries.  These are provided in a separate bundle of dependencies,
+  as described above, and enable support for the following:
 
-* Installing with an existing MSYS2 installation.
+  - displaying inline images of many types (PNG, JPEG, GIF, TIFF, SVG)
+  - SSL/TLS secure network communications (HTTPS, IMAPS, etc.)
+  - HTML and XML parsing (necessary for the built-in EWW browser)
+  - built-in decompression of compressed text
+
+  The optional dependency libraries are in emacs-MVER-x86_64-deps.zip
+  (64-bit) and emacs-MVER-i686-deps.zip (32-bit), and their sources
+  are in emacs-MVER-deps-mingw-w64-src.zip, where MVER is the major
+  version of Emacs that should use these dependencies.  Note that a
+  64-bit Emacs will only work with the 64-bit dependencies, and the
+  32-bit Emacs only with the 32-bit dependencies.
+
+  Newer/updated builds for these optional libraries are available at
+  http://msys2.github.io/ and
+  http://sourceforge.net/projects/ezwinports/files/ (but you shouldn't
+  need these except in emergencies).
+
+  If you install the libraries in a directory different from where you
+  have the Emacs executable programs, we recommend to add the
+  directory with DLLs to your Path, so that Emacs will be able to find
+  those DLLs when needed.
+
+* Installing Emacs with an existing MSYS2 installation
 
   You may also use Emacs with an existing MSYS2 installation by simply
-  unpacking the Emacs distribution over MSYS2. You can then use the
-  'pacman' utility to install dependencies. You should not use the
-  optional dependencies bundle, as this will overwrite MSYS2 files
-  (the dependency bundle derives from MSYS2, but may be a different
-  version).
+  unpacking the Emacs distribution over MSYS2.  You can then use the
+  'pacman' utility to install dependencies.  You should not use the
+  optional dependencies bundle from this site, as this will overwrite
+  MSYS2 files (the dependency bundle derives from MSYS2, but may be a
+  different version).
+
+  Some of the optional libraries need to be of certain versions to
+  work with your Emacs binary.  Make sure you install those versions
+  of dependencies, and no others.  Emacs variables such as
+  libpng-version and libjpeg-version tell what versions of the
+  corresponding libraries are expected by Emacs.  (We recommend that
+  you use the dependency bundle, where these issues are always
+  resolved.)
 
   To install the optional libraries, start the MSYS2 Bash window and
   type the following command:
@@ -153,17 +208,25 @@ See the end of the file for license conditions.
   where PACKAGES is the list of packages you want to install.  The
   full list is as follows:
 
-  mingw-w64-x86_64-giflib
-  mingw-w64-x86_64-gnutls
-  mingw-w64-x86_64-libjpeg-turbo
-  mingw-w64-x86_64-libpng
-  mingw-w64-x86_64-librsvg
-  mingw-w64-x86_64-libtiff
-  mingw-w64-x86_64-libxml2
-  mingw-w64-x86_64-xpm-nox
+    mingw-w64-x86_64-giflib
+    mingw-w64-x86_64-gnutls
+    mingw-w64-x86_64-libjpeg-turbo
+    mingw-w64-x86_64-libpng
+    mingw-w64-x86_64-librsvg
+    mingw-w64-x86_64-libtiff
+    mingw-w64-x86_64-libxml2
+    mingw-w64-x86_64-xpm-nox
 
-  You can type any subset of this list.  Once again, when asked
-  whether to proceed with installation, answer Y.
+  You can type any subset of this list.  When asked whether to proceed
+  with installation, answer Y.
+
+  Alternatively, you could install the packages manually from this
+  page:
+
+   https://sourceforge.net/projects/msys2/files/REPOS/MINGW/x86_64/
+
+  However, the packages there are not self-contained, so you will need
+  to manually download all their dependencies as well.
 
 * Uninstalling Emacs
 
@@ -184,12 +247,21 @@ See the end of the file for license conditions.
 
 * Troubleshooting
 
+  Some known problems and their solutions can be found in the file
+  etc\PROBLEMS in the unpacked Emacs distribution.
+
   Virus scanners
 
   Some virus scanners interfere with Emacs' use of subprocesses.  If you
   are unable to use subprocesses and you use Dr. Solomon's WinGuard or
   McAfee's Vshield, turn off "Scan all files" (WinGuard) or "boot sector
   scanning" (McAfee exclusion properties).
+
+  Windows 9X
+
+  On Windows 9X, make sure you have the UNICOWS.DLL library either in
+  the same directory where you have emacs.exe or in the directory
+  where system-wide DLLs are kept.
 
 * Further information
 
@@ -206,17 +278,17 @@ See the end of the file for license conditions.
   In addition to the manual, there is a mailing list for help with
   Emacs here:
 
-       https://lists.gnu.org/mailman/listinfo/help-gnu-emacs
+       http://lists.gnu.org/mailman/listinfo/help-gnu-emacs
 
-  To ask questions on the mailing list, send email to
+  To ask questions on this mailing list, send email to
   help-gnu-emacs@gnu.org.
 
-  And a more specific one for issues related to the Windows port of
-  Emacs.  For information about the list, see this Web page:
+  A mailing list for issuesspecifically related to the MS-Windows port
+  of Emacs is here:
 
 	http://lists.gnu.org/mailman/listinfo/help-emacs-windows
 
-  To ask questions on the mailing list, send email to
+  To ask questions on this mailing list, send email to
   help-emacs-windows@gnu.org.
 
 * Reporting bugs
@@ -224,11 +296,11 @@ See the end of the file for license conditions.
   If you encounter a bug in this port of Emacs, we would like to hear
   about it.  First check the FAQ on the web page above to see if the bug
   is already known and if there are any workarounds.  Then check whether
-  the bug has something to do with code in your .emacs file, e.g. by
+  the bug has something to do with code in your `.emacs' file, e.g. by
   invoking Emacs with the "-Q" option.
 
   If you decide that it is a bug in Emacs, use the built in bug
-  reporting facility to report it (from the menu; Help -> Send Bug Report).
+  reporting facility to report it (from the menu: Help -> Send Bug Report).
   If you have not yet configured Emacs for mail, then when you press
   C-c C-c to send the report, it will ask you to paste the text of the
   report into your mail client.  If the bug is related to subprocesses,

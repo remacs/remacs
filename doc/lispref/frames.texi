@@ -764,7 +764,7 @@ its size using the @code{height} and @code{width} parameters
 with sizes and positions.  For all of these functions the argument
 @var{frame} must denote a live frame and defaults to the selected frame.
 
-@defun frame-position &optional Lisp_Object &optional frame
+@defun frame-position &optional frame
 This function returns the outer position (@pxref{Frame Layout}) of
 @var{frame} in pixels.  The value is a cons giving the coordinates of
 the top left corner of the outer frame of @var{frame} relative to an
@@ -772,9 +772,9 @@ origin at the position (0, 0) of the frame's display.  On a text
 terminal frame both values are zero.
 @end defun
 
-@defun set-frame-position frame X Y
-This function sets the outer frame position of @var{frame} to @var{X}
-and @var{Y}.  The latter arguments specify pixels and normally count
+@defun set-frame-position frame x y
+This function sets the outer frame position of @var{frame} to @var{x}
+and @var{y}.  The latter arguments specify pixels and normally count
 from an origin at the position (0, 0) of @var{frame}'s display.
 
 A negative parameter value positions the right edge of the outer frame

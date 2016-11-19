@@ -788,7 +788,8 @@ Show the heading too, if it is currently invisible."
     'show-entry 'outline-show-entry "25.1")
 
 (defun outline-hide-body ()
-  "Hide all body lines in buffer, leaving all headings visible."
+  "Hide all body lines in buffer, leaving all headings visible.
+Note that this does not hide the lines preceding the first heading line."
   (interactive)
   (outline-hide-region-body (point-min) (point-max)))
 
@@ -868,7 +869,12 @@ Show the heading too, if it is currently invisible."
 		       nil))
 
 (defun outline-hide-sublevels (levels)
-  "Hide everything but the top LEVELS levels of headers, in whole buffer."
+  "Hide everything but the top LEVELS levels of headers, in whole buffer.
+This also unhides the top heading-less body, if any.
+
+Interactively, the prefix argument supplies the value of LEVELS.
+When invoked without a prefix argument, LEVELS defaults to the level
+of the current heading, or to 1 if the current line is not a heading."
   (interactive (list
 		(cond
 		 (current-prefix-arg (prefix-numeric-value current-prefix-arg))
@@ -909,7 +915,8 @@ Show the heading too, if it is currently invisible."
     'hide-sublevels 'outline-hide-sublevels "25.1")
 
 (defun outline-hide-other ()
-  "Hide everything except current body and parent and top-level headings."
+  "Hide everything except current body and parent and top-level headings.
+This also unhides the top heading-less body, if any."
   (interactive)
   (outline-hide-sublevels 1)
   (let (outline-view-change-hook)

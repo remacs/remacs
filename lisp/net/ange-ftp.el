@@ -740,7 +740,7 @@ These mean that the FTP process should be (or already has been) killed."
   :type 'regexp)
 
 (defcustom ange-ftp-potential-error-msgs
-  ;; On Mac OS X we sometimes get things like:
+  ;; On macOS we sometimes get things like:
   ;;
   ;;     ftp> open ftp.nluug.nl
   ;;     Trying 2001:610:1:80aa:192:87:102:36...

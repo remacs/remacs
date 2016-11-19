@@ -147,8 +147,8 @@ static emacs_value const module_nil = 0;
    or a pointer to handle non-local exits.  The function must have an
    ENV parameter.  The function will return the specified value if a
    signal or throw is caught.  */
-// TODO: Have Fsignal check for CATCHER_ALL so we only have to install
-// one handler.
+/* TODO: Have Fsignal check for CATCHER_ALL so we only have to install
+   one handler.  */
 #define MODULE_HANDLE_NONLOCAL_EXIT(retval)                     \
   MODULE_SETJMP (CONDITION_CASE, module_handle_signal, retval); \
   MODULE_SETJMP (CATCHER_ALL, module_handle_throw, retval)
@@ -168,7 +168,7 @@ static emacs_value const module_nil = 0;
    code after the macro may longjmp back into the macro, which means
    its local variable C must stay live in later code.  */
 
-// TODO: Make backtraces work if this macros is used.
+/* TODO: Make backtraces work if this macros is used.  */
 
 #define MODULE_SETJMP_1(handlertype, handlerfunc, retval, c, dummy)	\
   if (module_non_local_exit_check (env) != emacs_funcall_exit_return)	\

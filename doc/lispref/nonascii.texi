@@ -1049,8 +1049,7 @@ Unix convention, used on GNU and Unix systems, is to use the linefeed
 character (also called newline).  The DOS convention, used on
 MS-Windows and MS-DOS systems, is to use a carriage-return and a
 linefeed at the end of a line.  The Mac convention is to use just
-carriage-return.  (This was the convention used on the Macintosh
-system prior to OS X.)
+carriage-return.  (This was the convention used in Classic Mac OS.)
 
 @cindex base coding system
 @cindex variant coding system

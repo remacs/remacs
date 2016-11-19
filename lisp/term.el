@@ -849,6 +849,7 @@ is buffer-local."
     (define-key map [S-insert] 'term-paste)
     (define-key map [prior] 'term-send-prior)
     (define-key map [next] 'term-send-next)
+    (define-key map [xterm-paste] #'term--xterm-paste)
     map)
   "Keyboard map for sending characters directly to the inferior process.")
 
@@ -1203,6 +1204,13 @@ without any interpretation."
   "Insert the last stretch of killed text at point."
   (interactive)
    (term-send-raw-string (current-kill 0)))
+
+(defun term--xterm-paste ()
+  "Insert the text pasted in an XTerm bracketed paste operation."
+  (interactive)
+  (term-send-raw-string (xterm--pasted-text)))
+
+(declare-function xterm--pasted-text "term/xterm" ())
 
 ;; Which would be better:  "\e[A" or "\eOA"? readline accepts either.
 ;; For my configuration it's definitely better \eOA but YMMV. -mm

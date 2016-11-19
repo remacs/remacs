@@ -343,8 +343,8 @@ OPTION_DEFAULT_ON([toolkit-scroll-bars],[don't use Motif or Xaw3d scroll bars])
 OPTION_DEFAULT_ON([xaw3d],[don't use Xaw3d])
 OPTION_DEFAULT_ON([xim],[don't use X11 XIM])
 AC_ARG_WITH([ns],[AS_HELP_STRING([--with-ns],
-[use Nextstep (OS X Cocoa or GNUstep) windowing system.
-On by default on Mac OS X.])],[],[with_ns=maybe])
+[use Nextstep (macOS Cocoa or GNUstep) windowing system.
+On by default on macOS.])],[],[with_ns=maybe])
 OPTION_DEFAULT_OFF([w32], [use native MS Windows GUI in a Cygwin build])
 
 OPTION_DEFAULT_ON([gpm],[don't use -lgpm for mouse support on a GNU/Linux console])
@@ -608,7 +608,7 @@ case "${canonical}" in
     opsys=openbsd
   ;;
 
-  ## Apple Darwin / Mac OS X
+  ## Apple Darwin / macOS
   *-apple-darwin* )
     case "${canonical}" in
       *-apple-darwin[0-9].*) unported=yes ;;
@@ -1895,14 +1895,14 @@ Either fix this, or re-configure with the option '--without-ns'.])])
 
   macfont_file=""
   if test "${NS_IMPL_COCOA}" = "yes"; then
-    AC_MSG_CHECKING([for OSX 10.6 or newer])
+    AC_MSG_CHECKING([for Mac OS X 10.6 or newer])
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <AppKit/AppKit.h>],
                                      [
 #ifdef MAC_OS_X_VERSION_MAX_ALLOWED
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
  ; /* OK */
 #else
- error "OSX 10.6 or newer required";
+ error "Mac OS X 10.6 or newer required";
 #endif
 #endif
 		    ])],
@@ -1911,7 +1911,7 @@ Either fix this, or re-configure with the option '--without-ns'.])])
     AC_MSG_RESULT([$ns_osx_have_106])
 
     if test $ns_osx_have_106 = no; then
-       AC_MSG_ERROR([OSX 10.6 or newer is required]);
+       AC_MSG_ERROR([Mac OS X 10.6 or newer is required]);
     fi
   fi
 fi
@@ -3615,9 +3615,9 @@ AC_CHECK_HEADERS_ONCE(malloc/malloc.h)
 GNUSTEP_CFLAGS=
 ### Use NeXTstep API to implement GUI.
 if test "${HAVE_NS}" = "yes"; then
-  AC_DEFINE(HAVE_NS, 1, [Define to 1 if you are using the NeXTstep API, either GNUstep or Cocoa on Mac OS X.])
+  AC_DEFINE(HAVE_NS, 1, [Define to 1 if you are using the NeXTstep API, either GNUstep or Cocoa on macOS.])
   if test "${NS_IMPL_COCOA}" = "yes"; then
-    AC_DEFINE(NS_IMPL_COCOA, 1, [Define to 1 if you are using NS windowing under MacOS X.])
+    AC_DEFINE(NS_IMPL_COCOA, 1, [Define to 1 if you are using NS windowing under macOS.])
   fi
   if test "${NS_IMPL_GNUSTEP}" = "yes"; then
     AC_DEFINE(NS_IMPL_GNUSTEP, 1, [Define to 1 if you are using NS windowing under GNUstep.])
@@ -4732,9 +4732,9 @@ case $opsys in
     ;;
 
   darwin)
-    dnl Not __APPLE__, as this may not be defined on non-OSX Darwin.
+    dnl Not __APPLE__, as this may not be defined on non-macOS Darwin.
     dnl Not DARWIN, because Panther and lower CoreFoundation.h use DARWIN to
-    dnl distinguish OS X from pure Darwin.
+    dnl distinguish macOS from pure Darwin.
     AC_DEFINE(DARWIN_OS, [], [Define if the system is Darwin.])
     ;;
 

@@ -2272,7 +2272,7 @@ Useful links:
 * gv 3.5, June 1997
   `http://www.cs.wisc.edu/~ghost/gv/gv_doc/gv.html'
 
-* MacGSView (MacOS)
+* MacGSView (Mac OS)
   `http://www.cs.wisc.edu/~ghost/macos/index.htm'
 "
   :type '(string :tag "Ghostview Utility")

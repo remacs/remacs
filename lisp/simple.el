@@ -5517,13 +5517,13 @@ after C-u \\[set-mark-command]."
   :group 'editing-basics)
 
 (defun set-mark-command (arg)
-  "Set the mark where point is, or jump to the mark.
+  "Set the mark where point is, and activate it; or jump to the mark.
 Setting the mark also alters the region, which is the text
 between point and mark; this is the closest equivalent in
 Emacs to what some editors call the \"selection\".
 
 With no prefix argument, set the mark at point, and push the
-old mark position on local mark ring.  Also push the old mark on
+old mark position on local mark ring.  Also push the new mark on
 global mark ring, if the previous mark was set in another buffer.
 
 When Transient Mark Mode is off, immediately repeating this

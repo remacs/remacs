@@ -557,7 +557,7 @@ time @code{window-size-change-functions} was run for the last time on
 @cindex pixel width of a window
 @cindex total pixel width of a window
 
-@defun window-pixel-width &optional Lisp_Object &optional window
+@defun window-pixel-width &optional window
 This function returns the width of window @var{window} in pixels.
 @var{window} must be a valid window and defaults to the selected one.
 
@@ -4469,14 +4469,14 @@ This function returns the pixel edges of @var{window}'s body.  Calling
 the origin of the display screen rather than that of the frame:
 
 @defun window-absolute-pixel-edges &optional window
-This function returns the pixel coordinates of @var{WINDOW} relative to
+This function returns the pixel coordinates of @var{window} relative to
 an origin at (0, 0) of the display of @var{window}'s frame.  Calling
 @code{(window-absolute-pixel-edges)} is equivalent to calling
 @code{(window-edges window nil t t)}, see above.
 @end defun
 
 @defun window-absolute-body-pixel-edges &optional window
-This function returns the pixel coordinates of @var{WINDOW}'s body
+This function returns the pixel coordinates of @var{window}'s body
 relative to an origin at (0, 0) of the display of @var{window}'s frame.
 Calling @code{(window-absolute-body-pixel-edges window)} is equivalent
 to calling @code{(window-edges window t t t)}, see above.

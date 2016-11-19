@@ -891,7 +891,7 @@ Berkeley BSD and its variants.
 Cygwin, a Posix layer on top of MS-Windows.
 
 @item darwin
-Darwin (Mac OS X).
+Darwin (macOS).
 
 @item gnu
 The GNU system (using the GNU kernel, which consists of the HURD and Mach).

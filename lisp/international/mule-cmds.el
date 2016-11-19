@@ -2723,7 +2723,7 @@ See also `locale-charset-language-names', `locale-language-names',
       ;; On Darwin, file names are always encoded in utf-8, no matter
       ;; the locale.
       (setq default-file-name-coding-system 'utf-8)
-      ;; Mac OS X's Terminal.app by default uses utf-8 regardless of
+      ;; macOS's Terminal.app by default uses utf-8 regardless of
       ;; the locale.
       (when (and (null window-system)
 		 (equal (getenv "TERM_PROGRAM" frame) "Apple_Terminal"))

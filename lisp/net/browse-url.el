@@ -44,7 +44,7 @@
 ;; browse-url-text-*	              Any text browser     0
 ;; browse-url-generic                 arbitrary
 ;; browse-url-default-windows-browser MS-Windows browser
-;; browse-url-default-macosx-browser  Mac OS X browser
+;; browse-url-default-macosx-browser  macOS browser
 ;; browse-url-xdg-open                Free Desktop xdg-open on Gnome, KDE, Xfce4, LXDE
 ;; browse-url-kde                     KDE konqueror (kfm)
 ;; browse-url-elinks                  Elinks      Don't know (tried with 0.12.GIT)
@@ -162,7 +162,7 @@ regexp should probably be \".\" to specify a default browser."
 			 :value browse-url-generic)
 	  (function-item :tag "Default Windows browser"
 			 :value browse-url-default-windows-browser)
-	  (function-item :tag "Default Mac OS X browser"
+	  (function-item :tag "Default macOS browser"
 			 :value browse-url-default-macosx-browser)
 	  (function-item :tag "Default browser"
 			 :value browse-url-default-browser)
@@ -881,7 +881,7 @@ The optional NEW-WINDOW argument is not used."
 	(t (w32-shell-execute "open" url))))
 
 (defun browse-url-default-macosx-browser (url &optional _new-window)
-  "Invoke the MacOS X system's default Web browser.
+  "Invoke the macOS system's default Web browser.
 The optional NEW-WINDOW argument is not used"
   (interactive (browse-url-interactive-arg "URL: "))
   (start-process (concat "open " url) nil "open" url))

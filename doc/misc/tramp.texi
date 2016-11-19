@@ -933,7 +933,7 @@ D-Bus, dbus}.
 @cindex afp method
 
 This method is for connecting to remote hosts with the Apple Filing
-Protocol for accessing files on Mac OS X volumes.  @value{tramp} access
+Protocol for accessing files on macOS volumes.  @value{tramp} access
 syntax requires a leading volume (share) name, for example:
 @file{@trampfn{afp,user@@host,/volume}}.
 

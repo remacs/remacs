@@ -1758,6 +1758,10 @@ This performs fontification according to `js--class-styles'."
                (and (js--re-search-backward "[?:{]\\|\\_<case\\_>" nil t)
                     (eq (char-after) ??))))
          (not (and
+               (eq (char-after) ?/)
+               (save-excursion
+                 (eq (nth 3 (syntax-ppss)) ?/))))
+         (not (and
                (eq (char-after) ?*)
                ;; Generator method (possibly using computed property).
                (looking-at (concat "\\* *\\(?:\\[\\|" js--name-re " *(\\)"))

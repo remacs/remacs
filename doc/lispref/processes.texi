@@ -648,7 +648,7 @@ I/O, file-name-coding-system}).
 If @var{coding} is @code{nil}, the default rules for finding the
 coding system will apply.  @xref{Default Coding Systems}.
 
-@item :connection-type @var{TYPE}
+@item :connection-type @var{type}
 Initialize the type of device used to communicate with the subprocess.
 Possible values are @code{pty} to use a pty, @code{pipe} to use a
 pipe, or @code{nil} to use the default derived from the value of the

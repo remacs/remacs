@@ -12063,7 +12063,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 
 #else /* not USE_X_TOOLKIT */
   XSetLocaleModifiers ("");
-  unrequest_sigio ();  // See comment in x_display_ok.
+  unrequest_sigio ();  /* See comment in x_display_ok.  */
   dpy = XOpenDisplay (SSDATA (display_name));
   request_sigio ();
 #endif /* not USE_X_TOOLKIT */
