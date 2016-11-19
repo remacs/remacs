@@ -100,7 +100,42 @@
 (defconst reftex-version emacs-version
   "Version string for RefTeX.")
 
-(defvar reftex-mode-map (make-sparse-keymap)
+(defvar reftex-mode-map
+  (let ((map (make-sparse-keymap)))
+    ;; The default bindings in the mode map.
+    (define-key map "\C-c=" 'reftex-toc)
+    (define-key map "\C-c-" 'reftex-toc-recenter)
+    (define-key map "\C-c(" 'reftex-label)
+    (define-key map "\C-c)" 'reftex-reference)
+    (define-key map "\C-c[" 'reftex-citation)
+    (define-key map "\C-c<" 'reftex-index)
+    (define-key map "\C-c>" 'reftex-display-index)
+    (define-key map "\C-c/" 'reftex-index-selection-or-word)
+    (define-key map "\C-c\\" 'reftex-index-phrase-selection-or-word)
+    (define-key map "\C-c|" 'reftex-index-visit-phrases-buffer)
+    (define-key map "\C-c&" 'reftex-view-crossref)
+
+    ;; Bind `reftex-mouse-view-crossref' only when the key is still free
+    (if (featurep 'xemacs)
+        (unless (key-binding [(shift button2)])
+          (define-key map [(shift button2)] 'reftex-mouse-view-crossref))
+      (unless (key-binding [(shift mouse-2)])
+        (define-key map [(shift mouse-2)] 'reftex-mouse-view-crossref)))
+
+    ;; For most of these commands there are already bindings in place.
+    ;; Setting `reftex-extra-bindings' really is only there to spare users
+    ;; the hassle of defining bindings in the user space themselves.  This
+    ;; is why they violate the key binding recommendations.
+    (when reftex-extra-bindings
+      (define-key map "\C-ct" 'reftex-toc)
+      (define-key map "\C-cl" 'reftex-label)
+      (define-key map "\C-cr" 'reftex-reference)
+      (define-key map "\C-cc" 'reftex-citation)
+      (define-key map "\C-cv" 'reftex-view-crossref)
+      (define-key map "\C-cg" 'reftex-grep-document)
+      (define-key map "\C-cs" 'reftex-search-document))
+
+    map)
   "Keymap for RefTeX mode.")
 
 (defvar reftex-mode-menu nil)
@@ -659,9 +694,9 @@ on next use."
   (interactive)
 
   ;; Reset the file search path variables
-  (loop for prop in '(status master-dir recursive-path rec-type) do
-        (put 'reftex-tex-path prop nil)
-        (put 'reftex-bib-path prop nil))
+  (dolist (prop '(status master-dir recursive-path rec-type))
+    (put 'reftex-tex-path prop nil)
+    (put 'reftex-bib-path prop nil))
 
   ;; Kill temporary buffers associated with RefTeX - just in case they
   ;; were not cleaned up properly
@@ -2134,51 +2169,12 @@ IGNORE-WORDS List of words which should be removed from the string."
 ;;;
 ;;; Keybindings
 
-;; The default bindings in the mode map.
-(loop for x in
-      '(("\C-c="  . reftex-toc)
-        ("\C-c-"  . reftex-toc-recenter)
-        ("\C-c("  . reftex-label)
-        ("\C-c)"  . reftex-reference)
-        ("\C-c["  . reftex-citation)
-        ("\C-c<"  . reftex-index)
-        ("\C-c>"  . reftex-display-index)
-        ("\C-c/"  . reftex-index-selection-or-word)
-        ("\C-c\\" . reftex-index-phrase-selection-or-word)
-        ("\C-c|"  . reftex-index-visit-phrases-buffer)
-        ("\C-c&"  . reftex-view-crossref))
-      do (define-key reftex-mode-map (car x) (cdr x)))
-
-;; Bind `reftex-mouse-view-crossref' only when the key is still free
-(if (featurep 'xemacs)
-    (unless (key-binding [(shift button2)])
-      (define-key reftex-mode-map [(shift button2)]
-        'reftex-mouse-view-crossref))
-  (unless (key-binding [(shift mouse-2)])
-    (define-key reftex-mode-map [(shift mouse-2)]
-      'reftex-mouse-view-crossref)))
-
 (defvar bibtex-mode-map)
 
 ;; Bind `reftex-view-crossref-from-bibtex' in BibTeX mode map
 (eval-after-load
  "bibtex"
  '(define-key bibtex-mode-map "\C-c&" 'reftex-view-crossref-from-bibtex))
-
-;; For most of these commands there are already bindings in place.
-;; Setting `reftex-extra-bindings' really is only there to spare users
-;; the hassle of defining bindings in the user space themselves.  This
-;; is why they violate the key binding recommendations.
-(when reftex-extra-bindings
-  (loop for x in
-        '(("\C-ct" . reftex-toc)
-          ("\C-cl" . reftex-label)
-          ("\C-cr" . reftex-reference)
-          ("\C-cc" . reftex-citation)
-          ("\C-cv" . reftex-view-crossref)
-          ("\C-cg" . reftex-grep-document)
-          ("\C-cs" . reftex-search-document))
-        do (define-key reftex-mode-map (car x) (cdr x))))
 
 ;;; =========================================================================
 ;;;
