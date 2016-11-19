@@ -3102,7 +3102,7 @@ finish_after_tls_connection (Lisp_Object proc)
   else if (p->outfd < 0)
     {
       /* The counterparty may have closed the connection (especially
-	 if the NSM promt above take a long time), so recheck the file
+	 if the NSM prompt above take a long time), so recheck the file
 	 descriptor here. */
       pset_status (p, Qfailed);
       deactivate_process (proc);

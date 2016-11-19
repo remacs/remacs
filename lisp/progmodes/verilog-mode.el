@@ -9435,7 +9435,7 @@ you can read them automatically with:
     // verilog-auto-read-includes:t
     // End:
 
-Or a more specific alternative example, which requires haing
+Or a more specific alternative example, which requires having
 `enable-local-eval' non-nil:
 
     // Local Variables:

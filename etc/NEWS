@@ -556,7 +556,7 @@ variable.
 eval-current-buffer, string-to-int
 *** All the default-FOO variables that hold the default value of the
 FOO variable.  Use 'default-value' and 'setq-default' to access and
-change FOO, repectively.  The exhaustive list of removed variables is:
+change FOO, respectively.  The exhaustive list of removed variables is:
 'default-mode-line-format', 'default-header-line-format',
 'default-line-spacing', 'default-abbrev-mode', 'default-ctl-arrow',
 'default-truncate-lines', 'default-left-margin', 'default-tab-width',

@@ -2920,7 +2920,7 @@ User is always nil."
                 (setq candidate
                       (directory-file-name (file-name-directory candidate))))
               ;; Nothing found, so we must use a temporary file for
-              ;; comparision.  `make-nearby-temp-file' is added to
+              ;; comparison.  `make-nearby-temp-file' is added to
               ;; Emacs 26+ like `file-name-case-insensitive-p', so
               ;; there is no compatibility problem calling it.
               (unless

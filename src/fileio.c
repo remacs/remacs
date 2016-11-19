@@ -2259,8 +2259,8 @@ file_name_case_insensitive_p (const char *filename)
 
      There have been reports that pathconf with _PC_CASE_SENSITIVE
      does not work reliably on Mac OS X.  If you have a problem,
-     please recompile Emacs with -DDARWIN_OS_CASE_SENSITIVE_FIXME=1 or
-     -DDARWIN_OS_CASE_SENSITIVE_FIXME=2, and file a bug report saying
+     please recompile Emacs with -D DARWIN_OS_CASE_SENSITIVE_FIXME=1 or
+     -D DARWIN_OS_CASE_SENSITIVE_FIXME=2, and file a bug report saying
      whether this fixed your problem.  */
 
 #ifdef _PC_CASE_INSENSITIVE
