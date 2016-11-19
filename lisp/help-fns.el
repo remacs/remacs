@@ -918,6 +918,7 @@ it is displayed along with the global value."
                               (indirect-variable variable)
                             (error variable)))
                    (obsolete (get variable 'byte-obsolete-variable))
+                   (watchpoints (get-variable-watchers variable))
 		   (use (car obsolete))
 		   (safe-var (get variable 'safe-local-variable))
                    (doc (or (documentation-property
@@ -965,6 +966,12 @@ if it is given a local binding.\n"))))
 			     (use (format-message ";\n  use `%s' instead."
                                                   (car obsolete)))
 			     (t ".")))
+                (terpri))
+
+              (when watchpoints
+                (setq extra-line t)
+                (princ "  Calls these functions when changed: ")
+                (princ watchpoints)
                 (terpri))
 
 	      (when (member (cons variable val)

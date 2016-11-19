@@ -1463,6 +1463,16 @@ SYMBOL (or its aliases) are set.  */)
   return Qnil;
 }
 
+DEFUN ("get-variable-watchers", Fget_variable_watchers, Sget_variable_watchers,
+       1, 1, 0,
+       doc: /* Return a list of SYMBOL's active watchers.  */)
+  (Lisp_Object symbol)
+{
+  return (SYMBOL_TRAPPED_WRITE_P (symbol) == SYMBOL_TRAPPED_WRITE)
+    ? Fget (Findirect_variable (symbol), Qwatchers)
+    : Qnil;
+}
+
 void
 notify_variable_watchers (Lisp_Object symbol,
                           Lisp_Object newval,
@@ -3874,4 +3884,5 @@ syms_of_data (void)
   DEFSYM (Qset_default, "set-default");
   defsubr (&Sadd_variable_watcher);
   defsubr (&Sremove_variable_watcher);
+  defsubr (&Sget_variable_watchers);
 }
