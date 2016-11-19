@@ -829,7 +829,7 @@ main (int argc, char **argv)
   if (getrlimit (RLIMIT_STACK, &rlim) == 0
       && 0 <= rlim.rlim_cur && rlim.rlim_cur <= LONG_MAX)
     {
-      long lim = rlim.rlim_cur;
+      rlim_t lim = rlim.rlim_cur;
 
       /* Approximate the amount regex.c needs per unit of
 	 re_max_failures, then add 33% to cover the size of the
@@ -848,7 +848,7 @@ main (int argc, char **argv)
 
       if (try_to_grow_stack)
 	{
-	  long newlim = re_max_failures * ratio + extra;
+	  rlim_t newlim = re_max_failures * ratio + extra;
 
 	  /* Round the new limit to a page boundary; this is needed
 	     for Darwin kernel 15.4.0 (see Bug#23622) and perhaps

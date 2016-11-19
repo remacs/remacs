@@ -131,5 +131,7 @@ ac_cv_func_random=yes
 gl_cv_func_svid_putenv=yes
 # Implemented in w32heap.c
 ac_cv_func_sbrk=yes
+ac_cv_func_getrlimit=yes
+ac_cv_func_setrlimit=yes
 # GCC warnings that produce too much noise
 gl_cv_warn_c__Wredundant_decls=no
