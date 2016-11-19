@@ -869,14 +869,11 @@ turned into two separate filters [name: foo] and [mode: bar-mode]."
 (defun ibuffer-exchange-filters ()
   "Exchange the top two filters on the stack in this buffer."
   (interactive)
-  (when (< (length ibuffer-filtering-qualifiers)
-	   2)
-    (error "Need two filters to exchange"))
-  (let ((first (pop ibuffer-filtering-qualifiers))
-	(second (pop ibuffer-filtering-qualifiers)))
-    (push first ibuffer-filtering-qualifiers)
-    (push second ibuffer-filtering-qualifiers))
-  (ibuffer-update nil t))
+  (let ((filters ibuffer-filtering-qualifiers))
+    (when (< (length filters) 2)
+      (error "Need two filters to exchange"))
+    (cl-rotatef (car filters) (cadr filters))
+    (ibuffer-update nil t)))
 
 ;;;###autoload
 (defun ibuffer-negate-filter ()
