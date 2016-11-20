@@ -2038,6 +2038,7 @@ by text that describes the specified date and time in TIME:
 %H is the hour on a 24-hour clock, %I is on a 12-hour clock, %k is like %H
  only blank-padded, %l is like %I blank-padded.
 %p is the locale's equivalent of either AM or PM.
+%q is the calendar quarter (1–4).
 %M is the minute.
 %S is the second.
 %N is the nanosecond, %6N the microsecond, %3N the millisecond, etc.
