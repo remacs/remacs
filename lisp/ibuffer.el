@@ -91,7 +91,7 @@ Each element in `ibuffer-formats' should be a list containing COLUMN
 specifiers.  A COLUMN can be any of the following:
 
   SYMBOL - A symbol naming the column.  Predefined columns are:
-       mark modified read-only name size mode process filename
+       mark modified read-only locked name size mode process filename
    When you define your own columns using `define-ibuffer-column', just
    use their name like the predefined columns here.  This entry can
    also be a function of two arguments, which should return a string.
