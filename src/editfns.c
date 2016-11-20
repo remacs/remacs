@@ -87,10 +87,6 @@ static timezone_t local_tz;
 static timezone_t wall_clock_tz;
 static timezone_t const utc_tz = 0;
 
-/* A valid but unlikely setting for the TZ environment variable.
-   It is OK (though a bit slower) if the user chooses this value.  */
-static char dump_tz_string[] = "TZ=UtC0";
-
 /* The cached value of Vsystem_name.  This is used only to compare it
    to Vsystem_name, so it need not be visible to the GC.  */
 static Lisp_Object cached_system_name;
@@ -230,6 +226,12 @@ tzlookup (Lisp_Object zone, bool settz)
 void
 init_editfns (bool dumping)
 {
+#if !defined CANNOT_DUMP && defined HAVE_TZSET
+  /* A valid but unlikely setting for the TZ environment variable.
+     It is OK (though a bit slower) if the user chooses this value.  */
+  static char dump_tz_string[] = "TZ=UtC0";
+#endif
+
   const char *user_name;
   register char *p;
   struct passwd *pw;	/* password entry for the current user */
