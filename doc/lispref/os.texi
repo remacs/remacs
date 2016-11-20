@@ -1525,6 +1525,8 @@ fewer digits, use @samp{%3N} for milliseconds, @samp{%6N} for
 microseconds, etc.  Any excess digits are discarded, without rounding.
 @item %p
 This stands for @samp{AM} or @samp{PM}, as appropriate.
+@item %q
+This stands for the calendar quarter (1--4).
 @item %r
 This is a synonym for @samp{%I:%M:%S %p}.
 @item %R
