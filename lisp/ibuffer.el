@@ -1638,7 +1638,7 @@ If point is on a group name, this function operates on that group."
 					    max
 					  'max)
 					from-end-p))
-				(setq strlen (length str))
+				(setq strlen (string-width str))
 				(setq str
 				      ,(ibuffer-compile-make-eliding-form
                                         'str elide from-end-p)))))
@@ -1696,7 +1696,7 @@ If point is on a group name, this function operates on that group."
 		      outforms)
 		     (push `(setq str ,callform
                                   ,@(when strlen-used
-                                      `(strlen (length str))))
+                                      `(strlen (string-width str))))
 			   outforms)
 		     (setq outforms
 			   (append outforms
