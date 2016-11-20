@@ -4628,11 +4628,18 @@ w32_read_socket (struct terminal *terminal,
 		}
 	      else
 		{
-		  HDC hdc = get_frame_dc (f);
+		  /* Erase background again for safety.  But don't do
+		     that if the frame's 'garbaged' flag is set, since
+		     in that case expose_frame will do nothing, and if
+		     the various redisplay flags happen to be unset,
+		     we are left with a blank frame.  */
+		  if (!FRAME_GARBAGED_P (f))
+		    {
+		      HDC hdc = get_frame_dc (f);
 
-		  /* Erase background again for safety.  */
-		  w32_clear_rect (f, hdc, &msg.rect);
-		  release_frame_dc (f, hdc);
+		      w32_clear_rect (f, hdc, &msg.rect);
+		      release_frame_dc (f, hdc);
+		    }
 		  expose_frame (f,
 				msg.rect.left,
 				msg.rect.top,
