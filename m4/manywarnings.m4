@@ -62,10 +62,11 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
         CFLAGS="$CFLAGS -W -Werror"
         AC_COMPILE_IFELSE(
           [AC_LANG_PROGRAM(
-             [[void f (void)
+             [[int f (void)
                {
                  typedef struct { int a; int b; } s_t;
                  s_t s1 = { 0, };
+                 return s1.b;
                }
              ]],
              [[]])],
