@@ -2546,14 +2546,7 @@ that remote host.  If such a directory does not exist, or
 @end defun
 
 In order to extract the local part of the path name from a temporary
-file, the following code could be used:
-
-@example
-@group
-(let ((tmpfile (make-nearby-temp-file "foo")))
-  (or (file-remote-p tmpfile 'localname) tmpfile))
-@end group
-@end example
+file, @code{file-local-name} could be used.
 
 @node File Name Completion
 @subsection File Name Completion
@@ -3231,6 +3224,13 @@ name handler should indicate that by returning @code{nil}.
 This is useful for running a subprocess; every subprocess must have a
 non-magic directory to serve as its current directory, and this function
 is a good way to come up with one.
+@end defun
+
+@defun file-local-name filename
+This function returns the local part of file @var{filename}.  For a
+remote @var{filename}, it returns a file name which could be used
+directly as argument of a remote process.  If @var{filename} is local,
+this function returns the file name.
 @end defun
 
 @defopt remote-file-name-inhibit-cache

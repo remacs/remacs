@@ -3150,13 +3150,10 @@ t when called interactively."
                      (insert-file-contents
                       (or temp-file-name file-name))
                      (python-info-encoding)))
-         (file-name (expand-file-name
-                     (or (file-remote-p file-name 'localname)
-                         file-name)))
+         (file-name (expand-file-name (file-local-name file-name)))
          (temp-file-name (when temp-file-name
                            (expand-file-name
-                            (or (file-remote-p temp-file-name 'localname)
-                                temp-file-name)))))
+                            (file-local-name temp-file-name)))))
     (python-shell-send-string
      (format
       (concat

@@ -700,6 +700,10 @@ collection).
 can be used for creation of temporary files of remote or mounted directories.
 
 +++
+** The new function 'file-local-name' can be used to specify arguments
+of remote processes.
+
++++
 ** The new error 'file-missing', a subcategory of 'file-error', is now
 signaled instead of 'file-error' if a file operation acts on a file
 that does not exist.

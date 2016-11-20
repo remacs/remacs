@@ -714,12 +714,11 @@ Otherwise, one argument `-i' is passed to the shell.
 	   (null (getenv "ESHELL")))
       (with-current-buffer buffer
 	(set (make-local-variable 'explicit-shell-file-name)
-	     (file-remote-p
-	      (expand-file-name
+             (expand-file-name
+              (file-local-name
 	       (read-file-name
 		"Remote shell path: " default-directory shell-file-name
-		t shell-file-name))
-	      'localname))))
+		t shell-file-name))))))
 
   ;; The buffer's window must be correctly set when we call comint (so
   ;; that comint sets the COLUMNS env var properly).

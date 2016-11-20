@@ -2621,12 +2621,8 @@ comint mode, which see."
     (let ((w args))
       (while (and w (not (eq (car w) t)))
 	(setq w (cdr w)))
-      (if w
- 	  (setcar w
- 		  (if (file-remote-p file)
-		      ;; Tramp has already been loaded if we are here.
-		      (setq file (file-remote-p file 'localname))
- 		    file))))
+      ;; Tramp has already been loaded if we are here.
+      (if w (setcar w (setq file (file-local-name file)))))
     (apply 'make-comint (concat "gud" filepart) program nil
 	   (if massage-args (funcall massage-args file args) args))
     ;; Since comint clobbered the mode, we don't set it until now.
@@ -2854,8 +2850,7 @@ Obeying it means displaying in another window the specified file and line."
 	(frame (or gud-last-frame gud-last-last-frame))
 	(buffer-file-name-localized
          (and (buffer-file-name)
-              (or (file-remote-p (buffer-file-name) 'localname)
-                  (buffer-file-name))))
+              (file-local-name (buffer-file-name))))
 	result)
     (while (and str
 		(let ((case-fold-search nil))

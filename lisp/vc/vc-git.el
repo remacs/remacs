@@ -704,13 +704,10 @@ It is based on `log-edit-mode', and has Git-specific extensions.")
           ;; file, to work around the limitation that command-line
           ;; arguments must be in the system codepage, and therefore
           ;; might not support the non-ASCII characters in the log
-          ;; message.
+          ;; message.  Handle also remote files.
           (if (eq system-type 'windows-nt)
-              (if (file-remote-p file1)
-                  (let ((default-directory (file-name-directory file1)))
-                    (file-remote-p
-                     (make-nearby-temp-file "git-msg") 'localname))
-                (make-temp-file "git-msg")))))
+              (let ((default-directory (file-name-directory file1)))
+                (file-local-name (make-nearby-temp-file "git-msg"))))))
     (cl-flet ((boolean-arg-fn
                (argument)
                (lambda (value) (when (equal value "yes") (list argument)))))
