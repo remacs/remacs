@@ -161,7 +161,7 @@ bool display_arg;
    Tells GC how to save a copy of the stack.  */
 char *stack_bottom;
 
-#ifdef GNU_LINUX
+#if defined GNU_LINUX && !defined CANNOT_DUMP
 /* The gap between BSS end and heap start as far as we can tell.  */
 static uprintmax_t heap_bss_diff;
 #endif
@@ -716,14 +716,14 @@ main (int argc, char **argv)
 
 #ifndef CANNOT_DUMP
   might_dump = !initialized;
-#endif
 
-#ifdef GNU_LINUX
+# ifdef GNU_LINUX
   if (!initialized)
     {
       char *heap_start = my_heap_start ();
       heap_bss_diff = heap_start - max (my_endbss, my_endbss_static);
     }
+# endif
 #endif
 
 #if defined WINDOWSNT || defined HAVE_NTGUI
@@ -2126,7 +2126,7 @@ You must run Emacs in batch mode in order to dump it.  */)
   if (!might_dump)
     error ("Emacs can be dumped only once");
 
-#ifdef GNU_LINUX
+#if defined GNU_LINUX && !defined CANNOT_DUMP
 
   /* Warn if the gap between BSS end and heap start is larger than this.  */
 # define MAX_HEAP_BSS_DIFF (1024*1024)
