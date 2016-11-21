@@ -1829,11 +1829,11 @@ Do so according to the former subdir alist OLD-SUBDIR-ALIST."
       '("--"))
 
     (define-key map [menu-bar operate query-replace]
-      '(menu-item "Query Replace in Files..." dired-do-query-replace-regexp
-		  :help "Replace regexp in marked files"))
+      '(menu-item "Query Replace in Files..." dired-do-find-regexp-and-replace
+		  :help "Replace regexp matches in marked files"))
     (define-key map [menu-bar operate search]
-      '(menu-item "Search Files..." dired-do-search
-		  :help "Search marked files for regexp"))
+      '(menu-item "Search Files..." dired-do-find-regexp
+		  :help "Search marked files for matches of regexp"))
     (define-key map [menu-bar operate isearch-regexp]
       '(menu-item "Isearch Regexp Files..." dired-do-isearch-regexp
 		  :help "Incrementally search marked files for regexp"))
