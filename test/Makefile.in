@@ -190,6 +190,7 @@ check-doit: ${LOGFILES}
 
 mostlyclean:
 	-@for f in ${LOGFILES}; do test ! -f $$f || mv $$f $$f~; done
+	rm -f *.tmp
 
 clean:
 	-rm -f ${LOGFILES} ${LOGSAVEFILES}
@@ -206,5 +207,7 @@ maintainer-clean: distclean bootstrap-clean
 make-test-deps.mk: $(ELFILES) make-test-deps.emacs-lisp
 	$(EMACS) --batch -l $(srcdir)/make-test-deps.emacs-lisp \
 	--eval "(make-test-deps \"$(srcdir)\")" \
-	2> $@
-# Makefile ends here.
+	2> $@.tmp
+	# Hack to elide any CANNOT_DUMP=yes chatter.
+	sed '/\.log: /!d' $@.tmp >$@
+	rm -f $@.tmp

@@ -1366,6 +1366,7 @@ case "$opsys" in
    UNEXEC_OBJ=unexsol.o
    ;;
 esac
+test "$CANNOT_DUMP" = "yes" && UNEXEC_OBJ=
 
 LD_SWITCH_SYSTEM=
 case "$opsys" in
@@ -2154,6 +2155,7 @@ doug_lea_malloc=$emacs_cv_var_doug_lea_malloc
 hybrid_malloc=
 system_malloc=yes
 
+test "$CANNOT_DUMP" = yes ||
 case "$opsys" in
   ## darwin ld insists on the use of malloc routines in the System framework.
   darwin | mingw32 | nacl | sol2-10) ;;

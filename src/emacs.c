@@ -130,11 +130,15 @@ Lisp_Object Vlibrary_cache;
    on subsequent starts.  */
 bool initialized;
 
+#ifdef CANNOT_DUMP
+enum { might_dump = false };
+#else
 /* Set to true if this instance of Emacs might dump.  */
-#ifndef DOUG_LEA_MALLOC
+# ifndef DOUG_LEA_MALLOC
 static
-#endif
+# endif
 bool might_dump;
+#endif
 
 #ifdef DARWIN_OS
 extern void unexec_init_emacs_zone (void);
@@ -196,7 +200,7 @@ int daemon_type;
 #ifndef WINDOWSNT
 /* Pipe used to send exit notification to the background daemon parent at
    startup.  On Windows, we use a kernel event instead.  */
-int daemon_pipe[2];
+static int daemon_pipe[2];
 #else
 HANDLE w32_daemon_event;
 #endif

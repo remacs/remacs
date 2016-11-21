@@ -9776,6 +9776,8 @@ lookup_image_type (Lisp_Object type)
   return NULL;
 }
 
+#if !defined CANNOT_DUMP && defined HAVE_WINDOW_SYSTEM
+
 /* Reset image_types before dumping.
    Called from Fdump_emacs.  */
 
@@ -9789,6 +9791,7 @@ reset_image_types (void)
       image_types = next;
     }
 }
+#endif
 
 void
 syms_of_image (void)

@@ -173,31 +173,34 @@ voidfuncptr __MALLOC_HOOK_VOLATILE __malloc_initialize_hook EXTERNALLY_VISIBLE
 
 #endif
 
+#if defined DOUG_LEA_MALLOC || !defined CANNOT_DUMP
+
 /* Allocator-related actions to do just before and after unexec.  */
 
 void
 alloc_unexec_pre (void)
 {
-#ifdef DOUG_LEA_MALLOC
+# ifdef DOUG_LEA_MALLOC
   malloc_state_ptr = malloc_get_state ();
   if (!malloc_state_ptr)
     fatal ("malloc_get_state: %s", strerror (errno));
-#endif
-#ifdef HYBRID_MALLOC
+# endif
+# ifdef HYBRID_MALLOC
   bss_sbrk_did_unexec = true;
-#endif
+# endif
 }
 
 void
 alloc_unexec_post (void)
 {
-#ifdef DOUG_LEA_MALLOC
+# ifdef DOUG_LEA_MALLOC
   free (malloc_state_ptr);
-#endif
-#ifdef HYBRID_MALLOC
+# endif
+# ifdef HYBRID_MALLOC
   bss_sbrk_did_unexec = false;
-#endif
+# endif
 }
+#endif
 
 /* Mark, unmark, query mark bit of a Lisp string.  S must be a pointer
    to a struct Lisp_String.  */
@@ -5216,6 +5219,8 @@ pure_alloc (size_t size, int type)
 }
 
 
+#ifndef CANNOT_DUMP
+
 /* Print a warning if PURESIZE is too small.  */
 
 void
@@ -5226,6 +5231,7 @@ check_pure_size (void)
 	      " bytes needed)"),
 	     pure_bytes_used + pure_bytes_used_before_overflow);
 }
+#endif
 
 
 /* Find the byte sequence {DATA[0], ..., DATA[NBYTES-1], '\0'} from
