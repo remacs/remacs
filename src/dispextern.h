@@ -3356,9 +3356,7 @@ void x_cr_init_fringe (struct redisplay_interface *);
 
 extern unsigned row_hash (struct glyph_row *);
 
-extern void block_buffer_flips(void);
-extern void unblock_buffer_flips(void);
-extern bool buffer_flipping_blocked_p(void);
+extern bool buffer_flipping_blocked_p (void);
 
 /* Defined in image.c */
 
