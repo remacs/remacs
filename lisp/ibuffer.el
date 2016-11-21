@@ -1558,18 +1558,17 @@ If point is on a group name, this function operates on that group."
 	     ,(if from-end-p
 		  `(concat ,ellipsis
 			   (substring ,strvar
-				      (length ibuffer-eliding-string)))
-		`(concat
-		  (substring ,strvar 0 (- strlen ,(length ellipsis)))
+				      (string-width ibuffer-eliding-string)))
+		`(truncate-string-to-width
+		  ,strvar strlen nil nil
 		  ,ellipsis))
 	   ,strvar)
       strvar)))
 
 (defun ibuffer-compile-make-substring-form (strvar maxvar from-end-p)
   (if from-end-p
-      `(substring str
-		  (- strlen ,maxvar))
-    `(substring ,strvar 0 ,maxvar)))
+      `(truncate-string-to-width str (string-width str) (- strlen ,maxvar))
+    `(truncate-string-to-width ,strvar ,maxvar)))
 
 (defun ibuffer-compile-make-format-form (strvar widthform alignment)
   (let* ((left `(make-string tmp2 ?\s))
