@@ -85,11 +85,9 @@ Optional argument FOLDER specifies folder name."
 	(widen)
 	(unwind-protect
 	    (apply
-	     'call-process-region
-	     (append
-	      (list (point-min) (point-max) "rcvstore" nil errbuf nil
-		    folder)
-	      gnus-rcvstore-options))
+	     #'call-process-region
+	     (point-min) (point-max) "rcvstore" nil errbuf nil folder
+	     gnus-rcvstore-options)
 	  (set-buffer errbuf)
 	  (if (zerop (buffer-size))
 	      (message "Article saved in folder: %s" folder)
