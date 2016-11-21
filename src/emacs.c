@@ -130,9 +130,7 @@ Lisp_Object Vlibrary_cache;
    on subsequent starts.  */
 bool initialized;
 
-#ifdef CANNOT_DUMP
-enum { might_dump = false };
-#else
+#ifndef CANNOT_DUMP
 /* Set to true if this instance of Emacs might dump.  */
 # ifndef DOUG_LEA_MALLOC
 static
