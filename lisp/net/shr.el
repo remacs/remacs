@@ -1899,20 +1899,21 @@ The preference is a float determined from `shr-prefer-media-type'."
     (when (zerop shr-table-depth)
       (save-excursion
 	(shr-expand-alignments start (point)))
-      (save-restriction
-	(narrow-to-region (point) (point))
-	(insert (mapconcat #'identity
-			   (shr-collect-extra-strings-in-table dom)
-			   "\n"))
-	(shr-fill-lines (point-min) (point-max))))))
+      (let ((strings (shr-collect-extra-strings-in-table dom)))
+	(when strings
+	  (save-restriction
+	    (narrow-to-region (point) (point))
+	    (insert (mapconcat #'identity strings "\n"))
+	    (shr-fill-lines (point-min) (point-max))))))))
 
 (defun shr-collect-extra-strings-in-table (dom &optional flags)
   "Return extra strings in DOM of which the root is a table clause.
 Render <img>s and <object>s, and strings and child <table>s of which
-the parent is not <td> or <th> as well.  FLAGS is a cons of two
-boolean flags that control whether to collect or render objects."
-  ;; As for strings and child <table>s, it runs recursively and
-  ;; collects or renders those objects if the cdr of FLAGS is nil.
+the parent <td> or <th> is lacking.  FLAGS is a cons of two boolean
+flags that control whether to collect or render objects."
+  ;; This function runs recursively and collects strings if the cdr of
+  ;; FLAGS is nil and the car is not nil, and it renders also child
+  ;; <table>s if the cdr is nil.  Note: FLAGS may be nil, not a cons.
   ;; FLAGS becomes (t . nil) if a <tr> clause is found in the children
   ;; of DOM, and becomes (t . t) if a <td> or a <th> clause is found
   ;; and the car is t then.  When a <table> clause is found, FLAGS
@@ -1921,7 +1922,7 @@ boolean flags that control whether to collect or render objects."
   (cl-loop for child in (dom-children dom) with recurse with tag
 	   do (setq recurse nil)
 	   if (stringp child)
-	     unless (cdr flags)
+	     unless (or (not (car flags)) (cdr flags))
 	       when (string-match "\\(?:[^\t\n\r ]+[\t\n\r ]+\\)*[^\t\n\r ]+"
 				  child)
 		 collect (match-string 0 child)
