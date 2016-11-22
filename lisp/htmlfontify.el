@@ -1825,7 +1825,7 @@ fontified.  This is a simple convenience wrapper around
     (if (fboundp 'font-lock-ensure)
         (font-lock-ensure)
       (when font-lock-defaults
-        (font-lock-ensure))))
+        (font-lock-fontify-buffer))))
    ((fboundp #'jit-lock-fontify-now)
     (message "hfy jit-lock mode (%S %S)" window-system major-mode)
     (jit-lock-fontify-now))
