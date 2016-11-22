@@ -1,0 +1,9 @@
+[package]
+name = "remacs"
+version = "0.1.0"
+authors = ["Wilfred Hughes <me@wilfred.me.uk>"]
+
+[dependencies]
+
+[lib]
+crate-type = ["dylib"]
