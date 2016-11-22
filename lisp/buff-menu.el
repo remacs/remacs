@@ -344,7 +344,7 @@ is nil or omitted, and signal an error otherwise."
 (defun Buffer-menu-no-header ()
   (beginning-of-line)
   (if (or Buffer-menu-use-header-line
-	  (not (eq (char-after) ?C)))
+	  (not (tabulated-list-header-overlay-p (point))))
       t
     (ding)
     (forward-line 1)
