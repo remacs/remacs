@@ -1556,19 +1556,23 @@ If point is on a group name, this function operates on that group."
     (if (or elide (with-no-warnings ibuffer-elide-long-columns))
 	`(if (> strlen 5)
 	     ,(if from-end-p
+                  ;; FIXME: this should probably also be using
+                  ;; `truncate-string-to-width' (Bug#24972)
 		  `(concat ,ellipsis
 			   (substring ,strvar
 				      (string-width ibuffer-eliding-string)))
-		`(truncate-string-to-width
-		  ,strvar strlen nil nil
-		  ,ellipsis))
+		`(concat
+		  (truncate-string-to-width
+                   ,strvar (- strlen (string-width ,ellipsis)) nil ?.)
+                  ,ellipsis))
 	   ,strvar)
       strvar)))
 
 (defun ibuffer-compile-make-substring-form (strvar maxvar from-end-p)
   (if from-end-p
-      `(truncate-string-to-width str (string-width str) (- strlen ,maxvar))
-    `(truncate-string-to-width ,strvar ,maxvar)))
+      ;; FIXME: not sure if this case is correct (Bug#24972)
+      `(truncate-string-to-width str (string-width str) (- strlen ,maxvar) nil ?\s)
+    `(truncate-string-to-width ,strvar ,maxvar nil ?\s)))
 
 (defun ibuffer-compile-make-format-form (strvar widthform alignment)
   (let* ((left `(make-string tmp2 ?\s))

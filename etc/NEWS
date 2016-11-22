@@ -283,6 +283,24 @@ the file's actual content before prompting the user.
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
+** Electric-Buffer-menu
+
++++
+*** Key 'U' is bound to 'Buffer-menu-unmark-all' and key 'M-DEL' is
+bound to 'Buffer-menu-unmark-all-buffers'.
+
+** bs
+
+---
+*** Two new commands 'bs-unmark-all', bound to 'U', and
+'bs-unmark-previous', bound to <backspace>.
+
+** Buffer-menu
+
++++
+*** Two new commands 'Buffer-menu-unmark-all', bound to 'U' and
+'Buffer-menu-unmark-all-buffers', bound to 'M-DEL'.
+
 ** Ibuffer
 
 ---
