@@ -190,6 +190,8 @@ This includes password cache, file cache, connection cache, buffers."
 	     password-cache
 	     password-cache-expiry
 	     remote-file-name-inhibit-cache
+	     connection-local-class-alist
+	     connection-local-criteria-alist
 	     file-name-handler-alist))))
 	(lambda (x y) (string< (symbol-name (car x)) (symbol-name (car y)))))
 
@@ -294,7 +296,7 @@ buffer in your bug report.
 		'intern
 		(all-completions "tramp-" (buffer-local-variables buffer)))
 	       ;; Non-tramp variables of interest.
-	       '(default-directory))
+	       '(connection-local-variables-alist default-directory))
 	      'string<))
 	    (reporter-dump-variable varsym elbuf))
 	(lisp-indent-line)
