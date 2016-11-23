@@ -50,6 +50,7 @@ files.")
     ("Álvar Jesús Ibeas Martín" "Álvar Ibeas")
     ("Andrew Csillag" "Drew Csillag")
     ("Anna M. Bigatti" "Anna Bigatti")
+    ("Aurélien Aptel" "Aurelien Aptel")
     ("Barry A. Warsaw" "Barry A. Warsaw, Century Computing, Inc."
      "Barry A. Warsaw, ITB" "Barry Warsaw")
     ("Bill Carpenter" "WJ Carpenter")
