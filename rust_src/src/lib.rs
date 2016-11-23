@@ -5,12 +5,15 @@ extern crate libc;
 // Use Emacs naming conventions.
 #[allow(non_upper_case_globals)]
 
+// EMACS_INT is defined as 'long int' in lisp.h.
+type EmacsInt = libc::c_longlong;
+
 // TODO: typedef EMACS_INT to long int
 //
 // note this is dependent on platform and compiler flags passed when
 // compiling emacs.
 
-const fn builtin_lisp_symbol(index: i64) -> i64 {
+const fn builtin_lisp_symbol(index: EmacsInt) -> EmacsInt {
     index
 }
 
