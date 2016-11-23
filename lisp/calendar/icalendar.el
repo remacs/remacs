@@ -2389,22 +2389,43 @@ END-T is the event's end time in diary format."
           ;; monthly
           ((string-equal frequency "MONTHLY")
            (icalendar--dmsg "monthly")
-           (setq result
-                 (format
-                  "%%%%(and (diary-date %s) (diary-block %s %s)) %s%s%s"
-                  (let ((day (nth 3 dtstart-dec)))
-                    (cond ((eq calendar-date-style 'iso)
-                           (format "t t %d" day))
-                          ((eq calendar-date-style 'european)
-                           (format "%d t t" day))
-                          ((eq calendar-date-style 'american)
-                           (format "t %d t" day))))
-                  dtstart-conv
-                  (if until
-                      until-conv
-                    (if (eq calendar-date-style 'iso) "9999 1 1" "1 1 9999")) ;; FIXME: should be unlimited
-                  (or start-t "")
-                  (if end-t "-" "") (or end-t ""))))
+	   (let* ((byday (cadr (assoc 'BYDAY rrule-props)))
+                  (count-weekday
+                   (and byday
+                        (save-match-data
+                          (when (string-match "\\(-?[0-9]+\\)\\([A-Z][A-Z]\\)"
+                                              byday)
+                            (cons (substring byday
+                                             (match-beginning 1)
+                                             (match-end 1))
+                                  (substring byday
+                                             (match-beginning 2)
+                                             (match-end 2)))))))
+                  (rule-part
+                   (if count-weekday
+                       (let ((count (car count-weekday))
+                             (weekdaynum (icalendar--get-weekday-number
+                                          (cdr count-weekday))))
+                         ;; FIXME: this is valid only for interval==1
+                         (format "(diary-float t %s %s)" weekdaynum count))
+                     (format "(diary-date %s)"
+                             (let ((day (nth 3 dtstart-dec)))
+                               (cond ((eq calendar-date-style 'iso)
+                                      (format "t t %d" day))
+                                     ((eq calendar-date-style 'european)
+                                      (format "%d t t" day))
+                                     ((eq calendar-date-style 'american)
+                                      (format "t %d t" day))))))))
+             (setq result
+                   (format
+                    "%%%%(and %s (diary-block %s %s)) %s%s%s"
+                    rule-part
+                    dtstart-conv
+                    (if until
+                        until-conv
+                      (if (eq calendar-date-style 'iso) "9999 1 1" "1 1 9999")) ;; FIXME: should be unlimited
+                    (or start-t "")
+                    (if end-t "-" "") (or end-t "")))))
           ;; daily
           ((and (string-equal frequency "DAILY"))
            (if until

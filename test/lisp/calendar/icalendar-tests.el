@@ -1257,6 +1257,50 @@ UID:8814e3f9-7482-408f-996c-3bfe486a1263
  UID: 8814e3f9-7482-408f-996c-3bfe486a1263
 "))
 
+(ert-deftest icalendar-import-bug-24199 ()
+  ;;bug#24199 -- monthly rule with byday-clause
+  (icalendar-tests--test-import
+"
+SUMMARY:Summary
+DESCRIPTION:Desc
+LOCATION:Loc
+DTSTART:20151202T124600
+DTEND:20151202T160000
+RRULE:FREQ=MONTHLY;BYDAY=1WE;INTERVAL=1
+EXDATE:20160106T114600Z
+EXDATE:20160203T114600Z
+EXDATE:20160302T114600Z
+EXDATE:20160504T104600Z
+EXDATE:20160601T104600Z
+CLASS:DEFAULT
+TRANSP:OPAQUE
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER;VALUE=DURATION:-PT3H
+END:VALARM
+LAST-MODIFIED:20160805T191040Z
+UID:9188710a-08a7-4061-bae3-d4cf4972599a
+"
+"&%%(and (not (diary-date 2016 1 6)) (not (diary-date 2016 2 3)) (not (diary-date 2016 3 2)) (not (diary-date 2016 5 4)) (not (diary-date 2016 6 1)) (diary-float t 3 1) (diary-block 2015 12 2 9999 1 1)) 12:46-16:00 Summary
+ Desc: Desc
+ Location: Loc
+ Class: DEFAULT
+ UID: 9188710a-08a7-4061-bae3-d4cf4972599a
+"
+"&%%(and (not (diary-date 6 1 2016)) (not (diary-date 3 2 2016)) (not (diary-date 2 3 2016)) (not (diary-date 4 5 2016)) (not (diary-date 1 6 2016)) (diary-float t 3 1) (diary-block 2 12 2015 1 1 9999)) 12:46-16:00 Summary
+ Desc: Desc
+ Location: Loc
+ Class: DEFAULT
+ UID: 9188710a-08a7-4061-bae3-d4cf4972599a
+"
+"&%%(and (not (diary-date 1 6 2016)) (not (diary-date 2 3 2016)) (not (diary-date 3 2 2016)) (not (diary-date 5 4 2016)) (not (diary-date 6 1 2016)) (diary-float t 3 1) (diary-block 12 2 2015 1 1 9999)) 12:46-16:00 Summary
+ Desc: Desc
+ Location: Loc
+ Class: DEFAULT
+ UID: 9188710a-08a7-4061-bae3-d4cf4972599a
+"
+))
+
 (ert-deftest icalendar-import-multiple-vcalendars ()
   (icalendar-tests--test-import
    "DTSTART;VALUE=DATE:20110723
