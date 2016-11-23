@@ -20,6 +20,8 @@
 ;;; Code:
 (require 'ert)
 (require 'ibuffer)
+(eval-when-compile
+  (require 'ibuf-macs))
 
 (ert-deftest ibuffer-autoload ()
   "Tests to see whether reftex-auc has been autoloaded"
@@ -29,6 +31,24 @@
    (autoloadp
     (symbol-function
      'ibuffer-mark-unsaved-buffers))))
+
+(ert-deftest ibuffer-test-Bug25000 ()
+  "Test for http://debbugs.gnu.org/25000 ."
+  :expected-result :failed
+  (let ((case-fold-search t)
+        (buf1 (generate-new-buffer "ibuffer-test-Bug25000-buf1"))
+        (buf2 (generate-new-buffer "ibuffer-test-Bug25000-buf2")))
+    (ibuffer)
+    (unwind-protect
+        (ibuffer-save-marks
+          (ibuffer-unmark-all-marks)
+          (ibuffer-mark-by-name-regexp (buffer-name buf1))
+          (ibuffer-change-marks ibuffer-marked-char ?L)
+          (ibuffer-mark-by-name-regexp (buffer-name buf2))
+          (ibuffer-change-marks ibuffer-marked-char ?l)
+          (should-not (cdr (ibuffer-buffer-names-with-mark ?l))))
+      (mapc (lambda (buf) (when (buffer-live-p buf)
+                            (kill-buffer buf))) (list buf1 buf2)))))
 
 (provide 'ibuffer-tests)
 ;; ibuffer-tests.el ends here
