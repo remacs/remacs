@@ -296,7 +296,7 @@ problem discovered.  This is useful for adding additional checks.")
 
 (defvar checkdoc-defun-regexp
   "^(def\\(un\\|var\\|custom\\|macro\\|const\\|subst\\|advice\\)\
-\\s-+\\(\\(\\sw\\|\\s_\\)+\\)[ \t\n]+"
+\\s-+\\(\\(\\sw\\|\\s_\\)+\\)[ \t\n]*"
   "Regular expression used to identify a defun.
 A search leaves the cursor in front of the parameter list.")
 
