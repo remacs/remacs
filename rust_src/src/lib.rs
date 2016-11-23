@@ -1,7 +1,5 @@
 #![feature(const_fn)]
-#![feature(libc)]
 
-// TODO: move to libc from crates.io
 extern crate libc;
 
 // Use Emacs naming conventions.
