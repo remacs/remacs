@@ -1,3 +1,4 @@
+#![feature(const_fn)]
 #![feature(libc)]
 
 // TODO: move to libc from crates.io
@@ -11,8 +12,13 @@ extern crate libc;
 // note this is dependent on platform and compiler flags passed when
 // compiling emacs.
 
+const fn builtin_lisp_symbol(index: i64) -> i64 {
+    index
+}
+
 // First, we need a reference to Qt, the t symbol.
-static Qt: i64 = 1;
+// TODO: what generates globals.h, and where does the number 926 come from?
+static Qt: i64 = builtin_lisp_symbol(926);
 
 #[cfg(test)]
 mod tests {
