@@ -13,6 +13,28 @@ $ rustup override set nightly
 $ cargo build --release
 ```
 
+## Understanding Emacs macros:
+
+Define a little file, e.g.
+
+``` c
+#include "lisp.h"
+
+DEFUN ("return-t", Freturn_t, Sreturn_t, 0, 0, 0,
+       doc: /* Return t unconditionally.  */)
+    ()
+{
+    return Qt;
+}
+```
+
+Then expand it with GCC:
+
+```
+$ cd /path/to/remacs
+$ gcc -Ilib -E src/dummy.c > dummy_exp.c
+```
+
 ## TODOC
 
 * Building (as described in
