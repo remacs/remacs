@@ -2,21 +2,20 @@
 
 extern crate libc;
 
-// Use Emacs naming conventions.
-#[allow(non_upper_case_globals)]
 
 // EMACS_INT is defined as 'long int' in lisp.h.
 type EmacsInt = libc::c_longlong;
 
-// TODO: typedef EMACS_INT to long int
-//
-// note this is dependent on platform and compiler flags passed when
-// compiling emacs.
+// This is dependent on CHECK_LISP_OBJECT_TYPE, a compile time flag,
+// but it's usually false.
+type LispObject = EmacsInt;
 
-const fn builtin_lisp_symbol(index: EmacsInt) -> EmacsInt {
-    index
+// Use Emacs naming conventions.
+#[allow(non_upper_case_globals)]
+// TODO: load this from globals.h somehow.
+static Qt: i64 = 123;
+
+#[allow(non_snake_case)]
+pub unsafe extern "C" fn Freturn_t() -> LispObject {
+    Qt
 }
-
-// First, we need a reference to Qt, the t symbol.
-// TODO: what generates globals.h, and where does the number 926 come from?
-static Qt: i64 = builtin_lisp_symbol(926);
