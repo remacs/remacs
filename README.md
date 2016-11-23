@@ -4,6 +4,15 @@ An experiment in compiling Rust with C.
 
 GPLv3, just like all Emacs code.
 
+## Building
+
+You need to use nightly rust.
+
+```
+$ rustup override set nightly
+$ cargo build --release
+```
+
 ## TODOC
 
 * Building (as described in
