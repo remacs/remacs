@@ -170,6 +170,18 @@ args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
 }
 
 
+
+void rust_hello();
+
+DEFUN ("rust-hello", Frust_hello, Srust_hello, 0, 0, 0,
+       doc: /* Call rust_hello via FFI. */
+       attributes: const)
+    ()
+{
+  rust_hello();
+  return Qnil;
+}
+
 /* Data type predicates.  */
 
 DEFUN ("eq", Feq, Seq, 2, 2, 0,
@@ -3618,6 +3630,7 @@ syms_of_data (void)
 
   defsubr (&Sindirect_variable);
   defsubr (&Sinteractive_form);
+  defsubr (&Srust_hello);
   defsubr (&Seq);
   defsubr (&Snull);
   defsubr (&Stype_of);
