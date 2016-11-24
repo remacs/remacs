@@ -48,6 +48,11 @@ $ cd /path/to/remacs
 $ gcc -Ilib -E src/dummy.c > dummy_exp.c
 ```
 
+## Contributing
+
+Patches welcome. This project is under the
+[Rust code of conduct](https://www.rust-lang.org/en-US/conduct.html).
+
 ## TODOC
 
 * Overriding git hooks (just delete them?)
