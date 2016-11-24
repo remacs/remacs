@@ -1,7 +1,8 @@
+#![allow(dead_code)]
+
 extern crate libc;
 
 use std::os::raw::c_char;
-
 
 // EMACS_INT is defined as 'long int' in lisp.h.
 type EmacsInt = libc::c_longlong;
