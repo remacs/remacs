@@ -32,6 +32,22 @@
     (symbol-function
      'ibuffer-mark-unsaved-buffers))))
 
+(ert-deftest ibuffer-test-Bug24997 ()
+  "Test for http://debbugs.gnu.org/24997 ."
+  :expected-result :failed
+  (ibuffer)
+  (let ((orig ibuffer-filtering-qualifiers))
+    (unwind-protect
+        (progn
+          (setq ibuffer-filtering-qualifiers
+                '((size-gt . 10)
+                  (used-mode . lisp-interaction-mode)))
+          (ibuffer-update nil t)
+          (ignore-errors (ibuffer-decompose-filter))
+          (should (cdr ibuffer-filtering-qualifiers)))
+      (setq ibuffer-filtering-qualifiers orig)
+      (ibuffer-update nil t))))
+
 (ert-deftest ibuffer-test-Bug25000 ()
   "Test for http://debbugs.gnu.org/25000 ."
   :expected-result :failed
