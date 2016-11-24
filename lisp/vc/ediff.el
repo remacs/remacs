@@ -553,9 +553,9 @@ expression; only file names that match the regexp are considered."
 			   nil 'must-match)
 	   (read-string
 	    (if (stringp default-regexp)
-		(format "Filter through regular expression (default %s): "
+		(format "Filter filenames through regular expression (default %s): "
 			 default-regexp)
-	      "Filter through regular expression: ")
+	      "Filter filenames through regular expression: ")
 	    nil
 	    'ediff-filtering-regexp-history
 	    (eval ediff-default-filtering-regexp))
@@ -581,9 +581,9 @@ names.  Only the files that are under revision control are taken into account."
 	    "Directory to compare with revision:" dir-A nil 'must-match)
 	   (read-string
 	    (if (stringp default-regexp)
-		(format "Filter through regular expression (default %s): "
+		(format "Filter filenames through regular expression (default %s): "
 			 default-regexp)
-	      "Filter through regular expression: ")
+	      "Filter filenames through regular expression: ")
 	    nil
 	    'ediff-filtering-regexp-history
 	    (eval ediff-default-filtering-regexp))
@@ -619,9 +619,9 @@ regular expression; only file names that match the regexp are considered."
 			   nil 'must-match)
 	   (read-string
 	    (if (stringp default-regexp)
-		(format "Filter through regular expression (default %s): "
+		(format "Filter filenames through regular expression (default %s): "
 			 default-regexp)
-	      "Filter through regular expression: ")
+	      "Filter filenames through regular expression: ")
 	    nil
 	    'ediff-filtering-regexp-history
 	    (eval ediff-default-filtering-regexp))
@@ -651,9 +651,9 @@ expression; only file names that match the regexp are considered."
 			   nil 'must-match)
 	   (read-string
 	    (if (stringp default-regexp)
-		(format "Filter through regular expression (default %s): "
+		(format "Filter filenames through regular expression (default %s): "
 			 default-regexp)
-	      "Filter through regular expression: ")
+	      "Filter filenames through regular expression: ")
 	    nil
 	    'ediff-filtering-regexp-history
 	    (eval ediff-default-filtering-regexp))
@@ -692,9 +692,9 @@ only file names that match the regexp are considered."
 				 nil 'must-match)
 	   (read-string
 	    (if (stringp default-regexp)
-		(format "Filter through regular expression (default %s): "
+		(format "Filter filenames through regular expression (default %s): "
 			 default-regexp)
-	      "Filter through regular expression: ")
+	      "Filter filenames through regular expression: ")
 	    nil
 	    'ediff-filtering-regexp-history
 	    (eval ediff-default-filtering-regexp))
@@ -719,9 +719,9 @@ names.  Only the files that are under revision control are taken into account."
 	    "Directory to merge with revisions:" dir-A nil 'must-match)
 	   (read-string
 	    (if (stringp default-regexp)
-		(format "Filter through regular expression (default %s): "
+		(format "Filter filenames through regular expression (default %s): "
 			 default-regexp)
-	      "Filter through regular expression: ")
+	      "Filter filenames through regular expression: ")
 	    nil
 	    'ediff-filtering-regexp-history
 	    (eval ediff-default-filtering-regexp))
@@ -750,9 +750,9 @@ names.  Only the files that are under revision control are taken into account."
 	    dir-A nil 'must-match)
 	   (read-string
 	    (if (stringp default-regexp)
-		(format "Filter through regular expression (default %s): "
+		(format "Filter filenames through regular expression (default %s): "
 			 default-regexp)
-	      "Filter through regular expression: ")
+	      "Filter filenames through regular expression: ")
 	    nil
 	    'ediff-filtering-regexp-history
 	    (eval ediff-default-filtering-regexp))
