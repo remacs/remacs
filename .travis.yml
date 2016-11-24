@@ -6,3 +6,6 @@ rust:
 
 script:
   - cd rust_src && cargo build --release
+
+notifications:
+  email: false
