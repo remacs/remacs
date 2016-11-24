@@ -7,4 +7,4 @@ authors = ["Wilfred Hughes <me@wilfred.me.uk>"]
 libc = "0.2.17"
 
 [lib]
-crate-type = ["dylib"]
+crate-type = ["staticlib"]

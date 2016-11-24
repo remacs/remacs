@@ -9,8 +9,24 @@ GPLv3, just like all Emacs code.
 You need to use nightly rust.
 
 ```
+$ cd rust_src
 $ rustup override set nightly
 $ cargo build --release
+$ cd ..
+$ ./autogen.sh
+$ ./configure
+```
+
+Modify `src/Makefile` to read:
+
+``` makefile
+LIBS_SYSTEM=-L../rust_src/target/release -lremacs -ldl
+```
+
+Then compile Emacs:
+
+```
+$ make
 ```
 
 ## Understanding Emacs macros:
