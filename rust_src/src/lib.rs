@@ -35,10 +35,9 @@ struct LispSubr {
     doc: *const c_char,
 }
 
-// Use Emacs naming conventions.
-#[allow(non_upper_case_globals)]
-// TODO: load this from globals.h somehow.
-static Qt: i64 = 123;
+extern {
+    static Qt: LispObject;
+}
 
 #[allow(non_snake_case)]
 pub unsafe extern "C" fn Freturn_t() -> LispObject {
