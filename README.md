@@ -1,16 +1,13 @@
 # Rust + Emacs
 
-An experiment in compiling Rust with C.
+An experiment in building porting some Emacs C to Rust.
 
 GPLv3, just like all Emacs code.
 
 ## Building
 
-You need to use nightly rust.
-
 ```
 $ cd rust_src
-$ rustup override set nightly
 $ cargo build --release
 $ cd ..
 $ ./autogen.sh
@@ -53,6 +50,4 @@ $ gcc -Ilib -E src/dummy.c > dummy_exp.c
 
 ## TODOC
 
-* Building (as described in
-  https://bawk.space/2016/10/06/c-to-rust.html )
 * Overriding git hooks (just delete them?)
