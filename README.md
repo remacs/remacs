@@ -2,6 +2,9 @@
 
 An experiment in building porting some Emacs C to Rust.
 
+This codebase is based on the emacs 25.1 tag in git, plus commits to
+add some Rust!
+
 GPLv3, just like all Emacs code.
 
 ## Building
