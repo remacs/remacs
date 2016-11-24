@@ -2573,7 +2573,7 @@ current list, it is used @emph{as well as} the others.
 This tells the tags commands to look at the @file{TAGS} files in your
 @file{~/emacs} directory and in the @file{/usr/local/lib/emacs/src}
 directory.  The order depends on which file you are in and which tags
-table mentions that file, as explained above.
+table mentions that file.
 
   Do not set both @code{tags-file-name} and @code{tags-table-list}.
 
