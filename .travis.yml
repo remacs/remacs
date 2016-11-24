@@ -3,3 +3,6 @@ rust:
   - stable
   - beta
   - nightly
+
+script:
+  - cd rust_src && cargo build --release
