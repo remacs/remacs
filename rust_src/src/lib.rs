@@ -1,5 +1,3 @@
-#![feature(const_fn)]
-
 extern crate libc;
 
 use std::os::raw::c_char;
