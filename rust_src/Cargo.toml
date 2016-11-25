@@ -8,3 +8,11 @@ libc = "0.2.17"
 
 [lib]
 crate-type = ["staticlib"]
+
+# Allow unwinding in functions called from C. See
+# https://www.reddit.com/r/rust/comments/565q1f/wrote_a_blogpost_from_my_experiences_the_arduous/d8h053m/
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
