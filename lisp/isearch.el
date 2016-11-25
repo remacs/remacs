@@ -3328,4 +3328,6 @@ CASE-FOLD non-nil means the search was case-insensitive."
   (isearch-search)
   (isearch-update))
 
+(provide 'isearch)
+
 ;;; isearch.el ends here
