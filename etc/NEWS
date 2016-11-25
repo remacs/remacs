@@ -260,7 +260,7 @@ roster of X keysyms.  It can be used in combination with another
 variable of this kind to swap modifiers in Emacs.
 
 ---
-** New input method: 'cyrillic-tuvan'.
+** New input methods: 'cyrillic-tuvan', 'polish-prefix'.
 
 
 * Editing Changes in Emacs 26.1
