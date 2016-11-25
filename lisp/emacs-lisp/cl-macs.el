@@ -923,6 +923,7 @@ For more details, see Info node `(cl)Loop Facility'.
                                "count" "maximize" "minimize" "if" "unless"
                                "return"]
                           form]
+                         ["using" (symbolp symbolp)]
                          ;; Simple default, which covers 99% of the cases.
                          symbolp form)))
   (if (not (memq t (mapcar #'symbolp
