@@ -2644,4 +2644,6 @@ It must return a string."
 		   "")))
     (or (and keep-going stack) multi-buffer)))
 
+(provide 'replace)
+
 ;;; replace.el ends here

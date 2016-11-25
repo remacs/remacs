@@ -232,4 +232,6 @@ The argument NLINES says how many lines to center."
 	   (setq nlines (1+ nlines))
 	   (forward-line -1)))))
 
+(provide 'text-mode)
+
 ;;; text-mode.el ends here
