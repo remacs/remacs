@@ -171,15 +171,14 @@ args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
 
 
 
-void rust_hello();
+Lisp_Object rust_return_t();
 
 DEFUN ("rust-hello", Frust_hello, Srust_hello, 0, 0, 0,
-       doc: /* Call rust_hello via FFI. */
+       doc: /* Call rust_return_t via FFI. */
        attributes: const)
     ()
 {
-  rust_hello();
-  return Qnil;
+  return rust_return_t();
 }
 
 /* Data type predicates.  */
