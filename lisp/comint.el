@@ -2239,10 +2239,7 @@ the current line with any initial string matching the regexp
              (null (get-char-property (setq bof (field-beginning)) 'field)))
 	(field-string-no-properties bof)
       (comint-bol)
-      (buffer-substring-no-properties (point)
-				      (if comint-use-prompt-regexp
-					  (line-end-position)
-					(field-end))))))
+      (buffer-substring-no-properties (point) (line-end-position)))))
 
 (defun comint-copy-old-input ()
   "Insert after prompt old input at point as new input to be edited.
