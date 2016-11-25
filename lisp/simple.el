@@ -681,7 +681,7 @@ for numeric input."
   (let ((message-log-max nil)
 	(help-events (delq nil (mapcar (lambda (c) (unless (characterp c) c))
 				       help-event-list)))
-	done (first t) (code 0) translated)
+	done (first t) (code 0) char translated)
     (while (not done)
       (let ((inhibit-quit first)
 	    ;; Don't let C-h or other help chars get the help
@@ -693,15 +693,21 @@ for numeric input."
 or the octal character code.
 RET terminates the character code and is discarded;
 any other non-digit terminates the character code and is then used as input."))
-	(setq translated (read-key (and prompt (format "%s-" prompt))))
+	(setq char (read-event (and prompt (format "%s-" prompt)) t))
 	(if inhibit-quit (setq quit-flag nil)))
+      ;; Translate TAB key into control-I ASCII character, and so on.
+      ;; Note: `read-char' does it using the `ascii-character' property.
+      ;; We tried using read-key instead, but that disables the keystroke
+      ;; echo produced by 'C-q', see bug#24635.
+      (let ((translation (lookup-key local-function-key-map (vector char))))
+	(setq translated (if (arrayp translation)
+			     (aref translation 0)
+			   char)))
       (if (integerp translated)
 	  (setq translated (char-resolve-modifiers translated)))
       (cond ((null translated))
 	    ((not (integerp translated))
-	     (setq unread-command-events
-                   (nconc (listify-key-sequence (this-single-command-raw-keys))
-                          unread-command-events)
+	     (setq unread-command-events (list char)
 		   done t))
 	    ((/= (logand translated ?\M-\^@) 0)
 	     ;; Turn a meta-character into a character with the 0200 bit set.
@@ -720,9 +726,7 @@ any other non-digit terminates the character code and is then used as input."))
 	    ((and (not first) (eq translated ?\C-m))
 	     (setq done t))
 	    ((not first)
-	     (setq unread-command-events
-                   (nconc (listify-key-sequence (this-single-command-raw-keys))
-                          unread-command-events)
+	     (setq unread-command-events (list char)
 		   done t))
 	    (t (setq code translated
 		     done t)))
