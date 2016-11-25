@@ -6832,13 +6832,18 @@ With argument ARG, do this that many times."
   (kill-word (- arg)))
 
 (defun current-word (&optional strict really-word)
-  "Return the symbol or word that point is on (or a nearby one) as a string.
+  "Return the word at or near point, as a string.
 The return value includes no text properties.
-If optional arg STRICT is non-nil, return nil unless point is within
-or adjacent to a symbol or word.  In all cases the value can be nil
-if there is no word nearby.
-The function, belying its name, normally finds a symbol.
-If optional arg REALLY-WORD is non-nil, it finds just a word."
+
+If optional arg STRICT is non-nil, return nil unless point is
+within or adjacent to a word, otherwise look for a word within
+point's line.  If there is no word anywhere on point's line, the
+value is nil regardless of STRICT.
+
+By default, this function treats as a single word any sequence of
+characters that have either word or symbol syntax.  If optional
+arg REALLY-WORD is non-nil, only characters of word syntax can
+constitute a word."
   (save-excursion
     (let* ((oldpoint (point)) (start (point)) (end (point))
 	   (syntaxes (if really-word "w" "w_"))
