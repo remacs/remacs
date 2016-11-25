@@ -143,7 +143,7 @@ See variable `eshell-scroll-show-maximum-output' and function
   :type '(radio (const :tag "Do not scroll Eshell windows" nil)
 		(const :tag "Scroll all windows showing the buffer" all)
 		(const :tag "Scroll only the selected window" this)
-		(const :tag "Scroll all windows other than selected" this))
+		(const :tag "Scroll all windows other than selected" others))
   :group 'eshell-mode)
 
 (defcustom eshell-scroll-show-maximum-output t
