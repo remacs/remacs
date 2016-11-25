@@ -9,7 +9,7 @@ type EmacsInt = libc::c_longlong;
 // but it's usually false.
 type LispObject = EmacsInt;
 
-extern {
+extern "C" {
     static Qt: LispObject;
 }
 
