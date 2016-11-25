@@ -1,4 +1,4 @@
-;;; rot13.el --- display a buffer in ROT13
+;;; rot13.el --- display a buffer in ROT13  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1988, 2001-2016 Free Software Foundation, Inc.
 
