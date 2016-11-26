@@ -33,6 +33,7 @@
 ;;; Code:
 
 (require 'pcase)
+(eval-when-compile (require 'cl-lib))
 
 
 (defmacro internal--thread-argument (first? &rest forms)
@@ -146,15 +147,11 @@ to bind a single value, BINDINGS can just be a plain tuple."
 
 (defsubst hash-table-keys (hash-table)
   "Return a list of keys in HASH-TABLE."
-  (let ((keys '()))
-    (maphash (lambda (k _v) (push k keys)) hash-table)
-    keys))
+  (cl-loop for k being the hash-keys of hash-table collect k))
 
 (defsubst hash-table-values (hash-table)
   "Return a list of values in HASH-TABLE."
-  (let ((values '()))
-    (maphash (lambda (_k v) (push v values)) hash-table)
-    values))
+  (cl-loop for v being the hash-values of hash-table collect v))
 
 (defsubst string-empty-p (string)
   "Check whether STRING is empty."
