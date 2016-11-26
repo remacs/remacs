@@ -107,7 +107,8 @@ Each entry is a list with the following elements:
 (defcustom cpp-message-min-time-interval 1.0
   "Minimum time interval in seconds for `cpp-progress-message' messages.
 If nil, `cpp-progress-message' prints no progress messages."
-  :type 'float
+  :type '(choice (const :tag "Disable progress messages" nil)
+                 float)
   :group 'cpp
   :version "26.1")
 
