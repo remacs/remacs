@@ -1330,7 +1330,7 @@ main (int argc, char **argv)
 	    pfatal (tagfile);
 	}
 
-      exit (EXIT_SUCCESS);
+      return EXIT_SUCCESS;
     }
 
   /* From here on, we are in (CTAGS && !cxref_style) */
@@ -1383,7 +1383,7 @@ main (int argc, char **argv)
 	z = stpcpy (z, tagfile);
 	*z++ = ' ';
 	strcpy (z, tagfile);
-	exit (system (cmd));
+	return system (cmd);
       }
   return EXIT_SUCCESS;
 }

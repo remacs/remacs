@@ -85,13 +85,13 @@ main (void)
 	  puts (get_time ());
 	  break;
 	case 'q':
-	  exit (EXIT_SUCCESS);
+	  return EXIT_SUCCESS;
 	}
       /* Anything remaining on the line is ignored.  */
       while (c != '\n' && c != EOF)
 	c = getchar ();
     }
-  exit (EXIT_FAILURE);
+  return EXIT_FAILURE;
 }
 
 

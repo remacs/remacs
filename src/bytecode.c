@@ -46,7 +46,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    indirect threaded, using GCC's computed goto extension.  This code,
    as currently implemented, is incompatible with BYTE_CODE_SAFE and
    BYTE_CODE_METER.  */
-#if (defined __GNUC__ && !defined __STRICT_ANSI__ \
+#if (defined __GNUC__ && !defined __STRICT_ANSI__ && !defined __CHKP__ \
      && !BYTE_CODE_SAFE && !defined BYTE_CODE_METER)
 #define BYTE_CODE_THREADED
 #endif
