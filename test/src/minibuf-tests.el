@@ -394,10 +394,7 @@
 (ert-deftest test-completion-symbol-hashtable-predicate ()
   (minibuf-tests--test-completion-pred
    #'minibuf-tests--strings-to-symbol-hashtable
-   ;; The predicate recieves a string as the key in this case.
-   (lambda (table)
-     (let ((in-table (minibuf-tests--part-of-hashtable table)))
-       (lambda (k v) (funcall in-table (intern k) v))))))
+   #'minibuf-tests--part-of-hashtable))
 (ert-deftest test-completion-symbol-hashtable-completion-regexp ()
   (minibuf-tests--test-completion-regexp
    #'minibuf-tests--strings-to-symbol-hashtable))
