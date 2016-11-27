@@ -2924,11 +2924,8 @@ usage: (logxor &rest INTS-OR-MARKERS)  */)
   return arith_driver (Alogxor, nargs, args);
 }
 
-DEFUN ("ash", Fash, Sash, 2, 2, 0,
-       doc: /* Return VALUE with its bits shifted left by COUNT.
-If COUNT is negative, shifting is actually to the right.
-In this case, the sign bit is duplicated.  */)
-  (register Lisp_Object value, Lisp_Object count)
+static Lisp_Object
+ash_lsh_impl (register Lisp_Object value, Lisp_Object count, bool lsh)
 {
   register Lisp_Object val;
 
@@ -2940,10 +2937,20 @@ In this case, the sign bit is duplicated.  */)
   else if (XINT (count) > 0)
     XSETINT (val, XUINT (value) << XFASTINT (count));
   else if (XINT (count) <= -EMACS_INT_WIDTH)
-    XSETINT (val, XINT (value) < 0 ? -1 : 0);
+    XSETINT (val, lsh ? 0 : XINT (value) < 0 ? -1 : 0);
   else
-    XSETINT (val, XINT (value) >> -XINT (count));
+    XSETINT (val, lsh ? XUINT (value) >> -XINT (count) : \
+                        XINT (value) >> -XINT (count));
   return val;
+}
+
+DEFUN ("ash", Fash, Sash, 2, 2, 0,
+       doc: /* Return VALUE with its bits shifted left by COUNT.
+If COUNT is negative, shifting is actually to the right.
+In this case, the sign bit is duplicated.  */)
+  (register Lisp_Object value, Lisp_Object count)
+{
+  return ash_lsh_impl (value, count, false);
 }
 
 DEFUN ("lsh", Flsh, Slsh, 2, 2, 0,
@@ -2952,20 +2959,7 @@ If COUNT is negative, shifting is actually to the right.
 In this case, zeros are shifted in on the left.  */)
   (register Lisp_Object value, Lisp_Object count)
 {
-  register Lisp_Object val;
-
-  CHECK_NUMBER (value);
-  CHECK_NUMBER (count);
-
-  if (XINT (count) >= EMACS_INT_WIDTH)
-    XSETINT (val, 0);
-  else if (XINT (count) > 0)
-    XSETINT (val, XUINT (value) << XFASTINT (count));
-  else if (XINT (count) <= -EMACS_INT_WIDTH)
-    XSETINT (val, 0);
-  else
-    XSETINT (val, XUINT (value) >> -XINT (count));
-  return val;
+  return ash_lsh_impl (value, count, true);
 }
 
 DEFUN ("1+", Fadd1, Sadd1, 1, 1, 0,
