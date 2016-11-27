@@ -1686,8 +1686,6 @@ the values STRING, PREDICATE and `lambda'.  */)
       tem = Fassoc_string (string, collection, completion_ignore_case ? Qt : Qnil);
       if (NILP (tem))
 	return Qnil;
-      else if (CONSP (tem))
-        tem = XCAR (tem);
     }
   else if (VECTORP (collection))
     {
@@ -1770,9 +1768,9 @@ the values STRING, PREDICATE and `lambda'.  */)
       for (regexps = Vcompletion_regexp_list; CONSP (regexps);
 	   regexps = XCDR (regexps))
 	{
-	  if (NILP (Fstring_match (XCAR (regexps),
-				   SYMBOLP (tem) ? string : tem,
-				   Qnil)))
+          /* We can test against STRING, because if we got here, then
+             the element is equivalent to it.  */
+          if (NILP (Fstring_match (XCAR (regexps), string, Qnil)))
 	    return unbind_to (count, Qnil);
 	}
       unbind_to (count, Qnil);
