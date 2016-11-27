@@ -3567,14 +3567,22 @@ kbd_buffer_store_buffered_event (union buffered_input_event *event,
 #endif	/* subprocesses */
     }
 
+  Lisp_Object ignore_event = Qnil;
+
+  switch (event->kind)
+    {
+    case FOCUS_IN_EVENT: ignore_event = Qfocus_in; break;
+    case FOCUS_OUT_EVENT: ignore_event = Qfocus_out; break;
+    case HELP_EVENT: ignore_event = Qhelp; break;
+    case ICONIFY_EVENT: ignore_event = Qiconify; break;
+    case DEICONIFY_EVENT: ignore_event = Qdeiconify; break;
+    case SELECTION_REQUEST_EVENT: ignore_event = Qselection_request; break;
+    }
+
   /* If we're inside while-no-input, and this event qualifies
      as input, set quit-flag to cause an interrupt.  */
   if (!NILP (Vthrow_on_input)
-      && event->kind != FOCUS_IN_EVENT
-      && event->kind != FOCUS_OUT_EVENT
-      && event->kind != HELP_EVENT
-      && event->kind != ICONIFY_EVENT
-      && event->kind != DEICONIFY_EVENT)
+      && !NILP (Fmemq (ignore_event, Vwhile_no_input_ignore_events)))
     {
       Vquit_flag = Vthrow_on_input;
       /* If we're inside a function that wants immediate quits,
@@ -11164,6 +11172,10 @@ syms_of_keyboard (void)
   DEFSYM (Qiconify_frame, "iconify-frame");
   DEFSYM (Qmake_frame_visible, "make-frame-visible");
   DEFSYM (Qselect_window, "select-window");
+  DEFSYM (Qhelp, "help");
+  DEFSYM (Qiconify, "iconify");
+  DEFSYM (Qdeiconify, "deiconify");
+  DEFSYM (Qselection_request, "selection-request");
   {
     int i;
 
@@ -11822,6 +11834,11 @@ signals.  */);
 
   /* Create the initial keyboard.  Qt means 'unset'.  */
   initial_kboard = allocate_kboard (Qt);
+
+  DEFVAR_LISP ("while-no-input-ignore-events",
+               Vwhile_no_input_ignore_events,
+               doc: /* Ignored events from while-no-input.  */);
+  Vwhile_no_input_ignore_events = Qnil;
 }
 
 void

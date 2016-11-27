@@ -610,6 +610,10 @@ function 'check-declare-errmsg' has been removed.
 
 * Lisp Changes in Emacs 26.1
 
+** New variable 'while-no-input-ignore-events' which allow
+setting which special events 'while-no-input' should ignore.
+It is a list of symbols.
+
 ** New function 'undo-amalgamate-change-group' to get rid of
 undo-boundaries between two states.
 
