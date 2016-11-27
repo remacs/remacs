@@ -1,3 +1,84 @@
+2016-11-26  Karl Fogel  <kfogel@red-bean.com>
+
+	Handle TeX comments when making new paragraph
+
+	* lisp/textmodes/tex-mode.el (tex-handle-newline): New function.
+	  Handle comment case directly, and dispatch to `tex-terminate-paragraph'
+	  for original behavior in non-comment case.
+	  (tex-mode-map): Bind above to C-j, replacing `tex-terminate-paragraph'.
+
+2016-11-25  Eli Zaretskii  <eliz@gnu.org>
+
+	Restore keystroke echo in 'C-q'
+
+	* lisp/simple.el (read-quoted-char): Use 'read-event' instead of
+	'read-key', to avoid losing the keystroke echo in 'C-q'.  (Bug#24635)
+
+2016-11-25  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of 'current-word'
+
+	* lisp/simple.el (current-word): Clarify and improve the doc
+	string.  (Bug#24979)
+
+2016-11-25  Chunyang Xu  <mail@xuchunyang.me>
+
+	Fix a typo in an Eshell defcustom
+
+	* lisp/eshell/esh-mode.el (eshell-scroll-to-bottom-on-output): Fix
+	a typo in the 'others' standard value.  (Bug#24983)
+
+2016-11-24  Hong Xu  <hong@topbug.net>  (tiny change)
+
+	Minor copyedits of electric-pair-mode
+
+	* doc/emacs/programs.texi (Matching): Add index entries.  Fix
+	typos.  (Bug#25012)
+
+2016-11-24  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix documentation of 'invocation-directory'
+
+	* doc/lispref/os.texi (System Environment): Fix wording of the
+	description of 'invocation-directory'.  (Bug#24999)
+
+2016-11-23  Glenn Morris  <rgm@gnu.org>
+
+	* admin/authors.el (authors-aliases): Add an entry.
+
+2016-11-22  Philipp Stephani  <phst@google.com>
+
+	Guard terminal parameter in XTerm mouse mode
+
+	It has been observed (in the HTerm terminal emulator) that the
+	event stored in the 'xterm-mouse-last-down' terminal parameter gets
+	overwritten during a mouse drag operation, causing Emacs to attempt to
+	synthesize the non-existing <drag-mouse-0> event.  Copy the event into
+	the terminal parameter to protect against such modifications.
+
+	* lisp/xt-mouse.el (xterm-mouse-translate-1): Guard against modification
+	of input event list.
+
+2016-11-21  Nicolas Petton  <nicolas@petton.fr>
+
+	* etc/AUTHORS: Regenerate the AUTHORS file
+
+2016-11-21  Nicolas Petton  <nicolas@petton.fr>
+
+	Update ChangeLog files and authors.el
+
+	* admin/authors.el (authors-renamed-files-alist): Add entries for
+	  obsolete files.
+	* ChangeLog.2: Update.
+
+2016-11-21  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix menu bindings of Dired 'A' and 'Q' commands
+
+	* lisp/dired.el (dired-mode-map): Rebind "Search Files" and "Query
+	Replace in Files" menu items to 'dired-do-find-regexp' and
+	'dired-do-find-regexp-and-replace', respectively.  (Bug#24977)
+
 2016-11-20  Eli Zaretskii  <eliz@gnu.org>
 
 	Avoid errors in shr-pixel-column due to dedicated windows
@@ -34844,7 +34925,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit a725592db8824bb97d07e3897e800eee946757a3 (inclusive).
+commit 93c0f5126a50a0b1267ba74c444701af9ad46dc6 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
