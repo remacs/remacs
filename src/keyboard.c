@@ -3573,9 +3573,9 @@ kbd_buffer_store_buffered_event (union buffered_input_event *event,
     {
     case FOCUS_IN_EVENT: ignore_event = Qfocus_in; break;
     case FOCUS_OUT_EVENT: ignore_event = Qfocus_out; break;
-    case HELP_EVENT: ignore_event = Qhelp; break;
-    case ICONIFY_EVENT: ignore_event = Qiconify; break;
-    case DEICONIFY_EVENT: ignore_event = Qdeiconify; break;
+    case HELP_EVENT: ignore_event = Qhelp_echo; break;
+    case ICONIFY_EVENT: ignore_event = Qiconify_frame; break;
+    case DEICONIFY_EVENT: ignore_event = Qmake_frame_visible; break;
     case SELECTION_REQUEST_EVENT: ignore_event = Qselection_request; break;
     }
 
@@ -11172,9 +11172,6 @@ syms_of_keyboard (void)
   DEFSYM (Qiconify_frame, "iconify-frame");
   DEFSYM (Qmake_frame_visible, "make-frame-visible");
   DEFSYM (Qselect_window, "select-window");
-  DEFSYM (Qhelp, "help");
-  DEFSYM (Qiconify, "iconify");
-  DEFSYM (Qdeiconify, "deiconify");
   DEFSYM (Qselection_request, "selection-request");
   {
     int i;
