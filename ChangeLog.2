@@ -1,3 +1,45 @@
+2016-11-28  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix 'expand-file-name' during startup on MS-Windows
+
+	* src/w32.c (w32_init_file_name_codepage): New function, resets
+	file_name_codepage and w32_ansi_code_page to undo the values
+	recorded during dumping.
+	(codepage_for_filenames): Fix an embarrassing typo.  Ignore the
+	cached value of file-name encoding if it is nil, i.e. not
+	initialized yet.  Actually cache the last used file-name encoding
+	to avoid calling APIs when not necessary.
+
+	* src/w32.h (w32_init_file_name_codepage): Add prototype.
+
+	* src/w32term.c (syms_of_w32term): Set the value of
+	w32_unicode_filenames according to the OS version.  This avoids
+	resetting it during startup, which then causes temacs to run with
+	the incorrect value.
+
+	* src/emacs.c (main): Call w32_init_file_name_codepage early
+	during the startup.
+
+	* src/fileio.c (Fexpand_file_name) [WINDOWSNT]: Update 'newdir'
+	after converting $HOME to a UTF-8 string, so that 'newdirlim' is
+	consistent with it.  (Bug#25038)
+
+	* lisp/international/mule-cmds.el (set-locale-environment): Set
+	'default-file-name-coding-system' to the ANSI codepage even in
+	non-interactive sessions.
+
+	* lisp/files.el (directory-abbrev-alist, abbreviated-home-dir):
+	Doc fix.
+	(abbreviate-file-name): Decode 'abbreviated-home-dir' if it is a
+	unibyte string.
+
+	* doc/lispref/files.texi (Directory Names): Index
+	'directory-abbrev-alist'.
+
+2016-11-28  Nicolas Petton  <nicolas@petton.fr>
+
+	* admin/authors.el (authors-renamed-files-alist): Addition.
+
 2016-11-28  Glenn Morris  <rgm@gnu.org>
 
 	Tweak refcard note about documentation location
@@ -34968,7 +35010,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 6d27423d381c3496e76e8d57e0d81841cdde0815 (inclusive).
+commit 5878abf87b6b3ead1367cbae5cc6b0743349f611 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
