@@ -3567,7 +3567,7 @@ kbd_buffer_store_buffered_event (union buffered_input_event *event,
 #endif	/* subprocesses */
     }
 
-  Lisp_Object ignore_event = Qnil;
+  Lisp_Object ignore_event;
 
   switch (event->kind)
     {
@@ -3577,6 +3577,7 @@ kbd_buffer_store_buffered_event (union buffered_input_event *event,
     case ICONIFY_EVENT: ignore_event = Qiconify_frame; break;
     case DEICONIFY_EVENT: ignore_event = Qmake_frame_visible; break;
     case SELECTION_REQUEST_EVENT: ignore_event = Qselection_request; break;
+    default: ignore_event = Qnil; break;
     }
 
   /* If we're inside while-no-input, and this event qualifies
