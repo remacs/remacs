@@ -2065,14 +2065,13 @@ For use in `add-log-current-defun-function'."
   (require 'smerge-mode)
   (save-excursion
     (let* ((hunk-bounds (diff-bounds-of-hunk))
-           (style (diff-hunk-style))    ;Skips the hunk header as well.
+           (style (progn (goto-char (car hunk-bounds))
+                         (diff-hunk-style))) ;Skips the hunk header as well.
            (beg (point))
+           (end (cadr hunk-bounds))
            (props-c '((diff-mode . fine) (face diff-refine-changed)))
            (props-r '((diff-mode . fine) (face diff-refine-removed)))
-           (props-a '((diff-mode . fine) (face diff-refine-added)))
-           ;; Be careful to go back to `start' so diff-end-of-hunk gets
-           ;; to read the hunk header's line info.
-           (end (goto-char (cadr hunk-bounds))))
+           (props-a '((diff-mode . fine) (face diff-refine-added))))
 
       (remove-overlays beg end 'diff-mode 'fine)
 
