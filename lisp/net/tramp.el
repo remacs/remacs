@@ -4218,7 +4218,8 @@ Invokes `password-read' if available, `read-passwd' else."
 			  (setq auth-info
 				(auth-source-search
 				 :max 1
-				 :user (or tramp-current-user t)
+				 (and tramp-current-user :user)
+				      tramp-current-user
 				 :host tramp-current-host
 				 :port tramp-current-method
 				 :require
@@ -4262,7 +4263,7 @@ Invokes `password-read' if available, `read-passwd' else."
     ;; since Emacs 24.1, it has been replaced by `auth-source-forget'.
     (if (fboundp 'auth-source-forget)
 	(auth-source-forget
-	 `(:max 1 :user ,(or user t) :host ,host :port ,method))
+	 `(:max 1 ,(and user :user) ,user :host ,host :port ,method))
       (tramp-compat-funcall
        'auth-source-forget-user-or-password "password" host method))
     (password-cache-remove (tramp-make-tramp-file-name method user host ""))))
