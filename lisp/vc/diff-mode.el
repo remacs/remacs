@@ -2065,7 +2065,6 @@ For use in `add-log-current-defun-function'."
   (require 'smerge-mode)
   (save-excursion
     (let* ((hunk-bounds (diff-bounds-of-hunk))
-           (start (goto-char (car hunk-bounds)))
            (style (diff-hunk-style))    ;Skips the hunk header as well.
            (beg (point))
            (props-c '((diff-mode . fine) (face diff-refine-changed)))
