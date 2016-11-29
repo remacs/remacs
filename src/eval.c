@@ -1057,11 +1057,11 @@ usage: (catch TAG BODY...)  */)
   return internal_catch (tag, Fprogn, XCDR (args));
 }
 
-/* Assert that E is true, as a comment only.  Use this instead of
+/* Assert that E is true, but do not evaluate E.  Use this instead of
    eassert (E) when E contains variables that might be clobbered by a
    longjmp.  */
 
-#define clobbered_eassert(E) ((void) 0)
+#define clobbered_eassert(E) verify (sizeof (E) != 0)
 
 /* Set up a catch, then call C function FUNC on argument ARG.
    FUNC should return a Lisp_Object.
