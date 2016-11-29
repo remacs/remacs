@@ -2112,18 +2112,8 @@ struct Lisp_Overlay
     Lisp_Object plist;
   };
 
-/* Types of data which may be saved in a Lisp_Save_Value.  */
-
-enum
-  {
-    SAVE_UNUSED,
-    SAVE_INTEGER,
-    SAVE_FUNCPOINTER,
-    SAVE_POINTER,
-    SAVE_OBJECT
-  };
-
-/* Number of bits needed to store one of the above values.  */
+/* Number of bits needed to store one of the values
+   SAVE_UNUSED..SAVE_OBJECT.  */
 enum { SAVE_SLOT_BITS = 3 };
 
 /* Number of slots in a save value where save_type is nonzero.  */
@@ -2133,8 +2123,15 @@ enum { SAVE_VALUE_SLOTS = 4 };
 
 enum { SAVE_TYPE_BITS = SAVE_VALUE_SLOTS * SAVE_SLOT_BITS + 1 };
 
+/* Types of data which may be saved in a Lisp_Save_Value.  */
+
 enum Lisp_Save_Type
   {
+    SAVE_UNUSED,
+    SAVE_INTEGER,
+    SAVE_FUNCPOINTER,
+    SAVE_POINTER,
+    SAVE_OBJECT,
     SAVE_TYPE_INT_INT = SAVE_INTEGER + (SAVE_INTEGER << SAVE_SLOT_BITS),
     SAVE_TYPE_INT_INT_INT
       = (SAVE_INTEGER + (SAVE_TYPE_INT_INT << SAVE_SLOT_BITS)),
@@ -2151,6 +2148,12 @@ enum Lisp_Save_Type
     /* This has an extra bit indicating it's raw memory.  */
     SAVE_TYPE_MEMORY = SAVE_TYPE_PTR_INT + (1 << (SAVE_TYPE_BITS - 1))
   };
+
+/* SAVE_SLOT_BITS must be large enough to represent these values.  */
+verify (((SAVE_UNUSED | SAVE_INTEGER | SAVE_FUNCPOINTER
+	  | SAVE_POINTER | SAVE_OBJECT)
+	 >> SAVE_SLOT_BITS)
+	== 0);
 
 /* Special object used to hold a different values for later use.
 
