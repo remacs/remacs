@@ -1917,7 +1917,7 @@ flags that control whether to collect or render objects."
   ;; FLAGS becomes (t . nil) if a <tr> clause is found in the children
   ;; of DOM, and becomes (t . t) if a <td> or a <th> clause is found
   ;; and the car is t then.  When a <table> clause is found, FLAGS
-  ;; becomes nil if the cdr is t then.  But if the cdr is nil then,
+  ;; becomes nil if the cdr is t then.  But if FLAGS is (t . nil) then,
   ;; it renders the <table>.
   (cl-loop for child in (dom-children dom) with recurse with tag
 	   do (setq recurse nil)
@@ -1945,10 +1945,10 @@ flags that control whether to collect or render objects."
 		 else if (eq tag 'table)
 		   if (cdr flags)
 		     do (setq flags nil)
-		   else
+		   else if (car flags)
 		     do (setq recurse nil)
 			(shr-tag-table child)
-		   end end end end end end end end end
+		   end end end end end end end end end end
 	   when recurse
 	     append (shr-collect-extra-strings-in-table child flags)))
 
