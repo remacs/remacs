@@ -3583,7 +3583,7 @@ kbd_buffer_store_buffered_event (union buffered_input_event *event,
   /* If we're inside while-no-input, and this event qualifies
      as input, set quit-flag to cause an interrupt.  */
   if (!NILP (Vthrow_on_input)
-      && !NILP (Fmemq (ignore_event, Vwhile_no_input_ignore_events)))
+      && NILP (Fmemq (ignore_event, Vwhile_no_input_ignore_events)))
     {
       Vquit_flag = Vthrow_on_input;
       /* If we're inside a function that wants immediate quits,
