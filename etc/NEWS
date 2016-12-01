@@ -485,6 +485,13 @@ Linum mode and all similar packages are henceforth becoming obsolete.
 Users and developers are encouraged to switch to this new feature
 instead.
 
++++
+** emacsclient now accepts command-line options in ALTERNATE_EDITOR
+and --alternate-editor. For example, ALTERNATE_EDITOR="emacs -Q -nw".
+Arguments may be quoted "like this", so that for example an absolute
+path containing a space may be specified; quote escaping is not
+supported.
+
 
 * Editing Changes in Emacs 26.1
 
