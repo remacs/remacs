@@ -2628,19 +2628,32 @@ f-src/entry.strange,172
      & intensity1(577,12231
        character*(*) function foo(579,12307
 
-forth-src/test-forth.fth,408
-: a-forth-word 20,301
+forth-src/test-forth.fth,733
+: a-forth-word20,301
 99 constant a-forth-constant!22,343
 55 value a-forth-value?23,373
 create :a-forth-dictionary-entry24,397
 defer #a-defer-word27,460
-: (another-forth-word)(another-forth-word29,481
+: (another-forth-word)(another-forth-word)29,481
    9   field   >field136,582
    5   field   >field237,605
 constant (a-forth-constant(a-forth-constant38,628
 2000 buffer: #some-storage41,657
-code assemby-code-word 43,685
-: a-forth-word 50,870
+code assemby-code-word43,685
+: a-forth-word50,870
+: (foo)(foo)55,988
+: foo56,1000
+: create-bar58,1015
+3 4 2constant 2const61,1074
+2const 2value 2val62,1095
+2variable 2var63,1114
+3.1415e fconstant fconst65,1130
+fconst fvalue fval66,1155
+fvariable fvar67,1174
+synonym mypi69,1190
+BEGIN-STRUCTURE point71,1211
+  1 CELLS +FIELD p.x72,1262
+  1 CELLS +FIELD p.y73,1318
 
 go-src/test.go,48
 package main1,0

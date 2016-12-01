@@ -5469,16 +5469,37 @@ Forth_words (FILE *inf)
 	do			/* skip to ) or eol */
 	  bp++;
 	while (*bp != ')' && *bp != '\0');
-      else if ((bp[0] == ':' && c_isspace (bp[1]) && bp++)
-	       || LOOKING_AT_NOCASE (bp, "constant")
-	       || LOOKING_AT_NOCASE (bp, "code")
-	       || LOOKING_AT_NOCASE (bp, "create")
-	       || LOOKING_AT_NOCASE (bp, "defer")
-	       || LOOKING_AT_NOCASE (bp, "value")
-	       || LOOKING_AT_NOCASE (bp, "variable")
-	       || LOOKING_AT_NOCASE (bp, "buffer:")
-	       || LOOKING_AT_NOCASE (bp, "field"))
-	get_tag (skip_spaces (bp), NULL); /* Yay!  A definition! */
+      else if (((bp[0] == ':' && c_isspace (bp[1]) && bp++)
+		|| LOOKING_AT_NOCASE (bp, "constant")
+		|| LOOKING_AT_NOCASE (bp, "2constant")
+		|| LOOKING_AT_NOCASE (bp, "fconstant")
+		|| LOOKING_AT_NOCASE (bp, "code")
+		|| LOOKING_AT_NOCASE (bp, "create")
+		|| LOOKING_AT_NOCASE (bp, "defer")
+		|| LOOKING_AT_NOCASE (bp, "value")
+		|| LOOKING_AT_NOCASE (bp, "2value")
+		|| LOOKING_AT_NOCASE (bp, "fvalue")
+		|| LOOKING_AT_NOCASE (bp, "variable")
+		|| LOOKING_AT_NOCASE (bp, "2variable")
+		|| LOOKING_AT_NOCASE (bp, "fvariable")
+		|| LOOKING_AT_NOCASE (bp, "buffer:")
+		|| LOOKING_AT_NOCASE (bp, "field:")
+		|| LOOKING_AT_NOCASE (bp, "+field")
+		|| LOOKING_AT_NOCASE (bp, "field") /* not standard? */
+		|| LOOKING_AT_NOCASE (bp, "begin-structure")
+		|| LOOKING_AT_NOCASE (bp, "synonym")
+		)
+	       && c_isspace (bp[0]))
+	{
+	  /* Yay!  A definition! */
+	  char* name_start = skip_spaces (bp);
+	  char* name_end = skip_non_spaces (name_start);
+	  if (name_start < name_end)
+	    make_tag (name_start, name_end - name_start,
+		      true, lb.buffer, name_end - lb.buffer,
+		      lineno, linecharno);
+	  bp = name_end;
+	}
       else
 	bp = skip_non_spaces (bp);
 }

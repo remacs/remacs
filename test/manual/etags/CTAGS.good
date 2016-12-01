@@ -36,7 +36,8 @@ ${CHECKOBJS}	make-src/Makefile	/^${CHECKOBJS}: CFLAGS=-g3 -DNULLFREECHECK=0$/
 ($prog,$_,@list	perl-src/yagrip.pl	39
 ($string,$flag,@string,@temp,@last	perl-src/yagrip.pl	40
 (a-forth-constant	forth-src/test-forth.fth	/^constant (a-forth-constant$/
-(another-forth-word	forth-src/test-forth.fth	/^: (another-forth-word) ( -- )$/
+(another-forth-word)	forth-src/test-forth.fth	/^: (another-forth-word) ( -- )$/
+(foo)	forth-src/test-forth.fth	/^: (foo) 1 ;$/
 +	ruby-src/test.rb	/^        def +(y)$/
 +	tex-src/texinfo.tex	/^\\def+{{\\tt \\char 43}}$/
 .PRECIOUS	make-src/Makefile	/^.PRECIOUS: ETAGS CTAGS ETAGS16 CTAGS16 ETAGS17 CTA/
@@ -170,6 +171,9 @@ ${CHECKOBJS}	make-src/Makefile	/^${CHECKOBJS}: CFLAGS=-g3 -DNULLFREECHECK=0$/
 /wbytes	ps-src/rfc1245.ps	/^\/wbytes { $/
 /wh	ps-src/rfc1245.ps	/^\/wh { $/
 /yen	ps-src/rfc1245.ps	/^\/yen \/.notdef \/.notdef \/.notdef \/.notdef \/.notdef /
+2const	forth-src/test-forth.fth	/^3 4 2constant 2const$/
+2val	forth-src/test-forth.fth	/^2const 2value 2val$/
+2var	forth-src/test-forth.fth	/^2variable 2var$/
 :a-forth-dictionary-entry	forth-src/test-forth.fth	/^create :a-forth-dictionary-entry$/
 <	tex-src/texinfo.tex	/^\\def<{{\\tt \\less}}$/
 <<	ruby-src/test.rb	/^        def <<(y)$/
@@ -2725,6 +2729,7 @@ counter	cp-src/c.C	36
 cow	cp-src/c.C	127
 cow	cp-src/c.C	131
 cplpl	c-src/etags.c	2935
+create-bar	forth-src/test-forth.fth	/^: create-bar foo ;$/
 createPOEntries	php-src/lce_functions.php	/^      function createPOEntries()$/
 createWidgets	pyt-src/server.py	/^    def createWidgets(self, host):$/
 createWidgets	pyt-src/server.py	/^    def createWidgets(self):$/
@@ -2944,6 +2949,7 @@ fastmap	c-src/emacs/src/regex.h	355
 fastmap_accurate	c-src/emacs/src/regex.h	383
 fatal	c-src/etags.c	/^fatal (const char *s1, const char *s2)$/
 fatala	c.c	/^void fatala () __attribute__ ((noreturn));$/
+fconst	forth-src/test-forth.fth	/^3.1415e fconstant fconst$/
 fdHandler	objc-src/Subprocess.m	/^- fdHandler:(int)theFd$/
 fdHandler	objc-src/Subprocess.m	/^fdHandler (int theFd, id self)$/
 fdefunkey	c-src/etags.c	2409
@@ -3015,6 +3021,7 @@ foo	cp-src/x.cc	/^XX::foo()$/
 foo	f-src/entry.for	/^       character*(*) function foo()$/
 foo	f-src/entry.strange_suffix	/^       character*(*) function foo()$/
 foo	f-src/entry.strange	/^       character*(*) function foo()$/
+foo	forth-src/test-forth.fth	/^: foo (foo) ;$/
 foo	php-src/ptest.php	/^foo()$/
 foo	ruby-src/test1.ru	/^    attr_reader :foo$/
 foo!	ruby-src/test1.ru	/^    def foo!$/
@@ -3057,6 +3064,8 @@ function	c-src/emacs/src/lisp.h	694
 function	c-src/emacs/src/lisp.h	1685
 function	c-src/emacs/src/lisp.h	2197
 functionp	c-src/emacs/src/lisp.h	/^functionp (Lisp_Object object)$/
+fval	forth-src/test-forth.fth	/^fconst fvalue fval$/
+fvar	forth-src/test-forth.fth	/^fvariable fvar$/
 fvdef	c-src/etags.c	2418
 fvextern	c-src/etags.c	2420
 fvnameseen	c-src/etags.c	2412
@@ -3515,6 +3524,7 @@ my_struct	c.c	226
 my_struct	c-src/h.h	91
 my_typedef	c.c	228
 my_typedef	c-src/h.h	93
+mypi	forth-src/test-forth.fth	/^synonym mypi fconst$/
 n	c-src/exit.c	28
 n	c-src/exit.strange_suffix	28
 name	c-src/getopt.h	76
@@ -3719,6 +3729,8 @@ outputtable	html-src/algrthms.html	/^Output$/
 outsyn	prol-src/natded.prolog	/^outsyn(['Any'],_).$/
 p	c-src/emacs/src/lisp.h	4673
 p	c-src/emacs/src/lisp.h	4679
+p.x	forth-src/test-forth.fth	/^  1 CELLS +FIELD p.x    \\ A single cell filed name/
+p.y	forth-src/test-forth.fth	/^  1 CELLS +FIELD p.y    \\ A single cell field name/
 p/f	ada-src/etags-test-for.ada	/^   function p pragma Import (C,$/
 p/f	ada-src/etags-test-for.ada	/^function p ("p");$/
 pD	c-src/emacs/src/lisp.h	165
@@ -3767,6 +3779,7 @@ plist	c-src/emacs/src/lisp.h	697
 plus	cp-src/functions.cpp	/^void Date::plus ( int days , int month , int year /
 plus	go-src/test1.go	5
 plusvalseq	prol-src/natded.prolog	/^plusvalseq([]) --> [].$/
+point	forth-src/test-forth.fth	/^BEGIN-STRUCTURE point \\ create the named structure/
 pointer	c-src/emacs/src/lisp.h	2125
 poll_for_input	c-src/emacs/src/keyboard.c	/^poll_for_input (struct atimer *timer)$/
 poll_for_input_1	c-src/emacs/src/keyboard.c	/^poll_for_input_1 (void)$/
