@@ -4725,7 +4725,7 @@ editing and the result is evaluated.
 \(fn &optional PATTERN)" t nil)
 
 (autoload 'list-command-history "chistory" "\
-List history of commands typed to minibuffer.
+List history of commands that used the minibuffer.
 The number of commands listed is controlled by `list-command-history-max'.
 Calls value of `list-command-history-filter' (if non-nil) on each history
 element to judge if that element should be excluded from the list.
@@ -6383,7 +6383,10 @@ Expands to the most recent, preceding word for which this is a prefix.
 If no suitable preceding word is found, words following point are
 considered.  If still no suitable word is found, then look in the
 buffers accepted by the function pointed out by variable
-`dabbrev-friend-buffer-function'.
+`dabbrev-friend-buffer-function', if `dabbrev-check-other-buffers'
+says so.  Then, if `dabbrev-check-all-buffers' is non-nil, look in
+all the other buffers, subject to constraints specified
+by `dabbrev-ignored-buffer-names' and `dabbrev-ignored-regexps'.
 
 A positive prefix argument, N, says to take the Nth backward *distinct*
 possibility.  A negative argument says search forward.
@@ -8520,6 +8523,7 @@ Run hooks in `electric-buffer-menu-mode-hook' on entry.
 \\[Buffer-menu-save] -- mark that buffer to be saved.
 \\[Buffer-menu-delete] or \\[Buffer-menu-delete-backwards] -- mark that buffer to be deleted.
 \\[Buffer-menu-unmark] -- remove all kinds of marks from current line.
+\\[Buffer-menu-unmark-all] -- remove all kinds of marks from all lines.
 \\[Electric-buffer-menu-mode-view-buffer] -- view buffer, returning when done.
 \\[Buffer-menu-backup-unmark] -- back up a line and remove marks.
 
@@ -12356,7 +12360,54 @@ Copy directory-local variables to the -*- line.
 
 \(fn)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "files-x" '("modify-" "read-file-local-variable")))
+(defvar enable-connection-local-variables t "\
+Non-nil means enable use of connection-local variables.")
+
+(autoload 'connection-local-set-classes "files-x" "\
+Add CLASSES for remote servers.
+CRITERIA is either a regular expression identifying a remote
+server, or a function with one argument IDENTIFICATION, which
+returns non-nil when a remote server shall apply CLASS'es
+variables.  If CRITERIA is nil, it always applies.
+CLASSES are the names of a variable class (a symbol).
+
+When a connection to a remote server is opened and CRITERIA
+matches to that server, the connection-local variables from CLASSES
+are applied to the corresponding process buffer.  The variables
+for a class are defined using `connection-local-set-class-variables'.
+
+\(fn CRITERIA &rest CLASSES)" nil nil)
+
+(autoload 'connection-local-set-class-variables "files-x" "\
+Map the symbol CLASS to a list of variable settings.
+VARIABLES is a list that declares connection-local variables for
+the class.  An element in VARIABLES is an alist whose elements
+are of the form (VAR . VALUE).
+
+When a connection to a remote server is opened, the server's
+classes are found.  A server may be assigned a class using
+`connection-local-set-class'.  Then variables are set in the
+server's process buffer according to the VARIABLES list of the
+class.  The list is processed in order.
+
+\(fn CLASS VARIABLES)" nil nil)
+
+(autoload 'hack-connection-local-variables-apply "files-x" "\
+Apply connection-local variables identified by `default-directory'.
+Other local variables, like file-local and dir-local variables,
+will not be changed.
+
+\(fn)" nil nil)
+
+(autoload 'with-connection-local-classes "files-x" "\
+Apply connection-local variables according to CLASSES in current buffer.
+Execute BODY, and unwind connection local variables.
+
+\(fn CLASSES &rest BODY)" nil t)
+
+(function-put 'with-connection-local-classes 'lisp-indent-function '1)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "files-x" '("hack-connection-local-variables" "connection-local-" "modify-" "read-file-local-variable")))
 
 ;;;***
 
@@ -24287,9 +24338,9 @@ any kind of error.
 (function-put 'pcase-let 'lisp-indent-function '1)
 
 (autoload 'pcase-dolist "pcase" "\
+Like `dolist' but where the binding can be a `pcase' pattern.
 
-
-\(fn SPEC &rest BODY)" nil t)
+\(fn (PATTERN LIST) BODY...)" nil t)
 
 (function-put 'pcase-dolist 'lisp-indent-function '1)
 
@@ -27686,7 +27737,10 @@ Start using robin package NAME, which is a string.
 ;;; Generated autoloads from rot13.el
 
 (autoload 'rot13 "rot13" "\
-Return ROT13 encryption of OBJECT, a buffer or string.
+ROT13 encrypt OBJECT, a buffer or string.
+If OBJECT is a buffer, encrypt the region between START and END.
+If OBJECT is a string, encrypt it in its entirety, ignoring START
+and END, and return the encrypted string.
 
 \(fn OBJECT &optional START END)" nil nil)
 
@@ -33173,7 +33227,7 @@ TIME should be either a time value or a date-time string.
 
 \(fn TIME)" nil nil)
 
-(define-obsolete-function-alias 'subtract-time 'time-subtract "25.2")
+(define-obsolete-function-alias 'subtract-time 'time-subtract "26.1")
 
 (autoload 'date-to-day "time-date" "\
 Return the number of days between year 1 and DATE.
@@ -33735,21 +33789,11 @@ On W32 systems, the volume letter must be ignored.")
 Value for `tramp-file-name-regexp' for separate remoting.
 See `tramp-file-name-structure' for more explanations.")
 
-(defconst tramp-file-name-regexp (cond ((equal tramp-syntax 'ftp) tramp-file-name-regexp-unified) ((equal tramp-syntax 'sep) tramp-file-name-regexp-separate) (t (error "Wrong `tramp-syntax' defined"))) "\
+(defvar tramp-file-name-regexp (cond ((equal tramp-syntax 'ftp) tramp-file-name-regexp-unified) ((equal tramp-syntax 'sep) tramp-file-name-regexp-separate) (t (error "Wrong `tramp-syntax' defined"))) "\
 Regular expression matching file names handled by Tramp.
-This regexp should match Tramp file names but no other file names.
-When tramp.el is loaded, this regular expression is prepended to
-`file-name-handler-alist', and that is searched sequentially.  Thus,
-if the Tramp entry appears rather early in the `file-name-handler-alist'
-and is a bit too general, then some files might be considered Tramp
-files which are not really Tramp files.
-
-Please note that the entry in `file-name-handler-alist' is made when
-this file (tramp.el) is loaded.  This means that this variable must be set
-before loading tramp.el.  Alternatively, `file-name-handler-alist' can be
-updated after changing this variable.
-
-Also see `tramp-file-name-structure'.")
+This regexp should match Tramp file names but no other file
+names.  When calling `tramp-register-file-name-handlers', the
+initial value is overwritten by the car of `tramp-file-name-structure'.")
 
 (defconst tramp-completion-file-name-regexp-unified (if (memq system-type '(cygwin windows-nt)) "\\`/[^/]\\{2,\\}\\'" "\\`/[^/]*\\'") "\
 Value for `tramp-completion-file-name-regexp' for unified remoting.
@@ -35179,6 +35223,10 @@ If FILE is already registered, return the
 backend of FILE.  If FILE is not registered, then the
 first backend in `vc-handled-backends' that declares itself
 responsible for FILE is returned.
+
+Note that if FILE is a symbolic link, it will not be resolved --
+the responsible backend system for the symbolic link itself will
+be reported.
 
 \(fn FILE)" nil nil)
 
@@ -37301,13 +37349,13 @@ The problems cleaned up are:
    If `whitespace-style' includes the value `empty', remove all
    empty lines at beginning and/or end of buffer.
 
-3. 8 or more SPACEs at beginning of line.
+3. `tab-width' or more SPACEs at beginning of line.
    If `whitespace-style' includes the value `indentation':
-   replace 8 or more SPACEs at beginning of line by TABs, if
-   `indent-tabs-mode' is non-nil; otherwise, replace TABs by
+   replace `tab-width' or more SPACEs at beginning of line by
+   TABs, if `indent-tabs-mode' is non-nil; otherwise, replace TABs by
    SPACEs.
    If `whitespace-style' includes the value `indentation::tab',
-   replace 8 or more SPACEs at beginning of line by TABs.
+   replace `tab-width' or more SPACEs at beginning of line by TABs.
    If `whitespace-style' includes the value `indentation::space',
    replace TABs by SPACEs.
 
@@ -37324,7 +37372,7 @@ The problems cleaned up are:
    If `whitespace-style' includes the value `trailing', remove
    all SPACEs or TABs at end of line.
 
-6. 8 or more SPACEs after TAB.
+6. `tab-width' or more SPACEs after TAB.
    If `whitespace-style' includes the value `space-after-tab':
    replace SPACEs by TABs, if `indent-tabs-mode' is non-nil;
    otherwise, replace TABs by SPACEs.
@@ -37343,13 +37391,13 @@ Cleanup some blank problems at region.
 
 The problems cleaned up are:
 
-1. 8 or more SPACEs at beginning of line.
+1. `tab-width' or more SPACEs at beginning of line.
    If `whitespace-style' includes the value `indentation':
-   replace 8 or more SPACEs at beginning of line by TABs, if
-   `indent-tabs-mode' is non-nil; otherwise, replace TABs by
+   replace `tab-width' or more SPACEs at beginning of line by TABs,
+   if `indent-tabs-mode' is non-nil; otherwise, replace TABs by
    SPACEs.
    If `whitespace-style' includes the value `indentation::tab',
-   replace 8 or more SPACEs at beginning of line by TABs.
+   replace `tab-width' or more SPACEs at beginning of line by TABs.
    If `whitespace-style' includes the value `indentation::space',
    replace TABs by SPACEs.
 
@@ -37366,7 +37414,7 @@ The problems cleaned up are:
    If `whitespace-style' includes the value `trailing', remove
    all SPACEs or TABs at end of line.
 
-4. 8 or more SPACEs after TAB.
+4. `tab-width' or more SPACEs after TAB.
    If `whitespace-style' includes the value `space-after-tab':
    replace SPACEs by TABs, if `indent-tabs-mode' is non-nil;
    otherwise, replace TABs by SPACEs.
@@ -37395,13 +37443,8 @@ non-nil.
 
 If FORCE is non-nil or \\[universal-argument] was pressed just
 before calling `whitespace-report-region' interactively, it
-forces `whitespace-style' to have:
-
-   empty
-   trailing
-   indentation
-   space-before-tab
-   space-after-tab
+forces all classes of whitespace problem to be considered
+significant.
 
 If REPORT-IF-BOGUS is t, it reports only when there are any
 whitespace problems in buffer; if it is `never', it does not
@@ -37413,9 +37456,9 @@ Report if some of the following whitespace problems exist:
    empty		1. empty lines at beginning of buffer.
    empty		2. empty lines at end of buffer.
    trailing		3. SPACEs or TABs at end of line.
-   indentation		4. 8 or more SPACEs at beginning of line.
+   indentation		4. line starts with `tab-width' or more SPACEs.
    space-before-tab	5. SPACEs before TAB.
-   space-after-tab	6. 8 or more SPACEs after TAB.
+   space-after-tab	6. `tab-width' or more SPACEs after TAB.
 
 * If `indent-tabs-mode' is nil:
    empty		1. empty lines at beginning of buffer.
@@ -37423,7 +37466,7 @@ Report if some of the following whitespace problems exist:
    trailing		3. SPACEs or TABs at end of line.
    indentation		4. TABS at beginning of line.
    space-before-tab	5. SPACEs before TAB.
-   space-after-tab	6. 8 or more SPACEs after TAB.
+   space-after-tab	6. `tab-width' or more SPACEs after TAB.
 
 See `whitespace-style' for documentation.
 See also `whitespace-cleanup' and `whitespace-cleanup-region' for
