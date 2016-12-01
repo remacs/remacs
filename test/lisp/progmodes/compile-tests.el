@@ -1,4 +1,4 @@
-;;; compile-tests.el --- Test suite for font parsing.
+;;; compile-tests.el --- Test suite for compile.el.
 
 ;; Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
