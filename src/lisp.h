@@ -551,8 +551,6 @@ typedef EMACS_INT Lisp_Object;
 #define LISP_INITIALLY(i) (i)
 enum CHECK_LISP_OBJECT_TYPE { CHECK_LISP_OBJECT_TYPE = false };
 #endif /* CHECK_LISP_OBJECT_TYPE */
-
-#define LISP_INITIALLY_ZERO LISP_INITIALLY (0)
 
 /* Forward declarations.  */
 

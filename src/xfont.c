@@ -129,7 +129,7 @@ static int xfont_check (struct frame *, struct font *);
 
 struct font_driver xfont_driver =
   {
-    LISP_INITIALLY_ZERO,	/* Qx */
+    LISPSYM_INITIALLY (Qx),
     false,			/* case insensitive */
     xfont_get_cache,
     xfont_list,
@@ -1120,6 +1120,5 @@ syms_of_xfont (void)
   xfont_scripts_cache = CALLN (Fmake_hash_table, QCtest, Qequal);
   staticpro (&xfont_scratch_props);
   xfont_scratch_props = Fmake_vector (make_number (8), Qnil);
-  xfont_driver.type = Qx;
   register_font_driver (&xfont_driver, NULL);
 }

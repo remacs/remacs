@@ -1665,7 +1665,7 @@ static void macfont_filter_properties (Lisp_Object, Lisp_Object);
 
 static struct font_driver macfont_driver =
   {
-    LISP_INITIALLY_ZERO,	/* Qmac_ct */
+    LISPSYM_INITIALLY (Qmac_ct),
     0,				/* case insensitive */
     macfont_get_cache,
     macfont_list,
@@ -4059,7 +4059,6 @@ syms_of_macfont (void)
 {
   /* Core Text, for macOS.  */
   DEFSYM (Qmac_ct, "mac-ct");
-  macfont_driver.type = Qmac_ct;
   register_font_driver (&macfont_driver, NULL);
 
   /* The font property key specifying the font design destination.  The

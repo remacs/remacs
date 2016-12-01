@@ -626,7 +626,7 @@ static int nsfont_draw (struct glyph_string *s, int from, int to, int x, int y,
 
 struct font_driver nsfont_driver =
   {
-    0,				/* Qns */
+    LISPSYM_INITIALLY (Qns),
     1,				/* case sensitive */
     nsfont_get_cache,
     nsfont_list,
@@ -1524,7 +1524,6 @@ ns_dump_glyphstring (struct glyph_string *s)
 void
 syms_of_nsfont (void)
 {
-  nsfont_driver.type = Qns;
   register_font_driver (&nsfont_driver, NULL);
   DEFSYM (Qcondensed, "condensed");
   DEFSYM (Qexpanded, "expanded");
