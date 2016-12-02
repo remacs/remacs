@@ -91,8 +91,8 @@ jarring angry fruit salad look to reduce eye fatigue.")
  '(font-lock-doc-string-face    ((t (:foreground "Plum"))))
  '(font-lock-warning-face ((t (:bold t :foreground "Pink" :weight bold))))
 
- '(cperl-array-face ((t (:foreground "LawnGreen" :background "B;ack" :bold t))))
- '(cperl-hash-face ((t (:foreground "SpringGreen" :background "B;ack" :bold t :italic t))))
+ '(cperl-array-face ((t (:foreground "LawnGreen" :background "Black" :bold t))))
+ '(cperl-hash-face ((t (:foreground "SpringGreen" :background "Black" :bold t :italic t))))
  '(cperl-nonoverridable-face ((t (:foreground "chartreuse3"))))
 
  '(gnus-button ((t (:bold t :weight bold :background "#191932" :box (:line-width 2 :style released-button)))))
