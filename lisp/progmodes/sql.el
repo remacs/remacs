@@ -4052,6 +4052,12 @@ is specified in the connection settings."
           (if connect-set
               ;; Set the desired parameters
               (let (param-var login-params set-params rem-params)
+                ;; Set the parameters and start the interactive session
+                (mapc
+                 (lambda (vv)
+                   (set-default (car vv) (eval (cadr vv))))
+                 (cdr connect-set))
+                (setq-default sql-connection connection)
 
                 ;; :sqli-login params variable
                 (setq param-var
@@ -4080,13 +4086,6 @@ is specified in the connection settings."
                        (lambda (token plist)
                            (unless (member token set-params)
                              (if plist (cons token plist) token)))))
-
-                ;; Set the parameters and start the interactive session
-                (mapc
-                 (lambda (vv)
-                     (set-default (car vv) (eval (cadr vv))))
-                 (cdr connect-set))
-                (setq-default sql-connection connection)
 
                 ;; Start the SQLi session with revised list of login parameters
                 (eval `(let ((,param-var ',rem-params))
