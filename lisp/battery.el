@@ -45,6 +45,12 @@
   :type 'regexp
   :group 'battery)
 
+(defcustom battery-upower-device "battery_BAT1"
+  "*Upower battery device name."
+  :version "26.1"
+  :type 'string
+  :group 'battery)
+
 (defcustom battery-status-function
   (cond ((and (eq system-type 'gnu/linux)
 	      (file-readable-p "/proc/apm"))
@@ -534,6 +540,69 @@ The following %-sequences are provided:
                       "0" 0)
                      "BAT")
                     (t "N/A"))))))
+
+
+;;; `upowerd' interface.
+(defsubst battery-upower-prop (pname &optional device)
+  (dbus-get-property
+   :system
+   "org.freedesktop.UPower"
+   (concat "/org/freedesktop/UPower/devices/" (or device battery-upower-device))
+   "org.freedesktop.UPower"
+   pname))
+
+(defun battery-upower ()
+  "Get battery status from dbus Upower interface.
+This function works only in systems with `upowerd' daemon
+running.
+
+The following %-sequences are provided:
+%c Current capacity (mWh)
+%p Battery load percentage
+%r Current rate
+%B Battery status (verbose)
+%L AC line status (verbose)
+%s Remaining time (to charge or discharge) in seconds
+%m Remaining time (to charge or discharge) in minutes
+%h Remaining time (to charge or discharge) in hours
+%t Remaining time (to charge or discharge) in the form `h:min'"
+  (let ((percents (battery-upower-prop "Percentage"))
+        (time-to-empty (battery-upower-prop "TimeToEmpty"))
+        (time-to-full (battery-upower-prop "TimeToFull"))
+        (state (battery-upower-prop "State"))
+        (online (battery-upower-prop "Online" "line_power_ACAD"))
+        (energy (battery-upower-prop "Energy"))
+        (energy-rate (battery-upower-prop "EnergyRate"))
+        (battery-states '((0 . "unknown") (1 . "charging")
+                          (2 . "discharging") (3 . "empty")
+                          (4 . "fully-charged") (5 . "pending-charge")
+                          (6 . "pending-discharge")))
+        seconds minutes hours remaining-time)
+    (cond ((and online time-to-full)
+           (setq seconds time-to-full))
+          ((and (not online) time-to-empty)
+           (setq seconds time-to-empty)))
+    (when seconds
+      (setq minutes (/ seconds 60)
+            hours (/ minutes 60)
+            remaining-time
+            (format "%d:%02d" (truncate hours)
+                    (- (truncate minutes) (* 60 (truncate hours))))))
+    (list (cons ?c (or (and energy
+                            (number-to-string (round (* 1000 energy))))
+                       "N/A"))
+          (cons ?p (or (and percents (number-to-string (round percents)))
+                       "N/A"))
+          (cons ?r (or (and energy-rate
+                            (concat (number-to-string energy-rate) " W"))
+                       "N/A"))
+          (cons ?B (or (and state (cdr (assoc state battery-states)))
+                       "unknown"))
+          (cons ?L (or (and online "on-line") "off-line"))
+          (cons ?s (or (and seconds (number-to-string seconds)) "N/A"))
+          (cons ?m (or (and minutes (number-to-string minutes)) "N/A"))
+          (cons ?h (or (and hours (number-to-string hours)) "N/A"))
+          (cons ?t (or remaining-time "N/A")))))
 
 
 ;;; `apm' interface for BSD.
