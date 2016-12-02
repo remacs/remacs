@@ -1193,7 +1193,7 @@ replace man pages with better-organized manuals that you can browse
 with Info (@pxref{Misc Help}).  This process is not finished, so it is
 still useful to read manual pages.
 
-@findex manual-entry
+@findex man
   You can read the man page for an operating system command, library
 function, or system call, with the @kbd{M-x man} command.  This
 prompts for a topic, with completion (@pxref{Completion}), and runs
