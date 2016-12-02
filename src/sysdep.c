@@ -3371,7 +3371,7 @@ system_process_attributes (Lisp_Object pid)
     nread = 0;
   else
     {
-      record_unwind_protect (close_file_unwind, fd);
+      record_unwind_protect_int (close_file_unwind, fd);
       nread = emacs_read (fd, &pinfo, sizeof pinfo);
     }
 
