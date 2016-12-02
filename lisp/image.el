@@ -102,7 +102,7 @@ AUTODETECT can be
 	    (see `image-type-available-p').")
 
 (defvar image-format-suffixes
-  '((image/x-icon "ico"))
+  '((image/x-rgb "rgb") (image/x-icon "ico"))
   "An alist associating image types with file name suffixes.
 This is used as a hint by the ImageMagick library when detecting
 the type of image data (that does not have an associated file name).

@@ -8540,6 +8540,14 @@ imagemagick_load_image (struct frame *f, struct image *img,
     status = MagickReadImage (image_wand, filename);
   else
     {
+      Lisp_Object lwidth = image_spec_value (img->spec, QCwidth, NULL);
+      Lisp_Object lheight = image_spec_value (img->spec, QCheight, NULL);
+
+      if (NATNUMP (lwidth) && NATNUMP (lheight))
+	{
+	  MagickSetSize (image_wand, XFASTINT (lwidth), XFASTINT (lheight));
+	  MagickSetDepth (image_wand, 8);
+	}
       filename_hint = imagemagick_filename_hint (img->spec, hint_buffer);
       MagickSetFilename (image_wand, filename_hint);
       status = MagickReadImageBlob (image_wand, contents, size);
