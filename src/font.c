@@ -132,7 +132,7 @@ static struct font_driver_list *font_driver_list;
 /* Used to catch bogus pointers in font objects.  */
 
 bool
-valid_font_driver (struct font_driver *drv)
+valid_font_driver (struct font_driver const *drv)
 {
   Lisp_Object tail, frame;
   struct font_driver_list *fdl;
@@ -2543,14 +2543,11 @@ font_match_p (Lisp_Object spec, Lisp_Object font)
    is a number frames sharing this cache, and FONT-CACHE-DATA is a
    cons (FONT-SPEC . [FONT-ENTITY ...]).  */
 
-static void font_prepare_cache (struct frame *, struct font_driver *);
-static void font_finish_cache (struct frame *, struct font_driver *);
-static Lisp_Object font_get_cache (struct frame *, struct font_driver *);
 static void font_clear_cache (struct frame *, Lisp_Object,
-                              struct font_driver *);
+                              struct font_driver const *);
 
 static void
-font_prepare_cache (struct frame *f, struct font_driver *driver)
+font_prepare_cache (struct frame *f, struct font_driver const *driver)
 {
   Lisp_Object cache, val;
 
@@ -2572,7 +2569,7 @@ font_prepare_cache (struct frame *f, struct font_driver *driver)
 
 
 static void
-font_finish_cache (struct frame *f, struct font_driver *driver)
+font_finish_cache (struct frame *f, struct font_driver const *driver)
 {
   Lisp_Object cache, val, tmp;
 
@@ -2593,7 +2590,7 @@ font_finish_cache (struct frame *f, struct font_driver *driver)
 
 
 static Lisp_Object
-font_get_cache (struct frame *f, struct font_driver *driver)
+font_get_cache (struct frame *f, struct font_driver const *driver)
 {
   Lisp_Object val = driver->get_cache (f);
   Lisp_Object type = driver->type;
@@ -2608,7 +2605,8 @@ font_get_cache (struct frame *f, struct font_driver *driver)
 
 
 static void
-font_clear_cache (struct frame *f, Lisp_Object cache, struct font_driver *driver)
+font_clear_cache (struct frame *f, Lisp_Object cache,
+		  struct font_driver const *driver)
 {
   Lisp_Object tail, elt;
   Lisp_Object entity;
@@ -3463,7 +3461,7 @@ font_open_by_name (struct frame *f, Lisp_Object name)
    (e.g. syms_of_xfont).  */
 
 void
-register_font_driver (struct font_driver *driver, struct frame *f)
+register_font_driver (struct font_driver const *driver, struct frame *f)
 {
   struct font_driver_list *root = f ? f->font_driver_list : font_driver_list;
   struct font_driver_list *prev, *list;
@@ -3524,7 +3522,7 @@ font_update_drivers (struct frame *f, Lisp_Object new_drivers)
      drivers.  */
   for (list = f->font_driver_list; list; list = list->next)
     {
-      struct font_driver *driver = list->driver;
+      struct font_driver const *driver = list->driver;
       if ((EQ (new_drivers, Qt) || ! NILP (Fmemq (driver->type, new_drivers)))
 	  != list->on)
 	{
@@ -3587,7 +3585,7 @@ font_update_drivers (struct frame *f, Lisp_Object new_drivers)
 	     and then use it under w32 or ns.  */
 	  for (list = f->font_driver_list; list; list = list->next)
 	    {
-	      struct font_driver *driver = list->driver;
+	      struct font_driver const *driver = list->driver;
 	      eassert (! list->on);
 	      if (! driver->start_for_frame
 		  || driver->start_for_frame (f) == 0)

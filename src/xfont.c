@@ -113,44 +113,7 @@ xfont_get_pcm (XFontStruct *xfont, XChar2b *char2b)
 	  ? NULL : pcm);
 }
 
-static Lisp_Object xfont_get_cache (struct frame *);
-static Lisp_Object xfont_list (struct frame *, Lisp_Object);
-static Lisp_Object xfont_match (struct frame *, Lisp_Object);
-static Lisp_Object xfont_list_family (struct frame *);
-static Lisp_Object xfont_open (struct frame *, Lisp_Object, int);
-static void xfont_close (struct font *);
-static void xfont_prepare_face (struct frame *, struct face *);
-static int xfont_has_char (Lisp_Object, int);
-static unsigned xfont_encode_char (struct font *, int);
-static void xfont_text_extents (struct font *, unsigned *, int,
-				struct font_metrics *);
-static int xfont_draw (struct glyph_string *, int, int, int, int, bool);
-static int xfont_check (struct frame *, struct font *);
-
-struct font_driver xfont_driver =
-  {
-    LISPSYM_INITIALLY (Qx),
-    false,			/* case insensitive */
-    xfont_get_cache,
-    xfont_list,
-    xfont_match,
-    xfont_list_family,
-    NULL,
-    xfont_open,
-    xfont_close,
-    xfont_prepare_face,
-    NULL,
-    xfont_has_char,
-    xfont_encode_char,
-    xfont_text_extents,
-    xfont_draw,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    xfont_check,
-    NULL, /* get_variation_glyphs */
-    NULL, /* filter_properties */
-  };
-
-static Lisp_Object
+Lisp_Object
 xfont_get_cache (struct frame *f)
 {
   Display_Info *dpyinfo = FRAME_DISPLAY_INFO (f);
@@ -1113,6 +1076,24 @@ xfont_check (struct frame *f, struct font *font)
 }
 
 
+
+struct font_driver const xfont_driver =
+  {
+  type: LISPSYM_INITIALLY (Qx),
+  get_cache: xfont_get_cache,
+  list: xfont_list,
+  match: xfont_match,
+  list_family: xfont_list_family,
+  open: xfont_open,
+  close: xfont_close,
+  prepare_face: xfont_prepare_face,
+  has_char: xfont_has_char,
+  encode_char: xfont_encode_char,
+  text_extents: xfont_text_extents,
+  draw: xfont_draw,
+  check: xfont_check,
+  };
+
 void
 syms_of_xfont (void)
 {

@@ -125,15 +125,12 @@ xftfont_get_colors (struct frame *f, struct face *face, GC gc,
     }
 }
 
-
-struct font_driver xftfont_driver;
-
 static Lisp_Object
 xftfont_list (struct frame *f, Lisp_Object spec)
 {
-  Lisp_Object list = ftfont_driver.list (f, spec), tail;
+  Lisp_Object list = ftfont_list (f, spec);
 
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
+  for (Lisp_Object tail = list; CONSP (tail); tail = XCDR (tail))
     ASET (XCAR (tail), FONT_TYPE_INDEX, Qxft);
   return list;
 }
@@ -141,7 +138,7 @@ xftfont_list (struct frame *f, Lisp_Object spec)
 static Lisp_Object
 xftfont_match (struct frame *f, Lisp_Object spec)
 {
-  Lisp_Object entity = ftfont_driver.match (f, spec);
+  Lisp_Object entity = ftfont_match (f, spec);
 
   if (! NILP (entity))
     ASET (entity, FONT_TYPE_INDEX, Qxft);
@@ -542,7 +539,7 @@ xftfont_has_char (Lisp_Object font, int c)
     return (ENCODE_CHAR (cs, c) != CHARSET_INVALID_CODE (cs));
 
   if (FONT_ENTITY_P (font))
-    return ftfont_driver.has_char (font, c);
+    return ftfont_has_char (font, c);
   xftfont_info = (struct xftfont_info *) XFONT_OBJECT (font);
   return (XftCharExists (xftfont_info->display, xftfont_info->xftfont,
 			 (FcChar32) c) == FcTrue);
@@ -668,12 +665,9 @@ xftfont_shape (Lisp_Object lgstring)
 {
   struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
   struct xftfont_info *xftfont_info = (struct xftfont_info *) font;
-  FT_Face ft_face;
-  Lisp_Object val;
-
-  ft_face = XftLockFace (xftfont_info->xftfont);
+  FT_Face ft_face = XftLockFace (xftfont_info->xftfont);
   xftfont_info->ft_size = ft_face->size;
-  val = ftfont_driver.shape (lgstring);
+  Lisp_Object val = ftfont_shape (lgstring);
   XftUnlockFace (xftfont_info->xftfont);
   return val;
 }
@@ -696,6 +690,10 @@ xftfont_end_for_frame (struct frame *f)
   unblock_input ();
   return 0;
 }
+
+/* When using X double buffering, the XftDraw structure we build
+   seems to be useless once a frame is resized, so recreate it on
+   ConfigureNotify and in some other cases.  */
 
 static void
 xftfont_drop_xrender_surfaces (struct frame *f)
@@ -751,6 +749,40 @@ xftfont_cached_font_ok (struct frame *f, Lisp_Object font_object,
   return ok;
 }
 
+struct font_driver const xftfont_driver =
+  {
+    /* We can't draw a text without device dependent functions.  */
+  type: LISPSYM_INITIALLY (Qxft),
+  get_cache: xfont_get_cache,
+  list: xftfont_list,
+  match: xftfont_match,
+  list_family: ftfont_list_family,
+  open: xftfont_open,
+  close: xftfont_close,
+  prepare_face: xftfont_prepare_face,
+  done_face: xftfont_done_face,
+  has_char: xftfont_has_char,
+  encode_char: xftfont_encode_char,
+  text_extents: xftfont_text_extents,
+  draw: xftfont_draw,
+  get_bitmap: ftfont_get_bitmap,
+  anchor_point: ftfont_anchor_point,
+#ifdef HAVE_LIBOTF
+  otf_capability: ftfont_otf_capability,
+#endif
+  end_for_frame: xftfont_end_for_frame,
+#if defined HAVE_M17N_FLT && defined HAVE_LIBOTF
+  shape: xftfont_shape,
+#endif
+#ifdef HAVE_OTF_GET_VARIATION_GLYPHS
+  get_variation_glyphs: ftfont_variation_glyphs,
+#endif
+  filter_properties: ftfont_filter_properties,
+  cached_font_ok: xftfont_cached_font_ok,
+  combining_capability: ftfont_combining_capability,
+  drop_xrender_surfaces: xftfont_drop_xrender_surfaces,
+  };
+
 void
 syms_of_xftfont (void)
 {
@@ -769,29 +801,6 @@ This is needed with some fonts to correct vertical overlap of glyphs.  */);
   xft_font_ascent_descent_override = 0;
 
   ascii_printable[0] = 0;
-
-  xftfont_driver = ftfont_driver;
-  xftfont_driver.type = Qxft;
-  xftfont_driver.get_cache = xfont_driver.get_cache;
-  xftfont_driver.list = xftfont_list;
-  xftfont_driver.match = xftfont_match;
-  xftfont_driver.open = xftfont_open;
-  xftfont_driver.close = xftfont_close;
-  xftfont_driver.prepare_face = xftfont_prepare_face;
-  xftfont_driver.done_face = xftfont_done_face;
-  xftfont_driver.has_char = xftfont_has_char;
-  xftfont_driver.encode_char = xftfont_encode_char;
-  xftfont_driver.text_extents = xftfont_text_extents;
-  xftfont_driver.draw = xftfont_draw;
-  xftfont_driver.end_for_frame = xftfont_end_for_frame;
-  xftfont_driver.cached_font_ok = xftfont_cached_font_ok;
-#if defined (HAVE_M17N_FLT) && defined (HAVE_LIBOTF)
-  xftfont_driver.shape = xftfont_shape;
-#endif
-  /* When using X double buffering, the XftDraw structure we build
-   seems to be useless once a frame is resized, so recreate it on
-   ConfigureNotify and in some other cases.  */
-  xftfont_driver.drop_xrender_surfaces = xftfont_drop_xrender_surfaces;
 
   register_font_driver (&xftfont_driver, NULL);
 }

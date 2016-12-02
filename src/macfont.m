@@ -38,8 +38,6 @@ Original author: YAMAMOTO Mitsuharu
 
 #include <libkern/OSByteOrder.h>
 
-static struct font_driver macfont_driver;
-
 static double mac_font_get_advance_width_for_glyph (CTFontRef, CGGlyph);
 static CGRect mac_font_get_bounding_rect_for_glyph (CTFontRef, CGGlyph);
 static CFArrayRef mac_font_create_available_families (void);
@@ -893,7 +891,7 @@ macfont_descriptor_entity (CTFontDescriptorRef desc, Lisp_Object extra,
 
   entity = font_make_entity ();
 
-  ASET (entity, FONT_TYPE_INDEX, macfont_driver.type);
+  ASET (entity, FONT_TYPE_INDEX, Qmac_ct);
   ASET (entity, FONT_REGISTRY_INDEX, Qiso10646_1);
 
   macfont_store_descriptor_attributes (desc, entity);
@@ -1663,34 +1661,23 @@ static int macfont_variation_glyphs (struct font *, int c,
                                      unsigned variations[256]);
 static void macfont_filter_properties (Lisp_Object, Lisp_Object);
 
-static struct font_driver macfont_driver =
+static struct font_driver const macfont_driver =
   {
-    LISPSYM_INITIALLY (Qmac_ct),
-    0,				/* case insensitive */
-    macfont_get_cache,
-    macfont_list,
-    macfont_match,
-    macfont_list_family,
-    macfont_free_entity,
-    macfont_open,
-    macfont_close,
-    NULL,			/* prepare_face */
-    NULL,			/* done_face */
-    macfont_has_char,
-    macfont_encode_char,
-    macfont_text_extents,
-    macfont_draw,
-    NULL,			/* get_bitmap */
-    NULL,			/* free_bitmap */
-    NULL,			/* anchor_point */
-    NULL,			/* otf_capability */
-    NULL,			/* otf_drive */
-    NULL,			/* start_for_frame */
-    NULL,			/* end_for_frame */
-    macfont_shape,
-    NULL,			/* check */
-    macfont_variation_glyphs,
-    macfont_filter_properties,
+  type: LISPSYM_INITIALLY (Qmac_ct),
+  get_cache: macfont_get_cache,
+  list: macfont_list,
+  match: macfont_match,
+  list_family: macfont_list_family,
+  free_entity: macfont_free_entity,
+  open: macfont_open,
+  close: macfont_close,
+  has_char: macfont_has_char,
+  encode_char: macfont_encode_char,
+  text_extents: macfont_text_extents,
+  draw: macfont_draw,
+  shape: macfont_shape,
+  get_variation_glyphs: macfont_variation_glyphs,
+  filter_properties: macfont_filter_properties,
   };
 
 static Lisp_Object
