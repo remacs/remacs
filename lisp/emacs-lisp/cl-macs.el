@@ -2687,6 +2687,14 @@ non-nil value, that slot cannot be set via `setf'.
 				   (= safety 1))
 			      (cons 'and (cl-cdddr pred-form))
                             `(,predicate cl-x))))
+    (when pred-form
+      (push `(cl-defsubst ,predicate (cl-x)
+               (declare (side-effect-free error-free))
+               ,(if (eq (car pred-form) 'and)
+                    (append pred-form '(t))
+                  `(and ,pred-form t)))
+            forms)
+      (push `(put ',name 'cl-deftype-satisfies ',predicate) forms))
     (let ((pos 0) (descp descs))
       (while descp
 	(let* ((desc (pop descp))
@@ -2741,14 +2749,6 @@ non-nil value, that slot cannot be set via `setf'.
 	(setq pos (1+ pos))))
     (setq slots (nreverse slots)
 	  defaults (nreverse defaults))
-    (when pred-form
-      (push `(cl-defsubst ,predicate (cl-x)
-               (declare (side-effect-free error-free))
-               ,(if (eq (car pred-form) 'and)
-                    (append pred-form '(t))
-                  `(and ,pred-form t)))
-            forms)
-      (push `(put ',name 'cl-deftype-satisfies ',predicate) forms))
     (and copier
          (push `(defalias ',copier #'copy-sequence) forms))
     (if constructor
