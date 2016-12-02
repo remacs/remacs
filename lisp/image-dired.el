@@ -854,6 +854,9 @@ thumbnail buffer to be selected."
                (message "Thumb could not be created for file %s" curr-file)
              (image-dired-insert-thumbnail thumb-name curr-file dired-buf)))
          files))
+      (if do-not-pop
+          (display-buffer buf)
+        (pop-to-buffer buf))
       (cond ((eq 'dynamic image-dired-line-up-method)
              (image-dired-line-up-dynamic))
             ((eq 'fixed image-dired-line-up-method)
@@ -863,10 +866,7 @@ thumbnail buffer to be selected."
             ((eq 'none image-dired-line-up-method)
              nil)
             (t
-             (image-dired-line-up-dynamic))))
-    (if do-not-pop
-        (display-buffer image-dired-thumbnail-buffer)
-      (pop-to-buffer image-dired-thumbnail-buffer))))
+             (image-dired-line-up-dynamic))))))
 
 ;;;###autoload
 (defun image-dired-show-all-from-dir (dir)
