@@ -120,11 +120,10 @@ If nil, there is no maximum size."
   :group 'dired-x)
 
 (defcustom dired-omit-case-fold 'filesystem
-  "Determine whether `dired-omit-mode' will use case-folding to
-match the regexp of files to omit.  When nil, always be
-case-sensitive; when t, always be case-insensitive; the default
-value, 'filesystem, causes case folding to be used on
-case-insensitive filesystems only."
+  "Determine whether \"omitting\" patterns are case-sensitive.
+When nil, always be case-sensitive; when t, always be
+case-insensitive; the default value, 'filesystem, causes case
+folding to be used on case-insensitive filesystems only."
   :type '(choice (const :tag "Always case-sensitive" nil)
 		 (const :tag "Always case-insensitive" t)
 		 (const :tag "According to filesystem" filesystem))
@@ -132,9 +131,7 @@ case-insensitive filesystems only."
   :version "26.1")
 
 (defun dired-omit-case-fold-p (dir)
-  "Return t if, according to `dired-omit-case-fold',
-  `dired-omit-mode' should use case folding to interpret its
-  regexp in directory DIR, or nil otherwise."
+  "Non-nil if `dired-omit-mode' should be case-insensitive in DIR."
   (if (eq dired-omit-case-fold 'filesystem)
       (file-name-case-sensitive-p dir)
     dired-omit-case-fold))
