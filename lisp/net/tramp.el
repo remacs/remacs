@@ -2021,20 +2021,19 @@ ARGS are the arguments OPERATION has been called with."
 (defun tramp-file-name-handler (operation &rest args)
   "Invoke Tramp file name handler.
 Falls back to normal file name handler if no Tramp file name handler exists."
-  (if tramp-mode
-      (save-match-data
-	(let* ((filename
-		(tramp-replace-environment-variables
-		 (apply 'tramp-file-name-for-operation operation args)))
-	       (completion (tramp-completion-mode-p))
-	       (foreign
-		(tramp-find-foreign-file-name-handler
-		 filename operation completion))
-	       result)
-	  (with-parsed-tramp-file-name filename nil
-	    ;; Call the backend function.
-	    (if foreign
-		(tramp-condition-case-unless-debug err
+  (let ((filename (apply 'tramp-file-name-for-operation operation args)))
+    (if (and tramp-mode (tramp-tramp-file-p filename))
+	(save-match-data
+	  (let* ((filename (tramp-replace-environment-variables filename))
+		 (completion (tramp-completion-mode-p))
+		 (foreign
+		  (tramp-find-foreign-file-name-handler
+		   filename operation completion))
+		 result)
+	    (with-parsed-tramp-file-name filename nil
+	      ;; Call the backend function.
+	      (if foreign
+		  (tramp-condition-case-unless-debug err
 		    (let ((sf (symbol-function foreign)))
 		      ;; Some packages set the default directory to a
 		      ;; remote path, before respective Tramp packages
@@ -2072,43 +2071,44 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 			  (tramp-run-real-handler operation args)))
 		       (t result)))
 
-		  ;; Trace that somebody has interrupted the operation.
-		  ((debug quit)
-		   (let (tramp-message-show-message)
-		     (tramp-message
-		      v 1 "Interrupt received in operation %s"
-		      (cons operation args)))
-		   ;; Propagate the quit signal.
-		   (signal (car err) (cdr err)))
+		    ;; Trace that somebody has interrupted the operation.
+		    ((debug quit)
+		     (let (tramp-message-show-message)
+		       (tramp-message
+			v 1 "Interrupt received in operation %s"
+			(cons operation args)))
+		     ;; Propagate the quit signal.
+		     (signal (car err) (cdr err)))
 
-		  ;; When we are in completion mode, some failed
-		  ;; operations shall return at least a default value
-		  ;; in order to give the user a chance to correct the
-		  ;; file name in the minibuffer.
-		  ;; In order to get a full backtrace, one could apply
-		  ;;   (setq tramp-debug-on-error t)
-		  (error
-		   (cond
-		    ((and completion (zerop (length localname))
-			  (memq operation '(file-exists-p file-directory-p)))
-		     t)
-		    ((and completion (zerop (length localname))
-			  (memq operation
-				'(expand-file-name file-name-as-directory)))
-		     filename)
-		    ;; Propagate the error.
-		    (t (signal (car err) (cdr err))))))
+		    ;; When we are in completion mode, some failed
+		    ;; operations shall return at least a default
+		    ;; value in order to give the user a chance to
+		    ;; correct the file name in the minibuffer.
+		    ;; In order to get a full backtrace, one could apply
+		    ;;   (setq tramp-debug-on-error t)
+		    (error
+		     (cond
+		      ((and completion (zerop (length localname))
+			    (memq operation '(file-exists-p file-directory-p)))
+		       t)
+		      ((and completion (zerop (length localname))
+			    (memq operation
+				  '(expand-file-name file-name-as-directory)))
+		       filename)
+		      ;; Propagate the error.
+		      (t (signal (car err) (cdr err))))))
 
-	      ;; Nothing to do for us.  However, since we are in
-	      ;; `tramp-mode', we must suppress the volume letter on
-	      ;; MS Windows.
-	      (setq result (tramp-run-real-handler operation args))
-	      (if (stringp result)
-		  (tramp-drop-volume-letter result)
-		result)))))
+		;; Nothing to do for us.  However, since we are in
+		;; `tramp-mode', we must suppress the volume letter on
+		;; MS Windows.
+		(setq result (tramp-run-real-handler operation args))
+		(if (stringp result)
+		    (tramp-drop-volume-letter result)
+		  result)))))
 
-    ;; When `tramp-mode' is not enabled, we don't do anything.
-    (tramp-run-real-handler operation args)))
+      ;; When `tramp-mode' is not enabled, or the file name is quoted,
+      ;; we don't do anything.
+      (tramp-run-real-handler operation args))))
 
 ;; In Emacs, there is some concurrency due to timers.  If a timer
 ;; interrupts Tramp and wishes to use the same connection buffer as
