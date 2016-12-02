@@ -2626,7 +2626,7 @@ temporarily reverses the meaning of this variable."
 In merge jobs, buffer C is not deleted here, but rather according to
 ediff-quit-merge-hook.
 ASK non-nil means ask the user whether to keep each unmodified buffer, unless
-KEEP-VARIANTS is non-nil, in which case buffers are killed unconditionally.
+KEEP-VARIANTS is non-nil, in which case buffers are never killed.
 A side effect of cleaning up may be that you should be careful when comparing
 the same buffer in two separate Ediff sessions: quitting one of them might
 delete this buffer in another session as well."
