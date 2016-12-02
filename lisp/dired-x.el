@@ -122,7 +122,7 @@ If nil, there is no maximum size."
 (defcustom dired-omit-case-fold 'filesystem
   "Determine whether \"omitting\" patterns are case-sensitive.
 When nil, always be case-sensitive; when t, always be
-case-insensitive; the default value, 'filesystem, causes case
+case-insensitive; the default value, `filesystem', causes case
 folding to be used on case-insensitive filesystems only."
   :type '(choice (const :tag "Always case-sensitive" nil)
 		 (const :tag "Always case-insensitive" t)
