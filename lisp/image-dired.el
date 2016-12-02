@@ -799,9 +799,9 @@ calling `image-dired-restore-window-configuration'."
       (setq truncate-lines t)
       (save-excursion
         (other-window 1)
-        (switch-to-buffer buf)
+        (pop-to-buffer-same-window buf)
         (select-window (split-window-below))
-        (switch-to-buffer buf2)
+        (pop-to-buffer-same-window buf2)
         (other-window -2)))))
 
 (defun image-dired-restore-window-configuration ()
@@ -1110,7 +1110,7 @@ Optional prefix ARG says how many images to move; default is one
 image."
   (interactive "p")
   (let (pos (steps (or arg 1)))
-    (dotimes (i steps)
+    (dotimes (_ steps)
       (if (and (not (eobp))
                (save-excursion
                  (forward-char)
@@ -1131,7 +1131,7 @@ Optional prefix ARG says how many images to move; default is one
 image."
   (interactive "p")
   (let (pos (steps (or arg 1)))
-    (dotimes (i steps)
+    (dotimes (_ steps)
       (if (and (not (bobp))
                (save-excursion
                  (backward-char)
@@ -2484,7 +2484,7 @@ easy-to-use form."
   (setq image-dired-widget-list nil)
   ;; Setup buffer.
   (let ((files (dired-get-marked-files)))
-    (switch-to-buffer "*Image-Dired Edit Meta Data*")
+    (pop-to-buffer-same-window "*Image-Dired Edit Meta Data*")
     (kill-all-local-variables)
     (make-local-variable 'widget-example-repeat)
     (let ((inhibit-read-only t))
