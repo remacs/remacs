@@ -46,7 +46,7 @@
   :group 'battery)
 
 (defcustom battery-upower-device "battery_BAT1"
-  "*Upower battery device name."
+  "Upower battery device name."
   :version "26.1"
   :type 'string
   :group 'battery)
