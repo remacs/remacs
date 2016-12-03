@@ -156,9 +156,8 @@
 (require 'format-spec)
 (require 'widget)
 
-(require 'cl-lib)
-
 (eval-when-compile
+  (require 'cl-lib)
   (require 'wid-edit))
 
 (defgroup image-dired nil
@@ -656,25 +655,22 @@ of the marked files.  If ARG is an integer, use the next ARG (or
 previous -ARG, if ARG<0) files."
   (interactive "P")
   (dired-map-over-marks
-   (let* ((image-pos  (dired-move-to-filename))
-          (image-file (dired-get-filename nil t))
-          thumb-file
-          overlay)
+   (let ((image-pos  (dired-move-to-filename))
+         (image-file (dired-get-filename nil t))
+         thumb-file
+         overlay)
      (when (and image-file
                 (string-match-p (image-file-name-regexp) image-file))
        (setq thumb-file (image-dired-get-thumbnail-image image-file))
        ;; If image is not already added, then add it.
-       (let* ((cur-ovs (overlays-in (point) (1+ (point))))
-              (thumb-ov (car (cl-remove-if-not
-                              (lambda (ov) (overlay-get ov 'thumb-file))
-                              cur-ovs))))
+       (let ((thumb-ov (cl-loop for ov in (overlays-in (point) (1+ (point)))
+                                if (overlay-get ov 'thumb-file) return ov)))
          (if thumb-ov
              (delete-overlay thumb-ov)
 	   (put-image thumb-file image-pos)
 	   (setq overlay
-                 (cl-loop for o in (overlays-in (point) (1+ (point)))
-                          when (overlay-get o 'put-image) collect o into ov
-                          finally return (car ov)))
+                 (cl-loop for ov in (overlays-in (point) (1+ (point)))
+                          if (overlay-get ov 'put-image) return ov))
 	   (overlay-put overlay 'image-file image-file)
 	   (overlay-put overlay 'thumb-file thumb-file)))))
    arg             ; Show or hide image on ARG next files.
