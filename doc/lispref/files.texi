@@ -2995,6 +2995,7 @@ first, before handlers for jobs such as remote file access.
 @code{file-local-copy},
 @code{file-modes}, @code{file-name-all-completions},
 @code{file-name-as-directory},
+@code{file-name-case-insensitive-p},
 @code{file-name-completion},
 @code{file-name-directory},
 @code{file-name-nondirectory},
@@ -3005,8 +3006,7 @@ first, before handlers for jobs such as remote file access.
 @code{file-readable-p}, @code{file-regular-p},
 @code{file-remote-p}, @code{file-selinux-context},
 @code{file-symlink-p}, @code{file-truename}, @code{file-writable-p},
-@code{find-backup-file-name},
-@c Not sure why it was here:   @code{find-file-noselect},@*
+@code{find-backup-file-name},@*
 @code{get-file-buffer},
 @code{insert-directory},
 @code{insert-file-contents},@*
@@ -3051,6 +3051,7 @@ first, before handlers for jobs such as remote file access.
 @code{file-local-copy},
 @code{file-modes}, @code{file-name-all-completions},
 @code{file-name-as-directory},
+@code{file-name-case-insensitive-p},
 @code{file-name-completion},
 @code{file-name-directory},
 @code{file-name-nondirec@discretionary{}{}{}tory},
@@ -3062,7 +3063,6 @@ first, before handlers for jobs such as remote file access.
 @code{file-remote-p}, @code{file-selinux-context},
 @code{file-symlink-p}, @code{file-truename}, @code{file-writable-p},
 @code{find-backup-file-name},
-@c Not sure why it was here:   @code{find-file-noselect},
 @code{get-file-buffer},
 @code{insert-directory},
 @code{insert-file-contents},

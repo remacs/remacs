@@ -1965,7 +1965,7 @@ settings to all process buffers for those connections.  The list in
 @group
 (connection-local-set-class-variables
   'remote-null-device
-  '((null-device "/dev/null")))
+  '((null-device . "/dev/null")))
 @end group
 @end example
 @end defun
