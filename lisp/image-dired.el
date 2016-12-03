@@ -870,7 +870,7 @@ thumbnail buffer to be selected."
 If the number of files in DIR matching `image-file-name-regexp'
 exceeds `image-dired-show-all-from-dir-max-files', a warning will be
 displayed."
-  (interactive "DDir: ")
+  (interactive "DImage Dired: ")
   (dired dir)
   (dired-mark-files-regexp (image-file-name-regexp))
   (let ((files (dired-get-marked-files)))
@@ -1280,197 +1280,121 @@ You probably want to use this together with
           (select-window window))
       (message "Thumbnail buffer not visible"))))
 
-(defvar image-dired-thumbnail-mode-map (make-sparse-keymap)
-  "Keymap for `image-dired-thumbnail-mode'.")
-
-(defvar image-dired-thumbnail-mode-line-up-map (make-sparse-keymap)
+(defvar image-dired-thumbnail-mode-line-up-map
+  (let ((map (make-sparse-keymap)))
+    ;; map it to "g" so that the user can press it more quickly
+    (define-key map "g" 'image-dired-line-up-dynamic)
+    ;; "f" for "fixed" number of thumbs per row
+    (define-key map "f" 'image-dired-line-up)
+    ;; "i" for "interactive"
+    (define-key map "i" 'image-dired-line-up-interactive)
+    map)
   "Keymap for line-up commands in `image-dired-thumbnail-mode'.")
 
-(defvar image-dired-thumbnail-mode-tag-map (make-sparse-keymap)
+(defvar image-dired-thumbnail-mode-tag-map
+  (let ((map (make-sparse-keymap)))
+    ;; map it to "t" so that the user can press it more quickly
+    (define-key map "t" 'image-dired-tag-thumbnail)
+    ;; "r" for "remove"
+    (define-key map "r" 'image-dired-tag-thumbnail-remove)
+    map)
   "Keymap for tag commands in `image-dired-thumbnail-mode'.")
 
-(defun image-dired-define-thumbnail-mode-keymap ()
-  "Define keymap for `image-dired-thumbnail-mode'."
+(defvar image-dired-thumbnail-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [right] 'image-dired-forward-image)
+    (define-key map [left] 'image-dired-backward-image)
+    (define-key map [up] 'image-dired-previous-line)
+    (define-key map [down] 'image-dired-next-line)
+    (define-key map "\C-f" 'image-dired-forward-image)
+    (define-key map "\C-b" 'image-dired-backward-image)
+    (define-key map "\C-p" 'image-dired-previous-line)
+    (define-key map "\C-n" 'image-dired-next-line)
 
-  ;; Keys
-  (define-key image-dired-thumbnail-mode-map [right] 'image-dired-forward-image)
-  (define-key image-dired-thumbnail-mode-map [left] 'image-dired-backward-image)
-  (define-key image-dired-thumbnail-mode-map [up] 'image-dired-previous-line)
-  (define-key image-dired-thumbnail-mode-map [down] 'image-dired-next-line)
-  (define-key image-dired-thumbnail-mode-map "\C-f" 'image-dired-forward-image)
-  (define-key image-dired-thumbnail-mode-map "\C-b" 'image-dired-backward-image)
-  (define-key image-dired-thumbnail-mode-map "\C-p" 'image-dired-previous-line)
-  (define-key image-dired-thumbnail-mode-map "\C-n" 'image-dired-next-line)
+    (define-key map "d" 'image-dired-flag-thumb-original-file)
+    (define-key map [delete] 'image-dired-flag-thumb-original-file)
+    (define-key map "m" 'image-dired-mark-thumb-original-file)
+    (define-key map "u" 'image-dired-unmark-thumb-original-file)
+    (define-key map "." 'image-dired-track-original-file)
+    (define-key map [tab] 'image-dired-jump-original-dired-buffer)
 
-  (define-key image-dired-thumbnail-mode-map "d" 'image-dired-flag-thumb-original-file)
-  (define-key image-dired-thumbnail-mode-map [delete]
-    'image-dired-flag-thumb-original-file)
-  (define-key image-dired-thumbnail-mode-map "m" 'image-dired-mark-thumb-original-file)
-  (define-key image-dired-thumbnail-mode-map "u" 'image-dired-unmark-thumb-original-file)
-  (define-key image-dired-thumbnail-mode-map "." 'image-dired-track-original-file)
-  (define-key image-dired-thumbnail-mode-map [tab] 'image-dired-jump-original-dired-buffer)
+    ;; add line-up map
+    (define-key map "g" image-dired-thumbnail-mode-line-up-map)
+    ;; add tag map
+    (define-key map "t" image-dired-thumbnail-mode-tag-map)
 
-  ;; add line-up map
-  (define-key image-dired-thumbnail-mode-map "g" image-dired-thumbnail-mode-line-up-map)
+    (define-key map "\C-m" 'image-dired-display-thumbnail-original-image)
+    (define-key map [C-return] 'image-dired-thumbnail-display-external)
 
-  ;; map it to "g" so that the user can press it more quickly
-  (define-key image-dired-thumbnail-mode-line-up-map "g" 'image-dired-line-up-dynamic)
-  ;; "f" for "fixed" number of thumbs per row
-  (define-key image-dired-thumbnail-mode-line-up-map "f" 'image-dired-line-up)
-  ;; "i" for "interactive"
-  (define-key image-dired-thumbnail-mode-line-up-map "i" 'image-dired-line-up-interactive)
+    (define-key map "l" 'image-dired-rotate-thumbnail-left)
+    (define-key map "r" 'image-dired-rotate-thumbnail-right)
+    (define-key map "L" 'image-dired-rotate-original-left)
+    (define-key map "R" 'image-dired-rotate-original-right)
 
-  ;; add tag map
-  (define-key image-dired-thumbnail-mode-map "t" image-dired-thumbnail-mode-tag-map)
+    (define-key map "D" 'image-dired-thumbnail-set-image-description)
+    (define-key map "\C-d" 'image-dired-delete-char)
+    (define-key map " " 'image-dired-display-next-thumbnail-original)
+    (define-key map (kbd "DEL") 'image-dired-display-previous-thumbnail-original)
+    (define-key map "c" 'image-dired-comment-thumbnail)
+    (define-key map "q" 'image-dired-kill-buffer-and-window)
 
-  ;; map it to "t" so that the user can press it more quickly
-  (define-key image-dired-thumbnail-mode-tag-map "t" 'image-dired-tag-thumbnail)
-  ;; "r" for "remove"
-  (define-key image-dired-thumbnail-mode-tag-map "r" 'image-dired-tag-thumbnail-remove)
+    ;; Mouse
+    (define-key map [mouse-2] 'image-dired-mouse-display-image)
+    (define-key map [mouse-1] 'image-dired-mouse-select-thumbnail)
+    ;; Seems I must first set C-down-mouse-1 to undefined, or else it
+    ;; will trigger the buffer menu. If I try to instead bind
+    ;; C-down-mouse-1 to `image-dired-mouse-toggle-mark', I get a message
+    ;; about C-mouse-1 not being defined afterwards. Annoying, but I
+    ;; probably do not completely understand mouse events.
+    (define-key map [C-down-mouse-1] 'undefined)
+    (define-key map [C-mouse-1] 'image-dired-mouse-toggle-mark)
 
-  (define-key image-dired-thumbnail-mode-map "\C-m"
-    'image-dired-display-thumbnail-original-image)
-  (define-key image-dired-thumbnail-mode-map [C-return]
-    'image-dired-thumbnail-display-external)
+    ;; Menu
+    (easy-menu-define nil map
+      "Menu for `image-dired-thumbnail-mode'."
+      '("Image-Dired"
+        ["Quit" image-dired-kill-buffer-and-window]
+        ["Delete thumbnail from buffer" image-dired-delete-char]
+        ["Remove tag from thumbnail" image-dired-tag-thumbnail-remove]
+        ["Tag thumbnail" image-dired-tag-thumbnail]
+        ["Comment thumbnail" image-dired-comment-thumbnail]
+        ["Refresh thumb" image-dired-refresh-thumb]
+        ["Dynamic line up" image-dired-line-up-dynamic]
+        ["Line up thumbnails" image-dired-line-up]
 
-  (define-key image-dired-thumbnail-mode-map "l" 'image-dired-rotate-thumbnail-left)
-  (define-key image-dired-thumbnail-mode-map "r" 'image-dired-rotate-thumbnail-right)
+        ["Rotate thumbnail left" image-dired-rotate-thumbnail-left]
+        ["Rotate thumbnail right" image-dired-rotate-thumbnail-right]
+        ["Rotate original left" image-dired-rotate-original-left]
+        ["Rotate original right" image-dired-rotate-original-right]
 
-  (define-key image-dired-thumbnail-mode-map "L" 'image-dired-rotate-original-left)
-  (define-key image-dired-thumbnail-mode-map "R" 'image-dired-rotate-original-right)
+        ["Toggle movement tracking on/off" image-dired-toggle-movement-tracking]
 
-  (define-key image-dired-thumbnail-mode-map "D"
-    'image-dired-thumbnail-set-image-description)
+        ["Jump to dired buffer" image-dired-jump-original-dired-buffer]
+        ["Track original" image-dired-track-original-file]
 
-  (define-key image-dired-thumbnail-mode-map "\C-d" 'image-dired-delete-char)
-  (define-key image-dired-thumbnail-mode-map " "
-    'image-dired-display-next-thumbnail-original)
-  (define-key image-dired-thumbnail-mode-map
-    (kbd "DEL") 'image-dired-display-previous-thumbnail-original)
-  (define-key image-dired-thumbnail-mode-map "c" 'image-dired-comment-thumbnail)
-  (define-key image-dired-thumbnail-mode-map "q" 'image-dired-kill-buffer-and-window)
+        ["Flag original for deletion" image-dired-flag-thumb-original-file]
+        ["Unmark original" image-dired-unmark-thumb-original-file]
+        ["Mark original" image-dired-mark-thumb-original-file]
 
-  ;; Mouse
-  (define-key image-dired-thumbnail-mode-map [mouse-2] 'image-dired-mouse-display-image)
-  (define-key image-dired-thumbnail-mode-map [mouse-1] 'image-dired-mouse-select-thumbnail)
+        ["Display in external viewer" image-dired-thumbnail-display-external]
+        ["Display image" image-dired-display-thumbnail-original-image]))
+    map)
+  "Keymap for `image-dired-thumbnail-mode'.")
 
-  ;; Seems I must first set C-down-mouse-1 to undefined, or else it
-  ;; will trigger the buffer menu. If I try to instead bind
-  ;; C-down-mouse-1 to `image-dired-mouse-toggle-mark', I get a message
-  ;; about C-mouse-1 not being defined afterwards. Annoying, but I
-  ;; probably do not completely understand mouse events.
+(defvar image-dired-display-image-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "q" 'image-dired-kill-buffer-and-window)
+    (define-key map "f" 'image-dired-display-current-image-full)
+    (define-key map "s" 'image-dired-display-current-image-sized)
 
-  (define-key image-dired-thumbnail-mode-map [C-down-mouse-1] 'undefined)
-  (define-key image-dired-thumbnail-mode-map [C-mouse-1] 'image-dired-mouse-toggle-mark)
-
-  ;; Menu
-  (define-key image-dired-thumbnail-mode-map [menu-bar image-dired]
-    (cons "Image-Dired" (make-sparse-keymap "Image-Dired")))
-
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-kill-buffer-and-window]
-    '("Quit" . image-dired-kill-buffer-and-window))
-
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-delete-char]
-    '("Delete thumbnail from buffer" . image-dired-delete-char))
-
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-tag-thumbnail-remove]
-    '("Remove tag from thumbnail" . image-dired-tag-thumbnail-remove))
-
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-tag-thumbnail]
-    '("Tag thumbnail" . image-dired-tag-thumbnail))
-
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-comment-thumbnail]
-    '("Comment thumbnail" . image-dired-comment-thumbnail))
-
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-refresh-thumb]
-    '("Refresh thumb" . image-dired-refresh-thumb))
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-line-up-dynamic]
-    '("Dynamic line up" . image-dired-line-up-dynamic))
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-line-up]
-    '("Line up thumbnails" . image-dired-line-up))
-
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-rotate-thumbnail-left]
-    '("Rotate thumbnail left" . image-dired-rotate-thumbnail-left))
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-rotate-thumbnail-right]
-    '("Rotate thumbnail right" . image-dired-rotate-thumbnail-right))
-
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-rotate-original-left]
-    '("Rotate original left" . image-dired-rotate-original-left))
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-rotate-original-right]
-    '("Rotate original right" . image-dired-rotate-original-right))
-
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-toggle-movement-tracking]
-    '("Toggle movement tracking on/off" . image-dired-toggle-movement-tracking))
-
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-jump-original-dired-buffer]
-    '("Jump to dired buffer" . image-dired-jump-original-dired-buffer))
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-track-original-file]
-    '("Track original" . image-dired-track-original-file))
-
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-flag-thumb-original-file]
-    '("Flag original for deletion" . image-dired-flag-thumb-original-file))
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-unmark-thumb-original-file]
-    '("Unmark original" . image-dired-unmark-thumb-original-file))
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-mark-thumb-original-file]
-    '("Mark original" . image-dired-mark-thumb-original-file))
-
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-thumbnail-display-external]
-    '("Display in external viewer" . image-dired-thumbnail-display-external))
-  (define-key image-dired-thumbnail-mode-map
-    [menu-bar image-dired image-dired-display-thumbnail-original-image]
-    '("Display image" . image-dired-display-thumbnail-original-image)))
-
-(defvar image-dired-display-image-mode-map (make-sparse-keymap)
+    (easy-menu-define nil map
+      "Menu for `image-dired-display-image-mode-map'."
+      '("Image-Dired"
+        ["Quit" image-dired-kill-buffer-and-window]
+        ["Display original, sized to fit" image-dired-display-current-image-sized]
+        ["Display original, full size" image-dired-display-current-image-full]))
+    map)
   "Keymap for `image-dired-display-image-mode'.")
-
-(defun image-dired-define-display-image-mode-keymap ()
-  "Define keymap for `image-dired-display-image-mode'."
-
-  ;; Keys
-  (define-key image-dired-display-image-mode-map "q" 'image-dired-kill-buffer-and-window)
-
-  (define-key image-dired-display-image-mode-map "f"
-    'image-dired-display-current-image-full)
-
-  (define-key image-dired-display-image-mode-map "s"
-    'image-dired-display-current-image-sized)
-
-  ;; Menu
-  (define-key image-dired-display-image-mode-map [menu-bar image-dired]
-    (cons "Image-Dired" (make-sparse-keymap "Image-Dired")))
-
-  (define-key image-dired-display-image-mode-map
-    [menu-bar image-dired image-dired-kill-buffer-and-window]
-    '("Quit" . image-dired-kill-buffer-and-window))
-
-  (define-key image-dired-display-image-mode-map
-    [menu-bar image-dired image-dired-display-current-image-sized]
-    '("Display original, sized to fit" . image-dired-display-current-image-sized))
-
-  (define-key image-dired-display-image-mode-map
-    [menu-bar image-dired image-dired-display-current-image-full]
-    '("Display original, full size" . image-dired-display-current-image-full))
-
-  )
 
 (defun image-dired-display-current-image-full ()
   "Display current image in full size."
@@ -1489,7 +1413,7 @@ You probably want to use this together with
     (if file
         (progn
           (image-dired-display-image file)
-          (message "Full size image displayed"))
+          (message "Fitted image displayed"))
       (error "No original file name at point"))))
 
 (define-derived-mode image-dired-thumbnail-mode
@@ -1497,14 +1421,12 @@ You probably want to use this together with
   "Browse and manipulate thumbnail images using dired.
 Use `image-dired-dired' and `image-dired-setup-dired-keybindings' to get a
 nice setup to start with."
-  (image-dired-define-thumbnail-mode-keymap)
   (message "image-dired-thumbnail-mode enabled"))
 
 (define-derived-mode image-dired-display-image-mode
   fundamental-mode "image-dired-image-display"
   "Mode for displaying and manipulating original image.
 Resized or in full-size."
-  (image-dired-define-display-image-mode-keymap)
   (message "image-dired-display-image-mode enabled"))
 
 ;;;###autoload
