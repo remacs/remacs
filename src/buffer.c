@@ -984,40 +984,54 @@ reset_buffer_local_variables (struct buffer *b, bool permanent_too)
     bset_local_var_alist (b, Qnil);
   else
     {
-      Lisp_Object tmp, prop, last = Qnil;
+      Lisp_Object tmp, last = Qnil;
       for (tmp = BVAR (b, local_var_alist); CONSP (tmp); tmp = XCDR (tmp))
-	if (!NILP (prop = Fget (XCAR (XCAR (tmp)), Qpermanent_local)))
-	  {
-	    /* If permanent-local, keep it.  */
-	    last = tmp;
-	    if (EQ (prop, Qpermanent_local_hook))
-	      {
-		/* This is a partially permanent hook variable.
-		   Preserve only the elements that want to be preserved.  */
-		Lisp_Object list, newlist;
-		list = XCDR (XCAR (tmp));
-		if (!CONSP (list))
-		  newlist = list;
-		else
-		  for (newlist = Qnil; CONSP (list); list = XCDR (list))
-		    {
-		      Lisp_Object elt = XCAR (list);
-		      /* Preserve element ELT if it's t,
-			 if it is a function with a `permanent-local-hook' property,
-			 or if it's not a symbol.  */
-		      if (! SYMBOLP (elt)
-			  || EQ (elt, Qt)
-			  || !NILP (Fget (elt, Qpermanent_local_hook)))
-			newlist = Fcons (elt, newlist);
-		    }
-		XSETCDR (XCAR (tmp), Fnreverse (newlist));
-	      }
-	  }
-	/* Delete this local variable.  */
-	else if (NILP (last))
-	  bset_local_var_alist (b, XCDR (tmp));
-	else
-	  XSETCDR (last, XCDR (tmp));
+        {
+          Lisp_Object local_var = XCAR (XCAR (tmp));
+          Lisp_Object prop = Fget (local_var, Qpermanent_local);
+
+          if (!NILP (prop))
+            {
+              /* If permanent-local, keep it.  */
+              last = tmp;
+              if (EQ (prop, Qpermanent_local_hook))
+                {
+                  /* This is a partially permanent hook variable.
+                     Preserve only the elements that want to be preserved.  */
+                  Lisp_Object list, newlist;
+                  list = XCDR (XCAR (tmp));
+                  if (!CONSP (list))
+                    newlist = list;
+                  else
+                    for (newlist = Qnil; CONSP (list); list = XCDR (list))
+                      {
+                        Lisp_Object elt = XCAR (list);
+                        /* Preserve element ELT if it's t,
+                           if it is a function with a `permanent-local-hook' property,
+                           or if it's not a symbol.  */
+                        if (! SYMBOLP (elt)
+                            || EQ (elt, Qt)
+                            || !NILP (Fget (elt, Qpermanent_local_hook)))
+                          newlist = Fcons (elt, newlist);
+                      }
+                  newlist = Fnreverse (newlist);
+                  if (XSYMBOL (local_var)->trapped_write == SYMBOL_TRAPPED_WRITE)
+                    notify_variable_watchers (local_var, newlist,
+                                              Qmakunbound, Fcurrent_buffer ());
+                  XSETCDR (XCAR (tmp), newlist);
+                  continue; /* Don't do variable write trapping twice.  */
+                }
+            }
+          /* Delete this local variable.  */
+          else if (NILP (last))
+            bset_local_var_alist (b, XCDR (tmp));
+          else
+            XSETCDR (last, XCDR (tmp));
+
+          if (XSYMBOL (local_var)->trapped_write == SYMBOL_TRAPPED_WRITE)
+            notify_variable_watchers (local_var, Qnil,
+                                      Qmakunbound, Fcurrent_buffer ());
+        }
     }
 
   for (i = 0; i < last_per_buffer_idx; ++i)
@@ -5541,7 +5555,7 @@ file I/O and the behavior of various editing commands.
 This variable is buffer-local but you cannot set it directly;
 use the function `set-buffer-multibyte' to change a buffer's representation.
 See also Info node `(elisp)Text Representations'.  */);
-  XSYMBOL (intern_c_string ("enable-multibyte-characters"))->constant = 1;
+  make_symbol_constant (intern_c_string ("enable-multibyte-characters"));
 
   DEFVAR_PER_BUFFER ("buffer-file-coding-system",
 		     &BVAR (current_buffer, buffer_file_coding_system), Qnil,

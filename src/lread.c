@@ -3833,7 +3833,7 @@ intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index)
 
   if (SREF (SYMBOL_NAME (sym), 0) == ':' && EQ (obarray, initial_obarray))
     {
-      XSYMBOL (sym)->constant = 1;
+      make_symbol_constant (sym);
       XSYMBOL (sym)->redirect = SYMBOL_PLAINVAL;
       SET_SYMBOL_VAL (XSYMBOL (sym), sym);
     }
@@ -4120,12 +4120,12 @@ init_obarray (void)
 
   DEFSYM (Qnil, "nil");
   SET_SYMBOL_VAL (XSYMBOL (Qnil), Qnil);
-  XSYMBOL (Qnil)->constant = 1;
+  make_symbol_constant (Qnil);
   XSYMBOL (Qnil)->declared_special = true;
 
   DEFSYM (Qt, "t");
   SET_SYMBOL_VAL (XSYMBOL (Qt), Qt);
-  XSYMBOL (Qt)->constant = 1;
+  make_symbol_constant (Qt);
   XSYMBOL (Qt)->declared_special = true;
 
   /* Qt is correct even if CANNOT_DUMP.  loadup.el will set to nil at end.  */

@@ -320,7 +320,8 @@ error !;
 #define lisp_h_NILP(x) EQ (x, Qnil)
 #define lisp_h_SET_SYMBOL_VAL(sym, v) \
    (eassert ((sym)->redirect == SYMBOL_PLAINVAL), (sym)->val.value = (v))
-#define lisp_h_SYMBOL_CONSTANT_P(sym) (XSYMBOL (sym)->constant)
+#define lisp_h_SYMBOL_CONSTANT_P(sym) (XSYMBOL (sym)->trapped_write == SYMBOL_NOWRITE)
+#define lisp_h_SYMBOL_TRAPPED_WRITE_P(sym) (XSYMBOL (sym)->trapped_write)
 #define lisp_h_SYMBOL_VAL(sym) \
    (eassert ((sym)->redirect == SYMBOL_PLAINVAL), (sym)->val.value)
 #define lisp_h_SYMBOLP(x) (XTYPE (x) == Lisp_Symbol)
@@ -375,6 +376,7 @@ error !;
 # define NILP(x) lisp_h_NILP (x)
 # define SET_SYMBOL_VAL(sym, v) lisp_h_SET_SYMBOL_VAL (sym, v)
 # define SYMBOL_CONSTANT_P(sym) lisp_h_SYMBOL_CONSTANT_P (sym)
+# define SYMBOL_TRAPPED_WRITE_P(sym) lisp_h_SYMBOL_TRAPPED_WRITE_P (sym)
 # define SYMBOL_VAL(sym) lisp_h_SYMBOL_VAL (sym)
 # define SYMBOLP(x) lisp_h_SYMBOLP (x)
 # define VECTORLIKEP(x) lisp_h_VECTORLIKEP (x)
@@ -600,6 +602,9 @@ extern void char_table_set (Lisp_Object, int, Lisp_Object);
 /* Defined in data.c.  */
 extern _Noreturn Lisp_Object wrong_type_argument (Lisp_Object, Lisp_Object);
 extern _Noreturn void wrong_choice (Lisp_Object, Lisp_Object);
+extern void notify_variable_watchers (Lisp_Object symbol, Lisp_Object newval,
+                                      Lisp_Object operation, Lisp_Object where);
+
 
 #ifdef CANNOT_DUMP
 enum { might_dump = false };
@@ -632,6 +637,13 @@ enum symbol_redirect
   SYMBOL_FORWARDED = 3
 };
 
+enum symbol_trapped_write
+{
+  SYMBOL_UNTRAPPED_WRITE = 0,
+  SYMBOL_NOWRITE = 1,
+  SYMBOL_TRAPPED_WRITE = 2
+};
+
 struct Lisp_Symbol
 {
   bool_bf gcmarkbit : 1;
@@ -643,10 +655,10 @@ struct Lisp_Symbol
      3 : it's a forwarding variable, the value is in `forward'.  */
   ENUM_BF (symbol_redirect) redirect : 3;
 
-  /* Non-zero means symbol is constant, i.e. changing its value
-     should signal an error.  If the value is 3, then the var
-     can be changed, but only by `defconst'.  */
-  unsigned constant : 2;
+  /* 0 : normal case, just set the value
+     1 : constant, cannot set, e.g. nil, t, :keywords.
+     2 : trap the write, call watcher functions.  */
+  ENUM_BF (symbol_trapped_write) trapped_write : 2;
 
   /* Interned state of the symbol.  This is an enumerator from
      enum symbol_interned.  */
@@ -1850,9 +1862,20 @@ SYMBOL_INTERNED_IN_INITIAL_OBARRAY_P (Lisp_Object sym)
   return XSYMBOL (sym)->interned == SYMBOL_INTERNED_IN_INITIAL_OBARRAY;
 }
 
-/* Value is non-zero if symbol is considered a constant, i.e. its
-   value cannot be changed (there is an exception for keyword symbols,
-   whose value can be set to the keyword symbol itself).  */
+/* Value is non-zero if symbol cannot be changed through a simple set,
+   i.e. it's a constant (e.g. nil, t, :keywords), or it has some
+   watching functions.  */
+
+INLINE int
+(SYMBOL_TRAPPED_WRITE_P) (Lisp_Object sym)
+{
+  return lisp_h_SYMBOL_TRAPPED_WRITE_P (sym);
+}
+
+/* Value is non-zero if symbol cannot be changed at all, i.e. it's a
+   constant (e.g. nil, t, :keywords).  Code that actually wants to
+   write to SYM, should also check whether there are any watching
+   functions.  */
 
 INLINE int
 (SYMBOL_CONSTANT_P) (Lisp_Object sym)
@@ -3286,6 +3309,12 @@ set_symbol_next (Lisp_Object sym, struct Lisp_Symbol *next)
   XSYMBOL (sym)->next = next;
 }
 
+INLINE void
+make_symbol_constant (Lisp_Object sym)
+{
+  XSYMBOL (sym)->trapped_write = SYMBOL_NOWRITE;
+}
+
 /* Buffer-local (also frame-local) variable access functions.  */
 
 INLINE int
@@ -3394,7 +3423,13 @@ extern _Noreturn void args_out_of_range (Lisp_Object, Lisp_Object);
 extern _Noreturn void args_out_of_range_3 (Lisp_Object, Lisp_Object,
 					   Lisp_Object);
 extern Lisp_Object do_symval_forwarding (union Lisp_Fwd *);
-extern void set_internal (Lisp_Object, Lisp_Object, Lisp_Object, bool);
+enum Set_Internal_Bind {
+  SET_INTERNAL_SET,
+  SET_INTERNAL_BIND,
+  SET_INTERNAL_UNBIND
+};
+extern void set_internal (Lisp_Object, Lisp_Object, Lisp_Object,
+                          enum Set_Internal_Bind);
 extern void syms_of_data (void);
 extern void swap_in_global_binding (struct Lisp_Symbol *);
 
@@ -3877,6 +3912,7 @@ extern _Noreturn void xsignal2 (Lisp_Object, Lisp_Object, Lisp_Object);
 extern _Noreturn void xsignal3 (Lisp_Object, Lisp_Object, Lisp_Object,
 				Lisp_Object);
 extern _Noreturn void signal_error (const char *, Lisp_Object);
+extern Lisp_Object funcall_subr (struct Lisp_Subr *subr, ptrdiff_t numargs, Lisp_Object *arg_vector);
 extern Lisp_Object eval_sub (Lisp_Object form);
 extern Lisp_Object apply1 (Lisp_Object, Lisp_Object);
 extern Lisp_Object call0 (Lisp_Object);

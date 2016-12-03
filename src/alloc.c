@@ -3567,7 +3567,7 @@ init_symbol (Lisp_Object val, Lisp_Object name)
   set_symbol_next (val, NULL);
   p->gcmarkbit = false;
   p->interned = SYMBOL_UNINTERNED;
-  p->constant = 0;
+  p->trapped_write = SYMBOL_UNTRAPPED_WRITE;
   p->declared_special = false;
   p->pinned = false;
 }

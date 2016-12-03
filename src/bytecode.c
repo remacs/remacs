@@ -569,10 +569,10 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	    if (SYMBOLP (sym)
 		&& !EQ (val, Qunbound)
 		&& !XSYMBOL (sym)->redirect
-		&& !SYMBOL_CONSTANT_P (sym))
+                && !SYMBOL_TRAPPED_WRITE_P (sym))
 	      SET_SYMBOL_VAL (XSYMBOL (sym), val);
 	    else
-	      set_internal (sym, val, Qnil, false);
+              set_internal (sym, val, Qnil, SET_INTERNAL_SET);
 	  }
 	  NEXT;
 
