@@ -258,6 +258,12 @@ for example, (type-of 1) returns `integer'.  */)
 	return Qfont_entity;
       if (FONT_OBJECT_P (object))
 	return Qfont_object;
+      if (THREADP (object))
+	return Qthread;
+      if (MUTEXP (object))
+	return Qmutex;
+      if (CONDVARP (object))
+	return Qcondition_variable;
       return Qvector;
 
     case Lisp_Float:
@@ -528,6 +534,33 @@ DEFUN ("floatp", Ffloatp, Sfloatp, 1, 1, 0,
   return Qnil;
 }
 
+DEFUN ("threadp", Fthreadp, Sthreadp, 1, 1, 0,
+       doc: /* Return t if OBJECT is a thread.  */)
+  (Lisp_Object object)
+{
+  if (THREADP (object))
+    return Qt;
+  return Qnil;
+}
+
+DEFUN ("mutexp", Fmutexp, Smutexp, 1, 1, 0,
+       doc: /* Return t if OBJECT is a mutex.  */)
+  (Lisp_Object object)
+{
+  if (MUTEXP (object))
+    return Qt;
+  return Qnil;
+}
+
+DEFUN ("condition-variable-p", Fcondition_variable_p, Scondition_variable_p,
+       1, 1, 0,
+       doc: /* Return t if OBJECT is a condition variable.  */)
+  (Lisp_Object object)
+{
+  if (CONDVARP (object))
+    return Qt;
+  return Qnil;
+}
 
 /* Extract and set components of lists.  */
 
@@ -3756,6 +3789,9 @@ syms_of_data (void)
   DEFSYM (Qchar_table, "char-table");
   DEFSYM (Qbool_vector, "bool-vector");
   DEFSYM (Qhash_table, "hash-table");
+  DEFSYM (Qthread, "thread");
+  DEFSYM (Qmutex, "mutex");
+  DEFSYM (Qcondition_variable, "condition-variable");
 
   DEFSYM (Qdefun, "defun");
 
@@ -3796,6 +3832,9 @@ syms_of_data (void)
   defsubr (&Ssubrp);
   defsubr (&Sbyte_code_function_p);
   defsubr (&Schar_or_string_p);
+  defsubr (&Sthreadp);
+  defsubr (&Smutexp);
+  defsubr (&Scondition_variable_p);
   defsubr (&Scar);
   defsubr (&Scdr);
   defsubr (&Scar_safe);

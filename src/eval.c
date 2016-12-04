@@ -32,7 +32,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Chain of condition and catch handlers currently in effect.  */
 
-struct handler *handlerlist;
+/* struct handler *handlerlist; */
 
 /* Non-nil means record all fset's and provide's, to be undone
    if the file being autoloaded is not fully loaded.
@@ -46,23 +46,25 @@ Lisp_Object Vautoload_queue;
    is shutting down.  */
 Lisp_Object Vrun_hooks;
 
+/* The commented-out variables below are macros defined in thread.h.  */
+
 /* Current number of specbindings allocated in specpdl, not counting
    the dummy entry specpdl[-1].  */
 
-ptrdiff_t specpdl_size;
+/* ptrdiff_t specpdl_size; */
 
 /* Pointer to beginning of specpdl.  A dummy entry specpdl[-1] exists
    only so that its address can be taken.  */
 
-union specbinding *specpdl;
+/* union specbinding *specpdl; */
 
 /* Pointer to first unused element in specpdl.  */
 
-union specbinding *specpdl_ptr;
+/* union specbinding *specpdl_ptr; */
 
 /* Depth in Lisp evaluations and function calls.  */
 
-static EMACS_INT lisp_eval_depth;
+/* static EMACS_INT lisp_eval_depth; */
 
 /* The value of num_nonmacro_input_events as of the last time we
    started to enter the debugger.  If we decide to enter the debugger
@@ -119,6 +121,13 @@ specpdl_where (union specbinding *pdl)
 {
   eassert (pdl->kind > SPECPDL_LET);
   return pdl->let.where;
+}
+
+static Lisp_Object
+specpdl_saved_value (union specbinding *pdl)
+{
+  eassert (pdl->kind >= SPECPDL_LET);
+  return pdl->let.saved_value;
 }
 
 static Lisp_Object
@@ -218,20 +227,22 @@ init_eval_once (void)
   Vrun_hooks = Qnil;
 }
 
-static struct handler handlerlist_sentinel;
+/* static struct handler handlerlist_sentinel; */
 
 void
 init_eval (void)
 {
+  byte_stack_list = 0;
   specpdl_ptr = specpdl;
   { /* Put a dummy catcher at top-level so that handlerlist is never NULL.
        This is important since handlerlist->nextfree holds the freelist
        which would otherwise leak every time we unwind back to top-level.   */
-    handlerlist = handlerlist_sentinel.nextfree = &handlerlist_sentinel;
+    handlerlist_sentinel = xzalloc (sizeof (struct handler));
+    handlerlist = handlerlist_sentinel->nextfree = handlerlist_sentinel;
     struct handler *c = push_handler (Qunbound, CATCHER);
-    eassert (c == &handlerlist_sentinel);
-    handlerlist_sentinel.nextfree = NULL;
-    handlerlist_sentinel.next = NULL;
+    eassert (c == handlerlist_sentinel);
+    handlerlist_sentinel->nextfree = NULL;
+    handlerlist_sentinel->next = NULL;
   }
   Vquit_flag = Qnil;
   debug_on_next_call = 0;
@@ -1138,7 +1149,8 @@ unwind_to_catch (struct handler *catch, Lisp_Object value)
 
   eassert (handlerlist == catch);
 
-  lisp_eval_depth = catch->lisp_eval_depth;
+  byte_stack_list = catch->byte_stack;
+  lisp_eval_depth = catch->f_lisp_eval_depth;
 
   sys_longjmp (catch->jmp, 1);
 }
@@ -1432,6 +1444,7 @@ push_handler_nosignal (Lisp_Object tag_ch_val, enum handlertype handlertype)
   c->pdlcount = SPECPDL_INDEX ();
   c->poll_suppress_count = poll_suppress_count;
   c->interrupt_input_blocked = interrupt_input_blocked;
+  c->byte_stack = byte_stack_list;
   handlerlist = c;
   return c;
 }
@@ -1581,7 +1594,7 @@ signal_or_quit (Lisp_Object error_symbol, Lisp_Object data, bool keyboard_quit)
     }
   else
     {
-      if (handlerlist != &handlerlist_sentinel)
+      if (handlerlist != handlerlist_sentinel)
 	/* FIXME: This will come right back here if there's no `top-level'
 	   catcher.  A better solution would be to abort here, and instead
 	   add a catch-all condition handler so we never come here.  */
@@ -3144,6 +3157,44 @@ let_shadows_global_binding_p (Lisp_Object symbol)
   return 0;
 }
 
+void
+do_specbind (struct Lisp_Symbol *sym, union specbinding *bind,
+	     Lisp_Object value)
+{
+  switch (sym->redirect)
+    {
+    case SYMBOL_PLAINVAL:
+      if (!sym->trapped_write)
+	SET_SYMBOL_VAL (sym, value);
+      else
+	set_internal (specpdl_symbol (bind), value, Qnil, SET_INTERNAL_BIND);
+      break;
+
+    case SYMBOL_LOCALIZED:
+    case SYMBOL_FORWARDED:
+      if ((sym->redirect == SYMBOL_LOCALIZED
+	   || BUFFER_OBJFWDP (SYMBOL_FWD (sym)))
+	  && CONSP (specpdl_symbol (bind)))
+	{
+	  Lisp_Object where;
+
+	  where = XCAR (XCDR (specpdl_symbol (bind)));
+	  if (NILP (where)
+	      && sym->redirect == SYMBOL_FORWARDED)
+	    {
+	      Fset_default (XCAR (specpdl_symbol (bind)), value);
+	      return;
+	    }
+	}
+
+      set_internal (specpdl_symbol (bind), value, Qnil, SET_INTERNAL_BIND);
+      break;
+
+    default:
+      emacs_abort ();
+    }
+}
+
 /* `specpdl_ptr' describes which variable is
    let-bound, so it can be properly undone when we unbind_to.
    It can be either a plain SPECPDL_LET or a SPECPDL_LET_LOCAL/DEFAULT.
@@ -3175,11 +3226,9 @@ specbind (Lisp_Object symbol, Lisp_Object value)
       specpdl_ptr->let.kind = SPECPDL_LET;
       specpdl_ptr->let.symbol = symbol;
       specpdl_ptr->let.old_value = SYMBOL_VAL (sym);
+      specpdl_ptr->let.saved_value = Qnil;
       grow_specpdl ();
-      if (!sym->trapped_write)
-	SET_SYMBOL_VAL (sym, value);
-      else
-	set_internal (symbol, value, Qnil, SET_INTERNAL_BIND);
+      do_specbind (sym, specpdl_ptr - 1, value);
       break;
     case SYMBOL_LOCALIZED:
       if (SYMBOL_BLV (sym)->frame_local)
@@ -3191,6 +3240,7 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 	specpdl_ptr->let.symbol = symbol;
 	specpdl_ptr->let.old_value = ovalue;
 	specpdl_ptr->let.where = Fcurrent_buffer ();
+	specpdl_ptr->let.saved_value = Qnil;
 
 	eassert (sym->redirect != SYMBOL_LOCALIZED
 		 || (EQ (SYMBOL_BLV (sym)->where, Fcurrent_buffer ())));
@@ -3211,7 +3261,7 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 	      {
 		specpdl_ptr->let.kind = SPECPDL_LET_DEFAULT;
 		grow_specpdl ();
-		Fset_default (symbol, value);
+		do_specbind (sym, specpdl_ptr - 1, value);
 		return;
 	      }
 	  }
@@ -3219,7 +3269,7 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 	  specpdl_ptr->let.kind = SPECPDL_LET;
 
 	grow_specpdl ();
-        set_internal (symbol, value, Qnil, SET_INTERNAL_BIND);
+	do_specbind (sym, specpdl_ptr - 1, value);
 	break;
       }
     default: emacs_abort ();
@@ -3263,7 +3313,84 @@ record_unwind_protect_void (void (*function) (void))
   grow_specpdl ();
 }
 
+void
+rebind_for_thread_switch (void)
+{
+  union specbinding *bind;
+
+  for (bind = specpdl; bind != specpdl_ptr; ++bind)
+    {
+      if (bind->kind >= SPECPDL_LET)
+	{
+	  Lisp_Object value = specpdl_saved_value (bind);
+
+	  bind->let.saved_value = Qnil;
+	  do_specbind (XSYMBOL (specpdl_symbol (bind)), bind, value);
+	}
+    }
+}
+
 static void
+do_one_unbind (union specbinding *this_binding, int unwinding)
+{
+  eassert (unwinding || this_binding->kind >= SPECPDL_LET);
+  switch (this_binding->kind)
+    {
+    case SPECPDL_UNWIND:
+      this_binding->unwind.func (this_binding->unwind.arg);
+      break;
+    case SPECPDL_UNWIND_PTR:
+      this_binding->unwind_ptr.func (this_binding->unwind_ptr.arg);
+      break;
+    case SPECPDL_UNWIND_INT:
+      this_binding->unwind_int.func (this_binding->unwind_int.arg);
+      break;
+    case SPECPDL_UNWIND_VOID:
+      this_binding->unwind_void.func ();
+      break;
+    case SPECPDL_BACKTRACE:
+      break;
+    case SPECPDL_LET:
+      { /* If variable has a trivial value (no forwarding), and isn't
+	   trapped we can just set it.  No need to check for constant
+	   symbols here, since that was already done by specbind.  */
+	struct Lisp_Symbol sym = specpdl_symbol (this_binding);
+	if (SYMBOLP (sym) && XSYMBOL (sym)->redirect == SYMBOL_PLAINVAL)
+	  {
+	    if (XSYMBOL (sym)->trapped_write == SYMBOL_UNTRAPPED_WRITE)
+	      SET_SYMBOL_VAL (XSYMBOL (sym), specpdl_old_value (this_binding));
+	    else
+	      set_internal (sym, specpdl_old_value (this_binding),
+			    Qnil, SET_INTERNAL_UNBIND);
+	    break;
+	  }
+	else
+	  { /* FALLTHROUGH!!
+	       NOTE: we only ever come here if make_local_foo was used for
+	       the first time on this var within this let.  */
+	  }
+      }
+    case SPECPDL_LET_DEFAULT:
+      Fset_default (specpdl_symbol (this_binding),
+		    specpdl_old_value (this_binding));
+      break;
+    case SPECPDL_LET_LOCAL:
+      {
+	Lisp_Object symbol = specpdl_symbol (this_binding);
+	Lisp_Object where = specpdl_where (this_binding);
+	Lisp_Object old_value = specpdl_old_value (this_binding);
+	eassert (BUFFERP (where));
+
+	/* If this was a local binding, reset the value in the appropriate
+	   buffer, but only if that buffer's binding still exists.  */
+	if (!NILP (Flocal_variable_p (symbol, where)))
+	  set_internal (symbol, old_value, where, SET_INTERNAL_UNBIND);
+      }
+      break;
+    }
+}
+
+void
 do_nothing (void)
 {}
 
@@ -3322,72 +3449,37 @@ unbind_to (ptrdiff_t count, Lisp_Object value)
 
   while (specpdl_ptr != specpdl + count)
     {
-      /* Decrement specpdl_ptr before we do the work to unbind it, so
-	 that an error in unbinding won't try to unbind the same entry
-	 again.  Take care to copy any parts of the binding needed
-	 before invoking any code that can make more bindings.  */
+      /* Copy the binding, and decrement specpdl_ptr, before we do
+	 the work to unbind it.  We decrement first
+	 so that an error in unbinding won't try to unbind
+	 the same entry again, and we copy the binding first
+	 in case more bindings are made during some of the code we run.  */
 
-      specpdl_ptr--;
+      union specbinding this_binding;
+      this_binding = *--specpdl_ptr;
 
-      switch (specpdl_ptr->kind)
-	{
-	case SPECPDL_UNWIND:
-	  specpdl_ptr->unwind.func (specpdl_ptr->unwind.arg);
-	  break;
-	case SPECPDL_UNWIND_PTR:
-	  specpdl_ptr->unwind_ptr.func (specpdl_ptr->unwind_ptr.arg);
-	  break;
-	case SPECPDL_UNWIND_INT:
-	  specpdl_ptr->unwind_int.func (specpdl_ptr->unwind_int.arg);
-	  break;
-	case SPECPDL_UNWIND_VOID:
-	  specpdl_ptr->unwind_void.func ();
-	  break;
-	case SPECPDL_BACKTRACE:
-	  break;
-	case SPECPDL_LET:
-          { /* If variable has a trivial value (no forwarding), and
-               isn't trapped, we can just set it.  */
-	    Lisp_Object sym = specpdl_symbol (specpdl_ptr);
-	    if (SYMBOLP (sym) && XSYMBOL (sym)->redirect == SYMBOL_PLAINVAL)
-	      {
-                if (XSYMBOL (sym)->trapped_write == SYMBOL_UNTRAPPED_WRITE)
-                  SET_SYMBOL_VAL (XSYMBOL (sym), specpdl_old_value (specpdl_ptr));
-                else
-                  set_internal (sym, specpdl_old_value (specpdl_ptr),
-                                Qnil, SET_INTERNAL_UNBIND);
-		break;
-	      }
-	    else
-	      { /* FALLTHROUGH!!
-		   NOTE: we only ever come here if make_local_foo was used for
-		   the first time on this var within this let.  */
-	      }
-	  }
-	case SPECPDL_LET_DEFAULT:
-	  Fset_default (specpdl_symbol (specpdl_ptr),
-			specpdl_old_value (specpdl_ptr));
-	  break;
-	case SPECPDL_LET_LOCAL:
-	  {
-	    Lisp_Object symbol = specpdl_symbol (specpdl_ptr);
-	    Lisp_Object where = specpdl_where (specpdl_ptr);
-	    Lisp_Object old_value = specpdl_old_value (specpdl_ptr);
-	    eassert (BUFFERP (where));
-
-	    /* If this was a local binding, reset the value in the appropriate
-	       buffer, but only if that buffer's binding still exists.  */
-	    if (!NILP (Flocal_variable_p (symbol, where)))
-              set_internal (symbol, old_value, where, SET_INTERNAL_UNBIND);
-	  }
-	  break;
-	}
+      do_one_unbind (&this_binding, 1);
     }
 
   if (NILP (Vquit_flag) && !NILP (quitf))
     Vquit_flag = quitf;
 
   return value;
+}
+
+void
+unbind_for_thread_switch (struct thread_state *thr)
+{
+  union specbinding *bind;
+
+  for (bind = thr->m_specpdl_ptr; bind > thr->m_specpdl;)
+    {
+      if ((--bind)->kind >= SPECPDL_LET)
+	{
+	  bind->let.saved_value = find_symbol_value (specpdl_symbol (bind));
+	  do_one_unbind (bind, 0);
+	}
+    }
 }
 
 DEFUN ("special-variable-p", Fspecial_variable_p, Sspecial_variable_p, 1, 1, 0,
@@ -3712,10 +3804,10 @@ NFRAMES and BASE specify the activation frame to use, as in `backtrace-frame'.  
 
 
 void
-mark_specpdl (void)
+mark_specpdl (union specbinding *first, union specbinding *ptr)
 {
   union specbinding *pdl;
-  for (pdl = specpdl; pdl != specpdl_ptr; pdl++)
+  for (pdl = first; pdl != ptr; pdl++)
     {
       switch (pdl->kind)
 	{
@@ -3741,6 +3833,7 @@ mark_specpdl (void)
 	case SPECPDL_LET:
 	  mark_object (specpdl_symbol (pdl));
 	  mark_object (specpdl_old_value (pdl));
+	  mark_object (specpdl_saved_value (pdl));
 	  break;
 
 	case SPECPDL_UNWIND_PTR:

@@ -2096,7 +2096,7 @@ extern int proc_buffered_char[];
 
 int
 sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
-	    struct timespec *timeout, void *ignored)
+	    struct timespec *timeout, sigset_t *ignored)
 {
   SELECT_TYPE orfds, owfds;
   DWORD timeout_ms, start_time;

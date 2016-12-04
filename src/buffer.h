@@ -1040,10 +1040,6 @@ extern struct buffer *all_buffers;
 #define FOR_EACH_BUFFER(b) \
   for ((b) = all_buffers; (b); (b) = (b)->next)
 
-/* This points to the current buffer.  */
-
-extern struct buffer *current_buffer;
-
 /* This structure holds the default values of the buffer-local variables
    that have special slots in each buffer.
    The default value occupies the same slot in this structure
