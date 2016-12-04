@@ -2633,17 +2633,6 @@ Optional REFRESH will unhighlighted then highlight, using block cursor
 	  (if (eq 'block refresh) start (- start 2)) end t))))
 
 
-(defun ispell-highlight-spelling-error-xemacs (start end &optional highlight)
-  "Highlight the word from START to END using `isearch-highlight'.
-When the optional third arg HIGHLIGHT is set, the word is highlighted,
-otherwise it is displayed normally."
-  (if highlight
-      (isearch-highlight start end)
-    (isearch-dehighlight))
-  ;;(sit-for 0)
-  )
-
-
 (defun ispell-highlight-spelling-error-overlay (start end &optional highlight)
   "Highlight the word from START to END using overlays.
 When the optional third arg HIGHLIGHT is set, the word is highlighted
@@ -2679,14 +2668,9 @@ The variable `ispell-highlight-face' selects the face to use for highlighting."
 
 
 (defun ispell-highlight-spelling-error (start end &optional highlight refresh)
-  (cond
-   ((featurep 'xemacs)
-    (ispell-highlight-spelling-error-xemacs start end highlight))
-   ((and (featurep 'faces)
-	 (or (and (fboundp 'display-color-p) (display-color-p))
-	     window-system))
-    (ispell-highlight-spelling-error-overlay start end highlight))
-   (t (ispell-highlight-spelling-error-generic start end highlight refresh))))
+  (if (display-color-p)
+      (ispell-highlight-spelling-error-overlay start end highlight)
+    (ispell-highlight-spelling-error-generic start end highlight refresh)))
 
 (defun ispell-display-buffer (buffer)
   "Show BUFFER in new window above selected one.
