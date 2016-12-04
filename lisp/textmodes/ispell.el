@@ -673,10 +673,6 @@ here just for backwards compatibility.")
 
 
 
-;; The version must be 3.1 or greater for this version of ispell.el
-;; There is an incompatibility between version 3.1.12 and lower versions.
-(defconst ispell-required-version '(3 1 12)
-  "Ispell versions with which this version of ispell.el is known to work.")
 (defvar ispell-offset -1
   "Offset that maps protocol differences between ispell 3.1 versions.")
 
