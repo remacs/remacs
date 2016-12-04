@@ -1331,8 +1331,7 @@ aspell is used along with Emacs).")
   "Return a list of valid dictionaries.
 The variable `ispell-library-directory' defines their location."
   ;; Initialize variables and dictionaries alists for desired spellchecker.
-  ;; Make sure ispell.el is loaded to avoid some autoload loops in XEmacs
-  ;; (and may be others)
+  ;; Make sure ispell.el is loaded to avoid some autoload loops.
   (if (featurep 'ispell)
       (ispell-set-spellchecker-params))
 
@@ -4189,6 +4188,6 @@ Both should not be used to define a buffer-local dictionary."
 ; LocalWords:  minipage pers dict unhighlight buf grep sync prev inc
 ; LocalWords:  fn oldot NB AIX msg init read's bufs pt cmd Quinlan eg
 ; LocalWords:  uuencoded unidiff sc nn VM SGML eval IspellPersDict
-; LocalWords:  lns XEmacs HTML casechars Multibyte
+; LocalWords:  lns HTML casechars Multibyte
 
 ;;; ispell.el ends here
