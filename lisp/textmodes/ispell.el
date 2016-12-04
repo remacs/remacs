@@ -118,21 +118,6 @@
 ;;  Recursive edits (?C-r or ?R) inside a keyboard text replacement check (?r)
 ;;    can cause misalignment errors.
 
-;; XEmacs does not have looking-back
-(defalias 'ispell-looking-back
-  (if (fboundp 'looking-back) 'looking-back
-    (lambda (regexp &optional limit &rest ignored)
-      "Return non-nil if text before point matches regular expression REGEXP.
-Like `looking-at' except matches before point, and is slower.
-LIMIT if non-nil speeds up the search by specifying a minimum
-starting position, to avoid checking matches that would start
-before LIMIT.
-
-This is a stripped down compatibility function for use when
-full featured `looking-back' function is missing."
-      (save-excursion
-        (re-search-backward (concat "\\(?:" regexp "\\)\\=") limit t)))))
-
 ;;; XEmacs21 does not have `with-no-warnings'. Taken from org mode.
 (defmacro ispell-with-no-warnings (&rest body)
   (cons (if (fboundp 'with-no-warnings) 'with-no-warnings 'progn) body))
