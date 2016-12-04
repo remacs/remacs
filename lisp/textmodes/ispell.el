@@ -2094,15 +2094,9 @@ Global `ispell-quit' set to start location to continue spell session."
              "--  %b  --  word: " word
              "  --  dict: " (or ispell-current-dictionary "default")
              "  --  prog: " (file-name-nondirectory ispell-program-name)))
-      ;; XEmacs: no need for horizontal scrollbar in choices window
+      ;; No need for horizontal scrollbar in choices window
       (ispell-with-no-warnings
-       (and (fboundp 'set-specifier)
-	    (boundp 'horizontal-scrollbar-visible-p)
-	    (set-specifier horizontal-scrollbar-visible-p nil
-			   (cons (current-buffer) nil))))
-      (ispell-with-no-warnings
-       (and (boundp 'horizontal-scroll-bar)
-	    (setq horizontal-scroll-bar nil)))
+       (setq horizontal-scroll-bar nil))
       (erase-buffer)
       (if guess
 	  (progn
