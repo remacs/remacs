@@ -3851,8 +3851,7 @@ You can bind this to the key C-c i in GNUS or mail by adding to
 		       (point-max)))
 		    (t (min (point-max) (funcall ispell-message-text-end))))))
 	   (default-prefix   ; Vanilla cite prefix (just used for cite-regexp)
-	     (if (and (boundp 'mail-yank-prefix) mail-yank-prefix)
-		 (ispell-non-empty-string mail-yank-prefix)
+	     (if (ispell-non-empty-string mail-yank-prefix)
 	       "   \\|\t"))
 	   (cite-regexp			;Prefix of quoted text
 	    (cond
