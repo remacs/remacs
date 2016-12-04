@@ -673,9 +673,6 @@ here just for backwards compatibility.")
 
 
 
-(defvar ispell-offset -1
-  "Offset that maps protocol differences between ispell 3.1 versions.")
-
 (defconst ispell-version "ispell.el 3.6 - 7-Jan-2003")
 
 
@@ -758,13 +755,10 @@ Otherwise returns the library directory name, if that is defined."
 
       (let ((aspell-minver    "0.50")
 	    (aspell8-minver   "0.60")
-	    (ispell0-minver   "3.1.0")
 	    (ispell-minver    "3.1.12")
 	    (hunspell8-minver "1.1.6"))
 
-	(if (version<= ispell0-minver ispell-program-version)
-	    (or (version<= ispell-minver ispell-program-version)
-		(setq ispell-offset 0))
+	(unless (version<= ispell-minver ispell-program-version)
 	  (error "%s release %s or greater is required"
 		 ispell-program-name
 		 ispell-minver))
@@ -3360,7 +3354,7 @@ Returns the sum SHIFT due to changes in word replacements."
 	  ;; Markers can move with highlighting!  This destroys
 	  ;; end of region markers line-end and ispell-region-end
 	  (let ((word-start
-		 (copy-marker (+ ispell-start ispell-offset (car (cdr poss)))))
+		 (copy-marker (+ ispell-start (car (cdr poss)))))
 		(word-len (length (car poss)))
 		(line-end (copy-marker ispell-end))
 		(line-start (copy-marker ispell-start))
