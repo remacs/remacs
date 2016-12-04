@@ -860,11 +860,7 @@ and added as a submenu of the \"Edit\" menu.")
 
 (defvar ispell-async-processp (and (fboundp 'delete-process)
 				   (fboundp 'process-send-string)
-				   (fboundp 'accept-process-output)
-				   ;;(fboundp 'make-process)
-				   ;;(fboundp 'set-process-filter)
-				   ;;(fboundp 'process-kill-without-query)
-				   )
+				   (fboundp 'accept-process-output))
   "Non-nil means that the OS supports asynchronous processes.")
 
 ;; Make ispell.el work better with aspell.
@@ -1452,7 +1448,6 @@ The variable `ispell-library-directory' defines their location."
       (define-key ispell-menu-map [ispell-buffer]
 	`(menu-item ,(purecopy "Spell-Check Buffer") ispell-buffer
 		    :help ,(purecopy "Check spelling of selected buffer")))
-      ;;(put 'ispell-region 'menu-enable 'mark-active)
       (fset 'ispell-menu-map (symbol-value 'ispell-menu-map))))
 
 
