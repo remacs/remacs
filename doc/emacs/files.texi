@@ -1870,6 +1870,11 @@ prevent it from being treated as a remote file name.  Thus, if you have
 a directory named @file{/foo:} and a file named @file{bar} in it, you
 can refer to that file in Emacs as @samp{/:/foo:/bar}.
 
+  If you want to quote only special characters in the local part of a
+remote file name, you can quote just the local part.
+@samp{/baz:/:/foo:/bar} refers to the file @file{bar} of directory
+@file{/foo:} on the host @file{baz}.
+
   @samp{/:} can also prevent @samp{~} from being treated as a special
 character for a user's home directory.  For example, @file{/:/tmp/~hack}
 refers to a file whose name is @file{~hack} in directory @file{/tmp}.

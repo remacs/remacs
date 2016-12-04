@@ -268,6 +268,12 @@ variable of this kind to swap modifiers in Emacs.
 ---
 ** New input methods: 'cyrillic-tuvan', 'polish-prefix'.
 
++++
+** File name quoting by adding the prefix "/:" is now possible for the
+local part of a remote file name.  Thus, if you have a directory named
+"/~" on the remote host "foo", you can prevent it from being
+substituted by a home directory by writing it as "/foo:/:/~/file".
+
 
 * Editing Changes in Emacs 26.1
 

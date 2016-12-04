@@ -1239,9 +1239,9 @@ localname (file name on remote host) and hop.  If NODEFAULT is
 non-nil, the file name parts are not expanded to their default
 values."
   (save-match-data
+    (unless (tramp-tramp-file-p name)
+      (tramp-compat-user-error nil "Not a Tramp file name: \"%s\"" name))
     (let ((match (string-match (nth 0 tramp-file-name-structure) name)))
-      (unless match
-	(tramp-compat-user-error nil "Not a Tramp file name: \"%s\"" name))
       (let ((method    (match-string (nth 1 tramp-file-name-structure) name))
 	    (user      (match-string (nth 2 tramp-file-name-structure) name))
 	    (host      (match-string (nth 3 tramp-file-name-structure) name))
@@ -1678,6 +1678,27 @@ FILE must be a local file name on a connection identified via VEC."
 (put 'with-tramp-connection-property 'edebug-form-spec t)
 (font-lock-add-keywords
  'emacs-lisp-mode '("\\<with-tramp-connection-property\\>"))
+
+(defsubst tramp-quoted-name-p (name)
+  "Whether NAME is quoted with prefix \"/:\".
+If NAME is a remote file name, check the local part of NAME."
+  (string-match "^/:" (or (file-remote-p name 'localname) name)))
+
+(defsubst tramp-quote-name (name)
+  "Add the quotation prefix \"/:\" to file NAME.
+If NAME is a remote file name, the local part of NAME is quoted."
+  (concat (file-remote-p name) "/:" (or (file-remote-p name 'localname) name)))
+
+(defsubst tramp-unquote-name (name)
+  "Remove quotation prefix \"/:\" from file NAME.
+If NAME is a remote file name, the local part of NAME is unquoted."
+  (save-match-data
+    (let ((localname (or (file-remote-p name 'localname) name)))
+      (when (tramp-quoted-name-p localname)
+	(setq
+	 localname
+	 (replace-match (if (= (length localname) 2) "/" "") nil t localname)))
+      (concat (file-remote-p name) localname))))
 
 (defun tramp-drop-volume-letter (name)
   "Cut off unnecessary drive letter from file NAME.
@@ -3323,20 +3344,23 @@ User is always nil."
 (defun tramp-handle-substitute-in-file-name (filename)
   "Like `substitute-in-file-name' for Tramp files.
 \"//\" and \"/~\" substitute only in the local filename part."
-  ;; First, we must replace environment variables.
-  (setq filename (tramp-replace-environment-variables filename))
-  (with-parsed-tramp-file-name filename nil
-    ;; Ignore in LOCALNAME everything before "//" or "/~".
-    (when (and (stringp localname) (string-match ".+?/\\(/\\|~\\)" localname))
-      (setq filename
-	    (concat (file-remote-p filename)
-		    (replace-match "\\1" nil nil localname)))
-      ;; "/m:h:~" does not work for completion.  We use "/m:h:~/".
-      (when (string-match "~$" filename)
-	(setq filename (concat filename "/"))))
-    ;; We do not want to replace environment variables, again.
-    (let (process-environment)
-      (tramp-run-real-handler 'substitute-in-file-name (list filename)))))
+  ;; Check, whether the local part is a quoted file name.
+  (if (tramp-quoted-name-p filename)
+      filename
+    ;; First, we must replace environment variables.
+    (setq filename (tramp-replace-environment-variables filename))
+    (with-parsed-tramp-file-name filename nil
+      ;; Ignore in LOCALNAME everything before "//" or "/~".
+      (when (and (stringp localname) (string-match ".+?/\\(/\\|~\\)" localname))
+	(setq filename
+	      (concat (file-remote-p filename)
+		      (replace-match "\\1" nil nil localname)))
+	;; "/m:h:~" does not work for completion.  We use "/m:h:~/".
+	(when (string-match "~$" filename)
+	  (setq filename (concat filename "/"))))
+      ;; We do not want to replace environment variables, again.
+      (let (process-environment)
+	(tramp-run-real-handler 'substitute-in-file-name (list filename))))))
 
 (defun tramp-handle-set-visited-file-modtime (&optional time-list)
   "Like `set-visited-file-modtime' for Tramp files."
@@ -4080,7 +4104,7 @@ this file, if that variable is non-nil."
 	       ("|" . "__")
 	       ("[" . "_l")
 	       ("]" . "_r"))
-	     (buffer-file-name))
+	     (tramp-unquote-name (buffer-file-name)))
 	    tramp-auto-save-directory))))
     ;; Run plain `make-auto-save-file-name'.
     (tramp-run-real-handler 'make-auto-save-file-name nil)))
@@ -4318,7 +4342,7 @@ T1 and T2 are time values (as returned by `current-time' for example)."
 Only works for Bourne-like shells."
   (let ((system-type 'not-windows))
     (save-match-data
-      (let ((result (shell-quote-argument s))
+      (let ((result (shell-quote-argument (tramp-unquote-name s)))
 	    (nl (regexp-quote (format "\\%s" tramp-rsh-end-of-line))))
 	(when (and (>= (length result) 2)
 		   (string= (substring result 0 2) "\\~"))

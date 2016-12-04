@@ -1146,7 +1146,9 @@ target of the symlink differ."
      (tramp-make-tramp-file-name
       method user host
       (with-tramp-file-property v localname "file-truename"
-	(let ((result nil))			; result steps in reverse order
+	(let ((result nil)			; result steps in reverse order
+	      (quoted (tramp-quoted-name-p localname))
+	      (localname (tramp-unquote-name localname)))
 	  (tramp-message v 4 "Finding true name for `%s'" filename)
 	  (cond
 	   ;; Use GNU readlink --canonicalize-missing where available.
@@ -1241,6 +1243,7 @@ target of the symlink differ."
 		(when (string= "" result)
 		  (setq result "/")))))
 
+	  (when quoted (setq result (tramp-quote-name result)))
 	  (tramp-message v 4 "True name of `%s' is `%s'" localname result)
 	  result))))
 
