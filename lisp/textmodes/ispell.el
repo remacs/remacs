@@ -3866,16 +3866,11 @@ You can bind this to the key C-c i in GNUS or mail by adding to
 	       "   \\|\t"))
 	   (cite-regexp			;Prefix of quoted text
 	    (cond
-	     ((functionp 'sc-cite-regexp)	; sc 3.0
+	     ((functionp 'sc-cite-regexp)	; supercite >= 3.0
 	      (ispell-with-no-warnings
 	       (concat "\\(" (sc-cite-regexp) "\\)" "\\|"
 		       (ispell-non-empty-string sc-reference-tag-string))))
-	     ((boundp 'sc-cite-regexp)		; sc 2.3
-	      (concat "\\(" sc-cite-regexp "\\)" "\\|"
-		      (ispell-with-no-warnings
-		       (ispell-non-empty-string sc-reference-tag-string))))
-	     ((or (equal major-mode 'news-reply-mode) ;GNUS 4 & below
-		  (equal major-mode 'message-mode))   ;GNUS 5
+	     ((equal major-mode 'message-mode)  ; GNUS >= 5
 	      (concat "In article <" "\\|"
 		      "[^,;&+=\n]+ <[^,;&+=]+> writes:" "\\|"
 		      (ispell-with-no-warnings message-cite-prefix-regexp)
