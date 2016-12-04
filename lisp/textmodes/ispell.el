@@ -833,22 +833,10 @@ See `ispell-buffer-with-debug' for an example of use."
 ;; Redo menu when loading ispell to get dictionary modifications
 (setq ispell-menu-map nil)
 
-;;;###autoload
-(defvar ispell-menu-xemacs nil
-  "Spelling menu for XEmacs.
-If nil when package is loaded, a standard menu will be set,
-and added as a submenu of the \"Edit\" menu.")
-
-;; Break out XEmacs menu and split into several calls to avoid having
-;; long lines in loaddefs.el.  Detect need off following constant.
-
 ;;; Set up dictionary
 ;;;###autoload
 (defvar ispell-menu-map-needed
-  ;; only needed when not version 18 and not XEmacs.
-  (and (not ispell-menu-map)
-       (not (featurep 'xemacs))
-       'reload))
+  (unless ispell-menu-map 'reload))
 
 (defvar ispell-library-directory (condition-case ()
 				     (ispell-check-version)
@@ -1932,32 +1920,20 @@ quit          spell session exited."
       (cond ((eq poss t)
 	     (or quietly
 		 (message "%s is correct"
-			  (funcall ispell-format-word-function word)))
-	     (and (featurep 'xemacs)
-		  (extent-at start)
-		  (and (fboundp 'delete-extent)
-		       (delete-extent (extent-at start)))))
+			  (funcall ispell-format-word-function word))))
 	    ((stringp poss)
 	     (or quietly
 		 (message "%s is correct because of root %s"
 			  (funcall ispell-format-word-function word)
-			  (funcall ispell-format-word-function poss)))
-	     (and (featurep 'xemacs)
-		  (extent-at start)
-		  (and (fboundp 'delete-extent)
-		       (delete-extent (extent-at start)))))
+			  (funcall ispell-format-word-function poss))))
 	    ((null poss)
 	     (message "Error checking word %s using %s with %s dictionary"
 		      (funcall ispell-format-word-function word)
 		      (file-name-nondirectory ispell-program-name)
 		      (or ispell-current-dictionary "default")))
 	    (ispell-check-only	      ; called from ispell minor mode.
-	     (if (fboundp 'make-extent)
-		 (if (fboundp 'set-extent-property)
-		     (let ((ext (make-extent start end)))
-		       (set-extent-property ext 'face ispell-highlight-face)
-		       (set-extent-property ext 'priority 2000)))
-	       (beep)
+	     (progn
+               (beep)
 	       (message "%s is incorrect"
                         (funcall ispell-format-word-function word))))
 	    (t				; prompt for correct word.
@@ -2890,10 +2866,7 @@ Keeps argument list for future Ispell invocations for no async support."
 		;; to avoid over and over ispell kill.
 		(window-buffer (minibuffer-selected-window))
 	      (current-buffer))
-	  ;; 'local does not automatically make hook buffer-local in XEmacs.
-	  (if (featurep 'xemacs)
-	      (make-local-hook 'kill-buffer-hook))
-	  (add-hook 'kill-buffer-hook
+          (add-hook 'kill-buffer-hook
 		    (lambda () (ispell-kill-ispell t)) nil 'local)))
 
       (if ispell-async-processp
@@ -2938,12 +2911,8 @@ Keeps argument list for future Ispell invocations for no async support."
       (let ((extended-char-mode (ispell-get-extended-character-mode)))
 	(if extended-char-mode		; ~ extended character mode
 	    (ispell-send-string (concat extended-char-mode "\n"))))
-      (if ispell-async-processp
-	  (if (featurep 'emacs)
-	      (set-process-query-on-exit-flag ispell-process nil)
-	    (if (fboundp 'set-process-query-on-exit-flag)
-		(set-process-query-on-exit-flag ispell-process nil)
-	      (process-kill-without-query ispell-process)))))))
+      (when ispell-async-processp
+        (set-process-query-on-exit-flag ispell-process nil)))))
 
 ;;;###autoload
 (defun ispell-kill-ispell (&optional no-error clear)
@@ -2955,9 +2924,7 @@ With CLEAR, buffer session localwords are cleaned."
   ;; to optimize the common cases.
   (run-hooks 'ispell-kill-ispell-hook)
   (if (or clear
-	  (if (featurep 'xemacs)
-	      (interactive-p)
-	    (called-interactively-p 'interactive)))
+	  (called-interactively-p 'interactive))
       (setq ispell-buffer-session-localwords nil))
   (if (not (and ispell-process
 		(eq (ispell-process-status) 'run)))
@@ -3006,9 +2973,7 @@ By just answering RET you can find out what the current dictionary is."
 	 ;; Specified dictionary is the default already. Could reload
 	 ;; the dictionaries if needed.
 	 (ispell-internal-change-dictionary)
-	 (and (if (featurep 'xemacs)
-		  (interactive-p)
-		(called-interactively-p 'interactive))
+	 (when (called-interactively-p 'interactive)
 	      (message "No change, using %s dictionary" dict)))
 	(t				; reset dictionary!
 	 (if (or (assoc dict ispell-local-dictionary-alist)
