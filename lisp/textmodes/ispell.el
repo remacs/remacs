@@ -349,9 +349,7 @@ window system by evaluating the following on startup to set this variable:
 ;;;###autoload
 (defcustom ispell-personal-dictionary nil
   "File name of your personal spelling dictionary, or nil.
-If nil, the default personal dictionary, (\"~/.ispell_DICTNAME\" for ispell or
-\"~/.aspell.LANG.pws\" for Aspell) is used, where DICTNAME is the name of your
-default dictionary and LANG the two letter language code."
+If nil, the default personal dictionary for your spelling checker is used."
   :type '(choice file
 		 (const :tag "default" nil))
   :group 'ispell)
