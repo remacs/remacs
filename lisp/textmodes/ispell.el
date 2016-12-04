@@ -1451,17 +1451,8 @@ used as key in `ispell-local-dictionary-alist' and `ispell-dictionary-alist'.")
 This is passed to the Ispell process using the `-p' switch.")
 
 (defun ispell-decode-string (str)
-  "Decodes multibyte character strings.
-Protects against bogus binding of `enable-multibyte-characters' in XEmacs."
-  ;; FIXME: enable-multibyte-characters is read-only, so bogus bindings are
-  ;; really nasty (they signal an error in Emacs): Who does that?  --Stef
-  (if (and (or (featurep 'xemacs)
-	       (and (boundp 'enable-multibyte-characters)
-		    enable-multibyte-characters))
-	   (fboundp 'decode-coding-string)
-	   (ispell-get-coding-system))
-      (decode-coding-string str (ispell-get-coding-system))
-    str))
+  "Decodes multibyte character strings."
+  (decode-coding-string str (ispell-get-coding-system)))
 
 ;; Return a string decoded from Nth element of the current dictionary.
 (defun ispell-get-decoded-string (n)
@@ -2871,11 +2862,7 @@ Keeps argument list for future Ispell invocations for no async support."
 
       (if ispell-async-processp
 	  (set-process-filter ispell-process 'ispell-filter))
-      ;; Protect against XEmacs bogus binding of `enable-multibyte-characters'.
-      (if (and (or (featurep 'xemacs)
-		   (and (boundp 'enable-multibyte-characters)
-			enable-multibyte-characters))
-	       (fboundp 'set-process-coding-system)
+      (if (and enable-multibyte-characters
                ;; Evidently, some people use the synchronous mode even
                ;; when async subprocesses are supported, in which case
                ;; set-process-coding-system is bound, but
