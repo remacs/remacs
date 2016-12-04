@@ -671,11 +671,6 @@ here just for backwards compatibility.")
 ;;; The following are used by ispell, and should not be changed.
 ;;; **********************************************************************
 
-
-
-(defconst ispell-version "ispell.el 3.6 - 7-Jan-2003")
-
-
 (defun ispell-check-version (&optional interactivep)
   "Ensure that `ispell-program-name' is valid and has the correct version.
 Returns version number if called interactively.
@@ -710,13 +705,11 @@ Otherwise returns the library directory name, if that is defined."
 		      (if (string-match "\\`aspell" speller) "-v" "-vv"))))
       (goto-char (point-min))
       (if interactivep
-	  ;; Report version information of ispell and ispell.el
+	  ;; Report version information of ispell
 	  (progn
 	    (end-of-line)
-	    (setq result (concat (buffer-substring-no-properties (point-min)
-								 (point))
-				 ", "
-				 ispell-version))
+	    (setq result (buffer-substring-no-properties (point-min)
+                                                         (point)))
 	    (message "%s" result))
 	;; return LIBDIR or LIBRARYVAR (overrides LIBDIR) env.
 	(progn
