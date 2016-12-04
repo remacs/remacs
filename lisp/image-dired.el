@@ -104,9 +104,6 @@
 ;; * Some sort of auto-rotate function based on rotate info in the
 ;; EXIF data.
 ;;
-;; * Check if exiftool exist before trying to call it to give a better
-;; error message.
-;;
 ;; * Investigate if it is possible to also write the tags to the image
 ;; files.
 ;;
@@ -273,8 +270,7 @@ with the information required by the Thumbnail Managing Standard."
 
 (defcustom image-dired-cmd-create-standard-thumbnail-command
   (concat
-   image-dired-cmd-create-thumbnail-program " "
-   "-size %wx%h \"%f\" "
+   "%p -size %wx%h \"%f\" "
    (unless (or image-dired-cmd-pngcrush-program image-dired-cmd-pngnq-program)
      (concat
       "-set \"Thumb::MTime\" \"%m\" "
@@ -303,6 +299,7 @@ with the information required by the Thumbnail Managing Standard."
         "%q %t"
         " ; rm %q")))
   "Command to create thumbnails according to the Thumbnail Managing Standard."
+  :version "26.1"
   :type 'string
   :group 'image-dired)
 
@@ -842,14 +839,13 @@ thumbnail buffer to be selected."
         (if (not append)
             (erase-buffer)
           (goto-char (point-max)))
-        (mapc
-         (lambda (curr-file)
-           (setq thumb-name (image-dired-thumb-name curr-file))
-           (if (and (not (file-exists-p thumb-name))
-                    (not (= 0 (image-dired-create-thumb curr-file thumb-name))))
-               (message "Thumb could not be created for file %s" curr-file)
-             (image-dired-insert-thumbnail thumb-name curr-file dired-buf)))
-         files))
+        (dolist (curr-file files)
+          (setq thumb-name (image-dired-thumb-name curr-file))
+          (when (not (file-exists-p thumb-name))
+            (if (and (not (file-exists-p thumb-name))
+                     (not (= 0 (image-dired-create-thumb curr-file thumb-name))))
+                (message "Thumb could not be created for file %s" curr-file)
+              (image-dired-insert-thumbnail thumb-name curr-file dired-buf)))))
       (if do-not-pop
           (display-buffer buf)
         (pop-to-buffer buf))
@@ -1529,22 +1525,18 @@ Note that n, p and <down> and <up> will be hijacked and bound to
 With prefix argument ARG, create thumbnails even if they already exist
 \(i.e. use this to refresh your thumbnails)."
   (interactive "P")
-  (let (thumb-name files)
-    (setq files (dired-get-marked-files))
-    (mapcar
-     (lambda (curr-file)
-       (setq thumb-name (image-dired-thumb-name curr-file))
-       ;; If the user overrides the exist check, we must clear the
-       ;; image cache so that if the user wants to display the
-       ;; thumbnail, it is not fetched from cache.
-       (if arg
-           (clear-image-cache))
-       (if (or (not (file-exists-p thumb-name))
-               arg)
-           (if (not (= 0 (image-dired-create-thumb curr-file
-                                             (image-dired-thumb-name curr-file))))
-               (error "Thumb could not be created"))))
-     files)))
+  (let (thumb-name)
+    (dolist (curr-file (dired-get-marked-files))
+      (setq thumb-name (image-dired-thumb-name curr-file))
+      ;; If the user overrides the exist check, we must clear the
+      ;; image cache so that if the user wants to display the
+      ;; thumbnail, it is not fetched from cache.
+      (if arg
+          (clear-image-cache))
+      (when (or (not (file-exists-p thumb-name))
+                arg)
+        (when (not (= 0 (image-dired-create-thumb curr-file thumb-name)))
+          (error "Thumb could not be created"))))))
 
 (defvar image-dired-slideshow-timer nil
   "Slideshow timer.")
