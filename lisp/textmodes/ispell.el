@@ -132,10 +132,6 @@
   "User variables for Emacs ispell interface."
   :group 'applications)
 
-(if (not (fboundp 'buffer-substring-no-properties))
-    (defun buffer-substring-no-properties (start end)
-      (buffer-substring start end)))
-
 (defalias 'check-ispell-version 'ispell-check-version)
 
 ;;; **********************************************************************
@@ -2300,15 +2296,15 @@ Global `ispell-quit' set to start location to continue spell session."
 		   ((= char ?i)		; accept and insert word into pers dict
 		    (ispell-send-string (concat "*" word "\n"))
 		    (setq ispell-pdict-modified-p '(t)) ; dictionary modified!
-		    (and (fboundp 'flyspell-unhighlight-at)
-			 (flyspell-unhighlight-at start))
+		    (when (fboundp 'flyspell-unhighlight-at)
+                          (flyspell-unhighlight-at start))
 		    nil)
 		   ((or (= char ?a) (= char ?A)) ; accept word without insert
 		    (ispell-send-string (concat "@" word "\n"))
 		    (cl-pushnew word ispell-buffer-session-localwords
                                 :test #'equal)
-		    (and (fboundp 'flyspell-unhighlight-at)
-			 (flyspell-unhighlight-at start))
+		    (when (fboundp 'flyspell-unhighlight-at)
+                          (flyspell-unhighlight-at start))
 		    (or ispell-buffer-local-name ; session localwords might conflict
 			(setq ispell-buffer-local-name (buffer-name)))
 		    (if (null ispell-pdict-modified-p)
@@ -4259,8 +4255,8 @@ Both should not be used to define a buffer-local dictionary."
 
 ;; Returns optionally adjusted region-end-point.
 
-;; If comment-padright is defined, newcomment must be loaded.
-(declare-function comment-add "newcomment" (arg))
+;; If comment-normalize-vars is defined, newcomment must be loaded.
+(declare-function comment-normalize-vars "newcomment" (&optional noerror))
 
 (defun ispell-add-per-file-word-list (word)
   "Add WORD to the per-file word list."
@@ -4286,16 +4282,12 @@ Both should not be used to define a buffer-local dictionary."
 		    (unless found (newline))
 		    (insert (if comment-start
                                 (concat
-                                  (if (fboundp 'comment-padright)
-                                      ;; Try and use the proper comment marker,
-                                      ;; e.g. ";;" rather than ";".
-				      (progn
-					;; XEmacs: comment-normalize-vars
-					;; (newcomment.el) only in >= 21.5
-					(and (fboundp 'comment-normalize-vars)
-					     (comment-normalize-vars))
-					(comment-padright comment-start
-							  (comment-add nil)))
+                                  (progn
+                                   ;; Try and use the proper comment marker,
+                                   ;; e.g. ";;" rather than ";".
+                                    (comment-normalize-vars)
+                                    (comment-padright comment-start
+                                                      (comment-add nil))
                                     comment-start)
                                   " ")
                               "")
