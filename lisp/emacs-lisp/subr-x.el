@@ -219,7 +219,7 @@ The return value is the matching entry from the CHOICES list.
 Usage example:
 
 \(read-multiple-choice \"Continue connecting?\"
-                      '((?a \"always\")
+                      \\='((?a \"always\")
                         (?s \"session only\")
                         (?n \"no\")))"
   (let* ((altered-names nil)
