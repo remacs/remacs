@@ -2794,7 +2794,7 @@ Keeps argument list for future Ispell invocations for no async support."
 	 (current-ispell-directory default-directory) ;FIXME: Unused?
 	 ;; The default directory for the process.
 	 ;; Use "~/" as default-directory unless using Ispell with per-dir
-	 ;; personal dictionaries and not in a minibuffer under XEmacs
+	 ;; personal dictionaries
 	 (default-directory
 	   (if (or ispell-really-aspell
 		   ispell-really-hunspell
@@ -2807,9 +2807,8 @@ Keeps argument list for future Ispell invocations for no async support."
 						     ".ispell_"
 						     (or dict-bname
 							 "default")))))
-		   ;; Ispell, in a minibuffer, and XEmacs
-		   (and (window-minibuffer-p)
-			(not (fboundp 'minibuffer-selected-window))))
+		   ;; Ispell, in a minibuffer
+		   (window-minibuffer-p))
 	       (expand-file-name "~/")
 	     (expand-file-name default-directory))))
     ;; Check if process needs restart
@@ -2841,12 +2840,11 @@ Keeps argument list for future Ispell invocations for no async support."
 
       (unless (equal ispell-process-directory (expand-file-name "~/"))
 	;; At this point, `ispell-process-directory' will be "~/" unless using
-	;; Ispell with directory-specific dicts and not in XEmacs minibuffer.
+	;; Ispell with directory-specific dicts.
 	;; If not, kill ispell process when killing buffer.  It may be in a
 	;; removable device that would otherwise become un-mountable.
 	(with-current-buffer
-	    (if (and (window-minibuffer-p)                  ;; In minibuffer
-		     (fboundp 'minibuffer-selected-window)) ;; Not XEmacs.
+	    (if (window-minibuffer-p)                  ;; In minibuffer
 		;; In this case kill ispell only when parent buffer is killed
 		;; to avoid over and over ispell kill.
 		(window-buffer (minibuffer-selected-window))
