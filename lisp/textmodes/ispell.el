@@ -118,42 +118,6 @@
 ;;  Recursive edits (?C-r or ?R) inside a keyboard text replacement check (?r)
 ;;    can cause misalignment errors.
 
-;;; Compatibility code for XEmacs and (not too) older emacsen:
-(defalias 'ispell-check-minver
-  (if (fboundp 'version<=) 'version<=
-    (lambda (minver version)
-      "Check if string VERSION is at least string MINVER.
-Both must be in [0-9]+.[0-9]+... format.  This is a fallback
-compatibility function in case `version<=' is not available."
-      (let ((pending t)
-            (return t)
-            start-ver start-mver)
-        ;; Loop until an absolute greater or smaller condition is reached
-        ;; or until no elements are left in any of version and minver. In
-        ;; this case version is exactly the minimal, so return OK.
-        (while pending
-          (let (ver mver)
-            (if (string-match "[0-9]+" version start-ver)
-                (setq start-ver (match-end 0)
-                      ver (string-to-number (match-string 0 version))))
-            (if (string-match "[0-9]+" minver start-mver)
-                (setq start-mver (match-end 0)
-                      mver (string-to-number (match-string 0 minver))))
-
-            (if (or ver mver)
-                (progn
-                  (or ver  (setq ver 0))
-                  (or mver (setq mver 0))
-                  ;; If none of below conditions match, this element is the
-                  ;; same. Go checking next element.
-                  (if (> ver mver)
-                      (setq pending nil)
-                    (if (< ver mver)
-                        (setq pending nil
-                              return nil))))
-              (setq pending nil))))
-        return))))
-
 ;; XEmacs does not have looking-back
 (defalias 'ispell-looking-back
   (if (fboundp 'looking-back) 'looking-back
@@ -829,8 +793,8 @@ Otherwise returns the library directory name, if that is defined."
 	    (ispell-minver    "3.1.12")
 	    (hunspell8-minver "1.1.6"))
 
-	(if (ispell-check-minver ispell0-minver ispell-program-version)
-	    (or (ispell-check-minver ispell-minver ispell-program-version)
+	(if (version<= ispell0-minver ispell-program-version)
+	    (or (version<= ispell-minver ispell-program-version)
 		(setq ispell-offset 0))
 	  (error "%s release %s or greater is required"
 		 ispell-program-name
@@ -838,14 +802,14 @@ Otherwise returns the library directory name, if that is defined."
 
 	(cond
 	 (ispell-really-aspell
-	  (if (ispell-check-minver aspell-minver ispell-really-aspell)
-	      (if (ispell-check-minver aspell8-minver ispell-really-aspell)
+	  (if (version<= aspell-minver ispell-really-aspell)
+	      (if (version<= aspell8-minver ispell-really-aspell)
 		  (progn
 		    (setq ispell-aspell-supports-utf8 t)
 		    (setq ispell-encoding8-command "--encoding=")))
 	    (setq ispell-really-aspell nil)))
 	 (ispell-really-hunspell
-	  (if (ispell-check-minver hunspell8-minver ispell-really-hunspell)
+	  (if (version<= hunspell8-minver ispell-really-hunspell)
 	      (setq ispell-encoding8-command "-i")
 	    (setq ispell-really-hunspell nil))))))
     result))
