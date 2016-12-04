@@ -666,12 +666,6 @@ here just for backwards compatibility.")
   "Alist with known matching locales for standard dict names in
   `ispell-dictionary-base-alist'.")
 
-(defvar ispell-emacs-alpha-regexp
-  (if (string-match "^[[:alpha:]]+$" "abcde")
-      "[[:alpha:]]"
-    nil)
-  "[[:alpha:]] if Emacs supports [:alpha:] regexp, nil
-otherwise (current XEmacs does not support it).")
 
 ;;; **********************************************************************
 ;;; The following are used by ispell, and should not be changed.
@@ -1244,11 +1238,9 @@ aspell is used along with Emacs).")
 		   (setq ispell-library-directory (ispell-check-version))
 		   t)
 	       (error nil))
-	     ispell-encoding8-command
-	     ispell-emacs-alpha-regexp)
+	     ispell-encoding8-command)
 	;; auto-detection will only be used if spellchecker is not
-	;; ispell, supports a way  to set communication to UTF-8 and
-	;; Emacs flavor supports [:alpha:]
+	;; ispell and supports a way to set communication to UTF-8.
 	(if ispell-really-aspell
 	    (or ispell-aspell-dictionary-alist
 		(ispell-find-aspell-dictionaries))
@@ -1262,9 +1254,8 @@ aspell is used along with Emacs).")
     ;; installed dictionaries and add to it elements of the original
     ;; list that are not present there. Allow distro info.
     (let ((found-dicts-alist
-	   (if (and ispell-encoding8-command
-		    ispell-emacs-alpha-regexp)
-	       (if ispell-really-aspell
+	   (if ispell-encoding8-command
+               (if ispell-really-aspell
 		   ispell-aspell-dictionary-alist
 		 (if ispell-really-hunspell
 		     ispell-hunspell-dictionary-alist))
@@ -1331,28 +1322,26 @@ aspell is used along with Emacs).")
 	  (push dict all-dicts-alist)))
       (setq ispell-dictionary-alist all-dicts-alist))
 
-    ;; If Emacs flavor supports [:alpha:] use it for global dicts.  If
-    ;; spellchecker also supports UTF-8 via command-line option use it
+    ;; If spellchecker supports UTF-8 via command-line option, use it
     ;; in communication.  This does not affect definitions in your
     ;; init file.
-    (if ispell-emacs-alpha-regexp
-     	(let (tmp-dicts-alist)
-    	  (dolist (adict ispell-dictionary-alist)
-	    (cl-pushnew (if (cadr adict) ;; Do not touch hunspell uninitialized entries
-                            (list
-                             (nth 0 adict)   ; dict name
-                             "[[:alpha:]]"   ; casechars
-                             "[^[:alpha:]]"  ; not-casechars
-                             (nth 3 adict)   ; otherchars
-                             (nth 4 adict)   ; many-otherchars-p
-                             (nth 5 adict)   ; ispell-args
-                             (nth 6 adict)   ; extended-character-mode
-                             (if ispell-encoding8-command
-                                 'utf-8
-                               (nth 7 adict)))
-                          adict)
-                        tmp-dicts-alist :test #'equal))
-	  (setq ispell-dictionary-alist tmp-dicts-alist)))))
+    (let (tmp-dicts-alist)
+      (dolist (adict ispell-dictionary-alist)
+        (cl-pushnew (if (cadr adict) ;; Do not touch hunspell uninitialized entries
+                        (list
+                         (nth 0 adict)   ; dict name
+                         "[[:alpha:]]"   ; casechars
+                         "[^[:alpha:]]"  ; not-casechars
+                         (nth 3 adict)   ; otherchars
+                         (nth 4 adict)   ; many-otherchars-p
+                         (nth 5 adict)   ; ispell-args
+                         (nth 6 adict)   ; extended-character-mode
+                         (if ispell-encoding8-command
+                             'utf-8
+                           (nth 7 adict)))
+                      adict)
+                    tmp-dicts-alist :test #'equal))
+      (setq ispell-dictionary-alist tmp-dicts-alist))))
 
 (defun ispell-valid-dictionary-list ()
   "Return a list of valid dictionaries.
