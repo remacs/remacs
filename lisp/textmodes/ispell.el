@@ -118,10 +118,6 @@
 ;;  Recursive edits (?C-r or ?R) inside a keyboard text replacement check (?r)
 ;;    can cause misalignment errors.
 
-;;; XEmacs21 does not have `with-no-warnings'. Taken from org mode.
-(defmacro ispell-with-no-warnings (&rest body)
-  (cons (if (fboundp 'with-no-warnings) 'with-no-warnings 'progn) body))
-
 ;;; Code:
 
 (eval-when-compile (require 'cl-lib))
@@ -2077,7 +2073,7 @@ Global `ispell-quit' set to start location to continue spell session."
              "  --  dict: " (or ispell-current-dictionary "default")
              "  --  prog: " (file-name-nondirectory ispell-program-name)))
       ;; No need for horizontal scrollbar in choices window
-      (ispell-with-no-warnings
+      (with-no-warnings
        (setq horizontal-scroll-bar nil))
       (erase-buffer)
       (if guess
@@ -3849,18 +3845,18 @@ You can bind this to the key C-c i in GNUS or mail by adding to
 	   (cite-regexp			;Prefix of quoted text
 	    (cond
 	     ((functionp 'sc-cite-regexp)	; supercite >= 3.0
-	      (ispell-with-no-warnings
+	      (with-no-warnings
 	       (concat "\\(" (sc-cite-regexp) "\\)" "\\|"
 		       (ispell-non-empty-string sc-reference-tag-string))))
 	     ((equal major-mode 'message-mode)  ; GNUS >= 5
 	      (concat "In article <" "\\|"
 		      "[^,;&+=\n]+ <[^,;&+=]+> writes:" "\\|"
-		      (ispell-with-no-warnings message-cite-prefix-regexp)
+		      (with-no-warnings message-cite-prefix-regexp)
 		      "\\|"
 		      default-prefix))
 	     ((equal major-mode 'mh-letter-mode) ; mh mail message
 	      (concat "[^,;&+=\n]+ writes:" "\\|"
-		      (ispell-with-no-warnings
+		      (with-no-warnings
 		       (ispell-non-empty-string mh-ins-buf-prefix))))
 	     ((not internal-messagep)	; Assume nn sent us this message.
 	      (concat "In [a-zA-Z.]+ you write:" "\\|"
