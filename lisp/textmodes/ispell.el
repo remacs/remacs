@@ -1466,62 +1466,6 @@ The variable `ispell-library-directory' defines their location."
       ;;(put 'ispell-region 'menu-enable 'mark-active)
       (fset 'ispell-menu-map (symbol-value 'ispell-menu-map))))
 
-;;; XEmacs versions 19 & 20
-(if (and (featurep 'xemacs)
-	 (featurep 'menubar)
-	 ;;(null ispell-menu-xemacs)
-	 (not (and (boundp 'infodock-version) infodock-version)))
-    (let ((dicts (if (fboundp 'ispell-valid-dictionary-list)
-		     (reverse (ispell-valid-dictionary-list))))
-	  (current-menubar (or current-menubar default-menubar))
-	  (menu
-	   '(["Help"		(describe-function 'ispell-help) t]
-	     ;;["Help"		(popup-menu ispell-help-list)	t]
-	     ["Check Message"	ispell-message			t]
-	     ["Check Buffer"	ispell-buffer			t]
-	     ["Check Comments"	ispell-comments-and-strings	t]
-	     ["Check Word"	ispell-word			t]
-	     ["Check Region"	ispell-region  (or (not zmacs-regions) (mark))]
-	     ["Continue Check"	ispell-continue			t]
-	     ["Complete Word Frag"ispell-complete-word-interior-frag t]
-	     ["Complete Word"	ispell-complete-word		t]
-	     ["Kill Process"	(ispell-kill-ispell nil 'clear) t]
-	     ["Customize..."	(customize-group 'ispell)	t]
-	     ;; flyspell-mode may not be bound...
-	     ;;["flyspell"	flyspell-mode
-	     ;;			:style toggle :selected flyspell-mode ]
-	     "-"
-	     ["Save Personal Dict"(ispell-pdict-save t t)	t]
-	     ["Change Dictionary" ispell-change-dictionary	t])))
-      (if (null dicts)
-	  (setq dicts (cons "default" nil)))
-      (dolist (name dicts)
-	(setq menu (append menu
-			   (list
-			     (vector
-			      (concat "Select " (capitalize name))
-			      (list 'ispell-change-dictionary name)
-			      t)))))
-      (setq ispell-menu-xemacs menu)
-      (if current-menubar
-	  (progn
-	    (if (car (find-menu-item current-menubar '("Cmds")))
-		(progn
-		  ;; XEmacs 21.2
-		  (delete-menu-item '("Cmds" "Spell-Check"))
-		  (add-menu '("Cmds") "Spell-Check" ispell-menu-xemacs))
-	      ;; previous
-	      (delete-menu-item '("Edit" "Spell")) ; in case already defined
-	      (add-menu '("Edit") "Spell" ispell-menu-xemacs))))))
-
-(defalias 'ispell-int-char
-  ;; Allow incrementing characters as integers in XEmacs 20
-  (if (and (featurep 'xemacs)
-	   (fboundp 'int-char))
-      'int-char
-    ;; Emacs and XEmacs 19 or earlier
-    'identity))
-
 
 ;;; **********************************************************************
 
@@ -2230,12 +2174,12 @@ Global `ispell-quit' set to start location to continue spell session."
 	;; not so good if there are over 20 or 30 options, but then, if
 	;; there are that many you don't want to scan them all anyway...
 	(while (memq count command-characters) ; skip command characters.
-	  (setq count (ispell-int-char (1+ count))
+	  (setq count (1+ count)
 		skipped (1+ skipped)))
 	(insert "(" count ") " (car choices) "  ")
 	(setq choices (cdr choices)
-	      count (ispell-int-char (1+ count))))
-      (setq count (ispell-int-char (- count ?0 skipped))))
+	      count (1+ count)))
+      (setq count (- count ?0 skipped)))
 
     (run-hooks 'ispell-update-post-hook)
 
@@ -2382,13 +2326,12 @@ Global `ispell-quit' set to start location to continue spell session."
 					 (window-width))
 				  (insert "\n"))
 				(while (memq count command-characters)
-				  (setq count (ispell-int-char (1+ count))
+				  (setq count (1+ count)
 					skipped (1+ skipped)))
 				(insert "(" count ") " (car choices) "  ")
 				(setq choices (cdr choices)
-				      count (ispell-int-char (1+ count))))
-			      (setq count (ispell-int-char
-					   (- count ?0 skipped))))
+				      count (1+ count)))
+			      (setq count (- count ?0 skipped)))
 			    (setq textwin (selected-window))
 			    (ispell-show-choices)
 			    (select-window textwin))))
