@@ -143,8 +143,6 @@ lisp_mutex_lock (lisp_mutex_t *mutex, int new_count)
 static int
 lisp_mutex_unlock (lisp_mutex_t *mutex)
 {
-  struct thread_state *self = current_thread;
-
   if (mutex->owner != current_thread)
     error ("blah");
 
@@ -160,7 +158,6 @@ lisp_mutex_unlock (lisp_mutex_t *mutex)
 static unsigned int
 lisp_mutex_unlock_for_wait (lisp_mutex_t *mutex)
 {
-  struct thread_state *self = current_thread;
   unsigned int result = mutex->count;
 
   /* Ensured by condvar code.  */
@@ -601,9 +598,6 @@ DEFUN ("thread-yield", Fthread_yield, Sthread_yield, 0, 0, 0,
 static Lisp_Object
 invoke_thread_function (void)
 {
-  Lisp_Object iter;
-  volatile struct thread_state *self = current_thread;
-
   int count = SPECPDL_INDEX ();
 
   Ffuncall (1, &current_thread->function);

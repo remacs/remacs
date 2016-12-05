@@ -526,8 +526,6 @@ recompute_max_desc (void)
 void
 delete_write_fd (int fd)
 {
-  int lim = max_desc;
-
   if ((fd_callback_info[fd].flags & NON_BLOCKING_CONNECT_FD) != 0)
     {
       if (--num_pending_connects < 0)
@@ -1232,7 +1230,7 @@ set_process_filter_masks (struct Lisp_Process *p)
   else if (EQ (p->filter, Qt)
 	   /* Network or serial process not stopped:  */
 	   && !EQ (p->command, Qt))
-    add_read_fd (p->infd);
+    add_non_keyboard_read_fd (p->infd);
 }
 
 DEFUN ("set-process-filter", Fset_process_filter, Sset_process_filter,
@@ -3281,7 +3279,7 @@ finish_after_tls_connection (Lisp_Object proc)
       pset_status (p, Qfailed);
       deactivate_process (proc);
     }
-  else if (! FD_ISSET (p->outfd, &connect_wait_mask))
+  else if ((fd_callback_info[p->outfd].flags & NON_BLOCKING_CONNECT_FD) == 0)
     {
       /* If we cleared the connection wait mask before we did the TLS
 	 setup, then we have to say that the process is finally "open"
@@ -5730,7 +5728,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 
 		  if (0 <= p->infd && !EQ (p->filter, Qt)
 		      && !EQ (p->command, Qt))
-		    add_read_fd (p->infd);
+		    add_non_keyboard_read_fd (p->infd);
 		}
 	    }
 	}			/* End for each file descriptor.  */
@@ -7675,9 +7673,6 @@ void
 delete_keyboard_wait_descriptor (int desc)
 {
 #ifdef subprocesses
-  int fd;
-  int lim = max_desc;
-
   eassert (desc >= 0 && desc < FD_SETSIZE);
 
   fd_callback_info[desc].flags &= ~(FOR_READ | KEYBOARD_FD | PROCESS_FD);

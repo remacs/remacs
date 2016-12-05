@@ -891,7 +891,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	    if (sys_setjmp (c->jmp))
 	      {
 		struct handler *c = handlerlist;
-		int desc;
+		int dest;
 		top = c->bytecode_top;
 		dest = c->bytecode_dest;
 		handlerlist = c->next;

@@ -4328,7 +4328,6 @@ extern int read_bytecode_char (bool);
 /* Defined in bytecode.c.  */
 extern void syms_of_bytecode (void);
 extern void relocate_byte_stack (struct byte_stack *);
-extern struct byte_stack *byte_stack_list;
 extern Lisp_Object exec_byte_code (Lisp_Object, Lisp_Object, Lisp_Object,
 				   Lisp_Object, ptrdiff_t, Lisp_Object *);
 extern Lisp_Object get_byte_code_arity (Lisp_Object);

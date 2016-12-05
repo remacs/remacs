@@ -142,18 +142,6 @@ struct thread_state
   Lisp_Object m_re_match_object;
 #define re_match_object (current_thread->m_re_match_object)
 
-  /* Set by `re_set_syntax' to the current regexp syntax to recognize.  Can
-     also be assigned to arbitrarily: each pattern buffer stores its own
-     syntax, so it can be changed between regex compilations.  */
-  reg_syntax_t m_re_syntax_options;
-#define re_syntax_options (current_thread->m_re_syntax_options)
-
-  /* Regexp to use to replace spaces, or NULL meaning don't.  */
-  /* This ought to be a "const re_char *" but that is not available
-     outside regex.h.  */
-  const void *m_whitespace_regexp;
-#define whitespace_regexp (current_thread->m_whitespace_regexp)
-
   /* This variable is different from waiting_for_input in keyboard.c.
      It is used to communicate to a lisp process-filter/sentinel (via the
      function Fwaiting_for_user_input_p) whether Emacs was waiting

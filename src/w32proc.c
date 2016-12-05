@@ -72,7 +72,7 @@ extern BOOL g_b_init_compare_string_w;
 extern BOOL g_b_init_debug_break_process;
 
 int sys_select (int, SELECT_TYPE *, SELECT_TYPE *, SELECT_TYPE *,
-		struct timespec *, void *);
+		struct timespec *, sigset_t *);
 
 /* Signal handlers...SIG_DFL == 0 so this is initialized correctly.  */
 static signal_handler sig_handlers[NSIG];

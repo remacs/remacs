@@ -1440,7 +1440,7 @@ push_handler_nosignal (Lisp_Object tag_ch_val, enum handlertype handlertype)
   c->tag_or_ch = tag_ch_val;
   c->val = Qnil;
   c->next = handlerlist;
-  c->lisp_eval_depth = lisp_eval_depth;
+  c->f_lisp_eval_depth = lisp_eval_depth;
   c->pdlcount = SPECPDL_INDEX ();
   c->poll_suppress_count = poll_suppress_count;
   c->interrupt_input_blocked = interrupt_input_blocked;
@@ -3157,7 +3157,7 @@ let_shadows_global_binding_p (Lisp_Object symbol)
   return 0;
 }
 
-void
+static void
 do_specbind (struct Lisp_Symbol *sym, union specbinding *bind,
 	     Lisp_Object value)
 {
@@ -3332,7 +3332,7 @@ rebind_for_thread_switch (void)
 	  if (was_trapped)
 	    XSYMBOL (sym)->trapped_write = SYMBOL_UNTRAPPED_WRITE;
 	  bind->let.saved_value = Qnil;
-	  do_specbind (XSYMBOL (sym, bind, value, true);
+	  do_specbind (XSYMBOL (sym), bind, value);
 	  if (was_trapped)
 	    XSYMBOL (sym)->trapped_write = SYMBOL_TRAPPED_WRITE;
 	}
@@ -3363,7 +3363,7 @@ do_one_unbind (union specbinding *this_binding, bool unwinding)
       { /* If variable has a trivial value (no forwarding), and isn't
 	   trapped we can just set it.  No need to check for constant
 	   symbols here, since that was already done by specbind.  */
-	struct Lisp_Symbol sym = specpdl_symbol (this_binding);
+	Lisp_Object sym = specpdl_symbol (this_binding);
 	if (SYMBOLP (sym) && XSYMBOL (sym)->redirect == SYMBOL_PLAINVAL)
 	  {
 	    if (XSYMBOL (sym)->trapped_write == SYMBOL_UNTRAPPED_WRITE)
@@ -3399,7 +3399,7 @@ do_one_unbind (union specbinding *this_binding, bool unwinding)
     }
 }
 
-void
+static void
 do_nothing (void)
 {}
 

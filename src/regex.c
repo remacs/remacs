@@ -1146,7 +1146,6 @@ print_double_string (re_char *where, re_char *string1, ssize_t size1,
 /* This has no initializer because initialized variables in Emacs
    become read-only after dumping.  */
 reg_syntax_t re_syntax_options;
-#endif
 
 
 /* Specify the precise syntax of regexps for compilation.  This provides
@@ -1166,20 +1165,7 @@ re_set_syntax (reg_syntax_t syntax)
 }
 WEAK_ALIAS (__re_set_syntax, re_set_syntax)
 
-#ifndef emacs
-/* Regexp to use to replace spaces, or NULL meaning don't.  */
-static const_re_char *whitespace_regexp;
-#else
-/* whitespace_regexp is a macro defined in thread.h.  */
 #endif
-
-void
-re_set_whitespace_regexp (const char *regexp)
-{
-  whitespace_regexp = (const_re_char *) regexp;
-}
-WEAK_ALIAS (__re_set_syntax, re_set_syntax)
->>>>>>> concurrency
 
 /* This table gives an error message for each of the error codes listed
    in regex.h.  Obviously the order here has to be same as there.
