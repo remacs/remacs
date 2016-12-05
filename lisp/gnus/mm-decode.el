@@ -1859,6 +1859,10 @@ If RECURSIVE, search recursively."
 	(dolist (key (where-is-internal #'widget-button-click widget-keymap))
 	  (unless (lookup-key keymap key)
 	    (define-key keymap key #'ignore)))
+	;; Avoid `shr-next-link' and `shr-previous-link' in `keymap' so
+	;; TAB and M-TAB run `widget-forward' and `widget-backward' instead.
+	(substitute-key-definition 'shr-next-link nil keymap)
+	(substitute-key-definition 'shr-previous-link nil keymap)
 	(dolist (overlay (overlays-at start))
 	  (overlay-put overlay 'face nil))
 	(setq start end)))))
