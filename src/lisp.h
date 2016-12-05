@@ -292,9 +292,8 @@ error !;
    used elsewhere.
 
    FIXME: Remove the lisp_h_OP macros, and define just the inline OP
-   functions, once most developers have access to GCC 4.8 or later and
-   can use "gcc -Og" to debug.  Maybe in the year 2016.  See
-   Bug#11935.
+   functions, once "gcc -Og" (new to GCC 4.8) works well enough for
+   Emacs developers.  Maybe in the year 2020.  See Bug#11935.
 
    Commentary for these macros can be found near their corresponding
    functions, below.  */
