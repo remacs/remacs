@@ -3323,15 +3323,24 @@ rebind_for_thread_switch (void)
       if (bind->kind >= SPECPDL_LET)
 	{
 	  Lisp_Object value = specpdl_saved_value (bind);
-
+	  Lisp_Object sym = specpdl_symbol (bind);
+	  bool was_trapped =
+	    SYMBOLP (sym)
+	    && XSYMBOL (sym)->trapped_write == SYMBOL_TRAPPED_WRITE;
+	  /* FIXME: This is not clean, and if do_specbind signals an
+	     error, the symbol will be left untrapped.  */
+	  if (was_trapped)
+	    XSYMBOL (sym)->trapped_write = SYMBOL_UNTRAPPED_WRITE;
 	  bind->let.saved_value = Qnil;
-	  do_specbind (XSYMBOL (specpdl_symbol (bind)), bind, value);
+	  do_specbind (XSYMBOL (sym, bind, value, true);
+	  if (was_trapped)
+	    XSYMBOL (sym)->trapped_write = SYMBOL_TRAPPED_WRITE;
 	}
     }
 }
 
 static void
-do_one_unbind (union specbinding *this_binding, int unwinding)
+do_one_unbind (union specbinding *this_binding, bool unwinding)
 {
   eassert (unwinding || this_binding->kind >= SPECPDL_LET);
   switch (this_binding->kind)
@@ -3458,7 +3467,7 @@ unbind_to (ptrdiff_t count, Lisp_Object value)
       union specbinding this_binding;
       this_binding = *--specpdl_ptr;
 
-      do_one_unbind (&this_binding, 1);
+      do_one_unbind (&this_binding, true);
     }
 
   if (NILP (Vquit_flag) && !NILP (quitf))
@@ -3476,8 +3485,18 @@ unbind_for_thread_switch (struct thread_state *thr)
     {
       if ((--bind)->kind >= SPECPDL_LET)
 	{
-	  bind->let.saved_value = find_symbol_value (specpdl_symbol (bind));
-	  do_one_unbind (bind, 0);
+	  Lisp_Object sym = specpdl_symbol (bind);
+	  bool was_trapped =
+	    SYMBOLP (sym)
+	    && XSYMBOL (sym)->trapped_write == SYMBOL_TRAPPED_WRITE;
+	  bind->let.saved_value = find_symbol_value (sym);
+	  /* FIXME: This is not clean, and if do_one_unbind signals an
+	     error, the symbol will be left untrapped.  */
+	  if (was_trapped)
+	    XSYMBOL (sym)->trapped_write = SYMBOL_UNTRAPPED_WRITE;
+	  do_one_unbind (bind, false);
+	  if (was_trapped)
+	    XSYMBOL (sym)->trapped_write = SYMBOL_TRAPPED_WRITE;
 	}
     }
 }

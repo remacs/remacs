@@ -1321,7 +1321,8 @@ See `set-process-sentinel' for more info on sentinels.  */)
 
 DEFUN ("set-process-thread", Fset_process_thread, Sset_process_thread,
        2, 2, 0,
-       doc: /* FIXME */)
+       doc: /* Set the locking thread of PROCESS to be THREAD.
+If THREAD is nil, the process is unlocked.  */)
   (Lisp_Object process, Lisp_Object thread)
 {
   struct Lisp_Process *proc;
@@ -1348,7 +1349,8 @@ DEFUN ("set-process-thread", Fset_process_thread, Sset_process_thread,
 
 DEFUN ("process-thread", Fprocess_thread, Sprocess_thread,
        1, 1, 0,
-       doc: /* FIXME */)
+       doc: /* Ret the locking thread of PROCESS.
+If PROCESS is unlocked, this function returns nil.  */)
   (Lisp_Object process)
 {
   CHECK_PROCESS (process);
@@ -4573,7 +4575,8 @@ is nil, from any process) before the timeout expired.  */)
       /* Can't wait for a process that is dedicated to a different
 	 thread.  */
       if (!EQ (procp->thread, Qnil) && !EQ (procp->thread, Fcurrent_thread ()))
-	error ("FIXME");
+	error ("Attempt to accept output from process %s locked to thread %s",
+	       SDATA (procp->name), SDATA (XTHREAD (procp->thread)->name));
     }
   else
     just_this_one = Qnil;
@@ -5727,7 +5730,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 
 		  if (0 <= p->infd && !EQ (p->filter, Qt)
 		      && !EQ (p->command, Qt))
-		    delete_read_fd (p->infd);
+		    add_read_fd (p->infd);
 		}
 	    }
 	}			/* End for each file descriptor.  */
@@ -7660,7 +7663,7 @@ add_keyboard_wait_descriptor (int desc)
 {
 #ifdef subprocesses /* Actually means "not MSDOS".  */
   eassert (desc >= 0 && desc < FD_SETSIZE);
-  fd_callback_info[desc].flags |= FOR_READ | KEYBOARD_FD;
+  fd_callback_info[desc].flags |= (FOR_READ | KEYBOARD_FD);
   if (desc > max_desc)
     max_desc = desc;
 #endif
