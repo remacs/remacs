@@ -74,6 +74,10 @@ for '--daemon'.
 * Changes in Emacs 26.1
 
 +++
+** The new function 'mapbacktrace' applies a function to all frames of
+the current stack trace.
+
++++
 ** Emacs now provides a limited form of concurrency with Lisp threads.
 Concurrency in Emacs Lisp is "mostly cooperative", meaning that
 Emacs will only switch execution between threads at well-defined
