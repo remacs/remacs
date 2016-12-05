@@ -2768,8 +2768,6 @@ Keeps argument list for future Ispell invocations for no async support."
   (let* (;; Basename of dictionary used by the spell-checker
 	 (dict-bname (or (car (cdr (member "-d" (ispell-get-ispell-args))))
 			 ispell-current-dictionary))
-	 ;; The directory where process was started.
-	 (current-ispell-directory default-directory) ;FIXME: Unused?
 	 ;; The default directory for the process.
 	 ;; Use "~/" as default-directory unless using Ispell with per-dir
 	 ;; personal dictionaries
