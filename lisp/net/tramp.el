@@ -4292,17 +4292,10 @@ Invokes `password-read' if available, `read-passwd' else."
        'auth-source-forget-user-or-password "password" host method))
     (password-cache-remove (tramp-make-tramp-file-name method user host ""))))
 
-;; Snarfed code from time-date.el and parse-time.el
+;; Snarfed code from time-date.el.
 
 (defconst tramp-half-a-year '(241 17024)
 "Evaluated by \"(days-to-time 183)\".")
-
-(defconst tramp-parse-time-months
-  '(("jan" . 1) ("feb" . 2) ("mar" . 3)
-    ("apr" . 4) ("may" . 5) ("jun" . 6)
-    ("jul" . 7) ("aug" . 8) ("sep" . 9)
-    ("oct" . 10) ("nov" . 11) ("dec" . 12))
-  "Alist mapping month names to integers.")
 
 ;;;###tramp-autoload
 (defun tramp-time-diff (t1 t2)

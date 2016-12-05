@@ -37,6 +37,7 @@
 (require 'advice)
 (require 'custom)
 (require 'format-spec)
+(require 'parse-time)
 (require 'password-cache)
 (require 'shell)
 (require 'timer)

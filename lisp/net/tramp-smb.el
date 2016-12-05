@@ -1724,7 +1724,7 @@ Result is the list (LOCALNAME MODE SIZE MTIME)."
 	    (if (and sec min hour day month year)
 		(encode-time
 		 sec min hour day
-		 (cdr (assoc (downcase month) tramp-parse-time-months))
+		 (cdr (assoc (downcase month) parse-time-months))
 		 year)
 	      '(0 0)))
       (list localname mode size mtime))))
