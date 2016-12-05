@@ -1197,7 +1197,11 @@ a new window in the current frame, splitting vertically."
 	    (ibuffer-columnize-and-insert-list names)
 	    (goto-char (point-min))
 	    (setq buffer-read-only t))
-	  (let ((lastwin (car (last (window-list nil 'nomini)))))
+	  (let ((windows (nreverse (window-list nil 'nomini)))
+                lastwin)
+            (while (window-parameter (car windows) 'window-side)
+              (setq windows (cdr windows)))
+            (setq lastwin (car windows))
 	    ;; Now attempt to display the buffer...
 	    (save-window-excursion
 	      (select-window lastwin)
