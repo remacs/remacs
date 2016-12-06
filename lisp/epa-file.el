@@ -120,7 +120,7 @@ encryption is used."
   (let ((error epa-file-error))
     (save-window-excursion
       (kill-buffer))
-    (signal (car error)
+    (signal 'file-missing
 	    (cons "Opening input file" (cdr error)))))
 
 (defvar last-coding-system-used)
@@ -165,18 +165,19 @@ encryption is used."
 		      (equal (cadr error) "Searching for program"))
 		 (error "Decryption program `%s' not found"
 			(nth 3 error)))
-	     (when (file-exists-p local-file)
-	       ;; Hack to prevent find-file from opening empty buffer
-	       ;; when decryption failed (bug#6568).  See the place
-	       ;; where `find-file-not-found-functions' are called in
-	       ;; `find-file-noselect-1'.
-	       (setq-local epa-file-error error)
-	       (add-hook 'find-file-not-found-functions
-			 'epa-file--find-file-not-found-function
-			 nil t)
-	       (epa-display-error context))
-	     (signal (car error)
-		     (cons "Opening input file" (cdr error)))))
+	     (let ((exists (file-exists-p local-file)))
+	       (when exists
+		 ;; Hack to prevent find-file from opening empty buffer
+		 ;; when decryption failed (bug#6568).  See the place
+		 ;; where `find-file-not-found-functions' are called in
+		 ;; `find-file-noselect-1'.
+		 (setq-local epa-file-error error)
+		 (add-hook 'find-file-not-found-functions
+			   'epa-file--find-file-not-found-function
+			   nil t)
+		 (epa-display-error context))
+	       (signal (if exists 'file-error 'file-missing)
+		       (cons "Opening input file" (cdr error))))))
           (set-buffer buf) ;In case timer/filter changed/killed it (bug#16029)!
 	  (setq-local epa-file-encrypt-to
                       (mapcar #'car (epg-context-result-for
@@ -272,7 +273,7 @@ If no one is selected, symmetric encryption will be performed.  "
        (epa-display-error context)
        (if (setq entry (assoc file epa-file-passphrase-alist))
 	   (setcdr entry nil))
-       (signal (car error) (cons "Opening output file" (cdr error)))))
+       (signal 'file-error (cons "Opening output file" (cdr error)))))
     (epa-file-run-real-handler
      #'write-region
      (list string nil file append visit lockname mustbenew))
