@@ -1879,6 +1879,7 @@ Similarly for Soar, Scheme, etc."
           (let ((echo-len (- comint-last-input-end
                              comint-last-input-start)))
             ;; Wait for all input to be echoed:
+            
             (while (and (> (+ comint-last-input-end echo-len)
                            (point-max))
                         (accept-process-output proc)
@@ -1890,6 +1891,7 @@ Similarly for Soar, Scheme, etc."
                           ;; (+ comint-last-input-start
                           ;;    (- (point-max) comint-last-input-end))
                           nil comint-last-input-end (point-max)))))
+            
             (if (and
                  (<= (+ comint-last-input-end echo-len)
                      (point-max))
@@ -1901,6 +1903,7 @@ Similarly for Soar, Scheme, etc."
                 ;; Certain parts of the text to be deleted may have
                 ;; been mistaken for prompts.  We have to prevent
                 ;; problems when `comint-prompt-read-only' is non-nil.
+                
                 (let ((inhibit-read-only t))
                   (delete-region comint-last-input-end
                                  (+ comint-last-input-end echo-len))
@@ -1909,6 +1912,7 @@ Similarly for Soar, Scheme, etc."
                       (goto-char comint-last-input-end)
                       (comint-update-fence)))))))
 
+        
         ;; This used to call comint-output-filter-functions,
         ;; but that scrolled the buffer in undesirable ways.
         (run-hook-with-args 'comint-output-filter-functions "")))))
@@ -2666,7 +2670,7 @@ This command is like `M-.' in bash."
   (set-marker comint-insert-previous-argument-last-start-pos (point))
   ;; Insert the argument.
   (let ((input-string (comint-previous-input-string 0)))
-    (when (string-match "[ \t\n]*&" input-string)
+    (when (string-match "[ \t\n]*&[ \t\n]*$" input-string)
       ;; strip terminating '&'
       (setq input-string (substring input-string 0 (match-beginning 0))))
     (insert (comint-arguments input-string index index)))
