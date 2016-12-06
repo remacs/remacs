@@ -656,7 +656,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	    if (SYMBOLP (sym)
 		&& !EQ (val, Qunbound)
 		&& !XSYMBOL (sym)->redirect
-                && !SYMBOL_TRAPPED_WRITE_P (sym))
+		&& !SYMBOL_TRAPPED_WRITE_P (sym))
 	      SET_SYMBOL_VAL (XSYMBOL (sym), val);
 	    else
               set_internal (sym, val, Qnil, SET_INTERNAL_SET);
@@ -754,7 +754,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 
 	CASE (Bgoto):
 	  BYTE_CODE_QUIT;
-	  op = FETCH2;	/* pc = FETCH2 loses since FETCH2 contains pc++ */
+	  op = FETCH2;    /* pc = FETCH2 loses since FETCH2 contains pc++ */
 	  CHECK_RANGE (op);
 	  stack.pc = stack.byte_string_start + op;
 	  NEXT;
@@ -778,6 +778,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	      CHECK_RANGE (op);
 	      stack.pc = stack.byte_string_start + op;
 	    }
+	  else DISCARD (1);
 	  NEXT;
 
 	CASE (Bgotoifnonnilelsepop):
