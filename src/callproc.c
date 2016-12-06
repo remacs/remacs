@@ -293,7 +293,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
   Lisp_Object output_file = Qnil;
 #ifdef MSDOS	/* Demacs 1.1.1 91/10/16 HIRANO Satoshi */
   char *tempfile = NULL;
-  int pid;
 #else
   sigset_t oldset;
   pid_t pid;
@@ -538,11 +537,9 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
     }
 
 #ifdef MSDOS /* MW, July 1993 */
-  /* Note that on MSDOS `child_setup' actually returns the child process
-     exit status, not its PID, so assign it to status below.  */
-  pid = child_setup (filefd, fd_output, fd_error, new_argv, 0, current_dir);
+  status = child_setup (filefd, fd_output, fd_error, new_argv, 0, current_dir);
 
-  if (pid < 0)
+  if (status < 0)
     {
       child_errno = errno;
       unbind_to (count, Qnil);
@@ -551,7 +548,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	code_convert_string_norecord (build_string (strerror (child_errno)),
 				      Vlocale_coding_system, 0);
     }
-  status = pid;
 
   for (i = 0; i < CALLPROC_FDS; i++)
     if (0 <= callproc_fd[i])
@@ -1163,9 +1159,13 @@ exec_failed (char const *name, int err)
    CURRENT_DIR is an elisp string giving the path of the current
    directory the subprocess should have.  Since we can't really signal
    a decent error from within the child, this should be verified as an
-   executable directory by the parent.  */
+   executable directory by the parent.
 
-int
+   On GNUish hosts, either exec or return an error number.
+   On MS-Windows, either return a pid or signal an error.
+   On MS-DOS, either return an exit status or signal an error.  */
+
+CHILD_SETUP_TYPE
 child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
 	     Lisp_Object current_dir)
 {

@@ -309,7 +309,7 @@ error !;
 #define lisp_h_CHECK_NUMBER(x) CHECK_TYPE (INTEGERP (x), Qintegerp, x)
 #define lisp_h_CHECK_SYMBOL(x) CHECK_TYPE (SYMBOLP (x), Qsymbolp, x)
 #define lisp_h_CHECK_TYPE(ok, predicate, x) \
-   ((ok) ? (void) 0 : (void) wrong_type_argument (predicate, x))
+   ((ok) ? (void) 0 : wrong_type_argument (predicate, x))
 #define lisp_h_CONSP(x) (XTYPE (x) == Lisp_Cons)
 #define lisp_h_EQ(x, y) (XLI (x) == XLI (y))
 #define lisp_h_FLOATP(x) (XTYPE (x) == Lisp_Float)
@@ -599,7 +599,7 @@ extern Lisp_Object char_table_ref (Lisp_Object, int);
 extern void char_table_set (Lisp_Object, int, Lisp_Object);
 
 /* Defined in data.c.  */
-extern _Noreturn Lisp_Object wrong_type_argument (Lisp_Object, Lisp_Object);
+extern _Noreturn void wrong_type_argument (Lisp_Object, Lisp_Object);
 extern _Noreturn void wrong_choice (Lisp_Object, Lisp_Object);
 extern void notify_variable_watchers (Lisp_Object symbol, Lisp_Object newval,
                                       Lisp_Object operation, Lisp_Object where);
@@ -1270,16 +1270,20 @@ XSETCDR (Lisp_Object c, Lisp_Object n)
 INLINE Lisp_Object
 CAR (Lisp_Object c)
 {
-  return (CONSP (c) ? XCAR (c)
-	  : NILP (c) ? Qnil
-	  : wrong_type_argument (Qlistp, c));
+  if (CONSP (c))
+    return XCAR (c);
+  if (!NILP (c))
+    wrong_type_argument (Qlistp, c);
+  return Qnil;
 }
 INLINE Lisp_Object
 CDR (Lisp_Object c)
 {
-  return (CONSP (c) ? XCDR (c)
-	  : NILP (c) ? Qnil
-	  : wrong_type_argument (Qlistp, c));
+  if (CONSP (c))
+    return XCDR (c);
+  if (!NILP (c))
+    wrong_type_argument (Qlistp, c);
+  return Qnil;
 }
 
 /* Take the car or cdr of something whose type is not known.  */
@@ -4223,9 +4227,11 @@ extern void setup_process_coding_systems (Lisp_Object);
 
 /* Defined in callproc.c.  */
 #ifndef DOS_NT
- _Noreturn
+# define CHILD_SETUP_TYPE _Noreturn void
+#else
+# define CHILD_SETUP_TYPE int
 #endif
-extern int child_setup (int, int, int, char **, bool, Lisp_Object);
+extern CHILD_SETUP_TYPE child_setup (int, int, int, char **, bool, Lisp_Object);
 extern void init_callproc_1 (void);
 extern void init_callproc (void);
 extern void set_initial_environment (void);

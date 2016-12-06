@@ -138,7 +138,7 @@ wrong_length_argument (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
 	      make_number (bool_vector_size (a3)));
 }
 
-Lisp_Object
+_Noreturn void
 wrong_type_argument (register Lisp_Object predicate, register Lisp_Object value)
 {
   /* If VALUE is not even a valid Lisp object, we'd want to abort here
@@ -2924,7 +2924,7 @@ float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
 	case Alogand:
 	case Alogior:
 	case Alogxor:
-	  return wrong_type_argument (Qinteger_or_marker_p, val);
+	  wrong_type_argument (Qinteger_or_marker_p, val);
 	case Amax:
 	  if (!argnum || isnan (next) || next > accum)
 	    accum = next;
