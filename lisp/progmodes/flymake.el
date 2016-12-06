@@ -1198,10 +1198,11 @@ For the format of LINE-ERR-INFO, see `flymake-ler-make-ler'."
 
 (defun flymake-report-fatal-status (status warning)
   "Display a warning and switch flymake mode off."
-  ;; This should really by flymake-log 0, but that is not shown by default.
-  ;; flymake-mode already uses message if no file name.
+  ;; This first message was always shown by default, and flymake-log
+  ;; does nothing by default, hence the use of message.
   ;; Another option is display-warning.
-  (message "Flymake: %s. Flymake will be switched OFF" warning)
+  (if (< flymake-log-level 0)
+      (message "Flymake: %s. Flymake will be switched OFF" warning))
   (flymake-mode 0)
   (flymake-log 0 "switched OFF Flymake mode for buffer %s due to fatal status %s, warning %s"
                (buffer-name) status warning))
