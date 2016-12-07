@@ -1074,8 +1074,6 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
 	  if (!(newdir = egetenv ("HOME")))
 	    newdir = newdirlim = "";
 	  nm++;
-	  /* `egetenv' may return a unibyte string, which will bite us since
-	     we expect the directory to be multibyte.  */
 #ifdef WINDOWSNT
 	  if (newdir[0])
 	    {
@@ -1083,11 +1081,14 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
 
 	      filename_from_ansi (newdir, newdir_utf8);
 	      tem = make_unibyte_string (newdir_utf8, strlen (newdir_utf8));
+	      newdir = SSDATA (tem);
 	    }
 	  else
 #endif
 	    tem = build_string (newdir);
 	  newdirlim = newdir + SBYTES (tem);
+	  /* `egetenv' may return a unibyte string, which will bite us
+	     if we expect the directory to be multibyte.  */
 	  if (multibyte && !STRING_MULTIBYTE (tem))
 	    {
 	      hdir = DECODE_FILE (tem);
@@ -1116,8 +1117,7 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
 
 	      newdir = pw->pw_dir;
 	      /* `getpwnam' may return a unibyte string, which will
-		 bite us since we expect the directory to be
-		 multibyte.  */
+		 bite us when we expect the directory to be multibyte.  */
 	      tem = make_unibyte_string (newdir, strlen (newdir));
 	      newdirlim = newdir + SBYTES (tem);
 	      if (multibyte && !STRING_MULTIBYTE (tem))

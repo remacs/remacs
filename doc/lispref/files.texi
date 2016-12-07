@@ -2217,6 +2217,7 @@ function:
 
 @cindex file name abbreviations
 @cindex abbreviated file names
+@vindex directory-abbrev-alist
 @defun abbreviate-file-name filename
 @anchor{abbreviate-file-name}
 This function returns an abbreviated form of @var{filename}.  It

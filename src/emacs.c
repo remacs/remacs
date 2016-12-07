@@ -734,6 +734,9 @@ main (int argc, char **argv)
      to have non-stub implementations of APIs we need to convert file
      names between UTF-8 and the system's ANSI codepage.  */
   maybe_load_unicows_dll ();
+  /* Initialize the codepage for file names, needed to decode
+     non-ASCII file names during startup.  */
+  w32_init_file_name_codepage ();
 #endif
   /* This has to be done before module_init is called below, so that
      the latter could use the thread ID of the main thread.  */

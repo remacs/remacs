@@ -1,5 +1,172 @@
 2016-12-07  Eli Zaretskii  <eliz@gnu.org>
 
+	Fix 'expand-file-name' during startup on MS-Windows
+
+	* src/w32.c (w32_init_file_name_codepage): New function, resets
+	file_name_codepage and w32_ansi_code_page to undo the values
+	recorded during dumping.
+	(codepage_for_filenames): Fix an embarrassing typo.  Ignore the
+	cached value of file-name encoding if it is nil, i.e. not
+	initialized yet.  Actually cache the last used file-name encoding
+	to avoid calling APIs when not necessary.
+
+	* src/w32.h (w32_init_file_name_codepage): Add prototype.
+
+	* src/w32term.c (syms_of_w32term): Set the value of
+	w32_unicode_filenames according to the OS version.  This avoids
+	resetting it during startup, which then causes temacs to run with
+	the incorrect value.
+
+	* src/emacs.c (main): Call w32_init_file_name_codepage early
+	during the startup.
+
+	* src/fileio.c (Fexpand_file_name) [WINDOWSNT]: Update 'newdir'
+	after converting $HOME to a UTF-8 string, so that 'newdirlim' is
+	consistent with it.  (Bug#25038)
+
+	* lisp/international/mule-cmds.el (set-locale-environment): Set
+	'default-file-name-coding-system' to the ANSI codepage even in
+	non-interactive sessions.
+
+	* lisp/files.el (directory-abbrev-alist, abbreviated-home-dir):
+	Doc fix.
+	(abbreviate-file-name): Decode 'abbreviated-home-dir' if it is a
+	unibyte string.
+
+	* doc/lispref/files.texi (Directory Names): Index
+	'directory-abbrev-alist'.
+
+2016-12-07  Nicolas Petton  <nicolas@petton.fr>
+
+	* admin/authors.el (authors-renamed-files-alist): Addition.
+
+2016-12-07  Glenn Morris  <rgm@gnu.org>
+
+	Tweak refcard note about documentation location
+
+	* etc/refcards/calccard.tex, etc/refcards/cs-dired-ref.tex:
+	* etc/refcards/cs-refcard.tex, etc/refcards/cs-survival.tex:
+	* etc/refcards/de-refcard.tex, etc/refcards/dired-ref.tex:
+	* etc/refcards/fr-dired-ref.tex, etc/refcards/fr-refcard.tex:
+	* etc/refcards/fr-survival.tex, etc/refcards/gnus-refcard.tex:
+	* etc/refcards/orgcard.tex, etc/refcards/pl-refcard.tex:
+	* etc/refcards/pt-br-refcard.tex, etc/refcards/refcard.tex:
+	* etc/refcards/ru-refcard.tex, etc/refcards/sk-dired-ref.tex:
+	* etc/refcards/sk-refcard.tex, etc/refcards/sk-survival.tex:
+	* etc/refcards/survival.tex, etc/refcards/vipcard.tex:
+	* etc/refcards/viperCard.tex: Tweak documentation url.
+
+2016-12-07  Glenn Morris  <rgm@gnu.org>
+
+	Improve treatment of Fortran's "class is"
+
+	* lisp/progmodes/f90.el (f90-start-block-re, f90-no-block-limit):
+	Handle "class is".  (Bug#25039)
+	* test/automated/f90.el (f90-test-bug25039): New test.
+
+2016-12-07  Nicolas Petton  <nicolas@petton.fr>
+
+	Bump Emacs version to 25.1.90
+
+	* README:
+	* configure.ac:
+	* msdos/sed2v2.inp:
+	* nt/README.W32: Bump Emacs version to 25.1.90
+
+2016-12-07  Nicolas Petton  <nicolas@petton.fr>
+
+	Bump Emacs version
+
+	* README:
+	* configure.ac:
+	* etc/NEWS:
+	* msdos/sed2v2.inp:
+	* nt/README.W32: Bump Emacs version to 25.2.90
+
+2016-12-07  Karl Fogel  <kfogel@red-bean.com>
+
+	Handle TeX comments when making new paragraph
+
+	* lisp/textmodes/tex-mode.el (tex-handle-newline): New function.
+	  Handle comment case directly, and dispatch to `tex-terminate-paragraph'
+	  for original behavior in non-comment case.
+	  (tex-mode-map): Bind above to C-j, replacing `tex-terminate-paragraph'.
+
+2016-12-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Restore keystroke echo in 'C-q'
+
+	* lisp/simple.el (read-quoted-char): Use 'read-event' instead of
+	'read-key', to avoid losing the keystroke echo in 'C-q'.  (Bug#24635)
+
+2016-12-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of 'current-word'
+
+	* lisp/simple.el (current-word): Clarify and improve the doc
+	string.  (Bug#24979)
+
+2016-12-07  Chunyang Xu  <mail@xuchunyang.me>
+
+	Fix a typo in an Eshell defcustom
+
+	* lisp/eshell/esh-mode.el (eshell-scroll-to-bottom-on-output): Fix
+	a typo in the 'others' standard value.  (Bug#24983)
+
+2016-12-07  Hong Xu  <hong@topbug.net>  (tiny change)
+
+	Minor copyedits of electric-pair-mode
+
+	* doc/emacs/programs.texi (Matching): Add index entries.  Fix
+	typos.  (Bug#25012)
+
+2016-12-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix documentation of 'invocation-directory'
+
+	* doc/lispref/os.texi (System Environment): Fix wording of the
+	description of 'invocation-directory'.  (Bug#24999)
+
+2016-12-07  Glenn Morris  <rgm@gnu.org>
+
+	* admin/authors.el (authors-aliases): Add an entry.
+
+2016-12-07  Philipp Stephani  <phst@google.com>
+
+	Guard terminal parameter in XTerm mouse mode
+
+	It has been observed (in the HTerm terminal emulator) that the
+	event stored in the 'xterm-mouse-last-down' terminal parameter gets
+	overwritten during a mouse drag operation, causing Emacs to attempt to
+	synthesize the non-existing <drag-mouse-0> event.  Copy the event into
+	the terminal parameter to protect against such modifications.
+
+	* lisp/xt-mouse.el (xterm-mouse-translate-1): Guard against modification
+	of input event list.
+
+2016-12-07  Nicolas Petton  <nicolas@petton.fr>
+
+	* etc/AUTHORS: Regenerate the AUTHORS file
+
+2016-12-07  Nicolas Petton  <nicolas@petton.fr>
+
+	Update ChangeLog files and authors.el
+
+	* admin/authors.el (authors-renamed-files-alist): Add entries for
+	  obsolete files.
+	* ChangeLog.2: Update.
+
+2016-12-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix menu bindings of Dired 'A' and 'Q' commands
+
+	* lisp/dired.el (dired-mode-map): Rebind "Search Files" and "Query
+	Replace in Files" menu items to 'dired-do-find-regexp' and
+	'dired-do-find-regexp-and-replace', respectively.  (Bug#24977)
+
+2016-12-07  Eli Zaretskii  <eliz@gnu.org>
+2016-12-07  Eli Zaretskii  <eliz@gnu.org>
+
 	Avoid errors in shr-pixel-column due to dedicated windows
 
 	* lisp/net/shr.el (shr-pixel-column): If we are switching to
@@ -39110,6 +39277,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
+2016-12-07abf87b6b3ead1367cbae5cc6b0743349f611 (inclusive).
 2016-12-07db8824bb97d07e3897e800eee946757a3 (inclusive).
 2016-09-26c9cef49b0fceb3c5e904837ea5675fe4306ac (inclusive).
 2016-08-22bb813cfea53e4162409f2adc0a793ab301894 (inclusive).
