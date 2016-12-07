@@ -93,5 +93,38 @@
     (should (equal (cdr (assoc "test2" ibuffer-saved-filters)) test2))
     (should (equal (cdr (assoc "test3" ibuffer-saved-filters)) test3))))
 
+(ert-deftest ibuffer-test-Bug25058 ()
+  "Test for http://debbugs.gnu.org/25058 ."
+  (ibuffer)
+  (let ((orig-filters ibuffer-saved-filter-groups)
+        (tmp-filters '(("saved-filters"
+                        ("Shell"
+                         (used-mode . shell-mode))
+                        ("Elisp"
+                         (or
+                          (used-mode . emacs-lisp-mode)
+                          (used-mode . lisp-interaction-mode)))
+                        ("Dired"
+                         (used-mode . dired-mode))
+                        ("Info"
+                         (or
+                          (used-mode . help-mode)
+                          (used-mode . debugger-mode)
+                          (used-mode . Custom-mode)
+                          (used-mode . completion-list-mode)
+                          (name . "\\`[*]Messages[*]\\'")))))))
+    (unwind-protect
+        (progn
+          (setq ibuffer-saved-filter-groups tmp-filters)
+	  (ibuffer-switch-to-saved-filter-groups "saved-filters")
+          (ibuffer-decompose-filter-group "Elisp")
+          (ibuffer-filter-disable)
+          (ibuffer-switch-to-saved-filter-groups "saved-filters")
+          (should (assoc "Elisp" (cdar ibuffer-saved-filter-groups))))
+      (setq ibuffer-saved-filter-groups orig-filters)
+      (ibuffer-awhen (get-buffer "*Ibuffer*")
+        (and (buffer-live-p it) (kill-buffer it))))))
+
+
 (provide 'ibuffer-tests)
 ;; ibuffer-tests.el ends here

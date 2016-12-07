@@ -39,12 +39,11 @@
   (require 'subr-x))
 
 ;;; Utility functions
-(defun ibuffer-delete-alist (key alist)
-  "Delete all entries in ALIST that have a key equal to KEY."
-  (let (entry)
-    (while (setq entry (assoc key alist))
-      (setq alist (delete entry alist)))
-    alist))
+(defun ibuffer-remove-alist (key alist)
+  "Remove all entries in ALIST that have a key equal to KEY."
+  (while (ibuffer-awhen (assoc key alist)
+           (setq alist (remove it alist)) it))
+  alist)
 
 ;; borrowed from Gnus
 (defun ibuffer-remove-duplicates (list)
@@ -372,7 +371,7 @@ the mode if ARG is omitted or nil."
   (let ((buf (ibuffer-current-buffer)))
     (if (assq 'mode ibuffer-filtering-qualifiers)
 	(setq ibuffer-filtering-qualifiers
-	      (ibuffer-delete-alist 'mode ibuffer-filtering-qualifiers))
+	      (ibuffer-remove-alist 'mode ibuffer-filtering-qualifiers))
       (ibuffer-push-filter (cons 'mode (buffer-local-value 'major-mode buf)))))
   (ibuffer-update nil t))
 
@@ -645,7 +644,7 @@ To evaluate a form without viewing the buffer, see `ibuffer-do-eval'."
 			      (append ibuffer-filter-groups
 				      (list (cons "Default" nil))))))
     ;; (dolist (hidden ibuffer-hidden-filter-groups)
-    ;;   (setq filter-group-alist (ibuffer-delete-alist
+    ;;   (setq filter-group-alist (ibuffer-remove-alist
     ;;     			   hidden filter-group-alist)))
     (let ((vec (make-vector (length filter-group-alist) nil))
 	  (i 0))
@@ -729,7 +728,7 @@ To evaluate a form without viewing the buffer, see `ibuffer-do-eval'."
   (interactive
    (list (ibuffer-read-filter-group-name "Decompose filter group: " t)))
   (let ((data (cdr (assoc group ibuffer-filter-groups))))
-    (setq ibuffer-filter-groups (ibuffer-delete-alist
+    (setq ibuffer-filter-groups (ibuffer-remove-alist
 				 group ibuffer-filter-groups)
 	  ibuffer-filtering-qualifiers data))
   (ibuffer-update nil t))
@@ -777,7 +776,7 @@ The group will be added to `ibuffer-filter-group-kill-ring'."
   (ibuffer-aif (assoc name ibuffer-filter-groups)
       (progn
 	(push (copy-tree it) ibuffer-filter-group-kill-ring)
-	(setq ibuffer-filter-groups (ibuffer-delete-alist
+	(setq ibuffer-filter-groups (ibuffer-remove-alist
 				     name ibuffer-filter-groups))
 	(setq ibuffer-hidden-filter-groups
 	      (delete name ibuffer-hidden-filter-groups)))
@@ -867,7 +866,7 @@ They are removed from `ibuffer-saved-filter-groups'."
       (completing-read "Delete saved filter group: "
 		       ibuffer-saved-filter-groups nil t))))
   (setq ibuffer-saved-filter-groups
-	(ibuffer-delete-alist name ibuffer-saved-filter-groups))
+	(ibuffer-remove-alist name ibuffer-saved-filter-groups))
   (ibuffer-maybe-save-stuff)
   (ibuffer-update nil t))
 
@@ -1033,7 +1032,7 @@ Interactively, prompt for NAME, and use the current filters."
       (completing-read "Delete saved filters: "
 		       ibuffer-saved-filters nil t))))
   (setq ibuffer-saved-filters
-	(ibuffer-delete-alist name ibuffer-saved-filters))
+	(ibuffer-remove-alist name ibuffer-saved-filters))
   (ibuffer-maybe-save-stuff)
   (ibuffer-update nil t))
 
