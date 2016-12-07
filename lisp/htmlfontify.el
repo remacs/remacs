@@ -524,8 +524,8 @@ Some examples:\n
 
 (defvar hfy-sheet-assoc 'please-ignore-this-line
   "An assoc with elements of the form (face-name style-name . style-string):\n
-'((default               \"default\" . \"{background: black; color: white}\")
-  (font-lock-string-face \"string\"  . \"{color: rgb(64,224,208)}\"))" )
+\((default               \"default\" . \"{background: black; color: white}\")
+ (font-lock-string-face \"string\"  . \"{color: rgb(64,224,208)}\"))" )
 
 (defvar hfy-facemap-assoc 'please-ignore-this-line
   "An assoc of (point . FACE-SYMBOL) or (point . DEFFACE-LIST)

@@ -118,7 +118,7 @@ the header field or an empty string.  If FIELD is an empty string, the
 entire article body is searched for.  REGEXP is a string which is
 compared with FIELD value.  COMMAND is a string representing a valid
 key sequence in Summary mode or Lisp expression.  COMMAND defaults to
-'(gnus-summary-mark-as-read nil \"X\").  Make sure that COMMAND is
+\(gnus-summary-mark-as-read nil \"X\").  Make sure that COMMAND is
 executed in the Summary buffer.  If the second optional argument ALL
 is non-nil, the COMMAND is applied to articles which are already
 marked as read or unread.  Articles which are marked are skipped over
