@@ -454,6 +454,8 @@ add_non_keyboard_read_fd (int fd)
 {
   eassert (fd >= 0 && fd < FD_SETSIZE);
   eassert (fd_callback_info[fd].func == NULL);
+
+  fd_callback_info[fd].flags &= ~KEYBOARD_FD;
   fd_callback_info[fd].flags |= FOR_READ;
   if (fd > max_desc)
     max_desc = fd;
@@ -486,12 +488,13 @@ delete_read_fd (int fd)
 void
 add_write_fd (int fd, fd_callback func, void *data)
 {
-  if (fd > max_desc)
-    max_desc = fd;
+  eassert (fd >= 0 && fd < FD_SETSIZE);
 
   fd_callback_info[fd].func = func;
   fd_callback_info[fd].data = data;
   fd_callback_info[fd].flags |= FOR_WRITE;
+  if (fd > max_desc)
+    max_desc = fd;
 }
 
 static void
@@ -915,7 +918,7 @@ update_processes_for_thread_death (Lisp_Object dying_thread)
 	{
 	  struct Lisp_Process *proc = XPROCESS (process);
 
-	  proc->thread = Qnil;
+	  pset_thread (proc, Qnil);
 	  if (proc->infd >= 0)
 	    fd_callback_info[proc->infd].thread = NULL;
 	  if (proc->outfd >= 0)
@@ -1230,7 +1233,7 @@ set_process_filter_masks (struct Lisp_Process *p)
   else if (EQ (p->filter, Qt)
 	   /* Network or serial process not stopped:  */
 	   && !EQ (p->command, Qt))
-    add_non_keyboard_read_fd (p->infd);
+    add_process_read_fd (p->infd);
 }
 
 DEFUN ("set-process-filter", Fset_process_filter, Sset_process_filter,
@@ -1336,7 +1339,7 @@ If THREAD is nil, the process is unlocked.  */)
     }
 
   proc = XPROCESS (process);
-  proc->thread = thread;
+  pset_thread (proc, thread);
   if (proc->infd >= 0)
     fd_callback_info[proc->infd].thread = tstate;
   if (proc->outfd >= 0)
@@ -2031,7 +2034,8 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
   p->pty_flag = pty_flag;
   pset_status (p, Qrun);
 
-  add_process_read_fd (inchannel);
+  if (!EQ (p->command, Qt))
+    add_process_read_fd (inchannel);
 
   /* This may signal an error.  */
   setup_process_coding_systems (process);
@@ -2265,7 +2269,7 @@ create_pty (Lisp_Object process)
       pset_status (p, Qrun);
       setup_process_coding_systems (process);
 
-      add_non_keyboard_read_fd (pty_fd);
+      add_process_read_fd (pty_fd);
 
       pset_tty_name (p, build_string (pty_name));
     }
@@ -2371,7 +2375,7 @@ usage:  (make-pipe-process &rest ARGS)  */)
   eassert (! p->pty_flag);
 
   if (!EQ (p->command, Qt))
-    add_non_keyboard_read_fd (inchannel);
+    add_process_read_fd (inchannel);
   p->adaptive_read_buffering
     = (NILP (Vprocess_adaptive_read_buffering) ? 0
        : EQ (Vprocess_adaptive_read_buffering, Qt) ? 1 : 2);
@@ -3107,7 +3111,7 @@ usage:  (make-serial-process &rest ARGS)  */)
   eassert (! p->pty_flag);
 
   if (!EQ (p->command, Qt))
-    add_non_keyboard_read_fd (fd);
+    add_process_read_fd (fd);
 
   if (BUFFERP (buffer))
     {
@@ -3597,7 +3601,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
        still listen for incoming connects unless it is stopped.  */
     if ((!EQ (p->filter, Qt) && !EQ (p->command, Qt))
 	|| (EQ (p->status, Qlisten) && NILP (p->command)))
-      add_non_keyboard_read_fd (inch);
+      add_process_read_fd (inch);
 
   if (inch > max_desc)
     max_desc = inch;
@@ -4793,7 +4797,9 @@ server_accept_connection (Lisp_Object server, int channel)
 
   /* Client processes for accepted connections are not stopped initially.  */
   if (!EQ (p->filter, Qt))
-    add_non_keyboard_read_fd (s);
+    add_process_read_fd (s);
+  if (s > max_desc)
+    max_desc = s;
 
   /* Setup coding system for new process based on server process.
      This seems to be the proper thing to do, as the coding system
@@ -5542,7 +5548,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
           if (d->func
 	      && ((d->flags & FOR_READ
 		   && FD_ISSET (channel, &Available))
-		  || (d->flags & FOR_WRITE
+		  || ((d->flags & FOR_WRITE)
 		      && FD_ISSET (channel, &Writeok))))
             d->func (channel, d->data);
 	}
@@ -5728,7 +5734,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 
 		  if (0 <= p->infd && !EQ (p->filter, Qt)
 		      && !EQ (p->command, Qt))
-		    add_non_keyboard_read_fd (p->infd);
+		    add_process_read_fd (p->infd);
 		}
 	    }
 	}			/* End for each file descriptor.  */
@@ -6728,7 +6734,7 @@ traffic.  */)
 	  && p->infd >= 0
 	  && (!EQ (p->filter, Qt) || EQ (p->status, Qlisten)))
 	{
-	  add_non_keyboard_read_fd (p->infd);
+	  add_process_read_fd (p->infd);
 #ifdef WINDOWSNT
 	  if (fd_info[ p->infd ].flags & FILE_SERIAL)
 	    PurgeComm (fd_info[ p->infd ].hnd, PURGE_RXABORT | PURGE_RXCLEAR);
@@ -7397,7 +7403,8 @@ keyboard_bit_set (fd_set *mask)
 
   for (fd = 0; fd <= max_desc; fd++)
     if (FD_ISSET (fd, mask)
-	&& ((fd_callback_info[fd].flags & KEYBOARD_FD) != 0))
+	&& ((fd_callback_info[fd].flags & (FOR_READ | KEYBOARD_FD))
+	    == (FOR_READ | KEYBOARD_FD)))
       return 1;
 
   return 0;
@@ -7635,8 +7642,7 @@ void
 add_timer_wait_descriptor (int fd)
 {
   add_read_fd (fd, timerfd_callback, NULL);
-  if (fd > max_desc)
-    max_desc = fd;
+  fd_callback_info[fd].flags &= ~KEYBOARD_FD;
 }
 
 #endif /* HAVE_TIMERFD */
@@ -7661,6 +7667,7 @@ add_keyboard_wait_descriptor (int desc)
 {
 #ifdef subprocesses /* Actually means "not MSDOS".  */
   eassert (desc >= 0 && desc < FD_SETSIZE);
+  fd_callback_info[desc].flags &= ~PROCESS_FD;
   fd_callback_info[desc].flags |= (FOR_READ | KEYBOARD_FD);
   if (desc > max_desc)
     max_desc = desc;
