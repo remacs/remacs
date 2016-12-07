@@ -1347,7 +1347,11 @@ commands, which only operated on marked files."
 		args       (cddr args)))
 	(apply 'vc-do-async-command buffer root hg-program command args)
         (with-current-buffer buffer
-          (vc-run-delayed (vc-compilation-mode 'hg)))
+          (vc-run-delayed
+            (vc-compilation-mode 'hg)
+            (setq-local compile-command
+                        (concat hg-program " " command " "
+                                (if args (mapconcat 'identity args " ") "")))))
 	(vc-set-async-update buffer)))))
 
 (defun vc-hg-pull (prompt)

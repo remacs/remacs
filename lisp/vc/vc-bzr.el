@@ -372,7 +372,12 @@ If PROMPT is non-nil, prompt for the Bzr command to run."
 	    args           (cddr args)))
     (require 'vc-dispatcher)
     (let ((buf (apply 'vc-bzr-async-command command args)))
-      (with-current-buffer buf (vc-run-delayed (vc-compilation-mode 'bzr)))
+      (with-current-buffer buf
+        (vc-run-delayed
+          (vc-compilation-mode 'bzr)
+          (setq-local compile-command
+                      (concat vc-bzr-program " " command " "
+                              (if args (mapconcat 'identity args " ") "")))))
       (vc-set-async-update buf))))
 
 (defun vc-bzr-pull (prompt)

@@ -792,7 +792,12 @@ If PROMPT is non-nil, prompt for the Git command to run."
 	    args        (cddr args)))
     (require 'vc-dispatcher)
     (apply 'vc-do-async-command buffer root git-program command args)
-    (with-current-buffer buffer (vc-run-delayed (vc-compilation-mode 'git)))
+    (with-current-buffer buffer
+      (vc-run-delayed
+        (vc-compilation-mode 'git)
+        (setq-local compile-command
+                    (concat git-program " " command " "
+                            (if args (mapconcat 'identity args " ") "")))))
     (vc-set-async-update buffer)))
 
 (defun vc-git-pull (prompt)
