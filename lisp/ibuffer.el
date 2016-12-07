@@ -1431,11 +1431,11 @@ If point is on a group name, this function operates on that group."
   (interactive (ibuffer-get-region-and-prefix))
   (ibuffer-mark-region-or-n-with-char start end arg ?\s))
 
-(defun ibuffer-unmark-backward (arg)
-  "Unmark the ARG previous buffers.
+(defun ibuffer-unmark-backward (start end arg)
+  "Unmark the buffers in the region, or previous ARG buffers.
 If point is on a group name, this function operates on that group."
-  (interactive "p")
-  (ibuffer-unmark-forward nil nil (- arg)))
+  (interactive (ibuffer-get-region-and-prefix))
+  (ibuffer-unmark-forward start end (- arg)))
 
 (defun ibuffer-mark-region-or-n-with-char (start end arg mark-char)
   (if (use-region-p)
