@@ -478,15 +478,19 @@ pass to the OPERATION."
 		    (if t1
 			;; Source is remote.
 			(append args
-				(list "-D" (shell-quote-argument localname)
+				(list "-D" (tramp-unquote-shell-quote-argument
+					    localname)
 				      "-c" (shell-quote-argument "tar qc - *")
 				      "|" "tar" "xfC" "-"
-				      (shell-quote-argument tmpdir)))
+				      (tramp-unquote-shell-quote-argument
+				       tmpdir)))
 		      ;; Target is remote.
 		      (append (list "tar" "cfC" "-"
-				    (shell-quote-argument dirname) "." "|")
+				    (tramp-unquote-shell-quote-argument dirname)
+				    "." "|")
 			      args
-			      (list "-D" (shell-quote-argument localname)
+			      (list "-D" (tramp-unquote-shell-quote-argument
+					  localname)
 				    "-c" (shell-quote-argument "tar qx -")))))
 
 	      (unwind-protect
@@ -760,7 +764,8 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	    (setq args (append args (list "-s" tramp-smb-conf))))
 	  (setq
 	   args
-	   (append args (list (shell-quote-argument localname) "2>/dev/null")))
+	   (append args (list (tramp-unquote-shell-quote-argument localname)
+			      "2>/dev/null")))
 
 	  (unwind-protect
 	      (with-temp-buffer
@@ -1354,7 +1359,7 @@ target of the symlink differ."
 	    (setq args (append args (list "-s" tramp-smb-conf))))
 	  (setq
 	   args
-	   (append args (list (shell-quote-argument localname)
+	   (append args (list (tramp-unquote-shell-quote-argument localname)
 			      "&&" "echo" "tramp_exit_status" "0"
 			      "||" "echo" "tramp_exit_status" "1")))
 
@@ -2038,7 +2043,7 @@ Returns nil if an error message has appeared."
 (defun tramp-smb-shell-quote-argument (s)
   "Similar to `shell-quote-argument', but uses windows cmd syntax."
   (let ((system-type 'ms-dos))
-    (shell-quote-argument s)))
+    (tramp-unquote-shell-quote-argument s)))
 
 (add-hook 'tramp-unload-hook
 	  (lambda ()

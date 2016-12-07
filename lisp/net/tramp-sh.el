@@ -2415,10 +2415,10 @@ The method used must be an out-of-band method."
 			'identity)
 		      (if t1
 			  (tramp-make-copy-program-file-name v)
-			(shell-quote-argument filename)))
+			(tramp-unquote-shell-quote-argument filename)))
 	      target (if t2
 			 (tramp-make-copy-program-file-name v)
-		       (shell-quote-argument newname)))
+		       (tramp-unquote-shell-quote-argument newname)))
 
 	;; Check for host and port number.  We cannot use
 	;; `tramp-file-name-port', because this returns also
@@ -5175,8 +5175,9 @@ Return ATTR."
      ((tramp-get-method-parameter vec 'tramp-remote-copy-program)
       localname)
      ((not (zerop (length user)))
-      (shell-quote-argument (format "%s@%s:%s" user host localname)))
-     (t (shell-quote-argument (format "%s:%s" host localname))))))
+      (tramp-unquote-shell-quote-argument
+       (format "%s@%s:%s" user host localname)))
+     (t (tramp-unquote-shell-quote-argument (format "%s:%s" host localname))))))
 
 (defun tramp-method-out-of-band-p (vec size)
   "Return t if this is an out-of-band method, nil otherwise."
