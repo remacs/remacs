@@ -35,7 +35,8 @@
 
 (eval-when-compile
   (require 'ibuf-macs)
-  (require 'cl-lib))
+  (require 'cl-lib)
+  (require 'subr-x))
 
 ;;; Utility functions
 (defun ibuffer-delete-alist (key alist)
@@ -119,31 +120,99 @@ Buffers whose major mode is in this list, are not searched."
 
 (defvar ibuffer-auto-buffers-changed nil)
 
+(defun ibuffer-update-saved-filters-format (filters)
+  "Transforms alist from old to new `ibuffer-saved-filters' format.
+
+Specifically, converts old-format alist with values of the
+form (STRING (FILTER-SPECS...)) to alist with values of the
+form (STRING FILTER-SPECS...), where each filter spec should be a
+cons cell with a symbol in the car. Any elements in the latter
+form are kept as is.
+
+Returns (OLD-FORMAT-DETECTED . UPDATED-SAVED-FILTERS-LIST)."
+  (when filters
+    (let* ((old-format-detected nil)
+           (fix-filter (lambda (filter-spec)
+                         (if (symbolp (car (cadr filter-spec)))
+                             filter-spec
+                           (setq old-format-detected t) ; side-effect
+                           (cons (car filter-spec) (cadr filter-spec)))))
+           (fixed (mapcar fix-filter filters)))
+      (cons old-format-detected fixed))))
+
 (defcustom ibuffer-saved-filters '(("gnus"
-				    ((or (mode . message-mode)
-					 (mode . mail-mode)
-					 (mode . gnus-group-mode)
-					 (mode . gnus-summary-mode)
-					 (mode . gnus-article-mode))))
-				   ("programming"
-				    ((or (mode . emacs-lisp-mode)
-					 (mode . cperl-mode)
-					 (mode . c-mode)
-					 (mode . java-mode)
-					 (mode . idl-mode)
-					 (mode . lisp-mode)))))
+                                    (or (mode . message-mode)
+                                        (mode . mail-mode)
+                                        (mode . gnus-group-mode)
+                                        (mode . gnus-summary-mode)
+                                        (mode . gnus-article-mode)))
+                                   ("programming"
+                                    (or (mode . emacs-lisp-mode)
+                                        (mode . cperl-mode)
+                                        (mode . c-mode)
+                                        (mode . java-mode)
+                                        (mode . idl-mode)
+                                        (mode . lisp-mode))))
 
-  "An alist of filter qualifiers to switch between.
+  "An alist mapping saved filter names to filter specifications.
 
-This variable should look like ((\"STRING\" QUALIFIERS)
-                                (\"STRING\" QUALIFIERS) ...), where
-QUALIFIERS is a list of the same form as
-`ibuffer-filtering-qualifiers'.
-See also the variables `ibuffer-filtering-qualifiers',
-`ibuffer-filtering-alist', and the functions
-`ibuffer-switch-to-saved-filters', `ibuffer-save-filters'."
-  :type '(repeat sexp)
+Each element should look like (\"NAME\" . FILTER-LIST), where
+FILTER-LIST has the same structure as the variable
+`ibuffer-filtering-qualifiers', which see. The filters defined
+here are joined with an implicit logical `and' and associated
+with NAME. The combined specification can be used by name in
+other filter specifications via the `saved' qualifier (again, see
+`ibuffer-filtering-qualifiers'). They can also be switched to by
+name (see the functions `ibuffer-switch-to-saved-filters' and
+`ibuffer-save-filters'). The variable `ibuffer-save-with-custom'
+affects how this information is saved for future sessions. This
+variable can be set directly from lisp code."
+  :version "26.1"
+  :type '(alist :key-type (string :tag "Filter name")
+                :value-type (repeat :tag "Filter specification" sexp))
+  :set (lambda (symbol value)
+         ;; Just set-default but update legacy old-style format
+         (set-default symbol (cdr (ibuffer-update-saved-filters-format value))))
   :group 'ibuffer)
+
+(defvar ibuffer-old-saved-filters-warning
+  (concat "Deprecated format detected for variable `ibuffer-saved-filters'.
+
+The format has been repaired and the variable modified accordingly.
+You can save the current value through the customize system by
+either clicking or hitting return "
+          (make-text-button
+           "here" nil
+           'face '(:weight bold :inherit button)
+           'mouse-face '(:weight normal :background "gray50" :inherit button)
+           'follow-link t
+           'help-echo "Click or RET: save new value in customize"
+           'action (lambda (_)
+                     (if (not (fboundp 'customize-save-variable))
+                         (message "Customize not available; value not saved")
+                       (customize-save-variable 'ibuffer-saved-filters
+                                                ibuffer-saved-filters)
+                       (message "Saved updated ibuffer-saved-filters."))))
+          ". See below for
+an explanation and alternative ways to save the repaired value.
+
+Explanation: For the list variable `ibuffer-saved-filters',
+elements of the form (STRING (FILTER-SPECS...)) are deprecated
+and should instead have the form (STRING FILTER-SPECS...), where
+each filter spec is a cons cell with a symbol in the car. See
+`ibuffer-saved-filters' for details. The repaired value fixes
+this format without changing the meaning of the saved filters.
+
+Alternative ways to save the repaired value:
+
+  1. Do M-x customize-variable and entering `ibuffer-saved-filters'
+     when prompted.
+
+  2. Set the updated value manually by copying the
+     following emacs-lisp form to your emacs init file.
+
+%s
+"))
 
 (defvar ibuffer-filtering-qualifiers nil
   "A list like (SYMBOL . QUALIFIER) which filters the current buffer list.
@@ -223,6 +292,28 @@ Currently, this only applies to `ibuffer-saved-filters' and
 `ibuffer-saved-filter-groups'."
   :type 'boolean
   :group 'ibuffer)
+
+(defun ibuffer-repair-saved-filters ()
+  "Updates `ibuffer-saved-filters' to its new-style format, if needed.
+
+If this list has any elements of the old-style format, a
+deprecation warning is raised, with a button allowing persistent
+update. Any updated filters retain their meaning in the new
+format. See `ibuffer-update-saved-filters-format' and
+`ibuffer-saved-filters' for details of the old and new formats."
+  (interactive)
+  (when (and (boundp 'ibuffer-saved-filters) ibuffer-saved-filters)
+    (let ((fixed (ibuffer-update-saved-filters-format ibuffer-saved-filters)))
+      (prog1
+          (setq ibuffer-saved-filters (cdr fixed))
+        (when-let (old-format-detected (car fixed))
+          (let ((warning-series t)
+                (updated-form
+                 (with-output-to-string
+                   (pp `(setq ibuffer-saved-filters ',ibuffer-saved-filters)))))
+            (display-warning
+             'ibuffer
+             (format ibuffer-old-saved-filters-warning updated-form))))))))
 
 (defun ibuffer-ext-visible-p (buf all &optional ibuffer-buf)
   (or
@@ -535,13 +626,11 @@ To evaluate a form without viewing the buffer, see `ibuffer-do-eval'."
 			   (ibuffer-included-in-filter-p buf x))
 		       (cdr filter))))
       (`saved
-       (let ((data
-	      (assoc (cdr filter)
-		     ibuffer-saved-filters)))
+       (let ((data (assoc (cdr filter) ibuffer-saved-filters)))
 	 (unless data
 	   (ibuffer-filter-disable t)
 	   (error "Unknown saved filter %s" (cdr filter)))
-	 (ibuffer-included-in-filters-p buf (cadr data))))
+	 (ibuffer-included-in-filters-p buf (cdr data))))
       (_
        (pcase-let ((`(,_type ,_desc ,func)
                     (assq (car filter) ibuffer-filtering-alist)))
@@ -849,15 +938,12 @@ turned into two separate filters [name: foo] and [mode: bar-mode]."
 					  (cdr lim)
 					  ibuffer-filtering-qualifiers)))
       (`saved
-       (let ((data
-	      (assoc (cdr lim)
-		     ibuffer-saved-filters)))
+       (let ((data (assoc (cdr lim) ibuffer-saved-filters)))
 	 (unless data
 	   (ibuffer-filter-disable)
 	   (error "Unknown saved filter %s" (cdr lim)))
-	 (setq ibuffer-filtering-qualifiers (append
-					    (cadr data)
-					    ibuffer-filtering-qualifiers))))
+	 (setq ibuffer-filtering-qualifiers
+               (append (cdr data) ibuffer-filtering-qualifiers))))
       (`not
        (push (cdr lim)
 	     ibuffer-filtering-qualifiers))
@@ -936,7 +1022,7 @@ Interactively, prompt for NAME, and use the current filters."
       ibuffer-filtering-qualifiers)))
   (ibuffer-aif (assoc name ibuffer-saved-filters)
       (setcdr it filters)
-    (push (list name filters) ibuffer-saved-filters))
+    (push (cons name filters) ibuffer-saved-filters))
   (ibuffer-maybe-save-stuff))
 
 ;;;###autoload
