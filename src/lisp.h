@@ -564,7 +564,6 @@ INLINE bool CHAR_TABLE_P (Lisp_Object);
 INLINE Lisp_Object CHAR_TABLE_REF_ASCII (Lisp_Object, ptrdiff_t);
 INLINE bool (CONSP) (Lisp_Object);
 INLINE bool (FLOATP) (Lisp_Object);
-INLINE bool functionp (Lisp_Object);
 INLINE bool (INTEGERP) (Lisp_Object);
 INLINE bool (MARKERP) (Lisp_Object);
 INLINE bool (MISCP) (Lisp_Object);
@@ -2994,13 +2993,6 @@ CHECK_NUMBER_CDR (Lisp_Object x)
    Lisp_Object fnname
 #endif
 
-/* True if OBJ is a Lisp function.  */
-INLINE bool
-FUNCTIONP (Lisp_Object obj)
-{
-  return functionp (obj);
-}
-
 /* defsubr (Sname);
    is how we define the symbol for function `name' at start-up time.  */
 extern void defsubr (struct Lisp_Subr *);
@@ -3915,6 +3907,7 @@ extern _Noreturn void xsignal2 (Lisp_Object, Lisp_Object, Lisp_Object);
 extern _Noreturn void xsignal3 (Lisp_Object, Lisp_Object, Lisp_Object,
 				Lisp_Object);
 extern _Noreturn void signal_error (const char *, Lisp_Object);
+extern bool FUNCTIONP (Lisp_Object);
 extern Lisp_Object funcall_subr (struct Lisp_Subr *subr, ptrdiff_t numargs, Lisp_Object *arg_vector);
 extern Lisp_Object eval_sub (Lisp_Object form);
 extern Lisp_Object apply1 (Lisp_Object, Lisp_Object);
@@ -4720,38 +4713,6 @@ maybe_gc (void)
       || (!NILP (Vmemory_full)
 	  && consing_since_gc > memory_full_cons_threshold))
     Fgarbage_collect ();
-}
-
-INLINE bool
-functionp (Lisp_Object object)
-{
-  if (SYMBOLP (object) && !NILP (Ffboundp (object)))
-    {
-      object = Findirect_function (object, Qt);
-
-      if (CONSP (object) && EQ (XCAR (object), Qautoload))
-	{
-	  /* Autoloaded symbols are functions, except if they load
-	     macros or keymaps.  */
-	  int i;
-	  for (i = 0; i < 4 && CONSP (object); i++)
-	    object = XCDR (object);
-
-	  return ! (CONSP (object) && !NILP (XCAR (object)));
-	}
-    }
-
-  if (SUBRP (object))
-    return XSUBR (object)->max_args != UNEVALLED;
-  else if (COMPILEDP (object))
-    return true;
-  else if (CONSP (object))
-    {
-      Lisp_Object car = XCAR (object);
-      return EQ (car, Qlambda) || EQ (car, Qclosure);
-    }
-  else
-    return false;
 }
 
 INLINE_HEADER_END

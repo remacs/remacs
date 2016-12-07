@@ -1309,7 +1309,7 @@ usage: (dbus-message-internal &rest REST)  */)
       XD_DBUS_VALIDATE_PATH (path);
       XD_DBUS_VALIDATE_INTERFACE (interface);
       XD_DBUS_VALIDATE_MEMBER (member);
-      if (!NILP (handler) && (!FUNCTIONP (handler)))
+      if (!NILP (handler) && !FUNCTIONP (handler))
 	wrong_type_argument (Qinvalid_function, handler);
     }
 

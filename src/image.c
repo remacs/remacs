@@ -793,7 +793,7 @@ parse_image_spec (Lisp_Object spec, struct image_keyword *keywords,
 
 	case IMAGE_FUNCTION_VALUE:
 	  value = indirect_function (value);
-	  if (!NILP (Ffunctionp (value)))
+	  if (FUNCTIONP (value))
 	    break;
 	  return 0;
 

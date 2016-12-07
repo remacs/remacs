@@ -711,7 +711,7 @@ argument procedure FUN.*/)
 {
   WEBKIT_FN_INIT ();
   CHECK_STRING (script);
-  if (!NILP (fun) && (!FUNCTIONP (fun)))
+  if (!NILP (fun) && !FUNCTIONP (fun))
     wrong_type_argument (Qinvalid_function, fun);
 
   void *callback = (FUNCTIONP (fun)) ?

@@ -2638,6 +2638,37 @@ DEFUN ("functionp", Ffunctionp, Sfunctionp, 1, 1, 0,
   return Qnil;
 }
 
+bool
+FUNCTIONP (Lisp_Object object)
+{
+  if (SYMBOLP (object) && !NILP (Ffboundp (object)))
+    {
+      object = Findirect_function (object, Qt);
+
+      if (CONSP (object) && EQ (XCAR (object), Qautoload))
+	{
+	  /* Autoloaded symbols are functions, except if they load
+	     macros or keymaps.  */
+	  for (int i = 0; i < 4 && CONSP (object); i++)
+	    object = XCDR (object);
+
+	  return ! (CONSP (object) && !NILP (XCAR (object)));
+	}
+    }
+
+  if (SUBRP (object))
+    return XSUBR (object)->max_args != UNEVALLED;
+  else if (COMPILEDP (object))
+    return true;
+  else if (CONSP (object))
+    {
+      Lisp_Object car = XCAR (object);
+      return EQ (car, Qlambda) || EQ (car, Qclosure);
+    }
+  else
+    return false;
+}
+
 DEFUN ("funcall", Ffuncall, Sfuncall, 1, MANY, 0,
        doc: /* Call first argument as a function, passing remaining arguments to it.
 Return the value that function returns.
