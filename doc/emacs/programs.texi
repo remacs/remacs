@@ -1193,7 +1193,7 @@ replace man pages with better-organized manuals that you can browse
 with Info (@pxref{Misc Help}).  This process is not finished, so it is
 still useful to read manual pages.
 
-@findex manual-entry
+@findex man
   You can read the man page for an operating system command, library
 function, or system call, with the @kbd{M-x man} command.  This
 prompts for a topic, with completion (@pxref{Completion}), and runs
@@ -1210,11 +1210,11 @@ mode buffer.
 named by a digit or by a digit and a letter.  Sometimes there are man
 pages with the same name in different sections.  To read a man page
 from a specific section, type @samp{@var{topic}(@var{section})} or
-@samp{@var{section} @var{topic}} when @kbd{M-x manual-entry} prompts
-for the topic.  For example, the man page for the C library function
+@samp{@var{section} @var{topic}} when @kbd{M-x man} prompts for the
+topic.  For example, the man page for the C library function
 @code{chmod} is in section 2, but there is a shell command of the same
 name, whose man page is in section 1; to view the former, type
-@kbd{M-x manual-entry @key{RET} chmod(2) @key{RET}}.
+@w{@kbd{M-x man @key{RET} chmod(2) @key{RET}}}.
 
 @vindex Man-switches
 @kindex M-n @r{(Man mode)}
