@@ -1240,7 +1240,7 @@ a new window in the current frame, splitting vertically."
   (let ((ibuffer-buffer-names-with-mark-result nil))
     (ibuffer-map-lines-nomodify
      (lambda (buf mk)
-       (when (char-equal mark mk)
+       (when (eq mark mk)
 	 (push (buffer-name buf)
 	       ibuffer-buffer-names-with-mark-result))))
     ibuffer-buffer-names-with-mark-result))
@@ -1255,15 +1255,15 @@ a new window in the current frame, splitting vertically."
   (if all
       (ibuffer-map-lines-nomodify
        (lambda (_buf mark)
-	 (not (char-equal mark ?\s))))
+	 (not (eq mark ?\s))))
     (ibuffer-map-lines-nomodify
      (lambda (_buf mark)
-       (char-equal mark ibuffer-marked-char)))))
+       (eq mark ibuffer-marked-char)))))
 
 (defsubst ibuffer-count-deletion-lines ()
   (ibuffer-map-lines-nomodify
    (lambda (_buf mark)
-     (char-equal mark ibuffer-deletion-char))))
+     (eq mark ibuffer-deletion-char))))
 
 (defsubst ibuffer-map-deletion-lines (func)
   (ibuffer-map-on-mark ibuffer-deletion-char func))
@@ -1342,26 +1342,26 @@ Otherwise, toggle read only status."
   (if (= (ibuffer-count-marked-lines t) 0)
       (message "No buffers marked; use 'm' to mark a buffer")
     (cond
-     ((char-equal mark ibuffer-marked-char)
+     ((eq mark ibuffer-marked-char)
       (ibuffer-map-marked-lines
        (lambda (_buf _mark)
 	 (ibuffer-set-mark-1 ?\s)
 	 t)))
-     ((char-equal mark ibuffer-deletion-char)
+     ((eq mark ibuffer-deletion-char)
       (ibuffer-map-deletion-lines
        (lambda (_buf _mark)
 	 (ibuffer-set-mark-1 ?\s)
 	 t)))
-     ((not (char-equal mark ?\r))
+     ((not (eq mark ?\r))
       (ibuffer-map-lines
        (lambda (_buf cmark)
-	 (when (char-equal cmark mark)
+	 (when (eq cmark mark)
 	   (ibuffer-set-mark-1 ?\s))
 	 t)))
      (t
       (ibuffer-map-lines
        (lambda (_buf mark)
-	 (when (not (char-equal mark ?\s))
+	 (when (not (eq mark ?\s))
 	   (ibuffer-set-mark-1 ?\s))
 	 t)))))
   (ibuffer-redisplay t))
@@ -1912,9 +1912,9 @@ If point is on a group name, this function operates on that group."
       (_ (concat str left right)))))
 
 (defun ibuffer-buffer-name-face (buf mark)
-  (cond ((char-equal mark ibuffer-marked-char)
+  (cond ((eq mark ibuffer-marked-char)
 	 ibuffer-marked-face)
-	((char-equal mark ibuffer-deletion-char)
+	((eq mark ibuffer-deletion-char)
 	 ibuffer-deletion-face)
 	(t
 	 (let ((level -1)
@@ -1958,7 +1958,7 @@ If point is on a group name, this function operates on that group."
 (defun ibuffer-map-on-mark (mark func)
   (ibuffer-map-lines
    (lambda (buf mk)
-     (if (char-equal mark mk)
+     (if (eq mark mk)
 	 (funcall func buf mark)
        nil))))
 
@@ -2185,8 +2185,8 @@ the value of point at the beginning of the line for that buffer."
 		      (buffer-substring (point) (line-end-position)))))
 	   (apply #'insert (mapcar
 			    (lambda (c)
-			      (if (not (or (char-equal c ?\s)
-					   (char-equal c ?\n)))
+			      (if (not (or (eq c ?\s)
+					   (eq c ?\n)))
 				  ?-
 				?\s))
 			    str)))

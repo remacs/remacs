@@ -50,7 +50,6 @@
 
 (ert-deftest ibuffer-test-Bug25000 ()
   "Test for http://debbugs.gnu.org/25000 ."
-  :expected-result :failed
   (let ((case-fold-search t)
         (buf1 (generate-new-buffer "ibuffer-test-Bug25000-buf1"))
         (buf2 (generate-new-buffer "ibuffer-test-Bug25000-buf2")))
