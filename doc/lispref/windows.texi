@@ -1620,9 +1620,9 @@ window or too small to ordinarily split.  Furthermore, subsequently
 resizing or deleting @var{window} may resize all other windows in its
 combination.
 
-The default is @code{nil}.  Other values are reserved for future use.
-The value of this variable is ignored when
-@code{window-combination-limit} is non-@code{nil}.
+The default is @code{nil}.  Other values are reserved for future use.  A
+specific split operation may ignore the value of this variable if it is
+affected by a non-@code{nil} value of @code{window-combination-limit}.
 @end defopt
 
   To illustrate the effect of @code{window-combination-resize}, consider

@@ -508,20 +508,6 @@ filesystems generally don't honor linguistic equivalence of strings
 that collation implements.
 @end defun
 
-@defun string-prefix-p string1 string2 &optional ignore-case
-This function returns non-@code{nil} if @var{string1} is a prefix of
-@var{string2}; i.e., if @var{string2} starts with @var{string1}.  If
-the optional argument @var{ignore-case} is non-@code{nil}, the
-comparison ignores case differences.
-@end defun
-
-@defun string-suffix-p suffix string &optional ignore-case
-This function returns non-@code{nil} if @var{suffix} is a suffix of
-@var{string}; i.e., if @var{string} ends with @var{suffix}.  If the
-optional argument @var{ignore-case} is non-@code{nil}, the comparison
-ignores case differences.
-@end defun
-
 @cindex lexical comparison of strings
 @defun string< string1 string2
 @c (findex string< causes problems for permuted index!!)

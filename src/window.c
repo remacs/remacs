@@ -7421,8 +7421,8 @@ same combination.
 
 Other values are reserved for future use.
 
-This variable takes no effect if the variable `window-combination-limit' is
-non-nil.  */);
+A specific split operation may ignore the value of this variable if it
+is affected by a non-nil value of `window-combination-limit'.  */);
   Vwindow_combination_resize = Qnil;
 
   DEFVAR_LISP ("window-combination-limit", Vwindow_combination_limit,
