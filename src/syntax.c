@@ -3196,8 +3196,6 @@ do { prev_from = from;				\
 	  && (c1 = FETCH_CHAR (from_byte),
 	      syntax = SYNTAX_WITH_FLAGS (c1),
 	      SYNTAX_FLAGS_COMSTART_SECOND (syntax)))
-	/* Duplicate code to avoid a complex if-expression
-	   which causes trouble for the SGI compiler.  */
 	{
 	  /* Record the comment style we have entered so that only
 	     the comment-end sequence of the same style actually

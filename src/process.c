@@ -690,11 +690,7 @@ allocate_pty (char pty_name[PTY_NAME_SIZE])
 	    if (faccessat (AT_FDCWD, pty_name, R_OK | W_OK, AT_EACCESS) != 0)
 	      {
 		emacs_close (fd);
-# ifndef __sgi
 		continue;
-# else
-		return -1;
-# endif /* __sgi */
 	      }
 	    setup_pty (fd);
 	    return fd;
@@ -1886,9 +1882,8 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
       /* Make the pty be the controlling terminal of the process.  */
 #ifdef HAVE_PTYS
       /* First, disconnect its current controlling terminal.  */
-      /* We tried doing setsid only if pty_flag, but it caused
-	 process_set_signal to fail on SGI when using a pipe.  */
-      setsid ();
+      if (pty_flag)
+	setsid ();
       /* Make the pty's terminal the controlling terminal.  */
       if (pty_flag && forkin >= 0)
 	{
