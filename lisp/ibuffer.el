@@ -1265,9 +1265,6 @@ a new window in the current frame, splitting vertically."
    (lambda (_buf mark)
      (eq mark ibuffer-deletion-char))))
 
-(defsubst ibuffer-map-deletion-lines (func)
-  (ibuffer-map-on-mark ibuffer-deletion-char func))
-
 (defsubst ibuffer-assert-ibuffer-mode ()
   (cl-assert (derived-mode-p 'ibuffer-mode)))
 
@@ -1341,29 +1338,12 @@ Otherwise, toggle read only status."
   (interactive "cRemove marks (RET means all):")
   (if (= (ibuffer-count-marked-lines t) 0)
       (message "No buffers marked; use 'm' to mark a buffer")
-    (cond
-     ((eq mark ibuffer-marked-char)
-      (ibuffer-map-marked-lines
-       (lambda (_buf _mark)
-	 (ibuffer-set-mark-1 ?\s)
-	 t)))
-     ((eq mark ibuffer-deletion-char)
-      (ibuffer-map-deletion-lines
-       (lambda (_buf _mark)
-	 (ibuffer-set-mark-1 ?\s)
-	 t)))
-     ((not (eq mark ?\r))
-      (ibuffer-map-lines
-       (lambda (_buf cmark)
-	 (when (eq cmark mark)
-	   (ibuffer-set-mark-1 ?\s))
-	 t)))
-     (t
-      (ibuffer-map-lines
-       (lambda (_buf mark)
-	 (when (not (eq mark ?\s))
-	   (ibuffer-set-mark-1 ?\s))
-	 t)))))
+    (let ((fn (lambda (_buf mk)
+                (unless (eq mk ?\s)
+                  (ibuffer-set-mark-1 ?\s)) t)))
+      (if (eq mark ?\r)
+          (ibuffer-map-lines fn)
+        (ibuffer-map-on-mark mark fn))))
   (ibuffer-redisplay t))
 
 (defun ibuffer-unmark-all-marks ()
