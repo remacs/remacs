@@ -1411,7 +1411,7 @@ directories, make sure the PREDICATE function returns `dir-ok' for them.  */)
    PREDICATE t means the files are binary.
    PREDICATE non-nil and non-t means don't open the files,
    just look for one that satisfies the predicate.  In this case,
-   return 1 on success.  The predicate can be a lisp function or
+   return -2 on success.  The predicate can be a lisp function or
    an integer to pass to `access' (in which case file-name-handlers
    are ignored).
 
