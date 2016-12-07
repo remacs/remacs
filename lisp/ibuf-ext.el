@@ -941,7 +941,7 @@ turned into two separate filters [name: foo] and [mode: bar-mode]."
                (unless data
                  (ibuffer-filter-disable)
                  (error "Unknown saved filter %s" head))
-               (append (cadr data) tail)))
+               (append (cdr data) tail)))
             (`not (cons head tail))
             (_
              (error "Filter type %s is not compound" (caar filters))))))
