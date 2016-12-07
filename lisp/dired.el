@@ -3313,7 +3313,7 @@ is one line.
 If the region is active in Transient Mark mode, unmark all files
 in the active region."
   (interactive "p")
-  (dired-unmark (- arg)))
+  (dired-unmark (- arg) t))
 
 (defun dired-toggle-marks ()
   "Toggle marks: marked files become unmarked, and vice versa.
