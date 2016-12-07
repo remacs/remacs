@@ -602,6 +602,11 @@ is called on the entire buffer (rather than an active region)."
   :group 'editing
   :version "24.3")
 
+(defun region-modifiable-p (start end)
+  "Return non-nil if the region contain no non-read-only text."
+  (and (not (get-text-property start 'read-only))
+       (eq end (next-single-property-change start 'read-only nil end))))
+
 (defun delete-trailing-whitespace (&optional start end)
   "Delete trailing whitespace between START and END.
 If called interactively, START and END are the start/end of the
@@ -631,7 +636,9 @@ buffer if the variable `delete-trailing-lines' is non-nil."
           ;; Treating \n as non-whitespace makes things easier.
           (modify-syntax-entry ?\n "_")
           (while (re-search-forward "\\s-+$" end-marker t)
-            (delete-region (match-beginning 0) (match-end 0))))
+            (let ((b (match-beginning 0)) (e (match-end 0)))
+              (when (region-modifiable-p b e)
+                (delete-region b e)))))
         (if end
             (set-marker end-marker nil)
           ;; Delete trailing empty lines.
@@ -639,6 +646,7 @@ buffer if the variable `delete-trailing-lines' is non-nil."
                ;; Really the end of buffer.
                (= (goto-char (point-max)) (1+ (buffer-size)))
                (<= (skip-chars-backward "\n") -2)
+               (region-modifiable-p (1+ (point)) (point-max))
                (delete-region (1+ (point)) (point-max)))))))
   ;; Return nil for the benefit of `write-file-functions'.
   nil)
