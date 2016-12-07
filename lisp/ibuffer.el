@@ -1265,6 +1265,9 @@ a new window in the current frame, splitting vertically."
    (lambda (_buf mark)
      (eq mark ibuffer-deletion-char))))
 
+(defsubst ibuffer-map-deletion-lines (func)
+  (ibuffer-map-on-mark ibuffer-deletion-char func))
+
 (defsubst ibuffer-assert-ibuffer-mode ()
   (cl-assert (derived-mode-p 'ibuffer-mode)))
 
