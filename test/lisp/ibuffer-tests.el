@@ -34,7 +34,6 @@
 
 (ert-deftest ibuffer-test-Bug24997 ()
   "Test for http://debbugs.gnu.org/24997 ."
-  :expected-result :failed
   (ibuffer)
   (let ((orig ibuffer-filtering-qualifiers))
     (unwind-protect

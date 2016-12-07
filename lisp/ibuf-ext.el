@@ -929,26 +929,24 @@ This means that the topmost filter on the filtering stack, which must
 be a complex filter like (OR [name: foo] [mode: bar-mode]), will be
 turned into two separate filters [name: foo] and [mode: bar-mode]."
   (interactive)
-  (when (null ibuffer-filtering-qualifiers)
+  (unless ibuffer-filtering-qualifiers
     (error "No filters in effect"))
-  (let ((lim (pop ibuffer-filtering-qualifiers)))
-    (pcase (car lim)
-      (`or
-       (setq ibuffer-filtering-qualifiers (append
-					  (cdr lim)
-					  ibuffer-filtering-qualifiers)))
-      (`saved
-       (let ((data (assoc (cdr lim) ibuffer-saved-filters)))
-	 (unless data
-	   (ibuffer-filter-disable)
-	   (error "Unknown saved filter %s" (cdr lim)))
-	 (setq ibuffer-filtering-qualifiers
-               (append (cdr data) ibuffer-filtering-qualifiers))))
-      (`not
-       (push (cdr lim)
-	     ibuffer-filtering-qualifiers))
-      (_
-       (error "Filter type %s is not compound" (car lim)))))
+  (let* ((filters ibuffer-filtering-qualifiers)
+         (head (cdar filters))
+         (tail (cdr filters))
+         (value
+          (pcase (caar filters)
+            (`or (nconc head tail))
+            (`saved
+             (let ((data (assoc head ibuffer-saved-filters)))
+               (unless data
+                 (ibuffer-filter-disable)
+                 (error "Unknown saved filter %s" head))
+               (append (cadr data) tail)))
+            (`not (cons head tail))
+            (_
+             (error "Filter type %s is not compound" (caar filters))))))
+    (setq ibuffer-filtering-qualifiers value))
   (ibuffer-update nil t))
 
 ;;;###autoload
