@@ -91,7 +91,7 @@ static bool xd_in_read_queued_messages = 0;
   } while (0)
 
 /* Macros for debugging.  In order to enable them, build with
-   "env MYCPPFLAGS='-DDBUS_DEBUG -Wall' make".  */
+   "make MYCPPFLAGS='-DDBUS_DEBUG'".  */
 #ifdef DBUS_DEBUG
 #define XD_DEBUG_MESSAGE(...)						\
   do {									\

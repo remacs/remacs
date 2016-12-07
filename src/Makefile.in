@@ -361,16 +361,13 @@ DEPFLAGS =
 MKDEPDIR = :
 endif
 
-## DO NOT use -R.  There is a special hack described in lastfile.c
-## which is used instead.  Some initialized data areas are modified
-## at initial startup, then labeled as part of the text area when
-## Emacs is dumped for the first time, and never changed again.
-##
-## -Demacs is needed to make some files produce the correct version
-## for use in Emacs.
-##
-## FIXME? MYCPPFLAGS only referenced in etc/DEBUG.
-ALL_CFLAGS=-Demacs $(MYCPPFLAGS) -I. -I$(srcdir) \
+# Flags that might be in WARN_CFLAGS but are not valid for Objective C.
+NON_OBJC_CFLAGS = -Wignored-attributes -Wignored-qualifiers -Wopenmp-simd
+
+# -Demacs makes some files produce the correct version for use in Emacs.
+# MYCPPFLAGS is for by-hand Emacs-specific overrides, e.g.,
+# "make MYCPPFLAGS='-DDBUS_DEBUG'".
+EMACS_CFLAGS=-Demacs $(MYCPPFLAGS) -I. -I$(srcdir) \
   -I$(lib) -I$(top_srcdir)/lib \
   $(C_SWITCH_MACHINE) $(C_SWITCH_SYSTEM) $(C_SWITCH_X_SITE) \
   $(GNUSTEP_CFLAGS) $(CFLAGS_SOUND) $(RSVG_CFLAGS) $(IMAGEMAGICK_CFLAGS) \
@@ -381,8 +378,11 @@ ALL_CFLAGS=-Demacs $(MYCPPFLAGS) -I. -I$(srcdir) \
   $(LIBOTF_CFLAGS) $(M17N_FLT_CFLAGS) $(DEPFLAGS) \
   $(LIBSYSTEMD_CFLAGS) \
   $(LIBGNUTLS_CFLAGS) $(NOTIFY_CFLAGS) $(CAIRO_CFLAGS) \
-  $(WARN_CFLAGS) $(WERROR_CFLAGS) $(CFLAGS)
-ALL_OBJC_CFLAGS=$(ALL_CFLAGS) $(GNU_OBJC_CFLAGS)
+  $(WERROR_CFLAGS)
+ALL_CFLAGS = $(EMACS_CFLAGS) $(WARN_CFLAGS) $(CFLAGS)
+ALL_OBJC_CFLAGS = $(EMACS_CFLAGS) \
+  $(filter-out $(NON_OBJC_CFLAGS),$(WARN_CFLAGS)) $(CFLAGS) \
+  $(GNU_OBJC_CFLAGS)
 
 .SUFFIXES: .m
 .c.o:
