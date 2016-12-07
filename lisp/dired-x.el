@@ -1060,8 +1060,8 @@ You can set this variable in your ~/.emacs.  For example, to add rules for
 `.foo' and `.bar' files, write
 
  (setq dired-guess-shell-alist-user
-        '((\"\\\\.foo\\\\'\" \"FOO-COMMAND\")
-          (\"\\\\.bar\\\\'\"
+        \\='((\"\\\\.foo\\\\\\='\" \"FOO-COMMAND\")
+          (\"\\\\.bar\\\\\\='\"
            (if condition
               \"BAR-COMMAND-1\"
             \"BAR-COMMAND-2\"))))"

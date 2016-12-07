@@ -603,7 +603,7 @@ UML attribute strings are things like {abstract} or {leaf}."
     (private . "-")
     )
   "Association list of the form (SYMBOL . \"STRING\") for protection symbols.
-This associates a symbol, such as 'public with the st ring \"+\".")
+For example, it might associate the symbol `public' with the string \"+\".")
 
 (define-overloadable-function semantic-format-tag-uml-protection-to-string (protection-symbol color)
   "Convert PROTECTION-SYMBOL to a string for UML.

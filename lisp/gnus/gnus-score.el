@@ -46,7 +46,7 @@ Say you want to use the single score file
 score files in the \"/ftp.some-where:/pub/score\" directory.
 
  (setq gnus-global-score-files
-       '(\"/ftp.gnus.org:/pub/larsi/ding/score/soc.motss.SCORE\"
+       \\='(\"/ftp.gnus.org:/pub/larsi/ding/score/soc.motss.SCORE\"
 	 \"/ftp.some-where:/pub/score\"))"
   :group 'gnus-score-files
   :type '(repeat file))

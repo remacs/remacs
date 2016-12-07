@@ -65,7 +65,7 @@ and `am-pm' and `time-zone', both alphabetic strings.
 
 For example, the form
 
-  '(24-hours \":\" minutes
+  \\='(24-hours \":\" minutes
     (if time-zone \" (\") time-zone (if time-zone \")\"))
 
 would give military-style times like `21:07 (UTC)'."
