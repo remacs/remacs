@@ -1057,8 +1057,9 @@ value is a string, and does not include a directory name.
 @end defvar
 
 @defvar invocation-directory
-This variable holds the directory from which the Emacs executable was
-invoked, or @code{nil} if that directory cannot be determined.
+This variable holds the directory in which the Emacs executable was
+located when it was run, or @code{nil} if that directory cannot be
+determined.
 @end defvar
 
 @defvar installation-directory
