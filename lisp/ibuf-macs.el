@@ -302,8 +302,13 @@ bound to the current value of the filter.
 			  qualifier))
 	 (ibuffer-update nil t))
        (push (list ',name ,description
-		   #'(lambda (buf qualifier)
-		       ,@body))
+		   (lambda (buf qualifier)
+                     (condition-case nil
+                         ,@body
+                       (error (ibuffer-pop-filter)
+                              (when (eq ',name 'predicate)
+                                (error "Wrong filter predicate: %S"
+                                       qualifier))))))
 	     ibuffer-filtering-alist)
        :autoload-end)))
 

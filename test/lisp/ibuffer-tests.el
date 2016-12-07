@@ -126,5 +126,17 @@
         (and (buffer-live-p it) (kill-buffer it))))))
 
 
+(ert-deftest ibuffer-test-Bug25042 ()
+  "Test for http://debbugs.gnu.org/25042 ."
+  (ibuffer)
+  (let ((filters ibuffer-filtering-qualifiers))
+    (unwind-protect
+        (progn
+          (ignore-errors ; Mistyped `match-string' instead of `string-match'.
+            (setq ibuffer-filtering-qualifiers nil)
+            (ibuffer-filter-by-predicate '(match-string "foo" (buffer-name))))
+          (should-not ibuffer-filtering-qualifiers))
+      (setq ibuffer-filtering-qualifiers filters))))
+
 (provide 'ibuffer-tests)
 ;; ibuffer-tests.el ends here
