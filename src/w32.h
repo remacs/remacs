@@ -25,6 +25,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <windows.h>
 
+
 /* File descriptor set emulation.  */
 
 /* MSVC runtime library has limit of 64 descriptors by default */
