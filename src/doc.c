@@ -772,6 +772,8 @@ Otherwise, return a new string.  */)
   /* Extra room for expansion due to replacing ‘\[]’ with ‘M-x ’.  */
   enum { EXTRA_ROOM = sizeof "M-x " - sizeof "\\[]" };
 
+  ptrdiff_t count = SPECPDL_INDEX ();
+
   if (bsize <= sizeof sbuf - EXTRA_ROOM)
     {
       abuf = NULL;
@@ -779,7 +781,10 @@ Otherwise, return a new string.  */)
       bsize = sizeof sbuf;
     }
   else
-    buf = abuf = xpalloc (NULL, &bsize, EXTRA_ROOM, STRING_BYTES_BOUND, 1);
+    {
+      buf = abuf = xpalloc (NULL, &bsize, EXTRA_ROOM, STRING_BYTES_BOUND, 1);
+      record_unwind_protect_ptr (xfree, abuf);
+    }
   bufp = buf;
 
   strp = SDATA (str);
@@ -929,7 +934,12 @@ Otherwise, return a new string.  */)
 		abuf = xpalloc (abuf, &bsize, need - avail,
 				STRING_BYTES_BOUND, 1);
 		if (buf == sbuf)
-		  memcpy (abuf, sbuf, offset);
+		  {
+		    record_unwind_protect_ptr (xfree, abuf);
+		    memcpy (abuf, sbuf, offset);
+		  }
+		else
+		  set_unwind_protect_ptr (count, xfree, abuf);
 		buf = abuf;
 		bufp = buf + offset;
 	      }
@@ -988,8 +998,7 @@ Otherwise, return a new string.  */)
     }
   else
     tem = string;
-  xfree (abuf);
-  return tem;
+  return unbind_to (count, tem);
 }
 
 void
