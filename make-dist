@@ -100,7 +100,6 @@ while [ $# -gt 0 ]; do
       clean_up=yes
       make_tar=yes
       update=no
-      check=no
      ;;
 
     ## Include the test/ directory.
@@ -205,6 +204,8 @@ them, and try again." >&2
 fi
 
 if [ $check = yes ]; then
+  error=no
+
   ls -1 lisp/[a-zA-Z]*.el lisp/[a-z]*/[a-zA-Z0-9]*.el \
 	lisp/[a-z]*/[a-z]*/[a-zA-Z0-9]*.el \
 	lisp/[a-z]*/[a-z]*/[a-z]*/[a-zA-Z0-9]*.el > /tmp/el
@@ -218,6 +219,7 @@ if [ $check = yes ]; then
 
   bogosities=`comm -13 /tmp/elelc /tmp/elc`
   if [ x"${bogosities}" != x"" ]; then
+    error=yes
     echo "The following .elc files have no corresponding .el files:"
     echo "${bogosities}"
   fi
@@ -225,6 +227,19 @@ if [ $check = yes ]; then
   ### Check for .el files with no corresponding .elc file.
   sed 's/\.elc$/.el/' /tmp/elc > /tmp/elcel
   losers=`comm -23 /tmp/el /tmp/elcel`
+
+  bogosities=
+  while read elc; do
+      el=`echo $elc | sed 's/c$//'`
+      [ -e $el ] || continue
+      [ $elc -nt $el ] || bogosities="$bogosities $elc"
+  done < /tmp/elc
+
+  if [ x"${bogosities}" != x"" ]; then
+      error=yes
+      echo "The following .elc files are older than their .el files:"
+      echo "${bogosities}"
+  fi
 
   rm -f /tmp/el /tmp/elc /tmp/elcel /tmp/elelc
 
@@ -239,9 +254,34 @@ if [ $check = yes ]; then
 
   done
   if [ x"${bogosities}" != x"" ]; then
+    error=yes
     echo "The following .el files have no corresponding .elc files:"
     echo "${bogosities}"
   fi
+
+
+  ## This is only a crude check, eg it does not handle .info
+  ## files with multiple .texi source files.
+  find doc -name '*.texi' > /tmp/el
+
+  bogosities=
+  while read texi; do
+      info=`sed -n 's/^@setfilename //p' $texi | sed 's|.*info/||'`
+      [ x"${info}" != x"" ] || continue
+      info=info/$info
+      [ -e $info ] || continue
+      [ $info -nt $texi ] || bogosities="$bogosities $info"
+  done < /tmp/el
+
+  rm -f /tmp/el
+
+  if [ x"${bogosities}" != x"" ]; then
+    error=yes
+    echo "The following .info files are older than their .texi files:"
+    echo "${bogosities}"
+  fi
+
+  [ $error = yes ] && exit 1
 fi
 
 if [ $update = yes ]; then
