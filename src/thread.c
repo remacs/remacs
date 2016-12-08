@@ -689,7 +689,7 @@ If NAME is given, it names the new thread.  */)
 
   /* Can't start a thread in temacs.  */
   if (!initialized)
-    abort ();
+    emacs_abort ();
 
   if (!NILP (name))
     CHECK_STRING (name);
