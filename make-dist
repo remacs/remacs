@@ -204,6 +204,9 @@ them, and try again." >&2
 fi
 
 if [ $check = yes ]; then
+
+  echo "Sanity checking (use --no-check to disable this)..."
+
   error=no
 
   ls -1 lisp/[a-zA-Z]*.el lisp/[a-z]*/[a-zA-Z0-9]*.el \
@@ -288,7 +291,11 @@ if [ $check = yes ]; then
       make --question info || error=yes
   fi
 
-  [ $error = yes ] && exit 1
+  if [ $error = yes ]; then
+      echo "Failed checks" >&2
+      exit 1
+  fi
+
 fi
 
 if [ $update = yes ]; then
