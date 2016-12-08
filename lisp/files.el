@@ -6923,7 +6923,7 @@ only these files will be asked to be saved."
     (save-match-data
       (while (consp file-arg-indices)
 	(let ((pair (nthcdr (car file-arg-indices) arguments)))
-	  (and (car pair) (setcar pair (file-name-unquote 2))))
+	  (and (car pair) (setcar pair (file-name-unquote (car pair)))))
 	(setq file-arg-indices (cdr file-arg-indices))))
     (pcase method
       (`identity (car arguments))
@@ -6935,7 +6935,7 @@ only these files will be asked to be saved."
            (when (and visit buffer-file-name)
              (setq buffer-file-name (file-name-quote buffer-file-name))))))
       (`unquote-then-quote
-       (let ((buffer-file-name (substring buffer-file-name 2)))
+       (let ((buffer-file-name (file-name-unquote buffer-file-name)))
          (apply operation arguments)))
       (_
        (apply operation arguments)))))
