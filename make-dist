@@ -53,6 +53,7 @@ default_gzip=gzip
 newer=""
 with_tests=no
 changelog=yes
+verbose=no
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -109,6 +110,10 @@ while [ $# -gt 0 ]; do
       with_tests=yes
      ;;
 
+    "--verbose")
+      verbose=yes
+     ;;
+
     "--help")
       printf '%s\n' "Usage: ${progname} [options]"
       echo ""
@@ -123,6 +128,7 @@ while [ $# -gt 0 ]; do
       echo "  --snapshot	same as --clean-up --no-update --tar --no-check"
       echo "  --tar		make a tar file"
       echo "  --tests	include the test/ directory"
+      echo "  --verbose		noisier output"
       echo ""
       exit 0
     ;;
@@ -330,7 +336,7 @@ do
   ## site-lisp for in-place installs (?).
   [ "$subdir" = "site-lisp" ] || [ -d "$subdir" ] || \
       echo "WARNING: $subdir not found, making anyway"
-  echo "  ${tempdir}/${subdir}"
+  [ "$verbose" = "yes" ] && echo "  ${tempdir}/${subdir}"
   mkdir ${tempdir}/${subdir}
 done
 
@@ -576,7 +582,10 @@ if [ "${make_tar}" = yes ]; then
        *)  gzip_extension= ;;
   esac
   echo "Creating tar file"
-  (cd ${tempparent} ; tar cvf - ${emacsname} ) \
+  taropt=
+  [ "$verbose" = "yes" ] && taropt=v
+
+  (cd ${tempparent} ; tar c${taropt}f - ${emacsname} ) \
     | ${default_gzip} \
     > ${emacsname}.tar${gzip_extension}
 fi
