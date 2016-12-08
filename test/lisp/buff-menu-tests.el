@@ -27,7 +27,6 @@
 
 (ert-deftest buff-menu-24962 ()
   "Test for http://debbugs.gnu.org/24962 ."
-  :expected-result :failed
   (let ((file (expand-file-name "foo" temporary-file-directory))
         buf)
     (unwind-protect

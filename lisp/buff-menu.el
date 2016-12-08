@@ -671,7 +671,8 @@ means list those buffers and no others."
 	       (file buffer-file-name))
 	  (when (and (buffer-live-p buffer)
 		     (or buffer-list
-			 (and (not (string= (substring name 0 1) " "))
+			 (and (or (not (string= (substring name 0 1) " "))
+                                  file)
 			      (not (eq buffer buffer-menu-buffer))
 			      (or file show-non-file))))
 	    (push (list buffer
