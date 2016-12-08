@@ -603,7 +603,7 @@ is called on the entire buffer (rather than an active region)."
   :version "24.3")
 
 (defun region-modifiable-p (start end)
-  "Return non-nil if the region contain no non-read-only text."
+  "Return non-nil if the region contains no read-only text."
   (and (not (get-text-property start 'read-only))
        (eq end (next-single-property-change start 'read-only nil end))))
 
