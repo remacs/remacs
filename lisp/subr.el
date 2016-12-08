@@ -1879,7 +1879,7 @@ definition, variable definition, or face definition only."
 	   (autoloadp (symbol-function symbol)))
       (nth 1 (symbol-function symbol))
     (let ((files load-history)
-	  file)
+	  file match)
       (while files
 	(if (if type
 		(if (eq type 'defvar)
@@ -1890,7 +1890,8 @@ definition, variable definition, or face definition only."
 	      ;; We accept all types, so look for variable def
 	      ;; and then for any other kind.
 	      (or (member symbol (cdr (car files)))
-		  (rassq symbol (cdr (car files)))))
+		  (and (setq match (rassq symbol (cdr (car files))))
+		       (not (eq 'require (car match))))))
 	    (setq file (car (car files)) files nil))
 	(setq files (cdr files)))
       file)))
