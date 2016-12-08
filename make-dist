@@ -281,6 +281,13 @@ if [ $check = yes ]; then
     echo "${bogosities}"
   fi
 
+  ## This exits with non-zero status if any .info files need
+  ## rebuilding.
+  if [ -e Makefile ]; then
+      echo "Checking to see if info files are up-to-date..."
+      make --question info || error=yes
+  fi
+
   [ $error = yes ] && exit 1
 fi
 
