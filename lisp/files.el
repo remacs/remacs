@@ -1605,7 +1605,7 @@ file names with wildcards."
 
 (defun find-file--read-only (fun filename wildcards)
   (unless (or (and wildcards find-file-wildcards
-		   (not (string-match "\\`/:" filename))
+		   (not (file-name-quoted-p filename))
 		   (string-match "[[*?]" filename))
 	      (file-exists-p filename))
     (error "%s does not exist" filename))
@@ -1985,7 +1985,7 @@ the various files."
 	  (error "%s is a directory" filename))
     (if (and wildcards
 	     find-file-wildcards
-	     (not (string-match "\\`/:" filename))
+	     (not (file-name-quoted-p filename))
 	     (string-match "[[*?]" filename))
 	(let ((files (condition-case nil
 			 (file-expand-wildcards filename t)
@@ -6923,27 +6923,44 @@ only these files will be asked to be saved."
     (save-match-data
       (while (consp file-arg-indices)
 	(let ((pair (nthcdr (car file-arg-indices) arguments)))
-	  (and (car pair)
-	       (string-match "\\`/:" (car pair))
-	       (setcar pair
-		       (if (= (length (car pair)) 2)
-			   "/"
-			 (substring (car pair) 2)))))
+	  (and (car pair) (setcar pair (file-name-unquote 2))))
 	(setq file-arg-indices (cdr file-arg-indices))))
     (pcase method
       (`identity (car arguments))
-      (`add (concat "/:" (apply operation arguments)))
+      (`add (file-name-quote (apply operation arguments)))
       (`insert-file-contents
        (let ((visit (nth 1 arguments)))
          (unwind-protect
              (apply operation arguments)
            (when (and visit buffer-file-name)
-             (setq buffer-file-name (concat "/:" buffer-file-name))))))
+             (setq buffer-file-name (file-name-quote buffer-file-name))))))
       (`unquote-then-quote
        (let ((buffer-file-name (substring buffer-file-name 2)))
          (apply operation arguments)))
       (_
        (apply operation arguments)))))
+
+(defsubst file-name-quoted-p (name)
+  "Whether NAME is quoted with prefix \"/:\".
+If NAME is a remote file name, check the local part of NAME."
+  (string-prefix-p "/:" (file-local-name name)))
+
+(defsubst file-name-quote (name)
+  "Add the quotation prefix \"/:\" to file NAME.
+If NAME is a remote file name, the local part of NAME is quoted.
+If NAME is already a quoted file name, NAME is returned unchanged."
+  (if (file-name-quoted-p name)
+      name
+    (concat (file-remote-p name) "/:" (file-local-name name))))
+
+(defsubst file-name-unquote (name)
+  "Remove quotation prefix \"/:\" from file NAME, if any.
+If NAME is a remote file name, the local part of NAME is unquoted."
+  (let ((localname (file-local-name name)))
+    (when (file-name-quoted-p localname)
+      (setq
+       localname (if (= (length localname) 2) "/" (substring localname 2))))
+    (concat (file-remote-p name) localname)))
 
 ;; Symbolic modes and read-file-modes.
 
