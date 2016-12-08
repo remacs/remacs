@@ -74,6 +74,19 @@ for '--daemon'.
 * Changes in Emacs 26.1
 
 +++
+** Emacs now provides a limited form of concurrency with Lisp threads.
+Concurrency in Emacs Lisp is "mostly cooperative", meaning that
+Emacs will only switch execution between threads at well-defined
+times: when Emacs waits for input, during blocking operations related
+to threads (such as mutex locking), or when the current thread
+explicitly yields.  Global variables are shared among all threads, but
+a 'let' binding is thread-local.  Each thread also has its own current
+buffer and its own match data.
+
+See the chapter "Threads" in the ELisp manual for full documentation
+of these facilities.
+
++++
 ** The new function 'file-name-case-insensitive-p' tests whether a
 given file is on a case-insensitive filesystem.
 
