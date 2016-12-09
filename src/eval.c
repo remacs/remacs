@@ -102,6 +102,13 @@ specpdl_symbol (union specbinding *pdl)
   return pdl->let.symbol;
 }
 
+static enum specbind_tag
+specpdl_kind (union specbinding *pdl)
+{
+  eassert (pdl->kind >= SPECPDL_LET);
+  return pdl->let.kind;
+}
+
 static Lisp_Object
 specpdl_old_value (union specbinding *pdl)
 {
@@ -3170,23 +3177,15 @@ do_specbind (struct Lisp_Symbol *sym, union specbinding *bind,
 	set_internal (specpdl_symbol (bind), value, Qnil, SET_INTERNAL_BIND);
       break;
 
-    case SYMBOL_LOCALIZED:
     case SYMBOL_FORWARDED:
-      if ((sym->redirect == SYMBOL_LOCALIZED
-	   || BUFFER_OBJFWDP (SYMBOL_FWD (sym)))
-	  && CONSP (specpdl_symbol (bind)))
+      if (BUFFER_OBJFWDP (SYMBOL_FWD (sym))
+	  && specpdl_kind (bind) == SPECPDL_LET_DEFAULT)
 	{
-	  Lisp_Object where;
-
-	  where = XCAR (XCDR (specpdl_symbol (bind)));
-	  if (NILP (where)
-	      && sym->redirect == SYMBOL_FORWARDED)
-	    {
-	      Fset_default (XCAR (specpdl_symbol (bind)), value);
-	      return;
-	    }
+	  Fset_default (specpdl_symbol (bind), value);
+	  return;
 	}
-
+      /* FALLTHROUGH */
+    case SYMBOL_LOCALIZED:
       set_internal (specpdl_symbol (bind), value, Qnil, SET_INTERNAL_BIND);
       break;
 
@@ -3361,8 +3360,7 @@ do_one_unbind (union specbinding *this_binding, bool unwinding)
       break;
     case SPECPDL_LET:
       { /* If variable has a trivial value (no forwarding), and isn't
-	   trapped we can just set it.  No need to check for constant
-	   symbols here, since that was already done by specbind.  */
+	   trapped, we can just set it.  */
 	Lisp_Object sym = specpdl_symbol (this_binding);
 	if (SYMBOLP (sym) && XSYMBOL (sym)->redirect == SYMBOL_PLAINVAL)
 	  {
