@@ -63,7 +63,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define STDERR_FILENO fileno(GetStdHandle(STD_ERROR_HANDLE))
 #endif
 #include "w32.h"
-#endif /* not WINDOWSNT */
+#endif /* WINDOWSNT */
 
 #include <sys/types.h>
 #include <sys/stat.h>
