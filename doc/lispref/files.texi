@@ -2402,6 +2402,47 @@ through the immediately preceding @samp{/}).
 
 @end defun
 
+  Sometimes, it is not desired to expand file names.  In such cases,
+the file name can be quoted to suppress the expansion, and to handle
+the file name literally.  Quoting happens by prefixing the file name
+with @samp{/:}.
+
+@defmac file-name-quote name
+This macro adds the quotation prefix @samp{/:} to the file @var{name}.
+For a local file @var{name}, it prefixes @var{name} with @samp{/:}.
+If @var{name} is a remote file name, the local part of @var{name} is
+quoted.  If @var{name} is already a quoted file name, @var{name} is
+returned unchanged.
+
+@example
+@group
+(substitute-in-file-name (file-name-quote "bar/~/foo"))
+     @result{} "/:bar/~/foo"
+@end group
+
+@group
+(substitute-in-file-name (file-name-quote "/ssh:host:bar/~/foo"))
+     @result{} "/ssh:host:/:bar/~/foo"
+@end group
+@end example
+
+The macro cannot be used to suppress file name handlers from magic
+file names (@pxref{Magic File Names}).
+@end defmac
+
+@defmac file-name-unquote name
+This macro removes the quotation prefix @samp{/:} from the file
+@var{name}, if any. If @var{name} is a remote file name, the local
+part of @var{name} is unquoted.
+@end defmac
+
+@defmac file-name-quoted-p name
+This macro returns non-@code{nil}, when @var{name} is quoted with the
+prefix @samp{/:}.  If @var{name} is a remote file name, the local part
+of @var{name} is checked.
+@end defmac
+
+
 @node Unique File Names
 @subsection Generating Unique File Names
 @cindex unique file names

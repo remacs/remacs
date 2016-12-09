@@ -6923,19 +6923,24 @@ only these files will be asked to be saved."
     (save-match-data
       (while (consp file-arg-indices)
 	(let ((pair (nthcdr (car file-arg-indices) arguments)))
-	  (and (car pair) (setcar pair (file-name-unquote (car pair)))))
+	  (and (car pair)
+	       (string-match "\\`/:" (car pair))
+	       (setcar pair
+		       (if (= (length (car pair)) 2)
+			   "/"
+			 (substring (car pair) 2)))))
 	(setq file-arg-indices (cdr file-arg-indices))))
     (pcase method
       (`identity (car arguments))
-      (`add (file-name-quote (apply operation arguments)))
+      (`add (concat "/:" (apply operation arguments)))
       (`insert-file-contents
        (let ((visit (nth 1 arguments)))
          (unwind-protect
              (apply operation arguments)
            (when (and visit buffer-file-name)
-             (setq buffer-file-name (file-name-quote buffer-file-name))))))
+             (setq buffer-file-name (concat "/:" buffer-file-name))))))
       (`unquote-then-quote
-       (let ((buffer-file-name (file-name-unquote buffer-file-name)))
+       (let ((buffer-file-name (substring buffer-file-name 2)))
          (apply operation arguments)))
       (_
        (apply operation arguments)))))

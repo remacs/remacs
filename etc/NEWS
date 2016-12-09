@@ -749,6 +749,11 @@ can be used for creation of temporary files of remote or mounted directories.
 of remote processes.
 
 +++
+** The new functions 'file-name-quote', 'file-name-unquote' and
+'file-name-quoted-p' can be used to quote / unquote file names with
+the prefix "/:".
+
++++
 ** The new error 'file-missing', a subcategory of 'file-error', is now
 signaled instead of 'file-error' if a file operation acts on a file
 that does not exist.
