@@ -72,7 +72,7 @@ extern BOOL g_b_init_compare_string_w;
 extern BOOL g_b_init_debug_break_process;
 
 int sys_select (int, SELECT_TYPE *, SELECT_TYPE *, SELECT_TYPE *,
-		struct timespec *, sigset_t *);
+		const struct timespec *, const sigset_t *);
 
 /* Signal handlers...SIG_DFL == 0 so this is initialized correctly.  */
 static signal_handler sig_handlers[NSIG];
@@ -2096,7 +2096,7 @@ extern int proc_buffered_char[];
 
 int
 sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
-	    struct timespec *timeout, sigset_t *ignored)
+	    const struct timespec *timeout, const sigset_t *ignored)
 {
   SELECT_TYPE orfds, owfds;
   DWORD timeout_ms, start_time;

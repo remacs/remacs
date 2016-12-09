@@ -138,7 +138,7 @@ static struct rlimit nofile_limit;
 
 #ifdef WINDOWSNT
 extern int sys_select (int, fd_set *, fd_set *, fd_set *,
-                       struct timespec *, sigset_t *);
+                       const struct timespec *, const sigset_t *);
 #endif
 
 /* Work around GCC 4.3.0 bug with strict overflow checking; see

@@ -226,7 +226,7 @@ extern void init_threads (void);
 extern void syms_of_threads (void);
 
 typedef int select_func (int, fd_set *, fd_set *, fd_set *,
-			 struct timespec *, sigset_t *);
+			 const struct timespec *, const sigset_t *);
 
 int thread_select  (select_func *func, int max_fds, fd_set *rfds,
 		    fd_set *wfds, fd_set *efds, struct timespec *timeout,
