@@ -2379,7 +2379,9 @@ the `buffer-name'."
 (defun python-shell-calculate-command ()
   "Calculate the string used to execute the inferior Python process."
   (format "%s %s"
-          (shell-quote-argument python-shell-interpreter)
+          ;; `python-shell-make-comint' expects to be able to
+          ;; `split-string-and-unquote' the result of this function.
+          (combine-and-quote-strings (list python-shell-interpreter))
           python-shell-interpreter-args))
 
 (define-obsolete-function-alias
