@@ -1232,6 +1232,7 @@ file-notify events."
 (defun tramp-gvfs-url-file-name (filename)
   "Return FILENAME in URL syntax."
   ;; "/" must NOT be hexlified.
+  (setq filename (tramp-compat-file-name-unquote filename))
   (let ((url-unreserved-chars (cons ?/ url-unreserved-chars))
 	result)
     (setq

@@ -107,6 +107,7 @@ matching entries of `tramp-connection-properties'."
   "Get the PROPERTY of FILE from the cache context of KEY.
 Returns DEFAULT if not set."
   ;; Unify localname.  Remove hop from vector.
+  (setq file (tramp-compat-file-name-unquote file))
   (setq key (copy-sequence key))
   (aset key 3 (tramp-run-real-handler 'directory-file-name (list file)))
   (aset key 4 nil)
@@ -140,6 +141,7 @@ Returns DEFAULT if not set."
   "Set the PROPERTY of FILE to VALUE, in the cache context of KEY.
 Returns VALUE."
   ;; Unify localname.  Remove hop from vector.
+  (setq file (tramp-compat-file-name-unquote file))
   (setq key (copy-sequence key))
   (aset key 3 (tramp-run-real-handler 'directory-file-name (list file)))
   (aset key 4 nil)
@@ -159,28 +161,26 @@ Returns VALUE."
   (let* ((file (tramp-run-real-handler
 		'directory-file-name (list file)))
 	 (truename (tramp-get-file-property key file "file-truename" nil)))
-    ;; Remove file properties of symlinks.
-    (when (and (stringp truename)
-	       (not (string-equal file (directory-file-name truename))))
-      (tramp-flush-file-property key truename))
     ;; Unify localname.  Remove hop from vector.
+    (setq file (tramp-compat-file-name-unquote file))
     (setq key (copy-sequence key))
     (aset key 3 file)
     (aset key 4 nil)
     (tramp-message key 8 "%s" file)
-    (remhash key tramp-cache-data)))
+    (remhash key tramp-cache-data)
+    ;; Remove file properties of symlinks.
+    (when (and (stringp truename)
+	       (not (string-equal file (directory-file-name truename))))
+      (tramp-flush-file-property key truename))))
 
 ;;;###tramp-autoload
 (defun tramp-flush-directory-property (key directory)
   "Remove all properties of DIRECTORY in the cache context of KEY.
 Remove also properties of all files in subdirectories."
+  (setq directory (tramp-compat-file-name-unquote directory))
   (let* ((directory (tramp-run-real-handler
 		    'directory-file-name (list directory)))
 	 (truename (tramp-get-file-property key directory "file-truename" nil)))
-    ;; Remove file properties of symlinks.
-    (when (and (stringp truename)
-	       (not (string-equal directory (directory-file-name truename))))
-      (tramp-flush-directory-property key truename))
     (tramp-message key 8 "%s" directory)
     (maphash
      (lambda (key _value)
@@ -188,7 +188,11 @@ Remove also properties of all files in subdirectories."
 		  (string-match (regexp-quote directory)
 				(tramp-file-name-localname key)))
 	 (remhash key tramp-cache-data)))
-     tramp-cache-data)))
+     tramp-cache-data)
+    ;; Remove file properties of symlinks.
+    (when (and (stringp truename)
+	       (not (string-equal directory (directory-file-name truename))))
+      (tramp-flush-directory-property key truename))))
 
 ;; Reverting or killing a buffer should also flush file properties.
 ;; They could have been changed outside Tramp.  In eshell, "ls" would

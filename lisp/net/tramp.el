@@ -1679,27 +1679,6 @@ FILE must be a local file name on a connection identified via VEC."
 (font-lock-add-keywords
  'emacs-lisp-mode '("\\<with-tramp-connection-property\\>"))
 
-(defsubst tramp-quoted-name-p (name)
-  "Whether NAME is quoted with prefix \"/:\".
-If NAME is a remote file name, check the local part of NAME."
-  (string-match "^/:" (or (file-remote-p name 'localname) name)))
-
-(defsubst tramp-quote-name (name)
-  "Add the quotation prefix \"/:\" to file NAME.
-If NAME is a remote file name, the local part of NAME is quoted."
-  (concat (file-remote-p name) "/:" (or (file-remote-p name 'localname) name)))
-
-(defsubst tramp-unquote-name (name)
-  "Remove quotation prefix \"/:\" from file NAME.
-If NAME is a remote file name, the local part of NAME is unquoted."
-  (save-match-data
-    (let ((localname (or (file-remote-p name 'localname) name)))
-      (when (tramp-quoted-name-p localname)
-	(setq
-	 localname
-	 (replace-match (if (= (length localname) 2) "/" "") nil t localname)))
-      (concat (file-remote-p name) localname))))
-
 (defun tramp-drop-volume-letter (name)
   "Cut off unnecessary drive letter from file NAME.
 The functions `tramp-*-handle-expand-file-name' call `expand-file-name'
@@ -3345,7 +3324,7 @@ User is always nil."
   "Like `substitute-in-file-name' for Tramp files.
 \"//\" and \"/~\" substitute only in the local filename part."
   ;; Check, whether the local part is a quoted file name.
-  (if (tramp-quoted-name-p filename)
+  (if (tramp-compat-file-name-quoted-p filename)
       filename
     ;; First, we must replace environment variables.
     (setq filename (tramp-replace-environment-variables filename))
@@ -4105,7 +4084,7 @@ this file, if that variable is non-nil."
 	       ("|" . "__")
 	       ("[" . "_l")
 	       ("]" . "_r"))
-	     (tramp-unquote-name (buffer-file-name)))
+	     (tramp-compat-file-name-unquote (buffer-file-name)))
 	    tramp-auto-save-directory))))
     ;; Run plain `make-auto-save-file-name'.
     (tramp-run-real-handler 'make-auto-save-file-name nil)))
@@ -4307,7 +4286,7 @@ T1 and T2 are time values (as returned by `current-time' for example)."
 
 (defun tramp-unquote-shell-quote-argument (s)
   "Remove quotation prefix \"/:\" from string S, and quote it then for shell."
-  (shell-quote-argument (tramp-unquote-name s)))
+  (shell-quote-argument (tramp-compat-file-name-unquote s)))
 
 ;; Currently (as of Emacs 20.5), the function `shell-quote-argument'
 ;; does not deal well with newline characters.  Newline is replaced by

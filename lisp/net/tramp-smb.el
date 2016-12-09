@@ -604,7 +604,8 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	       v 'file-error "Target `%s' must contain a share name" newname))
 	    (unless (tramp-smb-send-command
 		     v (format "put \"%s\" \"%s\""
-			       filename (tramp-smb-get-localname v)))
+			       (tramp-compat-file-name-unquote filename)
+			       (tramp-smb-get-localname v)))
 	      (tramp-error
 	       v 'file-error "Cannot copy `%s' to `%s'" filename newname))))))
 
@@ -1463,15 +1464,18 @@ target of the symlink differ."
   "Like `handle-substitute-in-file-name' for Tramp files.
 \"//\" substitutes only in the local filename part.  Catches
 errors for shares like \"C$/\", which are common in Microsoft Windows."
-  (with-parsed-tramp-file-name filename nil
-    ;; Ignore in LOCALNAME everything before "//".
-    (when (and (stringp localname) (string-match ".+?/\\(/\\|~\\)" localname))
-      (setq filename
-	    (concat (file-remote-p filename)
-		    (replace-match "\\1" nil nil localname)))))
-  (condition-case nil
-      (tramp-run-real-handler 'substitute-in-file-name (list filename))
-    (error filename)))
+  ;; Check, whether the local part is a quoted file name.
+  (if (tramp-compat-file-name-quoted-p filename)
+      filename
+    (with-parsed-tramp-file-name filename nil
+      ;; Ignore in LOCALNAME everything before "//".
+      (when (and (stringp localname) (string-match ".+?/\\(/\\|~\\)" localname))
+	(setq filename
+	      (concat (file-remote-p filename)
+		      (replace-match "\\1" nil nil localname)))))
+    (condition-case nil
+	(tramp-run-real-handler 'substitute-in-file-name (list filename))
+      (error filename))))
 
 (defun tramp-smb-handle-write-region
   (start end filename &optional append visit lockname confirm)
@@ -1521,7 +1525,8 @@ errors for shares like \"C$/\", which are common in Microsoft Windows."
 (defun tramp-smb-get-share (vec)
   "Returns the share name of LOCALNAME."
   (save-match-data
-    (let ((localname (tramp-file-name-localname vec)))
+    (let ((localname
+	   (tramp-compat-file-name-unquote (tramp-file-name-localname vec))))
       (when (string-match "^/?\\([^/]+\\)/" localname)
 	(match-string 1 localname)))))
 
@@ -1529,7 +1534,8 @@ errors for shares like \"C$/\", which are common in Microsoft Windows."
   "Returns the file name of LOCALNAME.
 If VEC has no cifs capabilities, exchange \"/\" by \"\\\\\"."
   (save-match-data
-    (let ((localname (tramp-file-name-localname vec)))
+    (let ((localname
+	   (tramp-compat-file-name-unquote (tramp-file-name-localname vec))))
       (setq
        localname
        (if (string-match "^/?[^/]+\\(/.*\\)" localname)

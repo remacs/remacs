@@ -116,7 +116,7 @@ being the result.")
 If LOCAL is non-nil, a local file is created.
 If QUOTED is non-nil, the local part of the file is quoted."
   (funcall
-   (if quoted 'tramp-quote-name 'identity)
+   (if quoted 'tramp-compat-file-name-quote 'identity)
    (expand-file-name
     (make-temp-name "tramp-test")
     (if local temporary-file-directory tramp-test-temporary-file-directory))))
@@ -1252,7 +1252,7 @@ This tests also `file-readable-p', `file-regular-p' and
 		  (should
 		   (string-equal
 		    (funcall
-		     (if quoted 'tramp-quote-name 'identity)
+		     (if quoted 'tramp-compat-file-name-quote 'identity)
 		     (car attr))
 		    (file-remote-p (file-truename tmp-name1) 'localname)))
 		  (delete-file tmp-name2))
@@ -2010,7 +2010,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		 (string-equal
 		  (make-auto-save-file-name)
 		  (funcall
-		   (if quoted 'tramp-quote-name 'identity)
+		   (if quoted 'tramp-compat-file-name-quote 'identity)
 		   (expand-file-name
 		    (format "#%s#" (file-name-nondirectory tmp-name1))
 		    tramp-test-temporary-file-directory))))))
@@ -2033,7 +2033,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		       ("|" . "__")
 		       ("[" . "_l")
 		       ("]" . "_r"))
-		     (tramp-unquote-name tmp-name1)))
+		     (tramp-compat-file-name-unquote tmp-name1)))
 		   tmp-name2)))
 		(should (file-directory-p tmp-name2))))
 
@@ -2056,7 +2056,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		       ("|" . "__")
 		       ("[" . "_l")
 		       ("]" . "_r"))
-		     (tramp-unquote-name tmp-name1)))
+		     (tramp-compat-file-name-unquote tmp-name1)))
 		   tmp-name2)))
 		(should (file-directory-p tmp-name2)))))
 
@@ -2188,7 +2188,7 @@ Several special characters do not work properly there."
 		      (should
 		       (string-equal
 			(funcall
-			 (if quoted 'tramp-quote-name 'identity)
+			 (if quoted 'tramp-compat-file-name-quote 'identity)
 			 (car (file-attributes file3)))
 			(file-remote-p (file-truename file1) 'localname)))
 		      ;; Check file contents.
@@ -2264,7 +2264,7 @@ Several special characters do not work properly there."
 		      (should
 		       (string-equal
 			(funcall
-			 (if quoted 'tramp-quote-name 'identity)
+			 (if quoted 'tramp-compat-file-name-quote 'identity)
 			 (cadr (car (directory-files-and-attributes
 				     file1 nil (regexp-quote elt1)))))
 			(file-remote-p (file-truename file2) 'localname)))
