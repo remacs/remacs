@@ -4281,9 +4281,6 @@ extern void syms_of_xmenu (void);
 /* Defined in termchar.h.  */
 struct tty_display_info;
 
-/* Defined in termhooks.h.  */
-struct terminal;
-
 /* Defined in sysdep.c.  */
 #ifdef HAVE_PERSONALITY_ADDR_NO_RANDOMIZE
 extern bool disable_address_randomization (void);
