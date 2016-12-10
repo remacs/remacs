@@ -130,7 +130,7 @@ and a string describing how the process finished.")
 (defvar compilation-num-errors-found)
 
 ;; If you make any changes to `compilation-error-regexp-alist-alist',
-;; be sure to run the ERT test in test/automated/compile-tests.el.
+;; be sure to run the ERT test in test/lisp/progmodes/compile-tests.el.
 ;; emacs -batch -l compile-tests.el -f ert-run-tests-batch-and-exit
 
 (defvar compilation-error-regexp-alist-alist
