@@ -144,7 +144,7 @@ static int
 lisp_mutex_unlock (lisp_mutex_t *mutex)
 {
   if (mutex->owner != current_thread)
-    error ("blah");
+    error ("Cannot unlock mutex owned by another thread");
 
   if (--mutex->count > 0)
     return 0;
@@ -375,7 +375,7 @@ this thread.  */)
 
   mutex = XMUTEX (cvar->mutex);
   if (!lisp_mutex_owned_p (&mutex->mutex))
-    error ("fixme");
+    error ("Condition variable's mutex is not held by current thread");
 
   flush_stack_call_func (condition_wait_callback, cvar);
 
@@ -430,7 +430,7 @@ thread.  */)
 
   mutex = XMUTEX (cvar->mutex);
   if (!lisp_mutex_owned_p (&mutex->mutex))
-    error ("fixme");
+    error ("Condition variable's mutex is not held by current thread");
 
   args.cvar = cvar;
   args.all = !NILP (all);
@@ -855,7 +855,7 @@ It is an error for a thread to try to join itself.  */)
   tstate = XTHREAD (thread);
 
   if (tstate == current_thread)
-    error ("cannot join current thread");
+    error ("Cannot join current thread");
 
   if (thread_alive_p (tstate))
     flush_stack_call_func (thread_join_callback, tstate);
