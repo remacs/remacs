@@ -48,8 +48,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "w32heap.h"		/* for mmap_* */
 #endif
 
-struct buffer *current_buffer;		/* The current buffer.  */
-
 /* First buffer in chain of all buffers (in reverse order of creation).
    Threaded through ->header.next.buffer.  */
 
@@ -1652,6 +1650,9 @@ cleaning up all windows currently displaying the buffer to be killed. */)
 
   /* Avoid trouble for buffer already dead.  */
   if (!BUFFER_LIVE_P (b))
+    return Qnil;
+
+  if (thread_check_current_buffer (b))
     return Qnil;
 
   /* Run hooks with the buffer to be killed the current buffer.  */

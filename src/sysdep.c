@@ -51,14 +51,19 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 # include <math.h>
 #endif
 
+#ifdef HAVE_SOCKETS
+#include <sys/socket.h>
+#include <netdb.h>
+#endif /* HAVE_SOCKETS */
+
 #ifdef WINDOWSNT
 #define read sys_read
 #define write sys_write
 #ifndef STDERR_FILENO
 #define STDERR_FILENO fileno(GetStdHandle(STD_ERROR_HANDLE))
 #endif
-#include <windows.h>
-#endif /* not WINDOWSNT */
+#include "w32.h"
+#endif /* WINDOWSNT */
 
 #include <sys/types.h>
 #include <sys/stat.h>
