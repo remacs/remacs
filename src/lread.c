@@ -2536,7 +2536,7 @@ read_integer (Lisp_Object readcharfun, EMACS_INT radix)
       *p = '\0';
     }
 
-  if (! valid)
+  if (valid != 1)
     {
       sprintf (buf, "integer, radix %"pI"d", radix);
       invalid_syntax (buf);
