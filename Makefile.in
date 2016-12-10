@@ -735,8 +735,8 @@ install-etc:
 	client_name=`echo emacsclient | sed '$(TRANSFORM)'`${EXEEXT}; \
 	sed -e '/^##/d' \
 	  -e "/^Documentation/ s/emacs(1)/$${emacs_name}(1)/" \
-	  -e "/^ExecStart/ s|emacs|$(DESTDIR)${bindir}/$${exe_name}|" \
-	  -e "/^ExecStop/ s|emacsclient|$(DESTDIR)${bindir}/$${client_name}|" \
+	  -e "/^ExecStart/ s|emacs|${bindir}/$${exe_name}|" \
+	  -e "/^ExecStop/ s|emacsclient|${bindir}/$${client_name}|" \
 	  ${srcdir}/etc/emacs.service > $${tmp}; \
 	$(INSTALL_DATA) $${tmp} "$(DESTDIR)$(systemdunitdir)/${EMACS_NAME}.service"; \
 	rm -f $${tmp}
