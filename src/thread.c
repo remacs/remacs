@@ -540,7 +540,7 @@ mark_one_thread (struct thread_state *thread)
 
   mark_object (thread->m_last_thing_searched);
 
-  if (thread->m_saved_last_thing_searched)
+  if (!NILP (thread->m_saved_last_thing_searched))
     mark_object (thread->m_saved_last_thing_searched);
 }
 
