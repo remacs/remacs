@@ -83,6 +83,9 @@
      1 nil 302 "\\lib\\python\\Products\\PythonScripts\\PythonScript.py")
     ("File \"/tmp/foo.py\", line 10"
      1 nil 10 "/tmp/foo.py")
+    ;; clang-include
+    ("In file included from foo.cpp:2:"
+     1 nil 2 "foo.cpp" 0)
     ;; cmake cmake-info
     ("CMake Error at CMakeLists.txt:23 (hurz):"
      1 nil 23 "CMakeLists.txt")

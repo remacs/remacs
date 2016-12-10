@@ -230,6 +230,13 @@ of[ \t]+\"?\\([a-zA-Z]?:?[^\":\n]+\\)\"?:" 3 2 nil (1))
      nil 1 nil 2 0
      (2 (compilation-face '(3))))
 
+    (clang-include
+     ,(rx bol "In file included from "
+          (group (+ (not (any ?\n ?:)))) ?:
+          (group (+ (any (?0 . ?9)))) ?:
+          eol)
+     1 2 nil 0)
+
     (gcc-include
      "^\\(?:In file included \\|                 \\|\t\\)from \
 \\([0-9]*[^0-9\n]\\(?:[^\n :]\\| [^-/\n]\\|:[^ \n]\\)*?\\):\
