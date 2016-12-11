@@ -148,9 +148,6 @@ static Lisp_Object regular_top_level_message;
 
 static sys_jmp_buf getcjmp;
 
-/* True while doing kbd input.  */
-bool waiting_for_input;
-
 /* True while displaying for echoing.   Delays C-g throwing.  */
 
 static bool echoing;
@@ -321,10 +318,6 @@ static ptrdiff_t echo_length (void);
 
 /* Incremented whenever a timer is run.  */
 unsigned timers_run;
-
-/* Address (if not 0) of struct timespec to zero out if a SIGIO interrupt
-   happens.  */
-struct timespec *input_available_clear_time;
 
 /* True means use SIGIO interrupts; false means use CBREAK mode.
    Default is true if INTERRUPT_INPUT is defined.  */
