@@ -733,6 +733,9 @@ DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
 {
   register Lisp_Object function;
   CHECK_SYMBOL (symbol);
+  /* Perhaps not quite the right error signal, but seems good enough.  */
+  if (NILP (symbol))
+    xsignal1 (Qsetting_constant, symbol);
 
   function = XSYMBOL (symbol)->function;
 
