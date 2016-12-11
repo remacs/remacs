@@ -1299,11 +1299,13 @@ set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
         return;
 
     case SYMBOL_TRAPPED_WRITE:
-      notify_variable_watchers (symbol, voide? Qnil : newval,
-                                (bindflag == SET_INTERNAL_BIND? Qlet :
-                                 bindflag == SET_INTERNAL_UNBIND? Qunlet :
-                                 voide? Qmakunbound : Qset),
-                                where);
+      /* Setting due to thread-switching doesn't count.  */
+      if (bindflag != SET_INTERNAL_THREAD_SWITCH)
+        notify_variable_watchers (symbol, voide? Qnil : newval,
+                                  (bindflag == SET_INTERNAL_BIND? Qlet :
+                                   bindflag == SET_INTERNAL_UNBIND? Qunlet :
+                                   voide? Qmakunbound : Qset),
+                                  where);
       /* FALLTHROUGH!  */
     case SYMBOL_UNTRAPPED_WRITE:
         break;
@@ -1414,7 +1416,7 @@ set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
 	    int offset = XBUFFER_OBJFWD (innercontents)->offset;
 	    int idx = PER_BUFFER_IDX (offset);
 	    if (idx > 0
-		&& !bindflag
+                && bindflag == SET_INTERNAL_SET
 		&& !let_shadows_buffer_binding_p (sym))
 	      SET_PER_BUFFER_VALUE_P (buf, idx, 1);
 	  }
@@ -1634,11 +1636,9 @@ local bindings in certain buffers.  */)
   xsignal1 (Qvoid_variable, symbol);
 }
 
-DEFUN ("set-default", Fset_default, Sset_default, 2, 2, 0,
-       doc: /* Set SYMBOL's default value to VALUE.  SYMBOL and VALUE are evaluated.
-The default value is seen in buffers that do not have their own values
-for this variable.  */)
-  (Lisp_Object symbol, Lisp_Object value)
+void
+set_default_internal (Lisp_Object symbol, Lisp_Object value,
+                      enum Set_Internal_Bind bindflag)
 {
   struct Lisp_Symbol *sym;
 
@@ -1652,11 +1652,13 @@ for this variable.  */)
         xsignal1 (Qsetting_constant, symbol);
       else
         /* Allow setting keywords to their own value.  */
-        return value;
+        return;
 
     case SYMBOL_TRAPPED_WRITE:
       /* Don't notify here if we're going to call Fset anyway.  */
-      if (sym->redirect != SYMBOL_PLAINVAL)
+      if (sym->redirect != SYMBOL_PLAINVAL
+          /* Setting due to thread switching doesn't count.  */
+          && bindflag != SET_INTERNAL_THREAD_SWITCH)
         notify_variable_watchers (symbol, value, Qset_default, Qnil);
       /* FALLTHROUGH!  */
     case SYMBOL_UNTRAPPED_WRITE:
@@ -1669,7 +1671,7 @@ for this variable.  */)
   switch (sym->redirect)
     {
     case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
-    case SYMBOL_PLAINVAL: return Fset (symbol, value);
+    case SYMBOL_PLAINVAL: set_internal (symbol, value, Qnil, bindflag); return;
     case SYMBOL_LOCALIZED:
       {
 	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
@@ -1680,7 +1682,7 @@ for this variable.  */)
 	/* If the default binding is now loaded, set the REALVALUE slot too.  */
 	if (blv->fwd && EQ (blv->defcell, blv->valcell))
 	  store_symval_forwarding (blv->fwd, value, NULL);
-	return value;
+        return;
       }
     case SYMBOL_FORWARDED:
       {
@@ -1706,13 +1708,23 @@ for this variable.  */)
 		  if (!PER_BUFFER_VALUE_P (b, idx))
 		    set_per_buffer_value (b, offset, value);
 	      }
-	    return value;
 	  }
 	else
-	  return Fset (symbol, value);
+          set_internal (symbol, value, Qnil, bindflag);
+        return;
       }
     default: emacs_abort ();
     }
+}
+
+DEFUN ("set-default", Fset_default, Sset_default, 2, 2, 0,
+       doc: /* Set SYMBOL's default value to VALUE.  SYMBOL and VALUE are evaluated.
+The default value is seen in buffers that do not have their own values
+for this variable.  */)
+  (Lisp_Object symbol, Lisp_Object value)
+{
+  set_default_internal (symbol, value, SET_INTERNAL_SET);
+  return value;
 }
 
 DEFUN ("setq-default", Fsetq_default, Ssetq_default, 0, UNEVALLED, 0,

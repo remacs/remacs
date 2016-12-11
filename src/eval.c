@@ -3197,7 +3197,7 @@ let_shadows_global_binding_p (Lisp_Object symbol)
 
 static void
 do_specbind (struct Lisp_Symbol *sym, union specbinding *bind,
-	     Lisp_Object value)
+             Lisp_Object value, enum Set_Internal_Bind bindflag)
 {
   switch (sym->redirect)
     {
@@ -3205,19 +3205,19 @@ do_specbind (struct Lisp_Symbol *sym, union specbinding *bind,
       if (!sym->trapped_write)
 	SET_SYMBOL_VAL (sym, value);
       else
-	set_internal (specpdl_symbol (bind), value, Qnil, SET_INTERNAL_BIND);
+        set_internal (specpdl_symbol (bind), value, Qnil, bindflag);
       break;
 
     case SYMBOL_FORWARDED:
       if (BUFFER_OBJFWDP (SYMBOL_FWD (sym))
 	  && specpdl_kind (bind) == SPECPDL_LET_DEFAULT)
 	{
-	  Fset_default (specpdl_symbol (bind), value);
+          set_default_internal (specpdl_symbol (bind), value, bindflag);
 	  return;
 	}
       /* FALLTHROUGH */
     case SYMBOL_LOCALIZED:
-      set_internal (specpdl_symbol (bind), value, Qnil, SET_INTERNAL_BIND);
+      set_internal (specpdl_symbol (bind), value, Qnil, bindflag);
       break;
 
     default:
@@ -3258,7 +3258,7 @@ specbind (Lisp_Object symbol, Lisp_Object value)
       specpdl_ptr->let.old_value = SYMBOL_VAL (sym);
       specpdl_ptr->let.saved_value = Qnil;
       grow_specpdl ();
-      do_specbind (sym, specpdl_ptr - 1, value);
+      do_specbind (sym, specpdl_ptr - 1, value, SET_INTERNAL_BIND);
       break;
     case SYMBOL_LOCALIZED:
       if (SYMBOL_BLV (sym)->frame_local)
@@ -3291,7 +3291,7 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 	      {
 		specpdl_ptr->let.kind = SPECPDL_LET_DEFAULT;
 		grow_specpdl ();
-		do_specbind (sym, specpdl_ptr - 1, value);
+                do_specbind (sym, specpdl_ptr - 1, value, SET_INTERNAL_BIND);
 		return;
 	      }
 	  }
@@ -3299,7 +3299,7 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 	  specpdl_ptr->let.kind = SPECPDL_LET;
 
 	grow_specpdl ();
-	do_specbind (sym, specpdl_ptr - 1, value);
+        do_specbind (sym, specpdl_ptr - 1, value, SET_INTERNAL_BIND);
 	break;
       }
     default: emacs_abort ();
@@ -3354,23 +3354,16 @@ rebind_for_thread_switch (void)
 	{
 	  Lisp_Object value = specpdl_saved_value (bind);
 	  Lisp_Object sym = specpdl_symbol (bind);
-	  bool was_trapped =
-	    SYMBOLP (sym)
-	    && XSYMBOL (sym)->trapped_write == SYMBOL_TRAPPED_WRITE;
-	  /* FIXME: This is not clean, and if do_specbind signals an
-	     error, the symbol will be left untrapped.  */
-	  if (was_trapped)
-	    XSYMBOL (sym)->trapped_write = SYMBOL_UNTRAPPED_WRITE;
 	  bind->let.saved_value = Qnil;
-	  do_specbind (XSYMBOL (sym), bind, value);
-	  if (was_trapped)
-	    XSYMBOL (sym)->trapped_write = SYMBOL_TRAPPED_WRITE;
+          do_specbind (XSYMBOL (sym), bind, value,
+                       SET_INTERNAL_THREAD_SWITCH);
 	}
     }
 }
 
 static void
-do_one_unbind (union specbinding *this_binding, bool unwinding)
+do_one_unbind (union specbinding *this_binding, bool unwinding,
+               enum Set_Internal_Bind bindflag)
 {
   eassert (unwinding || this_binding->kind >= SPECPDL_LET);
   switch (this_binding->kind)
@@ -3399,7 +3392,7 @@ do_one_unbind (union specbinding *this_binding, bool unwinding)
 	      SET_SYMBOL_VAL (XSYMBOL (sym), specpdl_old_value (this_binding));
 	    else
 	      set_internal (sym, specpdl_old_value (this_binding),
-			    Qnil, SET_INTERNAL_UNBIND);
+                            Qnil, bindflag);
 	    break;
 	  }
 	else
@@ -3409,8 +3402,9 @@ do_one_unbind (union specbinding *this_binding, bool unwinding)
 	  }
       }
     case SPECPDL_LET_DEFAULT:
-      Fset_default (specpdl_symbol (this_binding),
-		    specpdl_old_value (this_binding));
+      set_default_internal (specpdl_symbol (this_binding),
+                            specpdl_old_value (this_binding),
+                            bindflag);
       break;
     case SPECPDL_LET_LOCAL:
       {
@@ -3422,7 +3416,7 @@ do_one_unbind (union specbinding *this_binding, bool unwinding)
 	/* If this was a local binding, reset the value in the appropriate
 	   buffer, but only if that buffer's binding still exists.  */
 	if (!NILP (Flocal_variable_p (symbol, where)))
-	  set_internal (symbol, old_value, where, SET_INTERNAL_UNBIND);
+          set_internal (symbol, old_value, where, bindflag);
       }
       break;
     }
@@ -3496,7 +3490,7 @@ unbind_to (ptrdiff_t count, Lisp_Object value)
       union specbinding this_binding;
       this_binding = *--specpdl_ptr;
 
-      do_one_unbind (&this_binding, true);
+      do_one_unbind (&this_binding, true, SET_INTERNAL_UNBIND);
     }
 
   if (NILP (Vquit_flag) && !NILP (quitf))
@@ -3515,17 +3509,8 @@ unbind_for_thread_switch (struct thread_state *thr)
       if ((--bind)->kind >= SPECPDL_LET)
 	{
 	  Lisp_Object sym = specpdl_symbol (bind);
-	  bool was_trapped =
-	    SYMBOLP (sym)
-	    && XSYMBOL (sym)->trapped_write == SYMBOL_TRAPPED_WRITE;
 	  bind->let.saved_value = find_symbol_value (sym);
-	  /* FIXME: This is not clean, and if do_one_unbind signals an
-	     error, the symbol will be left untrapped.  */
-	  if (was_trapped)
-	    XSYMBOL (sym)->trapped_write = SYMBOL_UNTRAPPED_WRITE;
-	  do_one_unbind (bind, false);
-	  if (was_trapped)
-	    XSYMBOL (sym)->trapped_write = SYMBOL_TRAPPED_WRITE;
+          do_one_unbind (bind, false, SET_INTERNAL_THREAD_SWITCH);
 	}
     }
 }

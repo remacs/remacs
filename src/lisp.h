@@ -3493,10 +3493,14 @@ extern Lisp_Object do_symval_forwarding (union Lisp_Fwd *);
 enum Set_Internal_Bind {
   SET_INTERNAL_SET,
   SET_INTERNAL_BIND,
-  SET_INTERNAL_UNBIND
+  SET_INTERNAL_UNBIND,
+  SET_INTERNAL_THREAD_SWITCH
 };
 extern void set_internal (Lisp_Object, Lisp_Object, Lisp_Object,
                           enum Set_Internal_Bind);
+extern void set_default_internal (Lisp_Object, Lisp_Object,
+                                  enum Set_Internal_Bind bindflag);
+
 extern void syms_of_data (void);
 extern void swap_in_global_binding (struct Lisp_Symbol *);
 
