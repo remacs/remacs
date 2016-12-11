@@ -415,6 +415,10 @@ extern void unuse_menu_items (void);
 #define EVENT_HEAD_KIND(event_head) \
   (Fget ((event_head), Qevent_kind))
 
+/* Address (if not 0) of struct timespec to zero out if a SIGIO interrupt
+   happens.  */
+extern struct timespec *input_available_clear_time;
+
 extern bool ignore_mouse_drag_p;
 
 extern Lisp_Object parse_modifiers (Lisp_Object);

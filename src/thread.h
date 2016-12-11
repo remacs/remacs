@@ -159,11 +159,6 @@ struct thread_state
   bool m_waiting_for_input;
 #define waiting_for_input (current_thread->m_waiting_for_input)
 
-  /* Address (if not 0) of struct timespec to zero out if a SIGIO interrupt
-   happens.  */
-  struct timespec *m_input_available_clear_time;
-#define input_available_clear_time (current_thread->m_input_available_clear_time)
-
   /* The OS identifier for this thread.  */
   sys_thread_t thread_id;
 
