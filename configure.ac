@@ -1189,14 +1189,13 @@ esac
 AC_SUBST([PAXCTL_dumped])
 AC_SUBST([PAXCTL_notdumped])
 
-## Need makeinfo >= 4.7 (?) to build the manuals.
+## Require makeinfo >= 4.13 (last of the 4.x series) to build the manuals.
 if test "$MAKEINFO" != "no"; then
   if test "$MAKEINFO" = "${am_missing_run}makeinfo"; then
     MAKEINFO=makeinfo
   fi
   case `($MAKEINFO --version) 2>/dev/null` in
-    *' (GNU texinfo) '4.[[7-9]]* | \
-    *' (GNU texinfo) '4.[[1-9][0-9]]* | \
+    *' (GNU texinfo) '4.1[[3-9]]* | \
     *' (GNU texinfo) '[[5-9]]* | \
     *' (GNU texinfo) '[[1-9][0-9]]* ) ;;
     *) MAKEINFO=no;;
@@ -1219,7 +1218,7 @@ if test "$MAKEINFO" = "no"; then
   if test "x${with_makeinfo}" = "xno"; then
     HAVE_MAKEINFO=no
   elif test ! -e "$srcdir/info/emacs" && test ! -e "$srcdir/info/emacs.info"; then
-    AC_MSG_ERROR( [You do not seem to have makeinfo >= 4.7, and your
+    AC_MSG_ERROR( [You do not seem to have makeinfo >= 4.13, and your
 source tree does not seem to have pre-built manuals in the 'info' directory.
 Either install a suitable version of makeinfo, or re-run configure
 with the '--without-makeinfo' option to build without the manuals.] )
