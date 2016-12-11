@@ -125,7 +125,7 @@ from executing while Emacs is redisplaying."
 		   'eshell-kill-append) t)
     ("/dev/clip" (lambda (mode)
 		   (if (eq mode 'overwrite)
-		       (let ((gui-select-enable-clipboard t))
+		       (let ((select-enable-clipboard t))
 			 (kill-new "")))
 		   'eshell-clipboard-append) t))
   "Map virtual devices name to Emacs Lisp functions.
@@ -325,7 +325,7 @@ last execution result should not be changed."
 (defun eshell-clipboard-append (string)
   "Call `kill-append' with STRING, if it is indeed a string."
   (if (stringp string)
-      (let ((gui-select-enable-clipboard t))
+      (let ((select-enable-clipboard t))
 	(kill-append string nil))))
 
 (defun eshell-get-target (target &optional mode)
