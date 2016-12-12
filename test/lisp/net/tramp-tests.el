@@ -2102,6 +2102,12 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 This requires restrictions of file name syntax."
   (tramp-adb-file-name-p tramp-test-temporary-file-directory))
 
+(defun tramp--test-docker-p ()
+  "Check, whether the docker method is used.
+This does not support some special file names."
+  (string-equal
+   "docker" (file-remote-p tramp-test-temporary-file-directory 'method)))
+
 (defun tramp--test-ftp-p ()
   "Check, whether an FTP-like method is used.
 This does not support globbing characters in file names (yet)."
@@ -2293,7 +2299,9 @@ Several special characters do not work properly there."
   (tramp--test-check-files
    (if (or (tramp--test-gvfs-p) (tramp--test-smb-or-windows-nt-p))
        "foo bar baz"
-     (if (or (tramp--test-adb-p) (eq system-type 'cygwin))
+     (if (or (tramp--test-adb-p)
+	     (tramp--test-docker-p)
+	     (eq system-type 'cygwin))
 	 " foo bar baz "
        " foo\tbar baz\t"))
    "$foo$bar$$baz$"
@@ -2404,6 +2412,7 @@ Use the `ls' command."
 (ert-deftest tramp-test34-utf8 ()
   "Check UTF8 encoding in file names and file contents."
   (skip-unless (tramp--test-enabled))
+  (skip-unless (not (tramp--test-docker-p)))
   (skip-unless (not (tramp--test-rsync-p)))
 
   (tramp--test-utf8))
@@ -2413,6 +2422,7 @@ Use the `ls' command."
 Use the `stat' command."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
+  (skip-unless (not (tramp--test-docker-p)))
   (skip-unless (and (tramp--test-sh-p) (not (tramp--test-rsync-p))))
   (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
     (skip-unless (tramp-get-remote-stat v)))
@@ -2429,6 +2439,7 @@ Use the `stat' command."
 Use the `perl' command."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
+  (skip-unless (not (tramp--test-docker-p)))
   (skip-unless (and (tramp--test-sh-p) (not (tramp--test-rsync-p))))
   (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
     (skip-unless (tramp-get-remote-perl v)))
@@ -2448,6 +2459,7 @@ Use the `perl' command."
 Use the `ls' command."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
+  (skip-unless (not (tramp--test-docker-p)))
   (skip-unless (and (tramp--test-sh-p) (not (tramp--test-rsync-p))))
 
   (let ((tramp-connection-properties

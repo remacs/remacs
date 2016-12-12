@@ -2227,14 +2227,8 @@ the uid and gid from FILENAME."
 			    v 'file-error
 			    "Unknown operation `%s', must be `copy' or `rename'"
 			    op))))
-	     (localname1
-	      (if t1
-		  (file-remote-p filename 'localname)
-		filename))
-	     (localname2
-	      (if t2
-		  (file-remote-p newname 'localname)
-		newname))
+	     (localname1 (if t1 (file-remote-p filename 'localname) filename))
+	     (localname2 (if t2 (file-remote-p newname 'localname) newname))
 	     (prefix (file-remote-p (if t1 filename newname)))
              cmd-result)
 
@@ -2324,11 +2318,9 @@ the uid and gid from FILENAME."
 		     (t2
 		      (if (eq op 'copy)
 			  (copy-file
-			   localname1 tmpfile t
-			   keep-date preserve-uid-gid)
+			   localname1 tmpfile t keep-date preserve-uid-gid)
 			(tramp-run-real-handler
-			 'rename-file
-			 (list localname1 tmpfile t)))
+			 'rename-file (list localname1 tmpfile t)))
 		      ;; We must change the ownership as local user.
 		      ;; Since this does not work reliable, we also
 		      ;; give read permissions.
@@ -5166,8 +5158,8 @@ Return ATTR."
   (let ((method (tramp-file-name-method vec))
 	(user (tramp-file-name-user vec))
 	(host (tramp-file-name-real-host vec))
-	(localname (tramp-compat-file-name-unquote
-		    (directory-file-name (tramp-file-name-localname vec)))))
+	(localname
+	 (directory-file-name (tramp-file-name-unquote-localname vec))))
     (when (string-match tramp-ipv6-regexp host)
       (setq host (format "[%s]" host)))
     (unless (string-match "ftp$" method)
