@@ -2033,9 +2033,6 @@ DEFUN ("current-buffer", Fcurrent_buffer, Scurrent_buffer, 0, 0, 0,
 void
 set_buffer_internal_1 (register struct buffer *b)
 {
-  register struct buffer *old_buf;
-  register Lisp_Object tail;
-
 #ifdef USE_MMAP_FOR_BUFFERS
   if (b->text->beg == NULL)
     enlarge_buffer_text (b, 0);
@@ -2043,6 +2040,17 @@ set_buffer_internal_1 (register struct buffer *b)
 
   if (current_buffer == b)
     return;
+
+  set_buffer_internal_2 (b);
+}
+
+/* Like set_buffer_internal_1, but doesn't check whether B is already
+   the current buffer.  Called upon switch of the current thread, see
+   post_acquire_global_lock.  */
+void set_buffer_internal_2 (register struct buffer *b)
+{
+  register struct buffer *old_buf;
+  register Lisp_Object tail;
 
   BUFFER_CHECK_INDIRECTION (b);
 

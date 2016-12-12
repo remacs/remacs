@@ -55,7 +55,6 @@ release_global_lock (void)
 static void
 post_acquire_global_lock (struct thread_state *self)
 {
-  Lisp_Object buffer;
   struct thread_state *prev_thread = current_thread;
 
   /* Do this early on, so that code below could signal errors (e.g.,
@@ -71,12 +70,12 @@ post_acquire_global_lock (struct thread_state *self)
       if (prev_thread != NULL)
 	unbind_for_thread_switch (prev_thread);
       rebind_for_thread_switch ();
-    }
 
-  /* We need special handling to re-set the buffer.  */
-  XSETBUFFER (buffer, self->m_current_buffer);
-  self->m_current_buffer = 0;
-  set_buffer_internal (XBUFFER (buffer));
+       /* Set the new thread's current buffer.  This needs to be done
+	  even if it is the same buffer as that of the previous thread,
+	  because of thread-local bindings.  */
+      set_buffer_internal_2 (current_buffer);
+    }
 
   if (!NILP (current_thread->error_symbol))
     {
