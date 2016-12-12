@@ -235,4 +235,13 @@
     (sit-for 1)
     (should (= (point) 21))))
 
+(ert-deftest thread-signal-early ()
+  "Test signaling a thread as soon as it is started by the OS."
+  (let ((thread
+         (make-thread #'(lambda ()
+                          (while t (thread-yield))))))
+    (thread-signal thread 'error nil)
+    (sit-for 1)
+    (should-not (thread-alive-p thread))))
+
 ;;; threads.el ends here
