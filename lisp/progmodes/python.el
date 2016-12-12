@@ -2113,20 +2113,25 @@ remote host, the returned value is intended for
 (defun python-shell-calculate-exec-path ()
   "Calculate `exec-path'.
 Prepends `python-shell-exec-path' and adds the binary directory
-for virtualenv if `python-shell-virtualenv-root' is set.  If
-`default-directory' points to a remote host, the returned value
-appends `python-shell-remote-exec-path' instead of `exec-path'."
+for virtualenv if `python-shell-virtualenv-root' is set - this
+will use the python interpreter from inside the virtualenv when
+starting the shell.  If `default-directory' points to a remote host,
+the returned value appends `python-shell-remote-exec-path' instead
+of `exec-path'."
   (let ((new-path (copy-sequence
                    (if (file-remote-p default-directory)
                        python-shell-remote-exec-path
-                     exec-path))))
+                     exec-path)))
+
+        ;; Windows and POSIX systems use different venv directory structures
+        (virtualenv-bin-dir (if (eq system-type 'windows-nt) "Scripts" "bin")))
     (python-shell--add-to-path-with-priority
      new-path python-shell-exec-path)
     (if (not python-shell-virtualenv-root)
         new-path
       (python-shell--add-to-path-with-priority
        new-path
-       (list (expand-file-name "bin" python-shell-virtualenv-root)))
+       (list (expand-file-name virtualenv-bin-dir python-shell-virtualenv-root)))
       new-path)))
 
 (defun python-shell-tramp-refresh-remote-path (vec paths)
