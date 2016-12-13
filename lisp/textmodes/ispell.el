@@ -727,8 +727,7 @@ Otherwise returns the library directory name, if that is defined."
 
 	;; Make sure these variables are (re-)initialized to the default value
 	(setq ispell-really-aspell nil
-	      ispell-aspell-supports-utf8 nil
-	      ispell-really-hunspell nil
+              ispell-really-hunspell nil
 	      ispell-encoding8-command nil)
 
 	(goto-char (point-min))
@@ -742,24 +741,24 @@ Otherwise returns the library directory name, if that is defined."
                         nil t)
 		       (match-string 1)))))
 
-      (let ((aspell-minver    "0.50")
-	    (aspell8-minver   "0.60")
-	    (ispell-minver    "3.1.12")
-	    (hunspell8-minver "1.1.6"))
+      (let* ((aspell8-minver   "0.60")
+             (ispell-minver    "3.1.12")
+             (hunspell8-minver "1.1.6")
+             (minver (cond
+                      ((not (version<= ispell-minver ispell-program-version))
+                       ispell-minver)
+                      ((and ispell-really-aspell
+                            (not (version<= aspell8-minver ispell-really-aspell)))
+                       aspell8-minver))))
 
-	(unless (version<= ispell-minver ispell-program-version)
-	  (error "%s release %s or greater is required"
-		 ispell-program-name
-		 ispell-minver))
+        (if minver
+	    (error "%s release %s or greater is required"
+                   ispell-program-name
+                   minver))
 
 	(cond
 	 (ispell-really-aspell
-	  (if (version<= aspell-minver ispell-really-aspell)
-	      (if (version<= aspell8-minver ispell-really-aspell)
-		  (progn
-		    (setq ispell-aspell-supports-utf8 t)
-		    (setq ispell-encoding8-command "--encoding=")))
-	    (setq ispell-really-aspell nil)))
+	  (setq ispell-encoding8-command "--encoding="))
 	 (ispell-really-hunspell
 	  (if (version<= hunspell8-minver ispell-really-hunspell)
 	      (setq ispell-encoding8-command "-i")
@@ -838,8 +837,6 @@ Internal use.")
 
 (defun ispell-find-aspell-dictionaries ()
   "Find Aspell's dictionaries, and record in `ispell-aspell-dictionary-alist'."
-  (unless (and ispell-really-aspell ispell-encoding8-command)
-    (error "This function only works with Aspell >= 0.60"))
   (let* ((dictionaries
 	  (split-string
 	   (with-temp-buffer
