@@ -1331,7 +1331,7 @@ You probably want to use this together with
     (define-key map " " 'image-dired-display-next-thumbnail-original)
     (define-key map (kbd "DEL") 'image-dired-display-previous-thumbnail-original)
     (define-key map "c" 'image-dired-comment-thumbnail)
-    (define-key map "q" 'image-dired-kill-buffer-and-window)
+    (define-key map "q" 'quit-window)
 
     ;; Mouse
     (define-key map [mouse-2] 'image-dired-mouse-display-image)
@@ -1348,7 +1348,7 @@ You probably want to use this together with
     (easy-menu-define nil map
       "Menu for `image-dired-thumbnail-mode'."
       '("Image-Dired"
-        ["Quit" image-dired-kill-buffer-and-window]
+        ["Quit" quit-window]
         ["Delete thumbnail from buffer" image-dired-delete-char]
         ["Remove tag from thumbnail" image-dired-tag-thumbnail-remove]
         ["Tag thumbnail" image-dired-tag-thumbnail]
@@ -1378,14 +1378,14 @@ You probably want to use this together with
 
 (defvar image-dired-display-image-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "q" 'image-dired-kill-buffer-and-window)
+    (define-key map "q" 'quit-window)
     (define-key map "f" 'image-dired-display-current-image-full)
     (define-key map "s" 'image-dired-display-current-image-sized)
 
     (easy-menu-define nil map
       "Menu for `image-dired-display-image-mode-map'."
       '("Image-Dired"
-        ["Quit" image-dired-kill-buffer-and-window]
+        ["Quit" quit-window]
         ["Display original, sized to fit" image-dired-display-current-image-sized]
         ["Display original, full size" image-dired-display-current-image-full]))
     map)
@@ -2335,15 +2335,6 @@ when using per-directory thumbnail file storage"))
 	  (setq count (1+ count))))
       (insert "  </body>\n")
       (insert "</html>"))))
-
-(defun image-dired-kill-buffer-and-window ()
-  "Kill the current buffer and, if possible, also the window."
-  (interactive)
-  (let ((buffer (current-buffer)))
-    (condition-case nil
-        (delete-window (selected-window))
-      (error nil))
-    (kill-buffer buffer)))
 
 (defvar image-dired-widget-list nil
   "List to keep track of meta data in edit buffer.")
