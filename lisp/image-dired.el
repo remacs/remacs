@@ -79,7 +79,7 @@
 ;;
 ;; This information has been moved to the manual.  Type `C-h r' to open
 ;; the Emacs manual and go to the node Thumbnails by typing `g
-;; Thumbnails RET'.
+;; Image-Dired RET'.
 ;;
 ;; Quickstart: M-x image-dired RET DIRNAME RET
 ;;
@@ -516,6 +516,7 @@ before warning the user."
 (defmacro image-dired--with-db-file (&rest body)
   "Run BODY in a temp buffer containing `image-dired-db-file'.
 Return the last form in BODY."
+  (declare (indent 0) (debug t))
   `(with-temp-buffer
      (if (file-exists-p image-dired-db-file)
 	 (insert-file-contents image-dired-db-file))
@@ -2238,13 +2239,8 @@ image-dired-file-comment-list:
 
 (defun image-dired-hidden-p (file)
   "Return t if image FILE has a \"hidden\" tag."
-  (let (hidden)
-    (mapc
-     (lambda (tag)
-       (if (member tag image-dired-gallery-hidden-tags)
-           (setq hidden t)))
-     (cdr (assoc file image-dired-file-tag-list)))
-    hidden))
+  (cl-loop for tag in (cdr (assoc file image-dired-file-tag-list))
+           if (member tag image-dired-gallery-hidden-tags) return t))
 
 (defun image-dired-gallery-generate ()
   "Generate gallery pages.
