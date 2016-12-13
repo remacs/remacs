@@ -2257,26 +2257,12 @@ See also the functions `match-beginning', `match-end' and `replace-match'.  */)
 
 DEFUN ("re-search-backward", Fre_search_backward, Sre_search_backward, 1, 4,
        "sRE search backward: ",
-       doc: /* Search backward from point for match for regular expression REGEXP.
-Set point to the beginning of the occurrence found, and return point.
-An optional second argument bounds the search; it is a buffer position.
-  The match found must not begin before that position.  A value of nil
-  means search to the beginning of the accessible portion of the buffer.
-Optional third argument, if t, means if fail just return nil (no error).
-  If not nil and not t, position at limit of search and return nil.
-Optional fourth argument COUNT, if a positive number, means to search
-  for COUNT successive occurrences.  If COUNT is negative, search
-  forward, instead of backward, for -COUNT occurrences.  A value of
-  nil means the same as 1.
-With COUNT positive, the match found is the COUNTth to last one (or
-  last, if COUNT is 1 or nil) in the buffer located entirely before
-  the origin of the search; correspondingly with COUNT negative.
+       doc: /* Search backward from point for regular expression REGEXP.
+This function is almost identical to `re-search-forward', except that
+by default it searches backward instead of forward, and the sign of
+COUNT also indicates exactly the opposite searching direction.
 
-Search case-sensitivity is determined by the value of the variable
-`case-fold-search', which see.
-
-See also the functions `match-beginning', `match-end', `match-string',
-and `replace-match'.  */)
+See `re-search-forward' for details.  */)
   (Lisp_Object regexp, Lisp_Object bound, Lisp_Object noerror, Lisp_Object count)
 {
   return search_command (regexp, bound, noerror, count, -1, 1, 0);
@@ -2286,18 +2272,22 @@ DEFUN ("re-search-forward", Fre_search_forward, Sre_search_forward, 1, 4,
        "sRE search: ",
        doc: /* Search forward from point for regular expression REGEXP.
 Set point to the end of the occurrence found, and return point.
-An optional second argument bounds the search; it is a buffer position.
-  The match found must not end after that position.  A value of nil
-  means search to the end of the accessible portion of the buffer.
-Optional third argument, if t, means if fail just return nil (no error).
-  If not nil and not t, move to limit of search and return nil.
-Optional fourth argument COUNT, if a positive number, means to search
-  for COUNT successive occurrences.  If COUNT is negative, search
-  backward, instead of forward, for -COUNT occurrences.  A value of
-  nil means the same as 1.
-With COUNT positive, the match found is the COUNTth one (or first,
-  if COUNT is 1 or nil) in the buffer located entirely after the
-  origin of the search; correspondingly with COUNT negative.
+The optional second argument BOUND is a buffer position that bounds
+  the search.  The match found must not end after that position.  A
+  value of nil means search to the end of the accessible portion of
+  the buffer.
+The optional third argument NOERROR indicates how errors are handled
+  when the search fails.  If it is nil or omitted, emit an error; if
+  it is t, simply return nil and do nothing; if it is neither nil nor
+  t, move to the limit of search and return nil.
+The optional fourth argument COUNT is a number that indicates the
+  search direction and the number of occurrences to search for.  If it
+  is positive, search forward for COUNT successive occurrences; if it
+  is negative, search backward, instead of forward, for -COUNT
+  occurrences.  A value of nil means the same as 1.
+With COUNT positive/negative, the match found is the COUNTth/-COUNTth
+  one in the buffer located entirely after/before the origin of the
+  search.
 
 Search case-sensitivity is determined by the value of the variable
 `case-fold-search', which see.
