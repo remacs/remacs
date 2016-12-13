@@ -82,9 +82,11 @@ immediately.
 @defun thread-signal thread error-symbol data
 Like @code{signal} (@pxref{Signaling Errors}), but the signal is
 delivered in the thread @var{thread}.  If @var{thread} is the current
-thread, then this just calls @code{signal} immediately.
-@code{thread-signal} will cause a thread to exit a call to
-@code{mutex-lock}, @code{condition-wait}, or @code{thread-join}.
+thread, then this just calls @code{signal} immediately.  Otherwise,
+@var{thread} will receive the signal as soon as it becomes current.
+If @var{thread} was blocked by a call to @code{mutex-lock},
+@code{condition-wait}, or @code{thread-join}; @code{thread-signal}
+will unblock it.
 @end defun
 
 @defun thread-yield
