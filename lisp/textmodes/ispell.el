@@ -837,7 +837,7 @@ See `ispell-buffer-with-debug' for an example of use."
 Internal use.")
 
 (defun ispell-find-aspell-dictionaries ()
-  "Find Aspell's dictionaries, and record in `ispell-dictionary-alist'."
+  "Find Aspell's dictionaries, and record in `ispell-aspell-dictionary-alist'."
   (unless (and ispell-really-aspell ispell-encoding8-command)
     (error "This function only works with Aspell >= 0.60"))
   (let* ((dictionaries
@@ -1277,7 +1277,7 @@ aspell is used along with Emacs).")
 
       (run-hooks 'ispell-initialize-spellchecker-hook)
 
-      ;; Add dicts to ``ispell-dictionary-alist'' unless already present.
+      ;; Add dicts to `ispell-dictionary-alist' unless already present.
       (dolist (dict (append found-dicts-alist
 			    ispell-base-dicts-override-alist
 			    ispell-dictionary-base-alist))
