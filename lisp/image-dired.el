@@ -1414,8 +1414,7 @@ You probably want to use this together with
 (define-derived-mode image-dired-thumbnail-mode
   fundamental-mode "image-dired-thumbnail"
   "Browse and manipulate thumbnail images using dired.
-Use `image-dired-dired' and `image-dired-setup-dired-keybindings' to get a
-nice setup to start with."
+Use `image-dired-minor-mode' to get a nice setup."
   (message "image-dired-thumbnail-mode enabled"))
 
 (define-derived-mode image-dired-display-image-mode
@@ -1424,98 +1423,65 @@ nice setup to start with."
 Resized or in full-size."
   (message "image-dired-display-image-mode enabled"))
 
+(defvar image-dired-minor-mode-map
+  (let ((map (make-sparse-keymap)))
+    ;; (set-keymap-parent map dired-mode-map)
+    ;; Hijack previous and next line movement. Let C-p and C-b be
+    ;; though...
+    (define-key map "p" 'image-dired-dired-previous-line)
+    (define-key map "n" 'image-dired-dired-next-line)
+    (define-key map [up] 'image-dired-dired-previous-line)
+    (define-key map [down] 'image-dired-dired-next-line)
+
+    (define-key map (kbd "C-S-n") 'image-dired-next-line-and-display)
+    (define-key map (kbd "C-S-p") 'image-dired-previous-line-and-display)
+    (define-key map (kbd "C-S-m") 'image-dired-mark-and-display-next)
+
+    (define-key map "\C-td" 'image-dired-display-thumbs)
+    (define-key map [tab] 'image-dired-jump-thumbnail-buffer)
+    (define-key map "\C-ti" 'image-dired-dired-display-image)
+    (define-key map "\C-tx" 'image-dired-dired-display-external)
+    (define-key map "\C-ta" 'image-dired-display-thumbs-append)
+    (define-key map "\C-t." 'image-dired-display-thumb)
+    (define-key map "\C-tc" 'image-dired-dired-comment-files)
+    (define-key map "\C-tf" 'image-dired-mark-tagged-files)
+
+    ;; Menu for dired
+    (easy-menu-define nil map
+      "Menu for `image-dired-minor-mode'."
+      '("Image-dired"
+        ["Copy with EXIF file name" image-dired-copy-with-exif-file-name]
+        ["Comment files" image-dired-dired-comment-files]
+        ["Mark tagged files" image-dired-mark-tagged-files]
+        ["Jump to thumbnail buffer" image-dired-jump-thumbnail-buffer]
+
+        ["Toggle movement tracking" image-dired-toggle-movement-tracking]
+        ["Toggle append browsing" image-dired-toggle-append-browsing]
+        ["Toggle display properties" image-dired-toggle-dired-display-properties]
+
+        ["Display in external viewer" image-dired-dired-display-external]
+        ["Display image" image-dired-dired-display-image]
+        ["Display this thumbnail" image-dired-display-thumb]
+        ["Display thumbnails append" image-dired-display-thumbs-append]
+
+        ["Create thumbnails for marked files" image-dired-create-thumbs]
+
+        ["Mark and display next" image-dired-mark-and-display-next]
+        ["Display thumb for previous file" image-dired-previous-line-and-display]
+        ["Display thumb for next file" image-dired-next-line-and-display]))
+    map)
+  "Keymap for `image-dired-minor-mode'.")
+
 ;;;###autoload
-(defun image-dired-setup-dired-keybindings ()
+(define-minor-mode image-dired-minor-mode
   "Setup easy-to-use keybindings for the commands to be used in dired mode.
 Note that n, p and <down> and <up> will be hijacked and bound to
 `image-dired-dired-x-line'."
-  (interactive)
+  :keymap image-dired-minor-mode-map)
 
-  ;; Hijack previous and next line movement. Let C-p and C-b be
-  ;; though...
-
-  (define-key dired-mode-map "p" 'image-dired-dired-previous-line)
-  (define-key dired-mode-map "n" 'image-dired-dired-next-line)
-  (define-key dired-mode-map [up] 'image-dired-dired-previous-line)
-  (define-key dired-mode-map [down] 'image-dired-dired-next-line)
-
-  (define-key dired-mode-map (kbd "C-S-n") 'image-dired-next-line-and-display)
-  (define-key dired-mode-map (kbd "C-S-p") 'image-dired-previous-line-and-display)
-  (define-key dired-mode-map (kbd "C-S-m") 'image-dired-mark-and-display-next)
-
-  (define-key dired-mode-map "\C-td" 'image-dired-display-thumbs)
-  (define-key dired-mode-map "\C-tt" 'image-dired-tag-files)
-  (define-key dired-mode-map "\C-tr" 'image-dired-delete-tag)
-  (define-key dired-mode-map [tab] 'image-dired-jump-thumbnail-buffer)
-  (define-key dired-mode-map "\C-ti" 'image-dired-dired-display-image)
-  (define-key dired-mode-map "\C-tx" 'image-dired-dired-display-external)
-  (define-key dired-mode-map "\C-ta" 'image-dired-display-thumbs-append)
-  (define-key dired-mode-map "\C-t." 'image-dired-display-thumb)
-  (define-key dired-mode-map "\C-tc" 'image-dired-dired-comment-files)
-  (define-key dired-mode-map "\C-tf" 'image-dired-mark-tagged-files)
-
-  ;; Menu for dired
-  (define-key dired-mode-map [menu-bar image-dired]
-    (cons "Image-Dired" (make-sparse-keymap "Image-Dired")))
-
-  (define-key dired-mode-map [menu-bar image-dired image-dired-copy-with-exif-file-name]
-    '("Copy with EXIF file name" . image-dired-copy-with-exif-file-name))
-
-  (define-key dired-mode-map [menu-bar image-dired image-dired-dired-comment-files]
-    '("Comment files" . image-dired-dired-comment-files))
-
-  (define-key dired-mode-map [menu-bar image-dired image-dired-mark-tagged-files]
-    '("Mark tagged files" . image-dired-mark-tagged-files))
-
-  (define-key dired-mode-map [menu-bar image-dired image-dired-delete-tag]
-    '("Remove tag from files" . image-dired-delete-tag))
-
-  (define-key dired-mode-map [menu-bar image-dired image-dired-tag-files]
-    '("Tag files" . image-dired-tag-files))
-
-  (define-key dired-mode-map [menu-bar image-dired image-dired-jump-thumbnail-buffer]
-    '("Jump to thumbnail buffer" . image-dired-jump-thumbnail-buffer))
-
-  (define-key dired-mode-map [menu-bar image-dired image-dired-toggle-movement-tracking]
-    '("Toggle movement tracking" . image-dired-toggle-movement-tracking))
-
-  (define-key dired-mode-map
-    [menu-bar image-dired image-dired-toggle-append-browsing]
-    '("Toggle append browsing" . image-dired-toggle-append-browsing))
-
-  (define-key dired-mode-map
-    [menu-bar image-dired image-dired-toggle-disp-props]
-    '("Toggle display properties" . image-dired-toggle-dired-display-properties))
-
-  (define-key dired-mode-map
-    [menu-bar image-dired image-dired-dired-display-external]
-    '("Display in external viewer" . image-dired-dired-display-external))
-  (define-key dired-mode-map
-    [menu-bar image-dired image-dired-dired-display-image]
-    '("Display image" . image-dired-dired-display-image))
-  (define-key dired-mode-map
-    [menu-bar image-dired image-dired-display-thumb]
-    '("Display this thumbnail" . image-dired-display-thumb))
-  (define-key dired-mode-map
-    [menu-bar image-dired image-dired-display-thumbs-append]
-    '("Display thumbnails append" . image-dired-display-thumbs-append))
-  (define-key dired-mode-map
-    [menu-bar image-dired image-dired-display-thumbs]
-    '("Display thumbnails" . image-dired-display-thumbs))
-
-  (define-key dired-mode-map
-    [menu-bar image-dired image-dired-create-thumbs]
-    '("Create thumbnails for marked files" . image-dired-create-thumbs))
-
-  (define-key dired-mode-map
-    [menu-bar image-dired image-dired-mark-and-display-next]
-    '("Mark and display next" . image-dired-mark-and-display-next))
-  (define-key dired-mode-map
-    [menu-bar image-dired image-dired-previous-line-and-display]
-    '("Display thumb for previous file" . image-dired-previous-line-and-display))
-  (define-key dired-mode-map
-    [menu-bar image-dired image-dired-next-line-and-display]
-    '("Display thumb for next file" . image-dired-next-line-and-display)))
+;;;###autoload
+(define-obsolete-function-alias 'image-dired-setup-dired-keybindings 'image-dired-minor-mode
+  "26.1")
 
 (declare-function clear-image-cache "image.c" (&optional filter))
 
