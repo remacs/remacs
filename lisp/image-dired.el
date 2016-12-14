@@ -1674,14 +1674,14 @@ Ask user how many thumbnails should be displayed per row."
              (equal (window-buffer window) buf))))
       (error "No thumbnail image at point"))))
 
-(defun image-dired-display-window-width ()
-  "Return width, in pixels, of image-dired's image display window."
-  (- (image-dired-window-width-pixels (image-dired-display-window))
+(defun image-dired-display-window-width (window)
+  "Return width, in pixels, of WINDOW."
+  (- (image-dired-window-width-pixels window)
      image-dired-display-window-width-correction))
 
-(defun image-dired-display-window-height ()
-  "Return height, in pixels, of image-dired's image display window."
-  (- (image-dired-window-height-pixels (image-dired-display-window))
+(defun image-dired-display-window-height (window)
+  "Return height, in pixels, of WINDOW."
+  (- (image-dired-window-height-pixels window)
      image-dired-display-window-height-correction))
 
 (defun image-dired-display-image (file &optional original-size)
@@ -1697,13 +1697,14 @@ original size."
   (image-dired--check-executable-exists
    'image-dired-cmd-create-temp-image-program)
   (let ((new-file (expand-file-name image-dired-temp-image-file))
+        (window (image-dired-display-window))
         width height command ret
         (image-type 'jpeg))
     (setq file (expand-file-name file))
     (if (not original-size)
         (progn
-          (setq width (image-dired-display-window-width))
-          (setq height (image-dired-display-window-height))
+          (setq width (image-dired-display-window-width window))
+          (setq height (image-dired-display-window-height window))
           (setq command
                 (format-spec
                  image-dired-cmd-create-temp-image-options
@@ -1725,6 +1726,8 @@ original size."
         (clear-image-cache)
         (image-dired-insert-image image-dired-temp-image-file image-type 0 0)
         (goto-char (point-min))
+        (set-window-vscroll window 0)
+        (set-window-hscroll window 0)
         (image-dired-update-property 'original-file-name file)))))
 
 (defun image-dired-display-thumbnail-original-image (&optional arg)
