@@ -587,9 +587,12 @@ the thumbnail file name unique.  For per-directory storage, just
 add a subdirectory.  For standard storage, produce the file name
 according to the Thumbnail Managing Standard."
   (cond ((eq 'standard image-dired-thumbnail-storage)
-         (expand-file-name
-          (concat "~/.thumbnails/normal/"
-                  (md5 (concat "file://" (expand-file-name file))) ".png")))
+         (let* ((xdg (getenv "XDG_CACHE_HOME"))
+                (dir (if (and xdg (file-name-absolute-p xdg))
+                         xdg "~/.cache")))
+           (expand-file-name
+            (concat (md5 (concat "file://" (expand-file-name file))) ".png")
+            (expand-file-name "thumbnails/normal" dir))))
         ((eq 'use-image-dired-dir image-dired-thumbnail-storage)
          (let* ((f (expand-file-name file))
                 (md5-hash
