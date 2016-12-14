@@ -1021,6 +1021,12 @@ With prefix argument ARG, remove tag from file at point."
   "Get original file name for thumbnail or display image at point."
   (get-text-property (point) 'original-file-name))
 
+(defun image-dired-file-name-at-point ()
+  "Get abbreviated file name for thumbnail or display image at point."
+  (let ((f (image-dired-original-file-name)))
+    (when f
+      (abbreviate-file-name f))))
+
 (defun image-dired-associated-dired-buffer ()
   "Get associated dired buffer at point."
   (get-text-property (point) 'associated-dired-buffer))
@@ -1416,13 +1422,15 @@ You probably want to use this together with
   fundamental-mode "image-dired-thumbnail"
   "Browse and manipulate thumbnail images using dired.
 Use `image-dired-minor-mode' to get a nice setup."
-  (message "image-dired-thumbnail-mode enabled"))
+  (buffer-disable-undo)
+  (add-hook 'file-name-at-point-functions 'image-dired-file-name-at-point nil t))
 
 (define-derived-mode image-dired-display-image-mode
   fundamental-mode "image-dired-image-display"
   "Mode for displaying and manipulating original image.
 Resized or in full-size."
-  (message "image-dired-display-image-mode enabled"))
+  (buffer-disable-undo)
+  (add-hook 'file-name-at-point-functions 'image-dired-file-name-at-point nil t))
 
 (defvar image-dired-minor-mode-map
   (let ((map (make-sparse-keymap)))
@@ -1621,16 +1629,16 @@ Ask user how many thumbnails should be displayed per row."
         (message "No thumbnail at point")
       (if (not file)
           (message "No original file name found")
-        (call-process shell-file-name nil nil nil shell-command-switch
-		      (format "%s \"%s\"" image-dired-external-viewer file))))))
+        (start-process "image-dired-thumb-external" nil
+                       image-dired-external-viewer file)))))
 
 ;;;###autoload
 (defun image-dired-dired-display-external ()
   "Display file at point using an external viewer."
   (interactive)
   (let ((file (dired-get-filename)))
-    (call-process shell-file-name nil nil nil shell-command-switch
-		  (format "%s \"%s\"" image-dired-external-viewer file))))
+    (start-process "image-dired-external" nil
+                   image-dired-external-viewer file)))
 
 (defun image-dired-window-width-pixels (window)
   "Calculate WINDOW width in pixels."
