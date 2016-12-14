@@ -43,7 +43,10 @@
 
 ;;; Image mode window-info management.
 
-(defvar-local image-mode-winprops-alist t)
+(defvar-local image-mode-winprops-alist t
+  "Alist of windows to window properties.
+Each element has the form (WINDOW . ALIST).
+See `image-mode-winprops'.")
 
 (defvar image-mode-new-window-functions nil
   "Special hook run when image data is requested in a new window.
