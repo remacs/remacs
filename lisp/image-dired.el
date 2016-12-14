@@ -255,9 +255,13 @@ is replaced by the file name of the temporary file."
   :type 'string
   :group 'image-dired)
 
-(defcustom image-dired-cmd-pngnq-program (executable-find "pngnq")
+(defcustom image-dired-cmd-pngnq-program
+  (or (executable-find "pngnq")
+      (executable-find "pngnq-s9"))
   "The file name of the `pngnq' program.
-It quantizes colors of PNG images down to 256 colors."
+It quantizes colors of PNG images down to 256 colors or fewer
+using the Neuquant procedure."
+  :version "26.1"
   :type '(choice (const :tag "Not Set" nil) string)
   :group 'image-dired)
 
