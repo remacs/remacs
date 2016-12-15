@@ -1189,14 +1189,14 @@ image."
 (defun image-dired-format-properties-string (buf file props comment)
   "Format display properties.
 BUF is the associated dired buffer, FILE is the original image file
-name, PROPS is a list of tags and COMMENT is the image file's
+name, PROPS is a stringified list of tags and COMMENT is the image file's
 comment."
   (format-spec
    image-dired-display-properties-format
    (list
     (cons ?b (or buf ""))
     (cons ?f file)
-    (cons ?t (or (princ props) ""))
+    (cons ?t (or props ""))
     (cons ?c (or comment "")))))
 
 (defun image-dired-display-thumb-properties ()
@@ -1204,11 +1204,9 @@ comment."
   (if (not (eobp))
       (let ((file-name (file-name-nondirectory (image-dired-original-file-name)))
             (dired-buf (buffer-name (image-dired-associated-dired-buffer)))
-            (props (mapconcat
-                    'princ
-                    (get-text-property (point) 'tags)
-                    ", "))
-            (comment (get-text-property (point) 'comment)))
+            (props (mapconcat #'identity (get-text-property (point) 'tags) ", "))
+            (comment (get-text-property (point) 'comment))
+            (message-log-max nil))
         (if file-name
              (message "%s"
              (image-dired-format-properties-string
@@ -2164,11 +2162,9 @@ non-nil."
   (let* ((file (dired-get-filename))
          (file-name (file-name-nondirectory file))
          (dired-buf (buffer-name (current-buffer)))
-         (props (mapconcat
-                 'princ
-                 (image-dired-list-tags file)
-                 ", "))
-         (comment (image-dired-get-comment file)))
+         (props (mapconcat #'identity (image-dired-list-tags file) ", "))
+         (comment (image-dired-get-comment file))
+         (message-log-max nil))
     (if file-name
         (message "%s"
          (image-dired-format-properties-string
