@@ -160,11 +160,12 @@
 (defgroup image-dired nil
   "Use dired to browse your images as thumbnails, and more."
   :prefix "image-dired-"
+  :link '(info-link "(emacs) Image-Dired")
   :group 'multimedia)
 
 (defcustom image-dired-dir (locate-user-emacs-file "image-dired/")
   "Directory where thumbnail images are stored."
-  :type 'string
+  :type 'directory
   :group 'image-dired)
 
 (defcustom image-dired-thumbnail-storage 'use-image-dired-dir
@@ -186,13 +187,13 @@ that allows sharing of thumbnails across different programs."
 (defcustom image-dired-db-file
   (expand-file-name ".image-dired_db" image-dired-dir)
   "Database file where file names and their associated tags are stored."
-  :type 'string
+  :type 'file
   :group 'image-dired)
 
 (defcustom image-dired-temp-image-file
   (expand-file-name ".image-dired_temp" image-dired-dir)
   "Name of temporary image file used by various commands."
-  :type 'string
+  :type 'file
   :group 'image-dired)
 
 (defcustom image-dired-gallery-dir
@@ -200,7 +201,7 @@ that allows sharing of thumbnails across different programs."
   "Directory to store generated gallery html pages.
 This path needs to be \"shared\" to the public so that it can access
 the index.html page that image-dired creates."
-  :type 'string
+  :type 'directory
   :group 'image-dired)
 
 (defcustom image-dired-gallery-image-root-url
@@ -223,7 +224,7 @@ expects to find pictures in this directory."
   "convert"
   "Executable used to create thumbnail.
 Used together with `image-dired-cmd-create-thumbnail-options'."
-  :type 'string
+  :type 'file
   :group 'image-dired)
 
 (defcustom image-dired-cmd-create-thumbnail-options
@@ -237,11 +238,10 @@ which is replaced by the file name of the thumbnail file."
   :type 'string
   :group 'image-dired)
 
-(defcustom image-dired-cmd-create-temp-image-program
-  "convert"
+(defcustom image-dired-cmd-create-temp-image-program "convert"
   "Executable used to create temporary image.
 Used together with `image-dired-cmd-create-temp-image-options'."
-  :type 'string
+  :type 'file
   :group 'image-dired)
 
 (defcustom image-dired-cmd-create-temp-image-options
@@ -311,7 +311,7 @@ with the information required by the Thumbnail Managing Standard."
   "mogrify"
   "Executable used to rotate thumbnail.
 Used together with `image-dired-cmd-rotate-thumbnail-options'."
-  :type 'string
+  :type 'file
   :group 'image-dired)
 
 (defcustom image-dired-cmd-rotate-thumbnail-options
@@ -329,7 +329,7 @@ of the thumbnail file."
   "jpegtran"
   "Executable used to rotate original image.
 Used together with `image-dired-cmd-rotate-original-options'."
-  :type 'string
+  :type 'file
   :group 'image-dired)
 
 (defcustom image-dired-cmd-rotate-original-options
@@ -347,7 +347,7 @@ original image file name and %t which is replaced by
 (defcustom image-dired-temp-rotate-image-file
   (expand-file-name ".image-dired_rotate_temp" image-dired-dir)
   "Temporary file for rotate operations."
-  :type 'string
+  :type 'file
   :group 'image-dired)
 
 (defcustom image-dired-rotate-original-ask-before-overwrite t
@@ -361,7 +361,7 @@ original file with `image-dired-temp-rotate-image-file'."
   "exiftool"
   "Program used to write EXIF data to image.
 Used together with `image-dired-cmd-write-exif-data-options'."
-  :type 'string
+  :type 'file
   :group 'image-dired)
 
 (defcustom image-dired-cmd-write-exif-data-options
@@ -377,8 +377,8 @@ which is replaced by the tag value."
 (defcustom image-dired-cmd-read-exif-data-program
   "exiftool"
   "Program used to read EXIF data to image.
-Used together with `image-dired-cmd-read-exif-data-program-options'."
-  :type 'string
+Used together with `image-dired-cmd-read-exif-data-options'."
+  :type 'file
   :group 'image-dired)
 
 (defcustom image-dired-cmd-read-exif-data-options
@@ -397,7 +397,8 @@ Used by `image-dired-gallery-generate' to leave out \"hidden\" images."
   :type '(repeat string)
   :group 'image-dired)
 
-(defcustom image-dired-thumb-size (if (eq 'standard image-dired-thumbnail-storage) 128 100)
+(defcustom image-dired-thumb-size
+  (if (eq 'standard image-dired-thumbnail-storage) 128 100)
   "Size of thumbnails, in pixels.
 This is the default size for both `image-dired-thumb-width'
 and `image-dired-thumb-height'."
@@ -538,7 +539,6 @@ Create the thumbnails directory if it does not exist."
 
 (defun image-dired-insert-image (file type relief margin)
   "Insert image FILE of image TYPE, using RELIEF and MARGIN, at point."
-
   (let ((i `(image :type ,type
                    :file ,file
                    :relief ,relief
@@ -625,8 +625,12 @@ according to the Thumbnail Managing Standard."
   "For ORIGINAL-FILE, create thumbnail image named THUMBNAIL-FILE."
   (image-dired--check-executable-exists
    'image-dired-cmd-create-thumbnail-program)
-  (let* ((width (int-to-string image-dired-thumb-width))
-         (height (int-to-string image-dired-thumb-height))
+  (let* ((width
+          (int-to-string (or (and (eq image-dired-thumbnail-storage 'standard) 128)
+                             image-dired-thumb-width)))
+         (height
+          (int-to-string (or (and (eq image-dired-thumbnail-storage 'standard) 128)
+                             image-dired-thumb-height)))
          (modif-time (format "%.0f" (float-time (nth 5 (file-attributes
                                                         original-file)))))
          (thumbnail-nq8-file (replace-regexp-in-string ".png\\'" "-nq8.png"
@@ -1615,7 +1619,9 @@ Calculate how many thumbnails fit."
          (/ width
             (+ (* 2 image-dired-thumb-relief)
                (* 2 image-dired-thumb-margin)
-               image-dired-thumb-width char-width))))
+               (or (and (eq image-dired-thumbnail-storage 'standard) 128)
+                   image-dired-thumb-width)
+               char-width))))
     (image-dired-line-up)))
 
 (defun image-dired-line-up-interactive ()
