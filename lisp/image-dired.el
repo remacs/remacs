@@ -648,7 +648,7 @@ according to the Thumbnail Managing Standard."
     (when (not (file-exists-p
                 (setq thumbnail-dir (file-name-directory thumbnail-file))))
       (message "Creating thumbnail directory.")
-      (make-directory thumbnail-dir))
+      (make-directory thumbnail-dir t))
     (call-process shell-file-name nil nil nil shell-command-switch command)))
 
 ;;;###autoload
