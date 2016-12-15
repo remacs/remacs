@@ -2283,7 +2283,34 @@ Several special characters do not work properly there."
 		(delete-file file2)
 		(should-not (file-exists-p file2))
 		(delete-directory file1)
-		(should-not (file-exists-p file1)))))
+		(should-not (file-exists-p file1))))
+
+	    ;; Check, that environment variables are set correctly.
+	    (when (and tramp--test-expensive-test (tramp--test-sh-p))
+	      (dolist (elt files)
+		;; Tramp does not support environment variables with
+		;; leading or trailing spaces.  It also does not
+		;; support the tab character.
+		(setq elt (replace-regexp-in-string "\t" " " elt)
+		      elt (replace-regexp-in-string "^\\s-+\\|\\s-+$" "" elt))
+		(let* ((default-directory tramp-test-temporary-file-directory)
+		       (shell-file-name "/bin/sh")
+		       (envvar
+			(concat "VAR_" (upcase (md5 (current-time-string)))))
+		       (tramp-remote-process-environment
+			(cons
+			 (format "%s=%s" envvar elt)
+			 tramp-remote-process-environment)))
+		  ;; We force a reconnect, in order to have a clean
+		  ;; environment.
+		  (tramp-cleanup-connection
+		   (tramp-dissect-file-name tramp-test-temporary-file-directory)
+		   'keep-debug 'keep-password)
+		  (should
+		   (string-equal
+		    elt
+		    (shell-command-to-string
+		     (format "echo -n $%s" envvar))))))))
 
 	;; Cleanup.
 	(ignore-errors (delete-directory tmp-name1 'recursive))
