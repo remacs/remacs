@@ -4201,10 +4201,11 @@ process to set up.  VEC specifies the connection."
       (when vars
 	(tramp-send-command
 	 vec
-	 (format "while read var val; do export $var=$val; done <<'%s'\n%s\n%s"
-		 tramp-end-of-heredoc
-		 (mapconcat 'identity vars "\n")
-		 tramp-end-of-heredoc)
+	 (format
+	  "while read var val; do export $var=\"$val\"; done <<'%s'\n%s\n%s"
+	  tramp-end-of-heredoc
+	  (mapconcat 'identity vars "\n")
+	  tramp-end-of-heredoc)
 	 t))
       (when unset
 	(tramp-send-command
