@@ -150,7 +150,7 @@ xg_select (int fds_lim, fd_set *rfds, fd_set *wfds, fd_set *efds,
 #else
   need_to_dispatch = true;
 #endif
-  if (need_to_dispatch)
+  if (need_to_dispatch && context_acquired)
     {
       int pselect_errno = errno;
       /* Prevent g_main_dispatch recursion, that would occur without
