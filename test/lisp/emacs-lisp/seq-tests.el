@@ -386,5 +386,10 @@ Evaluate BODY for each created sequence.
   (should-error (seq-random-elt []))
   (should-error (seq-random-elt "")))
 
+(ert-deftest test-seq-mapn-circular-lists ()
+  (let ((l1 '#1=(1 . #1#)))
+    (should (equal (seq-mapn #'+ '(3 4 5 7) l1)
+                   '(4 5 6 8)))))
+
 (provide 'seq-tests)
 ;;; seq-tests.el ends here

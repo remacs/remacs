@@ -178,7 +178,10 @@ Return a list of the results.
 
 \(fn FUNCTION SEQUENCES...)"
   (let ((result nil)
-        (sequences (seq-map (lambda (s) (seq-into s 'list))
+        (sequences (seq-map (lambda (s)
+                              (if (listp s)
+                                  s
+                                (seq-into s 'list)))
                             (cons sequence sequences))))
     (while (not (memq nil sequences))
       (push (apply function (seq-map #'car sequences)) result)
