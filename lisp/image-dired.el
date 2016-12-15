@@ -151,6 +151,7 @@
 
 (require 'dired)
 (require 'format-spec)
+(require 'image-mode)
 (require 'widget)
 
 (eval-when-compile
@@ -1349,7 +1350,6 @@ You probably want to use this together with
     (define-key map " " 'image-dired-display-next-thumbnail-original)
     (define-key map (kbd "DEL") 'image-dired-display-previous-thumbnail-original)
     (define-key map "c" 'image-dired-comment-thumbnail)
-    (define-key map "q" 'quit-window)
 
     ;; Mouse
     (define-key map [mouse-2] 'image-dired-mouse-display-image)
@@ -1396,9 +1396,27 @@ You probably want to use this together with
 
 (defvar image-dired-display-image-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "q" 'quit-window)
+    ;; `image-mode-map' has bindings that do not make sense in image-dired
+    ;; (set-keymap-parent map image-mode-map)
     (define-key map "f" 'image-dired-display-current-image-full)
     (define-key map "s" 'image-dired-display-current-image-sized)
+    (define-key map "g" nil)
+
+    ;; Useful bindings from `image-mode-map'
+    (define-key map [remap forward-char] 'image-forward-hscroll)
+    (define-key map [remap backward-char] 'image-backward-hscroll)
+    (define-key map [remap right-char] 'image-forward-hscroll)
+    (define-key map [remap left-char] 'image-backward-hscroll)
+    (define-key map [remap previous-line] 'image-previous-line)
+    (define-key map [remap next-line] 'image-next-line)
+    (define-key map [remap scroll-up] 'image-scroll-up)
+    (define-key map [remap scroll-down] 'image-scroll-down)
+    (define-key map [remap scroll-up-command] 'image-scroll-up)
+    (define-key map [remap scroll-down-command] 'image-scroll-down)
+    (define-key map [remap move-beginning-of-line] 'image-bol)
+    (define-key map [remap move-end-of-line] 'image-eol)
+    (define-key map [remap beginning-of-buffer] 'image-bob)
+    (define-key map [remap end-of-buffer] 'image-eob)
 
     (easy-menu-define nil map
       "Menu for `image-dired-display-image-mode-map'."
@@ -1430,17 +1448,18 @@ You probably want to use this together with
       (error "No original file name at point"))))
 
 (define-derived-mode image-dired-thumbnail-mode
-  fundamental-mode "image-dired-thumbnail"
+  special-mode "image-dired-thumbnail"
   "Browse and manipulate thumbnail images using dired.
 Use `image-dired-minor-mode' to get a nice setup."
   (buffer-disable-undo)
   (add-hook 'file-name-at-point-functions 'image-dired-file-name-at-point nil t))
 
 (define-derived-mode image-dired-display-image-mode
-  fundamental-mode "image-dired-image-display"
+  special-mode "image-dired-image-display"
   "Mode for displaying and manipulating original image.
 Resized or in full-size."
   (buffer-disable-undo)
+  (image-mode-setup-winprops)
   (add-hook 'file-name-at-point-functions 'image-dired-file-name-at-point nil t))
 
 (defvar image-dired-minor-mode-map
