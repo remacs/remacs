@@ -1549,8 +1549,8 @@ With prefix argument ARG, create thumbnails even if they already exist
       ;; If the user overrides the exist check, we must clear the
       ;; image cache so that if the user wants to display the
       ;; thumbnail, it is not fetched from cache.
-      (if arg
-          (clear-image-cache))
+      (when arg
+        (clear-image-cache (expand-file-name thumb-name)))
       (when (or (not (file-exists-p thumb-name))
                 arg)
         (when (not (= 0 (image-dired-create-thumb curr-file thumb-name)))
@@ -1808,18 +1808,17 @@ With prefix argument ARG, display image in its original size."
    'image-dired-cmd-rotate-thumbnail-program)
   (if (not (image-dired-image-at-point-p))
       (message "No thumbnail at point")
-    (let ((file (image-dired-thumb-name (image-dired-original-file-name)))
-          command)
+    (let* ((file (image-dired-thumb-name (image-dired-original-file-name)))
+           (thumb (expand-file-name file))
+           command)
       (setq command (format-spec
                      image-dired-cmd-rotate-thumbnail-options
                      (list
                       (cons ?p image-dired-cmd-rotate-thumbnail-program)
                       (cons ?d degrees)
-                      (cons ?t (expand-file-name file)))))
+                      (cons ?t thumb))))
       (call-process shell-file-name nil nil nil shell-command-switch command)
-      ;; Clear the cache to refresh image. I wish I could just refresh
-      ;; the current file but I do not know how to do that. Yet...
-      (clear-image-cache))))
+      (clear-image-cache thumb))))
 
 (defun image-dired-rotate-thumbnail-left ()
   "Rotate thumbnail left (counter clockwise) 90 degrees.
@@ -1842,9 +1841,10 @@ overwritten.  This confirmation can be turned off using
 (defun image-dired-refresh-thumb ()
   "Force creation of new image for current thumbnail."
   (interactive)
-  (let ((file (image-dired-original-file-name)))
-    (clear-image-cache)
-    (image-dired-create-thumb file (image-dired-thumb-name file))))
+  (let* ((file (image-dired-original-file-name))
+         (thumb (expand-file-name (image-dired-thumb-name file))))
+    (clear-image-cache (expand-file-name thumb))
+    (image-dired-create-thumb file thumb)))
 
 (defun image-dired-rotate-original (degrees)
   "Rotate original image DEGREES degrees."
