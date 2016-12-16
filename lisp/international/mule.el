@@ -713,7 +713,11 @@ decoded by the coding system itself and before any functions in
 `after-insert-functions' are called.  This function is passed one
 argument: the number of characters in the text to convert, with
 point at the start of the text.  The function should leave point
-unchanged, and should return the new character count.
+unchanged, and should return the new character count.  Note that
+this function should avoid reading from files or receiving text
+from subprocesses -- anything that could invoke decoding; if it
+must do so, it should bind `coding-system-for-read' to a value
+other than the current coding-system, to avoid infinite recursion.
 
 `:pre-write-conversion'
 
@@ -722,7 +726,12 @@ VALUE must be a function to call after all functions in
 called, and before the text is encoded by the coding system
 itself.  This function should convert the whole text in the
 current buffer.  For backward compatibility, this function is
-passed two arguments which can be ignored.
+passed two arguments which can be ignored.  Note that this
+function should avoid writing to files or sending text to
+subprocesses -- anything that could invoke encoding; if it
+must do so, it should bind `coding-system-for-write' to a
+value other than the current coding-system, to avoid infinite
+recursion.
 
 `:default-char'
 
