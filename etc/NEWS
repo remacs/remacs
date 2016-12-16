@@ -457,6 +457,12 @@ details.
 provided: 'image-property'.
 
 ---
+*** New commands 'image-scroll-left' and 'image-scroll-right'
+for 'image-mode' that complement 'image-scroll-up' and
+'image-scroll-down': they have the same prefix arg behavior and stop
+at image boundaries.
+
+---
 ** The default 'Info-default-directory-list' no longer checks some obsolete
 directory suffixes (gnu, gnu/lib, gnu/lib/emacs, emacs, lib, lib/emacs)
 when searching for info directories.
