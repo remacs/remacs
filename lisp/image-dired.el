@@ -180,8 +180,9 @@ means that each thumbnail is stored in a subdirectory called
 stored and generated according to the Thumbnail Managing Standard
 that allows sharing of thumbnails across different programs."
   :type '(choice :tag "How to store thumbnail files"
-                 (const :tag "Thumbnail Managing Standard" standard)
                  (const :tag "Use image-dired-dir" use-image-dired-dir)
+                 (const :tag "Thumbnail Managing Standard (normal 128x128)" standard)
+                 (const :tag "Thumbnail Managing Standard (large 256x256)" standard-large)
                  (const :tag "Per-directory" per-directory))
   :group 'image-dired)
 
@@ -399,7 +400,10 @@ Used by `image-dired-gallery-generate' to leave out \"hidden\" images."
   :group 'image-dired)
 
 (defcustom image-dired-thumb-size
-  (if (eq 'standard image-dired-thumbnail-storage) 128 100)
+  (cond
+   ((eq 'standard image-dired-thumbnail-storage) 128)
+   ((eq 'standard-large image-dired-thumbnail-storage) 256)
+   (t 100))
   "Size of thumbnails, in pixels.
 This is the default size for both `image-dired-thumb-width'
 and `image-dired-thumb-height'."
@@ -569,7 +573,8 @@ Add text properties ORIGINAL-FILE-NAME and ASSOCIATED-DIRED-BUFFER."
     (setq beg (point))
     (image-dired-insert-image file
                         ;; TODO: this should depend on the real file type
-                        (if (eq 'standard image-dired-thumbnail-storage)
+                        (if (memq image-dired-thumbnail-storage
+                                  '(standard standard-large))
                             'png 'jpeg)
                         image-dired-thumb-relief
                         image-dired-thumb-margin)
@@ -591,13 +596,16 @@ MD5-hash of the image file's directory name and add that to make
 the thumbnail file name unique.  For per-directory storage, just
 add a subdirectory.  For standard storage, produce the file name
 according to the Thumbnail Managing Standard."
-  (cond ((eq 'standard image-dired-thumbnail-storage)
+  (cond ((memq image-dired-thumbnail-storage '(standard standard-large))
          (let* ((xdg (getenv "XDG_CACHE_HOME"))
                 (dir (if (and xdg (file-name-absolute-p xdg))
-                         xdg "~/.cache")))
+                         xdg "~/.cache"))
+                (thumbdir (cl-case image-dired-thumbnail-storage
+                            (standard "thumbnails/normal")
+                            (standard-large "thumbnails/large"))))
            (expand-file-name
             (concat (md5 (concat "file://" (expand-file-name file))) ".png")
-            (expand-file-name "thumbnails/normal" dir))))
+            (expand-file-name thumbdir dir))))
         ((eq 'use-image-dired-dir image-dired-thumbnail-storage)
          (let* ((f (expand-file-name file))
                 (md5-hash
@@ -622,23 +630,29 @@ according to the Thumbnail Managing Standard."
   (unless (executable-find (symbol-value executable))
     (error "Executable %S not found" executable)))
 
+(defun image-dired-thumb-size (dimension)
+  "Return thumb size depending on `image-dired-thumbnail-storage'.
+DIMENSION should be either the symbol 'width or 'height."
+  (cond
+   ((eq 'standard image-dired-thumbnail-storage) 128)
+   ((eq 'standard-large image-dired-thumbnail-storage) 256)
+   (t (cl-ecase dimension
+        (width image-dired-thumb-width)
+        (height image-dired-thumb-height)))))
+
 (defun image-dired-create-thumb (original-file thumbnail-file)
   "For ORIGINAL-FILE, create thumbnail image named THUMBNAIL-FILE."
   (image-dired--check-executable-exists
    'image-dired-cmd-create-thumbnail-program)
-  (let* ((width
-          (int-to-string (or (and (eq image-dired-thumbnail-storage 'standard) 128)
-                             image-dired-thumb-width)))
-         (height
-          (int-to-string (or (and (eq image-dired-thumbnail-storage 'standard) 128)
-                             image-dired-thumb-height)))
+  (let* ((width (int-to-string (image-dired-thumb-size 'width)))
+         (height (int-to-string (image-dired-thumb-size 'height)))
          (modif-time (format "%.0f" (float-time (nth 5 (file-attributes
                                                         original-file)))))
          (thumbnail-nq8-file (replace-regexp-in-string ".png\\'" "-nq8.png"
                                                        thumbnail-file))
          (command
           (format-spec
-           (if (eq 'standard image-dired-thumbnail-storage)
+           (if (memq image-dired-thumbnail-storage '(standard standard-large))
                image-dired-cmd-create-standard-thumbnail-command
              image-dired-cmd-create-thumbnail-options)
            (list
@@ -1636,8 +1650,7 @@ Calculate how many thumbnails fit."
          (/ width
             (+ (* 2 image-dired-thumb-relief)
                (* 2 image-dired-thumb-margin)
-               (or (and (eq image-dired-thumbnail-storage 'standard) 128)
-                   image-dired-thumb-width)
+               (image-dired-thumb-size 'width)
                char-width))))
     (image-dired-line-up)))
 
