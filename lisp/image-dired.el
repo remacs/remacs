@@ -1,4 +1,4 @@
-;;; image-dired.el --- use dired to browse and manipulate your images
+;;; image-dired.el --- use dired to browse and manipulate your images -*- lexical-binding: t -*-
 ;;
 ;; Copyright (C) 2005-2016 Free Software Foundation, Inc.
 ;;
