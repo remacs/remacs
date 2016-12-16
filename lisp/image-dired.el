@@ -1463,6 +1463,7 @@ You probably want to use this together with
   special-mode "image-dired-thumbnail"
   "Browse and manipulate thumbnail images using dired.
 Use `image-dired-minor-mode' to get a nice setup."
+  :group 'image-dired
   (buffer-disable-undo)
   (add-hook 'file-name-at-point-functions 'image-dired-file-name-at-point nil t))
 
@@ -1470,6 +1471,7 @@ Use `image-dired-minor-mode' to get a nice setup."
   special-mode "image-dired-image-display"
   "Mode for displaying and manipulating original image.
 Resized or in full-size."
+  :group 'image-dired
   (buffer-disable-undo)
   (image-mode-setup-winprops)
   (add-hook 'file-name-at-point-functions 'image-dired-file-name-at-point nil t))
@@ -1741,26 +1743,22 @@ original size."
    'image-dired-cmd-create-temp-image-program)
   (let ((new-file (expand-file-name image-dired-temp-image-file))
         (window (image-dired-display-window))
-        width height command ret
         (image-type 'jpeg))
     (setq file (expand-file-name file))
     (if (not original-size)
-        (progn
-          (setq width (image-dired-display-window-width window))
-          (setq height (image-dired-display-window-height window))
-          (setq command
+        (let* ((command
                 (format-spec
                  image-dired-cmd-create-temp-image-options
                  (list
                   (cons ?p image-dired-cmd-create-temp-image-program)
-                  (cons ?w width)
-                  (cons ?h height)
+                  (cons ?w (image-dired-display-window-width window))
+                  (cons ?h (image-dired-display-window-height window))
                   (cons ?f file)
                   (cons ?t new-file))))
-          (setq ret (call-process shell-file-name nil nil nil
-				  shell-command-switch command))
-          (if (not (= 0 ret))
-              (error "Could not resize image")))
+               (ret (call-process shell-file-name nil nil nil
+				  shell-command-switch command)))
+          (when (not (zerop ret))
+            (error "Could not resize image")))
       (setq image-type (image-type-from-file-name file))
       (copy-file file new-file t))
     (with-current-buffer (image-dired-create-display-image-buffer)
@@ -1983,7 +1981,7 @@ function.  The result is a couple of new files in
   (interactive)
   (let (new-name
         (files (dired-get-marked-files)))
-    (mapcar
+    (mapc
      (lambda (curr-file)
        (setq new-name
              (format "%s/%s"
@@ -2433,8 +2431,7 @@ the operation by activating the Cancel button.\n\n")
                             :size 60
                             :format "%v "
                             :value (or (mapconcat
-                                        (lambda (tag)
-                                          tag)
+                                        #'identity
                                         (image-dired-list-tags file)
                                         ",") "")))
        ;; Save information in all widgets so that we can use it when
