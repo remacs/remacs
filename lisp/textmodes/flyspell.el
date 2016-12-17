@@ -1949,7 +1949,7 @@ This command proposes various successive corrections for the current word."
               (funcall flyspell-insert-function word)
               (flyspell-word)
               (flyspell-display-next-corrections flyspell-auto-correct-ring))
-            (flyspell-ajust-cursor-point pos (point) old-max)
+            (flyspell-adjust-cursor-point pos (point) old-max)
             (setq flyspell-auto-correct-pos (point)))
         ;; Fetch the word to be checked.
         (let ((word (flyspell-get-word)))
@@ -2016,7 +2016,7 @@ This command proposes various successive corrections for the current word."
                                     (flyspell-word)
                                     (flyspell-display-next-corrections
                                      (cons new-word flyspell-auto-correct-ring))
-                                    (flyspell-ajust-cursor-point pos
+                                    (flyspell-adjust-cursor-point pos
                                                                  (point)
                                                                  old-max))))))))))
                 (setq flyspell-auto-correct-pos (point))
@@ -2185,15 +2185,15 @@ If OPOINT is non-nil, restore point there after adjusting it for replacement."
              (funcall flyspell-insert-function new-word)
              (if flyspell-abbrev-p
                  (flyspell-define-abbrev word new-word)))
-           (flyspell-ajust-cursor-point save cursor-location old-max)))
+           (flyspell-adjust-cursor-point save cursor-location old-max)))
         (t
          (goto-char save)
          nil)))
 
 ;;*---------------------------------------------------------------------*/
-;;*    flyspell-ajust-cursor-point ...                                  */
+;;*    flyspell-adjust-cursor-point ...                                  */
 ;;*---------------------------------------------------------------------*/
-(defun flyspell-ajust-cursor-point (save cursor-location old-max)
+(defun flyspell-adjust-cursor-point (save cursor-location old-max)
   (if (>= save cursor-location)
       (let ((new-pos (+ save (- (point-max) old-max))))
 	(goto-char (cond
