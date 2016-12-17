@@ -1691,9 +1691,13 @@ locally on a remote file name.  When the local system is a W32 system
 but the remote system is Unix, this introduces a superfluous drive
 letter into the file name.  This function removes it."
   (save-match-data
-    (if (string-match "\\`[a-zA-Z]:/" name)
-	(replace-match "/" nil t name)
-      name)))
+    (funcall
+     (if (tramp-compat-file-name-quoted-p name)
+	 'tramp-compat-file-name-quote 'identity)
+     (let ((name (tramp-compat-file-name-unquote name)))
+       (if (string-match "\\`[a-zA-Z]:/" name)
+	   (replace-match "/" nil t name)
+	 name)))))
 
 ;;; Config Manipulation Functions:
 
