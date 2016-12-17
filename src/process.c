@@ -4937,8 +4937,8 @@ wait_reading_process_output_1 (void)
    READ_KBD is:
      0 to ignore keyboard input, or
      1 to return when input is available, or
-     -1 meaning caller will actually read the input, so don't throw to
-       the quit handler, or
+    -1 meaning caller will actually read the input, so don't throw to
+       the quit handler
 
    DO_DISPLAY means redisplay should be done to show subprocess
      output that arrives.

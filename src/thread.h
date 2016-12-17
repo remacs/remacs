@@ -78,7 +78,7 @@ struct thread_state
   /* Chain of condition handlers currently in effect.
      The elements of this chain are contained in the stack frames
      of Fcondition_case and internal_condition_case.
-     When an error is signaled (by calling Fsignal, below),
+     When an error is signaled (by calling Fsignal),
      this chain is searched for an element that applies.  */
   struct handler *m_handlerlist;
 #define handlerlist (current_thread->m_handlerlist)
@@ -143,7 +143,7 @@ struct thread_state
   Lisp_Object m_re_match_object;
 #define re_match_object (current_thread->m_re_match_object)
 
-  /* This variable is different from waiting_for_input in keyboard.c.
+  /* This member is different from waiting_for_input.
      It is used to communicate to a lisp process-filter/sentinel (via the
      function Fwaiting_for_user_input_p) whether Emacs was waiting
      for user-input when that process-filter was called.
