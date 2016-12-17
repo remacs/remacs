@@ -26,9 +26,7 @@
 # include <sys/param.h>
 #endif
 
-#ifndef __MINGW32__
 #include <errno.h>                             /* For detecting Plan9.  */
-#endif
 
 #if defined __sferror || defined __DragonFly__ || defined __ANDROID__
   /* FreeBSD, NetBSD, OpenBSD, DragonFly, Mac OS X, Cygwin, Android */
