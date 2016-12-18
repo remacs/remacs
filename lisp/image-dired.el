@@ -1424,6 +1424,8 @@ You probably want to use this together with
     (define-key map [remap scroll-down] 'image-scroll-down)
     (define-key map [remap scroll-up-command] 'image-scroll-up)
     (define-key map [remap scroll-down-command] 'image-scroll-down)
+    (define-key map [remap scroll-left] 'image-scroll-left)
+    (define-key map [remap scroll-right] 'image-scroll-right)
     (define-key map [remap move-beginning-of-line] 'image-bol)
     (define-key map [remap move-end-of-line] 'image-eol)
     (define-key map [remap beginning-of-buffer] 'image-bob)
