@@ -3092,6 +3092,36 @@ the prefix syntax flag (p).  */)
   return Qnil;
 }
 
+
+/* If the character at FROM_BYTE is the second part of a 2-character
+   comment opener based on PREV_FROM_SYNTAX, update STATE and return
+   true.  */
+static bool
+in_2char_comment_start (struct lisp_parse_state *state,
+                        int prev_from_syntax,
+                        ptrdiff_t prev_from,
+                        ptrdiff_t from_byte)
+{
+  int c1, syntax;
+  if (SYNTAX_FLAGS_COMSTART_FIRST (prev_from_syntax)
+      && (c1 = FETCH_CHAR_AS_MULTIBYTE (from_byte),
+          syntax = SYNTAX_WITH_FLAGS (c1),
+          SYNTAX_FLAGS_COMSTART_SECOND (syntax)))
+    {
+      /* Record the comment style we have entered so that only
+         the comment-end sequence of the same style actually
+         terminates the comment section.  */
+      state->comstyle
+        = SYNTAX_FLAGS_COMMENT_STYLE (syntax, prev_from_syntax);
+      bool comnested = (SYNTAX_FLAGS_COMMENT_NESTED (prev_from_syntax)
+                        | SYNTAX_FLAGS_COMMENT_NESTED (syntax));
+      state->incomment = comnested ? 1 : -1;
+      state->comstr_start = prev_from;
+      return true;
+    }
+  return false;
+}
+
 /* Parse forward from FROM / FROM_BYTE to END,
    assuming that FROM has state STATE,
    and return a description of the state of the parse at END.
@@ -3107,8 +3137,6 @@ scan_sexps_forward (struct lisp_parse_state *state,
 		    int commentstop)
 {
   enum syntaxcode code;
-  int c1;
-  bool comnested;
   struct level { ptrdiff_t last, prev; };
   struct level levelstart[100];
   struct level *curlevel = levelstart;
@@ -3122,7 +3150,6 @@ scan_sexps_forward (struct lisp_parse_state *state,
   ptrdiff_t prev_from;		/* Keep one character before FROM.  */
   ptrdiff_t prev_from_byte;
   int prev_from_syntax, prev_prev_from_syntax;
-  int syntax;
   bool boundary_stop = commentstop == -1;
   bool nofence;
   bool found;
@@ -3187,53 +3214,31 @@ do { prev_from = from;				\
     }
   else if (start_quoted)
     goto startquoted;
+  else if ((from < end)
+           && (in_2char_comment_start (state, prev_from_syntax,
+                                       prev_from, from_byte)))
+    {
+      INC_FROM;
+      prev_from_syntax = Smax; /* the syntax has already been "used up". */
+      goto atcomment;
+    }
 
   while (from < end)
     {
-      if (SYNTAX_FLAGS_COMSTART_FIRST (prev_from_syntax)
-	  && (c1 = FETCH_CHAR (from_byte),
-	      syntax = SYNTAX_WITH_FLAGS (c1),
-	      SYNTAX_FLAGS_COMSTART_SECOND (syntax)))
-	{
-	  /* Record the comment style we have entered so that only
-	     the comment-end sequence of the same style actually
-	     terminates the comment section.  */
-	  state->comstyle
-	    = SYNTAX_FLAGS_COMMENT_STYLE (syntax, prev_from_syntax);
-	  comnested = (SYNTAX_FLAGS_COMMENT_NESTED (prev_from_syntax)
-		       | SYNTAX_FLAGS_COMMENT_NESTED (syntax));
-	  state->incomment = comnested ? 1 : -1;
-	  state->comstr_start = prev_from;
-	  INC_FROM;
-          prev_from_syntax = Smax; /* the syntax has already been
-                                      "used up". */
-	  code = Scomment;
-	}
-      else
+      INC_FROM;
+
+      if ((from < end)
+          && (in_2char_comment_start (state, prev_from_syntax,
+                                      prev_from, from_byte)))
         {
           INC_FROM;
-          code = prev_from_syntax & 0xff;
-          if (code == Scomment_fence)
-            {
-              /* Record the comment style we have entered so that only
-                 the comment-end sequence of the same style actually
-                 terminates the comment section.  */
-              state->comstyle = ST_COMMENT_STYLE;
-              state->incomment = -1;
-              state->comstr_start = prev_from;
-              code = Scomment;
-            }
-          else if (code == Scomment)
-            {
-              state->comstyle = SYNTAX_FLAGS_COMMENT_STYLE (prev_from_syntax, 0);
-              state->incomment = (SYNTAX_FLAGS_COMMENT_NESTED (prev_from_syntax) ?
-                                 1 : -1);
-              state->comstr_start = prev_from;
-            }
+          prev_from_syntax = Smax; /* the syntax has already been "used up". */
+          goto atcomment;
         }
 
       if (SYNTAX_FLAGS_PREFIX (prev_from_syntax))
 	continue;
+      code = prev_from_syntax & 0xff;
       switch (code)
 	{
 	case Sescape:
@@ -3252,24 +3257,15 @@ do { prev_from = from;				\
 	symstarted:
 	  while (from < end)
 	    {
-	      int symchar = FETCH_CHAR_AS_MULTIBYTE (from_byte);
-
-              if (SYNTAX_FLAGS_COMSTART_FIRST (prev_from_syntax)
-                  && (syntax = SYNTAX_WITH_FLAGS (symchar),
-                      SYNTAX_FLAGS_COMSTART_SECOND (syntax)))
+              if (in_2char_comment_start (state, prev_from_syntax,
+                                          prev_from, from_byte))
                 {
-                  state->comstyle
-                    = SYNTAX_FLAGS_COMMENT_STYLE (syntax, prev_from_syntax);
-                  comnested = (SYNTAX_FLAGS_COMMENT_NESTED (prev_from_syntax)
-                               | SYNTAX_FLAGS_COMMENT_NESTED (syntax));
-                  state->incomment = comnested ? 1 : -1;
-                  state->comstr_start = prev_from;
                   INC_FROM;
-                  prev_from_syntax = Smax;
-                  code = Scomment;
+                  prev_from_syntax = Smax; /* the syntax has already been "used up". */
                   goto atcomment;
                 }
 
+	      int symchar = FETCH_CHAR_AS_MULTIBYTE (from_byte);
               switch (SYNTAX (symchar))
 		{
 		case Scharquote:
@@ -3290,8 +3286,19 @@ do { prev_from = from;				\
 	  curlevel->prev = curlevel->last;
 	  break;
 
-	case Scomment_fence: /* Can't happen because it's handled above.  */
+	case Scomment_fence:
+          /* Record the comment style we have entered so that only
+             the comment-end sequence of the same style actually
+             terminates the comment section.  */
+          state->comstyle = ST_COMMENT_STYLE;
+          state->incomment = -1;
+          state->comstr_start = prev_from;
+          goto atcomment;
 	case Scomment:
+          state->comstyle = SYNTAX_FLAGS_COMMENT_STYLE (prev_from_syntax, 0);
+          state->incomment = (SYNTAX_FLAGS_COMMENT_NESTED (prev_from_syntax) ?
+                              1 : -1);
+          state->comstr_start = prev_from;
         atcomment:
           if (commentstop || boundary_stop) goto done;
 	startincomment:
