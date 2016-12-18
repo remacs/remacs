@@ -646,8 +646,7 @@ DIMENSION should be either the symbol 'width or 'height."
    'image-dired-cmd-create-thumbnail-program)
   (let* ((width (int-to-string (image-dired-thumb-size 'width)))
          (height (int-to-string (image-dired-thumb-size 'height)))
-         (modif-time (format "%.0f" (float-time (nth 5 (file-attributes
-                                                        original-file)))))
+         (modif-time (floor (float-time (nth 5 (file-attributes original-file)))))
          (thumbnail-nq8-file (replace-regexp-in-string ".png\\'" "-nq8.png"
                                                        thumbnail-file))
          (command
