@@ -3338,7 +3338,10 @@ Returns the sum SHIFT due to changes in word replacements."
 	  ;; Markers can move with highlighting!  This destroys
 	  ;; end of region markers line-end and ispell-region-end
 	  (let ((word-start
-		 (copy-marker (+ ispell-start (car (cdr poss)))))
+                 ;; There is a -1 offset here as the string is escaped
+                 ;; with '^' to prevent us accidentally sending any
+                 ;; ispell commands.
+		 (copy-marker (+ ispell-start -1 (car (cdr poss)))))
 		(word-len (length (car poss)))
 		(line-end (copy-marker ispell-end))
 		(line-start (copy-marker ispell-start))
