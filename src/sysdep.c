@@ -765,6 +765,23 @@ unblock_child_signal (sigset_t const *oldset)
   pthread_sigmask (SIG_SETMASK, oldset, 0);
 }
 
+/* Block SIGINT.  */
+void
+block_interrupt_signal (sigset_t *oldset)
+{
+  sigset_t blocked;
+  sigemptyset (&blocked);
+  sigaddset (&blocked, SIGINT);
+  pthread_sigmask (SIG_BLOCK, &blocked, oldset);
+}
+
+/* Restore previously saved signal mask.  */
+void
+restore_signal_mask (sigset_t const *oldset)
+{
+  pthread_sigmask (SIG_SETMASK, oldset, 0);
+}
+
 #endif	/* !MSDOS */
 
 /* Saving and restoring the process group of Emacs's terminal.  */

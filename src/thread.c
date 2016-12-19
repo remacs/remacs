@@ -24,6 +24,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "process.h"
 #include "coding.h"
+#include "syssignal.h"
 
 static struct thread_state primary_thread;
 
@@ -98,6 +99,23 @@ acquire_global_lock (struct thread_state *self)
 {
   sys_mutex_lock (&global_lock);
   post_acquire_global_lock (self);
+}
+
+/* This is called from keyboard.c when it detects that SIGINT
+   interrupted thread_select before the current thread could acquire
+   the lock.  We must acquire the lock to prevent a thread from
+   running without holding the global lock, and to avoid repeated
+   calls to sys_mutex_unlock, which invokes undefined behavior.  */
+void
+maybe_reacquire_global_lock (void)
+{
+  if (current_thread->not_holding_lock)
+    {
+      struct thread_state *self = current_thread;
+
+      acquire_global_lock (self);
+      current_thread->not_holding_lock = 0;
+    }
 }
 
 
@@ -493,11 +511,20 @@ really_call_select (void *arg)
 {
   struct select_args *sa = arg;
   struct thread_state *self = current_thread;
+  sigset_t oldset;
 
+  block_interrupt_signal (&oldset);
+  self->not_holding_lock = 1;
   release_global_lock ();
+  restore_signal_mask (&oldset);
+
   sa->result = (sa->func) (sa->max_fds, sa->rfds, sa->wfds, sa->efds,
 			   sa->timeout, sa->sigmask);
+
+  block_interrupt_signal (&oldset);
   acquire_global_lock (self);
+  self->not_holding_lock = 0;
+  restore_signal_mask (&oldset);
 }
 
 int
