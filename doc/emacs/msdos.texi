@@ -580,7 +580,11 @@ variable @code{w32-rwindow-modifier} controls the effect of the right
 Windows key, and @code{w32-scroll-lock-modifier} does the same for the
 @key{ScrLock} key.  If these variables are set to @code{nil}, the
 right Windows key produces the symbol @code{rwindow} and @key{ScrLock}
-produces the symbol @code{scroll}.
+produces the symbol @code{scroll}.  If you want @key{ScrLock} to
+produce the same effect as in other applications, i.e.@: toggle the
+Scroll Lock @acronym{LED} indication on the keyboard, set
+@code{w32-scroll-lock-modifier} to @code{t} or any non-@code{nil}
+value other than the above modifier symbols.
 
 @vindex w32-pass-alt-to-system
 @cindex Windows system menu
