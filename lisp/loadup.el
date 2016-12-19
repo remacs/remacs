@@ -301,6 +301,7 @@
       ;; already produced, because it needs uni-*.el files that might
       ;; not be built early enough during bootstrap.
       (when (load-history-filename-element "charprop\\.el")
+        (load "international/mule-util")
         (load "international/ucs-normalize")
         (load "term/ns-win"))))
 (if (fboundp 'x-create-frame)
