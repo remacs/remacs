@@ -3442,25 +3442,51 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	    if (! NILP (result))
 	      return unbind_to (count, result);
 	  }
+	{
+	  Lisp_Object result;
+	  ptrdiff_t nbytes = p - read_buffer;
+	  ptrdiff_t nchars
+	    = (multibyte
+	       ? multibyte_chars_in_text ((unsigned char *) read_buffer,
+					  nbytes)
+	       : nbytes);
 
-	ptrdiff_t nbytes = p - read_buffer;
-	ptrdiff_t nchars
-	  = (multibyte
-	     ? multibyte_chars_in_text ((unsigned char *) read_buffer,
-					nbytes)
-	     : nbytes);
-	Lisp_Object name = ((uninterned_symbol && ! NILP (Vpurify_flag)
-			     ? make_pure_string : make_specified_string)
-			    (read_buffer, nchars, nbytes, multibyte));
-	Lisp_Object result = (uninterned_symbol ? Fmake_symbol (name)
-			      : Fintern (name, Qnil));
+	  if (uninterned_symbol)
+	    {
+	      Lisp_Object name
+		= ((! NILP (Vpurify_flag)
+		    ? make_pure_string : make_specified_string)
+		   (read_buffer, nchars, nbytes, multibyte));
+	      result = Fmake_symbol (name);
+	    }
+	  else
+	    {
+	      /* Don't create the string object for the name unless
+		 we're going to retain it in a new symbol.
 
-	if (EQ (Vread_with_symbol_positions, Qt)
-	    || EQ (Vread_with_symbol_positions, readcharfun))
-	  Vread_symbol_positions_list
-	    = Fcons (Fcons (result, make_number (start_position)),
-		     Vread_symbol_positions_list);
-	return unbind_to (count, result);
+		 Like intern_1 but supports multibyte names.  */
+	      Lisp_Object obarray = check_obarray (Vobarray);
+	      Lisp_Object tem = oblookup (obarray, read_buffer,
+					  nchars, nbytes);
+
+	      if (SYMBOLP (tem))
+		result = tem;
+	      else
+		{
+		  Lisp_Object name
+		    = make_specified_string (read_buffer, nchars, nbytes,
+					     multibyte);
+		  result = intern_driver (name, obarray, tem);
+		}
+	    }
+
+	  if (EQ (Vread_with_symbol_positions, Qt)
+	      || EQ (Vread_with_symbol_positions, readcharfun))
+	    Vread_symbol_positions_list
+	      = Fcons (Fcons (result, make_number (start_position)),
+		       Vread_symbol_positions_list);
+	  return unbind_to (count, result);
+	}
       }
     }
 }
