@@ -551,23 +551,7 @@ next hunk if TRY-HARDER is non-nil; otherwise signal an error."
 
 ;; Define diff-{hunk,file}-{prev,next}
 (easy-mmode-define-navigation
- diff--internal-hunk diff-hunk-header-re "hunk" diff-end-of-hunk diff-restrict-view
- (when diff-auto-refine-mode
-   (unless (prog1 diff--auto-refine-data
-             (setq diff--auto-refine-data
-                   (cons (current-buffer) (point-marker))))
-     (run-at-time 0.0 nil
-                  (lambda ()
-                    (when diff--auto-refine-data
-                      (let ((buffer (car diff--auto-refine-data))
-                            (point (cdr diff--auto-refine-data)))
-                        (setq diff--auto-refine-data nil)
-                        (with-local-quit
-                          (when (buffer-live-p buffer)
-                            (with-current-buffer buffer
-                              (save-excursion
-                                (goto-char point)
-                                (diff-refine-hunk))))))))))))
+ diff--internal-hunk diff-hunk-header-re "hunk" diff-end-of-hunk diff-restrict-view)
 
 (easy-mmode-define-navigation
  diff--internal-file diff-file-header-re "file" diff-end-of-file)
@@ -605,7 +589,26 @@ to the NEXT marker."
 
       (when (not (looking-at header-re))
         (goto-char start)
-        (user-error (format "No %s" what))))))
+        (user-error (format "No %s" what)))
+
+      ;; We successfully moved to the next/prev hunk/file. Apply the
+      ;; auto-refinement if needed
+      (when diff-auto-refine-mode
+        (unless (prog1 diff--auto-refine-data
+                  (setq diff--auto-refine-data
+                        (cons (current-buffer) (point-marker))))
+          (run-at-time 0.0 nil
+                       (lambda ()
+                         (when diff--auto-refine-data
+                           (let ((buffer (car diff--auto-refine-data))
+                                 (point (cdr diff--auto-refine-data)))
+                             (setq diff--auto-refine-data nil)
+                             (with-local-quit
+                               (when (buffer-live-p buffer)
+                                 (with-current-buffer buffer
+                                   (save-excursion
+                                     (goto-char point)
+                                     (diff-refine-hunk))))))))))))))
 
 ;; These functions all take a skip-hunk-start argument which controls
 ;; whether we skip pre-hunk-start text or not.  In interactive uses we
