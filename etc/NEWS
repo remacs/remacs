@@ -333,6 +333,27 @@ bound to 'Buffer-menu-unmark-all-buffers'.
 ** Ibuffer
 
 ---
+*** New filter commands `ibuffer-filter-by-basename',
+`ibuffer-filter-by-file-extension', `ibuffer-filter-by-directory',
+`ibuffer-filter-by-starred-name', `ibuffer-filter-by-modified'
+and `ibuffer-filter-by-visiting-file'; bound respectively
+to '/b', '/.', '//', '/*', '/i' and '/v'.
+
+---
+*** Two new commands 'ibuffer-filter-chosen-by-completion'
+and `ibuffer-and-filter', the second bound to '/&'.
+
+---
+*** The commands `ibuffer-pop-filter', `ibuffer-pop-filter-group',
+`ibuffer-or-filter' and `ibuffer-filter-disable' have the alternative
+bindings '/<up>', '/S-<up>', '/|' and '/DEL', respectively.
+
+---
+*** The data format specifying filters has been extended to allow
+explicit logical 'and', and a more flexible form for logical 'not'.
+See 'ibuffer-filtering-qualifiers' doc string for full details.
+
+---
 *** A new command 'ibuffer-copy-buffername-as-kill'; bound
 to 'B'.
 
