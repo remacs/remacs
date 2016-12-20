@@ -221,14 +221,19 @@ expects to find pictures in this directory."
   :group 'image-dired)
 
 (defcustom image-dired-cmd-create-thumbnail-program
-  "convert"
+  (cond ((executable-find "gm") "gm")
+        ((executable-find "convert") "convert")
+        (t "convert"))
   "Executable used to create thumbnail.
 Used together with `image-dired-cmd-create-thumbnail-options'."
+  :version "26.1"
   :type 'file
   :group 'image-dired)
 
 (defcustom image-dired-cmd-create-thumbnail-options
-  '("-size" "%wx%h" "%f" "-resize" "%wx%h>" "-strip" "jpeg:%t")
+  `(,@(when (string-match "gm\\'" image-dired-cmd-create-thumbnail-program)
+        '("convert"))
+    "-size" "%wx%h" "%f" "-resize" "%wx%h>" "-strip" "jpeg:%t")
   "Options of command used to create thumbnail image.
 Used with `image-dired-cmd-create-thumbnail-program'.
 Available format specifiers are: %w which is replaced by
@@ -239,14 +244,20 @@ which is replaced by the file name of the thumbnail file."
   :type '(repeat (string :tag "Argument"))
   :group 'image-dired)
 
-(defcustom image-dired-cmd-create-temp-image-program "convert"
+(defcustom image-dired-cmd-create-temp-image-program
+  (cond ((executable-find "gm") "gm")
+        ((executable-find "convert") "convert")
+        (t "convert"))
   "Executable used to create temporary image.
 Used together with `image-dired-cmd-create-temp-image-options'."
+  :version "26.1"
   :type 'file
   :group 'image-dired)
 
 (defcustom image-dired-cmd-create-temp-image-options
-  '("-size" "%wx%h" "%f" "-resize" "%wx%h>" "-strip" "jpeg:%t")
+  `(,@(when (string-match "gm\\'" image-dired-cmd-create-temp-image-program)
+        '("convert"))
+    "-size" "%wx%h" "%f" "-resize" "%wx%h>" "-strip" "jpeg:%t")
   "Options of command used to create temporary image for display window.
 Used together with `image-dired-cmd-create-temp-image-program',
 Available format specifiers are: %w and %h which are replaced by
@@ -316,15 +327,17 @@ Available format specifiers are described in
   :group 'image-dired)
 
 (defcustom image-dired-cmd-create-standard-thumbnail-options
-  (append '("-size" "%wx%h" "%f")
-          (unless (or image-dired-cmd-pngcrush-program
-                      image-dired-cmd-pngnq-program)
-            (list
-             "-set" "Thumb::MTime" "%m"
-             "-set" "Thumb::URI" "file://%f"
-             "-set" "Description" "Thumbnail of file://%f"
-             "-set" "Software" (emacs-version)))
-          '("-thumbnail" "%wx%h>" "png:%t"))
+  `(,@(when (string-match "gm\\'" image-dired-cmd-create-thumbnail-program)
+        '("convert"))
+    "-size" "%wx%h" "%f"
+    ,@(unless (or image-dired-cmd-pngcrush-program
+                  image-dired-cmd-pngnq-program)
+        (list
+         "-set" "Thumb::MTime" "%m"
+         "-set" "Thumb::URI" "file://%f"
+         "-set" "Description" "Thumbnail of file://%f"
+         "-set" "Software" (emacs-version)))
+    "-thumbnail" "%wx%h>" "png:%t")
   "Options for creating thumbnails according to the Thumbnail Managing Standard.
 Available format specifiers are the same as in
 `image-dired-cmd-create-thumbnail-options', with %m for file modification time."
@@ -333,14 +346,19 @@ Available format specifiers are the same as in
   :group 'image-dired)
 
 (defcustom image-dired-cmd-rotate-thumbnail-program
-  "mogrify"
+  (cond ((executable-find "gm") "gm")
+        ((executable-find "mogrify") "mogrify")
+        (t "mogrify"))
   "Executable used to rotate thumbnail.
 Used together with `image-dired-cmd-rotate-thumbnail-options'."
+  :version "26.1"
   :type 'file
   :group 'image-dired)
 
 (defcustom image-dired-cmd-rotate-thumbnail-options
-  '("-rotate" "%d" "%t")
+  `(,@(when (string-match "gm\\'" image-dired-cmd-rotate-thumbnail-program)
+        '("mogrify"))
+    "-rotate" "%d" "%t")
   "Arguments of command used to rotate thumbnail image.
 Used with `image-dired-cmd-rotate-thumbnail-program'.
 Available format specifiers are: %d which is replaced by the
