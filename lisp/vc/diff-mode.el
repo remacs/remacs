@@ -768,7 +768,7 @@ data such as \"Index: ...\" and such."
         (setq prevfile nextfile))
     (if (and previndex (numberp prevfile) (< previndex prevfile))
         (setq prevfile previndex))
-    (if (and (numberp prevfile) (<= prevfile start))
+    (if (numberp prevfile)
           (progn
             (goto-char prevfile)
             ;; Now skip backward over the leading junk we may have before the
