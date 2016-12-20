@@ -1683,6 +1683,7 @@ with your script for an edit-interpret-debug cycle."
          ((string-match "[.]bash\\>"   buffer-file-name) "bash")
          ((string-match "[.]ksh\\>"    buffer-file-name) "ksh")
          ((string-match "[.]t?csh\\(rc\\)?\\>" buffer-file-name) "csh")
+         ((string-match "[.]zsh\\(rc\\|env\\)?\\>" buffer-file-name) "zsh")
 	 ((equal (file-name-nondirectory buffer-file-name) ".profile") "sh")
          (t sh-shell-file))
    nil nil)
