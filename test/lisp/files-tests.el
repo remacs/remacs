@@ -229,7 +229,7 @@ be $HOME."
                (or def init)))
             (dir (make-temp-file "read-file-name-test" t)))
     (unwind-protect
-        (let ((subdir (expand-file-name "./~/")))
+        (let ((subdir (expand-file-name "./~/" dir)))
           (make-directory subdir t)
           (with-temp-buffer
             (setq default-directory subdir)
