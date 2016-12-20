@@ -1629,8 +1629,6 @@ with your script for an edit-interpret-debug cycle."
 
   (setq-local skeleton-pair-default-alist
 	      sh-skeleton-pair-default-alist)
-  (setq-local skeleton-end-hook
-	      (lambda () (or (eolp) (newline) (indent-relative))))
 
   (setq-local paragraph-start (concat page-delimiter "\\|$"))
   (setq-local paragraph-separate (concat paragraph-start "\\|#!/"))
