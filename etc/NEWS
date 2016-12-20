@@ -462,6 +462,39 @@ for 'image-mode' that complement 'image-scroll-up' and
 'image-scroll-down': they have the same prefix arg behavior and stop
 at image boundaries.
 
+** Image-Dired
+
+*** Now provides a minor mode 'image-dired-minor-mode' which replaces
+the function 'image-dired-setup-dired-keybindings'.
+
+*** Thumbnail generation is now asynchronous
+The number of concurrent processes is limited by the variable
+'image-dired-thumb-job-limit'.
+
+*** 'image-dired-thumbnail-storage' has a new option 'standard-large'
+for generating 256x256 thumbnails according to the Thumbnail Managing
+Standard.
+
+*** Inherits movement keys from 'image-mode' for viewing full images.
+This includes the usual char, line, and page movement commands.
+
+*** All the -options types have been changed to argument lists
+instead of shell command strings.  This change affects
+'image-dired-cmd-create-thumbnail-options',
+'image-dired-cmd-create-temp-image-options',
+'image-dired-cmd-rotate-thumbnail-options',
+'image-dired-cmd-rotate-original-options',
+'image-dired-cmd-write-exif-data-options',
+'image-dired-cmd-read-exif-data-options', and introduces
+'image-dired-cmd-pngnq-options', 'image-dired-cmd-pngcrush-options',
+'image-dired-cmd-create-standard-thumbnail-options'
+
+*** Recognizes more tools by default, including pngnq-s9, optipng, and gm
+
+*** 'find-file' and related commands now work on thumbnails and
+displayed images, providing a default argument of the original file name
+via an addition to 'file-name-at-point-functions'.
+
 ---
 ** The default 'Info-default-directory-list' no longer checks some obsolete
 directory suffixes (gnu, gnu/lib, gnu/lib/emacs, emacs, lib, lib/emacs)
