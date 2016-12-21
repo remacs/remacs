@@ -312,6 +312,8 @@ the file's actual content before prompting the user.
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
+** TeX: Add luatex and xetex as alternatives to pdftex
+
 ** Electric-Buffer-menu
 
 +++
