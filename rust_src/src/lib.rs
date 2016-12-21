@@ -74,6 +74,12 @@ pub unsafe extern "C" fn rust_return_t() -> LispObject {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn rust_mod(x: LispObject, y: LispObject) -> LispObject {
+    println!("mod from rust!");
+    Qt
+}
+
+#[no_mangle]
 #[allow(non_snake_case)]
 pub unsafe extern "C" fn rust_init_syms() {
     println!("init rust syms start");
@@ -108,6 +114,24 @@ pub unsafe extern "C" fn rust_init_syms() {
 
     // Shameful kludge to ensure Srust_return_t lives long enough.
     std::mem::forget(Srust_return_t);
+
+    let mut Srust_mod = Box::new(LispSubr {
+        header: VectorLikeHeader {
+            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
+                   PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
+        },
+        function: (rust_mod as *mut libc::c_void),
+        min_args: 2,
+        max_args: 2,
+        symbol_name: ("rust-mod\0".as_ptr()) as *const c_char,
+        intspec: "\0".as_ptr() as *const c_char,
+        doc: ("Calculate mod in rust\0".as_ptr()) as *const c_char,
+    });
+
+    defsubr(Srust_mod.as_mut());
+
+    // Shameful kludge to ensure Srust_mod lives long enough.
+    std::mem::forget(Srust_mod);
 
     println!("init rust syms end");
 }
