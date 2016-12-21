@@ -7,7 +7,15 @@ add some Rust!
 
 GPLv3, just like all Emacs code.
 
-## Building
+## Why Emacs?
+
+TODO
+
+## Why Rust?
+
+TODO
+
+## Building Remacs
 
 ```
 $ cd rust_src
@@ -27,6 +35,13 @@ Then compile Emacs:
 
 ```
 $ make
+```
+
+You can then run your shiny new Remacs:
+
+```
+# Using -q to ignore your .emacs.d, so Remacs starts up quickly
+$ src/emacs -q
 ```
 
 ## Understanding Emacs macros:
@@ -53,8 +68,12 @@ $ gcc -Ilib -E src/dummy.c > dummy_exp.c
 
 ## Contributing
 
-Patches welcome. This project is under the
+Pull requests welcome, no copyright assignment required. This project is under the
 [Rust code of conduct](https://www.rust-lang.org/en-US/conduct.html).
+
+## Help Needed
+
+TODO -- interesting bugs, first topics, ideas
 
 ## TODOC
 
