@@ -2466,7 +2466,7 @@ struct Lisp_Buffer_Objfwd
   };
 
 /* struct Lisp_Buffer_Local_Value is used in a symbol value cell when
-   the symbol has buffer-local or frame-local bindings.  (Exception:
+   the symbol has buffer-local bindings.  (Exception:
    some buffer-local variables are built-in, with their values stored
    in the buffer structure itself.  They are handled differently,
    using struct Lisp_Buffer_Objfwd.)
@@ -2494,9 +2494,6 @@ struct Lisp_Buffer_Local_Value
     /* True means that merely setting the variable creates a local
        binding for the current buffer.  */
     bool_bf local_if_set : 1;
-    /* True means this variable can have frame-local bindings, otherwise, it is
-       can have buffer-local bindings.  The two cannot be combined.  */
-    bool_bf frame_local : 1;
     /* True means that the binding now loaded was found.
        Presumably equivalent to (defcell!=valcell).  */
     bool_bf found : 1;
@@ -3384,7 +3381,7 @@ make_symbol_constant (Lisp_Object sym)
   XSYMBOL (sym)->trapped_write = SYMBOL_NOWRITE;
 }
 
-/* Buffer-local (also frame-local) variable access functions.  */
+/* Buffer-local variable access functions.  */
 
 INLINE int
 blv_found (struct Lisp_Buffer_Local_Value *blv)

@@ -332,7 +332,6 @@ comparing the subr with a much slower lisp implementation."
 ;; defvar and defconst modify the local binding [ doesn't matter for us ]
 ;; various kinds of special internal forwarding objects
 ;;   a couple examples in manual, not enough
-;; frame-local vars
 ;; variable aliases
 
 ;; Tests for watchpoints

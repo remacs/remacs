@@ -3283,8 +3283,6 @@ specbind (Lisp_Object symbol, Lisp_Object value)
       do_specbind (sym, specpdl_ptr - 1, value, SET_INTERNAL_BIND);
       break;
     case SYMBOL_LOCALIZED:
-      if (SYMBOL_BLV (sym)->frame_local)
-	error ("Frame-local vars cannot be let-bound");
     case SYMBOL_FORWARDED:
       {
 	Lisp_Object ovalue = find_symbol_value (symbol);
