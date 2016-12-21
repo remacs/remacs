@@ -1290,8 +1290,8 @@ aspell is used along with Emacs).")
         (cl-pushnew (if (cadr adict) ;; Do not touch hunspell uninitialized entries
                         (list
                          (nth 0 adict)   ; dict name
-                         "[[:alpha:]]"   ; casechars
-                         "[^[:alpha:]]"  ; not-casechars
+                         (nth 1 adict)   ; casechars
+                         (nth 2 adict)   ; not-casechars
                          (nth 3 adict)   ; otherchars
                          (nth 4 adict)   ; many-otherchars-p
                          (nth 5 adict)   ; ispell-args
