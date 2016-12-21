@@ -567,6 +567,10 @@ different group ID.
 Drive onsite repositories.
 
 +++
+*** Gateway methods in Tramp have been removed.  Instead, the Tramp
+manual documents how to configure ssh and PuTTY accordingly.
+
++++
 Setting the "ENV" environment variable in 'tramp-remote-process-environment'
 enables reading of shell initialization files.
 

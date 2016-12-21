@@ -583,10 +583,6 @@ handled properly.  BODY shall not contain a timeout."
   (when (and (load "tramp-gvfs" 'noerror 'nomessage)
 	     (symbol-value 'tramp-gvfs-enabled))
     (should (string-equal (file-remote-p "/synce::" 'user) nil)))
-  ;; Default values in tramp-gw.el.
-  (dolist (m '("tunnel" "socks"))
-    (should
-     (string-equal (file-remote-p (format "/%s::" m) 'user) (user-login-name))))
   ;; Default values in tramp-sh.el.
   (dolist (h `("127.0.0.1" "[::1]" "localhost" "localhost6" ,(system-name)))
     (should (string-equal (file-remote-p (format "/root@%s:" h) 'method) "su")))
