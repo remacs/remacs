@@ -729,7 +729,7 @@ Used when `whitespace-style' includes `empty'."
   :group 'whitespace)
 
 
-(defcustom whitespace-empty-at-eob-regexp "^\\([ \t\n]*\\(\n\\{2,\\}\\|[ \t]+\\)\\)\\'"
+(defcustom whitespace-empty-at-eob-regexp "^\\([ \t\n]+\\)\\'"
   "Specify regexp for empty lines at end of buffer.
 
 Used when `whitespace-style' includes `empty'."
