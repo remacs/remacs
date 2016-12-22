@@ -131,6 +131,11 @@ fn XTYPE(a: LispObject) -> LispType {
     }
 }
 
+#[test]
+fn test_xtype() {
+    assert!(XTYPE(Qnil) == LispType::Lisp_Symbol);
+}
+
 #[allow(non_snake_case)]
 fn FLOATP(a: LispObject) -> bool {
     XTYPE(a) == LispType::Lisp_Float
