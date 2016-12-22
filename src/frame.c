@@ -611,7 +611,7 @@ make_frame (bool mini_p)
 {
   Lisp_Object frame;
   struct frame *f;
-  struct window *rw, *mw;
+  struct window *rw, *mw UNINIT;
   Lisp_Object root_window;
   Lisp_Object mini_window;
 

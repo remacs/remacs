@@ -1837,19 +1837,19 @@ INLINE Lisp_Object
 INLINE struct Lisp_Symbol *
 SYMBOL_ALIAS (struct Lisp_Symbol *sym)
 {
-  eassert (sym->redirect == SYMBOL_VARALIAS);
+  eassume (sym->redirect == SYMBOL_VARALIAS && sym->val.alias);
   return sym->val.alias;
 }
 INLINE struct Lisp_Buffer_Local_Value *
 SYMBOL_BLV (struct Lisp_Symbol *sym)
 {
-  eassert (sym->redirect == SYMBOL_LOCALIZED);
+  eassume (sym->redirect == SYMBOL_LOCALIZED && sym->val.blv);
   return sym->val.blv;
 }
 INLINE union Lisp_Fwd *
 SYMBOL_FWD (struct Lisp_Symbol *sym)
 {
-  eassert (sym->redirect == SYMBOL_FORWARDED);
+  eassume (sym->redirect == SYMBOL_FORWARDED && sym->val.fwd);
   return sym->val.fwd;
 }
 
@@ -1862,19 +1862,19 @@ INLINE void
 INLINE void
 SET_SYMBOL_ALIAS (struct Lisp_Symbol *sym, struct Lisp_Symbol *v)
 {
-  eassert (sym->redirect == SYMBOL_VARALIAS);
+  eassume (sym->redirect == SYMBOL_VARALIAS && v);
   sym->val.alias = v;
 }
 INLINE void
 SET_SYMBOL_BLV (struct Lisp_Symbol *sym, struct Lisp_Buffer_Local_Value *v)
 {
-  eassert (sym->redirect == SYMBOL_LOCALIZED);
+  eassume (sym->redirect == SYMBOL_LOCALIZED && v);
   sym->val.blv = v;
 }
 INLINE void
 SET_SYMBOL_FWD (struct Lisp_Symbol *sym, union Lisp_Fwd *v)
 {
-  eassert (sym->redirect == SYMBOL_FORWARDED);
+  eassume (sym->redirect == SYMBOL_FORWARDED && v);
   sym->val.fwd = v;
 }
 
