@@ -145,3 +145,14 @@ fn FLOATP(a: LispObject) -> bool {
 fn test_floatp() {
     assert!(!FLOATP(Qnil));
 }
+
+#[allow(non_snake_case)]
+fn MISCP(a: LispObject) -> bool {
+    XTYPE(a) == LispType::Lisp_Misc
+}
+
+#[test]
+fn test_miscp() {
+    assert!(!MISCP(Qnil));
+}
+
