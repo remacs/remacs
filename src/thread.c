@@ -257,7 +257,7 @@ If the current thread already owns MUTEX, increment the count and
 return.
 Otherwise, if no thread owns MUTEX, make the current thread own it.
 Otherwise, block until MUTEX is available, or until the current thread
-is signalled using `thread-signal'.
+is signaled using `thread-signal'.
 Note that calls to `mutex-lock' and `mutex-unlock' must be paired.  */)
   (Lisp_Object mutex)
 {
@@ -363,8 +363,7 @@ condition_wait_callback (void *arg)
   XSETCONDVAR (cond, cvar);
   self->event_object = cond;
   saved_count = lisp_mutex_unlock_for_wait (&mutex->mutex);
-  /* If we were signalled while unlocking, we skip the wait, but we
-     still must reacquire our lock.  */
+  /* If signaled while unlocking, skip the wait but reacquire the lock.  */
   if (NILP (self->error_symbol))
     {
       self->wait_condvar = &cvar->cond;
@@ -384,7 +383,7 @@ The mutex associated with COND must be held when this is called.
 It is an error if it is not held.
 
 This releases the mutex and waits for COND to be notified or for
-this thread to be signalled with `thread-signal'.  When
+this thread to be signaled with `thread-signal'.  When
 `condition-wait' returns, COND's mutex will again be locked by
 this thread.  */)
   (Lisp_Object cond)
@@ -404,7 +403,7 @@ this thread.  */)
   return Qnil;
 }
 
-/* Used to communicate argumnets to condition_notify_callback.  */
+/* Used to communicate arguments to condition_notify_callback.  */
 struct notify_args
 {
   struct Lisp_CondVar *cvar;
@@ -814,7 +813,7 @@ or `thread-join' in the target thread.  */)
   if (tstate == current_thread)
     Fsignal (error_symbol, data);
 
-  /* What to do if thread is already signalled?  */
+  /* What to do if thread is already signaled?  */
   /* What if error_symbol is Qnil?  */
   tstate->error_symbol = error_symbol;
   tstate->error_data = data;

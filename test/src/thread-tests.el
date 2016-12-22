@@ -153,7 +153,7 @@
   (mutex-lock threads-mutex))
 
 (ert-deftest threads-mutex-signal ()
-  "test signalling a blocked thread"
+  "test signaling a blocked thread"
   (should
    (progn
      (setq threads-mutex (make-mutex))

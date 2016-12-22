@@ -2138,7 +2138,7 @@ This does not support special file names."
 
 (defun tramp--test-windows-nt-and-batch ()
   "Check, whether the locale host runs MS Windows in batch mode.
-This does not support scpecial characters."
+This does not support special characters."
   (and (eq system-type 'windows-nt) noninteractive))
 
 (defun tramp--test-windows-nt-and-pscp-psftp-p ()

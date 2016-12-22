@@ -48,7 +48,7 @@ struct thread_state
   /* The thread's function.  */
   Lisp_Object function;
 
-  /* If non-nil, this thread has been signalled.  */
+  /* If non-nil, this thread has been signaled.  */
   Lisp_Object error_symbol;
   Lisp_Object error_data;
 
@@ -60,7 +60,7 @@ struct thread_state
   /* A list of currently active byte-code execution value stacks.
      Fbyte_code adds an entry to the head of this list before it starts
      processing byte-code, and it removed the entry again when it is
-     done.  Signalling an error truncates the list.  */
+     done.  Signaling an error truncates the list.  */
   struct byte_stack *m_byte_stack_list;
 #define byte_stack_list (current_thread->m_byte_stack_list)
 
