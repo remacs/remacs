@@ -6406,7 +6406,7 @@ mark_object (Lisp_Object arg)
 
 #ifdef GC_CHECK_MARKED_OBJECTS
 	m = mem_find (po);
-	if (m == MEM_NIL && !SUBRP (obj) && !THREADP (obj))
+	if (m == MEM_NIL && !SUBRP (obj) && !primary_thread_p (po))
 	  emacs_abort ();
 #endif /* GC_CHECK_MARKED_OBJECTS */
 
@@ -6418,7 +6418,7 @@ mark_object (Lisp_Object arg)
 
 	if (pvectype != PVEC_SUBR
 	    && pvectype != PVEC_BUFFER
-	    && pvectype != PVEC_THREAD)
+	    && !primary_thread_p (po))
 	  CHECK_LIVE (live_vector_p);
 
 	switch (pvectype)

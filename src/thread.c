@@ -950,6 +950,12 @@ init_primary_thread (void)
   primary_thread.event_object = Qnil;
 }
 
+bool
+primary_thread_p (void *ptr)
+{
+  return (ptr == &primary_thread) ? true : false;
+}
+
 void
 init_threads_once (void)
 {
