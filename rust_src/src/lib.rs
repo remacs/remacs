@@ -16,6 +16,7 @@ type LispObject = EmacsInt;
 extern "C" {
     fn defsubr(sname: *mut LispSubr);
     static Qt: LispObject;
+    fn make_number(n: EmacsInt) -> LispObject;
 }
 
 const PSEUDOVECTOR_SIZE_BITS: libc::c_int = 12;
@@ -76,7 +77,7 @@ pub unsafe extern "C" fn rust_return_t() -> LispObject {
 #[no_mangle]
 pub unsafe extern "C" fn rust_mod(x: LispObject, y: LispObject) -> LispObject {
     println!("mod from rust!");
-    Qt
+    make_number(5)
 }
 
 #[no_mangle]
