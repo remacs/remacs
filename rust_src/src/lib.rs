@@ -3,6 +3,7 @@
 extern crate libc;
 
 use std::os::raw::c_char;
+use std::mem;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -18,6 +19,8 @@ extern "C" {
     static Qt: LispObject;
     fn make_number(n: EmacsInt) -> LispObject;
 }
+
+const Qnil: LispObject = 0;
 
 const PSEUDOVECTOR_SIZE_BITS: libc::c_int = 12;
 const PSEUDOVECTOR_SIZE_MASK: libc::c_int = (1 << PSEUDOVECTOR_SIZE_BITS) - 1;
@@ -52,6 +55,44 @@ enum PvecType {
 }
 
 #[repr(C)]
+#[derive(PartialEq, Eq)]
+enum LispType {
+    /* Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol.  */
+    Lisp_Symbol = 0,
+
+    /* Miscellaneous.  XMISC (object) points to a union Lisp_Misc,
+       whose first member indicates the subtype.  */
+    Lisp_Misc = 1,
+
+    /* Integer.  XINT (obj) is the integer value.  */
+    Lisp_Int0 = 2,
+    // This depend on USE_LSB_TAG in the C, but in my build that value
+    // is 1.
+    Lisp_Int1 = 6,
+
+    /* String.  XSTRING (object) points to a struct Lisp_String.
+       The length of the string, and its contents, are stored therein.  */
+    Lisp_String = 4,
+
+    /* Vector of Lisp objects, or something resembling it.
+       XVECTOR (object) points to a struct Lisp_Vector, which contains
+       the size and contents.  The size field also contains the type
+       information, if it's not a real vector object.  */
+    Lisp_Vectorlike = 5,
+
+    /* Cons.  XCONS (object) points to a struct Lisp_Cons.  */
+    Lisp_Cons = 3,
+
+    Lisp_Float = 7,
+}
+
+/* Number of bits in a Lisp_Object tag.  */
+const GCTYPEBITS: libc::c_int = 3;
+
+// This is also dependent on USE_LSB_TAG, which we're assuming to be 1.
+const VALMASK: EmacsInt = - (1 << GCTYPEBITS);
+
+#[repr(C)]
 struct VectorLikeHeader {
     size: libc::ptrdiff_t,
 }
@@ -66,6 +107,37 @@ struct LispSubr {
     symbol_name: *const c_char,
     intspec: *const c_char,
     doc: *const c_char,
+}
+
+/// Convert LispObject to EmacsInt.
+///
+/// It's so simple that we should avoid using this, but it's handy
+/// when transliterating from C.
+#[allow(non_snake_case)]
+fn XLI(o: LispObject) -> EmacsInt {
+    o as EmacsInt
+}
+
+#[allow(non_snake_case)]
+fn XTYPE(a: LispObject) -> LispType {
+    let obj = XLI(a);
+    println!("obj: {:b}", obj);
+    println!("mask: {:b}\nnegated: {:b}", VALMASK, !VALMASK);
+    let res = XLI(a) & !VALMASK;
+    println!("res: {:b} ({})", res, res);
+    unsafe {
+        mem::transmute(res as u32)
+    }
+}
+
+#[allow(non_snake_case)]
+fn FLOATP(a: LispObject) -> bool {
+    XTYPE(a) == LispType::Lisp_Float
+}
+
+#[test]
+fn test_floatp() {
+    assert!(!FLOATP(Qnil));
 }
 
 #[no_mangle]
