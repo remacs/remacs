@@ -5,6 +5,7 @@ rust:
   - nightly
 
 script:
+  - cd rust_src && cargo test
   - cd rust_src && cargo build --release
 
 notifications:
