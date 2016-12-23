@@ -5,9 +5,14 @@ rust:
   - nightly
 
 script:
+  # Test and build the Rust code.
   - cd rust_src
   - cargo test
   - cargo build --release
+
+  # Configure Emacs for building
+  - ./autogen.sh
+  - ./configure
 
 notifications:
   email: false
