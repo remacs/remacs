@@ -512,7 +512,7 @@ instead of shell command strings.  This change affects
 'image-dired-cmd-pngnq-options', 'image-dired-cmd-pngcrush-options',
 'image-dired-cmd-create-standard-thumbnail-options'
 
-*** Recognizes more tools by default, including pngnq-s9, OptiPNG, and gm
+*** Recognizes more tools by default, including pngnq-s9 and OptiPNG
 
 *** 'find-file' and related commands now work on thumbnails and
 displayed images, providing a default argument of the original file name
