@@ -643,12 +643,19 @@ do_nothing (Lisp_Object whatever)
 static void *
 run_thread (void *state)
 {
-  char stack_pos;
+  /* Make sure stack_top and m_stack_bottom are properly aligned as GC
+     expects.  */
+  union
+  {
+    void *p;
+    char c;
+  } stack_pos;
+
   struct thread_state *self = state;
   struct thread_state **iter;
 
-  self->m_stack_bottom = &stack_pos;
-  self->stack_top = &stack_pos;
+  self->m_stack_bottom = &stack_pos.c;
+  self->stack_top = &stack_pos.c;
   self->thread_id = sys_thread_self ();
 
   acquire_global_lock (self);
