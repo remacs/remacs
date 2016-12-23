@@ -221,6 +221,18 @@ Here is an example of this: @code{z} is bound to the old value of
      @result{} (1 2)
 @end group
 @end example
+
+On the other hand, the order of @emph{bindings} is unspecified: in the
+following example, either 1 or 2 might be printed.
+
+@example
+(let ((x 1)
+      (x 2))
+  (print x))
+@end example
+
+Therefore, avoid binding a variable more than once in a single
+@code{let} form.
 @end defspec
 
 @defspec let* (bindings@dots{}) forms@dots{}
