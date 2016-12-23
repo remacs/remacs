@@ -22,6 +22,7 @@ extern "C" {
 }
 
 #[allow(non_upper_case_globals)]
+#[allow(dead_code)]
 const Qnil: LispObject = 0;
 
 const PSEUDOVECTOR_SIZE_BITS: libc::c_int = 12;
@@ -159,6 +160,7 @@ fn test_xtype() {
 }
 
 #[allow(non_snake_case)]
+#[allow(dead_code)]
 fn FLOATP(a: LispObject) -> bool {
     XTYPE(a) == LispType::Lisp_Float
 }
@@ -191,6 +193,7 @@ fn XMISCTYPE(a: LispObject) -> LispMiscType {
     unimplemented!()
 }
 
+#[allow(dead_code)]
 #[allow(non_snake_case)]
 fn MARKERP(a: LispObject) -> bool {
     MISCP(a) && XMISCTYPE(a) == LispMiscType::Lisp_Misc_Marker
