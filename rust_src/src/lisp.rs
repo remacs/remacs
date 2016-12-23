@@ -21,17 +21,22 @@ extern "C" {
     pub fn make_number(n: EmacsInt) -> LispObject;
 }
 
+#[allow(non_upper_case_globals)]
 const Qnil: LispObject = 0;
 
 const PSEUDOVECTOR_SIZE_BITS: libc::c_int = 12;
+#[allow(dead_code)]
 const PSEUDOVECTOR_SIZE_MASK: libc::c_int = (1 << PSEUDOVECTOR_SIZE_BITS) - 1;
 const PSEUDOVECTOR_REST_BITS: libc::c_int = 12;
+#[allow(dead_code)]
 const PSEUDOVECTOR_REST_MASK: libc::c_int = (((1 << PSEUDOVECTOR_REST_BITS) - 1) <<
                                              PSEUDOVECTOR_SIZE_BITS);
 pub const PSEUDOVECTOR_AREA_BITS: libc::c_int = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS;
+#[allow(dead_code)]
 const PVEC_TYPE_MASK: libc::c_int = 0x3f << PSEUDOVECTOR_AREA_BITS;
 
 #[allow(non_camel_case_types)]
+#[allow(dead_code)]
 pub enum PvecType {
     // TODO: confirm these are the right numbers.
     PVEC_NORMAL_VECTOR = 0,
@@ -57,6 +62,7 @@ pub enum PvecType {
 
 #[repr(C)]
 #[derive(PartialEq, Eq)]
+#[allow(dead_code)]
 enum LispType {
     /* Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol.  */
     Lisp_Symbol = 0,
@@ -94,6 +100,7 @@ enum LispType {
    mistakenly interpreted as a Lisp_Misc.  */
 #[repr(C)]
 #[derive(PartialEq, Eq)]
+#[allow(dead_code)]
 enum LispMiscType {
     Lisp_Misc_Free = 0x5eab,
     Lisp_Misc_Marker,
@@ -172,6 +179,7 @@ fn test_miscp() {
 }
 
 #[allow(non_snake_case)]
+#[allow(unused_variables)]
 fn XMISCTYPE(a: LispObject) -> LispMiscType {
     unimplemented!()
 }
