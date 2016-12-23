@@ -32,6 +32,9 @@
 
 ;; RFC 1034, "DOMAIN NAMES - CONCEPTS AND FACILITIES", P. Mockapetris.
 ;; RFC 1035, "DOMAIN NAMES - IMPLEMENTATION AND SPECIFICATION", P. Mockapetris.
+;; RFC 5155, "DNS Security (DNSSEC) Hashed Authenticated Denial of Existence"
+;; RFC 6698, "The DNS-Based Authentication of Named Entities (DANE)
+;;             Transport Layer Security (TLS) Protocol: TLSA"
 
 ;;; Release history:
 
@@ -50,13 +53,13 @@
 
 (defconst dns-mode-types '("A" "NS" "MD" "MF" "CNAME" "SOA" "MB" "MG" "MR"
 			   "NULL" "WKS" "PTR" "HINFO" "MINFO" "MX" "TXT"
-			   "RP" "AFSDB" "X25" "ISDN" "RT" "NSAP" "NSAP"
+			   "RP" "AFSDB" "X25" "ISDN" "RT" "NSAP"
 			   "SIG" "KEY" "PX" "GPOS" "AAAA" "LOC" "NXT"
 			   "EID" "NIMLOC" "SRV" "ATMA" "NAPTR" "KX" "CERT"
 			   "A6" "DNAME" "SINK" "OPT" "APL" "DS" "SSHFP"
 			   "RRSIG" "NSEC" "DNSKEY" "UINFO" "UID" "GID"
 			   "UNSPEC" "TKEY" "TSIG" "IXFR" "AXFR" "MAILB"
-			   "MAILA")
+			   "MAILA" "TLSA" "NSEC3")
   "List of strings with known DNS types.")
 
 ;; Font lock.
