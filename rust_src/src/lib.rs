@@ -13,6 +13,7 @@ pub unsafe extern "C" fn rust_return_t() -> LispObject {
 }
 
 #[no_mangle]
+#[allow(unused_variables)]
 pub unsafe extern "C" fn rust_mod(x: LispObject, y: LispObject) -> LispObject {
     println!("mod from rust!");
     make_number(5)
