@@ -65,40 +65,40 @@ pub enum PvecType {
 #[derive(PartialEq, Eq)]
 #[allow(dead_code)]
 enum LispType {
-    /* Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol.  */
+    // Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol.
     Lisp_Symbol = 0,
 
-    /* Miscellaneous.  XMISC (object) points to a union Lisp_Misc,
-       whose first member indicates the subtype.  */
+    // Miscellaneous.  XMISC (object) points to a union Lisp_Misc,
+    // whose first member indicates the subtype.
     Lisp_Misc = 1,
 
-    /* Integer.  XINT (obj) is the integer value.  */
+    // Integer.  XINT (obj) is the integer value.
     Lisp_Int0 = 2,
     // This depend on USE_LSB_TAG in the C, but in my build that value
     // is 1.
     Lisp_Int1 = 6,
 
-    /* String.  XSTRING (object) points to a struct Lisp_String.
-       The length of the string, and its contents, are stored therein.  */
+    // String.  XSTRING (object) points to a struct Lisp_String.
+    // The length of the string, and its contents, are stored therein.
     Lisp_String = 4,
 
-    /* Vector of Lisp objects, or something resembling it.
-       XVECTOR (object) points to a struct Lisp_Vector, which contains
-       the size and contents.  The size field also contains the type
-       information, if it's not a real vector object.  */
+    // Vector of Lisp objects, or something resembling it.
+    // XVECTOR (object) points to a struct Lisp_Vector, which contains
+    // the size and contents.  The size field also contains the type
+    // information, if it's not a real vector object.
     Lisp_Vectorlike = 5,
 
-    /* Cons.  XCONS (object) points to a struct Lisp_Cons.  */
+    // Cons.  XCONS (object) points to a struct Lisp_Cons.
     Lisp_Cons = 3,
 
     Lisp_Float = 7,
 }
 
-/* This is the set of data types that share a common structure.
-   The first member of the structure is a type code from this set.
-   The enum values are arbitrary, but we'll use large numbers to make it
-   more likely that we'll spot the error if a random word in memory is
-   mistakenly interpreted as a Lisp_Misc.  */
+// This is the set of data types that share a common structure.
+// The first member of the structure is a type code from this set.
+// The enum values are arbitrary, but we'll use large numbers to make it
+// more likely that we'll spot the error if a random word in memory is
+// mistakenly interpreted as a Lisp_Misc.
 #[repr(C)]
 #[derive(PartialEq, Eq)]
 #[allow(dead_code)]
@@ -110,11 +110,11 @@ enum LispMiscType {
     Lisp_Misc_Finalizer,
 }
 
-/* Number of bits in a Lisp_Object tag.  */
+// Number of bits in a Lisp_Object tag.
 const GCTYPEBITS: libc::c_int = 3;
 
 // This is also dependent on USE_LSB_TAG, which we're assuming to be 1.
-const VALMASK: EmacsInt = - (1 << GCTYPEBITS);
+const VALMASK: EmacsInt = -(1 << GCTYPEBITS);
 
 #[repr(C)]
 pub struct VectorLikeHeader {
@@ -149,9 +149,7 @@ fn XTYPE(a: LispObject) -> LispType {
     println!("mask: {:b}\nnegated: {:b}", VALMASK, !VALMASK);
     let res = XLI(a) & !VALMASK;
     println!("res: {:b} ({})", res, res);
-    unsafe {
-        mem::transmute(res as u32)
-    }
+    unsafe { mem::transmute(res as u32) }
 }
 
 #[test]
