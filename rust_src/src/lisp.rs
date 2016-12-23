@@ -178,6 +178,13 @@ fn test_miscp() {
     assert!(!MISCP(Qnil));
 }
 
+#[allow(dead_code)]
+#[allow(non_snake_case)]
+fn XUNTAG(a: LispObject, ty: libc::c_int) -> *const libc::c_void {
+    (XLI(a) - ty as EmacsInt) as *const libc::c_void
+}
+
+#[allow(dead_code)]
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 fn XMISCTYPE(a: LispObject) -> LispMiscType {
