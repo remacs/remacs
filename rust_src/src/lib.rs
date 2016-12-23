@@ -3,8 +3,8 @@ extern crate libc;
 mod lisp;
 
 use std::os::raw::c_char;
-use lisp::{LispObject, LispSubr, PvecType, defsubr, make_number,
-           PSEUDOVECTOR_AREA_BITS, VectorLikeHeader, Qt};
+use lisp::{LispObject, LispSubr, PvecType, defsubr, make_number, PSEUDOVECTOR_AREA_BITS,
+           VectorLikeHeader, Qt};
 
 #[no_mangle]
 pub unsafe extern "C" fn rust_return_t() -> LispObject {
