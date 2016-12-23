@@ -9,6 +9,7 @@ script:
   - cd rust_src
   - cargo test
   - cargo build --release
+  - cd ..
 
   # Configure Emacs for building
   - ./autogen.sh
