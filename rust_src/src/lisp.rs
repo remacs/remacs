@@ -87,6 +87,21 @@ enum LispType {
     Lisp_Float = 7,
 }
 
+/* This is the set of data types that share a common structure.
+   The first member of the structure is a type code from this set.
+   The enum values are arbitrary, but we'll use large numbers to make it
+   more likely that we'll spot the error if a random word in memory is
+   mistakenly interpreted as a Lisp_Misc.  */
+#[repr(C)]
+#[derive(PartialEq, Eq)]
+enum LispMiscType {
+    Lisp_Misc_Free = 0x5eab,
+    Lisp_Misc_Marker,
+    Lisp_Misc_Overlay,
+    Lisp_Misc_Save_Value,
+    Lisp_Misc_Finalizer,
+}
+
 /* Number of bits in a Lisp_Object tag.  */
 const GCTYPEBITS: libc::c_int = 3;
 
@@ -156,3 +171,17 @@ fn test_miscp() {
     assert!(!MISCP(Qnil));
 }
 
+#[allow(non_snake_case)]
+fn XMISCTYPE(a: LispObject) -> LispMiscType {
+    unimplemented!()
+}
+
+#[allow(non_snake_case)]
+fn MARKERP(a: LispObject) -> bool {
+    MISCP(a) && XMISCTYPE(a) == LispMiscType::Lisp_Misc_Marker
+}
+
+#[test]
+fn test_markerp() {
+    assert!(!MARKERP(Qnil));
+}
