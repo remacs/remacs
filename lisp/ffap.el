@@ -162,8 +162,12 @@ schemes (e.g. \"ftp\"); in that case, only convert those URLs."
   :group 'ffap
   :version "24.3")
 
-(defcustom ffap-lax-url nil
-  "If non-nil, allow lax URL matching."
+(defcustom ffap-lax-url t
+  "If non-nil, allow lax URL matching.
+The default non-nil value might produce false URLs in C++ code
+with symbols like \"std::find\".  On the other hand, setting
+this to nil will disable recognition of URLs that are not
+well-formed, such as \"user@host\" or \"<user@host>\"."
   :type 'boolean
   :group 'ffap
   :version "25.1")
