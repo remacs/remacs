@@ -328,7 +328,7 @@ relocate_byte_stack (struct byte_stack *stack)
 
 
 /* Fetch the next byte from the bytecode stream.  */
-#ifdef BYTE_CODE_SAFE
+#if BYTE_CODE_SAFE
 #define FETCH (eassert (stack.byte_string_start == SDATA (stack.byte_string)), *stack.pc++)
 #else
 #define FETCH *stack.pc++
