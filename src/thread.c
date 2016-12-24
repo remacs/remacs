@@ -595,16 +595,6 @@ mark_threads (void)
   flush_stack_call_func (mark_threads_callback, NULL);
 }
 
-void
-unmark_threads (void)
-{
-  struct thread_state *iter;
-
-  for (iter = all_threads; iter; iter = iter->next_thread)
-    if (iter->m_byte_stack_list)
-      relocate_byte_stack (iter->m_byte_stack_list);
-}
-
 
 
 static void
@@ -716,7 +706,7 @@ If NAME is given, it must be a string; it names the new thread.  */)
   struct thread_state *new_thread;
   Lisp_Object result;
   const char *c_name = NULL;
-  size_t offset = offsetof (struct thread_state, m_byte_stack_list);
+  size_t offset = offsetof (struct thread_state, m_stack_bottom);
 
   /* Can't start a thread in temacs.  */
   if (!initialized)
@@ -725,7 +715,7 @@ If NAME is given, it must be a string; it names the new thread.  */)
   if (!NILP (name))
     CHECK_STRING (name);
 
-  new_thread = ALLOCATE_PSEUDOVECTOR (struct thread_state, m_byte_stack_list,
+  new_thread = ALLOCATE_PSEUDOVECTOR (struct thread_state, m_stack_bottom,
 				      PVEC_THREAD);
   memset ((char *) new_thread + offset, 0,
 	  sizeof (struct thread_state) - offset);
@@ -940,7 +930,7 @@ static void
 init_primary_thread (void)
 {
   primary_thread.header.size
-    = PSEUDOVECSIZE (struct thread_state, m_byte_stack_list);
+    = PSEUDOVECSIZE (struct thread_state, m_stack_bottom);
   XSETPVECTYPE (&primary_thread, PVEC_THREAD);
   primary_thread.m_last_thing_searched = Qnil;
   primary_thread.m_saved_last_thing_searched = Qnil;

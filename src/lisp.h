@@ -3282,7 +3282,6 @@ struct handler
   ptrdiff_t pdlcount;
   int poll_suppress_count;
   int interrupt_input_blocked;
-  struct byte_stack *byte_stack;
 };
 
 extern Lisp_Object memory_signal_data;
@@ -4330,7 +4329,6 @@ extern int read_bytecode_char (bool);
 
 /* Defined in bytecode.c.  */
 extern void syms_of_bytecode (void);
-extern void relocate_byte_stack (struct byte_stack *);
 extern Lisp_Object exec_byte_code (Lisp_Object, Lisp_Object, Lisp_Object,
 				   Lisp_Object, ptrdiff_t, Lisp_Object *);
 extern Lisp_Object get_byte_code_arity (Lisp_Object);
