@@ -280,9 +280,6 @@ enum byte_code_op
     Bset_mark = 0163, /* this loser is no longer generated as of v18 */
 #endif
 };
-
-/* Whether to maintain a `top' and `bottom' field in the stack frame.  */
-#define BYTE_MAINTAIN_TOP BYTE_CODE_SAFE
 
 /* Structure describing a value stack used during byte-code execution
    in Fbyte_code.  */
@@ -292,12 +289,6 @@ struct byte_stack
   /* Program counter.  This points into the byte_string below
      and is relocated when that string is relocated.  */
   const unsigned char *pc;
-
-  /* Top and bottom of stack.  The bottom points to an area of memory
-     allocated with alloca in Fbyte_code.  */
-#if BYTE_MAINTAIN_TOP
-  Lisp_Object *top, *bottom;
-#endif
 
   /* The string containing the byte-code, and its current address.
      Storing this here protects it from GC because mark_byte_stack
@@ -760,15 +751,17 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Bgotoifnonnil):
-	  op = FETCH2;
-	  Lisp_Object v1 = POP;
-	  if (!NILP (v1))
-	    {
-	      BYTE_CODE_QUIT;
-	      CHECK_RANGE (op);
-	      stack.pc = stack.byte_string_start + op;
-	    }
-	  NEXT;
+	  {
+	    op = FETCH2;
+	    Lisp_Object v1 = POP;
+	    if (!NILP (v1))
+	      {
+		BYTE_CODE_QUIT;
+		CHECK_RANGE (op);
+		stack.pc = stack.byte_string_start + op;
+	      }
+	    NEXT;
+	  }
 
 	CASE (Bgotoifnilelsepop):
 	  op = FETCH2;
