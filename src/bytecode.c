@@ -508,9 +508,8 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 
 	CASE (Bgotoifnil):
 	  {
-	    Lisp_Object v1;
+	    Lisp_Object v1 = POP;
 	    op = FETCH2;
-	    v1 = POP;
 	    if (NILP (v1))
 	      goto op_branch;
 	    NEXT;
@@ -686,13 +685,10 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Bgotoifnonnil):
-	  {
-	    op = FETCH2;
-	    Lisp_Object v1 = POP;
-	    if (!NILP (v1))
-	      goto op_branch;
-	    NEXT;
-	  }
+	  op = FETCH2;
+	  if (!NILP (POP))
+	    goto op_branch;
+	  NEXT;
 
 	CASE (Bgotoifnilelsepop):
 	  op = FETCH2;
@@ -713,22 +709,16 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  goto op_relative_branch;
 
 	CASE (BRgotoifnil):
-	  {
-	    Lisp_Object v1 = POP;
-	    op = FETCH - 128;
-	    if (NILP (v1))
-	      goto op_relative_branch;
-	    NEXT;
-	  }
+	  op = FETCH - 128;
+	  if (NILP (POP))
+	    goto op_relative_branch;
+	  NEXT;
 
 	CASE (BRgotoifnonnil):
-	  {
-	    Lisp_Object v1 = POP;
-	    op = FETCH - 128;
-	    if (!NILP (v1))
-	      goto op_relative_branch;
-	    NEXT;
-	  }
+	  op = FETCH - 128;
+	  if (!NILP (POP))
+	    goto op_relative_branch;
+	  NEXT;
 
 	CASE (BRgotoifnilelsepop):
 	  op = FETCH - 128;
@@ -1248,9 +1238,9 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 
 	CASE (Bdowncase):
 	  TOP = Fdowncase (TOP);
-	NEXT;
+	  NEXT;
 
-      CASE (Bstringeqlsign):
+	CASE (Bstringeqlsign):
 	  {
 	    Lisp_Object v1 = POP;
 	    TOP = Fstring_equal (TOP, v1);
