@@ -32,7 +32,7 @@
 ;; (`ffap-require-prefix' swaps these behaviors).  This is useful for
 ;; following references in situations such as mail or news buffers,
 ;; README's, MANIFEST's, and so on.  Submit bugs or suggestions with
-;; M-x ffap-bug.
+;; M-x report-emacs-bug.
 ;;
 ;; For the default installation, add this line to your init file:
 ;;
