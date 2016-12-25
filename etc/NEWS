@@ -191,6 +191,11 @@ It now treats the optional 2nd argument to mean that the URL should be
 shown in the currently selected window.
 
 ** Comint
+*** 'comint-insert-previous-argument' no longer interprets &.
+This worked strangely in shell-mode in the presence of &&.  And omitting this
+logic makes sense since 'comint-insert-previous-argument' exists to emulate M-.
+in bash and zsh, and neither of those treat & specially.
+
 *** 'comint-insert-previous-argument' knows how to count args
 from the beginning or from the end.  This is useful because
 'comint-insert-previous-argument' exists to emulate M-. in bash and zsh; and

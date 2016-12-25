@@ -2705,9 +2705,6 @@ is the last argument.  This command is like `M-.' in bash and zsh."
   (set-marker comint-insert-previous-argument-last-start-pos (point))
   ;; Insert the argument.
   (let ((input-string (comint-previous-input-string 0)))
-    (when (string-match "[ \t\n]*&" input-string)
-      ;; strip terminating '&'
-      (setq input-string (substring input-string 0 (match-beginning 0))))
     (insert (comint-arguments input-string index index)))
   ;; Make next invocation return arg from previous input
   (setq comint-input-ring-index (1+ (or comint-input-ring-index 0)))
