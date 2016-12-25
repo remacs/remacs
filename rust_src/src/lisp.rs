@@ -184,6 +184,22 @@ fn XUNTAG(a: LispObject, ty: libc::c_int) -> *const libc::c_void {
     (XLI(a) - ty as EmacsInt) as *const libc::c_void
 }
 
+/* Supertype of all Misc types.  */
+#[repr(C)]
+struct LispMiscAny {
+    pub ty: LispMiscType,
+    // This is actually a GC marker bit plus 15 bits of padding, but
+    // we don't care right now.
+    padding: u16,
+}
+
+#[allow(dead_code)]
+#[allow(non_snake_case)]
+fn XMISCANY(a: LispObject) -> *const LispMiscAny {
+    debug_assert!(MISCP(a));
+    unimplemented!()
+}
+
 #[allow(dead_code)]
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
