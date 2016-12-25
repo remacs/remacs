@@ -14,7 +14,7 @@ script:
   # Configure Emacs for building
   - ./autogen.sh
   # TODO: set up makeinfo on travis.
-  - ./configure --without-makeinfo
+  - ./configure --without-makeinfo --with-xpm=no --with-gif=no
 
 notifications:
   email: false
