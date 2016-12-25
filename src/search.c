@@ -30,7 +30,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "blockinput.h"
 #include "intervals.h"
 
-#include <sys/types.h>
 #include "regex.h"
 
 #define REGEXP_CACHE_SIZE 20

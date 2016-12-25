@@ -19,7 +19,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef THREAD_H
 #define THREAD_H
 
-#include <sys/types.h>		/* for ssize_t used by regex.h */
 #include "regex.h"
 
 #ifdef WINDOWSNT

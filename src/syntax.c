@@ -20,8 +20,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
-#include <sys/types.h>
-
 #include "lisp.h"
 #include "character.h"
 #include "buffer.h"

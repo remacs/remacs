@@ -27,13 +27,12 @@
 # error "_REGEX_RE_COMP nor _LIBC can be defined if emacs is defined."
 #endif
 
+#include <sys/types.h>
+
 /* Allow the use in C++ code.  */
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* POSIX says that <sys/types.h> must be included (by the caller) before
-   <regex.h>.  */
 
 #if !defined _POSIX_C_SOURCE && !defined _POSIX_SOURCE && defined VMS
 /* VMS doesn't have `size_t' in <sys/types.h>, even though POSIX says it
@@ -430,11 +429,10 @@ struct re_pattern_buffer
 
 typedef struct re_pattern_buffer regex_t;
 
-/* Type for byte offsets within the string.  POSIX mandates this to be an int,
-   but the Open Group has signaled its intention to change the requirement to
-   be that regoff_t be at least as wide as ptrdiff_t and ssize_t.  Current
-   gnulib sources also use ssize_t, and we need this for supporting buffers and
-   strings > 2GB on 64-bit hosts.  */
+/* POSIX 1003.1-2008 requires that regoff_t be at least as wide as
+   ptrdiff_t and ssize_t.  We don't know of any hosts where ptrdiff_t
+   is wider than ssize_t, so ssize_t is safe.  ptrdiff_t is not
+   necessarily visible here, so use ssize_t.  */
 typedef ssize_t regoff_t;
 
 
