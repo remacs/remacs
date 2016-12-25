@@ -5,6 +5,7 @@ extern crate libc;
 
 use std::os::raw::c_char;
 use std::mem;
+use std::ptr;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -186,6 +187,14 @@ fn XUNTAG(a: LispObject, ty: libc::c_int) -> *const libc::c_void {
     (XLI(a) - ty as EmacsInt) as *const libc::c_void
 }
 
+// lisp.h uses a union for Lisp_Misc, which we emulate with an opaque
+// struct.
+#[allow(dead_code)]
+#[repr(C)]
+struct LispMisc {
+    _ignored: i64
+}
+
 /* Supertype of all Misc types.  */
 #[repr(C)]
 struct LispMiscAny {
@@ -193,6 +202,15 @@ struct LispMiscAny {
     // This is actually a GC marker bit plus 15 bits of padding, but
     // we don't care right now.
     padding: u16,
+}
+
+#[allow(dead_code)]
+#[allow(non_snake_case)]
+fn XMISC(a: LispObject) -> LispMisc {
+    // TODO: XUNTAG should just take a LispType as an argument.
+    unsafe {
+        mem::transmute(XUNTAG(a, LispType::Lisp_Misc as libc::c_int))
+    }
 }
 
 #[allow(dead_code)]
@@ -206,7 +224,9 @@ fn XMISCANY(a: LispObject) -> *const LispMiscAny {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 fn XMISCTYPE(a: LispObject) -> LispMiscType {
-    unimplemented!()
+    unsafe {
+        ptr::read(XMISCANY(a)).ty
+    }
 }
 
 #[allow(dead_code)]
