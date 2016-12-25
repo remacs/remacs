@@ -996,14 +996,6 @@ XFASTINT (Lisp_Object a)
   return n;
 }
 
-/* Extract A's pointer value, assuming A's type is TYPE.  */
-INLINE void *
-XUNTAG (Lisp_Object a, int type)
-{
-  intptr_t i = USE_LSB_TAG ? XLI (a) - type : XLI (a) & VALMASK;
-  return (void *) i;
-}
-
 #endif /* ! USE_LSB_TAG */
 
 /* Extract A's value as an unsigned integer.  */
