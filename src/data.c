@@ -31,6 +31,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "character.h"
 #include "buffer.h"
 #include "keyboard.h"
+#include "process.h"
 #include "frame.h"
 #include "keymap.h"
 

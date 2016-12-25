@@ -19,6 +19,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef EMACS_INTERVALS_H
 #define EMACS_INTERVALS_H
 
+#include "buffer.h"
+#include "lisp.h"
+
 INLINE_HEADER_BEGIN
 
 /* Basic data type for use of intervals.  */

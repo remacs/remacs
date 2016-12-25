@@ -202,6 +202,25 @@ struct Lisp_Process
 #endif
 };
 
+INLINE bool
+PROCESSP (Lisp_Object a)
+{
+  return PSEUDOVECTORP (a, PVEC_PROCESS);
+}
+
+INLINE void
+CHECK_PROCESS (Lisp_Object x)
+{
+  CHECK_TYPE (PROCESSP (x), Qprocessp, x);
+}
+
+INLINE struct Lisp_Process *
+XPROCESS (Lisp_Object a)
+{
+  eassert (PROCESSP (a));
+  return XUNTAG (a, Lisp_Vectorlike);
+}
+
 /* Every field in the preceding structure except for the first two
    must be a Lisp_Object, for GC's sake.  */
 

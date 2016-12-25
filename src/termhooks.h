@@ -654,6 +654,19 @@ struct terminal
   void (*delete_terminal_hook) (struct terminal *);
 };
 
+INLINE bool
+TERMINALP (Lisp_Object a)
+{
+  return PSEUDOVECTORP (a, PVEC_TERMINAL);
+}
+
+INLINE struct terminal *
+XTERMINAL (Lisp_Object a)
+{
+  eassert (TERMINALP (a));
+  return XUNTAG (a, Lisp_Vectorlike);
+}
+
 /* Most code should use these functions to set Lisp fields in struct
    terminal.  */
 INLINE void

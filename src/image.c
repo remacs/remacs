@@ -36,6 +36,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "lisp.h"
 #include "frame.h"
+#include "process.h"
 #include "window.h"
 #include "buffer.h"
 #include "dispextern.h"

@@ -397,6 +397,25 @@ struct window
     ptrdiff_t window_end_bytepos;
   };
 
+INLINE bool
+WINDOWP (Lisp_Object a)
+{
+  return PSEUDOVECTORP (a, PVEC_WINDOW);
+}
+
+INLINE void
+CHECK_WINDOW (Lisp_Object x)
+{
+  CHECK_TYPE (WINDOWP (x), Qwindowp, x);
+}
+
+INLINE struct window *
+XWINDOW (Lisp_Object a)
+{
+  eassert (WINDOWP (a));
+  return XUNTAG (a, Lisp_Vectorlike);
+}
+
 /* Most code should use these functions to set Lisp fields in struct
    window.  */
 INLINE void

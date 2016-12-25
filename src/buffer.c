@@ -32,6 +32,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "lisp.h"
 #include "intervals.h"
+#include "process.h"
 #include "systime.h"
 #include "window.h"
 #include "commands.h"

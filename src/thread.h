@@ -28,6 +28,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "sysselect.h"		/* FIXME */
 #include "systime.h"		/* FIXME */
+#include "systhread.h"
 
 struct thread_state
 {
@@ -175,6 +176,25 @@ struct thread_state
   struct thread_state *next_thread;
 };
 
+INLINE bool
+THREADP (Lisp_Object a)
+{
+  return PSEUDOVECTORP (a, PVEC_THREAD);
+}
+
+INLINE void
+CHECK_THREAD (Lisp_Object x)
+{
+  CHECK_TYPE (THREADP (x), Qthreadp, x);
+}
+
+INLINE struct thread_state *
+XTHREAD (Lisp_Object a)
+{
+  eassert (THREADP (a));
+  return XUNTAG (a, Lisp_Vectorlike);
+}
+
 /* A mutex in lisp is represented by a system condition variable.
    The system mutex associated with this condition variable is the
    global lock.
@@ -203,6 +223,25 @@ struct Lisp_Mutex
   lisp_mutex_t mutex;
 };
 
+INLINE bool
+MUTEXP (Lisp_Object a)
+{
+  return PSEUDOVECTORP (a, PVEC_MUTEX);
+}
+
+INLINE void
+CHECK_MUTEX (Lisp_Object x)
+{
+  CHECK_TYPE (MUTEXP (x), Qmutexp, x);
+}
+
+INLINE struct Lisp_Mutex *
+XMUTEX (Lisp_Object a)
+{
+  eassert (MUTEXP (a));
+  return XUNTAG (a, Lisp_Vectorlike);
+}
+
 /* A condition variable as a lisp object.  */
 struct Lisp_CondVar
 {
@@ -217,6 +256,25 @@ struct Lisp_CondVar
   /* The lower-level condition variable object.  */
   sys_cond_t cond;
 };
+
+INLINE bool
+CONDVARP (Lisp_Object a)
+{
+  return PSEUDOVECTORP (a, PVEC_CONDVAR);
+}
+
+INLINE void
+CHECK_CONDVAR (Lisp_Object x)
+{
+  CHECK_TYPE (CONDVARP (x), Qcondition_variable_p, x);
+}
+
+INLINE struct Lisp_CondVar *
+XCONDVAR (Lisp_Object a)
+{
+  eassert (CONDVARP (a));
+  return XUNTAG (a, Lisp_Vectorlike);
+}
 
 extern struct thread_state *current_thread;
 
