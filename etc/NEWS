@@ -190,6 +190,16 @@ navigation and editing of large files.
 It now treats the optional 2nd argument to mean that the URL should be
 shown in the currently selected window.
 
+** Comint
+*** 'comint-insert-previous-argument' knows how to count args
+from the beginning or from the end.  This is useful because
+'comint-insert-previous-argument' exists to emulate M-. in bash and zsh; and
+bash counts from the start while zsh counts from the end.
+
+*** New variable 'comint-insert-previous-argument-from-end' controls whether
+args passed to 'comint-insert-previous-argument' count from the beginning or
+from the end
+
 ** Flymake
 
 +++

@@ -1682,12 +1682,13 @@ characters), and are not considered to be delimiters."
 
 (defun comint-arguments (string nth mth)
   "Return from STRING the NTH to MTH arguments.
-NTH and/or MTH can be nil, which means the last argument.
-Returned arguments are separated by single spaces.
-We assume whitespace separates arguments, except within quotes
-and except for a space or tab that immediately follows a backslash.
-Also, a run of one or more of a single character
-in `comint-delimiter-argument-list' is a separate argument.
+NTH and/or MTH can be nil, which means the last argument.  NTH
+and MTH can be <0 to count from the end; -1 means last argument.
+Returned arguments are separated by single spaces.  We assume
+whitespace separates arguments, except within quotes and except
+for a space or tab that immediately follows a backslash.  Also, a
+run of one or more of a single character in
+`comint-delimiter-argument-list' is a separate argument.
 Argument 0 is the command name."
   ;; The first line handles ordinary characters and backslash-sequences
   ;; (except with w32 msdos-like shells, where backslashes are valid).
@@ -1709,7 +1710,7 @@ Argument 0 is the command name."
 	 (count 0)
 	 beg str quotes)
     ;; Build a list of all the args until we have as many as we want.
-    (while (and (or (null mth) (<= count mth))
+    (while (and (or (null mth) (< mth 0) (<= count mth))
 		(string-match argpart string pos))
       ;; Apply the `literal' text property to backslash-escaped
       ;; characters, so that `comint-delim-arg' won't break them up.
@@ -1736,8 +1737,14 @@ Argument 0 is the command name."
 	      args (if quotes (cons str args)
 		     (nconc (comint-delim-arg str) args))))
     (setq count (length args))
-    (let ((n (or nth (1- count)))
-	  (m (if mth (1- (- count mth)) 0)))
+    (let ((n (cond
+              ((null nth) (1- count))
+              ((>= nth 0) nth)
+              (t          (+ count nth))))
+          (m (cond
+              ((null mth) 0)
+              ((>= mth 0) (1- (- count mth)))
+              (t          (1- (- mth))))))
       (mapconcat
        (function (lambda (a) a)) (nthcdr n (nreverse (nthcdr m args))) " "))))
 
@@ -2652,8 +2659,16 @@ text matching `comint-prompt-regexp'."
 (defvar-local comint-insert-previous-argument-last-start-pos nil)
 (defvar-local comint-insert-previous-argument-last-index nil)
 
-;; Needs fixing:
-;;  make comint-arguments understand negative indices as bash does
+(defcustom comint-insert-previous-argument-from-end nil
+  "If nil, the INDEX argument to
+`comint-insert-previous-argument' refers to the INDEX-th
+argument, counting from the beginning; if non-nil, counting from
+the end.  This exists to emulate the bahavior of `M-number M-.'
+in bash and zsh: in bash, `number' counts from the
+beginning (variable in nil), while in zsh it counts from the end."
+  :type 'boolean
+  :group 'comint)
+
 (defun comint-insert-previous-argument (index)
   "Insert the INDEXth argument from the previous Comint command-line at point.
 Spaces are added at beginning and/or end of the inserted string if
@@ -2661,8 +2676,8 @@ necessary to ensure that it's separated from adjacent arguments.
 Interactively, if no prefix argument is given, the last argument is inserted.
 Repeated interactive invocations will cycle through the same argument
 from progressively earlier commands (using the value of INDEX specified
-with the first command).
-This command is like `M-.' in bash."
+with the first command).  Values of INDEX<0 count from the end, so INDEX=-1
+is the last argument.  This command is like `M-.' in bash and zsh."
   (interactive "P")
   (unless (null index)
     (setq index (prefix-numeric-value index)))
@@ -2672,6 +2687,9 @@ This command is like `M-.' in bash."
 	 (setq index comint-insert-previous-argument-last-index))
 	(t
 	 ;; This is a non-repeat invocation, so initialize state.
+         (when (and index
+                    comint-insert-previous-argument-from-end)
+           (setq index (- index)))
 	 (setq comint-input-ring-index nil)
 	 (setq comint-insert-previous-argument-last-index index)
 	 (when (null comint-insert-previous-argument-last-start-pos)
