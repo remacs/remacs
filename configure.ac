@@ -3476,7 +3476,7 @@ elif test "${with_png}" != no; then
   elif test "${HAVE_X11}" = "yes" || test "${HAVE_W32}" = "yes"; then
     AC_MSG_CHECKING([for png])
     png_cflags=`(libpng-config --cflags) 2>&AS_MESSAGE_LOG_FD` &&
-    png_libs=`(libpng-config --libs) 2>&AS_MESSAGE_LOG_FD` || {
+    png_ldflags=`(libpng-config --ldflags) 2>&AS_MESSAGE_LOG_FD` || {
       # libpng-config does not work; configure by hand.
       # Debian unstable as of July 2003 has multiple libpngs, and puts png.h
       # in /usr/include/libpng.
@@ -3486,18 +3486,18 @@ elif test "${with_png}" != no; then
       else
 	png_cflags=
       fi
-      png_libs='-lpng'
+      png_ldflags='-lpng'
     }
     SAVE_CFLAGS=$CFLAGS
     SAVE_LIBS=$LIBS
     CFLAGS="$CFLAGS $png_cflags"
-    LIBS="$png_libs -lz -lm $LIBS"
+    LIBS="$png_ldflags -lz -lm $LIBS"
     AC_LINK_IFELSE(
       [AC_LANG_PROGRAM([[#include <png.h>]],
 	 [[return !png_get_channels (0, 0);]])],
       [HAVE_PNG=yes
        PNG_CFLAGS=`AS_ECHO(["$png_cflags"]) | sed -e "$edit_cflags"`
-       LIBPNG=$png_libs
+       LIBPNG=$png_ldflags
        # $LIBPNG requires explicit -lz in some cases.
        # We don't know what those cases are, exactly, so play it safe and
        # append -lz to any nonempty $LIBPNG, unless we're already using LIBZ.
