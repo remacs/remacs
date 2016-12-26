@@ -64,7 +64,11 @@
 (defvar file-notify--test-event nil)
 (defvar file-notify--test-events nil)
 
-(defconst file-notify--test-read-event-timeout 0.01
+(defconst file-notify--test-read-event-timeout
+  (cond
+   ;; Some events take several seconds to arrive on cygwin.
+   ((eq system-type 'cygwin) 7)
+   (t 0.01))
   "Timeout for `read-event' calls.
 It is different for local and remote file notification libraries.")
 
@@ -388,6 +392,10 @@ delivered."
       (not (input-pending-p)))
      (setq file-notify--test-events nil
            file-notify--test-results nil)
+     ;; cygwin needs a delay between setting a watch and beginning
+     ;; file activity, or else the first event is not sent.
+     (if (eq system-type 'cygwin)
+         (sleep-for 1))
      ,@body
      (file-notify--wait-for-events
       ;; More events need more time.  Use some fudge factor.
@@ -409,10 +417,9 @@ delivered."
   (unwind-protect
       (progn
         ;; Check file creation, change and deletion.  It doesn't work
-        ;; for cygwin and kqueue, because we don't use an implicit
-        ;; directory monitor (kqueue), or the timings are too bad (cygwin).
-        (unless (or (eq system-type 'cygwin)
-		    (string-equal (file-notify--test-library) "kqueue"))
+        ;; for kqueue, because we don't use an implicit directory
+        ;; monitor.
+        (unless (string-equal (file-notify--test-library) "kqueue")
           (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
           (should
            (setq file-notify--test-desc
@@ -421,9 +428,9 @@ delivered."
                   '(change) #'file-notify--test-event-handler)))
           (file-notify--test-with-events
               (cond
-               ;; cygwin recognizes only `deleted' and `stopped' events.
+               ;; cygwin does not raise a `changed' event.
                ((eq system-type 'cygwin)
-                '(deleted stopped))
+                '(created deleted stopped))
                (t '(created changed deleted stopped)))
             (write-region
              "another text" nil file-notify--test-tmpfile nil 'no-message)
@@ -440,13 +447,9 @@ delivered."
 		file-notify--test-tmpfile
 		'(change) #'file-notify--test-event-handler)))
         (file-notify--test-with-events
-	    (cond
-	     ;; cygwin recognizes only `deleted' and `stopped' events.
-	     ((eq system-type 'cygwin)
-	      '(deleted stopped))
-             ;; There could be one or two `changed' events.
-             (t '((changed deleted stopped)
-                  (changed changed deleted stopped))))
+            ;; There could be one or two `changed' events.
+            '((changed deleted stopped)
+              (changed changed deleted stopped))
           (write-region
            "another text" nil file-notify--test-tmpfile nil 'no-message)
           (read-event nil nil file-notify--test-read-event-timeout)
@@ -470,11 +473,11 @@ delivered."
 	       ;; events for the watched directory.
 	       ((string-equal (file-notify--test-library) "w32notify")
 		'(created changed deleted))
-	       ;; cygwin recognizes only `deleted' and `stopped' events.
-	       ((eq system-type 'cygwin)
-		'(deleted stopped))
 	       ;; There are two `deleted' events, for the file and for
-	       ;; the directory.  Except for kqueue.
+	       ;; the directory.  Except for cygwin and kqueue.  And
+	       ;; cygwin does not raise a `changed' event.
+	       ((eq system-type 'cygwin)
+		'(created deleted stopped))
 	       ((string-equal (file-notify--test-library) "kqueue")
 		'(created changed deleted stopped))
 	       (t '(created changed deleted deleted stopped)))
@@ -503,11 +506,10 @@ delivered."
 		'(created changed created changed
 		  changed changed changed
 		  deleted deleted))
-	       ;; cygwin recognizes only `deleted' and `stopped' events.
-	       ((eq system-type 'cygwin)
-		'(deleted stopped))
 	       ;; There are three `deleted' events, for two files and
-	       ;; for the directory.  Except for kqueue.
+	       ;; for the directory.  Except for cygwin and kqueue.
+	       ((eq system-type 'cygwin)
+		'(created created changed changed deleted stopped))
 	       ((string-equal (file-notify--test-library) "kqueue")
 		'(created changed created changed deleted stopped))
 	       (t '(created changed created changed
@@ -541,11 +543,12 @@ delivered."
 	       ;; events for the watched directory.
 	       ((string-equal (file-notify--test-library) "w32notify")
 		'(created changed renamed deleted))
-	       ;; cygwin recognizes only `deleted' and `stopped' events.
-	       ((eq system-type 'cygwin)
-		'(deleted stopped))
 	       ;; There are two `deleted' events, for the file and for
-	       ;; the directory.  Except for kqueue.
+	       ;; the directory.  Except for cygwin and kqueue.  And
+	       ;; cygwin raises `created' and `deleted' events instead
+	       ;; of a `renamed' event.
+	       ((eq system-type 'cygwin)
+		'(created created deleted deleted stopped))
 	       ((string-equal (file-notify--test-library) "kqueue")
 		'(created changed renamed deleted stopped))
 	       (t '(created changed renamed deleted deleted stopped)))
@@ -728,13 +731,9 @@ delivered."
 		'(change) #'file-notify--test-event-handler)))
 	(should (file-notify-valid-p file-notify--test-desc))
         (file-notify--test-with-events
-            (cond
-             ;; cygwin recognizes only `deleted' and `stopped' events.
-	     ((eq system-type 'cygwin)
-	      '(deleted stopped))
              ;; There could be one or two `changed' events.
-             (t '((changed deleted stopped)
-                  (changed changed deleted stopped))))
+             '((changed deleted stopped)
+               (changed changed deleted stopped))
           (write-region
            "another text" nil file-notify--test-tmpfile nil 'no-message)
 	  (read-event nil nil file-notify--test-read-event-timeout)
@@ -765,11 +764,11 @@ delivered."
 	  ;; for the watched directory.
 	  ((string-equal (file-notify--test-library) "w32notify")
 	   '(created changed deleted))
-	  ;; cygwin recognizes only `deleted' and `stopped' events.
-	  ((eq system-type 'cygwin)
-	   '(deleted stopped))
 	  ;; There are two `deleted' events, for the file and for the
-	  ;; directory.  Except for kqueue.
+	  ;; directory.  Except for cygwin and kqueue.  And cygwin
+	  ;; does not raise a `changed' event.
+	  ((eq system-type 'cygwin)
+	   '(created deleted stopped))
 	  ((string-equal (file-notify--test-library) "kqueue")
 	   '(created changed deleted stopped))
 	  (t '(created changed deleted deleted stopped)))
@@ -1172,9 +1171,10 @@ the file watch."
 ;;   the missing directory monitor.
 ;; * For w32notify, no `deleted' and `stopped' events arrive when a
 ;;   directory is removed.
-;; * For w32notify, no `attribute-changed' events arrive.  Its sends
-;;   `changed' events instead.
-;; * Check, why cygwin recognizes only `deleted' and `stopped' events.
+;; * For cygwin and w32notify, no `attribute-changed' events arrive.
+;;   They send `changed' events instead.
+;; * cygwin does not send all expected `changed' and `deleted' events.
+;;   Probably due to timing issues.
 
 (provide 'file-notify-tests)
 ;;; filenotify-tests.el ends here
