@@ -1580,6 +1580,44 @@ an ordinary evaluated argument.
 @end example
 @end defun
 
+  A variable can be let-bound (@pxref{Local Variables}) to a
+non-default value; in that case, @code{default-value} will return the
+value from that binding, not the global value, and @code{set-default}
+will be prevented from setting the global value.  The following two
+functions allow to reference the global value even if it's masked by a
+let-binding.
+
+@cindex top-level default value
+@defun default-toplevel-value symbol
+This function returns the @dfn{top-level} default value of
+@var{symbol}, which is its value outside of any let-binding.
+@end defun
+
+@example
+@group
+(defvar variable 'global-value)
+    @result{} variable
+@end group
+@group
+(let ((variable 'let-binding))
+  (default-value 'variable))
+    @result{} let-binding
+@end group
+@group
+(let ((variable 'let-binding))
+  (default-toplevel-value 'variable))
+    @result{} global-value
+@end group
+@end example
+
+@defun set-default-toplevel-value symbol value
+This function sets the top-level default value of @var{symbol} to the
+specified @var{value}.  This comes in handy when you want to set the
+global value of @var{symbol} regardless of whether your code runs in
+the context of @var{symbol}'s let-binding.
+@end defun
+
+
 @node File Local Variables
 @section File Local Variables
 @cindex file local variables
