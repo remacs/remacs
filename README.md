@@ -88,7 +88,34 @@ Pull requests welcome, no copyright assignment required. This project is under t
 
 ## Help Needed
 
-TODO -- interesting bugs, first topics, ideas
+There's lots to do!
+
+Easy tasks:
+
+* Find a small function in lisp.h and write an equivalent in lisp.rs.
+* Improve our unit tests. Currently we're passing `Qnil` to test
+  functions, which isn't very useful.
+* Add docstrings to public functions in lisp.rs.
+* Tidy up messy Rust that's been translated directly from C. Run
+  `rustfmt`, add or rename internal variables, run `clippy`, and so
+  on.
+* Fix the makefile to recompile with cargo and rebuild temacs when the
+  Rust source changes.
+
+Medium tasks:
+
+* Choose an elisp function you like, and port it to rust. Look at
+  `rust-mod` for an example.
+* Expand our Travis configuration to do a complete Emacs build,
+  including the C code.
+* Expand our Travis configuration to run 'make check', so we know
+  remacs passes Emacs' internal test suite.
+
+Big tasks:
+
+* Find equivalent Rust libraries for parts of Emacs, and replace all
+  the relevant C code. Rust has great libraries for regular
+  expressions, GUI, terminal UI, managing processes, amongst others.
 
 ## TODOC
 
