@@ -20,6 +20,10 @@ extern "C" {
     pub fn defsubr(sname: *mut LispSubr);
     pub static Qt: LispObject;
     pub fn make_number(n: EmacsInt) -> LispObject;
+    pub fn XMISC(a: LispObject) -> *const LispMisc;
+    pub fn XMISCANY(a: LispObject) -> *const LispMiscAny;
+    pub fn XMISCTYPE(a: LispObject) -> LispMiscType;
+    pub fn MARKERP(a: LispObject) -> bool;
 }
 
 #[allow(non_upper_case_globals)]
@@ -101,9 +105,9 @@ enum LispType {
 // more likely that we'll spot the error if a random word in memory is
 // mistakenly interpreted as a Lisp_Misc.
 #[repr(C)]
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 #[allow(dead_code)]
-enum LispMiscType {
+pub enum LispMiscType {
     Lisp_Misc_Free = 0x5eab,
     Lisp_Misc_Marker,
     Lisp_Misc_Overlay,
@@ -157,8 +161,7 @@ fn test_xtype() {
 }
 
 #[allow(non_snake_case)]
-#[allow(dead_code)]
-fn FLOATP(a: LispObject) -> bool {
+pub fn FLOATP(a: LispObject) -> bool {
     XTYPE(a) == LispType::Lisp_Float
 }
 
@@ -179,21 +182,21 @@ fn test_miscp() {
 
 #[allow(dead_code)]
 #[allow(non_snake_case)]
-fn XUNTAG(a: LispObject, ty: libc::c_int) -> *const libc::c_void {
-    (XLI(a) - ty as EmacsInt) as *const libc::c_void
+pub fn rust_XUNTAG(a: LispObject, ty: libc::c_int) -> *const libc::c_void {
+    (XLI(a) as libc::intptr_t - ty as libc::intptr_t) as *const libc::c_void
 }
 
 // lisp.h uses a union for Lisp_Misc, which we emulate with an opaque
 // struct.
 #[allow(dead_code)]
 #[repr(C)]
-struct LispMisc {
+pub struct LispMisc {
     _ignored: i64
 }
 
 /* Supertype of all Misc types.  */
 #[repr(C)]
-struct LispMiscAny {
+pub struct LispMiscAny {
     pub ty: LispMiscType,
     // This is actually a GC marker bit plus 15 bits of padding, but
     // we don't care right now.
@@ -202,36 +205,58 @@ struct LispMiscAny {
 
 #[allow(dead_code)]
 #[allow(non_snake_case)]
-fn XMISC(a: LispObject) -> LispMisc {
-    // TODO: XUNTAG should just take a LispType as an argument.
+pub fn rust_XMISC(a: LispObject) -> LispMisc {
+    // TODO: rust_XUNTAG should just take a LispType as an argument.
     unsafe {
-        mem::transmute(XUNTAG(a, LispType::Lisp_Misc as libc::c_int))
+        mem::transmute(rust_XUNTAG(a, LispType::Lisp_Misc as libc::c_int))
     }
 }
 
-#[allow(dead_code)]
 #[allow(non_snake_case)]
-fn XMISCANY(a: LispObject) -> *const LispMiscAny {
+pub fn rust_XMISCANY(a: LispObject) -> *const LispMiscAny {
     debug_assert!(MISCP(a));
-    unimplemented!()
-}
-
-#[allow(dead_code)]
-#[allow(non_snake_case)]
-#[allow(unused_variables)]
-fn XMISCTYPE(a: LispObject) -> LispMiscType {
     unsafe {
-        ptr::read(XMISCANY(a)).ty
+        mem::transmute(rust_XMISC(a))
     }
 }
 
-#[allow(dead_code)]
 #[allow(non_snake_case)]
-fn MARKERP(a: LispObject) -> bool {
-    MISCP(a) && XMISCTYPE(a) == LispMiscType::Lisp_Misc_Marker
+pub fn rust_XMISCTYPE(a: LispObject) -> LispMiscType {
+    unsafe {
+        ptr::read(rust_XMISCANY(a)).ty
+    }
+}
+
+#[allow(non_snake_case)]
+pub fn rust_MARKERP(a: LispObject) -> bool {
+    println!("a: {:x}", a as i32);
+    unsafe {
+        println!("XMISCTYPE a: {:?} {:x}", XMISCTYPE(a), XMISCTYPE(a) as i32);
+        println!("XMISC a: {:?} {:x}", XMISC(a), XMISC(a) as i32);
+    }
+    println!("rust_XMISCTYPE a: {:?} {:x}", rust_XMISCTYPE(a), rust_XMISCTYPE(a) as i32);
+    println!("LispMiscType::Lisp_Misc_Marker: {:?} {:x}", LispMiscType::Lisp_Misc_Marker, LispMiscType::Lisp_Misc_Marker as i32);
+    // TODO: why can't I use 'rust_XMISCTYPE(a) == LispMiscType::Lisp_Misc_Marker' ?
+    unsafe {
+        let res = MISCP(a) && match XMISCTYPE(a) {
+            LispMiscType::Lisp_Misc_Marker => true,
+            _ => false
+        };
+
+        println!("res: {:?}", res);
+        res
+    }
 }
 
 #[test]
 fn test_markerp() {
+    let from_c = 0x9205eac;
+    let enum_from_c: LispMiscType = unsafe {
+        mem::transmute(from_c)
+    };
+
+    println!("enum from C: {:?}", enum_from_c);
+    
+    println!("equal: {}", LispMiscType::Lisp_Misc_Marker == LispMiscType::Lisp_Misc_Marker);
     assert!(!MARKERP(Qnil));
 }
