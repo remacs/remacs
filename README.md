@@ -72,7 +72,42 @@ alternatives. Emacs shouldn't have its own forked regexp engine.
 
 Give it a try. We think you'll like it.
 
+## Why a fork?
+
+Forking is a longstanding tradition in the Emacs community. We believe
+it is a positive thing.
+
+Notable Emacs forks include [XEmacs](http://www.xemacs.org/),
+[Guile Emacs](https://www.emacswiki.org/emacs/GuileEmacs),
+and [emacs-jit](https://github.com/burtonsamograd/emacs-jit).
+
+There have also been separate elisp implementations, such as
+[Deuce](https://github.com/hraberg/deuce),
+[JEmacs](http://jemacs.sourceforge.net/) and
+[El Compilador](https://github.com/tromey/el-compilador).
+
+This fork hopes to show that writing Emacs in Rust is feasible. By
+forking, we can use a different development cycle to core Emacs, and
+we don't need to support all the niche platforms supported by core
+Emacs. Remacs will never run on MS-DOS.
+
 ## Design Goals
+
+**Compatibility**: Remacs should not break existing elisp code, and
+ideally provide the same FFI too.
+
+**Similar structure**: Code in Remacs should use the same naming and
+file structure as core Emacs, to make translation straightforward.
+
+**Leverage Rust itself**: Remacs should make best use of Rust to ensure code is
+robust and performant.
+
+**Leverage the Rust ecosystem**: Remacs should use existing Rust
+crates wherever possible, and create new, separate crates where our
+code could benefit others.
+
+**Great docs**: Emacs has excellent documentation, Remacs should be no
+different.
 
 ## Building Remacs
 
