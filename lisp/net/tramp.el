@@ -4345,13 +4345,13 @@ Only works for Bourne-like shells."
 
 (eval-after-load "esh-util"
   '(progn
-     (add-hook 'eshell-first-time-mode-hook
+     (add-hook 'eshell-mode-hook
 	       'tramp-eshell-directory-change)
      (add-hook 'eshell-directory-change-hook
 	       'tramp-eshell-directory-change)
      (add-hook 'tramp-unload-hook
 	       (lambda ()
-		 (remove-hook 'eshell-first-time-mode-hook
+		 (remove-hook 'eshell-mode-hook
 			      'tramp-eshell-directory-change)
 		 (remove-hook 'eshell-directory-change-hook
 			      'tramp-eshell-directory-change)))))
