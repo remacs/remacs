@@ -20,7 +20,6 @@ extern "C" {
     pub fn defsubr(sname: *mut LispSubr);
     pub static Qt: LispObject;
     pub fn make_number(n: EmacsInt) -> LispObject;
-    pub fn XMISC(a: LispObject) -> *mut LispMisc;
 }
 
 #[allow(non_upper_case_globals)]
@@ -178,15 +177,13 @@ fn test_miscp() {
     assert!(!MISCP(Qnil));
 }
 
-#[allow(dead_code)]
 #[allow(non_snake_case)]
-pub fn rust_XUNTAG(a: LispObject, ty: libc::c_int) -> *const libc::c_void {
+pub fn XUNTAG(a: LispObject, ty: libc::c_int) -> *const libc::c_void {
     (XLI(a) as libc::intptr_t - ty as libc::intptr_t) as *const libc::c_void
 }
 
 // lisp.h uses a union for Lisp_Misc, which we emulate with an opaque
 // struct.
-#[allow(dead_code)]
 #[repr(C)]
 pub struct LispMisc {
     _ignored: i64
@@ -201,12 +198,11 @@ pub struct LispMiscAny {
     padding: u16,
 }
 
-#[allow(dead_code)]
 #[allow(non_snake_case)]
-pub fn rust_XMISC(a: LispObject) -> LispMisc {
-    // TODO: rust_XUNTAG should just take a LispType as an argument.
+pub fn XMISC(a: LispObject) -> LispMisc {
+    // TODO: XUNTAG should just take a LispType as an argument.
     unsafe {
-        mem::transmute(rust_XUNTAG(a, LispType::Lisp_Misc as libc::c_int))
+        mem::transmute(XUNTAG(a, LispType::Lisp_Misc as libc::c_int))
     }
 }
 
