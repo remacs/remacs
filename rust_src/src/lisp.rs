@@ -179,6 +179,16 @@ fn test_integerp() {
     assert!(!INTEGERP(Qnil));
 }
 
+#[allow(non_snake_case)]
+pub fn SYMBOLP(a: LispObject) -> bool {
+    XTYPE(a) == LispType::Lisp_Symbol
+}
+
+#[test]
+fn test_symbolp() {
+    assert!(SYMBOLP(Qnil));
+}
+
 /// Raise an error if `x` is the wrong type. `ok` should be a Rust/C
 /// expression that evaluates if the type is correct. `predicate` is
 /// the elisp-level equivalent predicate that failed.
