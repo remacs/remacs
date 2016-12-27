@@ -168,6 +168,16 @@ fn test_floatp() {
 }
 
 #[allow(non_snake_case)]
+pub fn INTEGERP(a: LispObject) -> bool {
+    (XTYPE(a) as u32 & ((LispType::Lisp_Int0 as u32) | !(LispType::Lisp_Int1 as u32))) == LispType::Lisp_Int0 as u32
+}
+
+#[test]
+fn test_integerp() {
+    assert!(!INTEGERP(Qnil));
+}
+
+#[allow(non_snake_case)]
 fn MISCP(a: LispObject) -> bool {
     XTYPE(a) == LispType::Lisp_Misc
 }
