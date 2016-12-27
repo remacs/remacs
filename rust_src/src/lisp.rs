@@ -23,7 +23,6 @@ extern "C" {
     pub fn XMISC(a: LispObject) -> *const LispMisc;
     pub fn XMISCANY(a: LispObject) -> *const LispMiscAny;
     pub fn XMISCTYPE(a: LispObject) -> LispMiscType;
-    pub fn MARKERP(a: LispObject) -> bool;
 }
 
 #[allow(non_upper_case_globals)]
@@ -228,23 +227,11 @@ pub fn rust_XMISCTYPE(a: LispObject) -> LispMiscType {
 }
 
 #[allow(non_snake_case)]
-pub fn rust_MARKERP(a: LispObject) -> bool {
+pub fn MARKERP(a: LispObject) -> bool {
     println!("a: {:x}", a as i32);
-    unsafe {
-        println!("XMISCTYPE a: {:?} {:x}", XMISCTYPE(a), XMISCTYPE(a) as i32);
-        println!("XMISC a: {:?} {:x}", XMISC(a), XMISC(a) as i32);
-    }
-    println!("rust_XMISCTYPE a: {:?} {:x}", rust_XMISCTYPE(a), rust_XMISCTYPE(a) as i32);
-    println!("LispMiscType::Lisp_Misc_Marker: {:?} {:x}", LispMiscType::Lisp_Misc_Marker, LispMiscType::Lisp_Misc_Marker as i32);
-    // TODO: why can't I use 'rust_XMISCTYPE(a) == LispMiscType::Lisp_Misc_Marker' ?
-    unsafe {
-        let res = MISCP(a) && match XMISCTYPE(a) {
-            LispMiscType::Lisp_Misc_Marker => true,
-            _ => false
-        };
 
-        println!("res: {:?}", res);
-        res
+    unsafe {
+        MISCP(a) && XMISCTYPE(a) == LispMiscType::Lisp_Misc_Marker
     }
 }
 
