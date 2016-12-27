@@ -2162,9 +2162,9 @@ read_event_from_main_queue (struct timespec *end_time,
       if (CONSP (last))
         {
           while (CONSP (XCDR (last)))
-      	last = XCDR (last);
+	    last = XCDR (last);
           if (!NILP (XCDR (last)))
-      	emacs_abort ();
+	    emacs_abort ();
         }
       if (!CONSP (last))
         kset_kbd_queue (kb, list1 (c));
