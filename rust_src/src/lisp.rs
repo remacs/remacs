@@ -18,8 +18,10 @@ pub type LispObject = EmacsInt;
 
 extern "C" {
     pub fn defsubr(sname: *mut LispSubr);
-    pub static Qt: LispObject;
     pub fn make_number(n: EmacsInt) -> LispObject;
+    fn wrong_type_argument(predicate: LispObject, value: LispObject) -> LispObject;
+    pub static Qt: LispObject;
+    pub static Qnumber_or_marker_p: LispObject;
 }
 
 #[allow(non_upper_case_globals)]
@@ -175,6 +177,18 @@ pub fn INTEGERP(a: LispObject) -> bool {
 #[test]
 fn test_integerp() {
     assert!(!INTEGERP(Qnil));
+}
+
+/// Raise an error if `x` is the wrong type. `ok` should be a Rust/C
+/// expression that evaluates if the type is correct. `predicate` is
+/// the elisp-level equivalent predicate that failed.
+#[allow(non_snake_case)]
+pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
+    if !ok {
+        unsafe {
+            wrong_type_argument(predicate, x);
+        }
+    }
 }
 
 #[allow(non_snake_case)]
