@@ -809,7 +809,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  {
 	    Lisp_Object handler = POP;
 	    /* Support for a function here is new in 24.4.  */
-	    record_unwind_protect (FUNCTIONP (handler) ? bcall0 : unwind_body,
+	    record_unwind_protect (FUNCTIONP (handler) ? bcall0 : prog_ignore,
 				   handler);
 	    NEXT;
 	  }

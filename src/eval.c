@@ -453,11 +453,10 @@ usage: (progn BODY...)  */)
   return val;
 }
 
-/* Evaluate BODY sequentially, discarding its value.  Suitable for
-   record_unwind_protect.  */
+/* Evaluate BODY sequentially, discarding its value.  */
 
 void
-unwind_body (Lisp_Object body)
+prog_ignore (Lisp_Object body)
 {
   Fprogn (body);
 }
@@ -469,16 +468,8 @@ whose values are discarded.
 usage: (prog1 FIRST BODY...)  */)
   (Lisp_Object args)
 {
-  Lisp_Object val;
-  Lisp_Object args_left;
-
-  args_left = args;
-  val = args;
-
-  val = eval_sub (XCAR (args_left));
-  while (CONSP (args_left = XCDR (args_left)))
-    eval_sub (XCAR (args_left));
-
+  Lisp_Object val = eval_sub (XCAR (args));
+  prog_ignore (XCDR (args));
   return val;
 }
 
@@ -988,7 +979,7 @@ usage: (while TEST BODY...)  */)
   while (!NILP (eval_sub (test)))
     {
       QUIT;
-      Fprogn (body);
+      prog_ignore (body);
     }
 
   return Qnil;
@@ -1191,7 +1182,7 @@ usage: (unwind-protect BODYFORM UNWINDFORMS...)  */)
   Lisp_Object val;
   ptrdiff_t count = SPECPDL_INDEX ();
 
-  record_unwind_protect (unwind_body, XCDR (args));
+  record_unwind_protect (prog_ignore, XCDR (args));
   val = eval_sub (XCAR (args));
   return unbind_to (count, val);
 }
