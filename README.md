@@ -19,7 +19,7 @@ TODO
 
 ```
 $ cd rust_src
-$ cargo build --release
+$ cargo build
 $ cd ..
 $ ./autogen.sh
 $ ./configure
@@ -28,7 +28,7 @@ $ ./configure
 Modify `src/Makefile` to read:
 
 ``` makefile
-LIBS_SYSTEM=-L../rust_src/target/release -lremacs -ldl
+LIBS_SYSTEM=-L../rust_src/target/debug -lremacs -ldl
 ```
 
 Then compile Emacs:
@@ -43,6 +43,20 @@ You can then run your shiny new Remacs:
 # Using -q to ignore your .emacs.d, so Remacs starts up quickly.
 # RUST_BACKTRACE is optional, but useful if your instance crashes.
 $ RUST_BACKTRACE=1 src/emacs -q
+```
+
+### Release builds
+
+As above, but invoke Cargo with:
+
+``` bash
+$ cargo build --release
+```
+
+and modify `src/Makefile` to:
+
+``` makefile
+LIBS_SYSTEM=-L../rust_src/target/release -lremacs -ldl
 ```
 
 ## Understanding Emacs macros:
