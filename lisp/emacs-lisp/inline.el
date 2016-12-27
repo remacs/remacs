@@ -191,9 +191,9 @@ After VARS is handled, BODY is evaluated in the new environment."
        (while (and (consp exp) (not (eq '\, (car exp))))
          (push (inline--dont-quote (pop exp)) args))
        (setq args (nreverse args))
-       (if exp
-           `(apply ,@args ,(inline--dont-quote exp))
-         args)))
+       (if (null exp)
+           args
+         `(apply #',(car args) ,@(cdr args) ,(inline--dont-quote exp)))))
     (_ exp)))
 
 (defun inline--do-leteval (var-exp &rest body)
