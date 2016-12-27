@@ -20,9 +20,8 @@ extern "C" {
     pub fn defsubr(sname: *mut LispSubr);
     pub static Qt: LispObject;
     pub fn make_number(n: EmacsInt) -> LispObject;
-    pub fn XMISC(a: LispObject) -> *const LispMisc;
-    pub fn XMISCANY(a: LispObject) -> *const LispMiscAny;
-    pub fn XMISCTYPE(a: LispObject) -> LispMiscType;
+    pub fn XMISC(a: LispObject) -> *mut LispMisc;
+    pub fn XMISCANY(a: LispObject) -> *mut LispMiscAny;
 }
 
 #[allow(non_upper_case_globals)]
@@ -103,8 +102,9 @@ enum LispType {
 // The enum values are arbitrary, but we'll use large numbers to make it
 // more likely that we'll spot the error if a random word in memory is
 // mistakenly interpreted as a Lisp_Misc.
-#[repr(C)]
+#[repr(u16)]
 #[derive(PartialEq, Eq, Debug)]
+#[allow(non_camel_case_types)]
 #[allow(dead_code)]
 pub enum LispMiscType {
     Lisp_Misc_Free = 0x5eab,
@@ -219,31 +219,21 @@ pub fn rust_XMISCANY(a: LispObject) -> *const LispMiscAny {
     }
 }
 
+// TODO: we should do some sanity checking, because we're currently
+// exposing a safe API that dereferences raw pointers.
 #[allow(non_snake_case)]
-pub fn rust_XMISCTYPE(a: LispObject) -> LispMiscType {
+pub fn XMISCTYPE(a: LispObject) -> LispMiscType {
     unsafe {
-        ptr::read(rust_XMISCANY(a)).ty
+        ptr::read(XMISCANY(a)).ty
     }
 }
 
 #[allow(non_snake_case)]
 pub fn MARKERP(a: LispObject) -> bool {
-    println!("a: {:x}", a as i32);
-
-    unsafe {
-        MISCP(a) && XMISCTYPE(a) == LispMiscType::Lisp_Misc_Marker
-    }
+    MISCP(a) && XMISCTYPE(a) == LispMiscType::Lisp_Misc_Marker
 }
 
 #[test]
 fn test_markerp() {
-    let from_c = 0x9205eac;
-    let enum_from_c: LispMiscType = unsafe {
-        mem::transmute(from_c)
-    };
-
-    println!("enum from C: {:?}", enum_from_c);
-    
-    println!("equal: {}", LispMiscType::Lisp_Misc_Marker == LispMiscType::Lisp_Misc_Marker);
-    assert!(!MARKERP(Qnil));
+    assert!(!MARKERP(Qnil))
 }
