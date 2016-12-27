@@ -21,7 +21,6 @@ extern "C" {
     pub static Qt: LispObject;
     pub fn make_number(n: EmacsInt) -> LispObject;
     pub fn XMISC(a: LispObject) -> *mut LispMisc;
-    pub fn XMISCANY(a: LispObject) -> *mut LispMiscAny;
 }
 
 #[allow(non_upper_case_globals)]
@@ -212,10 +211,10 @@ pub fn rust_XMISC(a: LispObject) -> LispMisc {
 }
 
 #[allow(non_snake_case)]
-pub fn rust_XMISCANY(a: LispObject) -> *const LispMiscAny {
+pub fn XMISCANY(a: LispObject) -> *const LispMiscAny {
     debug_assert!(MISCP(a));
     unsafe {
-        mem::transmute(rust_XMISC(a))
+        mem::transmute(XMISC(a))
     }
 }
 
