@@ -1,6 +1,6 @@
 # Rust + Emacs [![Build Status](https://travis-ci.org/Wilfred/remacs.svg?branch=master)](https://travis-ci.org/Wilfred/remacs)
 
-An experiment in building porting some Emacs C to Rust.
+An experiment in porting Emacs' C codebase to Rust.
 
 This codebase is based on the emacs 25.1 tag in git, plus commits to
 add some Rust!
@@ -9,11 +9,70 @@ GPLv3, just like all Emacs code.
 
 ## Why Emacs?
 
-TODO
+Emacs will change how you think about programming.
+
+Emacs is **totally introspectable**. You can always find out 'what
+code runs when I press this button?'.
+
+Emacs is an **incremental programming environment**. There's no
+edit-compile-run cycle. There isn't even an edit-run cycle. You can
+execute snippets of code and gradually turn them into a finished
+project. There's no distinction between your editor and your
+interpreter.
+
+Emacs is a **mutable environment**. You can set variables, tweak
+functions with advice, or redefine entire functions. Nothing is
+off-limits.
+
+Emacs **provides functionality without applications**. Rather than
+separate applications, functionality is all integrated into your Emacs
+instance. Amazingly, this works. Ever wanted to use the same snippet
+tool for writing C++ classes as well as emails?
+
+Emacs is full of **incredible software concepts that haven't hit the
+mainstream yet**. For example:
+
+* Many platforms have a single item clipboard. Emacs has an **infinite
+  clipboard**.
+* If you undo a change, and then continue editing, you can't redo the
+  original change. Emacs allows **undoing to any historical state**, even
+  allowing tree-based exploration of history.
+* Emacs supports a **reverse variable search**: you can find variables
+  with a given value.
+* You can perform **structural editing** of code, allowing you to make
+  changes without breaking syntax. This works for lisps (paredit) and
+  non-lisps (smartparens).
+
+Emacs has a **documentation culture**. Emacs includes a usage manual,
+a lisp programming manual, pervasive docstrings and even an
+interactive tutorial.
+
+Emacs has **a broad ecosystem**. If you want to edit code in a
+niche language, there's probably an Emacs package for it.
+
+Emacs doesn't have a monopoly on good ideas, and there are other great
+tools out there. Nonetheless, we believe the [Emacs learning curve pays
+off](https://i.stack.imgur.com/7Cu9Z.jpg).
 
 ## Why Rust?
 
-TODO
+Rust is a great alternative to C.
+
+Rust provides many compile-time checks, making it much easier to write
+fast, correct code (even when using multithreading). This also makes
+it much easier for newcomers to contribute. Emacs is currently
+exploring multithreading, which is much easier is Rust.
+
+Code written in Rust can easily interoperate with C. We can port to
+Rust incrementally.
+
+The Rust ecosystem makes it easy to reuse libraries written by
+others. We can replace entire C files in Emacs with well-maintained
+alternatives. Emacs shouldn't have its own forked regexp engine.
+
+Give it a try. We think you'll like it.
+
+## Design Goals
 
 ## Building Remacs
 
