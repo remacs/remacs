@@ -145,11 +145,7 @@ fn XLI(o: LispObject) -> EmacsInt {
 
 #[allow(non_snake_case)]
 fn XTYPE(a: LispObject) -> LispType {
-    let obj = XLI(a);
-    println!("obj: {:b}", obj);
-    println!("mask: {:b}\nnegated: {:b}", VALMASK, !VALMASK);
     let res = XLI(a) & !VALMASK;
-    println!("res: {:b} ({})", res, res);
     // TODO: it would be better to check the type and fail,
     // https://www.reddit.com/r/rust/comments/36pgn9/integer_to_enum_after_removal_of_fromprimitive/crfy6al/
     unsafe { mem::transmute(res as u32) }
