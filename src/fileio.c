@@ -884,6 +884,11 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
 	/* Detect MSDOS file names with drive specifiers.  */
 	&& ! (IS_DRIVE (o[0]) && IS_DEVICE_SEP (o[1])
 	      && IS_DIRECTORY_SEP (o[2]))
+	/* Detect escaped file names without drive spec after "/:".
+	   These should not be recursively expanded, to avoid
+	   including the default directory twice in the expanded
+	   result.  */
+	&& ! (o[0] == '/' && o[1] == ':')
 #ifdef WINDOWSNT
 	/* Detect Windows file names in UNC format.  */
 	&& ! (IS_DIRECTORY_SEP (o[0]) && IS_DIRECTORY_SEP (o[1]))
@@ -1064,7 +1069,11 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
 
   newdir = newdirlim = 0;
 
-  if (nm[0] == '~')		/* prefix ~ */
+  if (nm[0] == '~'		/* prefix ~ */
+#ifdef DOS_NT
+    && !is_escaped		/* don't expand ~ in escaped file names */
+#endif
+      )
     {
       if (IS_DIRECTORY_SEP (nm[1])
 	  || nm[1] == 0)	/* ~ by itself */
