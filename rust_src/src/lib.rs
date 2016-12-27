@@ -17,6 +17,7 @@ pub unsafe extern "C" fn rust_return_t() -> LispObject {
 pub unsafe extern "C" fn rust_mod(x: LispObject, y: LispObject) -> LispObject {
     println!("x is a float: {}", lisp::FLOATP(x));
     println!("x is a marker: {}", lisp::MARKERP(x));
+    println!("x is an integer: {}", lisp::INTEGERP(x));
     make_number(5)
 }
 
