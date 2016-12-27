@@ -287,3 +287,6 @@ nt/emacs.rc
 nt/emacsclient.rc
 src/gdb.ini
 /var/
+
+# GDB
+.gdb_history
