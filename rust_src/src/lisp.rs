@@ -10,7 +10,9 @@ use std::ptr;
 // TODO: tweak Makefile to rebuild C files if this changes.
 
 // EMACS_INT is defined as 'long int' in lisp.h.
-pub type EmacsInt = libc::c_longlong;
+pub type EmacsInt = libc::c_long;
+// EMACS_UINT is defined as 'unsigned long'
+pub type EmacsUint = libc::c_ulong;
 
 // This is dependent on CHECK_LISP_OBJECT_TYPE, a compile time flag,
 // but it's usually false.
@@ -18,7 +20,6 @@ pub type LispObject = EmacsInt;
 
 extern "C" {
     pub fn defsubr(sname: *mut LispSubr);
-    pub fn make_number(n: EmacsInt) -> LispObject;
     fn wrong_type_argument(predicate: LispObject, value: LispObject) -> LispObject;
     pub static Qt: LispObject;
     pub static Qnumber_or_marker_p: LispObject;
@@ -117,6 +118,8 @@ pub enum LispMiscType {
 // Number of bits in a Lisp_Object tag.
 const GCTYPEBITS: libc::c_int = 3;
 
+const INTTYPEBITS: libc::c_int = GCTYPEBITS - 1;
+
 // This is also dependent on USE_LSB_TAG, which we're assuming to be 1.
 const VALMASK: EmacsInt = -(1 << GCTYPEBITS);
 
@@ -144,6 +147,18 @@ pub struct LispSubr {
 #[allow(non_snake_case)]
 fn XLI(o: LispObject) -> EmacsInt {
     o as EmacsInt
+}
+
+/// Note that CHECK_LISP_OBJECT_TYPE is 0 (false) in our build.
+#[allow(non_snake_case)]
+fn XIL(i: EmacsInt) -> LispObject {
+    i as LispObject
+}
+
+pub fn make_number(n: libc::c_int) -> LispObject {
+    // TODO: this is a rubbish variable name.
+    let as_uint = (n << INTTYPEBITS) as EmacsUint + LispType::Lisp_Int0 as EmacsUint;
+    XIL(as_uint as EmacsInt)
 }
 
 #[allow(non_snake_case)]
@@ -177,6 +192,7 @@ pub fn INTEGERP(a: LispObject) -> bool {
 #[test]
 fn test_integerp() {
     assert!(!INTEGERP(Qnil));
+    assert!(INTEGERP(make_number(1)));
 }
 
 #[allow(non_snake_case)]
