@@ -195,6 +195,8 @@ Easy tasks:
   on.
 * Fix the makefile to recompile with cargo and rebuild temacs when the
   Rust source changes.
+* Fix the makefile to output a binary called `remacs`
+* Update the Remacs welcome screen to say Remacs
 
 Medium tasks:
 
@@ -204,6 +206,9 @@ Medium tasks:
   including the C code.
 * Expand our Travis configuration to run 'make check', so we know
   remacs passes Emacs' internal test suite.
+* Set up bors/homu.
+* Search the Rust source code for `TODO` comments and fix them.
+* Teach Emacs how to jump to definition for Rust functions.
 
 Big tasks:
 
