@@ -1,4 +1,5 @@
-# Rust + Emacs [![Build Status](https://travis-ci.org/Wilfred/remacs.svg?branch=master)](https://travis-ci.org/Wilfred/remacs)
+# Rust + Emacs
+[![Build Status](https://travis-ci.org/Wilfred/remacs.svg?branch=master)](https://travis-ci.org/Wilfred/remacs)
 
 An experiment in porting Emacs' C codebase to Rust.
 
@@ -6,6 +7,23 @@ This codebase is based on the emacs 25.1 tag in git, plus commits to
 add some Rust!
 
 GPLv3, just like all Emacs code.
+
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-generate-toc again -->
+**Table of Contents**
+
+- [Rust + Emacs](#rust--emacs)
+    - [Why Emacs?](#why-emacs)
+    - [Why Rust?](#why-rust)
+    - [Why A Fork?](#why-a-fork)
+    - [Design Goals](#design-goals)
+    - [Building Remacs](#building-remacs)
+        - [Release builds](#release-builds)
+    - [Understanding Macros In Emacs C Files](#understanding-macros-in-emacs-c-files)
+    - [Contributing](#contributing)
+    - [Help Needed](#help-needed)
+    - [TODOC](#todoc)
+
+<!-- markdown-toc end -->
 
 ## Why Emacs?
 
@@ -77,7 +95,7 @@ alternatives. Emacs shouldn't have its own forked regexp engine.
 
 Give it a try. We think you'll like it.
 
-## Why a fork?
+## Why A Fork?
 
 Forking is a longstanding tradition in the Emacs community. We believe
 it is a positive thing.
@@ -158,7 +176,7 @@ and modify `src/Makefile` to:
 LIBS_SYSTEM=-L../rust_src/target/release -lremacs -ldl
 ```
 
-## Understanding Emacs macros:
+## Understanding Macros In Emacs C Files
 
 Define a little file, e.g.
 
