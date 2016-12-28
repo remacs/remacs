@@ -249,6 +249,12 @@ pub struct LispMiscAny {
     padding: u16,
 }
 
+#[test]
+fn test_lisp_misc_any_size() {
+    // Should be 32 bits, which is 4 bytes.
+    assert!(mem::size_of::<LispMiscAny>() == 4);
+}
+
 #[allow(non_snake_case)]
 pub fn XMISC(a: LispObject) -> LispMisc {
     // TODO: XUNTAG should just take a LispType as an argument.
