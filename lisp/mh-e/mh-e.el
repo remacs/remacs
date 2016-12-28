@@ -2330,7 +2330,7 @@ retracted--without question."
 (defcustom-mh mh-fetch-x-image-url nil
   "Control fetching of \"X-Image-URL:\" header field image.
 
-Ths option controls the fetching of the \"X-Image-URL:\" header
+This option controls the fetching of the \"X-Image-URL:\" header
 field image with the following values:
 
 Ask Before Fetching
