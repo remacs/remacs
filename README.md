@@ -119,8 +119,9 @@ Emacs. Remacs will never run on MS-DOS.
 **Compatibility**: Remacs should not break existing elisp code, and
 ideally provide the same FFI too.
 
-**Similar structure**: Code in Remacs should use the same naming and
-file structure as core Emacs, to make translation straightforward.
+**Similar structure**: Code in Remacs should use the same naming
+conventions and file structure as core Emacs, to make translation
+straightforward.
 
 **Leverage Rust itself**: Remacs should make best use of Rust to ensure code is
 robust and performant.
