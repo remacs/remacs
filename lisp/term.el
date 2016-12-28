@@ -2903,12 +2903,12 @@ See `term-prompt-regexp'."
 			  (beep t))
 			 ((and (eq char ?\032)
                                (not handled-ansi-message))
-			  (let ((end (string-match "\r?$" str i)))
+			  (let ((end (string-match "\r?\n" str i)))
 			    (if end
 				(funcall term-command-hook
 					 (decode-coding-string
 					  (prog1 (substring str (1+ i) end)
-					    (setq i (match-end 0)))
+					    (setq i (1- (match-end 0))))
 					  locale-coding-system))
 			      (setq term-terminal-parameter (substring str i))
 			      (setq term-terminal-state 4)
