@@ -180,6 +180,7 @@ fn test_integerp() {
 }
 
 #[allow(non_snake_case)]
+#[allow(dead_code)]
 pub fn SYMBOLP(a: LispObject) -> bool {
     XTYPE(a) == LispType::Lisp_Symbol
 }
