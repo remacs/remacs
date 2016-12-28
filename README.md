@@ -1,4 +1,4 @@
-# Rust + Emacs
+# Rust :heart: Emacs
 [![Build Status](https://travis-ci.org/Wilfred/remacs.svg?branch=master)](https://travis-ci.org/Wilfred/remacs)
 
 An experiment in porting Emacs' C codebase to Rust.
