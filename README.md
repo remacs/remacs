@@ -42,6 +42,11 @@ mainstream yet**. For example:
 * You can perform **structural editing** of code, allowing you to make
   changes without breaking syntax. This works for lisps (paredit) and
   non-lisps (smartparens).
+* Many applications use a modal GUI: for example, you can't do other
+  edits during a find-and-replace operation. Emacs provides
+  **recursive editing** that allow you to suspend what you're
+  currently doing, perform other edits, then continue the original
+  task.
 
 Emacs has a **documentation culture**. Emacs includes a usage manual,
 a lisp programming manual, pervasive docstrings and even an
