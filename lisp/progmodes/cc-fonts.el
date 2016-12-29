@@ -1311,6 +1311,13 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		     ;; multiline declaration.
 		     (c-put-char-property (1- match-pos)
 					  'c-type 'c-decl-arg-start))
+		    ;; Got an open paren preceded by an arith operator.
+		    ((and (eq (char-before match-pos) ?\()
+			  (save-excursion
+			    (and (zerop (c-backward-token-2 2))
+				 (looking-at c-arithmetic-op-regexp))))
+		     (setq context nil
+			   c-restricted-<>-arglists nil))
 		    (t (setq context 'arglist
 			     c-restricted-<>-arglists t))))
 

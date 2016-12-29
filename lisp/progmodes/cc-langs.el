@@ -1248,6 +1248,22 @@ operators."
 (c-lang-defvar c-assignment-op-regexp
   (c-lang-const c-assignment-op-regexp))
 
+(c-lang-defconst c-arithmetic-operators
+  "List of all arithmetic operators, including \"+=\", etc."
+  ;; Note: in the following, there are too many operators for AWK and IDL.
+  t (append (c-lang-const c-assignment-operators)
+	    '("+" "-" "*" "/" "%"
+	      "<<" ">>"
+	      "<" ">" "<=" ">="
+	      "==" "!="
+	      "&" "^" "|"
+	      "&&" "||")))
+
+(c-lang-defconst c-arithmetic-op-regexp
+  t (c-make-keywords-re nil
+      (c-lang-const c-arithmetic-operators)))
+(c-lang-defvar c-arithmetic-op-regexp (c-lang-const c-arithmetic-op-regexp))
+
 (c-lang-defconst c-:$-multichar-token-regexp
   ;; Regexp matching all tokens ending in ":" which are longer than one char.
   ;; Currently (2016-01-07) only used in C++ Mode.
