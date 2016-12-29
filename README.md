@@ -230,6 +230,8 @@ Medium tasks:
   including the C code.
 * Expand our Travis configuration to run 'make check', so we know
   remacs passes Emacs' internal test suite.
+* Expand our Travis configuration to ensure that Rust code has been
+  formatted with rustfmt
 * Set up bors/homu.
 * Search the Rust source code for `TODO` comments and fix them.
 * Teach Emacs how to jump to definition for Rust functions.

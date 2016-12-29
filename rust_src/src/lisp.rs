@@ -186,7 +186,8 @@ fn test_floatp() {
 
 #[allow(non_snake_case)]
 pub fn INTEGERP(a: LispObject) -> bool {
-    (XTYPE(a) as u32 & ((LispType::Lisp_Int0 as u32) | !(LispType::Lisp_Int1 as u32))) == LispType::Lisp_Int0 as u32
+    (XTYPE(a) as u32 & ((LispType::Lisp_Int0 as u32) | !(LispType::Lisp_Int1 as u32))) ==
+    LispType::Lisp_Int0 as u32
 }
 
 #[test]
@@ -237,10 +238,10 @@ pub fn XUNTAG(a: LispObject, ty: libc::c_int) -> *const libc::c_void {
 // struct.
 #[repr(C)]
 pub struct LispMisc {
-    _ignored: i64
+    _ignored: i64,
 }
 
-/* Supertype of all Misc types.  */
+// Supertype of all Misc types.
 #[repr(C)]
 pub struct LispMiscAny {
     pub ty: LispMiscType,
@@ -258,26 +259,20 @@ fn test_lisp_misc_any_size() {
 #[allow(non_snake_case)]
 pub fn XMISC(a: LispObject) -> LispMisc {
     // TODO: XUNTAG should just take a LispType as an argument.
-    unsafe {
-        mem::transmute(XUNTAG(a, LispType::Lisp_Misc as libc::c_int))
-    }
+    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_Misc as libc::c_int)) }
 }
 
 #[allow(non_snake_case)]
 pub fn XMISCANY(a: LispObject) -> *const LispMiscAny {
     debug_assert!(MISCP(a));
-    unsafe {
-        mem::transmute(XMISC(a))
-    }
+    unsafe { mem::transmute(XMISC(a)) }
 }
 
 // TODO: we should do some sanity checking, because we're currently
 // exposing a safe API that dereferences raw pointers.
 #[allow(non_snake_case)]
 pub fn XMISCTYPE(a: LispObject) -> LispMiscType {
-    unsafe {
-        ptr::read(XMISCANY(a)).ty
-    }
+    unsafe { ptr::read(XMISCANY(a)).ty }
 }
 
 #[allow(non_snake_case)]
