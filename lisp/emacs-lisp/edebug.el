@@ -2052,11 +2052,14 @@ expressions; a `progn' form will be returned enclosing these forms."
 (defvar edebug-stack-depth -1)
 ;; Index of last edebug-stack item.
 
-(defvar edebug-offset-indices nil)
+(defvar edebug-offset-indices (list 0))
 ;; Stack of offset indices of visited edebug sexps.
-;; Should be nil at the top level.
 ;; Each function adds one cons.  Top is modified with setcar.
-
+;; Should be nil at the top level.  No longer!  There are occasions
+;; when this variable is modified by setcar before a cons has been
+;; pushed by `edebug-enter', e.g. when instrumenting
+;; `c-font-lock-declarations' in .../lisp/progmodes/cc-fonts.el.  So
+;; this variable must be initialized to a cons.
 
 (defvar edebug-entered nil
   ;; Non-nil if edebug has already been entered at this recursive edit level.
