@@ -364,7 +364,7 @@ See inotify_rm_watch(2) for more information.
 }
 
 DEFUN ("inotify-valid-p", Finotify_valid_p, Sinotify_valid_p, 1, 1, 0,
-       doc: /* "Check a watch specified by its WATCH-DESCRIPTOR.
+       doc: /* Check a watch specified by its WATCH-DESCRIPTOR.
 
 WATCH-DESCRIPTOR should be an object returned by `inotify-add-watch'.
 

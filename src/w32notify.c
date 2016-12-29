@@ -670,7 +670,7 @@ w32_get_watch_object (void *desc)
 }
 
 DEFUN ("w32notify-valid-p", Fw32notify_valid_p, Sw32notify_valid_p, 1, 1, 0,
-       doc: /* "Check a watch specified by its WATCH-DESCRIPTOR for validity.
+       doc: /* Check a watch specified by its WATCH-DESCRIPTOR for validity.
 
 WATCH-DESCRIPTOR should be an object returned by `w32notify-add-watch'.
 

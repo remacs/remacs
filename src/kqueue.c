@@ -491,7 +491,7 @@ WATCH-DESCRIPTOR should be an object returned by `kqueue-add-watch'.  */)
 }
 
 DEFUN ("kqueue-valid-p", Fkqueue_valid_p, Skqueue_valid_p, 1, 1, 0,
-       doc: /* "Check a watch specified by its WATCH-DESCRIPTOR.
+       doc: /* Check a watch specified by its WATCH-DESCRIPTOR.
 
 WATCH-DESCRIPTOR should be an object returned by `kqueue-add-watch'.
 

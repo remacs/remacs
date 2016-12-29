@@ -258,7 +258,7 @@ WATCH-DESCRIPTOR should be an object returned by `gfile-add-watch'.  */)
 }
 
 DEFUN ("gfile-valid-p", Fgfile_valid_p, Sgfile_valid_p, 1, 1, 0,
-       doc: /* "Check a watch specified by its WATCH-DESCRIPTOR.
+       doc: /* Check a watch specified by its WATCH-DESCRIPTOR.
 
 WATCH-DESCRIPTOR should be an object returned by `gfile-add-watch'.
 
@@ -278,6 +278,26 @@ invalid.  */)
     }
 }
 
+DEFUN ("gfile-monitor-name", Fgfile_monitor_name, Sgfile_monitor_name, 1, 1, 0,
+       doc: /* Return the internal monitor name for WATCH-DESCRIPTOR.
+
+The result is a string, either "GInotifyFileMonitor",
+"GKqueueFileMonitor", or "GPollFileMonitor".
+
+WATCH-DESCRIPTOR should be an object returned by `gfile-add-watch'.
+If WATCH-DESCRIPTOR is not valid, nil is returned.  */)
+     (Lisp_Object watch_descriptor)
+{
+  if (NILP (Fgfile_valid_p (watch_descriptor)))
+    return Qnil;
+  else
+    {
+      Lisp_Object watch_object = Fassoc (watch_descriptor, watch_list);
+      GFileMonitor *monitor = XINTPTR (watch_descriptor);
+      return build_string (G_OBJECT_TYPE_NAME (monitor));
+    }
+}
+
 
 void
 globals_of_gfilenotify (void)
@@ -294,6 +314,7 @@ syms_of_gfilenotify (void)
   defsubr (&Sgfile_add_watch);
   defsubr (&Sgfile_rm_watch);
   defsubr (&Sgfile_valid_p);
+  defsubr (&Sgfile_monitor_name);
 
   /* Filter objects.  */
   DEFSYM (Qchange, "change");
