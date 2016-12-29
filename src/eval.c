@@ -704,10 +704,11 @@ can be referred to by the Emacs help facilities and other programming
 tools.  The `defvar' form also declares the variable as \"special\",
 so that it is always dynamically bound even if `lexical-binding' is t.
 
-The optional argument INITVALUE is evaluated, and used to set SYMBOL,
-only if SYMBOL's value is void.  If SYMBOL is buffer-local, its
-default value is what is set; buffer-local values are not affected.
-If INITVALUE is missing, SYMBOL's value is not set.
+If SYMBOL's value is void and the optional argument INITVALUE is
+provided, INITVALUE is evaluated and the result used to set SYMBOL's
+value.  If SYMBOL is buffer-local, its default value is what is set;
+buffer-local values are not affected.  If INITVALUE is missing,
+SYMBOL's value is not set.
 
 If SYMBOL has a local binding, then this form affects the local
 binding.  This is usually not what you want.  Thus, if you need to
