@@ -8,7 +8,7 @@ script:
   # Test and build the Rust code.
   - cd rust_src
   - cargo test
-  - cargo build --release
+  - cargo build
   - cd ..
 
   # Configure Emacs for building
