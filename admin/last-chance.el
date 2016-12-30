@@ -1,6 +1,6 @@
 ;;; last-chance.el --- dangling deterrence     -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2000-2016 Free Software Foundation, Inc.
+;; Copyright (C) 2016 Free Software Foundation, Inc.
 
 ;; Author: Thien-Thi Nguyen <ttn@gnu.org>
 ;; Maintainer: emacs-devel@gnu.org
@@ -58,6 +58,7 @@ This should include -n, -H, -F.")
 
 (defvar last-chance-uninteresting-regexps
   '("ChangeLog[.0-9]*:"
+    "NEWS[-.0-9]*:"
     ;; Add more ‘flush-lines’ args here.
     )
   "List of regexps that match uninteresting \"git grep\" hits.")
@@ -67,7 +68,7 @@ This should include -n, -H, -F.")
 
 (defun last-chance-cleanup (buffer status)
   "Filter lines in BUFFER; append STATUS and count of removed lines.
-If BUFFER is not seem to be one created by ‘last-chance’, do nothing.
+If BUFFER does not seem to be one created by ‘last-chance’, do nothing.
 This function is intended to be added to ‘compilation-finish-functions’."
   (let ((name (buffer-local-value 'last-chance-symbol buffer))
         bef aft)
