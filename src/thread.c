@@ -26,11 +26,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "syssignal.h"
 
-static struct thread_state primary_thread;
+static struct thread_state main_thread;
 
-struct thread_state *current_thread = &primary_thread;
+struct thread_state *current_thread = &main_thread;
 
-static struct thread_state *all_threads = &primary_thread;
+static struct thread_state *all_threads = &main_thread;
 
 static sys_mutex_t global_lock;
 
@@ -927,41 +927,41 @@ thread_check_current_buffer (struct buffer *buffer)
 
 
 static void
-init_primary_thread (void)
+init_main_thread (void)
 {
-  primary_thread.header.size
+  main_thread.header.size
     = PSEUDOVECSIZE (struct thread_state, m_stack_bottom);
-  XSETPVECTYPE (&primary_thread, PVEC_THREAD);
-  primary_thread.m_last_thing_searched = Qnil;
-  primary_thread.m_saved_last_thing_searched = Qnil;
-  primary_thread.name = Qnil;
-  primary_thread.function = Qnil;
-  primary_thread.error_symbol = Qnil;
-  primary_thread.error_data = Qnil;
-  primary_thread.event_object = Qnil;
+  XSETPVECTYPE (&main_thread, PVEC_THREAD);
+  main_thread.m_last_thing_searched = Qnil;
+  main_thread.m_saved_last_thing_searched = Qnil;
+  main_thread.name = Qnil;
+  main_thread.function = Qnil;
+  main_thread.error_symbol = Qnil;
+  main_thread.error_data = Qnil;
+  main_thread.event_object = Qnil;
 }
 
 bool
-primary_thread_p (void *ptr)
+main_thread_p (void *ptr)
 {
-  return (ptr == &primary_thread) ? true : false;
+  return ptr == &main_thread;
 }
 
 void
 init_threads_once (void)
 {
-  init_primary_thread ();
+  init_main_thread ();
 }
 
 void
 init_threads (void)
 {
-  init_primary_thread ();
-  sys_cond_init (&primary_thread.thread_condvar);
+  init_main_thread ();
+  sys_cond_init (&main_thread.thread_condvar);
   sys_mutex_init (&global_lock);
   sys_mutex_lock (&global_lock);
-  current_thread = &primary_thread;
-  primary_thread.thread_id = sys_thread_self ();
+  current_thread = &main_thread;
+  main_thread.thread_id = sys_thread_self ();
 }
 
 void
