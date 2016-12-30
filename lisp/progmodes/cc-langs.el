@@ -3292,6 +3292,24 @@ the invalidity of the putative template construct."
   c++ "[<;{},>()]")
 (c-lang-defvar c-<>-notable-chars-re (c-lang-const c-<>-notable-chars-re))
 
+(c-lang-defconst c-enum-clause-introduction-re
+  ;; A regexp loosely matching the start of an enum clause, starting at the
+  ;; keyword itself, and extending up to the "{".  It may match text which
+  ;; isn't such a construct; more accurate tests will rule these out when
+  ;; needed.
+  t (if (c-lang-const c-brace-list-decl-kwds)
+	(concat
+	 "\\<\\("
+	 (c-make-keywords-re nil (c-lang-const c-brace-list-decl-kwds))
+	 "\\)\\>"
+	 ;; Disallow various common punctuation chars that can't come
+	 ;; before the '{' of the enum list, to avoid searching too far.
+	 "[^][{};/#=]*"
+	 "{")
+      "\\<\\>"))
+(c-lang-defvar c-enum-clause-introduction-re
+	       (c-lang-const c-enum-clause-introduction-re))
+
 (c-lang-defconst c-enums-contain-decls
   "Non-nil means that an enum structure can contain declarations."
   t nil
