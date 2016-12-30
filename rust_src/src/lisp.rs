@@ -11,9 +11,21 @@ use marker::LispMarker;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
-// EMACS_INT is defined as 'long int' in lisp.h.
+/// Emacs values are represented as tagged pointers. A few bits are
+/// used to represent the type, and the remaining bits are either used
+/// to store the value directly (e.g. integers) or the address of a
+/// more complex data type (e.g. a cons cell).
+///
+/// TODO: example representations
+///
+/// `EmacsInt` represents an integer big enough to hold our tagged
+/// pointer representation.
+///
+/// In Emacs C, this is `EMACS_INT`, which is defined as `long int`.
 pub type EmacsInt = libc::c_long;
-// EMACS_UINT is defined as 'unsigned long'
+
+/// Unsigned equivalent of `EmacsInt`. In Emacs C, this is
+/// `EMACS_UINT`, which is defined as `unsigned long`.
 pub type EmacsUint = libc::c_ulong;
 
 // This is dependent on CHECK_LISP_OBJECT_TYPE, a compile time flag,
