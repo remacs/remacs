@@ -28,6 +28,10 @@ pub type EmacsInt = libc::c_long;
 /// `EMACS_UINT`, which is defined as `unsigned long`.
 pub type EmacsUint = libc::c_ulong;
 
+// 2**63 - 1, which is the value of LONG_MAX in limits.h in the C
+// stdlib.
+pub const EMACS_INT_MAX: EmacsInt = 9223372036854775807;
+
 // This is dependent on CHECK_LISP_OBJECT_TYPE, a compile time flag,
 // but it's usually false.
 pub type LispObject = EmacsInt;
@@ -136,6 +140,12 @@ const GCTYPEBITS: libc::c_int = 3;
 
 const INTTYPEBITS: libc::c_int = GCTYPEBITS - 1;
 
+// Largest and smallest numbers that can be represented as integers in
+// Emacs lisp.
+const MOST_POSITIVE_FIXNUM: EmacsInt = EMACS_INT_MAX >> INTTYPEBITS;
+#[allow(dead_code)]
+const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
+
 // This is also dependent on USE_LSB_TAG, which we're assuming to be 1.
 const VALMASK: EmacsInt = -(1 << GCTYPEBITS);
 
@@ -171,10 +181,18 @@ fn XIL(i: EmacsInt) -> LispObject {
     i as LispObject
 }
 
-pub fn make_number(n: libc::c_int) -> LispObject {
+pub fn make_number(n: EmacsInt) -> LispObject {
     // TODO: this is a rubbish variable name.
     let as_uint = (n << INTTYPEBITS) as EmacsUint + LispType::Lisp_Int0 as EmacsUint;
     XIL(as_uint as EmacsInt)
+}
+
+// TODO: the C claims that make_natnum is faster, but it does the same
+// thing as make_number when USE_LSB_TAG is 1, which it is for us. We
+// should remove this in favour of make_number.
+pub fn make_natnum(n: EmacsInt) -> LispObject {
+    debug_assert!(0 <= n && n <= MOST_POSITIVE_FIXNUM);
+    make_number(n)
 }
 
 #[allow(non_snake_case)]
