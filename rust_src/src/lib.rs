@@ -1,6 +1,7 @@
 extern crate libc;
 
 mod lisp;
+mod marker;
 
 use std::os::raw::c_char;
 use lisp::{LispObject, LispSubr, PvecType, defsubr, make_number, PSEUDOVECTOR_AREA_BITS,
@@ -17,6 +18,9 @@ pub unsafe extern "C" fn rust_return_t() -> LispObject {
 pub unsafe extern "C" fn rust_mod(x: LispObject, y: LispObject) -> LispObject {
     println!("x is a float: {}", lisp::FLOATP(x));
     println!("x is a marker: {}", lisp::MARKERP(x));
+    if lisp::MARKERP(x) {
+        println!("marker position: {}", marker::marker_position(x));
+    }
     println!("x is an integer: {}", lisp::INTEGERP(x));
     lisp::CHECK_TYPE(lisp::INTEGERP(x), lisp::Qnumber_or_marker_p, x);
     make_number(5)

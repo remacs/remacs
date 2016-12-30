@@ -7,6 +7,8 @@ use std::os::raw::c_char;
 use std::mem;
 use std::ptr;
 
+use marker::LispMarker;
+
 // TODO: tweak Makefile to rebuild C files if this changes.
 
 // EMACS_INT is defined as 'long int' in lisp.h.
@@ -278,6 +280,12 @@ pub fn XMISCTYPE(a: LispObject) -> LispMiscType {
 #[allow(non_snake_case)]
 pub fn MARKERP(a: LispObject) -> bool {
     MISCP(a) && XMISCTYPE(a) == LispMiscType::Lisp_Misc_Marker
+}
+
+#[allow(non_snake_case)]
+pub fn XMARKER(a: LispObject) -> *const LispMarker {
+    debug_assert!(MARKERP(a));
+    unsafe { mem::transmute(XMISC(a)) }
 }
 
 #[test]
