@@ -11,7 +11,7 @@ GPLv3, just like all Emacs code.
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-generate-toc again -->
 **Table of Contents**
 
-- [Rust + Emacs](#rust--emacs)
+- [Rust :heart: Emacs](#rust-heart-emacs)
     - [Why Emacs?](#why-emacs)
     - [Why Rust?](#why-rust)
     - [Why A Fork?](#why-a-fork)
@@ -21,6 +21,7 @@ GPLv3, just like all Emacs code.
     - [Understanding Macros In Emacs C Files](#understanding-macros-in-emacs-c-files)
     - [Contributing](#contributing)
     - [Help Needed](#help-needed)
+    - [Rust Porting Tips](#rust-porting-tips)
     - [TODOC](#todoc)
 
 <!-- markdown-toc end -->
@@ -241,6 +242,13 @@ Big tasks:
 * Find equivalent Rust libraries for parts of Emacs, and replace all
   the relevant C code. Rust has great libraries for regular
   expressions, GUI, terminal UI, managing processes, amongst others.
+
+## Rust Porting Tips
+
+Most macros in Emacs C can be (and should) be written as functions in
+Rust.
+
+`eassert` in Emacs C should be `debug_assert!` in Rust.
 
 ## TODOC
 
