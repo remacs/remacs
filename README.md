@@ -269,6 +269,10 @@ Big tasks:
 Most macros in Emacs C can be (and should) be written as functions in
 Rust.
 
+We've added docstrings to Rust functions that mention porting
+equivalents: for example, `make_natnum` mentions that it can be used
+in place of `XSETFASTINT`.
+
 `eassert` in Emacs C should be `debug_assert!` in Rust.
 
 ## TODOC

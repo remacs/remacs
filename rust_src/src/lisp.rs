@@ -193,6 +193,9 @@ pub fn make_number(n: EmacsInt) -> LispObject {
 }
 
 /// Convert a positive integer into its LispObject representation.
+///
+/// This is also the function to use when translating `XSETFASTINT`
+/// from Emacs C.
 // TODO: the C claims that make_natnum is faster, but it does the same
 // thing as make_number when USE_LSB_TAG is 1, which it is for us. We
 // should remove this in favour of make_number.
