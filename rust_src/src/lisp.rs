@@ -31,6 +31,8 @@ pub type EmacsUint = libc::c_ulong;
 // This is dependent on CHECK_LISP_OBJECT_TYPE, a compile time flag,
 // but it's usually false.
 pub type LispObject = EmacsInt;
+// TODO: set CHECK_LISP_OBJECT_TYPE and use a struct here, as it would
+// give us stronger guarantees from the type checker.
 
 extern "C" {
     pub fn defsubr(sname: *mut LispSubr);
