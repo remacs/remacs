@@ -4,7 +4,7 @@ mod lisp;
 mod marker;
 
 use std::os::raw::c_char;
-use lisp::{LispObject, LispSubr, PvecType, defsubr, make_number, PSEUDOVECTOR_AREA_BITS,
+use lisp::{LispObject, LispSubr, PvecType, defsubr, make_natnum, PSEUDOVECTOR_AREA_BITS,
            VectorLikeHeader, Qt};
 
 #[no_mangle]
@@ -23,7 +23,7 @@ pub unsafe extern "C" fn rust_mod(x: LispObject, y: LispObject) -> LispObject {
     }
     println!("x is an integer: {}", lisp::INTEGERP(x));
     lisp::CHECK_TYPE(lisp::INTEGERP(x), lisp::Qnumber_or_marker_p, x);
-    make_number(5)
+    make_natnum(5)
 }
 
 #[no_mangle]
