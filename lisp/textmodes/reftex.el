@@ -1015,8 +1015,8 @@ This enforces rescanning the buffer on next use."
     ;; Calculate the regular expressions
     (let* (
 ;          (wbol "\\(\\`\\|[\n\r]\\)[ \t]*")
-           (wbol "\\(^\\)[ \t]*") ; Need to keep the empty group because
-                                  ; match numbers are hard coded
+           (wbol "\\(^\\)%?[ \t]*") ; Need to keep the empty group because
+                                    ; match numbers are hard coded
            (label-re (concat "\\(?:"
 			     (mapconcat 'identity reftex-label-regexps "\\|")
 			     "\\)"))
