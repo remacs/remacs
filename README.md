@@ -234,6 +234,8 @@ Medium tasks:
 * Expand our Travis configuration to ensure that Rust code has been
   formatted with rustfmt
 * Set up bors/homu.
+* Set up a badge tracking pub struct/function coverage using
+  cargo-doc-coverage.
 * Search the Rust source code for `TODO` comments and fix them.
 * Teach Emacs how to jump to definition for Rust functions.
 
