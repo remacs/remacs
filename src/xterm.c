@@ -12762,6 +12762,13 @@ x_initialize (void)
   /* Try to use interrupt input; if we can't, then start polling.  */
   Fset_input_interrupt_mode (Qt);
 
+#if THREADS_ENABLED
+  /* This must be called before any other Xlib routines.  */
+  if (XInitThreads () == 0)
+    fprintf (stderr,
+	     "Warning: An error occurred initializing X11 thread support!\n");
+#endif
+
 #ifdef USE_X_TOOLKIT
   XtToolkitInitialize ();
 
