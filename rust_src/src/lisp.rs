@@ -80,8 +80,8 @@ enum LispType {
 
     // Integer.  XINT (obj) is the integer value.
     Lisp_Int0 = 2,
-    // This depend on USE_LSB_TAG in the C, but in my build that value
-    // is 1.
+    // This depends on USE_LSB_TAG in Emacs C, but in our build that
+    // value is 1.
     Lisp_Int1 = 6,
 
     // String.  XSTRING (object) points to a struct Lisp_String.
