@@ -281,8 +281,8 @@ invalid.  */)
 DEFUN ("gfile-monitor-name", Fgfile_monitor_name, Sgfile_monitor_name, 1, 1, 0,
        doc: /* Return the internal monitor name for WATCH-DESCRIPTOR.
 
-The result is a string, either "GInotifyFileMonitor",
-"GKqueueFileMonitor", or "GPollFileMonitor".
+The result is a symbol, either `GInotifyFileMonitor',
+`GKqueueFileMonitor', `GFamFileMonitor', or `GPollFileMonitor'.
 
 WATCH-DESCRIPTOR should be an object returned by `gfile-add-watch'.
 If WATCH-DESCRIPTOR is not valid, nil is returned.  */)
@@ -292,9 +292,8 @@ If WATCH-DESCRIPTOR is not valid, nil is returned.  */)
     return Qnil;
   else
     {
-      Lisp_Object watch_object = Fassoc (watch_descriptor, watch_list);
       GFileMonitor *monitor = XINTPTR (watch_descriptor);
-      return build_string (G_OBJECT_TYPE_NAME (monitor));
+      return Fmake_symbol (build_string (G_OBJECT_TYPE_NAME (monitor)));
     }
 }
 
