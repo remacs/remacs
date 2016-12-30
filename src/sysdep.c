@@ -1616,14 +1616,17 @@ static pthread_t main_thread;
 #endif
 
 /* SIG has arrived at the current process.  Deliver it to the main
-   thread, which should handle it with HANDLER.
+   thread, which should handle it with HANDLER.  (Delivering the
+   signal to some other thread might not work if the other thread is
+   about to exit.)
 
    If we are on the main thread, handle the signal SIG with HANDLER.
    Otherwise, redirect the signal to the main thread, blocking it from
    this thread.  POSIX says any thread can receive a signal that is
    associated with a process, process group, or asynchronous event.
-   On GNU/Linux that is not true, but for other systems (FreeBSD at
-   least) it is.  */
+   On GNU/Linux the main thread typically gets a process signal unless
+   it's blocked, but other systems (FreeBSD at least) can deliver the
+   signal to other threads.  */
 void
 deliver_process_signal (int sig, signal_handler_t handler)
 {
