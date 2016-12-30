@@ -192,9 +192,12 @@ pub fn make_number(n: EmacsInt) -> LispObject {
     XIL(as_uint as EmacsInt)
 }
 
+/// Convert a positive integer into its LispObject representation.
 // TODO: the C claims that make_natnum is faster, but it does the same
 // thing as make_number when USE_LSB_TAG is 1, which it is for us. We
 // should remove this in favour of make_number.
+//
+// TODO: it would be clearer if this function took a u64 or libc::c_int.
 pub fn make_natnum(n: EmacsInt) -> LispObject {
     debug_assert!(0 <= n && n <= MOST_POSITIVE_FIXNUM);
     make_number(n)
