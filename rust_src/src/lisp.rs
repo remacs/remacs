@@ -181,6 +181,11 @@ fn XIL(i: EmacsInt) -> LispObject {
     i as LispObject
 }
 
+#[test]
+fn test_xil_xli_inverse() {
+    assert!(XLI(XIL(0)) == 0);
+}
+
 pub fn make_number(n: EmacsInt) -> LispObject {
     // TODO: this is a rubbish variable name.
     let as_uint = (n << INTTYPEBITS) as EmacsUint + LispType::Lisp_Int0 as EmacsUint;
@@ -228,6 +233,7 @@ pub fn INTEGERP(a: LispObject) -> bool {
 fn test_integerp() {
     assert!(!INTEGERP(Qnil));
     assert!(INTEGERP(make_number(1)));
+    assert!(INTEGERP(make_natnum(1)));
 }
 
 #[allow(non_snake_case)]
