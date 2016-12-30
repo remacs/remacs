@@ -18,6 +18,7 @@ GPLv3, just like all Emacs code.
     - [Design Goals](#design-goals)
     - [Building Remacs](#building-remacs)
         - [Release builds](#release-builds)
+        - [Docs builds](#docs-builds)
     - [Understanding Macros In Emacs C Files](#understanding-macros-in-emacs-c-files)
     - [Contributing](#contributing)
     - [Help Needed](#help-needed)
@@ -176,6 +177,26 @@ and modify `src/Makefile` to:
 
 ``` makefile
 LIBS_SYSTEM=-L../rust_src/target/release -lremacs -ldl
+```
+
+### Docs builds
+
+You can use rustdoc to generate API docs:
+
+``` bash
+# http://stackoverflow.com/a/39374515/509706
+$ cargo rustdoc -- \
+    --no-defaults \
+    --passes strip-hidden \
+    --passes collapse-docs \
+    --passes unindent-comments \
+    --passes strip-priv-imports
+```
+
+You can then open these docs with:
+
+``` bash
+$ cargo doc --open
 ```
 
 ## Understanding Macros In Emacs C Files
