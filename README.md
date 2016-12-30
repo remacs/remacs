@@ -248,8 +248,6 @@ Medium tasks:
 
 * Choose an elisp function you like, and port it to rust. Look at
   `rust-mod` for an example.
-* Expand our Travis configuration to do a complete Emacs build,
-  including the C code.
 * Expand our Travis configuration to run 'make check', so we know
   remacs passes Emacs' internal test suite.
 * Expand our Travis configuration to ensure that Rust code has been
