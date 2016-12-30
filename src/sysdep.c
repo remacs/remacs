@@ -1612,7 +1612,7 @@ emacs_sigaction_init (struct sigaction *action, signal_handler_t handler)
 }
 
 #ifdef FORWARD_SIGNAL_TO_MAIN_THREAD
-static pthread_t main_thread;
+pthread_t main_thread_id;
 #endif
 
 /* SIG has arrived at the current process.  Deliver it to the main
@@ -1636,13 +1636,13 @@ deliver_process_signal (int sig, signal_handler_t handler)
 
   bool on_main_thread = true;
 #ifdef FORWARD_SIGNAL_TO_MAIN_THREAD
-  if (! pthread_equal (pthread_self (), main_thread))
+  if (! pthread_equal (pthread_self (), main_thread_id))
     {
       sigset_t blocked;
       sigemptyset (&blocked);
       sigaddset (&blocked, sig);
       pthread_sigmask (SIG_BLOCK, &blocked, 0);
-      pthread_kill (main_thread, sig);
+      pthread_kill (main_thread_id, sig);
       on_main_thread = false;
     }
 #endif
@@ -1668,12 +1668,12 @@ deliver_thread_signal (int sig, signal_handler_t handler)
   int old_errno = errno;
 
 #ifdef FORWARD_SIGNAL_TO_MAIN_THREAD
-  if (! pthread_equal (pthread_self (), main_thread))
+  if (! pthread_equal (pthread_self (), main_thread_id))
     {
       thread_backtrace_npointers
 	= backtrace (thread_backtrace_buffer, BACKTRACE_LIMIT_MAX);
       sigaction (sig, &process_fatal_action, 0);
-      pthread_kill (main_thread, sig);
+      pthread_kill (main_thread_id, sig);
 
       /* Avoid further damage while the main thread is exiting.  */
       while (1)
@@ -1796,7 +1796,7 @@ handle_sigsegv (int sig, siginfo_t *siginfo, void *arg)
   bool fatal = gc_in_progress;
 
 #ifdef FORWARD_SIGNAL_TO_MAIN_THREAD
-  if (!fatal && !pthread_equal (pthread_self (), main_thread))
+  if (!fatal && !pthread_equal (pthread_self (), main_thread_id))
     fatal = true;
 #endif
 
@@ -1888,7 +1888,7 @@ init_signals (bool dumping)
   sigemptyset (&empty_mask);
 
 #ifdef FORWARD_SIGNAL_TO_MAIN_THREAD
-  main_thread = pthread_self ();
+  main_thread_id = pthread_self ();
 #endif
 
 #if !HAVE_DECL_SYS_SIGLIST && !defined _sys_siglist

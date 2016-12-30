@@ -738,8 +738,6 @@ main (int argc, char **argv)
      non-ASCII file names during startup.  */
   w32_init_file_name_codepage ();
 #endif
-  /* This has to be done before module_init is called below, so that
-     the latter could use the thread ID of the main thread.  */
   w32_init_main_thread ();
 #endif
 
@@ -756,10 +754,6 @@ main (int argc, char **argv)
 
   init_standard_fds ();
   atexit (close_output_streams);
-
-#ifdef HAVE_MODULES
-  module_init ();
-#endif
 
   sort_args (argc, argv);
   argc = 0;

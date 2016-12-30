@@ -3880,7 +3880,6 @@ extern bool let_shadows_global_binding_p (Lisp_Object symbol);
 extern Lisp_Object make_user_ptr (void (*finalizer) (void *), void *p);
 
 /* Defined in emacs-module.c.  */
-extern void module_init (void);
 extern void syms_of_module (void);
 #endif
 
