@@ -27,7 +27,6 @@ struct timespec;
 
 extern int xg_select (int max_fds,
 		      fd_set *rfds, fd_set *wfds, fd_set *efds,
-		      struct timespec const *timeout,
-		      sigset_t const *sigmask);
+		      struct timespec *timeout, sigset_t *sigmask);
 
 #endif /* XGSELECT_H */

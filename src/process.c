@@ -5341,18 +5341,23 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	    }
 #endif
 
+/* HAVE_GLIB builds call thread_select in xgselect.c.  */
+#ifdef HAVE_GLIB
+	  nfds = xg_select (max_desc + 1,
+			    &Available, (check_write ? &Writeok : 0),
+			    NULL, &timeout, NULL);
+#else  /* !HAVE_GLIB */
 	  nfds = thread_select (
-#if defined (HAVE_NS)
+# ifdef HAVE_NS
 				ns_select
-#elif defined (HAVE_GLIB)
-				xg_select
-#else
+# else
 				pselect
-#endif
+# endif
 				, max_desc + 1,
 				&Available,
 				(check_write ? &Writeok : 0),
 				NULL, &timeout, NULL);
+#endif	/* !HAVE_GLIB */
 
 #ifdef HAVE_GNUTLS
           /* GnuTLS buffers data internally.  In lowat mode it leaves
