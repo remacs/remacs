@@ -203,6 +203,11 @@ Sensible values are nil, \"news\", or \"mailto\"."
 		 )
   :group 'ffap)
 
+(defvar ffap-max-region-length 1024
+  "Maximum active region length.
+When the region is active and larger than this value,
+`ffap-string-at-point' returns an empty string.")
+
 
 ;;; Peanut Gallery (More User Variables):
 ;;
@@ -1101,8 +1106,10 @@ MODE (defaults to value of `major-mode') is a symbol used to look up
 string syntax parameters in `ffap-string-at-point-mode-alist'.
 If MODE is not found, we use `file' instead of MODE.
 If the region is active, return a string from the region.
-Sets the variable `ffap-string-at-point' and the variable
-`ffap-string-at-point-region'."
+Set the variable `ffap-string-at-point' and the variable
+`ffap-string-at-point-region'.
+When the region is active and larger than `ffap-max-region-length',
+return an empty string, and set `ffap-string-at-point-region' to '(1 1)."
   (let* ((args
 	  (cdr
 	   (or (assq (or mode major-mode) ffap-string-at-point-mode-alist)
@@ -1119,11 +1126,15 @@ Sets the variable `ffap-string-at-point' and the variable
 		(save-excursion
 		  (skip-chars-forward (car args))
 		  (skip-chars-backward (nth 2 args) pt)
-		  (point)))))
-    (setq ffap-string-at-point
-	  (buffer-substring-no-properties
-	   (setcar ffap-string-at-point-region beg)
-	   (setcar (cdr ffap-string-at-point-region) end)))))
+		  (point))))
+         (region-len (- (max beg end) (min beg end))))
+    (if (and (natnump ffap-max-region-length)
+             (< region-len ffap-max-region-length)) ; Bug#25243.
+        (setf ffap-string-at-point-region (list beg end)
+              ffap-string-at-point
+              (buffer-substring-no-properties beg end))
+      (setf ffap-string-at-point-region (list 1 1)
+            ffap-string-at-point ""))))
 
 (defun ffap-string-around ()
   ;; Sometimes useful to decide how to treat a string.
