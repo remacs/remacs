@@ -1252,12 +1252,11 @@ string_from_display_spec (Lisp_Object spec)
 {
   if (CONSP (spec))
     {
-      while (CONSP (spec))
-	{
-	  if (STRINGP (XCAR (spec)))
-	    return XCAR (spec);
-	  spec = XCDR (spec);
-	}
+      do {
+	if (STRINGP (XCAR (spec)))
+	  return XCAR (spec);
+	spec = XCDR (spec);
+      } while (CONSP (spec));
     }
   else if (VECTORP (spec))
     {
