@@ -7,7 +7,7 @@ use std::os::raw::c_char;
 use std::mem;
 use std::ptr;
 
-use marker::LispMarker;
+use marker::{LispMarker, marker_position};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -240,6 +240,35 @@ fn test_integerp() {
     assert!(!INTEGERP(Qnil));
     assert!(INTEGERP(make_number(1)));
     assert!(INTEGERP(make_natnum(1)));
+}
+
+#[allow(non_snake_case)]
+pub fn NUMBERP(x: LispObject) -> bool {
+    INTEGERP(x) || FLOATP(x)
+}
+
+#[test]
+fn test_numberp() {
+    assert!(!NUMBERP(Qnil));
+    assert!(NUMBERP(make_natnum(1)));
+}
+
+/// Convert `x` to an integer or float, coercing markers to integers.
+///
+/// If `x` cannot be coerced, raises an elisp error.
+///
+/// This function is equivalent to
+/// `CHECK_NUMBER_OR_FLOAT_COERCE_MARKER` in Emacs C, but returns a
+/// value rather than assiging to a variable.
+pub fn check_number_or_float_coerce_marker(x: LispObject) -> LispObject {
+    if MARKERP(x) {
+        make_natnum(marker_position(x) as i64)
+    } else {
+        unsafe {
+            CHECK_TYPE(NUMBERP(x), Qnumber_or_marker_p, x);
+        }
+        x
+    }
 }
 
 #[allow(non_snake_case)]
