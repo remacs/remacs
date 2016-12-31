@@ -23,6 +23,9 @@ GPLv3, just like all Emacs code.
     - [Contributing](#contributing)
     - [Help Needed](#help-needed)
     - [Rust Porting Tips](#rust-porting-tips)
+        - [C Functions](#c-functions)
+        - [C Macros](#c-macros)
+        - [Assertions](#assertions)
     - [TODOC](#todoc)
 
 <!-- markdown-toc end -->
@@ -266,12 +269,24 @@ Big tasks:
 
 ## Rust Porting Tips
 
-Most macros in Emacs C can be (and should) be written as functions in
-Rust.
+### C Functions
 
-We've added docstrings to Rust functions that mention porting
-equivalents: for example, `make_natnum` mentions that it can be used
+When writing a Rust version of a C function, give it the same name and
+same arguments. If this isn't appropriate, docstrings should say the
+equivalent C function to help future porters.
+
+For example, `make_natnum` mentions that it can be used
 in place of `XSETFASTINT`.
+
+### C Macros
+
+For C macros, we try to define a fairly equivalent Rust
+function. The docstring should mention the original macro name.
+
+Since the Rust function is not a drop-in replacement, we prefer Rust
+naming conventions for the new function.
+
+### Assertions
 
 `eassert` in Emacs C should be `debug_assert!` in Rust.
 
