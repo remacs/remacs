@@ -70,10 +70,13 @@ There are different timeouts for local and remote file notification libraries."
   (read-event
    nil nil
    (cond
-    ;; gio/gpollfilemonitor.c declares POLL_TIME_SECS 5. So we must
-    ;; wait at least this time.
+    ;; gio/gpollfilemonitor.c declares POLL_TIME_SECS 5.  So we must
+    ;; wait at least this time in the GPollFileMonitor case.  A
+    ;; similar timeout seems to be needed in the GFamFileMonitor case,
+    ;; at least on Cygwin.
     ((and (string-equal (file-notify--test-library) "gfilenotify")
-	  (string-equal (file-notify--test-monitor) "GPollFileMonitor"))
+          (memq (file-notify--test-monitor)
+                '(GFamFileMonitor GPollFileMonitor)))
      7)
     ((file-remote-p temporary-file-directory) 0.1)
     (t 0.01))))
@@ -204,7 +207,7 @@ remote host, or nil."
 	  (process-name (cdr file-notify--test-remote-enabled-checked))))))
 
 (defun file-notify--test-monitor ()
-  "The used monitor for the test, as a string.
+  "The used monitor for the test, as a symbol.
 This returns only for the local case and gfilenotify; otherwise it is nil.
 `file-notify--test-desc' must be a valid watch descriptor."
   (and file-notify--test-desc
