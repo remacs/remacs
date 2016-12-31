@@ -293,7 +293,7 @@ If WATCH-DESCRIPTOR is not valid, nil is returned.  */)
   else
     {
       GFileMonitor *monitor = XINTPTR (watch_descriptor);
-      return Fmake_symbol (build_string (G_OBJECT_TYPE_NAME (monitor)));
+      return intern (G_OBJECT_TYPE_NAME (monitor));
     }
 }
 
