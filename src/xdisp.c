@@ -1250,26 +1250,18 @@ default_line_pixel_height (struct window *w)
 static Lisp_Object
 string_from_display_spec (Lisp_Object spec)
 {
-  if (CONSP (spec))
+  if (VECTORP (spec))
     {
-      do {
+      for (ptrdiff_t i = 0; i < ASIZE (spec); i++)
+	if (STRINGP (AREF (spec, i)))
+	  return AREF (spec, i);
+    }
+  else
+    {
+      for (; CONSP (spec); spec = XCDR (spec))
 	if (STRINGP (XCAR (spec)))
 	  return XCAR (spec);
-	spec = XCDR (spec);
-      } while (CONSP (spec));
     }
-  else if (VECTORP (spec))
-    {
-      ptrdiff_t i;
-
-      for (i = 0; i < ASIZE (spec); i++)
-	{
-	  if (STRINGP (AREF (spec, i)))
-	    return AREF (spec, i);
-	}
-      return Qnil;
-    }
-
   return spec;
 }
 
