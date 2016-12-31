@@ -1085,22 +1085,19 @@ internal_catch (Lisp_Object tag,
 {
   /* This structure is made part of the chain `catchlist'.  */
   struct handler *c = push_handler (tag, CATCHER);
+  Lisp_Object val;
 
   /* Call FUNC.  */
   if (! sys_setjmp (c->jmp))
-    {
-      Lisp_Object val = func (arg);
-      clobbered_eassert (handlerlist == c);
-      handlerlist = handlerlist->next;
-      return val;
-    }
+    val = func (arg);
   else
-    { /* Throw works by a longjmp that comes right here.  */
-      Lisp_Object val = handlerlist->val;
-      clobbered_eassert (handlerlist == c);
-      handlerlist = handlerlist->next;
-      return val;
+    {
+      /* Throw works by a longjmp that comes right here.  */
+      val = handlerlist->val;
     }
+  clobbered_eassert (handlerlist == c);
+  handlerlist = handlerlist->next;
+  return val;
 }
 
 /* Unwind the specbind, catch, and handler stacks back to CATCH, and
@@ -1314,20 +1311,22 @@ internal_condition_case (Lisp_Object (*bfun) (void), Lisp_Object handlers,
 			 Lisp_Object (*hfun) (Lisp_Object))
 {
   struct handler *c = push_handler (handlers, CONDITION_CASE);
+  Lisp_Object val;
+  bool call_hfun;
+
   if (sys_setjmp (c->jmp))
     {
-      Lisp_Object val = handlerlist->val;
-      clobbered_eassert (handlerlist == c);
-      handlerlist = handlerlist->next;
-      return hfun (val);
+      val = handlerlist->val;
+      call_hfun = true;
     }
   else
     {
-      Lisp_Object val = bfun ();
-      clobbered_eassert (handlerlist == c);
-      handlerlist = handlerlist->next;
-      return val;
+      val = bfun ();
+      call_hfun = false;
     }
+  clobbered_eassert (handlerlist == c);
+  handlerlist = handlerlist->next;
+  return call_hfun ? hfun (val) : val;
 }
 
 /* Like internal_condition_case but call BFUN with ARG as its argument.  */
@@ -1338,20 +1337,22 @@ internal_condition_case_1 (Lisp_Object (*bfun) (Lisp_Object), Lisp_Object arg,
 			   Lisp_Object (*hfun) (Lisp_Object))
 {
   struct handler *c = push_handler (handlers, CONDITION_CASE);
+  Lisp_Object val;
+  bool call_hfun;
+
   if (sys_setjmp (c->jmp))
     {
-      Lisp_Object val = handlerlist->val;
-      clobbered_eassert (handlerlist == c);
-      handlerlist = handlerlist->next;
-      return hfun (val);
+      val = handlerlist->val;
+      call_hfun = true;
     }
   else
     {
-      Lisp_Object val = bfun (arg);
-      clobbered_eassert (handlerlist == c);
-      handlerlist = handlerlist->next;
-      return val;
+      val = bfun (arg);
+      call_hfun = false;
     }
+  clobbered_eassert (handlerlist == c);
+  handlerlist = handlerlist->next;
+  return call_hfun ? hfun (val) : val;
 }
 
 /* Like internal_condition_case_1 but call BFUN with ARG1 and ARG2 as
@@ -1365,20 +1366,22 @@ internal_condition_case_2 (Lisp_Object (*bfun) (Lisp_Object, Lisp_Object),
 			   Lisp_Object (*hfun) (Lisp_Object))
 {
   struct handler *c = push_handler (handlers, CONDITION_CASE);
+  Lisp_Object val;
+  bool call_hfun;
+
   if (sys_setjmp (c->jmp))
     {
-      Lisp_Object val = handlerlist->val;
-      clobbered_eassert (handlerlist == c);
-      handlerlist = handlerlist->next;
-      return hfun (val);
+      val = handlerlist->val;
+      call_hfun = true;
     }
   else
     {
-      Lisp_Object val = bfun (arg1, arg2);
-      clobbered_eassert (handlerlist == c);
-      handlerlist = handlerlist->next;
-      return val;
+      val = bfun (arg1, arg2);
+      call_hfun = false;
     }
+  clobbered_eassert (handlerlist == c);
+  handlerlist = handlerlist->next;
+  return call_hfun ? hfun (val) : val;
 }
 
 /* Like internal_condition_case but call BFUN with NARGS as first,
@@ -1394,20 +1397,22 @@ internal_condition_case_n (Lisp_Object (*bfun) (ptrdiff_t, Lisp_Object *),
 						Lisp_Object *args))
 {
   struct handler *c = push_handler (handlers, CONDITION_CASE);
+  Lisp_Object val;
+  bool call_hfun;
+
   if (sys_setjmp (c->jmp))
     {
-      Lisp_Object val = handlerlist->val;
-      clobbered_eassert (handlerlist == c);
-      handlerlist = handlerlist->next;
-      return hfun (val, nargs, args);
+      val = handlerlist->val;
+      call_hfun = true;
     }
   else
     {
-      Lisp_Object val = bfun (nargs, args);
-      clobbered_eassert (handlerlist == c);
-      handlerlist = handlerlist->next;
-      return val;
+      val = bfun (nargs, args);
+      call_hfun = false;
     }
+  clobbered_eassert (handlerlist == c);
+  handlerlist = handlerlist->next;
+  return call_hfun ? hfun (val, nargs, args) : val;
 }
 
 struct handler *
