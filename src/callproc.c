@@ -32,7 +32,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 
 #ifdef WINDOWSNT
-#define NOMINMAX
 #include <sys/socket.h>	/* for fcntl */
 #include <windows.h>
 #include "w32.h"
