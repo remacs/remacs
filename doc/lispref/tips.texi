@@ -931,7 +931,7 @@ explains these conventions, starting with an example:
 @group
 ;;; foo.el --- Support for the Foo programming language
 
-;; Copyright (C) 2010-2016 Your Name
+;; Copyright (C) 2010-2017 Your Name
 @end group
 
 ;; Author: Your Name <yourname@@example.com>
