@@ -792,6 +792,10 @@ ac_func_list=$funcs
 AC_CHECK_FUNCS_ONCE([putenv])
 AC_DEFUN([gl_FUNC_PUTENV],
   [test "$ac_cv_func_putenv" = yes || REPLACE_PUTENV=1])
+# Emacs does not use the wchar or wctype-h modules.
+AC_DEFUN([gt_TYPE_WINT_T],
+  [GNULIB_OVERRIDES_WINT_T=0
+   AC_SUBST([GNULIB_OVERRIDES_WINT_T])])
 
 # Initialize gnulib right after choosing the compiler.
 dnl Amongst other things, this sets AR and ARFLAGS.
