@@ -186,10 +186,24 @@ fn test_xil_xli_inverse() {
     assert!(XLI(XIL(0)) == 0);
 }
 
+/// Convert an integer to an elisp object representing that number.
 pub fn make_number(n: EmacsInt) -> LispObject {
     // TODO: this is a rubbish variable name.
     let as_uint = (n << INTTYPEBITS) as EmacsUint + LispType::Lisp_Int0 as EmacsUint;
     XIL(as_uint as EmacsInt)
+}
+
+/// Extract the integer value from an elisp object representing an
+/// integer.
+#[allow(non_snake_case)]
+fn XINT(a: LispObject) -> EmacsInt {
+    XLI(a) >> INTTYPEBITS
+}
+
+#[test]
+fn test_xint() {
+    let boxed_5 = make_number(5);
+    assert!(XINT(boxed_5) == 5);
 }
 
 /// Convert a positive integer into its LispObject representation.
