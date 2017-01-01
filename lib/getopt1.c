@@ -1,6 +1,6 @@
 /* getopt_long and getopt_long_only entry points for GNU getopt.
-   Copyright (C) 1987-1994, 1996-1998, 2004, 2006, 2009-2016 Free Software
-   Foundation, Inc.
+   Copyright (C) 1987-1994, 1996-1998, 2004, 2006, 2009-2017 Free
+   Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    This program is free software: you can redistribute it and/or modify

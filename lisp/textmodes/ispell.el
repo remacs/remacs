@@ -1,6 +1,6 @@
 ;;; ispell.el --- interface to International Ispell Versions 3.1 and 3.2  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1994-1995, 1997-2016 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1995, 1997-2017 Free Software Foundation, Inc.
 
 ;; Author:           Ken Stevens <k.stevens@ieee.org>
 ;; Status          : Release with 3.1.12+ and 3.2.0+ ispell.
