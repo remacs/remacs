@@ -380,7 +380,10 @@ modes are restored automatically; they should not be listed here."
   :group 'desktop)
 
 (defcustom desktop-buffers-not-to-save "\\` "
-  "Regexp identifying buffers that are to be excluded from saving."
+  "Regexp identifying buffers that are to be excluded from saving.
+This is in effect only for buffers that don't visit files.
+To exclude buffers that visit files, use `desktop-files-not-to-save'
+or `desktop-modes-not-to-save'."
   :type '(choice (const :tag "None" nil)
 		 regexp)
   :version "24.4"		    ; skip invisible temporary buffers

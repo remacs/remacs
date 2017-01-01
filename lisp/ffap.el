@@ -32,7 +32,7 @@
 ;; (`ffap-require-prefix' swaps these behaviors).  This is useful for
 ;; following references in situations such as mail or news buffers,
 ;; README's, MANIFEST's, and so on.  Submit bugs or suggestions with
-;; M-x ffap-bug.
+;; M-x report-emacs-bug.
 ;;
 ;; For the default installation, add this line to your init file:
 ;;
@@ -162,8 +162,12 @@ schemes (e.g. \"ftp\"); in that case, only convert those URLs."
   :group 'ffap
   :version "24.3")
 
-(defcustom ffap-lax-url nil
-  "If non-nil, allow lax URL matching."
+(defcustom ffap-lax-url t
+  "If non-nil, allow lax URL matching.
+The default non-nil value might produce false URLs in C++ code
+with symbols like \"std::find\".  On the other hand, setting
+this to nil will disable recognition of URLs that are not
+well-formed, such as \"user@host\" or \"<user@host>\"."
   :type 'boolean
   :group 'ffap
   :version "25.1")

@@ -21,6 +21,13 @@ Temporary note:
 --- means no change in the manuals is needed.
 When you add a new item, use the appropriate mark if you are sure it applies,
 
++++
+** The version number of CC Mode has been changed from 5.33 to
+5.32.99, although the software itself hasn't changed.  This aims to
+reduce confusion with the standalone CC Mode 5.33 (available from
+http://cc-mode.sourceforge.net), which is a more mature version than
+the one in Emacs 25.2.
+
 
 * Installation Changes in Emacs 26.1
 
