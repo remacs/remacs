@@ -1,6 +1,6 @@
 ;;; zlib-tests.el --- Test suite for zlib.
 
-;; Copyright (C) 2013-2016 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
 ;; Author: Lars Ingebrigtsen <larsi@gnus.org>
 
