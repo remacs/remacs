@@ -253,14 +253,14 @@ fn test_numberp() {
     assert!(NUMBERP(make_natnum(1)));
 }
 
-/// Convert `x` to an integer or float, coercing markers to integers.
+/// Check that `x` is an integer or float, coercing markers to integers.
 ///
-/// If `x` cannot be coerced, raises an elisp error.
+/// If `x` has a different type, raise an elisp error.
 ///
 /// This function is equivalent to
 /// `CHECK_NUMBER_OR_FLOAT_COERCE_MARKER` in Emacs C, but returns a
 /// value rather than assiging to a variable.
-pub fn check_number_or_float_coerce_marker(x: LispObject) -> LispObject {
+pub fn check_number_coerce_marker(x: LispObject) -> LispObject {
     if MARKERP(x) {
         make_natnum(marker_position(x) as i64)
     } else {

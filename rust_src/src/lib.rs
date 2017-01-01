@@ -16,8 +16,8 @@ pub unsafe extern "C" fn rust_return_t() -> LispObject {
 #[no_mangle]
 #[allow(unused_variables)]
 pub unsafe extern "C" fn rust_mod(x: LispObject, y: LispObject) -> LispObject {
-    let x = lisp::check_number_or_float_coerce_marker(x);
-    let y = lisp::check_number_or_float_coerce_marker(y);
+    let x = lisp::check_number_coerce_marker(x);
+    let y = lisp::check_number_coerce_marker(y);
 
     println!("x is a float: {}", lisp::FLOATP(x));
     println!("x is a marker: {}", lisp::MARKERP(x));
