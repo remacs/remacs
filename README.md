@@ -251,6 +251,7 @@ Medium tasks:
 
 * Choose an elisp function you like, and port it to rust. Look at
   `rust-mod` for an example.
+* Teach `describe-function` to find functions defined in Rust.
 * Expand our Travis configuration to run 'make check', so we know
   remacs passes Emacs' internal test suite.
 * Expand our Travis configuration to ensure that Rust code has been
@@ -266,6 +267,9 @@ Big tasks:
 * Find equivalent Rust libraries for parts of Emacs, and replace all
   the relevant C code. Rust has great libraries for regular
   expressions, GUI, terminal UI, managing processes, amongst others.
+* Change the elisp float representation to use
+  [nan boxing](https://wingolog.org/archives/2011/05/18/value-representation-in-javascript-implementations)
+  rather than allocating floats on the heap.
 
 ## Rust Porting Tips
 
