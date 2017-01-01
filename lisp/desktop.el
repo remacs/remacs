@@ -1158,13 +1158,13 @@ This function also sets `desktop-dirname' to nil."
 ;; ----------------------------------------------------------------------------
 (defun desktop-restoring-frameset-p ()
   "True if calling `desktop-restore-frameset' will actually restore it."
-  (and desktop-restore-frames desktop-saved-frameset t))
+  (and desktop-restore-frames desktop-saved-frameset (display-graphic-p) t))
 
 (defun desktop-restore-frameset ()
   "Restore the state of a set of frames.
 This function depends on the value of `desktop-saved-frameset'
 being set (usually, by reading it from the desktop)."
-  (when (and (display-graphic-p) (desktop-restoring-frameset-p))
+  (when (desktop-restoring-frameset-p)
     (frameset-restore desktop-saved-frameset
 		      :reuse-frames (eq desktop-restore-reuses-frames t)
 		      :cleanup-frames (not (eq desktop-restore-reuses-frames 'keep))

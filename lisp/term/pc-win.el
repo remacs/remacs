@@ -263,7 +263,7 @@ Consult the selection.  Treat empty strings as if they were unset."
       (if (w16-selection-owner-p selection)
           t)
     ;; FIXME: Other systems don't obey
-    ;; gui-select-enable-clipboard here.
+    ;; select-enable-clipboard here.
     (with-demoted-errors "w16-set-clipboard-data: %S"
       (w16-set-clipboard-data value))
     value))

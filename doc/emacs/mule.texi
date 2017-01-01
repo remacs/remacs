@@ -1369,6 +1369,13 @@ Resources}).
 characters the font does not cover.  The standard fontset is only used if
 explicitly requested, despite its name.
 
+@findex describe-fontset
+  To show the information about a specific fontset, use the
+@w{@kbd{M-x describe-fontset}} command.  It prompts for a fontset
+name, defaulting to the one used by the current frame, and then
+displays all the subranges of characters and the fonts assigned to
+them in that fontset.
+
   A fontset does not necessarily specify a font for every character
 code.  If a fontset specifies no font for a certain character, or if
 it specifies a font that does not exist on your system, then it cannot

@@ -1852,7 +1852,8 @@ nil."
   "Helper function for `js--proper-indentation'.
 Return the proper indentation of the current line if it belongs to a declaration
 statement spanning multiple lines; otherwise, return nil."
-  (let (at-opening-bracket)
+  (let (forward-sexp-function ; Use Lisp version.
+        at-opening-bracket)
     (save-excursion
       (back-to-indentation)
       (when (not (looking-at js--declaration-keyword-re))
@@ -1929,6 +1930,7 @@ indentation is aligned to that column."
     (let ((bracket (nth 1 parse-status))
           declaration-keyword-end
           at-closing-bracket-p
+          forward-sexp-function ; Use Lisp version.
           comma-p)
       (when (looking-at js--declaration-keyword-re)
         (setq declaration-keyword-end (match-end 0))

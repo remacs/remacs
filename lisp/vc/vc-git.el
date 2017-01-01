@@ -1029,6 +1029,8 @@ or BRANCH^ (where \"^\" can be repeated)."
       (buffer-string))))
 
 (defun vc-git-region-history (file buffer lfrom lto)
+  "Insert into BUFFER the history of FILE for lines LFROM to LTO.
+This requires git 1.8.4 or later, for the \"-L\" option of \"git log\"."
   ;; The "git log" command below interprets the line numbers as applying
   ;; to the HEAD version of the file, not to the current state of the file.
   ;; So we need to look at all the local changes and adjust lfrom/lto

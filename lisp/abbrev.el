@@ -979,10 +979,10 @@ Properties with special meaning:
   ;; We used to manually add the docstring, but we also want to record this
   ;; location as the definition of the variable (in load-history), so we may
   ;; as well just use `defvar'.
-  (if (and docstring props (symbolp docstring))
-      ;; There is really no docstring, instead the docstring arg
-      ;; is a property name.
-      (push docstring props) (setq docstring nil))
+  (when (and docstring props (symbolp docstring))
+    ;; There is really no docstring, instead the docstring arg
+    ;; is a property name.
+    (push docstring props) (setq docstring nil))
   (eval `(defvar ,tablename nil ,@(if docstring (list docstring))))
   (let ((table (if (boundp tablename) (symbol-value tablename))))
     (unless table
