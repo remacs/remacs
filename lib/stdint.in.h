@@ -83,6 +83,15 @@
    LONG_MIN, LONG_MAX, ULONG_MAX, _GL_INTEGER_WIDTH.  */
 #include <limits.h>
 
+/* Override WINT_MIN and WINT_MAX if gnulib's <wchar.h> or <wctype.h> overrides
+   wint_t.  */
+#if @GNULIB_OVERRIDES_WINT_T@
+# undef WINT_MIN
+# undef WINT_MAX
+# define WINT_MIN 0x0U
+# define WINT_MAX 0xffffffffU
+#endif
+
 #if ! @HAVE_C99_STDINT_H@
 
 /* <sys/types.h> defines some of the stdint.h types as well, on glibc,
