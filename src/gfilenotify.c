@@ -27,7 +27,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "keyboard.h"
 
 
-/* This is a list, elements are triples (DESCRIPTOR FILE FLAGS CALLBACK)  */
+/* This is a list, elements are quadruples (DESCRIPTOR FILE FLAGS CALLBACK)  */
 static Lisp_Object watch_list;
 
 /* This is the callback function for arriving signals from
