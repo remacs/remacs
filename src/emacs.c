@@ -831,14 +831,16 @@ main (int argc, char **argv)
       rlim_t lim = rlim.rlim_cur;
 
       /* Approximate the amount regex.c needs per unit of
-	 re_max_failures, then add 33% to cover the size of the
+	 emacs_re_max_failures, then add 33% to cover the size of the
 	 smaller stacks that regex.c successively allocates and
 	 discards on its way to the maximum.  */
-      int ratio = 20 * sizeof (char *);
-      ratio += ratio / 3;
+      int min_ratio = 20 * sizeof (char *);
+      int ratio = min_ratio + min_ratio / 3;
 
-      /* Extra space to cover what we're likely to use for other reasons.  */
-      int extra = 200000;
+      /* Extra space to cover what we're likely to use for other
+         reasons.  For example, a typical GC might take 30K stack
+         frames.  */
+      int extra = (30 * 1000) * 50;
 
       bool try_to_grow_stack = true;
 #ifndef CANNOT_DUMP
@@ -847,7 +849,7 @@ main (int argc, char **argv)
 
       if (try_to_grow_stack)
 	{
-	  rlim_t newlim = re_max_failures * ratio + extra;
+	  rlim_t newlim = emacs_re_max_failures * ratio + extra;
 
 	  /* Round the new limit to a page boundary; this is needed
 	     for Darwin kernel 15.4.0 (see Bug#23622) and perhaps
@@ -869,9 +871,11 @@ main (int argc, char **argv)
 		lim = newlim;
 	    }
 	}
-
-      /* Don't let regex.c overflow the stack.  */
-      re_max_failures = lim < extra ? 0 : min (lim - extra, SIZE_MAX) / ratio;
+      /* If the stack is big enough, let regex.c more of it before
+         falling back to heap allocation.  */
+      emacs_re_safe_alloca = max
+        (min (lim - extra, SIZE_MAX) * (min_ratio / ratio),
+         MAX_ALLOCA);
     }
 #endif /* HAVE_SETRLIMIT and RLIMIT_STACK and not CYGWIN */
 

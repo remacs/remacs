@@ -186,7 +186,12 @@ typedef unsigned long reg_syntax_t;
 #endif
 
 /* Roughly the maximum number of failure points on the stack.  */
-extern size_t re_max_failures;
+extern size_t emacs_re_max_failures;
+
+#ifdef emacs
+/* Amount of memory that we can safely stack allocate.  */
+extern ptrdiff_t emacs_re_safe_alloca;
+#endif
 
 
 /* Define combinations of the above bits for the standard possibilities.
