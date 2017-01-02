@@ -414,9 +414,7 @@ pub fn XFLOAT(a: LispObject) -> *const LispFloat {
 
 #[allow(non_snake_case)]
 pub fn XFLOAT_DATA(f: LispObject) -> f64 {
-    unsafe {
-        ptr::read(XFLOAT(f)).u
-    }
+    unsafe { ptr::read(XFLOAT(f)).u }
 }
 
 #[allow(non_snake_case)]
