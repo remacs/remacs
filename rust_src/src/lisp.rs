@@ -41,7 +41,9 @@ pub type LispObject = EmacsInt;
 extern "C" {
     pub fn defsubr(sname: *mut LispSubr);
     fn wrong_type_argument(predicate: LispObject, value: LispObject) -> LispObject;
+    pub fn xsignal0(error_symbol: LispObject);
     pub static Qt: LispObject;
+    pub static Qarith_error: LispObject;
     pub static Qnumber_or_marker_p: LispObject;
 }
 
@@ -205,7 +207,7 @@ pub fn make_number(n: EmacsInt) -> LispObject {
 /// Extract the integer value from an elisp object representing an
 /// integer.
 #[allow(non_snake_case)]
-fn XINT(a: LispObject) -> EmacsInt {
+pub fn XINT(a: LispObject) -> EmacsInt {
     XLI(a) >> INTTYPEBITS
 }
 

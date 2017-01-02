@@ -4,8 +4,9 @@ mod lisp;
 mod marker;
 
 use std::os::raw::c_char;
-use lisp::{LispObject, LispSubr, PvecType, defsubr, make_natnum, PSEUDOVECTOR_AREA_BITS,
-           VectorLikeHeader, Qt};
+use lisp::{LispObject, LispSubr, PvecType, defsubr, make_number,
+           PSEUDOVECTOR_AREA_BITS, XINT,
+           VectorLikeHeader, Qt, Qarith_error};
 
 #[no_mangle]
 pub unsafe extern "C" fn rust_return_t() -> LispObject {
@@ -19,9 +20,26 @@ pub unsafe extern "C" fn rust_mod(x: LispObject, y: LispObject) -> LispObject {
     let x = lisp::check_number_coerce_marker(x);
     let y = lisp::check_number_coerce_marker(y);
 
-    println!("x is a float: {}", lisp::FLOATP(x));
-    println!("x is a marker: {}", lisp::MARKERP(x));
-    make_natnum(5)
+    if lisp::FLOATP(x) || lisp::FLOATP(y) {
+        // TODO: implement fmod_float
+        lisp::xsignal0(Qarith_error);
+    }
+
+    let mut i1 = XINT(x);
+    let i2 = XINT(y);
+
+    if i2 == 0 {
+        lisp::xsignal0(Qarith_error);
+    }
+
+    i1 %= i2;
+
+    // Ensure that the remainder has the correct sign.
+    if i2 < 0 && i1 > 0 || i2 > 0 && i1 < 0 {
+        i1 += i2
+    }
+
+    make_number(i1)
 }
 
 #[no_mangle]
