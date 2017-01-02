@@ -155,15 +155,23 @@ pub struct VectorLikeHeader {
     pub size: libc::ptrdiff_t,
 }
 
+/// Represents an elisp function.
 #[repr(C)]
 pub struct LispSubr {
     pub header: VectorLikeHeader,
-    // TODO: lisp.h has an elaborate union here.
-    pub function: *mut libc::c_void,
+    /// The C or Rust function that we will call when the user invokes
+    /// the elisp function.
+    pub function: *const libc::c_void,
+    /// The minimum number of arguments to the elisp function.
     pub min_args: libc::c_short,
+    /// The maximum number of arguments to the elisp function.
     pub max_args: libc::c_short,
+    /// The name of the function in elisp.
     pub symbol_name: *const c_char,
+    /// The interactive specification. This may be a normal prompt
+    /// string, such as `"bBuffer: "` or an elisp form as a string.
     pub intspec: *const c_char,
+    /// The docstring of our function.
     pub doc: *const c_char,
 }
 
