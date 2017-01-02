@@ -3,6 +3,7 @@ extern crate libc;
 mod lisp;
 mod marker;
 mod eval;
+mod floatfns;
 
 use std::os::raw::c_char;
 use lisp::{LispObject, LispSubr, PvecType, defsubr, make_number,
@@ -23,8 +24,7 @@ pub unsafe extern "C" fn rust_mod(x: LispObject, y: LispObject) -> LispObject {
     let y = lisp::check_number_coerce_marker(y);
 
     if lisp::FLOATP(x) || lisp::FLOATP(y) {
-        // TODO: implement fmod_float
-        xsignal0(Qarith_error);
+        return floatfns::fmod_float(x, y);
     }
 
     let mut i1 = XINT(x);
