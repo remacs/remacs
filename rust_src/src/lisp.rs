@@ -86,6 +86,8 @@ pub enum PvecType {
     PVEC_FONT = 17,
 }
 
+/// Bit pattern used in the least significant bits of a lisp object,
+/// to denote its type.
 #[repr(C)]
 #[derive(PartialEq, Eq)]
 #[allow(dead_code)]
@@ -175,7 +177,7 @@ pub struct LispSubr {
     pub doc: *const c_char,
 }
 
-/// Convert LispObject to EmacsInt.
+/// Convert a LispObject to an EmacsInt.
 ///
 /// It's so simple that we should avoid using this, but it's handy
 /// when transliterating from C.
@@ -184,9 +186,10 @@ fn XLI(o: LispObject) -> EmacsInt {
     o as EmacsInt
 }
 
-/// Note that CHECK_LISP_OBJECT_TYPE is 0 (false) in our build.
+/// Convert an EmacsInt to an LispObject.
 #[allow(non_snake_case)]
 fn XIL(i: EmacsInt) -> LispObject {
+    // Note that CHECK_LISP_OBJECT_TYPE is 0 (false) in our build.
     i as LispObject
 }
 
@@ -238,6 +241,7 @@ pub fn make_natnum(n: EmacsInt) -> LispObject {
     make_number(n)
 }
 
+/// Return the type of a LispObject.
 #[allow(non_snake_case)]
 fn XTYPE(a: LispObject) -> LispType {
     let res = XLI(a) & !VALMASK;
@@ -251,6 +255,7 @@ fn test_xtype() {
     assert!(XTYPE(Qnil) == LispType::Lisp_Symbol);
 }
 
+/// Is this LispObject a float?
 #[allow(non_snake_case)]
 pub fn FLOATP(a: LispObject) -> bool {
     XTYPE(a) == LispType::Lisp_Float
@@ -261,6 +266,7 @@ fn test_floatp() {
     assert!(!FLOATP(Qnil));
 }
 
+/// Is this LispObject an integer?
 #[allow(non_snake_case)]
 pub fn INTEGERP(a: LispObject) -> bool {
     (XTYPE(a) as u32 & ((LispType::Lisp_Int0 as u32) | !(LispType::Lisp_Int1 as u32))) ==
@@ -274,6 +280,7 @@ fn test_integerp() {
     assert!(INTEGERP(make_natnum(1)));
 }
 
+/// Is this LispObject a number?
 #[allow(non_snake_case)]
 pub fn NUMBERP(x: LispObject) -> bool {
     INTEGERP(x) || FLOATP(x)
@@ -303,6 +310,7 @@ pub fn check_number_coerce_marker(x: LispObject) -> LispObject {
     }
 }
 
+/// Is this LispObject a symbol?
 #[allow(non_snake_case)]
 #[allow(dead_code)]
 pub fn SYMBOLP(a: LispObject) -> bool {
@@ -326,6 +334,10 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
     }
 }
 
+/// Is this LispObject a misc type?
+///
+/// A misc type has its type bits set to 'misc', and uses additional
+/// bits to specify what exact type it represents.
 #[allow(non_snake_case)]
 fn MISCP(a: LispObject) -> bool {
     XTYPE(a) == LispType::Lisp_Misc
@@ -336,9 +348,16 @@ fn test_miscp() {
     assert!(!MISCP(Qnil));
 }
 
+/// Convert a tagged pointer to a normal C pointer.
+///
+/// See the docstring for `LispType` for more information on tagging.
 #[allow(non_snake_case)]
 pub fn XUNTAG(a: LispObject, ty: libc::c_int) -> *const libc::c_void {
-    (XLI(a) as libc::intptr_t - ty as libc::intptr_t) as *const libc::c_void
+    let tagged_ptr = XLI(a) as libc::intptr_t;
+    let tag = ty as libc::intptr_t;
+    // Since pointers are aligned to 8 bytes, we can simply subtract
+    // the bit pattern to obtain a valid pointer.
+    (tagged_ptr - tag) as *const libc::c_void
 }
 
 /// Represents a floating point value in elisp, or GC bookkeeping for
