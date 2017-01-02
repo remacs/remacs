@@ -187,6 +187,15 @@ fn test_xil_xli_inverse() {
 }
 
 /// Convert an integer to an elisp object representing that number.
+///
+/// # Porting from C
+///
+/// This function is a direct replacement for the C function
+/// `make_number`.
+///
+/// The C macro `XSETINT` should also be replaced with this when
+/// porting. For example, `XSETINT(x, y)` should be written as `x =
+/// make_number(y)`.
 pub fn make_number(n: EmacsInt) -> LispObject {
     // TODO: this is a rubbish variable name.
     let as_uint = (n << INTTYPEBITS) as EmacsUint + LispType::Lisp_Int0 as EmacsUint;
