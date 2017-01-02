@@ -7,14 +7,8 @@ mod floatfns;
 
 use std::os::raw::c_char;
 use lisp::{LispObject, LispSubr, PvecType, defsubr, make_number, PSEUDOVECTOR_AREA_BITS, XINT,
-           VectorLikeHeader, Qt, Qarith_error};
+           VectorLikeHeader, Qarith_error};
 use eval::xsignal0;
-
-#[no_mangle]
-pub unsafe extern "C" fn rust_return_t() -> LispObject {
-    println!("hello from rust!");
-    Qt
-}
 
 #[no_mangle]
 #[allow(unused_variables)]
@@ -46,8 +40,6 @@ pub unsafe extern "C" fn rust_mod(x: LispObject, y: LispObject) -> LispObject {
 #[no_mangle]
 #[allow(non_snake_case)]
 pub unsafe extern "C" fn rust_init_syms() {
-    println!("init rust syms start");
-
     // TODO: to be consistent with Emacs, we should consider
     // statically allocating our LispSubr values. However:
     //
@@ -60,25 +52,6 @@ pub unsafe extern "C" fn rust_init_syms() {
     //
     // TODO: this is blindly hoping we have the correct alignment.
     // We should ensure we have GCALIGNMENT (8 bytes).
-    let mut Srust_return_t = Box::new(LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
-        },
-        // TODO: rust_return_t as standard Emacs naming.
-        function: (rust_return_t as *mut libc::c_void),
-        min_args: 0,
-        max_args: 0,
-        symbol_name: ("return-t\0".as_ptr()) as *const c_char,
-        intspec: "\0".as_ptr() as *const c_char,
-        doc: ("hello world\0".as_ptr()) as *const c_char,
-    });
-
-    defsubr(Srust_return_t.as_mut());
-
-    // Shameful kludge to ensure Srust_return_t lives long enough.
-    std::mem::forget(Srust_return_t);
-
     let mut Srust_mod = Box::new(LispSubr {
         header: VectorLikeHeader {
             size: ((PvecType::PVEC_SUBR as libc::c_int) <<
@@ -96,6 +69,4 @@ pub unsafe extern "C" fn rust_init_syms() {
 
     // Shameful kludge to ensure Srust_mod lives long enough.
     std::mem::forget(Srust_mod);
-
-    println!("init rust syms end");
 }

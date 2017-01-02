@@ -43,7 +43,6 @@ pub type LispObject = EmacsInt;
 extern "C" {
     pub fn defsubr(sname: *mut LispSubr);
     fn wrong_type_argument(predicate: LispObject, value: LispObject) -> LispObject;
-    pub static Qt: LispObject;
     pub static Qarith_error: LispObject;
     pub static Qnumber_or_marker_p: LispObject;
 }
