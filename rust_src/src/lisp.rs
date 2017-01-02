@@ -177,6 +177,13 @@ pub struct LispSubr {
     pub doc: *const c_char,
 }
 
+// In order to use `lazy_static!` with LispSubr, it must be Sync. Raw
+// pointers are not Sync, but LispSubr values are never mutated, so it
+// isn't a problem to define Sync.
+//
+// Based on http://stackoverflow.com/a/28116557/509706
+unsafe impl Sync for LispSubr {}
+
 /// Convert a LispObject to an EmacsInt.
 #[allow(non_snake_case)]
 fn XLI(o: LispObject) -> EmacsInt {

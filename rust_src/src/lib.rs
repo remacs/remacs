@@ -1,3 +1,11 @@
+// TODO: this is just to ensure that Srust_mod does not generate a
+// warning. However, as it's defined with a macro, there doesn't seem
+// to be a way to disable the warning for just that variable.
+#![allow(non_upper_case_globals)]
+
+#[macro_use]
+extern crate lazy_static;
+
 extern crate libc;
 
 mod lisp;
@@ -37,22 +45,11 @@ pub unsafe extern "C" fn rust_mod(x: LispObject, y: LispObject) -> LispObject {
     make_number(i1)
 }
 
-#[no_mangle]
-#[allow(non_snake_case)]
-pub unsafe extern "C" fn rust_init_syms() {
-    // TODO: to be consistent with Emacs, we should consider
-    // statically allocating our LispSubr values. However:
-    //
-    // * we can't call .as_ptr() for a static value
-    // * Rust would force us to define Sync on LispSubr
-    //   see http://stackoverflow.com/a/28116557/509706
-    // * the lazy_static crate might be a good fit, but
-    //   we'd need to deref so make sure the data is
-    //   initialised.
-    //
+#[allow(non_upper_case_globals)]
+lazy_static! {
     // TODO: this is blindly hoping we have the correct alignment.
     // We should ensure we have GCALIGNMENT (8 bytes).
-    let mut Srust_mod = Box::new(LispSubr {
+    static ref Srust_mod: LispSubr = LispSubr {
         header: VectorLikeHeader {
             size: ((PvecType::PVEC_SUBR as libc::c_int) <<
                    PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
@@ -63,10 +60,11 @@ pub unsafe extern "C" fn rust_init_syms() {
         symbol_name: ("rust-mod\0".as_ptr()) as *const c_char,
         intspec: "\0".as_ptr() as *const c_char,
         doc: ("Calculate mod in rust\0".as_ptr()) as *const c_char,
-    });
+    };
+}
 
-    defsubr(Srust_mod.as_mut());
-
-    // Shameful kludge to ensure Srust_mod lives long enough.
-    std::mem::forget(Srust_mod);
+#[no_mangle]
+#[allow(non_snake_case)]
+pub unsafe extern "C" fn rust_init_syms() {
+    defsubr(&*Srust_mod);
 }
