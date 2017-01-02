@@ -172,6 +172,8 @@ pub struct LispSubr {
     pub symbol_name: *const c_char,
     /// The interactive specification. This may be a normal prompt
     /// string, such as `"bBuffer: "` or an elisp form as a string.
+    /// If the function is not interactive, this should be a null
+    /// pointer.
     pub intspec: *const c_char,
     /// The docstring of our function.
     pub doc: *const c_char,

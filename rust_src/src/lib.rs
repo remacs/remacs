@@ -14,6 +14,7 @@ mod eval;
 mod floatfns;
 
 use std::os::raw::c_char;
+use std::ptr;
 use lisp::{LispObject, LispSubr, PvecType, defsubr, make_number, PSEUDOVECTOR_AREA_BITS, XINT,
            VectorLikeHeader, Qarith_error};
 use eval::xsignal0;
@@ -54,12 +55,19 @@ lazy_static! {
             size: ((PvecType::PVEC_SUBR as libc::c_int) <<
                    PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
         },
-        function: (rust_mod as *mut libc::c_void),
+        function: (rust_mod as *const libc::c_void),
         min_args: 2,
         max_args: 2,
         symbol_name: ("rust-mod\0".as_ptr()) as *const c_char,
-        intspec: "\0".as_ptr() as *const c_char,
-        doc: ("Calculate mod in rust\0".as_ptr()) as *const c_char,
+        intspec: ptr::null(),
+        // TODO: There's some magic somewhere in core Emacs that means
+        // `(fn X Y)` is added to the docstring automatically. We
+        // should do something similar.
+        doc: ("Return X modulo Y.
+The result falls between zero (inclusive) and Y (exclusive).
+Both X and Y must be numbers or markers.
+
+(fn X Y)\0".as_ptr()) as *const c_char,
     };
 }
 
