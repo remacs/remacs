@@ -178,9 +178,6 @@ pub struct LispSubr {
 }
 
 /// Convert a LispObject to an EmacsInt.
-///
-/// It's so simple that we should avoid using this, but it's handy
-/// when transliterating from C.
 #[allow(non_snake_case)]
 fn XLI(o: LispObject) -> EmacsInt {
     o as EmacsInt
