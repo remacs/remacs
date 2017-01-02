@@ -6,8 +6,7 @@ mod eval;
 mod floatfns;
 
 use std::os::raw::c_char;
-use lisp::{LispObject, LispSubr, PvecType, defsubr, make_number,
-           PSEUDOVECTOR_AREA_BITS, XINT,
+use lisp::{LispObject, LispSubr, PvecType, defsubr, make_number, PSEUDOVECTOR_AREA_BITS, XINT,
            VectorLikeHeader, Qt, Qarith_error};
 use eval::xsignal0;
 

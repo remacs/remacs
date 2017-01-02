@@ -18,13 +18,11 @@ pub fn fmod_float(x: LispObject, y: LispObject) -> LispObject {
     };
 
     f1 %= f2;
-        
+
     // Ensure that the remainder has the correct sign.
     if f2 < 0.0 && f1 > 0.0 || f2 > 0.0 && f1 < 0.0 {
         f1 += f2
     }
 
-    unsafe {
-        make_float(f1)
-    }
+    unsafe { make_float(f1) }
 }
