@@ -41,7 +41,7 @@ pub type LispObject = EmacsInt;
 // give us stronger guarantees from the type checker.
 
 extern "C" {
-    pub fn defsubr(sname: *mut LispSubr);
+    pub fn defsubr(sname: *const LispSubr);
     fn wrong_type_argument(predicate: LispObject, value: LispObject) -> LispObject;
     pub static Qarith_error: LispObject;
     pub static Qnumber_or_marker_p: LispObject;
