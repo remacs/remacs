@@ -4,6 +4,8 @@
 extern crate libc;
 
 use std::os::raw::c_char;
+#[cfg(test)]
+use std::cmp::max;
 use std::mem;
 use std::ptr;
 
@@ -332,6 +334,37 @@ pub fn XUNTAG(a: LispObject, ty: libc::c_int) -> *const libc::c_void {
     (XLI(a) as libc::intptr_t - ty as libc::intptr_t) as *const libc::c_void
 }
 
+/// Represents a floating point value in elisp, or GC bookkeeping for
+/// floats.
+///
+/// # Porting from C
+///
+/// `Lisp_Float` in C uses a union between a `double` and a
+/// pointer. We assume a double, as that's the common case, and
+/// require callers to transmute to a `LispFloatChain` if they need
+/// the pointer.
+///
+/// As a result, `foo->u.data` in C should be written
+/// `ptr::read(foo).u` in Rust.
+#[repr(C)]
+pub struct LispFloat {
+    u: f64,
+}
+
+#[test]
+fn test_lisp_float_size() {
+    let double_size = mem::size_of::<f64>();
+    let ptr_size = mem::size_of::<*const LispFloat>;
+
+    assert!(mem::size_of::<LispFloat>() == max(double_size, ptr_size));
+}
+
+#[repr(C)]
+#[allow(dead_code)]
+pub struct LispFloatChain {
+    chain: *const LispFloat,
+}
+
 // lisp.h uses a union for Lisp_Misc, which we emulate with an opaque
 // struct.
 #[repr(C)]
@@ -371,6 +404,19 @@ pub fn XMISCANY(a: LispObject) -> *const LispMiscAny {
 #[allow(non_snake_case)]
 pub fn XMISCTYPE(a: LispObject) -> LispMiscType {
     unsafe { ptr::read(XMISCANY(a)).ty }
+}
+
+#[allow(non_snake_case)]
+pub fn XFLOAT(a: LispObject) -> *const LispFloat {
+    debug_assert!(FLOATP(a));
+    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_Float as libc::c_int)) }
+}
+
+#[allow(non_snake_case)]
+pub fn XFLOAT_DATA(f: LispObject) -> f64 {
+    unsafe {
+        ptr::read(XFLOAT(f)).u
+    }
 }
 
 #[allow(non_snake_case)]
