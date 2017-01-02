@@ -41,15 +41,13 @@ pub type LispObject = EmacsInt;
 extern "C" {
     pub fn defsubr(sname: *mut LispSubr);
     fn wrong_type_argument(predicate: LispObject, value: LispObject) -> LispObject;
-    pub fn xsignal0(error_symbol: LispObject);
     pub static Qt: LispObject;
     pub static Qarith_error: LispObject;
     pub static Qnumber_or_marker_p: LispObject;
 }
 
 #[allow(non_upper_case_globals)]
-#[allow(dead_code)]
-const Qnil: LispObject = 0;
+pub const Qnil: LispObject = 0;
 
 const PSEUDOVECTOR_SIZE_BITS: libc::c_int = 12;
 #[allow(dead_code)]

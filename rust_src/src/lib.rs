@@ -2,11 +2,13 @@ extern crate libc;
 
 mod lisp;
 mod marker;
+mod eval;
 
 use std::os::raw::c_char;
 use lisp::{LispObject, LispSubr, PvecType, defsubr, make_number,
            PSEUDOVECTOR_AREA_BITS, XINT,
            VectorLikeHeader, Qt, Qarith_error};
+use eval::xsignal0;
 
 #[no_mangle]
 pub unsafe extern "C" fn rust_return_t() -> LispObject {
@@ -22,14 +24,14 @@ pub unsafe extern "C" fn rust_mod(x: LispObject, y: LispObject) -> LispObject {
 
     if lisp::FLOATP(x) || lisp::FLOATP(y) {
         // TODO: implement fmod_float
-        lisp::xsignal0(Qarith_error);
+        xsignal0(Qarith_error);
     }
 
     let mut i1 = XINT(x);
     let i2 = XINT(y);
 
     if i2 == 0 {
-        lisp::xsignal0(Qarith_error);
+        xsignal0(Qarith_error);
     }
 
     i1 %= i2;

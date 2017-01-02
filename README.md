@@ -294,6 +294,9 @@ naming conventions for the new function.
 
 `eassert` in Emacs C should be `debug_assert!` in Rust.
 
+`emacs_abort()` in Emacs C should be `panic!("reason for panicking")`
+in Rust.
+
 ## TODOC
 
 * Overriding git hooks (just delete them?)
