@@ -5409,8 +5409,13 @@ Nonexistent directories are removed from spec."
   "Determine remote `gvfs-monitor-dir' command."
   (with-tramp-connection-property vec "gvfs-monitor-dir"
     (tramp-message vec 5 "Finding a suitable `gvfs-monitor-dir' command")
-    (tramp-find-executable
-     vec "gvfs-monitor-dir" (tramp-get-remote-path vec) t t)))
+    ;; We distinguish "gvfs-monitor-dir.exe" from cygwin in order to
+    ;; establish better timeouts in filenotify-tests.el.  Any better
+    ;; distinction approach would be welcome!
+    (or (tramp-find-executable
+	 vec "gvfs-monitor-dir.exe" (tramp-get-remote-path vec) t t)
+	(tramp-find-executable
+	 vec "gvfs-monitor-dir" (tramp-get-remote-path vec) t t))))
 
 (defun tramp-get-remote-inotifywait (vec)
   "Determine remote `inotifywait' command."
