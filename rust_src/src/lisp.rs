@@ -282,7 +282,7 @@ fn test_numberp() {
 ///
 /// This function is equivalent to
 /// `CHECK_NUMBER_OR_FLOAT_COERCE_MARKER` in Emacs C, but returns a
-/// value rather than assiging to a variable.
+/// value rather than assigning to a variable.
 pub fn check_number_coerce_marker(x: LispObject) -> LispObject {
     if MARKERP(x) {
         make_natnum(marker_position(x) as i64)
