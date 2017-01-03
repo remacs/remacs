@@ -2745,7 +2745,23 @@ non-nil value, that slot cannot be set via `setf'.
                             `(nth ,pos cl-x))))
                     forms)
               (when (cl-oddp (length desc))
-                (error "Invalid options for slot %s in %s" slot name))
+                (push
+                 (macroexp--warn-and-return
+                  (format "Missing value for option `%S' of slot `%s' in struct %s!"
+                          (car (last desc)) slot name)
+                  'nil)
+                 forms)
+                (when (and (keywordp (car defaults))
+                           (not (keywordp (car desc))))
+                  (let ((kw (car defaults)))
+                    (push
+                     (macroexp--warn-and-return
+                      (format "  I'll take `%s' to be an option rather than a default value."
+                              kw)
+                      'nil)
+                     forms)
+                    (push kw desc)
+                    (setcar defaults nil))))
               (if (plist-get desc ':read-only)
                   (push `(gv-define-expander ,accessor
                            (lambda (_cl-do _cl-x)
