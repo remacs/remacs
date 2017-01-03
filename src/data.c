@@ -2849,37 +2849,6 @@ Both must be integers or markers.  */)
   return val;
 }
 
-DEFUN ("mod", Fmod, Smod, 2, 2, 0,
-       doc: /* Return X modulo Y.
-The result falls between zero (inclusive) and Y (exclusive).
-Both X and Y must be numbers or markers.  */)
-  (register Lisp_Object x, Lisp_Object y)
-{
-  Lisp_Object val;
-  EMACS_INT i1, i2;
-
-  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (x);
-  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (y);
-
-  if (FLOATP (x) || FLOATP (y))
-    return fmod_float (x, y);
-
-  i1 = XINT (x);
-  i2 = XINT (y);
-
-  if (i2 == 0)
-    xsignal0 (Qarith_error);
-
-  i1 %= i2;
-
-  /* If the "remainder" comes out with the wrong sign, fix it.  */
-  if (i2 < 0 ? i1 > 0 : i1 < 0)
-    i1 += i2;
-
-  XSETINT (val, i1);
-  return val;
-}
-
 DEFUN ("max", Fmax, Smax, 1, MANY, 0,
        doc: /* Return largest of all the arguments (which must be numbers or markers).
 The value is always a number; markers are converted to numbers.
@@ -3700,7 +3669,6 @@ syms_of_data (void)
   defsubr (&Stimes);
   defsubr (&Squo);
   defsubr (&Srem);
-  defsubr (&Smod);
   defsubr (&Smax);
   defsubr (&Smin);
   defsubr (&Slogand);
