@@ -792,7 +792,10 @@ specify actions to try creating such a string.  A pair matches if either
   KEY is a symbol, and it equals `major-mode', or
   KEY is a string, it should match NAME as a regexp.
 On a match, (FUNCTION NAME) is called and should return a file, an
-URL, or nil.  If nil, search the alist for further matches.")
+URL, or nil.  If nil, search the alist for further matches.
+While calling FUNCTION, the match data is set according to KEY if KEY
+is a string, so that FUNCTION can use `match-string' and friends
+to extract substrings.")
 
 (put 'ffap-alist 'risky-local-variable t)
 
