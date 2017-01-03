@@ -19,10 +19,8 @@ use lisp::{LispObject, LispSubr, PvecType, defsubr, make_number, PSEUDOVECTOR_AR
            VectorLikeHeader, Qarith_error};
 use eval::xsignal0;
 
-#[no_mangle]
-#[allow(unused_variables)]
 #[allow(non_snake_case)]
-pub extern "C" fn Fmod(x: LispObject, y: LispObject) -> LispObject {
+fn Fmod(x: LispObject, y: LispObject) -> LispObject {
     let x = lisp::check_number_coerce_marker(x);
     let y = lisp::check_number_coerce_marker(y);
 
