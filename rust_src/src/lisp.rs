@@ -387,7 +387,7 @@ pub struct LispFloat {
 #[test]
 fn test_lisp_float_size() {
     let double_size = mem::size_of::<f64>();
-    let ptr_size = mem::size_of::<*const LispFloat>;
+    let ptr_size = mem::size_of::<*const LispFloat>();
 
     assert!(mem::size_of::<LispFloat>() == max(double_size, ptr_size));
 }
