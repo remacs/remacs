@@ -188,6 +188,10 @@ pub struct LispSubr {
 // Based on http://stackoverflow.com/a/28116557/509706
 unsafe impl Sync for LispSubr {}
 
+/// Used to denote functions that have no limit on the maximum number
+/// of arguments.
+pub const MANY: i16 = -2;
+
 /// Convert a LispObject to an EmacsInt.
 #[allow(non_snake_case)]
 fn XLI(o: LispObject) -> EmacsInt {
