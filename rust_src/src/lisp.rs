@@ -1,3 +1,5 @@
+#![allow(non_upper_case_globals)]
+
 /// This module contains Rust definitions whose C equivalents live in
 /// lisp.h.
 
@@ -42,11 +44,11 @@ pub type LispObject = EmacsInt;
 
 extern "C" {
     fn wrong_type_argument(predicate: LispObject, value: LispObject) -> LispObject;
+    pub static Qt: LispObject;
     pub static Qarith_error: LispObject;
     pub static Qnumber_or_marker_p: LispObject;
 }
 
-#[allow(non_upper_case_globals)]
 pub const Qnil: LispObject = 0;
 
 const PSEUDOVECTOR_SIZE_BITS: libc::c_int = 12;
