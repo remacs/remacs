@@ -1,6 +1,3 @@
-// TODO: this is just to ensure that Smod does not generate a
-// warning. However, as it's defined with a macro, there doesn't seem
-// to be a way to disable the warning for just that variable.
 #![allow(non_upper_case_globals)]
 
 #[macro_use]
@@ -47,7 +44,6 @@ fn Fmod(x: LispObject, y: LispObject) -> LispObject {
     make_number(i1)
 }
 
-#[allow(non_upper_case_globals)]
 lazy_static! {
     // TODO: this is blindly hoping we have the correct alignment.
     // We should ensure we have GCALIGNMENT (8 bytes).
