@@ -6407,6 +6407,23 @@ acl_set_file (const char *fname, acl_type_t type, acl_t acl)
   return retval;
 }
 
+/* Return true if errno value ERRNUM indicates that ACLs are well
+   supported on this system.  ERRNUM should be an errno value obtained
+   after an ACL-related system call fails.  */
+bool
+acl_errno_valid (int errnum)
+{
+  switch (errnum)
+    {
+    case EBUSY:
+    case EINVAL:
+    case ENOTSUP:
+      return false;
+    default:
+      return true;
+    }
+}
+
 
 /* MS-Windows version of careadlinkat (cf. ../lib/careadlinkat.c).  We
    have a fixed max size for file names, so we don't need the kind of

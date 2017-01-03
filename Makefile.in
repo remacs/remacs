@@ -98,6 +98,9 @@ configuration=@configuration@
 ### The nt/ subdirectory gets built only for MinGW
 NTDIR=@NTDIR@
 
+### $(srcdir)/nt/gnulib.mk for MinGW, else $(srcdir)/lib/gnulib.mk
+gnulib_mk=@GNULIB_MK@
+
 # 'make' verbosity.
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 
@@ -451,9 +454,12 @@ $(srcdir)/aclocal.m4: $(ACLOCAL_INPUTS)
 	cd $(srcdir) && ACLOCAL_PATH='$(ACLOCAL_PATH)' $(ACLOCAL) -I m4
 
 AUTOMAKE_INPUTS = $(srcdir)/aclocal.m4 $(srcdir)/lib/Makefile.am \
-  $(srcdir)/lib/gnulib.mk
+  $(gnulib_mk)
 $(srcdir)/lib/Makefile.in: $(AUTOMAKE_INPUTS)
 	cd $(srcdir) && $(AUTOMAKE) --gnu -a -c lib/Makefile
+
+$(srcdir)/nt/gnulib.mk: $(srcdir)/lib/Makefile.in
+	$(MAKE) -C $(srcdir)/nt gnulib.mk
 
 # Regenerate files that this makefile would have made, if this makefile
 # had been built by Automake.  The name 'am--refresh' is for

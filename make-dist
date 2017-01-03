@@ -482,7 +482,7 @@ echo "Making links to 'nt'"
 (cd nt
  ln emacs-x86.manifest emacs-x64.manifest ../${tempdir}/nt
  ln [a-z]*.bat [a-z]*.[ch] ../${tempdir}/nt
- ln *.in gnulib.mk ../${tempdir}/nt
+ ln *.in gnulib.mk gnulib-modules-to-delete.cfg ../${tempdir}/nt
  ln mingw-cfg.site epaths.nt INSTALL.W64 ../${tempdir}/nt
  ln ChangeLog.*[0-9] INSTALL README README.W32 ../${tempdir}/nt)
 

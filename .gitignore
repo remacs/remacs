@@ -288,5 +288,6 @@ lib/SYS/
 /site-lisp/
 nt/emacs.rc
 nt/emacsclient.rc
+nt/gnulib.mk
 src/gdb.ini
 /var/
