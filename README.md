@@ -246,6 +246,7 @@ Easy tasks:
   Rust source changes.
 * Fix the makefile to output a binary called `remacs`
 * Update the Remacs welcome screen to say Remacs
+* Add Rust-level unit tests to elisp functions defined in lib.rs.
 
 Medium tasks:
 
