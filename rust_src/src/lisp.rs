@@ -180,8 +180,9 @@ pub struct LispSubr {
 }
 
 // In order to use `lazy_static!` with LispSubr, it must be Sync. Raw
-// pointers are not Sync, but LispSubr values are never mutated, so it
-// isn't a problem to define Sync.
+// pointers are not Sync, but it isn't a problem to define Sync if we
+// never mutate LispSubr values. If we do, we will need to create
+// these objects at runtime, perhaps using forget().
 //
 // Based on http://stackoverflow.com/a/28116557/509706
 unsafe impl Sync for LispSubr {}
