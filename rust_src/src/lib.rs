@@ -1,4 +1,5 @@
 #![allow(non_upper_case_globals)]
+#![allow(non_snake_case)]
 
 #[macro_use]
 extern crate lazy_static;
@@ -16,7 +17,6 @@ use lisp::{LispObject, LispSubr, PvecType, defsubr, make_number, PSEUDOVECTOR_AR
            VectorLikeHeader, Qarith_error};
 use eval::xsignal0;
 
-#[allow(non_snake_case)]
 fn Fmod(x: LispObject, y: LispObject) -> LispObject {
     let x = lisp::check_number_coerce_marker(x);
     let y = lisp::check_number_coerce_marker(y);
