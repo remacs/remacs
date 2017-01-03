@@ -1,4 +1,4 @@
-// TODO: this is just to ensure that Srust_mod does not generate a
+// TODO: this is just to ensure that Smod does not generate a
 // warning. However, as it's defined with a macro, there doesn't seem
 // to be a way to disable the warning for just that variable.
 #![allow(non_upper_case_globals)]
@@ -21,7 +21,8 @@ use eval::xsignal0;
 
 #[no_mangle]
 #[allow(unused_variables)]
-pub unsafe extern "C" fn rust_mod(x: LispObject, y: LispObject) -> LispObject {
+#[allow(non_snake_case)]
+pub unsafe extern "C" fn Fmod(x: LispObject, y: LispObject) -> LispObject {
     let x = lisp::check_number_coerce_marker(x);
     let y = lisp::check_number_coerce_marker(y);
 
@@ -50,15 +51,15 @@ pub unsafe extern "C" fn rust_mod(x: LispObject, y: LispObject) -> LispObject {
 lazy_static! {
     // TODO: this is blindly hoping we have the correct alignment.
     // We should ensure we have GCALIGNMENT (8 bytes).
-    static ref Srust_mod: LispSubr = LispSubr {
+    static ref Smod: LispSubr = LispSubr {
         header: VectorLikeHeader {
             size: ((PvecType::PVEC_SUBR as libc::c_int) <<
                    PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
         },
-        function: (rust_mod as *const libc::c_void),
+        function: (Fmod as *const libc::c_void),
         min_args: 2,
         max_args: 2,
-        symbol_name: ("rust-mod\0".as_ptr()) as *const c_char,
+        symbol_name: ("mod\0".as_ptr()) as *const c_char,
         intspec: ptr::null(),
         // TODO: There's some magic somewhere in core Emacs that means
         // `(fn X Y)` is added to the docstring automatically. We
@@ -74,5 +75,5 @@ Both X and Y must be numbers or markers.
 #[no_mangle]
 #[allow(non_snake_case)]
 pub unsafe extern "C" fn rust_init_syms() {
-    defsubr(&*Srust_mod);
+    defsubr(&*Smod);
 }
