@@ -5,6 +5,7 @@ use lisp;
 
 use std::os::raw::c_char;
 use std::ptr;
+use libc::ptrdiff_t;
 
 use lisp::{LispSubr, MANY, PSEUDOVECTOR_AREA_BITS, PvecType, VectorLikeHeader, LispObject,
            Qarith_error, XINT, make_number};
@@ -43,7 +44,7 @@ lazy_static! {
     pub static ref Smod: LispSubr = LispSubr {
         header: VectorLikeHeader {
             size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
+                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
         },
         function: (Fmod as *const libc::c_void),
         min_args: 2,
@@ -76,11 +77,11 @@ enum ArithOp {
 }
 
 extern "C" {
-    fn arith_driver(code: ArithOp, nargs: libc::ptrdiff_t, args: LispObject) -> LispObject;
+    fn arith_driver(code: ArithOp, nargs: ptrdiff_t, args: LispObject) -> LispObject;
 }
 
 #[no_mangle]
-pub extern "C" fn Fplus(nargs: libc::ptrdiff_t, args: LispObject) -> LispObject {
+pub extern "C" fn Fplus(nargs: ptrdiff_t, args: LispObject) -> LispObject {
     unsafe {
         return arith_driver(ArithOp::Add, nargs, args)
     }
@@ -91,7 +92,7 @@ lazy_static! {
     pub static ref Splus: LispSubr = LispSubr {
         header: VectorLikeHeader {
             size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
+                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
         },
         function: (Fplus as *const libc::c_void),
         min_args: 0,
