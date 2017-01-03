@@ -17,8 +17,23 @@ use lisp::{LispObject, LispSubr, PvecType, make_number, PSEUDOVECTOR_AREA_BITS, 
            VectorLikeHeader, Qarith_error, Qt, Qnil};
 use eval::xsignal0;
 
+#[allow(dead_code)]
+#[repr(C)]
+enum ArithOp {
+    Add,
+    Sub,
+    Mult,
+    Div,
+    Logand,
+    Logior,
+    Logxor,
+    Max,
+    Min,
+}
+
 extern "C" {
     fn defsubr(sname: *const LispSubr);
+    fn arith_driver(code: ArithOp, nargs: libc::ptrdiff_t, args: LispObject) -> LispObject;
 }
 
 fn Fsymbolp(object: LispObject) -> LispObject {
@@ -99,10 +114,41 @@ Both X and Y must be numbers or markers.
     };
 }
 
+/// Used to denote functions that have no limit on the maximum number
+/// of arguments.
+const MANY: i16 = -2;
+
+#[no_mangle]
+pub extern "C" fn Fplus(nargs: libc::ptrdiff_t, args: LispObject) -> LispObject {
+    unsafe {
+        return arith_driver(ArithOp::Add, nargs, args)
+    }
+}
+
+// TODO: define a macro that saves us repeating lazy_static!.
+lazy_static! {
+    static ref Splus: LispSubr = LispSubr {
+        header: VectorLikeHeader {
+            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
+                   PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
+        },
+        function: (Fplus as *const libc::c_void),
+        min_args: 0,
+        max_args: MANY,
+        symbol_name: ("+\0".as_ptr()) as *const c_char,
+        intspec: ptr::null(),
+        doc: ("Return sum of any number of arguments, which are numbers or markers.
+
+(fn &rest NUMBERS-OR-MARKERS)\0".as_ptr()) as *const c_char,
+    };
+}
+
+
 #[no_mangle]
 pub extern "C" fn rust_init_syms() {
     unsafe {
         defsubr(&*Smod);
         defsubr(&*Ssymbolp);
+        defsubr(&*Splus);
     }
 }

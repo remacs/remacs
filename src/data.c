@@ -2621,7 +2621,7 @@ enum arithop
 
 static Lisp_Object float_arith_driver (double, ptrdiff_t, enum arithop,
                                        ptrdiff_t, Lisp_Object *);
-static Lisp_Object
+Lisp_Object
 arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 {
   Lisp_Object val;
@@ -2780,14 +2780,6 @@ float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
   return make_float (accum);
 }
 
-
-DEFUN ("+", Fplus, Splus, 0, MANY, 0,
-       doc: /* Return sum of any number of arguments, which are numbers or markers.
-usage: (+ &rest NUMBERS-OR-MARKERS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return arith_driver (Aadd, nargs, args);
-}
 
 DEFUN ("-", Fminus, Sminus, 0, MANY, 0,
        doc: /* Negate number or subtract numbers or markers and return the result.
@@ -3653,7 +3645,6 @@ syms_of_data (void)
   defsubr (&Sleq);
   defsubr (&Sgeq);
   defsubr (&Sneq);
-  defsubr (&Splus);
   defsubr (&Sminus);
   defsubr (&Stimes);
   defsubr (&Squo);
