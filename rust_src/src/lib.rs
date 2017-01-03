@@ -73,7 +73,8 @@ Both X and Y must be numbers or markers.
 }
 
 #[no_mangle]
-#[allow(non_snake_case)]
-pub unsafe extern "C" fn rust_init_syms() {
-    defsubr(&*Smod);
+pub extern "C" fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Smod);
+    }
 }
