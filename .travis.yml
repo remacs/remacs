@@ -18,5 +18,7 @@ script:
   - sed -i "/LIBS_SYSTEM=/c\\LIBS_SYSTEM=-L../rust_src/target/debug -lremacs -ldl" src/Makefile
   - make -j 3
 
+  - make check || echo 'make check failed'
+
 notifications:
   email: false
