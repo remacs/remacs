@@ -22,7 +22,7 @@ use eval::xsignal0;
 #[no_mangle]
 #[allow(unused_variables)]
 #[allow(non_snake_case)]
-pub unsafe extern "C" fn Fmod(x: LispObject, y: LispObject) -> LispObject {
+pub extern "C" fn Fmod(x: LispObject, y: LispObject) -> LispObject {
     let x = lisp::check_number_coerce_marker(x);
     let y = lisp::check_number_coerce_marker(y);
 
@@ -34,7 +34,9 @@ pub unsafe extern "C" fn Fmod(x: LispObject, y: LispObject) -> LispObject {
     let i2 = XINT(y);
 
     if i2 == 0 {
-        xsignal0(Qarith_error);
+        unsafe {
+            xsignal0(Qarith_error);
+        }
     }
 
     i1 %= i2;
