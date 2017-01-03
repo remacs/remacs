@@ -13,9 +13,13 @@ mod floatfns;
 
 use std::os::raw::c_char;
 use std::ptr;
-use lisp::{LispObject, LispSubr, PvecType, defsubr, make_number, PSEUDOVECTOR_AREA_BITS, XINT,
+use lisp::{LispObject, LispSubr, PvecType, make_number, PSEUDOVECTOR_AREA_BITS, XINT,
            VectorLikeHeader, Qarith_error};
 use eval::xsignal0;
+
+extern "C" {
+    fn defsubr(sname: *const LispSubr);
+}
 
 fn Fmod(x: LispObject, y: LispObject) -> LispObject {
     let x = lisp::check_number_coerce_marker(x);
