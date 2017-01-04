@@ -138,6 +138,12 @@ fn arith_driver(code: ArithOp, nargs: ptrdiff_t, args: *mut LispObject) ->  Lisp
                     accum = accum.wrapping_sub(next);
                 }
             }
+            ArithOp::Mult => {
+                if accum.checked_mul(next).is_none() {
+                    overflow = true;
+                }
+                accum = accum.wrapping_mul(next);
+            }
             _ => {
                 unimplemented!();
             }
@@ -192,5 +198,27 @@ With one arg, negates it.  With more than one arg,
 subtracts all but the first from the first.
 
 (fn &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)\0".as_ptr()) as *const c_char,
+    };
+}
+
+#[no_mangle]
+pub extern "C" fn Ftimes(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
+    arith_driver(ArithOp::Mult, nargs, args)
+}
+
+lazy_static! {
+    pub static ref Stimes: LispSubr = LispSubr {
+        header: VectorLikeHeader {
+            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
+                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
+        },
+        function: (Ftimes as *const libc::c_void),
+        min_args: 0,
+        max_args: MANY,
+        symbol_name: ("*\0".as_ptr()) as *const c_char,
+        intspec: ptr::null(),
+        doc: ("Return product of any number of arguments, which are numbers or markers.
+
+(fn &optional NUMBER-OR-MARKERS)\0".as_ptr()) as *const c_char,
     };
 }

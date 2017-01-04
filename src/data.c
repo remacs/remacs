@@ -2782,14 +2782,7 @@ float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
 
 Lisp_Object Fminus(ptrdiff_t, Lisp_Object*);
 Lisp_Object Fplus(ptrdiff_t, Lisp_Object*);
-
-DEFUN ("*", Ftimes, Stimes, 0, MANY, 0,
-       doc: /* Return product of any number of arguments, which are numbers or markers.
-usage: (* &rest NUMBERS-OR-MARKERS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return arith_driver (Amult, nargs, args);
-}
+Lisp_Object Ftimes(ptrdiff_t, Lisp_Object*);
 
 DEFUN ("/", Fquo, Squo, 1, MANY, 0,
        doc: /* Divide number by divisors and return the result.
@@ -3637,7 +3630,6 @@ syms_of_data (void)
   defsubr (&Sleq);
   defsubr (&Sgeq);
   defsubr (&Sneq);
-  defsubr (&Stimes);
   defsubr (&Squo);
   defsubr (&Srem);
   defsubr (&Smax);
