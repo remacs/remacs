@@ -392,6 +392,7 @@ char const * nstrace_fullscreen_type_name (int);
 - (void)sendEvent: (NSEvent *)theEvent;
 - (void)showPreferencesWindow: (id)sender;
 - (BOOL) openFile: (NSString *)fileName;
+- (void)fd_handler: (id)unused;
 - (void)timeout_handler: (NSTimer *)timedEntry;
 - (BOOL)fulfillService: (NSString *)name withArg: (NSString *)arg;
 #ifdef NS_IMPL_GNUSTEP

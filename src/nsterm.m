@@ -279,10 +279,18 @@ static BOOL ns_menu_bar_is_hidden = NO;
 /*static int debug_lock = 0; */
 
 /* event loop */
+static BOOL send_appdefined = YES;
 #define NO_APPDEFINED_DATA (-8)
 static int last_appdefined_event_data = NO_APPDEFINED_DATA;
 static NSTimer *timed_entry = 0;
 static NSTimer *scroll_repeat_entry = nil;
+static fd_set select_readfds, select_writefds;
+enum { SELECT_HAVE_READ = 1, SELECT_HAVE_WRITE = 2, SELECT_HAVE_TMO = 4 };
+static int select_nfds = 0, select_valid = 0;
+static struct timespec select_timeout = { 0, 0 };
+static int selfds[2] = { -1, -1 };
+static pthread_mutex_t select_mutex;
+static int apploopnr = 0;
 static NSAutoreleasePool *outerpool;
 static struct input_event *emacs_event = NULL;
 static struct input_event *q_event_ptr = NULL;
@@ -449,6 +457,7 @@ hold_event (struct input_event *event)
   hold_event_q.q[hold_event_q.nr++] = *event;
   /* Make sure ns_read_socket is called, i.e. we have input.  */
   raise (SIGIO);
+  send_appdefined = YES;
 }
 
 static Lisp_Object
@@ -3863,16 +3872,30 @@ ns_send_appdefined (int value)
       return;
     }
 
-  /* Only post this event if we haven't already posted one.  This will
-     end the [NXApp run] main loop after having processed all events
-     queued at this moment.  */
-  NSEvent *appev = [NSApp nextEventMatchingMask:NSEventMaskApplicationDefined
-                                      untilDate:[NSDate distantPast]
-                                         inMode:NSDefaultRunLoopMode
-                                        dequeue:NO];
-  if (! appev)
+  /* Only post this event if we haven't already posted one.  This will end
+       the [NXApp run] main loop after having processed all events queued at
+       this moment.  */
+
+#ifdef NS_IMPL_COCOA
+  if (! send_appdefined)
+    {
+      /* OS X 10.10.1 swallows the AppDefined event we are sending ourselves
+         in certain situations (rapid incoming events).
+         So check if we have one, if not add one.  */
+      NSEvent *appev = [NSApp nextEventMatchingMask:NSEventMaskApplicationDefined
+                                          untilDate:[NSDate distantPast]
+                                             inMode:NSDefaultRunLoopMode
+                                            dequeue:NO];
+      if (! appev) send_appdefined = YES;
+    }
+#endif
+
+  if (send_appdefined)
     {
       NSEvent *nxev;
+
+      /* We only need one NX_APPDEFINED event to stop NXApp from running.  */
+      send_appdefined = NO;
 
       /* Don't need wakeup timer any more */
       if (timed_entry)
@@ -3988,6 +4011,14 @@ ns_check_pending_open_menu ()
 }
 #endif /* NS_IMPL_COCOA */
 
+static void
+unwind_apploopnr (Lisp_Object not_used)
+{
+  --apploopnr;
+  n_emacs_events_pending = 0;
+  ns_finish_events ();
+  q_event_ptr = NULL;
+}
 
 static int
 ns_read_socket (struct terminal *terminal, struct input_event *hold_quit)
@@ -3998,9 +4029,12 @@ ns_read_socket (struct terminal *terminal, struct input_event *hold_quit)
    -------------------------------------------------------------------------- */
 {
   struct input_event ev;
-  int nevents = 0;
+  int nevents;
 
   NSTRACE_WHEN (NSTRACE_GROUP_EVENTS, "ns_read_socket");
+
+  if (apploopnr > 0)
+    return -1; /* Already within event loop. */
 
 #ifdef HAVE_NATIVE_FS
   check_native_fs ();
@@ -4018,49 +4052,54 @@ ns_read_socket (struct terminal *terminal, struct input_event *hold_quit)
       return i;
     }
 
-  if ([NSThread isMainThread])
+  block_input ();
+  n_emacs_events_pending = 0;
+  ns_init_events (&ev);
+  q_event_ptr = hold_quit;
+
+  /* we manage autorelease pools by allocate/reallocate each time around
+     the loop; strict nesting is occasionally violated but seems not to
+     matter.. earlier methods using full nesting caused major memory leaks */
+  [outerpool release];
+  outerpool = [[NSAutoreleasePool alloc] init];
+
+  /* If have pending open-file requests, attend to the next one of those. */
+  if (ns_pending_files && [ns_pending_files count] != 0
+      && [(EmacsApp *)NSApp openFile: [ns_pending_files objectAtIndex: 0]])
     {
-      block_input ();
-      n_emacs_events_pending = 0;
-      ns_init_events (&ev);
-      q_event_ptr = hold_quit;
-
-      /* we manage autorelease pools by allocate/reallocate each time around
-         the loop; strict nesting is occasionally violated but seems not to
-         matter.. earlier methods using full nesting caused major memory leaks */
-      [outerpool release];
-      outerpool = [[NSAutoreleasePool alloc] init];
-
-      /* If have pending open-file requests, attend to the next one of those. */
-      if (ns_pending_files && [ns_pending_files count] != 0
-          && [(EmacsApp *)NSApp openFile: [ns_pending_files objectAtIndex: 0]])
-        {
-          [ns_pending_files removeObjectAtIndex: 0];
-        }
-      /* Deal with pending service requests. */
-      else if (ns_pending_service_names && [ns_pending_service_names count] != 0
-               && [(EmacsApp *)
-                    NSApp fulfillService: [ns_pending_service_names objectAtIndex: 0]
-                                 withArg: [ns_pending_service_args objectAtIndex: 0]])
-        {
-          [ns_pending_service_names removeObjectAtIndex: 0];
-          [ns_pending_service_args removeObjectAtIndex: 0];
-        }
-      else
-        {
-          /* Run and wait for events.  We must always send one NX_APPDEFINED event
-             to ourself, otherwise [NXApp run] will never exit.  */
-          ns_send_appdefined (-1);
-
-          [NSApp run];
-        }
-
-      nevents = n_emacs_events_pending;
-      n_emacs_events_pending = 0;
-      ns_finish_events ();
-      q_event_ptr = NULL;
-      unblock_input ();
+      [ns_pending_files removeObjectAtIndex: 0];
     }
+  /* Deal with pending service requests. */
+  else if (ns_pending_service_names && [ns_pending_service_names count] != 0
+    && [(EmacsApp *)
+         NSApp fulfillService: [ns_pending_service_names objectAtIndex: 0]
+                      withArg: [ns_pending_service_args objectAtIndex: 0]])
+    {
+      [ns_pending_service_names removeObjectAtIndex: 0];
+      [ns_pending_service_args removeObjectAtIndex: 0];
+    }
+  else
+    {
+      ptrdiff_t specpdl_count = SPECPDL_INDEX ();
+      /* Run and wait for events.  We must always send one NX_APPDEFINED event
+         to ourself, otherwise [NXApp run] will never exit.  */
+      send_appdefined = YES;
+      ns_send_appdefined (-1);
+
+      if (++apploopnr != 1)
+        {
+          emacs_abort ();
+        }
+      record_unwind_protect (unwind_apploopnr, Qt);
+      [NSApp run];
+      unbind_to (specpdl_count, Qnil);  /* calls unwind_apploopnr */
+    }
+
+  nevents = n_emacs_events_pending;
+  n_emacs_events_pending = 0;
+  ns_finish_events ();
+  q_event_ptr = NULL;
+  unblock_input ();
 
   return nevents;
 }
@@ -4075,10 +4114,14 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
    -------------------------------------------------------------------------- */
 {
   int result;
-  NSDate *timeout_date = nil;
-  NSEvent *ns_event;
+  int t, k, nr = 0;
+  struct input_event event;
+  char c;
 
   NSTRACE_WHEN (NSTRACE_GROUP_EVENTS, "ns_select");
+
+  if (apploopnr > 0)
+    return -1; /* Already within event loop. */
 
 #ifdef HAVE_NATIVE_FS
   check_native_fs ();
@@ -4092,34 +4135,121 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
       return -1;
     }
 
-  if (NSApp == nil
-      || ![NSThread isMainThread]
-      || (timeout && timeout->tv_sec == 0 && timeout->tv_nsec == 0))
-    return pselect(nfds, readfds, writefds,
-                   exceptfds, timeout, sigmask);
+  for (k = 0; k < nfds+1; k++)
+    {
+      if (readfds && FD_ISSET(k, readfds)) ++nr;
+      if (writefds && FD_ISSET(k, writefds)) ++nr;
+    }
 
-  result = pselect(nfds, readfds, writefds, exceptfds,
-                   &(struct timespec){.tv_sec = 0, .tv_nsec = 100},
-                   sigmask);
+  if (NSApp == nil
+      || (timeout && timeout->tv_sec == 0 && timeout->tv_nsec == 0))
+    return pselect (nfds, readfds, writefds, exceptfds, timeout, sigmask);
 
   [outerpool release];
   outerpool = [[NSAutoreleasePool alloc] init];
 
-  if (timeout)
+
+  send_appdefined = YES;
+  if (nr > 0)
     {
+      pthread_mutex_lock (&select_mutex);
+      select_nfds = nfds;
+      select_valid = 0;
+      if (readfds)
+        {
+          select_readfds = *readfds;
+          select_valid += SELECT_HAVE_READ;
+        }
+      if (writefds)
+        {
+          select_writefds = *writefds;
+          select_valid += SELECT_HAVE_WRITE;
+        }
+
+      if (timeout)
+        {
+          select_timeout = *timeout;
+          select_valid += SELECT_HAVE_TMO;
+        }
+
+      pthread_mutex_unlock (&select_mutex);
+
+      /* Inform fd_handler that select should be called */
+      c = 'g';
+      emacs_write_sig (selfds[1], &c, 1);
+    }
+  else if (nr == 0 && timeout)
+    {
+      /* No file descriptor, just a timeout, no need to wake fd_handler  */
       double time = timespectod (*timeout);
-      timeout_date = [NSDate dateWithTimeIntervalSinceNow:time];
+      timed_entry = [[NSTimer scheduledTimerWithTimeInterval: time
+                                                      target: NSApp
+                                                    selector:
+                                  @selector (timeout_handler:)
+                                                    userInfo: 0
+                                                     repeats: NO]
+                      retain];
+    }
+  else /* No timeout and no file descriptors, can this happen?  */
+    {
+      /* Send appdefined so we exit from the loop */
+      ns_send_appdefined (-1);
     }
 
-  /* Listen for a new NSEvent. */
-  ns_event = [NSApp nextEventMatchingMask:NSEventMaskAny
-                                untilDate:timeout_date
-                                   inMode:NSDefaultRunLoopMode
-                                  dequeue:NO];
-
-  if (ns_event != nil)
+  block_input ();
+  ns_init_events (&event);
+  if (++apploopnr != 1)
     {
-      raise (SIGIO);
+      emacs_abort ();
+    }
+
+  {
+    ptrdiff_t specpdl_count = SPECPDL_INDEX ();
+    record_unwind_protect (unwind_apploopnr, Qt);
+    [NSApp run];
+    unbind_to (specpdl_count, Qnil);  /* calls unwind_apploopnr */
+  }
+
+  ns_finish_events ();
+  if (nr > 0 && readfds)
+    {
+      c = 's';
+      emacs_write_sig (selfds[1], &c, 1);
+    }
+  unblock_input ();
+
+  t = last_appdefined_event_data;
+
+  if (t != NO_APPDEFINED_DATA)
+    {
+      last_appdefined_event_data = NO_APPDEFINED_DATA;
+
+      if (t == -2)
+        {
+          /* The NX_APPDEFINED event we received was a timeout. */
+          result = 0;
+        }
+      else if (t == -1)
+        {
+          /* The NX_APPDEFINED event we received was the result of
+             at least one real input event arriving.  */
+          errno = EINTR;
+          result = -1;
+        }
+      else
+        {
+          /* Received back from select () in fd_handler; copy the results */
+          pthread_mutex_lock (&select_mutex);
+          if (readfds) *readfds = select_readfds;
+          if (writefds) *writefds = select_writefds;
+          pthread_mutex_unlock (&select_mutex);
+          result = t;
+        }
+    }
+  else
+    {
+      errno = EINTR;
+      result = -1;
     }
 
   return result;
@@ -4635,6 +4765,21 @@ ns_term_init (Lisp_Object display_name)
   baud_rate = 38400;
   Fset_input_interrupt_mode (Qnil);
 
+  if (selfds[0] == -1)
+    {
+      if (emacs_pipe (selfds) != 0)
+        {
+          fprintf (stderr, "Failed to create pipe: %s\n",
+                   emacs_strerror (errno));
+          emacs_abort ();
+        }
+
+      fcntl (selfds[0], F_SETFL, O_NONBLOCK|fcntl (selfds[0], F_GETFL));
+      FD_ZERO (&select_readfds);
+      FD_ZERO (&select_writefds);
+      pthread_mutex_init (&select_mutex, NULL);
+    }
+
   ns_pending_files = [[NSMutableArray alloc] init];
   ns_pending_service_names = [[NSMutableArray alloc] init];
   ns_pending_service_args = [[NSMutableArray alloc] init];
@@ -4646,6 +4791,11 @@ ns_term_init (Lisp_Object display_name)
   if (NSApp == nil)
     return NULL;
   [NSApp setDelegate: NSApp];
+
+  /* Start the select thread.  */
+  [NSThread detachNewThreadSelector:@selector (fd_handler:)
+                           toTarget:NSApp
+                         withObject:nil];
 
   /* debugging: log all notifications */
   /*   [[NSNotificationCenter defaultCenter] addObserver: NSApp
@@ -5028,6 +5178,10 @@ ns_term_shutdown (int sig)
           last_appdefined_event_data = [theEvent data1];
           [self stop: self];
         }
+      else
+        {
+          send_appdefined = YES;
+        }
     }
 
 
@@ -5328,6 +5482,95 @@ not_in_argv (NSString *arg)
 - (void)sendFromMainThread:(id)unused
 {
   ns_send_appdefined (nextappdefined);
+}
+
+- (void)fd_handler:(id)unused
+/* --------------------------------------------------------------------------
+     Check data waiting on file descriptors and terminate if so
+   -------------------------------------------------------------------------- */
+{
+  int result;
+  int waiting = 1, nfds;
+  char c;
+
+  fd_set readfds, writefds, *wfds;
+  struct timespec timeout, *tmo;
+  NSAutoreleasePool *pool = nil;
+
+  /* NSTRACE ("fd_handler"); */
+
+  for (;;)
+    {
+      [pool release];
+      pool = [[NSAutoreleasePool alloc] init];
+
+      if (waiting)
+        {
+          fd_set fds;
+          FD_ZERO (&fds);
+          FD_SET (selfds[0], &fds);
+          result = select (selfds[0]+1, &fds, NULL, NULL, NULL);
+          if (result > 0 && read (selfds[0], &c, 1) == 1 && c == 'g')
+	    waiting = 0;
+        }
+      else
+        {
+          pthread_mutex_lock (&select_mutex);
+          nfds = select_nfds;
+
+          if (select_valid & SELECT_HAVE_READ)
+            readfds = select_readfds;
+          else
+            FD_ZERO (&readfds);
+
+          if (select_valid & SELECT_HAVE_WRITE)
+            {
+              writefds = select_writefds;
+              wfds = &writefds;
+            }
+          else
+            wfds = NULL;
+          if (select_valid & SELECT_HAVE_TMO)
+            {
+              timeout = select_timeout;
+              tmo = &timeout;
+            }
+          else
+            tmo = NULL;
+
+          pthread_mutex_unlock (&select_mutex);
+
+          FD_SET (selfds[0], &readfds);
+          if (selfds[0] >= nfds) nfds = selfds[0]+1;
+
+          result = pselect (nfds, &readfds, wfds, NULL, tmo, NULL);
+
+          if (result == 0)
+            ns_send_appdefined (-2);
+          else if (result > 0)
+            {
+              if (FD_ISSET (selfds[0], &readfds))
+                {
+                  if (read (selfds[0], &c, 1) == 1 && c == 's')
+		    waiting = 1;
+                }
+              else
+                {
+                  pthread_mutex_lock (&select_mutex);
+                  if (select_valid & SELECT_HAVE_READ)
+                    select_readfds = readfds;
+                  if (select_valid & SELECT_HAVE_WRITE)
+                    select_writefds = writefds;
+                  if (select_valid & SELECT_HAVE_TMO)
+                    select_timeout = timeout;
+                  pthread_mutex_unlock (&select_mutex);
+
+                  ns_send_appdefined (result);
+                }
+            }
+          waiting = 1;
+        }
+    }
 }
 
 
@@ -6118,7 +6361,7 @@ not_in_argv (NSString *arg)
                       help_echo_object, help_echo_pos);
     }
 
-  if (emacsframe->mouse_moved)
+  if (emacsframe->mouse_moved && send_appdefined)
     ns_send_appdefined (-1);
 }
 
@@ -6815,7 +7058,8 @@ not_in_argv (NSString *arg)
   SET_FRAME_VISIBLE (emacsframe, 1);
   SET_FRAME_GARBAGED (emacsframe);
 
-  ns_send_appdefined (-1);
+  if (send_appdefined)
+    ns_send_appdefined (-1);
 }
 
 
