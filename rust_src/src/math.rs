@@ -123,6 +123,21 @@ fn arith_driver(code: ArithOp, nargs: ptrdiff_t, args: *mut LispObject) ->  Lisp
                 }
                 accum = accum.wrapping_add(next);
             }
+            ArithOp::Sub => {
+                if argnum == 0 {
+                    if nargs == 1 {
+                        // Calling - with one argument negates it.
+                        accum = -next;
+                    } else {
+                        accum = next;
+                    }
+                } else {
+                    if accum.checked_sub(next).is_none() {
+                        overflow = true;
+                    }
+                    accum = accum.wrapping_sub(next);
+                }
+            }
             _ => {
                 unimplemented!();
             }
@@ -152,5 +167,30 @@ lazy_static! {
         doc: ("Return sum of any number of arguments, which are numbers or markers.
 
 (fn &rest NUMBERS-OR-MARKERS)\0".as_ptr()) as *const c_char,
+    };
+}
+
+#[no_mangle]
+pub extern "C" fn Fminus(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
+    arith_driver(ArithOp::Sub, nargs, args)
+}
+
+// TODO: define a macro that saves us repeating lazy_static!.
+lazy_static! {
+    pub static ref Sminus: LispSubr = LispSubr {
+        header: VectorLikeHeader {
+            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
+                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
+        },
+        function: (Fminus as *const libc::c_void),
+        min_args: 0,
+        max_args: MANY,
+        symbol_name: ("-\0".as_ptr()) as *const c_char,
+        intspec: ptr::null(),
+        doc: ("Negate number or subtract numbers or markers and return the result.
+With one arg, negates it.  With more than one arg,
+subtracts all but the first from the first.
+
+(fn &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)\0".as_ptr()) as *const c_char,
     };
 }

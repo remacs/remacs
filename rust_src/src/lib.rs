@@ -17,8 +17,9 @@ use std::ptr;
 use lisp::{LispObject, LispSubr, PvecType, PSEUDOVECTOR_AREA_BITS,
            VectorLikeHeader, Qt, Qnil};
 
-// This needs to be exported as bytecode.c depends upon it.
+// These need to be exported as bytecode.c depends upon them.
 pub use math::Fplus;
+pub use math::Fminus;
 
 extern "C" {
     fn defsubr(sname: *const LispSubr);
@@ -56,6 +57,7 @@ pub extern "C" fn rust_init_syms() {
     unsafe {
         defsubr(&*math::Smod);
         defsubr(&*math::Splus);
+        defsubr(&*math::Sminus);
         defsubr(&*Ssymbolp);
     }
 }
