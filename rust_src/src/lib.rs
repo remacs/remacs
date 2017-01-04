@@ -20,6 +20,7 @@ use lisp::{LispObject, LispSubr, PvecType, PSEUDOVECTOR_AREA_BITS,
 // These need to be exported as bytecode.c depends upon them.
 pub use math::Fplus;
 pub use math::Fminus;
+pub use math::Ftimes;
 
 extern "C" {
     fn defsubr(sname: *const LispSubr);
@@ -58,6 +59,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*math::Smod);
         defsubr(&*math::Splus);
         defsubr(&*math::Sminus);
+        defsubr(&*math::Stimes);
         defsubr(&*Ssymbolp);
     }
 }
