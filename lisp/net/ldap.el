@@ -470,18 +470,17 @@ Additional search parameters can be specified through
   (or host
       (setq host ldap-default-host)
       (error "No LDAP host specified"))
-  (let ((host-plist (cdr (assoc host ldap-host-parameters-alist)))
-	result)
-    (setq result (ldap-search-internal `(host ,host
+  (let* ((host-plist (cdr (assoc host ldap-host-parameters-alist)))
+         (result (ldap-search-internal `(host ,host
 					 filter ,filter
                                          attributes ,attributes
                                          attrsonly ,attrsonly
                                          withdn ,withdn
-                                         ,@host-plist)))
+                                         ,@host-plist))))
     (if ldap-ignore-attribute-codings
 	result
       (mapcar (lambda (record)
-		(mapcar 'ldap-decode-attribute record))
+		(mapcar #'ldap-decode-attribute record))
 	      result))))
 
 (defun ldap-password-read (host)
