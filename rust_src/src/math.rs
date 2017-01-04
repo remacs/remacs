@@ -5,10 +5,11 @@ use lisp;
 
 use std::os::raw::c_char;
 use std::ptr;
+use std::slice;
 use libc::ptrdiff_t;
 
 use lisp::{LispSubr, MANY, PSEUDOVECTOR_AREA_BITS, PvecType, VectorLikeHeader, LispObject,
-           Qarith_error, XINT, make_number};
+           Qarith_error, XINT, make_number, EmacsInt};
 use eval::xsignal0;
 
 fn Fmod(x: LispObject, y: LispObject) -> LispObject {
@@ -77,14 +78,63 @@ enum ArithOp {
 }
 
 extern "C" {
-    fn arith_driver(code: ArithOp, nargs: ptrdiff_t, args: LispObject) -> LispObject;
+    fn float_arith_driver(accum: f64, argnum: ptrdiff_t, code: ArithOp, nargs: ptrdiff_t, args: *const LispObject) -> LispObject;
+}
+
+/// Given an array of LispObject, reduce over them according to the
+/// arithmetic operation specified.
+///
+/// Modifies the array in place.
+fn arith_driver(code: ArithOp, nargs: ptrdiff_t, args: *mut LispObject) ->  LispObject {
+    let mut accum: EmacsInt = match code {
+        ArithOp::Add | ArithOp::Sub | ArithOp::Logior | ArithOp::Logxor => 0,
+        ArithOp::Logand => -1,
+        _ => 1,
+    };
+
+    // TODO: use better variable names rather than just copying the C.
+    let mut overflow = false;
+    let mut ok_accum = accum;
+    let mut ok_args: ptrdiff_t = 0;
+
+    let mut args_slice = unsafe { slice::from_raw_parts_mut(args, nargs as usize) };
+
+    for (argnum, val) in args_slice.iter_mut().enumerate() {
+        if !overflow {
+            ok_args = argnum as ptrdiff_t;
+            ok_accum = accum;
+        }
+
+        let coerced_val = lisp::check_number_coerce_marker(*val);
+
+        if lisp::FLOATP(coerced_val) {
+            unsafe {
+                return float_arith_driver(ok_accum as f64, ok_args, code, nargs, args);
+            }
+        }
+
+        *val = coerced_val;
+        let next = lisp::XINT(*val);
+
+        match code {
+            ArithOp::Add => {
+                if accum.checked_add(next).is_none() {
+                    overflow = true;
+                }
+                accum = accum.wrapping_add(next);
+            }
+            _ => {
+                unimplemented!();
+            }
+        }
+    }
+
+    make_number(accum)
 }
 
 #[no_mangle]
-pub extern "C" fn Fplus(nargs: ptrdiff_t, args: LispObject) -> LispObject {
-    unsafe {
-        return arith_driver(ArithOp::Add, nargs, args)
-    }
+pub extern "C" fn Fplus(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
+    arith_driver(ArithOp::Add, nargs, args)
 }
 
 // TODO: define a macro that saves us repeating lazy_static!.
