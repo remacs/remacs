@@ -2780,16 +2780,8 @@ float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
   return make_float (accum);
 }
 
-
-DEFUN ("-", Fminus, Sminus, 0, MANY, 0,
-       doc: /* Negate number or subtract numbers or markers and return the result.
-With one arg, negates it.  With more than one arg,
-subtracts all but the first from the first.
-usage: (- &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return arith_driver (Asub, nargs, args);
-}
+Lisp_Object Fminus(ptrdiff_t, Lisp_Object*);
+Lisp_Object Fplus(ptrdiff_t, Lisp_Object*);
 
 DEFUN ("*", Ftimes, Stimes, 0, MANY, 0,
        doc: /* Return product of any number of arguments, which are numbers or markers.
@@ -3645,7 +3637,6 @@ syms_of_data (void)
   defsubr (&Sleq);
   defsubr (&Sgeq);
   defsubr (&Sneq);
-  defsubr (&Sminus);
   defsubr (&Stimes);
   defsubr (&Squo);
   defsubr (&Srem);
