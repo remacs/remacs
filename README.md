@@ -291,6 +291,10 @@ function. The docstring should mention the original macro name.
 Since the Rust function is not a drop-in replacement, we prefer Rust
 naming conventions for the new function.
 
+For the checked arithmetic macros (`INT_ADD_WRAPV`,
+`INT_MULTIPLY_WRAPV` and so on), you can simply use `.checked_add`,
+`.checked_mul` from the Rust stdlib.
+
 ### Assertions
 
 `eassert` in Emacs C should be `debug_assert!` in Rust.
