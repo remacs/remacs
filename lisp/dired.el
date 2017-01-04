@@ -3919,7 +3919,7 @@ Ask means pop up a menu for the user to select one of copy, move or link."
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads nil "dired-aux" "dired-aux.el" "daa0a32a5bdfcf4de80c31cf7833b26d")
+;;;### (autoloads nil "dired-aux" "dired-aux.el" "e9e4ada4d5bc5d9e319610983ace2260")
 ;;; Generated autoloads from dired-aux.el
 
 (autoload 'dired-diff "dired-aux" "\
@@ -4454,7 +4454,7 @@ instead.
 
 ;;;***
 
-;;;### (autoloads nil "dired-x" "dired-x.el" "d9ad5b70efdb3d840b8248d4043563b5")
+;;;### (autoloads nil "dired-x" "dired-x.el" "167f862d52f8581579680caf3ef662ea")
 ;;; Generated autoloads from dired-x.el
 
 (autoload 'dired-jump "dired-x" "\

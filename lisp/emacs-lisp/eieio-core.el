@@ -1101,7 +1101,7 @@ method invocation orders of the involved classes."
   (list eieio--generic-subclass-generalizer))
 
 
-;;;### (autoloads nil "eieio-compat" "eieio-compat.el" "dba4205b1a0d7133f1311d975b4d0ebe")
+;;;### (autoloads nil "eieio-compat" "eieio-compat.el" "e91175056972ff549f07b83740ad04eb")
 ;;; Generated autoloads from eieio-compat.el
 
 (autoload 'eieio--defalias "eieio-compat" "\
