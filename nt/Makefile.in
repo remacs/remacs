@@ -262,6 +262,6 @@ emacs.res ../src/emacs.res: emacs.rc ${srcdir}/icons/emacs.ico \
 	$(AM_V_RC)${WINDRES} -I ${srcdir} -O coff -o $@ $<
 
 ${srcdir}/gnulib.mk: ${srcdir}/gnulib-modules-to-delete.cfg ${srcdir}/../lib/gnulib.mk
-	$(AM_V_GEN)sed '/^[^#]/s|^.*$$|/^## begin  *gnulib module &/,/^## end  *gnulib module &/c ## gnulib module & removed|' < $< | \
+	$(AM_V_GEN)sed '/^[^#]/s|^.*$$|/^## begin  *gnulib module &/,/^## end  *gnulib module &/d|' < $< | \
 	  sed -f- ${srcdir}/../lib/gnulib.mk > $@-t && \
 	  ${srcdir}/../build-aux/move-if-change $@-t $@

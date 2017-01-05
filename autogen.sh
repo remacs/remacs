@@ -224,10 +224,8 @@ Please report any problems with this script to bug-gnu-emacs@gnu.org .'
   ## Create nt/gnulib.mk if it doesn't exist, as autoreconf will need it.
   if test ! -f nt/gnulib.mk; then
       echo 'Inferring nt/gnulib.mk from lib/gnulib.mk ...'
-      echo '/^[^#]/s|^.*$|/^## begin  *gnulib module &/,/^## end  *gnulib module &/c\\\' > metascript.$$
-      echo '## gnulib module & removed|' >> metascript.$$
-      script=`sed -f metascript.$$ nt/gnulib-modules-to-delete.cfg` || exit
-      rm -f metascript.$$
+      metascript='/^[^#]/s|^.*$|/^## begin  *gnulib module &/,/^## end  *gnulib module &/d|'
+      script=`sed "$metascript" nt/gnulib-modules-to-delete.cfg` || exit
       sed "$script" lib/gnulib.mk > nt/gnulib.mk || exit
   fi
 
