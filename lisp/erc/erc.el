@@ -3030,6 +3030,23 @@ For a list of user commands (/join /part, ...):
 (defalias 'erc-cmd-H 'erc-cmd-HELP)
 (put 'erc-cmd-HELP 'process-not-needed t)
 
+(defun erc-server-join-channel (server channel &optional secret)
+  (let* ((secret (or secret
+		     (plist-get (nth 0 (auth-source-search
+					:max 1
+					:host server
+					:port "irc"
+					:user channel))
+				:secret)))
+	 (password (if (functionp secret)
+		       (funcall secret)
+		     secret)))
+    (erc-log (format "cmd: JOIN: %s" channel))
+    (erc-server-send (concat "JOIN " channel
+			     (if password
+				 (concat " " password)
+			       "")))))
+
 (defun erc-cmd-JOIN (channel &optional key)
   "Join the channel given in CHANNEL, optionally with KEY.
 If CHANNEL is specified as \"-invite\", join the channel to which you
@@ -3049,10 +3066,9 @@ were most recently invited.  See also `invitation'."
         (if (erc-member-ignore-case chnl joined-channels)
             (switch-to-buffer (car (erc-member-ignore-case chnl
                                                            joined-channels)))
-          (erc-log (format "cmd: JOIN: %s" chnl))
-          (erc-server-send (if (and chnl key)
-                               (format "JOIN %s %s" chnl key)
-                             (format "JOIN %s" chnl)))))))
+	  (let ((server (with-current-buffer (process-buffer erc-server-process)
+			  (or erc-session-server erc-server-announced-name))))
+	    (erc-server-join-channel server chnl key))))))
   t)
 
 (defalias 'erc-cmd-CHANNEL 'erc-cmd-JOIN)
