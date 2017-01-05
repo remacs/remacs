@@ -458,7 +458,7 @@ AUTOMAKE_INPUTS = $(srcdir)/aclocal.m4 $(srcdir)/lib/Makefile.am \
 $(srcdir)/lib/Makefile.in: $(AUTOMAKE_INPUTS)
 	cd $(srcdir) && $(AUTOMAKE) --gnu -a -c lib/Makefile
 
-$(srcdir)/nt/gnulib.mk: $(srcdir)/lib/Makefile.in
+$(srcdir)/nt/gnulib.mk: $(srcdir)/lib/gnulib.mk
 	$(MAKE) -C $(srcdir)/nt gnulib.mk
 
 # Regenerate files that this makefile would have made, if this makefile
