@@ -80,7 +80,7 @@ character) must match a string \"\u2420\"."
                 ("print" "abcłąka\u2620-, " "\t\n\1")
 
                 ("space" " \t\n\u2001" "abcABCł0123")
-                ("blank" " \t" "\n\u2001")
+                ("blank" " \t\u2001" "\n")
 
                 ("ascii" "abcABC012 \t\n\1" "łą\u2620")
                 ("nonascii" "łą\u2622" "abcABC012 \t\n\1")

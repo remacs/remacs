@@ -553,7 +553,11 @@ characters whose Unicode @samp{general-category} property
 (@pxref{Character Properties}) indicates they are alphabetic
 characters.
 @item [:blank:]
-This matches space and tab only.
+This matches horizontal whitespace, as defined by Annex C of the
+Unicode Technical Standard #18.  In particular, it matches spaces,
+tabs, and other characters whose Unicode @samp{general-category}
+property (@pxref{Character Properties}) indicates they are spacing
+separators.
 @item [:cntrl:]
 This matches any @acronym{ASCII} control character.
 @item [:digit:]

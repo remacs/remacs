@@ -710,6 +710,12 @@ of curved quotes in format arguments to functions like 'message' and
 now generate less chatter and more-compact diagnostics.  The auxiliary
 function 'check-declare-errmsg' has been removed.
 
++++
+** The regular expression character class [:blank:] now matches
+Unicode horizontal whitespace as defined in the Unicode Technical
+Standard #18.  If you only want to match space and tab, use [ \t]
+instead.
+
 
 * Lisp Changes in Emacs 26.1
 

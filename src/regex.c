@@ -310,10 +310,11 @@ enum syntaxcode { Swhitespace = 0, Sword = 1, Ssymbol = 2 };
 		     || ((c) >= 'a' && (c) <= 'f')	\
 		     || ((c) >= 'A' && (c) <= 'F'))
 
-/* This is only used for single-byte characters.  */
-# define ISBLANK(c) ((c) == ' ' || (c) == '\t')
-
 /* The rest must handle multibyte characters.  */
+
+# define ISBLANK(c) (IS_REAL_ASCII (c)                  \
+                     ? ((c) == ' ' || (c) == '\t')      \
+                     : blankp (c))
 
 # define ISGRAPH(c) (SINGLE_BYTE_CHAR_P (c)				\
 		     ? (c) > ' ' && !((c) >= 0177 && (c) <= 0240)	\
@@ -1790,6 +1791,7 @@ struct range_table_work_area
 #define BIT_ALNUM	0x80
 #define BIT_GRAPH	0x100
 #define BIT_PRINT	0x200
+#define BIT_BLANK       0x400
 
 
 /* Set the bit for character C in a list.  */
@@ -2066,8 +2068,9 @@ re_wctype_to_bit (re_wctype_t cc)
     case RECC_SPACE: return BIT_SPACE;
     case RECC_GRAPH: return BIT_GRAPH;
     case RECC_PRINT: return BIT_PRINT;
+    case RECC_BLANK: return BIT_BLANK;
     case RECC_ASCII: case RECC_DIGIT: case RECC_XDIGIT: case RECC_CNTRL:
-    case RECC_BLANK: case RECC_UNIBYTE: case RECC_ERROR: return 0;
+    case RECC_UNIBYTE: case RECC_ERROR: return 0;
     default:
       abort ();
     }
@@ -4658,6 +4661,7 @@ execute_charset (const_re_char **pp, unsigned c, unsigned corig, bool unibyte)
 	  (class_bits & BIT_ALNUM && ISALNUM (c)) ||
 	  (class_bits & BIT_ALPHA && ISALPHA (c)) ||
 	  (class_bits & BIT_SPACE && ISSPACE (c)) ||
+          (class_bits & BIT_BLANK && ISBLANK (c)) ||
 	  (class_bits & BIT_WORD  && ISWORD  (c)) ||
 	  ((class_bits & BIT_UPPER) &&
 	   (ISUPPER (c) || (corig != c &&

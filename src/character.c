@@ -1038,6 +1038,23 @@ printablep (int c)
 	    || gen_cat == UNICODE_CATEGORY_Cn)); /* unassigned */
 }
 
+/* Return true if C is a horizontal whitespace character, as defined
+   by http://www.unicode.org/reports/tr18/tr18-19.html#blank.  */
+bool
+blankp (int c)
+{
+  /* Fast path for ASCII characters that are always assumed to
+     constitute horizontal whitespace.  */
+  if (c == ' ' || c == '\t')
+    return true;
+
+  Lisp_Object category = CHAR_TABLE_REF (Vunicode_category_table, c);
+  if (! INTEGERP (category))
+    return false;
+
+  return XINT (category) == UNICODE_CATEGORY_Zs; /* separator, space */
+}
+
 void
 syms_of_character (void)
 {
