@@ -4655,7 +4655,11 @@ connection if a previous connection has died for some reason."
 
 	  ;; If `non-essential' is non-nil, don't reopen a new connection.
 	  ;; This variable has been introduced with Emacs 24.1.
-	  (when (and (boundp 'non-essential) (symbol-value 'non-essential))
+	  ;; We check this for the process related to
+	  ;; `tramp-buffer-name'; otherwise `start-file-process'
+	  ;; wouldn't run ever when `non-essential' is non-nil.
+	  (when (and (boundp 'non-essential) (symbol-value 'non-essential)
+		     (null (get-process (tramp-buffer-name vec))))
 	    (throw 'non-essential 'non-essential))
 
 	  (with-tramp-progress-reporter
