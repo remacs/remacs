@@ -23,7 +23,7 @@ pub use math::Fminus;
 pub use math::Ftimes;
 pub use math::Fmax;
 pub use math::Fmin;
-pub use math::arith_driver;
+pub use math::Fquo;
 
 extern "C" {
     fn defsubr(sname: *const LispSubr);
@@ -63,6 +63,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*math::Splus);
         defsubr(&*math::Sminus);
         defsubr(&*math::Stimes);
+        defsubr(&*math::Squo);
         defsubr(&*math::Slogand);
         defsubr(&*math::Slogior);
         defsubr(&*math::Slogxor);

@@ -459,6 +459,7 @@ bcall0 (Lisp_Object f)
 Lisp_Object Fminus(ptrdiff_t, Lisp_Object*);
 Lisp_Object Fplus(ptrdiff_t, Lisp_Object*);
 Lisp_Object Ftimes(ptrdiff_t, Lisp_Object*);
+Lisp_Object Fquo(ptrdiff_t, Lisp_Object*);
 Lisp_Object Fmax(ptrdiff_t, Lisp_Object*);
 Lisp_Object Fmin(ptrdiff_t, Lisp_Object*);
 

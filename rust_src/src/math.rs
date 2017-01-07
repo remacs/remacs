@@ -64,7 +64,7 @@ Both X and Y must be numbers or markers.
 }
 
 #[repr(C)]
-pub enum ArithOp {
+enum ArithOp {
     Add,
     Sub,
     Mult,
@@ -87,8 +87,7 @@ extern "C" {
 /// arithmetic operation specified.
 ///
 /// Modifies the array in place.
-#[no_mangle]
-pub extern "C" fn arith_driver(code: ArithOp, nargs: ptrdiff_t, args: *mut LispObject) ->  LispObject {
+fn arith_driver(code: ArithOp, nargs: ptrdiff_t, args: *mut LispObject) ->  LispObject {
     let mut accum: EmacsInt = match code {
         ArithOp::Add | ArithOp::Sub | ArithOp::Logior | ArithOp::Logxor => 0,
         ArithOp::Logand => -1,
@@ -257,6 +256,40 @@ lazy_static! {
         doc: ("Return product of any number of arguments, which are numbers or markers.
 
 (fn &optional NUMBER-OR-MARKERS)\0".as_ptr()) as *const c_char,
+    };
+}
+
+/// Calculate quotient, in other words divide.
+#[no_mangle]
+pub extern "C" fn Fquo(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
+    for argnum in 2..nargs {
+        let arg = unsafe {*args.offset(argnum)};
+        if lisp::FLOATP(arg) {
+            unsafe {
+                return float_arith_driver(0.0, 0, ArithOp::Div, nargs, args);
+            }
+        }
+    }
+    arith_driver(ArithOp::Div, nargs, args)
+}
+
+lazy_static! {
+    pub static ref Squo: LispSubr = LispSubr {
+        header: VectorLikeHeader {
+            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
+                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
+        },
+        function: (Fquo as *const libc::c_void),
+        min_args: 1,
+        max_args: MANY,
+        symbol_name: ("/\0".as_ptr()) as *const c_char,
+        intspec: ptr::null(),
+        doc: ("Divide number by divisors and return the result.
+With two or more arguments, return first argument divided by the rest.
+With one argument, return 1 divided by the argument.
+The arguments must be numbers or markers.
+
+(fn NUMBER &rest DIVISORS)\0".as_ptr()) as *const c_char,
     };
 }
 
