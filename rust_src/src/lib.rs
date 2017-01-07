@@ -21,6 +21,8 @@ use lisp::{LispObject, LispSubr, PvecType, PSEUDOVECTOR_AREA_BITS,
 pub use math::Fplus;
 pub use math::Fminus;
 pub use math::Ftimes;
+pub use math::Fmax;
+pub use math::Fmin;
 
 extern "C" {
     fn defsubr(sname: *const LispSubr);
@@ -63,6 +65,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*math::Slogand);
         defsubr(&*math::Slogior);
         defsubr(&*math::Slogxor);
+        defsubr(&*math::Smax);
+        defsubr(&*math::Smin);
         defsubr(&*Ssymbolp);
     }
 }
