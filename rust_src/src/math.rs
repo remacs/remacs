@@ -144,23 +144,6 @@ fn arith_driver(code: ArithOp, nargs: ptrdiff_t, args: *mut LispObject) ->  Lisp
                 }
                 accum = accum.wrapping_mul(next);
             }
-            ArithOp::Div => {
-                // If we have multiple arguments, we divide the first
-                // argument by all the others.
-                if nargs > 1 && argnum == 0 {
-                    accum = next;
-                } else {
-                    if next == 0 {
-                        unsafe {
-                            xsignal0(Qarith_error);
-                        }
-                    }
-                    if accum.checked_div(next).is_none() {
-                        overflow = true;
-                    }
-                    accum = accum.wrapping_div(next);
-                }
-            }
             _ => {
                 unimplemented!();
             }
@@ -237,31 +220,5 @@ lazy_static! {
         doc: ("Return product of any number of arguments, which are numbers or markers.
 
 (fn &optional NUMBER-OR-MARKERS)\0".as_ptr()) as *const c_char,
-    };
-}
-
-/// Calculate quotient, in other words divide.
-#[no_mangle]
-pub extern "C" fn Fquo(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
-    arith_driver(ArithOp::Div, nargs, args)
-}
-
-lazy_static! {
-    pub static ref Squo: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
-        },
-        function: (Fquo as *const libc::c_void),
-        min_args: 1,
-        max_args: MANY,
-        symbol_name: ("/\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        doc: ("Divide number by divisors and return the result.
-With two or more arguments, return first argument divided by the rest.
-With one argument, return 1 divided by the argument.
-The arguments must be numbers or markers.
-
-(fn NUMBER &rest DIVISORS)\0".as_ptr()) as *const c_char,
     };
 }
