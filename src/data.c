@@ -2783,7 +2783,21 @@ float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
 Lisp_Object Fminus(ptrdiff_t, Lisp_Object*);
 Lisp_Object Fplus(ptrdiff_t, Lisp_Object*);
 Lisp_Object Ftimes(ptrdiff_t, Lisp_Object*);
-Lisp_Object Fquo(ptrdiff_t, Lisp_Object*);
+
+DEFUN ("/", Fquo, Squo, 1, MANY, 0,
+       doc: /* Divide number by divisors and return the result.
+With two or more arguments, return first argument divided by the rest.
+With one argument, return 1 divided by the argument.
+The arguments must be numbers or markers.
+usage: (/ NUMBER &rest DIVISORS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  ptrdiff_t argnum;
+  for (argnum = 2; argnum < nargs; argnum++)
+    if (FLOATP (args[argnum]))
+      return float_arith_driver (0, 0, Adiv, nargs, args);
+  return arith_driver (Adiv, nargs, args);
+}
 
 DEFUN ("%", Frem, Srem, 2, 2, 0,
        doc: /* Return remainder of X divided by Y.
@@ -3616,6 +3630,7 @@ syms_of_data (void)
   defsubr (&Sleq);
   defsubr (&Sgeq);
   defsubr (&Sneq);
+  defsubr (&Squo);
   defsubr (&Srem);
   defsubr (&Smax);
   defsubr (&Smin);
