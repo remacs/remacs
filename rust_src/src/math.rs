@@ -70,8 +70,11 @@ enum ArithOp {
     Sub,
     Mult,
     Div,
+    // Logical AND.
     Logand,
+    // Logical inclusive OR.
     Logior,
+    // Logical exclusive OR.
     Logxor,
     Max,
     Min,
@@ -144,8 +147,42 @@ fn arith_driver(code: ArithOp, nargs: ptrdiff_t, args: *mut LispObject) ->  Lisp
                 }
                 accum = accum.wrapping_mul(next);
             }
-            _ => {
-                unimplemented!();
+            ArithOp::Div => {
+                // If we have multiple arguments, we divide the first
+                // argument by all the others.
+                if nargs > 1 && argnum == 0 {
+                    accum = next;
+                } else {
+                    if next == 0 {
+                        unsafe {
+                            xsignal0(Qarith_error);
+                        }
+                    }
+                    if accum.checked_div(next).is_none() {
+                        overflow = true;
+                    } else {
+                        accum = accum.wrapping_div(next);
+                    }
+                }
+            }
+            ArithOp::Logand => {
+                accum &= next;
+            }
+            ArithOp::Logior => {
+                accum |= next;
+            }
+            ArithOp::Logxor => {
+                accum ^= next;
+            }
+            ArithOp::Max => {
+                if argnum == 0 || next > accum {
+                    accum = next;
+                }
+            }
+            ArithOp::Min => {
+                if argnum == 0 || next < accum {
+                    accum = next;
+                }
             }
         }
     }
@@ -220,5 +257,71 @@ lazy_static! {
         doc: ("Return product of any number of arguments, which are numbers or markers.
 
 (fn &optional NUMBER-OR-MARKERS)\0".as_ptr()) as *const c_char,
+    };
+}
+
+fn Flogand(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
+    arith_driver(ArithOp::Logand, nargs, args)
+}
+
+lazy_static! {
+    pub static ref Slogand: LispSubr = LispSubr {
+        header: VectorLikeHeader {
+            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
+                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
+        },
+        function: (Flogand as *const libc::c_void),
+        min_args: 0,
+        max_args: MANY,
+        symbol_name: ("logand\0".as_ptr()) as *const c_char,
+        intspec: ptr::null(),
+        doc: ("Return bitwise-and of all the arguments.
+Arguments may be integers, or markers converted to integers.
+
+(fn &rest INTS-OR-MARKERS)\0".as_ptr()) as *const c_char,
+    };
+}
+
+fn Flogior(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
+    arith_driver(ArithOp::Logior, nargs, args)
+}
+
+lazy_static! {
+    pub static ref Slogior: LispSubr = LispSubr {
+        header: VectorLikeHeader {
+            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
+                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
+        },
+        function: (Flogior as *const libc::c_void),
+        min_args: 0,
+        max_args: MANY,
+        symbol_name: ("logior\0".as_ptr()) as *const c_char,
+        intspec: ptr::null(),
+        doc: ("Return bitwise-or of all the arguments.
+Arguments may be integers, or markers converted to integers.
+
+(fn &rest INTS-OR-MARKERS)\0".as_ptr()) as *const c_char,
+    };
+}
+
+fn Flogxor(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
+    arith_driver(ArithOp::Logxor, nargs, args)
+}
+
+lazy_static! {
+    pub static ref Slogxor: LispSubr = LispSubr {
+        header: VectorLikeHeader {
+            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
+                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
+        },
+        function: (Flogxor as *const libc::c_void),
+        min_args: 0,
+        max_args: MANY,
+        symbol_name: ("logxor\0".as_ptr()) as *const c_char,
+        intspec: ptr::null(),
+        doc: ("Return bitwise-exclusive-or of all the arguments.
+Arguments may be integers, or markers converted to integers.
+
+(fn &rest INTS-OR-MARKERS)\0".as_ptr()) as *const c_char,
     };
 }
