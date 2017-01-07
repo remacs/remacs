@@ -23,6 +23,7 @@ pub use math::Fminus;
 pub use math::Ftimes;
 pub use math::Fmax;
 pub use math::Fmin;
+pub use math::arith_driver;
 
 extern "C" {
     fn defsubr(sname: *const LispSubr);

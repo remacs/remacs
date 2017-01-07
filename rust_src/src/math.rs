@@ -63,9 +63,8 @@ Both X and Y must be numbers or markers.
     };
 }
 
-#[allow(dead_code)]
 #[repr(C)]
-enum ArithOp {
+pub enum ArithOp {
     Add,
     Sub,
     Mult,
@@ -88,7 +87,8 @@ extern "C" {
 /// arithmetic operation specified.
 ///
 /// Modifies the array in place.
-fn arith_driver(code: ArithOp, nargs: ptrdiff_t, args: *mut LispObject) ->  LispObject {
+#[no_mangle]
+pub extern "C" fn arith_driver(code: ArithOp, nargs: ptrdiff_t, args: *mut LispObject) ->  LispObject {
     let mut accum: EmacsInt = match code {
         ArithOp::Add | ArithOp::Sub | ArithOp::Logior | ArithOp::Logxor => 0,
         ArithOp::Logand => -1,
