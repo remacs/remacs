@@ -15,8 +15,9 @@ GPLv3 license.
     - [Design Goals](#design-goals)
     - [Non-Design Goals](#non-design-goals)
     - [Building Remacs](#building-remacs)
-    - [Rustdoc builds](#rustdoc-builds)
-    - [Understanding Macros In Emacs C Files](#understanding-macros-in-emacs-c-files)
+        - [Release builds](#release-builds)
+        - [Rustdoc builds](#rustdoc-builds)
+    - [Porting C Functions To Rust: Walkthrough](#porting-c-functions-to-rust-walkthrough)
     - [Contributing](#contributing)
     - [Help Needed](#help-needed)
     - [Rust Porting Tips](#rust-porting-tips)
@@ -135,12 +136,21 @@ more Emacs-y.
 **Compatibility**: Remacs should not break existing elisp code, and
 ideally provide the same FFI too.
 
-**Similar structure**: Code in Remacs should use the same naming
-conventions and file structure as core Emacs, to make translation
+**Similar naming conventions**: Code in Remacs should use the same
+naming conventions for elisp namespaces, to make translation
 straightforward.
 
-**Leverage Rust itself**: Remacs should make best use of Rust to ensure code is
-robust and performant.
+This means that an elisp function `do-stuff` will have a corresponding
+Rust function `Fdo_stuff`, and a declaration struct `Sdo_stuff`. A
+lisp variable `do-stuff` will have a Rust variable `Vdo_stuff` and a
+symbol `'do-stuff` will have a Rust variaable `Qdo_stuff`.
+
+Otherwise, we follow Rust naming conventions, with docstrings noting
+equivalent functions or macros in C. When incrementally porting, we
+may define Rust functions with the same name as their C predecessors.
+
+**Leverage Rust itself**: Remacs should make best use of Rust to
+ensure code is robust and performant.
 
 **Leverage the Rust ecosystem**: Remacs should use existing Rust
 crates wherever possible, and create new, separate crates where our
@@ -219,18 +229,30 @@ You can then open these docs with:
 $ cargo doc --open
 ```
 
-## Understanding Macros In Emacs C Files
+## Porting C Functions To Rust: Walkthrough
 
-Define a little file, e.g.
+Let's look at porting `numberp` to Rust.
+
+First, make sure you have configured and built Remacs on your system.
+
+Emacs C uses a lot of macros, so it's useful to look at the expanded
+version of the code.
+
+Define a little file `src/dummy.c` with the C source of `numberp`, along
+with the `lisp.h` header file:
 
 ``` c
 #include "lisp.h"
 
-DEFUN ("return-t", Freturn_t, Sreturn_t, 0, 0, 0,
-       doc: /* Return t unconditionally.  */)
-    ()
+DEFUN ("numberp", Fnumberp, Snumberp, 1, 1, 0,
+       doc: /* Return t if OBJECT is a number (floating point or integer).  */
+       attributes: const)
+  (Lisp_Object object)
 {
+  if (NUMBERP (object))
     return Qt;
+  else
+    return Qnil;
 }
 ```
 
@@ -240,6 +262,80 @@ Then expand it with GCC:
 $ cd /path/to/remacs
 $ gcc -Ilib -E src/dummy.c > dummy_exp.c
 ```
+
+This gives us a file that ends with:
+
+``` c
+static struct Lisp_Subr 
+# 3 "src/dummy.c" 3 4
+_Alignas 
+# 3 "src/dummy.c"
+(8) Snumberp = { { PVEC_SUBR << PSEUDOVECTOR_AREA_BITS }, { .a1 = Fnumberp }, 1, 1, "numberp", 0, 0}; Lisp_Object Fnumberp
+
+
+  (Lisp_Object object)
+{
+  if (NUMBERP (object))
+    return Qt;
+  else
+    return builtin_lisp_symbol (0);
+}
+```
+
+We can see we need to define a `Snumberp` and a `Fnumberp`. `Qt` and
+`Qnil` are already defined in `lisp.rs`, so we can simply write:
+
+``` rust
+// This is the function that gets called when 
+// we call numberp in elisp.
+fn Fnumberp(object: LispObject) -> LispObject {
+    if lisp::SYMBOLP(object) {
+        unsafe {
+            Qt
+        }
+    } else {
+        Qnil
+    }
+}
+
+// This defines a built-in function in elisp.
+lazy_static! {
+    static ref Snumberp: LispSubr = LispSubr {
+        header: VectorLikeHeader {
+            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
+                   PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
+        },
+        function: (Fnumberp as *const libc::c_void),
+        // Our elisp function takes exactly one argument.
+        min_args: 1,
+        max_args: 1,
+        // The name of our function in elisp.
+        symbol_name: ("numberpp\0".as_ptr()) as *const c_char,
+        // Our function is not interactive.
+        intspec: ptr::null(),
+        // Docstring. The last line ensures that *Help* shows the
+        // correct calling convention
+        doc: ("Return t if OBJECT is a number (floating point or integer).
+
+(fn OBJECT)\0".as_ptr()) as *const c_char,
+    };
+}
+```
+
+Finally, we need to delete the old C definition and call `defsubr`
+inside `rust_init_syms`:
+
+``` rust
+pub extern "C" fn rust_init_syms() {
+    unsafe {
+        // ...
+        defsubr(&*yourmodule::Snumberp);
+    }
+}
+```
+
+You're done! Compile Remacs, try your function with `M-x ielm`, and
+open a pull request. Fame and glory await!
 
 ## Contributing
 
