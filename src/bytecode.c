@@ -455,6 +455,13 @@ bcall0 (Lisp_Object f)
   Ffuncall (1, &f);
 }
 
+// Defined in Rust.
+Lisp_Object Fminus(ptrdiff_t, Lisp_Object*);
+Lisp_Object Fplus(ptrdiff_t, Lisp_Object*);
+Lisp_Object Ftimes(ptrdiff_t, Lisp_Object*);
+Lisp_Object Fmax(ptrdiff_t, Lisp_Object*);
+Lisp_Object Fmin(ptrdiff_t, Lisp_Object*);
+
 /* Execute the byte-code in BYTESTR.  VECTOR is the constant vector, and
    MAXDEPTH is the maximum stack depth used (if MAXDEPTH is incorrect,
    emacs may crash!).  If ARGS_TEMPLATE is non-nil, it should be a lisp
