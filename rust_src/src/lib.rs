@@ -11,6 +11,7 @@ mod marker;
 mod eval;
 mod floatfns;
 mod math;
+mod cons;
 
 use std::os::raw::c_char;
 use std::ptr;
@@ -67,5 +68,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*math::Smax);
         defsubr(&*math::Smin);
         defsubr(&*Ssymbolp);
+        defsubr(&*cons::Sconsp);
     }
 }

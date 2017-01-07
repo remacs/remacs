@@ -92,7 +92,7 @@ pub enum PvecType {
 #[repr(C)]
 #[derive(PartialEq, Eq)]
 #[allow(dead_code)]
-enum LispType {
+pub enum LispType {
     // Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol.
     Lisp_Symbol = 0,
 
@@ -255,7 +255,7 @@ pub fn make_natnum(n: EmacsInt) -> LispObject {
 
 /// Return the type of a LispObject.
 #[allow(non_snake_case)]
-fn XTYPE(a: LispObject) -> LispType {
+pub fn XTYPE(a: LispObject) -> LispType {
     let res = XLI(a) & !VALMASK;
     // TODO: it would be better to check the type and fail,
     // https://www.reddit.com/r/rust/comments/36pgn9/integer_to_enum_after_removal_of_fromprimitive/crfy6al/
