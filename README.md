@@ -310,7 +310,7 @@ lazy_static! {
         min_args: 1,
         max_args: 1,
         // The name of our function in elisp.
-        symbol_name: ("numberpp\0".as_ptr()) as *const c_char,
+        symbol_name: ("numberp\0".as_ptr()) as *const c_char,
         // Our function is not interactive.
         intspec: ptr::null(),
         // Docstring. The last line ensures that *Help* shows the
