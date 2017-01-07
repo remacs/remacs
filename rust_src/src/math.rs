@@ -81,14 +81,19 @@ enum ArithOp {
 }
 
 extern "C" {
-    fn float_arith_driver(accum: f64, argnum: ptrdiff_t, code: ArithOp, nargs: ptrdiff_t, args: *const LispObject) -> LispObject;
+    fn float_arith_driver(accum: f64,
+                          argnum: ptrdiff_t,
+                          code: ArithOp,
+                          nargs: ptrdiff_t,
+                          args: *const LispObject)
+                          -> LispObject;
 }
 
 /// Given an array of LispObject, reduce over them according to the
 /// arithmetic operation specified.
 ///
 /// Modifies the array in place.
-fn arith_driver(code: ArithOp, nargs: ptrdiff_t, args: *mut LispObject) ->  LispObject {
+fn arith_driver(code: ArithOp, nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
     let mut accum: EmacsInt = match code {
         ArithOp::Add | ArithOp::Sub | ArithOp::Logior | ArithOp::Logxor => 0,
         ArithOp::Logand => -1,
