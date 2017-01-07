@@ -1,12 +1,9 @@
 # Rust :heart: Emacs
 [![Build Status](https://travis-ci.org/Wilfred/remacs.svg?branch=master)](https://travis-ci.org/Wilfred/remacs)
 
-An experiment in porting Emacs' C codebase to Rust.
+A community-driven port of Emacs to Rust.
 
-This codebase is based on the emacs 25.1 tag in git, plus commits to
-add some Rust!
-
-GPLv3, just like all Emacs code.
+GPLv3 license.
 
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-generate-toc again -->
 **Table of Contents**
@@ -16,9 +13,9 @@ GPLv3, just like all Emacs code.
     - [Why Rust?](#why-rust)
     - [Why A Fork?](#why-a-fork)
     - [Design Goals](#design-goals)
+    - [Non-Design Goals](#non-design-goals)
     - [Building Remacs](#building-remacs)
-        - [Release builds](#release-builds)
-        - [Docs builds](#docs-builds)
+    - [Rustdoc builds](#rustdoc-builds)
     - [Understanding Macros In Emacs C Files](#understanding-macros-in-emacs-c-files)
     - [Contributing](#contributing)
     - [Help Needed](#help-needed)
@@ -26,7 +23,6 @@ GPLv3, just like all Emacs code.
         - [C Functions](#c-functions)
         - [C Macros](#c-macros)
         - [Assertions](#assertions)
-    - [TODOC](#todoc)
 
 <!-- markdown-toc end -->
 
@@ -86,26 +82,36 @@ off](https://i.stack.imgur.com/7Cu9Z.jpg).
 
 Rust is a great alternative to C.
 
-Rust provides many compile-time checks, making it much easier to write
+Rust has **a fantastic learning curve**. The documentation is superb,
+and the community is very helpful if you get stuck.
+
+Rust has **excellent tooling**. The compiler makes great suggestions,
+the unit test framework is good, and `rustfmt` helps ensure formatting
+is beautiful and consistent.
+
+The Rust **packaging story is excellent**. It's easy to reuse
+the great libraries available, and just as easy to factor out code for
+the benefit of others. We can replace entire C files in Emacs with
+well-maintained Rust libraries.
+
+Code written in Rust **easily interoperates with C**. This means we
+can **port to Rust incrementally**, and having a working Emacs at each
+step of the process.
+
+Rust provides **many compile-time checks**, making it much easier to write
 fast, correct code (even when using multithreading). This also makes
-it much easier for newcomers to contribute. Emacs is currently
-exploring multithreading, which is much easier is Rust.
-
-Code written in Rust can easily interoperate with C. We can port to
-Rust incrementally.
-
-The Rust ecosystem makes it easy to reuse libraries written by
-others. We can replace entire C files in Emacs with well-maintained
-alternatives. Emacs shouldn't have its own forked regexp engine.
+it much easier for newcomers to contribute.
 
 Give it a try. We think you'll like it.
 
 ## Why A Fork?
 
-Forking is a longstanding tradition in the Emacs community. We believe
-it is a positive thing.
+Emacs is a widely used tool with a long history, broad platform
+support and strong backward compatibility requirements. The core team
+is understandably cautious in making far-reaching changes.
 
-Notable Emacs forks include [XEmacs](http://www.xemacs.org/),
+Forking is a longstanding tradition in the Emacs community for trying
+different approaches. Notable Emacs forks include [XEmacs](http://www.xemacs.org/),
 [Guile Emacs](https://www.emacswiki.org/emacs/GuileEmacs),
 and [emacs-jit](https://github.com/burtonsamograd/emacs-jit).
 
@@ -114,10 +120,15 @@ There have also been separate elisp implementations, such as
 [JEmacs](http://jemacs.sourceforge.net/) and
 [El Compilador](https://github.com/tromey/el-compilador).
 
-This fork hopes to show that writing Emacs in Rust is feasible. By
-forking, we can use a different development cycle to core Emacs, and
-we don't need to support all the niche platforms supported by core
-Emacs. Remacs will never run on MS-DOS.
+By forking, we can **explore new development approaches**. We can
+use a pull request workflow with integrated CI.
+
+We can **drop legacy platforms and compilers**. Remacs will never run
+on MS-DOS, and that's OK.
+
+There's a difference between **the idea of Emacs** and the **current
+implementation of Emacs**. Forking allows us to explore being even
+more Emacs-y.
 
 ## Design Goals
 
@@ -137,6 +148,12 @@ code could benefit others.
 
 **Great docs**: Emacs has excellent documentation, Remacs should be no
 different.
+
+## Non-Design Goals
+
+**`etags`**: The
+[universal ctags project](https://github.com/universal-ctags/ctags)
+supports a wider range of languages and we recommend it instead.
 
 ## Building Remacs
 
@@ -182,7 +199,7 @@ and modify `src/Makefile` to:
 LIBS_SYSTEM=-L../rust_src/target/release -lremacs -ldl
 ```
 
-### Docs builds
+### Rustdoc builds
 
 You can use rustdoc to generate API docs:
 
@@ -303,7 +320,3 @@ For the checked arithmetic macros (`INT_ADD_WRAPV`,
 
 `emacs_abort()` in Emacs C should be `panic!("reason for panicking")`
 in Rust.
-
-## TODOC
-
-* Overriding git hooks (just delete them?)
