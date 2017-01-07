@@ -60,6 +60,9 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*math::Splus);
         defsubr(&*math::Sminus);
         defsubr(&*math::Stimes);
+        defsubr(&*math::Slogand);
+        defsubr(&*math::Slogior);
+        defsubr(&*math::Slogxor);
         defsubr(&*Ssymbolp);
     }
 }
