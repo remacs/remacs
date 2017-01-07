@@ -14,8 +14,7 @@ mod math;
 
 use std::os::raw::c_char;
 use std::ptr;
-use lisp::{LispObject, LispSubr, PvecType, PSEUDOVECTOR_AREA_BITS,
-           VectorLikeHeader, Qt, Qnil};
+use lisp::{LispObject, LispSubr, PvecType, PSEUDOVECTOR_AREA_BITS, VectorLikeHeader, Qt, Qnil};
 
 // These need to be exported as bytecode.c depends upon them.
 pub use math::Fplus;
@@ -30,9 +29,7 @@ extern "C" {
 
 fn Fsymbolp(object: LispObject) -> LispObject {
     if lisp::SYMBOLP(object) {
-        unsafe {
-            Qt
-        }
+        unsafe { Qt }
     } else {
         Qnil
     }
