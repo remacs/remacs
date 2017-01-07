@@ -325,3 +325,49 @@ Arguments may be integers, or markers converted to integers.
 (fn &rest INTS-OR-MARKERS)\0".as_ptr()) as *const c_char,
     };
 }
+
+#[no_mangle]
+pub extern "C" fn Fmax(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
+    arith_driver(ArithOp::Max, nargs, args)
+}
+
+lazy_static! {
+    pub static ref Smax: LispSubr = LispSubr {
+        header: VectorLikeHeader {
+            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
+                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
+        },
+        function: (Fmax as *const libc::c_void),
+        min_args: 1,
+        max_args: MANY,
+        symbol_name: ("max\0".as_ptr()) as *const c_char,
+        intspec: ptr::null(),
+        doc: ("Return largest of all the arguments (which must be numbers or markers).
+The value is always a number; markers are converted to numbers.
+
+(fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)\0".as_ptr()) as *const c_char,
+    };
+}
+
+#[no_mangle]
+pub extern "C" fn Fmin(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
+    arith_driver(ArithOp::Min, nargs, args)
+}
+
+lazy_static! {
+    pub static ref Smin: LispSubr = LispSubr {
+        header: VectorLikeHeader {
+            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
+                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
+        },
+        function: (Fmin as *const libc::c_void),
+        min_args: 1,
+        max_args: MANY,
+        symbol_name: ("min\0".as_ptr()) as *const c_char,
+        intspec: ptr::null(),
+        doc: ("Return smallest of all the arguments (which must be numbers or markers).
+The value is always a number; markers are converted to numbers.
+
+(fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)\0".as_ptr()) as *const c_char,
+    };
+}

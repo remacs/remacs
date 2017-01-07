@@ -2780,10 +2780,6 @@ float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
   return make_float (accum);
 }
 
-Lisp_Object Fminus(ptrdiff_t, Lisp_Object*);
-Lisp_Object Fplus(ptrdiff_t, Lisp_Object*);
-Lisp_Object Ftimes(ptrdiff_t, Lisp_Object*);
-
 DEFUN ("/", Fquo, Squo, 1, MANY, 0,
        doc: /* Divide number by divisors and return the result.
 With two or more arguments, return first argument divided by the rest.
@@ -2814,24 +2810,6 @@ Both must be integers or markers.  */)
 
   XSETINT (val, XINT (x) % XINT (y));
   return val;
-}
-
-DEFUN ("max", Fmax, Smax, 1, MANY, 0,
-       doc: /* Return largest of all the arguments (which must be numbers or markers).
-The value is always a number; markers are converted to numbers.
-usage: (max NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return arith_driver (Amax, nargs, args);
-}
-
-DEFUN ("min", Fmin, Smin, 1, MANY, 0,
-       doc: /* Return smallest of all the arguments (which must be numbers or markers).
-The value is always a number; markers are converted to numbers.
-usage: (min NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return arith_driver (Amin, nargs, args);
 }
 
 DEFUN ("ash", Fash, Sash, 2, 2, 0,
@@ -3604,8 +3582,6 @@ syms_of_data (void)
   defsubr (&Sneq);
   defsubr (&Squo);
   defsubr (&Srem);
-  defsubr (&Smax);
-  defsubr (&Smin);
   defsubr (&Slsh);
   defsubr (&Sash);
   defsubr (&Sadd1);
