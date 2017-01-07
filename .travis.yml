@@ -21,4 +21,9 @@ script:
   - make check || echo 'make check failed'
 
 notifications:
+  fast_finish: true
   email: false
+
+matrix:
+  allow_failures:
+    - rust: nightly
