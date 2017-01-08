@@ -1768,14 +1768,9 @@ Return value:
   "Like `ffap', but put buffer in another window.
 Only intended for interactive use."
   (interactive)
-  (let (value)
-    (switch-to-buffer-other-window
-     (save-window-excursion
-       (setq value (call-interactively 'ffap))
-       (unless (or (bufferp value) (bufferp (car-safe value)))
-	 (setq value (current-buffer)))
-       (current-buffer)))
-    value))
+  (pcase (save-window-excursion (call-interactively 'ffap))
+    ((or (and (pred bufferp) b) `(,(and (pred bufferp) b) . ,_))
+     (switch-to-buffer-other-window b))))
 
 (defun ffap-other-frame ()
   "Like `ffap', but put buffer in another frame.
