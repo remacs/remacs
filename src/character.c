@@ -1043,11 +1043,6 @@ printablep (int c)
 bool
 blankp (int c)
 {
-  /* Fast path for ASCII characters that are always assumed to
-     constitute horizontal whitespace.  */
-  if (c == ' ' || c == '\t')
-    return true;
-
   Lisp_Object category = CHAR_TABLE_REF (Vunicode_category_table, c);
   if (! INTEGERP (category))
     return false;
