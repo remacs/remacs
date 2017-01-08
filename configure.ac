@@ -771,20 +771,6 @@ if test x$GCC = xyes; then
   test "x$GCC_TEST_OPTIONS" != x && CC="$CC $GCC_TEST_OPTIONS"
 fi
 
-dnl This is used in lib/Makefile.am to use nt/gnulib.mk, the
-dnl alternative to lib/gnulib.mk, so as to avoid generating header files
-dnl that clash with MinGW.
-case $opsys in
-  mingw32 )
-    GNULIB_MK='$(srcdir)/nt/gnulib.mk'
-    ;;
-  * )
-    GNULIB_MK='$(srcdir)/lib/gnulib.mk'
-    ;;
-
-esac
-AC_SUBST([GNULIB_MK])
-
 AM_CONDITIONAL([BUILDING_FOR_WINDOWSNT], [test "x$opsys" = "xmingw32"])
 
 # Avoid gnulib's tests for -lcrypto, so that there's no static dependency on it.

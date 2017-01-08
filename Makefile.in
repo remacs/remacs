@@ -95,9 +95,6 @@ configuration=@configuration@
 ### The nt/ subdirectory gets built only for MinGW
 NTDIR=@NTDIR@
 
-### $(srcdir)/nt/gnulib.mk for MinGW, else $(srcdir)/lib/gnulib.mk
-gnulib_mk=@GNULIB_MK@
-
 # 'make' verbosity.
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 
