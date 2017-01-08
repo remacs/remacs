@@ -451,7 +451,7 @@ $(srcdir)/aclocal.m4: $(ACLOCAL_INPUTS)
 	cd $(srcdir) && ACLOCAL_PATH='$(ACLOCAL_PATH)' $(ACLOCAL) -I m4
 
 AUTOMAKE_INPUTS = $(srcdir)/aclocal.m4 $(srcdir)/lib/Makefile.am \
-  $(gnulib_mk)
+  $(srcdir)/lib/gnulib.mk $(srcdir)/nt/gnulib.mk
 $(srcdir)/lib/Makefile.in: $(AUTOMAKE_INPUTS)
 	cd $(srcdir) && $(AUTOMAKE) --gnu -a -c lib/Makefile
 
