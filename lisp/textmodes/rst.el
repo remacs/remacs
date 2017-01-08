@@ -244,7 +244,7 @@ and before TAIL-RE and DELIM-RE in VAR or DEFAULT for no match."
 ;; Use CVSHeader to really get information from CVS and not other version
 ;; control systems.
 (defconst rst-cvs-header
-  "$CVSHeader: sm/rst_el/rst.el,v 1.1058.2.3 2017/01/03 21:56:29 stefan Exp $")
+  "$CVSHeader: sm/rst_el/rst.el,v 1.1058.2.9 2017/01/08 09:54:50 stefan Exp $")
 (defconst rst-cvs-rev
   (rst-extract-version "\\$" "CVSHeader: \\S + " "[0-9]+\\(?:\\.[0-9]+\\)+"
 		       " .*" rst-cvs-header "0.0")
@@ -258,22 +258,22 @@ and before TAIL-RE and DELIM-RE in VAR or DEFAULT for no match."
 ;; Use LastChanged... to really get information from SVN.
 (defconst rst-svn-rev
   (rst-extract-version "\\$" "LastChangedRevision: " "[0-9]+" " "
-		       "$LastChangedRevision: 8011 $")
+		       "$LastChangedRevision: 8015 $")
   "The SVN revision of this file.
 SVN revision is the upstream (docutils) revision.")
 (defconst rst-svn-timestamp
   (rst-extract-version "\\$" "LastChangedDate: " ".+?+" " "
-		       "$LastChangedDate: 2017-01-03 22:56:17 +0100 (Tue, 03 Jan 2017) $")
+		       "$LastChangedDate: 2017-01-08 10:54:35 +0100 (Sun, 08 Jan 2017) $")
   "The SVN time stamp of this file.")
 
 ;; Maintained by the release process.
 (defconst rst-official-version
   (rst-extract-version "%" "OfficialVersion: " "[0-9]+\\(?:\\.[0-9]+\\)+" " "
-		       "%OfficialVersion: 1.5.1 %")
+		       "%OfficialVersion: 1.5.2 %")
   "Official version of the package.")
 (defconst rst-official-cvs-rev
   (rst-extract-version "[%$]" "Revision: " "[0-9]+\\(?:\\.[0-9]+\\)+" " "
-		       "$Revision: 1.1058.2.3 $")
+		       "$Revision: 1.1058.2.9 $")
   "CVS revision of this file in the official version.")
 
 (defconst rst-version
@@ -297,6 +297,8 @@ in parentheses follows the development revision and the time stamp.")
     ("1.4.2" . "24.5")
     ("1.5.0" . "26.1")
     ("1.5.1" . "26.2")
+    ("1.5.2" . "26.2")
+    ;; Whatever the Emacs version is this rst.el version ends up in.
     ))
 
 (unless (assoc rst-official-version rst-package-emacs-version-alist)
@@ -4148,25 +4150,26 @@ Return extended point or nil if not moved."
 (defun rst-forward-indented-block (&optional column limit)
   ;; testcover: ok.
   "Move forward across one indented block.
-Find the next non-empty line which is not indented at least to
-COLUMN (defaults to the column of the point).  Moves point to
-first character of this line or the first of the empty lines
-immediately before it and returns that position.  If there is no
-such line before LIMIT (defaults to the end of the buffer)
-returns nil and point is not moved."
+Find the next (i.e. excluding the current line) non-empty line
+which is not indented at least to COLUMN (defaults to the column
+of the point).  Move point to first character of this line or the
+first of the empty lines immediately before it and return that
+position.  If there is no such line before LIMIT (defaults to the
+end of the buffer) return nil and do not move point."
   (let (fnd candidate)
     (setq fnd (rst-apply-indented-blocks
-	       (point) (or limit (point-max)) (or column (current-column))
-	       #'(lambda (_count _in-first _in-sub in-super in-empty _relind)
-		   (cond
-		    (in-empty
-		     (setq candidate (or candidate (line-beginning-position)))
-		     nil)
-		    (in-super
-		     (or candidate (line-beginning-position)))
-		    (t ; Non-empty, same or more indented line.
-		     (setq candidate nil)
-		     nil)))))
+  	       (line-beginning-position 2) ; Skip the current line
+	       (or limit (point-max)) (or column (current-column))
+  	       #'(lambda (_count _in-first _in-sub in-super in-empty _relind)
+  		   (cond
+  		    (in-empty
+  		     (setq candidate (or candidate (line-beginning-position)))
+  		     nil)
+  		    (in-super
+  		     (or candidate (line-beginning-position)))
+  		    (t ; Non-empty, same or more indented line.
+  		     (setq candidate nil)
+  		     nil)))))
     (when fnd
       (goto-char fnd))))
 
