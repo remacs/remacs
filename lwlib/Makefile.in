@@ -26,7 +26,6 @@ srcdir=@srcdir@
 # MinGW CPPFLAGS may use this.
 abs_top_srcdir=@abs_top_srcdir@
 VPATH=@srcdir@
-@SET_MAKE@
 C_SWITCH_X_SITE=@C_SWITCH_X_SITE@
 C_SWITCH_SYSTEM=@C_SWITCH_SYSTEM@
 C_SWITCH_MACHINE=@C_SWITCH_MACHINE@
