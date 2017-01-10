@@ -269,16 +269,6 @@ for example, (type-of 1) returns `integer'.  */)
     }
 }
 
-DEFUN ("consp", Fconsp, Sconsp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a cons cell.  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (CONSP (object))
-    return Qt;
-  return Qnil;
-}
-
 DEFUN ("atom", Fatom, Satom, 1, 1, 0,
        doc: /* Return t if OBJECT is not a cons cell.  This includes nil.  */
        attributes: const)
@@ -558,25 +548,6 @@ DEFUN ("cdr-safe", Fcdr_safe, Scdr_safe, 1, 1, 0,
   return CDR_SAFE (object);
 }
 
-DEFUN ("setcar", Fsetcar, Ssetcar, 2, 2, 0,
-       doc: /* Set the car of CELL to be NEWCAR.  Returns NEWCAR.  */)
-  (register Lisp_Object cell, Lisp_Object newcar)
-{
-  CHECK_CONS (cell);
-  CHECK_IMPURE (cell, XCONS (cell));
-  XSETCAR (cell, newcar);
-  return newcar;
-}
-
-DEFUN ("setcdr", Fsetcdr, Ssetcdr, 2, 2, 0,
-       doc: /* Set the cdr of CELL to be NEWCDR.  Returns NEWCDR.  */)
-  (register Lisp_Object cell, Lisp_Object newcdr)
-{
-  CHECK_CONS (cell);
-  CHECK_IMPURE (cell, XCONS (cell));
-  XSETCDR (cell, newcdr);
-  return newcdr;
-}
 
 /* Extract and set components of symbols.  */
 
@@ -3404,7 +3375,6 @@ syms_of_data (void)
   defsubr (&Stype_of);
   defsubr (&Slistp);
   defsubr (&Snlistp);
-  defsubr (&Sconsp);
   defsubr (&Satom);
   defsubr (&Sintegerp);
   defsubr (&Sinteger_or_marker_p);
@@ -3430,8 +3400,6 @@ syms_of_data (void)
   defsubr (&Scdr);
   defsubr (&Scar_safe);
   defsubr (&Scdr_safe);
-  defsubr (&Ssetcar);
-  defsubr (&Ssetcdr);
   defsubr (&Ssymbol_function);
   defsubr (&Sindirect_function);
   defsubr (&Ssymbol_plist);

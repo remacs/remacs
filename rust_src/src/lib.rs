@@ -11,6 +11,7 @@ mod marker;
 mod eval;
 mod floatfns;
 mod math;
+mod cons;
 
 use std::os::raw::c_char;
 use std::ptr;
@@ -23,6 +24,10 @@ pub use math::Ftimes;
 pub use math::Fmax;
 pub use math::Fmin;
 pub use math::Fquo;
+
+// Widely used in the C codebase.
+pub use cons::Fsetcar;
+pub use cons::Fsetcdr;
 
 extern "C" {
     fn defsubr(sname: *const LispSubr);
@@ -67,5 +72,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*math::Smax);
         defsubr(&*math::Smin);
         defsubr(&*Ssymbolp);
+        defsubr(&*cons::Sconsp);
+        defsubr(&*cons::Ssetcar);
+        defsubr(&*cons::Ssetcdr);
     }
 }
