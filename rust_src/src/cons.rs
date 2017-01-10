@@ -4,9 +4,8 @@ use std::os::raw::c_char;
 use std::ptr;
 use std::mem;
 
-use lisp::{LispObject, LispType, XTYPE, XUNTAG, Qt, Qnil, LispSubr,
-           PvecType, VectorLikeHeader, PSEUDOVECTOR_AREA_BITS,
-           CHECK_TYPE};
+use lisp::{LispObject, LispType, XTYPE, XUNTAG, Qt, Qnil, LispSubr, PvecType, VectorLikeHeader,
+           PSEUDOVECTOR_AREA_BITS, CHECK_TYPE};
 
 extern "C" {
     static Qconsp: LispObject;
@@ -19,13 +18,7 @@ fn CONSP(x: LispObject) -> bool {
 }
 
 fn Fconsp(object: LispObject) -> LispObject {
-    if CONSP(object) {
-        unsafe {
-            Qt
-        }
-    } else {
-        Qnil
-    }
+    if CONSP(object) { unsafe { Qt } } else { Qnil }
 }
 
 lazy_static! {
