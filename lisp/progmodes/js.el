@@ -1771,6 +1771,24 @@ This performs fontification according to `js--class-styles'."
                  ;; return NaN anyway.  Shouldn't be a problem.
                  (memq (char-before) '(?, ?} ?{))))))))
 
+(defun js--find-newline-backward ()
+  "Move backward to the nearest newline that is not in a block comment."
+  (let ((continue t)
+        (result t))
+    (while continue
+      (setq continue nil)
+      (if (search-backward "\n" nil t)
+          (let ((parse (syntax-ppss)))
+            ;; We match the end of a // comment but not a newline in a
+            ;; block comment.
+            (when (nth 4 parse)
+              (goto-char (nth 8 parse))
+              ;; If we saw a block comment, keep trying.
+              (unless (nth 7 parse)
+                (setq continue t))))
+        (setq result nil)))
+    result))
+
 (defun js--continued-expression-p ()
   "Return non-nil if the current line continues an expression."
   (save-excursion
@@ -1780,7 +1798,7 @@ This performs fontification according to `js--class-styles'."
             (progn
               (forward-comment (- (point)))
               (not (memq (char-before) '(?, ?\[ ?\()))))
-      (and (js--re-search-backward "\n" nil t)
+      (and (js--find-newline-backward)
            (progn
              (skip-chars-backward " \t")
              (or (bobp) (backward-char))

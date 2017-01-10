@@ -118,6 +118,12 @@ var arr = [
     -5
 ];
 
+// Regression test for bug#15582.
+if (x > 72 &&
+    y < 85) { // found
+  do_something();
+}
+
 // Local Variables:
 // indent-tabs-mode: nil
 // js-indent-level: 2
