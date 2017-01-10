@@ -233,9 +233,11 @@ $ cargo doc --open
 
 Let's look at porting `numberp` to Rust.
 
-First, make sure you have configured and built Remacs on your system.
+First, make sure you have configured and built Remacs on your
+system. You'll probably want to generate TAGS too, so you can jump to
+definitions of C functions.
 
-Emacs C uses a lot of macros, so it's useful to look at the expanded
+Emacs C uses a lot of macros, so it's also useful to look at the expanded
 version of the code.
 
 Define a little file `src/dummy.c` with the C source of `numberp`, along
