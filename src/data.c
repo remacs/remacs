@@ -324,16 +324,6 @@ DEFUN ("vectorp", Fvectorp, Svectorp, 1, 1, 0,
   return Qnil;
 }
 
-DEFUN ("stringp", Fstringp, Sstringp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a string.  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (STRINGP (object))
-    return Qt;
-  return Qnil;
-}
-
 DEFUN ("multibyte-string-p", Fmultibyte_string_p, Smultibyte_string_p,
        1, 1, 0,
        doc: /* Return t if OBJECT is a multibyte string.
@@ -3383,7 +3373,6 @@ syms_of_data (void)
   defsubr (&Sfloatp);
   defsubr (&Snatnump);
   defsubr (&Skeywordp);
-  defsubr (&Sstringp);
   defsubr (&Smultibyte_string_p);
   defsubr (&Svectorp);
   defsubr (&Schar_table_p);

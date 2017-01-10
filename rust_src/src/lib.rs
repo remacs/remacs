@@ -12,6 +12,7 @@ mod eval;
 mod floatfns;
 mod math;
 mod cons;
+mod strings;
 
 use std::os::raw::c_char;
 use std::ptr;
@@ -75,5 +76,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*cons::Sconsp);
         defsubr(&*cons::Ssetcar);
         defsubr(&*cons::Ssetcdr);
+        defsubr(&*strings::Sstringp);
     }
 }
