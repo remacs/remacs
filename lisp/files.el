@@ -2543,6 +2543,7 @@ ARC\\|ZIP\\|LZH\\|LHA\\|ZOO\\|[JEW]AR\\|XPI\\|RAR\\|CBR\\|7Z\\)\\'" . archive-mo
      ("\\.ds\\(ss\\)?l\\'" . dsssl-mode)
      ("\\.jsm?\\'" . javascript-mode)
      ("\\.json\\'" . javascript-mode)
+     ("\\.jsx\\'" . js-jsx-mode)
      ("\\.[ds]?vh?\\'" . verilog-mode)
      ("\\.by\\'" . bovine-grammar-mode)
      ("\\.wy\\'" . wisent-grammar-mode)
