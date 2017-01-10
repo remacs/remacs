@@ -25,6 +25,9 @@ pub use math::Fmax;
 pub use math::Fmin;
 pub use math::Fquo;
 
+// Widely used in the C codebase.
+pub use cons::Fsetcar;
+
 extern "C" {
     fn defsubr(sname: *const LispSubr);
 }
@@ -69,5 +72,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*math::Smin);
         defsubr(&*Ssymbolp);
         defsubr(&*cons::Sconsp);
+        defsubr(&*cons::Ssetcar);
     }
 }

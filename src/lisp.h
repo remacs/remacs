@@ -4688,6 +4688,8 @@ functionp (Lisp_Object object)
     return false;
 }
 
+Lisp_Object Fsetcar(Lisp_Object, Lisp_Object);
+
 INLINE_HEADER_END
 
 #endif /* EMACS_LISP_H */
