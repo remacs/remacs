@@ -87,7 +87,6 @@ fn XSETCAR(c: LispObject, n: LispObject) {
 }
 
 /// Set the cdr of a cons cell.
-#[allow(dead_code)]
 fn XSETCDR(c: LispObject, n: LispObject) {
     let cons_cell = XCONS(c);
     unsafe {
@@ -120,5 +119,33 @@ lazy_static! {
         doc: ("Set the car of CELL to be NEWCAR. Returns NEWCAR.
 
 (fn CELL NEWCAR)\0".as_ptr()) as *const c_char,
+    };
+}
+
+#[no_mangle]
+pub extern "C" fn Fsetcdr(cell: LispObject, newcar: LispObject) -> LispObject {
+    unsafe {
+        CHECK_TYPE(CONSP(cell), Qconsp, cell);
+        CHECK_IMPURE(cell, XCONS(cell) as *const libc::c_void);
+    }
+
+    XSETCDR(cell, newcar);
+    newcar
+}
+
+lazy_static! {
+    pub static ref Ssetcdr: LispSubr = LispSubr {
+        header: VectorLikeHeader {
+            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
+                   PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
+        },
+        function: (Fsetcdr as *const libc::c_void),
+        min_args: 2,
+        max_args: 2,
+        symbol_name: ("setcdr\0".as_ptr()) as *const c_char,
+        intspec: ptr::null(),
+        doc: ("Set the cdr of CELL to be NEWCDR.  Returns NEWCDR.
+
+(fn CELL NEWCDR)\0".as_ptr()) as *const c_char,
     };
 }

@@ -548,15 +548,6 @@ DEFUN ("cdr-safe", Fcdr_safe, Scdr_safe, 1, 1, 0,
   return CDR_SAFE (object);
 }
 
-DEFUN ("setcdr", Fsetcdr, Ssetcdr, 2, 2, 0,
-       doc: /* Set the cdr of CELL to be NEWCDR.  Returns NEWCDR.  */)
-  (register Lisp_Object cell, Lisp_Object newcdr)
-{
-  CHECK_CONS (cell);
-  CHECK_IMPURE (cell, XCONS (cell));
-  XSETCDR (cell, newcdr);
-  return newcdr;
-}
 
 /* Extract and set components of symbols.  */
 
@@ -3409,7 +3400,6 @@ syms_of_data (void)
   defsubr (&Scdr);
   defsubr (&Scar_safe);
   defsubr (&Scdr_safe);
-  defsubr (&Ssetcdr);
   defsubr (&Ssymbol_function);
   defsubr (&Sindirect_function);
   defsubr (&Ssymbol_plist);
