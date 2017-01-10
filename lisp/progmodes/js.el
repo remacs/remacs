@@ -3760,6 +3760,8 @@ If one hasn't been set, or if it's stale, prompt for a new one."
         c-line-comment-starter "//"
         c-comment-start-regexp "/[*/]\\|\\s!"
         comment-start-skip "\\(//+\\|/\\*+\\)\\s *")
+  (setq-local comment-line-break-function #'c-indent-new-comment-line)
+  (setq-local c-block-comment-start-regexp "/\\*")
 
   (setq-local electric-indent-chars
 	      (append "{}():;," electric-indent-chars)) ;FIXME: js2-mode adds "[]*".
