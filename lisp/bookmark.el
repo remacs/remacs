@@ -1432,13 +1432,20 @@ for a file, defaulting to the file defined by variable
           ;; arbitrary Lisp objects being stored in bookmark records,
           ;; and some users create objects containing circularities.
           (print-circle t))
-      (bookmark-insert-file-format-version-stamp coding-system-for-write)
       (insert "(")
       ;; Rather than a single call to `pp' we make one per bookmark.
       ;; Apparently `pp' has a poor algorithmic complexity, so this
       ;; scales a lot better.  bug#4485.
       (dolist (i bookmark-alist) (pp i (current-buffer)))
       (insert ")")
+      ;; Make sure the specified encoding can safely encode the
+      ;; bookmarks.  If it cannot, suggest utf-8-emacs as default.
+      (with-coding-priority '(utf-8-emacs)
+        (setq coding-system-for-write
+              (select-safe-coding-system (point-min) (point-max)
+                                         (list t coding-system-for-write))))
+      (goto-char (point-min))
+      (bookmark-insert-file-format-version-stamp coding-system-for-write)
       (let ((version-control
              (cond
               ((null bookmark-version-control) nil)
