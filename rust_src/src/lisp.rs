@@ -1083,7 +1083,7 @@ impl From<LispObject> for Option<LispCons> {
 
 /// A newtype for objects we know are conses.
 #[derive(Clone, Copy)]
-pub struct LispCons(LispObject);
+pub struct LispCons(pub LispObject);
 
 impl LispCons {
     pub fn as_obj(self) -> LispObject {
@@ -1101,7 +1101,7 @@ impl LispCons {
 
     /// Return the cdr (second cell).
     pub fn cdr(self) -> LispObject {
-        LispObject::from_raw(unsafe { (*self._extract()).cdr })
+        LispObject::from_raw(unsafe { (*self._extract()).u.cdr })
     }
 
     /// Set the car of the cons cell.
@@ -1114,7 +1114,7 @@ impl LispCons {
     /// Set the car of the cons cell.
     pub fn set_cdr(self, n: LispObject) {
         unsafe {
-            (*self._extract()).cdr = n.to_raw();
+            (*self._extract()).u.cdr = n.to_raw();
         }
     }
 

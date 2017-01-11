@@ -1,10 +1,13 @@
 //! Operations on lists.
 
+use libc;
+use lisp::{LispCons, LispObject};
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Qcircular_list, Qplistp};
-use remacs_sys::globals;
+use remacs_sys::{EmacsInt, Lisp_Type};
+use remacs_sys::{globals, lisp_align_malloc, make_lisp_ptr, Lisp_Cons, MemType, Qcircular_list,
+                 Qplistp};
+use std::mem;
 
-use lisp::LispObject;
 use lisp::defsubr;
 use symbols::LispSymbolRef;
 
@@ -500,6 +503,167 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
 
 pub fn circular_list(obj: LispObject) -> ! {
     xsignal!(Qcircular_list, obj);
+}
+
+extern "C" {
+    /// Free-list of Lisp_Cons structures.
+    static mut cons_free_list: *mut Lisp_Cons;
+    static mut consing_since_gc: EmacsInt;
+    static mut total_free_conses: EmacsInt;
+    // Current cons_block.
+    static mut cons_block: *mut ConsBlock;
+    // Index of first unused Lisp_Cons in the current block.
+    static mut cons_block_index: libc::c_int;
+}
+
+const BLOCK_PADDING: usize = 0;
+const BLOCK_ALIGN: usize = 1 << 10;
+
+#[cfg(target_pointer_width = "32")]
+const SIZE_OF_PTR: usize = 4;
+#[cfg(target_pointer_width = "64")]
+const SIZE_OF_PTR: usize = 8;
+
+/// We can't call size_of at compile time, so we write a test to
+/// verify that the constant has the value we want.
+#[test]
+fn test_size_of_ptr() {
+    assert_eq!(mem::size_of::<*const u32>(), SIZE_OF_PTR);
+}
+
+const BLOCK_BYTES: usize = BLOCK_ALIGN - SIZE_OF_PTR - BLOCK_PADDING;
+
+#[cfg(target_pointer_width = "32")]
+const SIZE_OF_LISP_CONS: usize = 2 * 4;
+#[cfg(all(not(windows), target_pointer_width = "64"))]
+const SIZE_OF_LISP_CONS: usize = 2 * 8;
+// An EmacsInt is a c_long, which is 32 bits on 64-bit windows:
+// http://stackoverflow.com/a/589685/509706
+#[cfg(all(windows, target_pointer_width = "64"))]
+const SIZE_OF_LISP_CONS: usize = 2 * 4;
+
+/// We can't call size_of at compile time, so we write a test to
+/// verify that the constant matches the size of `LispCons`.
+#[test]
+fn test_size_of_lisp_cons() {
+    assert_eq!(mem::size_of::<Lisp_Cons>(), SIZE_OF_LISP_CONS);
+}
+
+/// An unsigned integer type representing a fixed-length bit sequence,
+/// suitable for bool vector words, GC mark bits, etc.
+#[allow(non_camel_case_types)]
+type bits_word = libc::size_t;
+
+#[cfg(target_pointer_width = "32")]
+const SIZE_OF_BITS_WORD: usize = 4;
+#[cfg(target_pointer_width = "64")]
+const SIZE_OF_BITS_WORD: usize = 8;
+
+#[test]
+fn test_size_of_bits_word() {
+    assert_eq!(mem::size_of::<bits_word>(), SIZE_OF_BITS_WORD);
+}
+
+const CONS_BLOCK_SIZE: usize = ((BLOCK_BYTES - SIZE_OF_PTR
+    - (SIZE_OF_LISP_CONS - SIZE_OF_BITS_WORD)) * 8)
+    / (SIZE_OF_LISP_CONS * 8 + 1);
+
+const BITS_PER_BITS_WORD: usize = 8 * SIZE_OF_BITS_WORD;
+
+/// The ConsBlock is used to store cons cells.
+///
+/// We allocate new ConsBlock values when needed. Cons cells reclaimed
+/// by GC are put on a free list to be reallocated before allocating
+/// any new cons cells from the latest ConsBlock.
+///
+/// # Porting Notes
+///
+/// This is `cons_block` in C.
+#[repr(C)]
+struct ConsBlock {
+    conses: [Lisp_Cons; CONS_BLOCK_SIZE as usize],
+    gcmarkbits: [bits_word; (1 + CONS_BLOCK_SIZE / BITS_PER_BITS_WORD) as usize],
+    next: *mut ConsBlock,
+}
+
+fn get_mark_bit(block: *const ConsBlock, n: usize) -> usize {
+    unsafe { (*block).gcmarkbits[n / BITS_PER_BITS_WORD] >> (n % BITS_PER_BITS_WORD) & 1 }
+}
+
+/// Get pointer to block that contains this cons cell.
+fn CONS_BLOCK(fptr: *mut libc::c_void) -> *const ConsBlock {
+    (fptr as usize & !(BLOCK_ALIGN - 1)) as *const ConsBlock
+}
+
+/// Find the offset of this cons cell in its current block.
+fn CONS_INDEX(fptr: *mut libc::c_void) -> usize {
+    (fptr as usize & (BLOCK_ALIGN - 1)) / SIZE_OF_LISP_CONS
+}
+
+fn cons_marked_p(fptr: *mut libc::c_void) -> bool {
+    get_mark_bit(CONS_BLOCK(fptr), CONS_INDEX(fptr)) != 0
+}
+
+fn cons(car: LispObject, cdr: LispObject) -> LispObject {
+    // malloc_block_input();
+
+    let val: LispCons;
+    unsafe {
+        if !cons_free_list.is_null() {
+            // Use the current head of the free list for this cons
+            // cell, and remove it from the free list.
+            let tagged_cons_ptr =
+                make_lisp_ptr(cons_free_list as *mut libc::c_void, Lisp_Type::Lisp_Cons);
+            val = LispCons(LispObject::from_raw(tagged_cons_ptr));
+            let new_list_head = (*cons_free_list).u.chain;
+            cons_free_list = mem::transmute(new_list_head);
+        } else {
+            // Otherwise, we need to malloc some memory.
+            if cons_block_index == (CONS_BLOCK_SIZE as libc::c_int) {
+                // Allocate a new block.
+                let new: *mut ConsBlock =
+                    lisp_align_malloc(mem::size_of::<*mut ConsBlock>(), MemType::MEM_TYPE_CONS)
+                        as *mut ConsBlock;
+                // Set all the cons cells as free.
+                libc::memset(
+                    &mut (*new).gcmarkbits as *mut _ as *mut libc::c_void,
+                    0,
+                    mem::size_of_val(&(*new).gcmarkbits),
+                );
+                // Add the block to the linked list.
+                (*new).next = cons_block;
+                cons_block = new;
+                cons_block_index = 0;
+                total_free_conses += CONS_BLOCK_SIZE as EmacsInt;
+            }
+
+            let new_cons_cell_ptr =
+                &mut (*cons_block).conses[cons_block_index as usize] as *mut Lisp_Cons;
+            let tagged_cons_ptr =
+                make_lisp_ptr(new_cons_cell_ptr as *mut libc::c_void, Lisp_Type::Lisp_Cons);
+            val = LispCons(LispObject::from_raw(tagged_cons_ptr));
+            cons_block_index += 1;
+        }
+    }
+
+    val.set_car(car);
+    val.set_cdr(cdr);
+
+    debug_assert!(!cons_marked_p(val.0.get_untaggedptr()));
+
+    unsafe {
+        consing_since_gc += mem::size_of::<Lisp_Cons>() as EmacsInt;
+        total_free_conses -= 1;
+        globals.f_cons_cells_consed += 1;
+    }
+
+    val.as_obj()
+}
+
+/// Create a new cons, give it CAR and CDR as components, and return it.
+#[lisp_fn]
+pub fn rust_cons(car: LispObject, cdr: LispObject) -> LispObject {
+    cons(car, cdr)
 }
 
 include!(concat!(env!("OUT_DIR"), "/lists_exports.rs"));

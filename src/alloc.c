@@ -242,7 +242,8 @@ bool gc_in_progress;
 /* Number of live and free conses etc.  */
 
 static EMACS_INT total_conses, total_markers, total_symbols, total_buffers;
-static EMACS_INT total_free_conses, total_free_markers, total_free_symbols;
+EMACS_INT total_free_conses;
+static EMACS_INT total_free_markers, total_free_symbols;
 static EMACS_INT total_free_floats, total_floats;
 
 /* Points to memory space allocated as "spare", to be freed if we run
@@ -1242,7 +1243,7 @@ static struct ablock *free_ablock;
 /* Allocate an aligned block of nbytes.
    Alignment is on a multiple of BLOCK_ALIGN and `nbytes' has to be
    smaller or equal to BLOCK_BYTES.  */
-static void *
+void *
 lisp_align_malloc (size_t nbytes, enum mem_type type)
 {
   void *base, *val;
@@ -2710,15 +2711,15 @@ struct cons_block
 
 /* Current cons_block.  */
 
-static struct cons_block *cons_block;
+struct cons_block *cons_block;
 
 /* Index of first unused Lisp_Cons in the current block.  */
 
-static int cons_block_index = CONS_BLOCK_SIZE;
+int cons_block_index = CONS_BLOCK_SIZE;
 
 /* Free-list of Lisp_Cons structures.  */
 
-static struct Lisp_Cons *cons_free_list;
+struct Lisp_Cons *cons_free_list;
 
 /* Explicitly free a cons cell by putting it on the free-list.  */
 

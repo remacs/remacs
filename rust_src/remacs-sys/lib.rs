@@ -1,4 +1,5 @@
 #![feature(const_size_of)]
+#![feature(untagged_unions)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 
 //! This module contains all FFI declarations.
@@ -638,7 +639,45 @@ pub struct Lisp_Cons {
     /// Car of this cons cell.
     pub car: Lisp_Object,
     /// Cdr of this cons cell, or the chain used for the free list.
+    pub u: Lisp_Cons_Cdr,
+}
+
+#[repr(C)]
+pub union Lisp_Cons_Cdr {
     pub cdr: Lisp_Object,
+    pub chain: *mut Lisp_Cons
+}
+
+// When scanning the C stack for live Lisp objects, Emacs keeps track of
+// what memory allocated via lisp_malloc and lisp_align_malloc is intended
+// for what purpose.  This enumeration specifies the type of memory.
+//
+// # Porting Notes
+//
+// `mem_type` in C.
+#[repr(u8)]
+#[allow(dead_code)]
+#[allow(non_camel_case_types)]
+pub enum MemType {
+    MEM_TYPE_NON_LISP,
+    MEM_TYPE_BUFFER,
+    MEM_TYPE_CONS,
+    MEM_TYPE_STRING,
+    MEM_TYPE_MISC,
+    MEM_TYPE_SYMBOL,
+    MEM_TYPE_FLOAT,
+    // Since all non-bool pseudovectors are small enough to be
+    // allocated from vector blocks, this memory type denotes
+    // large regular vectors and large bool pseudovectors.
+    MEM_TYPE_VECTORLIKE,
+    // Special type to denote vector blocks.
+    MEM_TYPE_VECTOR_BLOCK,
+    // Special type to denote reserved memory.
+    MEM_TYPE_SPARE,
+}
+
+extern "C" {
+    pub fn lisp_align_malloc(nbytes: libc::size_t, ty: MemType) -> *mut libc::c_void;
 }
 
 /// Type of comparison for `internal_equal()`.
