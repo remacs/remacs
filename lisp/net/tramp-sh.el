@@ -5357,12 +5357,14 @@ Nonexistent directories are removed from spec."
       ;; work on older AIX systems.  Recent GNU stat versions (8.24?)
       ;; use shell quoted format for "%N", we check the boundaries "`"
       ;; and "'", therefore.  See Bug#23422 in coreutils.
+      ;; Since GNU stat 8.26, environment variable QUOTING_STYLE is
+      ;; supported.
       (when result
-	(setq tmp
-	      (tramp-send-command-and-read
-	       vec (format "%s -c '(\"%%N\" %%s)' /" result) 'noerror))
+	(setq result (concat "env QUOTING_STYLE=locale " result)
+	      tmp (tramp-send-command-and-read
+		   vec (format "%s -c '(\"%%N\" %%s)' /" result) 'noerror))
 	(unless (and (listp tmp) (stringp (car tmp))
-		     (string-match "^`/'$" (car tmp))
+		     (string-match "^\\(`/'\\|‘/’\\)$" (car tmp))
 		     (integerp (cadr tmp)))
 	  (setq result nil)))
       result)))
