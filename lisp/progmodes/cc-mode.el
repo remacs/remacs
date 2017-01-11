@@ -1209,6 +1209,7 @@ Note that the style variables are always made local to the buffer."
 	  ;; Are we coalescing two tokens together, e.g. "fo o" -> "foo"?
 	  (when (< beg end)
 	    (c-unfind-coalesced-tokens beg end))
+	  (c-invalidate-sws-region-before end)
 	  ;; Are we (potentially) disrupting the syntactic context which
 	  ;; makes a type a type?  E.g. by inserting stuff after "foo" in
 	  ;; "foo bar;", or before "foo" in "typedef foo *bar;"?
@@ -1338,7 +1339,7 @@ Note that the style variables are always made local to the buffer."
 	      (c-clear-char-property-with-value beg end 'syntax-table nil)))
 
 	  (c-trim-found-types beg end old-len) ; maybe we don't need all of these.
-	  (c-invalidate-sws-region-after beg end)
+	  (c-invalidate-sws-region-after beg end old-len)
 	  ;; (c-invalidate-state-cache beg) ; moved to `c-before-change'.
 	  (c-invalidate-find-decl-cache beg)
 

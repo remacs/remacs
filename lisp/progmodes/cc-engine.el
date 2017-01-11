@@ -1708,46 +1708,127 @@ comment at the start of cc-engine.el for more info."
 	 `((c-debug-remove-face beg end 'c-debug-is-sws-face)
 	   (c-debug-remove-face beg end 'c-debug-in-sws-face)))))
 
-(defsubst c-invalidate-sws-region-after (beg end)
-  ;; Called from `after-change-functions'.  Note that if
-  ;; `c-forward-sws' or `c-backward-sws' are used outside
+;; The type of literal position `end' is in in a `before-change-functions'
+;; function - one of `c', `c++', `pound', or nil (but NOT `string').
+(defvar c-sws-lit-type nil)
+;; A cons (START . STOP) of the bounds of the comment or CPP construct
+;; enclosing END, if any, else nil.
+(defvar c-sws-lit-limits nil)
+
+(defun c-invalidate-sws-region-before (end)
+  ;; Called from c-before-change.  END is the end of the change region, the
+  ;; standard parameter given to all before-change-functions.
+  ;;
+  ;; Note whether END is inside a comment or CPP construct, and if so note its
+  ;; bounds in `c-sws-lit-limits' and type in `c-sws-lit-type'.
+  (save-excursion
+    (goto-char end)
+    (let* ((limits (c-literal-limits))
+	   (lit-type (c-literal-type limits)))
+      (cond
+       ((memq lit-type '(c c++))
+	(setq c-sws-lit-type lit-type
+	      c-sws-lit-limits limits))
+       ((c-beginning-of-macro)
+	(setq c-sws-lit-type 'pound
+	      c-sws-lit-limits (cons (point)
+				     (progn (c-end-of-macro) (point)))))
+       (t (setq c-sws-lit-type nil
+		c-sws-lit-limits nil))))))
+
+(defun c-invalidate-sws-region-after-del (beg end old-len)
+  ;; Text has been deleted, OLD-LEN characters of it starting from position
+  ;; BEG.  END is typically eq to BEG.  Should there have been a comment or
+  ;; CPP construct open at END before the deletion, check whether this
+  ;; deletion deleted or "damaged" its opening delimiter.  If so, return the
+  ;; current position of where the construct ended, otherwise return nil.
+  (when c-sws-lit-limits
+    (setcdr c-sws-lit-limits (- (cdr c-sws-lit-limits) old-len))
+    (if (and (< beg (+ (car c-sws-lit-limits) 2)) ; A lazy assumption that
+						  ; comment delimiters are 2
+						  ; chars long.
+	     (or (get-text-property end 'c-in-sws)
+		 (next-single-property-change end 'c-in-sws nil
+					      (cdr c-sws-lit-limits))
+		 (get-text-property end 'c-is-sws)
+		 (next-single-property-change end 'c-is-sws nil
+					      (cdr c-sws-lit-limits))))
+	(cdr c-sws-lit-limits))))
+
+(defun c-invalidate-sws-region-after-ins (end)
+  ;; Text has been inserted, ending at buffer position END.  Should there be a
+  ;; literal or CPP construct open at END, check whether there are `c-in-sws'
+  ;; or `c-is-sws' text properties inside this literal.  If there are, return
+  ;; the buffer position of the end of the literal, else return nil.
+  (save-excursion
+    (let* ((limits (c-literal-limits))
+	   (lit-type (c-literal-type limits)))
+      (goto-char end)
+      (when (and (not (memq lit-type '(c c++)))
+		 (c-beginning-of-macro))
+	(setq lit-type 'pound
+	      limits (cons (point)
+			   (progn (c-end-of-macro) (point)))))
+      (when (memq lit-type '(c c++ pound))
+	(let ((next-in (next-single-property-change (car limits) 'c-in-sws
+						    nil (cdr limits)))
+	      (next-is (next-single-property-change (car limits) 'c-is-sws
+						    nil (cdr limits))))
+	  (and (or next-in next-is)
+	       (cdr limits)))))))
+
+(defun c-invalidate-sws-region-after (beg end old-len)
+  ;; Called from `after-change-functions'.  Remove any stale `c-in-sws' or
+  ;; `c-is-sws' text properties from the vicinity of the change.  BEG, END,
+  ;; and OLD-LEN are the standard arguments given to after-change functions.
+  ;;
+  ;; Note that if `c-forward-sws' or `c-backward-sws' are used outside
   ;; `c-save-buffer-state' or similar then this will remove the cache
   ;; properties right after they're added.
   ;;
   ;; This function does hidden buffer changes.
+  (let ((del-end
+	 (and (> old-len 0)
+	      (c-invalidate-sws-region-after-del beg end old-len)))
+	(ins-end
+	 (and (> end beg)
+	      (c-invalidate-sws-region-after-ins end))))
+    (save-excursion
+      ;; Adjust the end to remove the properties in any following simple
+      ;; ws up to and including the next line break, if there is any
+      ;; after the changed region. This is necessary e.g. when a rung
+      ;; marked empty line is converted to a line comment by inserting
+      ;; "//" before the line break. In that case the line break would
+      ;; keep the rung mark which could make a later `c-backward-sws'
+      ;; move into the line comment instead of over it.
+      (goto-char end)
+      (skip-chars-forward " \t\f\v")
+      (when (and (eolp) (not (eobp)))
+	(setq end (1+ (point)))))
 
-  (save-excursion
-    ;; Adjust the end to remove the properties in any following simple
-    ;; ws up to and including the next line break, if there is any
-    ;; after the changed region. This is necessary e.g. when a rung
-    ;; marked empty line is converted to a line comment by inserting
-    ;; "//" before the line break. In that case the line break would
-    ;; keep the rung mark which could make a later `c-backward-sws'
-    ;; move into the line comment instead of over it.
-    (goto-char end)
-    (skip-chars-forward " \t\f\v")
-    (when (and (eolp) (not (eobp)))
-      (setq end (1+ (point)))))
+    (when (and (= beg end)
+	       (get-text-property beg 'c-in-sws)
+	       (> beg (point-min))
+	       (get-text-property (1- beg) 'c-in-sws))
+      ;; Ensure that an `c-in-sws' range gets broken.  Note that it isn't
+      ;; safe to keep a range that was continuous before the change.  E.g:
+      ;;
+      ;;    #define foo
+      ;;         \
+      ;;    bar
+      ;;
+      ;; There can be a "ladder" between "#" and "b".  Now, if the newline
+      ;; after "foo" is removed then "bar" will become part of the cpp
+      ;; directive instead of a syntactically relevant token.  In that
+      ;; case there's no longer syntactic ws from "#" to "b".
+      (setq beg (1- beg)))
 
-  (when (and (= beg end)
-	     (get-text-property beg 'c-in-sws)
-	     (> beg (point-min))
-	     (get-text-property (1- beg) 'c-in-sws))
-    ;; Ensure that an `c-in-sws' range gets broken.  Note that it isn't
-    ;; safe to keep a range that was continuous before the change.  E.g:
-    ;;
-    ;;    #define foo
-    ;;         \
-    ;;    bar
-    ;;
-    ;; There can be a "ladder" between "#" and "b".  Now, if the newline
-    ;; after "foo" is removed then "bar" will become part of the cpp
-    ;; directive instead of a syntactically relevant token.  In that
-    ;; case there's no longer syntactic ws from "#" to "b".
-    (setq beg (1- beg)))
+    (setq end (max (or del-end end)
+		   (or ins-end end)
+		   end))
 
-  (c-debug-sws-msg "c-invalidate-sws-region-after [%s..%s]" beg end)
-  (c-remove-is-and-in-sws beg end))
+    (c-debug-sws-msg "c-invalidate-sws-region-after [%s..%s]" beg end)
+    (c-remove-is-and-in-sws beg end)))
 
 (defun c-forward-sws ()
   ;; Used by `c-forward-syntactic-ws' to implement the unbounded search.

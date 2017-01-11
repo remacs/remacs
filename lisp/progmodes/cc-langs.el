@@ -1445,6 +1445,15 @@ properly."
   t    "*/"
   awk  nil)
 
+(c-lang-defconst c-block-comment-ender-regexp
+  ;; Regexp which matches the end of a block comment (if such exists in the
+  ;; language)
+  t (if (c-lang-const c-block-comment-ender)
+	(regexp-quote (c-lang-const c-block-comment-ender))
+      "\\<\\>"))
+(c-lang-defvar c-block-comment-ender-regexp
+	       (c-lang-const c-block-comment-ender-regexp))
+
 (c-lang-defconst c-comment-start-regexp
   ;; Regexp to match the start of any type of comment.
   t (let ((re (c-make-keywords-re nil
