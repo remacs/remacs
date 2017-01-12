@@ -51,5 +51,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*cons::Ssetcar);
         defsubr(&*cons::Ssetcdr);
         defsubr(&*strings::Sstringp);
+        defsubr(&*strings::Seq);
     }
 }

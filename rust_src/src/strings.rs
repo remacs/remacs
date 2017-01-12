@@ -34,3 +34,30 @@ lazy_static! {
 (fn OBJECT)\0".as_ptr()) as *const c_char,
     };
 }
+
+fn Feq (firstObject: LispObject, secondObject: LispObject) -> LispObject {
+    if firstObject == secondObject {
+        unsafe {
+            Qt
+        }
+    } else {
+        Qnil
+    }
+}
+
+lazy_static! {
+    pub static ref Seq: LispSubr = LispSubr {
+        header: VectorLikeHeader {
+            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
+                   PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
+        },
+        function: (Feq as *const libc::c_void),
+        min_args: 2,
+        max_args: 2,
+        symbol_name: ("eq\0".as_ptr()) as *const c_char,
+        intspec: ptr::null(),
+        doc: ("Return t if the two args are the same Lisp object.
+
+(fn OBJECT OBJECT)\0".as_ptr()) as *const c_char,
+    };
+}
