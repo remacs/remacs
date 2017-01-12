@@ -14,6 +14,7 @@ mod math;
 mod cons;
 mod strings;
 mod symbols;
+mod globals;
 
 use lisp::LispSubr;
 
