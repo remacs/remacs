@@ -178,7 +178,7 @@ $ ./configure
 Modify `src/Makefile` to read:
 
 ``` makefile
-LIBS_SYSTEM=-L../rust_src/target/debug -lremacs -ldl
+LIBS_SYSTEM=-L$(top_srcdir)/rust_src/target/debug -lremacs -ldl
 ```
 
 Then compile Emacs:
