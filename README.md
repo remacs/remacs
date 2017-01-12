@@ -175,12 +175,6 @@ $ ./autogen.sh
 $ ./configure
 ```
 
-Modify `src/Makefile`, replacing the blank initialization of `LIBS_SYSTEM` to read:
-
-``` makefile
-LIBS_SYSTEM=-L$(top_srcdir)/rust_src/target/debug -lremacs -ldl
-```
-
 Then compile Emacs:
 
 ```
