@@ -438,7 +438,7 @@ otherobj= $(TERMCAP_OBJ) $(PRE_ALLOC_OBJ) $(GMALLOC_OBJ) $(RALLOC_OBJ) \
 FIRSTFILE_OBJ=@FIRSTFILE_OBJ@
 ALLOBJS = $(FIRSTFILE_OBJ) $(VMLIMIT_OBJ) $(obj) $(otherobj)
 
-all: emacs$(EXEEXT) $(OTHER_FILES)
+all: remacs$(EXEEXT) $(OTHER_FILES)
 .PHONY: all
 
 ## This is the list of all Lisp files that might be loaded into the
@@ -526,7 +526,7 @@ ${lispintdir}/characters.elc: ${charscript:.el=.elc}
 ## Strictly speaking, emacs does not depend directly on all of $lisp,
 ## since not all pieces are used on all platforms.  But DOC depends
 ## on all of $lisp, and emacs depends on DOC, so it is ok to use $lisp here.
-emacs$(EXEEXT): temacs$(EXEEXT) \
+remacs$(EXEEXT): temacs$(EXEEXT) \
                 lisp.mk $(etc)/DOC $(lisp) $(leimdir)/leim-list.el \
                 $(lispsource)/international/charprop.el ${charsets}
 ifeq ($(CANNOT_DUMP),yes)
@@ -628,7 +628,7 @@ emacs.res: FORCE
 	$(MAKE) -C ../nt ../src/emacs.res
 
 .PHONY: ns-app
-ns-app: emacs$(EXEEXT)
+ns-app: remacs$(EXEEXT)
 	$(MAKE) -C ../nextstep all
 
 .PHONY: mostlyclean clean bootstrap-clean distclean maintainer-clean
@@ -637,12 +637,12 @@ ns-app: emacs$(EXEEXT)
 mostlyclean:
 	rm -f temacs$(EXEEXT) core *.core \#* *.o
 	rm -f ../etc/DOC
-	rm -f bootstrap-emacs$(EXEEXT) emacs-$(version)$(EXEEXT)
+	rm -f bootstrap-emacs$(EXEEXT) remacs-$(version)$(EXEEXT)
 	rm -f buildobj.h
 	rm -f globals.h gl-stamp
 	rm -f *.res *.tmp
 clean: mostlyclean
-	rm -f emacs-*.*.*$(EXEEXT) emacs$(EXEEXT)
+	rm -f remacs-*.*.*$(EXEEXT) remacs$(EXEEXT)
 	-rm -rf $(DEPDIR)
 
 ## bootstrap-clean is used to clean up just before a bootstrap.
@@ -662,7 +662,7 @@ distclean: bootstrap-clean
 maintainer-clean: distclean
 	rm -f TAGS
 versionclean:
-	-rm -f emacs$(EXEEXT) emacs-*.*.*$(EXEEXT) ../etc/DOC*
+	-rm -f remacs$(EXEEXT) remacs-*.*.*$(EXEEXT) ../etc/DOC*
 extraclean: distclean
 	-rm -f *~ \#*
 
@@ -739,9 +739,9 @@ ifeq ($(CANNOT_DUMP),yes)
 else
 	$(RUN_TEMACS) --batch --load loadup bootstrap
   ifneq ($(PAXCTL_dumped),)
-	$(PAXCTL_dumped) emacs$(EXEEXT)
+	$(PAXCTL_dumped) remacs$(EXEEXT)
   endif
-	mv -f emacs$(EXEEXT) $@
+	mv -f remacs$(EXEEXT) $@
 endif
 	@: Compile some files earlier to speed up further compilation.
 	$(MAKE) -C ../lisp compile-first EMACS="$(bootstrap_exe)"
