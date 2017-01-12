@@ -346,46 +346,47 @@ Pull requests welcome, no copyright assignment required. This project is under t
 
 ## Help Needed
 
-There's lots to do!
+There's lots to do! We keep a list of low hanging fruit here so you can easily choose
+one. If you do, please open a new issue to keep track of the task and link to it.
 
 Easy tasks:
 
-* Find a small function in lisp.h and write an equivalent in lisp.rs.
-* Improve our unit tests. Currently we're passing `Qnil` to test
+- [ ] Find a small function in lisp.h and write an equivalent in lisp.rs.
+- [ ] Improve our unit tests. Currently we're passing `Qnil` to test
   functions, which isn't very useful.
-* Add docstrings to public functions in lisp.rs.
-* Tidy up messy Rust that's been translated directly from C. Run
+- [ ] Add docstrings to public functions in lisp.rs.
+- [ ] Tidy up messy Rust that's been translated directly from C. Run
   `rustfmt`, add or rename internal variables, run `clippy`, and so
   on.
-* Fix the makefile to recompile with cargo and rebuild temacs when the
+- [ ] Fix the makefile to recompile with cargo and rebuild temacs when the
   Rust source changes.
-* Fix 'make clean' to delete .elc files, otherwise you don't notice
+- [ ] Fix 'make clean' to delete .elc files, otherwise you don't notice
   some bugs until Travis runs.
-* Fix the makefile to output a binary called `remacs`
-* Update the Remacs welcome screen to say Remacs
-* Add Rust-level unit tests to elisp functions defined in lib.rs.
+- [ ] Fix the makefile to output a binary called `remacs`
+- [ ] Update the Remacs welcome screen to say Remacs
+- [ ] Add Rust-level unit tests to elisp functions defined in lib.rs.
 
 Medium tasks:
 
-* Choose an elisp function you like, and port it to rust. Look at
+- [ ] Choose an elisp function you like, and port it to rust. Look at
   `rust-mod` for an example.
-* Teach `describe-function` to find functions defined in Rust.
-* Expand our Travis configuration to run 'make check', so we know
+- [ ] Teach `describe-function` to find functions defined in Rust.
+- [ ] Expand our Travis configuration to run 'make check', so we know
   remacs passes Emacs' internal test suite.
-* Expand our Travis configuration to ensure that Rust code has been
+- [ ] Expand our Travis configuration to ensure that Rust code has been
   formatted with rustfmt
-* Set up bors/homu.
-* Set up a badge tracking pub struct/function coverage using
+- [ ] Set up bors/homu.
+- [ ] Set up a badge tracking pub struct/function coverage using
   cargo-doc-coverage.
-* Search the Rust source code for `TODO` comments and fix them.
-* Teach Emacs how to jump to definition for Rust functions.
+- [ ] Search the Rust source code for `TODO` comments and fix them.
+- [ ] Teach Emacs how to jump to definition for Rust functions.
 
 Big tasks:
 
-* Find equivalent Rust libraries for parts of Emacs, and replace all
+- [ ] Find equivalent Rust libraries for parts of Emacs, and replace all
   the relevant C code. Rust has great libraries for regular
   expressions, GUI, terminal UI, managing processes, amongst others.
-* Change the elisp float representation to use
+- [ ] Change the elisp float representation to use
   [nan boxing](https://wingolog.org/archives/2011/05/18/value-representation-in-javascript-implementations)
   rather than allocating floats on the heap.
 
