@@ -104,8 +104,7 @@ check_version ()
 }
 
 do_check=true
-do_autoconf=false
-test $# -eq 0 && do_autoconf=true
+do_autoconf=true
 do_git=false
 
 for arg; do
@@ -113,14 +112,13 @@ for arg; do
       --help)
 	exec echo "$0: usage: $0 [all|autoconf|git]";;
       --no-check)
-        do_check=false
-        test $# -eq 1 && do_autoconf=true;;
+        do_check=false;;
       all)
-	do_autoconf=true
 	test -e .git && do_git=true;;
       autoconf)
-	do_autoconf=true;;
+	true;;
       git)
+	do_autoconf=false
 	do_git=true;;
       *)
 	echo >&2 "$0: $arg: unknown argument"; exit 1;;
