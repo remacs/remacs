@@ -21,22 +21,9 @@ fn Fconsp(object: LispObject) -> LispObject {
     if CONSP(object) { unsafe { Qt } } else { Qnil }
 }
 
-lazy_static! {
-    pub static ref Sconsp: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
-        },
-        function: (Fconsp as *const libc::c_void),
-        min_args: 1,
-        max_args: 1,
-        symbol_name: ("consp\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        doc: ("Return t if OBJECT is a cons cell.
+defun!("consp", Fconsp, Sconsp, 1, 1, ptr::null(), "Return t if OBJECT is a cons cell.
 
-(fn OBJECT)\0".as_ptr()) as *const c_char,
-    };
-}
+(fn OBJECT)");
 
 /// Represents a cons cell, or GC bookkeeping for cons cells.
 ///
@@ -98,22 +85,9 @@ pub extern "C" fn Fsetcar(cell: LispObject, newcar: LispObject) -> LispObject {
     newcar
 }
 
-lazy_static! {
-    pub static ref Ssetcar: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
-        },
-        function: (Fsetcar as *const libc::c_void),
-        min_args: 2,
-        max_args: 2,
-        symbol_name: ("setcar\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        doc: ("Set the car of CELL to be NEWCAR. Returns NEWCAR.
+defun!("setcar", Fsetcar, Ssetcar, 2, 2, ptr::null(), "Set the car of CELL to be NEWCAR. Returns NEWCAR.
 
-(fn CELL NEWCAR)\0".as_ptr()) as *const c_char,
-    };
-}
+(fn CELL NEWCAR)");
 
 #[no_mangle]
 pub extern "C" fn Fsetcdr(cell: LispObject, newcar: LispObject) -> LispObject {
@@ -126,19 +100,6 @@ pub extern "C" fn Fsetcdr(cell: LispObject, newcar: LispObject) -> LispObject {
     newcar
 }
 
-lazy_static! {
-    pub static ref Ssetcdr: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
-        },
-        function: (Fsetcdr as *const libc::c_void),
-        min_args: 2,
-        max_args: 2,
-        symbol_name: ("setcdr\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        doc: ("Set the cdr of CELL to be NEWCDR.  Returns NEWCDR.
+defun!("setcdr", Fsetcdr, Ssetcdr, 2, 2, ptr::null(), "Set the cdr of CELL to be NEWCDR.  Returns NEWCDR.
 
-(fn CELL NEWCDR)\0".as_ptr()) as *const c_char,
-    };
-}
+(fn CELL NEWCDR)");

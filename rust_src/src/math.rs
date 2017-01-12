@@ -39,29 +39,14 @@ fn Fmod(x: LispObject, y: LispObject) -> LispObject {
     make_number(i1)
 }
 
-lazy_static! {
-    // TODO: this is blindly hoping we have the correct alignment.
-    // We should ensure we have GCALIGNMENT (8 bytes).
-    pub static ref Smod: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
-        },
-        function: (Fmod as *const libc::c_void),
-        min_args: 2,
-        max_args: 2,
-        symbol_name: ("mod\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        // TODO: There's some magic somewhere in core Emacs that means
-        // `(fn X Y)` is added to the docstring automatically. We
-        // should do something similar.
-        doc: ("Return X modulo Y.
+// TODO: There's some magic somewhere in core Emacs that means
+// `(fn X Y)` is added to the docstring automatically. We
+// should do something similar.
+defun!("mod", Fmod, Smod, 2, 2, ptr::null(), "Return X modulo Y.
 The result falls between zero (inclusive) and Y (exclusive).
 Both X and Y must be numbers or markers.
 
-(fn X Y)\0".as_ptr()) as *const c_char,
-    };
-}
+(fn X Y)");
 
 #[repr(C)]
 enum ArithOp {
@@ -199,70 +184,29 @@ pub extern "C" fn Fplus(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
     arith_driver(ArithOp::Add, nargs, args)
 }
 
-// TODO: define a macro that saves us repeating lazy_static!.
-lazy_static! {
-    pub static ref Splus: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
-        },
-        function: (Fplus as *const libc::c_void),
-        min_args: 0,
-        max_args: MANY,
-        symbol_name: ("+\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        doc: ("Return sum of any number of arguments, which are numbers or markers.
+defun!("+", Fplus, Splus, 0, MANY, ptr::null(), "Return sum of any number of arguments, which are numbers or markers.
 
-(fn &rest NUMBERS-OR-MARKERS)\0".as_ptr()) as *const c_char,
-    };
-}
+(fn &rest NUMBERS-OR-MARKERS)");
 
 #[no_mangle]
 pub extern "C" fn Fminus(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
     arith_driver(ArithOp::Sub, nargs, args)
 }
 
-// TODO: define a macro that saves us repeating lazy_static!.
-lazy_static! {
-    pub static ref Sminus: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
-        },
-        function: (Fminus as *const libc::c_void),
-        min_args: 0,
-        max_args: MANY,
-        symbol_name: ("-\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        doc: ("Negate number or subtract numbers or markers and return the result.
+defun!("-", Fminus, Sminus, 0, MANY, ptr::null(), "Negate number or subtract numbers or markers and return the result.
 With one arg, negates it.  With more than one arg,
 subtracts all but the first from the first.
 
-(fn &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)\0".as_ptr()) as *const c_char,
-    };
-}
+(fn &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)");
 
 #[no_mangle]
 pub extern "C" fn Ftimes(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
     arith_driver(ArithOp::Mult, nargs, args)
 }
 
-lazy_static! {
-    pub static ref Stimes: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
-        },
-        function: (Ftimes as *const libc::c_void),
-        min_args: 0,
-        max_args: MANY,
-        symbol_name: ("*\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        doc: ("Return product of any number of arguments, which are numbers or markers.
+defun!("*", Ftimes, Stimes, 0, MANY, ptr::null(), "Return product of any number of arguments, which are numbers or markers.
 
-(fn &optional NUMBER-OR-MARKERS)\0".as_ptr()) as *const c_char,
-    };
-}
+(fn &optional NUMBER-OR-MARKERS)");
 
 /// Calculate quotient, in other words divide.
 #[no_mangle]
@@ -278,134 +222,56 @@ pub extern "C" fn Fquo(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
     arith_driver(ArithOp::Div, nargs, args)
 }
 
-lazy_static! {
-    pub static ref Squo: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
-        },
-        function: (Fquo as *const libc::c_void),
-        min_args: 1,
-        max_args: MANY,
-        symbol_name: ("/\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        doc: ("Divide number by divisors and return the result.
+defun!("/", Fquo, Squo, 1, MANY, ptr::null(), "Divide number by divisors and return the result.
 With two or more arguments, return first argument divided by the rest.
 With one argument, return 1 divided by the argument.
 The arguments must be numbers or markers.
 
-(fn NUMBER &rest DIVISORS)\0".as_ptr()) as *const c_char,
-    };
-}
+(fn NUMBER &rest DIVISORS)");
 
 fn Flogand(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
     arith_driver(ArithOp::Logand, nargs, args)
 }
 
-lazy_static! {
-    pub static ref Slogand: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
-        },
-        function: (Flogand as *const libc::c_void),
-        min_args: 0,
-        max_args: MANY,
-        symbol_name: ("logand\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        doc: ("Return bitwise-and of all the arguments.
+defun!("logand", Flogand, Slogand, 0, MANY, ptr::null(), "Return bitwise-and of all the arguments.
 Arguments may be integers, or markers converted to integers.
 
-(fn &rest INTS-OR-MARKERS)\0".as_ptr()) as *const c_char,
-    };
-}
+(fn &rest INTS-OR-MARKERS)");
 
 fn Flogior(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
     arith_driver(ArithOp::Logior, nargs, args)
 }
 
-lazy_static! {
-    pub static ref Slogior: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
-        },
-        function: (Flogior as *const libc::c_void),
-        min_args: 0,
-        max_args: MANY,
-        symbol_name: ("logior\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        doc: ("Return bitwise-or of all the arguments.
+defun!("logior", Flogior, Slogior, 0, MANY, ptr::null(), "Return bitwise-or of all the arguments.
 Arguments may be integers, or markers converted to integers.
 
-(fn &rest INTS-OR-MARKERS)\0".as_ptr()) as *const c_char,
-    };
-}
+(fn &rest INTS-OR-MARKERS)");
 
 fn Flogxor(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
     arith_driver(ArithOp::Logxor, nargs, args)
 }
 
-lazy_static! {
-    pub static ref Slogxor: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
-        },
-        function: (Flogxor as *const libc::c_void),
-        min_args: 0,
-        max_args: MANY,
-        symbol_name: ("logxor\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        doc: ("Return bitwise-exclusive-or of all the arguments.
+defun!("logxor", Flogxor, Slogxor, 0, MANY, ptr::null(), "Return bitwise-exclusive-or of all the arguments.
 Arguments may be integers, or markers converted to integers.
 
-(fn &rest INTS-OR-MARKERS)\0".as_ptr()) as *const c_char,
-    };
-}
+(fn &rest INTS-OR-MARKERS)");
 
 #[no_mangle]
 pub extern "C" fn Fmax(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
     arith_driver(ArithOp::Max, nargs, args)
 }
 
-lazy_static! {
-    pub static ref Smax: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
-        },
-        function: (Fmax as *const libc::c_void),
-        min_args: 1,
-        max_args: MANY,
-        symbol_name: ("max\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        doc: ("Return largest of all the arguments (which must be numbers or markers).
+defun!("max", Fmax, Smax, 1, MANY, ptr::null(), "Return largest of all the arguments (which must be numbers or markers).
 The value is always a number; markers are converted to numbers.
 
-(fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)\0".as_ptr()) as *const c_char,
-    };
-}
+(fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)");
 
 #[no_mangle]
 pub extern "C" fn Fmin(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
     arith_driver(ArithOp::Min, nargs, args)
 }
 
-lazy_static! {
-    pub static ref Smin: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
-        },
-        function: (Fmin as *const libc::c_void),
-        min_args: 1,
-        max_args: MANY,
-        symbol_name: ("min\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        doc: ("Return smallest of all the arguments (which must be numbers or markers).
+defun!("min", Fmin, Smin, 1, MANY, ptr::null(), "Return smallest of all the arguments (which must be numbers or markers).
 The value is always a number; markers are converted to numbers.
 
-(fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)\0".as_ptr()) as *const c_char,
-    };
-}
+(fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)");
