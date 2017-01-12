@@ -26,3 +26,10 @@ notifications:
 matrix:
   allow_failures:
     - rust: nightly
+
+env:
+  - ARCH=x86_64
+  - ARCH=i686
+
+script:
+  - curl -sSL https://raw.githubusercontent.com/carllerche/travis-rust-matrix/master/test | bash
