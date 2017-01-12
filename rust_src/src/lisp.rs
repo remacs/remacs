@@ -352,7 +352,7 @@ fn test_miscp() {
 ///
 /// See the docstring for `LispType` for more information on tagging.
 #[allow(non_snake_case)]
-pub fn XUNTAG(a: LispObject, ty: libc::c_int) -> *const libc::c_void {
+pub fn XUNTAG(a: LispObject, ty: LispType) -> *const libc::c_void {
     let tagged_ptr = XLI(a) as libc::intptr_t;
     let tag = ty as libc::intptr_t;
     // Since pointers are aligned to 8 bytes, we can simply subtract
@@ -415,8 +415,7 @@ fn test_lisp_misc_any_size() {
 
 #[allow(non_snake_case)]
 pub fn XMISC(a: LispObject) -> LispMisc {
-    // TODO: XUNTAG should just take a LispType as an argument.
-    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_Misc as libc::c_int)) }
+    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_Misc)) }
 }
 
 #[allow(non_snake_case)]
@@ -435,7 +434,7 @@ pub fn XMISCTYPE(a: LispObject) -> LispMiscType {
 #[allow(non_snake_case)]
 pub fn XFLOAT(a: LispObject) -> *const LispFloat {
     debug_assert!(FLOATP(a));
-    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_Float as libc::c_int)) }
+    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_Float)) }
 }
 
 #[allow(non_snake_case)]

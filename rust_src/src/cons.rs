@@ -68,7 +68,7 @@ pub struct LispConsChain {
 /// Extract the LispCons data from an elisp value.
 fn XCONS(a: LispObject) -> *mut LispCons {
     debug_assert!(CONSP(a));
-    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_Cons as libc::c_int)) }
+    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_Cons)) }
 }
 
 /// Set the car of a cons cell.
