@@ -1,4 +1,5 @@
 #![allow(non_upper_case_globals)]
+#![macro_use]
 
 /// This module contains Rust definitions whose C equivalents live in
 /// lisp.h.
@@ -187,6 +188,52 @@ pub struct LispSubr {
 //
 // Based on http://stackoverflow.com/a/28116557/509706
 unsafe impl Sync for LispSubr {}
+
+/// Define an elisp function struct.
+///
+/// # Example
+///
+/// ```
+/// fn Fdo_nothing(x: LispObject) -> LispObject {
+///     Qnil
+/// }
+///
+/// defun!("do-nothing", // the name of our elisp function
+///        Fdo_nothing, // the Rust function we want to call
+///        Sdo_nothing, // the name of the struct that we will define
+///        1, 1, // min and max number of arguments
+///        ptr::null(), // our function is not interactive
+///        // Docstring. The last line ensures that *Help* shows the
+///        // correct calling convention
+///        "Return nil unconditionally.
+///
+/// (fn X)");
+/// ```
+///
+/// # Porting Notes
+///
+/// This is equivalent to DEFUN in Emacs C, but the function
+/// definition is kept separate to aid readability.
+macro_rules! defun {
+    ($lisp_name:expr, $fname:ident, $sname:ident, $min_args:expr, $max_args:expr, $intspec:expr, $docstring:expr) => {
+        lazy_static! {
+            // TODO: this is blindly hoping we have the correct alignment.
+            // We should ensure we have GCALIGNMENT (8 bytes).
+            pub static ref $sname: LispSubr = LispSubr {
+                header: VectorLikeHeader {
+                    size: ((PvecType::PVEC_SUBR as libc::c_int) <<
+                           PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
+                },
+                function: ($fname as *const libc::c_void),
+                min_args: $min_args,
+                max_args: $max_args,
+                symbol_name: ((concat!($lisp_name, "\0")).as_ptr()) as *const c_char,
+                intspec: $intspec,
+                doc: (concat!($docstring, "\0").as_ptr()) as *const c_char,
+            };
+        }
+    }
+}
 
 /// Used to denote functions that have no limit on the maximum number
 /// of arguments.

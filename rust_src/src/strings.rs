@@ -18,22 +18,9 @@ fn Fstringp(object: LispObject) -> LispObject {
     if STRINGP(object) { unsafe { Qt } } else { Qnil }
 }
 
-lazy_static! {
-    pub static ref Sstringp: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
-        },
-        function: (Fstringp as *const libc::c_void),
-        min_args: 1,
-        max_args: 1,
-        symbol_name: ("stringp\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        doc: ("Return t if OBJECT is a string.
+defun!("stringp", Fstringp, Sstringp, 1, 1, ptr::null(), "Return t if OBJECT is a string.
 
-(fn OBJECT)\0".as_ptr()) as *const c_char,
-    };
-}
+(fn OBJECT)");
 
 fn Feq (firstObject: LispObject, secondObject: LispObject) -> LispObject {
     if firstObject == secondObject {
@@ -45,19 +32,6 @@ fn Feq (firstObject: LispObject, secondObject: LispObject) -> LispObject {
     }
 }
 
-lazy_static! {
-    pub static ref Seq: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
-        },
-        function: (Feq as *const libc::c_void),
-        min_args: 2,
-        max_args: 2,
-        symbol_name: ("eq\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        doc: ("Return t if the two args are the same Lisp object.
+defun!("eq", Feq, Seq, 2, 2, ptr::null(), "Return t if the two args are the same Lisp object.
 
-(fn OBJECT OBJECT)\0".as_ptr()) as *const c_char,
-    };
-}
+(fn OBJECT OBJECT)");

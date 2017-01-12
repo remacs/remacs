@@ -300,28 +300,18 @@ fn Fnumberp(object: LispObject) -> LispObject {
     }
 }
 
-// This defines a built-in function in elisp.
-lazy_static! {
-    static ref Snumberp: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
-        },
-        function: (Fnumberp as *const libc::c_void),
-        // Our elisp function takes exactly one argument.
-        min_args: 1,
-        max_args: 1,
-        // The name of our function in elisp.
-        symbol_name: ("numberp\0".as_ptr()) as *const c_char,
-        // Our function is not interactive.
-        intspec: ptr::null(),
-        // Docstring. The last line ensures that *Help* shows the
-        // correct calling convention
-        doc: ("Return t if OBJECT is a number (floating point or integer).
+// This defines a built-in function in elisp, which is a represented
+// with a static struct.
+defun!("numberp", // the name of our elisp function
+       Fnumberp, // the rust function we want to call
+       Snumberp, // the name of the struct that we will define
+       1, 1, // min and max number of arguments
+       ptr::null(), // our function is not interactive
+       // docstring, the last line ensures that *Help* shows the
+       // correct calling convention
+       "Return t if OBJECT is a number (floating point or integer).
 
-(fn OBJECT)\0".as_ptr()) as *const c_char,
-    };
-}
+(fn OBJECT)");
 ```
 
 Finally, we need to delete the old C definition and call `defsubr`
