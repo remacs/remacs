@@ -141,6 +141,11 @@ all: compile-main $(lisp)/cus-load.el $(lisp)/finder-inf.el
 PHONY_EXTRAS =
 .PHONY: all custom-deps finder-data autoloads update-subdirs $(PHONY_EXTRAS)
 
+# Clean out the compiled .elc files
+clean:
+	find . -type f -name "*.elc" -print | xargs -I {} -- rm {}
+
+
 # custom-deps and finder-data both used to scan _all_ the *.el files.
 # This could lead to problems in parallel builds if automatically
 # generated *.el files (eg loaddefs etc) were being changed at the same time.
