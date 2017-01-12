@@ -655,9 +655,9 @@ MIME-Version header before proceeding."
 				 description)))))
       (if (or (not ctl)
 	      (not (string-match "/" (car ctl))))
-	    (mm-dissect-singlepart
+	  (mm-dissect-singlepart
 	   (list mm-dissect-default-type)
-	     (and cte (intern (downcase (mail-header-strip cte))))
+	   (and cte (intern (downcase (mail-header-strip-cte cte))))
 	   no-strict-mime
 	   (and cd (mail-header-parse-content-disposition cd))
 	   description)
@@ -690,7 +690,7 @@ MIME-Version header before proceeding."
 	   (mm-possibly-verify-or-decrypt
 	    (mm-dissect-singlepart
 	     ctl
-	     (and cte (intern (downcase (mail-header-strip cte))))
+	     (and cte (intern (downcase (mail-header-strip-cte cte))))
 	     no-strict-mime
 	     (and cd (mail-header-parse-content-disposition cd))
 	     description id)

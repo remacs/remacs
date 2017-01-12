@@ -49,6 +49,7 @@
 (defalias 'mail-header-remove-comments 'ietf-drums-remove-comments)
 (defalias 'mail-header-remove-whitespace 'ietf-drums-remove-whitespace)
 (defalias 'mail-header-strip 'ietf-drums-strip)
+(defalias 'mail-header-strip-cte 'ietf-drums-strip-cte)
 (defalias 'mail-header-get-comment 'ietf-drums-get-comment)
 (defalias 'mail-header-parse-address 'ietf-drums-parse-address)
 (defalias 'mail-header-parse-addresses 'ietf-drums-parse-addresses)

@@ -9211,7 +9211,7 @@ To control what happens when you exit the group, see the
 	    (widen)
 	    (narrow-to-region (point) (point-max))
 	    (mm-decode-content-transfer-encoding
-	     (intern (downcase (mail-header-strip encoding))))))
+	     (intern (downcase (mail-header-strip-cte encoding))))))
 	(widen))
       (unwind-protect
 	  (if (let ((gnus-newsgroup-ephemeral-charset

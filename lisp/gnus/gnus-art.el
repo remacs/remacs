@@ -2508,7 +2508,7 @@ If PROMPT (the prefix), prompt for a coding system to use."
 			(mail-content-type-get ctl 'charset)))
 	      format (and ctl (mail-content-type-get ctl 'format)))
 	(when cte
-	  (setq cte (mail-header-strip cte)))
+	  (setq cte (mail-header-strip-cte cte)))
 	(if (and ctl (not (string-match "/" (car ctl))))
 	    (setq ctl nil))
 	(goto-char (point-max)))
@@ -2523,8 +2523,7 @@ If PROMPT (the prefix), prompt for a coding system to use."
 		       (equal (car ctl) "text/plain"))
 		   (not format)) ;; article with format will decode later.
 	  (mm-decode-body
-	   charset (and cte (intern (downcase
-				     (gnus-strip-whitespace cte))))
+	   charset (and cte (intern (downcase cte)))
 	   (car ctl)))))))
 
 (defun article-decode-encoded-words ()
