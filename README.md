@@ -363,7 +363,7 @@ Easy tasks:
 - [ ] Fix 'make clean' to delete .elc files, otherwise you don't notice
   some bugs until Travis runs.
 - [ ] Fix the makefile to output a binary called `remacs`
-- [ ] Update the Remacs welcome screen to say Remacs
+- [x] Update the Remacs welcome screen to say Remacs
 - [ ] Add Rust-level unit tests to elisp functions defined in lib.rs.
 
 Medium tasks:
