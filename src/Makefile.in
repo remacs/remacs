@@ -119,7 +119,7 @@ PAXCTL_dumped = @PAXCTL_dumped@
 PAXCTL_notdumped = @PAXCTL_notdumped@
 
 ## Some systems define this to request special libraries.
-LIBS_SYSTEM=-L../rust_src/target/debug -lremacs -ldl
+LIBS_SYSTEM=-L$(top_srcdir)/rust_src/target/debug -lremacs -ldl
 
 ## -lm, or empty.
 LIB_MATH=@LIB_MATH@
