@@ -15,7 +15,6 @@ script:
   - ./autogen.sh
   # TODO: set up makeinfo on travis.
   - ./configure --without-makeinfo --with-xpm=no --with-gif=no
-  - sed -i "/LIBS_SYSTEM=/c\\LIBS_SYSTEM=-L../rust_src/target/debug -lremacs -ldl" src/Makefile
   - make -j 3
 
   - make check || echo 'make check failed'
