@@ -143,7 +143,7 @@ straightforward.
 This means that an elisp function `do-stuff` will have a corresponding
 Rust function `Fdo_stuff`, and a declaration struct `Sdo_stuff`. A
 lisp variable `do-stuff` will have a Rust variable `Vdo_stuff` and a
-symbol `'do-stuff` will have a Rust variaable `Qdo_stuff`.
+symbol `'do-stuff` will have a Rust variable `Qdo_stuff`.
 
 Otherwise, we follow Rust naming conventions, with docstrings noting
 equivalent functions or macros in C. When incrementally porting, we
@@ -192,7 +192,7 @@ You can then run your shiny new Remacs:
 ```
 # Using -q to ignore your .emacs.d, so Remacs starts up quickly.
 # RUST_BACKTRACE is optional, but useful if your instance crashes.
-$ RUST_BACKTRACE=1 src/emacs -q
+$ RUST_BACKTRACE=1 src/remacs -q
 ```
 
 ### Release builds
