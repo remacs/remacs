@@ -32,6 +32,8 @@ pub use cons::Fsetcar;
 pub use cons::Fsetcdr;
 pub use cons::Fcar;
 pub use cons::Fcdr;
+pub use floatfns::extract_float;
+pub use floatfns::fmod_float;
 
 // These need to be exported as marker.c depends upon them.
 pub use marker::CHECK_MARKER;
@@ -63,5 +65,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*strings::Sstringp);
         defsubr(&*strings::Seq);
         defsubr(&*strings::Snull);
+
+        floatfns::init_float_syms();
     }
 }

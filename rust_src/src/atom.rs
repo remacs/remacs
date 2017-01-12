@@ -4,9 +4,7 @@ use std::ptr;
 extern crate libc;
 
 use cons::CONSP;
-use lisp::{LispObject, LispSubr, Qnil, Qt, VectorLikeHeader, PvecType,
-           PSEUDOVECTOR_AREA_BITS};
-
+use lisp::{LispObject, LispSubr, Qnil, Qt};
 
 fn Fatom(object: LispObject) -> LispObject {
     if CONSP(object) {

@@ -4,8 +4,7 @@ use std::os::raw::c_char;
 use std::ptr;
 use std::mem;
 
-use lisp::{LispObject, LispType, XTYPE, XUNTAG, Qt, Qnil, LispSubr, PvecType, VectorLikeHeader,
-           PSEUDOVECTOR_AREA_BITS, CHECK_TYPE, wrong_type_argument};
+use lisp::{LispObject, LispType, XTYPE, XUNTAG, Qt, Qnil, LispSubr, CHECK_TYPE, wrong_type_argument};
 
 extern "C" {
     static Qconsp: LispObject;
