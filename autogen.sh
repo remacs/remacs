@@ -104,27 +104,32 @@ check_version ()
 }
 
 do_check=true
-do_autoconf=true
+do_autoconf=false
 do_git=false
 
 for arg; do
     case $arg in
       --help)
-	exec echo "$0: usage: $0 [all|autoconf|git]";;
+	exec echo "$0: usage: $0 [--no-check] [target...]
+  Targets are: all autoconf git";;
       --no-check)
         do_check=false;;
       all)
+	do_autoconf=true
 	test -e .git && do_git=true;;
       autoconf)
-	true;;
+	do_autoconf=true;;
       git)
-	do_autoconf=false
 	do_git=true;;
       *)
 	echo >&2 "$0: $arg: unknown argument"; exit 1;;
     esac
 done
 
+case $do_autoconf,$do_git in
+  false,false)
+    do_autoconf=true;;
+esac
 
 # Generate Autoconf and Automake related files, if requested.
 
@@ -143,7 +148,7 @@ if $do_autoconf; then
 
       eval min=\$${sprog}_min
 
-      echo "Checking for $prog (need at least version $min)..."
+      printf '%s' "Checking for $prog (need at least version $min) ... "
 
       check_version $prog $min
 
