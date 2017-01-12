@@ -175,7 +175,7 @@ $ ./autogen.sh
 $ ./configure
 ```
 
-Modify `src/Makefile` to read:
+Modify `src/Makefile`, replacing the blank initialization of `LIBS_SYSTEM` to read:
 
 ``` makefile
 LIBS_SYSTEM=-L../rust_src/target/debug -lremacs -ldl
@@ -203,7 +203,7 @@ As above, but invoke Cargo with:
 $ cargo build --release
 ```
 
-and modify `src/Makefile` to:
+and modify `src/Makefile`, replacing the blank initialization of `LIBS_SYSTEM` to read:
 
 ``` makefile
 LIBS_SYSTEM=-L../rust_src/target/release -lremacs -ldl
