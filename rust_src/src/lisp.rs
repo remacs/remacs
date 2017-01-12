@@ -313,7 +313,7 @@ fn test_numberp() {
 /// value rather than assigning to a variable.
 pub fn check_number_coerce_marker(x: LispObject) -> LispObject {
     if MARKERP(x) {
-        make_natnum(marker_position(x) as i64)
+        make_natnum(marker_position(x) as EmacsInt)
     } else {
         unsafe {
             CHECK_TYPE(NUMBERP(x), Qnumber_or_marker_p, x);
