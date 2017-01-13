@@ -124,6 +124,10 @@ if (x > 72 &&
   do_something();
 }
 
+// Test that chaining doesn't happen when js-chain-indent is nil.
+let x = svg.mumble()
+    .zzz;
+
 // Local Variables:
 // indent-tabs-mode: nil
 // js-indent-level: 2

@@ -552,6 +552,20 @@ don't indent the first one's initializer; otherwise, indent it.
   :safe 'symbolp
   :group 'js)
 
+(defcustom js-chain-indent nil
+  "Use \"chained\" indentation.
+Chained indentation applies when the current line starts with \".\".
+If the previous expression also contains a \".\" at the same level,
+then the \".\"s will be lined up:
+
+  let x = svg.mumble()
+             .chained;
+"
+  :version "26.1"
+  :type 'boolean
+  :safe 'booleanp
+  :group 'js)
+
 ;;; KeyMap
 
 (defvar js-mode-map
@@ -1808,6 +1822,63 @@ This performs fontification according to `js--class-styles'."
                   (and (progn (backward-char)
                               (not (looking-at "+\\+\\|--\\|/[/*]"))))))))))
 
+(defun js--skip-term-backward ()
+  "Skip a term before point; return t if a term was skipped."
+  (let ((term-skipped nil))
+    ;; Skip backward over balanced parens.
+    (let ((progress t))
+      (while progress
+        (setq progress nil)
+        ;; First skip whitespace.
+        (skip-syntax-backward " ")
+        ;; Now if we're looking at closing paren, skip to the opener.
+        ;; This doesn't strictly follow JS syntax, in that we might
+        ;; skip something nonsensical like "()[]{}", but it is enough
+        ;; if it works ok for valid input.
+        (when (memq (char-before) '(?\] ?\) ?\}))
+          (setq progress t term-skipped t)
+          (backward-list))))
+    ;; Maybe skip over a symbol.
+    (let ((save-point (point)))
+      (if (and (< (skip-syntax-backward "w_") 0)
+                 (looking-at js--name-re))
+          ;; Skipped.
+          (progn
+            (setq term-skipped t)
+            (skip-syntax-backward " "))
+        ;; Did not skip, so restore point.
+        (goto-char save-point)))
+    (when (and term-skipped (> (point) (point-min)))
+      (backward-char)
+      (eq (char-after) ?.))))
+
+(defun js--skip-terms-backward ()
+  "Skip any number of terms backward.
+Move point to the earliest \".\" without changing paren levels.
+Returns t if successful, nil if no term was found."
+  (when (js--skip-term-backward)
+    ;; Found at least one.
+    (let ((last-point (point)))
+      (while (js--skip-term-backward)
+        (setq last-point (point)))
+      (goto-char last-point)
+      t)))
+
+(defun js--chained-expression-p ()
+  "A helper for js--proper-indentation that handles chained expressions.
+A chained expression is when the current line starts with '.' and the
+previous line also has a '.' expression.
+This function returns the indentation for the current line if it is
+a chained expression line; otherwise nil.
+This should only be called while point is at the start of the line's content,
+as determined by `back-to-indentation'."
+  (when js-chain-indent
+    (save-excursion
+      (when (and (eq (char-after) ?.)
+                 (js--continued-expression-p)
+                 (js--find-newline-backward)
+                 (js--skip-terms-backward))
+        (current-column)))))
 
 (defun js--end-of-do-while-loop-p ()
   "Return non-nil if point is on the \"while\" of a do-while statement.
@@ -1984,6 +2055,7 @@ indentation is aligned to that column."
                   ;; At or after the first loop?
                   (>= (point) beg)
                   (js--array-comp-indentation bracket beg))))
+          ((js--chained-expression-p))
           ((js--ctrl-statement-indentation))
           ((js--multi-line-declaration-indentation))
           ((nth 1 parse-status)
