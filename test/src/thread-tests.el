@@ -272,8 +272,9 @@
     ;; Notify the waiting thread.
     (with-mutex cv-mutex
       (condition-notify threads-condvar t))
-    ;; Allow new-thread to process the notification.
-    (sleep-for 0.1)
+    ;; Allow new-thread to process the notification.  Sleeping for too
+    ;; short time here will fail the length test below.
+    (sleep-for 1)
     ;; Make sure the thread is still there.  This used to fail due to
     ;; a bug in thread.c:condition_wait_callback.
     (should (thread-alive-p new-thread))
