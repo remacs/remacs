@@ -2062,6 +2062,15 @@ For use in `add-log-current-defun-function'."
 (declare-function smerge-refine-subst "smerge-mode"
                   (beg1 end1 beg2 end2 props-c &optional preproc props-r props-a))
 
+(defun diff--forward-while-leading-char (char bound)
+  "Move point until reaching a line not starting with CHAR.
+Return new point, if it was moved."
+  (let ((pt nil))
+    (while (and (< (point) bound) (eql (following-char) char))
+      (forward-line 1)
+      (setq pt (point)))
+    pt))
+
 (defun diff-refine-hunk ()
   "Highlight changes of hunk at point at a finer granularity."
   (interactive)
@@ -2081,16 +2090,18 @@ For use in `add-log-current-defun-function'."
       (goto-char beg)
       (pcase style
         (`unified
-         (while (re-search-forward
-                 (eval-when-compile
-                   (let ((no-LF-at-eol-re "\\(?:\\\\.*\n\\)?"))
-                     (concat "^\\(?:-.*\n\\)+" no-LF-at-eol-re
-                             "\\(\\)"
-                             "\\(?:\\+.*\n\\)+" no-LF-at-eol-re)))
-                 end t)
-           (smerge-refine-subst (match-beginning 0) (match-end 1)
-                                (match-end 1) (match-end 0)
-                                nil 'diff-refine-preproc props-r props-a)))
+         (while (re-search-forward "^-" end t)
+           (let ((beg-del (progn (beginning-of-line) (point)))
+                 beg-add end-add)
+             (when (and (diff--forward-while-leading-char ?- end)
+                        ;; Allow for "\ No newline at end of file".
+                        (progn (diff--forward-while-leading-char ?\\ end)
+                               (setq beg-add (point)))
+                        (diff--forward-while-leading-char ?+ end)
+                        (progn (diff--forward-while-leading-char ?\\ end)
+                               (setq end-add (point))))
+               (smerge-refine-subst beg-del beg-add beg-add end-add
+                                    nil 'diff-refine-preproc props-r props-a)))))
         (`context
          (let* ((middle (save-excursion (re-search-forward "^---")))
                 (other middle))
