@@ -98,9 +98,6 @@ extern void free (void *ptr);
 /* Allocate SIZE bytes allocated to ALIGNMENT bytes.  */
 extern void *aligned_alloc (size_t, size_t);
 extern void *memalign (size_t, size_t);
-#ifdef MSDOS
-extern int posix_memalign (void **, size_t, size_t);
-#endif
 
 #ifdef USE_PTHREAD
 /* Set up mutexes and make malloc etc. thread-safe.  */

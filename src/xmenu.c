@@ -45,10 +45,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "sysselect.h"
 
-#ifdef MSDOS
-#include "msdos.h"
-#endif
-
 #ifdef HAVE_X_WINDOWS
 /* This may include sys/types.h, and that somehow loses
    if this is not done before the other system files.  */
@@ -131,7 +127,6 @@ menubar_id_to_frame (LWLIB_ID id)
 
 #endif
 
-#ifndef MSDOS
 
 #if defined USE_GTK || defined USE_MOTIF
 
@@ -199,7 +194,6 @@ x_menu_wait_for_event (void *data)
 #endif
     }
 }
-#endif /* ! MSDOS */
 
 
 #if defined (USE_X_TOOLKIT) || defined (USE_GTK)
@@ -1999,10 +1993,8 @@ pop_down_menu (Lisp_Object arg)
   XMenu *menu = XSAVE_POINTER (arg, 1);
 
   block_input ();
-#ifndef MSDOS
   XUngrabPointer (FRAME_X_DISPLAY (f), CurrentTime);
   XUngrabKeyboard (FRAME_X_DISPLAY (f), CurrentTime);
-#endif
   XMenuDestroy (FRAME_X_DISPLAY (f), menu);
 
 #ifdef HAVE_X_WINDOWS
@@ -2238,9 +2230,7 @@ x_menu_show (struct frame *f, int x, int y, int menuflags,
   XMenuSetFreeze (menu, true);
   pane = selidx = 0;
 
-#ifndef MSDOS
   XMenuActivateSetWaitFunction (x_menu_wait_for_event, FRAME_X_DISPLAY (f));
-#endif
 
   record_unwind_protect (pop_down_menu, make_save_ptr_ptr (f, menu));
 
@@ -2317,7 +2307,6 @@ x_menu_show (struct frame *f, int x, int y, int menuflags,
 
 #endif /* not USE_X_TOOLKIT */
 
-#ifndef MSDOS
 /* Detect if a dialog or menu has been posted.  MSDOS has its own
    implementation on msdos.c.  */
 
@@ -2326,7 +2315,6 @@ popup_activated (void)
 {
   return popup_activated_flag;
 }
-#endif	/* not MSDOS */
 
 /* The following is used by delayed window autoselection.  */
 

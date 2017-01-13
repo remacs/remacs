@@ -47,12 +47,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef HAVE_PTHREAD
 #include <pthread.h>
 #endif
-#ifdef MSDOS
-#include "msdos.h"
-#include <time.h>
-#else /* not MSDOS */
 #include <sys/ioctl.h>
-#endif /* not MSDOS */
 
 #if defined USABLE_FIONREAD && defined USG5_4
 # include <sys/filio.h>
@@ -6914,15 +6909,6 @@ tty_read_avail_input (struct terminal *terminal,
   if (! tty->input)
     return 0;                   /* The terminal is suspended.  */
 
-#ifdef MSDOS
-  n_to_read = dos_keysns ();
-  if (n_to_read == 0)
-    return 0;
-
-  cbuf[0] = dos_keyread ();
-  nread = 1;
-
-#else /* not MSDOS */
 #ifdef HAVE_GPM
   if (gpm_tty == tty)
   {
@@ -7026,7 +7012,6 @@ tty_read_avail_input (struct terminal *terminal,
   if (nread <= 0)
     return nread;
 
-#endif /* not MSDOS */
 #endif /* not WINDOWSNT */
 
   for (i = 0; i < nread; i++)
@@ -10317,11 +10302,6 @@ handle_interrupt (bool in_signal_handler)
 		    " on this operating system;\n"
 		    "you can continue or abort.\n");
 #endif /* not SIGTSTP */
-#ifdef MSDOS
-      /* We must remain inside the screen area when the internal terminal
-	 is used.  Note that [Enter] is not echoed by dos.  */
-      cursor_to (SELECTED_FRAME (), 0, 0);
-#endif
       /* It doesn't work to autosave while GC is in progress;
 	 the code used for auto-saving doesn't cope with the mark bit.  */
       if (!gc_in_progress)
@@ -10331,11 +10311,7 @@ handle_interrupt (bool in_signal_handler)
 	  if (c == 'y' || c == 'Y')
 	    {
 	      Fdo_auto_save (Qt, Qnil);
-#ifdef MSDOS
-	      write_stdout ("\r\nAuto-save done");
-#else
 	      write_stdout ("Auto-save done\n");
-#endif
 	    }
 	  while (c != '\n')
 	    c = read_stdin ();
@@ -10346,29 +10322,18 @@ handle_interrupt (bool in_signal_handler)
 	  Vinhibit_quit = Qnil;
 	  write_stdout
 	    (
-#ifdef MSDOS
-	     "\r\n"
-#endif
 	     "Garbage collection in progress; cannot auto-save now\r\n"
 	     "but will instead do a real quit"
 	     " after garbage collection ends\r\n");
 	}
 
-#ifdef MSDOS
-      write_stdout ("\r\nAbort?  (y or n) ");
-#else
       write_stdout ("Abort (and dump core)? (y or n) ");
-#endif
       c = read_stdin ();
       if (c == 'y' || c == 'Y')
 	emacs_abort ();
       while (c != '\n')
 	c = read_stdin ();
-#ifdef MSDOS
-      write_stdout ("\r\nContinuing...\r\n");
-#else /* not MSDOS */
       write_stdout ("Continuing...\n");
-#endif /* not MSDOS */
       init_all_sys_modes ();
     }
   else

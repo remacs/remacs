@@ -59,20 +59,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "w32.h"
 #endif /* not WINDOWSNT */
 
-#ifdef MSDOS
-#include "msdos.h"
-#include <sys/param.h>
-#endif
 
 #ifdef DOS_NT
 /* On Windows, drive letters must be alphabetic - on DOS, the Netware
    redirector allows the six letters between 'Z' and 'a' as well.  */
-#ifdef MSDOS
-#define IS_DRIVE(x) ((x) >= 'A' && (x) <= 'z')
-#endif
-#ifdef WINDOWSNT
-#define IS_DRIVE(x) c_isalpha (x)
-#endif
 /* Need to lower-case the drive letter, or else expanded
    filenames will sometimes compare unequal, because
    `expand-file-name' doesn't always down-case the drive letter.  */
@@ -147,15 +137,6 @@ check_executable (char *filename)
 static bool
 check_writable (const char *filename, int amode)
 {
-#ifdef MSDOS
-  /* FIXME: an faccessat implementation should be added to the
-     DOS/Windows ports and this #ifdef branch should be removed.  */
-  struct stat st;
-  if (stat (filename, &st) < 0)
-    return 0;
-  errno = EPERM;
-  return (st.st_mode & S_IWRITE || S_ISDIR (st.st_mode));
-#else /* not MSDOS */
   bool res = faccessat (AT_FDCWD, filename, amode, AT_EACCESS) == 0;
 #ifdef CYGWIN
   /* faccessat may have returned failure because Cygwin couldn't
@@ -171,7 +152,6 @@ check_writable (const char *filename, int amode)
     }
 #endif /* CYGWIN */
   return res;
-#endif /* not MSDOS */
 }
 
 /* Signal a file-access failure.  STRING describes the failure,
@@ -961,9 +941,6 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
      allocating a new string if name is already fully expanded.  */
   if (
       IS_DIRECTORY_SEP (nm[0])
-#ifdef MSDOS
-      && drive && !is_escaped
-#endif
 #ifdef WINDOWSNT
       && (drive || IS_DIRECTORY_SEP (nm[1])) && !is_escaped
 #endif
@@ -1957,11 +1934,7 @@ permissions.  */)
     report_file_errno ("Non-regular file", file,
 		       S_ISDIR (st.st_mode) ? EISDIR : EINVAL);
 
-#ifndef MSDOS
   new_mask = st.st_mode & (!NILP (preserve_uid_gid) ? 0700 : 0777);
-#else
-  new_mask = S_IREAD | S_IWRITE;
-#endif
 
   ofd = emacs_open (SSDATA (encoded_newname), O_WRONLY | O_CREAT | O_EXCL,
 		    new_mask);
@@ -2015,7 +1988,6 @@ permissions.  */)
 
   immediate_quit = 0;
 
-#ifndef MSDOS
   /* Preserve the original file permissions, and if requested, also its
      owner and group.  */
   {
@@ -2059,7 +2031,6 @@ permissions.  */)
       case -1: report_file_error ("Copying permissions to", newname);
       }
   }
-#endif	/* not MSDOS */
 
 #if HAVE_LIBSELINUX
   if (conlength > 0)
@@ -2088,14 +2059,6 @@ permissions.  */)
 
   emacs_close (ifd);
 
-#ifdef MSDOS
-  /* In DJGPP v2.0 and later, fstat usually returns true file mode bits,
-     and if it can't, it tells so.  Otherwise, under MSDOS we usually
-     get only the READ bit, which will make the copied file read-only,
-     so it's better not to chmod at all.  */
-  if ((_djstat_flags & _STFAIL_WRITEBIT) == 0)
-    chmod (SDATA (encoded_newname), st.st_mode & 07777);
-#endif /* MSDOS */
 #endif /* not WINDOWSNT */
 
   /* Discard the unwind protects.  */
@@ -2535,9 +2498,6 @@ DEFUN ("file-writable-p", Ffile_writable_p, Sfile_writable_p, 1, 1, 0,
 
   dir = Ffile_name_directory (absname);
   eassert (!NILP (dir));
-#ifdef MSDOS
-  dir = Fdirectory_file_name (dir);
-#endif /* MSDOS */
 
   dir = ENCODE_FILE (dir);
 #ifdef WINDOWSNT
@@ -2708,9 +2668,7 @@ file_accessible_directory_p (Lisp_Object file)
      hitting the disk.  */
   return (SBYTES (file) == 0
 	  || w32_accessible_directory_p (SSDATA (file), SBYTES (file)));
-# else	/* MSDOS */
-  return file_directory_p (SSDATA (file));
-# endif	 /* MSDOS */
+# endif	 /* WINDOWSNT */
 #else	 /* !DOS_NT */
   /* On POSIXish platforms, use just one system call; this avoids a
      race and is typically faster.  */
@@ -3150,11 +3108,6 @@ Use the current time if TIMESTAMP is nil.  TIMESTAMP is in the format of
   {
     if (set_file_times (-1, SSDATA (encoded_absname), t, t) != 0)
       {
-#ifdef MSDOS
-        /* Setting times on a directory always fails.  */
-        if (file_directory_p (SSDATA (encoded_absname)))
-          return Qnil;
-#endif
         report_file_error ("Setting file times", absname);
       }
   }
