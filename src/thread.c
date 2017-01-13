@@ -128,6 +128,20 @@ lisp_mutex_init (lisp_mutex_t *mutex)
   sys_cond_init (&mutex->condition);
 }
 
+/* Lock MUTEX setting its count to COUNT, if non-zero, or to 1
+   otherwise.
+
+   If MUTEX is locked by the current thread, COUNT must be zero, and
+   the MUTEX's lock count will be incremented.
+
+   If MUTEX is locked by another thread, this function will release
+   the global lock, giving other threads a chance to run, and will
+   wait for the MUTEX to become unlocked; when MUTEX becomes unlocked,
+   and will then re-acquire the global lock.
+
+   Return value is 1 if the function waited for the MUTEX to become
+   unlocked (meaning other threads could have run during the wait),
+   zero otherwise.  */
 static int
 lisp_mutex_lock (lisp_mutex_t *mutex, int new_count)
 {
@@ -162,6 +176,12 @@ lisp_mutex_lock (lisp_mutex_t *mutex, int new_count)
   return 1;
 }
 
+/* Decrement MUTEX's lock count.  If the lock count becomes zero after
+   decrementing it, meaning the mutex is now unlocked, broadcast that
+   to all the threads that might be waiting to lock the mutex.  This
+   function signals an error if MUTEX is locked by a thread other than
+   the current one.  Return value is 1 if the mutex becomes unlocked,
+   zero otherwise.  */
 static int
 lisp_mutex_unlock (lisp_mutex_t *mutex)
 {
@@ -177,6 +197,8 @@ lisp_mutex_unlock (lisp_mutex_t *mutex)
   return 1;
 }
 
+/* Like lisp_mutex_unlock, but sets MUTEX's lock count to zero
+   regardless of its value.  Return the previous lock count.  */
 static unsigned int
 lisp_mutex_unlock_for_wait (lisp_mutex_t *mutex)
 {
@@ -241,6 +263,10 @@ mutex_lock_callback (void *arg)
   struct Lisp_Mutex *mutex = arg;
   struct thread_state *self = current_thread;
 
+  /* Calling lisp_mutex_lock might yield to other threads while this
+     one waits for the mutex to become unlocked, so we need to
+     announce us as the current thread by calling
+     post_acquire_global_lock.  */
   if (lisp_mutex_lock (&mutex->mutex, 0))
     post_acquire_global_lock (self);
 }
@@ -280,7 +306,7 @@ mutex_unlock_callback (void *arg)
   struct thread_state *self = current_thread;
 
   if (lisp_mutex_unlock (&mutex->mutex))
-    post_acquire_global_lock (self);
+    post_acquire_global_lock (self); /* FIXME: is this call needed? */
 }
 
 DEFUN ("mutex-unlock", Fmutex_unlock, Smutex_unlock, 1, 1, 0,
@@ -367,12 +393,21 @@ condition_wait_callback (void *arg)
   if (NILP (self->error_symbol))
     {
       self->wait_condvar = &cvar->cond;
+      /* This call could switch to another thread.  */
       sys_cond_wait (&cvar->cond, &global_lock);
       self->wait_condvar = NULL;
     }
-  lisp_mutex_lock (&mutex->mutex, saved_count);
   self->event_object = Qnil;
+  /* Since sys_cond_wait could switch threads, we need to re-establish
+     ourselves as the current thread, otherwise lisp_mutex_lock will
+     record the wrong thread as the owner of the mutex lock.  */
   post_acquire_global_lock (self);
+  /* Calling lisp_mutex_lock might yield to other threads while this
+     one waits for the mutex to become unlocked, so we need to
+     announce us as the current thread by calling
+     post_acquire_global_lock.  */
+  if (lisp_mutex_lock (&mutex->mutex, saved_count))
+    post_acquire_global_lock (self);
 }
 
 DEFUN ("condition-wait", Fcondition_wait, Scondition_wait, 1, 1, 0,
@@ -425,6 +460,10 @@ condition_notify_callback (void *arg)
     sys_cond_broadcast (&na->cvar->cond);
   else
     sys_cond_signal (&na->cvar->cond);
+  /* Calling lisp_mutex_lock might yield to other threads while this
+     one waits for the mutex to become unlocked, so we need to
+     announce us as the current thread by calling
+     post_acquire_global_lock.  */
   lisp_mutex_lock (&mutex->mutex, saved_count);
   post_acquire_global_lock (self);
 }

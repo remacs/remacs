@@ -244,4 +244,45 @@
     (sit-for 1)
     (should-not (thread-alive-p thread))))
 
+(defvar threads-condvar nil)
+(defun threads-test-condvar-wait ()
+  ;; Wait for condvar to be notified
+  (mutex-lock (condition-mutex threads-condvar))
+  (condition-wait threads-condvar)
+  (mutex-unlock (condition-mutex threads-condvar))
+  ;; Wait again, it will be signaled.
+  (with-mutex (condition-mutex threads-condvar)
+    (condition-wait threads-condvar)))
+
+(ert-deftest threads-condvar-wait ()
+  "test waiting on conditional variable"
+  (let* ((cv-mutex (make-mutex))
+         (nthreads (length (all-threads)))
+         new-thread)
+    (setq threads-condvar (make-condition-variable cv-mutex))
+    (setq new-thread (make-thread #'threads-test-condvar-wait))
+    (while (not (eq (thread--blocker new-thread) threads-condvar))
+      (thread-yield))
+    (should (thread-alive-p new-thread))
+    (should (= (length (all-threads)) (1+ nthreads)))
+    ;; Notify the waiting thread.
+    (with-mutex cv-mutex
+      (condition-notify threads-condvar t))
+
+    ;; Allow new-thread to process the notification.
+    (sleep-for 0.1)
+    ;; Make sure the thread is still there.  This used to fail due to
+    ;; a bug in condition_wait_callback.
+    (should (thread-alive-p new-thread))
+    (should (= (length (all-threads)) (1+ nthreads)))
+    (should (memq new-thread (all-threads)))
+    ;; Make sure the other thread waits at the condition variable again.
+    (should (eq (thread--blocker new-thread) threads-condvar))
+
+    ;; Signal the thread.
+    (thread-signal new-thread 'error '("Die, die, die!"))
+    (sleep-for 0.1)
+    ;; Make sure the thread died.
+    (should (= (length (all-threads)) nthreads))))
+
 ;;; threads.el ends here
