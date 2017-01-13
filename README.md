@@ -285,7 +285,7 @@ We can see we need to define a `Snumberp` and a `Fnumberp`. `Qt` and
 // This is the function that gets called when 
 // we call numberp in elisp.
 fn Fnumberp(object: LispObject) -> LispObject {
-    if lisp::SYMBOLP(object) {
+    if lisp::NUMBERP(object) {
         unsafe {
             Qt
         }
