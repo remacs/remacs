@@ -26,16 +26,23 @@ use marker::{LispMarker, marker_position};
 /// `EmacsInt` represents an integer big enough to hold our tagged
 /// pointer representation.
 ///
-/// In Emacs C, this is `EMACS_INT`, which is defined as `long int`.
-pub type EmacsInt = libc::c_long;
+/// In Emacs C, this is `EMACS_INT`.
+///
+/// `EmacsUint` represents the unsigned equivalent of `EmacsInt`.
+/// In Emacs C, this is `EMACS_UINT`.
+///
+/// Their definition are determined in a way consistent with Emacs C.
+/// Under casual systems, they're the type isize and usize respectively.
 
-/// Unsigned equivalent of `EmacsInt`. In Emacs C, this is
-/// `EMACS_UINT`, which is defined as `unsigned long`.
-pub type EmacsUint = libc::c_ulong;
+include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
+/// These are an example of the casual case.
 
-// 2**63 - 1, which is the value of LONG_MAX in limits.h in the C
-// stdlib.
-pub const EMACS_INT_MAX: EmacsInt = 9223372036854775807;
+#[cfg(dummy = "impossible")]
+pub type EmacsInt = isize;
+#[cfg(dummy = "impossible")]
+pub type EmacsUint = usize;
+#[cfg(dummy = "impossible")]
+pub const EMACS_INT_MAX: EmacsInt = std::isize::MAX;
 
 // This is dependent on CHECK_LISP_OBJECT_TYPE, a compile time flag,
 // but it's usually false.
