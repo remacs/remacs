@@ -44,10 +44,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "regex.h"
 #include "blockinput.h"
 
-#ifdef MSDOS
-#include "msdos.h"	/* for fstatat */
-#endif
-
 static ptrdiff_t scmp (const char *, const char *, ptrdiff_t);
 static Lisp_Object file_attributes (int, char const *, Lisp_Object);
 
@@ -798,26 +794,12 @@ file_name_completion_stat (int fd, struct dirent *dp, struct stat *st_addr)
 {
   int value;
 
-#ifdef MSDOS
-  /* Some fields of struct stat are *very* expensive to compute on MS-DOS,
-     but aren't required here.  Avoid computing the following fields:
-     st_inode, st_size and st_nlink for directories, and the execute bits
-     in st_mode for non-directory files with non-standard extensions.  */
-
-  unsigned short save_djstat_flags = _djstat_flags;
-
-  _djstat_flags = _STAT_INODE | _STAT_EXEC_MAGIC | _STAT_DIRSIZE;
-#endif /* MSDOS */
-
   /* We want to return success if a link points to a nonexistent file,
      but we want to return the status for what the link points to,
      in case it is a directory.  */
   value = fstatat (fd, dp->d_name, st_addr, AT_SYMLINK_NOFOLLOW);
   if (value == 0 && S_ISLNK (st_addr->st_mode))
     fstatat (fd, dp->d_name, st_addr, 0);
-#ifdef MSDOS
-  _djstat_flags = save_djstat_flags;
-#endif /* MSDOS */
   return value;
 }
 

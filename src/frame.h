@@ -661,11 +661,7 @@ default_pixels_per_inch_y (void)
 #else
 #define FRAME_W32_P(f) ((f)->output_method == output_w32)
 #endif
-#ifndef MSDOS
 #define FRAME_MSDOS_P(f) false
-#else
-#define FRAME_MSDOS_P(f) ((f)->output_method == output_msdos_raw)
-#endif
 #ifndef HAVE_NS
 #define FRAME_NS_P(f) false
 #else

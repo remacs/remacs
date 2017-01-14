@@ -52,11 +52,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "cygw32.h"
 #endif
 
-#ifdef MSDOS
-#include <binary-io.h>
-#include "dosfns.h"
-#endif
-
 #ifdef HAVE_WINDOW_SYSTEM
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
@@ -369,14 +364,12 @@ terminate_due_to_signal (int sig, int backtrace_limit)
   /* Signal the same code; this time it will really be fatal.
      Since we're in a signal handler, the signal is blocked, so we
      have to unblock it if we want to really receive it.  */
-#ifndef MSDOS
   {
     sigset_t unblocked;
     sigemptyset (&unblocked);
     sigaddset (&unblocked, sig);
     pthread_sigmask (SIG_UNBLOCK, &unblocked, 0);
   }
-#endif
 
   emacs_raise (sig);
 
@@ -478,15 +471,7 @@ init_cmdargs (int argc, char **argv, int skip_args, char *original_pwd)
 	  tem = Fexpand_file_name (build_string ("lib-src"), dir);
 	  lib_src_exists = Ffile_exists_p (tem);
 
-#ifdef MSDOS
-	  /* MSDOS installations frequently remove lib-src, but we still
-	     must set installation-directory, or else info won't find
-	     its files (it uses the value of installation-directory).  */
-	  tem = Fexpand_file_name (build_string ("info"), dir);
-	  info_exists = Ffile_exists_p (tem);
-#else
 	  info_exists = Qnil;
-#endif
 
 	  if (!NILP (lib_src_exists) || !NILP (info_exists))
 	    {
@@ -504,14 +489,7 @@ init_cmdargs (int argc, char **argv, int skip_args, char *original_pwd)
 	  tem = Fexpand_file_name (build_string ("../lib-src"), dir);
 	  lib_src_exists = Ffile_exists_p (tem);
 
-
-#ifdef MSDOS
-	  /* See the MSDOS commentary above.  */
-	  tem = Fexpand_file_name (build_string ("../info"), dir);
-	  info_exists = Ffile_exists_p (tem);
-#else
 	  info_exists = Qnil;
-#endif
 
 	  if (!NILP (lib_src_exists) || !NILP (info_exists))
 	    {
@@ -885,12 +863,6 @@ main (int argc, char **argv)
 
 #endif	/* not SYSTEM_MALLOC and not HYBRID_MALLOC */
 
-#ifdef MSDOS
-  SET_BINARY (fileno (stdin));
-  fflush (stdout);
-  SET_BINARY (fileno (stdout));
-#endif /* MSDOS */
-
   /* Skip initial setlocale if LC_ALL is "C", as it's not needed in that case.
      The build procedure uses this while dumping, to ensure that the
      dumped Emacs does not have its system locale tables initialized,
@@ -1114,10 +1086,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 		   w32_strerror (0));
           exit (1);
         }
-#else /* MSDOS */
-      fprintf (stderr, "This platform does not support the -daemon flag.\n");
-      exit (1);
-#endif /* MSDOS */
+#endif /* DOS */
       if (dname_arg)
 	daemon_name = xstrdup (dname_arg);
     }
@@ -1306,16 +1275,6 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
      except when building temacs
      because the -d argument has not been skipped in skip_args.  */
 
-#ifdef MSDOS
-  /* Call early 'cause init_environment needs it.  */
-  init_dosfns ();
-  /* Set defaults for several environment variables.  */
-  if (initialized)
-    init_environment (argc, argv, skip_args);
-  else
-    tzset ();
-#endif /* MSDOS */
-
 #ifdef HAVE_KQUEUE
   globals_of_kqueue ();
 #endif
@@ -1483,13 +1442,6 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 #if defined WINDOWSNT || defined HAVE_NTGUI
       syms_of_w32select ();
 #endif
-
-#ifdef MSDOS
-      syms_of_xmenu ();
-      syms_of_dosfns ();
-      syms_of_msdos ();
-      syms_of_win16select ();
-#endif	/* MSDOS */
 
 #ifdef HAVE_NS
       syms_of_nsterm ();
@@ -2016,10 +1968,6 @@ shut_down_emacs (int sig, Lisp_Object stuff)
       check_message_stack ();
     }
 
-#ifdef MSDOS
-  dos_cleanup ();
-#endif
-
 #ifdef HAVE_NS
   ns_term_shutdown (sig);
 #endif
@@ -2261,9 +2209,6 @@ decode_env_path (const char *evarname, const char *defalt, bool empty)
 	  d[-1] = '\0';	/* remove last semi-colon and null-terminate PATH */
       } while (q);
       path_copy = path_utf8;
-#else  /* MSDOS */
-      path_copy = alloca (strlen (path) + 1);
-      strcpy (path_copy, path);
 #endif
       dostounix_filename (path_copy);
       path = path_copy;

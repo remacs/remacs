@@ -60,31 +60,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef HAVE_COFF_H
 #include <coff.h>
-#ifdef MSDOS
-#include <fcntl.h>  /* for O_RDONLY, O_RDWR */
-#include <crt0.h>   /* for _crt0_startup_flags and its bits */
-#include <sys/exceptn.h>
-static int save_djgpp_startup_flags;
-#include <libc/atexit.h>
-static struct __atexit *save_atexit_ptr;
-#define filehdr external_filehdr
-#define scnhdr external_scnhdr
-#define syment external_syment
-#define auxent external_auxent
-#define n_numaux e_numaux
-#define n_type e_type
-struct aouthdr
-{
-  unsigned short	magic;	/* type of file				*/
-  unsigned short	vstamp;	/* version stamp			*/
-  unsigned long		tsize;	/* text size in bytes, padded to FW bdry*/
-  unsigned long		dsize;	/* initialized data "  "		*/
-  unsigned long		bsize;	/* uninitialized data "   "		*/
-  unsigned long		entry;	/* entry pt.				*/
-  unsigned long	 	text_start;/* base of text used for this file */
-  unsigned long	 	data_start;/* base of data used for this file */
-};
-#endif /* MSDOS */
 #else  /* not HAVE_COFF_H */
 #include <a.out.h>
 #endif /* not HAVE_COFF_H */
@@ -189,25 +164,6 @@ make_hdr (int new, int a_out,
   /* Salvage as much info from the existing file as possible */
   if (a_out >= 0)
     {
-#ifdef MSDOS
-      /* Support the coff-go32-exe format with a prepended stub, since
-	 this is what GCC 2.8.0 and later generates by default in DJGPP.  */
-      unsigned short mz_header[3];
-
-      if (read (a_out, &mz_header, sizeof (mz_header)) != sizeof (mz_header))
-	{
-	  PERROR (a_name);
-	}
-      if (mz_header[0] == 0x5a4d || mz_header[0] == 0x4d5a) /* "MZ" or "ZM" */
-	{
-	  coff_offset = (long)mz_header[2] * 512L;
-	  if (mz_header[1])
-	    coff_offset += (long)mz_header[1] - 512L;
-	  lseek (a_out, coff_offset, 0);
-	}
-      else
-	lseek (a_out, 0L, 0);
-#endif /* MSDOS */
       if (read (a_out, &f_hdr, sizeof (f_hdr)) != sizeof (f_hdr))
 	{
 	  PERROR (a_name);
@@ -360,23 +316,6 @@ copy_text_and_data (int new, int a_out)
   register char *end;
   register char *ptr;
 
-#ifdef MSDOS
-  /* Dump the original table of exception handlers, not the one
-     where our exception hooks are registered.  */
-  __djgpp_exception_toggle ();
-
-  /* Switch off startup flags that might have been set at runtime
-     and which might change the way that dumped Emacs works.  */
-  save_djgpp_startup_flags = _crt0_startup_flags;
-  _crt0_startup_flags &= ~(_CRT0_FLAG_NO_LFN | _CRT0_FLAG_NEARPTR);
-
-  /* Zero out the 'atexit' chain in the dumped executable, to avoid
-     calling the atexit functions twice.  (emacs.c:main installs an
-     atexit function.)  */
-  save_atexit_ptr = __atexit_ptr;
-  __atexit_ptr = NULL;
-#endif
-
   lseek (new, (long) text_scnptr, 0);
   ptr = (char *) f_ohdr.text_start;
   end = ptr + f_ohdr.tsize;
@@ -386,18 +325,6 @@ copy_text_and_data (int new, int a_out)
   ptr = (char *) f_ohdr.data_start;
   end = ptr + f_ohdr.dsize;
   write_segment (new, ptr, end);
-
-#ifdef MSDOS
-  /* Restore our exception hooks.  */
-  __djgpp_exception_toggle ();
-
-  /* Restore the startup flags.  */
-  _crt0_startup_flags = save_djgpp_startup_flags;
-
-  /* Restore the atexit chain.  */
-  __atexit_ptr = save_atexit_ptr;
-#endif
-
 
   return 0;
 }
@@ -472,11 +399,7 @@ adjust_lnnoptrs (int writedesc, int readdesc, const char *new_name)
   if (!lnnoptr || !f_hdr.f_symptr)
     return 0;
 
-#ifdef MSDOS
-  if ((new = writedesc) < 0)
-#else
   if ((new = emacs_open (new_name, O_RDWR, 0)) < 0)
-#endif
     {
       PERROR (new_name);
       return -1;
@@ -498,9 +421,7 @@ adjust_lnnoptrs (int writedesc, int readdesc, const char *new_name)
 	    }
 	}
     }
-#ifndef MSDOS
   emacs_close (new);
-#endif
   return 0;
 }
 

@@ -6073,12 +6073,8 @@ init_display (void)
     f->terminal = t;
 
     t->reference_count++;
-#ifdef MSDOS
-    f->output_data.tty->display_info = &the_only_display_info;
-#else
     if (f->output_method == output_termcap)
       create_tty_output (f);
-#endif
     t->display_info.tty->top_frame = selected_frame;
     change_frame_size (XFRAME (selected_frame),
                        FrameCols (t->display_info.tty),

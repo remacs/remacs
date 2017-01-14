@@ -213,10 +213,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <Xm/XmStrDefs.h>
 #endif /* USE_MOTIF */
 
-#ifdef MSDOS
-#include "dosfns.h"
-#endif
-
 #ifdef HAVE_WINDOW_SYSTEM
 #include TERM_HEADER
 #include "fontset.h"
@@ -976,12 +972,6 @@ tty_color_name (struct frame *f, int idx)
       if (!NILP (coldesc))
 	return XCAR (coldesc);
     }
-#ifdef MSDOS
-  /* We can have an MS-DOS frame under -nw for a short window of
-     opportunity before internal_terminal_init is called.  DTRT.  */
-  if (FRAME_MSDOS_P (f) && !inhibit_window_system)
-    return msdos_stdcolor_name (idx);
-#endif
 
   if (idx == FACE_TTY_DEFAULT_FG_COLOR)
     return build_string (unspecified_fg);
@@ -5700,10 +5690,6 @@ map_tty_color (struct frame *f, struct face *face,
   unsigned long default_pixel =
     foreground_p ? FACE_TTY_DEFAULT_FG_COLOR : FACE_TTY_DEFAULT_BG_COLOR;
   unsigned long pixel = default_pixel;
-#ifdef MSDOS
-  unsigned long default_other_pixel =
-    foreground_p ? FACE_TTY_DEFAULT_BG_COLOR : FACE_TTY_DEFAULT_FG_COLOR;
-#endif
 
   eassert (idx == LFACE_FOREGROUND_INDEX || idx == LFACE_BACKGROUND_INDEX);
 
@@ -5724,33 +5710,6 @@ map_tty_color (struct frame *f, struct face *face,
   if (pixel == default_pixel && STRINGP (color))
     {
       pixel = load_color (f, face, color, idx);
-
-#ifdef MSDOS
-      /* If the foreground of the default face is the default color,
-	 use the foreground color defined by the frame.  */
-      if (FRAME_MSDOS_P (f))
-	{
-	  if (pixel == default_pixel
-	      || pixel == FACE_TTY_DEFAULT_COLOR)
-	    {
-	      if (foreground_p)
-		pixel = FRAME_FOREGROUND_PIXEL (f);
-	      else
-		pixel = FRAME_BACKGROUND_PIXEL (f);
-	      face->lface[idx] = tty_color_name (f, pixel);
-	      *defaulted = true;
-	    }
-	  else if (pixel == default_other_pixel)
-	    {
-	      if (foreground_p)
-		pixel = FRAME_BACKGROUND_PIXEL (f);
-	      else
-		pixel = FRAME_FOREGROUND_PIXEL (f);
-	      face->lface[idx] = tty_color_name (f, pixel);
-	      *defaulted = true;
-	    }
-	}
-#endif /* MSDOS */
     }
 
   if (foreground_p)

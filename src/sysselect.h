@@ -49,10 +49,6 @@ typedef int fd_set;
 #define select sys_select
 #endif
 
-#ifdef MSDOS
-#define pselect sys_select
-#endif
-
 #ifndef WINDOWSNT
 INLINE_HEADER_BEGIN
 
