@@ -479,17 +479,6 @@ DEFUN ("car-safe", Fcar_safe, Scar_safe, 1, 1, 0,
   return CAR_SAFE (object);
 }
 
-DEFUN ("cdr", Fcdr, Scdr, 1, 1, 0,
-       doc: /* Return the cdr of LIST.  If arg is nil, return nil.
-Error if arg is not nil and not a cons cell.  See also `cdr-safe'.
-
-See Info node `(elisp)Cons Cells' for a discussion of related basic
-Lisp concepts such as cdr, car, cons cell and list.  */)
-  (register Lisp_Object list)
-{
-  return CDR (list);
-}
-
 DEFUN ("cdr-safe", Fcdr_safe, Scdr_safe, 1, 1, 0,
        doc: /* Return the cdr of OBJECT if it is a cons cell, or else nil.  */)
   (Lisp_Object object)
@@ -3341,7 +3330,6 @@ syms_of_data (void)
   defsubr (&Ssubrp);
   defsubr (&Sbyte_code_function_p);
   defsubr (&Schar_or_string_p);
-  defsubr (&Scdr);
   defsubr (&Scar_safe);
   defsubr (&Scdr_safe);
   defsubr (&Ssymbol_function);

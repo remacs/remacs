@@ -113,16 +113,33 @@ unsafe fn XCAR(object: LispObject) -> LispObject {
     (*XCONS(object)).car
 }
 
-/// Take the car of a cons cell, or signal an error if it's a
+unsafe fn XCDR(object: LispObject) -> LispObject {
+    (*XCONS(object)).cdr
+}
+
+/// Take the car/cdr of a cons cell, or signal an error if it's a
 /// different type.
 ///
 /// # Porting Notes
 ///
-/// This is equivalent to `CAR` in C code.
+/// This is equivalent to `CAR`/`CDR` in C code.
 fn car(object: LispObject) -> LispObject {
     if CONSP(object) {
         unsafe {
             XCAR(object)
+        }
+    } else if NILP(object) {
+        Qnil
+    } else {
+        unsafe {
+            wrong_type_argument(Qlistp, object)
+        }
+    }
+}
+fn cdr(object: LispObject) -> LispObject {
+    if CONSP(object) {
+        unsafe {
+            XCDR(object)
         }
     } else if NILP(object) {
         Qnil
@@ -143,5 +160,18 @@ Error if arg is not nil and not a cons cell.  See also `car-safe'.
 
 See Info node `(elisp)Cons Cells' for a discussion of related basic
 Lisp concepts such as car, cdr, cons cell and list.
+
+(fn LIST)");
+
+#[no_mangle]
+pub extern "C" fn Fcdr(list: LispObject) -> LispObject {
+    cdr(list)
+}
+
+defun!("cdr", Fcdr, Scdr, 1, 1, ptr::null(), "Return the cdr of LIST.  If arg is nil, return nil.
+Error if arg is not nil and not a cons cell.  See also `cdr-safe'.
+
+See Info node `(elisp)Cons Cells' for a discussion of related basic
+Lisp concepts such as cdr, car, cons cell and list.
 
 (fn LIST)");
