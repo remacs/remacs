@@ -492,17 +492,6 @@ DEFUN ("floatp", Ffloatp, Sfloatp, 1, 1, 0,
 
 /* Extract and set components of lists.  */
 
-DEFUN ("car", Fcar, Scar, 1, 1, 0,
-       doc: /* Return the car of LIST.  If arg is nil, return nil.
-Error if arg is not nil and not a cons cell.  See also `car-safe'.
-
-See Info node `(elisp)Cons Cells' for a discussion of related basic
-Lisp concepts such as car, cdr, cons cell and list.  */)
-  (register Lisp_Object list)
-{
-  return CAR (list);
-}
-
 DEFUN ("car-safe", Fcar_safe, Scar_safe, 1, 1, 0,
        doc: /* Return the car of OBJECT if it is a cons cell, or else nil.  */)
   (Lisp_Object object)
@@ -3374,7 +3363,6 @@ syms_of_data (void)
   defsubr (&Ssubrp);
   defsubr (&Sbyte_code_function_p);
   defsubr (&Schar_or_string_p);
-  defsubr (&Scar);
   defsubr (&Scdr);
   defsubr (&Scar_safe);
   defsubr (&Scdr_safe);
