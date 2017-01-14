@@ -11,6 +11,7 @@ use std::os::raw::c_char;
 use std::cmp::max;
 use std::mem;
 use std::ptr;
+use strings::STRINGP;
 
 use marker::{LispMarker, marker_position};
 
@@ -405,6 +406,21 @@ pub fn XUNTAG(a: LispObject, ty: LispType) -> *const libc::c_void {
     // Since pointers are aligned to 8 bytes, we can simply subtract
     // the bit pattern to obtain a valid pointer.
     (tagged_ptr - tag) as *const libc::c_void
+}
+
+/// Represents a string value in elisp
+
+#[repr(C)]
+pub struct LispString {
+    size: libc::ptrdiff_t,
+    size_byte: libc::ptrdiff_t,
+    intervals: *mut libc::c_void, // @TODO implement
+    pub data: *mut libc::c_char,
+}
+
+pub fn XSTRING(a: LispObject) -> *const LispString {
+    debug_assert!(STRINGP(a));
+    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_String)) }
 }
 
 /// Represents a floating point value in elisp, or GC bookkeeping for

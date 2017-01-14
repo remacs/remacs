@@ -3154,47 +3154,47 @@ into shorter lines.  */)
   return make_number (encoded_length);
 }
 
-DEFUN ("base64-encode-string", Fbase64_encode_string, Sbase64_encode_string,
-       1, 2, 0,
-       doc: /* Base64-encode STRING and return the result.
-Optional second argument NO-LINE-BREAK means do not break long lines
-into shorter lines.  */)
-  (Lisp_Object string, Lisp_Object no_line_break)
-{
-  ptrdiff_t allength, length, encoded_length;
-  char *encoded;
-  Lisp_Object encoded_string;
-  USE_SAFE_ALLOCA;
+/* DEFUN ("base64-encode-string", Fbase64_encode_string, Sbase64_encode_string, */
+/*        1, 2, 0, */
+/*        doc: /\* Base64-encode STRING and return the result. */
+/* Optional second argument NO-LINE-BREAK means do not break long lines */
+/* into shorter lines.  *\/) */
+/*   (Lisp_Object string, Lisp_Object no_line_break) */
+/* { */
+/*   ptrdiff_t allength, length, encoded_length; */
+/*   char *encoded; */
+/*   Lisp_Object encoded_string; */
+/*   USE_SAFE_ALLOCA; */
 
-  CHECK_STRING (string);
+/*   CHECK_STRING (string); */
 
-  /* We need to allocate enough room for encoding the text.
-     We need 33 1/3% more space, plus a newline every 76
-     characters, and then we round up. */
-  length = SBYTES (string);
-  allength = length + length/3 + 1;
-  allength += allength / MIME_LINE_LENGTH + 1 + 6;
+/*   /\* We need to allocate enough room for encoding the text. */
+/*      We need 33 1/3% more space, plus a newline every 76 */
+/*      characters, and then we round up. *\/ */
+/*   length = SBYTES (string); */
+/*   allength = length + length/3 + 1; */
+/*   allength += allength / MIME_LINE_LENGTH + 1 + 6; */
 
-  /* We need to allocate enough room for decoding the text. */
-  encoded = SAFE_ALLOCA (allength);
+/*   /\* We need to allocate enough room for decoding the text. *\/ */
+/*   encoded = SAFE_ALLOCA (allength); */
 
-  encoded_length = base64_encode_1 (SSDATA (string),
-				    encoded, length, NILP (no_line_break),
-				    STRING_MULTIBYTE (string));
-  if (encoded_length > allength)
-    emacs_abort ();
+/*   encoded_length = base64_encode_1 (SSDATA (string), */
+/* 				    encoded, length, NILP (no_line_break), */
+/* 				    STRING_MULTIBYTE (string)); */
+/*   if (encoded_length > allength) */
+/*     emacs_abort (); */
 
-  if (encoded_length < 0)
-    {
-      /* The encoding wasn't possible. */
-      error ("Multibyte character in data for base64 encoding");
-    }
+/*   if (encoded_length < 0) */
+/*     { */
+/*       /\* The encoding wasn't possible. *\/ */
+/*       error ("Multibyte character in data for base64 encoding"); */
+/*     } */
 
-  encoded_string = make_unibyte_string (encoded, encoded_length);
-  SAFE_FREE ();
+/*   encoded_string = make_unibyte_string (encoded, encoded_length); */
+/*   SAFE_FREE (); */
 
-  return encoded_string;
-}
+/*   return encoded_string; */
+/* } */
 
 static ptrdiff_t
 base64_encode_1 (const char *from, char *to, ptrdiff_t length,
@@ -5111,7 +5111,7 @@ this variable.  */);
   defsubr (&Swidget_apply);
   defsubr (&Sbase64_encode_region);
   defsubr (&Sbase64_decode_region);
-  defsubr (&Sbase64_encode_string);
+  //  defsubr (&Sbase64_encode_string);
   defsubr (&Sbase64_decode_string);
   defsubr (&Smd5);
   defsubr (&Ssecure_hash);

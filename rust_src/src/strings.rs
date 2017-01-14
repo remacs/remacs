@@ -10,7 +10,7 @@ extern "C" {
     static Qt: LispObject;
 }
 
-fn STRINGP(value: LispObject) -> bool {
+pub fn STRINGP(value: LispObject) -> bool {
     XTYPE(value) == LispType::Lisp_String
 }
 

@@ -15,6 +15,7 @@ mod cons;
 mod strings;
 mod symbols;
 mod globals;
+mod fns;
 
 use lisp::LispSubr;
 
@@ -53,5 +54,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*cons::Ssetcdr);
         defsubr(&*strings::Sstringp);
         defsubr(&*strings::Seq);
+        defsubr(&*fns::Sbase64EncodeString);
     }
 }
