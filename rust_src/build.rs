@@ -5,6 +5,7 @@ use std::io::Write;
 use std::fs::File;
 use std::path::PathBuf;
 use std::mem::size_of;
+use std::cmp::max;
 
 #[cfg(feature = "wide-emacs-int")]
 const WIDE_EMACS_INT: bool = true;
@@ -39,6 +40,10 @@ fn emacs_int_types() -> (String, String, String) {
     panic!("build.rs: intptr_t is too large!");
 }
 
+fn emacs_float_types() -> (String, usize) {
+    ("f64".to_owned(), size_of::<f64>())
+}
+
 fn main() {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("definitions.rs");
     let mut file = File::create(out_path).expect("Failed to create definition file");
@@ -46,5 +51,8 @@ fn main() {
     write!(&mut file, "pub type EmacsInt = {};\n", type1).expect("Write error!");
     write!(&mut file, "pub type EmacsUint = {};\n", type2).expect("Write error!");
     write!(&mut file, "pub const EMACS_INT_MAX: EmacsInt = {};\n", max1).expect("Write error!");
-    
+
+    let (type1, size1) = emacs_float_types();
+    write!(&mut file, "pub type EmacsDouble = {};\n", type1).expect("Write error!");
+    write!(&mut file, "pub const EMACS_LISP_FLOAT_SIZE: EmacsInt = {};\n", max(size1, size_of::<libc::intptr_t>())).expect("Write error!");    
 }
