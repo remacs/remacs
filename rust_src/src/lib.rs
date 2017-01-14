@@ -17,6 +17,8 @@ mod symbols;
 mod globals;
 mod atom;
 
+pub use self::lisp::deprecated::{XFASTINT};
+
 use lisp::LispSubr;
 
 // These need to be exported as bytecode.c depends upon them.

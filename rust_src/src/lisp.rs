@@ -506,3 +506,20 @@ pub fn XMARKER(a: LispObject) -> *const LispMarker {
 fn test_markerp() {
     assert!(!MARKERP(Qnil))
 }
+
+pub mod deprecated {
+
+    use lisp::{LispObject, EmacsInt, XINT};
+
+    // Implementation of the XFASTINT depends on the USE_LSB_TAG
+    // in Emacs C. But we selected this implementation as in our
+    // build that value is 1.
+    // A must be nonnegative.
+    #[allow(dead_code)]
+    #[allow(non_snake_case)]
+    pub fn XFASTINT(a: LispObject) -> EmacsInt {
+        let n: EmacsInt = XINT(a);
+        debug_assert!(0 <= n);
+        n
+    }
+}
