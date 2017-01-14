@@ -7014,8 +7014,10 @@ or memory information can't be obtained, return nil.  */)
 		   (uintmax_t) freeswap / 1024);
   else
     return Qnil;
+#else
   /* FIXME: add more systems.  */
   return Qnil;
+#endif
 }
 
 /* Debugging aids.  */
