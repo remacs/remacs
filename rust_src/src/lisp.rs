@@ -205,6 +205,10 @@ fn test_lisp_misc_any_size() {
 }
 
 impl LispObject {
+    pub fn is_misc(self) -> bool {
+        unsafe { self.get_type_unchecked() == LispType::Lisp_Misc }
+    }
+
     pub unsafe fn to_misc_unchecked(self) -> LispMiscRef {
         LispMiscRef(mem::transmute(self.get_untaggedptr_unchecked()))
     }
@@ -241,6 +245,39 @@ impl LispObject {
     }
 
 }
+
+
+impl LispObject {
+    #[inline]
+    pub fn is_integer(self) -> bool {
+        let ty = unsafe { self.get_type_unchecked() };
+        (ty as u8 & ((LispType::Lisp_Int0 as u8) | !(LispType::Lisp_Int1 as u8))) == LispType::Lisp_Int0 as u8
+    }
+}
+
+
+// Float support (LispType == Lisp_Float == 7 )
+
+impl LispObject {
+    #[inline]
+    pub fn is_float(self) -> bool {
+        unsafe { self.get_type_unchecked() == LispType::Lisp_Float }
+    }
+
+}
+
+
+
+// Other functions
+
+impl LispObject {
+    #[inline]
+    pub fn is_number(self) -> bool {
+        self.is_integer() || self.is_float()
+    }
+}
+
+
 
 
 const PSEUDOVECTOR_SIZE_BITS: libc::c_int = 12;
@@ -366,6 +403,7 @@ pub const MANY: i16 = -2;
 
 mod deprecated {
     use super::*;
+    use ::libc;
 
     /// Convert a LispObject to an EmacsInt.
     #[allow(non_snake_case)]
@@ -413,6 +451,22 @@ mod deprecated {
         assert!(XINT(boxed_5) == 5);
     }
 
+
+    /// Is this LispObject an integer?
+    #[allow(non_snake_case)]
+    #[allow(dead_code)]
+    pub fn INTEGERP(a: LispObject) -> bool {
+        a.is_integer()
+    }
+
+    #[test]
+    fn test_integerp() {
+        assert!(!INTEGERP(Qnil));
+        assert!(INTEGERP(make_number(1)));
+        assert!(INTEGERP(make_natnum(1)));
+    }
+
+
     /// Convert a positive integer into its LispObject representation.
     ///
     /// This is also the function to use when translating `XSETFASTINT`
@@ -437,47 +491,80 @@ mod deprecated {
     fn test_xtype() {
         assert!(XTYPE(Qnil) == LispType::Lisp_Symbol);
     }
+
+    /// Is this LispObject a misc type?
+    ///
+    /// A misc type has its type bits set to 'misc', and uses additional
+    /// bits to specify what exact type it represents.
+    #[allow(non_snake_case)]
+    pub fn MISCP(a: LispObject) -> bool {
+        a.is_misc()
+    }
+
+    #[test]
+    fn test_miscp() {
+        assert!(!MISCP(Qnil));
+    }
+
+    #[allow(non_snake_case)]
+    pub fn XMISC(a: LispObject) -> LispMiscRef {
+        unsafe { a.to_misc_unchecked() }
+    }
+
+    #[allow(non_snake_case)]
+    #[allow(dead_code)]
+    pub fn XMISCANY(a: LispObject) -> *const LispMiscAny {
+        debug_assert!(MISCP(a));
+        XMISC(a).0
+    }
+
+    // TODO: we should do some sanity checking, because we're currently
+    // exposing a safe API that dereferences raw pointers.
+    #[allow(non_snake_case)]
+    pub fn XMISCTYPE(a: LispObject) -> LispMiscType {
+        XMISC(a).ty
+    }
+
+    /// Is this LispObject a float?
+    #[allow(non_snake_case)]
+    pub fn FLOATP(a: LispObject) -> bool {
+        a.is_float()
+    }
+
+    #[test]
+    fn test_floatp() {
+        assert!(!FLOATP(Qnil));
+    }
+
+
+    /// Is this LispObject a number?
+    #[allow(non_snake_case)]
+    pub fn NUMBERP(x: LispObject) -> bool {
+        x.is_number()
+    }
+
+    #[test]
+    fn test_numberp() {
+        assert!(!NUMBERP(Qnil));
+        assert!(NUMBERP(make_natnum(1)));
+    }
+
+    /// Convert a tagged pointer to a normal C pointer.
+    ///
+    /// See the docstring for `LispType` for more information on tagging.
+    #[allow(non_snake_case)]
+    pub fn XUNTAG(a: LispObject, ty: LispType) -> *const libc::c_void {
+        let tagged_ptr = XLI(a) as libc::intptr_t;
+        let tag = ty as libc::intptr_t;
+        // Since pointers are aligned to 8 bytes, we can simply subtract
+        // the bit pattern to obtain a valid pointer.
+        (tagged_ptr - tag) as *const libc::c_void
+    }
+
+
 }
 
 pub use self::deprecated::*;
-
-
-/// Is this LispObject a float?
-#[allow(non_snake_case)]
-pub fn FLOATP(a: LispObject) -> bool {
-    XTYPE(a) == LispType::Lisp_Float
-}
-
-#[test]
-fn test_floatp() {
-    assert!(!FLOATP(Qnil));
-}
-
-/// Is this LispObject an integer?
-#[allow(non_snake_case)]
-pub fn INTEGERP(a: LispObject) -> bool {
-    (XTYPE(a) as u32 & ((LispType::Lisp_Int0 as u32) | !(LispType::Lisp_Int1 as u32))) ==
-    LispType::Lisp_Int0 as u32
-}
-
-#[test]
-fn test_integerp() {
-    assert!(!INTEGERP(Qnil));
-    assert!(INTEGERP(make_number(1)));
-    assert!(INTEGERP(make_natnum(1)));
-}
-
-/// Is this LispObject a number?
-#[allow(non_snake_case)]
-pub fn NUMBERP(x: LispObject) -> bool {
-    INTEGERP(x) || FLOATP(x)
-}
-
-#[test]
-fn test_numberp() {
-    assert!(!NUMBERP(Qnil));
-    assert!(NUMBERP(make_natnum(1)));
-}
 
 /// Check that `x` is an integer or float, coercing markers to integers.
 ///
@@ -509,31 +596,8 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
     }
 }
 
-/// Is this LispObject a misc type?
-///
-/// A misc type has its type bits set to 'misc', and uses additional
-/// bits to specify what exact type it represents.
-#[allow(non_snake_case)]
-fn MISCP(a: LispObject) -> bool {
-    XTYPE(a) == LispType::Lisp_Misc
-}
 
-#[test]
-fn test_miscp() {
-    assert!(!MISCP(Qnil));
-}
 
-/// Convert a tagged pointer to a normal C pointer.
-///
-/// See the docstring for `LispType` for more information on tagging.
-#[allow(non_snake_case)]
-pub fn XUNTAG(a: LispObject, ty: LispType) -> *const libc::c_void {
-    let tagged_ptr = XLI(a) as libc::intptr_t;
-    let tag = ty as libc::intptr_t;
-    // Since pointers are aligned to 8 bytes, we can simply subtract
-    // the bit pattern to obtain a valid pointer.
-    (tagged_ptr - tag) as *const libc::c_void
-}
 
 /// Represents a floating point value in elisp, or GC bookkeeping for
 /// floats.
@@ -564,24 +628,6 @@ fn test_lisp_float_size() {
 #[allow(dead_code)]
 pub struct LispFloatChain {
     chain: *const LispFloat,
-}
-
-#[allow(non_snake_case)]
-pub fn XMISC(a: LispObject) -> LispMiscRef {
-    unsafe { a.to_misc_unchecked() }
-}
-
-#[allow(non_snake_case)]
-pub fn XMISCANY(a: LispObject) -> *const LispMiscAny {
-    debug_assert!(MISCP(a));
-    unsafe { mem::transmute(XMISC(a)) }
-}
-
-// TODO: we should do some sanity checking, because we're currently
-// exposing a safe API that dereferences raw pointers.
-#[allow(non_snake_case)]
-pub fn XMISCTYPE(a: LispObject) -> LispMiscType {
-    unsafe { ptr::read(XMISCANY(a)).ty }
 }
 
 #[allow(non_snake_case)]
