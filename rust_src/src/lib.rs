@@ -29,6 +29,7 @@ pub use math::Fquo;
 // Widely used in the C codebase.
 pub use cons::Fsetcar;
 pub use cons::Fsetcdr;
+pub use cons::Fcar;
 
 extern "C" {
     fn defsubr(sname: *const LispSubr);
@@ -51,6 +52,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*cons::Sconsp);
         defsubr(&*cons::Ssetcar);
         defsubr(&*cons::Ssetcdr);
+        defsubr(&*cons::Scar);
         defsubr(&*strings::Sstringp);
         defsubr(&*strings::Seq);
     }

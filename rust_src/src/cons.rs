@@ -5,13 +5,13 @@ use std::ptr;
 use std::mem;
 
 use lisp::{LispObject, LispType, XTYPE, XUNTAG, Qt, Qnil, LispSubr, PvecType, VectorLikeHeader,
-           PSEUDOVECTOR_AREA_BITS, CHECK_TYPE};
+           PSEUDOVECTOR_AREA_BITS, CHECK_TYPE, wrong_type_argument};
 
 extern "C" {
     static Qconsp: LispObject;
     fn CHECK_IMPURE(obj: LispObject, ptr: *const libc::c_void);
+    static Qlistp: LispObject;
 }
-
 
 fn CONSP(x: LispObject) -> bool {
     XTYPE(x) == LispType::Lisp_Cons
@@ -103,3 +103,45 @@ pub extern "C" fn Fsetcdr(cell: LispObject, newcar: LispObject) -> LispObject {
 defun!("setcdr", Fsetcdr, Ssetcdr, 2, 2, ptr::null(), "Set the cdr of CELL to be NEWCDR.  Returns NEWCDR.
 
 (fn CELL NEWCDR)");
+
+/// Is `object` nil?
+fn NILP(object: LispObject) -> bool {
+    object == Qnil
+}
+
+unsafe fn XCAR(object: LispObject) -> LispObject {
+    (*XCONS(object)).car
+}
+
+/// Take the car of a cons cell, or signal an error if it's a
+/// different type.
+///
+/// # Porting Notes
+///
+/// This is equivalent to `CAR` in C code.
+fn car(object: LispObject) -> LispObject {
+    if CONSP(object) {
+        unsafe {
+            XCAR(object)
+        }
+    } else if NILP(object) {
+        Qnil
+    } else {
+        unsafe {
+            wrong_type_argument(Qlistp, object)
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn Fcar(list: LispObject) -> LispObject {
+    car(list)
+}
+
+defun!("car", Fcar, Scar, 1, 1, ptr::null(), "Return the car of LIST.  If arg is nil, return nil.
+Error if arg is not nil and not a cons cell.  See also `car-safe'.
+
+See Info node `(elisp)Cons Cells' for a discussion of related basic
+Lisp concepts such as car, cdr, cons cell and list.
+
+(fn LIST)");
