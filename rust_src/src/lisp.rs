@@ -10,7 +10,6 @@ use std::os::raw::c_char;
 #[cfg(test)]
 use std::cmp::max;
 use std::mem;
-use std::ptr;
 use std::ops::Deref;
 
 use marker::{LispMarker, marker_position};
@@ -54,8 +53,6 @@ pub const EMACS_LISP_FLOAT_SIZE: EmacsInt = 8;
 #[repr(C)]
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct LispObject(EmacsInt);
-// TODO: set CHECK_LISP_OBJECT_TYPE and use a struct here, as it would
-// give us stronger guarantees from the type checker.
 
 extern "C" {
     pub fn wrong_type_argument(predicate: LispObject, value: LispObject) -> LispObject;
@@ -143,13 +140,13 @@ pub enum LispType {
 
 impl LispObject {
     #[allow(unused_unsafe)]
-    pub unsafe fn get_type_unchecked(self) -> LispType {
+    pub fn get_type(self) -> LispType {
         let res = (self.to_raw() & !VALMASK) as u8;
         unsafe { mem::transmute(res) }
     }
 
     #[inline]
-    pub unsafe fn get_untaggedptr_unchecked(self) -> * mut libc::c_void {
+    pub fn get_untaggedptr(self) -> * mut libc::c_void {
         (self.to_raw() & VALMASK) as libc::intptr_t as * mut libc::c_void
     }
 }
@@ -223,11 +220,11 @@ fn test_lisp_misc_any_size() {
 
 impl LispObject {
     pub fn is_misc(self) -> bool {
-        unsafe { self.get_type_unchecked() == LispType::Lisp_Misc }
+        self.get_type() == LispType::Lisp_Misc
     }
 
     pub unsafe fn to_misc_unchecked(self) -> LispMiscRef {
-        LispMiscRef::new(mem::transmute(self.get_untaggedptr_unchecked()))
+        LispMiscRef::new(mem::transmute(self.get_untaggedptr()))
     }
 
     pub unsafe fn get_misc_type_unchecked(self) -> LispMiscType {
@@ -235,40 +232,44 @@ impl LispObject {
     }
 }
 
-// Integer support (LispType == Lisp_Int0 | Lisp_Int1 == 2 | 6(LSB) )
+// Fixnum(Integer) support (LispType == Lisp_Int0 | Lisp_Int1 == 2 | 6(LSB) )
 
-// Largest and smallest numbers that can be represented as integers in
+/// Fixnums are inline integers that fit directly into Lisp's tagged word.
+/// There's two LispType variants to provide an extra bit.
+
+// Largest and smallest numbers that can be represented as fixnums in
 // Emacs lisp.
 pub const MOST_POSITIVE_FIXNUM: EmacsInt = EMACS_INT_MAX >> INTTYPEBITS;
 #[allow(dead_code)]
 pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
 
-
-// Lisp_Int0 (natnum)
-
-/// Natnums are inline integers that is great or equal to 0 and fit directly into
-/// Lisp's tagged word.
+/// Natnums(natural number) are the non-negative fixnums.
+/// There were special branches in the original code for better performance.
+/// However they are unified into the fixnum logic under LSB mode.
+/// TODO: Recheck these logic in original C code.
 
 impl LispObject {
     #[inline]
-    pub unsafe fn from_natnum_unchecked(n: EmacsInt) -> LispObject {
+    pub unsafe fn from_fixnum_unchecked(n: EmacsInt) -> LispObject {
         let o = (n << INTTYPEBITS) as EmacsUint + LispType::Lisp_Int0 as EmacsUint;
         LispObject::from_raw(o as EmacsInt)
     }
 
     #[inline]
-    pub unsafe fn to_natnum_unchecked(self) -> EmacsInt {
+    pub fn to_fixnum(self) -> EmacsInt {
         self.to_raw() >> INTTYPEBITS
     }
 
-}
+    #[inline]
+    pub fn is_fixnum(self) -> bool {
+        let ty = self.get_type();
+        (ty as u8 & ((LispType::Lisp_Int0 as u8) | !(LispType::Lisp_Int1 as u8))) == LispType::Lisp_Int0 as u8
+    }
 
-
-impl LispObject {
+    /// TODO: Bignum support? (Current Emacs doesn't have it)
     #[inline]
     pub fn is_integer(self) -> bool {
-        let ty = unsafe { self.get_type_unchecked() };
-        (ty as u8 & ((LispType::Lisp_Int0 as u8) | !(LispType::Lisp_Int1 as u8))) == LispType::Lisp_Int0 as u8
+        self.is_fixnum()
     }
 }
 
@@ -314,12 +315,12 @@ pub type LispFloatRef = ExternalPtr<LispFloat>;
 impl LispObject {
     #[inline]
     pub fn is_float(self) -> bool {
-        unsafe { self.get_type_unchecked() == LispType::Lisp_Float }
+        self.get_type() == LispType::Lisp_Float
     }
 
     #[inline]
     pub unsafe fn to_float_unchecked(self) -> LispFloatRef {
-        LispFloatRef::new(mem::transmute(self.get_untaggedptr_unchecked()))
+        LispFloatRef::new(mem::transmute(self.get_untaggedptr()))
     }
 
     pub unsafe fn get_float_data_unchecked(self) -> EmacsDouble {
@@ -462,6 +463,12 @@ macro_rules! defun {
 /// of arguments.
 pub const MANY: i16 = -2;
 
+/// # Porting Notes
+///
+/// This module contains some functions that is originally contained in Emacs C code
+/// as macros and global functions, which does not conforms to Rust naming rules well
+/// and lacks unsafe marks. However we'll keep them during the porting process to make
+/// the porting easy, we should be able to remove once the relevant functionality is Rust-only.
 mod deprecated {
     use super::*;
     use ::libc;
@@ -496,14 +503,14 @@ mod deprecated {
     /// porting. For example, `XSETINT(x, y)` should be written as `x =
     /// make_number(y)`.
     pub fn make_number(n: EmacsInt) -> LispObject {
-        unsafe { LispObject::from_natnum_unchecked(n) }
+        unsafe { LispObject::from_fixnum_unchecked(n) }
     }
 
     /// Extract the integer value from an elisp object representing an
     /// integer.
     #[allow(non_snake_case)]
     pub fn XINT(a: LispObject) -> EmacsInt {
-        unsafe { a.to_natnum_unchecked() }
+        a.to_fixnum()
     }
 
     #[test]
@@ -545,7 +552,7 @@ mod deprecated {
     /// Return the type of a LispObject.
     #[allow(non_snake_case)]
     pub fn XTYPE(a: LispObject) -> LispType {
-        unsafe { a.get_type_unchecked() }
+        a.get_type()
     }
 
     #[test]
