@@ -92,42 +92,13 @@ impl LispObject {
     }
 }
 
+// Number of bits in a Lisp_Object tag.
+const GCTYPEBITS: libc::c_int = 3;
 
-const PSEUDOVECTOR_SIZE_BITS: libc::c_int = 12;
-#[allow(dead_code)]
-const PSEUDOVECTOR_SIZE_MASK: libc::c_int = (1 << PSEUDOVECTOR_SIZE_BITS) - 1;
-const PSEUDOVECTOR_REST_BITS: libc::c_int = 12;
-#[allow(dead_code)]
-const PSEUDOVECTOR_REST_MASK: libc::c_int = (((1 << PSEUDOVECTOR_REST_BITS) - 1) <<
-                                             PSEUDOVECTOR_SIZE_BITS);
-pub const PSEUDOVECTOR_AREA_BITS: libc::c_int = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS;
-#[allow(dead_code)]
-const PVEC_TYPE_MASK: libc::c_int = 0x3f << PSEUDOVECTOR_AREA_BITS;
+const INTTYPEBITS: libc::c_int = GCTYPEBITS - 1;
 
-#[allow(non_camel_case_types)]
-#[allow(dead_code)]
-pub enum PvecType {
-    // TODO: confirm these are the right numbers.
-    PVEC_NORMAL_VECTOR = 0,
-    PVEC_FREE = 1,
-    PVEC_PROCESS = 2,
-    PVEC_FRAME = 3,
-    PVEC_WINDOW = 4,
-    PVEC_BOOL_VECTOR = 5,
-    PVEC_BUFFER = 6,
-    PVEC_HASH_TABLE = 7,
-    PVEC_TERMINAL = 8,
-    PVEC_WINDOW_CONFIGURATION = 9,
-    PVEC_SUBR = 10,
-    PVEC_OTHER = 11,
-    PVEC_XWIDGET = 12,
-    PVEC_XWIDGET_VIEW = 13,
-
-    PVEC_COMPILED = 14,
-    PVEC_CHAR_TABLE = 15,
-    PVEC_SUB_CHAR_TABLE = 16,
-    PVEC_FONT = 17,
-}
+// This is also dependent on USE_LSB_TAG, which we're assuming to be 1.
+const VALMASK: EmacsInt = -(1 << GCTYPEBITS);
 
 /// Bit pattern used in the least significant bits of a lisp object,
 /// to denote its type.
@@ -178,6 +149,45 @@ impl LispObject {
     }
 }
 
+// Symbol support (LispType == Lisp_Symbol == 0)
+
+
+// Misc support (LispType == Lisp_Misc == 1)
+
+// lisp.h uses a union for Lisp_Misc, which we emulate with an opaque
+// struct.
+#[repr(C)]
+pub struct LispMisc {
+    _ignored: i64,
+}
+
+// Supertype of all Misc types.
+#[repr(C)]
+pub struct LispMiscAny {
+    pub ty: LispMiscType,
+    // This is actually a GC marker bit plus 15 bits of padding, but
+    // we don't care right now.
+    padding: u16,
+}
+
+#[test]
+fn test_lisp_misc_any_size() {
+    // Should be 32 bits, which is 4 bytes.
+    assert!(mem::size_of::<LispMiscAny>() == 4);
+}
+
+
+// Integer support (LispType == Lisp_Int0 | Lisp_Int1 == 2 | 6(LSB) )
+
+// Largest and smallest numbers that can be represented as integers in
+// Emacs lisp.
+const MOST_POSITIVE_FIXNUM: EmacsInt = EMACS_INT_MAX >> INTTYPEBITS;
+#[allow(dead_code)]
+const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
+
+
+// Lisp_Int0 (natnum)
+
 /// Natnums are inline integers that is great or equal to 0 and fit directly into
 /// Lisp's tagged word.
 
@@ -212,19 +222,41 @@ pub enum LispMiscType {
     Lisp_Misc_Finalizer,
 }
 
-// Number of bits in a Lisp_Object tag.
-const GCTYPEBITS: libc::c_int = 3;
-
-const INTTYPEBITS: libc::c_int = GCTYPEBITS - 1;
-
-// Largest and smallest numbers that can be represented as integers in
-// Emacs lisp.
-const MOST_POSITIVE_FIXNUM: EmacsInt = EMACS_INT_MAX >> INTTYPEBITS;
+const PSEUDOVECTOR_SIZE_BITS: libc::c_int = 12;
 #[allow(dead_code)]
-const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
+const PSEUDOVECTOR_SIZE_MASK: libc::c_int = (1 << PSEUDOVECTOR_SIZE_BITS) - 1;
+const PSEUDOVECTOR_REST_BITS: libc::c_int = 12;
+#[allow(dead_code)]
+const PSEUDOVECTOR_REST_MASK: libc::c_int = (((1 << PSEUDOVECTOR_REST_BITS) - 1) <<
+                                             PSEUDOVECTOR_SIZE_BITS);
+pub const PSEUDOVECTOR_AREA_BITS: libc::c_int = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS;
+#[allow(dead_code)]
+const PVEC_TYPE_MASK: libc::c_int = 0x3f << PSEUDOVECTOR_AREA_BITS;
 
-// This is also dependent on USE_LSB_TAG, which we're assuming to be 1.
-const VALMASK: EmacsInt = -(1 << GCTYPEBITS);
+#[allow(non_camel_case_types)]
+#[allow(dead_code)]
+pub enum PvecType {
+    // TODO: confirm these are the right numbers.
+    PVEC_NORMAL_VECTOR = 0,
+    PVEC_FREE = 1,
+    PVEC_PROCESS = 2,
+    PVEC_FRAME = 3,
+    PVEC_WINDOW = 4,
+    PVEC_BOOL_VECTOR = 5,
+    PVEC_BUFFER = 6,
+    PVEC_HASH_TABLE = 7,
+    PVEC_TERMINAL = 8,
+    PVEC_WINDOW_CONFIGURATION = 9,
+    PVEC_SUBR = 10,
+    PVEC_OTHER = 11,
+    PVEC_XWIDGET = 12,
+    PVEC_XWIDGET_VIEW = 13,
+
+    PVEC_COMPILED = 14,
+    PVEC_CHAR_TABLE = 15,
+    PVEC_SUB_CHAR_TABLE = 16,
+    PVEC_FONT = 17,
+}
 
 #[repr(C)]
 pub struct VectorLikeHeader {
@@ -508,28 +540,6 @@ fn test_lisp_float_size() {
 #[allow(dead_code)]
 pub struct LispFloatChain {
     chain: *const LispFloat,
-}
-
-// lisp.h uses a union for Lisp_Misc, which we emulate with an opaque
-// struct.
-#[repr(C)]
-pub struct LispMisc {
-    _ignored: i64,
-}
-
-// Supertype of all Misc types.
-#[repr(C)]
-pub struct LispMiscAny {
-    pub ty: LispMiscType,
-    // This is actually a GC marker bit plus 15 bits of padding, but
-    // we don't care right now.
-    padding: u16,
-}
-
-#[test]
-fn test_lisp_misc_any_size() {
-    // Should be 32 bits, which is 4 bytes.
-    assert!(mem::size_of::<LispMiscAny>() == 4);
 }
 
 #[allow(non_snake_case)]
