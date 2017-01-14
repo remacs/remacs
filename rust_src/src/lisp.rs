@@ -46,7 +46,9 @@ pub const EMACS_INT_MAX: EmacsInt = std::isize::MAX;
 
 // This is dependent on CHECK_LISP_OBJECT_TYPE, a compile time flag,
 // but it's usually false.
-pub type LispObject = EmacsInt;
+#[repr(C)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+pub struct LispObject(EmacsInt);
 // TODO: set CHECK_LISP_OBJECT_TYPE and use a struct here, as it would
 // give us stronger guarantees from the type checker.
 
@@ -57,7 +59,52 @@ extern "C" {
     pub static Qnumber_or_marker_p: LispObject;
 }
 
-pub const Qnil: LispObject = 0;
+pub const Qnil: LispObject = LispObject(0);
+
+impl LispObject {
+    #[inline]
+    pub fn constant_t() -> LispObject {
+        unsafe { Qt }
+    }
+
+    #[inline]
+    pub fn constant_nil() -> LispObject {
+        Qnil
+    }
+
+    #[inline]
+    pub fn from_bool(v : bool) -> LispObject {
+        if v {
+            unsafe { Qt }
+        } else {
+            Qnil
+        }
+    }
+
+    #[inline]
+    pub unsafe fn from_raw(i: EmacsInt) -> LispObject {
+        LispObject(i)
+    }
+
+    /// Natnums are inline integers that is great or equal to 0 and fit directly into
+    /// Lisp's tagged word.
+    #[inline]
+    pub unsafe fn from_natnum_unchecked(n: EmacsInt) -> LispObject {
+        let o = (n << INTTYPEBITS) as EmacsUint + LispType::Lisp_Int0 as EmacsUint;
+        LispObject::from_raw(o as EmacsInt)
+    }
+
+    #[inline]
+    pub fn to_raw(self) -> EmacsInt {
+        self.0
+    }
+
+    #[inline]
+    pub unsafe fn to_natnum_unchecked(self) -> EmacsInt {
+        self.to_raw() >> INTTYPEBITS
+    }
+}
+
 
 const PSEUDOVECTOR_SIZE_BITS: libc::c_int = 12;
 #[allow(dead_code)]
@@ -249,14 +296,14 @@ pub const MANY: i16 = -2;
 /// Convert a LispObject to an EmacsInt.
 #[allow(non_snake_case)]
 fn XLI(o: LispObject) -> EmacsInt {
-    o as EmacsInt
+    o.0 as EmacsInt
 }
 
 /// Convert an EmacsInt to an LispObject.
 #[allow(non_snake_case)]
 fn XIL(i: EmacsInt) -> LispObject {
     // Note that CHECK_LISP_OBJECT_TYPE is 0 (false) in our build.
-    i as LispObject
+    LispObject(i)
 }
 
 #[test]
