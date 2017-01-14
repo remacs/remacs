@@ -51,6 +51,7 @@ fn main() {
     write!(&mut file, "pub type EmacsInt = {};\n", type1).expect("Write error!");
     write!(&mut file, "pub type EmacsUint = {};\n", type2).expect("Write error!");
     write!(&mut file, "pub const EMACS_INT_MAX: EmacsInt = {};\n", max1).expect("Write error!");
+
     let (type1, size1) = emacs_float_types();
     write!(&mut file, "pub type EmacsDouble = {};\n", type1).expect("Write error!");
     write!(&mut file, "pub const EMACS_LISP_FLOAT_SIZE: EmacsInt = {};\n", max(size1, size_of::<libc::intptr_t>())).expect("Write error!");

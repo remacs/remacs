@@ -18,9 +18,16 @@ extern "C" {
 
 pub fn Base64EncodeString (string: LispObject, noLineBreak: LispObject) -> LispObject {
     debug_assert!(STRINGP(string));
+
+    // We need to allocate enough room for the encoded text
+    // We will need 33 1/3% more space, plus a newline every 76 characters(MIME_LINE_LENGTH)
+    // and then round up
     let length = SBYTES(string);
     let mut allength: libc::ptrdiff_t = length + length / 3 + 1;
     allength += allength / MIME_LINE_LENGTH + 1 + 6;
+
+    // This function uses SAFE_ALLOCA in the c layer, however I cannot find an equivalent
+    // for rust. Instead, we will use a Vec to store the temporary char buffer.
     let mut buffer: Vec<libc::c_char> = Vec::with_capacity(allength as usize);
     unsafe {
         let encoded = buffer.as_mut_ptr();
