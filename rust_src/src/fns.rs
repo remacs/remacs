@@ -1,7 +1,4 @@
 extern crate libc;
-extern crate rustc_serialize;
-
-use self::rustc_serialize::base64::{ToBase64, STANDARD};
 
 use std::ptr;
 use lisp;
@@ -9,35 +6,38 @@ use std::os::raw::c_char;
 use libc::ptrdiff_t;
 use strings;
 use lisp::{LispSubr, PSEUDOVECTOR_AREA_BITS, PvecType, VectorLikeHeader, LispObject, XUNTAG, LispType,
-          LispString, XSTRING};
+          LispString, XSTRING, SBYTES};
 use std::ffi::CString;
 use std::ffi::IntoStringError;
+use strings::STRINGP;
+use cons::NILP;
+
+static MIME_LINE_LENGTH: isize = 76;
 
 extern "C" {
-    fn build_unibyte_string(s: *const libc::c_char) -> LispObject;
+    fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> LispObject;
+    fn base64_encode_1(from: *const libc::c_char, to: *mut libc::c_char, length: libc::ptrdiff_t,
+                       line_break: bool, multibyte: bool) -> libc::ptrdiff_t;
+    fn STRING_MULTIBYTE(a: LispObject) -> bool;
+    fn SSDATA(string: LispObject) -> *mut libc::c_char;
 }
 
-fn Base64EncodeString (object: LispObject, noLineBreak: LispObject) -> LispObject {
-    // let strPointer = XSTRING(object);
+pub fn Base64EncodeString (string: LispObject, noLineBreak: LispObject) -> LispObject {
+    debug_assert!(STRINGP(string));
+    let length = SBYTES(string);
+    let mut allength: libc::ptrdiff_t = length + length / 3 + 1;
+    allength += allength / MIME_LINE_LENGTH + 1 + 6;
+    let mut buffer: Vec<libc::c_char> = Vec::with_capacity(allength as usize);
     unsafe {
-//        build_unibyte_string(CString::new(base64Str).unwrap().into_raw())
-        build_unibyte_string(("foobar".as_ptr()) as *const c_char)
+        let encoded = buffer.as_mut_ptr();
+        let encodedLength = base64_encode_1(SSDATA(string), encoded, length,
+                                            NILP(noLineBreak), STRING_MULTIBYTE(string));
+        debug_assert!(encodedLength <= allength);
+        make_unibyte_string(encoded, encodedLength)
     }
 }
 
-lazy_static! {
-    pub static ref Sbase64EncodeString: LispSubr = LispSubr {
-        header: VectorLikeHeader {
-            size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                   PSEUDOVECTOR_AREA_BITS) as ptrdiff_t,
-        },
-        function: (Base64EncodeString as *const libc::c_void),
-        min_args: 2,
-        max_args: 2,
-        symbol_name: ("base64-encode-string\0".as_ptr()) as *const c_char,
-        intspec: ptr::null(),
-        doc: ("Base64-encode STRING and return the result.
-Optional second argument NO-LINE-BREAK means do not break long lines
-into shorter lines.".as_ptr()) as *const c_char,
-    };
-}
+defun!("base64-encode-string", Base64EncodeString, Sbase64EncodeString, 2, 2, ptr::null(),
+       "Base64-encode STRING and return the result.
+       Optional second argument NO-LINE-BREAK means do not break long lines
+       into shorter lines.");

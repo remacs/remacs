@@ -52,6 +52,7 @@ pub type LispObject = EmacsInt;
 
 extern "C" {
     pub fn wrong_type_argument(predicate: LispObject, value: LispObject) -> LispObject;
+    pub fn STRING_BYTES(s: *mut LispString) -> libc::ptrdiff_t;
     pub static Qt: LispObject;
     pub static Qarith_error: LispObject;
     pub static Qnumber_or_marker_p: LispObject;
@@ -424,9 +425,13 @@ pub struct LispString {
     pub data: *mut libc::c_char,
 }
 
-pub fn XSTRING(a: LispObject) -> *const LispString {
+pub fn XSTRING(a: LispObject) -> *mut LispString {
     debug_assert!(STRINGP(a));
     unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_String)) }
+}
+
+pub fn SBYTES(string: LispObject) -> libc::ptrdiff_t {
+    unsafe { STRING_BYTES(XSTRING(string)) }
 }
 
 /// Represents a floating point value in elisp, or GC bookkeeping for

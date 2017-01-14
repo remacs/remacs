@@ -105,7 +105,7 @@ defun!("setcdr", Fsetcdr, Ssetcdr, 2, 2, ptr::null(), "Set the cdr of CELL to be
 (fn CELL NEWCDR)");
 
 /// Is `object` nil?
-fn NILP(object: LispObject) -> bool {
+pub fn NILP(object: LispObject) -> bool {
     object == Qnil
 }
 
