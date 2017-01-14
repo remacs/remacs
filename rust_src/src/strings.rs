@@ -35,3 +35,17 @@ fn Feq (firstObject: LispObject, secondObject: LispObject) -> LispObject {
 defun!("eq", Feq, Seq, 2, 2, ptr::null(), "Return t if the two args are the same Lisp object.
 
 (fn OBJECT OBJECT)");
+
+fn Fnull(object: LispObject) -> LispObject {
+    if object == Qnil {
+        unsafe {
+            Qt
+        }
+    } else {
+        Qnil
+    }
+}
+
+defun!("null", Fnull, Snull, 1, 1, ptr::null(), "Return t if OBJECT is nil, and return nil otherwise.
+
+(fn OBJECT)");

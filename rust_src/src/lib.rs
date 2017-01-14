@@ -15,6 +15,7 @@ mod cons;
 mod strings;
 mod symbols;
 mod globals;
+mod atom;
 
 use lisp::LispSubr;
 
@@ -38,6 +39,7 @@ extern "C" {
 #[no_mangle]
 pub extern "C" fn rust_init_syms() {
     unsafe {
+        defsubr(&*atom::Satom);
         defsubr(&*math::Smod);
         defsubr(&*math::Splus);
         defsubr(&*math::Sminus);
@@ -55,5 +57,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*cons::Scar);
         defsubr(&*strings::Sstringp);
         defsubr(&*strings::Seq);
+        defsubr(&*strings::Snull);
     }
 }

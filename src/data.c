@@ -173,16 +173,6 @@ args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
 
 /* Data type predicates.  */
 
-DEFUN ("null", Fnull, Snull, 1, 1, 0,
-       doc: /* Return t if OBJECT is nil, and return nil otherwise.  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (NILP (object))
-    return Qt;
-  return Qnil;
-}
-
 DEFUN ("type-of", Ftype_of, Stype_of, 1, 1, 0,
        doc: /* Return a symbol representing the type of OBJECT.
 The symbol returned names the object's basic type;
@@ -257,16 +247,6 @@ for example, (type-of 1) returns `integer'.  */)
     default:
       emacs_abort ();
     }
-}
-
-DEFUN ("atom", Fatom, Satom, 1, 1, 0,
-       doc: /* Return t if OBJECT is not a cons cell.  This includes nil.  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (CONSP (object))
-    return Qnil;
-  return Qt;
 }
 
 DEFUN ("listp", Flistp, Slistp, 1, 1, 0,
@@ -3339,11 +3319,9 @@ syms_of_data (void)
 
   defsubr (&Sindirect_variable);
   defsubr (&Sinteractive_form);
-  defsubr (&Snull);
   defsubr (&Stype_of);
   defsubr (&Slistp);
   defsubr (&Snlistp);
-  defsubr (&Satom);
   defsubr (&Sintegerp);
   defsubr (&Sinteger_or_marker_p);
   defsubr (&Snumberp);

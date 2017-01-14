@@ -190,8 +190,8 @@ nextstep/Emacs.app/
 nextstep/GNUstep/Emacs.base/Resources/Emacs.desktop
 nextstep/GNUstep/Emacs.base/Resources/Info-gnustep.plist
 src/bootstrap-emacs
-src/emacs
-src/emacs-[0-9]*
+src/remacs
+src/remacs-[0-9]*
 src/temacs
 
 # Character-set info.
