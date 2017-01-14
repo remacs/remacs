@@ -1,13 +1,21 @@
 extern crate libc;
 
 use std::ptr;
-use lisp::{LispObject, LispMiscType, XMARKER};
+use lisp::{LispObject, LispMiscType, XMARKER, CHECK_TYPE, MARKERP};
 
 extern "C" {
     // defined in eval.c, where it can actually take an arbitrary
     // number of arguments.
     // TODO: define a Rust version of this that uses Rust strings.
     fn error(m: *const u8, ...);
+    pub static Qmarkerp: LispObject;
+}
+
+/// Raise an error if `x` is not marker.
+#[allow(non_snake_case)]
+#[no_mangle]
+pub extern "C" fn CHECK_MARKER(x: LispObject) {
+    CHECK_TYPE(MARKERP(x), unsafe { Qmarkerp }, x)
 }
 
 // TODO: write a docstring based on the docs in lisp.h.

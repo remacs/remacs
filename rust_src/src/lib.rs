@@ -32,6 +32,9 @@ pub use cons::Fsetcar;
 pub use cons::Fsetcdr;
 pub use cons::Fcar;
 
+// These need to be exported as marker.c depends upon them.
+pub use marker::CHECK_MARKER;
+
 extern "C" {
     fn defsubr(sname: *const LispSubr);
 }

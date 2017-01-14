@@ -127,11 +127,8 @@ clear_charpos_cache (struct buffer *b)
     }									\
 }
 
-static void
-CHECK_MARKER (Lisp_Object x)
-{
-  CHECK_TYPE (MARKERP (x), Qmarkerp, x);
-}
+/* exported from rust code (marker.rs) */
+void CHECK_MARKER (Lisp_Object x);
 
 /* Return the byte position corresponding to CHARPOS in B.  */
 
