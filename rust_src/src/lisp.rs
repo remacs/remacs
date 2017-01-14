@@ -181,9 +181,9 @@ fn test_lisp_misc_any_size() {
 
 // Largest and smallest numbers that can be represented as integers in
 // Emacs lisp.
-const MOST_POSITIVE_FIXNUM: EmacsInt = EMACS_INT_MAX >> INTTYPEBITS;
+pub const MOST_POSITIVE_FIXNUM: EmacsInt = EMACS_INT_MAX >> INTTYPEBITS;
 #[allow(dead_code)]
-const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
+pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
 
 
 // Lisp_Int0 (natnum)
@@ -343,80 +343,83 @@ macro_rules! defun {
 /// of arguments.
 pub const MANY: i16 = -2;
 
-/// Convert a LispObject to an EmacsInt.
-#[allow(non_snake_case)]
-fn XLI(o: LispObject) -> EmacsInt {
-    o.0 as EmacsInt
+mod deprecated {
+    use super::*;
+
+    /// Convert a LispObject to an EmacsInt.
+    #[allow(non_snake_case)]
+    pub fn XLI(o: LispObject) -> EmacsInt {
+        o.to_raw()
+    }
+
+    /// Convert an EmacsInt to an LispObject.
+    #[allow(non_snake_case)]
+    #[allow(dead_code)]
+    pub fn XIL(i: EmacsInt) -> LispObject {
+        // Note that CHECK_LISP_OBJECT_TYPE is 0 (false) in our build.
+        unsafe { LispObject::from_raw(i) }
+    }
+
+    #[test]
+    fn test_xil_xli_inverse() {
+        assert!(XLI(XIL(0)) == 0);
+    }
+
+    /// Convert an integer to an elisp object representing that number.
+    ///
+    /// # Porting from C
+    ///
+    /// This function is a direct replacement for the C function
+    /// `make_number`.
+    ///
+    /// The C macro `XSETINT` should also be replaced with this when
+    /// porting. For example, `XSETINT(x, y)` should be written as `x =
+    /// make_number(y)`.
+    pub fn make_number(n: EmacsInt) -> LispObject {
+        unsafe { LispObject::from_natnum_unchecked(n) }
+    }
+
+    /// Extract the integer value from an elisp object representing an
+    /// integer.
+    #[allow(non_snake_case)]
+    pub fn XINT(a: LispObject) -> EmacsInt {
+        unsafe { a.to_natnum_unchecked() }
+    }
+
+    #[test]
+    fn test_xint() {
+        let boxed_5 = make_number(5);
+        assert!(XINT(boxed_5) == 5);
+    }
+
+    /// Convert a positive integer into its LispObject representation.
+    ///
+    /// This is also the function to use when translating `XSETFASTINT`
+    /// from Emacs C.
+    // TODO: the C claims that make_natnum is faster, but it does the same
+    // thing as make_number when USE_LSB_TAG is 1, which it is for us. We
+    // should remove this in favour of make_number.
+    //
+    // TODO: it would be clearer if this function took a u64 or libc::c_int.
+    pub fn make_natnum(n: EmacsInt) -> LispObject {
+        debug_assert!(0 <= n && n <= MOST_POSITIVE_FIXNUM);
+        make_number(n)
+    }
+
+    /// Return the type of a LispObject.
+    #[allow(non_snake_case)]
+    pub fn XTYPE(a: LispObject) -> LispType {
+        unsafe { a.get_type_unchecked() }
+    }
+
+    #[test]
+    fn test_xtype() {
+        assert!(XTYPE(Qnil) == LispType::Lisp_Symbol);
+    }
 }
 
-/// Convert an EmacsInt to an LispObject.
-#[allow(non_snake_case)]
-fn XIL(i: EmacsInt) -> LispObject {
-    // Note that CHECK_LISP_OBJECT_TYPE is 0 (false) in our build.
-    LispObject(i)
-}
+pub use self::deprecated::*;
 
-#[test]
-fn test_xil_xli_inverse() {
-    assert!(XLI(XIL(0)) == 0);
-}
-
-/// Convert an integer to an elisp object representing that number.
-///
-/// # Porting from C
-///
-/// This function is a direct replacement for the C function
-/// `make_number`.
-///
-/// The C macro `XSETINT` should also be replaced with this when
-/// porting. For example, `XSETINT(x, y)` should be written as `x =
-/// make_number(y)`.
-pub fn make_number(n: EmacsInt) -> LispObject {
-    // TODO: this is a rubbish variable name.
-    let as_uint = (n << INTTYPEBITS) as EmacsUint + LispType::Lisp_Int0 as EmacsUint;
-    XIL(as_uint as EmacsInt)
-}
-
-/// Extract the integer value from an elisp object representing an
-/// integer.
-#[allow(non_snake_case)]
-pub fn XINT(a: LispObject) -> EmacsInt {
-    XLI(a) >> INTTYPEBITS
-}
-
-#[test]
-fn test_xint() {
-    let boxed_5 = make_number(5);
-    assert!(XINT(boxed_5) == 5);
-}
-
-/// Convert a positive integer into its LispObject representation.
-///
-/// This is also the function to use when translating `XSETFASTINT`
-/// from Emacs C.
-// TODO: the C claims that make_natnum is faster, but it does the same
-// thing as make_number when USE_LSB_TAG is 1, which it is for us. We
-// should remove this in favour of make_number.
-//
-// TODO: it would be clearer if this function took a u64 or libc::c_int.
-pub fn make_natnum(n: EmacsInt) -> LispObject {
-    debug_assert!(0 <= n && n <= MOST_POSITIVE_FIXNUM);
-    make_number(n)
-}
-
-/// Return the type of a LispObject.
-#[allow(non_snake_case)]
-pub fn XTYPE(a: LispObject) -> LispType {
-    let res = XLI(a) & !VALMASK;
-    // TODO: it would be better to check the type and fail,
-    // https://www.reddit.com/r/rust/comments/36pgn9/integer_to_enum_after_removal_of_fromprimitive/crfy6al/
-    unsafe { mem::transmute(res as u8) }
-}
-
-#[test]
-fn test_xtype() {
-    assert!(XTYPE(Qnil) == LispType::Lisp_Symbol);
-}
 
 /// Is this LispObject a float?
 #[allow(non_snake_case)]
