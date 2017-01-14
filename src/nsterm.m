@@ -230,22 +230,22 @@ static unsigned convert_ns_to_X_keysym[] =
   NSNewlineCharacter,		0x0D,
   NSEnterCharacter,		0x8D,
 
-  0x41|NSNumericPadKeyMask,	0xAE,  /* KP_Decimal */
-  0x43|NSNumericPadKeyMask,	0xAA,  /* KP_Multiply */
-  0x45|NSNumericPadKeyMask,	0xAB,  /* KP_Add */
-  0x4B|NSNumericPadKeyMask,	0xAF,  /* KP_Divide */
-  0x4E|NSNumericPadKeyMask,	0xAD,  /* KP_Subtract */
-  0x51|NSNumericPadKeyMask,	0xBD,  /* KP_Equal */
-  0x52|NSNumericPadKeyMask,	0xB0,  /* KP_0 */
-  0x53|NSNumericPadKeyMask,	0xB1,  /* KP_1 */
-  0x54|NSNumericPadKeyMask,	0xB2,  /* KP_2 */
-  0x55|NSNumericPadKeyMask,	0xB3,  /* KP_3 */
-  0x56|NSNumericPadKeyMask,	0xB4,  /* KP_4 */
-  0x57|NSNumericPadKeyMask,	0xB5,  /* KP_5 */
-  0x58|NSNumericPadKeyMask,	0xB6,  /* KP_6 */
-  0x59|NSNumericPadKeyMask,	0xB7,  /* KP_7 */
-  0x5B|NSNumericPadKeyMask,	0xB8,  /* KP_8 */
-  0x5C|NSNumericPadKeyMask,	0xB9,  /* KP_9 */
+  0x41|NSEventModifierFlagNumericPad,	0xAE,  /* KP_Decimal */
+  0x43|NSEventModifierFlagNumericPad,	0xAA,  /* KP_Multiply */
+  0x45|NSEventModifierFlagNumericPad,	0xAB,  /* KP_Add */
+  0x4B|NSEventModifierFlagNumericPad,	0xAF,  /* KP_Divide */
+  0x4E|NSEventModifierFlagNumericPad,	0xAD,  /* KP_Subtract */
+  0x51|NSEventModifierFlagNumericPad,	0xBD,  /* KP_Equal */
+  0x52|NSEventModifierFlagNumericPad,	0xB0,  /* KP_0 */
+  0x53|NSEventModifierFlagNumericPad,	0xB1,  /* KP_1 */
+  0x54|NSEventModifierFlagNumericPad,	0xB2,  /* KP_2 */
+  0x55|NSEventModifierFlagNumericPad,	0xB3,  /* KP_3 */
+  0x56|NSEventModifierFlagNumericPad,	0xB4,  /* KP_4 */
+  0x57|NSEventModifierFlagNumericPad,	0xB5,  /* KP_5 */
+  0x58|NSEventModifierFlagNumericPad,	0xB6,  /* KP_6 */
+  0x59|NSEventModifierFlagNumericPad,	0xB7,  /* KP_7 */
+  0x5B|NSEventModifierFlagNumericPad,	0xB8,  /* KP_8 */
+  0x5C|NSEventModifierFlagNumericPad,	0xB9,  /* KP_9 */
 
   0x1B,				0x1B   /* escape */
 };
@@ -333,28 +333,28 @@ static CGPoint menu_mouse_point;
 
 /* Convert modifiers in a NeXTstep event to emacs style modifiers.  */
 #define NS_FUNCTION_KEY_MASK 0x800000
-#define NSLeftControlKeyMask    (0x000001 | NSControlKeyMask)
-#define NSRightControlKeyMask   (0x002000 | NSControlKeyMask)
-#define NSLeftCommandKeyMask    (0x000008 | NSCommandKeyMask)
-#define NSRightCommandKeyMask   (0x000010 | NSCommandKeyMask)
-#define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
-#define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
+#define NSLeftControlKeyMask    (0x000001 | NSEventModifierFlagControl)
+#define NSRightControlKeyMask   (0x002000 | NSEventModifierFlagControl)
+#define NSLeftCommandKeyMask    (0x000008 | NSEventModifierFlagCommand)
+#define NSRightCommandKeyMask   (0x000010 | NSEventModifierFlagCommand)
+#define NSLeftAlternateKeyMask  (0x000020 | NSEventModifierFlagOption)
+#define NSRightAlternateKeyMask (0x000040 | NSEventModifierFlagOption)
 #define EV_MODIFIERS2(flags)                          \
-    (((flags & NSHelpKeyMask) ?           \
+    (((flags & NSEventModifierFlagHelp) ?           \
            hyper_modifier : 0)                        \
      | (!EQ (ns_right_alternate_modifier, Qleft) && \
         ((flags & NSRightAlternateKeyMask) \
          == NSRightAlternateKeyMask) ? \
            parse_solitary_modifier (ns_right_alternate_modifier) : 0) \
-     | ((flags & NSAlternateKeyMask) ?                 \
+     | ((flags & NSEventModifierFlagOption) ?                 \
            parse_solitary_modifier (ns_alternate_modifier) : 0)   \
-     | ((flags & NSShiftKeyMask) ?     \
+     | ((flags & NSEventModifierFlagShift) ?     \
            shift_modifier : 0)                        \
      | (!EQ (ns_right_control_modifier, Qleft) && \
         ((flags & NSRightControlKeyMask) \
          == NSRightControlKeyMask) ? \
            parse_solitary_modifier (ns_right_control_modifier) : 0) \
-     | ((flags & NSControlKeyMask) ?      \
+     | ((flags & NSEventModifierFlagControl) ?      \
            parse_solitary_modifier (ns_control_modifier) : 0)     \
      | ((flags & NS_FUNCTION_KEY_MASK) ?  \
            parse_solitary_modifier (ns_function_modifier) : 0)    \
@@ -362,24 +362,24 @@ static CGPoint menu_mouse_point;
         ((flags & NSRightCommandKeyMask) \
          == NSRightCommandKeyMask) ? \
            parse_solitary_modifier (ns_right_command_modifier) : 0) \
-     | ((flags & NSCommandKeyMask) ?      \
+     | ((flags & NSEventModifierFlagCommand) ?      \
            parse_solitary_modifier (ns_command_modifier):0))
 #define EV_MODIFIERS(e) EV_MODIFIERS2 ([e modifierFlags])
 
 #define EV_UDMODIFIERS(e)                                      \
-    ((([e type] == NSLeftMouseDown) ? down_modifier : 0)       \
-     | (([e type] == NSRightMouseDown) ? down_modifier : 0)    \
-     | (([e type] == NSOtherMouseDown) ? down_modifier : 0)    \
-     | (([e type] == NSLeftMouseDragged) ? down_modifier : 0)  \
-     | (([e type] == NSRightMouseDragged) ? down_modifier : 0) \
-     | (([e type] == NSOtherMouseDragged) ? down_modifier : 0) \
-     | (([e type] == NSLeftMouseUp)   ? up_modifier   : 0)     \
-     | (([e type] == NSRightMouseUp)   ? up_modifier   : 0)    \
-     | (([e type] == NSOtherMouseUp)   ? up_modifier   : 0))
+    ((([e type] == NSEventTypeLeftMouseDown) ? down_modifier : 0)       \
+     | (([e type] == NSEventTypeRightMouseDown) ? down_modifier : 0)    \
+     | (([e type] == NSEventTypeOtherMouseDown) ? down_modifier : 0)    \
+     | (([e type] == NSEventTypeLeftMouseDragged) ? down_modifier : 0)  \
+     | (([e type] == NSEventTypeRightMouseDragged) ? down_modifier : 0) \
+     | (([e type] == NSEventTypeOtherMouseDragged) ? down_modifier : 0) \
+     | (([e type] == NSEventTypeLeftMouseUp)   ? up_modifier   : 0)     \
+     | (([e type] == NSEventTypeRightMouseUp)   ? up_modifier   : 0)    \
+     | (([e type] == NSEventTypeOtherMouseUp)   ? up_modifier   : 0))
 
 #define EV_BUTTON(e)                                                         \
-    ((([e type] == NSLeftMouseDown) || ([e type] == NSLeftMouseUp)) ? 0 :    \
-      (([e type] == NSRightMouseDown) || ([e type] == NSRightMouseUp)) ? 2 : \
+    ((([e type] == NSEventTypeLeftMouseDown) || ([e type] == NSEventTypeLeftMouseUp)) ? 0 :    \
+      (([e type] == NSEventTypeRightMouseDown) || ([e type] == NSEventTypeRightMouseUp)) ? 2 : \
      [e buttonNumber] - 1)
 
 /* Convert the time field to a timestamp in milliseconds. */
@@ -2804,7 +2804,7 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
 
       [img drawInRect: r
               fromRect: fromRect
-             operation: NSCompositeSourceOver
+             operation: NSCompositingOperationSourceOver
               fraction: 1.0
            respectFlipped: YES
                 hints: nil];
@@ -2812,7 +2812,7 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
       {
         NSPoint pt = r.origin;
         pt.y += p->h;
-        [img compositeToPoint: pt operation: NSCompositeSourceOver];
+        [img compositeToPoint: pt operation: NSCompositingOperationSourceOver];
       }
 #endif
     }
@@ -3492,13 +3492,13 @@ ns_dumpglyphs_image (struct glyph_string *s, NSRect r)
                               s->slice.width, s->slice.height);
       [img drawInRect: dr
              fromRect: ir
-             operation: NSCompositeSourceOver
+             operation: NSCompositingOperationSourceOver
               fraction: 1.0
            respectFlipped: YES
                 hints: nil];
 #else
       [img compositeToPoint: NSMakePoint (x, y + s->slice.height)
-                  operation: NSCompositeSourceOver];
+                  operation: NSCompositingOperationSourceOver];
 #endif
     }
 
@@ -3940,7 +3940,7 @@ ns_send_appdefined (int value)
       /* OS X 10.10.1 swallows the AppDefined event we are sending ourselves
          in certain situations (rapid incoming events).
          So check if we have one, if not add one.  */
-      NSEvent *appev = [NSApp nextEventMatchingMask:NSApplicationDefinedMask
+      NSEvent *appev = [NSApp nextEventMatchingMask:NSEventMaskApplicationDefined
                                           untilDate:[NSDate distantPast]
                                              inMode:NSDefaultRunLoopMode
                                             dequeue:NO];
@@ -3963,7 +3963,7 @@ ns_send_appdefined (int value)
           timed_entry = nil;
         }
 
-      nxev = [NSEvent otherEventWithType: NSApplicationDefined
+      nxev = [NSEvent otherEventWithType: NSEventTypeApplicationDefined
                                 location: NSMakePoint (0, 0)
                            modifierFlags: 0
                                timestamp: 0
@@ -4985,7 +4985,7 @@ ns_term_init (Lisp_Object display_name)
                           action: @selector (hideOtherApplications:)
                    keyEquivalent: @"h"
                          atIndex: 7];
-    [item setKeyEquivalentModifierMask: NSCommandKeyMask | NSAlternateKeyMask];
+    [item setKeyEquivalentModifierMask: NSEventModifierFlagCommand | NSEventModifierFlagOption];
     [appMenu insertItem: [NSMenuItem separatorItem] atIndex: 8];
     [appMenu insertItemWithTitle: @"Quit Emacs"
                           action: @selector (terminate:)
@@ -5129,7 +5129,7 @@ ns_term_shutdown (int sig)
       pool = [[NSAutoreleasePool alloc] init];
 
       NSEvent *event =
-        [self nextEventMatchingMask:NSAnyEventMask
+        [self nextEventMatchingMask:NSEventMaskAny
                           untilDate:[NSDate distantFuture]
                              inMode:NSDefaultRunLoopMode
                             dequeue:YES];
@@ -5178,7 +5178,7 @@ ns_term_shutdown (int sig)
 #ifdef NS_IMPL_GNUSTEP
   // Keyboard events aren't propagated to file dialogs for some reason.
   if ([NSApp modalWindow] != nil &&
-      (type == NSKeyDown || type == NSKeyUp || type == NSFlagsChanged))
+      (type == NSEventTypeKeyDown || type == NSEventTypeKeyUp || type == NSEventTypeFlagsChanged))
     {
       [[NSApp modalWindow] sendEvent: theEvent];
       return;
@@ -5202,7 +5202,7 @@ ns_term_shutdown (int sig)
       represented_frame = NULL;
     }
 
-  if (type == NSApplicationDefined)
+  if (type == NSEventTypeApplicationDefined)
     {
       switch ([theEvent data2])
         {
@@ -5219,13 +5219,13 @@ ns_term_shutdown (int sig)
         }
     }
 
-  if (type == NSCursorUpdate && window == nil)
+  if (type == NSEventTypeCursorUpdate && window == nil)
     {
       fprintf (stderr, "Dropping external cursor update event.\n");
       return;
     }
 
-  if (type == NSApplicationDefined)
+  if (type == NSEventTypeApplicationDefined)
     {
       /* Events posted by ns_send_appdefined interrupt the run loop here.
          But, if a modal window is up, an appdefined can still come through,
@@ -5248,7 +5248,7 @@ ns_term_shutdown (int sig)
      It is a mouse move in an auxiliary menu, i.e. on the top right on macOS,
      such as Wifi, sound, date or similar.
      This prevents "spooky" highlighting in the frame under the menu.  */
-  if (type == NSMouseMoved && [NSApp modalWindow] == nil)
+  if (type == NSEventTypeMouseMoved && [NSApp modalWindow] == nil)
     {
       struct ns_display_info *di;
       BOOL has_focus = NO;
@@ -5403,7 +5403,7 @@ runAlertPanel(NSString *title,
     == NSAlertDefaultReturn;
 #else
   NSAlert *alert = [[NSAlert alloc] init];
-  [alert setAlertStyle: NSCriticalAlertStyle];
+  [alert setAlertStyle: NSAlertStyleCritical];
   [alert setMessageText: msgFormat];
   [alert addButtonWithTitle: defaultButton];
   [alert addButtonWithTitle: alternateButton];
@@ -5787,7 +5787,7 @@ not_in_argv (NSString *arg)
   /* Rhapsody and macOS give up and down events for the arrow keys */
   if (ns_fake_keydown == YES)
     ns_fake_keydown = NO;
-  else if ([theEvent type] != NSKeyDown)
+  else if ([theEvent type] != NSEventTypeKeyDown)
     return;
 
   if (!emacs_event)
@@ -5831,12 +5831,12 @@ not_in_argv (NSString *arg)
       /* (Carbon way: [theEvent keyCode]) */
 
       /* is it a "function key"? */
-      /* Note: Sometimes a plain key will have the NSNumericPadKeyMask
+      /* Note: Sometimes a plain key will have the NSEventModifierFlagNumericPad
          flag set (this is probably a bug in the OS).
       */
-      if (code < 0x00ff && (flags&NSNumericPadKeyMask))
+      if (code < 0x00ff && (flags&NSEventModifierFlagNumericPad))
         {
-          fnKeysym = ns_convert_key ([theEvent keyCode] | NSNumericPadKeyMask);
+          fnKeysym = ns_convert_key ([theEvent keyCode] | NSEventModifierFlagNumericPad);
         }
       if (fnKeysym == 0)
         {
@@ -5865,15 +5865,15 @@ not_in_argv (NSString *arg)
       /* are there modifiers? */
       emacs_event->modifiers = 0;
 
-      if (flags & NSHelpKeyMask)
+      if (flags & NSEventModifierFlagHelp)
           emacs_event->modifiers |= hyper_modifier;
 
-      if (flags & NSShiftKeyMask)
+      if (flags & NSEventModifierFlagShift)
         emacs_event->modifiers |= shift_modifier;
 
       is_right_key = (flags & NSRightCommandKeyMask) == NSRightCommandKeyMask;
       is_left_key = (flags & NSLeftCommandKeyMask) == NSLeftCommandKeyMask
-        || (! is_right_key && (flags & NSCommandKeyMask) == NSCommandKeyMask);
+        || (! is_right_key && (flags & NSEventModifierFlagCommand) == NSEventModifierFlagCommand);
 
       if (is_right_key)
         emacs_event->modifiers |= parse_solitary_modifier
@@ -5894,7 +5894,7 @@ not_in_argv (NSString *arg)
             {
               /* XXX: the code we get will be unshifted, so if we have
                  a shift modifier, must convert ourselves */
-              if (!(flags & NSShiftKeyMask))
+              if (!(flags & NSEventModifierFlagShift))
                 code = [[theEvent characters] characterAtIndex: 0];
 #if 0
               /* this is ugly and also requires linking w/Carbon framework
@@ -5909,7 +5909,7 @@ not_in_argv (NSString *arg)
                   UCKeyTranslate ((UCKeyboardLayout*)*uchrHandle,
                                  [[theEvent characters] characterAtIndex: 0],
                                  kUCKeyActionDisplay,
-                                 (flags & ~NSCommandKeyMask) >> 8,
+                                 (flags & ~NSEventModifierFlagCommand) >> 8,
                                  LMGetKbdType (), kUCKeyTranslateNoDeadKeysMask,
                                  &dummy, 1, &dummy, &code);
                   code &= 0xFF;
@@ -5920,7 +5920,7 @@ not_in_argv (NSString *arg)
 
       is_right_key = (flags & NSRightControlKeyMask) == NSRightControlKeyMask;
       is_left_key = (flags & NSLeftControlKeyMask) == NSLeftControlKeyMask
-        || (! is_right_key && (flags & NSControlKeyMask) == NSControlKeyMask);
+        || (! is_right_key && (flags & NSEventModifierFlagControl) == NSEventModifierFlagControl);
 
       if (is_right_key)
           emacs_event->modifiers |= parse_solitary_modifier
@@ -5943,7 +5943,7 @@ not_in_argv (NSString *arg)
         == NSRightAlternateKeyMask;
       is_left_key = (flags & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask
         || (! is_right_key
-            && (flags & NSAlternateKeyMask) == NSAlternateKeyMask);
+            && (flags & NSEventModifierFlagOption) == NSEventModifierFlagOption);
 
       if (is_right_key)
         {
@@ -6031,7 +6031,7 @@ not_in_argv (NSString *arg)
   NSTRACE ("[EmacsView keyUp:]");
 
   if (floor (NSAppKitVersionNumber) <= 824 /*NSAppKitVersionNumber10_4*/ &&
-      code == 0x30 && (flags & NSControlKeyMask) && !(flags & NSCommandKeyMask))
+      code == 0x30 && (flags & NSEventModifierFlagControl) && !(flags & NSEventModifierFlagCommand))
     {
       if (NS_KEYLOG)
         fprintf (stderr, "keyUp: passed test");
@@ -6278,7 +6278,7 @@ not_in_argv (NSString *arg)
      button clicks */
   emacsframe->mouse_moved = 0;
 
-  if ([theEvent type] == NSScrollWheel)
+  if ([theEvent type] == NSEventTypeScrollWheel)
     {
       CGFloat delta = [theEvent deltaY];
       /* Mac notebooks send wheel events w/delta =0 when trackpad scrolling */
@@ -6833,12 +6833,12 @@ not_in_argv (NSString *arg)
 
   win = [[EmacsWindow alloc]
             initWithContentRect: r
-                      styleMask: (NSResizableWindowMask |
+                      styleMask: (NSWindowStyleMaskResizable |
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
-                                  NSTitledWindowMask |
+                                  NSWindowStyleMaskTitled |
 #endif
-                                  NSMiniaturizableWindowMask |
-                                  NSClosableWindowMask)
+                                  NSWindowStyleMaskMiniaturizable |
+                                  NSWindowStyleMaskClosable)
                         backing: NSBackingStoreBuffered
                           defer: YES];
 
@@ -7261,7 +7261,7 @@ not_in_argv (NSString *arg)
   else
     {
 #ifdef HAVE_NATIVE_FS
-      res = (([[self window] styleMask] & NSFullScreenWindowMask) != 0);
+      res = (([[self window] styleMask] & NSWindowStyleMaskFullScreen) != 0);
 #else
       res = NO;
 #endif
@@ -7345,7 +7345,7 @@ not_in_argv (NSString *arg)
 
       fw = [[EmacsFSWindow alloc]
                        initWithContentRect:[w contentRectForFrameRect:wr]
-                                 styleMask:NSBorderlessWindowMask
+                                 styleMask:NSWindowStyleMaskBorderless
                                    backing:NSBackingStoreBuffered
                                      defer:YES
                                     screen:screen];
@@ -7653,11 +7653,11 @@ not_in_argv (NSString *arg)
       (op & 0xf) != 0xf)
     {
       if (op & NSDragOperationLink)
-        modifiers |= NSControlKeyMask;
+        modifiers |= NSEventModifierFlagControl;
       if (op & NSDragOperationCopy)
-        modifiers |= NSAlternateKeyMask;
+        modifiers |= NSEventModifierFlagOption;
       if (op & NSDragOperationGeneric)
-        modifiers |= NSCommandKeyMask;
+        modifiers |= NSEventModifierFlagCommand;
     }
 
   modifiers = EV_MODIFIERS2 (modifiers);
@@ -8106,7 +8106,7 @@ not_in_argv (NSString *arg)
   MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
   r = [NSScroller scrollerWidth];
 #else
-  r = [NSScroller scrollerWidthForControlSize: NSRegularControlSize
+  r = [NSScroller scrollerWidthForControlSize: NSControlSizeRegular
                                 scrollerStyle: NSScrollerStyleLegacy];
 #endif
   return r;
@@ -8426,7 +8426,7 @@ not_in_argv (NSString *arg)
         pos = loc / NSHeight (sr);
 
       /* send a fake mouse-up to super to preempt modal -trackKnob: mode */
-      fake_event = [NSEvent mouseEventWithType: NSLeftMouseUp
+      fake_event = [NSEvent mouseEventWithType: NSEventTypeLeftMouseUp
                                       location: [e locationInWindow]
                                  modifierFlags: [e modifierFlags]
                                      timestamp: [e timestamp]
