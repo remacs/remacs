@@ -551,7 +551,7 @@ may be any one of the following:
                         database and server) needed to connect to
                         the database.
 
- :sqli-comint-func      name of a function of two arguments, PRODUCT
+ :sqli-comint-func      function of two arguments, PRODUCT
                         and OPTIONS, that will open a comint buffer
                         and connect to the database.  PRODUCT is the
                         first argument to be passed to `sql-comint',
