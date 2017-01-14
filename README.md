@@ -320,6 +320,38 @@ pub extern "C" fn rust_init_syms() {
 You're done! Compile Remacs, try your function with `M-x ielm`, and
 open a pull request. Fame and glory await!
 
+### Porting Widely Used C Functions
+
+If your Rust function replaces a C function that is used elsewhere in
+the C codebase, you will need to export it. We change our function
+definition to add `extern` and `no_mangle`:
+
+``` rust
+#[no_mangle]
+pub extern "C" fn Fnumberp(object: LispObject) -> LispObject {
+    if lisp::NUMBERP(object) {
+        unsafe {
+            Qt
+        }
+    } else {
+        Qnil
+    }
+}
+```
+
+The function needs to be exported in lib.rs:
+
+``` rust
+pub use yourmodulename::Fnumberp;
+```
+
+and add a declaration in the C where the function used to be:
+
+``` c
+// This should take the same number of arguments as the Rust function.
+Lisp_Object Fnumberp(Lisp_Object);
+```
+
 ## Contributing
 
 Pull requests welcome, no copyright assignment required. This project is under the
