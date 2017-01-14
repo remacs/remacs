@@ -11,6 +11,7 @@ use std::os::raw::c_char;
 use std::cmp::max;
 use std::mem;
 use std::ptr;
+use std::ops::Deref;
 
 use marker::{LispMarker, marker_position};
 
@@ -144,8 +145,8 @@ impl LispObject {
     }
 
     #[inline]
-    pub unsafe fn get_untaggedptr_unchecked(self) -> * const libc::c_void {
-        (self.to_raw() & VALMASK) as libc::intptr_t as *const libc::c_void
+    pub unsafe fn get_untaggedptr_unchecked(self) -> * mut libc::c_void {
+        (self.to_raw() & VALMASK) as libc::intptr_t as * mut libc::c_void
     }
 }
 
@@ -154,11 +155,38 @@ impl LispObject {
 
 // Misc support (LispType == Lisp_Misc == 1)
 
-// lisp.h uses a union for Lisp_Misc, which we emulate with an opaque
-// struct.
+// This is the set of data types that share a common structure.
+// The first member of the structure is a type code from this set.
+// The enum values are arbitrary, but we'll use large numbers to make it
+// more likely that we'll spot the error if a random word in memory is
+// mistakenly interpreted as a Lisp_Misc.
+#[repr(u16)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
+#[allow(non_camel_case_types)]
+#[allow(dead_code)]
+pub enum LispMiscType {
+    Lisp_Misc_Free = 0x5eab,
+    Lisp_Misc_Marker,
+    Lisp_Misc_Overlay,
+    Lisp_Misc_Save_Value,
+    Lisp_Misc_Finalizer,
+}
+
+
+// Lisp_Misc is a union. Now we don't really care about its variants except the
+// super type layout. LispMisc is an unsized type for this, and LispMiscAny is 
+// only the header and a padding, which is consistent with the c version.
+// directly creating and moving or copying this struct is simply wrong!
+// If needed, we can calculate all variants size and allocate properly.
+
 #[repr(C)]
-pub struct LispMisc {
-    _ignored: i64,
+pub struct LispMiscRef(* mut LispMiscAny);
+
+impl Deref for LispMiscRef {
+    type Target = LispMiscAny;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.0 }
+    }
 }
 
 // Supertype of all Misc types.
@@ -176,6 +204,15 @@ fn test_lisp_misc_any_size() {
     assert!(mem::size_of::<LispMiscAny>() == 4);
 }
 
+impl LispObject {
+    pub unsafe fn to_misc_unchecked(self) -> LispMiscRef {
+        LispMiscRef(mem::transmute(self.get_untaggedptr_unchecked()))
+    }
+
+    pub unsafe fn get_misc_type_unchecked(self) -> LispMiscType {
+        self.to_misc_unchecked().ty
+    }
+}
 
 // Integer support (LispType == Lisp_Int0 | Lisp_Int1 == 2 | 6(LSB) )
 
@@ -205,22 +242,6 @@ impl LispObject {
 
 }
 
-// This is the set of data types that share a common structure.
-// The first member of the structure is a type code from this set.
-// The enum values are arbitrary, but we'll use large numbers to make it
-// more likely that we'll spot the error if a random word in memory is
-// mistakenly interpreted as a Lisp_Misc.
-#[repr(u16)]
-#[derive(PartialEq, Eq, Debug)]
-#[allow(non_camel_case_types)]
-#[allow(dead_code)]
-pub enum LispMiscType {
-    Lisp_Misc_Free = 0x5eab,
-    Lisp_Misc_Marker,
-    Lisp_Misc_Overlay,
-    Lisp_Misc_Save_Value,
-    Lisp_Misc_Finalizer,
-}
 
 const PSEUDOVECTOR_SIZE_BITS: libc::c_int = 12;
 #[allow(dead_code)]
@@ -546,8 +567,8 @@ pub struct LispFloatChain {
 }
 
 #[allow(non_snake_case)]
-pub fn XMISC(a: LispObject) -> LispMisc {
-    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_Misc)) }
+pub fn XMISC(a: LispObject) -> LispMiscRef {
+    unsafe { a.to_misc_unchecked() }
 }
 
 #[allow(non_snake_case)]
