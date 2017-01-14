@@ -1582,7 +1582,7 @@ Optional arg DIR_ONLY_P, if non-nil, means choose only directories.  */)
      The file dialog may pop up a confirm dialog after Ok has been pressed,
      so we can not simply pop down on the Ok/Cancel press.
    */
-  nxev = [NSEvent otherEventWithType: NSApplicationDefined
+  nxev = [NSEvent otherEventWithType: NSEventTypeApplicationDefined
                             location: NSMakePoint (0, 0)
                        modifierFlags: 0
                            timestamp: 0
@@ -2193,7 +2193,7 @@ In case the execution fails, an error is signaled. */)
      errors aren't returned and executeAndReturnError hangs forever.
      Post an event that runs applescript and then start the event loop.
      The event loop is exited when the script is done.  */
-  nxev = [NSEvent otherEventWithType: NSApplicationDefined
+  nxev = [NSEvent otherEventWithType: NSEventTypeApplicationDefined
                             location: NSMakePoint (0, 0)
                        modifierFlags: 0
                            timestamp: 0
@@ -2987,7 +2987,7 @@ handlePanelKeys (NSSavePanel *panel, NSEvent *theEvent)
   int i;
   BOOL ret = NO;
 
-  if ([theEvent type] != NSKeyDown) return NO;
+  if ([theEvent type] != NSEventTypeKeyDown) return NO;
   s = [theEvent characters];
 
   for (i = 0; i < [s length]; ++i)
@@ -3006,7 +3006,7 @@ handlePanelKeys (NSSavePanel *panel, NSEvent *theEvent)
           /* Don't send command modified keys, as those are handled in the
              performKeyEquivalent method of the super class.
           */
-          if (! ([theEvent modifierFlags] & NSCommandKeyMask))
+          if (! ([theEvent modifierFlags] & NSEventModifierFlagCommand))
             {
               [panel sendEvent: theEvent];
               ret = YES;
@@ -3023,7 +3023,7 @@ handlePanelKeys (NSSavePanel *panel, NSEvent *theEvent)
         case 'c': // Copy
         case 'v': // Paste
         case 'a': // Select all
-          if ([theEvent modifierFlags] & NSCommandKeyMask)
+          if ([theEvent modifierFlags] & NSEventModifierFlagCommand)
             {
               [NSApp sendAction:
                        (ch == 'x'
@@ -3039,7 +3039,7 @@ handlePanelKeys (NSSavePanel *panel, NSEvent *theEvent)
         default:
           // Send all control keys, as the text field supports C-a, C-f, C-e
           // C-b and more.
-          if ([theEvent modifierFlags] & NSControlKeyMask)
+          if ([theEvent modifierFlags] & NSEventModifierFlagControl)
             {
               [panel sendEvent: theEvent];
               ret = YES;

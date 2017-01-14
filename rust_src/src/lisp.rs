@@ -36,7 +36,6 @@ use marker::{LispMarker, marker_position};
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
 /// These are an example of the casual case.
-
 #[cfg(dummy = "impossible")]
 pub type EmacsInt = isize;
 #[cfg(dummy = "impossible")]
@@ -441,8 +440,8 @@ unsafe impl Sync for LispSubr {}
 macro_rules! defun {
     ($lisp_name:expr, $fname:ident, $sname:ident, $min_args:expr, $max_args:expr, $intspec:expr, $docstring:expr) => {
         lazy_static! {
-            // TODO: this is blindly hoping we have the correct alignment.
-            // We should ensure we have GCALIGNMENT (8 bytes).
+// TODO: this is blindly hoping we have the correct alignment.
+// We should ensure we have GCALIGNMENT (8 bytes).
             pub static ref $sname: LispSubr = LispSubr {
                 header: VectorLikeHeader {
                     size: ((PvecType::PVEC_SUBR as libc::c_int) <<

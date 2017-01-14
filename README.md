@@ -168,16 +168,8 @@ supports a wider range of languages and we recommend it instead.
 ## Building Remacs
 
 ```
-$ cd rust_src
-$ cargo build
-$ cd ..
 $ ./autogen.sh
 $ ./configure
-```
-
-Then compile Emacs:
-
-```
 $ make
 ```
 
@@ -189,18 +181,23 @@ You can then run your shiny new Remacs:
 $ RUST_BACKTRACE=1 src/remacs -q
 ```
 
-### Release builds
+### Debug builds
 
-As above, but invoke Cargo with:
+As above but with an additional argument to configure:
 
 ``` bash
-$ cargo build --release
+$ ./autogen.sh
+$ ./configure --enable-rust-debug
+$ make
 ```
 
-and modify `src/Makefile`, replacing the blank initialization of `LIBS_SYSTEM` to read:
+The Makefile obeys cargo's RUSTFLAGS variable and options can be passed to
+cargo with CARGO_FLAGS
 
-``` makefile
-LIBS_SYSTEM=-L../rust_src/target/release -lremacs -ldl
+For example:
+
+``` bash
+$ make CARGO_FLAGS="-vv" RUSTFLAGS="-Zunstable-options --pretty"
 ```
 
 ### Rustdoc builds
@@ -285,7 +282,7 @@ We can see we need to define a `Snumberp` and a `Fnumberp`. `Qt` and
 // This is the function that gets called when 
 // we call numberp in elisp.
 fn Fnumberp(object: LispObject) -> LispObject {
-    if lisp::SYMBOLP(object) {
+    if lisp::NUMBERP(object) {
         unsafe {
             Qt
         }
