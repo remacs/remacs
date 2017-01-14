@@ -20,11 +20,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <unistd.h> /* for 'environ', on AIX */
 #include "lisp.h"
 
-#ifdef MSDOS
-#include "dosfns.h"
-extern int etext;
-#endif
-
 /* Some systems need this before <sys/resource.h>.  */
 #include <sys/types.h>
 
@@ -110,26 +105,6 @@ get_lim_data (void)
   lim_data = reserved_heap_size;
 }
 
-#elif defined MSDOS
-
-void
-get_lim_data (void)
-{
-  unsigned long totalram, freeram, totalswap, freeswap;
-
-  dos_memory_info (&totalram, &freeram, &totalswap, &freeswap);
-  lim_data = freeram;
-  /* Don't believe they will give us more that 0.5 GB.   */
-  if (lim_data > 512U * 1024U * 1024U)
-    lim_data = 512U * 1024U * 1024U;
-}
-
-unsigned long
-ret_lim_data (void)
-{
-  get_lim_data ();
-  return lim_data;
-}
 #else
 # error "get_lim_data not implemented on this machine"
 #endif

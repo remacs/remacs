@@ -5096,6 +5096,42 @@ gl_INIT
 CFLAGS=$SAVE_CFLAGS
 LIBS=$SAVE_LIBS
 
+# Add Rust variables, libs and utilities
+
+RUSTFLAGS=
+
+AC_SUBST(RUSTFLAGS)
+
+CARGO="cargo"
+CARGO_BUILD="$CARGO build"
+CARGO_CLEAN="$CARGO clean"
+CARGO_TEST="$CARGO test"
+
+AC_SUBST(CARGO_BUILD)
+AC_SUBST(CARGO_CLEAN)
+AC_SUBST(CARGO_TEST)
+
+AC_ARG_ENABLE(rust-debug,
+[AS_HELP_STRING([--enable-rust-debug],
+[build rust-src in debug mode
+Useful for debugging rust component of Remacs.])],
+[ac_enable_rust_debug="${enableval}"],[])
+if test x$ac_enable_rust_debug != x ; then
+CARGO_FLAGS=
+else
+CARGO_FLAGS="--release"
+fi
+
+AC_SUBST(CARGO_FLAGS)
+
+LIB_REMACS="-lremacs -ldl"
+
+LDFLAGS_REMACS="-L../$srcdir/rust_src/target/\${CARGO_BUILD_DIR}"
+
+LDFLAGS="$LDFLAGS $LDFLAGS_REMACS"
+
+AC_SUBST(LIB_REMACS)
+
 if test "${opsys}" = "mingw32"; then
   CPPFLAGS="$CPPFLAGS -DUSE_CRT_DLL=1 -I \${abs_top_srcdir}/nt/inc"
   # Remove unneeded switches from the value of CC that goes to Makefiles

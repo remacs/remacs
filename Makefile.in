@@ -84,6 +84,12 @@ AWK = @AWK@
 
 EXEEXT=@EXEEXT@
 
+RUSTFLAGS=@RUSTFLAGS@
+CARGO_BUILD=@CARGO_BUILD@
+CARGO_CLEAN=@CARGO_CLEAN@
+CARGO_TEST=@CARGO_TEST@
+CARGO_FLAGS=@CARGO_FLAGS@
+
 ### These help us choose version- and architecture-specific directories
 ### to install files in.
 
@@ -202,6 +208,10 @@ icondir=$(datarootdir)/icons
 # The source directory for the icon files.
 iconsrcdir=$(srcdir)/etc/images/icons
 
+# Root of rust src tree (where Cargo.toml is located).
+rust_srcdir=$(srcdir)/rust_src
+cargo_manifest=$(rust_srcdir)/Cargo.toml
+
 # ==================== Emacs-specific directories ====================
 
 # These variables hold the values Emacs will actually use.  They are
@@ -290,7 +300,7 @@ EMACS = ${EMACS_NAME}${EXEEXT}
 EMACSFULL = `echo emacs-${version} | sed '$(TRANSFORM)'`${EXEEXT}
 
 # Subdirectories to make recursively.
-SUBDIR = $(NTDIR) lib lib-src src lisp
+SUBDIR = $(NTDIR) lib lib-src rust-src src lisp
 
 # The subdir makefiles created by config.status.
 SUBDIR_MAKEFILES_IN = @SUBDIR_MAKEFILES_IN@
@@ -369,11 +379,16 @@ epaths-force-w32:
 	  -e "/^.*#/s|@SRC@|$${w32srcdir}|g") &&		\
 	${srcdir}/build-aux/move-if-change epaths.h.$$$$ src/epaths.h
 
+.PHONY: rust-src
+rust-src:
+	RUSTFLAGS=${RUSTFLAGS} \
+	$(CARGO_BUILD) $(CARGO_FLAGS) --manifest-path ${cargo_manifest}
+
 # If lib/Makefile would build files in '.', then build them before
 # building 'lib', to avoid races with parallel makes.
 lib: am--refresh
 
-lib-src src: $(NTDIR) lib
+lib-src src: $(NTDIR) lib rust-src
 
 src: lib-src
 
@@ -837,6 +852,7 @@ clean: $(clean_dirs:=_clean)
 	-rm -f *.tmp etc/*.tmp*
 	-rm -rf info-dir.*
 	-rm -rf *.elc
+	-$(CARGO_CLEAN) --manifest-path ${cargo_manifest}
 
 ### 'bootclean'
 ###      Delete all files that need to be remade for a clean bootstrap.
@@ -932,6 +948,9 @@ check check-expensive: all
 	  echo "Maybe you are using a release tarfile, rather than a repository checkout."; \
 	else \
 	  $(MAKE) -C test/automated $@; \
+	  echo "\nRUNNING RUST_SRC TESTS"; \
+	  echo "------------------------"; \
+	  $(CARGO_TEST) --manifest-path ${cargo_manifest}; \
 	fi
 
 dist:

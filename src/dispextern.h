@@ -44,10 +44,6 @@ typedef struct {
 
 #endif /* HAVE_X_WINDOWS */
 
-#ifdef MSDOS
-#include "msdos.h"
-#endif
-
 INLINE_HEADER_BEGIN
 
 #include <c-strcase.h>

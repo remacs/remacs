@@ -5,12 +5,6 @@ rust:
   - nightly
 
 script:
-  # Test and build the Rust code.
-  - cd rust_src
-  - cargo test
-  - cargo build
-  - cd ..
-
   # Configure Emacs for building
   - ./autogen.sh
   # TODO: set up makeinfo on travis.

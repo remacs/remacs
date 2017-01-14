@@ -16,6 +16,7 @@ mod strings;
 mod symbols;
 mod globals;
 mod fns;
+mod atom;
 
 use lisp::LispSubr;
 
@@ -30,6 +31,10 @@ pub use math::Fquo;
 // Widely used in the C codebase.
 pub use cons::Fsetcar;
 pub use cons::Fsetcdr;
+pub use cons::Fcar;
+
+// These need to be exported as marker.c depends upon them.
+pub use marker::CHECK_MARKER;
 
 extern "C" {
     fn defsubr(sname: *const LispSubr);
@@ -38,6 +43,7 @@ extern "C" {
 #[no_mangle]
 pub extern "C" fn rust_init_syms() {
     unsafe {
+        defsubr(&*atom::Satom);
         defsubr(&*math::Smod);
         defsubr(&*math::Splus);
         defsubr(&*math::Sminus);
@@ -52,8 +58,10 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*cons::Sconsp);
         defsubr(&*cons::Ssetcar);
         defsubr(&*cons::Ssetcdr);
+        defsubr(&*cons::Scar);
         defsubr(&*strings::Sstringp);
         defsubr(&*strings::Seq);
         defsubr(&*fns::Sbase64EncodeString);
+        defsubr(&*strings::Snull);
     }
 }

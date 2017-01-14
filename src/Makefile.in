@@ -19,10 +19,6 @@
 # along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 
-# Note that this file is edited by msdos/sed1v2.inp for MSDOS.  That
-# script may need modifying in sync with changes made here.  Try to
-# avoid shell-ism because the DOS build has to use the DOS shell.
-
 SHELL = @SHELL@
 
 # Here are the things that we expect ../configure to edit.
@@ -36,6 +32,8 @@ CC = @CC@
 CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
+CARGO_FLAGS = @CARGO_FLAGS@
+RUSTFLAGS = @RUSTFLAGS@
 EXEEXT = @EXEEXT@
 version = @version@
 # Substitute an assignment for the MAKE variable, because
@@ -47,6 +45,7 @@ MKDIR_P = @MKDIR_P@
 # LIBS = @LIBS@
 LIBOBJS = @LIBOBJS@
 
+rust_srcdir=$(srcdir)/rust_src
 lispsource = $(top_srcdir)/lisp
 lib = ../lib
 libsrc = ../lib-src
@@ -119,7 +118,7 @@ PAXCTL_dumped = @PAXCTL_dumped@
 PAXCTL_notdumped = @PAXCTL_notdumped@
 
 ## Some systems define this to request special libraries.
-LIBS_SYSTEM=-L$(top_srcdir)/rust_src/target/debug -lremacs -ldl
+LIBS_SYSTEM=@LIBS_SYSTEM@
 
 ## -lm, or empty.
 LIB_MATH=@LIB_MATH@
@@ -261,11 +260,6 @@ CYGWIN_OBJ=@CYGWIN_OBJ@
 ## fontset.o fringe.o image.o if we have any window system
 WINDOW_SYSTEM_OBJ=@WINDOW_SYSTEM_OBJ@
 
-## dosfns.o msdos.o w16select.o if MSDOS.
-MSDOS_OBJ =
-## w16select.o termcap.o if MSDOS && HAVE_X_WINDOWS.
-MSDOS_X_OBJ =
-
 NS_OBJ=@NS_OBJ@
 ## nsterm.o nsfns.o nsmenu.o nsselect.o nsimage.o ns_fontfile if HAVE_NS.
 NS_OBJC_OBJ=@NS_OBJC_OBJ@
@@ -307,6 +301,8 @@ LIBSELINUX_LIBS = @LIBSELINUX_LIBS@
 LIBGNUTLS_LIBS = @LIBGNUTLS_LIBS@
 LIBGNUTLS_CFLAGS = @LIBGNUTLS_CFLAGS@
 
+LIB_REMACS = @LIB_REMACS@
+
 INTERVALS_H = dispextern.h intervals.h composite.h
 
 GETLOADAVG_LIBS = @GETLOADAVG_LIBS@
@@ -339,6 +335,13 @@ AM_V_at = $(am__v_at_@AM_V@)
 am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 =
+
+
+ifeq ($(findstring --release,$(CARGO_FLAGS)),--release)
+CARGO_BUILD_DIR=release
+else
+CARGO_BUILD_DIR=debug
+endif
 
 DEPDIR=deps
 AUTO_DEPEND = @AUTO_DEPEND@
@@ -398,7 +401,7 @@ base_obj = dispnew.o frame.o scroll.o xdisp.o menu.o $(XMENU_OBJ) window.o \
 	doprnt.o intervals.o textprop.o composite.o xml.o $(NOTIFY_OBJ) \
 	$(XWIDGETS_OBJ) \
 	profiler.o decompress.o \
-	$(MSDOS_OBJ) $(MSDOS_X_OBJ) $(NS_OBJ) $(CYGWIN_OBJ) $(FONT_OBJ) \
+	$(NS_OBJ) $(CYGWIN_OBJ) $(FONT_OBJ) \
 	$(W32_OBJ) $(WINDOW_SYSTEM_OBJ) $(XGSELOBJ)
 obj = $(base_obj) $(NS_OBJC_OBJ)
 
@@ -406,13 +409,13 @@ obj = $(base_obj) $(NS_OBJC_OBJ)
 ## These go in the DOC file on all machines in case they are needed.
 ## Some of them have no DOC entries, but it does no harm to have them
 ## in the list, in case they ever add any such entries.
-SOME_MACHINE_OBJECTS = dosfns.o msdos.o \
+SOME_MACHINE_OBJECTS = \
   xterm.o xfns.o xmenu.o xselect.o xrdb.o xsmfns.o fringe.o image.o \
   fontset.o dbusbind.o cygw32.o \
   nsterm.o nsfns.o nsmenu.o nsselect.o nsimage.o nsfont.o macfont.o \
   w32.o w32console.o w32fns.o w32heap.o w32inevt.o w32notify.o \
   w32menu.o w32proc.o w32reg.o w32select.o w32term.o w32xfns.o \
-  w16select.o widget.o xfont.o ftfont.o xftfont.o ftxfont.o gtkutil.o \
+  widget.o xfont.o ftfont.o xftfont.o ftxfont.o gtkutil.o \
   xsettings.o xgselect.o termcap.o
 
 ## gmalloc.o if !SYSTEM_MALLOC && !DOUG_LEA_MALLOC, else empty.
@@ -483,7 +486,7 @@ LIBES = $(LIBS) $(W32_LIBS) $(LIBS_GNUSTEP) $(LIBX_BASE) $(LIBIMAGE) \
    $(LIBXML2_LIBS) $(LIBGPM) $(LIBRESOLV) $(LIBS_SYSTEM) $(CAIRO_LIBS) \
    $(LIBS_TERMCAP) $(GETLOADAVG_LIBS) $(SETTINGS_LIBS) $(LIBSELINUX_LIBS) \
    $(FREETYPE_LIBS) $(FONTCONFIG_LIBS) $(LIBOTF_LIBS) $(M17N_FLT_LIBS) \
-   $(LIBGNUTLS_LIBS) $(LIB_PTHREAD) \
+   $(LIBGNUTLS_LIBS) $(LIB_PTHREAD) $(LIB_REMACS) \
    $(NOTIFY_LIBS) $(LIB_MATH) $(LIBZ) $(LIBMODULES)
 
 $(leimdir)/leim-list.el: bootstrap-emacs$(EXEEXT)
@@ -582,6 +585,11 @@ gl-stamp: $(libsrc)/make-docfile$(EXEEXT) $(GLOBAL_SOURCES)
 
 globals.h: gl-stamp; @true
 
+$(top_srcdir)/rust_src/target/.rustflags : FORCE
+	echo "$(CARGO_FLAGS) $(RUSTFLAGS)" > $@.tmp
+	diff -q $@ $@.tmp || cp $@.tmp $@
+	rm -f $@.tmp
+
 $(ALLOBJS): globals.h
 
 $(lib)/libgnu.a: $(config_h)
@@ -592,6 +600,7 @@ $(lib)/libgnu.a: $(config_h)
 ## This goes on to affect various things, and the emacs binary fails
 ## to start if Vinstallation_directory has the wrong value.
 temacs$(EXEEXT): $(LIBXMENU) $(ALLOBJS) \
+	         $(top_srcdir)/rust_src/target/.rustflags \
 	         $(lib)/libgnu.a $(EMACSRES) ${charsets} ${charscript}
 	$(AM_V_CCLD)$(CC) $(ALL_CFLAGS) $(TEMACS_LDFLAGS) $(LDFLAGS) \
 	  -o temacs $(ALLOBJS) $(lib)/libgnu.a $(W32_RES_LINK) $(LIBES)

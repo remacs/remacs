@@ -1275,6 +1275,8 @@ CDR_SAFE (Lisp_Object c)
 
 Lisp_Object Fsetcar(Lisp_Object, Lisp_Object);
 Lisp_Object Fsetcdr(Lisp_Object, Lisp_Object);
+Lisp_Object Fcar(Lisp_Object);
+Lisp_Object Fatom(Lisp_Object);
 
 /* In a string or vector, the sign bit of the `size' is the gc mark bit.  */
 

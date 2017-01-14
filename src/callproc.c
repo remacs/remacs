@@ -38,11 +38,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define _P_NOWAIT 1	/* from process.h */
 #endif
 
-#ifdef MSDOS	/* Demacs 1.1.1 91/10/16 HIRANO Satoshi */
-#include <sys/stat.h>
-#include <sys/param.h>
-#endif /* MSDOS */
-
 #include "commands.h"
 #include "buffer.h"
 #include "coding.h"
@@ -52,10 +47,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "syswait.h"
 #include "blockinput.h"
 #include "frame.h"
-
-#ifdef MSDOS
-#include "msdos.h"
-#endif
 
 #ifdef HAVE_NS
 #include "nsterm.h"
@@ -78,11 +69,7 @@ static Lisp_Object Vtemp_file_name_pattern;
 static pid_t synch_process_pid;
 
 /* If a string, the name of a temp file that has not been removed.  */
-#ifdef MSDOS
-static Lisp_Object synch_process_tempfile;
-#else
-# define synch_process_tempfile make_number (0)
-#endif
+#define synch_process_tempfile make_number (0)
 
 /* Indexes of file descriptors that need closing on call_process_kill.  */
 enum
@@ -141,7 +128,6 @@ encode_current_directory (void)
 void
 record_kill_process (struct Lisp_Process *p, Lisp_Object tempfile)
 {
-#ifndef MSDOS
   sigset_t oldset;
   block_child_signal (&oldset);
 
@@ -153,7 +139,6 @@ record_kill_process (struct Lisp_Process *p, Lisp_Object tempfile)
     }
 
   unblock_child_signal (&oldset);
-#endif	/* !MSDOS */
 }
 
 /* Clean up files, file descriptors and processes created by Fcall_process.  */
@@ -193,7 +178,6 @@ call_process_cleanup (Lisp_Object buffer)
 {
   Fset_buffer (buffer);
 
-#ifndef MSDOS
   if (synch_process_pid)
     {
       kill (-synch_process_pid, SIGINT);
@@ -205,7 +189,6 @@ call_process_cleanup (Lisp_Object buffer)
       immediate_quit = 0;
       message1 ("Waiting for process to die...done");
     }
-#endif	/* !MSDOS */
 }
 
 #ifdef DOS_NT
@@ -290,13 +273,8 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
      t means use same as standard output.  */
   Lisp_Object error_file;
   Lisp_Object output_file = Qnil;
-#ifdef MSDOS	/* Demacs 1.1.1 91/10/16 HIRANO Satoshi */
-  char *tempfile = NULL;
-  int pid;
-#else
   sigset_t oldset;
   pid_t pid;
-#endif
   int child_errno;
   int fd_output, fd_error;
   struct coding_system process_coding; /* coding-system of process output */
@@ -424,9 +402,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 
   for (i = 0; i < CALLPROC_FDS; i++)
     callproc_fd[i] = -1;
-#ifdef MSDOS
-  synch_process_tempfile = make_number (0);
-#endif
   record_unwind_protect_ptr (call_process_kill, callproc_fd);
 
   /* Search for program; barf if not found.  */
@@ -466,25 +441,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
   new_argv[0] = SSDATA (path);
 
   discard_output = INTEGERP (buffer) || (NILP (buffer) && NILP (output_file));
-
-#ifdef MSDOS
-  if (! discard_output && ! STRINGP (output_file))
-    {
-      char const *tmpdir = egetenv ("TMPDIR");
-      char const *outf = tmpdir ? tmpdir : "";
-      tempfile = alloca (strlen (outf) + 20);
-      strcpy (tempfile, outf);
-      dostounix_filename (tempfile);
-      if (*tempfile == '\0' || tempfile[strlen (tempfile) - 1] != '/')
-	strcat (tempfile, "/");
-      strcat (tempfile, "emXXXXXX");
-      mktemp (tempfile);
-      if (!*tempfile)
-	report_file_error ("Opening process output file", Qnil);
-      output_file = build_string (tempfile);
-      synch_process_tempfile = output_file;
-    }
-#endif
 
   if (discard_output)
     {
@@ -536,53 +492,10 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
       callproc_fd[CALLPROC_STDERR] = fd_error;
     }
 
-#ifdef MSDOS /* MW, July 1993 */
-  /* Note that on MSDOS `child_setup' actually returns the child process
-     exit status, not its PID, so assign it to status below.  */
-  pid = child_setup (filefd, fd_output, fd_error, new_argv, 0, current_dir);
-
-  if (pid < 0)
-    {
-      child_errno = errno;
-      unbind_to (count, Qnil);
-      synchronize_system_messages_locale ();
-      return
-	code_convert_string_norecord (build_string (strerror (child_errno)),
-				      Vlocale_coding_system, 0);
-    }
-  status = pid;
-
-  for (i = 0; i < CALLPROC_FDS; i++)
-    if (0 <= callproc_fd[i])
-      {
-	emacs_close (callproc_fd[i]);
-	callproc_fd[i] = -1;
-      }
-  emacs_close (filefd);
-  clear_unwind_protect (count - 1);
-
-  if (tempfile)
-    {
-      /* Since CRLF is converted to LF within `decode_coding', we
-	 can always open a file with binary mode.  */
-      callproc_fd[CALLPROC_PIPEREAD] = emacs_open (tempfile,
-						   O_RDONLY | O_BINARY, 0);
-      if (callproc_fd[CALLPROC_PIPEREAD] < 0)
-	{
-	  int open_errno = errno;
-	  report_file_errno ("Cannot re-open temporary file",
-			     build_string (tempfile), open_errno);
-	}
-    }
-
-#endif /* MSDOS */
-
   /* Do the unwind-protect now, even though the pid is not known, so
      that no storage allocation is done in the critical section.
      The actual PID will be filled in during the critical section.  */
   record_unwind_protect (call_process_cleanup, Fcurrent_buffer ());
-
-#ifndef MSDOS
 
   block_input ();
   block_child_signal (&oldset);
@@ -681,8 +594,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
       }
   emacs_close (filefd);
   clear_unwind_protect (count - 1);
-
-#endif /* not MSDOS */
 
   if (INTEGERP (buffer))
     return unbind_to (count, Qnil);
@@ -859,11 +770,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	call1 (intern ("after-insert-file-set-buffer-file-coding-system"),
 	       make_number (total_read));
     }
-
-#ifndef MSDOS
-  /* Wait for it to terminate, unless it already has.  */
-  wait_for_termination (pid, &status, fd0 < 0);
-#endif
 
   immediate_quit = 0;
 
@@ -1193,16 +1099,9 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
     ptrdiff_t i;
 
     i = SBYTES (current_dir);
-#ifdef MSDOS
-    /* MSDOS must have all environment variables malloc'ed, because
-       low-level libc functions that launch subsidiary processes rely
-       on that.  */
-    pwd_var = xmalloc (i + 5);
-#else
     if (MAX_ALLOCA - 5 < i)
       exec_failed (new_argv[0], ENOMEM);
     pwd_var = alloca (i + 5);
-#endif
     temp = pwd_var + 4;
     memcpy (pwd_var, "PWD=", 4);
     lispstpcpy (temp, current_dir);
@@ -1341,7 +1240,6 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
       err = relocate_fd (err, 3);
   }
 
-#ifndef MSDOS
   /* Redirect file descriptors and clear the close-on-exec flag on the
      redirected ones.  IN, OUT, and ERR are close-on-exec so they
      need not be closed explicitly.  */
@@ -1355,14 +1253,6 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
   execve (new_argv[0], new_argv, env);
   exec_failed (new_argv[0], errno);
 
-#else /* MSDOS */
-  pid = run_msdos_command (new_argv, pwd_var + 4, in, out, err, env);
-  xfree (pwd_var);
-  if (pid == -1)
-    /* An error occurred while trying to run the subprocess.  */
-    report_file_error ("Spawning child process", Qnil);
-  return pid;
-#endif  /* MSDOS */
 #endif  /* not WINDOWSNT */
 }
 
@@ -1383,9 +1273,6 @@ relocate_fd (int fd, int minfd)
 	  emacs_perror ("while setting up child");
 	  _exit (EXIT_CANCELED);
 	}
-#ifdef MSDOS
-      emacs_close (fd);
-#endif
       return new;
     }
 }
@@ -1557,7 +1444,6 @@ init_callproc (void)
       Lisp_Object tem;
       tem = Fexpand_file_name (build_string ("lib-src"),
 			       Vinstallation_directory);
-#ifndef MSDOS
 	  /* MSDOS uses wrapped binaries, so don't do this.  */
       if (NILP (Fmember (tem, Vexec_path)))
 	{
@@ -1574,7 +1460,6 @@ init_callproc (void)
 	}
 
       Vexec_directory = Ffile_name_as_directory (tem);
-#endif /* not MSDOS */
 
       /* Maybe use ../etc as well as ../lib-src.  */
       if (data_dir == 0)
@@ -1658,11 +1543,6 @@ syms_of_callproc (void)
   Vtemp_file_name_pattern = build_string ("emXXXXXX");
 #endif
   staticpro (&Vtemp_file_name_pattern);
-
-#ifdef MSDOS
-  synch_process_tempfile = make_number (0);
-  staticpro (&synch_process_tempfile);
-#endif
 
   DEFVAR_LISP ("shell-file-name", Vshell_file_name,
 	       doc: /* File name to load inferior shells from.

@@ -18597,7 +18597,7 @@ try_window_id (struct window *w)
 		     + WINDOW_WANTS_HEADER_LINE_P (w)
 		     + window_internal_height (w));
 
-#if defined (HAVE_GPM) || defined (MSDOS)
+#if defined (HAVE_GPM)
 	  x_clear_window_mouse_face (w);
 #endif
 	  /* Perform the operation on the screen.  */
@@ -23762,9 +23762,7 @@ decode_mode_spec (struct window *w, register int c, int field_width,
       obj = Fget_buffer_process (Fcurrent_buffer ());
       if (NILP (obj))
 	return "no process";
-#ifndef MSDOS
       obj = Fsymbol_name (Fprocess_status (obj));
-#endif
       break;
 
     case '@':
@@ -28629,7 +28627,7 @@ draw_row_with_mouse_face (struct window *w, int start_x, struct glyph_row *row,
       return;
     }
 #endif
-#if defined (HAVE_GPM) || defined (MSDOS) || defined (WINDOWSNT)
+#if defined (HAVE_GPM) || defined (WINDOWSNT)
   tty_draw_row_with_mouse_face (w, row, start_hpos, end_hpos, draw);
 #endif
 }
@@ -30069,7 +30067,7 @@ note_mouse_highlight (struct frame *f, int x, int y)
   struct buffer *b;
 
   /* When a menu is active, don't highlight because this looks odd.  */
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK) || defined (HAVE_NS) || defined (MSDOS)
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK) || defined (HAVE_NS)
   if (popup_activated ())
     return;
 #endif
@@ -31107,13 +31105,11 @@ expose_frame (struct frame *f, int x, int y, int w, int h)
 #endif
 
 #ifdef HAVE_X_WINDOWS
-#ifndef MSDOS
 #if ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
   if (WINDOWP (f->menu_bar_window))
     mouse_face_overwritten_p
       |= expose_window (XWINDOW (f->menu_bar_window), &r);
 #endif /* not USE_X_TOOLKIT and not USE_GTK */
-#endif
 #endif
 
   /* Some window managers support a focus-follows-mouse style with

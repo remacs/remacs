@@ -27,16 +27,22 @@ use marker::{LispMarker, marker_position};
 /// `EmacsInt` represents an integer big enough to hold our tagged
 /// pointer representation.
 ///
-/// In Emacs C, this is `EMACS_INT`, which is defined as `long int`.
-pub type EmacsInt = libc::c_long;
+/// In Emacs C, this is `EMACS_INT`.
+///
+/// `EmacsUint` represents the unsigned equivalent of `EmacsInt`.
+/// In Emacs C, this is `EMACS_UINT`.
+///
+/// Their definition are determined in a way consistent with Emacs C.
+/// Under casual systems, they're the type isize and usize respectively.
 
-/// Unsigned equivalent of `EmacsInt`. In Emacs C, this is
-/// `EMACS_UINT`, which is defined as `unsigned long`.
-pub type EmacsUint = libc::c_ulong;
-
-// 2**63 - 1, which is the value of LONG_MAX in limits.h in the C
-// stdlib.
-pub const EMACS_INT_MAX: EmacsInt = 9223372036854775807;
+include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
+/// These are an example of the casual case.
+#[cfg(dummy = "impossible")]
+pub type EmacsInt = isize;
+#[cfg(dummy = "impossible")]
+pub type EmacsUint = usize;
+#[cfg(dummy = "impossible")]
+pub const EMACS_INT_MAX: EmacsInt = std::isize::MAX;
 
 // This is dependent on CHECK_LISP_OBJECT_TYPE, a compile time flag,
 // but it's usually false.
@@ -45,7 +51,7 @@ pub type LispObject = EmacsInt;
 // give us stronger guarantees from the type checker.
 
 extern "C" {
-    fn wrong_type_argument(predicate: LispObject, value: LispObject) -> LispObject;
+    pub fn wrong_type_argument(predicate: LispObject, value: LispObject) -> LispObject;
     pub static Qt: LispObject;
     pub static Qarith_error: LispObject;
     pub static Qnumber_or_marker_p: LispObject;
@@ -218,8 +224,8 @@ unsafe impl Sync for LispSubr {}
 macro_rules! defun {
     ($lisp_name:expr, $fname:ident, $sname:ident, $min_args:expr, $max_args:expr, $intspec:expr, $docstring:expr) => {
         lazy_static! {
-            // TODO: this is blindly hoping we have the correct alignment.
-            // We should ensure we have GCALIGNMENT (8 bytes).
+// TODO: this is blindly hoping we have the correct alignment.
+// We should ensure we have GCALIGNMENT (8 bytes).
             pub static ref $sname: LispSubr = LispSubr {
                 header: VectorLikeHeader {
                     size: ((PvecType::PVEC_SUBR as libc::c_int) <<
@@ -454,12 +460,8 @@ pub struct LispFloatChain {
     chain: *const LispFloat,
 }
 
-// lisp.h uses a union for Lisp_Misc, which we emulate with an opaque
-// struct.
-#[repr(C)]
-pub struct LispMisc {
-    _ignored: i64,
-}
+/// lisp.h uses a union for `Lisp_Misc`, which we emulate with a `*mut libc::c_void`
+pub type LispMisc = *mut libc::c_void;
 
 // Supertype of all Misc types.
 #[repr(C)]

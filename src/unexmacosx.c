@@ -929,7 +929,9 @@ copy_data_segment (struct load_command *lc)
 	       || strncmp (sectp->sectname, "__mod_init_func", 16) == 0
 	       || strncmp (sectp->sectname, "__mod_term_func", 16) == 0
 	       || strncmp (sectp->sectname, "__static_data", 16) == 0
-	       || strncmp (sectp->sectname, "__objc_", 7) == 0)
+	       || strncmp (sectp->sectname, "__objc_", 7) == 0
+	       || strncmp (sectp->sectname, "__thread_data", 13) == 0
+	       || strncmp (sectp->sectname, "__thread_vars", 13) == 0)
 	{
 	  if (!unexec_copy (sectp->offset, old_file_offset, sectp->size))
 	    unexec_error ("cannot copy section %.16s", sectp->sectname);

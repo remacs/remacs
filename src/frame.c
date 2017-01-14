@@ -44,10 +44,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "fontset.h"
 #endif
 #include "cm.h"
-#ifdef MSDOS
-#include "msdos.h"
-#include "dosfns.h"
-#endif
 #ifdef USE_X_TOOLKIT
 #include "widget.h"
 #endif
@@ -508,16 +504,6 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
 
   block_input ();
 
-#ifdef MSDOS
-  /* We only can set screen dimensions to certain values supported by
-     our video hardware.  Try to find the smallest size greater or
-     equal to the requested dimensions, while accounting for the fact
-     that the menu-bar lines are not counted in the frame height.  */
-  int dos_new_lines = new_lines + FRAME_TOP_MARGIN (f);
-  dos_set_window_size (&dos_new_lines, &new_cols);
-  new_lines = dos_new_lines - FRAME_TOP_MARGIN (f);
-#endif
-
   if (new_windows_width != old_windows_width)
     {
       resize_frame_windows (f, new_windows_width, 1, 1);
@@ -906,20 +892,10 @@ make_terminal_frame (struct terminal *terminal)
 
   f->terminal = terminal;
   f->terminal->reference_count++;
-#ifdef MSDOS
-  f->output_data.tty->display_info = &the_only_display_info;
-  if (!inhibit_window_system
-      && (!FRAMEP (selected_frame) || !FRAME_LIVE_P (XFRAME (selected_frame))
-	  || XFRAME (selected_frame)->output_method == output_msdos_raw))
-    f->output_method = output_msdos_raw;
-  else
-    f->output_method = output_termcap;
-#else /* not MSDOS */
   f->output_method = output_termcap;
   create_tty_output (f);
   FRAME_FOREGROUND_PIXEL (f) = FACE_TTY_DEFAULT_FG_COLOR;
   FRAME_BACKGROUND_PIXEL (f) = FACE_TTY_DEFAULT_BG_COLOR;
-#endif /* not MSDOS */
 
 #ifdef HAVE_WINDOW_SYSTEM
   f->vertical_scroll_bar_type = vertical_scroll_bar_none;
@@ -992,17 +968,10 @@ affects all frames on the same terminal device.  */)
   Lisp_Object frame, tem;
   struct frame *sf = SELECTED_FRAME ();
 
-#ifdef MSDOS
-  if (sf->output_method != output_msdos_raw
-      && sf->output_method != output_termcap)
-    emacs_abort ();
-#else /* not MSDOS */
-
 #ifdef WINDOWSNT                           /* This should work now! */
   if (sf->output_method != output_termcap)
     error ("Not using an ASCII terminal now; cannot make a new ASCII frame");
 #endif
-#endif /* not MSDOS */
 
   {
     Lisp_Object terminal;
@@ -1013,13 +982,6 @@ affects all frames on the same terminal device.  */)
         terminal = XCDR (terminal);
         t = decode_live_terminal (terminal);
       }
-#ifdef MSDOS
-    if (t && t != the_only_display_info.terminal)
-      /* msdos.c assumes a single tty_display_info object.  */
-      error ("Multiple terminals are not supported on this platform");
-    if (!t)
-      t = the_only_display_info.terminal;
-#endif
   }
 
   if (!t)
@@ -1987,19 +1949,11 @@ before calling this function on it, like this.
     /* Warping the mouse will cause enternotify and focus events.  */
     frame_set_mouse_position (XFRAME (frame), XINT (x), XINT (y));
 #else
-#if defined (MSDOS)
-  if (FRAME_MSDOS_P (XFRAME (frame)))
-    {
-      Fselect_frame (frame, Qnil);
-      mouse_moveto (XINT (x), XINT (y));
-    }
-#else
 #ifdef HAVE_GPM
     {
       Fselect_frame (frame, Qnil);
       term_mouse_moveto (XINT (x), XINT (y));
     }
-#endif
 #endif
 #endif
 
@@ -2028,19 +1982,11 @@ before calling this function on it, like this.
     /* Warping the mouse will cause enternotify and focus events.  */
     frame_set_mouse_pixel_position (XFRAME (frame), XINT (x), XINT (y));
 #else
-#if defined (MSDOS)
-  if (FRAME_MSDOS_P (XFRAME (frame)))
-    {
-      Fselect_frame (frame, Qnil);
-      mouse_moveto (XINT (x), XINT (y));
-    }
-#else
 #ifdef HAVE_GPM
     {
       Fselect_frame (frame, Qnil);
       term_mouse_moveto (XINT (x), XINT (y));
     }
-#endif
 #endif
 #endif
 
@@ -2674,11 +2620,6 @@ use is not recommended.  Explicitly check for a frame-parameter instead.  */)
 #ifdef HAVE_WINDOW_SYSTEM
   if (FRAME_WINDOW_P (f))
     x_set_frame_parameters (f, alist);
-  else
-#endif
-#ifdef MSDOS
-  if (FRAME_MSDOS_P (f))
-    IT_set_frame_parameters (f, alist);
   else
 #endif
 

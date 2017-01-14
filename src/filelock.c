@@ -53,7 +53,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "w32.h"	/* for dostounix_filename */
 #endif
 
-#ifndef MSDOS
 
 #ifdef HAVE_UTMP_H
 #include <utmp.h>
@@ -753,19 +752,6 @@ unlock_file (Lisp_Object fn)
   SAFE_FREE ();
 }
 
-#else  /* MSDOS */
-void
-lock_file (Lisp_Object fn)
-{
-}
-
-void
-unlock_file (Lisp_Object fn)
-{
-}
-
-#endif	/* MSDOS */
-
 void
 unlock_all_files (void)
 {
@@ -829,9 +815,6 @@ The value is nil if the FILENAME is not locked,
 t if it is locked by you, else a string saying which user has locked it.  */)
   (Lisp_Object filename)
 {
-#ifdef MSDOS
-  return Qnil;
-#else
   Lisp_Object ret;
   char *lfname;
   int owner;
@@ -852,7 +835,6 @@ t if it is locked by you, else a string saying which user has locked it.  */)
 
   SAFE_FREE ();
   return ret;
-#endif
 }
 
 void

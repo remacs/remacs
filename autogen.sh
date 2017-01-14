@@ -217,58 +217,6 @@ autoreconf -fi -I m4 || exit $?
 echo timestamp > src/stamp-h.in || exit
 
 
-## Configure Git, if using Git.
-if test -d .git && (git status -s) >/dev/null 2>&1; then
-
-    # Configure 'git diff' hunk header format.
-
-    git config 'diff.elisp.xfuncname' \
-	'^\(def[^[:space:]]+[[:space:]]+([^()[:space:]]+)' || exit
-    git config 'diff.texinfo.xfuncname' \
-	'^@node[[:space:]]+([^,[:space:]][^,]+)' || exit
-
-
-    # Install Git hooks.
-
-    tailored_hooks=
-    sample_hooks=
-
-    for hook in commit-msg pre-commit; do
-	cmp build-aux/git-hooks/$hook .git/hooks/$hook >/dev/null 2>&1 ||
-	tailored_hooks="$tailored_hooks $hook"
-    done
-    for hook in applypatch-msg pre-applypatch; do
-	test ! -r .git/hooks/$hook.sample ||
-	cmp .git/hooks/$hook.sample .git/hooks/$hook >/dev/null 2>&1 ||
-	sample_hooks="$sample_hooks $hook"
-    done
-
-    if test -n "$tailored_hooks$sample_hooks"; then
-	echo "Installing git hooks..."
-
-	case `cp --help 2>/dev/null` in
-	  *--backup*--verbose*)
-	    cp_options='--backup=numbered --verbose';;
-	  *)
-	    cp_options='-f';;
-	esac
-
-	if test -n "$tailored_hooks"; then
-	    for hook in $tailored_hooks; do
-		cp $cp_options build-aux/git-hooks/$hook .git/hooks || exit
-		chmod a-w .git/hooks/$hook || exit
-	    done
-	fi
-
-	if test -n "$sample_hooks"; then
-	    for hook in $sample_hooks; do
-		cp $cp_options .git/hooks/$hook.sample .git/hooks/$hook || exit
-		chmod a-w .git/hooks/$hook || exit
-	    done
-	fi
-    fi
-fi
-
 echo "You can now run './configure'."
 
 exit 0
