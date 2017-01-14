@@ -86,22 +86,9 @@ impl LispObject {
         LispObject(i)
     }
 
-    /// Natnums are inline integers that is great or equal to 0 and fit directly into
-    /// Lisp's tagged word.
-    #[inline]
-    pub unsafe fn from_natnum_unchecked(n: EmacsInt) -> LispObject {
-        let o = (n << INTTYPEBITS) as EmacsUint + LispType::Lisp_Int0 as EmacsUint;
-        LispObject::from_raw(o as EmacsInt)
-    }
-
     #[inline]
     pub fn to_raw(self) -> EmacsInt {
         self.0
-    }
-
-    #[inline]
-    pub unsafe fn to_natnum_unchecked(self) -> EmacsInt {
-        self.to_raw() >> INTTYPEBITS
     }
 }
 
@@ -144,9 +131,10 @@ pub enum PvecType {
 
 /// Bit pattern used in the least significant bits of a lisp object,
 /// to denote its type.
-#[repr(C)]
+#[repr(u8)]
 #[derive(PartialEq, Eq)]
 #[allow(dead_code)]
+#[allow(non_camel_case_types)]
 pub enum LispType {
     // Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol.
     Lisp_Symbol = 0,
@@ -175,6 +163,36 @@ pub enum LispType {
     Lisp_Cons = 3,
 
     Lisp_Float = 7,
+}
+
+impl LispObject {
+    #[allow(unused_unsafe)]
+    pub unsafe fn get_type_unchecked(self) -> LispType {
+        let res = (self.to_raw() & !VALMASK) as u8;
+        unsafe { mem::transmute(res) }
+    }
+
+    #[inline]
+    pub unsafe fn get_untaggedptr_unchecked(self) -> * const libc::c_void {
+        (self.to_raw() & VALMASK) as libc::intptr_t as *const libc::c_void
+    }
+}
+
+/// Natnums are inline integers that is great or equal to 0 and fit directly into
+/// Lisp's tagged word.
+
+impl LispObject {
+    #[inline]
+    pub unsafe fn from_natnum_unchecked(n: EmacsInt) -> LispObject {
+        let o = (n << INTTYPEBITS) as EmacsUint + LispType::Lisp_Int0 as EmacsUint;
+        LispObject::from_raw(o as EmacsInt)
+    }
+
+    #[inline]
+    pub unsafe fn to_natnum_unchecked(self) -> EmacsInt {
+        self.to_raw() >> INTTYPEBITS
+    }
+
 }
 
 // This is the set of data types that share a common structure.
@@ -360,7 +378,7 @@ pub fn XTYPE(a: LispObject) -> LispType {
     let res = XLI(a) & !VALMASK;
     // TODO: it would be better to check the type and fail,
     // https://www.reddit.com/r/rust/comments/36pgn9/integer_to_enum_after_removal_of_fromprimitive/crfy6al/
-    unsafe { mem::transmute(res as u32) }
+    unsafe { mem::transmute(res as u8) }
 }
 
 #[test]
