@@ -43,7 +43,11 @@ pub type EmacsInt = isize;
 #[cfg(dummy = "impossible")]
 pub type EmacsUint = usize;
 #[cfg(dummy = "impossible")]
+pub type EmacsDouble = f64;
+#[cfg(dummy = "impossible")]
 pub const EMACS_INT_MAX: EmacsInt = std::isize::MAX;
+#[cfg(dummy = "impossible")]
+pub const EMACS_LISP_FLOAT_SIZE: EmacsInt = 8;
 
 // This is dependent on CHECK_LISP_OBJECT_TYPE, a compile time flag,
 // but it's usually false.
@@ -180,14 +184,27 @@ pub enum LispMiscType {
 // If needed, we can calculate all variants size and allocate properly.
 
 #[repr(C)]
-pub struct LispMiscRef(* mut LispMiscAny);
+#[derive(Clone, Copy, Debug)]
+pub struct ExternalPtr<T>(* mut T);
 
-impl Deref for LispMiscRef {
-    type Target = LispMiscAny;
+impl<T> ExternalPtr<T> {
+    pub fn new(p: *mut T) -> ExternalPtr<T> {
+        ExternalPtr(p)
+    }
+
+    pub fn as_ptr(&self) -> * const T {
+        self.0
+    }
+}
+
+impl<T> Deref for ExternalPtr<T> {
+    type Target = T;
     fn deref(&self) -> &Self::Target {
         unsafe { &*self.0 }
     }
 }
+
+pub type LispMiscRef = ExternalPtr<LispMiscAny>;
 
 // Supertype of all Misc types.
 #[repr(C)]
@@ -210,7 +227,7 @@ impl LispObject {
     }
 
     pub unsafe fn to_misc_unchecked(self) -> LispMiscRef {
-        LispMiscRef(mem::transmute(self.get_untaggedptr_unchecked()))
+        LispMiscRef::new(mem::transmute(self.get_untaggedptr_unchecked()))
     }
 
     pub unsafe fn get_misc_type_unchecked(self) -> LispMiscType {
@@ -258,12 +275,56 @@ impl LispObject {
 
 // Float support (LispType == Lisp_Float == 7 )
 
+/// Represents a floating point value in elisp, or GC bookkeeping for
+/// floats.
+///
+/// # Porting from C
+///
+/// `Lisp_Float` in C uses a union between a `double` and a
+/// pointer. We assume a double, as that's the common case, and
+/// require callers to transmute to a `LispFloatChain` if they need
+/// the pointer.
+#[repr(C)]
+pub struct LispFloat {
+    data: [u8; EMACS_LISP_FLOAT_SIZE as usize],
+}
+
+#[repr(C)]
+pub struct LispFloatChainRepr(* const LispFloat);
+
+impl LispFloat {
+    pub fn as_data(&self) -> &EmacsDouble {
+        unsafe { &*(self.data.as_ptr() as * const EmacsDouble) }
+    }
+    pub fn as_chain(&self) -> &LispFloatChainRepr {
+        unsafe { &*(self.data.as_ptr() as * const LispFloatChainRepr) }
+    }
+}
+
+#[test]
+fn test_lisp_float_size() {
+    let double_size = mem::size_of::<EmacsDouble>();
+    let ptr_size = mem::size_of::<*const LispFloat>();
+
+    assert!(mem::size_of::<LispFloat>() == max(double_size, ptr_size));
+}
+
+pub type LispFloatRef = ExternalPtr<LispFloat>;
+
 impl LispObject {
     #[inline]
     pub fn is_float(self) -> bool {
         unsafe { self.get_type_unchecked() == LispType::Lisp_Float }
     }
 
+    #[inline]
+    pub unsafe fn to_float_unchecked(self) -> LispFloatRef {
+        LispFloatRef::new(mem::transmute(self.get_untaggedptr_unchecked()))
+    }
+
+    pub unsafe fn get_float_data_unchecked(self) -> EmacsDouble {
+        *self.to_float_unchecked().as_data()
+    }
 }
 
 
@@ -536,6 +597,17 @@ mod deprecated {
         assert!(!FLOATP(Qnil));
     }
 
+    #[allow(non_snake_case)]
+    #[allow(dead_code)]
+    pub fn XFLOAT(a: LispObject) -> LispFloatRef {
+        debug_assert!(FLOATP(a));
+        unsafe { a.to_float_unchecked() }
+    }
+
+    #[allow(non_snake_case)]
+    pub fn XFLOAT_DATA(f: LispObject) -> f64 {
+        unsafe { f.get_float_data_unchecked() }
+    }
 
     /// Is this LispObject a number?
     #[allow(non_snake_case)]
@@ -599,47 +671,6 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
 
 
 
-/// Represents a floating point value in elisp, or GC bookkeeping for
-/// floats.
-///
-/// # Porting from C
-///
-/// `Lisp_Float` in C uses a union between a `double` and a
-/// pointer. We assume a double, as that's the common case, and
-/// require callers to transmute to a `LispFloatChain` if they need
-/// the pointer.
-///
-/// As a result, `foo->u.data` in C should be written
-/// `ptr::read(foo).u` in Rust.
-#[repr(C)]
-pub struct LispFloat {
-    u: f64,
-}
-
-#[test]
-fn test_lisp_float_size() {
-    let double_size = mem::size_of::<f64>();
-    let ptr_size = mem::size_of::<*const LispFloat>();
-
-    assert!(mem::size_of::<LispFloat>() == max(double_size, ptr_size));
-}
-
-#[repr(C)]
-#[allow(dead_code)]
-pub struct LispFloatChain {
-    chain: *const LispFloat,
-}
-
-#[allow(non_snake_case)]
-pub fn XFLOAT(a: LispObject) -> *const LispFloat {
-    debug_assert!(FLOATP(a));
-    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_Float)) }
-}
-
-#[allow(non_snake_case)]
-pub fn XFLOAT_DATA(f: LispObject) -> f64 {
-    unsafe { ptr::read(XFLOAT(f)).u }
-}
 
 #[allow(non_snake_case)]
 pub fn MARKERP(a: LispObject) -> bool {
