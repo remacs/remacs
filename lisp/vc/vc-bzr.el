@@ -715,11 +715,11 @@ or a superior directory.")
        ;; value of log-view-message-re only since Emacs-23.
        (if (eq vc-log-view-type 'short)
 	 (append `((,log-view-message-re
-		    (1 'log-view-message-face)
+		    (1 'log-view-message)
 		    (2 'change-log-name)
 		    (3 'change-log-date)
 		    (4 'change-log-list nil lax))))
-	 (append `((,log-view-message-re . 'log-view-message-face))
+	 (append `((,log-view-message-re . 'log-view-message))
 		 ;; log-view-font-lock-keywords
 		 '(("^ *\\(?:committer\\|author\\): \
 \\([^<(]+?\\)[  ]*[(<]\\([[:alnum:]_.+-]+@[[:alnum:]_.-]+\\)[>)]"
