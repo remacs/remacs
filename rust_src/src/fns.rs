@@ -2,7 +2,8 @@ extern crate libc;
 
 use std::ptr;
 use std::os::raw::c_char;
-use lisp::{LispSubr, PSEUDOVECTOR_AREA_BITS, PvecType, VectorLikeHeader, LispObject, SBYTES};
+use lisp::{LispSubr, PSEUDOVECTOR_AREA_BITS, PvecType, VectorLikeHeader, LispObject, SBYTES,
+           SSDATA, STRING_MULTIBYTE};
 use strings::STRINGP;
 use cons::NILP;
 
@@ -12,8 +13,6 @@ extern "C" {
     fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> LispObject;
     fn base64_encode_1(from: *const libc::c_char, to: *mut libc::c_char, length: libc::ptrdiff_t,
                        line_break: bool, multibyte: bool) -> libc::ptrdiff_t;
-    fn STRING_MULTIBYTE(a: LispObject) -> bool;
-    fn SSDATA(string: LispObject) -> *mut libc::c_char;
 }
 
 pub fn Base64EncodeString (string: LispObject, noLineBreak: LispObject) -> LispObject {

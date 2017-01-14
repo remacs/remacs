@@ -57,6 +57,8 @@ pub struct LispObject(EmacsInt);
 extern "C" {
     pub fn wrong_type_argument(predicate: LispObject, value: LispObject) -> LispObject;
     pub fn STRING_BYTES(s: *mut LispString) -> libc::ptrdiff_t;
+    pub fn STRING_MULTIBYTE(a: LispObject) -> bool;
+    pub fn SSDATA(string: LispObject) -> *mut libc::c_char;
     pub static Qt: LispObject;
     pub static Qarith_error: LispObject;
     pub static Qnumber_or_marker_p: LispObject;
@@ -682,9 +684,9 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
 
 #[repr(C)]
 pub struct LispString {
-    size: libc::ptrdiff_t,
-    size_byte: libc::ptrdiff_t,
-    intervals: *mut libc::c_void, // @TODO implement
+    pub size: libc::ptrdiff_t,
+    pub size_byte: libc::ptrdiff_t,
+    pub intervals: *mut libc::c_void, // @TODO implement
     pub data: *mut libc::c_char,
 }
 
