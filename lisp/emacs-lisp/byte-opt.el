@@ -185,6 +185,7 @@
 (require 'bytecomp)
 (eval-when-compile (require 'cl-lib))
 (require 'macroexp)
+(require 'subr-x)
 
 (defun byte-compile-log-lap-1 (format &rest args)
   ;; Newer byte codes for stack-ref make the slot 0 non-nil again.
@@ -1728,7 +1729,11 @@ If FOR-EFFECT is non-nil, the return value is assumed to be of no importance."
 	      ;; unused-TAG: --> <deleted>
 	      ;;
 	      ((and (eq 'TAG (car lap0))
-		    (not (rassq lap0 lap)))
+		    (not (rassq lap0 lap))
+                    (= (length (cl-loop for table in byte-compile-jump-tables
+                                        when (member lap0 (hash-table-values table))
+                                        collect t))
+                       0))
 	       (and (memq byte-optimize-log '(t byte))
 		    (byte-compile-log "  unused tag %d removed" (nth 1 lap0)))
 	       (setq lap (delq lap0 lap)
@@ -1736,9 +1741,12 @@ If FOR-EFFECT is non-nil, the return value is assumed to be of no importance."
 	      ;;
 	      ;; goto   ... --> goto   <delete until TAG or end>
 	      ;; return ... --> return <delete until TAG or end>
-	      ;;
+	      ;; (unless a jump-table is being used, where deleting may affect
+              ;; other valid case bodies)
+              ;;
 	      ((and (memq (car lap0) '(byte-goto byte-return))
-		    (not (memq (car lap1) '(TAG nil))))
+		    (not (memq (car lap1) '(TAG nil)))
+                    (not byte-compile-jump-tables))
 	       (setq tmp rest)
 	       (let ((i 0)
 		     (opt-p (memq byte-optimize-log '(t lap)))

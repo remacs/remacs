@@ -267,6 +267,8 @@ DEFINE (Bstack_set,  0262)						\
 DEFINE (Bstack_set2, 0263)						\
 DEFINE (BdiscardN,   0266)						\
 									\
+DEFINE (Bswitch, 0267)                                                  \
+                                                                        \
 DEFINE (Bconstant, 0300)
 
 enum byte_code_op
@@ -1410,6 +1412,20 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	    }
 	  DISCARD (op);
 	  NEXT;
+
+        CASE (Bswitch):
+          {
+            Lisp_Object jmp_table = POP;
+            Lisp_Object v1 = POP;
+            Lisp_Object dest = Fgethash(v1, jmp_table, Qnil);
+            if (!NILP(dest)) {
+              int car = XINT(XCAR(dest));
+              int cdr = XINT(XCDR(dest));
+              op = car + (cdr << 8); /* Simulate FETCH2 */
+              goto op_branch;
+            }
+          }
+          NEXT;
 
 	CASE_DEFAULT
 	CASE (Bconstant):
