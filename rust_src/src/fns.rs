@@ -1,14 +1,8 @@
 extern crate libc;
 
 use std::ptr;
-use lisp;
 use std::os::raw::c_char;
-use libc::ptrdiff_t;
-use strings;
-use lisp::{LispSubr, PSEUDOVECTOR_AREA_BITS, PvecType, VectorLikeHeader, LispObject, XUNTAG, LispType,
-          LispString, XSTRING, SBYTES};
-use std::ffi::CString;
-use std::ffi::IntoStringError;
+use lisp::{LispSubr, PSEUDOVECTOR_AREA_BITS, PvecType, VectorLikeHeader, LispObject, SBYTES};
 use strings::STRINGP;
 use cons::NILP;
 
