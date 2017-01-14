@@ -13,7 +13,7 @@ extern "C" {
     static Qlistp: LispObject;
 }
 
-fn CONSP(x: LispObject) -> bool {
+pub fn CONSP(x: LispObject) -> bool {
     XTYPE(x) == LispType::Lisp_Cons
 }
 
