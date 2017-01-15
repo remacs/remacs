@@ -1730,10 +1730,9 @@ If FOR-EFFECT is non-nil, the return value is assumed to be of no importance."
 	      ;;
 	      ((and (eq 'TAG (car lap0))
 		    (not (rassq lap0 lap))
-                    (= (length (cl-loop for table in byte-compile-jump-tables
-                                        when (member lap0 (hash-table-values table))
-                                        collect t))
-                       0))
+                    (cl-loop for table in byte-compile-jump-tables
+                             when (member lap0 (hash-table-values table))
+                             return nil finally return t))
 	       (and (memq byte-optimize-log '(t byte))
 		    (byte-compile-log "  unused tag %d removed" (nth 1 lap0)))
 	       (setq lap (delq lap0 lap)
