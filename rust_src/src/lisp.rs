@@ -74,7 +74,7 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn from_bool(v : bool) -> LispObject {
+    pub fn from_bool(v: bool) -> LispObject {
         if v {
             unsafe { Qt }
         } else {
@@ -145,8 +145,8 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn get_untaggedptr(self) -> * mut libc::c_void {
-        (self.to_raw() & VALMASK) as libc::intptr_t as * mut libc::c_void
+    pub fn get_untaggedptr(self) -> *mut libc::c_void {
+        (self.to_raw() & VALMASK) as libc::intptr_t as *mut libc::c_void
     }
 }
 
@@ -165,30 +165,30 @@ impl LispObject {
 #[allow(non_camel_case_types)]
 #[allow(dead_code)]
 pub enum LispMiscType {
-    Lisp_Misc_Free = 0x5eab,
-    Lisp_Misc_Marker,
-    Lisp_Misc_Overlay,
-    Lisp_Misc_Save_Value,
-    Lisp_Misc_Finalizer,
+    Free = 0x5eab,
+    Marker,
+    Overlay,
+    SaveValue,
+    Finalizer,
 }
 
 
 // Lisp_Misc is a union. Now we don't really care about its variants except the
-// super type layout. LispMisc is an unsized type for this, and LispMiscAny is 
+// super type layout. LispMisc is an unsized type for this, and LispMiscAny is
 // only the header and a padding, which is consistent with the c version.
 // directly creating and moving or copying this struct is simply wrong!
 // If needed, we can calculate all variants size and allocate properly.
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
-pub struct ExternalPtr<T>(* mut T);
+pub struct ExternalPtr<T>(*mut T);
 
 impl<T> ExternalPtr<T> {
     pub fn new(p: *mut T) -> ExternalPtr<T> {
         ExternalPtr(p)
     }
 
-    pub fn as_ptr(&self) -> * const T {
+    pub fn as_ptr(&self) -> *const T {
         self.0
     }
 }
@@ -262,7 +262,8 @@ impl LispObject {
     #[inline]
     pub fn is_fixnum(self) -> bool {
         let ty = self.get_type();
-        (ty as u8 & ((LispType::Lisp_Int0 as u8) | !(LispType::Lisp_Int1 as u8))) == LispType::Lisp_Int0 as u8
+        (ty as u8 & ((LispType::Lisp_Int0 as u8) | !(LispType::Lisp_Int1 as u8))) ==
+        LispType::Lisp_Int0 as u8
     }
 
     /// TODO: Bignum support? (Current Emacs doesn't have it)
@@ -290,14 +291,14 @@ pub struct LispFloat {
 }
 
 #[repr(C)]
-pub struct LispFloatChainRepr(* const LispFloat);
+pub struct LispFloatChainRepr(*const LispFloat);
 
 impl LispFloat {
     pub fn as_data(&self) -> &EmacsDouble {
-        unsafe { &*(self.data.as_ptr() as * const EmacsDouble) }
+        unsafe { &*(self.data.as_ptr() as *const EmacsDouble) }
     }
     pub fn as_chain(&self) -> &LispFloatChainRepr {
-        unsafe { &*(self.data.as_ptr() as * const LispFloatChainRepr) }
+        unsafe { &*(self.data.as_ptr() as *const LispFloatChainRepr) }
     }
 }
 
@@ -680,7 +681,7 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
 
 #[allow(non_snake_case)]
 pub fn MARKERP(a: LispObject) -> bool {
-    MISCP(a) && XMISCTYPE(a) == LispMiscType::Lisp_Misc_Marker
+    MISCP(a) && XMISCTYPE(a) == LispMiscType::Marker
 }
 
 #[allow(non_snake_case)]
