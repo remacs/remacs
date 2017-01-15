@@ -17,8 +17,6 @@ mod symbols;
 mod globals;
 mod atom;
 
-pub use self::lisp::deprecated::{XFASTINT};
-
 use lisp::LispSubr;
 
 // These need to be exported as bytecode.c depends upon them.
@@ -33,6 +31,10 @@ pub use math::Fquo;
 pub use cons::Fsetcar;
 pub use cons::Fsetcdr;
 pub use cons::Fcar;
+pub use cons::Fcdr;
+
+// These need to be exported as marker.c depends upon them.
+pub use marker::CHECK_MARKER;
 
 extern "C" {
     fn defsubr(sname: *const LispSubr);
@@ -57,6 +59,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*cons::Ssetcar);
         defsubr(&*cons::Ssetcdr);
         defsubr(&*cons::Scar);
+        defsubr(&*cons::Scdr);
         defsubr(&*strings::Sstringp);
         defsubr(&*strings::Seq);
         defsubr(&*strings::Snull);

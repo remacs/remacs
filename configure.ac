@@ -5126,6 +5126,10 @@ AC_SUBST(CARGO_FLAGS)
 
 LIB_REMACS="-lremacs -ldl"
 
+if test "${HAVE_W32}" = "yes"; then
+    LIB_REMACS="$LIB_REMACS -lws2_32 -luserenv"
+fi
+
 LDFLAGS_REMACS="-L../$srcdir/rust_src/target/\${CARGO_BUILD_DIR}"
 
 LDFLAGS="$LDFLAGS $LDFLAGS_REMACS"

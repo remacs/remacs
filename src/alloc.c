@@ -54,10 +54,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/sysinfo.h>
 #endif
 
-#ifdef MSDOS
-#include "dosfns.h"		/* For dos_memory_info.  */
-#endif
-
 #if (defined ENABLE_CHECKING			\
      && defined HAVE_VALGRIND_VALGRIND_H	\
      && !defined USE_VALGRIND)
@@ -7018,20 +7014,10 @@ or memory information can't be obtained, return nil.  */)
 		   (uintmax_t) freeswap / 1024);
   else
     return Qnil;
-#elif defined MSDOS
-  unsigned long totalram, freeram, totalswap, freeswap;
-
-  if (dos_memory_info (&totalram, &freeram, &totalswap, &freeswap) == 0)
-    return list4i ((uintmax_t) totalram / 1024,
-		   (uintmax_t) freeram / 1024,
-		   (uintmax_t) totalswap / 1024,
-		   (uintmax_t) freeswap / 1024);
-  else
-    return Qnil;
-#else /* not HAVE_LINUX_SYSINFO, not WINDOWSNT, not MSDOS */
+#else
   /* FIXME: add more systems.  */
   return Qnil;
-#endif /* HAVE_LINUX_SYSINFO, not WINDOWSNT, not MSDOS */
+#endif
 }
 
 /* Debugging aids.  */
