@@ -553,7 +553,11 @@ characters whose Unicode @samp{general-category} property
 (@pxref{Character Properties}) indicates they are alphabetic
 characters.
 @item [:blank:]
-This matches space and tab only.
+This matches horizontal whitespace, as defined by Annex C of the
+Unicode Technical Standard #18.  In particular, it matches spaces,
+tabs, and other characters whose Unicode @samp{general-category}
+property (@pxref{Character Properties}) indicates they are spacing
+separators.
 @item [:cntrl:]
 This matches any @acronym{ASCII} control character.
 @item [:digit:]
@@ -1837,6 +1841,14 @@ Answer this question and all subsequent questions in the series with
 
 @item backup
 Move back to the previous place that a question was asked about.
+
+@item undo
+Undo last replacement and move back to the place where that
+replacement was performed.
+
+@item undo-all
+Undo all replacements and move back to the place where the first
+replacement was performed.
 
 @item edit
 Enter a recursive edit to deal with this question---instead of any

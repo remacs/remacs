@@ -4,7 +4,7 @@
 
 ;; Author: Fabián E. Gallina <fgallina@gnu.org>
 ;; URL: https://github.com/fgallina/python.el
-;; Version: 0.25.1
+;; Version: 0.25.2
 ;; Package-Requires: ((emacs "24.1") (cl-lib "1.0"))
 ;; Maintainer: emacs-devel@gnu.org
 ;; Created: Jul 2010
@@ -283,6 +283,18 @@
   :version "24.3"
   :link '(emacs-commentary-link "python"))
 
+
+;;; 24.x Compat
+
+
+(unless (fboundp 'prog-widen)
+  (defun prog-widen ()
+    (widen)))
+
+(unless (fboundp 'prog-first-column)
+  (defun prog-first-column ()
+    0))
+
 
 ;;; Bindings
 
@@ -318,6 +330,7 @@
     ;; Some util commands
     (define-key map "\C-c\C-v" 'python-check)
     (define-key map "\C-c\C-f" 'python-eldoc-at-point)
+    (define-key map "\C-c\C-d" 'python-describe-at-point)
     ;; Utilities
     (substitute-key-definition 'complete-symbol 'completion-at-point
                                map global-map)
@@ -549,23 +562,32 @@ The type returned can be `comment', `string' or `paren'."
     ;; Builtin Exceptions
     (,(rx symbol-start
           (or
+           ;; Python 2 and 3:
            "ArithmeticError" "AssertionError" "AttributeError" "BaseException"
-           "DeprecationWarning" "EOFError" "EnvironmentError" "Exception"
-           "FloatingPointError" "FutureWarning" "GeneratorExit" "IOError"
-           "ImportError" "ImportWarning" "IndexError" "KeyError"
-           "KeyboardInterrupt" "LookupError" "MemoryError" "NameError"
-           "NotImplementedError" "OSError" "OverflowError"
-           "PendingDeprecationWarning" "ReferenceError" "RuntimeError"
-           "RuntimeWarning" "StopIteration" "SyntaxError" "SyntaxWarning"
-           "SystemError" "SystemExit" "TypeError" "UnboundLocalError"
-           "UnicodeDecodeError" "UnicodeEncodeError" "UnicodeError"
-           "UnicodeTranslateError" "UnicodeWarning" "UserWarning" "VMSError"
-           "ValueError" "Warning" "WindowsError" "ZeroDivisionError"
+           "BufferError" "BytesWarning" "DeprecationWarning" "EOFError"
+           "EnvironmentError" "Exception" "FloatingPointError" "FutureWarning"
+           "GeneratorExit" "IOError" "ImportError" "ImportWarning"
+           "IndentationError" "IndexError" "KeyError" "KeyboardInterrupt"
+           "LookupError" "MemoryError" "NameError" "NotImplementedError"
+           "OSError" "OverflowError" "PendingDeprecationWarning"
+           "ReferenceError" "RuntimeError" "RuntimeWarning" "StopIteration"
+           "SyntaxError" "SyntaxWarning" "SystemError" "SystemExit" "TabError"
+           "TypeError" "UnboundLocalError" "UnicodeDecodeError"
+           "UnicodeEncodeError" "UnicodeError" "UnicodeTranslateError"
+           "UnicodeWarning" "UserWarning" "ValueError" "Warning"
+           "ZeroDivisionError"
            ;; Python 2:
            "StandardError"
            ;; Python 3:
-           "BufferError" "BytesWarning" "IndentationError" "ResourceWarning"
-           "TabError")
+           "BlockingIOError" "BrokenPipeError" "ChildProcessError"
+           "ConnectionAbortedError" "ConnectionError" "ConnectionRefusedError"
+           "ConnectionResetError" "FileExistsError" "FileNotFoundError"
+           "InterruptedError" "IsADirectoryError" "NotADirectoryError"
+           "PermissionError" "ProcessLookupError" "RecursionError"
+           "ResourceWarning" "StopAsyncIteration" "TimeoutError"
+           ;; OS specific
+           "VMSError" "WindowsError"
+           )
           symbol-end) . font-lock-type-face)
     ;; Builtins
     (,(rx symbol-start
@@ -759,7 +781,7 @@ work on `python-indent-calculate-indentation' instead."
   (interactive)
   (save-excursion
     (save-restriction
-      (widen)
+      (prog-widen)
       (goto-char (point-min))
       (let ((block-end))
         (while (and (not block-end)
@@ -858,7 +880,7 @@ keyword
  - Point is on a line starting a dedenter block.
  - START is the position where the dedenter block starts."
   (save-restriction
-    (widen)
+    (prog-widen)
     (let ((ppss (save-excursion
                   (beginning-of-line)
                   (syntax-ppss))))
@@ -1005,10 +1027,10 @@ current context or a list of integers.  The latter case is only
 happening for :at-dedenter-block-start context since the
 possibilities can be narrowed to specific indentation points."
   (save-restriction
-    (widen)
+    (prog-widen)
     (save-excursion
       (pcase (python-indent-context)
-        (`(:no-indent . ,_) 0)
+        (`(:no-indent . ,_) (prog-first-column)) ; usually 0
         (`(,(or :after-line
                 :after-comment
                 :inside-string
@@ -1046,7 +1068,7 @@ possibilities can be narrowed to specific indentation points."
          (let ((opening-block-start-points
                 (python-info-dedenter-opening-block-positions)))
            (if (not opening-block-start-points)
-               0  ; if not found default to first column
+               (prog-first-column) ; if not found default to first column
              (mapcar (lambda (pos)
                        (save-excursion
                          (goto-char pos)
@@ -1064,7 +1086,7 @@ integers.  Levels are returned in ascending order, and in the
 case INDENTATION is a list, this order is enforced."
   (if (listp indentation)
       (sort (copy-sequence indentation) #'<)
-    (nconc (number-sequence 0 (1- indentation)
+    (nconc (number-sequence (prog-first-column) (1- indentation)
                             python-indent-offset)
            (list indentation))))
 
@@ -1089,7 +1111,7 @@ minimum."
         (python-indent--previous-level levels (current-indentation))
       (if levels
           (apply #'max levels)
-        0))))
+        (prog-first-column)))))
 
 (defun python-indent-line (&optional previous)
   "Internal implementation of `python-indent-line-function'.
@@ -2042,8 +2064,8 @@ virtualenv."
 (defun python-shell-calculate-pythonpath ()
   "Calculate the PYTHONPATH using `python-shell-extra-pythonpaths'."
   (let ((pythonpath
-         (tramp-compat-split-string
-          (or (getenv "PYTHONPATH") "") path-separator)))
+         (split-string
+          (or (getenv "PYTHONPATH") "") path-separator 'omit)))
     (python-shell--add-to-path-with-priority
      pythonpath python-shell-extra-pythonpaths)
     (mapconcat 'identity pythonpath path-separator)))
@@ -2114,7 +2136,7 @@ appends `python-shell-remote-exec-path' instead of `exec-path'."
            (md5 tramp-end-of-output)))
 	unset vars item)
     (while env
-      (setq item (tramp-compat-split-string (car env) "="))
+      (setq item (split-string (car env) "=" 'omit))
       (setcdr item (mapconcat 'identity (cdr item) "="))
       (if (and (stringp (cdr item)) (not (string-equal (cdr item) "")))
 	  (push (format "%s %s" (car item) (cdr item)) vars)
@@ -2357,7 +2379,9 @@ the `buffer-name'."
 (defun python-shell-calculate-command ()
   "Calculate the string used to execute the inferior Python process."
   (format "%s %s"
-          (shell-quote-argument python-shell-interpreter)
+          ;; `python-shell-make-comint' expects to be able to
+          ;; `split-string-and-unquote' the result of this function.
+          (combine-and-quote-strings (list python-shell-interpreter))
           python-shell-interpreter-args))
 
 (define-obsolete-function-alias
@@ -3128,13 +3152,10 @@ t when called interactively."
                      (insert-file-contents
                       (or temp-file-name file-name))
                      (python-info-encoding)))
-         (file-name (expand-file-name
-                     (or (file-remote-p file-name 'localname)
-                         file-name)))
+         (file-name (expand-file-name (file-local-name file-name)))
          (temp-file-name (when temp-file-name
                            (expand-file-name
-                            (or (file-remote-p temp-file-name 'localname)
-                                temp-file-name)))))
+                            (file-local-name temp-file-name)))))
     (python-shell-send-string
      (format
       (concat
@@ -4018,14 +4039,14 @@ be added to `python-mode-skeleton-abbrev-table'."
   "Abbrev table for Python mode."
   :parents (list python-mode-skeleton-abbrev-table))
 
-(defmacro python-define-auxiliary-skeleton (name doc &optional &rest skel)
+(defmacro python-define-auxiliary-skeleton (name &optional doc &rest skel)
   "Define a `python-mode' auxiliary skeleton using NAME DOC and SKEL.
 The skeleton will be bound to python-skeleton-NAME."
   (declare (indent 2))
   (let* ((name (symbol-name name))
          (function-name (intern (concat "python-skeleton--" name)))
-         (msg (format-message
-               "Add `%s' clause? " name)))
+         (msg (funcall (if (fboundp 'format-message) #'format-message #'format)
+                       "Add `%s' clause? " name)))
     (when (not skel)
       (setq skel
             `(< ,(format "%s:" name) \n \n
@@ -4038,11 +4059,11 @@ The skeleton will be bound to python-skeleton-NAME."
          (signal 'quit t))
        ,@skel)))
 
-(python-define-auxiliary-skeleton else nil)
+(python-define-auxiliary-skeleton else)
 
-(python-define-auxiliary-skeleton except nil)
+(python-define-auxiliary-skeleton except)
 
-(python-define-auxiliary-skeleton finally nil)
+(python-define-auxiliary-skeleton finally)
 
 (python-skeleton-define if nil
   "Condition: "
@@ -4346,6 +4367,11 @@ Interactively, prompt for symbol."
                         nil nil symbol))))
   (message (python-eldoc--get-doc-at-point symbol)))
 
+(defun python-describe-at-point (symbol process)
+  (interactive (list (python-info-current-symbol)
+                     (python-shell-get-process)))
+  (comint-send-string process (concat "help('" symbol "')\n")))
+
 
 ;;; Hideshow
 
@@ -4389,6 +4415,15 @@ It must be a function with two arguments: TYPE and NAME.")
       "*class definition*"
     "*function definition*"))
 
+(defun python-imenu--get-defun-type-name ()
+  "Return defun type and name at current position."
+  (when (looking-at python-nav-beginning-of-defun-regexp)
+    (let ((split (split-string (match-string-no-properties 0))))
+      (if (= (length split) 2)
+          split
+        (list (concat (car split) " " (cadr split))
+              (car (last split)))))))
+
 (defun python-imenu--put-parent (type name pos tree)
   "Add the parent with TYPE, NAME and POS to TREE."
   (let ((label
@@ -4406,11 +4441,9 @@ not be passed explicitly unless you know what you are doing."
   (setq min-indent (or min-indent 0)
         prev-indent (or prev-indent python-indent-offset))
   (let* ((pos (python-nav-backward-defun))
-         (type)
-         (name (when (and pos (looking-at python-nav-beginning-of-defun-regexp))
-                 (let ((split (split-string (match-string-no-properties 0))))
-                   (setq type (car split))
-                   (cadr split))))
+         (defun-type-name (and pos (python-imenu--get-defun-type-name)))
+         (type (car defun-type-name))
+         (name (cadr defun-type-name))
          (label (when name
                   (funcall python-imenu-format-item-label-function type name)))
          (indent (current-indentation))
@@ -4513,7 +4546,7 @@ Optional argument INCLUDE-TYPE indicates to include the type of the defun.
 This function can be used as the value of `add-log-current-defun-function'
 since it returns nil if point is not inside a defun."
   (save-restriction
-    (widen)
+    (prog-widen)
     (save-excursion
       (end-of-line 1)
       (let ((names)
@@ -4696,7 +4729,7 @@ likely an invalid python file."
   (let ((point (python-info-dedenter-opening-block-position)))
     (when point
       (save-restriction
-        (widen)
+        (prog-widen)
         (message "Closes %s" (save-excursion
                                (goto-char point)
                                (buffer-substring
@@ -4717,7 +4750,7 @@ statement."
 With optional argument LINE-NUMBER, check that line instead."
   (save-excursion
     (save-restriction
-      (widen)
+      (prog-widen)
       (when line-number
         (python-util-goto-line line-number))
       (while (and (not (eobp))
@@ -4733,7 +4766,7 @@ With optional argument LINE-NUMBER, check that line instead."
 Optional argument LINE-NUMBER forces the line number to check against."
   (save-excursion
     (save-restriction
-      (widen)
+      (prog-widen)
       (when line-number
         (python-util-goto-line line-number))
       (when (python-info-line-ends-backslash-p)
@@ -4750,7 +4783,7 @@ When current line is continuation of another return the point
 where the continued line ends."
   (save-excursion
     (save-restriction
-      (widen)
+      (prog-widen)
       (let* ((context-type (progn
                              (back-to-indentation)
                              (python-syntax-context-type)))

@@ -50,6 +50,11 @@
   (require 'vc-dispatcher)
   (require 'vc-dir))                    ; vc-dir-at-event
 
+(declare-function vc-deduce-fileset "vc"
+                  (&optional observer allow-unregistered
+                             state-model-only-files))
+
+
 ;; Clear up the cache to force vc-call to check again and discover
 ;; new functions when we reload this file.
 (put 'Bzr 'vc-functions nil)
@@ -367,7 +372,12 @@ If PROMPT is non-nil, prompt for the Bzr command to run."
 	    args           (cddr args)))
     (require 'vc-dispatcher)
     (let ((buf (apply 'vc-bzr-async-command command args)))
-      (with-current-buffer buf (vc-run-delayed (vc-compilation-mode 'bzr)))
+      (with-current-buffer buf
+        (vc-run-delayed
+          (vc-compilation-mode 'bzr)
+          (setq-local compile-command
+                      (concat vc-bzr-program " " command " "
+                              (if args (mapconcat 'identity args " ") "")))))
       (vc-set-async-update buf))))
 
 (defun vc-bzr-pull (prompt)
@@ -705,11 +715,11 @@ or a superior directory.")
        ;; value of log-view-message-re only since Emacs-23.
        (if (eq vc-log-view-type 'short)
 	 (append `((,log-view-message-re
-		    (1 'log-view-message-face)
+		    (1 'log-view-message)
 		    (2 'change-log-name)
 		    (3 'change-log-date)
 		    (4 'change-log-list nil lax))))
-	 (append `((,log-view-message-re . 'log-view-message-face))
+	 (append `((,log-view-message-re . 'log-view-message))
 		 ;; log-view-font-lock-keywords
 		 '(("^ *\\(?:committer\\|author\\): \
 \\([^<(]+?\\)[  ]*[(<]\\([[:alnum:]_.+-]+@[[:alnum:]_.-]+\\)[>)]"

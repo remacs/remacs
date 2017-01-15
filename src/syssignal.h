@@ -25,11 +25,14 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 extern void init_signals (bool);
 extern void block_child_signal (sigset_t *);
 extern void unblock_child_signal (sigset_t const *);
+extern void block_interrupt_signal (sigset_t *);
+extern void restore_signal_mask (sigset_t const *);
 extern void block_tty_out_signal (sigset_t *);
 extern void unblock_tty_out_signal (sigset_t const *);
 
 #ifdef HAVE_PTHREAD
 #include <pthread.h>
+extern pthread_t main_thread_id;
 /* If defined, asynchronous signals delivered to a non-main thread are
    forwarded to the main thread.  */
 #define FORWARD_SIGNAL_TO_MAIN_THREAD

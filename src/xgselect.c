@@ -25,7 +25,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <glib.h>
 #include <errno.h>
-#include <stdbool.h>
+#include "lisp.h"
 #include "blockinput.h"
 #include "systime.h"
 
@@ -42,11 +42,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 int
 xg_select (int fds_lim, fd_set *rfds, fd_set *wfds, fd_set *efds,
-	   struct timespec const *timeout, sigset_t const *sigmask)
+	   struct timespec *timeout, sigset_t *sigmask)
 {
   fd_set all_rfds, all_wfds;
   struct timespec tmo;
-  struct timespec const *tmop = timeout;
+  struct timespec *tmop = timeout;
 
   GMainContext *context;
   bool have_wfds = wfds != NULL;
@@ -55,9 +55,8 @@ xg_select (int fds_lim, fd_set *rfds, fd_set *wfds, fd_set *efds,
   int gfds_size = ARRAYELTS (gfds_buf);
   int n_gfds, retval = 0, our_fds = 0, max_fds = fds_lim - 1;
   bool context_acquired = false;
-  int i, nfds, tmo_in_millisec;
+  int i, nfds, tmo_in_millisec, must_free = 0;
   bool need_to_dispatch;
-  USE_SAFE_ALLOCA;
 
   context = g_main_context_default ();
   context_acquired = g_main_context_acquire (context);
@@ -78,7 +77,11 @@ xg_select (int fds_lim, fd_set *rfds, fd_set *wfds, fd_set *efds,
 
   if (gfds_size < n_gfds)
     {
-      SAFE_NALLOCA (gfds, sizeof *gfds, n_gfds);
+      /* Avoid using SAFE_NALLOCA, as that implicitly refers to the
+	 current thread.  Using xnmalloc avoids thread-switching
+	 problems here.  */
+      gfds = xnmalloc (n_gfds, sizeof *gfds);
+      must_free = 1;
       gfds_size = n_gfds;
       n_gfds = g_main_context_query (context, G_PRIORITY_LOW, &tmo_in_millisec,
 				     gfds, gfds_size);
@@ -99,7 +102,8 @@ xg_select (int fds_lim, fd_set *rfds, fd_set *wfds, fd_set *efds,
         }
     }
 
-  SAFE_FREE ();
+  if (must_free)
+    xfree (gfds);
 
   if (n_gfds >= 0 && tmo_in_millisec >= 0)
     {
@@ -110,9 +114,9 @@ xg_select (int fds_lim, fd_set *rfds, fd_set *wfds, fd_set *efds,
     }
 
   fds_lim = max_fds + 1;
-  nfds = pselect (fds_lim, &all_rfds, have_wfds ? &all_wfds : NULL,
-		  efds, tmop, sigmask);
-
+  nfds = thread_select (pselect, fds_lim,
+			&all_rfds, have_wfds ? &all_wfds : NULL, efds,
+			tmop, sigmask);
   if (nfds < 0)
     retval = nfds;
   else if (nfds > 0)
@@ -147,7 +151,7 @@ xg_select (int fds_lim, fd_set *rfds, fd_set *wfds, fd_set *efds,
 #else
   need_to_dispatch = true;
 #endif
-  if (need_to_dispatch)
+  if (need_to_dispatch && context_acquired)
     {
       int pselect_errno = errno;
       /* Prevent g_main_dispatch recursion, that would occur without

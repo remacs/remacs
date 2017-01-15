@@ -27,6 +27,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/stat.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifdef HAVE_PWD_H
 #include <pwd.h>
@@ -64,7 +65,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define BOOT_TIME_FILE "/var/run/random-seed"
 #endif
 
-#ifndef WTMP_FILE
+#if !defined WTMP_FILE && !defined WINDOWSNT
 #define WTMP_FILE "/var/log/wtmp"
 #endif
 
@@ -191,14 +192,11 @@ get_boot_time (void)
   /* If we did not find a boot time in wtmp, look at wtmp, and so on.  */
   for (counter = 0; counter < 20 && ! boot_time; counter++)
     {
+      Lisp_Object filename = Qnil;
+      bool delete_flag = false;
       char cmd_string[sizeof WTMP_FILE ".19.gz"];
-      Lisp_Object tempname, filename;
-      bool delete_flag = 0;
-
-      filename = Qnil;
-
-      tempname = make_formatted_string
-	(cmd_string, "%s.%d", WTMP_FILE, counter);
+      AUTO_STRING_WITH_LEN (tempname, cmd_string,
+			    sprintf (cmd_string, "%s.%d", WTMP_FILE, counter));
       if (! NILP (Ffile_exists_p (tempname)))
 	filename = tempname;
       else
@@ -218,7 +216,7 @@ get_boot_time (void)
 	      CALLN (Fcall_process, build_string ("gzip"), Qnil,
 		     list2 (QCfile, filename), Qnil,
 		     build_string ("-cd"), tempname);
-	      delete_flag = 1;
+	      delete_flag = true;
 	    }
 	}
 
@@ -253,14 +251,7 @@ get_boot_time_1 (const char *filename, bool newest)
   struct utmp ut, *utp;
 
   if (filename)
-    {
-      /* On some versions of IRIX, opening a nonexistent file name
-	 is likely to crash in the utmp routines.  */
-      if (faccessat (AT_FDCWD, filename, R_OK, AT_EACCESS) != 0)
-	return;
-
-      utmpname (filename);
-    }
+    utmpname (filename);
 
   setutent ();
 
@@ -495,7 +486,7 @@ read_lock_data (char *lfname, char lfinfo[MAX_LFINFO + 1])
   while ((nbytes = readlinkat (AT_FDCWD, lfname, lfinfo, MAX_LFINFO + 1)) < 0
 	 && errno == EINVAL)
     {
-      int fd = emacs_open (lfname, O_RDONLY | O_BINARY | O_NOFOLLOW, 0);
+      int fd = emacs_open (lfname, O_RDONLY | O_NOFOLLOW, 0);
       if (0 <= fd)
 	{
 	  /* Use read, not emacs_read, since FD isn't unwind-protected.  */
@@ -702,7 +693,7 @@ lock_file (Lisp_Object fn)
     if (!NILP (subject_buf)
 	&& NILP (Fverify_visited_file_modtime (subject_buf))
 	&& !NILP (Ffile_exists_p (fn)))
-      call1 (intern ("ask-user-about-supersession-threat"), fn);
+      call1 (intern ("userlock--ask-user-about-supersession-threat"), fn);
 
   }
 

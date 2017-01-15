@@ -3597,7 +3597,7 @@ Existing overlays are recycled, in order to minimize consumption."
       (if ov-alist
 	  (while (setq ov-list (pop ov-alist))
 	    (while (setq ov (pop (cdr ov-list)))
-	      (add-to-list 'old-buffers (overlay-buffer ov))
+	      (pushnew (overlay-buffer ov) old-buffers)
 	      (delete-overlay ov))))
 
       (setq ov-alist idlwave-shell-bp-overlays

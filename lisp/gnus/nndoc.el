@@ -495,7 +495,7 @@ from the document.")
       (save-restriction
 	(narrow-to-region (point) (point-max))
 	(mm-decode-content-transfer-encoding
-	 (intern (downcase (mail-header-strip encoding))))))))
+	 (intern (downcase (mail-header-strip-cte encoding))))))))
 
 (defun nndoc-babyl-type-p ()
   (when (re-search-forward "\^_\^L *\n" nil t)
@@ -558,7 +558,7 @@ from the document.")
       (save-restriction
 	(narrow-to-region begin (point-max))
 	(mm-decode-content-transfer-encoding
-	 (intern (downcase (mail-header-strip encoding))))))
+	 (intern (downcase (mail-header-strip-cte encoding))))))
     (when head
       (goto-char begin)
       (when (search-forward "\n\n" nil t)
@@ -761,7 +761,7 @@ from the document.")
   (looking-at "JMF"))
 
 (defun nndoc-oe-dbx-type-p ()
-  (looking-at (mm-string-to-multibyte "\317\255\022\376")))
+  (looking-at (string-to-multibyte "\317\255\022\376")))
 
 (defun nndoc-read-little-endian ()
   (+ (prog1 (char-after) (forward-char 1))

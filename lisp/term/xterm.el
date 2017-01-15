@@ -591,6 +591,19 @@ Return the pasted text as a string."
     (define-key map [f59] [M-f11])
     (define-key map [f60] [M-f12])
 
+    (define-key map [f61] [M-S-f1])
+    (define-key map [f62] [M-S-f2])
+    (define-key map [f63] [M-S-f3])
+    (define-key map [f64] [M-S-f4])
+    (define-key map [f65] [M-S-f5])
+    (define-key map [f66] [M-S-f6])
+    (define-key map [f67] [M-S-f7])
+    (define-key map [f68] [M-S-f8])
+    (define-key map [f69] [M-S-f9])
+    (define-key map [f70] [M-S-f10])
+    (define-key map [f71] [M-S-f11])
+    (define-key map [f72] [M-S-f12])
+
     map)
   "Keymap of possible alternative meanings for some keys.")
 

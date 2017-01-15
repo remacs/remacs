@@ -240,6 +240,11 @@ The return value is undefined.
   ;; from
   ;;    (defun foo (arg) (toto)).
   (declare (doc-string 3) (indent 2))
+  (or name (error "Cannot define '%s' as a function" name))
+  (if (null
+       (and (listp arglist)
+            (null (delq t (mapcar #'symbolp arglist)))))
+      (error "Malformed arglist: %s" arglist))
   (let ((decls (cond
                 ((eq (car-safe docstring) 'declare)
                  (prog1 (cdr docstring) (setq docstring nil)))
@@ -469,7 +474,7 @@ load time.  In interpreted code, this is entirely equivalent to
 `progn', except that the value of the expression may be (but is
 not necessarily) computed at load time if eager macro expansion
 is enabled."
-  (declare (debug t) (indent 0))
+  (declare (debug (&rest def-form)) (indent 0))
   ;; When the byte-compiler expands code, this macro is not used, so we're
   ;; either about to run `body' (plain interpretation) or we're doing eager
   ;; macroexpansion.

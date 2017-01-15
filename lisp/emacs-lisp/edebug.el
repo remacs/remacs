@@ -233,6 +233,12 @@ If the result is non-nil, then break.  Errors are ignored."
   :type 'number
   :group 'edebug)
 
+(defcustom edebug-sit-on-break t
+  "Whether or not to pause for `edebug-sit-for-seconds' on reaching a break."
+  :type 'boolean
+  :group 'edebug
+  :version "26.1")
+
 ;;; Form spec utilities.
 
 (defun get-edebug-spec (symbol)
@@ -1927,6 +1933,7 @@ expressions; a `progn' form will be returned enclosing these forms."
 (def-edebug-spec defun
   (&define name lambda-list
 	   [&optional stringp]
+           [&optional ("declare" &rest sexp)]
 	   [&optional ("interactive" interactive)]
 	   def-body))
 (def-edebug-spec defmacro
@@ -2163,8 +2170,7 @@ The purpose of this function is so you can properly undo
 subsequent changes to the same binding, by passing the status
 cons cell to `edebug-restore-status'.  The status cons cell
 has the form (LOCUS . VALUE), where LOCUS can be a buffer
-\(for a buffer-local binding), a frame (for a frame-local binding),
-or nil (if the default binding is current)."
+\(for a buffer-local binding), or nil (if the default binding is current)."
   (cons (variable-binding-locus var)
 	(symbol-value var)))
 
@@ -2356,7 +2362,7 @@ MSG is printed after `::::} '."
 (defvar edebug-window-data)  ; window and window-start for current function
 (defvar edebug-outside-windows) ; outside window configuration
 (defvar edebug-eval-buffer) ; for the evaluation list.
-(defvar edebug-outside-d-c-i-n-s-w) ; outside default-cursor-in-non-selected-windows
+(defvar edebug-outside-d-c-i-n-s-w) ; outside default cursor-in-non-selected-windows
 
 (defvar edebug-eval-list nil) ;; List of expressions to evaluate.
 
@@ -2489,6 +2495,7 @@ MSG is printed after `::::} '."
                 (progn
                   ;; Display result of previous evaluation.
                   (if (and edebug-break
+                           edebug-sit-on-break
                            (not (eq edebug-execution-mode 'Continue-fast)))
                       (sit-for edebug-sit-for-seconds)) ; Show message.
                   (edebug-previous-result)))
@@ -3790,7 +3797,9 @@ Otherwise call `debug' normally."
 	  (forward-line 1)
 	  (delete-region last-ok-point (point)))
 
-	 ((looking-at "^  edebug")
+	 ((looking-at (if debugger-stack-frame-as-list
+                          "^  (edebug"
+                        "^  edebug"))
 	  (forward-line 1)
 	  (delete-region last-ok-point (point))
 	  )))

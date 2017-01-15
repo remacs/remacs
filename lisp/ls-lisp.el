@@ -72,7 +72,7 @@
 
 (defcustom ls-lisp-emulation
   (cond ;; ((eq system-type 'windows-nt) 'MS-Windows)
-	((memq system-type '(hpux usg-unix-v irix berkeley-unix))
+	((memq system-type '(hpux usg-unix-v berkeley-unix))
 	 'UNIX))	; very similar to GNU
   ;; Anything else defaults to nil, meaning GNU.
   "Platform to emulate: GNU (default), macOS, MS-Windows, UNIX.

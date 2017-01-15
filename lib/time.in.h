@@ -217,7 +217,7 @@ _GL_CXXALIAS_SYS (gmtime, struct tm *, (time_t const *__timer));
 _GL_CXXALIASWARN (gmtime);
 # endif
 
-/* Parse BUF as a time stamp, assuming FORMAT specifies its layout, and store
+/* Parse BUF as a timestamp, assuming FORMAT specifies its layout, and store
    the resulting broken-down time into TM.  See
    <http://www.opengroup.org/susv3xsh/strptime.html>.  */
 # if @GNULIB_STRPTIME@

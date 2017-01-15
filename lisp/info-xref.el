@@ -1,4 +1,4 @@
-;;; info-xref.el --- check external references in an Info document
+;;; info-xref.el --- check external references in an Info document -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2003-2017 Free Software Foundation, Inc.
 

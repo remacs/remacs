@@ -30,7 +30,6 @@ EXEEXT = @EXEEXT@
 # abs_top_srcdir may contain ".."
 top_srcdir_abs = $(shell cd @top_srcdir@; pwd -P)
 
-@SET_MAKE@
 MKDIR_P = @MKDIR_P@
 
 ## Emacs.app.

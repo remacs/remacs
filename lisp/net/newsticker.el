@@ -1,4 +1,4 @@
-;;; newsticker.el --- A Newsticker for Emacs.
+;;; newsticker.el --- A Newsticker for Emacs. -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
