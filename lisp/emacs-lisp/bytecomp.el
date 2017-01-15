@@ -754,7 +754,9 @@ otherwise pop it")
 ;; `byte-compile-lapcode').
 (defconst byte-discardN-preserve-tos byte-discardN)
 
-(byte-defop 183 -2 byte-switch)
+(byte-defop 183 -2 byte-switch
+ "to take a hash table and a value from the stack, and jump to the address
+the value maps to, if any.")
 
 ;; unused: 182-191
 
@@ -3999,7 +4001,9 @@ that suppresses all warnings during execution of BODY."
                (if (and obj1 (memq test '(eq eql equal))
                         (consp condition)
                         (eq test prev-test)
-                        (eq obj1 prev-var))
+                        (eq obj1 prev-var)
+                        ;; discard duplicate clauses
+                        (not (assq obj2 cases)))
                    (push (list obj2 body) cases)
                  (if (eq condition t)
                      (progn (push (list 'default body) cases)
@@ -4008,16 +4012,12 @@ that suppresses all warnings during execution of BODY."
                    (throw 'break nil))))))
          (list (cons prev-test prev-var) (nreverse cases)))))
 
-(defun byte-compile-jump-table-add-tag (value tag jump-table)
-  (setcdr (cdr tag) byte-compile-depth)
-  (puthash value tag jump-table))
-
 (defun byte-compile-cond-jump-table (clauses)
   (let* ((table-info (byte-compile-cond-jump-table-info clauses))
          (test (caar table-info))
          (var (cdar table-info))
          (cases (cadr table-info))
-         jump-table test-obj body tag donetag finaltag finalcase)
+         jump-table test-obj body tag donetag default-tag default-case)
     (when (and cases (not (= (length cases) 1)))
       (setq jump-table (make-hash-table :test test :size (length cases))
             donetag (byte-compile-make-tag))
@@ -4026,28 +4026,41 @@ that suppresses all warnings during execution of BODY."
       (byte-compile-out 'byte-switch)
 
       (when (assq 'default cases)
-        (setq finalcase (cadr (assq 'default cases))
-              finaltag (byte-compile-make-tag))
+        (setq default-case (cadr (assq 'default cases))
+              default-tag (byte-compile-make-tag))
         (setq cases (butlast cases 1))
+        ;; When the opcode argument is `byte-goto', `byte-compile-goto' sets
+        ;; `byte-compile-depth' to `nil'. However, we need `byte-compile-depth'
+        ;; to be non-nil for generating tags for all cases. Since
+        ;; `byte-compile-depth' will increase by atmost 1 after compiling
+        ;; all of the clause (which is further enforced by cl-assert below)
+        ;; it should be safe to preserve it's value.
         (let ((byte-compile-depth byte-compile-depth))
-          (byte-compile-goto 'byte-goto finaltag)))
+          (byte-compile-goto 'byte-goto default-tag)))
 
       (dolist (case cases)
         (setq tag (byte-compile-make-tag)
               test-obj (nth 0 case)
               body (nth 1 case))
         (byte-compile-out-tag tag)
-        (byte-compile-jump-table-add-tag test-obj tag jump-table)
+        (puthash test-obj tag jump-table)
 
-        (let ((byte-compile-depth byte-compile-depth))
-          (byte-compile-maybe-guarded `(,test ,var ,test-obj)
-            (byte-compile-body body byte-compile--for-effect))
-          (byte-compile-goto 'byte-goto donetag))
-        (setcdr (cdr donetag) nil))
+        (let ((byte-compile-depth byte-compile-depth)
+              (init-depth byte-compile-depth))
+          ;; Since `byte-compile-body' might increase `byte-compile-depth'
+          ;; by 1, not preserving it's value will cause it to potentially
+          ;; increase by one for every clause body compiled, causing
+          ;; depth/tag conflicts or violating asserts down the road.
+          ;; To make sure `byte-compile-body' itself doesn't violate this,
+          ;; we use `cl-assert' (which probably doesn't need to .
+          (byte-compile-body body byte-compile--for-effect)
+          (cl-assert (or (= byte-compile-depth init-depth)
+                         (= byte-compile-depth (1+ init-depth))))
+          (byte-compile-goto 'byte-goto donetag)))
 
-      (if finalcase
-          (progn (byte-compile-out-tag finaltag)
-                 (byte-compile-body-do-effect finalcase))
+      (if default-case
+          (progn (byte-compile-out-tag default-tag)
+                 (byte-compile-body-do-effect default-case))
         (byte-compile-push-constant nil))
       (byte-compile-out-tag donetag)
       (push jump-table byte-compile-jump-tables))))
