@@ -5,10 +5,6 @@ extern crate libc;
 
 use lisp::{XTYPE, LispObject, LispType, LispSubr, Qnil};
 
-extern "C" {
-    static Qt: LispObject;
-}
-
 /// Is this LispObject a symbol?
 #[allow(non_snake_case)]
 pub fn SYMBOLP(a: LispObject) -> bool {
@@ -22,7 +18,7 @@ fn test_symbolp() {
 
 fn Fsymbolp(object: LispObject) -> LispObject {
     if SYMBOLP(object) {
-        unsafe { Qt }
+        LispObject::constant_t()
     } else {
         Qnil
     }

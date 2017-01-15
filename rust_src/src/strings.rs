@@ -5,12 +5,8 @@ extern crate libc;
 
 use lisp::{LispObject, LispSubr, Qnil, STRINGP};
 
-extern "C" {
-    static Qt: LispObject;
-}
-
 fn Fstringp(object: LispObject) -> LispObject {
-    if STRINGP(object) { unsafe { Qt } } else { Qnil }
+    if STRINGP(object) { LispObject::constant_t() } else { Qnil }
 }
 
 defun!("stringp", Fstringp, Sstringp, 1, 1, ptr::null(), "Return t if OBJECT is a string.
@@ -19,9 +15,7 @@ defun!("stringp", Fstringp, Sstringp, 1, 1, ptr::null(), "Return t if OBJECT is 
 
 fn Feq (firstObject: LispObject, secondObject: LispObject) -> LispObject {
     if firstObject == secondObject {
-        unsafe {
-            Qt
-        }
+        LispObject::constant_t()
     } else {
         Qnil
     }
@@ -33,9 +27,7 @@ defun!("eq", Feq, Seq, 2, 2, ptr::null(), "Return t if the two args are the same
 
 fn Fnull(object: LispObject) -> LispObject {
     if object == Qnil {
-        unsafe {
-            Qt
-        }
+        LispObject::constant_t()
     } else {
         Qnil
     }
