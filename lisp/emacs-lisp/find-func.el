@@ -292,6 +292,41 @@ TYPE should be nil to find a function, or `defvar' to find a variable."
       (error "Can't find source for %s" fun-or-var))
     (cons (current-buffer) (match-beginning 0))))
 
+(defvar find-function-rust-source-directory nil)
+
+(defun find-function-guess-rust-source-directory ()
+  (when source-directory
+    (let ((source-root (directory-file-name source-directory)))
+      (expand-file-name "rust_src/src" source-root))))
+
+(defun find-function-maybe-read-rust-source-directory ()
+  (let ((dir (or find-function-rust-source-directory
+                 (find-function-guess-rust-source-directory)
+                 (read-directory-name "Emacs Rust souce dir: " source-directory nil t))))
+    (setq find-function-rust-source-directory dir)
+    dir))
+
+(defun find-function-rust-source (identifier file)
+  "Find the source location where IDENTIFIER is defined in FILE."
+  (let* ((dir (find-function-maybe-read-rust-source-directory))
+         (file (expand-file-name file dir)))
+    (unless (file-readable-p file)
+      (error "The Rust source file %s is not available" (file-name-nondirectory file)))
+
+    (let* ((fname (subr-name
+                   (advice--cd*r
+                    (find-function-advised-original
+                     (indirect-function
+                      (find-function-advised-original identifier))))))
+           (regex (rx-to-string
+                   `(and "defun!" (* space) "(" (* space) "\"" ,fname "\""))))
+      (with-current-buffer (find-file-noselect file)
+        (goto-char (point-min))
+        (unless (re-search-forward regex nil t)
+          (error "Can't find source for %s" identifier))
+        (cons (current-buffer) (match-beginning 0))))))
+
+
 ;;;###autoload
 (defun find-library (library &optional other-window)
   "Find the Emacs Lisp source of LIBRARY.
@@ -390,9 +425,13 @@ The search is done in the source for library LIBRARY."
   ;; that defines something else.
   (while (and (symbolp symbol) (get symbol 'definition-name))
     (setq symbol (get symbol 'definition-name)))
-  (if (string-match "\\`src/\\(.*\\.\\(c\\|m\\)\\)\\'" library)
-      (find-function-C-source symbol (match-string 1 library) type)
-    (find-function-lisp-source symbol type library)))
+  (cond
+   ((string-match (rx bos "src/" (group (+ nonl) (or ".c" ".m")) eos) library)
+    (find-function-C-source symbol (match-string 1 library) type))
+   ((string-match (rx bos "rust_src/src/" (group (+ nonl) ".rs") eos) library)
+    (find-function-rust-source symbol (match-string 1 library)))
+   (t
+    (find-function-lisp-source symbol type library))))
 
 (defun find-function-library (function &optional lisp-only verbose)
   "Return the pair (ORIG-FUNCTION . LIBRARY) for FUNCTION.
