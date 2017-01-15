@@ -1,7 +1,7 @@
 /* group-member.c -- determine whether group id is in calling user's group list
 
-   Copyright (C) 1994, 1997-1998, 2003, 2005-2006, 2009-2017 Free
-   Software Foundation, Inc.
+   Copyright (C) 1994, 1997-1998, 2003, 2005-2006, 2009-2017 Free Software
+   Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -97,14 +97,10 @@ group_member (gid_t gid)
 
 #ifdef TEST
 
-char *program_name;
-
 int
 main (int argc, char **argv)
 {
   int i;
-
-  program_name = argv[0];
 
   for (i = 1; i < argc; i++)
     {

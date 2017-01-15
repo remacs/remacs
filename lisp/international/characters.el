@@ -194,6 +194,7 @@ with L, LRE, or LRO Unicode bidi character type.")
 
 (dolist (l '(katakana-jisx0201 japanese-jisx0208 japanese-jisx0212
 			       japanese-jisx0213-1 japanese-jisx0213-2
+                               japanese-jisx0213.2004-1
 			       cp932-2-byte))
   (map-charset-chars #'modify-category-entry l ?j))
 
@@ -622,16 +623,19 @@ with L, LRE, or LRO Unicode bidi character type.")
   (set-case-syntax-pair ?Ʊ ?ʊ tbl)
   (set-case-syntax-pair ?Ʋ ?ʋ tbl)
   (set-case-syntax-pair ?Ʒ ?ʒ tbl)
+  ;; We use set-downcase-syntax below, since we want upcase of ǆ
+  ;; return Ǆ, not ǅ, and the same for the rest.
   (set-case-syntax-pair ?Ǆ ?ǆ tbl)
-  (set-case-syntax-pair ?ǅ ?ǆ tbl)
+  (set-downcase-syntax ?ǅ ?ǆ tbl)
   (set-case-syntax-pair ?Ǉ ?ǉ tbl)
-  (set-case-syntax-pair ?ǈ ?ǉ tbl)
+  (set-downcase-syntax ?ǈ ?ǉ tbl)
   (set-case-syntax-pair ?Ǌ ?ǌ tbl)
-  (set-case-syntax-pair ?ǋ ?ǌ tbl)
+  (set-downcase-syntax ?ǋ ?ǌ tbl)
 
   ;; 01F0; F; 006A 030C; # LATIN SMALL LETTER J WITH CARON
+
   (set-case-syntax-pair ?Ǳ ?ǳ tbl)
-  (set-case-syntax-pair ?ǲ ?ǳ tbl)
+  (set-downcase-syntax ?ǲ ?ǳ tbl)
   (set-case-syntax-pair ?Ƕ ?ƕ tbl)
   (set-case-syntax-pair ?Ƿ ?ƿ tbl)
   (set-case-syntax-pair ?Ⱥ ?ⱥ tbl)
@@ -1382,10 +1386,10 @@ Setup char-width-table appropriate for non-CJK language environment."
     (aset char-acronym-table i (car c0-acronyms))
     (setq c0-acronyms (cdr c0-acronyms))))
 
-(let ((c1-acronyms '("XXX" "XXX" "BPH" "NBH" "IND" "NEL" "SSA" "ESA"
+(let ((c1-acronyms '("PAD" "HOP" "BPH" "NBH" "IND" "NEL" "SSA" "ESA"
 		     "HTS" "HTJ" "VTS" "PLD" "PLU" "R1"  "SS2" "SS1"
 		     "DCS" "PU1" "PU2" "STS" "CCH" "MW"  "SPA" "EPA"
-		     "SOS" "XXX" "SC1" "CSI" "ST"  "OSC" "PM"  "APC")))
+		     "SOS" "SGCI" "SC1" "CSI" "ST"  "OSC" "PM"  "APC")))
   (dotimes (i 32)
     (aset char-acronym-table (+ #x0080 i) (car c1-acronyms))
     (setq c1-acronyms (cdr c1-acronyms))))

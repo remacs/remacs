@@ -22,6 +22,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -31,7 +32,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 
 #ifdef WINDOWSNT
-#define NOMINMAX
 #include <sys/socket.h>	/* for fcntl */
 #include <windows.h>
 #include "w32.h"
@@ -991,10 +991,6 @@ usage: (call-process-region START END PROGRAM &optional DELETE BUFFER DISPLAY &r
   return unbind_to (count, val);
 }
 
-#ifndef WINDOWSNT
-static int relocate_fd (int fd, int minfd);
-#endif
-
 static char **
 add_env (char **env, char **new_env, char *string)
 {
@@ -1073,9 +1069,13 @@ exec_failed (char const *name, int err)
    CURRENT_DIR is an elisp string giving the path of the current
    directory the subprocess should have.  Since we can't really signal
    a decent error from within the child, this should be verified as an
-   executable directory by the parent.  */
+   executable directory by the parent.
 
-int
+   On GNUish hosts, either exec or return an error number.
+   On MS-Windows, either return a pid or signal an error.
+   On MS-DOS, either return an exit status or signal an error.  */
+
+CHILD_SETUP_TYPE
 child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
 	     Lisp_Object current_dir)
 {
@@ -1206,7 +1206,7 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
 
 #ifdef WINDOWSNT
   prepare_standard_handles (in, out, err, handles);
-  set_process_dir (SDATA (current_dir));
+  set_process_dir (SSDATA (current_dir));
   /* Spawn the child.  (See w32proc.c:sys_spawnve).  */
   cpid = spawnve (_P_NOWAIT, new_argv[0], new_argv, env);
   reset_standard_handles (in, out, err, handles);
@@ -1215,43 +1215,24 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
     report_file_error ("Spawning child process", Qnil);
   return cpid;
 
-#else  /* not WINDOWSNT */
-  /* Make sure that in, out, and err are not actually already in
-     descriptors zero, one, or two; this could happen if Emacs is
-     started with its standard in, out, or error closed, as might
-     happen under X.  */
-  {
-    int oin = in, oout = out;
+#endif  /* not WINDOWSNT */
 
-    /* We have to avoid relocating the same descriptor twice!  */
+#ifndef MSDOS
 
-    in = relocate_fd (in, 3);
-
-    if (out == oin)
-      out = in;
-    else
-      out = relocate_fd (out, 3);
-
-    if (err == oin)
-      err = in;
-    else if (err == oout)
-      err = out;
-    else
-      err = relocate_fd (err, 3);
-  }
+  restore_nofile_limit ();
 
   /* Redirect file descriptors and clear the close-on-exec flag on the
      redirected ones.  IN, OUT, and ERR are close-on-exec so they
      need not be closed explicitly.  */
-  dup2 (in, 0);
-  dup2 (out, 1);
-  dup2 (err, 2);
+  dup2 (in, STDIN_FILENO);
+  dup2 (out, STDOUT_FILENO);
+  dup2 (err, STDERR_FILENO);
 
   setpgid (0, 0);
   tcsetpgrp (0, pid);
 
-  execve (new_argv[0], new_argv, env);
-  exec_failed (new_argv[0], errno);
+  int errnum = emacs_exec_file (new_argv[0], new_argv, env);
+  exec_failed (new_argv[0], errnum);
 
 #endif  /* not WINDOWSNT */
 }
@@ -1289,7 +1270,7 @@ getenv_internal_1 (const char *var, ptrdiff_t varlen, char **value,
 	  && SBYTES (entry) >= varlen
 #ifdef WINDOWSNT
 	  /* NT environment variables are case insensitive.  */
-	  && ! strnicmp (SDATA (entry), var, varlen)
+	  && ! strnicmp (SSDATA (entry), var, varlen)
 #else  /* not WINDOWSNT */
 	  && ! memcmp (SDATA (entry), var, varlen)
 #endif /* not WINDOWSNT */
@@ -1321,6 +1302,20 @@ getenv_internal (const char *var, ptrdiff_t varlen, char **value,
   if (getenv_internal_1 (var, varlen, value, valuelen,
 			 Vprocess_environment))
     return *value ? 1 : 0;
+
+  /* On Windows we make some modifications to Emacs' environment
+     without recording them in Vprocess_environment.  */
+#ifdef WINDOWSNT
+  {
+    char* tmpval = getenv (var);
+    if (tmpval)
+      {
+        *value = tmpval;
+        *valuelen = strlen (tmpval);
+        return 1;
+      }
+  }
+#endif
 
   /* For DISPLAY try to get the values from the frame or the initial env.  */
   if (strcmp (var, "DISPLAY") == 0)

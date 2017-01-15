@@ -559,14 +559,14 @@ Optional argument COLOR means highlight the prototype with font-lock colors."
 ;;; UML display styles
 ;;
 (defcustom semantic-uml-colon-string " : "
-  "*String used as a color separator between parts of a UML string.
+  "String used as a color separator between parts of a UML string.
 In UML, a variable may appear as `varname : type'.
 Change this variable to change the output separator."
   :group 'semantic
   :type 'string)
 
 (defcustom semantic-uml-no-protection-string ""
-  "*String used to describe when no protection is specified.
+  "String used to describe when no protection is specified.
 Used by `semantic-format-tag-uml-protection-to-string'."
   :group 'semantic
   :type 'string)

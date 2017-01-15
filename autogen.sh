@@ -103,75 +103,100 @@ check_version ()
     return 2
 }
 
+do_check=true
+do_autoconf=false
+do_git=false
 
-cat <<EOF
-Checking whether you have the necessary tools...
-(Read INSTALL.REPO for more details on building Emacs)
-
-EOF
-
-missing=
-
-for prog in $progs; do
-
-    sprog=`echo "$prog" | sed 's/-/_/g'`
-
-    eval min=\$${sprog}_min
-
-    echo "Checking for $prog (need at least version $min)..."
-
-    check_version $prog $min
-
-    retval=$?
-
-    case $retval in
-        0) stat="ok" ;;
-        1) stat="missing" ;;
-        2) stat="too old" ;;
-        *) stat="unable to check" ;;
+for arg; do
+    case $arg in
+      --help)
+	exec echo "$0: usage: $0 [--no-check] [target...]
+  Targets are: all autoconf git";;
+      --no-check)
+        do_check=false;;
+      all)
+	do_autoconf=true
+	test -e .git && do_git=true;;
+      autoconf)
+	do_autoconf=true;;
+      git)
+	do_git=true;;
+      *)
+	echo >&2 "$0: $arg: unknown argument"; exit 1;;
     esac
-
-    echo $stat
-
-    if [ $retval -ne 0 ]; then
-        missing="$missing $prog"
-        eval ${sprog}_why=\""$stat"\"
-    fi
-
 done
 
+case $do_autoconf,$do_git in
+  false,false)
+    do_autoconf=true;;
+esac
 
-if [ x"$missing" != x ]; then
+# Generate Autoconf and Automake related files, if requested.
 
-    cat <<EOF
+if $do_autoconf; then
 
-Building Emacs from the repository requires the following specialized programs:
-EOF
+  if $do_check; then
+
+    echo 'Checking whether you have the necessary tools...
+(Read INSTALL.REPO for more details on building Emacs)'
+
+    missing=
 
     for prog in $progs; do
-        sprog=`echo "$prog" | sed 's/-/_/g'`
 
-        eval min=\$${sprog}_min
+      sprog=`echo "$prog" | sed 's/-/_/g'`
 
-        echo "$prog (minimum version $min)"
+      eval min=\$${sprog}_min
+
+      printf '%s' "Checking for $prog (need at least version $min) ... "
+
+      check_version $prog $min
+
+      retval=$?
+
+      case $retval in
+          0) stat="ok" ;;
+          1) stat="missing" ;;
+          2) stat="too old" ;;
+          *) stat="unable to check" ;;
+      esac
+
+      echo $stat
+
+      if [ $retval -ne 0 ]; then
+          missing="$missing $prog"
+          eval ${sprog}_why=\""$stat"\"
+      fi
+
     done
 
 
-    cat <<EOF
+    if [ x"$missing" != x ]; then
 
-Your system seems to be missing the following tool(s):
-EOF
+      echo '
+Building Emacs from the repository requires the following specialized programs:'
 
-    for prog in $missing; do
-        sprog=`echo "$prog" | sed 's/-/_/g'`
+      for prog in $progs; do
+          sprog=`echo "$prog" | sed 's/-/_/g'`
 
-        eval why=\$${sprog}_why
+          eval min=\$${sprog}_min
 
-        echo "$prog ($why)"
-    done
+          echo "$prog (minimum version $min)"
+      done
 
-    cat <<EOF
 
+      echo '
+Your system seems to be missing the following tool(s):'
+
+      for prog in $missing; do
+          sprog=`echo "$prog" | sed 's/-/_/g'`
+
+          eval why=\$${sprog}_why
+
+          echo "$prog ($why)"
+      done
+
+      echo '
 If you think you have the required tools, please add them to your PATH
 and re-run this script.
 
@@ -192,30 +217,89 @@ make install.  Add the installation directory to your PATH and re-run
 this script.
 
 If you know that the required versions are in your PATH, but this
-script has made an error, then you can simply run
+script has made an error, then you can simply re-run this script with
+the --no-check option.
 
-autoreconf -fi -I m4
+Please report any problems with this script to bug-gnu-emacs@gnu.org .'
 
-instead of this script.
+      exit 1
+    fi
 
-Please report any problems with this script to bug-gnu-emacs@gnu.org .
-EOF
+    echo 'Your system has the required tools.'
 
-    exit 1
+  fi                            # do_check
+
+  ## Create nt/gnulib.mk if it doesn't exist, as autoreconf will need it.
+  if test ! -f nt/gnulib.mk; then
+      echo 'Inferring nt/gnulib.mk from lib/gnulib.mk ...'
+      metascript='/^[^#]/s|^.*$|/^## begin  *gnulib module &/,/^## end  *gnulib module &/d|p'
+      script=`sed -n "$metascript" nt/gnulib-modules-to-delete.cfg` || exit
+      sed "$script" lib/gnulib.mk > nt/gnulib.mk || exit
+  fi
+
+  echo "Running 'autoreconf -fi -I m4' ..."
+
+  ## Let autoreconf figure out what, if anything, needs doing.
+  ## Use autoreconf's -f option in case autoreconf itself has changed.
+  autoreconf -fi -I m4 || exit $?
+
+  ## Create a timestamp, so that './autogen.sh; make' doesn't
+  ## cause 'make' to needlessly run 'autoheader'.
+  echo timestamp > src/stamp-h.in || exit
 fi
 
-echo 'Your system has the required tools.'
-echo "Running 'autoreconf -fi -I m4' ..."
+
+# True if the Git setup was OK before autogen.sh was run.
+
+git_was_ok=true
+
+if $do_git; then
+    case `cp --help 2>/dev/null` in
+      *--backup*--verbose*)
+	cp_options='--backup=numbered --verbose';;
+      *)
+	cp_options='-f';;
+    esac
+fi
 
 
-## Let autoreconf figure out what, if anything, needs doing.
-## Use autoreconf's -f option in case autoreconf itself has changed.
-autoreconf -fi -I m4 || exit $?
+# Like 'git config NAME VALUE' but verbose on change and exiting on failure.
+# Also, do not configure unless requested.
 
-## Create a timestamp, so that './autogen.sh; make' doesn't
-## cause 'make' to needlessly run 'autoheader'.
-echo timestamp > src/stamp-h.in || exit
+git_config ()
+{
+    name=$1
+    value=$2
 
+    ovalue=`git config --get "$name"` && test "$ovalue" = "$value" || {
+	if $do_git; then
+	    if $git_was_ok; then
+		echo 'Configuring local git repository...'
+		case $cp_options in
+		  --backup=*)
+		    config=$git_common_dir/config
+		    cp $cp_options --force -- "$config" "$config" || exit;;
+		esac
+	    fi
+	    echo "git config $name '$value'"
+	    git config "$name" "$value" || exit
+	fi
+	git_was_ok=false
+    }
+}
+
+## Configure Git, if requested.
+
+# Get location of Git's common configuration directory.  For older Git
+# versions this is just '.git'.  Newer Git versions support worktrees.
+
+{ test -e .git &&
+  git_common_dir=`git rev-parse --no-flags --git-common-dir 2>/dev/null` &&
+  test -n "$git_common_dir"
+} || git_common_dir=.git
+hooks=$git_common_dir/hooks
+
+# Check hashes when transferring objects among repositories.
 
 echo "You can now run './configure'."
 

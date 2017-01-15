@@ -85,16 +85,15 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    be changed accordingly.
 */
 
-/* config.h #define:s malloc/realloc/free and then includes stdlib.h.
-   We want the undefined versions, but if config.h includes stdlib.h
-   with the #define:s in place, the prototypes will be wrong and we get
-   warnings.  To prevent that, include stdlib.h before config.h.  */
-
-#include <stdlib.h>
 #include <config.h>
+
+/* Although <config.h> redefines malloc to unexec_malloc, etc., this
+   file wants stdlib.h to declare the originals.  */
 #undef malloc
 #undef realloc
 #undef free
+
+#include <stdlib.h>
 
 #include "unexec.h"
 #include "lisp.h"

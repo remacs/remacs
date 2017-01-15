@@ -52,12 +52,7 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 
 #ifdef HAVE_NS
 
-extern NSArray *ns_send_types, *ns_return_types, *ns_drag_types;
-
-EmacsTooltip *ns_tooltip = nil;
-
-/* Need forward declaration here to preserve organizational integrity of file */
-Lisp_Object Fx_open_connection (Lisp_Object, Lisp_Object, Lisp_Object);
+static EmacsTooltip *ns_tooltip = nil;
 
 /* Static variables to handle applescript execution.  */
 static Lisp_Object as_script, *as_result;
@@ -65,6 +60,8 @@ static int as_status;
 
 static ptrdiff_t image_cache_refcount;
 
+static struct ns_display_info *ns_display_info_for_name (Lisp_Object);
+static void ns_set_name_as_filename (struct frame *);
 
 /* ==========================================================================
 
@@ -132,7 +129,7 @@ ns_get_window (Lisp_Object maybeFrame)
 
 /* Return the X display structure for the display named NAME.
    Open a new connection if necessary.  */
-struct ns_display_info *
+static struct ns_display_info *
 ns_display_info_for_name (Lisp_Object name)
 {
   struct ns_display_info *dpyinfo;
@@ -523,7 +520,7 @@ x_set_title (struct frame *f, Lisp_Object name, Lisp_Object old_name)
 }
 
 
-void
+static void
 ns_set_name_as_filename (struct frame *f)
 {
   NSView *view;
@@ -622,7 +619,7 @@ ns_set_doc_edited (void)
 }
 
 
-void
+static void
 x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 {
   int nlines;
@@ -652,7 +649,7 @@ x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 
 
 /* toolbar support */
-void
+static void
 x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 {
   /* Currently, when the tool bar change state, the frame is resized.
@@ -720,15 +717,15 @@ x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 }
 
 
-void
+static void
 x_set_internal_border_width (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
   int old_width = FRAME_INTERNAL_BORDER_WIDTH (f);
 
   CHECK_TYPE_RANGED_INTEGER (int, arg);
-  FRAME_INTERNAL_BORDER_WIDTH (f) = XINT (arg);
+  f->internal_border_width = XINT (arg);
   if (FRAME_INTERNAL_BORDER_WIDTH (f) < 0)
-    FRAME_INTERNAL_BORDER_WIDTH (f) = 0;
+    f->internal_border_width = 0;
 
   if (FRAME_INTERNAL_BORDER_WIDTH (f) == old_width)
     return;
@@ -850,40 +847,6 @@ x_set_icon_type (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
   [view setMiniwindowImage: setMini];
 }
 
-
-/* TODO: move to nsterm? */
-int
-ns_lisp_to_cursor_type (Lisp_Object arg)
-{
-  char *str;
-  if (XTYPE (arg) == Lisp_String)
-    str = SSDATA (arg);
-  else if (XTYPE (arg) == Lisp_Symbol)
-    str = SSDATA (SYMBOL_NAME (arg));
-  else return -1;
-  if (!strcmp (str, "box"))	return FILLED_BOX_CURSOR;
-  if (!strcmp (str, "hollow"))	return HOLLOW_BOX_CURSOR;
-  if (!strcmp (str, "hbar"))	return HBAR_CURSOR;
-  if (!strcmp (str, "bar"))	return BAR_CURSOR;
-  if (!strcmp (str, "no"))	return NO_CURSOR;
-  return -1;
-}
-
-
-Lisp_Object
-ns_cursor_type_to_lisp (int arg)
-{
-  switch (arg)
-    {
-    case FILLED_BOX_CURSOR: return Qbox;
-    case HOLLOW_BOX_CURSOR: return Qhollow;
-    case HBAR_CURSOR:	    return Qhbar;
-    case BAR_CURSOR:	    return Qbar;
-    case NO_CURSOR:
-    default:		    return intern ("no");
-    }
-}
-
 /* This is the same as the xfns.c definition.  */
 static void
 x_set_cursor_type (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
@@ -983,8 +946,8 @@ frame_parm_handler ns_frame_parm_handlers[] =
   x_set_icon_name,
   x_set_icon_type,
   x_set_internal_border_width, /* generic OK */
-  0, /* x_set_right_divider_width */
-  0, /* x_set_bottom_divider_width */
+  x_set_right_divider_width,
+  x_set_bottom_divider_width,
   x_set_menu_bar_lines,
   x_set_mouse_color,
   x_explicitly_set_name,
@@ -1008,6 +971,7 @@ frame_parm_handler ns_frame_parm_handlers[] =
   x_set_alpha,
   0, /* x_set_sticky */
   0, /* x_set_tool_bar_position */
+  0, /* x_set_inhibit_double_buffering */
 };
 
 
@@ -2273,9 +2237,10 @@ x_get_string_resource (XrmDatabase rdb, const char *name, const char *class)
     return NULL;
 
   res = ns_get_defaults_value (toCheck);
-  return (!res ? NULL :
-	  (!c_strncasecmp (res, "YES", 3) ? "true" :
-	   (!c_strncasecmp (res, "NO", 2) ? "false" : (char *) res)));
+  return (char *) (!res ? NULL
+		   : !c_strncasecmp (res, "YES", 3) ? "true"
+		   : !c_strncasecmp (res, "NO", 2) ? "false"
+		   : res);
 }
 
 

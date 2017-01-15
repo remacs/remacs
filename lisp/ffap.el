@@ -207,6 +207,11 @@ Sensible values are nil, \"news\", or \"mailto\"."
 		 )
   :group 'ffap)
 
+(defvar ffap-max-region-length 1024
+  "Maximum active region length.
+When the region is active and larger than this value,
+`ffap-string-at-point' returns an empty string.")
+
 
 ;;; Peanut Gallery (More User Variables):
 ;;
@@ -574,7 +579,7 @@ Looks at `ffap-ftp-default-user', returns \"\" for \"localhost\"."
 (defvaralias 'ffap-newsgroup-heads  'thing-at-point-newsgroup-heads)
 (defalias 'ffap-newsgroup-p 'thing-at-point-newsgroup-p)
 
-(defsubst ffap-url-p (string)
+(defun ffap-url-p (string)
   "If STRING looks like an URL, return it (maybe improved), else nil."
   (when (and (stringp string) ffap-url-regexp)
     (let* ((case-fold-search t)
@@ -1108,8 +1113,10 @@ MODE (defaults to value of `major-mode') is a symbol used to look up
 string syntax parameters in `ffap-string-at-point-mode-alist'.
 If MODE is not found, we use `file' instead of MODE.
 If the region is active, return a string from the region.
-Sets the variable `ffap-string-at-point' and the variable
-`ffap-string-at-point-region'."
+Set the variable `ffap-string-at-point' and the variable
+`ffap-string-at-point-region'.
+When the region is active and larger than `ffap-max-region-length',
+return an empty string, and set `ffap-string-at-point-region' to '(1 1)."
   (let* ((args
 	  (cdr
 	   (or (assq (or mode major-mode) ffap-string-at-point-mode-alist)
@@ -1126,11 +1133,15 @@ Sets the variable `ffap-string-at-point' and the variable
 		(save-excursion
 		  (skip-chars-forward (car args))
 		  (skip-chars-backward (nth 2 args) pt)
-		  (point)))))
-    (setq ffap-string-at-point
-	  (buffer-substring-no-properties
-	   (setcar ffap-string-at-point-region beg)
-	   (setcar (cdr ffap-string-at-point-region) end)))))
+		  (point))))
+         (region-len (- (max beg end) (min beg end))))
+    (if (and (natnump ffap-max-region-length)
+             (< region-len ffap-max-region-length)) ; Bug#25243.
+        (setf ffap-string-at-point-region (list beg end)
+              ffap-string-at-point
+              (buffer-substring-no-properties beg end))
+      (setf ffap-string-at-point-region (list 1 1)
+            ffap-string-at-point ""))))
 
 (defun ffap-string-around ()
   ;; Sometimes useful to decide how to treat a string.
@@ -1517,9 +1528,9 @@ and the functions `ffap-file-at-point' and `ffap-url-at-point'."
 		 ;; expand-file-name fixes "~/~/.emacs" bug sent by CHUCKR.
 		 (expand-file-name filename)))
        ;; User does not want to find a non-existent file:
-       ((signal 'file-error (list "Opening file buffer"
-				  "No such file or directory"
-				  filename)))))))
+       ((signal 'file-missing (list "Opening file buffer"
+				    "No such file or directory"
+				    filename)))))))
 
 ;; Shortcut: allow {M-x ffap} rather than {M-x find-file-at-point}.
 ;;;###autoload
@@ -1895,7 +1906,10 @@ If `dired-at-point-require-prefix' is set, the prefix meaning is reversed."
 	     (y-or-n-p "Directory does not exist, create it? "))
 	(make-directory filename)
 	(funcall ffap-directory-finder filename))
-       ((error "No such file or directory `%s'" filename))))))
+       (t
+	(signal 'file-missing (list "Opening directory"
+				    "No such file or directory"
+				    filename)))))))
 
 (defun dired-at-point-prompter (&optional guess)
   ;; Does guess and prompt step for find-file-at-point.

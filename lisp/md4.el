@@ -1,4 +1,4 @@
-;;; md4.el --- MD4 Message Digest Algorithm.
+;;; md4.el --- MD4 Message Digest Algorithm. -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2001, 2004, 2007-2017 Free Software Foundation, Inc.
 

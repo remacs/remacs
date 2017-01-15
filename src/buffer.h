@@ -881,6 +881,25 @@ struct buffer
   Lisp_Object undo_list_;
 };
 
+INLINE bool
+BUFFERP (Lisp_Object a)
+{
+  return PSEUDOVECTORP (a, PVEC_BUFFER);
+}
+
+INLINE void
+CHECK_BUFFER (Lisp_Object x)
+{
+  CHECK_TYPE (BUFFERP (x), Qbufferp, x);
+}
+
+INLINE struct buffer *
+XBUFFER (Lisp_Object a)
+{
+  eassert (BUFFERP (a));
+  return XUNTAG (a, Lisp_Vectorlike);
+}
+
 /* Most code should use these functions to set Lisp fields in struct
    buffer.  (Some setters that are private to a single .c file are
    defined as static in those files.)  */
@@ -1040,10 +1059,6 @@ extern struct buffer *all_buffers;
 #define FOR_EACH_BUFFER(b) \
   for ((b) = all_buffers; (b); (b) = (b)->next)
 
-/* This points to the current buffer.  */
-
-extern struct buffer *current_buffer;
-
 /* This structure holds the default values of the buffer-local variables
    that have special slots in each buffer.
    The default value occupies the same slot in this structure
@@ -1086,6 +1101,7 @@ extern void recenter_overlay_lists (struct buffer *, ptrdiff_t);
 extern ptrdiff_t overlay_strings (ptrdiff_t, struct window *, unsigned char **);
 extern void validate_region (Lisp_Object *, Lisp_Object *);
 extern void set_buffer_internal_1 (struct buffer *);
+extern void set_buffer_internal_2 (struct buffer *);
 extern void set_buffer_temp (struct buffer *);
 extern Lisp_Object buffer_local_value (Lisp_Object, Lisp_Object);
 extern void record_buffer (Lisp_Object);
@@ -1187,8 +1203,7 @@ buffer_has_overlays (void)
 INLINE int
 FETCH_MULTIBYTE_CHAR (ptrdiff_t pos)
 {
-  unsigned char *p = ((pos >= GPT_BYTE ? GAP_SIZE : 0)
-		      + pos + BEG_ADDR - BEG_BYTE);
+  unsigned char *p = BYTE_POS_ADDR (pos);
   return STRING_CHAR (p);
 }
 
