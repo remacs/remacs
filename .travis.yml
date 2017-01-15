@@ -11,7 +11,7 @@ script:
   - ./configure --without-makeinfo --with-xpm=no --with-gif=no
   - make -j 3
 
-  - make check || echo 'make check failed'
+  - make check
 
 notifications:
   fast_finish: true
