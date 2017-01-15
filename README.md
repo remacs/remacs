@@ -15,7 +15,7 @@ GPLv3 license.
     - [Design Goals](#design-goals)
     - [Non-Design Goals](#non-design-goals)
     - [Building Remacs](#building-remacs)
-        - [Release builds](#release-builds)
+        - [Debug builds](#debug-builds)
         - [Rustdoc builds](#rustdoc-builds)
     - [Porting C Functions To Rust: Walkthrough](#porting-c-functions-to-rust-walkthrough)
     - [Contributing](#contributing)
@@ -24,6 +24,7 @@ GPLv3 license.
         - [C Functions](#c-functions)
         - [C Macros](#c-macros)
         - [Assertions](#assertions)
+        - [Safety](#safety)
 
 <!-- markdown-toc end -->
 
@@ -430,3 +431,37 @@ For the checked arithmetic macros (`INT_ADD_WRAPV`,
 
 `emacs_abort()` in Emacs C should be `panic!("reason for panicking")`
 in Rust.
+
+### Safety
+
+`LispObject` values may represent pointers, so the usual safety
+concerns of raw pointers apply.
+
+If you can break memory safety by passing a valid value to a function,
+then it should be marked as `unsafe`. For example:
+
+``` rust
+// This function is unsafe because it's dereferencing the car
+// of a cons cell. If `object` is not a cons cell, we'll dereference
+// an invalid pointer.
+unsafe fn XCAR(object: LispObject) -> LispObject {
+    (*XCONS(object)).car
+}
+
+// This function is safe because it preserves the contract
+// of XCAR: it only passes valid cons cells. We just use
+// unsafe blocks instead.
+fn car(object: LispObject) -> LispObject {
+    if CONSP(object) {
+        unsafe {
+            XCAR(object)
+        }
+    } else if NILP(object) {
+        Qnil
+    } else {
+        unsafe {
+            wrong_type_argument(Qlistp, object)
+        }
+    }
+}
+```
