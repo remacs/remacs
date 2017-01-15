@@ -666,7 +666,17 @@ mod deprecated {
         (tagged_ptr - tag) as *const libc::c_void
     }
 
-
+    // Implementation of the XFASTINT depends on the USE_LSB_TAG
+    // in Emacs C. But we selected this implementation as in our
+    // build that value is 1.
+    // A must be nonnegative.
+    #[allow(dead_code)]
+    #[allow(non_snake_case)]
+    pub fn XFASTINT(a: LispObject) -> EmacsInt {
+        let n: EmacsInt = XINT(a);
+        debug_assert!(0 <= n);
+        n
+    }
 }
 
 pub use self::deprecated::*;
