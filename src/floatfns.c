@@ -61,93 +61,6 @@ CHECK_FLOAT (Lisp_Object x)
   CHECK_TYPE (FLOATP (x), Qfloatp, x);
 }
 
-/* Extract a Lisp number as a `double', or signal an error.  */
-
-double
-extract_float (Lisp_Object num)
-{
-  CHECK_NUMBER_OR_FLOAT (num);
-
-  if (FLOATP (num))
-    return XFLOAT_DATA (num);
-  return (double) XINT (num);
-}
-
-/* Trig functions.  */
-
-DEFUN ("acos", Facos, Sacos, 1, 1, 0,
-       doc: /* Return the inverse cosine of ARG.  */)
-  (Lisp_Object arg)
-{
-  double d = extract_float (arg);
-  d = acos (d);
-  return make_float (d);
-}
-
-DEFUN ("asin", Fasin, Sasin, 1, 1, 0,
-       doc: /* Return the inverse sine of ARG.  */)
-  (Lisp_Object arg)
-{
-  double d = extract_float (arg);
-  d = asin (d);
-  return make_float (d);
-}
-
-DEFUN ("atan", Fatan, Satan, 1, 2, 0,
-       doc: /* Return the inverse tangent of the arguments.
-If only one argument Y is given, return the inverse tangent of Y.
-If two arguments Y and X are given, return the inverse tangent of Y
-divided by X, i.e. the angle in radians between the vector (X, Y)
-and the x-axis.  */)
-  (Lisp_Object y, Lisp_Object x)
-{
-  double d = extract_float (y);
-
-  if (NILP (x))
-    d = atan (d);
-  else
-    {
-      double d2 = extract_float (x);
-      d = atan2 (d, d2);
-    }
-  return make_float (d);
-}
-
-DEFUN ("cos", Fcos, Scos, 1, 1, 0,
-       doc: /* Return the cosine of ARG.  */)
-  (Lisp_Object arg)
-{
-  double d = extract_float (arg);
-  d = cos (d);
-  return make_float (d);
-}
-
-DEFUN ("sin", Fsin, Ssin, 1, 1, 0,
-       doc: /* Return the sine of ARG.  */)
-  (Lisp_Object arg)
-{
-  double d = extract_float (arg);
-  d = sin (d);
-  return make_float (d);
-}
-
-DEFUN ("tan", Ftan, Stan, 1, 1, 0,
-       doc: /* Return the tangent of ARG.  */)
-  (Lisp_Object arg)
-{
-  double d = extract_float (arg);
-  d = tan (d);
-  return make_float (d);
-}
-
-DEFUN ("isnan", Fisnan, Sisnan, 1, 1, 0,
-       doc: /* Return non nil if argument X is a NaN.  */)
-  (Lisp_Object x)
-{
-  CHECK_FLOAT (x);
-  return isnan (XFLOAT_DATA (x)) ? Qt : Qnil;
-}
-
 #ifdef HAVE_COPYSIGN
 DEFUN ("copysign", Fcopysign, Scopysign, 2, 2, 0,
        doc: /* Copy sign of X2 to value of X1, and return the result.
@@ -193,15 +106,6 @@ EXPONENT must be an integer.   */)
   int e = min (max (INT_MIN, XINT (exponent)), INT_MAX);
   return make_float (ldexp (XFLOATINT (sgnfcand), e));
 }
-
-DEFUN ("exp", Fexp, Sexp, 1, 1, 0,
-       doc: /* Return the exponential base e of ARG.  */)
-  (Lisp_Object arg)
-{
-  double d = extract_float (arg);
-  d = exp (d);
-  return make_float (d);
-}
 
 DEFUN ("expt", Fexpt, Sexpt, 2, 2, 0,
        doc: /* Return the exponential ARG1 ** ARG2.  */)
@@ -236,66 +140,6 @@ DEFUN ("expt", Fexpt, Sexpt, 2, 2, 0,
   f2 = FLOATP (arg2) ? XFLOAT_DATA (arg2) : XINT (arg2);
   f3 = pow (f1, f2);
   return make_float (f3);
-}
-
-DEFUN ("log", Flog, Slog, 1, 2, 0,
-       doc: /* Return the natural logarithm of ARG.
-If the optional argument BASE is given, return log ARG using that base.  */)
-  (Lisp_Object arg, Lisp_Object base)
-{
-  double d = extract_float (arg);
-
-  if (NILP (base))
-    d = log (d);
-  else
-    {
-      double b = extract_float (base);
-
-      if (b == 10.0)
-	d = log10 (d);
-#if HAVE_LOG2
-      else if (b == 2.0)
-	d = log2 (d);
-#endif
-      else
-	d = log (d) / log (b);
-    }
-  return make_float (d);
-}
-
-DEFUN ("sqrt", Fsqrt, Ssqrt, 1, 1, 0,
-       doc: /* Return the square root of ARG.  */)
-  (Lisp_Object arg)
-{
-  double d = extract_float (arg);
-  d = sqrt (d);
-  return make_float (d);
-}
-
-DEFUN ("abs", Fabs, Sabs, 1, 1, 0,
-       doc: /* Return the absolute value of ARG.  */)
-  (register Lisp_Object arg)
-{
-  CHECK_NUMBER_OR_FLOAT (arg);
-
-  if (FLOATP (arg))
-    arg = make_float (fabs (XFLOAT_DATA (arg)));
-  else if (XINT (arg) < 0)
-    XSETINT (arg, - XINT (arg));
-
-  return arg;
-}
-
-DEFUN ("float", Ffloat, Sfloat, 1, 1, 0,
-       doc: /* Return the floating point number equal to ARG.  */)
-  (register Lisp_Object arg)
-{
-  CHECK_NUMBER_OR_FLOAT (arg);
-
-  if (INTEGERP (arg))
-    return make_float ((double) XINT (arg));
-  else				/* give 'em the same float back */
-    return arg;
 }
 
 DEFUN ("logb", Flogb, Slogb, 1, 1, 0,
@@ -470,44 +314,6 @@ With optional DIVISOR, truncate ARG/DIVISOR.  */)
 			  "truncate");
 }
 
-
-Lisp_Object
-fmod_float (Lisp_Object x, Lisp_Object y)
-{
-  double f1, f2;
-
-  f1 = FLOATP (x) ? XFLOAT_DATA (x) : XINT (x);
-  f2 = FLOATP (y) ? XFLOAT_DATA (y) : XINT (y);
-
-  f1 = fmod (f1, f2);
-
-  /* If the "remainder" comes out with the wrong sign, fix it.  */
-  if (f2 < 0 ? f1 > 0 : f1 < 0)
-    f1 += f2;
-
-  return make_float (f1);
-}
-
-DEFUN ("fceiling", Ffceiling, Sfceiling, 1, 1, 0,
-       doc: /* Return the smallest integer no less than ARG, as a float.
-\(Round toward +inf.)  */)
-  (Lisp_Object arg)
-{
-  double d = extract_float (arg);
-  d = ceil (d);
-  return make_float (d);
-}
-
-DEFUN ("ffloor", Fffloor, Sffloor, 1, 1, 0,
-       doc: /* Return the largest integer no greater than ARG, as a float.
-\(Round towards -inf.)  */)
-  (Lisp_Object arg)
-{
-  double d = extract_float (arg);
-  d = floor (d);
-  return make_float (d);
-}
-
 DEFUN ("fround", Ffround, Sfround, 1, 1, 0,
        doc: /* Return the nearest integer to ARG, as a float.  */)
   (Lisp_Object arg)
@@ -517,45 +323,16 @@ DEFUN ("fround", Ffround, Sfround, 1, 1, 0,
   return make_float (d);
 }
 
-DEFUN ("ftruncate", Fftruncate, Sftruncate, 1, 1, 0,
-       doc: /* Truncate a floating point number to an integral float value.
-Rounds the value toward zero.  */)
-  (Lisp_Object arg)
-{
-  double d = extract_float (arg);
-  if (d >= 0.0)
-    d = floor (d);
-  else
-    d = ceil (d);
-  return make_float (d);
-}
-
 void
 syms_of_floatfns (void)
 {
-  defsubr (&Sacos);
-  defsubr (&Sasin);
-  defsubr (&Satan);
-  defsubr (&Scos);
-  defsubr (&Ssin);
-  defsubr (&Stan);
-  defsubr (&Sisnan);
 #ifdef HAVE_COPYSIGN
   defsubr (&Scopysign);
 #endif
   defsubr (&Sfrexp);
   defsubr (&Sldexp);
-  defsubr (&Sfceiling);
-  defsubr (&Sffloor);
-  defsubr (&Sfround);
-  defsubr (&Sftruncate);
-  defsubr (&Sexp);
   defsubr (&Sexpt);
-  defsubr (&Slog);
-  defsubr (&Ssqrt);
 
-  defsubr (&Sabs);
-  defsubr (&Sfloat);
   defsubr (&Slogb);
   defsubr (&Sceiling);
   defsubr (&Sfloor);
