@@ -21,7 +21,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include <stdio.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 
 #ifdef HAVE_PWD_H
@@ -42,7 +41,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "coding.h"
 #include "regex.h"
-#include "blockinput.h"
+
+#ifdef WINDOWSNT
+extern int is_slow_fs (const char *);
+#endif
 
 static ptrdiff_t scmp (const char *, const char *, ptrdiff_t);
 static Lisp_Object file_attributes (int, char const *, Lisp_Object);
@@ -64,8 +66,6 @@ open_directory (Lisp_Object dirname, int *fdp)
   char *name = SSDATA (dirname);
   DIR *d;
   int fd, opendir_errno;
-
-  block_input ();
 
 #ifdef DOS_NT
   /* Directories cannot be opened.  The emulation assumes that any
@@ -90,8 +90,6 @@ open_directory (Lisp_Object dirname, int *fdp)
     }
 #endif
 
-  unblock_input ();
-
   if (!d)
     report_file_errno ("Opening directory", dirname, opendir_errno);
   *fdp = fd;
@@ -99,7 +97,7 @@ open_directory (Lisp_Object dirname, int *fdp)
 }
 
 #ifdef WINDOWSNT
-void
+static void
 directory_files_internal_w32_unwind (Lisp_Object arg)
 {
   Vw32_get_true_file_attributes = arg;
@@ -107,12 +105,9 @@ directory_files_internal_w32_unwind (Lisp_Object arg)
 #endif
 
 static void
-directory_files_internal_unwind (void *dh)
+directory_files_internal_unwind (void *d)
 {
-  DIR *d = dh;
-  block_input ();
   closedir (d);
-  unblock_input ();
 }
 
 /* Return the next directory entry from DIR; DIR's name is DIRNAME.
@@ -210,8 +205,6 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 #ifdef WINDOWSNT
   if (attrs)
     {
-      extern int is_slow_fs (const char *);
-
       /* Do this only once to avoid doing it (in w32.c:stat) for each
 	 file in the directory, when we call Ffile_attributes below.  */
       record_unwind_protect (directory_files_internal_w32_unwind,
@@ -221,7 +214,7 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 	{
 	  /* w32.c:stat will notice these bindings and avoid calling
 	     GetDriveType for each file.  */
-	  if (is_slow_fs (SDATA (dirfilename)))
+	  if (is_slow_fs (SSDATA (dirfilename)))
 	    Vw32_get_true_file_attributes = Qnil;
 	  else
 	    Vw32_get_true_file_attributes = Qt;
@@ -303,9 +296,7 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 	}
     }
 
-  block_input ();
   closedir (d);
-  unblock_input ();
 #ifdef WINDOWSNT
   if (attrs)
     Vw32_get_true_file_attributes = w32_save;
@@ -842,6 +833,14 @@ below) - valid values are `string' and `integer'.  The latter is the
 default, but we plan to change that, so you should specify a non-nil value
 for ID-FORMAT if you use the returned uid or gid.
 
+To access the elements returned, the following access functions are
+provided: `file-attribute-type', `file-attribute-link-number',
+`file-attribute-user-id', `file-attribute-group-id',
+`file-attribute-access-time', `file-attribute-modification-time',
+`file-attribute-status-change-time', `file-attribute-size',
+`file-attribute-modes', `file-attribute-inode-number', and
+`file-attribute-device-number'.
+
 Elements of the attribute list are:
  0. t for directory, string (name linked to) for symbolic link, or nil.
  1. Number of links to file.
@@ -932,10 +931,8 @@ file_attributes (int fd, char const *name, Lisp_Object id_format)
 
   if (!(NILP (id_format) || EQ (id_format, Qinteger)))
     {
-      block_input ();
       uname = stat_uname (&s);
       gname = stat_gname (&s);
-      unblock_input ();
     }
 
   filemodestring (&s, modes);

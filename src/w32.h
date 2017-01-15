@@ -89,7 +89,7 @@ typedef struct _child_process
      terminate it by sys_kill.  */
   HWND                hwnd;
   /* Information about subprocess returned by CreateProcess.  Includes
-     handles to the subprocess and its primary thread, and the
+     handles to the subprocess and its main thread, and the
      corresponding process ID and thread ID numbers.  The PID is
      mirrored by the 'pid' member above.  The process handle is used
      to wait on it.  */
@@ -162,7 +162,7 @@ extern void reset_standard_handles (int in, int out,
 				    int err, HANDLE handles[4]);
 
 /* Return the string resource associated with KEY of type TYPE.  */
-extern LPBYTE w32_get_resource (char * key, LPDWORD type);
+extern LPBYTE w32_get_resource (const char * key, LPDWORD type);
 
 extern void release_listen_threads (void);
 extern void init_ntproc (int);

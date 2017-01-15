@@ -473,10 +473,15 @@ Called from a program, takes three args; START, END and STRING."
                              #'rectangle--string-erase-preview nil t)
                    (add-hook 'post-command-hook
                              #'rectangle--string-preview nil t))
-	   (read-string (format "String rectangle (default %s): "
-				(or (car string-rectangle-history) ""))
-			nil 'string-rectangle-history
+               (read-string (format "String rectangle (default %s): "
+                                    (or (car string-rectangle-history) ""))
+                            nil 'string-rectangle-history
                             (car string-rectangle-history)))))))
+  ;; If we undo this change, we want to have the point back where we
+  ;; are now, and not after the first line in the rectangle (which is
+  ;; the first line to be changed by the following command).
+  (unless (eq buffer-undo-list t)
+    (push (point) buffer-undo-list))
   (goto-char
    (apply-on-rectangle 'string-rectangle-line start end string t)))
 

@@ -317,9 +317,11 @@ Use --enable-gcc-warnings to enable compile-time checks that warn
 about possibly-questionable C code.  This is intended for developers
 and is useful with GNU-compatible compilers.  On a recent GNU system
 there should be no warnings; on older and on non-GNU systems the
-generated warnings may still be useful, though you may prefer building
-with 'make WERROR_CFLAGS=' so that the warnings are not treated as
-errors.
+generated warnings may still be useful, though you may prefer
+configuring with --enable-gcc-warnings=warn-only so they are not
+treated as errors.  The default is --enable-gcc-warnings=warn-only if
+it appears to be a developer build, and is --disable-gcc-warnings
+otherwise.
 
 Use --disable-silent-rules to cause 'make' to give more details about
 the commands it executes.  This can be helpful when debugging a build

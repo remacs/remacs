@@ -112,8 +112,8 @@ compiled into the Emacs executable when it was built.
 It runs the normal hook @code{before-init-hook}.
 
 @item
-If appropriate, it creates a graphical frame.  This is not done if the
-options @samp{--batch} or @samp{--daemon} were specified.
+If appropriate, it creates a graphical frame.  This is not done in
+batch (noninteractive) or daemon mode.
 
 @item
 It initializes the initial frame's faces, and sets up the menu bar
@@ -256,10 +256,10 @@ options were specified.
 @c last few bits of command-line-1 are not done in batch mode.
 
 @item
-If the option @code{--daemon} was specified, it calls
-@code{server-start}, and on Posix systems also detaches from the
-controlling terminal.  @xref{Emacs Server,,, emacs, The GNU Emacs
-Manual}.
+If a daemon was requested, it calls @code{server-start}.
+(On Posix systems, if a background daemon was requested, it then
+detaches from the controlling terminal.)  @xref{Emacs
+Server,,, emacs, The GNU Emacs Manual}.
 
 @item
 If started by the X session manager, it calls
@@ -337,7 +337,10 @@ Do not display a splash screen.
 Run without an interactive terminal.  @xref{Batch Mode}.
 
 @item --daemon
-Do not initialize any display; just start a server in the background.
+@itemx --old-daemon
+@itemx --new-daemon
+Do not initialize any display; just start a server.
+(An ``old-style'' daemon automatically runs in the background.)
 
 @item --no-init-file
 @itemx -q
@@ -904,9 +907,6 @@ A GNU (glibc-based) system with a FreeBSD kernel.
 @item hpux
 Hewlett-Packard HPUX operating system.
 
-@item irix
-Silicon Graphics Irix system.
-
 @item nacl
 Google Native Client (@acronym{NaCl}) sandboxing system.
 
@@ -1333,7 +1333,13 @@ omitted or @code{nil}, the conversion uses Emacs's default time zone.
 If it is @code{t}, the conversion uses Universal Time.  If it is
 @code{wall}, the conversion uses the system wall clock time.  If it is
 a string, the conversion uses the time zone rule equivalent to setting
-@env{TZ} to that string.
+@env{TZ} to that string.  If it is an integer @var{offset}, the
+conversion uses a fixed time zone with the given offset and a numeric
+abbreviation on POSIX-compatible platforms and an unspecified abbreviation
+on MS-Windows.  If it is a list (@var{offset} @var{abbr}), where
+@var{offset} is an integer number of seconds east of Universal Time
+and @var{abbr} is a string, the conversion uses a fixed time zone with
+the given offset and abbreviation.
 
 @defun current-time-zone &optional time zone
 @cindex time zone, current
@@ -1431,10 +1437,6 @@ yourself before you call @code{encode-time}.
 
 The optional argument @var{zone} defaults to the current time zone rule.
 @xref{Time Zone Rules}.
-In addition to the usual time zone rule values, it can also be a list
-(as you would get from @code{current-time-zone}) or an integer (as
-from @code{decode-time}), applied without any further alteration for
-daylight saving time.
 
 If you pass more than seven arguments to @code{encode-time}, the first
 six are used as @var{seconds} through @var{year}, the last argument is
@@ -1530,6 +1532,8 @@ fewer digits, use @samp{%3N} for milliseconds, @samp{%6N} for
 microseconds, etc.  Any excess digits are discarded, without rounding.
 @item %p
 This stands for @samp{AM} or @samp{PM}, as appropriate.
+@item %q
+This stands for the calendar quarter (1--4).
 @item %r
 This is a synonym for @samp{%I:%M:%S %p}.
 @item %R
@@ -1888,6 +1892,12 @@ timer---usually, one previously returned by @code{run-at-time} or
 one of these functions; the arrival of the specified time will not
 cause anything special to happen.
 @end defun
+
+@findex timer-list
+The @code{timer-list} command lists all the currently active timers.
+There's only one command available in the buffer displayed: @kbd{c}
+(@code{timer-list-cancel}) that will cancel the timer on the line
+under point.
 
 @node Idle Timers
 @section Idle Timers
@@ -2265,14 +2275,16 @@ The variable is always local to the current terminal, and cannot be
 buffer-local.  @xref{Multiple Terminals}.
 @end defvar
 
-You can specify which keysyms Emacs should use for the Meta, Alt, Hyper, and Super modifiers by setting these variables:
+You can specify which keysyms Emacs should use for the Control, Meta,
+Alt, Hyper, and Super modifiers by setting these variables:
 
-@defvar x-alt-keysym
+@defvar x-ctrl-keysym
+@defvarx x-alt-keysym
 @defvarx x-meta-keysym
 @defvarx x-hyper-keysym
 @defvarx x-super-keysym
-The name of the keysym that should stand for the Alt modifier
-(respectively, for Meta, Hyper, and Super).  For example, here is
+The name of the keysym that should stand for the Control modifier
+(respectively, for Alt, Meta, Hyper, and Super).  For example, here is
 how to swap the Meta and Alt modifiers within Emacs:
 @lisp
 (setq x-alt-keysym 'meta)

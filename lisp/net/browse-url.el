@@ -184,6 +184,15 @@ be used instead."
   :version "24.1"
   :group 'browse-url)
 
+(defcustom browse-url-man-function 'browse-url-man
+  "Function to display man: links."
+  :type '(radio
+          (function-item :tag "Emacs Man" :value browse-url-man)
+          (const :tag "None" nil)
+          (function :tag "Other function"))
+  :version "26.1"
+  :group 'browse-url)
+
 (defcustom browse-url-netscape-program "netscape"
   ;; Info about netscape-remote from Karl Berry.
   "The name by which to invoke Netscape.
@@ -798,6 +807,8 @@ as ARGS."
   (let ((process-environment (copy-sequence process-environment))
 	(function (or (and (string-match "\\`mailto:" url)
 			   browse-url-mailto-function)
+                      (and (string-match "\\`man:" url)
+                           browse-url-man-function)
 		      browse-url-browser-function))
 	;; Ensure that `default-directory' exists and is readable (b#6077).
 	(default-directory (or (unhandled-file-name-directory default-directory)
@@ -1584,6 +1595,19 @@ used instead of `browse-url-new-window-flag'."
 		     (insert (replace-regexp-in-string "\r\n" "\n" body))
 		     (unless (bolp)
 		       (insert "\n"))))))))
+
+;; --- man ---
+
+(defvar manual-program)
+
+(defun browse-url-man (url &optional _new-window)
+  "Open a man page."
+  (interactive (browse-url-interactive-arg "Man page URL: "))
+  (require 'man)
+  (setq url (replace-regexp-in-string "\\`man:" "" url))
+  (cond
+   ((executable-find manual-program) (man url))
+    (t (woman (replace-regexp-in-string "([[:alnum:]]+)" "" url)))))
 
 ;; --- Random browser ---
 

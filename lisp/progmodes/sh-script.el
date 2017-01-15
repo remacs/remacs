@@ -925,8 +925,6 @@ See `sh-feature'.")
      (:weight bold)))
   "Face to show quoted execs like \\=`blabla\\=`."
   :group 'sh-indentation)
-(define-obsolete-face-alias 'sh-heredoc-face 'sh-heredoc "22.1")
-(defvar sh-heredoc-face 'sh-heredoc)
 
 (defface sh-escaped-newline '((t :inherit font-lock-string-face))
   "Face used for (non-escaped) backslash at end of a line in Shell-script mode."
@@ -1207,7 +1205,7 @@ subshells can nest."
     (if q
         (if (characterp q)
             (if (eq q ?\`) 'sh-quoted-exec font-lock-string-face)
-          sh-heredoc-face)
+          'sh-heredoc)
       font-lock-comment-face)))
 
 (defgroup sh-indentation nil
@@ -1631,8 +1629,6 @@ with your script for an edit-interpret-debug cycle."
 
   (setq-local skeleton-pair-default-alist
 	      sh-skeleton-pair-default-alist)
-  (setq-local skeleton-end-hook
-	      (lambda () (or (eolp) (newline) (indent-relative))))
 
   (setq-local paragraph-start (concat page-delimiter "\\|$"))
   (setq-local paragraph-separate (concat paragraph-start "\\|#!/"))
@@ -1662,7 +1658,12 @@ with your script for an edit-interpret-debug cycle."
   (setq-local skeleton-filter-function 'sh-feature)
   (setq-local skeleton-newline-indent-rigidly t)
   (setq-local defun-prompt-regexp
-	      (concat "^\\(function[ \t]\\|[[:alnum:]]+[ \t]+()[ \t]+\\)"))
+              (concat
+               "^\\("
+               "\\(function[ \t]\\)?[ \t]*[[:alnum:]]+[ \t]*([ \t]*)"
+               "\\|"
+               "function[ \t]+[[:alnum:]]+[ \t]*\\(([ \t]*)\\)?"
+               "\\)[ \t]*"))
   (setq-local add-log-current-defun-function #'sh-current-defun-name)
   (add-hook 'completion-at-point-functions
             #'sh-completion-at-point-function nil t)
@@ -1680,6 +1681,7 @@ with your script for an edit-interpret-debug cycle."
          ((string-match "[.]bash\\>"   buffer-file-name) "bash")
          ((string-match "[.]ksh\\>"    buffer-file-name) "ksh")
          ((string-match "[.]t?csh\\(rc\\)?\\>" buffer-file-name) "csh")
+         ((string-match "[.]zsh\\(rc\\|env\\)?\\>" buffer-file-name) "zsh")
 	 ((equal (file-name-nondirectory buffer-file-name) ".profile") "sh")
          (t sh-shell-file))
    nil nil)
@@ -2430,8 +2432,8 @@ whose value is the shell name (don't quote it)."
                       (funcall mksym "rules")
                       :forward-token  (funcall mksym "forward-token")
                       :backward-token (funcall mksym "backward-token")))
+        (setq-local parse-sexp-lookup-properties t)
         (unless sh-use-smie
-          (setq-local parse-sexp-lookup-properties t)
           (setq-local sh-kw-alist (sh-feature sh-kw))
           (let ((regexp (sh-feature sh-kws-for-done)))
             (if regexp
@@ -2900,7 +2902,7 @@ STRING	     This is ignored for the purposes of calculating
       ;;(This function never returns just t.)
       (cond
        ((or (nth 3 (syntax-ppss (point)))
-	    (eq (get-text-property (point) 'face) sh-heredoc-face))
+	    (eq (get-text-property (point) 'face) 'sh-heredoc))
 	;; String continuation -- don't indent
 	(setq result t)
 	(setq have-result t))
@@ -3106,8 +3108,7 @@ we go to the end of the previous line and do not check for continuations."
     (forward-comment (- (point-max)))
     (unless end (beginning-of-line))
     (when (and (not (bobp))
-	       (equal (get-text-property (1- (point)) 'face)
-		      sh-heredoc-face))
+	       (eq (get-text-property (1- (point)) 'face) 'sh-heredoc))
       (let ((p1 (previous-single-property-change (1- (point)) 'face)))
 	(when p1
 	  (goto-char p1)

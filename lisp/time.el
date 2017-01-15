@@ -314,7 +314,7 @@ For example:
     (if mail \" Mail\" \"\"))
 
 would give mode line times like `94/12/30 21:07:48 (UTC)'."
-  :type 'sexp
+  :type '(repeat sexp)
   :group 'display-time)
 
 (defun display-time-event-handler ()
@@ -535,7 +535,8 @@ See `display-time-world'."
     (setq fmt (concat "%-" (int-to-string max-width) "s %s\n"))
     (dolist (timedata (nreverse result))
       (insert (format fmt (car timedata) (cdr timedata))))
-    (delete-char -1)))
+    (delete-char -1))
+  (goto-char (point-min)))
 
 ;;;###autoload
 (defun display-time-world ()
