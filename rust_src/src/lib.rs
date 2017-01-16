@@ -7,6 +7,7 @@ extern crate lazy_static;
 extern crate libc;
 
 mod lisp;
+mod lists;
 mod marker;
 mod eval;
 mod floatfns;
@@ -15,7 +16,6 @@ mod cons;
 mod strings;
 mod symbols;
 mod globals;
-mod atom;
 
 use lisp::LispSubr;
 
@@ -45,7 +45,7 @@ extern "C" {
 #[no_mangle]
 pub extern "C" fn rust_init_syms() {
     unsafe {
-        defsubr(&*atom::Satom);
+        defsubr(&*lists::Satom);
         defsubr(&*math::Smod);
         defsubr(&*math::Splus);
         defsubr(&*math::Sminus);

@@ -4,7 +4,9 @@ use std::os::raw::c_char;
 use std::ptr;
 use std::mem;
 
-use lisp::{LispObject, LispType, XTYPE, XUNTAG, Qt, Qnil, LispSubr, CHECK_TYPE, wrong_type_argument};
+use lisp::{LispObject, LispType, XUNTAG, Qt, Qnil, LispSubr, CHECK_TYPE, wrong_type_argument};
+
+use lists::CONSP;
 
 extern "C" {
     static Qconsp: LispObject;
@@ -12,9 +14,6 @@ extern "C" {
     static Qlistp: LispObject;
 }
 
-pub fn CONSP(x: LispObject) -> bool {
-    XTYPE(x) == LispType::Lisp_Cons
-}
 
 fn Fconsp(object: LispObject) -> LispObject {
     if CONSP(object) { unsafe { Qt } } else { Qnil }
