@@ -4039,7 +4039,7 @@ ns_read_socket (struct terminal *terminal, struct input_event *hold_quit)
       return i;
     }
 
-  if ([NSThread mainThread])
+  if ([NSThread isMainThread])
     {
       block_input ();
       n_emacs_events_pending = 0;
@@ -4123,7 +4123,7 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
     }
 
   if (NSApp == nil
-      || ![NSThread mainThread]
+      || ![NSThread isMainThread]
       || (timeout && timeout->tv_sec == 0 && timeout->tv_nsec == 0))
     return pselect (nfds, readfds, writefds, exceptfds, timeout, sigmask);
 

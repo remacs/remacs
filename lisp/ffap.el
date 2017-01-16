@@ -76,6 +76,7 @@
 ;; (setq ffap-machine-p-known 'accept)  ; no pinging
 ;; (setq ffap-url-regexp nil)           ; disable URL features in ffap
 ;; (setq ffap-shell-prompt-regexp nil)  ; disable shell prompt stripping
+;; (setq ffap-gopher-regexp nil)        ; disable gopher bookmark matching
 ;;
 ;; ffap uses `browse-url' (if found, else `w3-fetch') to fetch URL's.
 ;; For a hairier `ffap-url-fetcher', try ffap-url.el (same ftp site).
@@ -1194,43 +1195,46 @@ Sets the variable `ffap-string-at-point-region' to the bounds of URL, if any."
           val))))
 
 (defvar ffap-gopher-regexp
-  "^.*\\<\\(Type\\|Name\\|Path\\|Host\\|Port\\) *= *\\(.*\\) *$"
-  "Regexp matching a line in a gopher bookmark (maybe indented).
-The two subexpressions are the KEY and VALUE.")
+  "\\<\\(Type\\|Name\\|Path\\|Host\\|Port\\) *= *"
+  "Regexp matching a key in a gopher bookmark.
+Set to nil to disable matching gopher bookmarks.")
+
+(defun ffap--gopher-var-on-line ()
+  "Return (KEY . VALUE) of gopher bookmark on current line."
+  (save-excursion
+    (let ((eol (progn (end-of-line) (skip-chars-backward " ") (point)))
+          (bol (progn (beginning-of-line) (point))))
+     (when (re-search-forward ffap-gopher-regexp eol t)
+       (let ((key (match-string 1))
+             (val (buffer-substring-no-properties (match-end 0) eol)))
+         (cons (intern (downcase key)) val))))))
 
 (defun ffap-gopher-at-point ()
   "If point is inside a gopher bookmark block, return its URL.
 
 Sets the variable `ffap-string-at-point-region' to the bounds of URL, if any."
   ;; `gopher-parse-bookmark' from gopher.el is not so robust
-  (save-excursion
-    (beginning-of-line)
-    (if (looking-at ffap-gopher-regexp)
-	(progn
-	  (while (and (looking-at ffap-gopher-regexp) (not (bobp)))
-	    (forward-line -1))
-	  (or (looking-at ffap-gopher-regexp) (forward-line 1))
-          (setq ffap-string-at-point-region (list (point) (point)))
-	  (let ((type "1") path host (port "70"))
-	    (while (looking-at ffap-gopher-regexp)
-	      (let ((var (intern
-			  (downcase
-			   (buffer-substring (match-beginning 1)
-					     (match-end 1)))))
-		    (val (buffer-substring (match-beginning 2)
-					   (match-end 2))))
-		(set var val)
-		(forward-line 1)))
-            (setcdr ffap-string-at-point-region (list (point)))
-	    (if (and path (string-match "^ftp:.*@" path))
-		(concat "ftp://"
-			(substring path 4 (1- (match-end 0)))
-			(substring path (match-end 0)))
-	      (and (= (length type) 1)
-		   host;; (ffap-machine-p host)
-		   (concat "gopher://" host
-			   (if (equal port "70") "" (concat ":" port))
-			   "/" type path))))))))
+  (when (stringp ffap-gopher-regexp)
+    (save-excursion
+      (let* ((beg (progn (beginning-of-line)
+                         (while (and (not (bobp)) (ffap--gopher-var-on-line))
+                           (forward-line -1))
+                         (point)))
+             (bookmark (cl-loop for keyval = (ffap--gopher-var-on-line)
+                                while keyval collect keyval
+                                do (forward-line 1))))
+        (when bookmark
+          (setq ffap-string-at-point-region (list beg (point)))
+          (let-alist (nconc bookmark '((type . "1") (port . "70")))
+            (if (and .path (string-match "\\`ftp:.*@" .path))
+                (concat "ftp://"
+                        (substring .path 4 (1- (match-end 0)))
+                        (substring .path (match-end 0)))
+              (and (= (length .type) 1)
+                   .host ;; (ffap-machine-p host)
+                   (concat "gopher://" .host
+                           (if (equal .port "70") "" (concat ":" .port))
+                           "/" .type .path)))))))))
 
 (defvar ffap-ftp-sans-slash-regexp
   (and

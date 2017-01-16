@@ -2931,11 +2931,23 @@ comment at the start of cc-engine.el for more info."
   ;; o - ('BOD START-POINT) - scan forwards from START-POINT, which is at the
   ;;   top level.
   ;; o - ('IN-LIT nil) - point is inside the literal containing point-min.
-  (let ((cache-pos (c-get-cache-scan-pos here))	; highest position below HERE in cache (or 1)
-	BOD-pos		    ; position of 2nd BOD before HERE.
-	strategy	    ; 'forward, 'backward, 'BOD, or 'IN-LIT.
-	start-point
-	how-far)			; putative scanning distance.
+  (let* ((in-macro-start	      ; start of macro containing HERE or nil.
+	  (save-excursion
+	    (goto-char here)
+	    (and (c-beginning-of-macro)
+		 (point))))
+	 (changed-macro-start
+	  (and in-macro-start
+	       (not (and c-state-old-cpp-beg
+			 (= in-macro-start c-state-old-cpp-beg)))
+	       in-macro-start))
+	 (cache-pos (c-get-cache-scan-pos (if changed-macro-start
+					      (min changed-macro-start here)
+					    here))) ; highest suitable position in cache (or 1)
+	 BOD-pos		      ; position of 2nd BOD before HERE.
+	 strategy		      ; 'forward, 'backward, 'BOD, or 'IN-LIT.
+	 start-point
+	 how-far)			; putative scanning distance.
     (setq good-pos (or good-pos (c-state-get-min-scan-pos)))
     (cond
      ((< here (c-state-get-min-scan-pos))
@@ -2945,7 +2957,9 @@ comment at the start of cc-engine.el for more info."
 	    how-far 0))
      ((<= good-pos here)
       (setq strategy 'forward
-	    start-point (max good-pos cache-pos)
+	    start-point (if changed-macro-start
+			    cache-pos
+			  (max good-pos cache-pos))
 	    how-far (- here start-point)))
      ((< (- good-pos here) (- here cache-pos)) ; FIXME!!! ; apply some sort of weighting.
       (setq strategy 'backward
