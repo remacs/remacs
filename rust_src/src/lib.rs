@@ -7,15 +7,14 @@ extern crate lazy_static;
 extern crate libc;
 
 mod lisp;
+mod lists;
 mod marker;
 mod eval;
 mod floatfns;
 mod math;
-mod cons;
 mod strings;
 mod symbols;
 mod globals;
-mod atom;
 
 use lisp::LispSubr;
 
@@ -28,10 +27,11 @@ pub use math::Fmin;
 pub use math::Fquo;
 
 // Widely used in the C codebase.
-pub use cons::Fsetcar;
-pub use cons::Fsetcdr;
-pub use cons::Fcar;
-pub use cons::Fcdr;
+pub use lists::Fsetcar;
+pub use lists::Fsetcdr;
+pub use lists::Fcar;
+pub use lists::Fcdr;
+pub use lists::Flistp;
 pub use floatfns::extract_float;
 pub use floatfns::fmod_float;
 
@@ -45,7 +45,9 @@ extern "C" {
 #[no_mangle]
 pub extern "C" fn rust_init_syms() {
     unsafe {
-        defsubr(&*atom::Satom);
+        defsubr(&*lists::Satom);
+        defsubr(&*lists::Slistp);
+        defsubr(&*lists::Snlistp);
         defsubr(&*math::Smod);
         defsubr(&*math::Splus);
         defsubr(&*math::Sminus);
@@ -57,11 +59,11 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*math::Smax);
         defsubr(&*math::Smin);
         defsubr(&*symbols::Ssymbolp);
-        defsubr(&*cons::Sconsp);
-        defsubr(&*cons::Ssetcar);
-        defsubr(&*cons::Ssetcdr);
-        defsubr(&*cons::Scar);
-        defsubr(&*cons::Scdr);
+        defsubr(&*lists::Sconsp);
+        defsubr(&*lists::Ssetcar);
+        defsubr(&*lists::Ssetcdr);
+        defsubr(&*lists::Scar);
+        defsubr(&*lists::Scdr);
         defsubr(&*strings::Sstringp);
         defsubr(&*strings::Seq);
         defsubr(&*strings::Snull);
