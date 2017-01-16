@@ -645,6 +645,7 @@ mod deprecated {
     }
 
     #[allow(non_snake_case)]
+    #[allow(dead_code)]
     pub fn XFLOAT_DATA(f: LispObject) -> f64 {
         unsafe { f.get_float_data_unchecked() }
     }
