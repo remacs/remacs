@@ -3,14 +3,10 @@ use std::ptr;
 
 extern crate libc;
 
-use lisp::{XTYPE, LispObject, LispType, LispSubr, Qnil};
+use lisp::{LispObject, LispSubr, Qnil, STRINGP};
 
 extern "C" {
     static Qt: LispObject;
-}
-
-fn STRINGP(value: LispObject) -> bool {
-    XTYPE(value) == LispType::Lisp_String
 }
 
 fn Fstringp(object: LispObject) -> LispObject {

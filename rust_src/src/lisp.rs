@@ -60,6 +60,7 @@ extern "C" {
     pub static Qnumber_or_marker_p: LispObject;
     pub static Qnumberp: LispObject;
     pub static Qfloatp: LispObject;
+    pub static Qstringp: LispObject;
     fn make_float(float_value: f64) -> LispObject;
 }
 
@@ -364,6 +365,11 @@ impl LispObject {
     pub fn is_number(self) -> bool {
         self.is_integer() || self.is_float()
     }
+
+    #[inline]
+    pub fn is_string(self) -> bool {
+        XTYPE(self) == LispType::Lisp_String
+    }
 }
 
 
@@ -649,6 +655,12 @@ mod deprecated {
         x.is_number()
     }
 
+    /// Is this LispObject a string?
+    #[allow(non_snake_case)]
+    pub fn STRINGP(x: LispObject) -> bool {
+        x.is_string()
+    }
+
     #[test]
     fn test_numberp() {
         assert!(!NUMBERP(Qnil));
@@ -712,9 +724,12 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
     }
 }
 
-
-
-
+/// Raise an error if `x` is not lisp string.
+#[allow(non_snake_case)]
+#[no_mangle]
+pub extern "C" fn CHECK_STRING(x: LispObject) {
+    CHECK_TYPE(STRINGP(x), unsafe { Qstringp }, x);
+}
 
 #[allow(non_snake_case)]
 pub fn MARKERP(a: LispObject) -> bool {

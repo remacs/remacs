@@ -1271,12 +1271,6 @@ STRINGP (Lisp_Object x)
   return XTYPE (x) == Lisp_String;
 }
 
-INLINE void
-CHECK_STRING (Lisp_Object x)
-{
-  CHECK_TYPE (STRINGP (x), Qstringp, x);
-}
-
 INLINE struct Lisp_String *
 XSTRING (Lisp_Object a)
 {
@@ -2767,6 +2761,9 @@ INLINE void
 {
   lisp_h_CHECK_NUMBER (x);
 }
+
+/* exported from rust code (lisp.rs) */
+void CHECK_STRING (Lisp_Object x);
 
 INLINE void
 CHECK_STRING_CAR (Lisp_Object x)

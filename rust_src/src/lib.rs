@@ -38,6 +38,9 @@ pub use floatfns::fmod_float;
 // These need to be exported as marker.c depends upon them.
 pub use marker::CHECK_MARKER;
 
+// Defined in lisp.h and widely used in the C codebase.
+pub use lisp::CHECK_STRING;
+
 extern "C" {
     fn defsubr(sname: *const LispSubr);
 }
