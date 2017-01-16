@@ -3,6 +3,9 @@ rust:
   - stable
   - beta
   - nightly
+os:
+  - linux
+  - osx
 
 script:
   # Configure Emacs for building
@@ -20,3 +23,4 @@ notifications:
 matrix:
   allow_failures:
     - rust: nightly
+    - os: osx
