@@ -5132,7 +5132,10 @@ fi
 
 AC_SUBST(CARGO_FLAGS)
 
-LIB_REMACS="-lremacs -ldl"
+case "${opsys}" in
+  darwin|gnu*) LIB_REMACS="-lremacs -ldl" ;;
+  *) LIB_REMACS="-lremacs" ;;
+esac
 
 if test "${HAVE_W32}" = "yes"; then
     LIB_REMACS="$LIB_REMACS -lws2_32 -luserenv"
