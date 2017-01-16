@@ -329,6 +329,7 @@ syms_of_floatfns (void)
 #endif
   defsubr (&Sfrexp);
   defsubr (&Sldexp);
+  defsubr (&Sfround);
   defsubr (&Sexpt);
 
   defsubr (&Slogb);
