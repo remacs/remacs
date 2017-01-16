@@ -5,6 +5,11 @@ rust:
   - nightly
 
 script:
+  # Ensure that we build without warnings.
+  - cd rust_src
+  - cargo build --features "strict"
+  - cd ..
+
   # Configure Emacs for building
   - ./autogen.sh
   # TODO: set up makeinfo on travis.

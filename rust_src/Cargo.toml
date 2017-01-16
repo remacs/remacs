@@ -21,3 +21,7 @@ panic = "abort"
 
 [profile.release]
 panic = "abort"
+
+[features]
+# Treat warnings as a build error on Travis.
+strict = []
