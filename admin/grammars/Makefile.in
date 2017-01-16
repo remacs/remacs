@@ -44,7 +44,7 @@ am__v_at_1 =
 # Prevent any settings in the user environment causing problems.
 unexport EMACSDATA EMACSDOC EMACSPATH
 
-EMACS = ${top_builddir}/src/emacs
+EMACS = ${top_builddir}/src/remacs
 emacs = EMACSLOADPATH= "${EMACS}" -batch --no-site-file --no-site-lisp
 
 make_bovine = ${emacs} -l semantic/bovine/grammar -f bovine-batch-make-parser

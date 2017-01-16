@@ -21,7 +21,7 @@
 SHELL = @SHELL@
 
 # Following ../lisp/Makefile.in.
-EMACS = ../src/emacs${EXEEXT}
+EMACS = ../src/remacs${EXEEXT}
 EMACSOPT = -batch --no-site-file --no-site-lisp
 
 # ==================== Things 'configure' will edit ====================
@@ -150,7 +150,7 @@ MKDIR_P = @MKDIR_P@
 CLIENTW = @CLIENTW@
 
 # Things that a user might actually run, which should be installed in bindir.
-INSTALLABLES = etags${EXEEXT} ctags${EXEEXT} emacsclient${EXEEXT} $(CLIENTW) \
+INSTALLABLES = etags${EXEEXT} ctags${EXEEXT} remacsclient${EXEEXT} $(CLIENTW) \
                ebrowse${EXEEXT}
 
 # Things that Emacs runs internally, or during the build process,
@@ -392,12 +392,12 @@ movemail${EXEEXT}: ${srcdir}/movemail.c pop.o $(NTLIB) $(config_h)
 pop.o: ${srcdir}/pop.c ${srcdir}/pop.h ${srcdir}/../lib/min-max.h $(config_h)
 	$(AM_V_CC)$(CC) -c ${CPP_CFLAGS} ${MOVE_FLAGS} $<
 
-emacsclient${EXEEXT}: ${srcdir}/emacsclient.c $(NTLIB) $(config_h)
+remacsclient${EXEEXT}: ${srcdir}/emacsclient.c $(NTLIB) $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< \
 	   -DVERSION="\"${version}\"" $(NTLIB) $(LOADLIBES) $(LIB_FDATASYNC) \
 	   $(LIB_WSOCK32) $(LIBS_ECLIENT) -o $@
 
-emacsclientw${EXEEXT}: ${srcdir}/emacsclient.c $(NTLIB) $(CLIENTRES) $(config_h)
+remacsclientw${EXEEXT}: ${srcdir}/emacsclient.c $(NTLIB) $(CLIENTRES) $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $(CLIENTRES) -mwindows $< \
 	   -DVERSION="\"${version}\"" $(LOADLIBES) $(LIB_FDATASYNC) \
 	   $(LIB_WSOCK32) $(LIBS_ECLIENT) -o $@

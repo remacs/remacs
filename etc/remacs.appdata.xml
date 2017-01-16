@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Copyright (C) 2014-2017 Free Software Foundation, Inc. -->
 <application>
- <id type="desktop">emacs.desktop</id>
+ <id type="desktop">remacs.desktop</id>
  <metadata_license>GFDL-1.3</metadata_license>
  <!-- It is GFDL-1.3+, but appdata-validate complains... -->
  <project_license>GPL-3.0+ and GFDL-1.3</project_license>
- <name>GNU Emacs</name>
+ <name>remacs</name>
  <summary>An extensible text editor</summary>
  <description>
   <p>
-   GNU Emacs is an extensible, customizable text editor - and more.
+   remacs is an extensible, customizable text editor - and more.
    At its core is an interpreter for Emacs Lisp, a dialect of the Lisp
    programming language with extensions to support text editing.
   </p>
-  <p>The features of GNU Emacs include:</p>
+  <p>The features of rmacs include:</p>
   <ul>
    <li>Content-sensitive editing modes, including syntax coloring, for
    a wide-range of file types</li>
@@ -25,9 +25,6 @@
   </ul>
  </description>
  <screenshots>
-  <screenshot type="default" width="632" height="354">http://www.gnu.org/software/emacs/images/appdata.png</screenshot>
  </screenshots>
- <url type="homepage">http://www.gnu.org/software/emacs</url>
- <updatecontact>emacs-devel_at_gnu.org</updatecontact>
- <project_group>GNU</project_group>
+ <url type="homepage">https://github.com/Wilfred/remacs</url>
 </application>

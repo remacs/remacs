@@ -195,15 +195,15 @@ dnl It is important that variables on the RHS not be expanded here,
 dnl hence the single quotes.  This is per the GNU coding standards, see
 dnl (autoconf) Installation Directory Variables
 dnl See also epaths.h below.
-lispdir='${datadir}/emacs/${version}/lisp'
+lispdir='${datadir}/remacs/${version}/lisp'
 standardlisppath='${lispdir}'
-locallisppath='${datadir}/emacs/${version}/site-lisp:'\
-'${datadir}/emacs/site-lisp'
+locallisppath='${datadir}/remacs/${version}/site-lisp:'\
+'${datadir}/remacs/site-lisp'
 lisppath='${locallisppath}:${standardlisppath}'
-etcdir='${datadir}/emacs/${version}/etc'
-archlibdir='${libexecdir}/emacs/${version}/${configuration}'
-etcdocdir='${datadir}/emacs/${version}/etc'
-gamedir='${localstatedir}/games/emacs'
+etcdir='${datadir}/remacs/${version}/etc'
+archlibdir='${libexecdir}/remacs/${version}/${configuration}'
+etcdocdir='${datadir}/remacs/${version}/etc'
+gamedir='${localstatedir}/games/remacs'
 
 dnl Special option to disable the most of other options.
 AC_ARG_WITH(all,

@@ -18,7 +18,7 @@
 # along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ROOT = ../..
-EMACS = $(ROOT)/src/emacs
+EMACS = $(ROOT)/src/remacs
 
 CC      = gcc
 LD      = gcc
