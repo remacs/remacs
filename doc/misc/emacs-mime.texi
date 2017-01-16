@@ -1536,6 +1536,9 @@ Here's a bunch of time/date/second/day examples:
 (date-to-time "Sat Sep 12 12:21:54 1998 +0200")
 @result{} (13818 19266)
 
+(parse-iso8601-time-string "1998-09-12T12:21:54+0200")
+@result{} (13818 19266)
+
 (float-time '(13818 19266))
 @result{} 905595714.0
 
@@ -1825,6 +1828,11 @@ matching types.
 @item mailcap-mime-data
 @vindex mailcap-mime-data
 This variable is an alist of alists containing backup viewing rules.
+
+@item mailcap-user-mime-data
+@vindex mailcap-user-mime-data
+A customizable list of viewers that take preference over
+@code{mailcap-mime-data}.
 
 @end table
 

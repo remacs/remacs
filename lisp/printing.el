@@ -1668,7 +1668,7 @@ separator; otherwise, ensure unix-style directory separator."
   :link '(emacs-library-link :tag "Source Lisp File" "printing.el")
   :prefix "pr-"
   :version "22.1"
-  :group 'wp
+  :group 'text
   :group 'postscript)
 
 

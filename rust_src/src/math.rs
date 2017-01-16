@@ -8,8 +8,7 @@ use std::ptr;
 use std::slice;
 use libc::ptrdiff_t;
 
-use lisp::{LispSubr, MANY, PSEUDOVECTOR_AREA_BITS, PvecType, VectorLikeHeader, LispObject,
-           Qarith_error, XINT, make_number, EmacsInt};
+use lisp::{LispSubr, MANY, LispObject, Qarith_error, XINT, make_number, EmacsInt};
 use eval::xsignal0;
 
 fn Fmod(x: LispObject, y: LispObject) -> LispObject {

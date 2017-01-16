@@ -294,12 +294,6 @@ problem discovered.  This is useful for adding additional checks.")
 (defvar checkdoc-diagnostic-buffer "*Style Warnings*"
   "Name of warning message buffer.")
 
-(defvar checkdoc-defun-regexp
-  "^(def\\(un\\|var\\|custom\\|macro\\|const\\|subst\\|advice\\)\
-\\s-+\\(\\(\\sw\\|\\s_\\)+\\)[ \t\n]+"
-  "Regular expression used to identify a defun.
-A search leaves the cursor in front of the parameter list.")
-
 (defcustom checkdoc-verb-check-experimental-flag t
   "Non-nil means to attempt to check the voice of the doc string.
 This check keys off some words which are commonly misused.  See the
@@ -938,13 +932,31 @@ is the starting location.  If this is nil, `point-min' is used instead."
 (defun checkdoc-next-docstring ()
   "Move to the next doc string after point, and return t.
 Return nil if there are no more doc strings."
-  (if (not (re-search-forward checkdoc-defun-regexp nil t))
-      nil
-    ;; search drops us after the identifier.  The next sexp is either
-    ;; the argument list or the value of the variable.  skip it.
-    (forward-sexp 1)
-    (skip-chars-forward " \n\t")
-    t))
+  (let (found)
+    (while (and (not (setq found (checkdoc--next-docstring)))
+                (beginning-of-defun -1)))
+    found))
+
+(defun checkdoc--next-docstring ()
+  "When looking at a definition with a doc string, find it.
+Move to the next doc string after point, and return t.  When not
+looking at a definition containing a doc string, return nil and
+don't move point."
+  (pcase (save-excursion (condition-case nil
+                             (read (current-buffer))
+                           ;; Conservatively skip syntax errors.
+                           (invalid-read-syntax)))
+    (`(,(or 'defun 'defvar 'defcustom 'defmacro 'defconst 'defsubst 'defadvice)
+       ,(pred symbolp)
+       ;; Require an initializer, i.e. ignore single-argument `defvar'
+       ;; forms, which never have a doc string.
+       ,_ . ,_)
+     (down-list)
+     ;; Skip over function or macro name, symbol to be defined, and
+     ;; initializer or argument list.
+     (forward-sexp 3)
+     (skip-chars-forward " \n\t")
+     t)))
 
 ;;;###autoload
 (defun checkdoc-comments (&optional take-notes)
@@ -1027,21 +1039,12 @@ space at the end of each line."
   (interactive)
   (save-excursion
     (beginning-of-defun)
-    (if (not (looking-at checkdoc-defun-regexp))
-	;; I found this more annoying than useful.
-	;;(if (not no-error)
-	;;    (message "Cannot check this sexp's doc string."))
-	nil
-      ;; search drops us after the identifier.  The next sexp is either
-      ;; the argument list or the value of the variable.  skip it.
-      (goto-char (match-end 0))
-      (forward-sexp 1)
-      (skip-chars-forward " \n\t")
+    (when (checkdoc--next-docstring)
       (let* ((checkdoc-spellcheck-documentation-flag
-	      (car (memq checkdoc-spellcheck-documentation-flag
+              (car (memq checkdoc-spellcheck-documentation-flag
                          '(defun t))))
-	     (beg (save-excursion (beginning-of-defun) (point)))
-	     (end (save-excursion (end-of-defun) (point))))
+             (beg (save-excursion (beginning-of-defun) (point)))
+             (end (save-excursion (end-of-defun) (point))))
         (dolist (fun (list #'checkdoc-this-string-valid
                            (lambda () (checkdoc-message-text-search beg end))
                            (lambda () (checkdoc-rogue-space-check-engine beg end))))
@@ -1049,8 +1052,8 @@ space at the end of each line."
             (if msg (if no-error
                         (message "%s" (checkdoc-error-text msg))
                       (user-error "%s" (checkdoc-error-text msg))))))
-	(if (called-interactively-p 'interactive)
-	    (message "Checkdoc: done."))))))
+        (if (called-interactively-p 'interactive)
+            (message "Checkdoc: done."))))))
 
 ;;; Ispell interface for forcing a spell check
 ;;
@@ -1062,7 +1065,7 @@ Calls `checkdoc' with spell-checking turned on.
 Prefix argument is the same as for `checkdoc'"
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
-    (call-interactively #'checkdoc nil current-prefix-arg)))
+    (call-interactively #'checkdoc)))
 
 ;;;###autoload
 (defun checkdoc-ispell-current-buffer ()
@@ -1071,7 +1074,7 @@ Calls `checkdoc-current-buffer' with spell-checking turned on.
 Prefix argument is the same as for `checkdoc-current-buffer'"
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
-    (call-interactively #'checkdoc-current-buffer nil current-prefix-arg)))
+    (call-interactively #'checkdoc-current-buffer)))
 
 ;;;###autoload
 (defun checkdoc-ispell-interactive ()
@@ -1080,7 +1083,7 @@ Calls `checkdoc-interactive' with spell-checking turned on.
 Prefix argument is the same as for `checkdoc-interactive'"
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
-    (call-interactively #'checkdoc-interactive nil current-prefix-arg)))
+    (call-interactively #'checkdoc-interactive)))
 
 ;;;###autoload
 (defun checkdoc-ispell-message-interactive ()
@@ -1099,7 +1102,7 @@ Calls `checkdoc-message-text' with spell-checking turned on.
 Prefix argument is the same as for `checkdoc-message-text'"
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
-    (call-interactively #'checkdoc-message-text nil current-prefix-arg)))
+    (call-interactively #'checkdoc-message-text)))
 
 ;;;###autoload
 (defun checkdoc-ispell-start ()
@@ -1108,7 +1111,7 @@ Calls `checkdoc-start' with spell-checking turned on.
 Prefix argument is the same as for `checkdoc-start'"
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
-    (call-interactively #'checkdoc-start nil current-prefix-arg)))
+    (call-interactively #'checkdoc-start)))
 
 ;;;###autoload
 (defun checkdoc-ispell-continue ()
@@ -1117,7 +1120,7 @@ Calls `checkdoc-continue' with spell-checking turned on.
 Prefix argument is the same as for `checkdoc-continue'"
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
-    (call-interactively #'checkdoc-continue nil current-prefix-arg)))
+    (call-interactively #'checkdoc-continue)))
 
 ;;;###autoload
 (defun checkdoc-ispell-comments ()
@@ -1126,7 +1129,7 @@ Calls `checkdoc-comments' with spell-checking turned on.
 Prefix argument is the same as for `checkdoc-comments'"
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
-    (call-interactively #'checkdoc-comments nil current-prefix-arg)))
+    (call-interactively #'checkdoc-comments)))
 
 ;;;###autoload
 (defun checkdoc-ispell-defun ()
@@ -1135,7 +1138,7 @@ Calls `checkdoc-defun' with spell-checking turned on.
 Prefix argument is the same as for `checkdoc-defun'"
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
-    (call-interactively #'checkdoc-defun nil current-prefix-arg)))
+    (call-interactively #'checkdoc-defun)))
 
 ;;; Error Management
 ;;
@@ -1638,6 +1641,17 @@ function,command,variable,option or symbol." ms1))))))
 	     ;; * If a user option variable records a true-or-false
 	     ;;   condition, give it a name that ends in `-flag'.
 
+	     ;; "True ..." should be "Non-nil ..."
+	     (when (looking-at "\"\\*?\\(True\\)\\b")
+               (if (checkdoc-autofix-ask-replace
+                    (match-beginning 1) (match-end 1)
+                    "Say \"Non-nil\" instead of \"True\"? "
+                    "Non-nil")
+                   nil
+                 (checkdoc-create-error
+                  "\"True\" should usually be \"Non-nil\""
+                  (match-beginning 1) (match-end 1))))
+
 	     ;; If the variable has -flag in the name, make sure
 	     (if (and (string-match "-flag$" (car fp))
 		      (not (looking-at "\"\\*?Non-nil\\s-+means\\s-+")))
@@ -1798,6 +1812,16 @@ Replace with \"%s\"? " original replace)
 			    "Probably \"%s\" should be imperative \"%s\""
 			    original replace)
 			   (match-beginning 1) (match-end 1))))))
+	     ;; "Return true ..." should be "Return non-nil ..."
+	     (when (looking-at "\"Return \\(true\\)\\b")
+               (if (checkdoc-autofix-ask-replace
+                    (match-beginning 1) (match-end 1)
+                    "Say \"non-nil\" instead of \"true\"? "
+                    "non-nil")
+                   nil
+                 (checkdoc-create-error
+                  "\"true\" should usually be \"non-nil\""
+                  (match-beginning 1) (match-end 1))))
 	     ;; Done with functions
 	     )))
      ;;* When a documentation string refers to a Lisp symbol, write it as

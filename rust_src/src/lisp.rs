@@ -62,6 +62,9 @@ extern "C" {
     pub static Qt: LispObject;
     pub static Qarith_error: LispObject;
     pub static Qnumber_or_marker_p: LispObject;
+    pub static Qnumberp: LispObject;
+    pub static Qfloatp: LispObject;
+    fn make_float(float_value: f64) -> LispObject;
 }
 
 pub const Qnil: LispObject = LispObject(0);
@@ -84,6 +87,11 @@ impl LispObject {
         } else {
             Qnil
         }
+    }
+
+    #[inline]
+    pub fn from_float(v: EmacsDouble) -> LispObject {
+        unsafe { make_float(v) }
     }
 
     #[inline]
@@ -111,6 +119,7 @@ const VALMASK: EmacsInt = -(1 << GCTYPEBITS);
 #[derive(PartialEq, Eq)]
 #[allow(dead_code)]
 #[allow(non_camel_case_types)]
+#[derive(Debug)]
 pub enum LispType {
     // Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol.
     Lisp_Symbol = 0,
@@ -259,8 +268,12 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn to_fixnum(self) -> EmacsInt {
-        self.to_raw() >> INTTYPEBITS
+    pub fn to_fixnum(self) -> Option<EmacsInt> {
+        if self.is_fixnum() {
+            Some(self.to_raw() >> INTTYPEBITS)
+        } else {
+            None
+        }
     }
 
     #[inline]
@@ -328,6 +341,20 @@ impl LispObject {
 
     pub unsafe fn get_float_data_unchecked(self) -> EmacsDouble {
         *self.to_float_unchecked().as_data()
+    }
+
+    pub fn to_float(self) -> Option<EmacsDouble> {
+        if self.is_float() {
+            Some(unsafe { self.get_float_data_unchecked() })
+        } else {
+            None
+        }
+    }
+
+    /// If the LispObject is a number (of any kind), get a floating point value for it
+    pub fn extract_float(self) -> Option<EmacsDouble> {
+        let d = self.to_float();
+        d.or(self.to_fixnum().map( |i| i as EmacsDouble ))
     }
 }
 
@@ -447,9 +474,9 @@ macro_rules! defun {
 // TODO: this is blindly hoping we have the correct alignment.
 // We should ensure we have GCALIGNMENT (8 bytes).
             pub static ref $sname: LispSubr = LispSubr {
-                header: VectorLikeHeader {
-                    size: ((PvecType::PVEC_SUBR as libc::c_int) <<
-                           PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
+                header: $crate::lisp::VectorLikeHeader {
+                    size: (($crate::lisp::PvecType::PVEC_SUBR as libc::c_int) <<
+                           $crate::lisp::PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
                 },
                 function: ($fname as *const libc::c_void),
                 min_args: $min_args,
@@ -513,7 +540,7 @@ mod deprecated {
     /// integer.
     #[allow(non_snake_case)]
     pub fn XINT(a: LispObject) -> EmacsInt {
-        a.to_fixnum()
+        a.to_fixnum().unwrap()
     }
 
     #[test]
@@ -643,7 +670,17 @@ mod deprecated {
         (tagged_ptr - tag) as *const libc::c_void
     }
 
-
+    // Implementation of the XFASTINT depends on the USE_LSB_TAG
+    // in Emacs C. But we selected this implementation as in our
+    // build that value is 1.
+    // A must be nonnegative.
+    #[allow(dead_code)]
+    #[allow(non_snake_case)]
+    pub fn XFASTINT(a: LispObject) -> EmacsInt {
+        let n: EmacsInt = XINT(a);
+        debug_assert!(0 <= n);
+        n
+    }
 }
 
 pub use self::deprecated::*;

@@ -161,8 +161,8 @@ load was done for the sake of @code{autoload}, any function definitions
 made during the loading are undone.
 
 @kindex file-error
-If @code{load} can't find the file to load, then normally it signals the
-error @code{file-error} (with @samp{Cannot open load file
+If @code{load} can't find the file to load, then normally it signals a
+@code{file-error} (with @samp{Cannot open load file
 @var{filename}}).  But if @var{missing-ok} is non-@code{nil}, then
 @code{load} just returns @code{nil}.
 

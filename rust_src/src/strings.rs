@@ -3,8 +3,7 @@ use std::ptr;
 
 extern crate libc;
 
-use lisp::{XTYPE, LispObject, LispType, LispSubr, Qnil, VectorLikeHeader, PvecType,
-           PSEUDOVECTOR_AREA_BITS};
+use lisp::{XTYPE, LispObject, LispType, LispSubr, Qnil};
 
 extern "C" {
     static Qt: LispObject;

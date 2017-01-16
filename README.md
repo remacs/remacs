@@ -15,7 +15,7 @@ GPLv3 license.
     - [Design Goals](#design-goals)
     - [Non-Design Goals](#non-design-goals)
     - [Building Remacs](#building-remacs)
-        - [Release builds](#release-builds)
+        - [Debug builds](#debug-builds)
         - [Rustdoc builds](#rustdoc-builds)
     - [Porting C Functions To Rust: Walkthrough](#porting-c-functions-to-rust-walkthrough)
     - [Contributing](#contributing)
@@ -24,6 +24,7 @@ GPLv3 license.
         - [C Functions](#c-functions)
         - [C Macros](#c-macros)
         - [Assertions](#assertions)
+        - [Safety](#safety)
 
 <!-- markdown-toc end -->
 
@@ -320,6 +321,38 @@ pub extern "C" fn rust_init_syms() {
 You're done! Compile Remacs, try your function with `M-x ielm`, and
 open a pull request. Fame and glory await!
 
+### Porting Widely Used C Functions
+
+If your Rust function replaces a C function that is used elsewhere in
+the C codebase, you will need to export it. We change our function
+definition to add `extern` and `no_mangle`:
+
+``` rust
+#[no_mangle]
+pub extern "C" fn Fnumberp(object: LispObject) -> LispObject {
+    if lisp::NUMBERP(object) {
+        unsafe {
+            Qt
+        }
+    } else {
+        Qnil
+    }
+}
+```
+
+The function needs to be exported in lib.rs:
+
+``` rust
+pub use yourmodulename::Fnumberp;
+```
+
+and add a declaration in the C where the function used to be:
+
+``` c
+// This should take the same number of arguments as the Rust function.
+Lisp_Object Fnumberp(Lisp_Object);
+```
+
 ## Contributing
 
 Pull requests welcome, no copyright assignment required. This project is under the
@@ -398,3 +431,37 @@ For the checked arithmetic macros (`INT_ADD_WRAPV`,
 
 `emacs_abort()` in Emacs C should be `panic!("reason for panicking")`
 in Rust.
+
+### Safety
+
+`LispObject` values may represent pointers, so the usual safety
+concerns of raw pointers apply.
+
+If you can break memory safety by passing a valid value to a function,
+then it should be marked as `unsafe`. For example:
+
+``` rust
+// This function is unsafe because it's dereferencing the car
+// of a cons cell. If `object` is not a cons cell, we'll dereference
+// an invalid pointer.
+unsafe fn XCAR(object: LispObject) -> LispObject {
+    (*XCONS(object)).car
+}
+
+// This function is safe because it preserves the contract
+// of XCAR: it only passes valid cons cells. We just use
+// unsafe blocks instead.
+fn car(object: LispObject) -> LispObject {
+    if CONSP(object) {
+        unsafe {
+            XCAR(object)
+        }
+    } else if NILP(object) {
+        Qnil
+    } else {
+        unsafe {
+            wrong_type_argument(Qlistp, object)
+        }
+    }
+}
+```

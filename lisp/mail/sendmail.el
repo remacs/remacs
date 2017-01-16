@@ -28,8 +28,8 @@
 
 ;;; Code:
 (require 'mail-utils)
-
 (require 'rfc2047)
+(autoload 'message-make-date "message")
 
 (defgroup sendmail nil
   "Mail sending commands for Emacs."
@@ -1409,6 +1409,7 @@ just append to the file, in Babyl format if necessary."
 	(require 'mail-utils)
 	(insert (mail-rfc822-time-zone time) " ")
 	(goto-char (point-max))
+	(insert "Date: " (message-make-date) "\n")
 	(insert-buffer-substring mailbuf)
 	;; Make sure messages are separated.
 	(goto-char (point-max))
