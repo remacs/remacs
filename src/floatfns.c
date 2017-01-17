@@ -50,8 +50,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    implementations that are good enough.  */
 #undef isfinite
 #define isfinite(x) ((x) - (x) == 0)
-#undef isnan
-#define isnan(x) ((x) != (x))
 
 /* Check that X is a floating point number.  */
 
@@ -331,6 +329,7 @@ syms_of_floatfns (void)
 #endif
   defsubr (&Sfrexp);
   defsubr (&Sldexp);
+  defsubr (&Sfround);
   defsubr (&Sexpt);
 
   defsubr (&Slogb);
