@@ -17,7 +17,8 @@ GPLv3 license.
     - [Building Remacs](#building-remacs)
         - [Debug builds](#debug-builds)
         - [Rustdoc builds](#rustdoc-builds)
-    - [Porting C Functions To Rust: Walkthrough](#porting-c-functions-to-rust-walkthrough)
+    - [Porting Elisp Primitive Functions: Walkthrough](#porting-elisp-primitive-functions-walkthrough)
+        - [Porting Widely Used C Functions](#porting-widely-used-c-functions)
     - [Contributing](#contributing)
     - [Help Needed](#help-needed)
     - [Rust Porting Tips](#rust-porting-tips)
@@ -221,7 +222,7 @@ You can then open these docs with:
 $ cargo doc --open
 ```
 
-## Porting C Functions To Rust: Walkthrough
+## Porting Elisp Primitive Functions: Walkthrough
 
 Let's look at porting `numberp` to Rust.
 
