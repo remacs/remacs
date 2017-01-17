@@ -666,6 +666,8 @@ cannot be completed sensibly: `custom-ident',
     ;; Variables.
     (,(concat "--" css-ident-re) (0 font-lock-variable-name-face))
     ;; Selectors.
+    ;; Allow plain ":root" as a selector.
+    ("^[ \t]*\\(:root\\)\\(?:[\n \t]*\\)*{" (1 'css-selector keep))
     ;; FIXME: attribute selectors don't work well because they may contain
     ;; strings which have already been highlighted as f-l-string-face and
     ;; thus prevent this highlighting from being applied (actually now that
