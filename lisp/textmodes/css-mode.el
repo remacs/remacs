@@ -27,7 +27,6 @@
 
 ;;; Todo:
 
-;; - electric ; and }
 ;; - filling code with auto-fill-mode
 ;; - fix font-lock errors with multi-line selectors
 
