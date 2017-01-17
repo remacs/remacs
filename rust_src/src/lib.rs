@@ -28,6 +28,7 @@ pub use math::Fmin;
 pub use math::Fquo;
 pub use numbers::Fintegerp;
 pub use numbers::Ffloatp;
+pub use numbers::Fnatnump;
 
 // Widely used in the C codebase.
 pub use lists::Fsetcar;
@@ -66,6 +67,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*math::Smin);
         defsubr(&*numbers::Sintegerp);
         defsubr(&*numbers::Sfloatp);
+        defsubr(&*numbers::Snatnump);
         defsubr(&*symbols::Ssymbolp);
         defsubr(&*lists::Sconsp);
         defsubr(&*lists::Ssetcar);

@@ -404,16 +404,6 @@ DEFUN ("integer-or-marker-p", Finteger_or_marker_p, Sinteger_or_marker_p, 1, 1, 
   return Qnil;
 }
 
-DEFUN ("natnump", Fnatnump, Snatnump, 1, 1, 0,
-       doc: /* Return t if OBJECT is a nonnegative integer.  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (NATNUMP (object))
-    return Qt;
-  return Qnil;
-}
-
 DEFUN ("numberp", Fnumberp, Snumberp, 1, 1, 0,
        doc: /* Return t if OBJECT is a number (floating point or integer).  */
        attributes: const)
@@ -3359,7 +3349,6 @@ syms_of_data (void)
   defsubr (&Sinteger_or_marker_p);
   defsubr (&Snumberp);
   defsubr (&Snumber_or_marker_p);
-  defsubr (&Snatnump);
   defsubr (&Skeywordp);
   defsubr (&Smultibyte_string_p);
   defsubr (&Svectorp);
