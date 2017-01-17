@@ -26,6 +26,7 @@ pub use math::Ftimes;
 pub use math::Fmax;
 pub use math::Fmin;
 pub use math::Fquo;
+pub use numbers::Fintegerp;
 pub use numbers::Ffloatp;
 
 // Widely used in the C codebase.
@@ -63,6 +64,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*math::Slogxor);
         defsubr(&*math::Smax);
         defsubr(&*math::Smin);
+        defsubr(&*numbers::Sintegerp);
         defsubr(&*numbers::Sfloatp);
         defsubr(&*symbols::Ssymbolp);
         defsubr(&*lists::Sconsp);
