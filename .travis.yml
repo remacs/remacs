@@ -4,12 +4,11 @@ rust:
   - beta
   - nightly
 
-script:
+env:
   # Ensure that we build without warnings.
-  - cd rust_src
-  - cargo build --features "strict"
-  - cd ..
+  - CARGO_FLAGS="--features 'strict'"
 
+script:
   # Configure Emacs for building
   - ./autogen.sh
   # TODO: set up makeinfo on travis.

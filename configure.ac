@@ -5125,9 +5125,9 @@ AC_ARG_ENABLE(rust-debug,
 Useful for debugging rust component of Remacs.])],
 [ac_enable_rust_debug="${enableval}"],[])
 if test x$ac_enable_rust_debug != x ; then
-CARGO_FLAGS=
+CARGO_FLAGS="$CARGO_FLAGS"
 else
-CARGO_FLAGS="--release"
+CARGO_FLAGS="$CARGO_FLAGS --release"
 fi
 
 AC_SUBST(CARGO_FLAGS)
