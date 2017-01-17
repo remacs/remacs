@@ -395,17 +395,6 @@ DEFUN ("char-or-string-p", Fchar_or_string_p, Schar_or_string_p, 1, 1, 0,
   return Qnil;
 }
 
-DEFUN ("integer-or-marker-p", Finteger_or_marker_p, Sinteger_or_marker_p, 1, 1, 0,
-       doc: /* Return t if OBJECT is an integer or a marker (editor pointer).  */)
-  (register Lisp_Object object)
-{
-  if (MARKERP (object) || INTEGERP (object))
-    return Qt;
-  return Qnil;
-}
-
-
-
 DEFUN ("number-or-marker-p", Fnumber_or_marker_p,
        Snumber_or_marker_p, 1, 1, 0,
        doc: /* Return t if OBJECT is a number or a marker.  */)
@@ -3337,7 +3326,6 @@ syms_of_data (void)
   defsubr (&Sindirect_variable);
   defsubr (&Sinteractive_form);
   defsubr (&Stype_of);
-  defsubr (&Sinteger_or_marker_p);
   defsubr (&Snumber_or_marker_p);
   defsubr (&Skeywordp);
   defsubr (&Smultibyte_string_p);

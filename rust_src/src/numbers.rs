@@ -3,7 +3,7 @@ extern crate libc;
 use std::os::raw::c_char;
 use std::ptr;
 
-use lisp::{LispObject, LispSubr, Qnil, Qt, INTEGERP, FLOATP, NATNUMP, NUMBERP};
+use lisp::{LispObject, LispSubr, Qnil, Qt, INTEGERP, FLOATP, MARKERP, NATNUMP, NUMBERP};
 
 #[no_mangle]
 pub fn Ffloatp(object: LispObject) -> LispObject {
@@ -41,6 +41,23 @@ defun!("integerp",
 
 (fn OBJECT)");
 
+pub fn Finteger_or_marker_p(object: LispObject) -> LispObject {
+    if MARKERP(object) || INTEGERP(object) {
+        unsafe { Qt }
+    } else {
+        Qnil
+    }
+}
+
+defun!("integer-or-marker-p",
+       Finteger_or_marker_p,
+       Sinteger_or_marker_p,
+       1, 1,
+       ptr::null(),
+       "Return t if OBJECT is an integer or a marker (editor pointer).
+
+(fn OBJECT)");
+
 #[no_mangle]
 pub fn Fnatnump(object: LispObject) -> LispObject {
     if NATNUMP(object) {
@@ -49,7 +66,6 @@ pub fn Fnatnump(object: LispObject) -> LispObject {
         Qnil
     }
 }
-
 
 defun!("natnump",
        Fnatnump,
