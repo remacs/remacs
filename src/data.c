@@ -404,16 +404,7 @@ DEFUN ("integer-or-marker-p", Finteger_or_marker_p, Sinteger_or_marker_p, 1, 1, 
   return Qnil;
 }
 
-DEFUN ("numberp", Fnumberp, Snumberp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a number (floating point or integer).  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (NUMBERP (object))
-    return Qt;
-  else
-    return Qnil;
-}
+
 
 DEFUN ("number-or-marker-p", Fnumber_or_marker_p,
        Snumber_or_marker_p, 1, 1, 0,
@@ -3347,7 +3338,6 @@ syms_of_data (void)
   defsubr (&Sinteractive_form);
   defsubr (&Stype_of);
   defsubr (&Sinteger_or_marker_p);
-  defsubr (&Snumberp);
   defsubr (&Snumber_or_marker_p);
   defsubr (&Skeywordp);
   defsubr (&Smultibyte_string_p);

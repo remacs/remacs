@@ -3,7 +3,7 @@ extern crate libc;
 use std::os::raw::c_char;
 use std::ptr;
 
-use lisp::{LispObject, LispSubr, Qnil, Qt, INTEGERP, FLOATP, NATNUMP};
+use lisp::{LispObject, LispSubr, Qnil, Qt, INTEGERP, FLOATP, NATNUMP, NUMBERP};
 
 #[no_mangle]
 pub fn Ffloatp(object: LispObject) -> LispObject {
@@ -57,5 +57,23 @@ defun!("natnump",
        1, 1,
        ptr::null(),
        "Return t if OBJECT is a non-negative integer.
+
+(fn OBJECT)");
+
+#[no_mangle]
+pub fn Fnumberp(object: LispObject) -> LispObject {
+    if NUMBERP(object) {
+        unsafe { Qt }
+    } else {
+        Qnil
+    }
+}
+
+defun!("numberp",
+       Fnumberp,
+       Snumberp,
+       1, 1,
+       ptr::null(),
+       "Return t if OBJECT is a number (floating point or integer).
 
 (fn OBJECT)");
