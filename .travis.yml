@@ -4,6 +4,9 @@ rust:
   - beta
   - nightly
 
+env:
+  - CARGO_FLAGS="--features 'strict'"
+
 script:
   # Ensure that we build without warnings.
   - cd rust_src
