@@ -395,16 +395,6 @@ DEFUN ("char-or-string-p", Fchar_or_string_p, Schar_or_string_p, 1, 1, 0,
   return Qnil;
 }
 
-DEFUN ("number-or-marker-p", Fnumber_or_marker_p,
-       Snumber_or_marker_p, 1, 1, 0,
-       doc: /* Return t if OBJECT is a number or a marker.  */)
-  (Lisp_Object object)
-{
-  if (NUMBERP (object) || MARKERP (object))
-    return Qt;
-  return Qnil;
-}
-
 DEFUN ("threadp", Fthreadp, Sthreadp, 1, 1, 0,
        doc: /* Return t if OBJECT is a thread.  */)
   (Lisp_Object object)
@@ -3326,7 +3316,6 @@ syms_of_data (void)
   defsubr (&Sindirect_variable);
   defsubr (&Sinteractive_form);
   defsubr (&Stype_of);
-  defsubr (&Snumber_or_marker_p);
   defsubr (&Skeywordp);
   defsubr (&Smultibyte_string_p);
   defsubr (&Svectorp);

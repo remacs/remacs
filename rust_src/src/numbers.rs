@@ -93,3 +93,21 @@ defun!("numberp",
        "Return t if OBJECT is a number (floating point or integer).
 
 (fn OBJECT)");
+
+#[no_mangle]
+pub fn Fnumber_or_marker_p(object: LispObject) -> LispObject {
+    if NUMBERP(object) || MARKERP(object) {
+        unsafe { Qt }
+    } else {
+        Qnil
+    }
+}
+
+defun!("number-or-marker-p",
+       Fnumber_or_marker_p,
+       Snumber_or_marker_p,
+       1, 1,
+       ptr::null(),
+       "Return t if OBJECT is a number or a marker (editor pointer).
+
+(fn OBJECT)");

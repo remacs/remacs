@@ -31,6 +31,7 @@ pub use numbers::Finteger_or_marker_p;
 pub use numbers::Ffloatp;
 pub use numbers::Fnatnump;
 pub use numbers::Fnumberp;
+pub use numbers::Fnumber_or_marker_p;
 
 // Widely used in the C codebase.
 pub use lists::Fsetcar;
@@ -71,6 +72,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*numbers::Sinteger_or_marker_p);
         defsubr(&*numbers::Sfloatp);
         defsubr(&*numbers::Snatnump);
+        defsubr(&*numbers::Snumber_or_marker_p);
         defsubr(&*numbers::Snumberp);
         defsubr(&*symbols::Ssymbolp);
         defsubr(&*lists::Sconsp);
