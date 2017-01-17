@@ -12,6 +12,7 @@ mod marker;
 mod eval;
 mod floatfns;
 mod math;
+mod numbers;
 mod strings;
 mod symbols;
 mod globals;
@@ -25,6 +26,7 @@ pub use math::Ftimes;
 pub use math::Fmax;
 pub use math::Fmin;
 pub use math::Fquo;
+pub use numbers::Ffloatp;
 
 // Widely used in the C codebase.
 pub use lists::Fsetcar;
@@ -61,6 +63,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*math::Slogxor);
         defsubr(&*math::Smax);
         defsubr(&*math::Smin);
+        defsubr(&*numbers::Sfloatp);
         defsubr(&*symbols::Ssymbolp);
         defsubr(&*lists::Sconsp);
         defsubr(&*lists::Ssetcar);

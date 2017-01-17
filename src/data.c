@@ -445,16 +445,6 @@ DEFUN ("number-or-marker-p", Fnumber_or_marker_p,
   return Qnil;
 }
 
-DEFUN ("floatp", Ffloatp, Sfloatp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a floating point number.  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (FLOATP (object))
-    return Qt;
-  return Qnil;
-}
-
 DEFUN ("threadp", Fthreadp, Sthreadp, 1, 1, 0,
        doc: /* Return t if OBJECT is a thread.  */)
   (Lisp_Object object)
@@ -3380,7 +3370,6 @@ syms_of_data (void)
   defsubr (&Sinteger_or_marker_p);
   defsubr (&Snumberp);
   defsubr (&Snumber_or_marker_p);
-  defsubr (&Sfloatp);
   defsubr (&Snatnump);
   defsubr (&Skeywordp);
   defsubr (&Smultibyte_string_p);

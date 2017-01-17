@@ -3,7 +3,7 @@ extern crate libc;
 use std::os::raw::c_char;
 use std::ptr;
 
-use lisp::{LispObject, LispSubr, Qnumberp, Qfloatp, EmacsDouble, CHECK_TYPE};
+use lisp::{LispObject, LispSubr,  Qnumberp, Qfloatp, EmacsDouble, CHECK_TYPE};
 
 pub fn init_float_syms() {
     unsafe {
