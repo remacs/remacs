@@ -596,11 +596,13 @@ gl-stamp: $(libsrc)/make-docfile$(EXEEXT) $(GLOBAL_SOURCES)
 
 globals.h: gl-stamp; @true
 
-$(top_srcdir)/rust_src/target/.rustflags : FORCE
+RUSTFLAGS_FILE=$(top_srcdir)/rust_src/target/.rustflags
+$(RUSTFLAGS_FILE) : FORCE
 	echo "$(CARGO_FLAGS) $(RUSTFLAGS)" > $@.tmp
 	diff -q $@ $@.tmp || cp $@.tmp $@
 	rm -f $@.tmp
 
+LIBREMACS_ARCHIVE=$(top_srcdir)/rust_src/target/$(CARGO_BUILD_DIR)/libremacs.a
 $(ALLOBJS): globals.h
 
 LIBEGNU_ARCHIVE = $(lib)/lib$(if $(HYBRID_MALLOC),e)gnu.a
@@ -613,7 +615,7 @@ $(LIBEGNU_ARCHIVE): $(config_h)
 ## This goes on to affect various things, and the emacs binary fails
 ## to start if Vinstallation_directory has the wrong value.
 temacs$(EXEEXT): $(LIBXMENU) $(ALLOBJS) \
-	         $(top_srcdir)/rust_src/target/.rustflags \
+	         $(LIBREMACS_ARCHIVE) $(RUSTFLAGS_FILE) \
 	         $(LIBEGNU_ARCHIVE) $(EMACSRES) ${charsets} ${charscript}
 	$(AM_V_CCLD)$(CC) $(ALL_CFLAGS) $(TEMACS_LDFLAGS) $(LDFLAGS) \
 	  -o temacs $(ALLOBJS) $(LIBEGNU_ARCHIVE) $(W32_RES_LINK) $(LIBES)
