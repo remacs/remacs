@@ -1113,7 +1113,7 @@ for a moment, then straighten yourself up.
 	  (dun-doverb dun-ignore dun-verblist (car rest) (cdr rest)))
       (if (not (cdr (assq (intern verb) dun-verblist))) -1
 	(setq dun-numcmds (1+ dun-numcmds))
-	(eval (list (cdr (assq (intern verb) dun-verblist)) (quote rest)))))))
+	(funcall (cdr (assq (intern verb) dun-verblist)) rest)))))
 
 
 ;;; Function to take a string and change it into a list of lowercase words.
@@ -2687,7 +2687,7 @@ drwxr-xr-x  3 root     staff          2048 Jan 1 1970 ..")
 			    (dun-mprinc var)
 			    (dun-mprinc ": Permission denied")
 			    (setq nomore t))
-			(eval (list 'dun-mprinc var))
+			(dun-mprinc var)
 			(dun-mprinc " ")))))))
 	    (dun-mprinc "\n")))
 
@@ -3177,9 +3177,7 @@ File not found")))
 
 
 (defun dun-save-val (varname)
-  (let (value)
-    (setq varname (intern varname))
-    (setq value (eval varname))
+  (let ((value (symbol-value (intern varname))))
     (dun-minsert "(setq ")
     (dun-minsert varname)
     (dun-minsert " ")
@@ -3329,7 +3327,7 @@ File not found")))
   (dun-mprinc "\n")
   (dun-batch-loop))
 
-(unless (not noninteractive)
+(when noninteractive
   (fset 'dun-mprinc 'dun-batch-mprinc)
   (fset 'dun-mprincl 'dun-batch-mprincl)
   (fset 'dun-vparse 'dun-batch-parse)
