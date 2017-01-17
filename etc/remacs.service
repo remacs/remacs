@@ -3,13 +3,13 @@
 ## If you install this file by hand, change the "Exec" lines below
 ## to use absolute file names for the executables.
 [Unit]
-Description=Emacs text editor
-Documentation=info:emacs man:emacs(1) https://gnu.org/software/emacs/
+Description=remacs text editor
+Documentation=info:remacs man:remacs(1) https://gnu.org/software/emacs/
 
 [Service]
 Type=simple
-ExecStart=emacs --new-daemon
-ExecStop=emacsclient --eval "(kill-emacs)"
+ExecStart=remacs --new-daemon
+ExecStop=remacsclient --eval "(kill-emacs)"
 Environment=SSH_AUTH_SOCK=%t/keyring/ssh
 Restart=on-failure
 

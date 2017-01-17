@@ -25,7 +25,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    ${standardlisppath}, which typically has a value like:
    <datadir>/emacs/VERSION/lisp where datadir is eg /usr/local/share.
 */
-#define PATH_LOADSEARCH "/usr/local/share/emacs/lisp"
+#define PATH_LOADSEARCH "/usr/local/share/remacs/lisp"
 
 
 /* Like PATH_LOADSEARCH, but contains the non-standard pieces.
@@ -36,7 +36,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    This is combined with PATH_LOADSEARCH to make the default load-path.
    If the --no-site-lisp option is used, this piece is excluded.
 */
-#define PATH_SITELOADSEARCH "/usr/local/share/emacs/site-lisp"
+#define PATH_SITELOADSEARCH "/usr/local/share/remacs/site-lisp"
 
 
 /* Like PATH_LOADSEARCH, but used only during the build process
@@ -50,12 +50,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    variable exec-path and the first file name in it sets the Lisp
    variable exec-directory.  exec-directory is used for finding
    executables and other architecture-dependent files.  */
-#define PATH_EXEC "/usr/local/libexec/emacs"
+#define PATH_EXEC "/usr/local/libexec/remacs"
 
 /* Where Emacs should look for its architecture-independent data
    files, like the NEWS file.  The lisp variable data-directory
    is set to this value.  */
-#define PATH_DATA "/usr/local/share/emacs/etc"
+#define PATH_DATA "/usr/local/share/remacs/etc"
 
 /* Where Emacs should look for X bitmap files.
    The lisp variable x-bitmap-file-path is set based on this value.  */
@@ -63,7 +63,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Where Emacs should look for its docstring file.  The lisp variable
    doc-directory is set to this value.  */
-#define PATH_DOC "/usr/local/share/emacs/etc"
+#define PATH_DOC "/usr/local/share/remacs/etc"
 
 /* Where the configuration process believes the info tree lives.  The
    lisp variable configure-info-directory gets its value from this
@@ -71,7 +71,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define PATH_INFO "/usr/local/share/info"
 
 /* Where Emacs should store game score files.  */
-#define PATH_GAME "/usr/local/var/games/emacs"
+#define PATH_GAME "/usr/local/var/games/remacs"
 
 /* Where Emacs should look for the application default file. */
 #define PATH_X_DEFAULTS "/usr/lib/X11/%L/%T/%N%C%S:/usr/lib/X11/%l/%T/%N%C%S:/usr/lib/X11/%T/%N%C%S:/usr/lib/X11/%L/%T/%N%S:/usr/lib/X11/%l/%T/%N%S:/usr/lib/X11/%T/%N%S"

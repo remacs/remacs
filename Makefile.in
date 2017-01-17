@@ -162,7 +162,7 @@ libdir=@libdir@
 # Where to install Emacs's man pages.
 # Note they contain cross-references that expect them to be in section 1.
 mandir=@mandir@
-man1dir=$(mandir)/man1
+man2dir=$(mandir)/man2
 
 # Where to install and expect the info files describing Emacs.
 infodir=@infodir@
@@ -306,9 +306,9 @@ GZIP_PROG = @GZIP_PROG@
 TRANSFORM = @program_transform_name@
 
 # What emacs should be called when installed.
-EMACS_NAME = `echo emacs | sed '$(TRANSFORM)'`
+EMACS_NAME = `echo remacs | sed '$(TRANSFORM)'`
 EMACS = ${EMACS_NAME}${EXEEXT}
-EMACSFULL = `echo emacs-${version} | sed '$(TRANSFORM)'`${EXEEXT}
+EMACSFULL = `echo remacs-${version} | sed '$(TRANSFORM)'`${EXEEXT}
 
 # Subdirectories to make recursively.
 SUBDIR = $(NTDIR) lib lib-src src lisp
@@ -522,7 +522,7 @@ install-arch-dep: src install-arch-indep install-etcdoc install-$(NTDIR)
 	umask 022; ${MKDIR_P} "$(DESTDIR)${bindir}"
 	$(MAKE) -C lib-src install
 ifeq (${ns_self_contained},no)
-	${INSTALL_PROGRAM} $(INSTALL_STRIP) src/emacs${EXEEXT} "$(DESTDIR)${bindir}/$(EMACSFULL)"
+	${INSTALL_PROGRAM} $(INSTALL_STRIP) src/remacs${EXEEXT} "$(DESTDIR)${bindir}/$(EMACSFULL)"
 	-chmod 755 "$(DESTDIR)${bindir}/$(EMACSFULL)"
 ifndef NO_BIN_LINK
 	rm -f "$(DESTDIR)${bindir}/$(EMACS)"
@@ -634,9 +634,9 @@ install-arch-indep: lisp install-info install-man ${INSTALL_ARCH_INDEP_EXTRA}
 	done
 	-rm -f "$(DESTDIR)${lispdir}/subdirs.el"
 	umask 022; $(srcdir)/build-aux/update-subdirs "$(DESTDIR)${lispdir}"
-	subdir="$(DESTDIR)${datadir}/emacs/${version}/site-lisp" ; \
+	subdir="$(DESTDIR)${datadir}/remacs/${version}/site-lisp" ; \
 	  ${write_subdir}
-	subdir="$(DESTDIR)${datadir}/emacs/site-lisp" ; \
+	subdir="$(DESTDIR)${datadir}/remacs/site-lisp" ; \
 	  ${write_subdir} || true
 	[ -z "${GZIP_PROG}" ] || { \
 	  echo "Compressing *.el etc. ..." && \
@@ -646,7 +646,7 @@ install-arch-indep: lisp install-info install-man ${INSTALL_ARCH_INDEP_EXTRA}
 	  done; \
 	  ${GZIP_PROG} -9n "../etc/publicsuffix.txt"; \
 	}
-	-chmod -R a+r "$(DESTDIR)${datadir}/emacs/${version}" ${COPYDESTS}
+	-chmod -R a+r "$(DESTDIR)${datadir}/remacs/${version}" ${COPYDESTS}
 
 ## The above chmods are needed because "umask 022; tar ..." is not
 ## guaranteed to do the right thing; eg if we are root and tar is
@@ -709,17 +709,17 @@ install-info: info
 ## ctags.1 is compressed or not.  "gzip -f" is another option here,
 ## but not sure if portable.
 install-man:
-	umask 022; ${MKDIR_P} "$(DESTDIR)${man1dir}"
+	umask 022; ${MKDIR_P} "$(DESTDIR)${man2dir}"
 	thisdir=`/bin/pwd`; \
 	cd ${mansrcdir}; \
 	for page in *.1; do \
 	  test "$$page" = ChangeLog.1 && continue; \
 	  dest=`echo "$${page}" | sed -e 's/\.1$$//' -e '$(TRANSFORM)'`.1; \
 	  (cd "$${thisdir}"; \
-	   ${INSTALL_DATA} ${mansrcdir}/$${page} "$(DESTDIR)${man1dir}/$${dest}"); \
+	   ${INSTALL_DATA} ${mansrcdir}/$${page} "$(DESTDIR)${man2dir}/$${dest}"); \
 	  [ -n "${GZIP_PROG}" ] || continue ; \
-	  rm -f "$(DESTDIR)${man1dir}/$${dest}.gz"; \
-	  ${GZIP_PROG} -9n "$(DESTDIR)${man1dir}/$${dest}" || true; \
+	  rm -f "$(DESTDIR)${man2dir}/$${dest}.gz"; \
+	  ${GZIP_PROG} -9n "$(DESTDIR)${man2dir}/$${dest}" || true; \
 	done
 
 ## Install those items from etc/ that need to end up elsewhere.
@@ -730,29 +730,29 @@ EMACS_ICON=emacs
 
 install-etc:
 	umask 022; ${MKDIR_P} "$(DESTDIR)${desktopdir}"
-	tmp=etc/emacs.tmpdesktop; rm -f $${tmp}; \
-	emacs_name=`echo emacs | sed '$(TRANSFORM)'`; \
-	sed -e "/^Exec=emacs/ s/emacs/$${emacs_name}/" \
-	  -e "/^Icon=emacs/ s/emacs/$${emacs_name}/" \
-	  ${srcdir}/etc/emacs.desktop > $${tmp}; \
+	emacs_name=`echo remacs | sed '$(TRANSFORM)'`; \
+	tmp=etc/$${emacs_name}.tmpdesktop; rm -f $${tmp}; \
+	sed -e "/^Exec=remacs/ s/remacs/$${emacs_name}/" \
+	  -e "/^Icon=remacs/ s/remacs/$${emacs_name}/" \
+	  ${srcdir}/etc/remacs.desktop > $${tmp}; \
 	${INSTALL_DATA} $${tmp} "$(DESTDIR)${desktopdir}/${EMACS_NAME}.desktop"; \
 	rm -f $${tmp}
 	umask 022; ${MKDIR_P} "$(DESTDIR)${appdatadir}"
-	tmp=etc/emacs.tmpappdata; rm -f $${tmp}; \
-	sed -e "s/emacs\.desktop/${EMACS_NAME}.desktop/" \
-	  ${srcdir}/etc/emacs.appdata.xml > $${tmp}; \
+	tmp=etc/remacs.tmpappdata; rm -f $${tmp}; \
+	sed -e "s/remacs\.desktop/${EMACS_NAME}.desktop/" \
+	  ${srcdir}/etc/remacs.appdata.xml > $${tmp}; \
 	${INSTALL_DATA} $${tmp} "$(DESTDIR)${appdatadir}/${EMACS_NAME}.appdata.xml"; \
 	rm -f $${tmp}
 	umask 022; $(MKDIR_P) "$(DESTDIR)$(systemdunitdir)"
-	tmp=etc/emacs.tmpservice; rm -f $${tmp}; \
-	emacs_name=`echo emacs | sed '$(TRANSFORM)'`; \
+	tmp=etc/remacs.tmpservice; rm -f $${tmp}; \
+	emacs_name=`echo remacs | sed '$(TRANSFORM)'`; \
 	exe_name=$${emacs_name}${EXEEXT}; \
-	client_name=`echo emacsclient | sed '$(TRANSFORM)'`${EXEEXT}; \
+	client_name=`echo remacsclient | sed '$(TRANSFORM)'`${EXEEXT}; \
 	sed -e '/^##/d' \
-	  -e "/^Documentation/ s/emacs(1)/$${emacs_name}(1)/" \
-	  -e "/^ExecStart/ s|emacs|${bindir}/$${exe_name}|" \
-	  -e "/^ExecStop/ s|emacsclient|${bindir}/$${client_name}|" \
-	  ${srcdir}/etc/emacs.service > $${tmp}; \
+	  -e "/^Documentation/ s/remacs(1)/$${emacs_name}(1)/" \
+	  -e "/^ExecStart/ s|remacs|${bindir}/$${exe_name}|" \
+	  -e "/^ExecStop/ s|remacsclient|${bindir}/$${client_name}|" \
+	  ${srcdir}/etc/remacs.service > $${tmp}; \
 	$(INSTALL_DATA) $${tmp} "$(DESTDIR)$(systemdunitdir)/${EMACS_NAME}.service"; \
 	rm -f $${tmp}
 	thisdir=`/bin/pwd`; \
@@ -763,7 +763,7 @@ install-etc:
 	  for icon in $${dir}/${EMACS_ICON}[.-]*; do \
 	    [ -r $${icon} ] || continue ; \
 	    ext=`echo "$${icon}" | sed -e 's|.*\.||'`; \
-	    dest=`echo "$${icon}" | sed -e 's|.*/||' -e "s|\\.$${ext}\$$||" -e 's/$(EMACS_ICON)/emacs/' -e '$(TRANSFORM)'`.$${ext} ; \
+	    dest=`echo "$${icon}" | sed -e 's|.*/||' -e "s|\\.$${ext}\$$||" -e 's/$(EMACS_ICON)/remacs/' -e '$(TRANSFORM)'`.$${ext} ; \
 	    ( cd "$${thisdir}"; \
 	      ${INSTALL_DATA} ${iconsrcdir}/$${icon} "$(DESTDIR)${icondir}/$${dir}/$${dest}" ) \
 	    || exit 1; \
@@ -788,13 +788,13 @@ uninstall: uninstall-$(NTDIR) uninstall-doc
 	      * ) rm -rf "$${dir}" ;;			\
 	    esac ;					\
 	    case "$${dir}" in				\
-	      "$(DESTDIR)${datadir}/emacs/${version}"/* )		\
-	        rm -rf "$(DESTDIR)${datadir}/emacs/${version}"	\
+	      "$(DESTDIR)${datadir}/remacs/${version}"/* )		\
+	        rm -rf "$(DESTDIR)${datadir}/remacs/${version}"	\
 	      ;;					\
 	    esac ;					\
 	  fi ;						\
 	done
-	-rm -rf "$(DESTDIR)${libexecdir}/emacs/${version}"
+	-rm -rf "$(DESTDIR)${libexecdir}/remacs/${version}"
 	thisdir=`/bin/pwd`; \
 	(info_misc=`$(MAKE) --no-print-directory -s -C doc/misc echo-info`; \
 	 if cd "$(DESTDIR)${infodir}"; then \
@@ -810,7 +810,7 @@ uninstall: uninstall-$(NTDIR) uninstall-doc
 	    ext=.gz; else ext=; fi; \
 	 if cd ${mansrcdir}; then \
 	   for page in *.1; do \
-	     rm -f "$(DESTDIR)${man1dir}"/`echo "$${page}" | sed -e 's/\.1$$//' -e '$(TRANSFORM)'`.1$$ext; done; \
+	     rm -f "$(DESTDIR)${man2dir}"/`echo "$${page}" | sed -e 's/\.1$$//' -e '$(TRANSFORM)'`.1$$ext; done; \
 	 fi)
 	(cd "$(DESTDIR)${bindir}" && rm -f $(EMACSFULL) $(EMACS) || true)
 	(if cd "$(DESTDIR)${icondir}"; then \
@@ -1195,7 +1195,7 @@ change-history-commit:
 .PHONY: check-declare
 
 check-declare:
-	@if [ ! -f $(srcdir)/src/emacs ]; then \
+	@if [ ! -f $(srcdir)/src/remacs ]; then \
 	  echo "You must build Emacs to use this command"; \
 	  exit 1; \
 	fi
