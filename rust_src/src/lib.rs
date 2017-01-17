@@ -17,6 +17,7 @@ mod math;
 mod strings;
 mod symbols;
 mod globals;
+mod character;
 
 use lisp::LispSubr;
 
@@ -72,6 +73,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*strings::Sstringp);
         defsubr(&*strings::Seq);
         defsubr(&*strings::Snull);
+        defsubr(&*character::Smax_char);
 
         floatfns::init_float_syms();
     }

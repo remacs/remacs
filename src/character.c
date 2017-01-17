@@ -228,14 +228,6 @@ usage: (characterp OBJECT)  */
   return (CHARACTERP (object) ? Qt : Qnil);
 }
 
-DEFUN ("max-char", Fmax_char, Smax_char, 0, 0, 0,
-       doc: /* Return the character of the maximum code.  */
-       attributes: const)
-  (void)
-{
-  return make_number (MAX_CHAR);
-}
-
 DEFUN ("unibyte-char-to-multibyte", Funibyte_char_to_multibyte,
        Sunibyte_char_to_multibyte, 1, 1, 0,
        doc: /* Convert the byte CH to multibyte character.  */)
@@ -1059,7 +1051,6 @@ syms_of_character (void)
   staticpro (&Vchar_unify_table);
   Vchar_unify_table = Qnil;
 
-  defsubr (&Smax_char);
   defsubr (&Scharacterp);
   defsubr (&Sunibyte_char_to_multibyte);
   defsubr (&Smultibyte_char_to_unibyte);
