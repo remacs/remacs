@@ -109,7 +109,7 @@
 (def-edebug-spec push
   (&or [form symbolp] [form gv-place]))
 
-;; Correct wrong declaration. This still doesn't support dotted desctructuring
+;; Correct wrong declaration. This still doesn't support dotted destructuring
 ;; though.
 (def-edebug-spec cl-lambda-list
   (([&rest cl-macro-arg]
@@ -1006,7 +1006,7 @@ BEG-UND are the starting points of the overline or underline,
 respectively.  They may be nil if the respective thing is missing.
 BEG-TXT is the beginning of the title line or the transition and
 must be given.  The end of the line is used as the end point.  TXT
-is the title text or nil.  If TXT is given the indendation of the
+is the title text or nil.  If TXT is given the indentation of the
 line containing BEG-TXT is used as indentation.  Match group 0 is
 derived from the remaining information."
   (cl-check-type beg-txt integer-or-marker)
@@ -1845,8 +1845,7 @@ Uses and sets `rst-all-ttls-cache'."
 HDRS reflects the order in which the headers appear in the
 buffer.  Return a `rst-Hdr' list representing the hierarchy of
 headers in the buffer.  Indentation is unified."
-  (let (ado2indents) ; Asscociates `rst-Ado' with the set of indents seen for
-		     ; it.
+  (let (ado2indents) ; Associates `rst-Ado' with the set of indents seen for it.
     (dolist (hdr hdrs)
       (let* ((ado (rst-Hdr-ado hdr))
 	     (indent (rst-Hdr-indent hdr))
@@ -2451,7 +2450,7 @@ also arranged by `rst-insert-list-new-tag'."
 (defun rst-insert-list-continue (ind tag tab prefer-roman)
   ;; testcover: ok.
   "Insert a new list tag after the current line according to style.
-Style is defined by indentaton IND, TAG and suffix TAB.  If
+Style is defined by indentation IND, TAG and suffix TAB.  If
 PREFER-ROMAN roman numbering is preferred over using letters."
   (end-of-line)
   (insert
@@ -2551,8 +2550,8 @@ roman numerical list, just use a prefix to set PREFER-ROMAN."
   "Return the positions of begs in region BEG to END.
 RST-RE-BEG is a `rst-re' argument and matched at the beginning of
 a line.  Return a list of (POINT . COLUMN) where POINT gives the
-point after indentaton and COLUMN gives its column.  The list is
-ordererd by POINT."
+point after indentation and COLUMN gives its column.  The list is
+ordered by POINT."
   (let (r)
     (save-match-data
       (save-excursion
@@ -2963,7 +2962,7 @@ error if there is no working link at the given position."
   (unless link-buf
     (setq link-buf (current-buffer)))
   ;; Do not catch errors from `rst-toc-get-link' because otherwise the error is
-  ;; suppressed and invisible in interactve use.
+  ;; suppressed and invisible in interactive use.
   (let ((mrkr (rst-toc-get-link link-buf link-pnt)))
     (condition-case nil
 	(rst-toc-mode-return kill)
