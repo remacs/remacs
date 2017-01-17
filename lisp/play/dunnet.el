@@ -3343,8 +3343,8 @@ File not found")))
 
 (provide 'dunnet)
 
-;;; dunnet.el ends here
-
 ;; Local Variables:
 ;; byte-compile-warnings: (not free-vars lexical)
 ;; End:
+
+;;; dunnet.el ends here
