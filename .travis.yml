@@ -11,7 +11,7 @@ script:
   # Configure Emacs for building
   - ./autogen.sh
   # TODO: set up makeinfo on travis.
-  - ./configure --without-makeinfo --with-xpm=no --with-gif=no
+  - ./configure --without-makeinfo --with-xpm=no --with-gif=no --with-gnutls=no
   - make -j 3
 
   - make check || echo 'make check failed'
