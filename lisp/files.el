@@ -6074,8 +6074,8 @@ See also `auto-save-file-name-p'."
 	    ;; Make sure auto-save file names don't contain characters
 	    ;; invalid for the underlying filesystem.
 	    (if (and (memq system-type '(ms-dos windows-nt cygwin))
-		     ;; Don't modify remote (ange-ftp) filenames
-		     (not (string-match "^/\\w+@[-A-Za-z0-9._]+:" result)))
+		     ;; Don't modify remote filenames
+                     (not (file-remote-p result)))
 		(convert-standard-filename result)
 	      result))))
 
@@ -6112,8 +6112,8 @@ See also `auto-save-file-name-p'."
 		      ((file-writable-p "/var/tmp/") "/var/tmp/")
 		      ("~/")))))
 	       (if (and (memq system-type '(ms-dos windows-nt cygwin))
-			;; Don't modify remote (ange-ftp) filenames
-			(not (string-match "^/\\w+@[-A-Za-z0-9._]+:" fname)))
+			;; Don't modify remote filenames
+			(not (file-remote-p fname)))
 		   ;; The call to convert-standard-filename is in case
 		   ;; buffer-name includes characters not allowed by the
 		   ;; DOS/Windows filesystems.  make-temp-file writes to the
