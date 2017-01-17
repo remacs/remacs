@@ -374,8 +374,6 @@ Easy tasks:
   on.
 - [ ] Fix the makefile to recompile with cargo and rebuild temacs when the
   Rust source changes.
-- [ ] Fix 'make clean' to delete .elc files, otherwise you don't notice
-  some bugs until Travis runs.
 - [ ] Add Rust-level unit tests to elisp functions defined in lib.rs.
 
 Medium tasks:

@@ -4,7 +4,8 @@ use std::os::raw::c_char;
 use std::ptr;
 use std::mem;
 
-use lisp::{LispObject, LispType, XTYPE, XUNTAG, Qt, Qnil, LispSubr, CHECK_TYPE, wrong_type_argument};
+
+use lisp::{CHECK_TYPE, LispObject, LispSubr, LispType, Qnil, Qt, XTYPE, XUNTAG, wrong_type_argument};
 
 extern "C" {
     static Qconsp: LispObject;
@@ -12,9 +13,21 @@ extern "C" {
     static Qlistp: LispObject;
 }
 
+
 pub fn CONSP(x: LispObject) -> bool {
     XTYPE(x) == LispType::Lisp_Cons
 }
+
+fn Fatom(object: LispObject) -> LispObject {
+    if CONSP(object) {
+        Qnil
+    } else {
+        unsafe { Qt }
+    }
+}
+
+defun!("atom", Fatom, Satom, 1, 1, ptr::null(),
+       "Return t if OBJECT is not a cons cell.  This includes nil.");
 
 fn Fconsp(object: LispObject) -> LispObject {
     if CONSP(object) { unsafe { Qt } } else { Qnil }
@@ -174,3 +187,40 @@ See Info node `(elisp)Cons Cells' for a discussion of related basic
 Lisp concepts such as cdr, car, cons cell and list.
 
 (fn LIST)");
+
+#[no_mangle]
+pub extern "C" fn Flistp(object: LispObject) -> LispObject {
+    if CONSP(object) || NILP(object) {
+        unsafe { Qt }
+    } else {
+        Qnil
+    }
+}
+
+defun!("listp",
+       Flistp,
+       Slistp,
+       1, 1,
+       ptr::null(),
+"return t if OBJECT is a list, that is a cons cell or nil, Otherwise, return nil.
+
+(fn OBJECT)"
+);
+
+fn Fnlistp(object: LispObject) -> LispObject {
+    if CONSP(object) || NILP(object) {
+        Qnil
+    } else {
+        unsafe { Qt }
+    }
+}
+
+defun!("nlistp",
+       Fnlistp,
+       Snlistp,
+       1,2,
+       ptr::null(),
+       "Return t if OBJECT is not a list.  Lists include nil.
+
+(fn OBJECT)"
+);

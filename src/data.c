@@ -256,27 +256,6 @@ for example, (type-of 1) returns `integer'.  */)
     }
 }
 
-DEFUN ("listp", Flistp, Slistp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a list, that is, a cons cell or nil.
-Otherwise, return nil.  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (CONSP (object) || NILP (object))
-    return Qt;
-  return Qnil;
-}
-
-DEFUN ("nlistp", Fnlistp, Snlistp, 1, 1, 0,
-       doc: /* Return t if OBJECT is not a list.  Lists include nil.  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (CONSP (object) || NILP (object))
-    return Qnil;
-  return Qt;
-}
-
 /* Define this in C to avoid unnecessarily consing up the symbol
    name.  */
 DEFUN ("keywordp", Fkeywordp, Skeywordp, 1, 1, 0,
@@ -3397,8 +3376,6 @@ syms_of_data (void)
   defsubr (&Sindirect_variable);
   defsubr (&Sinteractive_form);
   defsubr (&Stype_of);
-  defsubr (&Slistp);
-  defsubr (&Snlistp);
   defsubr (&Sintegerp);
   defsubr (&Sinteger_or_marker_p);
   defsubr (&Snumberp);

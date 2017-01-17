@@ -3,8 +3,8 @@ use std::ptr;
 
 extern crate libc;
 
-use lisp::{XTYPE, LispObject, LispType, LispSubr, Qnil, SBYTES, SSDATA, STRING_MULTIBYTE};
-use cons::NILP;
+use lisp::{XTYPE, LispObject, LispType, LispSubr, Qnil, SBYTES, SSDATA, STRING_MULTIBYTE, STRINGP};
+use lists::{NILP};
 
 extern "C" {
     static Qt: LispObject;
@@ -15,10 +15,6 @@ extern "C" {
 }
 
 static MIME_LINE_LENGTH: isize = 76;
-
-pub fn STRINGP(value: LispObject) -> bool {
-    XTYPE(value) == LispType::Lisp_String
-}
 
 fn Fstringp(object: LispObject) -> LispObject {
     if STRINGP(object) { unsafe { Qt } } else { Qnil }

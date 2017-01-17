@@ -10,7 +10,6 @@ use std::os::raw::c_char;
 #[cfg(test)]
 use std::cmp::max;
 use std::mem;
-use strings::STRINGP;
 use std::ops::Deref;
 
 use marker::{LispMarker, marker_position};
@@ -64,6 +63,7 @@ extern "C" {
     pub static Qnumber_or_marker_p: LispObject;
     pub static Qnumberp: LispObject;
     pub static Qfloatp: LispObject;
+    pub static Qstringp: LispObject;
     fn make_float(float_value: f64) -> LispObject;
 }
 
@@ -81,7 +81,7 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn from_bool(v : bool) -> LispObject {
+    pub fn from_bool(v: bool) -> LispObject {
         if v {
             unsafe { Qt }
         } else {
@@ -158,8 +158,8 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn get_untaggedptr(self) -> * mut libc::c_void {
-        (self.to_raw() & VALMASK) as libc::intptr_t as * mut libc::c_void
+    pub fn get_untaggedptr(self) -> *mut libc::c_void {
+        (self.to_raw() & VALMASK) as libc::intptr_t as *mut libc::c_void
     }
 }
 
@@ -178,11 +178,11 @@ impl LispObject {
 #[allow(non_camel_case_types)]
 #[allow(dead_code)]
 pub enum LispMiscType {
-    Lisp_Misc_Free = 0x5eab,
-    Lisp_Misc_Marker,
-    Lisp_Misc_Overlay,
-    Lisp_Misc_Save_Value,
-    Lisp_Misc_Finalizer,
+    Free = 0x5eab,
+    Marker,
+    Overlay,
+    SaveValue,
+    Finalizer,
 }
 
 
@@ -194,14 +194,14 @@ pub enum LispMiscType {
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
-pub struct ExternalPtr<T>(* mut T);
+pub struct ExternalPtr<T>(*mut T);
 
 impl<T> ExternalPtr<T> {
     pub fn new(p: *mut T) -> ExternalPtr<T> {
         ExternalPtr(p)
     }
 
-    pub fn as_ptr(&self) -> * const T {
+    pub fn as_ptr(&self) -> *const T {
         self.0
     }
 }
@@ -279,7 +279,8 @@ impl LispObject {
     #[inline]
     pub fn is_fixnum(self) -> bool {
         let ty = self.get_type();
-        (ty as u8 & ((LispType::Lisp_Int0 as u8) | !(LispType::Lisp_Int1 as u8))) == LispType::Lisp_Int0 as u8
+        (ty as u8 & ((LispType::Lisp_Int0 as u8) | !(LispType::Lisp_Int1 as u8))) ==
+        LispType::Lisp_Int0 as u8
     }
 
     /// TODO: Bignum support? (Current Emacs doesn't have it)
@@ -307,14 +308,14 @@ pub struct LispFloat {
 }
 
 #[repr(C)]
-pub struct LispFloatChainRepr(* const LispFloat);
+pub struct LispFloatChainRepr(*const LispFloat);
 
 impl LispFloat {
     pub fn as_data(&self) -> &EmacsDouble {
-        unsafe { &*(self.data.as_ptr() as * const EmacsDouble) }
+        unsafe { &*(self.data.as_ptr() as *const EmacsDouble) }
     }
     pub fn as_chain(&self) -> &LispFloatChainRepr {
-        unsafe { &*(self.data.as_ptr() as * const LispFloatChainRepr) }
+        unsafe { &*(self.data.as_ptr() as *const LispFloatChainRepr) }
     }
 }
 
@@ -366,6 +367,11 @@ impl LispObject {
     #[inline]
     pub fn is_number(self) -> bool {
         self.is_integer() || self.is_float()
+    }
+
+    #[inline]
+    pub fn is_string(self) -> bool {
+        XTYPE(self) == LispType::Lisp_String
     }
 }
 
@@ -642,6 +648,7 @@ mod deprecated {
     }
 
     #[allow(non_snake_case)]
+    #[allow(dead_code)]
     pub fn XFLOAT_DATA(f: LispObject) -> f64 {
         unsafe { f.get_float_data_unchecked() }
     }
@@ -650,6 +657,12 @@ mod deprecated {
     #[allow(non_snake_case)]
     pub fn NUMBERP(x: LispObject) -> bool {
         x.is_number()
+    }
+
+    /// Is this LispObject a string?
+    #[allow(non_snake_case)]
+    pub fn STRINGP(x: LispObject) -> bool {
+        x.is_string()
     }
 
     #[test]
@@ -715,8 +728,6 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
     }
 }
 
-
-
 /// Represents a string value in elisp
 
 #[repr(C)]
@@ -736,9 +747,16 @@ pub fn SBYTES(string: LispObject) -> libc::ptrdiff_t {
     unsafe { STRING_BYTES(XSTRING(string)) }
 }
 
+/// Raise an error if `x` is not lisp string.
+#[allow(non_snake_case)]
+#[no_mangle]
+pub extern "C" fn CHECK_STRING(x: LispObject) {
+    CHECK_TYPE(STRINGP(x), unsafe { Qstringp }, x);
+}
+
 #[allow(non_snake_case)]
 pub fn MARKERP(a: LispObject) -> bool {
-    MISCP(a) && XMISCTYPE(a) == LispMiscType::Lisp_Misc_Marker
+    MISCP(a) && XMISCTYPE(a) == LispMiscType::Marker
 }
 
 #[allow(non_snake_case)]
