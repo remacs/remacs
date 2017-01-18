@@ -55,6 +55,9 @@ pub struct LispObject(EmacsInt);
 
 extern "C" {
     pub fn wrong_type_argument(predicate: LispObject, value: LispObject) -> LispObject;
+    pub fn STRING_BYTES(s: *mut LispString) -> libc::ptrdiff_t;
+    pub fn STRING_MULTIBYTE(a: LispObject) -> bool;
+    pub fn SSDATA(string: LispObject) -> *mut libc::c_char;
     pub static Qt: LispObject;
     pub static Qarith_error: LispObject;
     pub static Qnumber_or_marker_p: LispObject;
@@ -756,6 +759,25 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
             wrong_type_argument(predicate, x);
         }
     }
+}
+
+/// Represents a string value in elisp
+
+#[repr(C)]
+pub struct LispString {
+    pub size: libc::ptrdiff_t,
+    pub size_byte: libc::ptrdiff_t,
+    pub intervals: *mut libc::c_void, // @TODO implement
+    pub data: *mut libc::c_char,
+}
+
+pub fn XSTRING(a: LispObject) -> *mut LispString {
+    debug_assert!(STRINGP(a));
+    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_String)) }
+}
+
+pub fn SBYTES(string: LispObject) -> libc::ptrdiff_t {
+    unsafe { STRING_BYTES(XSTRING(string)) }
 }
 
 /// Raise an error if `x` is not lisp string.
