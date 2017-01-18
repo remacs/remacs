@@ -26,12 +26,6 @@ pub use math::Ftimes;
 pub use math::Fmax;
 pub use math::Fmin;
 pub use math::Fquo;
-pub use numbers::Fintegerp;
-pub use numbers::Finteger_or_marker_p;
-pub use numbers::Ffloatp;
-pub use numbers::Fnatnump;
-pub use numbers::Fnumberp;
-pub use numbers::Fnumber_or_marker_p;
 
 // Widely used in the C codebase.
 pub use lists::Fsetcar;

@@ -5,8 +5,7 @@ use std::ptr;
 
 use lisp::{LispObject, LispSubr, Qnil, Qt, INTEGERP, FLOATP, MARKERP, NATNUMP, NUMBERP};
 
-#[no_mangle]
-pub fn Ffloatp(object: LispObject) -> LispObject {
+fn Ffloatp(object: LispObject) -> LispObject {
     if FLOATP(object) {
         unsafe { Qt }
     } else {
@@ -23,8 +22,7 @@ defun!("floatp",
 
 (fn OBJECT)");
 
-#[no_mangle]
-pub fn Fintegerp(object: LispObject) -> LispObject {
+fn Fintegerp(object: LispObject) -> LispObject {
     if INTEGERP(object) {
         unsafe { Qt }
     } else {
@@ -41,7 +39,7 @@ defun!("integerp",
 
 (fn OBJECT)");
 
-pub fn Finteger_or_marker_p(object: LispObject) -> LispObject {
+fn Finteger_or_marker_p(object: LispObject) -> LispObject {
     if MARKERP(object) || INTEGERP(object) {
         unsafe { Qt }
     } else {
@@ -58,8 +56,7 @@ defun!("integer-or-marker-p",
 
 (fn OBJECT)");
 
-#[no_mangle]
-pub fn Fnatnump(object: LispObject) -> LispObject {
+fn Fnatnump(object: LispObject) -> LispObject {
     if NATNUMP(object) {
         unsafe { Qt }
     } else {
@@ -76,8 +73,7 @@ defun!("natnump",
 
 (fn OBJECT)");
 
-#[no_mangle]
-pub fn Fnumberp(object: LispObject) -> LispObject {
+fn Fnumberp(object: LispObject) -> LispObject {
     if NUMBERP(object) {
         unsafe { Qt }
     } else {
@@ -94,8 +90,7 @@ defun!("numberp",
 
 (fn OBJECT)");
 
-#[no_mangle]
-pub fn Fnumber_or_marker_p(object: LispObject) -> LispObject {
+fn Fnumber_or_marker_p(object: LispObject) -> LispObject {
     if NUMBERP(object) || MARKERP(object) {
         unsafe { Qt }
     } else {
