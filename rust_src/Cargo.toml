@@ -1,6 +1,10 @@
 [package]
 authors = ["Wilfred Hughes <me@wilfred.me.uk>"]
 name = "remacs"
+description = "a Rust port of Emacs"
+homepage = "https://github.com/Wilfred/remacs/"
+repository = "https://github.com/Wilfred/remacs/"
+license = "GPL-3.0"
 version = "0.1.0"
 build = "build.rs"
 
