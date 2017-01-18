@@ -1417,8 +1417,10 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
           {
             Lisp_Object jmp_table = POP;
             Lisp_Object v1 = POP;
-            Lisp_Object dest = Fgethash(v1, jmp_table, Qnil);
-            if (!NILP(dest)) {
+            struct Lisp_Hash_Table *h = XHASH_TABLE(jmp_table);
+            ptrdiff_t i = hash_lookup(h, v1, NULL);
+            if (i >= 0) {
+              Lisp_Object dest = HASH_VALUE(h, i);
               int car = XINT(XCAR(dest));
               int cdr = XINT(XCDR(dest));
               op = car + (cdr << 8); /* Simulate FETCH2 */
