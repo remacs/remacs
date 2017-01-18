@@ -663,10 +663,13 @@ invoke_thread_function (void)
   return unbind_to (count, Qnil);
 }
 
+static Lisp_Object last_thread_error;
+
 static Lisp_Object
-do_nothing (Lisp_Object whatever)
+record_thread_error (Lisp_Object error_form)
 {
-  return whatever;
+  last_thread_error = error_form;
+  return error_form;
 }
 
 static void *
@@ -695,7 +698,7 @@ run_thread (void *state)
   handlerlist_sentinel->next = NULL;
 
   /* It might be nice to do something with errors here.  */
-  internal_condition_case (invoke_thread_function, Qt, do_nothing);
+  internal_condition_case (invoke_thread_function, Qt, record_thread_error);
 
   update_processes_for_thread_death (Fcurrent_thread ());
 
@@ -944,6 +947,13 @@ DEFUN ("all-threads", Fall_threads, Sall_threads, 0, 0, 0,
   return result;
 }
 
+DEFUN ("thread-last-error", Fthread_last_error, Sthread_last_error, 0, 0, 0,
+       doc: /* Return the last error form recorded by a dying thread.  */)
+  (void)
+{
+  return last_thread_error;
+}
+
 
 
 bool
@@ -1028,6 +1038,10 @@ syms_of_threads (void)
       defsubr (&Scondition_notify);
       defsubr (&Scondition_mutex);
       defsubr (&Scondition_name);
+      defsubr (&Sthread_last_error);
+
+      staticpro (&last_thread_error);
+      last_thread_error = Qnil;
     }
 
   DEFSYM (Qthreadp, "threadp");
