@@ -17,7 +17,6 @@ pub fn init_float_syms() {
         ::defsubr(&*Slog);
 
         ::defsubr(&*Ssqrt);
-        ::defsubr(&*Sabs);
         ::defsubr(&*Sexp);
         ::defsubr(&*Sffloor);
         ::defsubr(&*Sfceiling);
@@ -91,7 +90,6 @@ simple_float_op!("tan",  Ftan,  Stan,  tan, "Return the tangent of ARG.");
 
 simple_float_op!("exp",  Fexp,  Sexp,  exp,  "Return the exponential base e of ARG.");
 simple_float_op!("sqrt", Fsqrt, Ssqrt, sqrt, "Return the square root of ARG.");
-simple_float_op!("abs",  Fabs,  Sabs,  abs,  "Return the absolute value of ARG.");
 
 simple_float_op!("fceiling", Ffceiling, Sfceiling, ceil,
     "Return the smallest integer no less than ARG, as a float.

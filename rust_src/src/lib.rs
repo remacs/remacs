@@ -65,6 +65,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*math::Slogxor);
         defsubr(&*math::Smax);
         defsubr(&*math::Smin);
+        defsubr(&*math::Sabs);
         defsubr(&*numbers::Sintegerp);
         defsubr(&*numbers::Sinteger_or_marker_p);
         defsubr(&*numbers::Sfloatp);

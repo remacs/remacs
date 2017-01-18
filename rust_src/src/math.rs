@@ -8,7 +8,8 @@ use std::ptr;
 use std::slice;
 use libc::ptrdiff_t;
 
-use lisp::{LispSubr, MANY, LispObject, Qarith_error, XINT, make_number, EmacsInt};
+use lisp::{LispSubr, MANY, LispObject, Qarith_error, XINT, make_number,
+           EmacsInt, CHECK_TYPE, Qnumberp, LispType};
 use eval::xsignal0;
 
 fn Fmod(x: LispObject, y: LispObject) -> LispObject {
@@ -274,3 +275,18 @@ defun!("min", Fmin, Smin, 1, MANY, ptr::null(), "Return smallest of all the argu
 The value is always a number; markers are converted to numbers.
 
 (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)");
+
+
+fn Fabs(obj: LispObject) -> LispObject {
+    CHECK_TYPE(obj.is_number(), unsafe { Qnumberp }, obj); // does not return on failure
+
+    match obj.get_type(){
+        LispType::Lisp_Float => LispObject::from_float(obj.to_float().unwrap().abs()),
+        _ => make_number(obj.to_fixnum().unwrap().abs() as EmacsInt)
+    }
+
+}
+
+defun!("abs", Fabs, Sabs, 1, 1, ptr::null(), "Return the absolute value of ARG.
+
+(fn ARG)");
