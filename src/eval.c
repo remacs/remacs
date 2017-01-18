@@ -857,6 +857,7 @@ usage: (let* VARLIST BODY...)  */)
   lexenv = Vinternal_interpreter_environment;
 
   varlist = XCAR (args);
+  CHECK_LIST (varlist);
   while (CONSP (varlist))
     {
       QUIT;
@@ -917,6 +918,7 @@ usage: (let VARLIST BODY...)  */)
   USE_SAFE_ALLOCA;
 
   varlist = XCAR (args);
+  CHECK_LIST (varlist);
 
   /* Make space to hold the values to give the bound variables.  */
   elt = Flength (varlist);
