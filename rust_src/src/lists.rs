@@ -4,8 +4,7 @@ use std::os::raw::c_char;
 use std::ptr;
 use std::mem;
 
-
-use lisp::{CHECK_TYPE, LispObject, LispSubr, LispType, Qnil, Qt, XTYPE, XUNTAG, wrong_type_argument};
+use lisp::{CHECK_TYPE, LispObject, LispSubr, LispType, Qnil, XTYPE, XUNTAG, wrong_type_argument};
 
 extern "C" {
     static Qconsp: LispObject;
@@ -22,7 +21,7 @@ fn Fatom(object: LispObject) -> LispObject {
     if CONSP(object) {
         Qnil
     } else {
-        unsafe { Qt }
+        LispObject::constant_t()
     }
 }
 
@@ -30,7 +29,7 @@ defun!("atom", Fatom, Satom, 1, 1, ptr::null(),
        "Return t if OBJECT is not a cons cell.  This includes nil.");
 
 fn Fconsp(object: LispObject) -> LispObject {
-    if CONSP(object) { unsafe { Qt } } else { Qnil }
+    if CONSP(object) { LispObject::constant_t() } else { Qnil }
 }
 
 defun!("consp", Fconsp, Sconsp, 1, 1, ptr::null(), "Return t if OBJECT is a cons cell.
@@ -191,7 +190,7 @@ Lisp concepts such as cdr, car, cons cell and list.
 #[no_mangle]
 pub extern "C" fn Flistp(object: LispObject) -> LispObject {
     if CONSP(object) || NILP(object) {
-        unsafe { Qt }
+        LispObject::constant_t()
     } else {
         Qnil
     }
@@ -211,7 +210,7 @@ fn Fnlistp(object: LispObject) -> LispObject {
     if CONSP(object) || NILP(object) {
         Qnil
     } else {
-        unsafe { Qt }
+        LispObject::constant_t()
     }
 }
 
