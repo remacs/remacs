@@ -1123,6 +1123,8 @@ treasures for points?" "4" "four")
     ("What network protocol is used between pokey and gamma?"
      "tcp/ip" "ip" "tcp")))
 
+(defconst dun-combination (prin1-to-string (+ 100 (random 899))))
+
 ;;;; Mode definitions for interactive mode
 
 (define-derived-mode dun-mode text-mode "Dungeon"
@@ -2964,12 +2966,9 @@ drwxr-xr-x  3 root     staff          2048 Jan 1 1970 ..")
     (dun-uexit nil)))
 
 
-(setq tloc (+ 60 (random 18)))
-(dun-replace dun-room-objects tloc
-	     (append (nth tloc dun-room-objects) (list 18)))
-
-(setq tcomb (+ 100 (random 899)))
-(setq dun-combination (prin1-to-string tcomb))
+(let ((tloc (+ 60 (random 18))))
+  (dun-replace dun-room-objects tloc
+               (append (nth tloc dun-room-objects) (list 18))))
 
 ;;;;
 ;;;; This section defines the DOS emulation functions for dunnet
