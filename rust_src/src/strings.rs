@@ -83,7 +83,9 @@ fn Fbase64_encode_string (string: LispObject, noLineBreak: LispObject) -> LispOb
     }
 }
 
-defun!("base64-encode-string", Fbase64_encode_string, Sbase64_encode_string, 2, 2, ptr::null(),
+defun!("base64-encode-string", Fbase64_encode_string, Sbase64_encode_string, 1, 2, ptr::null(),
        "Base64-encode STRING and return the result.
        Optional second argument NO-LINE-BREAK means do not break long lines
-       into shorter lines.");
+       into shorter lines.
+
+(fn STRING &optional NO-LINE-BREAK)");
