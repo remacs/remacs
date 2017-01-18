@@ -661,6 +661,16 @@ mod deprecated {
     }
 
     #[allow(non_snake_case)]
+    pub fn NATNUMP(a: LispObject) -> bool {
+        INTEGERP(a) && 0 <= XINT(a)
+    }
+
+    #[test]
+    fn test_natnump() {
+        assert!(!NATNUMP(Qnil));
+    }
+
+    #[allow(non_snake_case)]
     #[allow(dead_code)]
     pub fn XFLOAT(a: LispObject) -> LispFloatRef {
         debug_assert!(FLOATP(a));

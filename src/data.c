@@ -394,66 +394,6 @@ DEFUN ("char-or-string-p", Fchar_or_string_p, Schar_or_string_p, 1, 1, 0,
     return Qt;
   return Qnil;
 }
-
-DEFUN ("integerp", Fintegerp, Sintegerp, 1, 1, 0,
-       doc: /* Return t if OBJECT is an integer.  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (INTEGERP (object))
-    return Qt;
-  return Qnil;
-}
-
-DEFUN ("integer-or-marker-p", Finteger_or_marker_p, Sinteger_or_marker_p, 1, 1, 0,
-       doc: /* Return t if OBJECT is an integer or a marker (editor pointer).  */)
-  (register Lisp_Object object)
-{
-  if (MARKERP (object) || INTEGERP (object))
-    return Qt;
-  return Qnil;
-}
-
-DEFUN ("natnump", Fnatnump, Snatnump, 1, 1, 0,
-       doc: /* Return t if OBJECT is a nonnegative integer.  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (NATNUMP (object))
-    return Qt;
-  return Qnil;
-}
-
-DEFUN ("numberp", Fnumberp, Snumberp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a number (floating point or integer).  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (NUMBERP (object))
-    return Qt;
-  else
-    return Qnil;
-}
-
-DEFUN ("number-or-marker-p", Fnumber_or_marker_p,
-       Snumber_or_marker_p, 1, 1, 0,
-       doc: /* Return t if OBJECT is a number or a marker.  */)
-  (Lisp_Object object)
-{
-  if (NUMBERP (object) || MARKERP (object))
-    return Qt;
-  return Qnil;
-}
-
-DEFUN ("floatp", Ffloatp, Sfloatp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a floating point number.  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (FLOATP (object))
-    return Qt;
-  return Qnil;
-}
 
 DEFUN ("threadp", Fthreadp, Sthreadp, 1, 1, 0,
        doc: /* Return t if OBJECT is a thread.  */)
@@ -3376,12 +3316,6 @@ syms_of_data (void)
   defsubr (&Sindirect_variable);
   defsubr (&Sinteractive_form);
   defsubr (&Stype_of);
-  defsubr (&Sintegerp);
-  defsubr (&Sinteger_or_marker_p);
-  defsubr (&Snumberp);
-  defsubr (&Snumber_or_marker_p);
-  defsubr (&Sfloatp);
-  defsubr (&Snatnump);
   defsubr (&Skeywordp);
   defsubr (&Smultibyte_string_p);
   defsubr (&Svectorp);
