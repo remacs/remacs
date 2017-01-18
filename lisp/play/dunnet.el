@@ -50,51 +50,51 @@
 ;;;; All globals which can change must be saved from 'save-game.  Add
 ;;;; all new globals to bottom of file.
 
-(setq dun-visited '(27))
-(setq dun-current-room 1)
-(setq dun-exitf nil)
-(setq dun-badcd nil)
-(setq dun-computer nil)
-(setq dun-floppy nil)
-(setq dun-key-level 0)
-(setq dun-hole nil)
-(setq dun-correct-answer nil)
-(setq dun-lastdir 0)
-(setq dun-numsaves 0)
-(setq dun-jar nil)
-(setq dun-dead nil)
-(setq room 0)
-(setq dun-numcmds 0)
-(setq dun-wizard nil)
-(setq dun-endgame-question nil)
-(setq dun-logged-in nil)
-(setq dungeon-mode 'dungeon)
-(setq dun-unix-verbs '((ls . dun-ls) (ftp . dun-ftp) (echo . dun-echo)
+(defvar dun-visited '(27))
+(defvar dun-current-room 1)
+(defvar dun-exitf nil)
+(defvar dun-badcd nil)
+(defvar dun-computer nil)
+(defvar dun-floppy nil)
+(defvar dun-key-level 0)
+(defvar dun-hole nil)
+(defvar dun-correct-answer nil)
+(defvar dun-lastdir 0)
+(defvar dun-numsaves 0)
+(defvar dun-jar nil)
+(defvar dun-dead nil)
+(defvar room 0)
+(defvar dun-numcmds 0)
+(defvar dun-wizard nil)
+(defvar dun-endgame-question nil)
+(defvar dun-logged-in nil)
+(defvar dungeon-mode 'dungeon)
+(defvar dun-unix-verbs '((ls . dun-ls) (ftp . dun-ftp) (echo . dun-echo)
 		       (exit . dun-uexit) (cd . dun-cd) (pwd . dun-pwd)
 		       (rlogin . dun-rlogin) (ssh . dun-rlogin)
 		       (uncompress . dun-uncompress) (cat . dun-cat)))
 
-(setq dun-dos-verbs '((dir . dun-dos-dir) (type . dun-dos-type)
+(defvar dun-dos-verbs '((dir . dun-dos-dir) (type . dun-dos-type)
 		      (exit . dun-dos-exit) (command . dun-dos-spawn)
 		      (b: . dun-dos-invd) (c: . dun-dos-invd)
 		      (a: . dun-dos-nil)))
 
 
-(setq dun-batch-mode nil)
+(defvar dun-batch-mode nil)
 
-(setq dun-cdpath "/usr/toukmond")
-(setq dun-cdroom -10)
-(setq dun-uncompressed nil)
-(setq dun-ethernet t)
-(setq dun-restricted
-      '(dun-room-objects dungeon-map dun-rooms
-			 dun-room-silents dun-combination))
-(setq dun-ftptype 'ascii)
-(setq dun-endgame nil)
-(setq dun-gottago t)
-(setq dun-black nil)
+(defvar dun-cdpath "/usr/toukmond")
+(defvar dun-cdroom -10)
+(defvar dun-uncompressed nil)
+(defvar dun-ethernet t)
+(defconst dun-restricted
+  '(dun-room-objects dungeon-map dun-rooms
+    dun-room-silents dun-combination))
+(defvar dun-ftptype 'ascii)
+(defvar dun-endgame nil)
+(defvar dun-gottago t)
+(defvar dun-black nil)
 
-(setq dun-rooms '(
+(defconst dun-rooms '(
 	      (
 "You are in the treasure room.  A door leads out to the north."
                "Treasure room"
@@ -603,44 +603,46 @@ A hole leads north."
                )
 ))
 
-(setq dun-light-rooms '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 24 25 26 27 28 58 59
-		     60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76
-		     77 78 79 80 81 82 83))
+(defconst dun-light-rooms
+  '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 24 25 26 27 28 58 59
+    60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76
+    77 78 79 80 81 82 83))
 
-(setq dun-verblist '((die . dun-die) (ne . dun-ne) (north . dun-n)
-		     (south . dun-s) (east . dun-e) (west . dun-w)
-		     (u . dun-up) (d . dun-down) (i . dun-inven)
-		     (inventory . dun-inven) (look . dun-examine) (n . dun-n)
-		     (s . dun-s) (e . dun-e) (w . dun-w) (se . dun-se)
-		     (nw . dun-nw) (sw . dun-sw) (up . dun-up)
-		     (down . dun-down) (in . dun-in) (out . dun-out)
-		     (go . dun-go) (drop . dun-drop) (southeast . dun-se)
-		     (southwest . dun-sw) (northeast . dun-ne)
-		     (northwest . dun-nw) (save . dun-save-game)
-		     (restore . dun-restore) (long . dun-long) (dig . dun-dig)
-		     (shake . dun-shake) (wave . dun-shake)
-		     (examine . dun-examine) (describe . dun-examine)
-		     (climb . dun-climb) (eat . dun-eat) (put . dun-put)
-		     (type . dun-type)  (insert . dun-put)
-		     (score . dun-score) (help . dun-help) (quit . dun-quit)
-		     (read . dun-examine) (verbose . dun-long)
-		     (urinate . dun-piss) (piss . dun-piss)
-		     (flush . dun-flush) (sleep . dun-sleep) (lie . dun-sleep)
-		     (x . dun-examine) (break . dun-break) (drive . dun-drive)
-		     (board . dun-in) (enter . dun-in) (turn . dun-turn)
-		     (press . dun-press) (push . dun-press) (swim . dun-swim)
-		     (on . dun-in) (off . dun-out) (chop . dun-break)
-		     (switch . dun-press) (cut . dun-break) (exit . dun-out)
-		     (leave . dun-out) (reset . dun-power) (flick . dun-press)
-		     (superb . dun-superb) (answer . dun-answer)
-		     (throw . dun-drop) (l . dun-examine) (take . dun-take)
-		     (get . dun-take) (feed . dun-feed)))
+(defconst dun-verblist
+  '((die . dun-die) (ne . dun-ne) (north . dun-n)
+    (south . dun-s) (east . dun-e) (west . dun-w)
+    (u . dun-up) (d . dun-down) (i . dun-inven)
+    (inventory . dun-inven) (look . dun-examine) (n . dun-n)
+    (s . dun-s) (e . dun-e) (w . dun-w) (se . dun-se)
+    (nw . dun-nw) (sw . dun-sw) (up . dun-up)
+    (down . dun-down) (in . dun-in) (out . dun-out)
+    (go . dun-go) (drop . dun-drop) (southeast . dun-se)
+    (southwest . dun-sw) (northeast . dun-ne)
+    (northwest . dun-nw) (save . dun-save-game)
+    (restore . dun-restore) (long . dun-long) (dig . dun-dig)
+    (shake . dun-shake) (wave . dun-shake)
+    (examine . dun-examine) (describe . dun-examine)
+    (climb . dun-climb) (eat . dun-eat) (put . dun-put)
+    (type . dun-type)  (insert . dun-put)
+    (score . dun-score) (help . dun-help) (quit . dun-quit)
+    (read . dun-examine) (verbose . dun-long)
+    (urinate . dun-piss) (piss . dun-piss)
+    (flush . dun-flush) (sleep . dun-sleep) (lie . dun-sleep)
+    (x . dun-examine) (break . dun-break) (drive . dun-drive)
+    (board . dun-in) (enter . dun-in) (turn . dun-turn)
+    (press . dun-press) (push . dun-press) (swim . dun-swim)
+    (on . dun-in) (off . dun-out) (chop . dun-break)
+    (switch . dun-press) (cut . dun-break) (exit . dun-out)
+    (leave . dun-out) (reset . dun-power) (flick . dun-press)
+    (superb . dun-superb) (answer . dun-answer)
+    (throw . dun-drop) (l . dun-examine) (take . dun-take)
+    (get . dun-take) (feed . dun-feed)))
 
-(setq dun-inbus nil)
-(setq dun-nomail nil)
-(setq dun-ignore '(the to at))
-(setq dun-mode 'moby)
-(setq dun-sauna-level 0)
+(defvar dun-inbus nil)
+(defvar dun-nomail nil)
+(defconst dun-ignore '(the to at))
+(defvar dun-mode 'moby)
+(defvar dun-sauna-level 0)
 
 (defconst north 0)
 (defconst south 1)
@@ -655,180 +657,178 @@ A hole leads north."
 (defconst in 10)
 (defconst out 11)
 
-(setq dungeon-map '(
-;		      no  so  ea  we  ne  se  nw  sw  up  do  in  ot
-		    ( 96  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;0
-		    ( -1  -1   2  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;1
-		    ( -1  -1   3   1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;2
-		    ( -1  -1  -1   2   4   6  -1  -1  -1  -1  -1  -1 ) ;3
-		    ( -1  -1  -1  -1   5  -1  -1   3  -1  -1  -1  -1 ) ;4
-		    ( -1  -1  -1  -1  255 -1  -1   4  -1  -1  255 -1 ) ;5
-		    ( -1  -1  -1  -1  -1   7   3  -1  -1  -1  -1  -1 ) ;6
-		    ( -1  -1  -1  -1  -1  255  6  27  -1  -1  -1  -1 ) ;7
-		    ( 255  5   9  10  -1  -1  -1   5  -1  -1  -1   5 ) ;8
-		    ( -1  -1  -1   8  -1  -1  -1  -1  -1  -1  -1  -1 ) ;9
-		    ( -1  -1   8  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;10
-		    ( -1   8  -1  58  -1  -1  -1  -1  -1  -1  -1  -1 ) ;11
-		    ( -1  -1  13  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;12
-		    ( 15  -1  14  12  -1  -1  -1  -1  -1  -1  -1  -1 ) ;13
-		    ( -1  -1  -1  13  -1  -1  -1  -1  -1  -1  -1  -1 ) ;14
-		    ( -1  13  16  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;15
-		    ( -1  -1  -1  15  -1  -1  -1  -1  -1  17  16  -1 ) ;16
-		    ( -1  -1  17  17  17  17 255  17 255  17  -1  -1 ) ;17
-		    ( 18  18  18  18  18  -1  18  18  19  18  -1  -1 ) ;18
-		    ( -1  18  18  19  19  20  19  19  -1  18  -1  -1 ) ;19
-		    ( -1  -1  -1  18  -1  -1  -1  -1  -1  21  -1  -1 ) ;20
-		    ( -1  -1  -1  -1  -1  20  22  -1  -1  -1  -1  -1 ) ;21
-		    ( 18  18  18  18  16  18  23  18  18  18  18  18 ) ;22
-		    ( -1 255  -1  -1  -1  19  -1  -1  -1  -1  -1  -1 ) ;23
-		    ( 23  25  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;24
-		    ( 24 255  -1  -1  -1  -1  -1  -1  -1  -1 255  -1 ) ;25
-		    (255  28  -1  -1  -1  -1  -1  -1  -1  -1 255  -1 ) ;26
-		    ( -1  -1  -1  -1   7  -1  -1  -1  -1  -1  -1  -1 ) ;27
-		    ( 26 255  -1  -1  -1  -1  -1  -1  -1  -1  255 -1 ) ;28
-		    ( -1  -1  30  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;29
-		    ( -1  -1  31  29  -1  -1  -1  -1  -1  -1  -1  -1 ) ;30
-		    ( 32  33  -1  30  -1  -1  -1  -1  -1  -1  -1  -1 ) ;31
-		    ( -1  31  -1  255 -1  -1  -1  -1  -1  34  -1  -1 ) ;32
-		    ( 31  -1  -1  -1  -1  -1  -1  -1  -1  35  -1  -1 ) ;33
-		    ( -1  35  -1  -1  -1  -1  -1  -1  32  37  -1  -1 ) ;34
-		    ( 34  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;35
-		    ( -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;36
-		    ( -1  -1  -1  -1  -1  -1  -1  38  34  -1  -1  -1 ) ;37
-		    ( -1  -1  40  41  37  -1  -1  39  -1  -1  -1  -1 ) ;38
-		    ( -1  -1  -1  -1  38  -1  -1  -1  -1  -1  -1  -1 ) ;39
-		    ( -1  -1  -1  38  -1  -1  -1  -1  42  -1  -1  -1 ) ;40
-		    ( -1  -1  38  -1  -1  -1  -1  -1  -1  43  -1  -1 ) ;41
-		    ( -1  -1  -1  -1  -1  -1  -1  -1  -1  40  -1  -1 ) ;42
-		    ( 44  -1  46  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;43
-		    ( -1  43  45  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;44
-		    ( -1  46  -1  44  -1  -1  -1  -1  -1  -1  -1  -1 ) ;45
-		    ( 45  -1  -1  43  -1  -1  -1  -1  -1  255 -1  -1 ) ;46
-		    ( 48  50  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;47
-		    ( 49  47  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;48
-		    ( -1  48  -1  -1  -1  -1  -1  -1  52  -1  -1  -1 ) ;49
-		    ( 47  51  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;50
-		    ( 50  104 -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;51
-		    ( -1  -1  -1  -1  -1  -1  -1  -1  53  49  -1  -1 ) ;52
-		    ( -1  -1  -1  -1  -1  -1  -1  -1  54  52  -1  -1 ) ;53
-		    ( -1  -1  -1  -1  55  -1  -1  -1  -1  53  -1  -1 ) ;54
-		    ( -1  -1  -1  -1  56  -1  -1  54  -1  -1  -1  54 ) ;55
-		    ( -1  -1  -1  -1  -1  -1  -1  55  -1  31  -1  -1 ) ;56
-		    ( -1  -1  32  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;57
-		    ( 59  -1  11  -1  -1  -1  -1  -1  -1  -1  255 255) ;58
-		    ( 60  58  63  -1  -1  -1  255 -1  -1  -1  255 255) ;59
-		    ( 61  59  64  -1  -1  -1  -1  -1  -1  -1  255 255) ;60
-		    ( 62  60  65  -1  -1  -1  -1  -1  -1  -1  255 255) ;61
-		    ( -1  61  66  -1  -1  -1  -1  -1  -1  -1  255 255) ;62
-		    ( 64  -1  67  59  -1  -1  -1  -1  -1  -1  255 255) ;63
-		    ( 65  63  68  60  -1  -1  -1  -1  -1  -1  255 255) ;64
-		    ( 66  64  69  61  -1  -1  -1  -1  -1  -1  255 255) ;65
-		    ( -1  65  70  62  -1  -1  -1  -1  -1  -1  255 255) ;66
-		    ( 68  -1  71  63  -1  -1  -1  -1  -1  -1  255 255) ;67
-		    ( 69  67  72  64  -1  -1  -1  -1  -1  -1  255 255) ;68
-		    ( 70  68  73  65  -1  -1  -1  -1  -1  -1  255 255) ;69
-		    ( -1  69  74  66  -1  -1  -1  -1  -1  -1  255 255) ;70
-		    ( 72  -1  75  67  -1  -1  -1  -1  -1  -1  255 255) ;71
-		    ( 73  71  76  68  -1  -1  -1  -1  -1  -1  255 255) ;72
-		    ( 74  72  77  69  -1  -1  -1  -1  -1  -1  255 255) ;73
-		    ( -1  73  78  70  -1  -1  -1  -1  -1  -1  255 255) ;74
-		    ( 76  -1  79  71  -1  -1  -1  -1  -1  -1  255 255) ;75
-		    ( 77  75  80  72  -1  -1  -1  -1  -1  -1  255 255) ;76
-		    ( 78  76  81  73  -1  -1  -1  -1  -1  -1  255 255) ;77
-		    ( -1  77  82  74  -1  -1  -1  -1  -1  -1  255 255) ;78
-		    ( 80  -1  -1  75  -1  -1  -1  -1  -1  -1  255 255) ;79
-		    ( 81  79  255 76  -1  -1  -1  -1  -1  -1  255 255) ;80
-		    ( 82  80  -1  77  -1  -1  -1  -1  -1  -1  255 255) ;81
-		    ( -1  81  -1  78  -1  -1  -1  -1  -1  -1  255 255) ;82
-		    ( 84  -1  -1  -1  -1  59  -1  -1  -1  -1  255 255) ;83
-		    ( -1  83  85  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;84
-		    ( 86  -1  87  84  -1  -1  -1  -1  -1  -1  -1  -1 ) ;85
-		    ( -1  85  88  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;86
-		    ( 88  -1  -1  85  -1  -1  -1  -1  -1  -1  -1  -1 ) ;87
-		    ( -1  87 255  86  -1  -1  -1  -1  -1  -1  -1  -1 ) ;88
-		    ( -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 255  -1 ) ;89
-		    ( 91  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;90
-		    ( 92  90  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;91
-		    ( -1  91  -1  -1  -1  -1  -1  -1  93  94  -1  -1 ) ;92
-		    ( -1  -1  -1  88  -1  -1  -1  -1  -1  92  -1  -1 ) ;93
-		    ( -1  -1  -1  -1  95  -1  -1  -1  92  -1  -1  -1 ) ;94
-		    ( -1  -1  -1  -1  -1  -1  -1  94  -1  -1  -1  -1 ) ;95
-		    ( 97   0  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;96
-		    ( -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;97
-		    ( 99  97  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;98
-		    ( -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;99
-		    ( 101 99  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;100
-		    ( -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;101
-		    ( 103 101 -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;102
-		    ( -1  102 -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;103
-		    ( 51  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;104
-		    )
-;		      no  so  ea  we  ne  se  nw  sw  up  do  in  ot
+(defconst dungeon-map
+  ;;  no  so  ea  we  ne  se  nw  sw  up  do  in  ot
+  '(( 96  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;0
+    ( -1  -1   2  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;1
+    ( -1  -1   3   1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;2
+    ( -1  -1  -1   2   4   6  -1  -1  -1  -1  -1  -1 ) ;3
+    ( -1  -1  -1  -1   5  -1  -1   3  -1  -1  -1  -1 ) ;4
+    ( -1  -1  -1  -1  255 -1  -1   4  -1  -1  255 -1 ) ;5
+    ( -1  -1  -1  -1  -1   7   3  -1  -1  -1  -1  -1 ) ;6
+    ( -1  -1  -1  -1  -1  255  6  27  -1  -1  -1  -1 ) ;7
+    ( 255  5   9  10  -1  -1  -1   5  -1  -1  -1   5 ) ;8
+    ( -1  -1  -1   8  -1  -1  -1  -1  -1  -1  -1  -1 ) ;9
+    ( -1  -1   8  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;10
+    ( -1   8  -1  58  -1  -1  -1  -1  -1  -1  -1  -1 ) ;11
+    ( -1  -1  13  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;12
+    ( 15  -1  14  12  -1  -1  -1  -1  -1  -1  -1  -1 ) ;13
+    ( -1  -1  -1  13  -1  -1  -1  -1  -1  -1  -1  -1 ) ;14
+    ( -1  13  16  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;15
+    ( -1  -1  -1  15  -1  -1  -1  -1  -1  17  16  -1 ) ;16
+    ( -1  -1  17  17  17  17 255  17 255  17  -1  -1 ) ;17
+    ( 18  18  18  18  18  -1  18  18  19  18  -1  -1 ) ;18
+    ( -1  18  18  19  19  20  19  19  -1  18  -1  -1 ) ;19
+    ( -1  -1  -1  18  -1  -1  -1  -1  -1  21  -1  -1 ) ;20
+    ( -1  -1  -1  -1  -1  20  22  -1  -1  -1  -1  -1 ) ;21
+    ( 18  18  18  18  16  18  23  18  18  18  18  18 ) ;22
+    ( -1 255  -1  -1  -1  19  -1  -1  -1  -1  -1  -1 ) ;23
+    ( 23  25  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;24
+    ( 24 255  -1  -1  -1  -1  -1  -1  -1  -1 255  -1 ) ;25
+    (255  28  -1  -1  -1  -1  -1  -1  -1  -1 255  -1 ) ;26
+    ( -1  -1  -1  -1   7  -1  -1  -1  -1  -1  -1  -1 ) ;27
+    ( 26 255  -1  -1  -1  -1  -1  -1  -1  -1  255 -1 ) ;28
+    ( -1  -1  30  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;29
+    ( -1  -1  31  29  -1  -1  -1  -1  -1  -1  -1  -1 ) ;30
+    ( 32  33  -1  30  -1  -1  -1  -1  -1  -1  -1  -1 ) ;31
+    ( -1  31  -1  255 -1  -1  -1  -1  -1  34  -1  -1 ) ;32
+    ( 31  -1  -1  -1  -1  -1  -1  -1  -1  35  -1  -1 ) ;33
+    ( -1  35  -1  -1  -1  -1  -1  -1  32  37  -1  -1 ) ;34
+    ( 34  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;35
+    ( -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;36
+    ( -1  -1  -1  -1  -1  -1  -1  38  34  -1  -1  -1 ) ;37
+    ( -1  -1  40  41  37  -1  -1  39  -1  -1  -1  -1 ) ;38
+    ( -1  -1  -1  -1  38  -1  -1  -1  -1  -1  -1  -1 ) ;39
+    ( -1  -1  -1  38  -1  -1  -1  -1  42  -1  -1  -1 ) ;40
+    ( -1  -1  38  -1  -1  -1  -1  -1  -1  43  -1  -1 ) ;41
+    ( -1  -1  -1  -1  -1  -1  -1  -1  -1  40  -1  -1 ) ;42
+    ( 44  -1  46  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;43
+    ( -1  43  45  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;44
+    ( -1  46  -1  44  -1  -1  -1  -1  -1  -1  -1  -1 ) ;45
+    ( 45  -1  -1  43  -1  -1  -1  -1  -1  255 -1  -1 ) ;46
+    ( 48  50  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;47
+    ( 49  47  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;48
+    ( -1  48  -1  -1  -1  -1  -1  -1  52  -1  -1  -1 ) ;49
+    ( 47  51  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;50
+    ( 50  104 -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;51
+    ( -1  -1  -1  -1  -1  -1  -1  -1  53  49  -1  -1 ) ;52
+    ( -1  -1  -1  -1  -1  -1  -1  -1  54  52  -1  -1 ) ;53
+    ( -1  -1  -1  -1  55  -1  -1  -1  -1  53  -1  -1 ) ;54
+    ( -1  -1  -1  -1  56  -1  -1  54  -1  -1  -1  54 ) ;55
+    ( -1  -1  -1  -1  -1  -1  -1  55  -1  31  -1  -1 ) ;56
+    ( -1  -1  32  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;57
+    ( 59  -1  11  -1  -1  -1  -1  -1  -1  -1  255 255) ;58
+    ( 60  58  63  -1  -1  -1  255 -1  -1  -1  255 255) ;59
+    ( 61  59  64  -1  -1  -1  -1  -1  -1  -1  255 255) ;60
+    ( 62  60  65  -1  -1  -1  -1  -1  -1  -1  255 255) ;61
+    ( -1  61  66  -1  -1  -1  -1  -1  -1  -1  255 255) ;62
+    ( 64  -1  67  59  -1  -1  -1  -1  -1  -1  255 255) ;63
+    ( 65  63  68  60  -1  -1  -1  -1  -1  -1  255 255) ;64
+    ( 66  64  69  61  -1  -1  -1  -1  -1  -1  255 255) ;65
+    ( -1  65  70  62  -1  -1  -1  -1  -1  -1  255 255) ;66
+    ( 68  -1  71  63  -1  -1  -1  -1  -1  -1  255 255) ;67
+    ( 69  67  72  64  -1  -1  -1  -1  -1  -1  255 255) ;68
+    ( 70  68  73  65  -1  -1  -1  -1  -1  -1  255 255) ;69
+    ( -1  69  74  66  -1  -1  -1  -1  -1  -1  255 255) ;70
+    ( 72  -1  75  67  -1  -1  -1  -1  -1  -1  255 255) ;71
+    ( 73  71  76  68  -1  -1  -1  -1  -1  -1  255 255) ;72
+    ( 74  72  77  69  -1  -1  -1  -1  -1  -1  255 255) ;73
+    ( -1  73  78  70  -1  -1  -1  -1  -1  -1  255 255) ;74
+    ( 76  -1  79  71  -1  -1  -1  -1  -1  -1  255 255) ;75
+    ( 77  75  80  72  -1  -1  -1  -1  -1  -1  255 255) ;76
+    ( 78  76  81  73  -1  -1  -1  -1  -1  -1  255 255) ;77
+    ( -1  77  82  74  -1  -1  -1  -1  -1  -1  255 255) ;78
+    ( 80  -1  -1  75  -1  -1  -1  -1  -1  -1  255 255) ;79
+    ( 81  79  255 76  -1  -1  -1  -1  -1  -1  255 255) ;80
+    ( 82  80  -1  77  -1  -1  -1  -1  -1  -1  255 255) ;81
+    ( -1  81  -1  78  -1  -1  -1  -1  -1  -1  255 255) ;82
+    ( 84  -1  -1  -1  -1  59  -1  -1  -1  -1  255 255) ;83
+    ( -1  83  85  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;84
+    ( 86  -1  87  84  -1  -1  -1  -1  -1  -1  -1  -1 ) ;85
+    ( -1  85  88  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;86
+    ( 88  -1  -1  85  -1  -1  -1  -1  -1  -1  -1  -1 ) ;87
+    ( -1  87 255  86  -1  -1  -1  -1  -1  -1  -1  -1 ) ;88
+    ( -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 255  -1 ) ;89
+    ( 91  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;90
+    ( 92  90  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;91
+    ( -1  91  -1  -1  -1  -1  -1  -1  93  94  -1  -1 ) ;92
+    ( -1  -1  -1  88  -1  -1  -1  -1  -1  92  -1  -1 ) ;93
+    ( -1  -1  -1  -1  95  -1  -1  -1  92  -1  -1  -1 ) ;94
+    ( -1  -1  -1  -1  -1  -1  -1  94  -1  -1  -1  -1 ) ;95
+    ( 97   0  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;96
+    ( -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;97
+    ( 99  97  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;98
+    ( -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;99
+    ( 101 99  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;100
+    ( -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;101
+    ( 103 101 -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;102
+    ( -1  102 -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ) ;103
+    ( 51  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 ));104
+  ;; no  so  ea  we  ne  se  nw  sw  up  do  in  ot
 )
 
 
 ;;; How the user references *all* objects, permanent and regular.
-(setq dun-objnames '(
-		 (shovel . 0)
-		 (lamp . 1)
-		 (cpu . 2) (board . 2) (card . 2) (chip . 2)
-		 (food . 3)
-		 (key . 4)
-		 (paper . 5) (slip . 5)
-		 (rms . 6) (statue . 6) (statuette . 6)  (stallman . 6)
-		 (diamond . 7)
-		 (weight . 8)
-		 (life . 9) (preserver . 9)
-		 (bracelet . 10) (emerald . 10)
-		 (gold . 11)
-		 (platinum . 12)
-		 (towel . 13) (beach . 13)
-		 (axe . 14)
-		 (silver . 15)
-		 (license . 16)
-		 (coins . 17)
-		 (egg . 18)
-		 (jar . 19)
-		 (bone . 20)
-		 (acid . 21) (nitric . 21)
-		 (glycerine . 22)
-		 (ruby . 23)
-		 (amethyst . 24)
-		 (mona . 25)
-		 (bill . 26)
-		 (floppy . 27) (disk . 27)
+(defconst dun-objnames
+  '((shovel . 0)
+    (lamp . 1)
+    (cpu . 2) (board . 2) (card . 2) (chip . 2)
+    (food . 3)
+    (key . 4)
+    (paper . 5) (slip . 5)
+    (rms . 6) (statue . 6) (statuette . 6)  (stallman . 6)
+    (diamond . 7)
+    (weight . 8)
+    (life . 9) (preserver . 9)
+    (bracelet . 10) (emerald . 10)
+    (gold . 11)
+    (platinum . 12)
+    (towel . 13) (beach . 13)
+    (axe . 14)
+    (silver . 15)
+    (license . 16)
+    (coins . 17)
+    (egg . 18)
+    (jar . 19)
+    (bone . 20)
+    (acid . 21) (nitric . 21)
+    (glycerine . 22)
+    (ruby . 23)
+    (amethyst . 24)
+    (mona . 25)
+    (bill . 26)
+    (floppy . 27) (disk . 27)
 
-		 (boulder . -1)
-		 (tree . -2) (trees . -2) (palm . -2)
-		 (bear . -3)
-		 (bin . -4) (bins . -4)
-		 (cabinet . -5) (computer . -5) (vax . -5) (ibm . -5)
-		 (protoplasm . -6)
-		 (dial . -7)
-		 (button . -8)
-		 (chute . -9)
-		 (painting . -10)
-		 (bed . -11)
-		 (urinal . -12)
-		 (URINE . -13)
-		 (pipes . -14) (pipe . -14)
-		 (box . -15) (slit . -15)
-		 (cable . -16) (ethernet . -16)
-		 (mail . -17) (drop . -17)
-		 (bus . -18)
-		 (gate . -19)
-		 (cliff . -20)
-		 (skeleton . -21) (dinosaur . -21)
-		 (fish . -22)
-		 (tanks . -23) (tank . -23)
-		 (switch . -24)
-		 (blackboard . -25)
-		 (disposal . -26) (garbage . -26)
-		 (ladder . -27)
-		 (subway . -28) (train . -28)
-		 (pc . -29) (drive . -29) (coconut . -30) (coconuts . -30)
-		 (lake . -32) (water . -32)
-))
+    (boulder . -1)
+    (tree . -2) (trees . -2) (palm . -2)
+    (bear . -3)
+    (bin . -4) (bins . -4)
+    (cabinet . -5) (computer . -5) (vax . -5) (ibm . -5)
+    (protoplasm . -6)
+    (dial . -7)
+    (button . -8)
+    (chute . -9)
+    (painting . -10)
+    (bed . -11)
+    (urinal . -12)
+    (URINE . -13)
+    (pipes . -14) (pipe . -14)
+    (box . -15) (slit . -15)
+    (cable . -16) (ethernet . -16)
+    (mail . -17) (drop . -17)
+    (bus . -18)
+    (gate . -19)
+    (cliff . -20)
+    (skeleton . -21) (dinosaur . -21)
+    (fish . -22)
+    (tanks . -23) (tank . -23)
+    (switch . -24)
+    (blackboard . -25)
+    (disposal . -26) (garbage . -26)
+    (ladder . -27)
+    (subway . -28) (train . -28)
+    (pc . -29) (drive . -29) (coconut . -30) (coconuts . -30)
+    (lake . -32) (water . -32)))
 
 (dolist (x dun-objnames)
   (let (name)
@@ -844,7 +844,7 @@ A hole leads north."
 ;;; Stuff that is described and might change are 255, and are
 ;;; handled specially by 'dun-describe-room.
 
-(setq dun-room-objects (list nil
+(defvar dun-room-objects (list nil
 
         (list obj-shovel)                     ;; treasure-room
         (list obj-boulder)                    ;; dead-end
@@ -901,7 +901,7 @@ nil))
 ;;; These are objects in a room that are only described in the
 ;;; room description.  They are permanent.
 
-(setq dun-room-silents (list nil
+(defconst dun-room-silents (list nil
         (list obj-tree obj-coconut)            ;; dead-end
         (list obj-tree obj-coconut)            ;; e-w-dirt-road
         nil nil nil nil nil nil
@@ -945,96 +945,81 @@ nil))
 	(list obj-pc)                          ;; pc-area
 	nil nil nil nil nil nil
 ))
-(setq dun-inventory '(1))
+(defvar dun-inventory '(1))
 
 ;;; Descriptions of objects, as they appear in the room description, and
 ;;; the inventory.
 
-(setq dun-objects '(
-		("There is a shovel here." "A shovel")                ;0
-		("There is a lamp nearby." "A lamp")                  ;1
-		("There is a CPU card here." "A computer board")      ;2
-		("There is some food here." "Some food")              ;3
-		("There is a shiny brass key here." "A brass key")    ;4
-		("There is a slip of paper here." "A slip of paper")  ;5
-		("There is a wax statuette of Richard Stallman here." ;6
-		 "An RMS statuette")
-		("There is a shimmering diamond here." "A diamond")   ;7
-		("There is a 10 pound weight here." "A weight")       ;8
-		("There is a life preserver here." "A life preserver");9
-		("There is an emerald bracelet here." "A bracelet")   ;10
-		("There is a gold bar here." "A gold bar")            ;11
-		("There is a platinum bar here." "A platinum bar")    ;12
-		("There is a beach towel on the ground here." "A beach towel")
-		("There is an axe here." "An axe") ;14
-		("There is a silver bar here." "A silver bar")  ;15
-		("There is a bus driver's license here." "A license") ;16
-		("There are some valuable coins here." "Some valuable coins")
-		("There is a jewel-encrusted egg here." "A valuable egg") ;18
-		("There is a glass jar here." "A glass jar") ;19
-		("There is a dinosaur bone here." "A bone") ;20
-		("There is a packet of nitric acid here." "Some nitric acid")
-		("There is a packet of glycerine here." "Some glycerine") ;22
-		("There is a valuable ruby here." "A ruby") ;23
-		("There is a valuable amethyst here." "An amethyst") ;24
-		("The Mona Lisa is here." "The Mona Lisa") ;25
-		("There is a 100 dollar bill here." "A $100 bill") ;26
-		("There is a floppy disk here." "A floppy disk") ;27
-	       )
-)
+(defconst dun-objects
+  '(("There is a shovel here." "A shovel")                ;0
+    ("There is a lamp nearby." "A lamp")                  ;1
+    ("There is a CPU card here." "A computer board")      ;2
+    ("There is some food here." "Some food")              ;3
+    ("There is a shiny brass key here." "A brass key")    ;4
+    ("There is a slip of paper here." "A slip of paper")  ;5
+    ("There is a wax statuette of Richard Stallman here." ;6
+     "An RMS statuette")
+    ("There is a shimmering diamond here." "A diamond")   ;7
+    ("There is a 10 pound weight here." "A weight")       ;8
+    ("There is a life preserver here." "A life preserver");9
+    ("There is an emerald bracelet here." "A bracelet")   ;10
+    ("There is a gold bar here." "A gold bar")            ;11
+    ("There is a platinum bar here." "A platinum bar")    ;12
+    ("There is a beach towel on the ground here." "A beach towel")
+    ("There is an axe here." "An axe") ;14
+    ("There is a silver bar here." "A silver bar")  ;15
+    ("There is a bus driver's license here." "A license") ;16
+    ("There are some valuable coins here." "Some valuable coins")
+    ("There is a jewel-encrusted egg here." "A valuable egg") ;18
+    ("There is a glass jar here." "A glass jar") ;19
+    ("There is a dinosaur bone here." "A bone") ;20
+    ("There is a packet of nitric acid here." "Some nitric acid")
+    ("There is a packet of glycerine here." "Some glycerine") ;22
+    ("There is a valuable ruby here." "A ruby") ;23
+    ("There is a valuable amethyst here." "An amethyst") ;24
+    ("The Mona Lisa is here." "The Mona Lisa") ;25
+    ("There is a 100 dollar bill here." "A $100 bill") ;26
+    ("There is a floppy disk here." "A floppy disk"))) ;27
 
 ;;; Weight of objects
 
-(setq dun-object-lbs
-      '(2 1 1 1 1 0 2 2 10 3 1 1 1 0 1 1 0 1 1 1 1 0 0 2 2 1 0 0))
-(setq dun-object-pts
-      '(0 0 0 0 0 0 0 10 0 0 10 10 10 0 0 10 0 10 10 0 0 0 0 10 10 10 10 0))
+(defconst dun-object-lbs
+  '(2 1 1 1 1 0 2 2 10 3 1 1 1 0 1 1 0 1 1 1 1 0 0 2 2 1 0 0))
+(defconst dun-object-pts
+  '(0 0 0 0 0 0 0 10 0 0 10 10 10 0 0 10 0 10 10 0 0 0 0 10 10 10 10 0))
 
 
 ;;; Unix representation of objects.
-(setq dun-objfiles '(
-		 "shovel.o" "lamp.o" "cpu.o" "food.o" "key.o" "paper.o"
-		 "rms.o" "diamond.o" "weight.o" "preserver.o" "bracelet.o"
-		 "gold.o" "platinum.o" "towel.o" "axe.o" "silver.o" "license.o"
-		 "coins.o" "egg.o" "jar.o" "bone.o" "nitric.o" "glycerine.o"
-		 "ruby.o" "amethyst.o"
-		 ))
+(defconst dun-objfiles
+  '("shovel.o" "lamp.o" "cpu.o" "food.o" "key.o" "paper.o"
+    "rms.o" "diamond.o" "weight.o" "preserver.o" "bracelet.o"
+    "gold.o" "platinum.o" "towel.o" "axe.o" "silver.o" "license.o"
+    "coins.o" "egg.o" "jar.o" "bone.o" "nitric.o" "glycerine.o"
+    "ruby.o" "amethyst.o"))
 
 ;;; These are the descriptions for the negative numbered objects from
 ;;; dun-room-objects
 
-(setq dun-perm-objects '(
-		     nil
-		     ("There is a large boulder here.")
-		     nil
-		     ("There is a ferocious bear here!")
-		     nil
-		     nil
-		     ("There is a worthless pile of protoplasm here.")
-		     nil
-		     nil
-		     nil
-		     nil
-		     nil
-		     nil
-		     ("There is a strange smell in this room.")
-		     nil
-		     (
-"There is a box with a slit in it, bolted to the wall here."
-                     )
-		     nil
-		     nil
-		     ("There is a bus here.")
-		     nil
-		     nil
-		     nil
-))
+(defconst dun-perm-objects
+  '(nil
+    ("There is a large boulder here.")
+    nil
+    ("There is a ferocious bear here!")
+    nil nil
+    ("There is a worthless pile of protoplasm here.")
+    nil nil nil nil nil nil
+    ("There is a strange smell in this room.")
+    nil
+    ("There is a box with a slit in it, bolted to the wall here.")
+    nil nil
+    ("There is a bus here.")
+    nil nil nil))
 
 
 ;;; These are the descriptions the user gets when regular objects are
 ;;; examined.
 
-(setq dun-physobj-desc '(
+(defconst dun-physobj-desc '(
 "It is a normal shovel with a price tag attached that says $19.99."
 "The lamp is hand-crafted by Geppetto."
 "The CPU board has a VAX chip on it.  It seems to have
@@ -1048,29 +1033,20 @@ famous EMACS editor.  You notice that he is not wearing any shoes."
 nil
 "You observe that the weight is heavy."
 "It says S. S. Minnow."
-nil
-nil
-nil
+nil nil nil
 "It has a picture of snoopy on it."
-nil
-nil
+nil nil
 "It has your picture on it!"
 "They are old coins from the 19th century."
 "It is a valuable Fabrege egg."
 "It is a plain glass jar."
-nil
-nil
-nil
-nil
-nil
-                     )
-)
+nil nil nil nil nil))
 
 ;;; These are the descriptions the user gets when non-regular objects
 ;;; are examined.
 
-(setq dun-permobj-desc '(
-		     nil
+(defconst dun-permobj-desc
+  '(nil
 "It is just a boulder.  It cannot be moved."
 "They are palm trees with a bountiful supply of coconuts in them."
 "It looks like a grizzly to me."
@@ -1082,11 +1058,10 @@ names:
                    Robert Toukmond
                    Thomas Stock
 "
-                      nil
+nil
 "It is just a garbled mess."
 "The dial points to a temperature scale which has long since faded away."
-nil
-nil
+nil nil
 "It is a velvet painting of Elvis Presley.  It seems to be nailed to the
 wall, and you cannot move it."
 "It is a queen sized bed, with a very firm mattress."
@@ -1095,8 +1070,7 @@ isn't even any rust.  Upon close examination you realize that the drain at the
 bottom is missing, and there is just a large hole leading down the
 pipes into nowhere.  The hole is too small for a person to fit in.  The
 flush handle is so clean that you can see your reflection in it."
-nil
-nil
+nil nil
 "The box has a slit in the top of it, and on it, in sloppy handwriting, is
 written: ‘For key upgrade, put key in here.’"
 nil
@@ -1107,67 +1081,45 @@ nil
 "Unfortunately you do not know enough about dinosaurs to tell very much about
 it.  It is very big, though."
 "The fish look like they were once quite beautiful."
-nil
-nil
-nil
-nil
+nil nil nil nil
 "It is a normal ladder that is permanently attached to the hole."
 "It is a passenger train that is ready to go."
-"It is a personal computer that has only one floppy disk drive."
-		    )
-)
+"It is a personal computer that has only one floppy disk drive."))
 
-(setq dun-diggables
+(defconst dun-diggables
       (list nil nil nil (list obj-cpu) nil nil nil nil nil nil nil
 		  nil nil nil nil nil nil nil nil nil nil      ;11-20
 		  nil nil nil nil nil nil nil nil nil nil      ;21-30
 		  nil nil nil nil nil nil nil nil nil nil      ;31-40
 		  nil (list obj-platinum) nil nil nil nil nil nil nil nil))
 
-(setq dun-room-shorts nil)
+(defvar dun-room-shorts nil)
 
-(setq dun-endgame-questions '(
-			  (
-"What is your password on the machine called ‘pokey’?" "robert")
-			  (
-"What password did you use during anonymous ftp to gamma?" "foo")
-			  (
-"Excluding the endgame, how many places are there where you can put
+(defconst dun-endgame-questions
+  '(("What is your password on the machine called ‘pokey’?" "robert")
+    ("What password did you use during anonymous ftp to gamma?" "foo")
+    ("Excluding the endgame, how many places are there where you can put
 treasures for points?" "4" "four")
-			  (
-"What is your login name on the ‘endgame’ machine?" "toukmond"
-)
-			  (
-"What is the nearest whole dollar to the price of the shovel?" "20" "twenty")
-			  (
-"What is the name of the bus company serving the town?" "mobytours")
-			  (
-"Give either of the two last names in the mailroom, other than your own."
-"collier" "stock")
-			  (
-"What cartoon character is on the towel?" "snoopy")
-			  (
-"What is the last name of the author of EMACS?" "stallman")
-			  (
-"How many megabytes of memory is on the CPU board for the Vax?" "2")
-			  (
-"Which street in town is named after a U.S. state?" "vermont")
-			  (
-"How many pounds did the weight weigh?" "ten" "10")
-			  (
-"Name the STREET which runs right over the subway stop." "fourth" "4" "4th")
-			  (
-"How many corners are there in town (excluding the one with the Post Office)?"
-                  "24" "twentyfour" "twenty-four")
-			  (
-"What type of bear was hiding your key?" "grizzly")
-			  (
-"Name either of the two objects you found by digging." "cpu" "card" "vax"
-"board" "platinum")
-			  (
-"What network protocol is used between pokey and gamma?" "tcp/ip" "ip" "tcp")
-))
-
+    ("What is your login name on the ‘endgame’ machine?" "toukmond")
+    ("What is the nearest whole dollar to the price of the shovel?"
+     "20" "twenty")
+    ("What is the name of the bus company serving the town?" "mobytours")
+    ("Give either of the two last names in the mailroom, other than your own."
+     "collier" "stock")
+    ("What cartoon character is on the towel?" "snoopy")
+    ("What is the last name of the author of EMACS?" "stallman")
+    ("How many megabytes of memory is on the CPU board for the Vax?" "2")
+    ("Which street in town is named after a U.S. state?" "vermont")
+    ("How many pounds did the weight weigh?" "ten" "10")
+    ("Name the STREET which runs right over the subway stop."
+     "fourth" "4" "4th")
+    ("How many corners are there in town (excluding the one with the Post Office)?"
+     "24" "twentyfour" "twenty-four")
+    ("What type of bear was hiding your key?" "grizzly")
+    ("Name either of the two objects you found by digging."
+     "cpu" "card" "vax" "board" "platinum")
+    ("What network protocol is used between pokey and gamma?"
+     "tcp/ip" "ip" "tcp")))
 
 ;;;; Mode definitions for interactive mode
 
@@ -2231,15 +2183,15 @@ for a moment, then straighten yourself up.
 ;;; Function which takes a verb and a list of other words.  Calls proper
 ;;; function associated with the verb, and passes along the other words.
 
-(defun dun-doverb (dun-ignore dun-verblist verb rest)
+(defun dun-doverb (ignore verblist verb rest)
   (if (not verb)
       nil
-    (if (member (intern verb) dun-ignore)
+    (if (member (intern verb) ignore)
 	(if (not (car rest)) -1
-	  (dun-doverb dun-ignore dun-verblist (car rest) (cdr rest)))
-      (if (not (cdr (assq (intern verb) dun-verblist))) -1
+	  (dun-doverb ignore verblist (car rest) (cdr rest)))
+      (if (not (cdr (assq (intern verb) verblist))) -1
 	(setq dun-numcmds (1+ dun-numcmds))
-	(funcall (cdr (assq (intern verb) dun-verblist)) rest)))))
+	(funcall (cdr (assq (intern verb) verblist)) rest)))))
 
 
 ;;; Function to take a string and change it into a list of lowercase words.
@@ -2291,15 +2243,15 @@ for a moment, then straighten yourself up.
 ;;; parse a line passed in as a string  Call the proper verb with the
 ;;; rest of the line passed in as a list.
 
-(defun dun-vparse (dun-ignore dun-verblist line)
+(defun dun-vparse (ignore verblist line)
   (dun-mprinc "\n")
   (setq line-list (dun-listify-string (concat line " ")))
-  (dun-doverb dun-ignore dun-verblist (car line-list) (cdr line-list)))
+  (dun-doverb ignore verblist (car line-list) (cdr line-list)))
 
-(defun dun-parse2 (dun-ignore dun-verblist line)
+(defun dun-parse2 (ignore verblist line)
   (dun-mprinc "\n")
   (setq line-list (dun-listify-string2 (concat line " ")))
-  (dun-doverb dun-ignore dun-verblist (car line-list) (cdr line-list)))
+  (dun-doverb ignore verblist (car line-list) (cdr line-list)))
 
 ;;; Read a line, in window mode
 
@@ -3263,13 +3215,13 @@ File not found")))
      (send-string-to-terminal (prin1-to-string arg))
      (send-string-to-terminal "\n")))
 
-(defun dun-batch-parse (dun-ignore dun-verblist line)
+(defun dun-batch-parse (ignore verblist line)
   (setq line-list (dun-listify-string (concat line " ")))
-  (dun-doverb dun-ignore dun-verblist (car line-list) (cdr line-list)))
+  (dun-doverb ignore verblist (car line-list) (cdr line-list)))
 
-(defun dun-batch-parse2 (dun-ignore dun-verblist line)
+(defun dun-batch-parse2 (ignore verblist line)
   (setq line-list (dun-listify-string2 (concat line " ")))
-  (dun-doverb dun-ignore dun-verblist (car line-list) (cdr line-list)))
+  (dun-doverb ignore verblist (car line-list) (cdr line-list)))
 
 (defun dun-batch-read-line ()
   (read-from-minibuffer "" nil dungeon-batch-map))
