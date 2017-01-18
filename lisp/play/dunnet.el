@@ -644,18 +644,20 @@ A hole leads north."
 (defvar dun-mode 'moby)
 (defvar dun-sauna-level 0)
 
-(defconst north 0)
-(defconst south 1)
-(defconst east 2)
-(defconst west 3)
-(defconst northeast 4)
-(defconst southeast 5)
-(defconst northwest 6)
-(defconst southwest 7)
-(defconst up 8)
-(defconst down 9)
-(defconst in 10)
-(defconst out 11)
+(defconst dun-movement-alist
+  '((north . 0)
+    (south . 1)
+    (east . 2)
+    (west . 3)
+    (northeast . 4)
+    (southeast . 5)
+    (northwest . 6)
+    (southwest . 7)
+    (up . 8)
+    (down . 9)
+    (in . 10)
+    (out . 11))
+  "Alist enumerating movement directions.")
 
 (defconst dungeon-map
   ;;  no  so  ea  we  ne  se  nw  sw  up  do  in  ot
@@ -1645,41 +1647,45 @@ just try dropping it.")
 
 ;;; Various movement directions
 
+(defun dun-movement (dir)
+  "Return enumeral of movement symbol DIR."
+  (cdr (assq dir dun-movement-alist)))
+
 (defun dun-n (_args)
-  (dun-move north))
+  (dun-move 'north))
 
 (defun dun-s (_args)
-  (dun-move south))
+  (dun-move 'south))
 
 (defun dun-e (_args)
-  (dun-move east))
+  (dun-move 'east))
 
 (defun dun-w (_args)
-  (dun-move west))
+  (dun-move 'west))
 
 (defun dun-ne (_args)
-  (dun-move northeast))
+  (dun-move 'northeast))
 
 (defun dun-se (_args)
-  (dun-move southeast))
+  (dun-move 'southeast))
 
 (defun dun-nw (_args)
-  (dun-move northwest))
+  (dun-move 'northwest))
 
 (defun dun-sw (_args)
-  (dun-move southwest))
+  (dun-move 'southwest))
 
 (defun dun-up (_args)
-  (dun-move up))
+  (dun-move 'up))
 
 (defun dun-down (_args)
-  (dun-move down))
+  (dun-move 'down))
 
 (defun dun-in (_args)
-  (dun-move in))
+  (dun-move 'in))
 
 (defun dun-out (_args)
-  (dun-move out))
+  (dun-move 'out))
 
 (defun dun-go (args)
   (if (or (not (car args))
@@ -1701,6 +1707,7 @@ just try dropping it.")
 "You trip over a grue and fall into a pit and break every bone in your
 body.")
 	(dun-die "a grue"))
+    (setq dir (dun-movement dir))
     (let (newroom)
       (setq newroom (nth dir (nth dun-current-room dungeon-map)))
       (if (eq newroom -1)
@@ -1776,12 +1783,14 @@ force throws you out.  The train speeds away.\n")
 	    (setq dun-current-room meadow)
 	  (dun-mprincl "You don't have a key that can open this door.")))
 
-    (if (and (= dun-current-room maze-button-room) (= dir northwest))
+    (if (and (= dun-current-room maze-button-room)
+             (= dir (dun-movement 'northwest)))
 	(if (member obj-weight (nth maze-button-room dun-room-objects))
 	    (setq dun-current-room 18)
 	  (dun-mprincl "You can't go that way.")))
 
-    (if (and (= dun-current-room maze-button-room) (= dir up))
+    (if (and (= dun-current-room maze-button-room)
+             (= dir (dun-movement 'up)))
 	(if (member obj-weight (nth maze-button-room dun-room-objects))
 	    (dun-mprincl "You can't go that way.")
 	  (setq dun-current-room weight-room)))
@@ -1807,11 +1816,12 @@ engulf you, and you burn to death.")
 	    (setq dun-current-room long-n-s-hallway)
 	  (dun-mprincl "You can't go that way.")))
 
-    (if (and (> dir down) (> dun-current-room gamma-computing-center)
+    (if (and (> dir (dun-movement 'down))
+             (> dun-current-room gamma-computing-center)
 	     (< dun-current-room museum-lobby))
 	(if (not (member obj-bus (nth dun-current-room dun-room-objects)))
 	    (dun-mprincl "You can't go that way.")
-	  (if (= dir in)
+	  (if (= dir (dun-movement 'in))
 	      (if dun-inbus
 		  (dun-mprincl
 		   "You are already in the bus!")
