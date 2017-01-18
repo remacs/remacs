@@ -82,11 +82,7 @@ impl LispObject {
 
     #[inline]
     pub fn from_bool(v: bool) -> LispObject {
-        if v {
-            unsafe { Qt }
-        } else {
-            Qnil
-        }
+        if v { unsafe { Qt } } else { Qnil }
     }
 
     #[inline]
@@ -206,7 +202,7 @@ pub enum CharBits {
         | 0x2000000 | 0x4000000 | 0x8000000,
     // Actually, the current Emacs uses 22 bits for the character value
     // itself.
-    CHARACTERBITS = 22
+    CHARACTERBITS = 22,
 }
 
 // Lisp_Misc is a union. Now we don't really care about its variants except the
@@ -378,7 +374,7 @@ impl LispObject {
     /// If the LispObject is a number (of any kind), get a floating point value for it
     pub fn extract_float(self) -> Option<EmacsDouble> {
         let d = self.to_float();
-        d.or(self.to_fixnum().map( |i| i as EmacsDouble ))
+        d.or(self.to_fixnum().map(|i| i as EmacsDouble))
     }
 }
 
@@ -762,7 +758,6 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
 }
 
 /// Represents a string value in elisp
-
 #[repr(C)]
 pub struct LispString {
     pub size: libc::ptrdiff_t,
