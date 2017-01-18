@@ -5142,19 +5142,26 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
   if (! ok)
     report_file_errno ("Write error", filename, save_errno);
 
+  bool auto_saving_into_visited_file =
+    auto_saving
+    && ! NILP (Fstring_equal (BVAR (current_buffer, filename),
+			      BVAR (current_buffer, auto_save_file_name)));
   if (visiting)
     {
       SAVE_MODIFF = MODIFF;
       XSETFASTINT (BVAR (current_buffer, save_length), Z - BEG);
       bset_filename (current_buffer, visit_file);
       update_mode_lines = 14;
+      if (auto_saving_into_visited_file)
+	unlock_file (lockname);
     }
   else if (quietly)
     {
-      if (auto_saving
-	  && ! NILP (Fstring_equal (BVAR (current_buffer, filename),
-				    BVAR (current_buffer, auto_save_file_name))))
-	SAVE_MODIFF = MODIFF;
+      if (auto_saving_into_visited_file)
+	{
+	  SAVE_MODIFF = MODIFF;
+	  unlock_file (lockname);
+	}
 
       return Qnil;
     }
