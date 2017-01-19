@@ -4019,23 +4019,24 @@ that suppresses all warnings during execution of BODY."
          jump-table test-obj body tag donetag default-tag default-case)
     (when (and cases (not (= (length cases) 1)))
       (setq jump-table (make-hash-table :test test :size (length cases))
+            default-tag (byte-compile-make-tag)
             donetag (byte-compile-make-tag))
       (byte-compile-variable-ref var)
       (byte-compile-push-constant jump-table)
       (byte-compile-out 'byte-switch)
 
+      ;; When the opcode argument is `byte-goto', `byte-compile-goto' sets
+      ;; `byte-compile-depth' to `nil'. However, we need `byte-compile-depth'
+      ;; to be non-nil for generating tags for all cases. Since
+      ;; `byte-compile-depth' will increase by atmost 1 after compiling
+      ;; all of the clause (which is further enforced by cl-assert below)
+      ;; it should be safe to preserve it's value.
+      (let ((byte-compile-depth byte-compile-depth))
+        (byte-compile-goto 'byte-goto default-tag))
+
       (when (assq 'default cases)
         (setq default-case (cadr (assq 'default cases))
-              default-tag (byte-compile-make-tag))
-        (setq cases (butlast cases 1))
-        ;; When the opcode argument is `byte-goto', `byte-compile-goto' sets
-        ;; `byte-compile-depth' to `nil'. However, we need `byte-compile-depth'
-        ;; to be non-nil for generating tags for all cases. Since
-        ;; `byte-compile-depth' will increase by atmost 1 after compiling
-        ;; all of the clause (which is further enforced by cl-assert below)
-        ;; it should be safe to preserve it's value.
-        (let ((byte-compile-depth byte-compile-depth))
-          (byte-compile-goto 'byte-goto default-tag)))
+              cases (butlast cases 1)))
 
       (dolist (case cases)
         (setq tag (byte-compile-make-tag)
@@ -4051,21 +4052,23 @@ that suppresses all warnings during execution of BODY."
           ;; increase by one for every clause body compiled, causing
           ;; depth/tag conflicts or violating asserts down the road.
           ;; To make sure `byte-compile-body' itself doesn't violate this,
-          ;; we use `cl-assert' (which probably doesn't need to .
+          ;; we use `cl-assert'.
           (byte-compile-body body byte-compile--for-effect)
           (cl-assert (or (= byte-compile-depth init-depth)
                          (= byte-compile-depth (1+ init-depth))))
-          (byte-compile-goto 'byte-goto donetag)))
+          (byte-compile-goto 'byte-goto donetag)
+          (setcdr (cdr donetag) nil)))
 
+      (byte-compile-out-tag default-tag)
       (if default-case
-          (progn (byte-compile-out-tag default-tag)
-                 (byte-compile-body-do-effect default-case))
-        (byte-compile-push-constant nil))
+          (byte-compile-body-do-effect default-case)
+        (byte-compile-form 'nil))
       (byte-compile-out-tag donetag)
       (push jump-table byte-compile-jump-tables))))
 
 (defun byte-compile-cond (clauses)
-  (or (and byte-compile-cond-use-jump-table (byte-compile-cond-jump-table clauses))
+  (or (and byte-compile-cond-use-jump-table
+           (byte-compile-cond-jump-table clauses))
     (let ((donetag (byte-compile-make-tag))
           nexttag clause)
       (while (setq clauses (cdr clauses))
