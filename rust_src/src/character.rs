@@ -14,5 +14,10 @@ fn Fmax_char() -> LispObject {
     lisp::make_number(MaxChar)
 }
 
-defun!("max-char", Fmax_char, Smax_char, 0, 0, ptr::null(),
-"Return the character of the maximum code.");
+defun!("max-char",
+       Fmax_char,
+       Smax_char,
+       0,
+       0,
+       ptr::null(),
+       "Return the character of the maximum code.");

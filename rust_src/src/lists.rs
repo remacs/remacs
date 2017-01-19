@@ -25,14 +25,29 @@ fn Fatom(object: LispObject) -> LispObject {
     }
 }
 
-defun!("atom", Fatom, Satom, 1, 1, ptr::null(),
+defun!("atom",
+       Fatom,
+       Satom,
+       1,
+       1,
+       ptr::null(),
        "Return t if OBJECT is not a cons cell.  This includes nil.");
 
 fn Fconsp(object: LispObject) -> LispObject {
-    if CONSP(object) { LispObject::constant_t() } else { Qnil }
+    if CONSP(object) {
+        LispObject::constant_t()
+    } else {
+        Qnil
+    }
 }
 
-defun!("consp", Fconsp, Sconsp, 1, 1, ptr::null(), "Return t if OBJECT is a cons cell.
+defun!("consp",
+       Fconsp,
+       Sconsp,
+       1,
+       1,
+       ptr::null(),
+       "Return t if OBJECT is a cons cell.
 
 (fn OBJECT)");
 
@@ -96,7 +111,13 @@ pub extern "C" fn Fsetcar(cell: LispObject, newcar: LispObject) -> LispObject {
     newcar
 }
 
-defun!("setcar", Fsetcar, Ssetcar, 2, 2, ptr::null(), "Set the car of CELL to be NEWCAR. Returns NEWCAR.
+defun!("setcar",
+       Fsetcar,
+       Ssetcar,
+       2,
+       2,
+       ptr::null(),
+       "Set the car of CELL to be NEWCAR. Returns NEWCAR.
 
 (fn CELL NEWCAR)");
 
@@ -111,7 +132,13 @@ pub extern "C" fn Fsetcdr(cell: LispObject, newcar: LispObject) -> LispObject {
     newcar
 }
 
-defun!("setcdr", Fsetcdr, Ssetcdr, 2, 2, ptr::null(), "Set the cdr of CELL to be NEWCDR.  Returns NEWCDR.
+defun!("setcdr",
+       Fsetcdr,
+       Ssetcdr,
+       2,
+       2,
+       ptr::null(),
+       "Set the cdr of CELL to be NEWCDR.  Returns NEWCDR.
 
 (fn CELL NEWCDR)");
 
@@ -136,28 +163,20 @@ unsafe fn XCDR(object: LispObject) -> LispObject {
 /// This is equivalent to `CAR`/`CDR` in C code.
 fn car(object: LispObject) -> LispObject {
     if CONSP(object) {
-        unsafe {
-            XCAR(object)
-        }
+        unsafe { XCAR(object) }
     } else if NILP(object) {
         Qnil
     } else {
-        unsafe {
-            wrong_type_argument(Qlistp, object)
-        }
+        unsafe { wrong_type_argument(Qlistp, object) }
     }
 }
 fn cdr(object: LispObject) -> LispObject {
     if CONSP(object) {
-        unsafe {
-            XCDR(object)
-        }
+        unsafe { XCDR(object) }
     } else if NILP(object) {
         Qnil
     } else {
-        unsafe {
-            wrong_type_argument(Qlistp, object)
-        }
+        unsafe { wrong_type_argument(Qlistp, object) }
     }
 }
 
@@ -166,10 +185,18 @@ pub extern "C" fn Fcar(list: LispObject) -> LispObject {
     car(list)
 }
 
-defun!("car", Fcar, Scar, 1, 1, ptr::null(), "Return the car of LIST.  If arg is nil, return nil.
-Error if arg is not nil and not a cons cell.  See also `car-safe'.
+defun!("car",
+       Fcar,
+       Scar,
+       1,
+       1,
+       ptr::null(),
+       "Return the car of LIST.  If arg is nil, return nil.
+Error if arg is not nil and not a \
+        cons cell.  See also `car-safe'.
 
-See Info node `(elisp)Cons Cells' for a discussion of related basic
+See Info node `(elisp)Cons Cells' for a discussion of \
+        related basic
 Lisp concepts such as car, cdr, cons cell and list.
 
 (fn LIST)");
@@ -179,10 +206,18 @@ pub extern "C" fn Fcdr(list: LispObject) -> LispObject {
     cdr(list)
 }
 
-defun!("cdr", Fcdr, Scdr, 1, 1, ptr::null(), "Return the cdr of LIST.  If arg is nil, return nil.
-Error if arg is not nil and not a cons cell.  See also `cdr-safe'.
+defun!("cdr",
+       Fcdr,
+       Scdr,
+       1,
+       1,
+       ptr::null(),
+       "Return the cdr of LIST.  If arg is nil, return nil.
+Error if arg is not nil and not a \
+        cons cell.  See also `cdr-safe'.
 
-See Info node `(elisp)Cons Cells' for a discussion of related basic
+See Info node `(elisp)Cons Cells' for a discussion of \
+        related basic
 Lisp concepts such as cdr, car, cons cell and list.
 
 (fn LIST)");
@@ -199,12 +234,13 @@ pub extern "C" fn Flistp(object: LispObject) -> LispObject {
 defun!("listp",
        Flistp,
        Slistp,
-       1, 1,
+       1,
+       1,
        ptr::null(),
-"return t if OBJECT is a list, that is a cons cell or nil, Otherwise, return nil.
+       "return t if OBJECT is a list, that is a cons cell or nil, Otherwise, return nil.
 
-(fn OBJECT)"
-);
+(fn \
+        OBJECT)");
 
 fn Fnlistp(object: LispObject) -> LispObject {
     if CONSP(object) || NILP(object) {
@@ -217,9 +253,9 @@ fn Fnlistp(object: LispObject) -> LispObject {
 defun!("nlistp",
        Fnlistp,
        Snlistp,
-       1,2,
+       1,
+       2,
        ptr::null(),
        "Return t if OBJECT is not a list.  Lists include nil.
 
-(fn OBJECT)"
-);
+(fn OBJECT)");

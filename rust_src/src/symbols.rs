@@ -24,6 +24,12 @@ fn Fsymbolp(object: LispObject) -> LispObject {
     }
 }
 
-defun!("symbolp", Fsymbolp, Ssymbolp, 1, 1, ptr::null(), "Return t if OBJECT is a symbol.
+defun!("symbolp",
+       Fsymbolp,
+       Ssymbolp,
+       1,
+       1,
+       ptr::null(),
+       "Return t if OBJECT is a symbol.
 
 (fn OBJECT)");

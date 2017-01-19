@@ -33,7 +33,7 @@ pub extern "C" fn extract_float(f: LispObject) -> EmacsDouble {
     CHECK_TYPE(d.is_some(), unsafe { Qnumberp }, f);
     match d {
         Some(d) => d,
-        None    => unreachable!() // CHECK_TYPE never returns on failure
+        None => unreachable!(), // CHECK_TYPE never returns on failure
     }
 }
 
@@ -47,7 +47,7 @@ fn check_float(x: LispObject) {
 #[no_mangle]
 pub extern "C" fn fmod_float(x: LispObject, y: LispObject) -> LispObject {
     let mut f1 = extract_float(x);
-    let f2     = extract_float(y);
+    let f2 = extract_float(y);
 
     f1 %= f2;
 
@@ -81,22 +81,40 @@ macro_rules! simple_float_op {
     }
 }
 
-simple_float_op!("acos", Facos, Sacos, acos, "Return the inverse cosine of ARG.");
-simple_float_op!("asin", Fasin, Sasin, asin, "Return the inverse sine of ARG.");
+simple_float_op!("acos",
+                 Facos,
+                 Sacos,
+                 acos,
+                 "Return the inverse cosine of ARG.");
+simple_float_op!("asin",
+                 Fasin,
+                 Sasin,
+                 asin,
+                 "Return the inverse sine of ARG.");
 // atan is special, defined later
-simple_float_op!("cos",  Fcos,  Scos,  cos, "Return the cosine of ARG.");
-simple_float_op!("sin",  Fsin,  Ssin,  sin, "Return the sine of ARG.");
-simple_float_op!("tan",  Ftan,  Stan,  tan, "Return the tangent of ARG.");
+simple_float_op!("cos", Fcos, Scos, cos, "Return the cosine of ARG.");
+simple_float_op!("sin", Fsin, Ssin, sin, "Return the sine of ARG.");
+simple_float_op!("tan", Ftan, Stan, tan, "Return the tangent of ARG.");
 
-simple_float_op!("exp",  Fexp,  Sexp,  exp,  "Return the exponential base e of ARG.");
+simple_float_op!("exp",
+                 Fexp,
+                 Sexp,
+                 exp,
+                 "Return the exponential base e of ARG.");
 simple_float_op!("sqrt", Fsqrt, Ssqrt, sqrt, "Return the square root of ARG.");
 
-simple_float_op!("fceiling", Ffceiling, Sfceiling, ceil,
-    "Return the smallest integer no less than ARG, as a float.
+simple_float_op!("fceiling",
+                 Ffceiling,
+                 Sfceiling,
+                 ceil,
+                 "Return the smallest integer no less than ARG, as a float.
 (Round toward +inf.)");
 
-simple_float_op!("ffloor", Ffloor, Sffloor, floor,
-    "Return the largest integer no greater than ARG, as a float.
+simple_float_op!("ffloor",
+                 Ffloor,
+                 Sffloor,
+                 floor,
+                 "Return the largest integer no greater than ARG, as a float.
 (Round towards -inf.)");
 
 fn Fisnan(x: LispObject) -> LispObject {
@@ -108,7 +126,8 @@ fn Fisnan(x: LispObject) -> LispObject {
 defun!("isnan",
        Fisnan,
        Sisnan,
-       1, 1,
+       1,
+       1,
        ptr::null(),
        "Return non nil if argument X is a NaN.
 
@@ -130,7 +149,8 @@ fn Fatan(y: LispObject, x: LispObject) -> LispObject {
 defun!("atan",
        Fatan,
        Satan,
-       1, 2,
+       1,
+       2,
        ptr::null(),
        "Return the inverse tangent of the arguments.
 If only one argument Y is given, return the inverse tangent of Y.
@@ -162,7 +182,8 @@ fn Flog(arg: LispObject, base: LispObject) -> LispObject {
 defun!("log",
        Flog,
        Slog,
-       1, 2,
+       1,
+       2,
        ptr::null(),
        "Return the natural logarithm of ARG.
 If the optional argument BASE is given, return log ARG using that base.
@@ -181,7 +202,8 @@ fn Fftruncate(x: LispObject) -> LispObject {
 defun!("ftruncate",
        Fftruncate,
        Sftruncate,
-       1, 1,
+       1,
+       1,
        ptr::null(),
        "Truncate a floating point number to an integral float value.
 Rounds the value toward zero.
@@ -197,14 +219,15 @@ fn Ffloat(obj: LispObject) -> LispObject {
 
     match obj.to_fixnum() {
         Some(int) => LispObject::from_float(int as EmacsDouble),
-        None      => unreachable!()
+        None => unreachable!(),
     }
 }
 
 defun!("float",
        Ffloat,
        Sfloat,
-       1, 1,
+       1,
+       1,
        ptr::null(),
        "Return the floating point number equal to ARG.
 
