@@ -1417,6 +1417,9 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
           {
             Lisp_Object jmp_table = POP;
             Lisp_Object v1 = POP;
+#ifdef BYTE_CODE_SAFE
+            CHECK_TYPE (HASH_TABLE_P (jmp_table), Qhash_table_p, jmp_table);
+#endif
             struct Lisp_Hash_Table *h = XHASH_TABLE(jmp_table);
             ptrdiff_t i = hash_lookup(h, v1, NULL);
             if (i >= 0) {
