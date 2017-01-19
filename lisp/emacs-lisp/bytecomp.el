@@ -4005,7 +4005,7 @@ that suppresses all warnings during execution of BODY."
                         (eq obj1 prev-var)
                         ;; discard duplicate clauses
                         (not (assq obj2 cases)))
-                   (push (list obj2 body) cases)
+                   (push (list (eval obj2) body) cases)
                  (if (eq condition t)
                      (progn (push (list 'default body) cases)
                             (throw 'break t))
