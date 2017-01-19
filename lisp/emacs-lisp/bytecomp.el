@@ -3972,7 +3972,9 @@ that suppresses all warnings during execution of BODY."
 
 (defun byte-compile-cond-valid-obj2-p (obj)
   (cond
-   ((consp obj) (eq (car obj) 'quote))
+   ((consp obj) (and (eq (car obj) 'quote)
+                     (= (length obj) 2)
+                     (symbolp (cadr obj))))
    (t t)))
 
 (defun byte-compile-cond-vars (obj1 obj2)
