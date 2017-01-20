@@ -440,7 +440,8 @@ functions are called."
 
 (define-obsolete-variable-alias 'write-file-hooks 'write-file-functions "22.1")
 (defvar write-file-functions nil
-  "List of functions to be called before writing out a buffer to a file.
+  "List of functions to be called before saving a buffer to a file.
+Only used by `save-buffer'.
 If one of them returns non-nil, the file is considered already written
 and the rest are not called.
 These hooks are considered to pertain to the visited file.
@@ -465,6 +466,7 @@ updates before the buffer is saved, use `before-save-hook'.")
     'write-contents-functions "22.1")
 (defvar write-contents-functions nil
   "List of functions to be called before writing out a buffer to a file.
+Only used by `save-buffer'.
 If one of them returns non-nil, the file is considered already written
 and the rest are not called and neither are the functions in
 `write-file-functions'.
@@ -4721,13 +4723,15 @@ the last real save, but optional arg FORCE non-nil means delete anyway."
   "Normal hook run just before auto-saving.")
 
 (defcustom before-save-hook nil
-  "Normal hook that is run before a buffer is saved to its file."
+  "Normal hook that is run before a buffer is saved to its file.
+Only used by `save-buffer'."
   :options '(copyright-update time-stamp)
   :type 'hook
   :group 'files)
 
 (defcustom after-save-hook nil
-  "Normal hook that is run after a buffer is saved to its file."
+  "Normal hook that is run after a buffer is saved to its file.
+Only used by `save-buffer'."
   :options '(executable-make-buffer-file-executable-if-script-p)
   :type 'hook
   :group 'files)
