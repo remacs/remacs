@@ -13,6 +13,7 @@ extern crate lazy_static;
 
 extern crate remacs_sys;
 extern crate libc;
+extern crate ring;
 
 mod lisp;
 mod lists;
@@ -25,6 +26,7 @@ mod strings;
 mod symbols;
 mod character;
 mod base64;
+mod crypto;
 
 use remacs_sys::Lisp_Subr;
 
@@ -94,6 +96,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*strings::Sbase64_decode_string);
         defsubr(&*strings::Snull);
         defsubr(&*character::Smax_char);
+        defsubr(&*crypto::Ssecure_hash);
+        defsubr(&*crypto::Smd5);
 
         floatfns::init_float_syms();
     }
