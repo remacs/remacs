@@ -613,6 +613,13 @@ HTML tags, classes and IDs using the 'completion-at-point' command.
 Completion candidates for HTML classes and IDs are retrieved from open
 HTML mode buffers.
 
+---
+*** CSS mode now binds 'C-h s' to a function that will show
+information about a CSS construct (an at-rule, property, pseudo-class,
+pseudo-element, with the default being guessed from context).  By
+default the information is looked up on the Mozilla Developer Network,
+but this can be customized using 'css-lookup-url-format'.
+
 +++
 ** Emacs now supports character name escape sequences in character and
 string literals.  The syntax variants \N{character name} and
