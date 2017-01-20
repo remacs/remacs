@@ -11,6 +11,7 @@ use std::os::raw::c_char;
 use std::cmp::max;
 use std::mem;
 use std::ops::Deref;
+use std::fmt::{Debug, Formatter, Error};
 
 use marker::{LispMarker, marker_position};
 
@@ -50,7 +51,7 @@ pub const EMACS_LISP_FLOAT_SIZE: EmacsInt = 8;
 // This is dependent on CHECK_LISP_OBJECT_TYPE, a compile time flag,
 // but it's usually false.
 #[repr(C)]
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub struct LispObject(EmacsInt);
 
 extern "C" {
@@ -115,7 +116,7 @@ const VALMASK: EmacsInt = -(1 << GCTYPEBITS);
 #[derive(PartialEq, Eq)]
 #[allow(dead_code)]
 #[allow(non_camel_case_types)]
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum LispType {
     // Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol.
     Lisp_Symbol = 0,
@@ -517,6 +518,48 @@ macro_rules! defun {
 /// Used to denote functions that have no limit on the maximum number
 /// of arguments.
 pub const MANY: i16 = -2;
+
+impl Debug for LispObject {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        let ty = self.get_type();
+        let self_ptr = &self as *const _ as usize;
+        if ty as u8 >= 8 {
+            write!(f,
+                   "#<INVALID-OBJECT @ {:#X}: VAL({:#X})>",
+                   self_ptr,
+                   self.to_raw())?;
+            return Ok(());
+        }
+        match ty {
+            LispType::Lisp_Symbol => {
+                write!(f, "#<SYMBOL @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+            }
+            LispType::Lisp_Cons => {
+                write!(f, "#<CONS @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+            }
+            LispType::Lisp_Float => {
+                write!(f, "#<FLOAT @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+            }
+            LispType::Lisp_Vectorlike => {
+                write!(f,
+                       "#<VECTOR-LIKE @ {:#X}: VAL({:#X})>",
+                       self_ptr,
+                       self.to_raw())?;
+            }
+            LispType::Lisp_Int0 |
+            LispType::Lisp_Int1 => {
+                write!(f, "#<INT @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+            }
+            LispType::Lisp_Misc => {
+                write!(f, "#<MISC @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+            }
+            LispType::Lisp_String => {
+                write!(f, "#<STRING @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+            }
+        }
+        Ok(())
+    }
+}
 
 /// # Porting Notes
 ///
