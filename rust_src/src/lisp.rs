@@ -162,6 +162,11 @@ impl LispObject {
 
 // Symbol support (LispType == Lisp_Symbol == 0)
 
+impl LispObject {
+    pub fn is_symbol(self) -> bool {
+        self.get_type() == LispType::Lisp_Symbol
+    }
+}
 
 // Misc support (LispType == Lisp_Misc == 1)
 
@@ -379,7 +384,23 @@ impl LispObject {
     }
 }
 
+// String support (LispType == 4)
 
+/// Represents a string value in elisp
+#[repr(C)]
+pub struct LispString {
+    pub size: libc::ptrdiff_t,
+    pub size_byte: libc::ptrdiff_t,
+    pub intervals: *mut libc::c_void, // @TODO implement
+    pub data: *mut libc::c_char,
+}
+
+impl LispObject {
+    #[inline]
+    pub fn is_string(self) -> bool {
+        XTYPE(self) == LispType::Lisp_String
+    }
+}
 
 // Other functions
 
@@ -387,11 +408,6 @@ impl LispObject {
     #[inline]
     pub fn is_number(self) -> bool {
         self.is_integer() || self.is_float()
-    }
-
-    #[inline]
-    pub fn is_string(self) -> bool {
-        XTYPE(self) == LispType::Lisp_String
     }
 }
 
@@ -570,6 +586,7 @@ impl Debug for LispObject {
 mod deprecated {
     use super::*;
     use ::libc;
+    use ::std;
 
     /// Convert a LispObject to an EmacsInt.
     #[allow(non_snake_case)]
@@ -630,6 +647,18 @@ mod deprecated {
         assert!(!INTEGERP(Qnil));
         assert!(INTEGERP(make_number(1)));
         assert!(INTEGERP(make_natnum(1)));
+    }
+
+    /// Is this LispObject a symbol?
+    #[allow(non_snake_case)]
+    #[allow(dead_code)]    
+    pub fn SYMBOLP(a: LispObject) -> bool {
+        a.is_symbol()
+    }
+
+    #[test]
+    fn test_symbolp() {
+        assert!(SYMBOLP(Qnil));
     }
 
 
@@ -743,6 +772,16 @@ mod deprecated {
         assert!(NUMBERP(make_natnum(1)));
     }
 
+    pub fn XSTRING(a: LispObject) -> *mut LispString {
+        debug_assert!(STRINGP(a));
+        unsafe { std::mem::transmute(XUNTAG(a, LispType::Lisp_String)) }
+    }
+
+    pub fn SBYTES(string: LispObject) -> libc::ptrdiff_t {
+        unsafe { STRING_BYTES(XSTRING(string)) }
+    }
+
+
     /// Convert a tagged pointer to a normal C pointer.
     ///
     /// See the docstring for `LispType` for more information on tagging.
@@ -798,24 +837,6 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
             wrong_type_argument(predicate, x);
         }
     }
-}
-
-/// Represents a string value in elisp
-#[repr(C)]
-pub struct LispString {
-    pub size: libc::ptrdiff_t,
-    pub size_byte: libc::ptrdiff_t,
-    pub intervals: *mut libc::c_void, // @TODO implement
-    pub data: *mut libc::c_char,
-}
-
-pub fn XSTRING(a: LispObject) -> *mut LispString {
-    debug_assert!(STRINGP(a));
-    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_String)) }
-}
-
-pub fn SBYTES(string: LispObject) -> libc::ptrdiff_t {
-    unsafe { STRING_BYTES(XSTRING(string)) }
 }
 
 /// Raise an error if `x` is not lisp string.

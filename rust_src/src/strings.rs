@@ -20,11 +20,7 @@ extern "C" {
 static MIME_LINE_LENGTH: isize = 76;
 
 fn Fstringp(object: LispObject) -> LispObject {
-    if STRINGP(object) {
-        LispObject::constant_t()
-    } else {
-        Qnil
-    }
+    LispObject::from_bool(object.is_string())
 }
 
 defun!("stringp",
@@ -38,11 +34,7 @@ defun!("stringp",
 (fn OBJECT)");
 
 fn Feq(firstObject: LispObject, secondObject: LispObject) -> LispObject {
-    if firstObject == secondObject {
-        LispObject::constant_t()
-    } else {
-        Qnil
-    }
+    LispObject::from_bool(firstObject == secondObject)
 }
 
 defun!("eq",
@@ -56,11 +48,7 @@ defun!("eq",
 (fn OBJECT OBJECT)");
 
 fn Fnull(object: LispObject) -> LispObject {
-    if object == Qnil {
-        LispObject::constant_t()
-    } else {
-        Qnil
-    }
+    LispObject::from_bool(object == Qnil)
 }
 
 defun!("null",
