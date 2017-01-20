@@ -82,7 +82,11 @@ impl LispObject {
 
     #[inline]
     pub fn from_bool(v: bool) -> LispObject {
-        if v { unsafe { Qt } } else { Qnil }
+        if v {
+            unsafe { Qt }
+        } else {
+            Qnil
+        }
     }
 
     #[inline]
@@ -104,7 +108,7 @@ impl LispObject {
 // Number of bits in a Lisp_Object tag.
 const GCTYPEBITS: libc::c_int = 3;
 
-const INTTYPEBITS: libc::c_int = GCTYPEBITS - 1;
+pub const INTTYPEBITS: libc::c_int = GCTYPEBITS - 1;
 
 // This is also dependent on USE_LSB_TAG, which we're assuming to be 1.
 const VALMASK: EmacsInt = -(1 << GCTYPEBITS);
@@ -467,6 +471,40 @@ pub struct LispSubr {
 //
 // Based on http://stackoverflow.com/a/28116557/509706
 unsafe impl Sync for LispSubr {}
+
+
+/// These are the types of forwarding objects used in the value slot
+/// of symbols for special built-in variables whose value is stored in
+/// C variables.
+///
+/// # Porting notes
+/// This is the equivalent of `Lisp_Fwd_Type` in `lisp.h`.
+///
+/// # Safety notes
+/// Maybe it's a little unsafe to rely on `#[repr(C)] for enums,
+/// since C compilers can optimize them to have a lower size than
+/// Rust thinks it have.
+///
+/// A solution could be to replace enums in C (`lisp.h`) with constants
+/// that a fixed size.
+#[repr(C)]
+#[derive(Debug)]
+pub enum LispFwdType {
+    Int = 0,
+    Bool = 1,
+    Obj = 2,
+    Buffer_Obj = 3,
+    Kboard_Obj = 4,
+}
+
+/// # Porting notes
+/// This is the equivalent to `Lisp_Objfwd` in `lisp.h`.
+#[repr(C)]
+#[derive(Debug)]
+pub struct LispObjfwd {
+    pub type_: LispFwdType,
+    pub objvar: *mut LispObject,
+}
 
 /// Define an elisp function struct.
 ///
