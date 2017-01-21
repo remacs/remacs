@@ -5,6 +5,13 @@ rust:
   - beta
   - nightly
 
+addons:
+  apt:
+    packages:
+    - texinfo
+    - libgif-dev
+    - libxpm-dev
+
 env:
   # Ensure that we build without warnings.
   - CARGO_FLAGS="--features 'strict'"
@@ -12,8 +19,7 @@ env:
 script:
   # Configure Emacs for building
   - ./autogen.sh
-  # TODO: set up makeinfo on travis.
-  - ./configure --without-makeinfo --with-xpm=no --with-gif=no
+  - ./configure
   - make -j 3
 
   - make check || echo 'make check failed'
