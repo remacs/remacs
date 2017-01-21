@@ -4083,11 +4083,9 @@ that suppresses all warnings during execution of BODY."
                      clauses nil))
               ((cdr clauses)
                (byte-compile-form (car clause))
-               ;; (message "out %s" donetag)
                (if (null (cdr clause))
                    ;; First clause is a singleton.
                    (byte-compile-goto-if t byte-compile--for-effect donetag)
-                 ;; (message "inside %s" donetag)
                  (setq nexttag (byte-compile-make-tag))
                  (byte-compile-goto 'byte-goto-if-nil nexttag)
                  (byte-compile-maybe-guarded (car clause)
