@@ -9859,6 +9859,32 @@ move_it_by_lines (struct it *it, ptrdiff_t dvpos)
     }
 }
 
+int
+partial_line_height (struct it *it_origin)
+{
+  int partial_height;
+  void *it_data = NULL;
+  struct it it;
+  SAVE_IT (it, *it_origin, it_data);
+  move_it_to (&it, ZV, -1, it.last_visible_y, -1,
+              MOVE_TO_POS | MOVE_TO_Y);
+  if (it.what == IT_EOB)
+    {
+      int vis_height = it.last_visible_y - it.current_y;
+      int height = it.ascent + it.descent;
+      partial_height = (vis_height < height) ? vis_height : 0;
+    }
+  else
+    {
+      int last_line_y = it.current_y;
+      move_it_by_lines (&it, 1);
+      partial_height = (it.current_y > it.last_visible_y)
+        ? it.last_visible_y - last_line_y : 0;
+    }
+  RESTORE_IT (&it, &it, it_data);
+  return partial_height;
+}
+
 /* Return true if IT points into the middle of a display vector.  */
 
 bool
@@ -15368,7 +15394,8 @@ try_scrolling (Lisp_Object window, bool just_this_one_p,
       /* Compute the pixel ypos of the scroll margin, then move IT to
 	 either that ypos or PT, whichever comes first.  */
       start_display (&it, w, startp);
-      scroll_margin_y = it.last_visible_y - this_scroll_margin
+      scroll_margin_y = it.last_visible_y - partial_line_height (&it)
+        - this_scroll_margin
 	- frame_line_height * extra_scroll_margin_lines;
       move_it_to (&it, PT, -1, scroll_margin_y - 1, -1,
 		  (MOVE_TO_POS | MOVE_TO_Y));

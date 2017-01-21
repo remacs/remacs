@@ -5147,7 +5147,7 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
 	 in the scroll margin at the bottom.  */
       move_it_to (&it, PT, -1,
 		  (it.last_visible_y - WINDOW_HEADER_LINE_HEIGHT (w)
-		   - this_scroll_margin - 1),
+                   - partial_line_height (&it) - this_scroll_margin - 1),
 		  -1,
 		  MOVE_TO_POS | MOVE_TO_Y);
 
