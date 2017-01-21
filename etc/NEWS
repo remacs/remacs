@@ -116,7 +116,16 @@ dired buffer.
 ** Emacs now uses double buffering to reduce flicker when editing and
 resizing graphical Emacs frames on the X Window System.  This support
 requires the DOUBLE-BUFFER extension, which major X servers have
-supported for many years.
+supported for many years.  If your system has this extension, but an
+Emacs built with double buffering misbehaves on some displays you use,
+you can disable the feature by adding
+
+  '(inhibit-double-buffering . t)
+
+to default-frame-parameters.  Or inject this parameter into the
+selected frame by evaluating this form:
+
+  (modify-frame-parameters nil '((inhibit-double-buffering . t)))
 
 ---
 The group 'wp', whose label was "text", is now deprecated.
