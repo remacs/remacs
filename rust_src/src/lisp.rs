@@ -11,6 +11,7 @@ use std::os::raw::c_char;
 use std::cmp::max;
 use std::mem;
 use std::ops::Deref;
+use std::fmt::{Debug, Formatter, Error};
 
 use marker::{LispMarker, marker_position};
 
@@ -43,14 +44,20 @@ pub type EmacsUint = usize;
 #[cfg(dummy = "impossible")]
 pub type EmacsDouble = f64;
 #[cfg(dummy = "impossible")]
-pub const EMACS_INT_MAX: EmacsInt = std::isize::MAX;
+pub const EMACS_INT_MAX: EmacsInt = 0x7FFFFFFFFFFFFFFF_i64;
 #[cfg(dummy = "impossible")]
-pub const EMACS_LISP_FLOAT_SIZE: EmacsInt = 8;
+pub const EMACS_INT_SIZE: EmacsInt = 8;
+#[cfg(dummy = "impossible")]
+pub const EMACS_FLOAT_SIZE: EmacsInt = 8;
+#[cfg(dummy = "impossible")]
+pub const GCTYPEBITS: EmacsInt = 3;
+#[cfg(dummy = "impossible")]
+pub const USE_LSB_TAG: bool = true;
 
 // This is dependent on CHECK_LISP_OBJECT_TYPE, a compile time flag,
 // but it's usually false.
 #[repr(C)]
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub struct LispObject(EmacsInt);
 
 extern "C" {
@@ -102,12 +109,19 @@ impl LispObject {
 }
 
 // Number of bits in a Lisp_Object tag.
-const GCTYPEBITS: libc::c_int = 3;
+#[allow(dead_code)]
+const VALBITS: EmacsInt = EMACS_INT_SIZE * 8 - GCTYPEBITS;
 
-const INTTYPEBITS: libc::c_int = GCTYPEBITS - 1;
+const INTTYPEBITS: EmacsInt = GCTYPEBITS - 1;
 
-// This is also dependent on USE_LSB_TAG, which we're assuming to be 1.
-const VALMASK: EmacsInt = -(1 << GCTYPEBITS);
+#[allow(dead_code)]
+const FIXNUM_BITS: EmacsInt = VALBITS + 1;
+
+const VAL_MAX: EmacsInt = EMACS_INT_MAX >> (GCTYPEBITS - 1);
+
+const VALMASK: EmacsInt = [VAL_MAX, -(1 << GCTYPEBITS)][USE_LSB_TAG as usize];
+
+const INTMASK: EmacsInt = (EMACS_INT_MAX >> (INTTYPEBITS - 1));
 
 /// Bit pattern used in the least significant bits of a lisp object,
 /// to denote its type.
@@ -115,7 +129,7 @@ const VALMASK: EmacsInt = -(1 << GCTYPEBITS);
 #[derive(PartialEq, Eq)]
 #[allow(dead_code)]
 #[allow(non_camel_case_types)]
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum LispType {
     // Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol.
     Lisp_Symbol = 0,
@@ -126,9 +140,7 @@ pub enum LispType {
 
     // Integer.  XINT (obj) is the integer value.
     Lisp_Int0 = 2,
-    // This depends on USE_LSB_TAG in Emacs C, but in our build that
-    // value is 1.
-    Lisp_Int1 = 6,
+    Lisp_Int1 = 3 + (USE_LSB_TAG as usize as u8) * 3, // 3 | 6
 
     // String.  XSTRING (object) points to a struct Lisp_String.
     // The length of the string, and its contents, are stored therein.
@@ -141,7 +153,7 @@ pub enum LispType {
     Lisp_Vectorlike = 5,
 
     // Cons.  XCONS (object) points to a struct Lisp_Cons.
-    Lisp_Cons = 3,
+    Lisp_Cons = 6 - (USE_LSB_TAG as usize as u8) * 3, // 6 | 3
 
     Lisp_Float = 7,
 }
@@ -149,7 +161,12 @@ pub enum LispType {
 impl LispObject {
     #[allow(unused_unsafe)]
     pub fn get_type(self) -> LispType {
-        let res = (self.to_raw() & !VALMASK) as u8;
+        let raw = self.to_raw() as EmacsUint;
+        let res = (if USE_LSB_TAG {
+            raw & (!VALMASK as EmacsUint)
+        } else {
+            raw >> VALBITS
+        }) as u8;
         unsafe { mem::transmute(res) }
     }
 
@@ -161,6 +178,11 @@ impl LispObject {
 
 // Symbol support (LispType == Lisp_Symbol == 0)
 
+impl LispObject {
+    pub fn is_symbol(self) -> bool {
+        self.get_type() == LispType::Lisp_Symbol
+    }
+}
 
 // Misc support (LispType == Lisp_Misc == 1)
 
@@ -282,14 +304,23 @@ pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
 impl LispObject {
     #[inline]
     pub unsafe fn from_fixnum_unchecked(n: EmacsInt) -> LispObject {
-        let o = (n << INTTYPEBITS) as EmacsUint + LispType::Lisp_Int0 as EmacsUint;
+        let o = if USE_LSB_TAG {
+            (n << INTTYPEBITS) as EmacsUint + LispType::Lisp_Int0 as EmacsUint
+        } else {
+            (n & INTMASK) as EmacsUint + ((LispType::Lisp_Int0 as EmacsUint) << VALBITS)
+        };
         LispObject::from_raw(o as EmacsInt)
     }
 
     #[inline]
     pub fn to_fixnum(self) -> Option<EmacsInt> {
         if self.is_fixnum() {
-            Some(self.to_raw() >> INTTYPEBITS)
+            let raw = self.to_raw();
+            if !USE_LSB_TAG {
+                Some(raw & INTMASK)
+            } else {
+                Some(raw >> INTTYPEBITS)
+            }
         } else {
             None
         }
@@ -323,7 +354,7 @@ impl LispObject {
 /// the pointer.
 #[repr(C)]
 pub struct LispFloat {
-    data: [u8; EMACS_LISP_FLOAT_SIZE as usize],
+    data: [u8; EMACS_FLOAT_SIZE as usize],
 }
 
 #[repr(C)]
@@ -378,7 +409,23 @@ impl LispObject {
     }
 }
 
+// String support (LispType == 4)
 
+/// Represents a string value in elisp
+#[repr(C)]
+pub struct LispString {
+    pub size: libc::ptrdiff_t,
+    pub size_byte: libc::ptrdiff_t,
+    pub intervals: *mut libc::c_void, // @TODO implement
+    pub data: *mut libc::c_char,
+}
+
+impl LispObject {
+    #[inline]
+    pub fn is_string(self) -> bool {
+        XTYPE(self) == LispType::Lisp_String
+    }
+}
 
 // Other functions
 
@@ -386,11 +433,6 @@ impl LispObject {
     #[inline]
     pub fn is_number(self) -> bool {
         self.is_integer() || self.is_float()
-    }
-
-    #[inline]
-    pub fn is_string(self) -> bool {
-        XTYPE(self) == LispType::Lisp_String
     }
 }
 
@@ -518,6 +560,48 @@ macro_rules! defun {
 /// of arguments.
 pub const MANY: i16 = -2;
 
+impl Debug for LispObject {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        let ty = self.get_type();
+        let self_ptr = &self as *const _ as usize;
+        if ty as u8 >= 8 {
+            write!(f,
+                   "#<INVALID-OBJECT @ {:#X}: VAL({:#X})>",
+                   self_ptr,
+                   self.to_raw())?;
+            return Ok(());
+        }
+        match ty {
+            LispType::Lisp_Symbol => {
+                write!(f, "#<SYMBOL @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+            }
+            LispType::Lisp_Cons => {
+                write!(f, "#<CONS @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+            }
+            LispType::Lisp_Float => {
+                write!(f, "#<FLOAT @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+            }
+            LispType::Lisp_Vectorlike => {
+                write!(f,
+                       "#<VECTOR-LIKE @ {:#X}: VAL({:#X})>",
+                       self_ptr,
+                       self.to_raw())?;
+            }
+            LispType::Lisp_Int0 |
+            LispType::Lisp_Int1 => {
+                write!(f, "#<INT @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+            }
+            LispType::Lisp_Misc => {
+                write!(f, "#<MISC @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+            }
+            LispType::Lisp_String => {
+                write!(f, "#<STRING @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+            }
+        }
+        Ok(())
+    }
+}
+
 /// # Porting Notes
 ///
 /// This module contains some functions that is originally contained in Emacs C code
@@ -527,9 +611,11 @@ pub const MANY: i16 = -2;
 mod deprecated {
     use super::*;
     use ::libc;
+    use ::std;
 
     /// Convert a LispObject to an EmacsInt.
     #[allow(non_snake_case)]
+    #[allow(dead_code)]
     pub fn XLI(o: LispObject) -> EmacsInt {
         o.to_raw()
     }
@@ -587,6 +673,18 @@ mod deprecated {
         assert!(!INTEGERP(Qnil));
         assert!(INTEGERP(make_number(1)));
         assert!(INTEGERP(make_natnum(1)));
+    }
+
+    /// Is this LispObject a symbol?
+    #[allow(non_snake_case)]
+    #[allow(dead_code)]
+    pub fn SYMBOLP(a: LispObject) -> bool {
+        a.is_symbol()
+    }
+
+    #[test]
+    fn test_symbolp() {
+        assert!(SYMBOLP(Qnil));
     }
 
 
@@ -700,16 +798,22 @@ mod deprecated {
         assert!(NUMBERP(make_natnum(1)));
     }
 
+    pub fn XSTRING(a: LispObject) -> *mut LispString {
+        debug_assert!(STRINGP(a));
+        unsafe { std::mem::transmute(XUNTAG(a, LispType::Lisp_String)) }
+    }
+
+    pub fn SBYTES(string: LispObject) -> libc::ptrdiff_t {
+        unsafe { STRING_BYTES(XSTRING(string)) }
+    }
+
+
     /// Convert a tagged pointer to a normal C pointer.
     ///
     /// See the docstring for `LispType` for more information on tagging.
     #[allow(non_snake_case)]
-    pub fn XUNTAG(a: LispObject, ty: LispType) -> *const libc::c_void {
-        let tagged_ptr = XLI(a) as libc::intptr_t;
-        let tag = ty as libc::intptr_t;
-        // Since pointers are aligned to 8 bytes, we can simply subtract
-        // the bit pattern to obtain a valid pointer.
-        (tagged_ptr - tag) as *const libc::c_void
+    pub fn XUNTAG(a: LispObject, _: LispType) -> *const libc::c_void {
+        a.get_untaggedptr()
     }
 
     // Implementation of the XFASTINT depends on the USE_LSB_TAG
@@ -755,24 +859,6 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
             wrong_type_argument(predicate, x);
         }
     }
-}
-
-/// Represents a string value in elisp
-#[repr(C)]
-pub struct LispString {
-    pub size: libc::ptrdiff_t,
-    pub size_byte: libc::ptrdiff_t,
-    pub intervals: *mut libc::c_void, // @TODO implement
-    pub data: *mut libc::c_char,
-}
-
-pub fn XSTRING(a: LispObject) -> *mut LispString {
-    debug_assert!(STRINGP(a));
-    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_String)) }
-}
-
-pub fn SBYTES(string: LispObject) -> libc::ptrdiff_t {
-    unsafe { STRING_BYTES(XSTRING(string)) }
 }
 
 /// Raise an error if `x` is not lisp string.
