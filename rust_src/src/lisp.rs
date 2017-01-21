@@ -89,7 +89,11 @@ impl LispObject {
 
     #[inline]
     pub fn from_bool(v: bool) -> LispObject {
-        if v { unsafe { Qt } } else { Qnil }
+        if v {
+            unsafe { Qt }
+        } else {
+            Qnil
+        }
     }
 
     #[inline]
@@ -423,7 +427,7 @@ pub struct LispString {
 impl LispObject {
     #[inline]
     pub fn is_string(self) -> bool {
-        XTYPE(self) == LispType::Lisp_String
+        self.get_type() == LispType::Lisp_String
     }
 }
 
@@ -568,7 +572,8 @@ impl Debug for LispObject {
             write!(f,
                    "#<INVALID-OBJECT @ {:#X}: VAL({:#X})>",
                    self_ptr,
-                   self.to_raw())?;
+                   self.to_raw())
+                ?;
             return Ok(());
         }
         match ty {
@@ -585,7 +590,8 @@ impl Debug for LispObject {
                 write!(f,
                        "#<VECTOR-LIKE @ {:#X}: VAL({:#X})>",
                        self_ptr,
-                       self.to_raw())?;
+                       self.to_raw())
+                    ?;
             }
             LispType::Lisp_Int0 |
             LispType::Lisp_Int1 => {
@@ -865,7 +871,7 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
 #[allow(non_snake_case)]
 #[no_mangle]
 pub extern "C" fn CHECK_STRING(x: LispObject) {
-    CHECK_TYPE(STRINGP(x), unsafe { Qstringp }, x);
+    CHECK_TYPE(x.is_string(), unsafe { Qstringp }, x);
 }
 
 #[allow(non_snake_case)]
