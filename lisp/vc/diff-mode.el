@@ -498,22 +498,55 @@ See http://lists.gnu.org/archive/html/emacs-devel/2007-11/msg01990.html")
     ;; The return value is used by easy-mmode-define-navigation.
     (goto-char (or end (point-max)))))
 
+;; "index ", "old mode", "new mode", "new file mode" and
+;; "deleted file mode" are output by git-diff.
+(defconst diff-file-junk-re
+  "diff \\|index \\|\\(?:deleted file\\|new\\(?: file\\)?\\|old\\) mode\\|=== modified file")
+
+;; If point is in a diff header, then return beginning
+;; of hunk position otherwise return nil.
+(defun diff--at-diff-header-p ()
+  "Return non-nil if point is inside a diff header."
+  (let ((regexp-hunk diff-hunk-header-re)
+        (regexp-file diff-file-header-re)
+        (regexp-junk diff-file-junk-re)
+        (orig (point)))
+    (catch 'headerp
+      (save-excursion
+        (forward-line 0)
+        (when (looking-at regexp-hunk) ; Hunk header.
+          (throw 'headerp (point)))
+        (forward-line -1)
+        (when (re-search-forward regexp-file (point-at-eol 4) t) ; File header.
+          (forward-line 0)
+          (throw 'headerp (point)))
+        (goto-char orig)
+        (forward-line 0)
+        (when (looking-at regexp-junk) ; Git diff junk.
+          (while (and (looking-at regexp-junk)
+                      (not (bobp)))
+            (forward-line -1))
+          (re-search-forward regexp-file nil t)
+          (forward-line 0)
+          (throw 'headerp (point)))) nil)))
+
 (defun diff-beginning-of-hunk (&optional try-harder)
   "Move back to the previous hunk beginning, and return its position.
 If point is in a file header rather than a hunk, advance to the
 next hunk if TRY-HARDER is non-nil; otherwise signal an error."
   (beginning-of-line)
-  (if (looking-at diff-hunk-header-re)
+  (if (looking-at diff-hunk-header-re) ; At hunk header.
       (point)
-    (forward-line 1)
-    (condition-case ()
-	(re-search-backward diff-hunk-header-re)
-      (error
-       (unless try-harder
-	 (error "Can't find the beginning of the hunk"))
-       (diff-beginning-of-file-and-junk)
-       (diff-hunk-next)
-       (point)))))
+    (let ((pos (diff--at-diff-header-p))
+          (regexp diff-hunk-header-re))
+      (cond (pos ; At junk diff header.
+             (if try-harder
+                 (goto-char pos)
+               (error "Can't find the beginning of the hunk")))
+            ((re-search-backward regexp nil t)) ; In the middle of a hunk.
+            ((re-search-forward regexp nil t) ; At first hunk header.
+             (forward-line 0))
+            (t (error "Can't find the beginning of the hunk"))))))
 
 (defun diff-unified-hunk-p ()
   (save-excursion
@@ -632,12 +665,8 @@ If the prefix ARG is given, restrict the view to the current file instead."
 		   hunk-bounds))
 	 (inhibit-read-only t))
     (apply 'kill-region bounds)
-    (goto-char (car bounds))))
-
-;; "index ", "old mode", "new mode", "new file mode" and
-;; "deleted file mode" are output by git-diff.
-(defconst diff-file-junk-re
-  "diff \\|index \\|\\(?:deleted file\\|new\\(?: file\\)?\\|old\\) mode\\|=== modified file")
+    (goto-char (car bounds))
+    (diff-beginning-of-hunk t)))
 
 (defun diff-beginning-of-file-and-junk ()
   "Go to the beginning of file-related diff-info.
@@ -690,7 +719,8 @@ data such as \"Index: ...\" and such."
   "Kill current file's hunks."
   (interactive)
   (let ((inhibit-read-only t))
-    (apply 'kill-region (diff-bounds-of-file))))
+    (apply 'kill-region (diff-bounds-of-file)))
+  (diff-beginning-of-hunk t))
 
 (defun diff-kill-junk ()
   "Kill spurious empty diffs."
@@ -1274,7 +1304,7 @@ See `after-change-functions' for the meaning of BEG, END and LEN."
 	;; it's safer not to do it on big changes, e.g. when yanking a big
 	;; diff, or when the user edits the header, since we might then
 	;; screw up perfectly correct values.  --Stef
-	(diff-beginning-of-hunk)
+	(diff-beginning-of-hunk t)
         (let* ((style (if (looking-at "\\*\\*\\*") 'context))
                (start (line-beginning-position (if (eq style 'context) 3 2)))
                (mid (if (eq style 'context)
@@ -1738,6 +1768,7 @@ the value of this variable when given an appropriate prefix argument).
 
 With a prefix argument, REVERSE the hunk."
   (interactive "P")
+  (diff-beginning-of-hunk t)
   (pcase-let ((`(,buf ,line-offset ,pos ,old ,new ,switched)
                ;; Sometimes we'd like to have the following behavior: if
                ;; REVERSE go to the new file, otherwise go to the old.
