@@ -314,25 +314,6 @@ sha224_stream (FILE *stream, void *resblock)
 }
 
 #if ! HAVE_OPENSSL_SHA256
-/* Compute SHA512 message digest for LEN bytes beginning at BUFFER.  The
-   result is always in little endian byte order, so that a byte-wise
-   output yields to the wanted ASCII representation of the message
-   digest.  */
-void *
-sha256_buffer (const char *buffer, size_t len, void *resblock)
-{
-  struct sha256_ctx ctx;
-
-  /* Initialize the computation context.  */
-  sha256_init_ctx (&ctx);
-
-  /* Process whole buffer but last len % 64 bytes.  */
-  sha256_process_bytes (buffer, len, &ctx);
-
-  /* Put result in desired memory area.  */
-  return sha256_finish_ctx (&ctx, resblock);
-}
-
 void *
 sha224_buffer (const char *buffer, size_t len, void *resblock)
 {

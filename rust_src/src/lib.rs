@@ -51,6 +51,8 @@ pub use floatfns::extract_float;
 pub use floatfns::fmod_float;
 pub use symbols::Fsymbolp;
 
+pub use crypto::sha256_buffer;
+
 // These need to be exported as marker.c depends upon them.
 pub use marker::CHECK_MARKER;
 
@@ -96,8 +98,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*strings::Sbase64_decode_string);
         defsubr(&*strings::Snull);
         defsubr(&*character::Smax_char);
-        defsubr(&*crypto::Ssecure_hash);
-        defsubr(&*crypto::Smd5);
 
         floatfns::init_float_syms();
     }
