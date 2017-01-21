@@ -22,7 +22,7 @@ script:
   - ./configure
   - make -j 3
 
-  - make check || echo 'make check failed'
+  - make -j 3 check
 
 notifications:
   fast_finish: true
