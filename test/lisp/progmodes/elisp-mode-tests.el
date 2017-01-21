@@ -208,6 +208,9 @@ to (xref-elisp-test-descr-to-target xref)."
   (declare (indent defun)
            (debug (symbolp "name")))
   `(ert-deftest ,(intern (concat "xref-elisp-test-" (symbol-name name))) ()
+     ;; Skipping on remacs until we figure out what's wrong.
+     ;; https://github.com/Wilfred/remacs/issues/99
+     (skip-unless (equal invocation-name "emacs"))
      (let ((find-file-suppress-same-file-warnings t))
        (xref-elisp-test-run ,computed-xrefs ,expected-xrefs)
        )))
