@@ -787,6 +787,11 @@ of an arbitrary function.  This generalizes 'subr-arity' for functions
 that are not built-in primitives.  We recommend using this new
 function instead of 'subr-arity'.
 
+** New function 'region-bounds' can be used in the interactive spec
+to provide region boundaries (for rectangular regions more than one)
+to an interactively callable function as a single argument instead of
+two separate arguments region-beginning and region-end.
+
 +++
 ** 'parse-partial-sexp' state has a new element.  Element 10 is
 non-nil when the last character scanned might be the first character

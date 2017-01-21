@@ -5410,11 +5410,15 @@ also checks the value of `use-empty-active-region'."
        ;; region is active when there's no mark.
        (progn (cl-assert (mark)) t)))
 
+(defun region-bounds ()
+  "Return the boundaries of the region as a list of (START . END) positions."
+  (funcall region-extract-function 'bounds))
+
 (defun region-noncontiguous-p ()
   "Return non-nil if the region contains several pieces.
 An example is a rectangular region handled as a list of
 separate contiguous regions for each line."
-  (> (length (funcall region-extract-function 'bounds)) 1))
+  (> (length (region-bounds)) 1))
 
 (defvar redisplay-unhighlight-region-function
   (lambda (rol) (when (overlayp rol) (delete-overlay rol))))
