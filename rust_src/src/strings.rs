@@ -3,7 +3,7 @@ use std::ptr;
 
 extern crate libc;
 
-use lisp::{LispObject, LispSubr, Qnil, SBYTES, SSDATA, STRING_MULTIBYTE, STRINGP};
+use lisp::{LispObject, LispSubr, Qnil, SBYTES, SSDATA, STRING_MULTIBYTE};
 use lists::NILP;
 
 extern "C" {
@@ -63,7 +63,7 @@ defun!("null",
 
 
 fn Fbase64_encode_string(string: LispObject, noLineBreak: LispObject) -> LispObject {
-    debug_assert!(STRINGP(string));
+    debug_assert!(string.is_string());
 
     // We need to allocate enough room for the encoded text
     // We will need 33 1/3% more space, plus a newline every 76 characters(MIME_LINE_LENGTH)
