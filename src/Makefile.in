@@ -343,6 +343,10 @@ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 =
 
+CARGO_BUILD=@CARGO_BUILD@
+CARGO_CLEAN=@CARGO_CLEAN@
+CARGO_TEST=@CARGO_TEST@
+CARGO_FLAGS=@CARGO_FLAGS@
 
 ifeq ($(findstring --release,$(CARGO_FLAGS)),--release)
 CARGO_BUILD_DIR=release
@@ -596,13 +600,20 @@ gl-stamp: $(libsrc)/make-docfile$(EXEEXT) $(GLOBAL_SOURCES)
 
 globals.h: gl-stamp; @true
 
-RUSTFLAGS_FILE=$(top_srcdir)/rust_src/target/.rustflags
+rust_srcdir=$(top_srcdir)/rust_src
+RUSTFLAGS_FILE=$(rust_srcdir)/target/.rustflags
 $(RUSTFLAGS_FILE) : FORCE
+	mkdir -p $(dir $@)
 	echo "$(CARGO_FLAGS) $(RUSTFLAGS)" > $@.tmp
 	diff -q $@ $@.tmp || cp $@.tmp $@
 	rm -f $@.tmp
 
-LIBREMACS_ARCHIVE=$(top_srcdir)/rust_src/target/$(CARGO_BUILD_DIR)/libremacs.a
+cargo_manifest=$(rust_srcdir)/Cargo.toml
+LIBREMACS_ARCHIVE=$(rust_srcdir)/target/$(CARGO_BUILD_DIR)/libremacs.a
+$(LIBREMACS_ARCHIVE): $(rust_srcdir)/src/** $(rust_srcdir)/*.rs $(rust_srcdir)/Cargo.*
+	RUSTFLAGS=$(RUSTFLAGS) \
+	$(CARGO_BUILD) $(CARGO_FLAGS) --manifest-path $(cargo_manifest)
+
 $(ALLOBJS): globals.h
 
 LIBEGNU_ARCHIVE = $(lib)/lib$(if $(HYBRID_MALLOC),e)gnu.a
