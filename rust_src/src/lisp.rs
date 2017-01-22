@@ -846,6 +846,20 @@ pub mod deprecated {
         debug_assert!(0 <= n);
         n
     }
+
+    // TODO: Create a Rust version of this.
+    #[allow(non_snake_case)]
+    pub fn MARKERP(a: LispObject) -> bool {
+        debug_assert!(a.is_misc());
+        unsafe { a.to_misc_unchecked().ty == LispMiscType::Marker }
+    }
+
+    // TODO: Create a Rust version of this.
+    #[allow(non_snake_case)]
+    pub fn XMARKER(a: LispObject) -> *const LispMarker {
+        debug_assert!(MARKERP(a));
+        unsafe { mem::transmute(a.to_misc_unchecked()) }
+    }
 }
 
 /// Check that `x` is an integer or float, coercing markers to integers.
@@ -856,7 +870,7 @@ pub mod deprecated {
 /// `CHECK_NUMBER_OR_FLOAT_COERCE_MARKER` in Emacs C, but returns a
 /// value rather than assigning to a variable.
 pub fn check_number_coerce_marker(x: LispObject) -> LispObject {
-    if MARKERP(x) {
+    if deprecated::MARKERP(x) {
         unsafe { LispObject::from_fixnum_unchecked(marker_position(x) as EmacsInt) }
     } else {
         unsafe {
@@ -866,6 +880,7 @@ pub fn check_number_coerce_marker(x: LispObject) -> LispObject {
     }
 }
 
+// TODO: Create a macro version of this.
 /// Raise an error if `x` is the wrong type. `ok` should be a Rust/C
 /// expression that evaluates if the type is correct. `predicate` is
 /// the elisp-level equivalent predicate that failed.
@@ -883,18 +898,6 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
 #[no_mangle]
 pub extern "C" fn CHECK_STRING(x: LispObject) {
     CHECK_TYPE(x.is_string(), unsafe { Qstringp }, x);
-}
-
-#[allow(non_snake_case)]
-pub fn MARKERP(a: LispObject) -> bool {
-    debug_assert!(a.is_misc());
-    unsafe { a.to_misc_unchecked().ty == LispMiscType::Marker }
-}
-
-#[allow(non_snake_case)]
-pub fn XMARKER(a: LispObject) -> *const LispMarker {
-    debug_assert!(MARKERP(a));
-    unsafe { mem::transmute(a.to_misc_unchecked()) }
 }
 
 #[test]

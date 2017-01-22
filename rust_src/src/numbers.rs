@@ -3,7 +3,8 @@ extern crate libc;
 use std::os::raw::c_char;
 use std::ptr;
 
-use lisp::{LispObject, LispSubr, Qnil, Qt, MARKERP};
+use lisp::{LispObject, LispSubr, Qnil, Qt};
+use lisp::deprecated::MARKERP;
 
 fn Ffloatp(object: LispObject) -> LispObject {
     if object.is_float() {

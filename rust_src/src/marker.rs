@@ -1,7 +1,8 @@
 extern crate libc;
 
 use std::ptr;
-use lisp::{LispObject, LispMiscType, XMARKER, CHECK_TYPE, MARKERP};
+use lisp::{LispObject, LispMiscType, CHECK_TYPE};
+use lisp::deprecated::{XMARKER, MARKERP};
 
 extern "C" {
     // defined in eval.c, where it can actually take an arbitrary
