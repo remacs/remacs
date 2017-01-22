@@ -184,12 +184,11 @@
            (expected-xref (or (when (consp expected) (car expected)) expected))
            (expected-source (when (consp expected) (cdr expected))))
 
-      ;; Downcase the filenames for case-insensitive file systems.
       (setf (xref-elisp-location-file (oref xref location))
-            (downcase (xref-elisp-location-file (oref xref location))))
+            (xref-elisp-location-file (oref xref location)))
 
       (setf (xref-elisp-location-file (oref expected-xref location))
-            (downcase (xref-elisp-location-file (oref expected-xref location))))
+            (xref-elisp-location-file (oref expected-xref location)))
 
       (should (equal xref expected-xref))
 
@@ -208,9 +207,6 @@ to (xref-elisp-test-descr-to-target xref)."
   (declare (indent defun)
            (debug (symbolp "name")))
   `(ert-deftest ,(intern (concat "xref-elisp-test-" (symbol-name name))) ()
-     ;; Skipping on remacs until we figure out what's wrong.
-     ;; https://github.com/Wilfred/remacs/issues/99
-     (skip-unless (equal invocation-name "emacs"))
      (let ((find-file-suppress-same-file-warnings t))
        (xref-elisp-test-run ,computed-xrefs ,expected-xrefs)
        )))
@@ -219,15 +215,7 @@ to (xref-elisp-test-descr-to-target xref)."
 ;; so we must provide this dir to expand-file-name in the expected
 ;; results. This also allows running these tests from other
 ;; directories.
-;;
-;; We add 'downcase' here to deliberately cause a potential problem on
-;; case-insensitive file systems. On such systems, `load-file-name'
-;; may not have the same case as the real file system, since the user
-;; can set `load-path' to have the wrong case (on my Windows system,
-;; `load-path' has the correct case, so this causes the expected test
-;; values to have the wrong case). This is handled in
-;; `xref-elisp-test-run'.
-(defconst emacs-test-dir (downcase (file-name-directory (or load-file-name (buffer-file-name)))))
+(defconst emacs-test-dir (file-name-directory (or load-file-name (buffer-file-name))))
 
 
 ;; alphabetical by test name
