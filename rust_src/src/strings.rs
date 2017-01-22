@@ -3,7 +3,8 @@ use std::ptr;
 
 extern crate libc;
 
-use lisp::{LispObject, LispSubr, Qnil, SBYTES, SSDATA, STRING_MULTIBYTE};
+use lisp::{LispObject, LispSubr, Qnil, SSDATA, STRING_MULTIBYTE};
+use lisp::deprecated::SBYTES;
 use lists::NILP;
 
 extern "C" {

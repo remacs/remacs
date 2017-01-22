@@ -615,7 +615,7 @@ impl Debug for LispObject {
 /// and lacks unsafe marks. However we'll keep them during the porting process to make
 /// the porting easy, we should be able to remove once the relevant functionality is Rust-only.
 #[allow(dead_code)]
-mod deprecated {
+pub mod deprecated {
     use super::*;
     use ::libc;
     use ::std;
@@ -824,10 +824,10 @@ mod deprecated {
         unsafe { std::mem::transmute(a.get_untaggedptr()) }
     }
 
+    // TODO: Create a Rust version of this.
     pub fn SBYTES(string: LispObject) -> libc::ptrdiff_t {
         unsafe { STRING_BYTES(XSTRING(string)) }
     }
-
 
     /// Convert a tagged pointer to a normal C pointer.
     ///
@@ -847,8 +847,6 @@ mod deprecated {
         n
     }
 }
-
-pub use self::deprecated::*;
 
 /// Check that `x` is an integer or float, coercing markers to integers.
 ///
