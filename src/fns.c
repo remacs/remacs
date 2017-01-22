@@ -89,12 +89,6 @@ enum { QUIT_COUNT_HEURISTIC = 1 << 16 };
 
 /* Random data-structure functions.  */
 
-static void
-CHECK_LIST_END (Lisp_Object x, Lisp_Object y)
-{
-  CHECK_TYPE (NILP (x), Qlistp, y);
-}
-
 DEFUN ("length", Flength, Slength, 1, 1, 0,
        doc: /* Return the length of vector, list or string SEQUENCE.
 A byte-code function object is also allowed.
@@ -1202,17 +1196,12 @@ are shared, however.
 Elements of ALIST that are not conses are also shared.  */)
   (Lisp_Object alist)
 {
-  register Lisp_Object tem;
-
-  CHECK_LIST (alist);
   if (NILP (alist))
     return alist;
-  alist = concat (1, &alist, Lisp_Cons, 0);
-  for (tem = alist; CONSP (tem); tem = XCDR (tem))
+  alist = concat (1, &alist, Lisp_Cons, false);
+  for (Lisp_Object tem = alist; !NILP (tem); tem = XCDR (tem))
     {
-      register Lisp_Object car;
-      car = XCAR (tem);
-
+      Lisp_Object car = XCAR (tem);
       if (CONSP (car))
 	XSETCAR (tem, Fcons (XCAR (car), XCDR (car)));
     }
@@ -1356,16 +1345,20 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
        doc: /* Take cdr N times on LIST, return the result.  */)
   (Lisp_Object n, Lisp_Object list)
 {
-  EMACS_INT i, num;
   CHECK_NUMBER (n);
-  num = XINT (n);
-  for (i = 0; i < num && !NILP (list); i++)
+  EMACS_INT num = XINT (n);
+  Lisp_Object tail = list;
+  for (EMACS_INT i = 0; i < num; i++)
     {
+      if (! CONSP (tail))
+	{
+	  CHECK_LIST_END (tail, list);
+	  return Qnil;
+	}
+      tail = XCDR (tail);
       QUIT;
-      CHECK_LIST_CONS (list, list);
-      list = XCDR (list);
     }
-  return list;
+  return tail;
 }
 
 DEFUN ("nth", Fnth, Snth, 2, 2, 0,
@@ -1392,66 +1385,52 @@ DEFUN ("elt", Felt, Selt, 2, 2, 0,
 DEFUN ("member", Fmember, Smember, 2, 2, 0,
        doc: /* Return non-nil if ELT is an element of LIST.  Comparison done with `equal'.
 The value is actually the tail of LIST whose car is ELT.  */)
-  (register Lisp_Object elt, Lisp_Object list)
+  (Lisp_Object elt, Lisp_Object list)
 {
-  register Lisp_Object tail;
-  for (tail = list; !NILP (tail); tail = XCDR (tail))
+  Lisp_Object tail;
+  for (tail = list; CONSP (tail); tail = XCDR (tail))
     {
-      register Lisp_Object tem;
-      CHECK_LIST_CONS (tail, list);
-      tem = XCAR (tail);
-      if (! NILP (Fequal (elt, tem)))
+      if (! NILP (Fequal (elt, XCAR (tail))))
 	return tail;
       QUIT;
     }
+  CHECK_LIST_END (tail, list);
   return Qnil;
 }
 
 DEFUN ("memq", Fmemq, Smemq, 2, 2, 0,
        doc: /* Return non-nil if ELT is an element of LIST.  Comparison done with `eq'.
 The value is actually the tail of LIST whose car is ELT.  */)
-  (register Lisp_Object elt, Lisp_Object list)
+  (Lisp_Object elt, Lisp_Object list)
 {
-  while (1)
+  Lisp_Object tail;
+  for (tail = list; CONSP (tail); tail = XCDR (tail))
     {
-      if (!CONSP (list) || EQ (XCAR (list), elt))
-	break;
-
-      list = XCDR (list);
-      if (!CONSP (list) || EQ (XCAR (list), elt))
-	break;
-
-      list = XCDR (list);
-      if (!CONSP (list) || EQ (XCAR (list), elt))
-	break;
-
-      list = XCDR (list);
+      if (EQ (XCAR (tail), elt))
+	return tail;
       QUIT;
     }
-
-  CHECK_LIST (list);
-  return list;
+  CHECK_LIST_END (tail, list);
+  return Qnil;
 }
 
 DEFUN ("memql", Fmemql, Smemql, 2, 2, 0,
        doc: /* Return non-nil if ELT is an element of LIST.  Comparison done with `eql'.
 The value is actually the tail of LIST whose car is ELT.  */)
-  (register Lisp_Object elt, Lisp_Object list)
+  (Lisp_Object elt, Lisp_Object list)
 {
-  register Lisp_Object tail;
-
   if (!FLOATP (elt))
     return Fmemq (elt, list);
 
-  for (tail = list; !NILP (tail); tail = XCDR (tail))
+  Lisp_Object tail;
+  for (tail = list; CONSP (tail); tail = XCDR (tail))
     {
-      register Lisp_Object tem;
-      CHECK_LIST_CONS (tail, list);
-      tem = XCAR (tail);
+      Lisp_Object tem = XCAR (tail);
       if (FLOATP (tem) && internal_equal (elt, tem, 0, 0, Qnil))
 	return tail;
       QUIT;
     }
+  CHECK_LIST_END (tail, list);
   return Qnil;
 }
 
@@ -1461,44 +1440,27 @@ The value is actually the first element of LIST whose car is KEY.
 Elements of LIST that are not conses are ignored.  */)
   (Lisp_Object key, Lisp_Object list)
 {
-  while (1)
+  Lisp_Object tail;
+  for (tail = list; CONSP (tail); tail = XCDR (tail))
     {
-      if (!CONSP (list)
-	  || (CONSP (XCAR (list))
-	      && EQ (XCAR (XCAR (list)), key)))
-	break;
-
-      list = XCDR (list);
-      if (!CONSP (list)
-	  || (CONSP (XCAR (list))
-	      && EQ (XCAR (XCAR (list)), key)))
-	break;
-
-      list = XCDR (list);
-      if (!CONSP (list)
-	  || (CONSP (XCAR (list))
-	      && EQ (XCAR (XCAR (list)), key)))
-	break;
-
-      list = XCDR (list);
+      if (CONSP (XCAR (tail)) && EQ (XCAR (XCAR (tail)), key))
+	return XCAR (tail);
       QUIT;
     }
-
-  return CAR (list);
+  CHECK_LIST_END (tail, list);
+  return Qnil;
 }
 
 /* Like Fassq but never report an error and do not allow quits.
-   Use only on lists known never to be circular.  */
+   Use only on objects known to be non-circular lists.  */
 
 Lisp_Object
 assq_no_quit (Lisp_Object key, Lisp_Object list)
 {
-  while (CONSP (list)
-	 && (!CONSP (XCAR (list))
-	     || !EQ (XCAR (XCAR (list)), key)))
-    list = XCDR (list);
-
-  return CAR_SAFE (list);
+  for (; ! NILP (list); list = XCDR (list))
+    if (CONSP (XCAR (list)) && EQ (XCAR (XCAR (list)), key))
+      return XCAR (list);
+  return Qnil;
 }
 
 DEFUN ("assoc", Fassoc, Sassoc, 2, 2, 0,
@@ -1506,81 +1468,49 @@ DEFUN ("assoc", Fassoc, Sassoc, 2, 2, 0,
 The value is actually the first element of LIST whose car equals KEY.  */)
   (Lisp_Object key, Lisp_Object list)
 {
-  Lisp_Object car;
-
-  while (1)
+  Lisp_Object tail;
+  for (tail = list; CONSP (tail); tail = XCDR (tail))
     {
-      if (!CONSP (list)
-	  || (CONSP (XCAR (list))
-	      && (car = XCAR (XCAR (list)),
-		  EQ (car, key) || !NILP (Fequal (car, key)))))
-	break;
-
-      list = XCDR (list);
-      if (!CONSP (list)
-	  || (CONSP (XCAR (list))
-	      && (car = XCAR (XCAR (list)),
-		  EQ (car, key) || !NILP (Fequal (car, key)))))
-	break;
-
-      list = XCDR (list);
-      if (!CONSP (list)
-	  || (CONSP (XCAR (list))
-	      && (car = XCAR (XCAR (list)),
-		  EQ (car, key) || !NILP (Fequal (car, key)))))
-	break;
-
-      list = XCDR (list);
+      Lisp_Object car = XCAR (tail);
+      if (CONSP (car)
+	  && (EQ (XCAR (car), key) || !NILP (Fequal (XCAR (car), key))))
+	return car;
       QUIT;
     }
-
-  return CAR (list);
+  CHECK_LIST_END (tail, list);
+  return Qnil;
 }
 
 /* Like Fassoc but never report an error and do not allow quits.
-   Use only on lists known never to be circular.  */
+   Use only on objects known to be non-circular lists.  */
 
 Lisp_Object
 assoc_no_quit (Lisp_Object key, Lisp_Object list)
 {
-  while (CONSP (list)
-	 && (!CONSP (XCAR (list))
-	     || (!EQ (XCAR (XCAR (list)), key)
-		 && NILP (Fequal (XCAR (XCAR (list)), key)))))
-    list = XCDR (list);
-
-  return CONSP (list) ? XCAR (list) : Qnil;
+  for (; ! NILP (list); list = XCDR (list))
+    {
+      Lisp_Object car = XCAR (list);
+      if (CONSP (car)
+	  && (EQ (XCAR (car), key) || !NILP (Fequal (XCAR (car), key))))
+	return car;
+    }
+  return Qnil;
 }
 
 DEFUN ("rassq", Frassq, Srassq, 2, 2, 0,
        doc: /* Return non-nil if KEY is `eq' to the cdr of an element of LIST.
 The value is actually the first element of LIST whose cdr is KEY.  */)
-  (register Lisp_Object key, Lisp_Object list)
+  (Lisp_Object key, Lisp_Object list)
 {
-  while (1)
+  Lisp_Object tail;
+  for (tail = list; CONSP (tail); tail = XCDR (tail))
     {
-      if (!CONSP (list)
-	  || (CONSP (XCAR (list))
-	      && EQ (XCDR (XCAR (list)), key)))
-	break;
-
-      list = XCDR (list);
-      if (!CONSP (list)
-	  || (CONSP (XCAR (list))
-	      && EQ (XCDR (XCAR (list)), key)))
-	break;
-
-      list = XCDR (list);
-      if (!CONSP (list)
-	  || (CONSP (XCAR (list))
-	      && EQ (XCDR (XCAR (list)), key)))
-	break;
-
-      list = XCDR (list);
+      if (CONSP (XCAR (tail)) && EQ (XCDR (XCAR (tail)), key))
+	return XCAR (tail);
       QUIT;
     }
-
-  return CAR (list);
+  CHECK_LIST_END (tail, list);
+  return Qnil;
 }
 
 DEFUN ("rassoc", Frassoc, Srassoc, 2, 2, 0,
@@ -1588,35 +1518,17 @@ DEFUN ("rassoc", Frassoc, Srassoc, 2, 2, 0,
 The value is actually the first element of LIST whose cdr equals KEY.  */)
   (Lisp_Object key, Lisp_Object list)
 {
-  Lisp_Object cdr;
-
-  while (1)
+  Lisp_Object tail;
+  for (tail = list; CONSP (tail); tail = XCDR (tail))
     {
-      if (!CONSP (list)
-	  || (CONSP (XCAR (list))
-	      && (cdr = XCDR (XCAR (list)),
-		  EQ (cdr, key) || !NILP (Fequal (cdr, key)))))
-	break;
-
-      list = XCDR (list);
-      if (!CONSP (list)
-	  || (CONSP (XCAR (list))
-	      && (cdr = XCDR (XCAR (list)),
-		  EQ (cdr, key) || !NILP (Fequal (cdr, key)))))
-	break;
-
-      list = XCDR (list);
-      if (!CONSP (list)
-	  || (CONSP (XCAR (list))
-	      && (cdr = XCDR (XCAR (list)),
-		  EQ (cdr, key) || !NILP (Fequal (cdr, key)))))
-	break;
-
-      list = XCDR (list);
+      Lisp_Object car = XCAR (tail);
+      if (CONSP (car)
+	  && (EQ (XCDR (car), key) || !NILP (Fequal (XCDR (car), key))))
+	return car;
       QUIT;
     }
-
-  return CAR (list);
+  CHECK_LIST_END (tail, list);
+  return Qnil;
 }
 
 DEFUN ("delq", Fdelq, Sdelq, 2, 2, 0,
@@ -1756,10 +1668,8 @@ changing the value of a sequence `foo'.  */)
     {
       Lisp_Object tail, prev;
 
-      for (tail = seq, prev = Qnil; !NILP (tail); tail = XCDR (tail))
+      for (tail = seq, prev = Qnil; CONSP (tail); tail = XCDR (tail))
 	{
-	  CHECK_LIST_CONS (tail, seq);
-
 	  if (!NILP (Fequal (elt, XCAR (tail))))
 	    {
 	      if (NILP (prev))
@@ -1771,6 +1681,7 @@ changing the value of a sequence `foo'.  */)
 	    prev = tail;
 	  QUIT;
 	}
+      CHECK_LIST_END (tail, seq);
     }
 
   return seq;
@@ -1790,14 +1701,14 @@ This function may destructively modify SEQ to produce the value.  */)
     {
       Lisp_Object prev, tail, next;
 
-      for (prev = Qnil, tail = seq; !NILP (tail); tail = next)
+      for (prev = Qnil, tail = seq; CONSP (tail); tail = next)
 	{
 	  QUIT;
-	  CHECK_LIST_CONS (tail, tail);
 	  next = XCDR (tail);
 	  Fsetcdr (tail, prev);
 	  prev = tail;
 	}
+      CHECK_LIST_END (tail, seq);
       seq = prev;
     }
   else if (VECTORP (seq))
@@ -2498,14 +2409,15 @@ usage: (nconc &rest LISTS)  */)
 
       if (argnum + 1 == nargs) break;
 
-      CHECK_LIST_CONS (tem, tem);
+      CHECK_CONS (tem);
 
-      while (CONSP (tem))
+      do
 	{
 	  tail = tem;
 	  tem = XCDR (tail);
 	  QUIT;
 	}
+      while (CONSP (tem));
 
       tem = args[argnum + 1];
       Fsetcdr (tail, tem);

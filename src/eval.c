@@ -856,9 +856,7 @@ usage: (let* VARLIST BODY...)  */)
 
   lexenv = Vinternal_interpreter_environment;
 
-  varlist = XCAR (args);
-  CHECK_LIST (varlist);
-  while (CONSP (varlist))
+  for (varlist = XCAR (args); CONSP (varlist); varlist = XCDR (varlist))
     {
       QUIT;
 
@@ -894,9 +892,8 @@ usage: (let* VARLIST BODY...)  */)
 	}
       else
 	specbind (var, val);
-
-      varlist = XCDR (varlist);
     }
+  CHECK_LIST_END (varlist, XCAR (args));
 
   val = Fprogn (XCDR (args));
   return unbind_to (count, val);
@@ -3098,7 +3095,7 @@ lambda_arity (Lisp_Object fun)
       if (EQ (XCAR (fun), Qclosure))
 	{
 	  fun = XCDR (fun);	/* Drop `closure'.  */
-	  CHECK_LIST_CONS (fun, fun);
+	  CHECK_CONS (fun);
 	}
       syms_left = XCDR (fun);
       if (CONSP (syms_left))

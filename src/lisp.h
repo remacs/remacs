@@ -310,7 +310,6 @@ error !;
 # define lisp_h_XLI(o) (o)
 # define lisp_h_XIL(i) (i)
 #endif
-#define lisp_h_CHECK_LIST_CONS(x, y) CHECK_TYPE (CONSP (x), Qlistp, y)
 #define lisp_h_CHECK_NUMBER(x) CHECK_TYPE (INTEGERP (x), Qintegerp, x)
 #define lisp_h_CHECK_SYMBOL(x) CHECK_TYPE (SYMBOLP (x), Qsymbolp, x)
 #define lisp_h_CHECK_TYPE(ok, predicate, x) \
@@ -367,7 +366,6 @@ error !;
 #if DEFINE_KEY_OPS_AS_MACROS
 # define XLI(o) lisp_h_XLI (o)
 # define XIL(i) lisp_h_XIL (i)
-# define CHECK_LIST_CONS(x, y) lisp_h_CHECK_LIST_CONS (x, y)
 # define CHECK_NUMBER(x) lisp_h_CHECK_NUMBER (x)
 # define CHECK_SYMBOL(x) lisp_h_CHECK_SYMBOL (x)
 # define CHECK_TYPE(ok, predicate, x) lisp_h_CHECK_TYPE (ok, predicate, x)
@@ -2751,9 +2749,9 @@ CHECK_LIST (Lisp_Object x)
 }
 
 INLINE void
-(CHECK_LIST_CONS) (Lisp_Object x, Lisp_Object y)
+CHECK_LIST_END (Lisp_Object x, Lisp_Object y)
 {
-  lisp_h_CHECK_LIST_CONS (x, y);
+  CHECK_TYPE (NILP (x), Qlistp, y);
 }
 
 INLINE void
