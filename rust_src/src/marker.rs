@@ -36,7 +36,7 @@ pub struct LispMarker {
 /// Return the char position of marker MARKER, as a C integer.
 pub fn marker_position(marker: LispObject) -> libc::ptrdiff_t {
     let m_ptr = XMARKER(marker);
-    let m = unsafe { ptr::read(m_ptr) };
+    let m: LispMarker = unsafe { ptr::read(m_ptr) };
 
     let buf = m.buffer;
     if buf.is_null() {

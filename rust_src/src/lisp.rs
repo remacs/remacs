@@ -13,7 +13,7 @@ use std::mem;
 use std::ops::Deref;
 use std::fmt::{Debug, Formatter, Error};
 
-use marker::{LispMarker, marker_position};
+use marker::marker_position;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -619,6 +619,7 @@ pub mod deprecated {
     use super::*;
     use ::libc;
     use ::std;
+    use ::marker::LispMarker;
 
     /// Convert a LispObject to an EmacsInt.
     #[allow(non_snake_case)]
@@ -858,7 +859,7 @@ pub mod deprecated {
     #[allow(non_snake_case)]
     pub fn XMARKER(a: LispObject) -> *const LispMarker {
         debug_assert!(MARKERP(a));
-        unsafe { mem::transmute(a.to_misc_unchecked()) }
+        unsafe { std::mem::transmute(a.to_misc_unchecked()) }
     }
 }
 
