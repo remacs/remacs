@@ -179,7 +179,7 @@ a.out
 lib-src/blessmail
 lib-src/ctags
 lib-src/ebrowse
-lib-src/emacsclient
+lib-src/remacsclient
 lib-src/etags
 lib-src/hexl
 lib-src/make-docfile

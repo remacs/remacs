@@ -3,25 +3,10 @@ use std::ptr;
 
 extern crate libc;
 
-use lisp::{XTYPE, LispObject, LispType, LispSubr, Qnil};
-
-/// Is this LispObject a symbol?
-#[allow(non_snake_case)]
-pub fn SYMBOLP(a: LispObject) -> bool {
-    XTYPE(a) == LispType::Lisp_Symbol
-}
-
-#[test]
-fn test_symbolp() {
-    assert!(SYMBOLP(Qnil));
-}
+use lisp::{LispObject, LispSubr};
 
 fn Fsymbolp(object: LispObject) -> LispObject {
-    if SYMBOLP(object) {
-        LispObject::constant_t()
-    } else {
-        Qnil
-    }
+    LispObject::from_bool(object.is_symbol())
 }
 
 defun!("symbolp",

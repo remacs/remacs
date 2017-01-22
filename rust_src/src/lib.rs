@@ -113,3 +113,8 @@ pub extern "C" fn rust_init_syms() {
             LispObject::from_fixnum_unchecked(MOST_NEGATIVE_FIXNUM);
     }
 }
+
+#[no_mangle]
+pub extern "C" fn rust_print_lisp_object(v: lisp::LispObject) {
+    println!("{:?}", v)
+}
