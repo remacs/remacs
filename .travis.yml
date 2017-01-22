@@ -1,6 +1,7 @@
 language: rust
 cache: cargo
 rust:
+  - 1.14.0
   - stable
   - beta
   - nightly
@@ -22,7 +23,7 @@ script:
   - ./configure
   - make -j 3
 
-  - make check || echo 'make check failed'
+  - make -j 3 check
 
 notifications:
   fast_finish: true
@@ -31,3 +32,7 @@ notifications:
 matrix:
   allow_failures:
     - rust: nightly
+  exclude:
+    # Since stable is currently 1.14.0, there's no point running 1.14.0 twice.
+    # TODO: remove this once 1.15.0 is out.
+    - rust: stable
