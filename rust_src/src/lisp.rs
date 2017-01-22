@@ -545,7 +545,7 @@ pub enum LispFwdType {
 #[repr(C)]
 #[derive(Debug)]
 pub struct LispObjfwd {
-    pub type_: LispFwdType,
+    pub ty: LispFwdType,
     pub objvar: *mut LispObject,
 }
 

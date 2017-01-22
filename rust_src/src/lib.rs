@@ -20,7 +20,7 @@ mod symbols;
 mod globals;
 mod character;
 #[macro_use]
-mod defvar;
+mod variables;
 
 use lisp::LispSubr;
 
@@ -99,14 +99,14 @@ pub extern "C" fn rust_init_syms() {
         floatfns::init_float_syms();
 
         // The largest value that is representable in a Lisp integer
-        defvar_lisp!(b"most-positive-fixnum", f_Vmost_positive_fixnum);
+        defvar!(b"most-positive-fixnum", f_Vmost_positive_fixnum);
         rust_make_symbol_constant(intern_c_string_1(b"most-positive-fixnum"
             .as_ptr() as *const libc::c_char));
         globals::globals.f_Vmost_positive_fixnum =
             LispObject::from_fixnum_unchecked(MOST_POSITIVE_FIXNUM);
 
         // The smallest value that is representable in a Lisp integer.
-        defvar_lisp!(b"most-negative-fixnum", f_Vmost_negative_fixnum);
+        defvar!(b"most-negative-fixnum", f_Vmost_negative_fixnum);
         rust_make_symbol_constant(intern_c_string_1(b"most-negative-fixnum"
             .as_ptr() as *const libc::c_char));
         globals::globals.f_Vmost_negative_fixnum =
