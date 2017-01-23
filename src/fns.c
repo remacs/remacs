@@ -3144,7 +3144,7 @@ static const short base64_char_to_value[128] =
 
 
 ptrdiff_t base64_encode_1 (const char *, char *, ptrdiff_t, bool, bool);
-ptrdiff_t base64_decode_1 (const char *, char *, ptrdiff_t, bool,
+static ptrdiff_t base64_decode_1 (const char *, char *, ptrdiff_t, bool,
 				  ptrdiff_t *);
 
 DEFUN ("base64-encode-region", Fbase64_encode_region, Sbase64_encode_region,
@@ -3366,12 +3366,45 @@ If the region can't be decoded, signal an error and don't modify the buffer.  */
   return make_number (inserted_chars);
 }
 
+DEFUN ("base64-decode-string", Fbase64_decode_string, Sbase64_decode_string,
+       1, 1, 0,
+       doc: /* Base64-decode STRING and return the result.  */)
+  (Lisp_Object string)
+{
+  char *decoded;
+  ptrdiff_t length, decoded_length;
+  Lisp_Object decoded_string;
+  USE_SAFE_ALLOCA;
+
+  CHECK_STRING (string);
+
+  length = SBYTES (string);
+  /* We need to allocate enough room for decoding the text. */
+  decoded = SAFE_ALLOCA (length);
+
+  /* The decoded result should be unibyte. */
+  decoded_length = base64_decode_1 (SSDATA (string), decoded, length,
+				    0, NULL);
+  if (decoded_length > length)
+    emacs_abort ();
+  else if (decoded_length >= 0)
+    decoded_string = make_unibyte_string (decoded, decoded_length);
+  else
+    decoded_string = Qnil;
+
+  SAFE_FREE ();
+  if (!STRINGP (decoded_string))
+    error ("Invalid base64 data");
+
+  return decoded_string;
+}
+
 /* Base64-decode the data at FROM of LENGTH bytes into TO.  If
    MULTIBYTE, the decoded result should be in multibyte
    form.  If NCHARS_RETURN is not NULL, store the number of produced
    characters in *NCHARS_RETURN.  */
 
-ptrdiff_t
+static ptrdiff_t
 base64_decode_1 (const char *from, char *to, ptrdiff_t length,
 		 bool multibyte, ptrdiff_t *nchars_return)
 {
@@ -5151,6 +5184,7 @@ this variable.  */);
   defsubr (&Swidget_apply);
   defsubr (&Sbase64_encode_region);
   defsubr (&Sbase64_decode_region);
+  defsubr (&Sbase64_decode_string);
   defsubr (&Smd5);
   defsubr (&Ssecure_hash);
   defsubr (&Sbuffer_hash);
