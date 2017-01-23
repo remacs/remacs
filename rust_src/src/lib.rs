@@ -3,6 +3,8 @@
 
 #![cfg_attr(feature = "strict", deny(warnings))]
 
+extern crate alloc_unexecmacosx;
+
 #[macro_use]
 extern crate lazy_static;
 
