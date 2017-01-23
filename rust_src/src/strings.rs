@@ -118,6 +118,7 @@ fn Fbase64_decode_string(string: LispObject) -> LispObject {
 
     let length = SBYTES(string);
     let mut buffer: Vec<libc::c_char> = Vec::with_capacity(length as usize);
+    let mut decoded_string: LispObject = LispObject::constant_nil();
 
     unsafe {
         let decoded = buffer.as_mut_ptr();
@@ -127,7 +128,6 @@ fn Fbase64_decode_string(string: LispObject) -> LispObject {
                                              false, 
                                              ptr::null_mut());
 
-        let mut decoded_string: LispObject = Qnil;
         if decoded_length > length {
             panic!("Decoded length is above length");
         } else if decoded_length >= 0 {
