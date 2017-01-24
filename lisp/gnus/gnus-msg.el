@@ -1534,11 +1534,7 @@ If YANK is non-nil, include the original article."
       (message-pop-to-buffer "*Gnus Bug*"))
     (let ((message-this-is-mail t))
       (message-setup `((To . ,gnus-maintainer)
-                       (Subject . "")
-                       (X-Debbugs-Package
-                        . ,(format "%s" gnus-bug-package))
-                       (X-Debbugs-Version
-                        . ,(format "%s" (gnus-continuum-version))))))
+                       (Subject . ""))))
     (when gnus-bug-create-help-buffer
       (push `(gnus-bug-kill-buffer) message-send-actions))
     (goto-char (point-min))
