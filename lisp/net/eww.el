@@ -364,7 +364,14 @@ Currently this means either text/html or application/xhtml+xml."
            ((and eww-use-external-browser-for-content-type
                  (string-match-p eww-use-external-browser-for-content-type
                                  (car content-type)))
-            (eww-browse-with-external-browser url))
+            (erase-buffer)
+            (insert "<title>Unsupported content type</title>")
+            (insert (format "<h1>Content-type %s is unsupported</h1>"
+                            (car content-type)))
+            (insert (format "<a href=%S>Direct link to the document</a>"
+                            url))
+            (goto-char (point-min))
+	    (eww-display-html charset url nil point buffer encode))
 	   ((eww-html-p (car content-type))
 	    (eww-display-html charset url nil point buffer encode))
 	   ((equal (car content-type) "application/pdf")
