@@ -979,7 +979,7 @@ element is the data blob and the second element is the content-type."
 		      (create-image data nil t :ascent 100
 				    :format content-type))
 		     ((eq content-type 'image/svg+xml)
-		      (create-image data 'svg t :ascent 100))
+		      (create-image data 'imagemagick t :ascent 100))
 		     ((eq size 'full)
 		      (ignore-errors
 			(shr-rescale-image data content-type
@@ -1067,8 +1067,7 @@ Return a string with image data."
     (when (ignore-errors
 	    (url-cache-extract (url-cache-create-filename (shr-encode-url url)))
 	    t)
-      (when (or (search-forward "\n\n" nil t)
-		(search-forward "\r\n\r\n" nil t))
+      (when (re-search-forward "\r?\n\r?\n" nil t)
 	(shr-parse-image-data)))))
 
 (declare-function libxml-parse-xml-region "xml.c"
@@ -1087,9 +1086,12 @@ Return a string with image data."
 			    obarray)))))))
     ;; SVG images may contain references to further images that we may
     ;; want to block.  So special-case these by parsing the XML data
-    ;; and remove the blocked bits.
-    (when (eq content-type 'image/svg+xml)
+    ;; and remove anything that looks like a blocked bit.
+    (when (and shr-blocked-images
+               (eq content-type 'image/svg+xml))
       (setq data
+            ;; Note that libxml2 doesn't parse everything perfectly,
+            ;; so glitches may occur during this transformation.
 	    (shr-dom-to-xml
 	     (libxml-parse-xml-region (point) (point-max)))))
     (list data content-type)))
