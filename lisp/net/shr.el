@@ -96,8 +96,9 @@ If nil, don't draw horizontal table lines."
 (defcustom shr-width nil
   "Frame width to use for rendering.
 May either be an integer specifying a fixed width in characters,
-or nil, meaning that the full width of the window should be
-used."
+or nil, meaning that the full width of the window should be used.
+If `shr-use-fonts' is set, the mean width of a character is used
+to compute the pixel width to be used."
   :version "25.1"
   :type '(choice (integer :tag "Fixed width in characters")
 		 (const   :tag "Use the width of the window" nil))
