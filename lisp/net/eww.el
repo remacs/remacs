@@ -251,6 +251,29 @@ word(s) will be searched for via `eww-search-prefix'."
 			  (if uris (format " (default %s)" (car uris)) "")
 			  ": ")))
      (list (read-string prompt nil nil uris))))
+  (setq url (eww--dwim-expand-url url))
+  (pop-to-buffer-same-window
+   (if (eq major-mode 'eww-mode)
+       (current-buffer)
+     (get-buffer-create "*eww*")))
+  (eww-setup-buffer)
+  ;; Check whether the domain only uses "Highly Restricted" Unicode
+  ;; IDNA characters.  If not, transform to punycode to indicate that
+  ;; there may be funny business going on.
+  (let ((parsed (url-generic-parse-url url)))
+    (unless (puny-highly-restrictive-domain-p (url-host parsed))
+      (setf (url-host parsed) (puny-encode-domain (url-host parsed)))
+      (setq url (url-recreate-url parsed))))
+  (plist-put eww-data :url url)
+  (plist-put eww-data :title "")
+  (eww-update-header-line-format)
+  (let ((inhibit-read-only t))
+    (insert (format "Loading %s..." url))
+    (goto-char (point-min)))
+  (url-retrieve url 'eww-render
+		(list url nil (current-buffer))))
+
+(defun eww--dwim-expand-url (url)
   (setq url (string-trim url))
   (cond ((string-match-p "\\`file:/" url))
 	;; Don't mangle file: URLs at all.
@@ -275,26 +298,7 @@ word(s) will be searched for via `eww-search-prefix'."
                  (setq url (concat url "/"))))
            (setq url (concat eww-search-prefix
                              (replace-regexp-in-string " " "+" url))))))
-  (pop-to-buffer-same-window
-   (if (eq major-mode 'eww-mode)
-       (current-buffer)
-     (get-buffer-create "*eww*")))
-  (eww-setup-buffer)
-  ;; Check whether the domain only uses "Highly Restricted" Unicode
-  ;; IDNA characters.  If not, transform to punycode to indicate that
-  ;; there may be funny business going on.
-  (let ((parsed (url-generic-parse-url url)))
-    (unless (puny-highly-restrictive-domain-p (url-host parsed))
-      (setf (url-host parsed) (puny-encode-domain (url-host parsed)))
-      (setq url (url-recreate-url parsed))))
-  (plist-put eww-data :url url)
-  (plist-put eww-data :title "")
-  (eww-update-header-line-format)
-  (let ((inhibit-read-only t))
-    (insert (format "Loading %s..." url))
-    (goto-char (point-min)))
-  (url-retrieve url 'eww-render
-		(list url nil (current-buffer))))
+  url)
 
 ;;;###autoload (defalias 'browse-web 'eww)
 
@@ -804,7 +808,10 @@ the like."
 ;;;###autoload
 (defun eww-browse-url (url &optional new-window)
   (when new-window
-    (pop-to-buffer-same-window (generate-new-buffer "*eww*"))
+    (pop-to-buffer-same-window
+     (generate-new-buffer
+      (format "*eww-%s*" (url-host (url-generic-parse-url
+                                    (eww--dwim-expand-url url))))))
     (eww-mode))
   (eww url))
 
