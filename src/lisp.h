@@ -204,11 +204,6 @@ extern bool suppress_checking EXTERNALLY_VISIBLE;
     : die (# cond, __FILE__, __LINE__))
 #endif /* ENABLE_CHECKING */
 
-
-/* Use the configure flag --enable-check-lisp-object-type to make
-   Lisp_Object use a struct type instead of the default int.  The flag
-   causes CHECK_LISP_OBJECT_TYPE to be defined.  */
-
 /***** Select the tagging scheme.  *****/
 /* The following option controls the tagging scheme:
    - USE_LSB_TAG means that we can assume the least 3 bits of pointers are
@@ -303,13 +298,8 @@ error !;
    Commentary for these macros can be found near their corresponding
    functions, below.  */
 
-#if CHECK_LISP_OBJECT_TYPE
-# define lisp_h_XLI(o) ((o).i)
-# define lisp_h_XIL(i) ((Lisp_Object) { i })
-#else
-# define lisp_h_XLI(o) (o)
-# define lisp_h_XIL(i) (i)
-#endif
+#define lisp_h_XLI(o) (o)
+#define lisp_h_XIL(i) (i)
 #define lisp_h_CHECK_LIST_CONS(x, y) CHECK_TYPE (CONSP (x), Qlistp, y)
 #define lisp_h_CHECK_NUMBER(x) CHECK_TYPE (INTEGERP (x), Qintegerp, x)
 #define lisp_h_CHECK_SYMBOL(x) CHECK_TYPE (SYMBOLP (x), Qsymbolp, x)
@@ -541,23 +531,9 @@ enum Lisp_Fwd_Type
    your object -- this way, the same object could be used to represent
    several disparate C structures.  */
 
-#ifdef CHECK_LISP_OBJECT_TYPE
-
-typedef struct { EMACS_INT i; } Lisp_Object;
-
-#define LISP_INITIALLY(i) {i}
-
-#undef CHECK_LISP_OBJECT_TYPE
-enum CHECK_LISP_OBJECT_TYPE { CHECK_LISP_OBJECT_TYPE = true };
-#else /* CHECK_LISP_OBJECT_TYPE */
-
-/* If a struct type is not wanted, define Lisp_Object as just a number.  */
-
 typedef EMACS_INT Lisp_Object;
 #define LISP_INITIALLY(i) (i)
-enum CHECK_LISP_OBJECT_TYPE { CHECK_LISP_OBJECT_TYPE = false };
-#endif /* CHECK_LISP_OBJECT_TYPE */
-
+
 /* Forward declarations.  */
 
 /* Defined in this file.  */

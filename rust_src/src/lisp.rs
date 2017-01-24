@@ -54,8 +54,6 @@ pub const GCTYPEBITS: EmacsInt = 3;
 #[cfg(dummy = "impossible")]
 pub const USE_LSB_TAG: bool = true;
 
-// This is dependent on CHECK_LISP_OBJECT_TYPE, a compile time flag,
-// but it's usually false.
 #[repr(C)]
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct LispObject(EmacsInt);
