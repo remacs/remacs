@@ -1011,18 +1011,25 @@ element is the data blob and the second element is the content-type."
 	image)
     (insert (or alt ""))))
 
-(defun shr-rescale-image (data content-type width height)
+(defun shr-rescale-image (data content-type width height
+                               &optional max-width max-height)
   "Rescale DATA, if too big, to fit the current buffer.
-WIDTH and HEIGHT are the sizes given in the HTML data, if any."
+WIDTH and HEIGHT are the sizes given in the HTML data, if any.
+
+The size of the displayed image will not exceed
+MAX-WIDTH/MAX-HEIGHT.  If not given, use the current window
+width/height instead."
   (if (or (not (fboundp 'imagemagick-types))
           (not (get-buffer-window (current-buffer))))
       (create-image data nil t :ascent 100)
     (let* ((edges (window-inside-pixel-edges
                    (get-buffer-window (current-buffer))))
            (max-width (truncate (* shr-max-image-proportion
-                                   (- (nth 2 edges) (nth 0 edges)))))
+                                   (or max-width
+                                       (- (nth 2 edges) (nth 0 edges))))))
            (max-height (truncate (* shr-max-image-proportion
-                                    (- (nth 3 edges) (nth 1 edges)))))
+                                    (or max-height
+                                        (- (nth 3 edges) (nth 1 edges))))))
            (scaling (image-compute-scaling-factor image-scaling-factor)))
       (when (or (and width
                      (> width max-width))
