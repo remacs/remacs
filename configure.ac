@@ -510,16 +510,6 @@ if test x$ac_glyphs_debug != x ; then
 [Define this to enable glyphs debugging code.])
 fi
 
-AC_ARG_ENABLE(check-lisp-object-type,
-[AS_HELP_STRING([--enable-check-lisp-object-type],
-                [enable compile time checks for the Lisp_Object data type.
-		This is useful for development for catching certain types of bugs.])],
-if test "${enableval}" != "no"; then
-   AC_DEFINE(CHECK_LISP_OBJECT_TYPE, 1,
-   [Define this to enable compile time checks for the Lisp_Object data type.])
-fi)
-
-
 dnl The name of this option is unfortunate.  It predates, and has no
 dnl relation to, the "sampling-based elisp profiler" added in 24.3.
 dnl Actually, it stops it working.
