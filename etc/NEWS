@@ -858,6 +858,9 @@ ABBR is a time zone abbreviation.  The affected functions are
 collection).
 
 +++
+** 'car' and 'cdr' compositions 'cXXXr' and 'cXXXXr' are now part of Elisp.
+
++++
 ** The new functions 'make-nearby-temp-file' and 'temporary-file-directory'
 can be used for creation of temporary files of remote or mounted directories.
 
