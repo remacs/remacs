@@ -4037,6 +4037,9 @@ If SELECT-ARTICLES, only select those articles from GROUP."
 	(when kill-buffer
 	  (gnus-kill-or-deaden-summary kill-buffer))
 	(gnus-summary-auto-select-subject)
+	;; Don't mark any articles as selected if we haven't done that.
+	(when no-article
+	  (setq overlay-arrow-position nil))
 	;; Show first unread article if requested.
 	(if (and (not no-article)
 		 (not no-display)
