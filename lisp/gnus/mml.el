@@ -486,7 +486,8 @@ be \"related\" or \"alternate\"."
 		 (equal (cdr (assq 'type (car cont))) "text/html"))
 	(setq cont (mml-expand-html-into-multipart-related (car cont))))
       (prog1
-	  (mm-with-multibyte-buffer
+	  (with-temp-buffer
+	    (set-buffer-multibyte nil)
 	    (setq message-options options)
 	    (cond
 	     ((and (consp (car cont))
@@ -605,15 +606,18 @@ be \"related\" or \"alternate\"."
 				   (intern (downcase charset))))))
 	  (if (and (not raw)
 		   (member (car (split-string type "/")) '("text" "message")))
+	      ;; We have a text-like MIME part, so we need to do
+	      ;; charset encoding.
 	      (progn
 		(with-temp-buffer
+		  (set-buffer-multibyte nil)
+		  ;; First insert the data into the buffer.
 		  (cond
 		   ((cdr (assq 'buffer cont))
 		    (insert-buffer-substring (cdr (assq 'buffer cont))))
 		   ((and filename
 			 (not (equal (cdr (assq 'nofile cont)) "yes")))
-		    (let ((coding-system-for-read coding))
-		      (mm-insert-file-contents filename)))
+		    (mm-insert-file-contents filename))
 		   ((eq 'mml (car cont))
 		    (insert (cdr (assq 'contents cont))))
 		   (t
@@ -667,21 +671,22 @@ be \"related\" or \"alternate\"."
 			;; insert a "; format=flowed" string unless the
 			;; user has already specified it.
 			(setq flowed (null (assq 'format cont)))))
-		    ;; Prefer `utf-8' for text/calendar parts.
-		    (if (or charset
-			    (not (string= type "text/calendar")))
-			(setq charset (mm-encode-body charset))
-		      (let ((mm-coding-system-priorities
-			     (cons 'utf-8 mm-coding-system-priorities)))
-			(setq charset (mm-encode-body))))
-		    (mm-disable-multibyte)
+		    (unless charset
+		      (setq charset
+			    ;; Prefer `utf-8' for text/calendar parts.
+			    (if (string= type "text/calendar")
+				'utf-8
+			      (mm-coding-system-to-mime-charset
+			       (detect-coding-region
+				(point-min) (point-max) t)))))
 		    (setq encoding (mm-body-encoding
 				    charset (cdr (assq 'encoding cont))))))
 		  (setq coded (buffer-string)))
 		(mml-insert-mime-headers cont type charset encoding flowed)
 		(insert "\n")
 		(insert coded))
-	    (mm-with-unibyte-buffer
+	    (with-temp-buffer
+	      (set-buffer-multibyte nil)
 	      (cond
 	       ((cdr (assq 'buffer cont))
 		(insert (string-as-unibyte
