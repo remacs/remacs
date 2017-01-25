@@ -4020,7 +4020,10 @@ that suppresses all warnings during execution of BODY."
          (cases (cadr table-info))
          jump-table test-obj body tag donetag default-tag default-case)
     (when (and cases (not (= (length cases) 1)))
-      (setq jump-table (make-hash-table :test test :size (length cases))
+      (setq jump-table (make-hash-table :test test
+                                        :size (if (assq 'default cases)
+                                                  (1- (length cases))
+                                                (length cases)))
             default-tag (byte-compile-make-tag)
             donetag (byte-compile-make-tag))
       (byte-compile-variable-ref var)
