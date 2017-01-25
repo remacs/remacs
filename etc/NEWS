@@ -735,6 +735,11 @@ pseudo-element, with the default being guessed from context).  By
 default the information is looked up on the Mozilla Developer Network,
 but this can be customized using 'css-lookup-url-format'.
 
+---
+*** CSS colors are fontified using the color they represent as the
+background.  For instance, #ff0000 would be fontified with a red
+background.
+
 +++
 ** Emacs now supports character name escape sequences in character and
 string literals.  The syntax variants \N{character name} and
