@@ -1357,7 +1357,7 @@
 (defun byte-decompile-bytecode-1 (bytes constvec &optional make-spliceable)
   (let ((length (length bytes))
         (bytedecomp-ptr 0) optr tags bytedecomp-op offset
-	lap tmp)
+	lap tmp last-constant)
     (while (not (= bytedecomp-ptr length))
       (or make-spliceable
 	  (push bytedecomp-ptr lap))
@@ -1386,7 +1386,8 @@
 			    (or (assq tmp byte-compile-variables)
                                 (let ((new (list tmp)))
                                   (push new byte-compile-variables)
-                                  new)))))
+                                  new)))
+                   last-constant tmp))
 	    ((eq bytedecomp-op 'byte-stack-set2)
 	     (setq bytedecomp-op 'byte-stack-set))
 	    ((and (eq bytedecomp-op 'byte-discardN) (>= offset #x80))
@@ -1395,7 +1396,27 @@
 	     ;; lapcode, we represent this by using a different opcode
 	     ;; (with the flag removed from the operand).
 	     (setq bytedecomp-op 'byte-discardN-preserve-tos)
-	     (setq offset (- offset #x80))))
+	     (setq offset (- offset #x80)))
+            ((eq bytedecomp-op 'byte-switch)
+             (cl-assert (hash-table-p last-constant) nil
+                        "byte-switch used without preceeding hash table")
+             ;; make a copy of constvec to avoid making changes to the
+             ;; original jump table for the compiled function.
+             (setq constvec (cl-map 'vector
+                                    #'(lambda (e)
+                                        (if (eq last-constant e)
+                                            (setq last-constant (copy-hash-table e))
+                                          e))
+                                    constvec))
+             (maphash #'(lambda (value tag)
+                          (let (newtag)
+                            (cl-assert (consp tag)
+                                       nil "Invalid address for byte-switch")
+                            (setq newtag (byte-compile-make-tag))
+                            (push (cons (+ (car tag) (lsh (cdr tag) 8)) newtag) tags)
+                          (puthash value newtag last-constant)))
+                      last-constant)
+             (setf (nth 2 (cadr lap)) last-constant)))
       ;; lap = ( [ (pc . (op . arg)) ]* )
       (push (cons optr (cons bytedecomp-op (or offset 0)))
             lap)
