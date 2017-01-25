@@ -251,7 +251,12 @@ This can also be a list of the above values."
 		 (integer :value 200)
 		 (number :value 4.0)
 		 function
-		 (regexp :value ".*"))
+		 (regexp :value ".*")
+		 (repeat (choice (const nil)
+				 (integer :value 200)
+				 (number :value 4.0)
+				 function
+				 (regexp :value ".*"))))
   :group 'gnus-article-signature)
 
 (defcustom gnus-hidden-properties
