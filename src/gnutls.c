@@ -586,8 +586,10 @@ emacs_gnutls_handle_error (gnutls_session_t session, int err)
       /* Mostly ignore "The TLS connection was non-properly
 	 terminated" message which just means that the peer closed the
 	 connection.  */
+#ifdef HAVE_GNUTLS3
       if (err == GNUTLS_E_PREMATURE_TERMINATION)
 	level = 3;
+#endif
 
       GNUTLS_LOG2 (level, max_log_level, "fatal error:", str);
       ret = 0;
