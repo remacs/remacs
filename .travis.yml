@@ -23,7 +23,7 @@ script:
   - ./configure
   - make -j 3
 
-  - make -j 3 check
+  - make check
 
 notifications:
   fast_finish: true
