@@ -14273,19 +14273,9 @@ specific login method to be used, you can set this variable to either
 @code{plain} or @code{cram-md5}.
 
 @item nnimap-expunge
-When to expunge deleted messages.  If @code{never}, deleted articles
-are marked with the IMAP @code{\\Delete} flag but not automatically
-expunged. If @code{immediately}, deleted articles are immediately expunged
-(this requires the server to support the UID EXPUNGE command). If
-@code{on-exit}, deleted articles are flagged, and all flagged articles are
-expunged when the group is closed.
-
-For backwards compatibility, this variable may also be set to t
-or nil. If the server supports UID EXPUNGE, both t and nil are
-equivalent to @code{immediately}. If the server does not support UID
-EXPUNGE nil is equivalent to @code{never}, while t will immediately
-expunge ALL articles that are currently flagged as deleted
-(i.e., potentially not only the article that was just deleted).
+If non-@code{nil}, expunge articles after deleting them.  This is always done
+if the server supports UID EXPUNGE, but it's not done by default on
+servers that doesn't support that command.
 
 @item nnimap-streaming
 Virtually all @acronym{IMAP} server support fast streaming of data.
