@@ -8,20 +8,19 @@ use std::ptr;
 use std::slice;
 use libc::ptrdiff_t;
 
-use lisp::{LispSubr, MANY, LispObject, Qarith_error, XINT, make_number, EmacsInt, CHECK_TYPE,
-           Qnumberp, LispType};
+use lisp::{LispSubr, MANY, LispObject, Qarith_error, EmacsInt, CHECK_TYPE, Qnumberp, LispType};
 use eval::xsignal0;
 
 fn Fmod(x: LispObject, y: LispObject) -> LispObject {
     let x = lisp::check_number_coerce_marker(x);
     let y = lisp::check_number_coerce_marker(y);
 
-    if lisp::FLOATP(x) || lisp::FLOATP(y) {
+    if x.is_float() || y.is_float() {
         return floatfns::fmod_float(x, y);
     }
 
-    let mut i1 = XINT(x);
-    let i2 = XINT(y);
+    let mut i1 = x.to_fixnum().unwrap();
+    let i2 = y.to_fixnum().unwrap();
 
     if i2 == 0 {
         unsafe {
@@ -36,7 +35,7 @@ fn Fmod(x: LispObject, y: LispObject) -> LispObject {
         i1 += i2
     }
 
-    make_number(i1)
+    unsafe { LispObject::from_fixnum_unchecked(i1) }
 }
 
 // TODO: There's some magic somewhere in core Emacs that means
@@ -105,14 +104,14 @@ fn arith_driver(code: ArithOp, nargs: ptrdiff_t, args: *mut LispObject) -> LispO
 
         let coerced_val = lisp::check_number_coerce_marker(*val);
 
-        if lisp::FLOATP(coerced_val) {
+        if coerced_val.is_float() {
             unsafe {
                 return float_arith_driver(ok_accum as f64, ok_args, code, nargs, args);
             }
         }
 
         *val = coerced_val;
-        let next = lisp::XINT(*val);
+        let next = (*val).to_fixnum().unwrap();
 
         match code {
             ArithOp::Add => {
@@ -182,7 +181,8 @@ fn arith_driver(code: ArithOp, nargs: ptrdiff_t, args: *mut LispObject) -> LispO
         }
     }
 
-    make_number(accum)
+
+    unsafe { LispObject::from_fixnum_unchecked(accum) }
 }
 
 #[no_mangle]
@@ -237,7 +237,7 @@ defun!("*",
 pub extern "C" fn Fquo(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject {
     for argnum in 2..nargs {
         let arg = unsafe { *args.offset(argnum) };
-        if lisp::FLOATP(arg) {
+        if arg.is_float() {
             unsafe {
                 return float_arith_driver(0.0, 0, ArithOp::Div, nargs, args);
             }
@@ -342,7 +342,9 @@ fn Fabs(obj: LispObject) -> LispObject {
 
     match obj.get_type() {
         LispType::Lisp_Float => LispObject::from_float(obj.to_float().unwrap().abs()),
-        _ => make_number(obj.to_fixnum().unwrap().abs() as EmacsInt),
+        _ => unsafe {
+            LispObject::from_fixnum_unchecked(obj.to_fixnum().unwrap().abs() as EmacsInt)
+        },
     }
 
 }
