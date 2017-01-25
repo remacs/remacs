@@ -6644,29 +6644,27 @@ OTHER-HEADERS is an alist of header/value pairs.  CONTINUE says whether
 to continue editing a message already being composed.  SWITCH-FUNCTION
 is a function used to switch to and display the mail buffer."
   (interactive)
-  (let ((message-this-is-mail t))
-    (unless (message-mail-user-agent)
-      (message-pop-to-buffer
-       ;; Search for the existing message buffer if `continue' is non-nil.
-       (let ((message-generate-new-buffers
-	      (when (or (not continue)
-			(eq message-generate-new-buffers 'standard)
-			(functionp message-generate-new-buffers))
-		message-generate-new-buffers)))
-	 (message-buffer-name "mail" to))
-       switch-function))
-    (message-setup
-     (nconc
-      `((To . ,(or to "")) (Subject . ,(or subject "")))
-      ;; C-h f compose-mail says that headers should be specified as
-      ;; (string . value); however all the rest of message expects
-      ;; headers to be symbols, not strings (eg message-header-format-alist).
-      ;; http://lists.gnu.org/archive/html/emacs-devel/2011-01/msg00337.html
-      ;; We need to convert any string input, eg from rmail-start-mail.
-      (dolist (h other-headers other-headers)
- 	(if (stringp (car h)) (setcar h (intern (capitalize (car h)))))))
-     yank-action send-actions continue switch-function
-     return-action)))
+  (let ((message-this-is-mail t)
+	message-buffers)
+    ;; Search for the existing message buffer if `continue' is non-nil.
+    (if (and continue
+	     (setq message-buffers (message-buffers)))
+	(pop-to-buffer (car message-buffers))
+      ;; Start a new buffer.
+      (unless (message-mail-user-agent)
+	(message-pop-to-buffer (message-buffer-name "mail" to) switch-function))
+      (message-setup
+       (nconc
+	`((To . ,(or to "")) (Subject . ,(or subject "")))
+	;; C-h f compose-mail says that headers should be specified as
+	;; (string . value); however all the rest of message expects
+	;; headers to be symbols, not strings (eg message-header-format-alist).
+	;; http://lists.gnu.org/archive/html/emacs-devel/2011-01/msg00337.html
+	;; We need to convert any string input, eg from rmail-start-mail.
+	(dolist (h other-headers other-headers)
+	  (if (stringp (car h)) (setcar h (intern (capitalize (car h)))))))
+       yank-action send-actions continue switch-function
+       return-action))))
 
 ;;;###autoload
 (defun message-news (&optional newsgroups subject)
