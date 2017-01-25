@@ -3723,7 +3723,8 @@ Return the new variables list."
   (let* ((file-name (or (buffer-file-name)
 			;; Handle non-file buffers, too.
 			(expand-file-name default-directory)))
-	 (sub-file-name (if file-name
+	 (sub-file-name (if (and file-name
+                                 (file-name-absolute-p file-name))
                             ;; FIXME: Why not use file-relative-name?
 			    (substring file-name (length root)))))
     (condition-case err
