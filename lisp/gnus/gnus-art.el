@@ -4391,7 +4391,6 @@ If variable `gnus-use-long-file-name' is non-nil, it is
 
   "e" gnus-article-read-summary-keys
   "\C-d" gnus-article-read-summary-keys
-  "\C-c" gnus-article-read-summary-keys
   "\M-*" gnus-article-read-summary-keys
   "\M-#" gnus-article-read-summary-keys
   "\M-^" gnus-article-read-summary-keys
