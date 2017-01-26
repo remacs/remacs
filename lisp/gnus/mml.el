@@ -695,11 +695,7 @@ be \"related\" or \"alternate\"."
 	       ((and filename
 		     (not (equal (cdr (assq 'nofile cont)) "yes")))
 		(let ((coding-system-for-read mm-binary-coding-system))
-		  (mm-insert-file-contents filename nil nil nil nil t))
-		(unless charset
-		  (setq charset (mm-coding-system-to-mime-charset
-				 (mm-find-buffer-file-coding-system
-				  filename)))))
+		  (mm-insert-file-contents filename nil nil nil nil t)))
 	       (t
 		(let ((contents (cdr (assq 'contents cont))))
 		  (if (multibyte-string-p contents)
