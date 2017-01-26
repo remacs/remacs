@@ -2286,13 +2286,15 @@ body, set  `message-archive-note' to nil."
   "Mangles FollowUp-To and Newsgroups header to point to TARGET-GROUP.
 With prefix-argument just set Follow-Up, don't cross-post."
   (interactive
-   (list ; Completion based on Gnus
-    (completing-read "Followup To: "
-		     (if (boundp 'gnus-newsrc-alist)
-			 gnus-newsrc-alist)
-		     nil nil '("poster" . 0)
-		     (if (boundp 'gnus-group-history)
-			 'gnus-group-history))))
+   (list				; Completion based on Gnus
+    (replace-regexp-in-string
+     "\\`.*:" ""
+     (completing-read "Followup To: "
+		      (if (boundp 'gnus-newsrc-alist)
+			  gnus-newsrc-alist)
+		      nil nil '("poster" . 0)
+		      (if (boundp 'gnus-group-history)
+			  'gnus-group-history)))))
   (message-remove-header "Follow[Uu]p-[Tt]o" t)
   (message-goto-newsgroups)
   (beginning-of-line)
@@ -2361,13 +2363,15 @@ been made to before the user asked for a Crosspost."
   "Crossposts message and set Followup-To to TARGET-GROUP.
 With prefix-argument just set Follow-Up, don't cross-post."
   (interactive
-   (list ; Completion based on Gnus
-    (completing-read "Followup To: "
-		     (if (boundp 'gnus-newsrc-alist)
-			 gnus-newsrc-alist)
-		     nil nil '("poster" . 0)
-		     (if (boundp 'gnus-group-history)
-			 'gnus-group-history))))
+   (list				; Completion based on Gnus
+    (replace-regexp-in-string
+     "\\`.*:" ""
+     (completing-read "Followup To: "
+		      (if (boundp 'gnus-newsrc-alist)
+			  gnus-newsrc-alist)
+		      nil nil '("poster" . 0)
+		      (if (boundp 'gnus-group-history)
+			  'gnus-group-history)))))
   (when (fboundp 'gnus-group-real-name)
     (setq target-group (gnus-group-real-name target-group)))
   (cond ((not (or (null target-group) ; new subject not empty
