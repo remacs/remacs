@@ -70,8 +70,8 @@ back on `network'.")
 			       "ssh %s imapd")
   "What command to execute to connect to an IMAP server.
 This will only be used if the connection type is `shell'.  See
-the `make-network-process' documentation for an explanation of
-the format.)
+the `open-network-stream' documentation for an explanation of
+the format.")
 
 (defvoo nnimap-inbox nil
   "The mail box where incoming mail arrives and should be split out of.
