@@ -1251,9 +1251,11 @@ If not set, `default-directory' will be used."
   (let* ((completion-ignored-extensions nil)
 	 (file (read-file-name prompt
 			       (or mml-default-directory default-directory)
-			       nil t)))
+			       "" t)))
     ;; Prevent some common errors.  This is inspired by similar code in
     ;; VM.
+    (when (zerop (length file))
+      (error "No file name entered"))
     (when (file-directory-p file)
       (error "%s is a directory, cannot attach" file))
     (unless (file-exists-p file)
