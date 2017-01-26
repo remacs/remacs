@@ -3983,6 +3983,13 @@ that suppresses all warnings during execution of BODY."
    (and (symbolp obj2) (byte-compile-cond-valid-obj2-p obj1) (cons obj2 obj1))))
 
 (defun byte-compile-cond-jump-table-info (clauses)
+  "If CLAUSES is a `cond' form where:
+The condition for each clause is of the form (TEST VAR VALUE).
+VAR is a variable.
+TEST and VAR are the same throughtout all conditions.
+VALUE is either a constant or a quoted form.
+
+Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
   (let ((cases '())
         (ok t)
         prev-var prev-test)
