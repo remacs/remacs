@@ -635,7 +635,7 @@ x_cr_export_frames (Lisp_Object frames, cairo_surface_type_t surface_type)
 	(*surface_set_size_func) (surface, width, height);
 
       unblock_input ();
-      QUIT;
+      maybe_quit ();
       block_input ();
     }
 

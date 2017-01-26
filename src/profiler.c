@@ -174,8 +174,8 @@ record_backtrace (log_t *log, EMACS_INT count)
 	   some global flag so that some Elisp code can offload its
 	   data elsewhere, so as to avoid the eviction code.
 	   There are 2 ways to do that, AFAICT:
-	   - Set a flag checked in QUIT, such that QUIT can then call
-	     Fprofiler_cpu_log and stash the full log for later use.
+	   - Set a flag checked in maybe_quit, such that maybe_quit can then
+	     call Fprofiler_cpu_log and stash the full log for later use.
 	   - Set a flag check in post-gc-hook, so that Elisp code can call
 	     profiler-cpu-log.  That gives us more flexibility since that
 	     Elisp code can then do all kinds of fun stuff like write

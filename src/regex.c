@@ -1729,12 +1729,9 @@ typedef struct
 /* Explicit quit checking is needed for Emacs, which uses polling to
    process input events.  */
 #ifdef emacs
-# define IMMEDIATE_QUIT_CHECK			\
-    do {					\
-      if (immediate_quit) QUIT;			\
-    } while (0)
+# define IMMEDIATE_QUIT_CHECK (immediate_quit ? maybe_quit () : (void) 0)
 #else
-# define IMMEDIATE_QUIT_CHECK    ((void)0)
+# define IMMEDIATE_QUIT_CHECK ((void) 0)
 #endif
 
 /* Structure to manage work area for range table.  */

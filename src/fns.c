@@ -96,7 +96,7 @@ static void
 rarely_quit (unsigned short int *quit_count)
 {
   if (! (++*quit_count & (QUIT_COUNT_HEURISTIC - 1)))
-    QUIT;
+    maybe_quit ();
 }
 
 /* Random data-structure functions.  */
@@ -132,7 +132,7 @@ To get the number of bytes, use `string-bytes'.  */)
 	    {
 	      if (MOST_POSITIVE_FIXNUM < i)
 		error ("List too long");
-	      QUIT;
+	      maybe_quit ();
 	    }
 	  sequence = XCDR (sequence);
 	}
@@ -178,7 +178,7 @@ which is at least the number of distinct elements.  */)
 	  halftail = XCDR (halftail);
 	  if ((lolen & (QUIT_COUNT_HEURISTIC - 1)) == 0)
 	    {
-	      QUIT;
+	      maybe_quit ();
 	      if (lolen == 0)
 		hilen += UINTMAX_MAX + 1.0;
 	    }

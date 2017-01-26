@@ -390,7 +390,7 @@ gnutls_try_handshake (struct Lisp_Process *proc)
     {
       ret = gnutls_handshake (state);
       emacs_gnutls_handle_error (state, ret);
-      QUIT;
+      maybe_quit ();
     }
   while (ret < 0
 	 && gnutls_error_is_fatal (ret) == 0

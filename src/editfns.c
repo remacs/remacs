@@ -2695,7 +2695,7 @@ called interactively, INHERIT is t.  */)
     string[i] = str[i % len];
   while (n > stringlen)
     {
-      QUIT;
+      maybe_quit ();
       if (!NILP (inherit))
 	insert_and_inherit (string, stringlen);
       else

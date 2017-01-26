@@ -451,7 +451,7 @@ readbyte_from_file (int c, Lisp_Object readcharfun)
   while (c == EOF && ferror (instream) && errno == EINTR)
     {
       unblock_input ();
-      QUIT;
+      maybe_quit ();
       block_input ();
       clearerr (instream);
       c = getc (instream);
@@ -1702,14 +1702,14 @@ build_load_history (Lisp_Object filename, bool entire)
 		     			  Fcons (newelt, XCDR (tem))));
 
 		  tem2 = XCDR (tem2);
-		  QUIT;
+		  maybe_quit ();
 		}
 	    }
 	}
       else
 	prev = tail;
       tail = XCDR (tail);
-      QUIT;
+      maybe_quit ();
     }
 
   /* If we're loading an entire file, cons the new assoc onto the

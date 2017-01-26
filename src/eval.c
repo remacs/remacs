@@ -858,7 +858,7 @@ usage: (let* VARLIST BODY...)  */)
 
   for (varlist = XCAR (args); CONSP (varlist); varlist = XCDR (varlist))
     {
-      QUIT;
+      maybe_quit ();
 
       elt = XCAR (varlist);
       if (SYMBOLP (elt))
@@ -925,7 +925,7 @@ usage: (let VARLIST BODY...)  */)
 
   for (argnum = 0; CONSP (varlist); varlist = XCDR (varlist))
     {
-      QUIT;
+      maybe_quit ();
       elt = XCAR (varlist);
       if (SYMBOLP (elt))
 	temps [argnum++] = Qnil;
@@ -978,7 +978,7 @@ usage: (while TEST BODY...)  */)
   body = XCDR (args);
   while (!NILP (eval_sub (test)))
     {
-      QUIT;
+      maybe_quit ();
       prog_ignore (body);
     }
 
@@ -1011,7 +1011,7 @@ definitions to shadow the loaded ones for use in file byte-compilation.  */)
 	 until we get a symbol that is not an alias.  */
       while (SYMBOLP (def))
 	{
-	  QUIT;
+	  maybe_quit ();
 	  sym = def;
 	  tem = Fassq (sym, environment);
 	  if (NILP (tem))
@@ -1131,7 +1131,7 @@ unwind_to_catch (struct handler *catch, Lisp_Object value)
   /* Restore certain special C variables.  */
   set_poll_suppress_count (catch->poll_suppress_count);
   unblock_input_to (catch->interrupt_input_blocked);
-  immediate_quit = 0;
+  immediate_quit = false;
 
   do
     {
@@ -1514,10 +1514,10 @@ signal_or_quit (Lisp_Object error_symbol, Lisp_Object data, bool keyboard_quit)
   Lisp_Object string;
   Lisp_Object real_error_symbol
     = (NILP (error_symbol) ? Fcar (data) : error_symbol);
-  register Lisp_Object clause = Qnil;
+  Lisp_Object clause = Qnil;
   struct handler *h;
 
-  immediate_quit = 0;
+  immediate_quit = false;
   if (gc_in_progress || waiting_for_input)
     emacs_abort ();
 
@@ -2135,7 +2135,7 @@ eval_sub (Lisp_Object form)
   if (!CONSP (form))
     return form;
 
-  QUIT;
+  maybe_quit ();
 
   maybe_gc ();
 
@@ -2721,7 +2721,7 @@ usage: (funcall FUNCTION &rest ARGUMENTS)  */)
   Lisp_Object val;
   ptrdiff_t count;
 
-  QUIT;
+  maybe_quit ();
 
   if (++lisp_eval_depth > max_lisp_eval_depth)
     {
@@ -2966,7 +2966,7 @@ funcall_lambda (Lisp_Object fun, ptrdiff_t nargs,
   bool previous_optional_or_rest = false;
   for (; CONSP (syms_left); syms_left = XCDR (syms_left))
     {
-      QUIT;
+      maybe_quit ();
 
       next = XCAR (syms_left);
       if (!SYMBOLP (next))

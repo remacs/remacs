@@ -679,7 +679,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	    {
 	      quitcounter = 1;
 	      maybe_gc ();
-	      QUIT;
+	      maybe_quit ();
 	    }
 	  pc += op;
 	  NEXT;
