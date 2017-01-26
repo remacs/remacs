@@ -2872,44 +2872,14 @@ usage: (list &rest OBJECTS)  */)
 
 DEFUN ("make-list", Fmake_list, Smake_list, 2, 2, 0,
        doc: /* Return a newly created list of length LENGTH, with each element being INIT.  */)
-  (register Lisp_Object length, Lisp_Object init)
+  (Lisp_Object length, Lisp_Object init)
 {
-  register Lisp_Object val;
-  register EMACS_INT size;
-
+  Lisp_Object val = Qnil;
   CHECK_NATNUM (length);
-  size = XFASTINT (length);
 
-  val = Qnil;
-  while (size > 0)
+  for (EMACS_INT size = XFASTINT (length); 0 < size; size--)
     {
       val = Fcons (init, val);
-      --size;
-
-      if (size > 0)
-	{
-	  val = Fcons (init, val);
-	  --size;
-
-	  if (size > 0)
-	    {
-	      val = Fcons (init, val);
-	      --size;
-
-	      if (size > 0)
-		{
-		  val = Fcons (init, val);
-		  --size;
-
-		  if (size > 0)
-		    {
-		      val = Fcons (init, val);
-		      --size;
-		    }
-		}
-	    }
-	}
-
       QUIT;
     }
 
