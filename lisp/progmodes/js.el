@@ -3214,7 +3214,7 @@ with `js--js-encode-value'."
 Inside the lexical scope of `with-js', `js?', `js!',
 `js-new', `js-eval', `js-list', `js<', `js>', `js-get-service',
 `js-create-instance', and `js-qi' are defined."
-
+  (declare (indent 0) (debug t))
   `(progn
      (js--js-enter-repl)
      (unwind-protect
@@ -3431,11 +3431,8 @@ left-to-right."
                          (eq (cl-fifth window-info) 2))
               do (push window-info windows))
 
-     (cl-loop for window-info in windows
-              for window = (cl-first window-info)
-              collect (list (cl-second window-info)
-                            (cl-third window-info)
-                            window)
+     (cl-loop for (window title location) in windows
+              collect (list title location window)
 
               for gbrowser = (js< window "gBrowser")
               if (js-handle? gbrowser)
