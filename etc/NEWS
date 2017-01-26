@@ -354,6 +354,10 @@ bound to 'Buffer-menu-unmark-all-buffers'.
 *** The .newsrc file will now only be saved if the native select
 method is an NNTP select method.
 
++++
+*** A new command for sorting articles by readedness marks has been
+added: `C-c C-s C-m C-m'.
+
 ** Ibuffer
 
 ---
