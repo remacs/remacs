@@ -5393,15 +5393,11 @@ Otherwise, generate and save a value for `canlock-password' first."
   "Process Fcc headers in the current buffer."
   (let ((case-fold-search t)
 	(buf (current-buffer))
-	list file
-	(mml-externalize-attachments message-fcc-externalize-attachments))
-    (save-excursion
-      (save-restriction
-	(message-narrow-to-headers)
-	(setq file (message-fetch-field "fcc" t)))
-      (when file
-	(set-buffer (get-buffer-create " *message temp*"))
-	(erase-buffer)
+	(mml-externalize-attachments message-fcc-externalize-attachments)
+	(file (message-field-value "fcc" t))
+	list)
+    (when file
+      (with-temp-buffer
 	(insert-buffer-substring buf)
 	(message-encode-message-body)
 	(save-restriction
@@ -5442,8 +5438,7 @@ Otherwise, generate and save a value for `canlock-password' first."
 	      (if (and (file-readable-p file) (mail-file-babyl-p file))
 		  (rmail-output file 1 nil t)
 		(let ((mail-use-rfc822 t))
-		  (rmail-output file 1 t t))))))
-	(kill-buffer (current-buffer))))))
+		  (rmail-output file 1 t t))))))))))
 
 (defun message-output (filename)
   "Append this article to Unix/babyl mail file FILENAME."
