@@ -4552,6 +4552,9 @@ This function could be useful in `message-setup-hook'."
 	    (forward-line 1)
 	    (unless (y-or-n-p "Send anyway? ")
 	      (error "Failed to send the message")))))
+      ;; Fold too-long header lines.  They should be no longer than
+      ;; 998 octets long.
+      (message--fold-long-headers)
       ;; Let the user do all of the above.
       (run-hooks 'message-header-hook))
     (setq options message-options)
@@ -4647,6 +4650,14 @@ If you always want Gnus to send messages in one piece, set
     (set-buffer mailbuf)
     (setq message-options options)
     (push 'mail message-sent-message-via)))
+
+(defun message--fold-long-headers ()
+  (goto-char (point-min))
+  (while (not (eobp))
+    (when (and (looking-at "[^:]+:")
+	       (> (- (line-end-position) (point)) 998))
+      (mail-header-fold-field))
+    (forward-line 1)))
 
 (defvar sendmail-program)
 (defvar smtpmail-smtp-server)
