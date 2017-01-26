@@ -1895,6 +1895,7 @@ increase the score of each group you read."
   "\C-c\C-s\C-m\C-n" gnus-summary-sort-by-most-recent-number
   "\C-c\C-s\C-l" gnus-summary-sort-by-lines
   "\C-c\C-s\C-c" gnus-summary-sort-by-chars
+  "\C-c\C-s\C-m\C-m" gnus-summary-sort-by-marks
   "\C-c\C-s\C-a" gnus-summary-sort-by-author
   "\C-c\C-s\C-t" gnus-summary-sort-by-recipient
   "\C-c\C-s\C-s" gnus-summary-sort-by-subject
@@ -2748,6 +2749,7 @@ gnus-summary-show-article-from-menu-as-charset-%s" cs))))
 	 ["Sort by score" gnus-summary-sort-by-score t]
 	 ["Sort by lines" gnus-summary-sort-by-lines t]
 	 ["Sort by characters" gnus-summary-sort-by-chars t]
+	 ["Sort by marks" gnus-summary-sort-by-marks t]
 	 ["Randomize" gnus-summary-sort-by-random t]
 	 ["Original sort" gnus-summary-sort-by-original t])
 	("Help"
@@ -4944,6 +4946,16 @@ using some other form will lead to serious barfage."
 (defun gnus-thread-sort-by-chars (h1 h2)
   "Sort threads by root article octet length."
   (gnus-article-sort-by-chars
+   (gnus-thread-header h1) (gnus-thread-header h2)))
+
+(defsubst gnus-article-sort-by-marks (h1 h2)
+  "Sort articles by octet length."
+  (< (gnus-article-mark (mail-header-number h1))
+     (gnus-article-mark (mail-header-number h2))))
+
+(defun gnus-thread-sort-by-marks (h1 h2)
+  "Sort threads by root article octet length."
+  (gnus-article-sort-by-marks
    (gnus-thread-header h1) (gnus-thread-header h2)))
 
 (defsubst gnus-article-sort-by-author (h1 h2)
@@ -11929,6 +11941,12 @@ Argument REVERSE means reverse order."
 Argument REVERSE means reverse order."
   (interactive "P")
   (gnus-summary-sort 'chars reverse))
+
+(defun gnus-summary-sort-by-mark (&optional reverse)
+  "Sort the summary buffer by article marks.
+Argument REVERSE means reverse order."
+  (interactive "P")
+  (gnus-summary-sort 'marks reverse))
 
 (defun gnus-summary-sort-by-original (&optional reverse)
   "Sort the summary buffer using the default sorting method.

@@ -10197,6 +10197,11 @@ Sort by lines (@code{gnus-summary-sort-by-lines}).
 @findex gnus-summary-sort-by-chars
 Sort by article length (@code{gnus-summary-sort-by-chars}).
 
+@item C-c C-s C-m C-m
+@kindex C-c C-s C-m C-m (Summary)
+@findex gnus-summary-sort-by-marks
+Sort by article ``readedness'' marks (@code{gnus-summary-sort-by-marks}).
+
 @item C-c C-s C-i
 @kindex C-c C-s C-i (Summary)
 @findex gnus-summary-sort-by-score
