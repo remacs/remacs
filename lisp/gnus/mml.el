@@ -1383,12 +1383,23 @@ content-type, a string of the form \"type/subtype\".  DESCRIPTION
 is a one-line description of the attachment.  The DISPOSITION
 specifies how the attachment is intended to be displayed.  It can
 be either \"inline\" (displayed automatically within the message
-body) or \"attachment\" (separate from the body)."
+body) or \"attachment\" (separate from the body).
+
+If given a prefix interactively, no prompting will be done for
+the TYPE, DESCRIPTION or DISPOSITION values.  Instead defaults
+will be computed and used."
   (interactive
    (let* ((file (mml-minibuffer-read-file "Attach file: "))
-	  (type (mml-minibuffer-read-type file))
-	  (description (mml-minibuffer-read-description))
-	  (disposition (mml-minibuffer-read-disposition type nil file)))
+	  (type (if current-prefix-arg
+		    (or (mm-default-file-encoding file)
+			"application/octet-stream")
+		  (mml-minibuffer-read-type file)))
+	  (description (if current-prefix-arg
+			   nil
+			 (mml-minibuffer-read-description)))
+	  (disposition (if current-prefix-arg
+			   (mml-content-disposition type file)
+			 (mml-minibuffer-read-disposition type nil file))))
      (list file type description disposition)))
   ;; If in the message header, attach at the end and leave point unchanged.
   (let ((head (unless (message-in-body-p) (point))))
