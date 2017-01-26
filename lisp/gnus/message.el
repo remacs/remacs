@@ -3108,6 +3108,9 @@ M-RET    `message-newline-and-reformat' (break the line and reformat)."
 	     (looking-at "[ \t]*\n"))
     (expand-abbrev))
   (push-mark)
+  (message-goto-body-1))
+
+(defun message-goto-body-1 ()
   (goto-char (point-min))
   (or (search-forward (concat "\n" mail-header-separator "\n") nil t)
       (search-forward-regexp "[^:]+:\\([^\n]\\|\n[ \t]\\)+\n\n" nil t)))
@@ -3116,9 +3119,7 @@ M-RET    `message-newline-and-reformat' (break the line and reformat)."
   "Return t if point is in the message body."
   (>= (point)
       (save-excursion
-	(goto-char (point-min))
-	(or (search-forward (concat "\n" mail-header-separator "\n") nil t)
-	    (search-forward-regexp "[^:]+:\\([^\n]\\|\n[ \t]\\)+\n\n" nil t))
+	(message-goto-body-1)
 	(point))))
 
 (defun message-goto-eoh ()
