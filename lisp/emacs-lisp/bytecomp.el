@@ -4067,7 +4067,7 @@ that suppresses all warnings during execution of BODY."
       (byte-compile-out-tag default-tag)
       (if default-case
           (byte-compile-body-do-effect default-case)
-        (byte-compile-form 'nil))
+        (byte-compile-constant nil))
       (byte-compile-out-tag donetag)
       (push jump-table byte-compile-jump-tables))))
 
