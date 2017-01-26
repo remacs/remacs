@@ -3330,6 +3330,8 @@ of lines before the signature intact."
   "Insert four newlines, and then reformat if inside quoted text.
 Prefix arg means justify as well."
   (interactive (list (if current-prefix-arg 'full)))
+  (unless (message-in-body-p)
+    (error "This command only works in the body of the message"))
   (let (quoted point beg end leading-space bolp fill-paragraph-function)
     (setq point (point))
     (beginning-of-line)
