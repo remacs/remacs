@@ -13515,7 +13515,8 @@ Close the connection (if any) to the server
 @kindex D (Server)
 @findex gnus-server-deny-server
 Mark the current server as unreachable
-(@code{gnus-server-deny-server}).
+(@code{gnus-server-deny-server}).  This will effectively disable the
+server.
 
 @item M-o
 @kindex M-o (Server)
