@@ -1249,13 +1249,12 @@ If not set, `default-directory' will be used."
 
 (defun mml-minibuffer-read-file (prompt)
   (let* ((completion-ignored-extensions nil)
+	 (buffer-file-name nil)
 	 (file (read-file-name prompt
 			       (or mml-default-directory default-directory)
-			       "" t)))
+			       nil t)))
     ;; Prevent some common errors.  This is inspired by similar code in
     ;; VM.
-    (when (zerop (length file))
-      (error "No file name entered"))
     (when (file-directory-p file)
       (error "%s is a directory, cannot attach" file))
     (unless (file-exists-p file)
