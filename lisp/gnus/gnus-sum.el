@@ -11975,7 +11975,10 @@ save those articles instead.
 The variable `gnus-default-article-saver' specifies the saver function.
 
 If the optional second argument NOT-SAVED is non-nil, articles saved
-will not be marked as saved."
+will not be marked as saved.
+
+The `gnus-prompt-before-saving' variable says how prompting is
+performed."
   (interactive "P")
   (require 'gnus-art)
   (let* ((articles (gnus-summary-work-articles n))
