@@ -3111,16 +3111,26 @@ M-RET    `message-newline-and-reformat' (break the line and reformat)."
   (message-goto-body-1))
 
 (defun message-goto-body-1 ()
+  "Go to the body and return point."
   (goto-char (point-min))
   (or (search-forward (concat "\n" mail-header-separator "\n") nil t)
-      (search-forward-regexp "[^:]+:\\([^\n]\\|\n[ \t]\\)+\n\n" nil t)))
+      ;; If the message is mangled, find the end of the headers the
+      ;; hard way.
+      (progn
+	;; Skip past all headers and continuation lines.
+	(while (looking-at "[^:]+:\\|[\t ]+[^\t ]")
+	  (forward-line 1))
+	;; We're now at the first empty line, so perhaps move past it.
+	(when (and (eolp)
+		   (not (eobp)))
+	  (forward-line 1))
+	(point))))
 
 (defun message-in-body-p ()
   "Return t if point is in the message body."
   (>= (point)
       (save-excursion
-	(message-goto-body-1)
-	(point))))
+	(message-goto-body-1))))
 
 (defun message-goto-eoh ()
   "Move point to the end of the headers."
