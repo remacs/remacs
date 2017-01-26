@@ -40,8 +40,10 @@ pub mod ffi {
 /// Rust conversion:
 ///
 /// ```rust
-/// defvar!(b"command-line-args", f_Vcommand_line_args);
+/// defvar!(b"command-line-args\0", f_Vcommand_line_args);
 /// ```
+///
+/// Please note that you need to added a `\0` at the end of the symbol name.
 ///
 /// [concat_ident]: https://doc.rust-lang.org/std/macro.concat_idents.html
 #[macro_export]

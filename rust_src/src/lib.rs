@@ -99,15 +99,15 @@ pub extern "C" fn rust_init_syms() {
         floatfns::init_float_syms();
 
         // The largest value that is representable in a Lisp integer
-        defvar!(b"most-positive-fixnum", f_Vmost_positive_fixnum);
-        rust_make_symbol_constant(intern_c_string_1(b"most-positive-fixnum"
+        defvar!(b"most-positive-fixnum\0", f_Vmost_positive_fixnum);
+        rust_make_symbol_constant(intern_c_string_1(b"most-positive-fixnum\0"
             .as_ptr() as *const libc::c_char));
         globals::globals.f_Vmost_positive_fixnum =
             LispObject::from_fixnum_unchecked(MOST_POSITIVE_FIXNUM);
 
         // The smallest value that is representable in a Lisp integer.
-        defvar!(b"most-negative-fixnum", f_Vmost_negative_fixnum);
-        rust_make_symbol_constant(intern_c_string_1(b"most-negative-fixnum"
+        defvar!(b"most-negative-fixnum\0", f_Vmost_negative_fixnum);
+        rust_make_symbol_constant(intern_c_string_1(b"most-negative-fixnum\0"
             .as_ptr() as *const libc::c_char));
         globals::globals.f_Vmost_negative_fixnum =
             LispObject::from_fixnum_unchecked(MOST_NEGATIVE_FIXNUM);
