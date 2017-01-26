@@ -1450,7 +1450,7 @@ static Lisp_Object find_handler_clause (Lisp_Object, Lisp_Object);
 static bool maybe_call_debugger (Lisp_Object conditions, Lisp_Object sig,
 				 Lisp_Object data);
 
-void
+static void
 process_quit_flag (void)
 {
   Lisp_Object flag = Vquit_flag;
@@ -1460,6 +1460,15 @@ process_quit_flag (void)
   if (EQ (Vthrow_on_input, flag))
     Fthrow (Vthrow_on_input, Qt);
   quit ();
+}
+
+void
+maybe_quit (void)
+{
+  if (!NILP (Vquit_flag) && NILP (Vinhibit_quit))
+    process_quit_flag ();
+  else if (pending_signals)
+    process_pending_signals ();
 }
 
 DEFUN ("signal", Fsignal, Ssignal, 2, 2, 0,

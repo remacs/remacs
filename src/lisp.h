@@ -3133,20 +3133,12 @@ extern Lisp_Object memory_signal_data;
    and (in particular) cannot call arbitrary Lisp code.
 
    If quit-flag is set to `kill-emacs' the SIGINT handler has received
-   a request to exit Emacs when it is safe to do.  */
+   a request to exit Emacs when it is safe to do.
 
-extern void process_pending_signals (void);
-extern bool volatile pending_signals;
+   When not quitting, process any pending signals.  */
 
-extern void process_quit_flag (void);
-#define QUIT						\
-  do {							\
-    if (!NILP (Vquit_flag) && NILP (Vinhibit_quit))	\
-      process_quit_flag ();				\
-    else if (pending_signals)				\
-      process_pending_signals ();			\
-  } while (false)
-
+extern void maybe_quit (void);
+#define QUIT maybe_quit ()
 
 /* True if ought to quit now.  */
 
