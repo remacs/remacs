@@ -355,9 +355,11 @@ Currently this means either text/html or application/xhtml+xml."
 			"utf-8"))))
 	 (data-buffer (current-buffer))
 	 last-coding-system-used)
-    ;; Save the https peer status.
     (with-current-buffer buffer
-      (plist-put eww-data :peer (plist-get status :peer)))
+      ;; Save the https peer status.
+      (plist-put eww-data :peer (plist-get status :peer))
+      ;; Make buffer listings more informative.
+      (setq list-buffers-directory url))
     (unwind-protect
 	(progn
 	  (cond
@@ -849,6 +851,8 @@ the like."
       (erase-buffer)
       (insert text)
       (goto-char (plist-get elem :point))
+      ;; Make buffer listings more informative.
+      (setq list-buffers-directory (plist-get elem :url))
       (eww-update-header-line-format))))
 
 (defun eww-next-url ()
