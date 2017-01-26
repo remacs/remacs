@@ -390,16 +390,11 @@ epaths-force-w32:
 	  -e "/^.*#/s|@SRC@|$${w32srcdir}|g") &&		\
 	${srcdir}/build-aux/move-if-change epaths.h.$$$$ src/epaths.h
 
-.PHONY: rust-src
-rust-src:
-	RUSTFLAGS=${RUSTFLAGS} \
-	$(CARGO_BUILD) $(CARGO_FLAGS) --manifest-path ${cargo_manifest}
-
 # If lib/Makefile would build files in '.', then build them before
 # building 'lib', to avoid races with parallel makes.
-lib: am--refresh rust-src
+lib: am--refresh
 
-lib-src src: $(NTDIR) lib rust-src
+lib-src src: $(NTDIR) lib
 
 src: lib-src
 
