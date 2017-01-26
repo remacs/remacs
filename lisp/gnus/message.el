@@ -5399,6 +5399,7 @@ Otherwise, generate and save a value for `canlock-password' first."
     (when file
       (with-temp-buffer
 	(insert-buffer-substring buf)
+	(message-clone-locals buf)
 	(message-encode-message-body)
 	(save-restriction
 	  (message-narrow-to-headers)
