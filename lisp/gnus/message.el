@@ -5785,7 +5785,7 @@ give as trustworthy answer as possible."
 	   (not (string-match message-bogus-system-names message-user-fqdn)))
       ;; `message-user-fqdn' seems to be valid
       message-user-fqdn)
-     ((and (string-match message-bogus-system-names sysname))
+     ((not (string-match message-bogus-system-names sysname))
       ;; `system-name' returned the right result.
       sysname)
      ;; Try `mail-host-address'.
