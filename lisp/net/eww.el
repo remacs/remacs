@@ -59,7 +59,7 @@
   "Directory where files will downloaded."
   :version "24.4"
   :group 'eww
-  :type 'string)
+  :type 'directory)
 
 ;;;###autoload
 (defcustom eww-suggest-uris
@@ -81,7 +81,7 @@ duplicate entries (if any) removed."
   "Directory where bookmark files will be stored."
   :version "25.1"
   :group 'eww
-  :type 'string)
+  :type 'directory)
 
 (defcustom eww-desktop-remove-duplicates t
   "Whether to remove duplicates from the history when saving desktop data.
