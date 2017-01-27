@@ -546,7 +546,8 @@ instead."
 	    (gnus-setup-message 'message
 	      (message-mail to subject other-headers continue
 			    nil yank-action send-actions return-action)))
-	(setq gnus-newsgroup-name group-name))
+	(with-current-buffer buf
+	  (setq gnus-newsgroup-name group-name)))
       (when switch-action
 	(setq mail-buf (current-buffer))
 	(switch-to-buffer buf)
