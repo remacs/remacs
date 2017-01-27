@@ -47,7 +47,7 @@ pub use marker::CHECK_MARKER;
 pub use lisp::CHECK_STRING;
 
 // Used for creating temporary files in emacs
-pub use files::mkrstemp;
+pub use files::rust_make_temp;
 
 extern "C" {
     fn defsubr(sname: *const LispSubr);

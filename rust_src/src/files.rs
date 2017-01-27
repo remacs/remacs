@@ -1,34 +1,57 @@
-use std::fs::File;
-use std::io::{Write, Read, Seek, SeekFrom, Error};
-
-use std::os::unix::io::IntoRawFd;
-
 extern crate tempfile;
 extern crate libc;
 
-#[no_mangle]
-pub extern "C" fn mkrstemp(_: *mut libc::c_char,
-                           _: libc::c_int)
-                           -> libc::c_int {
+use std::ffi::{CStr, CString};
+use std::mem;
+use std::io::Error;
 
-    match make_temporary_file() {
-        Ok(tempFile) => tempFile.into_raw_fd(),
-        Err(_) => -1,
+#[cfg(unix)]
+use std::os::unix::io::AsRawFd;
+
+#[cfg(windows)]
+use std::os::windows::AsRawHandle;
+
+#[no_mangle]
+pub extern "C" fn rust_make_temp(template: *mut libc::c_char)
+                           -> libc::c_int {
+    let cstr = unsafe {
+        let result = CStr::from_ptr(template).to_str().unwrap();
+        assert_eq!(&result[result.len() - 6..result.len()], "XXXXXX");
+        &result[0..result.len() - 6]
+    };
+
+    match make_temporary_file(cstr) {
+        Ok(tempfile) => {
+            let dest = tempfile.path().to_str()
+                .map(|path| CString::new(path).unwrap())
+                .unwrap();
+
+            let raw_fd = get_fd_from_file(&tempfile);
+            unsafe {
+                libc::strcpy(template, dest.as_ptr());
+                mem::forget(tempfile);
+            }
+            
+            raw_fd
+        }
+
+        Err(_) => -1
     }
 }
 
-pub fn make_temporary_file() -> Result<File, Error> {
-    tempfile::tempfile()
+#[cfg(unix)]
+fn get_fd_from_file(file: &tempfile::NamedTempFile) -> libc::c_int {
+    file.as_raw_fd()
 }
 
-#[test]
-fn test_make_temporary_file() {
-    let mut file = make_temporary_file().unwrap();
-    file.write_all(b"Attempting to write temporary data").unwrap();
+#[cfg(windows)]
+fn get_fd_from_file(file: &tempfile::NamedTempFile) -> libc::c_int {
+    file.as_raw_handle()
+}
 
-    file.seek(SeekFrom::Start(0)).unwrap();
-    let mut string = String::new();
-    file.read_to_string(&mut string).unwrap();
-    assert_eq!(string
-               ,"Attempting to write temporary data");
+fn make_temporary_file(template: &str) -> Result<tempfile::NamedTempFile, Error> {
+    tempfile::NamedTempFileOptions::new()
+        .prefix(template)
+        .rand_bytes(6)
+        .create()
 }

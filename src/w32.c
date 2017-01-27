@@ -70,7 +70,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #undef localtime
 
-int mkrstemp(char *template, int flags);
 char *sys_ctime (const time_t *);
 int sys_chdir (const char *);
 int sys_creat (const char *, int);
