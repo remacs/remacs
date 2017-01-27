@@ -19,6 +19,7 @@ mod strings;
 mod symbols;
 mod globals;
 mod character;
+mod files;
 
 use lisp::LispSubr;
 
@@ -44,6 +45,9 @@ pub use marker::CHECK_MARKER;
 
 // Defined in lisp.h and widely used in the C codebase.
 pub use lisp::CHECK_STRING;
+
+// Used for creating temporary files in emacs
+pub use files::mkrstemp;
 
 extern "C" {
     fn defsubr(sname: *const LispSubr);
