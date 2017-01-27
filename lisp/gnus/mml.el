@@ -612,25 +612,32 @@ be \"related\" or \"alternate\"."
 		(with-temp-buffer
 		  (set-buffer-multibyte nil)
 		  ;; First insert the data into the buffer.
-		  (cond
-		   ((cdr (assq 'buffer cont))
-		    (insert-buffer-substring (cdr (assq 'buffer cont))))
-		   ((and filename
-			 (not (equal (cdr (assq 'nofile cont)) "yes")))
-		    (mm-insert-file-contents filename))
-		   ((eq 'mml (car cont))
-		    (insert (cdr (assq 'contents cont))))
-		   (t
-		    (save-restriction
-		      (narrow-to-region (point) (point))
-		      (insert (cdr (assq 'contents cont)))
-		      ;; Remove quotes from quoted tags.
-		      (goto-char (point-min))
-		      (while (re-search-forward
-			      "<#!+/?\\(part\\|multipart\\|external\\|mml\\|secure\\)"
-			      nil t)
-			(delete-region (+ (match-beginning 0) 2)
-				       (+ (match-beginning 0) 3))))))
+		  (if  (and filename
+			    (not (equal (cdr (assq 'nofile cont)) "yes")))
+		      (mm-insert-file-contents filename)
+		    (insert
+		     (with-temp-buffer
+		       (cond
+			((cdr (assq 'buffer cont))
+			 (insert-buffer-substring (cdr (assq 'buffer cont))))
+			((eq 'mml (car cont))
+			 (insert (cdr (assq 'contents cont))))
+			(t
+			 (insert (cdr (assq 'contents cont)))
+			 ;; Remove quotes from quoted tags.
+			 (goto-char (point-min))
+			 (while (re-search-forward
+				 "<#!+/?\\(part\\|multipart\\|external\\|mml\\|secure\\)"
+				 nil t)
+			   (delete-region (+ (match-beginning 0) 2)
+					  (+ (match-beginning 0) 3)))))
+		       (setq charset
+			     (mm-coding-system-to-mime-charset
+			      (detect-coding-region
+			       (point-min) (point-max) t)))
+		       (encode-coding-region (point-min) (point-max)
+					     charset)
+		       (buffer-string))))
 		  (cond
 		   ((eq (car cont) 'mml)
 		    (let ((mml-boundary (mml-compute-boundary cont))
