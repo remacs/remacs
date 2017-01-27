@@ -2,9 +2,14 @@
 name = "remacs"
 version = "0.1.0"
 dependencies = [
+ "alloc_unexecmacosx 0.1.0",
  "lazy_static 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.17 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "alloc_unexecmacosx"
+version = "0.1.0"
 
 [[package]]
 name = "lazy_static"
