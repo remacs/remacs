@@ -2816,13 +2816,15 @@ really is a readable and searchable directory.  */)
     {
       Lisp_Object r = call2 (handler, Qfile_accessible_directory_p, absname);
 
-      /* This might be a lie (e.g., the directory might not exist, or
-	 be a regular file), but at least it does TRT in the "usual"
-	 case of an existing directory that is not accessible by the
-	 current user, and avoids reporting "Success" for a failed
-	 operation.  */
-      if (!EQ (r, Qt))
-	errno = EACCES;
+      /* Set errno in case the handler failed.  EACCES might be a lie
+	 (e.g., the directory might not exist, or be a regular file),
+	 but at least it does TRT in the "usual" case of an existing
+	 directory that is not accessible by the current user, and
+	 avoids reporting "Success" for a failed operation.  Perhaps
+	 someday we can fix this in a better way, by improving
+	 file-accessible-directory-p's API; see Bug#25419.  */
+      errno = EACCES;
+
       return r;
     }
 
