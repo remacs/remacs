@@ -2823,7 +2823,8 @@ really is a readable and searchable directory.  */)
 	 avoids reporting "Success" for a failed operation.  Perhaps
 	 someday we can fix this in a better way, by improving
 	 file-accessible-directory-p's API; see Bug#25419.  */
-      errno = EACCES;
+      if (!EQ (r, Qt))
+	errno = EACCES;
 
       return r;
     }
