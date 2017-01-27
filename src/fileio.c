@@ -2815,7 +2815,14 @@ really is a readable and searchable directory.  */)
   if (!NILP (handler))
     {
       Lisp_Object r = call2 (handler, Qfile_accessible_directory_p, absname);
-      errno = 0;
+
+      /* This might be a lie (e.g., the directory might not exist, or
+	 be a regular file), but at least it does TRT in the "usual"
+	 case of an existing directory that is not accessible by the
+	 current user, and avoids reporting "Success" for a failed
+	 operation.  */
+      if (!EQ (r, Qt))
+	errno = EACCES;
       return r;
     }
 
