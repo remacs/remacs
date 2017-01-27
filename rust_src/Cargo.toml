@@ -11,7 +11,7 @@ build = "build.rs"
 [dependencies]
 lazy_static = "0.2.2"
 libc = "0.2.17"
-tempfile = "2.1.5"
+rand = "0.3"
 
 [build-dependencies]
 libc = "0.2.17"
