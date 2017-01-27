@@ -852,7 +852,7 @@ it is displayed along with the global value."
 		    (terpri)
 		    (pp val)
                     ;; Remove trailing newline.
-                    (delete-char -1))
+                    (and (= (char-before) ?\n) (delete-char -1)))
 		  (let* ((sv (get variable 'standard-value))
 			 (origval (and (consp sv)
 				       (condition-case nil
