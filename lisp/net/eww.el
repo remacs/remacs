@@ -1501,6 +1501,7 @@ Differences in #targets are ignored."
 (defun eww-download ()
   "Download URL under point to `eww-download-directory'."
   (interactive)
+  (access-file eww-download-directory "Download failed")
   (let ((url (get-text-property (point) 'shr-url)))
     (if (not url)
         (message "No URL under point")

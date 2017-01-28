@@ -2682,7 +2682,7 @@ DEFUN ("file-writable-p", Ffile_writable_p, Sfile_writable_p, 1, 1, 0,
 
 DEFUN ("access-file", Faccess_file, Saccess_file, 2, 2, 0,
        doc: /* Access file FILENAME, and get an error if that does not work.
-The second argument STRING is used in the error message.
+The second argument STRING is prepended to the error message.
 If there is no error, returns nil.  */)
   (Lisp_Object filename, Lisp_Object string)
 {
