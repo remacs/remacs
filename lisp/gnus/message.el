@@ -4119,8 +4119,8 @@ It should typically alter the sending method in some way or other."
   (let ((inhibit-read-only t))
     (put-text-property (point-min) (point-max) 'read-only nil))
   (message-fix-before-sending)
-  (mml-secure-bcc-is-safe)
   (run-hooks 'message-send-hook)
+  (mml-secure-bcc-is-safe)
   (when message-confirm-send
     (or (y-or-n-p "Send message? ")
 	(keyboard-quit)))
