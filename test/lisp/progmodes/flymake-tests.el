@@ -50,13 +50,15 @@
 
 (ert-deftest warning-predicate-rx-gcc ()
   "Test GCC warning via regexp predicate."
-  (skip-unless (and (executable-find "gcc") (executable-find "make")))
+  (skip-unless (and (executable-find "gcc") (executable-find "make")
+                    (not (eq system-type 'darwin))))
   (should (eq 'flymake-warnline
               (flymake-tests--current-face "test.c" "^[Ww]arning"))))
 
 (ert-deftest warning-predicate-function-gcc ()
   "Test GCC warning via function predicate."
-  (skip-unless (and (executable-find "gcc") (executable-find "make")))
+  (skip-unless (and (executable-find "gcc") (executable-find "make")
+                    (not (eq system-type 'darwin))))
   (should (eq 'flymake-warnline
               (flymake-tests--current-face "test.c"
                (lambda (msg) (string-match "^[Ww]arning" msg))))))
