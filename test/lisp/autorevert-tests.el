@@ -267,6 +267,7 @@
   "Check autorevert for dired."
   ;; `auto-revert-buffers' runs every 5".  And we must wait, until the
   ;; file has been reverted.
+  (skip-unless (not (eq system-type 'darwin)))
   (let* ((tmpfile (make-temp-file "auto-revert-test"))
          (name (file-name-nondirectory tmpfile))
          buf)
