@@ -2478,7 +2478,7 @@ if x:
   (python-tests-with-temp-buffer
       " \"\n"
     (goto-char (point-min))
-    (font-lock-fontify-buffer)))
+    (call-interactively 'font-lock-fontify-buffer)))
 
 
 ;;; Shell integration
