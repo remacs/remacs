@@ -3823,12 +3823,14 @@ The format control string may contain %-sequences meaning to substitute
 the next available argument:
 
 %s means print a string argument.  Actually, prints any object, with `princ'.
-%d means print as number in decimal (%o octal, %x hex).
+%d means print as signed number in decimal.
+%o means print as unsigned number in octal, %x as unsigned number in hex.
 %X is like %x, but uses upper case.
 %e means print a number in exponential notation.
 %f means print a number in decimal-point notation.
-%g means print a number in exponential notation
-  or decimal-point notation, whichever uses fewer characters.
+%g means print a number in exponential notation if the exponent would be
+   less than -4 or greater than or equal to the precision (default: 6);
+   otherwise it prints in decimal-point notation.
 %c means print a number as a single character.
 %S means print any object as an s-expression (using `prin1').
 
@@ -3851,8 +3853,10 @@ The - and 0 flags affect the width specifier, as described below.
 The # flag means to use an alternate display form for %o, %x, %X, %e,
 %f, and %g sequences: for %o, it ensures that the result begins with
 \"0\"; for %x and %X, it prefixes the result with \"0x\" or \"0X\";
-for %e, %f, and %g, it causes a decimal point to be included even if
-the precision is zero.
+for %e and %f, it causes a decimal point to be included even if the
+the precision is zero; for %g, it causes a decimal point to be
+included even if the the precision is zero, and also forces trailing
+zeros after the decimal point to be left in place.
 
 The width specifier supplies a lower limit for the length of the
 printed representation.  The padding, if any, normally goes on the
@@ -3861,10 +3865,12 @@ character is normally a space, but it is 0 if the 0 flag is present.
 The 0 flag is ignored if the - flag is present, or the format sequence
 is something other than %d, %e, %f, and %g.
 
-For %e, %f, and %g sequences, the number after the "." in the
-precision specifier says how many decimal places to show; if zero, the
-decimal point itself is omitted.  For %s and %S, the precision
-specifier truncates the string to the given width.
+For %e and %f sequences, the number after the "." in the precision
+specifier says how many decimal places to show; if zero, the decimal
+point itself is omitted.  For %g, the precision specifies how many
+significant digits to print; zero or omitted are treated as 1.
+For %s and %S, the precision specifier truncates the string to the
+given width.
 
 usage: (format STRING &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
