@@ -501,7 +501,8 @@ See http://lists.gnu.org/archive/html/emacs-devel/2007-11/msg01990.html")
 ;; "index ", "old mode", "new mode", "new file mode" and
 ;; "deleted file mode" are output by git-diff.
 (defconst diff-file-junk-re
-  "diff \\|index \\|\\(?:deleted file\\|new\\(?: file\\)?\\|old\\) mode\\|=== modified file")
+  (concat "Index: \\|=\\{20,\\}\\|" ; SVN
+          "diff \\|index \\|\\(?:deleted file\\|new\\(?: file\\)?\\|old\\) mode\\|=== modified file"))
 
 ;; If point is in a diff header, then return beginning
 ;; of hunk position otherwise return nil.
@@ -545,7 +546,8 @@ next hunk if TRY-HARDER is non-nil; otherwise signal an error."
                (error "Can't find the beginning of the hunk")))
             ((re-search-backward regexp nil t)) ; In the middle of a hunk.
             ((re-search-forward regexp nil t) ; At first hunk header.
-             (forward-line 0))
+             (forward-line 0)
+             (point))
             (t (error "Can't find the beginning of the hunk"))))))
 
 (defun diff-unified-hunk-p ()
