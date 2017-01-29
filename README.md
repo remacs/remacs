@@ -373,8 +373,6 @@ Easy tasks:
 - [ ] Tidy up messy Rust that's been translated directly from C. Run
   `rustfmt`, add or rename internal variables, run `clippy`, and so
   on.
-- [ ] Fix the makefile to recompile with cargo and rebuild temacs when the
-  Rust source changes.
 - [ ] Add Rust-level unit tests to elisp functions defined in lib.rs.
 
 Medium tasks:
