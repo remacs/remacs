@@ -12,13 +12,15 @@ GPLv3 license.
     - [Why Emacs?](#why-emacs)
     - [Why Rust?](#why-rust)
     - [Why A Fork?](#why-a-fork)
-    - [Design Goals](#design-goals)
-    - [Non-Design Goals](#non-design-goals)
-    - [Building Remacs](#building-remacs)
-        - [Debug builds](#debug-builds)
+    - [Getting Started](#getting-started)
+        - [Requirements](#requirements)
+        - [Building Remacs](#building-remacs)
+        - [Running Remacs](#running-remacs)
         - [Rustdoc builds](#rustdoc-builds)
     - [Porting Elisp Primitive Functions: Walkthrough](#porting-elisp-primitive-functions-walkthrough)
         - [Porting Widely Used C Functions](#porting-widely-used-c-functions)
+    - [Design Goals](#design-goals)
+    - [Non-Design Goals](#non-design-goals)
     - [Contributing](#contributing)
     - [Help Needed](#help-needed)
     - [Rust Porting Tips](#rust-porting-tips)
@@ -133,73 +135,54 @@ There's a difference between **the idea of Emacs** and the **current
 implementation of Emacs**. Forking allows us to explore being even
 more Emacs-y.
 
-## Design Goals
+## Getting Started
 
-**Compatibility**: Remacs should not break existing elisp code, and
-ideally provide the same FFI too.
+### Requirements
 
-**Similar naming conventions**: Code in Remacs should use the same
-naming conventions for elisp namespaces, to make translation
-straightforward.
-
-This means that an elisp function `do-stuff` will have a corresponding
-Rust function `Fdo_stuff`, and a declaration struct `Sdo_stuff`. A
-lisp variable `do-stuff` will have a Rust variable `Vdo_stuff` and a
-symbol `'do-stuff` will have a Rust variable `Qdo_stuff`.
-
-Otherwise, we follow Rust naming conventions, with docstrings noting
-equivalent functions or macros in C. When incrementally porting, we
-may define Rust functions with the same name as their C predecessors.
-
-**Leverage Rust itself**: Remacs should make best use of Rust to
-ensure code is robust and performant.
-
-**Leverage the Rust ecosystem**: Remacs should use existing Rust
-crates wherever possible, and create new, separate crates where our
-code could benefit others.
-
-**Great docs**: Emacs has excellent documentation, Remacs should be no
-different.
-
-## Non-Design Goals
-
-**`etags`**: The
-[universal ctags project](https://github.com/universal-ctags/ctags)
-supports a wider range of languages and we recommend it instead.
-
-## Building Remacs
+1. You will need Rust installed. If you're on macOS, you will need Rust
+   nightly.
+   
+2. You will need a C compiler and toolchain. On Linux, you can do
+   something like `apt-get install build-essential automake`. On
+   macOS, you'll need Xcode.
+   
+3. You will need some C libraries. On Linux, you can install
+   everything you need with:
+   
+        apt-get install texinfo libjpeg-dev libtiff-dev \
+          libgif-dev libxpm-dev libgtk-3-dev libgnutls-dev \
+          libncurses5-dev
+          
+    On macOS, you'll need libxml2 (via `xcode-select --install`) and
+    gnutls (via `brew install gnutls`).
+    
+### Building Remacs
 
 ```
-$ ./autogen.sh
-$ ./configure
-$ make
-```
-
-You can then run your shiny new Remacs:
-
-```
-# Using -q to ignore your .emacs.d, so Remacs starts up quickly.
-# RUST_BACKTRACE is optional, but useful if your instance crashes.
-$ RUST_BACKTRACE=1 src/remacs -q
-```
-
-### Debug builds
-
-As above but with an additional argument to configure:
-
-``` bash
 $ ./autogen.sh
 $ ./configure --enable-rust-debug
 $ make
 ```
 
-The Makefile obeys cargo's RUSTFLAGS variable and options can be passed to
-cargo with CARGO_FLAGS
+For a release build, don't pass `--enable-rust-debug`.
+
+The Makefile obeys cargo's RUSTFLAGS variable and additional options
+can be passed to cargo with CARGO_FLAGS.
 
 For example:
 
 ``` bash
 $ make CARGO_FLAGS="-vv" RUSTFLAGS="-Zunstable-options --pretty"
+```
+
+### Running Remacs
+
+You can now run your shiny new Remacs build!
+
+```
+# Using -q to ignore your .emacs.d, so Remacs starts up quickly.
+# RUST_BACKTRACE is optional, but useful if your instance crashes.
+$ RUST_BACKTRACE=1 src/remacs -q
 ```
 
 ### Rustdoc builds
@@ -353,6 +336,40 @@ and add a declaration in the C where the function used to be:
 // This should take the same number of arguments as the Rust function.
 Lisp_Object Fnumberp(Lisp_Object);
 ```
+
+## Design Goals
+
+**Compatibility**: Remacs should not break existing elisp code, and
+ideally provide the same FFI too.
+
+**Similar naming conventions**: Code in Remacs should use the same
+naming conventions for elisp namespaces, to make translation
+straightforward.
+
+This means that an elisp function `do-stuff` will have a corresponding
+Rust function `Fdo_stuff`, and a declaration struct `Sdo_stuff`. A
+lisp variable `do-stuff` will have a Rust variable `Vdo_stuff` and a
+symbol `'do-stuff` will have a Rust variable `Qdo_stuff`.
+
+Otherwise, we follow Rust naming conventions, with docstrings noting
+equivalent functions or macros in C. When incrementally porting, we
+may define Rust functions with the same name as their C predecessors.
+
+**Leverage Rust itself**: Remacs should make best use of Rust to
+ensure code is robust and performant.
+
+**Leverage the Rust ecosystem**: Remacs should use existing Rust
+crates wherever possible, and create new, separate crates where our
+code could benefit others.
+
+**Great docs**: Emacs has excellent documentation, Remacs should be no
+different.
+
+## Non-Design Goals
+
+**`etags`**: The
+[universal ctags project](https://github.com/universal-ctags/ctags)
+supports a wider range of languages and we recommend it instead.
 
 ## Contributing
 
