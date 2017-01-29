@@ -1589,6 +1589,7 @@ argument.  */)
       else
 	prev = tail;
     }
+  CHECK_LIST_END (tail, list);
   return list;
 }
 
