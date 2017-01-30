@@ -2599,7 +2599,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	      Lisp_Object val = Qnil;
 	      /* The size is 2 * number of allowed keywords to
 		 make-hash-table.  */
-	      Lisp_Object params[10];
+	      Lisp_Object params[12];
 	      Lisp_Object ht;
 	      Lisp_Object key = Qnil;
 	      int param_count = 0;
@@ -2635,6 +2635,11 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	      params[param_count + 1] = Fplist_get (tmp, Qrehash_threshold);
 	      if (!NILP (params[param_count + 1]))
 		param_count += 2;
+
+              params[param_count] = QCpurecopy;
+              params[param_count + 1] = Fplist_get (tmp, Qpurecopy);
+              if (!NILP (params[param_count + 1]))
+                param_count += 2;
 
 	      /* This is the hash table data.  */
 	      data = Fplist_get (tmp, Qdata);
@@ -4849,6 +4854,7 @@ that are loaded before your customizations are read!  */);
   DEFSYM (Qdata, "data");
   DEFSYM (Qtest, "test");
   DEFSYM (Qsize, "size");
+  DEFSYM (Qpurecopy, "purecopy");
   DEFSYM (Qweakness, "weakness");
   DEFSYM (Qrehash_size, "rehash-size");
   DEFSYM (Qrehash_threshold, "rehash-threshold");

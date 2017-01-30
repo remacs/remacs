@@ -34,6 +34,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "intervals.h"
 #include "window.h"
+#include "puresize.h"
 
 static void sort_vector_copy (Lisp_Object, ptrdiff_t,
 			      Lisp_Object *restrict, Lisp_Object *restrict);
@@ -3750,12 +3751,17 @@ allocate_hash_table (void)
    (table size) is >= REHASH_THRESHOLD.
 
    WEAK specifies the weakness of the table.  If non-nil, it must be
-   one of the symbols `key', `value', `key-or-value', or `key-and-value'.  */
+   one of the symbols `key', `value', `key-or-value', or `key-and-value'.
+
+   If PURECOPY is non-nil, the table can be copied to pure storage via
+   `purecopy' when Emacs is being dumped. Such tables can no longer be
+   changed after purecopy.  */
 
 Lisp_Object
 make_hash_table (struct hash_table_test test,
 		 Lisp_Object size, Lisp_Object rehash_size,
-		 Lisp_Object rehash_threshold, Lisp_Object weak)
+		 Lisp_Object rehash_threshold, Lisp_Object weak,
+                 Lisp_Object pure)
 {
   struct Lisp_Hash_Table *h;
   Lisp_Object table;
@@ -3796,6 +3802,7 @@ make_hash_table (struct hash_table_test test,
   h->hash = Fmake_vector (size, Qnil);
   h->next = Fmake_vector (size, Qnil);
   h->index = Fmake_vector (make_number (index_size), Qnil);
+  h->pure = pure;
 
   /* Set up the free list.  */
   for (i = 0; i < sz - 1; ++i)
@@ -4460,10 +4467,15 @@ key, value, one of key or value, or both key and value, depending on
 WEAK.  WEAK t is equivalent to `key-and-value'.  Default value of WEAK
 is nil.
 
+:purecopy PURECOPY -- If PURECOPY is non-nil, the table can be copied
+to pure storage when Emacs is being dumped, making the contents of the
+table read only. Any further changes to purified tables will result
+in an error.
+
 usage: (make-hash-table &rest KEYWORD-ARGS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  Lisp_Object test, size, rehash_size, rehash_threshold, weak;
+  Lisp_Object test, size, rehash_size, rehash_threshold, weak, pure;
   struct hash_table_test testdesc;
   ptrdiff_t i;
   USE_SAFE_ALLOCA;
@@ -4497,6 +4509,9 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
       testdesc.cmpfn = cmpfn_user_defined;
     }
 
+  /* See if there's a `:purecopy PURECOPY' argument.  */
+  i = get_key_arg (QCpurecopy, nargs, args, used);
+  pure = i ? args[i] : Qnil;
   /* See if there's a `:size SIZE' argument.  */
   i = get_key_arg (QCsize, nargs, args, used);
   size = i ? args[i] : Qnil;
@@ -4538,7 +4553,8 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
       signal_error ("Invalid argument list", args[i]);
 
   SAFE_FREE ();
-  return make_hash_table (testdesc, size, rehash_size, rehash_threshold, weak);
+  return make_hash_table (testdesc, size, rehash_size, rehash_threshold, weak,
+                          pure);
 }
 
 
@@ -4617,7 +4633,9 @@ DEFUN ("clrhash", Fclrhash, Sclrhash, 1, 1, 0,
        doc: /* Clear hash table TABLE and return it.  */)
   (Lisp_Object table)
 {
-  hash_clear (check_hash_table (table));
+  struct Lisp_Hash_Table *h = check_hash_table (table);
+  CHECK_IMPURE (table, h);
+  hash_clear (h);
   /* Be compatible with XEmacs.  */
   return table;
 }
@@ -4641,9 +4659,10 @@ VALUE.  In any case, return VALUE.  */)
   (Lisp_Object key, Lisp_Object value, Lisp_Object table)
 {
   struct Lisp_Hash_Table *h = check_hash_table (table);
+  CHECK_IMPURE (table, h);
+
   ptrdiff_t i;
   EMACS_UINT hash;
-
   i = hash_lookup (h, key, &hash);
   if (i >= 0)
     set_hash_value_slot (h, i, value);
@@ -4659,6 +4678,7 @@ DEFUN ("remhash", Fremhash, Sremhash, 2, 2, 0,
   (Lisp_Object key, Lisp_Object table)
 {
   struct Lisp_Hash_Table *h = check_hash_table (table);
+  CHECK_IMPURE (table, h);
   hash_remove_from_table (h, key);
   return Qnil;
 }
@@ -5029,6 +5049,7 @@ syms_of_fns (void)
   DEFSYM (Qequal, "equal");
   DEFSYM (QCtest, ":test");
   DEFSYM (QCsize, ":size");
+  DEFSYM (QCpurecopy, ":purecopy");
   DEFSYM (QCrehash_size, ":rehash-size");
   DEFSYM (QCrehash_threshold, ":rehash-threshold");
   DEFSYM (QCweakness, ":weakness");

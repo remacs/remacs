@@ -5434,6 +5434,37 @@ make_pure_vector (ptrdiff_t len)
   return new;
 }
 
+/* Copy all contents and parameters of TABLE to a new table allocated
+   from pure space, return the purified table.  */
+static struct Lisp_Hash_Table *
+purecopy_hash_table (struct Lisp_Hash_Table *table) {
+  eassert (NILP (table->weak));
+  eassert (!NILP (table->pure));
+
+  struct Lisp_Hash_Table *pure = pure_alloc (sizeof *pure, Lisp_Vectorlike);
+  struct hash_table_test pure_test = table->test;
+
+  /* Purecopy the hash table test.  */
+  pure_test.name = purecopy (table->test.name);
+  pure_test.user_hash_function = purecopy (table->test.user_hash_function);
+  pure_test.user_cmp_function = purecopy (table->test.user_cmp_function);
+
+  pure->test = pure_test;
+  pure->header = table->header;
+  pure->weak = purecopy (Qnil);
+  pure->rehash_size = purecopy (table->rehash_size);
+  pure->rehash_threshold = purecopy (table->rehash_threshold);
+  pure->hash = purecopy (table->hash);
+  pure->next = purecopy (table->next);
+  pure->next_free = purecopy (table->next_free);
+  pure->index = purecopy (table->index);
+  pure->count = table->count;
+  pure->key_and_value = purecopy (table->key_and_value);
+  pure->pure = purecopy (table->pure);
+
+  return pure;
+}
+
 DEFUN ("purecopy", Fpurecopy, Spurecopy, 1, 1, 0,
        doc: /* Make a copy of object OBJ in pure storage.
 Recursively copies contents of vectors and cons cells.
@@ -5442,13 +5473,21 @@ Does not copy symbols.  Copies strings without text properties.  */)
 {
   if (NILP (Vpurify_flag))
     return obj;
-  else if (MARKERP (obj) || OVERLAYP (obj)
-	   || HASH_TABLE_P (obj) || SYMBOLP (obj))
+  else if (MARKERP (obj) || OVERLAYP (obj) || SYMBOLP (obj))
     /* Can't purify those.  */
     return obj;
   else
     return purecopy (obj);
 }
+
+struct pinned_object
+{
+  Lisp_Object object;
+  struct pinned_object *next;
+};
+
+/* Pinned objects are marked before every GC cycle.  */
+static struct pinned_object *pinned_objects;
 
 static Lisp_Object
 purecopy (Lisp_Object obj)
@@ -5477,7 +5516,27 @@ purecopy (Lisp_Object obj)
     obj = make_pure_string (SSDATA (obj), SCHARS (obj),
 			    SBYTES (obj),
 			    STRING_MULTIBYTE (obj));
-  else if (COMPILEDP (obj) || VECTORP (obj) || HASH_TABLE_P (obj))
+  else if (HASH_TABLE_P (obj))
+    {
+      struct Lisp_Hash_Table *table = XHASH_TABLE (obj);
+      /* We cannot purify hash tables which haven't been defined with
+         :purecopy as non-nil or are weak - they aren't guaranteed to
+         not change.  */
+      if (!NILP (table->weak) || NILP (table->pure))
+        {
+          /* Instead, the hash table is added to the list of pinned objects,
+             and is marked before GC.  */
+          struct pinned_object *o = xmalloc (sizeof *o);
+          o->object = obj;
+          o->next = pinned_objects;
+          pinned_objects = o;
+          return obj; /* Don't hash cons it.  */
+        }
+
+      struct Lisp_Hash_Table *h = purecopy_hash_table (table);
+      XSET_HASH_TABLE (obj, h);
+    }
+  else if (COMPILEDP (obj) || VECTORP (obj))
     {
       struct Lisp_Vector *objp = XVECTOR (obj);
       ptrdiff_t nbytes = vector_nbytes (objp);
@@ -5694,6 +5753,16 @@ compact_undo_list (Lisp_Object list)
 }
 
 static void
+mark_pinned_objects (void)
+{
+  struct pinned_object *pobj;
+  for (pobj = pinned_objects; pobj; pobj = pobj->next)
+    {
+      mark_object (pobj->object);
+    }
+}
+
+static void
 mark_pinned_symbols (void)
 {
   struct symbol_block *sblk;
@@ -5813,6 +5882,7 @@ garbage_collect_1 (void *end)
   for (i = 0; i < staticidx; i++)
     mark_object (*staticvec[i]);
 
+  mark_pinned_objects ();
   mark_pinned_symbols ();
   mark_terminals ();
   mark_kboards ();

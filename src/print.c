@@ -1818,6 +1818,12 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	      print_object (h->rehash_threshold, printcharfun, escapeflag);
 	    }
 
+          if (!NILP (h->pure))
+            {
+              print_c_string (" purecopy ", printcharfun);
+	      print_object (h->pure, printcharfun, escapeflag);
+            }
+
 	  print_c_string (" data ", printcharfun);
 
 	  /* Print the data here as a plist. */
