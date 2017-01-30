@@ -1068,7 +1068,8 @@ Note that the style variables are always made local to the buffer."
 			(parse-partial-sexp pps-position (point) nil nil pps-state)
 			pps-position (point))
 		  (or (nth 3 pps-state)	   ; in a string?
-		      (nth 4 pps-state)))) ; in a comment?
+		      (and (nth 4 pps-state)
+			   (not (eq (nth 7 pps-state) 'syntax-table)))))) ; in a comment?
 	  (goto-char (match-beginning 1))
 	  (setq mbeg (point))
 	  (if (> (c-no-comment-end-of-macro) mbeg)

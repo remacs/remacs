@@ -59,6 +59,32 @@
  * Load the inspector's shared head.js for use by tests that need to
  * open the something or other"))))
 
+(ert-deftest js-mode-regexp-syntax ()
+  (with-temp-buffer
+    ;; Normally indentation tests are done in manual/indent, but in
+    ;; this case we are specifically testing a case where the bug
+    ;; caused the indenter not to do anything, and manual/indent can
+    ;; only be used for already-correct files.
+    (insert "function f(start, value) {
+if (start - 1 === 0 || /[ (:,='\"]/.test(value)) {
+--start;
+}
+if (start - 1 === 0 && /[ (:,='\"]/.test(value)) {
+--start;
+}
+if (!/[ (:,='\"]/.test(value)) {
+--start;
+}
+}
+")
+    (js-mode)
+    (indent-region (point-min) (point-max))
+    (goto-char (point-min))
+    (dolist (x '(0 4 8 4 4 8 4 4 8 4 0))
+      (back-to-indentation)
+      (should (= (current-column) x))
+      (forward-line))))
+
 (provide 'js-tests)
 
 ;;; js-tests.el ends here

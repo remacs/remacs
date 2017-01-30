@@ -116,7 +116,16 @@ dired buffer.
 ** Emacs now uses double buffering to reduce flicker when editing and
 resizing graphical Emacs frames on the X Window System.  This support
 requires the DOUBLE-BUFFER extension, which major X servers have
-supported for many years.
+supported for many years.  If your system has this extension, but an
+Emacs built with double buffering misbehaves on some displays you use,
+you can disable the feature by adding
+
+  '(inhibit-double-buffering . t)
+
+to default-frame-parameters.  Or inject this parameter into the
+selected frame by evaluating this form:
+
+  (modify-frame-parameters nil '((inhibit-double-buffering . t)))
 
 ---
 The group 'wp', whose label was "text", is now deprecated.
@@ -338,6 +347,16 @@ bound to 'Buffer-menu-unmark-all-buffers'.
 +++
 *** Two new commands 'Buffer-menu-unmark-all', bound to 'U' and
 'Buffer-menu-unmark-all-buffers', bound to 'M-DEL'.
+
+** Gnus
+
+---
+*** The .newsrc file will now only be saved if the native select
+method is an NNTP select method.
+
++++
+*** A new command for sorting articles by readedness marks has been
+added: `C-c C-s C-m C-m'.
 
 ** Ibuffer
 
@@ -778,6 +797,11 @@ of an arbitrary function.  This generalizes 'subr-arity' for functions
 that are not built-in primitives.  We recommend using this new
 function instead of 'subr-arity'.
 
+** New function 'region-bounds' can be used in the interactive spec
+to provide region boundaries (for rectangular regions more than one)
+to an interactively callable function as a single argument instead of
+two separate arguments region-beginning and region-end.
+
 +++
 ** 'parse-partial-sexp' state has a new element.  Element 10 is
 non-nil when the last character scanned might be the first character
@@ -836,6 +860,9 @@ ABBR is a time zone abbreviation.  The affected functions are
 
 ** New built-in function 'mapcan' which avoids unnecessary consing (and garbage
 collection).
+
++++
+** 'car' and 'cdr' compositions 'cXXXr' and 'cXXXXr' are now part of Elisp.
 
 +++
 ** The new functions 'make-nearby-temp-file' and 'temporary-file-directory'
