@@ -1472,7 +1472,7 @@ Elements of LIST that are not conses are ignored.  */)
 	immediate_quit = false;
 	return XCAR (tail);
       }
-  immediate_quit = true;
+  immediate_quit = false;
   CHECK_LIST_END (tail, list);
   return Qnil;
 }
@@ -1537,7 +1537,7 @@ The value is actually the first element of LIST whose cdr is KEY.  */)
 	immediate_quit = false;
 	return XCAR (tail);
       }
-  immediate_quit = true;
+  immediate_quit = false;
   CHECK_LIST_END (tail, list);
   return Qnil;
 }
@@ -2090,7 +2090,7 @@ The PLIST is modified by side effects.  */)
 
       prev = tail;
     }
-  immediate_quit = true;
+  immediate_quit = false;
   Lisp_Object newcell
     = Fcons (prop, Fcons (val, NILP (prev) ? plist : XCDR (XCDR (prev))));
   if (NILP (prev))
