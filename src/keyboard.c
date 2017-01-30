@@ -10448,7 +10448,7 @@ handle_interrupt (bool in_signal_handler)
       /* If executing a function that wants to be interrupted out of
 	 and the user has not deferred quitting by binding `inhibit-quit'
 	 then quit right away.  */
-      if (immediate_quit && NILP (Vinhibit_quit))
+      if (immediate_quit && NILP (Vinhibit_quit) && !waiting_for_input)
 	{
 	  struct gl_state_s saved;
 
