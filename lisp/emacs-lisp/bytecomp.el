@@ -4028,6 +4028,7 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
          jump-table test-obj body tag donetag default-tag default-case)
     (when (and cases (not (= (length cases) 1)))
       (setq jump-table (make-hash-table :test test
+                                        :purecopy t
                                         :size (if (assq 'default cases)
                                                   (1- (length cases))
                                                 (length cases)))
