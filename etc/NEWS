@@ -738,6 +738,7 @@ instead.
 
 * Lisp Changes in Emacs 26.1
 
+** string-(to|as|make)-(uni|multi)byte are now declared obsolete.
 ** New variable 'while-no-input-ignore-events' which allow
 setting which special events 'while-no-input' should ignore.
 It is a list of symbols.
