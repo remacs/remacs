@@ -1990,7 +1990,7 @@ backend check whether the group actually exists."
     (while lists
       (setq killed (car lists))
       (while killed
-	(gnus-sethash (string-as-unibyte (car killed)) nil hashtb)
+	(gnus-sethash (encode-coding-string (car killed) 'utf-8) nil hashtb)
 	(setq killed (cdr killed)))
       (setq lists (cdr lists)))))
 
@@ -2453,7 +2453,7 @@ If FORCE is non-nil, the .newsrc file is read."
     (dolist (elem gnus-newsrc-alist)
       ;; Protect against broken .newsrc.el files.
       (when (car elem)
-	(setcar elem (string-as-unibyte (car elem)))))
+	(setcar elem (encode-coding-string (car elem) 'utf-8))))
     (gnus-make-hashtable-from-newsrc-alist)
     (when (file-newer-than-file-p file ding-file)
       ;; Old format quick file

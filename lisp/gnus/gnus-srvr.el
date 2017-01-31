@@ -821,12 +821,13 @@ claim them."
 	      (while (not (eobp))
 		(ignore-errors
 		  (push (cons
-			 (string-as-unibyte
+			 (encode-coding-string
 			  (buffer-substring
 			   (point)
 			   (progn
 			     (skip-chars-forward "^ \t")
-			     (point))))
+			     (point)))
+			  'utf-8)
 			 (let ((last (read cur)))
 			   (cons (read cur) last)))
 			groups))
@@ -834,7 +835,7 @@ claim them."
 	    (while (not (eobp))
 	      (ignore-errors
 		(push (cons
-		       (string-as-unibyte
+		       (encode-coding-string
 			(if (eq (char-after) ?\")
 			    (read cur)
 			  (let ((p (point)) (name ""))
@@ -846,7 +847,8 @@ claim them."
 			      (skip-chars-forward "^ \t\\\\")
 			      (setq name (concat name (buffer-substring
 						       p (point)))))
-			    name)))
+			    name))
+			'utf-8)
 		       (let ((last (read cur)))
 			 (cons (read cur) last)))
 		      groups))

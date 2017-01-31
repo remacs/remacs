@@ -1818,19 +1818,20 @@ article came from is also searched."
 	(if (eq (car method) 'nntp)
 	    (while (not (eobp))
 	      (ignore-errors
-		(push (string-as-unibyte
+		(push (encode-coding-string
 		       (gnus-group-full-name
 			(buffer-substring
 			 (point)
 			 (progn
 			   (skip-chars-forward "^ \t")
 			   (point)))
-			method))
+			method)
+		       'utf-8)
 		      groups))
 	      (forward-line))
 	  (while (not (eobp))
 	    (ignore-errors
-	      (push (string-as-unibyte
+	      (push (encode-coding-string
 		     (if (eq (char-after) ?\")
 			 (gnus-group-full-name (read cur) method)
 		       (let ((p (point)) (name ""))
@@ -1842,7 +1843,8 @@ article came from is also searched."
 			   (skip-chars-forward "^ \t\\\\")
 			   (setq name (concat name (buffer-substring
 						    p (point)))))
-			 (gnus-group-full-name name method))))
+			 (gnus-group-full-name name method)))
+		     'utf-8)
 		    groups))
 	    (forward-line)))))
     groups))
