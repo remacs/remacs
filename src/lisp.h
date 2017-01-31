@@ -1995,8 +1995,8 @@ struct Lisp_Hash_Table
      hash table size to reduce collisions.  */
   Lisp_Object index;
 
-  /* Non-nil if the table can be purecopied. Any changes the table after
-     purecopy will result in an error.  */
+  /* Non-nil if the table can be purecopied.  The table cannot be
+     changed afterwards.  */
   Lisp_Object pure;
 
   /* Only the fields above are traced normally by the GC.  The ones below
