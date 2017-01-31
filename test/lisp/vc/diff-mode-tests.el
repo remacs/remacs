@@ -18,6 +18,10 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
+;;; Code:
+
+(require 'diff-mode)
+
 
 (ert-deftest diff-mode-test-ignore-trailing-dashes ()
   "Check to make sure we successfully ignore trailing -- made by
