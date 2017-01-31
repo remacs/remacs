@@ -5120,10 +5120,6 @@ On some platforms, file selection dialogs are also enabled if this is
 non-nil.  */);
   use_dialog_box = 1;
 
-  DEFVAR_LISP("watch-object", Vwatch_object,
-	       doc: /* Symbol to watch.  */);
-  Vwatch_object = Qnil;
-
   DEFVAR_BOOL ("use-file-dialog", use_file_dialog,
     doc: /* Non-nil means mouse commands use a file dialog to ask for files.
 This applies to commands from menus and tool bar buttons even when
