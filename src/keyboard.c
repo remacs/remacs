@@ -169,9 +169,6 @@ struct kboard *echo_kboard;
 
 Lisp_Object echo_message_buffer;
 
-/* True means C-g should cause immediate error-signal.  */
-bool immediate_quit;
-
 /* Character that causes a quit.  Normally C-g.
 
    If we are running on an ordinary terminal, this must be an ordinary
@@ -3584,16 +3581,7 @@ kbd_buffer_store_buffered_event (union buffered_input_event *event,
      as input, set quit-flag to cause an interrupt.  */
   if (!NILP (Vthrow_on_input)
       && NILP (Fmemq (ignore_event, Vwhile_no_input_ignore_events)))
-    {
-      Vquit_flag = Vthrow_on_input;
-      /* If we're inside a function that wants immediate quits,
-	 do it now.  */
-      if (immediate_quit && NILP (Vinhibit_quit))
-	{
-	  immediate_quit = false;
-	  maybe_quit ();
-	}
-    }
+    Vquit_flag = Vthrow_on_input;
 }
 
 
@@ -10445,30 +10433,12 @@ handle_interrupt (bool in_signal_handler)
     }
   else
     {
-      /* If executing a function that wants to be interrupted out of
-	 and the user has not deferred quitting by binding `inhibit-quit'
-	 then quit right away.  */
-      if (immediate_quit && NILP (Vinhibit_quit) && !waiting_for_input)
-	{
-	  struct gl_state_s saved;
-
-	  immediate_quit = false;
-	  pthread_sigmask (SIG_SETMASK, &empty_mask, 0);
-	  saved = gl_state;
-	  quit ();
-	  gl_state = saved;
-	}
-      else
-        { /* Else request quit when it's safe.  */
-	  int count = NILP (Vquit_flag) ? 1 : force_quit_count + 1;
-	  force_quit_count = count;
-	  if (count == 3)
-            {
-              immediate_quit = true;
-              Vinhibit_quit = Qnil;
-            }
-          Vquit_flag = Qt;
-        }
+      /* Request quit when it's safe.  */
+      int count = NILP (Vquit_flag) ? 1 : force_quit_count + 1;
+      force_quit_count = count;
+      if (count == 3)
+	Vinhibit_quit = Qnil;
+      Vquit_flag = Qt;
     }
 
   pthread_sigmask (SIG_SETMASK, &empty_mask, 0);
@@ -10907,7 +10877,6 @@ init_keyboard (void)
 {
   /* This is correct before outermost invocation of the editor loop.  */
   command_loop_level = -1;
-  immediate_quit = false;
   quit_char = Ctl ('g');
   Vunread_command_events = Qnil;
   timer_idleness_start_time = invalid_timespec ();

@@ -3131,11 +3131,6 @@ extern Lisp_Object memory_signal_data;
    impossible, of course.  But it is very desirable to avoid creating
    loops where maybe_quit is impossible.
 
-   Exception: if you set immediate_quit, the handler that responds to
-   the C-g does the quit itself.  This is a good thing to do around a
-   loop that has no side effects and (in particular) cannot call
-   arbitrary Lisp code.
-
    If quit-flag is set to `kill-emacs' the SIGINT handler has received
    a request to exit Emacs when it is safe to do.
 
@@ -4347,9 +4342,6 @@ extern char *emacs_root_dir (void);
 extern char my_edata[];
 extern char my_endbss[];
 extern char *my_endbss_static;
-
-/* True means ^G can quit instantly.  */
-extern bool immediate_quit;
 
 extern void *xmalloc (size_t) ATTRIBUTE_MALLOC_SIZE ((1));
 extern void *xzalloc (size_t) ATTRIBUTE_MALLOC_SIZE ((1));

@@ -1960,9 +1960,7 @@ permissions.  */)
       report_file_error ("Copying permissions to", newname);
     }
 #else /* not WINDOWSNT */
-  immediate_quit = true;
   ifd = emacs_open (SSDATA (encoded_file), O_RDONLY, 0);
-  immediate_quit = false;
 
   if (ifd < 0)
     report_file_error ("Opening input file", file);
@@ -2024,7 +2022,6 @@ permissions.  */)
 	oldsize = out_st.st_size;
     }
 
-  immediate_quit = true;
   maybe_quit ();
 
   if (clone_file (ofd, ifd))
@@ -2046,8 +2043,6 @@ permissions.  */)
      file system is out of space or the user is over disk quota.  */
   if (newsize < oldsize && ftruncate (ofd, newsize) != 0)
     report_file_error ("Truncating output file", newname);
-
-  immediate_quit = false;
 
 #ifndef MSDOS
   /* Preserve the original file permissions, and if requested, also its
@@ -3403,13 +3398,11 @@ read_non_regular (Lisp_Object state)
 {
   int nbytes;
 
-  immediate_quit = true;
   maybe_quit ();
   nbytes = emacs_read (XSAVE_INTEGER (state, 0),
 		       ((char *) BEG_ADDR + PT_BYTE - BEG_BYTE
 			+ XSAVE_INTEGER (state, 1)),
 		       XSAVE_INTEGER (state, 2));
-  immediate_quit = false;
   /* Fast recycle this object for the likely next call.  */
   free_misc (state);
   return make_number (nbytes);
@@ -3868,7 +3861,6 @@ by calling `format-decode', which see.  */)
 	    report_file_error ("Setting file position", orig_filename);
 	}
 
-      immediate_quit = true;
       maybe_quit ();
       /* Count how many chars at the start of the file
 	 match the text at the beginning of the buffer.  */
@@ -3907,7 +3899,6 @@ by calling `format-decode', which see.  */)
 	  if (bufpos != nread)
 	    break;
 	}
-      immediate_quit = false;
       /* If the file matches the buffer completely,
 	 there's no need to replace anything.  */
       if (same_at_start - BEGV_BYTE == end_offset - beg_offset)
@@ -3919,7 +3910,6 @@ by calling `format-decode', which see.  */)
 	  del_range_1 (same_at_start, same_at_end, 0, 0);
 	  goto handled;
 	}
-      immediate_quit = true;
       maybe_quit ();
       /* Count how many chars at the end of the file
 	 match the text at the end of the buffer.  But, if we have
@@ -3977,7 +3967,6 @@ by calling `format-decode', which see.  */)
 	  if (nread == 0)
 	    break;
 	}
-      immediate_quit = false;
 
       if (! giveup_match_end)
 	{
@@ -4075,11 +4064,9 @@ by calling `format-decode', which see.  */)
 	     quitting while reading a huge file.  */
 
 	  /* Allow quitting out of the actual I/O.  */
-	  immediate_quit = true;
 	  maybe_quit ();
 	  this = emacs_read (fd, read_buf + unprocessed,
 			     READ_BUF_SIZE - unprocessed);
-	  immediate_quit = false;
 
 	  if (this <= 0)
 	    break;
@@ -4294,13 +4281,11 @@ by calling `format-decode', which see.  */)
 	    /* Allow quitting out of the actual I/O.  We don't make text
 	       part of the buffer until all the reading is done, so a C-g
 	       here doesn't do any harm.  */
-	    immediate_quit = true;
 	    maybe_quit ();
 	    this = emacs_read (fd,
 			       ((char *) BEG_ADDR + PT_BYTE - BEG_BYTE
 				+ inserted),
 			       trytry);
-	    immediate_quit = false;
 	  }
 
 	if (this <= 0)
@@ -5002,8 +4987,6 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
 	}
     }
 
-  immediate_quit = true;
-
   if (STRINGP (start))
     ok = a_write (desc, start, 0, SCHARS (start), &annotations, &coding);
   else if (XINT (start) != XINT (end))
@@ -5025,8 +5008,6 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
       ok = e_write (desc, Qnil, 1, 1, &coding);
       save_errno = errno;
     }
-
-  immediate_quit = false;
 
   /* fsync is not crucial for temporary files.  Nor for auto-save
      files, since they might lose some work anyway.  */

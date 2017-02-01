@@ -1200,7 +1200,6 @@ compute_motion (ptrdiff_t from, ptrdiff_t frombyte, EMACS_INT fromvpos,
     continuation_glyph_width = 0;  /* In the fringe.  */
 #endif
 
-  immediate_quit = true;
   maybe_quit ();
 
   /* It's just impossible to be too paranoid here.  */
@@ -1694,7 +1693,6 @@ compute_motion (ptrdiff_t from, ptrdiff_t frombyte, EMACS_INT fromvpos,
   /* Nonzero if have just continued a line */
   val_compute_motion.contin = (contin_hpos && prev_hpos == 0);
 
-  immediate_quit = false;
   return &val_compute_motion;
 }
 

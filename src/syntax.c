@@ -1426,7 +1426,6 @@ scan_words (register ptrdiff_t from, register EMACS_INT count)
   int ch0, ch1;
   Lisp_Object func, pos;
 
-  immediate_quit = true;
   maybe_quit ();
 
   SETUP_SYNTAX_TABLE (from, count);
@@ -1436,10 +1435,7 @@ scan_words (register ptrdiff_t from, register EMACS_INT count)
       while (1)
 	{
 	  if (from == end)
-	    {
-	      immediate_quit = false;
-	      return 0;
-	    }
+	    return 0;
 	  UPDATE_SYNTAX_TABLE_FORWARD (from);
 	  ch0 = FETCH_CHAR_AS_MULTIBYTE (from_byte);
 	  code = SYNTAX (ch0);
@@ -1486,10 +1482,7 @@ scan_words (register ptrdiff_t from, register EMACS_INT count)
       while (1)
 	{
 	  if (from == beg)
-	    {
-	      immediate_quit = false;
-	      return 0;
-	    }
+	    return 0;
 	  DEC_BOTH (from, from_byte);
 	  UPDATE_SYNTAX_TABLE_BACKWARD (from);
 	  ch1 = FETCH_CHAR_AS_MULTIBYTE (from_byte);
@@ -1535,8 +1528,6 @@ scan_words (register ptrdiff_t from, register EMACS_INT count)
 	}
       count++;
     }
-
-  immediate_quit = false;
 
   return from;
 }
@@ -1921,7 +1912,6 @@ skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
 	stop = (pos >= GPT && GPT > XINT (lim)) ? GAP_END_ADDR : endp;
       }
 
-    immediate_quit = true;
     /* This code may look up syntax tables using functions that rely on the
        gl_state object.  To make sure this object is not out of date,
        let's initialize it manually.
@@ -2064,7 +2054,6 @@ skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
       }
 
     SET_PT_BOTH (pos, pos_byte);
-    immediate_quit = false;
 
     SAFE_FREE ();
     return make_number (PT - start_point);
@@ -2138,7 +2127,6 @@ skip_syntaxes (bool forwardp, Lisp_Object string, Lisp_Object lim)
     ptrdiff_t pos_byte = PT_BYTE;
     unsigned char *p, *endp, *stop;
 
-    immediate_quit = true;
     SETUP_SYNTAX_TABLE (pos, forwardp ? 1 : -1);
 
     if (forwardp)
@@ -2224,7 +2212,6 @@ skip_syntaxes (bool forwardp, Lisp_Object string, Lisp_Object lim)
 
   done:
     SET_PT_BOTH (pos, pos_byte);
-    immediate_quit = false;
 
     return make_number (PT - start_point);
   }
@@ -2412,7 +2399,6 @@ between them, return t; otherwise return nil.  */)
   count1 = XINT (count);
   stop = count1 > 0 ? ZV : BEGV;
 
-  immediate_quit = true;
   maybe_quit ();
 
   from = PT;
@@ -2429,7 +2415,6 @@ between them, return t; otherwise return nil.  */)
 	  if (from == stop)
 	    {
 	      SET_PT_BOTH (from, from_byte);
-	      immediate_quit = false;
 	      return Qnil;
 	    }
 	  c = FETCH_CHAR_AS_MULTIBYTE (from_byte);
@@ -2463,7 +2448,6 @@ between them, return t; otherwise return nil.  */)
 	comstyle = ST_COMMENT_STYLE;
       else if (code != Scomment)
 	{
-	  immediate_quit = false;
 	  DEC_BOTH (from, from_byte);
 	  SET_PT_BOTH (from, from_byte);
 	  return Qnil;
@@ -2474,7 +2458,6 @@ between them, return t; otherwise return nil.  */)
       from = out_charpos; from_byte = out_bytepos;
       if (!found)
 	{
-	  immediate_quit = false;
 	  SET_PT_BOTH (from, from_byte);
 	  return Qnil;
 	}
@@ -2494,7 +2477,6 @@ between them, return t; otherwise return nil.  */)
 	  if (from <= stop)
 	    {
 	      SET_PT_BOTH (BEGV, BEGV_BYTE);
-	      immediate_quit = false;
 	      return Qnil;
 	    }
 
@@ -2587,7 +2569,6 @@ between them, return t; otherwise return nil.  */)
 	  else if (code != Swhitespace || quoted)
 	    {
 	    leave:
-	      immediate_quit = false;
 	      INC_BOTH (from, from_byte);
 	      SET_PT_BOTH (from, from_byte);
 	      return Qnil;
@@ -2598,7 +2579,6 @@ between them, return t; otherwise return nil.  */)
     }
 
   SET_PT_BOTH (from, from_byte);
-  immediate_quit = false;
   return Qt;
 }
 
@@ -2640,7 +2620,6 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 
   from_byte = CHAR_TO_BYTE (from);
 
-  immediate_quit = true;
   maybe_quit ();
 
   SETUP_SYNTAX_TABLE (from, count);
@@ -2801,7 +2780,6 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
       if (depth)
 	goto lose;
 
-      immediate_quit = false;
       return Qnil;
 
       /* End of object reached */
@@ -2984,7 +2962,6 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
       if (depth)
 	goto lose;
 
-      immediate_quit = false;
       return Qnil;
 
     done2:
@@ -2992,7 +2969,6 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
     }
 
 
-  immediate_quit = false;
   XSETFASTINT (val, from);
   return val;
 
@@ -3173,7 +3149,6 @@ do { prev_from = from;				\
        UPDATE_SYNTAX_TABLE_FORWARD (from);	\
   } while (0)
 
-  immediate_quit = true;
   maybe_quit ();
 
   depth = state->depth;
@@ -3432,7 +3407,6 @@ do { prev_from = from;				\
                                 state->levelstarts);
   state->prev_syntax = (SYNTAX_FLAGS_COMSTARTEND_FIRST (prev_from_syntax)
                         || state->quoted) ? prev_from_syntax : Smax;
-  immediate_quit = false;
 }
 
 /* Convert a (lisp) parse state to the internal form used in

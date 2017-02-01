@@ -842,10 +842,8 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	    Lisp_Object v2 = POP, v1 = TOP;
 	    CHECK_NUMBER (v1);
 	    EMACS_INT n = XINT (v1);
-	    immediate_quit = true;
 	    while (--n >= 0 && CONSP (v2))
 	      v2 = XCDR (v2);
-	    immediate_quit = false;
 	    TOP = CAR (v2);
 	    NEXT;
 	  }
@@ -1276,10 +1274,8 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 		Lisp_Object v2 = POP, v1 = TOP;
 		CHECK_NUMBER (v2);
 		EMACS_INT n = XINT (v2);
-		immediate_quit = true;
 		while (--n >= 0 && CONSP (v1))
 		  v1 = XCDR (v1);
-		immediate_quit = false;
 		TOP = CAR (v1);
 	      }
 	    else

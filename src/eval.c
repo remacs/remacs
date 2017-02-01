@@ -1131,7 +1131,6 @@ unwind_to_catch (struct handler *catch, Lisp_Object value)
   /* Restore certain special C variables.  */
   set_poll_suppress_count (catch->poll_suppress_count);
   unblock_input_to (catch->interrupt_input_blocked);
-  immediate_quit = false;
 
   do
     {
@@ -1517,7 +1516,6 @@ signal_or_quit (Lisp_Object error_symbol, Lisp_Object data, bool keyboard_quit)
   Lisp_Object clause = Qnil;
   struct handler *h;
 
-  immediate_quit = false;
   if (gc_in_progress || waiting_for_input)
     emacs_abort ();
 

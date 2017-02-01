@@ -1361,18 +1361,15 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
   CHECK_NUMBER (n);
   EMACS_INT num = XINT (n);
   Lisp_Object tail = list;
-  immediate_quit = true;
   for (EMACS_INT i = 0; i < num; i++)
     {
       if (! CONSP (tail))
 	{
-	  immediate_quit = false;
 	  CHECK_LIST_END (tail, list);
 	  return Qnil;
 	}
       tail = XCDR (tail);
     }
-  immediate_quit = false;
   return tail;
 }
 
@@ -1419,17 +1416,12 @@ DEFUN ("memq", Fmemq, Smemq, 2, 2, 0,
 The value is actually the tail of LIST whose car is ELT.  */)
   (Lisp_Object elt, Lisp_Object list)
 {
-  immediate_quit = true;
   Lisp_Object tail;
   for (tail = list; CONSP (tail); tail = XCDR (tail))
     {
       if (EQ (XCAR (tail), elt))
-	{
-	  immediate_quit = false;
-	  return tail;
-	}
+	return tail;
     }
-  immediate_quit = false;
   CHECK_LIST_END (tail, list);
   return Qnil;
 }
@@ -1442,18 +1434,13 @@ The value is actually the tail of LIST whose car is ELT.  */)
   if (!FLOATP (elt))
     return Fmemq (elt, list);
 
-  immediate_quit = true;
   Lisp_Object tail;
   for (tail = list; CONSP (tail); tail = XCDR (tail))
     {
       Lisp_Object tem = XCAR (tail);
       if (FLOATP (tem) && internal_equal (elt, tem, 0, 0, Qnil))
-	{
-	  immediate_quit = false;
-	  return tail;
-	}
+	return tail;
     }
-  immediate_quit = false;
   CHECK_LIST_END (tail, list);
   return Qnil;
 }
@@ -1464,15 +1451,12 @@ The value is actually the first element of LIST whose car is KEY.
 Elements of LIST that are not conses are ignored.  */)
   (Lisp_Object key, Lisp_Object list)
 {
-  immediate_quit = true;
   Lisp_Object tail;
   for (tail = list; CONSP (tail); tail = XCDR (tail))
-    if (CONSP (XCAR (tail)) && EQ (XCAR (XCAR (tail)), key))
-      {
-	immediate_quit = false;
+    {
+      if (CONSP (XCAR (tail)) && EQ (XCAR (XCAR (tail)), key))
 	return XCAR (tail);
-      }
-  immediate_quit = false;
+    }
   CHECK_LIST_END (tail, list);
   return Qnil;
 }
@@ -1529,15 +1513,12 @@ DEFUN ("rassq", Frassq, Srassq, 2, 2, 0,
 The value is actually the first element of LIST whose cdr is KEY.  */)
   (Lisp_Object key, Lisp_Object list)
 {
-  immediate_quit = true;
   Lisp_Object tail;
   for (tail = list; CONSP (tail); tail = XCDR (tail))
-    if (CONSP (XCAR (tail)) && EQ (XCDR (XCAR (tail)), key))
-      {
-	immediate_quit = false;
+    {
+      if (CONSP (XCAR (tail)) && EQ (XCDR (XCAR (tail)), key))
 	return XCAR (tail);
-      }
-  immediate_quit = false;
+    }
   CHECK_LIST_END (tail, list);
   return Qnil;
 }
@@ -2077,21 +2058,18 @@ use `(setq x (plist-put x prop val))' to be sure to use the new value.
 The PLIST is modified by side effects.  */)
   (Lisp_Object plist, Lisp_Object prop, Lisp_Object val)
 {
-  immediate_quit = true;
   Lisp_Object prev = Qnil;
   for (Lisp_Object tail = plist; CONSP (tail) && CONSP (XCDR (tail));
        tail = XCDR (XCDR (tail)))
     {
       if (EQ (prop, XCAR (tail)))
 	{
-	  immediate_quit = false;
 	  Fsetcar (XCDR (tail), val);
 	  return plist;
 	}
 
       prev = tail;
     }
-  immediate_quit = false;
   Lisp_Object newcell
     = Fcons (prop, Fcons (val, NILP (prev) ? plist : XCDR (XCDR (prev))));
   if (NILP (prev))
@@ -2442,7 +2420,6 @@ usage: (nconc &rest LISTS)  */)
 
       CHECK_CONS (tem);
 
-      immediate_quit = true;
       Lisp_Object tail;
       do
 	{
@@ -2451,7 +2428,6 @@ usage: (nconc &rest LISTS)  */)
 	}
       while (CONSP (tem));
 
-      immediate_quit = false;
       rarely_quit (&quit_count);
 
       tem = args[argnum + 1];
@@ -2874,13 +2850,11 @@ property and a property with the value nil.
 The value is actually the tail of PLIST whose car is PROP.  */)
   (Lisp_Object plist, Lisp_Object prop)
 {
-  immediate_quit = true;
   while (CONSP (plist) && !EQ (XCAR (plist), prop))
     {
       plist = XCDR (plist);
       plist = CDR (plist);
     }
-  immediate_quit = false;
   return plist;
 }
 
