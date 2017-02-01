@@ -3431,8 +3431,8 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 	  break;
 	}
 
-      immediate_quit = 1;
-      QUIT;
+      immediate_quit = true;
+      maybe_quit ();
 
       ret = connect (s, sa, addrlen);
       xerrno = errno;
@@ -3459,7 +3459,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 	retry_select:
 	  FD_ZERO (&fdset);
 	  FD_SET (s, &fdset);
-	  QUIT;
+	  maybe_quit ();
 	  sc = pselect (s + 1, NULL, &fdset, NULL, NULL, NULL);
 	  if (sc == -1)
 	    {
@@ -3481,7 +3481,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 	}
 #endif /* !WINDOWSNT */
 
-      immediate_quit = 0;
+      immediate_quit = false;
 
       /* Discard the unwind protect closing S.  */
       specpdl_ptr = specpdl + count;
@@ -3539,7 +3539,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 #endif
     }
 
-  immediate_quit = 0;
+  immediate_quit = false;
 
   if (s < 0)
     {
@@ -4012,8 +4012,8 @@ usage: (make-network-process &rest ARGS)  */)
       struct addrinfo *res, *lres;
       int ret;
 
-      immediate_quit = 1;
-      QUIT;
+      immediate_quit = true;
+      maybe_quit ();
 
       struct addrinfo hints;
       memset (&hints, 0, sizeof hints);
@@ -4034,7 +4034,7 @@ usage: (make-network-process &rest ARGS)  */)
 #else
 	error ("%s/%s getaddrinfo error %d", SSDATA (host), portstring, ret);
 #endif
-      immediate_quit = 0;
+      immediate_quit = false;
 
       for (lres = res; lres; lres = lres->ai_next)
 	addrinfos = Fcons (conv_addrinfo_to_lisp (lres), addrinfos);
@@ -5020,7 +5020,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	 since we want to return C-g as an input character.
 	 Otherwise, do pending quit if requested.  */
       if (read_kbd >= 0)
-	QUIT;
+	maybe_quit ();
       else if (pending_signals)
 	process_pending_signals ();
 
@@ -5748,7 +5748,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
     {
       /* Prevent input_pending from remaining set if we quit.  */
       clear_input_pending ();
-      QUIT;
+      maybe_quit ();
     }
 
   return got_some_output;
@@ -7486,7 +7486,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	 since we want to return C-g as an input character.
 	 Otherwise, do pending quit if requested.  */
       if (read_kbd >= 0)
-	QUIT;
+	maybe_quit ();
 
       /* Exit now if the cell we're waiting for became non-nil.  */
       if (! NILP (wait_for_cell) && ! NILP (XCAR (wait_for_cell)))

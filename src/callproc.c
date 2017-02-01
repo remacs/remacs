@@ -182,11 +182,11 @@ call_process_cleanup (Lisp_Object buffer)
     {
       kill (-synch_process_pid, SIGINT);
       message1 ("Waiting for process to die...(type C-g again to kill it instantly)");
-      immediate_quit = 1;
-      QUIT;
+      immediate_quit = true;
+      maybe_quit ();
       wait_for_termination (synch_process_pid, 0, 1);
       synch_process_pid = 0;
-      immediate_quit = 0;
+      immediate_quit = false;
       message1 ("Waiting for process to die...done");
     }
 }
@@ -642,8 +642,8 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
       process_coding.src_multibyte = 0;
     }
 
-  immediate_quit = 1;
-  QUIT;
+  immediate_quit = true;
+  maybe_quit ();
 
   if (0 <= fd0)
     {
@@ -685,7 +685,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	    }
 
 	  /* Now NREAD is the total amount of data in the buffer.  */
-	  immediate_quit = 0;
+	  immediate_quit = false;
 
 	  if (!nread)
 	    ;
@@ -759,7 +759,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	      display_on_the_fly = true;
 	    }
 	  immediate_quit = true;
-	  QUIT;
+	  maybe_quit ();
 	}
     give_up: ;
 
@@ -771,7 +771,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	       make_number (total_read));
     }
 
-  immediate_quit = 0;
+  immediate_quit = false;
 
   /* Don't kill any children that the subprocess may have left behind
      when exiting.  */

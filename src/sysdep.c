@@ -380,10 +380,10 @@ get_child_status (pid_t child, int *status, int options, bool interruptible)
       if (errno != EINTR)
 	emacs_abort ();
 
-      /* Note: the MS-Windows emulation of waitpid calls QUIT
+      /* Note: the MS-Windows emulation of waitpid calls maybe_quit
 	 internally.  */
       if (interruptible)
-	QUIT;
+	maybe_quit ();
     }
 
   /* If successful and status is requested, tell wait_reading_process_output
@@ -2326,7 +2326,7 @@ emacs_open (const char *file, int oflags, int mode)
     oflags |= O_BINARY;
   oflags |= O_CLOEXEC;
   while ((fd = open (file, oflags, mode)) < 0 && errno == EINTR)
-    QUIT;
+    maybe_quit ();
   if (! O_CLOEXEC && 0 <= fd)
     fcntl (fd, F_SETFD, FD_CLOEXEC);
   return fd;
@@ -2455,7 +2455,7 @@ emacs_read (int fildes, void *buf, ptrdiff_t nbyte)
 
   while ((rtnval = read (fildes, buf, nbyte)) == -1
 	 && (errno == EINTR))
-    QUIT;
+    maybe_quit ();
   return (rtnval);
 }
 
@@ -2477,7 +2477,7 @@ emacs_full_write (int fildes, char const *buf, ptrdiff_t nbyte,
 	{
 	  if (errno == EINTR)
 	    {
-	      /* I originally used `QUIT' but that might cause files to
+	      /* I originally used maybe_quit but that might cause files to
 		 be truncated if you hit C-g in the middle of it.  --Stef  */
 	      if (process_signals && pending_signals)
 		process_pending_signals ();

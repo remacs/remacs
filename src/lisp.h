@@ -300,7 +300,6 @@ error !;
 
 #define lisp_h_XLI(o) (o)
 #define lisp_h_XIL(i) (i)
-#define lisp_h_CHECK_LIST_CONS(x, y) CHECK_TYPE (CONSP (x), Qlistp, y)
 #define lisp_h_CHECK_NUMBER(x) CHECK_TYPE (INTEGERP (x), Qintegerp, x)
 #define lisp_h_CHECK_SYMBOL(x) CHECK_TYPE (SYMBOLP (x), Qsymbolp, x)
 #define lisp_h_CHECK_TYPE(ok, predicate, x) \
@@ -357,7 +356,6 @@ error !;
 #if DEFINE_KEY_OPS_AS_MACROS
 # define XLI(o) lisp_h_XLI (o)
 # define XIL(i) lisp_h_XIL (i)
-# define CHECK_LIST_CONS(x, y) lisp_h_CHECK_LIST_CONS (x, y)
 # define CHECK_NUMBER(x) lisp_h_CHECK_NUMBER (x)
 # define CHECK_SYMBOL(x) lisp_h_CHECK_SYMBOL (x)
 # define CHECK_TYPE(ok, predicate, x) lisp_h_CHECK_TYPE (ok, predicate, x)
@@ -1973,6 +1971,10 @@ struct Lisp_Hash_Table
      hash table size to reduce collisions.  */
   Lisp_Object index;
 
+  /* Non-nil if the table can be purecopied.  The table cannot be
+     changed afterwards.  */
+  Lisp_Object pure;
+
   /* Only the fields above are traced normally by the GC.  The ones below
      `count' are special and are either ignored by the GC or traced in
      a special way (e.g. because of weakness).  */
@@ -2727,9 +2729,9 @@ CHECK_LIST (Lisp_Object x)
 }
 
 INLINE void
-(CHECK_LIST_CONS) (Lisp_Object x, Lisp_Object y)
+CHECK_LIST_END (Lisp_Object x, Lisp_Object y)
 {
-  lisp_h_CHECK_LIST_CONS (x, y);
+  CHECK_TYPE (NILP (x), Qlistp, y);
 }
 
 INLINE void
@@ -3100,34 +3102,25 @@ struct handler
 
 extern Lisp_Object memory_signal_data;
 
-/* Check quit-flag and quit if it is non-nil.
-   Typing C-g does not directly cause a quit; it only sets Vquit_flag.
-   So the program needs to do QUIT at times when it is safe to quit.
-   Every loop that might run for a long time or might not exit
-   ought to do QUIT at least once, at a safe place.
-   Unless that is impossible, of course.
-   But it is very desirable to avoid creating loops where QUIT is impossible.
+/* Check quit-flag and quit if it is non-nil.  Typing C-g does not
+   directly cause a quit; it only sets Vquit_flag.  So the program
+   needs to call maybe_quit at times when it is safe to quit.  Every
+   loop that might run for a long time or might not exit ought to call
+   maybe_quit at least once, at a safe place.  Unless that is
+   impossible, of course.  But it is very desirable to avoid creating
+   loops where maybe_quit is impossible.
 
-   Exception: if you set immediate_quit to true,
-   then the handler that responds to the C-g does the quit itself.
-   This is a good thing to do around a loop that has no side effects
-   and (in particular) cannot call arbitrary Lisp code.
+   Exception: if you set immediate_quit, the handler that responds to
+   the C-g does the quit itself.  This is a good thing to do around a
+   loop that has no side effects and (in particular) cannot call
+   arbitrary Lisp code.
 
    If quit-flag is set to `kill-emacs' the SIGINT handler has received
-   a request to exit Emacs when it is safe to do.  */
+   a request to exit Emacs when it is safe to do.
 
-extern void process_pending_signals (void);
-extern bool volatile pending_signals;
+   When not quitting, process any pending signals.  */
 
-extern void process_quit_flag (void);
-#define QUIT						\
-  do {							\
-    if (!NILP (Vquit_flag) && NILP (Vinhibit_quit))	\
-      process_quit_flag ();				\
-    else if (pending_signals)				\
-      process_pending_signals ();			\
-  } while (false)
-
+extern void maybe_quit (void);
 
 /* True if ought to quit now.  */
 
@@ -3354,7 +3347,7 @@ extern void sweep_weak_hash_tables (void);
 EMACS_UINT hash_string (char const *, ptrdiff_t);
 EMACS_UINT sxhash (Lisp_Object, int);
 Lisp_Object make_hash_table (struct hash_table_test, Lisp_Object, Lisp_Object,
-                             Lisp_Object, Lisp_Object);
+                             Lisp_Object, Lisp_Object, Lisp_Object);
 ptrdiff_t hash_lookup (struct Lisp_Hash_Table *, Lisp_Object, EMACS_UINT *);
 ptrdiff_t hash_put (struct Lisp_Hash_Table *, Lisp_Object, Lisp_Object,
 		    EMACS_UINT);
