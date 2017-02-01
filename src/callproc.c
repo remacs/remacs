@@ -198,7 +198,10 @@ call_process_cleanup (Lisp_Object buffer)
     {
       kill (-synch_process_pid, SIGINT);
       message1 ("Waiting for process to die...(type C-g again to kill it instantly)");
+
+      /* This will quit on C-g.  */
       wait_for_termination (synch_process_pid, 0, 1);
+
       synch_process_pid = 0;
       message1 ("Waiting for process to die...done");
     }

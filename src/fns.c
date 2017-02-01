@@ -1389,7 +1389,7 @@ The value is actually the tail of LIST whose car is ELT.  */)
     {
       if (! NILP (Fequal (elt, XCAR (tail))))
 	return tail;
-      incr_rarely_quit (&quit_count);
+      rarely_quit (++quit_count);
     }
   CHECK_LIST_END (tail, list);
   return Qnil;
@@ -1406,7 +1406,7 @@ The value is actually the tail of LIST whose car is ELT.  */)
     {
       if (EQ (XCAR (tail), elt))
 	return tail;
-      incr_rarely_quit (&quit_count);
+      rarely_quit (++quit_count);
     }
   CHECK_LIST_END (tail, list);
   return Qnil;
@@ -1427,7 +1427,7 @@ The value is actually the tail of LIST whose car is ELT.  */)
       Lisp_Object tem = XCAR (tail);
       if (FLOATP (tem) && internal_equal (elt, tem, 0, 0, Qnil))
 	return tail;
-      incr_rarely_quit (&quit_count);
+      rarely_quit (++quit_count);
     }
   CHECK_LIST_END (tail, list);
   return Qnil;
@@ -1445,7 +1445,7 @@ Elements of LIST that are not conses are ignored.  */)
     {
       if (CONSP (XCAR (tail)) && EQ (XCAR (XCAR (tail)), key))
 	return XCAR (tail);
-      incr_rarely_quit (&quit_count);
+      rarely_quit (++quit_count);
     }
   CHECK_LIST_END (tail, list);
   return Qnil;
@@ -1476,7 +1476,7 @@ The value is actually the first element of LIST whose car equals KEY.  */)
       if (CONSP (car)
 	  && (EQ (XCAR (car), key) || !NILP (Fequal (XCAR (car), key))))
 	return car;
-      incr_rarely_quit (&quit_count);
+      rarely_quit (++quit_count);
     }
   CHECK_LIST_END (tail, list);
   return Qnil;
@@ -1509,7 +1509,7 @@ The value is actually the first element of LIST whose cdr is KEY.  */)
     {
       if (CONSP (XCAR (tail)) && EQ (XCDR (XCAR (tail)), key))
 	return XCAR (tail);
-      incr_rarely_quit (&quit_count);
+      rarely_quit (++quit_count);
     }
   CHECK_LIST_END (tail, list);
   return Qnil;
@@ -1528,7 +1528,7 @@ The value is actually the first element of LIST whose cdr equals KEY.  */)
       if (CONSP (car)
 	  && (EQ (XCDR (car), key) || !NILP (Fequal (XCDR (car), key))))
 	return car;
-      incr_rarely_quit (&quit_count);
+      rarely_quit (++quit_count);
     }
   CHECK_LIST_END (tail, list);
   return Qnil;
@@ -1684,7 +1684,7 @@ changing the value of a sequence `foo'.  */)
 	    }
 	  else
 	    prev = tail;
-	  incr_rarely_quit (&quit_count);
+	  rarely_quit (++quit_count);
 	}
       CHECK_LIST_END (tail, seq);
     }
@@ -1712,7 +1712,7 @@ This function may destructively modify SEQ to produce the value.  */)
 	  next = XCDR (tail);
 	  Fsetcdr (tail, prev);
 	  prev = tail;
-	  incr_rarely_quit (&quit_count);
+	  rarely_quit (++quit_count);
 	}
       CHECK_LIST_END (tail, seq);
       seq = prev;
@@ -1759,7 +1759,7 @@ See also the function `nreverse', which is used more often.  */)
       for (new = Qnil; CONSP (seq); seq = XCDR (seq))
 	{
 	  new = Fcons (XCAR (seq), new);
-	  incr_rarely_quit (&quit_count);
+	  rarely_quit (++quit_count);
 	}
       CHECK_LIST_END (seq, seq);
     }
@@ -2062,7 +2062,7 @@ The PLIST is modified by side effects.  */)
 	}
 
       prev = tail;
-      incr_rarely_quit (&quit_count);
+      rarely_quit (++quit_count);
     }
   Lisp_Object newcell
     = Fcons (prop, Fcons (val, NILP (prev) ? plist : XCDR (XCDR (prev))));
@@ -2100,7 +2100,7 @@ one of the properties on the list.  */)
     {
       if (! NILP (Fequal (prop, XCAR (tail))))
 	return XCAR (XCDR (tail));
-      incr_rarely_quit (&quit_count);
+      rarely_quit (++quit_count);
     }
 
   CHECK_LIST_END (tail, prop);
@@ -2130,7 +2130,7 @@ The PLIST is modified by side effects.  */)
 	}
 
       prev = tail;
-      incr_rarely_quit (&quit_count);
+      rarely_quit (++quit_count);
     }
   Lisp_Object newcell = list2 (prop, val);
   if (NILP (prev))
@@ -2210,7 +2210,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 
   unsigned short int quit_count = 0;
  tail_recurse:
-  incr_rarely_quit (&quit_count);
+  rarely_quit (++quit_count);
   if (EQ (o1, o2))
     return 1;
   if (XTYPE (o1) != XTYPE (o2))
@@ -2419,7 +2419,7 @@ usage: (nconc &rest LISTS)  */)
 	{
 	  tail = tem;
 	  tem = XCDR (tail);
-	  incr_rarely_quit (&quit_count);
+	  rarely_quit (++quit_count);
 	}
       while (CONSP (tem));
 
@@ -2848,7 +2848,7 @@ The value is actually the tail of PLIST whose car is PROP.  */)
     {
       plist = XCDR (plist);
       plist = CDR (plist);
-      incr_rarely_quit (&quit_count);
+      rarely_quit (++quit_count);
     }
   return plist;
 }

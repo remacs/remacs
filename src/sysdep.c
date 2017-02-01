@@ -2508,12 +2508,12 @@ emacs_close (int fd)
 #endif
 
 /* Read from FD to a buffer BUF with size NBYTE.
-   If interrupted, either quit or retry the read.
-   Process any quits and pending signals immediately if INTERRUPTIBLE.
+   If interrupted, process any quits and pending signals immediately
+   if INTERRUPTIBLE, and then retry the read unless quitting.
    Return the number of bytes read, which might be less than NBYTE.
    On error, set errno to a value other than EINTR, and return -1.  */
 static ptrdiff_t
-emacs_nointr_read (int fd, void *buf, ptrdiff_t nbyte, bool interruptible)
+emacs_intr_read (int fd, void *buf, ptrdiff_t nbyte, bool interruptible)
 {
   ssize_t result;
 
@@ -2537,14 +2537,14 @@ emacs_nointr_read (int fd, void *buf, ptrdiff_t nbyte, bool interruptible)
 ptrdiff_t
 emacs_read (int fd, void *buf, ptrdiff_t nbyte)
 {
-  return emacs_nointr_read (fd, buf, nbyte, false);
+  return emacs_intr_read (fd, buf, nbyte, false);
 }
 
 /* Like emacs_read, but also process quits and pending signals.  */
 ptrdiff_t
 emacs_read_quit (int fd, void *buf, ptrdiff_t nbyte)
 {
-  return emacs_nointr_read (fd, buf, nbyte, true);
+  return emacs_intr_read (fd, buf, nbyte, true);
 }
 
 /* Write to FILEDES from a buffer BUF with size NBYTE, retrying if

@@ -593,7 +593,6 @@ static ptrdiff_t
 find_defun_start (ptrdiff_t pos, ptrdiff_t pos_byte)
 {
   ptrdiff_t opoint = PT, opoint_byte = PT_BYTE;
-  unsigned short int quit_count = 0;
 
   /* Use previous finding, if it's valid and applies to this inquiry.  */
   if (current_buffer == find_start_buffer
@@ -636,7 +635,6 @@ find_defun_start (ptrdiff_t pos, ptrdiff_t pos_byte)
 	}
       /* Move to beg of previous line.  */
       scan_newline (PT, PT_BYTE, BEGV, BEGV_BYTE, -2, 1);
-      incr_rarely_quit (&quit_count);
     }
 
   /* Record what we found, for the next try.  */
@@ -725,7 +723,7 @@ back_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
      that determines quote parity to the comment-end.  */
   while (from != stop)
     {
-      incr_rarely_quit (&quit_count);
+      rarely_quit (++quit_count);
 
       ptrdiff_t temp_byte;
       int prev_syntax;
@@ -954,7 +952,7 @@ back_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
 		  defun_start_byte = CHAR_TO_BYTE (defun_start);
 		}
 	    }
-	  incr_rarely_quit (&quit_count);
+	  rarely_quit (++quit_count);
 	}
       while (defun_start < comment_end);
 
@@ -2386,7 +2384,7 @@ forw_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
 	  nesting++;
 	}
 
-      incr_rarely_quit (&quit_count);
+      rarely_quit (++quit_count);
     }
   *charpos_ptr = from;
   *bytepos_ptr = from_byte;
@@ -2460,7 +2458,7 @@ between them, return t; otherwise return nil.  */)
 	      INC_BOTH (from, from_byte);
 	      UPDATE_SYNTAX_TABLE_FORWARD (from);
 	    }
-	  incr_rarely_quit (&quit_count);
+	  rarely_quit (++quit_count);
 	}
       while (code == Swhitespace || (code == Sendcomment && c == '\n'));
 
@@ -2544,7 +2542,7 @@ between them, return t; otherwise return nil.  */)
 		    }
 		  else if (from == stop)
 		    break;
-		  incr_rarely_quit (&quit_count);
+		  rarely_quit (++quit_count);
 		}
 	      if (fence_found == 0)
 		{
@@ -2592,7 +2590,7 @@ between them, return t; otherwise return nil.  */)
 	      return Qnil;
 	    }
 
-	  incr_rarely_quit (&quit_count);
+	  rarely_quit (++quit_count);
 	}
 
       count1++;
@@ -2648,7 +2646,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
     {
       while (from < stop)
 	{
-	  incr_rarely_quit (&quit_count);
+	  rarely_quit (++quit_count);
 	  bool comstart_first, prefix;
 	  int syntax, other_syntax;
 	  UPDATE_SYNTAX_TABLE_FORWARD (from);
@@ -2717,7 +2715,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 		      goto done;
 		    }
 		  INC_BOTH (from, from_byte);
-		  incr_rarely_quit (&quit_count);
+		  rarely_quit (++quit_count);
 		}
 	      goto done;
 
@@ -2789,7 +2787,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 		  if (c_code == Scharquote || c_code == Sescape)
 		    INC_BOTH (from, from_byte);
 		  INC_BOTH (from, from_byte);
-		  incr_rarely_quit (&quit_count);
+		  rarely_quit (++quit_count);
 		}
 	      INC_BOTH (from, from_byte);
 	      if (!depth && sexpflag) goto done;
@@ -2815,7 +2813,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
     {
       while (from > stop)
 	{
-	  incr_rarely_quit (&quit_count);
+	  rarely_quit (++quit_count);
 	  DEC_BOTH (from, from_byte);
 	  UPDATE_SYNTAX_TABLE_BACKWARD (from);
 	  c = FETCH_CHAR_AS_MULTIBYTE (from_byte);
@@ -2891,7 +2889,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 		      default: goto done2;
 		      }
 		  DEC_BOTH (from, from_byte);
-		  incr_rarely_quit (&quit_count);
+		  rarely_quit (++quit_count);
 		}
 	      goto done2;
 
@@ -2954,7 +2952,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 		      if (syntax_multibyte (c, multibyte_symbol_p) == code)
 			break;
 		    }
-		  incr_rarely_quit (&quit_count);
+		  rarely_quit (++quit_count);
 		}
 	      if (code == Sstring_fence && !depth && sexpflag) goto done2;
 	      break;
@@ -2975,7 +2973,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 			      == Sstring))
 			break;
 		    }
-		  incr_rarely_quit (&quit_count);
+		  rarely_quit (++quit_count);
 		}
 	      if (!depth && sexpflag) goto done2;
 	      break;
@@ -3229,7 +3227,7 @@ do { prev_from = from;				\
 
   while (from < end)
     {
-      incr_rarely_quit (&quit_count);
+      rarely_quit (++quit_count);
       INC_FROM;
 
       if ((from < end)
@@ -3286,7 +3284,7 @@ do { prev_from = from;				\
 		  goto symdone;
 		}
 	      INC_FROM;
-	      incr_rarely_quit (&quit_count);
+	      rarely_quit (++quit_count);
 	    }
 	symdone:
 	  curlevel->prev = curlevel->last;
@@ -3397,7 +3395,7 @@ do { prev_from = from;				\
 		    break;
 		  }
 		INC_FROM;
-		incr_rarely_quit (&quit_count);
+		rarely_quit (++quit_count);
 	      }
 	  }
 	string_end:

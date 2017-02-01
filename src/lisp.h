@@ -3145,14 +3145,6 @@ rarely_quit (unsigned short int count)
   if (! (count & (QUIT_COUNT_HEURISTIC - 1)))
     maybe_quit ();
 }
-
-/* Increment *QUIT_COUNT and rarely quit.  */
-
-INLINE void
-incr_rarely_quit (unsigned short int *quit_count)
-{
-  rarely_quit (++*quit_count);
-}
 
 extern Lisp_Object Vascii_downcase_table;
 extern Lisp_Object Vascii_canon_table;

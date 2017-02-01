@@ -1215,7 +1215,7 @@ compute_motion (ptrdiff_t from, ptrdiff_t frombyte, EMACS_INT fromvpos,
 
   while (true)
     {
-      incr_rarely_quit (&quit_count);
+      rarely_quit (++quit_count);
 
       while (pos == next_boundary)
 	{
@@ -1282,7 +1282,7 @@ compute_motion (ptrdiff_t from, ptrdiff_t frombyte, EMACS_INT fromvpos,
 	      pos_byte = CHAR_TO_BYTE (pos);
 	    }
 
-	  incr_rarely_quit (&quit_count);
+	  rarely_quit (++quit_count);
 	}
 
       /* Handle right margin.  */
@@ -1605,7 +1605,7 @@ compute_motion (ptrdiff_t from, ptrdiff_t frombyte, EMACS_INT fromvpos,
 			      pos = find_before_next_newline (pos, to, 1, &pos_byte);
 			      if (pos < to)
 				INC_BOTH (pos, pos_byte);
-			      incr_rarely_quit (&quit_count);
+			      rarely_quit (++quit_count);
 			    }
 			  while (pos < to
 				 && indented_beyond_p (pos, pos_byte,
