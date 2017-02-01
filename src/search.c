@@ -800,6 +800,8 @@ find_newline (ptrdiff_t start, ptrdiff_t start_byte, ptrdiff_t end,
 		    *bytepos = lim_byte + next;
 		  return BYTE_TO_CHAR (lim_byte + next);
 		}
+	      if (allow_quit)
+		maybe_quit ();
             }
 
 	  start_byte = lim_byte;
@@ -905,6 +907,8 @@ find_newline (ptrdiff_t start, ptrdiff_t start_byte, ptrdiff_t end,
 		    *bytepos = ceiling_byte + prev + 1;
 		  return BYTE_TO_CHAR (ceiling_byte + prev + 1);
 		}
+	      if (allow_quit)
+		maybe_quit ();
             }
 
 	  start_byte = ceiling_byte;
@@ -1252,6 +1256,7 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 	      return (n);
 	    }
 	  n++;
+	  maybe_quit ();
 	}
       while (n > 0)
 	{
@@ -1296,6 +1301,7 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 	      return (0 - n);
 	    }
 	  n--;
+	  maybe_quit ();
 	}
 #ifdef REL_ALLOC
       r_alloc_inhibit_buffer_relocation (0);
@@ -3252,6 +3258,8 @@ find_newline1 (ptrdiff_t start, ptrdiff_t start_byte, ptrdiff_t end,
 		    *bytepos = lim_byte + next;
 		  return BYTE_TO_CHAR (lim_byte + next);
 		}
+	      if (allow_quit)
+		maybe_quit ();
             }
 
 	  start_byte = lim_byte;

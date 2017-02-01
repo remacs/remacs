@@ -841,9 +841,11 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  {
 	    Lisp_Object v2 = POP, v1 = TOP;
 	    CHECK_NUMBER (v1);
-	    EMACS_INT n = XINT (v1);
-	    while (--n >= 0 && CONSP (v2))
-	      v2 = XCDR (v2);
+	    for (EMACS_INT n = XINT (v1); 0 < n && CONSP (v2); n--)
+	      {
+		v2 = XCDR (v2);
+		rarely_quit (n);
+	      }
 	    TOP = CAR (v2);
 	    NEXT;
 	  }
@@ -1273,9 +1275,11 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 		/* Exchange args and then do nth.  */
 		Lisp_Object v2 = POP, v1 = TOP;
 		CHECK_NUMBER (v2);
-		EMACS_INT n = XINT (v2);
-		while (--n >= 0 && CONSP (v1))
-		  v1 = XCDR (v1);
+		for (EMACS_INT n = XINT (v2); 0 < n && CONSP (v1); n--)
+		  {
+		    v1 = XCDR (v1);
+		    rarely_quit (n);
+		  }
 		TOP = CAR (v1);
 	      }
 	    else

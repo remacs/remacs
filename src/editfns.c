@@ -3096,6 +3096,7 @@ determines whether case is significant or ignored.  */)
 	return make_number (c1 < c2 ? -1 - chars : chars + 1);
 
       chars++;
+      rarely_quit (chars);
     }
 
   /* The strings match as far as they go.

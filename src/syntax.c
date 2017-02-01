@@ -593,6 +593,7 @@ static ptrdiff_t
 find_defun_start (ptrdiff_t pos, ptrdiff_t pos_byte)
 {
   ptrdiff_t opoint = PT, opoint_byte = PT_BYTE;
+  unsigned short int quit_count = 0;
 
   /* Use previous finding, if it's valid and applies to this inquiry.  */
   if (current_buffer == find_start_buffer
@@ -621,11 +622,9 @@ find_defun_start (ptrdiff_t pos, ptrdiff_t pos_byte)
   SETUP_BUFFER_SYNTAX_TABLE ();
   while (PT > BEGV)
     {
-      int c;
-
       /* Open-paren at start of line means we may have found our
 	 defun-start.  */
-      c = FETCH_CHAR_AS_MULTIBYTE (PT_BYTE);
+      int c = FETCH_CHAR_AS_MULTIBYTE (PT_BYTE);
       if (SYNTAX (c) == Sopen)
 	{
 	  SETUP_SYNTAX_TABLE (PT + 1, -1);	/* Try again... */
@@ -637,6 +636,7 @@ find_defun_start (ptrdiff_t pos, ptrdiff_t pos_byte)
 	}
       /* Move to beg of previous line.  */
       scan_newline (PT, PT_BYTE, BEGV, BEGV_BYTE, -2, 1);
+      incr_rarely_quit (&quit_count);
     }
 
   /* Record what we found, for the next try.  */
@@ -715,6 +715,7 @@ back_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
   ptrdiff_t nesting = 1;		/* Current comment nesting.  */
   int c;
   int syntax = 0;
+  unsigned short int quit_count = 0;
 
   /* FIXME: A }} comment-ender style leads to incorrect behavior
      in the case of {{ c }}} because we ignore the last two chars which are
@@ -724,6 +725,8 @@ back_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
      that determines quote parity to the comment-end.  */
   while (from != stop)
     {
+      incr_rarely_quit (&quit_count);
+
       ptrdiff_t temp_byte;
       int prev_syntax;
       bool com2start, com2end, comstart;
@@ -951,7 +954,9 @@ back_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
 		  defun_start_byte = CHAR_TO_BYTE (defun_start);
 		}
 	    }
-	} while (defun_start < comment_end);
+	  incr_rarely_quit (&quit_count);
+	}
+      while (defun_start < comment_end);
 
       from_byte = CHAR_TO_BYTE (from);
       UPDATE_SYNTAX_TABLE_FORWARD (from - 1);
@@ -1417,22 +1422,20 @@ DEFUN ("internal-describe-syntax-value", Finternal_describe_syntax_value,
    COUNT negative means scan backward and stop at word beginning.  */
 
 ptrdiff_t
-scan_words (register ptrdiff_t from, register EMACS_INT count)
+scan_words (ptrdiff_t from, EMACS_INT count)
 {
-  register ptrdiff_t beg = BEGV;
-  register ptrdiff_t end = ZV;
-  register ptrdiff_t from_byte = CHAR_TO_BYTE (from);
-  register enum syntaxcode code;
+  ptrdiff_t beg = BEGV;
+  ptrdiff_t end = ZV;
+  ptrdiff_t from_byte = CHAR_TO_BYTE (from);
+  enum syntaxcode code;
   int ch0, ch1;
   Lisp_Object func, pos;
-
-  maybe_quit ();
 
   SETUP_SYNTAX_TABLE (from, count);
 
   while (count > 0)
     {
-      while (1)
+      while (true)
 	{
 	  if (from == end)
 	    return 0;
@@ -1445,6 +1448,7 @@ scan_words (register ptrdiff_t from, register EMACS_INT count)
 	    break;
 	  if (code == Sword)
 	    break;
+	  rarely_quit (from);
 	}
       /* Now CH0 is a character which begins a word and FROM is the
          position of the next character.  */
@@ -1473,13 +1477,14 @@ scan_words (register ptrdiff_t from, register EMACS_INT count)
 		break;
 	      INC_BOTH (from, from_byte);
 	      ch0 = ch1;
+	      rarely_quit (from);
 	    }
 	}
       count--;
     }
   while (count < 0)
     {
-      while (1)
+      while (true)
 	{
 	  if (from == beg)
 	    return 0;
@@ -1492,6 +1497,7 @@ scan_words (register ptrdiff_t from, register EMACS_INT count)
 	    break;
 	  if (code == Sword)
 	    break;
+	  rarely_quit (from);
 	}
       /* Now CH1 is a character which ends a word and FROM is the
          position of it.  */
@@ -1524,6 +1530,7 @@ scan_words (register ptrdiff_t from, register EMACS_INT count)
 		  break;
 		}
 	      ch1 = ch0;
+	      rarely_quit (from);
 	    }
 	}
       count++;
@@ -1961,9 +1968,10 @@ skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
 		}
 	    fwd_ok:
 	      p += nbytes, pos++, pos_byte += nbytes;
+	      rarely_quit (pos);
 	    }
 	else
-	  while (1)
+	  while (true)
 	    {
 	      if (p >= stop)
 		{
@@ -1985,15 +1993,14 @@ skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
 		break;
 	    fwd_unibyte_ok:
 	      p++, pos++, pos_byte++;
+	      rarely_quit (pos);
 	    }
       }
     else
       {
 	if (multibyte)
-	  while (1)
+	  while (true)
 	    {
-	      unsigned char *prev_p;
-
 	      if (p <= stop)
 		{
 		  if (p <= endp)
@@ -2001,8 +2008,11 @@ skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
 		  p = GPT_ADDR;
 		  stop = endp;
 		}
-	      prev_p = p;
-	      while (--p >= stop && ! CHAR_HEAD_P (*p));
+	      unsigned char *prev_p = p;
+	      do
+		p--;
+	      while (stop <= p && ! CHAR_HEAD_P (*p));
+
 	      c = STRING_CHAR (p);
 
 	      if (! NILP (iso_classes) && in_classes (c, iso_classes))
@@ -2026,9 +2036,10 @@ skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
 		}
 	    back_ok:
 	      pos--, pos_byte -= prev_p - p;
+	      rarely_quit (pos);
 	    }
 	else
-	  while (1)
+	  while (true)
 	    {
 	      if (p <= stop)
 		{
@@ -2050,6 +2061,7 @@ skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
 		break;
 	    back_unibyte_ok:
 	      p--, pos--, pos_byte--;
+	      rarely_quit (pos);
 	    }
       }
 
@@ -2155,6 +2167,7 @@ skip_syntaxes (bool forwardp, Lisp_Object string, Lisp_Object lim)
 		if (! fastmap[SYNTAX (c)])
 		  goto done;
 		p += nbytes, pos++, pos_byte += nbytes;
+		rarely_quit (pos);
 	      }
 	    while (!parse_sexp_lookup_properties
 		   || pos < gl_state.e_property);
@@ -2171,10 +2184,8 @@ skip_syntaxes (bool forwardp, Lisp_Object string, Lisp_Object lim)
 
 	if (multibyte)
 	  {
-	    while (1)
+	    while (true)
 	      {
-		unsigned char *prev_p;
-
 		if (p <= stop)
 		  {
 		    if (p <= endp)
@@ -2183,17 +2194,22 @@ skip_syntaxes (bool forwardp, Lisp_Object string, Lisp_Object lim)
 		    stop = endp;
 		  }
 		UPDATE_SYNTAX_TABLE_BACKWARD (pos - 1);
-		prev_p = p;
-		while (--p >= stop && ! CHAR_HEAD_P (*p));
+
+		unsigned char *prev_p = p;
+		do
+		  p--;
+		while (stop <= p && ! CHAR_HEAD_P (*p));
+
 		c = STRING_CHAR (p);
 		if (! fastmap[SYNTAX (c)])
 		  break;
 		pos--, pos_byte -= prev_p - p;
+		rarely_quit (pos);
 	      }
 	  }
 	else
 	  {
-	    while (1)
+	    while (true)
 	      {
 		if (p <= stop)
 		  {
@@ -2206,6 +2222,7 @@ skip_syntaxes (bool forwardp, Lisp_Object string, Lisp_Object lim)
 		if (! fastmap[SYNTAX (p[-1])])
 		  break;
 		p--, pos--, pos_byte--;
+		rarely_quit (pos);
 	      }
 	  }
       }
@@ -2273,9 +2290,10 @@ forw_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
 	      ptrdiff_t *charpos_ptr, ptrdiff_t *bytepos_ptr,
 	      EMACS_INT *incomment_ptr, int *last_syntax_ptr)
 {
-  register int c, c1;
-  register enum syntaxcode code;
-  register int syntax, other_syntax;
+  unsigned short int quit_count = 0;
+  int c, c1;
+  enum syntaxcode code;
+  int syntax, other_syntax;
 
   if (nesting <= 0) nesting = -1;
 
@@ -2367,6 +2385,8 @@ forw_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
 	  UPDATE_SYNTAX_TABLE_FORWARD (from);
 	  nesting++;
 	}
+
+      incr_rarely_quit (&quit_count);
     }
   *charpos_ptr = from;
   *bytepos_ptr = from_byte;
@@ -2394,12 +2414,11 @@ between them, return t; otherwise return nil.  */)
   ptrdiff_t out_charpos, out_bytepos;
   EMACS_INT dummy;
   int dummy2;
+  unsigned short int quit_count = 0;
 
   CHECK_NUMBER (count);
   count1 = XINT (count);
   stop = count1 > 0 ? ZV : BEGV;
-
-  maybe_quit ();
 
   from = PT;
   from_byte = PT_BYTE;
@@ -2441,6 +2460,7 @@ between them, return t; otherwise return nil.  */)
 	      INC_BOTH (from, from_byte);
 	      UPDATE_SYNTAX_TABLE_FORWARD (from);
 	    }
+	  incr_rarely_quit (&quit_count);
 	}
       while (code == Swhitespace || (code == Sendcomment && c == '\n'));
 
@@ -2469,11 +2489,8 @@ between them, return t; otherwise return nil.  */)
 
   while (count1 < 0)
     {
-      while (1)
+      while (true)
 	{
-	  bool quoted;
-	  int syntax;
-
 	  if (from <= stop)
 	    {
 	      SET_PT_BOTH (BEGV, BEGV_BYTE);
@@ -2482,9 +2499,9 @@ between them, return t; otherwise return nil.  */)
 
 	  DEC_BOTH (from, from_byte);
 	  /* char_quoted does UPDATE_SYNTAX_TABLE_BACKWARD (from).  */
-	  quoted = char_quoted (from, from_byte);
+	  bool quoted = char_quoted (from, from_byte);
 	  c = FETCH_CHAR_AS_MULTIBYTE (from_byte);
-	  syntax = SYNTAX_WITH_FLAGS (c);
+	  int syntax = SYNTAX_WITH_FLAGS (c);
 	  code = SYNTAX (c);
 	  comstyle = 0;
 	  comnested = SYNTAX_FLAGS_COMMENT_NESTED (syntax);
@@ -2527,6 +2544,7 @@ between them, return t; otherwise return nil.  */)
 		    }
 		  else if (from == stop)
 		    break;
+		  incr_rarely_quit (&quit_count);
 		}
 	      if (fence_found == 0)
 		{
@@ -2573,6 +2591,8 @@ between them, return t; otherwise return nil.  */)
 	      SET_PT_BOTH (from, from_byte);
 	      return Qnil;
 	    }
+
+	  incr_rarely_quit (&quit_count);
 	}
 
       count1++;
@@ -2612,6 +2632,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
   EMACS_INT dummy;
   int dummy2;
   bool multibyte_symbol_p = sexpflag && multibyte_syntax_as_symbol;
+  unsigned short int quit_count = 0;
 
   if (depth > 0) min_depth = 0;
 
@@ -2627,6 +2648,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
     {
       while (from < stop)
 	{
+	  incr_rarely_quit (&quit_count);
 	  bool comstart_first, prefix;
 	  int syntax, other_syntax;
 	  UPDATE_SYNTAX_TABLE_FORWARD (from);
@@ -2695,6 +2717,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 		      goto done;
 		    }
 		  INC_BOTH (from, from_byte);
+		  incr_rarely_quit (&quit_count);
 		}
 	      goto done;
 
@@ -2766,6 +2789,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 		  if (c_code == Scharquote || c_code == Sescape)
 		    INC_BOTH (from, from_byte);
 		  INC_BOTH (from, from_byte);
+		  incr_rarely_quit (&quit_count);
 		}
 	      INC_BOTH (from, from_byte);
 	      if (!depth && sexpflag) goto done;
@@ -2791,11 +2815,11 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
     {
       while (from > stop)
 	{
-	  int syntax;
+	  incr_rarely_quit (&quit_count);
 	  DEC_BOTH (from, from_byte);
 	  UPDATE_SYNTAX_TABLE_BACKWARD (from);
 	  c = FETCH_CHAR_AS_MULTIBYTE (from_byte);
-	  syntax= SYNTAX_WITH_FLAGS (c);
+	  int syntax = SYNTAX_WITH_FLAGS (c);
 	  code = syntax_multibyte (c, multibyte_symbol_p);
 	  if (depth == min_depth)
 	    last_good = from;
@@ -2867,6 +2891,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 		      default: goto done2;
 		      }
 		  DEC_BOTH (from, from_byte);
+		  incr_rarely_quit (&quit_count);
 		}
 	      goto done2;
 
@@ -2929,13 +2954,14 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 		      if (syntax_multibyte (c, multibyte_symbol_p) == code)
 			break;
 		    }
+		  incr_rarely_quit (&quit_count);
 		}
 	      if (code == Sstring_fence && !depth && sexpflag) goto done2;
 	      break;
 
 	    case Sstring:
 	      stringterm = FETCH_CHAR_AS_MULTIBYTE (from_byte);
-	      while (1)
+	      while (true)
 		{
 		  if (from == stop)
 		    goto lose;
@@ -2949,6 +2975,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 			      == Sstring))
 			break;
 		    }
+		  incr_rarely_quit (&quit_count);
 		}
 	      if (!depth && sexpflag) goto done2;
 	      break;
@@ -3061,6 +3088,7 @@ the prefix syntax flag (p).  */)
       if (pos <= beg)
         break;
       DEC_BOTH (pos, pos_byte);
+      rarely_quit (pos);
     }
 
   SET_PT_BOTH (opoint, opoint_byte);
@@ -3131,6 +3159,7 @@ scan_sexps_forward (struct lisp_parse_state *state,
   bool found;
   ptrdiff_t out_bytepos, out_charpos;
   int temp;
+  unsigned short int quit_count = 0;
 
   prev_from = from;
   prev_from_byte = from_byte;
@@ -3200,6 +3229,7 @@ do { prev_from = from;				\
 
   while (from < end)
     {
+      incr_rarely_quit (&quit_count);
       INC_FROM;
 
       if ((from < end)
@@ -3256,6 +3286,7 @@ do { prev_from = from;				\
 		  goto symdone;
 		}
 	      INC_FROM;
+	      incr_rarely_quit (&quit_count);
 	    }
 	symdone:
 	  curlevel->prev = curlevel->last;
@@ -3366,6 +3397,7 @@ do { prev_from = from;				\
 		    break;
 		  }
 		INC_FROM;
+		incr_rarely_quit (&quit_count);
 	      }
 	  }
 	string_end:

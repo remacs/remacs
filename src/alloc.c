@@ -2880,7 +2880,7 @@ DEFUN ("make-list", Fmake_list, Smake_list, 2, 2, 0,
   for (EMACS_INT size = XFASTINT (length); 0 < size; size--)
     {
       val = Fcons (init, val);
-      maybe_quit ();
+      rarely_quit (size);
     }
 
   return val;

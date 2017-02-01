@@ -198,7 +198,6 @@ call_process_cleanup (Lisp_Object buffer)
     {
       kill (-synch_process_pid, SIGINT);
       message1 ("Waiting for process to die...(type C-g again to kill it instantly)");
-      maybe_quit ();
       wait_for_termination (synch_process_pid, 0, 1);
       synch_process_pid = 0;
       message1 ("Waiting for process to die...done");
@@ -724,8 +723,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
       process_coding.src_multibyte = 0;
     }
 
-  maybe_quit ();
-
   if (0 <= fd0)
     {
       enum { CALLPROC_BUFFER_SIZE_MIN = 16 * 1024 };
@@ -746,8 +743,8 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	  nread = carryover;
 	  while (nread < bufsize - 1024)
 	    {
-	      int this_read = emacs_read (fd0, buf + nread,
-					  bufsize - nread);
+	      int this_read = emacs_read_quit (fd0, buf + nread,
+					       bufsize - nread);
 
 	      if (this_read < 0)
 		goto give_up;
@@ -838,8 +835,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 		 we should have already detected a coding system.  */
 	      display_on_the_fly = true;
 	    }
-
-	  maybe_quit ();
 	}
     give_up: ;
 
