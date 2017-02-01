@@ -665,7 +665,7 @@ nn*-request-list should have been called before calling this function."
 	      (setq group (symbol-name group)))
 	    (if (and (numberp (setq max (read buffer)))
 		     (numberp (setq min (read buffer))))
-		(push (list (encode-coding-string group 'utf-8) (cons min max))
+		(push (list (string-as-unibyte group) (cons min max))
 		      group-assoc)))
 	(error nil))
       (widen)
@@ -1251,9 +1251,8 @@ Return the number of characters in the body."
       (insert (if (mm-multibyte-p)
 		  (string-as-multibyte
 		   (format " %s:%d" (caar group-alist) (cdar group-alist)))
-		(encode-coding-string
-		 (format " %s:%d" (caar group-alist) (cdar group-alist))
-		 'utf-8)))
+		(string-as-unibyte
+		 (format " %s:%d" (caar group-alist) (cdar group-alist)))))
       (setq group-alist (cdr group-alist)))
     (insert "\n")))
 

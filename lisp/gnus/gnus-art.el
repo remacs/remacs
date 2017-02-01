@@ -2938,8 +2938,7 @@ message header will be added to the bodies of the \"text/html\" parts."
 					 (encode-coding-string
 					  title coding))
 				 body content))
-		       (setq eheader (encode-coding-string
-				      (buffer-string) 'utf-8)
+		       (setq eheader (string-as-unibyte (buffer-string))
 			     body content)))
 		   (erase-buffer)
 		   (mm-disable-multibyte)

@@ -696,10 +696,9 @@ be \"related\" or \"alternate\"."
 	      (set-buffer-multibyte nil)
 	      (cond
 	       ((cdr (assq 'buffer cont))
-		(insert (encode-coding-string
+		(insert (string-as-unibyte
 			 (with-current-buffer (cdr (assq 'buffer cont))
-			   (buffer-string))
-			 'utf-8)))
+			   (buffer-string)))))
 	       ((and filename
 		     (not (equal (cdr (assq 'nofile cont)) "yes")))
 		(let ((coding-system-for-read mm-binary-coding-system))

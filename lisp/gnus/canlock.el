@@ -90,7 +90,7 @@ buffer does not look like a news message."
      (canlock-sha1
       (concat opad
 	      (canlock-sha1
-	       (concat ipad (encode-coding-string message-id 'utf-8))))))))
+	       (concat ipad (string-as-unibyte message-id))))))))
 
 (defun canlock-narrow-to-header ()
   "Narrow the buffer to the head of the message."
