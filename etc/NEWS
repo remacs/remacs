@@ -311,6 +311,11 @@ substituted by a home directory by writing it as "/foo:/:/~/file".
 * Editing Changes in Emacs 26.1
 
 +++
+** Two new user options 'list-matching-lines-jump-to-current-line' and
+'list-matching-lines-current-line-face' to show highlighted the current
+line in *Occur* buffer.
+
++++
 ** The 'occur' command can now operate on the region.
 
 +++
