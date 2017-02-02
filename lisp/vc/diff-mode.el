@@ -671,7 +671,7 @@ If the prefix ARG is given, restrict the view to the current file instead."
 	 (inhibit-read-only t))
     (apply 'kill-region bounds)
     (goto-char (car bounds))
-    (diff-beginning-of-hunk t)))
+    (ignore-errors (diff-beginning-of-hunk t))))
 
 (defun diff-beginning-of-file-and-junk ()
   "Go to the beginning of file-related diff-info.
@@ -723,9 +723,10 @@ data such as \"Index: ...\" and such."
 (defun diff-file-kill ()
   "Kill current file's hunks."
   (interactive)
+  (diff-beginning-of-hunk t)
   (let ((inhibit-read-only t))
     (apply 'kill-region (diff-bounds-of-file)))
-  (diff-beginning-of-hunk t))
+  (ignore-errors (diff-beginning-of-hunk t)))
 
 (defun diff-kill-junk ()
   "Kill spurious empty diffs."
