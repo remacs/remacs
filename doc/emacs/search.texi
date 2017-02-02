@@ -1715,6 +1715,8 @@ a multi-file incremental search is activated automatically.
 @cindex mode, Occur
 @cindex match (face name)
 @vindex list-matching-lines-default-context-lines
+@vindex list-matching-lines-jump-to-current-line
+@cindex list-matching-lines-current-line-face (face name)
 @kindex M-s o
 @item M-x occur
 @itemx M-s o
