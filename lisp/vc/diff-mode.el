@@ -650,28 +650,36 @@ If the prefix ARG is given, restrict the view to the current file instead."
 	 (if arg (diff-bounds-of-file) (diff-bounds-of-hunk)))
   (set (make-local-variable 'diff-narrowed-to) (if arg 'file 'hunk)))
 
+(defun diff--some-hunks-p ()
+  (save-excursion
+    (goto-char (point-min))
+    (re-search-forward diff-hunk-header-re nil t)))
+
 (defun diff-hunk-kill ()
   "Kill the hunk at point."
   (interactive)
-  (let* ((hunk-bounds (diff-bounds-of-hunk))
-	 (file-bounds (ignore-errors (diff-bounds-of-file)))
-	 ;; If the current hunk is the only one for its file, kill the
-	 ;; file header too.
-	 (bounds (if (and file-bounds
-			  (progn (goto-char (car file-bounds))
-				 (= (progn (diff-hunk-next) (point))
-				    (car hunk-bounds)))
-			  (progn (goto-char (cadr hunk-bounds))
-				 ;; bzr puts a newline after the last hunk.
-				 (while (looking-at "^\n")
-				   (forward-char 1))
-				 (= (point) (cadr file-bounds))))
-		     file-bounds
-		   hunk-bounds))
-	 (inhibit-read-only t))
-    (apply 'kill-region bounds)
-    (goto-char (car bounds))
-    (ignore-errors (diff-beginning-of-hunk t))))
+  (if (not (diff--some-hunks-p))
+      (error "No hunks")
+    (diff-beginning-of-hunk t)
+    (let* ((hunk-bounds (diff-bounds-of-hunk))
+           (file-bounds (ignore-errors (diff-bounds-of-file)))
+           ;; If the current hunk is the only one for its file, kill the
+           ;; file header too.
+           (bounds (if (and file-bounds
+                            (progn (goto-char (car file-bounds))
+                                   (= (progn (diff-hunk-next) (point))
+                                      (car hunk-bounds)))
+                            (progn (goto-char (cadr hunk-bounds))
+                                   ;; bzr puts a newline after the last hunk.
+                                   (while (looking-at "^\n")
+                                     (forward-char 1))
+                                   (= (point) (cadr file-bounds))))
+                       file-bounds
+                     hunk-bounds))
+           (inhibit-read-only t))
+      (apply 'kill-region bounds)
+      (goto-char (car bounds))
+      (ignore-errors (diff-beginning-of-hunk t)))))
 
 (defun diff-beginning-of-file-and-junk ()
   "Go to the beginning of file-related diff-info.
@@ -723,10 +731,12 @@ data such as \"Index: ...\" and such."
 (defun diff-file-kill ()
   "Kill current file's hunks."
   (interactive)
-  (diff-beginning-of-hunk t)
-  (let ((inhibit-read-only t))
-    (apply 'kill-region (diff-bounds-of-file)))
-  (ignore-errors (diff-beginning-of-hunk t)))
+  (if (not (diff--some-hunks-p))
+      (error "No hunks")
+    (diff-beginning-of-hunk t)
+    (let ((inhibit-read-only t))
+      (apply 'kill-region (diff-bounds-of-file)))
+    (ignore-errors (diff-beginning-of-hunk t))))
 
 (defun diff-kill-junk ()
   "Kill spurious empty diffs."
@@ -2009,57 +2019,58 @@ Return new point, if it was moved."
   "Highlight changes of hunk at point at a finer granularity."
   (interactive)
   (require 'smerge-mode)
-  (save-excursion
-    (diff-beginning-of-hunk t)
-    (let* ((start (point))
-           (style (diff-hunk-style))    ;Skips the hunk header as well.
-           (beg (point))
-           (props-c '((diff-mode . fine) (face diff-refine-changed)))
-           (props-r '((diff-mode . fine) (face diff-refine-removed)))
-           (props-a '((diff-mode . fine) (face diff-refine-added)))
-           ;; Be careful to go back to `start' so diff-end-of-hunk gets
-           ;; to read the hunk header's line info.
-           (end (progn (goto-char start) (diff-end-of-hunk) (point))))
+  (when (diff--some-hunks-p)
+    (save-excursion
+      (diff-beginning-of-hunk t)
+      (let* ((start (point))
+             (style (diff-hunk-style))    ;Skips the hunk header as well.
+             (beg (point))
+             (props-c '((diff-mode . fine) (face diff-refine-changed)))
+             (props-r '((diff-mode . fine) (face diff-refine-removed)))
+             (props-a '((diff-mode . fine) (face diff-refine-added)))
+             ;; Be careful to go back to `start' so diff-end-of-hunk gets
+             ;; to read the hunk header's line info.
+             (end (progn (goto-char start) (diff-end-of-hunk) (point))))
 
-      (remove-overlays beg end 'diff-mode 'fine)
+        (remove-overlays beg end 'diff-mode 'fine)
 
-      (goto-char beg)
-      (pcase style
-        (`unified
-         (while (re-search-forward "^-" end t)
-           (let ((beg-del (progn (beginning-of-line) (point)))
-                 beg-add end-add)
-             (when (and (diff--forward-while-leading-char ?- end)
-                        ;; Allow for "\ No newline at end of file".
-                        (progn (diff--forward-while-leading-char ?\\ end)
-                               (setq beg-add (point)))
-                        (diff--forward-while-leading-char ?+ end)
-                        (progn (diff--forward-while-leading-char ?\\ end)
-                               (setq end-add (point))))
-               (smerge-refine-subst beg-del beg-add beg-add end-add
-                                    nil 'diff-refine-preproc props-r props-a)))))
-        (`context
-         (let* ((middle (save-excursion (re-search-forward "^---")))
-                (other middle))
-           (while (re-search-forward "^\\(?:!.*\n\\)+" middle t)
-             (smerge-refine-subst (match-beginning 0) (match-end 0)
-                                  (save-excursion
-                                    (goto-char other)
-                                    (re-search-forward "^\\(?:!.*\n\\)+" end)
-                                    (setq other (match-end 0))
-                                    (match-beginning 0))
-                                  other
-                                  (if diff-use-changed-face props-c)
-                                  'diff-refine-preproc
-                                  (unless diff-use-changed-face props-r)
-                                  (unless diff-use-changed-face props-a)))))
-        (_ ;; Normal diffs.
-         (let ((beg1 (1+ (point))))
-           (when (re-search-forward "^---.*\n" end t)
-             ;; It's a combined add&remove, so there's something to do.
-             (smerge-refine-subst beg1 (match-beginning 0)
-                                  (match-end 0) end
-                                  nil 'diff-refine-preproc props-r props-a))))))))
+        (goto-char beg)
+        (pcase style
+          (`unified
+           (while (re-search-forward "^-" end t)
+             (let ((beg-del (progn (beginning-of-line) (point)))
+                   beg-add end-add)
+               (when (and (diff--forward-while-leading-char ?- end)
+                          ;; Allow for "\ No newline at end of file".
+                          (progn (diff--forward-while-leading-char ?\\ end)
+                                 (setq beg-add (point)))
+                          (diff--forward-while-leading-char ?+ end)
+                          (progn (diff--forward-while-leading-char ?\\ end)
+                                 (setq end-add (point))))
+                 (smerge-refine-subst beg-del beg-add beg-add end-add
+                                      nil 'diff-refine-preproc props-r props-a)))))
+          (`context
+           (let* ((middle (save-excursion (re-search-forward "^---")))
+                  (other middle))
+             (while (re-search-forward "^\\(?:!.*\n\\)+" middle t)
+               (smerge-refine-subst (match-beginning 0) (match-end 0)
+                                    (save-excursion
+                                      (goto-char other)
+                                      (re-search-forward "^\\(?:!.*\n\\)+" end)
+                                      (setq other (match-end 0))
+                                      (match-beginning 0))
+                                    other
+                                    (if diff-use-changed-face props-c)
+                                    'diff-refine-preproc
+                                    (unless diff-use-changed-face props-r)
+                                    (unless diff-use-changed-face props-a)))))
+          (_ ;; Normal diffs.
+           (let ((beg1 (1+ (point))))
+             (when (re-search-forward "^---.*\n" end t)
+               ;; It's a combined add&remove, so there's something to do.
+               (smerge-refine-subst beg1 (match-beginning 0)
+                                    (match-end 0) end
+                                    nil 'diff-refine-preproc props-r props-a)))))))))
 
 (defun diff-undo (&optional arg)
   "Perform `undo', ignoring the buffer's read-only status."
