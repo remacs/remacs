@@ -74,3 +74,21 @@ $list: (
    ('e', #000000, #fff)
    ('f', #000000, #fff)
 );
+
+// bug:13425
+div:first-child,
+div:last-child {
+    @include foo-mixin(
+        $foo: 'foo',
+        $bar: 'bar',
+    );
+
+    font: 15px "Helvetica Neue", Helvetica, Arial,
+          "Nimbus Sans L", sans-serif;
+
+    div:first-child,
+    div:last-child {
+        font: 15px "Helvetica Neue", Helvetica, Arial,
+              "Nimbus Sans L", sans-serif;
+    }
+}

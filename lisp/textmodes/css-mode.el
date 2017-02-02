@@ -32,10 +32,11 @@
 
 ;;; Code:
 
+(require 'eww)
 (require 'seq)
 (require 'sgml-mode)
 (require 'smie)
-(require 'eww)
+(require 'subr-x)
 
 (defgroup css nil
   "Cascading Style Sheets (CSS) editing mode."
@@ -741,7 +742,30 @@ cannot be completed sensibly: `custom-ident',
 
 (defconst css-smie-grammar
   (smie-prec2->grammar
-   (smie-precs->prec2 '((assoc ";") (assoc ",") (left ":")))))
+   (smie-precs->prec2
+    '((assoc ";")
+      ;; Colons that belong to a CSS property.  These get a higher
+      ;; precedence than other colons, such as colons in selectors,
+      ;; which are represented by a plain ":" token.
+      (left ":-property")
+      (assoc ",")
+      (assoc ":")))))
+
+(defun css--colon-inside-selector-p ()
+  "Return t if point looks to be inside a CSS selector.
+This function is intended to be good enough to help SMIE during
+tokenization, but should not be regarded as a reliable function
+for determining wheter point is within a selector."
+  (save-excursion
+    (re-search-forward "[{};)]" nil t)
+    (eq (char-before) ?\{)))
+
+(defun css--colon-inside-funcall ()
+  "Return t if point is inside a function call."
+  (when-let (opening-paren-pos (nth 1 (syntax-ppss)))
+    (save-excursion
+      (goto-char opening-paren-pos)
+      (eq (char-after) ?\())))
 
 (defun css-smie--forward-token ()
   (cond
@@ -755,7 +779,13 @@ cannot be completed sensibly: `custom-ident',
     ";")
    ((progn (forward-comment (point-max))
            (looking-at "[;,:]"))
-    (forward-char 1) (match-string 0))
+    (forward-char 1)
+    (if (equal (match-string 0) ":")
+        (if (or (css--colon-inside-selector-p)
+                (css--colon-inside-funcall))
+            ":"
+          ":-property")
+      (match-string 0)))
    (t (smie-default-forward-token))))
 
 (defun css-smie--backward-token ()
@@ -766,7 +796,13 @@ cannot be completed sensibly: `custom-ident',
      ((and (eq (char-before) ?\}) (scss-smie--not-interpolation-p)
            (> pos (point))) ";")
      ((memq (char-before) '(?\; ?\, ?\:))
-      (forward-char -1) (string (char-after)))
+      (forward-char -1)
+      (if (eq (char-after) ?\:)
+          (if (or (css--colon-inside-selector-p)
+                  (css--colon-inside-funcall))
+              ":"
+            ":-property")
+        (string (char-after))))
      (t (smie-default-backward-token)))))
 
 (defun css-smie-rules (kind token)
