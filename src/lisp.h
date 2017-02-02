@@ -4535,7 +4535,7 @@ enum
    use these only in macros like AUTO_CONS that declare a local
    variable whose lifetime will be clear to the programmer.  */
 #define STACK_CONS(a, b) \
-  make_lisp_ptr (&(union Aligned_Cons) { { a, { b } } }.s, Lisp_Cons)
+  make_lisp_ptr (&((union Aligned_Cons) { { a, { b } } }).s, Lisp_Cons)
 #define AUTO_CONS_EXPR(a, b) \
   (USE_STACK_CONS ? STACK_CONS (a, b) : Fcons (a, b))
 
@@ -4581,8 +4581,7 @@ enum
   Lisp_Object name =							\
     (USE_STACK_STRING							\
      ? (make_lisp_ptr							\
-	((&(union Aligned_String)					\
-	  {{len, -1, 0, (unsigned char *) (str)}}.s),			\
+	((&((union Aligned_String) {{len, -1, 0, (unsigned char *) (str)}}).s), \
 	 Lisp_String))							\
      : make_unibyte_string (str, len))
 
