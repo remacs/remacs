@@ -311,6 +311,9 @@ substituted by a home directory by writing it as "/foo:/:/~/file".
 * Editing Changes in Emacs 26.1
 
 +++
+** The 'occur' command can now operate on the region.
+
++++
 ** New bindings for 'query-replace-map'.
 'undo', undo the last replacement; bound to 'u'.
 'undo-all', undo all replacements; bound to 'U'.
