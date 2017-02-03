@@ -44,17 +44,29 @@ handle SIGALRM ignore
 # Use $bugfix so that the value isn't a constant.
 # Using a constant runs into GDB bugs sometimes.
 define xgetptr
-  set $bugfix = $arg0
+  if (CHECK_LISP_OBJECT_TYPE)
+    set $bugfix = $arg0.i
+  else
+    set $bugfix = $arg0
+  end
   set $ptr = $bugfix & VALMASK
 end
 
 define xgetint
-  set $bugfix = $arg0
+  if (CHECK_LISP_OBJECT_TYPE)
+    set $bugfix = $arg0.i
+  else
+    set $bugfix = $arg0
+  end
   set $int = $bugfix << (USE_LSB_TAG ? 0 : INTTYPEBITS) >> INTTYPEBITS
 end
 
 define xgettype
-  set $bugfix = $arg0
+  if (CHECK_LISP_OBJECT_TYPE)
+    set $bugfix = $arg0.i
+  else
+    set $bugfix = $arg0
+  end
   set $type = (enum Lisp_Type) (USE_LSB_TAG ? $bugfix & (1 << GCTYPEBITS) - 1 : (EMACS_UINT) $bugfix >> VALBITS)
 end
 

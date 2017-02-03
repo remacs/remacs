@@ -7499,6 +7499,7 @@ union
   enum CHARTAB_SIZE_BITS CHARTAB_SIZE_BITS;
   enum char_table_specials char_table_specials;
   enum char_bits char_bits;
+  enum CHECK_LISP_OBJECT_TYPE CHECK_LISP_OBJECT_TYPE;
   enum DEFAULT_HASH_SIZE DEFAULT_HASH_SIZE;
   enum Lisp_Bits Lisp_Bits;
   enum Lisp_Compiled Lisp_Compiled;
