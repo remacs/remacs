@@ -27,7 +27,7 @@ fn CHARACTERP(obj: LispObject) -> bool {
     lisp::NATNUMP(obj) && lisp::XFASTINT(obj) <= MaxChar
 }
 
-fn Fcharacterp(obj: LispObject, ignore: LispObject) -> LispObject {
+fn Fcharacterp(obj: LispObject, _ignore: LispObject) -> LispObject {
     if CHARACTERP(obj) {
         unsafe { lisp::Qt }
     } else {
@@ -38,7 +38,8 @@ fn Fcharacterp(obj: LispObject, ignore: LispObject) -> LispObject {
 defun!("characterp",
        Fcharacterp,
        Scharacterp,
-       1, 2,
+       1,
+       2,
        ptr::null(),
        "Return non-nil if OBJECT is a character.
 In Emacs Lisp, characters are represented by character codes, which
