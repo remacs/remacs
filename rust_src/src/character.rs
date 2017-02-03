@@ -1,17 +1,16 @@
 use std::os::raw::c_char;
 use std::ptr;
 
-use lisp;
-
 extern crate libc;
 
 use lisp::{LispObject, LispSubr, EmacsInt, CharBits};
 
+// TODO: Uppercase?
 /// Maximum character code
 pub const MaxChar: EmacsInt = (1 << CharBits::CHARACTERBITS as EmacsInt) - 1;
 
 fn Fmax_char() -> LispObject {
-    lisp::make_number(MaxChar)
+    unsafe { LispObject::from_fixnum_unchecked(MaxChar) }
 }
 
 defun!("max-char",

@@ -4,7 +4,7 @@ use std::os::raw::c_char;
 use std::ptr;
 use std::mem;
 
-use lisp::{CHECK_TYPE, LispObject, LispSubr, LispType, Qnil, XTYPE, XUNTAG, wrong_type_argument};
+use lisp::{CHECK_TYPE, LispObject, LispSubr, LispType, Qnil, wrong_type_argument};
 
 extern "C" {
     static Qconsp: LispObject;
@@ -14,7 +14,7 @@ extern "C" {
 
 
 pub fn CONSP(x: LispObject) -> bool {
-    XTYPE(x) == LispType::Lisp_Cons
+    x.get_type() == LispType::Lisp_Cons
 }
 
 fn Fatom(object: LispObject) -> LispObject {
@@ -81,7 +81,7 @@ pub struct LispConsChain {
 /// Extract the LispCons data from an elisp value.
 fn XCONS(a: LispObject) -> *mut LispCons {
     debug_assert!(CONSP(a));
-    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_Cons)) }
+    unsafe { mem::transmute(a.get_untaggedptr()) }
 }
 
 /// Set the car of a cons cell.
