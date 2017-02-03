@@ -4494,7 +4494,7 @@ Tim Van Holder: changed emacsclient.c Makefile.in configure.ac
 
 Tino Calancha: changed cl-macs.el cl.texi descr-text.el dired-aux.el
   find-func.el help-fns.el help-mode.el ibuf-ext.el ibuffer.el os.texi
-  simple.el vc.el
+  simple.el vc.el CONTRIBUTE
 
 Titus von der Malsburg: changed simple.el window.el
 
@@ -4553,7 +4553,7 @@ and co-wrote package.el tcl.el
 and changed buffer.c lisp.h makefile.el window.c keyboard.c keymap.c
   xfns.c buffer.h bytecode.c callint.c callproc.c cmds.c composite.c
   configure.ac dispextern.h doc.c editfns.c fileio.c frame.c insdel.c
-  intervals.h and 139 other files
+  intervals.h and 140 other files
 
 Tom Willemse: changed elec-pair.el package.el prog-mode.el
   progmodes/python.el simple.el
