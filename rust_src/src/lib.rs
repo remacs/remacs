@@ -88,6 +88,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*strings::Sbase64_decode_string);
         defsubr(&*strings::Snull);
         defsubr(&*character::Smax_char);
+        defsubr(&*character::Scharacterp);
 
         floatfns::init_float_syms();
     }
