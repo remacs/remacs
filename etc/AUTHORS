@@ -3359,7 +3359,7 @@ and changed sequences.texi README configure.ac sed2v2.inp emacs.png
   authors.el emacs23.png arc-mode.el cl-extra.el emacs.svg README.W32
   Emacs.icns Makefile.in auth-source.el emacs.ico obarray.el data.c
   emacs-document.svg emacs-document23.svg emacs.texi emacs23.svg
-  and 8 other files
+  and 9 other files
 
 Nicolas Richard: wrote cl-seq-tests.el cmds-tests.el
 and changed ffap.el package.el help.el keyboard.c landmark.el org.el
