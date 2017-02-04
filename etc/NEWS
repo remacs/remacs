@@ -885,6 +885,10 @@ collection).
 +++
 ** 'car' and 'cdr' compositions 'cXXXr' and 'cXXXXr' are now part of Elisp.
 
+---
+** 'if-let*', 'when-let*', and 'and-let*' are new in subr-x.el.
+The incumbent 'if-let' and 'when-let' are now aliases.
+
 +++
 ** The new functions 'make-nearby-temp-file' and 'temporary-file-directory'
 can be used for creation of temporary files of remote or mounted directories.
