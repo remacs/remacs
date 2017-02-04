@@ -128,11 +128,11 @@ lisp_mutex_init (lisp_mutex_t *mutex)
   sys_cond_init (&mutex->condition);
 }
 
-/* Lock MUTEX setting its count to COUNT, if non-zero, or to 1
-   otherwise.
+/* Lock MUTEX for thread LOCKER, setting its lock count to COUNT, if
+   non-zero, or to 1 otherwise.
 
-   If MUTEX is locked by the current thread, COUNT must be zero, and
-   the MUTEX's lock count will be incremented.
+   If MUTEX is locked by LOCKER, COUNT must be zero, and the MUTEX's
+   lock count will be incremented.
 
    If MUTEX is locked by another thread, this function will release
    the global lock, giving other threads a chance to run, and will
@@ -143,24 +143,25 @@ lisp_mutex_init (lisp_mutex_t *mutex)
    unlocked (meaning other threads could have run during the wait),
    zero otherwise.  */
 static int
-lisp_mutex_lock (lisp_mutex_t *mutex, int new_count)
+lisp_mutex_lock_for_thread (lisp_mutex_t *mutex, struct thread_state *locker,
+			    int new_count)
 {
   struct thread_state *self;
 
   if (mutex->owner == NULL)
     {
-      mutex->owner = current_thread;
+      mutex->owner = locker;
       mutex->count = new_count == 0 ? 1 : new_count;
       return 0;
     }
-  if (mutex->owner == current_thread)
+  if (mutex->owner == locker)
     {
       eassert (new_count == 0);
       ++mutex->count;
       return 0;
     }
 
-  self = current_thread;
+  self = locker;
   self->wait_condvar = &mutex->condition;
   while (mutex->owner != NULL && (new_count != 0
 				  || NILP (self->error_symbol)))
@@ -174,6 +175,12 @@ lisp_mutex_lock (lisp_mutex_t *mutex, int new_count)
   mutex->count = new_count == 0 ? 1 : new_count;
 
   return 1;
+}
+
+static int
+lisp_mutex_lock (lisp_mutex_t *mutex, int new_count)
+{
+  return lisp_mutex_lock_for_thread (mutex, current_thread, new_count);
 }
 
 /* Decrement MUTEX's lock count.  If the lock count becomes zero after
@@ -398,16 +405,16 @@ condition_wait_callback (void *arg)
       self->wait_condvar = NULL;
     }
   self->event_object = Qnil;
-  /* Since sys_cond_wait could switch threads, we need to re-establish
-     ourselves as the current thread, otherwise lisp_mutex_lock will
-     record the wrong thread as the owner of the mutex lock.  */
-  post_acquire_global_lock (self);
-  /* Calling lisp_mutex_lock might yield to other threads while this
-     one waits for the mutex to become unlocked, so we need to
-     announce us as the current thread by calling
+  /* Since sys_cond_wait could switch threads, we need to lock the
+     mutex for the thread which was the current when we were called,
+     otherwise lisp_mutex_lock will record the wrong thread as the
+     owner of the mutex lock.  */
+  lisp_mutex_lock_for_thread (&mutex->mutex, self, saved_count);
+  /* Calling lisp_mutex_lock_for_thread might yield to other threads
+     while this one waits for the mutex to become unlocked, so we need
+     to announce us as the current thread by calling
      post_acquire_global_lock.  */
-  if (lisp_mutex_lock (&mutex->mutex, saved_count))
-    post_acquire_global_lock (self);
+  post_acquire_global_lock (self);
 }
 
 DEFUN ("condition-wait", Fcondition_wait, Scondition_wait, 1, 1, 0,
@@ -663,10 +670,13 @@ invoke_thread_function (void)
   return unbind_to (count, Qnil);
 }
 
+static Lisp_Object last_thread_error;
+
 static Lisp_Object
-do_nothing (Lisp_Object whatever)
+record_thread_error (Lisp_Object error_form)
 {
-  return whatever;
+  last_thread_error = error_form;
+  return error_form;
 }
 
 static void *
@@ -695,7 +705,7 @@ run_thread (void *state)
   handlerlist_sentinel->next = NULL;
 
   /* It might be nice to do something with errors here.  */
-  internal_condition_case (invoke_thread_function, Qt, do_nothing);
+  internal_condition_case (invoke_thread_function, Qt, record_thread_error);
 
   update_processes_for_thread_death (Fcurrent_thread ());
 
@@ -944,6 +954,13 @@ DEFUN ("all-threads", Fall_threads, Sall_threads, 0, 0, 0,
   return result;
 }
 
+DEFUN ("thread-last-error", Fthread_last_error, Sthread_last_error, 0, 0, 0,
+       doc: /* Return the last error form recorded by a dying thread.  */)
+  (void)
+{
+  return last_thread_error;
+}
+
 
 
 bool
@@ -1028,6 +1045,10 @@ syms_of_threads (void)
       defsubr (&Scondition_notify);
       defsubr (&Scondition_mutex);
       defsubr (&Scondition_name);
+      defsubr (&Sthread_last_error);
+
+      staticpro (&last_thread_error);
+      last_thread_error = Qnil;
     }
 
   DEFSYM (Qthreadp, "threadp");

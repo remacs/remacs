@@ -44,10 +44,27 @@ index 3d7cebadcf..ad4b70d737 100644
                 str
                 (make-string ffap-max-region-length #xa)
                 (format "%s ENDS HERE" file)))
-              (mark-whole-buffer)
+              (call-interactively 'mark-whole-buffer)
               (should (equal "" (ffap-string-at-point)))
               (should (equal '(1 1) ffap-string-at-point-region)))))
       (and (file-exists-p file) (delete-file file)))))
+
+(ert-deftest ffap-gopher-at-point ()
+  (with-temp-buffer
+    (insert "\
+Type = 1
+Name = foo
+Path = /the/path
+Port = 7070
+Host = example.com\n")
+    (should-not (ffap-gopher-at-point))
+    (goto-char (point-min))
+    (should (equal (ffap-gopher-at-point)
+                   "gopher://example.com:7070/1/the/path"))
+    (should (equal ffap-string-at-point-region
+                   (list (point-min) (point-max))))
+    (let ((ffap-gopher-regexp nil))
+      (should-not (ffap-gopher-at-point)))))
 
 (provide 'ffap-tests)
 

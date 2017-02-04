@@ -313,7 +313,8 @@ comment at the start of cc-engine.el for more info."
 		   (c-macro-is-genuine-p))
 	      (progn
 		(setq c-macro-cache (cons (point) nil)
-		      c-macro-cache-start-pos here)
+		      c-macro-cache-start-pos here
+		      c-macro-cache-syntactic nil)
 		t)
 	    (goto-char here)
 	    nil))))))
@@ -344,7 +345,8 @@ comment at the start of cc-engine.el for more info."
 		(forward-char)
 		t)))
      (when (car c-macro-cache)
-       (setcdr c-macro-cache (point)))))
+       (setcdr c-macro-cache (point))
+       (setq c-macro-cache-syntactic nil))))
 
 (defun c-syntactic-end-of-macro ()
   ;; Go to the end of a CPP directive, or a "safe" pos just before.
@@ -364,7 +366,8 @@ comment at the start of cc-engine.el for more info."
 	(goto-char c-macro-cache-syntactic)
       (setq s (parse-partial-sexp here there))
       (while (and (or (nth 3 s)	 ; in a string
-		      (nth 4 s)) ; in a comment (maybe at end of line comment)
+		      (and (nth 4 s) ; in a comment (maybe at end of line comment)
+			   (not (eq (nth 7 s) 'syntax-table)))) ; Not a pseudo comment
 		  (> there here))	; No infinite loops, please.
 	(setq there (1- (nth 8 s)))
 	(setq s (parse-partial-sexp here there)))
@@ -389,7 +392,8 @@ comment at the start of cc-engine.el for more info."
 		  (> there here))	; No infinite loops, please.
 	(setq here (1+ (nth 8 s)))
 	(setq s (parse-partial-sexp here there)))
-      (when (nth 4 s)
+      (when (and (nth 4 s)
+		 (not (eq (nth 7 s) 'syntax-table))) ; no pseudo comments.
 	(goto-char (1- (nth 8 s))))
       (setq c-macro-cache-no-comment (point)))
     (point)))
@@ -2407,7 +2411,9 @@ comment at the start of cc-engine.el for more info."
 	       (s (parse-partial-sexp base here nil nil s))
 	       ty)
 	  (cond
-	   ((or (nth 3 s) (nth 4 s))	; in a string or comment
+	   ((or (nth 3 s)
+		(and (nth 4 s)
+		     (not (eq (nth 7 s) 'syntax-table)))) ; in a string or comment
 	    (setq ty (cond
 		      ((nth 3 s) 'string)
 		      ((nth 7 s) 'c++)
@@ -2453,7 +2459,9 @@ comment at the start of cc-engine.el for more info."
 	       (s (parse-partial-sexp base here nil nil s))
 	       ty start)
 	  (cond
-	   ((or (nth 3 s) (nth 4 s))	; in a string or comment
+	   ((or (nth 3 s)
+		(and (nth 4 s)
+		     (not (eq (nth 7 s) 'syntax-table)))) ; in a string or comment
 	    (setq ty (cond
 		      ((nth 3 s) 'string)
 		      ((nth 7 s) 'c++)
@@ -2479,7 +2487,7 @@ comment at the start of cc-engine.el for more info."
 
 	   (t (list s))))))))
 
-(defsubst c-state-pp-to-literal (from to &optional not-in-delimiter)
+(defun c-state-pp-to-literal (from to &optional not-in-delimiter)
   ;; Do a parse-partial-sexp from FROM to TO, returning either
   ;;     (STATE TYPE (BEG . END))     if TO is in a literal; or
   ;;     (STATE)                      otherwise,
@@ -2498,7 +2506,9 @@ comment at the start of cc-engine.el for more info."
       (let ((s (parse-partial-sexp from to))
 	    ty co-st)
 	(cond
-	 ((or (nth 3 s) (nth 4 s))	; in a string or comment
+	 ((or (nth 3 s)
+	      (and (nth 4 s)
+		   (not (eq (nth 7 s) 'syntax-table))))	; in a string or comment
 	  (setq ty (cond
 		    ((nth 3 s) 'string)
 		    ((nth 7 s) 'c++)
@@ -2560,7 +2570,8 @@ comment at the start of cc-engine.el for more info."
   (cond
    ((nth 3 state)			; A string
     (list (point) (nth 3 state) (nth 8 state)))
-   ((nth 4 state)			; A comment
+   ((and (nth 4 state)			; A comment
+	 (not (eq (nth 7 state) 'syntax-table))) ; but not a psuedo comment.
     (list (point)
 	  (if (eq (nth 7 state) 1) 'c++ 'c)
 	  (nth 8 state)))
@@ -2697,7 +2708,7 @@ comment at the start of cc-engine.el for more info."
     (widen)
     (save-excursion
       (let ((pos (c-state-safe-place here)))
-	    (car (cddr (c-state-pp-to-literal pos here)))))))
+	(car (cddr (c-state-pp-to-literal pos here)))))))
 
 (defsubst c-state-lit-beg (pos)
   ;; Return the start of the literal containing POS, or POS itself.
@@ -2708,7 +2719,8 @@ comment at the start of cc-engine.el for more info."
   ;; Return a position outside of a string/comment/macro at or before POS.
   ;; STATE is the parse-partial-sexp state at POS.
   (let ((res (if (or (nth 3 state)	; in a string?
-		     (nth 4 state))	; in a comment?
+		     (and (nth 4 state)
+			  (not (eq (nth 7 state) 'syntax-table)))) ; in a comment?
 		 (nth 8 state)
 	       pos)))
     (save-excursion
@@ -3467,7 +3479,7 @@ comment at the start of cc-engine.el for more info."
      ((and (consp (car c-state-cache))
 	   (> (cdar c-state-cache) here))
       ;; CASE 1: The top of the cache is a brace pair which now encloses
-      ;; `here'.  As good-pos, return the address. of the "{".  Since we've no
+      ;; `here'.  As good-pos, return the address of the "{".  Since we've no
       ;; knowledge of what's inside these braces, we have no alternative but
       ;; to direct the caller to scan the buffer from the opening brace.
       (setq pos (caar c-state-cache))
@@ -4952,7 +4964,8 @@ comment at the start of cc-engine.el for more info."
 	 (lit-limits
 	  (if lim
 	      (let ((s (parse-partial-sexp lim (point))))
-		(when (or (nth 3 s) (nth 4 s))
+		(when (or (nth 3 s)
+			  (and (nth 4 s) (not (eq (nth 7 s) 'syntax-table))))
 		  (cons (nth 8 s)
 			(progn (parse-partial-sexp (point) (point-max)
 						   nil nil
@@ -5005,7 +5018,8 @@ point isn't in one.  SAFE-POS, if non-nil, is a position before point which is
 a known \"safe position\", i.e. outside of any string or comment."
   (if safe-pos
       (let ((s (parse-partial-sexp safe-pos (point))))
-	(and (or (nth 3 s) (nth 4 s))
+	(and (or (nth 3 s)
+		 (and (nth 4 s) (not (eq (nth 7 s) 'syntax-table))))
 	     (nth 8 s)))
     (car (cddr (c-state-semi-pp-to-literal (point))))))
 
@@ -5106,7 +5120,8 @@ comment at the start of cc-engine.el for more info."
 		 'syntax-table))	; stop-comment
 
 	;; Gather details of the non-literal-bit - starting pos and size.
-	(setq size (- (if (or (nth 4 s) (nth 3 s))
+	(setq size (- (if (or (and (nth 4 s) (not (eq (nth 7 s) 'syntax-table)))
+			      (nth 3 s))
 			  (nth 8 s)
 			(point))
 		      pos))
@@ -5114,7 +5129,8 @@ comment at the start of cc-engine.el for more info."
 	    (setq stack (cons (cons pos size) stack)))
 
 	;; Move forward to the end of the comment/string.
-	(if (or (nth 4 s) (nth 3 s))
+	(if (or (and (nth 4 s) (not (eq (nth 7 s) 'syntax-table)))
+		(nth 3 s))
 	    (setq s (parse-partial-sexp
 		     (point)
 		     start

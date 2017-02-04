@@ -216,6 +216,7 @@ No problems result if this variable is not bound.
 	      (purecopy ,(format "Keymap for `%s'." child))))
        ,(if declare-syntax
 	    `(progn
+               (defvar ,syntax)
 	       (unless (boundp ',syntax)
 		 (put ',syntax 'definition-name ',child)
 		 (defvar ,syntax (make-syntax-table)))
@@ -224,6 +225,7 @@ No problems result if this variable is not bound.
 		      (purecopy ,(format "Syntax table for `%s'." child))))))
        ,(if declare-abbrev
 	    `(progn
+               (defvar ,abbrev)
 	       (unless (boundp ',abbrev)
 		 (put ',abbrev 'definition-name ',child)
 		 (defvar ,abbrev

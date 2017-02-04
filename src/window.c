@@ -518,9 +518,10 @@ select_window (Lisp_Object window, Lisp_Object norecord,
   bset_last_selected_window (XBUFFER (w->contents), window);
 
  record_and_return:
-  /* record_buffer can run QUIT, so make sure it is run only after we have
-     re-established the invariant between selected_window and selected_frame,
-     otherwise the temporary broken invariant might "escape" (bug#14161).  */
+  /* record_buffer can call maybe_quit, so make sure it is run only
+     after we have re-established the invariant between
+     selected_window and selected_frame, otherwise the temporary
+     broken invariant might "escape" (Bug#14161).  */
   if (NILP (norecord))
     {
       w->use_time = ++window_select_count;
