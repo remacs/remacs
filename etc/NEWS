@@ -758,6 +758,7 @@ instead.
 
 * Lisp Changes in Emacs 26.1
 
++++
 ** 'save-some-buffers' now uses 'save-some-buffers-default-predicate'
 to decide which buffers to ask about, if the PRED argument is nil.
 The default value of 'save-some-buffers-default-predicate' is nil,
