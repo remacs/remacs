@@ -755,7 +755,7 @@ cannot be completed sensibly: `custom-ident',
   "Return t if point looks to be inside a CSS selector.
 This function is intended to be good enough to help SMIE during
 tokenization, but should not be regarded as a reliable function
-for determining wheter point is within a selector."
+for determining whether point is within a selector."
   (save-excursion
     (re-search-forward "[{};)]" nil t)
     (eq (char-before) ?\{)))
