@@ -464,6 +464,11 @@ viewing HTML files and the like.
 breakpoint (e.g. with "f" and "o") by customizing the new option
 'edebug-sit-on-break'.
 
++++
+*** New customizable option 'edebug-max-depth'
+This allows to enlarge the maximum recursion depth when instrumenting
+code.
+
 ** Eshell
 
 *** 'eshell-input-filter's value is now a named function
