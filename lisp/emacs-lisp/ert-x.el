@@ -285,6 +285,30 @@ BUFFER defaults to current buffer.  Does not modify BUFFER."
             (kill-buffer clone)))))))
 
 
+(defmacro ert-with-message-capture (var &rest body)
+  "Execute BODY while collecting anything written with `message' in VAR.
+
+Capture all messages produced by `message' when it is called from
+Lisp, and concatenate them separated by newlines into one string.
+
+This is useful for separating the issuance of messages by the
+code under test from the behavior of the *Messages* buffer."
+  (declare (debug (symbolp body))
+           (indent 1))
+  (let ((g-advice (cl-gensym)))
+    `(let* ((,var "")
+            (,g-advice (lambda (func &rest args)
+                         (if (or (null args) (equal (car args) ""))
+                             (apply func args)
+                           (let ((msg (apply #'format-message args)))
+                             (setq ,var (concat ,var msg "\n"))
+                             (funcall func "%s" msg))))))
+       (advice-add 'message :around ,g-advice)
+       (unwind-protect
+           (progn ,@body)
+         (advice-remove 'message ,g-advice)))))
+
+
 (provide 'ert-x)
 
 ;;; ert-x.el ends here
