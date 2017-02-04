@@ -5134,6 +5134,13 @@ Before and after saving the buffer, this function runs
   "Non-nil means `save-some-buffers' should save this buffer without asking.")
 (make-variable-buffer-local 'buffer-save-without-query)
 
+(defcustom save-some-buffers-default-predicate nil
+  "Default predicate for `save-some-buffers'.
+This allows you to stop `save-some-buffers' from asking
+about certain files that you'd usually rather not save."
+  :group 'auto-save
+  :type 'function)
+
 (defun save-some-buffers (&optional arg pred)
   "Save some modified file-visiting buffers.  Asks user about each one.
 You can answer `y' to save, `n' not to save, `C-r' to look at the
@@ -5149,10 +5156,13 @@ If PRED is nil, all the file-visiting buffers are considered.
 If PRED is t, then certain non-file buffers will also be considered.
 If PRED is a zero-argument function, it indicates for each buffer whether
 to consider it or not when called with that buffer current.
+PRED defaults to the value of `save-some-buffers-default-predicate'.
 
 See `save-some-buffers-action-alist' if you want to
 change the additional actions you can take on files."
   (interactive "P")
+  (unless pred
+    (setq pred save-some-buffers-default-predicate))
   (save-window-excursion
     (let* (queried autosaved-buffers
 	   files-done abbrevs-done)
@@ -6812,6 +6822,8 @@ asks whether processes should be killed.
 Runs the members of `kill-emacs-query-functions' in turn and stops
 if any returns nil.  If `confirm-kill-emacs' is non-nil, calls it."
   (interactive "P")
+  ;; Don't use save-some-buffers-default-predicate, because we want
+  ;; to ask about all the buffers before killing Emacs.
   (save-some-buffers arg t)
   (let ((confirm confirm-kill-emacs))
     (and
