@@ -190,7 +190,9 @@ This expects `auto-revert--messages' to be bound by
             ;; notification should be disabled, falling back to
             ;; polling.
             (should (string-match "any text" (buffer-string)))
-            (should-not auto-revert-use-notify)
+            ;; With w32notify, the 'stopped' events are not sent.
+            (or (eq file-notify--library 'w32notify)
+                (should-not auto-revert-use-notify))
 
             ;; Once the file has been recreated, the buffer shall be
             ;; reverted.
