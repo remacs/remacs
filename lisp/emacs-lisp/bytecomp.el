@@ -4001,19 +4001,13 @@ that suppresses all warnings during execution of BODY."
 	(byte-compile-out-tag donetag))))
   (setq byte-compile--for-effect nil))
 
-(defun byte-compile-cond-valid-obj2-p (obj)
-  (cond
-   ((consp obj)
-    (and (eq (car obj) 'quote)
-         (= (length obj) 2)
-         (symbolp (cadr obj))))
-   ((symbolp obj) (keywordp obj))
-   (t t)))
-
 (defun byte-compile-cond-vars (obj1 obj2)
+  ;; We make sure that of OBJ1 and OBJ2, one of them is a symbol,
+  ;; and the other is a constant expression whose value can be
+  ;; compared with `eq' (with `macroexp-const-p').
   (or
-   (and (symbolp obj1) (byte-compile-cond-valid-obj2-p obj2) (cons obj1 obj2))
-   (and (symbolp obj2) (byte-compile-cond-valid-obj2-p obj1) (cons obj2 obj1))))
+   (and (symbolp obj1) (macroexp-const-p obj2) (cons obj1 obj2))
+   (and (symbolp obj2) (macroexp-const-p obj1) (cons obj2 obj1))))
 
 (defun byte-compile-cond-jump-table-info (clauses)
   "If CLAUSES is a `cond' form where:
