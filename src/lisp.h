@@ -3317,6 +3317,7 @@ extern struct Lisp_Symbol *indirect_variable (struct Lisp_Symbol *);
 extern _Noreturn void args_out_of_range (Lisp_Object, Lisp_Object);
 extern _Noreturn void args_out_of_range_3 (Lisp_Object, Lisp_Object,
 					   Lisp_Object);
+extern _Noreturn void circular_list (Lisp_Object);
 extern Lisp_Object do_symval_forwarding (union Lisp_Fwd *);
 enum Set_Internal_Bind {
   SET_INTERNAL_SET,
@@ -4585,20 +4586,25 @@ enum
 	 Lisp_String))							\
      : make_unibyte_string (str, len))
 
-/* Loop over all tails of a list, checking for cycles.
-   FIXME: Make tortoise and n internal declarations.
-   FIXME: Unroll the loop body so we don't need `n'.  */
-#define FOR_EACH_TAIL(hare, list, tortoise, n)	\
-  for ((tortoise) = (hare) = (list), (n) = true;		\
-       CONSP (hare);						\
-       (hare = XCDR (hare), (n) = !(n),				\
-   	((n)							\
-   	 ? (EQ (hare, tortoise)					\
-	    ? xsignal1 (Qcircular_list, list)			\
-	    : (void) 0)						\
-	 /* Move tortoise before the next iteration, in case */ \
-	 /* the next iteration does an Fsetcdr.  */		\
-   	 : (void) ((tortoise) = XCDR (tortoise)))))
+/* Loop over tails of LIST, checking for dotted lists and cycles.
+   In the loop body, ‘li.tail’ is the current cons; the name ‘li’ is
+   short for “list iterator”.  The expression LIST may be evaluated
+   more than once, and so should not have side effects.  The loop body
+   should not modify the list’s top level structure other than by
+   perhaps deleting the current cons.
+
+   Use Brent’s teleporting tortoise-hare algorithm.  See:
+   Brent RP. BIT. 1980;20(2):176-84. doi:10.1007/BF01933190
+   http://maths-people.anu.edu.au/~brent/pd/rpb051i.pdf  */
+
+#define FOR_EACH_TAIL(list)						\
+  for (struct { Lisp_Object tail, tortoise; intptr_t n, max; } li	\
+	 = { list, list, 2, 2 };					\
+       CONSP (li.tail) || (CHECK_LIST_END (li.tail, list), false);	\
+       (li.tail = XCDR (li.tail),					\
+	(li.n-- == 0							\
+	 ? (void) (li.n = li.max <<= 1, li.tortoise = li.tail)		\
+	 : EQ (li.tail, li.tortoise) ? circular_list (list) : (void) 0)))
 
 /* Do a `for' loop over alist values.  */
 

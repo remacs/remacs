@@ -1544,25 +1544,23 @@ list.
 Write `(setq foo (delq element foo))' to be sure of correctly changing
 the value of a list `foo'.  See also `remq', which does not modify the
 argument.  */)
-  (register Lisp_Object elt, Lisp_Object list)
+  (Lisp_Object elt, Lisp_Object list)
 {
-  Lisp_Object tail, tortoise, prev = Qnil;
-  bool skip;
+  Lisp_Object prev = Qnil;
 
-  FOR_EACH_TAIL (tail, list, tortoise, skip)
+  FOR_EACH_TAIL (list)
     {
-      Lisp_Object tem = XCAR (tail);
+      Lisp_Object tem = XCAR (li.tail);
       if (EQ (elt, tem))
 	{
 	  if (NILP (prev))
-	    list = XCDR (tail);
+	    list = XCDR (li.tail);
 	  else
-	    Fsetcdr (prev, XCDR (tail));
+	    Fsetcdr (prev, XCDR (li.tail));
 	}
       else
-	prev = tail;
+	prev = li.tail;
     }
-  CHECK_LIST_END (tail, list);
   return list;
 }
 
