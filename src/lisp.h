@@ -4603,6 +4603,14 @@ enum
 #define FOR_EACH_TAIL_SAFE(list) \
   FOR_EACH_TAIL_INTERNAL (list, (void) 0, (void) (li.tail = Qnil), false)
 
+/* Iterator intended for use only within FOR_EACH_TAIL_INTERNAL.  */
+struct for_each_tail_internal
+{
+  Lisp_Object tail, tortoise;
+  intptr_t max, n;
+  unsigned short int q;
+};
+
 /* Like FOR_EACH_TAIL (LIST), except evaluate DOTTED or CYCLE,
    respectively, if a dotted list or cycle is found, and check for
    quit if CHECK_QUIT.  This is an internal macro intended for use
@@ -4619,9 +4627,7 @@ enum
    is little point to calling maybe_quit here.  */
 
 #define FOR_EACH_TAIL_INTERNAL(list, dotted, cycle, check_quit)		\
-  for (struct { Lisp_Object tail, tortoise; intptr_t max, n;		\
-		unsigned short int q;					\
-	      } li = { list, list, 2, 0, 2 };				\
+  for (struct for_each_tail_internal li = { list, list, 2, 0, 2 };	\
        CONSP (li.tail) || (dotted, false);				\
        (li.tail = XCDR (li.tail),					\
 	((--li.q != 0							\
