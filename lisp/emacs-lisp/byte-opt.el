@@ -1405,7 +1405,7 @@
              ;; TAGs.
              (let ((orig-table last-constant))
                (cl-loop for e across constvec
-                        when (= e last-constant)
+                        when (eq e last-constant)
                         do (setq last-constant (copy-hash-table e))
                         and return nil)
                ;; Replace all addresses with TAGs.
