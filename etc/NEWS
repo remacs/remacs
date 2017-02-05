@@ -307,8 +307,21 @@ local part of a remote file name.  Thus, if you have a directory named
 "/~" on the remote host "foo", you can prevent it from being
 substituted by a home directory by writing it as "/foo:/:/~/file".
 
++++
+** The new variable 'maximum-scroll-margin' allows having effective
+settings of 'scroll-margin' up to half the window size, instead of
+always restricting the margin to a quarter of the window.
+
 
 * Editing Changes in Emacs 26.1
+
++++
+** Two new user options 'list-matching-lines-jump-to-current-line' and
+'list-matching-lines-current-line-face' to show highlighted the current
+line in *Occur* buffer.
+
++++
+** The 'occur' command can now operate on the region.
 
 +++
 ** New bindings for 'query-replace-map'.
@@ -450,6 +463,11 @@ viewing HTML files and the like.
 *** Edebug can be prevented from pausing 1 second after reaching a
 breakpoint (e.g. with "f" and "o") by customizing the new option
 'edebug-sit-on-break'.
+
++++
+*** New customizable option 'edebug-max-depth'
+This allows to enlarge the maximum recursion depth when instrumenting
+code.
 
 ** Eshell
 
@@ -613,6 +631,13 @@ HTML tags, classes and IDs using the 'completion-at-point' command.
 Completion candidates for HTML classes and IDs are retrieved from open
 HTML mode buffers.
 
+---
+*** CSS mode now binds 'C-h S' to a function that will show
+information about a CSS construct (an at-rule, property, pseudo-class,
+pseudo-element, with the default being guessed from context).  By
+default the information is looked up on the Mozilla Developer Network,
+but this can be customized using 'css-lookup-url-format'.
+
 +++
 ** Emacs now supports character name escape sequences in character and
 string literals.  The syntax variants \N{character name} and
@@ -738,6 +763,13 @@ instead.
 
 * Lisp Changes in Emacs 26.1
 
++++
+** 'save-some-buffers' now uses 'save-some-buffers-default-predicate'
+to decide which buffers to ask about, if the PRED argument is nil.
+The default value of 'save-some-buffers-default-predicate' is nil,
+which means ask about all file-visiting buffers.
+
+** string-(to|as|make)-(uni|multi)byte are now declared obsolete.
 ** New variable 'while-no-input-ignore-events' which allow
 setting which special events 'while-no-input' should ignore.
 It is a list of symbols.
@@ -863,6 +895,10 @@ collection).
 
 +++
 ** 'car' and 'cdr' compositions 'cXXXr' and 'cXXXXr' are now part of Elisp.
+
+---
+** 'if-let*', 'when-let*', and 'and-let*' are new in subr-x.el.
+The incumbent 'if-let' and 'when-let' are now aliases.
 
 +++
 ** The new functions 'make-nearby-temp-file' and 'temporary-file-directory'

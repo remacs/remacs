@@ -2880,7 +2880,7 @@ DEFUN ("make-list", Fmake_list, Smake_list, 2, 2, 0,
   for (EMACS_INT size = XFASTINT (length); 0 < size; size--)
     {
       val = Fcons (init, val);
-      maybe_quit ();
+      rarely_quit (size);
     }
 
   return val;
@@ -4887,12 +4887,19 @@ mark_memory (void *start, void *end)
     }
 }
 
-#if !defined GC_SAVE_REGISTERS_ON_STACK && !defined GC_SETJMP_WORKS
+#ifndef HAVE___BUILTIN_UNWIND_INIT
+
+# ifdef GC_SETJMP_WORKS
+static void
+test_setjmp (void)
+{
+}
+# else
 
 static bool setjmp_tested_p;
 static int longjmps_done;
 
-#define SETJMP_WILL_LIKELY_WORK "\
+#  define SETJMP_WILL_LIKELY_WORK "\
 \n\
 Emacs garbage collector has been changed to use conservative stack\n\
 marking.  Emacs has determined that the method it uses to do the\n\
@@ -4905,7 +4912,7 @@ verify that the methods used are appropriate for your system.\n\
 Please mail the result to <emacs-devel@gnu.org>.\n\
 "
 
-#define SETJMP_WILL_NOT_WORK "\
+#  define SETJMP_WILL_NOT_WORK "\
 \n\
 Emacs garbage collector has been changed to use conservative stack\n\
 marking.  Emacs has determined that the default method it uses to do the\n\
@@ -4931,6 +4938,9 @@ Please mail the result to <emacs-devel@gnu.org>.\n\
 static void
 test_setjmp (void)
 {
+  if (setjmp_tested_p)
+    return;
+  setjmp_tested_p = true;
   char buf[10];
   register int x;
   sys_jmp_buf jbuf;
@@ -4967,9 +4977,60 @@ test_setjmp (void)
   if (longjmps_done == 1)
     sys_longjmp (jbuf, 1);
 }
+# endif /* ! GC_SETJMP_WORKS */
+#endif /* ! HAVE___BUILTIN_UNWIND_INIT */
 
-#endif /* not GC_SAVE_REGISTERS_ON_STACK && not GC_SETJMP_WORKS */
+/* The type of an object near the stack top, whose address can be used
+   as a stack scan limit.  */
+typedef union
+{
+  /* Align the stack top properly.  Even if !HAVE___BUILTIN_UNWIND_INIT,
+     jmp_buf may not be aligned enough on darwin-ppc64.  */
+  max_align_t o;
+#ifndef HAVE___BUILTIN_UNWIND_INIT
+  sys_jmp_buf j;
+  char c;
+#endif
+} stacktop_sentry;
 
+/* Force callee-saved registers and register windows onto the stack.
+   Use the platform-defined __builtin_unwind_init if available,
+   obviating the need for machine dependent methods.  */
+#ifndef HAVE___BUILTIN_UNWIND_INIT
+# ifdef __sparc__
+   /* This trick flushes the register windows so that all the state of
+      the process is contained in the stack.
+      FreeBSD does not have a ta 3 handler, so handle it specially.
+      FIXME: Code in the Boehm GC suggests flushing (with 'flushrs') is
+      needed on ia64 too.  See mach_dep.c, where it also says inline
+      assembler doesn't work with relevant proprietary compilers.  */
+#  if defined __sparc64__ && defined __FreeBSD__
+#   define __builtin_unwind_init() asm ("flushw")
+#  else
+#   define __builtin_unwind_init() asm ("ta 3")
+#  endif
+# else
+#  define __builtin_unwind_init() ((void) 0)
+# endif
+#endif
+
+/* Set *P to the address of the top of the stack.  This must be a
+   macro, not a function, so that it is executed in the caller’s
+   environment.  It is not inside a do-while so that its storage
+   survives the macro.  */
+#ifdef HAVE___BUILTIN_UNWIND_INIT
+# define SET_STACK_TOP_ADDRESS(p)	\
+   stacktop_sentry sentry;		\
+   __builtin_unwind_init ();		\
+   *(p) = &sentry
+#else
+# define SET_STACK_TOP_ADDRESS(p)		\
+   stacktop_sentry sentry;			\
+   __builtin_unwind_init ();			\
+   test_setjmp ();				\
+   sys_setjmp (sentry.j);			\
+   *(p) = &sentry + (stack_bottom < &sentry.c)
+#endif
 
 /* Mark live Lisp objects on the C stack.
 
@@ -4981,12 +5042,7 @@ test_setjmp (void)
    We have to mark Lisp objects in CPU registers that can hold local
    variables or are used to pass parameters.
 
-   If GC_SAVE_REGISTERS_ON_STACK is defined, it should expand to
-   something that either saves relevant registers on the stack, or
-   calls mark_maybe_object passing it each register's contents.
-
-   If GC_SAVE_REGISTERS_ON_STACK is not defined, the current
-   implementation assumes that calling setjmp saves registers we need
+   This code assumes that calling setjmp saves registers we need
    to see in a jmp_buf which itself lies on the stack.  This doesn't
    have to be true!  It must be verified for each system, possibly
    by taking a look at the source code of setjmp.
@@ -5050,62 +5106,9 @@ flush_stack_call_func (void (*func) (void *arg), void *arg)
 {
   void *end;
   struct thread_state *self = current_thread;
-
-#ifdef HAVE___BUILTIN_UNWIND_INIT
-  /* Force callee-saved registers and register windows onto the stack.
-     This is the preferred method if available, obviating the need for
-     machine dependent methods.  */
-  __builtin_unwind_init ();
-  end = &end;
-#else /* not HAVE___BUILTIN_UNWIND_INIT */
-#ifndef GC_SAVE_REGISTERS_ON_STACK
-  /* jmp_buf may not be aligned enough on darwin-ppc64 */
-  union aligned_jmpbuf {
-    Lisp_Object o;
-    sys_jmp_buf j;
-  } j;
-  volatile bool stack_grows_down_p = (char *) &j > (char *) stack_bottom;
-#endif
-  /* This trick flushes the register windows so that all the state of
-     the process is contained in the stack.  */
-  /* Fixme: Code in the Boehm GC suggests flushing (with `flushrs') is
-     needed on ia64 too.  See mach_dep.c, where it also says inline
-     assembler doesn't work with relevant proprietary compilers.  */
-#ifdef __sparc__
-#if defined (__sparc64__) && defined (__FreeBSD__)
-  /* FreeBSD does not have a ta 3 handler.  */
-  asm ("flushw");
-#else
-  asm ("ta 3");
-#endif
-#endif
-
-  /* Save registers that we need to see on the stack.  We need to see
-     registers used to hold register variables and registers used to
-     pass parameters.  */
-#ifdef GC_SAVE_REGISTERS_ON_STACK
-  GC_SAVE_REGISTERS_ON_STACK (end);
-#else /* not GC_SAVE_REGISTERS_ON_STACK */
-
-#ifndef GC_SETJMP_WORKS  /* If it hasn't been checked yet that
-			    setjmp will definitely work, test it
-			    and print a message with the result
-			    of the test.  */
-  if (!setjmp_tested_p)
-    {
-      setjmp_tested_p = 1;
-      test_setjmp ();
-    }
-#endif /* GC_SETJMP_WORKS */
-
-  sys_setjmp (j.j);
-  end = stack_grows_down_p ? (char *) &j + sizeof j : (char *) &j;
-#endif /* not GC_SAVE_REGISTERS_ON_STACK */
-#endif /* not HAVE___BUILTIN_UNWIND_INIT */
-
+  SET_STACK_TOP_ADDRESS (&end);
   self->stack_top = end;
-  (*func) (arg);
-
+  func (arg);
   eassert (current_thread == self);
 }
 
@@ -5437,7 +5440,8 @@ make_pure_vector (ptrdiff_t len)
 /* Copy all contents and parameters of TABLE to a new table allocated
    from pure space, return the purified table.  */
 static struct Lisp_Hash_Table *
-purecopy_hash_table (struct Lisp_Hash_Table *table) {
+purecopy_hash_table (struct Lisp_Hash_Table *table)
+{
   eassert (NILP (table->weak));
   eassert (!NILP (table->pure));
 
@@ -5480,14 +5484,12 @@ Does not copy symbols.  Copies strings without text properties.  */)
     return purecopy (obj);
 }
 
-struct pinned_object
+/* Pinned objects are marked before every GC cycle.  */
+static struct pinned_object
 {
   Lisp_Object object;
   struct pinned_object *next;
-};
-
-/* Pinned objects are marked before every GC cycle.  */
-static struct pinned_object *pinned_objects;
+} *pinned_objects;
 
 static Lisp_Object
 purecopy (Lisp_Object obj)
@@ -5519,13 +5521,13 @@ purecopy (Lisp_Object obj)
   else if (HASH_TABLE_P (obj))
     {
       struct Lisp_Hash_Table *table = XHASH_TABLE (obj);
-      /* We cannot purify hash tables which haven't been defined with
+      /* Do not purify hash tables which haven't been defined with
          :purecopy as non-nil or are weak - they aren't guaranteed to
          not change.  */
       if (!NILP (table->weak) || NILP (table->pure))
         {
-          /* Instead, the hash table is added to the list of pinned objects,
-             and is marked before GC.  */
+          /* Instead, add the hash table to the list of pinned objects,
+             so that it will be marked during GC.  */
           struct pinned_object *o = xmalloc (sizeof *o);
           o->object = obj;
           o->next = pinned_objects;
@@ -5755,11 +5757,8 @@ compact_undo_list (Lisp_Object list)
 static void
 mark_pinned_objects (void)
 {
-  struct pinned_object *pobj;
-  for (pobj = pinned_objects; pobj; pobj = pobj->next)
-    {
-      mark_object (pobj->object);
-    }
+  for (struct pinned_object *pobj = pinned_objects; pobj; pobj = pobj->next)
+    mark_object (pobj->object);
 }
 
 static void
@@ -6051,58 +6050,7 @@ See Info node `(elisp)Garbage Collection'.  */)
   (void)
 {
   void *end;
-
-#ifdef HAVE___BUILTIN_UNWIND_INIT
-  /* Force callee-saved registers and register windows onto the stack.
-     This is the preferred method if available, obviating the need for
-     machine dependent methods.  */
-  __builtin_unwind_init ();
-  end = &end;
-#else /* not HAVE___BUILTIN_UNWIND_INIT */
-#ifndef GC_SAVE_REGISTERS_ON_STACK
-  /* jmp_buf may not be aligned enough on darwin-ppc64 */
-  union aligned_jmpbuf {
-    Lisp_Object o;
-    sys_jmp_buf j;
-  } j;
-  volatile bool stack_grows_down_p = (char *) &j > (char *) stack_base;
-#endif
-  /* This trick flushes the register windows so that all the state of
-     the process is contained in the stack.  */
-  /* Fixme: Code in the Boehm GC suggests flushing (with `flushrs') is
-     needed on ia64 too.  See mach_dep.c, where it also says inline
-     assembler doesn't work with relevant proprietary compilers.  */
-#ifdef __sparc__
-#if defined (__sparc64__) && defined (__FreeBSD__)
-  /* FreeBSD does not have a ta 3 handler.  */
-  asm ("flushw");
-#else
-  asm ("ta 3");
-#endif
-#endif
-
-  /* Save registers that we need to see on the stack.  We need to see
-     registers used to hold register variables and registers used to
-     pass parameters.  */
-#ifdef GC_SAVE_REGISTERS_ON_STACK
-  GC_SAVE_REGISTERS_ON_STACK (end);
-#else /* not GC_SAVE_REGISTERS_ON_STACK */
-
-#ifndef GC_SETJMP_WORKS  /* If it hasn't been checked yet that
-			    setjmp will definitely work, test it
-			    and print a message with the result
-			    of the test.  */
-  if (!setjmp_tested_p)
-    {
-      setjmp_tested_p = 1;
-      test_setjmp ();
-    }
-#endif /* GC_SETJMP_WORKS */
-
-  sys_setjmp (j.j);
-  end = stack_grows_down_p ? (char *) &j + sizeof j : (char *) &j;
-#endif /* not GC_SAVE_REGISTERS_ON_STACK */
-#endif /* not HAVE___BUILTIN_UNWIND_INIT */
+  SET_STACK_TOP_ADDRESS (&end);
   return garbage_collect_1 (end);
 }
 
@@ -7412,9 +7360,6 @@ init_alloc_once (void)
 void
 init_alloc (void)
 {
-#if !defined GC_SAVE_REGISTERS_ON_STACK && !defined GC_SETJMP_WORKS
-  setjmp_tested_p = longjmps_done = 0;
-#endif
   Vgc_elapsed = make_float (0.0);
   gcs_done = 0;
 
