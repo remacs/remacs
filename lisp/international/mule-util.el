@@ -352,7 +352,7 @@ QUALITY can be:
   `approximate', in which case we may cut some corners to avoid
     excessive work.
   `exact', in which case we may end up re-(en/de)coding a large
-    part of the file/buffer.
+    part of the file/buffer, this can be expensive and slow.
   nil, in which case we may return nil rather than an approximation."
   (unless coding-system (setq coding-system buffer-file-coding-system))
   (let ((eol (coding-system-eol-type coding-system))
@@ -428,7 +428,7 @@ QUALITY can be:
   `approximate', in which case we may cut some corners to avoid
     excessive work.
   `exact', in which case we may end up re-(en/de)coding a large
-    part of the file/buffer.
+    part of the file/buffer, this can be expensive and slow.
   nil, in which case we may return nil rather than an approximation."
   (unless coding-system (setq coding-system buffer-file-coding-system))
   (let* ((eol (coding-system-eol-type coding-system))

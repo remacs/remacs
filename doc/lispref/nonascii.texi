@@ -142,7 +142,7 @@ be one of the following:
 @table @code
 @item exact
 The result must be accurate.  The function may need to encode and
-decode a large part of the buffer.
+decode a large part of the buffer, which is expensive and can be slow.
 @item approximate
 The value can be an approximation.  The function may avoid expensive
 processing and return an inexact result.
