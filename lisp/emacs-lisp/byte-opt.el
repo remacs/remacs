@@ -1417,8 +1417,10 @@
                               (push (cons (+ (car tag) (lsh (cdr tag) 8)) newtag) tags)
                               (puthash value newtag last-constant)))
                         last-constant)
+               ;; Replace the hash table referenced in the lapcode with our
+               ;; modified one.
                (cl-loop for el in-ref lap
-                        when (and (listp el)
+                        when (and (listp el) ;; make sure we're at the correct op
                                   (eq (nth 1 el) 'byte-constant)
                                   (eq (nth 2 el) orig-table))
                         do (setf (nth 2 el) last-constant) and return nil))))
