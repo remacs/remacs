@@ -2952,17 +2952,20 @@ value.  (The property value is used as the PREDICATE argument to
           (use-dialog-box nil))
      (cond
       ((plist-member plist :file)
-       (expand-file-name
-        (read-file-name prompt
-                        (file-name-directory last-value) default 'confirm
-                        (file-name-nondirectory last-value)
-                        (when (plist-get plist :file)
-                          `(lambda (f)
-                             (if (not (file-regular-p f))
-                                 t
-                               (string-match
-                                (concat "\\<" ,(plist-get plist :file) "\\>")
-                                (file-name-nondirectory f))))))))
+       (let ((file-name
+              (read-file-name prompt
+                              (file-name-directory last-value) default 'confirm
+                              (file-name-nondirectory last-value)
+                              (when (plist-get plist :file)
+                                `(lambda (f)
+                                   (if (not (file-regular-p f))
+                                       t
+                                     (string-match
+                                      (concat "\\<" ,(plist-get plist :file) "\\>")
+                                      (file-name-nondirectory f))))))))
+         (if (string= file-name "")
+             ""
+           (expand-file-name file-name))))
 
       ((plist-member plist :completion)
        (completing-read prompt-def (plist-get plist :completion) nil t
