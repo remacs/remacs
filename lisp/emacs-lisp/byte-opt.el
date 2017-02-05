@@ -1400,23 +1400,28 @@
             ((eq bytedecomp-op 'byte-switch)
              (cl-assert (hash-table-p last-constant) nil
                         "byte-switch used without preceeding hash table")
-             ;; make a copy of constvec to avoid making changes to the
-             ;; original jump table for the compiled function.
-             (setq constvec (cl-map 'vector
-                                    #'(lambda (e)
-                                        (if (eq last-constant e)
-                                            (setq last-constant (copy-hash-table e))
-                                          e))
-                                    constvec))
-             (maphash #'(lambda (value tag)
-                          (let (newtag)
-                            (cl-assert (consp tag)
-                                       nil "Invalid address for byte-switch")
-                            (setq newtag (byte-compile-make-tag))
-                            (push (cons (+ (car tag) (lsh (cdr tag) 8)) newtag) tags)
-                          (puthash value newtag last-constant)))
-                      last-constant)
-             (setf (nth 2 (cadr lap)) last-constant)))
+             ;; We cannot use the original hash table referenced in the op,
+             ;; so we create a copy of it, and replace the addresses with
+             ;; TAGs.
+             (let ((orig-table last-constant))
+               (cl-loop for e across constvec
+                        when (= e last-constant)
+                        do (setq last-constant (copy-hash-table e))
+                        and return nil)
+               ;; Replace all addresses with TAGs.
+               (maphash #'(lambda (value tag)
+                            (let (newtag)
+                              (cl-assert (consp tag)
+                                         nil "Invalid address for byte-switch")
+                              (setq newtag (byte-compile-make-tag))
+                              (push (cons (+ (car tag) (lsh (cdr tag) 8)) newtag) tags)
+                              (puthash value newtag last-constant)))
+                        last-constant)
+               (cl-loop for el in-ref lap
+                        when (and (listp el)
+                                  (eq (nth 1 el) 'byte-constant)
+                                  (eq (nth 2 el) orig-table))
+                        do (setf (nth 2 el) last-constant) and return nil))))
       ;; lap = ( [ (pc . (op . arg)) ]* )
       (push (cons optr (cons bytedecomp-op (or offset 0)))
             lap)
