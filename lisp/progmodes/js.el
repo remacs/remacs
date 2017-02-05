@@ -1687,29 +1687,36 @@ This performs fontification according to `js--class-styles'."
                                    js--font-lock-keywords-3)
   "Font lock keywords for `js-mode'.  See `font-lock-keywords'.")
 
-(defconst js--syntax-propertize-regexp-syntax-table
-  (let ((st (make-char-table 'syntax-table (string-to-syntax "."))))
-    (modify-syntax-entry ?\[ "(]" st)
-    (modify-syntax-entry ?\] ")[" st)
-    (modify-syntax-entry ?\\ "\\" st)
-    st))
+(defconst js--syntax-propertize-regexp-regexp
+  (rx
+   ;; Start of regexp.
+   "/"
+   (0+ (or
+        ;; Match characters outside of a character class.
+        (not (any ?\[ ?/ ?\\))
+        ;; Match backslash quoted characters.
+        (and "\\" not-newline)
+        ;; Match character class.
+        (and
+         "["
+         (0+ (or
+              (not (any ?\] ?\\))
+              (and "\\" not-newline)))
+         "]")))
+   (group "/"))
+  "Regular expression matching a JavaScript regexp literal.")
 
 (defun js-syntax-propertize-regexp (end)
   (let ((ppss (syntax-ppss)))
     (when (eq (nth 3 ppss) ?/)
       ;; A /.../ regexp.
-      (while
-          (when (re-search-forward "\\(?:\\=\\|[^\\]\\)\\(?:\\\\\\\\\\)*/"
-                                   end 'move)
-            (if (nth 1 (with-syntax-table
-                           js--syntax-propertize-regexp-syntax-table
-                         (let ((parse-sexp-lookup-properties nil))
-                           (parse-partial-sexp (nth 8 ppss) (point)))))
-                ;; A / within a character class is not the end of a regexp.
-                t
-              (put-text-property (1- (point)) (point)
-                                 'syntax-table (string-to-syntax "\"/"))
-              nil))))))
+      (goto-char (nth 8 ppss))
+      (when (and (looking-at js--syntax-propertize-regexp-regexp)
+                 ;; Don't touch text after END.
+                 (<= (match-end 1) end))
+        (put-text-property (match-beginning 1) (match-end 1)
+                           'syntax-table (string-to-syntax "\"/"))
+        (goto-char (match-end 0))))))
 
 (defun js-syntax-propertize (start end)
   ;; JavaScript allows immediate regular expression objects, written /.../.
