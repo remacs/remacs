@@ -126,7 +126,8 @@ In the special case you only want to bind a single value,
 VARLIST can just be a plain tuple.
 \n(fn VARLIST THEN ELSE...)"
   (declare (indent 2)
-           (debug ([&or (&rest (symbolp form)) (symbolp form)] form body)))
+           (debug ([&or (&rest [&or symbolp (symbolp form)]) (symbolp form)]
+                   form body)))
   (when (and (<= (length bindings) 2)
              (not (listp (car bindings))))
     ;; Adjust the single binding case
