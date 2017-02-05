@@ -4580,44 +4580,56 @@ enum
 	 Lisp_String))							\
      : make_unibyte_string (str, len))
 
-/* Loop over tails of LIST, checking for dotted lists and cycles.
+/* Loop over tails of LIST, checking for dotted lists and cycles,
+   and possibly quitting after each loop iteration.
    In the loop body, ‘li.tail’ is the current cons; the name ‘li’ is
    short for “list iterator”.  The expression LIST may be evaluated
    more than once, and so should not have side effects.  The loop body
    should not modify the list’s top level structure other than by
-   perhaps deleting the current cons.
-
-   Use Brent’s teleporting tortoise-hare algorithm.  See:
-   Brent RP. BIT. 1980;20(2):176-84. doi:10.1007/BF01933190
-   http://maths-people.anu.edu.au/~brent/pd/rpb051i.pdf  */
+   perhaps deleting the current cons.  */
 
 #define FOR_EACH_TAIL(list)						\
   FOR_EACH_TAIL_INTERNAL (list, CHECK_LIST_END (li.tail, list),		\
-			  circular_list (list))
+			  circular_list (list), true)
 
-/* Like FOR_EACH_TAIL (LIST), except check only for cycles.  */
+/* Like FOR_EACH_TAIL (LIST), except do not check for dotted lists.  */
 
-#define FOR_EACH_TAIL_CONS(list) \
-  FOR_EACH_TAIL_INTERNAL (list, (void) 0, circular_list (list))
+#define FOR_EACH_TAIL_CONS(list)				\
+  FOR_EACH_TAIL_INTERNAL (list, (void) 0, circular_list (list), true)
 
 /* Like FOR_EACH_TAIL (LIST), except check for neither dotted lists
-   nor cycles.  */
+   nor cycles, and do not quit.  */
 
 #define FOR_EACH_TAIL_SAFE(list) \
-  FOR_EACH_TAIL_INTERNAL (list, (void) 0, (void) (li.tail = Qnil))
+  FOR_EACH_TAIL_INTERNAL (list, (void) 0, (void) (li.tail = Qnil), false)
 
 /* Like FOR_EACH_TAIL (LIST), except evaluate DOTTED or CYCLE,
-   respectively, if a dotted list or cycle is found.  This is an
-   internal macro intended for use only by the above macros.  */
+   respectively, if a dotted list or cycle is found, and check for
+   quit if CHECK_QUIT.  This is an internal macro intended for use
+   only by the above macros.
 
-#define FOR_EACH_TAIL_INTERNAL(list, dotted, cycle)			\
-  for (struct { Lisp_Object tail, tortoise; intptr_t n, max; } li	\
-	 = { list, list, 2, 2 };					\
+   Use Brent’s teleporting tortoise-hare algorithm.  See:
+   Brent RP. BIT. 1980;20(2):176-84. doi:10.1007/BF01933190
+   http://maths-people.anu.edu.au/~brent/pd/rpb051i.pdf
+
+   This macro uses maybe_quit because of an excess of caution.  The
+   call to maybe_quit should not be needed in practice, as a very long
+   list, whether circular or not, will cause Emacs to be so slow in
+   other noninterruptible areas (e.g., garbage collection) that there
+   is little point to calling maybe_quit here.  */
+
+#define FOR_EACH_TAIL_INTERNAL(list, dotted, cycle, check_quit)		\
+  for (struct { Lisp_Object tail, tortoise; intptr_t max, n;		\
+		unsigned short int q;					\
+	      } li = { list, list, 2, 0, 2 };				\
        CONSP (li.tail) || (dotted, false);				\
        (li.tail = XCDR (li.tail),					\
-	(li.n-- == 0							\
-	 ? (void) (li.n = li.max <<= 1, li.tortoise = li.tail)		\
-	 : EQ (li.tail, li.tortoise) ? (cycle) : (void) 0)))
+	((--li.q != 0							\
+	  || ((check_quit) ? maybe_quit () : (void) 0, 0 < --li.n)	\
+	  || (li.q = li.n = li.max <<= 1, li.n >>= USHRT_WIDTH,		\
+	      li.tortoise = li.tail, false))				\
+	 && EQ (li.tail, li.tortoise))					\
+	? (cycle) : (void) 0))
 
 /* Do a `for' loop over alist values.  */
 
