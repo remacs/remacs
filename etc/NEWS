@@ -900,6 +900,9 @@ collection).
 ** 'if-let*', 'when-let*', and 'and-let*' are new in subr-x.el.
 The incumbent 'if-let' and 'when-let' are now aliases.
 
+** Low-level list functions like 'length' and 'member' now do a better
+job of signaling list cycles instead of looping indefinitely.
+
 +++
 ** The new functions 'make-nearby-temp-file' and 'temporary-file-directory'
 can be used for creation of temporary files of remote or mounted directories.

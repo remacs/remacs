@@ -3129,20 +3129,14 @@ extern void maybe_quit (void);
 
 #define QUITP (!NILP (Vquit_flag) && NILP (Vinhibit_quit))
 
-/* Heuristic on how many iterations of a tight loop can be safely done
-   before it's time to do a quit.  This must be a power of 2.  It
-   is nice but not necessary for it to equal USHRT_MAX + 1.  */
-
-enum { QUIT_COUNT_HEURISTIC = 1 << 16 };
-
 /* Process a quit rarely, based on a counter COUNT, for efficiency.
-   "Rarely" means once per QUIT_COUNT_HEURISTIC or per USHRT_MAX + 1
-   times, whichever is smaller (somewhat arbitrary, but often faster).  */
+   "Rarely" means once per USHRT_MAX + 1 times; this is somewhat
+   arbitrary, but efficient.  */
 
 INLINE void
 rarely_quit (unsigned short int count)
 {
-  if (! (count & (QUIT_COUNT_HEURISTIC - 1)))
+  if (! count)
     maybe_quit ();
 }
 
@@ -4598,13 +4592,32 @@ enum
    http://maths-people.anu.edu.au/~brent/pd/rpb051i.pdf  */
 
 #define FOR_EACH_TAIL(list)						\
+  FOR_EACH_TAIL_INTERNAL (list, CHECK_LIST_END (li.tail, list),		\
+			  circular_list (list))
+
+/* Like FOR_EACH_TAIL (LIST), except check only for cycles.  */
+
+#define FOR_EACH_TAIL_CONS(list) \
+  FOR_EACH_TAIL_INTERNAL (list, (void) 0, circular_list (list))
+
+/* Like FOR_EACH_TAIL (LIST), except check for neither dotted lists
+   nor cycles.  */
+
+#define FOR_EACH_TAIL_SAFE(list) \
+  FOR_EACH_TAIL_INTERNAL (list, (void) 0, (void) (li.tail = Qnil))
+
+/* Like FOR_EACH_TAIL (LIST), except evaluate DOTTED or CYCLE,
+   respectively, if a dotted list or cycle is found.  This is an
+   internal macro intended for use only by the above macros.  */
+
+#define FOR_EACH_TAIL_INTERNAL(list, dotted, cycle)			\
   for (struct { Lisp_Object tail, tortoise; intptr_t n, max; } li	\
 	 = { list, list, 2, 2 };					\
-       CONSP (li.tail) || (CHECK_LIST_END (li.tail, list), false);	\
+       CONSP (li.tail) || (dotted, false);				\
        (li.tail = XCDR (li.tail),					\
 	(li.n-- == 0							\
 	 ? (void) (li.n = li.max <<= 1, li.tortoise = li.tail)		\
-	 : EQ (li.tail, li.tortoise) ? circular_list (list) : (void) 0)))
+	 : EQ (li.tail, li.tortoise) ? (cycle) : (void) 0)))
 
 /* Do a `for' loop over alist values.  */
 

@@ -23033,30 +23033,19 @@ display_mode_element (struct it *it, int depth, int field_width, int precision,
 	    goto tail_recurse;
 	  }
 	else if (STRINGP (car) || CONSP (car))
-	  {
-	    Lisp_Object halftail = elt;
-	    int len = 0;
-
-	    while (CONSP (elt)
-		   && (precision <= 0 || n < precision))
-	      {
-		n += display_mode_element (it, depth,
-					   /* Do padding only after the last
-					      element in the list.  */
-					   (! CONSP (XCDR (elt))
-					    ? field_width - n
-					    : 0),
-					   precision - n, XCAR (elt),
-					   props, risky);
-		elt = XCDR (elt);
-		len++;
-		if ((len & 1) == 0)
-		  halftail = XCDR (halftail);
-		/* Check for cycle.  */
-		if (EQ (halftail, elt))
-		  break;
-	      }
-	  }
+	  FOR_EACH_TAIL_SAFE (elt)
+	    {
+	      if (0 < precision && precision <= n)
+		break;
+	      n += display_mode_element (it, depth,
+					 /* Pad after only the last
+					    list element.  */
+					 (! CONSP (XCDR (li.tail))
+					  ? field_width - n
+					  : 0),
+					 precision - n, XCAR (li.tail),
+					 props, risky);
+	    }
       }
       break;
 
