@@ -3,6 +3,7 @@ extern crate rand;
 
 use std::ffi::{CStr, CString};
 use std::{io, ptr};
+
 #[cfg(unix)]
 use libc::{O_CLOEXEC, O_EXCL, O_RDWR, O_CREAT, open};
 
@@ -20,40 +21,59 @@ pub extern "C" fn rust_make_temp(template: *mut libc::c_char,
                                  flags: libc::c_int,
                                  error: *mut libc::c_int)
                                  -> libc::c_int {
-    let mut error_code = EEXIST;
-    let mut file_handle = -1;
-    let rust_template = unsafe { CStr::from_ptr(template) };
-    let mut owned_template = rust_template.to_string_lossy().into_owned();
-
-    if !owned_template.ends_with("XXXXXX") {
-        if error != ptr::null_mut() {
-            unsafe {*error = EINVAL;}
-        }
-        
-        return file_handle;
-    }
-
-    for _ in 0..NUM_RETRIES {
-        generate_temporary_filename(&mut owned_template);
-        let attempt_name = CString::new(owned_template.clone()).unwrap();
-        file_handle = match open_temporary_file(&attempt_name, flags) {
-            Ok(file) => file,
-            Err(ref e) if e.kind() == io::ErrorKind::AlreadyExists => continue,
-            Err(_) => -1
-        };
-
-        if file_handle != -1 {
-            unsafe { libc::strcpy(template, attempt_name.as_ptr()); }
-            error_code = 0;
-            break;
-        }
+    let template_string = unsafe {
+        CStr::from_ptr(template)
+            .to_string_lossy()
+            .into_owned()
     };
 
-    if error != ptr::null_mut() {
-        unsafe {*error = error_code};
+    match make_temporary_file(template_string, flags) {
+        Ok(result) => {
+            if error != ptr::null_mut() {
+                unsafe { *error = 0 };
+            }
+            
+            let name = CString::new(result.1).unwrap();
+            unsafe { libc::strcpy(template, name.as_ptr()) };
+            result.0
+        }
+        
+        Err(error_code) => {
+            if error != ptr::null_mut() {
+                unsafe { *error = error_code };
+            }
+            
+            -1
+        }
     }
     
-    file_handle
+}
+
+pub fn make_temporary_file(template: String,
+                           flags: i32)
+                           -> Result<(i32, String), i32> {
+    let mut validated_template = try!(validate_template(template));
+    for _ in 0..NUM_RETRIES {
+        generate_temporary_filename(&mut validated_template);
+        let attempt = try!(CString::new(validated_template.clone())
+                           .map_err(|_| EEXIST));
+        let file_handle = match open_temporary_file(&attempt, flags) {
+            Ok(file) => file,
+            Err(_) => continue,
+        };
+
+        return Ok((file_handle, validated_template));
+    }
+
+    Err(EEXIST)
+}
+
+fn validate_template(template: String) -> Result<String, i32> {
+    if !template.ends_with("XXXXXX") {
+        Err(EINVAL)
+    } else {
+        Ok(template)
+    }
 }
 
 fn generate_temporary_filename(name: &mut String) {
@@ -95,6 +115,23 @@ fn open_temporary_file(name: &CString, flags: libc::c_int) -> io::Result<libc::c
 fn test_generate_bad_temporary_filename() {
     let mut bad_name = String::from("1234");
     generate_temporary_filename(&mut bad_name);
+}
+
+#[test]
+#[should_panic]
+fn test_bad_temporary_filename_validation() {
+    let bad_name = String::from("123");
+    validate_template(bad_name).unwrap();
+}
+
+#[test]
+fn test_good_temporary_filename_validation() {
+    let good_name_1 = String::from("XXXXXX");
+    let good_name_2 = String::from(".emacsXXXXXX");
+    let good_name_3 = String::from("âââââ薔薔薔薔薔XXXXXX");
+    validate_template(good_name_1).unwrap();
+    validate_template(good_name_2).unwrap();
+    validate_template(good_name_3).unwrap();
 }
 
 #[test]
