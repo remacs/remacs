@@ -2,30 +2,40 @@ extern crate libc;
 extern crate rand;
 
 use std::ffi::{CStr, CString};
-use std::io;
+use std::{io, ptr};
 #[cfg(unix)]
 use libc::{O_CLOEXEC, O_EXCL, O_RDWR, O_CREAT, open};
 
+use libc::{EEXIST, EINVAL};
+
 #[cfg(test)]
-use std::{env, ptr};
+use std::env;
 
 use self::rand::Rng;
 
 const NUM_RETRIES: usize = 50;
 
-//@TODO The third parameter of this will be an error code
 #[no_mangle]
 pub extern "C" fn rust_make_temp(template: *mut libc::c_char,
                                  flags: libc::c_int,
-                                 _: *mut libc::c_int)
+                                 error: *mut libc::c_int)
                                  -> libc::c_int {
-
-    let rust_template = unsafe { CStr::from_ptr(template) };
-    let mut owned_template_copy = rust_template.to_string_lossy().into_owned();
+    let mut error_code = EEXIST;
     let mut file_handle = -1;
+    let rust_template = unsafe { CStr::from_ptr(template) };
+    let mut owned_template = rust_template.to_string_lossy().into_owned();
+
+    if !owned_template.ends_with("XXXXXX") {
+        if error != ptr::null_mut() {
+            unsafe {*error = EINVAL;}
+        }
+        
+        return file_handle;
+    }
+
     for _ in 0..NUM_RETRIES {
-        generate_temporary_filename(&mut owned_template_copy);
-        let attempt_name = CString::new(owned_template_copy.clone()).unwrap();
+        generate_temporary_filename(&mut owned_template);
+        let attempt_name = CString::new(owned_template.clone()).unwrap();
         file_handle = match open_temporary_file(&attempt_name, flags) {
             Ok(file) => file,
             Err(ref e) if e.kind() == io::ErrorKind::AlreadyExists => continue,
@@ -33,28 +43,34 @@ pub extern "C" fn rust_make_temp(template: *mut libc::c_char,
         };
 
         if file_handle != -1 {
-            unsafe { libc::strcpy(template, attempt_name.as_ptr()); }           
+            unsafe { libc::strcpy(template, attempt_name.as_ptr()); }
+            error_code = 0;
             break;
         }
     };
 
+    if error != ptr::null_mut() {
+        unsafe {*error = error_code};
+    }
+    
     file_handle
 }
 
 fn generate_temporary_filename(name: &mut String) {
     let len = name.len();
     assert!(len >= 6);
-    unsafe {
-        let mut name_vec = &mut name.as_mut_vec();
-        let mut bytes = &mut name_vec[len - 6..len];
-        rand::thread_rng().fill_bytes(bytes);
-        for byte in bytes.iter_mut() {
-            *byte = match *byte % 62 {
-                v @ 0...9 => (v + b'0' as u8),
-                v @ 10...35 => (v - 10 + b'a' as u8),
-                v @ 36...61 => (v - 36 + b'A' as u8),
-                _ => unreachable!(),
-            }
+    let mut name_vec = unsafe {
+        &mut name.as_mut_vec()
+    };
+
+    let mut bytes = &mut name_vec[len - 6..len];
+    rand::thread_rng().fill_bytes(bytes);
+    for byte in bytes.iter_mut() {
+        *byte = match *byte % 62 {
+            v @ 0...9 => (v + b'0' as u8),
+            v @ 10...35 => (v - 10 + b'a' as u8),
+            v @ 36...61 => (v - 36 + b'A' as u8),
+            _ => unreachable!(),
         }
     }
 }
@@ -93,7 +109,7 @@ fn test_generate_temporary_filename() {
 fn test_generate_temporary_filename_change() {
     let mut name = String::from(".emacs-XXXXXX");
     generate_temporary_filename(&mut name);
-    assert!(!name.contains("-XXXXXX"));
+    assert!(!name.ends_with("XXXXXX"));
 }
 
 #[test]
@@ -108,4 +124,16 @@ fn test_rust_make_temp() {
     assert!(file_handle != -1);
     let new_name = unsafe { CString::from_raw(raw_ptr) };
     assert!(new_name != name_copy);
+}
+
+#[test]
+fn test_rust_make_temp_error_inval() {
+    let mut tmpdir = env::temp_dir();
+    tmpdir.push(".emacs-XxXxx");
+    let fullpath = tmpdir.to_string_lossy().into_owned();
+    let name = CString::new(fullpath).unwrap();
+    let raw_ptr = name.into_raw();
+    let mut error: libc::c_int = 0;
+    let file_handle = rust_make_temp(raw_ptr, 0, &mut error);
+    assert!(file_handle == -1 && error == EINVAL);
 }

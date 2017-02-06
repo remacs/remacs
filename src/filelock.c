@@ -58,7 +58,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <utmp.h>
 #endif
 
-int rust_make_temp(char *template, int flags, int *errorcode);
+#include "rust-temp.h"
 
 /* A file whose last-modified time is just after the most recent boot.
    Define this to be NULL to disable checking for this file.  */
