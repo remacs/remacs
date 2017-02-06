@@ -4057,6 +4057,8 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
          (cases (cadr table-info))
          jump-table test-obj body tag donetag default-tag default-case)
     (when (and cases (not (= (length cases) 1)))
+      ;; TODO: Once :linear-search is implemented for `make-hash-table'
+      ;; set it to `t' for cond forms with a small number of cases.
       (setq jump-table (make-hash-table :test test
                                         :purecopy t
                                         :size (if (assq 'default cases)
