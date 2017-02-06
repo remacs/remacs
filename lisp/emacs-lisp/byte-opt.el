@@ -1773,6 +1773,9 @@ If FOR-EFFECT is non-nil, the return value is assumed to be of no importance."
               ;;
 	      ((and (memq (car lap0) '(byte-goto byte-return))
 		    (not (memq (car lap1) '(TAG nil)))
+                    ;; FIXME: Instead of deferring simply when jump-tables are
+                    ;; being used, keep a list of tags used for switch tags and
+                    ;; use them instead (see `byte-compile-inline-lapcode').
                     (not byte-compile-jump-tables))
 	       (setq tmp rest)
 	       (let ((i 0)
