@@ -23040,10 +23040,10 @@ display_mode_element (struct it *it, int depth, int field_width, int precision,
 	      n += display_mode_element (it, depth,
 					 /* Pad after only the last
 					    list element.  */
-					 (! CONSP (XCDR (li.tail))
+					 (! CONSP (XCDR (elt))
 					  ? field_width - n
 					  : 0),
-					 precision - n, XCAR (li.tail),
+					 precision - n, XCAR (elt),
 					 props, risky);
 	    }
       }

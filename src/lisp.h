@@ -4580,41 +4580,33 @@ enum
 	 Lisp_String))							\
      : make_unibyte_string (str, len))
 
-/* Loop over tails of LIST, checking for dotted lists and cycles,
-   and possibly quitting after each loop iteration.
-   In the loop body, ‘li.tail’ is the current cons; the name ‘li’ is
-   short for “list iterator”.  The expression LIST may be evaluated
-   more than once, and so should not have side effects.  The loop body
+/* Loop over conses of the list TAIL, signaling if a cycle is found,
+   and possibly quitting after each loop iteration.  In the loop body,
+   set TAIL to the current cons.  If the loop exits normally,
+   set TAIL to the terminating non-cons, typically nil.  The loop body
    should not modify the list’s top level structure other than by
    perhaps deleting the current cons.  */
 
-#define FOR_EACH_TAIL(list)						\
-  FOR_EACH_TAIL_INTERNAL (list, CHECK_LIST_END (li.tail, list),		\
-			  circular_list (list), true)
+#define FOR_EACH_TAIL(tail) \
+  FOR_EACH_TAIL_INTERNAL (tail, circular_list (tail), true)
 
-/* Like FOR_EACH_TAIL (LIST), except do not check for dotted lists.  */
+/* Like FOR_EACH_TAIL (LIST), except do not signal or quit.
+   If the loop exits due to a cycle, TAIL’s value is undefined.  */
 
-#define FOR_EACH_TAIL_CONS(list)				\
-  FOR_EACH_TAIL_INTERNAL (list, (void) 0, circular_list (list), true)
-
-/* Like FOR_EACH_TAIL (LIST), except check for neither dotted lists
-   nor cycles, and do not quit.  */
-
-#define FOR_EACH_TAIL_SAFE(list) \
-  FOR_EACH_TAIL_INTERNAL (list, (void) 0, (void) (li.tail = Qnil), false)
+#define FOR_EACH_TAIL_SAFE(tail) \
+  FOR_EACH_TAIL_INTERNAL (tail, (void) ((tail) = Qnil), false)
 
 /* Iterator intended for use only within FOR_EACH_TAIL_INTERNAL.  */
 struct for_each_tail_internal
 {
-  Lisp_Object tail, tortoise;
+  Lisp_Object tortoise;
   intptr_t max, n;
   unsigned short int q;
 };
 
-/* Like FOR_EACH_TAIL (LIST), except evaluate DOTTED or CYCLE,
-   respectively, if a dotted list or cycle is found, and check for
-   quit if CHECK_QUIT.  This is an internal macro intended for use
-   only by the above macros.
+/* Like FOR_EACH_TAIL (LIST), except evaluate CYCLE if a cycle is
+   found, and check for quit if CHECK_QUIT.  This is an internal macro
+   intended for use only by the above macros.
 
    Use Brent’s teleporting tortoise-hare algorithm.  See:
    Brent RP. BIT. 1980;20(2):176-84. doi:10.1007/BF01933190
@@ -4626,15 +4618,15 @@ struct for_each_tail_internal
    other noninterruptible areas (e.g., garbage collection) that there
    is little point to calling maybe_quit here.  */
 
-#define FOR_EACH_TAIL_INTERNAL(list, dotted, cycle, check_quit)		\
-  for (struct for_each_tail_internal li = { list, list, 2, 0, 2 };	\
-       CONSP (li.tail) || (dotted, false);				\
-       (li.tail = XCDR (li.tail),					\
+#define FOR_EACH_TAIL_INTERNAL(tail, cycle, check_quit)			\
+  for (struct for_each_tail_internal li = { tail, 2, 0, 2 };		\
+       CONSP (tail);							\
+       ((tail) = XCDR (tail),						\
 	((--li.q != 0							\
 	  || ((check_quit) ? maybe_quit () : (void) 0, 0 < --li.n)	\
 	  || (li.q = li.n = li.max <<= 1, li.n >>= USHRT_WIDTH,		\
-	      li.tortoise = li.tail, false))				\
-	 && EQ (li.tail, li.tortoise))					\
+	      li.tortoise = (tail), false))				\
+	 && EQ (tail, li.tortoise))					\
 	? (cycle) : (void) 0))
 
 /* Do a `for' loop over alist values.  */
