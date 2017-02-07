@@ -702,6 +702,8 @@ processes on exit.
 
 ** New Elisp data-structure library 'radix-tree'.
 
+** New library 'xdg' with utilities for some XDG standards and specs.
+
 
 * Incompatible Lisp Changes in Emacs 26.1
 
