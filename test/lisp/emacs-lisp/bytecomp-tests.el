@@ -247,6 +247,15 @@
 Each element will be executed by interpreter and with
 bytecompiled code, and their results compared.")
 
+(defconst byte-opt-testsuite-cond-data
+  '(
+    (let ((a 3)) (cond ((eq a 1) 'one) ((eq a 2) 'two) ((eq a 3) 'three) (t t)))
+    (let ((a 'three)) (cond ((eq a 'one) 1) ((eq a 2) 'two) ((eq a 'three) 3)
+                            (t t)))
+    (let ((a 2)) (cond ((eq a 'one) 1) ((eq a 1) 'one) ((eq a 2) 'two)
+                       (t nil))))
+  "List of expressions for testing byte-switch.")
+
 (defun bytecomp-check-1 (pat)
   "Return non-nil if PAT is the same whether directly evalled or compiled."
   (let ((warning-minimum-log-level :emergency)
@@ -274,6 +283,11 @@ bytecompiled code, and their results compared.")
 (ert-deftest bytecomp-tests ()
   "Test the Emacs byte compiler."
   (dolist (pat byte-opt-testsuite-arith-data)
+    (should (bytecomp-check-1 pat))))
+
+(ert-deftest bytecomp-cond ()
+  "Test the Emacs byte compiler."
+  (dolist (pat byte-opt-testsuite-cond-data)
     (should (bytecomp-check-1 pat))))
 
 (defun test-byte-opt-arithmetic (&optional arg)
