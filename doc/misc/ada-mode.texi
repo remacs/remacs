@@ -540,7 +540,7 @@ Lisp variable: @code{ada-prj-default-bind-opt}.
 @item @code{build_dir}      [default: @code{"."}]
 The compile commands will be issued in this directory.
 
-@item @code{casing}         [default: @code{("~/.emacs_case_exceptions")}
+@item @code{casing}         [default: @code{("~/.emacs_case_exceptions")}]
 List of files containing casing exceptions. See the help on
 @code{ada-case-exception-file} for more info.
 @c FIXME: section on case exceptions
