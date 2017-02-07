@@ -1011,12 +1011,10 @@ info_dir_deps = \
 ## slow down parallelization.
 ${srcdir}/info/dir: ${info_dir_deps}
 	$(AM_V_at)${MKDIR_P} ${srcdir}/info
-	$(AM_V_GEN)tempfile=info-dir.$$$$; \
-	rm -f $${tempfile}; \
-	(cd ${srcdir}/doc && \
+	$(AM_V_GEN)(cd ${srcdir}/doc && \
 	 AWK='${AWK}' ../build-aux/make-info-dir ${info_dir_inputs} \
-	) >$$tempfile && \
-	${srcdir}/build-aux/move-if-change $${tempfile} ${srcdir}/info/dir
+	) >$@.tmp
+	mv $@.tmp $@
 
 INSTALL_DVI = install-emacs-dvi install-lispref-dvi \
 	install-lispintro-dvi install-misc-dvi
