@@ -2655,7 +2655,7 @@ such as a mark that says whether an article is stored in the cache
   "The mail address of the Gnus maintainers.")
 
 (defconst gnus-bug-package
-  "gnus"
+  "emacs,gnus"
   "The package to use in the bug submission.")
 
 (defvar gnus-info-nodes
