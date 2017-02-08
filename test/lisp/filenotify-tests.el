@@ -665,9 +665,6 @@ delivered."
 (setq auto-revert-notify-exclude-dir-regexp "nothing-to-be-excluded"
       auto-revert-remote-files t
       auto-revert-stop-on-user-input nil)
-;; In the remote case, `vc-refresh-state' returns undesired error
-;; messages.  Let's suppress them.
-(defalias 'vc-refresh-state 'ignore)
 
 (ert-deftest file-notify-test03-autorevert ()
   "Check autorevert via file notification."
@@ -679,6 +676,9 @@ delivered."
         buf)
     (unwind-protect
 	(progn
+          ;; In the remote case, `vc-refresh-state' returns undesired
+          ;; error messages.  Let's suppress them.
+          (advice-add 'vc-refresh-state :around 'ignore)
 	  (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
 	  (write-region
 	   "any text" nil file-notify--test-tmpfile nil 'no-message)
@@ -748,6 +748,7 @@ delivered."
           (file-notify--test-cleanup-p))
 
       ;; Cleanup.
+      (advice-remove 'vc-refresh-state 'ignore)
       (ignore-errors (kill-buffer buf))
       (file-notify--test-cleanup))))
 
