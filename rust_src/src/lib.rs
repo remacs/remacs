@@ -12,17 +12,17 @@ extern crate lazy_static;
 
 extern crate libc;
 
-mod lisp;
-mod lists;
-mod marker;
-mod eval;
-mod floatfns;
-mod math;
-mod numbers;
-mod strings;
-mod symbols;
-mod globals;
-mod character;
+pub mod lisp;
+pub mod lists;
+pub mod marker;
+pub mod eval;
+pub mod floatfns;
+pub mod math;
+pub mod numbers;
+pub mod strings;
+pub mod symbols;
+pub mod globals;
+pub mod character;
 
 use lisp::LispSubr;
 

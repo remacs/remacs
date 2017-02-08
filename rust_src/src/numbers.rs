@@ -3,10 +3,15 @@ extern crate libc;
 use std::os::raw::c_char;
 use std::ptr;
 
-use lisp::{LispObject, LispSubr, Qnil, Qt, INTEGERP, FLOATP, MARKERP, NATNUMP, NUMBERP};
+use lisp::{LispObject, LispSubr, Qnil, Qt};
 
 fn Ffloatp(object: LispObject) -> LispObject {
-    if FLOATP(object) { unsafe { Qt } } else { Qnil }
+    // TODO: use LispObject::constant_t and constant_nil.
+    if object.is_float() {
+        unsafe { Qt }
+    } else {
+        Qnil
+    }
 }
 
 defun!("floatp",
@@ -20,7 +25,7 @@ defun!("floatp",
 (fn OBJECT)");
 
 fn Fintegerp(object: LispObject) -> LispObject {
-    if INTEGERP(object) {
+    if object.is_integer() {
         unsafe { Qt }
     } else {
         Qnil
@@ -37,8 +42,9 @@ defun!("integerp",
 
 (fn OBJECT)");
 
+#[allow(deprecated)]
 fn Finteger_or_marker_p(object: LispObject) -> LispObject {
-    if MARKERP(object) || INTEGERP(object) {
+    if ::lisp::deprecated::MARKERP(object) || object.is_integer() {
         unsafe { Qt }
     } else {
         Qnil
@@ -56,7 +62,11 @@ defun!("integer-or-marker-p",
 (fn OBJECT)");
 
 fn Fnatnump(object: LispObject) -> LispObject {
-    if NATNUMP(object) { unsafe { Qt } } else { Qnil }
+    if object.is_number() {
+        unsafe { Qt }
+    } else {
+        Qnil
+    }
 }
 
 defun!("natnump",
@@ -70,7 +80,11 @@ defun!("natnump",
 (fn OBJECT)");
 
 fn Fnumberp(object: LispObject) -> LispObject {
-    if NUMBERP(object) { unsafe { Qt } } else { Qnil }
+    if object.is_number() {
+        unsafe { Qt }
+    } else {
+        Qnil
+    }
 }
 
 defun!("numberp",
@@ -83,8 +97,9 @@ defun!("numberp",
 
 (fn OBJECT)");
 
+#[allow(deprecated)]
 fn Fnumber_or_marker_p(object: LispObject) -> LispObject {
-    if NUMBERP(object) || MARKERP(object) {
+    if object.is_number() || ::lisp::deprecated::MARKERP(object) {
         unsafe { Qt }
     } else {
         Qnil

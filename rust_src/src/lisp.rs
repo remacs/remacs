@@ -612,21 +612,20 @@ impl Debug for LispObject {
 /// as macros and global functions, which does not conforms to Rust naming rules well
 /// and lacks unsafe marks. However we'll keep them during the porting process to make
 /// the porting easy, we should be able to remove once the relevant functionality is Rust-only.
-mod deprecated {
+pub mod deprecated {
+    #![allow(dead_code)]
     use super::*;
     use ::libc;
     use ::std;
 
-    /// Convert a LispObject to an EmacsInt.
-    #[allow(non_snake_case)]
-    #[allow(dead_code)]
+    /// Convert a `LispObject` to an `EmacsInt`.
+    #[deprecated(note = "use LispObject::to_raw instead")]
     pub fn XLI(o: LispObject) -> EmacsInt {
         o.to_raw()
     }
 
-    /// Convert an EmacsInt to an LispObject.
-    #[allow(non_snake_case)]
-    #[allow(dead_code)]
+    /// Convert an `EmacsInt` to an `LispObject`.
+    #[deprecated(note = "use LispObject::from_raw instead")]
     pub fn XIL(i: EmacsInt) -> LispObject {
         // Note that CHECK_LISP_OBJECT_TYPE is 0 (false) in our build.
         unsafe { LispObject::from_raw(i) }
@@ -647,13 +646,14 @@ mod deprecated {
     /// The C macro `XSETINT` should also be replaced with this when
     /// porting. For example, `XSETINT(x, y)` should be written as `x =
     /// make_number(y)`.
-    pub fn make_number(n: EmacsInt) -> LispObject {
-        unsafe { LispObject::from_fixnum_unchecked(n) }
+    #[deprecated(note = "use LispObject::from_fixnum_unchecked instead")]
+    pub unsafe fn make_number(n: EmacsInt) -> LispObject {
+        LispObject::from_fixnum_unchecked(n)
     }
 
     /// Extract the integer value from an elisp object representing an
     /// integer.
-    #[allow(non_snake_case)]
+    #[deprecated(note = "use LispObject::to_fixnum instead")]
     pub fn XINT(a: LispObject) -> EmacsInt {
         a.to_fixnum().unwrap()
     }
@@ -665,9 +665,8 @@ mod deprecated {
     }
 
 
-    /// Is this LispObject an integer?
-    #[allow(non_snake_case)]
-    #[allow(dead_code)]
+    /// Is this `LispObject` an integer?
+    #[deprecated(note = "use LispObject::is_integer instead")]
     pub fn INTEGERP(a: LispObject) -> bool {
         a.is_integer()
     }
@@ -679,9 +678,8 @@ mod deprecated {
         assert!(INTEGERP(make_natnum(1)));
     }
 
-    /// Is this LispObject a symbol?
-    #[allow(non_snake_case)]
-    #[allow(dead_code)]
+    /// Is this `LispObject` a symbol?
+    #[deprecated(note = "use LispObject::is_symbol instead")]
     pub fn SYMBOLP(a: LispObject) -> bool {
         a.is_symbol()
     }
@@ -691,23 +689,18 @@ mod deprecated {
         assert!(SYMBOLP(Qnil));
     }
 
-
     /// Convert a positive integer into its LispObject representation.
     ///
     /// This is also the function to use when translating `XSETFASTINT`
     /// from Emacs C.
-    // TODO: the C claims that make_natnum is faster, but it does the same
-    // thing as make_number when USE_LSB_TAG is 1, which it is for us. We
-    // should remove this in favour of make_number.
-    //
-    // TODO: it would be clearer if this function took a u64 or libc::c_int.
-    pub fn make_natnum(n: EmacsInt) -> LispObject {
+    #[deprecated]
+    pub unsafe fn make_natnum(n: EmacsInt) -> LispObject {
         debug_assert!(0 <= n && n <= MOST_POSITIVE_FIXNUM);
-        make_number(n)
+        LispObject::from_fixnum_unchecked(n)
     }
 
     /// Return the type of a LispObject.
-    #[allow(non_snake_case)]
+    #[deprecated(note = "use LispObject::get_type instead")]
     pub fn XTYPE(a: LispObject) -> LispType {
         a.get_type()
     }
@@ -721,7 +714,7 @@ mod deprecated {
     ///
     /// A misc type has its type bits set to 'misc', and uses additional
     /// bits to specify what exact type it represents.
-    #[allow(non_snake_case)]
+    #[deprecated(note = "use LispObject::is_misc instead")]
     pub fn MISCP(a: LispObject) -> bool {
         a.is_misc()
     }
@@ -731,27 +724,25 @@ mod deprecated {
         assert!(!MISCP(Qnil));
     }
 
-    #[allow(non_snake_case)]
-    pub fn XMISC(a: LispObject) -> LispMiscRef {
-        unsafe { a.to_misc_unchecked() }
+    /// Converts a `LispObject` to a `LispMisc`
+    #[deprecated(note = "use LispObject::to_misc_unchecked instead")]
+    pub unsafe fn XMISC(a: LispObject) -> LispMiscRef {
+        a.to_misc_unchecked()
     }
 
-    #[allow(non_snake_case)]
-    #[allow(dead_code)]
-    pub fn XMISCANY(a: LispObject) -> *const LispMiscAny {
-        debug_assert!(MISCP(a));
-        XMISC(a).0
+    #[deprecated]
+    pub unsafe fn XMISCANY(a: LispObject) -> *const LispMiscAny {
+        debug_assert!(a.is_misc());
+        a.to_misc_unchecked().0
     }
 
-    // TODO: we should do some sanity checking, because we're currently
-    // exposing a safe API that dereferences raw pointers.
-    #[allow(non_snake_case)]
-    pub fn XMISCTYPE(a: LispObject) -> LispMiscType {
-        XMISC(a).ty
+    #[deprecated(note = "use LispObject::to_misc_unchecked instead")]
+    pub unsafe fn XMISCTYPE(a: LispObject) -> LispMiscType {
+        a.to_misc_unchecked().ty
     }
 
-    /// Is this LispObject a float?
-    #[allow(non_snake_case)]
+    /// Is this `LispObject` a float?
+    #[deprecated(note = "use LispObject::is_float instead")]
     pub fn FLOATP(a: LispObject) -> bool {
         a.is_float()
     }
@@ -761,9 +752,10 @@ mod deprecated {
         assert!(!FLOATP(Qnil));
     }
 
-    #[allow(non_snake_case)]
+    // TODO: Rustic way?
+    #[deprecated]
     pub fn NATNUMP(a: LispObject) -> bool {
-        INTEGERP(a) && 0 <= XINT(a)
+        a.is_integer() && 0 <= a.to_fixnum().unwrap()
     }
 
     #[test]
@@ -771,27 +763,26 @@ mod deprecated {
         assert!(!NATNUMP(Qnil));
     }
 
-    #[allow(non_snake_case)]
-    #[allow(dead_code)]
-    pub fn XFLOAT(a: LispObject) -> LispFloatRef {
-        debug_assert!(FLOATP(a));
-        unsafe { a.to_float_unchecked() }
+    #[deprecated]
+    pub unsafe fn XFLOAT(a: LispObject) -> LispFloatRef {
+        debug_assert!(a.is_float());
+        a.to_float_unchecked()
     }
 
-    #[allow(non_snake_case)]
-    #[allow(dead_code)]
-    pub fn XFLOAT_DATA(f: LispObject) -> f64 {
-        unsafe { f.get_float_data_unchecked() }
+    // TODO: Mark as unsafe
+    #[deprecated(note = "use LispObject::get_float_data_unchecked instead")]
+    pub unsafe fn XFLOAT_DATA(f: LispObject) -> f64 {
+        f.get_float_data_unchecked()
     }
 
     /// Is this LispObject a number?
-    #[allow(non_snake_case)]
+    #[deprecated(note = "use LispObject::is_number instead")]
     pub fn NUMBERP(x: LispObject) -> bool {
         x.is_number()
     }
 
     /// Is this LispObject a string?
-    #[allow(non_snake_case)]
+    #[deprecated(note = "use LispObject::is_string instead")]
     pub fn STRINGP(x: LispObject) -> bool {
         x.is_string()
     }
@@ -802,38 +793,57 @@ mod deprecated {
         assert!(NUMBERP(make_natnum(1)));
     }
 
-    pub fn XSTRING(a: LispObject) -> *mut LispString {
-        debug_assert!(STRINGP(a));
-        unsafe { std::mem::transmute(XUNTAG(a, LispType::Lisp_String)) }
+    // TODO: Rustic way?
+    #[deprecated]
+    pub unsafe fn XSTRING(a: LispObject) -> *mut LispString {
+        debug_assert!(a.is_string());
+        std::mem::transmute(a.get_untaggedptr())
     }
 
-    pub fn SBYTES(string: LispObject) -> libc::ptrdiff_t {
-        unsafe { STRING_BYTES(XSTRING(string)) }
+    // TODO: Rusty way?
+    #[allow(deprecated)]
+    #[deprecated]
+    pub unsafe fn SBYTES(string: LispObject) -> libc::ptrdiff_t {
+        STRING_BYTES(XSTRING(string))
     }
 
 
     /// Convert a tagged pointer to a normal C pointer.
     ///
     /// See the docstring for `LispType` for more information on tagging.
-    #[allow(non_snake_case)]
+    #[deprecated(note = "use LispObject::get_untaggedptr instead")]
     pub fn XUNTAG(a: LispObject, _: LispType) -> *const libc::c_void {
         a.get_untaggedptr()
     }
 
-    // Implementation of the XFASTINT depends on the USE_LSB_TAG
-    // in Emacs C. But we selected this implementation as in our
-    // build that value is 1.
-    // A must be nonnegative.
+    // TODO: Rusty way?
     #[allow(dead_code)]
-    #[allow(non_snake_case)]
+    #[deprecated]
     pub fn XFASTINT(a: LispObject) -> EmacsInt {
-        let n: EmacsInt = XINT(a);
+        let n: EmacsInt = a.to_fixnum().unwrap();
         debug_assert!(0 <= n);
         n
     }
-}
 
-pub use self::deprecated::*;
+    // TODO: Write a is_marker function.
+    #[deprecated]
+    pub fn MARKERP(a: LispObject) -> bool {
+        a.is_misc() && unsafe { a.to_misc_unchecked().ty } == LispMiscType::Marker
+    }
+
+    // TODO: Write a to_marker_unchecked
+    #[allow(deprecated)]
+    #[deprecated]
+    pub unsafe fn XMARKER(a: LispObject) -> *const LispMarker {
+        debug_assert!(MARKERP(a));
+        mem::transmute(a.to_misc_unchecked())
+    }
+
+    #[test]
+    fn test_markerp() {
+        assert!(!MARKERP(Qnil))
+    }
+}
 
 /// Check that `x` is an integer or float, coercing markers to integers.
 ///
@@ -842,12 +852,13 @@ pub use self::deprecated::*;
 /// This function is equivalent to
 /// `CHECK_NUMBER_OR_FLOAT_COERCE_MARKER` in Emacs C, but returns a
 /// value rather than assigning to a variable.
+#[allow(deprecated)]
 pub fn check_number_coerce_marker(x: LispObject) -> LispObject {
-    if MARKERP(x) {
-        make_natnum(marker_position(x) as EmacsInt)
+    if deprecated::MARKERP(x) {
+        unsafe { deprecated::make_natnum(marker_position(x) as EmacsInt) }
     } else {
         unsafe {
-            CHECK_TYPE(NUMBERP(x), Qnumber_or_marker_p, x);
+            CHECK_TYPE(x.is_number(), Qnumber_or_marker_p, x);
         }
         x
     }
@@ -870,20 +881,4 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
 #[no_mangle]
 pub extern "C" fn CHECK_STRING(x: LispObject) {
     CHECK_TYPE(x.is_string(), unsafe { Qstringp }, x);
-}
-
-#[allow(non_snake_case)]
-pub fn MARKERP(a: LispObject) -> bool {
-    MISCP(a) && XMISCTYPE(a) == LispMiscType::Marker
-}
-
-#[allow(non_snake_case)]
-pub fn XMARKER(a: LispObject) -> *const LispMarker {
-    debug_assert!(MARKERP(a));
-    unsafe { mem::transmute(XMISC(a)) }
-}
-
-#[test]
-fn test_markerp() {
-    assert!(!MARKERP(Qnil))
 }

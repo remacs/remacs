@@ -3,7 +3,7 @@ use std::ptr;
 
 extern crate libc;
 
-use lisp::{LispObject, LispSubr, Qnil, SBYTES, SSDATA, STRING_MULTIBYTE, STRINGP, CHECK_STRING};
+use lisp::{LispObject, LispSubr, Qnil, SSDATA, STRING_MULTIBYTE, CHECK_STRING};
 use lists::NILP;
 
 extern "C" {
@@ -67,14 +67,14 @@ defun!("null",
 
 (fn OBJECT)");
 
-
+#[allow(deprecated)]
 fn Fbase64_encode_string(string: LispObject, noLineBreak: LispObject) -> LispObject {
     CHECK_STRING(string);
 
     // We need to allocate enough room for the encoded text
     // We will need 33 1/3% more space, plus a newline every 76 characters(MIME_LINE_LENGTH)
     // and then round up
-    let length = SBYTES(string);
+    let length = unsafe { ::lisp::deprecated::SBYTES(string) };
     let mut allength: libc::ptrdiff_t = length + length / 3 + 1;
     allength += allength / MIME_LINE_LENGTH + 1 + 6;
 
@@ -113,20 +113,18 @@ defun!("base64-encode-string",
 
 (fn STRING &optional NO-LINE-BREAK)");
 
+#[allow(deprecated)]
 fn Fbase64_decode_string(string: LispObject) -> LispObject {
     CHECK_STRING(string);
 
-    let length = SBYTES(string);
+    let length = unsafe { ::lisp::deprecated::SBYTES(string) };
     let mut buffer: Vec<libc::c_char> = Vec::with_capacity(length as usize);
     let mut decoded_string: LispObject = LispObject::constant_nil();
 
     unsafe {
         let decoded = buffer.as_mut_ptr();
-        let decoded_length = base64_decode_1(SSDATA(string), 
-                                             decoded, 
-                                             length, 
-                                             false, 
-                                             ptr::null_mut());
+        let decoded_length =
+            base64_decode_1(SSDATA(string), decoded, length, false, ptr::null_mut());
 
         if decoded_length > length {
             panic!("Decoded length is above length");
@@ -134,7 +132,7 @@ fn Fbase64_decode_string(string: LispObject) -> LispObject {
             decoded_string = make_unibyte_string(decoded, decoded_length);
         }
 
-        if !STRINGP(decoded_string) {
+        if !decoded_string.is_string() {
             error("Invalid base64 data\0".as_ptr());
         }
 
