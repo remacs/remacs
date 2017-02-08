@@ -6,7 +6,11 @@ use std::ptr;
 use lisp::{LispObject, LispSubr, Qnil, Qt, INTEGERP, FLOATP, MARKERP, NATNUMP, NUMBERP};
 
 fn Ffloatp(object: LispObject) -> LispObject {
-    if FLOATP(object) { unsafe { Qt } } else { Qnil }
+    if FLOATP(object) {
+        unsafe { Qt }
+    } else {
+        Qnil
+    }
 }
 
 defun!("floatp",
@@ -56,7 +60,11 @@ defun!("integer-or-marker-p",
 (fn OBJECT)");
 
 fn Fnatnump(object: LispObject) -> LispObject {
-    if NATNUMP(object) { unsafe { Qt } } else { Qnil }
+    if NATNUMP(object) {
+        unsafe { Qt }
+    } else {
+        Qnil
+    }
 }
 
 defun!("natnump",
@@ -70,7 +78,11 @@ defun!("natnump",
 (fn OBJECT)");
 
 fn Fnumberp(object: LispObject) -> LispObject {
-    if NUMBERP(object) { unsafe { Qt } } else { Qnil }
+    if NUMBERP(object) {
+        unsafe { Qt }
+    } else {
+        Qnil
+    }
 }
 
 defun!("numberp",

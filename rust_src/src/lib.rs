@@ -23,6 +23,8 @@ mod strings;
 mod symbols;
 mod globals;
 mod character;
+#[macro_use]
+mod variables;
 
 use lisp::LispSubr;
 
@@ -49,8 +51,18 @@ pub use marker::CHECK_MARKER;
 // Defined in lisp.h and widely used in the C codebase.
 pub use lisp::CHECK_STRING;
 
+use lisp::LispObject;
+use lisp::EmacsInt;
+use lisp::EMACS_INT_MAX;
+use lisp::INTTYPEBITS;
+
+const MOST_POSITIVE_FIXNUM: EmacsInt = EMACS_INT_MAX >> INTTYPEBITS;
+const MOST_NEGATIVE_FIXNUM: EmacsInt = -1 - MOST_POSITIVE_FIXNUM;
+
 extern "C" {
     fn defsubr(sname: *const LispSubr);
+    fn rust_make_symbol_constant(sym: lisp::LispObject);
+    fn intern_c_string_1(str_: *const libc::c_char) -> LispObject;
 }
 
 #[no_mangle]
@@ -90,6 +102,20 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*character::Smax_char);
 
         floatfns::init_float_syms();
+
+        // The largest value that is representable in a Lisp integer
+        defvar!(b"most-positive-fixnum\0", f_Vmost_positive_fixnum);
+        rust_make_symbol_constant(intern_c_string_1(b"most-positive-fixnum\0"
+            .as_ptr() as *const libc::c_char));
+        globals::globals.f_Vmost_positive_fixnum =
+            LispObject::from_fixnum_unchecked(MOST_POSITIVE_FIXNUM);
+
+        // The smallest value that is representable in a Lisp integer.
+        defvar!(b"most-negative-fixnum\0", f_Vmost_negative_fixnum);
+        rust_make_symbol_constant(intern_c_string_1(b"most-negative-fixnum\0"
+            .as_ptr() as *const libc::c_char));
+        globals::globals.f_Vmost_negative_fixnum =
+            LispObject::from_fixnum_unchecked(MOST_NEGATIVE_FIXNUM);
     }
 }
 

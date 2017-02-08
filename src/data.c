@@ -3135,9 +3135,14 @@ A is a bool vector, B is t or nil, and I is an index into A.  */)
   return make_number (count);
 }
 
+void
+rust_make_symbol_constant(Lisp_Object sym)
+{
+    make_symbol_constant(sym);
+}
+
 void rust_init_syms(void);
 
-
 void
 syms_of_data (void)
 {
@@ -3394,16 +3399,6 @@ syms_of_data (void)
   defsubr (&Sbool_vector_count_population);
 
   set_symbol_function (Qwholenump, XSYMBOL (Qnatnump)->function);
-
-  DEFVAR_LISP ("most-positive-fixnum", Vmost_positive_fixnum,
-	       doc: /* The largest value that is representable in a Lisp integer.  */);
-  Vmost_positive_fixnum = make_number (MOST_POSITIVE_FIXNUM);
-  make_symbol_constant (intern_c_string ("most-positive-fixnum"));
-
-  DEFVAR_LISP ("most-negative-fixnum", Vmost_negative_fixnum,
-	       doc: /* The smallest value that is representable in a Lisp integer.  */);
-  Vmost_negative_fixnum = make_number (MOST_NEGATIVE_FIXNUM);
-  make_symbol_constant (intern_c_string ("most-negative-fixnum"));
 
   DEFSYM (Qwatchers, "watchers");
   DEFSYM (Qmakunbound, "makunbound");
