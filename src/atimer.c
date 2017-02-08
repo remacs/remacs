@@ -33,17 +33,17 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Free-list of atimer structures.  */
 
-static struct atimer *free_atimers;
+struct atimer *free_atimers;
 
 /* List of currently not running timers due to a call to
    lock_atimer.  */
 
-static struct atimer *stopped_atimers;
+struct atimer *stopped_atimers;
 
 /* List of active atimers, sorted by expiration time.  The timer that
    will become ripe next is always at the front of this list.  */
 
-static struct atimer *atimers;
+struct atimer *atimers;
 
 #ifdef HAVE_ITIMERSPEC
 /* The alarm timer and whether it was properly initialized, if
@@ -59,29 +59,14 @@ enum { timerfd = -1 };
 # endif
 #endif
 
-/* Block/unblock SIGALRM.  */
-
-static void
-block_atimers (sigset_t *oldset)
-{
-  sigset_t blocked;
-  sigemptyset (&blocked);
-  sigaddset (&blocked, SIGALRM);
-  sigaddset (&blocked, SIGINT);
-  pthread_sigmask (SIG_BLOCK, &blocked, oldset);
-}
-static void
-unblock_atimers (sigset_t const *oldset)
-{
-  pthread_sigmask (SIG_SETMASK, oldset, 0);
-}
-
 /* Function prototypes.  */
 
+void block_atimers (sigset_t *);
+void unblock_atimers (sigset_t const *);
+void handle_alarm_signal (int);
+void schedule_atimer (struct atimer *);
+
 static void set_alarm (void);
-static void schedule_atimer (struct atimer *);
-static struct atimer *append_atimer_lists (struct atimer *,
-                                           struct atimer *);
 
 /* Start a new atimer of type TYPE.  TIMESTAMP specifies when the timer is
    ripe.  FN is the function to call when the timer fires.
@@ -162,126 +147,126 @@ start_atimer (enum atimer_type type, struct timespec timestamp,
 
 /* Cancel and free atimer TIMER.  */
 
-void
-cancel_atimer (struct atimer *timer)
-{
-  int i;
-  sigset_t oldset;
+/* void */
+/* cancel_atimer (struct atimer *timer) */
+/* { */
+/*   int i; */
+/*   sigset_t oldset; */
 
-  block_atimers (&oldset);
+/*   block_atimers (&oldset); */
 
-  for (i = 0; i < 2; ++i)
-    {
-      struct atimer *t, *prev;
-      struct atimer **list = i ? &stopped_atimers : &atimers;
+/*   for (i = 0; i < 2; ++i) */
+/*     { */
+/*       struct atimer *t, *prev; */
+/*       struct atimer **list = i ? &stopped_atimers : &atimers; */
 
-      /* See if TIMER is active or stopped.  */
-      for (t = *list, prev = NULL; t && t != timer; prev = t, t = t->next)
-	;
+/*       /\* See if TIMER is active or stopped.  *\/ */
+/*       for (t = *list, prev = NULL; t && t != timer; prev = t, t = t->next) */
+/* 	; */
 
-      /* If it is, take it off its list, and put in on the free-list.
-	 We don't bother to arrange for setting a different alarm time,
-	 since a too early one doesn't hurt.  */
-      if (t)
-	{
-	  if (prev)
-	    prev->next = t->next;
-	  else
-	    *list = t->next;
+/*       /\* If it is, take it off its list, and put in on the free-list. */
+/* 	 We don't bother to arrange for setting a different alarm time, */
+/* 	 since a too early one doesn't hurt.  *\/ */
+/*       if (t) */
+/* 	{ */
+/* 	  if (prev) */
+/* 	    prev->next = t->next; */
+/* 	  else */
+/* 	    *list = t->next; */
 
-	  t->next = free_atimers;
-	  free_atimers = t;
-	  break;
-	}
-    }
+/* 	  t->next = free_atimers; */
+/* 	  free_atimers = t; */
+/* 	  break; */
+/* 	} */
+/*     } */
 
-  unblock_atimers (&oldset);
-}
+/*   unblock_atimers (&oldset); */
+/* } */
 
 
 /* Append two lists of atimers LIST_1 and LIST_2 and return the
    result list.  */
 
-static struct atimer *
-append_atimer_lists (struct atimer *list_1, struct atimer *list_2)
-{
-  if (list_1 == NULL)
-    return list_2;
-  else if (list_2 == NULL)
-    return list_1;
-  else
-    {
-      struct atimer *p;
+/* static struct atimer * */
+/* append_atimer_lists (struct atimer *list_1, struct atimer *list_2) */
+/* { */
+/*   if (list_1 == NULL) */
+/*     return list_2; */
+/*   else if (list_2 == NULL) */
+/*     return list_1; */
+/*   else */
+/*     { */
+/*       struct atimer *p; */
 
-      for (p = list_1; p->next; p = p->next)
-	;
-      p->next = list_2;
-      return list_1;
-    }
-}
+/*       for (p = list_1; p->next; p = p->next) */
+/* 	; */
+/*       p->next = list_2; */
+/*       return list_1; */
+/*     } */
+/* } */
 
 
 /* Stop all timers except timer T.  T null means stop all timers.  */
 
-void
-stop_other_atimers (struct atimer *t)
-{
-  sigset_t oldset;
-  block_atimers (&oldset);
+/* void */
+/* stop_other_atimers (struct atimer *t) */
+/* { */
+/*   sigset_t oldset; */
+/*   block_atimers (&oldset); */
 
-  if (t)
-    {
-      struct atimer *p, *prev;
+/*   if (t) */
+/*     { */
+/*       struct atimer *p, *prev; */
 
-      /* See if T is active.  */
-      for (p = atimers, prev = NULL; p && p != t; prev = p, p = p->next)
-	;
+/*       /\* See if T is active.  *\/ */
+/*       for (p = atimers, prev = NULL; p && p != t; prev = p, p = p->next) */
+/* 	; */
 
-      if (p == t)
-	{
-	  if (prev)
-	    prev->next = t->next;
-	  else
-	    atimers = t->next;
-	  t->next = NULL;
-	}
-      else
-	/* T is not active.  Let's handle this like T == 0.  */
-	t = NULL;
-    }
+/*       if (p == t) */
+/* 	{ */
+/* 	  if (prev) */
+/* 	    prev->next = t->next; */
+/* 	  else */
+/* 	    atimers = t->next; */
+/* 	  t->next = NULL; */
+/* 	} */
+/*       else */
+/* 	/\* T is not active.  Let's handle this like T == 0.  *\/ */
+/* 	t = NULL; */
+/*     } */
 
-  stopped_atimers = append_atimer_lists (atimers, stopped_atimers);
-  atimers = t;
-  unblock_atimers (&oldset);
-}
+/*   stopped_atimers = append_atimer_lists (atimers, stopped_atimers); */
+/*   atimers = t; */
+/*   unblock_atimers (&oldset); */
+/* } */
 
 
 /* Run all timers again, if some have been stopped with a call to
    stop_other_atimers.  */
 
-void
-run_all_atimers (void)
-{
-  if (stopped_atimers)
-    {
-      struct atimer *t = atimers;
-      struct atimer *next;
-      sigset_t oldset;
+/* void */
+/* run_all_atimers (void) */
+/* { */
+/*   if (stopped_atimers) */
+/*     { */
+/*       struct atimer *t = atimers; */
+/*       struct atimer *next; */
+/*       sigset_t oldset; */
 
-      block_atimers (&oldset);
-      atimers = stopped_atimers;
-      stopped_atimers = NULL;
+/*       block_atimers (&oldset); */
+/*       atimers = stopped_atimers; */
+/*       stopped_atimers = NULL; */
 
-      while (t)
-	{
-	  next = t->next;
-	  schedule_atimer (t);
-	  t = next;
-	}
+/*       while (t) */
+/* 	{ */
+/* 	  next = t->next; */
+/* 	  schedule_atimer (t); */
+/* 	  t = next; */
+/* 	} */
 
-      unblock_atimers (&oldset);
-    }
-}
+/*       unblock_atimers (&oldset); */
+/*     } */
+/* } */
 
 
 /* Arrange for a SIGALRM to arrive when the next timer is ripe.  */
@@ -338,23 +323,23 @@ set_alarm (void)
    the list sorted by expiration time.  T must not be in this list
    already.  */
 
-static void
-schedule_atimer (struct atimer *t)
-{
-  struct atimer *a = atimers, *prev = NULL;
+/* void */
+/* schedule_atimer (struct atimer *t) */
+/* { */
+/*   struct atimer *a = atimers, *prev = NULL; */
 
-  /* Look for the first atimer that is ripe after T.  */
-  while (a && timespec_cmp (a->expiration, t->expiration) < 0)
-    prev = a, a = a->next;
+/*   /\* Look for the first atimer that is ripe after T.  *\/ */
+/*   while (a && timespec_cmp (a->expiration, t->expiration) < 0) */
+/*     prev = a, a = a->next; */
 
-  /* Insert T in front of the atimer found, if any.  */
-  if (prev)
-    prev->next = t;
-  else
-    atimers = t;
+/*   /\* Insert T in front of the atimer found, if any.  *\/ */
+/*   if (prev) */
+/*     prev->next = t; */
+/*   else */
+/*     atimers = t; */
 
-  t->next = a;
-}
+/*   t->next = a; */
+/* } */
 
 static void
 run_timers (void)
@@ -386,11 +371,11 @@ run_timers (void)
 /* Signal handler for SIGALRM.  SIGNO is the signal number, i.e.
    SIGALRM.  */
 
-static void
-handle_alarm_signal (int sig)
-{
-  pending_signals = 1;
-}
+/* static void */
+/* handle_alarm_signal (int sig) */
+/* { */
+/*   pending_signals = 1; */
+/* } */
 
 #ifdef HAVE_TIMERFD
 
