@@ -609,6 +609,8 @@ string, its first and last words need not match whole words.  This is
 so that the matching can proceed incrementally as you type.  This
 additional laxity does not apply to the lazy highlight
 (@pxref{Incremental Search}), which always matches whole words.
+While you are typing the search string, @samp{Pending} appears in the
+search prompt until you use a search repeating key like @kbd{C-s}.
 
   The word search commands don't perform character folding, and
 toggling lax whitespace matching (@pxref{Lax Search, lax space
@@ -661,8 +663,10 @@ search is not already active, this runs the command
 active, @kbd{M-s _} switches to a symbol search, preserving the
 direction of the search and the current search string; you can disable
 symbol search by typing @kbd{M-s _} again.  In incremental symbol
-search, only the beginning of the search string is required to match
-the beginning of a symbol.
+search, while you are typing the search string, only the beginning
+of the search string is required to match the beginning of a symbol,
+and @samp{Pending} appears in the search prompt until you use a search
+repeating key like @kbd{C-s}.
 
   To begin a nonincremental symbol search, type @kbd{M-s _ @key{RET}}
 for a forward search, or @kbd{M-s _ C-r @key{RET}} or a backward
