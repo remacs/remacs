@@ -1430,8 +1430,10 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
                    FIXME: 5 is arbitrarily chosen.  */
                 for (i = 0; i < HASH_TABLE_SIZE (h); i++)
                   {
-                    if (!NILP (HASH_HASH (h, i)) &&
-                        (EQ (v1, HASH_KEY (h, i)) ||
+#ifdef BYTE_CODE_SAFE
+                    eassert (!NILP (HASH_HASH (h, i)));
+#endif
+                    if ((EQ (v1, HASH_KEY (h, i)) ||
                          (h->test.cmpfn &&
                           h->test.cmpfn (&h->test, v1, HASH_KEY (h, i)))))
                       {
