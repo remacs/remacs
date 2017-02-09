@@ -917,10 +917,11 @@ CONST2 may be evaluated multiple times."
       (if (> (car bytes-tail) 255) (error "Bytecode overflow")))
 
     (dolist (hash-table byte-compile-jump-tables)
-      (cl-loop for k being the hash-keys of hash-table do
-               (let ((tag (cdr (gethash k hash-table))))
-                 (setq pc (car tag))
-                 (puthash k (cons (logand pc 255) (lsh pc -8)) hash-table))))
+      (maphash #'(lambda (value tag)
+                   (setq pc (cadr tag))
+                   (puthash value (+ (logand pc 255) (lsh (lsh pc -8) 8))
+                            hash-table))
+               hash-table))
     (apply 'unibyte-string (nreverse bytes))))
 
 

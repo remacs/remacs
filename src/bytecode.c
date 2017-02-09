@@ -1415,20 +1415,39 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 
         CASE (Bswitch):
           {
+            /*TODO: Perhaps introduce another byte-code for switch when the
+              number of cases is less, which uses a simple vector for linear
+              search as the jump table.  */
             Lisp_Object jmp_table = POP;
             Lisp_Object v1 = POP;
 #ifdef BYTE_CODE_SAFE
             CHECK_TYPE (HASH_TABLE_P (jmp_table), Qhash_table_p, jmp_table);
 #endif
+            ptrdiff_t i;
             struct Lisp_Hash_Table *h = XHASH_TABLE(jmp_table);
-            ptrdiff_t i = hash_lookup(h, v1, NULL);
-            if (i >= 0) {
-              Lisp_Object dest = HASH_VALUE(h, i);
-              int car = XINT(XCAR(dest));
-              int cdr = XINT(XCDR(dest));
-              op = car + (cdr << 8); /* Simulate FETCH2 */
-              goto op_branch;
-            }
+            if (HASH_TABLE_SIZE (h) <= 5)
+              { /* Do a linear search if there are not many cases
+                   FIXME: 5 is arbitrarily chosen.  */
+                for (i = 0; i < HASH_TABLE_SIZE (h); i++)
+                  {
+                    if (!NILP (HASH_HASH (h, i)) &&
+                        (EQ (v1, HASH_KEY (h, i)) ||
+                         (h->test.cmpfn &&
+                          h->test.cmpfn (&h->test, v1, HASH_KEY (h, i)))))
+                      {
+                        op = XINT (HASH_VALUE (h, i));
+                        goto op_branch;
+                      }
+                  }
+              }
+            else
+              {
+                i = hash_lookup(h, v1, NULL);
+                if (i >= 0) {
+                  op = XINT(HASH_VALUE (h, i));
+                  goto op_branch;
+                }
+              }
           }
           NEXT;
 

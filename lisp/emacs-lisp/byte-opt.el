@@ -1411,10 +1411,8 @@
                ;; Replace all addresses with TAGs.
                (maphash #'(lambda (value tag)
                             (let (newtag)
-                              (cl-assert (consp tag)
-                                         nil "Invalid address for byte-switch")
                               (setq newtag (byte-compile-make-tag))
-                              (push (cons (+ (car tag) (lsh (cdr tag) 8)) newtag) tags)
+                              (push (cons tag newtag) tags)
                               (puthash value newtag last-constant)))
                         last-constant)
                ;; Replace the hash table referenced in the lapcode with our
