@@ -69,7 +69,7 @@
 
 (defun xdg-data-dirs ()
   "Return the data directory search path as a list."
-  (let ((env (getenv "XDG_CONFIG_DIRS")))
+  (let ((env (getenv "XDG_DATA_DIRS")))
     (if (or (null env) (string= env ""))
         '("/usr/local/share/" "/usr/share/")
       (parse-colon-path env))))
