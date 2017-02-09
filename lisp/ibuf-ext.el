@@ -506,11 +506,19 @@ the mode if ARG is omitted or nil."
     (ibuffer-backward-filter-group 1))
   (ibuffer-forward-line 0))
 
+(defun ibuffer--maybe-erase-shell-cmd-output ()
+  (let ((buf (get-buffer "*Shell Command Output*")))
+    (when (and (buffer-live-p buf)
+               (not shell-command-dont-erase-buffer)
+               (not (zerop (buffer-size buf))))
+      (with-current-buffer buf (erase-buffer)))))
+
 ;;;###autoload (autoload 'ibuffer-do-shell-command-pipe "ibuf-ext")
 (define-ibuffer-op shell-command-pipe (command)
   "Pipe the contents of each marked buffer to shell command COMMAND."
   (:interactive "sPipe to shell command: "
    :opstring "Shell command executed on"
+   :before (ibuffer--maybe-erase-shell-cmd-output)
    :modifier-p nil)
   (let ((out-buf (get-buffer-create "*Shell Command Output*")))
     (with-current-buffer out-buf (goto-char (point-max)))
@@ -533,6 +541,7 @@ the mode if ARG is omitted or nil."
   "Run shell command COMMAND separately on files of marked buffers."
   (:interactive "sShell command on buffer's file: "
    :opstring "Shell command executed on"
+   :before (ibuffer--maybe-erase-shell-cmd-output)
    :modifier-p nil)
   (let ((file (and (not (buffer-modified-p))
                    buffer-file-name))
@@ -550,7 +559,6 @@ the mode if ARG is omitted or nil."
              command
              (shell-quote-argument file))
      nil out-buf nil)))
-
 
 ;;;###autoload (autoload 'ibuffer-do-eval "ibuf-ext")
 (define-ibuffer-op eval (form)
