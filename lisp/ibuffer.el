@@ -2564,18 +2564,26 @@ Marking commands:
 
 Filtering commands:
 
+  `\\[ibuffer-filter-chosen-by-completion]' - Select and apply filter chosen by completion.
   `\\[ibuffer-filter-by-mode]' - Add a filter by any major mode.
   `\\[ibuffer-filter-by-used-mode]' - Add a filter by a major mode now in use.
   `\\[ibuffer-filter-by-derived-mode]' - Add a filter by derived mode.
   `\\[ibuffer-filter-by-name]' - Add a filter by buffer name.
   `\\[ibuffer-filter-by-content]' - Add a filter by buffer content.
+  `\\[ibuffer-filter-by-basename]' - Add a filter by basename.
+  `\\[ibuffer-filter-by-directory]' - Add a filter by directory name.
   `\\[ibuffer-filter-by-filename]' - Add a filter by filename.
+  `\\[ibuffer-filter-by-file-extension]' - Add a filter by file extension.
+  `\\[ibuffer-filter-by-modified]' - Add a filter by modified buffers.
+  `\\[ibuffer-filter-by-predicate]' - Add a filter by an arbitrary Lisp predicate.
   `\\[ibuffer-filter-by-size-gt]' - Add a filter by buffer size.
   `\\[ibuffer-filter-by-size-lt]' - Add a filter by buffer size.
-  `\\[ibuffer-filter-by-predicate]' - Add a filter by an arbitrary Lisp predicate.
+  `\\[ibuffer-filter-by-starred-name]' - Add a filter by special buffers.
+  `\\[ibuffer-filter-by-visiting-file]' - Add a filter by buffers visiting files.
   `\\[ibuffer-save-filters]' - Save the current filters with a name.
   `\\[ibuffer-switch-to-saved-filters]' - Switch to previously saved filters.
   `\\[ibuffer-add-saved-filters]' - Add saved filters to current filters.
+  `\\[ibuffer-and-filter]' - Replace the top two filters with their logical AND.
   `\\[ibuffer-or-filter]' - Replace the top two filters with their logical OR.
   `\\[ibuffer-pop-filter]' - Remove the top filter.
   `\\[ibuffer-negate-filter]' - Invert the logical sense of the top filter.
