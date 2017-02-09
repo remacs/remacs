@@ -512,8 +512,10 @@ the mode if ARG is omitted or nil."
   (:interactive "sPipe to shell command: "
    :opstring "Shell command executed on"
    :modifier-p nil)
-  (shell-command-on-region
-   (point-min) (point-max) command))
+  (let ((out-buf (get-buffer-create "*Shell Command Output*")))
+    (with-current-buffer out-buf (goto-char (point-max)))
+    (call-shell-region (point-min) (point-max)
+                       command nil out-buf)))
 
 ;;;###autoload (autoload 'ibuffer-do-shell-command-pipe-replace "ibuf-ext")
 (define-ibuffer-op shell-command-pipe-replace (command)
@@ -523,9 +525,8 @@ the mode if ARG is omitted or nil."
    :active-opstring "replace buffer contents in"
    :dangerous t
    :modifier-p t)
-  (with-current-buffer buf
-    (shell-command-on-region (point-min) (point-max)
-			     command nil t)))
+  (call-shell-region (point-min) (point-max)
+                     command 'delete buf))
 
 ;;;###autoload (autoload 'ibuffer-do-shell-command-file "ibuf-ext")
 (define-ibuffer-op shell-command-file (command)
@@ -533,16 +534,23 @@ the mode if ARG is omitted or nil."
   (:interactive "sShell command on buffer's file: "
    :opstring "Shell command executed on"
    :modifier-p nil)
-  (shell-command (concat command " "
-			 (shell-quote-argument
-			  (or buffer-file-name
-			      (let ((file
-				     (make-temp-file
-				      (substring
-				       (buffer-name) 0
-				       (min 10 (length (buffer-name)))))))
-				(write-region nil nil file nil 0)
-				file))))))
+  (let ((file (and (not (buffer-modified-p))
+                   buffer-file-name))
+        (out-buf (get-buffer-create "*Shell Command Output*")))
+    (unless (and file (file-exists-p file))
+      (setq file
+            (make-temp-file
+             (substring
+              (buffer-name) 0
+              (min 10 (length (buffer-name))))))
+      (write-region nil nil file nil 0))
+    (with-current-buffer out-buf (goto-char (point-max)))
+    (call-process-shell-command
+     (format "%s %s"
+             command
+             (shell-quote-argument file))
+     nil out-buf nil)))
+
 
 ;;;###autoload (autoload 'ibuffer-do-eval "ibuf-ext")
 (define-ibuffer-op eval (form)
