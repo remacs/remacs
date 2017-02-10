@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "XMenuInt.h"
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef EMACS_BITMAP_FILES
 #include "../src/bitmaps/dimple1.xbm"
