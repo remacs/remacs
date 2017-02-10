@@ -511,10 +511,14 @@ enum Lisp_Fwd_Type
    to add a new Lisp_Misc, extend the Lisp_Misc_Type enumeration.
 
    For a Lisp_Misc, you will also need to add your entry to union
-   Lisp_Misc (but make sure the first word has the same structure as
+   Lisp_Misc, but make sure the first word has the same structure as
    the others, starting with a 16-bit member of the Lisp_Misc_Type
-   enumeration and a 1-bit GC markbit) and make sure the overall size
-   of the union is not increased by your addition.
+   enumeration and a 1-bit GC markbit.  Also make sure the overall
+   size of the union is not increased by your addition.  The latter
+   requirement is to keep Lisp_Misc objects small enough, so they
+   are handled faster: since all Lisp_Misc types use the same space,
+   enlarging any of them will affect all the rest.  If you really
+   need a larger object, it is best to use Lisp_Vectorlike instead.
 
    For a new pseudovector, it's highly desirable to limit the size
    of your data type by VBLOCK_BYTES_MAX bytes (defined in alloc.c).
