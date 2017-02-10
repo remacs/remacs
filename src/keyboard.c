@@ -10020,7 +10020,7 @@ Internal use only.  */)
     add_command_key (make_number ('x' | meta_modifier));
   else
     add_command_key (make_number (key0));
-  for (int i = 1; i < SCHARS (keys); i++)
+  for (ptrdiff_t i = 1; i < SCHARS (keys); i++)
     add_command_key (make_number (SREF (keys, i)));
   return Qnil;
 }

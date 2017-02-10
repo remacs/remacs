@@ -2215,7 +2215,7 @@ struct composition_it
      the automatic composition.  Provided that ELT is an element of
      Vcomposition_function_table for CH, (nth ELT RULE_IDX) is the
      rule for the composition.  */
-  int rule_idx;
+  EMACS_INT rule_idx;
   /* If this is an automatic composition, how many characters to look
      back from the position where a character triggering the
      composition exists.  */
