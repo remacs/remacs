@@ -10001,6 +10001,30 @@ See also `this-command-keys-vector'.  */)
 			   XVECTOR (this_command_keys)->contents);
 }
 
+DEFUN ("set--this-command-keys", Fset__this_command_keys,
+       Sset__this_command_keys, 1, 1, 0,
+       doc: /* Set the vector to be returned by `this-command-keys'.
+The argument KEYS must be a string.
+Internal use only.  */)
+  (Lisp_Object keys)
+{
+  CHECK_STRING (keys);
+
+  this_command_key_count = 0;
+  this_single_command_key_start = 0;
+  int key0 = SREF (keys, 0);
+
+  /* Kludge alert: this makes M-x be in the form expected by
+     novice.el.  Any better ideas?  */
+  if (key0 == 248)
+    add_command_key (make_number ('x' | meta_modifier));
+  else
+    add_command_key (make_number (key0));
+  for (int i = 1; i < SCHARS (keys); i++)
+    add_command_key (make_number (SREF (keys, i)));
+  return Qnil;
+}
+
 DEFUN ("this-command-keys-vector", Fthis_command_keys_vector, Sthis_command_keys_vector, 0, 0, 0,
        doc: /* Return the key sequence that invoked this command, as a vector.
 However, if the command has called `read-key-sequence', it returns
@@ -11211,6 +11235,7 @@ syms_of_keyboard (void)
   defsubr (&Sthis_command_keys_vector);
   defsubr (&Sthis_single_command_keys);
   defsubr (&Sthis_single_command_raw_keys);
+  defsubr (&Sset__this_command_keys);
   defsubr (&Sclear_this_command_keys);
   defsubr (&Ssuspend_emacs);
   defsubr (&Sabort_recursive_edit);

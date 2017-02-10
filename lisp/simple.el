@@ -1733,6 +1733,9 @@ invoking, give a prefix argument to `execute-extended-command'."
 		       (where-is-internal function overriding-local-map t))))
     (unless (commandp function)
       (error "`%s' is not a valid command name" command-name))
+    ;; Some features, such as novice.el, rely on this-command-keys
+    ;; including M-x COMMAND-NAME RET.
+    (set--this-command-keys (concat "\M-x" (symbol-name function) "\r"))
     (setq this-command function)
     ;; Normally `real-this-command' should never be changed, but here we really
     ;; want to pretend that M-x <cmd> RET is nothing more than a "key
