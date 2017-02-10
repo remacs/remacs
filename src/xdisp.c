@@ -20995,7 +20995,10 @@ display_line (struct it *it)
 			 up to the right margin of the window.  */
 		      extend_face_to_end_of_line (it);
 		    }
-		  else if (it->c == '\t' && FRAME_WINDOW_P (it->f))
+		  else if ((it->what == IT_CHARACTER
+			    || it->what == IT_STRETCH
+			    || it->what == IT_COMPOSITION)
+			   && it->c == '\t' && FRAME_WINDOW_P (it->f))
 		    {
 		      /* A TAB that extends past the right edge of the
 			 window.  This produces a single glyph on
