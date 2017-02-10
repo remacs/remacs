@@ -1429,6 +1429,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
             if (h->count <= 5)
               { /* Do a linear search if there are not many cases
                    FIXME: 5 is arbitrarily chosen.  */
+                EMACS_UINT hash_code = h->test.hashfn (&h->test, v1);
                 for (i = 0; i < h->count; i++)
                   {
 #ifdef BYTE_CODE_SAFE
@@ -1439,8 +1440,9 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
                        HASH_TABLE_SIZE (h) == h->count.  */
 
                     if ((EQ (v1, HASH_KEY (h, i)) ||
-                         (h->test.cmpfn &&
-                          h->test.cmpfn (&h->test, v1, HASH_KEY (h, i)))))
+                         (h->test.cmpfn
+                          && hash_code == XUINT (HASH_HASH (h, i))
+                          && h->test.cmpfn (&h->test, v1, HASH_KEY (h, i)))))
                       {
                         op = XINT (HASH_VALUE (h, i));
                         goto op_branch;
