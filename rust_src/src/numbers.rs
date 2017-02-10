@@ -1,17 +1,19 @@
-extern crate libc;
-
-use std::os::raw::c_char;
 use std::ptr;
 
-use lisp::{LispObject, LispSubr, Qnil, Qt, INTEGERP, FLOATP, MARKERP, NATNUMP, NUMBERP};
+use lisp::{LispObject, Qnil, Qt, INTEGERP, FLOATP, MARKERP, NATNUMP, NUMBERP};
 
-fn Ffloatp(object: LispObject) -> LispObject {
-    if FLOATP(object) { unsafe { Qt } } else { Qnil }
+fn floatp(object: LispObject) -> LispObject {
+    if FLOATP(object) {
+        LispObject::from_raw(unsafe { Qt })
+    } else {
+        Qnil
+    }
 }
 
 defun!("floatp",
-       Ffloatp,
+       Ffloatp(object),
        Sfloatp,
+       floatp,
        1,
        1,
        ptr::null(),
@@ -19,17 +21,18 @@ defun!("floatp",
 
 (fn OBJECT)");
 
-fn Fintegerp(object: LispObject) -> LispObject {
+fn integerp(object: LispObject) -> LispObject {
     if INTEGERP(object) {
-        unsafe { Qt }
+        LispObject::from_raw(unsafe { Qt })
     } else {
         Qnil
     }
 }
 
 defun!("integerp",
-       Fintegerp,
+       Fintegerp(object),
        Sintegerp,
+       integerp,
        1,
        1,
        ptr::null(),
@@ -37,17 +40,18 @@ defun!("integerp",
 
 (fn OBJECT)");
 
-fn Finteger_or_marker_p(object: LispObject) -> LispObject {
+fn integer_or_marker_p(object: LispObject) -> LispObject {
     if MARKERP(object) || INTEGERP(object) {
-        unsafe { Qt }
+        LispObject::from_raw(unsafe { Qt })
     } else {
         Qnil
     }
 }
 
 defun!("integer-or-marker-p",
-       Finteger_or_marker_p,
+       Finteger_or_marker_p(object),
        Sinteger_or_marker_p,
+       integer_or_marker_p,
        1,
        1,
        ptr::null(),
@@ -55,13 +59,18 @@ defun!("integer-or-marker-p",
 
 (fn OBJECT)");
 
-fn Fnatnump(object: LispObject) -> LispObject {
-    if NATNUMP(object) { unsafe { Qt } } else { Qnil }
+fn natnump(object: LispObject) -> LispObject {
+    if NATNUMP(object) {
+        LispObject::from_raw(unsafe { Qt })
+    } else {
+        Qnil
+    }
 }
 
 defun!("natnump",
-       Fnatnump,
+       Fnatnump(object),
        Snatnump,
+       natnump,
        1,
        1,
        ptr::null(),
@@ -69,13 +78,18 @@ defun!("natnump",
 
 (fn OBJECT)");
 
-fn Fnumberp(object: LispObject) -> LispObject {
-    if NUMBERP(object) { unsafe { Qt } } else { Qnil }
+fn numberp(object: LispObject) -> LispObject {
+    if NUMBERP(object) {
+        LispObject::from_raw(unsafe { Qt })
+    } else {
+        Qnil
+    }
 }
 
 defun!("numberp",
-       Fnumberp,
+       Fnumberp(object),
        Snumberp,
+       numberp,
        1,
        1,
        ptr::null(),
@@ -83,17 +97,18 @@ defun!("numberp",
 
 (fn OBJECT)");
 
-fn Fnumber_or_marker_p(object: LispObject) -> LispObject {
+fn number_or_marker_p(object: LispObject) -> LispObject {
     if NUMBERP(object) || MARKERP(object) {
-        unsafe { Qt }
+        LispObject::from_raw(unsafe { Qt })
     } else {
         Qnil
     }
 }
 
 defun!("number-or-marker-p",
-       Fnumber_or_marker_p,
+       Fnumber_or_marker_p(object),
        Snumber_or_marker_p,
+       number_or_marker_p,
        1,
        1,
        ptr::null(),

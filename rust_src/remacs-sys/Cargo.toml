@@ -1,0 +1,13 @@
+[package]
+name = "remacs-sys"
+version = "0.1.0"
+build = "build.rs"
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+libc = "0.2"
+
+[build-dependencies]
+libc = "0.2"

@@ -1,13 +1,13 @@
-use std::os::raw::c_char;
 use std::ptr;
 
-extern crate libc;
+use libc;
 
-use lisp::{LispObject, LispSubr, Qnil, SBYTES, SSDATA, STRING_MULTIBYTE, STRINGP, CHECK_STRING};
+use lisp::{LispObject, Qnil, SBYTES, SSDATA, STRING_MULTIBYTE, STRINGP, CHECK_STRING};
 use lists::NILP;
+use remacs_sys::Lisp_Object;
 
 extern "C" {
-    fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> LispObject;
+    fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
     fn base64_encode_1(from: *const libc::c_char,
                        to: *mut libc::c_char,
                        length: libc::ptrdiff_t,
@@ -25,13 +25,14 @@ extern "C" {
 
 static MIME_LINE_LENGTH: isize = 76;
 
-fn Fstringp(object: LispObject) -> LispObject {
+fn stringp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_string())
 }
 
 defun!("stringp",
-       Fstringp,
+       Fstringp(object),
        Sstringp,
+       stringp,
        1,
        1,
        ptr::null(),
@@ -39,13 +40,14 @@ defun!("stringp",
 
 (fn OBJECT)");
 
-fn Feq(firstObject: LispObject, secondObject: LispObject) -> LispObject {
+fn eq(firstObject: LispObject, secondObject: LispObject) -> LispObject {
     LispObject::from_bool(firstObject == secondObject)
 }
 
 defun!("eq",
-       Feq,
+       Feq(firstObject, secondObject),
        Seq,
+       eq,
        2,
        2,
        ptr::null(),
@@ -53,13 +55,14 @@ defun!("eq",
 
 (fn OBJECT OBJECT)");
 
-fn Fnull(object: LispObject) -> LispObject {
+fn null(object: LispObject) -> LispObject {
     LispObject::from_bool(object == Qnil)
 }
 
 defun!("null",
-       Fnull,
+       Fnull(object),
        Snull,
+       null,
        1,
        1,
        ptr::null(),
@@ -68,8 +71,8 @@ defun!("null",
 (fn OBJECT)");
 
 
-fn Fbase64_encode_string(string: LispObject, noLineBreak: LispObject) -> LispObject {
-    CHECK_STRING(string);
+fn base64_encode_string(string: LispObject, noLineBreak: LispObject) -> LispObject {
+    CHECK_STRING(string.to_raw());
 
     // We need to allocate enough room for the encoded text
     // We will need 33 1/3% more space, plus a newline every 76 characters(MIME_LINE_LENGTH)
@@ -83,11 +86,11 @@ fn Fbase64_encode_string(string: LispObject, noLineBreak: LispObject) -> LispObj
     let mut buffer: Vec<libc::c_char> = Vec::with_capacity(allength as usize);
     unsafe {
         let encoded = buffer.as_mut_ptr();
-        let encodedLength = base64_encode_1(SSDATA(string),
+        let encodedLength = base64_encode_1(SSDATA(string.to_raw()),
                                             encoded,
                                             length,
                                             NILP(noLineBreak),
-                                            STRING_MULTIBYTE(string));
+                                            STRING_MULTIBYTE(string.to_raw()));
 
         if encodedLength > allength {
             panic!("base64 encoded length is larger then allocated buffer");
@@ -97,13 +100,14 @@ fn Fbase64_encode_string(string: LispObject, noLineBreak: LispObject) -> LispObj
             error("Multibyte character in data for base64 encoding\0".as_ptr());
         }
 
-        make_unibyte_string(encoded, encodedLength)
+        LispObject::from_raw(make_unibyte_string(encoded, encodedLength))
     }
 }
 
 defun!("base64-encode-string",
-       Fbase64_encode_string,
+       Fbase64_encode_string(string, noLineBreak),
        Sbase64_encode_string,
+       base64_encode_string,
        1,
        2,
        ptr::null(),
@@ -113,8 +117,8 @@ defun!("base64-encode-string",
 
 (fn STRING &optional NO-LINE-BREAK)");
 
-fn Fbase64_decode_string(string: LispObject) -> LispObject {
-    CHECK_STRING(string);
+fn base64_decode_string(string: LispObject) -> LispObject {
+    CHECK_STRING(string.to_raw());
 
     let length = SBYTES(string);
     let mut buffer: Vec<libc::c_char> = Vec::with_capacity(length as usize);
@@ -122,16 +126,16 @@ fn Fbase64_decode_string(string: LispObject) -> LispObject {
 
     unsafe {
         let decoded = buffer.as_mut_ptr();
-        let decoded_length = base64_decode_1(SSDATA(string), 
-                                             decoded, 
-                                             length, 
-                                             false, 
+        let decoded_length = base64_decode_1(SSDATA(string.to_raw()),
+                                             decoded,
+                                             length,
+                                             false,
                                              ptr::null_mut());
 
         if decoded_length > length {
             panic!("Decoded length is above length");
         } else if decoded_length >= 0 {
-            decoded_string = make_unibyte_string(decoded, decoded_length);
+            decoded_string = LispObject::from_raw(make_unibyte_string(decoded, decoded_length));
         }
 
         if !STRINGP(decoded_string) {
@@ -143,8 +147,9 @@ fn Fbase64_decode_string(string: LispObject) -> LispObject {
 }
 
 defun!("base64-decode-string",
-       Fbase64_decode_string,
+       Fbase64_decode_string(string),
        Sbase64_decode_string,
+       base64_decode_string,
        1,
        1,
        ptr::null(),

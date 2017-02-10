@@ -15,6 +15,9 @@ use std::fmt::{Debug, Formatter, Error};
 
 use marker::{LispMarker, marker_position};
 
+use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, Lisp_Object, EMACS_INT_MAX, EMACS_INT_SIZE,
+                 EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS};
+
 // TODO: tweak Makefile to rebuild C files if this changes.
 
 /// Emacs values are represented as tagged pointers. A few bits are
@@ -34,42 +37,22 @@ use marker::{LispMarker, marker_position};
 ///
 /// Their definition are determined in a way consistent with Emacs C.
 /// Under casual systems, they're the type isize and usize respectively.
-
-include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
-/// These are an example of the casual case.
-#[cfg(dummy = "impossible")]
-pub type EmacsInt = isize;
-#[cfg(dummy = "impossible")]
-pub type EmacsUint = usize;
-#[cfg(dummy = "impossible")]
-pub type EmacsDouble = f64;
-#[cfg(dummy = "impossible")]
-pub const EMACS_INT_MAX: EmacsInt = 0x7FFFFFFFFFFFFFFF_i64;
-#[cfg(dummy = "impossible")]
-pub const EMACS_INT_SIZE: EmacsInt = 8;
-#[cfg(dummy = "impossible")]
-pub const EMACS_FLOAT_SIZE: EmacsInt = 8;
-#[cfg(dummy = "impossible")]
-pub const GCTYPEBITS: EmacsInt = 3;
-#[cfg(dummy = "impossible")]
-pub const USE_LSB_TAG: bool = true;
-
 #[repr(C)]
 #[derive(PartialEq, Eq, Clone, Copy)]
-pub struct LispObject(EmacsInt);
+pub struct LispObject(Lisp_Object);
 
 extern "C" {
-    pub fn wrong_type_argument(predicate: LispObject, value: LispObject) -> LispObject;
+    pub fn wrong_type_argument(predicate: Lisp_Object, value: Lisp_Object) -> Lisp_Object;
     pub fn STRING_BYTES(s: *mut LispString) -> libc::ptrdiff_t;
-    pub fn STRING_MULTIBYTE(a: LispObject) -> bool;
-    pub fn SSDATA(string: LispObject) -> *mut libc::c_char;
-    pub static Qt: LispObject;
-    pub static Qarith_error: LispObject;
-    pub static Qnumber_or_marker_p: LispObject;
-    pub static Qnumberp: LispObject;
-    pub static Qfloatp: LispObject;
-    pub static Qstringp: LispObject;
-    fn make_float(float_value: f64) -> LispObject;
+    pub fn STRING_MULTIBYTE(a: Lisp_Object) -> bool;
+    pub fn SSDATA(string: Lisp_Object) -> *mut libc::c_char;
+    pub static Qt: Lisp_Object;
+    pub static Qarith_error: Lisp_Object;
+    pub static Qnumber_or_marker_p: Lisp_Object;
+    pub static Qnumberp: Lisp_Object;
+    pub static Qfloatp: Lisp_Object;
+    pub static Qstringp: Lisp_Object;
+    fn make_float(float_value: libc::c_double) -> Lisp_Object;
 }
 
 pub const Qnil: LispObject = LispObject(0);
@@ -77,7 +60,7 @@ pub const Qnil: LispObject = LispObject(0);
 impl LispObject {
     #[inline]
     pub fn constant_t() -> LispObject {
-        unsafe { Qt }
+        LispObject::from_raw(unsafe { Qt })
     }
 
     #[inline]
@@ -88,7 +71,7 @@ impl LispObject {
     #[inline]
     pub fn from_bool(v: bool) -> LispObject {
         if v {
-            unsafe { Qt }
+            LispObject::from_raw(unsafe { Qt })
         } else {
             Qnil
         }
@@ -96,11 +79,11 @@ impl LispObject {
 
     #[inline]
     pub fn from_float(v: EmacsDouble) -> LispObject {
-        unsafe { make_float(v) }
+        LispObject::from_raw(unsafe { make_float(v) })
     }
 
     #[inline]
-    pub unsafe fn from_raw(i: EmacsInt) -> LispObject {
+    pub fn from_raw(i: EmacsInt) -> LispObject {
         LispObject(i)
     }
 
@@ -538,21 +521,58 @@ unsafe impl Sync for LispSubr {}
 /// This is equivalent to DEFUN in Emacs C, but the function
 /// definition is kept separate to aid readability.
 macro_rules! defun {
-    ($lisp_name:expr, $fname:ident, $sname:ident, $min_args:expr, $max_args:expr, $intspec:expr, $docstring:expr) => {
+    ($lisp_name:expr, $fname:ident($($arg_name:ident),*), $sname: ident, $rust_name: ident, $min_args:expr, $max_args:expr, $intspec:expr, $docstring:expr) => {
+        #[no_mangle]
+        pub extern "C" fn $fname($($arg_name: $crate::remacs_sys::Lisp_Object),*) -> $crate::remacs_sys::Lisp_Object {
+            let ret = $rust_name($($crate::lisp::LispObject::from_raw($arg_name)),*);
+            ret.to_raw()
+        }
+
         lazy_static! {
 // TODO: this is blindly hoping we have the correct alignment.
 // We should ensure we have GCALIGNMENT (8 bytes).
-            pub static ref $sname: LispSubr = LispSubr {
+            pub static ref $sname: $crate::lisp::LispSubr = $crate::lisp::LispSubr {
                 header: $crate::lisp::VectorLikeHeader {
-                    size: (($crate::lisp::PvecType::PVEC_SUBR as libc::c_int) <<
-                           $crate::lisp::PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
+                    size: (($crate::lisp::PvecType::PVEC_SUBR as $crate::libc::c_int) <<
+                           $crate::lisp::PSEUDOVECTOR_AREA_BITS) as $crate::libc::ptrdiff_t,
                 },
-                function: ($fname as *const libc::c_void),
+                function: ($fname as *const $crate::libc::c_void),
                 min_args: $min_args,
                 max_args: $max_args,
-                symbol_name: ((concat!($lisp_name, "\0")).as_ptr()) as *const c_char,
+                symbol_name: ((concat!($lisp_name, "\0")).as_ptr()) as *const $crate::libc::c_char,
                 intspec: $intspec,
-                doc: (concat!($docstring, "\0").as_ptr()) as *const c_char,
+                doc: (concat!($docstring, "\0").as_ptr()) as *const $crate::libc::c_char,
+            };
+        }
+    }
+}
+
+macro_rules! defun_many {
+    ($lisp_name:expr, $fname:ident, $sname: ident, $rust_name: ident, $min_args:expr, $intspec:expr, $docstring:expr) => {
+// this is not beautifu, but works.
+        #[no_mangle]
+        pub extern "C" fn $fname(nargs: $crate::libc::ptrdiff_t, args: *mut $crate::remacs_sys::Lisp_Object) -> $crate::remacs_sys::Lisp_Object {
+            let slice = unsafe { $crate::std::slice::from_raw_parts_mut::<$crate::remacs_sys::Lisp_Object>(args, nargs as usize) };
+            let mut args: Vec<$crate::lisp::LispObject> = slice.iter().map(|arg| $crate::lisp::LispObject::from_raw(*arg)).collect();
+
+            let ret = $rust_name(args.as_mut_slice());
+            ret.to_raw()
+        }
+
+        lazy_static! {
+// TODO: this is blindly hoping we have the correct alignment.
+// We should ensure we have GCALIGNMENT (8 bytes).
+            pub static ref $sname: $crate::lisp::LispSubr = $crate::lisp::LispSubr {
+                header: $crate::lisp::VectorLikeHeader {
+                    size: (($crate::lisp::PvecType::PVEC_SUBR as $crate::libc::c_int) <<
+                           $crate::lisp::PSEUDOVECTOR_AREA_BITS) as $crate::libc::ptrdiff_t,
+                },
+                function: ($fname as *const $crate::libc::c_void),
+                min_args: $min_args,
+                max_args: $crate::lisp::MANY,
+                symbol_name: ((concat!($lisp_name, "\0")).as_ptr()) as *const $crate::libc::c_char,
+                intspec: $intspec,
+                doc: (concat!($docstring, "\0").as_ptr()) as *const $crate::libc::c_char,
             };
         }
     }
@@ -629,7 +649,7 @@ mod deprecated {
     #[allow(dead_code)]
     pub fn XIL(i: EmacsInt) -> LispObject {
         // Note that CHECK_LISP_OBJECT_TYPE is 0 (false) in our build.
-        unsafe { LispObject::from_raw(i) }
+        LispObject::from_raw(i)
     }
 
     #[test]
@@ -847,7 +867,7 @@ pub fn check_number_coerce_marker(x: LispObject) -> LispObject {
         make_natnum(marker_position(x) as EmacsInt)
     } else {
         unsafe {
-            CHECK_TYPE(NUMBERP(x), Qnumber_or_marker_p, x);
+            CHECK_TYPE(NUMBERP(x), LispObject::from_raw(Qnumber_or_marker_p), x);
         }
         x
     }
@@ -860,7 +880,7 @@ pub fn check_number_coerce_marker(x: LispObject) -> LispObject {
 pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
     if !ok {
         unsafe {
-            wrong_type_argument(predicate, x);
+            wrong_type_argument(predicate.to_raw(), x.to_raw());
         }
     }
 }
@@ -868,8 +888,9 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
 /// Raise an error if `x` is not lisp string.
 #[allow(non_snake_case)]
 #[no_mangle]
-pub extern "C" fn CHECK_STRING(x: LispObject) {
-    CHECK_TYPE(x.is_string(), unsafe { Qstringp }, x);
+pub extern "C" fn CHECK_STRING(x: Lisp_Object) {
+    let x = LispObject::from_raw(x);
+    CHECK_TYPE(x.is_string(), LispObject::from_raw(unsafe { Qstringp }), x);
 }
 
 #[allow(non_snake_case)]

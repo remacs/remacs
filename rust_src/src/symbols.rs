@@ -1,17 +1,15 @@
-use std::os::raw::c_char;
 use std::ptr;
 
-extern crate libc;
+use lisp::LispObject;
 
-use lisp::{LispObject, LispSubr};
-
-fn Fsymbolp(object: LispObject) -> LispObject {
+fn symbolp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_symbol())
 }
 
 defun!("symbolp",
-       Fsymbolp,
+       Fsymbolp(object),
        Ssymbolp,
+       symbolp,
        1,
        1,
        ptr::null(),

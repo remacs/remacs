@@ -1,9 +1,7 @@
-extern crate libc;
-
-use std::os::raw::c_char;
 use std::ptr;
 
-use lisp::{LispObject, LispSubr, Qnumberp, Qfloatp, EmacsDouble, CHECK_TYPE};
+use lisp::{LispObject, Qnumberp, Qfloatp, CHECK_TYPE};
+use remacs_sys::{EmacsDouble, Lisp_Object};
 
 pub fn init_float_syms() {
     unsafe {
@@ -28,9 +26,10 @@ pub fn init_float_syms() {
 /// Either extracts a floating point number from a lisp number (of any kind) or throws an error
 /// TODO eventually, this can hopefully go away when we have a better approach for error handling
 #[no_mangle]
-pub extern "C" fn extract_float(f: LispObject) -> EmacsDouble {
+pub extern "C" fn extract_float(f: Lisp_Object) -> EmacsDouble {
+    let f = LispObject::from_raw(f);
     let d = f.extract_float();
-    CHECK_TYPE(d.is_some(), unsafe { Qnumberp }, f);
+    CHECK_TYPE(d.is_some(), LispObject::from_raw(unsafe { Qnumberp }), f);
     match d {
         Some(d) => d,
         None => unreachable!(), // CHECK_TYPE never returns on failure
@@ -40,12 +39,14 @@ pub extern "C" fn extract_float(f: LispObject) -> EmacsDouble {
 /// checks if the argument is a float, if not, throws an error
 /// TODO eventually, this can hopefully go away when we have a better approach for error handling
 fn check_float(x: LispObject) {
-    CHECK_TYPE(x.to_float().is_some(), unsafe { Qfloatp }, x);
+    CHECK_TYPE(x.to_float().is_some(),
+               LispObject::from_raw(unsafe { Qfloatp }),
+               x);
 }
 
 /// Calculate the modulus of two elisp floats.
 #[no_mangle]
-pub extern "C" fn fmod_float(x: LispObject, y: LispObject) -> LispObject {
+pub extern "C" fn fmod_float(x: Lisp_Object, y: Lisp_Object) -> Lisp_Object {
     let mut f1 = extract_float(x);
     let f2 = extract_float(y);
 
@@ -56,24 +57,25 @@ pub extern "C" fn fmod_float(x: LispObject, y: LispObject) -> LispObject {
         f1 += f2
     }
 
-    LispObject::from_float(f1)
+    LispObject::from_float(f1).to_raw()
 }
 
 macro_rules! simple_float_op {
-    ($lisp_name:expr, $rust_name:ident, $sname:ident, $float_func:ident, $lisp_docs:expr) => {
-        fn $rust_name(x: LispObject) -> LispObject {
-            let d = extract_float(x);
+    ($lisp_name:expr, $fname:ident, $sname:ident, $float_func:ident, $lisp_docs:expr) => {
+        fn $float_func(x: LispObject) -> LispObject {
+            let d = extract_float(x.to_raw());
             let val = d.$float_func();
             LispObject::from_float(val)
         }
 
         defun! (
             $lisp_name,
-            $rust_name,
+            $fname(x),
             $sname,
+            $float_func,
             1, 1,
-            ptr::null(),
-            // explicity set signature, otherwise emacs seems to name the argument ARG1
+            $crate::std::ptr::null(),
+// explicity set signature, otherwise emacs seems to name the argument ARG1
             concat!($lisp_docs, "
 
 (fn ARG)")
@@ -117,15 +119,16 @@ simple_float_op!("ffloor",
                  "Return the largest integer no greater than ARG, as a float.
 (Round towards -inf.)");
 
-fn Fisnan(x: LispObject) -> LispObject {
+fn isnan(x: LispObject) -> LispObject {
     check_float(x);
     let d = x.to_float().unwrap();
     LispObject::from_bool(d.is_nan())
 }
 
 defun!("isnan",
-       Fisnan,
+       Fisnan(x),
        Sisnan,
+       isnan,
        1,
        1,
        ptr::null(),
@@ -133,22 +136,23 @@ defun!("isnan",
 
 (fn X)");
 
-fn Fatan(y: LispObject, x: LispObject) -> LispObject {
-    let y = extract_float(y);
+fn atan(y: LispObject, x: LispObject) -> LispObject {
+    let y = extract_float(y.to_raw());
 
     if x == LispObject::constant_nil() {
         let val = y.atan();
         return LispObject::from_float(val);
     } else {
-        let x = extract_float(x);
+        let x = extract_float(x.to_raw());
         let val = y.atan2(x);
         return LispObject::from_float(val);
     }
 }
 
 defun!("atan",
-       Fatan,
+       Fatan(y, x),
        Satan,
+       atan,
        1,
        2,
        ptr::null(),
@@ -160,13 +164,13 @@ and the x-axis
 
 (fn Y &optional X)");
 
-fn Flog(arg: LispObject, base: LispObject) -> LispObject {
-    let mut d = extract_float(arg);
+fn log(arg: LispObject, base: LispObject) -> LispObject {
+    let mut d = extract_float(arg.to_raw());
 
     if base == LispObject::constant_nil() {
         d = d.ln()
     } else {
-        let base = extract_float(base);
+        let base = extract_float(base.to_raw());
         if base == 10.0 {
             d = d.log10();
         } else if base == 2.0 {
@@ -180,8 +184,9 @@ fn Flog(arg: LispObject, base: LispObject) -> LispObject {
 }
 
 defun!("log",
-       Flog,
+       Flog(arg, base),
        Slog,
+       log,
        1,
        2,
        ptr::null(),
@@ -190,8 +195,8 @@ If the optional argument BASE is given, return log ARG using that base.
 
 (fn ARG &optional BASE)");
 
-fn Fftruncate(x: LispObject) -> LispObject {
-    let d = extract_float(x);
+fn ftruncate(x: LispObject) -> LispObject {
+    let d = extract_float(x.to_raw());
     if d > 0.0 {
         return LispObject::from_float(d.floor());
     } else {
@@ -200,8 +205,9 @@ fn Fftruncate(x: LispObject) -> LispObject {
 }
 
 defun!("ftruncate",
-       Fftruncate,
+       Fftruncate(x),
        Sftruncate,
+       ftruncate,
        1,
        1,
        ptr::null(),
@@ -210,8 +216,10 @@ Rounds the value toward zero.
 
 (fn ARG)");
 
-fn Ffloat(obj: LispObject) -> LispObject {
-    CHECK_TYPE(obj.is_number(), unsafe { Qnumberp }, obj); // does not return on failure
+fn float(obj: LispObject) -> LispObject {
+    CHECK_TYPE(obj.is_number(),
+               LispObject::from_raw(unsafe { Qnumberp }),
+               obj); // does not return on failure
 
     if obj.is_float() {
         return obj;
@@ -224,8 +232,9 @@ fn Ffloat(obj: LispObject) -> LispObject {
 }
 
 defun!("float",
-       Ffloat,
+       Ffloat(obj),
        Sfloat,
+       float,
        1,
        1,
        ptr::null(),
