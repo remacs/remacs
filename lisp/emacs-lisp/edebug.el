@@ -880,11 +880,9 @@ Maybe clear the markers and delete the symbol's edebug property?"
 	 (list
 	  (edebug-storing-offsets (- (point) 2) 'function)
 	  (edebug-read-storing-offsets stream)))
-	((memq (following-char) '(?: ?B ?O ?X ?b ?o ?x ?1 ?2 ?3 ?4 ?5 ?6
-				  ?7 ?8 ?9 ?0))
+        (t
 	 (backward-char 1)
-	 (read stream))
-	(t (edebug-syntax-error "Bad char after #"))))
+	 (read stream))))
 
 (defun edebug-read-list (stream)
   (forward-char 1)			; skip \(
