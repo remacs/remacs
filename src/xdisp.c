@@ -18972,7 +18972,7 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 	       glyph->pixel_width,
 	       glyph->u.ch,
 	       (glyph->u.ch < 0x80 && glyph->u.ch >= ' '
-		? glyph->u.ch
+		? (int) glyph->u.ch
 		: '.'),
 	       glyph->face_id,
 	       glyph->left_box_line_p,
@@ -18993,7 +18993,7 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 		      ? '0'
 		      : '-'))),
 	       glyph->pixel_width,
-	       0,
+	       0u,
 	       ' ',
 	       glyph->face_id,
 	       glyph->left_box_line_p,
@@ -19014,7 +19014,7 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 		      ? '0'
 		      : '-'))),
 	       glyph->pixel_width,
-	       glyph->u.img_id,
+	       (unsigned int) glyph->u.img_id,
 	       '.',
 	       glyph->face_id,
 	       glyph->left_box_line_p,
@@ -19035,7 +19035,7 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 		      ? '0'
 		      : '-'))),
 	       glyph->pixel_width,
-	       glyph->u.cmp.id);
+	       (unsigned int) glyph->u.cmp.id);
       if (glyph->u.cmp.automatic)
 	fprintf (stderr,
 		 "[%d-%d]",
@@ -24616,7 +24616,7 @@ dump_glyph_string (struct glyph_string *s)
   fprintf (stderr, "  x, y, w, h = %d, %d, %d, %d\n",
 	   s->x, s->y, s->width, s->height);
   fprintf (stderr, "  ybase = %d\n", s->ybase);
-  fprintf (stderr, "  hl = %d\n", s->hl);
+  fprintf (stderr, "  hl = %u\n", s->hl);
   fprintf (stderr, "  left overhang = %d, right = %d\n",
 	   s->left_overhang, s->right_overhang);
   fprintf (stderr, "  nchars = %d\n", s->nchars);
