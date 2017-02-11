@@ -5465,7 +5465,17 @@ pbm_load (struct frame *f, struct image *img)
 		c <<= 1;
 	      }
 	    else
-	      g = pbm_scan_number (&p, end);
+	      {
+		int c = 0;
+		/* Skip white-space and comments.  */
+		while ((c = pbm_next_char (&p, end)) != -1 && c_isspace (c))
+		  ;
+
+		if (c == '0' || c == '1')
+		  g = c - '0';
+		else
+		  g = 0;
+	      }
 
 #ifdef USE_CAIRO
             *dataptr++ = g ? fga32 : bga32;
