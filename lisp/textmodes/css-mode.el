@@ -1190,8 +1190,10 @@ to look up will be substituted there."
   "A helper for `css-lookup-symbol' that finds the symbol at point.
 Returns the symbol, a string, or nil if none found."
   (save-excursion
-    ;; Skip backward over a word first.
-    (skip-chars-backward "-[:alnum:] \t")
+    ;; Skip any whitespace between the word and point.
+    (skip-chars-backward "- \t")
+    ;; Skip backward over a word.
+    (skip-chars-backward "-[:alnum:]")
     ;; Now skip ":" or "@" to see if it's a pseudo-element or at-id.
     (skip-chars-backward "@:")
     (if (looking-at css--mdn-symbol-regexp)
