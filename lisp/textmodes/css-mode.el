@@ -36,7 +36,7 @@
 (require 'seq)
 (require 'sgml-mode)
 (require 'smie)
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 
 (defgroup css nil
   "Cascading Style Sheets (CSS) editing mode."

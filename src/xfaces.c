@@ -6251,7 +6251,7 @@ dump_realized_face (struct face *face)
   fprintf (stderr, "underline: %d (%s)\n",
 	   face->underline_p,
 	   SDATA (Fsymbol_name (face->lface[LFACE_UNDERLINE_INDEX])));
-  fprintf (stderr, "hash: %d\n", face->hash);
+  fprintf (stderr, "hash: %u\n", face->hash);
 }
 
 

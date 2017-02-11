@@ -108,23 +108,12 @@ To get the number of bytes, use `string-bytes'.  */)
     XSETFASTINT (val, ASIZE (sequence) & PSEUDOVECTOR_SIZE_MASK);
   else if (CONSP (sequence))
     {
-      EMACS_INT i = 0;
-
-      do
-	{
-	  ++i;
-	  if ((i & (QUIT_COUNT_HEURISTIC - 1)) == 0)
-	    {
-	      if (MOST_POSITIVE_FIXNUM < i)
-		error ("List too long");
-	      maybe_quit ();
-	    }
-	  sequence = XCDR (sequence);
-	}
-      while (CONSP (sequence));
-
+      intptr_t i = 0;
+      FOR_EACH_TAIL (sequence)
+	i++;
       CHECK_LIST_END (sequence, sequence);
-
+      if (MOST_POSITIVE_FIXNUM < i)
+	error ("List too long");
       val = make_number (i);
     }
   else if (NILP (sequence))
@@ -142,38 +131,10 @@ it returns 0.  If LIST is circular, it returns a finite value
 which is at least the number of distinct elements.  */)
   (Lisp_Object list)
 {
-  Lisp_Object tail, halftail;
-  double hilen = 0;
-  uintmax_t lolen = 1;
-
-  if (! CONSP (list))
-    return make_number (0);
-
-  /* halftail is used to detect circular lists.  */
-  for (tail = halftail = list; ; )
-    {
-      tail = XCDR (tail);
-      if (! CONSP (tail))
-	break;
-      if (EQ (tail, halftail))
-	break;
-      lolen++;
-      if ((lolen & 1) == 0)
-	{
-	  halftail = XCDR (halftail);
-	  if ((lolen & (QUIT_COUNT_HEURISTIC - 1)) == 0)
-	    {
-	      maybe_quit ();
-	      if (lolen == 0)
-		hilen += UINTMAX_MAX + 1.0;
-	    }
-	}
-    }
-
-  /* If the length does not fit into a fixnum, return a float.
-     On all known practical machines this returns an upper bound on
-     the true length.  */
-  return hilen ? make_float (hilen + lolen) : make_fixnum_or_float (lolen);
+  intptr_t len = 0;
+  FOR_EACH_TAIL_SAFE (list)
+    len++;
+  return make_fixnum_or_float (len);
 }
 
 DEFUN ("string-bytes", Fstring_bytes, Sstring_bytes, 1, 1, 0,
@@ -1383,14 +1344,10 @@ DEFUN ("member", Fmember, Smember, 2, 2, 0,
 The value is actually the tail of LIST whose car is ELT.  */)
   (Lisp_Object elt, Lisp_Object list)
 {
-  unsigned short int quit_count = 0;
-  Lisp_Object tail;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
-    {
-      if (! NILP (Fequal (elt, XCAR (tail))))
-	return tail;
-      rarely_quit (++quit_count);
-    }
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
+    if (! NILP (Fequal (elt, XCAR (tail))))
+      return tail;
   CHECK_LIST_END (tail, list);
   return Qnil;
 }
@@ -1400,14 +1357,10 @@ DEFUN ("memq", Fmemq, Smemq, 2, 2, 0,
 The value is actually the tail of LIST whose car is ELT.  */)
   (Lisp_Object elt, Lisp_Object list)
 {
-  unsigned short int quit_count = 0;
-  Lisp_Object tail;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
-    {
-      if (EQ (XCAR (tail), elt))
-	return tail;
-      rarely_quit (++quit_count);
-    }
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
+    if (EQ (XCAR (tail), elt))
+      return tail;
   CHECK_LIST_END (tail, list);
   return Qnil;
 }
@@ -1420,14 +1373,12 @@ The value is actually the tail of LIST whose car is ELT.  */)
   if (!FLOATP (elt))
     return Fmemq (elt, list);
 
-  unsigned short int quit_count = 0;
-  Lisp_Object tail;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
     {
       Lisp_Object tem = XCAR (tail);
       if (FLOATP (tem) && internal_equal (elt, tem, 0, 0, Qnil))
 	return tail;
-      rarely_quit (++quit_count);
     }
   CHECK_LIST_END (tail, list);
   return Qnil;
@@ -1439,14 +1390,10 @@ The value is actually the first element of LIST whose car is KEY.
 Elements of LIST that are not conses are ignored.  */)
   (Lisp_Object key, Lisp_Object list)
 {
-  unsigned short int quit_count = 0;
-  Lisp_Object tail;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
-    {
-      if (CONSP (XCAR (tail)) && EQ (XCAR (XCAR (tail)), key))
-	return XCAR (tail);
-      rarely_quit (++quit_count);
-    }
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
+    if (CONSP (XCAR (tail)) && EQ (XCAR (XCAR (tail)), key))
+      return XCAR (tail);
   CHECK_LIST_END (tail, list);
   return Qnil;
 }
@@ -1468,15 +1415,13 @@ DEFUN ("assoc", Fassoc, Sassoc, 2, 2, 0,
 The value is actually the first element of LIST whose car equals KEY.  */)
   (Lisp_Object key, Lisp_Object list)
 {
-  unsigned short int quit_count = 0;
-  Lisp_Object tail;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
     {
       Lisp_Object car = XCAR (tail);
       if (CONSP (car)
 	  && (EQ (XCAR (car), key) || !NILP (Fequal (XCAR (car), key))))
 	return car;
-      rarely_quit (++quit_count);
     }
   CHECK_LIST_END (tail, list);
   return Qnil;
@@ -1503,14 +1448,10 @@ DEFUN ("rassq", Frassq, Srassq, 2, 2, 0,
 The value is actually the first element of LIST whose cdr is KEY.  */)
   (Lisp_Object key, Lisp_Object list)
 {
-  unsigned short int quit_count = 0;
-  Lisp_Object tail;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
-    {
-      if (CONSP (XCAR (tail)) && EQ (XCDR (XCAR (tail)), key))
-	return XCAR (tail);
-      rarely_quit (++quit_count);
-    }
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
+    if (CONSP (XCAR (tail)) && EQ (XCDR (XCAR (tail)), key))
+      return XCAR (tail);
   CHECK_LIST_END (tail, list);
   return Qnil;
 }
@@ -1520,15 +1461,13 @@ DEFUN ("rassoc", Frassoc, Srassoc, 2, 2, 0,
 The value is actually the first element of LIST whose cdr equals KEY.  */)
   (Lisp_Object key, Lisp_Object list)
 {
-  unsigned short int quit_count = 0;
-  Lisp_Object tail;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
     {
       Lisp_Object car = XCAR (tail);
       if (CONSP (car)
 	  && (EQ (XCDR (car), key) || !NILP (Fequal (XCDR (car), key))))
 	return car;
-      rarely_quit (++quit_count);
     }
   CHECK_LIST_END (tail, list);
   return Qnil;
@@ -1544,12 +1483,11 @@ list.
 Write `(setq foo (delq element foo))' to be sure of correctly changing
 the value of a list `foo'.  See also `remq', which does not modify the
 argument.  */)
-  (register Lisp_Object elt, Lisp_Object list)
+  (Lisp_Object elt, Lisp_Object list)
 {
-  Lisp_Object tail, tortoise, prev = Qnil;
-  bool skip;
+  Lisp_Object prev = Qnil, tail = list;
 
-  FOR_EACH_TAIL (tail, list, tortoise, skip)
+  FOR_EACH_TAIL (tail)
     {
       Lisp_Object tem = XCAR (tail);
       if (EQ (elt, tem))
@@ -1670,10 +1608,9 @@ changing the value of a sequence `foo'.  */)
     }
   else
     {
-      unsigned short int quit_count = 0;
-      Lisp_Object tail, prev;
+      Lisp_Object prev = Qnil, tail = seq;
 
-      for (tail = seq, prev = Qnil; CONSP (tail); tail = XCDR (tail))
+      FOR_EACH_TAIL (tail)
 	{
 	  if (!NILP (Fequal (elt, XCAR (tail))))
 	    {
@@ -1684,7 +1621,6 @@ changing the value of a sequence `foo'.  */)
 	    }
 	  else
 	    prev = tail;
-	  rarely_quit (++quit_count);
 	}
       CHECK_LIST_END (tail, seq);
     }
@@ -1704,15 +1640,17 @@ This function may destructively modify SEQ to produce the value.  */)
     return Freverse (seq);
   else if (CONSP (seq))
     {
-      unsigned short int quit_count = 0;
       Lisp_Object prev, tail, next;
 
       for (prev = Qnil, tail = seq; CONSP (tail); tail = next)
 	{
 	  next = XCDR (tail);
+	  /* If SEQ contains a cycle, attempting to reverse it
+	     in-place will inevitably come back to SEQ.  */
+	  if (EQ (next, seq))
+	    circular_list (seq);
 	  Fsetcdr (tail, prev);
 	  prev = tail;
-	  rarely_quit (++quit_count);
 	}
       CHECK_LIST_END (tail, seq);
       seq = prev;
@@ -1755,12 +1693,9 @@ See also the function `nreverse', which is used more often.  */)
     return Qnil;
   else if (CONSP (seq))
     {
-      unsigned short int quit_count = 0;
-      for (new = Qnil; CONSP (seq); seq = XCDR (seq))
-	{
-	  new = Fcons (XCAR (seq), new);
-	  rarely_quit (++quit_count);
-	}
+      new = Qnil;
+      FOR_EACH_TAIL (seq)
+	new = Fcons (XCAR (seq), new);
       CHECK_LIST_END (seq, seq);
     }
   else if (VECTORP (seq))
@@ -2013,18 +1948,15 @@ corresponding to the given PROP, or nil if PROP is not one of the
 properties on the list.  This function never signals an error.  */)
   (Lisp_Object plist, Lisp_Object prop)
 {
-  Lisp_Object tail, halftail;
-
-  /* halftail is used to detect circular lists.  */
-  tail = halftail = plist;
-  while (CONSP (tail) && CONSP (XCDR (tail)))
+  Lisp_Object tail = plist;
+  FOR_EACH_TAIL_SAFE (tail)
     {
+      if (! CONSP (XCDR (tail)))
+	break;
       if (EQ (prop, XCAR (tail)))
 	return XCAR (XCDR (tail));
-
-      tail = XCDR (XCDR (tail));
-      halftail = XCDR (halftail);
-      if (EQ (tail, halftail))
+      tail = XCDR (tail);
+      if (EQ (tail, li.tortoise))
 	break;
     }
 
@@ -2050,11 +1982,12 @@ use `(setq x (plist-put x prop val))' to be sure to use the new value.
 The PLIST is modified by side effects.  */)
   (Lisp_Object plist, Lisp_Object prop, Lisp_Object val)
 {
-  unsigned short int quit_count = 0;
-  Lisp_Object prev = Qnil;
-  for (Lisp_Object tail = plist; CONSP (tail) && CONSP (XCDR (tail));
-       tail = XCDR (XCDR (tail)))
+  Lisp_Object prev = Qnil, tail = plist;
+  FOR_EACH_TAIL (tail)
     {
+      if (! CONSP (XCDR (tail)))
+	break;
+
       if (EQ (prop, XCAR (tail)))
 	{
 	  Fsetcar (XCDR (tail), val);
@@ -2062,8 +1995,11 @@ The PLIST is modified by side effects.  */)
 	}
 
       prev = tail;
-      rarely_quit (++quit_count);
+      tail = XCDR (tail);
+      if (EQ (tail, li.tortoise))
+	circular_list (plist);
     }
+  CHECK_LIST_END (tail, plist);
   Lisp_Object newcell
     = Fcons (prop, Fcons (val, NILP (prev) ? plist : XCDR (XCDR (prev))));
   if (NILP (prev))
@@ -2091,19 +2027,19 @@ corresponding to the given PROP, or nil if PROP is not
 one of the properties on the list.  */)
   (Lisp_Object plist, Lisp_Object prop)
 {
-  unsigned short int quit_count = 0;
-  Lisp_Object tail;
-
-  for (tail = plist;
-       CONSP (tail) && CONSP (XCDR (tail));
-       tail = XCDR (XCDR (tail)))
+  Lisp_Object tail = plist;
+  FOR_EACH_TAIL (tail)
     {
+      if (! CONSP (XCDR (tail)))
+	break;
       if (! NILP (Fequal (prop, XCAR (tail))))
 	return XCAR (XCDR (tail));
-      rarely_quit (++quit_count);
+      tail = XCDR (tail);
+      if (EQ (tail, li.tortoise))
+	circular_list (plist);
     }
 
-  CHECK_LIST_END (tail, prop);
+  CHECK_LIST_END (tail, plist);
 
   return Qnil;
 }
@@ -2118,11 +2054,12 @@ use `(setq x (lax-plist-put x prop val))' to be sure to use the new value.
 The PLIST is modified by side effects.  */)
   (Lisp_Object plist, Lisp_Object prop, Lisp_Object val)
 {
-  unsigned short int quit_count = 0;
-  Lisp_Object prev = Qnil;
-  for (Lisp_Object tail = plist; CONSP (tail) && CONSP (XCDR (tail));
-       tail = XCDR (XCDR (tail)))
+  Lisp_Object prev = Qnil, tail = plist;
+  FOR_EACH_TAIL (tail)
     {
+      if (! CONSP (XCDR (tail)))
+	break;
+
       if (! NILP (Fequal (prop, XCAR (tail))))
 	{
 	  Fsetcar (XCDR (tail), val);
@@ -2130,8 +2067,11 @@ The PLIST is modified by side effects.  */)
 	}
 
       prev = tail;
-      rarely_quit (++quit_count);
+      tail = XCDR (tail);
+      if (EQ (tail, li.tortoise))
+	circular_list (plist);
     }
+  CHECK_LIST_END (tail, plist);
   Lisp_Object newcell = list2 (prop, val);
   if (NILP (prev))
     return newcell;
@@ -2180,6 +2120,7 @@ static bool
 internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 		Lisp_Object ht)
 {
+ tail_recurse:
   if (depth > 10)
     {
       if (depth > 200)
@@ -2208,9 +2149,6 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 	}
     }
 
-  unsigned short int quit_count = 0;
- tail_recurse:
-  rarely_quit (++quit_count);
   if (EQ (o1, o2))
     return 1;
   if (XTYPE (o1) != XTYPE (o2))
@@ -2230,12 +2168,20 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
       }
 
     case Lisp_Cons:
-      if (!internal_equal (XCAR (o1), XCAR (o2), depth + 1, props, ht))
-	return 0;
-      o1 = XCDR (o1);
-      o2 = XCDR (o2);
-      /* FIXME: This inf-loops in a circular list!  */
-      goto tail_recurse;
+      {
+	FOR_EACH_TAIL (o1)
+	  {
+	    if (! CONSP (o2))
+	      return false;
+	    if (! internal_equal (XCAR (o1), XCAR (o2), depth + 1, props, ht))
+	      return false;
+	    o2 = XCDR (o2);
+	    if (EQ (XCDR (o1), o2))
+	      return true;
+	  }
+	depth++;
+	goto tail_recurse;
+      }
 
     case Lisp_Misc:
       if (XMISCTYPE (o1) != XMISCTYPE (o2))
@@ -2249,6 +2195,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 	    return 0;
 	  o1 = XOVERLAY (o1)->plist;
 	  o2 = XOVERLAY (o2)->plist;
+	  depth++;
 	  goto tail_recurse;
 	}
       if (MARKERP (o1))
@@ -2399,7 +2346,6 @@ Only the last argument is not altered, and need not be a list.
 usage: (nconc &rest LISTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  unsigned short int quit_count = 0;
   Lisp_Object val = Qnil;
 
   for (ptrdiff_t argnum = 0; argnum < nargs; argnum++)
@@ -2415,13 +2361,8 @@ usage: (nconc &rest LISTS)  */)
       CHECK_CONS (tem);
 
       Lisp_Object tail;
-      do
-	{
-	  tail = tem;
-	  tem = XCDR (tail);
-	  rarely_quit (++quit_count);
-	}
-      while (CONSP (tem));
+      FOR_EACH_TAIL (tem)
+	tail = tem;
 
       tem = args[argnum + 1];
       Fsetcdr (tail, tem);
@@ -2843,14 +2784,19 @@ property and a property with the value nil.
 The value is actually the tail of PLIST whose car is PROP.  */)
   (Lisp_Object plist, Lisp_Object prop)
 {
-  unsigned short int quit_count = 0;
-  while (CONSP (plist) && !EQ (XCAR (plist), prop))
+  Lisp_Object tail = plist;
+  FOR_EACH_TAIL (tail)
     {
-      plist = XCDR (plist);
-      plist = CDR (plist);
-      rarely_quit (++quit_count);
+      if (EQ (XCAR (tail), prop))
+	return tail;
+      tail = XCDR (tail);
+      if (! CONSP (tail))
+	break;
+      if (EQ (tail, li.tortoise))
+	circular_list (tail);
     }
-  return plist;
+  CHECK_LIST_END (tail, plist);
+  return Qnil;
 }
 
 DEFUN ("widget-put", Fwidget_put, Swidget_put, 3, 3, 0,

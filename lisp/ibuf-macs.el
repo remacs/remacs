@@ -169,6 +169,8 @@ value if and only if `a' is \"less than\" `b'.
 				  dangerous
 				  (opstring "operated on")
 				  (active-opstring "Operate on")
+                                  before
+                                  after
 				  complex)
 				 &rest body)
   "Generate a function which operates on a buffer.
@@ -198,6 +200,8 @@ operation is complete, in the form:
 ACTIVE-OPSTRING is a string which will be displayed to the user in a
 confirmation message, in the form:
  \"Really ACTIVE-OPSTRING x buffers?\"
+BEFORE is a form to evaluate before start the operation.
+AFTER is a form to evaluate once the operation is complete.
 COMPLEX means this function is special; if COMPLEX is nil BODY
 evaluates once for each marked buffer, MBUF, with MBUF current
 and saving the point.  If COMPLEX is non-nil, BODY evaluates
@@ -206,7 +210,7 @@ BODY define the operation; they are forms to evaluate per each
 marked buffer.  BODY is evaluated with `buf' bound to the
 buffer object.
 
-\(fn OP ARGS DOCUMENTATION (&key INTERACTIVE MARK MODIFIER-P DANGEROUS OPSTRING ACTIVE-OPSTRING COMPLEX) &rest BODY)"
+\(fn OP ARGS DOCUMENTATION (&key INTERACTIVE MARK MODIFIER-P DANGEROUS OPSTRING ACTIVE-OPSTRING BEFORE AFTER COMPLEX) &rest BODY)"
   (declare (indent 2) (doc-string 3))
   `(progn
      (defun ,(intern (concat (if (string-match "^ibuffer-do" (symbol-name op))
@@ -238,6 +242,7 @@ buffer object.
 			  (if (eq modifier-p t)
 			      '((setq ibuffer-did-modification t))
 			    ())
+                          (and after `(,after)) ; post-operation form.
 			  `((ibuffer-redisplay t)
 			    (message ,(concat "Operation finished; " opstring " %s buffers") count))))
 		 (inner-body (if complex
@@ -247,7 +252,8 @@ buffer object.
 				    (save-excursion
 				      ,@body))
 				  t)))
-		 (body `(let ((count
+		 (body `(let ((_ ,before) ; pre-operation form.
+                               (count
 			       (,(pcase mark
 				   (:deletion
 				    'ibuffer-map-deletion-lines)

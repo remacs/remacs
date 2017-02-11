@@ -1793,22 +1793,23 @@ If RECURSIVE, search recursively."
 				      (buffer-string))))))
 	(shr-inhibit-images mm-html-inhibit-images)
 	(shr-blocked-images mm-html-blocked-images)
-	charset char)
+	charset coding char)
     (unless handle
       (setq handle (mm-dissect-buffer t)))
-    (setq charset (mail-content-type-get (mm-handle-type handle) 'charset))
+    (and (setq charset
+	       (or (mail-content-type-get (mm-handle-type handle) 'charset)
+		   mail-parse-charset))
+	 (setq coding (mm-charset-to-coding-system charset nil t))
+	 (eq coding 'ascii)
+	 (setq coding nil))
     (save-restriction
       (narrow-to-region (point) (point))
       (shr-insert-document
        (mm-with-part handle
 	 (insert (prog1
-		     (if (and charset
-			      (setq charset
-				    (mm-charset-to-coding-system charset
-								 nil t))
-			      (not (eq charset 'ascii)))
-			 (decode-coding-string (buffer-string) charset)
-		       (string-as-multibyte (buffer-string)))
+		     (if coding
+			 (decode-coding-string (buffer-string) coding)
+		       (buffer-string))
 		   (erase-buffer)
 		   (mm-enable-multibyte)))
 	 (goto-char (point-min))

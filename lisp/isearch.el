@@ -1621,7 +1621,7 @@ Used in `word-search-forward', `word-search-backward',
    ((string-match-p "\\`\\W+\\'" string) "\\W+")
    (t (concat
        (if (string-match-p "\\`\\W" string) "\\W+"
-	 (unless lax "\\<"))
+	 "\\<")
        (mapconcat 'regexp-quote (split-string string "\\W+" t) "\\W+")
        (if (string-match-p "\\W\\'" string) "\\W+"
 	 (unless lax "\\>"))))))
@@ -1749,7 +1749,7 @@ the beginning or the end of the string need not match a symbol boundary."
      ((string-match-p (format "\\`%s\\'" not-word-symbol-re) string) not-word-symbol-re)
      (t (concat
 	 (if (string-match-p (format "\\`%s" not-word-symbol-re) string) not-word-symbol-re
-	   (unless lax "\\_<"))
+	   "\\_<")
 	 (mapconcat 'regexp-quote (split-string string not-word-symbol-re t) not-word-symbol-re)
 	 (if (string-match-p (format "%s\\'" not-word-symbol-re) string) not-word-symbol-re
 	   (unless lax "\\_>")))))))
@@ -2740,7 +2740,9 @@ Can be changed via `isearch-search-fun-function' for special needs."
           (funcall
            (if isearch-forward #'re-search-forward #'re-search-backward)
            (cond (isearch-regexp-function
-                  (let ((lax (isearch--lax-regexp-function-p)))
+                  (let ((lax (and (not bound) (isearch--lax-regexp-function-p))))
+                    (when lax
+                      (setq isearch-adjusted t))
                     (if (functionp isearch-regexp-function)
                         (funcall isearch-regexp-function string lax)
                       (word-search-regexp string lax))))

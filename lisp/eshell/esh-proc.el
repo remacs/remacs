@@ -393,8 +393,20 @@ PROC is the process that's exiting.  STRING is the exit message."
 		    (unless (string= string "run")
 		      (unless (string-match "^\\(finished\\|exited\\)" string)
 			(eshell-insertion-filter proc string))
-		      (eshell-close-handles (process-exit-status proc) 'nil
-					    (cadr entry))))
+                      (let ((handles (nth 1 entry))
+                            (str (prog1 (nth 3 entry)
+                                   (setf (nth 3 entry) nil)))
+                            (status (process-exit-status proc)))
+                        ;; If we're in the middle of handling output
+                        ;; from this process then schedule the EOF for
+                        ;; later.
+                        (letrec ((finish-io
+                                  (lambda ()
+                                    (if (nth 4 entry)
+                                        (run-at-time 0 nil finish-io)
+                                      (when str (eshell-output-object str nil handles))
+                                      (eshell-close-handles status 'nil handles)))))
+                          (funcall finish-io)))))
 		(eshell-remove-process-entry entry))))
 	(eshell-kill-process-function proc string)))))
 

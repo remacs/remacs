@@ -3129,20 +3129,14 @@ extern void maybe_quit (void);
 
 #define QUITP (!NILP (Vquit_flag) && NILP (Vinhibit_quit))
 
-/* Heuristic on how many iterations of a tight loop can be safely done
-   before it's time to do a quit.  This must be a power of 2.  It
-   is nice but not necessary for it to equal USHRT_MAX + 1.  */
-
-enum { QUIT_COUNT_HEURISTIC = 1 << 16 };
-
 /* Process a quit rarely, based on a counter COUNT, for efficiency.
-   "Rarely" means once per QUIT_COUNT_HEURISTIC or per USHRT_MAX + 1
-   times, whichever is smaller (somewhat arbitrary, but often faster).  */
+   "Rarely" means once per USHRT_MAX + 1 times; this is somewhat
+   arbitrary, but efficient.  */
 
 INLINE void
 rarely_quit (unsigned short int count)
 {
-  if (! (count & (QUIT_COUNT_HEURISTIC - 1)))
+  if (! count)
     maybe_quit ();
 }
 
@@ -3317,6 +3311,7 @@ extern struct Lisp_Symbol *indirect_variable (struct Lisp_Symbol *);
 extern _Noreturn void args_out_of_range (Lisp_Object, Lisp_Object);
 extern _Noreturn void args_out_of_range_3 (Lisp_Object, Lisp_Object,
 					   Lisp_Object);
+extern _Noreturn void circular_list (Lisp_Object);
 extern Lisp_Object do_symval_forwarding (union Lisp_Fwd *);
 enum Set_Internal_Bind {
   SET_INTERNAL_SET,
@@ -4585,20 +4580,54 @@ enum
 	 Lisp_String))							\
      : make_unibyte_string (str, len))
 
-/* Loop over all tails of a list, checking for cycles.
-   FIXME: Make tortoise and n internal declarations.
-   FIXME: Unroll the loop body so we don't need `n'.  */
-#define FOR_EACH_TAIL(hare, list, tortoise, n)	\
-  for ((tortoise) = (hare) = (list), (n) = true;		\
-       CONSP (hare);						\
-       (hare = XCDR (hare), (n) = !(n),				\
-   	((n)							\
-   	 ? (EQ (hare, tortoise)					\
-	    ? xsignal1 (Qcircular_list, list)			\
-	    : (void) 0)						\
-	 /* Move tortoise before the next iteration, in case */ \
-	 /* the next iteration does an Fsetcdr.  */		\
-   	 : (void) ((tortoise) = XCDR (tortoise)))))
+/* Loop over conses of the list TAIL, signaling if a cycle is found,
+   and possibly quitting after each loop iteration.  In the loop body,
+   set TAIL to the current cons.  If the loop exits normally,
+   set TAIL to the terminating non-cons, typically nil.  The loop body
+   should not modify the list’s top level structure other than by
+   perhaps deleting the current cons.  */
+
+#define FOR_EACH_TAIL(tail) \
+  FOR_EACH_TAIL_INTERNAL (tail, circular_list (tail), true)
+
+/* Like FOR_EACH_TAIL (LIST), except do not signal or quit.
+   If the loop exits due to a cycle, TAIL’s value is undefined.  */
+
+#define FOR_EACH_TAIL_SAFE(tail) \
+  FOR_EACH_TAIL_INTERNAL (tail, (void) ((tail) = Qnil), false)
+
+/* Iterator intended for use only within FOR_EACH_TAIL_INTERNAL.  */
+struct for_each_tail_internal
+{
+  Lisp_Object tortoise;
+  intptr_t max, n;
+  unsigned short int q;
+};
+
+/* Like FOR_EACH_TAIL (LIST), except evaluate CYCLE if a cycle is
+   found, and check for quit if CHECK_QUIT.  This is an internal macro
+   intended for use only by the above macros.
+
+   Use Brent’s teleporting tortoise-hare algorithm.  See:
+   Brent RP. BIT. 1980;20(2):176-84. doi:10.1007/BF01933190
+   http://maths-people.anu.edu.au/~brent/pd/rpb051i.pdf
+
+   This macro uses maybe_quit because of an excess of caution.  The
+   call to maybe_quit should not be needed in practice, as a very long
+   list, whether circular or not, will cause Emacs to be so slow in
+   other noninterruptible areas (e.g., garbage collection) that there
+   is little point to calling maybe_quit here.  */
+
+#define FOR_EACH_TAIL_INTERNAL(tail, cycle, check_quit)			\
+  for (struct for_each_tail_internal li = { tail, 2, 0, 2 };		\
+       CONSP (tail);							\
+       ((tail) = XCDR (tail),						\
+	((--li.q != 0							\
+	  || ((check_quit) ? maybe_quit () : (void) 0, 0 < --li.n)	\
+	  || (li.q = li.n = li.max <<= 1, li.n >>= USHRT_WIDTH,		\
+	      li.tortoise = (tail), false))				\
+	 && EQ (tail, li.tortoise))					\
+	? (cycle) : (void) 0))
 
 /* Do a `for' loop over alist values.  */
 

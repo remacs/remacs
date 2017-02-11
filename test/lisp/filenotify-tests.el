@@ -676,6 +676,9 @@ delivered."
         buf)
     (unwind-protect
 	(progn
+          ;; In the remote case, `vc-refresh-state' returns undesired
+          ;; error messages.  Let's suppress them.
+          (advice-add 'vc-refresh-state :around 'ignore)
 	  (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
 	  (write-region
 	   "any text" nil file-notify--test-tmpfile nil 'no-message)
@@ -745,6 +748,7 @@ delivered."
           (file-notify--test-cleanup-p))
 
       ;; Cleanup.
+      (advice-remove 'vc-refresh-state 'ignore)
       (ignore-errors (kill-buffer buf))
       (file-notify--test-cleanup))))
 
