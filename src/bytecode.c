@@ -1422,11 +1422,9 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
             Lisp_Object v1 = POP;
             ptrdiff_t i;
             struct Lisp_Hash_Table *h = XHASH_TABLE(jmp_table);
-            /* Hash tables for switch are declared with :size set to the
-               exact number of cases.  */
-            if (BYTE_CODE_SAFE)
-              eassert (HASH_TABLE_SIZE (h) == h->count);
 
+            /* h->count is a faster approximation for HASH_TABLE_SIZE (h)
+               here. */
             if (h->count <= 5)
               { /* Do a linear search if there are not many cases
                    FIXME: 5 is arbitrarily chosen.  */
