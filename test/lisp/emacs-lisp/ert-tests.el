@@ -367,12 +367,8 @@ This macro is used to test if macroexpansion in `should' works."
          (test (make-ert-test :body test-body))
          (result (ert-run-test test)))
     (should (ert-test-failed-p result))
-    (with-temp-buffer
-      (ert--print-backtrace (ert-test-failed-backtrace result))
-      (goto-char (point-min))
-      (end-of-line)
-      (let ((first-line (buffer-substring-no-properties (point-min) (point))))
-        (should (equal first-line (format "  %S()" test-body)))))))
+    (should (eq (nth 1 (car (ert-test-failed-backtrace result)))
+                'signal))))
 
 (ert-deftest ert-test-messages ()
   :tags '(:causes-redisplay)
