@@ -1420,9 +1420,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
               search as the jump table.  */
             Lisp_Object jmp_table = POP;
             Lisp_Object v1 = POP;
-#ifdef BYTE_CODE_SAFE
-            CHECK_TYPE (HASH_TABLE_P (jmp_table), Qhash_table_p, jmp_table);
-#endif
             ptrdiff_t i;
             struct Lisp_Hash_Table *h = XHASH_TABLE(jmp_table);
 
@@ -1430,19 +1427,18 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
               { /* Do a linear search if there are not many cases
                    FIXME: 5 is arbitrarily chosen.  */
                 EMACS_UINT hash_code = h->test.hashfn (&h->test, v1);
+                /* Hash tables for switch are declared with :size set to the
+                   exact number of cases, thus
+                   HASH_TABLE_SIZE (h) == h->count.  */
                 for (i = 0; i < h->count; i++)
                   {
-#ifdef BYTE_CODE_SAFE
-                    eassert (!NILP (HASH_HASH (h, i)));
-#endif
-                    /* Hash tables for switch are declared with :size set to the
-                       exact number of cases, thus
-                       HASH_TABLE_SIZE (h) == h->count.  */
+                    if (BYTE_CODE_SAFE)
+                      eassert (!NILP (HASH_HASH (h, i)));
 
-                    if ((EQ (v1, HASH_KEY (h, i)) ||
-                         (h->test.cmpfn
-                          && hash_code == XUINT (HASH_HASH (h, i))
-                          && h->test.cmpfn (&h->test, v1, HASH_KEY (h, i)))))
+                    if (EQ (v1, HASH_KEY (h, i))
+                        || (h->test.cmpfn
+                            && hash_code == XUINT (HASH_HASH (h, i))
+                            && h->test.cmpfn (&h->test, v1, HASH_KEY (h, i))))
                       {
                         op = XINT (HASH_VALUE (h, i));
                         goto op_branch;
