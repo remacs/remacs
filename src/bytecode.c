@@ -1431,29 +1431,22 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
               { /* Do a linear search if there are not many cases
                    FIXME: 5 is arbitrarily chosen.  */
                 EMACS_UINT hash_code = h->test.hashfn (&h->test, v1);
-                for (i = 0; i < h->count; i++)
-                  {
-                    if (BYTE_CODE_SAFE)
-                      eassert (!NILP (HASH_HASH (h, i)));
+                for (i = h->count; 0 <= --i;)
+                  if (EQ (v1, HASH_KEY (h, i))
+                      || (h->test.cmpfn
+                          && hash_code == XUINT (HASH_HASH (h, i))
+                          && h->test.cmpfn (&h->test, v1, HASH_KEY (h, i))))
+                    break;
 
-                    if (EQ (v1, HASH_KEY (h, i))
-                        || (h->test.cmpfn
-                            && hash_code == XUINT (HASH_HASH (h, i))
-                            && h->test.cmpfn (&h->test, v1, HASH_KEY (h, i))))
-                      {
-                        op = XINT (HASH_VALUE (h, i));
-                        goto op_branch;
-                      }
-                  }
               }
             else
-              {
-                i = hash_lookup(h, v1, NULL);
-                if (i >= 0) {
-                  op = XINT(HASH_VALUE (h, i));
-                  goto op_branch;
-                }
-              }
+              i = hash_lookup(h, v1, NULL);
+
+          if (i >= 0)
+            {
+              op = XINT (HASH_VALUE (h, i));
+              goto op_branch;
+            }
           }
           NEXT;
 
