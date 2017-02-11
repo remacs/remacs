@@ -3110,8 +3110,8 @@ xbm_load (struct frame *f, struct image *img)
             int nbytes, i;
             /* Windows mono bitmaps are reversed compared with X.  */
             invertedBits = bits;
-            nbytes = (img->width + CHAR_BIT - 1) / CHAR_BIT;
-            SAFE_NALLOCA (bits, nbytes, img->height);
+            nbytes = (img->width + CHAR_BIT - 1) / CHAR_BIT * img->height;
+            SAFE_NALLOCA (bits, 1, nbytes);
             for (i = 0; i < nbytes; i++)
               bits[i] = XBM_BIT_SHUFFLE (invertedBits[i]);
           }
