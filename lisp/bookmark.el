@@ -957,7 +957,7 @@ Lines beginning with `#' are ignored."
       (error "Not in bookmark-edit-annotation-mode"))
   (goto-char (point-min))
   (while (< (point) (point-max))
-    (if (looking-at "^#")
+    (if (= (following-char) ?#)
         (bookmark-kill-line t)
       (forward-line 1)))
   ;; Take no chances with text properties.
@@ -2064,7 +2064,7 @@ To carry out the deletions that you've marked, use \\<bookmark-bmenu-mode-map>\\
   (let ((o-point  (point))
         (o-str    (save-excursion
                     (beginning-of-line)
-                    (unless (looking-at "^D")
+                    (unless (= (following-char) ?D)
                       (buffer-substring
                        (point)
                        (progn (end-of-line) (point))))))
