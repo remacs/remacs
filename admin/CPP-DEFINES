@@ -48,7 +48,6 @@ USE_GTK		Use the Gtk   toolkit for menus&scrollbars.  Requires HAVE_X11.
 
 FRAME_TERMCAP_P	A tty (character terminal) frame.
 FRAME_X_P	A frame on X Window system.
-FRAME_MSDOS_P	An MS-DOS frame (used only by the DOS port).
 FRAME_W32_P	A frame using native MS-Windows GUI.
 FRAME_WINDOW_P	A GUI frame (like X, w32, etc.)
 

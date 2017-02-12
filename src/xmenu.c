@@ -2032,7 +2032,7 @@ x_menu_show (struct frame *f, int x, int y, int menuflags,
   unsigned int dummy_uint;
   ptrdiff_t specpdl_count = SPECPDL_INDEX ();
 
-  eassert (FRAME_X_P (f) || FRAME_MSDOS_P (f));
+  eassert (FRAME_X_P (f));
 
   *error_name = 0;
   if (menu_items_n_panes == 0)
