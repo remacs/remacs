@@ -2133,9 +2133,13 @@ preventing reentrant calls of Tramp.")
 Together with `tramp-locked', this implements a locking mechanism
 preventing reentrant calls of Tramp.")
 
-;; Avoid recursive loading of tramp.el.
+;; Avoid recursive loading of tramp.el.  If `non-essential' is
+;; non-nil, we must load tramp.el, in order to get the real definition
+;; of `tramp-completion-file-name-handler'.
 ;;;###autoload(defun tramp-completion-file-name-handler (operation &rest args)
-;;;###autoload  (tramp-completion-run-real-handler operation args))
+;;;###autoload  (if (and (boundp 'non-essential) (symbol-value 'non-essential))
+;;;###autoload      (apply 'tramp-autoload-file-name-handler operation args)
+;;;###autoload    (tramp-completion-run-real-handler operation args)))
 
 (defun tramp-completion-file-name-handler (operation &rest args)
   "Invoke Tramp file name completion handler.
@@ -2165,9 +2169,11 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 (progn (defun tramp-autoload-file-name-handler (operation &rest args)
   "Load Tramp file name handler, and perform OPERATION."
   ;; Avoid recursive loading of tramp.el.
-  (let ((default-directory temporary-file-directory))
-    (load "tramp" nil t))
-  (apply operation args)))
+  (if (let ((default-directory temporary-file-directory))
+        (and (null load-in-progress) (load "tramp" 'noerror 'nomessage)))
+      (apply operation args)
+    ;; tramp.el not available for loading, fall back.
+    (tramp-completion-run-real-handler operation args))))
 
 ;; `tramp-autoload-file-name-handler' must be registered before
 ;; evaluation of site-start and init files, because there might exist
@@ -2307,11 +2313,10 @@ not in completion mode."
       (progn
 	;; If DIR is not given, use `default-directory' or "/".
 	(setq dir (or dir default-directory "/"))
-	;; Unless NAME is absolute, concat DIR and NAME.
-	(unless (file-name-absolute-p name)
-	  (setq name (concat (file-name-as-directory dir) name)))
-	;; Return NAME.
-	name)
+        (cond
+         ((file-name-absolute-p name) name)
+         ((zerop (length name)) dir)
+         (t (concat (file-name-as-directory dir) name))))
 
     (tramp-completion-run-real-handler
      'expand-file-name (list name dir))))
