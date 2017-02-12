@@ -13,9 +13,6 @@ CYGWIN		Compiling the Cygwin port.
 __CYGWIN__	Ditto
 GNU_LINUX
 HPUX
-MSDOS		Compiling the MS-DOS port.
-__MSDOS__	Ditto.
-__DJGPP_MINOR__ Minor version number of the DJGPP library; used only in msdos.c and dosfns.c.
 DOS_NT		Compiling for either the MS-DOS or native MS-Windows port.
 WINDOWSNT	Compiling the native MS-Windows (W32) port.
 __MINGW32__	Compiling the W32 port with the MinGW or MinGW-w64 ports of GCC.

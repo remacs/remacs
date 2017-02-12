@@ -74,10 +74,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "pop.h"
 #endif
 
-#ifdef MSDOS
-#undef access
-#endif /* MSDOS */
-
 #ifdef WINDOWSNT
 #include "ntlib.h"
 #undef access
