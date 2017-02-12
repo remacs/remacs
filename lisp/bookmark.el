@@ -896,8 +896,8 @@ If optional arg NEWLINE-TOO is non-nil, delete the newline too.
 Does not affect the kill ring."
   (let ((eol (line-end-position)))
     (delete-region (point) eol)
-    (if (and newline-too (looking-at "\n"))
-        (delete-char 1))))
+    (when (and newline-too (= (following-char) ?\n))
+      (delete-char 1))))
 
 
 ;; Defvars to avoid compilation warnings:

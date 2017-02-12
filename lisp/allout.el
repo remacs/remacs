@@ -4462,7 +4462,7 @@ Topic exposure is marked with text-properties, to be used by
     (if (and (/= (current-column) 0) (not (eobp)))
         (forward-char 1))
     (if (not (eobp))
-	(if (and (save-match-data (looking-at "\n"))
+	(if (and (= (following-char) ?\n)
                  (or (save-excursion
                        (or (not (allout-next-heading))
                            (= depth allout-recent-depth)))
@@ -6278,8 +6278,7 @@ It must also have content."
             (setq got nil
                   done t)
           (goto-char (setq got (match-beginning 0)))
-          (if (save-match-data (looking-at "\n"))
-              (forward-char 1))
+          (when (= (following-char) ?\n) (forward-char 1))
           (setq got (point)))
 
         (cond ((not got)

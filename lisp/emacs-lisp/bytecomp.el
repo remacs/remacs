@@ -1995,7 +1995,7 @@ With argument ARG, insert value in current buffer after the form."
 	;; Compile the forms from the input buffer.
 	(while (progn
 		 (while (progn (skip-chars-forward " \t\n\^l")
-			       (looking-at ";"))
+			       (= (following-char) ?\;))
 		   (forward-line 1))
 		 (not (eobp)))
 	  (setq byte-compile-read-position (point)

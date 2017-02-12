@@ -6665,7 +6665,7 @@ even beep.)"
 	;; whether the trailing whitespace is highlighted.  But, it's
 	;; OK to just do this unconditionally.
 	(skip-chars-forward " \t")))
-    (kill-region opoint (if (and kill-whole-line (looking-at "\n"))
+    (kill-region opoint (if (and kill-whole-line (= (following-char) ?\n))
 			    (1+ (point))
 			  (point)))))
 

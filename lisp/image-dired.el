@@ -1751,8 +1751,8 @@ Ask user for number of images to show and the delay in between."
   (interactive)
   (let ((inhibit-read-only t))
     (delete-char 1)
-    (if (looking-at " ")
-        (delete-char 1))))
+    (when (= (following-char) ?\s)
+      (delete-char 1))))
 
 ;;;###autoload
 (defun image-dired-display-thumbs-append ()

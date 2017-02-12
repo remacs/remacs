@@ -748,7 +748,7 @@ FILE's modification time."
                               (setq output-start (autoload--setup-output
                                                   otherbuf outbuf absfile load-name)))
                             (autoload--print-cookie-text output-start load-name file))
-                           ((looking-at ";")
+                           ((= (following-char) ?\;)
                             ;; Don't read the comment.
                             (forward-line 1))
                            (t
