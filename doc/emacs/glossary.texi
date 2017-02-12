@@ -524,7 +524,7 @@ or absolute; the meaning of a relative file name depends on the current
 directory, but an absolute file name refers to the same file regardless
 of which directory is current.  On GNU and Unix systems, an absolute
 file name starts with a slash (the root directory) or with @samp{~/} or
-@samp{~@var{user}/} (a home directory).  On MS-Windows/MS-DOS, an
+@samp{~@var{user}/} (a home directory).  On MS-Windows, an
 absolute file name can also start with a drive letter and a colon, e.g.,
 @samp{@var{d}:}.
 
@@ -537,7 +537,7 @@ directory.  On GNU and Unix systems, a file name is a sequence of
 file-name components, separated by slashes.  For example, @file{foo/bar}
 is a file name containing two components, @samp{foo} and @samp{bar}; it
 refers to the file named @samp{bar} in the directory named @samp{foo} in
-the current directory.  MS-DOS/MS-Windows file names can also use
+the current directory.  MS-Windows file names can also use
 backslashes to separate components, as in @file{foo\bar}.
 
 @item Fill Prefix
@@ -1081,7 +1081,7 @@ Emacs.  @xref{Query Replace}.
 @anchor{Glossary---Quitting}
 @item Quitting
 Quitting means canceling a partially typed command or a running
-command, using @kbd{C-g} (or @kbd{C-@key{BREAK}} on MS-DOS).  @xref{Quitting}.
+command, using @kbd{C-g}.  @xref{Quitting}.
 
 @item Quoting
 Quoting means depriving a character of its usual special significance.

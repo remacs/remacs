@@ -450,7 +450,7 @@ the value refers to the corresponding source file.
 
 @defvar user-emacs-directory
 This variable holds the name of the @file{.emacs.d} directory.  It is
-@file{~/.emacs.d} on all platforms but MS-DOS.
+@file{~/.emacs.d} on all platforms.
 @end defvar
 
 @node Terminal-Specific
@@ -509,8 +509,6 @@ terminal-specific initialization file as follows:
 You may set the @code{term-file-prefix} variable to @code{nil} in your
 init file if you do not wish to load the
 terminal-initialization file.
-
-On MS-DOS, Emacs sets the @env{TERM} environment variable to @samp{internal}.
 @end defopt
 
 @defopt term-file-aliases
@@ -733,7 +731,7 @@ another application without doing anything special to Emacs.
 @c FIXME?  Are there any systems Emacs still supports that do not
 @c have SIGTSTP?
 @cindex SIGTSTP
-  Some operating systems (those without @code{SIGTSTP}, or MS-DOS) do
+  Some operating systems (those without @code{SIGTSTP}) do
 not support suspension of jobs; on these systems, suspension
 actually creates a new shell temporarily as a subprocess of Emacs.
 Then you would exit the shell to return to Emacs.
@@ -909,10 +907,6 @@ Hewlett-Packard HPUX operating system.
 
 @item nacl
 Google Native Client (@acronym{NaCl}) sandboxing system.
-
-@item ms-dos
-Microsoft's DOS@.  Emacs compiled with DJGPP for MS-DOS binds
-@code{system-type} to @code{ms-dos} even when you run it on MS-Windows.
 
 @item usg-unix-v
 AT&T Unix System V.

@@ -88,7 +88,7 @@ Fortran, Icon, IDL (CORBA), IDLWAVE, Java, Javascript, Metafont
 Octave, Pascal, Perl, Pike, PostScript, Prolog, Python, Ruby, Simula, Tcl,
 and VHDL@.  An alternative mode for Perl is called CPerl mode.  Modes are
 also available for the scripting languages of the common GNU and Unix
-shells, and MS-DOS/MS-Windows @samp{BAT} files, and for makefiles,
+shells, and MS-Windows @samp{BAT} files, and for makefiles,
 DNS master files, and various sorts of configuration files.
 
   Ideally, Emacs should have a major mode for each programming
@@ -1229,7 +1229,7 @@ this, change the value of the variable @code{Man-switches} to
 line shows how many manual pages are available.
 
 @findex woman
-@cindex manual pages, on MS-DOS/MS-Windows
+@cindex manual pages, on MS-Windows
   An alternative way of reading manual pages is the @kbd{M-x woman}
 command.  Unlike @kbd{M-x man}, it does not run any external programs
 to format and display the man pages; the formatting is done by Emacs,

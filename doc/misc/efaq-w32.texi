@@ -139,13 +139,6 @@ executable, using the MinGW GCC compiler and development tools.
 
 @xref{Cygwin}.
 
-@cindex DOS port
-@cindex Windows 3.11 port
-Emacs can also be compiled for MSDOS.  When run on recent MS Windows,
-it supports long file names, and uses the Windows clipboard.
-See the @file{msdos} directory in the Emacs sources for building
-instructions (requires DJGPP).
-
 @c ------------------------------------------------------------
 @node Getting Emacs
 @chapter Getting Emacs

@@ -477,7 +477,7 @@ initialize the Lisp variable @code{doc-directory}.
 #vindex EMACSLOADPATH, environment variable
 A colon-separated list of directories@footnote{Here and below,
 whenever we say ``colon-separated list of directories'', it pertains
-to Unix and GNU/Linux systems.  On MS-DOS and MS-Windows, the
+to Unix and GNU/Linux systems.  On MS-Windows, the
 directories are separated by semi-colons instead, since DOS/Windows
 file names might include a colon after a drive letter.} to search for
 Emacs Lisp files.  If set, it modifies the usual initial value of the
@@ -511,9 +511,7 @@ otherwise.
 @item HOME
 @vindex HOME, environment variable
 The location of your files in the directory tree; used for
-expansion of file names starting with a tilde (@file{~}).  On MS-DOS,
-it defaults to the directory from which Emacs was started, with
-@samp{/bin} removed from the end if it was present.  On Windows, the
+expansion of file names starting with a tilde (@file{~}).  On Windows, the
 default value of @env{HOME} is the @file{Application Data}
 subdirectory of the user profile directory (normally, this is
 @file{C:/Documents and Settings/@var{username}/Application Data},
@@ -620,9 +618,7 @@ variable @code{smtpmail-smtp-server} (@pxref{Mail Sending}).
 @item TERM
 @vindex TERM, environment variable
 The type of the terminal that Emacs is using.  This variable must be
-set unless Emacs is run in batch mode.  On MS-DOS, it defaults to
-@samp{internal}, which specifies a built-in terminal emulation that
-handles the machine's own display.
+set unless Emacs is run in batch mode.
 @item TERMCAP
 @vindex TERMCAP, environment variable
 The name of the termcap library file describing how to program the
@@ -638,20 +634,17 @@ These environment variables are used to initialize the variable
 @code{temporary-file-directory}, which specifies a directory in which
 to put temporary files (@pxref{Backup}).  Emacs tries to use
 @env{TMPDIR} first.  If that is unset, Emacs normally falls back on
-@file{/tmp}, but on MS-Windows and MS-DOS it instead falls back on
+@file{/tmp}, but on MS-Windows it instead falls back on
 @env{TMP}, then @env{TEMP}, and finally @file{c:/temp}.
 @item TZ
 @vindex TZ, environment variable
 This specifies the default time zone and possibly also daylight
 saving time information.  @xref{Time Zone Rules,,, elisp, The GNU
-Emacs Lisp Reference Manual}.  On MS-DOS, if @env{TZ} is not set in the
-environment when Emacs starts, Emacs defines a default value as
-appropriate for the country code returned by DOS@.  On MS-Windows, Emacs
+Emacs Lisp Reference Manual}.  On MS-Windows, Emacs
 does not use @env{TZ} at all.
 @item USER
 @vindex USER, environment variable
-The user's login name.  See also @env{LOGNAME}.  On MS-DOS, this
-defaults to @samp{root}.
+The user's login name.  See also @env{LOGNAME}.
 @item VERSION_CONTROL
 @vindex VERSION_CONTROL, environment variable
 Used to initialize the @code{version-control} variable (@pxref{Backup
@@ -665,37 +658,8 @@ These variables are used only on particular configurations:
 
 @vtable @env
 @item COMSPEC
-On MS-DOS and MS-Windows, the name of the command interpreter to use
-when invoking batch files and commands internal to the shell.  On MS-DOS
-this is also used to make a default value for the @env{SHELL} environment
-variable.
-
-@item NAME
-On MS-DOS, this variable defaults to the value of the @env{USER}
-variable.
-
-@item EMACSTEST
-On MS-DOS, this specifies a file to use to log the operation of the
-internal terminal emulator.  This feature is useful for submitting bug
-reports.
-
-@item EMACSCOLORS
-On MS-DOS, this specifies the screen colors.  It is useful to set them
-this way, since otherwise Emacs would display the default colors
-momentarily when it starts up.
-
-The value of this variable should be the two-character encoding of the
-foreground (the first character) and the background (the second
-character) colors of the default face.  Each character should be the
-hexadecimal code for the desired color on a standard PC text-mode
-display.  For example, to get blue text on a light gray background,
-specify @samp{EMACSCOLORS=17}, since 1 is the code of the blue color and
-7 is the code of the light gray color.
-
-The PC display usually supports only eight background colors.  However,
-Emacs switches the DOS display to a mode where all 16 colors can be used
-for the background, so all four bits of the background color are
-actually used.
+On MS-Windows, the name of the command interpreter to use
+when invoking batch files and commands internal to the shell.
 
 @item PRELOAD_WINSOCK
 On MS-Windows, if you set this variable, Emacs will load and initialize

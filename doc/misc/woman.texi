@@ -108,7 +108,7 @@ Mile End Road, London E1 4NS, UK
 This version of WoMan should run with GNU Emacs 20.3 or later on any
 platform.  It has not been tested, and may not run, with any other
 version of Emacs.  It was developed primarily on various versions of
-Microsoft Windows, but has also been tested on MS-DOS, and various
+Microsoft Windows, but has also been tested on various
 versions of UNIX and GNU/Linux.
 
 WoMan is distributed with GNU Emacs.
@@ -977,14 +977,7 @@ string or @code{nil}, which represents the current directory when the
 path is expanded and cached.  However, the last component (only) of each
 directory string is treated as a regexp (Emacs, not shell) and the
 string is expanded into a list of matching directories.  Non-directory
-and unreadable files are ignored.  The default value on MS-DOS is
-
-@lisp
-("$DJDIR/info" "$DJDIR/man/cat[1-9onlp]")
-@end lisp
-
-@noindent
-and on other platforms is @code{nil}.
+and unreadable files are ignored.  The default value is @code{nil}.
 
 Any environment variables (names of which must have the Unix-style form
 @code{$NAME}, e.g., @code{$HOME}, @code{$EMACSDATA}, @code{$EMACS_DIR},
