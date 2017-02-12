@@ -326,6 +326,10 @@ The old behaviour of using 'prin1' can be restored by customizing the
 new option 'debugger-print-function'.
 
 +++
+** NUL bytes in strings copied to the system clipboard are now
+replaced with "\0".
+
++++
 ** The new variable 'x-ctrl-keysym' has been added to the existing
 roster of X keysyms.  It can be used in combination with another
 variable of this kind to swap modifiers in Emacs.
