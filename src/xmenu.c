@@ -2307,8 +2307,7 @@ x_menu_show (struct frame *f, int x, int y, int menuflags,
 
 #endif /* not USE_X_TOOLKIT */
 
-/* Detect if a dialog or menu has been posted.  MSDOS has its own
-   implementation on msdos.c.  */
+/* Detect if a dialog or menu has been posted.  */
 
 int
 popup_activated (void)

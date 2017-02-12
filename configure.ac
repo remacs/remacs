@@ -1326,7 +1326,6 @@ AC_SUBST(CANNOT_DUMP)
 
 UNEXEC_OBJ=unexelf.o
 case "$opsys" in
-  # MSDOS uses unexcoff.o
   aix4-2)
    UNEXEC_OBJ=unexaix.o
    ;;
@@ -3961,7 +3960,7 @@ For example, a libncurses-dev(el) or similar package.])
 fi
 
 ## Use termcap instead of terminfo?
-## Only true for: freebsd < 40000, ms-w32, msdos, netbsd < 599002500.
+## Only true for: freebsd < 40000, ms-w32, netbsd < 599002500.
 TERMINFO=yes
 ## FIXME?  In the cases below where we unconditionally set
 ## LIBS_TERMCAP="-lncurses", this overrides LIBS_TERMCAP = -ltinfo,

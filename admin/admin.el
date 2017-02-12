@@ -112,18 +112,9 @@ Root must be the root of an Emacs source tree."
   (set-version-in-file root "nt/README.W32" version
 		       (rx (and "version" (1+ space)
 				(submatch (1+ (in "0-9."))))))
-  ;; TODO: msdos could easily extract the version number from
-  ;; configure.ac with sed, rather than duplicating the information.
-  (set-version-in-file root "msdos/sed2v2.inp" version
-		       (rx (and bol "/^#undef " (1+ not-newline)
-				"define VERSION" (1+ space) "\""
-				(submatch (1+ (in "0-9."))))))
   ;; Major version only.
   (when (string-match "\\([0-9]\\{2,\\}\\)" version)
     (let ((newmajor (match-string 1 version)))
-      (set-version-in-file root "src/msdos.c" newmajor
-                           (rx (and "Vwindow_system_version" (1+ not-newline)
-                                    ?\( (submatch (1+ (in "0-9"))) ?\))))
       (set-version-in-file root "etc/refcards/ru-refcard.tex" newmajor
                            "\\\\newcommand{\\\\versionemacs}\\[0\\]\
 {\\([0-9]\\{2,\\}\\)}.+%.+version of Emacs")))
@@ -206,10 +197,6 @@ Root must be the root of an Emacs source tree."
   (set-version-in-file root "configure.ac" copyright
 		       (rx (and bol "copyright" (0+ (not (in ?\")))
         			?\" (submatch (1+ (not (in ?\")))) ?\")))
-  (set-version-in-file root "msdos/sed2v2.inp" copyright
-		       (rx (and bol "/^#undef " (1+ not-newline)
-				"define COPYRIGHT" (1+ space)
-				?\" (submatch (1+ (not (in ?\")))) ?\")))
   (set-version-in-file root "lib-src/rcs2log" copyright
         	       (rx (and "Copyright" (0+ space) ?= (0+ space)
         			?\' (submatch (1+ nonl)))))

@@ -316,10 +316,6 @@ licensing@fsf.org starting on Thu, 07 Aug 2003 with subject:
 "[gnu.org #58812] Changing license of MH-E manual"
 
 
-msdos/sed*.inp - These files are copyright FSF and distributed under
-an MIT-like license.
-
-
 oldXMenu/
   Keep the "copyright.h" method used by X11, rather than moving the
   licenses into the files. Note that the original X10.h did not use

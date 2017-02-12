@@ -371,7 +371,7 @@ for subdir in site-lisp \
 	      nt nt/inc nt/inc/sys nt/inc/arpa nt/inc/netinet nt/icons \
 	      `find etc lisp admin test -type d` \
 	      doc doc/emacs doc/misc doc/man doc/lispref doc/lispintro \
-	      info m4 modules modules/mod-test msdos \
+	      info m4 modules modules/mod-test \
 	      nextstep nextstep/templates \
 	      nextstep/Cocoa nextstep/Cocoa/Emacs.base \
 	      nextstep/Cocoa/Emacs.base/Contents \
@@ -496,12 +496,6 @@ echo "Making links to 'nt/icons'"
  ln README [a-z]*.ico ../../${tempdir}/nt/icons
  ln [a-z]*.cur ../../${tempdir}/nt/icons)
 
-echo "Making links to 'msdos'"
-(cd msdos
- ln ChangeLog.*[0-9] INSTALL README emacs.ico emacs.pif ../${tempdir}/msdos
- ln depfiles.bat inttypes.h ../${tempdir}/msdos
- ln mainmake.v2 sed*.inp ../${tempdir}/msdos)
-
 echo "Making links to 'nextstep'"
 (cd nextstep
  ln ChangeLog.*[0-9] README INSTALL Makefile.in ../${tempdir}/nextstep)
@@ -598,7 +592,7 @@ echo "Making links to 'doc/man'"
 ### It would be nice if they could all be symlinks to top-level copy, but
 ### you're not supposed to have any symlinks in distribution tar files.
 echo "Making sure copying notices are all copies of 'COPYING'"
-for subdir in . etc leim lib lib-src lisp lwlib msdos nt src; do
+for subdir in . etc leim lib lib-src lisp lwlib nt src; do
   rm -f ${tempdir}/${subdir}/COPYING
   cp COPYING ${tempdir}/${subdir}
 done

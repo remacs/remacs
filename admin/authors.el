@@ -694,7 +694,6 @@ Changes to files in this list are not listed.")
     "notes/commits" "notes/changelogs"
     "revdiff"				; admin/
     "vcdiff" "rcs-checkin" "tindex.pl"
-    "mainmake" "sed1.inp" "sed2.inp" "sed3.inp" ; msdos/
     "mac-fix-env.m"
     ;; Deleted vms stuff:
     "temacs.opt" "descrip.mms" "compile.com" "link.com"

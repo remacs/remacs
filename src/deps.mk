@@ -195,7 +195,6 @@ undo.o: undo.c buffer.h commands.h window.h dispextern.h \
    lisp.h globals.h $(config_h)
 unexaix.o: unexaix.c lisp.h unexec.h $(config_h)
 unexcw.o: unexcw.c lisp.h unexec.h $(config_h)
-unexcoff.o: unexcoff.c lisp.h unexec.h $(config_h)
 unexelf.o: unexelf.c unexec.h ../lib/unistd.h $(config_h)
 unexhp9k800.o: unexhp9k800.c unexec.h $(config_h)
 unexmacosx.o: unexmacosx.c unexec.h $(config_h)
