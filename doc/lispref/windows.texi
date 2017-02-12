@@ -3062,9 +3062,13 @@ point and the buffer's point always move together; they remain equal.
 @end itemize
 
 @cindex cursor
-   As far as the user is concerned, point is where the cursor is, and
-when the user switches to another buffer, the cursor jumps to the
-position of point in that buffer.
+   Emacs displays the cursor, by default as a rectangular block, in
+each window at the position of that window's point.  When the user
+switches to another buffer in a window, Emacs moves that window's
+cursor to where point is in that buffer.  If the exact position of
+point is hidden behind some display element, such as a display string
+or an image, Emacs displays the cursor immediately before or after
+that display element.
 
 @defun window-point &optional window
 This function returns the current position of point in @var{window}.
