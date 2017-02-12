@@ -293,13 +293,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 
   error_file = Qt;
 
-#ifndef subprocesses
-  /* Without asynchronous processes we cannot have BUFFER == 0.  */
-  if (nargs >= 3
-      && (INTEGERP (CONSP (args[2]) ? XCAR (args[2]) : args[2])))
-    error ("Operating system cannot handle asynchronous subprocesses");
-#endif /* subprocesses */
-
   /* Decide the coding-system for giving arguments.  */
   {
     Lisp_Object val, *args2;

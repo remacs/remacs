@@ -56,8 +56,6 @@ HAVE_PROCFS     The /proc filesystem is supported.
 
 REL_ALLOC	Compile in the relocatable memory allocator ralloc.c.
 SYSTEM_MALLOC	Use the system library's malloc.
-subprocesses    System can use subprocesses (for M-x shell for example).
-                Defined by default, only MSDOS undefines it.
 DEBUG_LISP_OBJECT_TYPE Define it in lisp.h enable compile time checks
                        on Lisp_Object use.
 
