@@ -309,6 +309,7 @@ customize this variable.
 It also affects \\[indent-new-comment-line].  However, if you want this
 behavior for explicit filling, you might as well use \\[newline-and-indent]."
   :type 'boolean
+  :safe #'booleanp
   :group 'comment)
 
 (defcustom comment-empty-lines nil

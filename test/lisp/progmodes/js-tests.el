@@ -89,16 +89,18 @@ if (!/[ (:,='\"]/.test(value)) {
 (ert-deftest js-mode-auto-fill ()
   (with-temp-buffer
     (js-mode)
-    (setq fill-column 70)
-    (insert "/* ")
-    (dotimes (_ 16)
-      (insert "test "))
-    (do-auto-fill)
-    ;; The bug is that, after auto-fill, the second line starts with
-    ;; "/*", whereas it should start with " * ".
-    (goto-char (point-min))
-    (forward-line)
-    (should (looking-at " \\* test"))))
+    (let ((fill-column 10)
+          (comment-multi-line t))
+      (insert "/* test test")
+      (do-auto-fill)
+      ;; Filling should continue the multi line comment.
+      (should (equal (buffer-string) "/* test\n * test"))
+      (erase-buffer)
+      (insert "/* test test")
+      (setq comment-multi-line nil)
+      (do-auto-fill)
+      ;; Filling should start a new comment on the next line.
+      (should (equal (buffer-string) "/* test */\n/* test")))))
 
 (ert-deftest js-mode-regexp-syntax-bug-25529 ()
   (dolist (regexp-contents '("[^[]"
