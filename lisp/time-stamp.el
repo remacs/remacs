@@ -569,7 +569,7 @@ and all `time-stamp-format' compatibility."
 	 ((eq cur-char ?L)		;(undocumented alt user full name)
 	  (user-full-name))
 	 ((eq cur-char ?h)		;mail host name
-	  (time-stamp-mail-host-name))
+	  (or mail-host-address (system-name)))
 	 ((eq cur-char ?q)		;(undocumented unqual hostname)
 	  (let ((qualname (system-name)))
 	    (if (string-match "\\." qualname)
@@ -638,17 +638,6 @@ Suggests replacing OLD-FORM with NEW-FORM."
 	     "The following obsolescent time-stamp-format construct(s) were found:\n\n")))
       (insert "\"" old-form "\" -- use " new-form "\n"))
     (display-buffer "*Time-stamp-compatibility*"))))
-
-
-
-(defun time-stamp-mail-host-name ()
-  "Return the name of the host where the user receives mail.
-This is the value of `mail-host-address' if bound and a string,
-otherwise the value of the function `system-name'."
-  (or (and (boundp 'mail-host-address)
-	   (stringp mail-host-address)
-	   mail-host-address)
-      (system-name)))
 
 (provide 'time-stamp)
 

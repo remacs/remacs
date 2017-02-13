@@ -23,6 +23,7 @@
 
 (require 'ert)
 (require 'js)
+(require 'syntax)
 
 (ert-deftest js-mode-fill-bug-19399 ()
   (with-temp-buffer
@@ -98,6 +99,22 @@ if (!/[ (:,='\"]/.test(value)) {
     (goto-char (point-min))
     (forward-line)
     (should (looking-at " \\* test"))))
+
+(ert-deftest js-mode-regexp-syntax-bug-25529 ()
+  (dolist (regexp-contents '("[^[]"
+                             "[/]"
+                             ;; A comment with the regexp on the next
+                             ;; line.
+                             "*comment*/\n/regexp"))
+    (with-temp-buffer
+      (js-mode)
+      (insert "let x = /" regexp-contents "/;\n")
+      (save-excursion (insert "something();\n"))
+      ;; The failure mode was that the regexp literal was not
+      ;; recognized, causing the next line to be given string syntax;
+      ;; but check for comment syntax as well to prevent an
+      ;; implementation not recognizing the comment example.
+      (should-not (syntax-ppss-context (syntax-ppss))))))
 
 (provide 'js-tests)
 

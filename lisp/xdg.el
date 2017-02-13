@@ -109,6 +109,12 @@ file:///foo/bar.jpg"
 (defvar xdg-user-dirs nil
   "Alist of directory keys and values.")
 
+(defun xdg--substitute-home-env (str)
+  (if (file-name-absolute-p str) str
+    (save-match-data
+      (and (string-match "^$HOME/" str)
+           (replace-match "~/" t nil str 0)))))
+
 (defun xdg--user-dirs-parse-line ()
   "Return pair of user-dirs key to directory value in LINE, otherwise nil.
 This should be called at the beginning of a line."
@@ -117,7 +123,7 @@ This should be called at the beginning of a line."
              (looking-at xdg-line-regexp))
     (let ((k (match-string 1))
           (v (match-string 2)))
-      (when (and k v) (cons k v)))))
+      (when (and k v) (cons k (xdg--substitute-home-env v))))))
 
 (defun xdg--user-dirs-parse-file (filename)
   "Return alist of xdg-user-dirs from FILENAME."
@@ -137,7 +143,8 @@ This should be called at the beginning of a line."
     (setq xdg-user-dirs
           (xdg--user-dirs-parse-file
            (expand-file-name "user-dirs.dirs" (xdg-config-home)))))
-  (cdr (assoc name xdg-user-dirs)))
+  (let ((dir (cdr (assoc name xdg-user-dirs))))
+    (when dir (expand-file-name dir))))
 
 (provide 'xdg)
 

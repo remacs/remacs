@@ -79,15 +79,14 @@ That becomes the \"string to replace\".")
 to the minibuffer that reads the string to replace, or invoke replacements
 from Isearch by using a key sequence like `C-s C-s M-%'." "24.3")
 
-(defcustom query-replace-from-to-separator
-  (propertize (if (char-displayable-p ?→) " → " " -> ")
-              'face 'minibuffer-prompt)
-  "String that separates FROM and TO in the history of replacement pairs."
-  ;; Avoids error when attempt to autoload char-displayable-p fails
-  ;; while preparing to dump, also stops customize-rogue listing this.
-  :initialize 'custom-initialize-delay
+(defcustom query-replace-from-to-separator " → "
+  "String that separates FROM and TO in the history of replacement pairs.
+When nil, the pair will not be added to the history (same behavior
+as in emacs 24.5)."
   :group 'matching
-  :type '(choice string (sexp :tag "Display specification"))
+  :type '(choice
+          (const :tag "Disabled" nil)
+          string)
   :version "25.1")
 
 (defcustom query-replace-from-history-variable 'query-replace-history
@@ -165,14 +164,18 @@ The return value can also be a pair (FROM . TO) indicating that the user
 wants to replace FROM with TO."
   (if query-replace-interactive
       (car (if regexp-flag regexp-search-ring search-ring))
-    ;; Reevaluating will check char-displayable-p that is
-    ;; unavailable while preparing to dump.
-    (custom-reevaluate-setting 'query-replace-from-to-separator)
     (let* ((history-add-new-input nil)
 	   (separator
 	    (when query-replace-from-to-separator
 	      (propertize "\0"
-			  'display query-replace-from-to-separator
+			  'display
+                          (propertize
+                           (if (char-displayable-p
+                                (string-to-char (replace-regexp-in-string
+                                                 " " "" query-replace-from-to-separator)))
+                               query-replace-from-to-separator
+                             " -> ")
+                           'face 'minibuffer-prompt)
 			  'separator t)))
 	   (minibuffer-history
 	    (append
@@ -185,9 +188,13 @@ wants to replace FROM with TO."
 	     (symbol-value query-replace-from-history-variable)))
 	   (minibuffer-allow-text-properties t) ; separator uses text-properties
 	   (prompt
-	    (if (and query-replace-defaults separator)
-		(format "%s (default %s): " prompt (car minibuffer-history))
-	      (format "%s: " prompt)))
+	    (cond ((and query-replace-defaults separator)
+                   (format "%s (default %s): " prompt (car minibuffer-history)))
+                  (query-replace-defaults
+                   (format "%s (default %s -> %s): " prompt
+                           (query-replace-descr (caar query-replace-defaults))
+                           (query-replace-descr (cdar query-replace-defaults))))
+                  (t (format "%s: " prompt))))
 	   (from
 	    ;; The save-excursion here is in case the user marks and copies
 	    ;; a region in order to specify the minibuffer input.
@@ -200,8 +207,7 @@ wants to replace FROM with TO."
                 (if regexp-flag
                     (read-regexp prompt nil 'minibuffer-history)
                   (read-from-minibuffer
-                   prompt nil nil nil nil
-                   (car (if regexp-flag regexp-search-ring search-ring)) t)))))
+                   prompt nil nil nil nil (car search-ring) t)))))
            (to))
       (if (and (zerop (length from)) query-replace-defaults)
 	  (cons (caar query-replace-defaults)

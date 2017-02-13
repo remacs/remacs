@@ -245,10 +245,6 @@ in this way."
   :type 'boolean
   :version "21.1")
 
-;; FIXME? This is not a minor mode; what's the point of this?  (See bug#20201)
-(or (assq 'server-buffer-clients minor-mode-alist)
-    (push '(server-buffer-clients " Server") minor-mode-alist))
-
 (defvar server-existing-buffer nil
   "Non-nil means the buffer existed before the server was asked to visit it.
 This means that the server should not kill the buffer when you say you

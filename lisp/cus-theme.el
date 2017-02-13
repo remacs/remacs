@@ -431,7 +431,7 @@ It includes all variables in list VARS."
       (if (bolp)
 	  (princ " "))
       (princ ")")
-      (unless (looking-at "\n")
+      (when (/= (following-char) ?\n)
 	(princ "\n")))))
 
 (defun custom-theme-write-faces (theme faces)
@@ -463,7 +463,7 @@ It includes all faces in list FACES."
 	      (princ ")")))))
       (if (bolp) (princ " "))
       (princ ")")
-      (unless (looking-at "\n")
+      (when (/= (following-char) ?\n)
 	(princ "\n")))))
 
 

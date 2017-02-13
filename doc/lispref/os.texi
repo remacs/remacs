@@ -940,9 +940,7 @@ string.
 If this variable is non-@code{nil}, it is used instead of
 @code{system-name} for purposes of generating email addresses.  For
 example, it is used when constructing the default value of
-@code{user-mail-address}.  @xref{User Identification}.  (Since this is
-done when Emacs starts up, the value actually used is the one saved when
-Emacs was dumped.  @xref{Building Emacs}.)
+@code{user-mail-address}.  @xref{User Identification}.
 @c FIXME sounds like should probably give this a :set-after and some
 @c custom-initialize-delay voodoo.
 @end defopt

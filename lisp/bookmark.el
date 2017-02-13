@@ -896,8 +896,8 @@ If optional arg NEWLINE-TOO is non-nil, delete the newline too.
 Does not affect the kill ring."
   (let ((eol (line-end-position)))
     (delete-region (point) eol)
-    (if (and newline-too (looking-at "\n"))
-        (delete-char 1))))
+    (when (and newline-too (= (following-char) ?\n))
+      (delete-char 1))))
 
 
 ;; Defvars to avoid compilation warnings:
@@ -957,7 +957,7 @@ Lines beginning with `#' are ignored."
       (error "Not in bookmark-edit-annotation-mode"))
   (goto-char (point-min))
   (while (< (point) (point-max))
-    (if (looking-at "^#")
+    (if (= (following-char) ?#)
         (bookmark-kill-line t)
       (forward-line 1)))
   ;; Take no chances with text properties.
@@ -2064,7 +2064,7 @@ To carry out the deletions that you've marked, use \\<bookmark-bmenu-mode-map>\\
   (let ((o-point  (point))
         (o-str    (save-excursion
                     (beginning-of-line)
-                    (unless (looking-at "^D")
+                    (unless (= (following-char) ?D)
                       (buffer-substring
                        (point)
                        (progn (end-of-line) (point))))))
