@@ -376,9 +376,8 @@ this variable usefully is to set it while building and dumping Emacs."
 (make-obsolete-variable 'system-name "use (system-name) instead" "25.1")
 
 (defcustom mail-host-address nil
-  "Name of this machine, for purposes of naming users.
-If non-nil, Emacs uses this instead of `system-name' when constructing
-email addresses."
+  "The name of this machine, for use in constructing email addresses.
+If this is nil, Emacs uses `system-name'."
   :type '(choice (const nil) string)
   :group 'mail)
 
