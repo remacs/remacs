@@ -32,14 +32,7 @@ However, it is still possible to create multiple frames on text
 terminals; such frames are displayed one at a time, filling the entire
 terminal screen (@pxref{Non-Window Terminals}).  It is also possible
 to use the mouse on some text terminals (@pxref{Text-Only Mouse}, for
-doing so on GNU and Unix systems; and
-@iftex
-@pxref{MS-DOS Mouse,,,emacs-xtra,Specialized Emacs Features},
-@end iftex
-@ifnottex
-@pxref{MS-DOS Mouse},
-@end ifnottex
-for doing so on MS-DOS).  Menus are supported on all text terminals.
+doing so on GNU and Unix systems.  Menus are supported on all text terminals.
 
 @menu
 * Mouse Commands::      Moving, cutting, and pasting, with the mouse.
@@ -1330,11 +1323,3 @@ running on your system in order for this to work.  Note that when
 this mode is enabled, you cannot use the mouse to transfer text
 between Emacs and other programs which use GPM.  This is due to
 limitations in GPM and the Linux kernel.
-
-@iftex
-@xref{MS-DOS Mouse,,,emacs-xtra,Specialized Emacs Features},
-@end iftex
-@ifnottex
-@xref{MS-DOS Mouse},
-@end ifnottex
-for information about mouse support on MS-DOS.

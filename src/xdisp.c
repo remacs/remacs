@@ -11335,7 +11335,7 @@ clear_garbaged_frames (void)
 		     selected frame, and might leave the selected
 		     frame with corrupted display, if it happens not
 		     to be marked garbaged.  */
-		  && !(f != sf && (FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f))))
+		  && !(f != sf && FRAME_TERMCAP_P (f)))
 		redraw_frame (f);
 	      else
 		clear_current_matrices (f);
@@ -13601,7 +13601,7 @@ redisplay_internal (void)
   if (face_change)
     windows_or_buffers_changed = 47;
 
-  if ((FRAME_TERMCAP_P (sf) || FRAME_MSDOS_P (sf))
+  if (FRAME_TERMCAP_P (sf)
       && FRAME_TTY (sf)->previous_frame != sf)
     {
       /* Since frames on a single ASCII terminal share the same
@@ -14005,7 +14005,7 @@ redisplay_internal (void)
 
 	  /* We don't have to do anything for unselected terminal
 	     frames.  */
-	  if ((FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f))
+	  if (FRAME_TERMCAP_P (f)
 	      && !EQ (FRAME_TTY (f)->top_frame, frame))
 	    continue;
 
@@ -23914,7 +23914,6 @@ decode_mode_spec (struct window *w, register int c, int field_width,
 				     p, eol_flag);
 
 #if false /* This proves to be annoying; I think we can do without. -- rms.  */
-#ifdef subprocesses
 	obj = Fget_buffer_process (Fcurrent_buffer ());
 	if (PROCESSP (obj))
 	  {
@@ -23923,7 +23922,6 @@ decode_mode_spec (struct window *w, register int c, int field_width,
 	    p = decode_mode_spec_coding
 	      (XPROCESS (obj)->encode_coding_system, p, eol_flag);
 	  }
-#endif /* subprocesses */
 #endif /* false */
 	*p = 0;
 	return decode_mode_spec_buf;
@@ -28716,8 +28714,7 @@ x_clear_cursor (struct window *w)
 
 #endif /* HAVE_WINDOW_SYSTEM */
 
-/* Implementation of draw_row_with_mouse_face for GUI sessions, GPM,
-   and MSDOS.  */
+/* Implementation of draw_row_with_mouse_face for GUI sessions and GPM.  */
 static void
 draw_row_with_mouse_face (struct window *w, int start_x, struct glyph_row *row,
 			  int start_hpos, int end_hpos,

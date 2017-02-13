@@ -2306,10 +2306,7 @@ optionally specify a different file name for the tags table by using the
 prints the tags table to standard output.
 
   If the specified files don't exist, @command{etags} looks for
-compressed versions of them and uncompresses them to read them.  Under
-MS-DOS, @command{etags} also looks for file names like @file{mycode.cgz}
-if it is given @samp{mycode.c} on the command line and @file{mycode.c}
-does not exist.
+compressed versions of them and uncompresses them to read them.
 
   If the tags table becomes outdated due to changes in the files
 described in it, you can update it by running the @command{etags}
@@ -2348,7 +2345,7 @@ generally render the file names invalid.
 the tags file will contain absolute file names.  This way, the tags file
 will still refer to the same files even if you move it, as long as the
 source files remain in the same place.  Absolute file names start with
-@samp{/}, or with @samp{@var{device}:/} on MS-DOS and MS-Windows.
+@samp{/}, or with @samp{@var{device}:/} on MS-Windows.
 
    When you want to make a tags table from a great number of files,
 you may have problems listing them on the command line, because some

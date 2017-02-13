@@ -686,8 +686,8 @@ and @code{emacs-internal}.
 
 @cindex international files from DOS/Windows systems
   A special class of coding systems, collectively known as
-@dfn{codepages}, is designed to support text encoded by MS-Windows and
-MS-DOS software.  The names of these coding systems are
+@dfn{codepages}, is designed to support text encoded by MS-Windows
+software.  The names of these coding systems are
 @code{cp@var{nnnn}}, where @var{nnnn} is a 3- or 4-digit number of the
 codepage.  You can use these encodings just like any other coding
 system; for example, to visit a file encoded in codepage 850, type
@@ -729,7 +729,6 @@ system, including the letter that stands for it in the mode line
 
 @cindex end-of-line conversion
 @cindex line endings
-@cindex MS-DOS end-of-line conversion
 @cindex Macintosh end-of-line conversion
   Each of the coding systems that appear in this list---except for
 @code{no-conversion}, which means no conversion of any kind---specifies

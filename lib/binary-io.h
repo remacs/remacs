@@ -37,7 +37,7 @@ _GL_INLINE_HEADER_BEGIN
    sets the binary/text I/O mode of file descriptor fd to the given mode
    (must be O_BINARY or O_TEXT) and returns the previous mode.  */
 #if O_BINARY
-# if defined __EMX__ || defined __DJGPP__ || defined __CYGWIN__
+# if defined __EMX__ || defined __CYGWIN__
 #  include <io.h> /* declares setmode() */
 #  define set_binary_mode setmode
 # else
@@ -60,7 +60,7 @@ set_binary_mode (int fd, int mode)
 
 /* SET_BINARY (fd);
    changes the file descriptor fd to perform binary I/O.  */
-#if defined __DJGPP__ || defined __EMX__
+#if defined __EMX__
 # include <unistd.h> /* declares isatty() */
   /* Avoid putting stdin/stdout in binary mode if it is connected to
      the console, because that would make it impossible for the user

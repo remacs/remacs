@@ -103,9 +103,6 @@ genfiles="
   build-aux/compile build-aux/config.guess build-aux/config.sub
   build-aux/depcomp build-aux/install-sh build-aux/missing
 "
-## msdos-only:
-genfiles="src/config.in lib/Makefile.in"
-
 for g in $genfiles; do
     basegen="$basegen ${g##*/}"
 done
