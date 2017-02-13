@@ -662,7 +662,6 @@ default_pixels_per_inch_y (void)
 #else
 #define FRAME_W32_P(f) ((f)->output_method == output_w32)
 #endif
-#define FRAME_MSDOS_P(f) false
 #ifndef HAVE_NS
 #define FRAME_NS_P(f) false
 #else
@@ -1122,7 +1121,7 @@ INLINE bool
 window_system_available (struct frame *f)
 {
 #ifdef HAVE_WINDOW_SYSTEM
-  return f ? FRAME_WINDOW_P (f) || FRAME_MSDOS_P (f) : display_available ();
+  return f ? FRAME_WINDOW_P (f) : display_available ();
 #else
   return false;
 #endif

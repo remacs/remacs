@@ -1599,8 +1599,7 @@ rename-file}.  @xref{VC Delete/Rename}.
 file without removing its old name.  The new name is created as a
 hard link to the existing file.  The new name must belong on the
 same file system that the file is on.  On MS-Windows, this command
-works only if the file resides in an NTFS file system.  On MS-DOS, it
-works by copying the file.
+works only if the file resides in an NTFS file system.
 
 @findex make-symbolic-link
 @cindex symbolic links (creation)

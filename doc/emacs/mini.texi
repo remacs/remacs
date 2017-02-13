@@ -125,16 +125,9 @@ directory of a user whose login name is @var{user-id}.  Any leading
 directory name in front of the @file{~} is ignored: thus,
 @file{/u2/emacs/~/foo/bar.txt} is equivalent to @file{~/foo/bar.txt}.
 
-  On MS-Windows and MS-DOS systems, where a user doesn't always have a
-home directory, Emacs uses several alternatives.  For MS-Windows, see
-@ref{Windows HOME}; for MS-DOS, see
-@ifnottex
-@ref{MS-DOS File Names}.
-@end ifnottex
-@iftex
-@ref{MS-DOS File Names, HOME on MS-DOS,, emacs, the digital version of
-the Emacs Manual}.
-@end iftex
+  On MS-Windows, where a user doesn't always have a
+home directory, Emacs uses several alternatives.  See
+@ref{Windows HOME}.
 On these systems, the @file{~@var{user-id}/} construct is supported
 only for the current user, i.e., only if @var{user-id} is the current
 user's login name.

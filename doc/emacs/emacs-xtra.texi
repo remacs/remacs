@@ -61,7 +61,6 @@ modify this GNU manual.''
 * Emerge::              A convenient way of merging two versions of a program.
 * Advanced VC Usage::   Advanced VC (version control) features.
 * Fortran::             Fortran mode and its special features.
-* MS-DOS::              Using Emacs on MS-DOS.
 @end iftex
 * GNU Free Documentation License::  The license for this documentation.
 * Index::
@@ -118,8 +117,6 @@ the Emacs manual.
 @include vc-xtra.texi
 
 @include fortran-xtra.texi
-
-@include msdos-xtra.texi
 
 @lowersections
 @end iftex

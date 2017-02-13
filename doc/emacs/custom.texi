@@ -1296,11 +1296,8 @@ accomplished with @dfn{directory-local variables}.
 
 @cindex @file{.dir-locals.el} file
   The usual way to define directory-local variables is to put a file
-named @file{.dir-locals.el}@footnote{ On MS-DOS, the name of this file
-should be @file{_dir-locals.el}, due to limitations of the DOS
-filesystems.  If the filesystem is limited to 8+3 file names, the name
-of the file will be truncated by the OS to @file{_dir-loc.el}.
-}@footnote{ You can also use @file{.dir-locals-2.el}, which
+named @file{.dir-locals.el}
+@footnote{ You can also use @file{.dir-locals-2.el}, which
 is loaded in addition.  This is useful when @file{.dir-locals.el} is
 under version control in a shared repository and can't be used for
 personal customizations.  } in a

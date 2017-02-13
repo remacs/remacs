@@ -1326,7 +1326,6 @@ AC_SUBST(CANNOT_DUMP)
 
 UNEXEC_OBJ=unexelf.o
 case "$opsys" in
-  # MSDOS uses unexcoff.o
   aix4-2)
    UNEXEC_OBJ=unexaix.o
    ;;
@@ -3961,7 +3960,7 @@ For example, a libncurses-dev(el) or similar package.])
 fi
 
 ## Use termcap instead of terminfo?
-## Only true for: freebsd < 40000, ms-w32, msdos, netbsd < 599002500.
+## Only true for: freebsd < 40000, ms-w32, netbsd < 599002500.
 TERMINFO=yes
 ## FIXME?  In the cases below where we unconditionally set
 ## LIBS_TERMCAP="-lncurses", this overrides LIBS_TERMCAP = -ltinfo,
@@ -4289,9 +4288,6 @@ dnl which breaks in-tree builds.  So we do this manually instead.
 dnl Note that we cannot rely on PATH_SEPARATOR, as that one will always
 dnl be computed as ':' in MSYS Bash.
 AC_SUBST(SEPCHAR)
-
-dnl Everybody supports this, except MS-DOS.
-AC_DEFINE(subprocesses, 1, [Define to enable asynchronous subprocesses.])
 
 AC_DEFINE(USER_FULL_NAME, [pw->pw_gecos], [How to get a user's full name.])
 
@@ -4721,7 +4717,6 @@ esac
 dnl Define symbols to identify the version of Unix this is.
 dnl Define all the symbols that apply correctly.
 AH_TEMPLATE(DOS_NT, [Define if the system is MS DOS or MS Windows.])
-AH_TEMPLATE(MSDOS, [Define if the system is MS DOS.])
 AH_TEMPLATE(USG, [Define if the system is compatible with System III.])
 AH_TEMPLATE(USG5_4, [Define if the system is compatible with System V Release 4.])
 

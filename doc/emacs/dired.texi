@@ -96,7 +96,7 @@ default) means to perform the check; any other non-@code{nil} value
 means to use the @samp{--dired} option; and @code{nil} means not to
 use the @samp{--dired} option.
 
-  On MS-Windows and MS-DOS systems, Emacs emulates @command{ls}.
+  On MS-Windows systems, Emacs emulates @command{ls}.
 @xref{ls in Lisp}, for options and peculiarities of this emulation.
 
 @findex dired-other-window

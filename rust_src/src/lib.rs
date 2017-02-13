@@ -25,8 +25,12 @@ mod strings;
 mod symbols;
 mod globals;
 mod character;
+mod base64;
 
 use lisp::LispSubr;
+
+pub use base64::base64_encode_1;
+pub use base64::base64_decode_1;
 
 // These need to be exported as bytecode.c depends upon them.
 pub use math::Fplus;

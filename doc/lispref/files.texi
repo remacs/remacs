@@ -945,18 +945,6 @@ $ ls -l diffs
 -rw-rw-rw- 1 lewis lewis 3063 Oct 30 16:00 diffs
 @end group
 @end example
-
-@cindex MS-DOS and file modes
-@cindex file modes and MS-DOS
-@strong{MS-DOS note:} On MS-DOS, there is no such thing as an
-executable file mode bit.  So @code{file-modes} considers a file
-executable if its name ends in one of the standard executable
-extensions, such as @file{.com}, @file{.bat}, @file{.exe}, and some
-others.  Files that begin with the Unix-standard @samp{#!} signature,
-such as shell and Perl scripts, are also considered executable.
-Directories are also reported as executable, for compatibility with
-Unix.  These conventions are also followed by @code{file-attributes}
-(@pxref{File Attributes}).
 @end defun
 
 @node Kinds of Files
@@ -1145,14 +1133,14 @@ Sometimes file names or their parts need to be compared as strings, in
 which case it's important to know whether the underlying filesystem is
 case-insensitive.  This function returns @code{t} if file
 @var{filename} is on a case-insensitive filesystem.  It always returns
-@code{t} on MS-DOS and MS-Windows.  On Cygwin and Mac OS X,
+@code{t} on and MS-Windows.  On Cygwin and Mac OS X,
 filesystems may or may not be case-insensitive, and the function tries
 to determine case-sensitivity by a runtime test.  If the test is
 inconclusive, the function returns @code{t} on Cygwin and @code{nil}
 on Mac OS X.
 
 Currently this function always returns @code{nil} on platforms other
-than MS-DOS, MS-Windows, Cygwin, and Mac OS X.  It does not detect
+than MS-Windows, Cygwin, and Mac OS X.  It does not detect
 case-insensitivity of mounted filesystems, such as Samba shares or
 NFS-mounted Windows volumes.  On remote hosts, it assumes @code{t} for
 the @samp{smb} method.  For all other connection methods, runtime
@@ -1886,8 +1874,8 @@ directory.
 @findex cygwin-convert-file-name-to-windows
 @cindex MS-Windows file-name syntax
 @cindex converting file names from/to MS-Windows syntax
-  On MS-DOS and MS-Windows, these functions (like the function that
-actually operate on files) accept MS-DOS or MS-Windows file-name syntax,
+  On MS-Windows, these functions (like the function that
+actually operate on files) accept MS-Windows file-name syntax,
 where backslashes separate the components, as well as Unix syntax; but
 they always return Unix syntax.  This enables Lisp programs to specify
 file names in Unix syntax and work properly on all systems without
@@ -1923,7 +1911,7 @@ parts: the @dfn{directory name} part, and the @dfn{nondirectory} part
 Concatenating these two parts reproduces the original file name.
 
   On most systems, the directory part is everything up to and including
-the last slash (backslash is also allowed in input on MS-DOS or
+the last slash (backslash is also allowed in input on
 MS-Windows); the nondirectory part is the rest.
 
   For some purposes, the nondirectory part is further subdivided into
@@ -1936,7 +1924,7 @@ directory name (@pxref{Directory Names}), or @code{nil} if
 @var{filename} does not include a directory part.
 
 On GNU and Unix systems, a string returned by this function always
-ends in a slash.  On MS-DOS it can also end in a colon.
+ends in a slash.
 
 @example
 @group
@@ -2061,7 +2049,7 @@ in the tree relative to a default directory; then it is called a
 @dfn{relative} file name.  On Unix and GNU/Linux, an absolute file
 name starts with a @samp{/} or a @samp{~}
 (@pxref{abbreviate-file-name}), and a relative one does not.  On
-MS-DOS and MS-Windows, an absolute file name starts with a slash or a
+MS-Windows, an absolute file name starts with a slash or a
 backslash, or with a drive specification @samp{@var{x}:/}, where
 @var{x} is the @dfn{drive letter}.
 
@@ -2124,8 +2112,7 @@ not identical to it.  (This is not quite the same as the usual Unix
 terminology.)  These two different names for the same entity are
 related by a syntactic transformation.  On GNU and Unix systems, this
 is simple: a directory name ends in a slash, whereas the directory
-file name lacks that slash.  On MS-DOS the relationship is more
-complicated.
+file name lacks that slash.
 
   The difference between directory name and directory file name is
 subtle but crucial.  When an Emacs variable or function argument is
@@ -2155,7 +2142,7 @@ string (if it does not already end in one).
 @defun directory-name-p filename
 This function returns non-@code{nil} if @var{filename} ends with a
 directory separator character.  This is the forward slash @samp{/} on
-Unix and GNU systems; MS-Windows and MS-DOS recognize both the forward
+Unix and GNU systems; MS-Windows recognizes both the forward
 slash and the backslash @samp{\} as directory separators.
 @end defun
 
@@ -2463,9 +2450,8 @@ two different jobs from trying to use the exact same file name.
 This function creates a temporary file and returns its name.  Emacs
 creates the temporary file's name by adding to @var{prefix} some
 random characters that are different in each Emacs job.  The result is
-guaranteed to be a newly created empty file.  On MS-DOS, this function
-can truncate the @var{string} prefix to fit into the 8+3 file-name
-limits.  If @var{prefix} is a relative file name, it is expanded
+guaranteed to be a newly created empty file.
+If @var{prefix} is a relative file name, it is expanded
 against @code{temporary-file-directory}.
 
 @example
@@ -2544,8 +2530,7 @@ name.  The name starts with @var{base-name}, and has several random
 characters appended to it, which are different in each Emacs job.  It
 is like @code{make-temp-file} except that (i) it just constructs a
 name, and does not create a file, and (ii) @var{base-name} should be
-an absolute file name (on MS-DOS, this function can truncate
-@var{base-name} to fit into the 8+3 file-name limits).
+an absolute file name.
 
 @strong{Warning:} In most cases, you should not use this function; use
 @code{make-temp-file} instead!  This function is susceptible to a race
@@ -2738,10 +2723,7 @@ the conventions of the current operating system.
 
 On GNU and Unix systems, this simply returns @var{filename}.  On other
 operating systems, it may enforce system-specific file name
-conventions; for example, on MS-DOS this function performs a variety
-of changes to enforce MS-DOS file name limitations, including
-converting any leading @samp{.} to @samp{_} and truncating to three
-characters after the @samp{.}.
+conventions.
 
 The recommended way to use this function is to specify a name which
 fits the conventions of GNU and Unix systems, and pass it to
@@ -2858,7 +2840,7 @@ program whose name is in the variable @code{insert-directory-program}.
 If @var{wildcard} is non-@code{nil}, it also runs the shell specified by
 @code{shell-file-name}, to expand the wildcards.
 
-MS-DOS and MS-Windows systems usually lack the standard Unix program
+MS-Windows systems usually lack the standard Unix program
 @code{ls}, so this function emulates the standard Unix program @code{ls}
 with Lisp code.
 

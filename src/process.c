@@ -32,9 +32,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "lisp.h"
 
-/* Only MS-DOS does not define `subprocesses'.  */
-#ifdef subprocesses
-
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -98,8 +95,6 @@ static struct rlimit nofile_limit;
 #include <sig2str.h>
 #include <verify.h>
 
-#endif	/* subprocesses */
-
 #include "systime.h"
 #include "systty.h"
 
@@ -155,8 +150,6 @@ static bool kbd_is_on_hold;
 /* Nonzero means don't run process sentinels.  This is used
    when exiting.  */
 bool inhibit_sentinels;
-
-#ifdef subprocesses
 
 #ifndef SOCK_CLOEXEC
 # define SOCK_CLOEXEC 0
@@ -7410,225 +7403,6 @@ keyboard_bit_set (fd_set *mask)
 }
 # endif
 
-#else  /* not subprocesses */
-
-/* Defined in msdos.c.  */
-extern int sys_select (int, fd_set *, fd_set *, fd_set *,
-		       struct timespec *, void *);
-
-/* Implementation of wait_reading_process_output, assuming that there
-   are no subprocesses.  Used only by the MS-DOS build.
-
-   Wait for timeout to elapse and/or keyboard input to be available.
-
-   TIME_LIMIT is:
-     timeout in seconds
-     If negative, gobble data immediately available but don't wait for any.
-
-   NSECS is:
-     an additional duration to wait, measured in nanoseconds
-     If TIME_LIMIT is zero, then:
-       If NSECS == 0, there is no limit.
-       If NSECS > 0, the timeout consists of NSECS only.
-       If NSECS < 0, gobble data immediately, as if TIME_LIMIT were negative.
-
-   READ_KBD is:
-     0 to ignore keyboard input, or
-     1 to return when input is available, or
-     -1 means caller will actually read the input, so don't throw to
-       the quit handler.
-
-   see full version for other parameters. We know that wait_proc will
-     always be NULL, since `subprocesses' isn't defined.
-
-   DO_DISPLAY means redisplay should be done to show subprocess
-   output that arrives.
-
-   Return -1 signifying we got no output and did not try.  */
-
-int
-wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
-			     bool do_display,
-			     Lisp_Object wait_for_cell,
-			     struct Lisp_Process *wait_proc, int just_wait_proc)
-{
-  register int nfds;
-  struct timespec end_time, timeout;
-  enum { MINIMUM = -1, TIMEOUT, INFINITY } wait;
-
-  if (TYPE_MAXIMUM (time_t) < time_limit)
-    time_limit = TYPE_MAXIMUM (time_t);
-
-  if (time_limit < 0 || nsecs < 0)
-    wait = MINIMUM;
-  else if (time_limit > 0 || nsecs > 0)
-    {
-      wait = TIMEOUT;
-      end_time = timespec_add (current_timespec (),
-                               make_timespec (time_limit, nsecs));
-    }
-  else
-    wait = INFINITY;
-
-  /* Turn off periodic alarms (in case they are in use)
-     and then turn off any other atimers,
-     because the select emulator uses alarms.  */
-  stop_polling ();
-  turn_on_atimers (0);
-
-  while (1)
-    {
-      bool timeout_reduced_for_timers = false;
-      fd_set waitchannels;
-      int xerrno;
-
-      /* If calling from keyboard input, do not quit
-	 since we want to return C-g as an input character.
-	 Otherwise, do pending quit if requested.  */
-      if (read_kbd >= 0)
-	maybe_quit ();
-
-      /* Exit now if the cell we're waiting for became non-nil.  */
-      if (! NILP (wait_for_cell) && ! NILP (XCAR (wait_for_cell)))
-	break;
-
-      /* Compute time from now till when time limit is up.  */
-      /* Exit if already run out.  */
-      if (wait == TIMEOUT)
-	{
-	  struct timespec now = current_timespec ();
-	  if (timespec_cmp (end_time, now) <= 0)
-	    break;
-	  timeout = timespec_sub (end_time, now);
-	}
-      else
-	timeout = make_timespec (wait < TIMEOUT ? 0 : 100000, 0);
-
-      /* If our caller will not immediately handle keyboard events,
-	 run timer events directly.
-	 (Callers that will immediately read keyboard events
-	 call timer_delay on their own.)  */
-      if (NILP (wait_for_cell))
-	{
-	  struct timespec timer_delay;
-
-	  do
-	    {
-	      unsigned old_timers_run = timers_run;
-	      timer_delay = timer_check ();
-	      if (timers_run != old_timers_run && do_display)
-		/* We must retry, since a timer may have requeued itself
-		   and that could alter the time delay.  */
-		redisplay_preserve_echo_area (14);
-	      else
-		break;
-	    }
-	  while (!detect_input_pending ());
-
-	  /* If there is unread keyboard input, also return.  */
-	  if (read_kbd != 0
-	      && requeued_events_pending_p ())
-	    break;
-
-	  if (timespec_valid_p (timer_delay))
-	    {
-	      if (timespec_cmp (timer_delay, timeout) < 0)
-		{
-		  timeout = timer_delay;
-		  timeout_reduced_for_timers = true;
-		}
-	    }
-	}
-
-      /* Cause C-g and alarm signals to take immediate action,
-	 and cause input available signals to zero out timeout.  */
-      if (read_kbd < 0)
-	set_waiting_for_input (&timeout);
-
-      /* If a frame has been newly mapped and needs updating,
-	 reprocess its display stuff.  */
-      if (frame_garbaged && do_display)
-	{
-	  clear_waiting_for_input ();
-	  redisplay_preserve_echo_area (15);
-	  if (read_kbd < 0)
-	    set_waiting_for_input (&timeout);
-	}
-
-      /* Wait till there is something to do.  */
-      FD_ZERO (&waitchannels);
-      if (read_kbd && detect_input_pending ())
-	nfds = 0;
-      else
-	{
-	  if (read_kbd || !NILP (wait_for_cell))
-	    FD_SET (0, &waitchannels);
-	  nfds = pselect (1, &waitchannels, NULL, NULL, &timeout, NULL);
-	}
-
-      xerrno = errno;
-
-      /* Make C-g and alarm signals set flags again.  */
-      clear_waiting_for_input ();
-
-      /*  If we woke up due to SIGWINCH, actually change size now.  */
-      do_pending_window_change (0);
-
-      if (wait < INFINITY && nfds == 0 && ! timeout_reduced_for_timers)
-	/* We waited the full specified time, so return now.  */
-	break;
-
-      if (nfds == -1)
-	{
-	  /* If the system call was interrupted, then go around the
-	     loop again.  */
-	  if (xerrno == EINTR)
-	    FD_ZERO (&waitchannels);
-	  else
-	    report_file_errno ("Failed select", Qnil, xerrno);
-	}
-
-      /* Check for keyboard input.  */
-
-      if (read_kbd
-	  && detect_input_pending_run_timers (do_display))
-	{
-	  swallow_events (do_display);
-	  if (detect_input_pending_run_timers (do_display))
-	    break;
-	}
-
-      /* If there is unread keyboard input, also return.  */
-      if (read_kbd
-	  && requeued_events_pending_p ())
-	break;
-
-      /* If wait_for_cell. check for keyboard input
-	 but don't run any timers.
-	 ??? (It seems wrong to me to check for keyboard
-	 input at all when wait_for_cell, but the code
-	 has been this way since July 1994.
-	 Try changing this after version 19.31.)  */
-      if (! NILP (wait_for_cell)
-	  && detect_input_pending ())
-	{
-	  swallow_events (do_display);
-	  if (detect_input_pending ())
-	    break;
-	}
-
-      /* Exit now if the cell we're waiting for became non-nil.  */
-      if (! NILP (wait_for_cell) && ! NILP (XCAR (wait_for_cell)))
-	break;
-    }
-
-  start_polling ();
-
-  return -1;
-}
-
-#endif	/* not subprocesses */
-
 /* The following functions are needed even if async subprocesses are
    not supported.  Some of them are no-op stubs in that case.  */
 
@@ -7664,13 +7438,11 @@ remove_slash_colon (Lisp_Object name)
 void
 add_keyboard_wait_descriptor (int desc)
 {
-#ifdef subprocesses /* Actually means "not MSDOS".  */
   eassert (desc >= 0 && desc < FD_SETSIZE);
   fd_callback_info[desc].flags &= ~PROCESS_FD;
   fd_callback_info[desc].flags |= (FOR_READ | KEYBOARD_FD);
   if (desc > max_desc)
     max_desc = desc;
-#endif
 }
 
 /* From now on, do not expect DESC to give keyboard input.  */
@@ -7678,14 +7450,12 @@ add_keyboard_wait_descriptor (int desc)
 void
 delete_keyboard_wait_descriptor (int desc)
 {
-#ifdef subprocesses
   eassert (desc >= 0 && desc < FD_SETSIZE);
 
   fd_callback_info[desc].flags &= ~(FOR_READ | KEYBOARD_FD | PROCESS_FD);
 
   if (desc == max_desc)
     recompute_max_desc ();
-#endif
 }
 
 /* Setup coding systems of PROCESS.  */
@@ -7693,7 +7463,6 @@ delete_keyboard_wait_descriptor (int desc)
 void
 setup_process_coding_systems (Lisp_Object process)
 {
-#ifdef subprocesses
   struct Lisp_Process *p = XPROCESS (process);
   int inch = p->infd;
   int outch = p->outfd;
@@ -7717,7 +7486,6 @@ setup_process_coding_systems (Lisp_Object process)
     proc_encode_coding_system[outch] = xmalloc (sizeof (struct coding_system));
   setup_coding_system (p->encode_coding_system,
 		       proc_encode_coding_system[outch]);
-#endif
 }
 
 DEFUN ("get-buffer-process", Fget_buffer_process, Sget_buffer_process, 1, 1, 0,
@@ -7727,7 +7495,6 @@ Return nil if all processes associated with BUFFER have been
 deleted or killed.  */)
   (register Lisp_Object buffer)
 {
-#ifdef subprocesses
   register Lisp_Object buf, tail, proc;
 
   if (NILP (buffer)) return Qnil;
@@ -7737,7 +7504,6 @@ deleted or killed.  */)
   FOR_EACH_PROCESS (tail, proc)
     if (EQ (XPROCESS (proc)->buffer, buf))
       return proc;
-#endif	/* subprocesses */
   return Qnil;
 }
 
@@ -7750,14 +7516,8 @@ associated with PROCESS will inherit the coding system used to decode
 the process output.  */)
   (register Lisp_Object process)
 {
-#ifdef subprocesses
   CHECK_PROCESS (process);
   return XPROCESS (process)->inherit_coding_system_flag ? Qt : Qnil;
-#else
-  /* Ignore the argument and return the value of
-     inherit-process-coding-system.  */
-  return inherit_process_coding_system ? Qt : Qnil;
-#endif
 }
 
 /* Kill all processes associated with `buffer'.
@@ -7766,7 +7526,6 @@ the process output.  */)
 void
 kill_buffer_processes (Lisp_Object buffer)
 {
-#ifdef subprocesses
   Lisp_Object tail, proc;
 
   FOR_EACH_PROCESS (tail, proc)
@@ -7777,9 +7536,6 @@ kill_buffer_processes (Lisp_Object buffer)
 	else if (XPROCESS (proc)->infd >= 0)
 	  process_send_signal (proc, SIGHUP, Qnil, 1);
       }
-#else  /* subprocesses */
-  /* Since we have no subprocesses, this does nothing.  */
-#endif /* subprocesses */
 }
 
 DEFUN ("waiting-for-user-input-p", Fwaiting_for_user_input_p,
@@ -7788,11 +7544,7 @@ DEFUN ("waiting-for-user-input-p", Fwaiting_for_user_input_p,
 This is intended for use by asynchronous process output filters and sentinels.  */)
   (void)
 {
-#ifdef subprocesses
   return (waiting_for_user_input_p ? Qt : Qnil);
-#else
-  return Qnil;
-#endif
 }
 
 /* Stop reading input from keyboard sources.  */
@@ -7890,7 +7642,6 @@ integer or floating point values.
   return system_process_attributes (pid);
 }
 
-#ifdef subprocesses
 /* Arrange to catch SIGCHLD if this hasn't already been arranged.
    Invoke this after init_process_emacs, and after glib and/or GNUstep
    futz with the SIGCHLD handler, but before Emacs forks any children.
@@ -7914,7 +7665,6 @@ catch_child_signal (void)
 	 : old_action.sa_handler);
   unblock_child_signal (&oldset);
 }
-#endif	/* subprocesses */
 
 /* Limit the number of open files to the value it had at startup.  */
 
@@ -7933,7 +7683,6 @@ restore_nofile_limit (void)
 void
 init_process_emacs (int sockfd)
 {
-#ifdef subprocesses
   int i;
 
   inhibit_sentinels = 0;
@@ -8007,15 +7756,12 @@ init_process_emacs (int sockfd)
     }
   }
 #endif
-#endif	/* subprocesses */
   kbd_is_on_hold = 0;
 }
 
 void
 syms_of_process (void)
 {
-#ifdef subprocesses
-
   DEFSYM (Qprocessp, "processp");
   DEFSYM (Qrun, "run");
   DEFSYM (Qstop, "stop");
@@ -8082,8 +7828,6 @@ syms_of_process (void)
   staticpro (&Vprocess_alist);
   staticpro (&deleted_pid_list);
 
-#endif	/* subprocesses */
-
   DEFSYM (QCname, ":name");
   DEFSYM (QCtype, ":type");
 
@@ -8108,12 +7852,10 @@ syms_of_process (void)
   DEFSYM (Qcutime, "cutime");
   DEFSYM (Qcstime, "cstime");
   DEFSYM (Qctime, "ctime");
-#ifdef subprocesses
   DEFSYM (Qinternal_default_process_sentinel,
 	  "internal-default-process-sentinel");
   DEFSYM (Qinternal_default_process_filter,
 	  "internal-default-process-filter");
-#endif
   DEFSYM (Qpri, "pri");
   DEFSYM (Qnice, "nice");
   DEFSYM (Qthcount, "thcount");
@@ -8131,7 +7873,6 @@ A value of nil means don't delete them until `list-processes' is run.  */);
 
   delete_exited_processes = 1;
 
-#ifdef subprocesses
   DEFVAR_LISP ("process-connection-type", Vprocess_connection_type,
 	       doc: /* Control type of device used to communicate with subprocesses.
 Values are nil to use a pipe, or t or `pty' to use a pty.
@@ -8242,8 +7983,6 @@ The variable takes effect when `start-process' is called.  */);
 
    Fprovide (intern_c_string ("make-network-process"), subfeatures);
  }
-
-#endif	/* subprocesses */
 
   defsubr (&Sget_buffer_process);
   defsubr (&Sprocess_inherit_coding_system_flag);
