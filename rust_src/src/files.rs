@@ -7,6 +7,11 @@ use std::{io, ptr};
 #[cfg(unix)]
 use libc::{O_CLOEXEC, O_EXCL, O_RDWR, O_CREAT, open};
 
+#[cfg(windows)]
+extern "C" {
+    fn sys_open (filename: *const libc::c_char, flags: libc::c_int, mode: libc::c_int) -> libc::c_int;
+}
+
 use libc::{EEXIST, EINVAL};
 
 #[cfg(test)]
@@ -107,8 +112,20 @@ fn open_temporary_file(name: &CString, flags: libc::c_int) -> io::Result<libc::c
     }
 }
 
-// @TODO Need to implement a windows version of open_temporary_file
-// it will use sys_open as an extern "C" function
+#[cfg(windows)]
+fn open_temporary_file(name: &CString, flags: libc::c_int) -> io::Result<libc::c_int> {
+    let _O_CREAT = 0x0100;
+    let _O_EXCL = 0x0400;
+    let _O_RDWR = 0x0002;
+    unsafe {
+        match sys_open(name.as_ptr(),
+             _O_CREAT | _O_EXCL | _O_RDWR | flags,
+                   0o600) {
+            -1 => Err(io::Error::last_os_error()),
+            fd => Ok(fd),
+        }
+    }
+}
 
 #[test]
 #[should_panic]
