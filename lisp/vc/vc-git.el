@@ -1240,9 +1240,7 @@ This requires git 1.8.4 or later, for the \"-L\" option of \"git log\"."
 
 (defun vc-git-retrieve-tag (dir name _update)
   (let ((default-directory dir))
-    (vc-git-command nil 0 nil "checkout" name)
-    ;; FIXME: update buffers if `update' is true
-    ))
+    (vc-git-command nil 0 nil "checkout" name)))
 
 
 ;;; MISCELLANEOUS
