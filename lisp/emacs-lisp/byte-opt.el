@@ -1752,12 +1752,22 @@ If FOR-EFFECT is non-nil, the return value is assumed to be of no importance."
 		 (setcdr tmp2 lap1)
 		 (setq tmp3 (cdr (memq tmp2 tmp3))))
 	       (setq lap (delq lap0 lap)
-		     keep-going t))
+		     keep-going t)
+               ;; replace references to tag in jump tables, if any
+               (dolist (table byte-compile-jump-tables)
+                 (catch 'break
+                   (maphash #'(lambda (value tag)
+                                (when (equal tag lap0)
+                                  ;; each tag occurs only once in the jump table
+                                  (puthash value lap1 table)
+                                  (throw 'break nil)))
+                            table))))
 	      ;;
 	      ;; unused-TAG: --> <deleted>
 	      ;;
 	      ((and (eq 'TAG (car lap0))
 		    (not (rassq lap0 lap))
+                    ;; make sure this tag isn't used in a jump-table
                     (cl-loop for table in byte-compile-jump-tables
                              when (member lap0 (hash-table-values table))
                              return nil finally return t))
