@@ -500,13 +500,15 @@ unsafe impl Sync for LispSubr {}
 /// # Example
 ///
 /// ```
-/// fn Fdo_nothing(x: LispObject) -> LispObject {
+/// fn do_nothing(x: LispObject) -> LispObject {
 ///     Qnil
 /// }
 ///
 /// defun!("do-nothing", // the name of our elisp function
-///        Fdo_nothing, // the Rust function we want to call
+///        Fdo_nothing, // the name of the function that will be called by C (this will call
+///        do_nothing).
 ///        Sdo_nothing, // the name of the struct that we will define
+///        do_nothing, // the Rust function we want to call
 ///        1, 1, // min and max number of arguments
 ///        ptr::null(), // our function is not interactive
 ///        // Docstring. The last line ensures that *Help* shows the
@@ -518,7 +520,7 @@ unsafe impl Sync for LispSubr {}
 ///
 /// # Porting Notes
 ///
-/// This is equivalent to DEFUN in Emacs C, but the function
+/// This is equivalent to `DEFUN` in Emacs C, but the function
 /// definition is kept separate to aid readability.
 macro_rules! defun {
     ($lisp_name:expr, $fname:ident($($arg_name:ident),*), $sname: ident, $rust_name: ident, $min_args:expr, $max_args:expr, $intspec:expr, $docstring:expr) => {
@@ -547,6 +549,33 @@ macro_rules! defun {
     }
 }
 
+/// Define an elisp function struct with `MANY` arguments.
+///
+/// # Example
+///
+/// ```
+/// fn do_nothing(x: &[LispObject]) -> LispObject {
+///     Qnil
+/// }
+///
+/// defun_many!("do-nothing", // the name of our elisp function
+///             Fdo_nothing, // the name of the function that will be called by C (this will call
+///             do_nothing)
+///             Sdo_nothing, // the name of the struct that we will define
+///             do_nothing, // the name of the Rust function to be called
+///             0,
+///             ptr::null(), // our function is not interactive
+///             // Docstring. The last line ensures that *Help* shows the
+///             // correct calling convention
+///             "Return nil unconditionally.
+///
+/// (fn X)");
+/// ```
+///
+/// # Porting Notes
+///
+/// This is equivalent to `DEFUN` (using max_args with `MANY`) and `DEFUN_MANY` in Emacs C, but the function
+/// definition is kept separate to aid readability.
 macro_rules! defun_many {
     ($lisp_name:expr, $fname:ident, $sname: ident, $rust_name: ident, $min_args:expr, $intspec:expr, $docstring:expr) => {
 // this is not beautifu, but works.
