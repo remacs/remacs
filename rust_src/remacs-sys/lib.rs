@@ -19,3 +19,7 @@ extern crate libc;
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
 
 pub type Lisp_Object = EmacsInt;
+
+extern "C" {
+    pub fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
+}

@@ -7,7 +7,6 @@ use lists::NILP;
 use remacs_sys::Lisp_Object;
 
 extern "C" {
-    fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
     fn make_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
     fn base64_encode_1(from: *const libc::c_char,
                        to: *mut libc::c_char,
