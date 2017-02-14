@@ -266,21 +266,20 @@ We can see we need to define a `Snumberp` and a `Fnumberp`. `Qt` and
 ``` rust
 // This is the function that gets called when 
 // we call numberp in elisp.
-fn Fnumberp(object: LispObject) -> LispObject {
+fn numberp(object: LispObject) -> LispObject {
     if lisp::NUMBERP(object) {
-        unsafe {
-            Qt
-        }
+        LispObject::constant_t()
     } else {
-        Qnil
+        LispObject::constant_nil()
     }
 }
 
 // This defines a built-in function in elisp, which is a represented
 // with a static struct.
 defun!("numberp", // the name of our elisp function
-       Fnumberp, // the rust function we want to call
+       Fnumberp, // the function that will be called by C (this calls numberp).
        Snumberp, // the name of the struct that we will define
+       numberp, // the rust function we want to call
        1, 1, // min and max number of arguments
        ptr::null(), // our function is not interactive
        // docstring, the last line ensures that *Help* shows the
