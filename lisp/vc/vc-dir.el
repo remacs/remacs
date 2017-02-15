@@ -297,6 +297,12 @@ See `run-hooks'."
     (define-key map (kbd "M-s a M-C-s") 'vc-dir-isearch-regexp)
     (define-key map "G" 'vc-dir-ignore)
 
+    (let ((branch-map (make-sparse-keymap)))
+      (define-key map "B" branch-map)
+      (define-key branch-map "c" 'vc-create-tag)
+      (define-key branch-map "l" 'vc-print-branch-log)
+      (define-key branch-map "s" 'vc-retrieve-tag))
+
     ;; Hook up the menu.
     (define-key map [menu-bar vc-dir-mode]
       `(menu-item

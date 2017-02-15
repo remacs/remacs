@@ -708,6 +708,10 @@ string is computed dynamically based on 'url-privacy-level'.
 colorful faces to make it more obvious to the user what the state is.
 See the 'vc-faces' customization group.
 
++++
+*** 'vc-dir-mode' now binds 'vc-log-outgoing' to 'O'; and has various
+branch-related commands on a keymap bound to 'B'.
+
 ** CC mode
 
 *** Opening a .h file will turn C or C++ mode depending on language used.

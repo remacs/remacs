@@ -1757,6 +1757,9 @@ Return t if the buffer had changes, nil otherwise."
       ;; because we don't know that yet.
       t)))
 
+(defvar vc-revision-history nil
+  "History for `vc-read-revision'.")
+
 (defun vc-read-revision (prompt &optional files backend default initial-input)
   (cond
    ((null files)
@@ -1768,7 +1771,7 @@ Return t if the buffer had changes, nil otherwise."
          (vc-call-backend backend 'revision-completion-table files)))
     (if completion-table
         (completing-read prompt completion-table
-                         nil nil initial-input nil default)
+                         nil nil initial-input 'vc-revision-history default)
       (read-string prompt initial-input nil default))))
 
 (defun vc-diff-build-argument-list-internal ()
@@ -2371,6 +2374,17 @@ When called interactively with a prefix argument, prompt for LIMIT."
         (error "Directory is not version controlled")))
     (setq default-directory rootdir)
     (vc-print-log-internal backend (list rootdir) nil nil limit)))
+
+;;;###autoload
+(defun vc-print-branch-log (branch)
+  (interactive
+   (list
+    (vc-read-revision "Branch to log: ")))
+  (when (equal branch "")
+    (error "No branch specified"))
+  (vc-print-log-internal (vc-responsible-backend default-directory)
+                         (list default-directory) branch t
+                         (when (> vc-log-show-limit 0) vc-log-show-limit)))
 
 ;;;###autoload
 (defun vc-log-incoming (&optional remote-location)

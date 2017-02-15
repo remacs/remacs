@@ -1301,7 +1301,7 @@ up a multi-file VC fileset to be acted on by VC commands like
 
   The VC Directory buffer also defines some single-key shortcuts for
 VC commands with the @kbd{C-x v} prefix: @kbd{=}, @kbd{+}, @kbd{l},
-@kbd{i}, @kbd{D}, @kbd{L}, @kbd{G}, @kbd{I} and @kbd{v}.
+@kbd{i}, @kbd{D}, @kbd{L}, @kbd{G}, @kbd{I}, @kbd{O}, and @kbd{v}.
 
   For example, you can commit a set of edited files by opening a VC
 Directory buffer, where the files are listed with the @samp{edited}
@@ -1331,6 +1331,21 @@ Do an incremental regular expression search on the fileset
 @noindent
 Apart from acting on multiple files, these commands behave much like
 their single-buffer counterparts (@pxref{Search}).
+
+  The VC Directory buffer additionally defines some branch-related
+commands starting with the prefix @kbd{B}:
+
+@table @kbd
+@item B c
+Create a new branch (@code{vc-create-tag}).
+
+@item B l
+Prompt for the name of a branch and display the change history of that
+branch (@code{vc-print-branch-log}).
+
+@item B s
+Switch to a branch (@code{vc-retrieve-tag}).  @xref{Switching Branches}.
+@end table
 
 @cindex stashes in version control
 @cindex shelves in version control
