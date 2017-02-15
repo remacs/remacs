@@ -4590,7 +4590,8 @@ Argument MIME is non-nil if this is a mime message."
          (current-buffer))))
 
     (list armor-start (- (point-max) after-end) mime
-          armor-end-regexp)))
+          armor-end-regexp
+          (buffer-substring armor-start (- (point-max) after-end)))))
 
 (declare-function rmail-mime-entity-truncated "rmailmm" (entity))
 
@@ -4652,7 +4653,7 @@ Argument MIME is non-nil if this is a mime message."
 		      ;; Found as expected -- now replace it with the decrypt.
 		      (when armor-end
 			(delete-region armor-start armor-end)
-			(insert-buffer-substring from-buffer (nth 0 d) (nth 1 d)))
+                        (insert (nth 4 d)))
 
 		      ;; Change the mime type (if this is in a mime part)
 		      ;; so this part will display by default
