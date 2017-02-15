@@ -21,3 +21,7 @@ following code:
 ```
 
 This will return `t` in a Remacs instance.
+
+# Platform differences
+
+Remacs does not support MS-DOS.
