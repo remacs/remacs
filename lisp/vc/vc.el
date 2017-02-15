@@ -2378,8 +2378,8 @@ When called interactively with a prefix argument, prompt for REMOTE-LOCATION."
   (let ((backend (vc-deduce-backend)))
     (unless backend
       (error "Buffer is not version controlled"))
-    (vc-incoming-outgoing-internal backend remote-location "*vc-incoming*"
-                                   'log-incoming)))
+    (vc-incoming-outgoing-internal backend (or remote-location "")
+                                   "*vc-incoming*" 'log-incoming)))
 
 ;;;###autoload
 (defun vc-log-outgoing (&optional remote-location)
@@ -2391,8 +2391,8 @@ When called interactively with a prefix argument, prompt for REMOTE-LOCATION."
   (let ((backend (vc-deduce-backend)))
     (unless backend
       (error "Buffer is not version controlled"))
-    (vc-incoming-outgoing-internal backend remote-location "*vc-outgoing*"
-                                   'log-outgoing)))
+    (vc-incoming-outgoing-internal backend (or remote-location "")
+                                   "*vc-outgoing*" 'log-outgoing)))
 
 ;;;###autoload
 (defun vc-region-history (from to)

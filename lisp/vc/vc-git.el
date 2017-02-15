@@ -972,7 +972,7 @@ If LIMIT is non-nil, show no more than this many entries."
 (defun vc-git-log-outgoing (buffer remote-location)
   (interactive)
   (vc-git-command
-   buffer 0 nil
+   buffer 'async nil
    "log"
    "--no-color" "--graph" "--decorate" "--date=short"
    (format "--pretty=tformat:%s" (car vc-git-root-log-format))
@@ -986,7 +986,7 @@ If LIMIT is non-nil, show no more than this many entries."
   (interactive)
   (vc-git-command nil 0 nil "fetch")
   (vc-git-command
-   buffer 0 nil
+   buffer 'async nil
    "log"
    "--no-color" "--graph" "--decorate" "--date=short"
    (format "--pretty=tformat:%s" (car vc-git-root-log-format))
@@ -1011,7 +1011,7 @@ If LIMIT is non-nil, show no more than this many entries."
 	   (cadr vc-git-root-log-format)
 	 "^commit *\\([0-9a-z]+\\)"))
   ;; Allow expanding short log entries.
-  (when (eq vc-log-view-type 'short)
+  (when (memq vc-log-view-type '(short log-outgoing log-incoming))
     (setq truncate-lines t)
     (set (make-local-variable 'log-view-expanded-log-entry-function)
 	 'vc-git-expanded-log-entry))
