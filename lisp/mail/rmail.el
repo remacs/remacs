@@ -4634,8 +4634,7 @@ Argument MIME is non-nil if this is a mime message."
 	(when (y-or-n-p "Replace the original message? ")
 	  (setq decrypts (nreverse decrypts))
 	  (let ((beg (rmail-msgbeg rmail-current-message))
-		(end (rmail-msgend rmail-current-message))
-		(from-buffer (current-buffer)))
+		(end (rmail-msgend rmail-current-message)))
 	    (with-current-buffer rmail-view-buffer
 	      (narrow-to-region beg end)
 	      (goto-char (point-min))
