@@ -1111,8 +1111,8 @@ misspelling and skips redundant spell-checking step."
            (flyspell-word (flyspell-get-word following))
            start end poss word ispell-filter)
       (if (or (eq flyspell-word nil)
- 	      (and (fboundp flyspell-generic-check-word-predicate)
- 		   (not (funcall flyspell-generic-check-word-predicate))))
+              (and (functionp flyspell-generic-check-word-predicate)
+                   (not (funcall flyspell-generic-check-word-predicate))))
 	  t
 	(progn
 	  ;; destructure return flyspell-word info list.
@@ -1918,7 +1918,7 @@ This command proposes various successive corrections for the current word."
   ;; invoke the original binding of M-TAB, if that was recorded.
   (if (and (local-variable-p 'flyspell--prev-meta-tab-binding)
            (commandp flyspell--prev-meta-tab-binding t)
-           (fboundp flyspell-generic-check-word-predicate)
+           (functionp flyspell-generic-check-word-predicate)
            (not (funcall flyspell-generic-check-word-predicate))
            (equal (where-is-internal 'flyspell-auto-correct-word nil t)
                   [?\M-\t]))
