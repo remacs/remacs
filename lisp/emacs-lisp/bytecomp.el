@@ -911,16 +911,21 @@ CONST2 may be evaluated multiple times."
     ;; Patch tag PCs into absolute jumps.
     (dolist (bytes-tail patchlist)
       (setq pc (caar bytes-tail))	; Pick PC from goto's tag.
+      ;; Splits PC's value into 2 bytes. The jump address is
+      ;; "reconstructued" by the `FETCH2' macro in `bytecode.c'.
       (setcar (cdr bytes-tail) (logand pc 255))
       (setcar bytes-tail (lsh pc -8))
       ;; FIXME: Replace this by some workaround.
       (if (> (car bytes-tail) 255) (error "Bytecode overflow")))
 
+    ;; Similarly, replace TAGs in all jump tables with the correct PC index.
     (dolist (hash-table byte-compile-jump-tables)
       (maphash #'(lambda (value tag)
                    (setq pc (cadr tag))
-                   (puthash value (+ (logand pc 255) (lsh (lsh pc -8) 8))
-                            hash-table))
+                   ;; We don't need to split PC here, as it is stored as a lisp
+                   ;; object in the hash table (whereas other goto-* ops store
+                   ;; it within 2 bytes in the byte string).
+                   (puthash value pc hash-table))
                hash-table))
     (apply 'unibyte-string (nreverse bytes))))
 
