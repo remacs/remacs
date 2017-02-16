@@ -5421,26 +5421,26 @@ make_lispy_event (struct input_event *event)
            not.  And Control+Shift+s should produce C-S-s whether
            caps-lock is on or not.  */
         if (event->modifiers & ~shift_modifier)
-        {
+	  {
             /* This is a key chord: some non-shift modifier is
                depressed.  */
 
             if (uppercasep (c) &&
                 !(event->modifiers & shift_modifier))
-            {
+	      {
                 /* Got a capital letter without a shift.  The caps
                    lock is on.   Un-capitalize the letter.  */
                 c = downcase (c);
-            }
+	      }
             else if (lowercasep (c) &&
                      (event->modifiers & shift_modifier))
-            {
+	      {
                 /* Got a lower-case letter even though shift is
                    depressed.  The caps lock is on.  Capitalize the
                    letter.  */
                 c = upcase (c);
-            }
-        }
+	      }
+	  }
 
 	if (event->kind == ASCII_KEYSTROKE_EVENT)
 	  {
@@ -9645,13 +9645,13 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	  && INTEGERP (key))
 	{
 	  Lisp_Object new_key;
-	  int k = XINT (key);
+	  EMACS_INT k = XINT (key);
 
 	  if (k & shift_modifier)
 	    XSETINT (new_key, k & ~shift_modifier);
 	  else if (CHARACTERP (make_number (k & ~CHAR_MODIFIER_MASK)))
 	    {
-	      int dc = downcase(k & ~CHAR_MODIFIER_MASK);
+	      int dc = downcase (k & ~CHAR_MODIFIER_MASK);
 	      if (dc == (k & ~CHAR_MODIFIER_MASK))
 		goto not_upcase;
 	      XSETINT (new_key, dc | (k & CHAR_MODIFIER_MASK));
