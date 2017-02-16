@@ -4939,8 +4939,7 @@ If BINARY is non-nil, returns a string in binary form.  */)
 DEFUN ("buffer-hash", Fbuffer_hash, Sbuffer_hash, 0, 1, 0,
        doc: /* Return a hash of the contents of BUFFER-OR-NAME.
 This hash is performed on the raw internal format of the buffer,
-disregarding any coding systems.
-If nil, use the current buffer." */ )
+disregarding any coding systems.  If nil, use the current buffer.  */ )
   (Lisp_Object buffer_or_name)
 {
   Lisp_Object buffer;
