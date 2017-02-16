@@ -2768,7 +2768,8 @@ return that value."
    ((eq t feedmail-from-line)
     (let ((feedmail-from-line
 	   (let ((at-stuff
-		  (if user-mail-address user-mail-address
+		  (if (> (length user-mail-address) 0)
+		      user-mail-address
 		    (concat (user-login-name) "@"
 			    (or mail-host-address (system-name))))))
 	     (cond

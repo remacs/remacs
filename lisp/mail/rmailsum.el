@@ -757,10 +757,11 @@ the message being processed."
 				     ;; Don't lose if run from init file
 				     ;; where user-mail-address is not
 				     ;; set yet.
-				     (or user-mail-address
-					 (concat (user-login-name) "@"
-						 (or mail-host-address
-						     (system-name)))))
+				     (if (> (length user-mail-address) 0)
+					 user-mail-address
+				       (concat (user-login-name) "@"
+					       (or mail-host-address
+						   (system-name)))))
 				    "\\>\\)"))
 			from))
 		   ;; No From field, or it's this user.
