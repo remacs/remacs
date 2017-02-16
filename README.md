@@ -261,7 +261,7 @@ _Alignas
 ```
 
 We can see we need to define a `Snumberp` and a `Fnumberp`. `Qt` and
-`Qnil` are already defined in `lisp.rs`, so we can simply write:
+`Qnil` are wrapped in a `LispObject`, so we can simply write:
 
 ``` rust
 // This is the function that gets called when 
@@ -277,7 +277,7 @@ fn numberp(object: LispObject) -> LispObject {
 // This defines a built-in function in elisp, which is a represented
 // with a static struct.
 defun!("numberp", // the name of our elisp function
-       Fnumberp, // the function that will be called by C (this calls numberp).
+       Fnumberp(object), // the function that will be called by C (this calls numberp).
        Snumberp, // the name of the struct that we will define
        numberp, // the rust function we want to call
        1, 1, // min and max number of arguments
@@ -311,8 +311,10 @@ the C codebase, you will need to export it. We change our function
 definition to add `extern` and `no_mangle`:
 
 ``` rust
+use remacs_sys::Lisp_Object;
+
 #[no_mangle]
-pub extern "C" fn Fnumberp(object: LispObject) -> LispObject {
+pub extern "C" fn Fnumberp(object: Lisp_Object) -> Lisp_Object {
     if lisp::NUMBERP(object) {
         unsafe {
             Qt
@@ -325,16 +327,19 @@ pub extern "C" fn Fnumberp(object: LispObject) -> LispObject {
 
 The function needs to be exported in lib.rs:
 
-``` rust
+```rust
 pub use yourmodulename::Fnumberp;
 ```
 
 and add a declaration in the C where the function used to be:
 
-``` c
+```c
 // This should take the same number of arguments as the Rust function.
 Lisp_Object Fnumberp(Lisp_Object);
 ```
+
+Altought if you function can be defined with the `defun` or the `defun_many` macro you
+just need to export it in the crate root and add the respective declaration in C.
 
 ## Design Goals
 
