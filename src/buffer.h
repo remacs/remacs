@@ -1375,7 +1375,8 @@ upcase (int c)
 }
 
 /* True if C is upper case.  */
-INLINE bool uppercasep (int c)
+INLINE bool
+uppercasep (int c)
 {
   return downcase (c) != c;
 }
