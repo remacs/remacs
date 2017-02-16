@@ -340,9 +340,10 @@ the file's actual content before prompting the user.
 
 ** Title case characters are properly converted to upper case.
 'upcase', 'upcase-region' et al. convert title case characters (such
-as ǲ) into their upper case form (such as Ǳ).  As a downside,
-'capitalize' and 'upcase-initials' produce awkward words where first
-two letters are upper case, e.g. Ǆungla (instead of ǅungla).
+as the single character "ǲ") into their upper case form (such as "Ǳ").
+As a downside, 'capitalize' and 'upcase-initials' produce awkward
+words where first character is upper rather than title case, e.g.,
+"Ǆungla" instead of "ǅungla".
 
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
@@ -375,24 +376,24 @@ method is an NNTP select method.
 
 +++
 *** A new command for sorting articles by readedness marks has been
-added: `C-c C-s C-m C-m'.
+added: 'C-c C-s C-m C-m'.
 
 ** Ibuffer
 
 ---
-*** New filter commands `ibuffer-filter-by-basename',
-`ibuffer-filter-by-file-extension', `ibuffer-filter-by-directory',
-`ibuffer-filter-by-starred-name', `ibuffer-filter-by-modified'
-and `ibuffer-filter-by-visiting-file'; bound respectively
+*** New filter commands 'ibuffer-filter-by-basename',
+'ibuffer-filter-by-file-extension', 'ibuffer-filter-by-directory',
+'ibuffer-filter-by-starred-name', 'ibuffer-filter-by-modified'
+and 'ibuffer-filter-by-visiting-file'; bound respectively
 to '/b', '/.', '//', '/*', '/i' and '/v'.
 
 ---
 *** Two new commands 'ibuffer-filter-chosen-by-completion'
-and `ibuffer-and-filter', the second bound to '/&'.
+and 'ibuffer-and-filter', the second bound to '/&'.
 
 ---
-*** The commands `ibuffer-pop-filter', `ibuffer-pop-filter-group',
-`ibuffer-or-filter' and `ibuffer-filter-disable' have the alternative
+*** The commands 'ibuffer-pop-filter', 'ibuffer-pop-filter-group',
+'ibuffer-or-filter' and 'ibuffer-filter-disable' have the alternative
 bindings '/<up>', '/S-<up>', '/|' and '/DEL', respectively.
 
 ---
@@ -894,9 +895,9 @@ consistency with the new functions.  For compatibility, 'sxhash'
 remains as an alias to 'sxhash-equal'.
 
 +++
-** New function `add-variable-watcher' can be used to call a function
+** New function 'add-variable-watcher' can be used to call a function
 when a symbol's value is changed.  This is used to implement the new
-debugger command `debug-on-variable-change'.
+debugger command 'debug-on-variable-change'.
 
 +++
 ** Time conversion functions that accept a time zone rule argument now

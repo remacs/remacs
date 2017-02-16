@@ -4615,7 +4615,7 @@ struct for_each_tail_internal
    This macro uses maybe_quit because of an excess of caution.  The
    call to maybe_quit should not be needed in practice, as a very long
    list, whether circular or not, will cause Emacs to be so slow in
-   other noninterruptible areas (e.g., garbage collection) that there
+   other uninterruptible areas (e.g., garbage collection) that there
    is little point to calling maybe_quit here.  */
 
 #define FOR_EACH_TAIL_INTERNAL(tail, cycle, check_quit)			\

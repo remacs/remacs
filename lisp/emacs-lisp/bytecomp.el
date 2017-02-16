@@ -912,7 +912,7 @@ CONST2 may be evaluated multiple times."
     (dolist (bytes-tail patchlist)
       (setq pc (caar bytes-tail))	; Pick PC from goto's tag.
       ;; Splits PC's value into 2 bytes. The jump address is
-      ;; "reconstructued" by the `FETCH2' macro in `bytecode.c'.
+      ;; "reconstructed" by the `FETCH2' macro in `bytecode.c'.
       (setcar (cdr bytes-tail) (logand pc 255))
       (setcar bytes-tail (lsh pc -8))
       ;; FIXME: Replace this by some workaround.
@@ -4085,7 +4085,7 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
       ;; varref var
       ;; constant #s(hash-table purecopy t data (val1 (TAG1) val2 (TAG2)))
       ;; switch
-      ;; goto DEFAUT-TAG
+      ;; goto DEFAULT-TAG
       ;; TAG1
       ;; <clause body>
       ;; goto DONETAG
@@ -4103,7 +4103,7 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
       ;; When the opcode argument is `byte-goto', `byte-compile-goto' sets
       ;; `byte-compile-depth' to `nil'. However, we need `byte-compile-depth'
       ;; to be non-nil for generating tags for all cases. Since
-      ;; `byte-compile-depth' will increase by atmost 1 after compiling
+      ;; `byte-compile-depth' will increase by at most 1 after compiling
       ;; all of the clause (which is further enforced by cl-assert below)
       ;; it should be safe to preserve it's value.
       (let ((byte-compile-depth byte-compile-depth))

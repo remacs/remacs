@@ -675,10 +675,10 @@ with L, LRE, or LRO Unicode bidi character type.")
      (unicode-property-table-internal 'general-category))
 
     ;; Ⅰ through Ⅻ had word syntax in the past so set it here as well.
-    ;; General category of those characers is Number, Letter.
+    ;; The general category of those characters is Number, Letter.
     (modify-syntax-entry '(#x2160 . #x216b) "w   " syn-tab)
 
-    ;; ⓐ thourgh ⓩ are symbols, other according to Unicode but Emacs set
+    ;; ⓐ through ⓩ are symbols, other according to Unicode but Emacs set
     ;; their syntax to word in the past so keep backwards compatibility.
     (modify-syntax-entry '(#x24D0 . #x24E9) "w   " syn-tab))
 

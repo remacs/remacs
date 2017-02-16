@@ -1421,7 +1421,7 @@
                         when (and (listp el) ;; make sure we're at the correct op
                                   (eq (nth 1 el) 'byte-constant)
                                   (eq (nth 2 el) orig-table))
-                        ;; jump tables are never resused, so we do this exactly
+                        ;; Jump tables are never reused, so do this exactly
                         ;; once.
                         do (setf (nth 2 el) last-constant) and return nil))))
       ;; lap = ( [ (pc . (op . arg)) ]* )
