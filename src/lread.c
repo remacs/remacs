@@ -558,8 +558,6 @@ static Lisp_Object read_vector (Lisp_Object, bool);
 
 static Lisp_Object substitute_object_recurse (Lisp_Object, Lisp_Object,
                                               Lisp_Object);
-static void substitute_object_in_subtree (Lisp_Object,
-                                          Lisp_Object);
 static void substitute_in_interval (INTERVAL, Lisp_Object);
 
 
@@ -2957,7 +2955,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		      tem = read0 (readcharfun);
 
 		      /* Now put it everywhere the placeholder was...  */
-		      substitute_object_in_subtree (tem, placeholder);
+		      Fsubstitute_object_in_subtree (tem, placeholder);
 
 		      /* ...and #n# will use the real value from now on.  */
 		      Fsetcdr (cell, tem);
@@ -3326,8 +3324,10 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 /* List of nodes we've seen during substitute_object_in_subtree.  */
 static Lisp_Object seen_list;
 
-static void
-substitute_object_in_subtree (Lisp_Object object, Lisp_Object placeholder)
+DEFUN ("substitute-object-in-subtree", Fsubstitute_object_in_subtree,
+       Ssubstitute_object_in_subtree, 2, 2, 0,
+       doc: /* Replace every reference to PLACEHOLDER in OBJECT with OBJECT.  */)
+  (Lisp_Object object, Lisp_Object placeholder)
 {
   Lisp_Object check_object;
 
@@ -3345,6 +3345,7 @@ substitute_object_in_subtree (Lisp_Object object, Lisp_Object placeholder)
      original.  */
   if (!EQ (check_object, object))
     error ("Unexpected mutation error in reader");
+  return Qnil;
 }
 
 /*  Feval doesn't get called from here, so no gc protection is needed.  */
@@ -4548,6 +4549,7 @@ syms_of_lread (void)
 {
   defsubr (&Sread);
   defsubr (&Sread_from_string);
+  defsubr (&Ssubstitute_object_in_subtree);
   defsubr (&Sintern);
   defsubr (&Sintern_soft);
   defsubr (&Sunintern);

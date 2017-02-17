@@ -755,6 +755,11 @@ Maybe clear the markers and delete the symbol's edebug property?"
 (defvar edebug-offsets-stack nil)
 (defvar edebug-current-offset nil) ; Top of the stack, for convenience.
 
+;; The association list of objects read with the #n=object form.
+;; Each member of the list has the form (n . object), and is used to
+;; look up the object for the corresponding #n# construct.
+(defvar edebug-read-objects nil)
+
 ;; We must store whether we just read a list with a dotted form that
 ;; is itself a list.  This structure will be condensed, so the offsets
 ;; must also be condensed.
@@ -826,7 +831,7 @@ Maybe clear the markers and delete the symbol's edebug property?"
     (backquote . edebug-read-backquote)
     (comma . edebug-read-comma)
     (lbracket . edebug-read-vector)
-    (hash . edebug-read-function)
+    (hash . edebug-read-special)
     ))
 
 (defun edebug-read-storing-offsets (stream)
@@ -872,17 +877,47 @@ Maybe clear the markers and delete the symbol's edebug property?"
        (edebug-storing-offsets opoint symbol)
        (edebug-read-storing-offsets stream)))))
 
-(defun edebug-read-function (stream)
-  ;; Turn #'thing into (function thing)
-  (forward-char 1)
-  (cond ((eq ?\' (following-char))
-	 (forward-char 1)
-	 (list
-	  (edebug-storing-offsets (- (point) 2) 'function)
-	  (edebug-read-storing-offsets stream)))
-        (t
-	 (backward-char 1)
-	 (read stream))))
+(defun edebug-read-special (stream)
+  "Read from STREAM a Lisp object beginning with #.
+Turn #'thing into (function thing) and handle the read syntax for
+circular objects.  Let `read' read everything else."
+  (catch 'return
+    (forward-char 1)
+    (let ((start (point)))
+      (cond
+       ((eq ?\' (following-char))
+        (forward-char 1)
+        (throw 'return
+               (list
+                (edebug-storing-offsets (- (point) 2) 'function)
+                (edebug-read-storing-offsets stream))))
+       ((and (>= (following-char) ?0) (<= (following-char) ?9))
+        (while (and (>= (following-char) ?0) (<= (following-char) ?9))
+          (forward-char 1))
+        (let ((n (string-to-number (buffer-substring start (point)))))
+          (when (and read-circle
+                     (<= n most-positive-fixnum))
+            (cond
+             ((eq ?= (following-char))
+              ;; Make a placeholder for #n# to use temporarily.
+              (let* ((placeholder (cons nil nil))
+                     (elem (cons n placeholder)))
+                (push elem edebug-read-objects)
+                ;; Read the object and then replace the placeholder
+                ;; with the object itself, wherever it occurs.
+                (forward-char 1)
+                (let ((obj (edebug-read-storing-offsets stream)))
+                  (substitute-object-in-subtree obj placeholder)
+                  (throw 'return (setf (cdr elem) obj)))))
+             ((eq ?# (following-char))
+              ;; #n# returns a previously read object.
+              (let ((elem (assq n edebug-read-objects)))
+                (when (consp elem)
+                  (forward-char 1)
+                  (throw 'return (cdr elem))))))))))
+      ;; Let read handle errors, radix notation, and anything else.
+      (goto-char (1- start))
+      (read stream))))
 
 (defun edebug-read-list (stream)
   (forward-char 1)			; skip \(
@@ -1074,6 +1109,7 @@ Maybe clear the markers and delete the symbol's edebug property?"
 	edebug-offsets
 	edebug-offsets-stack
 	edebug-current-offset ; reset to nil
+        edebug-read-objects
 	)
     (save-excursion
       (if (and (eq 'lparen (edebug-next-token-class))
