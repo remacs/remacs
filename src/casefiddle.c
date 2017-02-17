@@ -41,7 +41,7 @@ casify_object (enum case_action flag, Lisp_Object obj)
   if (NILP (XCHAR_TABLE (BVAR (current_buffer, downcase_table))->extras[1]))
     Fset_case_table (BVAR (current_buffer, downcase_table));
 
-  if (INTEGERP (obj))
+  if (NATNUMP (obj))
     {
       int flagbits = (CHAR_ALT | CHAR_SUPER | CHAR_HYPER
 		      | CHAR_SHIFT | CHAR_CTL | CHAR_META);
