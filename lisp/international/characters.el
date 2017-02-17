@@ -665,70 +665,74 @@ with L, LRE, or LRO Unicode bidi character type.")
   ;; Combining marks
   (modify-category-entry '(#x20d0 . #x20ff) ?^)
 
-  ;; Set all Letter, uppercase; Letter, lowercase and Letter, titlecase syntax
-  ;; to word.
-  (let ((syn-tab (standard-syntax-table)))
-    (map-char-table
-     (lambda (ch cat)
-       (when (memq cat '(Lu Ll Lt))
-         (modify-syntax-entry ch "w   " syn-tab)))
-     (unicode-property-table-internal 'general-category))
+  (let ((gc (unicode-property-table-internal 'general-category))
+        (syn-table (standard-syntax-table)))
+    ;; In early bootstrapping Unicode tables are not available so we need to
+    ;; skip this step in those cases.
+    (when gc
+      ;; Set all Letter, uppercase; Letter, lowercase and Letter,
+      ;; titlecase syntax to word.
+      (map-char-table
+       (lambda (ch cat)
+         (when (memq cat '(Lu Ll Lt))
+           (modify-syntax-entry ch "w   " syn-table)))
+       gc)
+      ;; Ⅰ through Ⅻ had word syntax in the past so set it here as well.
+      ;; The general category of those characters is Number, Letter.
+      (modify-syntax-entry '(#x2160 . #x216b) "w   " syn-table)
 
-    ;; Ⅰ through Ⅻ had word syntax in the past so set it here as well.
-    ;; The general category of those characters is Number, Letter.
-    (modify-syntax-entry '(#x2160 . #x216b) "w   " syn-tab)
+      ;; ⓐ through ⓩ are symbols, other according to Unicode but Emacs set
+      ;; their syntax to word in the past so keep backwards compatibility.
+      (modify-syntax-entry '(#x24D0 . #x24E9) "w   " syn-table)
 
-    ;; ⓐ through ⓩ are symbols, other according to Unicode but Emacs set
-    ;; their syntax to word in the past so keep backwards compatibility.
-    (modify-syntax-entry '(#x24D0 . #x24E9) "w   " syn-tab))
+      ;; Set downcase and upcase from Unicode properties
 
-  ;; Set downcase and upcase from Unicode properties
+      ;; In some languages, such as Turkish, U+0049 LATIN CAPITAL LETTER I and
+      ;; U+0131 LATIN SMALL LETTER DOTLESS I make a case pair, and so do U+0130
+      ;; LATIN CAPITAL LETTER I WITH DOT ABOVE and U+0069 LATIN SMALL LETTER I.
 
-  ;; In some languages, such as Turkish, U+0049 LATIN CAPITAL LETTER I and
-  ;; U+0131 LATIN SMALL LETTER DOTLESS I make a case pair, and so do U+0130
-  ;; LATIN CAPITAL LETTER I WITH DOT ABOVE and U+0069 LATIN SMALL LETTER I.
+      ;; We used to set up half of those correspondence unconditionally, but
+      ;; that makes searches slow.  So now we don't set up either half of these
+      ;; correspondences by default.
 
-  ;; We used to set up half of those correspondence unconditionally, but that
-  ;; makes searches slow.  So now we don't set up either half of these
-  ;; correspondences by default.
+      ;; (set-downcase-syntax  ?İ ?i tbl)
+      ;; (set-upcase-syntax    ?I ?ı tbl)
 
-  ;; (set-downcase-syntax  ?İ ?i tbl)
-  ;; (set-upcase-syntax    ?I ?ı tbl)
+      (let ((map-unicode-property
+             (lambda (property func)
+               (map-char-table
+                (lambda (ch cased)
+                  ;; ASCII characters skipped due to reasons outlined above.  As
+                  ;; of Unicode 9.0, this exception affects the following:
+                  ;;   lc(U+0130 İ) = i
+                  ;;   uc(U+0131 ı) = I
+                  ;;   uc(U+017F ſ) = S
+                  ;;   uc(U+212A K) = k
+                  (when (> cased 127)
+                    (let ((end (if (consp ch) (cdr ch) ch)))
+                      (setq ch (max 128 (if (consp ch) (car ch) ch)))
+                      (while (<= ch end)
+                        (funcall func ch cased)
+                        (setq ch (1+ ch))))))
+                (unicode-property-table-internal property))))
+            (down tbl)
+            (up (case-table-get-table tbl 'up)))
 
-  (let ((map-unicode-property
-         (lambda (property func)
-           (map-char-table
-            (lambda (ch cased)
-              ;; ASCII characters skipped due to reasons outlined above.  As of
-              ;; Unicode 9.0, this exception affects the following:
-              ;;   lc(U+0130 İ) = i
-              ;;   uc(U+0131 ı) = I
-              ;;   uc(U+017F ſ) = S
-              ;;   uc(U+212A K) = k
-              (when (> cased 127)
-                (let ((end (if (consp ch) (cdr ch) ch)))
-                  (setq ch (max 128 (if (consp ch) (car ch) ch)))
-                  (while (<= ch end)
-                    (funcall func ch cased)
-                    (setq ch (1+ ch))))))
-            (unicode-property-table-internal property))))
-        (down tbl)
-        (up (case-table-get-table tbl 'up)))
+        ;; This works on an assumption that if toUpper(x) != x then toLower(x)
+        ;; == x (and the opposite for toLower/toUpper).  This doesn’t hold for
+        ;; title case characters but those incorrect mappings will be
+        ;; overwritten later.
+        (funcall map-unicode-property 'uppercase
+                 (lambda (lc uc) (aset down lc lc) (aset up uc uc)))
+        (funcall map-unicode-property 'lowercase
+                 (lambda (uc lc) (aset down lc lc) (aset up uc uc)))
 
-    ;; This works on an assumption that if toUpper(x) != x then toLower(x) ==
-    ;; x (and the opposite for toLower/toUpper).  This doesn’t hold for title
-    ;; case characters but those incorrect mappings will be overwritten later.
-    (funcall map-unicode-property 'uppercase
-             (lambda (lc uc) (aset down lc lc) (aset up uc uc)))
-    (funcall map-unicode-property 'lowercase
-             (lambda (uc lc) (aset down lc lc) (aset up uc uc)))
-
-    ;; Now deal with the actual mapping.  This will correctly assign casing for
-    ;; title-case characters.
-    (funcall map-unicode-property 'uppercase
-             (lambda (lc uc) (aset up lc uc) (aset up uc uc)))
-    (funcall map-unicode-property 'lowercase
-             (lambda (uc lc) (aset down uc lc) (aset down lc lc))))
+        ;; Now deal with the actual mapping.  This will correctly assign casing
+        ;; for title-case characters.
+        (funcall map-unicode-property 'uppercase
+                 (lambda (lc uc) (aset up lc uc) (aset up uc uc)))
+        (funcall map-unicode-property 'lowercase
+                 (lambda (uc lc) (aset down uc lc) (aset down lc lc))))))
 
   ;; Clear out the extra slots so that they will be recomputed from the main
   ;; (downcase) table and upcase table.  Since we’re side-stepping the usual
