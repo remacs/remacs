@@ -152,7 +152,7 @@ your objects, to give off an eerie glow."))
       (progn
 	(if (not dun-inbus)
 	    (progn
-	      (dun-mprincl"You fall into a hole in the ground.")
+	      (dun-mprincl "You fall into a hole in the ground.")
 	      (setq dun-current-room vermont-station)
 	      (dun-describe-room vermont-station))
 	  (progn
@@ -555,7 +555,7 @@ with a bang.  The key seems to have vanished!")
 		      (dun-mprincl
 "I don't know how to combine those objects.  Perhaps you should
 just try dropping it.")
-		    (dun-mprincl"You can't put that there.")))))))))))
+		    (dun-mprincl "You can't put that there.")))))))))))
 
 (defun dun-type (_args)
   (if (not (= dun-current-room computer-room))
@@ -2990,7 +2990,7 @@ drwxr-xr-x  3 root     staff          2048 Jan 1 1970 ..")
   (if (not (= (dun-score nil) 90))
       (dun-mprincl
        "You have not achieved enough points to connect to endgame.")
-    (dun-mprincl"\nWelcome to the endgame.  You are a truly noble adventurer.")
+    (dun-mprincl "\nWelcome to the endgame.  You are a truly noble adventurer.")
     (setq dun-current-room treasure-room)
     (setq dun-endgame t)
     (dun-replace dun-room-objects endgame-treasure-room (list obj-bill))
