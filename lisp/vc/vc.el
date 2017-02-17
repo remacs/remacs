@@ -2157,7 +2157,7 @@ checked out in that new branch."
 NAME can name a branch, in which case this command will switch to the
 named branch in the directory DIR.
 Interactively, prompt for DIR only for VCS that works at file level;
-otherwise use the default directory of the current buffer.
+otherwise use the repository root of the current buffer.
 If NAME is empty, it refers to the latest revisions of the current branch.
 If locking is used for the files in DIR, then there must not be any
 locked files at or below DIR (but if NAME is empty, locked files are
@@ -2170,7 +2170,9 @@ allowed and simply skipped)."
       (if (eq granularity 'repository)
 	  ;; For VC's that do not work at file level, it's pointless
 	  ;; to ask for a directory, branches are created at repository level.
-	  default-directory
+          ;; XXX: Either we call expand-file-name here, or use
+          ;; file-in-directory-p inside vc-resynch-buffers-in-directory.
+	  (expand-file-name (vc-root-dir))
 	(read-directory-name "Directory: " default-directory default-directory t))
       (read-string "Tag name to retrieve (default latest revisions): "))))
   (let ((update (yes-or-no-p "Update any affected buffers? "))
