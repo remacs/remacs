@@ -1793,40 +1793,44 @@ If RECURSIVE, search recursively."
 				      (buffer-string))))))
 	(shr-inhibit-images mm-html-inhibit-images)
 	(shr-blocked-images mm-html-blocked-images)
-	charset coding char)
-    (unless handle
-      (setq handle (mm-dissect-buffer t)))
-    (and (setq charset
-	       (or (mail-content-type-get (mm-handle-type handle) 'charset)
-		   mail-parse-charset))
-	 (setq coding (mm-charset-to-coding-system charset nil t))
-	 (eq coding 'ascii)
-	 (setq coding nil))
+	charset coding char document)
+    (mm-with-part (or handle (setq handle (mm-dissect-buffer t)))
+      (setq case-fold-search t)
+      (setq charset
+	    (or (mail-content-type-get (mm-handle-type handle) 'charset)
+		(progn
+		  (goto-char (point-min))
+		  (and (re-search-forward "\
+<meta\\s-+http-equiv=[\"']?content-type[\"']?\\s-+content=[\"']?\
+text/\\(\\sw+\\)\\(?:;\\s-*charset=\\([^\t\n\r \"'>]+\\)\\)?[^>]*>" nil t)
+		       (setq coding
+			     (mm-charset-to-coding-system (match-string 2)
+							  nil t))
+		       (string-match "\\`html\\'" (match-string 1))))
+		mail-parse-charset))
+      (when (or coding
+		(setq coding (mm-charset-to-coding-system charset nil t)))
+	(insert (prog1
+		    (decode-coding-string (buffer-string) coding)
+		  (erase-buffer)
+		  (set-buffer-multibyte t))))
+      (goto-char (point-min))
+      (while (re-search-forward
+	      "&#\\(?:x\\([89][0-9a-f]\\)\\|\\(1[2-5][0-9]\\)\\);" nil t)
+	(when (setq char
+		    (cdr (assq (if (match-beginning 1)
+				   (string-to-number (match-string 1) 16)
+				 (string-to-number (match-string 2)))
+			       mm-extra-numeric-entities)))
+	  (replace-match (char-to-string char))))
+      ;; Remove "soft hyphens".
+      (goto-char (point-min))
+      (while (search-forward "­" nil t)
+	(replace-match "" t t))
+      (setq document (libxml-parse-html-region (point-min) (point-max))))
     (save-restriction
       (narrow-to-region (point) (point))
-      (shr-insert-document
-       (mm-with-part handle
-	 (insert (prog1
-		     (if coding
-			 (decode-coding-string (buffer-string) coding)
-		       (buffer-string))
-		   (erase-buffer)
-		   (mm-enable-multibyte)))
-	 (goto-char (point-min))
-	 (setq case-fold-search t)
-	 (while (re-search-forward
-		 "&#\\(?:x\\([89][0-9a-f]\\)\\|\\(1[2-5][0-9]\\)\\);" nil t)
-	   (when (setq char
-		       (cdr (assq (if (match-beginning 1)
-				      (string-to-number (match-string 1) 16)
-				    (string-to-number (match-string 2)))
-				  mm-extra-numeric-entities)))
-	     (replace-match (char-to-string char))))
-	 ;; Remove "soft hyphens".
-	 (goto-char (point-min))
-	 (while (search-forward "­" nil t)
-	   (replace-match "" t t))
-	 (libxml-parse-html-region (point-min) (point-max))))
+      (shr-insert-document document)
       (unless (bobp)
 	(insert "\n"))
       (mm-convert-shr-links)
