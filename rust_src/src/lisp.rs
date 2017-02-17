@@ -17,6 +17,7 @@ use marker::{LispMarker, marker_position};
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, Lisp_Object, EMACS_INT_MAX, EMACS_INT_SIZE,
                  EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS};
+use remacs_sys::Lisp_Object as CLisp_Object;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -39,7 +40,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, Lisp_Object, EMACS_INT_MAX, E
 /// Under casual systems, they're the type isize and usize respectively.
 #[repr(C)]
 #[derive(PartialEq, Eq, Clone, Copy)]
-pub struct LispObject(Lisp_Object);
+pub struct LispObject(CLisp_Object);
 
 extern "C" {
     pub fn wrong_type_argument(predicate: Lisp_Object, value: Lisp_Object) -> Lisp_Object;
