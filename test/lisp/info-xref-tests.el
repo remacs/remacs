@@ -96,6 +96,7 @@ text.
 (ert-deftest info-xref-test-makeinfo ()
   "Test that info-xref can parse basic makeinfo output."
   (skip-unless (executable-find "makeinfo"))
+  (skip-unless (not (eq system-type 'darwin)))
   (let ((tempfile (make-temp-file "info-xref-test" nil ".texi"))
         (tempfile2 (make-temp-file "info-xref-test2" nil ".texi"))
         (errflag t))
