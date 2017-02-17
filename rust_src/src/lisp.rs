@@ -505,7 +505,7 @@ unsafe impl Sync for LispSubr {}
 /// }
 ///
 /// defun!("do-nothing", // the name of our elisp function
-///        Fdo_nothing, // the name of the function that will be called by C (this will call
+///        Fdo_nothing(x), // the name of the function that will be called by C (this will call
 ///        do_nothing).
 ///        Sdo_nothing, // the name of the struct that we will define
 ///        do_nothing, // the Rust function we want to call
@@ -517,6 +517,8 @@ unsafe impl Sync for LispSubr {}
 ///
 /// (fn X)");
 /// ```
+///
+/// The identifiers inside the parens of `Fdo_nothing` are the function arguments name.
 ///
 /// # Porting Notes
 ///
