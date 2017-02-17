@@ -64,9 +64,6 @@
   :group 'mail
   :group 'news)
 
-(put 'user-mail-address 'custom-type 'string)
-(put 'user-full-name 'custom-type 'string)
-
 (defgroup message-various nil
   "Various Message Variables."
   :link '(custom-manual "(message)Various Message Variables")
