@@ -2759,24 +2759,17 @@ return that value."
   (cond
    ;; nil means do nothing
    ((eq nil feedmail-from-line) nil)
-   ;; t is the same a using the default computation, so compute it and recurse
+   ;; t is the same as using the default computation, so compute it and recurse
    ;; user-full-name suggested by kpc@ptolemy.arc.nasa.gov (=Kimball Collins)
    ;; improvement using user-mail-address suggested by
    ;;   gray@austin.apc.slb.com (Douglas Gray Stephens)
-   ;; improvement using mail-host-address suggested by "Jason Eisner" <jason@cs.jhu.edu>
-   ;; ((this situation really is hopeless, though)
    ((eq t feedmail-from-line)
     (let ((feedmail-from-line
-	   (let ((at-stuff
-		  (if (> (length user-mail-address) 0)
-		      user-mail-address
-		    (concat (user-login-name) "@"
-			    (or mail-host-address (system-name))))))
-	     (cond
-	      ((eq mail-from-style nil) at-stuff)
-	      ((eq mail-from-style 'parens) (concat at-stuff " (" (user-full-name) ")"))
-	      ((eq mail-from-style 'angles) (concat "\"" (user-full-name) "\" <" at-stuff ">"))
-	      ))))
+	   (cond
+	    ((eq mail-from-style nil) user-mail-address)
+	    ((eq mail-from-style 'parens) (concat user-mail-address " (" (user-full-name) ")"))
+	    ((eq mail-from-style 'angles) (concat "\"" (user-full-name) "\" <" user-mail-address ">"))
+	    )))
       (feedmail-fiddle-from)))
 
    ;; if it's a string, simply make a fiddle-plex out of it and recurse

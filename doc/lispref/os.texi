@@ -941,8 +941,6 @@ If this variable is non-@code{nil}, it is used instead of
 @code{system-name} for purposes of generating email addresses.  For
 example, it is used when constructing the default value of
 @code{user-mail-address}.  @xref{User Identification}.
-@c FIXME sounds like should probably give this a :set-after and some
-@c custom-initialize-delay voodoo.
 @end defopt
 
 @deffn Command getenv var &optional frame

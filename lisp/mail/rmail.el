@@ -2665,12 +2665,7 @@ Ask the user whether to add that list name to `mail-mailing-lists'."
 			      (concat "^\\("
 				      (regexp-quote (user-login-name))
 				      "\\($\\|@\\)\\|"
-				      (regexp-quote
-				       (if (> (length user-mail-address) 0)
-					   user-mail-address
-					 (concat (user-login-name) "@"
-						 (or mail-host-address
-						     (system-name)))))
+				      (regexp-quote user-mail-address)
 				      "\\>\\)"))
 			  addr))
 			(y-or-n-p
