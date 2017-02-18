@@ -1,4 +1,4 @@
-;;; ruby-mode.el --- Major mode for editing Ruby files
+;;; ruby-mode.el --- Major mode for editing Ruby files -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1994-2017 Free Software Foundation, Inc.
 
@@ -2035,7 +2035,7 @@ It will be properly highlighted even when the call omits parens.")
         t)))
 
 (defvar ruby-font-lock-syntax-table
-  (let ((tbl (copy-syntax-table ruby-mode-syntax-table)))
+  (let ((tbl (make-syntax-table ruby-mode-syntax-table)))
     (modify-syntax-entry ?_ "w" tbl)
     tbl)
   "The syntax table to use for fontifying Ruby mode buffers.
@@ -2255,9 +2255,7 @@ See `font-lock-syntax-table'.")
 
 ;;;###autoload
 (define-derived-mode ruby-mode prog-mode "Ruby"
-  "Major mode for editing Ruby code.
-
-\\{ruby-mode-map}"
+  "Major mode for editing Ruby code."
   (ruby-mode-variables)
 
   (setq-local imenu-create-index-function 'ruby-imenu-create-index)
@@ -2286,7 +2284,8 @@ See `font-lock-syntax-table'.")
                                      "\\(?:Gem\\|Rake\\|Cap\\|Thor"
                                      "\\|Puppet\\|Berks"
                                      "\\|Vagrant\\|Guard\\|Pod\\)file"
-                                     "\\)\\'")) 'ruby-mode))
+                                     "\\)\\'"))
+                   'ruby-mode))
 
 ;;;###autoload
 (dolist (name (list "ruby" "rbx" "jruby" "ruby1.9" "ruby1.8"))
