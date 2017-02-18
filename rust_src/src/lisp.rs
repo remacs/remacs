@@ -87,11 +87,7 @@ impl LispObject {
 
     #[inline]
     pub fn from_bool(v: bool) -> LispObject {
-        if v {
-            unsafe { Qt }
-        } else {
-            Qnil
-        }
+        if v { unsafe { Qt } } else { Qnil }
     }
 
     #[inline]
@@ -538,7 +534,13 @@ unsafe impl Sync for LispSubr {}
 /// This is equivalent to DEFUN in Emacs C, but the function
 /// definition is kept separate to aid readability.
 macro_rules! defun {
-    ($lisp_name:expr, $fname:ident, $sname:ident, $min_args:expr, $max_args:expr, $intspec:expr, $docstring:expr) => {
+    ($lisp_name:expr,
+     $fname:ident,
+     $sname:ident,
+     $min_args:expr,
+     $max_args:expr,
+     $intspec:expr,
+     $docstring:expr) => {
         lazy_static! {
 // TODO: this is blindly hoping we have the correct alignment.
 // We should ensure we have GCALIGNMENT (8 bytes).
@@ -570,8 +572,7 @@ impl Debug for LispObject {
             write!(f,
                    "#<INVALID-OBJECT @ {:#X}: VAL({:#X})>",
                    self_ptr,
-                   self.to_raw())
-                ?;
+                   self.to_raw())?;
             return Ok(());
         }
         match ty {
@@ -588,8 +589,7 @@ impl Debug for LispObject {
                 write!(f,
                        "#<VECTOR-LIKE @ {:#X}: VAL({:#X})>",
                        self_ptr,
-                       self.to_raw())
-                    ?;
+                       self.to_raw())?;
             }
             LispType::Lisp_Int0 |
             LispType::Lisp_Int1 => {
@@ -614,8 +614,8 @@ impl Debug for LispObject {
 /// the porting easy, we should be able to remove once the relevant functionality is Rust-only.
 mod deprecated {
     use super::*;
-    use ::libc;
-    use ::std;
+    use libc;
+    use std;
 
     /// Convert a LispObject to an EmacsInt.
     #[allow(non_snake_case)]
