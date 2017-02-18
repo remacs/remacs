@@ -4131,6 +4131,20 @@ use the Bourne shell command 'TERM=...; export TERM' (C-shell:\n\
 
       tty->TN_max_colors = tgetnum ("Co");
 
+#ifdef TERMINFO
+      /* Non-standard support for 24-bit colors. */
+      {
+	const char* fg = tigetstr ("setf24");
+	const char* bg = tigetstr ("setb24");
+	if (fg && bg && fg != (char *)-1 && bg != (char *)-1)
+	  {
+	    tty->TS_set_foreground = fg;
+	    tty->TS_set_background = bg;
+	    tty->TN_max_colors = 16777216;
+	  }
+      }
+#endif
+
       tty->TN_no_color_video = tgetnum ("NC");
       if (tty->TN_no_color_video == -1)
         tty->TN_no_color_video = 0;
