@@ -2036,6 +2036,7 @@ Key bindings:
   :syntax-table nil
   (require 'cc-awk)			; Added 2003/6/10.
   (c-initialize-cc-mode t)
+  (set-syntax-table awk-mode-syntax-table)
   (setq	abbrev-mode t)
   (c-init-language-vars-for 'awk-mode)
   (c-common-init 'awk-mode)
