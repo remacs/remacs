@@ -1527,7 +1527,9 @@ replacements in the form @samp{@var{from} -> @var{to}}, where
 @var{from} is the search pattern, @var{to} is its replacement, and the
 separator between them is determined by the value of the variable
 @code{query-replace-from-to-separator}.  Type @key{RET} to select the
-desired replacement.
+desired replacement.  If the value of this variable is @code{nil},
+replacements are not added to the command history, and cannot be
+reused.
 
 @cindex faces for highlighting query replace
 @cindex query-replace face
