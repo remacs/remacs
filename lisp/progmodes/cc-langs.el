@@ -204,7 +204,7 @@ the evaluated constant value at compile time."
 ; (eval-after-load "edebug" ; 2006-07-09: def-edebug-spec is now in subr.el.
 ;  '
 (def-edebug-spec c-lang-defvar
-  (&define name def-form &optional stringp)) ;)
+  (&define name def-form &optional &or ("quote" symbolp) stringp))
 
 ;; Suppress "might not be defined at runtime" warning.
 ;; This file is only used when compiling other cc files.
@@ -712,8 +712,7 @@ This value is by default merged into `c-operators'."
       (when ops
 	(c-make-keywords-re 'appendable ops))))
 (c-lang-defvar c-opt-identifier-concat-key
-  (c-lang-const c-opt-identifier-concat-key)
-  'dont-doc)
+  (c-lang-const c-opt-identifier-concat-key))
 
 (c-lang-defconst c-opt-identifier-concat-key-depth
   ;; Number of regexp grouping parens in `c-opt-identifier-concat-key'.
@@ -2975,8 +2974,7 @@ constructs."
 		(c-make-keywords-re t (c-lang-const c-decl-start-kwds)))
       (c-lang-const c-decl-prefix-re)))
 (c-lang-defvar c-decl-prefix-or-start-re
-  (c-lang-const c-decl-prefix-or-start-re)
-  'dont-doc)
+  (c-lang-const c-decl-prefix-or-start-re))
 
 (c-lang-defconst c-cast-parens
   ;; List containing the paren characters that can open a cast, or nil in
