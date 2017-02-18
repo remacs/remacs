@@ -10020,7 +10020,7 @@ Internal use only.  */)
   int key0 = SREF (keys, 0);
 
   /* Kludge alert: this makes M-x be in the form expected by
-     novice.el.  Any better ideas?  */
+     novice.el.  (248 is \370, a.k.a. "Meta-x".)  Any better ideas?  */
   if (key0 == 248)
     add_command_key (make_number ('x' | meta_modifier));
   else
