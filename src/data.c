@@ -1834,15 +1834,6 @@ The function `default-value' gets the default value and `set-default' sets it.  
       blv = make_blv (sym, forwarded, valcontents);
       sym->redirect = SYMBOL_LOCALIZED;
       SET_SYMBOL_BLV (sym, blv);
-      {
-	Lisp_Object symbol;
-	XSETSYMBOL (symbol, sym); /* In case `variable' is aliased.  */
-	if (let_shadows_global_binding_p (symbol))
-	  {
-	    AUTO_STRING (format, "Making %s buffer-local while let-bound!");
-	    CALLN (Fmessage, format, SYMBOL_NAME (variable));
-	  }
-      }
     }
 
   blv->local_if_set = 1;
@@ -1916,16 +1907,6 @@ Instead, use `add-hook' and specify t for the LOCAL argument.  */)
       blv = make_blv (sym, forwarded, valcontents);
       sym->redirect = SYMBOL_LOCALIZED;
       SET_SYMBOL_BLV (sym, blv);
-      {
-	Lisp_Object symbol;
-	XSETSYMBOL (symbol, sym); /* In case `variable' is aliased.  */
-	if (let_shadows_global_binding_p (symbol))
-	  {
-	    AUTO_STRING (format, "Making %s local to %s while let-bound!");
-	    CALLN (Fmessage, format, SYMBOL_NAME (variable),
-		   BVAR (current_buffer, name));
-	  }
-      }
     }
 
   /* Make sure this buffer has its own value of symbol.  */
