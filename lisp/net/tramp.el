@@ -2021,6 +2021,10 @@ Falls back to normal file name handler if no Tramp file name handler exists."
     (if (and tramp-mode (tramp-tramp-file-p filename))
 	(save-match-data
 	  (let* ((filename (tramp-replace-environment-variables filename))
+                 (non-essential
+                  (and non-essential
+                       (string-match
+                        tramp-completion-file-name-regexp filename)))
 		 (completion (tramp-completion-mode-p))
 		 (foreign
 		  (tramp-find-foreign-file-name-handler
