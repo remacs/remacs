@@ -80,6 +80,9 @@ for '--daemon'.
 
 * Changes in Emacs 26.1
 
+** The variable 'emacs-version' no longer includes the build number.
+This is now stored separately in a new variable, 'emacs-build-number'.
+
 +++
 ** The new function 'mapbacktrace' applies a function to all frames of
 the current stack trace.

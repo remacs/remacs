@@ -350,7 +350,7 @@ lost after dumping")))
 	 (multibyte-string-p default-directory))
     (error "default-directory must be unibyte when dumping Emacs!"))
 
-;; Determine which last version number to use
+;; Determine which build number to use
 ;; based on the executables that now exist.
 (if (and (equal (last command-line-args) '("dump"))
 	 (not (eq system-type 'ms-dos)))
@@ -364,10 +364,9 @@ lost after dumping")))
 			     files)))
       (setq emacs-repository-version (condition-case nil (emacs-repository-get-version)
                               (error nil)))
-      ;; `emacs-version' is a constant, so we shouldn't change it with `setq'.
-      (defconst emacs-version
-	(format "%s.%d"
-		emacs-version (if versions (1+ (apply 'max versions)) 1)))))
+      ;; A constant, so we shouldn't change it with `setq'.
+      (defconst emacs-build-number
+	(if versions (1+ (apply 'max versions)) 1))))
 
 
 (message "Finding pointers to doc strings...")
@@ -463,7 +462,7 @@ lost after dumping")))
                    ;; Don't bother adding another name if we're just
                    ;; building bootstrap-emacs.
                    (equal (last command-line-args) '("bootstrap"))))
-	  (let ((name (concat "emacs-" emacs-version))
+	  (let ((name (format "emacs-%s.%d" emacs-version emacs-build-number))
 		(exe (if (eq system-type 'windows-nt) ".exe" "")))
 	    (while (string-match "[^-+_.a-zA-Z0-9]+" name)
 	      (setq name (concat (downcase (substring name 0 (match-beginning 0)))

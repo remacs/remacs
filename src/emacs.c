@@ -2607,7 +2607,12 @@ This is nil during initialization.  */);
   Vemacs_copyright = build_string (emacs_copyright);
 
   DEFVAR_LISP ("emacs-version", Vemacs_version,
-	       doc: /* Version numbers of this version of Emacs.  */);
+	       doc: /* Version numbers of this version of Emacs.
+This has the form: MAJOR.MINOR[.MICRO], where MAJOR/MINOR/MICRO are integers.
+MICRO is only present in unreleased development versions,
+and is not especially meaningful.  Prior to Emacs 26.1, an extra final
+component .BUILD is present.  This is now stored separately in
+`emacs-build-number'.  */);
   Vemacs_version = build_string (emacs_version);
 
   DEFVAR_LISP ("report-emacs-bug-address", Vreport_emacs_bug_address,

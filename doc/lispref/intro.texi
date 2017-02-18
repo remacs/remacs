@@ -480,8 +480,8 @@ running.  It is useful to include this string in bug reports.
 @smallexample
 @group
 (emacs-version)
-  @result{} "GNU Emacs 24.5.1 (x86_64-unknown-linux-gnu, GTK+ Version 3.16)
-             of 2015-06-01"
+  @result{} "GNU Emacs 26.1 (build 1, x86_64-unknown-linux-gnu,
+             GTK+ Version 3.16) of 2017-06-01"
 @end group
 @end smallexample
 
@@ -507,11 +507,11 @@ emacs-build-time
 
 @defvar emacs-version
 The value of this variable is the version of Emacs being run.  It is a
-string such as @code{"23.1.1"}.  The last number in this string is not
-really part of the Emacs release version number; it is incremented
-each time Emacs is built in any given directory.  A value with four
-numeric components, such as @code{"22.0.91.1"}, indicates an
-unreleased test version.
+string such as @code{"26.1"}.  A value with three numeric components,
+such as @code{"26.0.91"}, indicates an unreleased test version.
+(Prior to Emacs 26.1, the string includes an extra final component
+with the integer that is now stored in @code{emacs-build-number};
+e.g., @code{"25.1.1"}.)
 @end defvar
 
 @defvar emacs-major-version
@@ -522,6 +522,12 @@ The major version number of Emacs, as an integer.  For Emacs version
 @defvar emacs-minor-version
 The minor version number of Emacs, as an integer.  For Emacs version
 23.1, the value is 1.
+@end defvar
+
+@defvar emacs-build-number
+An integer that increments each time Emacs is built in the same
+directory (without cleaning).  This is only of relevance when
+developing Emacs.
 @end defvar
 
 @node Acknowledgments
