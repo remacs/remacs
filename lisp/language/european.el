@@ -506,7 +506,7 @@ and it selects the Spanish tutorial."))
 	     (input-method . "turkish-postfix")
 	     (sample-text . "Turkish (Türkçe)	Merhaba")
 	     (setup-function . turkish-case-conversion-enable)
-	     (setup-function . turkish-case-conversion-disable)
+	     (exit-function . turkish-case-conversion-disable)
 	     (documentation . "Support for Turkish.
 Differs from the Latin-5 environment in using the `turkish-postfix' input
 method and applying Turkish case rules for the characters i, I, ı, İ.")))
