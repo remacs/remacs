@@ -105,7 +105,9 @@ See the end of the file for license conditions.
   + runemacs.exe - A wrapper for running Emacs as a GUI application
     without popping up a command prompt window.  If you create a
     desktop shortcut for invoking Emacs, make it point to this
-    executable, not to emacs.exe.
+    executable, not to emacs.exe.  If you pin Emacs to the task bar,
+    edit the properties of the pinned shortcut (with Shift-right mouse
+    click) to point to this executable.
 
   + emacsclient.exe - A command-line client program that can
     communicate with a running Emacs process.  See the `Emacs Server'
