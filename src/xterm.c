@@ -12876,8 +12876,8 @@ keysyms.  The default is nil, which is the same as `super'.  */);
     doc: /* Hash table of character codes indexed by X keysym codes.  */);
   Vx_keysym_table = make_hash_table (hashtest_eql, make_number (900),
 				     make_float (DEFAULT_REHASH_SIZE),
-				     make_float (DEFAULT_REHASH_THRESHOLD),
-				     Qnil, Qnil);
+				     DEFAULT_REHASH_THRESHOLD,
+				     Qnil, false);
 
   DEFVAR_BOOL ("x-frame-normalize-before-maximize",
 	       x_frame_normalize_before_maximize,

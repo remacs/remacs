@@ -47,8 +47,8 @@ make_log (EMACS_INT heap_size, EMACS_INT max_stack_depth)
   Lisp_Object log = make_hash_table (hashtest_profiler,
 				     make_number (heap_size),
 				     make_float (DEFAULT_REHASH_SIZE),
-				     make_float (DEFAULT_REHASH_THRESHOLD),
-				     Qnil, Qnil);
+				     DEFAULT_REHASH_THRESHOLD,
+				     Qnil, false);
   struct Lisp_Hash_Table *h = XHASH_TABLE (log);
 
   /* What is special about our hash-tables is that the keys are pre-filled

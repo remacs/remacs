@@ -3676,8 +3676,8 @@ allocate_hash_table (void)
 Lisp_Object
 make_hash_table (struct hash_table_test test,
 		 Lisp_Object size, Lisp_Object rehash_size,
-		 Lisp_Object rehash_threshold, Lisp_Object weak,
-                 Lisp_Object pure)
+		 float rehash_threshold, Lisp_Object weak,
+                 bool pure)
 {
   struct Lisp_Hash_Table *h;
   Lisp_Object table;
@@ -3690,15 +3690,13 @@ make_hash_table (struct hash_table_test test,
   eassert (INTEGERP (size) && XINT (size) >= 0);
   eassert ((INTEGERP (rehash_size) && XINT (rehash_size) > 0)
 	   || (FLOATP (rehash_size) && 1 < XFLOAT_DATA (rehash_size)));
-  eassert (FLOATP (rehash_threshold)
-	   && 0 < XFLOAT_DATA (rehash_threshold)
-	   && XFLOAT_DATA (rehash_threshold) <= 1.0);
+  eassert (0 < rehash_threshold && rehash_threshold <= 1.0);
 
   if (XFASTINT (size) == 0)
     size = make_number (1);
 
   sz = XFASTINT (size);
-  index_float = sz / XFLOAT_DATA (rehash_threshold);
+  index_float = sz / rehash_threshold;
   index_size = (index_float < INDEX_SIZE_BOUND + 1
 		? next_almost_prime (index_float)
 		: INDEX_SIZE_BOUND + 1);
@@ -3797,7 +3795,7 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
 	  else
 	    new_size = INDEX_SIZE_BOUND + 1;
 	}
-      index_float = new_size / XFLOAT_DATA (h->rehash_threshold);
+      index_float = new_size / h->rehash_threshold;
       index_size = (index_float < INDEX_SIZE_BOUND + 1
 		    ? next_almost_prime (index_float)
 		    : INDEX_SIZE_BOUND + 1);
@@ -4391,7 +4389,9 @@ in an error.
 usage: (make-hash-table &rest KEYWORD-ARGS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  Lisp_Object test, size, rehash_size, rehash_threshold, weak, pure;
+  Lisp_Object test, size, rehash_size, weak;
+  float rehash_threshold;
+  bool pure;
   struct hash_table_test testdesc;
   ptrdiff_t i;
   USE_SAFE_ALLOCA;
@@ -4427,7 +4427,7 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
 
   /* See if there's a `:purecopy PURECOPY' argument.  */
   i = get_key_arg (QCpurecopy, nargs, args, used);
-  pure = i ? args[i] : Qnil;
+  pure = i && !NILP (args[i]);
   /* See if there's a `:size SIZE' argument.  */
   i = get_key_arg (QCsize, nargs, args, used);
   size = i ? args[i] : Qnil;
@@ -4445,11 +4445,11 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
 
   /* Look for `:rehash-threshold THRESHOLD'.  */
   i = get_key_arg (QCrehash_threshold, nargs, args, used);
-  rehash_threshold = i ? args[i] : make_float (DEFAULT_REHASH_THRESHOLD);
-  if (! (FLOATP (rehash_threshold)
-	 && 0 < XFLOAT_DATA (rehash_threshold)
-	 && XFLOAT_DATA (rehash_threshold) <= 1))
-    signal_error ("Invalid hash table rehash threshold", rehash_threshold);
+  rehash_threshold =
+    i ? (FLOATP (args[i]) ? XFLOAT_DATA (args[i]) : -1.0)
+    : DEFAULT_REHASH_THRESHOLD;
+  if (! (0 < rehash_threshold && rehash_threshold <= 1))
+    signal_error ("Invalid hash table rehash threshold", args[i]);
 
   /* Look for `:weakness WEAK'.  */
   i = get_key_arg (QCweakness, nargs, args, used);
@@ -4504,7 +4504,7 @@ DEFUN ("hash-table-rehash-threshold", Fhash_table_rehash_threshold,
        doc: /* Return the current rehash threshold of TABLE.  */)
   (Lisp_Object table)
 {
-  return check_hash_table (table)->rehash_threshold;
+  return make_float (check_hash_table (table)->rehash_threshold);
 }
 
 

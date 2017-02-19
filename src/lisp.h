@@ -1974,10 +1974,6 @@ struct Lisp_Hash_Table
      new size by multiplying the old size with this factor.  */
   Lisp_Object rehash_size;
 
-  /* Resize hash table when number of entries/ table size is >= this
-     ratio, a float.  */
-  Lisp_Object rehash_threshold;
-
   /* Vector of hash codes.  If hash[I] is nil, this means that the
      I-th entry is unused.  */
   Lisp_Object hash;
@@ -1995,16 +1991,20 @@ struct Lisp_Hash_Table
      hash table size to reduce collisions.  */
   Lisp_Object index;
 
-  /* Non-nil if the table can be purecopied.  The table cannot be
-     changed afterwards.  */
-  Lisp_Object pure;
-
   /* Only the fields above are traced normally by the GC.  The ones below
      `count' are special and are either ignored by the GC or traced in
      a special way (e.g. because of weakness).  */
 
   /* Number of key/value entries in the table.  */
   ptrdiff_t count;
+
+  /* Non-nil if the table can be purecopied.  The table cannot be
+     changed afterwards.  */
+  bool_bf pure : 1;
+
+  /* Resize hash table when number of entries/ table size is >= this
+     ratio, a float.  */
+  float rehash_threshold;
 
   /* Vector of keys and values.  The key of item I is found at index
      2 * I, the value is found at index 2 * I + 1.
@@ -3361,8 +3361,10 @@ extern Lisp_Object larger_vector (Lisp_Object, ptrdiff_t, ptrdiff_t);
 extern void sweep_weak_hash_tables (void);
 EMACS_UINT hash_string (char const *, ptrdiff_t);
 EMACS_UINT sxhash (Lisp_Object, int);
-Lisp_Object make_hash_table (struct hash_table_test, Lisp_Object, Lisp_Object,
-                             Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object make_hash_table (struct hash_table_test test,
+		             Lisp_Object size, Lisp_Object rehash_size,
+		             float rehash_threshold, Lisp_Object weak,
+                             bool pure);
 ptrdiff_t hash_lookup (struct Lisp_Hash_Table *, Lisp_Object, EMACS_UINT *);
 ptrdiff_t hash_put (struct Lisp_Hash_Table *, Lisp_Object, Lisp_Object,
 		    EMACS_UINT);

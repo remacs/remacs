@@ -66,8 +66,8 @@ hash_get_category_set (Lisp_Object table, Lisp_Object category_set)
       (table, 1,
        make_hash_table (hashtest_equal, make_number (DEFAULT_HASH_SIZE),
 			make_float (DEFAULT_REHASH_SIZE),
-			make_float (DEFAULT_REHASH_THRESHOLD),
-			Qnil, Qnil));
+			DEFAULT_REHASH_THRESHOLD,
+			Qnil, false));
   h = XHASH_TABLE (XCHAR_TABLE (table)->extras[1]);
   i = hash_lookup (h, category_set, &hash);
   if (i >= 0)

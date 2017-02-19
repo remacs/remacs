@@ -1812,16 +1812,14 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	      print_object (h->rehash_size, printcharfun, escapeflag);
 	    }
 
-	  if (!NILP (h->rehash_threshold))
-	    {
-	      print_c_string (" rehash-threshold ", printcharfun);
-	      print_object (h->rehash_threshold, printcharfun, escapeflag);
-	    }
+	  print_c_string (" rehash-threshold ", printcharfun);
+	  print_object (make_float (h->rehash_threshold),
+                        printcharfun, escapeflag);
 
-          if (!NILP (h->pure))
+          if (h->pure)
             {
               print_c_string (" purecopy ", printcharfun);
-	      print_object (h->pure, printcharfun, escapeflag);
+	      print_object (h->pure ? Qt : Qnil, printcharfun, escapeflag);
             }
 
 	  print_c_string (" data ", printcharfun);
