@@ -2156,11 +2156,14 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 ;;;###autoload
 (progn (defun tramp-autoload-file-name-handler (operation &rest args)
   "Load Tramp file name handler, and perform OPERATION."
-  ;; Avoid recursive loading of tramp.el.
-  (if (let ((default-directory temporary-file-directory))
-        (and (null load-in-progress) (load "tramp" 'noerror 'nomessage)))
+  (if (and
+       ;; Do not load tramp.el just for "/".
+       (not (and (stringp (car args)) (string-equal (car args) "/")))
+       ;; Avoid recursive loading of tramp.el.
+       (let ((default-directory temporary-file-directory))
+        (and (null load-in-progress) (load "tramp" 'noerror 'nomessage))))
       (apply operation args)
-    ;; tramp.el not available for loading, fall back.
+    ;; tramp.el not needed or not available for loading, fall back.
     (tramp-completion-run-real-handler operation args))))
 
 ;; `tramp-autoload-file-name-handler' must be registered before
