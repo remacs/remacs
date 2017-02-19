@@ -48,7 +48,7 @@
 ;;;;
 ;;;; IMPORTANT
 ;;;; All globals which can change must be saved from 'save-game.  Add
-;;;; all new globals to bottom of file.
+;;;; all new globals to bottom of this section.
 
 (defvar dun-visited '(27))
 (defvar dun-current-room 1)
@@ -1125,6 +1125,7 @@ treasures for points?" "4" "four")
 
 (defconst dun-combination (prin1-to-string (+ 100 (random 899))))
 
+
 ;;;; Mode definitions for interactive mode
 
 (define-derived-mode dun-mode text-mode "Dungeon"
