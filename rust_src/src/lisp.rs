@@ -534,8 +534,8 @@ macro_rules! defun {
         }
 
         lazy_static! {
-// TODO: this is blindly hoping we have the correct alignment.
-// We should ensure we have GCALIGNMENT (8 bytes).
+            // TODO: this is blindly hoping we have the correct alignment.
+            // We should ensure we have GCALIGNMENT (8 bytes).
             pub static ref $sname: $crate::lisp::LispSubr = $crate::lisp::LispSubr {
                 header: $crate::lisp::VectorLikeHeader {
                     size: (($crate::lisp::PvecType::PVEC_SUBR as $crate::libc::c_int) <<
