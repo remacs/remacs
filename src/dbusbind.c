@@ -941,7 +941,7 @@ xd_get_connection_references (DBusConnection *connection)
 }
 
 /* Convert a Lisp D-Bus object to a pointer.  */
-static DBusConnection*
+static DBusConnection *
 xd_lisp_dbus_to_dbus (Lisp_Object bus)
 {
   return (DBusConnection *) XSAVE_POINTER (bus, 0);

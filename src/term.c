@@ -2536,7 +2536,8 @@ term_mouse_click (struct input_event *result, Gpm_Event *event,
 }
 
 int
-handle_one_term_event (struct tty_display_info *tty, Gpm_Event *event, struct input_event* hold_quit)
+handle_one_term_event (struct tty_display_info *tty, Gpm_Event *event,
+		       struct input_event *hold_quit)
 {
   struct frame *f = XFRAME (tty->top_frame);
   struct input_event ie;
@@ -4134,9 +4135,11 @@ use the Bourne shell command 'TERM=...; export TERM' (C-shell:\n\
 #ifdef TERMINFO
       /* Non-standard support for 24-bit colors. */
       {
-	const char* fg = tigetstr ("setf24");
-	const char* bg = tigetstr ("setb24");
-	if (fg && bg && fg != (char *)-1 && bg != (char *)-1)
+	const char *fg = tigetstr ("setf24");
+	const char *bg = tigetstr ("setb24");
+	if (fg && bg
+	    && fg != (char *) (intptr_t) -1
+	    && bg != (char *) (intptr_t) -1)
 	  {
 	    tty->TS_set_foreground = fg;
 	    tty->TS_set_background = bg;

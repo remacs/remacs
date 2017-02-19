@@ -1421,7 +1421,7 @@ do {									\
     {									\
       /* It's a counter.  */						\
       /* Here, we discard `const', making re_match non-reentrant.  */	\
-      unsigned char *ptr = (unsigned char*) POP_FAILURE_POINTER ();	\
+      unsigned char *ptr = (unsigned char *) POP_FAILURE_POINTER ();	\
       pfreg = POP_FAILURE_INT ();					\
       STORE_NUMBER (ptr, pfreg);					\
       DEBUG_PRINT ("     Pop counter %p = %ld\n", ptr, pfreg);		\
@@ -4220,8 +4220,8 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1, size_t size1,
 	     struct re_registers *regs, ssize_t stop)
 {
   regoff_t val;
-  re_char *string1 = (re_char*) str1;
-  re_char *string2 = (re_char*) str2;
+  re_char *string1 = (re_char *) str1;
+  re_char *string2 = (re_char *) str2;
   register char *fastmap = bufp->fastmap;
   register RE_TRANSLATE_TYPE translate = bufp->translate;
   size_t total_size = size1 + size2;
@@ -4887,7 +4887,7 @@ regoff_t
 re_match (struct re_pattern_buffer *bufp, const char *string,
 	  size_t size, ssize_t pos, struct re_registers *regs)
 {
-  regoff_t result = re_match_2_internal (bufp, NULL, 0, (re_char*) string,
+  regoff_t result = re_match_2_internal (bufp, NULL, 0, (re_char *) string,
 					 size, pos, regs, size);
   return result;
 }
@@ -4921,8 +4921,8 @@ re_match_2 (struct re_pattern_buffer *bufp, const char *string1,
   SETUP_SYNTAX_TABLE_FOR_OBJECT (re_match_object, charpos, 1);
 #endif
 
-  result = re_match_2_internal (bufp, (re_char*) string1, size1,
-				(re_char*) string2, size2,
+  result = re_match_2_internal (bufp, (re_char *) string1, size1,
+				(re_char *) string2, size2,
 				pos, regs, stop);
   return result;
 }
@@ -5785,8 +5785,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 	  {
 	    re_char *p1 = p; /* Next operation.  */
 	    /* Here, we discard `const', making re_match non-reentrant.  */
-	    unsigned char *p2 = (unsigned char*) p + mcnt; /* Jump dest.  */
-	    unsigned char *p3 = (unsigned char*) p - 3; /* opcode location.  */
+	    unsigned char *p2 = (unsigned char *) p + mcnt; /* Jump dest.  */
+	    unsigned char *p3 = (unsigned char *) p - 3; /* opcode location.  */
 
 	    p -= 3;		/* Reset so that we will re-execute the
 				   instruction once it's been changed. */
@@ -5837,7 +5837,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 	  if (mcnt != 0)
 	    {
 	      /* Here, we discard `const', making re_match non-reentrant.  */
-	      unsigned char *p2 = (unsigned char*) p + 2; /* counter loc.  */
+	      unsigned char *p2 = (unsigned char *) p + 2; /* counter loc.  */
 	      mcnt--;
 	      p += 4;
 	      PUSH_NUMBER (p2, mcnt);
@@ -5856,7 +5856,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 	  if (mcnt != 0)
 	    {
 	       /* Here, we discard `const', making re_match non-reentrant.  */
-	      unsigned char *p2 = (unsigned char*) p + 2; /* counter loc.  */
+	      unsigned char *p2 = (unsigned char *) p + 2; /* counter loc.  */
 	      mcnt--;
 	      PUSH_NUMBER (p2, mcnt);
 	      goto unconditional_jump;
@@ -5873,7 +5873,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 
 	    EXTRACT_NUMBER_AND_INCR (mcnt, p);
 	    /* Here, we discard `const', making re_match non-reentrant.  */
-	    p2 = (unsigned char*) p + mcnt;
+	    p2 = (unsigned char *) p + mcnt;
 	    /* Signedness doesn't matter since we only copy MCNT's bits.  */
 	    EXTRACT_NUMBER_AND_INCR (mcnt, p);
 	    DEBUG_PRINT ("  Setting %p to %d.\n", p2, mcnt);
@@ -6283,7 +6283,7 @@ re_compile_pattern (const char *pattern, size_t length,
      setting no_sub.  */
   bufp->no_sub = 0;
 
-  ret = regex_compile ((re_char*) pattern, length,
+  ret = regex_compile ((re_char *) pattern, length,
 #ifdef emacs
 		       posix_backtracking,
 		       whitespace_regexp,
@@ -6446,7 +6446,7 @@ regcomp (regex_t *_Restrict_ preg, const char *_Restrict_ pattern,
 
   /* POSIX says a null character in the pattern terminates it, so we
      can use strlen here in compiling the pattern.  */
-  ret = regex_compile ((re_char*) pattern, strlen (pattern), syntax, preg);
+  ret = regex_compile ((re_char *) pattern, strlen (pattern), syntax, preg);
 
   /* POSIX doesn't distinguish between an unmatched open-group and an
      unmatched close-group: both are REG_EPAREN.  */

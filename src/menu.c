@@ -603,7 +603,7 @@ free_menubar_widget_value_tree (widget_value *wv)
 
   wv->name = wv->value = wv->key = (char *) 0xDEADBEEF;
 
-  if (wv->contents && (wv->contents != (widget_value*)1))
+  if (wv->contents && (wv->contents != (widget_value *) 1))
     {
       free_menubar_widget_value_tree (wv->contents);
       wv->contents = (widget_value *) 0xDEADBEEF;

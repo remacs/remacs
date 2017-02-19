@@ -7237,9 +7237,9 @@ find_suspicious_object_in_range (void *begin, void *end)
 }
 
 static void
-note_suspicious_free (void* ptr)
+note_suspicious_free (void *ptr)
 {
-  struct suspicious_free_record* rec;
+  struct suspicious_free_record *rec;
 
   rec = &suspicious_free_history[suspicious_free_history_index++];
   if (suspicious_free_history_index ==
@@ -7254,7 +7254,7 @@ note_suspicious_free (void* ptr)
 }
 
 static void
-detect_suspicious_free (void* ptr)
+detect_suspicious_free (void *ptr)
 {
   int i;
 

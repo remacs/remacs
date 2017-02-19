@@ -145,7 +145,7 @@ inotify_callback (int fd, void *_)
   i = 0;
   while (i < (size_t)n)
     {
-      struct inotify_event *ev = (struct inotify_event*)&buffer[i];
+      struct inotify_event *ev = (struct inotify_event *) &buffer[i];
 
       watch_object = Fassoc (make_watch_descriptor (ev->wd), watch_list);
       if (!NILP (watch_object))

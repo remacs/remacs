@@ -4379,7 +4379,7 @@ network_interface_info (Lisp_Object ifname)
 
       for (it = ifap; it != NULL; it = it->ifa_next)
         {
-          struct sockaddr_dl *sdl = (struct sockaddr_dl*) it->ifa_addr;
+          struct sockaddr_dl *sdl = (struct sockaddr_dl *) it->ifa_addr;
           unsigned char linkaddr[6];
           int n;
 

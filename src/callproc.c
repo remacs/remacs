@@ -1381,7 +1381,7 @@ getenv_internal (const char *var, ptrdiff_t varlen, char **value,
      without recording them in Vprocess_environment.  */
 #ifdef WINDOWSNT
   {
-    char* tmpval = getenv (var);
+    char *tmpval = getenv (var);
     if (tmpval)
       {
         *value = tmpval;

@@ -53,7 +53,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* CGFloat on GNUstep may be 4 or 8 byte, but functions expect float* for some
    versions.
-   On Cocoa >= 10.5, functions expect CGFloat*. Make compatible type.  */
+   On Cocoa >= 10.5, functions expect CGFloat *. Make compatible type.  */
 #ifdef NS_IMPL_COCOA
 typedef CGFloat EmacsCGFloat;
 #elif GNUSTEP_GUI_MAJOR_VERSION > 0 || GNUSTEP_GUI_MINOR_VERSION >= 22
@@ -1198,7 +1198,7 @@ extern void ns_finish_events (void);
 #ifdef __OBJC__
 /* Needed in nsfns.m.  */
 extern void
-ns_set_represented_filename (NSString* fstr, struct frame *f);
+ns_set_represented_filename (NSString *fstr, struct frame *f);
 
 #endif
 
