@@ -54,17 +54,38 @@ pub struct vectorlike_header {
     pub size: libc::ptrdiff_t,
 }
 
+/// Representation of an Emacs Lisp function symbol.
 #[derive(Debug)]
 #[repr(C)]
 pub struct Lisp_Subr {
     pub header: vectorlike_header,
-    // This field is actually an union
+
+    /// This is the function pointer that will be called when the user invokes
+    /// the Emacs Lisp function. Also, this field is actually an union in C.
     pub function: *const libc::c_void,
+
+    /// The minimum number of arguments that can be passed to the Emacs Lisp
+    /// function.
     pub min_args: libc::c_short,
+
+    /// The maximum number of arguments that can be passed to te Emacs Lisp
+    /// function.
     pub max_args: libc::c_short,
+
+    /// The name of the function in Emacs Lisp.
     pub symbol_name: *const libc::c_char,
+
+    /// The interactive specification. This may be a normal prompt
+    /// string, such as `"bBuffer: "` or an elisp form as a string.
+    /// If the function is not interactive, this should be a null
+    /// pointer.
     pub intspec: *const libc::c_char,
-    // In, Emacs C, this is an EMACS_INT. Should this be changed?
+
+    // TODO: Change this to EMACS_INT
+    //
+    // If you wan't to give it a try and solve this you should see this commit:
+    // https://github.com/Wilfred/remacs/commit/c5461d03a411ff5c6f43885a0a9030e8a94bbc2e
+    /// The docstring of the Emacs Lisp function.
     pub doc: *const libc::c_char,
 }
 
