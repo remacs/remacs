@@ -4390,7 +4390,7 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
   Lisp_Object test, size, rehash_size, weak;
-  float rehash_threshold;
+  double rehash_threshold;
   bool pure;
   struct hash_table_test testdesc;
   ptrdiff_t i;
