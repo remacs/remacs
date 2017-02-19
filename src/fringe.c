@@ -1456,9 +1456,9 @@ init_fringe_bitmap (int which, struct fringe_bitmap *fb, int once_p)
 	{
 	  unsigned short b = *bits;
 	  b <<= (16 - fb->width);
-#ifndef WORDS_BIGENDIAN
+	  /* Windows is little-endian, so the next line is always
+	     needed.  */
 	  b = ((b >> 8) | (b << 8));
-#endif
 	  *bits++ = b;
 	}
 #endif
