@@ -1998,13 +1998,13 @@ struct Lisp_Hash_Table
   /* Number of key/value entries in the table.  */
   ptrdiff_t count;
 
-  /* Non-nil if the table can be purecopied.  The table cannot be
+  /* True if the table can be purecopied.  The table cannot be
      changed afterwards.  */
-  bool_bf pure : 1;
+  bool pure;
 
-  /* Resize hash table when number of entries/ table size is >= this
-     ratio, a float.  */
-  float rehash_threshold;
+  /* Resize hash table when number of entries / table size is >= this
+     ratio.  */
+  double rehash_threshold;
 
   /* Vector of keys and values.  The key of item I is found at index
      2 * I, the value is found at index 2 * I + 1.

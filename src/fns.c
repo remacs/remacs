@@ -4445,9 +4445,8 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
 
   /* Look for `:rehash-threshold THRESHOLD'.  */
   i = get_key_arg (QCrehash_threshold, nargs, args, used);
-  rehash_threshold =
-    i ? (FLOATP (args[i]) ? XFLOAT_DATA (args[i]) : -1.0)
-    : DEFAULT_REHASH_THRESHOLD;
+  rehash_threshold = (!i ? DEFAULT_REHASH_THRESHOLD
+		      : FLOATP (args[i]) ? XFLOAT_DATA (args[i]) : 0);
   if (! (0 < rehash_threshold && rehash_threshold <= 1))
     signal_error ("Invalid hash table rehash threshold", args[i]);
 
