@@ -560,7 +560,20 @@ void
 make_gap (ptrdiff_t nbytes_added)
 {
   if (nbytes_added >= 0)
-    make_gap_larger (nbytes_added);
+    /* With set-buffer-multibyte on a large buffer, we can end up growing the
+     * buffer *many* times.  Avoid an O(N^2) behavior by increasing by an
+     * amount at least proportional to the size of the buffer.
+     * On my test (a 223.9MB zip file on a Thinkpad T61):
+     * With /5    =>  24s
+     * With /32   =>  25s
+     * With /64   =>  26s
+     * With /128  =>  28s
+     * With /1024 =>  51s
+     * With /4096 => 131s
+     * With /∞    => gave up after 858s
+     * Of couse, ideally we should never call set-buffer-multibyte on
+     * a non-empty buffer (e.g. use buffer-swa-text instead).  */
+    make_gap_larger (max (nbytes_added, (Z - BEG) / 64));
 #if defined USE_MMAP_FOR_BUFFERS || defined REL_ALLOC || defined DOUG_LEA_MALLOC
   else
     make_gap_smaller (-nbytes_added);
