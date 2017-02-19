@@ -23,7 +23,6 @@ mod math;
 mod numbers;
 mod strings;
 mod symbols;
-mod globals;
 mod character;
 mod base64;
 
