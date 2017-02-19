@@ -2163,18 +2163,22 @@ If locking is used for the files in DIR, then there must not be any
 locked files at or below DIR (but if NAME is empty, locked files are
 allowed and simply skipped)."
   (interactive
-   (let ((granularity
-	  (vc-call-backend (vc-responsible-backend default-directory)
-			   'revision-granularity)))
+   (let* ((granularity
+           (vc-call-backend (vc-responsible-backend default-directory)
+                            'revision-granularity))
+          (dir
+           (if (eq granularity 'repository)
+               ;; For VC's that do not work at file level, it's pointless
+               ;; to ask for a directory, branches are created at repository level.
+               ;; XXX: Either we call expand-file-name here, or use
+               ;; file-in-directory-p inside vc-resynch-buffers-in-directory.
+               (expand-file-name (vc-root-dir))
+             (read-directory-name "Directory: " default-directory nil t))))
      (list
-      (if (eq granularity 'repository)
-	  ;; For VC's that do not work at file level, it's pointless
-	  ;; to ask for a directory, branches are created at repository level.
-          ;; XXX: Either we call expand-file-name here, or use
-          ;; file-in-directory-p inside vc-resynch-buffers-in-directory.
-	  (expand-file-name (vc-root-dir))
-	(read-directory-name "Directory: " default-directory default-directory t))
-      (read-string "Tag name to retrieve (default latest revisions): "))))
+      dir
+      (vc-read-revision "Tag name to retrieve (default latest revisions): "
+                        (list dir)
+                        (vc-responsible-backend dir)))))
   (let ((update (yes-or-no-p "Update any affected buffers? "))
 	(msg (if (or (not name) (string= name ""))
 		 (format "Updating %s... " (abbreviate-file-name dir))
