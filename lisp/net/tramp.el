@@ -1342,10 +1342,18 @@ from the default one."
   "Set connection-local variables in the connection buffer used for VEC.
 If connection-local variables are not supported by this Emacs
 version, the function does nothing."
-  ;; `tramp-get-connection-buffer' sets proper `default-directory'."
   (with-current-buffer (tramp-get-connection-buffer vec)
     ;; `hack-connection-local-variables-apply' exists since Emacs 26.1.
-    (tramp-compat-funcall 'hack-connection-local-variables-apply)))
+    (tramp-compat-funcall
+     'hack-connection-local-variables-apply
+     (append
+      '(tramp)
+      (when (tramp-file-name-method vec)
+        `(:protocol ,(tramp-file-name-method vec)))
+      (when (tramp-file-name-user vec)
+        `(:user ,(tramp-file-name-user vec)))
+      (when (tramp-file-name-host vec)
+        `(:machine ,(tramp-file-name-host vec)))))))
 
 (defun tramp-debug-buffer-name (vec)
   "A name for the debug buffer for VEC."
