@@ -1,7 +1,8 @@
 use lisp::{LispObject, Qnil};
+use remacs_sys::Lisp_Object;
 
 extern "C" {
-    fn Fsignal(error_symbol: LispObject, data: LispObject);
+    fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object);
 }
 
 /// Signal an error in Emacs.
@@ -11,7 +12,7 @@ extern "C" {
 /// for `signal` for an explanation of the arguments.
 fn xsignal(error_symbol: LispObject, data: LispObject) {
     unsafe {
-        Fsignal(error_symbol, data);
+        Fsignal(error_symbol.to_raw(), data.to_raw());
     }
     panic!("Fsignal should not return in xsignal");
 }

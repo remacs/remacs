@@ -1,15 +1,15 @@
-extern crate libc;
-
-use std::os::raw::c_char;
 use std::ptr;
 use std::mem;
 
-use lisp::{CHECK_TYPE, LispObject, LispSubr, LispType, Qnil, XTYPE, XUNTAG, wrong_type_argument};
+use libc;
+
+use lisp::{CHECK_TYPE, LispObject, LispType, Qnil, XTYPE, XUNTAG, wrong_type_argument};
+use remacs_sys::Lisp_Object;
 
 extern "C" {
-    static Qconsp: LispObject;
-    fn CHECK_IMPURE(obj: LispObject, ptr: *const libc::c_void);
-    static Qlistp: LispObject;
+    static Qconsp: Lisp_Object;
+    fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const libc::c_void);
+    static Qlistp: Lisp_Object;
 }
 
 
@@ -17,7 +17,7 @@ pub fn CONSP(x: LispObject) -> bool {
     XTYPE(x) == LispType::Lisp_Cons
 }
 
-fn Fatom(object: LispObject) -> LispObject {
+fn atom(object: LispObject) -> LispObject {
     if CONSP(object) {
         Qnil
     } else {
@@ -26,14 +26,15 @@ fn Fatom(object: LispObject) -> LispObject {
 }
 
 defun!("atom",
-       Fatom,
+       Fatom(object),
        Satom,
+       atom,
        1,
        1,
        ptr::null(),
        "Return t if OBJECT is not a cons cell.  This includes nil.");
 
-fn Fconsp(object: LispObject) -> LispObject {
+fn consp(object: LispObject) -> LispObject {
     if CONSP(object) {
         LispObject::constant_t()
     } else {
@@ -42,8 +43,9 @@ fn Fconsp(object: LispObject) -> LispObject {
 }
 
 defun!("consp",
-       Fconsp,
+       Fconsp(object),
        Sconsp,
+       consp,
        1,
        1,
        ptr::null(),
@@ -100,11 +102,10 @@ fn XSETCDR(c: LispObject, n: LispObject) {
     }
 }
 
-#[no_mangle]
-pub extern "C" fn Fsetcar(cell: LispObject, newcar: LispObject) -> LispObject {
+pub fn setcar(cell: LispObject, newcar: LispObject) -> LispObject {
     unsafe {
-        CHECK_TYPE(CONSP(cell), Qconsp, cell);
-        CHECK_IMPURE(cell, XCONS(cell) as *const libc::c_void);
+        CHECK_TYPE(CONSP(cell), LispObject::from_raw(Qconsp), cell);
+        CHECK_IMPURE(cell.to_raw(), XCONS(cell) as *const libc::c_void);
     }
 
     XSETCAR(cell, newcar);
@@ -112,8 +113,9 @@ pub extern "C" fn Fsetcar(cell: LispObject, newcar: LispObject) -> LispObject {
 }
 
 defun!("setcar",
-       Fsetcar,
+       Fsetcar(cell, newcar),
        Ssetcar,
+       setcar,
        2,
        2,
        ptr::null(),
@@ -121,11 +123,10 @@ defun!("setcar",
 
 (fn CELL NEWCAR)");
 
-#[no_mangle]
-pub extern "C" fn Fsetcdr(cell: LispObject, newcar: LispObject) -> LispObject {
+fn setcdr(cell: LispObject, newcar: LispObject) -> LispObject {
     unsafe {
-        CHECK_TYPE(CONSP(cell), Qconsp, cell);
-        CHECK_IMPURE(cell, XCONS(cell) as *const libc::c_void);
+        CHECK_TYPE(CONSP(cell), LispObject::from_raw(Qconsp), cell);
+        CHECK_IMPURE(cell.to_raw(), XCONS(cell) as *const libc::c_void);
     }
 
     XSETCDR(cell, newcar);
@@ -133,8 +134,9 @@ pub extern "C" fn Fsetcdr(cell: LispObject, newcar: LispObject) -> LispObject {
 }
 
 defun!("setcdr",
-       Fsetcdr,
+       Fsetcdr(cell, newcar),
        Ssetcdr,
+       setcdr,
        2,
        2,
        ptr::null(),
@@ -167,27 +169,14 @@ fn car(object: LispObject) -> LispObject {
     } else if NILP(object) {
         Qnil
     } else {
-        unsafe { wrong_type_argument(Qlistp, object) }
+        LispObject::from_raw(unsafe { wrong_type_argument(Qlistp, object.to_raw()) })
     }
-}
-fn cdr(object: LispObject) -> LispObject {
-    if CONSP(object) {
-        unsafe { XCDR(object) }
-    } else if NILP(object) {
-        Qnil
-    } else {
-        unsafe { wrong_type_argument(Qlistp, object) }
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn Fcar(list: LispObject) -> LispObject {
-    car(list)
 }
 
 defun!("car",
-       Fcar,
+       Fcar(list),
        Scar,
+       car,
        1,
        1,
        ptr::null(),
@@ -201,14 +190,20 @@ Lisp concepts such as car, cdr, cons cell and list.
 
 (fn LIST)");
 
-#[no_mangle]
-pub extern "C" fn Fcdr(list: LispObject) -> LispObject {
-    cdr(list)
+fn cdr(object: LispObject) -> LispObject {
+    if CONSP(object) {
+        unsafe { XCDR(object) }
+    } else if NILP(object) {
+        Qnil
+    } else {
+        LispObject::from_raw(unsafe { wrong_type_argument(Qlistp, object.to_raw()) })
+    }
 }
 
 defun!("cdr",
-       Fcdr,
+       Fcdr(list),
        Scdr,
+       cdr,
        1,
        1,
        ptr::null(),
@@ -222,8 +217,7 @@ Lisp concepts such as cdr, car, cons cell and list.
 
 (fn LIST)");
 
-#[no_mangle]
-pub extern "C" fn Flistp(object: LispObject) -> LispObject {
+fn listp(object: LispObject) -> LispObject {
     if CONSP(object) || NILP(object) {
         LispObject::constant_t()
     } else {
@@ -232,8 +226,9 @@ pub extern "C" fn Flistp(object: LispObject) -> LispObject {
 }
 
 defun!("listp",
-       Flistp,
+       Flistp(object),
        Slistp,
+       listp,
        1,
        1,
        ptr::null(),
@@ -242,7 +237,7 @@ defun!("listp",
 (fn \
         OBJECT)");
 
-fn Fnlistp(object: LispObject) -> LispObject {
+fn nlistp(object: LispObject) -> LispObject {
     if CONSP(object) || NILP(object) {
         Qnil
     } else {
@@ -251,8 +246,9 @@ fn Fnlistp(object: LispObject) -> LispObject {
 }
 
 defun!("nlistp",
-       Fnlistp,
+       Fnlistp(object),
        Snlistp,
+       nlistp,
        1,
        2,
        ptr::null(),

@@ -1,5 +1,6 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
+#![allow(private_no_mangle_fns)]
 
 #![cfg_attr(feature = "strict", deny(warnings))]
 
@@ -10,6 +11,7 @@ extern crate alloc_unexecmacosx;
 #[macro_use]
 extern crate lazy_static;
 
+extern crate remacs_sys;
 extern crate libc;
 
 mod lisp;
@@ -46,6 +48,7 @@ pub use lists::Fcdr;
 pub use lists::Flistp;
 pub use floatfns::extract_float;
 pub use floatfns::fmod_float;
+pub use symbols::Fsymbolp;
 
 // These need to be exported as marker.c depends upon them.
 pub use marker::CHECK_MARKER;

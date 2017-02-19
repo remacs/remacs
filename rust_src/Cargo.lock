@@ -5,6 +5,7 @@ dependencies = [
  "alloc_unexecmacosx 0.1.0",
  "lazy_static 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.17 (registry+https://github.com/rust-lang/crates.io-index)",
+ "remacs-sys 0.1.0",
  "rustc-serialize 0.3.22 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -21,6 +22,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "libc"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "remacs-sys"
+version = "0.1.0"
+dependencies = [
+ "libc 0.2.17 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "rustc-serialize"
