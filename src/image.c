@@ -4019,8 +4019,8 @@ xpm_make_color_table_h (void (**put_func) (Lisp_Object, const char *, int,
   *get_func = xpm_get_color_table_h;
   return make_hash_table (hashtest_equal, make_number (DEFAULT_HASH_SIZE),
 			  make_float (DEFAULT_REHASH_SIZE),
-			  make_float (DEFAULT_REHASH_THRESHOLD),
-			  Qnil, Qnil);
+			  DEFAULT_REHASH_THRESHOLD,
+			  Qnil, false);
 }
 
 static void

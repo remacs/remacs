@@ -3363,7 +3363,7 @@ EMACS_UINT hash_string (char const *, ptrdiff_t);
 EMACS_UINT sxhash (Lisp_Object, int);
 Lisp_Object make_hash_table (struct hash_table_test test,
 		             Lisp_Object size, Lisp_Object rehash_size,
-		             float rehash_threshold, Lisp_Object weak,
+		             double rehash_threshold, Lisp_Object weak,
                              bool pure);
 ptrdiff_t hash_lookup (struct Lisp_Hash_Table *, Lisp_Object, EMACS_UINT *);
 ptrdiff_t hash_put (struct Lisp_Hash_Table *, Lisp_Object, Lisp_Object,

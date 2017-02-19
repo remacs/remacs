@@ -3676,7 +3676,7 @@ allocate_hash_table (void)
 Lisp_Object
 make_hash_table (struct hash_table_test test,
 		 Lisp_Object size, Lisp_Object rehash_size,
-		 float rehash_threshold, Lisp_Object weak,
+		 double rehash_threshold, Lisp_Object weak,
                  bool pure)
 {
   struct Lisp_Hash_Table *h;
