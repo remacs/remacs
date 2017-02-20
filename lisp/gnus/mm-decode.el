@@ -1808,8 +1808,9 @@ text/\\(\\sw+\\)\\(?:;\\s-*charset=\\([^\t\n\r \"'>]+\\)\\)?[^>]*>" nil t)
 							  nil t))
 		       (string-match "\\`html\\'" (match-string 1))))
 		mail-parse-charset))
-      (when (or coding
-		(setq coding (mm-charset-to-coding-system charset nil t)))
+      (when (and (or coding
+		     (setq coding (mm-charset-to-coding-system charset nil t)))
+		 (not (eq coding 'ascii)))
 	(insert (prog1
 		    (decode-coding-string (buffer-string) coding)
 		  (erase-buffer)
