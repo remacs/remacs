@@ -459,8 +459,8 @@ macro_rules! defun {
         }
 
         lazy_static! {
-// TODO: this is blindly hoping we have the correct alignment.
-// We should ensure we have GCALIGNMENT (8 bytes).
+            // TODO: this is blindly hoping we have the correct alignment.
+            // We should ensure we have GCALIGNMENT (8 bytes).
             pub static ref $sname: $crate::remacs_sys::Lisp_Subr = $crate::remacs_sys::Lisp_Subr {
                 header: $crate::remacs_sys::vectorlike_header {
                     size: ($crate::remacs_sys::PVEC_SUBR <<
