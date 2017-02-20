@@ -250,7 +250,7 @@ defun!("nlistp",
        Snlistp,
        nlistp,
        1,
-       2,
+       1,
        ptr::null(),
        "Return t if OBJECT is not a list.  Lists include nil.
 
