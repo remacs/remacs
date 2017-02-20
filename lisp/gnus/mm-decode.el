@@ -1414,10 +1414,9 @@ Return t if meta tag is added or replaced."
 	(goto-char (point-min))
 	(if (re-search-forward "\
 <meta\\s-+http-equiv=[\"']?content-type[\"']?\\s-+content=[\"']?\
-text/\\(\\sw+\\)\\(?:;\\s-*charset=\\([^\t\n\r \"'>]+\\)\\)?[^>]*>" nil t)
+text/html\\(?:;\\s-*charset=\\([^\t\n\r \"'>]+\\)\\)?[^>]*>" nil t)
 	    (if (and (not force-charset)
-		     (match-beginning 2)
-		     (string-match "\\`html\\'" (match-string 1)))
+		     (match-beginning 1))
 		;; Don't modify existing meta tag.
 		nil
 	      ;; Replace it with the one specifying charset.
@@ -1796,18 +1795,16 @@ If RECURSIVE, search recursively."
 	charset coding char document)
     (mm-with-part (or handle (setq handle (mm-dissect-buffer t)))
       (setq case-fold-search t)
-      (setq charset
-	    (or (mail-content-type-get (mm-handle-type handle) 'charset)
-		(progn
-		  (goto-char (point-min))
-		  (and (re-search-forward "\
+      (or (setq charset
+		(mail-content-type-get (mm-handle-type handle) 'charset))
+	  (progn
+	    (goto-char (point-min))
+	    (and (re-search-forward "\
 <meta\\s-+http-equiv=[\"']?content-type[\"']?\\s-+content=[\"']?\
-text/\\(\\sw+\\)\\(?:;\\s-*charset=\\([^\t\n\r \"'>]+\\)\\)?[^>]*>" nil t)
-		       (setq coding
-			     (mm-charset-to-coding-system (match-string 2)
-							  nil t))
-		       (string-match "\\`html\\'" (match-string 1))))
-		mail-parse-charset))
+text/html;\\s-*charset=\\([^\t\n\r \"'>]+\\)[^>]*>" nil t)
+		 (setq coding (mm-charset-to-coding-system (match-string 1)
+							   nil t))))
+	  (setq charset mail-parse-charset))
       (when (and (or coding
 		     (setq coding (mm-charset-to-coding-system charset nil t)))
 		 (not (eq coding 'ascii)))
