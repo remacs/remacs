@@ -6,7 +6,6 @@
 
 extern crate libc;
 
-use std::os::raw::c_char;
 #[cfg(test)]
 use std::cmp::max;
 use std::mem;
@@ -422,80 +421,6 @@ impl LispObject {
     }
 }
 
-
-
-
-const PSEUDOVECTOR_SIZE_BITS: libc::c_int = 12;
-#[allow(dead_code)]
-const PSEUDOVECTOR_SIZE_MASK: libc::c_int = (1 << PSEUDOVECTOR_SIZE_BITS) - 1;
-const PSEUDOVECTOR_REST_BITS: libc::c_int = 12;
-#[allow(dead_code)]
-const PSEUDOVECTOR_REST_MASK: libc::c_int = (((1 << PSEUDOVECTOR_REST_BITS) - 1) <<
-                                             PSEUDOVECTOR_SIZE_BITS);
-pub const PSEUDOVECTOR_AREA_BITS: libc::c_int = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS;
-#[allow(dead_code)]
-const PVEC_TYPE_MASK: libc::c_int = 0x3f << PSEUDOVECTOR_AREA_BITS;
-
-#[allow(non_camel_case_types)]
-#[allow(dead_code)]
-pub enum PvecType {
-    // TODO: confirm these are the right numbers.
-    PVEC_NORMAL_VECTOR = 0,
-    PVEC_FREE = 1,
-    PVEC_PROCESS = 2,
-    PVEC_FRAME = 3,
-    PVEC_WINDOW = 4,
-    PVEC_BOOL_VECTOR = 5,
-    PVEC_BUFFER = 6,
-    PVEC_HASH_TABLE = 7,
-    PVEC_TERMINAL = 8,
-    PVEC_WINDOW_CONFIGURATION = 9,
-    PVEC_SUBR = 10,
-    PVEC_OTHER = 11,
-    PVEC_XWIDGET = 12,
-    PVEC_XWIDGET_VIEW = 13,
-
-    PVEC_COMPILED = 14,
-    PVEC_CHAR_TABLE = 15,
-    PVEC_SUB_CHAR_TABLE = 16,
-    PVEC_FONT = 17,
-}
-
-#[repr(C)]
-pub struct VectorLikeHeader {
-    pub size: libc::ptrdiff_t,
-}
-
-/// Represents an elisp function.
-#[repr(C)]
-pub struct LispSubr {
-    pub header: VectorLikeHeader,
-    /// The C or Rust function that we will call when the user invokes
-    /// the elisp function.
-    pub function: *const libc::c_void,
-    /// The minimum number of arguments to the elisp function.
-    pub min_args: libc::c_short,
-    /// The maximum number of arguments to the elisp function.
-    pub max_args: libc::c_short,
-    /// The name of the function in elisp.
-    pub symbol_name: *const c_char,
-    /// The interactive specification. This may be a normal prompt
-    /// string, such as `"bBuffer: "` or an elisp form as a string.
-    /// If the function is not interactive, this should be a null
-    /// pointer.
-    pub intspec: *const c_char,
-    /// The docstring of our function.
-    pub doc: *const c_char,
-}
-
-// In order to use `lazy_static!` with LispSubr, it must be Sync. Raw
-// pointers are not Sync, but it isn't a problem to define Sync if we
-// never mutate LispSubr values. If we do, we will need to create
-// these objects at runtime, perhaps using forget().
-//
-// Based on http://stackoverflow.com/a/28116557/509706
-unsafe impl Sync for LispSubr {}
-
 /// Define an elisp function struct.
 ///
 /// # Example
@@ -536,10 +461,10 @@ macro_rules! defun {
         lazy_static! {
             // TODO: this is blindly hoping we have the correct alignment.
             // We should ensure we have GCALIGNMENT (8 bytes).
-            pub static ref $sname: $crate::lisp::LispSubr = $crate::lisp::LispSubr {
-                header: $crate::lisp::VectorLikeHeader {
-                    size: (($crate::lisp::PvecType::PVEC_SUBR as $crate::libc::c_int) <<
-                           $crate::lisp::PSEUDOVECTOR_AREA_BITS) as $crate::libc::ptrdiff_t,
+            pub static ref $sname: $crate::remacs_sys::Lisp_Subr = $crate::remacs_sys::Lisp_Subr {
+                header: $crate::remacs_sys::vectorlike_header {
+                    size: ($crate::remacs_sys::PVEC_SUBR <<
+                           $crate::remacs_sys::PSEUDOVECTOR_AREA_BITS) as $crate::libc::ptrdiff_t,
                 },
                 function: ($fname as *const $crate::libc::c_void),
                 min_args: $min_args,
@@ -594,10 +519,10 @@ macro_rules! defun_many {
         lazy_static! {
 // TODO: this is blindly hoping we have the correct alignment.
 // We should ensure we have GCALIGNMENT (8 bytes).
-            pub static ref $sname: $crate::lisp::LispSubr = $crate::lisp::LispSubr {
-                header: $crate::lisp::VectorLikeHeader {
-                    size: (($crate::lisp::PvecType::PVEC_SUBR as $crate::libc::c_int) <<
-                           $crate::lisp::PSEUDOVECTOR_AREA_BITS) as $crate::libc::ptrdiff_t,
+            pub static ref $sname: $crate::remacs_sys::Lisp_Subr = $crate::remacs_sys::Lisp_Subr {
+                header: $crate::remacs_sys::vectorlike_header {
+                    size: ($crate::remacs_sys::PVEC_SUBR <<
+                           $crate::remacs_sys::PSEUDOVECTOR_AREA_BITS) as $crate::libc::ptrdiff_t,
                 },
                 function: ($fname as *const $crate::libc::c_void),
                 min_args: $min_args,
