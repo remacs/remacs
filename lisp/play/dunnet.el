@@ -1095,7 +1095,17 @@ nil nil nil nil
 		  nil nil nil nil nil nil nil nil nil nil      ;31-40
 		  nil (list obj-platinum) nil nil nil nil nil nil nil nil))
 
-(defvar dun-room-shorts nil)
+(defconst dun-room-shorts
+  (let (res str)
+    (dolist (x dun-rooms)
+      (setq str (downcase (cadr x)))
+      (push (mapconcat #'identity (split-string str "[ /]+") "-") res))
+    (nreverse res)))
+
+(let ((a 0))
+  (dolist (x dun-room-shorts)
+    (eval (list 'defconst (intern x) a))
+    (setq a (+ a 1))))
 
 (defconst dun-endgame-questions
   '(("What is your password on the machine called ‘pokey’?" "robert")
@@ -2305,17 +2315,6 @@ for a moment, then straighten yourself up.
       nil
     result)))
 
-;;; Take a short room description, and change spaces and slashes to dashes.
-
-(defun dun-space-to-hyphen (string)
-  (let (space)
-    (if (setq space (string-match "[ /]" string))
-	(progn
-	  (setq string (concat (substring string 0 space) "-"
-			       (substring string (1+ space))))
-	  (dun-space-to-hyphen string))
-      string)))
-
 ;;; Given a unix style pathname, build a list of path components (recursive)
 
 (defun dun-get-path (dirstring startlist)
@@ -2397,18 +2396,6 @@ for a moment, then straighten yourself up.
       (aset (car (cdr dungeon-batch-map)) n 'dungeon-nil))))
 (define-key dungeon-batch-map "\r" 'exit-minibuffer)
 (define-key dungeon-batch-map "\n" 'exit-minibuffer)
-
-(dolist (x dun-rooms)
-  (setq dun-room-shorts
-		     (append dun-room-shorts (list (downcase
-						    (dun-space-to-hyphen
-						     (cadr x)))))))
-
-(let (a)
-  (setq a 0)
-  (dolist (x dun-room-shorts)
-    (eval (list 'defconst (intern x) a))
-    (setq a (+ a 1))))
 
 ;;;;
 ;;;; This section defines the UNIX emulation functions for dunnet.
