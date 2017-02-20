@@ -720,6 +720,8 @@ argument procedure FUN.*/)
   GAsyncReadyCallback callback
     = FUNCTIONP (fun) ? webkit_javascript_finished_cb : NULL;
 
+  /* FIXME: The following hack assumes USE_LSB_TAG.  */
+  verify (USE_LSB_TAG);
   /* FIXME: This hack might lead to disaster if FUN is garbage
      collected before store_xwidget_js_callback_event makes it visible
      to Lisp again.  See the FIXME in webkit_javascript_finished_cb.  */
