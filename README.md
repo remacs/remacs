@@ -282,7 +282,7 @@ defun!("numberp", // the name of our primitive function inside elisp
        Fnumberp(object), // the signature of the wrapper function
        Snumberp, // the name of the struct that describes our function
        numberp, // the rust function we want to call
-       1, 1, // min and max number of arguments
+       1, // minimum number of arguments
        ptr::null(), // our function is not interactive
        // docstring, the last line ensures that *Help* shows the
        // correct calling convention

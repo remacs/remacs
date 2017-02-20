@@ -11,7 +11,6 @@ defun!("symbolp",
        Ssymbolp,
        symbolp,
        1,
-       1,
        ptr::null(),
        "Return t if OBJECT is a symbol.
 

@@ -34,7 +34,6 @@ defun!("stringp",
        Sstringp,
        stringp,
        1,
-       1,
        ptr::null(),
        "Return t if OBJECT is a string.
 
@@ -49,7 +48,6 @@ defun!("eq",
        Seq,
        eq,
        2,
-       2,
        ptr::null(),
        "Return t if the two args are the same Lisp object.
 
@@ -63,7 +61,6 @@ defun!("null",
        Fnull(object),
        Snull,
        null,
-       1,
        1,
        ptr::null(),
        "Return t if OBJECT is nil, and return nil otherwise.
@@ -109,7 +106,6 @@ defun!("base64-encode-string",
        Sbase64_encode_string,
        base64_encode_string,
        1,
-       2,
        ptr::null(),
        "Base64-encode STRING and return the result.
        Optional second argument NO-LINE-BREAK means do not break long lines
@@ -150,7 +146,6 @@ defun!("base64-decode-string",
        Fbase64_decode_string(string),
        Sbase64_decode_string,
        base64_decode_string,
-       1,
        1,
        ptr::null(),
        "Base64-decode STRING and return the result.

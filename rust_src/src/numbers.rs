@@ -15,7 +15,6 @@ defun!("floatp",
        Sfloatp,
        floatp,
        1,
-       1,
        ptr::null(),
        "Return t if OBJECT is a floating point number.
 
@@ -33,7 +32,6 @@ defun!("integerp",
        Fintegerp(object),
        Sintegerp,
        integerp,
-       1,
        1,
        ptr::null(),
        "Return t if OBJECT is an integer.
@@ -53,7 +51,6 @@ defun!("integer-or-marker-p",
        Sinteger_or_marker_p,
        integer_or_marker_p,
        1,
-       1,
        ptr::null(),
        "Return t if OBJECT is an integer or a marker (editor pointer).
 
@@ -71,7 +68,6 @@ defun!("natnump",
        Fnatnump(object),
        Snatnump,
        natnump,
-       1,
        1,
        ptr::null(),
        "Return t if OBJECT is a non-negative integer.
@@ -91,7 +87,6 @@ defun!("numberp",
        Snumberp,
        numberp,
        1,
-       1,
        ptr::null(),
        "Return t if OBJECT is a number (floating point or integer).
 
@@ -109,7 +104,6 @@ defun!("number-or-marker-p",
        Fnumber_or_marker_p(object),
        Snumber_or_marker_p,
        number_or_marker_p,
-       1,
        1,
        ptr::null(),
        "Return t if OBJECT is a number or a marker (editor pointer).

@@ -43,7 +43,6 @@ defun!("mod",
        Smod,
        lisp_mod,
        2,
-       2,
        ptr::null(),
        "Return X modulo Y.
 The result falls between zero (inclusive) and Y (exclusive).
@@ -370,7 +369,6 @@ defun!("abs",
        Fabs(obj),
        Sabs,
        abs,
-       1,
        1,
        ptr::null(),
        "Return the absolute value of ARG.

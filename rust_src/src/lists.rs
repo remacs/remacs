@@ -30,7 +30,6 @@ defun!("atom",
        Satom,
        atom,
        1,
-       1,
        ptr::null(),
        "Return t if OBJECT is not a cons cell.  This includes nil.");
 
@@ -46,7 +45,6 @@ defun!("consp",
        Fconsp(object),
        Sconsp,
        consp,
-       1,
        1,
        ptr::null(),
        "Return t if OBJECT is a cons cell.
@@ -117,7 +115,6 @@ defun!("setcar",
        Ssetcar,
        setcar,
        2,
-       2,
        ptr::null(),
        "Set the car of CELL to be NEWCAR. Returns NEWCAR.
 
@@ -137,7 +134,6 @@ defun!("setcdr",
        Fsetcdr(cell, newcar),
        Ssetcdr,
        setcdr,
-       2,
        2,
        ptr::null(),
        "Set the cdr of CELL to be NEWCDR.  Returns NEWCDR.
@@ -178,7 +174,6 @@ defun!("car",
        Scar,
        car,
        1,
-       1,
        ptr::null(),
        "Return the car of LIST.  If arg is nil, return nil.
 Error if arg is not nil and not a \
@@ -205,7 +200,6 @@ defun!("cdr",
        Scdr,
        cdr,
        1,
-       1,
        ptr::null(),
        "Return the cdr of LIST.  If arg is nil, return nil.
 Error if arg is not nil and not a \
@@ -230,7 +224,6 @@ defun!("listp",
        Slistp,
        listp,
        1,
-       1,
        ptr::null(),
        "return t if OBJECT is a list, that is a cons cell or nil, Otherwise, return nil.
 
@@ -249,7 +242,6 @@ defun!("nlistp",
        Fnlistp(object),
        Snlistp,
        nlistp,
-       1,
        1,
        ptr::null(),
        "Return t if OBJECT is not a list.  Lists include nil.
