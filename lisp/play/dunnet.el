@@ -2109,7 +2109,7 @@ for a moment, then straighten yourself up.
     (setq args (car args))
     (if (not args)
 	(dun-mprincl "You must give the answer on the same line.")
-      (if (dun-members args dun-correct-answer)
+      (if (member args dun-correct-answer)
 	  (progn
 	    (dun-mprincl "Correct.")
 	    (if (= dun-lastdir 0)
@@ -2329,16 +2329,6 @@ for a moment, then straighten yourself up.
 	  (dun-get-path (substring dirstring (1+ slash))
 		    (append startlist
 			    (list (substring dirstring 0 slash)))))))))
-
-
-;;; Is a string a member of a string list?
-
-(defun dun-members (string string-list)
-  (let (found)
-    (setq found nil)
-    (dolist (x string-list)
-      (if (string= x string)
-	  (setq found t))) found))
 
 ;;; Function to put objects in the treasure room.  Also prints current
 ;;; score to let user know he has scored.
