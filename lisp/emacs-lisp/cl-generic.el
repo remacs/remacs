@@ -233,6 +233,7 @@ DEFAULT-BODY, if present, is used as the body of a default method.
              ,(help-add-fundoc-usage doc args))
            ,@(mapcar (lambda (method) `(cl-defmethod ,name ,@method))
                      (nreverse methods)))
+       :autoload-end
        ,@(mapcar (lambda (declaration)
                    (let ((f (cdr (assq (car declaration)
                                        defun-declarations-alist))))
@@ -1214,10 +1215,6 @@ Used internally for the (major-mode MODE) context specializers."
                     ;;E.g. could be (eql ...)
                     (progn (cl-assert (null modes)) mode)
                   `(derived-mode ,mode . ,modes))))
-
-;; Local variables:
-;; generated-autoload-file: "cl-loaddefs.el"
-;; End:
 
 (provide 'cl-generic)
 ;;; cl-generic.el ends here
