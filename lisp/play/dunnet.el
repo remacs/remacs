@@ -1,4 +1,4 @@
-;;; dunnet.el --- text adventure for Emacs
+;;; dunnet.el --- text adventure for Emacs -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1992-1993, 2001-2017 Free Software Foundation, Inc.
 
@@ -3193,7 +3193,7 @@ File not found")))
 (provide 'dunnet)
 
 ;; Local Variables:
-;; byte-compile-warnings: (not free-vars lexical)
+;; byte-compile-warnings: (not free-vars)
 ;; End:
 
 ;;; dunnet.el ends here
