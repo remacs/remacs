@@ -968,6 +968,17 @@ addition, toolkit builds create their menu bars in toolkit-specific
 parts of code, bypassing xdisp.c, so those parts need to be enhanced
 with toolkit-specific code to display the menu bar right to left.
 
+** Custom
+
+*** Extend :set-after to also mean initialize after.
+If defcustom A specifies :set-after '(B), then if a user customizes
+both A and B, custom will set A after B.  But if the user only customizes
+A, then if B is already defined, it gets left at its original setting.
+Instead, if B has not been customized it should be re-initialized
+(on the assumption that the default value depends on A).
+See the places where we manually call custom-reevaluate-setting,
+such as for mail-host-address and user-mail-address in startup.el.
+
 ** ImageMagick support
 
 *** image-type-header-regexps priorities the jpeg loader over the

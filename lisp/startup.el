@@ -1298,7 +1298,7 @@ the `--debug-init' option to view a complete error backtrace."
 	 ;; Yes, this is ugly, but slightly less so than leaving
 	 ;; user-mail-address uninitialized during init file processing.
 	 ;; Perhaps we should make :set-after do something like this?
-	 ;; Ie, extend it to also mean (re)initialize-after.
+	 ;; Ie, extend it to also mean (re)initialize-after.  See etc/TODO.
 	 (equal user-mail-address
 		(let (mail-host-address)
 		  (ignore-errors
