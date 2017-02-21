@@ -3000,8 +3000,6 @@ redraw_frame (struct frame *f)
   /* Error if F has no glyphs.  */
   eassert (f->glyphs_initialized_p);
   update_begin (f);
-  if (FRAME_MSDOS_P (f))
-    FRAME_TERMINAL (f)->set_terminal_modes_hook (FRAME_TERMINAL (f));
   clear_frame (f);
   clear_current_matrices (f);
   update_end (f);
@@ -3123,7 +3121,7 @@ update_frame (struct frame *f, bool force_p, bool inhibit_hairy_id_p)
       paused_p = update_frame_1 (f, force_p, inhibit_hairy_id_p, 1);
       update_end (f);
 
-      if (FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f))
+      if (FRAME_TERMCAP_P (f))
         {
           if (FRAME_TTY (f)->termscript)
             fflush (FRAME_TTY (f)->termscript);
@@ -5530,21 +5528,8 @@ void
 change_frame_size (struct frame *f, int new_width, int new_height,
 		   bool pretend, bool delay, bool safe, bool pixelwise)
 {
-  Lisp_Object tail, frame;
-
-  if (FRAME_MSDOS_P (f))
-    {
-      /* On MS-DOS, all frames use the same screen, so a change in
-         size affects all frames.  Termcap now supports multiple
-         ttys. */
-      FOR_EACH_FRAME (tail, frame)
-	if (! FRAME_WINDOW_P (XFRAME (frame)))
-	  change_frame_size_1 (XFRAME (frame), new_width, new_height,
-			       pretend, delay, safe, pixelwise);
-    }
-  else
-    change_frame_size_1 (f, new_width, new_height, pretend, delay, safe,
-			 pixelwise);
+  change_frame_size_1 (f, new_width, new_height, pretend, delay, safe,
+                       pixelwise);
 }
 
 /***********************************************************************
@@ -5559,8 +5544,7 @@ FILE = nil means just close any termscript file currently open.  */)
 {
   struct tty_display_info *tty;
 
-  if (! FRAME_TERMCAP_P (SELECTED_FRAME ())
-      && ! FRAME_MSDOS_P (SELECTED_FRAME ()))
+  if (! FRAME_TERMCAP_P (SELECTED_FRAME ()))
     error ("Current frame is not on a tty device");
 
   tty = CURTTY ();

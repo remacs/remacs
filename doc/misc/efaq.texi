@@ -1415,7 +1415,6 @@ of files from Macintosh, Microsoft, and Unix platforms.
 * Deleting menus and menu options::
 * Turning on syntax highlighting::
 * Scrolling only one line::
-* Editing MS-DOS files::
 * Filling paragraphs with a single space::
 * Escape sequences in shell output::
 * Fullscreen mode on MS-Windows::
@@ -1479,8 +1478,7 @@ customize, with completion.
 
 In Emacs 21.1 and later, colors and faces are supported in non-windowed mode,
 i.e., on Unix and GNU/Linux text-only terminals and consoles, and when
-invoked as @samp{emacs -nw} on X, and MS-Windows.  (Colors and faces were
-supported in the MS-DOS port since Emacs 19.29.)  Emacs automatically
+invoked as @samp{emacs -nw} on X, and MS-Windows.  Emacs automatically
 detects color support at startup and uses it if available.  If you think
 that your terminal supports colors, but Emacs won't use them, check the
 @code{termcap} entry for your display type for color-related
@@ -2722,23 +2720,6 @@ Alternatively, use the following Lisp form in your @file{.emacs}:
 (setq scroll-conservatively most-positive-fixnum)
 @end lisp
 
-@node Editing MS-DOS files
-@section How can I edit MS-DOS files using Emacs?
-@cindex Editing MS-DOS files
-@cindex MS-DOS files, editing
-@cindex Microsoft files, editing
-@cindex Windows files, editing
-
-As of Emacs 20, detection and handling of MS-DOS (and Windows) files is
-performed transparently.  You can open MS-DOS files on a Unix system,
-edit it, and save it without having to worry about the file format.
-
-When editing an MS-DOS style file, the mode line will indicate that it
-is a DOS file.  On Unix and GNU/Linux systems, and also on a Macintosh,
-the string @samp{(DOS)} will appear near the left edge of the mode line;
-on DOS and Windows, where the DOS end-of-line (EOL) format is the
-default, a backslash (@samp{\}) will appear in the mode line.
-
 @node Filling paragraphs with a single space
 @section How can I tell Emacs to fill paragraphs with a single space after each period?
 @cindex One space following periods
@@ -3245,7 +3226,7 @@ dired, @code{directory-listing-before-filename-regexp}.
 
 This answer is meant for users of Unix and Unix-like systems.  Users of
 other operating systems should see the series of questions beginning
-with @ref{Emacs for MS-DOS}, which describe where to get non-Unix source
+with @ref{Emacs for MS-Windows}, which describe where to get non-Unix source
 and binaries, and how to install Emacs on those systems.
 
 Most GNU/Linux distributions provide pre-built Emacs packages.
@@ -3338,7 +3319,6 @@ problem (@pxref{Reporting bugs}).
 * Current GNU distributions::
 * Difference between Emacs and XEmacs::
 * Emacs for minimalists::
-* Emacs for MS-DOS::
 * Emacs for MS-Windows::
 * Emacs for GNUstep::
 * Emacs for macOS::
@@ -3513,36 +3493,6 @@ information is available from
 
 @uref{http://www.gnu.org/software/zile/}
 
-
-@node Emacs for MS-DOS
-@section Where can I get Emacs for MS-DOS?
-@cindex MS-DOS, Emacs for
-@cindex DOS, Emacs for
-@cindex Compiling Emacs for DOS
-@cindex Emacs for MS-DOS
-
-To build Emacs from source for MS-DOS, see the instructions in the file
-@file{msdos/INSTALL} in the distribution.  The DOS port builds and runs
-on plain DOS, and also on all versions of MS-Windows from version 3.X
-onwards, including Windows XP and Vista.
-
-The file @file{etc/PROBLEMS} contains some additional information
-regarding Emacs under MS-DOS.
-
-A pre-built binary distribution of the old Emacs 20 is available, as
-described at
-
-@uref{ftp://ftp.delorie.com/pub/djgpp/current/v2gnu/emacs.README}
-
-For a list of other MS-DOS implementations of Emacs (and Emacs
-look-alikes), consult the list of ``Emacs implementations and literature,''
-available at
-
-@uref{http://www.finseth.com/emacs.html}
-
-Note that while many of these programs look similar to Emacs, they often
-lack certain features, such as the Emacs Lisp extension language.
-
 @node Emacs for MS-Windows
 @section Where can I get Emacs for Microsoft Windows?
 @cindex FAQ for Emacs on MS-Windows
@@ -3551,8 +3501,6 @@ lack certain features, such as the Emacs Lisp extension language.
 
 There is a separate FAQ for Emacs on MS-Windows,
 @pxref{Top,,,efaq-w32,FAQ for Emacs on MS Windows}.
-For MS-DOS, @pxref{Emacs for MS-DOS}.
-
 
 @node Emacs for GNUstep
 @section Where can I get Emacs for GNUstep?
@@ -4130,7 +4078,7 @@ display or is invoked with @samp{emacs -nw}, you typically need to use
 @code{set-terminal-coding-system} to tell Emacs what the terminal can
 display, even after setting the language environment; otherwise
 non-@acronym{ASCII} characters will display as @samp{?}.  On other operating
-systems, such as MS-DOS and MS-Windows, Emacs queries the OS about the
+systems, such as MS-Windows, Emacs queries the OS about the
 character set supported by the display, and sets up the required
 terminal coding system automatically.
 

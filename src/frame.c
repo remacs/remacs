@@ -187,10 +187,10 @@ frame_inhibit_resize (struct frame *f, bool horizontal, Lisp_Object parameter)
 	      && !EQ (fullscreen, Qnil) && !EQ (fullscreen, Qfullheight))
 	  || (!horizontal
 	      && !EQ (fullscreen, Qnil) && !EQ (fullscreen, Qfullwidth))
-	  || FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f))
+	  || FRAME_TERMCAP_P (f))
        : ((horizontal && f->inhibit_horizontal_resize)
 	  || (!horizontal && f->inhibit_vertical_resize)));
-  if (inhibit && !FRAME_TERMCAP_P (f) && !FRAME_MSDOS_P (f))
+  if (inhibit && !FRAME_TERMCAP_P (f))
     frame_size_history_add
       (f, Qframe_inhibit_resize, 0, 0,
        list5 (horizontal ? Qt : Qnil, parameter,
@@ -510,9 +510,7 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
     {
       resize_frame_windows (f, new_windows_width, 1, 1);
 
-      /* MSDOS frames cannot PRETEND, as they change frame size by
-	 manipulating video hardware.  */
-      if ((FRAME_TERMCAP_P (f) && !pretend) || FRAME_MSDOS_P (f))
+      if ((FRAME_TERMCAP_P (f) && !pretend))
 	FrameCols (FRAME_TTY (f)) = new_cols;
 
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
@@ -535,9 +533,7 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
     {
       resize_frame_windows (f, new_windows_height, 0, 1);
 
-      /* MSDOS frames cannot PRETEND, as they change frame size by
-	 manipulating video hardware.  */
-      if ((FRAME_TERMCAP_P (f) && !pretend) || FRAME_MSDOS_P (f))
+      if ((FRAME_TERMCAP_P (f) && !pretend))
 	FrameRows (FRAME_TTY (f)) = new_lines + FRAME_TOP_MARGIN (f);
     }
   else if (new_lines != old_lines)
@@ -1141,7 +1137,7 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
   if (!for_deletion && FRAME_HAS_MINIBUF_P (sf))
     resize_mini_window (XWINDOW (FRAME_MINIBUF_WINDOW (sf)), 1);
 
-  if (FRAME_TERMCAP_P (XFRAME (frame)) || FRAME_MSDOS_P (XFRAME (frame)))
+  if (FRAME_TERMCAP_P (XFRAME (frame)))
     {
       struct frame *f = XFRAME (frame);
       struct tty_display_info *tty = FRAME_TTY (f);
@@ -1588,7 +1584,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 		{
 		  /* Do not change a text terminal's top-frame.  */
 		  struct frame *f1 = XFRAME (frame1);
-		  if (FRAME_TERMCAP_P (f1) || FRAME_MSDOS_P (f1))
+		  if (FRAME_TERMCAP_P (f1))
 		    {
 		      Lisp_Object top_frame = FRAME_TTY (f1)->top_frame;
 		      if (!EQ (top_frame, frame))
@@ -2510,9 +2506,7 @@ If FRAME is omitted or nil, return information on the currently selected frame. 
 	store_in_alist (&alist, Qbackground_color,
 			tty_color_name (f, FRAME_BACKGROUND_PIXEL (f)));
       store_in_alist (&alist, Qfont,
-		      build_string (FRAME_MSDOS_P (f)
-				    ? "ms-dos"
-				    : FRAME_W32_P (f) ? "w32term"
+		      build_string (FRAME_W32_P (f) ? "w32term"
 				    :"tty"));
     }
   store_in_alist (&alist, Qname, f->name);
@@ -2637,9 +2631,7 @@ list, but are otherwise ignored.  */)
   (Lisp_Object frame, Lisp_Object alist)
 {
   struct frame *f = decode_live_frame (frame);
-  register Lisp_Object prop, val;
-
-  CHECK_LIST (alist);
+  Lisp_Object prop, val;
 
   /* I think this should be done with a hook.  */
 #ifdef HAVE_WINDOW_SYSTEM
@@ -3083,6 +3075,7 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
 
   for (size = 0, tail = alist; CONSP (tail); tail = XCDR (tail))
     size++;
+  CHECK_LIST_END (tail, alist);
 
   USE_SAFE_ALLOCA;
   SAFE_ALLOCA_LISP (parms, 2 * size);

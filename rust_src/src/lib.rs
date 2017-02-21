@@ -1,11 +1,17 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
+#![allow(private_no_mangle_fns)]
 
 #![cfg_attr(feature = "strict", deny(warnings))]
+
+// Wilfred/remacs#38 : Need to override the allocator for legacy unexec support on Mac.
+#[cfg(all(not(test), target_os = "macos"))]
+extern crate alloc_unexecmacosx;
 
 #[macro_use]
 extern crate lazy_static;
 
+extern crate remacs_sys;
 extern crate libc;
 
 mod lisp;
@@ -17,11 +23,14 @@ mod math;
 mod numbers;
 mod strings;
 mod symbols;
-mod globals;
 mod character;
 mod files;
+mod base64;
 
-use lisp::LispSubr;
+use remacs_sys::Lisp_Subr;
+
+pub use base64::base64_encode_1;
+pub use base64::base64_decode_1;
 
 // These need to be exported as bytecode.c depends upon them.
 pub use math::Fplus;
@@ -39,6 +48,7 @@ pub use lists::Fcdr;
 pub use lists::Flistp;
 pub use floatfns::extract_float;
 pub use floatfns::fmod_float;
+pub use symbols::Fsymbolp;
 
 // These need to be exported as marker.c depends upon them.
 pub use marker::CHECK_MARKER;
@@ -50,7 +60,7 @@ pub use lisp::CHECK_STRING;
 pub use files::rust_make_temp;
 
 extern "C" {
-    fn defsubr(sname: *const LispSubr);
+    fn defsubr(sname: *const Lisp_Subr);
 }
 
 #[no_mangle]

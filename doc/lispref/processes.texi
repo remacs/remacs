@@ -205,7 +205,7 @@ function.  @xref{Security Considerations}.
 (shell-quote-argument "foo > bar")
      @result{} "foo\\ \\>\\ bar"
 
-;; @r{This example shows the behavior on MS-DOS and MS-Windows.}
+;; @r{This example shows the behavior on MS-Windows.}
 (shell-quote-argument "foo > bar")
      @result{} "\"foo > bar\""
 @end example
@@ -286,8 +286,7 @@ user can quit by typing @kbd{C-g}.  The first @kbd{C-g} tries to kill
 the subprocess with a @code{SIGINT} signal; but it waits until the
 subprocess actually terminates before quitting.  If during that time the
 user types another @kbd{C-g}, that kills the subprocess instantly with
-@code{SIGKILL} and quits immediately (except on MS-DOS, where killing
-other processes doesn't work).  @xref{Quitting}.
+@code{SIGKILL} and quits immediately.  @xref{Quitting}.
 
   The synchronous subprocess functions return an indication of how the
 process terminated.
@@ -330,9 +329,6 @@ In this case, the process is not truly synchronous, since it can run in
 parallel with Emacs; but you can think of it as synchronous in that
 Emacs is essentially finished with the subprocess as soon as this
 function returns.
-
-MS-DOS doesn't support asynchronous subprocesses, so this option doesn't
-work there.
 
 @item @code{(:file @var{file-name})}
 Send the output to the file name specified, overwriting it if it
@@ -476,8 +472,7 @@ with the output from the subprocess, and whether to update the display
 as it comes in.  For details, see the description of
 @code{call-process}, above.  If @var{destination} is the integer 0,
 @code{call-process-region} discards the output and returns @code{nil}
-immediately, without waiting for the subprocess to finish (this only
-works if asynchronous subprocesses are supported; i.e., not on MS-DOS).
+immediately, without waiting for the subprocess to finish.
 
 The remaining arguments, @var{args}, are strings that specify command
 line arguments for the program.
@@ -2413,6 +2408,14 @@ If non-@code{nil}, the host's capability string.
 @item :type @var{symbol}
 The connection type: @samp{plain} or @samp{tls}.
 @end table
+
+@item :shell-command @var{string-or-nil}
+If the connection @code{type} is @code{shell}, this parameter will be
+interpreted as a format-spec string that will be executed to make the
+connection.  The specs available are @samp{%s} for the host name and
+@samp{%p} for the port number.  For instance, if you want to first ssh
+to @samp{gateway} before making a plain connection, then this
+parameter could be something like @samp{ssh gateway nc %s %p}.
 
 @end table
 

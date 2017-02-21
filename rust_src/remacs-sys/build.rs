@@ -61,7 +61,7 @@ fn main() {
            "pub const EMACS_INT_SIZE: EmacsInt = {};\n",
            integer_type_item.2)
         .expect("Write error!");
-    
+
     write!(&mut file, "pub type EmacsDouble = {};\n", float_type_item.0).expect("Write error!");
     write!(&mut file,
            "pub const EMACS_FLOAT_SIZE: EmacsInt = {};\n",
@@ -81,7 +81,11 @@ fn main() {
     let use_lsb_tag = val_max_len - 1 < int_max_len;
     write!(&mut file,
            "pub const USE_LSB_TAG: bool = {};\n",
-           if use_lsb_tag { "true" } else { "false" })
+           if use_lsb_tag {
+               "true"
+           } else {
+               "false"
+           })
         .expect("Write error!");
 
 }

@@ -199,15 +199,6 @@ nontrivial changes to the build process.
 	leim/MISC-DIC/pinyin.map
 	leim/MISC-DIC/ziranma.cin
 
- * cp850
-
-     This file contains non-ASCII characters in unibyte strings.  When
-     editing a keyboard layout it's more convenient to see 'é' than
-     '\202', and the MS-DOS compiler requires the single byte if a
-     backslash escape is not being used.
-
-	src/msdos.c
-
  * iso-2022-cn-ext
 
      This file is externally generated from leim/MISC-DIC/cangjie-table.b5
@@ -287,7 +278,6 @@ nontrivial changes to the build process.
 	*.sig
 	etc/e/eterm-color
 	etc/package-keyring.gpg
-	msdos/emacs.pif
 	nextstep/GNUstep/Emacs.base/Resources/emacs.tiff
 	nt/icons/hand.cur
 

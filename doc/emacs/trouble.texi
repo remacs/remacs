@@ -21,7 +21,6 @@ also considered.
 
 @table @kbd
 @item C-g
-@itemx C-@key{Break} @r{(MS-DOS only)}
 Quit: cancel running or partially typed command.
 @item C-]
 Abort innermost recursive editing level and cancel the command which
@@ -57,18 +56,6 @@ deactivates the mark, unless Transient Mark mode is off
 incremental search, @kbd{C-g} behaves specially; it may take two
 successive @kbd{C-g} characters to get out of a search.
 @xref{Incremental Search}, for details.
-
-  On MS-DOS, the character @kbd{C-@key{Break}} serves as a quit character
-like @kbd{C-g}.  The reason is that it is not feasible, on MS-DOS, to
-recognize @kbd{C-g} while a command is running, between interactions
-with the user.  By contrast, it @emph{is} feasible to recognize
-@kbd{C-@key{Break}} at all times.
-@iftex
-@xref{MS-DOS Keyboard,,,emacs-xtra, Specialized Emacs Features}.
-@end iftex
-@ifnottex
-@xref{MS-DOS Keyboard}.
-@end ifnottex
 
 @findex keyboard-quit
   @kbd{C-g} works by setting the variable @code{quit-flag} to @code{t}
@@ -342,7 +329,7 @@ Here, @var{backtrace} is the name of a text file containing a copy of
 the backtrace, @var{bindir} is the name of the directory that
 contains the Emacs executable, and @var{emacs-binary} is the name of
 the Emacs executable file, normally @file{emacs} on GNU and Unix
-systems and @file{emacs.exe} on MS-Windows and MS-DOS@.  Omit the
+systems and @file{emacs.exe} on MS-Windows and.  Omit the
 @option{-p} option if your version of @command{addr2line} is too old
 to have it.
 
@@ -452,10 +439,6 @@ state.  The quit you requested will happen by and by.
 displays, you can use the mouse to kill Emacs or switch to another
 program.
 
-  On MS-DOS, you must type @kbd{C-@key{Break}} (twice) to cause
-emergency escape---but there are cases where it won't work, when
-system call hangs or when Emacs is stuck in a tight loop in C code.
-
 @node Bugs
 @section Reporting Bugs
 
@@ -553,7 +536,7 @@ buffer or change how it is displayed, are not responsible.
 
   Taking forever to complete a command can be a bug, but you must make
 sure that it is really Emacs's fault.  Some commands simply take a
-long time.  Type @kbd{C-g} (@kbd{C-@key{Break}} on MS-DOS) and then
+long time.  Type @kbd{C-g} and then
 @kbd{C-h l} to see whether the input Emacs received was what you
 intended to type; if the input was such that you @emph{know} it should
 have been processed quickly, report a bug.  If you don't know whether

@@ -184,11 +184,11 @@ call_process_cleanup (Lisp_Object buffer)
     {
       kill (-synch_process_pid, SIGINT);
       message1 ("Waiting for process to die...(type C-g again to kill it instantly)");
-      immediate_quit = 1;
-      QUIT;
+      immediate_quit = true;
+      maybe_quit ();
       wait_for_termination (synch_process_pid, 0, 1);
       synch_process_pid = 0;
-      immediate_quit = 0;
+      immediate_quit = false;
       message1 ("Waiting for process to die...done");
     }
 }
@@ -294,13 +294,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
   CHECK_STRING (args[0]);
 
   error_file = Qt;
-
-#ifndef subprocesses
-  /* Without asynchronous processes we cannot have BUFFER == 0.  */
-  if (nargs >= 3
-      && (INTEGERP (CONSP (args[2]) ? XCAR (args[2]) : args[2])))
-    error ("Operating system cannot handle asynchronous subprocesses");
-#endif /* subprocesses */
 
   /* Decide the coding-system for giving arguments.  */
   {
@@ -644,8 +637,8 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
       process_coding.src_multibyte = 0;
     }
 
-  immediate_quit = 1;
-  QUIT;
+  immediate_quit = true;
+  maybe_quit ();
 
   if (0 <= fd0)
     {
@@ -687,7 +680,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	    }
 
 	  /* Now NREAD is the total amount of data in the buffer.  */
-	  immediate_quit = 0;
+	  immediate_quit = false;
 
 	  if (!nread)
 	    ;
@@ -761,7 +754,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	      display_on_the_fly = true;
 	    }
 	  immediate_quit = true;
-	  QUIT;
+	  maybe_quit ();
 	}
     give_up: ;
 
@@ -773,7 +766,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	       make_number (total_read));
     }
 
-  immediate_quit = 0;
+  immediate_quit = false;
 
   /* Don't kill any children that the subprocess may have left behind
      when exiting.  */
@@ -1219,8 +1212,6 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
 
 #else  /* not WINDOWSNT */
 
-#ifndef MSDOS
-
   restore_nofile_limit ();
 
   /* Redirect file descriptors and clear the close-on-exec flag on the
@@ -1236,7 +1227,6 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
   int errnum = emacs_exec_file (new_argv[0], new_argv, env);
   exec_failed (new_argv[0], errnum);
 
-#endif  /* MSDOS */
 #endif  /* not WINDOWSNT */
 }
 

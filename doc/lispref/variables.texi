@@ -1886,10 +1886,7 @@ variables: by putting them in a special file, or by defining a
 @defvr Constant dir-locals-file
 This constant is the name of the file where Emacs expects to find the
 directory-local variables.  The name of the file is
-@file{.dir-locals.el}@footnote{
-The MS-DOS version of Emacs uses @file{_dir-locals.el} instead, due to
-limitations of the DOS filesystems.
-}.  A file by that name in a directory causes Emacs to apply its
+@file{.dir-locals.el}.  A file by that name in a directory causes Emacs to apply its
 settings to any file in that directory or any of its subdirectories
 (optionally, you can exclude subdirectories; see below).
 If some of the subdirectories have their own @file{.dir-locals.el}

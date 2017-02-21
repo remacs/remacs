@@ -149,9 +149,6 @@ directory name.
 
 If this variable is @code{nil} (the default), or it fails to match a
 filename, the backup is made in the original file's directory.
-
-On MS-DOS filesystems without long names this variable is always
-ignored.
 @end defopt
 
 @defopt make-backup-file-name-function

@@ -222,8 +222,15 @@
 
 (ert-deftest thread-errors ()
   "Test what happens when a thread signals an error."
-    (should (threadp (make-thread #'call-error "call-error")))
-    (should (threadp (make-thread #'thread-custom "thread-custom"))))
+  (let (th1 th2)
+    (setq th1 (make-thread #'call-error "call-error"))
+    (should (threadp th1))
+    (while (thread-alive-p th1)
+      (thread-yield))
+    (should (equal (thread-last-error)
+                   '(error "Error is called")))
+    (setq th2 (make-thread #'thread-custom "thread-custom"))
+    (should (threadp th2))))
 
 (ert-deftest thread-sticky-point ()
   "Test bug #25165 with point movement in cloned buffer."
@@ -242,7 +249,8 @@
                           (while t (thread-yield))))))
     (thread-signal thread 'error nil)
     (sit-for 1)
-    (should-not (thread-alive-p thread))))
+    (should-not (thread-alive-p thread))
+    (should (equal (thread-last-error) '(error)))))
 
 (defvar threads-condvar nil)
 
@@ -287,6 +295,7 @@
     (thread-signal new-thread 'error '("Die, die, die!"))
     (sleep-for 0.1)
     ;; Make sure the thread died.
-    (should (= (length (all-threads)) 1))))
+    (should (= (length (all-threads)) 1))
+    (should (equal (thread-last-error) '(error "Die, die, die!")))))
 
 ;;; threads.el ends here

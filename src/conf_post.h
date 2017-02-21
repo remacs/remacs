@@ -133,59 +133,6 @@ typedef bool bool_bf;
 #undef HAVE_RINT
 #endif  /* HPUX */
 
-#ifdef MSDOS
-#ifndef __DJGPP__
-You lose; /* Emacs for DOS must be compiled with DJGPP */
-#endif
-#define _NAIVE_DOS_REGS
-
-/* Start of gnulib-related stuff  */
-
-/* lib/ftoastr.c wants strtold, but DJGPP only has _strtold.  DJGPP >
-   2.03 has it, but it also has _strtold as a stub that jumps to
-   strtold, so use _strtold in all versions.  */
-#define strtold _strtold
-
-#if __DJGPP__ > 2 || __DJGPP_MINOR__ > 3
-# define HAVE_LSTAT 1
-#else
-# define lstat stat
-/* DJGPP 2.03 and older don't have the next two.  */
-# define EOVERFLOW ERANGE
-# define SIZE_MAX  4294967295U
-#endif
-
-/* We must intercept 'opendir' calls to stash away the directory name,
-   so we could reuse it in readlinkat; see msdos.c.  */
-#define opendir sys_opendir
-
-/* End of gnulib-related stuff.  */
-
-#define emacs_raise(sig) msdos_fatal_signal (sig)
-
-/* DATA_START is needed by vm-limit.c and unexcoff.c. */
-#define DATA_START (&etext + 1)
-
-/* Define one of these for easier conditionals.  */
-#ifdef HAVE_X_WINDOWS
-/* We need a little extra space, see ../../lisp/loadup.el and the
-   commentary below, in the non-X branch.  The 140KB number was
-   measured on GNU/Linux and on MS-Windows.  */
-#define SYSTEM_PURESIZE_EXTRA (-170000+140000)
-#else
-/* We need a little extra space, see ../../lisp/loadup.el.
-   As of 20091024, DOS-specific files use up 62KB of pure space.  But
-   overall, we end up wasting 130KB of pure space, because
-   BASE_PURESIZE starts at 1.47MB, while we need only 1.3MB (including
-   non-DOS specific files and load history; the latter is about 55K,
-   but depends on the depth of the top-level Emacs directory in the
-   directory tree).  Given the unknown policy of different DPMI
-   hosts regarding loading of untouched pages, I'm not going to risk
-   enlarging Emacs footprint by another 100+ KBytes.  */
-#define SYSTEM_PURESIZE_EXTRA (-170000+90000)
-#endif
-#endif  /* MSDOS */
-
 /* macOS / GNUstep need a bit more pure memory.  Of the existing knobs,
    SYSTEM_PURESIZE_EXTRA seems like the least likely to cause problems.  */
 #ifdef HAVE_NS

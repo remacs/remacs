@@ -850,6 +850,13 @@ delivered."
 	;; After deleting the parent directory, the descriptor must
 	;; not be valid anymore.
 	(should-not (file-notify-valid-p file-notify--test-desc))
+        ;; w32notify doesn't generate 'stopped' events when the parent
+        ;; directory is deleted, which doesn't provide a chance for
+        ;; filenotify.el to remove the descriptor from the internal
+        ;; hash table it maintains.  So we must remove the descriptor
+        ;; manually.
+        (if (string-equal (file-notify--test-library) "w32notify")
+            (file-notify--rm-descriptor file-notify--test-desc))
 
         ;; The environment shall be cleaned up.
         (file-notify--test-cleanup-p))
@@ -906,6 +913,8 @@ delivered."
 	 (file-notify--test-timeout)
 	 (not (file-notify-valid-p file-notify--test-desc)))
         (should-not (file-notify-valid-p file-notify--test-desc))
+        (if (string-equal (file-notify--test-library) "w32notify")
+            (file-notify--rm-descriptor file-notify--test-desc))
 
         ;; The environment shall be cleaned up.
         (file-notify--test-cleanup-p))
@@ -975,6 +984,8 @@ delivered."
             (file-notify--test-read-event)
             (delete-file file)))
         (delete-directory file-notify--test-tmpfile)
+        (if (string-equal (file-notify--test-library) "w32notify")
+            (file-notify--rm-descriptor file-notify--test-desc))
 
         ;; The environment shall be cleaned up.
         (file-notify--test-cleanup-p))
@@ -1184,6 +1195,9 @@ the file watch."
           (delete-directory file-notify--test-tmpfile 'recursive))
         (should-not (file-notify-valid-p file-notify--test-desc1))
         (should-not (file-notify-valid-p file-notify--test-desc2))
+        (when (string-equal (file-notify--test-library) "w32notify")
+          (file-notify--rm-descriptor file-notify--test-desc1)
+          (file-notify--rm-descriptor file-notify--test-desc2))
 
         ;; The environment shall be cleaned up.
         (file-notify--test-cleanup-p))

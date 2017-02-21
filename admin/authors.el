@@ -694,7 +694,6 @@ Changes to files in this list are not listed.")
     "notes/commits" "notes/changelogs"
     "revdiff"				; admin/
     "vcdiff" "rcs-checkin" "tindex.pl"
-    "mainmake" "sed1.inp" "sed2.inp" "sed3.inp" ; msdos/
     "mac-fix-env.m"
     ;; Deleted vms stuff:
     "temacs.opt" "descrip.mms" "compile.com" "link.com"
@@ -808,7 +807,6 @@ in the repository.")
     ("INSTALL.MSYS" . "INSTALL")
     ("server.c" . "emacsserver.c")
     ("lib-src/etags.c" . "etags.c")
-    ;; msdos/
     ("is-exec.c" . "is_exec.c")
     ("enriched.doc" . "enriched.txt")
     ("GETTING.GNU.SOFTWARE" . "FTP")
@@ -905,7 +903,6 @@ in the repository.")
     ("emacs.tex" . "emacs.texi")
     ("faq.texi" . "efaq.texi")
     ("major.texi" . "modes.texi")
-    ("msdog-xtra.texi" . "msdos-xtra.texi")
     ("msdog.texi" . "msdos.texi")
     ;; Moved from lisp/gnus/ to lisp/calendar/
     ("time-date.el" . "calendar/time-date.el")

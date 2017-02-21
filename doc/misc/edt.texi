@@ -119,9 +119,6 @@ Emacs distribution etc directory).
 @file{edt-vt100.el}---Built-in support for DEC VT-100 (and above) terminals.
 
 @item
-@file{edt-pc.el}---Built-in support for PC 101 Keyboards under MS-DOS.
-
-@item
 @file{edt-mapper.el}---Create an EDT LK-201 map file for keyboards
 without built-in support.
 
@@ -334,7 +331,6 @@ Emacs bindings.
 
 @menu
 * Sun workstations::  Sun workstations running X.
-* MS-DOS::            PC users running MS-DOS.
 * GNU/Linux::         PC users running GNU/Linux.
 * Unix::              Using @key{NumLock} for the @key{PF1} key on Unix systems.
 @end menu
@@ -410,16 +406,6 @@ one you don't use and redefine it to be the @key{NumLock} key.
 Basically, you need to clear the @key{NumLock} key from being assigned
 as a modifier, assign it to the key of your choice, and then add it back
 as a modifier.  (@ref{Unix} for further help on how to do this.)
-
-@node MS-DOS
-@section PC Users Running MS-DOS
-
-By default, F1 is configured to emulate the @key{PF1} (@key{GOLD}) key.
-But @key{NumLock} can be used instead if you load a freeware TSR
-distributed with MS-Kermit, call @samp{gold.com}.  This was once
-distributed in a file called @file{gold22.zip} and came with the source
-code as well as a loadable binary image.  (See @file{edt-pc.el} in the
-Emacs @file{lisp/emulation} directory for more information.)
 
 @node GNU/Linux
 @section PC Users Running GNU/Linux

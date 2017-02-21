@@ -6,7 +6,6 @@
 
 extern crate libc;
 
-use std::os::raw::c_char;
 #[cfg(test)]
 use std::cmp::max;
 use std::mem;
@@ -14,6 +13,10 @@ use std::ops::Deref;
 use std::fmt::{Debug, Formatter, Error};
 
 use marker::{LispMarker, marker_position};
+
+use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, Lisp_Object, EMACS_INT_MAX, EMACS_INT_SIZE,
+                 EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS};
+use remacs_sys::Lisp_Object as CLisp_Object;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -34,42 +37,22 @@ use marker::{LispMarker, marker_position};
 ///
 /// Their definition are determined in a way consistent with Emacs C.
 /// Under casual systems, they're the type isize and usize respectively.
-
-include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
-/// These are an example of the casual case.
-#[cfg(dummy = "impossible")]
-pub type EmacsInt = isize;
-#[cfg(dummy = "impossible")]
-pub type EmacsUint = usize;
-#[cfg(dummy = "impossible")]
-pub type EmacsDouble = f64;
-#[cfg(dummy = "impossible")]
-pub const EMACS_INT_MAX: EmacsInt = 0x7FFFFFFFFFFFFFFF_i64;
-#[cfg(dummy = "impossible")]
-pub const EMACS_INT_SIZE: EmacsInt = 8;
-#[cfg(dummy = "impossible")]
-pub const EMACS_FLOAT_SIZE: EmacsInt = 8;
-#[cfg(dummy = "impossible")]
-pub const GCTYPEBITS: EmacsInt = 3;
-#[cfg(dummy = "impossible")]
-pub const USE_LSB_TAG: bool = true;
-
 #[repr(C)]
 #[derive(PartialEq, Eq, Clone, Copy)]
-pub struct LispObject(EmacsInt);
+pub struct LispObject(CLisp_Object);
 
 extern "C" {
-    pub fn wrong_type_argument(predicate: LispObject, value: LispObject) -> LispObject;
+    pub fn wrong_type_argument(predicate: Lisp_Object, value: Lisp_Object) -> Lisp_Object;
     pub fn STRING_BYTES(s: *mut LispString) -> libc::ptrdiff_t;
-    pub fn STRING_MULTIBYTE(a: LispObject) -> bool;
-    pub fn SSDATA(string: LispObject) -> *mut libc::c_char;
-    pub static Qt: LispObject;
-    pub static Qarith_error: LispObject;
-    pub static Qnumber_or_marker_p: LispObject;
-    pub static Qnumberp: LispObject;
-    pub static Qfloatp: LispObject;
-    pub static Qstringp: LispObject;
-    fn make_float(float_value: f64) -> LispObject;
+    pub fn STRING_MULTIBYTE(a: Lisp_Object) -> bool;
+    pub fn SSDATA(string: Lisp_Object) -> *mut libc::c_char;
+    pub static Qt: Lisp_Object;
+    pub static Qarith_error: Lisp_Object;
+    pub static Qnumber_or_marker_p: Lisp_Object;
+    pub static Qnumberp: Lisp_Object;
+    pub static Qfloatp: Lisp_Object;
+    pub static Qstringp: Lisp_Object;
+    fn make_float(float_value: libc::c_double) -> Lisp_Object;
 }
 
 pub const Qnil: LispObject = LispObject(0);
@@ -77,7 +60,7 @@ pub const Qnil: LispObject = LispObject(0);
 impl LispObject {
     #[inline]
     pub fn constant_t() -> LispObject {
-        unsafe { Qt }
+        LispObject::from_raw(unsafe { Qt })
     }
 
     #[inline]
@@ -88,7 +71,7 @@ impl LispObject {
     #[inline]
     pub fn from_bool(v: bool) -> LispObject {
         if v {
-            unsafe { Qt }
+            LispObject::from_raw(unsafe { Qt })
         } else {
             Qnil
         }
@@ -96,11 +79,11 @@ impl LispObject {
 
     #[inline]
     pub fn from_float(v: EmacsDouble) -> LispObject {
-        unsafe { make_float(v) }
+        LispObject::from_raw(unsafe { make_float(v) })
     }
 
     #[inline]
-    pub unsafe fn from_raw(i: EmacsInt) -> LispObject {
+    pub fn from_raw(i: EmacsInt) -> LispObject {
         LispObject(i)
     }
 
@@ -438,92 +421,20 @@ impl LispObject {
     }
 }
 
-
-
-
-const PSEUDOVECTOR_SIZE_BITS: libc::c_int = 12;
-#[allow(dead_code)]
-const PSEUDOVECTOR_SIZE_MASK: libc::c_int = (1 << PSEUDOVECTOR_SIZE_BITS) - 1;
-const PSEUDOVECTOR_REST_BITS: libc::c_int = 12;
-#[allow(dead_code)]
-const PSEUDOVECTOR_REST_MASK: libc::c_int = (((1 << PSEUDOVECTOR_REST_BITS) - 1) <<
-                                             PSEUDOVECTOR_SIZE_BITS);
-pub const PSEUDOVECTOR_AREA_BITS: libc::c_int = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS;
-#[allow(dead_code)]
-const PVEC_TYPE_MASK: libc::c_int = 0x3f << PSEUDOVECTOR_AREA_BITS;
-
-#[allow(non_camel_case_types)]
-#[allow(dead_code)]
-pub enum PvecType {
-    // TODO: confirm these are the right numbers.
-    PVEC_NORMAL_VECTOR = 0,
-    PVEC_FREE = 1,
-    PVEC_PROCESS = 2,
-    PVEC_FRAME = 3,
-    PVEC_WINDOW = 4,
-    PVEC_BOOL_VECTOR = 5,
-    PVEC_BUFFER = 6,
-    PVEC_HASH_TABLE = 7,
-    PVEC_TERMINAL = 8,
-    PVEC_WINDOW_CONFIGURATION = 9,
-    PVEC_SUBR = 10,
-    PVEC_OTHER = 11,
-    PVEC_XWIDGET = 12,
-    PVEC_XWIDGET_VIEW = 13,
-
-    PVEC_COMPILED = 14,
-    PVEC_CHAR_TABLE = 15,
-    PVEC_SUB_CHAR_TABLE = 16,
-    PVEC_FONT = 17,
-}
-
-#[repr(C)]
-pub struct VectorLikeHeader {
-    pub size: libc::ptrdiff_t,
-}
-
-/// Represents an elisp function.
-#[repr(C)]
-pub struct LispSubr {
-    pub header: VectorLikeHeader,
-    /// The C or Rust function that we will call when the user invokes
-    /// the elisp function.
-    pub function: *const libc::c_void,
-    /// The minimum number of arguments to the elisp function.
-    pub min_args: libc::c_short,
-    /// The maximum number of arguments to the elisp function.
-    pub max_args: libc::c_short,
-    /// The name of the function in elisp.
-    pub symbol_name: *const c_char,
-    /// The interactive specification. This may be a normal prompt
-    /// string, such as `"bBuffer: "` or an elisp form as a string.
-    /// If the function is not interactive, this should be a null
-    /// pointer.
-    pub intspec: *const c_char,
-    /// The docstring of our function.
-    pub doc: *const c_char,
-}
-
-// In order to use `lazy_static!` with LispSubr, it must be Sync. Raw
-// pointers are not Sync, but it isn't a problem to define Sync if we
-// never mutate LispSubr values. If we do, we will need to create
-// these objects at runtime, perhaps using forget().
-//
-// Based on http://stackoverflow.com/a/28116557/509706
-unsafe impl Sync for LispSubr {}
-
 /// Define an elisp function struct.
 ///
 /// # Example
 ///
 /// ```
-/// fn Fdo_nothing(x: LispObject) -> LispObject {
+/// fn do_nothing(x: LispObject) -> LispObject {
 ///     Qnil
 /// }
 ///
 /// defun!("do-nothing", // the name of our elisp function
-///        Fdo_nothing, // the Rust function we want to call
+///        Fdo_nothing(x), // the name of the function that will be called by C (this will call
+///        do_nothing).
 ///        Sdo_nothing, // the name of the struct that we will define
+///        do_nothing, // the Rust function we want to call
 ///        1, 1, // min and max number of arguments
 ///        ptr::null(), // our function is not interactive
 ///        // Docstring. The last line ensures that *Help* shows the
@@ -533,26 +444,92 @@ unsafe impl Sync for LispSubr {}
 /// (fn X)");
 /// ```
 ///
+/// The identifiers inside the parens of `Fdo_nothing` are the function arguments name.
+///
 /// # Porting Notes
 ///
-/// This is equivalent to DEFUN in Emacs C, but the function
+/// This is equivalent to `DEFUN` in Emacs C, but the function
 /// definition is kept separate to aid readability.
 macro_rules! defun {
-    ($lisp_name:expr, $fname:ident, $sname:ident, $min_args:expr, $max_args:expr, $intspec:expr, $docstring:expr) => {
+    ($lisp_name:expr, $fname:ident($($arg_name:ident),*), $sname: ident, $rust_name: ident, $min_args:expr, $max_args:expr, $intspec:expr, $docstring:expr) => {
+        #[no_mangle]
+        pub extern "C" fn $fname($($arg_name: $crate::remacs_sys::Lisp_Object),*) -> $crate::remacs_sys::Lisp_Object {
+            let ret = $rust_name($($crate::lisp::LispObject::from_raw($arg_name)),*);
+            ret.to_raw()
+        }
+
+        lazy_static! {
+            // TODO: this is blindly hoping we have the correct alignment.
+            // We should ensure we have GCALIGNMENT (8 bytes).
+            pub static ref $sname: $crate::remacs_sys::Lisp_Subr = $crate::remacs_sys::Lisp_Subr {
+                header: $crate::remacs_sys::vectorlike_header {
+                    size: ($crate::remacs_sys::PVEC_SUBR <<
+                           $crate::remacs_sys::PSEUDOVECTOR_AREA_BITS) as $crate::libc::ptrdiff_t,
+                },
+                function: ($fname as *const $crate::libc::c_void),
+                min_args: $min_args,
+                max_args: $max_args,
+                symbol_name: ((concat!($lisp_name, "\0")).as_ptr()) as *const $crate::libc::c_char,
+                intspec: $intspec,
+                doc: (concat!($docstring, "\0").as_ptr()) as *const $crate::libc::c_char,
+            };
+        }
+    }
+}
+
+/// Define an elisp function struct with `MANY` arguments.
+///
+/// # Example
+///
+/// ```
+/// fn do_nothing(x: &[LispObject]) -> LispObject {
+///     Qnil
+/// }
+///
+/// defun_many!("do-nothing", // the name of our elisp function
+///             Fdo_nothing, // the name of the function that will be called by C (this will call
+///             do_nothing)
+///             Sdo_nothing, // the name of the struct that we will define
+///             do_nothing, // the name of the Rust function to be called
+///             0,
+///             ptr::null(), // our function is not interactive
+///             // Docstring. The last line ensures that *Help* shows the
+///             // correct calling convention
+///             "Return nil unconditionally.
+///
+/// (fn X)");
+/// ```
+///
+/// # Porting Notes
+///
+/// This is equivalent to `DEFUN` (using max_args with `MANY`) and `DEFUN_MANY` in Emacs C, but the function
+/// definition is kept separate to aid readability.
+macro_rules! defun_many {
+    ($lisp_name:expr, $fname:ident, $sname: ident, $rust_name: ident, $min_args:expr, $intspec:expr, $docstring:expr) => {
+// this is not beautifu, but works.
+        #[no_mangle]
+        pub extern "C" fn $fname(nargs: $crate::libc::ptrdiff_t, args: *mut $crate::remacs_sys::Lisp_Object) -> $crate::remacs_sys::Lisp_Object {
+            let slice = unsafe { $crate::std::slice::from_raw_parts_mut::<$crate::remacs_sys::Lisp_Object>(args, nargs as usize) };
+            let mut args: Vec<$crate::lisp::LispObject> = slice.iter().map(|arg| $crate::lisp::LispObject::from_raw(*arg)).collect();
+
+            let ret = $rust_name(args.as_mut_slice());
+            ret.to_raw()
+        }
+
         lazy_static! {
 // TODO: this is blindly hoping we have the correct alignment.
 // We should ensure we have GCALIGNMENT (8 bytes).
-            pub static ref $sname: LispSubr = LispSubr {
-                header: $crate::lisp::VectorLikeHeader {
-                    size: (($crate::lisp::PvecType::PVEC_SUBR as libc::c_int) <<
-                           $crate::lisp::PSEUDOVECTOR_AREA_BITS) as libc::ptrdiff_t,
+            pub static ref $sname: $crate::remacs_sys::Lisp_Subr = $crate::remacs_sys::Lisp_Subr {
+                header: $crate::remacs_sys::vectorlike_header {
+                    size: ($crate::remacs_sys::PVEC_SUBR <<
+                           $crate::remacs_sys::PSEUDOVECTOR_AREA_BITS) as $crate::libc::ptrdiff_t,
                 },
-                function: ($fname as *const libc::c_void),
+                function: ($fname as *const $crate::libc::c_void),
                 min_args: $min_args,
-                max_args: $max_args,
-                symbol_name: ((concat!($lisp_name, "\0")).as_ptr()) as *const c_char,
+                max_args: $crate::lisp::MANY,
+                symbol_name: ((concat!($lisp_name, "\0")).as_ptr()) as *const $crate::libc::c_char,
                 intspec: $intspec,
-                doc: (concat!($docstring, "\0").as_ptr()) as *const c_char,
+                doc: (concat!($docstring, "\0").as_ptr()) as *const $crate::libc::c_char,
             };
         }
     }
@@ -629,7 +606,7 @@ mod deprecated {
     #[allow(dead_code)]
     pub fn XIL(i: EmacsInt) -> LispObject {
         // Note that CHECK_LISP_OBJECT_TYPE is 0 (false) in our build.
-        unsafe { LispObject::from_raw(i) }
+        LispObject::from_raw(i)
     }
 
     #[test]
@@ -847,7 +824,7 @@ pub fn check_number_coerce_marker(x: LispObject) -> LispObject {
         make_natnum(marker_position(x) as EmacsInt)
     } else {
         unsafe {
-            CHECK_TYPE(NUMBERP(x), Qnumber_or_marker_p, x);
+            CHECK_TYPE(NUMBERP(x), LispObject::from_raw(Qnumber_or_marker_p), x);
         }
         x
     }
@@ -860,7 +837,7 @@ pub fn check_number_coerce_marker(x: LispObject) -> LispObject {
 pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
     if !ok {
         unsafe {
-            wrong_type_argument(predicate, x);
+            wrong_type_argument(predicate.to_raw(), x.to_raw());
         }
     }
 }
@@ -868,8 +845,9 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
 /// Raise an error if `x` is not lisp string.
 #[allow(non_snake_case)]
 #[no_mangle]
-pub extern "C" fn CHECK_STRING(x: LispObject) {
-    CHECK_TYPE(x.is_string(), unsafe { Qstringp }, x);
+pub extern "C" fn CHECK_STRING(x: Lisp_Object) {
+    let x = LispObject::from_raw(x);
+    CHECK_TYPE(x.is_string(), LispObject::from_raw(unsafe { Qstringp }), x);
 }
 
 #[allow(non_snake_case)]

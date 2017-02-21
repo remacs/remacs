@@ -127,6 +127,17 @@ Return a list of all the live thread objects.  A new list is returned
 by each invocation.
 @end defun
 
+When code run by a thread signals an error that is unhandled, the
+thread exits.  Other threads can access the error form which caused
+the thread to exit using the following function.
+
+@defun thread-last-error
+This function returns the last error form recorded when a thread
+exited due to an error.  Each thread that exits abnormally overwrites
+the form stored by the previous thread's error with a new value, so
+only the last one can be accessed.
+@end defun
+
 @node Mutexes
 @section Mutexes
 

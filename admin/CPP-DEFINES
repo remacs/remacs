@@ -13,9 +13,6 @@ CYGWIN		Compiling the Cygwin port.
 __CYGWIN__	Ditto
 GNU_LINUX
 HPUX
-MSDOS		Compiling the MS-DOS port.
-__MSDOS__	Ditto.
-__DJGPP_MINOR__ Minor version number of the DJGPP library; used only in msdos.c and dosfns.c.
 DOS_NT		Compiling for either the MS-DOS or native MS-Windows port.
 WINDOWSNT	Compiling the native MS-Windows (W32) port.
 __MINGW32__	Compiling the W32 port with the MinGW or MinGW-w64 ports of GCC.
@@ -48,7 +45,6 @@ USE_GTK		Use the Gtk   toolkit for menus&scrollbars.  Requires HAVE_X11.
 
 FRAME_TERMCAP_P	A tty (character terminal) frame.
 FRAME_X_P	A frame on X Window system.
-FRAME_MSDOS_P	An MS-DOS frame (used only by the DOS port).
 FRAME_W32_P	A frame using native MS-Windows GUI.
 FRAME_WINDOW_P	A GUI frame (like X, w32, etc.)
 
@@ -60,8 +56,6 @@ HAVE_PROCFS     The /proc filesystem is supported.
 
 REL_ALLOC	Compile in the relocatable memory allocator ralloc.c.
 SYSTEM_MALLOC	Use the system library's malloc.
-subprocesses    System can use subprocesses (for M-x shell for example).
-                Defined by default, only MSDOS undefines it.
 DEBUG_LISP_OBJECT_TYPE Define it in lisp.h enable compile time checks
                        on Lisp_Object use.
 

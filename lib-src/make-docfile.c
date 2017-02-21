@@ -56,10 +56,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef DOS_NT
 /* Defined to be sys_chdir in ms-w32.h, but only #ifdef emacs, so this
-   is really just insurance.
-
-   Similarly, msdos defines this as sys_chdir, but we're not linking with the
-   file where that function is defined.  */
+   is really just insurance.  */
 #undef chdir
 #define IS_SLASH(c)  ((c) == '/' || (c) == '\\' || (c) == ':')
 #else  /* not DOS_NT */

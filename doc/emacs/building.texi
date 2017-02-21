@@ -321,13 +321,6 @@ compilation process terminates, this is sufficient:
 nohup @var{command}; sleep 1
 @end example
 
-@ifnottex
-  On MS-DOS, asynchronous subprocesses are
-not supported, so @kbd{M-x compile} runs the compilation command
-synchronously (i.e., you must wait until the command finishes before
-you can do anything else in Emacs).  @xref{MS-DOS}.
-@end ifnottex
-
 @node Grep Searching
 @section Searching with Grep under Emacs
 
