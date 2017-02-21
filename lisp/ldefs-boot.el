@@ -19123,8 +19123,8 @@ The default is 20.  If LIMIT is negative, do not limit the listing.
 
 ;;;***
 
-;;;### (autoloads nil "mule-util" "international/mule-util.el" (22676
-;;;;;;  23208 715522 293000))
+;;;### (autoloads nil "mule-util" "international/mule-util.el" (22700
+;;;;;;  907 781538 432000))
 ;;; Generated autoloads from international/mule-util.el
 
 (defsubst string-to-list (string) "\
@@ -19262,7 +19262,7 @@ QUALITY can be:
   `approximate', in which case we may cut some corners to avoid
     excessive work.
   `exact', in which case we may end up re-(en/de)coding a large
-    part of the file/buffer.
+    part of the file/buffer, this can be expensive and slow.
   nil, in which case we may return nil rather than an approximation.
 
 \(fn BYTE &optional QUALITY CODING-SYSTEM)" nil nil)
@@ -19276,7 +19276,7 @@ QUALITY can be:
   `approximate', in which case we may cut some corners to avoid
     excessive work.
   `exact', in which case we may end up re-(en/de)coding a large
-    part of the file/buffer.
+    part of the file/buffer, this can be expensive and slow.
   nil, in which case we may return nil rather than an approximation.
 
 \(fn POSITION &optional QUALITY CODING-SYSTEM)" nil nil)
@@ -22414,8 +22414,8 @@ Optional argument FACE specifies the face to do the highlighting.
 
 ;;;***
 
-;;;### (autoloads nil "python" "progmodes/python.el" (22676 23208
-;;;;;;  867521 672000))
+;;;### (autoloads nil "python" "progmodes/python.el" (22700 907 783538
+;;;;;;  423000))
 ;;; Generated autoloads from progmodes/python.el
 (push (purecopy '(python 0 25 1)) package--builtin-versions)
 
@@ -32293,7 +32293,7 @@ you can press `C-c <right>' (calling `winner-redo').
 
 ;;;***
 
-;;;### (autoloads nil "woman" "woman.el" (22676 23208 936521 391000))
+;;;### (autoloads nil "woman" "woman.el" (22700 907 786538 408000))
 ;;; Generated autoloads from woman.el
 (push (purecopy '(woman 0 551)) package--builtin-versions)
 
@@ -32311,7 +32311,7 @@ The major browsing mode used is essentially the standard Man mode.
 Choose the filename for the man page using completion, based on the
 topic selected from the directories specified in `woman-manpath' and
 `woman-path'.  The directory expansions and topics are cached for
-speed, but a non-nil interactive argument forces the caches to be
+speed.  With a prefix argument, force the caches to be
 updated (e.g. to re-interpret the current directory).
 
 Used non-interactively, arguments are optional: if given then TOPIC
@@ -32772,7 +32772,7 @@ Zone out, completely.
 ;;;;;;  "vc/ediff-vers.el" "vc/ediff-wind.el" "vc/pcvs-info.el" "vc/pcvs-parse.el"
 ;;;;;;  "vc/pcvs-util.el" "vc/vc-dav.el" "vc/vc-filewise.el" "vcursor.el"
 ;;;;;;  "vt-control.el" "vt100-led.el" "w32-fns.el" "w32-vars.el"
-;;;;;;  "x-dnd.el") (22676 38554 103597 865000))
+;;;;;;  "x-dnd.el") (22700 28147 844034 58000))
 
 ;;;***
 
