@@ -23,11 +23,10 @@ mod math;
 mod numbers;
 mod strings;
 mod symbols;
-mod globals;
 mod character;
 mod base64;
 
-use lisp::LispSubr;
+use remacs_sys::Lisp_Subr;
 
 pub use base64::base64_encode_1;
 pub use base64::base64_decode_1;
@@ -57,7 +56,7 @@ pub use marker::CHECK_MARKER;
 pub use lisp::CHECK_STRING;
 
 extern "C" {
-    fn defsubr(sname: *const LispSubr);
+    fn defsubr(sname: *const Lisp_Subr);
 }
 
 #[no_mangle]

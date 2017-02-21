@@ -19,8 +19,14 @@ env:
   # Ensure that we build without warnings.
   - CARGO_FLAGS="--features 'strict'"
 
+before_script: (cargo install rustfmt || true)
+
 script:
   # Configure Emacs for building
+  - export PATH=$PATH:~/.cargo/bin
+  - cd rust_src && cargo fmt -- --write-mode=diff
+  - cd remacs-sys && cargo fmt -- --write-mode=diff && cd ..
+  - cd alloc_unexecmacosx && cargo fmt -- --write-mode=diff && cd ../..
   - ./autogen.sh
   # These configure flags are only required on OS X.
   # TODO: remove them.
