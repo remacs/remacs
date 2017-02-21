@@ -765,9 +765,16 @@ Use the :set function to do so.  This is useful for customizable options
 that are defined before their standard value can really be computed.
 E.g. dumped variables whose default depends on run-time information."
   ;; If it has never been set at all, defvar it so as to mark it
-  ;; special, etc (bug#25770).
+  ;; special, etc (bug#25770).  This means we are initializing
+  ;; the variable, and normally any :set function would not apply.
+  ;; For custom-initialize-delay, however, it is documented that "the
+  ;; (delayed) initialization is performed with the :set function".
+  ;; This is needed by eg global-font-lock-mode, which uses
+  ;; custom-initialize-delay but needs the :set function custom-set-minor-mode
+  ;; to also run during initialization.  So, long story short, we
+  ;; always do the funcall step, even if symbol was not bound before.
   (or (default-boundp symbol)
-      (eval `(defvar ,symbol nil)))
+      (eval `(defvar ,symbol nil))) ; reset below, so any value is fine
   (funcall (or (get symbol 'custom-set) 'set-default)
 	   symbol
 	   (eval (car (or (get symbol 'saved-value) (get symbol 'standard-value))))))
