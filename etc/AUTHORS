@@ -1252,7 +1252,7 @@ Eli Zaretskii: wrote [bidirectional display in xdisp.c]
 and changed xdisp.c msdos.c w32.c w32fns.c display.texi files.el
   simple.el fileio.c w32proc.c w32term.c keyboard.c emacs.c dispnew.c
   dispextern.h INSTALL config.bat sed1v2.inp src/Makefile.in term.c
-  frames.texi window.c and 1020 other files
+  frames.texi window.c and 1021 other files
 
 Emanuele Giaquinta: changed configure.ac rxvt.el charset.c etags.c
   fontset.c frame.el gnus-faq.texi loadup.el lread.c sh-script.el
@@ -3356,7 +3356,7 @@ Nicolas Petton: wrote map-tests.el map.el seq-tests.el seq.el
   thunk-tests.el thunk.el
 and co-wrote auth-source-tests.el subr-tests.el
 and changed sequences.texi README configure.ac sed2v2.inp emacs.png
-  authors.el emacs23.png arc-mode.el cl-extra.el emacs.svg README.W32
+  authors.el emacs23.png README.W32 arc-mode.el cl-extra.el emacs.svg
   Emacs.icns Makefile.in auth-source.el emacs.ico obarray.el data.c
   emacs-document.svg emacs-document23.svg emacs.texi emacs23.svg
   and 9 other files
@@ -3395,10 +3395,10 @@ and changed rsz-mini.el emacs-buffer.gdb comint.el files.el Makefile
 Noah Lavine: changed tramp.el
 
 Noam Postavsky: changed search.c cl-preloaded.el debugging.texi
-  modes.texi simple.el w32.c cl-macs.el buffer.c buffers.texi category.c
-  cmdproxy.c cus-edit.el dired.c elisp-mode.el em-term.el
-  emacs-lisp-intro.texi etags.el eval.c files.el find-func.el help-fns.el
-  and 30 other files
+  modes.texi simple.el w32.c cl-macs.el progmodes/python.el buffer.c
+  buffers.texi category.c cmdproxy.c cus-edit.el dired.c elisp-mode.el
+  em-term.el emacs-lisp-intro.texi etags.el eval.c files.el find-func.el
+  and 31 other files
 
 Nobuyoshi Nakada: co-wrote ruby-mode.el
 

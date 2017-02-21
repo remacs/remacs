@@ -1,3 +1,75 @@
+2017-02-18  Noam Postavsky  <npostavs@gmail.com>
+
+	* lisp/woman.el (woman): Fix docstring prefix arg description.
+
+2017-02-18  Eli Zaretskii  <eliz@gnu.org>
+
+	Mention "editor" in Emacs man page header
+
+	* doc/man/emacs.1.in: Mention "editor" in the header line.
+	(Bug#25771, Bug#25779)
+
+2017-02-18  Eli Zaretskii  <eliz@gnu.org>
+
+	Document problems with nerd-fonts
+
+	* etc/PROBLEMS (fonts): Describe the potential problems with
+	nerd-fonts that cause slow display.  (Bug#25697)
+
+2017-02-13  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* doc/lispref/modes.texi (Derived Modes): Make example more idiomatic
+
+2017-02-12  Eli Zaretskii  <eliz@gnu.org>
+
+	Clarify what is the "cursor"
+
+	* doc/lispref/windows.texi (Window Point): Clarify the notion of
+	"cursor".
+
+2017-02-10  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve commentary in lisp.h
+
+	* src/lisp.h: Explain in the comment why enlarging a Lisp_Misc
+	object is discouraged.
+
+2017-02-08  Noam Postavsky  <npostavs@gmail.com>
+
+	Disable native completion for ipython (Bug#25067)
+
+	* lisp/progmodes/python.el:
+	(python-shell-completion-native-disabled-interpreters): Add "ipython".
+
+2017-02-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in ada-mode manual
+
+	* doc/misc/ada-mode.texi (Project file variables): Add a missing
+	right bracket.  Reported by Jean-Christophe Helary
+	<jean.christophe.helary@gmail.com>.
+
+2017-02-05  Eli Zaretskii  <eliz@gnu.org>
+
+	Clarify documentation of 'bufferpos-to-filepos' and 'filepos-to-bufferpos'
+
+	* doc/lispref/nonascii.texi (Text Representations): Clarify that
+	'exact' value of QUALITY argument to 'bufferpos-to-filepos' and
+	'filepos-to-bufferpos' can lead to expensive and slow processing.
+
+	* lisp/international/mule-util.el (filepos-to-bufferpos)
+	(bufferpos-to-filepos): Doc fix.  (Bug#25626)
+
+2017-02-03  Nicolas Petton  <nicolas@petton.fr>
+
+	Bump Emacs version to 25.2 RC1
+
+	* README:
+	* configure.ac:
+	* msdos/sed2v2.inp:
+	* nt/README.W32: Bump Emacs version.
+	* lisp/ldefs-boot.el: Update.
+
 2017-02-03  Nicolas Petton  <nicolas@petton.fr>
 
 	* admin/make-tarball.txt: Add documentation regarding the release banner.
@@ -35569,7 +35641,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 02d9ad8440508b64233a4a38dae67c523139f7df (inclusive).
+commit ec4226d81074751c105264a3a3383c48d0a05e41 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
