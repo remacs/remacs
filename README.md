@@ -151,7 +151,7 @@ more Emacs-y.
    
         apt-get install texinfo libjpeg-dev libtiff-dev \
           libgif-dev libxpm-dev libgtk-3-dev libgnutls-dev \
-          libncurses5-dev
+          libncurses5-dev libxml2-dev
           
     On macOS, you'll need libxml2 (via `xcode-select --install`) and
     gnutls (via `brew install gnutls`).
