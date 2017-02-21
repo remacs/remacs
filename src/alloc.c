@@ -5453,18 +5453,18 @@ purecopy_hash_table (struct Lisp_Hash_Table *table)
   pure_test.user_hash_function = purecopy (table->test.user_hash_function);
   pure_test.user_cmp_function = purecopy (table->test.user_cmp_function);
 
-  pure->test = pure_test;
   pure->header = table->header;
   pure->weak = purecopy (Qnil);
-  pure->rehash_size = purecopy (table->rehash_size);
   pure->hash = purecopy (table->hash);
   pure->next = purecopy (table->next);
-  pure->next_free = table->next_free;
   pure->index = purecopy (table->index);
   pure->count = table->count;
+  pure->next_free = table->next_free;
   pure->pure = table->pure;
   pure->rehash_threshold = table->rehash_threshold;
+  pure->rehash_size = table->rehash_size;
   pure->key_and_value = purecopy (table->key_and_value);
+  pure->test = pure_test;
 
   return pure;
 }

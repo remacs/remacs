@@ -133,10 +133,10 @@ it grows automatically.  This value specifies how to make the hash table
 larger, at that time.
 
 If @var{rehash-size} is an integer, it should be positive, and the hash
-table grows by adding that much to the nominal size.  If
+table grows by adding approximately that much to the nominal size.  If
 @var{rehash-size} is floating point, it had better be greater
-than 1, and the hash table grows by multiplying the old size by that
-number.
+than 1, and the hash table grows by multiplying the old size by
+approximately that number.
 
 The default value is 1.5.
 

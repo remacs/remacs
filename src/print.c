@@ -1806,14 +1806,12 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	      print_object (h->weak, printcharfun, escapeflag);
 	    }
 
-	  if (!NILP (h->rehash_size))
-	    {
-	      print_c_string (" rehash-size ", printcharfun);
-	      print_object (h->rehash_size, printcharfun, escapeflag);
-	    }
+	  print_c_string (" rehash-size ", printcharfun);
+	  print_object (Fhash_table_rehash_size (obj),
+			printcharfun, escapeflag);
 
 	  print_c_string (" rehash-threshold ", printcharfun);
-	  print_object (make_float (h->rehash_threshold),
+	  print_object (Fhash_table_rehash_threshold (obj),
                         printcharfun, escapeflag);
 
           if (h->pure)

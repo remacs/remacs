@@ -3684,13 +3684,13 @@ allocate_hash_table (void)
    `equal' or a symbol denoting a user-defined test named TEST with
    test and hash functions USER_TEST and USER_HASH.
 
-   Give the table initial capacity SIZE, SIZE >= 0, an integer.
+   Give the table initial capacity SIZE, 0 <= SIZE <= MOST_POSITIVE_FIXNUM.
 
-   If REHASH_SIZE is an integer, it must be > 0, and this hash table's
-   new size when it becomes full is computed by adding REHASH_SIZE to
-   its old size.  If REHASH_SIZE is a float, it must be > 1.0, and the
-   table's new size is computed by multiplying its old size with
-   REHASH_SIZE.
+   If REHASH_SIZE is equal to a negative integer, this hash table's
+   new size when it becomes full is computed by subtracting
+   REHASH_SIZE from its old size.  Otherwise it must be positive, and
+   the table's new size is computed by multiplying its old size by
+   REHASH_SIZE + 1.
 
    REHASH_THRESHOLD must be a float <= 1.0, and > 0.  The table will
    be resized when the approximate ratio of table entries to table
@@ -3704,34 +3704,31 @@ allocate_hash_table (void)
    changed after purecopy.  */
 
 Lisp_Object
-make_hash_table (struct hash_table_test test,
-		 Lisp_Object size, Lisp_Object rehash_size,
-		 float rehash_threshold, Lisp_Object weak,
-                 bool pure)
+make_hash_table (struct hash_table_test test, EMACS_INT size,
+		 float rehash_size, float rehash_threshold,
+		 Lisp_Object weak, bool pure)
 {
   struct Lisp_Hash_Table *h;
   Lisp_Object table;
-  EMACS_INT index_size, sz;
+  EMACS_INT index_size;
   ptrdiff_t i;
   double index_float;
 
   /* Preconditions.  */
   eassert (SYMBOLP (test.name));
-  eassert (INTEGERP (size) && XINT (size) >= 0);
-  eassert ((INTEGERP (rehash_size) && XINT (rehash_size) > 0)
-	   || (FLOATP (rehash_size) && 1 < XFLOAT_DATA (rehash_size)));
+  eassert (0 <= size && size <= MOST_POSITIVE_FIXNUM);
+  eassert (rehash_size <= -1 || 0 < rehash_size);
   eassert (0 < rehash_threshold && rehash_threshold <= 1);
 
-  if (XFASTINT (size) == 0)
-    size = make_number (1);
+  if (size == 0)
+    size = 1;
 
-  sz = XFASTINT (size);
   double threshold = rehash_threshold;
-  index_float = sz / threshold;
+  index_float = size / threshold;
   index_size = (index_float < INDEX_SIZE_BOUND + 1
 		? next_almost_prime (index_float)
 		: INDEX_SIZE_BOUND + 1);
-  if (INDEX_SIZE_BOUND < max (index_size, 2 * sz))
+  if (INDEX_SIZE_BOUND < max (index_size, 2 * size))
     error ("Hash table too large");
 
   /* Allocate a table and initialize it.  */
@@ -3743,14 +3740,14 @@ make_hash_table (struct hash_table_test test,
   h->rehash_threshold = rehash_threshold;
   h->rehash_size = rehash_size;
   h->count = 0;
-  h->key_and_value = Fmake_vector (make_number (2 * sz), Qnil);
-  h->hash = Fmake_vector (size, Qnil);
-  h->next = Fmake_vector (size, make_number (-1));
+  h->key_and_value = Fmake_vector (make_number (2 * size), Qnil);
+  h->hash = Fmake_vector (make_number (size), Qnil);
+  h->next = Fmake_vector (make_number (size), make_number (-1));
   h->index = Fmake_vector (make_number (index_size), make_number (-1));
   h->pure = pure;
 
   /* Set up the free list.  */
-  for (i = 0; i < sz - 1; ++i)
+  for (i = 0; i < size - 1; ++i)
     set_hash_next_slot (h, i, i + 1);
   h->next_free = 0;
 
@@ -3810,22 +3807,21 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
       ptrdiff_t old_size = HASH_TABLE_SIZE (h);
       EMACS_INT new_size, index_size, nsize;
       ptrdiff_t i;
+      double rehash_size = h->rehash_size;
       double index_float;
 
-      if (INTEGERP (h->rehash_size))
-	new_size = old_size + XFASTINT (h->rehash_size);
+      if (rehash_size < 0)
+	new_size = old_size - rehash_size;
       else
 	{
-	  double float_new_size = old_size * XFLOAT_DATA (h->rehash_size);
+	  double float_new_size = old_size * (rehash_size + 1);
 	  if (float_new_size < INDEX_SIZE_BOUND + 1)
-	    {
-	      new_size = float_new_size;
-	      if (new_size <= old_size)
-		new_size = old_size + 1;
-	    }
+	    new_size = float_new_size;
 	  else
 	    new_size = INDEX_SIZE_BOUND + 1;
 	}
+      if (new_size <= old_size)
+	new_size = old_size + 1;
       double threshold = h->rehash_threshold;
       index_float = new_size / threshold;
       index_size = (index_float < INDEX_SIZE_BOUND + 1
@@ -4408,7 +4404,7 @@ in an error.
 usage: (make-hash-table &rest KEYWORD-ARGS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  Lisp_Object test, size, rehash_size, weak;
+  Lisp_Object test, weak;
   bool pure;
   struct hash_table_test testdesc;
   ptrdiff_t i;
@@ -4448,18 +4444,26 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
   pure = i && !NILP (args[i]);
   /* See if there's a `:size SIZE' argument.  */
   i = get_key_arg (QCsize, nargs, args, used);
-  size = i ? args[i] : Qnil;
-  if (NILP (size))
-    size = make_number (DEFAULT_HASH_SIZE);
-  else if (!INTEGERP (size) || XINT (size) < 0)
-    signal_error ("Invalid hash table size", size);
+  Lisp_Object size_arg = i ? args[i] : Qnil;
+  EMACS_INT size;
+  if (NILP (size_arg))
+    size = DEFAULT_HASH_SIZE;
+  else if (NATNUMP (size_arg))
+    size = XFASTINT (size_arg);
+  else
+    signal_error ("Invalid hash table size", size_arg);
 
   /* Look for `:rehash-size SIZE'.  */
+  float rehash_size;
   i = get_key_arg (QCrehash_size, nargs, args, used);
-  rehash_size = i ? args[i] : make_float (DEFAULT_REHASH_SIZE);
-  if (! ((INTEGERP (rehash_size) && 0 < XINT (rehash_size))
-	 || (FLOATP (rehash_size) && 1 < XFLOAT_DATA (rehash_size))))
-    signal_error ("Invalid hash table rehash size", rehash_size);
+  if (!i)
+    rehash_size = DEFAULT_REHASH_SIZE;
+  else if (INTEGERP (args[i]) && 0 < XINT (args[i]))
+    rehash_size = - XINT (args[i]);
+  else if (FLOATP (args[i]) && 0 < (float) (XFLOAT_DATA (args[i]) - 1))
+    rehash_size = (float) (XFLOAT_DATA (args[i]) - 1);
+  else
+    signal_error ("Invalid hash table rehash size", args[i]);
 
   /* Look for `:rehash-threshold THRESHOLD'.  */
   i = get_key_arg (QCrehash_threshold, nargs, args, used);
@@ -4513,7 +4517,14 @@ DEFUN ("hash-table-rehash-size", Fhash_table_rehash_size,
        doc: /* Return the current rehash size of TABLE.  */)
   (Lisp_Object table)
 {
-  return check_hash_table (table)->rehash_size;
+  double rehash_size = check_hash_table (table)->rehash_size;
+  if (rehash_size < 0)
+    {
+      EMACS_INT s = -rehash_size;
+      return make_number (min (s, MOST_POSITIVE_FIXNUM));
+    }
+  else
+    return make_float (rehash_size + 1);
 }
 
 

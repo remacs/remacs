@@ -44,9 +44,8 @@ make_log (EMACS_INT heap_size, EMACS_INT max_stack_depth)
      a special way.  This is OK as long as the object is not exposed
      to Elisp, i.e. until it is returned by *-profiler-log, after which
      it can't be used any more.  */
-  Lisp_Object log = make_hash_table (hashtest_profiler,
-				     make_number (heap_size),
-				     make_float (DEFAULT_REHASH_SIZE),
+  Lisp_Object log = make_hash_table (hashtest_profiler, heap_size,
+				     DEFAULT_REHASH_SIZE,
 				     DEFAULT_REHASH_THRESHOLD,
 				     Qnil, false);
   struct Lisp_Hash_Table *h = XHASH_TABLE (log);
