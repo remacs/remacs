@@ -4674,7 +4674,7 @@ If nil, use the current buffer." */ )
 {
   Lisp_Object buffer;
   struct buffer *b;
-  struct sha1_ctx ctx;
+  struct sha1_ctx *ctx;
 
   if (NILP (buffer_or_name))
     buffer = Fcurrent_buffer ();
@@ -4684,26 +4684,26 @@ If nil, use the current buffer." */ )
     nsberror (buffer_or_name);
 
   b = XBUFFER (buffer);
-  sha1_init_ctx (&ctx);
+  ctx = sha1_ctx_new();
 
   /* Process the first part of the buffer. */
   sha1_process_bytes (BUF_BEG_ADDR (b),
 		      BUF_GPT_BYTE (b) - BUF_BEG_BYTE (b),
-		      &ctx);
+		      ctx);
 
   /* If the gap is before the end of the buffer, process the last half
      of the buffer. */
   if (BUF_GPT_BYTE (b) < BUF_Z_BYTE (b))
     sha1_process_bytes (BUF_GAP_END_ADDR (b),
 			BUF_Z_ADDR (b) - BUF_GAP_END_ADDR (b),
-			&ctx);
+			ctx);
 
   Lisp_Object digest = make_uninit_string (SHA1_DIGEST_SIZE * 2);
-  sha1_finish_ctx (&ctx, SSDATA (digest));
+  sha1_finish_ctx (ctx, SSDATA (digest));
   return make_digest_string (digest, SHA1_DIGEST_SIZE);
 }
 
-
+
 void
 syms_of_fns (void)
 {

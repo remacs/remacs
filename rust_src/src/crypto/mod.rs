@@ -1,5 +1,7 @@
 extern crate libc;
 
+pub mod sha1;
+
 use std::{ptr, slice};
 use libc::{c_char, c_void, size_t};
 use ring::digest;

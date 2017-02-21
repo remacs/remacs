@@ -6,7 +6,7 @@ dependencies = [
  "lazy_static 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "remacs-sys 0.1.0",
- "ring 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ring 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-serialize 0.3.22 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -33,7 +33,7 @@ dependencies = [
 
 [[package]]
 name = "ring"
-version = "0.6.3"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "lazy_static 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -54,6 +54,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [metadata]
 "checksum lazy_static 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6abe0ee2e758cd6bc8a2cd56726359007748fbf4128da998b65d0b70f881e19b"
 "checksum libc 0.2.20 (registry+https://github.com/rust-lang/crates.io-index)" = "684f330624d8c3784fb9558ca46c4ce488073a8d22450415c5eb4f4cfb0d11b5"
-"checksum ring 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)" = "f171b03b4d8db3b2b2de34661ad25b8f21749a7b94fbb0090463be285122cd83"
+"checksum ring 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)" = "595afba2db7545b940ec900dc59b5281f719d327fc0674eeadc9953617e55357"
 "checksum rustc-serialize 0.3.22 (registry+https://github.com/rust-lang/crates.io-index)" = "237546c689f20bb44980270c73c3b9edd0891c1be49cc1274406134a66d3957b"
 "checksum untrusted 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "193df64312e3515fd983ded55ad5bcaa7647a035804828ed757e832ce6029ef3"
