@@ -3119,7 +3119,7 @@ M-RET    `message-newline-and-reformat' (break the line and reformat)."
       ;; hard way.
       (progn
 	;; Skip past all headers and continuation lines.
-	(while (looking-at "[^:]+:\\|[\t ]+[^\t ]")
+	(while (looking-at "[^\t\n :]+:\\|[\t ]+[^\t\n ]")
 	  (forward-line 1))
 	;; We're now at the first empty line, so perhaps move past it.
 	(when (and (eolp)
