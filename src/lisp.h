@@ -2004,7 +2004,7 @@ struct Lisp_Hash_Table
 
   /* Resize hash table when number of entries / table size is >= this
      ratio.  */
-  double rehash_threshold;
+  float rehash_threshold;
 
   /* Vector of keys and values.  The key of item I is found at index
      2 * I, the value is found at index 2 * I + 1.
@@ -2088,7 +2088,7 @@ enum DEFAULT_HASH_SIZE { DEFAULT_HASH_SIZE = 65 };
    value gives the ratio of current entries in the hash table and the
    size of the hash table.  */
 
-static double const DEFAULT_REHASH_THRESHOLD = 0.8;
+static float const DEFAULT_REHASH_THRESHOLD = 0.8125;
 
 /* Default factor by which to increase the size of a hash table.  */
 
@@ -3363,7 +3363,7 @@ EMACS_UINT hash_string (char const *, ptrdiff_t);
 EMACS_UINT sxhash (Lisp_Object, int);
 Lisp_Object make_hash_table (struct hash_table_test test,
 		             Lisp_Object size, Lisp_Object rehash_size,
-		             double rehash_threshold, Lisp_Object weak,
+		             float rehash_threshold, Lisp_Object weak,
                              bool pure);
 ptrdiff_t hash_lookup (struct Lisp_Hash_Table *, Lisp_Object, EMACS_UINT *);
 ptrdiff_t hash_put (struct Lisp_Hash_Table *, Lisp_Object, Lisp_Object,

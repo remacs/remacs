@@ -144,8 +144,9 @@ The default value is 1.5.
 This specifies the criterion for when the hash table is full (so
 it should be made larger).  The value, @var{threshold}, should be a
 positive floating-point number, no greater than 1.  The hash table is
-full whenever the actual number of entries exceeds this fraction
-of the nominal size.  The default for @var{threshold} is 0.8.
+full whenever the actual number of entries exceeds the nominal size
+multiplied by an approximation to this value.  The default for
+@var{threshold} is 0.8125.
 @end table
 @end defun
 

@@ -3663,8 +3663,8 @@ allocate_hash_table (void)
    REHASH_SIZE.
 
    REHASH_THRESHOLD must be a float <= 1.0, and > 0.  The table will
-   be resized when the ratio of (number of entries in the table) /
-   (table size) is >= REHASH_THRESHOLD.
+   be resized when the approximate ratio of table entries to table
+   size exceeds REHASH_THRESHOLD.
 
    WEAK specifies the weakness of the table.  If non-nil, it must be
    one of the symbols `key', `value', `key-or-value', or `key-and-value'.
@@ -3676,7 +3676,7 @@ allocate_hash_table (void)
 Lisp_Object
 make_hash_table (struct hash_table_test test,
 		 Lisp_Object size, Lisp_Object rehash_size,
-		 double rehash_threshold, Lisp_Object weak,
+		 float rehash_threshold, Lisp_Object weak,
                  bool pure)
 {
   struct Lisp_Hash_Table *h;
@@ -3690,13 +3690,14 @@ make_hash_table (struct hash_table_test test,
   eassert (INTEGERP (size) && XINT (size) >= 0);
   eassert ((INTEGERP (rehash_size) && XINT (rehash_size) > 0)
 	   || (FLOATP (rehash_size) && 1 < XFLOAT_DATA (rehash_size)));
-  eassert (0 < rehash_threshold && rehash_threshold <= 1.0);
+  eassert (0 < rehash_threshold && rehash_threshold <= 1);
 
   if (XFASTINT (size) == 0)
     size = make_number (1);
 
   sz = XFASTINT (size);
-  index_float = sz / rehash_threshold;
+  double threshold = rehash_threshold;
+  index_float = sz / threshold;
   index_size = (index_float < INDEX_SIZE_BOUND + 1
 		? next_almost_prime (index_float)
 		: INDEX_SIZE_BOUND + 1);
@@ -3795,7 +3796,8 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
 	  else
 	    new_size = INDEX_SIZE_BOUND + 1;
 	}
-      index_float = new_size / h->rehash_threshold;
+      double threshold = h->rehash_threshold;
+      index_float = new_size / threshold;
       index_size = (index_float < INDEX_SIZE_BOUND + 1
 		    ? next_almost_prime (index_float)
 		    : INDEX_SIZE_BOUND + 1);
@@ -4370,8 +4372,8 @@ amount.  If it is a float, it must be > 1.0, and the new size is the
 old size multiplied by that factor.  Default is 1.5.
 
 :rehash-threshold THRESHOLD -- THRESHOLD must a float > 0, and <= 1.0.
-Resize the hash table when the ratio (number of entries / table size)
-is greater than or equal to THRESHOLD.  Default is 0.8.
+Resize the hash table when the ratio (table entries / table size)
+exceeds an approximation to THRESHOLD.  Default is 0.8125.
 
 :weakness WEAK -- WEAK must be one of nil, t, `key', `value',
 `key-or-value', or `key-and-value'.  If WEAK is not nil, the table
@@ -4390,7 +4392,6 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
   Lisp_Object test, size, rehash_size, weak;
-  double rehash_threshold;
   bool pure;
   struct hash_table_test testdesc;
   ptrdiff_t i;
@@ -4445,8 +4446,9 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
 
   /* Look for `:rehash-threshold THRESHOLD'.  */
   i = get_key_arg (QCrehash_threshold, nargs, args, used);
-  rehash_threshold = (!i ? DEFAULT_REHASH_THRESHOLD
-		      : FLOATP (args[i]) ? XFLOAT_DATA (args[i]) : 0);
+  float rehash_threshold = (!i ? DEFAULT_REHASH_THRESHOLD
+			    : !FLOATP (args[i]) ? 0
+			    : (float) XFLOAT_DATA (args[i]));
   if (! (0 < rehash_threshold && rehash_threshold <= 1))
     signal_error ("Invalid hash table rehash threshold", args[i]);
 

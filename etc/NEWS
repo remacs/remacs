@@ -904,6 +904,10 @@ consistency with the new functions.  For compatibility, 'sxhash'
 remains as an alias to 'sxhash-equal'.
 
 +++
+** 'make-hash-table' now defaults to a rehash threshold of 0.8125
+instead of 0.8, to avoid rounding glitches.
+
++++
 ** New function 'add-variable-watcher' can be used to call a function
 when a symbol's value is changed.  This is used to implement the new
 debugger command 'debug-on-variable-change'.
