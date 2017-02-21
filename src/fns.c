@@ -3756,9 +3756,7 @@ make_hash_table (struct hash_table_test test, EMACS_INT size,
   eassert (XHASH_TABLE (table) == h);
 
   /* Maybe add this hash table to the list of all weak hash tables.  */
-  if (NILP (h->weak))
-    h->next_weak = NULL;
-  else
+  if (! NILP (weak))
     {
       h->next_weak = weak_hash_tables;
       weak_hash_tables = h;
@@ -3788,8 +3786,8 @@ copy_hash_table (struct Lisp_Hash_Table *h1)
   /* Maybe add this hash table to the list of all weak hash tables.  */
   if (!NILP (h2->weak))
     {
-      h2->next_weak = weak_hash_tables;
-      weak_hash_tables = h2;
+      h2->next_weak = h1->next_weak;
+      h1->next_weak = h2;
     }
 
   return table;
