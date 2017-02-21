@@ -1980,13 +1980,12 @@ struct Lisp_Hash_Table
 
   /* Vector used to chain entries.  If entry I is free, next[I] is the
      entry number of the next free item.  If entry I is non-free,
-     next[I] is the index of the next entry in the collision chain.  */
+     next[I] is the index of the next entry in the collision chain,
+     or -1 if there is such entry.  */
   Lisp_Object next;
 
-  /* Index of first free entry in free list.  */
-  Lisp_Object next_free;
-
-  /* Bucket vector.  A non-nil entry is the index of the first item in
+  /* Bucket vector.  An entry of -1 indicates no item is present,
+     and a nonnegative entry is the index of the first item in
      a collision chain.  This vector's size can be larger than the
      hash table size to reduce collisions.  */
   Lisp_Object index;
@@ -1997,6 +1996,9 @@ struct Lisp_Hash_Table
 
   /* Number of key/value entries in the table.  */
   ptrdiff_t count;
+
+  /* Index of first free entry in free list, or -1 if none.  */
+  ptrdiff_t next_free;
 
   /* True if the table can be purecopied.  The table cannot be
      changed afterwards.  */
@@ -2050,27 +2052,11 @@ HASH_VALUE (struct Lisp_Hash_Table *h, ptrdiff_t idx)
   return AREF (h->key_and_value, 2 * idx + 1);
 }
 
-/* Value is the index of the next entry following the one at IDX
-   in hash table H.  */
-INLINE Lisp_Object
-HASH_NEXT (struct Lisp_Hash_Table *h, ptrdiff_t idx)
-{
-  return AREF (h->next, idx);
-}
-
 /* Value is the hash code computed for entry IDX in hash table H.  */
 INLINE Lisp_Object
 HASH_HASH (struct Lisp_Hash_Table *h, ptrdiff_t idx)
 {
   return AREF (h->hash, idx);
-}
-
-/* Value is the index of the element in hash table H that is the
-   start of the collision list at index IDX in the index vector of H.  */
-INLINE Lisp_Object
-HASH_INDEX (struct Lisp_Hash_Table *h, ptrdiff_t idx)
-{
-  return AREF (h->index, idx);
 }
 
 /* Value is the size of hash table H.  */
