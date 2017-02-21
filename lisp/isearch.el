@@ -332,7 +332,7 @@ If this is nil, extra highlighting can be \"manually\" removed with
                                 'lazy-highlight-max-at-a-time
                                 "22.1")
 
-(defcustom lazy-highlight-max-at-a-time 20
+(defcustom lazy-highlight-max-at-a-time nil ; 20 (bug#25751)
   "Maximum matches to highlight at a time (for `lazy-highlight').
 Larger values may reduce Isearch's responsiveness to user input;
 smaller values make matches highlight slowly.
@@ -3122,17 +3122,18 @@ since they have special meaning in a regexp."
 (defvar isearch-lazy-highlight-forward nil)
 (defvar isearch-lazy-highlight-error nil)
 
-(defun lazy-highlight-cleanup (&optional force)
+(defun lazy-highlight-cleanup (&optional force procrastinate)
   "Stop lazy highlighting and remove extra highlighting from current buffer.
-FORCE non-nil means do it whether or not `lazy-highlight-cleanup'
-is nil.  This function is called when exiting an incremental search if
+FORCE non-nil means do it whether or not `lazy-highlight-cleanup' is nil.
+PROCRASTINATE non-nil means postpone cleanup to a later time.
+This function is called when exiting an incremental search if
 `lazy-highlight-cleanup' is non-nil."
   (interactive '(t))
-  (if (or force lazy-highlight-cleanup)
-      (while isearch-lazy-highlight-overlays
-        (delete-overlay (car isearch-lazy-highlight-overlays))
-        (setq isearch-lazy-highlight-overlays
-              (cdr isearch-lazy-highlight-overlays))))
+  (when (and (or force lazy-highlight-cleanup) (not procrastinate))
+    (while isearch-lazy-highlight-overlays
+      (delete-overlay (car isearch-lazy-highlight-overlays))
+      (setq isearch-lazy-highlight-overlays
+            (cdr isearch-lazy-highlight-overlays))))
   (when isearch-lazy-highlight-timer
     (cancel-timer isearch-lazy-highlight-timer)
     (setq isearch-lazy-highlight-timer nil)))
@@ -3173,7 +3174,7 @@ by other Emacs features."
 		 (not (equal isearch-error
 			     isearch-lazy-highlight-error))))
     ;; something important did indeed change
-    (lazy-highlight-cleanup t)        ;kill old loop & remove overlays
+    (lazy-highlight-cleanup t (not (equal isearch-string ""))) ;stop old timer
     (setq isearch-lazy-highlight-error isearch-error)
     ;; It used to check for `(not isearch-error)' here, but actually
     ;; lazy-highlighting might find matches to highlight even when
@@ -3204,7 +3205,7 @@ by other Emacs features."
     (unless (equal isearch-string "")
       (setq isearch-lazy-highlight-timer
             (run-with-idle-timer lazy-highlight-initial-delay nil
-                                 'isearch-lazy-highlight-update)))))
+                                 'isearch-lazy-highlight-start)))))
 
 (defun isearch-lazy-highlight-search ()
   "Search ahead for the next or previous match, for lazy highlighting.
@@ -3248,6 +3249,11 @@ Attempt to do the search exactly the way the pending Isearch would."
 	      (setq retry nil)))
 	success)
     (error nil)))
+
+(defun isearch-lazy-highlight-start ()
+  "Start a new lazy-highlight updating loop."
+  (lazy-highlight-cleanup t) ;remove old overlays
+  (isearch-lazy-highlight-update))
 
 (defun isearch-lazy-highlight-update ()
   "Update highlighting of other matches for current search."
