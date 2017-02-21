@@ -1,0 +1,16 @@
+[package]
+name = "remacs-codegen"
+version = "0.1.0"
+authors = ["Jean Pierre Dudey <jeandudey@hotmail.com>"]
+build = "build.rs"
+
+[lib]
+plugin = true
+
+[dependencies]
+
+[dev-dependencies]
+compiletest_rs = "0.2.5"
+
+[build-dependencies]
+version_check = "0.1.0"
