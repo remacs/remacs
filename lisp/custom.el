@@ -764,17 +764,13 @@ Return non-nil if the `customized-value' property actually changed."
 Use the :set function to do so.  This is useful for customizable options
 that are defined before their standard value can really be computed.
 E.g. dumped variables whose default depends on run-time information."
-  (let ((val (car (or (get symbol 'saved-value)
-		      (get symbol 'standard-value)))))
-    (if (default-boundp symbol)
-	(funcall (or (get symbol 'custom-set) 'set-default) symbol (eval val))
-      ;; If it has never been set at all, defvar it so as to mark it
-      ;; special, etc (bug#25770).  This ignores any :set function,
-      ;; but that is not supposed to be used for initialization anyway.
-      ;; Or we could move this branch to the start, then unconditionally
-      ;; call the custom-set branch.
-      (eval `(defvar ,symbol ,val)))))
-
+  ;; If it has never been set at all, defvar it so as to mark it
+  ;; special, etc (bug#25770).
+  (or (default-boundp symbol)
+      (eval `(defvar ,symbol nil)))
+  (funcall (or (get symbol 'custom-set) 'set-default)
+	   symbol
+	   (eval (car (or (get symbol 'saved-value) (get symbol 'standard-value))))))
 
 
 ;;; Custom Themes
