@@ -341,7 +341,7 @@ If this is nil, extra highlighting can be \"manually\" removed with
   "Maximum matches to highlight at a time (for `lazy-highlight').
 Larger values may reduce Isearch's responsiveness to user input;
 smaller values make matches highlight slowly.
-A value of nil means highlight all matches."
+A value of nil means highlight all matches shown on the screen."
   :type '(choice (const :tag "All" nil)
 		 (integer :tag "Some"))
   :group 'lazy-highlight)
