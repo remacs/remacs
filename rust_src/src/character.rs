@@ -1,13 +1,13 @@
 use std::ptr;
 
-use lisp::{self, LispObject, CharBits};
-use remacs_sys::EmacsInt;
+use lisp::{self, LispObject};
+use remacs_sys::{EmacsInt, CHARACTERBITS};
 
 /// Maximum character code
-pub const MaxChar: EmacsInt = (1 << CharBits::CHARACTERBITS as EmacsInt) - 1;
+pub const MAX_CHAR: EmacsInt = (1 << CHARACTERBITS as EmacsInt) - 1;
 
 fn max_char() -> LispObject {
-    lisp::make_number(MaxChar)
+    lisp::make_number(MAX_CHAR)
 }
 
 defun!("max-char",

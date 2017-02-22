@@ -188,30 +188,6 @@ pub enum LispMiscType {
     Finalizer,
 }
 
-/// Flag bits in a character.  These also get used in termhooks.h.
-/// Richard Stallman <rms@gnu.ai.mit.edu> thinks that MULE
-/// (MUlti-Lingual Emacs) might need 22 bits for the character value
-/// itself, so we probably shouldn't use any bits lower than 0x0400000.  */
-#[derive(PartialEq, Eq, Copy, Clone, Debug)]
-#[allow(non_camel_case_types)]
-#[allow(dead_code)]
-#[repr(isize)]
-pub enum CharBits {
-    CHAR_ALT = 0x0400000,
-    CHAR_SUPER = 0x0800000,
-    CHAR_HYPER = 0x1000000,
-    CHAR_SHIFT = 0x2000000,
-    CHAR_CTL = 0x4000000,
-    CHAR_META = 0x8000000,
-    // TODO implement BitOr and other traits related to
-    // bit operations.
-    CHAR_MODIFIER_MASK = 0x0400000 | 0x0800000 | 0x1000000
-        | 0x2000000 | 0x4000000 | 0x8000000,
-    // Actually, the current Emacs uses 22 bits for the character value
-    // itself.
-    CHARACTERBITS = 22,
-}
-
 // Lisp_Misc is a union. Now we don't really care about its variants except the
 // super type layout. LispMisc is an unsized type for this, and LispMiscAny is
 // only the header and a padding, which is consistent with the c version.
@@ -521,7 +497,7 @@ macro_rules! defun_many {
      $min_args:expr,
      $intspec:expr,
      $docstring:expr) => {
-        // this is not beautifu, but works.
+        // this is not beautiful, but works.
         #[no_mangle]
         pub extern "C" fn $fname(nargs: $crate::libc::ptrdiff_t,
                                  args: *mut $crate::remacs_sys::Lisp_Object)
