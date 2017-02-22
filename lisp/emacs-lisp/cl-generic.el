@@ -231,9 +231,9 @@ DEFAULT-BODY, if present, is used as the body of a default method.
            (defalias ',name
              (cl-generic-define ',name ',args ',(nreverse options))
              ,(help-add-fundoc-usage doc args))
+           :autoload-end
            ,@(mapcar (lambda (method) `(cl-defmethod ,name ,@method))
                      (nreverse methods)))
-       :autoload-end
        ,@(mapcar (lambda (declaration)
                    (let ((f (cdr (assq (car declaration)
                                        defun-declarations-alist))))
