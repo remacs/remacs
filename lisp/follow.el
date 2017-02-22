@@ -427,6 +427,9 @@ Keys specific to Follow mode:
         (add-hook 'replace-update-post-hook 'follow-post-command-hook nil t)
         (add-hook 'ispell-update-post-hook 'follow-post-command-hook nil t)
 
+        (when isearch-lazy-highlight
+          (setq-local isearch-lazy-highlight 'all-windows))
+
         (setq window-group-start-function 'follow-window-start)
         (setq window-group-end-function 'follow-window-end)
         (setq set-window-group-start-function 'follow-set-window-start)

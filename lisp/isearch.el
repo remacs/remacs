@@ -285,8 +285,13 @@ are `word-search-regexp' \(`\\[isearch-toggle-word]'), `isearch-symbol-regexp'
   "Controls the lazy-highlighting during incremental search.
 When non-nil, all text in the buffer matching the current search
 string is highlighted lazily (see `lazy-highlight-initial-delay'
-and `lazy-highlight-interval')."
-  :type 'boolean
+and `lazy-highlight-interval').
+
+When multiple windows display the current buffer, the
+highlighting is displayed only on the selected window, unless
+this variable is set to the symbol `all-windows'."
+  :type '(choice boolean
+                 (const :tag "On, and applied to all windows" all-windows))
   :group 'lazy-highlight
   :group 'isearch)
 
@@ -3298,8 +3303,9 @@ Attempt to do the search exactly the way the pending Isearch would."
 			  ;; 1000 is higher than ediff's 100+,
 			  ;; but lower than isearch main overlay's 1001
 			  (overlay-put ov 'priority 1000)
-			  (overlay-put ov 'face 'lazy-highlight)))
-			  ;(overlay-put ov 'window (selected-window))))
+			  (overlay-put ov 'face 'lazy-highlight)
+			  (unless (eq isearch-lazy-highlight 'all-windows)
+                            (overlay-put ov 'window (selected-window)))))
 		      ;; Remember the current position of point for
 		      ;; the next call of `isearch-lazy-highlight-update'
 		      ;; when `lazy-highlight-max-at-a-time' is too small.
