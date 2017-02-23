@@ -1987,7 +1987,7 @@ or more clues in here):
   If this happens, your score will decrease, and in many cases you can never
   get credit for it again.
 
-- You can save your game with the ‘save’ command, and use restore it
+- You can save your game with the ‘save’ command, and restore it
   with the ‘restore’ command.
 
 - There are no limits on lengths of object names.
