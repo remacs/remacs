@@ -894,9 +894,9 @@ main (int argc, char **argv)
 #endif	/* not SYSTEM_MALLOC and not HYBRID_MALLOC */
 
 #ifdef MSDOS
-  SET_BINARY (fileno (stdin));
+  set_binary_mode (STDIN_FILENO, O_BINARY);
   fflush (stdout);
-  SET_BINARY (fileno (stdout));
+  set_binary_mode (STDOUT_FILENO, O_BINARY);
 #endif /* MSDOS */
 
   /* Skip initial setlocale if LC_ALL is "C", as it's not needed in that case.

@@ -76,7 +76,7 @@ main (int argc, char **argv)
       else if (!strcmp (*argv, "-un") || !strcmp (*argv, "-de"))
 	{
 	  un_flag = true;
-	  SET_BINARY (fileno (stdout));
+	  set_binary_mode (fileno (stdout), O_BINARY);
 	}
       else if (!strcmp (*argv, "-hex"))
 	/* Hex is the default and is only base supported.  */;
@@ -109,7 +109,7 @@ main (int argc, char **argv)
 	{
 	  fp = stdin;
 	  if (!un_flag)
-	    SET_BINARY (fileno (stdin));
+	    set_binary_mode (fileno (stdin), O_BINARY);
 	}
       else
 	{
