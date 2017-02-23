@@ -1135,6 +1135,9 @@ treasures for points?" "4" "four")
 
 (defconst dun-combination (prin1-to-string (+ 100 (random 899))))
 
+(defvar dun-line nil)
+(defvar dun-line-list nil)
+
 
 ;;;; Mode definitions for interactive mode
 
@@ -1924,7 +1927,7 @@ disk bursts into flames, and disintegrates.")
                (member objnum (nth dun-current-room dun-room-silents))))
       (dun-mprincl "I don't see that here."))
      ((not (member objnum (list obj-button obj-switch)))
-      (dun-mprincl "You can't " (car line-list) " that."))
+      (dun-mprincl "You can't " (car dun-line-list) " that."))
      ((= objnum obj-button)
       (dun-mprincl
 "As you press the button, you notice a passageway open up, but
@@ -2235,13 +2238,13 @@ for a moment, then straighten yourself up.
 
 (defun dun-vparse (ignore verblist line)
   (dun-mprinc "\n")
-  (setq line-list (dun-listify-string (concat line " ")))
-  (dun-doverb ignore verblist (car line-list) (cdr line-list)))
+  (setq dun-line-list (dun-listify-string (concat line " ")))
+  (dun-doverb ignore verblist (car dun-line-list) (cdr dun-line-list)))
 
 (defun dun-parse2 (ignore verblist line)
   (dun-mprinc "\n")
-  (setq line-list (dun-listify-string2 (concat line " ")))
-  (dun-doverb ignore verblist (car line-list) (cdr line-list)))
+  (setq dun-line-list (dun-listify-string2 (concat line " ")))
+  (dun-doverb ignore verblist (car dun-line-list) (cdr dun-line-list)))
 
 ;;; Read a line, in window mode
 
@@ -2397,13 +2400,13 @@ for a moment, then straighten yourself up.
     (if (and (not (= beg (point)))
 	     (string= "$" (buffer-substring (- beg 2) (- beg 1))))
 	(progn
-	  (setq line (downcase (buffer-substring beg (point))))
-	  (princ line)
-	  (if (eq (dun-parse2 nil dun-unix-verbs line) -1)
+	  (setq dun-line (downcase (buffer-substring beg (point))))
+	  (princ dun-line)
+	  (if (eq (dun-parse2 nil dun-unix-verbs dun-line) -1)
 	      (progn
-		(if (setq esign (string-match "=" line))
-		    (dun-doassign line esign)
-		  (dun-mprinc (car line-list))
+		(if (setq esign (string-match "=" dun-line))
+		    (dun-doassign dun-line esign)
+		  (dun-mprinc (car dun-line-list))
 		  (dun-mprincl ": not found.")))))
       (goto-char (point-max))
       (dun-mprinc "\n"))
@@ -3111,12 +3114,12 @@ File not found")))
   (send-string-to-terminal "\n"))
 
 (defun dun-batch-parse (ignore verblist line)
-  (setq line-list (dun-listify-string (concat line " ")))
-  (dun-doverb ignore verblist (car line-list) (cdr line-list)))
+  (setq dun-line-list (dun-listify-string (concat line " ")))
+  (dun-doverb ignore verblist (car dun-line-list) (cdr dun-line-list)))
 
 (defun dun-batch-parse2 (ignore verblist line)
-  (setq line-list (dun-listify-string2 (concat line " ")))
-  (dun-doverb ignore verblist (car line-list) (cdr line-list)))
+  (setq dun-line-list (dun-listify-string2 (concat line " ")))
+  (dun-doverb ignore verblist (car dun-line-list) (cdr dun-line-list)))
 
 (defun dun-batch-read-line ()
   (read-from-minibuffer "" nil dungeon-batch-map))
@@ -3133,8 +3136,8 @@ File not found")))
 		(dun-describe-room dun-current-room)
 		(setq dun-room dun-current-room)))
 	  (dun-mprinc ">")
-	  (setq line (downcase (dun-read-line)))
-	  (if (eq (dun-vparse dun-ignore dun-verblist line) -1)
+	  (setq dun-line (downcase (dun-read-line)))
+	  (if (eq (dun-vparse dun-ignore dun-verblist dun-line) -1)
 	      (dun-mprinc "I don't understand that.\n"))))))
 
 (defun dun-batch-dos-interface ()
@@ -3142,8 +3145,8 @@ File not found")))
   (setq dungeon-mode 'dos)
   (while (eq dungeon-mode 'dos)
     (dun-dos-prompt)
-    (setq line (downcase (dun-read-line)))
-    (if (eq (dun-parse2 nil dun-dos-verbs line) -1)
+    (setq dun-line (downcase (dun-read-line)))
+    (if (eq (dun-parse2 nil dun-dos-verbs dun-line) -1)
 	(progn
 	  (sleep-for 1)
 	  (dun-mprincl "Bad command or file name"))))
@@ -3157,12 +3160,12 @@ File not found")))
 	  (setq dungeon-mode 'unix)
 	  (while (eq dungeon-mode 'unix)
 	    (dun-mprinc "$ ")
-	    (setq line (downcase (dun-read-line)))
-	    (if (eq (dun-parse2 nil dun-unix-verbs line) -1)
+	    (setq dun-line (downcase (dun-read-line)))
+	    (if (eq (dun-parse2 nil dun-unix-verbs dun-line) -1)
 		(let (esign)
-		  (if (setq esign (string-match "=" line))
-		      (dun-doassign line esign)
-		    (dun-mprinc (car line-list))
+		  (if (setq esign (string-match "=" dun-line))
+		      (dun-doassign dun-line esign)
+		    (dun-mprinc (car dun-line-list))
 		    (dun-mprincl ": not found.")))))
 	  (goto-char (point-max))
 	  (dun-mprinc "\n"))))
