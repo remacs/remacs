@@ -27,10 +27,6 @@
 ;; This game can be run in batch mode.  To do this, use:
 ;;    emacs -batch -l dunnet
 
-;;; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-;;;  The log file should be set for your system, and it must
-;;;  be writable by all.
-
 ;;; Code:
 
 (defgroup dunnet nil
@@ -38,8 +34,13 @@
   :prefix "dun-"
   :group 'games)
 
-(defcustom dun-log-file "/usr/local/dunnet.score"
+;; Cf gamegrid.  dunnet normally runs in batch mode, where
+;; locate-user-emacs-file doesn't create directories.
+(defcustom dun-log-file (expand-file-name "dunnet-scores"
+					  (let (noninteractive)
+					    (locate-user-emacs-file "games/")))
   "Name of file to store score information for dunnet."
+  :version "26.1"
   :type 'file
   :group 'dunnet)
 
@@ -3068,11 +3069,15 @@ File not found")))
 	(setq dun-room 0)))))
 
 
+;; See gamegrid-add-score; but that only handles a single integer score.
 (defun dun-do-logfile (type how)
   (let (ferror)
     (with-temp-buffer
       (condition-case err
-          (insert-file-contents dun-log-file)
+          (if (file-exists-p dun-log-file)
+	      (insert-file-contents dun-log-file)
+	    (let ((dir (file-name-directory dun-log-file)))
+	      (if dir (make-directory dir t))))
         (error
          (setq ferror t)
          (dun-mprincl (error-message-string err))))
