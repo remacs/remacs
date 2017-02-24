@@ -19111,8 +19111,8 @@ the operation is left in symbolic form.
 @tindex lcm
 The @kbd{k l} (@code{calc-lcm}) [@code{lcm}] command computes the
 Least Common Multiple of two integers or fractions.  The product of
-the LCM and GCD of two numbers is equal to the product of the
-numbers.
+the LCM and GCD of two numbers is equal to the absolute value of the
+product of the numbers.
 
 @kindex k E
 @pindex calc-extended-gcd
