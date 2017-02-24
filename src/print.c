@@ -640,7 +640,7 @@ is used instead.  */)
   return object;
 }
 
-/* a buffer which is used to hold output being built by prin1-to-string */
+/* A buffer which is used to hold output being built by prin1-to-string.  */
 Lisp_Object Vprin1_to_string_buffer;
 
 DEFUN ("prin1-to-string", Fprin1_to_string, Sprin1_to_string, 1, 2, 0,
@@ -1140,14 +1140,14 @@ print (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
   print_object (obj, printcharfun, escapeflag);
 }
 
-#define PRINT_CIRCLE_CANDIDATE_P(obj)					\
-  (STRINGP (obj) || CONSP (obj)						\
-   || (VECTORLIKEP (obj)						\
-      && (VECTORP (obj) || COMPILEDP (obj)				\
-	  || CHAR_TABLE_P (obj) || SUB_CHAR_TABLE_P (obj)		\
-	  || HASH_TABLE_P (obj) || FONTP (obj)))			\
-   || (! NILP (Vprint_gensym)						\
-       && SYMBOLP (obj)							\
+#define PRINT_CIRCLE_CANDIDATE_P(obj)			   \
+  (STRINGP (obj) || CONSP (obj)				   \
+   || (VECTORLIKEP (obj)				   \
+       && (VECTORP (obj) || COMPILEDP (obj)		   \
+	   || CHAR_TABLE_P (obj) || SUB_CHAR_TABLE_P (obj) \
+	   || HASH_TABLE_P (obj) || FONTP (obj)))	   \
+   || (! NILP (Vprint_gensym)				   \
+       && SYMBOLP (obj)					   \
        && !SYMBOL_INTERNED_P (obj)))
 
 /* Construct Vprint_number_table according to the structure of OBJ.
@@ -1258,6 +1258,16 @@ print_preprocess (Lisp_Object obj)
 	}
     }
   print_depth--;
+}
+
+DEFUN ("print--preprocess", Fprint_preprocess, Sprint_preprocess, 1, 1, 0,
+       doc: /* Extract sharing info from OBJECT needed to print it.
+Fills `print-number-table'.  */)
+  (Lisp_Object object)
+{
+  print_number_index = 0;
+  print_preprocess (object);
+  return Qnil;
 }
 
 static void
@@ -1537,7 +1547,8 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 
 	size_byte = SBYTES (name);
 
-	if (! NILP (Vprint_gensym) && !SYMBOL_INTERNED_P (obj))
+	if (! NILP (Vprint_gensym)
+            && !SYMBOL_INTERNED_IN_INITIAL_OBARRAY_P (obj))
 	  print_c_string ("#:", printcharfun);
 	else if (size_byte == 0)
 	  {
@@ -2344,6 +2355,7 @@ priorities.  */);
   defsubr (&Sterpri);
   defsubr (&Swrite_char);
   defsubr (&Sredirect_debugging_output);
+  defsubr (&Sprint_preprocess);
 
   DEFSYM (Qprint_escape_newlines, "print-escape-newlines");
   DEFSYM (Qprint_escape_multibyte, "print-escape-multibyte");
