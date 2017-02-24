@@ -1986,11 +1986,16 @@ In particular, return the buffer position of the first `for' kwd."
         (js--forward-syntactic-ws)
         (if (looking-at "[[{]")
             (let (forward-sexp-function) ; Use Lisp version.
-              (forward-sexp)             ; Skip destructuring form.
-              (js--forward-syntactic-ws)
-              (if (and (/= (char-after) ?,) ; Regular array.
-                       (looking-at "for"))
-                  (match-beginning 0)))
+              (condition-case nil
+                  (progn
+                    (forward-sexp)       ; Skip destructuring form.
+                    (js--forward-syntactic-ws)
+                    (if (and (/= (char-after) ?,) ; Regular array.
+                             (looking-at "for"))
+                        (match-beginning 0)))
+                (scan-error
+                 ;; Nothing to do here.
+                 nil)))
           ;; To skip arbitrary expressions we need the parser,
           ;; so we'll just guess at it.
           (if (and (> end (point)) ; Not empty literal.

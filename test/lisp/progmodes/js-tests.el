@@ -118,6 +118,16 @@ if (!/[ (:,='\"]/.test(value)) {
       ;; implementation not recognizing the comment example.
       (should-not (syntax-ppss-context (syntax-ppss))))))
 
+(ert-deftest js-mode-indentation-error ()
+  (with-temp-buffer
+    (js-mode)
+    ;; The bug previously was that requesting re-indentation on the
+    ;; "{" line here threw an exception.
+    (insert "const TESTS = [\n{")
+    (js-indent-line)
+    ;; Any success is ok here.
+    (should t)))
+
 (provide 'js-tests)
 
 ;;; js-tests.el ends here
