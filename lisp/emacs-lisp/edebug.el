@@ -398,31 +398,30 @@ Return the result of the last expression in BODY."
 (defun edebug-current-windows (which-windows)
   ;; Get either a full window configuration or some window information.
   (if (listp which-windows)
-      (mapcar (function (lambda (window)
-			  (if (edebug-window-live-p window)
-			      (list window
-				    (window-buffer window)
-				    (window-point window)
-				    (window-start window)
-				    (window-hscroll window)))))
+      (mapcar (lambda (window)
+                (if (edebug-window-live-p window)
+                    (list window
+                          (window-buffer window)
+                          (window-point window)
+                          (window-start window)
+                          (window-hscroll window))))
 	      which-windows)
     (current-window-configuration)))
 
 (defun edebug-set-windows (window-info)
   ;; Set either a full window configuration or some window information.
   (if (listp window-info)
-      (mapcar (function
-	       (lambda (one-window-info)
-		 (if one-window-info
-		     (apply (function
-			     (lambda (window buffer point start hscroll)
-			       (if (edebug-window-live-p window)
-				   (progn
-				     (set-window-buffer window buffer)
-				     (set-window-point window point)
-				     (set-window-start window start)
-				     (set-window-hscroll window hscroll)))))
-			    one-window-info))))
+      (mapcar (lambda (one-window-info)
+                (if one-window-info
+                    (apply (function
+                            (lambda (window buffer point start hscroll)
+                              (if (edebug-window-live-p window)
+                                  (progn
+                                    (set-window-buffer window buffer)
+                                    (set-window-point window point)
+                                    (set-window-start window start)
+                                    (set-window-hscroll window hscroll)))))
+                           one-window-info)))
 	      window-info)
     (set-window-configuration window-info)))
 
@@ -658,7 +657,7 @@ Maybe clear the markers and delete the symbol's edebug property?"
       (progn
 	;; Instead of this, we could just find all contained forms.
 	;; (put (car entry) 'edebug nil)   ;
-	;; (mapcar 'edebug-clear-form-data-entry   ; dangerous
+	;; (mapcar #'edebug-clear-form-data-entry   ; dangerous
 	;;   (get (car entry) 'edebug-dependents))
 	;; (set-marker (nth 1 entry) nil)
 	;; (set-marker (nth 2 entry) nil)
@@ -945,7 +944,7 @@ circular objects.  Let `read' read everything else."
       (let ((elements))
 	(while (not (eq 'rbracket (edebug-next-token-class)))
 	  (push (edebug-read-storing-offsets stream) elements))
-	(apply 'vector (nreverse elements)))
+	(apply #'vector (nreverse elements)))
     (forward-char 1)			; skip \]
     ))
 
@@ -988,7 +987,7 @@ circular objects.  Let `read' read everything else."
   ;; Check if a dotted form is required.
   (if edebug-dotted-spec (edebug-no-match cursor "Dot expected."))
   ;; Check if there is at least one more argument.
-  (if (edebug-empty-cursor cursor) (apply 'edebug-no-match cursor error))
+  (if (edebug-empty-cursor cursor) (apply #'edebug-no-match cursor error))
   ;; Return that top element.
   (edebug-top-element cursor))
 
@@ -1095,7 +1094,7 @@ circular objects.  Let `read' read everything else."
              (setq result (edebug-read-and-maybe-wrap-form1))
              nil)))
       (if no-match
-          (apply 'edebug-syntax-error no-match)))
+          (apply #'edebug-syntax-error no-match)))
     result))
 
 
@@ -1255,7 +1254,7 @@ expressions; a `progn' form will be returned enclosing these forms."
       (setq sexp new-sexp
 	    new-sexp (edebug-unwrap sexp)))
     (if (consp new-sexp)
-	(mapcar 'edebug-unwrap* new-sexp)
+	(mapcar #'edebug-unwrap* new-sexp)
       new-sexp)))
 
 
@@ -1516,7 +1515,7 @@ expressions; a `progn' form will be returned enclosing these forms."
       (progn
 	(if edebug-error-point
 	    (goto-char edebug-error-point))
-	(apply 'edebug-syntax-error args))
+	(apply #'edebug-syntax-error args))
     (throw 'no-match args)))
 
 
@@ -1712,7 +1711,7 @@ expressions; a `progn' form will be returned enclosing these forms."
 	;; Reset the cursor for the next match.
 	(edebug-set-cursor cursor this-form this-offset))
       ;; All failed.
-      (apply 'edebug-no-match cursor "Expected one of" original-specs))
+      (apply #'edebug-no-match cursor "Expected one of" original-specs))
     ))
 
 
@@ -1738,9 +1737,9 @@ expressions; a `progn' form will be returned enclosing these forms."
   (edebug-match-&rest
    cursor
    (cons '&or
-	 (mapcar (function (lambda (pair)
-			     (vector (format ":%s" (car pair))
-				     (car (cdr pair)))))
+	 (mapcar (lambda (pair)
+                   (vector (format ":%s" (car pair))
+                           (car (cdr pair))))
 		 specs))))
 
 
@@ -1785,7 +1784,7 @@ expressions; a `progn' form will be returned enclosing these forms."
 			    form (cdr (edebug-top-offset cursor)))
 			   (cdr specs))))
 	      (edebug-move-cursor cursor)
-	      (list (apply 'vector result)))
+	      (list (apply #'vector result)))
 	  (edebug-no-match cursor "Expected" specs)))
 
        ((listp form)
@@ -1812,7 +1811,7 @@ expressions; a `progn' form will be returned enclosing these forms."
 	(edebug-match-specs cursor specs 'edebug-match-specs)
       (if (not (edebug-empty-cursor cursor))
 	  (if edebug-best-error
-	      (apply 'edebug-no-match cursor edebug-best-error)
+	      (apply #'edebug-no-match cursor edebug-best-error)
 	    ;; A failed &rest or &optional spec may leave some args.
 	    (edebug-no-match cursor "Failed matching" specs)
 	    )))))
@@ -3377,10 +3376,10 @@ Return the result of the last expression."
   (message "%s: %s"
 	   (or (get (car value) 'error-message)
 	       (format "peculiar error (%s)" (car value)))
-	   (mapconcat (function (lambda (edebug-arg)
-				  ;; continuing after an error may
-				  ;; complain about edebug-arg. why??
-				  (prin1-to-string edebug-arg)))
+	   (mapconcat (lambda (edebug-arg)
+                        ;; continuing after an error may
+                        ;; complain about edebug-arg. why??
+                        (prin1-to-string edebug-arg))
 		      (cdr value) ", ")))
 
 (defvar print-readably) ; defined by lemacs
@@ -3411,11 +3410,9 @@ Return the result of the last expression."
 
 ;;; Read, Eval and Print
 
-(defalias 'edebug-prin1 'prin1)
-(defalias 'edebug-print 'print)
-(defalias 'edebug-prin1-to-string 'prin1-to-string)
-(defalias 'edebug-format 'format-message)
-(defalias 'edebug-message 'message)
+(defalias 'edebug-prin1-to-string #'cl-prin1-to-string)
+(defalias 'edebug-format #'format-message)
+(defalias 'edebug-message #'message)
 
 (defun edebug-eval-expression (expr)
   "Evaluate an expression in the outside environment.
@@ -3656,7 +3653,7 @@ Options:
   ;; Don't do any edebug things now.
   (let ((edebug-execution-mode 'Go-nonstop)
 	(edebug-trace nil))
-    (mapcar 'edebug-safe-eval edebug-eval-list)))
+    (mapcar #'edebug-safe-eval edebug-eval-list)))
 
 (defun edebug-eval-display-list (eval-result-list)
   ;; Assumes edebug-eval-buffer exists.
@@ -3804,7 +3801,7 @@ Otherwise call `debug' normally."
 
     ;; Otherwise call debug normally.
     ;; Still need to remove extraneous edebug calls from stack.
-    (apply 'debug arg-mode args)
+    (apply #'debug arg-mode args)
     ))
 
 
@@ -3870,7 +3867,7 @@ You must include newlines in FMT to break lines, but one newline is appended."
     (setq truncate-lines t)
     (setq buf-window (selected-window))
     (goto-char (point-max))
-    (insert (apply 'edebug-format fmt args) "\n")
+    (insert (apply #'edebug-format fmt args) "\n")
     ;; Make it visible.
     (vertical-motion (- 1 (window-height)))
     (set-window-start buf-window (point))
@@ -3885,7 +3882,7 @@ You must include newlines in FMT to break lines, but one newline is appended."
 
 (defun edebug-trace (fmt &rest args)
   "Convenience call to `edebug-trace-display' using `edebug-trace-buffer'."
-  (apply 'edebug-trace-display edebug-trace-buffer fmt args))
+  (apply #'edebug-trace-display edebug-trace-buffer fmt args))
 
 
 ;;; Frequency count and coverage

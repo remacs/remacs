@@ -825,6 +825,7 @@ first and modify the returned object.")
 It is sometimes useful to put a summary of the object into the
 default #<notation> string when using EIEIO browsing tools.
 Implement this method to customize the summary."
+  (declare (obsolete cl-print-object "26.1"))
   (format "%S" this))
 
 (cl-defmethod object-print ((this eieio-default-superclass) &rest strings)
@@ -840,6 +841,12 @@ Implement this function and specify STRINGS in a call to
 When passing in extra strings from child classes, always remember
 to prepend a space."
   (eieio-object-name this (apply #'concat strings)))
+
+
+(cl-defmethod cl-print-object ((object eieio-default-superclass) stream)
+  "Default printer for EIEIO objects."
+  ;; Fallback to the old `object-print'.
+  (princ (object-print object) stream))
 
 (defvar eieio-print-depth 0
   "When printing, keep track of the current indentation depth.")
@@ -944,27 +951,6 @@ of `eq'."
 ;; FIXME: This is not actually needed any more since we can click on the
 ;; hyperlink from the constructor's docstring to see the type definition.
 (add-hook 'help-fns-describe-function-functions 'eieio-help-constructor)
-
-;;; Interfacing with edebug
-;;
-(defun eieio-edebug-prin1-to-string (print-function object &optional noescape)
-  "Display EIEIO OBJECT in fancy format.
-
-Used as advice around `edebug-prin1-to-string', held in the
-variable PRINT-FUNCTION.  Optional argument NOESCAPE is passed to
-`prin1-to-string' when appropriate."
-  (cond ((eieio--class-p object) (eieio--class-print-name object))
-	((eieio-object-p object) (object-print object))
-	((and (listp object) (or (eieio--class-p (car object))
-				 (eieio-object-p (car object))))
-	 (concat "(" (mapconcat
-                      (lambda (x) (eieio-edebug-prin1-to-string print-function x))
-                      object " ")
-                 ")"))
-	(t (funcall print-function object noescape))))
-
-(advice-add 'edebug-prin1-to-string
-            :around #'eieio-edebug-prin1-to-string)
 
 (provide 'eieio)
 
