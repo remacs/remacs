@@ -255,10 +255,6 @@ of constants and nonconstant parts.  To make this easier, use the
 @end example
 @end example
 
-  The body of a macro definition can include a @code{declare} form,
-which specifies additional properties about the macro.  @xref{Declare
-Form}.
-
 @node Problems with Macros
 @section Common Problems Using Macros
 @cindex macro caveats
