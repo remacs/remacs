@@ -10711,7 +10711,7 @@ POS defaults to point in WINDOW; WINDOW defaults to the selected window.
 Return nil if POS is not visible in WINDOW.  Otherwise,
 the return value is similar to that returned by `event-start' for
 a mouse click at the upper left corner of the glyph corresponding
-to the POS:
+to POS:
    (WINDOW AREA-OR-POS (X . Y) TIMESTAMP OBJECT POS (COL . ROW)
     IMAGE (DX . DY) (WIDTH . HEIGHT))
 The `posn-' functions access elements of such lists.  */)
