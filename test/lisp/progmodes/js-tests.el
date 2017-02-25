@@ -128,6 +128,18 @@ if (!/[ (:,='\"]/.test(value)) {
     ;; Any success is ok here.
     (should t)))
 
+(ert-deftest js-mode-doc-comment-face ()
+  (dolist (test '(("/*" "*/" font-lock-comment-face)
+                  ("//" "\n" font-lock-comment-face)
+                  ("/**" "*/" font-lock-doc-face)
+                  ("\"" "\"" font-lock-string-face)))
+    (with-temp-buffer
+      (js-mode)
+      (insert (car test) " he")
+      (save-excursion (insert "llo " (cadr test)))
+      (font-lock-ensure)
+      (should (eq (get-text-property (point) 'face) (caddr test))))))
+
 (provide 'js-tests)
 
 ;;; js-tests.el ends here

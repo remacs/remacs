@@ -1687,6 +1687,16 @@ This performs fontification according to `js--class-styles'."
                                    js--font-lock-keywords-3)
   "Font lock keywords for `js-mode'.  See `font-lock-keywords'.")
 
+(defun js-font-lock-syntactic-face-function (state)
+  "Return syntactic face given STATE."
+  (if (nth 3 state)
+      font-lock-string-face
+    (if (save-excursion
+          (goto-char (nth 8 state))
+          (looking-at "/\\*\\*"))
+        font-lock-doc-face
+      font-lock-comment-face)))
+
 (defconst js--syntax-propertize-regexp-regexp
   (rx
    ;; Start of regexp.
@@ -3828,7 +3838,10 @@ If one hasn't been set, or if it's stale, prompt for a new one."
   (setq-local beginning-of-defun-function #'js-beginning-of-defun)
   (setq-local end-of-defun-function #'js-end-of-defun)
   (setq-local open-paren-in-column-0-is-defun-start nil)
-  (setq-local font-lock-defaults (list js--font-lock-keywords))
+  (setq-local font-lock-defaults
+              (list js--font-lock-keywords nil nil nil nil
+                    '(font-lock-syntactic-face-function
+                      . js-font-lock-syntactic-face-function)))
   (setq-local syntax-propertize-function #'js-syntax-propertize)
   (setq-local prettify-symbols-alist js--prettify-symbols-alist)
 
