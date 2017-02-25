@@ -321,6 +321,10 @@ substituted by a home directory by writing it as "/foo:/:/~/file".
 settings of 'scroll-margin' up to half the window size, instead of
 always restricting the margin to a quarter of the window.
 
++++
+** Emacsclient has a new option -u/--suppress-output.  The option
+suppresses display of return values from the server process.
+
 
 * Editing Changes in Emacs 26.1
 
