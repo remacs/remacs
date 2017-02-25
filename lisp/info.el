@@ -367,17 +367,17 @@ with wrapping around the current Info node."
   ;; Try to obey obsolete Info-fontify settings.
   (unless (and (boundp 'Info-fontify) (null Info-fontify))
     '(turn-on-font-lock))
-  "Hooks run when `Info-mode' is called."
+  "Hook run when activating Info Mode."
   :type 'hook
   :group 'info)
 
 (defcustom Info-selection-hook nil
-  "Hooks run when `Info-select-node' is called."
+  "Hook run when an Info node is selected as the current node."
   :type 'hook
   :group 'info)
 
 (defvar Info-edit-mode-hook nil
-  "Hooks run when `Info-edit-mode' is called.")
+  "Hook run when `Info-edit-mode' is activated.")
 
 (make-obsolete-variable 'Info-edit-mode-hook
 			"editing Info nodes by hand is not recommended." "24.4")
