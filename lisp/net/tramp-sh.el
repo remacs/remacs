@@ -1307,18 +1307,10 @@ target of the symlink differ."
           (setq res-inode
                 (condition-case err
                     (read (current-buffer))
-                  (invalid-read-syntax
-                   (when (and (equal (cadr err)
-                                     "Integer constant overflow in reader")
-                              (string-match
-                               "^[0-9]+\\([0-9][0-9][0-9][0-9][0-9]\\)\\'"
-                               (car (cddr err))))
-                     (let* ((big (read (substring (car (cddr err)) 0
-                                                  (match-beginning 1))))
-                            (small (read (match-string 1 (car (cddr err)))))
-                            (twiddle (/ small 65536)))
-                       (cons (+ big twiddle)
-                             (- small (* twiddle 65536))))))))
+                  ;; This error happens in Emacs 23.  Starting with
+                  ;; Emacs 24, a large integer will be converted into
+                  ;; a float automatically during `read'.
+                  (overflow-error (string-to-number (cadr err)))))
           ;; ... file mode flags
           (setq res-filemodes (symbol-name (read (current-buffer))))
           ;; ... number links
@@ -5065,8 +5057,19 @@ Return ATTR."
     (unless (listp (nth 10 attr))
       (setcar (nthcdr 10 attr)
               (condition-case nil
-                  (cons (floor (nth 10 attr) 65536)
-                        (floor (mod (nth 10 attr) 65536)))
+                  (let ((high (nth 10 attr))
+                        middle low)
+                    (if (<= high most-positive-fixnum)
+                        (floor high)
+                      ;; The low 16 bits.
+                      (setq low (mod high #x10000)
+                            high (/ high #x10000))
+                      (if (<= high most-positive-fixnum)
+                          (cons (floor high) (floor low))
+                        ;; The middle 24 bits.
+                        (setq middle (mod high #x1000000)
+                              high (/ high #x1000000))
+                        (cons (floor high) (cons (floor middle) (floor low))))))
                 ;; Inodes can be incredible huge.  We must hide this.
                 (error (tramp-get-inode vec)))))
     ;; Set virtual device number.
