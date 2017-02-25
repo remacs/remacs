@@ -10130,6 +10130,8 @@ comment at the start of cc-engine.el for more info."
 	       (or (not (looking-at "\\s)"))
 		   (c-go-up-list-backward))
 	       (cond
+		((looking-at "::")
+		 t)
 		((and (eql (char-after) ?:)
 		      (save-excursion
 			(c-backward-syntactic-ws)
