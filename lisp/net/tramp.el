@@ -2268,25 +2268,28 @@ This is necessary, because Tramp uses a heuristic depending on last
 input event.  This fails when external packages use other characters
 but <TAB>, <SPACE> or ?\\? for file name completion.  This variable
 should never be set globally, the intention is to let-bind it.")
+(make-obsolete-variable 'tramp-completion-mode 'non-essential "26.1")
 
 ;; Necessary because `tramp-file-name-regexp-unified' and
 ;; `tramp-completion-file-name-regexp-unified' aren't different.  If
-;; nil, `tramp-completion-run-real-handler' is called (i.e. forwarding
-;; to `tramp-file-name-handler'). Otherwise, it takes
-;; `tramp-run-real-handler'.  Using `last-input-event' is a little bit
-;; risky, because completing a file might require loading other files,
-;; like "~/.netrc", and for them it shouldn't be decided based on that
-;; variable. On the other hand, those files shouldn't have partial
-;; Tramp file name syntax. Maybe another variable should be introduced
-;; overwriting this check in such cases. Or we change Tramp file name
-;; syntax in order to avoid ambiguities.
+;; nil is returned, `tramp-completion-run-real-handler' is called
+;; (i.e. forwarding to `tramp-file-name-handler').  Otherwise, it
+;; takes `tramp-run-real-handler'.  Using `last-input-event' is a
+;; little bit risky, because completing a file might require loading
+;; other files, like "~/.netrc", and for them it shouldn't be decided
+;; based on that variable.  On the other hand, those files shouldn't
+;; have partial Tramp file name syntax.
 ;;;###autoload
 (progn (defun tramp-completion-mode-p ()
   "Check, whether method / user name / host name completion is active."
   (or
    ;; Signal from outside.  `non-essential' has been introduced in Emacs 24.
    (and (boundp 'non-essential) (symbol-value 'non-essential))
-   tramp-completion-mode)))
+   ;; This variable has been obsoleted in Emacs 26.
+   tramp-completion-mode
+   ;; Fallback.  Some completion packages still don't support
+   ;; `non-essential' sufficiently.
+   (equal last-input-event 'tab))))
 
 (defun tramp-connectable-p (filename)
   "Check, whether it is possible to connect the remote host w/o side-effects.

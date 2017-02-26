@@ -642,6 +642,9 @@ manual documents how to configure ssh and PuTTY accordingly.
 initialization files.
 
 ---
+*** Variable 'tramp-completion-mode' is obsoleted.
+
+---
 ** 'auto-revert-use-notify' is set back to t in 'global-auto-revert-mode'.
 
 ---
