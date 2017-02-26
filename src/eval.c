@@ -3213,18 +3213,6 @@ let_shadows_buffer_binding_p (struct Lisp_Symbol *symbol)
   return 0;
 }
 
-bool
-let_shadows_global_binding_p (Lisp_Object symbol)
-{
-  union specbinding *p;
-
-  for (p = specpdl_ptr; p > specpdl; )
-    if ((--p)->kind >= SPECPDL_LET && EQ (specpdl_symbol (p), symbol))
-      return 1;
-
-  return 0;
-}
-
 static void
 do_specbind (struct Lisp_Symbol *sym, union specbinding *bind,
              Lisp_Object value, enum Set_Internal_Bind bindflag)

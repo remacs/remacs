@@ -522,21 +522,11 @@ print_c_string (char const *string, Lisp_Object printcharfun)
    Do not use this on the contents of a Lisp string.  */
 
 static void
-write_string_1 (const char *data, Lisp_Object printcharfun)
+write_string (const char *data, Lisp_Object printcharfun)
 {
   PRINTPREPARE;
   print_c_string (data, printcharfun);
   PRINTFINISH;
-}
-
-/* Used from outside of print.c to print a C unibyte
-   string at DATA on the default output stream.
-   Do not use this on the contents of a Lisp string.  */
-
-void
-write_string (const char *data)
-{
-  write_string_1 (data, Vstandard_output);
 }
 
 
@@ -888,7 +878,7 @@ print_error_message (Lisp_Object data, Lisp_Object stream, const char *context,
   Lisp_Object errname, errmsg, file_error, tail;
 
   if (context != 0)
-    write_string_1 (context, stream);
+    write_string (context, stream);
 
   /* If we know from where the error was signaled, show it in
    *Messages*.  */
@@ -934,7 +924,7 @@ print_error_message (Lisp_Object data, Lisp_Object stream, const char *context,
     const char *sep = ": ";
 
     if (!STRINGP (errmsg))
-      write_string_1 ("peculiar error", stream);
+      write_string ("peculiar error", stream);
     else if (SCHARS (errmsg))
       Fprinc (errmsg, stream);
     else
@@ -945,7 +935,7 @@ print_error_message (Lisp_Object data, Lisp_Object stream, const char *context,
 	Lisp_Object obj;
 
 	if (sep)
-	  write_string_1 (sep, stream);
+	  write_string (sep, stream);
 	obj = XCAR (tail);
 	if (!NILP (file_error)
 	    || EQ (errname, Qend_of_file) || EQ (errname, Quser_error))
