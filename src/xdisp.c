@@ -13362,8 +13362,10 @@ overlay_arrows_changed_p (bool set_redisplay)
 	  || ! (pstr = overlay_arrow_string_or_property (var),
 		EQ (pstr, Fget (var, Qlast_arrow_string))))
 	{
-	  if (set_redisplay)
-	    bset_redisplay (XMARKER (val)->buffer);
+	  struct buffer *buf = XMARKER (val)->buffer;
+
+	  if (set_redisplay && buf)
+	    bset_redisplay (buf);
 	  else
 	    return true;
 	}
