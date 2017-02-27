@@ -13358,14 +13358,19 @@ overlay_arrows_changed_p (bool set_redisplay)
       if (!MARKERP (val))
 	continue;
       if (! EQ (COERCE_MARKER (val),
+                /* FIXME: Don't we have a problem, using such a global
+                 * "last-position" if the variable is buffer-local?  */
 		Fget (var, Qlast_arrow_position))
 	  || ! (pstr = overlay_arrow_string_or_property (var),
 		EQ (pstr, Fget (var, Qlast_arrow_string))))
 	{
 	  struct buffer *buf = XMARKER (val)->buffer;
 
-	  if (set_redisplay && buf)
-	    bset_redisplay (buf);
+	  if (set_redisplay)
+            {
+              if (buf)
+	        bset_redisplay (buf);
+            }
 	  else
 	    return true;
 	}
