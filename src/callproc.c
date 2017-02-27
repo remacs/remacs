@@ -182,11 +182,11 @@ call_process_cleanup (Lisp_Object buffer)
     {
       kill (-synch_process_pid, SIGINT);
       message1 ("Waiting for process to die...(type C-g again to kill it instantly)");
-      immediate_quit = true;
-      maybe_quit ();
+
+      /* This will quit on C-g.  */
       wait_for_termination (synch_process_pid, 0, 1);
+
       synch_process_pid = 0;
-      immediate_quit = false;
       message1 ("Waiting for process to die...done");
     }
 }
@@ -635,9 +635,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
       process_coding.src_multibyte = 0;
     }
 
-  immediate_quit = true;
-  maybe_quit ();
-
   if (0 <= fd0)
     {
       enum { CALLPROC_BUFFER_SIZE_MIN = 16 * 1024 };
@@ -678,7 +675,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	    }
 
 	  /* Now NREAD is the total amount of data in the buffer.  */
-	  immediate_quit = false;
 
 	  if (!nread)
 	    ;
@@ -751,8 +747,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 		 we should have already detected a coding system.  */
 	      display_on_the_fly = true;
 	    }
-	  immediate_quit = true;
-	  maybe_quit ();
 	}
     give_up: ;
 
@@ -764,7 +758,8 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	       make_number (total_read));
     }
 
-  immediate_quit = false;
+  /* Wait for it to terminate, unless it already has.  */
+  wait_for_termination (pid, &status, fd0 < 0);
 
   /* Don't kill any children that the subprocess may have left behind
      when exiting.  */
@@ -1227,28 +1222,6 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
 
 #endif  /* not WINDOWSNT */
 }
-
-#ifndef WINDOWSNT
-/* Move the file descriptor FD so that its number is not less than MINFD.
-   If the file descriptor is moved at all, the original is closed on MSDOS,
-   but not elsewhere as the caller will close it anyway.  */
-static int
-relocate_fd (int fd, int minfd)
-{
-  if (fd >= minfd)
-    return fd;
-  else
-    {
-      int new = fcntl (fd, F_DUPFD_CLOEXEC, minfd);
-      if (new == -1)
-	{
-	  emacs_perror ("while setting up child");
-	  _exit (EXIT_CANCELED);
-	}
-      return new;
-    }
-}
-#endif /* not WINDOWSNT */
 
 static bool
 getenv_internal_1 (const char *var, ptrdiff_t varlen, char **value,
