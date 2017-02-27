@@ -3361,7 +3361,14 @@ object files--just `.o' will mark more than you might think."
   (interactive
    (list (read-regexp (concat (if current-prefix-arg "Unmark" "Mark")
                               " files (regexp): ")
-                      nil 'dired-regexp-history)
+                      ;; Add more suggestions into the default list
+                      (cons nil (list (dired-get-filename t t)
+                                      (and (dired-get-filename nil t)
+                                           (concat (regexp-quote
+                                                    (file-name-extension
+                                                     (dired-get-filename nil t) t))
+                                                   "\\'"))))
+                      'dired-regexp-history)
 	 (if current-prefix-arg ?\040)))
   (let ((dired-marker-char (or marker-char dired-marker-char)))
     (dired-mark-if
