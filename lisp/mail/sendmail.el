@@ -555,8 +555,9 @@ This also saves the value of `send-mail-function' via Customize."
 	    (goto-char (point-min))
 	    (display-buffer (current-buffer))
 	    (let ((completion-ignore-case t))
-	      (completing-read "Send mail via: "
-			       options nil 'require-match)))))
+              (completing-read
+               (format "Send mail via (default %s): " (caar options))
+               options nil 'require-match nil nil (car options))))))
     (customize-save-variable 'send-mail-function
 			     (cdr (assoc-string choice options t)))))
 
