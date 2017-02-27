@@ -1791,6 +1791,7 @@ Optional arg HOW-TO determines how to treat the target.
 	  (and (consp fn-list) (null (cdr fn-list)) (car fn-list)))
 	 (target-dir (dired-dwim-target-directory))
 	 (default (and dired-one-file
+		       (not dired-dwim-target) ; Bug#25609
 		       (expand-file-name (file-name-nondirectory (car fn-list))
 					 target-dir)))
 	 (defaults (dired-dwim-target-defaults fn-list target-dir))

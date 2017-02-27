@@ -20,6 +20,7 @@
 ;;; Code:
 (require 'ert)
 (require 'dired)
+(require 'nadvice)
 
 
 (ert-deftest dired-autoload ()
@@ -51,6 +52,37 @@
                        `(t ,full-name)))
       ;; Clean up
       (delete-directory dir 'recursive))))
+
+(ert-deftest dired-test-bug25609 ()
+  "Test for http://debbugs.gnu.org/25609 ."
+  (let* ((from (make-temp-file "foo" 'dir))
+         (to (make-temp-file "bar" 'dir))
+         (target (expand-file-name (file-name-nondirectory from) to))
+         (nested (expand-file-name (file-name-nondirectory from) target))
+         (dired-dwim-target t)
+         (dired-recursive-copies 'always)) ; Don't prompt me.
+    (advice-add 'dired-query ; Don't ask confirmation to overwrite a file.
+                :override
+                (lambda (sym prompt &rest args) (setq dired-query t))
+                '((name . "advice-dired-query")))
+    (advice-add 'completing-read ; Just return init.
+                :override
+                (lambda (prompt coll &optional pred match init hist def inherit keymap)
+                  init)
+                '((name . "advice-completing-read")))
+    (dired to)
+    (dired-other-window temporary-file-directory)
+    (dired-goto-file from)
+    (dired-do-copy)
+    (dired-do-copy); Again.
+    (unwind-protect
+        (progn
+          (should (file-exists-p target))
+          (should-not (file-exists-p nested)))
+      (delete-directory from 'recursive)
+      (delete-directory to 'recursive)
+      (advice-remove 'dired-query "advice-dired-query")
+      (advice-remove 'completing-read "advice-completing-read"))))
 
 (provide 'dired-tests)
 ;; dired-tests.el ends here
