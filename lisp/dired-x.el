@@ -342,22 +342,29 @@ Interactively, ask for EXTENSION.
 Prefixed with one C-u, unmark files instead.
 Prefixed with two C-u's, prompt for MARKER-CHAR and mark files with it."
   (interactive
-   (let ((suffix
-          (read-string (format "%s extension: "
-                               (if (equal current-prefix-arg '(4))
-                                   "UNmarking"
-                                 "Marking"))))
-         (marker
-          (pcase current-prefix-arg
-            ('(4) ?\s)
-            ('(16)
-             (let* ((dflt (char-to-string dired-marker-char))
-                    (input (read-string
-                            (format
-                             "Marker character to use (default %s): " dflt)
-                            nil nil dflt)))
-               (aref input 0)))
-            (_ dired-marker-char))))
+   (let* ((default
+            (let ((file (dired-get-filename nil t)))
+              (when file
+                (file-name-extension file))))
+          (suffix
+           (read-string (format "%s extension%s: "
+                                (if (equal current-prefix-arg '(4))
+                                    "UNmarking"
+                                  "Marking")
+                                (if default
+                                    (format " (default %s)" default)
+                                  "")) nil nil default))
+          (marker
+           (pcase current-prefix-arg
+             ('(4) ?\s)
+             ('(16)
+              (let* ((dflt (char-to-string dired-marker-char))
+                     (input (read-string
+                             (format
+                              "Marker character to use (default %s): " dflt)
+                             nil nil dflt)))
+                (aref input 0)))
+             (_ dired-marker-char))))
      (list suffix marker)))
   (or (listp extension)
       (setq extension (list extension)))
