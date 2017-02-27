@@ -89,7 +89,7 @@ strings case-insensitively."
 ;;; Control structures.
 
 ;;;###autoload
-(defun cl--mapcar-many (cl-func cl-seqs)
+(defun cl--mapcar-many (cl-func cl-seqs &optional acc)
   (if (cdr (cdr cl-seqs))
       (let* ((cl-res nil)
 	     (cl-n (apply 'min (mapcar 'length cl-seqs)))
@@ -106,20 +106,23 @@ strings case-insensitively."
 			  (setcar cl-p1 (cdr (car cl-p1))))
 		      (aref (car cl-p1) cl-i)))
 	    (setq cl-p1 (cdr cl-p1) cl-p2 (cdr cl-p2)))
-	  (push (apply cl-func cl-args) cl-res)
+	  (if acc
+	      (push (apply cl-func cl-args) cl-res)
+	    (apply cl-func cl-args))
 	  (setq cl-i (1+ cl-i)))
-	(nreverse cl-res))
+	(and acc (nreverse cl-res)))
     (let ((cl-res nil)
 	  (cl-x (car cl-seqs))
 	  (cl-y (nth 1 cl-seqs)))
       (let ((cl-n (min (length cl-x) (length cl-y)))
 	    (cl-i -1))
 	(while (< (setq cl-i (1+ cl-i)) cl-n)
-	  (push (funcall cl-func
-                         (if (consp cl-x) (pop cl-x) (aref cl-x cl-i))
-                         (if (consp cl-y) (pop cl-y) (aref cl-y cl-i)))
-                cl-res)))
-      (nreverse cl-res))))
+	  (let ((val (funcall cl-func
+			      (if (consp cl-x) (pop cl-x) (aref cl-x cl-i))
+			      (if (consp cl-y) (pop cl-y) (aref cl-y cl-i)))))
+	    (when acc
+	      (push val cl-res)))))
+	(and acc (nreverse cl-res)))))
 
 ;;;###autoload
 (defun cl-map (cl-type cl-func cl-seq &rest cl-rest)
@@ -142,7 +145,7 @@ the elements themselves.
 	(while (not (memq nil cl-args))
 	  (push (apply cl-func cl-args) cl-res)
 	  (setq cl-p cl-args)
-	  (while cl-p (setcar cl-p (cdr (pop cl-p)) )))
+	  (while cl-p (setcar cl-p (cdr (pop cl-p)))))
 	(nreverse cl-res))
     (let ((cl-res nil))
       (while cl-list
@@ -155,8 +158,14 @@ the elements themselves.
   "Like `cl-mapcar', but does not accumulate values returned by the function.
 \n(fn FUNCTION SEQUENCE...)"
   (if cl-rest
-      (progn (apply 'cl-map nil cl-func cl-seq cl-rest)
-	     cl-seq)
+      (if (or (cdr cl-rest) (nlistp cl-seq) (nlistp (car cl-rest)))
+          (progn
+            (cl--mapcar-many cl-func (cons cl-seq cl-rest))
+            cl-seq)
+        (let ((cl-x cl-seq) (cl-y (car cl-rest)))
+          (while (and cl-x cl-y)
+            (funcall cl-func (pop cl-x) (pop cl-y)))
+          cl-seq))
     (mapc cl-func cl-seq)))
 
 ;;;###autoload
@@ -164,7 +173,12 @@ the elements themselves.
   "Like `cl-maplist', but does not accumulate values returned by the function.
 \n(fn FUNCTION LIST...)"
   (if cl-rest
-      (apply 'cl-maplist cl-func cl-list cl-rest)
+      (let ((cl-args (cons cl-list (copy-sequence cl-rest)))
+	    cl-p)
+	(while (not (memq nil cl-args))
+          (apply cl-func cl-args)
+	  (setq cl-p cl-args)
+	  (while cl-p (setcar cl-p (cdr (pop cl-p))))))
     (let ((cl-p cl-list))
       (while cl-p (funcall cl-func cl-p) (setq cl-p (cdr cl-p)))))
   cl-list)
