@@ -149,14 +149,17 @@ See `replace-regexp' and `query-replace-regexp-eval'.")
   (mapconcat 'isearch-text-char-description string ""))
 
 (defun query-replace--split-string (string)
-  "Split string STRING at a character with property `separator'"
+  "Split string STRING at a substring with property `separator'."
   (let* ((length (length string))
          (split-pos (text-property-any 0 length 'separator t string)))
     (if (not split-pos)
         (substring-no-properties string)
-      (cl-assert (not (text-property-any (1+ split-pos) length 'separator t string)))
       (cons (substring-no-properties string 0 split-pos)
-            (substring-no-properties string (1+ split-pos) length)))))
+            (substring-no-properties
+             string (or (text-property-not-all
+                         (1+ split-pos) length 'separator t string)
+                        length)
+             length)))))
 
 (defun query-replace-read-from (prompt regexp-flag)
   "Query and return the `from' argument of a query-replace operation.
@@ -165,17 +168,19 @@ wants to replace FROM with TO."
   (if query-replace-interactive
       (car (if regexp-flag regexp-search-ring search-ring))
     (let* ((history-add-new-input nil)
-	   (separator
+	   (separator-string
 	    (when query-replace-from-to-separator
-	      (propertize "\0"
-			  'display
-                          (propertize
-                           (if (char-displayable-p
-                                (string-to-char (replace-regexp-in-string
-                                                 " " "" query-replace-from-to-separator)))
-                               query-replace-from-to-separator
-                             " -> ")
-                           'face 'minibuffer-prompt)
+	      ;; Check if the first non-whitespace char is displayable
+	      (if (char-displayable-p
+		   (string-to-char (replace-regexp-in-string
+				    " " "" query-replace-from-to-separator)))
+		  query-replace-from-to-separator
+		" -> ")))
+	   (separator
+	    (when separator-string
+	      (propertize separator-string
+			  'display separator-string
+			  'face 'minibuffer-prompt
 			  'separator t)))
 	   (minibuffer-history
 	    (append
@@ -203,7 +208,8 @@ wants to replace FROM with TO."
               (minibuffer-with-setup-hook
                   (lambda ()
                     (setq-local text-property-default-nonsticky
-                                (cons '(separator . t) text-property-default-nonsticky)))
+                                (append '((separator . t) (face . t))
+                                        text-property-default-nonsticky)))
                 (if regexp-flag
                     (read-regexp prompt nil 'minibuffer-history)
                   (read-from-minibuffer
