@@ -40,9 +40,6 @@
   ;; We need to record autoloads till the point that emacs (as opposed
   ;; to bootstrap-emacs) is dumped. After this point, we are not
   ;; bootstrapping any more.
-  (search-backward "-l loadup dump")
-  (beginning-of-line)
-  (delete-region (point) (point-max))
   (keep-lines "(autoload" (point-min) (point-max))
   (sort-lines nil (point-min) (point-max))
   (ldefs-clean-uniquify-buffer-lines)
@@ -60,6 +57,6 @@
 
 
 (defun ldefs-clean ()
-  (find-file "lisp/ldefs-boot-auto.temp")
+  (find-file "../lisp/ldefs-boot-auto.temp")
   (ldefs-clean-up)
   (write-file "ldefs-boot-auto.el"))
