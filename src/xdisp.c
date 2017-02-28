@@ -13338,12 +13338,15 @@ overlay_arrow_in_current_buffer_p (void)
 
 
 /* Return true if any overlay_arrows have moved or overlay-arrow-string
-   has changed.  */
+   has changed.
+   If SET_REDISPLAY is true, additionally, set the `redisplay' bit in those
+   buffers that are affected.  */
 
 static bool
 overlay_arrows_changed_p (bool set_redisplay)
 {
   Lisp_Object vlist;
+  bool changed = false;
 
   for (vlist = Voverlay_arrow_variable_list;
        CONSP (vlist);
@@ -13370,12 +13373,13 @@ overlay_arrows_changed_p (bool set_redisplay)
             {
               if (buf)
 	        bset_redisplay (buf);
+              changed = true;
             }
 	  else
 	    return true;
 	}
     }
-  return false;
+  return changed;
 }
 
 /* Mark overlay arrows to be updated on next redisplay.  */
@@ -13397,6 +13401,8 @@ update_overlay_arrows (int up_to_date)
       if (up_to_date > 0)
 	{
 	  Lisp_Object val = find_symbol_value (var);
+          if (!MARKERP (val))
+	    continue;
 	  Fput (var, Qlast_arrow_position,
 		COERCE_MARKER (val));
 	  Fput (var, Qlast_arrow_string,
