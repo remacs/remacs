@@ -68,14 +68,14 @@ Valid encodings are `7bit', `8bit', `quoted-printable' and `base64'."
 (declare-function message-options-set "message" (symbol value))
 
 (defun mm-encode-body (&optional charset)
-  "Encode a body.
-Should be called narrowed to the body that is to be encoded.
+  "Encode whole buffer's contents.
+Buffer's multibyteness will be turned off when encoding takes place.
 If there is more than one non-ASCII MULE charset in the body, then the
 list of MULE charsets found is returned.
 If CHARSET is non-nil, it is used as the MIME charset to encode the body.
 If successful, the MIME charset is returned.
 If no encoding was done, nil is returned."
-  (if (not (mm-multibyte-p))
+  (if (not enable-multibyte-characters)
       ;; In the non-Mule case, we search for non-ASCII chars and
       ;; return the value of `mail-parse-charset' if any are found.
       (or charset
@@ -93,8 +93,12 @@ If no encoding was done, nil is returned."
     (save-excursion
       (if charset
 	  (progn
-	    (encode-coding-region (point-min) (point-max)
-				  (mm-charset-to-coding-system charset))
+	    (insert
+	     (prog1
+		 (encode-coding-string (buffer-string)
+				       (mm-charset-to-coding-system charset))
+	       (erase-buffer)
+	       (set-buffer-multibyte nil)))
 	    charset)
 	(goto-char (point-min))
 	(let ((charsets (mm-find-mime-charset-region (point-min) (point-max)
@@ -110,8 +114,12 @@ If no encoding was done, nil is returned."
 	   (t
 	    (prog1
 		(setq charset (car charsets))
-	      (encode-coding-region (point-min) (point-max)
-				    (mm-charset-to-coding-system charset))))
+	      (insert
+	       (prog1
+		   (encode-coding-string (buffer-string)
+					 (mm-charset-to-coding-system charset))
+		 (erase-buffer)
+		 (set-buffer-multibyte nil)))))
 	   ))))))
 
 (defun mm-long-lines-p (length)

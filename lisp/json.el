@@ -188,7 +188,7 @@ Unlike `reverse', this keeps the property-value pairs intact."
 ;; Reader utilities
 
 (defsubst json-advance (&optional n)
-  "Skip past the following N characters."
+  "Advance N characters forward."
   (forward-char n))
 
 (defsubst json-peek ()
@@ -293,7 +293,7 @@ KEYWORD is the keyword expected."
   (unless (member keyword json-keywords)
     (signal 'json-unknown-keyword (list keyword)))
   (mapc (lambda (char)
-          (unless (char-equal char (json-peek))
+          (when (/= char (json-peek))
             (signal 'json-unknown-keyword
                     (list (save-excursion
                             (backward-word-strictly 1)
@@ -330,10 +330,10 @@ representation will be parsed correctly."
  ;; If SIGN is non-nil, the number is explicitly signed.
  (let ((number-regexp
         "\\([0-9]+\\)?\\(\\.[0-9]+\\)?\\([Ee][+-]?[0-9]+\\)?"))
-   (cond ((and (null sign) (char-equal (json-peek) ?-))
+   (cond ((and (null sign) (= (json-peek) ?-))
           (json-advance)
           (- (json-read-number t)))
-         ((and (null sign) (char-equal (json-peek) ?+))
+         ((and (null sign) (= (json-peek) ?+))
           (json-advance)
           (json-read-number t))
          ((and (looking-at number-regexp)
@@ -381,13 +381,13 @@ representation will be parsed correctly."
      ;; this clause overlaps with the next one and therefore has to
      ;; come first.
      ((looking-at
-       (rx (group (any "Dd") (any "89ABab") (= 2 (any "0-9A-Fa-f")))
-           "\\u" (group (any "Dd") (any "C-Fc-f") (= 2 (any "0-9A-Fa-f")))))
+       (rx (group (any "Dd") (any "89ABab") (= 2 (any xdigit)))
+           "\\u" (group (any "Dd") (any "C-Fc-f") (= 2 (any xdigit)))))
       (json-advance 10)
       (json--decode-utf-16-surrogates
        (string-to-number (match-string 1) 16)
        (string-to-number (match-string 2) 16)))
-     ((looking-at "[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]")
+     ((looking-at (rx (= 4 xdigit)))
       (let ((hex (match-string 0)))
         (json-advance 4)
         (string-to-number hex 16)))
@@ -396,14 +396,14 @@ representation will be parsed correctly."
 
 (defun json-read-string ()
   "Read the JSON string at point."
-  (unless (char-equal (json-peek) ?\")
+  (unless (= (json-peek) ?\")
     (signal 'json-string-format (list "doesn't start with `\"'!")))
   ;; Skip over the '"'
   (json-advance)
   (let ((characters '())
         (char (json-peek)))
-    (while (not (char-equal char ?\"))
-      (push (if (char-equal char ?\\)
+    (while (not (= char ?\"))
+      (push (if (= char ?\\)
                 (json-read-escaped-char)
               (json-pop))
             characters)
@@ -495,11 +495,11 @@ Please see the documentation of `json-object-type' and `json-key-type'."
   ;; read key/value pairs until "}"
   (let ((elements (json-new-object))
         key value)
-    (while (not (char-equal (json-peek) ?}))
+    (while (not (= (json-peek) ?}))
       (json-skip-whitespace)
       (setq key (json-read-string))
       (json-skip-whitespace)
-      (if (char-equal (json-peek) ?:)
+      (if (= (json-peek) ?:)
           (json-advance)
         (signal 'json-object-format (list ":" (json-peek))))
       (json-skip-whitespace)
@@ -510,8 +510,8 @@ Please see the documentation of `json-object-type' and `json-key-type'."
         (funcall json-post-element-read-function))
       (setq elements (json-add-to-object elements key value))
       (json-skip-whitespace)
-      (unless (char-equal (json-peek) ?})
-        (if (char-equal (json-peek) ?,)
+      (when (/= (json-peek) ?})
+        (if (= (json-peek) ?,)
             (json-advance)
           (signal 'json-object-format (list "," (json-peek))))))
     ;; Skip over the "}"
@@ -621,7 +621,7 @@ become JSON objects."
   (json-skip-whitespace)
   ;; read values until "]"
   (let (elements)
-    (while (not (char-equal (json-peek) ?\]))
+    (while (not (= (json-peek) ?\]))
       (json-skip-whitespace)
       (when json-pre-element-read-function
         (funcall json-pre-element-read-function (length elements)))
@@ -629,8 +629,8 @@ become JSON objects."
       (when json-post-element-read-function
         (funcall json-post-element-read-function))
       (json-skip-whitespace)
-      (unless (char-equal (json-peek) ?\])
-        (if (char-equal (json-peek) ?,)
+      (when (/= (json-peek) ?\])
+        (if (= (json-peek) ?,)
             (json-advance)
           (signal 'json-error (list 'bleah)))))
     ;; Skip over the "]"

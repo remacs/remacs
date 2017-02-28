@@ -5331,7 +5331,7 @@ Specifically, return the position of `erc-insert-marker'."
   "Time of last call to `erc-send-current-line'.
 If that function has never been called, the value is 0.")
 
-(defcustom erc-accidental-paste-threshold-seconds nil
+(defcustom erc-accidental-paste-threshold-seconds 0.2
   "Minimum time, in seconds, before sending new lines via IRC.
 If the value is a number, `erc-send-current-line' signals an error
 if its previous invocation was fewer than this many seconds ago.
@@ -5341,7 +5341,7 @@ into the ERC buffer, that text is not sent to the IRC server.
 If the value is nil, `erc-send-current-line' always considers any
 submitted line to be intentional."
   :group 'erc
-  :version "24.4"
+  :version "26.1"
   :type '(choice number (other :tag "disabled" nil)))
 
 (defun erc-send-current-line ()

@@ -44,6 +44,12 @@ This variable first existed in version 19.23.")
 (defconst emacs-build-time (if emacs-build-system (current-time))
   "Time at which Emacs was dumped out, or nil if not available.")
 
+(defconst emacs-build-number 1          ; loadup.el may increment this
+  "The build number of this version of Emacs.
+This is an integer that increments each time Emacs is built in a given
+directory (without cleaning).  This is likely to only be relevant when
+developing Emacs.")
+
 (defvar motif-version-string)
 (defvar gtk-version-string)
 (defvar ns-version-string)
@@ -56,8 +62,9 @@ Don't use this function in programs to choose actions according
 to the system configuration; look at `system-configuration' instead."
   (interactive "P")
   (let ((version-string
-         (format "GNU Emacs %s (%s%s%s%s)%s"
+         (format "GNU Emacs %s (build %s, %s%s%s%s)%s"
                  emacs-version
+                 emacs-build-number
 		 system-configuration
 		 (cond ((featurep 'motif)
 			(concat ", " (substring motif-version-string 4)))

@@ -1246,7 +1246,7 @@ main (int argc, char **argv)
       if (streq (tagfile, "-"))
 	{
 	  tagf = stdout;
-	  SET_BINARY (fileno (stdout));
+	  set_binary_mode (STDOUT_FILENO, O_BINARY);
 	}
       else
 	tagf = fopen (tagfile, append_to_tagfile ? "ab" : "wb");

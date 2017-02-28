@@ -76,7 +76,7 @@
 ;; - annotate-extract-revision-at-line ()      OK
 ;; TAG SYSTEM
 ;; - create-tag (dir name branchp)             OK
-;; - retrieve-tag (dir name update)            OK FIXME UPDATE BUFFERS
+;; - retrieve-tag (dir name update)            OK
 ;; MISCELLANEOUS
 ;; - make-version-backups-p (file)             ??
 ;; - previous-revision (file rev)              OK
@@ -562,7 +562,6 @@ Optional arg REVISION is a revision to annotate from."
   "Retrieve the version tagged by NAME of all registered files at or below DIR."
   (let ((default-directory dir))
     (vc-hg-command nil 0 nil "update" name)
-    ;; FIXME: update buffers if `update' is true
     ;; TODO: update *vc-change-log* buffer so can see @ if --graph
     ))
 

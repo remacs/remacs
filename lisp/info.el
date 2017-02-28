@@ -1599,6 +1599,16 @@ escaped (\\\",\\\\)."
 	    parameter-alist))
     parameter-alist))
 
+(defun Info-node-description (file)
+  (cond
+   ((equal file "dir") "*Info Directory*")
+   ((eq file 'apropos) "*Info Apropos*")
+   ((eq file 'history) "*Info History*")
+   ((eq file 'toc)     "*Info TOC*")
+   ((not (stringp file)) "") ; Avoid errors
+   (t
+    (concat "(" (file-name-nondirectory file) ") " Info-current-node))))
+
 (defun Info-display-images-node ()
   "Display images in current node."
   (save-excursion
@@ -1693,6 +1703,7 @@ escaped (\\\",\\\\)."
 	  (setq Info-history-forward nil))
 	(if (not (eq Info-fontify-maximum-menu-size nil))
             (Info-fontify-node))
+        (setq list-buffers-directory (Info-node-description Info-current-file))
 	(Info-display-images-node)
 	(Info-hide-cookies-node)
 	(run-hooks 'Info-selection-hook)))))
@@ -2107,10 +2118,9 @@ If DIRECTION is `backward', search in the reverse direction."
 	   (cond
 	    (isearch-regexp-function
 	     ;; Lax version of word search
-	     (let ((lax (not (or isearch-nonincremental
-				 (eq (length string)
-				     (length (isearch--state-string
-					      (car isearch-cmds))))))))
+	     (let ((lax (and (not bound) (isearch--lax-regexp-function-p))))
+	       (when lax
+		 (setq isearch-adjusted t))
 	       (if (functionp isearch-regexp-function)
 		   (funcall isearch-regexp-function string lax)
 		 (word-search-regexp string lax))))

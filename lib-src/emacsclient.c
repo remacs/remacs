@@ -118,6 +118,9 @@ int nowait = 0;
 /* Nonzero means don't print messages for successful operations.  --quiet.  */
 int quiet = 0;
 
+/* Nonzero means don't print values returned from emacs. --suppress-output.  */
+int suppress_output = 0;
+
 /* Nonzero means args are expressions to be evaluated.  --eval.  */
 int eval = 0;
 
@@ -160,6 +163,7 @@ struct option longopts[] =
 {
   { "no-wait",	no_argument,	   NULL, 'n' },
   { "quiet",	no_argument,	   NULL, 'q' },
+  { "suppress-output", no_argument, NULL, 'u' },
   { "eval",	no_argument,	   NULL, 'e' },
   { "help",	no_argument,	   NULL, 'H' },
   { "version",	no_argument,	   NULL, 'V' },
@@ -469,9 +473,9 @@ decode_options (int argc, char **argv)
     {
       int opt = getopt_long_only (argc, argv,
 #ifndef NO_SOCKETS_IN_FILE_SYSTEM
-			     "VHneqa:s:f:d:F:tc",
+			     "VHnequa:s:f:d:F:tc",
 #else
-			     "VHneqa:f:d:F:tc",
+			     "VHnequa:f:d:F:tc",
 #endif
 			     longopts, 0);
 
@@ -517,6 +521,10 @@ decode_options (int argc, char **argv)
 
 	case 'q':
 	  quiet = 1;
+	  break;
+
+	case 'u':
+	  suppress_output = 1;
 	  break;
 
 	case 'V':
@@ -631,6 +639,7 @@ The following OPTIONS are accepted:\n\
 -e, --eval    		Evaluate the FILE arguments as ELisp expressions\n\
 -n, --no-wait		Don't wait for the server to return\n\
 -q, --quiet		Don't display messages on success\n\
+-u, --suppress-output   Don't display return values from the server\n\
 -d DISPLAY, --display=DISPLAY\n\
 			Visit the file in the given display\n\
 ", "\
@@ -1860,19 +1869,25 @@ main (int argc, char **argv)
           else if (strprefix ("-print ", p))
             {
               /* -print STRING: Print STRING on the terminal. */
-              str = unquote_argument (p + strlen ("-print "));
-              if (needlf)
-                printf ("\n");
-              printf ("%s", str);
-              needlf = str[0] == '\0' ? needlf : str[strlen (str) - 1] != '\n';
-            }
+	      if (!suppress_output)
+		{
+		  str = unquote_argument (p + strlen ("-print "));
+		  if (needlf)
+		    printf ("\n");
+		  printf ("%s", str);
+		  needlf = str[0] == '\0' ? needlf : str[strlen (str) - 1] != '\n';
+		}
+	    }
           else if (strprefix ("-print-nonl ", p))
             {
               /* -print-nonl STRING: Print STRING on the terminal.
                  Used to continue a preceding -print command.  */
-              str = unquote_argument (p + strlen ("-print-nonl "));
-              printf ("%s", str);
-              needlf = str[0] == '\0' ? needlf : str[strlen (str) - 1] != '\n';
+	      if (!suppress_output)
+		{
+		  str = unquote_argument (p + strlen ("-print-nonl "));
+		  printf ("%s", str);
+		  needlf = str[0] == '\0' ? needlf : str[strlen (str) - 1] != '\n';
+		}
             }
           else if (strprefix ("-error ", p))
             {

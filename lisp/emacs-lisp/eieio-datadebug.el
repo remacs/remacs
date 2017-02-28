@@ -59,7 +59,7 @@ PREFIX is the text that precedes the button.
 PREBUTTONTEXT is some text between PREFIX and the object button."
   (let* ((start (point))
          (end nil)
-         (str (object-print object))
+         (str (cl-prin1-to-string object))
          (class (eieio-object-class object))
          (tip (format "Object %s\nClass: %S\nParent(s): %S\n%d slots"
                       (eieio-object-name-string object)

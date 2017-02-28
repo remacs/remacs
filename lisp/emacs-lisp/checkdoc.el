@@ -603,7 +603,7 @@ style."
 	      (checkdoc-overlay-put cdo 'face 'highlight)
 	      ;; Make sure the whole doc string is visible if possible.
 	      (sit-for 0)
-	      (if (and (looking-at "\"")
+	      (if (and (= (following-char) ?\")
 		       (not (pos-visible-in-window-p
 			     (save-excursion (forward-sexp 1) (point))
 			     (selected-window))))
@@ -743,9 +743,9 @@ buffer, otherwise searching starts at START-HERE."
       (while (checkdoc-next-docstring)
         (message "Searching for doc string spell error...%d%%"
                  (floor (* 100.0 (point)) (point-max)))
-        (if (looking-at "\"")
-            (checkdoc-ispell-docstring-engine
-             (save-excursion (forward-sexp 1) (point-marker)))))
+        (when (= (following-char) ?\")
+          (checkdoc-ispell-docstring-engine
+           (save-excursion (forward-sexp 1) (point-marker)))))
       (message "Checkdoc: Done."))))
 
 (defun checkdoc-message-interactive-ispell-loop (start-here)
@@ -763,7 +763,7 @@ buffer, otherwise searching starts at START-HERE."
       (while (checkdoc-message-text-next-string (point-max))
         (message "Searching for message string spell error...%d%%"
                  (floor (* 100.0 (point)) (point-max)))
-        (if (looking-at "\"")
+        (if (= (following-char) ?\")
             (checkdoc-ispell-docstring-engine
              (save-excursion (forward-sexp 1) (point-marker)))))
       (message "Checkdoc: Done."))))
@@ -1381,7 +1381,7 @@ See the style guide in the Emacs Lisp manual for more details."
 		"All variables and subroutines might as well have a \
 documentation string")
 	      (point) (+ (point) 1) t)))))
-    (if (and (not err) (looking-at "\""))
+    (if (and (not err) (= (following-char) ?\"))
         (with-syntax-table checkdoc-syntax-table
           (checkdoc-this-string-valid-engine fp))
       err)))
@@ -1395,7 +1395,7 @@ regexp short cuts work.  FP is the function defun information."
 	;; we won't accidentally lose our place.  This could cause
 	;; end-of doc string whitespace to also delete the " char.
 	(s (point))
-	(e (if (looking-at "\"")
+	(e (if (= (following-char) ?\")
 	       (save-excursion (forward-sexp 1) (point-marker))
 	     (point))))
     (or
@@ -1475,7 +1475,7 @@ regexp short cuts work.  FP is the function defun information."
 	((looking-at "[\\!?;:.)]")
 	 ;; These are ok
 	 nil)
-        ((and checkdoc-permit-comma-termination-flag (looking-at ","))
+        ((and checkdoc-permit-comma-termination-flag (= (following-char) ?,))
 	 nil)
 	(t
 	 ;; If it is not a complete sentence, let's see if we can

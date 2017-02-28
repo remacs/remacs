@@ -423,14 +423,14 @@ static void ns_judge_scroll_bars (struct frame *f);
    ========================================================================== */
 
 void
-ns_set_represented_filename (NSString* fstr, struct frame *f)
+ns_set_represented_filename (NSString *fstr, struct frame *f)
 {
   represented_filename = [fstr retain];
   represented_frame = f;
 }
 
 void
-ns_init_events (struct input_event* ev)
+ns_init_events (struct input_event *ev)
 {
   EVENT_INIT (*ev);
   emacs_event = ev;
@@ -5817,7 +5817,7 @@ not_in_argv (NSString *arg)
                   Handle uchrHandle = GetResource
                     ('uchr', GetScriptVariable (smv, smScriptKeys));
                   UInt32 dummy = 0;
-                  UCKeyTranslate ((UCKeyboardLayout*)*uchrHandle,
+                  UCKeyTranslate ((UCKeyboardLayout *) *uchrHandle,
                                  [[theEvent characters] characterAtIndex: 0],
                                  kUCKeyActionDisplay,
                                  (flags & ~NSEventModifierFlagCommand) >> 8,

@@ -92,7 +92,7 @@ typedef struct _EmacsFrameClassRec *EmacsFrameClass;
 
 extern WidgetClass emacsFrameClass;
 
-extern struct _DisplayContext* display_context;
+extern struct _DisplayContext *display_context;
 
 /* Special entry points */
 void EmacsFrameSetCharSize (Widget, int, int);

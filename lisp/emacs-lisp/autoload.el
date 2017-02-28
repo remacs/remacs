@@ -164,7 +164,7 @@ expression, in which case we want to handle forms differently."
      ((and (memq car '(easy-mmode-define-global-mode define-global-minor-mode
                        define-globalized-minor-mode defun defmacro
 		       easy-mmode-define-minor-mode define-minor-mode
-                       define-inline cl-defun cl-defmacro))
+                       define-inline cl-defun cl-defmacro cl-defgeneric))
            (macrop car)
 	   (setq expand (let ((load-file-name file)) (macroexpand form)))
 	   (memq (car expand) '(progn prog1 defalias)))
@@ -748,7 +748,7 @@ FILE's modification time."
                               (setq output-start (autoload--setup-output
                                                   otherbuf outbuf absfile load-name)))
                             (autoload--print-cookie-text output-start load-name file))
-                           ((looking-at ";")
+                           ((= (following-char) ?\;)
                             ;; Don't read the comment.
                             (forward-line 1))
                            (t

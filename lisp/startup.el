@@ -376,23 +376,19 @@ this variable usefully is to set it while building and dumping Emacs."
 (make-obsolete-variable 'system-name "use (system-name) instead" "25.1")
 
 (defcustom mail-host-address nil
-  "Name of this machine, for purposes of naming users.
-If non-nil, Emacs uses this instead of `system-name' when constructing
-email addresses."
+  "The name of this machine, for use in constructing email addresses.
+If this is nil, Emacs uses `system-name'."
   :type '(choice (const nil) string)
   :group 'mail)
 
-(defcustom user-mail-address (if command-line-processed
-				 (or (getenv "EMAIL")
-				     (concat (user-login-name) "@"
-					     (or mail-host-address
-						 (system-name))))
-			       ;; Empty string means "not set yet".
-			       "")
-  "Full mailing address of this user.
-This is initialized with environment variable `EMAIL' or, as a
-fallback, using `mail-host-address'.  This is done after your
-init file is read, in case it sets `mail-host-address'."
+(defcustom user-mail-address
+  (or (getenv "EMAIL")
+      (concat (user-login-name) "@" (or mail-host-address (system-name))))
+  "The email address of the current user.
+This defaults to either: the value of EMAIL environment variable; or
+user@host, using `user-login-name' and `mail-host-address' (or `system-name')."
+  :initialize 'custom-initialize-delay
+  :set-after '(mail-host-address)
   :type 'string
   :group 'mail)
 
@@ -1297,11 +1293,17 @@ the `--debug-init' option to view a complete error backtrace."
 	(set-language-environment current-language-environment)))
 
     ;; Do this here in case the init file sets mail-host-address.
-    (if (equal user-mail-address "")
-	(setq user-mail-address (or (getenv "EMAIL")
-				    (concat (user-login-name) "@"
-					    (or mail-host-address
-						(system-name))))))
+    (and mail-host-address
+	 ;; Check that user-mail-address has not been set by hand.
+	 ;; Yes, this is ugly, but slightly less so than leaving
+	 ;; user-mail-address uninitialized during init file processing.
+	 ;; Perhaps we should make :set-after do something like this?
+	 ;; Ie, extend it to also mean (re)initialize-after.  See etc/TODO.
+	 (equal user-mail-address
+		(let (mail-host-address)
+		  (ignore-errors
+		    (eval (car (get 'user-mail-address 'standard-value))))))
+	 (custom-reevaluate-setting 'user-mail-address))
 
     ;; If parameter have been changed in the init file which influence
     ;; face realization, clear the face cache so that new faces will

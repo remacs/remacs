@@ -185,6 +185,7 @@
 (require 'bytecomp)
 (eval-when-compile (require 'cl-lib))
 (require 'macroexp)
+(require 'subr-x)
 
 (defun byte-compile-log-lap-1 (format &rest args)
   ;; Newer byte codes for stack-ref make the slot 0 non-nil again.
@@ -1356,7 +1357,7 @@
 (defun byte-decompile-bytecode-1 (bytes constvec &optional make-spliceable)
   (let ((length (length bytes))
         (bytedecomp-ptr 0) optr tags bytedecomp-op offset
-	lap tmp)
+	lap tmp last-constant)
     (while (not (= bytedecomp-ptr length))
       (or make-spliceable
 	  (push bytedecomp-ptr lap))
@@ -1385,7 +1386,8 @@
 			    (or (assq tmp byte-compile-variables)
                                 (let ((new (list tmp)))
                                   (push new byte-compile-variables)
-                                  new)))))
+                                  new)))
+                   last-constant tmp))
 	    ((eq bytedecomp-op 'byte-stack-set2)
 	     (setq bytedecomp-op 'byte-stack-set))
 	    ((and (eq bytedecomp-op 'byte-discardN) (>= offset #x80))
@@ -1394,7 +1396,34 @@
 	     ;; lapcode, we represent this by using a different opcode
 	     ;; (with the flag removed from the operand).
 	     (setq bytedecomp-op 'byte-discardN-preserve-tos)
-	     (setq offset (- offset #x80))))
+	     (setq offset (- offset #x80)))
+            ((eq bytedecomp-op 'byte-switch)
+             (cl-assert (hash-table-p last-constant) nil
+                        "byte-switch used without preceeding hash table")
+             ;; We cannot use the original hash table referenced in the op,
+             ;; so we create a copy of it, and replace the addresses with
+             ;; TAGs.
+             (let ((orig-table last-constant))
+               (cl-loop for e across constvec
+                        when (eq e last-constant)
+                        do (setq last-constant (copy-hash-table e))
+                        and return nil)
+               ;; Replace all addresses with TAGs.
+               (maphash #'(lambda (value tag)
+                            (let (newtag)
+                              (setq newtag (byte-compile-make-tag))
+                              (push (cons tag newtag) tags)
+                              (puthash value newtag last-constant)))
+                        last-constant)
+               ;; Replace the hash table referenced in the lapcode with our
+               ;; modified one.
+               (cl-loop for el in-ref lap
+                        when (and (listp el) ;; make sure we're at the correct op
+                                  (eq (nth 1 el) 'byte-constant)
+                                  (eq (nth 2 el) orig-table))
+                        ;; Jump tables are never reused, so do this exactly
+                        ;; once.
+                        do (setf (nth 2 el) last-constant) and return nil))))
       ;; lap = ( [ (pc . (op . arg)) ]* )
       (push (cons optr (cons bytedecomp-op (or offset 0)))
             lap)
@@ -1723,12 +1752,25 @@ If FOR-EFFECT is non-nil, the return value is assumed to be of no importance."
 		 (setcdr tmp2 lap1)
 		 (setq tmp3 (cdr (memq tmp2 tmp3))))
 	       (setq lap (delq lap0 lap)
-		     keep-going t))
+		     keep-going t)
+               ;; replace references to tag in jump tables, if any
+               (dolist (table byte-compile-jump-tables)
+                 (catch 'break
+                   (maphash #'(lambda (value tag)
+                                (when (equal tag lap0)
+                                  ;; each tag occurs only once in the jump table
+                                  (puthash value lap1 table)
+                                  (throw 'break nil)))
+                            table))))
 	      ;;
 	      ;; unused-TAG: --> <deleted>
 	      ;;
 	      ((and (eq 'TAG (car lap0))
-		    (not (rassq lap0 lap)))
+		    (not (rassq lap0 lap))
+                    ;; make sure this tag isn't used in a jump-table
+                    (cl-loop for table in byte-compile-jump-tables
+                             when (member lap0 (hash-table-values table))
+                             return nil finally return t))
 	       (and (memq byte-optimize-log '(t byte))
 		    (byte-compile-log "  unused tag %d removed" (nth 1 lap0)))
 	       (setq lap (delq lap0 lap)
@@ -1736,9 +1778,15 @@ If FOR-EFFECT is non-nil, the return value is assumed to be of no importance."
 	      ;;
 	      ;; goto   ... --> goto   <delete until TAG or end>
 	      ;; return ... --> return <delete until TAG or end>
-	      ;;
+	      ;; (unless a jump-table is being used, where deleting may affect
+              ;; other valid case bodies)
+              ;;
 	      ((and (memq (car lap0) '(byte-goto byte-return))
-		    (not (memq (car lap1) '(TAG nil))))
+		    (not (memq (car lap1) '(TAG nil)))
+                    ;; FIXME: Instead of deferring simply when jump-tables are
+                    ;; being used, keep a list of tags used for switch tags and
+                    ;; use them instead (see `byte-compile-inline-lapcode').
+                    (not byte-compile-jump-tables))
 	       (setq tmp rest)
 	       (let ((i 0)
 		     (opt-p (memq byte-optimize-log '(t lap)))

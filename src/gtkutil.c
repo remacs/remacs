@@ -1694,7 +1694,7 @@ pop_down_dialog (void *arg)
 }
 
 /* If there are any emacs timers pending, add a timeout to main loop in DATA.
-    We pass in DATA as gpointer* so we can use this as a callback.  */
+   Pass DATA as gpointer so we can use this as a callback.  */
 
 static gboolean
 xg_maybe_add_timer (gpointer data)

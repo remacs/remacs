@@ -1757,6 +1757,9 @@ Return t if the buffer had changes, nil otherwise."
       ;; because we don't know that yet.
       t)))
 
+(defvar vc-revision-history nil
+  "History for `vc-read-revision'.")
+
 (defun vc-read-revision (prompt &optional files backend default initial-input)
   (cond
    ((null files)
@@ -1768,7 +1771,7 @@ Return t if the buffer had changes, nil otherwise."
          (vc-call-backend backend 'revision-completion-table files)))
     (if completion-table
         (completing-read prompt completion-table
-                         nil nil initial-input nil default)
+                         nil nil initial-input 'vc-revision-history default)
       (read-string prompt initial-input nil default))))
 
 (defun vc-diff-build-argument-list-internal ()
@@ -2157,22 +2160,28 @@ checked out in that new branch."
 NAME can name a branch, in which case this command will switch to the
 named branch in the directory DIR.
 Interactively, prompt for DIR only for VCS that works at file level;
-otherwise use the default directory of the current buffer.
+otherwise use the repository root of the current buffer.
 If NAME is empty, it refers to the latest revisions of the current branch.
 If locking is used for the files in DIR, then there must not be any
 locked files at or below DIR (but if NAME is empty, locked files are
 allowed and simply skipped)."
   (interactive
-   (let ((granularity
-	  (vc-call-backend (vc-responsible-backend default-directory)
-			   'revision-granularity)))
+   (let* ((granularity
+           (vc-call-backend (vc-responsible-backend default-directory)
+                            'revision-granularity))
+          (dir
+           (if (eq granularity 'repository)
+               ;; For VC's that do not work at file level, it's pointless
+               ;; to ask for a directory, branches are created at repository level.
+               ;; XXX: Either we call expand-file-name here, or use
+               ;; file-in-directory-p inside vc-resynch-buffers-in-directory.
+               (expand-file-name (vc-root-dir))
+             (read-directory-name "Directory: " default-directory nil t))))
      (list
-      (if (eq granularity 'repository)
-	  ;; For VC's that do not work at file level, it's pointless
-	  ;; to ask for a directory, branches are created at repository level.
-	  default-directory
-	(read-directory-name "Directory: " default-directory default-directory t))
-      (read-string "Tag name to retrieve (default latest revisions): "))))
+      dir
+      (vc-read-revision "Tag name to retrieve (default latest revisions): "
+                        (list dir)
+                        (vc-responsible-backend dir)))))
   (let ((update (yes-or-no-p "Update any affected buffers? "))
 	(msg (if (or (not name) (string= name ""))
 		 (format "Updating %s... " (abbreviate-file-name dir))
@@ -2367,6 +2376,17 @@ When called interactively with a prefix argument, prompt for LIMIT."
     (vc-print-log-internal backend (list rootdir) nil nil limit)))
 
 ;;;###autoload
+(defun vc-print-branch-log (branch)
+  (interactive
+   (list
+    (vc-read-revision "Branch to log: ")))
+  (when (equal branch "")
+    (error "No branch specified"))
+  (vc-print-log-internal (vc-responsible-backend default-directory)
+                         (list default-directory) branch t
+                         (when (> vc-log-show-limit 0) vc-log-show-limit)))
+
+;;;###autoload
 (defun vc-log-incoming (&optional remote-location)
   "Show a log of changes that will be received with a pull operation from REMOTE-LOCATION.
 When called interactively with a prefix argument, prompt for REMOTE-LOCATION."
@@ -2376,8 +2396,8 @@ When called interactively with a prefix argument, prompt for REMOTE-LOCATION."
   (let ((backend (vc-deduce-backend)))
     (unless backend
       (error "Buffer is not version controlled"))
-    (vc-incoming-outgoing-internal backend remote-location "*vc-incoming*"
-                                   'log-incoming)))
+    (vc-incoming-outgoing-internal backend (or remote-location "")
+                                   "*vc-incoming*" 'log-incoming)))
 
 ;;;###autoload
 (defun vc-log-outgoing (&optional remote-location)
@@ -2389,8 +2409,8 @@ When called interactively with a prefix argument, prompt for REMOTE-LOCATION."
   (let ((backend (vc-deduce-backend)))
     (unless backend
       (error "Buffer is not version controlled"))
-    (vc-incoming-outgoing-internal backend remote-location "*vc-outgoing*"
-                                   'log-outgoing)))
+    (vc-incoming-outgoing-internal backend (or remote-location "")
+                                   "*vc-outgoing*" 'log-outgoing)))
 
 ;;;###autoload
 (defun vc-region-history (from to)

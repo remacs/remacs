@@ -115,7 +115,7 @@ if optional DONT-ERR-IF-NOT-AVAILABLE is non-nil; else throw an error."
 (cl-defmethod object-print ((obj semanticdb-table-global) &rest strings)
   "Pretty printer extension for `semanticdb-table-global'.
 Adds the number of tags in this file to the object print name."
-  (apply 'call-next-method obj (cons " (proxy)" strings)))
+  (apply #'cl-call-next-method obj (cons " (proxy)" strings)))
 
 (cl-defmethod semanticdb-equivalent-mode ((table semanticdb-table-global) &optional buffer)
   "Return t, pretend that this table's mode is equivalent to BUFFER.

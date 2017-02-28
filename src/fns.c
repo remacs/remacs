@@ -84,22 +84,6 @@ See Info node `(elisp)Random Numbers' for more details.  */)
   return make_number (val);
 }
 
-/* Heuristic on how many iterations of a tight loop can be safely done
-   before it's time to do a quit.  This must be a power of 2.  It
-   is nice but not necessary for it to equal USHRT_MAX + 1.  */
-enum { QUIT_COUNT_HEURISTIC = 1 << 16 };
-
-/* Process a quit, but do it only rarely, for efficiency.  "Rarely"
-   means once per QUIT_COUNT_HEURISTIC or per USHRT_MAX + 1 times,
-   whichever is smaller.  Use *QUIT_COUNT to count this.  */
-
-static void
-rarely_quit (unsigned short int *quit_count)
-{
-  if (! (++*quit_count & (QUIT_COUNT_HEURISTIC - 1)))
-    maybe_quit ();
-}
-
 /* Random data-structure functions.  */
 
 DEFUN ("length", Flength, Slength, 1, 1, 0,
@@ -124,23 +108,12 @@ To get the number of bytes, use `string-bytes'.  */)
     XSETFASTINT (val, ASIZE (sequence) & PSEUDOVECTOR_SIZE_MASK);
   else if (CONSP (sequence))
     {
-      EMACS_INT i = 0;
-
-      do
-	{
-	  ++i;
-	  if ((i & (QUIT_COUNT_HEURISTIC - 1)) == 0)
-	    {
-	      if (MOST_POSITIVE_FIXNUM < i)
-		error ("List too long");
-	      maybe_quit ();
-	    }
-	  sequence = XCDR (sequence);
-	}
-      while (CONSP (sequence));
-
+      intptr_t i = 0;
+      FOR_EACH_TAIL (sequence)
+	i++;
       CHECK_LIST_END (sequence, sequence);
-
+      if (MOST_POSITIVE_FIXNUM < i)
+	error ("List too long");
       val = make_number (i);
     }
   else if (NILP (sequence))
@@ -158,38 +131,10 @@ it returns 0.  If LIST is circular, it returns a finite value
 which is at least the number of distinct elements.  */)
   (Lisp_Object list)
 {
-  Lisp_Object tail, halftail;
-  double hilen = 0;
-  uintmax_t lolen = 1;
-
-  if (! CONSP (list))
-    return make_number (0);
-
-  /* halftail is used to detect circular lists.  */
-  for (tail = halftail = list; ; )
-    {
-      tail = XCDR (tail);
-      if (! CONSP (tail))
-	break;
-      if (EQ (tail, halftail))
-	break;
-      lolen++;
-      if ((lolen & 1) == 0)
-	{
-	  halftail = XCDR (halftail);
-	  if ((lolen & (QUIT_COUNT_HEURISTIC - 1)) == 0)
-	    {
-	      maybe_quit ();
-	      if (lolen == 0)
-		hilen += UINTMAX_MAX + 1.0;
-	    }
-	}
-    }
-
-  /* If the length does not fit into a fixnum, return a float.
-     On all known practical machines this returns an upper bound on
-     the true length.  */
-  return hilen ? make_float (hilen + lolen) : make_fixnum_or_float (lolen);
+  intptr_t len = 0;
+  FOR_EACH_TAIL_SAFE (list)
+    len++;
+  return make_fixnum_or_float (len);
 }
 
 DEFUN ("string-bytes", Fstring_bytes, Sstring_bytes, 1, 1, 0,
@@ -1359,20 +1304,17 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
   (Lisp_Object n, Lisp_Object list)
 {
   CHECK_NUMBER (n);
-  EMACS_INT num = XINT (n);
   Lisp_Object tail = list;
-  immediate_quit = true;
-  for (EMACS_INT i = 0; i < num; i++)
+  for (EMACS_INT num = XINT (n); 0 < num; num--)
     {
       if (! CONSP (tail))
 	{
-	  immediate_quit = false;
 	  CHECK_LIST_END (tail, list);
 	  return Qnil;
 	}
       tail = XCDR (tail);
+      rarely_quit (num);
     }
-  immediate_quit = false;
   return tail;
 }
 
@@ -1402,14 +1344,10 @@ DEFUN ("member", Fmember, Smember, 2, 2, 0,
 The value is actually the tail of LIST whose car is ELT.  */)
   (Lisp_Object elt, Lisp_Object list)
 {
-  unsigned short int quit_count = 0;
-  Lisp_Object tail;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
-    {
-      if (! NILP (Fequal (elt, XCAR (tail))))
-	return tail;
-      rarely_quit (&quit_count);
-    }
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
+    if (! NILP (Fequal (elt, XCAR (tail))))
+      return tail;
   CHECK_LIST_END (tail, list);
   return Qnil;
 }
@@ -1419,17 +1357,10 @@ DEFUN ("memq", Fmemq, Smemq, 2, 2, 0,
 The value is actually the tail of LIST whose car is ELT.  */)
   (Lisp_Object elt, Lisp_Object list)
 {
-  immediate_quit = true;
-  Lisp_Object tail;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
-    {
-      if (EQ (XCAR (tail), elt))
-	{
-	  immediate_quit = false;
-	  return tail;
-	}
-    }
-  immediate_quit = false;
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
+    if (EQ (XCAR (tail), elt))
+      return tail;
   CHECK_LIST_END (tail, list);
   return Qnil;
 }
@@ -1442,18 +1373,13 @@ The value is actually the tail of LIST whose car is ELT.  */)
   if (!FLOATP (elt))
     return Fmemq (elt, list);
 
-  immediate_quit = true;
-  Lisp_Object tail;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
     {
       Lisp_Object tem = XCAR (tail);
       if (FLOATP (tem) && internal_equal (elt, tem, 0, 0, Qnil))
-	{
-	  immediate_quit = false;
-	  return tail;
-	}
+	return tail;
     }
-  immediate_quit = false;
   CHECK_LIST_END (tail, list);
   return Qnil;
 }
@@ -1464,15 +1390,10 @@ The value is actually the first element of LIST whose car is KEY.
 Elements of LIST that are not conses are ignored.  */)
   (Lisp_Object key, Lisp_Object list)
 {
-  immediate_quit = true;
-  Lisp_Object tail;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
     if (CONSP (XCAR (tail)) && EQ (XCAR (XCAR (tail)), key))
-      {
-	immediate_quit = false;
-	return XCAR (tail);
-      }
-  immediate_quit = false;
+      return XCAR (tail);
   CHECK_LIST_END (tail, list);
   return Qnil;
 }
@@ -1494,15 +1415,13 @@ DEFUN ("assoc", Fassoc, Sassoc, 2, 2, 0,
 The value is actually the first element of LIST whose car equals KEY.  */)
   (Lisp_Object key, Lisp_Object list)
 {
-  unsigned short int quit_count = 0;
-  Lisp_Object tail;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
     {
       Lisp_Object car = XCAR (tail);
       if (CONSP (car)
 	  && (EQ (XCAR (car), key) || !NILP (Fequal (XCAR (car), key))))
 	return car;
-      rarely_quit (&quit_count);
     }
   CHECK_LIST_END (tail, list);
   return Qnil;
@@ -1529,15 +1448,10 @@ DEFUN ("rassq", Frassq, Srassq, 2, 2, 0,
 The value is actually the first element of LIST whose cdr is KEY.  */)
   (Lisp_Object key, Lisp_Object list)
 {
-  immediate_quit = true;
-  Lisp_Object tail;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
     if (CONSP (XCAR (tail)) && EQ (XCDR (XCAR (tail)), key))
-      {
-	immediate_quit = false;
-	return XCAR (tail);
-      }
-  immediate_quit = false;
+      return XCAR (tail);
   CHECK_LIST_END (tail, list);
   return Qnil;
 }
@@ -1547,15 +1461,13 @@ DEFUN ("rassoc", Frassoc, Srassoc, 2, 2, 0,
 The value is actually the first element of LIST whose cdr equals KEY.  */)
   (Lisp_Object key, Lisp_Object list)
 {
-  unsigned short int quit_count = 0;
-  Lisp_Object tail;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
     {
       Lisp_Object car = XCAR (tail);
       if (CONSP (car)
 	  && (EQ (XCDR (car), key) || !NILP (Fequal (XCDR (car), key))))
 	return car;
-      rarely_quit (&quit_count);
     }
   CHECK_LIST_END (tail, list);
   return Qnil;
@@ -1571,12 +1483,11 @@ list.
 Write `(setq foo (delq element foo))' to be sure of correctly changing
 the value of a list `foo'.  See also `remq', which does not modify the
 argument.  */)
-  (register Lisp_Object elt, Lisp_Object list)
+  (Lisp_Object elt, Lisp_Object list)
 {
-  Lisp_Object tail, tortoise, prev = Qnil;
-  bool skip;
+  Lisp_Object prev = Qnil, tail = list;
 
-  FOR_EACH_TAIL (tail, list, tortoise, skip)
+  FOR_EACH_TAIL (tail)
     {
       Lisp_Object tem = XCAR (tail);
       if (EQ (elt, tem))
@@ -1697,10 +1608,9 @@ changing the value of a sequence `foo'.  */)
     }
   else
     {
-      unsigned short int quit_count = 0;
-      Lisp_Object tail, prev;
+      Lisp_Object prev = Qnil, tail = seq;
 
-      for (tail = seq, prev = Qnil; CONSP (tail); tail = XCDR (tail))
+      FOR_EACH_TAIL (tail)
 	{
 	  if (!NILP (Fequal (elt, XCAR (tail))))
 	    {
@@ -1711,7 +1621,6 @@ changing the value of a sequence `foo'.  */)
 	    }
 	  else
 	    prev = tail;
-	  rarely_quit (&quit_count);
 	}
       CHECK_LIST_END (tail, seq);
     }
@@ -1731,13 +1640,15 @@ This function may destructively modify SEQ to produce the value.  */)
     return Freverse (seq);
   else if (CONSP (seq))
     {
-      unsigned short int quit_count = 0;
       Lisp_Object prev, tail, next;
 
       for (prev = Qnil, tail = seq; CONSP (tail); tail = next)
 	{
-	  rarely_quit (&quit_count);
 	  next = XCDR (tail);
+	  /* If SEQ contains a cycle, attempting to reverse it
+	     in-place will inevitably come back to SEQ.  */
+	  if (EQ (next, seq))
+	    circular_list (seq);
 	  Fsetcdr (tail, prev);
 	  prev = tail;
 	}
@@ -1782,12 +1693,9 @@ See also the function `nreverse', which is used more often.  */)
     return Qnil;
   else if (CONSP (seq))
     {
-      unsigned short int quit_count = 0;
-      for (new = Qnil; CONSP (seq); seq = XCDR (seq))
-	{
-	  rarely_quit (&quit_count);
-	  new = Fcons (XCAR (seq), new);
-	}
+      new = Qnil;
+      FOR_EACH_TAIL (seq)
+	new = Fcons (XCAR (seq), new);
       CHECK_LIST_END (seq, seq);
     }
   else if (VECTORP (seq))
@@ -2040,18 +1948,15 @@ corresponding to the given PROP, or nil if PROP is not one of the
 properties on the list.  This function never signals an error.  */)
   (Lisp_Object plist, Lisp_Object prop)
 {
-  Lisp_Object tail, halftail;
-
-  /* halftail is used to detect circular lists.  */
-  tail = halftail = plist;
-  while (CONSP (tail) && CONSP (XCDR (tail)))
+  Lisp_Object tail = plist;
+  FOR_EACH_TAIL_SAFE (tail)
     {
+      if (! CONSP (XCDR (tail)))
+	break;
       if (EQ (prop, XCAR (tail)))
 	return XCAR (XCDR (tail));
-
-      tail = XCDR (XCDR (tail));
-      halftail = XCDR (halftail);
-      if (EQ (tail, halftail))
+      tail = XCDR (tail);
+      if (EQ (tail, li.tortoise))
 	break;
     }
 
@@ -2077,21 +1982,24 @@ use `(setq x (plist-put x prop val))' to be sure to use the new value.
 The PLIST is modified by side effects.  */)
   (Lisp_Object plist, Lisp_Object prop, Lisp_Object val)
 {
-  immediate_quit = true;
-  Lisp_Object prev = Qnil;
-  for (Lisp_Object tail = plist; CONSP (tail) && CONSP (XCDR (tail));
-       tail = XCDR (XCDR (tail)))
+  Lisp_Object prev = Qnil, tail = plist;
+  FOR_EACH_TAIL (tail)
     {
+      if (! CONSP (XCDR (tail)))
+	break;
+
       if (EQ (prop, XCAR (tail)))
 	{
-	  immediate_quit = false;
 	  Fsetcar (XCDR (tail), val);
 	  return plist;
 	}
 
       prev = tail;
+      tail = XCDR (tail);
+      if (EQ (tail, li.tortoise))
+	circular_list (plist);
     }
-  immediate_quit = false;
+  CHECK_LIST_END (tail, plist);
   Lisp_Object newcell
     = Fcons (prop, Fcons (val, NILP (prev) ? plist : XCDR (XCDR (prev))));
   if (NILP (prev))
@@ -2119,19 +2027,19 @@ corresponding to the given PROP, or nil if PROP is not
 one of the properties on the list.  */)
   (Lisp_Object plist, Lisp_Object prop)
 {
-  unsigned short int quit_count = 0;
-  Lisp_Object tail;
-
-  for (tail = plist;
-       CONSP (tail) && CONSP (XCDR (tail));
-       tail = XCDR (XCDR (tail)))
+  Lisp_Object tail = plist;
+  FOR_EACH_TAIL (tail)
     {
+      if (! CONSP (XCDR (tail)))
+	break;
       if (! NILP (Fequal (prop, XCAR (tail))))
 	return XCAR (XCDR (tail));
-      rarely_quit (&quit_count);
+      tail = XCDR (tail);
+      if (EQ (tail, li.tortoise))
+	circular_list (plist);
     }
 
-  CHECK_LIST_END (tail, prop);
+  CHECK_LIST_END (tail, plist);
 
   return Qnil;
 }
@@ -2146,11 +2054,12 @@ use `(setq x (lax-plist-put x prop val))' to be sure to use the new value.
 The PLIST is modified by side effects.  */)
   (Lisp_Object plist, Lisp_Object prop, Lisp_Object val)
 {
-  unsigned short int quit_count = 0;
-  Lisp_Object prev = Qnil;
-  for (Lisp_Object tail = plist; CONSP (tail) && CONSP (XCDR (tail));
-       tail = XCDR (XCDR (tail)))
+  Lisp_Object prev = Qnil, tail = plist;
+  FOR_EACH_TAIL (tail)
     {
+      if (! CONSP (XCDR (tail)))
+	break;
+
       if (! NILP (Fequal (prop, XCAR (tail))))
 	{
 	  Fsetcar (XCDR (tail), val);
@@ -2158,8 +2067,11 @@ The PLIST is modified by side effects.  */)
 	}
 
       prev = tail;
-      rarely_quit (&quit_count);
+      tail = XCDR (tail);
+      if (EQ (tail, li.tortoise))
+	circular_list (plist);
     }
+  CHECK_LIST_END (tail, plist);
   Lisp_Object newcell = list2 (prop, val);
   if (NILP (prev))
     return newcell;
@@ -2208,6 +2120,7 @@ static bool
 internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 		Lisp_Object ht)
 {
+ tail_recurse:
   if (depth > 10)
     {
       if (depth > 200)
@@ -2236,9 +2149,6 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 	}
     }
 
-  unsigned short int quit_count = 0;
- tail_recurse:
-  rarely_quit (&quit_count);
   if (EQ (o1, o2))
     return 1;
   if (XTYPE (o1) != XTYPE (o2))
@@ -2258,12 +2168,20 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
       }
 
     case Lisp_Cons:
-      if (!internal_equal (XCAR (o1), XCAR (o2), depth + 1, props, ht))
-	return 0;
-      o1 = XCDR (o1);
-      o2 = XCDR (o2);
-      /* FIXME: This inf-loops in a circular list!  */
-      goto tail_recurse;
+      {
+	FOR_EACH_TAIL (o1)
+	  {
+	    if (! CONSP (o2))
+	      return false;
+	    if (! internal_equal (XCAR (o1), XCAR (o2), depth + 1, props, ht))
+	      return false;
+	    o2 = XCDR (o2);
+	    if (EQ (XCDR (o1), o2))
+	      return true;
+	  }
+	depth++;
+	goto tail_recurse;
+      }
 
     case Lisp_Misc:
       if (XMISCTYPE (o1) != XMISCTYPE (o2))
@@ -2277,6 +2195,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 	    return 0;
 	  o1 = XOVERLAY (o1)->plist;
 	  o2 = XOVERLAY (o2)->plist;
+	  depth++;
 	  goto tail_recurse;
 	}
       if (MARKERP (o1))
@@ -2427,7 +2346,6 @@ Only the last argument is not altered, and need not be a list.
 usage: (nconc &rest LISTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  unsigned short int quit_count = 0;
   Lisp_Object val = Qnil;
 
   for (ptrdiff_t argnum = 0; argnum < nargs; argnum++)
@@ -2442,17 +2360,9 @@ usage: (nconc &rest LISTS)  */)
 
       CHECK_CONS (tem);
 
-      immediate_quit = true;
       Lisp_Object tail;
-      do
-	{
-	  tail = tem;
-	  tem = XCDR (tail);
-	}
-      while (CONSP (tem));
-
-      immediate_quit = false;
-      rarely_quit (&quit_count);
+      FOR_EACH_TAIL (tem)
+	tail = tem;
 
       tem = args[argnum + 1];
       Fsetcdr (tail, tem);
@@ -2874,14 +2784,19 @@ property and a property with the value nil.
 The value is actually the tail of PLIST whose car is PROP.  */)
   (Lisp_Object plist, Lisp_Object prop)
 {
-  immediate_quit = true;
-  while (CONSP (plist) && !EQ (XCAR (plist), prop))
+  Lisp_Object tail = plist;
+  FOR_EACH_TAIL (tail)
     {
-      plist = XCDR (plist);
-      plist = CDR (plist);
+      if (EQ (XCAR (tail), prop))
+	return tail;
+      tail = XCDR (tail);
+      if (! CONSP (tail))
+	break;
+      if (EQ (tail, li.tortoise))
+	circular_list (tail);
     }
-  immediate_quit = false;
-  return plist;
+  CHECK_LIST_END (tail, plist);
+  return Qnil;
 }
 
 DEFUN ("widget-put", Fwidget_put, Swidget_put, 3, 3, 0,
@@ -3193,9 +3108,9 @@ set_hash_next (struct Lisp_Hash_Table *h, Lisp_Object next)
   h->next = next;
 }
 static void
-set_hash_next_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
+set_hash_next_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, ptrdiff_t val)
 {
-  gc_aset (h->next, idx, val);
+  gc_aset (h->next, idx, make_number (val));
 }
 static void
 set_hash_hash (struct Lisp_Hash_Table *h, Lisp_Object hash)
@@ -3213,9 +3128,9 @@ set_hash_index (struct Lisp_Hash_Table *h, Lisp_Object index)
   h->index = index;
 }
 static void
-set_hash_index_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
+set_hash_index_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, ptrdiff_t val)
 {
-  gc_aset (h->index, idx, val);
+  gc_aset (h->index, idx, make_number (val));
 }
 
 /* If OBJ is a Lisp hash table, return a pointer to its struct
@@ -3269,11 +3184,11 @@ get_key_arg (Lisp_Object key, ptrdiff_t nargs, Lisp_Object *args, char *used)
 /* Return a Lisp vector which has the same contents as VEC but has
    at least INCR_MIN more entries, where INCR_MIN is positive.
    If NITEMS_MAX is not -1, do not grow the vector to be any larger
-   than NITEMS_MAX.  Entries in the resulting
-   vector that are not copied from VEC are set to nil.  */
+   than NITEMS_MAX.  New entries in the resulting vector are
+   uninitialized.  */
 
-Lisp_Object
-larger_vector (Lisp_Object vec, ptrdiff_t incr_min, ptrdiff_t nitems_max)
+static Lisp_Object
+larger_vecalloc (Lisp_Object vec, ptrdiff_t incr_min, ptrdiff_t nitems_max)
 {
   struct Lisp_Vector *v;
   ptrdiff_t incr, incr_max, old_size, new_size;
@@ -3290,15 +3205,45 @@ larger_vector (Lisp_Object vec, ptrdiff_t incr_min, ptrdiff_t nitems_max)
   new_size = old_size + incr;
   v = allocate_vector (new_size);
   memcpy (v->contents, XVECTOR (vec)->contents, old_size * sizeof *v->contents);
-  memclear (v->contents + old_size, incr * word_size);
   XSETVECTOR (vec, v);
   return vec;
+}
+
+/* Likewise, except set new entries in the resulting vector to nil.  */
+
+Lisp_Object
+larger_vector (Lisp_Object vec, ptrdiff_t incr_min, ptrdiff_t nitems_max)
+{
+  ptrdiff_t old_size = ASIZE (vec);
+  Lisp_Object v = larger_vecalloc (vec, incr_min, nitems_max);
+  ptrdiff_t new_size = ASIZE (v);
+  memclear (XVECTOR (v)->contents + old_size,
+	    (new_size - old_size) * word_size);
+  return v;
 }
 
 
 /***********************************************************************
 			 Low-level Functions
  ***********************************************************************/
+
+/* Return the index of the next entry in H following the one at IDX,
+   or -1 if none.  */
+
+static ptrdiff_t
+HASH_NEXT (struct Lisp_Hash_Table *h, ptrdiff_t idx)
+{
+  return XINT (AREF (h->next, idx));
+}
+
+/* Return the index of the element in hash table H that is the start
+   of the collision list at index IDX, or -1 if the list is empty.  */
+
+static ptrdiff_t
+HASH_INDEX (struct Lisp_Hash_Table *h, ptrdiff_t idx)
+{
+  return XINT (AREF (h->index, idx));
+}
 
 /* Compare KEY1 which has hash code HASH1 and KEY2 with hash code
    HASH2 in hash table H using `eql'.  Value is true if KEY1 and
@@ -3410,17 +3355,17 @@ allocate_hash_table (void)
    `equal' or a symbol denoting a user-defined test named TEST with
    test and hash functions USER_TEST and USER_HASH.
 
-   Give the table initial capacity SIZE, SIZE >= 0, an integer.
+   Give the table initial capacity SIZE, 0 <= SIZE <= MOST_POSITIVE_FIXNUM.
 
-   If REHASH_SIZE is an integer, it must be > 0, and this hash table's
-   new size when it becomes full is computed by adding REHASH_SIZE to
-   its old size.  If REHASH_SIZE is a float, it must be > 1.0, and the
-   table's new size is computed by multiplying its old size with
-   REHASH_SIZE.
+   If REHASH_SIZE is equal to a negative integer, this hash table's
+   new size when it becomes full is computed by subtracting
+   REHASH_SIZE from its old size.  Otherwise it must be positive, and
+   the table's new size is computed by multiplying its old size by
+   REHASH_SIZE + 1.
 
    REHASH_THRESHOLD must be a float <= 1.0, and > 0.  The table will
-   be resized when the ratio of (number of entries in the table) /
-   (table size) is >= REHASH_THRESHOLD.
+   be resized when the approximate ratio of table entries to table
+   size exceeds REHASH_THRESHOLD.
 
    WEAK specifies the weakness of the table.  If non-nil, it must be
    one of the symbols `key', `value', `key-or-value', or `key-and-value'.
@@ -3430,35 +3375,31 @@ allocate_hash_table (void)
    changed after purecopy.  */
 
 Lisp_Object
-make_hash_table (struct hash_table_test test,
-		 Lisp_Object size, Lisp_Object rehash_size,
-		 Lisp_Object rehash_threshold, Lisp_Object weak,
-                 Lisp_Object pure)
+make_hash_table (struct hash_table_test test, EMACS_INT size,
+		 float rehash_size, float rehash_threshold,
+		 Lisp_Object weak, bool pure)
 {
   struct Lisp_Hash_Table *h;
   Lisp_Object table;
-  EMACS_INT index_size, sz;
+  EMACS_INT index_size;
   ptrdiff_t i;
   double index_float;
 
   /* Preconditions.  */
   eassert (SYMBOLP (test.name));
-  eassert (INTEGERP (size) && XINT (size) >= 0);
-  eassert ((INTEGERP (rehash_size) && XINT (rehash_size) > 0)
-	   || (FLOATP (rehash_size) && 1 < XFLOAT_DATA (rehash_size)));
-  eassert (FLOATP (rehash_threshold)
-	   && 0 < XFLOAT_DATA (rehash_threshold)
-	   && XFLOAT_DATA (rehash_threshold) <= 1.0);
+  eassert (0 <= size && size <= MOST_POSITIVE_FIXNUM);
+  eassert (rehash_size <= -1 || 0 < rehash_size);
+  eassert (0 < rehash_threshold && rehash_threshold <= 1);
 
-  if (XFASTINT (size) == 0)
-    size = make_number (1);
+  if (size == 0)
+    size = 1;
 
-  sz = XFASTINT (size);
-  index_float = sz / XFLOAT_DATA (rehash_threshold);
+  double threshold = rehash_threshold;
+  index_float = size / threshold;
   index_size = (index_float < INDEX_SIZE_BOUND + 1
 		? next_almost_prime (index_float)
 		: INDEX_SIZE_BOUND + 1);
-  if (INDEX_SIZE_BOUND < max (index_size, 2 * sz))
+  if (INDEX_SIZE_BOUND < max (index_size, 2 * size))
     error ("Hash table too large");
 
   /* Allocate a table and initialize it.  */
@@ -3470,25 +3411,23 @@ make_hash_table (struct hash_table_test test,
   h->rehash_threshold = rehash_threshold;
   h->rehash_size = rehash_size;
   h->count = 0;
-  h->key_and_value = Fmake_vector (make_number (2 * sz), Qnil);
-  h->hash = Fmake_vector (size, Qnil);
-  h->next = Fmake_vector (size, Qnil);
-  h->index = Fmake_vector (make_number (index_size), Qnil);
+  h->key_and_value = Fmake_vector (make_number (2 * size), Qnil);
+  h->hash = Fmake_vector (make_number (size), Qnil);
+  h->next = Fmake_vector (make_number (size), make_number (-1));
+  h->index = Fmake_vector (make_number (index_size), make_number (-1));
   h->pure = pure;
 
   /* Set up the free list.  */
-  for (i = 0; i < sz - 1; ++i)
-    set_hash_next_slot (h, i, make_number (i + 1));
-  h->next_free = make_number (0);
+  for (i = 0; i < size - 1; ++i)
+    set_hash_next_slot (h, i, i + 1);
+  h->next_free = 0;
 
   XSET_HASH_TABLE (table, h);
   eassert (HASH_TABLE_P (table));
   eassert (XHASH_TABLE (table) == h);
 
   /* Maybe add this hash table to the list of all weak hash tables.  */
-  if (NILP (h->weak))
-    h->next_weak = NULL;
-  else
+  if (! NILP (weak))
     {
       h->next_weak = weak_hash_tables;
       weak_hash_tables = h;
@@ -3518,8 +3457,8 @@ copy_hash_table (struct Lisp_Hash_Table *h1)
   /* Maybe add this hash table to the list of all weak hash tables.  */
   if (!NILP (h2->weak))
     {
-      h2->next_weak = weak_hash_tables;
-      weak_hash_tables = h2;
+      h2->next_weak = h1->next_weak;
+      h1->next_weak = h2;
     }
 
   return table;
@@ -3532,28 +3471,28 @@ copy_hash_table (struct Lisp_Hash_Table *h1)
 static void
 maybe_resize_hash_table (struct Lisp_Hash_Table *h)
 {
-  if (NILP (h->next_free))
+  if (h->next_free < 0)
     {
       ptrdiff_t old_size = HASH_TABLE_SIZE (h);
       EMACS_INT new_size, index_size, nsize;
       ptrdiff_t i;
+      double rehash_size = h->rehash_size;
       double index_float;
 
-      if (INTEGERP (h->rehash_size))
-	new_size = old_size + XFASTINT (h->rehash_size);
+      if (rehash_size < 0)
+	new_size = old_size - rehash_size;
       else
 	{
-	  double float_new_size = old_size * XFLOAT_DATA (h->rehash_size);
+	  double float_new_size = old_size * (rehash_size + 1);
 	  if (float_new_size < INDEX_SIZE_BOUND + 1)
-	    {
-	      new_size = float_new_size;
-	      if (new_size <= old_size)
-		new_size = old_size + 1;
-	    }
+	    new_size = float_new_size;
 	  else
 	    new_size = INDEX_SIZE_BOUND + 1;
 	}
-      index_float = new_size / XFLOAT_DATA (h->rehash_threshold);
+      if (new_size <= old_size)
+	new_size = old_size + 1;
+      double threshold = h->rehash_threshold;
+      index_float = new_size / threshold;
       index_size = (index_float < INDEX_SIZE_BOUND + 1
 		    ? next_almost_prime (index_float)
 		    : INDEX_SIZE_BOUND + 1);
@@ -3569,29 +3508,32 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
 
       set_hash_key_and_value (h, larger_vector (h->key_and_value,
 						2 * (new_size - old_size), -1));
-      set_hash_next (h, larger_vector (h->next, new_size - old_size, -1));
       set_hash_hash (h, larger_vector (h->hash, new_size - old_size, -1));
-      set_hash_index (h, Fmake_vector (make_number (index_size), Qnil));
+      set_hash_index (h, Fmake_vector (make_number (index_size),
+				       make_number (-1)));
+      set_hash_next (h, larger_vecalloc (h->next, new_size - old_size, -1));
 
       /* Update the free list.  Do it so that new entries are added at
          the end of the free list.  This makes some operations like
          maphash faster.  */
       for (i = old_size; i < new_size - 1; ++i)
-	set_hash_next_slot (h, i, make_number (i + 1));
+	set_hash_next_slot (h, i, i + 1);
+      set_hash_next_slot (h, i, -1);
 
-      if (!NILP (h->next_free))
-	{
-	  Lisp_Object last, next;
-
-	  last = h->next_free;
-	  while (next = HASH_NEXT (h, XFASTINT (last)),
-		 !NILP (next))
-	    last = next;
-
-	  set_hash_next_slot (h, XFASTINT (last), make_number (old_size));
-	}
+      if (h->next_free < 0)
+	h->next_free = old_size;
       else
-	XSETFASTINT (h->next_free, old_size);
+	{
+	  ptrdiff_t last = h->next_free;
+	  while (true)
+	    {
+	      ptrdiff_t next = HASH_NEXT (h, last);
+	      if (next < 0)
+		break;
+	      last = next;
+	    }
+	  set_hash_next_slot (h, last, old_size);
+	}
 
       /* Rehash.  */
       for (i = 0; i < old_size; ++i)
@@ -3600,7 +3542,7 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
 	    EMACS_UINT hash_code = XUINT (HASH_HASH (h, i));
 	    ptrdiff_t start_of_bucket = hash_code % ASIZE (h->index);
 	    set_hash_next_slot (h, i, HASH_INDEX (h, start_of_bucket));
-	    set_hash_index_slot (h, start_of_bucket, make_number (i));
+	    set_hash_index_slot (h, start_of_bucket, i);
 	  }
     }
 }
@@ -3614,8 +3556,7 @@ ptrdiff_t
 hash_lookup (struct Lisp_Hash_Table *h, Lisp_Object key, EMACS_UINT *hash)
 {
   EMACS_UINT hash_code;
-  ptrdiff_t start_of_bucket;
-  Lisp_Object idx;
+  ptrdiff_t start_of_bucket, i;
 
   hash_code = h->test.hashfn (&h->test, key);
   eassert ((hash_code & ~INTMASK) == 0);
@@ -3623,20 +3564,15 @@ hash_lookup (struct Lisp_Hash_Table *h, Lisp_Object key, EMACS_UINT *hash)
     *hash = hash_code;
 
   start_of_bucket = hash_code % ASIZE (h->index);
-  idx = HASH_INDEX (h, start_of_bucket);
 
-  while (!NILP (idx))
-    {
-      ptrdiff_t i = XFASTINT (idx);
-      if (EQ (key, HASH_KEY (h, i))
-	  || (h->test.cmpfn
-	      && hash_code == XUINT (HASH_HASH (h, i))
-	      && h->test.cmpfn (&h->test, key, HASH_KEY (h, i))))
-	break;
-      idx = HASH_NEXT (h, i);
-    }
+  for (i = HASH_INDEX (h, start_of_bucket); 0 <= i; i = HASH_NEXT (h, i))
+    if (EQ (key, HASH_KEY (h, i))
+	|| (h->test.cmpfn
+	    && hash_code == XUINT (HASH_HASH (h, i))
+	    && h->test.cmpfn (&h->test, key, HASH_KEY (h, i))))
+      break;
 
-  return NILP (idx) ? -1 : XFASTINT (idx);
+  return i;
 }
 
 
@@ -3657,7 +3593,7 @@ hash_put (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object value,
   h->count++;
 
   /* Store key/value in the key_and_value vector.  */
-  i = XFASTINT (h->next_free);
+  i = h->next_free;
   h->next_free = HASH_NEXT (h, i);
   set_hash_key_slot (h, i, key);
   set_hash_value_slot (h, i, value);
@@ -3668,7 +3604,7 @@ hash_put (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object value,
   /* Add new entry to its collision chain.  */
   start_of_bucket = hash % ASIZE (h->index);
   set_hash_next_slot (h, i, HASH_INDEX (h, start_of_bucket));
-  set_hash_index_slot (h, start_of_bucket, make_number (i));
+  set_hash_index_slot (h, start_of_bucket, i);
   return i;
 }
 
@@ -3678,30 +3614,25 @@ hash_put (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object value,
 void
 hash_remove_from_table (struct Lisp_Hash_Table *h, Lisp_Object key)
 {
-  EMACS_UINT hash_code;
-  ptrdiff_t start_of_bucket;
-  Lisp_Object idx, prev;
-
-  hash_code = h->test.hashfn (&h->test, key);
+  EMACS_UINT hash_code = h->test.hashfn (&h->test, key);
   eassert ((hash_code & ~INTMASK) == 0);
-  start_of_bucket = hash_code % ASIZE (h->index);
-  idx = HASH_INDEX (h, start_of_bucket);
-  prev = Qnil;
+  ptrdiff_t start_of_bucket = hash_code % ASIZE (h->index);
+  ptrdiff_t prev = -1;
 
-  while (!NILP (idx))
+  for (ptrdiff_t i = HASH_INDEX (h, start_of_bucket);
+       0 <= i;
+       i = HASH_NEXT (h, i))
     {
-      ptrdiff_t i = XFASTINT (idx);
-
       if (EQ (key, HASH_KEY (h, i))
 	  || (h->test.cmpfn
 	      && hash_code == XUINT (HASH_HASH (h, i))
 	      && h->test.cmpfn (&h->test, key, HASH_KEY (h, i))))
 	{
 	  /* Take entry out of collision chain.  */
-	  if (NILP (prev))
+	  if (prev < 0)
 	    set_hash_index_slot (h, start_of_bucket, HASH_NEXT (h, i));
 	  else
-	    set_hash_next_slot (h, XFASTINT (prev), HASH_NEXT (h, i));
+	    set_hash_next_slot (h, prev, HASH_NEXT (h, i));
 
 	  /* Clear slots in key_and_value and add the slots to
 	     the free list.  */
@@ -3709,16 +3640,13 @@ hash_remove_from_table (struct Lisp_Hash_Table *h, Lisp_Object key)
 	  set_hash_value_slot (h, i, Qnil);
 	  set_hash_hash_slot (h, i, Qnil);
 	  set_hash_next_slot (h, i, h->next_free);
-	  h->next_free = make_number (i);
+	  h->next_free = i;
 	  h->count--;
 	  eassert (h->count >= 0);
 	  break;
 	}
-      else
-	{
-	  prev = idx;
-	  idx = HASH_NEXT (h, i);
-	}
+
+      prev = i;
     }
 }
 
@@ -3734,16 +3662,16 @@ hash_clear (struct Lisp_Hash_Table *h)
 
       for (i = 0; i < size; ++i)
 	{
-	  set_hash_next_slot (h, i, i < size - 1 ? make_number (i + 1) : Qnil);
+	  set_hash_next_slot (h, i, i < size - 1 ? i + 1 : -1);
 	  set_hash_key_slot (h, i, Qnil);
 	  set_hash_value_slot (h, i, Qnil);
 	  set_hash_hash_slot (h, i, Qnil);
 	}
 
       for (i = 0; i < ASIZE (h->index); ++i)
-	ASET (h->index, i, Qnil);
+	ASET (h->index, i, make_number (-1));
 
-      h->next_free = make_number (0);
+      h->next_free = 0;
       h->count = 0;
     }
 }
@@ -3767,14 +3695,12 @@ sweep_weak_table (struct Lisp_Hash_Table *h, bool remove_entries_p)
 
   for (ptrdiff_t bucket = 0; bucket < n; ++bucket)
     {
-      Lisp_Object idx, next, prev;
-
       /* Follow collision chain, removing entries that
 	 don't survive this garbage collection.  */
-      prev = Qnil;
-      for (idx = HASH_INDEX (h, bucket); !NILP (idx); idx = next)
+      ptrdiff_t prev = -1;
+      ptrdiff_t next;
+      for (ptrdiff_t i = HASH_INDEX (h, bucket); 0 <= i; i = next)
 	{
-	  ptrdiff_t i = XFASTINT (idx);
 	  bool key_known_to_survive_p = survives_gc_p (HASH_KEY (h, i));
 	  bool value_known_to_survive_p = survives_gc_p (HASH_VALUE (h, i));
 	  bool remove_p;
@@ -3797,14 +3723,14 @@ sweep_weak_table (struct Lisp_Hash_Table *h, bool remove_entries_p)
 	      if (remove_p)
 		{
 		  /* Take out of collision chain.  */
-		  if (NILP (prev))
+		  if (prev < 0)
 		    set_hash_index_slot (h, bucket, next);
 		  else
-		    set_hash_next_slot (h, XFASTINT (prev), next);
+		    set_hash_next_slot (h, prev, next);
 
 		  /* Add to free list.  */
 		  set_hash_next_slot (h, i, h->next_free);
-		  h->next_free = idx;
+		  h->next_free = i;
 
 		  /* Clear key, value, and hash.  */
 		  set_hash_key_slot (h, i, Qnil);
@@ -3815,7 +3741,7 @@ sweep_weak_table (struct Lisp_Hash_Table *h, bool remove_entries_p)
 		}
 	      else
 		{
-		  prev = idx;
+		  prev = i;
 		}
 	    }
 	  else
@@ -4128,8 +4054,8 @@ amount.  If it is a float, it must be > 1.0, and the new size is the
 old size multiplied by that factor.  Default is 1.5.
 
 :rehash-threshold THRESHOLD -- THRESHOLD must a float > 0, and <= 1.0.
-Resize the hash table when the ratio (number of entries / table size)
-is greater than or equal to THRESHOLD.  Default is 0.8.
+Resize the hash table when the ratio (table entries / table size)
+exceeds an approximation to THRESHOLD.  Default is 0.8125.
 
 :weakness WEAK -- WEAK must be one of nil, t, `key', `value',
 `key-or-value', or `key-and-value'.  If WEAK is not nil, the table
@@ -4147,7 +4073,8 @@ in an error.
 usage: (make-hash-table &rest KEYWORD-ARGS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  Lisp_Object test, size, rehash_size, rehash_threshold, weak, pure;
+  Lisp_Object test, weak;
+  bool pure;
   struct hash_table_test testdesc;
   ptrdiff_t i;
   USE_SAFE_ALLOCA;
@@ -4183,29 +4110,37 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
 
   /* See if there's a `:purecopy PURECOPY' argument.  */
   i = get_key_arg (QCpurecopy, nargs, args, used);
-  pure = i ? args[i] : Qnil;
+  pure = i && !NILP (args[i]);
   /* See if there's a `:size SIZE' argument.  */
   i = get_key_arg (QCsize, nargs, args, used);
-  size = i ? args[i] : Qnil;
-  if (NILP (size))
-    size = make_number (DEFAULT_HASH_SIZE);
-  else if (!INTEGERP (size) || XINT (size) < 0)
-    signal_error ("Invalid hash table size", size);
+  Lisp_Object size_arg = i ? args[i] : Qnil;
+  EMACS_INT size;
+  if (NILP (size_arg))
+    size = DEFAULT_HASH_SIZE;
+  else if (NATNUMP (size_arg))
+    size = XFASTINT (size_arg);
+  else
+    signal_error ("Invalid hash table size", size_arg);
 
   /* Look for `:rehash-size SIZE'.  */
+  float rehash_size;
   i = get_key_arg (QCrehash_size, nargs, args, used);
-  rehash_size = i ? args[i] : make_float (DEFAULT_REHASH_SIZE);
-  if (! ((INTEGERP (rehash_size) && 0 < XINT (rehash_size))
-	 || (FLOATP (rehash_size) && 1 < XFLOAT_DATA (rehash_size))))
-    signal_error ("Invalid hash table rehash size", rehash_size);
+  if (!i)
+    rehash_size = DEFAULT_REHASH_SIZE;
+  else if (INTEGERP (args[i]) && 0 < XINT (args[i]))
+    rehash_size = - XINT (args[i]);
+  else if (FLOATP (args[i]) && 0 < (float) (XFLOAT_DATA (args[i]) - 1))
+    rehash_size = (float) (XFLOAT_DATA (args[i]) - 1);
+  else
+    signal_error ("Invalid hash table rehash size", args[i]);
 
   /* Look for `:rehash-threshold THRESHOLD'.  */
   i = get_key_arg (QCrehash_threshold, nargs, args, used);
-  rehash_threshold = i ? args[i] : make_float (DEFAULT_REHASH_THRESHOLD);
-  if (! (FLOATP (rehash_threshold)
-	 && 0 < XFLOAT_DATA (rehash_threshold)
-	 && XFLOAT_DATA (rehash_threshold) <= 1))
-    signal_error ("Invalid hash table rehash threshold", rehash_threshold);
+  float rehash_threshold = (!i ? DEFAULT_REHASH_THRESHOLD
+			    : !FLOATP (args[i]) ? 0
+			    : (float) XFLOAT_DATA (args[i]));
+  if (! (0 < rehash_threshold && rehash_threshold <= 1))
+    signal_error ("Invalid hash table rehash threshold", args[i]);
 
   /* Look for `:weakness WEAK'.  */
   i = get_key_arg (QCweakness, nargs, args, used);
@@ -4251,7 +4186,14 @@ DEFUN ("hash-table-rehash-size", Fhash_table_rehash_size,
        doc: /* Return the current rehash size of TABLE.  */)
   (Lisp_Object table)
 {
-  return check_hash_table (table)->rehash_size;
+  double rehash_size = check_hash_table (table)->rehash_size;
+  if (rehash_size < 0)
+    {
+      EMACS_INT s = -rehash_size;
+      return make_number (min (s, MOST_POSITIVE_FIXNUM));
+    }
+  else
+    return make_float (rehash_size + 1);
 }
 
 
@@ -4260,7 +4202,7 @@ DEFUN ("hash-table-rehash-threshold", Fhash_table_rehash_threshold,
        doc: /* Return the current rehash threshold of TABLE.  */)
   (Lisp_Object table)
 {
-  return check_hash_table (table)->rehash_threshold;
+  return make_float (check_hash_table (table)->rehash_threshold);
 }
 
 

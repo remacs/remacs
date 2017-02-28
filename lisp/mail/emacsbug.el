@@ -151,10 +151,7 @@ Prompts for bug subject.  Leaves you in a mail buffer."
   (interactive "sBug Subject: ")
   ;; The syntax `version;' is preferred to `[version]' because the
   ;; latter could be mistakenly stripped by mailing software.
-  (if (eq system-type 'ms-dos)
-      (setq topic (concat emacs-version "; " topic))
-    (when (string-match "^\\(\\([.0-9]+\\)*\\)\\.[0-9]+$" emacs-version)
-      (setq topic (concat (match-string 1 emacs-version) "; " topic))))
+  (setq topic (concat emacs-version "; " topic))
   (let ((from-buffer (current-buffer))
 	(can-insert-mail (or (report-emacs-bug-can-use-xdg-email)
 			     (report-emacs-bug-can-use-osx-open)))

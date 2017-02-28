@@ -170,6 +170,12 @@ args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
   xsignal3 (Qargs_out_of_range, a1, a2, a3);
 }
 
+void
+circular_list (Lisp_Object list)
+{
+  xsignal1 (Qcircular_list, list);
+}
+
 
 
 /* Data type predicates.  */
@@ -1239,7 +1245,7 @@ set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
 static void
 set_symbol_trapped_write (Lisp_Object symbol, enum symbol_trapped_write trap)
 {
-  struct Lisp_Symbol* sym = XSYMBOL (symbol);
+  struct Lisp_Symbol *sym = XSYMBOL (symbol);
   if (sym->trapped_write == SYMBOL_NOWRITE)
     xsignal1 (Qtrapping_constant, symbol);
   sym->trapped_write = trap;
@@ -1647,15 +1653,6 @@ The function `default-value' gets the default value and `set-default' sets it.  
       blv = make_blv (sym, forwarded, valcontents);
       sym->redirect = SYMBOL_LOCALIZED;
       SET_SYMBOL_BLV (sym, blv);
-      {
-	Lisp_Object symbol;
-	XSETSYMBOL (symbol, sym); /* In case `variable' is aliased.  */
-	if (let_shadows_global_binding_p (symbol))
-	  {
-	    AUTO_STRING (format, "Making %s buffer-local while let-bound!");
-	    CALLN (Fmessage, format, SYMBOL_NAME (variable));
-	  }
-      }
     }
 
   blv->local_if_set = 1;
@@ -1729,16 +1726,6 @@ Instead, use `add-hook' and specify t for the LOCAL argument.  */)
       blv = make_blv (sym, forwarded, valcontents);
       sym->redirect = SYMBOL_LOCALIZED;
       SET_SYMBOL_BLV (sym, blv);
-      {
-	Lisp_Object symbol;
-	XSETSYMBOL (symbol, sym); /* In case `variable' is aliased.  */
-	if (let_shadows_global_binding_p (symbol))
-	  {
-	    AUTO_STRING (format, "Making %s local to %s while let-bound!");
-	    CALLN (Fmessage, format, SYMBOL_NAME (variable),
-		   BVAR (current_buffer, name));
-	  }
-      }
     }
 
   /* Make sure this buffer has its own value of symbol.  */

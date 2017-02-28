@@ -1649,6 +1649,13 @@ If this variable is non-@code{nil}, it should be a string of
 characters that can end a sentence without following spaces.
 @end defopt
 
+@defopt fill-separate-heterogeneous-words-with-space
+If this variable is non-@code{nil}, two words of different kind (e.g.,
+English and CJK) will be separated with a space when concatenating one
+that is in the end of a line and the other that is in the beginning of
+the next line for filling.
+@end defopt
+
 @defvar fill-paragraph-function
 This variable provides a way to override the filling of paragraphs.
 If its value is non-@code{nil}, @code{fill-paragraph} calls this

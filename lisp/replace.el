@@ -79,15 +79,14 @@ That becomes the \"string to replace\".")
 to the minibuffer that reads the string to replace, or invoke replacements
 from Isearch by using a key sequence like `C-s C-s M-%'." "24.3")
 
-(defcustom query-replace-from-to-separator
-  (propertize (if (char-displayable-p ?→) " → " " -> ")
-              'face 'minibuffer-prompt)
-  "String that separates FROM and TO in the history of replacement pairs."
-  ;; Avoids error when attempt to autoload char-displayable-p fails
-  ;; while preparing to dump, also stops customize-rogue listing this.
-  :initialize 'custom-initialize-delay
+(defcustom query-replace-from-to-separator " → "
+  "String that separates FROM and TO in the history of replacement pairs.
+When nil, the pair will not be added to the history (same behavior
+as in emacs 24.5)."
   :group 'matching
-  :type '(choice string (sexp :tag "Display specification"))
+  :type '(choice
+          (const :tag "Disabled" nil)
+          string)
   :version "25.1")
 
 (defcustom query-replace-from-history-variable 'query-replace-history
@@ -150,14 +149,17 @@ See `replace-regexp' and `query-replace-regexp-eval'.")
   (mapconcat 'isearch-text-char-description string ""))
 
 (defun query-replace--split-string (string)
-  "Split string STRING at a character with property `separator'"
+  "Split string STRING at a substring with property `separator'."
   (let* ((length (length string))
          (split-pos (text-property-any 0 length 'separator t string)))
     (if (not split-pos)
         (substring-no-properties string)
-      (cl-assert (not (text-property-any (1+ split-pos) length 'separator t string)))
       (cons (substring-no-properties string 0 split-pos)
-            (substring-no-properties string (1+ split-pos) length)))))
+            (substring-no-properties
+             string (or (text-property-not-all
+                         (1+ split-pos) length 'separator t string)
+                        length)
+             length)))))
 
 (defun query-replace-read-from (prompt regexp-flag)
   "Query and return the `from' argument of a query-replace operation.
@@ -165,14 +167,20 @@ The return value can also be a pair (FROM . TO) indicating that the user
 wants to replace FROM with TO."
   (if query-replace-interactive
       (car (if regexp-flag regexp-search-ring search-ring))
-    ;; Reevaluating will check char-displayable-p that is
-    ;; unavailable while preparing to dump.
-    (custom-reevaluate-setting 'query-replace-from-to-separator)
     (let* ((history-add-new-input nil)
-	   (separator
+	   (separator-string
 	    (when query-replace-from-to-separator
-	      (propertize "\0"
-			  'display query-replace-from-to-separator
+	      ;; Check if the first non-whitespace char is displayable
+	      (if (char-displayable-p
+		   (string-to-char (replace-regexp-in-string
+				    " " "" query-replace-from-to-separator)))
+		  query-replace-from-to-separator
+		" -> ")))
+	   (separator
+	    (when separator-string
+	      (propertize separator-string
+			  'display separator-string
+			  'face 'minibuffer-prompt
 			  'separator t)))
 	   (minibuffer-history
 	    (append
@@ -185,9 +193,13 @@ wants to replace FROM with TO."
 	     (symbol-value query-replace-from-history-variable)))
 	   (minibuffer-allow-text-properties t) ; separator uses text-properties
 	   (prompt
-	    (if (and query-replace-defaults separator)
-		(format "%s (default %s): " prompt (car minibuffer-history))
-	      (format "%s: " prompt)))
+	    (cond ((and query-replace-defaults separator)
+                   (format "%s (default %s): " prompt (car minibuffer-history)))
+                  (query-replace-defaults
+                   (format "%s (default %s -> %s): " prompt
+                           (query-replace-descr (caar query-replace-defaults))
+                           (query-replace-descr (cdar query-replace-defaults))))
+                  (t (format "%s: " prompt))))
 	   (from
 	    ;; The save-excursion here is in case the user marks and copies
 	    ;; a region in order to specify the minibuffer input.
@@ -196,12 +208,12 @@ wants to replace FROM with TO."
               (minibuffer-with-setup-hook
                   (lambda ()
                     (setq-local text-property-default-nonsticky
-                                (cons '(separator . t) text-property-default-nonsticky)))
+                                (append '((separator . t) (face . t))
+                                        text-property-default-nonsticky)))
                 (if regexp-flag
                     (read-regexp prompt nil 'minibuffer-history)
                   (read-from-minibuffer
-                   prompt nil nil nil nil
-                   (car (if regexp-flag regexp-search-ring search-ring)) t)))))
+                   prompt nil nil nil nil (car search-ring) t)))))
            (to))
       (if (and (zerop (length from)) query-replace-defaults)
 	  (cons (caar query-replace-defaults)
@@ -1304,6 +1316,19 @@ If the value is nil, don't highlight the buffer names specially."
   :type 'face
   :group 'matching)
 
+(defcustom list-matching-lines-current-line-face 'lazy-highlight
+  "Face used by \\[list-matching-lines] to highlight the current line."
+  :type 'face
+  :group 'matching
+  :version "26.1")
+
+(defcustom list-matching-lines-jump-to-current-line nil
+  "If non-nil, \\[list-matching-lines] shows the current line highlighted.
+Set the point right after such line when there are matches after it."
+:type 'boolean
+:group 'matching
+:version "26.1")
+
 (defcustom list-matching-lines-prefix-face 'shadow
   "Face used by \\[list-matching-lines] to show the prefix column.
 If the face doesn't differ from the default face,
@@ -1360,7 +1385,15 @@ invoke `occur'."
                            "*")
                    (or unique-p (not interactive-p)))))
 
-(defun occur (regexp &optional nlines)
+;; Region limits when `occur' applies on a region.
+(defvar occur--region-start nil)
+(defvar occur--region-end nil)
+(defvar occur--matches-threshold nil)
+(defvar occur--orig-line nil)
+(defvar occur--orig-line-str nil)
+(defvar occur--final-pos nil)
+
+(defun occur (regexp &optional nlines region)
   "Show all lines in the current buffer containing a match for REGEXP.
 If a match spreads across multiple lines, all those lines are shown.
 
@@ -1369,9 +1402,17 @@ before if NLINES is negative.
 NLINES defaults to `list-matching-lines-default-context-lines'.
 Interactively it is the prefix arg.
 
+Optional arg REGION, if non-nil, mean restrict search to the
+specified region.  Otherwise search the entire buffer.
+REGION must be a list of (START . END) positions as returned by
+`region-bounds'.
+
 The lines are shown in a buffer named `*Occur*'.
 It serves as a menu to find any of the occurrences in this buffer.
 \\<occur-mode-map>\\[describe-mode] in that buffer will explain how.
+If `list-matching-lines-jump-to-current-line' is non-nil, then show
+the current line highlighted with `list-matching-lines-current-line-face'
+and set point at the first match after such line.
 
 If REGEXP contains upper case characters (excluding those preceded by `\\')
 and `search-upper-case' is non-nil, the matching is case-sensitive.
@@ -1386,8 +1427,30 @@ For example, providing \"defun\\s +\\(\\S +\\)\" for REGEXP and
 program.  When there is no parenthesized subexpressions in REGEXP
 the entire match is collected.  In any case the searched buffer
 is not modified."
-  (interactive (occur-read-primary-args))
-  (occur-1 regexp nlines (list (current-buffer))))
+  (interactive
+   (nconc (occur-read-primary-args)
+          (and (use-region-p) (list (region-bounds)))))
+  (let* ((start (and (caar region) (max (caar region) (point-min))))
+         (end (and (cdar region) (min (cdar region) (point-max))))
+         (in-region-p (or start end)))
+    (when in-region-p
+      (or start (setq start (point-min)))
+      (or end (setq end (point-max))))
+    (let ((occur--region-start start)
+          (occur--region-end end)
+          (occur--matches-threshold
+           (and in-region-p
+                (line-number-at-pos (min start end))))
+          (occur--orig-line
+           (line-number-at-pos (point)))
+          (occur--orig-line-str
+           (buffer-substring-no-properties
+            (line-beginning-position)
+            (line-end-position))))
+      (save-excursion ; If no matches `occur-1' doesn't restore the point.
+        (and in-region-p (narrow-to-region start end))
+        (occur-1 regexp nlines (list (current-buffer)))
+        (and in-region-p (widen))))))
 
 (defvar ido-ignore-item-temp-list)
 
@@ -1482,7 +1545,8 @@ See also `multi-occur'."
 	(occur-mode))
       (let ((inhibit-read-only t)
 	    ;; Don't generate undo entries for creation of the initial contents.
-	    (buffer-undo-list t))
+	    (buffer-undo-list t)
+            (occur--final-pos nil))
 	(erase-buffer)
 	(let ((count
 	       (if (stringp nlines)
@@ -1534,6 +1598,10 @@ See also `multi-occur'."
           (if (= count 0)
               (kill-buffer occur-buf)
             (display-buffer occur-buf)
+            (when occur--final-pos
+              (set-window-point
+               (get-buffer-window occur-buf 'all-frames)
+               occur--final-pos))
             (setq next-error-last-buffer occur-buf)
             (setq buffer-read-only t)
             (set-buffer-modified-p nil)
@@ -1545,19 +1613,26 @@ See also `multi-occur'."
     (let ((global-lines 0)    ;; total count of matching lines
 	  (global-matches 0)  ;; total count of matches
 	  (coding nil)
-	  (case-fold-search case-fold))
+	  (case-fold-search case-fold)
+          (in-region-p (and occur--region-start occur--region-end))
+          (multi-occur-p (cdr buffers)))
       ;; Map over all the buffers
       (dolist (buf buffers)
 	(when (buffer-live-p buf)
 	  (let ((lines 0)               ;; count of matching lines
 		(matches 0)             ;; count of matches
-		(curr-line 1)           ;; line count
+		(curr-line              ;; line count
+                 (or occur--matches-threshold 1))
+                (orig-line occur--orig-line)
+                (orig-line-str occur--orig-line-str)
+                (orig-line-shown-p)
 		(prev-line nil)         ;; line number of prev match endpt
 		(prev-after-lines nil)  ;; context lines of prev match
 		(matchbeg 0)
 		(origpt nil)
 		(begpt nil)
 		(endpt nil)
+                (finalpt nil)
 		(marker nil)
 		(curstring "")
 		(ret nil)
@@ -1658,6 +1733,18 @@ See also `multi-occur'."
 			      (nth 0 ret))))
 		      ;; Actually insert the match display data
 		      (with-current-buffer out-buf
+                        (when (and list-matching-lines-jump-to-current-line
+                                   (not multi-occur-p)
+                                   (not orig-line-shown-p)
+                                   (>= curr-line orig-line))
+                          (insert
+                           (concat
+                            (propertize
+                             (format "%7d:%s" orig-line orig-line-str)
+                             'face list-matching-lines-current-line-face
+                             'mouse-face 'mode-line-highlight
+                             'help-echo "Current line") "\n"))
+                          (setq orig-line-shown-p t finalpt (point)))
 			(insert data)))
 		    (goto-char endpt))
 		  (if endpt
@@ -1671,6 +1758,18 @@ See also `multi-occur'."
 			(forward-line 1))
 		    (goto-char (point-max)))
 		  (setq prev-line (1- curr-line)))
+                ;; Insert original line if haven't done yet.
+                (when (and list-matching-lines-jump-to-current-line
+                           (not multi-occur-p)
+                           (not orig-line-shown-p))
+                  (with-current-buffer out-buf
+                    (insert
+                     (concat
+                      (propertize
+                       (format "%7d:%s" orig-line orig-line-str)
+                       'face list-matching-lines-current-line-face
+                       'mouse-face 'mode-line-highlight
+                       'help-echo "Current line") "\n"))))
 		;; Flush remaining context after-lines.
 		(when prev-after-lines
 		  (with-current-buffer out-buf
@@ -1684,7 +1783,7 @@ See also `multi-occur'."
 		(let ((beg (point))
 		      end)
 		  (insert (propertize
-			   (format "%d match%s%s%s in buffer: %s\n"
+			   (format "%d match%s%s%s in buffer: %s%s\n"
 				   matches (if (= matches 1) "" "es")
 				   ;; Don't display the same number of lines
 				   ;; and matches in case of 1 match per line.
@@ -1694,13 +1793,21 @@ See also `multi-occur'."
 				   ;; Don't display regexp for multi-buffer.
 				   (if (> (length buffers) 1)
 				       "" (occur-regexp-descr regexp))
-				   (buffer-name buf))
+				   (buffer-name buf)
+                                   (if in-region-p
+                                       (format " within region: %d-%d"
+                                               occur--region-start
+                                               occur--region-end)
+                                     ""))
 			   'read-only t))
 		  (setq end (point))
 		  (add-text-properties beg end `(occur-title ,buf))
 		  (when title-face
-		    (add-face-text-property beg end title-face)))
-		(goto-char (point-min)))))))
+		    (add-face-text-property beg end title-face))
+                  (goto-char (if finalpt
+                                 (setq occur--final-pos
+                                       (cl-incf finalpt (- end beg)))
+                               (point-min)))))))))
       ;; Display total match count and regexp for multi-buffer.
       (when (and (not (zerop global-lines)) (> (length buffers) 1))
 	(goto-char (point-min))

@@ -3424,7 +3424,6 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 	  break;
 	}
 
-      immediate_quit = true;
       maybe_quit ();
 
       ret = connect (s, sa, addrlen);
@@ -3432,8 +3431,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 
       if (ret == 0 || xerrno == EISCONN)
 	{
-	  /* The unwind-protect will be discarded afterwards.
-	     Likewise for immediate_quit.  */
+	  /* The unwind-protect will be discarded afterwards.  */
 	  break;
 	}
 
@@ -3473,8 +3471,6 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 	    report_file_errno ("Failed connect", Qnil, xerrno);
 	}
 #endif /* !WINDOWSNT */
-
-      immediate_quit = false;
 
       /* Discard the unwind protect closing S.  */
       specpdl_ptr = specpdl + count;
@@ -3531,8 +3527,6 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 	}
 #endif
     }
-
-  immediate_quit = false;
 
   if (s < 0)
     {
@@ -4005,7 +3999,6 @@ usage: (make-network-process &rest ARGS)  */)
       struct addrinfo *res, *lres;
       int ret;
 
-      immediate_quit = true;
       maybe_quit ();
 
       struct addrinfo hints;
@@ -4027,7 +4020,6 @@ usage: (make-network-process &rest ARGS)  */)
 #else
 	error ("%s/%s getaddrinfo error %d", SSDATA (host), portstring, ret);
 #endif
-      immediate_quit = false;
 
       for (lres = res; lres; lres = lres->ai_next)
 	addrinfos = Fcons (conv_addrinfo_to_lisp (lres), addrinfos);
@@ -4380,7 +4372,7 @@ network_interface_info (Lisp_Object ifname)
 
       for (it = ifap; it != NULL; it = it->ifa_next)
         {
-          struct sockaddr_dl *sdl = (struct sockaddr_dl*) it->ifa_addr;
+          struct sockaddr_dl *sdl = (struct sockaddr_dl *) it->ifa_addr;
           unsigned char linkaddr[6];
           int n;
 

@@ -93,7 +93,7 @@ static void describe_command (Lisp_Object, Lisp_Object);
 static void describe_translation (Lisp_Object, Lisp_Object);
 static void describe_map (Lisp_Object, Lisp_Object,
                           void (*) (Lisp_Object, Lisp_Object),
-			  bool, Lisp_Object, Lisp_Object*, bool, bool);
+			  bool, Lisp_Object, Lisp_Object *, bool, bool);
 static void describe_vector (Lisp_Object, Lisp_Object, Lisp_Object,
                              void (*) (Lisp_Object, Lisp_Object), bool,
                              Lisp_Object, Lisp_Object, bool, bool);

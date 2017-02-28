@@ -1946,35 +1946,21 @@ struct Lisp_Hash_Table
      weakness of the table.  */
   Lisp_Object weak;
 
-  /* When the table is resized, and this is an integer, compute the
-     new size by adding this to the old size.  If a float, compute the
-     new size by multiplying the old size with this factor.  */
-  Lisp_Object rehash_size;
-
-  /* Resize hash table when number of entries/ table size is >= this
-     ratio, a float.  */
-  Lisp_Object rehash_threshold;
-
   /* Vector of hash codes.  If hash[I] is nil, this means that the
      I-th entry is unused.  */
   Lisp_Object hash;
 
   /* Vector used to chain entries.  If entry I is free, next[I] is the
      entry number of the next free item.  If entry I is non-free,
-     next[I] is the index of the next entry in the collision chain.  */
+     next[I] is the index of the next entry in the collision chain,
+     or -1 if there is such entry.  */
   Lisp_Object next;
 
-  /* Index of first free entry in free list.  */
-  Lisp_Object next_free;
-
-  /* Bucket vector.  A non-nil entry is the index of the first item in
+  /* Bucket vector.  An entry of -1 indicates no item is present,
+     and a nonnegative entry is the index of the first item in
      a collision chain.  This vector's size can be larger than the
      hash table size to reduce collisions.  */
   Lisp_Object index;
-
-  /* Non-nil if the table can be purecopied.  The table cannot be
-     changed afterwards.  */
-  Lisp_Object pure;
 
   /* Only the fields above are traced normally by the GC.  The ones below
      `count' are special and are either ignored by the GC or traced in
@@ -1982,6 +1968,24 @@ struct Lisp_Hash_Table
 
   /* Number of key/value entries in the table.  */
   ptrdiff_t count;
+
+  /* Index of first free entry in free list, or -1 if none.  */
+  ptrdiff_t next_free;
+
+  /* True if the table can be purecopied.  The table cannot be
+     changed afterwards.  */
+  bool pure;
+
+  /* Resize hash table when number of entries / table size is >= this
+     ratio.  */
+  float rehash_threshold;
+
+  /* Used when the table is resized.  If equal to a negative integer,
+     the user rehash-size is the integer -REHASH_SIZE, and the new
+     size is the old size plus -REHASH_SIZE.  If positive, the user
+     rehash-size is the floating-point value REHASH_SIZE + 1, and the
+     new size is the old size times REHASH_SIZE + 1.  */
+  float rehash_size;
 
   /* Vector of keys and values.  The key of item I is found at index
      2 * I, the value is found at index 2 * I + 1.
@@ -2027,27 +2031,11 @@ HASH_VALUE (struct Lisp_Hash_Table *h, ptrdiff_t idx)
   return AREF (h->key_and_value, 2 * idx + 1);
 }
 
-/* Value is the index of the next entry following the one at IDX
-   in hash table H.  */
-INLINE Lisp_Object
-HASH_NEXT (struct Lisp_Hash_Table *h, ptrdiff_t idx)
-{
-  return AREF (h->next, idx);
-}
-
 /* Value is the hash code computed for entry IDX in hash table H.  */
 INLINE Lisp_Object
 HASH_HASH (struct Lisp_Hash_Table *h, ptrdiff_t idx)
 {
   return AREF (h->hash, idx);
-}
-
-/* Value is the index of the element in hash table H that is the
-   start of the collision list at index IDX in the index vector of H.  */
-INLINE Lisp_Object
-HASH_INDEX (struct Lisp_Hash_Table *h, ptrdiff_t idx)
-{
-  return AREF (h->index, idx);
 }
 
 /* Value is the size of hash table H.  */
@@ -2065,11 +2053,11 @@ enum DEFAULT_HASH_SIZE { DEFAULT_HASH_SIZE = 65 };
    value gives the ratio of current entries in the hash table and the
    size of the hash table.  */
 
-static double const DEFAULT_REHASH_THRESHOLD = 0.8;
+static float const DEFAULT_REHASH_THRESHOLD = 0.8125;
 
-/* Default factor by which to increase the size of a hash table.  */
+/* Default factor by which to increase the size of a hash table, minus 1.  */
 
-static double const DEFAULT_REHASH_SIZE = 1.5;
+static float const DEFAULT_REHASH_SIZE = 1.5 - 1;
 
 /* Combine two integers X and Y for hashing.  The result might not fit
    into a Lisp integer.  */
@@ -3103,29 +3091,22 @@ struct handler
 
 extern Lisp_Object memory_signal_data;
 
-/* Check quit-flag and quit if it is non-nil.  Typing C-g does not
-   directly cause a quit; it only sets Vquit_flag.  So the program
-   needs to call maybe_quit at times when it is safe to quit.  Every
-   loop that might run for a long time or might not exit ought to call
-   maybe_quit at least once, at a safe place.  Unless that is
-   impossible, of course.  But it is very desirable to avoid creating
-   loops where maybe_quit is impossible.
-
-   Exception: if you set immediate_quit, the handler that responds to
-   the C-g does the quit itself.  This is a good thing to do around a
-   loop that has no side effects and (in particular) cannot call
-   arbitrary Lisp code.
-
-   If quit-flag is set to `kill-emacs' the SIGINT handler has received
-   a request to exit Emacs when it is safe to do.
-
-   When not quitting, process any pending signals.  */
-
 extern void maybe_quit (void);
 
 /* True if ought to quit now.  */
 
 #define QUITP (!NILP (Vquit_flag) && NILP (Vinhibit_quit))
+
+/* Process a quit rarely, based on a counter COUNT, for efficiency.
+   "Rarely" means once per USHRT_MAX + 1 times; this is somewhat
+   arbitrary, but efficient.  */
+
+INLINE void
+rarely_quit (unsigned short int count)
+{
+  if (! count)
+    maybe_quit ();
+}
 
 extern Lisp_Object Vascii_downcase_table;
 extern Lisp_Object Vascii_canon_table;
@@ -3298,6 +3279,7 @@ extern struct Lisp_Symbol *indirect_variable (struct Lisp_Symbol *);
 extern _Noreturn void args_out_of_range (Lisp_Object, Lisp_Object);
 extern _Noreturn void args_out_of_range_3 (Lisp_Object, Lisp_Object,
 					   Lisp_Object);
+extern _Noreturn void circular_list (Lisp_Object);
 extern Lisp_Object do_symval_forwarding (union Lisp_Fwd *);
 enum Set_Internal_Bind {
   SET_INTERNAL_SET,
@@ -3347,8 +3329,8 @@ extern Lisp_Object larger_vector (Lisp_Object, ptrdiff_t, ptrdiff_t);
 extern void sweep_weak_hash_tables (void);
 EMACS_UINT hash_string (char const *, ptrdiff_t);
 EMACS_UINT sxhash (Lisp_Object, int);
-Lisp_Object make_hash_table (struct hash_table_test, Lisp_Object, Lisp_Object,
-                             Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object make_hash_table (struct hash_table_test, EMACS_INT, float, float,
+			     Lisp_Object, bool);
 ptrdiff_t hash_lookup (struct Lisp_Hash_Table *, Lisp_Object, EMACS_UINT *);
 ptrdiff_t hash_put (struct Lisp_Hash_Table *, Lisp_Object, Lisp_Object,
 		    EMACS_UINT);
@@ -3705,7 +3687,6 @@ extern Lisp_Object Vprin1_to_string_buffer;
 extern void debug_print (Lisp_Object) EXTERNALLY_VISIBLE;
 extern void temp_output_buffer_setup (const char *);
 extern int print_level;
-extern void write_string (const char *);
 extern void print_error_message (Lisp_Object, Lisp_Object, const char *,
 				 Lisp_Object);
 extern Lisp_Object internal_with_output_to_temp_buffer
@@ -3846,7 +3827,6 @@ extern void mark_specpdl (union specbinding *first, union specbinding *ptr);
 extern void get_backtrace (Lisp_Object array);
 Lisp_Object backtrace_top_function (void);
 extern bool let_shadows_buffer_binding_p (struct Lisp_Symbol *symbol);
-extern bool let_shadows_global_binding_p (Lisp_Object symbol);
 
 #ifdef HAVE_MODULES
 /* Defined in alloc.c.  */
@@ -4201,8 +4181,10 @@ extern int emacs_open (const char *, int, int);
 extern int emacs_pipe (int[2]);
 extern int emacs_close (int);
 extern ptrdiff_t emacs_read (int, void *, ptrdiff_t);
+extern ptrdiff_t emacs_read_quit (int, void *, ptrdiff_t);
 extern ptrdiff_t emacs_write (int, void const *, ptrdiff_t);
 extern ptrdiff_t emacs_write_sig (int, void const *, ptrdiff_t);
+extern ptrdiff_t emacs_write_quit (int, void const *, ptrdiff_t);
 extern void emacs_perror (char const *);
 
 extern void unlock_all_files (void);
@@ -4327,9 +4309,6 @@ extern char *emacs_root_dir (void);
 extern char my_edata[];
 extern char my_endbss[];
 extern char *my_endbss_static;
-
-/* True means ^G can quit instantly.  */
-extern bool immediate_quit;
 
 extern void *xmalloc (size_t) ATTRIBUTE_MALLOC_SIZE ((1));
 extern void *xzalloc (size_t) ATTRIBUTE_MALLOC_SIZE ((1));
@@ -4517,7 +4496,7 @@ enum
    use these only in macros like AUTO_CONS that declare a local
    variable whose lifetime will be clear to the programmer.  */
 #define STACK_CONS(a, b) \
-  make_lisp_ptr (&(union Aligned_Cons) { { a, { b } } }.s, Lisp_Cons)
+  make_lisp_ptr (&((union Aligned_Cons) { { a, { b } } }).s, Lisp_Cons)
 #define AUTO_CONS_EXPR(a, b) \
   (USE_STACK_CONS ? STACK_CONS (a, b) : Fcons (a, b))
 
@@ -4563,25 +4542,58 @@ enum
   Lisp_Object name =							\
     (USE_STACK_STRING							\
      ? (make_lisp_ptr							\
-	((&(union Aligned_String)					\
-	  {{len, -1, 0, (unsigned char *) (str)}}.s),			\
+	((&((union Aligned_String) {{len, -1, 0, (unsigned char *) (str)}}).s), \
 	 Lisp_String))							\
      : make_unibyte_string (str, len))
 
-/* Loop over all tails of a list, checking for cycles.
-   FIXME: Make tortoise and n internal declarations.
-   FIXME: Unroll the loop body so we don't need `n'.  */
-#define FOR_EACH_TAIL(hare, list, tortoise, n)	\
-  for ((tortoise) = (hare) = (list), (n) = true;		\
-       CONSP (hare);						\
-       (hare = XCDR (hare), (n) = !(n),				\
-   	((n)							\
-   	 ? (EQ (hare, tortoise)					\
-	    ? xsignal1 (Qcircular_list, list)			\
-	    : (void) 0)						\
-	 /* Move tortoise before the next iteration, in case */ \
-	 /* the next iteration does an Fsetcdr.  */		\
-   	 : (void) ((tortoise) = XCDR (tortoise)))))
+/* Loop over conses of the list TAIL, signaling if a cycle is found,
+   and possibly quitting after each loop iteration.  In the loop body,
+   set TAIL to the current cons.  If the loop exits normally,
+   set TAIL to the terminating non-cons, typically nil.  The loop body
+   should not modify the list’s top level structure other than by
+   perhaps deleting the current cons.  */
+
+#define FOR_EACH_TAIL(tail) \
+  FOR_EACH_TAIL_INTERNAL (tail, circular_list (tail), true)
+
+/* Like FOR_EACH_TAIL (LIST), except do not signal or quit.
+   If the loop exits due to a cycle, TAIL’s value is undefined.  */
+
+#define FOR_EACH_TAIL_SAFE(tail) \
+  FOR_EACH_TAIL_INTERNAL (tail, (void) ((tail) = Qnil), false)
+
+/* Iterator intended for use only within FOR_EACH_TAIL_INTERNAL.  */
+struct for_each_tail_internal
+{
+  Lisp_Object tortoise;
+  intptr_t max, n;
+  unsigned short int q;
+};
+
+/* Like FOR_EACH_TAIL (LIST), except evaluate CYCLE if a cycle is
+   found, and check for quit if CHECK_QUIT.  This is an internal macro
+   intended for use only by the above macros.
+
+   Use Brent’s teleporting tortoise-hare algorithm.  See:
+   Brent RP. BIT. 1980;20(2):176-84. doi:10.1007/BF01933190
+   http://maths-people.anu.edu.au/~brent/pd/rpb051i.pdf
+
+   This macro uses maybe_quit because of an excess of caution.  The
+   call to maybe_quit should not be needed in practice, as a very long
+   list, whether circular or not, will cause Emacs to be so slow in
+   other uninterruptible areas (e.g., garbage collection) that there
+   is little point to calling maybe_quit here.  */
+
+#define FOR_EACH_TAIL_INTERNAL(tail, cycle, check_quit)			\
+  for (struct for_each_tail_internal li = { tail, 2, 0, 2 };		\
+       CONSP (tail);							\
+       ((tail) = XCDR (tail),						\
+	((--li.q != 0							\
+	  || ((check_quit) ? maybe_quit () : (void) 0, 0 < --li.n)	\
+	  || (li.q = li.n = li.max <<= 1, li.n >>= USHRT_WIDTH,		\
+	      li.tortoise = (tail), false))				\
+	 && EQ (tail, li.tortoise))					\
+	? (cycle) : (void) 0))
 
 /* Do a `for' loop over alist values.  */
 

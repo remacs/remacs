@@ -77,8 +77,17 @@ modern init systems such as systemd, which manage many of the traditional
 aspects of daemon behavior themselves.  '--old-daemon' is now an alias
 for '--daemon'.
 
++++
+** Emacs now supports 24-bit colors on capable text terminals
+Terminal is automatically initialized to use 24-bit colors if the
+required capabilities are found in terminfo.  See the FAQ node
+"Colors on a TTY" for more information.
+
 
 * Changes in Emacs 26.1
+
+** The variable 'emacs-version' no longer includes the build number.
+This is now stored separately in a new variable, 'emacs-build-number'.
 
 +++
 ** The new function 'mapbacktrace' applies a function to all frames of
@@ -307,8 +316,25 @@ local part of a remote file name.  Thus, if you have a directory named
 "/~" on the remote host "foo", you can prevent it from being
 substituted by a home directory by writing it as "/foo:/:/~/file".
 
++++
+** The new variable 'maximum-scroll-margin' allows having effective
+settings of 'scroll-margin' up to half the window size, instead of
+always restricting the margin to a quarter of the window.
+
++++
+** Emacsclient has a new option -u/--suppress-output.  The option
+suppresses display of return values from the server process.
+
 
 * Editing Changes in Emacs 26.1
+
++++
+** Two new user options 'list-matching-lines-jump-to-current-line' and
+'list-matching-lines-current-line-face' to show highlighted the current
+line in *Occur* buffer.
+
++++
+** The 'occur' command can now operate on the region.
 
 +++
 ** New bindings for 'query-replace-map'.
@@ -324,6 +350,13 @@ same as in modes where the character is not whitespace.
 ** No more prompt about changed file when the file's content is unchanged.
 Instead of only checking the modification time, Emacs now also checks
 the file's actual content before prompting the user.
+
+** Title case characters are properly converted to upper case.
+'upcase', 'upcase-region' et al. convert title case characters (such
+as the single character "ǲ") into their upper case form (such as "Ǳ").
+As a downside, 'capitalize' and 'upcase-initials' produce awkward
+words where first character is upper rather than title case, e.g.,
+"Ǆungla" instead of "ǅungla".
 
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
@@ -356,24 +389,27 @@ method is an NNTP select method.
 
 +++
 *** A new command for sorting articles by readedness marks has been
-added: `C-c C-s C-m C-m'.
+added: 'C-c C-s C-m C-m'.
 
 ** Ibuffer
 
 ---
-*** New filter commands `ibuffer-filter-by-basename',
-`ibuffer-filter-by-file-extension', `ibuffer-filter-by-directory',
-`ibuffer-filter-by-starred-name', `ibuffer-filter-by-modified'
-and `ibuffer-filter-by-visiting-file'; bound respectively
+*** New command 'ibuffer-jump'.
+
+---
+*** New filter commands 'ibuffer-filter-by-basename',
+'ibuffer-filter-by-file-extension', 'ibuffer-filter-by-directory',
+'ibuffer-filter-by-starred-name', 'ibuffer-filter-by-modified'
+and 'ibuffer-filter-by-visiting-file'; bound respectively
 to '/b', '/.', '//', '/*', '/i' and '/v'.
 
 ---
 *** Two new commands 'ibuffer-filter-chosen-by-completion'
-and `ibuffer-and-filter', the second bound to '/&'.
+and 'ibuffer-and-filter', the second bound to '/&'.
 
 ---
-*** The commands `ibuffer-pop-filter', `ibuffer-pop-filter-group',
-`ibuffer-or-filter' and `ibuffer-filter-disable' have the alternative
+*** The commands 'ibuffer-pop-filter', 'ibuffer-pop-filter-group',
+'ibuffer-or-filter' and 'ibuffer-filter-disable' have the alternative
 bindings '/<up>', '/S-<up>', '/|' and '/DEL', respectively.
 
 ---
@@ -450,6 +486,11 @@ viewing HTML files and the like.
 *** Edebug can be prevented from pausing 1 second after reaching a
 breakpoint (e.g. with "f" and "o") by customizing the new option
 'edebug-sit-on-break'.
+
++++
+*** New customizable option 'edebug-max-depth'
+This allows to enlarge the maximum recursion depth when instrumenting
+code.
 
 ** Eshell
 
@@ -599,11 +640,18 @@ Drive onsite repositories.
 manual documents how to configure ssh and PuTTY accordingly.
 
 +++
-Setting the "ENV" environment variable in 'tramp-remote-process-environment'
-enables reading of shell initialization files.
+*** Setting the "ENV" environment variable in
+'tramp-remote-process-environment' enables reading of shell
+initialization files.
+
+---
+*** Variable 'tramp-completion-mode' is obsoleted.
 
 ---
 ** 'auto-revert-use-notify' is set back to t in 'global-auto-revert-mode'.
+
+---
+** JS mode now sets 'comment-multi-line' to t.
 
 ** CSS mode
 
@@ -666,6 +714,10 @@ string is computed dynamically based on 'url-privacy-level'.
 colorful faces to make it more obvious to the user what the state is.
 See the 'vc-faces' customization group.
 
++++
+*** 'vc-dir-mode' now binds 'vc-log-outgoing' to 'O'; and has various
+branch-related commands on a keymap bound to 'B'.
+
 ** CC mode
 
 *** Opening a .h file will turn C or C++ mode depending on language used.
@@ -683,6 +735,8 @@ processes on exit.
 * New Modes and Packages in Emacs 26.1
 
 ** New Elisp data-structure library 'radix-tree'.
+
+** New library 'xdg' with utilities for some XDG standards and specs.
 
 
 * Incompatible Lisp Changes in Emacs 26.1
@@ -702,6 +756,13 @@ mode bindings: 'C-c @ C-a', 'C-c @ C-t', 'C-c @ C-d', and 'C-c @ C-e.'
 ** The grep/rgrep/lgrep functions will now ask about saving files
 before running.  This is controlled by the 'grep-save-buffers'
 variable.
+
+---
+** Customizable variable 'query-replace-from-to-separator'
+now doesn't propertize the string value of the separator.
+Instead, text properties are added by query-replace-read-from.
+Additionally, the new nil value restores pre-24.5 behavior
+of not providing replacement pairs via the history.
 
 ** Some obsolete functions, variables, and faces have been removed:
 *** make-variable-frame-local.  Variables cannot be frame-local any more.
@@ -744,6 +805,12 @@ instead.
 
 
 * Lisp Changes in Emacs 26.1
+
++++
+** 'save-some-buffers' now uses 'save-some-buffers-default-predicate'
+to decide which buffers to ask about, if the PRED argument is nil.
+The default value of 'save-some-buffers-default-predicate' is nil,
+which means ask about all file-visiting buffers.
 
 ** string-(to|as|make)-(uni|multi)byte are now declared obsolete.
 ** New variable 'while-no-input-ignore-events' which allow
@@ -851,9 +918,13 @@ consistency with the new functions.  For compatibility, 'sxhash'
 remains as an alias to 'sxhash-equal'.
 
 +++
-** New function `add-variable-watcher' can be used to call a function
+** 'make-hash-table' now defaults to a rehash threshold of 0.8125
+instead of 0.8, to avoid rounding glitches.
+
++++
+** New function 'add-variable-watcher' can be used to call a function
 when a symbol's value is changed.  This is used to implement the new
-debugger command `debug-on-variable-change'.
+debugger command 'debug-on-variable-change'.
 
 +++
 ** Time conversion functions that accept a time zone rule argument now
@@ -871,6 +942,13 @@ collection).
 
 +++
 ** 'car' and 'cdr' compositions 'cXXXr' and 'cXXXXr' are now part of Elisp.
+
+---
+** 'if-let*', 'when-let*', and 'and-let*' are new in subr-x.el.
+The incumbent 'if-let' and 'when-let' are now aliases.
+
+** Low-level list functions like 'length' and 'member' now do a better
+job of signaling list cycles instead of looping indefinitely.
 
 +++
 ** The new functions 'make-nearby-temp-file' and 'temporary-file-directory'
@@ -984,7 +1062,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 
 Local variables:
-coding: us-ascii
+coding: utf-8
 mode: outline
 paragraph-separate: "[ 	]*$"
 end:

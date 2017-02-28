@@ -2211,7 +2211,7 @@ struct composition_it
      the automatic composition.  Provided that ELT is an element of
      Vcomposition_function_table for CH, (nth ELT RULE_IDX) is the
      rule for the composition.  */
-  int rule_idx;
+  EMACS_INT rule_idx;
   /* If this is an automatic composition, how many characters to look
      back from the position where a character triggering the
      composition exists.  */
@@ -3259,6 +3259,7 @@ void move_it_past_eol (struct it *);
 void move_it_in_display_line (struct it *it,
 			      ptrdiff_t to_charpos, int to_x,
 			      enum move_operation_enum op);
+int partial_line_height (struct it *it_origin);
 bool in_display_vector_p (struct it *);
 int frame_mode_line_height (struct frame *);
 extern bool redisplaying_p;

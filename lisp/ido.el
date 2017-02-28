@@ -2541,7 +2541,7 @@ If cursor is not at the end of the user input, move to end of input."
 (defun ido-complete ()
   "Try and complete the current pattern amongst the file names."
   (interactive)
-  (let (res)
+  (let (non-essential res)
     (cond
      (ido-incomplete-regexp
       ;; Do nothing
@@ -3556,7 +3556,6 @@ it is put to the start of the list."
     ;; Strip method:user@host: part of tramp completions.
     ;; Tramp completions do not include leading slash.
     (let* ((len (1- (length dir)))
-	   (non-essential t)
 	   (compl
 	    (or ;; We do not want to be disturbed by "File does not
                 ;; exist" errors.

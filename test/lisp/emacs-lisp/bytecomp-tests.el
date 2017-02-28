@@ -26,6 +26,7 @@
 ;;; Commentary:
 
 (require 'ert)
+(require 'cl-lib)
 
 ;;; Code:
 (defconst byte-opt-testsuite-arith-data
@@ -242,7 +243,44 @@
     (let ((a 3) (b 2) (c 1.0)) (/ 1 a b c))
     (let ((a 3) (b 2) (c 1.0)) (/ a b c 0))
     (let ((a 3) (b 2) (c 1.0)) (/ a b c 1))
-    (let ((a 3) (b 2) (c 1.0)) (/ a b c -1)))
+    (let ((a 3) (b 2) (c 1.0)) (/ a b c -1))
+    ;; Test switch bytecode
+    (let ((a 3)) (cond ((eq a 1) 'one) ((eq a 2) 'two) ((eq a 3) 'three) (t t)))
+    (let ((a 'three)) (cond ((eq a 'one) 1) ((eq a 2) 'two) ((eq a 'three) 3)
+                            (t t)))
+    (let ((a 2)) (cond ((eq a 'one) 1) ((eq a 1) 'one) ((eq a 2) 'two)
+                       (t nil)))
+    (let ((a 2.0)) (cond ((eql a 2) 'incorrect) ((eql a 2.00) 'correct)))
+    (let ((a "foobar")) (cond ((equal "notfoobar" a) 'incorrect)
+                              ((equal 1 a) 'incorrect)
+                              ((equal a "foobar") 'correct)
+                              (t 'incorrect)))
+    (let ((a "foobar") (l t)) (pcase a
+                                ("bar" 'incorrect)
+                                ("foobar" (while l
+                                            a (setq l nil))
+                                 'correct)))
+    (let ((a 'foobar) (l t)) (cl-case a
+                         ('foo 'incorrect)
+                         ('bar 'incorrect)
+                         ('foobar (while l
+                                    a (setq l nil))
+                                  'correct)))
+    (let ((a 'foobar) (l t)) (cond
+                        ((eq a 'bar) 'incorrect)
+                        ((eq a 'foo) 'incorrect)
+                        ((eq a 'bar) 'incorrect)
+                        (t (while l
+                             a (setq l nil))
+                           'correct)))
+    (let ((a 'foobar) (l t)) (cond
+                        ((eq a 'bar) 'incorrect)
+                        ((eq a 'foo) 'incorrect)
+                        ((eq a 'foobar)
+                         (while l
+                           a (setq l nil))
+                         'correct)
+                        (t 'incorrect))))
   "List of expression for test.
 Each element will be executed by interpreter and with
 bytecompiled code, and their results compared.")

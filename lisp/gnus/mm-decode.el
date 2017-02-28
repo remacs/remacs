@@ -1413,11 +1413,10 @@ Return t if meta tag is added or replaced."
       (let ((case-fold-search t))
 	(goto-char (point-min))
 	(if (re-search-forward "\
-<meta\\s-+http-equiv=[\"']?content-type[\"']?\\s-+content=[\"']\
-text/\\(\\sw+\\)\\(?:;\\s-*charset=\\([^\"'>]+\\)\\)?[^>]*>" nil t)
+<meta\\s-+http-equiv=[\"']?content-type[\"']?\\s-+content=[\"']?\
+text/html\\(?:;\\s-*charset=\\([^\t\n\r \"'>]+\\)\\)?[^>]*>" nil t)
 	    (if (and (not force-charset)
-		     (match-beginning 2)
-		     (string-match "\\`html\\'" (match-string 1)))
+		     (match-beginning 1))
 		;; Don't modify existing meta tag.
 		nil
 	      ;; Replace it with the one specifying charset.
@@ -1793,39 +1792,43 @@ If RECURSIVE, search recursively."
 				      (buffer-string))))))
 	(shr-inhibit-images mm-html-inhibit-images)
 	(shr-blocked-images mm-html-blocked-images)
-	charset char)
-    (unless handle
-      (setq handle (mm-dissect-buffer t)))
-    (setq charset (mail-content-type-get (mm-handle-type handle) 'charset))
+	charset coding char document)
+    (mm-with-part (or handle (setq handle (mm-dissect-buffer t)))
+      (setq case-fold-search t)
+      (or (setq charset
+		(mail-content-type-get (mm-handle-type handle) 'charset))
+	  (progn
+	    (goto-char (point-min))
+	    (and (re-search-forward "\
+<meta\\s-+http-equiv=[\"']?content-type[\"']?\\s-+content=[\"']?\
+text/html;\\s-*charset=\\([^\t\n\r \"'>]+\\)[^>]*>" nil t)
+		 (setq coding (mm-charset-to-coding-system (match-string 1)
+							   nil t))))
+	  (setq charset mail-parse-charset))
+      (when (and (or coding
+		     (setq coding (mm-charset-to-coding-system charset nil t)))
+		 (not (eq coding 'ascii)))
+	(insert (prog1
+		    (decode-coding-string (buffer-string) coding)
+		  (erase-buffer)
+		  (set-buffer-multibyte t))))
+      (goto-char (point-min))
+      (while (re-search-forward
+	      "&#\\(?:x\\([89][0-9a-f]\\)\\|\\(1[2-5][0-9]\\)\\);" nil t)
+	(when (setq char
+		    (cdr (assq (if (match-beginning 1)
+				   (string-to-number (match-string 1) 16)
+				 (string-to-number (match-string 2)))
+			       mm-extra-numeric-entities)))
+	  (replace-match (char-to-string char))))
+      ;; Remove "soft hyphens".
+      (goto-char (point-min))
+      (while (search-forward "­" nil t)
+	(replace-match "" t t))
+      (setq document (libxml-parse-html-region (point-min) (point-max))))
     (save-restriction
       (narrow-to-region (point) (point))
-      (shr-insert-document
-       (mm-with-part handle
-	 (insert (prog1
-		     (if (and charset
-			      (setq charset
-				    (mm-charset-to-coding-system charset
-								 nil t))
-			      (not (eq charset 'ascii)))
-			 (decode-coding-string (buffer-string) charset)
-		       (string-as-multibyte (buffer-string)))
-		   (erase-buffer)
-		   (mm-enable-multibyte)))
-	 (goto-char (point-min))
-	 (setq case-fold-search t)
-	 (while (re-search-forward
-		 "&#\\(?:x\\([89][0-9a-f]\\)\\|\\(1[2-5][0-9]\\)\\);" nil t)
-	   (when (setq char
-		       (cdr (assq (if (match-beginning 1)
-				      (string-to-number (match-string 1) 16)
-				    (string-to-number (match-string 2)))
-				  mm-extra-numeric-entities)))
-	     (replace-match (char-to-string char))))
-	 ;; Remove "soft hyphens".
-	 (goto-char (point-min))
-	 (while (search-forward "­" nil t)
-	   (replace-match "" t t))
-	 (libxml-parse-html-region (point-min) (point-max))))
+      (shr-insert-document document)
       (unless (bobp)
 	(insert "\n"))
       (mm-convert-shr-links)
