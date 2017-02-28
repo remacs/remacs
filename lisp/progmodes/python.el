@@ -1491,10 +1491,18 @@ Optional argument NOEND is internal and makes the logic to not
 jump to the end of line when moving forward searching for the end
 of the statement."
   (interactive "^")
-  (let (string-start bs-pos)
+  (let (string-start bs-pos (last-string-end 0))
     (while (and (or noend (goto-char (line-end-position)))
                 (not (eobp))
                 (cond ((setq string-start (python-syntax-context 'string))
+                       ;; The assertion can only fail if syntax table
+                       ;; text properties and the `syntax-ppss' cache
+                       ;; are somehow out of whack.  This has been
+                       ;; observed when using `syntax-ppss' during
+                       ;; narrowing.
+                       (cl-assert (> string-start last-string-end)
+                                  :show-args
+                                  "Overlapping strings detected")
                        (goto-char string-start)
                        (if (python-syntax-context 'paren)
                            ;; Ended up inside a paren, roll again.
@@ -1504,8 +1512,10 @@ of the statement."
                          (goto-char (+ (point)
                                        (python-syntax-count-quotes
                                         (char-after (point)) (point))))
-                         (or (re-search-forward (rx (syntax string-delimiter)) nil t)
-                             (goto-char (point-max)))))
+                         (setq last-string-end
+                               (or (re-search-forward
+                                    (rx (syntax string-delimiter)) nil t)
+                                   (goto-char (point-max))))))
                       ((python-syntax-context 'paren)
                        ;; The statement won't end before we've escaped
                        ;; at least one level of parenthesis.
