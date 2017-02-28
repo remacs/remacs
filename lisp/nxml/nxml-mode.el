@@ -518,7 +518,7 @@ Many aspects this mode can be customized using
 	(nxml-with-invisible-motion
 	  (nxml-scan-prolog)))))
   (setq-local syntax-ppss-table sgml-tag-syntax-table)
-  (setq-local syntax-propertize-function sgml-syntax-propertize-function)
+  (setq-local syntax-propertize-function #'sgml-syntax-propertize)
   (add-hook 'change-major-mode-hook #'nxml-cleanup nil t)
 
   ;; Emacs 23 handles the encoding attribute on the xml declaration
