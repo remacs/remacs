@@ -2491,6 +2491,15 @@ FORMATS is the value to use for `ibuffer-formats'.
 	(unless ibuffer-expert
 	  (message "Commands: m, u, t, RET, g, k, S, D, Q; q to quit; h for help"))))))
 
+;;;###autoload
+(defun ibuffer-jump (&optional other-window)
+  "Call Ibuffer and set point at the line listing the current buffer.
+If optional arg OTHER-WINDOW is non-nil, then use another window."
+  (interactive "P")
+  (let ((name (buffer-name)))
+    (ibuffer other-window)
+    (ignore-errors (ibuffer-jump-to-buffer name))))
+
 (put 'ibuffer-mode 'mode-class 'special)
 (define-derived-mode ibuffer-mode special-mode "IBuffer"
   "A major mode for viewing a list of buffers.

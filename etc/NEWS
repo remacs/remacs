@@ -394,6 +394,9 @@ added: 'C-c C-s C-m C-m'.
 ** Ibuffer
 
 ---
+*** New command 'ibuffer-jump'.
+
+---
 *** New filter commands 'ibuffer-filter-by-basename',
 'ibuffer-filter-by-file-extension', 'ibuffer-filter-by-directory',
 'ibuffer-filter-by-starred-name', 'ibuffer-filter-by-modified'
