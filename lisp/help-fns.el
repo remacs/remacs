@@ -73,7 +73,7 @@ The functions will receive the function name as argument.")
       (let* ((re (load-history-regexp file))
              (done nil))
         (dolist (x load-history)
-          (if (string-match-p re (car x)) (setq done t)))
+          (and (car x) (string-match-p re (car x)) (setq done t)))
         done)))
 
 (defun help--load-prefixes (prefixes)
