@@ -5838,6 +5838,8 @@ an auto-save file."
 (defun recover-this-file ()
   "Recover the visited file--get contents from its last auto-save file."
   (interactive)
+  (or buffer-file-name
+      (user-error "This buffer is not visiting a file"))
   (recover-file buffer-file-name))
 
 (defun recover-file (file)
