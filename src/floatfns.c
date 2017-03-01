@@ -36,7 +36,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    isnormal, isunordered, lgamma, log1p, *log2 [via (log X 2)], *logb
    (approximately), lrint/llrint, lround/llround, nan, nearbyint,
    nextafter, nexttoward, remainder, remquo, *rint, round, scalbln,
-   scalbn, signbit, tgamma, trunc.
+   scalbn, signbit, tgamma, *trunc.
  */
 
 #include <config.h>
@@ -333,47 +333,42 @@ rounding_driver (Lisp_Object arg, Lisp_Object divisor,
 {
   CHECK_NUMBER_OR_FLOAT (arg);
 
-  if (! NILP (divisor))
+  double d;
+  if (NILP (divisor))
     {
-      EMACS_INT i1, i2;
-
+      if (! FLOATP (arg))
+	return arg;
+      d = XFLOAT_DATA (arg);
+    }
+  else
+    {
       CHECK_NUMBER_OR_FLOAT (divisor);
-
-      if (FLOATP (arg) || FLOATP (divisor))
+      if (!FLOATP (arg) && !FLOATP (divisor))
 	{
-	  double f1, f2;
-
-	  f1 = FLOATP (arg) ? XFLOAT_DATA (arg) : XINT (arg);
-	  f2 = (FLOATP (divisor) ? XFLOAT_DATA (divisor) : XINT (divisor));
-	  if (! IEEE_FLOATING_POINT && f2 == 0)
+	  if (XINT (divisor) == 0)
 	    xsignal0 (Qarith_error);
-
-	  f1 = (*double_round) (f1 / f2);
-	  if (FIXNUM_OVERFLOW_P (f1))
-	    xsignal3 (Qrange_error, build_string (name), arg, divisor);
-	  arg = make_number (f1);
-	  return arg;
+	  return make_number (int_round2 (XINT (arg), XINT (divisor)));
 	}
 
-      i1 = XINT (arg);
-      i2 = XINT (divisor);
-
-      if (i2 == 0)
+      double f1 = FLOATP (arg) ? XFLOAT_DATA (arg) : XINT (arg);
+      double f2 = FLOATP (divisor) ? XFLOAT_DATA (divisor) : XINT (divisor);
+      if (! IEEE_FLOATING_POINT && f2 == 0)
 	xsignal0 (Qarith_error);
-
-      XSETINT (arg, (*int_round2) (i1, i2));
-      return arg;
+      d = f1 / f2;
     }
 
-  if (FLOATP (arg))
+  /* Round, coarsely test for fixnum overflow before converting to
+     EMACS_INT (to avoid undefined C behavior), and then exactly test
+     for overflow after converting (as FIXNUM_OVERFLOW_P is inaccurate
+     on floats).  */
+  double dr = double_round (d);
+  if (fabs (dr) < 2 * (MOST_POSITIVE_FIXNUM + 1))
     {
-      double d = (*double_round) (XFLOAT_DATA (arg));
-      if (FIXNUM_OVERFLOW_P (d))
-	xsignal2 (Qrange_error, build_string (name), arg);
-      arg = make_number (d);
+      EMACS_INT ir = dr;
+      if (! FIXNUM_OVERFLOW_P (ir))
+	return make_number (ir);
     }
-
-  return arg;
+  xsignal2 (Qrange_error, build_string (name), arg);
 }
 
 static EMACS_INT
@@ -423,11 +418,15 @@ emacs_rint (double d)
 }
 #endif
 
+#ifdef HAVE_TRUNC
+#define emacs_trunc trunc
+#else
 static double
-double_identity (double d)
+emacs_trunc (double d)
 {
-  return d;
+  return (d < 0 ? ceil : floor) (d);
 }
+#endif
 
 DEFUN ("ceiling", Fceiling, Sceiling, 1, 2, 0,
        doc: /* Return the smallest integer no less than ARG.
@@ -466,7 +465,7 @@ Rounds ARG toward zero.
 With optional DIVISOR, truncate ARG/DIVISOR.  */)
   (Lisp_Object arg, Lisp_Object divisor)
 {
-  return rounding_driver (arg, divisor, double_identity, truncate2,
+  return rounding_driver (arg, divisor, emacs_trunc, truncate2,
 			  "truncate");
 }
 

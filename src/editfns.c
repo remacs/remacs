@@ -4119,12 +4119,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	    }
 	  else if (conversion == 'c')
 	    {
-	      if (FLOATP (args[n]))
-		{
-		  double d = XFLOAT_DATA (args[n]);
-		  args[n] = make_number (FIXNUM_OVERFLOW_P (d) ? -1 : d);
-		}
-
 	      if (INTEGERP (args[n]) && ! ASCII_CHAR_P (XINT (args[n])))
 		{
 		  if (!multibyte)
@@ -4241,7 +4235,8 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		      || conversion == 'X'))
 	    error ("Invalid format operation %%%c",
 		   STRING_CHAR ((unsigned char *) format - 1));
-	  else if (! NUMBERP (args[n]))
+	  else if (! (INTEGERP (args[n])
+		      || (FLOATP (args[n]) && conversion != 'c')))
 	    error ("Format specifier doesn't match argument type");
 	  else
 	    {

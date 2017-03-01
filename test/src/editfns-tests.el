@@ -133,4 +133,7 @@
     (should (string= (buffer-string) "éä\"ba÷"))
     (should (equal (transpose-test-get-byte-positions 7) '(1 3 5 6 7 8 10)))))
 
+(ert-deftest format-c-float ()
+  (should-error (format "%c" 0.5)))
+
 ;;; editfns-tests.el ends here
