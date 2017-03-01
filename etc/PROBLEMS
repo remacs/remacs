@@ -464,6 +464,23 @@ problem by adding this to your .cshrc file:
         stty -icrnl -onlcr -echo susp ^Z
     endif
 
+*** In Inferior Python mode, input is echoed and native completion doesn't work.
+<https://debbugs.gnu.org/cgi/bugreport.cgi?bug=25753>
+
+This happens when python uses a libedit based readline module, which
+is the default on macOS.  This can be worked around by installing a
+GNU readline based module instead, for example, using setuptools
+
+    sudo easy_install gnureadline
+
+And then rename the system's readline so that it won't be loaded:
+
+    cd /Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/lib-dynload
+    mv readline.so readline.so.bak
+
+See <https://pypi.python.org/pypi/gnureadline> for more details on
+installation.
+
 *** Emacs startup on GNU/Linux systems (and possibly other systems) is slow.
 
 This can happen if the system is misconfigured and Emacs can't get the
