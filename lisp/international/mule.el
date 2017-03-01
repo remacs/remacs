@@ -1311,8 +1311,8 @@ Internal use only.")
                                     preferred))))))
          (completion-ignore-case t)
          (completion-pcm--delim-wild-regex ; Let "u8" complete to "utf-8".
-          (concat completion-pcm--delim-wild-regex
-                  "\\|\\([[:alpha:]]\\)[[:digit:]]"))
+          (concat "\\(?:" completion-pcm--delim-wild-regex
+                  "\\|\\([[:alpha:]]\\)[[:digit:]]\\)"))
          (cs (completing-read
               (format "Coding system for saving file (default %s): " default)
               combined-table
