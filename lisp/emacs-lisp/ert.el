@@ -2079,14 +2079,23 @@ and how to display message."
   '("ERT Results"
     ["Re-run all tests" ert-results-rerun-all-tests]
     "--"
-    ["Re-run test" ert-results-rerun-test-at-point]
-    ["Debug test" ert-results-rerun-test-at-point-debugging-errors]
-    ["Show test definition" ert-results-find-test-at-point-other-window]
+    ;; FIXME?  Why are there (at least) 3 different ways to decide if
+    ;; there is a test at point?
+    ["Re-run test" ert-results-rerun-test-at-point
+     :active (car (ert--results-test-at-point-allow-redefinition))]
+    ["Debug test" ert-results-rerun-test-at-point-debugging-errors
+     :active (car (ert--results-test-at-point-allow-redefinition))]
+    ["Show test definition" ert-results-find-test-at-point-other-window
+     :active (ert-test-at-point)]
     "--"
-    ["Show backtrace" ert-results-pop-to-backtrace-for-test-at-point]
-    ["Show messages" ert-results-pop-to-messages-for-test-at-point]
-    ["Show `should' forms" ert-results-pop-to-should-forms-for-test-at-point]
-    ["Describe test" ert-results-describe-test-at-point]
+    ["Show backtrace" ert-results-pop-to-backtrace-for-test-at-point
+     :active (ert--results-test-at-point-no-redefinition)]
+    ["Show messages" ert-results-pop-to-messages-for-test-at-point
+     :active (ert--results-test-at-point-no-redefinition)]
+    ["Show `should' forms" ert-results-pop-to-should-forms-for-test-at-point
+     :active (ert--results-test-at-point-no-redefinition)]
+    ["Describe test" ert-results-describe-test-at-point
+     :active (ert--results-test-at-point-no-redefinition)]
     "--"
     ["Delete test" ert-delete-test]
     "--"
@@ -2237,22 +2246,24 @@ To be used in the ERT results buffer."
         (and (ert-test-boundp sym)
              sym))))
 
-(defun ert--results-test-at-point-no-redefinition ()
+(defun ert--results-test-at-point-no-redefinition (&optional error)
   "Return the test at point, or nil.
-
+If optional argument ERROR is non-nil, signal an error rather than return nil.
 To be used in the ERT results buffer."
   (cl-assert (eql major-mode 'ert-results-mode))
-  (if (ert--results-test-node-or-null-at-point)
-      (let* ((node (ert--results-test-node-at-point))
-             (test (ert--ewoc-entry-test (ewoc-data node))))
-        test)
-    (let ((progress-bar-begin ert--results-progress-bar-button-begin))
-      (when (and (<= progress-bar-begin (point))
-                 (< (point) (button-end (button-at progress-bar-begin))))
-        (let* ((test-index (- (point) progress-bar-begin))
-               (test (aref (ert--stats-tests ert--results-stats)
+  (or
+   (if (ert--results-test-node-or-null-at-point)
+       (let* ((node (ert--results-test-node-at-point))
+              (test (ert--ewoc-entry-test (ewoc-data node))))
+         test)
+     (let ((progress-bar-begin ert--results-progress-bar-button-begin))
+       (when (and (<= progress-bar-begin (point))
+                  (< (point) (button-end (button-at progress-bar-begin))))
+         (let* ((test-index (- (point) progress-bar-begin))
+                (test (aref (ert--stats-tests ert--results-stats)
                            test-index)))
-          test)))))
+           test))))
+   (if error (user-error "No test at point"))))
 
 (defun ert--results-test-at-point-allow-redefinition ()
   "Look up the test at point, and check whether it has been redefined.
@@ -2377,7 +2388,7 @@ To be used in the ERT results buffer."
 
 To be used in the ERT results buffer."
   (interactive)
-  (let* ((test (ert--results-test-at-point-no-redefinition))
+  (let* ((test (ert--results-test-at-point-no-redefinition t))
          (stats ert--results-stats)
          (pos (ert--stats-test-pos stats test))
          (result (aref (ert--stats-test-results stats) pos)))
@@ -2406,7 +2417,7 @@ To be used in the ERT results buffer."
 
 To be used in the ERT results buffer."
   (interactive)
-  (let* ((test (ert--results-test-at-point-no-redefinition))
+  (let* ((test (ert--results-test-at-point-no-redefinition t))
          (stats ert--results-stats)
          (pos (ert--stats-test-pos stats test))
          (result (aref (ert--stats-test-results stats) pos)))
@@ -2427,7 +2438,7 @@ To be used in the ERT results buffer."
 
 To be used in the ERT results buffer."
   (interactive)
-  (let* ((test (ert--results-test-at-point-no-redefinition))
+  (let* ((test (ert--results-test-at-point-no-redefinition t))
          (stats ert--results-stats)
          (pos (ert--stats-test-pos stats test))
          (result (aref (ert--stats-test-results stats) pos)))
@@ -2554,7 +2565,7 @@ To be used in the ERT results buffer."
 
 To be used in the ERT results buffer."
   (interactive)
-  (ert-describe-test (ert--results-test-at-point-no-redefinition)))
+  (ert-describe-test (ert--results-test-at-point-no-redefinition t)))
 
 
 ;;; Actions on load/unload.
