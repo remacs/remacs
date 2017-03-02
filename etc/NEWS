@@ -902,6 +902,11 @@ interpreting consecutive runs of numerical characters as numbers, and
 compares their numerical values.  According to this predicate,
 "foo2.png" is smaller than "foo12.png".
 
+---
+** Numeric comparisons no longer return incorrect answers due to
+internal rounding errors.  For example, (< most-positive-fixnum (+ 1.0
+most-positive-fixnum)) now correctly returns t on 64-bit hosts.
+
 +++
 ** The new function 'char-from-name' converts a Unicode name string
 to the corresponding character code.

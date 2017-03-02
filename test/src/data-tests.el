@@ -29,6 +29,8 @@
   (should (= 1))
   (should (= 2 2))
   (should (= 9 9 9 9 9 9 9 9 9))
+  (should (= most-negative-fixnum (float most-negative-fixnum)))
+  (should-not (= most-positive-fixnum (+ 1.0 most-positive-fixnum)))
   (should-not (apply #'= '(3 8 3)))
   (should-error (= 9 9 'foo))
   ;; Short circuits before getting to bad arg
@@ -39,6 +41,7 @@
   (should (< 1))
   (should (< 2 3))
   (should (< -6 -1 0 2 3 4 8 9 999))
+  (should (< 0.5 most-positive-fixnum (+ 1.0 most-positive-fixnum)))
   (should-not (apply #'< '(3 8 3)))
   (should-error (< 9 10 'foo))
   ;; Short circuits before getting to bad arg
@@ -49,6 +52,7 @@
   (should (> 1))
   (should (> 3 2))
   (should (> 6 1 0 -2 -3 -4 -8 -9 -999))
+  (should (> (+ 1.0 most-positive-fixnum) most-positive-fixnum 0.5))
   (should-not (apply #'> '(3 8 3)))
   (should-error (> 9 8 'foo))
   ;; Short circuits before getting to bad arg
@@ -59,6 +63,7 @@
   (should (<= 1))
   (should (<= 2 3))
   (should (<= -6 -1 -1 0 0 0 2 3 4 8 999))
+  (should (<= 0.5 most-positive-fixnum (+ 1.0 most-positive-fixnum)))
   (should-not (apply #'<= '(3 8 3 3)))
   (should-error (<= 9 10 'foo))
   ;; Short circuits before getting to bad arg
@@ -69,6 +74,7 @@
   (should (>= 1))
   (should (>= 3 2))
   (should (>= 666 1 0 0 -2 -3 -3 -3 -4 -8 -8 -9 -999))
+  (should (>= (+ 1.0 most-positive-fixnum) most-positive-fixnum))
   (should-not (apply #'>= '(3 8 3)))
   (should-error (>= 9 8 'foo))
   ;; Short circuits before getting to bad arg

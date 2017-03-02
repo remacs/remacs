@@ -2392,68 +2392,90 @@ bool-vector.  IDX starts at 0.  */)
 /* Arithmetic functions */
 
 Lisp_Object
-arithcompare (Lisp_Object num1, Lisp_Object num2, enum Arith_Comparison comparison)
+arithcompare (Lisp_Object num1, Lisp_Object num2,
+	      enum Arith_Comparison comparison)
 {
-  double f1 = 0, f2 = 0;
-  bool floatp = 0;
+  double f1, f2;
+  EMACS_INT i1, i2;
+  bool fneq;
+  bool test;
 
   CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (num1);
   CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (num2);
 
-  if (FLOATP (num1) || FLOATP (num2))
+  /* If either arg is floating point, set F1 and F2 to the 'double'
+     approximations of the two arguments.  Regardless, set I1 and I2
+     to integers that break ties if the floating point comparison is
+     either not done or reports equality.  */
+
+  if (FLOATP (num1))
     {
-      floatp = 1;
-      f1 = (FLOATP (num1)) ? XFLOAT_DATA (num1) : XINT (num1);
-      f2 = (FLOATP (num2)) ? XFLOAT_DATA (num2) : XINT (num2);
+      f1 = XFLOAT_DATA (num1);
+      if (FLOATP (num2))
+	{
+	  i1 = i2 = 0;
+	  f2 = XFLOAT_DATA (num2);
+	}
+      else
+	i1 = f2 = i2 = XINT (num2);
+      fneq = f1 != f2;
+    }
+  else
+    {
+      i1 = XINT (num1);
+      if (FLOATP (num2))
+	{
+	  i2 = f1 = i1;
+	  f2 = XFLOAT_DATA (num2);
+	  fneq = f1 != f2;
+	}
+      else
+	{
+	  i2 = XINT (num2);
+	  fneq = false;
+	}
     }
 
   switch (comparison)
     {
     case ARITH_EQUAL:
-      if (floatp ? f1 == f2 : XINT (num1) == XINT (num2))
-	return Qt;
-      return Qnil;
+      test = !fneq && i1 == i2;
+      break;
 
     case ARITH_NOTEQUAL:
-      if (floatp ? f1 != f2 : XINT (num1) != XINT (num2))
-	return Qt;
-      return Qnil;
+      test = fneq || i1 != i2;
+      break;
 
     case ARITH_LESS:
-      if (floatp ? f1 < f2 : XINT (num1) < XINT (num2))
-	return Qt;
-      return Qnil;
+      test = fneq ? f1 < f2 : i1 < i2;
+      break;
 
     case ARITH_LESS_OR_EQUAL:
-      if (floatp ? f1 <= f2 : XINT (num1) <= XINT (num2))
-	return Qt;
-      return Qnil;
+      test = fneq ? f1 <= f2 : i1 <= i2;
+      break;
 
     case ARITH_GRTR:
-      if (floatp ? f1 > f2 : XINT (num1) > XINT (num2))
-	return Qt;
-      return Qnil;
+      test = fneq ? f1 > f2 : i1 > i2;
+      break;
 
     case ARITH_GRTR_OR_EQUAL:
-      if (floatp ? f1 >= f2 : XINT (num1) >= XINT (num2))
-	return Qt;
-      return Qnil;
+      test = fneq ? f1 >= f2 : i1 >= i2;
+      break;
 
     default:
-      emacs_abort ();
+      eassume (false);
     }
+
+  return test ? Qt : Qnil;
 }
 
 static Lisp_Object
 arithcompare_driver (ptrdiff_t nargs, Lisp_Object *args,
                      enum Arith_Comparison comparison)
 {
-  ptrdiff_t argnum;
-  for (argnum = 1; argnum < nargs; ++argnum)
-    {
-      if (EQ (Qnil, arithcompare (args[argnum - 1], args[argnum], comparison)))
-        return Qnil;
-    }
+  for (ptrdiff_t i = 1; i < nargs; i++)
+    if (NILP (arithcompare (args[i - 1], args[i], comparison)))
+      return Qnil;
   return Qt;
 }
 
