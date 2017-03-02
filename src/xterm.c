@@ -8551,8 +8551,10 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 #endif
       if (f)
         {
-
-          x_net_wm_state (f, configureEvent.xconfigure.window);
+	  /* Don't call x_net_wm_state for the scroll bar window.
+	     (Bug#24963, Bug#25887)  */
+	  if (configureEvent.xconfigure.window == FRAME_X_WINDOW (f))
+	    x_net_wm_state (f, configureEvent.xconfigure.window);
 
 #ifdef USE_X_TOOLKIT
           /* Tip frames are pure X window, set size for them.  */
