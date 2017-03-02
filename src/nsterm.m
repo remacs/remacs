@@ -3107,10 +3107,19 @@ ns_draw_text_decoration (struct glyph_string *s, struct face *face,
   if (face->strike_through_p)
     {
       NSRect r;
+      /* Y-coordinate and height of the glyph string's first glyph.
+	 We cannot use s->y and s->height because those could be
+	 larger if there are taller display elements (e.g., characters
+	 displayed with a larger font) in the same glyph row.  */
+      int glyph_y = s->ybase - s->first_glyph->ascent;
+      int glyph_height = s->first_glyph->ascent + s->first_glyph->descent;
+      /* Strike-through width and offset from the glyph string's
+	 top edge.  */
+      unsigned long h = 1;
       unsigned long dy;
 
-      dy = lrint ((s->height - 1) / 2);
-      r = NSMakeRect (x, s->y + dy, width, 1);
+      dy = lrint ((glyph_height - h) / 2);
+      r = NSMakeRect (x, glyph_y + dy, width, 1);
 
       if (face->strike_through_color_defaulted_p)
         [defaultCol set];

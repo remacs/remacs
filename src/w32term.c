@@ -2500,18 +2500,27 @@ x_draw_glyph_string (struct glyph_string *s)
       if (s->face->strike_through_p
           && !FONT_TEXTMETRIC (s->font).tmStruckOut)
         {
+	  /* Y-coordinate and height of the glyph string's first
+	     glyph.  We cannot use s->y and s->height because those
+	     could be larger if there are taller display elements
+	     (e.g., characters displayed with a larger font) in the
+	     same glyph row.  */
+	  int glyph_y = s->ybase - s->first_glyph->ascent;
+	  int glyph_height = s->first_glyph->ascent + s->first_glyph->descent;
+	  /* Strike-through width and offset from the glyph string's
+	     top edge.  */
           unsigned long h = 1;
-          unsigned long dy = (s->height - h) / 2;
+          unsigned long dy = (glyph_height - h) / 2;
 
           if (s->face->strike_through_color_defaulted_p)
             {
-              w32_fill_area (s->f, s->hdc, s->gc->foreground, s->x, s->y + dy,
-                             s->width, h);
+              w32_fill_area (s->f, s->hdc, s->gc->foreground, s->x,
+			     glyph_y + dy, s->width, h);
             }
           else
             {
               w32_fill_area (s->f, s->hdc, s->face->strike_through_color, s->x,
-                             s->y + dy, s->width, h);
+                             glyph_y + dy, s->width, h);
             }
         }
 

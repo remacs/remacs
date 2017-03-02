@@ -3708,18 +3708,27 @@ x_draw_glyph_string (struct glyph_string *s)
       /* Draw strike-through.  */
       if (s->face->strike_through_p)
 	{
-	  unsigned long h = 1;
-	  unsigned long dy = (s->height - h) / 2;
+	  /* Y-coordinate and height of the glyph string's first
+	     glyph.  We cannot use s->y and s->height because those
+	     could be larger if there are taller display elements
+	     (e.g., characters displayed with a larger font) in the
+	     same glyph row.  */
+	  int glyph_y = s->ybase - s->first_glyph->ascent;
+	  int glyph_height = s->first_glyph->ascent + s->first_glyph->descent;
+	  /* Strike-through width and offset from the glyph string's
+	     top edge.  */
+          unsigned long h = 1;
+          unsigned long dy = (glyph_height - h) / 2;
 
 	  if (s->face->strike_through_color_defaulted_p)
-	    x_fill_rectangle (s->f, s->gc, s->x, s->y + dy,
+	    x_fill_rectangle (s->f, s->gc, s->x, glyph_y + dy,
 			    s->width, h);
 	  else
 	    {
 	      XGCValues xgcv;
 	      XGetGCValues (s->display, s->gc, GCForeground, &xgcv);
 	      XSetForeground (s->display, s->gc, s->face->strike_through_color);
-	      x_fill_rectangle (s->f, s->gc, s->x, s->y + dy,
+	      x_fill_rectangle (s->f, s->gc, s->x, glyph_y + dy,
 			      s->width, h);
 	      XSetForeground (s->display, s->gc, xgcv.foreground);
 	    }
