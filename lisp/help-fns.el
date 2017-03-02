@@ -391,12 +391,12 @@ suitable file is found, return nil."
               ;; If lots of ordinary text characters run this command,
               ;; don't mention them one by one.
               (if (< (length non-modified-keys) 10)
-                  (princ (mapconcat 'key-description keys ", "))
+                  (princ (mapconcat #'key-description keys ", "))
                 (dolist (key non-modified-keys)
                   (setq keys (delq key keys)))
                 (if keys
                     (progn
-                      (princ (mapconcat 'key-description keys ", "))
+                      (princ (mapconcat #'key-description keys ", "))
                       (princ ", and many ordinary text characters"))
                   (princ "many ordinary text characters"))))
             (when (or remapped keys non-modified-keys)
@@ -842,15 +842,22 @@ it is displayed along with the global value."
 		(let ((line-beg (line-beginning-position))
 		      (print-rep
 		       (let ((rep
-			      (let ((print-quoted t))
-				(prin1-to-string val))))
+			      (let ((print-quoted t)
+                                    (print-circle t))
+				(cl-prin1-to-string val))))
 			 (if (and (symbolp val) (not (booleanp val)))
 			     (format-message "`%s'" rep)
 			   rep))))
 		  (if (< (+ (length print-rep) (point) (- line-beg)) 68)
 		      (insert " " print-rep)
 		    (terpri)
-		    (pp val)
+                    (let ((buf (current-buffer)))
+                      (with-temp-buffer
+                        (insert print-rep)
+                        (pp-buffer)
+                        (let ((pp-buffer (current-buffer)))
+                          (with-current-buffer buf
+                            (insert-buffer-substring pp-buffer)))))
                     ;; Remove trailing newline.
                     (and (= (char-before) ?\n) (delete-char -1)))
 		  (let* ((sv (get variable 'standard-value))
