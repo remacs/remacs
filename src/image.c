@@ -3110,8 +3110,8 @@ xbm_load (struct frame *f, struct image *img)
             int nbytes, i;
             /* Windows mono bitmaps are reversed compared with X.  */
             invertedBits = bits;
-            nbytes = (img->width + CHAR_BIT - 1) / CHAR_BIT;
-            SAFE_NALLOCA (bits, nbytes, img->height);
+            nbytes = (img->width + CHAR_BIT - 1) / CHAR_BIT * img->height;
+            SAFE_NALLOCA (bits, 1, nbytes);
             for (i = 0; i < nbytes; i++)
               bits[i] = XBM_BIT_SHUFFLE (invertedBits[i]);
           }
@@ -4017,10 +4017,9 @@ xpm_make_color_table_h (void (**put_func) (Lisp_Object, const char *, int,
 {
   *put_func = xpm_put_color_table_h;
   *get_func = xpm_get_color_table_h;
-  return make_hash_table (hashtest_equal, make_number (DEFAULT_HASH_SIZE),
-			  make_float (DEFAULT_REHASH_SIZE),
-			  make_float (DEFAULT_REHASH_THRESHOLD),
-			  Qnil, Qnil);
+  return make_hash_table (hashtest_equal, DEFAULT_HASH_SIZE,
+			  DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
+			  Qnil, false);
 }
 
 static void
@@ -5465,7 +5464,17 @@ pbm_load (struct frame *f, struct image *img)
 		c <<= 1;
 	      }
 	    else
-	      g = pbm_scan_number (&p, end);
+	      {
+		int c = 0;
+		/* Skip white-space and comments.  */
+		while ((c = pbm_next_char (&p, end)) != -1 && c_isspace (c))
+		  ;
+
+		if (c == '0' || c == '1')
+		  g = c - '0';
+		else
+		  g = 0;
+	      }
 
 #ifdef USE_CAIRO
             *dataptr++ = g ? fga32 : bga32;

@@ -1,4 +1,4 @@
-;;; elint.el --- Lint Emacs Lisp
+;;; elint.el --- Lint Emacs Lisp -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1997, 2001-2017 Free Software Foundation, Inc.
 
@@ -27,7 +27,7 @@
 ;; misspellings and undefined variables, although it can also catch
 ;; function calls with the wrong number of arguments.
 
-;; To use, call elint-current-buffer or elint-defun to lint a buffer
+;; To use, call `elint-current-buffer' or `elint-defun' to lint a buffer
 ;; or defun.  The first call runs `elint-initialize' to set up some
 ;; argument data, which may take a while.
 
@@ -153,6 +153,9 @@ Set by `elint-initialize', if `elint-scan-preloaded' is non-nil.")
 		"cp51932"))
   "Regexp matching elements of `preloaded-file-list' to ignore.
 We ignore them because they contain no definitions of use to Elint.")
+
+(defvar elint-running)
+(defvar elint-current-pos)	 ; dynamically bound in elint-top-form
 
 ;;;
 ;;; ADT: top-form
@@ -372,7 +375,7 @@ Returns the forms."
 	(let ((elint-current-pos (point)))
 	  ;; non-list check could be here too. errors may be out of seq.
 	  ;; quoted check cannot be elsewhere, since quotes skipped.
-	  (if (looking-back "'" (1- (point)))
+	  (if (= (preceding-char) ?\')
 	      ;; Eg cust-print.el uses ' as a comment syntax.
 	      (elint-warning "Skipping quoted form `%c%.20s...'" ?\'
 			   (read (current-buffer)))
@@ -862,7 +865,7 @@ CODE can be a lambda expression, a macro, or byte-compiled code."
      (t (elint-error "Not a function object: %s" form)
 	env))))
 
-(defun elint-check-quote-form (form env)
+(defun elint-check-quote-form (_form env)
   "Lint the quote FORM in ENV."
   env)
 
@@ -903,8 +906,7 @@ CODE can be a lambda expression, a macro, or byte-compiled code."
   "Check the when/unless/and/or FORM in ENV.
 Does basic handling of `featurep' tests."
   (let ((func (car form))
-	(test (cadr form))
-	sym)
+	(test (cadr form)))
     ;; Misses things like (and t (featurep 'xemacs))
     ;; Check byte-compile-maybe-guarded.
     (cond ((and (memq func '(when and))
@@ -966,8 +968,6 @@ Does basic handling of `featurep' tests."
 ;;;
 ;;; Message functions
 ;;;
-
-(defvar elint-current-pos)	 ; dynamically bound in elint-top-form
 
 (defun elint-log (type string args)
   (elint-log-message (format "%s:%d:%s: %s"
@@ -1037,8 +1037,6 @@ Insert HEADER followed by a blank line if non-nil."
   (let ((pop-up-windows t))
     (display-buffer (elint-get-log-buffer))
     (sit-for 0)))
-
-(defvar elint-running)
 
 (defun elint-set-mode-line (&optional on)
   "Set the mode-line-process of the Elint log buffer."

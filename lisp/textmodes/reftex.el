@@ -352,7 +352,7 @@ If the symbols for the current master file do not exist, they are created."
 	 ((save-excursion
             (goto-char (point-min))
             (re-search-forward
-             "^[[:space:]]*\\\\documentclass\\[\\([[:word:].]+\\)\\]{subfiles}"
+             "^[[:space:]]*\\\\documentclass\\[\\([^]]+\\)\\]{subfiles}"
              nil t))
           (match-string-no-properties 1))
          ;; AUCTeX is loaded.  Use its mechanism.

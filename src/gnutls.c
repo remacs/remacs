@@ -142,7 +142,7 @@ DEF_DLL_FN (int, gnutls_x509_crt_get_dn,
 	    (gnutls_x509_crt_t, char *, size_t *));
 DEF_DLL_FN (int, gnutls_x509_crt_get_pk_algorithm,
 	    (gnutls_x509_crt_t, unsigned int *));
-DEF_DLL_FN (const char*, gnutls_pk_algorithm_get_name,
+DEF_DLL_FN (const char *, gnutls_pk_algorithm_get_name,
 	    (gnutls_pk_algorithm_t));
 DEF_DLL_FN (int, gnutls_pk_bits_to_sec_param,
 	    (gnutls_pk_algorithm_t, unsigned int));
@@ -154,22 +154,22 @@ DEF_DLL_FN (int, gnutls_x509_crt_get_signature_algorithm,
 	    (gnutls_x509_crt_t));
 DEF_DLL_FN (int, gnutls_x509_crt_get_key_id,
 	    (gnutls_x509_crt_t, unsigned int, unsigned char *, size_t *_size));
-DEF_DLL_FN (const char*, gnutls_sec_param_get_name, (gnutls_sec_param_t));
-DEF_DLL_FN (const char*, gnutls_sign_get_name, (gnutls_sign_algorithm_t));
+DEF_DLL_FN (const char *, gnutls_sec_param_get_name, (gnutls_sec_param_t));
+DEF_DLL_FN (const char *, gnutls_sign_get_name, (gnutls_sign_algorithm_t));
 DEF_DLL_FN (int, gnutls_server_name_set,
 	    (gnutls_session_t, gnutls_server_name_type_t,
 	     const void *, size_t));
 DEF_DLL_FN (gnutls_kx_algorithm_t, gnutls_kx_get, (gnutls_session_t));
-DEF_DLL_FN (const char*, gnutls_kx_get_name, (gnutls_kx_algorithm_t));
+DEF_DLL_FN (const char *, gnutls_kx_get_name, (gnutls_kx_algorithm_t));
 DEF_DLL_FN (gnutls_protocol_t, gnutls_protocol_get_version,
 	    (gnutls_session_t));
-DEF_DLL_FN (const char*, gnutls_protocol_get_name, (gnutls_protocol_t));
+DEF_DLL_FN (const char *, gnutls_protocol_get_name, (gnutls_protocol_t));
 DEF_DLL_FN (gnutls_cipher_algorithm_t, gnutls_cipher_get,
 	    (gnutls_session_t));
-DEF_DLL_FN (const char*, gnutls_cipher_get_name,
+DEF_DLL_FN (const char *, gnutls_cipher_get_name,
 	    (gnutls_cipher_algorithm_t));
 DEF_DLL_FN (gnutls_mac_algorithm_t, gnutls_mac_get, (gnutls_session_t));
-DEF_DLL_FN (const char*, gnutls_mac_get_name, (gnutls_mac_algorithm_t));
+DEF_DLL_FN (const char *, gnutls_mac_get_name, (gnutls_mac_algorithm_t));
 
 
 static bool

@@ -2875,6 +2875,14 @@ See Info node `(elisp)Security Considerations'."
        (replace-regexp-in-string "[^-0-9a-zA-Z_./\n]" "\\\\\\&" argument))))
    ))
 
+(defsubst string-to-list (string)
+  "Return a list of characters in STRING."
+  (append string nil))
+
+(defsubst string-to-vector (string)
+  "Return a vector of characters in STRING."
+  (vconcat string))
+
 (defun string-or-null-p (object)
   "Return t if OBJECT is a string or nil.
 Otherwise, return nil."

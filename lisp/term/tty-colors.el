@@ -824,6 +824,15 @@ A canonicalized color name is all-lower case, with any blanks removed."
 	(replace-regexp-in-string " +" "" (downcase color))
       color)))
 
+(defun tty-color-24bit (rgb)
+  "Return pixel value on 24-bit terminals. Return nil if RGB is
+nil or not on 24-bit terminal."
+  (when (and rgb (= (display-color-cells) 16777216))
+    (let ((r (lsh (car rgb) -8))
+	  (g (lsh (cadr rgb) -8))
+	  (b (lsh (nth 2 rgb) -8)))
+      (logior (lsh r 16) (lsh g 8) b))))
+
 (defun tty-color-define (name index &optional rgb frame)
   "Specify a tty color by its NAME, terminal INDEX and RGB values.
 NAME is a string, INDEX is typically a small integer used to send to
@@ -840,7 +849,10 @@ If FRAME is not specified or is nil, it defaults to the selected frame."
 	  (and rgb (or (not (listp rgb)) (/= (length rgb) 3))))
       (error "Invalid specification for tty color \"%s\"" name))
   (tty-modify-color-alist
-   (append (list (tty-color-canonicalize name) index) rgb) frame))
+   (append (list (tty-color-canonicalize name)
+		 (or (tty-color-24bit rgb) index))
+	   rgb)
+   frame))
 
 (defun tty-color-clear (&optional _frame)
   "Clear the list of supported tty colors for frame FRAME.
@@ -1013,7 +1025,10 @@ might need to be approximated if it is not supported directly."
        (let ((color (tty-color-canonicalize color)))
 	  (or (assoc color (tty-color-alist frame))
 	      (let ((rgb (tty-color-standard-values color)))
-		(and rgb (tty-color-approximate rgb frame)))))))
+		(and rgb
+		     (let ((pixel (tty-color-24bit rgb)))
+		       (or (and pixel (cons color (cons pixel rgb)))
+			   (tty-color-approximate rgb frame)))))))))
 
 (defun tty-color-gray-shades (&optional display)
   "Return the number of gray colors supported by DISPLAY's terminal.

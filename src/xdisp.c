@@ -5557,9 +5557,14 @@ next_overlay_string (struct it *it)
 
       /* Since we've exhausted overlay strings at this buffer
 	 position, set the flag to ignore overlays until we move to
-	 another position.  The flag is reset in
-	 next_element_from_buffer.  */
-      it->ignore_overlay_strings_at_pos_p = true;
+	 another position.  (The flag will be reset in
+	 next_element_from_buffer.)  But don't do that if the overlay
+	 strings were loaded at position other than the current one,
+	 which could happen if we called pop_it above, or if the
+	 overlay strings were loaded by handle_invisible_prop at the
+	 beginning of invisible text.  */
+      if (it->overlay_strings_charpos == IT_CHARPOS (*it))
+	it->ignore_overlay_strings_at_pos_p = true;
 
       /* If we're at the end of the buffer, record that we have
 	 processed the overlay strings there already, so that
@@ -9859,6 +9864,32 @@ move_it_by_lines (struct it *it, ptrdiff_t dvpos)
     }
 }
 
+int
+partial_line_height (struct it *it_origin)
+{
+  int partial_height;
+  void *it_data = NULL;
+  struct it it;
+  SAVE_IT (it, *it_origin, it_data);
+  move_it_to (&it, ZV, -1, it.last_visible_y, -1,
+              MOVE_TO_POS | MOVE_TO_Y);
+  if (it.what == IT_EOB)
+    {
+      int vis_height = it.last_visible_y - it.current_y;
+      int height = it.ascent + it.descent;
+      partial_height = (vis_height < height) ? vis_height : 0;
+    }
+  else
+    {
+      int last_line_y = it.current_y;
+      move_it_by_lines (&it, 1);
+      partial_height = (it.current_y > it.last_visible_y)
+        ? it.last_visible_y - last_line_y : 0;
+    }
+  RESTORE_IT (&it, &it, it_data);
+  return partial_height;
+}
+
 /* Return true if IT points into the middle of a display vector.  */
 
 bool
@@ -13310,7 +13341,7 @@ overlay_arrow_in_current_buffer_p (void)
    has changed.  */
 
 static bool
-overlay_arrows_changed_p (void)
+overlay_arrows_changed_p (bool set_redisplay)
 {
   Lisp_Object vlist;
 
@@ -13327,10 +13358,22 @@ overlay_arrows_changed_p (void)
       if (!MARKERP (val))
 	continue;
       if (! EQ (COERCE_MARKER (val),
+                /* FIXME: Don't we have a problem, using such a global
+                 * "last-position" if the variable is buffer-local?  */
 		Fget (var, Qlast_arrow_position))
 	  || ! (pstr = overlay_arrow_string_or_property (var),
 		EQ (pstr, Fget (var, Qlast_arrow_string))))
-	return true;
+	{
+	  struct buffer *buf = XMARKER (val)->buffer;
+
+	  if (set_redisplay)
+            {
+              if (buf)
+	        bset_redisplay (buf);
+            }
+	  else
+	    return true;
+	}
     }
   return false;
 }
@@ -13755,10 +13798,9 @@ redisplay_internal (void)
 
   /* If specs for an arrow have changed, do thorough redisplay
      to ensure we remove any arrow that should no longer exist.  */
-  if (overlay_arrows_changed_p ())
-    /* Apparently, this is the only case where we update other windows,
-       without updating other mode-lines.  */
-    windows_or_buffers_changed = 49;
+  /* Apparently, this is the only case where we update other windows,
+     without updating other mode-lines.  */
+  overlay_arrows_changed_p (true);
 
   consider_all_windows_p = (update_mode_lines
 			    || windows_or_buffers_changed);
@@ -15316,7 +15358,6 @@ try_scrolling (Lisp_Object window, bool just_this_one_p,
 	       bool temp_scroll_step, bool last_line_misfit)
 {
   struct window *w = XWINDOW (window);
-  struct frame *f = XFRAME (w->frame);
   struct text_pos pos, startp;
   struct it it;
   int this_scroll_margin, scroll_max, rc, height;
@@ -15327,8 +15368,6 @@ try_scrolling (Lisp_Object window, bool just_this_one_p,
   /* We will never try scrolling more than this number of lines.  */
   int scroll_limit = SCROLL_LIMIT;
   int frame_line_height = default_line_pixel_height (w);
-  int window_total_lines
-    = WINDOW_TOTAL_LINES (w) * FRAME_LINE_HEIGHT (f) / frame_line_height;
 
 #ifdef GLYPH_DEBUG
   debug_method_add (w, "try_scrolling");
@@ -15336,13 +15375,7 @@ try_scrolling (Lisp_Object window, bool just_this_one_p,
 
   SET_TEXT_POS_FROM_MARKER (startp, w->start);
 
-  /* Compute scroll margin height in pixels.  We scroll when point is
-     within this distance from the top or bottom of the window.  */
-  if (scroll_margin > 0)
-    this_scroll_margin = min (scroll_margin, window_total_lines / 4)
-      * frame_line_height;
-  else
-    this_scroll_margin = 0;
+  this_scroll_margin = window_scroll_margin (w, MARGIN_IN_PIXELS);
 
   /* Force arg_scroll_conservatively to have a reasonable value, to
      avoid scrolling too far away with slow move_it_* functions.  Note
@@ -15377,7 +15410,8 @@ try_scrolling (Lisp_Object window, bool just_this_one_p,
       /* Compute the pixel ypos of the scroll margin, then move IT to
 	 either that ypos or PT, whichever comes first.  */
       start_display (&it, w, startp);
-      scroll_margin_y = it.last_visible_y - this_scroll_margin
+      scroll_margin_y = it.last_visible_y - partial_line_height (&it)
+        - this_scroll_margin
 	- frame_line_height * extra_scroll_margin_lines;
       move_it_to (&it, PT, -1, scroll_margin_y - 1, -1,
 		  (MOVE_TO_POS | MOVE_TO_Y));
@@ -15816,23 +15850,12 @@ try_cursor_movement (Lisp_Object window, struct text_pos startp,
     {
       int this_scroll_margin, top_scroll_margin;
       struct glyph_row *row = NULL;
-      int frame_line_height = default_line_pixel_height (w);
-      int window_total_lines
-	= WINDOW_TOTAL_LINES (w) * FRAME_LINE_HEIGHT (f) / frame_line_height;
 
 #ifdef GLYPH_DEBUG
       debug_method_add (w, "cursor movement");
 #endif
 
-      /* Scroll if point within this distance from the top or bottom
-	 of the window.  This is a pixel value.  */
-      if (scroll_margin > 0)
-	{
-	  this_scroll_margin = min (scroll_margin, window_total_lines / 4);
-	  this_scroll_margin *= frame_line_height;
-	}
-      else
-	this_scroll_margin = 0;
+      this_scroll_margin = window_scroll_margin (w, MARGIN_IN_PIXELS);
 
       top_scroll_margin = this_scroll_margin;
       if (WINDOW_WANTS_HEADER_LINE_P (w))
@@ -16280,7 +16303,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
   int centering_position = -1;
   bool last_line_misfit = false;
   ptrdiff_t beg_unchanged, end_unchanged;
-  int frame_line_height;
+  int frame_line_height, margin;
   bool use_desired_matrix;
   void *itdata = NULL;
 
@@ -16310,6 +16333,8 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
  restart:
   reconsider_clip_changes (w);
   frame_line_height = default_line_pixel_height (w);
+  margin = window_scroll_margin (w, MARGIN_IN_LINES);
+
 
   /* Has the mode line to be updated?  */
   update_mode_line = (w->update_mode_line
@@ -16614,10 +16639,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	  /* Some people insist on not letting point enter the scroll
 	     margin, even though this part handles windows that didn't
 	     scroll at all.  */
-	  int window_total_lines
-	    = WINDOW_TOTAL_LINES (w) * FRAME_LINE_HEIGHT (f) / frame_line_height;
-	  int margin = min (scroll_margin, window_total_lines / 4);
-	  int pixel_margin = margin * frame_line_height;
+          int pixel_margin = margin * frame_line_height;
 	  bool header_line = WINDOW_WANTS_HEADER_LINE_P (w);
 
 	  /* Note: We add an extra FRAME_LINE_HEIGHT, because the loop
@@ -16901,12 +16923,6 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
   it.current_y = it.last_visible_y;
   if (centering_position < 0)
     {
-      int window_total_lines
-	= WINDOW_TOTAL_LINES (w) * FRAME_LINE_HEIGHT (f) / frame_line_height;
-      int margin
-	= scroll_margin > 0
-	? min (scroll_margin, window_total_lines / 4)
-	: 0;
       ptrdiff_t margin_pos = CHARPOS (startp);
       Lisp_Object aggressive;
       bool scrolling_up;
@@ -17150,10 +17166,6 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	{
 	  int window_total_lines
 	    = WINDOW_TOTAL_LINES (w) * FRAME_LINE_HEIGHT (f) / frame_line_height;
-	  int margin =
-	    scroll_margin > 0
-	    ? min (scroll_margin, window_total_lines / 4)
-	    : 0;
 	  bool move_down = w->cursor.vpos >= window_total_lines / 2;
 
 	  move_it_by_lines (&it, move_down ? margin + 1 : -(margin + 1));
@@ -17359,7 +17371,6 @@ try_window (Lisp_Object window, struct text_pos pos, int flags)
   struct it it;
   struct glyph_row *last_text_row = NULL;
   struct frame *f = XFRAME (w->frame);
-  int frame_line_height = default_line_pixel_height (w);
 
   /* Make POS the new window start.  */
   set_marker_both (w->start, Qnil, CHARPOS (pos), BYTEPOS (pos));
@@ -17381,31 +17392,27 @@ try_window (Lisp_Object window, struct text_pos pos, int flags)
 	return 0;
     }
 
+  /* Save the character position of 'it' before we call
+     'start_display' again.  */
+  ptrdiff_t it_charpos = IT_CHARPOS (it);
+
   /* Don't let the cursor end in the scroll margins.  */
   if ((flags & TRY_WINDOW_CHECK_MARGINS)
       && !MINI_WINDOW_P (w))
     {
-      int this_scroll_margin;
-      int window_total_lines
-	= WINDOW_TOTAL_LINES (w) * FRAME_LINE_HEIGHT (f) / frame_line_height;
-
-      if (scroll_margin > 0)
-	{
-	  this_scroll_margin = min (scroll_margin, window_total_lines / 4);
-	  this_scroll_margin *= frame_line_height;
-	}
-      else
-	this_scroll_margin = 0;
+      int this_scroll_margin = window_scroll_margin (w, MARGIN_IN_PIXELS);
+      start_display (&it, w, pos);
 
       if ((w->cursor.y >= 0	/* not vscrolled */
 	   && w->cursor.y < this_scroll_margin
 	   && CHARPOS (pos) > BEGV
-	   && IT_CHARPOS (it) < ZV)
+           && it_charpos < ZV)
 	  /* rms: considering make_cursor_line_fully_visible_p here
 	     seems to give wrong results.  We don't want to recenter
 	     when the last line is partly visible, we want to allow
 	     that case to be handled in the usual way.  */
-	  || w->cursor.y > it.last_visible_y - this_scroll_margin - 1)
+          || w->cursor.y > (it.last_visible_y - partial_line_height (&it)
+                            - this_scroll_margin - 1))
 	{
 	  w->cursor.vpos = -1;
 	  clear_glyph_matrix (w->desired_matrix);
@@ -17414,7 +17421,7 @@ try_window (Lisp_Object window, struct text_pos pos, int flags)
     }
 
   /* If bottom moved off end of frame, change mode line percentage.  */
-  if (w->window_end_pos <= 0 && Z != IT_CHARPOS (it))
+  if (w->window_end_pos <= 0 && Z != it_charpos)
     w->update_mode_line = true;
 
   /* Set window_end_pos to the offset of the last character displayed
@@ -18297,7 +18304,7 @@ try_window_id (struct window *w)
 
   /* Can't use this if overlay arrow position and/or string have
      changed.  */
-  if (overlay_arrows_changed_p ())
+  if (overlay_arrows_changed_p (false))
     GIVE_UP (12);
 
   /* When word-wrap is on, adding a space to the first word of a
@@ -18679,15 +18686,8 @@ try_window_id (struct window *w)
 
   /* Don't let the cursor end in the scroll margins.  */
   {
-    int this_scroll_margin, cursor_height;
-    int frame_line_height = default_line_pixel_height (w);
-    int window_total_lines
-      = WINDOW_TOTAL_LINES (w) * FRAME_LINE_HEIGHT (it.f) / frame_line_height;
-
-    this_scroll_margin =
-      max (0, min (scroll_margin, window_total_lines / 4));
-    this_scroll_margin *= frame_line_height;
-    cursor_height = MATRIX_ROW (w->desired_matrix, w->cursor.vpos)->height;
+    int this_scroll_margin = window_scroll_margin (w, MARGIN_IN_PIXELS);
+    int cursor_height = MATRIX_ROW (w->desired_matrix, w->cursor.vpos)->height;
 
     if ((w->cursor.y < this_scroll_margin
 	 && CHARPOS (start) > BEGV)
@@ -18994,7 +18994,7 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 	       glyph->pixel_width,
 	       glyph->u.ch,
 	       (glyph->u.ch < 0x80 && glyph->u.ch >= ' '
-		? glyph->u.ch
+		? (int) glyph->u.ch
 		: '.'),
 	       glyph->face_id,
 	       glyph->left_box_line_p,
@@ -19015,7 +19015,7 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 		      ? '0'
 		      : '-'))),
 	       glyph->pixel_width,
-	       0,
+	       0u,
 	       ' ',
 	       glyph->face_id,
 	       glyph->left_box_line_p,
@@ -19036,7 +19036,7 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 		      ? '0'
 		      : '-'))),
 	       glyph->pixel_width,
-	       glyph->u.img_id,
+	       (unsigned int) glyph->u.img_id,
 	       '.',
 	       glyph->face_id,
 	       glyph->left_box_line_p,
@@ -19057,7 +19057,7 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 		      ? '0'
 		      : '-'))),
 	       glyph->pixel_width,
-	       glyph->u.cmp.id);
+	       (unsigned int) glyph->u.cmp.id);
       if (glyph->u.cmp.automatic)
 	fprintf (stderr,
 		 "[%d-%d]",
@@ -20745,6 +20745,12 @@ display_line (struct it *it)
 	    }
 
 	  it->continuation_lines_width = 0;
+	  /* Reset those iterator values set from display property
+	     values.  This is for the case when the display property
+	     ends at ZV, and is not a replacing property, so pop_it is
+	     not called.  */
+	  it->font_height = Qnil;
+	  it->voffset = 0;
 	  row->ends_at_zv_p = true;
 	  /* A row that displays right-to-left text must always have
 	     its last face extended all the way to the end of line,
@@ -20931,6 +20937,8 @@ display_line (struct it *it)
 				{
 				  row->exact_window_width_line_p = true;
 				  it->continuation_lines_width = 0;
+				  it->font_height = Qnil;
+				  it->voffset = 0;
 				  row->continued_p = false;
 				  row->ends_at_zv_p = true;
 				}
@@ -21017,7 +21025,10 @@ display_line (struct it *it)
 			 up to the right margin of the window.  */
 		      extend_face_to_end_of_line (it);
 		    }
-		  else if (it->c == '\t' && FRAME_WINDOW_P (it->f))
+		  else if ((it->what == IT_CHARACTER
+			    || it->what == IT_STRETCH
+			    || it->what == IT_COMPOSITION)
+			   && it->c == '\t' && FRAME_WINDOW_P (it->f))
 		    {
 		      /* A TAB that extends past the right edge of the
 			 window.  This produces a single glyph on
@@ -21245,6 +21256,8 @@ display_line (struct it *it)
 	      if (!get_next_display_element (it))
 		{
 		  it->continuation_lines_width = 0;
+		  it->font_height = Qnil;
+		  it->voffset = 0;
 		  row->ends_at_zv_p = true;
 		  row->exact_window_width_line_p = true;
 		  break;
@@ -23055,30 +23068,19 @@ display_mode_element (struct it *it, int depth, int field_width, int precision,
 	    goto tail_recurse;
 	  }
 	else if (STRINGP (car) || CONSP (car))
-	  {
-	    Lisp_Object halftail = elt;
-	    int len = 0;
-
-	    while (CONSP (elt)
-		   && (precision <= 0 || n < precision))
-	      {
-		n += display_mode_element (it, depth,
-					   /* Do padding only after the last
-					      element in the list.  */
-					   (! CONSP (XCDR (elt))
-					    ? field_width - n
-					    : 0),
-					   precision - n, XCAR (elt),
-					   props, risky);
-		elt = XCDR (elt);
-		len++;
-		if ((len & 1) == 0)
-		  halftail = XCDR (halftail);
-		/* Check for cycle.  */
-		if (EQ (halftail, elt))
-		  break;
-	      }
-	  }
+	  FOR_EACH_TAIL_SAFE (elt)
+	    {
+	      if (0 < precision && precision <= n)
+		break;
+	      n += display_mode_element (it, depth,
+					 /* Pad after only the last
+					    list element.  */
+					 (! CONSP (XCDR (elt))
+					  ? field_width - n
+					  : 0),
+					 precision - n, XCAR (elt),
+					 props, risky);
+	    }
       }
       break;
 
@@ -24642,7 +24644,7 @@ dump_glyph_string (struct glyph_string *s)
   fprintf (stderr, "  x, y, w, h = %d, %d, %d, %d\n",
 	   s->x, s->y, s->width, s->height);
   fprintf (stderr, "  ybase = %d\n", s->ybase);
-  fprintf (stderr, "  hl = %d\n", s->hl);
+  fprintf (stderr, "  hl = %u\n", s->hl);
   fprintf (stderr, "  left overhang = %d, right = %d\n",
 	   s->left_overhang, s->right_overhang);
   fprintf (stderr, "  nchars = %d\n", s->nchars);
@@ -31561,6 +31563,14 @@ A value of zero means always recenter point if it moves off screen.  */);
 Recenter the window whenever point gets within this many lines
 of the top or bottom of the window.  */);
   scroll_margin = 0;
+
+  DEFVAR_LISP ("maximum-scroll-margin", Vmaximum_scroll_margin,
+    doc: /* Maximum effective value of `scroll-margin'.
+Given as a fraction of the current window's lines.  The value should
+be a floating point number between 0.0 and 0.5.  The effective maximum
+is limited to (/ (1- window-lines) 2).  Non-float values for this
+variable are ignored and the default 0.25 is used instead.  */);
+  Vmaximum_scroll_margin = make_float (0.25);
 
   DEFVAR_LISP ("display-pixels-per-inch",  Vdisplay_pixels_per_inch,
     doc: /* Pixels per inch value for non-window system displays.

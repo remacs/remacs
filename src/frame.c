@@ -2098,9 +2098,6 @@ If omitted, FRAME defaults to the currently selected frame.  */)
 #endif
     }
 
-  /* Make menu bar update for the Buffers and Frames menus.  */
-  windows_or_buffers_changed = 17;
-
   return Qnil;
 }
 

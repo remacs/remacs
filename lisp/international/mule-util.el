@@ -33,16 +33,6 @@
 ;;; String manipulations while paying attention to multibyte characters.
 
 ;;;###autoload
-(defsubst string-to-list (string)
-  "Return a list of characters in STRING."
-  (append string nil))
-
-;;;###autoload
-(defsubst string-to-vector (string)
-  "Return a vector of characters in STRING."
-  (vconcat string))
-
-;;;###autoload
 (defun store-substring (string idx obj)
   "Embed OBJ (string or character) at index IDX of STRING."
   (if (integerp obj)

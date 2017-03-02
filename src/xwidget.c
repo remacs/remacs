@@ -301,13 +301,13 @@ webkit_js_to_lisp (JSContextRef context, JSValueRef value)
           {
             JSStringRef pname = JSStringCreateWithUTF8CString("length");
             JSValueRef len = JSObjectGetProperty (context, (JSObjectRef) value, pname, NULL);
-            int n = JSValueToNumber (context, len, NULL);
+            EMACS_INT n = JSValueToNumber (context, len, NULL);
             JSStringRelease(pname);
 
             Lisp_Object obj;
             struct Lisp_Vector *p = allocate_vector (n);
 
-            for (int i = 0; i < n; ++i)
+            for (ptrdiff_t i = 0; i < n; ++i)
               {
                 p->contents[i] =
                   webkit_js_to_lisp (context,
@@ -323,13 +323,13 @@ webkit_js_to_lisp (JSContextRef context, JSValueRef value)
             JSPropertyNameArrayRef properties =
               JSObjectCopyPropertyNames (context, (JSObjectRef) value);
 
-            int n = JSPropertyNameArrayGetCount (properties);
+            ptrdiff_t n = JSPropertyNameArrayGetCount (properties);
             Lisp_Object obj;
 
             /* TODO: can we use a regular list here?  */
             struct Lisp_Vector *p = allocate_vector (n);
 
-            for (int i = 0; i < n; ++i)
+            for (ptrdiff_t i = 0; i < n; ++i)
               {
                 JSStringRef name = JSPropertyNameArrayGetNameAtIndex (properties, i);
                 JSValueRef property = JSObjectGetProperty (context,
@@ -389,7 +389,10 @@ webkit_javascript_finished_cb (GObject      *webview,
     /* Register an xwidget event here, which then runs the callback.
        This ensures that the callback runs in sync with the Emacs
        event loop.  */
-    store_xwidget_js_callback_event (xw, (Lisp_Object)lisp_callback,
+    /* FIXME: This might lead to disaster if LISP_CALLBACK’s object
+       was garbage collected before now.  See the FIXME in
+       Fxwidget_webkit_execute_script.  */
+    store_xwidget_js_callback_event (xw, XIL ((intptr_t) lisp_callback),
                                      lisp_value);
 }
 
@@ -714,8 +717,15 @@ argument procedure FUN.*/)
   if (!NILP (fun) && !FUNCTIONP (fun))
     wrong_type_argument (Qinvalid_function, fun);
 
-  void *callback = (FUNCTIONP (fun)) ?
-    &webkit_javascript_finished_cb : NULL;
+  GAsyncReadyCallback callback
+    = FUNCTIONP (fun) ? webkit_javascript_finished_cb : NULL;
+
+  /* FIXME: The following hack assumes USE_LSB_TAG.  */
+  verify (USE_LSB_TAG);
+  /* FIXME: This hack might lead to disaster if FUN is garbage
+     collected before store_xwidget_js_callback_event makes it visible
+     to Lisp again.  See the FIXME in webkit_javascript_finished_cb.  */
+  gpointer callback_arg = (gpointer) (intptr_t) XLI (fun);
 
   /* JavaScript execution happens asynchronously.  If an elisp
      callback function is provided we pass it to the C callback
@@ -723,8 +733,7 @@ argument procedure FUN.*/)
   webkit_web_view_run_javascript (WEBKIT_WEB_VIEW (xw->widget_osr),
                                   SSDATA (script),
                                   NULL, /* cancelable */
-                                  callback,
-                                  (gpointer) fun);
+                                  callback, callback_arg);
   return Qnil;
 }
 
@@ -733,8 +742,8 @@ DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0,
   (Lisp_Object xwidget, Lisp_Object new_width, Lisp_Object new_height)
 {
   CHECK_XWIDGET (xwidget);
-  CHECK_NATNUM (new_width);
-  CHECK_NATNUM (new_height);
+  CHECK_RANGED_INTEGER (new_width, 0, INT_MAX);
+  CHECK_RANGED_INTEGER (new_height, 0, INT_MAX);
   struct xwidget *xw = XXWIDGET (xwidget);
   int w = XFASTINT (new_width);
   int h = XFASTINT (new_height);

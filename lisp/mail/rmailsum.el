@@ -753,14 +753,7 @@ the message being processed."
 			    (concat "^\\("
 				    (regexp-quote (user-login-name))
 				    "\\($\\|@\\)\\|"
-				    (regexp-quote
-				     ;; Don't lose if run from init file
-				     ;; where user-mail-address is not
-				     ;; set yet.
-				     (or user-mail-address
-					 (concat (user-login-name) "@"
-						 (or mail-host-address
-						     (system-name)))))
+				    (regexp-quote user-mail-address)
 				    "\\>\\)"))
 			from))
 		   ;; No From field, or it's this user.

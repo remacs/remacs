@@ -522,21 +522,11 @@ print_c_string (char const *string, Lisp_Object printcharfun)
    Do not use this on the contents of a Lisp string.  */
 
 static void
-write_string_1 (const char *data, Lisp_Object printcharfun)
+write_string (const char *data, Lisp_Object printcharfun)
 {
   PRINTPREPARE;
   print_c_string (data, printcharfun);
   PRINTFINISH;
-}
-
-/* Used from outside of print.c to print a C unibyte
-   string at DATA on the default output stream.
-   Do not use this on the contents of a Lisp string.  */
-
-void
-write_string (const char *data)
-{
-  write_string_1 (data, Vstandard_output);
 }
 
 
@@ -640,7 +630,7 @@ is used instead.  */)
   return object;
 }
 
-/* a buffer which is used to hold output being built by prin1-to-string */
+/* A buffer which is used to hold output being built by prin1-to-string.  */
 Lisp_Object Vprin1_to_string_buffer;
 
 DEFUN ("prin1-to-string", Fprin1_to_string, Sprin1_to_string, 1, 2, 0,
@@ -888,7 +878,7 @@ print_error_message (Lisp_Object data, Lisp_Object stream, const char *context,
   Lisp_Object errname, errmsg, file_error, tail;
 
   if (context != 0)
-    write_string_1 (context, stream);
+    write_string (context, stream);
 
   /* If we know from where the error was signaled, show it in
    *Messages*.  */
@@ -934,7 +924,7 @@ print_error_message (Lisp_Object data, Lisp_Object stream, const char *context,
     const char *sep = ": ";
 
     if (!STRINGP (errmsg))
-      write_string_1 ("peculiar error", stream);
+      write_string ("peculiar error", stream);
     else if (SCHARS (errmsg))
       Fprinc (errmsg, stream);
     else
@@ -945,7 +935,7 @@ print_error_message (Lisp_Object data, Lisp_Object stream, const char *context,
 	Lisp_Object obj;
 
 	if (sep)
-	  write_string_1 (sep, stream);
+	  write_string (sep, stream);
 	obj = XCAR (tail);
 	if (!NILP (file_error)
 	    || EQ (errname, Qend_of_file) || EQ (errname, Quser_error))
@@ -1140,14 +1130,14 @@ print (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
   print_object (obj, printcharfun, escapeflag);
 }
 
-#define PRINT_CIRCLE_CANDIDATE_P(obj)					\
-  (STRINGP (obj) || CONSP (obj)						\
-   || (VECTORLIKEP (obj)						\
-      && (VECTORP (obj) || COMPILEDP (obj)				\
-	  || CHAR_TABLE_P (obj) || SUB_CHAR_TABLE_P (obj)		\
-	  || HASH_TABLE_P (obj) || FONTP (obj)))			\
-   || (! NILP (Vprint_gensym)						\
-       && SYMBOLP (obj)							\
+#define PRINT_CIRCLE_CANDIDATE_P(obj)			   \
+  (STRINGP (obj) || CONSP (obj)				   \
+   || (VECTORLIKEP (obj)				   \
+       && (VECTORP (obj) || COMPILEDP (obj)		   \
+	   || CHAR_TABLE_P (obj) || SUB_CHAR_TABLE_P (obj) \
+	   || HASH_TABLE_P (obj) || FONTP (obj)))	   \
+   || (! NILP (Vprint_gensym)				   \
+       && SYMBOLP (obj)					   \
        && !SYMBOL_INTERNED_P (obj)))
 
 /* Construct Vprint_number_table according to the structure of OBJ.
@@ -1258,6 +1248,16 @@ print_preprocess (Lisp_Object obj)
 	}
     }
   print_depth--;
+}
+
+DEFUN ("print--preprocess", Fprint_preprocess, Sprint_preprocess, 1, 1, 0,
+       doc: /* Extract sharing info from OBJECT needed to print it.
+Fills `print-number-table'.  */)
+  (Lisp_Object object)
+{
+  print_number_index = 0;
+  print_preprocess (object);
+  return Qnil;
 }
 
 static void
@@ -1537,7 +1537,8 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 
 	size_byte = SBYTES (name);
 
-	if (! NILP (Vprint_gensym) && !SYMBOL_INTERNED_P (obj))
+	if (! NILP (Vprint_gensym)
+            && !SYMBOL_INTERNED_IN_INITIAL_OBARRAY_P (obj))
 	  print_c_string ("#:", printcharfun);
 	else if (size_byte == 0)
 	  {
@@ -1806,22 +1807,18 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	      print_object (h->weak, printcharfun, escapeflag);
 	    }
 
-	  if (!NILP (h->rehash_size))
-	    {
-	      print_c_string (" rehash-size ", printcharfun);
-	      print_object (h->rehash_size, printcharfun, escapeflag);
-	    }
+	  print_c_string (" rehash-size ", printcharfun);
+	  print_object (Fhash_table_rehash_size (obj),
+			printcharfun, escapeflag);
 
-	  if (!NILP (h->rehash_threshold))
-	    {
-	      print_c_string (" rehash-threshold ", printcharfun);
-	      print_object (h->rehash_threshold, printcharfun, escapeflag);
-	    }
+	  print_c_string (" rehash-threshold ", printcharfun);
+	  print_object (Fhash_table_rehash_threshold (obj),
+                        printcharfun, escapeflag);
 
-          if (!NILP (h->pure))
+          if (h->pure)
             {
               print_c_string (" purecopy ", printcharfun);
-	      print_object (h->pure, printcharfun, escapeflag);
+	      print_object (h->pure ? Qt : Qnil, printcharfun, escapeflag);
             }
 
 	  print_c_string (" data ", printcharfun);
@@ -2348,6 +2345,7 @@ priorities.  */);
   defsubr (&Sterpri);
   defsubr (&Swrite_char);
   defsubr (&Sredirect_debugging_output);
+  defsubr (&Sprint_preprocess);
 
   DEFSYM (Qprint_escape_newlines, "print-escape-newlines");
   DEFSYM (Qprint_escape_multibyte, "print-escape-multibyte");

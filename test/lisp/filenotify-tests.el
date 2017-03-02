@@ -36,6 +36,7 @@
 ;;; Code:
 
 (require 'ert)
+(require 'ert-x)
 (require 'filenotify)
 (require 'tramp)
 
@@ -675,6 +676,9 @@ delivered."
         buf)
     (unwind-protect
 	(progn
+          ;; In the remote case, `vc-refresh-state' returns undesired
+          ;; error messages.  Let's suppress them.
+          (advice-add 'vc-refresh-state :around 'ignore)
 	  (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
 	  (write-region
 	   "any text" nil file-notify--test-tmpfile nil 'no-message)
@@ -703,21 +707,19 @@ delivered."
 	    (should auto-revert-notify-watch-descriptor)
 
 	    ;; Modify file.  We wait for a second, in order to have
-	    ;; another timestamp.
-            (with-current-buffer (get-buffer-create "*Messages*")
-              (narrow-to-region (point-max) (point-max)))
-	    (sleep-for 1)
-            (write-region
-             "another text" nil file-notify--test-tmpfile nil 'no-message)
+            ;; another timestamp.
+            (ert-with-message-capture captured-messages
+              (sleep-for 1)
+              (write-region
+               "another text" nil file-notify--test-tmpfile nil 'no-message)
 
-	    ;; Check, that the buffer has been reverted.
-	    (with-current-buffer (get-buffer-create "*Messages*")
-	      (file-notify--wait-for-events
-	       timeout
-	       (string-match
+              ;; Check, that the buffer has been reverted.
+              (file-notify--wait-for-events
+               timeout
+               (string-match
                 (format-message "Reverting buffer `%s'." (buffer-name buf))
-                (buffer-string))))
-	    (should (string-match "another text" (buffer-string)))
+                captured-messages))
+              (should (string-match "another text" (buffer-string))))
 
             ;; Stop file notification.  Autorevert shall still work via polling.
 	    (file-notify-rm-watch auto-revert-notify-watch-descriptor)
@@ -728,27 +730,25 @@ delivered."
 
 	    ;; Modify file.  We wait for two seconds, in order to
 	    ;; have another timestamp.  One second seems to be too
-	    ;; short.
-	    (with-current-buffer (get-buffer-create "*Messages*")
-	      (narrow-to-region (point-max) (point-max)))
-	    (sleep-for 2)
-	    (write-region
-	     "foo bla" nil file-notify--test-tmpfile nil 'no-message)
+            ;; short.
+            (ert-with-message-capture captured-messages
+              (sleep-for 2)
+              (write-region
+               "foo bla" nil file-notify--test-tmpfile nil 'no-message)
 
-	    ;; Check, that the buffer has been reverted.
-	    (with-current-buffer (get-buffer-create "*Messages*")
-	      (file-notify--wait-for-events
-	       timeout
-	       (string-match
-		(format-message "Reverting buffer `%s'." (buffer-name buf))
-		(buffer-string))))
-	    (should (string-match "foo bla" (buffer-string))))
+              ;; Check, that the buffer has been reverted.
+              (file-notify--wait-for-events
+               timeout
+               (string-match
+                (format-message "Reverting buffer `%s'." (buffer-name buf))
+                captured-messages))
+              (should (string-match "foo bla" (buffer-string)))))
 
           ;; The environment shall be cleaned up.
           (file-notify--test-cleanup-p))
 
       ;; Cleanup.
-      (with-current-buffer "*Messages*" (widen))
+      (advice-remove 'vc-refresh-state 'ignore)
       (ignore-errors (kill-buffer buf))
       (file-notify--test-cleanup))))
 

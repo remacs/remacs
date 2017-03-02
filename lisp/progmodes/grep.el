@@ -1045,6 +1045,15 @@ to specify a command to run."
 	  (if (eq next-error-last-buffer (current-buffer))
 	      (setq default-directory dir)))))))
 
+(defun rgrep-find-ignored-directories (dir)
+  "Return the list of ignored directories applicable to `dir'."
+  (delq nil (mapcar
+             (lambda (ignore)
+               (cond ((stringp ignore) ignore)
+                     ((consp ignore)
+                      (and (funcall (car ignore) dir) (cdr ignore)))))
+             grep-find-ignored-directories)))
+
 (defun rgrep-default-command (regexp files dir)
   "Compute the command for \\[rgrep] to use by default."
   (require 'find-dired)      ; for `find-name-arg'
@@ -1066,20 +1075,9 @@ to specify a command to run."
                  (shell-quote-argument "(")
                  ;; we should use shell-quote-argument here
                  " -path "
-                 (mapconcat
-                  'identity
-                  (delq nil (mapcar
-                             #'(lambda (ignore)
-                                 (cond ((stringp ignore)
-                                        (shell-quote-argument
-                                         (concat "*/" ignore)))
-                                       ((consp ignore)
-                                        (and (funcall (car ignore) dir)
-                                             (shell-quote-argument
-                                              (concat "*/"
-                                                      (cdr ignore)))))))
-                             grep-find-ignored-directories))
-                  " -o -path ")
+                 (mapconcat (lambda (d) (shell-quote-argument (concat "*/" d)))
+                            (rgrep-find-ignored-directories dir)
+                            " -o -path ")
                  " "
                  (shell-quote-argument ")")
                  " -prune -o "))

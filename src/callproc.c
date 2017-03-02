@@ -182,11 +182,11 @@ call_process_cleanup (Lisp_Object buffer)
     {
       kill (-synch_process_pid, SIGINT);
       message1 ("Waiting for process to die...(type C-g again to kill it instantly)");
-      immediate_quit = true;
-      maybe_quit ();
+
+      /* This will quit on C-g.  */
       wait_for_termination (synch_process_pid, 0, 1);
+
       synch_process_pid = 0;
-      immediate_quit = false;
       message1 ("Waiting for process to die...done");
     }
 }
@@ -635,9 +635,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
       process_coding.src_multibyte = 0;
     }
 
-  immediate_quit = true;
-  maybe_quit ();
-
   if (0 <= fd0)
     {
       enum { CALLPROC_BUFFER_SIZE_MIN = 16 * 1024 };
@@ -658,8 +655,8 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	  nread = carryover;
 	  while (nread < bufsize - 1024)
 	    {
-	      int this_read = emacs_read (fd0, buf + nread,
-					  bufsize - nread);
+	      int this_read = emacs_read_quit (fd0, buf + nread,
+					       bufsize - nread);
 
 	      if (this_read < 0)
 		goto give_up;
@@ -678,7 +675,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	    }
 
 	  /* Now NREAD is the total amount of data in the buffer.  */
-	  immediate_quit = false;
 
 	  if (!nread)
 	    ;
@@ -751,8 +747,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 		 we should have already detected a coding system.  */
 	      display_on_the_fly = true;
 	    }
-	  immediate_quit = true;
-	  maybe_quit ();
 	}
     give_up: ;
 
@@ -764,7 +758,8 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	       make_number (total_read));
     }
 
-  immediate_quit = false;
+  /* Wait for it to terminate, unless it already has.  */
+  wait_for_termination (pid, &status, fd0 < 0);
 
   /* Don't kill any children that the subprocess may have left behind
      when exiting.  */
@@ -1298,7 +1293,7 @@ getenv_internal (const char *var, ptrdiff_t varlen, char **value,
      without recording them in Vprocess_environment.  */
 #ifdef WINDOWSNT
   {
-    char* tmpval = getenv (var);
+    char *tmpval = getenv (var);
     if (tmpval)
       {
         *value = tmpval;

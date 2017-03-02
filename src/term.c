@@ -2055,7 +2055,6 @@ TERMINAL does not refer to a text terminal.  */)
    to work around an HPUX compiler bug (?). See
    http://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00410.html  */
 static int default_max_colors;
-static int default_max_pairs;
 static int default_no_color_video;
 static char *default_orig_pair;
 static char *default_set_foreground;
@@ -2073,7 +2072,6 @@ tty_default_color_capabilities (struct tty_display_info *tty, bool save)
       dupstring (&default_set_foreground, tty->TS_set_foreground);
       dupstring (&default_set_background, tty->TS_set_background);
       default_max_colors = tty->TN_max_colors;
-      default_max_pairs = tty->TN_max_pairs;
       default_no_color_video = tty->TN_no_color_video;
     }
   else
@@ -2082,7 +2080,6 @@ tty_default_color_capabilities (struct tty_display_info *tty, bool save)
       tty->TS_set_foreground = default_set_foreground;
       tty->TS_set_background = default_set_background;
       tty->TN_max_colors = default_max_colors;
-      tty->TN_max_pairs = default_max_pairs;
       tty->TN_no_color_video = default_no_color_video;
     }
 }
@@ -2102,7 +2099,6 @@ tty_setup_colors (struct tty_display_info *tty, int mode)
     {
       case -1:	 /* no colors at all */
 	tty->TN_max_colors = 0;
-	tty->TN_max_pairs = 0;
 	tty->TN_no_color_video = 0;
 	tty->TS_set_foreground = tty->TS_set_background = tty->TS_orig_pair = NULL;
 	break;
@@ -2120,7 +2116,6 @@ tty_setup_colors (struct tty_display_info *tty, int mode)
 	tty->TS_set_background = "\033[4%dm";
 #endif
 	tty->TN_max_colors = 8;
-	tty->TN_max_pairs = 64;
 	tty->TN_no_color_video = 0;
 	break;
     }
@@ -2539,7 +2534,8 @@ term_mouse_click (struct input_event *result, Gpm_Event *event,
 }
 
 int
-handle_one_term_event (struct tty_display_info *tty, Gpm_Event *event, struct input_event* hold_quit)
+handle_one_term_event (struct tty_display_info *tty, Gpm_Event *event,
+		       struct input_event *hold_quit)
 {
   struct frame *f = XFRAME (tty->top_frame);
   struct input_event ie;
@@ -4108,7 +4104,22 @@ use the Bourne shell command 'TERM=...; export TERM' (C-shell:\n\
 	}
 
       tty->TN_max_colors = tgetnum ("Co");
-      tty->TN_max_pairs = tgetnum ("pa");
+
+#ifdef TERMINFO
+      /* Non-standard support for 24-bit colors. */
+      {
+	const char *fg = tigetstr ("setf24");
+	const char *bg = tigetstr ("setb24");
+	if (fg && bg
+	    && fg != (char *) (intptr_t) -1
+	    && bg != (char *) (intptr_t) -1)
+	  {
+	    tty->TS_set_foreground = fg;
+	    tty->TS_set_background = bg;
+	    tty->TN_max_colors = 16777216;
+	  }
+      }
+#endif
 
       tty->TN_no_color_video = tgetnum ("NC");
       if (tty->TN_no_color_video == -1)

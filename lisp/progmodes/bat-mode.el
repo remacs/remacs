@@ -82,12 +82,15 @@
          (2 font-lock-constant-face t))
         ("^:[^:].*"
          . 'bat-label-face)
-        ("\\_<\\(defined\\|set\\)\\_>[ \t]*\\(\\w+\\)"
+        ("\\_<\\(defined\\|set\\)\\_>[ \t]*\\(\\(\\sw\\|\\s_\\)+\\)"
          (2 font-lock-variable-name-face))
-        ("%\\(\\w+\\)%?"
+        ("%\\(\\(\\sw\\|\\s_\\)+\\)%"
          (1 font-lock-variable-name-face))
-        ("!\\(\\w+\\)!?"                ; delayed-expansion !variable!
+        ("!\\(\\(\\sw\\|\\s_\\)+\\)!"  ; delayed-expansion !variable!
          (1 font-lock-variable-name-face))
+        ("%%\\(?:~[adfnpstxz]*\\(?:\\$\\(\\(?:\\sw\\|\\s_\\)+\\):\\)?\\)?\\([]!#$&-:?-[_-{}~]\\)"
+         (1 font-lock-variable-name-face nil t) ; PATH expansion
+         (2 font-lock-variable-name-face)) ; iteration variable or positional parameter
         ("[ =][-/]+\\(\\w+\\)"
          (1 font-lock-type-face append))
         (,(concat "\\_<" (regexp-opt COMMANDS) "\\_>") . font-lock-builtin-face)
@@ -130,6 +133,7 @@
     (modify-syntax-entry ?{ "_" table)
     (modify-syntax-entry ?} "_" table)
     (modify-syntax-entry ?\\ "." table)
+    (modify-syntax-entry ?= "." table)
     table))
 
 (defconst bat--syntax-propertize
@@ -175,6 +179,7 @@ with `bat-cmd-help'.  Navigate between sections using `imenu'.
 Run script using `bat-run' and `bat-run-args'.\n
 \\{bat-mode-map}"
   (setq-local comment-start "rem ")
+  (setq-local comment-start-skip "rem[ \t]+")
   (setq-local syntax-propertize-function bat--syntax-propertize)
   (setq-local font-lock-defaults
        '(bat-font-lock-keywords nil t)) ; case-insensitive keywords

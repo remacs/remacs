@@ -32,10 +32,11 @@
 
 ;;; Code:
 
+(require 'eww)
 (require 'seq)
 (require 'sgml-mode)
 (require 'smie)
-(require 'eww)
+(eval-when-compile (require 'subr-x))
 
 (defgroup css nil
   "Cascading Style Sheets (CSS) editing mode."
@@ -695,7 +696,8 @@ cannot be completed sensibly: `custom-ident',
        ;; Even though pseudo-elements should be prefixed by ::, a
        ;; single colon is accepted for backward compatibility.
        "\\(?:\\(:" (regexp-opt (append css-pseudo-class-ids
-                                       css-pseudo-element-ids) t)
+                                       css-pseudo-element-ids)
+                               t)
        "\\|\\::" (regexp-opt css-pseudo-element-ids t) "\\)"
        "\\(?:([^)]+)\\)?"
        (if (not sassy)
@@ -741,7 +743,30 @@ cannot be completed sensibly: `custom-ident',
 
 (defconst css-smie-grammar
   (smie-prec2->grammar
-   (smie-precs->prec2 '((assoc ";") (assoc ",") (left ":")))))
+   (smie-precs->prec2
+    '((assoc ";")
+      ;; Colons that belong to a CSS property.  These get a higher
+      ;; precedence than other colons, such as colons in selectors,
+      ;; which are represented by a plain ":" token.
+      (left ":-property")
+      (assoc ",")
+      (assoc ":")))))
+
+(defun css--colon-inside-selector-p ()
+  "Return t if point looks to be inside a CSS selector.
+This function is intended to be good enough to help SMIE during
+tokenization, but should not be regarded as a reliable function
+for determining whether point is within a selector."
+  (save-excursion
+    (re-search-forward "[{};)]" nil t)
+    (eq (char-before) ?\{)))
+
+(defun css--colon-inside-funcall ()
+  "Return t if point is inside a function call."
+  (when-let (opening-paren-pos (nth 1 (syntax-ppss)))
+    (save-excursion
+      (goto-char opening-paren-pos)
+      (eq (char-after) ?\())))
 
 (defun css-smie--forward-token ()
   (cond
@@ -755,7 +780,13 @@ cannot be completed sensibly: `custom-ident',
     ";")
    ((progn (forward-comment (point-max))
            (looking-at "[;,:]"))
-    (forward-char 1) (match-string 0))
+    (forward-char 1)
+    (if (equal (match-string 0) ":")
+        (if (or (css--colon-inside-selector-p)
+                (css--colon-inside-funcall))
+            ":"
+          ":-property")
+      (match-string 0)))
    (t (smie-default-forward-token))))
 
 (defun css-smie--backward-token ()
@@ -766,7 +797,13 @@ cannot be completed sensibly: `custom-ident',
      ((and (eq (char-before) ?\}) (scss-smie--not-interpolation-p)
            (> pos (point))) ";")
      ((memq (char-before) '(?\; ?\, ?\:))
-      (forward-char -1) (string (char-after)))
+      (forward-char -1)
+      (if (eq (char-after) ?\:)
+          (if (or (css--colon-inside-selector-p)
+                  (css--colon-inside-funcall))
+              ":"
+            ":-property")
+        (string (char-after))))
      (t (smie-default-backward-token)))))
 
 (defun css-smie-rules (kind token)
@@ -929,10 +966,22 @@ pseudo-elements, pseudo-classes, at-rules, and bang-rules."
       (seq-let (prop-beg prop-end prop-table) (css--complete-property)
         (seq-let (sel-beg sel-end sel-table) (css--complete-selector)
           (when (or prop-table sel-table)
+            ;; FIXME: If both prop-table and sel-table are set but
+            ;; prop-beg/prop-end is different from sel-beg/sel-end
+            ;; we have a problem!
             `(,@(if prop-table
                     (list prop-beg prop-end)
                   (list sel-beg sel-end))
-              ,(completion-table-merge prop-table sel-table)))))))
+              ,(completion-table-merge prop-table sel-table)
+              :exit-function
+              ,(lambda (string status)
+                 (and (eq status 'finished)
+                      prop-table
+                      (test-completion string prop-table)
+                      (not (and sel-table
+                                (test-completion string sel-table)))
+                      (progn (insert ": ;")
+                             (forward-char -1))))))))))
 
 ;;;###autoload
 (define-derived-mode css-mode prog-mode "CSS"
@@ -1154,8 +1203,10 @@ to look up will be substituted there."
   "A helper for `css-lookup-symbol' that finds the symbol at point.
 Returns the symbol, a string, or nil if none found."
   (save-excursion
-    ;; Skip backward over a word first.
-    (skip-chars-backward "-[:alnum:] \t")
+    ;; Skip any whitespace between the word and point.
+    (skip-chars-backward "- \t")
+    ;; Skip backward over a word.
+    (skip-chars-backward "-[:alnum:]")
     ;; Now skip ":" or "@" to see if it's a pseudo-element or at-id.
     (skip-chars-backward "@:")
     (if (looking-at css--mdn-symbol-regexp)

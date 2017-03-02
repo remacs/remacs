@@ -2665,11 +2665,7 @@ Ask the user whether to add that list name to `mail-mailing-lists'."
 			      (concat "^\\("
 				      (regexp-quote (user-login-name))
 				      "\\($\\|@\\)\\|"
-				      (regexp-quote
-				       (or user-mail-address
-					   (concat (user-login-name) "@"
-						   (or mail-host-address
-						       (system-name)))))
+				      (regexp-quote user-mail-address)
 				      "\\>\\)"))
 			  addr))
 			(y-or-n-p
@@ -4590,7 +4586,8 @@ Argument MIME is non-nil if this is a mime message."
          (current-buffer))))
 
     (list armor-start (- (point-max) after-end) mime
-          armor-end-regexp)))
+          armor-end-regexp
+          (buffer-substring armor-start (- (point-max) after-end)))))
 
 (declare-function rmail-mime-entity-truncated "rmailmm" (entity))
 
@@ -4633,8 +4630,7 @@ Argument MIME is non-nil if this is a mime message."
 	(when (y-or-n-p "Replace the original message? ")
 	  (setq decrypts (nreverse decrypts))
 	  (let ((beg (rmail-msgbeg rmail-current-message))
-		(end (rmail-msgend rmail-current-message))
-		(from-buffer (current-buffer)))
+		(end (rmail-msgend rmail-current-message)))
 	    (with-current-buffer rmail-view-buffer
 	      (narrow-to-region beg end)
 	      (goto-char (point-min))
@@ -4652,7 +4648,7 @@ Argument MIME is non-nil if this is a mime message."
 		      ;; Found as expected -- now replace it with the decrypt.
 		      (when armor-end
 			(delete-region armor-start armor-end)
-			(insert-buffer-substring from-buffer (nth 0 d) (nth 1 d)))
+                        (insert (nth 4 d)))
 
 		      ;; Change the mime type (if this is in a mime part)
 		      ;; so this part will display by default

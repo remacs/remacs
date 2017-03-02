@@ -934,11 +934,7 @@ string.
 If this variable is non-@code{nil}, it is used instead of
 @code{system-name} for purposes of generating email addresses.  For
 example, it is used when constructing the default value of
-@code{user-mail-address}.  @xref{User Identification}.  (Since this is
-done when Emacs starts up, the value actually used is the one saved when
-Emacs was dumped.  @xref{Building Emacs}.)
-@c FIXME sounds like should probably give this a :set-after and some
-@c custom-initialize-delay voodoo.
+@code{user-mail-address}.  @xref{User Identification}.
 @end defopt
 
 @deffn Command getenv var &optional frame
@@ -1129,11 +1125,7 @@ not load any customization files or user profile.
 @end defvar
 
 @defopt user-mail-address
-This holds the nominal email address of the user who is using Emacs.
-Emacs normally sets this variable to a default value after reading your
-init files, but not if you have already set it.  So you can set the
-variable to some other value in your init file if you do not
-want to use the default value.
+This holds the email address of the user who is using Emacs.
 @end defopt
 
 @defun user-login-name &optional uid

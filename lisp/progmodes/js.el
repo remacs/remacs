@@ -277,7 +277,7 @@ Match group 1 is the name of the macro.")
 
 (defconst js--keyword-re
   (js--regexp-opt-symbol
-   '("abstract" "break" "case" "catch" "class" "const"
+   '("abstract" "async" "await" "break" "case" "catch" "class" "const"
      "continue" "debugger" "default" "delete" "do" "else"
      "enum" "export" "extends" "final" "finally" "for"
      "function" "goto" "if" "implements" "import" "in"
@@ -1687,29 +1687,46 @@ This performs fontification according to `js--class-styles'."
                                    js--font-lock-keywords-3)
   "Font lock keywords for `js-mode'.  See `font-lock-keywords'.")
 
-(defconst js--syntax-propertize-regexp-syntax-table
-  (let ((st (make-char-table 'syntax-table (string-to-syntax "."))))
-    (modify-syntax-entry ?\[ "(]" st)
-    (modify-syntax-entry ?\] ")[" st)
-    (modify-syntax-entry ?\\ "\\" st)
-    st))
+(defun js-font-lock-syntactic-face-function (state)
+  "Return syntactic face given STATE."
+  (if (nth 3 state)
+      font-lock-string-face
+    (if (save-excursion
+          (goto-char (nth 8 state))
+          (looking-at "/\\*\\*"))
+        font-lock-doc-face
+      font-lock-comment-face)))
+
+(defconst js--syntax-propertize-regexp-regexp
+  (rx
+   ;; Start of regexp.
+   "/"
+   (0+ (or
+        ;; Match characters outside of a character class.
+        (not (any ?\[ ?/ ?\\))
+        ;; Match backslash quoted characters.
+        (and "\\" not-newline)
+        ;; Match character class.
+        (and
+         "["
+         (0+ (or
+              (not (any ?\] ?\\))
+              (and "\\" not-newline)))
+         "]")))
+   (group "/"))
+  "Regular expression matching a JavaScript regexp literal.")
 
 (defun js-syntax-propertize-regexp (end)
   (let ((ppss (syntax-ppss)))
     (when (eq (nth 3 ppss) ?/)
       ;; A /.../ regexp.
-      (while
-          (when (re-search-forward "\\(?:\\=\\|[^\\]\\)\\(?:\\\\\\\\\\)*/"
-                                   end 'move)
-            (if (nth 1 (with-syntax-table
-                           js--syntax-propertize-regexp-syntax-table
-                         (let ((parse-sexp-lookup-properties nil))
-                           (parse-partial-sexp (nth 8 ppss) (point)))))
-                ;; A / within a character class is not the end of a regexp.
-                t
-              (put-text-property (1- (point)) (point)
-                                 'syntax-table (string-to-syntax "\"/"))
-              nil))))))
+      (goto-char (nth 8 ppss))
+      (when (and (looking-at js--syntax-propertize-regexp-regexp)
+                 ;; Don't touch text after END.
+                 (<= (match-end 1) end))
+        (put-text-property (match-beginning 1) (match-end 1)
+                           'syntax-table (string-to-syntax "\"/"))
+        (goto-char (match-end 0))))))
 
 (defun js-syntax-propertize (start end)
   ;; JavaScript allows immediate regular expression objects, written /.../.
@@ -1979,11 +1996,16 @@ In particular, return the buffer position of the first `for' kwd."
         (js--forward-syntactic-ws)
         (if (looking-at "[[{]")
             (let (forward-sexp-function) ; Use Lisp version.
-              (forward-sexp)             ; Skip destructuring form.
-              (js--forward-syntactic-ws)
-              (if (and (/= (char-after) ?,) ; Regular array.
-                       (looking-at "for"))
-                  (match-beginning 0)))
+              (condition-case nil
+                  (progn
+                    (forward-sexp)       ; Skip destructuring form.
+                    (js--forward-syntactic-ws)
+                    (if (and (/= (char-after) ?,) ; Regular array.
+                             (looking-at "for"))
+                        (match-beginning 0)))
+                (scan-error
+                 ;; Nothing to do here.
+                 nil)))
           ;; To skip arbitrary expressions we need the parser,
           ;; so we'll just guess at it.
           (if (and (> end (point)) ; Not empty literal.
@@ -3816,7 +3838,10 @@ If one hasn't been set, or if it's stale, prompt for a new one."
   (setq-local beginning-of-defun-function #'js-beginning-of-defun)
   (setq-local end-of-defun-function #'js-end-of-defun)
   (setq-local open-paren-in-column-0-is-defun-start nil)
-  (setq-local font-lock-defaults (list js--font-lock-keywords))
+  (setq-local font-lock-defaults
+              (list js--font-lock-keywords nil nil nil nil
+                    '(font-lock-syntactic-face-function
+                      . js-font-lock-syntactic-face-function)))
   (setq-local syntax-propertize-function #'js-syntax-propertize)
   (setq-local prettify-symbols-alist js--prettify-symbols-alist)
 
@@ -3849,6 +3874,7 @@ If one hasn't been set, or if it's stale, prompt for a new one."
         comment-start-skip "\\(//+\\|/\\*+\\)\\s *")
   (setq-local comment-line-break-function #'c-indent-new-comment-line)
   (setq-local c-block-comment-start-regexp "/\\*")
+  (setq-local comment-multi-line t)
 
   (setq-local electric-indent-chars
 	      (append "{}():;," electric-indent-chars)) ;FIXME: js2-mode adds "[]*".

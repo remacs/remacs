@@ -1365,27 +1365,28 @@ downcase (int c)
   return NATNUMP (down) ? XFASTINT (down) : c;
 }
 
-/* True if C is upper case.  */
-INLINE bool uppercasep (int c) { return downcase (c) != c; }
-
-/* Upcase a character C known to be not upper case.  */
+/* Upcase a character C, or make no change if that cannot be done. */
 INLINE int
-upcase1 (int c)
+upcase (int c)
 {
   Lisp_Object upcase_table = BVAR (current_buffer, upcase_table);
   Lisp_Object up = CHAR_TABLE_REF (upcase_table, c);
   return NATNUMP (up) ? XFASTINT (up) : c;
 }
 
+/* True if C is upper case.  */
+INLINE bool
+uppercasep (int c)
+{
+  return downcase (c) != c;
+}
+
 /* True if C is lower case.  */
 INLINE bool
 lowercasep (int c)
 {
-  return !uppercasep (c) && upcase1 (c) != c;
+  return !uppercasep (c) && upcase (c) != c;
 }
-
-/* Upcase a character C, or make no change if that cannot be done.  */
-INLINE int upcase (int c) { return uppercasep (c) ? c : upcase1 (c); }
 
 INLINE_HEADER_END
 

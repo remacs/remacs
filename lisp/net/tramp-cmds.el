@@ -190,7 +190,7 @@ This includes password cache, file cache, connection cache, buffers."
 	     password-cache
 	     password-cache-expiry
 	     remote-file-name-inhibit-cache
-	     connection-local-class-alist
+	     connection-local-profile-alist
 	     connection-local-criteria-alist
 	     file-name-handler-alist))))
 	(lambda (x y) (string< (symbol-name (car x)) (symbol-name (car y)))))

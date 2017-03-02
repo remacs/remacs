@@ -855,7 +855,7 @@ nsfont_open (struct frame *f, Lisp_Object font_entity, int pixel_size)
                 ((CFStringRef)@"Monaco", kATSOptionFlagsDefault);
             }
         }
-      font_info->cgfont = CGFontCreateWithPlatformFont ((void*)&atsFont);
+      font_info->cgfont = CGFontCreateWithPlatformFont ((void *) &atsFont);
     }
 #endif
 

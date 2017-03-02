@@ -23,6 +23,7 @@
 
 (require 'ert)
 (require 'js)
+(require 'syntax)
 
 (ert-deftest js-mode-fill-bug-19399 ()
   (with-temp-buffer
@@ -84,6 +85,60 @@ if (!/[ (:,='\"]/.test(value)) {
       (back-to-indentation)
       (should (= (current-column) x))
       (forward-line))))
+
+(ert-deftest js-mode-auto-fill ()
+  (with-temp-buffer
+    (js-mode)
+    (let ((fill-column 10)
+          (comment-multi-line t))
+      (insert "/* test test")
+      (do-auto-fill)
+      ;; Filling should continue the multi line comment.
+      (should (equal (buffer-string) "/* test\n * test"))
+      (erase-buffer)
+      (insert "/* test test")
+      (setq comment-multi-line nil)
+      (do-auto-fill)
+      ;; Filling should start a new comment on the next line.
+      (should (equal (buffer-string) "/* test */\n/* test")))))
+
+(ert-deftest js-mode-regexp-syntax-bug-25529 ()
+  (dolist (regexp-contents '("[^[]"
+                             "[/]"
+                             ;; A comment with the regexp on the next
+                             ;; line.
+                             "*comment*/\n/regexp"))
+    (with-temp-buffer
+      (js-mode)
+      (insert "let x = /" regexp-contents "/;\n")
+      (save-excursion (insert "something();\n"))
+      ;; The failure mode was that the regexp literal was not
+      ;; recognized, causing the next line to be given string syntax;
+      ;; but check for comment syntax as well to prevent an
+      ;; implementation not recognizing the comment example.
+      (should-not (syntax-ppss-context (syntax-ppss))))))
+
+(ert-deftest js-mode-indentation-error ()
+  (with-temp-buffer
+    (js-mode)
+    ;; The bug previously was that requesting re-indentation on the
+    ;; "{" line here threw an exception.
+    (insert "const TESTS = [\n{")
+    (js-indent-line)
+    ;; Any success is ok here.
+    (should t)))
+
+(ert-deftest js-mode-doc-comment-face ()
+  (dolist (test '(("/*" "*/" font-lock-comment-face)
+                  ("//" "\n" font-lock-comment-face)
+                  ("/**" "*/" font-lock-doc-face)
+                  ("\"" "\"" font-lock-string-face)))
+    (with-temp-buffer
+      (js-mode)
+      (insert (car test) " he")
+      (save-excursion (insert "llo " (cadr test)))
+      (font-lock-ensure)
+      (should (eq (get-text-property (point) 'face) (caddr test))))))
 
 (provide 'js-tests)
 

@@ -380,13 +380,17 @@ SPC=view TAB=goto RET=goto+hide [q]uit [r]escan [l]abels [f]ollow [x]r [?]Help
 
 (defun reftex-re-enlarge ()
   "Enlarge window to a remembered size."
+  ;; FIXME: reftex-last-window-width might be the width of another window on
+  ;; another frame, so the enlarge-window call might make no sense.
+  ;; We should just use `quit-window' instead nowadays.
   (let ((count (if reftex-toc-split-windows-horizontally
 		   (- (or reftex-last-window-width (window-total-width))
 		      (window-total-width))
 		 (- (or reftex-last-window-height (window-height))
 		    (window-height)))))
     (when (> count 0)
-      (enlarge-window count reftex-toc-split-windows-horizontally))))
+      (with-demoted-errors           ;E.g. the window might be the root window!
+        (enlarge-window count reftex-toc-split-windows-horizontally)))))
 
 (defun reftex-toc-dframe-p (&optional frame error)
   ;; Check if FRAME is the dedicated TOC frame.

@@ -148,7 +148,7 @@ WidgetClass emacsFrameClass = (WidgetClass) &emacsFrameClassRec;
 static void
 get_default_char_pixel_size (EmacsFrame ew, int *pixel_width, int *pixel_height)
 {
-  struct frame* f = ew->emacs_frame.frame;
+  struct frame *f = ew->emacs_frame.frame;
   *pixel_width = FRAME_COLUMN_WIDTH (f);
   *pixel_height = FRAME_LINE_HEIGHT (f);
 }
@@ -156,7 +156,7 @@ get_default_char_pixel_size (EmacsFrame ew, int *pixel_width, int *pixel_height)
 static void
 pixel_to_char_size (EmacsFrame ew, Dimension pixel_width, Dimension pixel_height, int *char_width, int *char_height)
 {
-  struct frame* f = ew->emacs_frame.frame;
+  struct frame *f = ew->emacs_frame.frame;
   *char_width = FRAME_PIXEL_WIDTH_TO_TEXT_COLS (f, (int) pixel_width);
   *char_height = FRAME_PIXEL_HEIGHT_TO_TEXT_LINES (f, (int) pixel_height);
 }
@@ -164,7 +164,7 @@ pixel_to_char_size (EmacsFrame ew, Dimension pixel_width, Dimension pixel_height
 static void
 pixel_to_text_size (EmacsFrame ew, Dimension pixel_width, Dimension pixel_height, int *text_width, int *text_height)
 {
-  struct frame* f = ew->emacs_frame.frame;
+  struct frame *f = ew->emacs_frame.frame;
   *text_width = FRAME_PIXEL_TO_TEXT_WIDTH (f, (int) pixel_width);
   *text_height = FRAME_PIXEL_TO_TEXT_HEIGHT (f, (int) pixel_height);
 }
@@ -172,7 +172,7 @@ pixel_to_text_size (EmacsFrame ew, Dimension pixel_width, Dimension pixel_height
 static void
 char_to_pixel_size (EmacsFrame ew, int char_width, int char_height, Dimension *pixel_width, Dimension *pixel_height)
 {
-  struct frame* f = ew->emacs_frame.frame;
+  struct frame *f = ew->emacs_frame.frame;
   *pixel_width = FRAME_TEXT_COLS_TO_PIXEL_WIDTH (f, char_width);
   *pixel_height = FRAME_TEXT_LINES_TO_PIXEL_HEIGHT (f, char_height);
 }
@@ -365,8 +365,8 @@ EmacsFrameInitialize (Widget request, Widget new, ArgList dum1, Cardinal *dum2)
 static void
 resize_cb (Widget widget,
            XtPointer closure,
-           XEvent* event,
-           Boolean* continue_to_dispatch)
+           XEvent *event,
+           Boolean *continue_to_dispatch)
 {
   EmacsFrameResize (widget);
 }

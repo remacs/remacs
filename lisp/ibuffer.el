@@ -1319,13 +1319,14 @@ a new window in the current frame, splitting vertically."
   (cl-assert (derived-mode-p 'ibuffer-mode)))
 
 (defun ibuffer-buffer-file-name ()
-  (or buffer-file-name
-      (let ((dirname (or (and (boundp 'dired-directory)
-			      (if (stringp dired-directory)
-				  dired-directory
-				(car dired-directory)))
-			 (bound-and-true-p list-buffers-directory))))
-	(and dirname (expand-file-name dirname)))))
+  (cond
+   ((buffer-file-name))
+   ((bound-and-true-p list-buffers-directory))
+   ((let ((dirname (and (boundp 'dired-directory)
+                        (if (stringp dired-directory)
+                            dired-directory
+                          (car dired-directory)))))
+	(and dirname (expand-file-name dirname))))))
 
 (define-ibuffer-op ibuffer-do-save ()
   "Save marked buffers as with `save-buffer'."
@@ -2490,6 +2491,15 @@ FORMATS is the value to use for `ibuffer-formats'.
 	(unless ibuffer-expert
 	  (message "Commands: m, u, t, RET, g, k, S, D, Q; q to quit; h for help"))))))
 
+;;;###autoload
+(defun ibuffer-jump (&optional other-window)
+  "Call Ibuffer and set point at the line listing the current buffer.
+If optional arg OTHER-WINDOW is non-nil, then use another window."
+  (interactive "P")
+  (let ((name (buffer-name)))
+    (ibuffer other-window)
+    (ignore-errors (ibuffer-jump-to-buffer name))))
+
 (put 'ibuffer-mode 'mode-class 'special)
 (define-derived-mode ibuffer-mode special-mode "IBuffer"
   "A major mode for viewing a list of buffers.
@@ -2563,18 +2573,26 @@ Marking commands:
 
 Filtering commands:
 
+  `\\[ibuffer-filter-chosen-by-completion]' - Select and apply filter chosen by completion.
   `\\[ibuffer-filter-by-mode]' - Add a filter by any major mode.
   `\\[ibuffer-filter-by-used-mode]' - Add a filter by a major mode now in use.
   `\\[ibuffer-filter-by-derived-mode]' - Add a filter by derived mode.
   `\\[ibuffer-filter-by-name]' - Add a filter by buffer name.
   `\\[ibuffer-filter-by-content]' - Add a filter by buffer content.
+  `\\[ibuffer-filter-by-basename]' - Add a filter by basename.
+  `\\[ibuffer-filter-by-directory]' - Add a filter by directory name.
   `\\[ibuffer-filter-by-filename]' - Add a filter by filename.
+  `\\[ibuffer-filter-by-file-extension]' - Add a filter by file extension.
+  `\\[ibuffer-filter-by-modified]' - Add a filter by modified buffers.
+  `\\[ibuffer-filter-by-predicate]' - Add a filter by an arbitrary Lisp predicate.
   `\\[ibuffer-filter-by-size-gt]' - Add a filter by buffer size.
   `\\[ibuffer-filter-by-size-lt]' - Add a filter by buffer size.
-  `\\[ibuffer-filter-by-predicate]' - Add a filter by an arbitrary Lisp predicate.
+  `\\[ibuffer-filter-by-starred-name]' - Add a filter by special buffers.
+  `\\[ibuffer-filter-by-visiting-file]' - Add a filter by buffers visiting files.
   `\\[ibuffer-save-filters]' - Save the current filters with a name.
   `\\[ibuffer-switch-to-saved-filters]' - Switch to previously saved filters.
   `\\[ibuffer-add-saved-filters]' - Add saved filters to current filters.
+  `\\[ibuffer-and-filter]' - Replace the top two filters with their logical AND.
   `\\[ibuffer-or-filter]' - Replace the top two filters with their logical OR.
   `\\[ibuffer-pop-filter]' - Remove the top filter.
   `\\[ibuffer-negate-filter]' - Invert the logical sense of the top filter.

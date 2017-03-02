@@ -226,7 +226,8 @@
                   ("a:v" "isited" ":visited")
                   ("border-" "color: red" "border-color")
                   ("border-color: red" ";" "border-color")
-                  ("border-color: red; color: green" ";" "color")))
+                  ("border-color: red; color: green" ";" "color")
+                  ("  border-collapse " ": collapse;" "border-collapse")))
     (with-temp-buffer
       (css-mode)
       (insert (nth 0 item))

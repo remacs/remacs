@@ -930,6 +930,14 @@ versions of xterm."
     ;; are more colors to support, compute them now.
     (when (> ncolors 0)
       (cond
+       ((= ncolors 16777200) ; 24-bit xterm
+	;; all named tty colors
+	(let ((idx (length xterm-standard-colors)))
+	  (mapc (lambda (color)
+		  (unless (assoc (car color) xterm-standard-colors)
+		    (tty-color-define (car color) idx (cdr color))
+		    (setq idx (1+ idx))))
+		color-name-rgb-alist)))
        ((= ncolors 240)	; 256-color xterm
 	;; 216 non-gray colors first
 	(let ((r 0) (g 0) (b 0))

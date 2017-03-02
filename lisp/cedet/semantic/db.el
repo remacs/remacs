@@ -180,7 +180,7 @@ Adds the number of tags in this file to the object print name."
       ;; Else, add a tags quantifier.
       (cl-call-next-method obj (format " (%d tags)" (length (semanticdb-get-tags obj))))
     ;; Pass through.
-    (apply 'call-next-method obj strings)
+    (apply #'cl-call-next-method obj strings)
     ))
 
 ;;; Index Cache
@@ -324,9 +324,10 @@ If OBJ's file is not loaded, read it in first."
 (cl-defmethod object-print ((obj semanticdb-table) &rest strings)
   "Pretty printer extension for `semanticdb-table'.
 Adds the number of tags in this file to the object print name."
-  (apply 'call-next-method obj
-	 (cons (format " (%d tags)" (length (semanticdb-get-tags obj)))
-	       (cons (if (oref obj dirty) ", DIRTY" "") strings))))
+  (apply #'cl-call-next-method obj
+	 (format " (%d tags)" (length (semanticdb-get-tags obj)))
+         (if (oref obj dirty) ", DIRTY" "")
+         strings))
 
 ;;; DATABASE BASE CLASS
 ;;
@@ -382,13 +383,13 @@ where it may need to resynchronize with some persistent storage."
 (cl-defmethod object-print ((obj semanticdb-project-database) &rest strings)
   "Pretty printer extension for `semanticdb-project-database'.
 Adds the number of tables in this file to the object print name."
-  (apply 'call-next-method obj
-	 (cons (format " (%d tables%s)"
-		       (length (semanticdb-get-database-tables obj))
-		       (if (semanticdb-dirty-p obj)
-			   " DIRTY" "")
-		       )
-	       strings)))
+  (apply #'cl-call-next-method obj
+	 (format " (%d tables%s)"
+                 (length (semanticdb-get-database-tables obj))
+                 (if (semanticdb-dirty-p obj)
+                     " DIRTY" "")
+                 )
+         strings))
 
 (cl-defmethod semanticdb-create-database ((dbc (subclass semanticdb-project-database)) directory)
   "Create a new semantic database of class DBC for DIRECTORY and return it.
