@@ -30439,11 +30439,13 @@ note_mouse_highlight (struct frame *f, int x, int y)
 	     no need to do that again.  */
 	  if (!NILP (overlay) && EQ (overlay, hlinfo->mouse_face_overlay))
 	    goto check_help_echo;
-	  hlinfo->mouse_face_overlay = overlay;
 
 	  /* Clear the display of the old active region, if any.  */
 	  if (clear_mouse_face (hlinfo))
 	    cursor = No_Cursor;
+
+	  /* Record the overlay, if any, to be highlighted.  */
+	  hlinfo->mouse_face_overlay = overlay;
 
 	  /* If no overlay applies, get a text property.  */
 	  if (NILP (overlay))

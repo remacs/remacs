@@ -5869,7 +5869,10 @@ compute_char_face (struct frame *f, int ch, Lisp_Object prop)
    LIMIT is a position not to scan beyond.  That is to limit the time
    this function can take.
 
-   If MOUSE, use the character's mouse-face, not its face.
+   If MOUSE, use the character's mouse-face, not its face, and only
+   consider the highest-priority source of mouse-face at POS,
+   i.e. don't merge different mouse-face values if more than one
+   source specifies it.
 
    BASE_FACE_ID, if non-negative, specifies a base face id to use
    instead of DEFAULT_FACE_ID.
@@ -5949,19 +5952,47 @@ face_at_buffer_position (struct window *w, ptrdiff_t pos,
 
   /* Now merge the overlay data.  */
   noverlays = sort_overlays (overlay_vec, noverlays, w);
-  for (i = 0; i < noverlays; i++)
+  /* For mouse-face, we need only the single highest-priority face
+     from the overlays, if any.  */
+  if (mouse)
     {
-      Lisp_Object oend;
-      ptrdiff_t oendpos;
+      for (prop = Qnil, i = noverlays - 1; i >= 0 && NILP (prop); --i)
+	{
+	  Lisp_Object oend;
+	  ptrdiff_t oendpos;
 
-      prop = Foverlay_get (overlay_vec[i], propname);
-      if (!NILP (prop))
-	merge_face_ref (f, prop, attrs, true, 0);
+	  prop = Foverlay_get (overlay_vec[i], propname);
+	  if (!NILP (prop))
+	    {
+	      /* Overlays always take priority over text properties,
+		 so discard the mouse-face text property, if any, and
+		 use the overlay property instead.  */
+	      memcpy (attrs, default_face->lface, sizeof attrs);
+	      merge_face_ref (f, prop, attrs, true, 0);
+	    }
 
-      oend = OVERLAY_END (overlay_vec[i]);
-      oendpos = OVERLAY_POSITION (oend);
-      if (oendpos < endpos)
-	endpos = oendpos;
+	  oend = OVERLAY_END (overlay_vec[i]);
+	  oendpos = OVERLAY_POSITION (oend);
+	  if (oendpos < endpos)
+	    endpos = oendpos;
+	}
+    }
+  else
+    {
+      for (i = 0; i < noverlays; i++)
+	{
+	  Lisp_Object oend;
+	  ptrdiff_t oendpos;
+
+	  prop = Foverlay_get (overlay_vec[i], propname);
+	  if (!NILP (prop))
+	    merge_face_ref (f, prop, attrs, true, 0);
+
+	  oend = OVERLAY_END (overlay_vec[i]);
+	  oendpos = OVERLAY_POSITION (oend);
+	  if (oendpos < endpos)
+	    endpos = oendpos;
+	}
     }
 
   *endptr = endpos;
