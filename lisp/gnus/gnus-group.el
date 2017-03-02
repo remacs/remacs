@@ -2464,14 +2464,33 @@ the bug number, and browsing the URL must return mbox output."
 		     (file-exists-p file))
 		(insert-file-contents file)
 	      (url-insert-file-contents (format mbox-url id)))))
-	(goto-char (point-min))
 	;; Add the debbugs address so that we can respond to reports easily.
-	(while (re-search-forward "^To: " nil t)
-	  (end-of-line)
-	  (insert (format ", %s@%s" (car ids)
-			  (replace-regexp-in-string
-			   "/.*$" ""
-			   (replace-regexp-in-string "^http://" "" mbox-url)))))))
+	(let ((address
+	       (format "%s@%s" (car ids)
+		       (replace-regexp-in-string
+			"/.*$" ""
+			(replace-regexp-in-string "^http://" "" mbox-url)))))
+	  (goto-char (point-min))
+	  (while (re-search-forward (concat "^" message-unix-mail-delimiter)
+				    nil t)
+	    (narrow-to-region (point)
+			      (if (search-forward "\n\n" nil t)
+				  (1- (point))
+				(point-max)))
+	    (unless (string-match (concat "\\(?:\\`\\|[ ,<]\\)"
+					  (regexp-quote address)
+					  "\\(?:\\'\\|[ ,>]\\)")
+				  (concat (message-fetch-field "to") " "
+					  (message-fetch-field "cc")))
+	      (goto-char (point-min))
+	      (if (re-search-forward "^To:" nil t)
+		  (progn
+		    (message-next-header)
+		    (skip-chars-backward "\t\n ")
+		    (insert ", " address))
+		(insert "To: " address "\n")))
+	    (goto-char (point-max))
+	    (widen)))))
     (gnus-group-read-ephemeral-group
      (format "nndoc+ephemeral:bug#%s"
 	     (mapconcat 'number-to-string ids ","))
