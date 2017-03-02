@@ -4915,19 +4915,19 @@ x_edge_detection (struct frame *f, struct image *img, Lisp_Object matrix,
       for (i = 0;
 	   i < 9 && CONSP (matrix) && NUMBERP (XCAR (matrix));
 	   ++i, matrix = XCDR (matrix))
-	trans[i] = XFLOATINT (XCAR (matrix));
+	trans[i] = extract_float (XCAR (matrix));
     }
   else if (VECTORP (matrix) && ASIZE (matrix) >= 9)
     {
       for (i = 0; i < 9 && NUMBERP (AREF (matrix, i)); ++i)
-	trans[i] = XFLOATINT (AREF (matrix, i));
+	trans[i] = extract_float (AREF (matrix, i));
     }
 
   if (NILP (color_adjust))
     color_adjust = make_number (0xffff / 2);
 
   if (i == 9 && NUMBERP (color_adjust))
-    x_detect_edges (f, img, trans, XFLOATINT (color_adjust));
+    x_detect_edges (f, img, trans, extract_float (color_adjust));
 }
 
 

@@ -3530,9 +3530,9 @@ x_set_screen_gamma (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
 
   if (NILP (new_value))
     f->gamma = 0;
-  else if (NUMBERP (new_value) && XFLOATINT (new_value) > 0)
+  else if (NUMBERP (new_value) && extract_float (new_value) > 0)
     /* The value 0.4545 is the normal viewing gamma.  */
-    f->gamma = 1.0 / (0.4545 * XFLOATINT (new_value));
+    f->gamma = 1.0 / (0.4545 * extract_float (new_value));
   else
     signal_error ("Invalid screen-gamma", new_value);
 

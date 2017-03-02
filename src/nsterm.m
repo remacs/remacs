@@ -4814,7 +4814,7 @@ ns_term_init (Lisp_Object display_name)
       /* this is a standard variable */
       ns_default ("AppleAntiAliasingThreshold", &tmp,
                  make_float (10.0), make_float (6.0), YES, NO);
-      ns_antialias_threshold = NILP (tmp) ? 10.0 : XFLOATINT (tmp);
+      ns_antialias_threshold = NILP (tmp) ? 10.0 : extract_float (tmp);
     }
 
   NSTRACE_MSG ("Colors");

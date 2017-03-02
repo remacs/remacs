@@ -178,7 +178,7 @@ The function returns the cons cell (SGNFCAND . EXP).
 If X is zero, both parts (SGNFCAND and EXP) are zero.  */)
   (Lisp_Object x)
 {
-  double f = XFLOATINT (x);
+  double f = extract_float (x);
   int exponent;
   double sgnfcand = frexp (f, &exponent);
   return Fcons (make_float (sgnfcand), make_number (exponent));
@@ -191,7 +191,7 @@ EXPONENT must be an integer.   */)
 {
   CHECK_NUMBER (exponent);
   int e = min (max (INT_MIN, XINT (exponent)), INT_MAX);
-  return make_float (ldexp (XFLOATINT (sgnfcand), e));
+  return make_float (ldexp (extract_float (sgnfcand), e));
 }
 
 DEFUN ("exp", Fexp, Sexp, 1, 1, 0,
