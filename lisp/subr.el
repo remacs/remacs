@@ -132,15 +132,6 @@ buffer-local wherever it is set."
   (list 'progn (list 'defvar var val docstring)
         (list 'make-variable-buffer-local (list 'quote var))))
 
-(defun apply-partially (fun &rest args)
-  "Return a function that is a partial application of FUN to ARGS.
-ARGS is a list of the first N arguments to pass to FUN.
-The result is a new function which does the same as FUN, except that
-the first N arguments are fixed at the values with which this function
-was called."
-  (lambda (&rest args2)
-    (apply fun (append args args2))))
-
 (defmacro push (newelt place)
   "Add NEWELT to the list stored in the generalized variable PLACE.
 This is morally equivalent to (setf PLACE (cons NEWELT PLACE)),
@@ -343,6 +334,15 @@ Any list whose car is `frame-configuration' is assumed to be a frame
 configuration."
   (and (consp object)
        (eq (car object) 'frame-configuration)))
+
+(defun apply-partially (fun &rest args)
+  "Return a function that is a partial application of FUN to ARGS.
+ARGS is a list of the first N arguments to pass to FUN.
+The result is a new function which does the same as FUN, except that
+the first N arguments are fixed at the values with which this function
+was called."
+  (lambda (&rest args2)
+    (apply fun (append args args2))))
 
 
 ;;;; List functions.
