@@ -601,7 +601,7 @@ read_filtered_event (bool no_switch_frame, bool ascii_required,
   /* Compute timeout.  */
   if (NUMBERP (seconds))
     {
-      double duration = extract_float (seconds);
+      double duration = XFLOATINT (seconds);
       struct timespec wait_time = dtotimespec (duration);
       end_time = timespec_add (current_timespec (), wait_time);
     }

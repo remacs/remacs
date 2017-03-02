@@ -7129,8 +7129,8 @@ If PIXELS-P is non-nil, the return value is VSCROLL.  */)
       int old_dy = w->vscroll;
 
       w->vscroll = - (NILP (pixels_p)
-		      ? FRAME_LINE_HEIGHT (f) * extract_float (vscroll)
-		      : extract_float (vscroll));
+		      ? FRAME_LINE_HEIGHT (f) * XFLOATINT (vscroll)
+		      : XFLOATINT (vscroll));
       w->vscroll = min (w->vscroll, 0);
 
       if (w->vscroll != old_dy)

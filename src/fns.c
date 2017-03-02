@@ -2158,10 +2158,8 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
     {
     case Lisp_Float:
       {
-	double d1, d2;
-
-	d1 = extract_float (o1);
-	d2 = extract_float (o2);
+	double d1 = XFLOAT_DATA (o1);
+	double d2 = XFLOAT_DATA (o2);
 	/* If d is a NaN, then d != d. Two NaNs should be `equal' even
 	   though they are not =.  */
 	return d1 == d2 || (d1 != d1 && d2 != d2);

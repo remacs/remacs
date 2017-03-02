@@ -67,10 +67,7 @@ double
 extract_float (Lisp_Object num)
 {
   CHECK_NUMBER_OR_FLOAT (num);
-
-  if (FLOATP (num))
-    return XFLOAT_DATA (num);
-  return (double) XINT (num);
+  return XFLOATINT (num);
 }
 
 /* Trig functions.  */
@@ -207,8 +204,6 @@ DEFUN ("expt", Fexpt, Sexpt, 2, 2, 0,
        doc: /* Return the exponential ARG1 ** ARG2.  */)
   (Lisp_Object arg1, Lisp_Object arg2)
 {
-  double f1, f2, f3;
-
   CHECK_NUMBER_OR_FLOAT (arg1);
   CHECK_NUMBER_OR_FLOAT (arg2);
   if (INTEGERP (arg1)     /* common lisp spec */
@@ -232,10 +227,7 @@ DEFUN ("expt", Fexpt, Sexpt, 2, 2, 0,
       XSETINT (val, acc);
       return val;
     }
-  f1 = FLOATP (arg1) ? XFLOAT_DATA (arg1) : XINT (arg1);
-  f2 = FLOATP (arg2) ? XFLOAT_DATA (arg2) : XINT (arg2);
-  f3 = pow (f1, f2);
-  return make_float (f3);
+  return make_float (pow (XFLOATINT (arg1), XFLOATINT (arg2)));
 }
 
 DEFUN ("log", Flog, Slog, 1, 2, 0,

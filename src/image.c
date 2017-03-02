@@ -4915,19 +4915,19 @@ x_edge_detection (struct frame *f, struct image *img, Lisp_Object matrix,
       for (i = 0;
 	   i < 9 && CONSP (matrix) && NUMBERP (XCAR (matrix));
 	   ++i, matrix = XCDR (matrix))
-	trans[i] = extract_float (XCAR (matrix));
+	trans[i] = XFLOATINT (XCAR (matrix));
     }
   else if (VECTORP (matrix) && ASIZE (matrix) >= 9)
     {
       for (i = 0; i < 9 && NUMBERP (AREF (matrix, i)); ++i)
-	trans[i] = extract_float (AREF (matrix, i));
+	trans[i] = XFLOATINT (AREF (matrix, i));
     }
 
   if (NILP (color_adjust))
     color_adjust = make_number (0xffff / 2);
 
   if (i == 9 && NUMBERP (color_adjust))
-    x_detect_edges (f, img, trans, extract_float (color_adjust));
+    x_detect_edges (f, img, trans, XFLOATINT (color_adjust));
 }
 
 
@@ -8077,7 +8077,7 @@ compute_image_size (size_t width, size_t height,
 
   value = image_spec_value (spec, QCscale, NULL);
   if (NUMBERP (value))
-    scale = extract_float (value);
+    scale = XFLOATINT (value);
 
   /* If width and/or height is set in the display spec assume we want
      to scale to those values.  If either h or w is unspecified, the
@@ -8684,7 +8684,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
   value = image_spec_value (img->spec, QCrotation, NULL);
   if (FLOATP (value))
     {
-      rotation = extract_float (value);
+      rotation = XFLOAT_DATA (value);
       status = MagickRotateImage (image_wand, bg_wand, rotation);
       if (status == MagickFalse)
         {

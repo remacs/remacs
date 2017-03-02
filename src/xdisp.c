@@ -4870,7 +4870,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		  height = safe_call1 (it->font_height,
 				       face->lface[LFACE_HEIGHT_INDEX]);
 		  if (NUMBERP (height))
-		    new_height = extract_float (height);
+		    new_height = XFLOATINT (height);
 		}
 	      else if (NUMBERP (it->font_height))
 		{
@@ -4879,7 +4879,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 
 		  f = FACE_FROM_ID (it->f,
 				    lookup_basic_face (it->f, DEFAULT_FACE_ID));
-		  new_height = (extract_float (it->font_height)
+		  new_height = (XFLOATINT (it->font_height)
 				* XINT (f->lface[LFACE_HEIGHT_INDEX]));
 		}
 	      else
@@ -4894,7 +4894,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		  unbind_to (count, Qnil);
 
 		  if (NUMBERP (value))
-		    new_height = extract_float (value);
+		    new_height = XFLOATINT (value);
 		}
 
 	      if (new_height > 0)
@@ -4916,7 +4916,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	    return 0;
 
 	  value = XCAR (XCDR (spec));
-	  if (NUMBERP (value) && extract_float (value) > 0)
+	  if (NUMBERP (value) && XFLOATINT (value) > 0)
 	    it->space_width = value;
 	}
 
@@ -4968,7 +4968,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	  if (NUMBERP (value))
 	    {
 	      struct face *face = FACE_FROM_ID (it->f, it->face_id);
-	      it->voffset = - (extract_float (value)
+	      it->voffset = - (XFLOATINT (value)
 			       * (normal_char_height (face->font, -1)));
 	    }
 #endif /* HAVE_WINDOW_SYSTEM */
@@ -11058,7 +11058,7 @@ resize_mini_window (struct window *w, bool exact_p)
 
       /* Compute the max. number of lines specified by the user.  */
       if (FLOATP (Vmax_mini_window_height))
-	max_height = extract_float (Vmax_mini_window_height) * total_height;
+	max_height = XFLOAT_DATA (Vmax_mini_window_height) * total_height;
       else if (INTEGERP (Vmax_mini_window_height))
 	max_height = XINT (Vmax_mini_window_height) * unit;
       else
@@ -15501,7 +15501,7 @@ try_scrolling (Lisp_Object window, bool just_this_one_p,
 	  height = WINDOW_BOX_TEXT_HEIGHT (w);
 	  if (NUMBERP (aggressive))
 	    {
-	      double float_amount = extract_float (aggressive) * height;
+	      double float_amount = XFLOATINT (aggressive) * height;
 	      int aggressive_scroll = float_amount;
 	      if (aggressive_scroll == 0 && float_amount > 0)
 		aggressive_scroll = 1;
@@ -15617,7 +15617,7 @@ try_scrolling (Lisp_Object window, bool just_this_one_p,
 	      height = WINDOW_BOX_TEXT_HEIGHT (w);
 	      if (NUMBERP (aggressive))
 		{
-		  double float_amount = extract_float (aggressive) * height;
+		  double float_amount = XFLOATINT (aggressive) * height;
 		  int aggressive_scroll = float_amount;
 		  if (aggressive_scroll == 0 && float_amount > 0)
 		    aggressive_scroll = 1;
@@ -16968,7 +16968,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	     scroll-*-aggressively.  */
 	  if (!scroll_conservatively && NUMBERP (aggressive))
 	    {
-	      double float_amount = extract_float (aggressive);
+	      double float_amount = XFLOATINT (aggressive);
 
 	      pt_offset = float_amount * WINDOW_BOX_TEXT_HEIGHT (w);
 	      if (pt_offset == 0 && float_amount > 0)
@@ -24557,7 +24557,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
       int base_unit = (width_p
 		       ? FRAME_COLUMN_WIDTH (it->f)
 		       : FRAME_LINE_HEIGHT (it->f));
-      return OK_PIXELS (extract_float (prop) * base_unit);
+      return OK_PIXELS (XFLOATINT (prop) * base_unit);
     }
 
   if (CONSP (prop))
@@ -24612,7 +24612,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
       if (NUMBERP (car))
 	{
 	  double fact;
-	  pixels = extract_float (car);
+	  pixels = XFLOATINT (car);
 	  if (NILP (cdr))
 	    return OK_PIXELS (pixels);
 	  if (calc_pixel_width_or_height (&fact, it, cdr,
@@ -27225,7 +27225,7 @@ x_produce_glyphs (struct it *it)
 	  bool stretched_p
 	    = it->char_to_display == ' ' && !NILP (it->space_width);
 	  if (stretched_p)
-	    it->pixel_width *= extract_float (it->space_width);
+	    it->pixel_width *= XFLOATINT (it->space_width);
 
 	  /* If face has a box, add the box thickness to the character
 	     height.  If character has a box line to the left and/or
@@ -29703,7 +29703,7 @@ on_hot_spot_p (Lisp_Object hot_spot, int x, int y)
 	  && (lx0 = XCAR (XCAR (circ)), INTEGERP (lx0))
 	  && (ly0 = XCDR (XCAR (circ)), INTEGERP (ly0)))
 	{
-	  double r = extract_float (lr);
+	  double r = XFLOATINT (lr);
 	  double dx = XINT (lx0) - x;
 	  double dy = XINT (ly0) - y;
 	  return (dx * dx + dy * dy <= r * r);

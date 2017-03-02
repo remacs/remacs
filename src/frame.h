@@ -624,7 +624,7 @@ fset_desired_tool_bar_string (struct frame *f, Lisp_Object val)
 INLINE double
 NUMVAL (Lisp_Object x)
 {
-  return NUMBERP (x) ? extract_float (x) : -1;
+  return NUMBERP (x) ? XFLOATINT (x) : -1;
 }
 
 INLINE double

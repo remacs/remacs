@@ -2803,6 +2803,12 @@ CHECK_NATNUM (Lisp_Object x)
       CHECK_TYPE (INTEGERP (x), Qinteger_or_marker_p, x);		\
   } while (false)
 
+INLINE double
+XFLOATINT (Lisp_Object n)
+{
+  return FLOATP (n) ? XFLOAT_DATA (n) : XINT (n);
+}
+
 INLINE void
 CHECK_NUMBER_OR_FLOAT (Lisp_Object x)
 {

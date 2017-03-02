@@ -4312,12 +4312,8 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      char sprintf_buf[SPRINTF_BUFSIZE];
 	      ptrdiff_t sprintf_bytes;
 	      if (conversion == 'e' || conversion == 'f' || conversion == 'g')
-		{
-		  double x = (INTEGERP (args[n])
-			      ? XINT (args[n])
-			      : XFLOAT_DATA (args[n]));
-		  sprintf_bytes = sprintf (sprintf_buf, convspec, prec, x);
-		}
+		sprintf_bytes = sprintf (sprintf_buf, convspec, prec,
+					 XFLOATINT (args[n]));
 	      else if (conversion == 'c')
 		{
 		  /* Don't use sprintf here, as it might mishandle prec.  */
