@@ -7045,8 +7045,9 @@ buffer."
   (interactive)
   (if (not (gnus-buffer-live-p gnus-article-buffer))
       (error "There is no article buffer for this summary buffer")
-    (unless (get-buffer-window gnus-article-buffer)
-      (gnus-summary-show-article))
+    (or (get-buffer-window gnus-article-buffer)
+	(eq gnus-current-article (gnus-summary-article-number))
+	(gnus-summary-show-article))
     (gnus-configure-windows
      (if gnus-widen-article-window
 	 'only-article
