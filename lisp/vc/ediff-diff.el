@@ -1149,7 +1149,11 @@ delimiter regions"))
 	     ediff-coding-system-for-write
 	   ediff-coding-system-for-read))
 	args)
-    (setq args (append (split-string options) files))
+    (setq args (append (split-string options)
+                       (mapcar (lambda (file)
+                                 (file-name-unquote
+                                  (or (file-local-copy file) file)))
+                               files)))
     (setq args (delete "" (delq nil args))) ; delete nil and "" from arguments
     ;; the --binary option, if present, should be used only for buffer jobs
     ;; or for refining the differences
