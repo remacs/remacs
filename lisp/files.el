@@ -6915,7 +6915,15 @@ only these files will be asked to be saved."
 (defun file-name-non-special (operation &rest arguments)
   (let ((file-name-handler-alist nil)
 	(default-directory
-	  (if (eq operation 'insert-directory)
+          ;; Some operations respect file name handlers in
+          ;; `default-directory'.  Because core function like
+          ;; `call-process' don't care about file name handlers in
+          ;; `default-directory', we here have to resolve the
+          ;; directory into a local one.  For `process-file',
+          ;; `start-file-process', and `shell-command', this fixes
+          ;; Bug#25949.
+	  (if (memq operation '(insert-directory process-file start-file-process
+                                                 shell-command))
 	      (directory-file-name
 	       (expand-file-name
 		(unhandled-file-name-directory default-directory)))

@@ -243,5 +243,13 @@ be $HOME."
                          (concat "/:/:" subdir)))))
       (delete-directory dir 'recursive))))
 
+(ert-deftest files-tests--file-name-non-special--subprocess ()
+  "Check that Bug#25949 is fixed."
+  (skip-unless (executable-find "true"))
+  (should (eq (let ((default-directory "/:/")) (process-file "true")) 0))
+  (should (processp (let ((default-directory "/:/"))
+                      (start-file-process "foo" nil "true"))))
+  (should (eq (let ((default-directory "/:/")) (shell-command "true")) 0)))
+
 (provide 'files-tests)
 ;;; files-tests.el ends here
