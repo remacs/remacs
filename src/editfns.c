@@ -4275,7 +4275,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      {
 		char *f = convspec;
 		*f++ = '%';
-		*f = '-'; f += minus_flag;
+		/* MINUS_FLAG is dealt with later.  */
 		*f = '+'; f +=  plus_flag;
 		*f = ' '; f += space_flag;
 		*f = '#'; f += sharp_flag;
