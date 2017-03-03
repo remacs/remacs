@@ -45,6 +45,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <math.h>
 
+#include <count-leading-zeros.h>
+
 /* 'isfinite' and 'isnan' cause build failures on Solaris 10 with the
    bundled GCC in c99 mode.  Work around the bugs with simple
    implementations that are good enough.  */
@@ -290,28 +292,46 @@ DEFUN ("float", Ffloat, Sfloat, 1, 1, 0,
     return arg;
 }
 
+static int
+ecount_leading_zeros (EMACS_UINT x)
+{
+  return (EMACS_UINT_WIDTH == UINT_WIDTH ? count_leading_zeros (x)
+	  : EMACS_UINT_WIDTH == ULONG_WIDTH ? count_leading_zeros_l (x)
+	  : count_leading_zeros_ll (x));
+}
+
 DEFUN ("logb", Flogb, Slogb, 1, 1, 0,
        doc: /* Returns largest integer <= the base 2 log of the magnitude of ARG.
 This is the same as the exponent of a float.  */)
   (Lisp_Object arg)
 {
-  Lisp_Object val;
   EMACS_INT value;
-  double f = extract_float (arg);
+  CHECK_NUMBER_OR_FLOAT (arg);
 
-  if (f == 0.0)
-    value = MOST_NEGATIVE_FIXNUM;
-  else if (isfinite (f))
+  if (FLOATP (arg))
     {
-      int ivalue;
-      frexp (f, &ivalue);
-      value = ivalue - 1;
+      double f = XFLOAT_DATA (arg);
+
+      if (f == 0)
+	value = MOST_NEGATIVE_FIXNUM;
+      else if (isfinite (f))
+	{
+	  int ivalue;
+	  frexp (f, &ivalue);
+	  value = ivalue - 1;
+	}
+      else
+	value = MOST_POSITIVE_FIXNUM;
     }
   else
-    value = MOST_POSITIVE_FIXNUM;
+    {
+      EMACS_INT i = eabs (XINT (arg));
+      value = (i == 0
+	       ? MOST_NEGATIVE_FIXNUM
+	       : EMACS_UINT_WIDTH - 1 - ecount_leading_zeros (i));
+    }
 
-  XSETINT (val, value);
-  return val;
+  return make_number (value);
 }
 
 

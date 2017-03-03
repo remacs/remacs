@@ -25,4 +25,7 @@
   (should-error (round most-negative-fixnum -1.0))
   (should-error (truncate most-negative-fixnum -1.0)))
 
+(ert-deftest logb-extreme-fixnum ()
+  (should (= (logb most-negative-fixnum) (1+ (logb most-positive-fixnum)))))
+
 (provide 'floatfns-tests)
