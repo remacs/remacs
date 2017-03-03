@@ -3245,7 +3245,7 @@ record_char (Lisp_Object c)
 	    }
 	}
     }
-  else
+  else if (NILP (Vexecuting_kbd_macro))
     store_kbd_macro_char (c);
 
   /* recent_keys should not include events from keyboard macros.  */
