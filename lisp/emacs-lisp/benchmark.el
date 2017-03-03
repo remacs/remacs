@@ -1,4 +1,4 @@
-;;; benchmark.el --- support for benchmarking code
+;;; benchmark.el --- support for benchmarking code  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
@@ -33,6 +33,7 @@
 
 (defmacro benchmark-elapse (&rest forms)
   "Return the time in seconds elapsed for execution of FORMS."
+  (declare (indent 0) (debug t))
   (let ((t1 (make-symbol "t1"))
 	(t2 (make-symbol "t2")))
     `(let (,t1 ,t2)
@@ -40,9 +41,6 @@
        ,@forms
        (setq ,t2 (current-time))
        (float-time (time-subtract ,t2 ,t1)))))
-
-(put 'benchmark-elapse 'edebug-form-spec t)
-(put 'benchmark-elapse 'lisp-indent-function 0)
 
 ;;;###autoload
 (defmacro benchmark-run (&optional repetitions &rest forms)
