@@ -1,4 +1,4 @@
-# gnulib-common.m4 serial 36
+# gnulib-common.m4 serial 37
 dnl Copyright (C) 2007-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -456,7 +456,9 @@ m4_ifndef([AC_PROG_SED],
      else
        ac_cv_path_SED=$SED
      fi
+    ])
  SED="$ac_cv_path_SED"
  AC_SUBST([SED])dnl
  rm -f conftest.sed
-])])])
+])
+])
