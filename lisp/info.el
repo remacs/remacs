@@ -2361,8 +2361,8 @@ If SAME-FILE is non-nil, do not move to a different Info file."
   "History-specific implementation of `Info-find-node-2'."
   (insert (format "\n\^_\nFile: %s,  Node: %s,  Up: (dir)\n\n"
 		  (or filename Info-current-file) nodename))
-  (insert "Recently Visited Nodes\n")
-  (insert "**********************\n\n")
+  (insert "History of Visited Nodes\n")
+  (insert "************************\n\n")
   (insert "* Menu:\n\n")
   (let ((hl (remove '("*History*" "Top") Info-history-list)))
     (while hl
