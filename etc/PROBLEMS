@@ -741,7 +741,7 @@ instance if you are editing a text with a lot of math symbols, then
 installing a font like 'Symbola' should solve this problem.
 
 ** Emacs running on GNU/Linux system with the m17n library Ver.1.7.1 or the
-earlier vesion has a problem with rendering Bengali script.
+earlier version has a problem with rendering Bengali script.
 
 The problem can be fixed by installing the newer version of the m17n
 library (if any), or by following this procedure:
