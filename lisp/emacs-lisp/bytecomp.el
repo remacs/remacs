@@ -1659,7 +1659,12 @@ that already has a `.elc' file."
   (if arg (setq arg (prefix-numeric-value arg)))
   (if noninteractive
       nil
-    (save-some-buffers)
+    (save-some-buffers
+     nil (lambda ()
+           (let ((file (buffer-file-name)))
+             (and file
+                  (string-match-p emacs-lisp-file-regexp file)
+                  (file-in-directory-p file directory)))))
     (force-mode-line-update))
   (with-current-buffer (get-buffer-create byte-compile-log-buffer)
     (setq default-directory (expand-file-name directory))
