@@ -740,6 +740,36 @@ The solution is to install the appropriate fonts on your machine. For
 instance if you are editing a text with a lot of math symbols, then
 installing a font like 'Symbola' should solve this problem.
 
+** Emacs running on GNU/Linux system with the m17n library Ver.1.7.1 or the
+earlier vesion has a problem with rendering Bengali script.
+
+The problem can be fixed by installing the newer version of the m17n
+library (if any), or by following this procedure:
+
+1. Locate the file BENG-OTF.flt installed on your system as part of the
+m17n library.  Usually it is under the directory /usr/share/m17n.
+
+2. Apply the following patch to BENG-OTF.flt
+
+------------------------------------------------------------
+diff --git a/FLT/BENG-OTF.flt b/FLT/BENG-OTF.flt
+index 45cc554..0cc5e76 100644
+--- a/FLT/BENG-OTF.flt
++++ b/FLT/BENG-OTF.flt
+@@ -232,7 +232,7 @@
+  (lang-forms
+   (cond
+    ("(.H)J" (1 :otf=beng=half+))
+-   (".H" :otf=beng=blwf,half,vatu+)
++   (".+H" :otf=beng=blwf,half,vatu+)
+    ("." =)))
+
+  (post
+------------------------------------------------------------
+
+If you can't modify that file directly, copy it to the directory
+~/.m17n.d/ (create it if it doesn't exist), and apply the patch.
+
 * Internationalization problems
 
 ** M-{ does not work on a Spanish PC keyboard.
