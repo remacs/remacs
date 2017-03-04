@@ -2228,6 +2228,9 @@ flags that control whether to collect or render objects."
     (if (get-buffer-window)
 	(car (window-text-pixel-size nil (point-min) (point-max)))
       (save-window-excursion
+        ;; Avoid errors if the selected window is a dedicated one,
+        ;; and they just want to insert a document into it.
+        (set-window-dedicated-p nil nil)
 	(set-window-buffer nil (current-buffer))
 	(car (window-text-pixel-size nil (point-min) (point-max)))))))
 
@@ -2271,6 +2274,9 @@ flags that control whether to collect or render objects."
 	    (shr-indentation 0))
 	(shr-descend dom))
       (save-window-excursion
+        ;; Avoid errors if the selected window is a dedicated one,
+        ;; and they just want to insert a document into it.
+        (set-window-dedicated-p nil nil)
 	(set-window-buffer nil (current-buffer))
 	(unless fill
 	  (setq natural-width
