@@ -175,19 +175,11 @@ EXTRA_DIST += gl_openssl.h md5.h
 
 ## end   gnulib module crypto/md5
 
-## begin gnulib module crypto/sha1
+## begin crypto in rust
 
-EXTRA_DIST += sha1.h
+EXTRA_DIST += sha1.h gl_openssl.h sha256.h
 
-## end   gnulib module crypto/sha1
-
-## begin gnulib module crypto/sha256
-
-libgnu_a_SOURCES += sha256.c
-
-EXTRA_DIST += gl_openssl.h sha256.h
-
-## end   gnulib module crypto/sha256
+## end   crypto in rust
 
 ## begin gnulib module dirent
 

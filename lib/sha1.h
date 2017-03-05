@@ -22,11 +22,6 @@
 # define SHA1_DIGEST_SIZE 20
 
 # include <stdio.h>
-# include <stdint.h>
-
-# ifdef __cplusplus
-extern "C" {
-# endif
 
 /* Structure to save state of computation between the single steps.  */
 struct sha1_ctx;
@@ -53,9 +48,5 @@ extern void *sha1_finish_ctx (struct sha1_ctx *ctx, void *resbuf);
    output yields to the wanted ASCII representation of the message
    digest.  */
 extern void *sha1_buffer (const char *buffer, size_t len, void *resblock);
-
-# ifdef __cplusplus
-}
-# endif
 
 #endif

@@ -20,10 +20,6 @@
 
 # include <stdio.h>
 
-# ifdef __cplusplus
-extern "C" {
-# endif
-
 enum { SHA384_DIGEST_SIZE = 384/8 };
 enum { SHA512_DIGEST_SIZE = 512/8 };
 
@@ -33,9 +29,5 @@ enum { SHA512_DIGEST_SIZE = 512/8 };
    digest.  */
 extern void *sha512_buffer (const char *buffer, size_t len, void *resblock);
 extern void *sha384_buffer (const char *buffer, size_t len, void *resblock);
-
-# ifdef __cplusplus
-}
-# endif
 
 #endif

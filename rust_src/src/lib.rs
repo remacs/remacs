@@ -13,7 +13,8 @@ extern crate lazy_static;
 
 extern crate remacs_sys;
 extern crate libc;
-extern crate ring;
+extern crate sha1;
+extern crate sha2;
 
 mod lisp;
 mod lists;
@@ -56,9 +57,10 @@ pub use crypto::sha256_buffer;
 pub use crypto::sha1_buffer;
 pub use crypto::sha384_buffer;
 pub use crypto::sha512_buffer;
-pub use crypto::sha1::sha1_ctx_new;
-pub use crypto::sha1::sha1_process_bytes;
-pub use crypto::sha1::sha1_finish_ctx;
+pub use crypto::sha224_buffer;
+pub use crypto::sha1_ctx::sha1_ctx_new;
+pub use crypto::sha1_ctx::sha1_process_bytes;
+pub use crypto::sha1_ctx::sha1_finish_ctx;
 
 // These need to be exported as marker.c depends upon them.
 pub use marker::CHECK_MARKER;
