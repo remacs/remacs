@@ -6643,11 +6643,11 @@ live."
     (display-buffer-record-window type window buffer)
     (unless (eq buffer (window-buffer window))
       (set-window-dedicated-p window nil)
-      (set-window-buffer window buffer)
-      (when dedicated
-	(set-window-dedicated-p window dedicated))
-      (when (memq type '(window frame))
-	(set-window-prev-buffers window nil)))
+      (set-window-buffer window buffer))
+    (when dedicated
+      (set-window-dedicated-p window dedicated))
+    (when (memq type '(window frame))
+      (set-window-prev-buffers window nil))
     (let ((quit-restore (window-parameter window 'quit-restore))
 	  (height (cdr (assq 'window-height alist)))
 	  (width (cdr (assq 'window-width alist)))
