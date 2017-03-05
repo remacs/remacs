@@ -1728,6 +1728,7 @@ iterating over vectors or lists.
 
 @node Loop Facility
 @section Loop Facility
+@cindex loop facility
 
 @noindent
 A common complaint with Lisp's traditional looping constructs was
