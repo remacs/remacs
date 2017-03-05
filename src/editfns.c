@@ -4145,6 +4145,9 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		}
 	    }
 
+	  bool float_conversion
+	    = conversion == 'e' || conversion == 'f' || conversion == 'g';
+
 	  if (conversion == 's')
 	    {
 	      /* handle case (precision[n] >= 0) */
@@ -4229,8 +4232,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		}
 	    }
 	  else if (! (conversion == 'c' || conversion == 'd'
-		      || conversion == 'e' || conversion == 'f'
-		      || conversion == 'g' || conversion == 'i'
+		      || float_conversion || conversion == 'i'
 		      || conversion == 'o' || conversion == 'x'
 		      || conversion == 'X'))
 	    error ("Invalid format operation %%%c",
@@ -4242,11 +4244,22 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	    {
 	      enum
 	      {
+		/* Lower bound on the number of bits per
+		   base-FLT_RADIX digit.  */
+		DIG_BITS_LBOUND = FLT_RADIX < 16 ? 1 : 4,
+
+		/* 1 if integers should be formatted as long doubles,
+		   because they may be so large that there is a rounding
+		   error when converting them to double, and long doubles
+		   are wider than doubles.  */
+		INT_AS_LDBL = (DIG_BITS_LBOUND * DBL_MANT_DIG < FIXNUM_BITS - 1
+			       && DBL_MANT_DIG < LDBL_MANT_DIG),
+
 		/* Maximum precision for a %f conversion such that the
 		   trailing output digit might be nonzero.  Any precision
 		   larger than this will not yield useful information.  */
 		USEFUL_PRECISION_MAX =
-		  ((1 - DBL_MIN_EXP)
+		  ((1 - LDBL_MIN_EXP)
 		   * (FLT_RADIX == 2 || FLT_RADIX == 10 ? 1
 		      : FLT_RADIX == 16 ? 4
 		      : -1)),
@@ -4255,7 +4268,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		   precision is no more than USEFUL_PRECISION_MAX.
 		   On all practical hosts, %f is the worst case.  */
 		SPRINTF_BUFSIZE =
-		  sizeof "-." + (DBL_MAX_10_EXP + 1) + USEFUL_PRECISION_MAX,
+		  sizeof "-." + (LDBL_MAX_10_EXP + 1) + USEFUL_PRECISION_MAX,
 
 		/* Length of pM (that is, of pMd without the
 		   trailing "d").  */
@@ -4269,9 +4282,10 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 
 	      /* Create the copy of the conversion specification, with
 		 any width and precision removed, with ".*" inserted,
+		 with "L" possibly inserted for floating-point formats,
 		 and with pM inserted for integer formats.
 		 At most two flags F can be specified at once.  */
-	      char convspec[sizeof "%FF.*d" + pMlen];
+	      char convspec[sizeof "%FF.*d" + max (INT_AS_LDBL, pMlen)];
 	      {
 		char *f = convspec;
 		*f++ = '%';
@@ -4281,9 +4295,15 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		*f = '#'; f += sharp_flag;
                 *f++ = '.';
                 *f++ = '*';
-		if (conversion == 'd' || conversion == 'i'
-		    || conversion == 'o' || conversion == 'x'
-		    || conversion == 'X')
+		if (float_conversion)
+		  {
+		    if (INT_AS_LDBL)
+		      {
+			*f = 'L';
+			f += INTEGERP (args[n]);
+		      }
+		  }
+		else if (conversion != 'c')
 		  {
 		    memcpy (f, pMd, pMlen);
 		    f += pMlen;
@@ -4310,9 +4330,20 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		 not suitable here.  */
 	      char sprintf_buf[SPRINTF_BUFSIZE];
 	      ptrdiff_t sprintf_bytes;
-	      if (conversion == 'e' || conversion == 'f' || conversion == 'g')
-		sprintf_bytes = sprintf (sprintf_buf, convspec, prec,
-					 XFLOATINT (args[n]));
+	      if (float_conversion)
+		{
+		  if (INT_AS_LDBL && INTEGERP (args[n]))
+		    {
+		      /* Although long double may have a rounding error if
+			 DIG_BITS_LBOUND * LDBL_MANT_DIG < FIXNUM_BITS - 1,
+			 it is more accurate than plain 'double'.  */
+		      long double x = XINT (args[n]);
+		      sprintf_bytes = sprintf (sprintf_buf, convspec, prec, x);
+		    }
+		  else
+		    sprintf_bytes = sprintf (sprintf_buf, convspec, prec,
+					     XFLOATINT (args[n]));
+		}
 	      else if (conversion == 'c')
 		{
 		  /* Don't use sprintf here, as it might mishandle prec.  */
@@ -4374,8 +4405,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      uintmax_t leading_zeros = 0, trailing_zeros = 0;
 	      if (excess_precision)
 		{
-		  if (conversion == 'e' || conversion == 'f'
-		      || conversion == 'g')
+		  if (float_conversion)
 		    {
 		      if ((conversion == 'g' && ! sharp_flag)
 			  || ! ('0' <= sprintf_buf[sprintf_bytes - 1]
