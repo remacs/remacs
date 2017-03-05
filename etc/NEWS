@@ -741,6 +741,11 @@ where to place point after C-c M-r and C-c M-s.
 *** Messages from CMake are now recognized.
 
 +++
+*** The number of errors, warnings, and informational messages is now
+displayed in the mode line.  These are updated as compilation
+proceeds.
+
++++
 *** A new option 'dired-always-read-filesystem' default to nil.
 If non-nil, buffers visiting files are reverted before search them;
 for instance, in 'dired-mark-files-containing-regexp' a non-nil value

@@ -90,6 +90,10 @@ inserted above point, which remains at the end.  Otherwise, point
 remains fixed while compilation output is added at the end of the
 buffer.
 
+  While compilation proceeds, the mode line is updated to show the
+number of errors, warnings, and informational messages that have been
+seen so far.
+
 @cindex compilation buffer, keeping point at end
 @vindex compilation-scroll-output
   If you change the variable @code{compilation-scroll-output} to a
