@@ -1069,103 +1069,79 @@ Lisp function does not specify a special indentation."
 If optional arg ENDPOS is given, indent each line, stopping when
 ENDPOS is encountered."
   (interactive)
-  (let ((indent-stack (list nil))
-	(next-depth 0)
-	;; If ENDPOS is non-nil, use nil as STARTING-POINT
-	;; so that calculate-lisp-indent will find the beginning of
-	;; the defun we are in.
-	;; If ENDPOS is nil, it is safe not to scan before point
-	;; since every line we indent is more deeply nested than point is.
-	(starting-point (if endpos nil (point)))
-	(last-point (point))
-	last-depth bol outer-loop-done inner-loop-done state this-indent)
-    (or endpos
-	;; Get error now if we don't have a complete sexp after point.
-	(save-excursion (forward-sexp 1)))
+  (let* ((indent-stack (list nil))
+         ;; If ENDPOS is non-nil, use beginning of defun as STARTING-POINT.
+         ;; If ENDPOS is nil, it is safe not to scan before point
+         ;; since every line we indent is more deeply nested than point is.
+         (starting-point (save-excursion (if endpos (beginning-of-defun))
+                                         (point)))
+         (state nil)
+         (init-depth 0)
+         (next-depth 0)
+         (last-depth 0)
+         (last-syntax-point (point)))
+    (unless endpos
+      ;; Get error now if we don't have a complete sexp after point.
+      (save-excursion (forward-sexp 1)
+                      ;; We need a marker because we modify the buffer
+                      ;; text preceding endpos.
+                      (setq endpos (point-marker))))
     (save-excursion
-      (setq outer-loop-done nil)
-      (while (if endpos (< (point) endpos)
-	       (not outer-loop-done))
-	(setq last-depth next-depth
-	      inner-loop-done nil)
-	;; Parse this line so we can learn the state
-	;; to indent the next line.
-	;; This inner loop goes through only once
-	;; unless a line ends inside a string.
-	(while (and (not inner-loop-done)
-		    (not (setq outer-loop-done (eobp))))
-	  (setq state (parse-partial-sexp (point) (progn (end-of-line) (point))
-					  nil nil state))
-	  (setq next-depth (car state))
-	  ;; If the line contains a comment other than the sort
-	  ;; that is indented like code,
-	  ;; indent it now with indent-for-comment.
-	  ;; Comments indented like code are right already.
-	  ;; In any case clear the in-comment flag in the state
-	  ;; because parse-partial-sexp never sees the newlines.
-	  (if (car (nthcdr 4 state))
-	      (progn (indent-for-comment)
-		     (end-of-line)
-		     (setcar (nthcdr 4 state) nil)))
-	  ;; If this line ends inside a string,
-	  ;; go straight to next line, remaining within the inner loop,
-	  ;; and turn off the \-flag.
-	  (if (car (nthcdr 3 state))
-	      (progn
-		(forward-line 1)
-		(setcar (nthcdr 5 state) nil))
-	    (setq inner-loop-done t)))
-	(and endpos
-	     (<= next-depth 0)
-	     (progn
-	       (setq indent-stack (nconc indent-stack
-					 (make-list (- next-depth) nil))
-		     last-depth (- last-depth next-depth)
-		     next-depth 0)))
-	(forward-line 1)
-	;; Decide whether to exit.
-	(if endpos
-	    ;; If we have already reached the specified end,
-	    ;; give up and do not reindent this line.
-	    (if (<= endpos (point))
-		(setq outer-loop-done t))
-	  ;; If no specified end, we are done if we have finished one sexp.
-	  (if (<= next-depth 0)
-	      (setq outer-loop-done t)))
-	(unless outer-loop-done
-	  (while (> last-depth next-depth)
-	    (setq indent-stack (cdr indent-stack)
-		  last-depth (1- last-depth)))
-	  (while (< last-depth next-depth)
-	    (setq indent-stack (cons nil indent-stack)
-		  last-depth (1+ last-depth)))
-	  ;; Now indent the next line according
-	  ;; to what we learned from parsing the previous one.
-	  (setq bol (point))
-	  (skip-chars-forward " \t")
-	  ;; But not if the line is blank, or just a comment
-	  ;; (except for double-semi comments; indent them as usual).
-	  (if (or (eobp) (looking-at "\\s<\\|\n"))
-	      nil
-	    (if (and (car indent-stack)
-		     (>= (car indent-stack) 0))
-		(setq this-indent (car indent-stack))
-	      (let ((val (calculate-lisp-indent
-			  (if (car indent-stack) (- (car indent-stack))
-			    starting-point))))
-		(if (null val)
-		    (setq this-indent val)
-		  (if (integerp val)
-		      (setcar indent-stack
-			      (setq this-indent val))
-		    (setcar indent-stack (- (car (cdr val))))
-		    (setq this-indent (car val))))))
-	    (if (and this-indent (/= (current-column) this-indent))
-		(progn (delete-region bol (point))
-		       (indent-to this-indent)))))
-	(or outer-loop-done
-	    (setq outer-loop-done (= (point) last-point))
-	    (setq last-point (point)))))))
+      (while (< (point) endpos)
+        ;; Parse this line so we can learn the state to indent the
+        ;; next line.
+        (while (progn
+                 (setq state (parse-partial-sexp
+                              last-syntax-point (progn (end-of-line) (point))
+                              nil nil state))
+                 ;; Skip over newlines within strings.
+                 (nth 3 state))
+          (setq state (parse-partial-sexp (point) (point-max)
+                                          nil nil state 'syntax-table))
+          (setq last-syntax-point (point)))
+        (setq next-depth (car state))
+        ;; If the line contains a comment indent it now with
+        ;; `indent-for-comment'.
+        (when (nth 4 state)
+          (indent-for-comment)
+          (end-of-line))
+        (setq last-syntax-point (point))
+        (when (< next-depth init-depth)
+          (setq indent-stack (nconc indent-stack
+                                    (make-list (- init-depth next-depth) nil))
+                last-depth (- last-depth next-depth)
+                next-depth init-depth))
+        (forward-line 1)
+        (when (< (point) endpos)
+          (let ((depth-delta (- next-depth last-depth)))
+            (cond ((< depth-delta 0)
+                   (setq indent-stack (nthcdr (- depth-delta) indent-stack)))
+                  ((> depth-delta 0)
+                   (setq indent-stack (nconc (make-list depth-delta nil)
+                                             indent-stack))))
+            (setq last-depth next-depth))
+          ;; Now indent the next line according
+          ;; to what we learned from parsing the previous one.
+          (skip-chars-forward " \t")
+          ;; But not if the line is blank, or just a comment (we
+          ;; already called `indent-for-comment' above).
+          (unless (or (eolp) (eq (char-syntax (char-after)) ?<))
+            (let ((this-indent (car indent-stack)))
+              (when (listp this-indent)
+                (let ((val (calculate-lisp-indent
+                            (or (car this-indent) starting-point))))
+                  (setq
+                   this-indent
+                   (cond ((integerp val)
+                          (setf (car indent-stack) val))
+                         ((consp val) ; (COLUMN CONTAINING-SEXP-START)
+                          (setf (car indent-stack) (cdr val))
+                          (car val))
+                         ;; `calculate-lisp-indent' only returns nil
+                         ;; when we're in a string, but this won't
+                         ;; happen because we skip strings above.
+                         (t (error "This shouldn't happen!"))))))
+              (indent-line-to this-indent))))))))
 
 (defun indent-pp-sexp (&optional arg)
   "Indent each line of the list starting just after point, or prettyprint it.
