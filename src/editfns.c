@@ -4270,16 +4270,15 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      /* Create the copy of the conversion specification, with
 		 any width and precision removed, with ".*" inserted,
 		 and with pM inserted for integer formats.
-		 At most three flags F can be specified at once.  */
-	      char convspec[sizeof "%FFF.*d" + pMlen];
+		 At most two flags F can be specified at once.  */
+	      char convspec[sizeof "%FF.*d" + pMlen];
 	      {
 		char *f = convspec;
 		*f++ = '%';
-		/* MINUS_FLAG is dealt with later.  */
+		/* MINUS_FLAG and ZERO_FLAG are dealt with later.  */
 		*f = '+'; f +=  plus_flag;
 		*f = ' '; f += space_flag;
 		*f = '#'; f += sharp_flag;
-		*f = '0'; f +=  zero_flag;
                 *f++ = '.';
                 *f++ = '*';
 		if (conversion == 'd' || conversion == 'i'
