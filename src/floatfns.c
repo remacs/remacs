@@ -534,10 +534,7 @@ Rounds the value toward zero.  */)
   (Lisp_Object arg)
 {
   double d = extract_float (arg);
-  if (d >= 0.0)
-    d = floor (d);
-  else
-    d = ceil (d);
+  d = emacs_trunc (d);
   return make_float (d);
 }
 
