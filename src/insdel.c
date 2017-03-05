@@ -571,7 +571,7 @@ make_gap (ptrdiff_t nbytes_added)
      * With /1024 =>  51s
      * With /4096 => 131s
      * With /∞    => gave up after 858s
-     * Of couse, ideally we should never call set-buffer-multibyte on
+     * Of course, ideally we should never call set-buffer-multibyte on
      * a non-empty buffer (e.g. use buffer-swap-text instead).
      * We chose /64 because it already brings almost the best performance while
      * limiting the potential wasted memory to 1.5%.  */

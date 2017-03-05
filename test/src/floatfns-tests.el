@@ -1,4 +1,4 @@
-;;; floatfn-tests.el --- tests for floating point operations
+;;; floatfns-tests.el --- tests for floating point operations
 
 ;; Copyright 2017 Free Software Foundation, Inc.
 

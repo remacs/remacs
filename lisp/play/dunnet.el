@@ -1642,7 +1642,7 @@ just try dropping it."))
 ;;; Various movement directions
 
 (defun dun-movement (dir)
-  "Return enumeral of movement symbol DIR."
+  "Return number associated with movement symbol DIR."
   (cdr (assq dir dun-movement-alist)))
 
 (defun dun-n (_args)

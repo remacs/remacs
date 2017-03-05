@@ -1,4 +1,4 @@
-;;; cl-print.el --- CL-style generic printer facilies  -*- lexical-binding: t; -*-
+;;; cl-print.el --- CL-style generic printing  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2017  Free Software Foundation, Inc.
 
