@@ -3426,11 +3426,12 @@ file_offset (Lisp_Object val)
   if (FLOATP (val))
     {
       double v = XFLOAT_DATA (val);
-      if (0 <= v
-	  && (sizeof (off_t) < sizeof v
-	      ? v <= TYPE_MAXIMUM (off_t)
-	      : v < TYPE_MAXIMUM (off_t)))
-	return v;
+      if (0 <= v && v < 1.0 + TYPE_MAXIMUM (off_t))
+	{
+	  off_t o = v;
+	  if (o == v)
+	    return o;
+	}
     }
 
   wrong_type_argument (intern ("file-offset"), val);
@@ -5163,7 +5164,7 @@ DEFUN ("car-less-than-car", Fcar_less_than_car, Scar_less_than_car, 2, 2, 0,
        doc: /* Return t if (car A) is numerically less than (car B).  */)
   (Lisp_Object a, Lisp_Object b)
 {
-  return CALLN (Flss, Fcar (a), Fcar (b));
+  return arithcompare (Fcar (a), Fcar (b), ARITH_LESS);
 }
 
 /* Build the complete list of annotations appropriate for writing out

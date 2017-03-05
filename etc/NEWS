@@ -915,6 +915,11 @@ Emacs integers with %e, %f, or %g conversions.  For example, on these
 hosts (eql N (string-to-number (format "%.0f" N))) now returns t for
 all Emacs integers N.
 
+---
+** Calls that accept floating-point integers (for use on hosts with
+limited integer range) now signal an error if arguments are not
+integral.  For example (decode-char 'ascii 0.5) now signals an error.
+
 +++
 ** The new function 'char-from-name' converts a Unicode name string
 to the corresponding character code.

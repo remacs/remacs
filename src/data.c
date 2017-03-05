@@ -1110,10 +1110,8 @@ store_symval_forwarding (union Lisp_Fwd *valcontents, register Lisp_Object newva
 		else if ((prop = Fget (predicate, Qrange), !NILP (prop)))
 		  {
 		    Lisp_Object min = XCAR (prop), max = XCDR (prop);
-
-		    if (!NUMBERP (newval)
-			|| !NILP (arithcompare (newval, min, ARITH_LESS))
-			|| !NILP (arithcompare (newval, max, ARITH_GRTR)))
+		    if (! NUMBERP (newval)
+			|| NILP (CALLN (Fleq, min, newval, max)))
 		      wrong_range (min, max, newval);
 		  }
 		else if (FUNCTIONP (predicate))
@@ -2554,12 +2552,13 @@ uintbig_to_lisp (uintmax_t i)
 }
 
 /* Convert the cons-of-integers, integer, or float value C to an
-   unsigned value with maximum value MAX.  Signal an error if C does not
-   have a valid format or is out of range.  */
+   unsigned value with maximum value MAX, where MAX is one less than a
+   power of 2.  Signal an error if C does not have a valid format or
+   is out of range.  */
 uintmax_t
 cons_to_unsigned (Lisp_Object c, uintmax_t max)
 {
-  bool valid = 0;
+  bool valid = false;
   uintmax_t val;
   if (INTEGERP (c))
     {
@@ -2569,11 +2568,10 @@ cons_to_unsigned (Lisp_Object c, uintmax_t max)
   else if (FLOATP (c))
     {
       double d = XFLOAT_DATA (c);
-      if (0 <= d
-	  && d < (max == UINTMAX_MAX ? (double) UINTMAX_MAX + 1 : max + 1))
+      if (0 <= d && d < 1.0 + max)
 	{
 	  val = d;
-	  valid = 1;
+	  valid = val == d;
 	}
     }
   else if (CONSP (c) && NATNUMP (XCAR (c)))
@@ -2587,7 +2585,7 @@ cons_to_unsigned (Lisp_Object c, uintmax_t max)
 	{
 	  uintmax_t mid = XFASTINT (XCAR (rest));
 	  val = top << 24 << 16 | mid << 16 | XFASTINT (XCDR (rest));
-	  valid = 1;
+	  valid = true;
 	}
       else if (top <= UINTMAX_MAX >> 16)
 	{
@@ -2596,37 +2594,38 @@ cons_to_unsigned (Lisp_Object c, uintmax_t max)
 	  if (NATNUMP (rest) && XFASTINT (rest) < 1 << 16)
 	    {
 	      val = top << 16 | XFASTINT (rest);
-	      valid = 1;
+	      valid = true;
 	    }
 	}
     }
 
   if (! (valid && val <= max))
-    error ("Not an in-range integer, float, or cons of integers");
+    error ("Not an in-range integer, integral float, or cons of integers");
   return val;
 }
 
 /* Convert the cons-of-integers, integer, or float value C to a signed
-   value with extrema MIN and MAX.  Signal an error if C does not have
-   a valid format or is out of range.  */
+   value with extrema MIN and MAX.  MAX should be one less than a
+   power of 2, and MIN should be zero or the negative of a power of 2.
+   Signal an error if C does not have a valid format or is out of
+   range.  */
 intmax_t
 cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
 {
-  bool valid = 0;
+  bool valid = false;
   intmax_t val;
   if (INTEGERP (c))
     {
       val = XINT (c);
-      valid = 1;
+      valid = true;
     }
   else if (FLOATP (c))
     {
       double d = XFLOAT_DATA (c);
-      if (min <= d
-	  && d < (max == INTMAX_MAX ? (double) INTMAX_MAX + 1 : max + 1))
+      if (min <= d && d < 1.0 + max)
 	{
 	  val = d;
-	  valid = 1;
+	  valid = val == d;
 	}
     }
   else if (CONSP (c) && INTEGERP (XCAR (c)))
@@ -2640,7 +2639,7 @@ cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
 	{
 	  intmax_t mid = XFASTINT (XCAR (rest));
 	  val = top << 24 << 16 | mid << 16 | XFASTINT (XCDR (rest));
-	  valid = 1;
+	  valid = true;
 	}
       else if (INTMAX_MIN >> 16 <= top && top <= INTMAX_MAX >> 16)
 	{
@@ -2649,13 +2648,13 @@ cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
 	  if (NATNUMP (rest) && XFASTINT (rest) < 1 << 16)
 	    {
 	      val = top << 16 | XFASTINT (rest);
-	      valid = 1;
+	      valid = true;
 	    }
 	}
     }
 
   if (! (valid && min <= val && val <= max))
-    error ("Not an in-range integer, float, or cons of integers");
+    error ("Not an in-range integer, integral float, or cons of integers");
   return val;
 }
 
