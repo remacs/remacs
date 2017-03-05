@@ -908,6 +908,12 @@ due to internal rounding errors.  For example, (< most-positive-fixnum
 (+ 1.0 most-positive-fixnum)) now correctly returns t on 64-bit hosts.
 
 ---
+** The functions 'ffloor', 'fceiling', 'ftruncate' and 'fround' now
+accept only floating-point arguments, as per their documentation.
+Formerly, they quietly accepted integer arguments and sometimes
+returned nonsensical answers, e.g., (< N (ffloor N)) could return t.
+
+---
 ** On hosts like GNU/Linux x86-64 where a 'long double' fraction
 contains at least EMACS_INT_WIDTH - 3 bits, 'format' no longer returns
 incorrect answers due to internal rounding errors when formatting

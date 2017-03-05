@@ -504,17 +504,19 @@ DEFUN ("fceiling", Ffceiling, Sfceiling, 1, 1, 0,
 \(Round toward +inf.)  */)
   (Lisp_Object arg)
 {
-  double d = extract_float (arg);
+  CHECK_FLOAT (arg);
+  double d = XFLOAT_DATA (arg);
   d = ceil (d);
   return make_float (d);
 }
 
 DEFUN ("ffloor", Fffloor, Sffloor, 1, 1, 0,
        doc: /* Return the largest integer no greater than ARG, as a float.
-\(Round towards -inf.)  */)
+\(Round toward -inf.)  */)
   (Lisp_Object arg)
 {
-  double d = extract_float (arg);
+  CHECK_FLOAT (arg);
+  double d = XFLOAT_DATA (arg);
   d = floor (d);
   return make_float (d);
 }
@@ -523,17 +525,19 @@ DEFUN ("fround", Ffround, Sfround, 1, 1, 0,
        doc: /* Return the nearest integer to ARG, as a float.  */)
   (Lisp_Object arg)
 {
-  double d = extract_float (arg);
+  CHECK_FLOAT (arg);
+  double d = XFLOAT_DATA (arg);
   d = emacs_rint (d);
   return make_float (d);
 }
 
 DEFUN ("ftruncate", Fftruncate, Sftruncate, 1, 1, 0,
        doc: /* Truncate a floating point number to an integral float value.
-Rounds the value toward zero.  */)
+\(Round toward zero.)  */)
   (Lisp_Object arg)
 {
-  double d = extract_float (arg);
+  CHECK_FLOAT (arg);
+  double d = XFLOAT_DATA (arg);
   d = emacs_trunc (d);
   return make_float (d);
 }
