@@ -10,6 +10,7 @@ version = "0.1.0"
 [dependencies]
 lazy_static = "0.2.2"
 remacs-sys = { version = "0.1.0", path = "remacs-sys/" }
+remacs-codegen = { version = "0.1.0", path = "remacs-codegen/" }
 libc = "0.2"
 rustc-serialize = "0.3"
 
