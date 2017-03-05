@@ -1075,10 +1075,14 @@ ENDPOS is encountered."
          ;; since every line we indent is more deeply nested than point is.
          (starting-point (save-excursion (if endpos (beginning-of-defun))
                                          (point)))
-         (state nil)
-         (init-depth 0)
-         (next-depth 0)
-         (last-depth 0)
+         ;; Use `syntax-ppss' to get initial state so we don't get
+         ;; confused by starting inside a string.  We don't use
+         ;; `syntax-ppss' in the loop, because this is measurably
+         ;; slower when we're called on a long list.
+         (state (syntax-ppss))
+         (init-depth (car state))
+         (next-depth init-depth)
+         (last-depth init-depth)
          (last-syntax-point (point)))
     (unless endpos
       ;; Get error now if we don't have a complete sexp after point.
