@@ -177,9 +177,7 @@ EXTRA_DIST += gl_openssl.h md5.h
 
 ## begin gnulib module crypto/sha1
 
-libgnu_a_SOURCES += sha1.c
-
-EXTRA_DIST += gl_openssl.h sha1.h
+EXTRA_DIST += sha1.h
 
 ## end   gnulib module crypto/sha1
 
@@ -190,14 +188,6 @@ libgnu_a_SOURCES += sha256.c
 EXTRA_DIST += gl_openssl.h sha256.h
 
 ## end   gnulib module crypto/sha256
-
-## begin gnulib module crypto/sha512
-
-libgnu_a_SOURCES += sha512.c
-
-EXTRA_DIST += gl_openssl.h sha512.h
-
-## end   gnulib module crypto/sha512
 
 ## begin gnulib module dirent
 
