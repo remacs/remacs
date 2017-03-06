@@ -5118,7 +5118,7 @@ fi
 AC_SUBST(CARGO_FLAGS)
 
 case "${opsys}" in
-  darwin|gnu*) RUST_DEPS="-ldl"
+  darwin|gnu*) RUST_DEPS="-ldl -lrt"
   	       REMACSLIB_CFLAGS="-pthread" ;;
 esac
 
@@ -5302,6 +5302,7 @@ Configured for '${canonical}'.
   Should Emacs use mmap(2) for buffer allocation?         $use_mmap_for_buffers
   What window system should Emacs use?                    ${window_system}
   What toolkit should Emacs use?                          ${USE_X_TOOLKIT}
+  What libraries will lib-remacs link against?            ${RUST_DEPS}
   Where do we find X Windows header files?                ${x_includes:-$emacs_standard_dirs}
   Where do we find X Windows libraries?                   ${x_libraries:-$emacs_standard_dirs}"])
 
