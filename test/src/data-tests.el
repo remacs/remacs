@@ -80,6 +80,26 @@
   ;; Short circuits before getting to bad arg
   (should-not (>= 8 9 'foo)))
 
+(ert-deftest data-tests-max ()
+  (should-error (max))
+  (should (= 1 (max 1)))
+  (should (= 3 (max 3 2)))
+  (should (= 666 (max 666 1 0 0 -2 -3 -3 -3 -4 -8 -8 -9 -999)))
+  (should (= (1+ most-negative-fixnum)
+             (max (float most-negative-fixnum) (1+ most-negative-fixnum))))
+  (should (= 8 (apply #'max '(3 8 3))))
+  (should-error (max 9 8 'foo)))
+
+(ert-deftest data-tests-min ()
+  (should-error (min))
+  (should (= 1 (min 1)))
+  (should (= 2 (min 3 2)))
+  (should (= -999 (min 666 1 0 0 -2 -3 -3 -3 -4 -8 -8 -9 -999)))
+  (should (= most-positive-fixnum
+             (min (+ 1.0 most-positive-fixnum) most-positive-fixnum)))
+  (should (= 3 (apply #'min '(3 8 3))))
+  (should-error (min 9 8 'foo)))
+
 ;; Bool vector tests.  Compactly represent bool vectors as hex
 ;; strings.
 

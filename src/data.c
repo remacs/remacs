@@ -2719,9 +2719,7 @@ enum arithop
     Adiv,
     Alogand,
     Alogior,
-    Alogxor,
-    Amax,
-    Amin
+    Alogxor
   };
 
 static Lisp_Object float_arith_driver (double, ptrdiff_t, enum arithop,
@@ -2807,14 +2805,6 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	case Alogxor:
 	  accum ^= next;
 	  break;
-	case Amax:
-	  if (!argnum || next > accum)
-	    accum = next;
-	  break;
-	case Amin:
-	  if (!argnum || next < accum)
-	    accum = next;
-	  break;
 	}
     }
 
@@ -2871,14 +2861,6 @@ float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
 	case Alogior:
 	case Alogxor:
 	  wrong_type_argument (Qinteger_or_marker_p, val);
-	case Amax:
-	  if (!argnum || isnan (next) || next > accum)
-	    accum = next;
-	  break;
-	case Amin:
-	  if (!argnum || isnan (next) || next < accum)
-	    accum = next;
-	  break;
 	}
     }
 
@@ -2975,22 +2957,37 @@ Both X and Y must be numbers or markers.  */)
   return val;
 }
 
+static Lisp_Object
+minmax_driver (ptrdiff_t nargs, Lisp_Object *args,
+	       enum Arith_Comparison comparison)
+{
+  eassume (0 < nargs);
+  Lisp_Object accum;
+  for (ptrdiff_t argnum = 0; argnum < nargs; argnum++)
+    {
+      Lisp_Object val = args[argnum];
+      if (argnum == 0 || !NILP (arithcompare (val, accum, comparison)))
+	accum = val;
+      else if (FLOATP (accum) && isnan (XFLOAT_DATA (accum)))
+	break;
+    }
+  return accum;
+}
+
 DEFUN ("max", Fmax, Smax, 1, MANY, 0,
        doc: /* Return largest of all the arguments (which must be numbers or markers).
-The value is always a number; markers are converted to numbers.
 usage: (max NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  return arith_driver (Amax, nargs, args);
+  return minmax_driver (nargs, args, ARITH_GRTR);
 }
 
 DEFUN ("min", Fmin, Smin, 1, MANY, 0,
        doc: /* Return smallest of all the arguments (which must be numbers or markers).
-The value is always a number; markers are converted to numbers.
 usage: (min NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  return arith_driver (Amin, nargs, args);
+  return minmax_driver (nargs, args, ARITH_LESS);
 }
 
 DEFUN ("logand", Flogand, Slogand, 0, MANY, 0,

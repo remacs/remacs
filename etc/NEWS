@@ -803,6 +803,13 @@ Unicode horizontal whitespace as defined in the Unicode Technical
 Standard #18.  If you only want to match space and tab, use [ \t]
 instead.
 
++++
+** 'min' and 'max' now always return one of their arguments.
+Formerly, they returned a floating-point value if any argument was
+floating-point, which was sometimes numerically incorrect.  For
+example, (min most-positive-fixnum (+ 1.0 most-positive-fixnum)) now
+always returns its first argument instead of its second.
+
 
 * Lisp Changes in Emacs 26.1
 
