@@ -479,31 +479,31 @@ Name of a generic function which can be used to fetch the value of this slot.
 You can call this function later on your object and retrieve the value
 of the slot.
 
-This options is in the CLOS spec, but is not fully compliant in @eieio{}.
+This option is in the CLOS spec, but is not fully compliant in @eieio{}.
 
 @item :writer
 Name of a generic function which will write this slot.
 
-This options is in the CLOS spec, but is not fully compliant in @eieio{}.
+This option is in the CLOS spec, but is not fully compliant in @eieio{}.
 
 @item :reader
 Name of a generic function which will read this slot.
 
-This options is in the CLOS spec, but is not fully compliant in @eieio{}.
+This option is in the CLOS spec, but is not fully compliant in @eieio{}.
 
 @item :custom
 A custom :type specifier used when editing an object of this type.
 See documentation for @code{defcustom} for details.  This specifier is
 equivalent to the :type spec of a @code{defcustom} call.
 
-This options is specific to Emacs, and is not in the CLOS spec.
+This option is specific to Emacs, and is not in the CLOS spec.
 
 @item :label
 When customizing an object, the value of :label will be used instead
 of the slot name.  This enables better descriptions of the data than
 would usually be afforded.
 
-This options is specific to Emacs, and is not in the CLOS spec.
+This option is specific to Emacs, and is not in the CLOS spec.
 
 @item :group
 Similar to @code{defcustom}'s :group command, this organizes different
@@ -511,7 +511,7 @@ slots in an object into groups.  When customizing an object, only the
 slots belonging to a specific group need be worked with, simplifying the
 size of the display.
 
-This options is specific to Emacs, and is not in the CLOS spec.
+This option is specific to Emacs, and is not in the CLOS spec.
 
 @item :printer
 This routine takes a symbol which is a function name.  The function
@@ -546,7 +546,7 @@ Access this slot only from methods of the same class or a child class.
 Access this slot only from methods of the same class.
 @end table
 
-This options is specific to Emacs, and is not in the CLOS spec.
+This option is specific to Emacs, and is not in the CLOS spec.
 
 @end table
 
@@ -571,7 +571,7 @@ the @code{:type} is specifies something such as @code{string} then allow
 this to pass.  The default is to have this option be off.  This is
 implemented as an alternative to unbound slots.
 
-This options is specific to Emacs, and is not in the CLOS spec.
+This option is specific to Emacs, and is not in the CLOS spec.
 
 @item :abstract
 A class which is @code{:abstract} cannot be instantiated, and instead
