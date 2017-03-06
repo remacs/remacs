@@ -5118,19 +5118,23 @@ fi
 AC_SUBST(CARGO_FLAGS)
 
 case "${opsys}" in
-  darwin|gnu*) LIB_REMACS="-lremacs -ldl" ;;
-  *) LIB_REMACS="-lremacs" ;;
+  darwin|gnu*) RUST_DEPS="-ldl"
+  	       REMACSLIB_CFLAGS="-pthread" ;;
 esac
 
 if test "${HAVE_W32}" = "yes"; then
-    LIB_REMACS="$LIB_REMACS -lws2_32 -luserenv"
+    RUST_DEPS="$RUST_DEPS -lws2_32 -luserenv"
 fi
+
+LIB_REMACS="$RUST_DEPS -lremacs"
 
 LDFLAGS_REMACS="-L../$srcdir/rust_src/target/\${CARGO_BUILD_DIR}"
 
 LDFLAGS="$LDFLAGS $LDFLAGS_REMACS"
 
 AC_SUBST(LIB_REMACS)
+AC_SUBST(RUST_DEPS)
+AC_SUBST(REMACSLIB_CFLAGS)
 
 if test "${opsys}" = "mingw32"; then
   CPPFLAGS="$CPPFLAGS -DUSE_CRT_DLL=1 -I \${abs_top_srcdir}/nt/inc"

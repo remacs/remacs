@@ -27,9 +27,9 @@ EMACSOPT = -batch --no-site-file --no-site-lisp
 # ==================== Things 'configure' will edit ====================
 
 CC=@CC@
-CFLAGS=@CFLAGS@
+CFLAGS=@CFLAGS@ @REMACSLIB_CFLAGS@
 CPPFLAGS = @CPPFLAGS@
-LDFLAGS = @LDFLAGS@ @LIB_PTHREAD@ -ldl
+LDFLAGS = @LDFLAGS@ @RUST_DEPS@
 
 RUSTFLAGS=@RUSTFLAGS@
 CARGO_BUILD=@CARGO_BUILD@
