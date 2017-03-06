@@ -58,7 +58,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <utmp.h>
 #endif
 
-#include "rust-temp.h"
+#include "remacs-lib.h"
 
 /* A file whose last-modified time is just after the most recent boot.
    Define this to be NULL to disable checking for this file.  */
@@ -397,7 +397,7 @@ create_lock_file (char *lfname, char *lock_info_str, bool force)
       memcpy (nonce, lfname, lfdirlen);
       strcpy (nonce + lfdirlen, nonce_base);
 
-      fd = rust_make_temp (nonce, O_BINARY | O_CLOEXEC, NULL);
+      fd = rust_make_temp (nonce, O_BINARY | O_CLOEXEC);
       if (fd < 0)
 	err = errno;
       else

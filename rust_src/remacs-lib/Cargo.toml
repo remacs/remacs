@@ -5,6 +5,7 @@ version = "0.1.0"
 [dependencies]
 rand = "0.3"
 libc = "0.2"
+errno = "0.2.3"
 
 [lib]
 path = "lib.rs"

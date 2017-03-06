@@ -1,8 +1,9 @@
 extern crate libc;
 extern crate rand;
+extern crate errno;
 
 use std::ffi::{CStr, CString};
-use std::{io, ptr};
+use std::io;
 
 #[cfg(unix)]
 use libc::{O_CLOEXEC, O_EXCL, O_RDWR, O_CREAT, open};
@@ -23,9 +24,9 @@ const NUM_RETRIES: usize = 50;
 
 #[no_mangle]
 pub extern "C" fn rust_make_temp(template: *mut libc::c_char,
-                                 flags: libc::c_int,
-                                 error: *mut libc::c_int)
+                                 flags: libc::c_int)
                                  -> libc::c_int {
+    let save_errno = errno::errno();
     let template_string = unsafe {
         CStr::from_ptr(template)
             .to_string_lossy()
@@ -34,20 +35,14 @@ pub extern "C" fn rust_make_temp(template: *mut libc::c_char,
 
     match make_temporary_file(template_string, flags) {
         Ok(result) => {
-            if error != ptr::null_mut() {
-                unsafe { *error = 0 };
-            }
-            
+            errno::set_errno(save_errno);
             let name = CString::new(result.1).unwrap();
             unsafe { libc::strcpy(template, name.as_ptr()) };
             result.0
         }
         
         Err(error_code) => {
-            if error != ptr::null_mut() {
-                unsafe { *error = error_code };
-            }
-            
+            errno::set_errno(errno::Errno(error_code));
             -1
         }
     }
@@ -174,10 +169,12 @@ fn test_rust_make_temp() {
     let name = CString::new(fullpath).unwrap();
     let name_copy = name.clone();
     let raw_ptr = name.into_raw();
-    let file_handle = rust_make_temp(raw_ptr, 0, ptr::null_mut());
+    let save_errno = errno::errno();
+    let file_handle = rust_make_temp(raw_ptr, 0);
     assert!(file_handle != -1);
     let new_name = unsafe { CString::from_raw(raw_ptr) };
     assert!(new_name != name_copy);
+    assert!(save_errno == errno::errno());
 }
 
 #[test]
@@ -187,7 +184,7 @@ fn test_rust_make_temp_error_inval() {
     let fullpath = tmpdir.to_string_lossy().into_owned();
     let name = CString::new(fullpath).unwrap();
     let raw_ptr = name.into_raw();
-    let mut error: libc::c_int = 0;
-    let file_handle = rust_make_temp(raw_ptr, 0, &mut error);
-    assert!(file_handle == -1 && error == EINVAL);
+    let file_handle = rust_make_temp(raw_ptr, 0);
+    let error = errno::errno();
+    assert!(file_handle == -1 && error == errno::Errno(EINVAL));
 }

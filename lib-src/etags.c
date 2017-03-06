@@ -126,7 +126,7 @@ char pot_etags_version[] = "@(#) pot revision number is 17.38.1.4";
 #include <getopt.h>
 #include <regex.h>
 
-#include "rust-temp.h"
+#include "remacs-lib.h"
 
 /* Define CTAGS to make the program "ctags" compatible with the usual one.
  Leave it undefined to make the program "etags", which makes emacs-style
@@ -6968,10 +6968,10 @@ etags_mktmp (void)
 #endif
 
   char *templt = concat (tmpdir, slash, "etXXXXXX");
-  int temp_errno;
-  int fd = rust_make_temp (templt, O_CLOEXEC, &temp_errno);
+  int fd = rust_make_temp (templt, O_CLOEXEC);
   if (fd < 0 || close (fd) != 0)
     {
+      int temp_errno = errno;
       free (templt);
       errno = temp_errno;
       templt = NULL;
