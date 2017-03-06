@@ -25948,6 +25948,36 @@ draw_glyphs (struct window *w, int x, struct glyph_row *row,
   return x_reached;
 }
 
+/* Find the first glyph in the run of underlined glyphs preceding the
+   beginning of glyph string S, and return its font (which could be
+   NULL).  This is needed because that font determines the underline
+   position and thickness for the entire run of the underlined glyphs.
+   This function is called from the draw_glyph_string method of GUI
+   frame's redisplay interface (RIF) when it needs to draw in an
+   underlined face.  */
+struct font *
+font_for_underline_metrics (struct glyph_string *s)
+{
+  struct glyph *g0 = s->row->glyphs[s->area], *g;
+
+  for (g = s->first_glyph - 1; g >= g0; g--)
+    {
+      struct face *prev_face = FACE_FROM_ID (s->f, g->face_id);
+      if (!(prev_face && prev_face->underline_p))
+	break;
+    }
+
+  /* If preceding glyphs are not underlined, use the font of S.  */
+  if (g == s->first_glyph - 1)
+    return s->font;
+  else
+    {
+      /* Otherwise use the font of the last glyph we saw in the above
+	 loop whose face had the underline_p flag set.  */
+      return FACE_FROM_ID (s->f, g[1].face_id)->font;
+    }
+}
+
 /* Expand row matrix if too narrow.  Don't expand if area
    is not present.  */
 

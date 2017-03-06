@@ -3043,28 +3043,7 @@ ns_draw_text_decoration (struct glyph_string *s, struct face *face,
             }
           else
             {
-	      /* If we are drawing in the middle of a glyph row, find
-		 the first glyph in the run of underlined glyphs
-		 preceding the beginning of glyph string S.  This is
-		 because that glyph determines the underline position
-		 and thickness for the entire run of the underlined
-		 glyphs.  */
-	      struct glyph *g0 = s->row->glyphs[s->area], *g;
-
-	      for (g = s->first_glyph - 1; g >= g0; g--)
-		{
-		  struct face *prev_face = FACE_FROM_ID (s->f, g->face_id);
-		  if (!(prev_face && prev_face->underline_p))
-		    break;
-		}
-
-	      /* Now use the font of the last glyph we saw that
-		 still has the underlined_p flag set.  */
-	      struct face *glyph_face = FACE_FROM_ID (s->f, g[1].face_id);
-	      struct font *font = glyph_face->font;
-	      if (font)
-		font_prepare_for_face (s->f, glyph_face);
-
+	      struct font *font = font_for_underline_metrics (s);
               unsigned long descent = s->y + s->height - s->ybase;
 
               /* Use underline thickness of font, defaulting to 1. */
