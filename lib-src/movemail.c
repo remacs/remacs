@@ -70,6 +70,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <signal.h>
 #include <string.h>
 #include "syswait.h"
+#include "rust-temp.h"
 #ifdef MAIL_USE_POP
 #include "pop.h"
 #endif
@@ -276,15 +277,16 @@ main (int argc, char **argv)
 
       while (true)
 	{
+	  int errcode;
 	  /* Create the lock file, but not under the lock file name.  */
 	  /* Give up if cannot do that.  */
 
 	  memcpy (tempname, inname, inname_dirlen);
 	  strcpy (tempname + inname_dirlen, "EXXXXXX");
-	  desc = mkostemp (tempname, O_BINARY);
+	  desc = rust_make_temp (tempname, O_BINARY, &errcode);
 	  if (desc < 0)
 	    {
-	      int mkostemp_errno = errno;
+	      int mkostemp_errno = errcode;
 	      error ("error while creating what would become the lock file",
 		     0, 0);
 	      errno = mkostemp_errno;
