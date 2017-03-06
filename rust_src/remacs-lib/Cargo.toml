@@ -9,3 +9,7 @@ libc = "0.2"
 [lib]
 path = "lib.rs"
 crate-type = ["staticlib", "rlib"]
+
+[features]
+# Treat warnings as a build error on Travis.
+strict = []
