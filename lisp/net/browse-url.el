@@ -878,7 +878,7 @@ The optional NEW-WINDOW argument is not used."
 	   (error "Browsing URLs is not supported on this system")))
 	((eq system-type 'cygwin)
 	 (call-process "cygstart" nil nil nil url))
-	(t (w32-shell-execute "open" url))))
+	(t (w32-shell-execute "open" (url-unhex-string url)))))
 
 (defun browse-url-default-macosx-browser (url &optional _new-window)
   "Invoke the macOS system's default Web browser.
