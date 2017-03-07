@@ -148,11 +148,11 @@
 ;; emacs binary has been built.  We therefore compromise and keep
 ;; ldefs-boot.el in the repository.  This does not need to be updated
 ;; as often as the real loaddefs.el would.  Bootstrap should always
-;; work with ldefs-boot.el.  Therefore, Whenever a new autoload cookie
+;; work with ldefs-boot.el.  Therefore, whenever a new autoload cookie
 ;; gets added that is necessary during bootstrapping, ldefs-boot.el
 ;; should be updated by overwriting it with an up-to-date copy of
-;; loaddefs.el that is uncorrupted by local changes.
-;; autogen/update_autogen can be used to periodically update ldefs-boot.
+;; loaddefs.el that is not corrupted by local changes.
+;; admin/update_autogen can be used to update ldefs-boot.el periodically.
 (condition-case nil (load "loaddefs.el")
   ;; In case loaddefs hasn't been generated yet.
   (file-error (load "ldefs-boot.el")))
