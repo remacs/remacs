@@ -201,6 +201,8 @@ modified=$(status ${autogendir:+$sources} ${ldefs_flag:+lisp} ${info_flag:+doc})
 }
 
 
+[ -e nt/gnulib.mk ] || touch nt/gnulib.mk # bug#25359
+
 echo "Running autoreconf..."
 
 autoreconf ${clean:+-f} -i -I m4 2>| $tempfile
