@@ -1717,6 +1717,9 @@ Auto-Revert Mode is a minor mode that affects only the current
 buffer.  When enabled, it reverts the buffer when the file on
 disk changes.
 
+When a buffer is reverted, a message is generated.  This can be
+suppressed by setting `auto-revert-verbose' to nil.
+
 Use `global-auto-revert-mode' to automatically revert all buffers.
 Use `auto-revert-tail-mode' if you know that the file will only grow
 without being changed in the part that is already in the buffer.
@@ -1746,6 +1749,9 @@ this is reflected in the current buffer.
 You can edit the buffer and turn this mode off and on again as
 you please.  But make sure the background process has stopped
 writing before you save the file!
+
+When a buffer is reverted, a message is generated.  This can be
+suppressed by setting `auto-revert-verbose' to nil.
 
 Use `auto-revert-mode' for changes other than appends!
 
@@ -1784,6 +1790,9 @@ may also revert some non-file buffers, as described in the
 documentation of that variable.  It ignores buffers with modes
 matching `global-auto-revert-ignore-modes', and buffers with a
 non-nil vale of `global-auto-revert-ignore-buffer'.
+
+When a buffer is reverted, a message is generated.  This can be
+suppressed by setting `auto-revert-verbose' to nil.
 
 This function calls the hook `global-auto-revert-mode-hook'.
 It displays the text that `global-auto-revert-mode-text'
@@ -3575,7 +3584,6 @@ diary entries can also be marked on the calendar (see
 
 Runs the following hooks:
 
-`calendar-load-hook' - after loading calendar.el
 `calendar-today-visible-hook', `calendar-today-invisible-hook' - after
    generating a calendar, if today's date is visible or not, respectively
 `calendar-initial-window-hook' - after first creating a calendar
@@ -4768,6 +4776,13 @@ and runs the normal hook `command-history-hook'.
 
 ;;;***
 
+;;;### (autoloads nil "cl-generic" "emacs-lisp/cl-generic.el" (0
+;;;;;;  0 0 0))
+;;; Generated autoloads from emacs-lisp/cl-generic.el
+(push (purecopy '(cl-generic 1 0)) package--builtin-versions)
+
+;;;***
+
 ;;;### (autoloads nil "cl-indent" "emacs-lisp/cl-indent.el" (0 0
 ;;;;;;  0 0))
 ;;; Generated autoloads from emacs-lisp/cl-indent.el
@@ -4870,6 +4885,15 @@ printer proceeds to the next function on the list.
 This variable is not used at present, but it is defined in hopes that
 a future Emacs interpreter will be able to use it.")
 
+(autoload 'cl-mapcar "cl-lib" "\
+Apply FUNCTION to each element of SEQ, and make a list of the results.
+If there are several SEQs, FUNCTION is called with that many arguments,
+and mapping stops as soon as the shortest list runs out.  With just one
+SEQ, this is like `mapcar'.  With several, it is like the Common Lisp
+`mapcar' function extended to arbitrary sequence types.
+
+\(fn FUNCTION SEQ...)" nil nil)
+
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "cl-lib" '("cl-")))
 
 ;;;***
@@ -4879,6 +4903,33 @@ a future Emacs interpreter will be able to use it.")
 ;;; Generated autoloads from emacs-lisp/cl-macs.el
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "cl-macs" '("cl-")))
+
+;;;***
+
+;;;### (autoloads nil "cl-print" "emacs-lisp/cl-print.el" (0 0 0
+;;;;;;  0))
+;;; Generated autoloads from emacs-lisp/cl-print.el
+(push (purecopy '(cl-print 1 0)) package--builtin-versions)
+
+(autoload 'cl-print-object "cl-print" "\
+Dispatcher to print OBJECT on STREAM according to its type.
+You can add methods to it to customize the output.
+But if you just want to print something, don't call this directly:
+call other entry points instead, such as `cl-prin1'.
+
+\(fn OBJECT STREAM)" nil nil)
+
+(autoload 'cl-prin1 "cl-print" "\
+
+
+\(fn OBJECT &optional STREAM)" nil nil)
+
+(autoload 'cl-prin1-to-string "cl-print" "\
+
+
+\(fn OBJECT)" nil nil)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "cl-print" '("cl-print-")))
 
 ;;;***
 
@@ -5803,7 +5854,16 @@ Major mode to edit \"Sassy CSS\" files.
 
 \(fn)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "css-mode" '("scss-" "css-")))
+(autoload 'css-lookup-symbol "css-mode" "\
+Display the CSS documentation for SYMBOL, as found on MDN.
+When this command is used interactively, it picks a default
+symbol based on the CSS text before point -- either an @-keyword,
+a property name, a pseudo-class, or a pseudo-element, depending
+on what is seen near point.
+
+\(fn SYMBOL)" t nil)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "css-mode" '("css-" "scss-")))
 
 ;;;***
 
@@ -6195,7 +6255,7 @@ option itself, into the file you specify, overwriting any
 `custom-set-variables' and `custom-set-faces' forms already
 present in that file.  It will not delete any customizations from
 the old custom file.  You should do that manually if that is what you
-want.  You also have to put something like `(load \"CUSTOM-FILE\")
+want.  You also have to put something like (load \"CUSTOM-FILE\")
 in your init file, where CUSTOM-FILE is the actual name of the
 file.  Otherwise, Emacs will not load the file when it starts up,
 and hence will not set `custom-file' to that file either.")
@@ -6601,6 +6661,38 @@ When called interactively, prompt for FUNCTION in the minibuffer.
 To specify a nil argument interactively, exit with an empty minibuffer.
 
 \(fn &optional FUNCTION)" t nil)
+
+(autoload 'debug-on-variable-change "debug" "\
+Trigger a debugger invocation when VARIABLE is changed.
+
+When called interactively, prompt for VARIABLE in the minibuffer.
+
+This works by calling `add-variable-watch' on VARIABLE.  If you
+quit from the debugger, this will abort the change (unless the
+change is caused by the termination of a let-binding).
+
+The watchpoint may be circumvented by C code that changes the
+variable directly (i.e., not via `set').  Changing the value of
+the variable (e.g., `setcar' on a list variable) will not trigger
+watchpoint.
+
+Use \\[cancel-debug-on-variable-change] to cancel the effect of
+this command.  Uninterning VARIABLE or making it an alias of
+another symbol also cancels it.
+
+\(fn VARIABLE)" t nil)
+
+(defalias 'debug-watch #'debug-on-variable-change)
+
+(autoload 'cancel-debug-on-variable-change "debug" "\
+Undo effect of \\[debug-on-variable-change] on VARIABLE.
+If VARIABLE is nil, cancel debug-on-variable-change for all variables.
+When called interactively, prompt for VARIABLE in the minibuffer.
+To specify a nil argument interactively, exit with an empty minibuffer.
+
+\(fn &optional VARIABLE)" t nil)
+
+(defalias 'cancel-debug-watch #'cancel-debug-on-variable-change)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "debug" '("debug" "inhibit-debug-on-entry")))
 
@@ -7241,6 +7333,10 @@ Switches passed to `ls' for Dired.  MUST contain the `l' option.
 May contain all other options that don't contradict `-l';
 may contain even `F', `b', `i' and `s'.  See also the variable
 `dired-ls-F-marks-symlinks' concerning the `F' switch.
+Options that include embedded whitespace must be quoted
+like this: \\\"--option=value with spaces\\\"; you can use
+`combine-and-quote-strings' to produce the correct quoting of
+each option.
 On systems such as MS-DOS and MS-Windows, which use `ls' emulation in Lisp,
 some of the `ls' switches are not supported; see the doc string of
 `insert-directory' in `ls-lisp.el' for more details.")
@@ -7733,7 +7829,7 @@ Switch to *dungeon* buffer and start game.
 
 \(fn)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "dunnet" '("down" "dun" "out" "obj-special" "south" "north" "west" "east")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "dunnet" '("dun" "obj-special")))
 
 ;;;***
 
@@ -9506,7 +9602,7 @@ It creates an autoload function for CNAME's constructor.
 ;;;### (autoloads nil "elec-pair" "elec-pair.el" (0 0 0 0))
 ;;; Generated autoloads from elec-pair.el
 
-(defvar electric-pair-text-pairs '((34 . 34)) "\
+(defvar electric-pair-text-pairs '((34 . 34) ((nth 0 electric-quote-chars) nth 1 electric-quote-chars) ((nth 2 electric-quote-chars) nth 3 electric-quote-chars)) "\
 Alist of pairs that should always be used in comments and strings.
 
 Pairs of delimiters in this list are a fallback in case they have
@@ -11064,8 +11160,9 @@ corresponding to a successful execution.
 
 (defvar tags-file-name nil "\
 File name of tags table.
-To switch to a new tags table, setting this variable is sufficient.
-If you set this variable, do not also set `tags-table-list'.
+To switch to a new tags table, do not set this variable; instead,
+invoke `visit-tags-table', which is the only reliable way of
+setting the value of this variable, whether buffer-local or global.
 Use the `etags' program to make a tags table file.")
  (put 'tags-file-name 'variable-interactive (purecopy "fVisit tags table: "))
  (put 'tags-file-name 'safe-local-variable 'stringp)
@@ -11126,7 +11223,8 @@ FILE should be the name of a file created with the `etags' program.
 A directory name is ok too; it means file TAGS in that directory.
 
 Normally \\[visit-tags-table] sets the global value of `tags-file-name'.
-With a prefix arg, set the buffer-local value instead.
+With a prefix arg, set the buffer-local value instead.  When called
+from Lisp, if the optional arg LOCAL is non-nil, set the local value.
 When you find a tag with \\[find-tag], the buffer it finds the tag
 in is given a local value of this variable which is the name of the tags
 file the tag was in.
@@ -11135,15 +11233,18 @@ file the tag was in.
 
 (autoload 'visit-tags-table-buffer "etags" "\
 Select the buffer containing the current tags table.
-If optional arg is a string, visit that file as a tags table.
-If optional arg is t, visit the next table in `tags-table-list'.
-If optional arg is the atom `same', don't look for a new table;
+Optional arg CONT specifies which tags table to visit.
+If CONT is a string, visit that file as a tags table.
+If CONT is t, visit the next table in `tags-table-list'.
+If CONT is the atom `same', don't look for a new table;
  just select the buffer visiting `tags-file-name'.
-If arg is nil or absent, choose a first buffer from information in
+If CONT is nil or absent, choose a first buffer from information in
  `tags-file-name', `tags-table-list', `tags-table-list-pointer'.
+Optional second arg CBUF, if non-nil, specifies the initial buffer,
+which is important if that buffer has a local value of `tags-file-name'.
 Returns t if it visits a tags table, or nil if there are no more in the list.
 
-\(fn &optional CONT)" nil nil)
+\(fn &optional CONT CBUF)" nil nil)
 
 (autoload 'tags-table-files "etags" "\
 Return a list of files in the current tags table.
@@ -12363,49 +12464,51 @@ Copy directory-local variables to the -*- line.
 (defvar enable-connection-local-variables t "\
 Non-nil means enable use of connection-local variables.")
 
-(autoload 'connection-local-set-classes "files-x" "\
-Add CLASSES for remote servers.
+(autoload 'connection-local-set-profiles "files-x" "\
+Add PROFILES for remote servers.
 CRITERIA is either a regular expression identifying a remote
 server, or a function with one argument IDENTIFICATION, which
-returns non-nil when a remote server shall apply CLASS'es
+returns non-nil when a remote server shall apply PROFILE's
 variables.  If CRITERIA is nil, it always applies.
-CLASSES are the names of a variable class (a symbol).
+PROFILES are the names of a connection profile (a symbol).
 
 When a connection to a remote server is opened and CRITERIA
-matches to that server, the connection-local variables from CLASSES
-are applied to the corresponding process buffer.  The variables
-for a class are defined using `connection-local-set-class-variables'.
+matches to that server, the connection-local variables from
+PROFILES are applied to the corresponding process buffer.  The
+variables for a connection profile are defined using
+`connection-local-set-profile-variables'.
 
-\(fn CRITERIA &rest CLASSES)" nil nil)
+\(fn CRITERIA &rest PROFILES)" nil nil)
 
-(autoload 'connection-local-set-class-variables "files-x" "\
-Map the symbol CLASS to a list of variable settings.
+(autoload 'connection-local-set-profile-variables "files-x" "\
+Map the symbol PROFILE to a list of variable settings.
 VARIABLES is a list that declares connection-local variables for
-the class.  An element in VARIABLES is an alist whose elements
-are of the form (VAR . VALUE).
+the connection profile.  An element in VARIABLES is an alist
+whose elements are of the form (VAR . VALUE).
 
 When a connection to a remote server is opened, the server's
-classes are found.  A server may be assigned a class using
-`connection-local-set-class'.  Then variables are set in the
-server's process buffer according to the VARIABLES list of the
-class.  The list is processed in order.
+connection profiles are found.  A server may be assigned a
+connection profile using `connection-local-set-profile'.  Then
+variables are set in the server's process buffer according to the
+VARIABLES list of the connection profile.  The list is processed
+in order.
 
-\(fn CLASS VARIABLES)" nil nil)
+\(fn PROFILE VARIABLES)" nil nil)
 
 (autoload 'hack-connection-local-variables-apply "files-x" "\
-Apply connection-local variables identified by `default-directory'.
+Apply connection-local variables identified by CRITERIA.
 Other local variables, like file-local and dir-local variables,
 will not be changed.
 
-\(fn)" nil nil)
+\(fn CRITERIA)" nil nil)
 
-(autoload 'with-connection-local-classes "files-x" "\
-Apply connection-local variables according to CLASSES in current buffer.
+(autoload 'with-connection-local-profiles "files-x" "\
+Apply connection-local variables according to PROFILES in current buffer.
 Execute BODY, and unwind connection local variables.
 
-\(fn CLASSES &rest BODY)" nil t)
+\(fn PROFILES &rest BODY)" nil t)
 
-(function-put 'with-connection-local-classes 'lisp-indent-function '1)
+(function-put 'with-connection-local-profiles 'lisp-indent-function '1)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "files-x" '("hack-connection-local-variables" "connection-local-" "modify-" "read-file-local-variable")))
 
@@ -14977,22 +15080,7 @@ file name to `*.gz', and sets `grep-highlight-matches' to `always'.
 
 (defalias 'rzgrep 'zrgrep)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "grep" '("rgrep-default-command" "grep-" "kill-grep")))
-
-;;;***
-
-;;;### (autoloads nil "gs" "gs.el" (0 0 0 0))
-;;; Generated autoloads from gs.el
-
-(autoload 'gs-load-image "gs" "\
-Load a PS image for display on FRAME.
-SPEC is an image specification, IMG-HEIGHT and IMG-WIDTH are width
-and height of the image in pixels.  WINDOW-AND-PIXMAP-ID is a string of
-the form \"WINDOW-ID PIXMAP-ID\".  Value is non-nil if successful.
-
-\(fn FRAME SPEC IMG-WIDTH IMG-HEIGHT WINDOW-AND-PIXMAP-ID PIXEL-COLORS)" nil nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "gs" '("gs-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "grep" '("rgrep-" "grep-" "kill-grep")))
 
 ;;;***
 
@@ -15769,6 +15857,14 @@ This discards the buffer's undo information.
 
 ;;;***
 
+;;;### (autoloads "actual autoloads are elsewhere" "hfy-cmap" "hfy-cmap.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from hfy-cmap.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "hfy-cmap" '("hfy-" "htmlfontify-unload-rgb-file")))
+
+;;;***
+
 ;;;### (autoloads nil "hi-lock" "hi-lock.el" (0 0 0 0))
 ;;; Generated autoloads from hi-lock.el
 
@@ -16450,7 +16546,7 @@ You may also want to set `hfy-page-header' and `hfy-page-footer'.
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from ibuf-ext.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ibuf-ext" '("ibuffer-" "filename" "shell-command-" "size" "alphabetic" "major-mode" "mode" "print" "predicate" "content" "name" "derived-mode" "used-mode" "query-replace" "rename-uniquely" "revert" "replace-regexp" "view-and-eval" "eval")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ibuf-ext" '("ibuffer-" "file" "shell-command-" "starred-name" "size" "alphabetic" "major-mode" "mod" "print" "predicate" "content" "view-and-eval" "visiting-file" "derived-mode" "directory" "basename" "name" "used-mode" "query-replace" "rename-uniquely" "revert" "replace-regexp" "eval")))
 
 ;;;***
 
@@ -16528,6 +16624,8 @@ operation is complete, in the form:
 ACTIVE-OPSTRING is a string which will be displayed to the user in a
 confirmation message, in the form:
  \"Really ACTIVE-OPSTRING x buffers?\"
+BEFORE is a form to evaluate before start the operation.
+AFTER is a form to evaluate once the operation is complete.
 COMPLEX means this function is special; if COMPLEX is nil BODY
 evaluates once for each marked buffer, MBUF, with MBUF current
 and saving the point.  If COMPLEX is non-nil, BODY evaluates
@@ -16536,7 +16634,7 @@ BODY define the operation; they are forms to evaluate per each
 marked buffer.  BODY is evaluated with `buf' bound to the
 buffer object.
 
-\(fn OP ARGS DOCUMENTATION (&key INTERACTIVE MARK MODIFIER-P DANGEROUS OPSTRING ACTIVE-OPSTRING COMPLEX) &rest BODY)" nil t)
+\(fn OP ARGS DOCUMENTATION (&key INTERACTIVE MARK MODIFIER-P DANGEROUS OPSTRING ACTIVE-OPSTRING BEFORE AFTER COMPLEX) &rest BODY)" nil t)
 
 (function-put 'define-ibuffer-op 'lisp-indent-function '2)
 
@@ -16599,6 +16697,12 @@ FORMATS is the value to use for `ibuffer-formats'.
   that value locally in this buffer.
 
 \(fn &optional OTHER-WINDOW-P NAME QUALIFIERS NOSELECT SHRINK FILTER-GROUPS FORMATS)" t nil)
+
+(autoload 'ibuffer-jump "ibuffer" "\
+Call Ibuffer and set point at the line listing the current buffer.
+If optional arg OTHER-WINDOW is non-nil, then use another window.
+
+\(fn &optional OTHER-WINDOW)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ibuffer" '("ibuffer-" "filename" "process" "mark" "mod" "size" "name" "locked" "read-only")))
 
@@ -17509,12 +17613,14 @@ Jump to thumbnail buffer.
 
 \(fn)" t nil)
 
-(autoload 'image-dired-setup-dired-keybindings "image-dired" "\
+(autoload 'image-dired-minor-mode "image-dired" "\
 Setup easy-to-use keybindings for the commands to be used in dired mode.
 Note that n, p and <down> and <up> will be hijacked and bound to
 `image-dired-dired-x-line'.
 
-\(fn)" t nil)
+\(fn &optional ARG)" t nil)
+
+(define-obsolete-function-alias 'image-dired-setup-dired-keybindings 'image-dired-minor-mode "26.1")
 
 (autoload 'image-dired-display-thumbs-append "image-dired" "\
 Append thumbnails to `image-dired-thumbnail-buffer'.
@@ -18451,9 +18557,7 @@ Add submenus to the File menu, to convert to and from various formats.
 
 (defvar ispell-personal-dictionary nil "\
 File name of your personal spelling dictionary, or nil.
-If nil, the default personal dictionary, (\"~/.ispell_DICTNAME\" for ispell or
-\"~/.aspell.LANG.pws\" for Aspell) is used, where DICTNAME is the name of your
-default dictionary and LANG the two letter language code.")
+If nil, the default personal dictionary for your spelling checker is used.")
 
 (custom-autoload 'ispell-personal-dictionary "ispell" t)
 
@@ -18462,12 +18566,7 @@ default dictionary and LANG the two letter language code.")
 (defvar ispell-menu-map nil "\
 Key map for ispell menu.")
 
-(defvar ispell-menu-xemacs nil "\
-Spelling menu for XEmacs.
-If nil when package is loaded, a standard menu will be set,
-and added as a submenu of the \"Edit\" menu.")
-
-(defvar ispell-menu-map-needed (and (not ispell-menu-map) (not (featurep 'xemacs)) 'reload))
+(defvar ispell-menu-map-needed (unless ispell-menu-map 'reload))
 
 (if ispell-menu-map-needed (progn (setq ispell-menu-map (make-sparse-keymap "Spell")) (define-key ispell-menu-map [ispell-change-dictionary] `(menu-item ,(purecopy "Change Dictionary...") ispell-change-dictionary :help ,(purecopy "Supply explicit dictionary file name"))) (define-key ispell-menu-map [ispell-kill-ispell] `(menu-item ,(purecopy "Kill Process") (lambda nil (interactive) (ispell-kill-ispell nil 'clear)) :enable (and (boundp 'ispell-process) ispell-process (eq (ispell-process-status) 'run)) :help ,(purecopy "Terminate Ispell subprocess"))) (define-key ispell-menu-map [ispell-pdict-save] `(menu-item ,(purecopy "Save Dictionary") (lambda nil (interactive) (ispell-pdict-save t t)) :help ,(purecopy "Save personal dictionary"))) (define-key ispell-menu-map [ispell-customize] `(menu-item ,(purecopy "Customize...") (lambda nil (interactive) (customize-group 'ispell)) :help ,(purecopy "Customize spell checking options"))) (define-key ispell-menu-map [ispell-help] `(menu-item ,(purecopy "Help") (lambda nil (interactive) (describe-function 'ispell-help)) :help ,(purecopy "Show standard Ispell keybindings and commands"))) (define-key ispell-menu-map [flyspell-mode] `(menu-item ,(purecopy "Automatic spell checking (Flyspell)") flyspell-mode :help ,(purecopy "Check spelling while you edit the text") :button (:toggle bound-and-true-p flyspell-mode))) (define-key ispell-menu-map [ispell-complete-word] `(menu-item ,(purecopy "Complete Word") ispell-complete-word :help ,(purecopy "Complete word at cursor using dictionary"))) (define-key ispell-menu-map [ispell-complete-word-interior-frag] `(menu-item ,(purecopy "Complete Word Fragment") ispell-complete-word-interior-frag :help ,(purecopy "Complete word fragment at cursor")))))
 
@@ -19226,7 +19325,7 @@ A major mode to edit GNU ld script files
 ;;;### (autoloads nil "let-alist" "emacs-lisp/let-alist.el" (0 0
 ;;;;;;  0 0))
 ;;; Generated autoloads from emacs-lisp/let-alist.el
-(push (purecopy '(let-alist 1 0 4)) package--builtin-versions)
+(push (purecopy '(let-alist 1 0 5)) package--builtin-versions)
 
 (autoload 'let-alist "let-alist" "\
 Let-bind dotted symbols to their cdrs in ALIST and execute BODY.
@@ -21232,6 +21331,10 @@ specifies how the attachment is intended to be displayed.  It can
 be either \"inline\" (displayed automatically within the message
 body) or \"attachment\" (separate from the body).
 
+If given a prefix interactively, no prompting will be done for
+the TYPE, DESCRIPTION or DISPOSITION values.  Instead defaults
+will be computed and used.
+
 \(fn FILE &optional TYPE DESCRIPTION DISPOSITION)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "mml" '("mime-to-mml" "mml-")))
@@ -21636,12 +21739,6 @@ The default is 20.  If LIMIT is negative, do not limit the listing.
 ;;;;;;  0 0 0))
 ;;; Generated autoloads from international/mule-util.el
 
-(defsubst string-to-list (string) "\
-Return a list of characters in STRING." (append string nil))
-
-(defsubst string-to-vector (string) "\
-Return a vector of characters in STRING." (vconcat string))
-
 (autoload 'store-substring "mule-util" "\
 Embed OBJ (string or character) at index IDX of STRING.
 
@@ -22001,6 +22098,10 @@ a greeting from the server.
 
 :nowait, if non-nil, says the connection should be made
 asynchronously, if possible.
+
+:shell-command is a format-spec string that can be used if :type
+is `shell'.  It has two specs, %s for host and %p for port
+number.  Example: \"ssh gateway nc %s %p\".
 
 :tls-parameters is a list that should be supplied if you're
 opening a TLS connection.  The first element is the TLS
@@ -27822,8 +27923,6 @@ for modes derived from Text mode, like Mail mode.
 (autoload 'ruby-mode "ruby-mode" "\
 Major mode for editing Ruby code.
 
-\\{ruby-mode-map}
-
 \(fn)" t nil)
 
 (add-to-list 'auto-mode-alist (cons (purecopy (concat "\\(?:\\.\\(?:" "rbw?\\|ru\\|rake\\|thor" "\\|jbuilder\\|rabl\\|gemspec\\|podspec" "\\)" "\\|/" "\\(?:Gem\\|Rake\\|Cap\\|Thor" "\\|Puppet\\|Berks" "\\|Vagrant\\|Guard\\|Pod\\)file" "\\)\\'")) 'ruby-mode))
@@ -29930,6 +30029,10 @@ The optional third argument STR, if specified, is the value for the
 variable `str' within the skeleton.  When this is non-nil, the
 interactor gets ignored, and this should be a valid skeleton element.
 
+When done with skeleton, but before going back to `_'-point, add
+a newline (unless `skeleton-end-newline' is nil) and run the hook
+`skeleton-end-hook'.
+
 SKELETON is made up as (INTERACTOR ELEMENT ...).  INTERACTOR may be nil if
 not needed, a prompt-string or an expression for complex read functions.
 
@@ -29979,9 +30082,6 @@ available:
 	help	help-form during interaction with the user or nil
 	input	initial input (string or cons with index) while reading str
 	v1, v2	local variables for memorizing anything you want
-
-When done with skeleton, but before going back to `_'-point call
-`skeleton-end-hook' if that is non-nil.
 
 \(fn SKELETON &optional REGIONS STR)" nil nil)
 
@@ -31383,7 +31483,7 @@ Studlify-case the current buffer.
 ;;;### (autoloads nil "subr-x" "emacs-lisp/subr-x.el" (0 0 0 0))
 ;;; Generated autoloads from emacs-lisp/subr-x.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "subr-x" '("read-multiple-choice" "string-" "hash-table-" "when-let" "internal--" "if-let" "thread-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "subr-x" '("read-multiple-choice" "string-" "hash-table-" "and-let*" "when-let" "internal--" "if-let" "thread-")))
 
 ;;;***
 
@@ -33821,10 +33921,12 @@ Invoke `tramp-file-name-handler' for OPERATION.
 First arg specifies the OPERATION, second arg is a list of arguments to
 pass to the OPERATION." (let* ((inhibit-file-name-handlers (\` (tramp-completion-file-name-handler cygwin-mount-name-hook-function cygwin-mount-map-drive-hook-function \, (and (eq inhibit-file-name-operation operation) inhibit-file-name-handlers)))) (inhibit-file-name-operation operation)) (apply operation args)))
 (defun tramp-completion-file-name-handler (operation &rest args)
- (tramp-completion-run-real-handler operation args))
+ (if (tramp-completion-mode-p)
+     (apply 'tramp-autoload-file-name-handler operation args)
+   (tramp-completion-run-real-handler operation args)))
 
 (defun tramp-autoload-file-name-handler (operation &rest args) "\
-Load Tramp file name handler, and perform OPERATION." (let ((default-directory temporary-file-directory)) (load "tramp" nil t)) (apply operation args))
+Load Tramp file name handler, and perform OPERATION." (if (and (not (and (stringp (car args)) (string-equal (car args) "/"))) (let ((default-directory temporary-file-directory)) (and (null load-in-progress) (load "tramp" (quote noerror) (quote nomessage))))) (apply operation args) (tramp-completion-run-real-handler operation args)))
 
 (defun tramp-register-autoload-file-name-handlers nil "\
 Add Tramp file name handlers to `file-name-handler-alist' during autoload." (add-to-list (quote file-name-handler-alist) (cons tramp-file-name-regexp (quote tramp-autoload-file-name-handler))) (put (quote tramp-autoload-file-name-handler) (quote safe-magic) t) (add-to-list (quote file-name-handler-alist) (cons tramp-completion-file-name-regexp (quote tramp-completion-file-name-handler))) (put (quote tramp-completion-file-name-handler) (quote safe-magic) t))
@@ -33843,6 +33945,9 @@ This is necessary, because Tramp uses a heuristic depending on last
 input event.  This fails when external packages use other characters
 but <TAB>, <SPACE> or ?\\? for file name completion.  This variable
 should never be set globally, the intention is to let-bind it.")
+
+(defun tramp-completion-mode-p nil "\
+Check, whether method / user name / host name completion is active." (or (and (boundp (quote non-essential)) (symbol-value (quote non-essential))) tramp-completion-mode (equal last-input-event (quote tab))))
 
 (autoload 'tramp-unload-tramp "tramp" "\
 Discard Tramp from loading remote files.
@@ -33901,13 +34006,6 @@ Reenable Ange-FTP, when Tramp is unloaded.
 
 ;;;***
 
-;;;### (autoloads nil "tramp-gw" "net/tramp-gw.el" (0 0 0 0))
-;;; Generated autoloads from net/tramp-gw.el
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tramp-gw" '("tramp-gw-" "socks-")))
-
-;;;***
-
 ;;;### (autoloads nil "tramp-sh" "net/tramp-sh.el" (0 0 0 0))
 ;;; Generated autoloads from net/tramp-sh.el
 
@@ -33931,7 +34029,7 @@ Reenable Ange-FTP, when Tramp is unloaded.
 
 ;;;### (autoloads nil "trampver" "net/trampver.el" (0 0 0 0))
 ;;; Generated autoloads from net/trampver.el
-(push (purecopy '(tramp 2 3 1 -1)) package--builtin-versions)
+(push (purecopy '(tramp 2 3 2 -1)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "trampver" '("tramp-")))
 
@@ -35372,7 +35470,7 @@ For each file in or below DIR, retrieve their tagged version NAME.
 NAME can name a branch, in which case this command will switch to the
 named branch in the directory DIR.
 Interactively, prompt for DIR only for VCS that works at file level;
-otherwise use the default directory of the current buffer.
+otherwise use the repository root of the current buffer.
 If NAME is empty, it refers to the latest revisions of the current branch.
 If locking is used for the files in DIR, then there must not be any
 locked files at or below DIR (but if NAME is empty, locked files are
@@ -35398,6 +35496,11 @@ number of revisions to show; the default is `vc-log-show-limit'.
 When called interactively with a prefix argument, prompt for LIMIT.
 
 \(fn &optional LIMIT)" t nil)
+
+(autoload 'vc-print-branch-log "vc" "\
+
+
+\(fn BRANCH)" t nil)
 
 (autoload 'vc-log-incoming "vc" "\
 Show a log of changes that will be received with a pull operation from REMOTE-LOCATION.
@@ -35920,7 +36023,7 @@ AUTO expansion functions are, in part:
 
 Some other functions are:
 
-    \\[verilog-complete-word]    Complete word with appropriate possibilities.
+    \\[completion-at-point]    Complete word with appropriate possibilities.
     \\[verilog-mark-defun]  Mark function.
     \\[verilog-beg-of-defun]  Move to beginning of current function.
     \\[verilog-end-of-defun]  Move to end of current function.
@@ -37696,6 +37799,13 @@ Default bookmark handler for Woman buffers.
 
 ;;;***
 
+;;;### (autoloads nil "xdg" "xdg.el" (0 0 0 0))
+;;; Generated autoloads from xdg.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "xdg" '("xdg-")))
+
+;;;***
+
 ;;;### (autoloads nil "xml" "xml.el" (0 0 0 0))
 ;;; Generated autoloads from xml.el
 
@@ -37977,25 +38087,24 @@ Zone out, completely.
 ;;;;;;  "cedet/srecode/template.el" "cedet/srecode/texi.el" "composite.el"
 ;;;;;;  "cus-face.el" "cus-start.el" "custom.el" "dired-aux.el" "dired-loaddefs.el"
 ;;;;;;  "dired-x.el" "electric.el" "emacs-lisp/backquote.el" "emacs-lisp/byte-run.el"
-;;;;;;  "emacs-lisp/cl-extra.el" "emacs-lisp/cl-generic.el" "emacs-lisp/cl-loaddefs.el"
-;;;;;;  "emacs-lisp/cl-macs.el" "emacs-lisp/cl-preloaded.el" "emacs-lisp/cl-seq.el"
-;;;;;;  "emacs-lisp/eieio-compat.el" "emacs-lisp/eieio-custom.el"
-;;;;;;  "emacs-lisp/eieio-loaddefs.el" "emacs-lisp/eieio-opt.el"
-;;;;;;  "emacs-lisp/eldoc.el" "emacs-lisp/float-sup.el" "emacs-lisp/lisp-mode.el"
-;;;;;;  "emacs-lisp/lisp.el" "emacs-lisp/macroexp.el" "emacs-lisp/map-ynp.el"
-;;;;;;  "emacs-lisp/nadvice.el" "emacs-lisp/syntax.el" "emacs-lisp/timer.el"
-;;;;;;  "env.el" "epa-hook.el" "eshell/em-alias.el" "eshell/em-banner.el"
-;;;;;;  "eshell/em-basic.el" "eshell/em-cmpl.el" "eshell/em-dirs.el"
-;;;;;;  "eshell/em-glob.el" "eshell/em-hist.el" "eshell/em-ls.el"
-;;;;;;  "eshell/em-pred.el" "eshell/em-prompt.el" "eshell/em-rebind.el"
-;;;;;;  "eshell/em-script.el" "eshell/em-smart.el" "eshell/em-term.el"
-;;;;;;  "eshell/em-tramp.el" "eshell/em-unix.el" "eshell/em-xtra.el"
-;;;;;;  "eshell/esh-groups.el" "facemenu.el" "faces.el" "files.el"
-;;;;;;  "font-core.el" "font-lock.el" "format.el" "frame.el" "help.el"
-;;;;;;  "hfy-cmap.el" "htmlfontify-loaddefs.el" "ibuf-ext.el" "ibuffer-loaddefs.el"
-;;;;;;  "indent.el" "international/characters.el" "international/charprop.el"
-;;;;;;  "international/charscript.el" "international/cp51932.el"
-;;;;;;  "international/eucjp-ms.el" "international/mule-cmds.el"
+;;;;;;  "emacs-lisp/cl-extra.el" "emacs-lisp/cl-loaddefs.el" "emacs-lisp/cl-macs.el"
+;;;;;;  "emacs-lisp/cl-preloaded.el" "emacs-lisp/cl-seq.el" "emacs-lisp/eieio-compat.el"
+;;;;;;  "emacs-lisp/eieio-custom.el" "emacs-lisp/eieio-loaddefs.el"
+;;;;;;  "emacs-lisp/eieio-opt.el" "emacs-lisp/eldoc.el" "emacs-lisp/float-sup.el"
+;;;;;;  "emacs-lisp/lisp-mode.el" "emacs-lisp/lisp.el" "emacs-lisp/macroexp.el"
+;;;;;;  "emacs-lisp/map-ynp.el" "emacs-lisp/nadvice.el" "emacs-lisp/syntax.el"
+;;;;;;  "emacs-lisp/timer.el" "env.el" "epa-hook.el" "eshell/em-alias.el"
+;;;;;;  "eshell/em-banner.el" "eshell/em-basic.el" "eshell/em-cmpl.el"
+;;;;;;  "eshell/em-dirs.el" "eshell/em-glob.el" "eshell/em-hist.el"
+;;;;;;  "eshell/em-ls.el" "eshell/em-pred.el" "eshell/em-prompt.el"
+;;;;;;  "eshell/em-rebind.el" "eshell/em-script.el" "eshell/em-smart.el"
+;;;;;;  "eshell/em-term.el" "eshell/em-tramp.el" "eshell/em-unix.el"
+;;;;;;  "eshell/em-xtra.el" "eshell/esh-groups.el" "facemenu.el"
+;;;;;;  "faces.el" "files.el" "font-core.el" "font-lock.el" "format.el"
+;;;;;;  "frame.el" "help.el" "hfy-cmap.el" "htmlfontify-loaddefs.el"
+;;;;;;  "ibuf-ext.el" "ibuffer-loaddefs.el" "indent.el" "international/characters.el"
+;;;;;;  "international/charprop.el" "international/charscript.el"
+;;;;;;  "international/cp51932.el" "international/eucjp-ms.el" "international/mule-cmds.el"
 ;;;;;;  "international/mule-conf.el" "international/mule.el" "international/uni-bidi.el"
 ;;;;;;  "international/uni-brackets.el" "international/uni-category.el"
 ;;;;;;  "international/uni-combining.el" "international/uni-comment.el"
