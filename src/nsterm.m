@@ -5936,31 +5936,6 @@ not_in_argv (NSString *arg)
 }
 
 
-#ifdef NS_IMPL_COCOA
-/* Needed to pick up Ctrl-tab and possibly other events that Mac OS X
-   decided not to send key-down for.
-   See http://osdir.com/ml/editors.vim.mac/2007-10/msg00141.html
-   This only applies on Tiger and earlier.
-   If it matches one of these, send it on to keyDown. */
--(void)keyUp: (NSEvent *)theEvent
-{
-  int flags = [theEvent modifierFlags];
-  int code = [theEvent keyCode];
-
-  NSTRACE ("[EmacsView keyUp:]");
-
-  if (floor (NSAppKitVersionNumber) <= 824 /*NSAppKitVersionNumber10_4*/ &&
-      code == 0x30 && (flags & NSEventModifierFlagControl) && !(flags & NSEventModifierFlagCommand))
-    {
-      if (NS_KEYLOG)
-        fprintf (stderr, "keyUp: passed test");
-      ns_fake_keydown = YES;
-      [self keyDown: theEvent];
-    }
-}
-#endif
-
-
 /* <NSTextInput> implementation (called through super interpretKeyEvents:]). */
 
 
