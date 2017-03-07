@@ -19,6 +19,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
 #include <config.h>
+
+#include <math.h>
 #include <stdio.h>
 
 #include <byteswap.h>
@@ -2812,8 +2814,9 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
   return val;
 }
 
-#undef isnan
-#define isnan(x) ((x) != (x))
+#ifndef isnan
+# define isnan(x) ((x) != (x))
+#endif
 
 static Lisp_Object
 float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,

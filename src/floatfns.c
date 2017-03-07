@@ -47,13 +47,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <count-leading-zeros.h>
 
-/* 'isfinite' and 'isnan' cause build failures on Solaris 10 with the
-   bundled GCC in c99 mode.  Work around the bugs with simple
-   implementations that are good enough.  */
-#undef isfinite
-#define isfinite(x) ((x) - (x) == 0)
-#undef isnan
-#define isnan(x) ((x) != (x))
+#ifndef isfinite
+# define isfinite(x) ((x) - (x) == 0)
+#endif
+#ifndef isnan
+# define isnan(x) ((x) != (x))
+#endif
 
 /* Check that X is a floating point number.  */
 
