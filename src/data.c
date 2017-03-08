@@ -2972,9 +2972,9 @@ minmax_driver (ptrdiff_t nargs, Lisp_Object *args,
       if (argnum == 0 || !NILP (arithcompare (val, accum, comparison)))
 	accum = val;
       else if (FLOATP (accum) && isnan (XFLOAT_DATA (accum)))
-	break;
+	return accum;
     }
-  return accum;
+  return MARKERP (accum) ? make_number (marker_position (accum)) : accum;
 }
 
 DEFUN ("max", Fmax, Smax, 1, MANY, 0,

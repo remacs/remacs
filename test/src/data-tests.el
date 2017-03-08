@@ -88,7 +88,9 @@
   (should (= (1+ most-negative-fixnum)
              (max (float most-negative-fixnum) (1+ most-negative-fixnum))))
   (should (= 8 (apply #'max '(3 8 3))))
-  (should-error (max 9 8 'foo)))
+  (should-error (max 9 8 'foo))
+  (should-error (max (make-marker)))
+  (should (eql 1 (max (point-min-marker) 1))))
 
 (ert-deftest data-tests-min ()
   (should-error (min))
@@ -98,7 +100,9 @@
   (should (= most-positive-fixnum
              (min (+ 1.0 most-positive-fixnum) most-positive-fixnum)))
   (should (= 3 (apply #'min '(3 8 3))))
-  (should-error (min 9 8 'foo)))
+  (should-error (min 9 8 'foo))
+  (should-error (min (make-marker)))
+  (should (eql 1 (min (point-min-marker) 1))))
 
 ;; Bool vector tests.  Compactly represent bool vectors as hex
 ;; strings.
