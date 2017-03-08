@@ -2147,6 +2147,11 @@ file names."
 First arg OP is either `copy' or `rename' and indicates the operation.
 FILENAME is the source file, NEWNAME the target file.
 KEEP-DATE is non-nil if NEWNAME should have the same timestamp as FILENAME."
+  ;; Check, whether file is too large.  Emacs checks in `insert-file-1'
+  ;; and `find-file-noselect', but that's not called here.
+  (abort-if-file-too-large
+   (tramp-compat-file-attribute-size (file-attributes (file-truename filename)))
+   (symbol-name op) filename)
   ;; We must disable multibyte, because binary data shall not be
   ;; converted.  We don't want the target file to be compressed, so we
   ;; let-bind `jka-compr-inhibit' to t.  `epa-file-handler' shall not
