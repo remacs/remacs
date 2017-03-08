@@ -2564,13 +2564,13 @@ cons_to_unsigned (Lisp_Object c, uintmax_t max)
   uintmax_t val;
   if (INTEGERP (c))
     {
-      valid = 0 <= XINT (c);
+      valid = XINT (c) >= 0;
       val = XINT (c);
     }
   else if (FLOATP (c))
     {
       double d = XFLOAT_DATA (c);
-      if (0 <= d && d < 1.0 + max)
+      if (d >= 0 && d < 1.0 + max)
 	{
 	  val = d;
 	  valid = val == d;
@@ -2624,7 +2624,7 @@ cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
   else if (FLOATP (c))
     {
       double d = XFLOAT_DATA (c);
-      if (min <= d && d < 1.0 + max)
+      if (d >= min && d < 1.0 + max)
 	{
 	  val = d;
 	  valid = val == d;
@@ -2634,7 +2634,7 @@ cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
     {
       intmax_t top = XINT (XCAR (c));
       Lisp_Object rest = XCDR (c);
-      if (INTMAX_MIN >> 24 >> 16 <= top && top <= INTMAX_MAX >> 24 >> 16
+      if (top >= INTMAX_MIN >> 24 >> 16 && top <= INTMAX_MAX >> 24 >> 16
 	  && CONSP (rest)
 	  && NATNUMP (XCAR (rest)) && XFASTINT (XCAR (rest)) < 1 << 24
 	  && NATNUMP (XCDR (rest)) && XFASTINT (XCDR (rest)) < 1 << 16)
@@ -2643,7 +2643,7 @@ cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
 	  val = top << 24 << 16 | mid << 16 | XFASTINT (XCDR (rest));
 	  valid = true;
 	}
-      else if (INTMAX_MIN >> 16 <= top && top <= INTMAX_MAX >> 16)
+      else if (top >= INTMAX_MIN >> 16 && top <= INTMAX_MAX >> 16)
 	{
 	  if (CONSP (rest))
 	    rest = XCAR (rest);
@@ -2700,7 +2700,7 @@ If the base used is not 10, STRING is always parsed as an integer.  */)
   else
     {
       CHECK_NUMBER (base);
-      if (! (2 <= XINT (base) && XINT (base) <= 16))
+      if (! (XINT (base) >= 2 && XINT (base) <= 16))
 	xsignal1 (Qargs_out_of_range, base);
       b = XINT (base);
     }
