@@ -75,9 +75,10 @@ call other entry points instead, such as `cl-prin1'."
   (princ "]" stream))
 
 (cl-defmethod cl-print-object ((object compiled-function) stream)
-  (princ "#<compiled-function " stream)
+  ;; We use "#f(...)" rather than "#<...>" so that pp.el gives better results.
+  (princ "#f(compiled-function " stream)
   (prin1 (help-function-arglist object 'preserve-names) stream)
-  (princ " #<bytecode> >" stream))
+  (princ " #<bytecode>)" stream))
 
 ;; This belongs in nadvice.el, of course, but some load-ordering issues make it
 ;; complicated: cl-generic uses macros from cl-macs and cl-macs uses advice-add
@@ -87,7 +88,7 @@ call other entry points instead, such as `cl-prin1'."
               ((object compiled-function) stream)
   (if (not (advice--p object))
       (cl-call-next-method)
-    (princ "#<advice-wrapper " stream)
+    (princ "#f(advice-wrapper " stream)
     (when (fboundp 'advice--where)
       (princ (advice--where object) stream)
       (princ " " stream))
@@ -98,7 +99,7 @@ call other entry points instead, such as `cl-prin1'."
       (when props
         (princ " " stream)
         (cl-print-object props stream)))
-    (princ ">" stream)))
+    (princ ")" stream)))
 
 (cl-defmethod cl-print-object ((object cl-structure-object) stream)
   (princ "#s(" stream)
