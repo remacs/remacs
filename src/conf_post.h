@@ -94,7 +94,7 @@ typedef bool bool_bf;
 #endif
 
 #ifdef DARWIN_OS
-#ifdef emacs
+#if defined emacs && !defined CANNOT_DUMP
 #define malloc unexec_malloc
 #define realloc unexec_realloc
 #define free unexec_free

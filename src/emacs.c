@@ -137,7 +137,7 @@ static
 bool might_dump;
 #endif
 
-#ifdef DARWIN_OS
+#if defined DARWIN_OS && !defined CANNOT_DUMP
 extern void unexec_init_emacs_zone (void);
 #endif
 
@@ -742,7 +742,7 @@ main (int argc, char **argv)
 #endif
 
 /* If using unexmacosx.c (set by s/darwin.h), we must do this. */
-#ifdef DARWIN_OS
+#if defined DARWIN_OS && !defined CANNOT_DUMP
   if (!initialized)
     unexec_init_emacs_zone ();
 #endif
