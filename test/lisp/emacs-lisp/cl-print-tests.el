@@ -34,7 +34,7 @@
     (let ((print-circle t))
       (should (equal (cl-prin1-to-string `((x . ,x) (y . ,x)))
                      "((x . #1=#s(cl-print--test :a 1 :b 2)) (y . #1#))")))
-    (should (string-match "\\`#<compiled-function (x) .*>\\'"
+    (should (string-match "\\`#f(compiled-function (x) .*)\\'"
                           (cl-prin1-to-string (symbol-function #'caar))))))
 
 ;;; cl-print-tests.el ends here.
