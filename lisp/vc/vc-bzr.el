@@ -725,7 +725,7 @@ or a superior directory.")
 \\([^<(]+?\\)[  ]*[(<]\\([[:alnum:]_.+-]+@[[:alnum:]_.-]+\\)[>)]"
 		    (1 'change-log-name)
 		    (2 'change-log-email))
-		   ("^ *timestamp: \\(.*\\)" (1 'change-log-date-face)))))))
+		   ("^ *timestamp: \\(.*\\)" (1 'change-log-date)))))))
 
 (autoload 'vc-setup-buffer "vc-dispatcher")
 
