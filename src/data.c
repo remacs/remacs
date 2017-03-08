@@ -2969,16 +2969,18 @@ minmax_driver (ptrdiff_t nargs, Lisp_Object *args,
   for (ptrdiff_t argnum = 0; argnum < nargs; argnum++)
     {
       Lisp_Object val = args[argnum];
+      CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (val);
       if (argnum == 0 || !NILP (arithcompare (val, accum, comparison)))
 	accum = val;
       else if (FLOATP (accum) && isnan (XFLOAT_DATA (accum)))
 	return accum;
     }
-  return MARKERP (accum) ? make_number (marker_position (accum)) : accum;
+  return accum;
 }
 
 DEFUN ("max", Fmax, Smax, 1, MANY, 0,
        doc: /* Return largest of all the arguments (which must be numbers or markers).
+The value is always a number; markers are converted to numbers.
 usage: (max NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
@@ -2987,6 +2989,7 @@ usage: (max NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
 
 DEFUN ("min", Fmin, Smin, 1, MANY, 0,
        doc: /* Return smallest of all the arguments (which must be numbers or markers).
+The value is always a number; markers are converted to numbers.
 usage: (min NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
