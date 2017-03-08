@@ -2404,9 +2404,11 @@ arithcompare (Lisp_Object num1, Lisp_Object num2,
   CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (num2);
 
   /* If either arg is floating point, set F1 and F2 to the 'double'
-     approximations of the two arguments.  Regardless, set I1 and I2
-     to integers that break ties if the floating point comparison is
-     either not done or reports equality.  */
+     approximations of the two arguments, and set FNEQ if floating-point
+     comparison reports that F1 is not equal to F2, possibly because F1
+     or F2 is a NaN.  Regardless, set I1 and I2 to integers that break
+     ties if the floating-point comparison is either not done or reports
+     equality.  */
 
   if (FLOATP (num1))
     {
@@ -2417,7 +2419,17 @@ arithcompare (Lisp_Object num1, Lisp_Object num2,
 	  f2 = XFLOAT_DATA (num2);
 	}
       else
-	i1 = f2 = i2 = XINT (num2);
+	{
+	  /* Compare a float NUM1 to an integer NUM2 by converting the
+	     integer I2 (i.e., NUM2) to the double F2 (a conversion that
+	     can round on some platforms, if I2 is large enough), and then
+	     converting F2 back to the integer I1 (a conversion that is
+	     always exact), so that I1 exactly equals ((double) NUM2).  If
+	     floating-point comparison reports a tie, NUM1 = F1 = F2 = I1
+	     (exactly) so I1 - I2 = NUM1 - NUM2 (exactly), so comparing I1
+	     to I2 will break the tie correctly.  */
+	  i1 = f2 = i2 = XINT (num2);
+	}
       fneq = f1 != f2;
     }
   else
@@ -2425,6 +2437,8 @@ arithcompare (Lisp_Object num1, Lisp_Object num2,
       i1 = XINT (num1);
       if (FLOATP (num2))
 	{
+	  /* Compare an integer NUM1 to a float NUM2.  This is the
+	     converse of comparing float to integer (see above).  */
 	  i2 = f1 = i1;
 	  f2 = XFLOAT_DATA (num2);
 	  fneq = f1 != f2;
