@@ -427,12 +427,6 @@ lost after dumping")))
     (message "Pure-hashed: %d strings, %d vectors, %d conses, %d bytecodes, %d others"
              strings vectors conses bytecodes others)))
 
-;; Prevent build-time PATH getting stored in the binary.
-;; Mainly cosmetic, but helpful for Guix.  (Bug#20330)
-;; Do this here, rather than earlier, so that the above code
-;; can invoke Git commands and the like.
-(setq exec-path nil)
-
 ;; Avoid error if user loads some more libraries now and make sure the
 ;; hash-consing hash table is GC'd.
 (setq purify-flag nil)
@@ -445,6 +439,11 @@ lost after dumping")))
 
 (if (member (car (last command-line-args)) '("dump" "bootstrap"))
     (progn
+      ;; Prevent build-time PATH getting stored in the binary.
+      ;; Mainly cosmetic, but helpful for Guix.  (Bug#20330)
+      ;; Do this here, rather than earlier, so that the above code
+      ;; can invoke Git commands and the like.
+      (setq exec-path nil)
       (message "Dumping under the name emacs")
       (condition-case ()
 	  (delete-file "emacs")
