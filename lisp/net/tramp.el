@@ -1559,7 +1559,7 @@ an input event arrives.  The other arguments are passed to `tramp-error'."
 	(when (and buf
 		   tramp-message-show-message
 		   (not (zerop tramp-verbose))
-		   (not (tramp-completion-mode-p))
+		   (not (tramp-completion-mode-p vec))
 		   ;; Show only when Emacs has started already.
 		   (current-message))
 	  (let ((enable-recursive-minibuffers t))
@@ -2028,17 +2028,17 @@ Falls back to normal file name handler if no Tramp file name handler exists."
   (let ((filename (apply 'tramp-file-name-for-operation operation args)))
     (if (and tramp-mode (tramp-tramp-file-p filename))
 	(save-match-data
-	  (let* ((filename (tramp-replace-environment-variables filename))
-                 (non-essential
-                  (and non-essential
-                       (string-match
-                        tramp-completion-file-name-regexp filename)))
-		 (completion (tramp-completion-mode-p))
-		 (foreign
-		  (tramp-find-foreign-file-name-handler
-		   filename operation completion))
-		 result)
-	    (with-parsed-tramp-file-name filename nil
+          (setq filename (tramp-replace-environment-variables filename))
+          (with-parsed-tramp-file-name filename nil
+            (let* ((non-essential
+                    (and non-essential
+                         (string-match
+                          tramp-completion-file-name-regexp filename)))
+                   (completion (tramp-completion-mode-p v))
+                   (foreign
+                    (tramp-find-foreign-file-name-handler
+                     filename operation completion))
+                   result)
 	      ;; Call the backend function.
 	      (if foreign
 		  (tramp-condition-case-unless-debug err
@@ -2262,34 +2262,27 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 
 ;;;###autoload
 (defvar tramp-completion-mode nil
-  "If non-nil, external packages signal that they are in file name completion.
-
-This is necessary, because Tramp uses a heuristic depending on last
-input event.  This fails when external packages use other characters
-but <TAB>, <SPACE> or ?\\? for file name completion.  This variable
-should never be set globally, the intention is to let-bind it.")
+  "If non-nil, external packages signal that they are in file name completion.")
 (make-obsolete-variable 'tramp-completion-mode 'non-essential "26.1")
 
 ;; Necessary because `tramp-file-name-regexp-unified' and
 ;; `tramp-completion-file-name-regexp-unified' aren't different.  If
 ;; nil is returned, `tramp-completion-run-real-handler' is called
 ;; (i.e. forwarding to `tramp-file-name-handler').  Otherwise, it
-;; takes `tramp-run-real-handler'.  Using `last-input-event' is a
-;; little bit risky, because completing a file might require loading
-;; other files, like "~/.netrc", and for them it shouldn't be decided
-;; based on that variable.  On the other hand, those files shouldn't
-;; have partial Tramp file name syntax.
+;; takes `tramp-run-real-handler'.
 ;;;###autoload
-(progn (defun tramp-completion-mode-p ()
+(progn (defun tramp-completion-mode-p (&optional vec)
   "Check, whether method / user name / host name completion is active."
   (or
    ;; Signal from outside.  `non-essential' has been introduced in Emacs 24.
    (and (boundp 'non-essential) (symbol-value 'non-essential))
    ;; This variable has been obsoleted in Emacs 26.
    tramp-completion-mode
-   ;; Fallback.  Some completion packages still don't support
-   ;; `non-essential' sufficiently.
-   (equal last-input-event 'tab))))
+   ;; When the host name is a method, we are still in completion mode.
+   ;; Due to autoload dependencies, we cannot use `tramp-file-name-host'.
+   (and (equal tramp-syntax 'ftp)
+        (vectorp vec)
+        (member (aref vec 2) (mapcar 'car tramp-methods))))))
 
 (defun tramp-connectable-p (filename)
   "Check, whether it is possible to connect the remote host w/o side-effects.
@@ -2297,10 +2290,10 @@ This is true, if either the remote host is already connected, or if we are
 not in completion mode."
   (let (tramp-verbose)
     (and (tramp-tramp-file-p filename)
-	 (or (not (tramp-completion-mode-p))
-	     (tramp-compat-process-live-p
-	      (tramp-get-connection-process
-	       (tramp-dissect-file-name filename)))))))
+         (with-parsed-tramp-file-name filename nil
+           (or (not (tramp-completion-mode-p v))
+               (tramp-compat-process-live-p
+                (tramp-get-connection-process v)))))))
 
 (defun tramp-completion-handle-expand-file-name (name &optional dir)
   "Like `expand-file-name' for Tramp files."
@@ -2878,7 +2871,7 @@ User is always nil."
      (tramp-file-name-method v)
      (tramp-file-name-user v)
      (tramp-file-name-host v)
-     (if (and (tramp-completion-mode-p)
+     (if (and (tramp-completion-mode-p v)
 	      (zerop (length (tramp-file-name-localname v))))
 	 ""
        (tramp-run-real-handler

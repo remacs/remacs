@@ -4654,7 +4654,7 @@ connection if a previous connection has died for some reason."
 	  ;; check this for the process related to
 	  ;; `tramp-buffer-name'; otherwise `start-file-process'
 	  ;; wouldn't run ever when `non-essential' is non-nil.
-	  (when (and (tramp-completion-mode-p)
+	  (when (and (tramp-completion-mode-p vec)
 		     (null (get-process (tramp-buffer-name vec))))
 	    (throw 'non-essential 'non-essential))
 
