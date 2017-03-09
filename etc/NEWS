@@ -742,6 +742,12 @@ processes on exit.
 * Incompatible Lisp Changes in Emacs 26.1
 
 +++
+** Certain cond/pcase/cl-case forms are now compiled using a faster jump
+table implementation. This uses a new bytecode op `switch', which isn't
+compatible with previous Emacs versions. This functionality can be disabled
+by setting `byte-compile-cond-use-jump-table' to nil.
+
++++
 ** Resizing a frame no longer runs 'window-configuration-change-hook'.
 Put your function on 'window-size-change-functions' instead.
 
