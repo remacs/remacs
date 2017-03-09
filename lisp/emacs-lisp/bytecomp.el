@@ -4128,7 +4128,9 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
           ;; depth/tag conflicts or violating asserts down the road.
           ;; To make sure `byte-compile-body' itself doesn't violate this,
           ;; we use `cl-assert'.
-          (byte-compile-body body byte-compile--for-effect)
+          (if (null body)
+              (byte-compile-form t byte-compile--for-effect)
+            (byte-compile-body body byte-compile--for-effect))
           (cl-assert (or (= byte-compile-depth init-depth)
                          (= byte-compile-depth (1+ init-depth))))
           (byte-compile-goto 'byte-goto donetag)
