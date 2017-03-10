@@ -1891,9 +1891,10 @@ where @samp{192.168.0.1} is the remote host IP address
 @section Android shell setup hints
 @cindex android shell setup
 
-@value{tramp} uses the @option{adb} method to access Android
-devices.  Android devices provide a restricted shell access through an
-USB connection.  The local host must have the Android SDK installed.
+@value{tramp} uses the @option{adb} method to access Android devices.
+Android devices provide a restricted shell access through an USB
+connection.  The local host must have the @command{adb} program
+installed.
 
 Applications such as @code{SSHDroid} that run @command{sshd} process
 on the Android device can accept any @option{ssh}-based methods
