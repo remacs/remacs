@@ -77,33 +77,12 @@
        (equal (executable-find "open") "/usr/bin/open")
        (memq system-type '(darwin))))
 
-;; FIXME this duplicates much of the logic from browse-url-can-use-xdg-open.
 (defun report-emacs-bug-can-use-xdg-email ()
   "Return non-nil if the \"xdg-email\" command can be used.
-xdg-email is a desktop utility that calls your preferred mail client.
-This requires you to be running either Gnome, KDE, or Xfce4."
-  (and (getenv "DISPLAY")
-       (executable-find "xdg-email")
-       (or (getenv "GNOME_DESKTOP_SESSION_ID")
-	   ;; GNOME_DESKTOP_SESSION_ID is deprecated, check on Dbus also.
-	   (condition-case nil
-	       (eq 0 (call-process
-		      "dbus-send" nil nil nil
-				  "--dest=org.gnome.SessionManager"
-				  "--print-reply"
-				  "/org/gnome/SessionManager"
-				  "org.gnome.SessionManager.CanShutdown"))
-	     (error nil))
-	   (equal (getenv "KDE_FULL_SESSION") "true")
-	   ;; FIXME? browse-url-can-use-xdg-open also accepts LXDE.
-	   ;; Is that no good here, or just overlooked?
-	   (condition-case nil
-	       (eq 0 (call-process
-		      "/bin/sh" nil nil nil
-		      "-c"
-		      ;; FIXME use string-match rather than grep.
-		      "xprop -root _DT_SAVE_MODE|grep xfce4"))
-	     (error nil)))))
+xdg-email is a desktop utility that calls your preferred mail client."
+  (and ;; See browse-url-can-use-xdg-open.
+       (or (getenv "DISPLAY") (getenv "WAYLAND_DISPLAY"))
+       (executable-find "xdg-email")))
 
 (defun report-emacs-bug-insert-to-mailer ()
   "Send the message to your preferred mail client.
