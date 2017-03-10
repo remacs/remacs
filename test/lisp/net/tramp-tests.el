@@ -732,7 +732,8 @@ This checks also `file-name-as-directory', `file-name-directory',
 	    (should
 	     (string-equal
 	      (file-name-as-directory file)
-	      (if (tramp-completion-mode-p) file (concat file "./"))))
+	      (if (tramp-completion-mode-p (tramp-dissect-file-name file))
+		  file (concat file "./"))))
 	    (should (string-equal (file-name-directory file) file))
 	    (should (string-equal (file-name-nondirectory file) ""))))))))
 
@@ -1515,7 +1516,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (progn
 	      ;; Method and host name in completion mode.  This kind
 	      ;; of completion does not work on MS Windows.
-	      (when (and (tramp-completion-mode-p)
+	      (when (and (tramp-completion-mode-p
+			  (tramp-dissect-file-name
+			   tramp-test-temporary-file-directory))
 			 (not (memq system-type '(cygwin windows-nt))))
 		(unless (zerop (length method))
 		  (should
