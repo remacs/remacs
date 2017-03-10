@@ -3337,6 +3337,10 @@ dotted notation.
 
 @node Bindat Examples
 @subsection Examples of Byte Unpacking and Packing
+@c FIXME?  This seems a very long example for something that is not used
+@c very often.  As of 25.2, gdb-mi.el is the only user of bindat.el in Emacs.
+@c Maybe one or both of these examples should just be moved to the
+@c commentary of bindat.el.
 
   Here are two complete examples that use bindat.el.
 The first shows simple byte packing:
