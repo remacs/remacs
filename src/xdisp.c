@@ -4999,6 +4999,14 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	{
 	  ptrdiff_t ovendpos = OVERLAY_POSITION (OVERLAY_END (overlay));
 
+	  /* Some borderly-sane Lisp might call us with the current
+	     buffer narrowed so that overlay-end is outside the
+	     POINT_MIN..POINT_MAX region, which will then cause
+	     various assertion violations and crashes down the road,
+	     starting with pop_it when it will attempt to use POSITION
+	     set below.  Prevent that.  */
+	  ovendpos = clip_to_bounds (BEGV, ovendpos, ZV);
+
 	  if (ovendpos > CHARPOS (*position))
 	    SET_TEXT_POS (*position, ovendpos, CHAR_TO_BYTE (ovendpos));
 	}
