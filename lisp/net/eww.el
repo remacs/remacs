@@ -849,8 +849,9 @@ appears in a <link> or <a> tag."
 
 (defun eww-reload (&optional local encode)
   "Reload the current page.
-If LOCAL (the command prefix), don't reload the page from the
-network, but just re-display the HTML already fetched."
+If LOCAL is non-nil (interactively, the command was invoked with
+a prefix argument), don't reload the page from the network, but
+just re-display the HTML already fetched."
   (interactive "P")
   (let ((url (plist-get eww-data :url)))
     (if local
