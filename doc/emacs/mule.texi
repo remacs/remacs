@@ -553,6 +553,15 @@ most input methods---some disable this feature).  If
 possible characters to type next is displayed in the echo area (but
 not when you are in the minibuffer).
 
+@vindex quail-activate-hook
+@findex quail-translation-keymap
+  You can modify how an input method works by making your changes in a
+function that you add to the hook variable @code{quail-activate-hook}.
+@xref{Hooks}.  For example, you can redefine some of the input
+method's keys by defining key bindings in the keymap returned by the
+function @code{quail-translation-keymap}, using @code{define-key}.
+@xref{Init Rebinding}.
+
   Another facility for typing characters not on your keyboard is by
 using @kbd{C-x 8 @key{RET}} (@code{insert-char}) to insert a single
 character based on its Unicode name or code-point; see @ref{Inserting
