@@ -411,6 +411,15 @@ This will generate compile-time constants from BINDINGS."
          ;; Words inside \\[] tend to be for `substitute-command-keys'.
          (,(concat "\\\\\\\\\\[\\(" lisp-mode-symbol-regexp "\\)\\]")
           (1 font-lock-constant-face prepend))
+         ;; Ineffective backslashes (typically in need of doubling).
+         ("\\(?:[^\\]\\|^\\)\\(?:\\\\\\\\\\)*\\(\\(\\\\\\)\\([^\"\\]\\)\\)"
+          (2 (and (nth 3 (syntax-ppss))
+                  (equal (ignore-errors
+                           (car (read-from-string
+                                 (format "\"%s\"" (match-string 1)))))
+                         (match-string 3))
+                  font-lock-warning-face)
+             prepend))
          ;; Words inside ‘’ and `' tend to be symbol names.
          (,(concat "[`‘]\\(\\(?:\\sw\\|\\s_\\|\\\\.\\)"
                    lisp-mode-symbol-regexp "\\)['’]")
