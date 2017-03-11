@@ -1,13 +1,13 @@
+//! Define functions needed to compute a SHA1 from C, when you don't
+//! have a contiguous buffer of bytes. This is necessary for the elisp
+//! function `buffer-hash`.
+
 use libc::{c_void, size_t};
 use std::mem;
 use std::slice;
 use std::ptr;
 
 use sha1;
-
-/// Define functions needed to compute a SHA1 from C, when you don't
-/// have a contiguous buffer of bytes. This is necessary for the elisp
-/// function `buffer-hash`.
 
 // TODO: There's no reason why `buffer-hash` couldn't do the same
 // thing as `secure-hash` and build a byte buffer of the entire elisp
