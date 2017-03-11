@@ -19,7 +19,7 @@ env:
   # Ensure that we build without warnings.
   - CARGO_FLAGS="--features 'strict'"
 
-before_script: (cargo install rustfmt || true)
+before_script: (cargo install --force rustfmt || true)
 
 script:
   - ./.travis.sh
