@@ -412,13 +412,17 @@ This will generate compile-time constants from BINDINGS."
          (,(concat "\\\\\\\\\\[\\(" lisp-mode-symbol-regexp "\\)\\]")
           (1 font-lock-constant-face prepend))
          ;; Ineffective backslashes (typically in need of doubling).
-         ("\\(?:[^\\]\\|^\\)\\(?:\\\\\\\\\\)*\\(\\(\\\\\\)\\([^\"\\]\\)\\)"
-          (2 (and (nth 3 (syntax-ppss))
-                  (equal (ignore-errors
-                           (car (read-from-string
-                                 (format "\"%s\"" (match-string 1)))))
-                         (match-string 3))
-                  font-lock-warning-face)
+         ("\\(\\\\\\)\\([^\"\\]\\)"
+          (1 (let ((ppss (save-excursion (syntax-ppss (match-beginning 0)))))
+               (and (nth 3 ppss)        ;Inside a string.
+                    (not (nth 5 ppss))  ;The \ is not itself \-escaped.
+                    (equal (ignore-errors
+                             (car (read-from-string
+                                   (format "\"%s\""
+                                           (match-string-no-properties 0)))))
+                           (match-string-no-properties 2))
+                    `(face ,font-lock-warning-face
+                           help-echo "This \\ has no effect")))
              prepend))
          ;; Words inside ‘’ and `' tend to be symbol names.
          (,(concat "[`‘]\\(\\(?:\\sw\\|\\s_\\|\\\\.\\)"
