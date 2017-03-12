@@ -83,9 +83,9 @@ Note that the buffer name starts with a space."
 (defconst epg-gpg-minimum-version "1.4.3")
 
 (defconst epg-config--program-alist
-  '((OpenPGP
+  `((OpenPGP
      epg-gpg-program
-     ("gpg2" . "2.1.6") ("gpg" . "1.4.3"))
+     ("gpg2" . "2.1.6") ("gpg" . ,epg-gpg-minimum-version))
     (CMS
      epg-gpgsm-program
      ("gpgsm" . "2.0.4")))
