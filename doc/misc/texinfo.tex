@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2017-01-14.15}
+\def\texinfoversion{2017-03-07.20}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -5888,8 +5888,8 @@ end
     \divide\doublecolumnhsize by 2
   \hsize = \doublecolumnhsize
   %
-  % Double the \vsize as well.  (We don't need a separate register here,
-  % since nobody clobbers \vsize.)
+  % Double the \vsize as well.
+  \advance\vsize by -\ht\partialpage
   \vsize = 2\vsize
   %
   % For the benefit of balancing columns
@@ -5907,12 +5907,12 @@ end
   % previous page.
   \dimen@ = \vsize
   \divide\dimen@ by 2
-  \advance\dimen@ by -\ht\partialpage
   %
   % box0 will be the left-hand column, box2 the right.
-  \setbox0=\vsplit255 to\dimen@ \setbox2=\vsplit255 to\dimen@
+  \setbox0=\vsplit\PAGE to\dimen@ \setbox2=\vsplit\PAGE to\dimen@
+  \global\advance\vsize by 2\ht\partialpage
   \onepageout\pagesofar
-  \unvbox255
+  \unvbox\PAGE
   \penalty\outputpenalty
 }
 %
@@ -5976,9 +5976,9 @@ end
   %
   % \pagegoal was set to the doubled \vsize above, since we restarted
   % the current page.  We're now back to normal single-column
-  % typesetting, so reset \pagegoal to the normal \vsize (after the
-  % \endgroup where \vsize got restored).
-  \pagegoal = \vsize
+  % typesetting, so reset \pagegoal to the normal \vsize.
+  \global\vsize = \txipageheight %
+  \pagegoal = \txipageheight %
 }
 \newbox\balancedcolumns
 \setbox\balancedcolumns=\vbox{shouldnt see this}%
@@ -5986,7 +5986,7 @@ end
 % Only called for the last of the double column material.  \doublecolumnout 
 % does the others.
 \def\balancecolumns{%
-  \setbox0 = \vbox{\unvbox255}% like \box255 but more efficient, see p.120.
+  \setbox0 = \vbox{\unvbox\PAGE}% like \box255 but more efficient, see p.120.
   \dimen@ = \ht0
   \advance\dimen@ by \topskip
   \advance\dimen@ by-\baselineskip
@@ -11274,6 +11274,7 @@ directory should work if nowhere else does.}
     \pdfvorigin = 1 true in
   \else
     \ifx\XeTeXrevision\thisisundefined
+      \special{papersize=#8,#7}%
     \else
       \pdfpageheight #7\relax
       \pdfpagewidth #8\relax
