@@ -440,7 +440,11 @@
     ("filter" "none" filter-function-list)
     ("flood-color" color)
     ("flood-opacity" number percentage)
-    ("lighting-color" color))
+    ("lighting-color" color)
+
+    ;; Pointer Events
+    ;; (https://www.w3.org/TR/pointerevents/#the-touch-action-css-property)
+    ("touch-action" "auto" "none" "pan-x" "pan-y" "manipulation"))
   "Identifiers for properties and their possible values.
 The CAR of each entry is the name of a property, while the CDR is
 a list of possible values for that property.  String values in
