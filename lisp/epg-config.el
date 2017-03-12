@@ -129,7 +129,8 @@ version requirement is met."
         (or (and (not no-cache) (alist-get protocol epg--configurations))
             ;; If the executable value is already set with M-x
             ;; customize, use it without checking.
-            (if (and symbol (get symbol 'saved-value))
+            (if (and symbol (or (get symbol 'saved-value)
+                                (get symbol 'customized-value)))
                 (let ((configuration
                        (funcall constructor (symbol-value symbol))))
                   (push (cons protocol configuration) epg--configurations)
