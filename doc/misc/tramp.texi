@@ -428,7 +428,7 @@ XEmacs support has been stopped in January 2016.
 
 @value{tramp} is initially configured to use the @command{scp} program
 to connect to the remote host.  Just type @kbd{C-x C-f} and then enter
-file name @file{@trampf{user@@host,/path/to.file}}.  For details,
+file name @file{@trampf{user@@host,/path/to/file}}.  For details,
 @xref{Default Method}, @xref{Default User}, @xref{Default Host}.
 
 For problems related to the behavior of the remote shell, @xref{Remote
@@ -2190,7 +2190,7 @@ remote user name for log in to the remote host.  Specifying a different
 name using the proper syntax will override this default behavior:
 
 @example
-@trampf{user@@host,path/to.file}
+@trampf{user@@host,path/to/file}
 @end example
 
 @file{@trampf{daniel@@melancholia,.emacs}} is for file @file{.emacs}
