@@ -2059,8 +2059,8 @@ except that it additionally expands symbol macros."
           (pcase exp
             ((pred symbolp)
              ;; Perform symbol-macro expansion.
-             (when (cdr (assq (symbol-name exp) env))
-               (setq exp (cadr (assq (symbol-name exp) env)))))
+             (when (cdr (assq exp env))
+               (setq exp (cadr (assq exp env)))))
             (`(setq . ,_)
              ;; Convert setq to setf if required by symbol-macro expansion.
              (let* ((args (mapcar (lambda (f) (cl--sm-macroexpand f env))
@@ -2078,7 +2078,7 @@ except that it additionally expands symbol macros."
              (let ((letf nil) (found nil) (nbs ()))
                (dolist (binding bindings)
                  (let* ((var (if (symbolp binding) binding (car binding)))
-                        (sm (assq (symbol-name var) env)))
+                        (sm (assq var env)))
                    (push (if (not (cdr sm))
                              binding
                            (let ((nexp (cadr sm)))
@@ -2149,7 +2149,7 @@ by EXPANSION, and (setq NAME ...) will act like (setf EXPANSION ...).
             (let ((expansion
                    ;; FIXME: For N bindings, this will traverse `body' N times!
                    (macroexpand-all (macroexp-progn body)
-                                    (cons (list (symbol-name (caar bindings))
+                                    (cons (list (caar bindings)
                                                 (cl-cadar bindings))
                                           macroexpand-all-environment))))
               (if (or (null (cdar bindings)) (cl-cddar bindings))
