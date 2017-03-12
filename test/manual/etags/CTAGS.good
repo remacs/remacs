@@ -548,7 +548,7 @@ ENUM_BF	c-src/emacs/src/lisp.h	/^      ENUM_BF (specbind_tag) kind : CHAR_BIT;$/
 EQ	c-src/emacs/src/lisp.h	/^# define EQ(x, y) lisp_h_EQ (x, y)$/
 EQUAL	y-src/cccp.c	12
 ERLSRC	make-src/Makefile	/^ERLSRC=gs_dialog.erl lines.erl lists.erl$/
-ERROR	y-src/parse.y	303
+ERROR	y-src/parse.y	304
 ERROR	y-src/cccp.c	9
 ETAGS	make-src/Makefile	/^ETAGS: FRC etags ${infiles}$/
 ETAGS%	make-src/Makefile	/^ETAGS%: FRC etags% ${infiles}$/
@@ -1701,8 +1701,8 @@ YYSTD	/usr/share/bison/bison.simple	/^# define YYSTD(x) std::x$/
 YYSTD	/usr/share/bison/bison.simple	/^# define YYSTD(x) x$/
 YYSTD	/usr/share/bison/bison.simple	/^# define YYSTD(x) std::x$/
 YYSTD	/usr/share/bison/bison.simple	/^# define YYSTD(x) x$/
-YYSTYPE	y-src/parse.y	71
 YYSTYPE	y-src/parse.y	72
+YYSTYPE	y-src/parse.y	73
 YYTERROR	/usr/share/bison/bison.simple	177
 YYTERROR	/usr/share/bison/bison.simple	178
 YY_DECL_NON_LSP_VARIABLES	/usr/share/bison/bison.simple	374
@@ -2656,7 +2656,7 @@ cat	prol-src/natded.prolog	/^cat(A, Alpha@Beta, Ass3, Qs3, tree(fe,A:Alpha@Beta/
 cat_atoms	prol-src/natded.prolog	/^cat_atoms(A1,A2,A3):-$/
 cccccccccc	c-src/h.h	115
 cdr	c-src/emacs/src/lisp.h	1159
-cell	y-src/parse.y	278
+cell	y-src/parse.y	279
 cgrep	html-src/software.html	/^cgrep$/
 chain	c-src/emacs/src/lisp.h	1162
 chain	c-src/emacs/src/lisp.h	2396
@@ -2902,12 +2902,12 @@ exit	c-src/exit.c	/^DEFUN(exit, (status), int status)$/
 exit	c-src/exit.strange_suffix	/^DEFUN(exit, (status), int status)$/
 exit-recursive-edit	c-src/emacs/src/keyboard.c	/^DEFUN ("exit-recursive-edit", Fexit_recursive_edit/
 exit_critical_to_previous	c-src/h.h	117
-exp	y-src/parse.y	94
+exp	y-src/parse.y	95
 exp	y-src/atest.y	2
 exp	y-src/cccp.y	156
 exp	y-src/cccp.y	185
 exp1	y-src/cccp.y	148
-exp_list	y-src/parse.y	262
+exp_list	y-src/parse.y	263
 expand-abbrev	c-src/abbrev.c	/^DEFUN ("expand-abbrev", Fexpand_abbrev, Sexpand_ab/
 expandmng	prol-src/natded.prolog	/^expandmng(var(V),var(V)).$/
 expandmng_tree	prol-src/natded.prolog	/^expandmng_tree(tree(Rule,Syn:Sem,Trees),$/
@@ -3003,7 +3003,7 @@ flag2str	pyt-src/server.py	/^def flag2str(value, string):$/
 flistseen	c-src/etags.c	2415
 fn	c-src/exit.c	/^    void EXFUN((*fn[1]), (NOARGS));$/
 fn	c-src/exit.strange_suffix	/^    void EXFUN((*fn[1]), (NOARGS));$/
-fnin	y-src/parse.y	67
+fnin	y-src/parse.y	68
 focus_set	pyt-src/server.py	/^    def focus_set(self):$/
 follow_key	c-src/emacs/src/keyboard.c	/^follow_key (Lisp_Object keymap, Lisp_Object key)$/
 fonts	tex-src/texinfo.tex	/^\\obeyspaces \\obeylines \\ninett \\indexfonts \\rawbac/
@@ -3207,7 +3207,7 @@ instance_method	ruby-src/test.rb	/^        def instance_method$/
 instance_method_equals=	ruby-src/test.rb	/^        def instance_method_equals=$/
 instance_method_exclamation!	ruby-src/test.rb	/^        def instance_method_exclamation!$/
 instance_method_question?	ruby-src/test.rb	/^        def instance_method_question?$/
-instr	y-src/parse.y	80
+instr	y-src/parse.y	81
 instruct	c-src/etags.c	2527
 intNumber	go-src/test1.go	13
 integer	c-src/emacs/src/lisp.h	2127
@@ -3346,7 +3346,7 @@ licenze	html-src/softwarelibero.html	/^Licenze d'uso di un programma$/
 limit	cp-src/Range.h	/^  double limit (void) const { return rng_limit; }$/
 line	c-src/etags.c	2493
 line	perl-src/htlmify-cystic	37
-line	y-src/parse.y	86
+line	y-src/parse.y	87
 lineCount	php-src/lce_functions.php	/^      function lineCount($entry)$/
 linebuffer	c-src/etags.c	239
 linebuffer_init	c-src/etags.c	/^linebuffer_init (linebuffer *lbp)$/
@@ -3651,8 +3651,8 @@ object	c-src/emacs/src/lisp.h	2128
 object_registry	cp-src/clheir.cpp	10
 objtag	c-src/etags.c	2453
 objvar	c-src/emacs/src/lisp.h	2297
-obstack_chunk_alloc	y-src/parse.y	46
-obstack_chunk_free	y-src/parse.y	47
+obstack_chunk_alloc	y-src/parse.y	47
+obstack_chunk_free	y-src/parse.y	48
 ocatseen	c-src/etags.c	2477
 octave_MDiagArray2_h	cp-src/MDiagArray2.h	29
 octave_Range_h	cp-src/Range.h	24
@@ -3752,14 +3752,14 @@ parse	prol-src/natded.prolog	/^parse(Ws,Cat):-$/
 parseFromVars	php-src/lce_functions.php	/^      function parseFromVars($prefix)$/
 parse_c_expression	y-src/cccp.y	/^parse_c_expression (string)$/
 parse_cgi	prol-src/natded.prolog	/^parse_cgi(TokenList,KeyVals):-$/
-parse_error	y-src/parse.y	81
+parse_error	y-src/parse.y	82
 parse_escape	y-src/cccp.y	/^parse_escape (string_ptr)$/
-parse_hash	y-src/parse.y	63
+parse_hash	y-src/parse.y	64
 parse_menu_item	c-src/emacs/src/keyboard.c	/^parse_menu_item (Lisp_Object item, int inmenubar)$/
 parse_modifiers	c-src/emacs/src/keyboard.c	/^parse_modifiers (Lisp_Object symbol)$/
 parse_modifiers_uncached	c-src/emacs/src/keyboard.c	/^parse_modifiers_uncached (Lisp_Object symbol, ptrd/
 parse_number	y-src/cccp.y	/^parse_number (olen)$/
-parse_return	y-src/parse.y	73
+parse_return	y-src/parse.y	74
 parse_return_error	y-src/cccp.y	70
 parse_solitary_modifier	c-src/emacs/src/keyboard.c	/^parse_solitary_modifier (Lisp_Object symbol)$/
 parse_tool_bar_item	c-src/emacs/src/keyboard.c	/^parse_tool_bar_item (Lisp_Object key, Lisp_Object /
@@ -3866,8 +3866,8 @@ qux=	ruby-src/test1.ru	/^      def qux=(tee)$/
 r0	c-src/sysdep.h	54
 r1	c-src/sysdep.h	55
 r_alloc	c-src/emacs/src/lisp.h	/^extern void *r_alloc (void **, size_t) ATTRIBUTE_A/
-range_exp	y-src/parse.y	268
-range_exp_list	y-src/parse.y	272
+range_exp	y-src/parse.y	269
+range_exp_list	y-src/parse.y	273
 raw_keybuf	c-src/emacs/src/keyboard.c	116
 raw_keybuf_count	c-src/emacs/src/keyboard.c	117
 rbtp	c.c	240
