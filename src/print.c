@@ -1677,7 +1677,8 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
       break;
 
     case Lisp_Vectorlike:
-      if (PROCESSP (obj))
+      switch (PSEUDOVECTOR_TYPE (XVECTOR (obj))) {
+      case PVEC_PROCESS:
 	{
 	  if (escapeflag)
 	    {
@@ -1688,7 +1689,9 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	  else
 	    print_string (XPROCESS (obj)->name, printcharfun);
 	}
-      else if (BOOL_VECTOR_P (obj))
+        break;
+
+      case PVEC_BOOL_VECTOR:
 	{
 	  ptrdiff_t i;
 	  unsigned char c;
@@ -1732,18 +1735,24 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	    print_c_string (" ...", printcharfun);
 	  printchar ('\"', printcharfun);
 	}
-      else if (SUBRP (obj))
+        break;
+
+      case PVEC_SUBR:
 	{
 	  print_c_string ("#<subr ", printcharfun);
 	  print_c_string (XSUBR (obj)->symbol_name, printcharfun);
 	  printchar ('>', printcharfun);
 	}
-      else if (XWIDGETP (obj) || XWIDGET_VIEW_P (obj))
+	break;
+
+      case PVEC_XWIDGET: case PVEC_XWIDGET_VIEW:
 	{
 	  print_c_string ("#<xwidget ", printcharfun);
 	  printchar ('>', printcharfun);
 	}
-      else if (WINDOWP (obj))
+	break;
+
+      case PVEC_WINDOW:
 	{
 	  int len = sprintf (buf, "#<window %"pI"d",
 			     XWINDOW (obj)->sequence_number);
@@ -1756,7 +1765,9 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	    }
 	  printchar ('>', printcharfun);
 	}
-      else if (TERMINALP (obj))
+	break;
+
+      case PVEC_TERMINAL:
 	{
 	  struct terminal *t = XTERMINAL (obj);
 	  int len = sprintf (buf, "#<terminal %d", t->id);
@@ -1768,27 +1779,14 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	    }
 	  printchar ('>', printcharfun);
 	}
-      else if (HASH_TABLE_P (obj))
+        break;
+
+      case PVEC_HASH_TABLE:
 	{
 	  struct Lisp_Hash_Table *h = XHASH_TABLE (obj);
 	  ptrdiff_t i;
 	  ptrdiff_t real_size, size;
 	  int len;
-#if 0
-	  void *ptr = h;
-	  print_c_string ("#<hash-table", printcharfun);
-	  if (SYMBOLP (h->test))
-	    {
-	      print_c_string (" '", printcharfun);
-	      print_c_string (SSDATA (SYMBOL_NAME (h->test)), printcharfun);
-	      printchar (' ', printcharfun);
-	      print_c_string (SSDATA (SYMBOL_NAME (h->weak)), printcharfun);
-	      len = sprintf (buf, " %"pD"d/%"pD"d", h->count, ASIZE (h->next));
-	      strout (buf, len, len, printcharfun);
-	    }
-	  len = sprintf (buf, " %p>", ptr);
-	  strout (buf, len, len, printcharfun);
-#endif
 	  /* Implement a readable output, e.g.:
 	    #s(hash-table size 2 test equal data (k1 v1 k2 v2)) */
 	  /* Always print the size.  */
@@ -1846,9 +1844,10 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	    print_c_string (" ...", printcharfun);
 
 	  print_c_string ("))", printcharfun);
-
 	}
-      else if (BUFFERP (obj))
+        break;
+
+      case PVEC_BUFFER:
 	{
 	  if (!BUFFER_LIVE_P (XBUFFER (obj)))
 	    print_c_string ("#<killed buffer>", printcharfun);
@@ -1861,9 +1860,13 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	  else
 	    print_string (BVAR (XBUFFER (obj), name), printcharfun);
 	}
-      else if (WINDOW_CONFIGURATIONP (obj))
+        break;
+
+      case PVEC_WINDOW_CONFIGURATION:
 	print_c_string ("#<window-configuration>", printcharfun);
-      else if (FRAMEP (obj))
+        break;
+
+      case PVEC_FRAME: ;
 	{
 	  int len;
 	  void *ptr = XFRAME (obj);
@@ -1886,7 +1889,9 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	  len = sprintf (buf, " %p>", ptr);
 	  strout (buf, len, len, printcharfun);
 	}
-      else if (FONTP (obj))
+        break;
+
+      case PVEC_FONT:
 	{
 	  int i;
 
@@ -1914,7 +1919,9 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	    }
 	  printchar ('>', printcharfun);
 	}
-      else if (THREADP (obj))
+        break;
+
+      case PVEC_THREAD:
 	{
 	  print_c_string ("#<thread ", printcharfun);
 	  if (STRINGP (XTHREAD (obj)->name))
@@ -1926,7 +1933,9 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	    }
 	  printchar ('>', printcharfun);
 	}
-      else if (MUTEXP (obj))
+        break;
+
+      case PVEC_MUTEX:
 	{
 	  print_c_string ("#<mutex ", printcharfun);
 	  if (STRINGP (XMUTEX (obj)->name))
@@ -1938,7 +1947,9 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	    }
 	  printchar ('>', printcharfun);
 	}
-      else if (CONDVARP (obj))
+        break;
+
+      case PVEC_CONDVAR:
 	{
 	  print_c_string ("#<condvar ", printcharfun);
 	  if (STRINGP (XCONDVAR (obj)->name))
@@ -1950,7 +1961,12 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	    }
 	  printchar ('>', printcharfun);
 	}
-      else
+        break;
+
+      case PVEC_SUB_CHAR_TABLE:
+      case PVEC_COMPILED:
+      case PVEC_CHAR_TABLE:
+      case PVEC_NORMAL_VECTOR: ;
 	{
 	  ptrdiff_t size = ASIZE (obj);
 	  if (COMPILEDP (obj))
@@ -2007,6 +2023,12 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	      print_c_string (" ...", printcharfun);
 	  }
 	  printchar (']', printcharfun);
+        }
+        break;
+
+        case PVEC_OTHER:
+        case PVEC_FREE:
+          emacs_abort ();
 	}
       break;
 

@@ -3276,13 +3276,7 @@ sweep_vectors (void)
 	  VECTOR_UNMARK (vector);
 	  total_vectors++;
 	  if (vector->header.size & PSEUDOVECTOR_FLAG)
-	    {
-	      /* All non-bool pseudovectors are small enough to be allocated
-		 from vector blocks.  This code should be redesigned if some
-		 pseudovector type grows beyond VBLOCK_BYTES_MAX.  */
-	      eassert (PSEUDOVECTOR_TYPEP (&vector->header, PVEC_BOOL_VECTOR));
-              total_vector_slots += vector_nbytes (vector) / word_size;
-	    }
+            total_vector_slots += vector_nbytes (vector) / word_size;
 	  else
 	    total_vector_slots
 	      += header_size / word_size + vector->header.size;
@@ -4648,7 +4642,7 @@ live_vector_p (struct mem_node *m, void *p)
 	     && vector <= (struct Lisp_Vector *) p)
 	{
 	  if (!PSEUDOVECTOR_TYPEP (&vector->header, PVEC_FREE) && vector == p)
-	    return 1;
+	    return true;
 	  else
 	    vector = ADVANCE (vector, vector_nbytes (vector));
 	}
@@ -6385,7 +6379,6 @@ mark_object (Lisp_Object arg)
     case Lisp_Vectorlike:
       {
 	register struct Lisp_Vector *ptr = XVECTOR (obj);
-	register ptrdiff_t pvectype;
 
 	if (VECTOR_MARKED_P (ptr))
 	  break;
@@ -6396,11 +6389,8 @@ mark_object (Lisp_Object arg)
 	  emacs_abort ();
 #endif /* GC_CHECK_MARKED_OBJECTS */
 
-	if (ptr->header.size & PSEUDOVECTOR_FLAG)
-	  pvectype = ((ptr->header.size & PVEC_TYPE_MASK)
-		      >> PSEUDOVECTOR_AREA_BITS);
-	else
-	  pvectype = PVEC_NORMAL_VECTOR;
+        enum pvec_type pvectype
+          = PSEUDOVECTOR_TYPE (ptr);
 
 	if (pvectype != PVEC_SUBR
 	    && pvectype != PVEC_BUFFER

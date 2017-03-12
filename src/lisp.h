@@ -874,7 +874,7 @@ enum pvec_type
   PVEC_TERMINAL,
   PVEC_WINDOW_CONFIGURATION,
   PVEC_SUBR,
-  PVEC_OTHER,
+  PVEC_OTHER,            /* Should never be visible to Elisp code.  */
   PVEC_XWIDGET,
   PVEC_XWIDGET_VIEW,
   PVEC_THREAD,
@@ -1410,9 +1410,21 @@ CHECK_VECTOR (Lisp_Object x)
 
 /* A pseudovector is like a vector, but has other non-Lisp components.  */
 
-INLINE bool
-PSEUDOVECTOR_TYPEP (struct vectorlike_header *a, int code)
+INLINE enum pvec_type
+PSEUDOVECTOR_TYPE (struct Lisp_Vector *v)
 {
+  ptrdiff_t size = v->header.size;
+  return (size & PSEUDOVECTOR_FLAG
+          ? (size & PVEC_TYPE_MASK) >> PSEUDOVECTOR_AREA_BITS
+          : PVEC_NORMAL_VECTOR);
+}
+
+/* Can't be used with PVEC_NORMAL_VECTOR.  */
+INLINE bool
+PSEUDOVECTOR_TYPEP (struct vectorlike_header *a, enum pvec_type code)
+{
+  /* We don't use PSEUDOVECTOR_TYPE here so as to avoid a shift
+   * operation when `code' is known.  */
   return ((a->size & (PSEUDOVECTOR_FLAG | PVEC_TYPE_MASK))
 	  == (PSEUDOVECTOR_FLAG | (code << PSEUDOVECTOR_AREA_BITS)));
 }

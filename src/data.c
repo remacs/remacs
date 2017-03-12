@@ -241,39 +241,40 @@ for example, (type-of 1) returns `integer'.  */)
 	}
 
     case Lisp_Vectorlike:
-      if (WINDOW_CONFIGURATIONP (object))
-	return Qwindow_configuration;
-      if (PROCESSP (object))
-	return Qprocess;
-      if (WINDOWP (object))
-	return Qwindow;
-      if (SUBRP (object))
-	return Qsubr;
-      if (COMPILEDP (object))
-	return Qcompiled_function;
-      if (BUFFERP (object))
-	return Qbuffer;
-      if (CHAR_TABLE_P (object))
-	return Qchar_table;
-      if (BOOL_VECTOR_P (object))
-	return Qbool_vector;
-      if (FRAMEP (object))
-	return Qframe;
-      if (HASH_TABLE_P (object))
-	return Qhash_table;
-      if (FONT_SPEC_P (object))
-	return Qfont_spec;
-      if (FONT_ENTITY_P (object))
-	return Qfont_entity;
-      if (FONT_OBJECT_P (object))
-	return Qfont_object;
-      if (THREADP (object))
-	return Qthread;
-      if (MUTEXP (object))
-	return Qmutex;
-      if (CONDVARP (object))
-	return Qcondition_variable;
-      return Qvector;
+      switch (PSEUDOVECTOR_TYPE (XVECTOR (object)))
+        {
+        case PVEC_NORMAL_VECTOR: return Qvector;
+        case PVEC_WINDOW_CONFIGURATION: return Qwindow_configuration;
+        case PVEC_PROCESS: return Qprocess;
+        case PVEC_WINDOW: return Qwindow;
+        case PVEC_SUBR: return Qsubr;
+        case PVEC_COMPILED: return Qcompiled_function;
+        case PVEC_BUFFER: return Qbuffer;
+        case PVEC_CHAR_TABLE: return Qchar_table;
+        case PVEC_BOOL_VECTOR: return Qbool_vector;
+        case PVEC_FRAME: return Qframe;
+        case PVEC_HASH_TABLE: return Qhash_table;
+        case PVEC_FONT:
+          if (FONT_SPEC_P (object))
+	    return Qfont_spec;
+          if (FONT_ENTITY_P (object))
+	    return Qfont_entity;
+          if (FONT_OBJECT_P (object))
+	    return Qfont_object;
+          else
+            emacs_abort (); /* return Qfont?  */
+        case PVEC_THREAD: return Qthread;
+        case PVEC_MUTEX: return Qmutex;
+        case PVEC_CONDVAR: return Qcondition_variable;
+        case PVEC_TERMINAL: return Qterminal;
+        /* "Impossible" cases.  */
+        case PVEC_XWIDGET:
+        case PVEC_OTHER:
+        case PVEC_XWIDGET_VIEW:
+        case PVEC_SUB_CHAR_TABLE:
+        case PVEC_FREE: ;
+        }
+      emacs_abort ();
 
     case Lisp_Float:
       return Qfloat;
