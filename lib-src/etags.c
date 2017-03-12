@@ -2458,7 +2458,7 @@ enum sym_type
   st_none,
   st_C_objprot, st_C_objimpl, st_C_objend,
   st_C_gnumacro,
-  st_C_ignore, st_C_attribute,
+  st_C_ignore, st_C_attribute, st_C_enum_bf,
   st_C_javastruct,
   st_C_operator,
   st_C_class, st_C_template,
@@ -2507,6 +2507,7 @@ DEFUN,		0,			st_C_gnumacro
 SYSCALL,	0,			st_C_gnumacro
 ENTRY,		0,			st_C_gnumacro
 PSEUDO,		0,			st_C_gnumacro
+ENUM_BF,	0,			st_C_enum_bf
 # These are defined inside C functions, so currently they are not met.
 # EXFUN used in glibc, DEFVAR_* in emacs.
 #EXFUN,		0,			st_C_gnumacro
@@ -2514,46 +2515,48 @@ PSEUDO,		0,			st_C_gnumacro
 %]
 and replace lines between %< and %> with its output, then:
  - remove the #if characterset check
- - make in_word_set static and not inline. */
+ - remove any #line directives
+ - make in_word_set static and not inline
+ - remove any 'register' qualifications from variable decls. */
 /*%<*/
 /* C code produced by gperf version 3.0.1 */
-/* Command-line: gperf -m 5  */
+/* Command-line: gperf -m 5 */
 /* Computed positions: -k'2-3' */
 
 struct C_stab_entry { const char *name; int c_ext; enum sym_type type; };
-/* maximum key range = 33, duplicates = 0 */
+/* maximum key range = 34, duplicates = 0 */
 
 static int
 hash (const char *str, int len)
 {
   static char const asso_values[] =
     {
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35,  3,
-      26, 35, 35, 35, 35, 35, 35, 35, 27, 35,
-      35, 35, 35, 24,  0, 35, 35, 35, 35,  0,
-      35, 35, 35, 35, 35,  1, 35, 16, 35,  6,
-      23,  0,  0, 35, 22,  0, 35, 35,  5,  0,
-       0, 15,  1, 35,  6, 35,  8, 19, 35, 16,
-       4,  5, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
-      35, 35, 35, 35, 35, 35
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36,  3,
+      27, 36, 36, 36, 36, 36, 36, 36, 26, 36,
+      36, 36, 36, 25,  0,  0, 36, 36, 36,  0,
+      36, 36, 36, 36, 36,  1, 36, 16, 36,  6,
+      23,  0,  0, 36, 22,  0, 36, 36,  5,  0,
+       0, 15,  1, 36,  6, 36,  8, 19, 36, 16,
+       4,  5, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+      36, 36, 36, 36, 36, 36
     };
   int hval = len;
 
@@ -2574,11 +2577,11 @@ in_word_set (register const char *str, register unsigned int len)
 {
   enum
     {
-      TOTAL_KEYWORDS = 33,
+      TOTAL_KEYWORDS = 34,
       MIN_WORD_LENGTH = 2,
       MAX_WORD_LENGTH = 15,
       MIN_HASH_VALUE = 2,
-      MAX_HASH_VALUE = 34
+      MAX_HASH_VALUE = 35
     };
 
   static struct C_stab_entry wordlist[] =
@@ -2613,8 +2616,9 @@ in_word_set (register const char *str, register unsigned int len)
       {"undef",		0,			st_C_define},
       {"package",	(C_JAVA & ~C_PLPL),	st_C_ignore},
       {"__attribute__",	0,			st_C_attribute},
-      {"SYSCALL",	0,			st_C_gnumacro},
       {"ENTRY",		0,			st_C_gnumacro},
+      {"SYSCALL",	0,			st_C_gnumacro},
+      {"ENUM_BF",	0,			st_C_enum_bf},
       {"PSEUDO",		0,			st_C_gnumacro},
       {"DEFUN",		0,			st_C_gnumacro}
     };
@@ -2650,6 +2654,11 @@ C_symtype (char *str, int len, int c_ext)
  * Ignoring __attribute__ ((list))
  */
 static bool inattribute;	/* looking at an __attribute__ construct */
+
+/* Ignoring ENUM_BF (type)
+ *
+ */
+static bool in_enum_bf;		/* inside parentheses following ENUM_BF */
 
 /*
  * C functions and variables are recognized using a simple
@@ -2890,6 +2899,15 @@ consider_token (char *str, int len, int c, int *c_extp,
       inattribute = true;
       return false;
      }
+
+  /*
+   * Skip ENUM_BF
+   */
+  if (toktype == st_C_enum_bf && definedef == dnone)
+    {
+      in_enum_bf = true;
+      return false;
+    }
 
    /*
     * Advance the definedef state machine.
@@ -3496,7 +3514,8 @@ C_entries (int c_ext, FILE *inf)
 	  && templatelev == 0
 	  && (definedef != dnone
 	      || structdef != scolonseen)
-	  && !inattribute)
+	  && !inattribute
+	  && !in_enum_bf)
 	{
 	  if (midtoken)
 	    {
@@ -3957,6 +3976,12 @@ C_entries (int c_ext, FILE *inf)
 	    {
 	      if (--attrparlev == 0)
 		inattribute = false;
+	      break;
+	    }
+	  if (in_enum_bf)
+	    {
+	      if (--parlev == 0)
+		in_enum_bf = false;
 	      break;
 	    }
 	  if (definedef != dnone)
