@@ -266,8 +266,15 @@ archlibdir=@archlibdir@
 # Where to put the etc/DOC file.
 etcdocdir=@etcdocdir@
 
-# Where to install Emacs game score files.
+# User or group of the auxiliary program update-game-score, which is
+# installed on platforms with a game directory shared by multiple users.
+# On other platforms Emacs can update the score files itself.
+gameuser=@gameuser@
+gamegroup=@gamegroup@
+# Where to install game score files, if gameuser or gamegroup is nonempty.
 gamedir=@gamedir@
+# Nonempty if and only if a shared gamedir is used.
+use_gamedir=$(gameuser)$(gamegroup)
 
 # ==================== Utility Programs for the Build ====================
 
@@ -334,6 +341,9 @@ etc-emacsver:
 	  ${srcdir}/build-aux/move-if-change emacsver.tex.$$$$ \
 	  ${srcdir}/etc/refcards/emacsver.tex
 
+# The shared gamedir name as a C string literal, or a null ptr if not in use.
+PATH_GAME = $(if $(use_gamedir),"$(gamedir)",((char const *) 0))
+
 # Generate epaths.h from epaths.in.  This target is invoked by 'configure'.
 # See comments in configure.ac for why it is done this way, as opposed
 # to just letting configure generate epaths.h from epaths.in in a
@@ -359,7 +369,7 @@ epaths-force:
 	  -e 's;\(#.*PATH_DATA\).*$$;\1 "${etcdir}";'			\
 	  -e 's;\(#.*PATH_BITMAPS\).*$$;\1 "${bitmapdir}";'		\
 	  -e 's;\(#.*PATH_X_DEFAULTS\).*$$;\1 "${x_default_search_path}";' \
-	  -e 's;\(#.*PATH_GAME\).*$$;\1 "${gamedir}";' \
+	  -e 's;\(#.*PATH_GAME\).*$$;\1 $(PATH_GAME);'			\
 	  -e 's;\(#.*PATH_DOC\).*$$;\1 "${etcdocdir}";') &&		\
 	${srcdir}/build-aux/move-if-change epaths.h.$$$$ src/epaths.h
 
@@ -811,10 +821,12 @@ uninstall: uninstall-$(NTDIR) uninstall-doc
 	-rm -f "$(DESTDIR)${desktopdir}/${EMACS_NAME}.desktop"
 	-rm -f "$(DESTDIR)${appdatadir}/${EMACS_NAME}.appdata.xml"
 	-rm -f "$(DESTDIR)$(systemdunitdir)/${EMACS_NAME}.service"
+  ifneq (,$(use_gamedir))
 	for file in snake-scores tetris-scores; do \
 	  file="$(DESTDIR)${gamedir}/$${file}"; \
 	  [ -s "$${file}" ] || rm -f "$$file"; \
 	done
+  endif
 
 ### Windows-specific uninstall target for removing programs produced
 ### in nt/, and its Posix do-nothing shadow.

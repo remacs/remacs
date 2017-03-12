@@ -65,6 +65,11 @@ emacs-version and erc-cmd-SV functions, and the leave the following
 variables nil: emacs-build-system, emacs-build-time,
 erc-emacs-build-time.
 
+** The configure option '--with-gameuser' now defaults to 'no',
+as this appears to be the most common configuration in practice.
+When it is 'no', the shared game directory and the auxiliary program
+update-game-score are no longer needed and are not installed.
+
 ** Emacs no longer works on IRIX.  We expect that Emacs users are not
 affected by this, as SGI stopped supporting IRIX in December 2013.
 

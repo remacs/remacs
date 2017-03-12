@@ -459,7 +459,6 @@ echo "Making links to 'lib-src'"
  ln [a-zA-Z]*.[ch] ../${tempdir}/lib-src
  ln ChangeLog.*[0-9] Makefile.in README ../${tempdir}/lib-src
  ln rcs2log ../${tempdir}/lib-src
- ln update-game-score.exe.manifest ../${tempdir}/lib-src)
 
 echo "Making links to 'm4'"
 (cd m4

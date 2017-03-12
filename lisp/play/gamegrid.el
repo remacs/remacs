@@ -475,17 +475,19 @@ FILE is created there."
 ;;        update FILE.  This is for the case that a user has installed
 ;;        a game on her own.
 ;;
-;;     4. "update-game-score" is not setgid/setuid.  Use it to
-;;        create/update FILE in the user's home directory.  There is
-;;        presumably no shared game directory.
+;;     4. "update-game-score" does not exist or is not setgid/setuid.
+;;        Create/update FILE in the user's home directory, without
+;;        using "update-game-score".  There is presumably no shared
+;;        game directory.
 
 (defvar gamegrid-shared-game-dir)
 
 (defun gamegrid-add-score-with-update-game-score (file score)
   (let ((gamegrid-shared-game-dir
-	 (not (zerop (logand (file-modes
-			      (expand-file-name "update-game-score"
-						exec-directory))
+	 (not (zerop (logand (or (file-modes
+				  (expand-file-name "update-game-score"
+						    exec-directory))
+				  0)
 			     #o6000)))))
     (cond ((file-name-absolute-p file)
 	   (gamegrid-add-score-insecure file score))
@@ -497,23 +499,12 @@ FILE is created there."
 	    (expand-file-name file shared-game-score-directory) score))
 	  ;; Else: Add the score to a score file in the user's home
 	  ;; directory.
-	  (gamegrid-shared-game-dir
-	   ;; If `gamegrid-shared-game-dir' is non-nil, then
-	   ;; "update-gamescore" program is setuid, so don't use it.
-	   (unless (file-exists-p
-		    (directory-file-name gamegrid-user-score-file-directory))
-	     (make-directory gamegrid-user-score-file-directory t))
-	   (gamegrid-add-score-insecure file score
-					gamegrid-user-score-file-directory))
 	  (t
 	   (unless (file-exists-p
 		    (directory-file-name gamegrid-user-score-file-directory))
 	     (make-directory gamegrid-user-score-file-directory t))
-	   (let ((f (expand-file-name file
-				      gamegrid-user-score-file-directory)))
-	     (unless (file-exists-p f)
-	       (write-region "" nil f nil 'silent nil 'excl))
-	     (gamegrid-add-score-with-update-game-score-1 file f score))))))
+	   (gamegrid-add-score-insecure file score
+					gamegrid-user-score-file-directory)))))
 
 (defun gamegrid-add-score-with-update-game-score-1 (file target score)
   (let ((default-directory "/")

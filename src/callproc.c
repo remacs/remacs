@@ -1584,13 +1584,14 @@ init_callproc (void)
   sh = getenv ("SHELL");
   Vshell_file_name = build_string (sh ? sh : "/bin/sh");
 
-#ifdef DOS_NT
-  Vshared_game_score_directory = Qnil;
-#else
-  Vshared_game_score_directory = build_unibyte_string (PATH_GAME);
-  if (NILP (Ffile_accessible_directory_p (Vshared_game_score_directory)))
-    Vshared_game_score_directory = Qnil;
-#endif
+  Lisp_Object gamedir = Qnil;
+  if (PATH_GAME)
+    {
+      Lisp_Object path_game = build_unibyte_string (PATH_GAME);
+      if (file_accessible_directory_p (path_game))
+	gamedir = path_game;
+    }
+  Vshared_game_score_directory = gamedir;
 }
 
 void
@@ -1661,11 +1662,6 @@ includes this.  */);
   DEFVAR_LISP ("shared-game-score-directory", Vshared_game_score_directory,
 	       doc: /* Directory of score files for games which come with GNU Emacs.
 If this variable is nil, then Emacs is unable to use a shared directory.  */);
-#ifdef DOS_NT
-  Vshared_game_score_directory = Qnil;
-#else
-  Vshared_game_score_directory = build_string (PATH_GAME);
-#endif
 
   DEFVAR_LISP ("initial-environment", Vinitial_environment,
 	       doc: /* List of environment variables inherited from the parent process.
