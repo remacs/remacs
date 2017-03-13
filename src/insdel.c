@@ -2001,18 +2001,21 @@ invalidate_buffer_caches (struct buffer *buf, ptrdiff_t start, ptrdiff_t end)
      see below).  */
   if (buf->bidi_paragraph_cache)
     {
-      if (start != end
-	  && start > BUF_BEG (buf))
+      if (start > BUF_BEG (buf))
 	{
 	  /* If we are deleting or replacing characters, we could
 	     create a paragraph start, because all of the characters
 	     from START to the beginning of START's line are
 	     whitespace.  Therefore, we must extend the region to be
-	     invalidated up to the newline before START.  */
+	     invalidated up to the newline before START.  Similarly,
+	     if we are inserting characters immediately after a
+	     newline, we could create a paragraph start if the
+	     inserted characters start with a newline.  */
 	  ptrdiff_t line_beg = start;
 	  ptrdiff_t start_byte = buf_charpos_to_bytepos (buf, start);
+	  int prev_char = BUF_FETCH_BYTE (buf, start_byte - 1);
 
-	  if (BUF_FETCH_BYTE (buf, start_byte - 1) != '\n')
+	  if ((start == end) == (prev_char == '\n'))
 	    {
 	      struct buffer *old = current_buffer;
 
