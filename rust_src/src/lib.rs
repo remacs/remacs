@@ -13,6 +13,8 @@ extern crate lazy_static;
 
 extern crate remacs_sys;
 extern crate libc;
+extern crate sha1;
+extern crate sha2;
 
 mod lisp;
 mod lists;
@@ -25,6 +27,7 @@ mod strings;
 mod symbols;
 mod character;
 mod base64;
+mod crypto;
 
 use remacs_sys::Lisp_Subr;
 
@@ -48,6 +51,16 @@ pub use lists::Flistp;
 pub use floatfns::extract_float;
 pub use floatfns::fmod_float;
 pub use symbols::Fsymbolp;
+
+// Cryptographic functions used in the C codebase.
+pub use crypto::sha256_buffer;
+pub use crypto::sha1_buffer;
+pub use crypto::sha384_buffer;
+pub use crypto::sha512_buffer;
+pub use crypto::sha224_buffer;
+pub use crypto::sha1_ctx::sha1_ctx_new;
+pub use crypto::sha1_ctx::sha1_process_bytes;
+pub use crypto::sha1_ctx::sha1_finish_ctx;
 
 // These need to be exported as marker.c depends upon them.
 pub use marker::CHECK_MARKER;

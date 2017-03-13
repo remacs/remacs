@@ -148,10 +148,10 @@ impl LispObject {
     pub fn get_type(self) -> LispType {
         let raw = self.to_raw() as EmacsUint;
         let res = (if USE_LSB_TAG {
-            raw & (!VALMASK as EmacsUint)
-        } else {
-            raw >> VALBITS
-        }) as u8;
+                       raw & (!VALMASK as EmacsUint)
+                   } else {
+                       raw >> VALBITS
+                   }) as u8;
         unsafe { mem::transmute(res) }
     }
 
