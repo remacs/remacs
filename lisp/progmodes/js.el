@@ -1713,7 +1713,7 @@ This performs fontification according to `js--class-styles'."
               (not (any ?\] ?\\))
               (and "\\" not-newline)))
          "]")))
-   (group "/"))
+   (group (zero-or-one "/")))
   "Regular expression matching a JavaScript regexp literal.")
 
 (defun js-syntax-propertize-regexp (end)
@@ -1721,12 +1721,13 @@ This performs fontification according to `js--class-styles'."
     (when (eq (nth 3 ppss) ?/)
       ;; A /.../ regexp.
       (goto-char (nth 8 ppss))
-      (when (and (looking-at js--syntax-propertize-regexp-regexp)
-                 ;; Don't touch text after END.
-                 (<= (match-end 1) end))
-        (put-text-property (match-beginning 1) (match-end 1)
+      (when (looking-at js--syntax-propertize-regexp-regexp)
+        ;; Don't touch text after END.
+        (when (> end (match-end 1))
+          (setq end (match-end 1)))
+        (put-text-property (match-beginning 1) end
                            'syntax-table (string-to-syntax "\"/"))
-        (goto-char (match-end 0))))))
+        (goto-char end)))))
 
 (defun js-syntax-propertize (start end)
   ;; JavaScript allows immediate regular expression objects, written /.../.
