@@ -3,6 +3,7 @@
 ;; Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
 ;; Author: Kai Großjohann <kai.grossjohann@gmx.net>
+;; Maintainer: Michael Albinus <michael.albinus@gmx.de>
 ;; Keywords: comm, terminals
 ;; Package: tramp
 

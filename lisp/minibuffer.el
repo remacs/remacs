@@ -894,22 +894,21 @@ This overrides the defaults specified in `completion-category-defaults'."
   ;; The quote/unquote function needs to come from the completion table (rather
   ;; than from completion-extra-properties) because it may apply only to some
   ;; part of the string (e.g. substitute-in-file-name).
-  (let* ((requote
-          (when (completion-metadata-get metadata 'completion--unquote-requote)
-            (cl-assert (functionp table))
-            (let ((new (funcall table string point 'completion--unquote)))
-              (setq string (pop new))
-              (setq table (pop new))
-              (setq point (pop new))
-              (cl-assert (<= point (length string)))
-              (pop new))))
-         (non-essential t)
-         (result
-          (completion--some (lambda (style)
-                              (funcall (nth n (assq style
-                                                    completion-styles-alist))
-                                       string table pred point))
-                            (completion--styles metadata))))
+  (let ((requote
+         (when (completion-metadata-get metadata 'completion--unquote-requote)
+           (cl-assert (functionp table))
+           (let ((new (funcall table string point 'completion--unquote)))
+             (setq string (pop new))
+             (setq table (pop new))
+             (setq point (pop new))
+	     (cl-assert (<= point (length string)))
+             (pop new))))
+        (result
+         (completion--some (lambda (style)
+                             (funcall (nth n (assq style
+                                                   completion-styles-alist))
+                                      string table pred point))
+                           (completion--styles metadata))))
     (if requote
         (funcall requote result n)
       result)))

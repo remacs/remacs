@@ -4,6 +4,7 @@
 ;; Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
 ;; Author: Kai Großjohann <kai.grossjohann@gmx.net>
+;; Maintainer: Michael Albinus <michael.albinus@gmx.de>
 ;; Keywords: comm, processes
 ;; Package: tramp
 ;; Version: 2.3.2-pre

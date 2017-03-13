@@ -6,6 +6,7 @@
 
 ;; Author: Kai Großjohann <kai.grossjohann@gmx.net>
 ;;         Michael Albinus <michael.albinus@gmx.de>
+;; Maintainer: Michael Albinus <michael.albinus@gmx.de>
 ;; Keywords: comm, processes
 ;; Package: tramp
 
@@ -4576,38 +4577,39 @@ Goes through the list `tramp-inline-compress-commands'."
       (let ((case-fold-search t))
 	(ignore-errors
 	  (when (executable-find "ssh")
-	    (with-temp-buffer
-	      (tramp-call-process vec "ssh" nil t nil "-o" "ControlMaster")
-	      (goto-char (point-min))
-	      (when (search-forward-regexp "missing.+argument" nil t)
-		(setq tramp-ssh-controlmaster-options "-o ControlMaster=auto")))
-	    (unless (zerop (length tramp-ssh-controlmaster-options))
+	    (with-tramp-progress-reporter
+		vec 4  "Computing ControlMaster options"
 	      (with-temp-buffer
-		;; We use a non-existing IP address, in order to avoid
-		;; useless connections, and DNS timeouts.
-		(tramp-call-process
-		 vec "ssh" nil t nil "-o" "ControlPath=%C" "0.0.0.1")
-		(goto-char (point-min))
-		(setq tramp-ssh-controlmaster-options
-		      (concat tramp-ssh-controlmaster-options
-			      (if (search-forward-regexp "unknown.+key" nil t)
-				  " -o ControlPath='tramp.%%r@%%h:%%p'"
-				" -o ControlPath='tramp.%%C'"))))
-	      (with-temp-buffer
-		(tramp-call-process vec "ssh" nil t nil "-o" "ControlPersist")
+		(tramp-call-process vec "ssh" nil t nil "-o" "ControlMaster")
 		(goto-char (point-min))
 		(when (search-forward-regexp "missing.+argument" nil t)
 		  (setq tramp-ssh-controlmaster-options
+			"-o ControlMaster=auto")))
+	      (unless (zerop (length tramp-ssh-controlmaster-options))
+		(with-temp-buffer
+		  ;; We use a non-existing IP address, in order to
+		  ;; avoid useless connections, and DNS timeouts.
+		  (tramp-call-process
+		   vec "ssh" nil t nil "-o" "ControlPath=%C" "0.0.0.1")
+		  (goto-char (point-min))
+		  (setq tramp-ssh-controlmaster-options
 			(concat tramp-ssh-controlmaster-options
-				" -o ControlPersist=no"))))))))
+				(if (search-forward-regexp "unknown.+key" nil t)
+				    " -o ControlPath='tramp.%%r@%%h:%%p'"
+				  " -o ControlPath='tramp.%%C'"))))
+		(with-temp-buffer
+		  (tramp-call-process vec "ssh" nil t nil "-o" "ControlPersist")
+		  (goto-char (point-min))
+		  (when (search-forward-regexp "missing.+argument" nil t)
+		    (setq tramp-ssh-controlmaster-options
+			  (concat tramp-ssh-controlmaster-options
+				  " -o ControlPersist=no")))))))))
       tramp-ssh-controlmaster-options)))
 
 (defun tramp-maybe-open-connection (vec)
   "Maybe open a connection VEC.
 Does not do anything if a connection is already open, but re-opens the
 connection if a previous connection has died for some reason."
-  (tramp-check-proper-method-and-host vec)
-
   (let ((p (tramp-get-connection-process vec))
 	(process-name (tramp-get-connection-property vec "process-name" nil))
 	(process-environment (copy-sequence process-environment))
@@ -4654,7 +4656,7 @@ connection if a previous connection has died for some reason."
 	  ;; check this for the process related to
 	  ;; `tramp-buffer-name'; otherwise `start-file-process'
 	  ;; wouldn't run ever when `non-essential' is non-nil.
-	  (when (and (tramp-completion-mode-p vec)
+	  (when (and (tramp-completion-mode-p)
 		     (null (get-process (tramp-buffer-name vec))))
 	    (throw 'non-essential 'non-essential))
 
