@@ -4168,16 +4168,10 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
       /* Inform fd_handler that select should be called */
       c = 'g';
       emacs_write_sig (selfds[1], &c, 1);
-
-      /* We rely on fd_handler timing out to cause
-         nextEventMatchingMask below to return, so set it's timeout to
-         an unreasonably long time. */
-      timeout_date = [NSDate distantFuture];
     }
   else if (nr == 0 && timeout)
     {
-      /* No file descriptor, just a timeout, no need to wake
-         fd_handler. Set nextEventMatchingMask timeout. */
+      /* No file descriptor, just a timeout, no need to wake fd_handler  */
       double time = timespectod (*timeout);
       timeout_date = [NSDate dateWithTimeIntervalSinceNow: time];
     }
