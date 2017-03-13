@@ -4108,9 +4108,6 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
   struct input_event event;
   char c;
 
-  NSDate *timeout_date = nil;
-  NSEvent *ns_event;
-
   NSTRACE_WHEN (NSTRACE_GROUP_EVENTS, "ns_select");
 
 #ifdef HAVE_NATIVE_FS
@@ -4173,58 +4170,65 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
     {
       /* No file descriptor, just a timeout, no need to wake fd_handler  */
       double time = timespectod (*timeout);
-      timeout_date = [NSDate dateWithTimeIntervalSinceNow: time];
+      timed_entry = [[NSTimer scheduledTimerWithTimeInterval: time
+                                                      target: NSApp
+                                                    selector:
+                                  @selector (timeout_handler:)
+                                                    userInfo: 0
+                                                     repeats: NO]
+                      retain];
+    }
+  else /* No timeout and no file descriptors, can this happen?  */
+    {
+      /* Send appdefined so we exit from the loop */
+      ns_send_appdefined (-1);
     }
 
-  /* Listen for a new NSEvent. */
-  ns_event = [NSApp nextEventMatchingMask: NSEventMaskAny
-                                untilDate: timeout_date
-                                   inMode: NSDefaultRunLoopMode
-                                  dequeue: NO];
+  block_input ();
+  ns_init_events (&event);
 
+  [NSApp run];
+
+  ns_finish_events ();
   if (nr > 0 && readfds)
     {
       c = 's';
       emacs_write_sig (selfds[1], &c, 1);
     }
+  unblock_input ();
 
-  if (ns_event != nil)
+  t = last_appdefined_event_data;
+
+  if (t != NO_APPDEFINED_DATA)
     {
-      if ([ns_event type] == NSEventTypeApplicationDefined)
-        {
-          if ([ns_event data1] < 0)
-            {
-              /* The NX_APPDEFINED event we received was a timeout. */
-              result = 0;
-            }
-          else
-            {
-              /* Received back from select () in fd_handler; copy the results */
-              pthread_mutex_lock (&select_mutex);
-              if (readfds) *readfds = select_readfds;
-              if (writefds) *writefds = select_writefds;
-              pthread_mutex_unlock (&select_mutex);
-              result = [ns_event data1];
-            }
+      last_appdefined_event_data = NO_APPDEFINED_DATA;
 
-          /* Remove the NX_APPDEFINED event from the queue as it's no
-             longer needed. */
-          [NSApp nextEventMatchingMask: NSEventMaskAny
-                             untilDate: nil
-                                inMode: NSDefaultRunLoopMode
-                               dequeue: YES];
+      if (t == -2)
+        {
+          /* The NX_APPDEFINED event we received was a timeout. */
+          result = 0;
+        }
+      else if (t == -1)
+        {
+          /* The NX_APPDEFINED event we received was the result of
+             at least one real input event arriving.  */
+          errno = EINTR;
+          result = -1;
         }
       else
         {
-          /* A real NSEvent came in. */
-          errno = EINTR;
-          result = -1;
+          /* Received back from select () in fd_handler; copy the results */
+          pthread_mutex_lock (&select_mutex);
+          if (readfds) *readfds = select_readfds;
+          if (writefds) *writefds = select_writefds;
+          pthread_mutex_unlock (&select_mutex);
+          result = t;
         }
     }
   else
     {
-      /* Reading from the NSEvent queue timed out. */
-      result = 0;
+      errno = EINTR;
+      result = -1;
     }
 
   return result;
