@@ -31,6 +31,9 @@
          1
        2)
    2)
+ (fun arg1
+
+      arg2)
  (1
   \"string
 noindent\" (\"string2
@@ -58,7 +61,7 @@ noindent\" 3
         (save-excursion
           (let ((n 0))
             (while (not (eobp))
-              (unless (looking-at "noindent")
+              (unless (looking-at "noindent\\|^[[:blank:]]*$")
                 (insert (make-string n ?\s)))
               (cl-incf n)
               (forward-line))))
