@@ -629,6 +629,12 @@ header's value.
 
 ** Tramp
 
+*** The method part of remote file names is mandatory now.  A valid
+remote file name starts with "/method:host:" or "/method:user@host:".
+
+*** The new virtual method "-" is a marker for the default method.
+"/-::" is the shortest remote file name then.
+
 +++
 *** New connection method "sg", which supports editing files under a
 different group ID.
