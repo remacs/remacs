@@ -458,7 +458,7 @@ echo "Making links to 'lib-src'"
 (cd lib-src
  ln [a-zA-Z]*.[ch] ../${tempdir}/lib-src
  ln ChangeLog.*[0-9] Makefile.in README ../${tempdir}/lib-src
- ln rcs2log ../${tempdir}/lib-src
+ ln rcs2log ../${tempdir}/lib-src)
 
 echo "Making links to 'm4'"
 (cd m4
