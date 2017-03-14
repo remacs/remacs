@@ -519,4 +519,11 @@
 (ert-deftest cl-lib-symbol-macrolet-2 ()
   (should (equal (cl-lib-symbol-macrolet-4+5) (+ 4 5))))
 
+(ert-deftest cl-lib-defstruct-record ()
+  (cl-defstruct foo x)
+  (let ((x (make-foo :x 42)))
+    (should (recordp x))
+    (should (eq (type-of x) 'foo))
+    (should (eql (foo-x x) 42))))
+
 ;;; cl-lib.el ends here

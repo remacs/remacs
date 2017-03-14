@@ -137,7 +137,7 @@ call other entry points instead, such as `cl-prin1'."
 
 (cl-defmethod cl-print-object ((object cl-structure-object) stream)
   (princ "#s(" stream)
-  (let* ((class (symbol-value (aref object 0)))
+  (let* ((class (cl-find-class (type-of object)))
          (slots (cl--struct-class-slots class)))
     (princ (cl--struct-class-name class) stream)
     (dotimes (i (length slots))

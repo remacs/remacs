@@ -775,8 +775,7 @@ including `cl-block' and `cl-eval-when'."
 (defun cl--describe-class (type &optional class)
   (unless class (setq class (cl--find-class type)))
   (let ((location (find-lisp-object-file-name type 'define-type))
-        ;; FIXME: Add a `cl-class-of' or `cl-typeof' or somesuch.
-        (metatype (cl--class-name (symbol-value (aref class 0)))))
+        (metatype (type-of class)))
     (insert (symbol-name type)
             (substitute-command-keys " is a type (of kind `"))
     (help-insert-xref-button (symbol-name metatype)
@@ -901,8 +900,7 @@ including `cl-block' and `cl-eval-when'."
   "Print help description for the slots in CLASS.
 Outputs to the current buffer."
   (let* ((slots (cl--class-slots class))
-         ;; FIXME: Add a `cl-class-of' or `cl-typeof' or somesuch.
-         (metatype (cl--class-name (symbol-value (aref class 0))))
+         (metatype (type-of class))
          ;; ¡For EIEIO!
          (cslots (condition-case nil
                      (cl-struct-slot-value metatype 'class-slots class)
