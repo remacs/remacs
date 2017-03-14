@@ -1529,7 +1529,14 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		   (member
 		    (format "%s:" method)
 		    (file-name-all-completions (substring method 0 1) "/"))))
-                (unless (or (zerop (length method)) (zerop (length host)))
+		(unless (zerop (length host))
+		  (let ((tramp-default-method (or method tramp-default-method)))
+		    (should
+		     (member
+		      (format "-:%s:" host)
+		      (file-name-all-completions
+		       (format "-:%s" (substring host 0 1)) "/")))))
+		(unless (or (zerop (length method)) (zerop (length host)))
 		  (should
 		   (member
 		    (format "%s:%s:" method host)
