@@ -633,10 +633,9 @@ buffer if the variable `delete-trailing-lines' is non-nil."
         (with-syntax-table (make-syntax-table (syntax-table))
           ;; Don't delete formfeeds, even if they are considered whitespace.
           (modify-syntax-entry ?\f "_")
-          ;; Treating \n as non-whitespace makes things easier.
-          (modify-syntax-entry ?\n "_")
-          (while (re-search-forward "\\s-+$" end-marker t)
-            (let ((b (match-beginning 0)) (e (match-end 0)))
+          (while (re-search-forward "\\s-$" end-marker t)
+            (skip-syntax-backward "-" (line-beginning-position))
+            (let ((b (point)) (e (match-end 0)))
               (when (region-modifiable-p b e)
                 (delete-region b e)))))
         (if end
