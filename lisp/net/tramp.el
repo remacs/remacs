@@ -879,7 +879,7 @@ initial value is overwritten by the car of `tramp-file-name-structure'.")
 ;;;###autoload
 (defconst tramp-completion-file-name-regexp-unified
   (concat
-   "\\`"
+   "\\`/\\("
    ;; Optional multi hop.
    "\\([^/|:]+:[^/|:]*|\\)*"
    ;; Last hop.
@@ -890,7 +890,7 @@ initial value is overwritten by the car of `tramp-file-name-structure'.")
      "[^/|:]+")
    ;; Method separator, user name and host name.
    "\\(:[^/|:]*\\)?"
-   "\\'")
+   "\\)?\\'")
   "Value for `tramp-completion-file-name-regexp' for unified remoting.
 See `tramp-file-name-structure' for more explanations.
 
