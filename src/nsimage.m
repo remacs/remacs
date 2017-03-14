@@ -179,13 +179,6 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
       return nil;
     }
 
-  /* The next two lines cause the DPI of the image to be ignored.
-     This seems to be the behavior users expect. */
-#ifdef NS_IMPL_COCOA
-#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_6
-  [image setScalesWhenResized: YES];
-#endif
-#endif
   [image setSize: NSMakeSize([imgRep pixelsWide], [imgRep pixelsHigh])];
 
   [image setName: [NSString stringWithUTF8String: SSDATA (file)]];
@@ -355,13 +348,6 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
           if ([bmr numberOfPlanes] >= 3)
               [bmr getBitmapDataPlanes: pixmapData];
 
-          /* The next two lines cause the DPI of the image to be ignored.
-             This seems to be the behavior users expect. */
-#ifdef NS_IMPL_COCOA
-#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_6
-          [self setScalesWhenResized: YES];
-#endif
-#endif
           [self setSize: NSMakeSize([bmr pixelsWide], [bmr pixelsHigh])];
 
           break;
