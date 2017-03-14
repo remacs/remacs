@@ -541,10 +541,6 @@ alone (may import them from Gnulib again). These are:
     build-aux/depcomp
     build-aux/missing
     build-aux/move-if-change
-    build-aux/snippet/_Noreturn.h
-    build-aux/snippet/arg-nonnull.h
-    build-aux/snippet/c++defs.h
-    build-aux/snippet/warn-on-use.h
     doc/man/texinfo.tex
     lib/*.[ch]
     lib/gnulib.mk

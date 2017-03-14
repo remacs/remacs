@@ -366,7 +366,7 @@ ln aclocal.m4 CONTRIBUTE ${tempdir}
 echo "Creating subdirectories"
 for subdir in site-lisp \
 	      leim leim/CXTERM-DIC leim/MISC-DIC leim/SKK-DIC \
-	      build-aux build-aux/snippet \
+	      build-aux \
 	      src src/bitmaps lib lib-src oldXMenu lwlib \
 	      nt nt/inc nt/inc/sys nt/inc/arpa nt/inc/netinet nt/icons \
 	      `find etc lisp admin test -type d` \
@@ -424,10 +424,6 @@ echo "Making links to 'build-aux'"
  ln update-copyright update-subdirs ../${tempdir}/build-aux
  ln dir_top make-info-dir ar-lib ../${tempdir}/build-aux)
 
-echo "Making links to 'build-aux/snippet'"
-(cd build-aux/snippet
- ln *.h ../../${tempdir}/build-aux/snippet)
-
 echo "Making links to 'src'"
 ### Don't distribute the configured versions of
 ### config.in, paths.in, buildobj.h, or Makefile.in.
@@ -446,13 +442,12 @@ echo "Making links to 'src/bitmaps'"
  ln README *.xbm ../../${tempdir}/src/bitmaps)
 
 echo "Making links to 'lib'"
-(snippet_h=`(cd build-aux/snippet && ls *.h)`
- cd lib
- ln [a-zA-Z]*.[ch] ../${tempdir}/lib
+(cd lib
+ ln [a-zA-Z_]*.[ch] ../${tempdir}/lib
  ln gnulib.mk Makefile.am Makefile.in ../${tempdir}/lib
  cd ../${tempdir}/lib
  script='/[*]/d; s/\.in\.h$/.h/'
- rm -f `(echo "$snippet_h"; ls *.in.h) | sed "$script"`)
+ rm -f `ls *.in.h | sed "$script"`)
 
 echo "Making links to 'lib-src'"
 (cd lib-src

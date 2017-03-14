@@ -787,6 +787,8 @@ changequote([, ])dnl
   AC_SUBST([LIBGNU_LIBDEPS])
   LIBGNU_LTLIBDEPS="$gl_ltlibdeps"
   AC_SUBST([LIBGNU_LTLIBDEPS])
+  LIBTESTS_LIBDEPS="$gltests_libdeps"
+  AC_SUBST([LIBTESTS_LIBDEPS])
 ])
 
 # Like AC_LIBOBJ, except that the module name goes
@@ -847,11 +849,8 @@ AC_DEFUN([gltests_LIBSOURCES], [
 # gnulib-tool and may be removed by future gnulib-tool invocations.
 AC_DEFUN([gl_FILE_LIST], [
   build-aux/gitlog-to-changelog
-  build-aux/snippet/_Noreturn.h
-  build-aux/snippet/arg-nonnull.h
-  build-aux/snippet/c++defs.h
-  build-aux/snippet/warn-on-use.h
   build-aux/update-copyright
+  lib/_Noreturn.h
   lib/acl-errno-valid.c
   lib/acl-internal.c
   lib/acl-internal.h
@@ -860,10 +859,12 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/alloca.in.h
   lib/allocator.c
   lib/allocator.h
+  lib/arg-nonnull.h
   lib/at-func.c
   lib/binary-io.c
   lib/binary-io.h
   lib/byteswap.in.h
+  lib/c++defs.h
   lib/c-ctype.c
   lib/c-ctype.h
   lib/c-strcase.h
@@ -995,6 +996,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/utimens.h
   lib/verify.h
   lib/vla.h
+  lib/warn-on-use.h
   lib/xalloc-oversized.h
   m4/00gnulib.m4
   m4/absolute-header.m4
@@ -1104,4 +1106,9 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/warnings.m4
   m4/wchar_t.m4
   m4/wint_t.m4
+  tests=lib/_Noreturn.h
+  tests=lib/arg-nonnull.h
+  tests=lib/c++defs.h
+  tests=lib/dummy.c
+  tests=lib/warn-on-use.h
 ])

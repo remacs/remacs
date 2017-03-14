@@ -57,9 +57,7 @@ src/epaths.h
 
 # C-level sources built by 'make'.
 lib/alloca.h
-lib/arg-nonnull.h
 lib/byteswap.h
-lib/c++defs.h
 lib/dirent.h
 lib/errno.h
 lib/execinfo.h
@@ -76,7 +74,6 @@ lib/string.h
 lib/sys/
 lib/time.h
 lib/unistd.h
-lib/warn-on-use.h
 src/buildobj.h
 src/globals.h
 src/lisp.mk
@@ -274,7 +271,7 @@ etc/emacs.tmpdesktop
 # Microsoft-related builds and installations.
 *.in-h
 _*
-!build-aux/snippet/_Noreturn.h
+!lib/_Noreturn.h
 /bin/
 /BIN/
 /data/
