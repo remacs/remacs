@@ -112,7 +112,7 @@ n,SPC -next diff     |     h -highlighting       |  r -restore buf C's old diff
   C-l -recenter      | #f/#h -focus/hide regions |  + -combine diff regions
   v/V -scroll up/dn  |     X -read-only in buf X | wx -save buf X
   </> -scroll lt/rt  |     m -wide display       | wd -save diff output
-    ~ -swap variants |     s -shrink window C    |  / -show ancestor buff
+    ~ -swap variants |     s -shrink window C    |  / -show/hide ancestor buff
                      |  $$ -show clashes only    |  & -merge w/new default
                      |  $* -skip changed regions |
 "

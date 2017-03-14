@@ -366,6 +366,11 @@ words where first character is upper rather than title case, e.g.,
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
++++
+*** The ancestor buffer is shown by default in 3way merges.
+A new option ediff-show-ancestor and a new toggle
+ediff-toggle-show-ancestor.
+
 ** TeX: Add luatex and xetex as alternatives to pdftex
 
 ** Electric-Buffer-menu

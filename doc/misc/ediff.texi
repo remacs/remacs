@@ -99,7 +99,8 @@ through them.  You can also copy difference regions from one buffer to
 another (and recover old differences if you change your mind).
 
 Another powerful feature is the ability to merge a pair of files into a
-third buffer.  Merging with an ancestor file is also supported.
+third buffer.  Merging with an ancestor file, (a.k.a. 3way merges)
+is also supported.
 Furthermore, Ediff is equipped with directory-level capabilities that
 allow the user to conveniently launch browsing or merging sessions on
 groups of files in two (or three) different directories.
@@ -828,7 +829,10 @@ region in buffer A, etc.
 
 @item /
 @kindex /
-Displays the ancestor file during merges.
+@vindex ediff-show-ancestor
+Toggle to display the ancestor file in 3way merges.
+You can enable permanently this setting customizing the variable
+@code{ediff-show-ancestor}.
 @item &
 @kindex &
 In some situations, such as when one of the files agrees with the ancestor file

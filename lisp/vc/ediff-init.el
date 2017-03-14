@@ -1363,6 +1363,16 @@ This property can be toggled interactively."
 ;; if nil, this silences some messages
 (defvar ediff-verbose-p t)
 
+(defcustom ediff-show-ancestor t
+"If non-nil, show ancestor buffer in 3way merges and refine it."
+  :type 'boolean
+  :group 'ediff-merge
+  :version "26.1")
+
+;; Store orig value of `ediff-show-ancestor'  when changed in
+;; `ediff-toggle-show-ancestor' and restore it on exit.
+(ediff-defvar-local ediff--show-ancestor-orig nil "")
+
 (defcustom ediff-autostore-merges  'group-jobs-only
   "Save the results of merge jobs automatically.
 With value nil, don't save automatically.  With value t, always
