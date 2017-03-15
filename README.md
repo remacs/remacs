@@ -139,7 +139,7 @@ more Emacs-y.
 
 ### Requirements
 
-1. You will need Rust installed. If you're on macOS, you will need Rust
+1. You will need [Rust installed](https://www.rust-lang.org/en-US/install.html). If you're on macOS, you will need Rust
    nightly.
    
 2. You will need a C compiler and toolchain. On Linux, you can do
