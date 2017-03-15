@@ -1882,7 +1882,6 @@ If INITIAL is non-nil, it specifies the initial input string."
        ido-selected
        ido-final-text
        (done nil)
-       (non-essential t) ;; prevent eager Tramp connection
        (icomplete-mode nil) ;; prevent icomplete starting up
        ;; Exported dynamic variables:
        ido-cur-list
@@ -2541,7 +2540,7 @@ If cursor is not at the end of the user input, move to end of input."
 (defun ido-complete ()
   "Try and complete the current pattern amongst the file names."
   (interactive)
-  (let (non-essential res)
+  (let (res)
     (cond
      (ido-incomplete-regexp
       ;; Do nothing
