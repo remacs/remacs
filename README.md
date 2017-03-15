@@ -85,7 +85,7 @@ off](https://i.stack.imgur.com/7Cu9Z.jpg).
 
 ## Why Rust?
 
-Rust is a great alternative to C.
+[Rust](https://www.rust-lang.org) is a great alternative to C.
 
 Rust has **a fantastic learning curve**. The documentation is superb,
 and the community is very helpful if you get stuck.
