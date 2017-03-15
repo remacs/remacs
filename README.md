@@ -1,7 +1,7 @@
 # Rust :heart: Emacs
 [![Build Status](https://travis-ci.org/Wilfred/remacs.svg?branch=master)](https://travis-ci.org/Wilfred/remacs)
 
-A community-driven port of Emacs to Rust.
+A community-driven port of [Emacs](https://www.gnu.org/software/emacs/) to [Rust](https://www.rust-lang.org).
 
 GPLv3 license.
 
@@ -139,7 +139,7 @@ more Emacs-y.
 
 ### Requirements
 
-1. You will need Rust installed. If you're on macOS, you will need Rust
+1. You will need [Rust installed](https://www.rust-lang.org/en-US/install.html). If you're on macOS, you will need Rust
    nightly.
    
 2. You will need a C compiler and toolchain. On Linux, you can do
