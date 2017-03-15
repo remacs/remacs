@@ -1,7 +1,7 @@
 # Rust :heart: Emacs
 [![Build Status](https://travis-ci.org/Wilfred/remacs.svg?branch=master)](https://travis-ci.org/Wilfred/remacs)
 
-A community-driven port of Emacs to [Rust](https://www.rust-lang.org).
+A community-driven port of [Emacs](https://www.gnu.org/software/emacs/) to [Rust](https://www.rust-lang.org).
 
 GPLv3 license.
 
