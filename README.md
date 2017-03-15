@@ -1,7 +1,7 @@
 # Rust :heart: Emacs
 [![Build Status](https://travis-ci.org/Wilfred/remacs.svg?branch=master)](https://travis-ci.org/Wilfred/remacs)
 
-A community-driven port of Emacs to Rust.
+A community-driven port of Emacs to [Rust](https://www.rust-lang.org).
 
 GPLv3 license.
 
@@ -85,7 +85,7 @@ off](https://i.stack.imgur.com/7Cu9Z.jpg).
 
 ## Why Rust?
 
-[Rust](https://www.rust-lang.org) is a great alternative to C.
+Rust is a great alternative to C.
 
 Rust has **a fantastic learning curve**. The documentation is superb,
 and the community is very helpful if you get stuck.
