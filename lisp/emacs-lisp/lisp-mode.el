@@ -1089,12 +1089,13 @@ ENDPOS is encountered."
          (next-depth init-depth)
          (last-depth init-depth)
          (last-syntax-point (point)))
-    (unless endpos
-      ;; Get error now if we don't have a complete sexp after point.
-      (save-excursion (forward-sexp 1)
-                      ;; We need a marker because we modify the buffer
-                      ;; text preceding endpos.
-                      (setq endpos (point-marker))))
+    ;; We need a marker because we modify the buffer
+    ;; text preceding endpos.
+    (setq endpos (copy-marker
+                  (if endpos endpos
+                    ;; Get error now if we don't have a complete sexp
+                    ;; after point.
+                    (save-excursion (forward-sexp 1) (point)))))
     (save-excursion
       (while (< (point) endpos)
         ;; Parse this line so we can learn the state to indent the
@@ -1154,7 +1155,8 @@ ENDPOS is encountered."
                          ;; `calculate-lisp-indent' only returns nil
                          ;; when we're in a string, but this won't
                          ;; happen because we skip strings above.
-                         (t (error "This shouldn't happen!"))))))))))))
+                         (t (error "This shouldn't happen!"))))))))))
+    (move-marker endpos nil)))
 
 (defun indent-pp-sexp (&optional arg)
   "Indent each line of the list starting just after point, or prettyprint it.
