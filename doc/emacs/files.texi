@@ -1777,9 +1777,7 @@ syntax:
 
 @example
 @group
-/@var{host}:@var{filename}
-/@var{user}@@@var{host}:@var{filename}
-/@var{user}@@@var{host}#@var{port}:@var{filename}
+/@var{method}:@var{host}:@var{filename}
 /@var{method}:@var{user}@@@var{host}:@var{filename}
 /@var{method}:@var{user}@@@var{host}#@var{port}:@var{filename}
 @end group
@@ -1788,11 +1786,11 @@ syntax:
 @noindent
 To carry out this request, Emacs uses a remote-login program such as
 @command{ftp}, @command{ssh}, @command{rlogin}, or @command{telnet}.
-You can always specify in the file name which method to use---for
+You must always specify in the file name which method to use---for
 example, @file{/ftp:@var{user}@@@var{host}:@var{filename}} uses FTP,
 whereas @file{/ssh:@var{user}@@@var{host}:@var{filename}} uses
-@command{ssh}.  When you don't specify a method in the file name,
-Emacs chooses the method as follows:
+@command{ssh}.  When you specify the pseudo method @var{-} in the file
+name, Emacs chooses the method as follows:
 
 @enumerate
 @item
@@ -1884,7 +1882,7 @@ can refer to that file in Emacs as @samp{/:/foo:/bar}.
 
   If you want to quote only special characters in the local part of a
 remote file name, you can quote just the local part.
-@samp{/baz:/:/foo:/bar} refers to the file @file{bar} of directory
+@samp{/ssh:baz:/:/foo:/bar} refers to the file @file{bar} of directory
 @file{/foo:} on the host @file{baz}.
 
   @samp{/:} can also prevent @samp{~} from being treated as a special
