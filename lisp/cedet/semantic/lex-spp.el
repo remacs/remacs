@@ -147,13 +147,13 @@ The search priority is:
    ;; Do the check of the various tables.
    (or
     ;; DYNAMIC
-    (and (arrayp semantic-lex-spp-dynamic-macro-symbol-obarray)
+    (and (obarrayp semantic-lex-spp-dynamic-macro-symbol-obarray)
 	 (intern-soft name semantic-lex-spp-dynamic-macro-symbol-obarray))
     ;; PROJECT
-    (and (arrayp semantic-lex-spp-project-macro-symbol-obarray)
+    (and (obarrayp semantic-lex-spp-project-macro-symbol-obarray)
 	 (intern-soft name semantic-lex-spp-project-macro-symbol-obarray))
     ;; SYSTEM
-    (and (arrayp semantic-lex-spp-macro-symbol-obarray)
+    (and (obarrayp semantic-lex-spp-macro-symbol-obarray)
 	 (intern-soft name semantic-lex-spp-macro-symbol-obarray))
     ;; ...
     )))
@@ -291,7 +291,7 @@ REPLACEMENT a string that would be substituted in for NAME."
   "Return a list of spp macros and values.
 The return list is meant to be saved in a semanticdb table."
   (let (macros)
-    (when (arrayp semantic-lex-spp-dynamic-macro-symbol-obarray)
+    (when (obarrayp semantic-lex-spp-dynamic-macro-symbol-obarray)
       (mapatoms
        #'(lambda (symbol)
 	   (setq macros (cons (cons (symbol-name symbol)
@@ -304,17 +304,17 @@ The return list is meant to be saved in a semanticdb table."
   "Return a list of spp macros as Lisp symbols.
 The value of each symbol is the replacement stream."
   (let (macros)
-    (when (arrayp semantic-lex-spp-macro-symbol-obarray)
+    (when (obarrayp semantic-lex-spp-macro-symbol-obarray)
       (mapatoms
        #'(lambda (symbol)
 	   (setq macros (cons symbol macros)))
        semantic-lex-spp-macro-symbol-obarray))
-    (when (arrayp semantic-lex-spp-project-macro-symbol-obarray)
+    (when (obarrayp semantic-lex-spp-project-macro-symbol-obarray)
       (mapatoms
        #'(lambda (symbol)
 	   (setq macros (cons symbol macros)))
        semantic-lex-spp-project-macro-symbol-obarray))
-    (when (arrayp semantic-lex-spp-dynamic-macro-symbol-obarray)
+    (when (obarrayp semantic-lex-spp-dynamic-macro-symbol-obarray)
       (mapatoms
        #'(lambda (symbol)
 	   (setq macros (cons symbol macros)))
