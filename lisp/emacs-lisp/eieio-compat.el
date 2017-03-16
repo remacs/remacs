@@ -145,7 +145,7 @@ Summary:
   ;; interleaved list comes before the class's non-interleaved list.
   51 #'cl--generic-struct-tag
   (lambda (tag &rest _)
-    (and (symbolp tag) (boundp tag) (setq tag (symbol-value tag))
+    (and (symbolp tag) (setq tag (cl--find-class tag))
          (eieio--class-p tag)
          (let ((superclasses (eieio--class-precedence-list tag))
                (specializers ()))

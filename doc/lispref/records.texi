@@ -9,7 +9,8 @@
 
   The purpose of records is to allow programmers to create objects
 with new types that are not built into Emacs.  They are used as the
-underlying representation of @code{cl-defstruct} instances.
+underlying representation of @code{cl-defstruct} and @code{defclass}
+instances.
 
   Internally, a record object is much like a vector; its slots can be
 accessed using @code{aref}.  However, the first slot is used to hold
