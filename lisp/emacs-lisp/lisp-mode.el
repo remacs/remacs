@@ -594,6 +594,7 @@ font-lock keywords will not be case sensitive."
   ;;  I believe that newcomment's auto-fill code properly deals with it  -stef
   ;;(set (make-local-variable 'adaptive-fill-mode) nil)
   (setq-local indent-line-function 'lisp-indent-line)
+  (setq-local indent-region-function 'lisp-indent-region)
   (setq-local outline-regexp ";;;\\(;* [^ \t\n]\\|###autoload\\)\\|(")
   (setq-local outline-level 'lisp-outline-level)
   (setq-local add-log-current-defun-function #'lisp-current-defun-name)
@@ -748,12 +749,51 @@ function is `common-lisp-indent-function'."
   :type 'function
   :group 'lisp)
 
-(defun lisp-indent-line ()
+(defun lisp-ppss (&optional pos)
+  "Return Parse-Partial-Sexp State at POS, defaulting to point.
+Like to `syntax-ppss' but includes the character address of the
+last complete sexp in the innermost containing list at position
+2 (counting from 0).  This is important for lisp indentation."
+  (unless pos (setq pos (point)))
+  (let ((pss (syntax-ppss pos)))
+    (if (nth 9 pss)
+        (parse-partial-sexp (car (last (nth 9 pss))) pos)
+      pss)))
+
+(defun lisp-indent-region (start end)
+  "Indent region as Lisp code, efficiently."
+  (save-excursion
+    (setq end (copy-marker end))
+    (goto-char start)
+    ;; The default `indent-region-line-by-line' doesn't hold a running
+    ;; parse state, which forces each indent call to reparse from the
+    ;; beginning.  That has O(n^2) complexity.
+    (let* ((parse-state (lisp-ppss start))
+           (last-syntax-point start)
+           (pr (unless (minibufferp)
+                 (make-progress-reporter "Indenting region..." (point) end))))
+      (while (< (point) end)
+        (unless (and (bolp) (eolp))
+          (lisp-indent-line parse-state))
+        (forward-line 1)
+        (let ((last-sexp (nth 2 parse-state)))
+          (setq parse-state (parse-partial-sexp last-syntax-point (point)
+                                                nil nil parse-state))
+          ;; It's important to preserve last sexp location for
+          ;; `calculate-lisp-indent'.
+          (unless (nth 2 parse-state)
+            (setf (nth 2 parse-state) last-sexp))
+          (setq last-syntax-point (point)))
+        (and pr (progress-reporter-update pr (point))))
+      (and pr (progress-reporter-done pr))
+      (move-marker end nil))))
+
+(defun lisp-indent-line (&optional parse-state)
   "Indent current line as Lisp code."
   (interactive)
-  (let ((indent (calculate-lisp-indent))
-	(pos (- (point-max) (point))))
-    (beginning-of-line)
+  (let ((pos (- (point-max) (point)))
+        (indent (progn (beginning-of-line)
+                       (calculate-lisp-indent (or parse-state (lisp-ppss))))))
     (skip-chars-forward " \t")
     (if (or (null indent) (looking-at "\\s<\\s<\\s<"))
 	;; Don't alter indentation of a ;;; comment line
