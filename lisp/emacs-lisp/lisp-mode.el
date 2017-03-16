@@ -748,14 +748,12 @@ function is `common-lisp-indent-function'."
   :type 'function
   :group 'lisp)
 
-(defun lisp-indent-line (&optional _whole-exp)
-  "Indent current line as Lisp code.
-With argument, indent any additional lines of the same expression
-rigidly along with this one."
-  (interactive "P")
-  (let ((indent (calculate-lisp-indent)) shift-amt
-	(pos (- (point-max) (point)))
-	(beg (progn (beginning-of-line) (point))))
+(defun lisp-indent-line ()
+  "Indent current line as Lisp code."
+  (interactive)
+  (let ((indent (calculate-lisp-indent))
+	(pos (- (point-max) (point))))
+    (beginning-of-line)
     (skip-chars-forward " \t")
     (if (or (null indent) (looking-at "\\s<\\s<\\s<"))
 	;; Don't alter indentation of a ;;; comment line
@@ -767,11 +765,7 @@ rigidly along with this one."
 	  ;; as comment lines, not as code.
 	  (progn (indent-for-comment) (forward-char -1))
 	(if (listp indent) (setq indent (car indent)))
-	(setq shift-amt (- indent (current-column)))
-	(if (zerop shift-amt)
-	    nil
-	  (delete-region beg (point))
-	  (indent-to indent)))
+        (indent-line-to indent))
       ;; If initial point was within line's indentation,
       ;; position after the indentation.  Else stay at same point in text.
       (if (> (- (point-max) pos) (point))
