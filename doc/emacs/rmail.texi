@@ -1426,7 +1426,7 @@ Hostname of the remote server for remote mailboxes or file name of a
 local mailbox.
 
 @item port
-Optional port number, if not the default for that protocal.
+Optional port number, if not the default for that protocol.
 @end table
 
 @noindent

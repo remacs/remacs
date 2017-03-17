@@ -507,7 +507,7 @@ _XMRecomputeGlobals(register Display *display, register XMenu *menu)
 
     /*
      * Ensure that the origin of the menu is placed so that
-     * None of the panes ore selections are off the screen.
+     * None of the panes or selections are off the screen.
      */
     screen = DefaultScreen(display);
     if (menu->x_pos + menu->width > DisplayWidth(display, screen))
