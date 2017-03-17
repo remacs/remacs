@@ -99,12 +99,12 @@ sources="configure.ac lib/Makefile.am"
 ## Files to copy into autogendir.
 ## Everything:
 genfiles="
-  configure aclocal.m4 src/config.in lib/Makefile.in
-  build-aux/compile build-aux/config.guess build-aux/config.sub
-  build-aux/depcomp build-aux/install-sh build-aux/missing
+  configure aclocal.m4 src/config.in
+  build-aux/config.guess build-aux/config.sub
+  build-aux/install-sh
 "
 ## msdos-only:
-genfiles="src/config.in lib/Makefile.in"
+genfiles="src/config.in"
 
 for g in $genfiles; do
     basegen="$basegen ${g##*/}"
@@ -200,8 +200,6 @@ modified=$(status ${autogendir:+$sources} ${ldefs_flag:+lisp} ${info_flag:+doc})
     rm -f $ldefs_in
 }
 
-
-[ -e nt/gnulib.mk ] || touch nt/gnulib.mk # bug#25359
 
 echo "Running autoreconf..."
 

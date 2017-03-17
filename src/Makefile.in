@@ -624,16 +624,15 @@ $(oldXMenudir)/libXMenu11.a: FORCE
 FORCE:
 .PHONY: FORCE
 
-ACLOCAL_INPUTS = $(top_srcdir)/configure.ac $(top_srcdir)/m4/*.m4
-AUTOCONF_INPUTS = $(top_srcdir)/configure.ac $(top_srcdir)/aclocal.m4
-$(top_srcdir)/aclocal.m4: $(ACLOCAL_INPUTS)
+AUTOCONF_INPUTS = $(top_srcdir)/configure.ac $(top_srcdir)/m4/*.m4
 $(top_srcdir)/configure config.in: $(AUTOCONF_INPUTS)
 .PRECIOUS: ../config.status Makefile
 ../config.status: $(top_srcdir)/configure $(top_srcdir)/lisp/version.el
 Makefile: ../config.status $(srcdir)/Makefile.in
-$(top_srcdir)/aclocal.m4 $(top_srcdir)/configure config.in ../config.status \
-  Makefile:
-	$(MAKE) -C .. am--refresh
+$(top_srcdir)/configure ../config.status:
+	$(MAKE) -C .. $(notdir $@)
+config.in Makefile:
+	$(MAKE) -C .. src/$@
 
 doc.o: buildobj.h
 

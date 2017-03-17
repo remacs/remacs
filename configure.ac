@@ -67,8 +67,6 @@ done
 AC_CONFIG_HEADERS(src/config.h:src/config.in)
 AC_CONFIG_SRCDIR(src/lisp.h)
 AC_CONFIG_AUX_DIR(build-aux)
-dnl automake 1.13 and later understand this, making -I m4 unnecessary.
-dnl With older versions this is a no-op.
 AC_CONFIG_MACRO_DIR(m4)
 
 xcsdkdir=
@@ -86,13 +84,7 @@ if test -n "$XCRUN"; then
   fi
 fi
 
-dnl GNU Make is required, so don't test for its individual features.
-am_cv_make_support_nested_variables=yes
-AC_DEFUN([AC_PROG_MAKE_SET],
-  [SET_MAKE=
-   AC_SUBST([SET_MAKE])])
-
-dnl Check for GNU Make and possibly set MAKE before running AM_INIT_AUTOMAKE.
+dnl Check for GNU Make and possibly set MAKE.
 [emacs_check_gnu_make ()
 {
   emacs_makeout=`($1 --version) 2>/dev/null` &&
@@ -131,9 +123,6 @@ For example, run '$0 MAKE=gnu-make'.]])
 }
 MAKE=$ac_cv_path_MAKE
 export MAKE
-
-dnl Fairly arbitrary, older versions might work too.
-AM_INIT_AUTOMAKE(1.11)
 
 dnl Canonicalize the configuration name.
 AC_CANONICAL_HOST
@@ -395,9 +384,6 @@ OPTION_DEFAULT_OFF([xwidgets],
 ## a suitable makeinfo, and can live without the manuals.
 dnl http://lists.gnu.org/archive/html/emacs-devel/2008-04/msg01844.html
 OPTION_DEFAULT_ON([makeinfo],[don't require makeinfo for building manuals])
-
-## This might be a 'configure' arg.
-AC_SUBST([ACLOCAL_PATH])
 
 ## Makefile.in needs the cache file name.
 AC_SUBST(cache_file)
@@ -774,13 +760,11 @@ fi
 dnl Emacs needs C99 or later.
 gl_PROG_CC_C99
 
-AM_PROG_CC_C_O
+AC_PROG_CC_C_O
 
 if test x$GCC = xyes; then
   test "x$GCC_TEST_OPTIONS" != x && CC="$CC $GCC_TEST_OPTIONS"
 fi
-
-AM_CONDITIONAL([BUILDING_FOR_WINDOWSNT], [test "x$opsys" = "xmingw32"])
 
 # Avoid gnulib's tests for -lcrypto, so that there's no static dependency on it.
 AC_DEFUN([gl_CRYPTO_CHECK])
@@ -1089,22 +1073,35 @@ if test "${enableval}" != "no"; then
    fi
 fi)
 
+
+dnl Automake replacements.
+AC_DEFUN([AM_CONDITIONAL],
+  [$2 && $1=1 || $1=
+   AC_SUBST([$1])])
+
 dnl Prefer silent make output.  For verbose output, use
 dnl 'configure --disable-silent-rules' or 'make V=1' .
-AM_SILENT_RULES([yes])
-dnl Port to Automake 1.11.
-dnl This section can be removed once we assume Automake 1.14 or later.
-: ${AM_V=$AM_DEFAULT_VERBOSITY}
-: ${AM_DEFAULT_V=$AM_DEFAULT_VERBOSITY}
+dnl This code is adapted from Automake.
+dnl Although it can be simplified now that GNU Make is assumed,
+dnl the simplification hasn't been done yet.
+AC_ARG_ENABLE([silent-rules],
+  [AS_HELP_STRING(
+     [--disable-silent-rules],
+     [verbose build output (undo: "make V=0")])])
+if test "$enable_silent_rules" = no; then
+  AM_DEFAULT_VERBOSITY=1
+else
+  AM_DEFAULT_VERBOSITY=0
+fi
+AM_V='$(V)'
+AM_DEFAULT_V='$(AM_DEFAULT_VERBOSITY)'
 AC_SUBST([AM_V])
-AM_SUBST_NOTMAKE([AM_V])
 AC_SUBST([AM_DEFAULT_V])
-AM_SUBST_NOTMAKE([AM_DEFAULT_V])
 AC_SUBST([AM_DEFAULT_VERBOSITY])
 
 dnl Some other nice autoconf tests.
+AC_PROG_INSTALL
 dnl These are commented out, since gl_EARLY and/or Autoconf already does them.
-dnl AC_PROG_INSTALL
 dnl AC_PROG_MKDIR_P
 dnl if test "x$RANLIB" = x; then
 dnl   AC_PROG_RANLIB
@@ -1229,10 +1226,7 @@ AC_SUBST([PAXCTL_dumped])
 AC_SUBST([PAXCTL_notdumped])
 
 ## Require makeinfo >= 4.13 (last of the 4.x series) to build the manuals.
-if test "$MAKEINFO" != "no"; then
-  if test "$MAKEINFO" = "${am_missing_run}makeinfo"; then
-    MAKEINFO=makeinfo
-  fi
+if test "${MAKEINFO:=makeinfo}" != "no"; then
   case `($MAKEINFO --version) 2>/dev/null` in
     *' (GNU texinfo) '4.1[[3-9]]* | \
     *' (GNU texinfo) '[[5-9]]* | \
@@ -1263,6 +1257,7 @@ Either install a suitable version of makeinfo, or re-run configure
 with the '--without-makeinfo' option to build without the manuals.] )
   fi
 fi
+AC_SUBST([MAKEINFO])
 AC_SUBST(HAVE_MAKEINFO)
 
 if test $opsys = mingw32; then
@@ -1550,6 +1545,7 @@ esac
 AC_SUBST(LIB_MATH)
 AC_DEFINE_UNQUOTED(SYSTEM_TYPE, "$SYSTEM_TYPE",
   [The type of system you are compiling for; sets 'system-type'.])
+AC_SUBST([SYSTEM_TYPE])
 
 
 pre_PKG_CONFIG_CFLAGS=$CFLAGS
@@ -2213,7 +2209,6 @@ else
   fi
 fi
 AC_SUBST([HYBRID_MALLOC])
-AM_CONDITIONAL([HYBRID_MALLOC_LIB], [test -n "$HYBRID_MALLOC"])
 AC_SUBST(GMALLOC_OBJ)
 AC_SUBST(VMLIMIT_OBJ)
 
@@ -5397,23 +5392,15 @@ if test "$HAVE_NS" = "yes"; then
   AC_SUBST(ns_check_file)
 fi
 
+AC_CONFIG_FILES([Makefile lib/gnulib.mk])
+
 dnl config.status treats $srcdir specially, so I think this is ok...
 AC_CONFIG_FILES([$srcdir/doc/man/emacs.1])
 
-dnl Obviously there is duplication here wrt $SUBDIR_MAKEFILES.
-dnl You _can_ use that variable in AC_CONFIG_FILES, so long as any directory
-dnl using automake (ie lib/) is explicitly listed and not "hidden" in a variable
-dnl (else you get "no 'Makefile.am' found for any configure output").
-dnl This will work, but you get a config.status that is not quite right
-dnl (see http://lists.gnu.org/archive/html/bug-autoconf/2008-08/msg00028.html).
-dnl That doesn't have any obvious consequences for Emacs, but on the whole
-dnl it seems better to just live with the duplication.
-SUBDIR_MAKEFILES="lib/Makefile lib-src/Makefile oldXMenu/Makefile doc/emacs/Makefile doc/misc/Makefile doc/lispintro/Makefile doc/lispref/Makefile src/Makefile lwlib/Makefile lisp/Makefile leim/Makefile nextstep/Makefile nt/Makefile"
-
-AC_CONFIG_FILES([Makefile lib/Makefile lib-src/Makefile oldXMenu/Makefile \
-       doc/emacs/Makefile doc/misc/Makefile doc/lispintro/Makefile \
-       doc/lispref/Makefile src/Makefile lwlib/Makefile lisp/Makefile \
-       leim/Makefile nextstep/Makefile nt/Makefile])
+m4_define([subdir_makefiles],
+  [lib/Makefile lib-src/Makefile oldXMenu/Makefile doc/emacs/Makefile doc/misc/Makefile doc/lispintro/Makefile doc/lispref/Makefile src/Makefile lwlib/Makefile lisp/Makefile leim/Makefile nextstep/Makefile nt/Makefile])
+SUBDIR_MAKEFILES="subdir_makefiles"
+AC_CONFIG_FILES(subdir_makefiles)
 
 dnl test/ is not present in release tarfiles.
 opt_makefile=test/Makefile

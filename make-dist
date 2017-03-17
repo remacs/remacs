@@ -418,11 +418,11 @@ echo "Making links to 'leim' and its subdirectories"
 ## FIXME Can we not just use the "find -type f" method for this one?
 echo "Making links to 'build-aux'"
 (cd build-aux
- ln compile config.guess config.sub depcomp msys-to-w32 ../${tempdir}/build-aux
+ ln config.guess config.sub msys-to-w32 ../${tempdir}/build-aux
  ln gitlog-to-changelog gitlog-to-emacslog ../${tempdir}/build-aux
- ln install-sh missing move-if-change ../${tempdir}/build-aux
+ ln install-sh move-if-change ../${tempdir}/build-aux
  ln update-copyright update-subdirs ../${tempdir}/build-aux
- ln dir_top make-info-dir ar-lib ../${tempdir}/build-aux)
+ ln dir_top make-info-dir ../${tempdir}/build-aux)
 
 echo "Making links to 'src'"
 ### Don't distribute the configured versions of
@@ -444,7 +444,7 @@ echo "Making links to 'src/bitmaps'"
 echo "Making links to 'lib'"
 (cd lib
  ln [a-zA-Z_]*.[ch] ../${tempdir}/lib
- ln gnulib.mk Makefile.am Makefile.in ../${tempdir}/lib
+ ln gnulib.mk.in Makefile.in ../${tempdir}/lib
  cd ../${tempdir}/lib
  script='/[*]/d; s/\.in\.h$/.h/'
  rm -f `ls *.in.h | sed "$script"`)
@@ -476,7 +476,7 @@ echo "Making links to 'nt'"
 (cd nt
  ln emacs-x86.manifest emacs-x64.manifest ../${tempdir}/nt
  ln [a-z]*.bat [a-z]*.[ch] ../${tempdir}/nt
- ln *.in gnulib.mk gnulib-modules-to-delete.cfg ../${tempdir}/nt
+ ln *.in gnulib-cfg.mk ../${tempdir}/nt
  ln mingw-cfg.site epaths.nt INSTALL.W64 ../${tempdir}/nt
  ln ChangeLog.*[0-9] INSTALL README README.W32 ../${tempdir}/nt)
 

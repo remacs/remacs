@@ -535,15 +535,12 @@ of writing) GPL >= 2. rms says may as well leave the licenses of these
 alone (may import them from Gnulib again). These are:
 
     Gnulib:
-    build-aux/compile
     build-aux/config.guess
     build-aux/config.sub
-    build-aux/depcomp
-    build-aux/missing
     build-aux/move-if-change
     doc/man/texinfo.tex
     lib/*.[ch]
-    lib/gnulib.mk
+    lib/gnulib.mk.in
     src/gmalloc.c
     src/termcap.c
     src/tparam.c

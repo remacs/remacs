@@ -26,14 +26,6 @@
 # Built by 'autogen.sh'.
 /aclocal.m4
 /configure
-build-aux/ar-lib
-build-aux/compile
-build-aux/config.guess
-build-aux/config.sub
-build-aux/depcomp
-build-aux/install-sh
-build-aux/missing
-lib/Makefile.in
 src/config.in
 
 # Built by 'configure'.
@@ -52,6 +44,7 @@ makefile
 /config.status
 /configure.lineno
 /conftest*
+lib/gnulib.mk
 src/config.h
 src/epaths.h
 
@@ -285,6 +278,5 @@ lib/SYS/
 /site-lisp/
 nt/emacs.rc
 nt/emacsclient.rc
-nt/gnulib.mk
 src/gdb.ini
 /var/

@@ -44,17 +44,18 @@ GNULIB_MODULES='
   vla warnings
 '
 
+AVOIDED_MODULES='
+  close dup fchdir fstat
+  malloc-posix msvc-inval msvc-nothrow
+  open openat-die opendir raise
+  save-cwd select setenv sigprocmask stdarg stdbool
+  threadlib unsetenv
+'
+
 GNULIB_TOOL_FLAGS='
-  --avoid=close --avoid=dup
-  --avoid=fchdir --avoid=fstat
-  --avoid=malloc-posix --avoid=msvc-inval --avoid=msvc-nothrow
-  --avoid=open --avoid=openat-die --avoid=opendir
-  --avoid=raise
-  --avoid=save-cwd --avoid=select --avoid=setenv --avoid=sigprocmask
-  --avoid=stdarg --avoid=stdbool
-  --avoid=threadlib --avoid=unsetenv
   --conditional-dependencies --import --no-changelog --no-vc-files
-  --makefile-name=gnulib.mk
+  --gnu-make
+  --makefile-name=gnulib.mk.in
 '
 
 # The source directory, with a trailing '/'.
@@ -94,12 +95,22 @@ test -x "$gnulib_srcdir"/gnulib-tool || {
   exit 1
 }
 
-"$gnulib_srcdir"/gnulib-tool --dir="$src" $GNULIB_TOOL_FLAGS $GNULIB_MODULES &&
+avoided_flags=
+for module in $AVOIDED_MODULES; do
+  avoided_flags="$avoided_flags --avoid=$module"
+done
+
+"$gnulib_srcdir"/gnulib-tool --dir="$src" $GNULIB_TOOL_FLAGS \
+	$avoided_flags $GNULIB_MODULES &&
 rm -- "$src"lib/gl_openssl.h "$src"m4/fcntl-o.m4 \
       "$src"m4/gl-openssl.m4 \
       "$src"m4/gnulib-cache.m4 "$src"m4/gnulib-tool.m4 \
       "$src"m4/warn-on-use.m4 "$src"m4/wint_t.m4 &&
 cp -- "$gnulib_srcdir"/build-aux/texinfo.tex "$src"doc/misc &&
-cp -- "$gnulib_srcdir"/build-aux/move-if-change "$src"build-aux &&
+cp -- "$gnulib_srcdir"/build-aux/config.guess \
+      "$gnulib_srcdir"/build-aux/config.sub \
+      "$gnulib_srcdir"/build-aux/install-sh \
+      "$gnulib_srcdir"/build-aux/move-if-change \
+   "$src"build-aux &&
 { test -z "$src" || cd "$src"; } &&
 ./autogen.sh

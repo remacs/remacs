@@ -73,10 +73,6 @@ CDPATH=
 cache_file = @cache_file@
 CONFIGURE_FLAGS = --cache-file=$(cache_file)
 
-AUTOCONF = @AUTOCONF@
-AUTOMAKE = @AUTOMAKE@
-AUTOHEADER = @AUTOHEADER@
-ACLOCAL = @ACLOCAL@
 AWK = @AWK@
 
 EXEEXT=@EXEEXT@
@@ -395,10 +391,6 @@ epaths-force-w32:
 	  -e "/^.*#/s|@SRC@|$${w32srcdir}|g") &&		\
 	${srcdir}/build-aux/move-if-change epaths.h.$$$$ src/epaths.h
 
-# If lib/Makefile would build files in '.', then build them before
-# building 'lib', to avoid races with parallel makes.
-lib: am--refresh
-
 lib-src src: $(NTDIR) lib
 
 src: lib-src
@@ -439,6 +431,7 @@ blessmail: Makefile src
 # etc. to be built without running into similar recursion problems.
 MAKEFILE_NAME = Makefile
 $(MAKEFILE_NAME): config.status $(srcdir)/src/config.in \
+	 $(srcdir)/lib/gnulib.mk.in \
          $(srcdir)/Makefile.in $(SUBDIR_MAKEFILES_IN) $(CONFIG_STATUS_FILES_IN)
 	MAKE='$(MAKE)' ./config.status
 
@@ -452,40 +445,16 @@ config.status: ${srcdir}/configure
 	    $(CFG) $(srcdir)/configure $(CONFIGURE_FLAGS); \
 	fi
 
-AUTOCONF_INPUTS = $(srcdir)/configure.ac $(srcdir)/aclocal.m4
-
-$(srcdir)/configure: $(AUTOCONF_INPUTS)
-	cd ${srcdir} && ${AUTOCONF}
-
-ACLOCAL_PATH = @ACLOCAL_PATH@
-ACLOCAL_INPUTS = $(srcdir)/configure.ac $(srcdir)/m4/*.m4
-$(srcdir)/aclocal.m4: $(ACLOCAL_INPUTS)
-	cd $(srcdir) && ACLOCAL_PATH='$(ACLOCAL_PATH)' $(ACLOCAL) -I m4
-
-AUTOMAKE_INPUTS = $(srcdir)/aclocal.m4 $(srcdir)/lib/Makefile.am \
-  $(srcdir)/lib/gnulib.mk $(srcdir)/nt/gnulib.mk
-$(srcdir)/lib/Makefile.in: $(AUTOMAKE_INPUTS)
-	cd $(srcdir) && $(AUTOMAKE) --gnu -a -c lib/Makefile
-
-$(srcdir)/nt/gnulib.mk: $(srcdir)/lib/gnulib.mk
-	$(MAKE) -C $(srcdir)/nt gnulib.mk
-
-# Regenerate files that this makefile would have made, if this makefile
-# had been built by Automake.  The name 'am--refresh' is for
-# compatibility with subsidiary Automake-generated makefiles.
-am--refresh: $(srcdir)/aclocal.m4 $(srcdir)/configure $(srcdir)/src/config.in
-.PHONY: am--refresh
+$(srcdir)/configure $(srcdir)/src/stamp-h.in: \
+  $(srcdir)/configure.ac $(srcdir)/m4/*.m4
+	cd $(srcdir) && ./autogen.sh autoconf
 
 $(srcdir)/src/config.in: $(srcdir)/src/stamp-h.in
 	@ # Usually, there's no need to rebuild src/config.in just
 	@ # because stamp-h.in has changed (since building stamp-h.in
 	@ # refreshes config.in as well), but if config.in is missing
 	@ # then we really need to do something more.
-	$(if $(wildcard $@),,cd $(srcdir) && $(AUTOHEADER))
-$(srcdir)/src/stamp-h.in: $(AUTOCONF_INPUTS)
-	cd ${srcdir} && ${AUTOHEADER}
-	rm -f $@
-	echo timestamp > $@
+	$(if $(wildcard $@),,cd $(srcdir) && ./autogen.sh autoconf)
 
 # ==================== Installation ====================
 
@@ -894,7 +863,8 @@ top_bootclean=\
 ###      distribution.
 top_distclean=\
 	${top_bootclean}; \
-	rm -f config.status config.log~ Makefile stamp-h1 ${SUBDIR_MAKEFILES}
+	rm -f config.status config.log~ \
+	  Makefile lib/gnulib.mk stamp-h1 ${SUBDIR_MAKEFILES}
 
 distclean_dirs = $(clean_dirs) leim lisp
 

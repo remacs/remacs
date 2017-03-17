@@ -9,7 +9,7 @@ Steps to take before starting on the first pretest in any release sequence:
     and you should use it for all that follows.  Diffs from this
     branch should be going to the emacs-diffs mailing list.
 
-1.  Decide on versions of automake and autoconf, and ensure you will
+1.  Decide on versions of m4 and autoconf, and ensure you will
     have them available for the duration of the release process.
 
 2.  Consider increasing the value of the variable
