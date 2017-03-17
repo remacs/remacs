@@ -37,6 +37,12 @@ Use 'configure --with-gnutls=no' to build even when GnuTLS is missing.
 ** GnuTLS version 2.12.2 or later is now required, instead of merely
 version 2.6.6 or later.
 
+** The new option 'configure --with-mailutils' causes Emacs to rely on
+GNU Mailutils 'movemail' to retrieve email.  By default, the Emacs
+build procedure continues to build and install a limited and insecure
+'movemail' substitute.  Although --with-mailutils is recommended, it
+is not yet the default due to backward-compatibility concerns.
+
 ** The new option 'configure --enable-gcc-warnings=warn-only' causes
 GCC to issue warnings without stopping the build.  This behavior is
 now the default in developer builds.  As before, use

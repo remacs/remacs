@@ -100,6 +100,9 @@ bindir=@bindir@
 # --libexecdir option to '../configure'.
 libexecdir=@libexecdir@
 
+# Nonempty if Emacs can assume Mailutils is installed.
+with_mailutils=@with_mailutils@
+
 # Directory for local state files for all programs.
 localstatedir=@localstatedir@
 
@@ -160,7 +163,8 @@ INSTALLABLES = etags${EXEEXT} ctags${EXEEXT} emacsclient${EXEEXT} $(CLIENTW) \
 
 # Things that Emacs runs internally, or during the build process,
 #  which should not be installed in bindir.
-UTILITIES = profile${EXEEXT} movemail${EXEEXT} hexl${EXEEXT} \
+UTILITIES = profile${EXEEXT} hexl${EXEEXT} \
+	    $(if $(with_mailutils), , movemail${EXEEXT}) \
             $(and $(use_gamedir), update-game-score${EXEEXT})
 
 DONT_INSTALL= make-docfile${EXEEXT}

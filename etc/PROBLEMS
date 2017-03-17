@@ -323,6 +323,7 @@ or set the variable 'cannot-suspend' to a non-nil value.
 
 *** movemail compiled with POP support can't connect to the POP server.
 
+This problem can occur if you do not configure --with-mailutils.
 Make sure that the 'pop' entry in /etc/services, or in the services
 NIS map if your machine uses NIS, has the same port number as the
 entry on the POP server.  A common error is for the POP server to be

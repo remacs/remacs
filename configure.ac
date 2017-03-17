@@ -240,6 +240,18 @@ AC_DEFUN([OPTION_DEFAULT_ON], [dnl
    m4_bpatsubst([with_$1], [[^0-9a-z]], [_])=$with_features])dnl
 ])dnl
 
+# FIXME: The default options '--without-mailutils --with-pop' result
+# in a movemail implementation that supports only unencrypted POP3
+# connections.  Encrypted connections should be the default.
+
+OPTION_DEFAULT_OFF([mailutils],
+  [rely on GNU Mailutils being installed; this makes the options
+   --without-pop through --with-mailhost irrelevant)])
+if test "$with_mailutils" = no; then
+  with_mailutils=
+fi
+AC_SUBST([with_mailutils])
+
 OPTION_DEFAULT_ON([pop],[don't support POP mail retrieval with movemail])
 if test "$with_pop" = yes; then
    AC_DEFINE(MAIL_USE_POP)
@@ -3789,87 +3801,91 @@ fi
 AC_SUBST(LIBXML2_LIBS)
 AC_SUBST(LIBXML2_CFLAGS)
 
-# Check for mail-locking functions in a "mail" library.  Probably this should
-# have the same check as for liblockfile below.
-AC_CHECK_LIB(mail, maillock, have_mail=yes, have_mail=no)
-if test $have_mail = yes; then
-  LIBS_MAIL=-lmail
-  AC_DEFINE(HAVE_LIBMAIL, 1, [Define to 1 if you have the 'mail' library (-lmail).])
+BLESSMAIL_TARGET=
+LIBS_MAIL=
+if test ! "$with_mailutils"; then
+  # Check for mail-locking functions in a "mail" library.  Probably this should
+  # have the same check as for liblockfile below.
+  AC_CHECK_LIB([mail], [maillock], [have_mail=yes], [have_mail=no])
+  if test $have_mail = yes; then
+    LIBS_MAIL=-lmail
+    AC_DEFINE([HAVE_LIBMAIL], [1],
+      [Define to 1 if you have the 'mail' library (-lmail).])
 
-  OLD_LIBS=$LIBS
-  LIBS="$LIBS_MAIL $LIBS"
-  AC_CHECK_FUNCS(touchlock)
-  LIBS=$OLD_LIBS
-else
-  LIBS_MAIL=
-fi
-dnl Debian, at least:
-AC_CHECK_LIB(lockfile, maillock, have_lockfile=yes, have_lockfile=no)
-if test $have_lockfile = yes; then
-   LIBS_MAIL=-llockfile
-   AC_DEFINE(HAVE_LIBLOCKFILE, 1, [Define to 1 if you have the 'lockfile' library (-llockfile).])
-else
-# If we have the shared liblockfile, assume we must use it for mail
-# locking (e.g. Debian).  If we couldn't link against liblockfile
-# (no liblockfile.a installed), ensure that we don't need to.
-  dnl This works for files generally, not just executables.
-  dnl Should we look elsewhere for it?  Maybe examine /etc/ld.so.conf?
-  AC_CHECK_PROG(liblockfile, liblockfile.so, yes, no,
-                /usr/lib:/lib:/usr/local/lib:$LD_LIBRARY_PATH)
-  if test $ac_cv_prog_liblockfile = yes; then
-    AC_MSG_ERROR([Shared liblockfile found but can't link against it.
+    OLD_LIBS=$LIBS
+    LIBS="$LIBS_MAIL $LIBS"
+    AC_CHECK_FUNCS([touchlock])
+    LIBS=$OLD_LIBS
+  fi
+  dnl Debian, at least:
+  AC_CHECK_LIB([lockfile], [maillock], [have_lockfile=yes], [have_lockfile=no])
+  if test $have_lockfile = yes; then
+     LIBS_MAIL=-llockfile
+     AC_DEFINE([HAVE_LIBLOCKFILE], [1],
+       [Define to 1 if you have the 'lockfile' library (-llockfile).])
+  else
+    # If we have the shared liblockfile, assume we must use it for mail
+    # locking (e.g. Debian).  If we couldn't link against liblockfile
+    # (no liblockfile.a installed), ensure that we don't need to.
+    dnl This works for files generally, not just executables.
+    dnl Should we look elsewhere for it?  Maybe examine /etc/ld.so.conf?
+    AC_CHECK_PROG([liblockfile], [liblockfile.so], [yes], [no],
+		  [/usr/lib:/lib:/usr/local/lib:$LD_LIBRARY_PATH])
+    if test "$ac_cv_prog_liblockfile" = yes; then
+      AC_MSG_ERROR([Shared liblockfile found but can't link against it.
 This probably means that movemail could lose mail.
 There may be a 'development' package to install containing liblockfile.])
-  fi
-fi
-AC_CHECK_HEADERS_ONCE(maillock.h)
-AC_SUBST(LIBS_MAIL)
-
-## Define MAIL_USE_FLOCK (or LOCKF) if the mailer uses flock (or lockf) to
-## interlock access to the mail spool.  The alternative is a lock file named
-## /usr/spool/mail/$USER.lock.
-mail_lock=no
-case "$opsys" in
-  aix4-2) mail_lock="lockf" ;;
-
-  gnu|freebsd|dragonfly|netbsd|openbsd|darwin) mail_lock="flock" ;;
-
-  ## On GNU/Linux systems, both methods are used by various mail programs.
-  ## I assume most people are using newer mailers that have heard of flock.
-  ## Change this if you need to.
-  ## Debian contains a patch which says: "On Debian/GNU/Linux systems,
-  ## configure gets the right answers, and that means *NOT* using flock.
-  ## Using flock is guaranteed to be the wrong thing. See Debian Policy
-  ## for details." and then uses '#ifdef DEBIAN'.  Unfortunately the
-  ## Debian maintainer hasn't provided a clean fix for Emacs.
-  ## movemail.c will use 'maillock' when MAILDIR, HAVE_LIBMAIL and
-  ## HAVE_MAILLOCK_H are defined, so the following appears to be the
-  ## correct logic.  -- fx
-  ## We must check for HAVE_LIBLOCKFILE too, as movemail does.
-  ## liblockfile is a Free Software replacement for libmail, used on
-  ## Debian systems and elsewhere. -rfr.
-  gnu-*)
-    mail_lock="flock"
-    if test $have_mail = yes || test $have_lockfile = yes; then
-      test $ac_cv_header_maillock_h = yes && mail_lock=no
     fi
-    ;;
+  fi
+  AC_CHECK_HEADERS([maillock.h])
 
-  mingw32)
-    mail_lock="none-needed" ;;
-esac
+  ## Define MAIL_USE_FLOCK (or LOCKF) if the mailer uses flock (or lockf) to
+  ## interlock access to the mail spool.  The alternative is a lock file named
+  ## /usr/spool/mail/$USER.lock.
+  mail_lock=no
+  case $opsys in
+    aix4-2) mail_lock="lockf" ;;
 
-BLESSMAIL_TARGET=
-case "$mail_lock" in
-  flock) AC_DEFINE(MAIL_USE_FLOCK, 1, [Define if the mailer uses flock to interlock the mail spool.]) ;;
+    gnu|freebsd|dragonfly|netbsd|openbsd|darwin) mail_lock="flock" ;;
 
-  lockf) AC_DEFINE(MAIL_USE_LOCKF, 1, [Define if the mailer uses lockf to interlock the mail spool.]) ;;
+    ## On GNU/Linux systems, both methods are used by various mail programs.
+    ## I assume most people are using newer mailers that have heard of flock.
+    ## Change this if you need to.
+    ## Debian contains a patch which says: "On Debian/GNU/Linux systems,
+    ## configure gets the right answers, and that means *NOT* using flock.
+    ## Using flock is guaranteed to be the wrong thing. See Debian Policy
+    ## for details." and then uses '#ifdef DEBIAN'.  Unfortunately the
+    ## Debian maintainer hasn't provided a clean fix for Emacs.
+    ## movemail.c will use 'maillock' when MAILDIR, HAVE_LIBMAIL and
+    ## HAVE_MAILLOCK_H are defined, so the following appears to be the
+    ## correct logic.  -- fx
+    ## We must check for HAVE_LIBLOCKFILE too, as movemail does.
+    ## liblockfile is a Free Software replacement for libmail, used on
+    ## Debian systems and elsewhere. -rfr.
+    gnu-*)
+      mail_lock="flock"
+      if test $have_mail = yes || test $have_lockfile = yes; then
+	test $ac_cv_header_maillock_h = yes && mail_lock=no
+      fi ;;
 
-  none-needed) ;;
+    mingw32)
+      mail_lock="none-needed" ;;
+  esac
 
-  *) BLESSMAIL_TARGET="need-blessmail" ;;
-esac
-AC_SUBST(BLESSMAIL_TARGET)
+  case $mail_lock in
+    flock) AC_DEFINE([MAIL_USE_FLOCK], [1],
+	     [Define if the mailer uses flock to interlock the mail spool.]);;
+
+    lockf) AC_DEFINE([MAIL_USE_LOCKF], [1],
+	     [Define if the mailer uses lockf to interlock the mail spool.]);;
+
+    none-needed) ;;
+
+    *) BLESSMAIL_TARGET="need-blessmail" ;;
+  esac
+fi
+AC_SUBST([BLESSMAIL_TARGET])
+AC_SUBST([LIBS_MAIL])
 
 OLD_LIBS=$LIBS
 LIBS="$LIB_PTHREAD $LIB_MATH $LIBS"
@@ -5468,5 +5484,22 @@ AC_MSG_ERROR(['etc/refcards/emacsver.tex' could not be made.])
 ])
 
 AC_OUTPUT
+
+if test ! "$with_mailutils"; then
+  emacs_use_mailutils="use '$0 --with-mailutils'"
+  case `(movemail --version) 2>/dev/null` in
+    *Mailutils*) ;;
+    *) emacs_use_mailutils="install GNU Mailutils
+<http://mailutils.org> and $emacs_use_mailutils";;
+  esac
+  if test "$with_pop" = yes; then
+    AC_MSG_WARN([This configuration installs a 'movemail' program
+that retrieves POP3 email via only insecure channels.
+To fix this you can $emacs_use_mailutils.])
+  else
+    AC_MSG_NOTICE([This configuration installs a 'movemail' program that cannot
+retrieve POP3 email.  You might want to $emacs_use_mailutils.])
+  fi
+fi
 
 test "$MAKE" = make || AC_MSG_NOTICE([Now you can run '$MAKE'.])
