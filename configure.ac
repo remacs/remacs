@@ -5486,19 +5486,30 @@ AC_MSG_ERROR(['etc/refcards/emacsver.tex' could not be made.])
 AC_OUTPUT
 
 if test ! "$with_mailutils"; then
-  emacs_use_mailutils="use '$0 --with-mailutils'"
-  case `(movemail --version) 2>/dev/null` in
-    *Mailutils*) ;;
-    *) emacs_use_mailutils="install GNU Mailutils
-<http://mailutils.org> and $emacs_use_mailutils";;
+  case $opsys in
+    cygwin | mingw32)
+      # Don't suggest GNU Mailutils, as it hasn't been ported.
+      if test "$with_pop" = yes; then
+	emacs_fix_movemail="use '$0 --without-pop'"
+      else
+	emacs_fix_movemail=
+      fi;;
+    *)
+      emacs_fix_movemail="use '$0 --with-mailutils'"
+      case `(movemail --version) 2>/dev/null` in
+	*Mailutils*) ;;
+	*) emacs_fix_movemail="install GNU Mailutils
+<http://mailutils.org> and $emacs_fix_movemail";;
+      esac;;
   esac
+
   if test "$with_pop" = yes; then
     AC_MSG_WARN([This configuration installs a 'movemail' program
 that retrieves POP3 email via only insecure channels.
-To fix this you can $emacs_use_mailutils.])
-  else
+To fix this you can $emacs_fix_movemail.])
+  elif test "$emacs_fix_movemail"; then
     AC_MSG_NOTICE([This configuration installs a 'movemail' program that cannot
-retrieve POP3 email.  You might want to $emacs_use_mailutils.])
+retrieve POP3 email.  You might want to $emacs_fix_movemail.])
   fi
 fi
 
