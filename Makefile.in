@@ -419,8 +419,10 @@ blessmail: Makefile src
 	$(MAKE) -C lib-src maybe-blessmail
 
 # We used to have one rule per */Makefile.in, but that leads to race
-# conditions with parallel makes, so let's assume that the time stamp on
-# ./Makefile is representative of the time stamp on all the other Makefiles.
+# conditions with parallel makes, so assume that the timestamp on
+# ./Makefile represents the timestamp on all the other Makefiles.
+# Similarly, assume the timestamp on ./configure represents the
+# timestamp on src/config.in.
 #
 # config.status overrides MAKEFILE_NAME with a bogus name when creating
 # src/epaths.h, so that 'make epaths-force' does not recursively invoke
@@ -430,7 +432,7 @@ blessmail: Makefile src
 # then attempts to build that file.  This forces 'Makefile', 'lib/Makefile',
 # etc. to be built without running into similar recursion problems.
 MAKEFILE_NAME = Makefile
-$(MAKEFILE_NAME): config.status $(srcdir)/src/config.in \
+$(MAKEFILE_NAME): config.status $(srcdir)/configure \
 	 $(srcdir)/lib/gnulib.mk.in \
          $(srcdir)/Makefile.in $(SUBDIR_MAKEFILES_IN) $(CONFIG_STATUS_FILES_IN)
 	MAKE='$(MAKE)' ./config.status
@@ -445,16 +447,8 @@ config.status: ${srcdir}/configure
 	    $(CFG) $(srcdir)/configure $(CONFIGURE_FLAGS); \
 	fi
 
-$(srcdir)/configure $(srcdir)/src/stamp-h.in: \
-  $(srcdir)/configure.ac $(srcdir)/m4/*.m4
-	cd $(srcdir) && ./autogen.sh autoconf
-
-$(srcdir)/src/config.in: $(srcdir)/src/stamp-h.in
-	@ # Usually, there's no need to rebuild src/config.in just
-	@ # because stamp-h.in has changed (since building stamp-h.in
-	@ # refreshes config.in as well), but if config.in is missing
-	@ # then we really need to do something more.
-	$(if $(wildcard $@),,cd $(srcdir) && ./autogen.sh autoconf)
+$(srcdir)/configure: $(srcdir)/configure.ac $(srcdir)/m4/*.m4
+	cd $(srcdir) && ./autogen.sh
 
 # ==================== Installation ====================
 
@@ -864,7 +858,7 @@ top_bootclean=\
 top_distclean=\
 	${top_bootclean}; \
 	rm -f config.status config.log~ \
-	  Makefile lib/gnulib.mk stamp-h1 ${SUBDIR_MAKEFILES}
+	  Makefile lib/gnulib.mk ${SUBDIR_MAKEFILES}
 
 distclean_dirs = $(clean_dirs) leim lisp
 

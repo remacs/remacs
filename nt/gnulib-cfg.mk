@@ -16,7 +16,7 @@
 # along with this file.  If not, see <http://www.gnu.org/licenses/>.
 
 
-# Gnulib odules to be omitted from Emacs.
+# Gnulib modules to be omitted from Emacs.
 
 # Omit them because they either conflict with MinGW headers or
 # headers in nt/inc, or because those modules won't compile with

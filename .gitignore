@@ -121,8 +121,6 @@ deps/
 *.stamp
 stamp_BLD
 src/gl-stamp
-src/stamp-h.in
-src/stamp-h1
 
 # Object files and debugging.
 *.a

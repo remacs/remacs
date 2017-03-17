@@ -76,14 +76,10 @@ else
   MKDEPDIR = :
 endif
 
-AUTOCONF_INPUTS = $(top_srcdir)/configure.ac $(top_srcdir)/m4/*.m4
-$(top_srcdir)/configure: $(AUTOCONF_INPUTS)
 .PRECIOUS: ../config.status Makefile
-../config.status: $(top_srcdir)/configure $(top_srcdir)/lisp/version.el
-Makefile: ../config.status $(srcdir)/Makefile.in
-$(top_srcdir)/configure ../config.status:
+../config.status: $(top_srcdir)/configure.ac $(top_srcdir)/m4/*.m4
 	$(MAKE) -C .. $(notdir $@)
-Makefile:
+Makefile: ../config.status $(srcdir)/Makefile.in
 	$(MAKE) -C .. src/$@
 
 libgnu_a_OBJECTS = $(gl_LIBOBJS) \

@@ -242,10 +242,6 @@ Please report any problems with this script to bug-gnu-emacs@gnu.org .'
   ## Let autoreconf figure out what, if anything, needs doing.
   ## Use autoreconf's -f option in case autoreconf itself has changed.
   autoreconf -fi -I m4 || exit
-
-  ## Create a timestamp, so that './autogen.sh; make' doesn't
-  ## cause 'make' to needlessly run 'autoheader'.
-  echo timestamp > src/stamp-h.in || exit
 fi
 
 
@@ -360,7 +356,7 @@ if test ! -f configure; then
 elif test -e .git && test $git_was_ok = false && test $do_git = false; then
     echo "You can now run '$0 git'."
 elif test ! -f config.status ||
-	test -n "`find src/stamp-h.in -newer config.status`"; then
+	test -n "`find configure src/config.in -newer config.status`"; then
     echo "You can now run './configure'."
 fi
 
