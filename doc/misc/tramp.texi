@@ -405,8 +405,8 @@ September 2011.  Ad-hoc multi-hop methods (with a changed syntax)
 re-enabled in November 2011.  In November 2012, added Juergen
 Hoetzel's @file{tramp-adb.el}.
 
-XEmacs support has been stopped in January 2016.  Since March 2017,
-@value{tramp} syntax requires a method mandatorily.
+XEmacs support was stopped in January 2016.  Since March 2017,
+@value{tramp} syntax mandates a method.
 
 @c Installation chapter is necessary only in case of standalone
 @c installation.  Text taken from trampinst.texi.
