@@ -4001,7 +4001,7 @@ x_set_alpha (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
       else if (INTEGERP (item))
 	{
 	  EMACS_INT ialpha = XINT (item);
-	  if (! (0 <= ialpha && alpha <= 100))
+	  if (! (0 <= ialpha && ialpha <= 100))
 	    args_out_of_range (make_number (0), make_number (100));
 	  alpha = ialpha / 100.0;
 	}
