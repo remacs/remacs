@@ -323,13 +323,17 @@ or set the variable 'cannot-suspend' to a non-nil value.
 
 *** movemail compiled with POP support can't connect to the POP server.
 
-This problem can occur if you do not configure --with-mailutils.
-Make sure that the 'pop' entry in /etc/services, or in the services
-NIS map if your machine uses NIS, has the same port number as the
-entry on the POP server.  A common error is for the POP server to be
-listening on port 110, the assigned port for the POP3 protocol, while
-the client is trying to connect on port 109, the assigned port for the
-old POP protocol.
+This problem can occur if you do not configure --with-mailutils,
+and don't have GNU Mailutils installed.  Then Emacs uses its own
+version of movemail, which doesn't support secure POP connections.
+To solve this, install GNU Mailutils.
+
+Also, make sure that the 'pop' entry in /etc/services, or in the
+services NIS map if your machine uses NIS, has the same port number as
+the entry on the POP server.  A common error is for the POP server to
+be listening on port 110, the assigned port for the POP3 protocol,
+while the client is trying to connect on port 109, the assigned port
+for the old POP protocol.
 
 *** RMAIL gets error getting new mail.
 
