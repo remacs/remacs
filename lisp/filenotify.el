@@ -62,9 +62,10 @@ If it is registered in `file-notify-descriptors', a stopped event is sent."
 
     (when (consp registered)
       ;; Send `stopped' event.
-      (funcall
-       (cdr (assoc file (cdr registered)))
-       `(,descriptor stopped ,(if file (expand-file-name file dir) dir)))
+      (when (consp (assoc file (cdr registered)))
+        (funcall
+         (cdr (assoc file (cdr registered)))
+         `(,descriptor stopped ,(if file (expand-file-name file dir) dir))))
 
       ;; Modify `file-notify-descriptors'.
       (if (not file)
