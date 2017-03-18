@@ -235,7 +235,7 @@ AC_DEFUN([OPTION_DEFAULT_ON], [dnl
 
 OPTION_DEFAULT_OFF([mailutils],
   [rely on GNU Mailutils being installed; this makes the options
-   --without-pop through --with-mailhost irrelevant)])
+   --without-pop through --with-mailhost irrelevant])
 if test "$with_mailutils" = no; then
   with_mailutils=
 fi
