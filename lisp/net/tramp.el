@@ -1052,7 +1052,7 @@ means to use always cached values for the directory contents."
 
 ;;;###autoload
 (defconst tramp-completion-file-name-handler-alist
-  '((expand-file-name . tramp-completion-handle-expand-file-name)
+  '(;(expand-file-name . tramp-completion-handle-expand-file-name)
     (file-name-all-completions
      . tramp-completion-handle-file-name-all-completions)
     (file-name-completion . tramp-completion-handle-file-name-completion))
