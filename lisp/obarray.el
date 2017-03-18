@@ -37,9 +37,9 @@
         (make-vector size 0)
       (signal 'wrong-type-argument '(size 0)))))
 
-(defun obarray-size (obarray)
-  "Return the number of slots of OBARRAY."
-  (length obarray))
+(defun obarray-size (ob)
+  "Return the number of slots of obarray OB."
+  (length ob))
 
 (defun obarrayp (object)
   "Return t if OBJECT is an obarray."
