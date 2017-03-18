@@ -57,7 +57,7 @@ ALL_CFLAGS= \
 
 SYSTEM_TYPE = @SYSTEM_TYPE@
 ifeq ($(SYSTEM_TYPE),windows-nt)
-  include ../nt/gnulib-cfg.mk
+  include $(srcdir)/../nt/gnulib-cfg.mk
 endif
 include gnulib.mk
 ifneq ($(SYSTEM_TYPE),windows-nt)
