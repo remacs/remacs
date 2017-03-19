@@ -1237,7 +1237,8 @@ values."
   (save-match-data
     (unless (tramp-tramp-file-p name)
       (tramp-compat-user-error nil "Not a Tramp file name: \"%s\"" name))
-    (let ((match (string-match (nth 0 tramp-file-name-structure) name)))
+    (if (not (string-match (nth 0 tramp-file-name-structure) name))
+        (error "`tramp-file-name-structure' didn't match!")
       (let ((method    (match-string (nth 1 tramp-file-name-structure) name))
 	    (user      (match-string (nth 2 tramp-file-name-structure) name))
 	    (host      (match-string (nth 3 tramp-file-name-structure) name))
@@ -1372,6 +1373,8 @@ Point must be at the beginning of a header line.
 
 The outline level is equal to the verbosity of the Tramp message."
   (1+ (string-to-number (match-string 1))))
+
+(defvar outline-regexp)
 
 (defun tramp-get-debug-buffer (vec)
   "Get the debug buffer for VEC."
@@ -1969,11 +1972,10 @@ ARGS are the arguments OPERATION has been called with."
    ;; Unknown file primitive.
    (t (error "unknown file I/O primitive: %s" operation))))
 
-(defun tramp-find-foreign-file-name-handler (filename &optional operation)
+(defun tramp-find-foreign-file-name-handler (filename &optional _operation)
   "Return foreign file name handler if exists."
   (when (tramp-tramp-file-p filename)
-    (let ((v (tramp-dissect-file-name filename t))
-	  (handler tramp-foreign-file-name-handler-alist)
+    (let ((handler tramp-foreign-file-name-handler-alist)
 	  elt res)
       (while handler
 	(setq elt (car handler)
@@ -2952,6 +2954,8 @@ User is always nil."
 		tramp-backup-directory-alist)
 	     backup-directory-alist)))
       (tramp-run-real-handler 'find-backup-file-name (list filename)))))
+
+(defvar ls-lisp-use-insert-directory-program)
 
 (defun tramp-handle-insert-directory
   (filename switches &optional wildcard full-directory-p)

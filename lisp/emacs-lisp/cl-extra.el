@@ -877,16 +877,14 @@ including `cl-block' and `cl-eval-when'."
           (if (> newwidth curwidth)
               (setf (aref cols i) newwidth)))))
     (let ((formats '())
-          (tmp-head header)
           (col 0))
       (dotimes (i (length cols))
-        (let ((head (pop tmp-head)))
-          (push (concat (propertize "	"
-                                    'display
-                                    `(space :align-to ,(+ col col-space)))
-                        "%s")
-                formats)
-        (cl-incf col (+ col-space (aref cols i)))))
+        (push (concat (propertize "	"
+                                  'display
+                                  `(space :align-to ,(+ col col-space)))
+                      "%s")
+              formats)
+        (cl-incf col (+ col-space (aref cols i))))
       (let ((format (mapconcat #'identity (nreverse formats) "")))
         (insert (apply #'format format
                        (mapcar (lambda (str) (propertize str 'face 'italic))
