@@ -865,6 +865,40 @@ including `cl-block' and `cl-eval-when'."
               "\n")))
    "\n"))
 
+(defun cl--print-table (header rows)
+  ;; FIXME: Isn't this functionality already implemented elsewhere?
+  (let ((cols (apply #'vector (mapcar #'string-width header)))
+        (col-space 2))
+    (dolist (row rows)
+      (dotimes (i (length cols))
+        (let* ((x (pop row))
+               (curwidth (aref cols i))
+               (newwidth (if x (string-width x) 0)))
+          (if (> newwidth curwidth)
+              (setf (aref cols i) newwidth)))))
+    (let ((formats '())
+          (tmp-head header)
+          (col 0))
+      (dotimes (i (length cols))
+        (let ((head (pop tmp-head)))
+          (push (concat (propertize "	"
+                                    'display
+                                    `(space :align-to ,(+ col col-space)))
+                        "%s")
+                formats)
+        (cl-incf col (+ col-space (aref cols i)))))
+      (let ((format (mapconcat #'identity (nreverse formats) "")))
+        (insert (apply #'format format
+                       (mapcar (lambda (str) (propertize str 'face 'italic))
+                               header))
+                "\n")
+        (insert (apply #'format format
+                       (mapcar (lambda (str) (make-string (string-width str) ?—))
+                               header))
+                "\n")
+        (dolist (row rows)
+          (insert (apply #'format format row) "\n"))))))
+
 (defun cl--describe-class-slots (class)
   "Print help description for the slots in CLASS.
 Outputs to the current buffer."
@@ -877,7 +911,22 @@ Outputs to the current buffer."
                    (cl-struct-unknown-slot nil))))
     (insert (propertize "Instance Allocated Slots:\n\n"
 			'face 'bold))
-    (mapc #'cl--describe-class-slot slots)
+    (let* ((has-doc nil)
+           (slots-strings
+            (mapcar
+             (lambda (slot)
+               (list (cl-prin1-to-string (cl--slot-descriptor-name slot))
+                     (cl-prin1-to-string (cl--slot-descriptor-type slot))
+                     (cl-prin1-to-string (cl--slot-descriptor-initform slot))
+                     (let ((doc (alist-get :documentation
+                                           (cl--slot-descriptor-props slot))))
+                       (if (not doc) ""
+                         (setq has-doc t)
+                         (substitute-command-keys doc)))))
+             slots)))
+      (cl--print-table `("Name" "Type" "Default" . ,(if has-doc '("Doc")))
+                       slots-strings))
+    (insert "\n")
     (when (> (length cslots) 0)
       (insert (propertize "\nClass Allocated Slots:\n\n" 'face 'bold))
       (mapc #'cl--describe-class-slot cslots))))
