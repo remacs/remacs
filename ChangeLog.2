@@ -1,3 +1,331 @@
+2017-02-18  Noam Postavsky  <npostavs@gmail.com>
+
+	* lisp/woman.el (woman): Fix docstring prefix arg description.
+
+2017-02-18  Eli Zaretskii  <eliz@gnu.org>
+
+	Mention "editor" in Emacs man page header
+
+	* doc/man/emacs.1.in: Mention "editor" in the header line.
+	(Bug#25771, Bug#25779)
+
+2017-02-18  Eli Zaretskii  <eliz@gnu.org>
+
+	Document problems with nerd-fonts
+
+	* etc/PROBLEMS (fonts): Describe the potential problems with
+	nerd-fonts that cause slow display.  (Bug#25697)
+
+2017-02-13  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* doc/lispref/modes.texi (Derived Modes): Make example more idiomatic
+
+2017-02-12  Eli Zaretskii  <eliz@gnu.org>
+
+	Clarify what is the "cursor"
+
+	* doc/lispref/windows.texi (Window Point): Clarify the notion of
+	"cursor".
+
+2017-02-10  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve commentary in lisp.h
+
+	* src/lisp.h: Explain in the comment why enlarging a Lisp_Misc
+	object is discouraged.
+
+2017-02-08  Noam Postavsky  <npostavs@gmail.com>
+
+	Disable native completion for ipython (Bug#25067)
+
+	* lisp/progmodes/python.el:
+	(python-shell-completion-native-disabled-interpreters): Add "ipython".
+
+2017-02-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in ada-mode manual
+
+	* doc/misc/ada-mode.texi (Project file variables): Add a missing
+	right bracket.  Reported by Jean-Christophe Helary
+	<jean.christophe.helary@gmail.com>.
+
+2017-02-05  Eli Zaretskii  <eliz@gnu.org>
+
+	Clarify documentation of 'bufferpos-to-filepos' and 'filepos-to-bufferpos'
+
+	* doc/lispref/nonascii.texi (Text Representations): Clarify that
+	'exact' value of QUALITY argument to 'bufferpos-to-filepos' and
+	'filepos-to-bufferpos' can lead to expensive and slow processing.
+
+	* lisp/international/mule-util.el (filepos-to-bufferpos)
+	(bufferpos-to-filepos): Doc fix.  (Bug#25626)
+
+2017-02-03  Nicolas Petton  <nicolas@petton.fr>
+
+	Bump Emacs version to 25.2 RC1
+
+	* README:
+	* configure.ac:
+	* msdos/sed2v2.inp:
+	* nt/README.W32: Bump Emacs version.
+	* lisp/ldefs-boot.el: Update.
+
+2017-02-03  Nicolas Petton  <nicolas@petton.fr>
+
+	* admin/make-tarball.txt: Add documentation regarding the release banner.
+
+2017-02-03  Tino Calancha  <tino.calancha@gmail.com>
+
+	* CONTRIBUTE (Documenting your changes): Index new vars/commands in manual.
+
+2017-01-31  Eli Zaretskii  <eliz@gnu.org>
+
+	Index byte-compile-debug
+
+	* doc/lispref/compile.texi (Compilation Functions): Index
+	byte-compile-debug.
+
+2017-01-31  Philipp Stephani  <phst@google.com>
+
+	Document `byte-compile-debug' in the ELisp manual
+
+	* doc/lispref/compile.texi: Document variable `byte-compile-debug'.
+
+2017-01-31  Philipp Stephani  <phst@google.com>
+
+	Document variable `byte-compile-debug'
+
+	* lisp/emacs-lisp/bytecomp.el (byte-compile-debug): Document variable.
+
+2017-01-31  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix call to debugger on assertion failure
+
+	* lisp/emacs-lisp/cl-preloaded.el (cl--assertion-failed): The first
+	argument must be `error', and the second is a list of arguments for
+	`signal'.
+
+2017-01-29  Noam Postavsky  <npostavs@gmail.com>
+
+	Call modification hooks in org-src fontify buffers
+
+	* lisp/org/org-src.el (org-src-font-lock-fontify-block): Let-bind
+	`inhibit-modification-hooks' to nil, since this function can be called
+	from jit-lock-function which binds that variable to t (Bug#25132).
+
+2017-01-28  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of 'format' conversions
+
+	* src/editfns.c (Fformat): More accurate description of %g and
+	effects of the various flags on it.  More accurate description of
+	integer conversions.
+
+	* doc/lispref/strings.texi (Formatting Strings): More accurate
+	description of %g and effects of the various flags on it.  More
+	accurate description of integer conversions.  (Bug#25557)
+
+2017-01-27  Vladimir Panteleev  <git@thecybershadow.net>  (tiny change)
+
+	Remove stale functions from ert manual
+
+	* doc/misc/ert.texi (Useful Techniques when Writing Tests):
+	Replace ert--mismatch references with its cl-lib replacement,
+	cl-mismatch.
+
+2017-01-27  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in Eshell manual
+
+	* doc/misc/eshell.texi (History): Fix a typo.  Reported by Mak
+	Kolybabi <mak@kolybabi.com>.
+
+2017-01-20  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of hooks related to saving buffers
+
+	* lisp/files.el (write-file-functions, write-contents-functions)
+	(before-save-hook, after-save-hook): Note that these are only used
+	by save-buffer.
+
+	* doc/lispref/backups.texi (Auto-Saving):
+	* doc/lispref/files.texi (Saving Buffers): Mention that
+	save-related hooks are not run by auto-saving.  (Bug#25460)
+
+2017-01-20  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of auto-save-visited-file-name
+
+	* doc/emacs/files.texi (Auto Save Files): Mention subtle
+	differences between saving the buffer and auto-saving with
+	auto-save-visited-file-name set non-nil.  (Bug#25478)
+
+2017-01-18  Tom Tromey  <tom@tromey.com>
+
+	fix typo in mailcap-mime-extensions
+
+	* lisp/gnus/mailcap.el (mailcap-mime-extensions): Use "text/x-patch",
+	not "test/x-patch".  (Bug#25472)
+
+2017-01-18  Lele Gaifax  <lele@metapensiero.it>  (tiny change)
+
+	Fix typos in flymake.el
+
+	* lisp/progmodes/flymake.el (flymake-check-patch-master-file-buffer):
+	Spelling fixes in the doc string.
+
+2017-01-17  Glenn Morris  <rgm@gnu.org>
+
+	More NEWS checking for admin.el's set-version
+
+	* admin/admin.el (set-version): Warn if temporary NEWS markup
+	still present in release candidates.
+
+2017-01-17  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix auto-save-file-name problem in Tramp on MS Windows. Do not merge
+
+	* lisp/net/tramp.el (tramp-handle-make-auto-save-file-name):
+	Fix a problem when running on MS Windows.
+
+2017-01-16  Ian Dunn  <dunni@gnu.org>  (tiny change)
+
+	* lisp/net/eww.el (eww-tag-meta): Handle single quoted URLs (Bug#25445).
+
+2017-01-14  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/progmodes/sql.el (sql-product-alist): Doc tweak
+
+	`:sqli-comint-func' does not have to be a symbol.
+
+2017-01-14  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/progmodes/sql.el (sql-product-alist): Doc fix.  (Bug#25440)
+
+2017-01-13  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of dabbrevs
+
+	* doc/emacs/abbrevs.texi (Dynamic Abbrevs): Add a cross reference
+	to "Dabbrev Customization".
+	(Dabbrev Customization): More details about the default value of
+	dabbrev-abbrev-char-regexp and use cases when it might not be good
+	enough.  (Bug#25432)
+
+2017-01-12  Noam Postavsky  <npostavs@gmail.com>
+
+	Clarify that easy-menu-add is a nop (Bug#25382)
+
+	* lisp/emacs-lisp/easymenu.el (easy-menu-add): Make it into an alias of
+	`ignore', like `easy-menu-remove'.
+
+2017-01-12  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/textmodes/rst.el (rst-package-emacs-version-alist): Fix entry.
+
+2017-01-11  Eli Zaretskii  <eliz@gnu.org>
+
+	Revert "Add DNS keywords and remove duplications"
+
+	This reverts commit 1cb9aa5b14867983d0013a61709b4d0af18364ff.
+
+2017-01-11  Alexander Kuleshov  <kuleshovmail@gmail.com>
+
+	Add DNS keywords and remove duplications
+
+	* lisp/textmodes/dns-mode.el (dns-mode-types): Add two TLSA and
+	NSEC" DNS related keywords and remove duplication of "NSAP".
+
+2017-01-10  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of coding-systems
+
+	* doc/lispref/nonascii.texi (Coding System Basics): Mention
+	'prefer-utf-8'.  Index it and 'undecided'.
+	(Encoding and I/O): Fix a typo.
+	(User-Chosen Coding Systems): Improve the documentation of
+	ACCEPT-DEFAULT-P argument to select-safe-coding-system.  Document
+	select-safe-coding-system-function.
+	(Specifying Coding Systems): Document coding-system-require-warning.
+
+2017-01-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve definition of 'variable-pitch' face on MS-Windows
+
+	* lisp/faces.el (variable-pitch): Don't specify too many
+	attributes of the font, otherwise faces that request different
+	weight or slant or size will not get them.
+
+2017-01-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix an error message in python.el
+
+	* lisp/progmodes/python.el (python-shell-get-process-or-error):
+	Don't repeat the same key binding twice.  (Bug#25405)
+
+2017-01-07  Noam Postavsky  <npostavs@gmail.com>
+
+	Clarify major mode switching
+
+	* doc/emacs/modes.texi (Major Modes):
+	* doc/lispref/modes.texi (Modes, Major Modes): Explictly say that each
+	buffer has exactly one major mode and can't be "turned off", only
+	switched away from (Bug#25357).
+
+2017-01-07  Noam Postavsky  <npostavs@gmail.com>
+
+	Add helpful comment to compile-command's docstring
+
+	* lisp/progmodes/compile.el (compile-command): Mention trailing space in
+	docstring (Bug#25337).
+
+2017-01-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix ':version' of 'select-enable-primary'
+
+	* lisp/select.el (select-enable-primary): Fix a typo in
+	':version'.  (Bug#25375)
+
+2017-01-04  Glenn Morris  <rgm@gnu.org>
+
+	Update remaining copyright years with admin.el M-x set-copyright
+
+	* etc/refcards/ru-refcard.tex (cyear): Set to 2017.
+
+2017-01-04  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/ffap.el (ffap-lax-url): Bump :version after recent change.
+
+2017-01-03  Philipp Stephani  <phst@google.com>
+
+	Document that functions in 'ffap-alist' can use the match data
+
+	* lisp/ffap.el (ffap-alist): Document that ffap sets the match data
+	while walking 'ffap-alist'.
+
+2017-01-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix copyright years by hand
+
+	These are dates that admin/update-copyright did not update, or
+	updated incorrectly.
+
+2017-01-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Update copyright year to 2017
+
+	Run admin/update-copyright.
+
+2016-12-30  Nicolas Petton  <nicolas@petton.fr>
+
+	Bump Emacs version to 25.1.91
+
+	* README:
+	* configure.ac:
+	* msdos/sed2v2.inp:
+	* nt/README.W32: Bump Emacs version.
+	* lisp/ldefs-boot.el: Update.
+
 2016-12-30  Alan Mackenzie  <acm@muc.de>
 
 	Backport: Remove an ambiguity from defvar's doc string.  Fixes bug #25292.
@@ -26508,7 +26836,7 @@
 
 2015-08-07  Phillip Lord  <phillip.lord@newcastle.ac.uk>
 
-	Improve error signaling for seq-subseq
+	Improve error signalling for seq-subseq
 	* lisp/emacs-lisp/seq.el (seq-subseq): The existing behavior is to error
 	when indexes are too large, but to silently ignore numbers which
 	are too negative for lists.  String and vector handling errors in
@@ -35313,7 +35641,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit e8f0d7dcadd2b35f62f7a14b96df15e5314d7f6e (inclusive).
+commit ec4226d81074751c105264a3a3383c48d0a05e41 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
