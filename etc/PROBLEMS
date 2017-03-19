@@ -469,6 +469,23 @@ problem by adding this to your .cshrc file:
         stty -icrnl -onlcr -echo susp ^Z
     endif
 
+*** In Inferior Python mode, input is echoed and native completion doesn't work.
+<https://debbugs.gnu.org/cgi/bugreport.cgi?bug=25753>
+
+This happens when python uses a libedit based readline module, which
+is the default on macOS.  This can be worked around by installing a
+GNU readline based module instead, for example, using setuptools
+
+    sudo easy_install gnureadline
+
+And then rename the system's readline so that it won't be loaded:
+
+    cd /Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/lib-dynload
+    mv readline.so readline.so.bak
+
+See <https://pypi.python.org/pypi/gnureadline> for more details on
+installation.
+
 *** Emacs startup on GNU/Linux systems (and possibly other systems) is slow.
 
 This can happen if the system is misconfigured and Emacs can't get the
@@ -1043,6 +1060,13 @@ into the buffer.  The reason this happens is an apparent
 incompatibility of the Gnome terminal with Xterm, which also affects
 other programs using the Xterm mouse interface.  A problem report has
 been filed.
+
+*** Gnome: GPaste clipboard manager causes erratic behavior of 'yank'
+
+The symptom is that 'kill-line' followed by 'yank' often (but not
+always) doesn't insert the whitespace of the killed and yanked line.
+
+The solution is to set the GPaste "trim items" option to OFF.
 
 *** KDE: When running on KDE, colors or fonts are not as specified for Emacs,
 or messed up.
@@ -1934,6 +1958,13 @@ EOF
 *** HP/UX 11.0: Emacs makes HP/UX 11.0 crash.
 
 This is a bug in HPUX; HPUX patch PHKL_16260 is said to fix it.
+
+*** HP-UX 11.31 cc: Emacs does not build.
+
+HP-UX 11.31 cc has bugs in its implementation of flexible array
+members, a C99 feature that Emacs relies on.  To work around the
+problem, install GCC and use it to build Emacs.  For details, see:
+http://lists.gnu.org/archive/html/bug-gnulib/2017-03/msg00066.html
 
 ** AIX
 

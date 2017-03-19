@@ -3473,7 +3473,7 @@ With argument MSG show activation/deactivation message."
            :warning
            (concat
             "Your `python-shell-interpreter' doesn't seem to "
-            "support readline, yet `python-shell-completion-native' "
+            "support readline, yet `python-shell-completion-native-enable' "
             (format "was t and %S is not part of the "
                     (file-name-nondirectory python-shell-interpreter))
             "`python-shell-completion-native-disabled-interpreters' "

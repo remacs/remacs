@@ -4666,16 +4666,21 @@ a form.  Emacs evaluates it to get the new height, with the symbol
 
 @item (raise @var{factor})
 This kind of display specification raises or lowers the text
-it applies to, relative to the baseline of the line.
+it applies to, relative to the baseline of the line.  It is mainly
+meant to support display of subscripts and superscripts.
 
-@var{factor} must be a number, which is interpreted as a multiple of the
-height of the affected text.  If it is positive, that means to display
-the characters raised.  If it is negative, that means to display them
-lower down.
+The @var{factor} must be a number, which is interpreted as a multiple
+of the height of the affected text.  If it is positive, that means to
+display the characters raised.  If it is negative, that means to
+display them lower down.
 
-If the text also has a @code{height} display specification, that does
-not affect the amount of raising or lowering, which is based on the
-faces used for the text.
+Note that if the text also has a @code{height} display specification,
+which was specified before (i.e.@: to the left of) @code{raise}, the
+latter will affect the amount of raising or lowering in pixels,
+because that is based on the height of the text being raised.
+Therefore, if you want to display a sub- or superscript that is
+smaller than the normal text height, consider specifying @code{raise}
+before @code{height}.
 @end table
 
 @c We put all the '@code{(when ...)}' on one line to encourage

@@ -296,7 +296,7 @@ mark by one paragraph.
 
   The definition of a paragraph depends on the major mode.  In
 Fundamental mode, as well as Text mode and related modes, a paragraph
-is separated each neighboring paragraph another by one or more
+is separated from neighboring paragraphs by one or more
 @dfn{blank lines}---lines that are either empty, or consist solely of
 space, tab and/or formfeed characters.  In programming language modes,
 paragraphs are usually defined in a similar way, so that you can use
