@@ -10661,7 +10661,8 @@ comment at the start of cc-engine.el for more info."
 		       (progn
 			 (c-backward-token-2 1 nil lim)
 			 (and
-			  (not (c-on-identifier))
+			  (not (and (c-on-identifier)
+				    (looking-at c-symbol-chars)))
 			  (not (looking-at c-opt-op-identifier-prefix)))))))
 	    (cons 'inlambda bracket-pos))
 	   ((and c-recognize-paren-inexpr-blocks
