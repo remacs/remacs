@@ -870,7 +870,7 @@ drop_overlay (struct buffer *b, struct Lisp_Overlay *ov)
 
 }
 
-/* Delete all overlays of B and reset it's overlay lists.  */
+/* Delete all overlays of B and reset its overlay lists.  */
 
 void
 delete_all_overlays (struct buffer *b)
@@ -1698,7 +1698,7 @@ cleaning up all windows currently displaying the buffer to be killed. */)
   if (EQ (buffer, XWINDOW (minibuf_window)->contents))
     return Qnil;
 
-  /* When we kill an ordinary buffer which shares it's buffer text
+  /* When we kill an ordinary buffer which shares its buffer text
      with indirect buffer(s), we must kill indirect buffer(s) too.
      We do it at this stage so nothing terrible happens if they
      ask questions or their hooks get errors.  */
