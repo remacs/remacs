@@ -45,7 +45,7 @@
 
 (defun cl--assertion-failed (form &optional string sargs args)
   (if debug-on-error
-      (funcall debugger `(cl-assertion-failed ,form ,string ,@sargs))
+      (funcall debugger 'error `(cl-assertion-failed (,form ,string ,@sargs)))
     (if string
         (apply #'error string (append sargs args))
       (signal 'cl-assertion-failed `(,form ,@sargs)))))

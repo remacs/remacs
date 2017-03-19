@@ -1044,8 +1044,10 @@ auto-save-mode}.
   If you want auto-saving to be done in the visited file rather than
 in a separate auto-save file, set the variable
 @code{auto-save-visited-file-name} to a non-@code{nil} value.  In this
-mode, there is no real difference between auto-saving and explicit
-saving.
+mode, auto-saving is very similar to explicit saving.  However,
+differences still exist, in particular for modes which modify the
+buffer-saving process in non-trivial ways via various hooks
+(@pxref{Saving Buffers,,, elisp, The Emacs Lisp Reference Manual}).
 
 @vindex delete-auto-save-files
   A buffer's auto-save file is deleted when you save the buffer in its

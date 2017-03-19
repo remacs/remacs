@@ -88,10 +88,14 @@ the @code{byte-compile} function.  You can compile a whole file with
 @code{byte-compile-file}, or several files with
 @code{byte-recompile-directory} or @code{batch-byte-compile}.
 
+@vindex byte-compile-debug
   Sometimes, the byte compiler produces warning and/or error messages
-(@pxref{Compiler Errors}, for details).  These messages are recorded
-in a buffer called @file{*Compile-Log*}, which uses Compilation mode.
-@xref{Compilation Mode,,,emacs, The GNU Emacs Manual}.
+(@pxref{Compiler Errors}, for details).  These messages are normally
+recorded in a buffer called @file{*Compile-Log*}, which uses
+Compilation mode.  @xref{Compilation Mode,,,emacs, The GNU Emacs
+Manual}.  However, if the variable @code{byte-compile-debug} is
+non-nil, error message will be signaled as Lisp errors instead
+(@pxref{Errors}).
 
 @cindex macro compilation
   Be careful when writing macro calls in files that you intend to

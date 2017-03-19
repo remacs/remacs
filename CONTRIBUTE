@@ -162,7 +162,7 @@ them right the first time, so here are guidelines for formatting them:
 - If you use Emacs VC, one way to format ChangeLog entries is to create
   a top-level ChangeLog file manually, and update it with 'C-x 4 a' as
   usual.  Do not register the ChangeLog file under git; instead, use
-  'C-c C-a' to insert its contents into into your *vc-log* buffer.
+  'C-c C-a' to insert its contents into your *vc-log* buffer.
   Or if 'log-edit-hook' includes 'log-edit-insert-changelog' (which it
   does by default), they will be filled in for you automatically.
 
