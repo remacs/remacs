@@ -175,8 +175,8 @@ Emacs Lisp manual for more information and examples."
       ;; (when (gethash (car cases) pcase--memoize-2)
       ;;   (message "pcase-memoize failed because of eq test on %S"
       ;;            (car cases)))
-      (when data
-        (message "pcase-memoize: equal first branch, yet different"))
+      ;; (when data
+      ;;   (message "pcase-memoize: equal first branch, yet different"))
       (let ((expansion (pcase--expand exp cases)))
         (puthash (car cases) `(,exp ,cases ,@expansion) pcase--memoize)
         ;; (puthash (car cases) `(,exp ,cases ,@expansion) pcase--memoize-1)
