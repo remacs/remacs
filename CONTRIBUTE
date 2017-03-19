@@ -261,6 +261,13 @@ know it does not, mark the NEWS entry with "---".  If you know
 that *all* the necessary documentation updates have been made, mark
 the entry with "+++".  Otherwise do not mark it.
 
+If your change requires updating the manuals to document new
+functions/commands/variables/faces, then use the proper Texinfo
+command to index them; for instance, use @vindex for variables and
+@findex for functions/commands.  For the full list of predefine indices, see
+http://www.gnu.org/software/texinfo/manual/texinfo/html_node/Predefined-Indices.html
+or run the shell command 'info "(texinfo)Predefined Indices"'.
+
 For more specific tips on Emacs's doc style, see
 http://www.gnu.org/software/emacs/manual/html_node/elisp/Documentation-Tips.html
 Use 'checkdoc' to check for documentation errors before submitting a patch.
