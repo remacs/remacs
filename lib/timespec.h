@@ -29,6 +29,10 @@ _GL_INLINE_HEADER_BEGIN
 # define _GL_TIMESPEC_INLINE _GL_INLINE
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Resolution of timespec timestamps (in units per second), and log
    base 10 of the resolution.  */
 
@@ -106,6 +110,10 @@ timespectod (struct timespec a)
 
 void gettime (struct timespec *);
 int settime (struct timespec const *);
+
+#ifdef __cplusplus
+}
+#endif
 
 _GL_INLINE_HEADER_END
 

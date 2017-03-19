@@ -103,7 +103,7 @@
 # elif ((defined __APPLE__ && defined __MACH__                  \
          ? 4 < __GNUC__ + (1 <= __GNUC_MINOR__)                 \
          : __GNUC__)                                            \
-        || 061200 <= __HP_cc || 061200 <= __HP_aCC                \
+        || (__ia64 && (61200 <= __HP_cc || 61200 <= __HP_aCC)) \
         || __ICC || 0x590 <= __SUNPRO_C || 0x0600 <= __xlC__)
 #  define _Alignas(a) __attribute__ ((__aligned__ (a)))
 # elif 1300 <= _MSC_VER

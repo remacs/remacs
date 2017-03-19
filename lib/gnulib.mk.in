@@ -927,6 +927,7 @@ standardlisppath = @standardlisppath@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 version = @version@
+with_mailutils = @with_mailutils@
 x_default_search_path = @x_default_search_path@
 # End of GNU Make output.
 

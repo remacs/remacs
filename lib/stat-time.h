@@ -31,6 +31,10 @@ _GL_INLINE_HEADER_BEGIN
 # define _GL_STAT_TIME_INLINE _GL_INLINE
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* STAT_TIMESPEC (ST, ST_XTIM) is the ST_XTIM member for *ST of type
    struct timespec, if available.  If not, then STAT_TIMESPEC_NS (ST,
    ST_XTIM) is the nanosecond component of the ST_XTIM member for *ST,
@@ -193,6 +197,10 @@ get_stat_birthtime (struct stat const *st)
 
   return t;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 _GL_INLINE_HEADER_END
 
