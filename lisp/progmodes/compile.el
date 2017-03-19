@@ -694,7 +694,9 @@ You might also use mode hooks to specify it in certain modes, like this:
 		(concat \"make -k \"
 			(if buffer-file-name
 			  (shell-quote-argument
-			    (file-name-sans-extension buffer-file-name))))))))"
+			    (file-name-sans-extension buffer-file-name))))))))
+
+It's often useful to leave a space at the end of the value."
   :type 'string
   :group 'compilation)
 ;;;###autoload(put 'compile-command 'safe-local-variable (lambda (a) (and (stringp a) (or (not (boundp 'compilation-read-command)) compilation-read-command))))

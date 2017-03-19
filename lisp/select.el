@@ -103,7 +103,7 @@ The existence of a primary selection depends on the underlying GUI you use.
 E.g. it doesn't exist under MS-Windows."
   :type 'boolean
   :group 'killing
-  :version "24.1")
+  :version "25.1")
 (define-obsolete-variable-alias 'x-select-enable-primary
   'select-enable-primary "25.1")
 
