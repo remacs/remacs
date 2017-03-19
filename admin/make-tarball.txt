@@ -191,6 +191,10 @@ emacs.html (for a new major release, a more thorough update is needed)
 history.html
 add the new NEWS file as news/NEWS.xx.y
 
+For every new release, a banner is displayed on top of the emacs.html
+page.  Uncomment and the release banner in emacs.html.  Keep it on the
+page for about a month, then comment it again.
+
 Use M-x make-manuals from admin/admin.el to regenerate the html
 manuals in manual/.  If there are new manuals, add appropriate index
 pages in manual/ and add them to manual/index.html.  In the
