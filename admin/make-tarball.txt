@@ -55,9 +55,12 @@ General steps (for each step, check for possible errors):
     M-x set-version RET).  For a pretest, start at version .90.  After
     .99, use .990 (so that it sorts).
 
-    The final pretest should be a release candidate.  Set the version
-    number to that of the actual release.  Pick a date about a week
-    from now when you intend to make the release.  Use M-x
+    The final pretest should be a release candidate.
+    Before a release candidate is made, the tasks listed in
+    admin/release-process must be completed.
+
+    Set the version number to that of the actual release.  Pick a date
+    about a week from now when you intend to make the release.  Use M-x
     add-release-logs to add entries to etc/HISTORY and the ChangeLog
     file.  It's best not to commit these files until the release is
     actually made.  Merge the entries from (unversioned) ChangeLog

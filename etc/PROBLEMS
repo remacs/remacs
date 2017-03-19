@@ -745,6 +745,10 @@ The solution is to install the appropriate fonts on your machine. For
 instance if you are editing a text with a lot of math symbols, then
 installing a font like 'Symbola' should solve this problem.
 
+Another reason for slow display is reportedly the nerd-fonts
+installation, even when Symbola is installed as well.  Uninstalling
+nerd-fonts was reported to solve the problem in that case.
+
 ** Emacs running on GNU/Linux system with the m17n library Ver.1.7.1 or the
 earlier version has a problem with rendering Bengali script.
 

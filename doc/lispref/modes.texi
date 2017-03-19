@@ -820,14 +820,15 @@ which in turn may have been changed in a mode hook.
 Here is a hypothetical example:
 
 @example
+(defvar hypertext-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [down-mouse-3] 'do-hyper-link)
+    map))
+
 (define-derived-mode hypertext-mode
   text-mode "Hypertext"
-  "Major mode for hypertext.
-\\@{hypertext-mode-map@}"
-  (setq case-fold-search nil))
-
-(define-key hypertext-mode-map
-  [down-mouse-3] 'do-hyper-link)
+  "Major mode for hypertext."
+  (setq-local case-fold-search nil))
 @end example
 
 Do not write an @code{interactive} spec in the definition;
