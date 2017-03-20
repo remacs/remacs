@@ -1742,6 +1742,9 @@ if test "$GCC" = yes && test "$ac_enable_autodepend" = yes; then
    AC_MSG_RESULT([$ac_enable_autodepend])
    if test $ac_enable_autodepend = yes; then
       AUTO_DEPEND=yes
+      for depdir in */deps; do
+	test ! -d "$depdir" || rm -fr "$depdir"/../*.o "$depdir" || exit
+      done
    fi
 fi
 AC_SUBST(AUTO_DEPEND)
