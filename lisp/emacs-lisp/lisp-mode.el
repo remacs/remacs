@@ -1083,7 +1083,8 @@ ENDPOS is encountered."
          (init-depth (car state))
          (next-depth init-depth)
          (last-depth init-depth)
-         (last-syntax-point (point)))
+         (last-syntax-point (point))
+         (real-endpos endpos))
     (unless endpos
       ;; Get error now if we don't have a complete sexp after point.
       (save-excursion (forward-sexp 1)
@@ -1116,6 +1117,8 @@ ENDPOS is encountered."
                 last-depth (- last-depth next-depth)
                 next-depth init-depth))
         (forward-line 1)
+        (when (and (not real-endpos) (<= next-depth init-depth))
+          (goto-char endpos))
         (when (< (point) endpos)
           (let ((depth-delta (- next-depth last-depth)))
             (cond ((< depth-delta 0)
