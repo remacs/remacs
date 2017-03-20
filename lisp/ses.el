@@ -1,4 +1,3 @@
-
 ;;; ses.el -- Simple Emacs Spreadsheet  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2002-2017 Free Software Foundation, Inc.
@@ -2273,15 +2272,19 @@ print area if NONARROW is nil."
 ;; (defvar maxrow)
 ;; (defvar maxcol)
 
-(defun ses-recalculate-cell ()
+(defun ses-recalculate-cell (&optional ses--curcell)
   "Recalculate and reprint the current cell or range.
+
+If SES--CURCELL is non nil use it as current cell or range
+without any check, otherwise fnuction (ses-check-curcell 'range)
+is called.
 
 For an individual cell, shows the error if the formula or printer
 signals one, or otherwise shows the cell's complete value.  For a range, the
 cells are recalculated in \"natural\" order, so cells that other cells refer
 to are recalculated first."
   (interactive "*")
-  (ses-check-curcell 'range)
+  (or ses--curcell (ses-check-curcell 'range))
   (ses-begin-change)
   (ses-initialize-Dijkstra-attempt)
   (let (sig cur-rowcol)
@@ -2334,7 +2337,7 @@ to are recalculated first."
   (let ((startcell    (ses--cell-at-pos (point)))
 	(ses--curcell (cons 'A1 (ses-cell-symbol (1- ses--numrows)
 						 (1- ses--numcols)))))
-    (ses-recalculate-cell)
+    (ses-recalculate-cell ses--curcell)
     (ses-jump-safe startcell)))
 
 (defun ses-truncate-cell ()
