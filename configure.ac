@@ -5473,7 +5473,6 @@ AC_MSG_ERROR(['etc/refcards/emacsver.tex' could not be made.])
 
 if test $AUTO_DEPEND = yes; then
    for dir in $AUTODEPEND_PARENTS; do
-     rm -f $dir/*.o $dir/deps/*
      AS_MKDIR_P([$dir/deps])
    done
 fi
