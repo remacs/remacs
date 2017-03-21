@@ -234,14 +234,16 @@ AC_DEFUN([OPTION_DEFAULT_ON], [dnl
 # connections.  Encrypted connections should be the default.
 
 OPTION_DEFAULT_OFF([mailutils],
-  [rely on GNU Mailutils being installed; this makes the options
-   --without-pop through --with-mailhost irrelevant])
+  [rely on GNU Mailutils, so that the --without-pop through --with-mailhost
+   options are irrelevant])
 if test "$with_mailutils" = no; then
   with_mailutils=
 fi
 AC_SUBST([with_mailutils])
 
-OPTION_DEFAULT_ON([pop],[don't support POP mail retrieval with movemail])
+OPTION_DEFAULT_ON([pop],
+  [don't support POP mail retrieval with movemail (--without-pop or
+   --with-mailutils is recommended, as movemail POP is insecure)])
 if test "$with_pop" = yes; then
    AC_DEFINE(MAIL_USE_POP)
 fi
@@ -5482,31 +5484,25 @@ fi
 AC_OUTPUT
 
 if test ! "$with_mailutils"; then
+  if test "$with_pop" = yes; then
+    AC_MSG_WARN([This configuration installs a 'movemail' program
+that retrieves POP3 email via only insecure channels.
+To omit insecure POP3, you can use '$0 --without-pop'.])
+  fi
+
   case $opsys in
     cygwin | mingw32)
       # Don't suggest GNU Mailutils, as it hasn't been ported.
-      if test "$with_pop" = yes; then
-	emacs_fix_movemail="use '$0 --without-pop'"
-      else
-	emacs_fix_movemail=
-      fi;;
+      ;;
     *)
       emacs_fix_movemail="use '$0 --with-mailutils'"
       case `(movemail --version) 2>/dev/null` in
 	*Mailutils*) ;;
 	*) emacs_fix_movemail="install GNU Mailutils
 <http://mailutils.org> and $emacs_fix_movemail";;
-      esac;;
+      esac
+      AC_MSG_NOTICE([You might want to $emacs_fix_movemail.]);;
   esac
-
-  if test "$with_pop" = yes; then
-    AC_MSG_WARN([This configuration installs a 'movemail' program
-that retrieves POP3 email via only insecure channels.
-To fix this you can $emacs_fix_movemail.])
-  elif test "$emacs_fix_movemail"; then
-    AC_MSG_NOTICE([This configuration installs a 'movemail' program that cannot
-retrieve POP3 email.  You might want to $emacs_fix_movemail.])
-  fi
 fi
 
 test "$MAKE" = make || AC_MSG_NOTICE([Now you can run '$MAKE'.])
