@@ -229,17 +229,19 @@ AC_DEFUN([OPTION_DEFAULT_ON], [dnl
    m4_bpatsubst([with_$1], [[^0-9a-z]], [_])=$with_features])dnl
 ])dnl
 
+# FIXME: The default options '--without-mailutils --with-pop' result
+# in a movemail implementation that supports only unencrypted POP3
+# connections.  Encrypted connections should be the default.
+
 OPTION_DEFAULT_OFF([mailutils],
-  [rely on GNU Mailutils being installed, so that --with-pop through
-   --with-mailhost are irrelevant])
+  [rely on GNU Mailutils being installed; this makes the options
+   --without-pop through --with-mailhost irrelevant])
 if test "$with_mailutils" = no; then
   with_mailutils=
 fi
 AC_SUBST([with_mailutils])
 
-OPTION_DEFAULT_OFF([pop],
-  [support POP mail retrieval with movemail (not recommended, as its
-   email retrieval is unencrypted)])
+OPTION_DEFAULT_ON([pop],[don't support POP mail retrieval with movemail])
 if test "$with_pop" = yes; then
    AC_DEFINE(MAIL_USE_POP)
 fi
@@ -5479,11 +5481,15 @@ fi
 
 AC_OUTPUT
 
-if test ! "$with_mailutils" && test "$with_pop" = yes; then
+if test ! "$with_mailutils"; then
   case $opsys in
     cygwin | mingw32)
       # Don't suggest GNU Mailutils, as it hasn't been ported.
-      emacs_fix_movemail="use '$0' (without '--with-pop')";;
+      if test "$with_pop" = yes; then
+	emacs_fix_movemail="use '$0 --without-pop'"
+      else
+	emacs_fix_movemail=
+      fi;;
     *)
       emacs_fix_movemail="use '$0 --with-mailutils'"
       case `(movemail --version) 2>/dev/null` in
@@ -5493,9 +5499,14 @@ if test ! "$with_mailutils" && test "$with_pop" = yes; then
       esac;;
   esac
 
-  AC_MSG_WARN([This configuration installs a 'movemail' program
-that retrieves POP3 email via only unencrypted channels.
-To avoid the problem you can $emacs_fix_movemail.])
+  if test "$with_pop" = yes; then
+    AC_MSG_WARN([This configuration installs a 'movemail' program
+that retrieves POP3 email via only insecure channels.
+To fix this you can $emacs_fix_movemail.])
+  elif test "$emacs_fix_movemail"; then
+    AC_MSG_NOTICE([This configuration installs a 'movemail' program that cannot
+retrieve POP3 email.  You might want to $emacs_fix_movemail.])
+  fi
 fi
 
 test "$MAKE" = make || AC_MSG_NOTICE([Now you can run '$MAKE'.])

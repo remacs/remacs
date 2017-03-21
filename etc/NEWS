@@ -32,15 +32,9 @@ version 2.6.6 or later.
 
 ** The new option 'configure --with-mailutils' causes Emacs to rely on
 GNU Mailutils 'movemail' to retrieve email.  By default, the Emacs
-build procedure continues to build and install a limited 'movemail'
-substitute.  Although --with-mailutils is recommended, it is not yet
-the default due to backward-compatibility concerns.
-
-** The option 'configure --without-pop' is now the default.
-(This option's setting matters only if --with-mailutils is not used.)
-Using --with-pop (the previous default) preserves the historical
-behavior where Emacs 'movemail' retrieves network email only via
-unencrypted channels.
+build procedure continues to build and install a limited and insecure
+'movemail' substitute.  Although --with-mailutils is recommended, it
+is not yet the default due to backward-compatibility concerns.
 
 ** The new option 'configure --enable-gcc-warnings=warn-only' causes
 GCC to issue warnings without stopping the build.  This behavior is
