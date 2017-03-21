@@ -518,7 +518,7 @@ FAILURE-RESULTS is a list of (URL STATUS)."
 				    depth '(("Timeout" . "Infinite"))))
 
     ;; Get the parent URL ready for expand-file-name
-    (if (not (vectorp url))
+    (if (not (url-p url))
 	(setq url (url-generic-parse-url url)))
 
     ;; Walk thru the response list, fully expand the URL, and grab the
@@ -540,7 +540,7 @@ FAILURE-RESULTS is a list of (URL STATUS)."
 	(child-url nil)
 	(child-results nil)
 	(results nil))
-    (if (not (vectorp url))
+    (if (not (url-p url))
 	(setq url (url-generic-parse-url url)))
 
     (while response

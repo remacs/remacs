@@ -89,7 +89,7 @@ to them."
 			    keep-date &optional msg cont nowait))
 
 (defun url-file-build-filename (url)
-  (if (not (vectorp url))
+  (if (not (url-p url))
       (setq url (url-generic-parse-url url)))
   (let* ((user (url-user url))
 	 (pass (url-password url))
