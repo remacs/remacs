@@ -1730,6 +1730,7 @@ dnl AC_C_BIGENDIAN is done by gnulib.
 dnl check for Make feature
 
 AUTO_DEPEND=no
+AUTODEPEND_PARENTS='lib src'
 dnl check if we have GCC and autodepend is on.
 if test "$GCC" = yes && test "$ac_enable_autodepend" = yes; then
    AC_MSG_CHECKING([whether gcc understands -MMD -MF])
@@ -1742,9 +1743,6 @@ if test "$GCC" = yes && test "$ac_enable_autodepend" = yes; then
    AC_MSG_RESULT([$ac_enable_autodepend])
    if test $ac_enable_autodepend = yes; then
       AUTO_DEPEND=yes
-      for depdir in */deps; do
-	test ! -d "$depdir" || rm -fr "$depdir"/../*.o "$depdir" || exit
-      done
    fi
 fi
 AC_SUBST(AUTO_DEPEND)
@@ -5016,8 +5014,10 @@ if test "$HAVE_GTK" = yes || test "$HAVE_X11" != yes; then
   LIBXMENU=
 elif test "$USE_X_TOOLKIT" = none; then
   LIBXMENU='$(oldXMenudir)/libXMenu11.a'
+  AUTODEPEND_PARENTS="$AUTODEPEND_PARENTS oldXMenu"
 else
   LIBXMENU='$(lwlibdir)/liblw.a'
+  AUTODEPEND_PARENTS="$AUTODEPEND_PARENTS lwlib"
 fi
 AC_SUBST(LIBXMENU)
 
@@ -5472,6 +5472,13 @@ AC_CONFIG_COMMANDS([etc-refcards-emacsver.tex], [
 ${MAKE-make} -s MAKEFILE_NAME=do-not-make-Makefile etc-emacsver || \
 AC_MSG_ERROR(['etc/refcards/emacsver.tex' could not be made.])
 ])
+
+if test $AUTO_DEPEND = yes; then
+   for dir in $AUTODEPEND_PARENTS; do
+     rm -f $dir/*.o $dir/deps/*
+     AS_MKDIR_P([$dir/deps])
+   done
+fi
 
 AC_OUTPUT
 

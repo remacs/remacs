@@ -347,15 +347,14 @@ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 =
 
-DEPDIR=deps
 AUTO_DEPEND = @AUTO_DEPEND@
-
+DEPDIR = deps
 ifeq ($(AUTO_DEPEND),yes)
-DEPFLAGS = -MMD -MF ${DEPDIR}/$*.d -MP
-MKDEPDIR = ${MKDIR_P} ${DEPDIR}
+  DEPFLAGS = -MMD -MF $(DEPDIR)/$*.d -MP
+  -include $(ALLOBJS:%.o=$(DEPDIR)/%.d)
 else
-DEPFLAGS =
-MKDEPDIR = :
+  DEPFLAGS =
+  include $(srcdir)/deps.mk
 endif
 
 # Flags that might be in WARN_CFLAGS but are not valid for Objective C.
@@ -383,10 +382,8 @@ ALL_OBJC_CFLAGS = $(EMACS_CFLAGS) \
 
 .SUFFIXES: .m
 .c.o:
-	@$(MKDEPDIR)
 	$(AM_V_CC)$(CC) -c $(CPPFLAGS) $(ALL_CFLAGS) $(PROFILING_CFLAGS) $<
 .m.o:
-	@$(MKDEPDIR)
 	$(AM_V_CC)$(CC) -c $(CPPFLAGS) $(ALL_OBJC_CFLAGS) $(PROFILING_CFLAGS) $<
 
 ## lastfile must follow all files whose initialized data areas should
@@ -650,8 +647,7 @@ mostlyclean:
 	rm -f globals.h gl-stamp
 	rm -f *.res *.tmp
 clean: mostlyclean
-	rm -f emacs-*.*.*$(EXEEXT) emacs$(EXEEXT)
-	-rm -rf $(DEPDIR)
+	rm -f emacs-*.*.*$(EXEEXT) emacs$(EXEEXT) $(DEPDIR)/*
 
 ## bootstrap-clean is used to clean up just before a bootstrap.
 ## It should remove all files generated during a compilation/bootstrap,
@@ -666,6 +662,7 @@ bootstrap-clean: clean
 
 distclean: bootstrap-clean
 	rm -f Makefile lisp.mk
+	rm -fr $(DEPDIR)
 
 maintainer-clean: distclean
 	rm -f TAGS
@@ -755,11 +752,3 @@ else
 endif
 	@: Compile some files earlier to speed up further compilation.
 	$(MAKE) -C ../lisp compile-first EMACS="$(bootstrap_exe)"
-
-ifeq ($(AUTO_DEPEND),yes)
--include $(ALLOBJS:%.o=${DEPDIR}/%.d)
-else
-include $(srcdir)/deps.mk
-endif
-
-### Makefile.in ends here

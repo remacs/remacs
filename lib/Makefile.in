@@ -65,16 +65,12 @@ ifneq ($(SYSTEM_TYPE),windows-nt)
   libgnu_a_SOURCES += openat-die.c save-cwd.c
 endif
 
-# Dependencies.  When !AUTO_DEPEND, don't bother with a dependencies file,
-# as the default dependencies are often adequate.
 DEPDIR = deps
 ifeq ($(AUTO_DEPEND),yes)
   DEPFLAGS = -MMD -MF $(DEPDIR)/$*.d -MP
-  MKDEPDIR = $(MKDIR_P) $(DEPDIR)
   -include $(ALLOBJS:%.o=$(DEPDIR)/%.d)
 else
   DEPFLAGS =
-  MKDEPDIR = :
 endif
 
 .PRECIOUS: ../config.status Makefile
@@ -90,10 +86,8 @@ libegnu_a_OBJECTS = $(patsubst %.o,e-%.o,$(libgnu_a_OBJECTS))
 $(libegnu_a_OBJECTS) $(libgnu_a_OBJECTS): $(BUILT_SOURCES)
 
 .c.o:
-	@$(MKDEPDIR)
 	$(AM_V_CC)$(CC) -c $(CPPFLAGS) $(ALL_CFLAGS) $<
 e-%.o: %.c
-	@$(MKDEPDIR)
 	$(AM_V_CC)$(CC) -c $(CPPFLAGS) $(ALL_CFLAGS) -Demacs -o $@ $<
 
 all: libgnu.a $(if $(HYBRID_MALLOC),libegnu.a)
@@ -118,10 +112,10 @@ TAGS: $(ETAGS) $(tagsfiles)
 .PHONY: $(ETAGS) tags
 
 clean mostlyclean:
-	rm -f *.[ao] \#*
-	-rm -rf $(DEPDIR)
+	rm -f *.[ao] \#* $(DEPDIR)/*
 distclean: clean
 	rm -f Makefile $(BUILT_SOURCES)
+	rm -fr $(DEPDIR)
 bootstrap-clean: distclean
 	rm -f TAGS
 maintainer-clean: bootstrap-clean
