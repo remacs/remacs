@@ -504,7 +504,7 @@ See http://lists.gnu.org/archive/html/emacs-devel/2007-11/msg01990.html")
 ;; "index ", "old mode", "new mode", "new file mode" and
 ;; "deleted file mode" are output by git-diff.
 (defconst diff-file-junk-re
-  (concat "Index: \\|=\\{20,\\}\\|" ; SVN
+  (concat "Index: \\|Prereq: \\|=\\{20,\\}\\|" ; SVN
           "diff \\|index \\|\\(?:deleted file\\|new\\(?: file\\)?\\|old\\) mode\\|=== modified file"))
 
 ;; If point is in a diff header, then return beginning
