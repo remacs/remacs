@@ -77,6 +77,10 @@ noindent\" 3
       (search-backward "d2")
       (up-list -1)
       (indent-sexp)
+      (should (equal (buffer-string) correct))
+      (backward-sexp)
+      (end-of-line)
+      (indent-sexp)
       (should (equal (buffer-string) correct)))))
 
 (ert-deftest indent-sexp-in-string ()
