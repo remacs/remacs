@@ -340,20 +340,24 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
   (expand-file-name
    (make-temp-name "file-notify-test") temporary-file-directory))
 
-;; This test is inspired by Bug#26127.
+;; This test is inspired by Bug#26126 and Bug#26127.
 (ert-deftest file-notify-test02-rm-watch ()
   "Check `file-notify-rm-watch'."
+  ;; There is a problem with inotify removing watch descriptors out of
+  ;; order.  Temporarily, we expect to fail this test until it is
+  ;; fixed.
+  :expected-result
+    (if (string-equal (file-notify--test-library) "inotify") :failed :passed)
   (skip-unless (file-notify--test-local-enabled))
 
   (unwind-protect
+      ;; Check, that `file-notify-rm-watch' works.
       (progn
-        ;; Check, that `file-notify-rm-watch' works.
         (should
          (setq file-notify--test-desc
                (file-notify-add-watch
                 temporary-file-directory '(change) #'ignore)))
         (file-notify-rm-watch file-notify--test-desc)
-
         ;; Check, that any parameter is accepted.
         (condition-case err
             (progn
@@ -363,7 +367,15 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
               (file-notify-rm-watch 'foo))
           (error (ert-fail err)))
 
-        ;; Check, that no error is returned removing a watch descriptor twice.
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
+
+    ;; Cleanup.
+    (file-notify--test-cleanup))
+
+  (unwind-protect
+      ;; Check, that no error is returned removing a watch descriptor twice.
+      (progn
         (setq file-notify--test-tmpfile (file-notify--test-make-temp-name)
               file-notify--test-tmpfile1 (file-notify--test-make-temp-name))
         (should
@@ -374,12 +386,47 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
          (setq file-notify--test-desc1
                (file-notify-add-watch
                 file-notify--test-tmpfile1 '(change) #'ignore)))
+        ;; Remove `file-notify--test-desc' twice.
         (file-notify-rm-watch file-notify--test-desc)
         (file-notify-rm-watch file-notify--test-desc)
         (file-notify-rm-watch file-notify--test-desc1)
 
         ;; The environment shall be cleaned up.
         (file-notify--test-cleanup-p))
+
+    ;; Cleanup.
+    (file-notify--test-cleanup))
+
+  (unwind-protect
+      ;; Check, that removing watch descriptors out of order do not harm.
+      (let (results)
+        (cl-flet ((first-callback (event)
+                   (when (eq (nth 1 event) 'deleted) (push 1 results)))
+                  (second-callback (event)
+                   (when (eq (nth 1 event) 'deleted) (push 2 results))))
+          (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
+          (write-region
+           "any text" nil file-notify--test-tmpfile nil 'no-message)
+          (should
+           (setq file-notify--test-desc
+                 (file-notify-add-watch
+                  file-notify--test-tmpfile
+                  '(change) #'first-callback)))
+          (should
+           (setq file-notify--test-desc1
+                 (file-notify-add-watch
+                  file-notify--test-tmpfile
+                  '(change) #'second-callback)))
+          ;; Remove first watch.
+          (file-notify-rm-watch file-notify--test-desc)
+          ;; Only the second callback shall run.
+          (delete-file file-notify--test-tmpfile)
+          (file-notify--wait-for-events
+           (file-notify--test-timeout) results)
+          (should (equal results (list 2)))
+
+          ;; The environment shall be cleaned up.
+          (file-notify--test-cleanup-p)))
 
     ;; Cleanup.
     (file-notify--test-cleanup)))
