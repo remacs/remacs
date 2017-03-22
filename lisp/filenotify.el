@@ -347,13 +347,7 @@ FILE is the name of the file whose event is being reported."
     (if handler
 	;; A file name handler could exist even if there is no local
 	;; file notification support.
-	(setq desc (funcall
-		    handler 'file-notify-add-watch
-                    ;; kqueue does not report file changes in
-                    ;; directory monitor.  So we must watch the file
-                    ;; itself.
-                    (if (eq file-notify--library 'kqueue) file dir)
-                    flags callback))
+	(setq desc (funcall handler 'file-notify-add-watch dir flags callback))
 
       ;; Check, whether Emacs has been compiled with file notification
       ;; support.
@@ -391,6 +385,8 @@ FILE is the name of the file whose event is being reported."
 
       ;; Call low-level function.
       (setq desc (funcall
+                  ;; kqueue does not report file changes in directory
+                  ;; monitor.  So we must watch the file itself.
                   func (if (eq file-notify--library 'kqueue) file dir)
                   l-flags 'file-notify-callback)))
 

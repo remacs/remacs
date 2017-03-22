@@ -294,13 +294,20 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
                (file-notify-add-watch
                 temporary-file-directory '(change attribute-change) #'ignore)))
         (file-notify-rm-watch file-notify--test-desc)
-        (write-region "any text" nil file-notify--test-tmpfile nil 'no-message)
+
+        ;; File monitors like kqueue insist, that the watched file
+        ;; exists.  Directory monitors are not bound to this
+        ;; restriction.
+        (when (string-equal (file-notify--test-library) "kqueue")
+          (write-region
+           "any text" nil file-notify--test-tmpfile nil 'no-message))
         (should
          (setq file-notify--test-desc
                (file-notify-add-watch
                 file-notify--test-tmpfile '(change attribute-change) #'ignore)))
         (file-notify-rm-watch file-notify--test-desc)
-        (delete-file file-notify--test-tmpfile)
+        (when (string-equal (file-notify--test-library) "kqueue")
+          (delete-file file-notify--test-tmpfile))
 
         ;; Check error handling.
         (should-error (file-notify-add-watch 1 2 3 4)
@@ -378,6 +385,8 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
       (progn
         (setq file-notify--test-tmpfile (file-notify--test-make-temp-name)
               file-notify--test-tmpfile1 (file-notify--test-make-temp-name))
+        (write-region "any text" nil file-notify--test-tmpfile nil 'no-message)
+        (write-region "any text" nil file-notify--test-tmpfile1 nil 'no-message)
         (should
          (setq file-notify--test-desc
                (file-notify-add-watch
@@ -390,6 +399,8 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
         (file-notify-rm-watch file-notify--test-desc)
         (file-notify-rm-watch file-notify--test-desc)
         (file-notify-rm-watch file-notify--test-desc1)
+        (delete-file file-notify--test-tmpfile)
+        (delete-file file-notify--test-tmpfile1)
 
         ;; The environment shall be cleaned up.
         (file-notify--test-cleanup-p))
