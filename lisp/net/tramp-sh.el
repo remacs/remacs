@@ -1,4 +1,4 @@
-;;; tramp-sh.el --- Tramp access functions for (s)sh-like connections
+;;; tramp-sh.el --- Tramp access functions for (s)sh-like connections  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
@@ -33,6 +33,9 @@
 (eval-when-compile
   (require 'cl)
   (require 'dired))
+
+(declare-function dired-remove-file "dired-aux")
+(defvar dired-compress-file-suffixes)
 (defvar vc-handled-backends)
 (defvar vc-bzr-program)
 (defvar vc-git-program)
@@ -2592,9 +2595,6 @@ The method used must be an out-of-band method."
      "Couldn't delete %s" filename)))
 
 ;; Dired.
-
-(defvar dired-compress-file-suffixes)
-(declare-function dired-remove-file "dired-aux")
 
 (defun tramp-sh-handle-dired-compress-file (file)
   "Like `dired-compress-file' for Tramp files."

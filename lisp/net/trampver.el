@@ -1,4 +1,4 @@
-;;; trampver.el --- Transparent Remote Access, Multiple Protocol
+;;; trampver.el --- Transparent Remote Access, Multiple Protocol  -*- lexical-binding:t -*-
 ;;; lisp/trampver.el.  Generated from trampver.el.in by configure.
 
 ;; Copyright (C) 2003-2017 Free Software Foundation, Inc.

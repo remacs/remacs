@@ -1,4 +1,4 @@
-;;; tramp-gvfs.el --- Tramp access functions for GVFS daemon
+;;; tramp-gvfs.el --- Tramp access functions for GVFS daemon  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
@@ -1874,12 +1874,9 @@ This uses \"avahi-browse\" in case D-Bus is not enabled in Avahi."
       (lambda (x)
 	(let* ((list (split-string x ";"))
 	       (host (nth 6 list))
-	       (port (nth 8 list))
 	       (text (tramp-compat-funcall
 		      'split-string (nth 9 list) "\" \"" 'omit "\""))
 	       user)
-;	  (when (and port (not (string-equal port "0")))
-;	    (setq host (format "%s%s%s" host tramp-prefix-port-regexp port)))
 	  ;; A user is marked in a TXT field like "u=guest".
 	  (while text
 	    (when (string-match "u=\\(.+\\)$" (car text))

@@ -1,4 +1,4 @@
-;;; tramp-smb.el --- Tramp access functions for SMB servers
+;;; tramp-smb.el --- Tramp access functions for SMB servers  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2002-2017 Free Software Foundation, Inc.
 

@@ -1,4 +1,4 @@
-;;; tramp-cmds.el --- Interactive commands for Tramp
+;;; tramp-cmds.el --- Interactive commands for Tramp  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2007-2017 Free Software Foundation, Inc.
 

@@ -1,4 +1,4 @@
-;;; tramp-tests.el --- Tests of remote file access
+;;; tramp-tests.el --- Tests of remote file access  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
@@ -37,6 +37,7 @@
 
 ;;; Code:
 
+(require 'dired)
 (require 'ert)
 (require 'tramp)
 (require 'vc)
@@ -44,11 +45,11 @@
 (require 'vc-git)
 (require 'vc-hg)
 
-(autoload 'dired-uncache "dired")
 (declare-function tramp-find-executable "tramp-sh")
 (declare-function tramp-get-remote-path "tramp-sh")
 (declare-function tramp-get-remote-stat "tramp-sh")
 (declare-function tramp-get-remote-perl "tramp-sh")
+(defvar auto-save-file-name-transforms)
 (defvar tramp-copy-size-limit)
 (defvar tramp-persistency-file-name)
 (defvar tramp-remote-process-environment)
@@ -2083,17 +2084,20 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (skip-unless
    (and (fboundp 'make-nearby-temp-file) (fboundp 'temporary-file-directory)))
 
+  ;; `make-nearby-temp-file' and `temporary-file-directory' exists
+  ;; since Emacs 26.  We don't want to see compiler warnings for older
+  ;; Emacsen."
   (let ((default-directory tramp-test-temporary-file-directory)
 	tmp-file)
     ;; The remote host shall know a temporary file directory.
-    (should (stringp (temporary-file-directory)))
+    (should (stringp (with-no-warnings (temporary-file-directory))))
     (should
      (string-equal
       (file-remote-p default-directory)
-      (file-remote-p (temporary-file-directory))))
+      (file-remote-p (with-no-warnings (temporary-file-directory)))))
 
     ;; The temporary file shall be located on the remote host.
-    (setq tmp-file (make-nearby-temp-file "tramp-test"))
+    (setq tmp-file (with-no-warnings (make-nearby-temp-file "tramp-test")))
     (should (file-exists-p tmp-file))
     (should (file-regular-p tmp-file))
     (should
@@ -2103,7 +2107,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
     (delete-file tmp-file)
     (should-not (file-exists-p tmp-file))
 
-    (setq tmp-file (make-nearby-temp-file "tramp-test" 'dir))
+    (setq tmp-file (with-no-warnings (make-nearby-temp-file "tramp-test" 'dir)))
     (should (file-exists-p tmp-file))
     (should (file-directory-p tmp-file))
     (delete-directory tmp-file)
@@ -2582,7 +2586,7 @@ process sentinels.  They shall not disturb each other."
 	    ;; Create temporary buffers.  The number of buffers
 	    ;; corresponds to the number of processes; it could be
 	    ;; increased in order to make pressure on Tramp.
-	    (dotimes (i 5)
+	    (dotimes (_i 5)
 	      (add-to-list 'buffers (generate-new-buffer "*temp*")))
 
 	    ;; Open asynchronous processes.  Set process sentinel.

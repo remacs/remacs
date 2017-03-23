@@ -1,4 +1,4 @@
-;;; tramp.el --- Transparent Remote Access, Multiple Protocol
+;;; tramp.el --- Transparent Remote Access, Multiple Protocol  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
@@ -60,7 +60,10 @@
 ;; Pacify byte-compiler.
 (eval-when-compile
   (require 'cl))
+(defvar auto-save-file-name-transforms)
 (defvar eshell-path-env)
+(defvar ls-lisp-use-insert-directory-program)
+(defvar outline-regexp)
 
 ;;; User Customizable Internal Variables:
 
@@ -1374,8 +1377,6 @@ Point must be at the beginning of a header line.
 The outline level is equal to the verbosity of the Tramp message."
   (1+ (string-to-number (match-string 1))))
 
-(defvar outline-regexp)
-
 (defun tramp-get-debug-buffer (vec)
   "Get the debug buffer for VEC."
   (with-current-buffer
@@ -1871,13 +1872,12 @@ temporary file names.  If `file-coding-system-alist' contains an
 expression, which matches more than the file name suffix, the
 coding system might not be determined.  This function repairs it."
   (let (result)
-    (dolist (elt file-coding-system-alist result)
+    (dolist (elt file-coding-system-alist (nreverse result))
       (when (and (consp elt) (string-match (car elt) filename))
 	;; We found a matching entry in `file-coding-system-alist'.
 	;; So we add a similar entry, but with the temporary file name
 	;; as regexp.
-	(add-to-list
-	 'result (cons (regexp-quote tmpname) (cdr elt)) 'append)))))
+	(push (cons (regexp-quote tmpname) (cdr elt)) result)))))
 
 ;;;###autoload
 (progn (defun tramp-run-real-handler (operation args)
@@ -2328,9 +2328,9 @@ not in completion mode."
       (when elt
 	(string-match tramp-prefix-regexp elt)
 	(setq elt (replace-match (concat tramp-prefix-format hop) nil nil elt))
-	(add-to-list
-	 'result1
-	 (substring elt (length (tramp-drop-volume-letter directory))))))
+	(push
+	 (substring elt (length (tramp-drop-volume-letter directory)))
+	 result1)))
 
     ;; Complete local parts.
     (append
@@ -2954,8 +2954,6 @@ User is always nil."
 		tramp-backup-directory-alist)
 	     backup-directory-alist)))
       (tramp-run-real-handler 'find-backup-file-name (list filename)))))
-
-(defvar ls-lisp-use-insert-directory-program)
 
 (defun tramp-handle-insert-directory
   (filename switches &optional wildcard full-directory-p)

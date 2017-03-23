@@ -1,4 +1,4 @@
-;;; tramp-ftp.el --- Tramp convenience functions for Ange-FTP
+;;; tramp-ftp.el --- Tramp convenience functions for Ange-FTP  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2002-2017 Free Software Foundation, Inc.
 

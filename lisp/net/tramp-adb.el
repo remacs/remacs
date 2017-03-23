@@ -1,4 +1,4 @@
-;;; tramp-adb.el --- Functions for calling Android Debug Bridge from Tramp
+;;; tramp-adb.el --- Functions for calling Android Debug Bridge from Tramp  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
@@ -209,7 +209,7 @@ pass to the OPERATION."
 	(tramp-message v 6 "\n%s" (buffer-string))
 	(goto-char (point-min))
 	(while (search-forward-regexp "^\\(\\S-+\\)[[:space:]]+device$" nil t)
-	  (add-to-list 'result (list nil (match-string 1))))
+	  (push (list nil (match-string 1)) result))
 
 	;; Replace ":" by "#".
 	(mapc
@@ -1060,8 +1060,7 @@ E.g. a host name \"192.168.1.1#5555\" returns \"192.168.1.1:5555\"
   ;; unwanted entries first.
   (tramp-flush-connection-property nil)
   (with-tramp-connection-property (tramp-get-connection-process vec) "device"
-    (let* ((method (tramp-file-name-method vec))
-	   (host (tramp-file-name-host vec))
+    (let* ((host (tramp-file-name-host vec))
 	   (port (tramp-file-name-port vec))
 	   (devices (mapcar 'cadr (tramp-adb-parse-device-names nil))))
       (replace-regexp-in-string
