@@ -783,33 +783,55 @@ xg_set_geometry (struct frame *f)
 {
   if (f->size_hint_flags & (USPosition | PPosition))
     {
-      int left = f->left_pos;
-      int xneg = f->size_hint_flags & XNegative;
-      int top = f->top_pos;
-      int yneg = f->size_hint_flags & YNegative;
-      char geom_str[sizeof "=x--" + 4 * INT_STRLEN_BOUND (int)];
-      guint id;
+      if (x_gtk_use_window_move)
+	{
+	  /* Handle negative positions without consulting
+	     gtk_window_parse_geometry (Bug#25851).  The position will
+	     be off by scrollbar width + window manager decorations.  */
+	  if (f->size_hint_flags & XNegative)
+	    f->left_pos = (x_display_pixel_width (FRAME_DISPLAY_INFO (f))
+			   - FRAME_PIXEL_WIDTH (f) + f->left_pos);
 
-      if (xneg)
-        left = -left;
-      if (yneg)
-        top = -top;
+	  if (f->size_hint_flags & YNegative)
+	    f->top_pos = (x_display_pixel_height (FRAME_DISPLAY_INFO (f))
+			  - FRAME_PIXEL_HEIGHT (f) + f->top_pos);
 
-      sprintf (geom_str, "=%dx%d%c%d%c%d",
-               FRAME_PIXEL_WIDTH (f),
-               FRAME_PIXEL_HEIGHT (f),
-               (xneg ? '-' : '+'), left,
-               (yneg ? '-' : '+'), top);
+	  gtk_window_move (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
+			   f->left_pos, f->top_pos);
 
-      /* Silence warning about visible children.  */
-      id = g_log_set_handler ("Gtk", G_LOG_LEVEL_WARNING | G_LOG_FLAG_FATAL
-                              | G_LOG_FLAG_RECURSION, my_log_handler, NULL);
+	  /* Reset size hint flags.  */
+	  f->size_hint_flags &= ~ (XNegative | YNegative);
+	}
+      else
+	{
+	  int left = f->left_pos;
+	  int xneg = f->size_hint_flags & XNegative;
+	  int top = f->top_pos;
+	  int yneg = f->size_hint_flags & YNegative;
+	  char geom_str[sizeof "=x--" + 4 * INT_STRLEN_BOUND (int)];
+	  guint id;
 
-      if (!gtk_window_parse_geometry (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
-                                      geom_str))
-        fprintf (stderr, "Failed to parse: '%s'\n", geom_str);
+	  if (xneg)
+	    left = -left;
+	  if (yneg)
+	    top = -top;
 
-      g_log_remove_handler ("Gtk", id);
+	  sprintf (geom_str, "=%dx%d%c%d%c%d",
+		   FRAME_PIXEL_WIDTH (f),
+		   FRAME_PIXEL_HEIGHT (f),
+		   (xneg ? '-' : '+'), left,
+		   (yneg ? '-' : '+'), top);
+
+	  /* Silence warning about visible children.  */
+	  id = g_log_set_handler ("Gtk", G_LOG_LEVEL_WARNING | G_LOG_FLAG_FATAL
+				  | G_LOG_FLAG_RECURSION, my_log_handler, NULL);
+
+	  if (!gtk_window_parse_geometry (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
+					  geom_str))
+	    fprintf (stderr, "Failed to parse: '%s'\n", geom_str);
+
+	  g_log_remove_handler ("Gtk", id);
+	}
     }
 }
 
@@ -1405,6 +1427,13 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
     size_hints.win_gravity = GDK_GRAVITY_SOUTH_EAST;
   else if (win_gravity == StaticGravity)
     size_hints.win_gravity = GDK_GRAVITY_STATIC;
+
+  if (x_gtk_use_window_move)
+    {
+      if (flags & PPosition) hint_flags |= GDK_HINT_POS;
+      if (flags & USPosition) hint_flags |= GDK_HINT_USER_POS;
+      if (flags & USSize) hint_flags |= GDK_HINT_USER_SIZE;
+    }
 
   if (user_position)
     {

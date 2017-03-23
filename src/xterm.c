@@ -10056,10 +10056,25 @@ x_set_offset (struct frame *f, register int xoff, register int yoff, int change_
 	f->size_hint_flags |= YNegative;
       f->win_gravity = NorthWestGravity;
     }
+
   x_calc_absolute_position (f);
 
   block_input ();
   x_wm_set_size_hint (f, 0, false);
+
+#ifdef USE_GTK
+  if (x_gtk_use_window_move)
+    {
+      /* When a position change was requested and the outer GTK widget
+	 has been realized already, leave it to gtk_window_move to DTRT
+	 and return.  Used for Bug#25851 and Bug#25943.  */
+      if (change_gravity != 0 && FRAME_GTK_OUTER_WIDGET (f))
+	gtk_window_move (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
+			 f->left_pos, f->top_pos);
+      unblock_input ();
+      return;
+    }
+#endif /* USE_GTK */
 
   modified_left = f->left_pos;
   modified_top = f->top_pos;
@@ -12905,4 +12920,11 @@ state.
 Set this variable only if your window manager cannot handle the
 transition between the various maximization states.  */);
   x_frame_normalize_before_maximize = false;
+
+  DEFVAR_BOOL ("x-gtk-use-window-move", x_gtk_use_window_move,
+    doc: /* Non-nil means rely on gtk_window_move to set frame positions.
+If this variable is t, the GTK build uses the function gtk_window_move
+to set or store frame positions and disables some time consuming frame
+position adjustments.  */);
+  x_gtk_use_window_move = false;
 }
