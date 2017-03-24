@@ -266,7 +266,9 @@ need-blessmail: blessmail
 maybe-blessmail: $(BLESSMAIL_TARGET)
 
 ## Install the internal utilities.  Until they are installed, we can
-## just run them directly from lib-src.
+## just run them directly from lib-src.  When installing, do not give
+## up if chown or chgrp fails, as the package responsible for
+## installing Emacs can fix this problem later.
 $(DESTDIR)${archlibdir}: all
 	@echo
 	@echo "Installing utilities run internally by Emacs."
@@ -283,15 +285,19 @@ $(DESTDIR)${archlibdir}: all
 	touch "$(DESTDIR)${gamedir}/snake-scores" \
 	      "$(DESTDIR)${gamedir}/tetris-scores"
     ifneq (,$(gameuser))
-	chown ${gameuser} "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}"
-	chmod u+s,go-r "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}"
-	chown ${gameuser} "$(DESTDIR)${gamedir}"
-	chmod u=rwx,g=rx,o=rx "$(DESTDIR)${gamedir}"
+	-chown ${gameuser} \
+	   "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}" \
+	   "$(DESTDIR)${gamedir}" && \
+	 chmod u+s,go-r \
+	   "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}" && \
+	 chmod u=rwx,g=rx,o=rx "$(DESTDIR)${gamedir}"
     else
-	chgrp ${gamegroup} "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}"
-	chmod g+s,o-r "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}"
-	chgrp ${gamegroup} "$(DESTDIR)${gamedir}"
-	chmod u=rwx,g=rwx,o=rx "$(DESTDIR)${gamedir}"
+	-chgrp ${gamegroup} \
+	   "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}" && \
+	   "$(DESTDIR)${gamedir}" && \
+	 chmod g+s,o-r \
+	   "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}" && \
+	 chmod u=rwx,g=rwx,o=rx "$(DESTDIR)${gamedir}"
     endif
   endif
 	exp_archlibdir=`cd "$(DESTDIR)${archlibdir}" && /bin/pwd` && \
