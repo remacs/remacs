@@ -1672,7 +1672,7 @@ escaped (\\\",\\\\)."
 	  (forward-line 2)
 	(if (looking-at "\^_")
 	    (forward-line 1)
-	  (signal 'search-failed (list "\n\^_"))))
+	  (user-error "Search failed: `\n\^_'")))
       ;; Get nodename spelled as it is in the node.
       (re-search-forward "Node:[ \t]*")
       (setq Info-current-node
@@ -1998,19 +1998,20 @@ If DIRECTION is `backward', search in the reverse direction."
                   Info-isearch-initial-node
                   bound
                   (and found (> found opoint-min) (< found opoint-max)))
-	(signal 'search-failed (list regexp "end of node")))
+	(user-error "Search failed: `%s' (end of node)" regexp))
 
       ;; If no subfiles, give error now.
       (unless (or found Info-current-subfile)
         (if isearch-mode
-            (signal 'search-failed (list regexp "end of manual"))
+            (user-error "Search failed: `%s' (end of manual)" regexp)
           (let ((search-spaces-regexp Info-search-whitespace-regexp))
-            (if backward
-                (re-search-backward regexp)
-              (re-search-forward regexp)))))
+            (unless (if backward
+                        (re-search-backward regexp nil t)
+                      (re-search-forward regexp nil t))
+              (user-error "Search failed: `%s'" regexp)))))
 
       (if (and bound (not found))
-	  (signal 'search-failed (list regexp)))
+          (user-error "Search failed: `%s'" regexp))
 
       (unless (or found bound)
 	(unwind-protect
@@ -2054,9 +2055,8 @@ If DIRECTION is `backward', search in the reverse direction."
 		    (setq list nil)))
 	      (if found
 		  (message "")
-		(signal 'search-failed (if isearch-mode
-					   (list regexp "end of manual")
-					 (list regexp)))))
+                (user-error "Search failed: `%s'%s"
+                            regexp (if isearch-mode " (end of manual)" ""))))
 	  (if (not found)
 	      (progn (Info-read-subfile osubfile)
 		     (goto-char opoint)
@@ -5236,9 +5236,6 @@ BUFFER is the buffer speedbar is requesting buttons for."
 			(not (looking-at "Info Nodes:"))))
       (erase-buffer))
   (Info-speedbar-hierarchy-buttons nil 0))
-
-;; FIXME: Really?  Why here?
-(add-to-list 'debug-ignored-errors 'search-failed)
 
 ;;;;  Desktop support
 
