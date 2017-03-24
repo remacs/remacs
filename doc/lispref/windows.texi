@@ -2755,12 +2755,13 @@ put it in the selected window.
 @section Window History
 @cindex window history
 
-Each window remembers in a list the buffers it has previously displayed,
-and the order in which these buffers were removed from it.  This history
-is used, for example, by @code{replace-buffer-in-windows}
-(@pxref{Buffers and Windows}).  The list is automatically maintained by
-Emacs, but you can use the following functions to explicitly inspect or
-alter it:
+Each window remembers in a list the buffers it has previously
+displayed, and the order in which these buffers were removed from it.
+This history is used, for example, by @code{replace-buffer-in-windows}
+(@pxref{Buffers and Windows}), and when quitting windows
+(@pxref{Quitting Windows}).  The list is automatically maintained by
+Emacs, but you can use the following functions to explicitly inspect
+or alter it:
 
 @defun window-prev-buffers &optional window
 This function returns a list specifying the previous contents of
@@ -2946,33 +2947,35 @@ described next to deal with the window and its buffer.
 @end deffn
 
 @defun quit-restore-window &optional window bury-or-kill
-This function tries to restore the state of @var{window} that existed
-before its buffer was displayed in it.  The optional argument
-@var{window} must be a live window and defaults to the selected one.
+This function handles @var{window} and its buffer after quitting.  The
+optional argument @var{window} must be a live window and defaults to
+the selected one. The function's behavior is determined by the four
+elements of the @code{quit-restore} window parameter (@pxref{Window
+Parameters}), which is set to nil afterwards.
 
-If @var{window} was created specially for displaying its buffer, this
-function deletes @var{window} provided its frame contains at least one
-other live window.  If @var{window} is the only window on its frame and
-there are other frames on the frame's terminal, the value of the
-optional argument @var{bury-or-kill} determines how to proceed with the
-window.  If @var{bury-or-kill} equals @code{kill}, the frame is deleted
-unconditionally.  Otherwise, the fate of the frame is determined by
-calling @code{frame-auto-hide-function} (see below) with that frame as
-sole argument.
+The window is deleted entirely if: 1) the first element of the
+@code{quit-restore} parameter is one of 'window or 'frame, 2) the
+window has no history of previously-displayed buffers, and 3) the
+displayed buffer matches the one in the fourth element of the
+@code{quit-restore} parameter.  If @var{window} is the
+only window on its frame and there are other frames on the frame's
+terminal, the value of the optional argument @var{bury-or-kill}
+determines how to proceed with the window.  If @var{bury-or-kill}
+equals @code{kill}, the frame is deleted unconditionally.  Otherwise,
+the fate of the frame is determined by calling
+@code{frame-auto-hide-function} (see below) with that frame as sole
+argument.
 
-Otherwise, this function tries to redisplay the buffer previously shown
-in @var{window}.  It also tries to restore the window start
-(@pxref{Window Start and End}) and point (@pxref{Window Point})
-positions of the previously shown buffer.  If, in addition,
+If the third element of the @code{quit-restore} parameter is a list of
+buffer, window start (@pxref{Window Start and End}), and point
+(@pxref{Window Point}), and that buffer is still live, the buffer will
+be displayed, and start and point set accordingly.  If, in addition,
 @var{window}'s buffer was temporarily resized, this function will also
 try to restore the original height of @var{window}.
 
-The cases described so far require that the buffer shown in @var{window}
-is still the buffer displayed by the last buffer display function for
-this window.  If another buffer has been shown in the meantime, or the
-buffer previously shown no longer exists, this function calls
-@code{switch-to-prev-buffer} (@pxref{Window History}) to show some other
-buffer instead.
+Otherwise, if @var{window} was previously used for displaying other
+buffers (@pxref{Window History}), the most recent buffer in that
+history will be displayed.
 
 The optional argument @var{bury-or-kill} specifies how to deal with
 @var{window}'s buffer.  The following values are handled:
@@ -3000,9 +3003,24 @@ buffer again without killing the buffer.
 This means to kill @var{window}'s buffer.
 @end table
 
-@code{quit-restore-window} bases its decisions on information stored in
-@var{window}'s @code{quit-restore} window parameter (@pxref{Window
-Parameters}), and resets that parameter to @code{nil} after it's done.
+Typically, the display routines run by @code{display-buffer} will set
+the @code{quit-restore} window parameter correctly.  It's also
+possible to set it manually, using the following code for displaying
+@var{buffer} in @var{window}:
+
+@example
+@group
+(display-buffer-record-window type window buffer)
+
+(set-window-buffer window buffer)
+
+(set-window-prev-buffers window nil)
+@end group
+@end example
+
+Setting the window history to nil ensures that a future call to
+@code{quit-window} can delete the window altogether.
+
 @end defun
 
 The following option specifies how to deal with a frame containing just
@@ -4335,20 +4353,24 @@ This parameter is installed by the buffer display functions
 (@pxref{Choosing Window}) and consulted by @code{quit-restore-window}
 (@pxref{Quitting Windows}).  It contains four elements:
 
-The first element is one of the symbols @code{window}, meaning that the
-window has been specially created by @code{display-buffer}; @code{frame},
-a separate frame has been created; @code{same}, the window has
-displayed the same buffer before; or @code{other}, the window showed
-another buffer before.
+The first element is one of the symbols @code{window}, meaning that
+the window has been specially created by @code{display-buffer};
+@code{frame}, a separate frame has been created; @code{same}, the
+window has only ever displayed this buffer; or @code{other}, the
+window showed another buffer before.  @code{frame} and @code{window}
+affect how the window is quit, while @code{same} and @code{other}
+affect the redisplay of buffers previously shown in this window.
 
 The second element is either one of the symbols @code{window} or
 @code{frame}, or a list whose elements are the buffer shown in the
 window before, that buffer's window start and window point positions,
-and the window's height at that time.
+and the window's height at that time.  If that buffer is still live
+when the window is quit, then the function @code{quit-restore-window}
+reuses the window to display the buffer.
 
 The third element is the window selected at the time the parameter was
-created.  The function @code{quit-restore-window} tries to reselect that
-window when it deletes the window passed to it as argument.
+created.  If @code{quit-restore-window} deletes the window passed to
+it as argument, it then tries to reselect this window.
 
 The fourth element is the buffer whose display caused the creation of
 this parameter.  @code{quit-restore-window} deletes the specified window
