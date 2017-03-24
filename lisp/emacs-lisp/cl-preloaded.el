@@ -110,6 +110,12 @@
 ;;;###autoload
 (defun cl-struct-define (name docstring parent type named slots children-sym
                               tag print)
+  (unless type
+    ;; Legacy defstruct, using tagged vectors.  Enable backward compatibility.
+    (cl-old-struct-compat-mode 1))
+  (if (eq type 'record)
+      ;; Defstruct using record objects.
+      (setq type nil))
   (cl-assert (or type (not named)))
   (if (boundp children-sym)
       (add-to-list children-sym tag)

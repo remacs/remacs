@@ -639,6 +639,42 @@ If ALIST is non-nil, the new pairs are prepended to it."
   (require 'cl-macs)
   (require 'cl-seq))
 
+(defun cl--old-struct-type-of (orig-fun object)
+  (or (and (vectorp object)
+           (let ((tag (aref object 0)))
+             (when (and (symbolp tag)
+                        (string-prefix-p "cl-struct-" (symbol-name tag)))
+               (unless (eq (symbol-function tag)
+                           :quick-object-witness-check)
+                 ;; Old-style old-style struct:
+                 ;; Convert to new-style old-style struct!
+                 (let* ((type (intern (substring (symbol-name tag)
+                                                 (length "cl-struct-"))))
+                        (class (cl--struct-get-class type)))
+                   ;; If the `cl-defstruct' was recompiled after the code
+                   ;; which constructed `object', `cl--struct-get-class' may
+                   ;; not have called `cl-struct-define' and setup the tag
+                   ;; symbol for us.
+                   (unless (eq (symbol-function tag)
+                               :quick-object-witness-check)
+                     (set tag class)
+                     (fset tag :quick-object-witness-check))))
+               (cl--class-name (symbol-value tag)))))
+      (funcall orig-fun object)))
+
+;;;###autoload
+(define-minor-mode cl-old-struct-compat-mode
+  "Enable backward compatibility with old-style structs.
+This can be needed when using code byte-compiled using the old
+macro-expansion of `cl-defstruct' that used vectors objects instead
+of record objects."
+  :global t
+  (cond
+   (cl-old-struct-compat-mode
+    (advice-add 'type-of :around #'cl--old-struct-type-of))
+   (t
+    (advice-remove 'type-of #'cl--old-struct-type-of))))
+
 ;; Local variables:
 ;; byte-compile-dynamic: t
 ;; End:

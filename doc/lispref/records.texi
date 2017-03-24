@@ -26,7 +26,8 @@ evaluating it is the same record.  This does not evaluate or even
 examine the slots.  @xref{Self-Evaluating Forms}.
 
 @menu
-* Record Functions::      Functions for records.
+* Record Functions::        Functions for records.
+* Backward Compatibility::  Compatibility for cl-defstruct.
 @end menu
 
 @node Record Functions
@@ -97,4 +98,18 @@ the copied record, are also visible in the original record.
      @result{} t
 @end group
 @end example
+@end defun
+
+@node Backward Compatibility
+@section Backward Compatibility
+
+  Code compiled with older versions of @code{cl-defstruct} that
+doesn't use records may run into problems when used in a new Emacs.
+To alleviate this, Emacs detects when an old @code{cl-defstruct} is
+used, and enables a mode in which @code{type-of} handles old struct
+objects as if they were records.
+
+@defun cl-old-struct-compat-mode arg
+If @var{arg} is positive, enable backward compatibility with old-style
+structs.
 @end defun

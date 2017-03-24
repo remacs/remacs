@@ -423,6 +423,7 @@ Sequences, Arrays, and Vectors
 Records
 
 * Record Functions::        Functions for records.
+* Backward Compatibility::  Compatibility for cl-defstruct.
 
 Hash Tables
 

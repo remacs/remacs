@@ -2847,8 +2847,8 @@ non-nil value, that slot cannot be set via `setf'.
        ;; struct as a parent.
        (eval-and-compile
          (cl-struct-define ',name ,docstring ',include-name
-                           ',type ,(eq named t) ',descs ',tag-symbol ',tag
-                           ',print-auto))
+                           ',(or type 'record) ,(eq named t) ',descs
+                           ',tag-symbol ',tag ',print-auto))
        ',name)))
 
 ;;; Add cl-struct support to pcase
