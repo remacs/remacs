@@ -293,7 +293,7 @@ $(DESTDIR)${archlibdir}: all
 	 chmod u=rwx,g=rx,o=rx "$(DESTDIR)${gamedir}"
     else
 	-chgrp ${gamegroup} \
-	   "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}" && \
+	   "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}" \
 	   "$(DESTDIR)${gamedir}" && \
 	 chmod g+s,o-r \
 	   "$(DESTDIR)${archlibdir}/update-game-score${EXEEXT}" && \
