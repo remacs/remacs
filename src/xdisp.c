@@ -2716,6 +2716,7 @@ init_iterator (struct it *it, struct window *w,
       if (face_change)
 	{
 	  face_change = false;
+	  XFRAME (w->frame)->face_change = 0;
 	  free_all_realized_faces (Qnil);
 	}
       else if (XFRAME (w->frame)->face_change)
@@ -14072,6 +14073,7 @@ redisplay_internal (void)
 		/* Only GC scrollbars when we redisplay the whole frame.  */
 		= f->redisplay || !REDISPLAY_SOME_P ();
 	      bool f_redisplay_flag = f->redisplay;
+	      bool f_garbaged_flag = FRAME_GARBAGED_P (f);
 	      /* Mark all the scroll bars to be removed; we'll redeem
 		 the ones we want when we redisplay their windows.  */
 	      if (gcscrollbars && FRAME_TERMINAL (f)->condemn_scroll_bars_hook)
@@ -14132,6 +14134,15 @@ redisplay_internal (void)
 		     Therefore, we must redisplay this frame.  */
 		  if (!f_redisplay_flag && f->redisplay)
                     goto retry_frame;
+		  /* Likewise with the frame's garbaged flag: it can
+		     get set inside redisplay_windows if some hook
+		     winds up calling adjust_frame_glyphs, for example. */
+		  if (!f_garbaged_flag && FRAME_GARBAGED_P (f))
+		    {
+		      f->garbaged = false;
+		      fset_redisplay (f);
+		      goto retry_frame;
+		    }
 
                   /* In some case (e.g., window resize), we notice
                      only during window updating that the window
