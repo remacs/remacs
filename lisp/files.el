@@ -279,8 +279,13 @@ The value `never' means do not make them."
 		 (const :tag "If existing" nil)
 		 (other :tag "Always" t))
   :group 'backup)
+
+(defun version-control-safe-local-p (x)
+  "Return whether X is safe as local value for `version-control'."
+  (or (booleanp x) (equal x 'never)))
+
 (put 'version-control 'safe-local-variable
-     (lambda (x) (or (booleanp x) (equal x 'never))))
+     #'version-control-safe-local-p)
 
 (defcustom dired-kept-versions 2
   "When cleaning directory, number of versions to keep."
