@@ -43,7 +43,7 @@
 
 ;;; Code:
 
-(require 'seq)
+(eval-when-compile (require 'cl-lib))
 
 ;;; User variables:
 
@@ -203,43 +203,21 @@ LIBRARY should be a string (the name of the library)."
           (locate-file rel
                        (or find-function-source-path load-path)
                        load-file-rep-suffixes)))))
-   (find-library--from-load-path library)
+   (find-library--from-load-history library)
    (error "Can't find library %s" library)))
 
-(defun find-library--from-load-path (library)
+(defun find-library--from-load-history (library)
   ;; In `load-history', the file may be ".elc", ".el", ".el.gz", and
-  ;; LIBRARY may be "foo.el" or "foo", so make sure that we get all
-  ;; potential matches, and then see whether any of them lead us to an
-  ;; ".el" or an ".el.gz" file.
-  (let* ((elc-regexp "\\.el\\(c\\(\\..*\\)?\\)\\'")
-         (suffix-regexp
-          (concat "\\("
-                  (mapconcat 'regexp-quote (find-library-suffixes) "\\'\\|")
-                  "\\|" elc-regexp "\\)\\'"))
-         (potentials
-          (mapcar
-           (lambda (entry)
-             (if (string-match suffix-regexp (car entry))
-                 (replace-match "" t t (car entry))
-               (car entry)))
-           (seq-filter
-            (lambda (entry)
-              (string-match
-               (concat "\\`"
-                       (regexp-quote
-                        (replace-regexp-in-string suffix-regexp "" library))
-                       suffix-regexp)
-               (file-name-nondirectory (car entry))))
-            load-history)))
-         result)
-    (dolist (file potentials)
-      (dolist (suffix (find-library-suffixes))
-        (when (not result)
-          (cond ((file-exists-p file)
-                 (setq result file))
-                ((file-exists-p (concat file suffix))
-                 (setq result (concat file suffix)))))))
-    result))
+  ;; LIBRARY may be "foo.el" or "foo".
+  (let ((load-re
+         (concat "\\(" (regexp-quote (file-name-sans-extension library)) "\\)"
+                 (regexp-opt (get-load-suffixes)) "\\'")))
+    (cl-loop
+     for (file . _) in load-history thereis
+     (and (stringp file) (string-match load-re file)
+          (let ((dir (substring file 0 (match-beginning 1)))
+                (basename (match-string 1 file)))
+            (locate-file basename (list dir) (find-library-suffixes)))))))
 
 (defvar find-function-C-source-directory
   (let ((dir (expand-file-name "src" source-directory)))
