@@ -14073,7 +14073,6 @@ redisplay_internal (void)
 		/* Only GC scrollbars when we redisplay the whole frame.  */
 		= f->redisplay || !REDISPLAY_SOME_P ();
 	      bool f_redisplay_flag = f->redisplay;
-	      bool f_garbaged_flag = FRAME_GARBAGED_P (f);
 	      /* Mark all the scroll bars to be removed; we'll redeem
 		 the ones we want when we redisplay their windows.  */
 	      if (gcscrollbars && FRAME_TERMINAL (f)->condemn_scroll_bars_hook)
@@ -14134,30 +14133,16 @@ redisplay_internal (void)
 		     Therefore, we must redisplay this frame.  */
 		  if (!f_redisplay_flag && f->redisplay)
                     goto retry_frame;
-		  /* Likewise with the frame's garbaged flag: it can
-		     get set inside redisplay_windows if some hook
-		     winds up calling adjust_frame_glyphs, for example. */
-		  if (!f_garbaged_flag && FRAME_GARBAGED_P (f))
-		    {
-		      f->garbaged = false;
-		      fset_redisplay (f);
-		      goto retry_frame;
-		    }
-
                   /* In some case (e.g., window resize), we notice
                      only during window updating that the window
                      content changed unpredictably (e.g., a GTK
-                     scrollbar moved) and that our previous estimation
-                     of the frame content was garbage.  We have to
-                     start over.  These cases should be rare, so going
-                     all the way back to the top of redisplay should
-                     be good enough.
-
-                     Why FRAME_WINDOW_P? See
-                     https://lists.gnu.org/archive/html/emacs-devel/2016-10/msg00957.html
-
-                     */
-                  if (FRAME_GARBAGED_P (f) && FRAME_WINDOW_P (f))
+                     scrollbar moved, or some Lisp hook that winds up
+                     calling adjust_frame_glyphs) and that our
+                     previous estimation of the frame content was
+                     garbage.  We have to start over.  These cases
+                     should be rare, so going all the way back to the
+                     top of redisplay should be good enough.  */
+                  if (FRAME_GARBAGED_P (f))
                     goto retry;
 
 		  /* Prevent various kinds of signals during display
