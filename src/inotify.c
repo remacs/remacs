@@ -61,7 +61,7 @@ static int inotifyfd = -1;
    IN_ONLYDIR
 
    Format: (descriptor . ((id filename callback mask) ...))
- */
+*/
 static Lisp_Object watch_list;
 
 static Lisp_Object
@@ -204,9 +204,10 @@ inotifyevent_to_event (Lisp_Object watch, struct inotify_event const *ev)
 
 /* Add a new watch to watch-descriptor WD watching FILENAME and using
    CALLBACK.  Returns a cons (DESCRIPTOR . ID) uniquely identifying the
-   new watch. */
+   new watch.  */
 static Lisp_Object
-add_watch (int wd, Lisp_Object filename, Lisp_Object aspect, Lisp_Object callback)
+add_watch (int wd, Lisp_Object filename,
+	   Lisp_Object aspect, Lisp_Object callback)
 {
   Lisp_Object descriptor = make_number (wd);
   Lisp_Object elt = Fassoc (descriptor, watch_list);
@@ -260,7 +261,7 @@ remove_descriptor (Lisp_Object descriptor, bool invalid_p)
     }
 }
 
-/*  Remove watch associated with (descriptor, id). */
+/*  Remove watch associated with (descriptor, id).  */
 static void
 remove_watch (Lisp_Object descriptor, Lisp_Object id)
 {
@@ -273,7 +274,7 @@ remove_watch (Lisp_Object descriptor, Lisp_Object id)
       if (! NILP (watch))
         XSETCDR (elt, Fdelete (watch, XCDR (elt)));
 
-      /* Remove the descriptor if noone is watching it. */
+      /* Remove the descriptor if noone is watching it.  */
       if (NILP (XCDR (elt)))
         remove_descriptor (descriptor, false);
     }
@@ -378,13 +379,12 @@ unmount
 
 If a directory is watched then NAME is the name of file that caused the event.
 
-COOKIE is an object that can be compared using `equal' to identify two matchingt
+COOKIE is an object that can be compared using `equal' to identify two matching
 renames (moved-from and moved-to).
 
 See inotify(7) and inotify_add_watch(2) for further information.  The inotify fd
 is managed internally and there is no corresponding inotify_init.  Use
-`inotify-rm-watch' to remove a watch.
-            */)
+`inotify-rm-watch' to remove a watch.  */)
      (Lisp_Object filename, Lisp_Object aspect, Lisp_Object callback)
 {
   Lisp_Object encoded_file_name;
@@ -417,8 +417,7 @@ DEFUN ("inotify-rm-watch", Finotify_rm_watch, Sinotify_rm_watch, 1, 1, 0,
 
 WATCH-DESCRIPTOR should be an object returned by `inotify-add-watch'.
 
-See inotify_rm_watch(2) for more information.
-            */)
+See inotify_rm_watch(2) for more information.  */)
      (Lisp_Object watch_descriptor)
 {
 
@@ -462,13 +461,13 @@ it invalid.  */)
 
 #ifdef INOTIFY_DEBUG
 DEFUN ("inotify-watch-list", Finotify_watch_list, Sinotify_watch_list, 0, 0, 0,
-       doc: /* Return a copy of the internal watch_list. */)
+       doc: /* Return a copy of the internal watch_list.  */)
 {
   return Fcopy_sequence (watch_list);
 }
 
 DEFUN ("inotify-allocated-p", Finotify_allocated_p, Sinotify_allocated_p, 0, 0, 0,
-       doc: /* Return non-nil, if a inotify instance is allocated. */)
+       doc: /* Return non-nil, if a inotify instance is allocated.  */)
 {
   return inotifyfd < 0 ? Qnil : Qt;
 }

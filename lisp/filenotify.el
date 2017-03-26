@@ -42,7 +42,8 @@ could use another implementation.")
 
 (cl-defstruct (file-notify--watch
                (:constructor nil)
-               (:constructor file-notify--watch-make (directory filename callback)))
+               (:constructor
+                file-notify--watch-make (directory filename callback)))
   ;; Watched directory
   directory
   ;; Watched relative filename, nil if watching the directory.
@@ -61,14 +62,13 @@ could use another implementation.")
   "Hash table for registered file notification descriptors.
 A key in this hash table is the descriptor as returned from
 `inotify', `kqueue', `gfilenotify', `w32notify' or a file name
-handler.  The value in the hash table is file-notify--watch
+handler.  The value in the hash table is `file-notify--watch'
 struct.")
 
 (defun file-notify--rm-descriptor (descriptor)
   "Remove DESCRIPTOR from `file-notify-descriptors'.
-DESCRIPTOR should be an object returned by
-`file-notify-add-watch'.  If it is registered in
-`file-notify-descriptors', a stopped event is sent."
+DESCRIPTOR should be an object returned by `file-notify-add-watch'.
+If it is registered in `file-notify-descriptors', a stopped event is sent."
   (when-let (watch (gethash descriptor file-notify-descriptors))
     ;; Send `stopped' event.
     (unwind-protect
@@ -123,8 +123,7 @@ This is available in case a file has been moved."
     (and (stringp (nth 3 event))
          (directory-file-name
           (expand-file-name
-           (nth 3 event)
-           (file-notify--watch-directory watch))))))
+           (nth 3 event) (file-notify--watch-directory watch))))))
 
 ;; Cookies are offered by `inotify' only.
 (defun file-notify--event-cookie (event)
@@ -187,11 +186,13 @@ EVENT is the cadr of the event in `file-notify-handle-event'
                  ((memq action '(attrib link)) 'attribute-changed)
                  ((memq action '(create added)) 'created)
                  ((memq action '(modify modified write)) 'changed)
-                 ((memq action '(delete delete-self move-self removed)) 'deleted)
+                 ((memq action
+                        '(delete delete-self move-self removed)) 'deleted)
                  ;; Make the event pending.
                  ((memq action '(moved-from renamed-from))
                   (setq file-notify--pending-event
-                        `((,desc ,action ,file ,(file-notify--event-cookie event))
+                        `((,desc ,action ,file
+                           ,(file-notify--event-cookie event))
                           ,(file-notify--watch-callback watch)))
                   nil)
                  ;; Look for pending event.
@@ -222,8 +223,8 @@ EVENT is the cadr of the event in `file-notify-handle-event'
           ;; Apply callback.
           (when (and action
                      (or
-                      ;; If there is no relative file name for that watch,
-                      ;; we watch the whole directory.
+                      ;; If there is no relative file name for that
+                      ;; watch, we watch the whole directory.
                       (null (file-notify--watch-filename watch))
                       ;; File matches.
                       (string-equal
@@ -241,8 +242,7 @@ EVENT is the cadr of the event in `file-notify-handle-event'
                             (file-name-nondirectory file1)))))
             ;;(message
             ;;"file-notify-callback %S %S %S %S %S"
-            ;;desc
-            ;;action file file1 watch)
+            ;;desc action file file1 watch)
             (if file1
                 (funcall (file-notify--watch-callback watch)
                          `(,desc ,action ,file ,file1))
@@ -382,8 +382,8 @@ DESCRIPTOR should be an object returned by `file-notify-add-watch'."
                     'file-notify-rm-watch)))
       (condition-case nil
           (if handler
-              ;; A file name handler could exist even if there is no local
-              ;; file notification support.
+              ;; A file name handler could exist even if there is no
+              ;; local file notification support.
               (funcall handler 'file-notify-rm-watch descriptor)
 
             (funcall
