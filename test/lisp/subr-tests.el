@@ -281,5 +281,15 @@ indirectly `mapbacktrace'."
   (should (equal (string-match-p "\\`[[:blank:]]\\'" "\u3000") 0))
   (should-not (string-match-p "\\`[[:blank:]]\\'" "\N{LINE SEPARATOR}")))
 
+(ert-deftest subr-tests--dolist--wrong-number-of-args ()
+  "Test that `dolist' doesn't accept wrong types or length of SPEC,
+cf. Bug#25477."
+  (should-error (eval '(dolist (a)))
+                :type 'wrong-number-of-arguments)
+  (should-error (eval '(dolist (a () 'result 'invalid)) t)
+                :type 'wrong-number-of-arguments)
+  (should-error (eval '(dolist "foo") t)
+                :type 'wrong-type-argument))
+
 (provide 'subr-tests)
 ;;; subr-tests.el ends here
