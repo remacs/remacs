@@ -52,6 +52,7 @@ could use another implementation.")
   callback)
 
 (defun file-notify--watch-absolute-filename (watch)
+  "Return the absolute filename observed by WATCH."
   (if (file-notify--watch-filename watch)
       (expand-file-name
        (file-notify--watch-filename watch)
@@ -204,7 +205,7 @@ EVENT is the cadr of the event in `file-notify-handle-event'
                                 (car file-notify--pending-event)))
                     ;; If the source is handled by another watch, we
                     ;; must fire the rename event there as well.
-                    (when (not (equal desc (caar file-notify--pending-event)))
+                    (unless (equal desc (caar file-notify--pending-event))
                       (setq pending-event
                             `((,(caar file-notify--pending-event)
                                renamed ,file ,file1)
@@ -214,9 +215,6 @@ EVENT is the cadr of the event in `file-notify-handle-event'
 
           ;; Apply pending callback.
           (when pending-event
-            (setcar
-             (car pending-event)
-             (caar pending-event))
             (funcall (cadr pending-event) (car pending-event))
             (setq pending-event nil))
 

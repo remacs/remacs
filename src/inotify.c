@@ -382,9 +382,17 @@ If a directory is watched then NAME is the name of file that caused the event.
 COOKIE is an object that can be compared using `equal' to identify two matching
 renames (moved-from and moved-to).
 
-See inotify(7) and inotify_add_watch(2) for further information.  The inotify fd
-is managed internally and there is no corresponding inotify_init.  Use
-`inotify-rm-watch' to remove a watch.  */)
+See inotify(7) and inotify_add_watch(2) for further information.  The
+inotify fd is managed internally and there is no corresponding
+inotify_init.  Use `inotify-rm-watch' to remove a watch.
+
+Also note, that the following inotify bit-masks can not be used, due
+to the fact that descriptors are shared across different callers.
+
+IN_EXCL_UNLINK
+IN_MASK_ADD
+IN_ONESHOT
+IN_ONLYDIR  */)
      (Lisp_Object filename, Lisp_Object aspect, Lisp_Object callback)
 {
   Lisp_Object encoded_file_name;
