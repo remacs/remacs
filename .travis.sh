@@ -1,5 +1,7 @@
 #!/bin/bash
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 # This is separate from .travis.yml so we terminate as soon as
 # anything errors.
 # See https://github.com/travis-ci/travis-ci/issues/1066
@@ -9,13 +11,19 @@ set -x
 export PATH=$PATH:~/.cargo/bin
 
 echo "Checking formatting"
-cd rust_src
+cd "$DIR/rust_src"
 cargo fmt -- --version
-cd src && cargo fmt -- --write-mode=diff && cd ..
-cd remacs-sys && cargo fmt -- --write-mode=diff && cd ..
-cd alloc_unexecmacosx && cargo fmt -- --write-mode=diff && cd ..
-cd ..
 
+cd "$DIR/rust_src/src"
+cargo fmt -- --write-mode=diff
+
+cd "$DIR/rust_src/remacs-sys"
+cargo fmt -- --write-mode=diff
+
+cd "$DIR/rust_src/alloc_unexecmacosx"
+cargo fmt -- --write-mode=diff
+
+cd "$DIR"
 echo 'Configuring Emacs for building'
 ./autogen.sh
 # These configure flags are only required on OS X.
