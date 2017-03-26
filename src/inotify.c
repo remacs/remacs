@@ -41,21 +41,28 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef IN_ONLYDIR
 # define IN_ONLYDIR 0
 #endif
+#define INOTIFY_DEFAULT_MASK (IN_ALL_EVENTS|IN_EXCL_UNLINK)
 
 /* File handle for inotify.  */
 static int inotifyfd = -1;
 
-/* Assoc list of files being watched.
-   Format: (watch-descriptor name callback)
+/* Alist of files being watched.  We want the returned descriptor to
+   be unique for every watch, but inotify returns the same descriptor
+   for multiple calls to inotify_add_watch with the same file.  In
+   order to solve this problem, we add a ID, uniquely identifying a
+   watch/file combination.
+
+   For the same reason, we also need to store the watch's mask and we
+   can't allow the following flags to be used.
+
+   IN_EXCL_UNLINK
+   IN_MASK_ADD
+   IN_ONESHOT
+   IN_ONLYDIR
+
+   Format: (descriptor . ((id filename callback mask) ...))
  */
 static Lisp_Object watch_list;
-
-static Lisp_Object
-make_watch_descriptor (int wd)
-{
-  /* TODO replace this with a Misc Object! */
-  return make_number (wd);
-}
 
 static Lisp_Object
 mask_to_aspects (uint32_t mask) {
@@ -95,77 +102,6 @@ mask_to_aspects (uint32_t mask) {
   return aspects;
 }
 
-static Lisp_Object
-inotifyevent_to_event (Lisp_Object watch_object, struct inotify_event const *ev)
-{
-  Lisp_Object name = Qnil;
-  if (ev->len > 0)
-    {
-      size_t const len = strlen (ev->name);
-      name = make_unibyte_string (ev->name, min (len, ev->len));
-      name = DECODE_FILE (name);
-    }
-  else
-    name = XCAR (XCDR (watch_object));
-
-  return list2 (list4 (make_watch_descriptor (ev->wd),
-                       mask_to_aspects (ev->mask),
-                       name,
-                       make_number (ev->cookie)),
-		Fnth (make_number (2), watch_object));
-}
-
-/* This callback is called when the FD is available for read.  The inotify
-   events are read from FD and converted into input_events.  */
-static void
-inotify_callback (int fd, void *_)
-{
-  struct input_event event;
-  Lisp_Object watch_object;
-  int to_read;
-  char *buffer;
-  ssize_t n;
-  size_t i;
-
-  to_read = 0;
-  if (ioctl (fd, FIONREAD, &to_read) == -1)
-    report_file_notify_error ("Error while retrieving file system events",
-			      Qnil);
-  buffer = xmalloc (to_read);
-  n = read (fd, buffer, to_read);
-  if (n < 0)
-    {
-      xfree (buffer);
-      report_file_notify_error ("Error while reading file system events", Qnil);
-    }
-
-  EVENT_INIT (event);
-  event.kind = FILE_NOTIFY_EVENT;
-
-  i = 0;
-  while (i < (size_t)n)
-    {
-      struct inotify_event *ev = (struct inotify_event *) &buffer[i];
-
-      watch_object = Fassoc (make_watch_descriptor (ev->wd), watch_list);
-      if (!NILP (watch_object))
-        {
-          event.arg = inotifyevent_to_event (watch_object, ev);
-
-          /* If event was removed automatically: Drop it from watch list.  */
-          if (ev->mask & IN_IGNORED)
-            watch_list = Fdelete (watch_object, watch_list);
-
-	  if (!NILP (event.arg))
-	    kbd_buffer_store_event (&event);
-        }
-
-      i += sizeof (*ev) + ev->len;
-    }
-
-  xfree (buffer);
-}
-
 static uint32_t
 symbol_to_inotifymask (Lisp_Object symb)
 {
@@ -200,14 +136,6 @@ symbol_to_inotifymask (Lisp_Object symb)
 
   else if (EQ (symb, Qdont_follow))
     return IN_DONT_FOLLOW;
-  else if (EQ (symb, Qexcl_unlink))
-    return IN_EXCL_UNLINK;
-  else if (EQ (symb, Qmask_add))
-    return IN_MASK_ADD;
-  else if (EQ (symb, Qoneshot))
-    return IN_ONESHOT;
-  else if (EQ (symb, Qonlydir))
-    return IN_ONLYDIR;
 
   else if (EQ (symb, Qt) || EQ (symb, Qall_events))
     return IN_ALL_EVENTS;
@@ -234,6 +162,174 @@ aspect_to_inotifymask (Lisp_Object aspect)
     }
   else
     return symbol_to_inotifymask (aspect);
+}
+
+static Lisp_Object
+make_lispy_mask (uint32_t mask)
+{
+  return Fcons (make_number (mask & 0xffff),
+                make_number (mask >> 16));
+}
+
+static bool
+lispy_mask_match_p (Lisp_Object mask, uint32_t other)
+{
+  return (XINT (XCAR (mask)) & other)
+    || ((XINT (XCDR (mask)) << 16) & other);
+}
+
+static Lisp_Object
+inotifyevent_to_event (Lisp_Object watch, struct inotify_event const *ev)
+{
+  Lisp_Object name = Qnil;
+
+  if (! lispy_mask_match_p (Fnth (make_number (3), watch), ev->mask))
+    return Qnil;
+
+  if (ev->len > 0)
+    {
+      size_t const len = strlen (ev->name);
+      name = make_unibyte_string (ev->name, min (len, ev->len));
+      name = DECODE_FILE (name);
+    }
+  else
+    name = XCAR (XCDR (watch));
+
+  return list2 (list4 (Fcons (make_number (ev->wd), XCAR (watch)),
+                       mask_to_aspects (ev->mask),
+                       name,
+                       make_number (ev->cookie)),
+		Fnth (make_number (2), watch));
+}
+
+/* Add a new watch to watch-descriptor WD watching FILENAME and using
+   CALLBACK.  Returns a cons (DESCRIPTOR . ID) uniquely identifying the
+   new watch. */
+static Lisp_Object
+add_watch (int wd, Lisp_Object filename, Lisp_Object aspect, Lisp_Object callback)
+{
+  Lisp_Object descriptor = make_number (wd);
+  Lisp_Object elt = Fassoc (descriptor, watch_list);
+  Lisp_Object watches = Fcdr (elt);
+  Lisp_Object watch, watch_id;
+  Lisp_Object mask = make_lispy_mask (aspect_to_inotifymask (aspect));
+
+  int id = 0;
+
+  while (! NILP (watches))
+    {
+      id = max (id, 1 + XINT (XCAR (XCAR (watches))));
+      watches = XCDR (watches);
+    }
+
+  watch_id = make_number (id);
+  watch = list4 (watch_id, filename, callback, mask);
+
+  if (NILP (elt))
+    watch_list = Fcons (Fcons (descriptor, Fcons (watch, Qnil)),
+                        watch_list);
+  else
+    XSETCDR (elt, Fcons (watch, XCDR (elt)));
+
+  return Fcons (descriptor, watch_id);
+}
+
+/*  Remove all watches associated with descriptor.  If INVALID_P is
+    true, the descriptor is already invalid, i.e. it received a
+    IN_IGNORED event. In this case skip calling inotify_rm_watch.  */
+static void
+remove_descriptor (Lisp_Object descriptor, bool invalid_p)
+{
+  Lisp_Object elt = Fassoc (descriptor, watch_list);
+
+  if (! NILP (elt))
+    {
+      int wd = XINT (descriptor);
+
+      watch_list = Fdelete (elt, watch_list);
+      if (! invalid_p)
+        if (inotify_rm_watch (inotifyfd, wd) == -1)
+          report_file_notify_error ("Could not rm watch", descriptor);
+    }
+  /* Cleanup if no more files are watched.  */
+  if (NILP (watch_list))
+    {
+      emacs_close (inotifyfd);
+      delete_read_fd (inotifyfd);
+      inotifyfd = -1;
+    }
+}
+
+/*  Remove watch associated with (descriptor, id). */
+static void
+remove_watch (Lisp_Object descriptor, Lisp_Object id)
+{
+  Lisp_Object elt = Fassoc (descriptor, watch_list);
+
+  if (! NILP (elt))
+    {
+      Lisp_Object watch = Fassoc (id, XCDR (elt));
+
+      if (! NILP (watch))
+        XSETCDR (elt, Fdelete (watch, XCDR (elt)));
+
+      /* Remove the descriptor if noone is watching it. */
+      if (NILP (XCDR (elt)))
+        remove_descriptor (descriptor, false);
+    }
+}
+
+/* This callback is called when the FD is available for read.  The inotify
+   events are read from FD and converted into input_events.  */
+static void
+inotify_callback (int fd, void *_)
+{
+  struct input_event event;
+  int to_read;
+  char *buffer;
+  ssize_t n;
+  size_t i;
+
+  to_read = 0;
+  if (ioctl (fd, FIONREAD, &to_read) == -1)
+    report_file_notify_error ("Error while retrieving file system events",
+			      Qnil);
+  buffer = xmalloc (to_read);
+  n = read (fd, buffer, to_read);
+  if (n < 0)
+    {
+      xfree (buffer);
+      report_file_notify_error ("Error while reading file system events", Qnil);
+    }
+
+  EVENT_INIT (event);
+  event.kind = FILE_NOTIFY_EVENT;
+
+  i = 0;
+  while (i < (size_t)n)
+    {
+      struct inotify_event *ev = (struct inotify_event *) &buffer[i];
+      Lisp_Object descriptor = make_number (ev->wd);
+      Lisp_Object elt = Fassoc (descriptor, watch_list);
+
+      if (! NILP (elt))
+        {
+          Lisp_Object watches = XCDR (elt);
+          while (! NILP (watches))
+            {
+              event.arg = inotifyevent_to_event (XCAR (watches), ev);
+              if (!NILP (event.arg))
+                kbd_buffer_store_event (&event);
+              watches = XCDR (watches);
+            }
+          /* If event was removed automatically: Drop it from watch list.  */
+          if (ev->mask & IN_IGNORED)
+            remove_descriptor (descriptor, true);
+        }
+      i += sizeof (*ev) + ev->len;
+    }
+
+  xfree (buffer);
 }
 
 DEFUN ("inotify-add-watch", Finotify_add_watch, Sinotify_add_watch, 3, 3, 0,
@@ -264,10 +360,6 @@ close
 The following symbols can also be added to a list of aspects:
 
 dont-follow
-excl-unlink
-mask-add
-oneshot
-onlydir
 
 Watching a directory is not recursive.  CALLBACK is passed a single argument
 EVENT which contains an event structure of the format
@@ -286,22 +378,22 @@ unmount
 
 If a directory is watched then NAME is the name of file that caused the event.
 
-COOKIE is an object that can be compared using `equal' to identify two matching
+COOKIE is an object that can be compared using `equal' to identify two matchingt
 renames (moved-from and moved-to).
 
 See inotify(7) and inotify_add_watch(2) for further information.  The inotify fd
 is managed internally and there is no corresponding inotify_init.  Use
 `inotify-rm-watch' to remove a watch.
-             */)
-     (Lisp_Object file_name, Lisp_Object aspect, Lisp_Object callback)
+            */)
+     (Lisp_Object filename, Lisp_Object aspect, Lisp_Object callback)
 {
-  uint32_t mask;
-  Lisp_Object watch_object;
   Lisp_Object encoded_file_name;
-  Lisp_Object watch_descriptor;
-  int watchdesc = -1;
+  bool dont_follow = ! NILP (Fmemq (Qdont_follow, aspect));
+  int wd = -1;
+  uint32_t mask = (INOTIFY_DEFAULT_MASK
+                   | (dont_follow ? IN_DONT_FOLLOW : 0));
 
-  CHECK_STRING (file_name);
+  CHECK_STRING (filename);
 
   if (inotifyfd < 0)
     {
@@ -312,24 +404,12 @@ is managed internally and there is no corresponding inotify_init.  Use
       add_read_fd (inotifyfd, &inotify_callback, NULL);
     }
 
-  mask = aspect_to_inotifymask (aspect);
-  encoded_file_name = ENCODE_FILE (file_name);
-  watchdesc = inotify_add_watch (inotifyfd, SSDATA (encoded_file_name), mask);
-  if (watchdesc == -1)
-    report_file_notify_error ("Could not add watch for file", file_name);
+  encoded_file_name = ENCODE_FILE (filename);
+  wd = inotify_add_watch (inotifyfd, SSDATA (encoded_file_name), mask);
+  if (wd == -1)
+    report_file_notify_error ("Could not add watch for file", filename);
 
-  watch_descriptor = make_watch_descriptor (watchdesc);
-
-  /* Delete existing watch object.  */
-  watch_object = Fassoc (watch_descriptor, watch_list);
-  if (!NILP (watch_object))
-      watch_list = Fdelete (watch_object, watch_list);
-
-  /* Store watch object in watch list.  */
-  watch_object = list3 (watch_descriptor, encoded_file_name, callback);
-  watch_list = Fcons (watch_object, watch_list);
-
-  return watch_descriptor;
+  return add_watch (wd, filename, aspect, callback);
 }
 
 DEFUN ("inotify-rm-watch", Finotify_rm_watch, Sinotify_rm_watch, 1, 1, 0,
@@ -338,27 +418,20 @@ DEFUN ("inotify-rm-watch", Finotify_rm_watch, Sinotify_rm_watch, 1, 1, 0,
 WATCH-DESCRIPTOR should be an object returned by `inotify-add-watch'.
 
 See inotify_rm_watch(2) for more information.
-             */)
+            */)
      (Lisp_Object watch_descriptor)
 {
-  Lisp_Object watch_object;
-  int wd = XINT (watch_descriptor);
 
-  if (inotify_rm_watch (inotifyfd, wd) == -1)
-    report_file_notify_error ("Could not rm watch", watch_descriptor);
+  Lisp_Object descriptor, id;
 
-  /* Remove watch descriptor from watch list.  */
-  watch_object = Fassoc (watch_descriptor, watch_list);
-  if (!NILP (watch_object))
-    watch_list = Fdelete (watch_object, watch_list);
+  if (! (CONSP (watch_descriptor)
+         && INTEGERP (XCAR (watch_descriptor))
+         && INTEGERP (XCDR (watch_descriptor))))
+    report_file_notify_error ("Invalid descriptor ", watch_descriptor);
 
-  /* Cleanup if no more files are watched.  */
-  if (NILP (watch_list))
-    {
-      emacs_close (inotifyfd);
-      delete_read_fd (inotifyfd);
-      inotifyfd = -1;
-    }
+  descriptor = XCAR (watch_descriptor);
+  id = XCDR (watch_descriptor);
+  remove_watch (descriptor, id);
 
   return Qt;
 }
@@ -374,9 +447,32 @@ reason.  Removing the watch by calling `inotify-rm-watch' also makes
 it invalid.  */)
      (Lisp_Object watch_descriptor)
 {
-  Lisp_Object watch_object = Fassoc (watch_descriptor, watch_list);
-  return NILP (watch_object) ? Qnil : Qt;
+  Lisp_Object elt, watch;
+
+  if (! (CONSP (watch_descriptor)
+         && INTEGERP (XCAR (watch_descriptor))
+         && INTEGERP (XCDR (watch_descriptor))))
+    return Qnil;
+
+  elt = Fassoc (XCAR (watch_descriptor), watch_list);
+  watch = Fassoc (XCDR (watch_descriptor), XCDR (elt));
+
+  return ! NILP (watch) ? Qt : Qnil;
 }
+
+#ifdef INOTIFY_DEBUG
+DEFUN ("inotify-watch-list", Finotify_watch_list, Sinotify_watch_list, 0, 0, 0,
+       doc: /* Return a copy of the internal watch_list. */)
+{
+  return Fcopy_sequence (watch_list);
+}
+
+DEFUN ("inotify-allocated-p", Finotify_allocated_p, Sinotify_allocated_p, 0, 0, 0,
+       doc: /* Return non-nil, if a inotify instance is allocated. */)
+{
+  return inotifyfd < 0 ? Qnil : Qt;
+}
+#endif
 
 void
 syms_of_inotify (void)
@@ -400,10 +496,6 @@ syms_of_inotify (void)
   DEFSYM (Qclose, "close");		/* IN_CLOSE */
 
   DEFSYM (Qdont_follow, "dont-follow");	/* IN_DONT_FOLLOW */
-  DEFSYM (Qexcl_unlink, "excl-unlink");	/* IN_EXCL_UNLINK */
-  DEFSYM (Qmask_add, "mask-add");	/* IN_MASK_ADD */
-  DEFSYM (Qoneshot, "oneshot");		/* IN_ONESHOT */
-  DEFSYM (Qonlydir, "onlydir");		/* IN_ONLYDIR */
 
   DEFSYM (Qignored, "ignored");		/* IN_IGNORED */
   DEFSYM (Qisdir, "isdir");		/* IN_ISDIR */
@@ -414,6 +506,10 @@ syms_of_inotify (void)
   defsubr (&Sinotify_rm_watch);
   defsubr (&Sinotify_valid_p);
 
+#ifdef INOTIFY_DEBUG
+  defsubr (&Sinotify_watch_list);
+  defsubr (&Sinotify_allocated_p);
+#endif
   staticpro (&watch_list);
 
   Fprovide (intern_c_string ("inotify"), Qnil);

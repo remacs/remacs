@@ -350,11 +350,6 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
 ;; This test is inspired by Bug#26126 and Bug#26127.
 (ert-deftest file-notify-test02-rm-watch ()
   "Check `file-notify-rm-watch'."
-  ;; There is a problem with inotify removing watch descriptors out of
-  ;; order.  Temporarily, we expect to fail this test until it is
-  ;; fixed.
-  :expected-result
-    (if (string-equal (file-notify--test-library) "inotify") :failed :passed)
   (skip-unless (file-notify--test-local-enabled))
 
   (unwind-protect
