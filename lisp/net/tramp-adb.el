@@ -94,9 +94,6 @@ It is used for TCP/IP devices."
     tramp-adb-method '((tramp-adb-parse-device-names ""))))
 
 ;;;###tramp-autoload
-(add-to-list 'tramp-foreign-file-name-handler-alist
-	     (cons 'tramp-adb-file-name-p 'tramp-adb-file-name-handler))
-
 (defconst tramp-adb-file-name-handler-alist
   '((access-file . ignore)
     (add-name-to-file . tramp-adb-handle-copy-file)
@@ -188,6 +185,10 @@ pass to the OPERATION."
     (if fn
 	(save-match-data (apply (cdr fn) args))
       (tramp-run-real-handler operation args))))
+
+;;;###tramp-autoload
+(tramp-register-foreign-file-name-handler
+ 'tramp-adb-file-name-p 'tramp-adb-file-name-handler)
 
 ;;;###tramp-autoload
 (defun tramp-adb-parse-device-names (_ignore)

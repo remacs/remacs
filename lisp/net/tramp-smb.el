@@ -217,6 +217,7 @@ This list is used for smbcacls actions.
 See `tramp-actions-before-shell' for more info.")
 
 ;; New handlers should be added here.
+;;;###tramp-autoload
 (defconst tramp-smb-file-name-handler-alist
   '(;; `access-file' performed by default handler.
     (add-name-to-file . tramp-smb-handle-add-name-to-file)
@@ -340,9 +341,8 @@ pass to the OPERATION."
 
 ;;;###tramp-autoload
 (unless (memq system-type '(cygwin windows-nt))
-  (add-to-list 'tramp-foreign-file-name-handler-alist
-	       (cons 'tramp-smb-file-name-p 'tramp-smb-file-name-handler)))
-
+  (tramp-register-foreign-file-name-handler
+   'tramp-smb-file-name-p 'tramp-smb-file-name-handler))
 
 ;; File name primitives.
 

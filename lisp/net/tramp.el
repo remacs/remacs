@@ -2121,41 +2121,26 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 	(save-match-data (apply (cdr fn) args))
       (tramp-run-real-handler operation args))))
 
-;; Mark `operations' the handler is responsible for.
-;;;###autoload
-(put 'tramp-completion-file-name-handler 'operations
-     (mapcar 'car tramp-completion-file-name-handler-alist))
-
-;;;###autoload
-(progn (defun tramp-autoload-file-name-handler (operation &rest args)
-  "Load Tramp file name handler, and perform OPERATION."
-  (if (and
-       ;; Do not load tramp.el just for "/".
-       (not (and (stringp (car args)) (string-equal (car args) "/")))
-       ;; Avoid recursive loading of tramp.el.
-       (let ((default-directory temporary-file-directory))
-        (and (null load-in-progress) (load "tramp" 'noerror 'nomessage))))
-      (apply operation args)
-    ;; tramp.el not needed or not available for loading, fall back.
-    (tramp-run-real-handler operation args))))
-
-;; `tramp-autoload-file-name-handler' must be registered before
-;; evaluation of site-start and init files, because there might exist
-;; remote files already, f.e. files kept via recentf-mode.  We cannot
-;; autoload `tramp-file-name-handler', because it would result in
-;; recursive loading of tramp.el when `default-directory' is set to
-;; remote.
+;; `tramp-file-name-handler' must be registered before evaluation of
+;; site-start and init files, because there might exist remote files
+;; already, f.e. files kept via recentf-mode.
 ;;;###autoload
 (progn (defun tramp-register-autoload-file-name-handlers ()
   "Add Tramp file name handlers to `file-name-handler-alist' during autoload."
   (add-to-list 'file-name-handler-alist
-	       (cons tramp-file-name-regexp
-		     'tramp-autoload-file-name-handler))
-  (put 'tramp-autoload-file-name-handler 'safe-magic t)
+	       (cons tramp-file-name-regexp 'tramp-file-name-handler))
+  (put 'tramp-file-name-handler 'safe-magic t)
+  ;; Mark `operations' the handler is responsible for.  It's a short list ...
+  (put 'tramp-file-name-handler 'operations
+       '(file-name-all-completions file-name-completion file-remote-p))
+
   (add-to-list 'file-name-handler-alist
 	       (cons tramp-completion-file-name-regexp
 		     'tramp-completion-file-name-handler))
-  (put 'tramp-completion-file-name-handler 'safe-magic t)))
+  (put 'tramp-completion-file-name-handler 'safe-magic t)
+  ;; Mark `operations' the handler is responsible for.
+  (put 'tramp-completion-file-name-handler 'operations
+       (mapcar 'car tramp-completion-file-name-handler-alist))))
 
 ;;;###autoload
 (tramp-register-autoload-file-name-handlers)
@@ -2165,22 +2150,29 @@ Falls back to normal file name handler if no Tramp file name handler exists."
   ;; Remove autoloaded handlers from file name handler alist.  Useful,
   ;; if `tramp-syntax' has been changed.
   (dolist (fnh '(tramp-file-name-handler
-		 tramp-completion-file-name-handler
-		 tramp-autoload-file-name-handler))
+		 tramp-completion-file-name-handler))
     (let ((a1 (rassq fnh file-name-handler-alist)))
       (setq file-name-handler-alist (delq a1 file-name-handler-alist))))
+
   ;; The initial value of `tramp-file-name-regexp' is too simple
   ;; minded, but we cannot give it the real value in the autoload
   ;; pattern.  See Bug#24889.
   (setq tramp-file-name-regexp (car tramp-file-name-structure))
-  ;; Add the handlers.
+  ;; Add the handlers.  We do not add anything to the `operations'
+  ;; property of `tramp-file-name-handler', this shall be done by the
+  ;; respective foreign handlers.
   (add-to-list 'file-name-handler-alist
 	       (cons tramp-file-name-regexp 'tramp-file-name-handler))
   (put 'tramp-file-name-handler 'safe-magic t)
+
   (add-to-list 'file-name-handler-alist
 	       (cons tramp-completion-file-name-regexp
 		     'tramp-completion-file-name-handler))
   (put 'tramp-completion-file-name-handler 'safe-magic t)
+  ;; Mark `operations' the handler is responsible for.
+  (put 'tramp-completion-file-name-handler 'operations
+       (mapcar 'car tramp-completion-file-name-handler-alist))
+
   ;; If jka-compr or epa-file are already loaded, move them to the
   ;; front of `file-name-handler-alist'.
   (dolist (fnh '(epa-file-handler jka-compr-handler))
@@ -2190,6 +2182,24 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 	      (cons entry (delete entry file-name-handler-alist)))))))
 
 (eval-after-load 'tramp (tramp-register-file-name-handlers))
+
+;;;###tramp-autoload
+(progn (defun tramp-register-foreign-file-name-handler
+    (func handler &optional append)
+  "Register (FUNC . HANDLER) in `tramp-foreign-file-name-handler-alist'.
+FUNC is the function, which determines whether HANDLER is to be called.
+Add operations defined in `HANDLER-alist' to `tramp-file-name-handler'."
+  (add-to-list
+   'tramp-foreign-file-name-handler-alist `(,func . ,handler) append)
+  ;; Mark `operations' the handler is responsible for.
+  (put 'tramp-file-name-handler
+       'operations
+       (cl-delete-duplicates
+        (append
+         (get 'tramp-file-name-handler 'operations)
+         (mapcar
+          'car
+          (symbol-value (intern (concat (symbol-name handler) "-alist")))))))))
 
 (defun tramp-exists-file-name-handler (operation &rest args)
   "Check, whether OPERATION runs a file name handler."
