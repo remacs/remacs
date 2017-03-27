@@ -933,17 +933,19 @@ If EXTERNAL, browse the URL using `shr-external-browser'."
 	(let ((data (shr-parse-image-data)))
 	  (with-current-buffer buffer
 	    (save-excursion
-	      (let ((alt (buffer-substring start end))
-		    (properties (text-properties-at start))
-		    (inhibit-read-only t))
-		(delete-region start end)
-		(goto-char start)
-		(funcall shr-put-image-function data alt flags)
-		(while properties
-		  (let ((type (pop properties))
-			(value (pop properties)))
-		    (unless (memq type '(display image-size))
-		      (put-text-property start (point) type value))))))))))
+	      (save-restriction
+		(widen)
+		(let ((alt (buffer-substring start end))
+		      (properties (text-properties-at start))
+		      (inhibit-read-only t))
+		  (delete-region start end)
+		  (goto-char start)
+		  (funcall shr-put-image-function data alt flags)
+		  (while properties
+		    (let ((type (pop properties))
+			  (value (pop properties)))
+		      (unless (memq type '(display image-size))
+			(put-text-property start (point) type value)))))))))))
     (kill-buffer image-buffer)))
 
 (defun shr-image-from-data (data)
