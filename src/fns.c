@@ -137,15 +137,6 @@ which is at least the number of distinct elements.  */)
   return make_fixnum_or_float (len);
 }
 
-DEFUN ("string-bytes", Fstring_bytes, Sstring_bytes, 1, 1, 0,
-       doc: /* Return the number of bytes in STRING.
-If STRING is multibyte, this may be greater than the length of STRING.  */)
-  (Lisp_Object string)
-{
-  CHECK_STRING (string);
-  return make_number (SBYTES (string));
-}
-
 DEFUN ("string-equal", Fstring_equal, Sstring_equal, 2, 2, 0,
        doc: /* Return t if two strings have identical contents.
 Case is significant, but text properties are ignored.
@@ -4745,7 +4736,6 @@ this variable.  */);
   defsubr (&Srandom);
   defsubr (&Slength);
   defsubr (&Ssafe_length);
-  defsubr (&Sstring_bytes);
   defsubr (&Sstring_equal);
   defsubr (&Scompare_strings);
   defsubr (&Sstring_lessp);

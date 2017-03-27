@@ -105,6 +105,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*strings::Seq);
         defsubr(&*strings::Sbase64_encode_string);
         defsubr(&*strings::Sbase64_decode_string);
+        defsubr(&*strings::Sstring_bytes);
         defsubr(&*strings::Snull);
         defsubr(&*character::Smax_char);
 
