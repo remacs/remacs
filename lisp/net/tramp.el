@@ -1994,6 +1994,7 @@ ARGS are the arguments OPERATION has been called with."
      (tramp-compat-condition-case-unless-debug ,var ,bodyform ,@handlers)))
 
 ;; Main function.
+;;;###autoload
 (defun tramp-file-name-handler (operation &rest args)
   "Invoke Tramp file name handler.
 Falls back to normal file name handler if no Tramp file name handler exists."
