@@ -52,7 +52,7 @@
 ;; - `seq-copy'
 ;; - `seq-into'
 ;;
-;; All functions are tested in test/automated/seq-tests.el
+;; All functions are tested in test/lisp/emacs-lisp/seq-tests.el
 
 ;;; Code:
 

@@ -42,8 +42,6 @@
 ;;
 ;;    (thunk-force delayed)
 
-;; Tests are located at test/automated/thunk-tests.el
-
 ;;; Code:
 
 (defmacro thunk-delay (&rest body)

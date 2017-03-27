@@ -821,9 +821,7 @@ mostlyclean_dirs = src oldXMenu lwlib lib lib-src nt doc/emacs doc/misc \
 $(foreach dir,$(mostlyclean_dirs),$(eval $(call submake_template,$(dir),mostlyclean)))
 
 mostlyclean: $(mostlyclean_dirs:=_mostlyclean)
-	for dir in test/automated; do \
-	  [ ! -d $$dir ] || $(MAKE) -C $$dir mostlyclean; \
-	done
+	[ ! -d test ] || $(MAKE) -C test $@
 
 ### 'clean'
 ###      Delete all files from the current directory that are normally
@@ -838,9 +836,8 @@ clean_dirs = $(mostlyclean_dirs) nextstep
 $(foreach dir,$(clean_dirs),$(eval $(call submake_template,$(dir),clean)))
 
 clean: $(clean_dirs:=_clean)
-	for dir in test/automated admin/charsets; do \
-	  [ ! -d $$dir ] || $(MAKE) -C $$dir clean; \
-	done
+	$(MAKE) -C admin/charsets $@
+	[ ! -d test ] || $(MAKE) -C test $@
 	-rm -f *.tmp etc/*.tmp*
 	-rm -rf info-dir.*
 
@@ -864,12 +861,13 @@ distclean_dirs = $(clean_dirs) leim lisp
 
 $(foreach dir,$(distclean_dirs),$(eval $(call submake_template,$(dir),distclean)))
 
-maybeclean_dirs = test/automated admin/grammars admin/unidata admin/charsets
+maybeclean_dirs = test admin/grammars admin/unidata admin/charsets
 
 distclean: $(distclean_dirs:=_distclean)
-	for dir in ${maybeclean_dirs}; do \
-	  [ ! -d $$dir ] || $(MAKE) -C $$dir distclean; \
+	for dir in $(filter-out test,$(maybeclean_dirs)); do \
+	  $(MAKE) -C $$dir $@ || exit; \
 	done
+	[ ! -d test ] || $(MAKE) -C test $@
 	${top_distclean}
 
 ### 'bootstrap-clean'
@@ -878,9 +876,10 @@ distclean: $(distclean_dirs:=_distclean)
 $(foreach dir,$(distclean_dirs),$(eval $(call submake_template,$(dir),bootstrap-clean)))
 
 bootstrap-clean: $(distclean_dirs:=_bootstrap-clean)
-	for dir in ${maybeclean_dirs}; do \
-	  [ ! -d $$dir ] || $(MAKE) -C $$dir bootstrap-clean; \
+	for dir in $(filter-out test,$(maybeclean_dirs)); do \
+	  $(MAKE) -C $$dir $@ || exit; \
 	done
+	[ ! -d test ] || $(MAKE) -C test $@
 	[ ! -f config.log ] || mv -f config.log config.log~
 	rm -rf ${srcdir}/info
 	rm -f ${srcdir}/etc/refcards/emacsver.tex
@@ -906,9 +905,10 @@ maintainer_clean_dirs = src leim lisp
 $(foreach dir,$(maintainer_clean_dirs),$(eval $(call submake_template,$(dir),maintainer-clean)))
 
 maintainer-clean: bootstrap-clean $(maintainer_clean_dirs:=_maintainer-clean)
-	for dir in ${maybeclean_dirs}; do \
-	  [ ! -d $$dir ] || $(MAKE) -C $$dir maintainer-clean; \
+	for dir in $(filter-out test,$(maybeclean_dirs)); do \
+	  $(MAKE) -C $$dir $@ || exit; \
 	done
+	[ ! -d test ] || $(MAKE) -C test $@
 	${top_maintainer_clean}
 
 ### This doesn't actually appear in the coding standards, but Karl
