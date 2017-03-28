@@ -1672,7 +1672,7 @@ escaped (\\\",\\\\)."
 	  (forward-line 2)
 	(if (looking-at "\^_")
 	    (forward-line 1)
-	  (user-error "Search failed: `\n\^_'")))
+	  (signal 'search-failed (list "\n\^_"))))
       ;; Get nodename spelled as it is in the node.
       (re-search-forward "Node:[ \t]*")
       (setq Info-current-node
@@ -2699,7 +2699,8 @@ Because of ambiguities, this should be concatenated with something like
             (orignode Info-current-node)
             nextnode)
         (goto-char (point-min))
-        (search-forward "\n* Menu:")
+        (unless (search-forward "\n* Menu:" nil t)
+          (user-error "No menu in this node"))
         (cond
          ((eq (car-safe action) 'boundaries) nil)
          ((eq action 'lambda)
