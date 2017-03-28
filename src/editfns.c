@@ -4356,7 +4356,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  sprintf_buf[0] = XINT (args[n]);
 		  sprintf_bytes = prec != 0;
 		}
-	      else if (conversion == 'd')
+	      else if (conversion == 'd' || conversion == 'i')
 		{
 		  /* For float, maybe we should use "%1.0f"
 		     instead so it also works for values outside
