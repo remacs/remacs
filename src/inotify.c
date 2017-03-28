@@ -396,7 +396,9 @@ IN_ONLYDIR  */)
      (Lisp_Object filename, Lisp_Object aspect, Lisp_Object callback)
 {
   Lisp_Object encoded_file_name;
-  bool dont_follow = ! NILP (Fmemq (Qdont_follow, aspect));
+  bool dont_follow = (CONSP (aspect)
+		      ? ! NILP (Fmemq (Qdont_follow, aspect))
+		      : EQ (Qdont_follow, aspect));
   int wd = -1;
   uint32_t mask = (INOTIFY_DEFAULT_MASK
                    | (dont_follow ? IN_DONT_FOLLOW : 0));
