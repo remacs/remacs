@@ -1236,7 +1236,7 @@ SELECTOR is the selector that was used to select TESTS."
         (funcall listener 'test-ended stats test result))
       (setf (ert--stats-current-test stats) nil))))
 
-(defun ert-run-tests (selector listener interactively)
+(defun ert-run-tests (selector listener &optional interactively)
   "Run the tests specified by SELECTOR, sending progress updates to LISTENER."
   (let* ((tests (ert-select-tests selector t))
          (stats (ert--make-stats tests selector)))
