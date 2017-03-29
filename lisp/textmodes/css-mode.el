@@ -44,9 +44,9 @@
 
 (defconst css-pseudo-class-ids
   '("active" "checked" "default" "disabled" "empty" "enabled" "first"
-    "first-child" "first-of-type" "focus" "hover" "in-range"
-    "indeterminate" "invalid" "lang" "last-child" "last-of-type"
-    "left" "link" "not" "nth-child" "nth-last-child"
+    "first-child" "first-of-type" "focus" "focus-within" "hover"
+    "in-range" "indeterminate" "invalid" "lang" "last-child"
+    "last-of-type" "left" "link" "not" "nth-child" "nth-last-child"
     "nth-last-of-type" "nth-of-type" "only-child" "only-of-type"
     "optional" "out-of-range" "read-only" "read-write" "required"
     "right" "root" "scope" "target" "valid" "visited")
