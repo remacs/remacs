@@ -50,7 +50,7 @@
 (defvar gitmerge-skip-regexp
   ;; We used to include "sync" in there, but in my experience it only
   ;; caused false positives.  --Stef
-  "back[- ]?port\\|cherry picked from commit\\|\\(do not\\|no need to\\) merge\\|\
+  "back[- ]?port\\|cherry picked from commit\\|\\(do\\( no\\|n['’]\\)t\\|no need to\\) merge\\|\
 re-?generate\\|bump version\\|from trunk\\|Auto-commit"
   "Regexp matching logs of revisions that might be skipped.
 `gitmerge-missing' will ask you if it should skip any matches.")
