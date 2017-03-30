@@ -5222,7 +5222,7 @@ Nonexistent directories are removed from spec."
   "Determine remote locale, supporting UTF8 if possible."
   (with-tramp-connection-property vec "locale"
     (tramp-send-command vec "locale -a")
-    (let ((candidates '("en_US.utf8" "C.utf8" "en_US.UTF-8"))
+    (let ((candidates '("en_US.utf8" "C.utf8" "en_US.UTF-8" "C.UTF-8"))
 	  locale)
       (with-current-buffer (tramp-get-connection-buffer vec)
 	(while candidates
