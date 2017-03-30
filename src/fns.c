@@ -38,7 +38,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 static void sort_vector_copy (Lisp_Object, ptrdiff_t,
 			      Lisp_Object *restrict, Lisp_Object *restrict);
-static bool equal_no_quit (Lisp_Object, Lisp_Object);
 enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
 static bool internal_equal (Lisp_Object, Lisp_Object,
 			    enum equal_kind, int, Lisp_Object);
@@ -2121,7 +2120,7 @@ of strings.  (`equal' ignores text properties.)  */)
    Use this only on arguments that are cycle-free and not too large and
    are not window configurations.  */
 
-static bool
+bool
 equal_no_quit (Lisp_Object o1, Lisp_Object o2)
 {
   return internal_equal (o1, o2, EQUAL_NO_QUIT, 0, Qnil);
