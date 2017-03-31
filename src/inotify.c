@@ -227,6 +227,9 @@ add_watch (int wd, Lisp_Object filename,
 	emacs_abort ();
     }
 
+  /* Insert the newly-assigned ID into the previously-discovered gap,
+     which is possibly at the end of the list.  Inserting it there
+     keeps the list sorted.  */
   watch_id = make_number (id);
   watch = list4 (watch_id, filename, callback, mask);
   XSETCDR (tail, Fcons (watch, XCDR (tail)));
