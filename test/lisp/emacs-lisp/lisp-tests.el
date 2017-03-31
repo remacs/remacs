@@ -342,5 +342,252 @@ a marker."
 	`(let ,marker-list
 	   ,@body))))
 
+;;; mark-defun
+
+(defvar mark-defun-test-buffer
+  ";; Comment header
+=!before-1=
+\(defun func-1 (arg)
+  =!inside-1=\"docstring\"
+  body)
+=!after-1==!before-2=
+;; Comment before a defun
+\(d=!inside-2=efun func-2 (arg)
+  \"docstring\"
+  body)
+=!after-2==!before-3=
+\(defun func-3 (arg)
+  \"docstring\"=!inside-3=
+  body)
+=!after-3==!before-4=(defun func-4 (arg)
+  \"docstring\"=!inside-4=
+  body)
+=!after-4=
+;; end
+"
+  "Test buffer for `mark-defun'.")
+
+(ert-deftest mark-defun-no-arg-region-inactive ()
+  "Test `mark-defun' with no prefix argument and inactive
+region."
+  (setq last-command nil)
+  (elisp-tests-with-temp-buffer
+      mark-defun-test-buffer
+    ;; mark-defun inside a defun, with comments and an empty line
+    ;; before
+    (goto-char inside-1)
+    (mark-defun)
+    (should (= (point) before-1))
+    (should (= (mark) after-1))
+    ;; mark-defun inside a defun with comments before
+    (deactivate-mark)
+    (goto-char inside-2)
+    (mark-defun)
+    (should (= (point) before-2))
+    (should (= (mark) after-2))
+    ;; mark-defun inside a defun with empty line before
+    (deactivate-mark)
+    (goto-char inside-3)
+    (mark-defun)
+    (should (= (point) before-3))
+    (should (= (mark) after-3))
+    ;; mark-defun inside a defun with another one right before
+    (deactivate-mark)
+    (goto-char inside-4)
+    (mark-defun)
+    (should (= (point) before-4))
+    (should (= (mark) after-4))
+    ;; mark-defun between a comment and a defun
+    (deactivate-mark)
+    (goto-char before-1)
+    (mark-defun)
+    (should (= (point) before-1))
+    (should (= (mark) after-1))
+    ;; mark-defun between defuns
+    (deactivate-mark)
+    (goto-char before-3)
+    (mark-defun)
+    (should (= (point) before-3))
+    (should (= (mark) after-3))
+    ;; mark-defun in comment right before the defun
+    (deactivate-mark)
+    (goto-char before-2)
+    (mark-defun)
+    (should (= (point) before-2))
+    (should (= (mark) after-2))))
+
+(ert-deftest mark-defun-no-arg-region-active ()
+  "Test `mark-defun' with no prefix argument and active
+region."
+  (transient-mark-mode 1)
+  (setq last-command nil)
+  (elisp-tests-with-temp-buffer
+      mark-defun-test-buffer
+    ;; mark-defun when a defun is marked
+    (goto-char before-1)
+    (set-mark after-1)
+    (mark-defun)
+    (should (= (point) before-1))
+    (should (= (mark) after-2))
+    ;; mark-defun when two defuns are marked
+    (deactivate-mark)
+    (goto-char before-1)
+    (set-mark after-2)
+    (mark-defun)
+    (should (= (point) before-1))
+    (should (= (mark) after-3))))
+
+(ert-deftest mark-defun-arg-region-active ()
+  "Test `mark-defun' with a prefix arg and active region."
+  (transient-mark-mode 1)
+  (setq last-command nil)
+  (elisp-tests-with-temp-buffer
+      mark-defun-test-buffer
+    ;; mark-defun with positive arg when a defun is marked
+    (goto-char before-1)
+    (set-mark after-1)
+    (mark-defun 2)
+    (should (= (point) before-1))
+    (should (= (mark) after-3))
+    ;; mark-defun with arg=-1 when a defun is marked
+    (goto-char before-2)
+    (set-mark after-2)
+    (mark-defun -1)
+    (should (= (point) before-1))
+    (should (= (mark) after-2))
+    ;; mark-defun with arg=-2 when a defun is marked
+    (goto-char before-3)
+    (set-mark after-3)
+    (mark-defun -2)
+    (should (= (point) before-1))
+    (should (= (mark) after-3))))
+
+(ert-deftest mark-defun-pos-arg-region-inactive ()
+  "Test `mark-defun' with positive argument and inactive
+  region."
+  (setq last-command nil)
+  (elisp-tests-with-temp-buffer
+      mark-defun-test-buffer
+    ;; mark-defun with positive arg inside a defun
+    (goto-char inside-1)
+    (mark-defun 2)
+    (should (= (point) before-1))
+    (should (= (mark) after-2))
+    ;; mark-defun with positive arg between defuns
+    (deactivate-mark)
+    (goto-char before-3)
+    (mark-defun 2)
+    (should (= (point) before-3))
+    (should (= (mark) after-4))
+    ;; mark-defun with positive arg in a comment
+    (deactivate-mark)
+    (goto-char before-2)
+    (mark-defun 2)
+    (should (= (point) before-2))
+    (should (= (mark) after-3))))
+
+(ert-deftest mark-defun-neg-arg-region-inactive ()
+  "Test `mark-defun' with negative argument and inactive
+  region."
+  (setq last-command nil)
+  (elisp-tests-with-temp-buffer
+      mark-defun-test-buffer
+    ;; mark-defun with arg=-1 inside a defun
+    (goto-char inside-1)
+    (mark-defun -1)
+    (should (= (point) before-1))
+    (should (= (mark) after-1))
+    ;; mark-defun with arg=-1 between defuns
+    (deactivate-mark)
+    (goto-char after-2)
+    (mark-defun -1)
+    (should (= (point) before-2))
+    (should (= (mark) after-2))
+    ;; mark-defun with arg=-1 in a comment
+    ;; (this is probably not an optimal behavior...)
+    (deactivate-mark)
+    (goto-char before-2)
+    (mark-defun -1)
+    (should (= (point) before-1))
+    (should (= (mark) after-1))
+    ;; mark-defun with arg=-2 inside a defun
+    (deactivate-mark)
+    (goto-char inside-4)
+    (mark-defun -2)
+    (should (= (point) before-3))
+    (should (= (mark) after-4))
+    ;; mark-defun with arg=-2 between defuns
+    (deactivate-mark)
+    (goto-char before-3)
+    (mark-defun -2)
+    (should (= (point) before-1))
+    (should (= (mark) after-2)))
+  (elisp-tests-with-temp-buffer         ; test case submitted by Drew Adams
+      "(defun a ()
+  nil)
+=!before-b=(defun b ()
+=!in-b=  nil)
+=!after-b=;;;;
+\(defun c ()
+  nil)
+"
+    (setq last-command nil)
+    (goto-char in-b)
+    (mark-defun -1)
+    (should (= (point) before-b))
+    (should (= (mark) after-b))))
+
+(ert-deftest mark-defun-bob ()
+  "Test `mark-defun' at the beginning of buffer."
+  ;; Bob, comment, newline, defun
+  (setq last-command nil)
+  (elisp-tests-with-temp-buffer
+      ";; Comment at the bob
+=!before=
+\(defun func (arg)=!inside=
+  \"docstring\"
+  body)
+=!after="
+    (goto-char inside)
+    (mark-defun)
+    (should (= (point) before))
+    (should (= (mark) after)))
+  ;; Bob, newline, comment, defun
+  (elisp-tests-with-temp-buffer
+      "=!before=
+;; Comment before the defun
+\(defun func (arg)=!inside=
+  \"docstring\"
+  body)
+=!after="
+    (goto-char inside)
+    (mark-defun)
+    (should (= (point) before))
+    (should (= (mark) after)))
+  ;; Bob, comment, defun
+  (elisp-tests-with-temp-buffer
+      "=!before=;; Comment at the bob before the defun
+\(defun func (arg)=!inside=
+  \"docstring\"
+  body)
+=!after="
+    (goto-char inside)
+    (mark-defun)
+    (should (= (point) before))
+    (should (= (mark) after)))
+  ;; Bob, newline, comment, newline, defun
+  (elisp-tests-with-temp-buffer
+      "
+;; Comment before the defun
+=!before=
+\(defun func (arg)=!inside=
+  \"docstring\"
+  body)
+=!after="
+    (goto-char inside)
+    (mark-defun)
+    (should (= (point) before))
+    (should (= (mark) after))))
+
 (provide 'lisp-tests)
 ;;; lisp-tests.el ends here
