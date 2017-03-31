@@ -5118,8 +5118,10 @@ fi
 AC_SUBST(CARGO_FLAGS)
 
 case "${opsys}" in
-  darwin|gnu*) RUST_DEPS="-ldl -lrt"
-  	       REMACSLIB_CFLAGS="-pthread" ;;
+  darwin) RUST_DEPS="-ldl"
+  	  REMACSLIB_CFLAGS="-pthread" ;;
+  gnu*) RUST_DEPS="-ldl -lrt"
+        REMACSLIB_CFLAGS="-pthread -Wl,--no-as-needed" ;;
 esac
 
 if test "${HAVE_W32}" = "yes"; then
