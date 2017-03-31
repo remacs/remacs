@@ -639,7 +639,8 @@ Activates the region if needed.  Only lasts until the region is deactivated."
   ;; rectangles" and not "visual rectangles", so in the presence of
   ;; bidirectional text things won't work well anyway.
   (if (< n 0) (rectangle--*-char other-cmd (- n))
-    (let ((col (rectangle--point-col (point))))
+    (let ((col (rectangle--point-col (point)))
+          (step 1))
       (while (> n 0)
         (let* ((bol (line-beginning-position))
                (eol (line-end-position))
@@ -647,7 +648,7 @@ Activates the region if needed.  Only lasts until the region is deactivated."
                (nextcol
                 (condition-case nil
                     (save-excursion
-                      (funcall cmd 1)
+                      (funcall cmd step)
                       (cond
                        ((> bol (point)) (- curcol 1))
                        ((< eol (point)) (+ col (1+ n)))
@@ -666,7 +667,8 @@ Activates the region if needed.  Only lasts until the region is deactivated."
            (t ;; (> nextcol curcol)
             (if (<= diff n)
                 (progn (cl-decf n diff) (setq col nextcol))
-              (setq col (if (< col nextcol) (+ col n) (- col n)) n 0))))))
+              (setq col (if (< col nextcol) (+ col n) (- col n)) n 0))))
+          (setq step (1+ step))))
       ;; FIXME: This rectangle--col-pos's move-to-column is wasted!
       (rectangle--col-pos col 'point))))
 

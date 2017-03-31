@@ -1,4 +1,4 @@
-;;; buff-menu.el --- Interface for viewing and manipulating buffers
+;;; buff-menu.el --- Interface for viewing and manipulating buffers -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1985-1987, 1993-1995, 2000-2017 Free Software
 ;; Foundation, Inc.
@@ -101,9 +101,6 @@ as it is by default."
 This is set by the prefix argument to `buffer-menu' and related
 commands.")
 (make-variable-buffer-local 'Buffer-menu-files-only)
-
-(defvar Info-current-file) ; from info.el
-(defvar Info-current-node) ; from info.el
 
 (defvar Buffer-menu-mode-map
   (let ((map (make-sparse-keymap))
@@ -702,21 +699,7 @@ means list those buffers and no others."
 (defun Buffer-menu--pretty-file-name (file)
   (cond (file
 	 (abbreviate-file-name file))
-	((and (boundp 'list-buffers-directory)
-	      list-buffers-directory)
-	 list-buffers-directory)
-	((eq major-mode 'Info-mode)
-	 (Buffer-menu-info-node-description Info-current-file))
+	((bound-and-true-p list-buffers-directory))
 	(t "")))
-
-(defun Buffer-menu-info-node-description (file)
-  (cond
-   ((equal file "dir") "*Info Directory*")
-   ((eq file 'apropos) "*Info Apropos*")
-   ((eq file 'history) "*Info History*")
-   ((eq file 'toc)     "*Info TOC*")
-   ((not (stringp file)) "") ; Avoid errors
-   (t
-    (concat "(" (file-name-nondirectory file) ") " Info-current-node))))
 
 ;;; buff-menu.el ends here

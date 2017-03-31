@@ -1618,7 +1618,7 @@ sequence, this is like `mapcar'.  With several, it is like the Common Lisp
      ((not (memq 'emacs lst))
       nil)
      ((string-match "^\\(\\([.0-9]+\\)*\\)\\.[0-9]+$" emacs-version)
-      (concat "Emacs/" (match-string 1 emacs-version)
+      (concat "Emacs/" emacs-version
 	      (if system-v
 		  (concat " (" system-v ")")
 		"")))

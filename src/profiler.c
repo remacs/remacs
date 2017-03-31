@@ -44,11 +44,10 @@ make_log (EMACS_INT heap_size, EMACS_INT max_stack_depth)
      a special way.  This is OK as long as the object is not exposed
      to Elisp, i.e. until it is returned by *-profiler-log, after which
      it can't be used any more.  */
-  Lisp_Object log = make_hash_table (hashtest_profiler,
-				     make_number (heap_size),
-				     make_float (DEFAULT_REHASH_SIZE),
-				     make_float (DEFAULT_REHASH_THRESHOLD),
-				     Qnil, Qnil);
+  Lisp_Object log = make_hash_table (hashtest_profiler, heap_size,
+				     DEFAULT_REHASH_SIZE,
+				     DEFAULT_REHASH_THRESHOLD,
+				     Qnil, false);
   struct Lisp_Hash_Table *h = XHASH_TABLE (log);
 
   /* What is special about our hash-tables is that the keys are pre-filled
@@ -119,7 +118,7 @@ static void evict_lower_half (log_t *log)
 	  XSET_HASH_TABLE (tmp, log); /* FIXME: Use make_lisp_ptr.  */
 	  Fremhash (key, tmp);
 	}
-	eassert (EQ (log->next_free, make_number (i)));
+	eassert (log->next_free == i);
 
 	eassert (VECTORP (key));
 	for (ptrdiff_t j = 0; j < ASIZE (key); j++)
@@ -139,11 +138,11 @@ record_backtrace (log_t *log, EMACS_INT count)
   Lisp_Object backtrace;
   ptrdiff_t index;
 
-  if (!INTEGERP (log->next_free))
+  if (log->next_free < 0)
     /* FIXME: transfer the evicted counts to a special entry rather
        than dropping them on the floor.  */
     evict_lower_half (log);
-  index = XINT (log->next_free);
+  index = log->next_free;
 
   /* Get a "working memory" vector.  */
   backtrace = HASH_KEY (log, index);
@@ -163,8 +162,8 @@ record_backtrace (log_t *log, EMACS_INT count)
       }
     else
       { /* BEWARE!  hash_put in general can allocate memory.
-	   But currently it only does that if log->next_free is nil.  */
-	eassert (!NILP (log->next_free));
+	   But currently it only does that if log->next_free is -1.  */
+	eassert (0 <= log->next_free);
 	ptrdiff_t j = hash_put (log, backtrace, make_number (count), hash);
 	/* Let's make sure we've put `backtrace' right where it
 	   already was to start with.  */

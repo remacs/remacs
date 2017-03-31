@@ -1445,13 +1445,13 @@ individual packages after calling `package-initialize' -- this is
 taken care of by `package-initialize'."
   (interactive)
   (setq package-alist nil)
-  (if (equal user-init-file load-file-name)
-      ;; If `package-initialize' is being called as part of loading
-      ;; the init file, it's obvious we don't need to ensure-init.
-      (setq package--init-file-ensured t
-            ;; And likely we don't need to run it again after init.
-            package-enable-at-startup nil)
-    (package--ensure-init-file))
+  (if after-init-time
+      (package--ensure-init-file)
+    ;; If `package-initialize' is before we finished loading the init
+    ;; file, it's obvious we don't need to ensure-init.
+    (setq package--init-file-ensured t
+          ;; And likely we don't need to run it again after init.
+          package-enable-at-startup nil))
   (package-load-all-descriptors)
   (package-read-all-archive-contents)
   (unless no-activate

@@ -64,9 +64,6 @@
   :group 'mail
   :group 'news)
 
-(put 'user-mail-address 'custom-type 'string)
-(put 'user-full-name 'custom-type 'string)
-
 (defgroup message-various nil
   "Various Message Variables."
   :link '(custom-manual "(message)Various Message Variables")
@@ -1358,7 +1355,7 @@ If nil, you might be asked to input the charset."
 (defcustom message-dont-reply-to-names mail-dont-reply-to-names
   "Addresses to prune when doing wide replies.
 This can be a regexp, a list of regexps or a predicate function.
-Also, a value of nil means exclude your own user name only.
+Also, a value of nil means exclude `user-mail-address' only.
 
 If a function email is passed as the argument."
   :version "24.3"
@@ -3122,7 +3119,7 @@ M-RET    `message-newline-and-reformat' (break the line and reformat)."
       ;; hard way.
       (progn
 	;; Skip past all headers and continuation lines.
-	(while (looking-at "[^:]+:\\|[\t ]+[^\t ]")
+	(while (looking-at "[^\t\n :]+:\\|[\t ]+[^\t\n ]")
 	  (forward-line 1))
 	;; We're now at the first empty line, so perhaps move past it.
 	(when (and (eolp)

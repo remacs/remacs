@@ -5,7 +5,7 @@ use std::ffi::CStr;
 use std::ffi::CString;
 use std::ptr;
 use std::slice;
-use strings::{MIME_LINE_LENGTH};
+use strings::MIME_LINE_LENGTH;
 use self::rustc_serialize::base64::{FromBase64, ToBase64, STANDARD};
 
 // We don't use the length arg as CStr::from_ptr handles checking the
@@ -56,10 +56,12 @@ pub extern "C" fn base64_encode_1(from: *const libc::c_char,
 }
 
 fn decode(encoded: &CStr) -> Result<Vec<u8>, String> {
-    encoded.to_str()
-        .map_err(|err| err.to_string())
-        .and_then(|encoded| encoded.from_base64()
-                  .map_err(|err| err.to_string()))
+    encoded.to_str().map_err(|err| err.to_string()).and_then(|encoded| {
+                                                                 encoded.from_base64()
+                                                                     .map_err(|err| {
+                                                                                  err.to_string()
+                                                                              })
+                                                             })
 }
 
 ///  Base64-decode the data at FROM of LENGTH bytes into TO.  If
@@ -91,8 +93,8 @@ pub extern "C" fn base64_decode_1(from: *const libc::c_char,
                     match String::from_utf8(decoded) {
                         Ok(s) => {
                             *nchars_return = s.chars().count() as libc::ptrdiff_t;
-                        },
-                        Err(_) => { *nchars_return = size },
+                        }
+                        Err(_) => *nchars_return = size,
                     }
                 }
 
@@ -100,7 +102,7 @@ pub extern "C" fn base64_decode_1(from: *const libc::c_char,
                 size
             }
 
-        },
+        }
         Err(_) => -1,
     }
 

@@ -341,20 +341,40 @@ Any terminating `>' or `/' is not matched.")
 (defvar sgml-font-lock-keywords sgml-font-lock-keywords-1
   "Rules for highlighting SGML code.  See also `sgml-tag-face-alist'.")
 
-(defconst sgml-syntax-propertize-function
+(defun sgml-syntax-propertize (start end)
+  "Syntactic keywords for `sgml-mode'."
+  (goto-char start)
+  (sgml-syntax-propertize-inside end)
+  (funcall
   (syntax-propertize-rules
    ;; Use the `b' style of comments to avoid interference with the -- ... --
    ;; comments recognized when `sgml-specials' includes ?-.
-  ;; FIXME: beware of <!--> blabla <!--> !!
+   ;; FIXME: beware of <!--> blabla <!--> !!
    ("\\(<\\)!--" (1 "< b"))
-    ("--[ \t\n]*\\(>\\)" (1 "> b"))
-    ;; Double quotes outside of tags should not introduce strings.
-    ;; Be careful to call `syntax-ppss' on a position before the one we're
-    ;; going to change, so as not to need to flush the data we just computed.
-    ("\"" (0 (if (prog1 (zerop (car (syntax-ppss (match-beginning 0))))
-                   (goto-char (match-end 0)))
-           (string-to-syntax ".")))))
-  "Syntactic keywords for `sgml-mode'.")
+   ("--[ \t\n]*\\(>\\)" (1 "> b"))
+   ("\\(<\\)[?!]" (1 (prog1 "|>"
+                       (sgml-syntax-propertize-inside end))))
+   ;; Double quotes outside of tags should not introduce strings.
+   ;; Be careful to call `syntax-ppss' on a position before the one we're
+   ;; going to change, so as not to need to flush the data we just computed.
+   ("\"" (0 (if (prog1 (zerop (car (syntax-ppss (match-beginning 0))))
+                  (goto-char (match-end 0)))
+                (string-to-syntax ".")))))
+  start end))
+
+(defun sgml-syntax-propertize-inside (end)
+  (let ((ppss (syntax-ppss)))
+    (cond
+     ((eq (nth 3 ppss) t)
+      (let ((endre (save-excursion
+                     (goto-char (nth 8 ppss))
+                     (cond
+                      ((looking-at-p "<!\\[CDATA\\[") "]]>")
+                      ((looking-at-p "<\\?")  (if sgml-xml-mode "\\?>" ">"))
+                      (t ">")))))
+        (when (re-search-forward endre end 'move)
+          (put-text-property (1- (point)) (point)
+                             'syntax-table (string-to-syntax "|<"))))))))
 
 ;; internal
 (defvar sgml-face-tag-alist ()
@@ -547,7 +567,7 @@ Do \\[describe-key] on the following bindings to discover what they do.
 			      sgml-font-lock-keywords-1
 			      sgml-font-lock-keywords-2)
 			     nil t))
-  (setq-local syntax-propertize-function sgml-syntax-propertize-function)
+  (setq-local syntax-propertize-function #'sgml-syntax-propertize)
   (setq-local facemenu-add-face-function 'sgml-mode-facemenu-add-face-function)
   (setq-local sgml-xml-mode (sgml-xml-guess))
   (unless sgml-xml-mode

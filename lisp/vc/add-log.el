@@ -1077,14 +1077,16 @@ A sequence of buffers is formed by ChangeLog files with decreasing
 numeric file name suffixes in the directory of the initial ChangeLog
 file were isearch was started."
   (let* ((name (change-log-name))
-	 (files (cons name (sort (file-expand-wildcards
-				  (concat name "[-.][0-9]*"))
-				 (lambda (a b)
-                                   ;; The file's extension may not have a valid
-                                   ;; version form (e.g. VC backup revisions).
-                                   (ignore-errors
-                                     (version< (substring b (length name))
-                                               (substring a (length name))))))))
+	 (files (append
+                 (and (file-exists-p name) (list name))
+                 (sort (file-expand-wildcards
+                        (concat name "[-.][0-9]*"))
+                       (lambda (a b)
+                         ;; The file's extension may not have a valid
+                         ;; version form (e.g. VC backup revisions).
+                         (ignore-errors
+                           (version< (substring b (length name))
+                                     (substring a (length name))))))))
 	 (files (if isearch-forward files (reverse files)))
 	 (file (if wrap
 		   (car files)

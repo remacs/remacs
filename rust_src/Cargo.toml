@@ -13,6 +13,8 @@ remacs-sys = { version = "0.1.0", path = "remacs-sys/" }
 remacs-lib = { version = "0.1.0", path = "remacs-lib/" }
 libc = "0.2"
 rustc-serialize = "0.3"
+sha1 = "0.2.0"
+sha2 = "0.4.2"
 
 # Only want this local crate as dependency on Mac OS X
 [target.'cfg(target_os = "macos")'.dependencies]

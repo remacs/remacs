@@ -3168,16 +3168,7 @@ signal_user_input (void)
       Vquit_flag = Vthrow_on_input;
       /* Calling maybe_quit from this thread is a bad idea, since this
 	 unwinds the stack of the Lisp thread, and the Windows runtime
-	 rightfully barfs.  Disabled.  */
-#if 0
-      /* If we're inside a function that wants immediate quits,
-	 do it now.  */
-      if (immediate_quit && NILP (Vinhibit_quit))
-	{
-	  immediate_quit = false;
-	  maybe_quit ();
-	}
-#endif
+	 rightfully barfs.  */
     }
 }
 
@@ -4810,7 +4801,11 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_ENDSESSION:
       my_post_msg (&wmsg, hwnd, msg, wParam, lParam);
-      /* If we return, the process will be terminated immediately.  */
+      /* Allow time for Emacs to attempt an orderly shutdown.  If we
+         return, the process will be terminated immediately.  FIXME:
+         1000 seconds is too long to sleep if the shutdown attempt
+         fails (see bug#25875).  But if it fails, we want to find out
+         about it, so let's leave 1000 for now.  */
       sleep (1000);
 
     case WM_WINDOWPOSCHANGING:

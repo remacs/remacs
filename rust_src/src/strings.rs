@@ -156,3 +156,20 @@ defun!("base64-decode-string",
        "Base64-decode STRING and return the result.
 
 (fn STRING)");
+
+fn string_bytes(string: LispObject) -> LispObject {
+    CHECK_STRING(string.to_raw());
+    unsafe { LispObject::from_fixnum_unchecked(SBYTES(string) as i64) }
+}
+
+defun!("string-bytes",
+       Fstring_bytes(string),
+       Sstring_bytes,
+       string_bytes,
+       1,
+       1,
+       ptr::null(),
+       "Return the number of bytes in STRING.
+If STRING is multibyte, this may be greater than the length of STRING.
+
+(fn STRING)");

@@ -149,10 +149,6 @@ struct tty_display_info
 
   int TN_max_colors;            /* "Co" -- number of colors.  */
 
-  /* "pa" -- max. number of color pairs on screen.  Not handled yet.
-     Could be a problem if not equal to TN_max_colors * TN_max_colors.  */
-  int TN_max_pairs;
-
   /* "op" -- SVr4 set default pair to its original value.  */
   const char *TS_orig_pair;
 

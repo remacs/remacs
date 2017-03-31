@@ -255,6 +255,7 @@ See `run-hooks'."
     (define-key map "l" 'vc-print-log)	   ;; C-x v l
     (define-key map "L" 'vc-print-root-log) ;; C-x v L
     (define-key map "I" 'vc-log-incoming)   ;; C-x v I
+    (define-key map "O" 'vc-log-outgoing)   ;; C-x v O
     ;; More confusing than helpful, probably
     ;;(define-key map "R" 'vc-revert) ;; u is taken by vc-dir-unmark.
     ;;(define-key map "A" 'vc-annotate) ;; g is taken by revert-buffer
@@ -295,6 +296,12 @@ See `run-hooks'."
     (define-key map (kbd "M-s a C-s")   'vc-dir-isearch)
     (define-key map (kbd "M-s a M-C-s") 'vc-dir-isearch-regexp)
     (define-key map "G" 'vc-dir-ignore)
+
+    (let ((branch-map (make-sparse-keymap)))
+      (define-key map "B" branch-map)
+      (define-key branch-map "c" 'vc-create-tag)
+      (define-key branch-map "l" 'vc-print-branch-log)
+      (define-key branch-map "s" 'vc-retrieve-tag))
 
     ;; Hook up the menu.
     (define-key map [menu-bar vc-dir-mode]

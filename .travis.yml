@@ -19,15 +19,10 @@ env:
   # Ensure that we build without warnings.
   - CARGO_FLAGS="--features 'strict'"
 
-script:
-  # Configure Emacs for building
-  - ./autogen.sh
-  # These configure flags are only required on OS X.
-  # TODO: remove them.
-  - ./configure --without-makeinfo --with-xpm=no --with-gif=no --with-gnutls=no
-  - make -j 3
+before_script: (cargo install --force rustfmt || true)
 
-  - make check
+script:
+  - ./.travis.sh
 
 notifications:
   fast_finish: true

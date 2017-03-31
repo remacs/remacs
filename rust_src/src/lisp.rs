@@ -148,10 +148,10 @@ impl LispObject {
     pub fn get_type(self) -> LispType {
         let raw = self.to_raw() as EmacsUint;
         let res = (if USE_LSB_TAG {
-            raw & (!VALMASK as EmacsUint)
-        } else {
-            raw >> VALBITS
-        }) as u8;
+                       raw & (!VALMASK as EmacsUint)
+                   } else {
+                       raw >> VALBITS
+                   }) as u8;
         unsafe { mem::transmute(res) }
     }
 
@@ -186,30 +186,6 @@ pub enum LispMiscType {
     Overlay,
     SaveValue,
     Finalizer,
-}
-
-/// Flag bits in a character.  These also get used in termhooks.h.
-/// Richard Stallman <rms@gnu.ai.mit.edu> thinks that MULE
-/// (MUlti-Lingual Emacs) might need 22 bits for the character value
-/// itself, so we probably shouldn't use any bits lower than 0x0400000.  */
-#[derive(PartialEq, Eq, Copy, Clone, Debug)]
-#[allow(non_camel_case_types)]
-#[allow(dead_code)]
-#[repr(isize)]
-pub enum CharBits {
-    CHAR_ALT = 0x0400000,
-    CHAR_SUPER = 0x0800000,
-    CHAR_HYPER = 0x1000000,
-    CHAR_SHIFT = 0x2000000,
-    CHAR_CTL = 0x4000000,
-    CHAR_META = 0x8000000,
-    // TODO implement BitOr and other traits related to
-    // bit operations.
-    CHAR_MODIFIER_MASK = 0x0400000 | 0x0800000 | 0x1000000
-        | 0x2000000 | 0x4000000 | 0x8000000,
-    // Actually, the current Emacs uses 22 bits for the character value
-    // itself.
-    CHARACTERBITS = 22,
 }
 
 // Lisp_Misc is a union. Now we don't really care about its variants except the
@@ -451,9 +427,17 @@ impl LispObject {
 /// This is equivalent to `DEFUN` in Emacs C, but the function
 /// definition is kept separate to aid readability.
 macro_rules! defun {
-    ($lisp_name:expr, $fname:ident($($arg_name:ident),*), $sname: ident, $rust_name: ident, $min_args:expr, $max_args:expr, $intspec:expr, $docstring:expr) => {
+    ($lisp_name:expr,
+     $fname:ident($($arg_name:ident),*),
+     $sname: ident,
+     $rust_name: ident,
+     $min_args:expr,
+     $max_args:expr,
+     $intspec:expr,
+     $docstring:expr) => {
         #[no_mangle]
-        pub extern "C" fn $fname($($arg_name: $crate::remacs_sys::Lisp_Object),*) -> $crate::remacs_sys::Lisp_Object {
+        pub extern "C" fn $fname($($arg_name: $crate::remacs_sys::Lisp_Object),*)
+                                 -> $crate::remacs_sys::Lisp_Object {
             let ret = $rust_name($($crate::lisp::LispObject::from_raw($arg_name)),*);
             ret.to_raw()
         }
@@ -502,15 +486,28 @@ macro_rules! defun {
 ///
 /// # Porting Notes
 ///
-/// This is equivalent to `DEFUN` (using max_args with `MANY`) and `DEFUN_MANY` in Emacs C, but the function
-/// definition is kept separate to aid readability.
+/// This is equivalent to `DEFUN` (using max_args with `MANY`) and
+/// `DEFUN_MANY` in Emacs C, but the function definition is kept
+/// separate to aid readability.
 macro_rules! defun_many {
-    ($lisp_name:expr, $fname:ident, $sname: ident, $rust_name: ident, $min_args:expr, $intspec:expr, $docstring:expr) => {
-// this is not beautifu, but works.
+    ($lisp_name:expr,
+     $fname:ident,
+     $sname: ident,
+     $rust_name: ident,
+     $min_args:expr,
+     $intspec:expr,
+     $docstring:expr) => {
+        // this is not beautiful, but works.
         #[no_mangle]
-        pub extern "C" fn $fname(nargs: $crate::libc::ptrdiff_t, args: *mut $crate::remacs_sys::Lisp_Object) -> $crate::remacs_sys::Lisp_Object {
-            let slice = unsafe { $crate::std::slice::from_raw_parts_mut::<$crate::remacs_sys::Lisp_Object>(args, nargs as usize) };
-            let mut args: Vec<$crate::lisp::LispObject> = slice.iter().map(|arg| $crate::lisp::LispObject::from_raw(*arg)).collect();
+        pub extern "C" fn $fname(nargs: $crate::libc::ptrdiff_t,
+                                 args: *mut $crate::remacs_sys::Lisp_Object)
+                                 -> $crate::remacs_sys::Lisp_Object {
+            let slice = unsafe {
+                $crate::std::slice::from_raw_parts_mut::<$crate::remacs_sys::Lisp_Object>(
+                    args, nargs as usize)
+            };
+            let mut args: Vec<$crate::lisp::LispObject> = slice
+                .iter().map(|arg| $crate::lisp::LispObject::from_raw(*arg)).collect();
 
             let ret = $rust_name(args.as_mut_slice());
             ret.to_raw()
@@ -547,8 +544,7 @@ impl Debug for LispObject {
             write!(f,
                    "#<INVALID-OBJECT @ {:#X}: VAL({:#X})>",
                    self_ptr,
-                   self.to_raw())
-                ?;
+                   self.to_raw())?;
             return Ok(());
         }
         match ty {
@@ -565,8 +561,7 @@ impl Debug for LispObject {
                 write!(f,
                        "#<VECTOR-LIKE @ {:#X}: VAL({:#X})>",
                        self_ptr,
-                       self.to_raw())
-                    ?;
+                       self.to_raw())?;
             }
             LispType::Lisp_Int0 |
             LispType::Lisp_Int1 => {
@@ -591,8 +586,9 @@ impl Debug for LispObject {
 /// the porting easy, we should be able to remove once the relevant functionality is Rust-only.
 mod deprecated {
     use super::*;
-    use ::libc;
-    use ::std;
+    use libc;
+    use std;
+    use remacs_sys::EmacsInt;
 
     /// Convert a LispObject to an EmacsInt.
     #[allow(non_snake_case)]

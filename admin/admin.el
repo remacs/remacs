@@ -93,9 +93,7 @@ Optional argument DATE is the release date, default today."
 Root must be the root of an Emacs source tree."
   (interactive (list
 		(read-directory-name "Emacs root directory: " source-directory)
-		(read-string "Version number: "
-			     (replace-regexp-in-string "\\.[0-9]+\\'" ""
-						       emacs-version))))
+		(read-string "Version number: " emacs-version)))
   (unless (file-exists-p (expand-file-name "src/emacs.c" root))
     (user-error "%s doesn't seem to be the root of an Emacs source tree" root))
   (message "Setting version numbers...")

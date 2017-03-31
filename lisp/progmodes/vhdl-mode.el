@@ -1010,7 +1010,7 @@ if the header needs to be version controlled.
 The following keywords for template generation are supported:
   <filename>    : replaced by the name of the buffer
   <author>      : replaced by the user name and email address
-                  (`user-full-name',`mail-host-address', `user-mail-address')
+                  (`user-full-name', `user-mail-address')
   <authorfull>  : replaced by the user full name (`user-full-name')
   <login>       : replaced by user login name (`user-login-name')
   <company>     : replaced by contents of option `vhdl-company-name'
@@ -1967,7 +1967,6 @@ are treated as single words otherwise."
 (unless (featurep 'xemacs)
   (custom-add-to-group 'vhdl-related 'transient-mark-mode 'custom-variable))
 (custom-add-to-group 'vhdl-related 'user-full-name 'custom-variable)
-(custom-add-to-group 'vhdl-related 'mail-host-address 'custom-variable)
 (custom-add-to-group 'vhdl-related 'user-mail-address 'custom-variable)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

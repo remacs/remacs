@@ -616,10 +616,18 @@ relevant to POS."
                                    'help-args '(,current-input-method))
 				 "input method")
 			 (list
-                          (let ((name
-                                 (or (get-char-code-property char 'name)
-                                     (get-char-code-property char 'old-name))))
-                            (if (and name (assoc-string name (ucs-names)))
+                          (let* ((names (ucs-names))
+                                 (name
+                                  (or (when (= char 7)
+				       ;; Special case for "BELL" which is
+				       ;; apparently the only char which
+				       ;; doesn't have a new name and whose
+				       ;; old-name is shadowed by a newer char
+				       ;; with that name (bug#25641).
+				       (car (rassoc char names)))
+                                      (get-char-code-property char 'name)
+                                      (get-char-code-property char 'old-name))))
+                            (if (and name (assoc-string name names))
                                 (format
                                  "type \"C-x 8 RET %x\" or \"C-x 8 RET %s\""
                                  char name)

@@ -89,7 +89,8 @@
        (functionp &rest form)
        sexp))
 
-(def-edebug-spec pcase-MACRO pcase--edebug-match-macro)
+;; See bug#24717
+(put 'pcase-MACRO 'edebug-form-spec 'pcase--edebug-match-macro)
 
 ;; Only called from edebug.
 (declare-function get-edebug-spec "edebug" (symbol))
@@ -436,8 +437,10 @@ to this macro."
   ;; Don't use let*, otherwise macroexp-let* may merge it with some surrounding
   ;; let* which might prevent the setcar/setcdr in pcase--expand's fancy
   ;; codegen from later metamorphosing this let into a funcall.
-  `(let ,(mapcar (lambda (b) (list (car b) (cdr b))) vars)
-     ,@code))
+  (if vars
+      `(let ,(mapcar (lambda (b) (list (car b) (cdr b))) vars)
+         ,@code)
+    `(progn ,@code)))
 
 (defun pcase--small-branch-p (code)
   (and (= 1 (length code))

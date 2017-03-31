@@ -21,31 +21,39 @@ C source is stored in the ~src~ directory, which is flat.
 
 ** Test Files
 
-Automated tests should be stored in the ~test/automated/lisp~ directory. Tests
-should reflect the directory structure of the source tree; so tests for files
-in the ~emacs-lisp~ source directory should reside in the
+Automated tests should be stored in the ~test/lisp~ directory for
+tests of functionality implemented in Lisp, and in the ~test/src~
+directory for functionality implemented in C.  Tests should reflect
+the directory structure of the source tree; so tests for files in the
+~lisp/emacs-lisp~ source directory should reside in the
 ~test/lisp/emacs-lisp~ directory.
 
-Tests should normally reside in a file with ~-tests~ added to the name of
-the tested source file; hence ~ert.el~ is tested in ~ert-tests.el~, or
-~pcase.el~ is tested in ~pcase-tests.el~. Exceptionally, tests for a
-single feature may be placed into multiple files of any name which are
-themselves placed in a directory named after the feature with ~-tests~
-appended, such as ~/test/lisp/emacs-lisp/eieio-tests~
+Tests should normally reside in a file with ~-tests.el~ added to the
+base-name of the tested source file; hence ~ert.el~ is tested in
+~ert-tests.el~, and ~pcase.el~ is tested in ~pcase-tests.el~.  As n
+exception, tests for a single feature may be placed into multiple
+files of any name which are themselves placed in a directory named
+after the feature with ~-tests~ appended, such as
+~/test/lisp/emacs-lisp/eieio-tests~
 
-Where features of the C source are tested using Emacs-Lisp test files, these
-should reside in ~/test/src~ and be named after the C file.
+Similarly, features implemented in C should reside in ~/test/src~ and
+be named after the C file with ~-tests.el~ added to the base-name of
+the tested source file.  Thus, tests for ~src/fileio.c~ should be in
+~test/src/fileio-tests.el~.
 
 There are also some test materials that cannot be run automatically
-(i.e. via ert). These should be placed in ~/test/manual~
+(i.e. via ert).  These should be placed in ~/test/manual~; they are
+not run by the "make check" command and its derivatives.
 
 ** Resource Files
 
-Resource files for tests (containing test data) should reside in a directory
-named after the feature with a ~-resources~ suffix, and located in the same
-directory as the feature. Hence, the lisp file ~flymake.el~ should have test
-files in ~/test/automated/lisp/progmodes/flymake-tests.el~ should reside in a
+Resource files for tests (containing test data) should reside in a
+directory named after the feature with a ~-resources~ suffix, and
+located in the same directory as the feature.  Hence, the lisp file
+~flymake.el~ should have test files in
+~/test/automated/lisp/progmodes/flymake-tests.el~ should reside in a
 directory called ~/test/automated/lisp/progmodes/flymake-resources~.
 
 No guidance is given for the organization of resource files inside the
-~-resource~ directory; files can be organized at the author's discretion.
+~-resource~ directory; files can be organized at the author's
+discretion.

@@ -4581,7 +4581,7 @@ This function does not save the buffer."
       (if (bolp)
 	  (princ " "))
       (princ ")")
-      (unless (looking-at-p "\n")
+      (when (/= (following-char) ?\n)
 	(princ "\n")))))
 
 (defun custom-save-faces ()
@@ -4636,7 +4636,7 @@ This function does not save the buffer."
       (if (bolp)
 	  (princ " "))
       (princ ")")
-      (unless (looking-at-p "\n")
+      (when (/= (following-char) ?\n)
 	(princ "\n")))))
 
 ;;; The Customize Menu.

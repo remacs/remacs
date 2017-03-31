@@ -35,20 +35,6 @@ Change src/bytecode.c so that calls from byte-code functions to byte-code
 functions don't go through Ffuncall/funcall_lambda/exec_byte_code but instead
 stay within exec_byte_code.
 
-** Add new 'switch' byte-code
-This byte-code would take one argument from the stack (the object to test)
-and one argument from the constant-pool (a switch table, implemented as an
-'eq' hash table) and would jump to the "label" contained in the hash table.
-
-Then add a 'case' special-form that can be compiled to this byte-code.
-This would behave just like cl-case, but instead of expanding to cond+eq it
-would be its own special form and would be compiled specially.
-
-Then change pcase to use 'case' when applicable.
-
-Then change the byte-compiler to recognize (cond ((eq x 'foo) bar) ...)
-and turn it into a 'case' for more efficient execution.
-
 ** Improve the byte-compiler to recognize immutable (lexical) bindings
 and get rid of them if they're used only once and/or they're bound to
 a constant expression.
@@ -981,6 +967,17 @@ R2L menu bar is tricky for the same reasons as the mode line.  In
 addition, toolkit builds create their menu bars in toolkit-specific
 parts of code, bypassing xdisp.c, so those parts need to be enhanced
 with toolkit-specific code to display the menu bar right to left.
+
+** Custom
+
+*** Extend :set-after to also mean initialize after.
+If defcustom A specifies :set-after '(B), then if a user customizes
+both A and B, custom will set A after B.  But if the user only customizes
+A, then if B is already defined, it gets left at its original setting.
+Instead, if B has not been customized it should be re-initialized
+(on the assumption that the default value depends on A).
+See the places where we manually call custom-reevaluate-setting,
+such as for mail-host-address and user-mail-address in startup.el.
 
 ** ImageMagick support
 

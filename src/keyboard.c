@@ -164,9 +164,6 @@ struct kboard *echo_kboard;
 
 Lisp_Object echo_message_buffer;
 
-/* True means C-g should cause immediate error-signal.  */
-bool immediate_quit;
-
 /* Character that causes a quit.  Normally C-g.
 
    If we are running on an ordinary terminal, this must be an ordinary
@@ -3577,16 +3574,7 @@ kbd_buffer_store_buffered_event (union buffered_input_event *event,
      as input, set quit-flag to cause an interrupt.  */
   if (!NILP (Vthrow_on_input)
       && NILP (Fmemq (ignore_event, Vwhile_no_input_ignore_events)))
-    {
-      Vquit_flag = Vthrow_on_input;
-      /* If we're inside a function that wants immediate quits,
-	 do it now.  */
-      if (immediate_quit && NILP (Vinhibit_quit))
-	{
-	  immediate_quit = false;
-	  maybe_quit ();
-	}
-    }
+    Vquit_flag = Vthrow_on_input;
 }
 
 
@@ -5424,26 +5412,26 @@ make_lispy_event (struct input_event *event)
            not.  And Control+Shift+s should produce C-S-s whether
            caps-lock is on or not.  */
         if (event->modifiers & ~shift_modifier)
-        {
+	  {
             /* This is a key chord: some non-shift modifier is
                depressed.  */
 
             if (uppercasep (c) &&
                 !(event->modifiers & shift_modifier))
-            {
+	      {
                 /* Got a capital letter without a shift.  The caps
                    lock is on.   Un-capitalize the letter.  */
                 c = downcase (c);
-            }
+	      }
             else if (lowercasep (c) &&
                      (event->modifiers & shift_modifier))
-            {
+	      {
                 /* Got a lower-case letter even though shift is
                    depressed.  The caps lock is on.  Capitalize the
                    letter.  */
                 c = upcase (c);
-            }
-        }
+	      }
+	  }
 
 	if (event->kind == ASCII_KEYSTROKE_EVENT)
 	  {
@@ -7029,40 +7017,22 @@ tty_read_avail_input (struct terminal *terminal,
 
   /* Now read; for one reason or another, this will not block.
      NREAD is set to the number of chars read.  */
-  do
-    {
-      nread = emacs_read (fileno (tty->input), (char *) cbuf, n_to_read);
-      /* POSIX infers that processes which are not in the session leader's
-         process group won't get SIGHUPs at logout time.  BSDI adheres to
-         this part standard and returns -1 from read (0) with errno==EIO
-         when the control tty is taken away.
-         Jeffrey Honig <jch@bsdi.com> says this is generally safe.  */
-      if (nread == -1 && errno == EIO)
-        return -2;          /* Close this terminal.  */
-#if defined (AIX) && defined (_BSD)
-      /* The kernel sometimes fails to deliver SIGHUP for ptys.
-         This looks incorrect, but it isn't, because _BSD causes
-         O_NDELAY to be defined in fcntl.h as O_NONBLOCK,
-         and that causes a value other than 0 when there is no input.  */
-      if (nread == 0)
-        return -2;          /* Close this terminal.  */
+  nread = emacs_read (fileno (tty->input), (char *) cbuf, n_to_read);
+  /* POSIX infers that processes which are not in the session leader's
+     process group won't get SIGHUPs at logout time.  BSDI adheres to
+     this part standard and returns -1 from read (0) with errno==EIO
+     when the control tty is taken away.
+     Jeffrey Honig <jch@bsdi.com> says this is generally safe.  */
+  if (nread == -1 && errno == EIO)
+    return -2;          /* Close this terminal.  */
+#if defined AIX && defined _BSD
+  /* The kernel sometimes fails to deliver SIGHUP for ptys.
+     This looks incorrect, but it isn't, because _BSD causes
+     O_NDELAY to be defined in fcntl.h as O_NONBLOCK,
+     and that causes a value other than 0 when there is no input.  */
+  if (nread == 0)
+    return -2;          /* Close this terminal.  */
 #endif
-    }
-  while (
-         /* We used to retry the read if it was interrupted.
-            But this does the wrong thing when O_NONBLOCK causes
-            an EAGAIN error.  Does anybody know of a situation
-            where a retry is actually needed?  */
-#if 0
-         nread < 0 && (errno == EAGAIN || errno == EFAULT
-#ifdef EBADSLT
-                       || errno == EBADSLT
-#endif
-                       )
-#else
-         0
-#endif
-         );
 
 #ifndef USABLE_FIONREAD
 #if defined (USG) || defined (CYGWIN)
@@ -9647,21 +9617,25 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	 use the corresponding lower-case letter instead.  */
       if (NILP (current_binding)
 	  && /* indec.start >= t && fkey.start >= t && */ keytran.start >= t
-	  && INTEGERP (key)
-	  && ((CHARACTERP (make_number (XINT (key) & ~CHAR_MODIFIER_MASK))
-	       && uppercasep (XINT (key) & ~CHAR_MODIFIER_MASK))
-	      || (XINT (key) & shift_modifier)))
+	  && INTEGERP (key))
 	{
 	  Lisp_Object new_key;
+	  EMACS_INT k = XINT (key);
+
+	  if (k & shift_modifier)
+	    XSETINT (new_key, k & ~shift_modifier);
+	  else if (CHARACTERP (make_number (k & ~CHAR_MODIFIER_MASK)))
+	    {
+	      int dc = downcase (k & ~CHAR_MODIFIER_MASK);
+	      if (dc == (k & ~CHAR_MODIFIER_MASK))
+		goto not_upcase;
+	      XSETINT (new_key, dc | (k & CHAR_MODIFIER_MASK));
+	    }
+	  else
+	    goto not_upcase;
 
 	  original_uppercase = key;
 	  original_uppercase_position = t - 1;
-
-	  if (XINT (key) & shift_modifier)
-	    XSETINT (new_key, XINT (key) & ~shift_modifier);
-	  else
-	    XSETINT (new_key, (downcase (XINT (key) & ~CHAR_MODIFIER_MASK)
-			       | (XINT (key) & CHAR_MODIFIER_MASK)));
 
 	  /* We have to do this unconditionally, regardless of whether
 	     the lower-case char is defined in the keymaps, because they
@@ -9673,6 +9647,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	  goto replay_sequence;
 	}
 
+    not_upcase:
       if (NILP (current_binding)
 	  && help_char_p (EVENT_HEAD (key)) && t > 1)
 	    {
@@ -10004,6 +9979,30 @@ See also `this-command-keys-vector'.  */)
 {
   return make_event_array (this_command_key_count,
 			   XVECTOR (this_command_keys)->contents);
+}
+
+DEFUN ("set--this-command-keys", Fset__this_command_keys,
+       Sset__this_command_keys, 1, 1, 0,
+       doc: /* Set the vector to be returned by `this-command-keys'.
+The argument KEYS must be a string.
+Internal use only.  */)
+  (Lisp_Object keys)
+{
+  CHECK_STRING (keys);
+
+  this_command_key_count = 0;
+  this_single_command_key_start = 0;
+  int key0 = SREF (keys, 0);
+
+  /* Kludge alert: this makes M-x be in the form expected by
+     novice.el.  (248 is \370, a.k.a. "Meta-x".)  Any better ideas?  */
+  if (key0 == 248)
+    add_command_key (make_number ('x' | meta_modifier));
+  else
+    add_command_key (make_number (key0));
+  for (ptrdiff_t i = 1; i < SCHARS (keys); i++)
+    add_command_key (make_number (SREF (keys, i)));
+  return Qnil;
 }
 
 DEFUN ("this-command-keys-vector", Fthis_command_keys_vector, Sthis_command_keys_vector, 0, 0, 0,
@@ -10400,30 +10399,12 @@ handle_interrupt (bool in_signal_handler)
     }
   else
     {
-      /* If executing a function that wants to be interrupted out of
-	 and the user has not deferred quitting by binding `inhibit-quit'
-	 then quit right away.  */
-      if (immediate_quit && NILP (Vinhibit_quit) && !waiting_for_input)
-	{
-	  struct gl_state_s saved;
-
-	  immediate_quit = false;
-	  pthread_sigmask (SIG_SETMASK, &empty_mask, 0);
-	  saved = gl_state;
-	  quit ();
-	  gl_state = saved;
-	}
-      else
-        { /* Else request quit when it's safe.  */
-	  int count = NILP (Vquit_flag) ? 1 : force_quit_count + 1;
-	  force_quit_count = count;
-	  if (count == 3)
-            {
-              immediate_quit = true;
-              Vinhibit_quit = Qnil;
-            }
-          Vquit_flag = Qt;
-        }
+      /* Request quit when it's safe.  */
+      int count = NILP (Vquit_flag) ? 1 : force_quit_count + 1;
+      force_quit_count = count;
+      if (count == 3)
+	Vinhibit_quit = Qnil;
+      Vquit_flag = Qt;
     }
 
   pthread_sigmask (SIG_SETMASK, &empty_mask, 0);
@@ -10862,7 +10843,6 @@ init_keyboard (void)
 {
   /* This is correct before outermost invocation of the editor loop.  */
   command_loop_level = -1;
-  immediate_quit = false;
   quit_char = Ctl ('g');
   Vunread_command_events = Qnil;
   timer_idleness_start_time = invalid_timespec ();
@@ -11215,6 +11195,7 @@ syms_of_keyboard (void)
   defsubr (&Sthis_command_keys_vector);
   defsubr (&Sthis_single_command_keys);
   defsubr (&Sthis_single_command_raw_keys);
+  defsubr (&Sset__this_command_keys);
   defsubr (&Sclear_this_command_keys);
   defsubr (&Ssuspend_emacs);
   defsubr (&Sabort_recursive_edit);

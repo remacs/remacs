@@ -548,7 +548,8 @@ x_update_window_begin (struct window *w)
   /* Hide the system caret during an update.  */
   if (w32_use_visible_system_caret && w32_system_caret_hwnd)
     {
-      SendMessage (w32_system_caret_hwnd, WM_EMACS_HIDE_CARET, 0, 0);
+      SendMessageTimeout (w32_system_caret_hwnd, WM_EMACS_HIDE_CARET, 0, 0,
+			  0, 6000, NULL);
     }
 
   w->output_cursor = w->cursor;
@@ -714,7 +715,8 @@ x_update_window_end (struct window *w, bool cursor_on_p,
      x_update_window_begin.  */
   if (w32_use_visible_system_caret && w32_system_caret_hwnd)
     {
-      SendMessage (w32_system_caret_hwnd, WM_EMACS_SHOW_CARET, 0, 0);
+      SendMessageTimeout (w32_system_caret_hwnd, WM_EMACS_SHOW_CARET, 0, 0,
+			  0, 6000, NULL);
     }
 }
 
@@ -3668,8 +3670,8 @@ static BOOL
 my_show_window (struct frame *f, HWND hwnd, int how)
 {
 #ifndef ATTACH_THREADS
-  return SendMessage (FRAME_W32_WINDOW (f), WM_EMACS_SHOWWINDOW,
-		      (WPARAM) hwnd, (LPARAM) how);
+  return SendMessageTimeout (FRAME_W32_WINDOW (f), WM_EMACS_SHOWWINDOW,
+			     (WPARAM) hwnd, (LPARAM) how, 0, 6000, NULL);
 #else
   return ShowWindow (hwnd, how);
 #endif
@@ -3687,7 +3689,8 @@ my_set_window_pos (HWND hwnd, HWND hwndAfter,
   pos.cx = cx;
   pos.cy = cy;
   pos.flags = flags;
-  SendMessage (hwnd, WM_EMACS_SETWINDOWPOS, (WPARAM) &pos, 0);
+  SendMessageTimeout (hwnd, WM_EMACS_SETWINDOWPOS, (WPARAM) &pos, 0,
+		      0, 6000, NULL);
 #else
   SetWindowPos (hwnd, hwndAfter, x, y, cx, cy, flags);
 #endif
@@ -3697,29 +3700,31 @@ my_set_window_pos (HWND hwnd, HWND hwndAfter,
 static void
 my_set_focus (struct frame * f, HWND hwnd)
 {
-  SendMessage (FRAME_W32_WINDOW (f), WM_EMACS_SETFOCUS,
-	       (WPARAM) hwnd, 0);
+  SendMessageTimeout (FRAME_W32_WINDOW (f), WM_EMACS_SETFOCUS,
+		      (WPARAM) hwnd, 0, 0, 6000, NULL);
 }
 #endif
 
 static void
 my_set_foreground_window (HWND hwnd)
 {
-  SendMessage (hwnd, WM_EMACS_SETFOREGROUND, (WPARAM) hwnd, 0);
+  SendMessageTimeout (hwnd, WM_EMACS_SETFOREGROUND, (WPARAM) hwnd, 0,
+		      0, 6000, NULL);
 }
 
 
 static void
 my_destroy_window (struct frame * f, HWND hwnd)
 {
-  SendMessage (FRAME_W32_WINDOW (f), WM_EMACS_DESTROYWINDOW,
-	       (WPARAM) hwnd, 0);
+  SendMessageTimeout (FRAME_W32_WINDOW (f), WM_EMACS_DESTROYWINDOW,
+		      (WPARAM) hwnd, 0, 0, 6000, NULL);
 }
 
 static void
 my_bring_window_to_top (HWND hwnd)
 {
-  SendMessage (hwnd, WM_EMACS_BRINGTOTOP, (WPARAM) hwnd, 0);
+  SendMessageTimeout (hwnd, WM_EMACS_BRINGTOTOP, (WPARAM) hwnd, 0,
+		      0, 6000, NULL);
 }
 
 /* Create a scroll bar and return the scroll bar vector for it.  W is
@@ -6538,7 +6543,8 @@ x_iconify_frame (struct frame *f)
   x_set_bitmap_icon (f);
 
   /* Simulate the user minimizing the frame.  */
-  SendMessage (FRAME_W32_WINDOW (f), WM_SYSCOMMAND, SC_MINIMIZE, 0);
+  SendMessageTimeout (FRAME_W32_WINDOW (f), WM_SYSCOMMAND, SC_MINIMIZE, 0,
+		      0, 6000, NULL);
 
   SET_FRAME_VISIBLE (f, 0);
   SET_FRAME_ICONIFIED (f, true);

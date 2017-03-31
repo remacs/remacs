@@ -260,7 +260,7 @@
 (defun calcFunc-lcm (a b)
   (let ((g (calcFunc-gcd a b)))
     (if (Math-numberp g)
-	(math-div (math-mul a b) g)
+	(math-div (math-abs (math-mul a b)) g)
       (list 'calcFunc-lcm a b))))
 
 (defun calcFunc-egcd (a b)   ; Knuth section 4.5.2

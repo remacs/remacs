@@ -918,11 +918,7 @@ IGNORES is a list of glob patterns."
   (grep-compute-defaults)
   (defvar grep-find-template)
   (defvar grep-highlight-matches)
-  ;; 'grep -E -foo' results in 'grep: oo: No such file or directory'.
-  ;; while 'grep -e -foo' inexplicably doesn't.
-  (when (eq (aref regexp 0) ?-)
-    (setq regexp (concat "\\" regexp)))
-  (let* ((grep-find-template (replace-regexp-in-string "-e " "-E "
+  (let* ((grep-find-template (replace-regexp-in-string "<C>" "<C> -E"
                                                        grep-find-template t t))
          (grep-highlight-matches nil)
          (command (xref--rgrep-command (xref--regexp-to-extended regexp)

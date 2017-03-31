@@ -882,8 +882,10 @@ If SCROLLBACK is non-nil, clear the scrollback contents."
   (interactive)
   (if scrollback
       (eshell/clear-scrollback)
-    (insert (make-string (window-size) ?\n))
-    (eshell-send-input)))
+    (let ((eshell-input-filter-functions
+           (remq 'eshell-add-to-history eshell-input-filter-functions)))
+      (insert (make-string (window-size) ?\n))
+      (eshell-send-input))))
 
 (defun eshell/clear-scrollback ()
   "Clear the scrollback content of the eshell window."

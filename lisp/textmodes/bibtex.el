@@ -317,6 +317,20 @@ If parsing fails, try to set this variable to nil."
       ("organization" "Sponsoring organization of the conference")
       ("publisher" "Publishing company, its location")
       ("note")))
+    ("Conference" "Article in Conference Proceedings" ; same as InProceedings
+     (("author")
+      ("title" "Title of the article in proceedings (BibTeX converts it to lowercase)"))
+     (("booktitle" "Name of the conference proceedings")
+      ("year"))
+     (("editor")
+      ("volume" "Volume of the conference proceedings in the series")
+      ("number" "Number of the conference proceedings in a small series (overwritten by volume)")
+      ("series" "Series in which the conference proceedings appeared")
+      ("pages" "Pages in the conference proceedings")
+      ("month") ("address")
+      ("organization" "Sponsoring organization of the conference")
+      ("publisher" "Publishing company, its location")
+      ("note")))
     ("InCollection" "Article in a Collection"
      (("author")
       ("title" "Title of the article in book (BibTeX converts it to lowercase)")
@@ -444,7 +458,7 @@ which is called to determine the initial content of the field.
 ALTERNATIVE if non-nil is an integer that numbers sets of
 alternatives, starting from zero."
   :group 'BibTeX
-  :version "24.1"
+  :version "26.1"                       ; add Conference
   :type 'bibtex-entry-alist)
 (put 'bibtex-BibTeX-entry-alist 'risky-local-variable t)
 

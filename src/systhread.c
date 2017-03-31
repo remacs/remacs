@@ -39,11 +39,6 @@ sys_mutex_unlock (sys_mutex_t *m)
 }
 
 void
-sys_mutex_destroy (sys_mutex_t *m)
-{
-}
-
-void
 sys_cond_init (sys_cond_t *c)
 {
   *c = 0;
@@ -73,12 +68,6 @@ sys_thread_t
 sys_thread_self (void)
 {
   return 0;
-}
-
-int
-sys_thread_equal (sys_thread_t x, sys_thread_t y)
-{
-  return x == y;
 }
 
 int
@@ -120,12 +109,6 @@ sys_mutex_unlock (sys_mutex_t *mutex)
 }
 
 void
-sys_mutex_destroy (sys_mutex_t *mutex)
-{
-  pthread_mutex_destroy (mutex);
-}
-
-void
 sys_cond_init (sys_cond_t *cond)
 {
   pthread_cond_init (cond, NULL);
@@ -159,12 +142,6 @@ sys_thread_t
 sys_thread_self (void)
 {
   return pthread_self ();
-}
-
-int
-sys_thread_equal (sys_thread_t one, sys_thread_t two)
-{
-  return pthread_equal (one, two);
 }
 
 int
@@ -227,17 +204,6 @@ void
 sys_mutex_unlock (sys_mutex_t *mutex)
 {
   LeaveCriticalSection ((LPCRITICAL_SECTION)mutex);
-}
-
-void
-sys_mutex_destroy (sys_mutex_t *mutex)
-{
-  /* FIXME: According to MSDN, deleting a critical session that is
-     owned by a thread leaves the other threads waiting for the
-     critical session in an undefined state.  Posix docs seem to say
-     the same about pthread_mutex_destroy.  Do we need to protect
-     against such calamities?  */
-  DeleteCriticalSection ((LPCRITICAL_SECTION)mutex);
 }
 
 void
@@ -344,12 +310,6 @@ sys_thread_t
 sys_thread_self (void)
 {
   return (sys_thread_t) GetCurrentThreadId ();
-}
-
-int
-sys_thread_equal (sys_thread_t one, sys_thread_t two)
-{
-  return one == two;
 }
 
 static thread_creation_function *thread_start_address;

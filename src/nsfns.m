@@ -2074,10 +2074,10 @@ static int
 ns_do_applescript (Lisp_Object script, Lisp_Object *result)
 {
   NSAppleEventDescriptor *desc;
-  NSDictionary* errorDict;
-  NSAppleEventDescriptor* returnDescriptor = NULL;
+  NSDictionary *errorDict;
+  NSAppleEventDescriptor *returnDescriptor = NULL;
 
-  NSAppleScript* scriptObject =
+  NSAppleScript *scriptObject =
     [[NSAppleScript alloc] initWithSource:
 			     [NSString stringWithUTF8String: SSDATA (script)]];
 

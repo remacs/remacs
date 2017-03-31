@@ -185,8 +185,8 @@ but you can change the behavior to suit your needs by fiddling with the
 @vindex message-dont-reply-to-names
 Addresses that match the @code{message-dont-reply-to-names} regular
 expression (or list of regular expressions or a predicate function)
-will be removed from the @code{Cc} header. A value of @code{nil} means
-exclude your name only.
+will be removed from the @code{Cc} header.  A value of @code{nil} means
+to exclude only your email address.
 
 @vindex message-prune-recipient-rules
 @code{message-prune-recipient-rules} is used to prune the addresses

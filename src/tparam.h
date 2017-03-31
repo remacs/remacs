@@ -36,4 +36,8 @@ extern char PC;
 extern char *BC;
 extern char *UP;
 
+#ifdef TERMINFO
+char *tigetstr(const char *);
+#endif
+
 #endif /* EMACS_TPARAM_H */
