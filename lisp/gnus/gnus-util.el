@@ -84,11 +84,6 @@ This is a compatibility function for different Emacsen."
   (declare (obsolete replace-regexp-in-string "26.1"))
   (replace-regexp-in-string regexp newtext string nil literal))
 
-(defun gnus-boundp (variable)
-  "Return non-nil if VARIABLE is bound and non-nil."
-  (and (boundp variable)
-       (symbol-value variable)))
-
 (defmacro gnus-eval-in-buffer-window (buffer &rest forms)
   "Pop to BUFFER, evaluate FORMS, and then return to the original window."
   (let ((tempvar (make-symbol "GnusStartBufferWindow"))
