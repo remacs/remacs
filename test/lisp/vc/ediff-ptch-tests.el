@@ -41,25 +41,28 @@ index 6a07f80..6e8e947 100644
 
 (ert-deftest ediff-ptch-test-bug26084 ()
   "Test for http://debbugs.gnu.org/26084 ."
-  (let* ((tmpdir temporary-file-directory)
-         (foo (expand-file-name "foo" tmpdir))
-         (patch (expand-file-name "foo.diff" tmpdir))
-         (qux (expand-file-name "qux.txt" foo))
-         (bar (expand-file-name "bar.txt" foo))
-         (cmd "
-mkdir -p foo
-cd foo
-echo 'qux here' > qux.txt
-echo 'bar here' > bar.txt
-git init
-git add . && git commit -m 'Test repository.'
-echo 'foo here' > qux.txt
-echo 'foo here' > bar.txt
-git diff > ../foo.diff
-git reset --hard HEAD
-"))
-    (setq default-directory tmpdir)
-    (call-process-shell-command cmd)
+  (skip-unless (executable-find "git"))
+  (skip-unless (executable-find ediff-patch-program))
+  (let* ((tmpdir (make-temp-file "ediff-ptch-test" t))
+         (default-directory (file-name-as-directory tmpdir))
+         (patch (make-temp-file "ediff-ptch-test"))
+         (qux (expand-file-name "qux.txt" tmpdir))
+         (bar (expand-file-name "bar.txt" tmpdir)))
+    (with-temp-buffer
+      (insert "qux here\n")
+      (write-region nil nil qux nil 'silent)
+      (erase-buffer)
+      (insert "bar here\n")
+      (write-region nil nil bar nil 'silent))
+    (call-process "git" nil nil nil "init")
+    (call-process "git" nil nil nil "add" ".")
+    (call-process "git" nil nil nil "commit" "-m" "Test repository.")
+    (with-temp-buffer
+      (insert "foo here\n")
+      (write-region nil nil qux nil 'silent)
+      (write-region nil nil bar nil 'silent))
+    (call-process "git" nil `(:file ,patch) nil "diff")
+    (call-process "git" nil nil nil "reset" "--hard" "HEAD")
     (find-file patch)
     (unwind-protect
         (let* ((info
@@ -91,7 +94,7 @@ git reset --hard HEAD
                                  (with-temp-buffer
                                    (insert-file-contents (concat x ediff-backup-extension))
                                    (buffer-string))))))
-      (delete-directory foo 'recursive)
+      (delete-directory tmpdir 'recursive)
       (delete-file patch))))
 
 
