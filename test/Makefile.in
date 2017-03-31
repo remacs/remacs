@@ -33,6 +33,7 @@ SHELL = @SHELL@
 srcdir = @srcdir@
 VPATH = $(srcdir)
 
+FIND_DELETE = @FIND_DELETE@
 MKDIR_P = @MKDIR_P@
 
 SEPCHAR = @SEPCHAR@
@@ -125,11 +126,9 @@ endif
 
 ELFILES = $(shell find ${srcdir} -path "${srcdir}/manual" -prune -o \
 		-path "*resources" -prune -o -name "*el" -print)
-## .elc files may be in a different directory for out of source builds
-ELCFILES = $(patsubst %.el,%.elc, \
+## .log files may be in a different directory for out of source builds
+LOGFILES = $(patsubst %.el,%.log, \
 		$(patsubst $(srcdir)%,.%,$(ELFILES)))
-LOGFILES = $(patsubst %.elc,%.log,${ELCFILES})
-LOGSAVEFILES  = $(patsubst %.elc,%.log~,${ELCFILES})
 TESTS = $(subst ${srcdir}/,,$(LOGFILES:.log=))
 
 ## If we have to interrupt a hanging test, preserve the log so we can
@@ -193,11 +192,11 @@ mostlyclean:
 	rm -f *.tmp
 
 clean:
-	-rm -f ${LOGFILES} ${LOGSAVEFILES}
-	-rm make-test-deps.mk
+	find . '(' -name '*.log' -o -name '*.log~' ')' $(FIND_DELETE)
+	rm -f make-test-deps.mk
 
 bootstrap-clean: clean
-	-rm -f ${ELCFILES}
+	find $(srcdir) -name '*.elc' $(FIND_DELETE)
 
 distclean: clean
 	rm -f Makefile
