@@ -493,4 +493,13 @@
   (should (cl-typep '* 'cl-lib-test-type))
   (should-not (cl-typep 1 'cl-lib-test-type)))
 
+(ert-deftest cl-lib-symbol-macrolet ()
+  (should (equal (cl-flet ((f (x) (+ x 5)))
+                   (let ((x 5))
+                     (f (+ x 6))))
+                 (cl-symbol-macrolet ((f (+ x 6)))
+                   (cl-flet ((f (x) (+ x 5)))
+                     (let ((x 5))
+                       (f f)))))))
+
 ;;; cl-lib.el ends here
