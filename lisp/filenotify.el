@@ -28,6 +28,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'subr-x)
 
 (defconst file-notify--library
   (cond
@@ -155,9 +156,9 @@ EVENT is the cadr of the event in `file-notify-handle-event'
           ;; Send pending event, if it doesn't match.
           (when (and file-notify--pending-event
                      ;; The cookie doesn't match.
-                     (not (eq (file-notify--event-cookie
-                               (car file-notify--pending-event))
-                              (file-notify--event-cookie event)))
+                     (not (equal (file-notify--event-cookie
+                                  (car file-notify--pending-event))
+                                 (file-notify--event-cookie event)))
                      (or
                       ;; inotify.
                       (and (eq (nth 1 (car file-notify--pending-event))
