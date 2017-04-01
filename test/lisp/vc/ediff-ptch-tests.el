@@ -47,22 +47,25 @@ index 6a07f80..6e8e947 100644
          (default-directory (file-name-as-directory tmpdir))
          (patch (make-temp-file "ediff-ptch-test"))
          (qux (expand-file-name "qux.txt" tmpdir))
-         (bar (expand-file-name "bar.txt" tmpdir)))
+         (bar (expand-file-name "bar.txt" tmpdir))
+         (git-program (executable-find "git")))
+    ;; Create repository.
     (with-temp-buffer
       (insert "qux here\n")
       (write-region nil nil qux nil 'silent)
       (erase-buffer)
       (insert "bar here\n")
       (write-region nil nil bar nil 'silent))
-    (call-process "git" nil nil nil "init")
-    (call-process "git" nil nil nil "add" ".")
-    (call-process "git" nil nil nil "commit" "-m" "Test repository.")
+    (call-process git-program nil nil nil "init")
+    (call-process git-program nil nil nil "add" ".")
+    (call-process git-program nil nil nil "commit" "-m" "Test repository.")
+    ;; Update repo., save the diff and reset to initial state.
     (with-temp-buffer
       (insert "foo here\n")
       (write-region nil nil qux nil 'silent)
       (write-region nil nil bar nil 'silent))
-    (call-process "git" nil `(:file ,patch) nil "diff")
-    (call-process "git" nil nil nil "reset" "--hard" "HEAD")
+    (call-process git-program nil `(:file ,patch) nil "diff")
+    (call-process git-program nil nil nil "reset" "--hard" "HEAD")
     (find-file patch)
     (unwind-protect
         (let* ((info
@@ -79,13 +82,12 @@ index 6a07f80..6e8e947 100644
           (dolist (x (list (cons patch1 bar) (cons patch2 qux)))
             (with-temp-buffer
               (insert (car x))
-              (call-shell-region (point-min)
-                                 (point-max)
-                                 (format "%s %s %s %s"
-                                         ediff-patch-program
-                                         ediff-patch-options
-                                         ediff-backup-specs
-                                         (cdr x)))))
+              (call-process-region (point-min)
+                                   (point-max)
+                                   ediff-patch-program
+                                   nil nil nil
+                                   "-f" "-z.orig" "-b"
+                                   (cdr x))))
           ;; Check backup files were saved correctly.
           (dolist (x (list qux bar))
             (should-not (string= (with-temp-buffer
