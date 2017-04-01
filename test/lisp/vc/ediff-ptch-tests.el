@@ -86,18 +86,23 @@ index 6a07f80..6e8e947 100644
                                    (point-max)
                                    ediff-patch-program
                                    nil nil nil
-                                   "-f" "-z.orig" "-b"
-                                   (cdr x))))
+                                   "-b" (cdr x))))
           ;; Check backup files were saved correctly.
           (dolist (x (list qux bar))
-            (should-not (string= (with-temp-buffer
-                                   (insert-file-contents x)
-                                   (buffer-string))
-                                 (with-temp-buffer
-                                   (insert-file-contents (concat x ediff-backup-extension))
-                                   (buffer-string))))))
-      (delete-directory tmpdir 'recursive)
-      (delete-file patch))))
+            (let ((backup
+                   (car
+                    (directory-files
+                     tmpdir 'full
+                     (concat (file-name-nondirectory x) ".")))))
+              (should-not
+               (string= (with-temp-buffer
+                          (insert-file-contents x)
+                          (buffer-string))
+                        (with-temp-buffer
+                          (insert-file-contents backup)
+                          (buffer-string))))))
+          (delete-directory tmpdir 'recursive)
+          (delete-file patch)))))
 
 
 (provide 'ediff-ptch-tests)
