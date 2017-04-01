@@ -1058,6 +1058,10 @@ its window gets deleted by 'delete-other-windows'.
 *** New command 'window-swap-states' swaps the states of two live
 windows.
 
++++
+*** New error type 'user-search-failed' like 'search-failed' but
+avoids debugger like 'user-error'.
+
 
 * Changes in Emacs 26.1 on Non-Free Operating Systems
 

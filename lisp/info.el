@@ -1998,20 +1998,20 @@ If DIRECTION is `backward', search in the reverse direction."
                   Info-isearch-initial-node
                   bound
                   (and found (> found opoint-min) (< found opoint-max)))
-	(user-error "Search failed: `%s' (end of node)" regexp))
+	(signal 'user-search-failed (list regexp "(end of node)")))
 
       ;; If no subfiles, give error now.
       (unless (or found Info-current-subfile)
         (if isearch-mode
-            (user-error "Search failed: `%s' (end of manual)" regexp)
+            (signal 'user-search-failed (list regexp "end of manual"))
           (let ((search-spaces-regexp Info-search-whitespace-regexp))
             (unless (if backward
                         (re-search-backward regexp nil t)
                       (re-search-forward regexp nil t))
-              (user-error "Search failed: `%s'" regexp)))))
+              (signal 'user-seach-failed (list regexp))))))
 
       (if (and bound (not found))
-          (user-error "Search failed: `%s'" regexp))
+          (signal 'user-search-failed (list regexp)))
 
       (unless (or found bound)
 	(unwind-protect
@@ -2055,8 +2055,8 @@ If DIRECTION is `backward', search in the reverse direction."
 		    (setq list nil)))
 	      (if found
 		  (message "")
-                (user-error "Search failed: `%s'%s"
-                            regexp (if isearch-mode " (end of manual)" ""))))
+                (signal 'user-search-failed
+                        `(,regexp ,@(if isearch-mode '("end of manual"))))))
 	  (if (not found)
 	      (progn (Info-read-subfile osubfile)
 		     (goto-char opoint)

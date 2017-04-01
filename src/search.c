@@ -3389,6 +3389,10 @@ syms_of_search (void)
   /* Error condition used for failing searches.  */
   DEFSYM (Qsearch_failed, "search-failed");
 
+  /* Error condition used for failing searches started by user, i.e.,
+     where failure should not invoke the debugger.  */
+  DEFSYM (Quser_search_failed, "user-search-failed");
+
   /* Error condition signaled when regexp compile_pattern fails.  */
   DEFSYM (Qinvalid_regexp, "invalid-regexp");
 
@@ -3396,6 +3400,12 @@ syms_of_search (void)
 	listn (CONSTYPE_PURE, 2, Qsearch_failed, Qerror));
   Fput (Qsearch_failed, Qerror_message,
 	build_pure_c_string ("Search failed"));
+
+  Fput (Quser_search_failed, Qerror_conditions,
+        listn (CONSTYPE_PURE, 4,
+               Quser_search_failed, Quser_error, Qsearch_failed, Qerror));
+  Fput (Quser_search_failed, Qerror_message,
+        build_pure_c_string ("Search failed"));
 
   Fput (Qinvalid_regexp, Qerror_conditions,
 	listn (CONSTYPE_PURE, 2, Qinvalid_regexp, Qerror));
