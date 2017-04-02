@@ -5314,6 +5314,25 @@ class SomeClass:
       (or enabled (hs-minor-mode -1)))))
 
 
+(ert-deftest python-tests--python-nav-end-of-statement--infloop ()
+  "Checks that `python-nav-end-of-statement' doesn't infloop in a
+buffer with overlapping strings."
+  (python-tests-with-temp-buffer "''' '\n''' ' '\n"
+    (syntax-propertize (point-max))
+    ;; Create a situation where strings nominally overlap.  This
+    ;; shouldn't happen in practice, but apparently it can happen when
+    ;; a package calls `syntax-ppss' in a narrowed buffer during JIT
+    ;; lock.
+    (put-text-property 4 5 'syntax-table (string-to-syntax "|"))
+    (remove-text-properties 8 9 '(syntax-table nil))
+    (goto-char 4)
+    (setq-local syntax-propertize-function nil)
+    ;; The next form should not infloop.  We have to disable
+    ;; ‘debug-on-error’ so that ‘cl-assert’ doesn’t call the debugger.
+    (should-error (let ((debug-on-error nil))
+                    (python-nav-end-of-statement)))
+    (should (eolp))))
+
 
 (provide 'python-tests)
 

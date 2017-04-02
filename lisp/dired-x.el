@@ -332,46 +332,73 @@ See also the functions:
 
 ;;; EXTENSION MARKING FUNCTIONS.
 
+(defun dired--mark-suffix-interactive-spec ()
+  (let* ((default
+           (let ((file (dired-get-filename nil t)))
+             (when file
+               (file-name-extension file))))
+         (suffix
+          (read-string (format "%s extension%s: "
+                               (if (equal current-prefix-arg '(4))
+                                   "UNmarking"
+                                 "Marking")
+                               (if default
+                                   (format " (default %s)" default)
+                                 "")) nil nil default))
+         (marker
+          (pcase current-prefix-arg
+            ('(4) ?\s)
+            ('(16)
+             (let* ((dflt (char-to-string dired-marker-char))
+                    (input (read-string
+                            (format
+                             "Marker character to use (default %s): " dflt)
+                            nil nil dflt)))
+               (aref input 0)))
+            (_ dired-marker-char))))
+    (list suffix marker)))
+
 ;; Mark files with some extension.
 (defun dired-mark-extension (extension &optional marker-char)
   "Mark all files with a certain EXTENSION for use in later commands.
-A `.' is *not* automatically prepended to the string entered.
+A `.' is automatically prepended to EXTENSION when not present.
 EXTENSION may also be a list of extensions instead of a single one.
 Optional MARKER-CHAR is marker to use.
 Interactively, ask for EXTENSION.
 Prefixed with one C-u, unmark files instead.
 Prefixed with two C-u's, prompt for MARKER-CHAR and mark files with it."
-  (interactive
-   (let* ((default
-            (let ((file (dired-get-filename nil t)))
-              (when file
-                (file-name-extension file))))
-          (suffix
-           (read-string (format "%s extension%s: "
-                                (if (equal current-prefix-arg '(4))
-                                    "UNmarking"
-                                  "Marking")
-                                (if default
-                                    (format " (default %s)" default)
-                                  "")) nil nil default))
-          (marker
-           (pcase current-prefix-arg
-             ('(4) ?\s)
-             ('(16)
-              (let* ((dflt (char-to-string dired-marker-char))
-                     (input (read-string
-                             (format
-                              "Marker character to use (default %s): " dflt)
-                             nil nil dflt)))
-                (aref input 0)))
-             (_ dired-marker-char))))
-     (list suffix marker)))
-  (or (listp extension)
-      (setq extension (list extension)))
+  (interactive (dired--mark-suffix-interactive-spec))
+  (unless (listp extension)
+    (setq extension (list extension)))
   (dired-mark-files-regexp
    (concat ".";; don't match names with nothing but an extension
            "\\("
-           (mapconcat 'regexp-quote extension "\\|")
+           (mapconcat
+            (lambda (x)
+              (regexp-quote
+               (if (string-prefix-p "." x) x (concat "." x))))
+            extension "\\|")
+           "\\)$")
+   marker-char))
+
+;; Mark files ending with some suffix.
+(defun dired-mark-suffix (suffix &optional marker-char)
+  "Mark all files with a certain SUFFIX for use in later commands.
+A `.' is *not* automatically prepended to the string entered;  see
+also `dired-mark-extension', which is similar but automatically
+prepends `.' when not present.
+SUFFIX may also be a list of suffixes instead of a single one.
+Optional MARKER-CHAR is marker to use.
+Interactively, ask for SUFFIX.
+Prefixed with one C-u, unmark files instead.
+Prefixed with two C-u's, prompt for MARKER-CHAR and mark files with it."
+  (interactive (dired--mark-suffix-interactive-spec))
+  (unless (listp suffix)
+    (setq suffix (list suffix)))
+  (dired-mark-files-regexp
+   (concat ".";; don't match names with nothing but an extension
+           "\\("
+           (mapconcat 'regexp-quote suffix "\\|")
            "\\)$")
    marker-char))
 

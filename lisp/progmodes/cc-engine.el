@@ -6243,9 +6243,9 @@ comment at the start of cc-engine.el for more info."
 		    (eq (char-before) ?<))
 	(c-backward-token-2)
 	(when (eq (char-after) ?<)
-	  (c-clear-<-pair-props-if-match-after beg)))
+	  (c-clear-<-pair-props-if-match-after beg)
+	  (setq new-beg (point))))
       (c-forward-syntactic-ws)
-      (setq new-beg (point))
 
       ;; ...Then the ones with < before end and > after end.
       (goto-char (if end-lit-limits (cdr end-lit-limits) end))
@@ -6254,9 +6254,9 @@ comment at the start of cc-engine.el for more info."
 		  (eq (char-before) ?>))
 	(c-end-of-current-token)
 	(when (eq (char-before) ?>)
-	  (c-clear->-pair-props-if-match-before end (1- (point)))))
+	  (c-clear->-pair-props-if-match-before end (1- (point)))
+	  (setq new-end (point))))
       (c-backward-syntactic-ws)
-      (setq new-end (point))
 
       ;; Extend the fontification region, if needed.
       (and new-beg
@@ -8863,7 +8863,29 @@ comment at the start of cc-engine.el for more info."
 		 ;; it as a declaration if "a" has been used as a type
 		 ;; somewhere else (if it's a known type we won't get here).
 		 (setq maybe-expression t)
-		 (throw 'at-decl-or-cast t)))
+		 (throw 'at-decl-or-cast t))
+
+	       ;; CASE 17.5
+	       (when (and c-asymmetry-fontification-flag
+			  got-prefix-before-parens
+			  at-type
+			  (or (not got-suffix)
+			      at-decl-start))
+		 (let ((space-before-id
+			(save-excursion
+			  (goto-char name-start)
+			  (or (bolp) (memq (char-before) '(?\  ?\t)))))
+		       (space-after-type
+			(save-excursion
+			  (goto-char type-start)
+			  (and (c-forward-type)
+			       (progn (c-backward-syntactic-ws) t)
+			       (or (eolp)
+				   (memq (char-after) '(?\  ?\t)))))))
+		   (when (not (eq (not space-before-id)
+				  (not space-after-type)))
+		     (setq maybe-expression t)
+		     (throw 'at-decl-or-cast t)))))
 
 	   ;; CASE 18
 	   (when (and (not (memq context '(nil top)))

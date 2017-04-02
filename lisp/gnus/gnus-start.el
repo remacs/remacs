@@ -3196,7 +3196,7 @@ If this variable is nil, don't do anything."
 
 (defun gnus-display-time-event-handler ()
   (if (and (fboundp 'display-time-event-handler)
-	   (gnus-boundp 'display-time-timer))
+	   (bound-and-true-p display-time-timer))
       (display-time-event-handler)))
 
 (defun gnus-check-reasonable-setup ()

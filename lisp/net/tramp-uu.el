@@ -1,4 +1,4 @@
-;;; tramp-uu.el --- uuencode in Lisp
+;;; tramp-uu.el --- uuencode in Lisp  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2002-2017 Free Software Foundation, Inc.
 

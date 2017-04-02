@@ -38,7 +38,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 static void sort_vector_copy (Lisp_Object, ptrdiff_t,
 			      Lisp_Object *restrict, Lisp_Object *restrict);
-static bool internal_equal (Lisp_Object, Lisp_Object, int, bool, Lisp_Object);
+enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
+static bool internal_equal (Lisp_Object, Lisp_Object,
+			    enum equal_kind, int, Lisp_Object);
 
 DEFUN ("identity", Fidentity, Sidentity, 1, 1, 0,
        doc: /* Return the argument unchanged.  */
@@ -1377,7 +1379,7 @@ The value is actually the tail of LIST whose car is ELT.  */)
   FOR_EACH_TAIL (tail)
     {
       Lisp_Object tem = XCAR (tail);
-      if (FLOATP (tem) && internal_equal (elt, tem, 0, 0, Qnil))
+      if (FLOATP (tem) && equal_no_quit (elt, tem))
 	return tail;
     }
   CHECK_LIST_END (tail, list);
@@ -1428,7 +1430,8 @@ The value is actually the first element of LIST whose car equals KEY.  */)
 }
 
 /* Like Fassoc but never report an error and do not allow quits.
-   Use only on objects known to be non-circular lists.  */
+   Use only on keys and lists known to be non-circular, and on keys
+   that are not too deep and are not window configurations.  */
 
 Lisp_Object
 assoc_no_quit (Lisp_Object key, Lisp_Object list)
@@ -1437,7 +1440,7 @@ assoc_no_quit (Lisp_Object key, Lisp_Object list)
     {
       Lisp_Object car = XCAR (list);
       if (CONSP (car)
-	  && (EQ (XCAR (car), key) || !NILP (Fequal (XCAR (car), key))))
+	  && (EQ (XCAR (car), key) || equal_no_quit (XCAR (car), key)))
 	return car;
     }
   return Qnil;
@@ -2085,7 +2088,7 @@ Floating-point numbers of equal value are `eql', but they may not be `eq'.  */)
   (Lisp_Object obj1, Lisp_Object obj2)
 {
   if (FLOATP (obj1))
-    return internal_equal (obj1, obj2, 0, 0, Qnil) ? Qt : Qnil;
+    return equal_no_quit (obj1, obj2) ? Qt : Qnil;
   else
     return EQ (obj1, obj2) ? Qt : Qnil;
 }
@@ -2098,31 +2101,50 @@ Vectors and strings are compared element by element.
 Numbers are compared by value, but integers cannot equal floats.
  (Use `=' if you want integers and floats to be able to be equal.)
 Symbols must match exactly.  */)
-  (register Lisp_Object o1, Lisp_Object o2)
+  (Lisp_Object o1, Lisp_Object o2)
 {
-  return internal_equal (o1, o2, 0, 0, Qnil) ? Qt : Qnil;
+  return internal_equal (o1, o2, EQUAL_PLAIN, 0, Qnil) ? Qt : Qnil;
 }
 
 DEFUN ("equal-including-properties", Fequal_including_properties, Sequal_including_properties, 2, 2, 0,
        doc: /* Return t if two Lisp objects have similar structure and contents.
 This is like `equal' except that it compares the text properties
 of strings.  (`equal' ignores text properties.)  */)
-  (register Lisp_Object o1, Lisp_Object o2)
+  (Lisp_Object o1, Lisp_Object o2)
 {
-  return internal_equal (o1, o2, 0, 1, Qnil) ? Qt : Qnil;
+  return (internal_equal (o1, o2, EQUAL_INCLUDING_PROPERTIES, 0, Qnil)
+	  ? Qt : Qnil);
 }
 
-/* DEPTH is current depth of recursion.  Signal an error if it
-   gets too deep.
-   PROPS means compare string text properties too.  */
+/* Return true if O1 and O2 are equal.  Do not quit or check for cycles.
+   Use this only on arguments that are cycle-free and not too large and
+   are not window configurations.  */
+
+bool
+equal_no_quit (Lisp_Object o1, Lisp_Object o2)
+{
+  return internal_equal (o1, o2, EQUAL_NO_QUIT, 0, Qnil);
+}
+
+/* Return true if O1 and O2 are equal.  EQUAL_KIND specifies what kind
+   of equality test to use: if it is EQUAL_NO_QUIT, do not check for
+   cycles or large arguments or quits; if EQUAL_PLAIN, do ordinary
+   Lisp equality; and if EQUAL_INCLUDING_PROPERTIES, do
+   equal-including-properties.
+
+   If DEPTH is the current depth of recursion; signal an error if it
+   gets too deep.  HT is a hash table used to detect cycles; if nil,
+   it has not been allocated yet.  But ignore the last two arguments
+   if EQUAL_KIND == EQUAL_NO_QUIT.  */
 
 static bool
-internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
-		Lisp_Object ht)
+internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
+		int depth, Lisp_Object ht)
 {
  tail_recurse:
   if (depth > 10)
     {
+      eassert (equal_kind != EQUAL_NO_QUIT);
       if (depth > 200)
 	error ("Stack overflow in equal");
       if (NILP (ht))
@@ -2138,7 +2160,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 	      { /* `o1' was seen already.  */
 		Lisp_Object o2s = HASH_VALUE (h, i);
 		if (!NILP (Fmemq (o2, o2s)))
-		  return 1;
+		  return true;
 		else
 		  set_hash_value_slot (h, i, Fcons (o2, o2s));
 	      }
@@ -2150,9 +2172,9 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
     }
 
   if (EQ (o1, o2))
-    return 1;
+    return true;
   if (XTYPE (o1) != XTYPE (o2))
-    return 0;
+    return false;
 
   switch (XTYPE (o1))
     {
@@ -2166,31 +2188,42 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
       }
 
     case Lisp_Cons:
-      {
-	FOR_EACH_TAIL (o1)
+      if (equal_kind == EQUAL_NO_QUIT)
+	for (; CONSP (o1); o1 = XCDR (o1))
 	  {
 	    if (! CONSP (o2))
 	      return false;
-	    if (! internal_equal (XCAR (o1), XCAR (o2), depth + 1, props, ht))
+	    if (! equal_no_quit (XCAR (o1), XCAR (o2)))
 	      return false;
 	    o2 = XCDR (o2);
 	    if (EQ (XCDR (o1), o2))
 	      return true;
 	  }
-	depth++;
-	goto tail_recurse;
-      }
+      else
+	FOR_EACH_TAIL (o1)
+	  {
+	    if (! CONSP (o2))
+	      return false;
+	    if (! internal_equal (XCAR (o1), XCAR (o2),
+				  equal_kind, depth + 1, ht))
+	      return false;
+	    o2 = XCDR (o2);
+	    if (EQ (XCDR (o1), o2))
+	      return true;
+	  }
+      depth++;
+      goto tail_recurse;
 
     case Lisp_Misc:
       if (XMISCTYPE (o1) != XMISCTYPE (o2))
-	return 0;
+	return false;
       if (OVERLAYP (o1))
 	{
 	  if (!internal_equal (OVERLAY_START (o1), OVERLAY_START (o2),
-			       depth + 1, props, ht)
+			       equal_kind, depth + 1, ht)
 	      || !internal_equal (OVERLAY_END (o1), OVERLAY_END (o2),
-				  depth + 1, props, ht))
-	    return 0;
+				  equal_kind, depth + 1, ht))
+	    return false;
 	  o1 = XOVERLAY (o1)->plist;
 	  o2 = XOVERLAY (o2)->plist;
 	  depth++;
@@ -2212,20 +2245,23 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 	   actually checks that the objects have the same type as well as the
 	   same size.  */
 	if (ASIZE (o2) != size)
-	  return 0;
+	  return false;
 	/* Boolvectors are compared much like strings.  */
 	if (BOOL_VECTOR_P (o1))
 	  {
 	    EMACS_INT size = bool_vector_size (o1);
 	    if (size != bool_vector_size (o2))
-	      return 0;
+	      return false;
 	    if (memcmp (bool_vector_data (o1), bool_vector_data (o2),
 			bool_vector_bytes (size)))
-	      return 0;
-	    return 1;
+	      return false;
+	    return true;
 	  }
 	if (WINDOW_CONFIGURATIONP (o1))
-	  return compare_window_configurations (o1, o2, 0);
+	  {
+	    eassert (equal_kind != EQUAL_NO_QUIT);
+	    return compare_window_configurations (o1, o2, false);
+	  }
 
 	/* Aside from them, only true vectors, char-tables, compiled
 	   functions, and fonts (font-spec, font-entity, font-object)
@@ -2234,7 +2270,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 	  {
 	    if (((size & PVEC_TYPE_MASK) >> PSEUDOVECTOR_AREA_BITS)
 		< PVEC_COMPILED)
-	      return 0;
+	      return false;
 	    size &= PSEUDOVECTOR_SIZE_MASK;
 	  }
 	for (i = 0; i < size; i++)
@@ -2242,29 +2278,30 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 	    Lisp_Object v1, v2;
 	    v1 = AREF (o1, i);
 	    v2 = AREF (o2, i);
-	    if (!internal_equal (v1, v2, depth + 1, props, ht))
-	      return 0;
+	    if (!internal_equal (v1, v2, equal_kind, depth + 1, ht))
+	      return false;
 	  }
-	return 1;
+	return true;
       }
       break;
 
     case Lisp_String:
       if (SCHARS (o1) != SCHARS (o2))
-	return 0;
+	return false;
       if (SBYTES (o1) != SBYTES (o2))
-	return 0;
+	return false;
       if (memcmp (SDATA (o1), SDATA (o2), SBYTES (o1)))
-	return 0;
-      if (props && !compare_string_intervals (o1, o2))
-	return 0;
-      return 1;
+	return false;
+      if (equal_kind == EQUAL_INCLUDING_PROPERTIES
+	  && !compare_string_intervals (o1, o2))
+	return false;
+      return true;
 
     default:
       break;
     }
 
-  return 0;
+  return false;
 }
 
 

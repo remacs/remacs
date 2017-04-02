@@ -259,6 +259,24 @@ This will generate compile-time constants from BINDINGS."
                     (funcall loop bindings)))))))
     (funcall loop bindings)))
 
+(defun elisp--font-lock-backslash ()
+  (let* ((beg0 (match-beginning 0))
+         (end0 (match-end 0))
+         (ppss (save-excursion (syntax-ppss beg0))))
+    (and (nth 3 ppss)                  ;Inside a string.
+         (not (nth 5 ppss))            ;The \ is not itself \-escaped.
+         ;; Don't highlight the \( introduced because of
+         ;; `open-paren-in-column-0-is-defun-start'.
+         (not (eq ?\n (char-before beg0)))
+         (equal (ignore-errors
+                  (car (read-from-string
+                        (format "\"%s\""
+                                (buffer-substring-no-properties
+                                 beg0 end0)))))
+                (buffer-substring-no-properties (1+ beg0) end0))
+         `(face ,font-lock-warning-face
+                help-echo "This \\ has no effect"))))
+
 (let-when-compile
     ((lisp-fdefs '("defmacro" "defun"))
      (lisp-vdefs '("defvar"))
@@ -413,17 +431,7 @@ This will generate compile-time constants from BINDINGS."
           (1 font-lock-constant-face prepend))
          ;; Ineffective backslashes (typically in need of doubling).
          ("\\(\\\\\\)\\([^\"\\]\\)"
-          (1 (let ((ppss (save-excursion (syntax-ppss (match-beginning 0)))))
-               (and (nth 3 ppss)        ;Inside a string.
-                    (not (nth 5 ppss))  ;The \ is not itself \-escaped.
-                    (equal (ignore-errors
-                             (car (read-from-string
-                                   (format "\"%s\""
-                                           (match-string-no-properties 0)))))
-                           (match-string-no-properties 2))
-                    `(face ,font-lock-warning-face
-                           help-echo "This \\ has no effect")))
-             prepend))
+          (1 (elisp--font-lock-backslash) prepend))
          ;; Words inside ‘’ and `' tend to be symbol names.
          (,(concat "[`‘]\\(\\(?:\\sw\\|\\s_\\|\\\\.\\)"
                    lisp-mode-symbol-regexp "\\)['’]")
@@ -1083,7 +1091,8 @@ ENDPOS is encountered."
          (init-depth (car state))
          (next-depth init-depth)
          (last-depth init-depth)
-         (last-syntax-point (point)))
+         (last-syntax-point (point))
+         (real-endpos endpos))
     (unless endpos
       ;; Get error now if we don't have a complete sexp after point.
       (save-excursion (forward-sexp 1)
@@ -1116,6 +1125,8 @@ ENDPOS is encountered."
                 last-depth (- last-depth next-depth)
                 next-depth init-depth))
         (forward-line 1)
+        (when (and (not real-endpos) (<= next-depth init-depth))
+          (goto-char endpos))
         (when (< (point) endpos)
           (let ((depth-delta (- next-depth last-depth)))
             (cond ((< depth-delta 0)

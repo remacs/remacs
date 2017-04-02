@@ -493,4 +493,30 @@
   (should (cl-typep '* 'cl-lib-test-type))
   (should-not (cl-typep 1 'cl-lib-test-type)))
 
+(ert-deftest cl-lib-symbol-macrolet ()
+  ;; bug#26325
+  :expected-result :failed
+  (should (equal (cl-flet ((f (x) (+ x 5)))
+                   (let ((x 5))
+                     (f (+ x 6))))
+                 ;; Go through `eval', otherwise the macro-expansion
+                 ;; error prevents running the whole test suite :-(
+                 (eval '(cl-symbol-macrolet ((f (+ x 6)))
+                          (cl-flet ((f (x) (+ x 5)))
+                            (let ((x 5))
+                              (f f))))
+                       t))))
+
+(defmacro cl-lib-symbol-macrolet-4+5 ()
+  ;; bug#26068
+  (let* ((sname "x")
+         (s1 (make-symbol sname))
+         (s2 (make-symbol sname)))
+    `(cl-symbol-macrolet ((,s1 4)
+                          (,s2 5))
+       (+ ,s1 ,s2))))
+
+(ert-deftest cl-lib-symbol-macrolet-2 ()
+  (should (equal (cl-lib-symbol-macrolet-4+5) (+ 4 5))))
+
 ;;; cl-lib.el ends here

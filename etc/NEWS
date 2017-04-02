@@ -471,8 +471,6 @@ where to place point after C-c M-r and C-c M-s.
 ---
 *** Messages from CMake are now recognized.
 
-** Dired
-
 +++
 *** A new option 'dired-always-read-filesystem' default to nil.
 If non-nil, buffers visiting files are reverted before search them;
@@ -757,6 +755,11 @@ processes on exit.
 
 
 * Incompatible Lisp Changes in Emacs 26.1
+
++++
+*** Command 'dired-mark-extension' now automatically prepends a '.' to the
+extension when not present.  The new command 'dired-mark-suffix' behaves
+similarly but it doesn't prepend a '.'.
 
 +++
 ** Certain cond/pcase/cl-case forms are now compiled using a faster jump

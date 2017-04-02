@@ -1015,7 +1015,7 @@
 	Upcase Path and ComSpec in process-environment
 
 	Since 2016-07-18 "Keep w32 environment settings internal only", the
-	upcasing of environment variables "Path" and "ComSpec" occured after
+	upcasing of environment variables "Path" and "ComSpec" occurred after
 	initializing process-environment.  This meant that Lisp code trying to
 	override "PATH" environment had no effect (Bug #24956).
 

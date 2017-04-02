@@ -733,9 +733,9 @@ Maybe clear the markers and delete the symbol's edebug property?"
      ((eq class 'string) (read (current-buffer)))
      ((eq class 'quote) (forward-char 1)
       (list 'quote (edebug-read-sexp)))
-     ((eq class 'backquote)
+     ((eq class 'backquote) (forward-char 1)
       (list '\` (edebug-read-sexp)))
-     ((eq class 'comma)
+     ((eq class 'comma) (forward-char 1)
       (list '\, (edebug-read-sexp)))
      (t ; anything else, just read it.
       (read (current-buffer))))))

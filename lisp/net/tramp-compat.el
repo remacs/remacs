@@ -1,4 +1,4 @@
-;;; tramp-compat.el --- Tramp compatibility functions
+;;; tramp-compat.el --- Tramp compatibility functions  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2007-2017 Free Software Foundation, Inc.
 

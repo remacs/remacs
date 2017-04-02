@@ -1,4 +1,4 @@
-;;; tramp-adb.el --- Functions for calling Android Debug Bridge from Tramp
+;;; tramp-adb.el --- Functions for calling Android Debug Bridge from Tramp  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
@@ -94,9 +94,6 @@ It is used for TCP/IP devices."
     tramp-adb-method '((tramp-adb-parse-device-names ""))))
 
 ;;;###tramp-autoload
-(add-to-list 'tramp-foreign-file-name-handler-alist
-	     (cons 'tramp-adb-file-name-p 'tramp-adb-file-name-handler))
-
 (defconst tramp-adb-file-name-handler-alist
   '((access-file . ignore)
     (add-name-to-file . tramp-adb-handle-copy-file)
@@ -190,6 +187,10 @@ pass to the OPERATION."
       (tramp-run-real-handler operation args))))
 
 ;;;###tramp-autoload
+(tramp-register-foreign-file-name-handler
+ 'tramp-adb-file-name-p 'tramp-adb-file-name-handler)
+
+;;;###tramp-autoload
 (defun tramp-adb-parse-device-names (_ignore)
   "Return a list of (nil host) tuples allowed to access."
   (with-timeout (10)
@@ -209,7 +210,7 @@ pass to the OPERATION."
 	(tramp-message v 6 "\n%s" (buffer-string))
 	(goto-char (point-min))
 	(while (search-forward-regexp "^\\(\\S-+\\)[[:space:]]+device$" nil t)
-	  (add-to-list 'result (list nil (match-string 1))))
+	  (push (list nil (match-string 1)) result))
 
 	;; Replace ":" by "#".
 	(mapc
@@ -1060,8 +1061,7 @@ E.g. a host name \"192.168.1.1#5555\" returns \"192.168.1.1:5555\"
   ;; unwanted entries first.
   (tramp-flush-connection-property nil)
   (with-tramp-connection-property (tramp-get-connection-process vec) "device"
-    (let* ((method (tramp-file-name-method vec))
-	   (host (tramp-file-name-host vec))
+    (let* ((host (tramp-file-name-host vec))
 	   (port (tramp-file-name-port vec))
 	   (devices (mapcar 'cadr (tramp-adb-parse-device-names nil))))
       (replace-regexp-in-string

@@ -1,4 +1,4 @@
-;;; tramp-gvfs.el --- Tramp access functions for GVFS daemon
+;;; tramp-gvfs.el --- Tramp access functions for GVFS daemon  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
@@ -452,6 +452,7 @@ Every entry is a list (NAME ADDRESS).")
 
 
 ;; New handlers should be added here.
+;;;###tramp-autoload
 (defconst tramp-gvfs-file-name-handler-alist
   '((access-file . ignore)
     (add-name-to-file . tramp-gvfs-handle-copy-file)
@@ -548,12 +549,10 @@ pass to the OPERATION."
 	(save-match-data (apply (cdr fn) args))
       (tramp-run-real-handler operation args))))
 
-;; This might be moved to tramp.el.  It shall be the first file name
-;; handler.
 ;;;###tramp-autoload
 (when (featurep 'dbusbind)
-  (add-to-list 'tramp-foreign-file-name-handler-alist
-	       (cons 'tramp-gvfs-file-name-p 'tramp-gvfs-file-name-handler)))
+  (tramp-register-foreign-file-name-handler
+   'tramp-gvfs-file-name-p 'tramp-gvfs-file-name-handler))
 
 
 ;; D-Bus helper function.
@@ -1874,12 +1873,9 @@ This uses \"avahi-browse\" in case D-Bus is not enabled in Avahi."
       (lambda (x)
 	(let* ((list (split-string x ";"))
 	       (host (nth 6 list))
-	       (port (nth 8 list))
 	       (text (tramp-compat-funcall
 		      'split-string (nth 9 list) "\" \"" 'omit "\""))
 	       user)
-;	  (when (and port (not (string-equal port "0")))
-;	    (setq host (format "%s%s%s" host tramp-prefix-port-regexp port)))
 	  ;; A user is marked in a TXT field like "u=guest".
 	  (while text
 	    (when (string-match "u=\\(.+\\)$" (car text))

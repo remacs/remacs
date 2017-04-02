@@ -274,6 +274,7 @@ Font Locking
 * Font Locking Preliminaries::
 * Faces::
 * Doc Comments::
+* Misc Font Locking::
 * AWK Mode Font Locking::
 
 Configuration Basics
@@ -1821,6 +1822,7 @@ sections apply to the other languages.
 * Font Locking Preliminaries::
 * Faces::
 * Doc Comments::
+* Misc Font Locking::
 * AWK Mode Font Locking::
 @end menu
 
@@ -2023,7 +2025,7 @@ since those aren't syntactic errors in themselves.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Doc Comments, AWK Mode Font Locking, Faces, Font Locking
+@node    Doc Comments, Misc Font Locking, Faces, Font Locking
 @comment node-name, next, previous, up
 @section Documentation Comments
 @cindex documentation comments
@@ -2099,9 +2101,63 @@ initialization and the result is prepended.  For an example, see
 If you add support for another doc comment style, please consider
 contributing it: send a note to @email{bug-cc-mode@@gnu.org}.
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Misc Font Locking, AWK Mode Font Locking, Doc Comments, Font Locking
+@comment  node-name,  next,  previous,  up
+@section Miscellaneous Font Locking
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+In some languages, particularly in C++, there are constructs which are
+syntactically ambiguous---they could be either declarations or
+expressions, and @ccmode{} cannot tell for sure which.  Often such a
+construct is one of the operators @samp{*} or @samp{&} surrounded by
+two identifiers.
+
+Experience shows that very often when such a construct is a
+declaration it will be written with the operator touching exactly one
+of the identifiers, like:
+
+@example
+foo *bar
+@end example
+or
+@example
+foo& bar
+@end example
+
+.  Whether such code is fontified depends on the setting of
+@code{c-asymmetry-fontification-flag}.
+
+@defvar c-asymmetry-fontification-flag
+@vindex asymmetry-fontification-flag (c-)
+When @code{c-asymmetry-fontification-flag} is non-nil (which it is by
+default), code like the above, with white space either before or after
+the operator, but not both, is fontified as a declaration.  When the
+variable is nil, such a construct gets the default face.
+@end defvar
+
+When the construct is an expression there will often be white space
+both before and after the operator or there will be no white space
+around it at all, like:
+
+@example
+foo * bar
+@end example
+or
+@example
+foo&bar
+@end example
+.
+
+Such code is not fontified as a declaration.  (Typically, the
+identifiers don't get a non-default face.)
+
+For clarity's sake, we emphasize that the ``asymmetry'' rule in this
+section only applies when CC Mode cannot disambiguate a construct in
+any other way.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    AWK Mode Font Locking,  , Doc Comments, Font Locking
+@node    AWK Mode Font Locking,  , Misc Font Locking, Font Locking
 @comment  node-name,  next,  previous,  up
 @section AWK Mode Font Locking
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

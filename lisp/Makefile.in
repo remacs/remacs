@@ -47,6 +47,9 @@ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 =
 
+
+FIND_DELETE = @FIND_DELETE@
+
 # You can specify a different executable on the make command line,
 # e.g. "make EMACS=../src/emacs ...".
 
@@ -343,7 +346,7 @@ compile: $(LOADDEFS) autoloads compile-first
 # unconditionally.  Some files don't actually get compiled because they
 # set the local variable no-byte-compile.
 compile-always:
-	cd $(lisp) && rm -f *.elc */*.elc */*/*.elc */*/*/*.elc
+	find $(lisp) -name '*.elc' $(FIND_DELETE)
 	$(MAKE) compile
 
 .PHONY: backup-compiled-files compile-after-backup
@@ -433,7 +436,8 @@ $(CAL_DIR)/hol-loaddefs.el: $(CAL_SRC) $(CAL_DIR)/diary-loaddefs.el
 .PHONY: bootstrap-clean distclean maintainer-clean
 
 bootstrap-clean:
-	-cd $(lisp) && rm -f *.elc */*.elc */*/*.elc */*/*/*.elc $(AUTOGENEL)
+	find $(lisp) -name '*.elc' $(FIND_DELETE)
+	-cd $(lisp) && rm -f $(AUTOGENEL)
 
 distclean:
 	-rm -f ./Makefile $(lisp)/loaddefs.el~

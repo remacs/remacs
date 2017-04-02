@@ -1236,7 +1236,7 @@ SELECTOR is the selector that was used to select TESTS."
         (funcall listener 'test-ended stats test result))
       (setf (ert--stats-current-test stats) nil))))
 
-(defun ert-run-tests (selector listener)
+(defun ert-run-tests (selector listener &optional interactively)
   "Run the tests specified by SELECTOR, sending progress updates to LISTENER."
   (let* ((tests (ert-select-tests selector t))
          (stats (ert--make-stats tests selector)))
@@ -1247,10 +1247,14 @@ SELECTOR is the selector that was used to select TESTS."
           (let ((ert--current-run-stats stats))
             (force-mode-line-update)
             (unwind-protect
-                (progn
-                  (cl-loop for test in tests do
-                           (ert-run-or-rerun-test stats test listener))
-                  (setq abortedp nil))
+		(cl-loop for test in tests do
+			 (ert-run-or-rerun-test stats test listener)
+			 (when (and interactively
+				    (ert-test-quit-p
+				     (ert-test-most-recent-result test))
+				    (y-or-n-p "Abort testing? "))
+			   (cl-return))
+			 finally (setq abortedp nil))
               (setf (ert--stats-aborted-p stats) abortedp)
               (setf (ert--stats-end-time stats) (current-time))
               (funcall listener 'run-ended stats abortedp)))
@@ -1442,7 +1446,8 @@ Returns the stats object."
                                                  (ert-test-result-expected-p
                                                   test result))
                      (1+ (ert--stats-test-pos stats test))
-                     (ert-test-name test)))))))))
+                     (ert-test-name test)))))))
+   nil))
 
 ;;;###autoload
 (defun ert-run-tests-batch-and-exit (&optional selector)
@@ -2033,9 +2038,8 @@ and how to display message."
                                                       test result)))
                      (ert--results-update-stats-display-maybe ewoc stats)
                      (ewoc-invalidate ewoc node))))))))
-    (ert-run-tests
-     selector
-     listener)))
+    (ert-run-tests selector listener t)))
+
 ;;;###autoload
 (defalias 'ert 'ert-run-tests-interactively)
 

@@ -2716,6 +2716,7 @@ init_iterator (struct it *it, struct window *w,
       if (face_change)
 	{
 	  face_change = false;
+	  XFRAME (w->frame)->face_change = 0;
 	  free_all_realized_faces (Qnil);
 	}
       else if (XFRAME (w->frame)->face_change)
@@ -14132,21 +14133,16 @@ redisplay_internal (void)
 		     Therefore, we must redisplay this frame.  */
 		  if (!f_redisplay_flag && f->redisplay)
                     goto retry_frame;
-
                   /* In some case (e.g., window resize), we notice
                      only during window updating that the window
                      content changed unpredictably (e.g., a GTK
-                     scrollbar moved) and that our previous estimation
-                     of the frame content was garbage.  We have to
-                     start over.  These cases should be rare, so going
-                     all the way back to the top of redisplay should
-                     be good enough.
-
-                     Why FRAME_WINDOW_P? See
-                     https://lists.gnu.org/archive/html/emacs-devel/2016-10/msg00957.html
-
-                     */
-                  if (FRAME_GARBAGED_P (f) && FRAME_WINDOW_P (f))
+                     scrollbar moved, or some Lisp hook that winds up
+                     calling adjust_frame_glyphs) and that our
+                     previous estimation of the frame content was
+                     garbage.  We have to start over.  These cases
+                     should be rare, so going all the way back to the
+                     top of redisplay should be good enough.  */
+                  if (FRAME_GARBAGED_P (f))
                     goto retry;
 
 		  /* Prevent various kinds of signals during display

@@ -77,6 +77,49 @@ server's WWW-Authenticate header field.")
              :expected-ha2 "b44272ea65ee4af7fb26c5dba58f6863"
              :expected-response "0d84884d967e04440efc77e9e2b5b561")))
 
+(ert-deftest url-auth-test-colonjoin ()
+  "Check joining strings with `:'."
+  (should (string= (url-digest-auth-colonjoin) ""))
+  (should (string= (url-digest-auth-colonjoin nil) ""))
+  (should (string= (url-digest-auth-colonjoin nil nil nil) "::"))
+  (should (string= (url-digest-auth-colonjoin "") ""))
+  (should (string= (url-digest-auth-colonjoin "" "") ":"))
+  (should (string= (url-digest-auth-colonjoin "one") "one"))
+  (should (string= (url-digest-auth-colonjoin "one" "two" "three") "one:two:three")))
+
+(ert-deftest url-auth-test-digest-ha1 ()
+  "Check HA1 computation."
+  (dolist (row url-auth-test-challenges)
+    (should (string= (url-digest-auth-make-ha1 (plist-get row :username)
+                                               (plist-get row :realm)
+                                               (plist-get row :password))
+                     (plist-get row :expected-ha1)
+                     ))))
+
+(ert-deftest url-auth-test-digest-ha2 ()
+  "Check HA2 computation."
+  (dolist (row url-auth-test-challenges)
+    (should (string= (url-digest-auth-make-ha2 (plist-get row :method)
+                                               (plist-get row :uri))
+                     (plist-get row :expected-ha2)))))
+
+(ert-deftest url-auth-test-digest-request-digest ()
+  "Check digest response value."
+  (dolist (row url-auth-test-challenges)
+    (should (string= (plist-get row :expected-response)
+                     (if (plist-member row :qop)
+                         (url-digest-auth-make-request-digest-qop
+                          (plist-get row :qop)
+                          (plist-get row :expected-ha1)
+                          (plist-get row :expected-ha2)
+                          (plist-get row :nonce)
+                          (plist-get row :nc)
+                          (plist-get row :cnonce))
+                       (url-digest-auth-make-request-digest
+                        (plist-get row :expected-ha1)
+                        (plist-get row :expected-ha2)
+                        (plist-get row :nonce)))))))
+
 (ert-deftest url-auth-test-digest-create-key ()
   "Check user credentials in their hashed form."
   (dolist (challenge url-auth-test-challenges)
@@ -223,14 +266,12 @@ test and cannot be passed by arguments to `url-digest-auth'."
           (progn
             ;; We don't know these, just check that they exists.
             (should (string-match-p ".*response=\".*?\".*" auth))
-            ;; url-digest-auth doesn't return these AFAICS.
-;;;            (should (string-match-p ".*nc=\".*?\".*" auth))
-;;;            (should (string-match-p ".*cnonce=\".*?\".*" auth))
-            )
+            (should (string-match-p ".*nc=\".*?\".*" auth))
+            (should (string-match-p ".*cnonce=\".*?\".*" auth)))
         (should (string-match ".*response=\"\\(.*?\\)\".*" auth))
         (should (string= (match-string 1 auth)
                          (plist-get challenge :expected-response))))
-      )))
+        )))
 
 (ert-deftest url-auth-test-digest-auth-opaque ()
   "Check that `opaque' value is added to result when presented by

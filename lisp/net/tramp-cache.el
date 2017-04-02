@@ -1,4 +1,4 @@
-;;; tramp-cache.el --- file information caching for Tramp
+;;; tramp-cache.el --- file information caching for Tramp  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2000, 2005-2017 Free Software Foundation, Inc.
 
