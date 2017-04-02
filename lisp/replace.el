@@ -848,7 +848,6 @@ called interactively by passing a non-nil INTERACTIVE argument.
 This function starts looking for the next match from the end of
 the previous match.  Hence, it ignores matches that overlap
 a previously found match."
-
   (interactive
    (progn
      (barf-if-buffer-read-only)
@@ -923,7 +922,6 @@ a non-nil INTERACTIVE argument.
 If a match is split across lines, all the lines it lies in are deleted.
 They are deleted _before_ looking for the next match.  Hence, a match
 starting on the same line at which another match ended is ignored."
-
   (interactive
    (progn
      (barf-if-buffer-read-only)
@@ -971,7 +969,6 @@ end of (the accessible portion of) the buffer.
 This function starts looking for the next match from the end of
 the previous match.  Hence, it ignores matches that overlap
 a previously found match."
-
   (interactive
    (keep-lines-read-args "How many matches for regexp"))
   (save-excursion
