@@ -1359,6 +1359,11 @@ window's body.
 *** The semantics of 'mouse-autoselect-window' has changed slightly.
 For details see the section "Mouse Window Auto-selection" in the Elisp
 manual.
+
+---
+** 'tcl-auto-fill-mode' is now declared obsolete.  It's functionality
+can be replicated simply by setting 'comment-auto-fill-only-comments'.
+
 
 * Changes in Emacs 26.1 on Non-Free Operating Systems
 
