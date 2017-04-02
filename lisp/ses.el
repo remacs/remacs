@@ -2276,7 +2276,7 @@ print area if NONARROW is nil."
   "Recalculate and reprint the current cell or range.
 
 If SES--CURCELL is non nil use it as current cell or range
-without any check, otherwise fnuction (ses-check-curcell 'range)
+without any check, otherwise function (ses-check-curcell 'range)
 is called.
 
 For an individual cell, shows the error if the formula or printer

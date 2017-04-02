@@ -124,12 +124,12 @@ endif
 	$(emacs) -l ert -l $$loadfile \
 	  --eval "(ert-run-tests-batch-and-exit ${SELECTOR_ACTUAL})" ${WRITE_LOG}
 
-ELFILES = $(shell find ${srcdir} -path "${srcdir}/manual" -prune -o \
-		-path "*resources" -prune -o -name "*el" -print)
+ELFILES := $(shell find ${srcdir} -path "${srcdir}/manual" -prune -o \
+		-name "*resources" -prune -o -name "*.el" -print)
 ## .log files may be in a different directory for out of source builds
-LOGFILES = $(patsubst %.el,%.log, \
+LOGFILES := $(patsubst %.el,%.log, \
 		$(patsubst $(srcdir)%,.%,$(ELFILES)))
-TESTS = $(subst ${srcdir}/,,$(LOGFILES:.log=))
+TESTS := $(subst ${srcdir}/,,$(LOGFILES:.log=))
 
 ## If we have to interrupt a hanging test, preserve the log so we can
 ## see what the problem was.
@@ -141,6 +141,11 @@ TESTS = $(subst ${srcdir}/,,$(LOGFILES:.log=))
 ## Define an alias both with and without the directory name for ease
 ## of use.
 define test_template
+  ifeq (,$(patsubst $(srcdir)/src/%,,$(1)))
+    $(1): $(srcdir)/../src/$(1:.log=.c)
+  else
+    $(1): $(srcdir)/../lisp/$(1:.log=.el)
+  endif
 $(1):
 	@test ! -f ./$(1).log || mv ./$(1).log ./$(1).log~
 	@${MAKE} ./$(1).log WRITE_LOG=
@@ -157,11 +162,6 @@ $(foreach test,${TESTS},$(eval $(call test_template,${test})))
 check-no-automated-subdir:
 	test ! -d $(srcdir)/automated
 
-## Include dependencies between test files and the files they test.
-## We could do this without the file and eval directly, but then we
-## would have to run Emacs for every make invocation, and it might not
-## be available during clean.
--include make-test-deps.mk
 ## Rerun all default tests.
 check: mostlyclean check-no-automated-subdir
 	@${MAKE} check-doit SELECTOR="${SELECTOR_ACTUAL}"
@@ -175,7 +175,7 @@ check-expensive: mostlyclean check-no-automated-subdir
 ## logfile is out-of-date with either the test file, or the source
 ## files that the tests depend on. The source file dependencies are
 ## determined by a heuristic and does not identify the full dependency
-## graph. See make-test-deps.emacs-lisp for details.
+## graph. See test_template for details.
 .PHONY: check-maybe
 check-maybe: check-no-automated-subdir
 	@${MAKE} check-doit SELECTOR="${SELECTOR_ACTUAL}"
@@ -183,7 +183,7 @@ check-maybe: check-no-automated-subdir
 ## Run the tests.
 .PHONY: check-doit
 check-doit: ${LOGFILES}
-	$(emacs) -l ert -f ert-summarize-tests-batch-and-exit $^
+	@$(emacs) -l ert -f ert-summarize-tests-batch-and-exit $^
 
 .PHONY: mostlyclean clean bootstrap-clean distclean maintainer-clean
 
@@ -193,7 +193,6 @@ mostlyclean:
 
 clean:
 	find . '(' -name '*.log' -o -name '*.log~' ')' $(FIND_DELETE)
-	rm -f make-test-deps.mk
 
 bootstrap-clean: clean
 	find $(srcdir) -name '*.elc' $(FIND_DELETE)
@@ -202,11 +201,3 @@ distclean: clean
 	rm -f Makefile
 
 maintainer-clean: distclean bootstrap-clean
-
-make-test-deps.mk: $(ELFILES) make-test-deps.emacs-lisp
-	$(EMACS) --batch -l $(srcdir)/make-test-deps.emacs-lisp \
-	--eval "(make-test-deps \"$(srcdir)\")" \
-	2> $@.tmp
-	# Hack to elide any CANNOT_DUMP=yes chatter.
-	sed '/\.log: /!d' $@.tmp >$@
-	rm -f $@.tmp

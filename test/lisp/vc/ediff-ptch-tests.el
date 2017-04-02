@@ -41,25 +41,31 @@ index 6a07f80..6e8e947 100644
 
 (ert-deftest ediff-ptch-test-bug26084 ()
   "Test for http://debbugs.gnu.org/26084 ."
-  (let* ((tmpdir temporary-file-directory)
-         (foo (expand-file-name "foo" tmpdir))
-         (patch (expand-file-name "foo.diff" tmpdir))
-         (qux (expand-file-name "qux.txt" foo))
-         (bar (expand-file-name "bar.txt" foo))
-         (cmd "
-mkdir -p foo
-cd foo
-echo 'qux here' > qux.txt
-echo 'bar here' > bar.txt
-git init
-git add . && git commit -m 'Test repository.'
-echo 'foo here' > qux.txt
-echo 'foo here' > bar.txt
-git diff > ../foo.diff
-git reset --hard HEAD
-"))
-    (setq default-directory tmpdir)
-    (call-process-shell-command cmd)
+  (skip-unless (executable-find "git"))
+  (skip-unless (executable-find ediff-patch-program))
+  (let* ((tmpdir (make-temp-file "ediff-ptch-test" t))
+         (default-directory (file-name-as-directory tmpdir))
+         (patch (make-temp-file "ediff-ptch-test"))
+         (qux (expand-file-name "qux.txt" tmpdir))
+         (bar (expand-file-name "bar.txt" tmpdir))
+         (git-program (executable-find "git")))
+    ;; Create repository.
+    (with-temp-buffer
+      (insert "qux here\n")
+      (write-region nil nil qux nil 'silent)
+      (erase-buffer)
+      (insert "bar here\n")
+      (write-region nil nil bar nil 'silent))
+    (call-process git-program nil nil nil "init")
+    (call-process git-program nil nil nil "add" ".")
+    (call-process git-program nil nil nil "commit" "-m" "Test repository.")
+    ;; Update repo., save the diff and reset to initial state.
+    (with-temp-buffer
+      (insert "foo here\n")
+      (write-region nil nil qux nil 'silent)
+      (write-region nil nil bar nil 'silent))
+    (call-process git-program nil `(:file ,patch) nil "diff")
+    (call-process git-program nil nil nil "reset" "--hard" "HEAD")
     (find-file patch)
     (unwind-protect
         (let* ((info
@@ -76,23 +82,27 @@ git reset --hard HEAD
           (dolist (x (list (cons patch1 bar) (cons patch2 qux)))
             (with-temp-buffer
               (insert (car x))
-              (call-shell-region (point-min)
-                                 (point-max)
-                                 (format "%s %s %s %s"
-                                         ediff-patch-program
-                                         ediff-patch-options
-                                         ediff-backup-specs
-                                         (cdr x)))))
+              (call-process-region (point-min)
+                                   (point-max)
+                                   ediff-patch-program
+                                   nil nil nil
+                                   "-b" (cdr x))))
           ;; Check backup files were saved correctly.
           (dolist (x (list qux bar))
-            (should-not (string= (with-temp-buffer
-                                   (insert-file-contents x)
-                                   (buffer-string))
-                                 (with-temp-buffer
-                                   (insert-file-contents (concat x ediff-backup-extension))
-                                   (buffer-string))))))
-      (delete-directory foo 'recursive)
-      (delete-file patch))))
+            (let ((backup
+                   (car
+                    (directory-files
+                     tmpdir 'full
+                     (concat (file-name-nondirectory x) ".")))))
+              (should-not
+               (string= (with-temp-buffer
+                          (insert-file-contents x)
+                          (buffer-string))
+                        (with-temp-buffer
+                          (insert-file-contents backup)
+                          (buffer-string))))))
+          (delete-directory tmpdir 'recursive)
+          (delete-file patch)))))
 
 
 (provide 'ediff-ptch-tests)
