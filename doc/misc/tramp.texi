@@ -2499,6 +2499,42 @@ Starting with Emacs 24, when @option{explicit-shell-file-name} is
 equal to @code{nil}, calling @code{shell} interactively will prompt
 for a shell name.
 
+Starting with Emacs 26, you could use connection-local variables for
+setting different values of @option{explicit-shell-file-name} for
+different remote hosts.
+@ifinfo
+@pxref{Connection Local Variables, , , elisp}
+@end ifinfo
+
+@lisp
+@group
+(connection-local-set-profile-variables
+  'remote-bash
+  '((explicit-shell-file-name . "/bin/bash")
+    (explicit-bash-args . ("-i"))))
+@end group
+
+@group
+(connection-local-set-profile-variables
+  'remote-ksh
+  '((explicit-shell-file-name . "/bin/ksh")
+    (explicit-ksh-args . ("-i"))))
+@end group
+
+@group
+(connection-local-set-profiles
+  '(:application 'tramp :protocol "ssh" :machine "localhost")
+  'remote-bash)
+@end group
+
+@group
+(connection-local-set-profiles
+  `(:application 'tramp :protocol "sudo"
+    :user "root" :machine ,(system-name))
+  'remote-ksh)
+@end group
+@end lisp
+
 
 @subsection Running @code{shell-command} on a remote host
 @cindex shell-command
@@ -2542,11 +2578,10 @@ uid=0(root) gid=0(root) groups=0(root)
 @end group
 @end example
 
-@code{eshell} in Emacs 23.2 added custom @code{su} and @code{sudo}
-commands that set the default directory correctly for the
-@file{*eshell*} buffer.  @value{tramp} silently updates
-@option{tramp-default-proxies-alist} with an entry for this directory
-(@pxref{Multi-hops}):
+@code{eshell} added custom @code{su} and @code{sudo} commands that set
+the default directory correctly for the @file{*eshell*} buffer.
+@value{tramp} silently updates @option{tramp-default-proxies-alist}
+with an entry for this directory (@pxref{Multi-hops}):
 
 @example
 @group
@@ -2763,11 +2798,12 @@ Where is the latest @value{tramp}?
 @item
 Which systems does it work on?
 
-The package works successfully on Emacs 23, Emacs 24, and Emacs 25.
+The package works successfully on Emacs 23, Emacs 24, Emacs 25, and
+Emacs 26.
 
 While Unix and Unix-like systems are the primary remote targets,
 @value{tramp} has equal success connecting to other platforms, such as
-MS Windows XP/Vista/7.
+MS Windows 7/8/10.
 
 
 @item
