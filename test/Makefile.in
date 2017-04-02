@@ -128,8 +128,8 @@ ELFILES := $(shell find ${srcdir} -path "${srcdir}/manual" -prune -o \
 		-name "*resources" -prune -o -name "*.el" -print)
 ## .log files may be in a different directory for out of source builds
 LOGFILES := $(patsubst %.el,%.log, \
-		$(patsubst $(srcdir)%,.%,$(ELFILES)))
-TESTS := $(subst ${srcdir}/,,$(LOGFILES:.log=))
+		$(patsubst $(srcdir)/%,%,$(ELFILES)))
+TESTS := $(LOGFILES:.log=)
 
 ## If we have to interrupt a hanging test, preserve the log so we can
 ## see what the problem was.
@@ -137,20 +137,24 @@ TESTS := $(subst ${srcdir}/,,$(LOGFILES:.log=))
 
 .PHONY: ${TESTS}
 
-## The short aliases that always re-run the tests, with no logging.
-## Define an alias both with and without the directory name for ease
-## of use.
 define test_template
-  ifeq (,$(patsubst $(srcdir)/src/%,,$(1)))
-    $(1): $(srcdir)/../src/$(1:.log=.c)
-  else
-    $(1): $(srcdir)/../lisp/$(1:.log=.el)
+  ## A test FOO-tests depends on the source file with the similar
+  ## name, unless FOO itself contains the string '-tests/'.
+  ## The similar name is FOO.c if FOO begins with 'src/', FOO.el
+  ## otherwise.  Although this heuristic does not identify all the
+  ## dependencies, it is better than nothing.
+  ifeq (,$(patsubst %-tests,,$(1))$(findstring -tests/,$(1)))
+    $(1).log: $(patsubst %-tests,$(srcdir)/../%,$(1))$(if \
+					$(patsubst src/%,,$(1)),.el,.c)
   endif
-$(1):
-	@test ! -f ./$(1).log || mv ./$(1).log ./$(1).log~
-	@${MAKE} ./$(1).log WRITE_LOG=
 
-$(notdir $(1)): $(1)
+  ## Short aliases that always re-run the tests, with no logging.
+  ## Define both with and without the directory name for ease of use.
+  .PHONY: $(1) $(notdir $(1))
+  $(1):
+	@test ! -f $(1).log || mv $(1).log $(1).log~
+	@$(MAKE) $(1).log WRITE_LOG=
+  $(notdir $(1)): $(1)
 endef
 
 $(foreach test,${TESTS},$(eval $(call test_template,${test})))
@@ -173,9 +177,7 @@ check-expensive: mostlyclean check-no-automated-subdir
 
 ## Re-run all tests which are outdated. A test is outdated if its
 ## logfile is out-of-date with either the test file, or the source
-## files that the tests depend on. The source file dependencies are
-## determined by a heuristic and does not identify the full dependency
-## graph. See test_template for details.
+## files that the tests depend on.  See test_template.
 .PHONY: check-maybe
 check-maybe: check-no-automated-subdir
 	@${MAKE} check-doit SELECTOR="${SELECTOR_ACTUAL}"
