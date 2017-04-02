@@ -240,6 +240,10 @@ Otherwise it waits for PROGRAM to terminate
 and returns a numeric exit status or a signal description string.
 If you quit, the process is killed with SIGINT, or SIGKILL if you quit again.
 
+The process runs in `default-directory' if that is local (as
+determined by `unhandled-file-name-directory'), or "~" otherwise.  If
+you want to run a process in a remote directory use `process-file'.
+
 usage: (call-process PROGRAM &optional INFILE DESTINATION DISPLAY &rest ARGS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {

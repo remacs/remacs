@@ -1970,7 +1970,12 @@ arguments PROGRAM-ARGS are strings to give program as arguments.
 
 If you want to separate standard output from standard error, use
 `make-process' or invoke the command through a shell and redirect
-one of them using the shell syntax."
+one of them using the shell syntax.
+
+The process runs in `default-directory' if that is local (as
+determined by `unhandled-file-name-directory'), or \"~\"
+otherwise.  If you want to run a process in a remote directory
+use `start-file-process'."
   (unless (fboundp 'make-process)
     (error "Emacs was compiled without subprocess support"))
   (apply #'make-process
