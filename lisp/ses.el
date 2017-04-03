@@ -2215,7 +2215,8 @@ Based on the current set of columns and `window-hscroll' position."
 		      (s (completing-read
 			  "Jump to cell: "
 			  (and ses--named-cell-hashmap
-			       (progn (maphash (lambda (key val) (push (symbol-name key) names))
+			       (progn (maphash (lambda (key _val)
+                                                 (push (symbol-name key) names))
 					       ses--named-cell-hashmap)
 				      names)))))
 		 (if
@@ -2272,10 +2273,10 @@ print area if NONARROW is nil."
 ;; (defvar maxrow)
 ;; (defvar maxcol)
 
-(defun ses-recalculate-cell (&optional ses--curcell)
+(defun ses-recalculate-cell (&optional curcell)
   "Recalculate and reprint the current cell or range.
 
-If SES--CURCELL is non nil use it as current cell or range
+If CURCELL is non nil use it as current cell or range
 without any check, otherwise function (ses-check-curcell 'range)
 is called.
 
@@ -2284,7 +2285,8 @@ signals one, or otherwise shows the cell's complete value.  For a range, the
 cells are recalculated in \"natural\" order, so cells that other cells refer
 to are recalculated first."
   (interactive "*")
-  (or ses--curcell (ses-check-curcell 'range))
+  (if curcell (setq ses--curcell curcell)
+    (ses-check-curcell 'range))
   (ses-begin-change)
   (ses-initialize-Dijkstra-attempt)
   (let (sig cur-rowcol)
@@ -3572,7 +3574,7 @@ the current definition is proposed as default value, and the
 function is redefined."
   (interactive
    (let (name def already-defined-names)
-     (maphash (lambda (key val) (push (symbol-name key) already-defined-names))
+     (maphash (lambda (key _val) (push (symbol-name key) already-defined-names))
               ses--local-printer-hashmap)
      (setq name (completing-read    "Enter printer name: " already-defined-names))
      (when (string= name "")
