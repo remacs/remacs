@@ -1966,7 +1966,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 
       case PVEC_RECORD:
 	{
-	  ptrdiff_t n, size = ASIZE (obj) & PSEUDOVECTOR_SIZE_MASK;
+	  ptrdiff_t n, size = PVSIZE (obj);
 	  int i;
 
 	  /* Don't print more elements than the specified maximum.  */

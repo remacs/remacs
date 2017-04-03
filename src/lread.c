@@ -3402,7 +3402,7 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
 	else if (CHAR_TABLE_P (subtree) || SUB_CHAR_TABLE_P (subtree)
 		 || COMPILEDP (subtree) || HASH_TABLE_P (subtree)
 		 || RECORDP (subtree))
-	  length = ASIZE (subtree) & PSEUDOVECTOR_SIZE_MASK;
+	  length = PVSIZE (subtree);
 	else if (VECTORP (subtree))
 	  length = ASIZE (subtree);
 	else

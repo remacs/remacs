@@ -342,7 +342,7 @@ string is passed through `substitute-command-keys'.  */)
     doc = make_number (XSUBR (fun)->doc);
   else if (COMPILEDP (fun))
     {
-      if ((ASIZE (fun) & PSEUDOVECTOR_SIZE_MASK) <= COMPILED_DOC_STRING)
+      if (PVSIZE (fun) <= COMPILED_DOC_STRING)
 	return Qnil;
       else
 	{
@@ -500,7 +500,7 @@ store_function_docstring (Lisp_Object obj, EMACS_INT offset)
     {
       /* This bytecode object must have a slot for the
 	 docstring, since we've found a docstring for it.  */
-      if ((ASIZE (fun) & PSEUDOVECTOR_SIZE_MASK) > COMPILED_DOC_STRING)
+      if (PVSIZE (fun) > COMPILED_DOC_STRING)
 	ASET (fun, COMPILED_DOC_STRING, make_number (offset));
       else
 	{

@@ -107,7 +107,7 @@ To get the number of bytes, use `string-bytes'.  */)
   else if (BOOL_VECTOR_P (sequence))
     XSETFASTINT (val, bool_vector_size (sequence));
   else if (COMPILEDP (sequence) || RECORDP (sequence))
-    XSETFASTINT (val, ASIZE (sequence) & PSEUDOVECTOR_SIZE_MASK);
+    XSETFASTINT (val, PVSIZE (sequence));
   else if (CONSP (sequence))
     {
       intptr_t i = 0;
@@ -484,8 +484,7 @@ shared with the original.  */)
 
   if (RECORDP (arg))
     {
-      ptrdiff_t size = ASIZE (arg) & PSEUDOVECTOR_SIZE_MASK;
-      return Frecord (size, XVECTOR (arg)->contents);
+      return Frecord (PVSIZE (arg), XVECTOR (arg)->contents);
     }
 
   if (CHAR_TABLE_P (arg))

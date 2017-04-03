@@ -1401,6 +1401,12 @@ ASIZE (Lisp_Object array)
   return size;
 }
 
+INLINE ptrdiff_t
+PVSIZE (Lisp_Object pv)
+{
+  return ASIZE (pv) & PSEUDOVECTOR_SIZE_MASK;
+}
+
 INLINE bool
 VECTORP (Lisp_Object x)
 {

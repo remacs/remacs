@@ -270,7 +270,7 @@ for example, (type-of 1) returns `integer'.  */)
         case PVEC_RECORD:
           {
             Lisp_Object t = AREF (object, 0);
-            if (RECORDP (t) && 1 < (ASIZE (t) & PSEUDOVECTOR_SIZE_MASK))
+            if (RECORDP (t) && 1 < PVSIZE (t))
               /* Return the type name field of the class!  */
               return AREF (t, 1);
             else
@@ -902,7 +902,7 @@ Value, if non-nil, is a list (interactive SPEC).  */)
     }
   else if (COMPILEDP (fun))
     {
-      if ((ASIZE (fun) & PSEUDOVECTOR_SIZE_MASK) > COMPILED_INTERACTIVE)
+      if (PVSIZE (fun) > COMPILED_INTERACTIVE)
 	return list2 (Qinteractive, AREF (fun, COMPILED_INTERACTIVE));
     }
   else if (AUTOLOADP (fun))
@@ -2306,7 +2306,7 @@ or a byte-code object.  IDX starts at 0.  */)
       if (VECTORP (array))
 	size = ASIZE (array);
       else if (COMPILEDP (array) || RECORDP (array))
-	size = ASIZE (array) & PSEUDOVECTOR_SIZE_MASK;
+	size = PVSIZE (array);
       else
 	wrong_type_argument (Qarrayp, array);
 
@@ -2349,8 +2349,7 @@ bool-vector.  IDX starts at 0.  */)
     }
   else if (RECORDP (array))
     {
-      ptrdiff_t size = ASIZE (array) & PSEUDOVECTOR_SIZE_MASK;
-      if (idxval < 0 || idxval >= size)
+      if (idxval < 0 || idxval >= PVSIZE (array))
 	args_out_of_range (array, idx);
       ASET (array, idxval, newelt);
     }
