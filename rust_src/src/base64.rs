@@ -56,12 +56,10 @@ pub extern "C" fn base64_encode_1(from: *const libc::c_char,
 }
 
 fn decode(encoded: &CStr) -> Result<Vec<u8>, String> {
-    encoded.to_str().map_err(|err| err.to_string()).and_then(|encoded| {
-                                                                 encoded.from_base64()
-                                                                     .map_err(|err| {
-                                                                                  err.to_string()
-                                                                              })
-                                                             })
+    encoded
+        .to_str()
+        .map_err(|err| err.to_string())
+        .and_then(|encoded| encoded.from_base64().map_err(|err| err.to_string()))
 }
 
 ///  Base64-decode the data at FROM of LENGTH bytes into TO.  If
