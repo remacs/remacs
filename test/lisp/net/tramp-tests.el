@@ -1912,7 +1912,51 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		(regexp-quote envvar)
 		(funcall this-shell-command-to-string "set")))))))))
 
-(ert-deftest tramp-test30-vc-registered ()
+;; The functions were introduced in Emacs 26.1.
+(ert-deftest tramp-test30-explicit-shell-file-name ()
+  "Check that connection-local `explicit-shell-file-name' is set."
+  :tags '(:expensive-test)
+  (skip-unless (tramp--test-enabled))
+  (skip-unless (tramp--test-sh-p))
+  (skip-unless (and (fboundp 'connection-local-set-profile-variables)
+		    (fboundp 'connection-local-set-profiles)))
+
+  ;; `connection-local-set-profile-variables' and
+  ;; `connection-local-set-profiles' exists since Emacs 26.  We don't
+  ;; want to see compiler warnings for older Emacsen.
+  (let ((default-directory tramp-test-temporary-file-directory)
+	explicit-shell-file-name kill-buffer-query-functions)
+    (unwind-protect
+	(progn
+	  ;; `shell-mode' would ruin our test, because it deletes all
+	  ;; buffer local variables.
+	  (put 'explicit-shell-file-name 'permanent-local t)
+	  ;; Declare connection-local variable `explicit-shell-file-name'.
+	  (with-no-warnings
+	    (connection-local-set-profile-variables
+	     'remote-sh
+	     '((explicit-shell-file-name . "/bin/sh")
+	       (explicit-sh-args . ("-i"))))
+	    (connection-local-set-profiles
+	     `(:application tramp
+	       :protocol ,(file-remote-p default-directory 'method)
+	       :user ,(file-remote-p default-directory 'user)
+	       :machine ,(file-remote-p default-directory 'host))
+	     'remote-sh))
+
+	  ;; Run interactive shell.  Since the default directory is
+	  ;; remote, `explicit-shell-file-name' shall be set in order
+	  ;; to avoid a question.
+	  (with-current-buffer (get-buffer-create "*shell*")
+	    (ignore-errors (kill-process (current-buffer)))
+	    (should-not explicit-shell-file-name)
+	    (call-interactively 'shell)
+	    (should explicit-shell-file-name)))
+
+      (put 'explicit-shell-file-name 'permanent-local nil)
+      (kill-buffer "*shell*"))))
+
+(ert-deftest tramp-test31-vc-registered ()
   "Check `vc-registered'."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
@@ -1983,7 +2027,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	;; Cleanup.
 	(ignore-errors (delete-directory tmp-name1 'recursive))))))
 
-(ert-deftest tramp-test31-make-auto-save-file-name ()
+(ert-deftest tramp-test32-make-auto-save-file-name ()
   "Check `make-auto-save-file-name'."
   (skip-unless (tramp--test-enabled))
 
@@ -2078,7 +2122,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	(ignore-errors (delete-directory tmp-name2 'recursive))))))
 
 ;; The functions were introduced in Emacs 26.1.
-(ert-deftest tramp-test32-make-nearby-temp-file ()
+(ert-deftest tramp-test33-make-nearby-temp-file ()
   "Check `make-nearby-temp-file' and `temporary-file-directory'."
   (skip-unless (tramp--test-enabled))
   (skip-unless
@@ -2086,7 +2130,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 
   ;; `make-nearby-temp-file' and `temporary-file-directory' exists
   ;; since Emacs 26.  We don't want to see compiler warnings for older
-  ;; Emacsen."
+  ;; Emacsen.
   (let ((default-directory tramp-test-temporary-file-directory)
 	tmp-file)
     ;; The remote host shall know a temporary file directory.
@@ -2343,7 +2387,7 @@ This requires restrictions of file name syntax."
 	(ignore-errors (delete-directory tmp-name2 'recursive))))))
 
 (defun tramp--test-special-characters ()
-  "Perform the test in `tramp-test33-special-characters*'."
+  "Perform the test in `tramp-test34-special-characters*'."
   ;; Newlines, slashes and backslashes in file names are not
   ;; supported.  So we don't test.  And we don't test the tab
   ;; character on Windows or Cygwin, because the backslash is
@@ -2386,7 +2430,7 @@ This requires restrictions of file name syntax."
    "{foo}bar{baz}"))
 
 ;; These tests are inspired by Bug#17238.
-(ert-deftest tramp-test33-special-characters ()
+(ert-deftest tramp-test34-special-characters ()
   "Check special characters in file names."
   (skip-unless (tramp--test-enabled))
   (skip-unless (not (tramp--test-rsync-p)))
@@ -2394,7 +2438,7 @@ This requires restrictions of file name syntax."
 
   (tramp--test-special-characters))
 
-(ert-deftest tramp-test33-special-characters-with-stat ()
+(ert-deftest tramp-test34-special-characters-with-stat ()
   "Check special characters in file names.
 Use the `stat' command."
   :tags '(:expensive-test)
@@ -2412,7 +2456,7 @@ Use the `stat' command."
 	  tramp-connection-properties)))
     (tramp--test-special-characters)))
 
-(ert-deftest tramp-test33-special-characters-with-perl ()
+(ert-deftest tramp-test34-special-characters-with-perl ()
   "Check special characters in file names.
 Use the `perl' command."
   :tags '(:expensive-test)
@@ -2433,7 +2477,7 @@ Use the `perl' command."
 	  tramp-connection-properties)))
     (tramp--test-special-characters)))
 
-(ert-deftest tramp-test33-special-characters-with-ls ()
+(ert-deftest tramp-test34-special-characters-with-ls ()
   "Check special characters in file names.
 Use the `ls' command."
   :tags '(:expensive-test)
@@ -2456,7 +2500,7 @@ Use the `ls' command."
     (tramp--test-special-characters)))
 
 (defun tramp--test-utf8 ()
-  "Perform the test in `tramp-test34-utf8*'."
+  "Perform the test in `tramp-test35-utf8*'."
   (let* ((utf8 (if (and (eq system-type 'darwin)
 			(memq 'utf-8-hfs (coding-system-list)))
 		   'utf-8-hfs 'utf-8))
@@ -2470,7 +2514,7 @@ Use the `ls' command."
      "银河系漫游指南系列"
      "Автостопом по гала́ктике")))
 
-(ert-deftest tramp-test34-utf8 ()
+(ert-deftest tramp-test35-utf8 ()
   "Check UTF8 encoding in file names and file contents."
   (skip-unless (tramp--test-enabled))
   (skip-unless (not (tramp--test-docker-p)))
@@ -2480,7 +2524,7 @@ Use the `ls' command."
 
   (tramp--test-utf8))
 
-(ert-deftest tramp-test34-utf8-with-stat ()
+(ert-deftest tramp-test35-utf8-with-stat ()
   "Check UTF8 encoding in file names and file contents.
 Use the `stat' command."
   :tags '(:expensive-test)
@@ -2500,7 +2544,7 @@ Use the `stat' command."
 	  tramp-connection-properties)))
     (tramp--test-utf8)))
 
-(ert-deftest tramp-test34-utf8-with-perl ()
+(ert-deftest tramp-test35-utf8-with-perl ()
   "Check UTF8 encoding in file names and file contents.
 Use the `perl' command."
   :tags '(:expensive-test)
@@ -2523,7 +2567,7 @@ Use the `perl' command."
 	  tramp-connection-properties)))
     (tramp--test-utf8)))
 
-(ert-deftest tramp-test34-utf8-with-ls ()
+(ert-deftest tramp-test35-utf8-with-ls ()
   "Check UTF8 encoding in file names and file contents.
 Use the `ls' command."
   :tags '(:expensive-test)
@@ -2547,7 +2591,7 @@ Use the `ls' command."
     (tramp--test-utf8)))
 
 ;; This test is inspired by Bug#16928.
-(ert-deftest tramp-test35-asynchronous-requests ()
+(ert-deftest tramp-test36-asynchronous-requests ()
   "Check parallel asynchronous requests.
 Such requests could arrive from timers, process filters and
 process sentinels.  They shall not disturb each other."
@@ -2636,7 +2680,7 @@ process sentinels.  They shall not disturb each other."
 	(dolist (buf buffers)
 	  (ignore-errors (kill-buffer buf))))))))
 
-(ert-deftest tramp-test36-recursive-load ()
+(ert-deftest tramp-test37-recursive-load ()
   "Check that Tramp does not fail due to recursive load."
   (skip-unless (tramp--test-enabled))
 
@@ -2657,7 +2701,7 @@ process sentinels.  They shall not disturb each other."
 	(mapconcat 'shell-quote-argument load-path " -L ")
 	(shell-quote-argument code)))))))
 
-(ert-deftest tramp-test37-unload ()
+(ert-deftest tramp-test38-unload ()
   "Check that Tramp and its subpackages unload completely.
 Since it unloads Tramp, it shall be the last test to run."
   ;; Mark as failed until all symbols are unbound.
@@ -2704,8 +2748,8 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * Work on skipped tests.  Make a comment, when it is impossible.
 ;; * Fix `tramp-test06-directory-file-name' for `ftp'.
 ;; * Fix `tramp-test27-start-file-process' on MS Windows (`process-send-eof'?).
-;; * Fix Bug#16928.  Set expected error of `tramp-test35-asynchronous-requests'.
-;; * Fix `tramp-test37-unload' (Not all symbols are unbound).  Set
+;; * Fix Bug#16928.  Set expected error of `tramp-test36-asynchronous-requests'.
+;; * Fix `tramp-test38-unload' (Not all symbols are unbound).  Set
 ;;   expected error.
 
 (defun tramp-test-all (&optional interactive)

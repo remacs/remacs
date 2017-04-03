@@ -715,7 +715,7 @@ Otherwise, one argument `-i' is passed to the shell.
     (when (file-remote-p default-directory)
       ;; Apply connection-local variables.
       (hack-connection-local-variables-apply
-       `(:application 'tramp
+       `(:application tramp
          :protocol ,(file-remote-p default-directory 'method)
          :user ,(file-remote-p default-directory 'user)
          :machine ,(file-remote-p default-directory 'host)))

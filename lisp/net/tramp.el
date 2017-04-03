@@ -1347,14 +1347,10 @@ version, the function does nothing."
     ;; `hack-connection-local-variables-apply' exists since Emacs 26.1.
     (tramp-compat-funcall
      'hack-connection-local-variables-apply
-     (append
-      '(tramp)
-      (when (tramp-file-name-method vec)
-        `(:protocol ,(tramp-file-name-method vec)))
-      (when (tramp-file-name-user vec)
-        `(:user ,(tramp-file-name-user vec)))
-      (when (tramp-file-name-host vec)
-        `(:machine ,(tramp-file-name-host vec)))))))
+     `(:application tramp
+       :protocol    ,(tramp-file-name-method vec)
+       :user        ,(tramp-file-name-user vec)
+       :machine     ,(tramp-file-name-host vec)))))
 
 (defun tramp-debug-buffer-name (vec)
   "A name for the debug buffer for VEC."

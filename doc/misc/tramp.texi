@@ -2523,13 +2523,13 @@ different remote hosts.
 
 @group
 (connection-local-set-profiles
-  '(:application 'tramp :protocol "ssh" :machine "localhost")
+  '(:application tramp :protocol "ssh" :machine "localhost")
   'remote-bash)
 @end group
 
 @group
 (connection-local-set-profiles
-  `(:application 'tramp :protocol "sudo"
+  `(:application tramp :protocol "sudo"
     :user "root" :machine ,(system-name))
   'remote-ksh)
 @end group
