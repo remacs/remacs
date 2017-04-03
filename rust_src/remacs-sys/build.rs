@@ -40,7 +40,8 @@ fn main() {
     } else {
         usable_integers_wide.as_ref()
     };
-    let integer_type_item = integer_types.iter()
+    let integer_type_item = integer_types
+        .iter()
         .find(|&&(n, _, l)| {
                   actual_ptr_size <= l && usable_integers.iter().find(|&x| x == &n).is_some()
               })
