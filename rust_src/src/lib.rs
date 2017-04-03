@@ -64,7 +64,6 @@ pub use crypto::sha1_ctx::sha1_process_bytes;
 pub use crypto::sha1_ctx::sha1_finish_ctx;
 
 // Used in process.c
-pub use sig2str::sig2str;
 pub use sig2str::str2sig;
 
 // These need to be exported as marker.c depends upon them.

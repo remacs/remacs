@@ -89,11 +89,3 @@ pub unsafe extern "C" fn str2sig(signame: *const c_char, signum: *mut c_int) -> 
     }
     return -1;
 }
-
-/// Convert SIGNUM to a signal name in SIGNAME. SIGNAME must point to
-/// a buffer of at least 5 bytes. Return 0 if successful, -1
-/// otherwise.
-#[no_mangle]
-pub extern "C" fn sig2str(signum: c_int, signame: *mut c_char) -> c_int {
-    return -1;
-}

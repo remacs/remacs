@@ -29,7 +29,6 @@
 extern "C" {
 #endif
 
-int sig2str (int, char *);
 int str2sig (char const *, int *);
 
 #ifdef __cplusplus
