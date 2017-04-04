@@ -1,4 +1,6 @@
 # Rust :heart: Emacs
+
+[![Join the chat at https://gitter.im/remacs-discuss/Lobby](https://badges.gitter.im/remacs-discuss/Lobby.svg)](https://gitter.im/remacs-discuss/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/Wilfred/remacs.svg?branch=master)](https://travis-ci.org/Wilfred/remacs)
 
 A community-driven port of [Emacs](https://www.gnu.org/software/emacs/) to [Rust](https://www.rust-lang.org).
