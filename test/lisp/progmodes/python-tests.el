@@ -2612,7 +2612,7 @@ Using `python-shell-interpreter' and
   "Test no side-effects on `process-environment'."
   (let* ((python-shell-process-environment
           '("TESTVAR1=value1" "TESTVAR2=value2"))
-         (python-shell-virtualenv-root "/env")
+         (python-shell-virtualenv-root (or (getenv "VIRTUAL_ENV") "/env"))
          (python-shell-unbuffered t)
          (python-shell-extra-pythonpaths'("/path1" "/path2"))
          (original-process-environment (copy-sequence process-environment)))
