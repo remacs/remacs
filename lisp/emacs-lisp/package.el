@@ -2354,6 +2354,13 @@ Otherwise no newline is inserted."
                                      (package-desc-name pkg))))
         (insert "\n")))
     (when homepage
+      ;; Prefer https for the homepage of packages on gnu.org.
+      (let ((gnu (cdr (assoc "gnu" package-archives))))
+        (and gnu
+             (string-match-p "^https" gnu)
+             (string-match-p "^http://\\(elpa\\|www\\)\\.gnu\\.org/" homepage)
+             (setq homepage
+                   (replace-regexp-in-string "^http" "https" homepage))))
       (package--print-help-section "Homepage")
       (help-insert-xref-button homepage 'help-url homepage)
       (insert "\n"))
