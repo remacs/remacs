@@ -840,6 +840,12 @@ instead of its first.
 * Lisp Changes in Emacs 26.1
 
 +++
+** Emacs now supports records for user-defined types, via the new
+functions 'copy-record', 'make-record', 'record', and 'recordp'.
+Records are now used internally to represent cl-defstruct and defclass
+instances, for example.
+
++++
 ** 'save-some-buffers' now uses 'save-some-buffers-default-predicate'
 to decide which buffers to ask about, if the PRED argument is nil.
 The default value of 'save-some-buffers-default-predicate' is nil,

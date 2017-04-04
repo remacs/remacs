@@ -14,8 +14,10 @@ instances.
 
   Internally, a record object is much like a vector; its slots can be
 accessed using @code{aref}.  However, the first slot is used to hold
-its type as returned by @code{type-of}.  Like arrays, records use
-zero-origin indexing: the first slot has index 0.
+its type as returned by @code{type-of}.  Also, in the current
+implementation records can have at most 4096 slots, whereas vectors
+can be much larger.  Like arrays, records use zero-origin indexing:
+the first slot has index 0.
 
   The printed representation of records is @samp{#s} followed by a
 list specifying the contents.  The first list element must be the

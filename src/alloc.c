@@ -3371,7 +3371,7 @@ allocate_pseudovector (int memlen, int lisplen,
   eassert (0 <= tag && tag <= PVEC_FONT);
   eassert (0 <= lisplen && lisplen <= zerolen && zerolen <= memlen);
   eassert (memlen - lisplen <= (1 << PSEUDOVECTOR_REST_BITS) - 1);
-  eassert (lisplen <= (1 << PSEUDOVECTOR_SIZE_BITS) - 1);
+  eassert (lisplen <= PSEUDOVECTOR_SIZE_MASK);
 
   /* Only the first LISPLEN slots will be traced normally by the GC.  */
   memclear (v->contents, zerolen * word_size);
@@ -3393,16 +3393,17 @@ allocate_buffer (void)
 }
 
 
-/* Allocate a new record with COUNT slots.  Return NULL if COUNT is
-   too large.  */
+/* Allocate a record with COUNT slots.  COUNT must be positive, and
+   includes the type slot.  */
 
 static struct Lisp_Vector *
-allocate_record (int count)
+allocate_record (EMACS_INT count)
 {
-  if (count >= (1 << PSEUDOVECTOR_SIZE_BITS))
-    return NULL;
-
-  struct Lisp_Vector *p = allocate_vector (count);
+  if (count > PSEUDOVECTOR_SIZE_MASK)
+    error ("Attempt to allocate a record of %"pI"d slots; max is %d",
+	   count, PSEUDOVECTOR_SIZE_MASK);
+  struct Lisp_Vector *p = allocate_vectorlike (count);
+  p->header.size = count;
   XSETPVECTYPE (p, PVEC_RECORD);
   return p;
 }
@@ -3411,53 +3412,29 @@ allocate_record (int count)
 DEFUN ("make-record", Fmake_record, Smake_record, 3, 3, 0,
        doc: /* Create a new record.
 TYPE is its type as returned by `type-of'.  SLOTS is the number of
-slots, each initialized to INIT.  The number of slots, including the
-type slot, must fit in PSEUDOVECTOR_SIZE_BITS.  */)
+non-type slots, each initialized to INIT.  */)
   (Lisp_Object type, Lisp_Object slots, Lisp_Object init)
 {
-  Lisp_Object record;
-  ptrdiff_t size, i;
-  struct Lisp_Vector *p;
-
   CHECK_NATNUM (slots);
-
-  size = XFASTINT (slots) + 1;
-  p = allocate_record (size);
-  if (p == NULL)
-    error ("Attempt to allocate a record of %"pD"d slots; max is %d",
-	   size, (1 << PSEUDOVECTOR_SIZE_BITS) - 1);
-
+  EMACS_INT size = XFASTINT (slots) + 1;
+  struct Lisp_Vector *p = allocate_record (size);
   p->contents[0] = type;
-  for (i = 1; i < size; i++)
+  for (ptrdiff_t i = 1; i < size; i++)
     p->contents[i] = init;
-
-  XSETVECTOR (record, p);
-  return record;
+  return make_lisp_ptr (p, Lisp_Vectorlike);
 }
 
 
 DEFUN ("record", Frecord, Srecord, 1, MANY, 0,
        doc: /* Create a new record.
 TYPE is its type as returned by `type-of'.  SLOTS is used to
-initialize the record slots with shallow copies of the arguments.  The
-number of slots, including the type slot, must fit in
-PSEUDOVECTOR_SIZE_BITS.
+initialize the record slots with shallow copies of the arguments.
 usage: (record TYPE &rest SLOTS) */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
   struct Lisp_Vector *p = allocate_record (nargs);
-  if (p == NULL)
-    error ("Attempt to allocate a record of %"pD"d slots; max is %d",
-	   nargs, (1 << PSEUDOVECTOR_SIZE_BITS) - 1);
-
-  Lisp_Object type = args[0];
-  Lisp_Object record;
-
-  p->contents[0] = type;
-  memcpy (p->contents + 1, args + 1, (nargs - 1) * sizeof *args);
-
-  XSETVECTOR (record, p);
-  return record;
+  memcpy (p->contents, args, nargs * sizeof *args);
+  return make_lisp_ptr (p, Lisp_Vectorlike);
 }
 
 
@@ -3466,17 +3443,11 @@ DEFUN ("copy-record", Fcopy_record, Scopy_record, 1, 1, 0,
   (Lisp_Object record)
 {
   CHECK_RECORD (record);
-  struct Lisp_Vector *src = XVECTOR (record);
   ptrdiff_t size = ASIZE (record) & PSEUDOVECTOR_SIZE_MASK;
   struct Lisp_Vector *new = allocate_record (size);
-  if (new == NULL)
-    error ("Attempt to allocate a record of %"pD"d slots; max is %d",
-	   size, (1 << PSEUDOVECTOR_SIZE_BITS) - 1);
-
-  memcpy (&(new->contents[0]), &(src->contents[0]),
+  memcpy (new->contents, XVECTOR (record)->contents,
           size * sizeof (Lisp_Object));
-  XSETVECTOR (record, new);
-  return record;
+  return make_lisp_ptr (new, Lisp_Vectorlike);
 }
 
 
