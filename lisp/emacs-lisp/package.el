@@ -194,14 +194,16 @@ If VERSION is nil, the package is not loaded (it is \"disabled\")."
   :risky t
   :version "24.1")
 
-(defcustom package-archives '(("gnu" . "http://elpa.gnu.org/packages/"))
+(defcustom package-archives `(("gnu" .
+                               ,(format "http%s://elpa.gnu.org/packages/"
+                                        (if (gnutls-available-p) "s" ""))))
   "An alist of archives from which to fetch.
 The default value points to the GNU Emacs package repository.
 
 Each element has the form (ID . LOCATION).
  ID is an archive name, as a string.
  LOCATION specifies the base location for the archive.
-  If it starts with \"http:\", it is treated as a HTTP URL;
+  If it starts with \"http(s):\", it is treated as an HTTP(S) URL;
   otherwise it should be an absolute directory name.
   (Other types of URL are currently not supported.)
 
@@ -210,7 +212,7 @@ a package can run arbitrary code."
   :type '(alist :key-type (string :tag "Archive name")
                 :value-type (string :tag "URL or directory name"))
   :risky t
-  :version "24.1")
+  :version "26.1")                      ; gnutls test
 
 (defcustom package-menu-hide-low-priority 'archive
   "If non-nil, hide low priority packages from the packages menu.
