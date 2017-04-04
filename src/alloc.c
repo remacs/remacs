@@ -3424,7 +3424,7 @@ type slot, must fit in PSEUDOVECTOR_SIZE_BITS.  */)
   size = XFASTINT (slots) + 1;
   p = allocate_record (size);
   if (p == NULL)
-    error ("Attempt to allocate a record of %ld slots; max is %d",
+    error ("Attempt to allocate a record of %"pD"d slots; max is %d",
 	   size, (1 << PSEUDOVECTOR_SIZE_BITS) - 1);
 
   p->contents[0] = type;
@@ -3447,7 +3447,7 @@ usage: (record TYPE &rest SLOTS) */)
 {
   struct Lisp_Vector *p = allocate_record (nargs);
   if (p == NULL)
-    error ("Attempt to allocate a record of %ld slots; max is %d",
+    error ("Attempt to allocate a record of %"pD"d slots; max is %d",
 	   nargs, (1 << PSEUDOVECTOR_SIZE_BITS) - 1);
 
   Lisp_Object type = args[0];
@@ -3470,7 +3470,7 @@ DEFUN ("copy-record", Fcopy_record, Scopy_record, 1, 1, 0,
   ptrdiff_t size = ASIZE (record) & PSEUDOVECTOR_SIZE_MASK;
   struct Lisp_Vector *new = allocate_record (size);
   if (new == NULL)
-    error ("Attempt to allocate a record of %ld slots; max is %d",
+    error ("Attempt to allocate a record of %"pD"d slots; max is %d",
 	   size, (1 << PSEUDOVECTOR_SIZE_BITS) - 1);
 
   memcpy (&(new->contents[0]), &(src->contents[0]),
