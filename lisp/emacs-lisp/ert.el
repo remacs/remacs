@@ -275,9 +275,9 @@ DATA is displayed to the user and should state the reason for skipping."
 
 (defun ert--expand-should-1 (whole form inner-expander)
   "Helper function for the `should' macro and its variants."
-  (require 'bytecomp)                   ; FIXME?
   (let ((form
-         (macroexpand form (append byte-compile-macro-environment
+         (macroexpand form (append (bound-and-true-p
+                                    byte-compile-macro-environment)
                                    (cond
                                     ((boundp 'macroexpand-all-environment)
                                      macroexpand-all-environment)
