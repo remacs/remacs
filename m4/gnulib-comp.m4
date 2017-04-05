@@ -119,7 +119,6 @@ AC_DEFUN([gl_EARLY],
   # Code from module readlinkat:
   # Code from module root-uid:
   # Code from module secure_getenv:
-  # Code from module sig2str:
   # Code from module signal-h:
   # Code from module snippet/_Noreturn:
   # Code from module snippet/arg-nonnull:
@@ -340,11 +339,6 @@ AC_DEFUN([gl_INIT],
     AC_LIBOBJ([readlinkat])
   fi
   gl_UNISTD_MODULE_INDICATOR([readlinkat])
-  gl_FUNC_SIG2STR
-  if test $ac_cv_func_sig2str = no; then
-    AC_LIBOBJ([sig2str])
-    gl_PREREQ_SIG2STR
-  fi
   gl_SIGNAL_H
   gl_TYPE_SOCKLEN_T
   gt_TYPE_SSIZE_T
@@ -945,8 +939,6 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/sha256.h
   lib/sha512.c
   lib/sha512.h
-  lib/sig2str.c
-  lib/sig2str.h
   lib/signal.in.h
   lib/stat-time.c
   lib/stat-time.h
@@ -1056,7 +1048,6 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/sha1.m4
   m4/sha256.m4
   m4/sha512.m4
-  m4/sig2str.m4
   m4/signal_h.m4
   m4/socklen.m4
   m4/ssize_t.m4
