@@ -683,8 +683,12 @@ main (int argc, char **argv)
   /* Record (approximately) where the stack begins.  */
   stack_bottom = &stack_bottom_variable;
 
+#ifndef CANNOT_DUMP
   dumping = !initialized && (strcmp (argv[argc - 1], "dump") == 0
 			     || strcmp (argv[argc - 1], "bootstrap") == 0);
+#else
+  dumping = false;
+#endif
 
   /* True if address randomization interferes with memory allocation.  */
 # ifdef __PPC64__
