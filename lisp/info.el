@@ -2008,7 +2008,7 @@ If DIRECTION is `backward', search in the reverse direction."
             (unless (if backward
                         (re-search-backward regexp nil t)
                       (re-search-forward regexp nil t))
-              (signal 'user-seach-failed (list regexp))))))
+              (signal 'user-search-failed (list regexp))))))
 
       (if (and bound (not found))
           (signal 'user-search-failed (list regexp)))
