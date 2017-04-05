@@ -4923,8 +4923,6 @@ syms_of_frame (void)
   DEFSYM (Qx_resource_name, "x-resource-name");
   DEFSYM (Qx_frame_parameter, "x-frame-parameter");
 
-  DEFSYM (Qterminal, "terminal");
-
   DEFSYM (Qworkarea, "workarea");
   DEFSYM (Qmm_size, "mm-size");
   DEFSYM (Qframes, "frames");

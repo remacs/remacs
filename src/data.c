@@ -368,7 +368,7 @@ DEFUN ("vectorp", Fvectorp, Svectorp, 1, 1, 0,
   return Qnil;
 }
 
-DEFUN ("recordp", Frecordp_p, Srecordp, 1, 1, 0,
+DEFUN ("recordp", Frecordp, Srecordp, 1, 1, 0,
        doc: /* Return t if OBJECT is a record.  */)
   (Lisp_Object object)
 {
@@ -3589,7 +3589,6 @@ syms_of_data (void)
 
   DEFSYM (Qquote, "quote");
   DEFSYM (Qlambda, "lambda");
-  DEFSYM (Qsubr, "subr");
   DEFSYM (Qerror_conditions, "error-conditions");
   DEFSYM (Qerror_message, "error-message");
   DEFSYM (Qtop_level, "top-level");
@@ -3737,6 +3736,7 @@ syms_of_data (void)
   DEFSYM (Qwindow_configuration, "window-configuration");
   DEFSYM (Qprocess, "process");
   DEFSYM (Qwindow, "window");
+  DEFSYM (Qsubr, "subr");
   DEFSYM (Qcompiled_function, "compiled-function");
   DEFSYM (Qbuffer, "buffer");
   DEFSYM (Qframe, "frame");
@@ -3748,12 +3748,12 @@ syms_of_data (void)
   DEFSYM (Qthread, "thread");
   DEFSYM (Qmutex, "mutex");
   DEFSYM (Qcondition_variable, "condition-variable");
-
-  DEFSYM (Qdefun, "defun");
-
   DEFSYM (Qfont_spec, "font-spec");
   DEFSYM (Qfont_entity, "font-entity");
   DEFSYM (Qfont_object, "font-object");
+  DEFSYM (Qterminal, "terminal");
+
+  DEFSYM (Qdefun, "defun");
 
   DEFSYM (Qinteractive_form, "interactive-form");
   DEFSYM (Qdefalias_fset_function, "defalias-fset-function");
