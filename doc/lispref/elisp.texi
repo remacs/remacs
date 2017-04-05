@@ -316,6 +316,7 @@ Programming Types
 * Primitive Function Type::     A function written in C, callable from Lisp.
 * Byte-Code Type::      A function written in Lisp, then compiled.
 * Record Type::         Compound objects with programmer-defined types.
+* Type Descriptors::    Objects holding information about types.
 * Autoload Type::       A type used for automatically loading seldom-used
                           functions.
 * Finalizer Type::      Runs code when no longer reachable.

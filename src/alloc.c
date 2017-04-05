@@ -3411,8 +3411,9 @@ allocate_record (EMACS_INT count)
 
 DEFUN ("make-record", Fmake_record, Smake_record, 3, 3, 0,
        doc: /* Create a new record.
-TYPE is its type as returned by `type-of'.  SLOTS is the number of
-non-type slots, each initialized to INIT.  */)
+TYPE is its type as returned by `type-of'; it should be either a
+symbol or a type descriptor.  SLOTS is the number of non-type slots,
+each initialized to INIT.  */)
   (Lisp_Object type, Lisp_Object slots, Lisp_Object init)
 {
   CHECK_NATNUM (slots);
@@ -3427,8 +3428,9 @@ non-type slots, each initialized to INIT.  */)
 
 DEFUN ("record", Frecord, Srecord, 1, MANY, 0,
        doc: /* Create a new record.
-TYPE is its type as returned by `type-of'.  SLOTS is used to
-initialize the record slots with shallow copies of the arguments.
+TYPE is its type as returned by `type-of'; it should be either a
+symbol or a type descriptor.  SLOTS is used to initialize the record
+slots with shallow copies of the arguments.
 usage: (record TYPE &rest SLOTS) */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
