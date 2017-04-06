@@ -111,15 +111,15 @@ TAGS: $(ETAGS) $(tagsfiles)
 	$(ETAGS) $(tagsfiles)
 .PHONY: $(ETAGS) tags
 
-clean mostlyclean:
-	rm -f *.[ao] \#* $(DEPDIR)/*
-distclean: clean
-	rm -f Makefile $(BUILT_SOURCES)
+clean:
+	rm -f *.[ao] *-t \#* $(DEPDIR)/*
+mostlyclean: clean
+	rm -f $(filter-out %-t,$(MOSTLYCLEANFILES))
+distclean bootstrap-clean: mostlyclean
+	rm -f Makefile
 	rm -fr $(DEPDIR)
-bootstrap-clean: distclean
-	rm -f TAGS
-maintainer-clean: bootstrap-clean
-	rm -f gnulib.mk
+maintainer-clean: distclean
+	rm -f TAGS gnulib.mk
 .PHONY: mostlyclean clean distclean bootstrap-clean maintainer-clean
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
