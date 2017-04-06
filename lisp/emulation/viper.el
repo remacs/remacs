@@ -14,6 +14,8 @@
 ;; filed in the Emacs bug reporting system against this file, a copy
 ;; of the bug report be sent to the maintainer's email address.
 
+(require 'cl-lib)
+
 (defconst viper-version "3.14.2 of July 4, 2013"
   "The current version of Viper")
 

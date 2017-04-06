@@ -37,6 +37,7 @@
 (require 'cedet)
 (require 'semantic/tag)
 (require 'semantic/lex)
+(require 'cl-lib)
 
 (defvar semantic-version "2.2"
   "Current version of Semantic.")

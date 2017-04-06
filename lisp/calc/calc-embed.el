@@ -27,6 +27,7 @@
 
 (require 'calc-ext)
 (require 'calc-macs)
+(require 'cl-lib)
 
 ;; Declare functions which are defined elsewhere.
 (declare-function thing-at-point-looking-at "thingatpt"
