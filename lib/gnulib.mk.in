@@ -84,6 +84,7 @@ EOVERFLOW_VALUE = @EOVERFLOW_VALUE@
 ERRNO_H = @ERRNO_H@
 EXECINFO_H = @EXECINFO_H@
 EXEEXT = @EXEEXT@
+FIND_DELETE = @FIND_DELETE@
 FIRSTFILE_OBJ = @FIRSTFILE_OBJ@
 FONTCONFIG_CFLAGS = @FONTCONFIG_CFLAGS@
 FONTCONFIG_LIBS = @FONTCONFIG_LIBS@
@@ -94,6 +95,7 @@ GCONF_CFLAGS = @GCONF_CFLAGS@
 GCONF_LIBS = @GCONF_LIBS@
 GETADDRINFO_A_LIBS = @GETADDRINFO_A_LIBS@
 GETLOADAVG_LIBS = @GETLOADAVG_LIBS@
+GETOPT_CDEFS_H = @GETOPT_CDEFS_H@
 GETOPT_H = @GETOPT_H@
 GFILENOTIFY_CFLAGS = @GFILENOTIFY_CFLAGS@
 GFILENOTIFY_LIBS = @GFILENOTIFY_LIBS@
@@ -488,6 +490,7 @@ HAVE_STRVERSCMP = @HAVE_STRVERSCMP@
 HAVE_SYMLINK = @HAVE_SYMLINK@
 HAVE_SYMLINKAT = @HAVE_SYMLINKAT@
 HAVE_SYS_BITYPES_H = @HAVE_SYS_BITYPES_H@
+HAVE_SYS_CDEFS_H = @HAVE_SYS_CDEFS_H@
 HAVE_SYS_INTTYPES_H = @HAVE_SYS_INTTYPES_H@
 HAVE_SYS_LOADAVG_H = @HAVE_SYS_LOADAVG_H@
 HAVE_SYS_PARAM_H = @HAVE_SYS_PARAM_H@
@@ -1511,11 +1514,11 @@ endif
 ## begin gnulib module getopt-posix
 ifeq (,$(OMIT_GNULIB_MODULE_getopt-posix))
 
-BUILT_SOURCES += $(GETOPT_H)
+BUILT_SOURCES += $(GETOPT_H) $(GETOPT_CDEFS_H)
 
 # We need the following in order to create <getopt.h> when the system
 # doesn't have one that works with the given compiler.
-getopt.h: getopt.in.h $(top_builddir)/config.status $(ARG_NONNULL_H)
+getopt.h: getopt.in.h $(top_builddir)/config.status
 	$(AM_V_GEN)rm -f $@-t $@ && \
 	{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */'; \
 	  sed -e 's|@''GUARD_PREFIX''@|GL|g' \
@@ -1524,13 +1527,21 @@ getopt.h: getopt.in.h $(top_builddir)/config.status $(ARG_NONNULL_H)
 	      -e 's|@''PRAGMA_SYSTEM_HEADER''@|@PRAGMA_SYSTEM_HEADER@|g' \
 	      -e 's|@''PRAGMA_COLUMNS''@|@PRAGMA_COLUMNS@|g' \
 	      -e 's|@''NEXT_GETOPT_H''@|$(NEXT_GETOPT_H)|g' \
-	      -e '/definition of _GL_ARG_NONNULL/r $(ARG_NONNULL_H)' \
 	      < $(srcdir)/getopt.in.h; \
 	} > $@-t && \
 	mv -f $@-t $@
-MOSTLYCLEANFILES += getopt.h getopt.h-t
 
-EXTRA_DIST += getopt.c getopt.in.h getopt1.c getopt_int.h
+getopt_cdefs.h: getopt_cdefs.in.h $(top_builddir)/config.status
+	$(AM_V_GEN)rm -f $@-t $@ && \
+	{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */'; \
+          sed -e 's|@''HAVE_SYS_CDEFS_H''@|$(HAVE_SYS_CDEFS_H)|g' \
+	      < $(srcdir)/getopt_cdefs.in.h; \
+	} > $@-t && \
+	mv -f $@-t $@
+
+MOSTLYCLEANFILES += getopt.h getopt.h-t getopt_cdefs.h getopt_cdefs.h-t
+
+EXTRA_DIST += getopt.c getopt.in.h getopt1.c getopt_cdefs.in.h getopt_core.h getopt_ext.h getopt_int.h getopt_pfx_core.h getopt_pfx_ext.h
 
 EXTRA_libgnu_a_SOURCES += getopt.c getopt1.c
 

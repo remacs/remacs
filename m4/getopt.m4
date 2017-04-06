@@ -1,4 +1,4 @@
-# getopt.m4 serial 44
+# getopt.m4 serial 45
 dnl Copyright (C) 2002-2006, 2008-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -33,8 +33,6 @@ AC_DEFUN([gl_FUNC_GETOPT_POSIX],
 AC_DEFUN([gl_FUNC_GETOPT_GNU],
 [
   m4_divert_text([INIT_PREPARE], [gl_getopt_required=GNU])
-
-  AC_REQUIRE([gl_FUNC_GETOPT_POSIX])
 ])
 
 # Determine whether to replace the entire getopt facility.
@@ -354,15 +352,19 @@ dnl is ambiguous with environment values that contain newlines.
 
 AC_DEFUN([gl_GETOPT_SUBSTITUTE_HEADER],
 [
-  GETOPT_H=getopt.h
+  AC_CHECK_HEADERS_ONCE([sys/cdefs.h])
+  if test $ac_cv_header_sys_cdefs_h = yes; then
+    HAVE_SYS_CDEFS_H=1
+  else
+    HAVE_SYS_CDEFS_H=0
+  fi
+  AC_SUBST([HAVE_SYS_CDEFS_H])
+
   AC_DEFINE([__GETOPT_PREFIX], [[rpl_]],
     [Define to rpl_ if the getopt replacement functions and variables
      should be used.])
+  GETOPT_H=getopt.h
+  GETOPT_CDEFS_H=getopt_cdefs.h
   AC_SUBST([GETOPT_H])
-])
-
-# Prerequisites of lib/getopt*.
-AC_DEFUN([gl_PREREQ_GETOPT],
-[
-  AC_CHECK_DECLS_ONCE([getenv])
+  AC_SUBST([GETOPT_CDEFS_H])
 ])

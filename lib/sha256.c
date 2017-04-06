@@ -366,7 +366,8 @@ sha256_process_bytes (const void *buffer, size_t len, struct sha256_ctx *ctx)
           sha256_process_block (ctx->buffer, ctx->buflen & ~63, ctx);
 
           ctx->buflen &= 63;
-          /* The regions in the following copy operation cannot overlap.  */
+          /* The regions in the following copy operation cannot overlap,
+             because ctx->buflen < 64 ≤ (left_over + add) & ~63.  */
           memcpy (ctx->buffer,
                   &((char *) ctx->buffer)[(left_over + add) & ~63],
                   ctx->buflen);
@@ -408,6 +409,8 @@ sha256_process_bytes (const void *buffer, size_t len, struct sha256_ctx *ctx)
         {
           sha256_process_block (ctx->buffer, 64, ctx);
           left_over -= 64;
+          /* The regions in the following copy operation cannot overlap,
+             because left_over ≤ 64.  */
           memcpy (ctx->buffer, &ctx->buffer[16], left_over);
         }
       ctx->buflen = left_over;

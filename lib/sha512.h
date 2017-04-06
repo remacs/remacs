@@ -44,8 +44,8 @@ struct sha512_ctx
   u64 state[8];
 
   u64 total[2];
-  size_t buflen;
-  u64 buffer[32];
+  size_t buflen;  /* ≥ 0, ≤ 256 */
+  u64 buffer[32]; /* 256 bytes; the first buflen bytes are in use */
 };
 
 /* Initialize structure containing state of computation. */

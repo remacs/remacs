@@ -259,19 +259,10 @@ AC_DEFUN([gl_INIT],
   fi
   gl_STDLIB_MODULE_INDICATOR([getloadavg])
   gl_FUNC_GETOPT_GNU
-  if test $REPLACE_GETOPT = 1; then
-    AC_LIBOBJ([getopt])
-    AC_LIBOBJ([getopt1])
-    gl_PREREQ_GETOPT
-    dnl Arrange for unistd.h to include getopt.h.
-    GNULIB_GL_UNISTD_H_GETOPT=1
-  fi
-  AC_SUBST([GNULIB_GL_UNISTD_H_GETOPT])
   gl_FUNC_GETOPT_POSIX
   if test $REPLACE_GETOPT = 1; then
     AC_LIBOBJ([getopt])
     AC_LIBOBJ([getopt1])
-    gl_PREREQ_GETOPT
     dnl Arrange for unistd.h to include getopt.h.
     GNULIB_GL_UNISTD_H_GETOPT=1
   fi
@@ -911,7 +902,12 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/getopt.c
   lib/getopt.in.h
   lib/getopt1.c
+  lib/getopt_cdefs.in.h
+  lib/getopt_core.h
+  lib/getopt_ext.h
   lib/getopt_int.h
+  lib/getopt_pfx_core.h
+  lib/getopt_pfx_ext.h
   lib/gettext.h
   lib/gettime.c
   lib/gettimeofday.c

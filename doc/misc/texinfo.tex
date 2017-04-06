@@ -3,11 +3,11 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2017-03-07.20}
+\def\texinfoversion{2017-03-25.14}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-% 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016
+% 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017
 % Free Software Foundation, Inc.
 %
 % This texinfo.tex file is free software: you can redistribute it and/or
@@ -11312,7 +11312,6 @@ directory should work if nowhere else does.}
   %
   \lispnarrowing = 0.3in
   \tolerance = 700
-  \hfuzz = 1pt
   \contentsrightmargin = 0pt
   \defbodyindent = .5cm
 }}
@@ -11330,7 +11329,6 @@ directory should work if nowhere else does.}
   %
   \lispnarrowing = 0.25in
   \tolerance = 700
-  \hfuzz = 1pt
   \contentsrightmargin = 0pt
   \defbodyindent = .4cm
 }}
@@ -11356,7 +11354,6 @@ directory should work if nowhere else does.}
                     {297mm}{210mm}%
   %
   \tolerance = 700
-  \hfuzz = 1pt
   \contentsrightmargin = 0pt
   \defbodyindent = 5mm
 }}
@@ -11375,7 +11372,6 @@ directory should work if nowhere else does.}
   %
   \lispnarrowing = 0.2in
   \tolerance = 800
-  \hfuzz = 1.2pt
   \contentsrightmargin = 0pt
   \defbodyindent = 2mm
   \tableindent = 12mm
@@ -11430,6 +11426,9 @@ directory should work if nowhere else does.}
 % Set default to letter.
 %
 \letterpaper
+
+% Default value of \hfuzz, for suppressing warnings about overfull hboxes.
+\hfuzz = 1pt
 
 
 \message{and turning on texinfo input format.}
