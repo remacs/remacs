@@ -85,8 +85,9 @@
 (message "Using load-path %s" load-path)
 
 ;; This is a poor man's `last', since we haven't loaded subr.el yet.
-(if (or (equal (member "bootstrap" command-line-args) '("bootstrap"))
-	(equal (member "dump" command-line-args) '("dump")))
+(if (and (fboundp 'dump-emacs)
+         (or (equal (member "bootstrap" command-line-args) '("bootstrap"))
+             (equal (member "dump" command-line-args) '("dump"))))
     (progn
       ;; To reduce the size of dumped Emacs, we avoid making huge char-tables.
       (setq inhibit-load-charset-map t)
@@ -345,12 +346,14 @@ lost after dumping")))
 ;; in non-ASCII directories is to manipulate unibyte strings in the
 ;; current locale's encoding.
 (if (and (member (car (last command-line-args)) '("dump" "bootstrap"))
+         (fboundp 'dump-emacs)
 	 (multibyte-string-p default-directory))
     (error "default-directory must be unibyte when dumping Emacs!"))
 
 ;; Determine which build number to use
 ;; based on the executables that now exist.
 (if (and (equal (last command-line-args) '("dump"))
+         (fboundp 'dump-emacs)
 	 (not (eq system-type 'ms-dos)))
     (let* ((base (concat "emacs-" emacs-version "."))
 	   (exelen (if (eq system-type 'windows-nt) -4))
@@ -368,7 +371,8 @@ lost after dumping")))
 
 
 (message "Finding pointers to doc strings...")
-(if (equal (last command-line-args) '("dump"))
+(if (and (fboundp 'dump-emacs)
+         (equal (last command-line-args) '("dump")))
     (Snarf-documentation "DOC")
   (condition-case nil
       (Snarf-documentation "DOC")
@@ -437,7 +441,8 @@ lost after dumping")))
 ;; Make sure we will attempt bidi reordering henceforth.
 (setq redisplay--inhibit-bidi nil)
 
-(if (member (car (last command-line-args)) '("dump" "bootstrap"))
+(if (and (fboundp 'dump-emacs)
+         (member (car (last command-line-args)) '("dump" "bootstrap")))
     (progn
       ;; Prevent build-time PATH getting stored in the binary.
       ;; Mainly cosmetic, but helpful for Guix.  (Bug#20330)
