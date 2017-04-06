@@ -1087,7 +1087,12 @@ DEFUN ("char-syntax", Fchar_syntax, Schar_syntax, 1, 1, 0,
 For example, if CHARACTER is a word constituent, the
 character `w' (119) is returned.
 The characters that correspond to various syntax codes
-are listed in the documentation of `modify-syntax-entry'.  */)
+are listed in the documentation of `modify-syntax-entry'.
+
+If you're trying to determine the syntax of characters in the buffer,
+this is probably the wrong function to use, because it can't take
+`syntax-table' text properties into account.  Consider using
+`syntax-after' instead.  */)
   (Lisp_Object character)
 {
   int char_int;
