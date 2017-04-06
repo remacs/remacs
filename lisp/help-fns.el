@@ -1096,8 +1096,8 @@ frame to show the information about SYMBOL; they default to the
 current buffer and the selected frame, respectively."
   (interactive
    (let* ((v-or-f (symbol-at-point))
-          (found (cl-some (lambda (x) (funcall (nth 1 x) v-or-f))
-                          describe-symbol-backends))
+          (found (if v-or-f (cl-some (lambda (x) (funcall (nth 1 x) v-or-f))
+                                     describe-symbol-backends)))
           (v-or-f (if found v-or-f (function-called-at-point)))
           (found (or found v-or-f))
           (enable-recursive-minibuffers t)
