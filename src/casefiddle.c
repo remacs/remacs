@@ -33,24 +33,30 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP};
 
 /* State for casing individual characters.  */
-struct casing_context {
+struct casing_context
+{
   /* A char-table with title-case character mappings or nil.  Non-nil implies
      flag is CASE_CAPITALIZE or CASE_CAPITALIZE_UP.  */
   Lisp_Object titlecase_char_table;
+
   /* The unconditional special-casing Unicode property char tables for upper
-     casing, lower casing and title casing respectively. */
+     casing, lower casing and title casing respectively.  */
   Lisp_Object specialcase_char_tables[3];
-  /* User-requested action. */
+
+  /* User-requested action.  */
   enum case_action flag;
-  /* If true, function operates on a buffer as opposed to a string or character.
-     When run on a buffer, syntax_prefix_flag_p is taken into account when
-     determined inword flag. */
+
+  /* If true, the function operates on a buffer as opposed to a string
+     or character.  When run on a buffer, syntax_prefix_flag_p is
+     taken into account when determining whether the context is within
+     a word.  */
   bool inbuffer;
-  /* Whether we are inside of a word. */
+
+  /* Whether the context is within a word.  */
   bool inword;
 };
 
-/* Initialise CTX structure for casing characters. */
+/* Initialize CTX structure for casing characters.  */
 static void
 prepare_casing_context (struct casing_context *ctx,
 			enum case_action flag, bool inbuffer)
@@ -58,26 +64,30 @@ prepare_casing_context (struct casing_context *ctx,
   ctx->flag = flag;
   ctx->inbuffer = inbuffer;
   ctx->inword = false;
-  ctx->titlecase_char_table = (int)flag < (int)CASE_CAPITALIZE ? Qnil :
-    uniprop_table (intern_c_string ("titlecase"));
-  ctx->specialcase_char_tables[CASE_UP] = flag == CASE_DOWN ? Qnil :
-    uniprop_table (intern_c_string ("special-uppercase"));
-  ctx->specialcase_char_tables[CASE_DOWN] = flag == CASE_UP ? Qnil :
-    uniprop_table (intern_c_string ("special-lowercase"));
-  ctx->specialcase_char_tables[CASE_CAPITALIZE] =
-    (int)flag < (int)CASE_CAPITALIZE ? Qnil :
-    uniprop_table (intern_c_string ("special-titlecase"));
+  ctx->titlecase_char_table
+    = (flag < CASE_CAPITALIZE ? Qnil
+       : uniprop_table (intern_c_string ("titlecase")));
+  ctx->specialcase_char_tables[CASE_UP]
+    = (flag == CASE_DOWN ? Qnil
+       : uniprop_table (intern_c_string ("special-uppercase")));
+  ctx->specialcase_char_tables[CASE_DOWN]
+    = (flag == CASE_UP ? Qnil
+       : uniprop_table (intern_c_string ("special-lowercase")));
+  ctx->specialcase_char_tables[CASE_CAPITALIZE]
+    = (flag < CASE_CAPITALIZE ? Qnil
+       : uniprop_table (intern_c_string ("special-titlecase")));
 
   /* If the case table is flagged as modified, rescan it.  */
   if (NILP (XCHAR_TABLE (BVAR (current_buffer, downcase_table))->extras[1]))
     Fset_case_table (BVAR (current_buffer, downcase_table));
 
-  if (inbuffer && (int) flag >= (int) CASE_CAPITALIZE)
+  if (inbuffer && flag >= CASE_CAPITALIZE)
     SETUP_BUFFER_SYNTAX_TABLE ();	/* For syntax_prefix_flag_p.  */
 }
 
-struct casing_str_buf {
-  unsigned char data[MAX_MULTIBYTE_LENGTH > 6 ? MAX_MULTIBYTE_LENGTH : 6];
+struct casing_str_buf
+{
+  unsigned char data[max (6, MAX_MULTIBYTE_LENGTH)];
   unsigned char len_chars;
   unsigned char len_bytes;
 };
@@ -87,24 +97,23 @@ struct casing_str_buf {
    character has been changed.
 
    Since meaning of return value depends on arguments, it’s more convenient to
-   use case_single_character or case_character instead. */
+   use case_single_character or case_character instead.  */
 static int
 case_character_impl (struct casing_str_buf *buf,
 		     struct casing_context *ctx, int ch)
 {
   enum case_action flag;
   Lisp_Object prop;
-  bool was_inword;
   int cased;
 
   /* Update inword state */
-  was_inword = ctx->inword;
+  bool was_inword = ctx->inword;
   ctx->inword = SYNTAX (ch) == Sword &&
     (!ctx->inbuffer || was_inword || !syntax_prefix_flag_p (ch));
 
-  /* Normalise flag so its one of CASE_UP, CASE_DOWN or CASE_CAPITALIZE. */
+  /* Normalize flag so its one of CASE_UP, CASE_DOWN or CASE_CAPITALIZE.  */
   if (ctx->flag == CASE_CAPITALIZE)
-    flag = (enum case_action)((int)ctx->flag - was_inword);
+    flag = ctx->flag - was_inword;
   else if (ctx->flag != CASE_CAPITALIZE_UP)
     flag = ctx->flag;
   else if (!was_inword)
@@ -115,33 +124,34 @@ case_character_impl (struct casing_str_buf *buf,
       goto done;
     }
 
-  /* Look through the special casing entries. */
-  if (buf && !NILP(ctx->specialcase_char_tables[(int)flag]))
+  /* Look through the special casing entries.  */
+  if (buf && !NILP (ctx->specialcase_char_tables[(int)flag]))
     {
-      prop = CHAR_TABLE_REF(ctx->specialcase_char_tables[(int)flag], ch);
-      if (STRINGP(prop))
+      prop = CHAR_TABLE_REF (ctx->specialcase_char_tables[(int)flag], ch);
+      if (STRINGP (prop))
         {
-          struct Lisp_String *str = XSTRING(prop);
-          if (STRING_BYTES(str) <= sizeof buf->data)
+          struct Lisp_String *str = XSTRING (prop);
+          if (STRING_BYTES (str) <= sizeof buf->data)
 	    {
 	      buf->len_chars = str->size;
-	      buf->len_bytes = STRING_BYTES(str);
-	      memcpy(buf->data, str->data, buf->len_bytes);
+	      buf->len_bytes = STRING_BYTES (str);
+	      memcpy (buf->data, str->data, buf->len_bytes);
 	      return 1;
 	    }
         }
     }
 
-  /* Handle simple, one-to-one case. */
+  /* Handle simple, one-to-one case.  */
   if (flag == CASE_DOWN)
     cased = downcase (ch);
-  else if (!NILP (ctx->titlecase_char_table) &&
-	   CHARACTERP (prop = CHAR_TABLE_REF (ctx->titlecase_char_table, ch)))
+  else if (!NILP (ctx->titlecase_char_table)
+	   && CHARACTERP (prop
+			  = CHAR_TABLE_REF (ctx->titlecase_char_table, ch)))
     cased = XFASTINT (prop);
   else
-    cased = upcase(ch);
+    cased = upcase (ch);
 
-  /* And we’re done. */
+  /* And we’re done.  */
  done:
   if (!buf)
     return cased;
@@ -155,18 +165,17 @@ case_character_impl (struct casing_str_buf *buf,
    casing.
 
    The rule does not conflict with any other casing rules so while it is
-   a conditional one, it is independent on language. */
+   a conditional one, it is independent of language.  */
 
-#define CAPITAL_SIGMA     0x03A3
-#define SMALL_SIGMA       0x03C3
-#define SMALL_FINAL_SIGMA 0x03C2
+enum { GREEK_CAPITAL_LETTER_SIGMA = 0x03A }; /* Σ */
+enum { GREEK_SMALL_LETTER_FINAL_SIGMA = 0x03C2 }; /* ς */
 
 /* Based on CTX, case character CH accordingly.  Update CTX as necessary.
    Return cased character.
 
    Special casing rules (such as upcase(ﬁ) = FI) are not handled.  For
    characters whose casing results in multiple code points, the character is
-   returned unchanged. */
+   returned unchanged.  */
 static inline int
 case_single_character (struct casing_context *ctx, int ch)
 {
@@ -181,23 +190,21 @@ case_single_character (struct casing_context *ctx, int ch)
    apply some rules which depend on proceeding state.
 
    This is like case_single_character but also handles one-to-many casing
-   rules. */
+   rules.  */
 static bool
 case_character (struct casing_str_buf *buf, struct casing_context *ctx,
 		int ch, const unsigned char *next)
 {
-  bool changed, was_inword;
-
-  was_inword = ctx->inword;
-  changed = case_character_impl (buf, ctx, ch);
+  bool was_inword = ctx->inword;
+  bool changed = case_character_impl (buf, ctx, ch);
 
   /* If we have just down-cased a capital sigma and the next character no longer
      has a word syntax (i.e. current character is end of word), use final
-     sigma. */
-  if (was_inword && ch == CAPITAL_SIGMA && changed &&
-      (!next || SYNTAX (STRING_CHAR (next)) != Sword))
+     sigma.  */
+  if (was_inword && ch == GREEK_CAPITAL_LETTER_SIGMA && changed
+      && (!next || SYNTAX (STRING_CHAR (next)) != Sword))
     {
-      buf->len_bytes = CHAR_STRING (SMALL_FINAL_SIGMA, buf->data);
+      buf->len_bytes = CHAR_STRING (GREEK_SMALL_LETTER_FINAL_SIGMA, buf->data);
       buf->len_chars = 1;
     }
 
@@ -209,63 +216,64 @@ do_casify_natnum (struct casing_context *ctx, Lisp_Object obj)
 {
   int flagbits = (CHAR_ALT | CHAR_SUPER | CHAR_HYPER
 		  | CHAR_SHIFT | CHAR_CTL | CHAR_META);
-  int flags, ch = XFASTINT (obj), cased;
-  bool multibyte;
+  int ch = XFASTINT (obj);
 
   /* If the character has higher bits set above the flags, return it unchanged.
      It is not a real character.  */
   if (UNSIGNED_CMP (ch, >, flagbits))
     return obj;
 
-  flags = ch & flagbits;
+  int flags = ch & flagbits;
   ch = ch & ~flagbits;
 
   /* FIXME: Even if enable-multibyte-characters is nil, we may manipulate
      multibyte chars.  This means we have a bug for latin-1 chars since when we
      receive an int 128-255 we can't tell whether it's an eight-bit byte or
      a latin-1 char.  */
-  multibyte = ch >= 256
-    || !NILP (BVAR (current_buffer, enable_multibyte_characters));
+  bool multibyte = (ch >= 256
+		    || !NILP (BVAR (current_buffer,
+				    enable_multibyte_characters)));
   if (! multibyte)
     MAKE_CHAR_MULTIBYTE (ch);
-  cased = case_single_character (ctx, ch);
+  int cased = case_single_character (ctx, ch);
   if (cased == ch)
     return obj;
 
   if (! multibyte)
     MAKE_CHAR_UNIBYTE (cased);
-  XSETFASTINT (obj, cased | flags);
-  return obj;
+  return make_natnum (cased | flags);
 }
 
 static Lisp_Object
 do_casify_multibyte_string (struct casing_context *ctx, Lisp_Object obj)
 {
-  /* We assume data is the first member of casing_str_buf structure so that if
-     we cast a (char *) into (struct casing_str_buf *) the representation of the
-     character is at the beginning of the buffer.  This is why we don’t need
-     separate struct casing_str_buf object but rather write directly to o. */
-  typedef char static_assertion[offsetof(struct casing_str_buf, data) ? -1 : 1];
+  /* Verify that ‘data’ is the first member of struct casing_str_buf
+     so that when casting char * to struct casing_str_buf *, the
+     representation of the character is at the beginning of the
+     buffer.  This is why we don’t need a separate struct
+     casing_str_buf object, and can write directly to the destination.  */
+  verify (offsetof (struct casing_str_buf, data) == 0);
 
   ptrdiff_t size = SCHARS (obj), n;
-  int ch;
   USE_SAFE_ALLOCA;
-  if (INT_MULTIPLY_WRAPV (size, MAX_MULTIBYTE_LENGTH, &n) ||
-      INT_ADD_WRAPV (n, sizeof(struct casing_str_buf), &n))
+  if (INT_MULTIPLY_WRAPV (size, MAX_MULTIBYTE_LENGTH, &n)
+      || INT_ADD_WRAPV (n, sizeof (struct casing_str_buf), &n))
     n = PTRDIFF_MAX;
-  unsigned char *const dst = SAFE_ALLOCA (n), *const dst_end = dst + n;
+  unsigned char *dst = SAFE_ALLOCA (n);
+  unsigned char *dst_end = dst + n;
   unsigned char *o = dst;
 
   const unsigned char *src = SDATA (obj);
 
   for (n = 0; size; --size)
     {
-      if (dst_end - o < sizeof(struct casing_str_buf))
+      if (dst_end - o < sizeof (struct casing_str_buf))
 	string_overflow ();
-      ch = STRING_CHAR_ADVANCE (src);
-      case_character ((void *)o, ctx, ch, size > 1 ? src : NULL);
-      n += ((struct casing_str_buf *)o)->len_chars;
-      o += ((struct casing_str_buf *)o)->len_bytes;
+      int ch = STRING_CHAR_ADVANCE (src);
+      case_character ((struct casing_str_buf *) o, ctx, ch,
+		      size > 1 ? src : NULL);
+      n += ((struct casing_str_buf *) o)->len_chars;
+      o += ((struct casing_str_buf *) o)->len_bytes;
     }
   eassert (o <= dst_end);
   obj = make_multibyte_string ((char *) dst, n, o - dst);
@@ -288,7 +296,8 @@ do_casify_unibyte_string (struct casing_context *ctx, Lisp_Object obj)
       if (ch == cased)
 	continue;
       MAKE_CHAR_UNIBYTE (cased);
-      /* If the char can't be converted to a valid byte, just don't change it */
+      /* If the char can't be converted to a valid byte, just don't
+	 change it.  */
       if (cased >= 0 && cased < 256)
 	SSET (obj, i, cased);
     }
@@ -369,21 +378,20 @@ cased, e.g. ﬁ, are returned unchanged.  */)
    *ENDP unspecified.
 
    Always return 0.  This is so that interface of this function is the same as
-   do_casify_multibyte_region. */
+   do_casify_multibyte_region.  */
 static ptrdiff_t
 do_casify_unibyte_region (struct casing_context *ctx,
 			  ptrdiff_t *startp, ptrdiff_t *endp)
 {
-  ptrdiff_t first = -1, last = -1;  /* Position of first and last changes. */
-  ptrdiff_t pos = *startp, end = *endp;
-  int ch, cased;
+  ptrdiff_t first = -1, last = -1;  /* Position of first and last changes.  */
+  ptrdiff_t end = *endp;
 
-  for (; pos < end; ++pos)
+  for (ptrdiff_t pos = *startp; pos < end; ++pos)
     {
-      ch = FETCH_BYTE (pos);
+      int ch = FETCH_BYTE (pos);
       MAKE_CHAR_MULTIBYTE (ch);
 
-      cased = case_single_character (ctx, ch);
+      int cased = case_single_character (ctx, ch);
       if (cased == ch)
 	continue;
 
@@ -405,26 +413,22 @@ do_casify_unibyte_region (struct casing_context *ctx,
    Return number of added characters (may be negative if more characters were
    deleted then inserted), save first and last positions that has changed in
    *STARTP and *ENDP respectively.  If no characters were changed, return 0,
-   save -1 to *STARTP and leave *ENDP unspecified. */
+   save -1 to *STARTP and leave *ENDP unspecified.  */
 static ptrdiff_t
 do_casify_multibyte_region (struct casing_context *ctx,
 			    ptrdiff_t *startp, ptrdiff_t *endp)
 {
-  ptrdiff_t first = -1, last = -1;  /* Position of first and last changes. */
+  ptrdiff_t first = -1, last = -1;  /* Position of first and last changes.  */
   ptrdiff_t pos = *startp, pos_byte = CHAR_TO_BYTE (pos), size = *endp - pos;
   ptrdiff_t opoint = PT, added = 0;
-  struct casing_str_buf buf;
-  bool changed;
-  int ch, len;
 
   for (; size; --size)
     {
-      ch = STRING_CHAR_AND_LENGTH (BYTE_POS_ADDR (pos_byte), len);
-      changed = case_character (
-	  &buf, ctx, ch,
-	  size > 1 ? BYTE_POS_ADDR (pos_byte + len) : NULL);
-
-      if (!changed)
+      int len;
+      int ch = STRING_CHAR_AND_LENGTH (BYTE_POS_ADDR (pos_byte), len);
+      struct casing_str_buf buf;
+      if (!case_character (&buf, ctx, ch,
+			   size > 1 ? BYTE_POS_ADDR (pos_byte + len) : NULL))
 	{
 	  pos_byte += len;
 	  ++pos;
@@ -468,19 +472,19 @@ do_casify_multibyte_region (struct casing_context *ctx,
 static ptrdiff_t
 casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e)
 {
-  ptrdiff_t start, end, orig_end, added;
+  ptrdiff_t added;
   struct casing_context ctx;
 
   validate_region (&b, &e);
-  start = XFASTINT (b);
-  end = XFASTINT (e);
+  ptrdiff_t start = XFASTINT (b);
+  ptrdiff_t end = XFASTINT (e);
   if (start == end)
-    /* Not modifying because nothing marked */
+    /* Not modifying because nothing marked.  */
     return end;
   modify_text (start, end);
   prepare_casing_context (&ctx, flag, true);
 
-  orig_end = end;
+  ptrdiff_t orig_end = end;
   record_delete (start, make_buffer_string (start, end, true), false);
   if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
     {
