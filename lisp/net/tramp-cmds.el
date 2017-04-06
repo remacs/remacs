@@ -37,6 +37,20 @@
 (defvar reporter-eval-buffer)
 (defvar reporter-prompt-for-summary-p)
 
+;;;###autoload
+(defun tramp-change-syntax (&optional syntax)
+  "Change Tramp syntax.
+SYNTAX can be one of the symbols `def' (default), `ftp' (ange-ftp like)
+or `sep' (XEmacs like)."
+  (interactive
+   (let ((input (completing-read
+		 "Enter Tramp syntax: " '(def ftp sep) nil t
+		 (symbol-name tramp-syntax))))
+     (unless (string-equal input "")
+       (list (intern input)))))
+  (when syntax
+    (custom-set-variables `(tramp-syntax ',syntax))))
+
 (defun tramp-list-tramp-buffers ()
   "Return a list of all Tramp connection buffers."
   (append
