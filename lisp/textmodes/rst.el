@@ -2711,6 +2711,12 @@ indentation style:
   :group 'rst-toc)
 (rst-testcover-defcustom)
 
+(defconst rst-toc-link-keymap
+  (let ((map (make-sparse-keymap)))
+       (define-key map [mouse-1] 'rst-toc-mouse-follow-link)
+       map)
+  "Keymap used for links in TOC.")
+
 (defun rst-toc-insert (&optional max-level)
   ;; testcover: ok.
   "Insert the table of contents of the current section at the current column.
@@ -2772,12 +2778,6 @@ If KEYMAP use this as keymap property.  PFX is inserted before text."
     (unless (buffer-live-p (marker-buffer mrkr))
       (error "Buffer for this section was killed"))
     mrkr))
-
-(defconst rst-toc-link-keymap
-  (let ((map (make-sparse-keymap)))
-       (define-key map [mouse-1] 'rst-toc-mouse-follow-link)
-       map)
-  "Keymap used for links in TOC.")
 
 (defun rst-toc-insert-tree (stn buf style depth keymap tgt-stn)
   ;; testcover: ok.
