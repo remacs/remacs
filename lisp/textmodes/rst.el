@@ -296,8 +296,8 @@ in parentheses follows the development revision and the time stamp.")
     ("1.4.1" . "25.1")
     ("1.4.2" . "25.1")
     ("1.5.0" . "26.1")
-    ("1.5.1" . "26.2")
-    ("1.5.2" . "26.2")
+    ("1.5.1" . "26.1")
+    ("1.5.2" . "26.1")
     ;; Whatever the Emacs version is this rst.el version ends up in.
     ))
 
