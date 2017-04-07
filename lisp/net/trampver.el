@@ -60,6 +60,16 @@
 	    (match-string 0 (emacs-version)))))))
   (unless (string-match "\\`ok\\'" x) (error "%s" x)))
 
+;; Tramp versions integrated into Emacs.
+(add-to-list
+ 'customize-package-emacs-version-alist
+ '(Tramp ("2.0.55" . "22.1") ("2.0.57" . "22.2") ("2.0.58-pre" . "22.3")
+	 ("2.1.15" . "23.1") ("2.1.18-23.2" . "23.2")
+	 ("2.1.20" . "23.3") ("2.1.21-pre" . "23.4")
+	 ("2.2.3-24.1" . "24.1") ("2.2.3-24.1" . "24.2") ("2.2.6-24.3" . "24.3")
+	 ("2.2.9-24.4" . "24.4") ("2.2.11-24.5" . "24.5")
+	 ("2.2.13.25.1" . "25.1") ("2.2.13.25.2" . "25.2")))
+
 (add-hook 'tramp-unload-hook
 	  (lambda ()
 	    (unload-feature 'trampver 'force)))
