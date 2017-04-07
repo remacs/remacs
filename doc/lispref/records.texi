@@ -56,7 +56,7 @@ and remaining slots are the rest of the arguments, @var{objects}.
 
 @example
 @group
-(vector 'foo 23 [bar baz] "rats")
+(record 'foo 23 [bar baz] "rats")
      @result{} #s(foo 23 [bar baz] "rats")
 @end group
 @end example
