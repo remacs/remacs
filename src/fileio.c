@@ -5157,7 +5157,8 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
                    ? "Added %d characters to `%s'"
                    : "Wrote %d characters to `%s'");
       CALLN (Fmessage, format,
-             make_number (XINT (end) - XINT (start)),
+             (STRINGP (start) ? Flength (start)
+              : make_number (XINT (end) - XINT (start))),
              visit_file);
     }
   return Qnil;
