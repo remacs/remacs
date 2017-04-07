@@ -66,16 +66,16 @@ prepare_casing_context (struct casing_context *ctx,
   ctx->inword = false;
   ctx->titlecase_char_table
     = (flag < CASE_CAPITALIZE ? Qnil
-       : uniprop_table (intern_c_string ("titlecase")));
+       : uniprop_table (Qtitlecase));
   ctx->specialcase_char_tables[CASE_UP]
     = (flag == CASE_DOWN ? Qnil
-       : uniprop_table (intern_c_string ("special-uppercase")));
+       : uniprop_table (Qspecial_uppercase));
   ctx->specialcase_char_tables[CASE_DOWN]
     = (flag == CASE_UP ? Qnil
-       : uniprop_table (intern_c_string ("special-lowercase")));
+       : uniprop_table (Qspecial_lowercase));
   ctx->specialcase_char_tables[CASE_CAPITALIZE]
     = (flag < CASE_CAPITALIZE ? Qnil
-       : uniprop_table (intern_c_string ("special-titlecase")));
+       : uniprop_table (Qspecial_titlecase));
 
   /* If the case table is flagged as modified, rescan it.  */
   if (NILP (XCHAR_TABLE (BVAR (current_buffer, downcase_table))->extras[1]))
@@ -644,6 +644,11 @@ void
 syms_of_casefiddle (void)
 {
   DEFSYM (Qidentity, "identity");
+  DEFSYM (Qtitlecase, "titlecase");
+  DEFSYM (Qspecial_uppercase, "special-uppercase");
+  DEFSYM (Qspecial_lowercase, "special-lowercase");
+  DEFSYM (Qspecial_titlecase, "special-titlecase");
+
   defsubr (&Supcase);
   defsubr (&Sdowncase);
   defsubr (&Scapitalize);
