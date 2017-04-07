@@ -91,7 +91,7 @@ code();
       (funcall mode)
       ;; Make sure font lock is all set up.
       (font-lock-set-defaults)
-      ;; This has to be set to a value other than the mthml-mode
+      ;; This has to be set to a value other than the mhtml-mode
       ;; value, to avoid recursion.
       (unless (variable-binding-locus 'font-lock-fontify-region-function)
         (setq-local font-lock-fontify-region-function

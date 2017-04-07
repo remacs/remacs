@@ -35,22 +35,22 @@
     (font-lock-ensure)
     (should (eq (syntax-ppss-context (syntax-ppss)) what))))
 
-(ert-deftest mthml-comment-js ()
+(ert-deftest mhtml-comment-js ()
   (mhtml-test-syntax "<html><script>\n/* "
                      " some text */<script></html>"
                      'comment))
 
-(ert-deftest mthml-string-js ()
+(ert-deftest mhtml-string-js ()
   (mhtml-test-syntax "<html><script>\n\" "
                      " some text \"<script></html>"
                      'string))
 
-(ert-deftest mthml-comment-css ()
+(ert-deftest mhtml-comment-css ()
   (mhtml-test-syntax "<html><style>\n/* "
                       " some text */<style></html>"
                       'comment))
 
-(ert-deftest mthml-string-css ()
+(ert-deftest mhtml-string-css ()
   (mhtml-test-syntax "<html><style>\n\" "
                       " some text \"<style></html>"
                       'string))

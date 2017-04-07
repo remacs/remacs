@@ -1363,8 +1363,8 @@ types that are not built into Emacs.
 @node Type Descriptors
 @subsection Type Descriptors
 
-  A @dfn{type decriptor} is a @code{record} which holds information
-about a type.  Slot 1 in the record must be a symbol naming the type.
+  A @dfn{type descriptor} is a @code{record} which holds information
+about a type.  Slot 1 in the record must be a symbol naming the type, and
 @code{type-of} relies on this to return the type of @code{record}
 objects.  No other type descriptor slot is used by Emacs; they are
 free for use by Lisp extensions.

@@ -771,7 +771,7 @@ processes on exit.
 ** HTML
 
 +++
-*** A new submode of `html-mode', `mthml-mode', is now the default
+*** A new submode of 'html-mode', 'mhtml-mode', is now the default
     mode for *.html files.  This mode handles indentation,
     fontification, and commenting for embedded JavaScript and CSS.
 
@@ -785,9 +785,9 @@ similarly but it doesn't prepend a '.'.
 
 +++
 ** Certain cond/pcase/cl-case forms are now compiled using a faster jump
-table implementation. This uses a new bytecode op `switch', which isn't
+table implementation. This uses a new bytecode op 'switch', which isn't
 compatible with previous Emacs versions. This functionality can be disabled
-by setting `byte-compile-cond-use-jump-table' to nil.
+by setting 'byte-compile-cond-use-jump-table' to nil.
 
 +++
 ** Resizing a frame no longer runs 'window-configuration-change-hook'.
