@@ -125,9 +125,9 @@ case_character_impl (struct casing_str_buf *buf,
     }
 
   /* Look through the special casing entries.  */
-  if (buf && !NILP (ctx->specialcase_char_tables[(int)flag]))
+  if (buf && !NILP (ctx->specialcase_char_tables[flag]))
     {
-      prop = CHAR_TABLE_REF (ctx->specialcase_char_tables[(int)flag], ch);
+      prop = CHAR_TABLE_REF (ctx->specialcase_char_tables[flag], ch);
       if (STRINGP (prop))
         {
           struct Lisp_String *str = XSTRING (prop);
@@ -144,12 +144,21 @@ case_character_impl (struct casing_str_buf *buf,
   /* Handle simple, one-to-one case.  */
   if (flag == CASE_DOWN)
     cased = downcase (ch);
-  else if (!NILP (ctx->titlecase_char_table)
-	   && CHARACTERP (prop
-			  = CHAR_TABLE_REF (ctx->titlecase_char_table, ch)))
-    cased = XFASTINT (prop);
   else
-    cased = upcase (ch);
+    {
+      bool cased_is_set = false;
+      if (!NILP (ctx->titlecase_char_table))
+	{
+	  prop = CHAR_TABLE_REF (ctx->titlecase_char_table, ch);
+	  if (CHARACTERP (prop))
+	    {
+	      cased = XFASTINT (prop);
+	      cased_is_set = true;
+	    }
+	}
+      if (!cased_is_set)
+	cased = upcase (ch);
+    }
 
   /* And we’re done.  */
  done:
@@ -167,7 +176,7 @@ case_character_impl (struct casing_str_buf *buf,
    The rule does not conflict with any other casing rules so while it is
    a conditional one, it is independent of language.  */
 
-enum { GREEK_CAPITAL_LETTER_SIGMA = 0x03A }; /* Σ */
+enum { GREEK_CAPITAL_LETTER_SIGMA = 0x03A3 }; /* Σ */
 enum { GREEK_SMALL_LETTER_FINAL_SIGMA = 0x03C2 }; /* ς */
 
 /* Based on CTX, case character CH accordingly.  Update CTX as necessary.
