@@ -410,10 +410,6 @@ Should be one of:
   :group 'url
   :type 'hook)
 
-;;; Make OS/2 happy - yeeks
-;; (defvar	tcp-binary-process-input-services nil
-;;   "*Make OS/2 happy with our CRLF pairs...")
-
 (defconst url-working-buffer " *url-work")
 
 (defvar url-gateway-unplugged nil

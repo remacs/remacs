@@ -3277,16 +3277,14 @@ Hit \\[ediff-recenter] to reset the windows afterward."
     file))
 
 
-;; Quote metacharacters (using \) when executing diff in Unix, but not in
-;; EMX OS/2
+;; Quote metacharacters (using \) when executing diff in Unix.
 ;;(defun ediff-protect-metachars (str)
-;;  (or (memq system-type '(emx))
-;;      (let ((limit 0))
-;;	(while (string-match ediff-metachars str limit)
-;;	  (setq str (concat (substring str 0 (match-beginning 0))
-;;			    "\\"
-;;			    (substring str (match-beginning 0))))
-;;	  (setq limit (1+ (match-end 0))))))
+;;  (let ((limit 0))
+;;    (while (string-match ediff-metachars str limit)
+;;      (setq str (concat (substring str 0 (match-beginning 0))
+;;			"\\"
+;;			(substring str (match-beginning 0))))
+;;      (setq limit (1+ (match-end 0)))))
 ;;  str)
 
 ;; Make sure the current buffer (for a file) has the same contents as the
@@ -4059,7 +4057,7 @@ interfaces to several other packages and runs under Emacs and XEmacs,
 byte-compilation may produce output like this:
 
        While compiling toplevel forms in file ediff.el:
-	 ** reference to free variable pm-color-alist
+	 ** reference to free variable zzz
 	   ........................
        While compiling the end of the data:
 	 ** The following functions are not known to be defined:

@@ -3246,10 +3246,6 @@ Only match the specified window systems.")
 					   :sibling-args (:help-echo "\
 The X11 Window System.")
 					   x)
-				    (const :format "PM "
-					   :sibling-args (:help-echo "\
-OS/2 Presentation Manager.")
-					   pm)
 				    (const :format "W32 "
 					   :sibling-args (:help-echo "\
 MS Windows.")

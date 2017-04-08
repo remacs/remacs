@@ -58,9 +58,6 @@ This is to avoid conflict with user settings if URL is dumped with
 Emacs."
   (unless url-setup-done
 
-    ;; Make OS/2 happy
-    ;;(push '("http" "80") tcp-binary-process-input-services)
-
     (mailcap-parse-mailcaps)
     (mailcap-parse-mimetypes)
 

@@ -29,7 +29,6 @@
 
 ;; Compiler pacifier
 (defvar viper-overriding-map)
-(defvar pm-color-alist)
 (defvar viper-minibuffer-current-face)
 (defvar viper-minibuffer-insert-face)
 (defvar viper-minibuffer-vi-face)
@@ -131,12 +130,6 @@ Otherwise return the normal value."
        (let ((fp (assoc ',variable (frame-parameters))))
 	 (if fp (cdr fp)
 	   ,variable)))))
-
-;; OS/2
-(cond ((eq (viper-device-type) 'pm)
-       (fset 'viper-color-defined-p
-	     (lambda (color) (assoc color pm-color-alist)))))
-
 
 ;; cursor colors
 (defun viper-change-cursor-color (new-color &optional frame)
