@@ -41,4 +41,15 @@
       (should (equal call-process-args
                      `(("diff" nil ,(current-buffer) nil "/a" "/b")))))))
 
+(ert-deftest ediff-diff-tests--ediff-exec-process--nil ()
+  "Check that Bug#26378 is fixed."
+  (cl-letf* ((call-process-args ())
+             ((symbol-function #'call-process)
+              (lambda (&rest args) (push args call-process-args) 0)))
+    (with-temp-buffer
+      (ediff-exec-process "diff" (current-buffer) :synchronous ""
+                          "foo" nil "")
+      (should (equal call-process-args
+                     `(("diff" nil ,(current-buffer) nil "foo")))))))
+
 ;;; ediff-diff-tests.el ends here
