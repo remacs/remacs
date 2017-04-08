@@ -118,8 +118,6 @@
 
 ;;; Code:
 
-(require 'cl-lib)
-
 (defgroup align nil
   "Align text to a specific column, by regexp."
   :version "21.1"
@@ -1324,8 +1322,7 @@ aligner would have dealt with are."
 	     (modes (assq 'modes rule)))
 	;; unless the `run-if' form tells us not to, look for the
 	;; rule..
-	(unless (or (and modes (not (cl-member-if #'derived-mode-p
-					  (eval (cdr modes)))))
+	(unless (or (and modes (not (apply #'derived-mode-p (eval (cdr modes)))))
 		    (and run-if (not (funcall (cdr run-if)))))
 	  (let* ((case-fold-search case-fold-search)
 		 (case-fold (assq 'case-fold rule))
