@@ -347,16 +347,6 @@ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 =
 
-AUTO_DEPEND = @AUTO_DEPEND@
-DEPDIR = deps
-ifeq ($(AUTO_DEPEND),yes)
-  DEPFLAGS = -MMD -MF $(DEPDIR)/$*.d -MP
-  -include $(ALLOBJS:%.o=$(DEPDIR)/%.d)
-else
-  DEPFLAGS =
-  include $(srcdir)/deps.mk
-endif
-
 # Flags that might be in WARN_CFLAGS but are not valid for Objective C.
 NON_OBJC_CFLAGS = -Wignored-attributes -Wignored-qualifiers -Wopenmp-simd
 
@@ -444,6 +434,16 @@ otherobj= $(TERMCAP_OBJ) $(PRE_ALLOC_OBJ) $(GMALLOC_OBJ) $(RALLOC_OBJ) \
 ## (On MinGW, firstfile.o should be before vm-limit.o.)
 FIRSTFILE_OBJ=@FIRSTFILE_OBJ@
 ALLOBJS = $(FIRSTFILE_OBJ) $(VMLIMIT_OBJ) $(obj) $(otherobj)
+
+AUTO_DEPEND = @AUTO_DEPEND@
+DEPDIR = deps
+ifeq ($(AUTO_DEPEND),yes)
+  DEPFLAGS = -MMD -MF $(DEPDIR)/$*.d -MP
+  -include $(ALLOBJS:%.o=$(DEPDIR)/%.d)
+else
+  DEPFLAGS =
+  include $(srcdir)/deps.mk
+endif
 
 all: emacs$(EXEEXT) $(OTHER_FILES)
 .PHONY: all
