@@ -379,6 +379,14 @@ If NAME is a remote file name, the local part of NAME is unquoted."
 	      (if (= (length localname) 2) "/" "") nil t localname)))
 	  (concat (file-remote-p name) localname))))))
 
+;; `tramp-syntax' has changed its meaning in Emacs 26.  We still
+;; support old settings.
+(defsubst tramp-compat-tramp-syntax ()
+  "Return proper value of `tramp-syntax'."
+  (cond ((eq tramp-syntax 'ftp) 'default)
+	((eq tramp-syntax 'sep) 'separate)
+	(t tramp-syntax)))
+
 (provide 'tramp-compat)
 
 ;;; TODO:

@@ -662,29 +662,26 @@ Useful for \"rsync\" like methods.")
 (put 'tramp-temp-buffer-file-name 'permanent-local t)
 
 ;;;###autoload
-(defcustom tramp-syntax 'def
+(defcustom tramp-syntax 'default
   "Tramp filename syntax to be used.
 
 It can have the following values:
 
-  `def' -- Default syntax
-  `ftp' -- Ange-FTP like syntax
-  `sep' -- Syntax as defined for XEmacs originally."
+  `default'    -- Default syntax
+  `simplified' -- Ange-FTP like syntax
+  `separate'   -- Syntax as defined for XEmacs originally."
   :group 'tramp
   :version "26.1"
   :package-version '(Tramp . "2.3.2")
-  :type '(choice (const :tag "Default" def)
-		 (const :tag "Ange-FTP" ftp)
-		 (const :tag "XEmacs" sep))
+  :type '(choice (const :tag "Default" default)
+		 (const :tag "Ange-FTP" simplified)
+		 (const :tag "XEmacs" separate))
   :require 'tramp
   :initialize 'custom-initialize-set
   :set (lambda (symbol value)
 	 ;; Check allowed values.
-	 (let ((values (cdr (get symbol 'custom-type))))
-	   (setq values (mapcar 'last values)
-		 values (mapcar 'car values))
-	   (unless (member value values)
-	     (user-error "Wrong `tramp-syntax' %s defined" tramp-syntax)))
+	 (unless (memq value (tramp-syntax-values))
+	   (user-error "Wrong `tramp-syntax' %s" tramp-syntax))
          ;; Cleanup existing buffers.
          (unless (eq (symbol-value symbol) value)
            (tramp-cleanup-all-buffers))
@@ -693,13 +690,19 @@ It can have the following values:
 	 ;; Rearrange file name handlers.
 	 (tramp-register-file-name-handlers)))
 
+(defun tramp-syntax-values ()
+  "Return possible values of `tramp-syntax', a list"
+  (let ((values (cdr (get 'tramp-syntax 'custom-type))))
+    (setq values (mapcar 'last values)
+	  values (mapcar 'car values))))
+
 (defun tramp-prefix-format ()
   "String matching the very beginning of Tramp file names.
 Used in `tramp-make-tramp-file-name'."
-  (cond ((eq tramp-syntax 'def) "/")
-	((eq tramp-syntax 'ftp) "/")
-	((eq tramp-syntax 'sep) "/[")
-	(t (error "Wrong `tramp-syntax' %s defined" tramp-syntax))))
+  (cond ((eq (tramp-compat-tramp-syntax) 'default) "/")
+	((eq (tramp-compat-tramp-syntax) 'simplified) "/")
+	((eq (tramp-compat-tramp-syntax) 'separate) "/[")
+	(t (error "Wrong `tramp-syntax' %s" tramp-syntax))))
 
 (defun tramp-prefix-regexp ()
   "Regexp matching the very beginning of Tramp file names.
@@ -709,16 +712,16 @@ Should always start with \"^\". Derived from `tramp-prefix-format'."
 (defun tramp-method-regexp ()
   "Regexp matching methods identifiers.
 The `ftp' syntax does not support methods."
-  (if (eq tramp-syntax 'ftp) "" "[a-zA-Z0-9-]+"))
+  (if (eq (tramp-compat-tramp-syntax) 'simplified) "" "[a-zA-Z0-9-]+"))
 
 (defun tramp-postfix-method-format ()
   "String matching delimiter between method and user or host names.
 The `ftp' syntax does not support methods.
 Used in `tramp-make-tramp-file-name'."
-  (cond ((eq tramp-syntax 'def) ":")
-	((eq tramp-syntax 'ftp) "")
-	((eq tramp-syntax 'sep) "/")
-	(t (error "Wrong `tramp-syntax' %s defined" tramp-syntax))))
+  (cond ((eq (tramp-compat-tramp-syntax) 'default) ":")
+	((eq (tramp-compat-tramp-syntax) 'simplified) "")
+	((eq (tramp-compat-tramp-syntax) 'separate) "/")
+	(t (error "Wrong `tramp-syntax' %s" tramp-syntax))))
 
 (defun tramp-postfix-method-regexp ()
   "Regexp matching delimiter between method and user or host names.
@@ -762,10 +765,10 @@ Derived from `tramp-postfix-user-format'.")
 (defun tramp-prefix-ipv6-format ()
   "String matching left hand side of IPv6 addresses.
 Used in `tramp-make-tramp-file-name'."
-  (cond ((eq tramp-syntax 'def) "[")
-	((eq tramp-syntax 'ftp) "[")
-	((eq tramp-syntax 'sep) "")
-	(t (error "Wrong `tramp-syntax' %s defined" tramp-syntax))))
+  (cond ((eq (tramp-compat-tramp-syntax) 'default) "[")
+	((eq (tramp-compat-tramp-syntax) 'simplified) "[")
+	((eq (tramp-compat-tramp-syntax) 'separate) "")
+	(t (error "Wrong `tramp-syntax' %s" tramp-syntax))))
 
 (defun tramp-prefix-ipv6-regexp ()
   "Regexp matching left hand side of IPv6 addresses.
@@ -782,10 +785,10 @@ Derived from `tramp-prefix-ipv6-format'."
 (defun tramp-postfix-ipv6-format ()
   "String matching right hand side of IPv6 addresses.
 Used in `tramp-make-tramp-file-name'."
-  (cond ((eq tramp-syntax 'def) "]")
-	((eq tramp-syntax 'ftp) "]")
-	((eq tramp-syntax 'sep) "")
-	(t (error "Wrong `tramp-syntax' %s defined" tramp-syntax))))
+  (cond ((eq (tramp-compat-tramp-syntax) 'default) "]")
+	((eq (tramp-compat-tramp-syntax) 'simplified) "]")
+	((eq (tramp-compat-tramp-syntax) 'separate) "")
+	(t (error "Wrong `tramp-syntax' %s" tramp-syntax))))
 
 (defun tramp-postfix-ipv6-regexp ()
   "Regexp matching right hand side of IPv6 addresses.
@@ -820,10 +823,10 @@ Derived from `tramp-postfix-hop-format'.")
 (defun tramp-postfix-host-format ()
   "String matching delimiter between host names and localnames.
 Used in `tramp-make-tramp-file-name'."
-  (cond ((eq tramp-syntax 'def) ":")
-	((eq tramp-syntax 'ftp) ":")
-	((eq tramp-syntax 'sep) "]")
-	(t (error "Wrong `tramp-syntax' %s defined" tramp-syntax))))
+  (cond ((eq (tramp-compat-tramp-syntax) 'default) ":")
+	((eq (tramp-compat-tramp-syntax) 'simplified) ":")
+	((eq (tramp-compat-tramp-syntax) 'separate) "]")
+	(t (error "Wrong `tramp-syntax' %s" tramp-syntax))))
 
 (defun tramp-postfix-host-regexp ()
   "Regexp matching delimiter between host names and localnames.
@@ -890,7 +893,7 @@ This regexp should match Tramp file names but no other file names."
 It must match the initial `tramp-syntax' settings.")
 
 ;;;###autoload
-(defconst tramp-completion-file-name-regexp-unified
+(defconst tramp-completion-file-name-regexp-default
   (concat
    "\\`/\\("
    ;; Optional multi hop.
@@ -904,12 +907,12 @@ It must match the initial `tramp-syntax' settings.")
    ;; Method separator, user name and host name.
    "\\(:[^/|:]*\\)?"
    "\\)?\\'")
-  "Value for `tramp-completion-file-name-regexp' for unified remoting.
+  "Value for `tramp-completion-file-name-regexp' for default remoting.
 See `tramp-file-name-structure' for more explanations.
 
 On W32 systems, the volume letter must be ignored.")
 
-(defconst tramp-completion-file-name-regexp-old-style
+(defconst tramp-completion-file-name-regexp-simplified
   (concat
    "\\`/\\("
    ;; Optional multi hop.
@@ -921,7 +924,7 @@ On W32 systems, the volume letter must be ignored.")
      ;; At least one character.
      "[^/|:]+")
    "\\)?\\'")
-  "Value for `tramp-completion-file-name-regexp' for ange-ftp style remoting.
+  "Value for `tramp-completion-file-name-regexp' for simplified style remoting.
 See `tramp-file-name-structure' for more explanations.
 
 On W32 systems, the volume letter must be ignored.")
@@ -941,14 +944,17 @@ before loading tramp.el.  Alternatively, `file-name-handler-alist' can be
 updated after changing this variable.
 
 Also see `tramp-file-name-structure'."
-  (cond ((eq tramp-syntax 'def) tramp-completion-file-name-regexp-unified)
-	((eq tramp-syntax 'ftp) tramp-completion-file-name-regexp-old-style)
-	((eq tramp-syntax 'sep) tramp-completion-file-name-regexp-separate)
-	(t (error "Wrong `tramp-syntax' %s defined" tramp-syntax))))
+  (cond ((eq (tramp-compat-tramp-syntax) 'default)
+	 tramp-completion-file-name-regexp-default)
+	((eq (tramp-compat-tramp-syntax) 'simplified)
+	 tramp-completion-file-name-regexp-simplified)
+	((eq (tramp-compat-tramp-syntax) 'separate)
+	 tramp-completion-file-name-regexp-separate)
+	(t (error "Wrong `tramp-syntax' %s" tramp-syntax))))
 
 ;;;###autoload
 (defconst tramp-initial-completion-file-name-regexp
-  tramp-completion-file-name-regexp-unified
+  tramp-completion-file-name-regexp-default
   "Value for `tramp-completion-file-name-regexp' for autoload.
 It must match the initial `tramp-syntax' settings.")
 
@@ -1911,8 +1917,7 @@ coding system might not be determined.  This function repairs it."
 	;; as regexp.
 	(push (cons (regexp-quote tmpname) (cdr elt)) result)))))
 
-;;;###autoload
-(progn (defun tramp-run-real-handler (operation args)
+(defun tramp-run-real-handler (operation args)
   "Invoke normal file name handler for OPERATION.
 First arg specifies the OPERATION, second arg is a list of arguments to
 pass to the OPERATION."
@@ -1926,7 +1931,7 @@ pass to the OPERATION."
 	    ,(and (eq inhibit-file-name-operation operation)
 		  inhibit-file-name-handlers)))
 	 (inhibit-file-name-operation operation))
-    (apply operation args))))
+    (apply operation args)))
 
 ;; We handle here all file primitives.  Most of them have the file
 ;; name as first parameter; nevertheless we check for them explicitly

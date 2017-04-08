@@ -40,11 +40,11 @@
 ;;;###autoload
 (defun tramp-change-syntax (&optional syntax)
   "Change Tramp syntax.
-SYNTAX can be one of the symbols `def' (default), `ftp' (ange-ftp like)
-or `sep' (XEmacs like)."
+SYNTAX can be one of the symbols `default' (default),
+`simplified' (ange-ftp like) or `separate' (XEmacs like)."
   (interactive
    (let ((input (completing-read
-		 "Enter Tramp syntax: " '(def ftp sep) nil t
+		 "Enter Tramp syntax: " (tramp-syntax-values) nil t
 		 (symbol-name tramp-syntax))))
      (unless (string-equal input "")
        (list (intern input)))))
