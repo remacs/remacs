@@ -112,4 +112,8 @@
   (should-error (read "#24r") :type 'invalid-read-syntax)
   (should-error (read "#") :type 'invalid-read-syntax))
 
+(ert-deftest lread-record-1 ()
+  (should (equal '(#s(foo) #s(foo))
+                 (read "(#1=#s(foo) #1#)"))))
+
 ;;; lread-tests.el ends here
