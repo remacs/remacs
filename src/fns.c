@@ -475,12 +475,18 @@ usage: (vconcat &rest SEQUENCES)   */)
 
 
 DEFUN ("copy-sequence", Fcopy_sequence, Scopy_sequence, 1, 1, 0,
-       doc: /* Return a copy of a list, vector, string or char-table.
-The elements of a list or vector are not copied; they are shared
-with the original.  */)
+       doc: /* Return a copy of a list, vector, string, char-table or record.
+The elements of a list, vector or record are not copied; they are
+shared with the original.  */)
   (Lisp_Object arg)
 {
   if (NILP (arg)) return arg;
+
+  if (RECORDP (arg))
+    {
+      ptrdiff_t size = ASIZE (arg) & PSEUDOVECTOR_SIZE_MASK;
+      return Frecord (size, XVECTOR (arg)->contents);
+    }
 
   if (CHAR_TABLE_P (arg))
     {

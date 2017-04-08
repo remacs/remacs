@@ -2808,8 +2808,7 @@ non-nil value, that slot cannot be set via `setf'.
     (setq slots (nreverse slots)
 	  defaults (nreverse defaults))
     (and copier
-         (push `(defalias ',copier
-                    ,(if (null type) '#'copy-record '#'copy-sequence))
+         (push `(defalias ',copier #'copy-sequence)
                forms))
     (if constructor
 	(push (list constructor

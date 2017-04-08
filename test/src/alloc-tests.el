@@ -47,7 +47,7 @@
 
 (ert-deftest record-3 ()
   (let* ((x (record 'foo 1 2 3))
-         (y (copy-record x)))
+         (y (copy-sequence x)))
     (should-not (eq x y))
     (dotimes (i 4)
       (should (eql (aref x i) (aref y i))))))

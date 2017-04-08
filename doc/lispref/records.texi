@@ -13,8 +13,9 @@ underlying representation of @code{cl-defstruct} and @code{defclass}
 instances.
 
   Internally, a record object is much like a vector; its slots can be
-accessed using @code{aref}.  However, the first slot is used to hold
-its type as returned by @code{type-of}.  Also, in the current
+accessed using @code{aref} and it can be copied using
+@code{copy-sequence}.  However, the first slot is used to hold its
+type as returned by @code{type-of}.  Also, in the current
 implementation records can have at most 4096 slots, whereas vectors
 can be much larger.  Like arrays, records use zero-origin indexing:
 the first slot has index 0.
@@ -70,38 +71,6 @@ This function returns a new record with type @var{type} and
 @group
 (setq sleepy (make-record 'foo 9 'Z))
      @result{} #s(foo Z Z Z Z Z Z Z Z Z)
-@end group
-@end example
-@end defun
-
-@defun copy-record record
-This function returns a shallow copy of @var{record}.  The copy is the
-same type as the original record, and it has the same slots in the
-same order.
-
-  Storing a new slot into the copy does not affect the original
-@var{record}, and vice versa.  However, the slots of the new record
-are not copies; they are identical (@code{eq}) to the slots of the
-original.  Therefore, changes made within these slots, as found via
-the copied record, are also visible in the original record.
-
-@example
-@group
-(setq x (record 'foo 1 2))
-     @result{} #s(foo 1 2)
-@end group
-@group
-(setq y (copy-record x))
-     @result{} #s(foo 1 2)
-@end group
-
-@group
-(eq x y)
-     @result{} nil
-@end group
-@group
-(equal x y)
-     @result{} t
 @end group
 @end example
 @end defun

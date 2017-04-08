@@ -699,8 +699,8 @@ SLOTS are the initialization slots used by `initialize-instance'.
 This static method is called when an object is constructed.
 It allocates the vector used to represent an EIEIO object, and then
 calls `initialize-instance' on that object."
-  (let* ((new-object (copy-record (eieio--class-default-object-cache
-                                   (eieio--class-object class)))))
+  (let* ((new-object (copy-sequence (eieio--class-default-object-cache
+                                     (eieio--class-object class)))))
     (if (and slots
              (let ((x (car slots)))
                (or (stringp x) (null x))))
@@ -804,7 +804,7 @@ first and modify the returned object.")
 
 (cl-defmethod clone ((obj eieio-default-superclass) &rest params)
   "Make a copy of OBJ, and then apply PARAMS."
-  (let ((nobj (copy-record obj)))
+  (let ((nobj (copy-sequence obj)))
     (if (stringp (car params))
         (funcall (if eieio-backward-compatibility #'ignore #'message)
                  "Obsolete name %S passed to clone" (pop params)))

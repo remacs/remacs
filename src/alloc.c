@@ -3440,19 +3440,6 @@ usage: (record TYPE &rest SLOTS) */)
 }
 
 
-DEFUN ("copy-record", Fcopy_record, Scopy_record, 1, 1, 0,
-       doc: /* Return a new record that is a shallow copy of the argument RECORD.  */)
-  (Lisp_Object record)
-{
-  CHECK_RECORD (record);
-  ptrdiff_t size = ASIZE (record) & PSEUDOVECTOR_SIZE_MASK;
-  struct Lisp_Vector *new = allocate_record (size);
-  memcpy (new->contents, XVECTOR (record)->contents,
-          size * sizeof (Lisp_Object));
-  return make_lisp_ptr (new, Lisp_Vectorlike);
-}
-
-
 DEFUN ("make-vector", Fmake_vector, Smake_vector, 2, 2, 0,
        doc: /* Return a newly created vector of length LENGTH, with each element being INIT.
 See also the function `vector'.  */)
@@ -7523,7 +7510,6 @@ The time is in seconds as a floating point value.  */);
   defsubr (&Slist);
   defsubr (&Svector);
   defsubr (&Srecord);
-  defsubr (&Scopy_record);
   defsubr (&Sbool_vector);
   defsubr (&Smake_byte_code);
   defsubr (&Smake_list);
