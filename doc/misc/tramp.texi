@@ -155,7 +155,10 @@ Configuring @value{tramp} for use
 
 Using @value{tramp}
 
-* File name Syntax::            @value{tramp} file name conventions.
+* File name syntax::            @value{tramp} file name conventions.
+@ifset unified
+* Change file name syntax::     Alternative file name syntax.
+@end ifset
 * File name completion::        File name completion.
 * Ad-hoc multi-hops::           Declaring multiple hops in the file name.
 * Remote processes::            Integration with other Emacs packages.
@@ -997,7 +1000,7 @@ Other methods to include are: @option{ftp} and @option{smb}.
 @cindex default method
 
 In a remote file name, the use of a default method is indicated by the
-pseudo method @option{-}, @ref{File name Syntax}.
+pseudo method @option{-}, @ref{File name syntax}.
 
 @defopt tramp-default-method
 Default method is for transferring files.  The user option
@@ -2131,7 +2134,10 @@ is a feature of Emacs that may cause missed prompts when using
 @value{tramp}.
 
 @menu
-* File name Syntax::            @value{tramp} file name conventions.
+* File name syntax::            @value{tramp} file name conventions.
+@ifset unified
+* Change file name syntax::     Alternative file name syntax.
+@end ifset
 * File name completion::        File name completion.
 * Ad-hoc multi-hops::           Declaring multiple hops in the file name.
 * Remote processes::            Integration with other Emacs packages.
@@ -2139,7 +2145,7 @@ is a feature of Emacs that may cause missed prompts when using
 @end menu
 
 
-@node File name Syntax
+@node File name syntax
 @section @value{tramp} file name conventions
 @cindex file name syntax
 @cindex file name examples
@@ -2197,6 +2203,58 @@ optional, @xref{Default Method}, @xref{Default User}, @xref{Default Host}.
 @ifset unified
 For syntactical reasons, the default method must be indicated by the
 pseudo method @file{-}.
+@end ifset
+
+
+@ifset unified
+@node Change file name syntax
+@section Alternative file name syntax
+@cindex change file name syntax
+@cindex alternative file name syntax
+
+The syntax described in @ref{File name syntax} is the @code{default}
+syntax, which is active after Emacs startup.  However, this can be
+changed.
+
+@deffn Command tramp-change-syntax syntax
+This command changes the syntax @value{tramp} uses for remote file
+names.  Beside the @code{default} value, @var{syntax} can be
+
+@itemize
+@item @code{simplified}
+@cindex simplified syntax
+
+The remote file name syntax is similar to the syntax used by Ange FTP.
+A remote file name has the form
+@code{@value{prefix}user@@host@value{postfix}path/to/file}.  The
+@code{user@@} part is optional, and the method is determined by
+@ref{Default Method}.
+
+@item @code{separate}
+@cindex separate syntax
+
+@clear unified
+@set separate
+@include trampver.texi
+The remote file name syntax is similar to the syntax used by XEmacs.
+A remote file name has the form
+@code{@trampfn{method,user@@host,path/to/file}}.  The @code{method}
+and @code{user@@} parts are optional.
+@clear separate
+@set unified
+@include trampver.texi
+@end itemize
+@end deffn
+
+@defvar tramp-file-name-regexp
+This variable keeps a regexp which matches the selected remote file
+name syntax.  However, it is not recommended to use this variable in
+external packages, a call of @code{file-remote-p} is much more
+appropriate.
+@ifinfo
+@pxref{Magic File Names, , , elisp}
+@end ifinfo
+@end defvar
 @end ifset
 
 

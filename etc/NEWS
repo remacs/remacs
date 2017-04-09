@@ -655,6 +655,10 @@ remote file name starts with "/method:host:" or "/method:user@host:".
 "/-::" is the shortest remote file name then.
 
 +++
+*** The command 'tramp-change-syntax' allows to choose an alternative
+remote file name syntax.
+
++++
 *** New connection method "sg", which supports editing files under a
 different group ID.
 

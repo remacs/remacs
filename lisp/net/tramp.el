@@ -687,6 +687,8 @@ It can have the following values:
            (tramp-cleanup-all-buffers))
 	 ;; Set the value:
 	 (set-default symbol value)
+	 ;; Reset `tramp-file-name-regexp'.
+	 (setq tramp-file-name-regexp (tramp-file-name-regexp))
 	 ;; Rearrange file name handlers.
 	 (tramp-register-file-name-handlers)))
 
@@ -890,6 +892,13 @@ This regexp should match Tramp file names but no other file names."
 ;;;###autoload
 (defconst tramp-initial-file-name-regexp "\\`/.+:.*:"
   "Value for `tramp-file-name-regexp' for autoload.
+It must match the initial `tramp-syntax' settings.")
+
+;; External packages use constant `tramp-file-name-regexp'.  In order
+;; not to break them, we still provide it.  It is a variable now.
+;;;###autoload
+(defvar tramp-file-name-regexp tramp-initial-file-name-regexp
+    "Value for `tramp-file-name-regexp' for autoload.
 It must match the initial `tramp-syntax' settings.")
 
 ;;;###autoload
