@@ -127,11 +127,18 @@
 # include <sys/types.h>
 #endif
 
+/* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */
+
+/* The definition of _GL_ARG_NONNULL is copied here.  */
+
+/* The definition of _GL_WARN_ON_USE is copied here.  */
+
+
 /* Get getopt(), optarg, optind, opterr, optopt.
    But avoid namespace pollution on glibc systems.  */
 #if @GNULIB_UNISTD_H_GETOPT@ && !defined __GLIBC__ && !defined _GL_SYSTEM_GETOPT
-# include <getopt_cdefs.h>
-# include <getopt_pfx_core.h>
+# include <getopt-cdefs.h>
+# include <getopt-pfx-core.h>
 #endif
 
 #ifndef _GL_INLINE_HEADER_BEGIN
@@ -141,13 +148,6 @@ _GL_INLINE_HEADER_BEGIN
 #ifndef _GL_UNISTD_INLINE
 # define _GL_UNISTD_INLINE _GL_INLINE
 #endif
-
-/* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */
-
-/* The definition of _GL_ARG_NONNULL is copied here.  */
-
-/* The definition of _GL_WARN_ON_USE is copied here.  */
-
 
 /* Hide some function declarations from <winsock2.h>.  */
 

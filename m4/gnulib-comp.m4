@@ -899,15 +899,15 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/getdtablesize.c
   lib/getgroups.c
   lib/getloadavg.c
+  lib/getopt-cdefs.in.h
+  lib/getopt-core.h
+  lib/getopt-ext.h
+  lib/getopt-pfx-core.h
+  lib/getopt-pfx-ext.h
   lib/getopt.c
   lib/getopt.in.h
   lib/getopt1.c
-  lib/getopt_cdefs.in.h
-  lib/getopt_core.h
-  lib/getopt_ext.h
   lib/getopt_int.h
-  lib/getopt_pfx_core.h
-  lib/getopt_pfx_ext.h
   lib/gettext.h
   lib/gettime.c
   lib/gettimeofday.c

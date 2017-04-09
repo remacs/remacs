@@ -56,6 +56,7 @@ lib/errno.h
 lib/execinfo.h
 lib/fcntl.h
 lib/getopt.h
+lib/getopt-cdefs.h
 lib/inttypes.h
 lib/libgnu.a
 lib/limits.h

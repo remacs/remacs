@@ -25,7 +25,7 @@
    unistd.h instead.  It does not have a protective #error, because
    the guard macro for getopt.h in gnulib is not fixed.  */
 
-/* getopt_core.h and getopt_ext.h are shared with GNU libc, and expect
+/* getopt-core.h and getopt-ext.h are shared with GNU libc, and expect
    a number of the internal macros supplied to GNU libc's headers by
    sys/cdefs.h.  Provide fallback definitions for all of them.  */
 #if @HAVE_SYS_CDEFS_H@
@@ -64,12 +64,4 @@
 # endif
 #endif
 
-#ifndef __nonnull
-# if __GNUC_PREREQ (3,3)
-#  define __nonnull(params) __attribute__ ((__nonnull__ params))
-# else
-#  define __nonnull(params)
-# endif
-#endif
-
-#endif /* getopt_cdefs.h */
+#endif /* _GETOPT_CDEFS_H */

@@ -922,6 +922,7 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -1527,21 +1528,22 @@ getopt.h: getopt.in.h $(top_builddir)/config.status
 	      -e 's|@''PRAGMA_SYSTEM_HEADER''@|@PRAGMA_SYSTEM_HEADER@|g' \
 	      -e 's|@''PRAGMA_COLUMNS''@|@PRAGMA_COLUMNS@|g' \
 	      -e 's|@''NEXT_GETOPT_H''@|$(NEXT_GETOPT_H)|g' \
+	      -e '/definition of _GL_ARG_NONNULL/r $(ARG_NONNULL_H)' \
 	      < $(srcdir)/getopt.in.h; \
 	} > $@-t && \
 	mv -f $@-t $@
 
-getopt_cdefs.h: getopt_cdefs.in.h $(top_builddir)/config.status
+getopt-cdefs.h: getopt-cdefs.in.h $(top_builddir)/config.status
 	$(AM_V_GEN)rm -f $@-t $@ && \
 	{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */'; \
           sed -e 's|@''HAVE_SYS_CDEFS_H''@|$(HAVE_SYS_CDEFS_H)|g' \
-	      < $(srcdir)/getopt_cdefs.in.h; \
+	      < $(srcdir)/getopt-cdefs.in.h; \
 	} > $@-t && \
 	mv -f $@-t $@
 
-MOSTLYCLEANFILES += getopt.h getopt.h-t getopt_cdefs.h getopt_cdefs.h-t
+MOSTLYCLEANFILES += getopt.h getopt.h-t getopt-cdefs.h getopt-cdefs.h-t
 
-EXTRA_DIST += getopt.c getopt.in.h getopt1.c getopt_cdefs.in.h getopt_core.h getopt_ext.h getopt_int.h getopt_pfx_core.h getopt_pfx_ext.h
+EXTRA_DIST += getopt-cdefs.in.h getopt-core.h getopt-ext.h getopt-pfx-core.h getopt-pfx-ext.h getopt.c getopt.in.h getopt1.c getopt_int.h
 
 EXTRA_libgnu_a_SOURCES += getopt.c getopt1.c
 

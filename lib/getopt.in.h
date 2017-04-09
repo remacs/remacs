@@ -38,7 +38,7 @@
 
 /* Standalone applications should #define __GETOPT_PREFIX to an
    identifier that prefixes the external functions and variables
-   defined in getopt_core.h and getopt_ext.h.  When this happens,
+   defined in getopt-core.h and getopt-ext.h.  When this happens,
    include the headers that might declare getopt so that they will not
    cause confusion if included after this file (if the system had
    <getopt.h>, we have already included it).  */
@@ -52,8 +52,10 @@
 # endif
 #endif
 
-#include <getopt_cdefs.h>
-#include <getopt_pfx_core.h>
-#include <getopt_pfx_ext.h>
+/* The definition of _GL_ARG_NONNULL is copied here.  */
+
+#include <getopt-cdefs.h>
+#include <getopt-pfx-core.h>
+#include <getopt-pfx-ext.h>
 
 #endif /* _@GUARD_PREFIX@_GETOPT_H */

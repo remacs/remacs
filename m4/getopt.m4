@@ -1,4 +1,4 @@
-# getopt.m4 serial 45
+# getopt.m4 serial 46
 dnl Copyright (C) 2002-2006, 2008-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -364,7 +364,7 @@ AC_DEFUN([gl_GETOPT_SUBSTITUTE_HEADER],
     [Define to rpl_ if the getopt replacement functions and variables
      should be used.])
   GETOPT_H=getopt.h
-  GETOPT_CDEFS_H=getopt_cdefs.h
+  GETOPT_CDEFS_H=getopt-cdefs.h
   AC_SUBST([GETOPT_H])
   AC_SUBST([GETOPT_CDEFS_H])
 ])

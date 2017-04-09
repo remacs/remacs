@@ -66,12 +66,12 @@ struct option
 extern int getopt_long (int ___argc, char *__getopt_argv_const *___argv,
 			const char *__shortopts,
 		        const struct option *__longopts, int *__longind)
-       __THROW __nonnull ((2, 3));
+       __THROW _GL_ARG_NONNULL ((2, 3));
 extern int getopt_long_only (int ___argc, char *__getopt_argv_const *___argv,
 			     const char *__shortopts,
 		             const struct option *__longopts, int *__longind)
-       __THROW __nonnull ((2, 3));
+       __THROW _GL_ARG_NONNULL ((2, 3));
 
 __END_DECLS
 
-#endif /* getopt_ext.h */
+#endif /* _GETOPT_EXT_H */
