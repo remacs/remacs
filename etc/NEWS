@@ -1228,6 +1228,13 @@ or its files before 'delete-directory' gets to them.
 *** New error type 'user-search-failed' like 'search-failed' but
 avoids debugger like 'user-error'.
 
++++
+** The function 'line-number-at-pos' now takes a second optional
+argument 'absolute'. If this parameter is nil, the default, this
+function keeps on returning the line number taking potential narrowing
+into account. If this parameter is non-nil, the function ignores
+narrowing and returns the absolute line number.
+
 ** Changes in Frame- and Window- Handling
 
 +++

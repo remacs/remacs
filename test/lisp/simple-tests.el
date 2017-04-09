@@ -448,5 +448,54 @@ See Bug#21722."
         (call-interactively #'eval-expression)
         (should (equal (current-message) "66 (#o102, #x42, ?B)"))))))
 
+(ert-deftest line-number-at-pos-in-widen-buffer ()
+  (let ((target-line 3))
+    (with-temp-buffer
+      (insert "a\nb\nc\nd\n")
+      (goto-char (point-min))
+      (forward-line (1- target-line))
+      (should (equal (line-number-at-pos) target-line))
+      (should (equal (line-number-at-pos nil t) target-line)))))
+
+(ert-deftest line-number-at-pos-in-narrow-buffer ()
+  (let ((target-line 3))
+    (with-temp-buffer
+      (insert "a\nb\nc\nd\n")
+      (goto-char (point-min))
+      (forward-line (1- target-line))
+      (narrow-to-region (line-beginning-position) (line-end-position))
+      (should (equal (line-number-at-pos) 1))
+      (should (equal (line-number-at-pos nil t) target-line)))))
+
+(ert-deftest line-number-at-pos-keeps-restriction ()
+  (with-temp-buffer
+    (insert "a\nb\nc\nd\n")
+    (goto-char (point-min))
+    (forward-line 2)
+    (narrow-to-region (line-beginning-position) (line-end-position))
+    (should (equal (line-number-at-pos) 1))
+    (line-number-at-pos nil t)
+    (should (equal (line-number-at-pos) 1))))
+
+(ert-deftest line-number-at-pos-keeps-point ()
+  (let (pos)
+    (with-temp-buffer
+      (insert "a\nb\nc\nd\n")
+      (goto-char (point-min))
+      (forward-line 2)
+      (setq pos (point))
+      (line-number-at-pos)
+      (line-number-at-pos nil t)
+      (should (equal pos (point))))))
+
+(ert-deftest line-number-at-pos-when-passing-point ()
+  (let (pos)
+    (with-temp-buffer
+      (insert "a\nb\nc\nd\n")
+      (should (equal (line-number-at-pos 1) 1))
+      (should (equal (line-number-at-pos 3) 2))
+      (should (equal (line-number-at-pos 5) 3))
+      (should (equal (line-number-at-pos 7) 4)))))
+
 (provide 'simple-test)
 ;;; simple-test.el ends here
