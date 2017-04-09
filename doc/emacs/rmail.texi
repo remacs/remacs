@@ -1436,18 +1436,18 @@ Optional port number, if not the default for that protocol.
 @item mbox
 Usual Unix mailbox format.  In this case, @var{user}, @var{pass} and
 @var{port} are not used, and @var{host-or-file-name} denotes the file
-name of the mailbox file, e.g., @code{mbox://var/spool/mail/smith}.
+name of the mailbox file, e.g., @code{mbox:///var/spool/mail/smith}.
 
 @item mh
 A local mailbox in the @acronym{MH} format.  @var{user}, @var{pass}
 and @var{port} are not used.  @var{host-or-file-name} denotes the name
-of @acronym{MH} folder, e.g., @code{mh://Mail/inbox}.
+of @acronym{MH} folder, e.g., @code{mh:///Mail/inbox}.
 
 @item maildir
 A local mailbox in the @acronym{maildir} format.  @var{user},
 @var{pass} and @var{port} are not used, and @var{host-or-file-name}
 denotes the name of @code{maildir} mailbox, e.g.,
-@code{maildir://mail/inbox}.
+@code{maildir:///mail/inbox}.
 
 @item file
 Any local mailbox format.  Its actual format is detected automatically
@@ -1472,7 +1472,7 @@ port number; e.g., @code{imap://smith:guessme@@remote.server.net:993}.
 This is equivalent to specifying the @samp{file} protocol:
 
 @smallexample
-/var/spool/mail/@var{user} @equiv{} file://var/spool/mail/@var{user}
+/var/spool/mail/@var{user} @equiv{} file:///var/spool/mail/@var{user}
 @end smallexample
 
 @vindex rmail-movemail-program
@@ -1579,5 +1579,5 @@ retrieve it.  @xref{Movemail}, for the detailed description of
 include the following in the Rmail inbox list:
 
 @smallexample
-maildir://var/spool/mail/in
+maildir:///var/spool/mail/in
 @end smallexample
