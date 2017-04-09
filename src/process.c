@@ -2049,7 +2049,16 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
   int volatile forkerr_volatile = forkerr;
   struct Lisp_Process *p_volatile = p;
 
+#ifdef DARWIN_OS
+  /* Darwin doesn't let us run setsid after a vfork, so use fork when
+     necessary. */
+  if (pty_flag)
+    pid = fork ();
+  else
+    pid = vfork ();
+#else
   pid = vfork ();
+#endif
 
   current_dir = current_dir_volatile;
   lisp_pty_name = lisp_pty_name_volatile;
