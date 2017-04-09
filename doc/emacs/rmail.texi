@@ -1388,7 +1388,7 @@ command line syntax and the same basic subset of options.  However, the
 Mailutils version offers additional features.
 
   The Emacs version of @command{movemail} can retrieve mail from the
-usual Unix mailbox formats.  Although it can also use the POP3
+usual Unix mailbox formats.  @strong{Warning}: Although it can also use the POP3
 protocol, this is not recommended because it does not support POP3 via
 encrypted TLS channels.
 
@@ -1454,18 +1454,24 @@ Any local mailbox format.  Its actual format is detected automatically
 by @command{movemail}.
 
 @item pop
+@itemx pops
 A remote mailbox to be accessed via POP3 protocol.  @var{user}
 specifies the remote user name to use, @var{pass} may be used to
 specify the user password, @var{host-or-file-name} is the name or IP
 address of the remote mail server to connect to, and @var{port} is the
 port number; e.g., @code{pop://smith:guessme@@remote.server.net:995}.
+If the server supports it, @command{movemail} tries to use an
+encrypted connection---use the @samp{pops} form to require one.
 
 @item imap
+@itemx imaps
 A remote mailbox to be accessed via IMAP4 protocol.  @var{user}
 specifies the remote user name to use, @var{pass} may be used to
 specify the user password, @var{host-or-file-name} is the name or IP
 address of the remote mail server to connect to, and @var{port} is the
 port number; e.g., @code{imap://smith:guessme@@remote.server.net:993}.
+If the server supports it, @command{movemail} tries to use an
+encrypted connection---use the @samp{imaps} form to require one.
 @end table
 
   Alternatively, you can specify the file name of the mailbox to use.
@@ -1491,10 +1497,11 @@ listed in @code{rmail-movemail-search-path}, then in @code{exec-path}
   Some sites use a method called POP for accessing users' inbox data
 instead of storing the data in inbox files.  The Mailutils
 @command{movemail} by default supports POP with TLS encryption.
-Although the @command{Emacs movemail} supports unencrypted POP, this
-is not recommended due to the lack of encryption.  Both versions of
-@command{movemail} work only with POP3, not with older versions of
-POP.
+@strong{Warning:} Although the @command{Emacs movemail} supports POP,
+its use for this is not recommended since it does not support encrypted
+connections---the Mailutils version does.
+Both versions of @command{movemail} work only with POP3, not with
+older versions of POP.
 
 @cindex @env{MAILHOST} environment variable
 @cindex POP mailboxes
@@ -1510,6 +1517,8 @@ Additionally, you may specify the password in the mailbox @acronym{URL}:
 case, @var{password} takes preference over the one set by
 @code{rmail-remote-password} (see below).  This is especially useful
 if you have several remote mailboxes with different passwords.
+If using Mailutils @command{movemail}, you may wish to use
+@samp{pops} in place of @samp{pop}.
 
   For backward compatibility, Rmail also supports an alternative way of
 specifying remote POP mailboxes.  Specifying an inbox name in the form
@@ -1523,7 +1532,8 @@ the machine on which to look for the POP server.
 supported only by the Mailutils @command{movemail}.  To specify an IMAP
 mailbox in the inbox list, use the following mailbox @acronym{URL}:
 @samp{imap://@var{username}[:@var{password}]@@@var{hostname}:@var{port}}.  The
-@var{password} part is optional, as described above.
+@var{password} part is optional, as described above.  You may wish to
+use @samp{imaps} in place of @samp{imap}.
 
 @vindex rmail-remote-password
 @vindex rmail-remote-password-required
