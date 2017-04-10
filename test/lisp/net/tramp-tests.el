@@ -213,6 +213,115 @@ handled properly.  BODY shall not contain a timeout."
     (should (tramp-tramp-file-p "/-:h:/path/to/file"))
     (should (tramp-tramp-file-p "/m::/path/to/file"))))
 
+(ert-deftest tramp-test01-file-name-syntax-simplified ()
+  "Check simplified file name syntax."
+  :tags '(:expensive-test)
+  (let ((syntax tramp-syntax))
+    (unwind-protect
+	(progn
+	  (tramp-change-syntax 'simplified)
+	  ;; Simple cases.
+	  (should (tramp-tramp-file-p "/host:"))
+	  (should (tramp-tramp-file-p "/user@:"))
+	  (should (tramp-tramp-file-p "/user@host:"))
+	  (should (tramp-tramp-file-p "/user@email@host:"))
+
+	  ;; Using a port.
+	  (should (tramp-tramp-file-p "/host#1234:"))
+	  (should (tramp-tramp-file-p "/user@host#1234:"))
+
+	  ;; Using an IPv4 address.
+	  (should (tramp-tramp-file-p "/1.2.3.4:"))
+	  (should (tramp-tramp-file-p "/user@1.2.3.4:"))
+
+	  ;; Using an IPv6 address.
+	  (should (tramp-tramp-file-p "/[::1]:"))
+	  (should (tramp-tramp-file-p "/user@[::1]:"))
+
+	  ;; Local file name part.
+	  (should (tramp-tramp-file-p "/host::"))
+	  (should (tramp-tramp-file-p "/host:/:"))
+	  (should (tramp-tramp-file-p "/host:/path/to/file"))
+	  (should (tramp-tramp-file-p "/host:/:/path/to/file"))
+	  (should (tramp-tramp-file-p "/host:file"))
+	  (should (tramp-tramp-file-p "/host:/:file"))
+
+	  ;; Multihop.
+	  (should (tramp-tramp-file-p "/host1|host2:"))
+	  (should (tramp-tramp-file-p "/user1@host1|user2@host2:"))
+	  (should (tramp-tramp-file-p "/user1@host1|user2@host2|user3@host3:"))
+
+	  ;; No strings.
+	  (should-not (tramp-tramp-file-p nil))
+	  (should-not (tramp-tramp-file-p 'symbol))
+	  ;; Quote with "/:" suppresses file name handlers.
+	  (should-not (tramp-tramp-file-p "/::"))
+	  (should-not (tramp-tramp-file-p "/:@:"))
+	  (should-not (tramp-tramp-file-p "/:[]:")))
+
+      ;; Exit.
+      (tramp-change-syntax syntax))))
+
+(ert-deftest tramp-test01-file-name-syntax-separate ()
+  "Check separate file name syntax."
+  :tags '(:expensive-test)
+  (let ((syntax tramp-syntax))
+    (unwind-protect
+	(progn
+	  (tramp-change-syntax 'separate)
+	  ;; Simple cases.
+	  (should (tramp-tramp-file-p "/[method/]"))
+	  (should (tramp-tramp-file-p "/[method/host]"))
+	  (should (tramp-tramp-file-p "/[method/user@]"))
+	  (should (tramp-tramp-file-p "/[method/user@host]"))
+	  (should (tramp-tramp-file-p "/[method/user@email@host]"))
+
+	  ;; Using a port.
+	  (should (tramp-tramp-file-p "/[method/host#1234]"))
+	  (should (tramp-tramp-file-p "/[method/user@host#1234]"))
+
+	  ;; Using an IPv4 address.
+	  (should (tramp-tramp-file-p "/[method/1.2.3.4]"))
+	  (should (tramp-tramp-file-p "/[method/user@1.2.3.4]"))
+
+	  ;; Using an IPv6 address.
+	  (should (tramp-tramp-file-p "/[method/::1]"))
+	  (should (tramp-tramp-file-p "/[method/user@::1]"))
+
+	  ;; Local file name part.
+	  (should (tramp-tramp-file-p "/[method/]"))
+	  (should (tramp-tramp-file-p "/[method/]/:"))
+	  (should (tramp-tramp-file-p "/[method/]/path/to/file"))
+	  (should (tramp-tramp-file-p "/[method/]/:/path/to/file"))
+	  (should (tramp-tramp-file-p "/[method/]file"))
+	  (should (tramp-tramp-file-p "/[method/]/:file"))
+
+	  ;; Multihop.
+	  (should (tramp-tramp-file-p "/[method1/|method2/]"))
+	  (should (tramp-tramp-file-p "/[method1/host1|method2/host2]"))
+	  (should
+	   (tramp-tramp-file-p
+	    "/[method1/user1@host1|method2/user2@host2]"))
+	  (should
+	   (tramp-tramp-file-p
+	    "/[method1/user1@host1|method2/user2@host2|method3/user3@host3]"))
+
+	  ;; No strings.
+	  (should-not (tramp-tramp-file-p nil))
+	  (should-not (tramp-tramp-file-p 'symbol))
+	  ;; Ange-ftp syntax.
+	  (should-not (tramp-tramp-file-p "/host:"))
+	  (should-not (tramp-tramp-file-p "/user@host:"))
+	  (should-not (tramp-tramp-file-p "/1.2.3.4:"))
+	  (should-not (tramp-tramp-file-p "/host:/:"))
+	  (should-not (tramp-tramp-file-p "/host1|host2:"))
+	  (should-not (tramp-tramp-file-p "/user1@host1|user2@host2:"))
+	  ;; Quote with "/:" suppresses file name handlers.
+	  (should-not (tramp-tramp-file-p "/:[]")))
+
+      ;; Exit.
+      (tramp-change-syntax syntax))))
+
 (ert-deftest tramp-test02-file-name-dissect ()
   "Check remote file name components."
   (let ((tramp-default-method "default-method")
@@ -568,6 +677,683 @@ handled properly.  BODY shall not contain a timeout."
        'hop)
       (format "%s:%s@%s|%s:%s@%s|"
 	      "method1" "user1" "host1" "method2" "user2" "host2")))))
+
+(ert-deftest tramp-test02-file-name-dissect-simplified ()
+  "Check simplified file name components."
+  :tags '(:expensive-test)
+  (let ((tramp-default-method "default-method")
+	(tramp-default-user "default-user")
+	(tramp-default-host "default-host")
+	(syntax tramp-syntax))
+    (unwind-protect
+	(progn
+	  (tramp-change-syntax 'simplified)
+	  ;; Expand `tramp-default-method' and `tramp-default-user'.
+	  (should (string-equal
+		   (file-remote-p "/host:")
+		   (format "/%s@%s:" "default-user" "host")))
+	  (should (string-equal
+		   (file-remote-p "/host:" 'method) "default-method"))
+	  (should (string-equal (file-remote-p "/host:" 'user) "default-user"))
+	  (should (string-equal (file-remote-p "/host:" 'host) "host"))
+	  (should (string-equal (file-remote-p "/host:" 'localname) ""))
+	  (should (string-equal (file-remote-p "/host:" 'hop) nil))
+
+	  ;; Expand `tramp-default-method' and `tramp-default-host'.
+	  (should (string-equal
+		   (file-remote-p "/user@:")
+		   (format "/%s@%s:" "user" "default-host")))
+	  (should (string-equal
+		   (file-remote-p "/user@:" 'method) "default-method"))
+	  (should (string-equal (file-remote-p "/user@:" 'user) "user"))
+	  (should (string-equal (file-remote-p "/user@:" 'host) "default-host"))
+	  (should (string-equal (file-remote-p "/user@:" 'localname) ""))
+	  (should (string-equal (file-remote-p "/user@:" 'hop) nil))
+
+	  ;; Expand `tramp-default-method'.
+	  (should (string-equal
+		   (file-remote-p "/user@host:")
+		   (format "/%s@%s:" "user" "host")))
+	  (should (string-equal
+		   (file-remote-p "/user@host:" 'method) "default-method"))
+	  (should (string-equal (file-remote-p "/user@host:" 'user) "user"))
+	  (should (string-equal (file-remote-p "/user@host:" 'host) "host"))
+	  (should (string-equal (file-remote-p "/user@host:" 'localname) ""))
+	  (should (string-equal (file-remote-p "/user@host:" 'hop) nil))
+
+	  ;; No expansion.
+	  (should (string-equal
+		   (file-remote-p "/user@email@host:")
+		   (format "/%s@%s:" "user@email" "host")))
+	  (should (string-equal
+		   (file-remote-p
+		    "/user@email@host:" 'method) "default-method"))
+	  (should (string-equal
+		   (file-remote-p "/user@email@host:" 'user) "user@email"))
+	  (should (string-equal
+		   (file-remote-p "/user@email@host:" 'host) "host"))
+	  (should (string-equal
+		   (file-remote-p "/user@email@host:" 'localname) ""))
+	  (should (string-equal
+		   (file-remote-p "/user@email@host:" 'hop) nil))
+
+	  ;; Expand `tramp-default-method' and `tramp-default-user'.
+	  (should (string-equal
+		   (file-remote-p "/host#1234:")
+		   (format "/%s@%s:" "default-user" "host#1234")))
+	  (should (string-equal
+		   (file-remote-p "/host#1234:" 'method) "default-method"))
+	  (should (string-equal
+		   (file-remote-p "/host#1234:" 'user) "default-user"))
+	  (should (string-equal
+		   (file-remote-p "/host#1234:" 'host) "host#1234"))
+	  (should (string-equal (file-remote-p "/host#1234:" 'localname) ""))
+	  (should (string-equal (file-remote-p "/host#1234:" 'hop) nil))
+
+	  ;; Expand `tramp-default-method'.
+	  (should (string-equal
+		   (file-remote-p "/user@host#1234:")
+		   (format "/%s@%s:" "user" "host#1234")))
+	  (should (string-equal
+		   (file-remote-p "/user@host#1234:" 'method) "default-method"))
+	  (should (string-equal
+		   (file-remote-p "/user@host#1234:" 'user) "user"))
+	  (should (string-equal
+		   (file-remote-p "/user@host#1234:" 'host) "host#1234"))
+	  (should (string-equal
+		   (file-remote-p "/user@host#1234:" 'localname) ""))
+	  (should (string-equal (file-remote-p "/user@host#1234:" 'hop) nil))
+
+    ;; Expand `tramp-default-method' and `tramp-default-user'.
+	  (should (string-equal
+		   (file-remote-p "/1.2.3.4:")
+		   (format "/%s@%s:" "default-user" "1.2.3.4")))
+	  (should (string-equal
+		   (file-remote-p "/1.2.3.4:" 'method) "default-method"))
+	  (should (string-equal
+		   (file-remote-p "/1.2.3.4:" 'user) "default-user"))
+	  (should (string-equal (file-remote-p "/1.2.3.4:" 'host) "1.2.3.4"))
+	  (should (string-equal (file-remote-p "/1.2.3.4:" 'localname) ""))
+	  (should (string-equal (file-remote-p "/1.2.3.4:" 'hop) nil))
+
+	  ;; Expand `tramp-default-method'.
+	  (should (string-equal
+		   (file-remote-p "/user@1.2.3.4:")
+		   (format "/%s@%s:" "user" "1.2.3.4")))
+	  (should (string-equal
+		   (file-remote-p "/user@1.2.3.4:" 'method) "default-method"))
+	  (should (string-equal (file-remote-p "/user@1.2.3.4:" 'user) "user"))
+	  (should (string-equal
+		   (file-remote-p "/user@1.2.3.4:" 'host) "1.2.3.4"))
+	  (should (string-equal (file-remote-p "/user@1.2.3.4:" 'localname) ""))
+	  (should (string-equal (file-remote-p "/user@1.2.3.4:" 'hop) nil))
+
+	  ;; Expand `tramp-default-method', `tramp-default-user' and
+	  ;; `tramp-default-host'.
+	  (should (string-equal
+		   (file-remote-p "/[]:")
+		   (format
+		    "/%s@%s:" "default-user" "default-host")))
+	  (should (string-equal
+		   (file-remote-p "/[]:" 'method) "default-method"))
+	  (should (string-equal (file-remote-p "/[]:" 'user) "default-user"))
+	  (should (string-equal (file-remote-p "/[]:" 'host) "default-host"))
+	  (should (string-equal (file-remote-p "/[]:" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[]:" 'hop) nil))
+
+	  ;; Expand `tramp-default-method' and `tramp-default-user'.
+	  (let ((tramp-default-host "::1"))
+	    (should (string-equal
+		     (file-remote-p "/[]:")
+		     (format "/%s@%s:" "default-user" "[::1]")))
+	    (should (string-equal
+		     (file-remote-p "/[]:" 'method) "default-method"))
+	    (should (string-equal (file-remote-p "/[]:" 'user) "default-user"))
+	    (should (string-equal (file-remote-p "/[]:" 'host) "::1"))
+	    (should (string-equal (file-remote-p "/[]:" 'localname) ""))
+	    (should (string-equal (file-remote-p "/[]:" 'hop) nil)))
+
+	  ;; Expand `tramp-default-method' and `tramp-default-user'.
+	  (should (string-equal
+		   (file-remote-p "/[::1]:")
+		   (format "/%s@%s:" "default-user" "[::1]")))
+	  (should (string-equal
+		   (file-remote-p "/[::1]:" 'method) "default-method"))
+	  (should (string-equal (file-remote-p "/[::1]:" 'user) "default-user"))
+	  (should (string-equal (file-remote-p "/[::1]:" 'host) "::1"))
+	  (should (string-equal (file-remote-p "/[::1]:" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[::1]:" 'hop) nil))
+
+	  ;; Expand `tramp-default-method'.
+	  (should (string-equal
+		   (file-remote-p "/user@[::1]:")
+		   (format "/%s@%s:" "user" "[::1]")))
+	  (should (string-equal
+		   (file-remote-p "/user@[::1]:" 'method) "default-method"))
+	  (should (string-equal (file-remote-p "/user@[::1]:" 'user) "user"))
+	  (should (string-equal (file-remote-p "/user@[::1]:" 'host) "::1"))
+	  (should (string-equal (file-remote-p "/user@[::1]:" 'localname) ""))
+	  (should (string-equal (file-remote-p "/user@[::1]:" 'hop) nil))
+
+	  ;; Local file name part.
+	  (should (string-equal (file-remote-p "/host:/:" 'localname) "/:"))
+	  (should (string-equal (file-remote-p "/host::" 'localname) ":"))
+	  (should (string-equal (file-remote-p "/host: " 'localname) " "))
+	  (should (string-equal (file-remote-p "/host:file" 'localname) "file"))
+	  (should (string-equal
+		   (file-remote-p "/host:/path/to/file" 'localname)
+		   "/path/to/file"))
+
+	  ;; Multihop.
+	  (should
+	   (string-equal
+	    (file-remote-p "/user1@host1|user2@host2:/path/to/file")
+	    (format "/%s@%s|%s@%s:" "user1" "host1" "user2" "host2")))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     "/user1@host1|user2@host2:/path/to/file" 'method)
+	    "default-method"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     "/user1@host1|user2@host2:/path/to/file" 'user)
+	    "user2"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     "/user1@host1|user2@host2:/path/to/file" 'host)
+	    "host2"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     "/user1@host1|user2@host2:/path/to/file" 'localname)
+	    "/path/to/file"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     "/user1@host1|user2@host2:/path/to/file" 'hop)
+	    (format "%s@%s|" "user1" "host1")))
+
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/user1@host1"
+	      "|user2@host2"
+	      "|user3@host3:/path/to/file"))
+	    (format "/%s@%s|%s@%s|%s@%s:"
+		    "user1" "host1"
+		    "user2" "host2"
+		    "user3" "host3")))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/user1@host1"
+	      "|user2@host2"
+	      "|user3@host3:/path/to/file")
+	     'method)
+	    "default-method"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/user1@host1"
+	      "|user2@host2"
+	      "|user3@host3:/path/to/file")
+	     'user)
+	    "user3"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/user1@host1"
+	      "|user2@host2"
+	      "|user3@host3:/path/to/file")
+	     'host)
+	    "host3"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/user1@host1"
+	      "|user2@host2"
+	      "|user3@host3:/path/to/file")
+	     'localname)
+	    "/path/to/file"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/user1@host1"
+	      "|user2@host2"
+	      "|user3@host3:/path/to/file")
+	     'hop)
+	    (format "%s@%s|%s@%s|"
+		    "user1" "host1" "user2" "host2"))))
+
+      ;; Exit.
+      (tramp-change-syntax syntax))))
+
+(ert-deftest tramp-test02-file-name-dissect-separate ()
+  "Check separate file name components."
+  :tags '(:expensive-test)
+  (let ((tramp-default-method "default-method")
+	(tramp-default-user "default-user")
+	(tramp-default-host "default-host")
+	(syntax tramp-syntax))
+    (unwind-protect
+	(progn
+	  (tramp-change-syntax 'separate)
+	  ;; Expand `tramp-default-user' and `tramp-default-host'.
+	  (should (string-equal
+		   (file-remote-p "/[method/]")
+		   (format
+		    "/[%s/%s@%s]" "method" "default-user" "default-host")))
+	  (should (string-equal (file-remote-p "/[method/]" 'method) "method"))
+	  (should (string-equal
+		   (file-remote-p "/[method/]" 'user) "default-user"))
+	  (should (string-equal
+		   (file-remote-p "/[method/]" 'host) "default-host"))
+	  (should (string-equal (file-remote-p "/[method/]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[method/]" 'hop) nil))
+
+	  ;; Expand `tramp-default-method' and `tramp-default-user'.
+	  (should (string-equal
+		   (file-remote-p "/[-/host]")
+		   (format
+		    "/[%s/%s@%s]" "default-method" "default-user" "host")))
+	  (should (string-equal
+		   (file-remote-p "/[-/host]" 'method) "default-method"))
+	  (should (string-equal
+		   (file-remote-p "/[-/host]" 'user) "default-user"))
+	  (should (string-equal (file-remote-p "/[-/host]" 'host) "host"))
+	  (should (string-equal (file-remote-p "/[-/host]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[-/host]" 'hop) nil))
+
+	  ;; Expand `tramp-default-method' and `tramp-default-host'.
+	  (should (string-equal
+		   (file-remote-p "/[-/user@]")
+		   (format
+		    "/[%s/%s@%s]" "default-method" "user" "default-host")))
+	  (should (string-equal
+		   (file-remote-p "/[-/user@]" 'method) "default-method"))
+	  (should (string-equal (file-remote-p "/[-/user@]" 'user) "user"))
+	  (should (string-equal
+		   (file-remote-p "/[-/user@]" 'host) "default-host"))
+	  (should (string-equal (file-remote-p "/[-/user@]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[-/user@]" 'hop) nil))
+
+	  ;; Expand `tramp-default-method'.
+	  (should (string-equal
+		   (file-remote-p "/[-/user@host]")
+		   (format "/[%s/%s@%s]" "default-method" "user" "host")))
+	  (should (string-equal
+		   (file-remote-p "/[-/user@host]" 'method) "default-method"))
+	  (should (string-equal (file-remote-p "/[-/user@host]" 'user) "user"))
+	  (should (string-equal (file-remote-p "/[-/user@host]" 'host) "host"))
+	  (should (string-equal (file-remote-p "/[-/user@host]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[-/user@host]" 'hop) nil))
+
+	  ;; Expand `tramp-default-user'.
+	  (should (string-equal
+		   (file-remote-p "/[method/host]")
+		   (format "/[%s/%s@%s]" "method" "default-user" "host")))
+	  (should (string-equal
+		   (file-remote-p "/[method/host]" 'method) "method"))
+	  (should (string-equal
+		   (file-remote-p "/[method/host]" 'user) "default-user"))
+	  (should (string-equal (file-remote-p "/[method/host]" 'host) "host"))
+	  (should (string-equal (file-remote-p "/[method/host]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[method/host]" 'hop) nil))
+
+	  ;; Expand `tramp-default-host'.
+	  (should (string-equal
+		   (file-remote-p "/[method/user@]")
+		   (format "/[%s/%s@%s]" "method" "user" "default-host")))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@]" 'method) "method"))
+	  (should (string-equal (file-remote-p "/[method/user@]" 'user) "user"))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@]" 'host) "default-host"))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[method/user@]" 'hop) nil))
+
+	  ;; No expansion.
+	  (should (string-equal
+		   (file-remote-p "/[method/user@host]")
+		   (format "/[%s/%s@%s]" "method" "user" "host")))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@host]" 'method) "method"))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@host]" 'user) "user"))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@host]" 'host) "host"))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@host]" 'localname) ""))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@host]" 'hop) nil))
+
+	  ;; No expansion.
+	  (should (string-equal
+		   (file-remote-p "/[method/user@email@host]")
+		   (format "/[%s/%s@%s]" "method" "user@email" "host")))
+	  (should (string-equal
+		   (file-remote-p
+		    "/[method/user@email@host]" 'method) "method"))
+	  (should (string-equal
+		   (file-remote-p
+		    "/[method/user@email@host]" 'user) "user@email"))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@email@host]" 'host) "host"))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@email@host]" 'localname) ""))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@email@host]" 'hop) nil))
+
+	  ;; Expand `tramp-default-method' and `tramp-default-user'.
+	  (should (string-equal
+		   (file-remote-p "/[-/host#1234]")
+		   (format
+		    "/[%s/%s@%s]" "default-method" "default-user" "host#1234")))
+	  (should (string-equal
+		   (file-remote-p "/[-/host#1234]" 'method) "default-method"))
+	  (should (string-equal
+		   (file-remote-p "/[-/host#1234]" 'user) "default-user"))
+	  (should (string-equal
+		   (file-remote-p "/[-/host#1234]" 'host) "host#1234"))
+	  (should (string-equal (file-remote-p "/[-/host#1234]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[-/host#1234]" 'hop) nil))
+
+	  ;; Expand `tramp-default-method'.
+	  (should (string-equal
+		   (file-remote-p "/[-/user@host#1234]")
+		   (format "/[%s/%s@%s]" "default-method" "user" "host#1234")))
+	  (should (string-equal
+		   (file-remote-p
+		    "/[-/user@host#1234]" 'method) "default-method"))
+	  (should (string-equal
+		   (file-remote-p
+		    "/[-/user@host#1234]" 'user) "user"))
+	  (should (string-equal
+		   (file-remote-p "/[-/user@host#1234]" 'host) "host#1234"))
+	  (should (string-equal
+		   (file-remote-p "/[-/user@host#1234]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[-/user@host#1234]" 'hop) nil))
+
+	  ;; Expand `tramp-default-user'.
+	  (should (string-equal
+		   (file-remote-p "/[method/host#1234]")
+		   (format "/[%s/%s@%s]" "method" "default-user" "host#1234")))
+	  (should (string-equal
+		   (file-remote-p "/[method/host#1234]" 'method) "method"))
+	  (should (string-equal
+		   (file-remote-p "/[method/host#1234]" 'user) "default-user"))
+	  (should (string-equal
+		   (file-remote-p "/[method/host#1234]" 'host) "host#1234"))
+	  (should (string-equal
+		   (file-remote-p "/[method/host#1234]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[method/host#1234]" 'hop) nil))
+
+	  ;; No expansion.
+	  (should (string-equal
+		   (file-remote-p "/[method/user@host#1234]")
+		   (format "/[%s/%s@%s]" "method" "user" "host#1234")))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@host#1234]" 'method) "method"))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@host#1234]" 'user) "user"))
+	  (should (string-equal
+		   (file-remote-p
+		    "/[method/user@host#1234]" 'host) "host#1234"))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@host#1234]" 'localname) ""))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@host#1234]" 'hop) nil))
+
+	  ;; Expand `tramp-default-method' and `tramp-default-user'.
+	  (should (string-equal
+		   (file-remote-p "/[-/1.2.3.4]")
+		   (format
+		    "/[%s/%s@%s]" "default-method" "default-user" "1.2.3.4")))
+	  (should (string-equal
+		   (file-remote-p "/[-/1.2.3.4]" 'method) "default-method"))
+	  (should (string-equal
+		   (file-remote-p "/[-/1.2.3.4]" 'user) "default-user"))
+	  (should (string-equal
+		   (file-remote-p "/[-/1.2.3.4]" 'host) "1.2.3.4"))
+	  (should (string-equal (file-remote-p "/[-/1.2.3.4]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[-/1.2.3.4]" 'hop) nil))
+
+	  ;; Expand `tramp-default-method'.
+	  (should (string-equal
+		   (file-remote-p "/[-/user@1.2.3.4]")
+		   (format "/[%s/%s@%s]" "default-method" "user" "1.2.3.4")))
+	  (should (string-equal
+		   (file-remote-p
+		    "/[-/user@1.2.3.4]" 'method) "default-method"))
+	  (should (string-equal
+		   (file-remote-p "/[-/user@1.2.3.4]" 'user) "user"))
+	  (should (string-equal
+		   (file-remote-p "/[-/user@1.2.3.4]" 'host) "1.2.3.4"))
+	  (should (string-equal
+		   (file-remote-p "/[-/user@1.2.3.4]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[-/user@1.2.3.4]" 'hop) nil))
+
+	  ;; Expand `tramp-default-user'.
+	  (should (string-equal
+		   (file-remote-p "/[method/1.2.3.4]")
+		   (format "/[%s/%s@%s]" "method" "default-user" "1.2.3.4")))
+	  (should (string-equal
+		   (file-remote-p "/[method/1.2.3.4]" 'method) "method"))
+	  (should (string-equal
+		   (file-remote-p "/[method/1.2.3.4]" 'user) "default-user"))
+	  (should (string-equal
+		   (file-remote-p "/[method/1.2.3.4]" 'host) "1.2.3.4"))
+	  (should (string-equal
+		   (file-remote-p "/[method/1.2.3.4]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[method/1.2.3.4]" 'hop) nil))
+
+	  ;; No expansion.
+	  (should (string-equal
+		   (file-remote-p "/[method/user@1.2.3.4]")
+		   (format "/[%s/%s@%s]" "method" "user" "1.2.3.4")))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@1.2.3.4]" 'method) "method"))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@1.2.3.4]" 'user) "user"))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@1.2.3.4]" 'host) "1.2.3.4"))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@1.2.3.4]" 'localname) ""))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@1.2.3.4]" 'hop) nil))
+
+	  ;; Expand `tramp-default-method', `tramp-default-user' and
+	  ;; `tramp-default-host'.
+	  (should (string-equal
+		   (file-remote-p "/[-/]")
+		   (format
+		    "/[%s/%s@%s]"
+		    "default-method" "default-user" "default-host")))
+	  (should (string-equal
+		   (file-remote-p "/[-/]" 'method) "default-method"))
+	  (should (string-equal (file-remote-p "/[-/]" 'user) "default-user"))
+	  (should (string-equal (file-remote-p "/[-/]" 'host) "default-host"))
+	  (should (string-equal (file-remote-p "/[-/]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[-/]" 'hop) nil))
+
+	  ;; Expand `tramp-default-method' and `tramp-default-user'.
+	  (let ((tramp-default-host "::1"))
+	    (should (string-equal
+		     (file-remote-p "/[-/]")
+		     (format
+		      "/[%s/%s@%s]"
+		      "default-method" "default-user" "::1")))
+	    (should (string-equal
+		     (file-remote-p "/[-/]" 'method) "default-method"))
+	    (should (string-equal (file-remote-p "/[-/]" 'user) "default-user"))
+	    (should (string-equal (file-remote-p "/[-/]" 'host) "::1"))
+	    (should (string-equal (file-remote-p "/[-/]" 'localname) ""))
+	    (should (string-equal (file-remote-p "/[-/]" 'hop) nil)))
+
+	  ;; Expand `tramp-default-method' and `tramp-default-user'.
+	  (should (string-equal
+		   (file-remote-p "/[-/::1]")
+		   (format
+		    "/[%s/%s@%s]" "default-method" "default-user" "::1")))
+	  (should (string-equal
+		   (file-remote-p "/[-/::1]" 'method) "default-method"))
+	  (should (string-equal
+		   (file-remote-p "/[-/::1]" 'user) "default-user"))
+	  (should (string-equal (file-remote-p "/[-/::1]" 'host) "::1"))
+	  (should (string-equal (file-remote-p "/[-/::1]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[-/::1]" 'hop) nil))
+
+	  ;; Expand `tramp-default-method'.
+	  (should (string-equal
+		   (file-remote-p "/[-/user@::1]")
+		   (format "/[%s/%s@%s]" "default-method" "user" "::1")))
+	  (should (string-equal
+		   (file-remote-p "/[-/user@::1]" 'method) "default-method"))
+	  (should (string-equal (file-remote-p "/[-/user@::1]" 'user) "user"))
+	  (should (string-equal (file-remote-p "/[-/user@::1]" 'host) "::1"))
+	  (should (string-equal (file-remote-p "/[-/user@::1]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[-/user@::1]" 'hop) nil))
+
+	  ;; Expand `tramp-default-user'.
+	  (should (string-equal
+		   (file-remote-p "/[method/::1]")
+		   (format "/[%s/%s@%s]" "method" "default-user" "::1")))
+	  (should (string-equal
+		   (file-remote-p "/[method/::1]" 'method) "method"))
+	  (should (string-equal
+		   (file-remote-p "/[method/::1]" 'user) "default-user"))
+	  (should (string-equal (file-remote-p "/[method/::1]" 'host) "::1"))
+	  (should (string-equal (file-remote-p "/[method/::1]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[method/::1]" 'hop) nil))
+
+	  ;; No expansion.
+	  (should (string-equal
+		   (file-remote-p "/[method/user@::1]")
+		   (format "/[%s/%s@%s]" "method" "user" "::1")))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@::1]" 'method) "method"))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@::1]" 'user) "user"))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@::1]" 'host) "::1"))
+	  (should (string-equal
+		   (file-remote-p "/[method/user@::1]" 'localname) ""))
+	  (should (string-equal (file-remote-p "/[method/user@::1]" 'hop) nil))
+
+	  ;; Local file name part.
+	  (should (string-equal (file-remote-p "/[-/host]/:" 'localname) "/:"))
+	  (should (string-equal (file-remote-p "/[method/]:" 'localname) ":"))
+	  (should (string-equal (file-remote-p "/[method/] " 'localname) " "))
+	  (should (string-equal
+		   (file-remote-p "/[method/]file" 'localname) "file"))
+	  (should (string-equal
+		   (file-remote-p "/[method/]/path/to/file" 'localname)
+		   "/path/to/file"))
+
+	  ;; Multihop.
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     "/[method1/user1@host1|method2/user2@host2]/path/to/file")
+	    (format "/[%s/%s@%s|%s/%s@%s]"
+		    "method1" "user1" "host1" "method2" "user2" "host2")))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     "/[method1/user1@host1|method2/user2@host2]/path/to/file" 'method)
+	    "method2"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     "/[method1/user1@host1|method2/user2@host2]/path/to/file" 'user)
+	    "user2"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     "/[method1/user1@host1|method2/user2@host2]/path/to/file" 'host)
+	    "host2"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     "/[method1/user1@host1|method2/user2@host2]/path/to/file"
+	     'localname)
+	    "/path/to/file"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     "/[method1/user1@host1|method2/user2@host2]/path/to/file" 'hop)
+	    (format "%s/%s@%s|"
+		    "method1" "user1" "host1")))
+
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/[method1/user1@host1"
+	      "|method2/user2@host2"
+	      "|method3/user3@host3]/path/to/file"))
+	    (format "/[%s/%s@%s|%s/%s@%s|%s/%s@%s]"
+		    "method1" "user1" "host1"
+		    "method2" "user2" "host2"
+		    "method3" "user3" "host3")))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/[method1/user1@host1"
+	      "|method2/user2@host2"
+	      "|method3/user3@host3]/path/to/file")
+	     'method)
+	    "method3"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/[method1/user1@host1"
+	      "|method2/user2@host2"
+	      "|method3/user3@host3]/path/to/file")
+	     'user)
+	    "user3"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/[method1/user1@host1"
+	      "|method2/user2@host2"
+	      "|method3/user3@host3]/path/to/file")
+	     'host)
+	    "host3"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/[method1/user1@host1"
+	      "|method2/user2@host2"
+	      "|method3/user3@host3]/path/to/file")
+	     'localname)
+	    "/path/to/file"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/[method1/user1@host1"
+	      "|method2/user2@host2"
+	      "|method3/user3@host3]/path/to/file")
+	     'hop)
+	    (format "%s/%s@%s|%s/%s@%s|"
+		    "method1" "user1" "host1" "method2" "user2" "host2"))))
+
+      ;; Exit.
+      (tramp-change-syntax syntax))))
 
 (ert-deftest tramp-test03-file-name-defaults ()
   "Check default values for some methods."
