@@ -319,34 +319,41 @@ comment at the start of cc-engine.el for more info."
 	    (goto-char here)
 	    nil))))))
 
-(defun c-end-of-macro ()
+(defun c-end-of-macro (&optional lim)
   "Go to the end of a preprocessor directive.
 More accurately, move the point to the end of the closest following
 line that doesn't end with a line continuation backslash - no check is
 done that the point is inside a cpp directive to begin with.
 
+If LIM is provided, it is a limit position at which point is left
+if the end of the macro doesn't occur earlier.
+
 Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
-   (if (and (cdr c-macro-cache)
-	    (<= (point) (cdr c-macro-cache))
-	    (>= (point) (car c-macro-cache)))
-       (goto-char (cdr c-macro-cache))
-     (unless (and (car c-macro-cache)
-		  (<= (point) c-macro-cache-start-pos)
-		  (>= (point) (car c-macro-cache)))
-       (setq c-macro-cache nil
-	     c-macro-cache-start-pos nil
-	     c-macro-cache-syntactic nil
-	     c-macro-cache-no-comment nil))
-     (while (progn
-	      (end-of-line)
-	      (when (and (eq (char-before) ?\\)
-			 (not (eobp)))
-		(forward-char)
-		t)))
-     (when (car c-macro-cache)
-       (setcdr c-macro-cache (point))
-       (setq c-macro-cache-syntactic nil))))
+  (save-restriction
+    (if lim (narrow-to-region (point-min) lim))
+    (if (and (cdr c-macro-cache)
+	     (<= (point) (cdr c-macro-cache))
+	     (>= (point) (car c-macro-cache)))
+	(goto-char (cdr c-macro-cache))
+      (unless (and (car c-macro-cache)
+		   (<= (point) c-macro-cache-start-pos)
+		   (>= (point) (car c-macro-cache)))
+	(setq c-macro-cache nil
+	      c-macro-cache-start-pos nil
+	      c-macro-cache-syntactic nil
+	      c-macro-cache-no-comment nil))
+      (while (progn
+	       (end-of-line)
+	       (when (and (eq (char-before) ?\\)
+			  (not (eobp)))
+		 (forward-char)
+		 t)))
+      (when (and (car c-macro-cache)
+		 (bolp)
+		 (not (eq (char-before (1- (point))) ?\\)))
+	(setcdr c-macro-cache (point))
+	(setq c-macro-cache-syntactic nil)))))
 
 (defun c-syntactic-end-of-macro ()
   ;; Go to the end of a CPP directive, or a "safe" pos just before.
@@ -1842,13 +1849,10 @@ comment at the start of cc-engine.el for more info."
   (let (;; `rung-pos' is set to a position as early as possible in the
 	;; unmarked part of the simple ws region.
 	(rung-pos (point)) next-rung-pos rung-end-pos last-put-in-sws-pos
-	rung-is-marked next-rung-is-marked simple-ws-end
+	rung-is-marked next-rung-is-marked simple-ws-end macro-start macro-end
 	;; `safe-start' is set when it's safe to cache the start position.
-	;; It's not set if we've initially skipped over comments and line
-	;; continuations since we might have gone out through the end of a
-	;; macro then.  This provision makes `c-forward-sws' not populate the
-	;; cache in the majority of cases, but otoh is `c-backward-sws' by far
-	;; more common.
+	;; This is the case except when we have an unterminated block comment
+	;; within a macro.
 	safe-start)
 
     ;; Skip simple ws and do a quick check on the following character to see
@@ -1925,7 +1929,33 @@ comment at the start of cc-engine.el for more info."
 
 	    ;; Now move over any comments (x)or a CPP construct.
 	    (setq simple-ws-end (point))
-	    (c-forward-comments)
+	    (setq safe-start t)
+	    ;; Take elaborate precautions to detect an open block comment at
+	    ;; the end of a macro.  If we find one, we set `safe-start' to nil
+	    ;; and break off any further scanning of comments.
+	    (let ((com-begin (point)) com-end in-macro)
+	      (when (and (c-forward-single-comment)
+			 (setq com-end (point))
+			 (save-excursion
+			   (goto-char com-begin)
+			   (c-beginning-of-macro)))
+		(setq in-macro t)
+		(goto-char com-begin)
+		(if (progn (c-end-of-macro com-end)
+			   (< (point) com-end))
+		    (setq safe-start nil)))
+	      (if in-macro
+		  (while (and safe-start
+			      com-end (> com-end com-begin)
+			      (setq com-begin (point))
+			      (when (and (c-forward-single-comment)
+					 (setq com-end (point)))
+				(goto-char com-begin)
+				(if (progn (c-end-of-macro com-end)
+					   (< (point) com-end))
+				    (setq safe-start nil))
+				safe-start)))
+		(c-forward-comments)))
 
 	    (cond
 	     ((/= (point) simple-ws-end)
@@ -1936,6 +1966,7 @@ comment at the start of cc-engine.el for more info."
 	     ((save-excursion
 		(and c-opt-cpp-prefix
 		     (looking-at c-opt-cpp-start)
+		     (setq macro-start (point))
 		     (progn (skip-chars-backward " \t")
 			    (bolp))
 		     (or (bobp)
@@ -1946,8 +1977,20 @@ comment at the start of cc-engine.el for more info."
 	      (while (and (eq (char-before) ?\\)
 			  (= (forward-line 1) 0))
 		(end-of-line))
+	      (setq macro-end (point))
+	      ;; Check for an open block comment at the end of the macro.
+	      (goto-char macro-start)
+	      (let (s in-block-comment)
+		(while
+		    (progn
+		      (setq s (parse-partial-sexp (point) macro-end
+						  nil nil s 'syntax-table))
+		      (< (point) macro-end))
+		  (setq in-block-comment
+			(and (elt s 4)	     ; in a comment
+			     (null (elt s 7))))) ; a block comment
+		(if in-block-comment (setq safe-start nil)))
 	      (forward-line 1)
-	      (setq safe-start t)
 	      ;; Don't cache at eob in case the buffer is narrowed.
 	      (not (eobp)))
 
@@ -1955,7 +1998,6 @@ comment at the start of cc-engine.el for more info."
 		   (looking-at c-noise-macro-name-re))
 	      ;; Skip over a noise macro.
 	      (goto-char (match-end 1))
-	      (setq safe-start t)
 	      (not (eobp)))))
 
 	;; We've searched over a piece of non-white syntactic ws.  See if this
@@ -2018,8 +2060,7 @@ comment at the start of cc-engine.el for more info."
 	  (if (setq rung-is-marked next-rung-is-marked)
 	      (setq rung-pos (1- (c-next-single-property-change
 				  rung-is-marked 'c-is-sws nil rung-end-pos)))
-	    (setq rung-pos next-rung-pos))
-	  (setq safe-start t)))
+	    (setq rung-pos next-rung-pos))))
 
       ;; Make sure that the newly marked `c-in-sws' region doesn't connect to
       ;; another one after the point (which might occur when editing inside a
