@@ -826,7 +826,7 @@ if we don't understand a construct, we signal
      prefix)))
 
 (defun vc-hg--slurp-hgignore-1 (hgignore prefix)
-  (let ((default-syntax 'vc-hg--hgignore-add-glob))
+  (let ((default-syntax 'vc-hg--hgignore-add-pcre))
     (with-temp-buffer
       (let ((attr (file-attributes hgignore)))
         (when attr (insert-file-contents hgignore))
