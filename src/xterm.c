@@ -12923,8 +12923,8 @@ transition between the various maximization states.  */);
 
   DEFVAR_BOOL ("x-gtk-use-window-move", x_gtk_use_window_move,
     doc: /* Non-nil means rely on gtk_window_move to set frame positions.
-If this variable is t, the GTK build uses the function gtk_window_move
-to set or store frame positions and disables some time consuming frame
-position adjustments.  */);
-  x_gtk_use_window_move = false;
+If this variable is t (the default), the GTK build uses the function
+gtk_window_move to set or store frame positions and disables some time
+consuming frame position adjustments.  */);
+  x_gtk_use_window_move = true;
 }
