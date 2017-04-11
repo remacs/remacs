@@ -193,15 +193,22 @@ and use only third parties that you think you can trust!
 can have in their packages by @dfn{signing} them.  They generate a
 private/public pair of cryptographic keys, and use the private key to
 create a @dfn{signature file} for each package.  With the public key, you
-can use the signature files to verify who created the package, and
-that it has not been modified.  A valid signature is not a cast-iron
+can use the signature files to verify the package creator and make sure
+the package has not been tampered with.  Signature verification uses
+@uref{https://www.gnupg.org/, the GnuPG package} via the EasyPG
+interface (@pxref{Top,, EasyPG, epa, Emacs EasyPG Assistant Manual}).
+A valid signature is not a cast-iron
 guarantee that a package is not malicious, so you should still
 exercise caution.  Package archives should provide instructions
 on how you can obtain their public key.  One way is to download the
 key from a server such as @url{http://pgp.mit.edu/}.
 Use @kbd{M-x package-import-keyring} to import the key into Emacs.
-Emacs stores package keys in the @file{gnupg} subdirectory
-of @code{package-user-dir}.
+Emacs stores package keys in the directory specified by the variable
+@code{package-gnupghome-dir}, by default in the @file{gnupg}
+subdirectory of @code{package-user-dir}, which causes Emacs to invoke
+GnuPG with the option @samp{--homedir} when verifying signatures.
+If @code{package-gnupghome-dir} is @code{nil}, GnuPG's option
+@samp{--homedir} is omitted.
 The public key for the GNU package archive is distributed with Emacs,
 in the @file{etc/package-keyring.gpg}.  Emacs uses it automatically.
 

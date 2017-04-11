@@ -644,6 +644,13 @@ In 'visual-line-mode' it will look for the true beginning of a header
 while in non-'visual-line-mode' it will move the point to the indented
 header's value.
 
+** Package
+
++++
+*** The new variable 'package-gnupghome-dir' has been added to control
+where the GnuPG home directory (used for signature verification) is
+located and whether GnuPG's option "--homedir" is used or not.
+
 ** Tramp
 
 +++

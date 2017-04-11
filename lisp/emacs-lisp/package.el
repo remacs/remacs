@@ -307,6 +307,23 @@ contrast, `package-user-dir' contains packages for personal use."
 (declare-function epg-find-configuration "epg-config"
                   (protocol &optional no-cache program-alist))
 
+(defcustom package-gnupghome-dir (expand-file-name "gnupg" package-user-dir)
+  "Directory containing GnuPG keyring or nil.
+This variable specifies the GnuPG home directory used by package.
+That directory is passed via the option \"--homedir\" to GnuPG.
+If nil, do not use the option \"--homedir\", but stick with GnuPG's
+default directory."
+  :type `(choice
+          (const
+           :tag "Default Emacs package management GnuPG home directory"
+           ,(expand-file-name "gnupg" package-user-dir))
+          (const
+           :tag "Default GnuPG directory (GnuPG option --homedir not used)"
+           nil)
+          (directory :tag "A specific GnuPG --homedir"))
+  :risky t
+  :version "26.1")
+
 (defcustom package-check-signature
   (if (and (require 'epg-config)
            (epg-find-configuration 'OpenPGP))
@@ -1209,9 +1226,9 @@ errors signaled by ERROR-FORM or by BODY).
   "Check signature CONTENT against STRING.
 SIG-FILE is the name of the signature file, used when signaling
 errors."
-  (let* ((context (epg-make-context 'OpenPGP))
-         (homedir (expand-file-name "gnupg" package-user-dir)))
-    (setf (epg-context-home-directory context) homedir)
+  (let ((context (epg-make-context 'OpenPGP)))
+    (when package-gnupghome-dir
+      (setf (epg-context-home-directory context) package-gnupghome-dir))
     (condition-case error
         (epg-verify-string context content string)
       (error (package--display-verify-error context sig-file)
@@ -1238,7 +1255,7 @@ errors."
   "Check signature of the current buffer.
 Download the signature file from LOCATION by appending \".sig\"
 to FILE.
-GnuPG keyring is located under \"gnupg\" in `package-user-dir'.
+GnuPG keyring location depends on `package-gnupghome-dir'.
 STRING is the string to verify, it defaults to `buffer-string'.
 If ASYNC is non-nil, the download of the signature file is
 done asynchronously.
@@ -1478,11 +1495,11 @@ taken care of by `package-initialize'."
   "Import keys from FILE."
   (interactive "fFile: ")
   (setq file (expand-file-name file))
-  (let ((context (epg-make-context 'OpenPGP))
-        (homedir (expand-file-name "gnupg" package-user-dir)))
-    (with-file-modes 448
-      (make-directory homedir t))
-    (setf (epg-context-home-directory context) homedir)
+  (let ((context (epg-make-context 'OpenPGP)))
+    (when package-gnupghome-dir
+      (with-file-modes 448
+        (make-directory package-gnupghome-dir t))
+      (setf (epg-context-home-directory context) package-gnupghome-dir))
     (message "Importing %s..." (file-name-nondirectory file))
     (epg-import-keys-from-file context file)
     (message "Importing %s...done" (file-name-nondirectory file))))
