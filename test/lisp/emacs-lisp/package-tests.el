@@ -117,6 +117,7 @@
           (process-environment (cons (format "HOME=%s" package-test-user-dir)
                                      process-environment))
           (package-user-dir package-test-user-dir)
+          (package-gnupghome-dir (expand-file-name "gnupg" package-user-dir))
           (package-archives `(("gnu" . ,(or ,location package-test-data-dir))))
           (default-directory package-test-file-dir)
           abbreviated-home-dir
