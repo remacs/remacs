@@ -8614,7 +8614,22 @@ handle_one_xevent (struct x_display_info *dpyinfo,
           if (FRAME_GTK_OUTER_WIDGET (f)
               && gtk_widget_get_mapped (FRAME_GTK_OUTER_WIDGET (f)))
 #endif
-	    x_real_positions (f, &f->left_pos, &f->top_pos);
+	    {
+	      int old_left = f->left_pos;
+	      int old_top = f->top_pos;
+	      Lisp_Object frame = Qnil;
+
+	      XSETFRAME (frame, f);
+
+	      x_real_positions (f, &f->left_pos, &f->top_pos);
+
+	      if (old_left != f->left_pos || old_top != f->top_pos)
+		{
+		  inev.ie.kind = MOVE_FRAME_EVENT;
+		  XSETFRAME (inev.ie.frame_or_window, f);
+		}
+	    }
+
 
 #ifdef HAVE_X_I18N
           if (FRAME_XIC (f) && (FRAME_XIC_STYLE (f) & XIMStatusArea))
@@ -10088,8 +10103,13 @@ x_set_offset (struct frame *f, register int xoff, register int yoff, int change_
       modified_top += FRAME_X_OUTPUT (f)->move_offset_top;
     }
 
+#ifdef USE_GTK
+  gtk_window_move (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
+		   modified_left, modified_top);
+#else
   XMoveWindow (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
-               modified_left, modified_top);
+	       modified_left, modified_top);
+#endif
 
   x_sync_with_move (f, f->left_pos, f->top_pos,
                     FRAME_DISPLAY_INFO (f)->wm_type == X_WMTYPE_UNKNOWN);

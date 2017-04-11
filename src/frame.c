@@ -1107,7 +1107,7 @@ affects all frames on the same terminal device.  */)
 Lisp_Object
 do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object norecord)
 {
-  struct frame *sf = SELECTED_FRAME ();
+  struct frame *sf = SELECTED_FRAME (), *f;
 
   /* If FRAME is a switch-frame event, extract the frame we should
      switch to.  */
@@ -1120,10 +1120,10 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
      a switch-frame event to arrive after a frame is no longer live,
      especially when deleting the initial frame during startup.  */
   CHECK_FRAME (frame);
-  if (! FRAME_LIVE_P (XFRAME (frame)))
+  f = XFRAME (frame);
+  if (!FRAME_LIVE_P (f))
     return Qnil;
-
-  if (sf == XFRAME (frame))
+  else if (f == sf)
     return frame;
 
   /* If a frame's focus has been redirected toward the currently
@@ -1156,11 +1156,11 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
 #else /* ! 0 */
   /* Instead, apply it only to the frame we're pointing to.  */
 #ifdef HAVE_WINDOW_SYSTEM
-  if (track && FRAME_WINDOW_P (XFRAME (frame)))
+  if (track && FRAME_WINDOW_P (f))
     {
       Lisp_Object focus, xfocus;
 
-      xfocus = x_get_focus_frame (XFRAME (frame));
+      xfocus = x_get_focus_frame (f);
       if (FRAMEP (xfocus))
 	{
 	  focus = FRAME_FOCUS_FRAME (XFRAME (xfocus));
@@ -1168,8 +1168,7 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
 	      /* Redirect frame focus also when FRAME has its minibuffer
 		 window on the selected frame (see Bug#24500).  */
 	      || (NILP (focus)
-		  && EQ (FRAME_MINIBUF_WINDOW (XFRAME (frame)),
-			 sf->selected_window)))
+		  && EQ (FRAME_MINIBUF_WINDOW (f), sf->selected_window)))
 	    Fredirect_frame_focus (xfocus, frame);
 	}
     }
@@ -1179,9 +1178,8 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
   if (!for_deletion && FRAME_HAS_MINIBUF_P (sf))
     resize_mini_window (XWINDOW (FRAME_MINIBUF_WINDOW (sf)), 1);
 
-  if (FRAME_TERMCAP_P (XFRAME (frame)) || FRAME_MSDOS_P (XFRAME (frame)))
+  if (FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f))
     {
-      struct frame *f = XFRAME (frame);
       struct tty_display_info *tty = FRAME_TTY (f);
       Lisp_Object top_frame = tty->top_frame;
 
@@ -1209,7 +1207,7 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
   if (! FRAME_MINIBUF_ONLY_P (XFRAME (selected_frame)))
     last_nonminibuf_frame = XFRAME (selected_frame);
 
-  Fselect_window (XFRAME (frame)->selected_window, norecord);
+  Fselect_window (f->selected_window, norecord);
 
   /* We want to make sure that the next event generates a frame-switch
      event to the appropriate frame.  This seems kludgy to me, but
@@ -1253,12 +1251,15 @@ If EVENT is frame object, handle it as if it were a switch-frame event
 to that frame.  */)
   (Lisp_Object event)
 {
+  Lisp_Object value;
+
   /* Preserve prefix arg that the command loop just cleared.  */
   kset_prefix_arg (current_kboard, Vcurrent_prefix_arg);
   run_hook (Qmouse_leave_buffer_hook);
   /* `switch-frame' implies a focus in.  */
+  value = do_switch_frame (event, 0, 0, Qnil);
   call1 (intern ("handle-focus-in"), event);
-  return do_switch_frame (event, 0, 0, Qnil);
+  return value;
 }
 
 DEFUN ("selected-frame", Fselected_frame, Sselected_frame, 0, 0, 0,
@@ -1709,8 +1710,6 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
      promise that the terminal of the frame must be valid until we
      have called the window-system-dependent frame destruction
      routine.  */
-
-
   {
     struct terminal *terminal;
     block_input ();
@@ -5121,12 +5120,18 @@ The pointer becomes visible again when the mouse is moved.  */);
   Vmake_pointer_invisible = Qt;
 
   DEFVAR_LISP ("focus-in-hook", Vfocus_in_hook,
-               doc: /* Normal hook run when a frame gains input focus.  */);
+               doc: /* Normal hook run when a frame gains input focus.
+The frame gaining focus is selected at the time this hook is run.  */);
   Vfocus_in_hook = Qnil;
 
   DEFVAR_LISP ("focus-out-hook", Vfocus_out_hook,
-               doc: /* Normal hook run when a frame loses input focus.  */);
+               doc: /* Normal hook run when all frames lost input focus.  */);
   Vfocus_out_hook = Qnil;
+
+  DEFVAR_LISP ("move-frame-functions", Vmove_frame_functions,
+               doc: /* Functions run after a frame was moved.
+The functions are run with one arg, the frame that moved.  */);
+  Vmove_frame_functions = Qnil;
 
   DEFVAR_LISP ("delete-frame-functions", Vdelete_frame_functions,
 	       doc: /* Functions run before deleting a frame.

@@ -144,6 +144,13 @@ Focus-out events occur when no frame has focus.
 This function runs the hook `focus-out-hook'."
   (interactive "e")
   (run-hooks 'focus-out-hook))
+
+(defun handle-move-frame (event)
+  "Handle a move-frame event.
+This function runs the abnormal hook `move-frame-functions'."
+  (interactive "e")
+  (let ((frame (posn-window (event-start event))))
+    (run-hook-with-args 'move-frame-functions frame)))
 
 ;;;; Arrangement of frames at startup
 
@@ -1483,6 +1490,29 @@ keys and their meanings."
 	   for frames = (cdr (assq 'frames attributes))
 	   if (memq frame frames) return attributes))
 
+(defun frame-size-changed-p (&optional frame)
+  "Return non-nil when the size of FRAME has changed.
+More precisely, return non-nil when the inner width or height of
+FRAME has changed since `window-size-change-functions' was run
+for FRAME."
+  (let* ((frame (window-normalize-frame frame))
+         (root (frame-root-window frame))
+         (mini (minibuffer-window frame))
+         (mini-height-before-size-change 0)
+         (mini-height 0))
+    ;; FRAME's minibuffer window counts iff it's on FRAME and FRAME is
+    ;; not a minibuffer-only frame.
+    (when (and (eq (window-frame mini) frame) (not (eq mini root)))
+      (setq mini-height-before-size-change
+            (window-pixel-height-before-size-change mini))
+      (setq mini-height (window-pixel-height mini)))
+    ;; Return non-nil when either the width of the root or the sum of
+    ;; the heights of root and minibuffer window changed.
+    (or (/= (window-pixel-width-before-size-change root)
+            (window-pixel-width root))
+        (/= (+ (window-pixel-height-before-size-change root)
+               mini-height-before-size-change)
+            (+ (window-pixel-height root) mini-height)))))
 
 ;;;; Frame/display capabilities.
 

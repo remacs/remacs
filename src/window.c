@@ -3314,6 +3314,9 @@ run_window_size_change_functions (Lisp_Object frame)
   Lisp_Object functions = Vwindow_size_change_functions;
 
   if (FRAME_WINDOW_CONFIGURATION_CHANGED (f)
+      /* Here we implicitly exclude the possibility that the height of
+	 FRAME and its minibuffer window both change leaving the height
+	 of FRAME's root window alone.  */
       || window_size_changed (r))
     {
       while (CONSP (functions))
@@ -3324,6 +3327,12 @@ run_window_size_change_functions (Lisp_Object frame)
 	}
 
       window_set_before_size_change_sizes (r);
+
+      if (FRAME_HAS_MINIBUF_P (f) && !FRAME_MINIBUF_ONLY_P (f))
+	/* Record size of FRAME's minibuffer window too.  */
+	window_set_before_size_change_sizes
+	  (XWINDOW (FRAME_MINIBUF_WINDOW (f)));
+
       FRAME_WINDOW_CONFIGURATION_CHANGED (f) = false;
     }
 }
