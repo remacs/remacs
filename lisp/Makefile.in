@@ -195,7 +195,8 @@ $(lisp)/loaddefs.el: $(LOADDEFS)
 # autoloads only runs when loaddefs.el is nonexistent, although it
 # generates a number of different files. Provide a force option to enable
 # regeneration of all these files.
-autoloads-force .PHONY:
+.PHONY: autoloads-force
+autoloads-force:
 	rm loaddefs.el
 	$(MAKE) autoloads
 
