@@ -286,7 +286,11 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 	     ;; fns.c
 	     (use-dialog-box menu boolean "21.1")
 	     (use-file-dialog menu boolean "22.1")
-	     (focus-follows-mouse frames boolean "20.3")
+	     (focus-follows-mouse
+              frames (choice
+                      (const :tag "Off (nil)" :value nil)
+                      (const :tag "On (t)" :value t)
+                      (const :tag "Auto-raise" :value auto-raise)) "26.1")
 	     ;; fontset.c
 	     ;; FIXME nil is the initial value, fontset.el setqs it.
 	     (vertical-centering-font-regexp display

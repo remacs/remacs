@@ -246,6 +246,7 @@ extern void x_set_internal_border_width (struct frame *f,
 					 Lisp_Object value,
 					 Lisp_Object oldval);
 extern void initialize_frame_menubar (struct frame *);
+extern void w32_dialog_in_progress (Lisp_Object in_progress);
 
 /* w32inevt.c */
 extern int w32_kbd_patch_key (KEY_EVENT_RECORD *event, int cpId);

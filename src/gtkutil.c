@@ -1200,7 +1200,14 @@ xg_create_frame_widgets (struct frame *f)
   else if (! NILP (f->name))
     title = SSDATA (ENCODE_UTF_8 (f->name));
 
-  if (title) gtk_window_set_title (GTK_WINDOW (wtop), title);
+  if (title)
+    gtk_window_set_title (GTK_WINDOW (wtop), title);
+
+  if (FRAME_UNDECORATED (f))
+    {
+      gtk_window_set_decorated (GTK_WINDOW (wtop), FALSE);
+      store_frame_param (f, Qundecorated, Qt);
+    }
 
   FRAME_GTK_OUTER_WIDGET (f) = wtop;
   FRAME_GTK_WIDGET (f) = wfixed;
@@ -1274,6 +1281,14 @@ xg_create_frame_widgets (struct frame *f)
   gtk_widget_set_can_focus (wfixed, TRUE);
   gtk_window_set_resizable (GTK_WINDOW (wtop), TRUE);
 #endif
+
+  if (FRAME_OVERRIDE_REDIRECT (f))
+    {
+      GdkWindow *gwin = gtk_widget_get_window (wtop);
+
+      if (gwin)
+	gdk_window_set_override_redirect (gwin, TRUE);
+    }
 
 #ifdef USE_GTK_TOOLTIP
   /* Steal a tool tip window we can move ourselves.  */
@@ -1356,7 +1371,9 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
   /* Don't set size hints during initialization; that apparently leads
      to a race condition.  See the thread at
      http://lists.gnu.org/archive/html/emacs-devel/2008-10/msg00033.html  */
-  if (NILP (Vafter_init_time) || !FRAME_GTK_OUTER_WIDGET (f))
+  if (NILP (Vafter_init_time)
+      || !FRAME_GTK_OUTER_WIDGET (f)
+      || FRAME_PARENT_FRAME (f))
     return;
 
   XSETFRAME (frame, f);
@@ -1489,6 +1506,100 @@ xg_set_background_color (struct frame *f, unsigned long bg)
     }
 }
 
+/* Change the frame's decoration (title bar + resize borders).  This
+   might not work with all window managers.  */
+void
+xg_set_undecorated (struct frame *f, Lisp_Object undecorated)
+{
+  if (FRAME_GTK_WIDGET (f))
+    {
+      block_input ();
+      gtk_window_set_decorated (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
+				NILP (undecorated) ? TRUE : FALSE);
+      unblock_input ();
+    }
+}
+
+
+/* Restack F1 below F2, above if ABOVE_FLAG is true.  This might not
+   work with all window managers.  */
+void
+xg_frame_restack (struct frame *f1, struct frame *f2, bool above_flag)
+{
+  block_input ();
+  if (FRAME_GTK_OUTER_WIDGET (f1) && FRAME_GTK_OUTER_WIDGET (f2))
+    {
+      GdkWindow *gwin1 = gtk_widget_get_window (FRAME_GTK_OUTER_WIDGET (f1));
+      GdkWindow *gwin2 = gtk_widget_get_window (FRAME_GTK_OUTER_WIDGET (f2));
+      Lisp_Object frame1, frame2;
+
+      XSETFRAME (frame1, f1);
+      XSETFRAME (frame2, f2);
+
+      gdk_window_restack (gwin1, gwin2, above_flag);
+      x_sync (f1);
+    }
+  unblock_input ();
+}
+
+
+/* Don't show frame in taskbar, don't ALT-TAB to it.  */
+void
+xg_set_skip_taskbar (struct frame *f, Lisp_Object skip_taskbar)
+{
+  block_input ();
+  if (FRAME_GTK_WIDGET (f))
+    gdk_window_set_skip_taskbar_hint
+      (gtk_widget_get_window (FRAME_GTK_OUTER_WIDGET (f)),
+       NILP (skip_taskbar) ? FALSE : TRUE);
+  unblock_input ();
+}
+
+
+/* Don't give frame focus.  */
+void
+xg_set_no_focus_on_map (struct frame *f, Lisp_Object no_focus_on_map)
+{
+  block_input ();
+  if (FRAME_GTK_WIDGET (f))
+    {
+      GtkWindow *gwin = GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f));
+      gboolean gno_focus_on_map = NILP (no_focus_on_map) ? TRUE : FALSE;
+
+      gtk_window_set_focus_on_map (gwin, gno_focus_on_map);
+    }
+  unblock_input ();
+}
+
+
+void
+xg_set_no_accept_focus (struct frame *f, Lisp_Object no_accept_focus)
+{
+  block_input ();
+  if (FRAME_GTK_WIDGET (f))
+    {
+      GtkWindow *gwin = GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f));
+      gboolean gno_accept_focus = NILP (no_accept_focus) ? TRUE : FALSE;
+
+      gtk_window_set_accept_focus (gwin, gno_accept_focus);
+    }
+  unblock_input ();
+}
+
+void
+xg_set_override_redirect (struct frame *f, Lisp_Object override_redirect)
+{
+  block_input ();
+
+  if (FRAME_GTK_OUTER_WIDGET (f))
+    {
+      GdkWindow *gwin = gtk_widget_get_window (FRAME_GTK_OUTER_WIDGET (f));
+
+      gdk_window_set_override_redirect (gwin, NILP (override_redirect) ? FALSE : TRUE);
+    }
+
+  unblock_input ();
+}
 
 /* Set the frame icon to ICON_PIXMAP/MASK.  This must be done with GTK
    functions so GTK does not overwrite the icon.  */
@@ -3769,6 +3880,7 @@ xg_update_scrollbar_pos (struct frame *f,
       GtkWidget *wparent = gtk_widget_get_parent (wscroll);
       gint msl;
       int scale = xg_get_gdk_scale ();
+      bool hidden;
 
       top /= scale;
       left /= scale;
@@ -3793,6 +3905,7 @@ xg_update_scrollbar_pos (struct frame *f,
              the height is less than the min size.  */
           gtk_widget_hide (wparent);
           gtk_widget_hide (wscroll);
+	  hidden = true;
         }
       else
         {
@@ -3806,6 +3919,15 @@ xg_update_scrollbar_pos (struct frame *f,
 	  oldx -= (scale - 1) * oldw;
           x_clear_area (f, oldx, oldy, oldw, oldh);
         }
+
+      if (!hidden)
+	{
+	  GtkWidget *scrollbar = xg_get_widget_from_map (scrollbar_id);
+	  GtkWidget *webox = gtk_widget_get_parent (scrollbar);
+
+	  /* Don't obscure any child frames.  */
+	  XLowerWindow (FRAME_X_DISPLAY (f), GTK_WIDGET_TO_X_WIN (webox));
+	}
 
       /* GTK does not redraw until the main loop is entered again, but
          if there are no X events pending we will not enter it.  So we sync
@@ -3871,6 +3993,15 @@ xg_update_horizontal_scrollbar_pos (struct frame *f,
       /* GTK does not redraw until the main loop is entered again, but
          if there are no X events pending we will not enter it.  So we sync
          here to get some events.  */
+
+      {
+	GtkWidget *scrollbar =
+	  xg_get_widget_from_map (scrollbar_id);
+	GtkWidget *webox = gtk_widget_get_parent (scrollbar);
+
+	/* Don't obscure any child frames.  */
+	XLowerWindow (FRAME_X_DISPLAY (f), GTK_WIDGET_TO_X_WIN (webox));
+      }
 
       x_sync (f);
       SET_FRAME_GARBAGED (f);

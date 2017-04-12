@@ -45,6 +45,13 @@ enum fullscreen_type
 #endif
 };
 
+enum z_group
+{
+  z_group_none,
+  z_group_above,
+  z_group_below,
+  z_group_above_suspended,
+};
 #endif /* HAVE_WINDOW_SYSTEM */
 
 /* The structure representing a frame.  */
@@ -67,6 +74,11 @@ struct frame
   /* This is the frame title specified explicitly, if any.
      Usually it is nil.  */
   Lisp_Object title;
+
+#if defined (HAVE_WINDOW_SYSTEM) && !defined (HAVE_NS)
+  /* This frame's parent frame, if it has one.  */
+  Lisp_Object parent_frame;
+#endif /* HAVE_WINDOW_SYSTEM and not HAVE_NS */
 
   /* The frame which should receive keystrokes that occur in this
      frame, or nil if they should go to the frame itself.  This is
@@ -320,6 +332,30 @@ struct frame
   bool_bf horizontal_scroll_bars : 1;
 #endif /* HAVE_WINDOW_SYSTEM */
 
+#if defined (HAVE_WINDOW_SYSTEM) && !defined (HAVE_NS)
+  /* True if this is an undecorated frame.  */
+  bool_bf undecorated : 1;
+
+#ifndef HAVE_NTGUI
+  /* True if this is an override_redirect frame.  */
+  bool_bf override_redirect : 1;
+#endif
+
+  /* Nonzero if this frame's icon should not appear on its display's taskbar.  */
+  bool_bf skip_taskbar : 1;
+
+  /* Nonzero if this frame's window F's X window does not want to
+     receive input focus when it is mapped.  */
+  bool_bf no_focus_on_map : 1;
+
+  /* Nonzero if this frame's window does not want to receive input focus
+     via mouse clicks or by moving the mouse into it.  */
+  bool_bf no_accept_focus : 1;
+
+  /* The z-group this frame's window belongs to. */
+  ENUM_BF (z_group) z_group : 2;
+#endif /* HAVE_WINDOW_SYSTEM and not HAVE_NS */
+
   /* Whether new_height and new_width shall be interpreted
      in pixels.  */
   bool_bf new_pixelwise : 1;
@@ -534,6 +570,13 @@ fset_face_alist (struct frame *f, Lisp_Object val)
 {
   f->face_alist = val;
 }
+#if defined (HAVE_WINDOW_SYSTEM) && !defined (HAVE_NS)
+INLINE void
+fset_parent_frame (struct frame *f, Lisp_Object val)
+{
+  f->parent_frame = val;
+}
+#endif
 INLINE void
 fset_focus_frame (struct frame *f, Lisp_Object val)
 {
@@ -854,7 +897,6 @@ default_pixels_per_inch_y (void)
 #define FRAME_FOCUS_FRAME(f) f->focus_frame
 
 #ifdef HAVE_WINDOW_SYSTEM
-
 /* This frame slot says whether scroll bars are currently enabled for frame F,
    and which side they are on.  */
 #define FRAME_VERTICAL_SCROLL_BAR_TYPE(f) ((f)->vertical_scroll_bar_type)
@@ -864,16 +906,46 @@ default_pixels_per_inch_y (void)
   ((f)->vertical_scroll_bar_type == vertical_scroll_bar_left)
 #define FRAME_HAS_VERTICAL_SCROLL_BARS_ON_RIGHT(f) \
   ((f)->vertical_scroll_bar_type == vertical_scroll_bar_right)
-
 #else /* not HAVE_WINDOW_SYSTEM */
-
 /* If there is no window system, there are no scroll bars.  */
 #define FRAME_VERTICAL_SCROLL_BAR_TYPE(f) ((void) f, vertical_scroll_bar_none)
 #define FRAME_HAS_VERTICAL_SCROLL_BARS(f) ((void) f, 0)
 #define FRAME_HAS_VERTICAL_SCROLL_BARS_ON_LEFT(f) ((void) f, 0)
 #define FRAME_HAS_VERTICAL_SCROLL_BARS_ON_RIGHT(f) ((void) f, 0)
-
 #endif /* HAVE_WINDOW_SYSTEM */
+
+#if defined (HAVE_WINDOW_SYSTEM) && !defined (HAVE_NS)
+#define FRAME_UNDECORATED(f) ((f)->undecorated)
+#ifdef HAVE_NTGUI
+#define FRAME_OVERRIDE_REDIRECT(f) ((void) f, 0)
+#else
+#define FRAME_OVERRIDE_REDIRECT(f) ((f)->override_redirect)
+#endif
+#define FRAME_PARENT_FRAME(f)			\
+  (NILP ((f)->parent_frame)			\
+   ? NULL					\
+   : XFRAME ((f)->parent_frame))
+#define FRAME_SKIP_TASKBAR(f) ((f)->skip_taskbar)
+#define FRAME_NO_FOCUS_ON_MAP(f) ((f)->no_focus_on_map)
+#define FRAME_NO_ACCEPT_FOCUS(f) ((f)->no_accept_focus)
+#define FRAME_Z_GROUP(f) ((f)->z_group)
+#define FRAME_Z_GROUP_NONE(f) ((f)->z_group == z_group_none)
+#define FRAME_Z_GROUP_ABOVE(f) ((f)->z_group == z_group_above)
+#define FRAME_Z_GROUP_ABOVE_SUSPENDED(f)	\
+  ((f)->z_group == z_group_above_suspended)
+#define FRAME_Z_GROUP_BELOW(f) ((f)->z_group == z_group_below)
+#else /* not HAVE_WINDOW_SYSTEM or HAVE_NS */
+#define FRAME_UNDECORATED(f) ((void) f, 0)
+#define FRAME_OVERRIDE_REDIRECT(f) ((void) f, 0)
+#define FRAME_PARENT_FRAME(f) ((void) f, NULL)
+#define FRAME_SKIP_TASKBAR(f) ((void) f, 0)
+#define FRAME_NO_FOCUS_ON_MAP(f) ((void) f, 0)
+#define FRAME_NO_ACCEPT_FOCUS(f) ((void) f, 0)
+#define FRAME_Z_GROUP(f) ((void) f, z_group_none)
+#define FRAME_Z_GROUP_NONE(f) ((void) f, true)
+#define FRAME_Z_GROUP_ABOVE(f) ((void) f, false)
+#define FRAME_Z_GROUP_BELOW(f) ((void) f, false)
+#endif /* HAVE_WINDOW_SYSTEM and not HAVE_NS */
 
 /* Whether horizontal scroll bars are currently enabled for frame F.  */
 #if USE_HORIZONTAL_SCROLL_BARS
@@ -1041,7 +1113,8 @@ default_pixels_per_inch_y (void)
    loop will set FRAME_VAR, a Lisp_Object, to each frame in
    Vframe_list in succession and execute the statement.  LIST_VAR
    should be a Lisp_Object too; it is used to iterate through the
-   Vframe_list.
+   Vframe_list.  Note that this macro walks over child frames and
+   the tooltip frame as well.
 
    This macro is a holdover from a time when multiple frames weren't always
    supported.  An alternate definition of the macro would expand to
@@ -1221,7 +1294,7 @@ FRAME_INTERNAL_BORDER_WIDTH (struct frame *f)
   return frame_dimension (f->internal_border_width);
 }
 
-/* Pixel-size of window border lines */
+/* Pixel-size of window divider lines */
 INLINE int
 FRAME_RIGHT_DIVIDER_WIDTH (struct frame *f)
 {
@@ -1446,6 +1519,7 @@ extern void x_activate_menubar (struct frame *);
 extern void x_real_positions (struct frame *, int *, int *);
 extern void free_frame_menubar (struct frame *);
 extern void x_free_frame_resources (struct frame *);
+extern bool frame_ancestor_p (struct frame *af, struct frame *df);
 
 #if defined HAVE_X_WINDOWS
 extern void x_wm_set_icon_position (struct frame *, int, int);

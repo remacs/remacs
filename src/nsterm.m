@@ -6288,7 +6288,7 @@ not_in_argv (NSString *arg)
       if (WINDOWP (window)
           && !EQ (window, last_mouse_window)
           && !EQ (window, selected_window)
-          && (focus_follows_mouse
+          && (!NILP (focus_follows_mouse)
               || (EQ (XWINDOW (window)->frame,
                       XWINDOW (selected_window)->frame))))
         {

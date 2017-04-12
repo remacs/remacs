@@ -11767,6 +11767,7 @@ x_consider_frame_title (Lisp_Object frame)
 	      && FRAME_KBOARD (tf) == FRAME_KBOARD (f)
 	      && !FRAME_MINIBUF_ONLY_P (tf)
 	      && !EQ (other_frame, tip_frame)
+	      && !FRAME_PARENT_FRAME (tf)
 	      && (FRAME_VISIBLE_P (tf) || FRAME_ICONIFIED_P (tf)))
 	    break;
 	}
@@ -11883,6 +11884,7 @@ prepare_menu_bars (void)
 	    continue;
 
 	  if (!EQ (frame, tooltip_frame)
+	      && !FRAME_PARENT_FRAME (f)
 	      && (FRAME_ICONIFIED_P (f)
 		  || FRAME_VISIBLE_P (f) == 1
 		  /* Exclude TTY frames that are obscured because they
@@ -11929,6 +11931,10 @@ prepare_menu_bars (void)
 	    continue;
 
 	  run_window_size_change_functions (frame);
+
+	  if (FRAME_PARENT_FRAME (f))
+	    continue;
+
 	  menu_bar_hooks_run = update_menu_bar (f, false, menu_bar_hooks_run);
 #ifdef HAVE_WINDOW_SYSTEM
 	  update_tool_bar (f, false);

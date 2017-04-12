@@ -140,14 +140,26 @@ menubar_id_to_frame (LWLIB_ID id)
 void
 x_menu_set_in_use (bool in_use)
 {
+  Lisp_Object frames, frame;
+
   menu_items_inuse = in_use ? Qt : Qnil;
   popup_activated_flag = in_use;
 #ifdef USE_X_TOOLKIT
   if (popup_activated_flag)
     x_activate_timeout_atimer ();
 #endif
-}
 
+  /* Don't let frames in `above' z-group obscure popups.  */
+  FOR_EACH_FRAME (frames, frame)
+    {
+      struct frame *f = XFRAME (frame);
+
+      if (in_use && FRAME_Z_GROUP_ABOVE (f))
+	x_set_z_group (f, Qabove_suspended, Qabove);
+      else if (!in_use && FRAME_Z_GROUP_ABOVE_SUSPENDED (f))
+	x_set_z_group (f, Qabove, Qabove_suspended);
+    }
+}
 #endif
 
 /* Wait for an X event to arrive or for a timer to expire.  */

@@ -3095,7 +3095,8 @@ construct_mouse_wheel (struct input_event *result, W32Msg *msg, struct frame *f)
      coordinates, so cast to short to interpret them correctly.  */
   p.x = (short) LOWORD (msg->msg.lParam);
   p.y = (short) HIWORD (msg->msg.lParam);
-  ScreenToClient (msg->msg.hwnd, &p);
+  /* For the case that F's w32 window is not msg->msg.hwnd.  */
+  ScreenToClient (FRAME_W32_WINDOW (f), &p);
   XSETINT (result->x, p.x);
   XSETINT (result->y, p.y);
   XSETFRAME (result->frame_or_window, f);
@@ -3446,8 +3447,22 @@ w32_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 	/* If mouse was grabbed on a frame, give coords for that
 	   frame even if the mouse is now outside it.  Otherwise
 	   check for window under mouse on one of our frames.  */
-	f1 = (x_mouse_grabbed (dpyinfo) ? dpyinfo->last_mouse_frame
-	      : x_any_window_to_frame (dpyinfo, WindowFromPoint (pt)));
+	if (x_mouse_grabbed (dpyinfo))
+	  f1 = dpyinfo->last_mouse_frame;
+	else
+	  {
+	    HWND wfp = WindowFromPoint (pt);
+
+	    if (wfp && (f1 = x_any_window_to_frame (dpyinfo, wfp)))
+	      {
+		HWND cwfp = ChildWindowFromPoint (wfp, pt);
+		struct frame *f2;
+
+		/* If cwfp exists it should be one of our windows ...  */
+		if (cwfp && (f2 = x_any_window_to_frame (dpyinfo, cwfp)))
+		  f1 = f2;
+	      }
+	  }
 
 	/* If not, is it one of our scroll bars?  */
 	if (! f1)
@@ -3897,7 +3912,10 @@ w32_set_vertical_scroll_bar (struct window *w,
           /* Make sure scroll bar is "visible" before moving, to ensure the
              area of the parent window now exposed will be refreshed.  */
           my_show_window (f, hwnd, SW_HIDE);
-          MoveWindow (hwnd, left, top, width, max (height, 1), TRUE);
+/**           MoveWindow (hwnd, left, top, width, max (height, 1), TRUE); **/
+	  /* Try to not draw over child frames.  */
+	  SetWindowPos (hwnd, HWND_BOTTOM, left, top, width, max (height, 1),
+                        SWP_FRAMECHANGED);
 
 	  si.cbSize = sizeof (si);
 	  si.fMask = SIF_RANGE;
@@ -3995,7 +4013,10 @@ w32_set_horizontal_scroll_bar (struct window *w,
           /* Make sure scroll bar is "visible" before moving, to ensure the
              area of the parent window now exposed will be refreshed.  */
           my_show_window (f, hwnd, SW_HIDE);
-          MoveWindow (hwnd, left, top, width, max (height, 1), TRUE);
+/**           MoveWindow (hwnd, left, top, width, max (height, 1), TRUE); **/
+	  /* Try to not draw over child frames.  */
+	  SetWindowPos (hwnd, HWND_BOTTOM, left, top, max (width, 1), height,
+                        SWP_FRAMECHANGED);
 
 	  /* +++ SetScrollInfo +++ */
 	  si.cbSize = sizeof (si);
@@ -4649,7 +4670,7 @@ w32_read_socket (struct terminal *terminal,
 		     in that case expose_frame will do nothing, and if
 		     the various redisplay flags happen to be unset,
 		     we are left with a blank frame.  */
-		  if (!FRAME_GARBAGED_P (f))
+		  if (!FRAME_GARBAGED_P (f) || FRAME_PARENT_FRAME (f))
 		    {
 		      HDC hdc = get_frame_dc (f);
 
@@ -4835,8 +4856,15 @@ w32_read_socket (struct terminal *terminal,
 
 	  if (f)
 	    {
-	      /* Generate SELECT_WINDOW_EVENTs when needed.  */
-	      if (!NILP (Vmouse_autoselect_window))
+	      /* Maybe generate SELECT_WINDOW_EVENTs for
+		 `mouse-autoselect-window'.  */
+	      if (!NILP (Vmouse_autoselect_window)
+		  && (f == XFRAME (selected_frame)
+		      /* Switch to f from another frame iff
+			 focus_follows_mouse is set and f accepts
+			 focus.  */
+		      || (!NILP (focus_follows_mouse)
+			  && !FRAME_NO_ACCEPT_FOCUS (f))))
 		{
 		  static Lisp_Object last_mouse_window;
 		  Lisp_Object window = window_from_coordinates
@@ -4848,20 +4876,16 @@ w32_read_socket (struct terminal *terminal,
 		     only when it is active.  */
 		  if (WINDOWP (window)
 		      && !EQ (window, last_mouse_window)
-		      && !EQ (window, selected_window)
-		      /* For click-to-focus window managers
-			 create event iff we don't leave the
-			 selected frame.  */
-		      && (focus_follows_mouse
-			  || (EQ (XWINDOW (window)->frame,
-				  XWINDOW (selected_window)->frame))))
+		      && !EQ (window, selected_window))
 		    {
 		      inev.kind = SELECT_WINDOW_EVENT;
 		      inev.frame_or_window = window;
 		    }
+
 		  /* Remember the last window where we saw the mouse.  */
 		  last_mouse_window = window;
 		}
+
 	      if (!note_mouse_movement (f, &msg.msg))
 		help_echo_string = previous_help_echo_string;
 	    }
@@ -4927,7 +4951,10 @@ w32_read_socket (struct terminal *terminal,
 
                 if (tool_bar_p
 		    || (dpyinfo->w32_focus_frame
-			&& f != dpyinfo->w32_focus_frame))
+			&& f != dpyinfo->w32_focus_frame
+			/* This does not help when the click happens in
+			   a grand-parent frame.  */
+			&& !frame_ancestor_p (f, dpyinfo->w32_focus_frame)))
 		  inev.kind = NO_EVENT;
 	      }
 
@@ -4964,21 +4991,40 @@ w32_read_socket (struct terminal *terminal,
 
 	    if (f)
 	      {
-
 		if (!dpyinfo->w32_focus_frame
 		    || f == dpyinfo->w32_focus_frame)
+		  /* Emit an Emacs wheel-up/down event.  */
 		  {
-		    /* Emit an Emacs wheel-up/down event.  */
 		    construct_mouse_wheel (&inev, &msg, f);
+
+		    /* Ignore any mouse motion that happened before this
+		       event; any subsequent mouse-movement Emacs events
+		       should reflect only motion after the ButtonPress.  */
+		    f->mouse_moved = false;
+		    f->last_tool_bar_item = -1;
+		    dpyinfo->last_mouse_frame = f;
 		  }
-		/* Ignore any mouse motion that happened before this
-		   event; any subsequent mouse-movement Emacs events
-		   should reflect only motion after the
-		   ButtonPress.  */
-		f->mouse_moved = false;
-		f->last_tool_bar_item = -1;
+		else if (FRAME_NO_ACCEPT_FOCUS (f)
+			 && !x_mouse_grabbed (dpyinfo))
+		  {
+		    Lisp_Object frame1 = get_frame_param (f, Qmouse_wheel_frame);
+		    struct frame *f1 = FRAMEP (frame1) ? XFRAME (frame1) : NULL;
+
+		    if (f1 && FRAME_LIVE_P (f1) && FRAME_W32_P (f1))
+		      {
+			construct_mouse_wheel (&inev, &msg, f1);
+			f1->mouse_moved = false;
+			f1->last_tool_bar_item = -1;
+			dpyinfo->last_mouse_frame = f1;
+		      }
+		    else
+		      dpyinfo->last_mouse_frame = f;
+		  }
+		else
+		  dpyinfo->last_mouse_frame = f;
 	      }
-	    dpyinfo->last_mouse_frame = f;
+	    else
+	      dpyinfo->last_mouse_frame = f;
 	  }
 	  break;
 
@@ -5031,6 +5077,7 @@ w32_read_socket (struct terminal *terminal,
 		  w32fullscreen_hook (f);
 		}
 	    }
+
 	  check_visibility = 1;
 	  break;
 
@@ -5969,6 +6016,8 @@ x_calc_absolute_position (struct frame *f)
      are computed correctly (Bug#21173).  */
   int display_left = 0;
   int display_top = 0;
+  struct frame *p = FRAME_PARENT_FRAME (f);
+
   if (flags & (XNegative | YNegative))
     {
       Lisp_Object list;
@@ -5997,18 +6046,34 @@ x_calc_absolute_position (struct frame *f)
   /* Treat negative positions as relative to the rightmost bottommost
      position that fits on the screen.  */
   if (flags & XNegative)
-    f->left_pos = (x_display_pixel_width (FRAME_DISPLAY_INFO (f))
-                   + display_left
-		   - FRAME_PIXEL_WIDTH (f)
-		   + f->left_pos
-		   - (left_right_borders_width - 1));
+    {
+      if (p)
+	f->left_pos = (FRAME_PIXEL_WIDTH (p)
+		       - FRAME_PIXEL_WIDTH (f)
+		       + f->left_pos
+		       - (left_right_borders_width - 1));
+      else
+	f->left_pos = (x_display_pixel_width (FRAME_DISPLAY_INFO (f))
+		       + display_left
+		       - FRAME_PIXEL_WIDTH (f)
+		       + f->left_pos
+		       - (left_right_borders_width - 1));
+    }
 
   if (flags & YNegative)
-    f->top_pos = (x_display_pixel_height (FRAME_DISPLAY_INFO (f))
-                  + display_top
-		  - FRAME_PIXEL_HEIGHT (f)
-		  + f->top_pos
-		  - (top_bottom_borders_height - 1));
+    {
+      if (p)
+	f->top_pos = (FRAME_PIXEL_HEIGHT (p)
+		      - FRAME_PIXEL_HEIGHT (f)
+		      + f->top_pos
+		      - (top_bottom_borders_height - 1));
+      else
+	f->top_pos = (x_display_pixel_height (FRAME_DISPLAY_INFO (f))
+		      + display_top
+		      - FRAME_PIXEL_HEIGHT (f)
+		      + f->top_pos
+		      - (top_bottom_borders_height - 1));
+    }
 
   /* The left_pos and top_pos are now relative to the top and left
      screen edges, so the flags should correspond.  */
@@ -6046,11 +6111,16 @@ x_set_offset (struct frame *f, register int xoff, register int yoff,
   modified_left = f->left_pos;
   modified_top = f->top_pos;
 
-  my_set_window_pos (FRAME_W32_WINDOW (f),
-		     NULL,
-		     modified_left, modified_top,
-		     0, 0,
-		     SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+  if (!FRAME_PARENT_FRAME (f))
+    my_set_window_pos (FRAME_W32_WINDOW (f), NULL,
+		       modified_left, modified_top,
+		       0, 0,
+		       SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+  else
+    my_set_window_pos (FRAME_W32_WINDOW (f), HWND_TOP,
+		       modified_left, modified_top,
+		       0, 0,
+		       SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
   unblock_input ();
 }
 
@@ -6254,11 +6324,18 @@ x_set_window_size (struct frame *f, bool change_gravity,
 		Fcons (make_number (rect.right - rect.left),
 		       make_number (rect.bottom - rect.top))));
 
-      my_set_window_pos (FRAME_W32_WINDOW (f), NULL,
-			 0, 0,
-			 rect.right - rect.left,
-			 rect.bottom - rect.top,
-			 SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
+      if (!FRAME_PARENT_FRAME (f))
+	my_set_window_pos (FRAME_W32_WINDOW (f), NULL,
+			   0, 0,
+			   rect.right - rect.left,
+			   rect.bottom - rect.top,
+			   SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
+      else
+	my_set_window_pos (FRAME_W32_WINDOW (f), HWND_TOP,
+			   0, 0,
+			   rect.right - rect.left,
+			   rect.bottom - rect.top,
+			   SWP_NOMOVE | SWP_NOACTIVATE);
 
       change_frame_size (f,
 			 ((pixelwidth == 0)
@@ -6447,18 +6524,21 @@ x_make_frame_visible (struct frame *f)
       if (! FRAME_ICONIFIED_P (f)
 	  && ! f->output_data.w32->asked_for_visible)
 	{
-	  RECT workarea_rect;
-	  RECT window_rect;
+	  if (!FRAME_PARENT_FRAME (f))
+	    {
+	      RECT workarea_rect;
+	      RECT window_rect;
 
-	  /* Adjust vertical window position in order to avoid being
-	     covered by a taskbar placed at the bottom of the desktop. */
-	  SystemParametersInfo (SPI_GETWORKAREA, 0, &workarea_rect, 0);
-	  GetWindowRect (FRAME_W32_WINDOW (f), &window_rect);
-	  if (window_rect.bottom > workarea_rect.bottom
-	      && window_rect.top > workarea_rect.top)
-	    f->top_pos = max (window_rect.top
-			      - window_rect.bottom + workarea_rect.bottom,
-			      workarea_rect.top);
+	      /* Adjust vertical window position in order to avoid being
+		 covered by a taskbar placed at the bottom of the desktop. */
+	      SystemParametersInfo (SPI_GETWORKAREA, 0, &workarea_rect, 0);
+	      GetWindowRect (FRAME_W32_WINDOW (f), &window_rect);
+	      if (window_rect.bottom > workarea_rect.bottom
+		  && window_rect.top > workarea_rect.top)
+		f->top_pos = max (window_rect.top
+				  - window_rect.bottom + workarea_rect.bottom,
+				  workarea_rect.top);
+	    }
 
 	  x_set_offset (f, f->left_pos, f->top_pos, 0);
 	}
@@ -6473,7 +6553,11 @@ x_make_frame_visible (struct frame *f)
 	 set for minimized windows that are still visible, so use that to
 	 determine the appropriate flag to pass ShowWindow.  */
       my_show_window (f, FRAME_W32_WINDOW (f),
-                      FRAME_ICONIFIED_P (f) ? SW_RESTORE : SW_SHOWNORMAL);
+                      FRAME_ICONIFIED_P (f)
+		      ? SW_RESTORE
+		      : FRAME_NO_FOCUS_ON_MAP (f)
+		      ? SW_SHOWNOACTIVATE
+		      : SW_SHOWNORMAL);
     }
 
   /* Synchronize to ensure Emacs knows the frame is visible

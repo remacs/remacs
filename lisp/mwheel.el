@@ -190,14 +190,33 @@ This can be slightly disconcerting, but some people prefer it."
 This should be bound only to mouse buttons 4 and 5 on non-Windows
 systems."
   (interactive (list last-input-event))
-  (let* ((curwin (if mouse-wheel-follow-mouse
-                     (prog1
-                         (selected-window)
-                       (select-window (mwheel-event-window event)))))
-	 (buffer (window-buffer curwin))
-	 (opoint (with-current-buffer buffer
-		   (when (eq (car-safe transient-mark-mode) 'only)
-		     (point))))
+  (let* ((selected-window (selected-window))
+         (scroll-window
+          (or (catch 'found
+                (let* ((window (if mouse-wheel-follow-mouse
+                                   (mwheel-event-window event)
+                                 (selected-window)))
+                       (frame (when (window-live-p window)
+                                (frame-parameter
+                                 (window-frame window) 'mouse-wheel-frame))))
+                  (when (frame-live-p frame)
+                    (let* ((pos (mouse-absolute-pixel-position))
+                           (pos-x (car pos))
+                           (pos-y (cdr pos)))
+                      (walk-window-tree
+                       (lambda (window-1)
+                         (let ((edges (window-edges window-1 nil t t)))
+                           (when (and (<= (nth 0 edges) pos-x)
+                                      (<= pos-x (nth 2 edges))
+                                      (<= (nth 1 edges) pos-y)
+                                      (<= pos-y (nth 3 edges)))
+                             (throw 'found window-1))))
+                       frame nil t)))))
+              (mwheel-event-window event)))
+	 (old-point
+          (and (eq scroll-window selected-window)
+	       (eq (car-safe transient-mark-mode) 'only)
+	       (window-point)))
          (mods
 	  (delq 'click (delq 'double (delq 'triple (event-modifiers event)))))
          (amt (assoc mods mouse-wheel-scroll-amount)))
@@ -232,18 +251,18 @@ systems."
                    ;; Make sure we do indeed scroll to the end of the buffer.
                    (end-of-buffer (while t (funcall mwheel-scroll-up-function)))))
 		(t (error "Bad binding in mwheel-scroll"))))
-      (if curwin (select-window curwin)))
-    ;; If there is a temporarily active region, deactivate it if
-    ;; scrolling moves point.
-    (when opoint
-      (with-current-buffer buffer
-	(when (/= opoint (point))
-	  ;; Call `deactivate-mark' at the original position, so that
-	  ;; the original region is saved to the X selection.
-	  (let ((newpoint (point)))
-	    (goto-char opoint)
-	    (deactivate-mark)
-	    (goto-char newpoint))))))
+      (if (eq scroll-window selected-window)
+	  ;; If there is a temporarily active region, deactivate it if
+	  ;; scrolling moved point.
+	  (when (and old-point (/= old-point (window-point)))
+	    ;; Call `deactivate-mark' at the original position, so that
+	    ;; the original region is saved to the X selection.
+	    (let ((new-point (window-point)))
+	      (goto-char old-point)
+	      (deactivate-mark)
+	      (goto-char new-point)))
+	(select-window selected-window t))))
+
   (when (and mouse-wheel-click-event mouse-wheel-inhibit-click-time)
     (if mwheel-inhibit-click-event-timer
 	(cancel-timer mwheel-inhibit-click-event-timer)

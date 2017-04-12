@@ -972,6 +972,13 @@ frame_parm_handler ns_frame_parm_handlers[] =
   0, /* x_set_sticky */
   0, /* x_set_tool_bar_position */
   0, /* x_set_inhibit_double_buffering */
+  0, /* x_set_undecorated */
+  0, /* x_set_parent_frame */
+  0, /* x_set_skip_taskbar */
+  0, /* x_set_no_focus_on_map */
+  0, /* x_set_no_accept_focus */
+  0, /* x_set_z_group */
+  0, /* x_set_override_redirect */
 };
 
 
@@ -1248,6 +1255,12 @@ This function is an internal primitive--use `make-frame' instead.  */)
   init_frame_faces (f);
 
   /* Read comment about this code in corresponding place in xfns.c.  */
+  tem = x_get_arg (dpyinfo, parms, Qmin_width, NULL, NULL, RES_TYPE_NUMBER);
+  if (NUMBERP (tem))
+    store_frame_param (f, Qmin_width, tem);
+  tem = x_get_arg (dpyinfo, parms, Qmin_height, NULL, NULL, RES_TYPE_NUMBER);
+  if (NUMBERP (tem))
+    store_frame_param (f, Qmin_height, tem);
   adjust_frame_size (f, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
 		     FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 5, 1,
 		     Qx_create_frame_1);
