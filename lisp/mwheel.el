@@ -187,8 +187,8 @@ This can be slightly disconcerting, but some people prefer it."
 
 (defun mwheel-scroll (event)
   "Scroll up or down according to the EVENT.
-This should be bound only to mouse buttons 4 and 5 on non-Windows
-systems."
+This should be bound only to mouse buttons 4, 5, 6, and 7 on
+non-Windows systems."
   (interactive (list last-input-event))
   (let* ((selected-window (selected-window))
          (scroll-window
@@ -250,6 +250,16 @@ systems."
                  (condition-case nil (funcall mwheel-scroll-up-function amt)
                    ;; Make sure we do indeed scroll to the end of the buffer.
                    (end-of-buffer (while t (funcall mwheel-scroll-up-function)))))
+                ((eq button mouse-wheel-left-event) ; for tilt scroll
+                 (when mwheel-tilt-scroll-p
+                   (funcall (if mwheel-flip-direction
+                                mwheel-scroll-right-function
+                              mwheel-scroll-left-function) amt)))
+                ((eq button mouse-wheel-right-event) ; for tilt scroll
+                 (when mwheel-tilt-scroll-p
+                   (funcall (if mwheel-flip-direction
+                                mwheel-scroll-left-function
+                              mwheel-scroll-right-function) amt)))
 		(t (error "Bad binding in mwheel-scroll"))))
       (if (eq scroll-window selected-window)
 	  ;; If there is a temporarily active region, deactivate it if
@@ -295,7 +305,7 @@ the mode if ARG is omitted or nil."
         (global-unset-key key))))
   ;; Setup bindings as needed.
   (when mouse-wheel-mode
-    (dolist (event (list mouse-wheel-down-event mouse-wheel-up-event))
+    (dolist (event (list mouse-wheel-down-event mouse-wheel-up-event mouse-wheel-right-event mouse-wheel-left-event))
       (dolist (key (mapcar (lambda (amt) `[(,@(if (consp amt) (car amt)) ,event)])
                            mouse-wheel-scroll-amount))
         (global-set-key key 'mwheel-scroll)
@@ -306,6 +316,45 @@ the mode if ARG is omitted or nil."
 (defun mwheel-install (&optional uninstall)
   "Enable mouse wheel support."
   (mouse-wheel-mode (if uninstall -1 1)))
+
+
+;;; For tilt-scroll
+;;;
+(defcustom mwheel-tilt-scroll-p nil
+  "Enable scroll using tilting mouse wheel."
+  :group 'mouse
+  :type 'boolean
+  :version "26.1")
+
+(defcustom mwheel-flip-direction nil
+  "Swap direction of 'wheel-right and 'wheel-left."
+  :group 'mouse
+  :type 'boolean
+  :version "26.1")
+
+(defcustom mwheel-scroll-left-function 'scroll-left
+  "Function that does the job of scrolling left."
+  :group 'mouse
+  :type 'function
+  :version "26.1")
+
+(defcustom mwheel-scroll-right-function 'scroll-right
+  "Function that does the job of scrolling right."
+  :group 'mouse
+  :type 'function
+  :version "26.1")
+
+(defvar mouse-wheel-left-event
+  (if (or (featurep 'w32-win) (featurep 'ns-win))
+      'wheel-left
+    (intern "mouse-6"))
+  "Event used for scrolling left.")
+
+(defvar mouse-wheel-right-event
+  (if (or (featurep 'w32-win) (featurep 'ns-win))
+      'wheel-right
+    (intern "mouse-7"))
+  "Event used for scrolling right.")
 
 (provide 'mwheel)
 
