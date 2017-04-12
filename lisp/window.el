@@ -8855,7 +8855,7 @@ is active.  This function is run by `mouse-autoselect-window-timer'."
         (raise-frame frame))
        (t
         ;; Just focus frame.
-        (x-focus-frame frame))))))
+        (x-focus-frame frame t))))))
 
 (defun truncated-partial-width-window-p (&optional window)
   "Return non-nil if lines in WINDOW are specifically truncated due to its width.

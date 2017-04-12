@@ -707,7 +707,7 @@ extern BOOL parse_button (int, int, int *, int *);
 
 extern void w32_sys_ring_bell (struct frame *f);
 extern void x_delete_display (struct w32_display_info *dpyinfo);
-
+extern void x_clear_under_internal_border (struct frame *f);
 extern void x_query_color (struct frame *, XColor *);
 
 #define FILE_NOTIFICATIONS_SIZE 16384

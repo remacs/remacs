@@ -1703,15 +1703,10 @@ x_set_internal_border_width (struct frame *f, Lisp_Object arg, Lisp_Object oldva
 	widget_store_internal_border (FRAME_X_OUTPUT (f)->edit_widget);
 #endif
 
-      if (FRAME_X_WINDOW (f) != 0)
+      if (FRAME_X_WINDOW (f))
 	{
 	  adjust_frame_size (f, -1, -1, 3, false, Qinternal_border_width);
-
-#ifdef USE_GTK
-	  xg_clear_under_internal_border (f);
-#else
 	  x_clear_under_internal_border (f);
-#endif
 	}
     }
 
@@ -4076,7 +4071,7 @@ x_get_focus_frame (struct frame *frame)
    following a user-command.  */
 
 void
-x_focus_frame (struct frame *f)
+x_focus_frame (struct frame *f, bool noactivate)
 {
   Display *dpy = FRAME_X_DISPLAY (f);
 
@@ -4094,7 +4089,8 @@ x_focus_frame (struct frame *f)
     {
       XSetInputFocus (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
 		      RevertToParent, CurrentTime);
-      x_ewmh_activate_frame (f);
+      if (!noactivate)
+	x_ewmh_activate_frame (f);
     }
 
   x_uncatch_errors ();

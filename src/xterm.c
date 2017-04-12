@@ -714,7 +714,7 @@ x_reset_clip_rectangles (struct frame *f, GC gc)
 #endif
 }
 
-static void
+void
 x_fill_rectangle (struct frame *f, GC gc, int x, int y, int width, int height)
 {
 #ifdef USE_CAIRO
@@ -1295,8 +1295,12 @@ XTbuffer_flipping_unblocked_hook (struct frame *f)
     show_back_buffer (f);
 }
 
-/* Clear under internal border if any (GTK has its own version). */
-#ifndef USE_GTK
+/**
+ * x_clear_under_internal_border:
+ *
+ * Clear area of frame F's internal border.  If the internal border face
+ * of F has been specified (is not null), fill the area with that face.
+ */
 void
 x_clear_under_internal_border (struct frame *f)
 {
@@ -1305,17 +1309,39 @@ x_clear_under_internal_border (struct frame *f)
       int border = FRAME_INTERNAL_BORDER_WIDTH (f);
       int width = FRAME_PIXEL_WIDTH (f);
       int height = FRAME_PIXEL_HEIGHT (f);
+#ifdef USE_GTK
+      int margin = 0;
+#else
       int margin = FRAME_TOP_MARGIN_HEIGHT (f);
+#endif
+      struct face *face = FACE_FROM_ID_OR_NULL (f, INTERNAL_BORDER_FACE_ID);
 
       block_input ();
-      x_clear_area (f, 0, 0, border, height);
-      x_clear_area (f, 0, margin, width, border);
-      x_clear_area (f, width - border, 0, border, height);
-      x_clear_area (f, 0, height - border, width, border);
+
+      if (face)
+	{
+	  unsigned long color = face->background;
+	  Display *display = FRAME_X_DISPLAY (f);
+	  GC gc = f->output_data.x->normal_gc;
+
+	  XSetForeground (display, gc, color);
+	  x_fill_rectangle (f, gc, 0, margin, width, border);
+	  x_fill_rectangle (f, gc, 0, 0, border, height);
+	  x_fill_rectangle (f, gc, width - border, 0, border, height);
+	  x_fill_rectangle (f, gc, 0, height - border, width, border);
+	  XSetForeground (display, gc, FRAME_FOREGROUND_PIXEL (f));
+	}
+      else
+	{
+	  x_clear_area (f, 0, 0, border, height);
+	  x_clear_area (f, 0, margin, width, border);
+	  x_clear_area (f, width - border, 0, border, height);
+	  x_clear_area (f, 0, height - border, width, border);
+	}
+
       unblock_input ();
     }
 }
-#endif
 
 /* Draw truncation mark bitmaps, continuation mark bitmaps, overlay
    arrow bitmaps, or clear the fringes if no bitmaps are required
@@ -1351,10 +1377,25 @@ x_after_update_window_line (struct window *w, struct glyph_row *desired_row)
 	    height > 0))
       {
 	int y = WINDOW_TO_FRAME_PIXEL_Y (w, max (0, desired_row->y));
+	struct face *face = FACE_FROM_ID_OR_NULL (f, INTERNAL_BORDER_FACE_ID);
 
 	block_input ();
-	x_clear_area (f, 0, y, width, height);
-	x_clear_area (f, FRAME_PIXEL_WIDTH (f) - width, y, width, height);
+	if (face)
+	  {
+	    unsigned long color = face->background;
+	    Display *display = FRAME_X_DISPLAY (f);
+
+	    XSetForeground (display, f->output_data.x->normal_gc, color);
+	    x_fill_rectangle (f, f->output_data.x->normal_gc,
+			      0, y, width, height);
+	    x_fill_rectangle (f, f->output_data.x->normal_gc,
+			      FRAME_PIXEL_WIDTH (f) - width, y, width, height);
+	  }
+	else
+	  {
+	    x_clear_area (f, 0, y, width, height);
+	    x_clear_area (f, FRAME_PIXEL_WIDTH (f) - width, y, width, height);
+	  }
 	unblock_input ();
       }
   }
@@ -3849,11 +3890,11 @@ x_clear_area (struct frame *f, int x, int y, int width, int height)
   cairo_fill (cr);
   x_end_cr_clip (f);
 #else
-    if (FRAME_X_DOUBLE_BUFFERED_P (f))
-      XFillRectangle (FRAME_X_DISPLAY (f),
-                      FRAME_X_DRAWABLE (f),
-                      f->output_data.x->reverse_gc,
-                      x, y, width, height);
+  if (FRAME_X_DOUBLE_BUFFERED_P (f))
+    XFillRectangle (FRAME_X_DISPLAY (f),
+		    FRAME_X_DRAWABLE (f),
+		    f->output_data.x->reverse_gc,
+		    x, y, width, height);
   else
     x_clear_area1 (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
                    x, y, width, height, False);
@@ -5307,20 +5348,22 @@ xt_horizontal_action_hook (Widget widget, XtPointer client_data, String action_n
       x_send_scroll_bar_event (window_being_scrolled,
 			       scroll_bar_end_scroll, 0, 0, true);
       w = XWINDOW (window_being_scrolled);
-      bar = XSCROLL_BAR (w->horizontal_scroll_bar);
-
-      if (bar->dragging != -1)
+      if (!NILP (w->horizontal_scroll_bar))
 	{
-	  bar->dragging = -1;
-	  /* The thumb size is incorrect while dragging: fix it.  */
-	  set_horizontal_scroll_bar (w);
-	}
-      window_being_scrolled = Qnil;
+	  bar = XSCROLL_BAR (w->horizontal_scroll_bar);
+	  if (bar->dragging != -1)
+	    {
+	      bar->dragging = -1;
+	      /* The thumb size is incorrect while dragging: fix it.  */
+	      set_horizontal_scroll_bar (w);
+	    }
+	  window_being_scrolled = Qnil;
 #if defined (USE_LUCID)
-      bar->last_seen_part = scroll_bar_nowhere;
+	  bar->last_seen_part = scroll_bar_nowhere;
 #endif
-      /* Xt timeouts no longer needed.  */
-      toolkit_scroll_bar_interaction = false;
+	  /* Xt timeouts no longer needed.  */
+	  toolkit_scroll_bar_interaction = false;
+	}
     }
 }
 #endif /* not USE_GTK */
@@ -7920,6 +7963,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
                 event->xexpose.x, event->xexpose.y,
                 event->xexpose.width, event->xexpose.height,
                 0);
+	      x_clear_under_internal_border (f);
 #endif
             }
 
@@ -7935,6 +7979,9 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 #endif
               expose_frame (f, event->xexpose.x, event->xexpose.y,
 			    event->xexpose.width, event->xexpose.height);
+#ifdef USE_GTK
+	      x_clear_under_internal_border (f);
+#endif
             }
 
           if (!FRAME_GARBAGED_P (f))
@@ -7983,7 +8030,10 @@ handle_one_xevent (struct x_display_info *dpyinfo,
                         event->xgraphicsexpose.y,
                         event->xgraphicsexpose.width,
                         event->xgraphicsexpose.height);
-          show_back_buffer (f);
+#ifdef USE_GTK
+	  x_clear_under_internal_border (f);
+#endif
+	  show_back_buffer (f);
         }
 #ifdef USE_X_TOOLKIT
       else

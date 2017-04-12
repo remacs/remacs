@@ -2629,6 +2629,13 @@ the same as `window-divider' face."
   :group 'window-divider
   :group 'basic-faces)
 
+(defface internal-border
+    '((t nil))
+  "Basic face for the internal border."
+  :version "26.1"
+  :group 'frames
+  :group 'basic-faces)
+
 (defface minibuffer-prompt
   '((((background dark)) :foreground "cyan")
     ;; Don't use blue because many users of the MS-DOS port customize

@@ -492,7 +492,7 @@ select_window (Lisp_Object window, Lisp_Object norecord,
        record_buffer before returning here.  */
     goto record_and_return;
 
-  if (NILP (norecord))
+  if (NILP (norecord) || EQ (norecord, Qmark_for_redisplay))
     { /* Mark the window for redisplay since the selected-window has
 	 a different mode-line.  */
       wset_redisplay (XWINDOW (selected_window));
@@ -571,7 +571,8 @@ Return WINDOW.
 
 Optional second arg NORECORD non-nil means do not put this buffer at the
 front of the buffer list and do not make this window the most recently
-selected one.
+selected one.  Also, do not mark WINDOW for redisplay unless NORECORD
+equals the special symbol `mark-for-redisplay'.
 
 Run `buffer-list-update-hook' unless NORECORD is non-nil.  Note that
 applications and internal routines often select a window temporarily for
@@ -7350,6 +7351,7 @@ syms_of_window (void)
   DEFSYM (Qclone_of, "clone-of");
   DEFSYM (Qfloor, "floor");
   DEFSYM (Qceiling, "ceiling");
+  DEFSYM (Qmark_for_redisplay, "mark-for-redisplay");
 
   staticpro (&Vwindow_list);
 

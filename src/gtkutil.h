@@ -150,7 +150,6 @@ extern void update_frame_tool_bar (struct frame *f);
 extern void free_frame_tool_bar (struct frame *f);
 extern void xg_change_toolbar_position (struct frame *f, Lisp_Object pos);
 
-extern void xg_clear_under_internal_border (struct frame *f);
 extern void xg_frame_resized (struct frame *f,
                               int pixelwidth,
                               int pixelheight);

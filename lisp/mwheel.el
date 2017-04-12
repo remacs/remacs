@@ -220,6 +220,9 @@ non-Windows systems."
          (mods
 	  (delq 'click (delq 'double (delq 'triple (event-modifiers event)))))
          (amt (assoc mods mouse-wheel-scroll-amount)))
+    (unless (eq scroll-window selected-window)
+      ;; Mark window to be scrolled for redisplay.
+      (select-window scroll-window 'mark-for-redisplay))
     ;; Extract the actual amount or find the element that has no modifiers.
     (if amt (setq amt (cdr amt))
       (let ((list-elt mouse-wheel-scroll-amount))

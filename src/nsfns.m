@@ -1391,7 +1391,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
 }
 
 void
-x_focus_frame (struct frame *f)
+x_focus_frame (struct frame *f, bool noactivate)
 {
   struct ns_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
 

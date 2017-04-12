@@ -1634,7 +1634,13 @@ x_set_icon_name (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 #endif
 }
 
-static void
+/**
+ * x_clear_under_internal_border:
+ *
+ * Clear area of frame F's internal border.  If the internal border face
+ * of F has been specified (is not null), fill the area with that face.
+ */
+void
 x_clear_under_internal_border (struct frame *f)
 {
   int border = FRAME_INTERNAL_BORDER_WIDTH (f);
@@ -1645,12 +1651,26 @@ x_clear_under_internal_border (struct frame *f)
       HDC hdc = get_frame_dc (f);
       int width = FRAME_PIXEL_WIDTH (f);
       int height = FRAME_PIXEL_HEIGHT (f);
+      struct face *face = FACE_FROM_ID_OR_NULL (f, INTERNAL_BORDER_FACE_ID);
 
       block_input ();
-      w32_clear_area (f, hdc, 0, FRAME_TOP_MARGIN_HEIGHT (f), width, border);
-      w32_clear_area (f, hdc, 0, 0, border, height);
-      w32_clear_area (f, hdc, width - border, 0, border, height);
-      w32_clear_area (f, hdc, 0, height - border, width, border);
+      if (face)
+	{
+	  /* Fill border with internal border face.  */
+	  unsigned long color = face->background;
+
+	  w32_fill_area (f, hdc, color, 0, FRAME_TOP_MARGIN_HEIGHT (f), width, border);
+	  w32_fill_area (f, hdc, color, 0, 0, border, height);
+	  w32_fill_area (f, hdc, color, width - border, 0, border, height);
+	  w32_fill_area (f, hdc, color, 0, height - border, width, border);
+	}
+      else
+	{
+	  w32_clear_area (f, hdc, 0, FRAME_TOP_MARGIN_HEIGHT (f), width, border);
+	  w32_clear_area (f, hdc, 0, 0, border, height);
+	  w32_clear_area (f, hdc, width - border, 0, border, height);
+	  w32_clear_area (f, hdc, 0, height - border, width, border);
+	}
       release_frame_dc (f, hdc);
       unblock_input ();
     }

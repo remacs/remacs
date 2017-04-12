@@ -782,9 +782,23 @@ x_after_update_window_line (struct window *w, struct glyph_row *desired_row)
       block_input ();
       {
 	HDC hdc = get_frame_dc (f);
-	w32_clear_area (f, hdc, 0, y, width, height);
-	w32_clear_area (f, hdc, FRAME_PIXEL_WIDTH (f) - width,
-			y, width, height);
+	struct face *face = FACE_FROM_ID_OR_NULL (f, INTERNAL_BORDER_FACE_ID);
+
+	if (face)
+	  {
+	    /* Fill border with internal border face.  */
+	    unsigned long color = face->background;
+
+	    w32_fill_area (f, hdc, color, 0, y, width, height);
+	    w32_fill_area (f, hdc, color, FRAME_PIXEL_WIDTH (f) - width,
+			   y, width, height);
+	  }
+	else
+	  {
+	    w32_clear_area (f, hdc, 0, y, width, height);
+	    w32_clear_area (f, hdc, FRAME_PIXEL_WIDTH (f) - width,
+			    y, width, height);
+	  }
 	release_frame_dc (f, hdc);
       }
       unblock_input ();
@@ -3908,6 +3922,7 @@ w32_set_vertical_scroll_bar (struct window *w,
 		 for them on the frame, we have to clear "under" them.  */
 	      w32_clear_area (f, hdc, left, top, width, height);
 	      release_frame_dc (f, hdc);
+	      x_clear_under_internal_border (f);
 	    }
           /* Make sure scroll bar is "visible" before moving, to ensure the
              area of the parent window now exposed will be refreshed.  */
@@ -4009,6 +4024,7 @@ w32_set_horizontal_scroll_bar (struct window *w,
 		 for them on the frame, we have to clear "under" them.  */
 	      w32_clear_area (f, hdc, clear_left, top, clear_width, height);
 	      release_frame_dc (f, hdc);
+	      x_clear_under_internal_border (f);
 	    }
           /* Make sure scroll bar is "visible" before moving, to ensure the
              area of the parent window now exposed will be refreshed.  */
@@ -4553,6 +4569,7 @@ x_scroll_bar_clear (struct frame *f)
         GetClientRect (window, &rect);
         select_palette (f, hdc);
         w32_clear_rect (f, hdc, &rect);
+	x_clear_under_internal_border (f);
         deselect_palette (f, hdc);
 
         ReleaseDC (window, hdc);
@@ -4682,6 +4699,7 @@ w32_read_socket (struct terminal *terminal,
 				msg.rect.top,
 				msg.rect.right - msg.rect.left,
 				msg.rect.bottom - msg.rect.top);
+		  x_clear_under_internal_border (f);
 		}
 	    }
 	  break;
@@ -5117,6 +5135,9 @@ w32_read_socket (struct terminal *terminal,
 	      f->async_visible = msg.msg.wParam;
 	    }
 #endif
+
+	  if (f = x_window_to_frame (dpyinfo, msg.msg.hwnd))
+	    x_clear_under_internal_border (f);
 
 	  check_visibility = 1;
 	  break;
@@ -6392,10 +6413,14 @@ frame_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_y)
 }
 
 
-/* focus shifting, raising and lowering.  */
+/* Focus shifting, raising and lowering.  */
+
+/* The NOACTIVATE argument has no effect on Windows.  According to the
+   Windows API: An application cannot activate an inactive window
+   without also bringing it to the top of the Z order.  */
 
 void
-x_focus_frame (struct frame *f)
+x_focus_frame (struct frame *f, bool noactivate)
 {
 #if 0
   struct w32_display_info *dpyinfo = &one_w32_display_info;

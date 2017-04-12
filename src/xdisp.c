@@ -11379,6 +11379,11 @@ clear_garbaged_frames (void)
 		redraw_frame (f);
 	      else
 		clear_current_matrices (f);
+
+#if defined (HAVE_WINDOW_SYSTEM) && !defined (HAVE_NS)
+	      x_clear_under_internal_border (f);
+#endif /* HAVE_WINDOW_SYSTEM && !HAVE_NS */
+
 	      fset_redisplay (f);
 	      f->garbaged = false;
 	      f->resized_p = false;
@@ -11441,7 +11446,14 @@ echo_area_display (bool update_frame_p)
 	     been called, so that mode lines above the echo area are
 	     garbaged.  This looks odd, so we prevent it here.  */
 	  if (!display_completed)
-	    n = redisplay_mode_lines (FRAME_ROOT_WINDOW (f), false);
+	    {
+	      n = redisplay_mode_lines (FRAME_ROOT_WINDOW (f), false);
+
+#if defined (HAVE_WINDOW_SYSTEM) && !defined (HAVE_NS)
+	      x_clear_under_internal_border (f);
+#endif /* HAVE_WINDOW_SYSTEM && !HAVE_NS */
+
+	    }
 
 	  if (window_height_changed_p
 	      /* Don't do this if Emacs is shutting down.  Redisplay
@@ -14150,6 +14162,10 @@ redisplay_internal (void)
                      top of redisplay should be good enough.  */
                   if (FRAME_GARBAGED_P (f))
                     goto retry;
+
+#if defined (HAVE_WINDOW_SYSTEM) && !defined (HAVE_NS)
+		  x_clear_under_internal_border (f);
+#endif /* HAVE_WINDOW_SYSTEM && !HAVE_NS */
 
 		  /* Prevent various kinds of signals during display
 		     update.  stdio is not robust about handling

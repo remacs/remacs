@@ -835,30 +835,6 @@ xg_set_geometry (struct frame *f)
     }
 }
 
-/* Clear under internal border if any.  As we use a mix of Gtk+ and X calls
-   and use a GtkFixed widget, this doesn't happen automatically.  */
-
-void
-xg_clear_under_internal_border (struct frame *f)
-{
-  if (FRAME_INTERNAL_BORDER_WIDTH (f) > 0)
-    {
-      x_clear_area (f, 0, 0,
-		    FRAME_PIXEL_WIDTH (f), FRAME_INTERNAL_BORDER_WIDTH (f));
-
-      x_clear_area (f, 0, 0,
-		    FRAME_INTERNAL_BORDER_WIDTH (f), FRAME_PIXEL_HEIGHT (f));
-
-      x_clear_area (f, 0,
-		    FRAME_PIXEL_HEIGHT (f) - FRAME_INTERNAL_BORDER_WIDTH (f),
-		    FRAME_PIXEL_WIDTH (f), FRAME_INTERNAL_BORDER_WIDTH (f));
-
-      x_clear_area (f,
-		    FRAME_PIXEL_WIDTH (f) - FRAME_INTERNAL_BORDER_WIDTH (f),
-		    0, FRAME_INTERNAL_BORDER_WIDTH (f), FRAME_PIXEL_HEIGHT (f));
-    }
-}
-
 static int
 xg_get_gdk_scale (void)
 {
@@ -905,7 +881,7 @@ xg_frame_resized (struct frame *f, int pixelwidth, int pixelheight)
       || pixelwidth != FRAME_PIXEL_WIDTH (f)
       || pixelheight != FRAME_PIXEL_HEIGHT (f))
     {
-      xg_clear_under_internal_border (f);
+      x_clear_under_internal_border (f);
       change_frame_size (f, width, height, 0, 1, 0, 1);
       SET_FRAME_GARBAGED (f);
       cancel_mouse_face (f);
@@ -933,7 +909,7 @@ xg_frame_set_char_size (struct frame *f, int width, int height)
 		       &gwidth, &gheight);
 
   /* Do this before resize, as we don't know yet if we will be resized.  */
-  xg_clear_under_internal_border (f);
+  x_clear_under_internal_border (f);
 
   if (FRAME_VISIBLE_P (f))
     {
@@ -4361,7 +4337,7 @@ xg_tool_bar_callback (GtkWidget *w, gpointer client_data)
 
   /* Return focus to the frame after we have clicked on a detached
      tool bar button. */
-  x_focus_frame (f);
+  x_focus_frame (f, false);
 }
 
 static GtkWidget *
