@@ -5147,6 +5147,21 @@ If ARG is zero, move to the beginning of the current line."
 		       (point-max)))
       (goto-char (next-overlay-change (point))))
     (end-of-line)))
+
+(defun kill-current-buffer ()
+  "Kill the current buffer.
+When called in the minibuffer, get out of the minibuffer
+using `abort-recursive-edit'.
+
+This is like `kill-this-buffer', but it doesn't have to be invoked
+via the menu bar, and pays no attention to the menu-bar's frame."
+  (interactive)
+  (let ((frame (selected-frame)))
+    (if (and (frame-live-p frame)
+             (not (window-minibuffer-p (frame-selected-window frame))))
+        (kill-buffer (current-buffer))
+      (abort-recursive-edit))))
+
 
 (defun insert-buffer (buffer)
   "Insert after point the contents of BUFFER.
@@ -7892,7 +7907,7 @@ With a prefix argument, set VARIABLE to VALUE buffer-locally."
     (define-key map [?\t] 'next-completion)
     (define-key map [backtab] 'previous-completion)
     (define-key map "q" 'quit-window)
-    (define-key map "z" 'kill-this-buffer)
+    (define-key map "z" 'kill-current-buffer)
     map)
   "Local map for completion list buffers.")
 

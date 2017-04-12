@@ -3484,7 +3484,7 @@ in `gdb-memory-format'."
 (defvar gdb-memory-mode-map
   (let ((map (make-sparse-keymap)))
     (suppress-keymap map t)
-    (define-key map "q" 'kill-this-buffer)
+    (define-key map "q" 'kill-current-buffer)
     (define-key map "n" 'gdb-memory-show-next-page)
     (define-key map "p" 'gdb-memory-show-previous-page)
     (define-key map "a" 'gdb-memory-set-address)
@@ -3838,7 +3838,7 @@ DOC is an optional documentation string."
   ;; TODO
   (let ((map (make-sparse-keymap)))
     (suppress-keymap map)
-    (define-key map "q" 'kill-this-buffer)
+    (define-key map "q" 'kill-current-buffer)
     map))
 
 (define-derived-mode gdb-disassembly-mode gdb-parent-mode "Disassembly"
@@ -4042,7 +4042,7 @@ member."
 (defvar gdb-frames-mode-map
   (let ((map (make-sparse-keymap)))
     (suppress-keymap map)
-    (define-key map "q" 'kill-this-buffer)
+    (define-key map "q" 'kill-current-buffer)
     (define-key map "\r" 'gdb-select-frame)
     (define-key map [mouse-2] 'gdb-select-frame)
     (define-key map [follow-link] 'mouse-face)
@@ -4168,7 +4168,7 @@ member."
 (defvar gdb-locals-mode-map
   (let ((map (make-sparse-keymap)))
     (suppress-keymap map)
-    (define-key map "q" 'kill-this-buffer)
+    (define-key map "q" 'kill-current-buffer)
     (define-key map "\t" (lambda ()
                            (interactive)
                            (gdb-set-window-buffer
@@ -4259,7 +4259,7 @@ member."
     (suppress-keymap map)
     (define-key map "\r" 'gdb-edit-register-value)
     (define-key map [mouse-2] 'gdb-edit-register-value)
-    (define-key map "q" 'kill-this-buffer)
+    (define-key map "q" 'kill-current-buffer)
     (define-key map "\t" (lambda ()
                            (interactive)
                            (gdb-set-window-buffer
