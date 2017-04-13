@@ -5128,7 +5128,7 @@ if test "${HAVE_W32}" = "yes"; then
     RUST_DEPS="$RUST_DEPS -lws2_32 -luserenv"
 fi
 
-LIB_REMACS="$RUST_DEPS -lremacs"
+LIB_REMACS="-lremacs $RUST_DEPS"
 
 LDFLAGS_REMACS="-L../$srcdir/rust_src/target/\${CARGO_BUILD_DIR}"
 
