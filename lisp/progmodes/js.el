@@ -1788,6 +1788,8 @@ This performs fontification according to `js--class-styles'."
     (and (looking-at js--indent-operator-re)
          (or (not (eq (char-after) ?:))
              (save-excursion
+               (js--backward-syntactic-ws)
+               (when (= (char-before) ?\)) (backward-list))
                (and (js--re-search-backward "[?:{]\\|\\_<case\\_>" nil t)
                     (eq (char-after) ??))))
          (not (and
