@@ -1198,7 +1198,7 @@ Command Line Arguments for Emacs Invocation
 * Font X::              Choosing a font for text, under X.
 * Colors X::            Choosing display colors.
 * Window Size X::       Start-up window size, under X.
-* Borders X::           Internal and external borders, under X.
+* Borders X::           Internal and outer borders, under X.
 * Title X::             Specifying the initial frame's title.
 * Icons X::             Choosing what sort of icon to use, under X.
 * Misc X::              Other display options.

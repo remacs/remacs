@@ -7190,20 +7190,22 @@ changing the value of the variable @code{x-gtk-use-system-tooltips} to
 @code{nil}.  The rest of this subsection describes how to control
 non-GTK+ tooltips, which are presented by Emacs itself.
 
-Since tooltips are special frames, they have their frame parameters
-(@pxref{Frame Parameters}).  Unlike other frames, the frame parameters
-for tooltips are stored in a special variable.
+@cindex tooltip frames
+Tooltips are displayed in special frames called tooltip frames, which
+have their own frame parameters (@pxref{Frame Parameters}).  Unlike
+other frames, the default parameters for tooltip frames are stored in a
+special variable.
 
 @defvar tooltip-frame-parameters
-This customizable option holds the frame parameters used for
-displaying tooltips.  Any font and color parameters are ignored, and
-the corresponding attributes of the @code{tooltip} face are used
-instead.  If @code{left} or @code{top} parameters are included, they
-are used as absolute frame-relative coordinates where the tooltip
-should be shown.  (Mouse-relative position of the tooltip can be
-customized using the variables described in @ref{Tooltips,,, emacs,
-The GNU Emacs Manual}.)  Note that the @code{left} and @code{top}
-parameters, if present, override the values of mouse-relative offsets.
+This customizable option holds the default frame parameters used for
+displaying tooltips.  Any font and color parameters are ignored, and the
+corresponding attributes of the @code{tooltip} face are used instead.
+If @code{left} or @code{top} parameters are included, they are used as
+absolute frame-relative coordinates where the tooltip should be shown.
+(Mouse-relative position of the tooltip can be customized using the
+variables described in @ref{Tooltips,,, emacs, The GNU Emacs Manual}.)
+Note that the @code{left} and @code{top} parameters, if present,
+override the values of mouse-relative offsets.
 @end defvar
 
 @vindex tooltip@r{ face}

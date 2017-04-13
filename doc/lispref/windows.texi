@@ -42,6 +42,7 @@ is displayed in windows.
 * Vertical Scrolling::      Moving the contents up and down on the window.
 * Horizontal Scrolling::    Moving the contents sideways on the window.
 * Coordinates and Windows:: Converting coordinates to windows.
+* Mouse Window Auto-selection:: Automatically selecting windows with the mouse.
 * Window Configurations::   Saving and restoring the state of the screen.
 * Window Parameters::       Associating additional information with windows.
 * Window Hooks::            Hooks for scrolling, window size changes,
@@ -763,7 +764,7 @@ changing the size of its frame.  Because live windows do not overlap,
 these functions are meaningful only on frames that contain two or more
 windows: resizing a window also changes the size of a neighboring
 window.  If there is just one window on a frame, its size cannot be
-changed except by resizing the frame (@pxref{Size and Position}).
+changed except by resizing the frame (@pxref{Frame Size}).
 
   Except where noted, these functions also accept internal windows as
 arguments.  Resizing an internal window causes its child windows to be
@@ -1016,7 +1017,7 @@ A window can get resized explicitly by using one of the functions from
 the preceding section or implicitly, for example, when resizing an
 adjacent window, when splitting or deleting a window (@pxref{Splitting
 Windows}, @pxref{Deleting Windows}) or when resizing the window's frame
-(@pxref{Size and Position}).
+(@pxref{Frame Size}).
 
   It is possible to avoid implicit resizing of a specific window when
 there are one or more other resizable windows on the same frame.  For
@@ -1716,22 +1717,46 @@ value of @code{window-point} (@pxref{Window Point}) in @var{window}.
 @var{window} must be a live window.  The return value is @var{window}.
 
 By default, this function also moves @var{window}'s buffer to the front
-of the buffer list (@pxref{Buffer List}), and makes @var{window} the
-most recently selected window.  However, if the optional argument
-@var{norecord} is non-@code{nil}, these additional actions are omitted.
+of the buffer list (@pxref{Buffer List}) and makes @var{window} the most
+recently selected window.  If the optional argument @var{norecord} is
+non-@code{nil}, these additional actions are omitted.
 
-This function runs @code{buffer-list-update-hook} (@pxref{Buffer List})
-unless @var{norecord} is non-@code{nil}.  Note that applications and
-internal routines often temporarily select a window in order to simplify
-coding.  As a rule, such selections (including those made by the macros
-@code{save-selected-window} and @code{with-selected-window} below) are
-not recorded thus avoiding to pollute @code{buffer-list-update-hook}.
-Selections that really count are those causing a visible change in
-the next redisplay of @var{window}'s frame and should be always
-recorded.  This also means that to run a function each time a window
-gets selected, putting it on @code{buffer-list-update-hook} should be
-the right choice.
+In addition, this function by default also tells the display engine to
+update the display of @var{window} when its frame gets redisplayed the
+next time.  If @var{norecord} is non-@code{nil}, such updates are
+usually not performed.  If, however, @var{norecord} equals the special
+symbol @code{mark-for-redisplay}, the additional actions mentioned above
+are omitted but @var{window} will be nevertheless updated.
 @end defun
+
+@cindex select window hook
+@cindex running a hook when a windows gets selected
+For historical reasons, Emacs does not run a separate hook whenever a
+window gets selected.  Applications and internal routines often
+temporarily select a window to perform a few actions on it.  They do
+that either to simplify coding---because many functions by default
+operate on the selected window when no @var{window} argument is
+specified---or because some functions did not (and still do not) take a
+window as argument and always operate(d) on the selected window instead.
+Running a hook every time a window gets selected for a short time and
+once more when the previously selected window gets restored is not
+useful.
+
+  However, when its @var{norecord} argument is @code{nil},
+@code{select-window} updates the buffer list and thus indirectly runs
+the normal hook @code{buffer-list-update-hook} (@pxref{Buffer List}).
+Consequently, that hook provides a reasonable way to run a function
+whenever a window gets selected more ``permanently''.
+
+  Since @code{buffer-list-update-hook} is also run by functions that are
+not related to window management, it will usually make sense to save the
+value of the selected window somewhere and compare it with the value of
+@code{selected-window} while running that hook.  Also, to avoid false
+positives when using @code{buffer-list-update-hook} it is good practice
+that every @code{select-window} call supposed to select a window only
+temporarily, passes a non-@code{nil} @var{norecord} argument.  If
+possible, the macro @code{with-selected-window} (see below) should be
+used in such cases.
 
 @cindex most recently selected windows
   The sequence of calls to @code{select-window} with a non-@code{nil}
@@ -1761,13 +1786,13 @@ the buffer list.
 
 @defmac with-selected-window window forms@dots{}
 This macro selects @var{window}, executes @var{forms} in sequence, then
-restores the previously selected window and current buffer.  The ordering
-of recently selected windows and the buffer list remain unchanged unless
-you deliberately change them within @var{forms}; for example, by calling
-@code{select-window} with argument @var{norecord} @code{nil}.
-
-This macro does not change the order of recently selected windows or
-the buffer list.
+restores the previously selected window and current buffer.  The
+ordering of recently selected windows and the buffer list remain
+unchanged unless you deliberately change them within @var{forms}; for
+example, by calling @code{select-window} with argument @var{norecord}
+@code{nil}.  Hence, this macro is the preferred way to temporarily work
+with @var{window} as the selected window without needlessly running
+@code{buffer-list-update-hook}.
 @end defmac
 
 @defun frame-selected-window &optional frame
@@ -4564,6 +4589,55 @@ point in the selected window, it's sufficient to write:
 @end group
 @end example
 @end defun
+
+
+@node Mouse Window Auto-selection
+@section Mouse Window Auto-selection
+@cindex window auto-selection
+@cindex auto-selection of window
+The following option allows to automatically select the window under the
+mouse pointer.  This accomplishes a policy similar to that of window
+managers that give focus to a frame (and thus trigger its subsequent
+selection) whenever the mouse pointer enters its window-system window
+(@pxref{Input Focus}).
+
+@defvar mouse-autoselect-window
+If this variable is non-@code{nil}, Emacs will try to automatically
+select the window under the mouse pointer.  The following values are
+meaningful:
+
+@table @asis
+@item A positive number
+This specifies a delay in seconds after which auto-selection triggers.
+The window under the mouse pointer is selected after the mouse has
+remained in it for the entire duration of the delay.
+
+@item A negative number
+A negative number has a similar effect as a positive number, but selects
+the window under the mouse pointer only after the mouse pointer has
+remained in it for the entire duration of the absolute value of that
+number and in addition has stopped moving.
+
+@item Other value
+Any other non-@code{nil} value means to select a window instantaneously
+as soon as the mouse pointer enters it.
+@end table
+
+In either case the mouse pointer must enter the text area of a window in
+order to trigger its selection.  Dragging the scroll bar slider or the
+mode line of a window conceptually should not cause its auto-selection.
+
+Mouse auto-selection selects the minibuffer window only if it is active,
+and never deselects the active minibuffer window.
+@end defvar
+
+Mouse auto-selection can be used to emulate a focus follows mouse policy
+for child frames (@pxref{Child Frames}) which usually are not tracked by
+the window manager.  This requires to set the value of
+@code{focus-follows-mouse} (@pxref{Input Focus}) to a non-@code{nil}
+value.  If the value of @code{focus-follows-mouse} is @code{auto-raise},
+entering a child frame with the mouse will raise it automatically above
+all other child frames of that frame's parent frame.
 
 
 @node Window Configurations
