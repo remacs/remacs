@@ -29,7 +29,7 @@ EMACSOPT = -batch --no-site-file --no-site-lisp
 CC=@CC@
 CFLAGS=@CFLAGS@ @REMACSLIB_CFLAGS@
 CPPFLAGS = @CPPFLAGS@
-LDFLAGS = @LDFLAGS@ @RUST_DEPS@
+LDFLAGS = @LDFLAGS@
 
 RUSTFLAGS=@RUSTFLAGS@
 CARGO_BUILD=@CARGO_BUILD@
@@ -183,7 +183,7 @@ SCRIPTS= rcs2log $(UPDATE_MANIFEST)
 EXE_FILES = ${INSTALLABLES} ${UTILITIES} ${DONT_INSTALL}
 
 # Rust files to be linked as part of the executables
-RUST_LIB = ../rust_src/remacs-lib/target/$(CARGO_BUILD_DIR)/libremacs_lib.a
+RUST_LIB = ../rust_src/remacs-lib/target/$(CARGO_BUILD_DIR)/libremacs_lib.a @RUST_DEPS@
 
 # Specify additional -D flags for movemail. Options:
 # -DMAIL_USE_FLOCK or -DMAIL_USE_LOCKF (use flock or lockf for file locking).
@@ -251,7 +251,7 @@ all: ${EXE_FILES} ${SCRIPTS}
 
 .PHONY: all need-blessmail maybe-blessmail
 
-LOADLIBES = ../lib/libgnu.a $(LIBS_SYSTEM) $(RUST_LIB)
+LOADLIBES = ../lib/libgnu.a $(LIBS_SYSTEM) $(RUST_LIB) 
 $(EXE_FILES): ../lib/libgnu.a $(RUST_LIB)
 
 ## Only used if we need blessmail, but no harm in always defining.

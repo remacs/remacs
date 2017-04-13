@@ -5121,7 +5121,7 @@ case "${opsys}" in
   darwin) RUST_DEPS="-ldl"
   	  REMACSLIB_CFLAGS="-pthread" ;;
   gnu*) RUST_DEPS="-ldl -lrt"
-        REMACSLIB_CFLAGS="-pthread -Wl,--no-as-needed" ;;
+        REMACSLIB_CFLAGS="-pthread" ;;
 esac
 
 if test "${HAVE_W32}" = "yes"; then
