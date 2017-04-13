@@ -123,7 +123,10 @@
      "table-column" "table-cell" "table-caption" "none"
      ;; CSS Flexible Box Layout Module Level 1
      ;; (https://www.w3.org/TR/css3-flexbox/#valdef-display-flex)
-     "flex" "inline-flex")
+     "flex" "inline-flex"
+     ;; CSS Grid Layout Module Level 1
+     ;; (https://www.w3.org/TR/css-grid-1/#grid-containers)
+     "grid" "inline-grid" "subgrid")
     ("elevation" angle "below" "level" "above" "higher" "lower")
     ("empty-cells" "show" "hide")
     ("float" "left" "right" "none")
@@ -271,6 +274,29 @@
     ;; (http://www.w3.org/TR/css3-color/#property)
     ("color" color)
     ("opacity" alphavalue)
+
+    ;; CSS Grid Layout Module Level 1
+    ;; (https://www.w3.org/TR/css-grid-1/#property-index)
+    ("grid" grid-template grid-template-rows "auto-flow" "dense"
+     grid-auto-columns grid-auto-rows grid-template-columns)
+    ("grid-area" grid-line)
+    ("grid-auto-columns" track-size)
+    ("grid-auto-flow" "row" "column" "dense")
+    ("grid-auto-rows" track-size)
+    ("grid-column" grid-line)
+    ("grid-column-end" grid-line)
+    ("grid-column-gap" length-percentage)
+    ("grid-column-start" grid-line)
+    ("grid-gap" grid-row-gap grid-column-gap)
+    ("grid-row" grid-line)
+    ("grid-row-end" grid-line)
+    ("grid-row-gap" length-percentage)
+    ("grid-row-start" grid-line)
+    ("grid-template" "none" grid-template-rows grid-template-columns
+     line-names string track-size line-names explicit-track-list)
+    ("grid-template-areas" "none" string)
+    ("grid-template-columns" "none" track-list auto-track-list)
+    ("grid-template-rows" "none" track-list auto-track-list)
 
     ;; CSS Flexible Box Layout Module Level 1
     ;; (http://www.w3.org/TR/css-flexbox-1/#property-index)
@@ -469,6 +495,8 @@ further value candidates, since that list would be infinite.")
     (angle "calc()")
     (animateable-feature "scroll-position" "contents" custom-ident)
     (attachment "scroll" "fixed" "local")
+    (auto-repeat "repeat()")
+    (auto-track-list line-names fixed-size fixed-repeat auto-repeat)
     (bg-image image "none")
     (bg-layer bg-image position repeat-style attachment box)
     (bg-size length percentage "auto" "cover" "contain")
@@ -484,6 +512,7 @@ further value candidates, since that list would be infinite.")
     (east-asian-variant-values
      "jis78" "jis83" "jis90" "jis04" "simplified" "traditional")
     (east-asian-width-values "full-width" "proportional-width")
+    (explicit-track-list line-names track-size)
     (family-name "Courier" "Helvetica" "Times")
     (feature-tag-value string integer "on" "off")
     (filter-function
@@ -493,6 +522,9 @@ further value candidates, since that list would be infinite.")
     (filter-function-list filter-function uri)
     (final-bg-layer
      bg-image position repeat-style attachment box color)
+    (fixed-breadth length-percentage)
+    (fixed-repeat "repeat()")
+    (fixed-size fixed-breadth "minmax()")
     (font-variant-css21 "normal" "small-caps")
     (frequency "calc()")
     (generic-family
@@ -501,13 +533,17 @@ further value candidates, since that list would be infinite.")
     (gradient
      linear-gradient radial-gradient repeating-linear-gradient
      repeating-radial-gradient)
+    (grid-line "auto" custom-ident integer "span")
     (historical-lig-values
      "historical-ligatures" "no-historical-ligatures")
     (image uri image-list element-reference gradient)
     (image-list "image()")
+    (inflexible-breadth length-percentage "min-content" "max-content"
+                        "auto")
     (integer "calc()")
     (length "calc()" number)
     (line-height "normal" number length percentage)
+    (line-names custom-ident)
     (line-style
      "none" "hidden" "dotted" "dashed" "solid" "double" "groove"
      "ridge" "inset" "outset")
@@ -576,6 +612,11 @@ further value candidates, since that list would be infinite.")
     (specific-voice identifier)
     (target-name string)
     (time "calc()")
+    (track-breadth length-percentage flex "min-content" "max-content"
+                   "auto")
+    (track-list line-names track-size track-repeat)
+    (track-repeat "repeat()")
+    (track-size track-breadth "minmax()" "fit-content()")
     (transform-list
      "matrix()" "translate()" "translateX()" "translateY()" "scale()"
      "scaleX()" "scaleY()" "rotate()" "skew()" "skewX()" "skewY()"
@@ -594,8 +635,8 @@ other entries in this list, not to properties.
 
 The following classes have been left out above because they
 cannot be completed sensibly: `custom-ident',
-`element-reference', `id', `identifier', `percentage', and
-`string'.")
+`element-reference', `flex', `id', `identifier',
+`length-percentage', `percentage', and `string'.")
 
 (defcustom css-electric-keys '(?\} ?\;) ;; '()
   "Self inserting keys which should trigger re-indentation."
