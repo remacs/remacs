@@ -507,12 +507,8 @@ $(srcdir)/macuvs.h $(lispsource)/international/charprop.el: \
 
 ## We require charprop.el to exist before ucs-normalize.el is
 ## byte-compiled, because ucs-normalize.el needs to load 2 uni-*.el files.
-$(lispsource)/international/ucs-normalize.elc: | \
-  $(lispsource)/international/charprop.el
-
-## ns-win.el loads ucs-normalize, so it also needs the above-mentioned
-## 2 uni-*.el files to exist.
-$(lispsource)/term/ns-win.elc: | \
+## And ns-win requires ucs-normalize.
+$(lispsource)/international/ucs-normalize.elc $(lispsource)/term/ns-win.elc: | \
   $(lispsource)/international/charprop.el
 
 lispintdir = ${lispsource}/international
