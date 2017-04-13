@@ -489,7 +489,7 @@ ifeq (${ns_self_contained},no)
 	-chmod 755 "$(DESTDIR)${bindir}/$(EMACSFULL)"
 ifndef NO_BIN_LINK
 	rm -f "$(DESTDIR)${bindir}/$(EMACS)"
-	cd "$(DESTDIR)${bindir}" && $(LN_S_FILEONLY) $(EMACSFULL) $(EMACS)
+	cd "$(DESTDIR)${bindir}" && $(LN_S_FILEONLY) "$(EMACSFULL)" "$(EMACS)"
 endif
 else
 	subdir=${ns_appresdir}/site-lisp && ${write_subdir}
@@ -772,10 +772,10 @@ uninstall: uninstall-$(NTDIR) uninstall-doc
 	   for page in *.1; do \
 	     rm -f "$(DESTDIR)${man1dir}"/`echo "$${page}" | sed -e 's/\.1$$//' -e '$(TRANSFORM)'`.1$$ext; done; \
 	 fi)
-	(cd "$(DESTDIR)${bindir}" && rm -f $(EMACSFULL) $(EMACS) || true)
+	rm -f "$(DESTDIR)${bindir}/$(EMACS)" "$(DESTDIR)${bindir}/$(EMACSFULL)"
 	(if cd "$(DESTDIR)${icondir}"; then \
-	   rm -f hicolor/*x*/apps/${EMACS_NAME}.png \
-	     hicolor/scalable/apps/${EMACS_NAME}.svg \
+	   rm -f hicolor/*x*/apps/"${EMACS_NAME}.png" \
+	     "hicolor/scalable/apps/${EMACS_NAME}.svg" \
 	     hicolor/scalable/mimetypes/`echo emacs-document | sed '$(TRANSFORM)'`.svg; \
 	fi)
 	-rm -f "$(DESTDIR)${desktopdir}/${EMACS_NAME}.desktop"
