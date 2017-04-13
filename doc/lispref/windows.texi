@@ -1752,9 +1752,9 @@ whenever a window gets selected more ``permanently''.
 not related to window management, it will usually make sense to save the
 value of the selected window somewhere and compare it with the value of
 @code{selected-window} while running that hook.  Also, to avoid false
-positives when using @code{buffer-list-update-hook} it is good practice
+positives when using @code{buffer-list-update-hook}, it is good practice
 that every @code{select-window} call supposed to select a window only
-temporarily, passes a non-@code{nil} @var{norecord} argument.  If
+temporarily passes a non-@code{nil} @var{norecord} argument.  If
 possible, the macro @code{with-selected-window} (see below) should be
 used in such cases.
 
@@ -4623,7 +4623,7 @@ Any other non-@code{nil} value means to select a window instantaneously
 as soon as the mouse pointer enters it.
 @end table
 
-In either case the mouse pointer must enter the text area of a window in
+In either case, the mouse pointer must enter the text area of a window in
 order to trigger its selection.  Dragging the scroll bar slider or the
 mode line of a window conceptually should not cause its auto-selection.
 

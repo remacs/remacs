@@ -1077,6 +1077,7 @@ frame's text area), in pixels.
 @itemx --border-width=@var{width}
 @opindex --border-width
 @cindex main border width, command-line argument
+@cindex outer border width, command-line argument
 Specify @var{width} as the width of the outer border, in pixels.
 @end table
 
