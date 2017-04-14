@@ -2480,7 +2480,7 @@ raise @var{frame} above other frames.
 
 On MS-Windows the @var{noactivate} argument has no effect.  However, if
 @var{frame} is a child frame (@pxref{Child Frames}), this function
-usualy does focus @var{frame} without raising it above other child
+usually focuses @var{frame} without raising it above other child
 frames.
 
 If there is no window system support, this function does nothing.
@@ -2835,7 +2835,7 @@ whose window-system window is a child of its display's root window.
 child and a parent frame.  Also, the relative roles of child and parent
 frame may be reversed at any time (though it's usually a good idea to
 keep the size of child frames sufficiently smaller than that of their
-parent).  An error will be signalled for the attempt to make a frame an
+parent).  An error will be signaled for the attempt to make a frame an
 ancestor of itself.
 
   A child frame is clipped at the native edges (@pxref{Frame Geometry})

@@ -1540,9 +1540,9 @@ xg_set_no_focus_on_map (struct frame *f, Lisp_Object no_focus_on_map)
   if (FRAME_GTK_WIDGET (f))
     {
       GtkWindow *gwin = GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f));
-      gboolean gno_focus_on_map = NILP (no_focus_on_map) ? TRUE : FALSE;
+      gboolean g_no_focus_on_map = NILP (no_focus_on_map) ? TRUE : FALSE;
 
-      gtk_window_set_focus_on_map (gwin, gno_focus_on_map);
+      gtk_window_set_focus_on_map (gwin, g_no_focus_on_map);
     }
   unblock_input ();
 }
@@ -1555,9 +1555,9 @@ xg_set_no_accept_focus (struct frame *f, Lisp_Object no_accept_focus)
   if (FRAME_GTK_WIDGET (f))
     {
       GtkWindow *gwin = GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f));
-      gboolean gno_accept_focus = NILP (no_accept_focus) ? TRUE : FALSE;
+      gboolean g_no_accept_focus = NILP (no_accept_focus) ? TRUE : FALSE;
 
-      gtk_window_set_accept_focus (gwin, gno_accept_focus);
+      gtk_window_set_accept_focus (gwin, g_no_accept_focus);
     }
   unblock_input ();
 }

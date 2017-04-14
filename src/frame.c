@@ -337,7 +337,7 @@ DEFUN ("frame-windows-min-size", Fframe_windows_min_size,
  * value to be returned.  In that latter case IGNORE is ignored.
  *
  * If `frame-windows-min-size' is called, it will make sure that the
- * return value accomodates all windows of FRAME respecting the values
+ * return value accommodates all windows of FRAME respecting the values
  * of `window-min-height' (`window-min-width' if HORIZONTAL is non-nil).
  * With IGNORE non-nil the values of these variables are ignored.
  *
@@ -2614,8 +2614,8 @@ store_frame_param (struct frame *f, Lisp_Object prop, Lisp_Object val)
 	}
     }
 
-  /* Check these parameters for circular dependeny.  This does not check
-     for interdependencies between these properties.  Hence you can
+  /* Check each parent-frame and delete-before parameter for a
+     circular dependency.  Do not check between parameters, so you can
      still create circular dependencies with different properties, for
      example a chain of frames F1->F2->...Fn such that F1 is an ancestor
      frame of Fn and thus cannot be deleted before Fn and a second chain

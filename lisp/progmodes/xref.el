@@ -932,7 +932,7 @@ IGNORES is a list of glob patterns."
       (erase-buffer)
       (call-process-shell-command command nil t)
       ;; FIXME: What to do when the call fails?
-      ;; "find: ‘zzgrep’: No such file or directory\n"
+      ;; "find: ‘foo’: No such file or directory\n"
       ;; The problem is, find-grep can exit with a nonzero code even
       ;; when there are some matches in the output.
       (goto-char (point-min))

@@ -799,9 +799,9 @@ x_set_undecorated (struct frame *f, Lisp_Object new_value, Lisp_Object old_value
       hints.decorations = NILP (new_value) ? MWM_DECOR_ALL : 0;
 
       block_input ();
-      /* For some reason the third and fourth argument in the following
-	 call must be identic: In the corresponding XGetWindowProperty
-	 call in getMotifHints, xfwm has the third and seventh arg both
+      /* For some reason the third and fourth arguments in the following
+	 call must be identical: In the corresponding XGetWindowProperty
+	 call in getMotifHints, xfwm has the third and seventh args both
 	 display_info->atoms[MOTIF_WM_HINTS].  Obviously, YMMV.   */
       XChangeProperty (dpy, FRAME_OUTER_WINDOW (f), prop, prop, 32,
 		       PropModeReplace, (unsigned char *) &hints,
@@ -3041,9 +3041,9 @@ x_window (struct frame *f, long window_prompting)
       hints.flags = MWM_HINTS_DECORATIONS;
       hints.decorations = 0;
 
-      /* For some reason the third and fourth argument in the following
-	 call must be identic: In the corresponding XGetWindowProperty
-	 call in getMotifHints, xfwm has the third and seventh arg both
+      /* For some reason the third and fourth arguments in the following
+	 call must be identical: In the corresponding XGetWindowProperty
+	 call in getMotifHints, xfwm has the third and seventh args both
 	 display_info->atoms[MOTIF_WM_HINTS].  Obviously, YMMV.   */
       XChangeProperty (dpy, FRAME_OUTER_WINDOW (f), prop, prop, 32,
 		       PropModeReplace, (unsigned char *) &hints,
@@ -3201,9 +3201,9 @@ x_window (struct frame *f)
       hints.flags = MWM_HINTS_DECORATIONS;
       hints.decorations = 0;
 
-      /* For some reason the third and fourth argument in the following
-	 call must be identic: In the corresponding XGetWindowProperty
-	 call in getMotifHints, xfwm has the third and seventh arg both
+      /* For some reason the third and fourth arguments in the following
+	 call must be identical: In the corresponding XGetWindowProperty
+	 call in getMotifHints, xfwm has the third and seventh args both
 	 display_info->atoms[MOTIF_WM_HINTS].  Obviously, YMMV.   */
       XChangeProperty (dpy, FRAME_OUTER_WINDOW (f), prop, prop, 32,
 		       PropModeReplace, (unsigned char *) &hints,
