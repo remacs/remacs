@@ -725,11 +725,7 @@ or to switch back to an existing one."
 ;; Used in old LispM code.
 (defalias 'common-lisp-mode 'lisp-mode)
 
-;; This will do unless inf-lisp.el is loaded.
-(defun lisp-eval-defun (&optional _and-go)
-  "Send the current defun to the Lisp process made by \\[run-lisp]."
-  (interactive)
-  (error "Process lisp does not exist"))
+(autoload 'lisp-eval-defun "inf-lisp" nil t)
 
 ;; May still be used by some external Lisp-mode variant.
 (define-obsolete-function-alias 'lisp-comment-indent
