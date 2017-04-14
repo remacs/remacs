@@ -1116,8 +1116,9 @@ Semantic mode.
 	;; Enable all the global auxiliary minor modes in
 	;; `semantic-submode-list'.
 	(dolist (mode semantic-submode-list)
-	  (if (memq mode semantic-default-submodes)
-	      (funcall mode 1)))
+	  (and (memq mode semantic-default-submodes)
+	       (fboundp mode)
+	       (funcall mode 1)))
 	(unless semantic-load-system-cache-loaded
 	  (setq semantic-load-system-cache-loaded t)
 	  (when (and (boundp 'semanticdb-default-system-save-directory)
@@ -1139,7 +1140,7 @@ Semantic mode.
 	(add-hook 'completion-at-point-functions
 		  'semantic-analyze-completion-at-point-function)
 
-	(if global-ede-mode
+	(if (bound-and-true-p global-ede-mode)
 	    (define-key cedet-menu-map [cedet-menu-separator] '("--")))
 	(dolist (b (buffer-list))
 	  (with-current-buffer b

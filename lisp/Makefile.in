@@ -179,6 +179,10 @@ $(lisp)/finder-inf.el:
 # Note that we set no-update-autoloads in _generated_ leim files.
 # If you want to allow autoloads in such files, remove that,
 # and make this depend on leim.
+# Actually this should depend on leim anyway, since no-update-autoloads
+# files are still recorded in loaddefs.  So we should ensure
+# that all input files are generated before we create loaddefs.
+# Otherwise making loaddefs again will change the output.
 #
 # Write to a temporary file in case we're doing a parallel build and a
 # CANNOT_DUMP-mode Emacs needs to read loaddefs at startup.
@@ -192,7 +196,7 @@ $(lisp)/finder-inf.el:
 # slow; starting from an almost-correct content will enable the "only
 # update where necessary" feature of batch-update-autoloads.
 autoloads .PHONY: $(lisp)/loaddefs.el
-$(lisp)/loaddefs.el: $(LOADDEFS)
+$(lisp)/loaddefs.el: gen-lisp $(LOADDEFS)
 	@echo Directories for loaddefs: ${SUBDIRS_ALMOST}
 	@if test -f $@ ; then cp $@ $(lisp)/loaddefs.tmp ; fi
 	$(AM_V_GEN)$(emacs) -l autoload \
@@ -319,7 +323,7 @@ compile-targets: $(TARGETS)
 
 # Compile all the Elisp files that need it.  Beware: it approximates
 # 'no-byte-compile', so watch out for false-positives!
-compile-main: leim semantic compile-clean
+compile-main: gen-lisp compile-clean
 	@(cd $(lisp) && \
 	els=`echo "${SUBDIRS_REL} " | sed -e 's|/\./|/|g' -e 's|/\. | |g' -e 's| |/*.el |g'`; \
 	for el in $$els; do \
@@ -343,7 +347,10 @@ compile-clean:
 	  fi \
 	done
 
-.PHONY: leim semantic
+.PHONY: gen-lisp leim semantic
+
+gen-lisp: leim semantic
+
 leim:
 	$(MAKE) -C ../leim all EMACS="$(EMACS)"
 
