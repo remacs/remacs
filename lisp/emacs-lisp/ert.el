@@ -1602,7 +1602,7 @@ Signals an error if no test name was read."
     (let ((sym (intern-soft input)))
       (if (ert-test-boundp sym)
           sym
-        (error "Input does not name a test")))))
+        (user-error "Input does not name a test")))))
 
 (defun ert-read-test-name-at-point (prompt)
   "Read the name of a test and return it as a symbol.
@@ -1628,7 +1628,7 @@ Nothing more than an interactive interface to `ert-make-test-unbound'."
   (interactive)
   (when (called-interactively-p 'any)
     (unless (y-or-n-p "Delete all tests? ")
-      (error "Aborted")))
+      (user-error "Aborted")))
   ;; We can't use `ert-select-tests' here since that gives us only
   ;; test objects, and going from them back to the test name symbols
   ;; can fail if the `ert-test' defstruct has been redefined.
@@ -2141,7 +2141,7 @@ To be used in the ERT results buffer."
 
 To be used in the ERT results buffer."
   (or (ert--results-test-node-or-null-at-point)
-      (error "No test at point")))
+      (user-error "No test at point")))
 
 (defun ert-results-next-test ()
   "Move point to the next test.
@@ -2191,7 +2191,7 @@ To be used in the ERT results buffer."
   (interactive)
   (let ((name (ert-test-at-point)))
     (unless name
-      (error "No test at point"))
+      (user-error "No test at point"))
     (ert-find-test-other-window name)))
 
 (defun ert--test-name-button-action (button)
@@ -2352,7 +2352,7 @@ To be used in the ERT results buffer."
   (cl-destructuring-bind (test redefinition-state)
       (ert--results-test-at-point-allow-redefinition)
     (when (null test)
-      (error "No test at point"))
+      (user-error "No test at point"))
     (let* ((stats ert--results-stats)
            (progress-message (format "Running %stest %S"
                                      (cl-ecase redefinition-state
@@ -2525,7 +2525,7 @@ To be used in the ERT results buffer."
   "Display the documentation for TEST-OR-TEST-NAME (a symbol or ert-test)."
   (interactive (list (ert-read-test-name-at-point "Describe test")))
   (when (< emacs-major-version 24)
-    (error "Requires Emacs 24"))
+    (user-error "Requires Emacs 24 or later"))
   (let (test-name
         test-definition)
     (cl-etypecase test-or-test-name
