@@ -476,7 +476,7 @@ check-declare:
 check-defun-dups:
 	sed -n -e '/^(defun /s/\(.\)(.*/\1/p' \
 	  $$(find . -name '*.el' -print | \
-	  grep -Ev '(loaddefs|ldefs-boot)\.el') | sort | uniq -d
+	  grep -Ev '(loaddefs|ldefs-boot)\.el|obsolete') | sort | uniq -d
 
 # Dependencies
 
