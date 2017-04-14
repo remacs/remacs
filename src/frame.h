@@ -75,10 +75,10 @@ struct frame
      Usually it is nil.  */
   Lisp_Object title;
 
-#if defined (HAVE_WINDOW_SYSTEM) && !defined (HAVE_NS)
+#if defined (HAVE_WINDOW_SYSTEM)
   /* This frame's parent frame, if it has one.  */
   Lisp_Object parent_frame;
-#endif /* HAVE_WINDOW_SYSTEM and not HAVE_NS */
+#endif /* HAVE_WINDOW_SYSTEM */
 
   /* The frame which should receive keystrokes that occur in this
      frame, or nil if they should go to the frame itself.  This is
@@ -332,7 +332,7 @@ struct frame
   bool_bf horizontal_scroll_bars : 1;
 #endif /* HAVE_WINDOW_SYSTEM */
 
-#if defined (HAVE_WINDOW_SYSTEM) && !defined (HAVE_NS)
+#if defined (HAVE_WINDOW_SYSTEM)
   /* True if this is an undecorated frame.  */
   bool_bf undecorated : 1;
 
@@ -570,7 +570,7 @@ fset_face_alist (struct frame *f, Lisp_Object val)
 {
   f->face_alist = val;
 }
-#if defined (HAVE_WINDOW_SYSTEM) && !defined (HAVE_NS)
+#if defined (HAVE_WINDOW_SYSTEM)
 INLINE void
 fset_parent_frame (struct frame *f, Lisp_Object val)
 {
@@ -914,7 +914,7 @@ default_pixels_per_inch_y (void)
 #define FRAME_HAS_VERTICAL_SCROLL_BARS_ON_RIGHT(f) ((void) f, 0)
 #endif /* HAVE_WINDOW_SYSTEM */
 
-#if defined (HAVE_WINDOW_SYSTEM) && !defined (HAVE_NS)
+#if defined (HAVE_WINDOW_SYSTEM)
 #define FRAME_UNDECORATED(f) ((f)->undecorated)
 #ifdef HAVE_NTGUI
 #define FRAME_OVERRIDE_REDIRECT(f) ((void) f, 0)
@@ -934,7 +934,7 @@ default_pixels_per_inch_y (void)
 #define FRAME_Z_GROUP_ABOVE_SUSPENDED(f)	\
   ((f)->z_group == z_group_above_suspended)
 #define FRAME_Z_GROUP_BELOW(f) ((f)->z_group == z_group_below)
-#else /* not HAVE_WINDOW_SYSTEM or HAVE_NS */
+#else /* not HAVE_WINDOW_SYSTEM */
 #define FRAME_UNDECORATED(f) ((void) f, 0)
 #define FRAME_OVERRIDE_REDIRECT(f) ((void) f, 0)
 #define FRAME_PARENT_FRAME(f) ((void) f, NULL)
@@ -945,7 +945,7 @@ default_pixels_per_inch_y (void)
 #define FRAME_Z_GROUP_NONE(f) ((void) f, true)
 #define FRAME_Z_GROUP_ABOVE(f) ((void) f, false)
 #define FRAME_Z_GROUP_BELOW(f) ((void) f, false)
-#endif /* HAVE_WINDOW_SYSTEM and not HAVE_NS */
+#endif /* HAVE_WINDOW_SYSTEM */
 
 /* Whether horizontal scroll bars are currently enabled for frame F.  */
 #if USE_HORIZONTAL_SCROLL_BARS

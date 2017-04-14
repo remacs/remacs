@@ -430,7 +430,7 @@ char const * nstrace_fullscreen_type_name (int);
    NSString *workingText;
    BOOL processingCompose;
    int fs_state, fs_before_fs, next_maximized;
-   int tibar_height, tobar_height, bwidth;
+   int bwidth;
    int maximized_width, maximized_height;
    NSWindow *nonfs_window;
    BOOL fs_is_native;
@@ -454,6 +454,7 @@ char const * nstrace_fullscreen_type_name (int);
 
 /* Emacs-side interface */
 - initFrameFromEmacs: (struct frame *) f;
+- (void) createToolbar: (struct frame *)f;
 - (void) setRows: (int) r andColumns: (int) c;
 - (void) setWindowClosing: (BOOL)closing;
 - (EmacsToolbar *) toolbar;
@@ -1012,8 +1013,6 @@ struct x_output
 
 #define NS_FACE_FOREGROUND(f) ((f)->foreground)
 #define NS_FACE_BACKGROUND(f) ((f)->background)
-#define FRAME_NS_TITLEBAR_HEIGHT(f) ((f)->output_data.ns->titlebar_height)
-#define FRAME_TOOLBAR_HEIGHT(f) ((f)->output_data.ns->toolbar_height)
 
 #define FRAME_DEFAULT_FACE(f) FACE_FROM_ID_OR_NULL (f, DEFAULT_FACE_ID)
 
@@ -1028,6 +1027,25 @@ struct x_output
 #else
 #define XNS_SCROLL_BAR(vec) XSAVE_POINTER (vec, 0)
 #endif
+
+/* Compute pixel height of the frame's titlebar. */
+#define FRAME_NS_TITLEBAR_HEIGHT(f)                                     \
+  (NSHeight([FRAME_NS_VIEW (f) frame]) == 0 ?                           \
+   0                                                                    \
+   : (int)(NSHeight([FRAME_NS_VIEW (f) window].frame)                   \
+           - NSHeight([NSWindow contentRectForFrameRect:                \
+                       [[FRAME_NS_VIEW (f) window] frame]               \
+                       styleMask:[[FRAME_NS_VIEW (f) window] styleMask]])))
+
+/* Compute pixel height of the toolbar. */
+#define FRAME_TOOLBAR_HEIGHT(f)                                         \
+  (([[FRAME_NS_VIEW (f) window] toolbar] == nil                         \
+    || ! [[FRAME_NS_VIEW (f) window] toolbar].isVisible) ?		\
+   0                                                                    \
+   : (int)(NSHeight([NSWindow contentRectForFrameRect:                  \
+                     [[FRAME_NS_VIEW (f) window] frame]                 \
+                     styleMask:[[FRAME_NS_VIEW (f) window] styleMask]]) \
+           - NSHeight([[[FRAME_NS_VIEW (f) window] contentView] frame])))
 
 /* Compute pixel size for vertical scroll bars */
 #define NS_SCROLL_BAR_WIDTH(f)						\
@@ -1059,12 +1077,17 @@ struct x_output
    (FRAME_SCROLL_BAR_LINES (f) * FRAME_LINE_HEIGHT (f)	\
     - NS_SCROLL_BAR_HEIGHT (f)) : 0)
 
-/* XXX: fix for GNUstep inconsistent accounting for titlebar */
-#ifdef NS_IMPL_GNUSTEP
-#define NS_TOP_POS(f) ((f)->top_pos + 18)
-#else
-#define NS_TOP_POS(f) ((f)->top_pos)
-#endif
+/* Calculate system coordinates of the left and top of the parent
+   window or, if there is no parent window, the screen. */
+#define NS_PARENT_WINDOW_LEFT_POS(f)                                    \
+  (FRAME_PARENT_FRAME (f) != NULL                                       \
+   ? [[FRAME_NS_VIEW (f) window] parentWindow].frame.origin.x : 0)
+#define NS_PARENT_WINDOW_TOP_POS(f)                                     \
+  (FRAME_PARENT_FRAME (f) != NULL                                       \
+   ? ([[FRAME_NS_VIEW (f) window] parentWindow].frame.origin.y          \
+      + [[FRAME_NS_VIEW (f) window] parentWindow].frame.size.height     \
+      - FRAME_NS_TITLEBAR_HEIGHT (FRAME_PARENT_FRAME (f)))              \
+   : [[[FRAME_NS_VIEW (f) window] screen] frame].size.height)
 
 #define FRAME_NS_FONT_TABLE(f) (FRAME_DISPLAY_INFO (f)->font_table)
 
@@ -1185,6 +1208,12 @@ extern int x_display_pixel_width (struct ns_display_info *);
 /* This in nsterm.m */
 extern float ns_antialias_threshold;
 extern void x_destroy_window (struct frame *f);
+extern void x_set_undecorated (struct frame *f, Lisp_Object new_value,
+                               Lisp_Object old_value);
+extern void x_set_parent_frame (struct frame *f, Lisp_Object new_value,
+                                Lisp_Object old_value);
+extern void x_set_z_group (struct frame *f, Lisp_Object new_value,
+                           Lisp_Object old_value);
 extern int ns_select (int nfds, fd_set *readfds, fd_set *writefds,
 		      fd_set *exceptfds, struct timespec const *timeout,
 		      sigset_t const *sigmask);

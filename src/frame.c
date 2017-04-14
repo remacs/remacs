@@ -683,7 +683,6 @@ make_frame (bool mini_p)
   f->vertical_scroll_bar_type = vertical_scroll_bar_none;
   f->horizontal_scroll_bars = false;
   f->want_fullscreen = FULLSCREEN_NONE;
-#if ! defined (HAVE_NS)
   f->undecorated = false;
 #ifndef HAVE_NTGUI
   f->override_redirect = false;
@@ -692,7 +691,6 @@ make_frame (bool mini_p)
   f->no_focus_on_map = false;
   f->no_accept_focus = false;
   f->z_group = z_group_none;
-#endif
 #if ! defined (USE_GTK) && ! defined (HAVE_NS)
   f->last_tool_bar_item = -1;
 #endif

@@ -1548,7 +1548,9 @@ Some window managers may refuse to restack windows. "
          ((eq frame-type 'x)
           (x-frame-restack frame1 frame2 above))
          ((eq frame-type 'w32)
-          (w32-frame-restack frame1 frame2 above))))
+          (w32-frame-restack frame1 frame2 above))
+         ((eq frame-type 'ns)
+          (ns-frame-restack frame1 frame2 above))))
     (error "Cannot restack frames")))
 
 (defun frame-size-changed-p (&optional frame)

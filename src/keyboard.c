@@ -4056,7 +4056,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 	  kbd_fetch_ptr = event + 1;
 	}
 #endif
-#if defined (HAVE_X11) || defined (HAVE_NTGUI)
+#if defined (HAVE_X11) || defined (HAVE_NTGUI) || defined (HAVE_NS)
       else if (event->kind == MOVE_FRAME_EVENT)
 	{
 	  /* Make an event (move-frame (FRAME)).  */
