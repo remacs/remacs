@@ -575,7 +575,7 @@ frames.  Display of the title bar can be suppressed by setting the
 @cindex external menu bar
 The menu bar (@pxref{Menu Bar}) can be either internal (drawn by Emacs
 itself) or external (drawn by the toolkit).  Most builds (GTK+, Lucid,
-Motif and Windows) rely on an external menu bar.  NS also uses an
+Motif and MS-Windows) rely on an external menu bar.  NS also uses an
 external menu bar which, however, is not part of the outer frame.
 Non-toolkit builds can provide an internal menu bar.  On text terminal
 frames, the menu bar is part of the frame's root window (@pxref{Windows
@@ -648,8 +648,9 @@ indicate that position for the various builds:
 @end itemize
 
 Accordingly, the native height of a frame may include the height of the
-tool bar but not that of the menu bar (Lucid, Motif, Windows) or those
-of the menu bar and the tool bar (non-toolkit and text terminal frames).
+tool bar but not that of the menu bar (Lucid, Motif, MS-Windows) or
+those of the menu bar and the tool bar (non-toolkit and text terminal
+frames).
 
 The native position of a frame is the reference position for functions
 that set or return the current position of the mouse (@pxref{Mouse
@@ -1153,7 +1154,7 @@ unchanged if this option is either @code{t} or a list containing
 @code{vertical-scroll-bars}.
 
 The default value is @code{'(tool-bar-lines)} for Lucid, Motif and
-Windows (which means that adding/removing a tool bar there does not
+MS-Windows (which means that adding/removing a tool bar there does not
 change the outer frame height), @code{nil} on all other window systems
 including GTK+ (which means that changing any of the parameters listed
 above may change the size of the outer frame), and @code{t} otherwise
@@ -2275,9 +2276,9 @@ frame.
 It first deletes any child frame of @var{frame} (@pxref{Child Frames})
 and any frame whose @code{delete-before} frame parameter (@pxref{Frame
 Interaction Parameters}) specifies @var{frame}.  All such deletions are
-performed recursively; so this step makes sure that there no other
-frames with @var{frame} as their ancestor will exist.  Then, unless
-@var{frame} specifies a tooltip, this function runs the hook
+performed recursively; so this step makes sure that no other frames with
+@var{frame} as their ancestor will exist.  Then, unless @var{frame}
+specifies a tooltip, this function runs the hook
 @code{delete-frame-functions} (each function getting one argument,
 @var{frame}) before actually killing the frame.
 
