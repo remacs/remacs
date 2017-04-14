@@ -8801,7 +8801,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 		   frame.  */
 		struct frame *hf = dpyinfo->x_highlight_frame;
 
-		if (FRAME_PARENT_FRAME (f) || frame_ancestor_p (f, hf))
+		if (FRAME_PARENT_FRAME (f) || (hf && frame_ancestor_p (f, hf)))
 		  {
 		    block_input ();
 		    XSetInputFocus (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
