@@ -1334,7 +1334,7 @@ suggest to customize that face, if it's customizable."
       (if (get face 'face-alias)
 	  (setq face (get face 'face-alias)))
       (unless (facep face)
-	(error "Invalid face %S" face))
+	(user-error "Invalid face %S" face))
       (funcall display-fun
 	       (list (list face 'custom-face))
 	       (format "*Customize Face: %s*"
@@ -4845,8 +4845,6 @@ if that value is non-nil."
 (put 'Custom-mode 'mode-class 'special)
 
 (define-obsolete-function-alias 'custom-mode 'Custom-mode "23.1")
-
-(add-to-list 'debug-ignored-errors "^Invalid face:? ")
 
 ;;; The End.
 
