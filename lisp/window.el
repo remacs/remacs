@@ -235,14 +235,27 @@ displays the buffer specified by BUFFER-OR-NAME before running BODY."
 			 (vquit-function quit-function))
       `(let* ((,buffer (temp-buffer-window-setup ,vbuffer-or-name))
 	      (standard-output ,buffer)
+              ;; If a 'window-height' entry specifies a function,
+              ;; remember it here in order to call it below but replace
+              ;; the entry so `window--try-to-split-window' will bind
+              ;; `window-combination-limit' to t and the function does
+              ;; not resize any other window but the one we split this
+              ;; one off (Bug#25055, Bug#25179).
+              (vheight-function
+               (let ((window-height (assq 'window-height (cdr ,vaction))))
+                 (when (functionp (cdr window-height))
+                   (cdr window-height))))
+              (vaction-copied
+               (when vheight-function
+                 (cons (car , vaction)
+                       (cons
+                        '(window-height . t)
+                        (assq-delete-all
+                         'window-height (cdr (copy-sequence ,vaction)))))))
 	      ,window ,value)
 	 (with-current-buffer ,buffer
 	   (setq ,window (temp-buffer-window-show
-			  ,buffer
-			  ;; Remove window-height when it's handled below.
-			  (if (functionp (cdr (assq 'window-height (cdr ,vaction))))
-			      (assq-delete-all 'window-height (copy-sequence ,vaction))
-			    ,vaction))))
+                          ,buffer (or vaction-copied ,vaction))))
 
 	 (let ((inhibit-read-only t)
 	       (inhibit-modification-hooks t))
@@ -250,9 +263,10 @@ displays the buffer specified by BUFFER-OR-NAME before running BODY."
 
 	 (set-window-point ,window (point-min))
 
-	 (when (functionp (cdr (assq 'window-height (cdr ,vaction))))
+	 (when vheight-function
 	   (ignore-errors
-	     (funcall (cdr (assq 'window-height (cdr ,vaction))) ,window)))
+	     (set-window-parameter ,window 'preserve-size nil)
+             (funcall vheight-function ,window)))
 
 	 (when (consp (cdr (assq 'preserve-size (cdr ,vaction))))
 	   (window-preserve-size
@@ -8152,12 +8166,12 @@ accessible position."
 		  (min
 		   (+ total-height
 		      (window-max-delta
-		       window nil window nil nil nil pixelwise))
+		       window nil window nil t nil pixelwise))
 		   (if pixelwise
 		       (* char-height max-height)
 		     max-height))
 		(+ total-height (window-max-delta
-				 window nil window nil nil nil pixelwise))))
+				 window nil window nil t nil pixelwise))))
 	     height)
 	(cond
 	 ;; If WINDOW is vertically combined, try to resize it
@@ -8209,12 +8223,12 @@ accessible position."
 		  (if (numberp max-width)
 		      (min (+ total-width
 			      (window-max-delta
-			       window t window nil nil nil pixelwise))
+			       window t window nil t nil pixelwise))
 			   (if pixelwise
 			       (* char-width max-width)
 			     max-width))
 		    (+ total-width (window-max-delta
-				    window t window nil nil nil pixelwise))))
+				    window t window nil t nil pixelwise))))
 		 ;; When fitting horizontally, assume that WINDOW's
 		 ;; start position remains unaltered.  WINDOW can't get
 		 ;; wider than its frame's pixel width, its height
