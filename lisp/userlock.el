@@ -61,6 +61,7 @@ in any way you like."
       (while (null answer)
 	(message "%s locked by %s: (s, q, p, ?)? "
 		 short-file short-opponent)
+	(if noninteractive (error "Cannot resolve lock conflict in batch mode"))
 	(let ((tem (let ((inhibit-quit t)
 			 (cursor-in-echo-area t))
 		     (prog1 (downcase (read-char))
@@ -149,6 +150,9 @@ really edit the buffer? (y, n, r or C-h) "
 		   (file-name-nondirectory fn)))
 	  (choices '(?y ?n ?r ?? ?\C-h))
 	  answer)
+      (when noninteractive
+	(message "%s" prompt)
+	(error "Cannot resolve conflict in batch mode"))
       (while (null answer)
 	(setq answer (read-char-choice prompt choices))
 	(cond ((memq answer '(?? ?\C-h))
