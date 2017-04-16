@@ -2297,7 +2297,6 @@ w32_createwindow (struct frame *f, int *coords)
 {
   HWND hwnd = NULL, parent_hwnd = NULL;
   RECT rect;
-  DWORD dwStyle;
   int top, left;
   Lisp_Object border_width = Fcdr (Fassq (Qborder_width, f->param_alist));
 
@@ -2310,14 +2309,13 @@ w32_createwindow (struct frame *f, int *coords)
 	{
 	  /* If we want a thin border, specify it here.  */
 	  if (NUMBERP (border_width) && (XINT (border_width) > 0))
-	    f->output_data.w32->dwStyle =
-	      f->output_data.w32->dwStyle | WS_BORDER;
+	    f->output_data.w32->dwStyle |= WS_BORDER;
 	}
       else
 	/* To decorate a child frame, list all needed elements.  */
-	f->output_data.w32->dwStyle =
-	  f->output_data.w32->dwStyle | WS_THICKFRAME | WS_CAPTION
-	  | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU;
+	f->output_data.w32->dwStyle |= (WS_THICKFRAME | WS_CAPTION
+					| WS_MAXIMIZEBOX | WS_MINIMIZEBOX
+					| WS_SYSMENU);
     }
   else if (FRAME_UNDECORATED (f))
     {
@@ -2327,14 +2325,13 @@ w32_createwindow (struct frame *f, int *coords)
 
       /* If we want a thin border, specify it here.  */
       if (NUMBERP (border_width) && (XINT (border_width) > 0))
-	f->output_data.w32->dwStyle =
-	  f->output_data.w32->dwStyle | WS_BORDER;
+	f->output_data.w32->dwStyle |= WS_BORDER;
     }
   else
     f->output_data.w32->dwStyle = WS_OVERLAPPEDWINDOW;
 
   /* Always clip children.  */
-  f->output_data.w32->dwStyle = f->output_data.w32->dwStyle | WS_CLIPCHILDREN;
+  f->output_data.w32->dwStyle |= WS_CLIPCHILDREN;
 
   rect.left = rect.top = 0;
   rect.right = FRAME_PIXEL_WIDTH (f);

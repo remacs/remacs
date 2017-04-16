@@ -5136,7 +5136,8 @@ w32_read_socket (struct terminal *terminal,
 	    }
 #endif
 
-	  if (f = x_window_to_frame (dpyinfo, msg.msg.hwnd))
+	  f = x_window_to_frame (dpyinfo, msg.msg.hwnd);
+	  if (f)
 	    x_clear_under_internal_border (f);
 
 	  check_visibility = 1;
