@@ -733,7 +733,7 @@ cannot be completed sensibly: `custom-ident',
        (if (not sassy)
            ;; We don't allow / as first char, so as not to
            ;; take a comment as the beginning of a selector.
-           "[^@/:{}() \t\n][^:{}()]+"
+           "[^@/:{}() \t\n][^:{}()]*"
          ;; Same as for non-sassy except we do want to allow { and }
          ;; chars in selectors in the case of #{$foo}
          ;; variable interpolation!
