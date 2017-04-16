@@ -1369,6 +1369,10 @@ SBYTES (Lisp_Object string)
 INLINE void
 STRING_SET_CHARS (Lisp_Object string, ptrdiff_t newsize)
 {
+  /* This function cannot change the size of data allocated for the
+     string when it was created.  */
+  eassert ((STRING_MULTIBYTE (string) && newsize <= SBYTES (string))
+	   || (!STRING_MULTIBYTE (string) && newsize == SCHARS (string)));
   XSTRING (string)->size = newsize;
 }
 
