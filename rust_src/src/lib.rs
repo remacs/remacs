@@ -112,6 +112,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*strings::Sstring_bytes);
         defsubr(&*strings::Snull);
         defsubr(&*character::Smax_char);
+        defsubr(&*character::Scharacterp);
 
         floatfns::init_float_syms();
     }
