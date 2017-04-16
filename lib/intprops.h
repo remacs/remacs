@@ -389,10 +389,10 @@ verify (TYPE_WIDTH (unsigned int) == UINT_WIDTH);
    (_Generic \
     (*(r), \
      signed char: \
-       _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned char, \
+       _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned int, \
                         signed char, SCHAR_MIN, SCHAR_MAX), \
      short int: \
-       _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned short int, \
+       _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned int, \
                         short int, SHRT_MIN, SHRT_MAX), \
      int: \
        _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned int, \
@@ -406,10 +406,10 @@ verify (TYPE_WIDTH (unsigned int) == UINT_WIDTH);
 #else
 # define _GL_INT_OP_WRAPV(a, b, r, op, builtin, overflow) \
    (sizeof *(r) == sizeof (signed char) \
-    ? _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned char, \
+    ? _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned int, \
                        signed char, SCHAR_MIN, SCHAR_MAX) \
     : sizeof *(r) == sizeof (short int) \
-    ? _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned short int, \
+    ? _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned int, \
                        short int, SHRT_MIN, SHRT_MAX) \
     : sizeof *(r) == sizeof (int) \
     ? _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned int, \
@@ -431,9 +431,8 @@ verify (TYPE_WIDTH (unsigned int) == UINT_WIDTH);
 
 /* Store the low-order bits of A <op> B into *R, where the operation
    is given by OP.  Use the unsigned type UT for calculation to avoid
-   overflow problems.  *R's type is T, with extremal values TMIN and
-   TMAX.  T must be a signed integer type.  Return 1 if the result
-   overflows.  */
+   overflow problems.  *R's type is T, with extrema TMIN and TMAX.
+   T must be a signed integer type.  Return 1 if the result overflows.  */
 #define _GL_INT_OP_CALC(a, b, r, op, overflow, ut, t, tmin, tmax) \
   (sizeof ((a) op (b)) < sizeof (t) \
    ? _GL_INT_OP_CALC1 ((t) (a), (t) (b), r, op, overflow, ut, t, tmin, tmax) \
@@ -442,17 +441,27 @@ verify (TYPE_WIDTH (unsigned int) == UINT_WIDTH);
   ((overflow (a, b) \
     || (EXPR_SIGNED ((a) op (b)) && ((a) op (b)) < (tmin)) \
     || (tmax) < ((a) op (b))) \
-   ? (*(r) = _GL_INT_OP_WRAPV_VIA_UNSIGNED (a, b, op, ut, t, tmin, tmax), 1) \
-   : (*(r) = _GL_INT_OP_WRAPV_VIA_UNSIGNED (a, b, op, ut, t, tmin, tmax), 0))
+   ? (*(r) = _GL_INT_OP_WRAPV_VIA_UNSIGNED (a, b, op, ut, t), 1) \
+   : (*(r) = _GL_INT_OP_WRAPV_VIA_UNSIGNED (a, b, op, ut, t), 0))
 
-/* Return A <op> B, where the operation is given by OP.  Use the
-   unsigned type UT for calculation to avoid overflow problems.
-   Convert the result to type T without overflow by subtracting TMIN
-   from large values before converting, and adding it afterwards.
-   Compilers can optimize all the operations except OP.  */
-#define _GL_INT_OP_WRAPV_VIA_UNSIGNED(a, b, op, ut, t, tmin, tmax) \
-  (((ut) (a) op (ut) (b)) <= (tmax) \
-   ? (t) ((ut) (a) op (ut) (b)) \
-   : ((t) (((ut) (a) op (ut) (b)) - (tmin)) + (tmin)))
+/* Return the low-order bits of A <op> B, where the operation is given
+   by OP.  Use the unsigned type UT for calculation to avoid undefined
+   behavior on signed integer overflow, and convert the result to type T.
+   UT is at least as wide as T and is no narrower than unsigned int,
+   T is two's complement, and there is no padding or trap representations.
+   Assume that converting UT to T yields the low-order bits, as is
+   done in all known two's-complement C compilers.  E.g., see:
+   https://gcc.gnu.org/onlinedocs/gcc/Integers-implementation.html
+
+   According to the C standard, converting UT to T yields an
+   implementation-defined result or signal for values outside T's
+   range.  However, code that works around this theoretical problem
+   runs afoul of a compiler bug in Oracle Studio 12.3 x86.  See:
+   http://lists.gnu.org/archive/html/bug-gnulib/2017-04/msg00049.html
+   As the compiler bug is real, don't try to work around the
+   theoretical problem.  */
+
+#define _GL_INT_OP_WRAPV_VIA_UNSIGNED(a, b, op, ut, t) \
+  ((t) ((ut) (a) op (ut) (b)))
 
 #endif /* _GL_INTPROPS_H */

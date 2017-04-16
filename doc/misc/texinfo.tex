@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2017-03-25.14}
+\def\texinfoversion{2017-04-14.11}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -11595,6 +11595,9 @@ directory should work if nowhere else does.}
   @def ^^M{@let^^M@secondlinenl}%
   % Definition for a newline in the main Texinfo file.
   @gdef @secondlinenl{@fixbackslash}%
+  % In case the first line has a whole-line command on it
+  @let@originalparsearg@parsearg
+  @def@parsearg{@fixbackslash@originalparsearg}
 }}
 
 {@catcode`@^=7 @catcode`@^^M=13%
@@ -11615,6 +11618,7 @@ directory should work if nowhere else does.}
   @catcode13=5 % regular end of line
   @enableemergencynewline
   @let@c=@texinfoc
+  @let@parsearg@originalparsearg
   % Also turn back on active characters that might appear in the input
   % file name, in case not using a pre-dumped format.
   @catcode`+=@active
