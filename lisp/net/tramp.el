@@ -717,7 +717,10 @@ Should always start with \"^\". Derived from `tramp-prefix-format'."
 (defun tramp-method-regexp ()
   "Regexp matching methods identifiers.
 The `ftp' syntax does not support methods."
-  (if (eq (tramp-compat-tramp-syntax) 'simplified) "" "[a-zA-Z0-9-]+"))
+  (cond ((eq (tramp-compat-tramp-syntax) 'default) "[a-zA-Z0-9-]+")
+	((eq (tramp-compat-tramp-syntax) 'simplified) "")
+	((eq (tramp-compat-tramp-syntax) 'separate) "[a-zA-Z0-9-]*")
+	(t (error "Wrong `tramp-syntax' %s" tramp-syntax))))
 
 (defun tramp-postfix-method-format ()
   "String matching delimiter between method and user or host names.
@@ -942,7 +945,7 @@ See `tramp-file-name-structure' for more explanations.
 On W32 systems, the volume letter must be ignored.")
 
 (defconst tramp-completion-file-name-regexp-separate
-  "\\`/\\[\\([^]]*\\)?\\'"
+  "\\`/\\[[^]]*\\'"
   "Value for `tramp-completion-file-name-regexp' for separate remoting.
 See `tramp-file-name-structure' for more explanations.")
 
@@ -2306,7 +2309,7 @@ not in completion mode."
 
 ;; Method, host name and user name completion.
 ;; `tramp-completion-dissect-file-name' returns a list of
-;; tramp-file-name structures. For all of them we return possible completions.
+;; tramp-file-name structures.  For all of them we return possible completions.
 (defun tramp-completion-handle-file-name-all-completions (filename directory)
   "Like `file-name-all-completions' for partial Tramp files."
 
