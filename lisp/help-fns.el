@@ -473,7 +473,8 @@ suitable file is found, return nil."
         (let ((fill-begin (point))
               (high-usage (car high))
               (high-doc (cdr high)))
-          (unless (get function 'reader-construct)
+          (unless (and (symbolp function)
+                       (get function 'reader-construct))
             (insert high-usage "\n"))
           (fill-region fill-begin (point))
           high-doc)))))
@@ -613,7 +614,8 @@ FILE is the file where FUNCTION was probably defined."
     ;; Print what kind of function-like object FUNCTION is.
     (princ (cond ((or (stringp def) (vectorp def))
 		  "a keyboard macro")
-		 ((get function 'reader-construct)
+		 ((and (symbolp function)
+                       (get function 'reader-construct))
                   "a reader construct")
 		 ;; Aliases are Lisp functions, so we need to check
 		 ;; aliases before functions.
