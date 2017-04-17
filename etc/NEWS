@@ -899,6 +899,9 @@ instead of its first.
 
 * Lisp Changes in Emacs 26.1
 
+** New function 'seq-set-equal-p' to check if SEQUENCE1 and SEQUENCE2
+contain the same elements, regardless of the order.
+
 +++
 ** Emacs now supports records for user-defined types, via the new
 functions 'make-record', 'record', and 'recordp'.  Records are now
