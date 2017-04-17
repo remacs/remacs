@@ -8297,7 +8297,7 @@ not_in_argv (NSString *arg)
     case NSScrollerKnobSlot:  /* GNUstep-only */
       last_hit_part = scroll_bar_move_ratio; break;
     default:  /* NSScrollerNoPart? */
-      fprintf (stderr, "EmacsScoller-mouseDown: unexpected part %ld\n",
+      fprintf (stderr, "EmacsScroller-mouseDown: unexpected part %ld\n",
                (long) part);
       return;
     }
