@@ -575,7 +575,9 @@ Lisp_Object
 terminal_glyph_code (struct terminal *t, int ch)
 {
 #if HAVE_STRUCT_UNIPAIR_UNICODE
-  if (t->type == output_termcap)
+  /* Heuristically assume that a terminal supporting glyph codes is in
+     UTF-8 mode if and only if its coding system is multibyte (Bug#26396).  */
+  if (t->type == output_termcap && t->terminal_coding->src_multibyte)
     {
       /* As a hack, recompute the table when CH is the maximum
 	 character.  */
