@@ -714,7 +714,7 @@ x_reset_clip_rectangles (struct frame *f, GC gc)
 #endif
 }
 
-void
+static void
 x_fill_rectangle (struct frame *f, GC gc, int x, int y, int width, int height)
 {
 #ifdef USE_CAIRO
