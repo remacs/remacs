@@ -1449,7 +1449,7 @@ decode_coding_utf_8 (struct coding_system *coding)
 }
 
 
-static bool
+bool
 encode_coding_utf_8 (struct coding_system *coding)
 {
   bool multibytep = coding->dst_multibyte;
