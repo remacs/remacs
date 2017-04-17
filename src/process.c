@@ -4563,8 +4563,16 @@ is nil, from any process) before the timeout expired.  */)
       /* Can't wait for a process that is dedicated to a different
 	 thread.  */
       if (!EQ (proc->thread, Qnil) && !EQ (proc->thread, Fcurrent_thread ()))
-	error ("Attempt to accept output from process %s locked to thread %s",
-	       SDATA (proc->name), SDATA (XTHREAD (proc->thread)->name));
+	{
+	  Lisp_Object proc_thread_name = XTHREAD (proc->thread)->name;
+
+	  if (STRINGP (proc_thread_name))
+	    error ("Attempt to accept output from process %s locked to thread %s",
+		   SDATA (proc->name), SDATA (proc_thread_name));
+	  else
+	    error ("Attempt to accept output from process %s locked to thread %p",
+		   SDATA (proc->name), XTHREAD (proc->thread));
+	}
     }
   else
     just_this_one = Qnil;
