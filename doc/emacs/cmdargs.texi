@@ -459,11 +459,11 @@ bus as well as autolaunching the D-Bus session bus if not running yet.
 Directory for the architecture-independent files that come with Emacs.
 This is used to initialize the variable @code{data-directory}.
 @item EMACSDOC
-#vindex EMACSDOC, environment variable
+@vindex EMACSDOC, environment variable
 Directory for the documentation string file, which is used to
 initialize the Lisp variable @code{doc-directory}.
 @item EMACSLOADPATH
-#vindex EMACSLOADPATH, environment variable
+@vindex EMACSLOADPATH, environment variable
 A colon-separated list of directories@footnote{Here and below,
 whenever we say ``colon-separated list of directories'', it pertains
 to Unix and GNU/Linux systems.  On MS-DOS and MS-Windows, the
