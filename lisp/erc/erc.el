@@ -6735,9 +6735,10 @@ This function should be on `erc-kill-server-hook'."
 This function should be on `erc-kill-channel-hook'."
   (when (erc-server-process-alive)
     (let ((tgt (erc-default-target)))
-      (erc-server-send (format "PART %s :%s" tgt
-                               (funcall erc-part-reason nil))
-                       nil tgt))))
+      (if tgt
+         (erc-server-send (format "PART %s :%s" tgt
+                                  (funcall erc-part-reason nil))
+                          nil tgt)))))
 
 ;;; Dealing with `erc-parsed'
 
