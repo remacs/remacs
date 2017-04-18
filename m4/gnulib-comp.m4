@@ -295,11 +295,6 @@ AC_DEFUN([gl_INIT],
     gl_PREREQ_MEMRCHR
   fi
   gl_STRING_MODULE_INDICATOR([memrchr])
-  gl_FUNC_MKOSTEMP
-  if test $HAVE_MKOSTEMP = 0; then
-    AC_LIBOBJ([mkostemp])
-    gl_PREREQ_MKOSTEMP
-  fi
   gl_MODULE_INDICATOR([mkostemp])
   gl_STDLIB_MODULE_INDICATOR([mkostemp])
   gl_FUNC_MKTIME
@@ -601,14 +596,6 @@ AC_DEFUN([gl_INIT],
       gl_gnulib_enabled_strtoull=true
     fi
   }
-  func_gl_gnulib_m4code_tempname ()
-  {
-    if ! $gl_gnulib_enabled_tempname; then
-      gl_FUNC_GEN_TEMPNAME
-      gl_gnulib_enabled_tempname=true
-      func_gl_gnulib_m4code_secure_getenv
-    fi
-  }
   func_gl_gnulib_m4code_682e609604ccaac6be382e4ee3a4eaec ()
   {
     if ! $gl_gnulib_enabled_682e609604ccaac6be382e4ee3a4eaec; then
@@ -653,9 +640,6 @@ AC_DEFUN([gl_INIT],
   fi
   if test $REPLACE_LSTAT = 1; then
     func_gl_gnulib_m4code_stat
-  fi
-  if test $HAVE_MKOSTEMP = 0; then
-    func_gl_gnulib_m4code_tempname
   fi
   if test $HAVE_READLINK = 0 || test $REPLACE_READLINK = 1; then
     func_gl_gnulib_m4code_stat

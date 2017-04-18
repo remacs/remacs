@@ -51,6 +51,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "ntlib.h"
 #endif
 
+#include "remacs-lib.h"
+
 #ifndef min
 # define min(a,b) ((a) < (b) ? (a) : (b))
 #endif
@@ -435,7 +437,7 @@ write_scores (const char *filename, mode_t mode,
   if (!tempfile)
     return -1;
   strcpy (stpcpy (tempfile, filename), ".tempXXXXXX");
-  fd = mkostemp (tempfile, 0);
+  fd = rust_make_temp (tempfile, 0);
   if (fd < 0)
     return -1;
 #ifndef DOS_NT

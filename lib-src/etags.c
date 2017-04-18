@@ -126,6 +126,8 @@ char pot_etags_version[] = "@(#) pot revision number is 17.38.1.4";
 #include <getopt.h>
 #include <regex.h>
 
+#include "remacs-lib.h"
+
 /* Define CTAGS to make the program "ctags" compatible with the usual one.
  Leave it undefined to make the program "etags", which makes emacs-style
  tag tables and tags typedefs, #defines and struct/union/enum by default. */
@@ -6966,7 +6968,7 @@ etags_mktmp (void)
 #endif
 
   char *templt = concat (tmpdir, slash, "etXXXXXX");
-  int fd = mkostemp (templt, O_CLOEXEC);
+  int fd = rust_make_temp (templt, O_CLOEXEC);
   if (fd < 0 || close (fd) != 0)
     {
       int temp_errno = errno;

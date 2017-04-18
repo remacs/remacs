@@ -12,6 +12,7 @@ extern crate alloc_unexecmacosx;
 extern crate lazy_static;
 
 extern crate remacs_sys;
+extern crate remacs_lib;
 extern crate libc;
 extern crate sha1;
 extern crate sha2;

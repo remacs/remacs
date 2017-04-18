@@ -5118,19 +5118,25 @@ fi
 AC_SUBST(CARGO_FLAGS)
 
 case "${opsys}" in
-  darwin|gnu*) LIB_REMACS="-lremacs -ldl" ;;
-  *) LIB_REMACS="-lremacs" ;;
+  darwin) RUST_DEPS="-ldl"
+  	  REMACSLIB_CFLAGS="-pthread" ;;
+  gnu*) RUST_DEPS="-ldl -lrt"
+        REMACSLIB_CFLAGS="-pthread" ;;
 esac
 
 if test "${HAVE_W32}" = "yes"; then
-    LIB_REMACS="$LIB_REMACS -lws2_32 -luserenv"
+    RUST_DEPS="$RUST_DEPS -lws2_32 -luserenv"
 fi
+
+LIB_REMACS="-lremacs $RUST_DEPS"
 
 LDFLAGS_REMACS="-L../$srcdir/rust_src/target/\${CARGO_BUILD_DIR}"
 
 LDFLAGS="$LDFLAGS $LDFLAGS_REMACS"
 
 AC_SUBST(LIB_REMACS)
+AC_SUBST(RUST_DEPS)
+AC_SUBST(REMACSLIB_CFLAGS)
 
 if test "${opsys}" = "mingw32"; then
   CPPFLAGS="$CPPFLAGS -DUSE_CRT_DLL=1 -I \${abs_top_srcdir}/nt/inc"
@@ -5298,6 +5304,7 @@ Configured for '${canonical}'.
   Should Emacs use mmap(2) for buffer allocation?         $use_mmap_for_buffers
   What window system should Emacs use?                    ${window_system}
   What toolkit should Emacs use?                          ${USE_X_TOOLKIT}
+  What libraries will lib-remacs link against?            ${RUST_DEPS}
   Where do we find X Windows header files?                ${x_includes:-$emacs_standard_dirs}
   Where do we find X Windows libraries?                   ${x_libraries:-$emacs_standard_dirs}"])
 

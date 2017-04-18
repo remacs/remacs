@@ -27,9 +27,21 @@ EMACSOPT = -batch --no-site-file --no-site-lisp
 # ==================== Things 'configure' will edit ====================
 
 CC=@CC@
-CFLAGS=@CFLAGS@
+CFLAGS=@CFLAGS@ @REMACSLIB_CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
+
+RUSTFLAGS=@RUSTFLAGS@
+CARGO_BUILD=@CARGO_BUILD@
+CARGO_CLEAN=@CARGO_CLEAN@
+CARGO_TEST=@CARGO_TEST@
+CARGO_FLAGS=@CARGO_FLAGS@
+
+ifeq ($(findstring --release,$(CARGO_FLAGS)),--release)
+CARGO_BUILD_DIR=release
+else
+CARGO_BUILD_DIR=debug
+endif
 
 version=@version@
 ## Used in $archlibdir.
@@ -113,6 +125,9 @@ localstatedir=@localstatedir@
 srcdir=@srcdir@
 VPATH=@srcdir@
 
+# Path to rust source files, relative to srcdir
+rust_srcdir=$(srcdir)/rust_src
+
 # The top-level source directory, also set by configure.
 top_srcdir=@top_srcdir@
 # MinGW CPPFLAGS may use this.
@@ -166,6 +181,9 @@ SCRIPTS= rcs2log $(UPDATE_MANIFEST)
 
 # All files that are created by the linker, i.e., whose names end in ${EXEEXT}.
 EXE_FILES = ${INSTALLABLES} ${UTILITIES} ${DONT_INSTALL}
+
+# Rust files to be linked as part of the executables
+RUST_LIB = ../rust_src/remacs-lib/target/$(CARGO_BUILD_DIR)/libremacs_lib.a @RUST_DEPS@
 
 # Specify additional -D flags for movemail. Options:
 # -DMAIL_USE_FLOCK or -DMAIL_USE_LOCKF (use flock or lockf for file locking).
@@ -233,8 +251,8 @@ all: ${EXE_FILES} ${SCRIPTS}
 
 .PHONY: all need-blessmail maybe-blessmail
 
-LOADLIBES = ../lib/libgnu.a $(LIBS_SYSTEM)
-$(EXE_FILES): ../lib/libgnu.a
+LOADLIBES = ../lib/libgnu.a $(LIBS_SYSTEM) $(RUST_LIB) 
+$(EXE_FILES): ../lib/libgnu.a $(RUST_LIB)
 
 ## Only used if we need blessmail, but no harm in always defining.
 ## This makes the actual blessmail executable.
@@ -354,6 +372,11 @@ TAGS: etags${EXEEXT} ${tagsfiles}
 
 ../lib/libgnu.a: $(config_h)
 	$(MAKE) -C ../lib all
+
+cargo_manifest=../rust_src/remacs-lib/Cargo.toml
+$(RUST_LIB):
+	RUSTFLAGS=$(RUSTFLAGS) \
+	$(CARGO_BUILD) $(CARGO_FLAGS) --manifest-path=$(cargo_manifest)
 
 regex.o: $(srcdir)/../src/regex.c $(srcdir)/../src/regex.h $(config_h)
 	$(AM_V_CC)$(CC) -c $(CPP_CFLAGS) $<

@@ -52,6 +52,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "nsterm.h"
 #endif
 
+#include "remacs-lib.h"
+
 /* Pattern used by call-process-region to make temp files.  */
 static Lisp_Object Vtemp_file_name_pattern;
 
@@ -845,7 +847,7 @@ create_temp_file (ptrdiff_t nargs, Lisp_Object *args,
 
     count = SPECPDL_INDEX ();
     record_unwind_protect_nothing ();
-    fd = mkostemp (tempfile, O_BINARY | O_CLOEXEC);
+    fd = rust_make_temp (tempfile, O_BINARY | O_CLOEXEC);
     if (fd < 0)
       report_file_error ("Failed to open temporary file using pattern",
 			 pattern);
