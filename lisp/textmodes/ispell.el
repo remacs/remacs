@@ -2014,7 +2014,7 @@ which is in `ispell-local-dictionary-alist' or `ispell-dictionary-alist'."
 	(if ispell-check-only
 	    ;; return dummy word when just flagging misspellings
 	    (list "" (point) (point))
-	  (error "No word found to check!"))
+	  (user-error "No word found to check!"))
       (setq start (copy-marker (match-beginning 0))
 	    end (point-marker)
 	    word (buffer-substring-no-properties start end))
@@ -4137,9 +4137,6 @@ Both should not be used to define a buffer-local dictionary."
 			  (newline)
 			  (insert comment-end)))))
 	      (insert (concat " " word))))))))
-
-;;FIXME: Use `user-error' instead!
-(add-to-list 'debug-ignored-errors "^No word found to check!$")
 
 (provide 'ispell)
 
