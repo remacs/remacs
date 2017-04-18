@@ -589,7 +589,7 @@ filing messages."
       (set-buffer (get-buffer-create mh-temp-buffer))
       (insert-file-contents (mh-msg-filename (mh-get-msg-num t))))
      ((eq major-mode 'mh-folder-mode)
-      (error "Cursor not pointing to a message")))
+      (user-error "Cursor not pointing to a message")))
     (let* ((address (or (mh-extract-from-header-value)
                         (error "Message has no From: header")))
            (alias (mh-alias-suggest-alias address)))
