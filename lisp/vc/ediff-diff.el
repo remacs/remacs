@@ -340,7 +340,7 @@ one optional arguments, diff-number to refine.")
 	(ediff-skip-unsuitable-frames)
 	(switch-to-buffer error-buf)
 	(ediff-kill-buffer-carefully ctl-buf)
-	(error "Errors in diff output.  Diff output is in %S" diff-buff))))
+	(user-error "Errors in diff output.  Diff output is in %S" diff-buff))))
 
 ;; BOUNDS specifies visibility bounds to use.
 ;; WORD-MODE tells whether we are in the word-mode or not.

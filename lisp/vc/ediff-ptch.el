@@ -766,7 +766,7 @@ you can still examine the changes via M-x ediff-files"
 		(select-window aux-wind)
 		(goto-char (point-max))))
 	  (switch-to-buffer-other-window patch-diagnostics)
-	  (error "Patch appears to have failed")))
+	  (user-error "Patch appears to have failed")))
 
     ;; If black magic is involved, apply patch to a temp copy of the
     ;; file.  Otherwise, apply patch to the orig copy.  If patch is applied
