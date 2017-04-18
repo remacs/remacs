@@ -24,6 +24,7 @@
 ;;; Code:
 
 (require 'kmacro)
+(require 'seq)
 (require 'ert)
 (require 'ert-x)
 
