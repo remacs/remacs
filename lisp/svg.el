@@ -27,7 +27,7 @@
 (require 'cl-lib)
 (require 'xml)
 (require 'dom)
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 
 (defun svg-create (width height &rest args)
   "Create a new, empty SVG image with dimensions WIDTHxHEIGHT.

@@ -30,6 +30,9 @@
 ;; Do not document these functions in the lispref.
 ;; http://lists.gnu.org/archive/html/emacs-devel/2014-01/msg01006.html
 
+;; NB If you want to use this library, it's almost always correct to use:
+;; (eval-when-compile (require 'subr-x))
+
 ;;; Code:
 
 (require 'pcase)

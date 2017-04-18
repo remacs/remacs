@@ -34,7 +34,7 @@
 
 (require 'dom)
 (require 'seq)
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 (eval-when-compile
   (require 'skeleton)
   (require 'cl-lib))

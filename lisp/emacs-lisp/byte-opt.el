@@ -185,7 +185,7 @@
 (require 'bytecomp)
 (eval-when-compile (require 'cl-lib))
 (require 'macroexp)
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 
 (defun byte-compile-log-lap-1 (format &rest args)
   ;; Newer byte codes for stack-ref make the slot 0 non-nil again.

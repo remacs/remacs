@@ -40,7 +40,6 @@
 (require 'mail-utils)
 (require 'mm-util)
 (require 'gnus-util)
-(require 'subr-x)
 (autoload 'gnus-range-add "gnus-range")
 (autoload 'gnus-remove-from-range "gnus-range")
 ;; FIXME none of these are used explicitly in this file.

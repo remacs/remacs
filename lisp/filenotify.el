@@ -28,7 +28,7 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 
 (defconst file-notify--library
   (cond

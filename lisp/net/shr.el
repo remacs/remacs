@@ -33,7 +33,7 @@
 (eval-when-compile (require 'cl))
 (eval-when-compile (require 'url))      ;For url-filename's setf handler.
 (require 'browse-url)
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 (require 'dom)
 (require 'seq)
 (require 'svg)
