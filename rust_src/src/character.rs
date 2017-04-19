@@ -19,12 +19,12 @@ defun!("max-char",
        ptr::null(),
        "Return the character of the maximum code.");
 
-/* Nonzero iff X is a character.  */
+// Nonzero iff X is a character.
 pub fn CHARACTERP(x: LispObject) -> bool {
     lisp::NATNUMP(x) && lisp::XFASTINT(x) <= MAX_CHAR
 }
 
-fn characterp(object: LispObject, ignore: LispObject) -> LispObject {
+fn characterp(object: LispObject, _ignore: LispObject) -> LispObject {
     if CHARACTERP(object) {
         LispObject::constant_t()
     } else {
