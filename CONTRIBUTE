@@ -209,8 +209,6 @@ reasons.  These should be marked by including something like "Do not
 merge to master" or anything that matches gitmerge-skip-regexp (see
 admin/gitmerge.el) in the commit message.
 
-** Other process information
-
 ** Emacs Mailing lists.
 
 Discussion about Emacs development takes place on emacs-devel@gnu.org.
