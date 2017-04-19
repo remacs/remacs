@@ -124,11 +124,13 @@
 (require 'backquote)
 (require 'macroexp)
 (require 'cconv)
+(require 'cl-lib)
 
 ;; During bootstrap, cl-loaddefs.el is not created yet, so loading cl-lib
 ;; doesn't setup autoloads for things like cl-every, which is why we have to
-;; require cl-extra instead (bug#18804).
-(require 'cl-extra)
+;; require cl-extra as well (bug#18804).
+(or (fboundp 'cl-every)
+    (require 'cl-extra))
 
 (or (fboundp 'defsubst)
     ;; This really ought to be loaded already!
