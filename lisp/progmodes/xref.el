@@ -69,7 +69,6 @@
 (require 'cl-lib)
 (require 'eieio)
 (require 'ring)
-(require 'pcase)
 (require 'project)
 
 (eval-when-compile

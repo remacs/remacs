@@ -77,7 +77,6 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'pcase)
 
 (defvar cps--bindings nil)
 (defvar cps--states nil)

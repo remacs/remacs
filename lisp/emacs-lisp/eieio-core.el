@@ -32,7 +32,6 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'pcase)
 (require 'eieio-loaddefs nil t)
 
 ;;;

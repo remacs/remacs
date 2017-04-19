@@ -35,7 +35,6 @@
 
 ;;; Code:
 
-(require 'pcase)
 (eval-when-compile (require 'cl-lib))
 
 
