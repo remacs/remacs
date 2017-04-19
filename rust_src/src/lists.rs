@@ -3,8 +3,8 @@ use std::mem;
 
 use libc;
 
-use lisp::{CHECK_TYPE, LispObject, LispType, Qnil, XTYPE, XUNTAG, wrong_type_argument};
-use remacs_sys::Lisp_Object;
+use lisp::{CHECK_TYPE, LispObject, LispType, Qnil, XTYPE, XUNTAG};
+use remacs_sys::{Lisp_Object, wrong_type_argument};
 
 extern "C" {
     static Qconsp: Lisp_Object;
