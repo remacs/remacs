@@ -1894,6 +1894,9 @@ display has been suspended via window manager settings.
 Under X, Emacs uses the Motif window manager hints to turn off
 decorations.  Some window managers may not honor these hints.
 
+NS builds consider the tool bar to be a decoration, and therefore hide
+it on an undecorated frame.
+
 @vindex override-redirect, a frame parameter
 @item override-redirect
 @cindex override redirect frames
@@ -2846,6 +2849,10 @@ is resized, the relative position of the child frame remains unaltered.
 Hence, resizing either of these frames can hide or reveal parts of the
 child frame.
 
+  NS builds do not clip child frames at the parent frame's edges,
+allowing them to be positioned so they do not obscure the parent
+frame while still being visible themselves.
+
   Usually, moving a parent frame moves along all its child frames and
 their descendants as well, keeping their relative positions unaltered.
 The hook @code{move-frame-functions} (@pxref{Frame Position}) is run for
@@ -2856,12 +2863,13 @@ its parent.  In this case, the position respective to the lower or right
 native edge of the parent frame is usually lost.
 
   A visible child frame always appears on top of its parent frame thus
-obscuring parts of it.  This is comparable to the window-system window
-of a top-level frame which also always appears on top of its parent
-window---the desktop's root window.  When a parent frame is iconified or
-made invisible (@pxref{Visibility of Frames}), its child frames are made
-invisible.  When a parent frame is deiconified or made visible, its
-child frames are made visible.  When a parent frame is about to be
+obscuring parts of it, except on NS builds where it may be positioned
+beneath the parent.  This is comparable to the window-system window of
+a top-level frame which also always appears on top of its parent
+window---the desktop's root window.  When a parent frame is iconified
+or made invisible (@pxref{Visibility of Frames}), its child frames are
+made invisible.  When a parent frame is deiconified or made visible,
+its child frames are made visible.  When a parent frame is about to be
 deleted, (@pxref{Deleting Frames}) its child frames are recursively
 deleted before it.
 
