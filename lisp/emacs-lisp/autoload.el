@@ -164,7 +164,8 @@ expression, in which case we want to handle forms differently."
      ((and (memq car '(easy-mmode-define-global-mode define-global-minor-mode
                        define-globalized-minor-mode defun defmacro
 		       easy-mmode-define-minor-mode define-minor-mode
-                       define-inline cl-defun cl-defmacro cl-defgeneric))
+                       define-inline cl-defun cl-defmacro cl-defgeneric
+                       pcase-defmacro))
            (macrop car)
 	   (setq expand (let ((load-file-name file)) (macroexpand form)))
 	   (memq (car expand) '(progn prog1 defalias)))
