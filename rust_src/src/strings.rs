@@ -4,7 +4,7 @@ use libc;
 
 use lisp::{LispObject, Qnil, SBYTES, SSDATA, STRING_MULTIBYTE, STRINGP, CHECK_STRING};
 use lists::NILP;
-use remacs_sys::Lisp_Object;
+use remacs_sys::{Lisp_Object, EmacsInt};
 
 extern "C" {
     fn make_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
@@ -159,7 +159,7 @@ defun!("base64-decode-string",
 
 fn string_bytes(string: LispObject) -> LispObject {
     CHECK_STRING(string.to_raw());
-    unsafe { LispObject::from_fixnum_unchecked(SBYTES(string) as i64) }
+    unsafe { LispObject::from_fixnum_unchecked(SBYTES(string) as EmacsInt) }
 }
 
 defun!("string-bytes",
