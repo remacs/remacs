@@ -973,14 +973,14 @@ frame_parm_handler ns_frame_parm_handlers[] =
   0, /* x_set_tool_bar_position */
   0, /* x_set_inhibit_double_buffering */
 #ifdef NS_IMPL_COCOA
-  x_set_undecorated, /* x_set_undecorated */
+  x_set_undecorated,
 #else
   0, /*x_set_undecorated */
 #endif
-  x_set_parent_frame, /* x_set_parent_frame */
+  x_set_parent_frame,
   0, /* x_set_skip_taskbar */
   0, /* x_set_no_focus_on_map */
-  0, /* x_set_no_accept_focus */
+  x_set_no_accept_focus,
   x_set_z_group, /* x_set_z_group */
   0, /* x_set_override_redirect */
 };
@@ -1287,6 +1287,8 @@ This function is an internal primitive--use `make-frame' instead.  */)
   store_frame_param (f, Qparent_frame, parent_frame);
 
   x_default_parameter (f, parms, Qz_group, Qnil, NULL, NULL, RES_TYPE_SYMBOL);
+  x_default_parameter (f, parms, Qno_accept_focus, Qnil,
+                       NULL, NULL, RES_TYPE_BOOLEAN);
 
   /* The resources controlling the menu-bar and tool-bar are
      processed specially at startup, and reflected in the mode
@@ -1426,6 +1428,58 @@ x_focus_frame (struct frame *f, bool noactivate)
       [[view window] makeKeyAndOrderFront: view];
       unblock_input ();
     }
+}
+
+static BOOL
+ns_window_is_ancestor (NSWindow *win, NSWindow *candidate)
+/* Test whether CANDIDATE is an ancestor window of WIN. */
+{
+  if (candidate == NULL)
+    return NO;
+  else if (win == candidate)
+    return YES;
+  else
+    return ns_window_is_ancestor(win, [candidate parentWindow]);
+}
+
+DEFUN ("ns-frame-list-z-order", Fns_frame_list_z_order,
+       Sns_frame_list_z_order, 0, 1, 0,
+       doc: /* Return list of Emacs' frames, in Z (stacking) order.
+The optional argument TERMINAL specifies which display to ask about.
+TERMINAL should be either a frame or a display name (a string).  If
+omitted or nil, that stands for the selected frame's display.  Return
+nil if TERMINAL contains no Emacs frame.
+
+As a special case, if TERMINAL is non-nil and specifies a live frame,
+return the child frames of that frame in Z (stacking) order.
+
+Frames are listed from topmost (first) to bottommost (last).  */)
+  (Lisp_Object terminal)
+{
+  NSArray *list = [NSApp orderedWindows];
+  Lisp_Object frames = Qnil;
+
+  if (FRAMEP (terminal) && FRAME_LIVE_P (XFRAME (terminal)))
+    {
+      /* Filter LIST to just those that are ancestors of TERMINAL. */
+      NSWindow *win = [FRAME_NS_VIEW (XFRAME (terminal)) window];
+
+      NSPredicate *ancestor_pred =
+        [NSPredicate predicateWithBlock:^BOOL(id candidate, NSDictionary *bind) {
+            return ns_window_is_ancestor (win, [(NSWindow *)candidate parentWindow]);
+          }];
+
+      list = [[NSApp orderedWindows] filteredArrayUsingPredicate: ancestor_pred];
+    }
+
+  for (NSWindow *win in [list reverseObjectEnumerator])
+    {
+      Lisp_Object frame;
+      XSETFRAME (frame, ((EmacsView *)[win delegate])->emacsframe);
+      frames = Fcons(frame, frames);
+    }
+
+  return frames;
 }
 
 DEFUN ("ns-frame-restack", Fns_frame_restack, Sns_frame_restack, 2, 3, 0,
@@ -3188,6 +3242,7 @@ be used as the image of the icon representing the frame.  */);
   defsubr (&Sns_display_monitor_attributes_list);
   defsubr (&Sns_frame_geometry);
   defsubr (&Sns_frame_edges);
+  defsubr (&Sns_frame_list_z_order);
   defsubr (&Sns_frame_restack);
   defsubr (&Sx_display_mm_width);
   defsubr (&Sx_display_mm_height);

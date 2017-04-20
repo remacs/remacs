@@ -1913,6 +1913,21 @@ x_set_parent_frame (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
 }
 
 void
+x_set_no_accept_focus (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+/*  Set frame F's `no-accept-focus' parameter which, if non-nil, hints
+ * that F's window-system window does not want to receive input focus
+ * via mouse clicks or by moving the mouse into it.
+ *
+ * If non-nil, this may have the unwanted side-effect that a user cannot
+ * scroll a non-selected frame with the mouse.
+ *
+ * Some window managers may not honor this parameter. */
+{
+  if (!EQ (new_value, old_value))
+    FRAME_NO_ACCEPT_FOCUS (f) = !NILP (new_value);
+}
+
+void
 x_set_z_group (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
 /* Set frame F's `z-group' parameter.  If `above', F's window-system
    window is displayed above all windows that do not have the `above'
@@ -6900,7 +6915,7 @@ not_in_argv (NSString *arg)
   maximizing_resize = NO;
 #endif
 
-  win = [[EmacsFSWindow alloc]
+  win = [[EmacsWindow alloc]
             initWithContentRect: r
                       styleMask: (FRAME_UNDECORATED (f)
                                   ? NSWindowStyleMaskBorderless
@@ -8129,6 +8144,11 @@ not_in_argv (NSString *arg)
            NSTRACE_ARG_POINT (point));
 
   [super setFrameTopLeftPoint:point];
+}
+
+- (BOOL)canBecomeKeyWindow
+{
+  return !FRAME_NO_ACCEPT_FOCUS (((EmacsView *)[self delegate])->emacsframe);
 }
 @end /* EmacsWindow */
 

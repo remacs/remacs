@@ -1500,6 +1500,7 @@ keys and their meanings."
 
 (declare-function x-frame-list-z-order "xfns.c" (&optional display))
 (declare-function w32-frame-list-z-order "w32fns.c" (&optional display))
+(declare-function ns-frame-list-z-order "nsfns.m" (&optional display))
 
 (defun frame-list-z-order (&optional display)
   "Return list of Emacs' frames, in Z (stacking) order.
@@ -1517,10 +1518,13 @@ Return nil if DISPLAY contains no Emacs frame."
      ((eq frame-type 'x)
       (x-frame-list-z-order display))
      ((eq frame-type 'w32)
-      (w32-frame-list-z-order display)))))
+      (w32-frame-list-z-order display))
+     ((eq frame-type 'ns)
+      (ns-frame-list-z-order display)))))
 
 (declare-function x-frame-restack "xfns.c" (frame1 frame2 &optional above))
 (declare-function w32-frame-restack "w32fns.c" (frame1 frame2 &optional above))
+(declare-function ns-frame-restack "nsfns.m" (frame1 frame2 &optional above))
 
 (defun frame-restack (frame1 frame2 &optional above)
   "Restack FRAME1 below FRAME2.

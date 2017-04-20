@@ -1212,6 +1212,8 @@ extern void x_set_undecorated (struct frame *f, Lisp_Object new_value,
                                Lisp_Object old_value);
 extern void x_set_parent_frame (struct frame *f, Lisp_Object new_value,
                                 Lisp_Object old_value);
+extern void x_set_no_accept_focus (struct frame *f, Lisp_Object new_value,
+                                   Lisp_Object old_value);
 extern void x_set_z_group (struct frame *f, Lisp_Object new_value,
                            Lisp_Object old_value);
 extern int ns_select (int nfds, fd_set *readfds, fd_set *writefds,
