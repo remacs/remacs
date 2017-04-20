@@ -575,14 +575,9 @@ must be implemented via rewriting, rather than as a function."
 (defvar eshell-last-command-result)     ;Defined in esh-io.el.
 
 (defun eshell-exit-success-p ()
-  "Return non-nil if the last command was \"successful\".
-For a bit of Lisp code, this means a return value of non-nil.
-For an external command, it means an exit code of 0."
-  (if (save-match-data
-	(string-match "#<\\(Lisp object\\|function .*\\)>"
-		      eshell-last-command-name))
-      eshell-last-command-result
-    (= eshell-last-command-status 0)))
+  "Return non-nil if the last command was successful.
+This means an exit code of 0."
+  (= eshell-last-command-status 0))
 
 (defvar eshell--cmd)
 
@@ -1257,6 +1252,7 @@ represent a lisp form; ARGS will be ignored in that case."
         (and result (funcall printer result))
         result)
     (error
+     (setq eshell-last-command-status 1)
      (let ((msg (error-message-string err)))
        (if (and (not form-p)
                 (string-match "^Wrong number of arguments" msg)
