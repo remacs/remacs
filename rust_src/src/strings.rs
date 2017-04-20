@@ -159,7 +159,7 @@ defun!("base64-decode-string",
 
 fn string_bytes(string: LispObject) -> LispObject {
     CHECK_STRING(string.to_raw());
-    unsafe { LispObject::from_fixnum_unchecked(SBYTES(string) as EmacsInt) }
+    unsafe { LispObject::from_fixnum_unchecked(SBYTES(string) as ::remacs_sys::EmacsInt) }
 }
 
 defun!("string-bytes",
