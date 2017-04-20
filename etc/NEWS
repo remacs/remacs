@@ -386,6 +386,10 @@ end of the word).
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
+*** Info menu and index completion uses substring completion by default.
+This can be customized via the `info-menu` category in
+completion-category-override.
+
 +++
 *** The ancestor buffer is shown by default in 3way merges.
 A new option ediff-show-ancestor and a new toggle
