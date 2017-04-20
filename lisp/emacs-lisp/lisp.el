@@ -569,13 +569,9 @@ the one(s) already marked."
                                         ; https://lists.gnu.org/archive/html/bug-gnu-emacs/2017-02/msg00196.html
                     (beginning-of-defun (1- (- arg))))
                   (push-mark end nil t))))))
-  (let (nbobp)
-    (while (progn
-             (setq nbobp (zerop (forward-line -1)))
-             (and (looking-at "^\\s-*$")
-                  nbobp)))
-    (when nbobp
-      (forward-line 1))))
+  (skip-chars-backward "[:space:]\n")
+  (unless (bobp)
+    (forward-line 1)))
 
 (defvar narrow-to-defun-include-comments nil
   "If non-nil, `narrow-to-defun' will also show comments preceding the defun.")
