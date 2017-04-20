@@ -222,13 +222,15 @@ otherwise.  IMAGE-TYPE should be a MIME image type, like
    def)
   svg)
 
-(defun svg-image (svg)
-  "Return an image object from SVG."
-  (create-image
+(defun svg-image (svg &rest props)
+  "Return an image object from SVG.
+PROPS is passed on to `create-image' as its PROPS list."
+  (apply
+   #'create-image
    (with-temp-buffer
      (svg-print svg)
      (buffer-string))
-   'svg t))
+   'svg t props))
 
 (defun svg-insert-image (svg)
   "Insert SVG as an image at point.
