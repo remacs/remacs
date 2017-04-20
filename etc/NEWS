@@ -555,6 +555,13 @@ replaced by the real images asynchronously, which will also now
 respect width/height HTML specs (unless they specify widths/heights
 bigger than the current window).
 
+** Ido
+
+*** The commands 'find-alternate-file-other-window',
+'dired-other-window', 'dired-other-frame', and
+'display-buffer-other-window' are now remapped to Ido equivalents if
+Ido mode is active.
+
 ** Images
 
 +++
