@@ -60,6 +60,15 @@ pub extern "C" fn __rust_allocate(size: usize, align: usize) -> *mut u8 {
 }
 
 #[no_mangle]
+pub extern "C" fn __rust_allocate_zeroed(size: usize, align: usize) -> *mut u8 {
+    unsafe {
+        let addr = unexec_malloc(size as libc::size_t) as usize;
+        assert_eq!(addr & (align - 1), 0);
+        addr as *mut u8
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn __rust_deallocate(ptr: *mut u8, _old_size: usize, align: usize) {
     assert_eq!(ptr as usize & (align - 1), 0);
     unsafe { unexec_free(ptr as *mut libc::c_void) }
