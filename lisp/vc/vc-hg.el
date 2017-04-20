@@ -987,8 +987,7 @@ hg binary."
          repo
          dirstate
          dirstate-attr
-         repo-relative-filename
-         ascii-fname)
+         repo-relative-filename)
     (if (or
          ;; Explicit user disable
          (not vc-hg-parse-hg-data-structures)
@@ -1013,18 +1012,12 @@ hg binary."
          (progn
            (setf repo-relative-filename
                  (file-relative-name truename repo))
-           (setf ascii-fname
-                 (string-as-unibyte
-                  (let (last-coding-system-used)
-                    (encode-coding-string
-                     repo-relative-filename
-                     'us-ascii t))))
            ;; We only try dealing with ASCII filenames
-           (not (equal ascii-fname repo-relative-filename))))
+           (string-match-p "[^[:ascii:]]" repo-relative-filename)))
         'unsupported
       (let* ((dirstate-entry
               (vc-hg--cached-dirstate-search
-               dirstate dirstate-attr ascii-fname))
+               dirstate dirstate-attr repo-relative-filename))
              (state (car dirstate-entry))
              (stat (file-attributes
                     (concat repo repo-relative-filename))))
