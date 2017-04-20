@@ -1,12 +1,5 @@
 NOTES ON COMMITTING TO EMACS'S REPOSITORY    -*- outline -*-
 
-** elpa
-
-This branch does not contain a copy of Emacs, but of the Emacs Lisp
-package archive (elpa.gnu.org).  See admin/notes/elpa for further
-explanation, and the README file in the branch for usage
-instructions.
-
 * Install changes only on one branch, let them get merged elsewhere if needed.
 
 In particular, install bug-fixes only on the release branch (if there
