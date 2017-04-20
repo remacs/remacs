@@ -1,3 +1,202 @@
+2017-04-18  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in indexing the user manual
+
+	* doc/emacs/cmdargs.texi (General Variables): Fix a horrible typo.
+
+2017-04-12  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/menu-bar.el (kill-this-buffer): Doc fix.  (Bug#26466)
+
+2017-04-11  Eli Zaretskii  <eliz@gnu.org>
+
+	Document 'line-pixel-height'
+
+	* doc/lispref/display.texi (Size of Displayed Text): Document
+	line-pixel-height.  Suggested by Tak Kunihiro
+	<tkk@misasa.okayama-u.ac.jp>.  (Bug#26379)
+
+2017-04-07  Hong Xu  <hong@topbug.net>
+
+	* src/search.c (Fre_search_forward, Fre_search_backward): Improve doc (Bug#25193).
+
+2017-04-07  Noam Postavsky  <npostavs@gmail.com>
+
+	Mention that processes start in default-directory (Bug#18515)
+
+	* doc/lispref/processes.texi (Synchronous Processes):
+	(Asynchronous Processes):
+	* lisp/subr.el (start-process):
+	* src/callproc.c (call-process): Mention that the subprocess starts in
+	`default-directory' when local, suggest `start-file-process' and
+	`process-file' otherwise.
+
+2017-04-07  Noam Postavsky  <npostavs@gmail.com>
+
+	* src/xdisp.c (vmessage, message): Clarify commentary.
+
+2017-04-02  Glenn Morris  <rgm@gnu.org>
+
+	Belated fixes for admin.el's M-x make-manuals-dist
+
+	* admin/admin.el (make-manuals-dist-output-variables): Additions.
+	(make-manuals-dist--1): Also copy docstyle.texi.
+
+2017-03-31  Tino Calancha  <tino.calancha@gmail.com>
+
+	default-directory: Remark that it must be a directory name
+
+	* src/buffer.c (default-directory): Update docstring (Bug#26272).
+
+2017-03-31  Tino Calancha  <tino.calancha@gmail.com>
+
+	Delete confuse statement in manual
+
+	* doc/misc/cl.texi (For Clauses): Delete confuse statement
+	and its example (Bug#23550).
+
+2017-03-31  Noam Postavsky  <npostavs@gmail.com>
+
+	Improve packaging documentation
+
+	* doc/lispref/package.texi (Packaging Basics):
+	* doc/lispref/tips.texi (Library Headers): Clarify some header
+	formats, relation between file headers and package
+	attributes (Bug#13281).
+
+2017-03-27  Eric Abrahamsen  <eric@ericabrahamsen.net>
+
+	Expand manual section on quitting windows
+
+	* doc/lispref/windows.texi (Quitting Windows): Provide more
+	  information about the elements of the quit-restore window parameter,
+	  and how they affect the behavior of quit-restore-window.
+
+2017-03-26  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix docstring of dabbrev-abbrev-char-regexp
+
+	* lisp/dabbrev.el (dabbrev-abbrev-char-regexp): Using a value of nil
+	is equivalent to "\\sw\\|\\s_", and has no special behavior.  If the
+	previous character doesn't match, we search backwards for one that
+	does, not throw an error.  Replace Lisp example with C based one to
+	make it clear that "symbol" means a sequence of word and symbol
+	constituent characters, not a Lisp symbol (Bug#358).
+
+2017-03-26  Johan Claesson  <johanclaesson@bredband.net>  (tiny change)
+
+	* doc/misc/cl.texi (Iteration Clauses): Clarify example (Bug#19515).
+
+2017-03-25  Eli Zaretskii  <eliz@gnu.org>
+
+	;* doc/misc/info.texi (Choose menu subtopic): Improve indexing.  (Bug#26236)
+
+2017-03-21  Noam Postavsky  <npostavs@gmail.com>
+
+	Narrow scope of modification hook renabling in org-src fontification
+
+	Modification hooks should be enabled while modifying text in the
+	org-src temp buffer, but in 2017-01-29 "Call modification hooks in
+	org-src fontify buffers" the hooks were enabled also for modifications
+	to the original org buffer.  This causes fontification errors when
+	combined with certain packages, as reported in
+	http://lists.gnu.org/archive/html/emacs-orgmode/2017-03/msg00420.html.
+
+	* lisp/org/org-src.el (org-src-font-lock-fontify-block): Reduce scope
+	of inhibit-modification-hooks let-binding.
+
+2017-03-17  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of interactive "r".
+
+	* doc/lispref/commands.texi (Interactive Codes): Mention that mark
+	must be set for "r" to work.
+
+2017-03-17  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Fix bug: Range-check integer ‘alpha’ frame parm value
+
+	Typo introduced 2013-04-01, "Prefer < to >
+	in range checks such as 0 <= i && i < N".
+
+	* src/frame.c (x_set_alpha): Use ‘ialpha’, not ‘alpha’.
+
+2017-03-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* etc/PROBLEMS: Say that HP-UX cc doesn't work.
+
+2017-03-14  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix duplicate wording in Emacs manual
+
+	* doc/emacs/programs.texi (Which Function): Delete duplicate
+	wording.  (Bug#26098)
+
+2017-03-14  Hong Xu  <hong@topbug.net>
+
+	* lisp/paren.el (show-paren--default, show-paren-function): Add docstring.
+
+2017-03-13  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix wording in Emacs manual
+
+	* doc/emacs/text.texi (Paragraphs): Fix a garbled sentence.
+	(Bug#26086)
+
+2017-03-11  Eli Zaretskii  <eliz@gnu.org>
+
+	Document how to customize input methods
+
+	* doc/emacs/mule.texi (Input Methods): Document how to customize
+	input methods.
+
+2017-03-11  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/net/eww.el (eww-reload): Doc fix.  (Bug#25981)
+
+2017-03-06  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix warning message about native completion (Bug#25984)
+
+	* lisp/progmodes/python.el (python-shell-completion-native-turn-on-maybe):
+	The relevant variable is `python-shell-completion-native-enable'.
+
+2017-03-04  Eli Zaretskii  <eliz@gnu.org>
+
+	Clarify documentation of 'raise' and 'height' display specs
+
+	* doc/lispref/display.texi (Other Display Specs): Clarify the
+	effect of 'height' display spec on the following 'raise'.
+	(Bug#25824)
+
+2017-03-04  Eli Zaretskii  <eliz@gnu.org>
+
+	Mention problems with GPaste in PROBLEMS
+
+	* etc/PROBLEMS (GPaste): Mention the problem in yanking caused by
+	GPaste, and its solution.  (Bug#25902)
+
+2017-02-25  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix doc strings in info.el
+
+	* lisp/info.el (Info-selection-hook, Info-mode-hook)
+	(Info-edit-mode-hook): Doc fixes.  (Bug#25794)
+
+2017-02-25  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix doc string of 'posn-at-point'
+
+	* src/keyboard.c (Fposn_at_point): Clarify the doc string.
+	(Bug#25796)
+
+2017-02-24  Tino Calancha  <tino.calancha@gmail.com>
+
+	Documentation fix in elisp reference manual
+
+	* doc/lispref/macros.texi (Defining Macros): Drop redundant mention
+	on 'declare' forms (Bug#25846).
+
 2017-02-18  Noam Postavsky  <npostavs@gmail.com>
 
 	* lisp/woman.el (woman): Fix docstring prefix arg description.
@@ -35641,7 +35840,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit ec4226d81074751c105264a3a3383c48d0a05e41 (inclusive).
+commit 56a4461a48d5803fbc979924475da4b3621ea0f5 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
