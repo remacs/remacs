@@ -2047,6 +2047,12 @@ This is like `cl-flet', but for macros instead of functions.
       cl--old-macroexpand
     (symbol-function 'macroexpand)))
 
+(defun cl--symbol-macro-key (sym)
+  "Return the key used in `macroexpand-all-environment' for symbol macro SYM."
+  ;; In the past we've used `symbol-name' instead, but that doesn't
+  ;; preserve the `eq'uality between different symbols of the same name.
+  `(:cl-symbol-macro . ,sym))
+
 (defun cl--sm-macroexpand (exp &optional env)
   "Special macro expander used inside `cl-symbol-macrolet'.
 This function replaces `macroexpand' during macro expansion
@@ -2059,8 +2065,10 @@ except that it additionally expands symbol macros."
           (pcase exp
             ((pred symbolp)
              ;; Perform symbol-macro expansion.
-             (when (cdr (assq exp env))
-               (setq exp (cadr (assq exp env)))))
+             ;; FIXME: Calling `cl--symbol-macro-key' for every var reference
+             ;; is a bit more costly than I'd like.
+             (when (cdr (assoc (cl--symbol-macro-key exp) env))
+               (setq exp (cadr (assoc (cl--symbol-macro-key exp) env)))))
             (`(setq . ,_)
              ;; Convert setq to setf if required by symbol-macro expansion.
              (let* ((args (mapcar (lambda (f) (cl--sm-macroexpand f env))
@@ -2078,7 +2086,7 @@ except that it additionally expands symbol macros."
              (let ((letf nil) (found nil) (nbs ()))
                (dolist (binding bindings)
                  (let* ((var (if (symbolp binding) binding (car binding)))
-                        (sm (assq var env)))
+                        (sm (assoc (cl--symbol-macro-key var) env)))
                    (push (if (not (cdr sm))
                              binding
                            (let ((nexp (cadr sm)))
@@ -2149,7 +2157,8 @@ by EXPANSION, and (setq NAME ...) will act like (setf EXPANSION ...).
             (let ((expansion
                    ;; FIXME: For N bindings, this will traverse `body' N times!
                    (macroexpand-all (macroexp-progn body)
-                                    (cons (list (caar bindings)
+                                    (cons (list (cl--symbol-macro-key
+                                                 (caar bindings))
                                                 (cl-cadar bindings))
                                           macroexpand-all-environment))))
               (if (or (null (cdar bindings)) (cl-cddar bindings))

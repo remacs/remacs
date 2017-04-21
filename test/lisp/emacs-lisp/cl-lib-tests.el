@@ -495,7 +495,6 @@
 
 (ert-deftest cl-lib-symbol-macrolet ()
   ;; bug#26325
-  :expected-result :failed
   (should (equal (cl-flet ((f (x) (+ x 5)))
                    (let ((x 5))
                      (f (+ x 6))))
