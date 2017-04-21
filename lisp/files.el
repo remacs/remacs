@@ -29,6 +29,7 @@
 ;;; Code:
 
 (eval-when-compile
+  (require 'cl-lib)
   (require 'pcase)
   (require 'easy-mmode)) ; For `define-minor-mode'.
 
@@ -7031,7 +7032,12 @@ only these files will be asked to be saved."
            (when (and visit buffer-file-name)
              (setq buffer-file-name (concat "/:" buffer-file-name))))))
       (`unquote-then-quote
-       (let ((buffer-file-name (substring buffer-file-name 2)))
+       (cl-letf* ((buffer (or (car arguments) (current-buffer)))
+                  ((buffer-local-value 'buffer-file-name buffer)
+                   (substring (buffer-file-name buffer) 2)))
+         ;; `unquote-then-quote' is only used for the
+         ;; `verify-visited-file-modtime' action, which takes a buffer
+         ;; as only optional argument.
          (apply operation arguments)))
       (_
        (apply operation arguments)))))
