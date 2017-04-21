@@ -576,6 +576,13 @@ Lisp font lock syntactic face function."
               font-lock-string-face))))
     font-lock-comment-face))
 
+(defun lisp-adaptive-fill ()
+  "Return fill prefix found at point.
+Value for `adaptive-fill-function'."
+  ;; Adaptive fill mode gets the fill wrong for a one-line paragraph made of
+  ;; a single docstring.  Let's fix it here.
+  (if (looking-at "\\s-+\"[^\n\"]+\"\\s-*$") ""))
+
 (defun lisp-mode-variables (&optional lisp-syntax keywords-case-insensitive
                                       elisp)
   "Common initialization routine for lisp modes.
@@ -587,10 +594,7 @@ font-lock keywords will not be case sensitive."
     (set-syntax-table lisp-mode-syntax-table))
   (setq-local paragraph-ignore-fill-prefix t)
   (setq-local fill-paragraph-function 'lisp-fill-paragraph)
-  ;; Adaptive fill mode gets the fill wrong for a one-line paragraph made of
-  ;; a single docstring.  Let's fix it here.
-  (setq-local adaptive-fill-function
-	      (lambda () (if (looking-at "\\s-+\"[^\n\"]+\"\\s-*$") "")))
+  (setq-local adaptive-fill-function #'lisp-adaptive-fill)
   ;; Adaptive fill mode gets in the way of auto-fill,
   ;; and should make no difference for explicit fill
   ;; because lisp-fill-paragraph should do the job.
