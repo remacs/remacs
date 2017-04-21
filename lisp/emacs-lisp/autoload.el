@@ -598,7 +598,8 @@ Don't try to split prefixes that are already longer than that.")
               (lambda (x)
                 (let ((prefix (car x)))
                   (if (or (> (length prefix) 2) ;Long enough!
-                          (string-match ".[[:punct:]]\\'" prefix))
+                          (and (eq (length prefix) 2)
+                               (string-match "[[:punct:]]" prefix)))
                       prefix
                     ;; Some packages really don't follow the rules.
                     ;; Drop the most egregious cases such as the
