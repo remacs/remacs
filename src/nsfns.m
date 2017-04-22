@@ -1456,27 +1456,24 @@ return the child frames of that frame in Z (stacking) order.
 Frames are listed from topmost (first) to bottommost (last).  */)
   (Lisp_Object terminal)
 {
-  NSArray *list = [NSApp orderedWindows];
   Lisp_Object frames = Qnil;
+  NSWindow *parent = nil;
 
   if (FRAMEP (terminal) && FRAME_LIVE_P (XFRAME (terminal)))
-    {
-      /* Filter LIST to just those that are ancestors of TERMINAL. */
-      NSWindow *win = [FRAME_NS_VIEW (XFRAME (terminal)) window];
+    parent = [FRAME_NS_VIEW (XFRAME (terminal)) window];
+  else if (!NILP (terminal))
+    return Qnil;
 
-      NSPredicate *ancestor_pred =
-        [NSPredicate predicateWithBlock:^BOOL(id candidate, NSDictionary *bind) {
-            return ns_window_is_ancestor (win, [(NSWindow *)candidate parentWindow]);
-          }];
-
-      list = [[NSApp orderedWindows] filteredArrayUsingPredicate: ancestor_pred];
-    }
-
-  for (NSWindow *win in [list reverseObjectEnumerator])
+  for (NSWindow *win in [[NSApp orderedWindows] reverseObjectEnumerator])
     {
       Lisp_Object frame;
-      XSETFRAME (frame, ((EmacsView *)[win delegate])->emacsframe);
-      frames = Fcons(frame, frames);
+
+      /* Check against [win parentWindow] so that it doesn't match itself. */
+      if (parent == nil || ns_window_is_ancestor (parent, [win parentWindow]))
+        {
+          XSETFRAME (frame, ((EmacsView *)[win delegate])->emacsframe);
+          frames = Fcons(frame, frames);
+        }
     }
 
   return frames;

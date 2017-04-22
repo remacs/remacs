@@ -1012,7 +1012,6 @@ update_frame_tool_bar (struct frame *f)
 {
   int i, k = 0;
   EmacsView *view = FRAME_NS_VIEW (f);
-  NSWindow *window = [view window];
   EmacsToolbar *toolbar = [view toolbar];
   int oldh;
 
