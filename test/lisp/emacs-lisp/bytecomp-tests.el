@@ -280,7 +280,13 @@
                          (while l
                            a (setq l nil))
                          'correct)
-                        (t 'incorrect))))
+                        (t 'incorrect)))
+    (let ((a))
+      (cond ((eq a 'foo) 'incorrect)
+            (t)))
+    (let ((a))
+      (cond ((eq a 'foo) 'incorrect)
+            ('correct))))
   "List of expression for test.
 Each element will be executed by interpreter and with
 bytecompiled code, and their results compared.")
