@@ -2103,6 +2103,11 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	    printchar ('>', printcharfun);
 	    break;
 	  }
+
+        case Lisp_Misc_Module_Function:
+          print_string (module_format_fun_env (XMODULE_FUNCTION (obj)),
+                        printcharfun);
+          break;
 #endif
 
         case Lisp_Misc_Finalizer:

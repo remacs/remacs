@@ -233,6 +233,8 @@ for example, (type-of 1) returns `integer'.  */)
         case Lisp_Misc_Finalizer:
           return Qfinalizer;
 #ifdef HAVE_MODULES
+        case Lisp_Misc_Module_Function:
+          return Qmodule_function;
 	case Lisp_Misc_User_Ptr:
 	  return Quser_ptr;
 #endif
@@ -3729,6 +3731,7 @@ syms_of_data (void)
   DEFSYM (Qoverlay, "overlay");
   DEFSYM (Qfinalizer, "finalizer");
 #ifdef HAVE_MODULES
+  DEFSYM (Qmodule_function, "module-function");
   DEFSYM (Quser_ptr, "user-ptr");
 #endif
   DEFSYM (Qfloat, "float");

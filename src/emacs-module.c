@@ -62,10 +62,6 @@ enum
 /* Function prototype for the module init function.  */
 typedef int (*emacs_init_function) (struct emacs_runtime *);
 
-/* Function prototype for the module Lisp functions.  */
-typedef emacs_value (*emacs_subr) (emacs_env *, ptrdiff_t,
-				   emacs_value [], void *);
-
 /* Function prototype for module user-pointer finalizers.  These
    should not throw C++ exceptions, so emacs-module.h declares the
    corresponding interfaces with EMACS_NOEXCEPT.  There is only C code
@@ -102,7 +98,6 @@ struct emacs_runtime_private
 
 struct module_fun_env;
 
-static Lisp_Object module_format_fun_env (const struct module_fun_env *);
 static Lisp_Object value_to_lisp (emacs_value);
 static emacs_value lisp_to_value (Lisp_Object);
 static enum emacs_funcall_exit module_non_local_exit_check (emacs_env *);
@@ -182,22 +177,6 @@ static emacs_value const module_nil = 0;
       return retval;							\
     }									\
   do { } while (false)
-
-
-/* Function environments.  */
-
-/* A function environment is an auxiliary structure used by
-   `module_make_function' to store information about a module
-   function.  It is stored in a save pointer and retrieved by
-   `internal--module-call'.  Its members correspond to the arguments
-   given to `module_make_function'.  */
-
-struct module_fun_env
-{
-  ptrdiff_t min_arity, max_arity;
-  emacs_subr subr;
-  void *data;
-};
 
 
 /* Implementation of runtime and environment functions.
@@ -382,14 +361,13 @@ module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
 	     : min_arity <= max_arity)))
     xsignal2 (Qinvalid_arity, make_number (min_arity), make_number (max_arity));
 
-  /* FIXME: This should be freed when envobj is GC'd.  */
-  struct module_fun_env *envptr = xmalloc (sizeof *envptr);
+  Lisp_Object envobj = make_module_function ();
+  struct Lisp_Module_Function *envptr = XMODULE_FUNCTION (envobj);
   envptr->min_arity = min_arity;
   envptr->max_arity = max_arity;
   envptr->subr = subr;
   envptr->data = data;
 
-  Lisp_Object envobj = make_save_ptr (envptr);
   Lisp_Object doc = Qnil;
   if (documentation)
     {
@@ -677,17 +655,8 @@ usage: (module-call ENVOBJ &rest ARGLIST)   */)
   (ptrdiff_t nargs, Lisp_Object *arglist)
 {
   Lisp_Object envobj = arglist[0];
-  /* FIXME: Rather than use a save_value, we should create a new object type.
-     Making save_value visible to Lisp is wrong.  */
-  CHECK_TYPE (SAVE_VALUEP (envobj), Qsave_value_p, envobj);
-  struct Lisp_Save_Value *save_value = XSAVE_VALUE (envobj);
-  CHECK_TYPE (save_type (save_value, 0) == SAVE_POINTER, Qsave_pointer_p, envobj);
-  /* FIXME: We have no reason to believe that XSAVE_POINTER (envobj, 0)
-     is a module_fun_env pointer.  If some other part of Emacs also
-     exports save_value objects to Elisp, than we may be getting here this
-     other kind of save_value which will likely hold something completely
-     different in this field.  */
-  struct module_fun_env *envptr = XSAVE_POINTER (envobj, 0);
+  CHECK_TYPE (MODULE_FUNCTIONP (envobj), Qmodule_function_p, envobj);
+  struct Lisp_Module_Function *envptr = XMODULE_FUNCTION (envobj);
   EMACS_INT len = nargs - 1;
   eassume (0 <= envptr->min_arity);
   if (! (envptr->min_arity <= len
@@ -976,10 +945,12 @@ module_handle_throw (emacs_env *env, Lisp_Object tag_val)
 
 /* Return a string object that contains a user-friendly
    representation of the function environment.  */
-static Lisp_Object
-module_format_fun_env (const struct module_fun_env *env)
+Lisp_Object
+module_format_fun_env (const struct Lisp_Module_Function *env)
 {
   /* Try to print a function name if possible.  */
+  /* FIXME: Move this function into print.c, then use prin1-to-string
+     above.  */
   const char *path, *sym;
   static char const noaddr_format[] = "#<module function at %p>";
   char buffer[sizeof noaddr_format + INT_STRLEN_BOUND (intptr_t) + 256];
@@ -1048,8 +1019,7 @@ syms_of_module (void)
      code or modules should not access it.  */
   Funintern (Qmodule_refs_hash, Qnil);
 
-  DEFSYM (Qsave_value_p, "save-value-p");
-  DEFSYM (Qsave_pointer_p, "save-pointer-p");
+  DEFSYM (Qmodule_function_p, "module-function-p");
 
   defsubr (&Smodule_load);
 
