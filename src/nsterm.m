@@ -6966,7 +6966,7 @@ not_in_argv (NSString *arg)
                      ordered: NSWindowAbove];
     }
 
-  if (!NILP (FRAME_Z_GROUP (f)))
+  if (FRAME_Z_GROUP (f) != z_group_none)
       win.level = NSNormalWindowLevel
         + (FRAME_Z_GROUP_BELOW (f) ? -1 : 1);
 
