@@ -4066,8 +4066,8 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
                         ;; discard duplicate clauses
                         (not (assq obj2 cases)))
                    (push (list (if (consp obj2) (eval obj2) obj2) body) cases)
-                 (if (eq condition t)
-                     (progn (push (list 'default body) cases)
+                 (if (and (macroexp-const-p condition) condition)
+                     (progn (push (list 'default (or body `(,condition))) cases)
                             (throw 'break t))
                    (setq ok nil)
                    (throw 'break nil))))))
