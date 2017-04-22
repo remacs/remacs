@@ -6,6 +6,7 @@ use lisp;
 use lisp::{LispObject, Qarith_error, XINT, make_number, CHECK_TYPE, Qnumberp, LispType};
 use eval::xsignal0;
 use remacs_sys::{EmacsInt, Lisp_Object};
+use remacs_macros::{lisp_fn, lisp_doc};
 
 fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
     let x = lisp::check_number_coerce_marker(x);
@@ -189,54 +190,35 @@ fn arith_driver(code: ArithOp, args: &mut [LispObject]) -> LispObject {
     make_number(accum)
 }
 
+#[lisp_fn(name = "+")]
+#[lisp_doc("Return sum of any number of arguments, which are numbers or markers")]
+#[lisp_doc("(fn &rest NUMBERS-OR-MARKERS)")]
 fn plus(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Add, args)
 }
 
-defun_many!("+",
-            Fplus,
-            Splus,
-            plus,
-            0,
-            ptr::null(),
-            "Return sum of any number of arguments, which are numbers or markers.
-
-(fn &rest \
-             NUMBERS-OR-MARKERS)");
-
+#[lisp_fn(name = "-")]
+#[lisp_doc("Negate number or subtract numbers or markers and return the result.")]
+#[lisp_doc("With one arg, negates it. With more than one arg, subtracts all but")]
+#[lisp_doc("the first from the first")]
+#[lisp_doc("(fn &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)")]
 fn minus(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Sub, args)
 }
 
-defun_many!("-",
-            Fminus,
-            Sminus,
-            minus,
-            0,
-            ptr::null(),
-            "Negate number or subtract numbers or markers and return the result.
-With one arg, \
-             negates it.  With more than one arg,
-subtracts all but the first from the first.
-
-\
-             (fn &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)");
-
+#[lisp_fn(name = "*")]
+#[lisp_doc("Return product of any number of arguments, which are numbers or markers.")]
+#[lisp_doc("(fn &optional NUMBER-OR-MARKERS)")]
 fn times(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Mult, args)
 }
 
-defun_many!("*",
-            Ftimes,
-            Stimes,
-            times,
-            0,
-            ptr::null(),
-            "Return product of any number of arguments, which are numbers or markers.
-
-(fn \
-             &optional NUMBER-OR-MARKERS)");
-
+#[lisp_fn(name = "/", min = "1")]
+#[lisp_doc("Divide number by divisors and return the result.")]
+#[lisp_doc("With two or more arguments, return first argument divided by the rest.")]
+#[lisp_doc("With one argument, return 1 divided by te argument.")]
+#[lisp_doc("The arguments must be numbers or markers")]
+#[lisp_doc("(fn NUMBER &rest DIVISORS)")]
 fn quo(args: &mut [LispObject]) -> LispObject {
     for argnum in 2..args.len() {
         let arg = args[argnum];
@@ -256,104 +238,49 @@ fn quo(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Div, args)
 }
 
-defun_many!("/",
-            Fquo,
-            Squo,
-            quo,
-            1,
-            ptr::null(),
-            "Divide number by divisors and return the result.
-With two or more arguments, return \
-             first argument divided by the rest.
-With one argument, return 1 divided by the \
-             argument.
-The arguments must be numbers or markers.
-
-(fn NUMBER &rest DIVISORS)");
-
+#[lisp_fn(name = "logand")]
+#[lisp_doc("Return bitwise-and of all the arguments.")]
+#[lisp_doc("Arguments may be integers, or markers, converted to integers.")]
 fn logand(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Logand, args)
 }
 
-defun_many!("logand",
-            Flogand,
-            Slogand,
-            logand,
-            0,
-            ptr::null(),
-            "Return bitwise-and of all the arguments.
-Arguments may be integers, or markers \
-             converted to integers.
-
-(fn &rest INTS-OR-MARKERS)");
-
+#[lisp_fn(name = "logior")]
+#[lisp_doc("Return bitwise-or of all the arguments.")]
+#[lisp_doc("Arguments may be integers, or markers converted to integers.")]
+#[lisp_doc("(fn &rest INTS-OR-MARKERS)")]
 fn logior(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Logior, args)
 }
 
-defun_many!("logior",
-            Flogior,
-            Slogior,
-            logior,
-            0,
-            ptr::null(),
-            "Return bitwise-or of all the arguments.
-Arguments may be integers, or markers \
-             converted to integers.
-
-(fn &rest INTS-OR-MARKERS)");
-
+#[lisp_fn(name = "logxor")]
+#[lisp_doc("Return bitwise-exclusive-or of all the arguments.")]
+#[lisp_doc("Arguments may be integers, or markers converted to integers.")]
+#[lisp_doc("(fn &rest INTS-OR-MARKERS)")]
 fn logxor(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Logxor, args)
 }
 
-defun_many!("logxor",
-            Flogxor,
-            Slogxor,
-            logxor,
-            0,
-            ptr::null(),
-            "Return bitwise-exclusive-or of all the arguments.
-Arguments may be integers, or \
-             markers converted to integers.
-
-(fn &rest INTS-OR-MARKERS)");
-
+#[lisp_fn(name = "max", min = "1")]
+#[lisp_doc("Return largest of all the arguments (which must be numbers or markers).")]
+#[lisp_doc("The value is always a number; markers are converted to numbers.")]
+#[lisp_doc("(fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)")]
 fn max(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Max, args)
 }
 
-defun_many!("max",
-            Fmax,
-            Smax,
-            max,
-            1,
-            ptr::null(),
-            "Return largest of all the arguments (which must be numbers or markers).
-The value \
-             is always a number; markers are converted to numbers.
-
-(fn NUMBER-OR-MARKER &rest \
-             NUMBERS-OR-MARKERS)");
-
+#[lisp_fn(name = "min", min = "1")]
+#[lisp_doc("Return smallest of all the arguments (which must be numbers or markers).")]
+#[lisp_doc("The value is always a number; markers are converted to numbers.")]
+#[lisp_doc("fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS")]
 fn min(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Min, args)
 }
 
-defun_many!("min",
-            Fmin,
-            Smin,
-            min,
-            1,
-            ptr::null(),
-            "Return smallest of all the arguments (which must be numbers or markers).
-The value \
-             is always a number; markers are converted to numbers.
 
-(fn NUMBER-OR-MARKER &rest \
-             NUMBERS-OR-MARKERS)");
-
-
+#[lisp_fn(name = "abs", min = "1")]
+#[lisp_doc("Return the absolute value of ARG")]
+#[lisp_doc("(fn ARG)")]
 fn abs(obj: LispObject) -> LispObject {
     CHECK_TYPE(obj.is_number(),
                LispObject::from_raw(unsafe { Qnumberp }),
@@ -363,16 +290,4 @@ fn abs(obj: LispObject) -> LispObject {
         LispType::Lisp_Float => LispObject::from_float(obj.to_float().unwrap().abs()),
         _ => make_number(obj.to_fixnum().unwrap().abs() as EmacsInt),
     }
-
 }
-
-defun!("abs",
-       Fabs(obj),
-       Sabs,
-       abs,
-       1,
-       1,
-       ptr::null(),
-       "Return the absolute value of ARG.
-
-(fn ARG)");

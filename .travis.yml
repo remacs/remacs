@@ -1,8 +1,6 @@
 language: rust
 cache: cargo
 rust:
-  - stable
-  - beta
   - nightly
 os:
   - linux
@@ -27,14 +25,3 @@ script:
 notifications:
   fast_finish: true
   email: false
-
-matrix:
-  exclude:
-    # OS X only builds on nightly, see https://github.com/Wilfred/remacs/pull/112
-    - os: osx
-      rust: stable
-    - os: osx
-      rust: beta
-    # Don't build nightly on linux, to keep our build quicker.
-    - os: linux
-      rust: nightly
