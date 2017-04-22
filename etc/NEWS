@@ -383,6 +383,12 @@ Strings such as ΌΣΟΣ are now correctly converted to Όσος when
 capitalized instead of incorrect Όσοσ (compare lowercase sigma at the
 end of the word).
 
+** Emacs can now auto-save buffers to visited files in a more robust
+manner via the new mode 'auto-save-visited-mode'.  Unlike
+'auto-save-visited-file-name', this mode uses the normal saving
+procedure and therefore obeys saving hooks.
+'auto-save-visited-file-name' is now obsolete.
+
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
 

@@ -393,6 +393,46 @@ ignored."
   :initialize 'custom-initialize-delay
   :version "21.1")
 
+(defvar auto-save--timer nil "Timer for `auto-save-visited-mode'.")
+
+(defcustom auto-save-visited-interval 5
+  "Interval in seconds for `auto-save-visited-mode'.
+If `auto-save-visited-mode' is enabled, Emacs will save all
+buffers visiting a file to the visited file after it has been
+idle for `auto-save-visited-interval' seconds."
+  :group 'auto-save
+  :type 'number
+  :version "26.1"
+  :set (lambda (symbol value)
+         (set-default symbol value)
+         (when auto-save--timer
+           (timer-set-idle-time auto-save--timer value :repeat))))
+
+(define-minor-mode auto-save-visited-mode
+  "Toggle automatic saving to file-visiting buffers on or off.
+With a prefix argument ARG, enable regular saving of all buffers
+visiting a file if ARG is positive, and disable it otherwise.
+Unlike `auto-save-mode', this mode will auto-save buffer contents
+to the visited files directly and will also run all save-related
+hooks.  See Info node `Saving' for details of the save process.
+
+If called from Lisp, enable the mode if ARG is omitted or nil,
+and toggle it if ARG is `toggle'."
+  :group 'auto-save
+  :global t
+  (when auto-save--timer (kill-timer auto-save--timer))
+  (setq auto-save--timer
+        (when auto-save-visited-mode
+          (run-with-idle-timer
+           auto-save-visited-interval :repeat
+           #'save-some-buffers :no-prompt
+           (lambda ()
+             (not (and buffer-auto-save-file-name
+                       auto-save-visited-file-name)))))))
+
+(make-obsolete-variable 'auto-save-visited-file-name 'auto-save-visited-mode
+                        "Emacs 26.1")
+
 (defcustom save-abbrevs t
   "Non-nil means save word abbrevs too when files are saved.
 If `silently', don't ask the user before saving."
