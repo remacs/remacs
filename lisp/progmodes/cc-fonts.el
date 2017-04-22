@@ -900,7 +900,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
     (when (memq prop '(c-decl-id-start c-decl-type-start))
       (c-forward-syntactic-ws limit)
       (c-font-lock-declarators limit t (eq prop 'c-decl-type-start)
-			       (c-bs-at-toplevel-p (point)))))
+			       (not (c-bs-at-toplevel-p (point))))))
 
   (setq c-font-lock-context ;; (c-guess-font-lock-context)
 	(save-excursion

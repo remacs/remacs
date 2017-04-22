@@ -5681,7 +5681,7 @@ comment at the start of cc-engine.el for more info."
 	;; Whether the last position returned from `c-find-decl-prefix-search'
 	;; is at the top-level (including directly in a class or namespace,
 	;; etc.).
-	cfd-top-level)
+	(cfd-top-level (c-bs-at-toplevel-p (point))))
 
     ;; Initialize by finding a syntactically relevant start position
     ;; before the point, and do the first `c-decl-prefix-or-start-re'
@@ -8379,7 +8379,11 @@ comment at the start of cc-engine.el for more info."
 		   (c-simple-skip-symbol-backward))
 		 (>= (point) type-start)
 		 (equal (buffer-substring-no-properties (point) end-1)
-			name))
+			name)
+		 (goto-char end-2)
+		 (progn
+		   (c-forward-syntactic-ws)
+		   (eq (char-after) ?\()))
 	    ;; It is a (con|de)structor name.  In that case the
 	    ;; declaration is typeless so zap out any preceding
 	    ;; identifier(s) that we might have taken as types.
