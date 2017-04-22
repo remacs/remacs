@@ -30,6 +30,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "keyboard.h"
 #include "syssignal.h"
+#include "thread.h"
 
 #include <intprops.h>
 #include <verify.h>
@@ -94,7 +95,7 @@ struct module_fun_env;
 static Lisp_Object value_to_lisp (emacs_value);
 static emacs_value lisp_to_value (Lisp_Object);
 static enum emacs_funcall_exit module_non_local_exit_check (emacs_env *);
-static void check_main_thread (void);
+static void check_thread (void);
 static void initialize_environment (emacs_env *, struct emacs_env_private *);
 static void finalize_environment (emacs_env *);
 static void finalize_environment_unwind (void *);
@@ -181,7 +182,7 @@ static emacs_value const module_nil = 0;
 
    1. The first argument should always be a pointer to emacs_env.
 
-   2. Each function should first call check_main_thread.  Note that
+   2. Each function should first call check_thread.  Note that
       this function is a no-op unless Emacs was built with
       --enable-checking.
 
@@ -215,7 +216,7 @@ static emacs_value const module_nil = 0;
 
 #define MODULE_FUNCTION_BEGIN_NO_CATCH(error_retval)                    \
   do {                                                                  \
-    check_main_thread ();                                               \
+    check_thread ();                                                    \
     if (module_non_local_exit_check (env) != emacs_funcall_exit_return) \
       return error_retval;                                              \
   } while (false)
@@ -241,8 +242,9 @@ CHECK_USER_PTR (Lisp_Object obj)
 static emacs_env *
 module_get_environment (struct emacs_runtime *ert)
 {
-  check_main_thread ();
-  return &ert->private_members->pub;
+  emacs_env *env = &ert->private_members->pub;
+  check_thread ();
+  return env;
 }
 
 /* To make global refs (GC-protected global values) keep a hash that
@@ -303,21 +305,21 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
 static enum emacs_funcall_exit
 module_non_local_exit_check (emacs_env *env)
 {
-  check_main_thread ();
+  check_thread ();
   return env->private_members->pending_non_local_exit;
 }
 
 static void
 module_non_local_exit_clear (emacs_env *env)
 {
-  check_main_thread ();
+  check_thread ();
   env->private_members->pending_non_local_exit = emacs_funcall_exit_return;
 }
 
 static enum emacs_funcall_exit
 module_non_local_exit_get (emacs_env *env, emacs_value *sym, emacs_value *data)
 {
-  check_main_thread ();
+  check_thread ();
   struct emacs_env_private *p = env->private_members;
   if (p->pending_non_local_exit != emacs_funcall_exit_return)
     {
@@ -332,7 +334,7 @@ module_non_local_exit_get (emacs_env *env, emacs_value *sym, emacs_value *data)
 static void
 module_non_local_exit_signal (emacs_env *env, emacs_value sym, emacs_value data)
 {
-  check_main_thread ();
+  check_thread ();
   if (module_non_local_exit_check (env) == emacs_funcall_exit_return)
     module_non_local_exit_signal_1 (env, value_to_lisp (sym),
 				    value_to_lisp (data));
@@ -341,7 +343,7 @@ module_non_local_exit_signal (emacs_env *env, emacs_value sym, emacs_value data)
 static void
 module_non_local_exit_throw (emacs_env *env, emacs_value tag, emacs_value value)
 {
-  check_main_thread ();
+  check_thread ();
   if (module_non_local_exit_check (env) == emacs_funcall_exit_return)
     module_non_local_exit_throw_1 (env, value_to_lisp (tag),
 				   value_to_lisp (value));
@@ -724,12 +726,13 @@ module_function_arity (const struct Lisp_Module_Function *const function)
 /* Helper functions.  */
 
 static void
-check_main_thread (void)
+check_thread (void)
 {
+  eassert (current_thread != NULL);
 #ifdef HAVE_PTHREAD
-  eassert (pthread_equal (pthread_self (), main_thread_id));
+  eassert (pthread_equal (pthread_self (), current_thread->thread_id));
 #elif defined WINDOWSNT
-  eassert (GetCurrentThreadId () == dwMainThreadId);
+  eassert (GetCurrentThreadId () == current_thread->thread_id);
 #endif
 }
 
