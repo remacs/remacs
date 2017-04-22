@@ -3476,6 +3476,8 @@ if test "${HAVE_MODULES}" = yes; then
 fi
 AC_SUBST(MODULES_OBJ)
 AC_SUBST(LIBMODULES)
+AC_SUBST(HAVE_MODULES)
+AC_SUBST(MODULES_SUFFIX)
 
 ### Use -lpng if available, unless '--with-png=no'.
 HAVE_PNG=no

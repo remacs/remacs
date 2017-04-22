@@ -19,9 +19,9 @@
 
 (require 'ert)
 
-(add-to-list 'load-path
-             (file-name-directory (or #$ (expand-file-name (buffer-file-name)))))
-(require 'mod-test)
+(require 'mod-test
+         (expand-file-name "data/emacs-module/mod-test"
+                           (getenv "EMACS_TEST_DIRECTORY")))
 
 ;;
 ;; Basic tests.

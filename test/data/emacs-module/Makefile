@@ -17,29 +17,25 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
-ROOT = ../..
-EMACS = $(ROOT)/src/emacs
+ROOT = ../../..
 
 CC      = gcc
 LD      = gcc
 LDFLAGS =
 
-# On MS-Windows, say "make SO=dll" to build the module
-SO      = so
+# On MS-Windows, say "make SO=.dll" to build the module
+SO      = .so
 # -fPIC is a no-op on Windows, but causes a compiler warning
-ifeq ($(SO),dll)
+ifeq ($(SO),.dll)
 CFLAGS  = -std=gnu99 -ggdb3 -Wall
 else
 CFLAGS  = -std=gnu99 -ggdb3 -Wall -fPIC
 endif
 
-all: mod-test.$(SO)
+all: mod-test$(SO)
 
-%.$(SO): %.o
+%$(SO): %.o
 	$(LD) -shared $(LDFLAGS) -o $@ $<
 
 %.o: %.c
 	$(CC) $(CFLAGS) -I$(ROOT)/src -c $<
-
-check:
-	$(EMACS) -batch -l ert -l test.el -f ert-run-tests-batch-and-exit

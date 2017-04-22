@@ -63,7 +63,8 @@ TEST_LOCALE = C
 
 # The actual Emacs command run in the targets below.
 # Prevent any setting of EMACSLOADPATH in user environment causing problems.
-emacs = EMACSLOADPATH= LC_ALL=$(TEST_LOCALE) EMACS_TEST_DIRECTORY=$(srcdir) \
+emacs = EMACSLOADPATH= LC_ALL=$(TEST_LOCALE) \
+ EMACS_TEST_DIRECTORY=$(abspath $(srcdir)) \
  $(GDB) "$(EMACS)" $(EMACSOPT)
 
 .PHONY: all check
@@ -124,8 +125,16 @@ endif
 	$(emacs) -l ert -l $$loadfile \
 	  --eval "(ert-run-tests-batch-and-exit ${SELECTOR_ACTUAL})" ${WRITE_LOG}
 
+ifeq (@HAVE_MODULES@, yes)
+maybe_exclude_module_tests :=
+else
+maybe_exclude_module_tests := -name emacs-module-tests.el -prune -o
+endif
+
 ELFILES := $(shell find ${srcdir} -path "${srcdir}/manual" -prune -o \
-		-name "*resources" -prune -o -name "*.el" -print)
+		-name "*resources" -prune -o \
+		${maybe_exclude_module_tests} \
+		-name "*.el" -print)
 ## .log files may be in a different directory for out of source builds
 LOGFILES := $(patsubst %.el,%.log, \
 		$(patsubst $(srcdir)/%,%,$(ELFILES)))
@@ -158,6 +167,15 @@ define test_template
 endef
 
 $(foreach test,${TESTS},$(eval $(call test_template,${test})))
+
+ifeq (@HAVE_MODULES@, yes)
+test_module_dir := $(srcdir)/data/emacs-module
+test_module_name := mod-test@MODULES_SUFFIX@
+test_module := $(test_module_dir)/$(test_module_name)
+$(srcdir)/src/emacs-module-tests.log: $(test_module)
+$(test_module): $(srcdir)/../src/emacs-module.[ch]
+	$(MAKE) -C $(test_module_dir) $(test_module_name) SO=@MODULES_SUFFIX@
+endif
 
 ## Check that there is no 'automated' subdirectory, which would
 ## indicate an incomplete merge from an older version of Emacs where
