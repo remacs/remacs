@@ -9016,7 +9016,6 @@ LIMIT (the numerical prefix) old headers. If LIMIT is
 non-numeric or nil fetch the number specified by the
 `gnus-refer-thread-limit' variable."
   (interactive "P")
-  (gnus-warp-to-article)
   (let* ((header (gnus-summary-article-header))
 	 (id (mail-header-id header))
 	 (gnus-inhibit-demon t)
@@ -9105,7 +9104,6 @@ non-numeric or nil fetch the number specified by the
 (defun gnus-summary-refer-article (message-id)
   "Fetch an article specified by MESSAGE-ID."
   (interactive "sMessage-ID: ")
-  (gnus-warp-to-article)
   (when (and (stringp message-id)
 	     (not (zerop (length message-id))))
     (setq message-id (replace-regexp-in-string " " "" message-id))
