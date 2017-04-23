@@ -1,7 +1,7 @@
 use std::ptr;
 
-use lisp::{LispObject, Qnumberp, Qfloatp, CHECK_TYPE};
-use remacs_sys::{EmacsDouble, Lisp_Object};
+use lisp::{LispObject, CHECK_TYPE};
+use remacs_sys::{EmacsDouble, Lisp_Object, Qnumberp, Qfloatp};
 
 pub fn init_float_syms() {
     unsafe {
