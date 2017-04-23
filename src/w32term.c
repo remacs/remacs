@@ -3427,7 +3427,6 @@ w32_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 		    enum scroll_bar_part *part, Lisp_Object *x, Lisp_Object *y,
 		    Time *time)
 {
-  struct frame *f1;
   struct w32_display_info *dpyinfo = FRAME_DISPLAY_INFO (*fp);
 
   block_input ();
@@ -3444,8 +3443,8 @@ w32_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
   else
     {
       POINT pt;
-
       Lisp_Object frame, tail;
+      struct frame *f1 = NULL;
 
       /* Clear the mouse-moved flag for every frame on this display.  */
       FOR_EACH_FRAME (tail, frame)
@@ -3465,16 +3464,25 @@ w32_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 	  f1 = dpyinfo->last_mouse_frame;
 	else
 	  {
-	    HWND wfp = WindowFromPoint (pt);
+	    /* Try to check for a child window first.  */
+	    HWND wfp = ChildWindowFromPoint (wfp, pt);
 
-	    if (wfp && (f1 = x_any_window_to_frame (dpyinfo, wfp)))
+	    if (wfp)
 	      {
-		HWND cwfp = ChildWindowFromPoint (wfp, pt);
-		struct frame *f2;
+		struct frame *f2 = x_any_window_to_frame (dpyinfo, wfp);
 
-		/* If cwfp exists it should be one of our windows ...  */
-		if (cwfp && (f2 = x_any_window_to_frame (dpyinfo, cwfp)))
+		/* If f2 is one of our frames, make sure it's a child
+		   frame (Bug#26615, maybe).  */
+		if (f2 && FRAME_PARENT_FRAME (f2))
 		  f1 = f2;
+	      }
+
+	    if (!f1)
+	      {
+		/* Check for a top-level window second.  */
+		wfp = WindowFromPoint (pt);
+		if (wfp)
+		  f1 = x_any_window_to_frame (dpyinfo, wfp);
 	      }
 	  }
 
