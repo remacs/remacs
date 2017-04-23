@@ -8583,7 +8583,7 @@ article."
 	(gnus-summary-limit (nconc articles gnus-newsgroup-limit))
       (gnus-summary-limit-include-matching-articles
        "subject"
-       (regexp-quote (gnus-simplify-subject-re
+       (regexp-quote (gnus-general-simplify-subject
 		      (mail-header-subject (gnus-id-to-header id)))))
       (gnus-summary-position-point))))
 
