@@ -1945,6 +1945,8 @@ main (int argc, char **argv)
   if (rl < 0)
     exit_status = EXIT_FAILURE;
 
+  free (cwd);                   /* Keep leak checkers happy.  */
+
   CLOSE_SOCKET (emacs_socket);
   return exit_status;
 }
