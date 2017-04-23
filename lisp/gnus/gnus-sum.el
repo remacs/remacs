@@ -119,6 +119,14 @@ current group."
   :group 'gnus-thread
   :type 'boolean)
 
+(defcustom gnus-refer-thread-limit-to-thread nil
+  "If non-nil referring a thread will limit the summary buffer to
+articles in the thread. A nil value will add the thread articles
+to the summary buffer."
+  :version "25.1"
+  :group 'gnus-thread
+  :type 'boolean)
+
 (defcustom gnus-summary-make-false-root 'adopt
   "nil means that Gnus won't gather loose threads.
 If the root of a thread has expired or been read in a previous
@@ -8568,10 +8576,11 @@ Returns how many articles were removed."
       (gnus-summary-limit gnus-newsgroup-unseen)
     (gnus-summary-position-point)))
 
-(defun gnus-summary-limit-include-thread (id)
-  "Display all the hidden articles that is in the thread with ID in it.
+(defun gnus-summary-limit-include-thread (id &optional thread-only)
+  "Display all hidden articles belonging to thread ID.
 When called interactively, ID is the Message-ID of the current
-article."
+article. If thread-only is non-nil limit the summary buffer to
+these articles."
   (interactive (list (mail-header-id (gnus-summary-article-header))))
   (let ((articles (gnus-articles-in-thread
 		   (gnus-id-to-thread (gnus-root-id id))))
@@ -8580,7 +8589,8 @@ article."
 	(gnus-fetch-old-headers nil)
 	(gnus-build-sparse-threads nil))
     (prog1
-	(gnus-summary-limit (nconc articles gnus-newsgroup-limit))
+	(gnus-summary-limit (if thread-only articles
+			      (nconc articles gnus-newsgroup-limit)))
       (gnus-summary-limit-include-matching-articles
        "subject"
        (regexp-quote (gnus-general-simplify-subject
@@ -9054,7 +9064,7 @@ non-numeric or nil fetch the number specified by the
               'gnus-article-sort-by-number)))
       (setq gnus-newsgroup-articles
 	    (gnus-sorted-nunion gnus-newsgroup-articles article-ids))
-      (gnus-summary-limit-include-thread id)))
+      (gnus-summary-limit-include-thread id gnus-refer-thread-limit-to-thread)))
   (gnus-summary-show-thread))
 
 (defun gnus-summary-open-group-with-article (message-id)
