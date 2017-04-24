@@ -1450,15 +1450,24 @@ If nil, don't change the value of `debug-on-error'."
   :type 'boolean
   :version "21.1")
 
+(defcustom eval-expression-print-maximum-character 127
+  "The largest integer that will be displayed as a character.
+This affects printing by `eval-expression' (via
+`eval-expression-print-format')."
+  :group 'lisp
+  :type 'integer
+  :version "26.1")
+
 (defun eval-expression-print-format (value)
   "If VALUE in an integer, return a specially formatted string.
 This string will typically look like \" (#o1, #x1, ?\\C-a)\".
 If VALUE is not an integer, nil is returned.
-This function is used by functions like `prin1' that display the
-result of expression evaluation."
+This function is used by commands like `eval-expression' that
+display the result of expression evaluation."
   (when (integerp value)
     (let ((char-string
            (and (characterp value)
+                (<= value eval-expression-print-maximum-character)
                 (char-displayable-p value)
                 (prin1-char value))))
       (if char-string
@@ -1484,32 +1493,40 @@ result of expression evaluation."
 
 (defun eval-expression-get-print-arguments (prefix-argument)
   "Get arguments for commands that print an expression result.
-Returns a list (INSERT-VALUE NO-TRUNCATE CHAR-PRINT)
+Returns a list (INSERT-VALUE NO-TRUNCATE CHAR-PRINT-LIMIT)
 based on PREFIX-ARG.  This function determines the interpretation
 of the prefix argument for `eval-expression' and
 `eval-last-sexp'."
   (let ((num (prefix-numeric-value prefix-argument)))
-    (list (not (memq prefix-argument '(nil)))
+    (list (not (memq prefix-argument '(- nil)))
           (= num 0)
-          (cond ((not (memq prefix-argument '(0 nil))) nil)
-                (t t)))))
+          (cond ((not (memq prefix-argument '(0 -1 - nil))) nil)
+                ((= num -1) most-positive-fixnum)
+                (t eval-expression-print-maximum-character)))))
 
 ;; We define this, rather than making `eval' interactive,
 ;; for the sake of completion of names like eval-region, eval-buffer.
-(defun eval-expression (exp &optional insert-value no-truncate char-print)
+(defun eval-expression (exp &optional insert-value no-truncate char-print-limit)
   "Evaluate EXP and print value in the echo area.
-When called interactively, read an Emacs Lisp expression and evaluate it.
-Value is also consed on to front of the variable `values'.
-If the resulting value is an integer, it will be printed in
-several additional formats (octal, hexadecimal, and character).
-Optional argument INSERT-VALUE non-nil (interactively, with
-prefix argument) means insert the result into the current buffer
-instead of printing it in the echo area.
+When called interactively, read an Emacs Lisp expression and
+evaluate it.  Value is also consed on to front of the variable
+`values'.  Optional argument INSERT-VALUE non-nil (interactively,
+with a non `-' prefix argument) means insert the result into the
+current buffer instead of printing it in the echo area.
 
-Normally, this function truncates long output according to the value
-of the variables `eval-expression-print-length' and
-`eval-expression-print-level'.  With a prefix argument of zero,
-however, there is no such truncation.
+Normally, this function truncates long output according to the
+value of the variables `eval-expression-print-length' and
+`eval-expression-print-level'.  When NO-TRUNCATE is
+non-nil (interactively, with a prefix argument of zero), however,
+there is no such truncation.
+
+If the resulting value is an integer, and CHAR-PRINT-LIMIT is
+non-nil (interactively, unless given a positive prefix argument)
+it will be printed in several additional formats (octal,
+hexadecimal, and character).  The character format is only used
+if the value is below CHAR-PRINT-LIMIT (interactively, if the
+prefix argument is -1 or the value is below
+`eval-expression-print-maximum-character').
 
 Runs the hook `eval-expression-minibuffer-setup-hook' on entering the
 minibuffer.
@@ -1535,11 +1552,12 @@ this command arranges for all errors to enter the debugger."
 
   (let ((print-length (unless no-truncate eval-expression-print-length))
         (print-level  (unless no-truncate eval-expression-print-level))
+        (eval-expression-print-maximum-character char-print-limit)
         (deactivate-mark))
     (let ((out (if insert-value (current-buffer) t)))
       (prog1
           (prin1 (car values) out)
-        (let ((str (and char-print
+        (let ((str (and char-print-limit
                         (eval-expression-print-format (car values)))))
           (when str (princ str out)))))))
 

@@ -396,5 +396,57 @@ See Bug#21722."
         (call-interactively #'eval-expression)
         (should (equal (current-message) "t"))))))
 
+(ert-deftest eval-expression-print-format-small-int ()
+  (with-temp-buffer
+    (cl-letf (((symbol-function 'read--expression) (lambda (&rest _) ?A)))
+      (let ((current-prefix-arg '(4)))
+        (erase-buffer)
+        (call-interactively #'eval-expression)
+        (should (equal (buffer-string) "65")))
+      (let ((current-prefix-arg 0))
+        (erase-buffer)
+        (call-interactively #'eval-expression)
+        (should (equal (buffer-string) "65 (#o101, #x41, ?A)"))))))
+
+(ert-deftest eval-expression-print-format-small-int-echo ()
+  (skip-unless (not noninteractive))
+  (with-temp-buffer
+    (cl-letf (((symbol-function 'read--expression) (lambda (&rest _) ?A)))
+      (let ((current-prefix-arg nil))
+        (message nil)
+        (call-interactively #'eval-expression)
+        (should (equal (current-message) "65 (#o101, #x41, ?A)"))))))
+
+(ert-deftest eval-expression-print-format-large-int ()
+  (with-temp-buffer
+    (cl-letf (((symbol-function 'read--expression) (lambda (&rest _) ?B))
+              (eval-expression-print-maximum-character ?A))
+      (let ((current-prefix-arg '(4)))
+        (erase-buffer)
+        (call-interactively #'eval-expression)
+        (should (equal (buffer-string) "66")))
+      (let ((current-prefix-arg 0))
+        (erase-buffer)
+        (call-interactively #'eval-expression)
+        (should (equal (buffer-string) "66 (#o102, #x42)")))
+      (let ((current-prefix-arg -1))
+        (erase-buffer)
+        (call-interactively #'eval-expression)
+        (should (equal (buffer-string) "66 (#o102, #x42, ?B)"))))))
+
+(ert-deftest eval-expression-print-format-large-int-echo ()
+  (skip-unless (not noninteractive))
+  (with-temp-buffer
+    (cl-letf (((symbol-function 'read--expression) (lambda (&rest _) ?B))
+              (eval-expression-print-maximum-character ?A))
+      (let ((current-prefix-arg nil))
+        (message nil)
+        (call-interactively #'eval-expression)
+        (should (equal (current-message) "66 (#o102, #x42)")))
+      (let ((current-prefix-arg '-))
+        (message nil)
+        (call-interactively #'eval-expression)
+        (should (equal (current-message) "66 (#o102, #x42, ?B)"))))))
+
 (provide 'simple-test)
 ;;; simple-test.el ends here
