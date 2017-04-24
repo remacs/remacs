@@ -1119,29 +1119,28 @@ current buffer.  If EVAL-LAST-SEXP-ARG-INTERNAL is `0', print
 output with no limit on the length and level of lists, and
 include additional formats for integers \(octal, hexadecimal, and
 character)."
-  (let ((standard-output (if eval-last-sexp-arg-internal (current-buffer) t)))
+  (pcase-let*
+      ((`(,insert-value ,no-truncate ,char-print)
+        (eval-expression-get-print-arguments eval-last-sexp-arg-internal)))
     ;; Setup the lexical environment if lexical-binding is enabled.
     (elisp--eval-last-sexp-print-value
      (eval (eval-sexp-add-defvars (elisp--preceding-sexp)) lexical-binding)
-     eval-last-sexp-arg-internal)))
+     (if insert-value (current-buffer) t) no-truncate char-print)))
 
-(defun elisp--eval-last-sexp-print-value (value &optional eval-last-sexp-arg-internal)
-  (let ((unabbreviated (let ((print-length nil) (print-level nil))
-			 (prin1-to-string value)))
-	(print-length (and (not (zerop (prefix-numeric-value
-					eval-last-sexp-arg-internal)))
-			   eval-expression-print-length))
-	(print-level (and (not (zerop (prefix-numeric-value
-				       eval-last-sexp-arg-internal)))
-			  eval-expression-print-level))
-	(beg (point))
-	end)
+(defun elisp--eval-last-sexp-print-value
+    (value output &optional no-truncate char-print)
+  (let* ((unabbreviated (let ((print-length nil) (print-level nil))
+                          (prin1-to-string value)))
+         (print-length (unless no-truncate eval-expression-print-length))
+         (print-level  (unless no-truncate eval-expression-print-level))
+         (beg (point))
+         end)
     (prog1
-	(prin1 value)
-      (let ((str (eval-expression-print-format value)))
-	(if str (princ str)))
+	(prin1 value output)
+      (let ((str (and char-print (eval-expression-print-format value))))
+	(if str (princ str output)))
       (setq end (point))
-      (when (and (bufferp standard-output)
+      (when (and (bufferp output)
 		 (or (not (null print-length))
 		     (not (null print-level)))
 		 (not (string= unabbreviated
