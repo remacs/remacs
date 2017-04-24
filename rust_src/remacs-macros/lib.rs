@@ -109,9 +109,3 @@ impl<'a> quote::ToTokens for ByteLiteral<'a> {
 fn concat_idents(lhs: &str, rhs: syn::Ident) -> syn::Ident {
     syn::Ident::new(format!("{}{}", lhs, rhs))
 }
-
-#[proc_macro_attribute]
-pub fn lisp_doc(_: TokenStream, fn_: TokenStream) -> TokenStream {
-    // Do nothing at the moment
-    fn_
-}
