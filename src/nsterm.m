@@ -411,6 +411,23 @@ static CGPoint menu_mouse_point;
       ns_send_appdefined (-1);                                          \
     }
 
+
+/* GNUstep always shows decorations if the window is resizable,
+   miniaturizable or closable, but Cocoa does strange things in native
+   fullscreen mode if you don't have at least resizable enabled.
+
+   These flags will be OR'd or XOR'd with the NSWindow's styleMask
+   property depending on what we're doing. */
+#ifdef NS_IMPL_COCOA
+#define FRAME_DECORATED_FLAGS NSWindowStyleMaskTitled
+#else
+#define FRAME_DECORATED_FLAGS (NSWindowStyleMaskTitled              \
+                               | NSWindowStyleMaskResizable         \
+                               | NSWindowStyleMaskMiniaturizable    \
+                               | NSWindowStyleMaskClosable)
+#endif
+#define FRAME_UNDECORATED_FLAGS NSWindowStyleMaskBorderless
+
 /* TODO: get rid of need for these forward declarations */
 static void ns_condemn_scroll_bars (struct frame *f);
 static void ns_judge_scroll_bars (struct frame *f);
@@ -1823,6 +1840,8 @@ x_set_undecorated (struct frame *f, Lisp_Object new_value, Lisp_Object old_value
   EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
   NSWindow *window = [view window];
 
+  NSTRACE ("x_set_undecorated");
+
   if (!EQ (new_value, old_value))
     {
       block_input ();
@@ -1830,12 +1849,8 @@ x_set_undecorated (struct frame *f, Lisp_Object new_value, Lisp_Object old_value
       if (NILP (new_value))
         {
           FRAME_UNDECORATED (f) = false;
-          [window setStyleMask: ((window.styleMask
-                                  | NSWindowStyleMaskTitled
-                                  | NSWindowStyleMaskResizable
-                                  | NSWindowStyleMaskMiniaturizable
-                                  | NSWindowStyleMaskClosable)
-                                 ^ NSWindowStyleMaskBorderless)];
+          [window setStyleMask: ((window.styleMask | FRAME_DECORATED_FLAGS)
+                                  ^ FRAME_UNDECORATED_FLAGS)];
 
           [view createToolbar: f];
         }
@@ -1845,11 +1860,8 @@ x_set_undecorated (struct frame *f, Lisp_Object new_value, Lisp_Object old_value
           /* Do I need to release the toolbar here? */
 
           FRAME_UNDECORATED (f) = true;
-          [window setStyleMask: ((window.styleMask | NSWindowStyleMaskBorderless)
-                                 ^ (NSWindowStyleMaskTitled
-                                    | NSWindowStyleMaskResizable
-                                    | NSWindowStyleMaskMiniaturizable
-                                    | NSWindowStyleMaskClosable))];
+          [window setStyleMask: ((window.styleMask | FRAME_UNDECORATED_FLAGS)
+                                 ^ FRAME_DECORATED_FLAGS)];
         }
 
       /* At this point it seems we don't have an active NSResponder,
@@ -1889,6 +1901,8 @@ x_set_parent_frame (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
   struct frame *p = NULL;
   NSWindow *parent, *child;
 
+  NSTRACE ("x_set_parent_frame");
+
   if (!NILP (new_value)
       && (!FRAMEP (new_value)
 	  || !FRAME_LIVE_P (p = XFRAME (new_value))
@@ -1923,6 +1937,8 @@ x_set_no_accept_focus (struct frame *f, Lisp_Object new_value, Lisp_Object old_v
  *
  * Some window managers may not honor this parameter. */
 {
+  NSTRACE ("x_set_no_accept_focus");
+
   if (!EQ (new_value, old_value))
     FRAME_NO_ACCEPT_FOCUS (f) = !NILP (new_value);
 }
@@ -1940,6 +1956,8 @@ x_set_z_group (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
 {
   EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
   NSWindow *window = [view window];
+
+  NSTRACE ("x_set_z_group");
 
   if (NILP (new_value))
     {
@@ -6647,7 +6665,7 @@ not_in_argv (NSString *arg)
           }
       }
     else if (fs_state == FULLSCREEN_NONE && ! maximizing_resize
-             && [[self window] titleVisibility])
+             && [[self window] title] != NULL)
       {
         char *size_title;
         NSWindow *window = [self window];
@@ -6918,11 +6936,14 @@ not_in_argv (NSString *arg)
   win = [[EmacsWindow alloc]
             initWithContentRect: r
                       styleMask: (FRAME_UNDECORATED (f)
-                                  ? NSWindowStyleMaskBorderless
-                                  : NSWindowStyleMaskTitled
+                                  ? FRAME_UNDECORATED_FLAGS
+                                  : FRAME_DECORATED_FLAGS
+#ifdef NS_IMPL_COCOA
                                   | NSWindowStyleMaskResizable
                                   | NSWindowStyleMaskMiniaturizable
-                                  | NSWindowStyleMaskClosable)
+                                  | NSWindowStyleMaskClosable
+#endif
+                                  )
                         backing: NSBackingStoreBuffered
                           defer: YES];
 
@@ -7003,6 +7024,13 @@ not_in_argv (NSString *arg)
 #endif
   [NSApp registerServicesMenuSendTypes: ns_send_types
                            returnTypes: nil];
+
+  /* macOS Sierra automatically enables tabbed windows.  We can't
+     allow this to be enabled until it's available on a Free system.
+     Currently it only happens by accident and is buggy anyway. */
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12
+  [win setTabbingMode: NSWindowTabbingModeDisallowed];
+#endif
 
   ns_window_num++;
   return self;
