@@ -7028,7 +7028,8 @@ not_in_argv (NSString *arg)
   /* macOS Sierra automatically enables tabbed windows.  We can't
      allow this to be enabled until it's available on a Free system.
      Currently it only happens by accident and is buggy anyway. */
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12
+#if defined (NS_IMPL_COCOA) && \
+  MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12
   [win setTabbingMode: NSWindowTabbingModeDisallowed];
 #endif
 
