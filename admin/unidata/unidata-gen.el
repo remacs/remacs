@@ -26,12 +26,12 @@
 ;; SPECIAL NOTICE
 ;;
 ;;   This file must be byte-compilable/loadable by `temacs' and also
-;;   the entry function `unidata-gen-files' must be runnable by `temacs'.
+;;   the entry function `unidata-gen-file' must be runnable by `temacs'.
 
 ;; FILES TO BE GENERATED
 ;;
-;;   The entry function `unidata-gen-files' generates these files in
-;;   in directory specified by its dest-dir argument.
+;;   The entry functions `unidata-gen-file' and `unidata-gen-charprop'
+;;   generate these files:
 ;;
 ;;   charprop.el
 ;;	It contains a series of forms of this format:
@@ -94,7 +94,7 @@
 
 ;; Name of the directory containing files of Unicode Character Database.
 
-;; Dynamically bound in unidata-gen-files.
+;; Dynamically bound in unidata-gen-file.
 (defvar unidata-dir nil)
 
 (defun unidata-setup-list (unidata-text-file)
@@ -167,7 +167,10 @@
 ;; VAL-LIST: list of specially ordered property values
 
 (defconst unidata-file-alist
-  '(("uni-name.el"
+  '(
+    ;; NB this list is parsed by the Makefile to extract the names of
+    ;; the uni-*.el files, so preserve the formatting of those lines.
+    ("uni-name.el"
      (name
       1 unidata-gen-table-name
       "Unicode character name.
@@ -1388,6 +1391,9 @@ Property value is a symbol `o' (Open), `c' (Close), or `n' (None)."
 				  char val1 char val2)))
 	      (sit-for 0))))))))
 
+;; The entry functions.  They generate files described in the header
+;; comment of this file.
+
 (defun unidata-gen-file (&optional file data-dir unidata-text-file)
   "Generate lisp file FILE from Unicode data."
   (or file
@@ -1443,7 +1449,7 @@ Property value is a symbol `o' (Open), `c' (Close), or `n' (None)."
 	(insert (format "(define-char-code-property '%S %S\n  %S)\n"
 			(unidata-prop-prop proplist) (car elt)
 			(unidata-prop-docstring proplist)))))
-    (message "Writing %s..." charprop-file)
+    (or noninteractive (message "Writing %s..." charprop-file))
     (insert ";; Local Variables:\n"
 	    ";; coding: utf-8\n"
 	    ";; version-control: never\n"
@@ -1452,27 +1458,6 @@ Property value is a symbol `o' (Open), `c' (Close), or `n' (None)."
 	    ";; End:\n\n"
 	    (format ";; %s ends here\n"
 		    (file-name-nondirectory charprop-file)))))
-
-;; The entry function.  It generates files described in the header
-;; comment of this file.
-
-;; Write files (charprop.el, uni-*.el) to dest-dir (default PWD),
-;; using as input files from data-dir, and
-;; unidata-text-file (default "unidata.txt" in PWD).
-(defun unidata-gen-files (&optional data-dir dest-dir unidata-text-file)
-  (or data-dir
-      (setq data-dir (pop command-line-args-left)
-	    dest-dir (or (pop command-line-args-left) default-directory)
-	    unidata-text-file (or (pop command-line-args-left)
-				  (expand-file-name "unidata.txt"))))
-  (let ((coding-system-for-write 'utf-8-unix)
-        (coding-system-for-read 'utf-8)
-	(unidata-dir data-dir))
-    (unidata-setup-list unidata-text-file)
-    (dolist (elt unidata-file-alist)
-      (unidata-gen-file (expand-file-name (car elt) dest-dir)
-			data-dir unidata-text-file))
-    (unidata-gen-charprop (expand-file-name "charprop.el" dest-dir))))
 
 
 

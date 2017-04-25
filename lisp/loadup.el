@@ -59,8 +59,11 @@
 ;; This is because PATH_DUMPLOADSEARCH is just "../lisp".
 (if (or (equal (member "bootstrap" command-line-args) '("bootstrap"))
 	;; FIXME this is irritatingly fragile.
-	(equal (nth 4 command-line-args) "unidata-gen.el")
-	(equal (nth 7 command-line-args) "unidata-gen-files")
+	(and (stringp (nth 4 command-line-args))
+	     (string-match "^unidata-gen\\(\\.elc?\\)?$"
+			   (nth 4 command-line-args)))
+	(member (nth 7 command-line-args) '("unidata-gen-file"
+					    "unidata-gen-charprop"))
 	(if (fboundp 'dump-emacs)
 	    (string-match "src/bootstrap-emacs" (nth 0 command-line-args))
 	  t))
