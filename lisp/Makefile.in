@@ -196,7 +196,7 @@ $(lisp)/finder-inf.el:
 # slow; starting from an almost-correct content will enable the "only
 # update where necessary" feature of batch-update-autoloads.
 autoloads .PHONY: $(lisp)/loaddefs.el
-$(lisp)/loaddefs.el: gen-lisp $(LOADDEFS)
+$(lisp)/loaddefs.el: $(LOADDEFS)
 	@echo Directories for loaddefs: ${SUBDIRS_ALMOST}
 	@if test -f $@ ; then cp $@ $(lisp)/loaddefs.tmp ; fi
 	$(AM_V_GEN)$(emacs) -l autoload \
