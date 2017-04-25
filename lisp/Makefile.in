@@ -184,6 +184,9 @@ $(lisp)/finder-inf.el:
 # that all input files are generated before we create loaddefs.
 # Otherwise making loaddefs again will change the output.
 #
+# In fact, now we rely on this target to create leim-list.
+# In src, emacs depends directly on loaddefs.el (not leim-list).
+#
 # Write to a temporary file in case we're doing a parallel build and a
 # CANNOT_DUMP-mode Emacs needs to read loaddefs at startup.
 #
@@ -196,7 +199,7 @@ $(lisp)/finder-inf.el:
 # slow; starting from an almost-correct content will enable the "only
 # update where necessary" feature of batch-update-autoloads.
 autoloads .PHONY: $(lisp)/loaddefs.el
-$(lisp)/loaddefs.el: $(LOADDEFS)
+$(lisp)/loaddefs.el: gen-lisp $(LOADDEFS)
 	@echo Directories for loaddefs: ${SUBDIRS_ALMOST}
 	@if test -f $@ ; then cp $@ $(lisp)/loaddefs.tmp ; fi
 	$(AM_V_GEN)$(emacs) -l autoload \
