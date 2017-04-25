@@ -1388,43 +1388,51 @@ Property value is a symbol `o' (Open), `c' (Close), or `n' (None)."
 				  char val1 char val2)))
 	      (sit-for 0))))))))
 
-;; Must call from unidata-gen-files.
-(defun unidata-gen-file (file)
+(defun unidata-gen-file (&optional file data-dir unidata-text-file)
   "Generate lisp file FILE from Unicode data."
-  (let* ((basename (file-name-nondirectory file))
-	 (elt (assoc basename unidata-file-alist)))
-    (or elt (user-error "Unknown output file: %s" basename))
-    (or noninteractive (message "Generating %s..." file))
-    (with-temp-file file
-      (insert ";; Copyright (C) 1991-2014 Unicode, Inc.
+  (or file
+      (setq file (pop command-line-args-left)
+	    data-dir (or (pop command-line-args-left) default-directory)
+	    unidata-text-file (or (pop command-line-args-left)
+				  (expand-file-name "unidata.txt"))))
+  (let ((coding-system-for-write 'utf-8-unix)
+        (coding-system-for-read 'utf-8)
+	(unidata-dir data-dir))
+    (or unidata-list (unidata-setup-list unidata-text-file))
+    (let* ((basename (file-name-nondirectory file))
+	   (elt (assoc basename unidata-file-alist)))
+      (or elt (user-error "Unknown output file: %s" basename))
+      (or noninteractive (message "Generating %s..." file))
+      (with-temp-file file
+        (insert ";; Copyright (C) 1991-2014 Unicode, Inc.
 ;; This file was generated from the Unicode data files at
 ;; http://www.unicode.org/Public/UNIDATA/.
 ;; See lisp/international/README for the copyright and permission notice.\n")
-      (dolist (proplist (cdr elt))
-	(let ((prop (unidata-prop-prop proplist))
-	      (index (unidata-prop-index proplist))
-	      (generator (unidata-prop-generator proplist))
-	      (docstring (unidata-prop-docstring proplist))
-	      (describer (unidata-prop-describer proplist))
-	      (default-value (unidata-prop-default proplist))
-	      (val-list (unidata-prop-val-list proplist))
-	      table)
-	  (setq table (funcall generator prop index default-value val-list))
-	  (when describer
-	    (unless (subrp (symbol-function describer))
-	      (unidata--ensure-compiled describer)
-	      (setq describer (symbol-function describer)))
-	    (set-char-table-extra-slot table 3 describer))
-	  (insert (format "(define-char-code-property '%S\n  %S\n  %S)\n"
-			  prop table docstring))))
-      (insert ";; Local Variables:\n"
-	      ";; coding: utf-8\n"
-	      ";; version-control: never\n"
-	      ";; no-byte-compile: t\n"
-	      ";; no-update-autoloads: t\n"
-	      ";; End:\n\n"
-	      (format ";; %s ends here\n" basename)))
-    (or noninteractive (message "Generating %s...done" file))))
+        (dolist (proplist (cdr elt))
+          (let ((prop (unidata-prop-prop proplist))
+                (index (unidata-prop-index proplist))
+                (generator (unidata-prop-generator proplist))
+                (docstring (unidata-prop-docstring proplist))
+                (describer (unidata-prop-describer proplist))
+                (default-value (unidata-prop-default proplist))
+                (val-list (unidata-prop-val-list proplist))
+                table)
+            (setq table (funcall generator prop index default-value val-list))
+            (when describer
+              (unless (subrp (symbol-function describer))
+                (unidata--ensure-compiled describer)
+                (setq describer (symbol-function describer)))
+              (set-char-table-extra-slot table 3 describer))
+            (insert (format "(define-char-code-property '%S\n  %S\n  %S)\n"
+                            prop table docstring))))
+        (insert ";; Local Variables:\n"
+                ";; coding: utf-8\n"
+                ";; version-control: never\n"
+                ";; no-byte-compile: t\n"
+                ";; no-update-autoloads: t\n"
+                ";; End:\n\n"
+                (format ";; %s ends here\n" basename)))))
+  (or noninteractive (message "Generating %s...done" file)))
 
 ;; The entry function.  It generates files described in the header
 ;; comment of this file.
@@ -1448,7 +1456,7 @@ Property value is a symbol `o' (Open), `c' (Close), or `n' (None)."
       (dolist (elt unidata-file-alist)
 	(let* ((file (expand-file-name (car elt) dest-dir))
 	       (basename (file-name-nondirectory file)))
-	  (unidata-gen-file file)
+	  (unidata-gen-file file data-dir unidata-text-file)
 	  ;; Filename in this comment line is extracted by sed in Makefile.
 	  (insert (format ";; FILE: %s\n" basename))
 	  (dolist (proplist (cdr elt))
