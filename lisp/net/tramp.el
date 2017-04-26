@@ -1410,6 +1410,19 @@ version, the function does nothing."
        :user        ,(tramp-file-name-user vec)
        :machine     ,(tramp-file-name-host vec)))))
 
+(defun tramp-set-connection-local-variables-for-buffer ()
+  "Set connection-local variables in the current buffer.
+If connection-local variables are not supported by this Emacs
+version, the function does nothing."
+  (when (file-remote-p default-directory)
+    ;; `hack-connection-local-variables-apply' exists since Emacs 26.1.
+    (tramp-compat-funcall
+     'hack-connection-local-variables-apply
+     `(:application tramp
+       :protocol    ,(file-remote-p default-directory 'method)
+       :user        ,(file-remote-p default-directory 'user)
+       :machine     ,(file-remote-p default-directory 'host)))))
+
 (defun tramp-debug-buffer-name (vec)
   "A name for the debug buffer for VEC."
   (let ((method (tramp-file-name-method vec))
