@@ -7029,7 +7029,7 @@ not_in_argv (NSString *arg)
      allow this to be enabled until it's available on a Free system.
      Currently it only happens by accident and is buggy anyway. */
 #if defined (NS_IMPL_COCOA) && \
-  MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12
+  MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_12
   [win setTabbingMode: NSWindowTabbingModeDisallowed];
 #endif
 
