@@ -1,3 +1,4 @@
+
 ;;; loadup.el --- load up standardly loaded Lisp files for Emacs
 
 ;; Copyright (C) 1985-1986, 1992, 1994, 2001-2017 Free Software
@@ -184,7 +185,8 @@
 (load "case-table")
 ;; This file doesn't exist when building a development version of Emacs
 ;; from the repository.  It is generated just after temacs is built.
-(if (load "international/charprop.el" t)
+(if                              ; this formatting is for the Makefile
+    (load "international/charprop.el" t)
     (setq redisplay--inhibit-bidi nil))
 (load "international/characters")
 (load "composite")
