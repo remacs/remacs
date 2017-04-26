@@ -306,18 +306,20 @@ font_pixel_size (struct frame *f, Lisp_Object spec)
     return XINT (size);
   if (NILP (size))
     return 0;
-  eassert (FLOATP (size));
-  point_size = XFLOAT_DATA (size);
-  val = AREF (spec, FONT_DPI_INDEX);
-  if (INTEGERP (val))
-    dpi = XINT (val);
-  else
-    dpi = FRAME_RES_Y (f);
-  pixel_size = POINT_TO_PIXEL (point_size, dpi);
-  return pixel_size;
-#else
-  return 1;
+  if (FRAME_WINDOW_P (f))
+    {
+      eassert (FLOATP (size));
+      point_size = XFLOAT_DATA (size);
+      val = AREF (spec, FONT_DPI_INDEX);
+      if (INTEGERP (val))
+	dpi = XINT (val);
+      else
+	dpi = FRAME_RES_Y (f);
+      pixel_size = POINT_TO_PIXEL (point_size, dpi);
+      return pixel_size;
+    }
 #endif
+  return 1;
 }
 
 
