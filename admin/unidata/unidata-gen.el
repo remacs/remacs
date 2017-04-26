@@ -1450,7 +1450,10 @@ Property value is a symbol `o' (Open), `c' (Close), or `n' (None)."
 			(unidata-prop-prop proplist) (car elt)
 			(unidata-prop-docstring proplist)))))
     (or noninteractive (message "Writing %s..." charprop-file))
-    (insert ";; Local Variables:\n"
+    (insert "\n"
+	    "(provide 'charprop)\n"
+	    "\n"
+	    ";; Local Variables:\n"
 	    ";; coding: utf-8\n"
 	    ";; version-control: never\n"
 	    ";; no-byte-compile: t\n"

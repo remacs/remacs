@@ -184,8 +184,8 @@
 (load "case-table")
 ;; This file doesn't exist when building a development version of Emacs
 ;; from the repository.  It is generated just after temacs is built.
-(if                              ; this formatting is for the Makefile
-    (load "international/charprop.el" t)
+(load "international/charprop.el" t)
+(if (featurep 'charprop)
     (setq redisplay--inhibit-bidi nil))
 (load "international/characters")
 (load "composite")
@@ -303,7 +303,7 @@
       ;; Don't load ucs-normalize.el unless uni-*.el files were
       ;; already produced, because it needs uni-*.el files that might
       ;; not be built early enough during bootstrap.
-      (when (load-history-filename-element "charprop\\.el")
+      (when (featurep 'charprop)
         (load "international/mule-util")
         (load "international/ucs-normalize")
         (load "term/ns-win"))))
