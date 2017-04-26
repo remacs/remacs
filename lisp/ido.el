@@ -1582,19 +1582,11 @@ positive, and disable it otherwise.  If called from Lisp,
 enable the mode if ARG is omitted or nil."
   :global t
   :group 'ido
-  (when (get 'ido-everywhere 'file)
-    (setq read-file-name-function (car (get 'ido-everywhere 'file)))
-    (put 'ido-everywhere 'file nil))
-  (when (get 'ido-everywhere 'buffer)
-    (setq read-buffer-function (car (get 'ido-everywhere 'buffer)))
-    (put 'ido-everywhere 'buffer nil))
+  (remove-function read-file-name-function #'ido-read-file-name)
+  (remove-function read-buffer-function #'ido-read-buffer)
   (when ido-everywhere
-    (when (memq ido-mode '(both file))
-      (put 'ido-everywhere 'file (cons read-file-name-function nil))
-      (setq read-file-name-function #'ido-read-file-name))
-    (when (memq ido-mode '(both buffer))
-      (put 'ido-everywhere 'buffer (cons read-buffer-function nil))
-      (setq read-buffer-function #'ido-read-buffer))))
+    (add-function :override read-file-name-function #'ido-read-file-name)
+    (add-function :override read-buffer-function #'ido-read-buffer)))
 
 (defvar ido-minor-mode-map-entry nil)
 
