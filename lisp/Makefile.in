@@ -204,11 +204,13 @@ $(lisp)/finder-inf.el:
 # sources have changed.
 
 # Write to a temporary file in case we're doing a parallel build and a
-# CANNOT_DUMP-mode Emacs needs to read loaddefs at startup.  We start
-# by copying an existing loaddefs.el to loaddefs.tmp to avoid regenerating
-# the entire file anew, which is slow; starting from an almost-correct
-# content will enable the "only update where necessary" feature of
-# batch-update-autoloads.
+# CANNOT_DUMP-mode Emacs needs to read loaddefs at startup.
+# (FIXME: This seems like something that batch-update-autoloads should
+# do internally, then it would Just Work for all loaddefs files.)
+# We start by copying an existing loaddefs.el to loaddefs.tmp to avoid
+# regenerating the entire file anew, which is slow; starting from an
+# almost-correct content will enable the "only update where necessary"
+# feature of batch-update-autoloads.
 
 # Use expand-file-name rather than $abs_scrdir so that Emacs does not
 # get confused when it compares file-names for equality.
