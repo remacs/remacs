@@ -136,4 +136,25 @@
 (ert-deftest format-c-float ()
   (should-error (format "%c" 0.5)))
 
+;;; Check format-time-string with various TZ settings.
+;;; Use only POSIX-compatible TZ values, since the tests should work
+;;; even if tzdb is not in use.
+(ert-deftest format-time-string-with-zone ()
+  (should (string-equal
+           (format-time-string "%Y-%m-%d %H:%M:%S %z" '(0 0 0 0) t)
+           "1970-01-01 00:00:00 +0000"))
+  (should (string-equal
+           (format-time-string "%Y-%m-%d %H:%M:%S %z (%Z)" '(0 0 0 0) "PST8")
+           "1969-12-31 16:00:00 -0800 (PST)"))
+  (should (string-equal
+           (format-time-string "%Y-%m-%d %H:%M:%S %z (%Z)" '(0 0 0 0)
+                               "NZST-12NZDT,M9.5.0,M4.1.0/3")
+           "1970-01-01 13:00:00 +1300 (NZDT)")))
+
+;;; This should not dump core.
+(ert-deftest format-time-string-with-outlandish-zone ()
+  (should (stringp
+           (format-time-string "%Y-%m-%d %H:%M:%S %z" '(0 0 0 0)
+                               (concat (make-string 2048 ?X) "0")))))
+
 ;;; editfns-tests.el ends here
