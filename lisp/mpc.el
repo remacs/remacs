@@ -1131,8 +1131,8 @@ If PLAYLIST is t or nil or missing, use the main playlist."
     map))
 
 (easy-menu-define mpc-mode-menu mpc-mode-map
-  "Menu for MPC.el."
-  '("MPC.el"
+  "Menu for MPC mode."
+  '("MPC"
     ["Play/Pause" mpc-toggle-play]      ;FIXME: Add one of ⏯/▶/⏸ in there?
     ["Next Track" mpc-next]             ;FIXME: Add ⇥ there?
     ["Previous Track" mpc-prev]         ;FIXME: Add ⇤ there?
