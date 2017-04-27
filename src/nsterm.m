@@ -8040,7 +8040,40 @@ not_in_argv (NSString *arg)
       NSTRACE_RETURN_RECT (frameRect);
       return frameRect;
     }
-#endif
+  else
+#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9 */
+    // Check that the proposed frameRect is visible in at least one
+    // screen.  If it is not, ask the system to reposition it (only
+    // for non-child windows).
+
+    if (!FRAME_PARENT_FRAME (((EmacsView *)[self delegate])->emacsframe))
+    {
+      NSArray *screens = [NSScreen screens];
+      NSUInteger nr_screens = [screens count];
+
+      int i;
+      BOOL frame_on_screen = NO;
+
+      for (i = 0; i < nr_screens; ++i)
+        {
+          NSScreen *s = [screens objectAtIndex: i];
+          NSRect scrRect = [s frame];
+
+          if (NSIntersectsRect(frameRect, scrRect))
+            {
+              frame_on_screen = YES;
+              break;
+            }
+        }
+
+      if (!frame_on_screen)
+        {
+          NSTRACE_MSG ("Frame outside screens; constraining");
+          frameRect = [super constrainFrameRect:frameRect toScreen:screen];
+          NSTRACE_RETURN_RECT (frameRect);
+          return frameRect;
+        }
+    }
 #endif
 
   return constrain_frame_rect(frameRect,
