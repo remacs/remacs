@@ -32,7 +32,16 @@ AC_DEFUN([gl_FUNC_GETOPT_POSIX],
 # getopt_long_only.
 AC_DEFUN([gl_FUNC_GETOPT_GNU],
 [
+  dnl Set the variable gl_getopt_required, so that all invocations of
+  dnl gl_GETOPT_CHECK_HEADERS in the scope of the current configure file
+  dnl will check for getopt with GNU extensions.
+  dnl This means that if one gnulib-tool invocation requests getopt-posix
+  dnl and another gnulib-tool invocation requests getopt-gnu, it is as if
+  dnl both had requested getopt-gnu.
   m4_divert_text([INIT_PREPARE], [gl_getopt_required=GNU])
+
+  dnl No need to invoke gl_FUNC_GETOPT_POSIX here; this is automatically
+  dnl done through the module dependency getopt-gnu -> getopt-posix.
 ])
 
 # Determine whether to replace the entire getopt facility.
