@@ -306,46 +306,46 @@
 
 ;;; Helpers
 
-(defvar elisp-test-point-marker-regex "=!\\([a-zA-Z0-9-]+\\)="
-  "A regexp matching placeholders for point position for
-`elisp-tests-with-temp-buffer'.")
+(eval-and-compile
+  (defvar elisp-test-point-position-regex "=!\\([a-zA-Z0-9-]+\\)="
+    "A regexp matching placeholders for point position for
+`elisp-tests-with-temp-buffer'."))
 
 ;; Copied and heavily modified from `python-tests-with-temp-buffer'
 (defmacro elisp-tests-with-temp-buffer (contents &rest body)
   "Create an `emacs-lisp-mode' enabled temp buffer with CONTENTS.
 BODY is the code to be executed within the temp buffer.  Point is
-always located at the beginning of buffer.  Special markers of
-the form =!NAME= in CONTENTS are removed, and a for each one
-a variable called NAME is bound to the position of such
-a marker."
-  (declare (indent 1) (debug t))
-  `(with-temp-buffer
-     (emacs-lisp-mode)
-     (insert ,contents)
-     (goto-char (point-min))
-     (while (re-search-forward elisp-test-point-marker-regex nil t)
-       (delete-region (match-beginning 0)
-		      (match-end 0)))
-     (goto-char (point-min))
-     ,(let (marker-list)
-	(with-temp-buffer
-	  (insert (cond ((symbolp contents)
-                         (symbol-value contents))
-                        (t contents)))
-	  (goto-char (point-min))
-	  (while (re-search-forward elisp-test-point-marker-regex nil t)
-	    (push (list (intern (match-string-no-properties 1))
-			(match-beginning 0))
-		  marker-list)
-	    (delete-region (match-beginning 0)
-			   (match-end 0))))
-	`(let ,marker-list
-	   ,@body))))
+always located at the beginning of buffer.  CONTENTS is an
+expression that must evaluate to a string at compile time.  Words
+of the form =!NAME= in CONTENTS are removed, and a for each one a
+variable called NAME is bound to the position of the word's
+start."
+  (declare (indent 1) (debug (def-form body)))
+  (let* ((var-pos nil)
+         (text (with-temp-buffer
+                 (insert (eval contents))
+                 (goto-char (point-min))
+                 (while (re-search-forward elisp-test-point-position-regex nil t)
+                   (push (list (intern (match-string-no-properties 1))
+                               (match-beginning 0))
+                         var-pos)
+                   (delete-region (match-beginning 0)
+                                  (match-end 0)))
+                 (buffer-string))))
+    `(with-temp-buffer
+       (emacs-lisp-mode)
+       (insert ,text)
+       (goto-char (point-min))
+       (let ,var-pos
+         ;; Let the =!POSITION= variables be ignorable.
+         ,@(mapcar (lambda (v-p) `(ignore ,(car v-p))) var-pos)
+         ,@body))))
 
 ;;; mark-defun
 
-(defvar mark-defun-test-buffer
-  ";; Comment header
+(eval-and-compile
+  (defvar mark-defun-test-buffer
+    ";; Comment header
 =!before-1=
 \(defun func-1 (arg)
   =!inside-1=\"docstring\"
@@ -365,7 +365,7 @@ a marker."
 =!after-4=
 ;; end
 "
-  "Test buffer for `mark-defun'.")
+    "Test buffer for `mark-defun'."))
 
 (ert-deftest mark-defun-no-arg-region-inactive ()
   "Test `mark-defun' with no prefix argument and inactive
