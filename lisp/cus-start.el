@@ -498,14 +498,16 @@ since it could result in memory overflow and make Emacs crash."
 	     (window-combination-limit
 	      windows (choice
 		       (const :tag "Never (nil)" :value nil)
-		       (const :tag "For Temp Buffer Resize mode (temp-buffer-resize)"
+		       (const :tag "If requested via buffer display alist (window-size)"
+                              :value window-size)
+		       (const :tag "With Temp Buffer Resize mode (temp-buffer-resize)"
 			      :value temp-buffer-resize)
 		       (const :tag "For temporary buffers (temp-buffer)"
 			      :value temp-buffer)
 		       (const :tag "For buffer display (display-buffer)"
 			      :value display-buffer)
 		       (other :tag "Always (t)" :value t))
-	      "24.3")
+	      "26.1")
 	     (fast-but-imprecise-scrolling scrolling boolean "25.1")
 	     (window-resize-pixelwise windows boolean "24.4")
 	     ;; xdisp.c

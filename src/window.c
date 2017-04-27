@@ -7468,9 +7468,14 @@ nil means splitting a window will create a new parent window only if the
     `window-height' or `window-width' entry in the alist used by
     `display-buffer'.  Otherwise, this value is handled like nil.
 
+`temp-buffer-resize' means that splitting a window for displaying a
+    temporary buffer via `with-temp-buffer-window' makes a new parent
+    window only if `temp-buffer-resize-mode' is enabled.  Otherwise,
+    this value is handled like nil.
+
 `temp-buffer' means that splitting a window for displaying a temporary
-    buffer always makes a new parent window.  Otherwise, this value is
-    handled like nil.
+    buffer via `with-temp-buffer-window' always makes a new parent
+    window.  Otherwise, this value is handled like nil.
 
 `display-buffer' means that splitting a window for displaying a buffer
     always makes a new parent window.  Since temporary buffers are
@@ -7483,7 +7488,8 @@ t means that splitting a window always creates a new parent window.  If
     tree and every window but the frame's root window has exactly one
     sibling.
 
-Other values are reserved for future use.  */);
+The default value is `window-size'.  Other values are reserved for
+future use.  */);
   Vwindow_combination_limit = Qwindow_size;
 
   DEFVAR_LISP ("window-persistent-parameters", Vwindow_persistent_parameters,

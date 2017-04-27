@@ -1516,26 +1516,37 @@ direction as the existing window combination (otherwise, a new internal
 window is created anyway).
 
 @item window-size
-In this case @code{display-buffer} makes a new parent window if it is
-passed a @code{window-height} or @code{window-width} entry in the
-@var{alist} argument (@pxref{Display Action Functions}).
+This means that @code{display-buffer} makes a new parent window when it
+splits a window and is passed a @code{window-height} or
+@code{window-width} entry in the @var{alist} argument (@pxref{Display
+Action Functions}).  Otherwise, window splitting behaves as for a value
+of @code{nil}.
+
+@item temp-buffer-resize
+In this case @code{with-temp-buffer-window} makes a new parent window
+when it splits a window and @code{temp-buffer-resize-mode} is enabled
+(@pxref{Temporary Displays}).  Otherwise, window splitting behaves as
+for @code{nil}.
 
 @item temp-buffer
-This value causes the creation of a new parent window when a window is
-split for showing a temporary buffer (@pxref{Temporary Displays}) only.
+In this case @code{with-temp-buffer-window} always makes a new parent
+window when it splits an existing window (@pxref{Temporary Displays}).
+Otherwise, window splitting behaves as for @code{nil}.
 
 @item display-buffer
 This means that when @code{display-buffer} (@pxref{Choosing Window})
-splits a window it always makes a new parent window.
+splits a window it always makes a new parent window.  Otherwise, window
+splitting behaves as for @code{nil}.
 
 @item t
-In this case a new parent window is always created when splitting a
-window.  Thus, if the value of this variable is at all times @code{t},
-then at all times every window tree is a binary tree (a tree where each
-window except the root window has exactly one sibling).
+This means that splitting a window always creates a new parent window.
+Thus, if the value of this variable is at all times @code{t}, then at
+all times every window tree is a binary tree (a tree where each window
+except the root window has exactly one sibling).
 @end table
 
-The default is @code{nil}.  Other values are reserved for future use.
+The default is @code{window-size}.  Other values are reserved for future
+use.
 
 If, as a consequence of this variable's setting, @code{split-window}
 makes a new parent window, it also calls
