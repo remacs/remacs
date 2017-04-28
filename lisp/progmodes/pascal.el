@@ -507,9 +507,9 @@ See also the user variables `pascal-type-keywords', `pascal-start-keywords' and
   "Mark the current Pascal function (or procedure).
 This puts the mark at the end, and point at the beginning."
   (interactive)
-  (push-mark (point))
+  (push-mark)
   (pascal-end-of-defun)
-  (push-mark (point))
+  (push-mark)
   (pascal-beg-of-defun)
   (when (featurep 'xemacs)
     (zmacs-activate-region)))

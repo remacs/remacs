@@ -2041,7 +2041,7 @@ function does not require the declaration to contain a brace block."
 	     (push-mark-p (and (eq this-command 'c-mark-function)
 			       (not extend-region-p)
 			       (not (c-region-is-active-p)))))
-	(if push-mark-p (push-mark (point)))
+	(if push-mark-p (push-mark))
 	(if extend-region-p
 	    (progn
 	      (exchange-point-and-mark)

@@ -4212,9 +4212,9 @@ This puts the mark at the end, and point at the beginning."
   (interactive)
   (if (featurep 'xemacs)
       (progn
-	(push-mark (point))
+	(push-mark)
 	(verilog-end-of-defun)
-	(push-mark (point))
+	(push-mark)
 	(verilog-beg-of-defun)
 	(if (fboundp 'zmacs-activate-region)
 	    (zmacs-activate-region)))

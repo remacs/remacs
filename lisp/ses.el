@@ -3028,7 +3028,7 @@ as symbols."
 		(eq (get-text-property (point) 'keymap) 'ses-mode-print-map)))
       (apply yank-fun arg args) ; Normal non-SES yank.
     (ses-check-curcell 'end)
-    (push-mark (point))
+    (push-mark)
     (let ((text (current-kill (cond
 			       ((listp arg)  0)
 			       ((eq arg '-)  -1)
@@ -3295,7 +3295,7 @@ The top row is row 1.  Selecting row 0 displays the default header row."
   (interactive)
   (ses-check-curcell 'range)
   (let ((row (car (ses-sym-rowcol (or (car-safe ses--curcell) ses--curcell)))))
-    (push-mark (point))
+    (push-mark)
     (ses-goto-print (1+ row) 0)
     (push-mark (point) nil t)
     (ses-goto-print row 0)))
@@ -3306,7 +3306,7 @@ The top row is row 1.  Selecting row 0 displays the default header row."
   (ses-check-curcell 'range)
   (let ((col (cdr (ses-sym-rowcol (or (car-safe ses--curcell) ses--curcell))))
 	(row 0))
-    (push-mark (point))
+    (push-mark)
     (ses-goto-print (1- ses--numrows) col)
     (forward-char 1)
     (push-mark (point) nil t)

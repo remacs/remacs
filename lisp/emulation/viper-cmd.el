@@ -4346,7 +4346,7 @@ and regexp replace."
 (defun viper-mark-beginning-of-buffer ()
   "Mark beginning of buffer."
   (interactive)
-  (push-mark (point))
+  (push-mark)
   (goto-char (point-min))
   (exchange-point-and-mark)
   (message "Mark set at the beginning of buffer"))
@@ -4354,7 +4354,7 @@ and regexp replace."
 (defun viper-mark-end-of-buffer ()
   "Mark end of buffer."
   (interactive)
-  (push-mark (point))
+  (push-mark)
   (goto-char (point-max))
   (exchange-point-and-mark)
   (message "Mark set at the end of buffer"))

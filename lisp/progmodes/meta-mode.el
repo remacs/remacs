@@ -780,7 +780,7 @@ The environment indented is the one that contains point or follows point."
   "Put mark at end of the environment, point at the beginning.
 The environment marked is the one that contains point or follows point."
   (interactive)
-  (push-mark (point))
+  (push-mark)
   (meta-end-of-defun)
   (push-mark (point) nil t)
   (meta-beginning-of-defun))

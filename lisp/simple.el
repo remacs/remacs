@@ -1104,7 +1104,7 @@ it is usually a mistake for a Lisp function to use any subroutine
 that uses or sets the mark."
   (declare (interactive-only t))
   (interactive)
-  (push-mark (point))
+  (push-mark)
   (push-mark (point-max) nil t)
   ;; This is really `point-min' in most cases, but if we're in the
   ;; minibuffer, this is at the end of the prompt.
@@ -4860,7 +4860,7 @@ See also the command `yank-pop' (\\[yank-pop])."
   ;; If we don't get all the way thru, make last-command indicate that
   ;; for the following command.
   (setq this-command t)
-  (push-mark (point))
+  (push-mark)
   (insert-for-yank (current-kill (cond
 				  ((listp arg) 0)
 				  ((eq arg '-) -2)

@@ -1135,7 +1135,7 @@ regardless of where you click."
       (deactivate-mark)))
   (or mouse-yank-at-point (mouse-set-point click))
   (let ((primary (gui-get-primary-selection)))
-    (push-mark (point))
+    (push-mark)
     (insert-for-yank primary)))
 
 (defun mouse-kill-ring-save (click)

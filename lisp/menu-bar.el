@@ -1974,7 +1974,7 @@ otherwise it could decide to silently do nothing."
   "Insert the stretch of previously-killed text selected from menu.
 The menu shows all the killed text sequences stored in `kill-ring'."
   (interactive "*")
-  (push-mark (point))
+  (push-mark)
   (insert last-command-event))
 
 

@@ -1128,7 +1128,7 @@ text as lines.  If the optional after-p is given, put after/below the cursor."
 	      (progn (forward-line 1) (beginning-of-line))
 	    (beginning-of-line))
 	(if after-p (forward-char 1)))
-      (push-mark (point))
+      (push-mark)
       (insert put-text)
       (exchange-point-and-mark)
 ;;    (back-to-indentation)      ; this is not allowed if we allow yank-pop

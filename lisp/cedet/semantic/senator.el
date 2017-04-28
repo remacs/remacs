@@ -659,7 +659,7 @@ Use semantic tags to navigate."
         (end    (progn (senator-end-of-defun) (point)))
         (start  (progn (senator-beginning-of-defun) (point))))
     (goto-char origin)
-    (push-mark (point))
+    (push-mark)
     (goto-char end) ;; end-of-defun
     (push-mark (point) nil t)
     (goto-char start) ;; beginning-of-defun

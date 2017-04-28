@@ -2596,7 +2596,7 @@ a token has type \(command, address, end-mark\) and value."
   "ex goto command"
   (if (null ex-addresses)
       (setq ex-addresses (cons (point) nil)))
-  (push-mark (point))
+  (push-mark)
   (goto-char (car ex-addresses))
   (beginning-of-line))
 

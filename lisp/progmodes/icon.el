@@ -459,9 +459,9 @@ Returns nil if line starts inside a string, t if in a comment."
 (defun mark-icon-function ()
   "Put mark at end of Icon function, point at beginning."
   (interactive)
-  (push-mark (point))
+  (push-mark)
   (end-of-icon-defun)
-  (push-mark (point))
+  (push-mark)
   (beginning-of-line 0)
   (beginning-of-icon-defun))
 

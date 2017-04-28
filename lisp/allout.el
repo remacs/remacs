@@ -6503,7 +6503,7 @@ not its value."
   (let ((inhibit-field-text-motion t))
     (beginning-of-line))
   (allout-goto-prefix-doublechecked)
-  (push-mark (point))
+  (push-mark)
   (allout-end-of-current-subtree)
   (exchange-point-and-mark))
 ;;;_  : UI:
