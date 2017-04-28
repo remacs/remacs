@@ -61,6 +61,7 @@ It is a way for multiple applications to share a single configuration
 * Help for users::
 * Multiple GMail accounts with Gnus::
 * Secret Service API::
+* The Unix password store::
 * Help for developers::
 * GnuPG and EasyPG Assistant Configuration::
 * GNU Free Documentation License::  The license for this documentation.
@@ -166,7 +167,7 @@ get fancy, the default and simplest configuration is:
 ;;; (@pxref{Secret Service API})
 (setq auth-sources '("secrets:Login"))
 ;;; use pass (@file{~/.password-store})
-;;; (@pxref{Pass, the Unix password store})
+;;; (@pxref{The Unix password store})
 (setq auth-sources '(password-store))
 @end lisp
 
@@ -406,8 +407,8 @@ then fall back to @file{~/.authinfo.gpg}.
                      "~/.authinfo.gpg"))
 @end example
 
-@node Pass, the Unix password store
-@chapter Pass, the Unix password store
+@node The Unix password store
+@chapter The Unix password store
 
 @uref{http://www.passwordstore.org,,The standard unix password
 manager} (or just @code{pass}) stores your passwords in
