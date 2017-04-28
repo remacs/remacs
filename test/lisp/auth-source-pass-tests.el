@@ -29,7 +29,7 @@
 
 (require 'auth-source-pass)
 
-(eval-when-compile (require 'cl-macs))
+(eval-when-compile (require 'cl-lib))
 
 (ert-deftest auth-source-pass-parse-simple ()
   (let ((content "pass\nkey1:val1\nkey2:val2\n"))
