@@ -1974,6 +1974,12 @@ line, if present, in the return value.  If it is @code{t}, include the
 height of both, if present, in the return value.
 @end defun
 
+@defun line-pixel-height
+This function returns the height in pixels of the line at point in the
+selected window.  The value includes the line spacing of the line
+(@pxref{Line Height}).
+@end defun
+
 
 @node Line Height
 @section Line Height

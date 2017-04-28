@@ -209,7 +209,11 @@ reasons.  These should be marked by including something like "Do not
 merge to master" or anything that matches gitmerge-skip-regexp (see
 admin/gitmerge.el) in the commit message.
 
-** Other process information
+** GNU ELPA
+
+This repository does not contain the Emacs Lisp package archive
+(elpa.gnu.org).  See admin/notes/elpa for how to access the GNU ELPA
+repository.
 
 ** Emacs Mailing lists.
 

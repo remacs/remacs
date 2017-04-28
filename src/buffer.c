@@ -5629,7 +5629,9 @@ visual lines rather than logical lines.  See the documentation of
   DEFVAR_PER_BUFFER ("default-directory", &BVAR (current_buffer, directory),
 		     Qstringp,
 		     doc: /* Name of default directory of current buffer.
-To interactively change the default directory, use command `cd'.  */);
+It should be a directory name (as opposed to a directory file-name).
+On GNU and Unix systems, directory names end in a slash `/'.
+To interactively change the default directory, use command `cd'. */);
 
   DEFVAR_PER_BUFFER ("auto-fill-function", &BVAR (current_buffer, auto_fill_function),
 		     Qnil,

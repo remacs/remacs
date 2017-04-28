@@ -1898,7 +1898,10 @@ updating the menu."
 (defun kill-this-buffer ()	; for the menu bar
   "Kill the current buffer.
 When called in the minibuffer, get out of the minibuffer
-using `abort-recursive-edit'."
+using `abort-recursive-edit'.
+
+This command can be reliably invoked only from the menu bar,
+otherwise it could decide to silently do nothing."
   (interactive)
   (cond
    ;; Don't do anything when `menu-frame' is not alive or visible

@@ -1976,18 +1976,6 @@ This clause iterates @var{var} over all the cons cells of @var{list}.
         @result{} ((1 2 3 4) (2 3 4) (3 4) (4))
 @end example
 
-With @code{by}, there is no real reason that the @code{on} expression
-must be a list.  For example:
-
-@example
-(cl-loop for x on first-animal by 'next-animal collect x)
-@end example
-
-@noindent
-where @code{(next-animal x)} takes an ``animal'' @var{x} and returns
-the next in the (assumed) sequence of animals, or @code{nil} if
-@var{x} was the last animal in the sequence.
-
 @item for @var{var} in-ref @var{list} by @var{function}
 This is like a regular @code{in} clause, but @var{var} becomes
 a @code{setf}-able ``reference'' onto the elements of the list
@@ -2252,8 +2240,8 @@ were non-@code{nil}, the loop returns @code{t}:
 
 @example
 (if (cl-loop for size in size-list always (> size 10))
-    (some-big-sizes)
-  (no-big-sizes))
+    (only-big-sizes)
+  (some-small-sizes))
 @end example
 
 @item never @var{condition}
