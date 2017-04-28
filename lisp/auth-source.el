@@ -364,9 +364,9 @@ soon as a function returns non-nil.")
   "Create an auth-source-backend from an ENTRY in `auth-sources'."
 
   (let (backend)
-    (dolist (f auth-source-backend-parser-functions)
+    (cl-dolist (f auth-source-backend-parser-functions)
       (when (setq backend (funcall f entry))
-        (return)))
+        (cl-return)))
 
     (unless backend
       ;; none of the parsers worked
