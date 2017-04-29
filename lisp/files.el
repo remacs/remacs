@@ -420,7 +420,7 @@ If called from Lisp, enable the mode if ARG is omitted or nil,
 and toggle it if ARG is `toggle'."
   :group 'auto-save
   :global t
-  (when auto-save--timer (kill-timer auto-save--timer))
+  (when auto-save--timer (cancel-timer auto-save--timer))
   (setq auto-save--timer
         (when auto-save-visited-mode
           (run-with-idle-timer
