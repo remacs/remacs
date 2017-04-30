@@ -118,13 +118,10 @@ appended when the minibuffer frame is created."
   (let* ((frame (posn-window (event-start event))))
     (if (catch 'other-frame
           (dolist (frame-1 (frame-list))
-            ;; A valid "other" frame is visible, owns its minibuffer
-            ;; window, has its `delete-before' parameter unset and is
-            ;; not a child frame.
+            ;; A valid "other" frame is visible, has its `delete-before'
+            ;; parameter unset and is not a child frame.
             (when (and (not (eq frame-1 frame))
                        (frame-visible-p frame-1)
-                       (window-live-p (minibuffer-window frame-1))
-                       (eq (window-frame (minibuffer-window frame-1)) frame-1)
                        (not (frame-parent frame-1))
                        (not (frame-parameter frame-1 'delete-before)))
               (throw 'other-frame t))))

@@ -1560,15 +1560,16 @@ DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,
  * Return true if there exists at least one visible or iconified frame
  * but F.  Return false otherwise.
  *
- * Always return false when all remaining frames are either tooltip or
- * child frames or frames with a non-nil `delete-before' parameter.  If
- * INVISIBLE is false, also return false when the minibuffer window of
- * all remaining frames is on F.
-
+ * INVISIBLE true means we are called from make_frame_invisible where
+ * such a frame must be visible or iconified.  INVISIBLE nil means we
+ * are called from delete_frame.  In that case FORCE true means that the
+ * visibility status of such a frame can be ignored.
+ *
  * If F is the terminal frame and we are using X, return true if at
- * least one X frame exists.  */
+ * least one X frame exists.
+ */
 static bool
-other_frames (struct frame *f, bool invisible)
+other_frames (struct frame *f, bool invisible, bool force)
 {
   Lisp_Object frames, frame, frame1;
   struct frame *f1;
@@ -1591,23 +1592,20 @@ other_frames (struct frame *f, bool invisible)
 	    x_sync (f1);
 #endif
 	  if (NILP (Fframe_parameter (frame1, Qtooltip))
-	      /* Tooltips and child frames don't count.  */
+	      /* Tooltips and child frames count neither for
+		 invisibility nor for deletions.  */
 	      && !FRAME_PARENT_FRAME (f1)
 	      /* Frames with a non-nil `delete-before' parameter don't
-		 count - either they depend on us or they depend on a
-		 frame that we will have to find right here.  */
-	      && NILP (get_frame_param (f1, Qdelete_before))
-	      /* Frames whose minibuffer window is on F don't count
-		 unless INVISIBLE is set - in that case F is either made
-		 invisible and may be autoraised from such a frame or
-		 the FORCE argument of delete_frame was non-nil.  */
-	      && (invisible || NILP (minibuffer_window)
-		  || !EQ (FRAME_MINIBUF_WINDOW (f1), minibuffer_window))
-	      /* At least one visible/iconified frame must remain.  */
+		 count for deletions.  */
+	      && (invisible || NILP (get_frame_param (f1, Qdelete_before)))
+	      /* For invisibility and normal deletions, at least one
+		 visible or iconified frame must remain (Bug#26682).  */
 	      && (FRAME_VISIBLE_P (f1) || FRAME_ICONIFIED_P (f1)
-		  /* Allow deleting the terminal frame when at least one
-		     X frame exists.  */
-		  || (FRAME_WINDOW_P (f1) && !FRAME_WINDOW_P (f))))
+		  || (!invisible
+		      && (force
+			  /* Allow deleting the terminal frame when at
+			     least one X frame exists.  */
+			  || (FRAME_WINDOW_P (f1) && !FRAME_WINDOW_P (f))))))
 	    return true;
 	}
     }
@@ -1680,7 +1678,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 
   if (!FRAME_LIVE_P (f))
     return Qnil;
-  else if (!EQ (force, Qnoelisp) && !other_frames (f, !NILP (force)))
+  else if (!EQ (force, Qnoelisp) && !other_frames (f, false, !NILP (force)))
     {
       if (NILP (force))
 	error ("Attempt to delete the sole visible or iconified frame");
@@ -1752,7 +1750,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
      one.  */
   if (!FRAME_LIVE_P (f))
     return Qnil;
-  else if (!EQ (force, Qnoelisp) && !other_frames (f, !NILP (force)))
+  else if (!EQ (force, Qnoelisp) && !other_frames (f, false, !NILP (force)))
     {
       if (NILP (force))
 	error ("Attempt to delete the sole visible or iconified frame");
@@ -2275,7 +2273,7 @@ displayed in the terminal.  */)
 {
   struct frame *f = decode_live_frame (frame);
 
-  if (NILP (force) && !other_frames (f, true))
+  if (NILP (force) && !other_frames (f, true, false))
     error ("Attempt to make invisible the sole visible or iconified frame");
 
   /* Don't allow minibuf_window to remain on an invisible frame.  */

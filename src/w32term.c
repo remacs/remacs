@@ -5110,7 +5110,7 @@ w32_read_socket (struct terminal *terminal,
 	case WM_MOVE:
 	  f = x_window_to_frame (dpyinfo, msg.msg.hwnd);
 
-	  if (f && !FRAME_ICONIFIED_P (f))
+	  if (f && FRAME_VISIBLE_P (f) && !FRAME_ICONIFIED_P(f))
 	    {
 	      x_real_positions (f, &f->left_pos, &f->top_pos);
 	      inev.kind = MOVE_FRAME_EVENT;
