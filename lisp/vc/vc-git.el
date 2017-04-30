@@ -1274,9 +1274,8 @@ This requires git 1.8.4 or later, for the \"-L\" option of \"git log\"."
 
 (defun vc-git-next-revision (file rev)
   "Git-specific version of `vc-next-revision'."
-  (let* ((default-directory (file-name-directory
-			     (expand-file-name file)))
-         (file (file-name-nondirectory file))
+  (let* ((default-directory (vc-git-root file))
+         (file (file-relative-name file))
          (current-rev
           (with-temp-buffer
             (and
