@@ -567,6 +567,7 @@ mod deprecated {
     use libc;
     use std;
     use remacs_sys::EmacsInt;
+    use remacs_sys::Lisp_String;
 
     /// Convert a LispObject to an EmacsInt.
     #[allow(non_snake_case)]
