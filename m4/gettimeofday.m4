@@ -1,4 +1,4 @@
-# serial 21
+# serial 22
 
 # Copyright (C) 2001-2003, 2005, 2007, 2009-2017 Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
@@ -132,7 +132,4 @@ AC_DEFUN([gl_GETTIMEOFDAY_REPLACE_LOCALTIME], [
 ])
 
 # Prerequisites of lib/gettimeofday.c.
-AC_DEFUN([gl_PREREQ_GETTIMEOFDAY], [
-  AC_CHECK_HEADERS([sys/timeb.h])
-  AC_CHECK_FUNCS([_ftime])
-])
+AC_DEFUN([gl_PREREQ_GETTIMEOFDAY], [:])

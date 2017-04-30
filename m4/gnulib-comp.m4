@@ -516,7 +516,7 @@ AC_DEFUN([gl_INIT],
   {
     if ! $gl_gnulib_enabled_5264294aa0a5557541b53c8c741f7f31; then
       gl_FUNC_MKTIME_INTERNAL
-      if test $REPLACE_MKTIME = 1; then
+      if test $WANT_MKTIME_INTERNAL = 1; then
         AC_LIBOBJ([mktime])
         gl_PREREQ_MKTIME
       fi
@@ -1051,7 +1051,6 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/timespec.m4
   m4/tm_gmtoff.m4
   m4/unistd_h.m4
-  m4/utimbuf.m4
   m4/utimens.m4
   m4/utimes.m4
   m4/vararrays.m4

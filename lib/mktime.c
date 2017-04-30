@@ -23,6 +23,19 @@
 # define DEBUG_MKTIME 0
 #endif
 
+/* The following macros influence what gets defined when this file is compiled:
+
+   Macro/expression            Which gnulib module    This compilation unit
+                                                      should define
+
+   NEED_MKTIME_WORKING         mktime                 rpl_mktime
+   || NEED_MKTIME_WINDOWS
+
+   NEED_MKTIME_INTERNAL        mktime-internal        mktime_internal
+
+   DEBUG_MKTIME                (defined manually)     my_mktime, main
+ */
+
 #if !defined _LIBC && !DEBUG_MKTIME
 # include <config.h>
 #endif
@@ -50,6 +63,13 @@
 # undef mktime
 # define mktime my_mktime
 #endif
+
+#if NEED_MKTIME_WINDOWS /* on native Windows */
+# include <stdlib.h>
+# include <string.h>
+#endif
+
+#if NEED_MKTIME_WORKING || NEED_MKTIME_INTERNAL || DEBUG_MKTIME
 
 /* A signed type that can represent an integer number of years
    multiplied by three times the number of seconds in a year.  It is
@@ -458,24 +478,45 @@ __mktime_internal (struct tm *tp,
   return t;
 }
 
+#endif /* NEED_MKTIME_WORKING || NEED_MKTIME_INTERNAL || DEBUG_MKTIME */
 
+#if NEED_MKTIME_WORKING || NEED_MKTIME_WINDOWS || DEBUG_MKTIME
+
+# if NEED_MKTIME_WORKING || DEBUG_MKTIME
 static mktime_offset_t localtime_offset;
+# endif
 
 /* Convert *TP to a time_t value.  */
 time_t
 mktime (struct tm *tp)
 {
-#ifdef _LIBC
+# if NEED_MKTIME_WINDOWS
+  /* If the environment variable TZ has been set by Cygwin, neutralize it.
+     The Microsoft CRT interprets TZ differently than Cygwin and produces
+     incorrect results if TZ has the syntax used by Cygwin.  */
+  const char *tz = getenv ("TZ");
+  if (tz != NULL && strchr (tz, '/') != NULL)
+    _putenv ("TZ=");
+# endif
+
+# if NEED_MKTIME_WORKING || DEBUG_MKTIME
+#  ifdef _LIBC
   /* POSIX.1 8.1.1 requires that whenever mktime() is called, the
      time zone names contained in the external variable 'tzname' shall
      be set as if the tzset() function had been called.  */
   __tzset ();
-#elif HAVE_TZSET
+#  elif HAVE_TZSET
   tzset ();
-#endif
+#  endif
 
   return __mktime_internal (tp, __localtime_r, &localtime_offset);
+# else
+#  undef mktime
+  return mktime (tp);
+# endif
 }
+
+#endif /* NEED_MKTIME_WORKING || NEED_MKTIME_WINDOWS || DEBUG_MKTIME */
 
 #ifdef weak_alias
 weak_alias (mktime, timelocal)

@@ -30,23 +30,10 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <utime.h>
 
 #include "stat-time.h"
 #include "timespec.h"
-
-#if HAVE_UTIME_H
-# include <utime.h>
-#endif
-
-/* Some systems (even some that do have <utime.h>) don't declare this
-   structure anywhere.  */
-#ifndef HAVE_STRUCT_UTIMBUF
-struct utimbuf
-{
-  long actime;
-  long modtime;
-};
-#endif
 
 /* Avoid recursion with rpl_futimens or rpl_utimensat.  */
 #undef futimens
