@@ -1677,6 +1677,12 @@ x_clear_under_internal_border (struct frame *f)
 }
 
 
+/**
+ * x_set_internal_border_width:
+ *
+ * Set width of frame F's internal border to ARG pixels.  ARG < 0 is
+ * treated like ARG = 0.
+ */
 void
 x_set_internal_border_width (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
@@ -1700,44 +1706,59 @@ x_set_internal_border_width (struct frame *f, Lisp_Object arg, Lisp_Object oldva
 }
 
 
+/**
+ * x_set_menu_bar_lines:
+ *
+ * Set number of lines of frame F's menu bar to VALUE.  An integer
+ * greater zero specifies 1 line and turns the menu bar on if it was off
+ * before.  Any other value specifies 0 lines and turns the menu bar off
+ * if it was on before.
+ */
 void
 x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 {
-  int nlines;
-
   /* Right now, menu bars don't work properly in minibuf-only frames;
      most of the commands try to apply themselves to the minibuffer
-     frame itself, and get an error because you can't switch buffers
-     in or split the minibuffer window.  */
-  if (FRAME_MINIBUF_ONLY_P (f) || FRAME_PARENT_FRAME (f))
-    return;
-
-  if (INTEGERP (value))
-    nlines = XINT (value);
-  else
-    nlines = 0;
-
-  FRAME_MENU_BAR_LINES (f) = 0;
-  FRAME_MENU_BAR_HEIGHT (f) = 0;
-  if (nlines)
-    FRAME_EXTERNAL_MENU_BAR (f) = 1;
-  else
+     frame itself, and get an error because you can't switch buffers in
+     or split the minibuffer window.  Child frames don't like menu bars
+     either.  */
+  if (!FRAME_MINIBUF_ONLY_P (f) && !FRAME_PARENT_FRAME (f))
     {
-      if (FRAME_EXTERNAL_MENU_BAR (f) == 1)
-	free_frame_menubar (f);
-      FRAME_EXTERNAL_MENU_BAR (f) = 0;
+      boolean old = FRAME_EXTERNAL_MENU_BAR (f);
+      boolean new = (INTEGERP (value) && XINT (value) > 0) ? true : false;
 
-      /* Adjust the frame size so that the client (text) dimensions
-	 remain the same.  This depends on FRAME_EXTERNAL_MENU_BAR being
-	 set correctly.  Note that we resize twice: The first time upon
-	 a request from the window manager who wants to keep the height
-	 of the outer rectangle (including decorations) unchanged, and a
-	 second time because we want to keep the height of the inner
-	 rectangle (without the decorations unchanged).  */
-      adjust_frame_size (f, -1, -1, 2, true, Qmenu_bar_lines);
+      FRAME_MENU_BAR_LINES (f) = 0;
+      FRAME_MENU_BAR_HEIGHT (f) = 0;
 
-      /* Not sure whether this is needed.  */
-      x_clear_under_internal_border (f);
+      if (old != new)
+	{
+	  FRAME_EXTERNAL_MENU_BAR (f) = new;
+
+	  if (!old)
+	    /* Make menu bar when there was none.  Emacs 25 waited until
+	       the next redisplay for this to take effect.  */
+	    set_frame_menubar (f, false, true);
+	  else
+	    {
+	      /* Remove menu bar.  */
+	      free_frame_menubar (f);
+
+	      /* Adjust the frame size so that the client (text) dimensions
+		 remain the same.  Note that we resize twice: The first time
+		 upon a request from the window manager who wants to keep
+		 the height of the outer rectangle (including decorations)
+		 unchanged, and a second time because we want to keep the
+		 height of the inner rectangle (without the decorations
+		 unchanged).  */
+	      adjust_frame_size (f, -1, -1, 2, false, Qmenu_bar_lines);
+	    }
+
+	  if (FRAME_W32_WINDOW (f))
+	    x_clear_under_internal_border (f);
+
+	  /* Don't store anything but 1 or 0 in the parameter.  */
+	  store_frame_param (f, Qmenu_bar_lines, make_number (new ? 1 : 0));
+	}
     }
 }
 
@@ -1820,7 +1841,7 @@ x_change_tool_bar_height (struct frame *f, int height)
      here.  */
   adjust_frame_glyphs (f);
   SET_FRAME_GARBAGED (f);
-  if (FRAME_X_WINDOW (f))
+  if (FRAME_W32_WINDOW (f))
     x_clear_under_internal_border (f);
 }
 

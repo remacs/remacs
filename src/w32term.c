@@ -6272,10 +6272,7 @@ x_set_window_size (struct frame *f, bool change_gravity,
 
   /* Get the height of the menu bar here.  It's used below to detect
      whether the menu bar is wrapped.  It's also used to specify the
-     third argument for AdjustWindowRect.  FRAME_EXTERNAL_MENU_BAR which
-     has been used before for that reason is unreliable because it only
-     specifies whether we _want_ a menu bar for this frame and not
-     whether this frame _has_ a menu bar.  See bug#22105.  */
+     third argument for AdjustWindowRect.  See bug#22105.  */
   info.cbSize = sizeof (info);
   info.rcBar.top = info.rcBar.bottom = 0;
   GetMenuBarInfo (FRAME_W32_WINDOW (f), 0xFFFFFFFD, 0, &info);
