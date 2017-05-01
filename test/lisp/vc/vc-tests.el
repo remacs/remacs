@@ -329,8 +329,10 @@ This checks also `vc-backend' and `vc-responsible-backend'."
 	    ;; Write a new file.  Check state.
 	    (write-region "foo" nil tmp-name nil 'nomessage)
 
-            (message "vc-state3 %s" (vc-state tmp-name))
-	    (should (null (vc-state tmp-name)))
+            ;; nil: Mtn
+            ;; unregistered: Bzr CVS Git Hg SVN RCS
+            (message "vc-state3 %s %s" backend (vc-state tmp-name backend))
+	    (should (memq (vc-state tmp-name backend) '(nil unregistered)))
 
 	    ;; Register a file.  Check state.
 	    (vc-register
@@ -348,10 +350,11 @@ This checks also `vc-backend' and `vc-responsible-backend'."
                      'vc-test--unregister-function backend tmp-name)
                     'vc-not-supported)
                 (message "vc-state5 unsupported")
-              ;; nil: Bzr Git Hg RCS
+              ;; unregistered: Bzr Git RCS Hg
               ;; unsupported: CVS Mtn SCCS SRC SVN
-              (message "vc-state5 %s" (vc-state tmp-name))
-              (should (null (vc-state tmp-name))))))
+              (message "vc-state5 %s %s" backend (vc-state tmp-name backend))
+              (should (memq (vc-state tmp-name backend)
+                            '(nil unregistered))))))
 
       ;; Save exit.
       (ignore-errors (run-hooks 'vc-test--cleanup-hook)))))
