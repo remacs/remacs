@@ -148,25 +148,28 @@
   ;; second on 1972-06-30 23:59:60 UTC, so it should format to the
   ;; same string regardless of whether the underlying C library
   ;; ignores leap seconds, while avoiding circa-1970 glitches.
-  (let ((look '(1202 22527 999999 999999)))
+  ;;
+  ;; Similarly, stick to the limited set of time zones that are
+  ;; supported by both POSIX and MS-Windows: exactly 3 ASCII letters
+  ;; in the abbreviation, and no DST.
+  (let ((look '(1202 22527 999999 999999))
+        (format "%Y-%m-%d %H:%M:%S.%3N %z (%Z)"))
     ;; UTC.
     (should (string-equal
              (format-time-string "%Y-%m-%d %H:%M:%S.%3N %z" look t)
              "1972-06-30 23:59:59.999 +0000"))
-    ;; Time zone without DST in 1972.
+    ;; "UTC0".
     (should (string-equal
-             (format-time-string "%Y-%m-%d %H:%M:%S.%3N %z (%Z)" look "NZST-12")
-             "1972-07-01 11:59:59.999 +1200 (NZST)"))
-    ;; United States DST in 1972.
+             (format-time-string format look "UTC0")
+             "1972-06-30 23:59:59.999 +0000 (UTC)"))
+    ;; Negative UTC offset, as a Lisp list.
     (should (string-equal
-             (format-time-string "%Y-%m-%d %H:%M:%S.%3N %z (%Z)" look
-                                 "PST8PDT,M4.5.0,M10.5.0")
-             "1972-06-30 16:59:59.999 -0700 (PDT)"))
-    ;; New South Wales DST in 1971-2.
+             (format-time-string format look '(-28800 "PST"))
+             "1972-06-30 15:59:59.999 -0800 (PST)"))
+    ;; Positive UTC offset that is not an hour multiple, as a string.
     (should (string-equal
-             (format-time-string "%Y-%m-%d %H:%M:%S.%3N %z (%Z)" look
-                                 "AEST-10AEDT,M10.5.0,M2.5.0/3")
-             "1972-07-01 09:59:59.999 +1000 (AEST)"))))
+             (format-time-string format look "IST-5:30")
+             "1972-07-01 05:29:59.999 +0530 (IST)"))))
 
 ;;; This should not dump core.
 (ert-deftest format-time-string-with-outlandish-zone ()
