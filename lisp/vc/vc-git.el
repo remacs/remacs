@@ -231,6 +231,19 @@ Should be consistent with the Git config value i18n.logOutputEncoding."
     (?U 'edited)     ;; FIXME
     (?T 'edited)))   ;; FIXME
 
+(defvar vc-git--program-version nil)
+
+(defun vc-git--program-version ()
+  (or vc-git--program-version
+      (let ((version-string
+             (vc-git--run-command-string nil "version")))
+        (setq vc-git--program-version
+              (if (and version-string
+                       (string-match "git version \\([0-9.]+\\)$"
+                                     version-string))
+                  (match-string 1 version-string)
+                "0")))))
+
 (defun vc-git--git-status-to-vc-state (code-list)
   "Convert CODE-LIST to a VC status.
 
@@ -268,25 +281,20 @@ in the order given by 'git status'."
 
 (defun vc-git-state (file)
   "Git-specific version of `vc-state'."
-  ;; FIXME: Still can't detect `ignored', see below, and returns
-  ;; `up-to-date' instead.  Which is rarely a problem because
-  ;; `vc-backend' returns nil for ignored files.
-  ;;
-  ;; It also can't set `needs-update' or `needs-merge'. The rough
+  ;; It can't set `needs-update' or `needs-merge'. The rough
   ;; equivalent would be that upstream branch for current branch is in
   ;; fast-forward state i.e. current branch is direct ancestor of
   ;; corresponding upstream branch, and the file was modified
   ;; upstream.  We'd need to check against the upstream tracking
   ;; branch for that (an extra process call or two).
-  (let ((status
-         (vc-git--run-command-string file "status" "--porcelain" "-z"
-                                     ;; Just to be explicit, it's the
-                                     ;; default anyway.
-                                     "--untracked-files"
-                                     ;; Requires Git 1.7.6.3 or so,
-                                     ;; so does not work in CentOS 6
-                                     ;; "--ignored"
-                                     "--")))
+  (let* ((args
+          `("status" "--porcelain" "-z"
+            ;; Just to be explicit, it's the default anyway.
+            "--untracked-files"
+            ,@(when (version<= "1.7.6.3" (vc-git--program-version))
+                '("--ignored"))
+            "--"))
+        (status (apply #'vc-git--run-command-string file args)))
     ;; Alternatively, the `ignored' state could be detected with 'git
     ;; ls-files -i -o --exclude-standard', but that's an extra process
     ;; call, and the `ignored' state is rarely needed.
