@@ -141,13 +141,13 @@
 ;;; even if tzdb is not in use.
 (ert-deftest format-time-string-with-zone ()
   ;; Don’t use (0 0 0 0) as the test case, as there are too many bugs
-  ;; in MSVC (and presumably other) C libraries when formatting time
-  ;; stamps near the Epoch of 1970-01-01 00:00:00 UTC, and this test
-  ;; is for GNU Emacs, not for C runtimes.  Instead, look before you
-  ;; leap: "look" is the timestamp just before the first leap second
-  ;; on 1972-06-30 23:59:60 UTC, so it should format to the same
-  ;; string regardless of whether the underlying C library ignores
-  ;; leap seconds, while avoiding circa-1970 glitches.
+  ;; in MS-Windows (and presumably other) C libraries when formatting
+  ;; time stamps near the Epoch of 1970-01-01 00:00:00 UTC, and this
+  ;; test is for GNU Emacs, not for C runtimes.  Instead, look before
+  ;; you leap: "look" is the timestamp just before the first leap
+  ;; second on 1972-06-30 23:59:60 UTC, so it should format to the
+  ;; same string regardless of whether the underlying C library
+  ;; ignores leap seconds, while avoiding circa-1970 glitches.
   (let ((look '(1202 22527 999999 999999)))
     ;; UTC.
     (should (string-equal
