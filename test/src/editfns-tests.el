@@ -140,21 +140,38 @@
 ;;; Use only POSIX-compatible TZ values, since the tests should work
 ;;; even if tzdb is not in use.
 (ert-deftest format-time-string-with-zone ()
-  (should (string-equal
-           (format-time-string "%Y-%m-%d %H:%M:%S %z" '(0 0 0 0) t)
-           "1970-01-01 00:00:00 +0000"))
-  (should (string-equal
-           (format-time-string "%Y-%m-%d %H:%M:%S %z (%Z)" '(0 0 0 0) "PST8")
-           "1969-12-31 16:00:00 -0800 (PST)"))
-  (should (string-equal
-           (format-time-string "%Y-%m-%d %H:%M:%S %z (%Z)" '(0 0 0 0)
-                               "NZST-12NZDT,M9.5.0,M4.1.0/3")
-           "1970-01-01 13:00:00 +1300 (NZDT)")))
+  ;; Don’t use (0 0 0 0) as the test case, as there are too many bugs
+  ;; in MSVC (and presumably other) C libraries when formatting time
+  ;; stamps near the Epoch of 1970-01-01 00:00:00 UTC, and this test
+  ;; is for GNU Emacs, not for C runtimes.  Instead, look before you
+  ;; leap: "look" is the timestamp just before the first leap second
+  ;; on 1972-06-30 23:59:60 UTC, so it should format to the same
+  ;; string regardless of whether the underlying C library ignores
+  ;; leap seconds, while avoiding circa-1970 glitches.
+  (let ((look '(1202 22527 999999 999999)))
+    ;; UTC.
+    (should (string-equal
+             (format-time-string "%Y-%m-%d %H:%M:%S.%3N %z" look t)
+             "1972-06-30 23:59:59.999 +0000"))
+    ;; Time zone without DST in 1972.
+    (should (string-equal
+             (format-time-string "%Y-%m-%d %H:%M:%S.%3N %z (%Z)" look "NZST-12")
+             "1972-07-01 11:59:59.999 +1200 (NZST)"))
+    ;; United States DST in 1972.
+    (should (string-equal
+             (format-time-string "%Y-%m-%d %H:%M:%S.%3N %z (%Z)" look
+                                 "PST8PDT,M4.5.0,M10.5,0")
+             "1972-06-30 16:59:59.999 -0700 (PDT)"))
+    ;; New South Wales DST in 1971-2.
+    (should (string-equal
+             (format-time-string "%Y-%m-%d %H:%M:%S.%3N %z (%Z)" look
+                                 "AEST-10AEDT,M10.5.0,M2.5.0/3")
+             "1972-07-01 09:59:59.999 +1000 (AEST)"))))
 
 ;;; This should not dump core.
 (ert-deftest format-time-string-with-outlandish-zone ()
   (should (stringp
-           (format-time-string "%Y-%m-%d %H:%M:%S %z" '(0 0 0 0)
+           (format-time-string "%Y-%m-%d %H:%M:%S.%3N %z" nil
                                (concat (make-string 2048 ?X) "0")))))
 
 ;;; editfns-tests.el ends here
