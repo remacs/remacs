@@ -307,8 +307,13 @@ This checks also `vc-backend' and `vc-responsible-backend'."
 	  (file-name-as-directory
 	   (expand-file-name
 	    (make-temp-name "vc-test") temporary-file-directory)))
+	(process-environment process-environment)
+	tempdir
 	vc-test--cleanup-hook)
-
+    (when (eq backend 'Bzr)
+      (setq tempdir (make-temp-file "vc-test--state" t)
+	    process-environment (cons (format "BZR_HOME=%s" tempdir)
+				      process-environment)))
     (unwind-protect
 	(progn
 	  ;; Cleanup.
@@ -357,7 +362,9 @@ This checks also `vc-backend' and `vc-responsible-backend'."
                             '(nil unregistered))))))
 
       ;; Save exit.
-      (ignore-errors (run-hooks 'vc-test--cleanup-hook)))))
+      (ignore-errors
+	(if tempdir (delete-directory tempdir t))
+	(run-hooks 'vc-test--cleanup-hook)))))
 
 (defun vc-test--working-revision (backend)
   "Check the working revision of a repository."
