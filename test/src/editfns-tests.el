@@ -160,7 +160,7 @@
     ;; United States DST in 1972.
     (should (string-equal
              (format-time-string "%Y-%m-%d %H:%M:%S.%3N %z (%Z)" look
-                                 "PST8PDT,M4.5.0,M10.5,0")
+                                 "PST8PDT,M4.5.0,M10.5.0")
              "1972-06-30 16:59:59.999 -0700 (PDT)"))
     ;; New South Wales DST in 1971-2.
     (should (string-equal
