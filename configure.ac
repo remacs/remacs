@@ -5503,7 +5503,7 @@ To omit insecure POP3, you can use '$0 --without-pop'.])
   fi
 
   case $opsys in
-    cygwin | mingw32)
+    mingw32)
       # Don't suggest GNU Mailutils, as it hasn't been ported.
       ;;
     *)
