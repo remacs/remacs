@@ -35,6 +35,12 @@
 #include "stat-time.h"
 #include "timespec.h"
 
+#if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+# define WIN32_LEAN_AND_MEAN
+# include <windows.h>
+# include "msvc-nothrow.h"
+#endif
+
 /* Avoid recursion with rpl_futimens or rpl_utimensat.  */
 #undef futimens
 #undef utimensat
@@ -270,6 +276,82 @@ fdutimens (int fd, char const *file, struct timespec const timespec[2])
   utimensat_works_really = -1;
   lutimensat_works_really = -1;
 #endif /* HAVE_UTIMENSAT || HAVE_FUTIMENS */
+
+#if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+  /* On native Windows, use SetFileTime(). See
+     <https://msdn.microsoft.com/en-us/library/ms724933.aspx>
+     <https://msdn.microsoft.com/en-us/library/ms724284.aspx>  */
+  if (0 <= fd)
+    {
+      HANDLE handle;
+      FILETIME current_time;
+      FILETIME last_access_time;
+      FILETIME last_write_time;
+
+      handle = (HANDLE) _get_osfhandle (fd);
+      if (handle == INVALID_HANDLE_VALUE)
+        {
+          errno = EBADF;
+          return -1;
+        }
+
+      if (ts == NULL || ts[0].tv_nsec == UTIME_NOW || ts[1].tv_nsec == UTIME_NOW)
+        {
+          /* GetSystemTimeAsFileTime
+             <https://msdn.microsoft.com/en-us/library/ms724397.aspx>.
+             It would be overkill to use
+             GetSystemTimePreciseAsFileTime
+             <https://msdn.microsoft.com/en-us/library/hh706895.aspx>.  */
+          GetSystemTimeAsFileTime (&current_time);
+        }
+
+      if (ts == NULL || ts[0].tv_nsec == UTIME_NOW)
+        {
+          last_access_time = current_time;
+        }
+      else if (ts[0].tv_nsec == UTIME_OMIT)
+        {
+          last_access_time.dwLowDateTime = 0;
+          last_access_time.dwHighDateTime = 0;
+        }
+      else
+        {
+          ULONGLONG time_since_16010101 =
+            (ULONGLONG) ts[0].tv_sec * 10000000 + ts[0].tv_nsec / 100 + 116444736000000000LL;
+          last_access_time.dwLowDateTime = (DWORD) time_since_16010101;
+          last_access_time.dwHighDateTime = time_since_16010101 >> 32;
+        }
+
+      if (ts == NULL || ts[1].tv_nsec == UTIME_NOW)
+        {
+          last_write_time = current_time;
+        }
+      else if (ts[1].tv_nsec == UTIME_OMIT)
+        {
+          last_write_time.dwLowDateTime = 0;
+          last_write_time.dwHighDateTime = 0;
+        }
+      else
+        {
+          ULONGLONG time_since_16010101 =
+            (ULONGLONG) ts[1].tv_sec * 10000000 + ts[1].tv_nsec / 100 + 116444736000000000LL;
+          last_write_time.dwLowDateTime = (DWORD) time_since_16010101;
+          last_write_time.dwHighDateTime = time_since_16010101 >> 32;
+        }
+
+      if (SetFileTime (handle, NULL, &last_access_time, &last_write_time))
+        return 0;
+      else
+        {
+          #if 0
+          DWORD sft_error = GetLastError ();
+          fprintf (stderr, "utime SetFileTime error 0x%x\n", (unsigned int) sft_error);
+          #endif
+          errno = EINVAL;
+          return -1;
+        }
+    }
+#endif
 
   /* The platform lacks an interface to set file timestamps with
      nanosecond resolution, so do the best we can, discarding any

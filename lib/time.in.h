@@ -120,6 +120,24 @@ _GL_CXXALIAS_SYS (nanosleep, int,
 _GL_CXXALIASWARN (nanosleep);
 # endif
 
+/* Initialize time conversion information.  */
+# if @GNULIB_TZSET@
+#  if @REPLACE_TZSET@
+#   if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#    undef tzset
+#    define tzset rpl_tzset
+#   endif
+_GL_FUNCDECL_RPL (tzset, void, (void));
+_GL_CXXALIAS_RPL (tzset, void, (void));
+#  else
+#   if ! @HAVE_TZSET@
+_GL_FUNCDECL_SYS (tzset, void, (void));
+#   endif
+_GL_CXXALIAS_SYS (tzset, void, (void));
+#  endif
+_GL_CXXALIASWARN (tzset);
+# endif
+
 /* Return the 'time_t' representation of TP and normalize TP.  */
 # if @GNULIB_MKTIME@
 #  if @REPLACE_MKTIME@
@@ -187,7 +205,7 @@ _GL_CXXALIASWARN (gmtime_r);
 /* Convert TIMER to RESULT, assuming local time and UTC respectively.  See
    <http://www.opengroup.org/susv3xsh/localtime.html> and
    <http://www.opengroup.org/susv3xsh/gmtime.html>.  */
-# if @GNULIB_LOCALTIME@ || @GNULIB_GETTIMEOFDAY@
+# if @GNULIB_LOCALTIME@ || @REPLACE_LOCALTIME@
 #  if @REPLACE_LOCALTIME@
 #   if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #    undef localtime
@@ -202,7 +220,7 @@ _GL_CXXALIAS_SYS (localtime, struct tm *, (time_t const *__timer));
 _GL_CXXALIASWARN (localtime);
 # endif
 
-# if @GNULIB_GETTIMEOFDAY@
+# if 0 || @REPLACE_GMTIME@
 #  if @REPLACE_GMTIME@
 #   if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #    undef gmtime

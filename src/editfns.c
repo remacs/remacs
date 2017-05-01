@@ -226,7 +226,7 @@ tzlookup (Lisp_Object zone, bool settz)
 void
 init_editfns (bool dumping)
 {
-#if !defined CANNOT_DUMP && defined HAVE_TZSET
+#if !defined CANNOT_DUMP
   /* A valid but unlikely setting for the TZ environment variable.
      It is OK (though a bit slower) if the user chooses this value.  */
   static char dump_tz_string[] = "TZ=UtC0";
@@ -245,17 +245,15 @@ init_editfns (bool dumping)
      and skip the rest of this function.  */
   if (dumping)
     {
-# ifdef HAVE_TZSET
       xputenv (dump_tz_string);
       tzset ();
-# endif
       return;
     }
 #endif
 
   char *tz = getenv ("TZ");
 
-#if !defined CANNOT_DUMP && defined HAVE_TZSET
+#if !defined CANNOT_DUMP
   /* If the execution TZ happens to be the same as the dump TZ,
      change it to some other value and then change it back,
      to force the underlying implementation to reload the TZ info.

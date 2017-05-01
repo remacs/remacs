@@ -101,6 +101,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module largefile:
   AC_REQUIRE([AC_SYS_LARGEFILE])
   # Code from module limits-h:
+  # Code from module localtime-buffer:
   # Code from module lstat:
   # Code from module manywarnings:
   # Code from module memrchr:
@@ -413,6 +414,7 @@ AC_DEFUN([gl_INIT],
   gl_gnulib_enabled_getgroups=false
   gl_gnulib_enabled_be453cec5eecf5731a274f2de7f2db36=false
   gl_gnulib_enabled_a9786850e999ae65a836a6041e8e5ed1=false
+  gl_gnulib_enabled_2049e887c7e5308faad27b3f894bb8c9=false
   gl_gnulib_enabled_5264294aa0a5557541b53c8c741f7f31=false
   gl_gnulib_enabled_03e0aaad4cb89ca757653bd367a6ccb7=false
   gl_gnulib_enabled_6099e9737f757db36c47fa9d9f02e88c=false
@@ -510,6 +512,14 @@ AC_DEFUN([gl_INIT],
       if test $HAVE_GROUP_MEMBER = 0; then
         func_gl_gnulib_m4code_682e609604ccaac6be382e4ee3a4eaec
       fi
+    fi
+  }
+  func_gl_gnulib_m4code_2049e887c7e5308faad27b3f894bb8c9 ()
+  {
+    if ! $gl_gnulib_enabled_2049e887c7e5308faad27b3f894bb8c9; then
+      AC_REQUIRE([gl_LOCALTIME_BUFFER_DEFAULTS])
+      AC_LIBOBJ([localtime-buffer])
+      gl_gnulib_enabled_2049e887c7e5308faad27b3f894bb8c9=true
     fi
   }
   func_gl_gnulib_m4code_5264294aa0a5557541b53c8c741f7f31 ()
@@ -618,6 +628,9 @@ AC_DEFUN([gl_INIT],
   if test $REPLACE_GETOPT = 1; then
     func_gl_gnulib_m4code_be453cec5eecf5731a274f2de7f2db36
   fi
+  if test $NEED_LOCALTIME_BUFFER = 1; then
+    func_gl_gnulib_m4code_2049e887c7e5308faad27b3f894bb8c9
+  fi
   if test $REPLACE_LSTAT = 1; then
     func_gl_gnulib_m4code_dosname
   fi
@@ -651,6 +664,7 @@ AC_DEFUN([gl_INIT],
   AM_CONDITIONAL([gl_GNULIB_ENABLED_getgroups], [$gl_gnulib_enabled_getgroups])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_be453cec5eecf5731a274f2de7f2db36], [$gl_gnulib_enabled_be453cec5eecf5731a274f2de7f2db36])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_a9786850e999ae65a836a6041e8e5ed1], [$gl_gnulib_enabled_a9786850e999ae65a836a6041e8e5ed1])
+  AM_CONDITIONAL([gl_GNULIB_ENABLED_2049e887c7e5308faad27b3f894bb8c9], [$gl_gnulib_enabled_2049e887c7e5308faad27b3f894bb8c9])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_5264294aa0a5557541b53c8c741f7f31], [$gl_gnulib_enabled_5264294aa0a5557541b53c8c741f7f31])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_03e0aaad4cb89ca757653bd367a6ccb7], [$gl_gnulib_enabled_03e0aaad4cb89ca757653bd367a6ccb7])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_6099e9737f757db36c47fa9d9f02e88c], [$gl_gnulib_enabled_6099e9737f757db36c47fa9d9f02e88c])
@@ -880,6 +894,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/intprops.h
   lib/inttypes.in.h
   lib/limits.in.h
+  lib/localtime-buffer.c
+  lib/localtime-buffer.h
   lib/lstat.c
   lib/md5.c
   lib/md5.h
@@ -997,6 +1013,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/inttypes.m4
   m4/largefile.m4
   m4/limits-h.m4
+  m4/localtime-buffer.m4
   m4/longlong.m4
   m4/lstat.m4
   m4/manywarnings.m4

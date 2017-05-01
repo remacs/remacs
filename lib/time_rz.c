@@ -40,10 +40,6 @@
 # define SIZE_MAX ((size_t) -1)
 #endif
 
-#if !HAVE_TZSET
-static void tzset (void) { }
-#endif
-
 /* The approximate size to use for small allocation requests.  This is
    the largest "small" request for the GNU C library malloc.  */
 enum { DEFAULT_MXFAST = 64 * sizeof (size_t) / 4 };

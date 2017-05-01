@@ -4195,7 +4195,7 @@ AC_CHECK_HEADERS(valgrind/valgrind.h)
 
 AC_CHECK_MEMBERS([struct unipair.unicode], [], [], [[#include <linux/kd.h>]])
 
-AC_CHECK_FUNCS_ONCE([sbrk tzset])
+AC_CHECK_FUNCS_ONCE([sbrk])
 
 ok_so_far=yes
 AC_CHECK_FUNC(socket, , ok_so_far=no)

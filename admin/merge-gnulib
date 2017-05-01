@@ -49,7 +49,7 @@ AVOIDED_MODULES='
   malloc-posix msvc-inval msvc-nothrow
   open openat-die opendir raise
   save-cwd select setenv sigprocmask stat stdarg stdbool
-  threadlib unsetenv utime-h
+  threadlib tzset unsetenv utime utime-h
 '
 
 GNULIB_TOOL_FLAGS='

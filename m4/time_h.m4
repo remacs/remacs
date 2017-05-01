@@ -113,11 +113,13 @@ AC_DEFUN([gl_HEADER_TIME_H_DEFAULTS],
   GNULIB_TIMEGM=0;                       AC_SUBST([GNULIB_TIMEGM])
   GNULIB_TIME_R=0;                       AC_SUBST([GNULIB_TIME_R])
   GNULIB_TIME_RZ=0;                      AC_SUBST([GNULIB_TIME_RZ])
+  GNULIB_TZSET=0;                        AC_SUBST([GNULIB_TZSET])
   dnl Assume proper GNU behavior unless another module says otherwise.
   HAVE_DECL_LOCALTIME_R=1;               AC_SUBST([HAVE_DECL_LOCALTIME_R])
   HAVE_NANOSLEEP=1;                      AC_SUBST([HAVE_NANOSLEEP])
   HAVE_STRPTIME=1;                       AC_SUBST([HAVE_STRPTIME])
   HAVE_TIMEGM=1;                         AC_SUBST([HAVE_TIMEGM])
+  HAVE_TZSET=1;                          AC_SUBST([HAVE_TZSET])
   dnl If another module says to replace or to not replace, do that.
   dnl Otherwise, replace only if someone compiles with -DGNULIB_PORTCHECK;
   dnl this lets maintainers check for portability.
@@ -127,6 +129,7 @@ AC_DEFUN([gl_HEADER_TIME_H_DEFAULTS],
   REPLACE_NANOSLEEP=GNULIB_PORTCHECK;    AC_SUBST([REPLACE_NANOSLEEP])
   REPLACE_STRFTIME=GNULIB_PORTCHECK;     AC_SUBST([REPLACE_STRFTIME])
   REPLACE_TIMEGM=GNULIB_PORTCHECK;       AC_SUBST([REPLACE_TIMEGM])
+  REPLACE_TZSET=GNULIB_PORTCHECK;        AC_SUBST([REPLACE_TZSET])
 
   dnl Hack so that the time module doesn't depend on the sys_time module.
   dnl First, default GNULIB_GETTIMEOFDAY to 0 if sys_time is absent.

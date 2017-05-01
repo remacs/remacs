@@ -29,72 +29,7 @@
 # include <windows.h>
 #endif
 
-#if GETTIMEOFDAY_CLOBBERS_LOCALTIME || TZSET_CLOBBERS_LOCALTIME
-
-/* Work around the bug in some systems whereby gettimeofday clobbers
-   the static buffer that localtime uses for its return value.  The
-   gettimeofday function from Mac OS X 10.0.4 (i.e., Darwin 1.3.7) has
-   this problem.  The tzset replacement is necessary for at least
-   Solaris 2.5, 2.5.1, and 2.6.  */
-
-static struct tm tm_zero_buffer;
-static struct tm *localtime_buffer_addr = &tm_zero_buffer;
-
-# undef localtime
-extern struct tm *localtime (time_t const *);
-
-# undef gmtime
-extern struct tm *gmtime (time_t const *);
-
-/* This is a wrapper for localtime.  It is used only on systems for which
-   gettimeofday clobbers the static buffer used for localtime's result.
-
-   On the first call, record the address of the static buffer that
-   localtime uses for its result.  */
-
-struct tm *
-rpl_localtime (time_t const *timep)
-{
-  struct tm *tm = localtime (timep);
-
-  if (localtime_buffer_addr == &tm_zero_buffer)
-    localtime_buffer_addr = tm;
-
-  return tm;
-}
-
-/* Same as above, since gmtime and localtime use the same buffer.  */
-struct tm *
-rpl_gmtime (time_t const *timep)
-{
-  struct tm *tm = gmtime (timep);
-
-  if (localtime_buffer_addr == &tm_zero_buffer)
-    localtime_buffer_addr = tm;
-
-  return tm;
-}
-
-#endif /* GETTIMEOFDAY_CLOBBERS_LOCALTIME || TZSET_CLOBBERS_LOCALTIME */
-
-#if TZSET_CLOBBERS_LOCALTIME
-
-# undef tzset
-extern void tzset (void);
-
-/* This is a wrapper for tzset, for systems on which tzset may clobber
-   the static buffer used for localtime's result.  */
-void
-rpl_tzset (void)
-{
-  /* Save and restore the contents of the buffer used for localtime's
-     result around the call to tzset.  */
-  struct tm save = *localtime_buffer_addr;
-  tzset ();
-  *localtime_buffer_addr = save;
-}
-
-#endif
+#include "localtime-buffer.h"
 
 #ifdef WINDOWS_NATIVE
 
@@ -119,7 +54,11 @@ initialize (void)
 
 /* This is a wrapper for gettimeofday.  It is used only on systems
    that lack this function, or whose implementation of this function
-   causes problems.  */
+   causes problems.
+   Work around the bug in some systems whereby gettimeofday clobbers
+   the static buffer that localtime uses for its return value.  The
+   gettimeofday function from Mac OS X 10.0.4 (i.e., Darwin 1.3.7) has
+   this problem.  */
 
 int
 gettimeofday (struct timeval *restrict tv, void *restrict tz)
