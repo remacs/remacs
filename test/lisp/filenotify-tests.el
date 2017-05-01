@@ -69,6 +69,7 @@
 (defun file-notify--test-read-event ()
   "Read one event.
 There are different timeouts for local and remote file notification libraries."
+  (sit-for 0.001 'nodisp)
   (read-event
    nil nil
    (cond
@@ -426,6 +427,7 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
           ;; Remove first watch.
           (file-notify-rm-watch file-notify--test-desc)
           ;; Only the second callback shall run.
+	  (file-notify--test-read-event)
           (delete-file file-notify--test-tmpfile)
           (file-notify--wait-for-events
            (file-notify--test-timeout) results)
@@ -953,7 +955,7 @@ delivered."
 	;; After deleting the parent directory, the descriptor must
 	;; not be valid anymore.
 	(should-not (file-notify-valid-p file-notify--test-desc))
-        ;; w32notify doesn't generate 'stopped' events when the parent
+        ;; w32notify doesn't generate `stopped' events when the parent
         ;; directory is deleted, which doesn't provide a chance for
         ;; filenotify.el to remove the descriptor from the internal
         ;; hash table it maintains.  So we must remove the descriptor
