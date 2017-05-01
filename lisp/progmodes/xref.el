@@ -1004,6 +1004,17 @@ directory, used as the root of the ignore globs."
                (match-string 1 str)))))
    str t t))
 
+(defun xref--regexp-syntax-dependent-p (str)
+  "Return non-nil when STR depends on the buffer's syntax.
+Such as the current syntax table and the applied syntax properties."
+  (let ((case-fold-search nil))
+    (string-match-p (rx
+                     (or string-start (not (in ?\\)))
+                     (0+ (= 2 ?\\))
+                     ?\\
+                     (in ?b ?B ?< ?> ?w ?W ?_ ?s ?S))
+                    str)))
+
 (defvar xref--last-visiting-buffer nil)
 (defvar xref--temp-buffer-file-name nil)
 
@@ -1017,7 +1028,8 @@ directory, used as the root of the ignore globs."
 
 (defun xref--collect-matches (hit regexp tmp-buffer)
   (pcase-let* ((`(,line ,file ,text) hit)
-               (buf (xref--find-buffer-visiting file)))
+               (buf (xref--find-buffer-visiting file))
+               (syntax-needed (xref--regexp-syntax-dependent-p regexp)))
     (if buf
         (with-current-buffer buf
           (save-excursion
@@ -1025,12 +1037,14 @@ directory, used as the root of the ignore globs."
             (forward-line (1- line))
             (xref--collect-matches-1 regexp file line
                                      (line-beginning-position)
-                                     (line-end-position))))
+                                     (line-end-position)
+                                     syntax-needed)))
       ;; Using the temporary buffer is both a performance and a buffer
       ;; management optimization.
       (with-current-buffer tmp-buffer
         (erase-buffer)
-        (unless (equal file xref--temp-buffer-file-name)
+        (when (and syntax-needed
+                   (not (equal file xref--temp-buffer-file-name)))
           (insert-file-contents file nil 0 200)
           ;; Can't (setq-local delay-mode-hooks t) because of
           ;; bug#23272, but the performance penalty seems minimal.
@@ -1046,11 +1060,13 @@ directory, used as the root of the ignore globs."
         (goto-char (point-min))
         (xref--collect-matches-1 regexp file line
                                  (point)
-                                 (point-max))))))
+                                 (point-max)
+                                 syntax-needed)))))
 
-(defun xref--collect-matches-1 (regexp file line line-beg line-end)
+(defun xref--collect-matches-1 (regexp file line line-beg line-end syntax-needed)
   (let (matches)
-    (syntax-propertize line-end)
+    (when syntax-needed
+      (syntax-propertize line-end))
     ;; FIXME: This results in several lines with the same
     ;; summary. Solve with composite pattern?
     (while (and
