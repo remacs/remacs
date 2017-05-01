@@ -268,9 +268,28 @@ in the order given by 'git status'."
 
 (defun vc-git-state (file)
   "Git-specific version of `vc-state'."
+  ;; FIXME: Still can't detect `ignored', see below, and returns
+  ;; `up-to-date' instead.  Which is rarely a problem because
+  ;; `vc-backend' returns nil for ignored files.
+  ;;
+  ;; It also can't set `needs-update' or `needs-merge'. The rough
+  ;; equivalent would be that upstream branch for current branch is in
+  ;; fast-forward state i.e. current branch is direct ancestor of
+  ;; corresponding upstream branch, and the file was modified
+  ;; upstream.  We'd need to check against the upstream tracking
+  ;; branch for that (an extra process call or two).
   (let ((status
          (vc-git--run-command-string file "status" "--porcelain" "-z"
-                                     "--untracked-files" "--ignored" "--")))
+                                     ;; Just to be explicit, it's the
+                                     ;; default anyway.
+                                     "--untracked-files"
+                                     ;; Requires Git 1.7.6.3 or so,
+                                     ;; so does not work in CentOS 6
+                                     ;; "--ignored"
+                                     "--")))
+    ;; Alternatively, the `ignored' state could be detected with 'git
+    ;; ls-files -i -o --exclude-standard', but that's an extra process
+    ;; call, and the `ignored' state is rarely needed.
     (if (null status)
         ;; If status is nil, there was an error calling git, likely because
         ;; the file is not in a git repo.
