@@ -32,7 +32,7 @@
 ;;; Code:
 
 (require 'seq)
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 (eval-when-compile
   (require 'cl-lib))
 (require 'auth-source)
@@ -132,7 +132,7 @@ CONTENTS is the contents of a password-store formatted file."
   (let ((lines (split-string contents "\\\n" t "\\\s")))
     (seq-remove #'null
                 (mapcar (lambda (line)
-                          (let ((pair (mapcar #'string-trim
+                          (let ((pair (mapcar (lambda (s) (string-trim s))
                                               (split-string line ":"))))
                             (when (> (length pair) 1)
                               (cons (car pair)
