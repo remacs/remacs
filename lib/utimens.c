@@ -35,7 +35,13 @@
 #include "stat-time.h"
 #include "timespec.h"
 
-#if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+/* On native Windows, use SetFileTime; but avoid this when compiling
+   GNU Emacs, which arranges for this in some other way and which
+   defines WIN32_LEAN_AND_MEAN itself.  */
+
+#if ((defined _WIN32 || defined __WIN32__) \
+     && ! defined __CYGWIN__ && ! defined EMACS_CONFIGURATION)
+# define USE_SETFILETIME
 # define WIN32_LEAN_AND_MEAN
 # include <windows.h>
 # include "msvc-nothrow.h"
@@ -277,7 +283,7 @@ fdutimens (int fd, char const *file, struct timespec const timespec[2])
   lutimensat_works_really = -1;
 #endif /* HAVE_UTIMENSAT || HAVE_FUTIMENS */
 
-#if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+#ifdef USE_SETFILETIME
   /* On native Windows, use SetFileTime(). See
      <https://msdn.microsoft.com/en-us/library/ms724933.aspx>
      <https://msdn.microsoft.com/en-us/library/ms724284.aspx>  */
