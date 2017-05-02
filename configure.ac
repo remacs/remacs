@@ -507,16 +507,6 @@ if test x$ac_glyphs_debug != x ; then
 [Define this to enable glyphs debugging code.])
 fi
 
-AC_ARG_ENABLE(check-lisp-object-type,
-[AS_HELP_STRING([--enable-check-lisp-object-type],
-                [enable compile time checks for the Lisp_Object data type.
-		This is useful for development for catching certain types of bugs.])],
-if test "${enableval}" != "no"; then
-   AC_DEFINE(CHECK_LISP_OBJECT_TYPE, 1,
-   [Define this to enable compile time checks for the Lisp_Object data type.])
-fi)
-
-
 dnl The name of this option is unfortunate.  It predates, and has no
 dnl relation to, the "sampling-based elisp profiler" added in 24.3.
 dnl Actually, it stops it working.
@@ -877,9 +867,18 @@ AC_ARG_ENABLE([gcc-warnings],
    # just a release imported into Git for patch management.
    gl_gcc_warnings=no
    if test -e "$srcdir"/.git && test ! -f "$srcdir"/.tarball-version; then
-     gl_GCC_VERSION_IFELSE([5], [3], [gl_gcc_warnings=warn-only])]
-   fi
-)
+     gl_GCC_VERSION_IFELSE([5], [3], [gl_gcc_warnings=warn-only])
+   fi])
+
+AC_ARG_ENABLE([check-lisp-object-type],
+  [AS_HELP_STRING([--enable-check-lisp-object-type],
+     [Enable compile-time checks for the Lisp_Object data type,
+      which can catch some bugs during development.
+      The default is "no" if --enable-gcc-warnings is "no".])])
+if test "${enable_check_lisp_object_type-$gl_gcc_warnings}" != "no"; then
+  AC_DEFINE([CHECK_LISP_OBJECT_TYPE], 1,
+    [Define to enable compile-time checks for the Lisp_Object data type.])
+fi
 
 # clang is unduly picky about some things.
 AC_CACHE_CHECK([whether the compiler is clang], [emacs_cv_clang],

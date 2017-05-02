@@ -1225,18 +1225,17 @@ usage: (condition-case VAR BODYFORM &rest HANDLERS)  */)
    rather than passed in a list.  Used by Fbyte_code.  */
 
 Lisp_Object
-internal_lisp_condition_case (volatile Lisp_Object var, Lisp_Object bodyform,
+internal_lisp_condition_case (Lisp_Object var, Lisp_Object bodyform,
 			      Lisp_Object handlers)
 {
-  Lisp_Object val;
   struct handler *oldhandlerlist = handlerlist;
-  int clausenb = 0;
+  ptrdiff_t clausenb = 0;
 
   CHECK_SYMBOL (var);
 
-  for (val = handlers; CONSP (val); val = XCDR (val))
+  for (Lisp_Object tail = handlers; CONSP (tail); tail = XCDR (tail))
     {
-      Lisp_Object tem = XCAR (val);
+      Lisp_Object tem = XCAR (tail);
       clausenb++;
       if (! (NILP (tem)
 	     || (CONSP (tem)
@@ -1246,55 +1245,57 @@ internal_lisp_condition_case (volatile Lisp_Object var, Lisp_Object bodyform,
 	       SDATA (Fprin1_to_string (tem, Qt)));
     }
 
-  { /* The first clause is the one that should be checked first, so it should
-       be added to handlerlist last.  So we build in `clauses' a table that
-       contains `handlers' but in reverse order.  SAFE_ALLOCA won't work
-       here due to the setjmp, so impose a MAX_ALLOCA limit.  */
-    if (MAX_ALLOCA / word_size < clausenb)
-      memory_full (SIZE_MAX);
-    Lisp_Object *clauses = alloca (clausenb * sizeof *clauses);
-    Lisp_Object *volatile clauses_volatile = clauses;
-    int i = clausenb;
-    for (val = handlers; CONSP (val); val = XCDR (val))
-      clauses[--i] = XCAR (val);
-    for (i = 0; i < clausenb; i++)
-      {
-	Lisp_Object clause = clauses[i];
-	Lisp_Object condition = CONSP (clause) ? XCAR (clause) : Qnil;
-	if (!CONSP (condition))
-	  condition = Fcons (condition, Qnil);
-	struct handler *c = push_handler (condition, CONDITION_CASE);
-	if (sys_setjmp (c->jmp))
-	  {
-	    ptrdiff_t count = SPECPDL_INDEX ();
-	    Lisp_Object val = handlerlist->val;
-	    Lisp_Object *chosen_clause = clauses_volatile;
-	    for (c = handlerlist->next; c != oldhandlerlist; c = c->next)
-	      chosen_clause++;
-	    handlerlist = oldhandlerlist;
-	    if (!NILP (var))
-	      {
-		if (!NILP (Vinternal_interpreter_environment))
-		  specbind (Qinternal_interpreter_environment,
-			    Fcons (Fcons (var, val),
-				   Vinternal_interpreter_environment));
-		else
-		  specbind (var, val);
-	      }
-	    val = Fprogn (XCDR (*chosen_clause));
-	    /* Note that this just undoes the binding of var; whoever
-	       longjumped to us unwound the stack to c.pdlcount before
-	       throwing.  */
-	    if (!NILP (var))
-	      unbind_to (count, Qnil);
-	    return val;
-	  }
-      }
-  }
+  /* The first clause is the one that should be checked first, so it
+     should be added to handlerlist last.  So build in CLAUSES a table
+     that contains HANDLERS but in reverse order.  CLAUSES is pointer
+     to volatile to avoid issues with setjmp and local storage.
+     SAFE_ALLOCA won't work here due to the setjmp, so impose a
+     MAX_ALLOCA limit.  */
+  if (MAX_ALLOCA / word_size < clausenb)
+    memory_full (SIZE_MAX);
+  Lisp_Object volatile *clauses = alloca (clausenb * sizeof *clauses);
+  clauses += clausenb;
+  for (Lisp_Object tail = handlers; CONSP (tail); tail = XCDR (tail))
+    *--clauses = XCAR (tail);
+  for (ptrdiff_t i = 0; i < clausenb; i++)
+    {
+      Lisp_Object clause = clauses[i];
+      Lisp_Object condition = CONSP (clause) ? XCAR (clause) : Qnil;
+      if (!CONSP (condition))
+	condition = list1 (condition);
+      struct handler *c = push_handler (condition, CONDITION_CASE);
+      if (sys_setjmp (c->jmp))
+	{
+	  Lisp_Object val = handlerlist->val;
+	  Lisp_Object volatile *chosen_clause = clauses;
+	  for (struct handler *h = handlerlist->next; h != oldhandlerlist;
+	       h = h->next)
+	    chosen_clause++;
+	  Lisp_Object handler_body = XCDR (*chosen_clause);
+	  handlerlist = oldhandlerlist;
 
-  val = eval_sub (bodyform);
+	  if (NILP (var))
+	    return Fprogn (handler_body);
+
+	  if (!NILP (Vinternal_interpreter_environment))
+	    {
+	      val = Fcons (Fcons (var, val),
+			   Vinternal_interpreter_environment);
+	      var = Qinternal_interpreter_environment;
+	    }
+
+	  /* Bind VAR to VAL while evaluating HANDLER_BODY.  The
+	     unbind_to just undoes VAR's binding; whoever longjumped
+	     to us unwound the stack to C->pdlcount before throwing.  */
+	  ptrdiff_t count = SPECPDL_INDEX ();
+	  specbind (var, val);
+	  return unbind_to (count, Fprogn (handler_body));
+	}
+    }
+
+  Lisp_Object result = eval_sub (bodyform);
   handlerlist = oldhandlerlist;
-  return val;
+  return result;
 }
 
 /* Call the function BFUN with no arguments, catching errors within it
