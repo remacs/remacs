@@ -151,7 +151,7 @@ extern char *getenv ();
 #endif
 
 /* Make a leaner executable.  */
-#define WIN32_LEAN_AND_MEAN 1
+#define WIN32_LEAN_AND_MEAN
 
 #include <sys/types.h>
 
