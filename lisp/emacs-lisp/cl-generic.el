@@ -413,10 +413,11 @@ The set of acceptable TYPEs (also called \"specializers\") is defined
   (declare (doc-string 3) (indent 2)
            (debug
             (&define                    ; this means we are defining something
-             [&or name ("setf" :name setf name)]
+             [&or symbolp ("setf" symbolp)]
              ;; ^^ This is the methods symbol
-             [ &optional keywordp ]     ; this is key :before etc
-             list                       ; arguments
+             [ &optional keywordp       ; this is key :before etc
+               &optional stringp ]      ; :extra can be followed by a string
+             listp                      ; arguments
              [ &optional stringp ]      ; documentation string
              def-body)))                ; part to be debugged
   (let ((qualifiers nil))
