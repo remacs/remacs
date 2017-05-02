@@ -664,7 +664,7 @@ DEFUN ("thread-yield", Fthread_yield, Sthread_yield, 0, 0, 0,
 static Lisp_Object
 invoke_thread_function (void)
 {
-  int count = SPECPDL_INDEX ();
+  ptrdiff_t count = SPECPDL_INDEX ();
 
   Ffuncall (1, &current_thread->function);
   return unbind_to (count, Qnil);
