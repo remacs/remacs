@@ -436,7 +436,7 @@ w32font_text_extents (struct font *font, unsigned *code,
   int i;
   HFONT old_font = NULL;
   HDC dc = NULL;
-  struct frame * f;
+  struct frame * f UNINIT;
   int total_width = 0;
   WORD *wcode;
   SIZE size;

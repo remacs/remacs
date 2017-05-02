@@ -2630,7 +2630,7 @@ since only regular expressions have distinguished subexpressions.  */)
 	  const unsigned char *add_stuff = NULL;
 	  ptrdiff_t add_len = 0;
 	  ptrdiff_t idx = -1;
-	  ptrdiff_t begbyte;
+	  ptrdiff_t begbyte UNINIT;
 
 	  if (str_multibyte)
 	    {

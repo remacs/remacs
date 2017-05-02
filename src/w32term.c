@@ -2454,7 +2454,7 @@ x_draw_glyph_string (struct glyph_string *s)
                     thickness = font->underline_thickness;
                   else
                     thickness = 1;
-                  if (x_underline_at_descent_line)
+                  if (x_underline_at_descent_line || !font)
                     position = (s->height - thickness) - (s->ybase - s->y);
                   else
                     {
@@ -2467,9 +2467,9 @@ x_draw_glyph_string (struct glyph_string *s)
                          ROUND (x) = floor (x + 0.5)  */
 
                       if (x_use_underline_position_properties
-                          && font && font->underline_position >= 0)
+                          && font->underline_position >= 0)
                         position = font->underline_position;
-                      else if (font)
+                      else
                         position = (font->descent + 1) / 2;
                     }
                   position = max (position, underline_minimum_offset);

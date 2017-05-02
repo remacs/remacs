@@ -7159,7 +7159,7 @@ compute_tip_xy (struct frame *f,
 		int width, int height, int *root_x, int *root_y)
 {
   Lisp_Object left, top, right, bottom;
-  int min_x, min_y, max_x, max_y;
+  int min_x = 0, min_y, max_x = 0, max_y;
 
   /* User-specified position?  */
   left = Fcdr (Fassq (Qleft, parms));
@@ -7777,7 +7777,7 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
   OPENFILENAMEA * file_details_a = &new_file_details_a.details;
   int use_unicode = w32_unicode_filenames;
   wchar_t *prompt_w;
-  char *prompt_a;
+  char *prompt_a UNINIT;
   int len;
   char fname_ret[MAX_UTF8_PATH];
 #endif /* NTGUI_UNICODE */
@@ -8505,8 +8505,8 @@ w32_parse_and_hook_hot_key (Lisp_Object key, int hook)
 {
   /* Copied from Fdefine_key and store_in_keymap.  */
   register Lisp_Object c;
-  int vk_code;
-  int lisp_modifiers;
+  int vk_code = 0;
+  int lisp_modifiers = 0;
   int w32_modifiers;
   Lisp_Object res = Qnil;
   char* vkname;
