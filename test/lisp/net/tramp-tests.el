@@ -2448,37 +2448,66 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   "Check `file-name-completion' and `file-name-all-completions'."
   (skip-unless (tramp--test-enabled))
 
+  ;; Method and host name in completion mode.  This kind of completion
+  ;; does not work on MS Windows.
+  (when (not (memq system-type '(cygwin windows-nt)))
+    (let ((method (file-remote-p tramp-test-temporary-file-directory 'method))
+	  (host (file-remote-p tramp-test-temporary-file-directory 'host))
+          (orig-syntax tramp-syntax))
+
+      (unwind-protect
+          (dolist (syntax (tramp-syntax-values))
+            (tramp-change-syntax syntax)
+            (let ;; This is needed for the `simplified' syntax.
+                ((method-marker
+                  (if (zerop (length (tramp-method-regexp)))
+                      "" tramp-default-method-marker))
+                 ;; This is needed for the `separate' syntax.
+                 (prefix-format (substring (tramp-prefix-format) 1)))
+              ;; Complete method name.
+	      (unless (or (zerop (length method))
+                          (zerop (length (tramp-method-regexp))))
+	        (should
+	         (member
+		  (concat prefix-format method (tramp-postfix-method-format))
+		  (file-name-all-completions
+                   (concat prefix-format (substring method 0 1)) "/"))))
+              ;; Complete host name for default method.
+	      (unless (zerop (length host))
+	        (let ((tramp-default-method (or method tramp-default-method)))
+		  (should
+		   (member
+		    (concat
+                     prefix-format method-marker (tramp-postfix-method-format)
+                     host (tramp-postfix-host-format))
+		    (file-name-all-completions
+		     (concat
+                      prefix-format method-marker (tramp-postfix-method-format)
+                      (substring host 0 1))
+                     "/")))))
+              ;; Complete host name.
+	      (unless (or (zerop (length method))
+                          (zerop (length (tramp-method-regexp)))
+                          (zerop (length host)))
+	        (should
+	         (member
+		  (concat
+                   prefix-format method (tramp-postfix-method-format)
+                   host (tramp-postfix-host-format))
+		  (file-name-all-completions
+		   (concat prefix-format method (tramp-postfix-method-format))
+                   "/"))))))
+
+	;; Cleanup.
+        (tramp-change-syntax orig-syntax))))
+
   (dolist (n-e '(nil t))
     (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
       (let ((non-essential n-e)
-	    (tmp-name (tramp--test-make-temp-name nil quoted))
-	    (method (file-remote-p tramp-test-temporary-file-directory 'method))
-	    (host (file-remote-p tramp-test-temporary-file-directory 'host)))
+	    (tmp-name (tramp--test-make-temp-name nil quoted)))
 
 	(unwind-protect
 	    (progn
-	      ;; Method and host name in completion mode.  This kind
-	      ;; of completion does not work on MS Windows.
-	      (when (not (memq system-type '(cygwin windows-nt)))
-		(unless (zerop (length method))
-		  (should
-		   (member
-		    (format "%s:" method)
-		    (file-name-all-completions (substring method 0 1) "/"))))
-		(unless (zerop (length host))
-		  (let ((tramp-default-method (or method tramp-default-method)))
-		    (should
-		     (member
-		      (format "-:%s:" host)
-		      (file-name-all-completions
-		       (format "-:%s" (substring host 0 1)) "/")))))
-		(unless (or (zerop (length method)) (zerop (length host)))
-		  (should
-		   (member
-		    (format "%s:%s:" method host)
-		    (file-name-all-completions
-		     (format "%s:" method) "/")))))
-
 	      ;; Local files.
 	      (make-directory tmp-name)
 	      (should (file-directory-p tmp-name))

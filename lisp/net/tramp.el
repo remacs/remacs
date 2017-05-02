@@ -945,7 +945,7 @@ See `tramp-file-name-structure' for more explanations.
 On W32 systems, the volume letter must be ignored.")
 
 (defconst tramp-completion-file-name-regexp-separate
-  "\\`/\\[[^]]*\\'"
+  "\\`/\\(\\[[^]]*\\)?\\'"
   "Value for `tramp-completion-file-name-regexp' for separate remoting.
 See `tramp-file-name-structure' for more explanations.")
 
