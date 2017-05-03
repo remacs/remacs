@@ -617,7 +617,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
        (tramp-compat-file-attribute-modification-time
 	(file-attributes filename))))))
 
-(defun tramp-smb-handle-delete-directory (directory &optional recursive)
+(defun tramp-smb-handle-delete-directory (directory &optional recursive _trash)
   "Like `delete-directory' for Tramp files."
   (setq directory (directory-file-name (expand-file-name directory)))
   (when (file-exists-p directory)

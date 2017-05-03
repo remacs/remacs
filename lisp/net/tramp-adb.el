@@ -521,7 +521,7 @@ Emacs dired can't find files."
     (tramp-flush-file-property v (file-name-directory localname))
     (tramp-flush-directory-property v localname)))
 
-(defun tramp-adb-handle-delete-directory (directory &optional recursive)
+(defun tramp-adb-handle-delete-directory (directory &optional recursive _trash)
   "Like `delete-directory' for Tramp files."
   (setq directory (expand-file-name directory))
   (with-parsed-tramp-file-name (file-truename directory) nil

@@ -5477,7 +5477,7 @@ RECURSIVE if DIRECTORY is nonempty."
   (let ((handler (find-file-name-handler directory 'delete-directory)))
     (cond
      (handler
-      (funcall handler 'delete-directory directory recursive))
+      (funcall handler 'delete-directory directory recursive trash))
      ((and delete-by-moving-to-trash trash)
       ;; Only move non-empty dir to trash if recursive deletion was
       ;; requested.  This mimics the non-`delete-by-moving-to-trash'
