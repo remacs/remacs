@@ -2904,7 +2904,7 @@ Return (PKG-DESC [NAME VERSION STATUS DOC])."
   :version "25.1")
 
 (defface package-status-incompat
-  '((t :inherit font-lock-comment-face))
+  '((t :inherit error))
   "Face used on the status and version of incompat packages."
   :version "25.1")
 
