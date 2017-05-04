@@ -526,6 +526,7 @@ pass to the OPERATION."
 		      (tramp-message
 		       v 6 "%s" (mapconcat 'identity (process-command p) " "))
 		      (tramp-set-connection-property p "vector" v)
+		      (process-put p 'adjust-window-size-function 'ignore)
 		      (set-process-query-on-exit-flag p nil)
 		      (tramp-process-actions p v nil tramp-smb-actions-with-tar)
 
@@ -788,6 +789,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		  (tramp-message
 		   v 6 "%s" (mapconcat 'identity (process-command p) " "))
 		  (tramp-set-connection-property p "vector" v)
+		  (process-put p 'adjust-window-size-function 'ignore)
 		  (set-process-query-on-exit-flag p nil)
 		  (tramp-process-actions p v nil tramp-smb-actions-get-acl)
 		  (when (> (point-max) (point-min))
@@ -1384,6 +1386,7 @@ target of the symlink differ."
 		  (tramp-message
 		   v 6 "%s" (mapconcat 'identity (process-command p) " "))
 		  (tramp-set-connection-property p "vector" v)
+		  (process-put p 'adjust-window-size-function 'ignore)
 		  (set-process-query-on-exit-flag p nil)
 		  (tramp-process-actions p v nil tramp-smb-actions-set-acl)
 		  (goto-char (point-max))
@@ -1890,6 +1893,7 @@ If ARGUMENT is non-nil, use it as argument for
 	      (tramp-message
 	       vec 6 "%s" (mapconcat 'identity (process-command p) " "))
 	      (tramp-set-connection-property p "vector" vec)
+	      (process-put p 'adjust-window-size-function 'ignore)
 	      (set-process-query-on-exit-flag p nil)
 
 	      ;; Set variables for computing the prompt for reading password.

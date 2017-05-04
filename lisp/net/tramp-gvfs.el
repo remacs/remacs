@@ -1082,6 +1082,7 @@ file names."
 	(tramp-set-connection-property p "vector" v)
 	(process-put p 'events events)
 	(process-put p 'watch-name localname)
+	(process-put p 'adjust-window-size-function 'ignore)
 	(set-process-query-on-exit-flag p nil)
 	(set-process-filter p 'tramp-gvfs-monitor-file-process-filter)
 	;; There might be an error if the monitor is not supported.

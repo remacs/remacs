@@ -203,6 +203,7 @@ pass to the OPERATION."
 		       tramp-current-host nil nil))
 	    result)
 	(tramp-message v 6 "%s" (mapconcat 'identity (process-command p) " "))
+	(process-put p 'adjust-window-size-function 'ignore)
 	(set-process-query-on-exit-flag p nil)
 	(while (tramp-compat-process-live-p p)
 	  (accept-process-output p 0.1))
@@ -1230,6 +1231,7 @@ connection if a previous connection has died for some reason."
 	    (unless (tramp-compat-process-live-p p)
 	      (tramp-error  vec 'file-error "Terminated!"))
 	    (tramp-set-connection-property p "vector" vec)
+	    (process-put p 'adjust-window-size-function 'ignore)
 	    (set-process-query-on-exit-flag p nil)
 
 	    ;; Check whether the properties have been changed.  If
