@@ -690,7 +690,7 @@ information, is available via the @code{process-contact} function.
 The current working directory of the subprocess is set to the current
 buffer's value of @code{default-directory} if that is local (as
 determined by `unhandled-file-name-directory'), or "~" otherwise.  If
-you want to run a process in a remote direcotry use
+you want to run a process in a remote directory use
 @code{start-file-process}.
 @end defun
 

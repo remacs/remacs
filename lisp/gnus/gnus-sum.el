@@ -8600,7 +8600,7 @@ these articles."
       ;; subject, while the second pop gets us back to the state
       ;; before we started to deal with the thread. presumably we want
       ;; to think of the thread and its associated subject matches as
-      ;; a single thing so that we onnly need to pop once to get back
+      ;; a single thing so that we need to pop only once to get back
       ;; to the original view.
       (pop gnus-newsgroup-limits)
       (gnus-summary-position-point))))

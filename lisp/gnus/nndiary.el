@@ -1304,9 +1304,7 @@ all.  This may very well take some time.")
        res))
     (sort res 'time-less-p)))
 
-;; FIXME: "occurrence" is misspelled in this function name.
-
-(defun nndiary-last-occurence (sched)
+(defun nndiary-last-occurrence (sched)
   ;; Returns the last occurrence of schedule SCHED as an Emacs time struct, or
   ;; nil for permanent schedule or errors.
   (let ((minute (nndiary-max (nth 0 sched)))
@@ -1385,10 +1383,11 @@ all.  This may very well take some time.")
 	   (nnheader-report 'nndiary "Undecidable schedule")
 	   nil))
 	))))
+(define-obsolete-function-alias
+  'nndiary-last-occurence
+  'nndiary-last-occurrence "26.1")
 
-;; FIXME: "occurrence" is misspelled in this function name.
-
-(defun nndiary-next-occurence (sched now)
+(defun nndiary-next-occurrence (sched now)
   ;; Returns the next occurrence of schedule SCHED, starting from time NOW.
   ;; If there's no next occurrence, returns the last one (if any) which is then
   ;; in the past.
@@ -1517,10 +1516,13 @@ all.  This may very well take some time.")
 		       ))
 		   )))
 	     ))
-	 (nndiary-last-occurence sched))
+	 (nndiary-last-occurrence sched))
       ;; else
-      (nndiary-last-occurence sched))
+      (nndiary-last-occurrence sched))
     ))
+(define-obsolete-function-alias
+  'nndiary-next-occurence
+  'nndiary-next-occurrence "26.1")
 
 (defun nndiary-expired-article-p (file)
   (with-temp-buffer
@@ -1529,7 +1531,7 @@ all.  This may very well take some time.")
 	  ;; An article has expired if its last schedule (if any) is in the
 	  ;; past. A permanent schedule never expires.
 	  (and sched
-	       (setq sched (nndiary-last-occurence sched))
+	       (setq sched (nndiary-last-occurrence sched))
 	       (time-less-p sched (current-time))))
       ;; else
       (nnheader-report 'nndiary "Could not read file %s" file)
@@ -1543,7 +1545,7 @@ all.  This may very well take some time.")
 	    (sched (nndiary-schedule)))
 	;; The article should be re-considered as unread if there's a reminder
 	;; between the group timestamp and the current time.
-	(when (and sched (setq sched (nndiary-next-occurence sched now)))
+	(when (and sched (setq sched (nndiary-next-occurrence sched now)))
 	  (let ((reminders ;; add the next occurrence itself at the end.
 		 (append (nndiary-compute-reminders sched) (list sched))))
 	    (while (and reminders (time-less-p (car reminders) timestamp))

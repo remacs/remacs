@@ -159,7 +159,7 @@ There are currently two built-in format functions:
   ;; Code partly stolen from article-make-date-line
   (let* ((extras (mail-header-extra header))
 	 (sched (gnus-diary-header-schedule extras))
-	 (occur (nndiary-next-occurence sched (current-time)))
+	 (occur (nndiary-next-occurrence sched (current-time)))
 	 (now (current-time))
 	 (real-time (time-subtract occur now)))
     (if (null real-time)
@@ -194,7 +194,7 @@ There are currently two built-in format functions:
   ;; Returns a formatted time string for the next occurrence of this message.
   (let* ((extras (mail-header-extra header))
 	 (sched (gnus-diary-header-schedule extras))
-	 (occur (nndiary-next-occurence sched (current-time))))
+	 (occur (nndiary-next-occurrence sched (current-time))))
     (format-time-string gnus-diary-time-format occur)))
 
 
@@ -206,8 +206,8 @@ There are currently two built-in format functions:
 	 (e2 (mail-header-extra h2))
 	 (s1 (gnus-diary-header-schedule e1))
 	 (s2 (gnus-diary-header-schedule e2))
-	 (o1 (nndiary-next-occurence s1 now))
-	 (o2 (nndiary-next-occurence s2 now)))
+	 (o1 (nndiary-next-occurrence s1 now))
+	 (o2 (nndiary-next-occurrence s2 now)))
     (if (and (= (car o1) (car o2)) (= (cadr o1) (cadr o2)))
 	(< (mail-header-number h1) (mail-header-number h2))
       (time-less-p o1 o2))))
