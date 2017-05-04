@@ -40,7 +40,7 @@
 ;; Items are listed alphabetically (except for mh-require which is
 ;; needed sooner it would normally appear).
 
-(require 'mh-acros)
+(eval-when-compile (require 'mh-acros))
 
 (mh-do-in-gnu-emacs
   (defalias 'mh-require 'require))
@@ -374,7 +374,6 @@ XEmacs."
 (provide 'mh-compat)
 
 ;; Local Variables:
-;; no-byte-compile: t
 ;; indent-tabs-mode: nil
 ;; sentence-end-double-space: nil
 ;; End:
