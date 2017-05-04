@@ -920,6 +920,9 @@ IGNORES is a list of glob patterns."
   (let* ((grep-find-template (replace-regexp-in-string "<C>" "<C> -E"
                                                        grep-find-template t t))
          (grep-highlight-matches nil)
+         ;; TODO: Sanitize the regexp to remove Emacs-specific terms,
+         ;; so that Grep can search for the "relaxed" version.  Can we
+         ;; do that reliably enough, without creating false negatives?
          (command (xref--rgrep-command (xref--regexp-to-extended regexp)
                                        files
                                        (expand-file-name dir)
