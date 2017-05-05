@@ -79,6 +79,7 @@
 (defcustom dns-mode-font-lock-keywords
   `(("^$ORIGIN" 0 ,dns-mode-control-entity-face)
     ("^$INCLUDE" 0 ,dns-mode-control-entity-face)
+    ("^$TTL" 0 ,dns-mode-control-entity-face)
     ("^$[a-z0-9A-Z]+" 0 ,dns-mode-bad-control-entity-face)
     (,(regexp-opt dns-mode-classes) 0 ,dns-mode-class-face)
     (,(regexp-opt dns-mode-types) 0 ,dns-mode-type-face))
