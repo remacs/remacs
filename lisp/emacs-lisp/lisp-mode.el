@@ -164,6 +164,9 @@
 (put 'defalias 'doc-string-elt 3)
 (put 'defvaralias 'doc-string-elt 3)
 (put 'define-category 'doc-string-elt 2)
+;; CL
+(put 'defconstant 'doc-string-elt 3)
+(put 'defparameter 'doc-string-elt 3)
 
 (defvar lisp-doc-string-elt-property 'doc-string-elt
   "The symbol property that holds the docstring position info.")
