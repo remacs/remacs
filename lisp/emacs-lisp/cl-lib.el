@@ -349,7 +349,6 @@ Call `cl-float-limits' to set this.")
 
 (declare-function cl--mapcar-many "cl-extra" (cl-func cl-seqs &optional acc))
 
-;;;###autoload
 (defun cl-mapcar (cl-func cl-x &rest cl-rest)
   "Apply FUNCTION to each element of SEQ, and make a list of the results.
 If there are several SEQs, FUNCTION is called with that many arguments,
