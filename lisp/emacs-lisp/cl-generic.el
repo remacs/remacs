@@ -415,8 +415,9 @@ The set of acceptable TYPEs (also called \"specializers\") is defined
             (&define                    ; this means we are defining something
              [&or symbolp ("setf" symbolp)]
              ;; ^^ This is the methods symbol
-             [ &optional keywordp       ; this is key :before etc
-               &optional stringp ]      ; :extra can be followed by a string
+             [ &rest atom ]         ; Multiple qualifiers are allowed.
+                                    ; Like in CLOS spec, we support
+                                    ; any non-list values.
              listp                      ; arguments
              [ &optional stringp ]      ; documentation string
              def-body)))                ; part to be debugged
