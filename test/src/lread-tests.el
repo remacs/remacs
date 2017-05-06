@@ -155,4 +155,13 @@ literals (Bug#20852)."
     (load "somelib" nil t)
     (should (string-suffix-p "/somelib.el" (caar load-history)))))
 
+(ert-deftest lread-tests--old-style-backquotes ()
+  "Check that loading warns about old-style backquotes."
+  (lread-tests--with-temp-file file-name
+    (write-region "(` (a b))" nil file-name)
+    (should (equal (load file-name nil :nomessage :nosuffix) t))
+    (should (equal (lread-tests--last-message)
+                   (concat (format-message "Loading `%s': " file-name)
+                           "old-style backquotes detected!")))))
+
 ;;; lread-tests.el ends here

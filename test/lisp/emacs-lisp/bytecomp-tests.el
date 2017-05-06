@@ -530,6 +530,21 @@ literals (Bug#20852)."
                                      "`?\"', `?(', `?)', `?;', `?[', `?]' "
                                      "detected!"))))))))
 
+(ert-deftest bytecomp-tests--old-style-backquotes ()
+  "Check that byte compiling warns about old-style backquotes."
+  (should (boundp 'lread--old-style-backquotes))
+  (bytecomp-tests--with-temp-file source
+    (write-region "(` (a b))" nil source)
+    (bytecomp-tests--with-temp-file destination
+      (let* ((byte-compile-dest-file-function (lambda (_) destination))
+            (byte-compile-error-on-warn t)
+            (byte-compile-debug t)
+            (err (should-error (byte-compile-file source))))
+        (should (equal (cdr err)
+                       (list "!! The file uses old-style backquotes !!
+This functionality has been obsolete for more than 10 years already
+and will be removed soon.  See (elisp)Backquote in the manual.")))))))
+
 ;; Local Variables:
 ;; no-byte-compile: t
 ;; End:

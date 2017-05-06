@@ -2021,11 +2021,11 @@ With argument ARG, insert value in current buffer after the form."
 		 (not (eobp)))
 	  (setq byte-compile-read-position (point)
 		byte-compile-last-position byte-compile-read-position)
-	  (let* ((old-style-backquotes nil)
+	  (let* ((lread--old-style-backquotes nil)
                  (lread--unescaped-character-literals nil)
                  (form (read inbuffer)))
             ;; Warn about the use of old-style backquotes.
-            (when old-style-backquotes
+            (when lread--old-style-backquotes
               (byte-compile-warn "!! The file uses old-style backquotes !!
 This functionality has been obsolete for more than 10 years already
 and will be removed soon.  See (elisp)Backquote in the manual."))

@@ -948,7 +948,7 @@ load_error_handler (Lisp_Object data)
 static void
 load_warn_old_style_backquotes (Lisp_Object file)
 {
-  if (!NILP (Vold_style_backquotes))
+  if (!NILP (Vlread_old_style_backquotes))
     {
       AUTO_STRING (format, "Loading `%s': old-style backquotes detected!");
       CALLN (Fmessage, format, file);
@@ -1216,7 +1216,7 @@ Return t if the file exists and loads successfully.  */)
   version = -1;
 
   /* Check for the presence of old-style quotes and warn about them.  */
-  specbind (Qold_style_backquotes, Qnil);
+  specbind (Qlread_old_style_backquotes, Qnil);
   record_unwind_protect (load_warn_old_style_backquotes, file);
 
   /* Check for the presence of unescaped character literals and warn
@@ -3040,7 +3040,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	   "(\`" anyway).  */
 	if (!new_backquote_flag && first_in_list && next_char == ' ')
 	  {
-	    Vold_style_backquotes = Qt;
+	    Vlread_old_style_backquotes = Qt;
 	    goto default_label;
 	  }
 	else
@@ -3094,7 +3094,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	  }
 	else
 	  {
-	    Vold_style_backquotes = Qt;
+	    Vlread_old_style_backquotes = Qt;
 	    goto default_label;
 	  }
       }
@@ -4843,10 +4843,11 @@ variables, this must be set in the first line of a file.  */);
 	       doc: /* List of buffers being read from by calls to `eval-buffer' and `eval-region'.  */);
   Veval_buffer_list = Qnil;
 
-  DEFVAR_LISP ("old-style-backquotes", Vold_style_backquotes,
-	       doc: /* Set to non-nil when `read' encounters an old-style backquote.  */);
-  Vold_style_backquotes = Qnil;
-  DEFSYM (Qold_style_backquotes, "old-style-backquotes");
+  DEFVAR_LISP ("lread--old-style-backquotes", Vlread_old_style_backquotes,
+	       doc: /* Set to non-nil when `read' encounters an old-style backquote.
+For internal use only.  */);
+  Vlread_old_style_backquotes = Qnil;
+  DEFSYM (Qlread_old_style_backquotes, "lread--old-style-backquotes");
 
   DEFVAR_LISP ("lread--unescaped-character-literals",
                Vlread_unescaped_character_literals,

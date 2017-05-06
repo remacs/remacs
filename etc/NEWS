@@ -907,6 +907,11 @@ which was sometimes numerically incorrect.  For example, on a 64-bit
 host (max 1e16 10000000000000001) now returns its second argument
 instead of its first.
 
++++
+** The variable 'old-style-backquotes' has been made internal and
+renamed to 'lread--old-style-backquotes'.  No user code should use
+this variable.
+
 
 * Lisp Changes in Emacs 26.1
 
