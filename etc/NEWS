@@ -143,8 +143,8 @@ you can disable the feature by adding
 
   '(inhibit-double-buffering . t)
 
-to default-frame-parameters.  Or inject this parameter into the
-selected frame by evaluating this form:
+to default-frame-alist.  Or inject this parameter into the selected
+frame by evaluating this form:
 
   (modify-frame-parameters nil '((inhibit-double-buffering . t)))
 
