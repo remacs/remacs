@@ -5151,13 +5151,19 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
 
   if (!auto_saving && !noninteractive)
     {
-      AUTO_STRING (format, NUMBERP (append)
-                   ? "Updated `%s' (%d characters)"
-                   : ! NILP (append)
-                   ? "Added to `%s' (%d characters)"
-                   : "Wrote `%s' (%d characters)");
       EMACS_INT nchars = (STRINGP (start) ? SCHARS (start)
 			  : XINT (end) - XINT (start));
+      AUTO_STRING (format, NUMBERP (append)
+                   ? (nchars != 1
+		      ? "Updated `%s' (%d characters)"
+		      : "Updated `%s' (%d character)")
+                   : ! NILP (append)
+		   ? (nchars != 1
+		      ? "Added to `%s' (%d characters)"
+		      : "Added to `%s' (%d character)")
+                   : (nchars != 1
+		      ? "Wrote `%s' (%d characters)"
+		      : "Wrote `%s' (%d character)"));
       CALLN (Fmessage, format, visit_file, make_number (nchars));
     }
   return Qnil;
