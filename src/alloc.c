@@ -3945,7 +3945,7 @@ make_user_ptr (void (*finalizer) (void *), void *p)
 
 /* Create a new module function environment object.  */
 Lisp_Object
-make_module_function ()
+make_module_function (void)
 {
   return allocate_misc (Lisp_Misc_Module_Function);
 }
