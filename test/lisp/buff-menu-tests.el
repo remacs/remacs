@@ -27,12 +27,10 @@
 
 (ert-deftest buff-menu-24962 ()
   "Test for http://debbugs.gnu.org/24962 ."
-  (let ((file (expand-file-name "foo" temporary-file-directory))
-        buf)
+  (let* ((file (make-temp-file "foo"))
+         (buf (find-file file)))
     (unwind-protect
         (progn
-          (write-region "foo" nil file)
-          (setq buf (find-file file))
           (rename-buffer " foo")
           (list-buffers)
           (with-current-buffer "*Buffer List*"
