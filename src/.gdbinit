@@ -1280,7 +1280,7 @@ if hasattr(gdb, 'printing'):
        RegexpCollectionPrettyPrinter except when printing Lisp_Object."""
     def __call__ (self, val):
       """Look up the pretty-printer for the provided value."""
-      type = val.type
+      type = val.type.unqualified ()
       typename = type.tag or type.name
       basic_type = gdb.types.get_basic_type (type)
       basic_typename = basic_type.tag or basic_type.name
