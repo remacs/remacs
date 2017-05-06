@@ -1277,18 +1277,19 @@ internal_lisp_condition_case (Lisp_Object var, Lisp_Object bodyform,
 	  if (NILP (var))
 	    return Fprogn (handler_body);
 
+	  Lisp_Object handler_var = var;
 	  if (!NILP (Vinternal_interpreter_environment))
 	    {
 	      val = Fcons (Fcons (var, val),
 			   Vinternal_interpreter_environment);
-	      var = Qinternal_interpreter_environment;
+	      handler_var = Qinternal_interpreter_environment;
 	    }
 
-	  /* Bind VAR to VAL while evaluating HANDLER_BODY.  The
-	     unbind_to just undoes VAR's binding; whoever longjumped
+	  /* Bind HANDLER_VAR to VAL while evaluating HANDLER_BODY.
+	     The unbind_to undoes just this binding; whoever longjumped
 	     to us unwound the stack to C->pdlcount before throwing.  */
 	  ptrdiff_t count = SPECPDL_INDEX ();
-	  specbind (var, val);
+	  specbind (handler_var, val);
 	  return unbind_to (count, Fprogn (handler_body));
 	}
     }
