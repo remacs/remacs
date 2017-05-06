@@ -75,14 +75,20 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 static bool valgrind_p;
 #endif
 
-/* GC_CHECK_MARKED_OBJECTS means do sanity checks on allocated objects.  */
+/* GC_CHECK_MARKED_OBJECTS means do sanity checks on allocated objects.
+   We turn that on by default when ENABLE_CHECKING is defined;
+   define GC_CHECK_MARKED_OBJECTS to zero to disable.  */
+
+#if defined ENABLE_CHECKING && !defined GC_CHECK_MARKED_OBJECTS
+# define GC_CHECK_MARKED_OBJECTS 1
+#endif
 
 /* GC_MALLOC_CHECK defined means perform validity checks of malloc'd
    memory.  Can do this only if using gmalloc.c and if not checking
    marked objects.  */
 
 #if (defined SYSTEM_MALLOC || defined DOUG_LEA_MALLOC \
-     || defined HYBRID_MALLOC || defined GC_CHECK_MARKED_OBJECTS)
+     || defined HYBRID_MALLOC || GC_CHECK_MARKED_OBJECTS)
 #undef GC_MALLOC_CHECK
 #endif
 
@@ -6343,7 +6349,7 @@ mark_object (Lisp_Object arg)
 {
   register Lisp_Object obj;
   void *po;
-#ifdef GC_CHECK_MARKED_OBJECTS
+#if GC_CHECK_MARKED_OBJECTS
   struct mem_node *m;
 #endif
   ptrdiff_t cdr_count = 0;
@@ -6362,7 +6368,7 @@ mark_object (Lisp_Object arg)
   /* Perform some sanity checks on the objects marked here.  Abort if
      we encounter an object we know is bogus.  This increases GC time
      by ~80%.  */
-#ifdef GC_CHECK_MARKED_OBJECTS
+#if GC_CHECK_MARKED_OBJECTS
 
   /* Check that the object pointed to by PO is known to be a Lisp
      structure allocated from the heap.  */
@@ -6431,7 +6437,7 @@ mark_object (Lisp_Object arg)
 	if (VECTOR_MARKED_P (ptr))
 	  break;
 
-#ifdef GC_CHECK_MARKED_OBJECTS
+#if GC_CHECK_MARKED_OBJECTS
 	m = mem_find (po);
 	if (m == MEM_NIL && !SUBRP (obj) && !main_thread_p (po))
 	  emacs_abort ();
@@ -6448,7 +6454,7 @@ mark_object (Lisp_Object arg)
 	switch (pvectype)
 	  {
 	  case PVEC_BUFFER:
-#ifdef GC_CHECK_MARKED_OBJECTS
+#if GC_CHECK_MARKED_OBJECTS
 	    {
 	      struct buffer *b;
 	      FOR_EACH_BUFFER (b)
