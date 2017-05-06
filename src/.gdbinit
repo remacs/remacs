@@ -1311,7 +1311,7 @@ if hasattr(gdb, 'printing'):
       # pretty-printing could be fancier.
       if not val:
         return "XIL(0)" # Easier to read than "XIL(0x0)".
-      return "XIL(0x%x)" % val
+      return "XIL(0x%x)" % int(val)
 
   def build_pretty_printer ():
     pp = Emacs_Pretty_Printers ("Emacs")

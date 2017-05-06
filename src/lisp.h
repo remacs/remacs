@@ -546,7 +546,7 @@ enum Lisp_Fwd_Type
 
 #ifdef CHECK_LISP_OBJECT_TYPE
 
-typedef struct { EMACS_INT i; } Lisp_Object;
+typedef struct Lisp_Object { EMACS_INT i; } Lisp_Object;
 
 #define LISP_INITIALLY(i) {i}
 
