@@ -48,6 +48,9 @@
   "DNS master file mode configuration."
   :group 'data)
 
+(defconst dns-mode-control-entities '("INCLUDE" "ORIGIN" "TTL")
+  "Lists of strings with known DNS control entities.")
+
 (defconst dns-mode-classes '("IN" "CS" "CH" "HS")
   "List of strings with known DNS classes.")
 
@@ -62,28 +65,59 @@
 			   "MAILA" "TLSA" "NSEC3")
   "List of strings with known DNS types.")
 
-;; Font lock.
+(defface dns-mode-control-entity '((t :inherit font-lock-keyword-face))
+  "Face used for DNS control entities, e.g. $ORIGIN."
+  :version "26.1"
+  :group 'dns-mode)
 
-(defvar dns-mode-control-entity-face 'font-lock-keyword-face
+(defface dns-mode-bad-control-entity '((t :inherit font-lock-warning-face))
+  "Face used for non-standard DNS control entities, e.g. $FOO."
+  :version "26.1"
+  :group 'dns-mode)
+
+(defface dns-mode-type '((t :inherit font-lock-type-face))
+  "Face used for DNS types, e.g., SOA."
+  :version "26.1"
+  :group 'dns-mode)
+
+(defface dns-mode-class '((t :inherit font-lock-constant-face))
+  "Face used for DNS classes, e.g., IN."
+  :version "26.1"
+  :group 'dns-mode)
+
+(defvar dns-mode-control-entity-face ''dns-mode-control-entity
   "Name of face used for control entities, e.g. $ORIGIN.")
+(make-obsolete-variable 'dns-mode-control-entity-face
+			"customize the face `dns-mode-control-entity' instead."
+			"26.1" 'set)
 
-(defvar dns-mode-bad-control-entity-face 'font-lock-warning-face
+(defvar dns-mode-bad-control-entity-face ''dns-mode-bad-control-entity
   "Name of face used for non-standard control entities, e.g. $FOO.")
+(make-obsolete-variable
+ 'dns-mode-bad-control-entity-face
+ "customize the face `dns-mode-bad-control-entity' instead."
+ "26.1" 'set)
 
-(defvar dns-mode-type-face 'font-lock-type-face
+(defvar dns-mode-type-face ''dns-mode-type
   "Name of face used for DNS types, e.g., SOA.")
+(make-obsolete-variable 'dns-mode-type-face
+			"customize the face `dns-mode-type' instead."
+			"26.1" 'set)
 
-(defvar dns-mode-class-face 'font-lock-constant-face
+(defvar dns-mode-class-face ''dns-mode-class
   "Name of face used for DNS classes, e.g., IN.")
+(make-obsolete-variable 'dns-mode-class
+			"customize the face `dns-mode-class' instead."
+			"26.1" 'set)
 
 (defcustom dns-mode-font-lock-keywords
-  `(("^$ORIGIN" 0 ,dns-mode-control-entity-face)
-    ("^$INCLUDE" 0 ,dns-mode-control-entity-face)
-    ("^$TTL" 0 ,dns-mode-control-entity-face)
+  `((,(concat "^$" (regexp-opt dns-mode-control-entities))
+     0 ,dns-mode-control-entity-face)
     ("^$[a-z0-9A-Z]+" 0 ,dns-mode-bad-control-entity-face)
     (,(regexp-opt dns-mode-classes) 0 ,dns-mode-class-face)
     (,(regexp-opt dns-mode-types) 0 ,dns-mode-type-face))
   "Font lock keywords used to highlight text in DNS master file mode."
+  :version "26.1"
   :type 'sexp
   :group 'dns-mode)
 
