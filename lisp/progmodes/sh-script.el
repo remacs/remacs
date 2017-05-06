@@ -599,8 +599,8 @@ This is buffer-local in every such buffer.")
     map)
   "Keymap used in Shell-Script mode.")
 
-(defvar sh-skeleton-pair-default-alist '((?( _ ?)) (?\))
-				      (?[ ?\s _ ?\s ?]) (?\])
+(defvar sh-skeleton-pair-default-alist '((?\( _ ?\)) (?\))
+				      (?\[ ?\s _ ?\s ?\]) (?\])
 				      (?{ _ ?}) (?\}))
   "Value to use for `skeleton-pair-default-alist' in Shell-Script mode.")
 

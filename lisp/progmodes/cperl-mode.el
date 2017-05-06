@@ -2173,8 +2173,8 @@ See `cperl-electric-parens'."
 	  (insert (make-string
 		   (prefix-numeric-value arg)
 		   (cdr (assoc last-command-event '((?{ .?})
-						   (?[ . ?])
-						   (?( . ?))
+						   (?\[ . ?\])
+						   (?\( . ?\))
 						   (?< . ?>))))))
 	  (forward-char (- (prefix-numeric-value arg))))
       (self-insert-command (prefix-numeric-value arg)))))

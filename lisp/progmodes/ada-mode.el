@@ -1664,7 +1664,7 @@ ARG is the prefix the user entered with \\[universal-argument]."
 				   ada-mode-map
 				   (char-to-string key)
 				   'ada-adjust-case-interactive)))
-	  '( ?` ?_ ?# ?% ?& ?* ?( ?) ?- ?= ?+
+	  '( ?` ?_ ?# ?% ?& ?* ?\( ?\) ?- ?= ?+
 		?| ?\; ?: ?' ?\" ?< ?, ?. ?> ?/ ?\n 32 ?\r )))
 
 (defun ada-loose-case-word (&optional _arg)

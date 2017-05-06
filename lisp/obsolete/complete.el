@@ -570,7 +570,7 @@ GOTO-END is non-nil, however, it instead replaces up to END."
 				(substring regex (1+ p)))
 		  p (+ p (length PC-ndelims-regex) (length PC-delim-regex)))
 	  (let ((bump (if (memq (aref regex p)
-				'(?$ ?^ ?\. ?* ?+ ?? ?[ ?] ?\\))
+				'(?$ ?^ ?\. ?* ?+ ?? ?\[ ?\] ?\\))
 			  -1 0)))
 	    (setq regex (concat (substring regex 0 (+ p bump))
 				PC-ndelims-regex

@@ -14003,7 +14003,7 @@ See also `verilog-header' for an alternative format."
 (define-skeleton verilog-sk-task
   "Insert a task definition."
   ()
-  > "task " '(verilog-sk-prompt-name) & ?; \n
+  > "task " '(verilog-sk-prompt-name) & ?\; \n
   > _ \n
   > "begin" \n
   > \n
@@ -14013,7 +14013,7 @@ See also `verilog-header' for an alternative format."
 (define-skeleton verilog-sk-function
   "Insert a function definition."
   ()
-  > "function [" '(verilog-sk-prompt-width) | -1 '(verilog-sk-prompt-name) ?; \n
+  > "function [" '(verilog-sk-prompt-width) | -1 '(verilog-sk-prompt-name) ?\; \n
   > _ \n
   > "begin" \n
   > \n
@@ -14208,13 +14208,13 @@ and the case items."
   '(setq input "state")
   > "// State registers for " str | -23 \n
   '(setq verilog-sk-state str)
-  > "reg [" '(verilog-sk-prompt-width) | -1 verilog-sk-state ", next_" verilog-sk-state ?; \n
+  > "reg [" '(verilog-sk-prompt-width) | -1 verilog-sk-state ", next_" verilog-sk-state ?\; \n
   '(setq input nil)
   > \n
   > "// State FF for " verilog-sk-state \n
   > "always @ ( " (read-string "clock:" "posedge clk") " or " (verilog-sk-prompt-reset) " ) begin" \n
   > "if ( " verilog-sk-reset " ) " verilog-sk-state " = 0; else" \n
-  > verilog-sk-state " = next_" verilog-sk-state ?; \n
+  > verilog-sk-state " = next_" verilog-sk-state ?\; \n
   > (- verilog-indent-level-behavioral) "end" (progn (electric-verilog-terminate-line) nil)
   > \n
   > "// Next State Logic for " verilog-sk-state \n

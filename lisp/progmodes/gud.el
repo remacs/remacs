@@ -3118,10 +3118,10 @@ Link exprs of the form:
       (setq span-start (char-after (- span-start 1)))
       (setq span-end (char-after span-end))
       (cond
-       ((= span-start ?)) t)
-      ((= span-start ?]) t)
-     ((= span-end ?() t)
-      ((= span-end ?[) t)
+       ((= span-start ?\)) t)
+      ((= span-start ?\]) t)
+     ((= span-end ?\() t)
+      ((= span-end ?\[) t)
        (t nil)))
      (t nil))))
 
