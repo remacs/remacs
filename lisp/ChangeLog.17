@@ -24621,7 +24621,7 @@
 
 	* progmodes/octave.el (octave-beginning-of-line)
 	(octave-end-of-line): Check before using up-list because it jumps
-	out of more syntactic contructs since moving to smie.
+	out of more syntactic constructs since moving to smie.
 	(octave-indent-comment): New function.
 	(octave-mode): Use it in smie-indent-functions.  (Bug#14350)
 	(octave-begin-keywords, octave-end-keywords)

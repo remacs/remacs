@@ -1045,7 +1045,7 @@ This function simply drops any transparency."
 (defun css--named-color (start-point str)
   "Check whether STR, seen at point, is CSS named color.
 Returns STR if it is a valid color.  Special care is taken
-to exclude some SCSS contructs."
+to exclude some SCSS constructs."
   (when-let ((color (assoc str css--color-map)))
     (save-excursion
       (goto-char start-point)
