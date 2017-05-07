@@ -2575,17 +2575,24 @@ comment at the start of cc-engine.el for more info."
 
 (defun c-cache-to-parse-ps-state (elt)
   ;; Create a list suitable to use as the old-state parameter to
-  ;; `parse-partial-sexp', out of ELT.  ELT is either just a number, a buffer
-  ;; position, or it is a list (POS TYPE STARTING-POS).  Here POS is the
-  ;; buffer position the other elements are pertinent for, TYPE is either 'c
-  ;; or 'c++ (for a comment) or a character (for a string delimiter) or t
-  ;; (meaning a string fence opened the string), STARTING-POS is the starting
-  ;; position of the comment or string.
-  (if (consp elt)
+  ;; `parse-partial-sexp', out of ELT, a member of
+  ;; `c-state-semi-nonlit-pos-cache'.  ELT is either just a number, or a list
+  ;; with 2, 3, or 4 members (See `c-parse-ps-state-to-cache').  That number
+  ;; or the car of the list is the "position element" of ELT, the position
+  ;; where ELT is valid.
+  ;;
+  ;; POINT is left at the postition for which the returned state is valid.  It
+  ;; will be either the position element of ELT, or one character before
+  ;; that.  (The latter happens in Emacs <= 25 and XEmacs, when ELT indicates
+  ;; its position element directly follows a potential first character of a
+  ;; two char construct (such as a comment opener or an escaped character).)
+  (if (and (consp elt) (>= (length elt) 3))
+      ;; Inside a string or comment
       (let ((depth 0) (containing nil) (last nil)
 	    in-string in-comment (after-quote nil)
 	    (min-depth 0) com-style com-str-start (intermediate nil)
-	    (between-syntax nil)
+	    (char-1 (nth 3 elt))	; first char of poss. 2-char construct
+	    (pos (car elt))
 	    (type (cadr elt)))
 	(setq com-str-start (car (cddr elt)))
 	(cond
@@ -2596,28 +2603,88 @@ comment at the start of cc-engine.el for more info."
 		com-style (if (eq type 'c++) 1 nil)))
 	 (t (c-benign-error "Invalid type %s in c-cache-to-parse-ps-state"
 			    elt)))
-	(list depth containing last
-	      in-string in-comment after-quote
-	      min-depth com-style com-str-start
-	      intermediate nil))
-    (copy-tree '(0 nil nil nil nil nil 0 nil nil nil nil))))
+	(if (memq 'pps-extended-state c-emacs-features)
+	    (progn
+	      (goto-char pos)
+	      (list depth containing last
+		    in-string in-comment after-quote
+		    min-depth com-style com-str-start
+		    intermediate char-1))
+	  (goto-char (if char-1
+			 (1- pos)
+		       pos))
+	  (list depth containing last
+		in-string in-comment nil
+		min-depth com-style com-str-start
+		intermediate)))
+
+    ;; Not in a string or comment.
+    (if (memq 'pps-extended-state c-emacs-features)
+	(progn
+	  (goto-char (if (consp elt) (car elt) elt))
+	  (list 0 nil nil nil nil
+		(and (consp elt) (eq (nth 1 elt) 9)) ; 9 is syntax code for "escape".
+		0 nil nil nil
+		(and (consp elt) (nth 1 elt))))
+      (goto-char (if (consp elt) (car elt) elt))
+      (if (and (consp elt) (cdr elt)) (backward-char))
+      (copy-tree '(0 nil nil nil nil
+		     nil
+		     0 nil nil nil)))))
 
 (defun c-parse-ps-state-to-cache (state)
   ;; Convert STATE, a `parse-partial-sexp' state valid at POINT, to an element
-  ;; for the `c-state-semi-nonlit-pos-cache' cache.  This is either POINT
-  ;; (when point is not in a literal) or a list (POINT TYPE STARTING-POS),
-  ;; where TYPE is the type of the literal, either 'string, 'c, or 'c++, and
-  ;; STARTING-POS is the starting position of the comment or string.
-  (cond
-   ((nth 3 state)			; A string
-    (list (point) (nth 3 state) (nth 8 state)))
-   ((and (nth 4 state)			; A comment
-	 (not (eq (nth 7 state) 'syntax-table))) ; but not a psuedo comment.
-    (list (point)
-	  (if (eq (nth 7 state) 1) 'c++ 'c)
-	  (nth 8 state)))
-   (t					; Neither string nor comment.
-    (point))))
+  ;; for the `c-state-semi-nonlit-pos-cache' cache.  This is one of
+  ;;   o - POINT (when point is not in a literal);
+  ;;   o - (POINT CHAR-1) (when the last character before point is potentially
+  ;;       the first of a two-character construct
+  ;;   o - (POINT TYPE STARTING-POS) (when in a literal);
+  ;;   o - (POINT TYPE STARTING-POS CHAR-1) (Combination of the previous two),
+  ;; where TYPE is the type of the literal (either 'c, or 'c++, or the
+  ;; character which closes the string), STARTING-POS is the starting
+  ;; position of the comment or string.  CHAR-1 is either the character
+  ;; potentially forming the first half of a two-char construct (in Emacs <=
+  ;; 25 and XEmacs) or the syntax of the character (in Emacs >= 26).
+  (if (memq 'pps-extended-state c-emacs-features)
+      ;; Emacs >= 26.
+      (let ((basic
+	     (cond
+	      ((nth 3 state)		; A string
+	       (list (point) (nth 3 state) (nth 8 state)))
+	      ((and (nth 4 state)		 ; A comment
+		    (not (eq (nth 7 state) 'syntax-table))) ; but not a psuedo comment.
+	       (list (point)
+		     (if (eq (nth 7 state) 1) 'c++ 'c)
+		     (nth 8 state)))
+	      (t			; Neither string nor comment.
+	       (point)))))
+	(if (nth 10 state)
+	    (append (if (consp basic)
+			basic
+		      (list basic))
+		    (list (nth 10 state)))
+	  basic))
+
+    ;; Emacs <= 25, XEmacs.
+    (cond
+     ((nth 3 state)			; A string
+      (if (eq (char-before) ?\\)
+	  (list (point) (nth 3 state) (nth 8 state) ?\\)
+	(list (point) (nth 3 state) (nth 8 state))))
+     ((and (nth 4 state)		; comment
+	   (not (eq (nth 7 state) 'syntax-table)))
+      (if (and (eq (char-before) ?*)
+	       (> (- (point) (nth 8 state)) 2)) ; not "/*/".
+	  (list (point)
+		(if (eq (nth 7 state) 1) 'c++ 'c)
+		(nth 8 state)
+		?*)
+	(list (point)
+		(if (eq (nth 7 state) 1) 'c++ 'c)
+		(nth 8 state))))
+     (t (if (memq (char-before) '(?/ ?\\))
+	    (list (point) (char-before))
+	  (point))))))
 
 (defsubst c-ps-state-cache-pos (elt)
   ;; Get the buffer position from ELT, an element from the cache
@@ -2637,7 +2704,7 @@ comment at the start of cc-engine.el for more info."
     (save-restriction
       (widen)
       (let ((c c-state-semi-nonlit-pos-cache)
-	    elt state pos npos high-elt)
+	    elt state npos high-elt)
 	;; Trim the cache to take account of buffer changes.
 	(while (and c (> (c-ps-state-cache-pos (car c))
 			 c-state-semi-nonlit-pos-cache-limit))
@@ -2647,29 +2714,27 @@ comment at the start of cc-engine.el for more info."
 	(while (and c (> (c-ps-state-cache-pos (car c)) here))
 	  (setq high-elt (car c))
 	  (setq c (cdr c)))
-	(setq pos (or (and c (c-ps-state-cache-pos (car c)))
-		      (point-min)))
+	(goto-char (or (and c (c-ps-state-cache-pos (car c)))
+		       (point-min)))
+	(setq state
+	      (if c
+		  (c-cache-to-parse-ps-state (car c))
+		(copy-tree '(0 nil nil nil nil nil 0 nil nil nil nil))))
 
-	(if high-elt
-	    (setq state (c-cache-to-parse-ps-state (car c)))
-	  (setq elt (if c (car c) (point-min)))
-	  (setq state
-		(if c
-		    (c-cache-to-parse-ps-state (car c))
-		  (copy-tree '(0 nil nil nil nil nil 0 nil nil nil nil))))
+	(when (not high-elt)
+	  ;; We need to extend the cache.  Add an element to
+	  ;; `c-state-semi-nonlit-pos-cache' each iteration of the following.
 	  (while
-	      ;; Add an element to `c-state-semi-nonlit-pos-cache' each iteration.
-	      (<= (setq npos (+ pos c-state-nonlit-pos-interval)) here)
-	    (setq state (parse-partial-sexp pos npos nil nil state))
+	      (<= (setq npos (+ (point) c-state-nonlit-pos-interval)) here)
+	    (setq state (parse-partial-sexp (point) npos nil nil state))
 	    (setq elt (c-parse-ps-state-to-cache state))
 	    (setq c-state-semi-nonlit-pos-cache
-		  (cons elt c-state-semi-nonlit-pos-cache))
-	    (setq pos npos)))
+		  (cons elt c-state-semi-nonlit-pos-cache))))
 
-	(if (> pos c-state-semi-nonlit-pos-cache-limit)
-	    (setq c-state-semi-nonlit-pos-cache-limit pos))
+	(if (> (point) c-state-semi-nonlit-pos-cache-limit)
+	    (setq c-state-semi-nonlit-pos-cache-limit (point)))
 
-	(cons pos state)))))
+	(cons (point) state)))))
 
 (defun c-state-safe-place (here)
   ;; Return a buffer position before HERE which is "safe", i.e. outside any
