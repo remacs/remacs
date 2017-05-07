@@ -866,11 +866,26 @@ FILE's modification time."
      (error "%s:0:0: error: %s: %s" file (car err) (cdr err)))
     ))
 
+;; For parallel builds, to stop another process reading a half-written file.
+(defun autoload--save-buffer ()
+  "Save current buffer to its file, atomically."
+  ;; Copied from byte-compile-file.
+  (let* ((version-control 'never)
+         (tempfile (make-temp-name buffer-file-name))
+         (kill-emacs-hook
+          (cons (lambda () (ignore-errors (delete-file tempfile)))
+                kill-emacs-hook)))
+    (write-region (point-min) (point-max) tempfile nil 1)
+    (backup-buffer)
+    (rename-file tempfile buffer-file-name t)
+    (set-buffer-modified-p nil)
+    (set-visited-file-modtime)
+    (or noninteractive (message "Wrote %s" buffer-file-name))))
+
 (defun autoload-save-buffers ()
   (while autoload-modified-buffers
     (with-current-buffer (pop autoload-modified-buffers)
-      (let ((version-control 'never))
-	(save-buffer)))))
+      (autoload--save-buffer))))
 
 ;; FIXME This command should be deprecated.
 ;; See http://debbugs.gnu.org/22213#41
@@ -1110,8 +1125,7 @@ write its autoloads into the specified file instead."
       ;; dependencies don't trigger unnecessarily.
       (if (not changed)
           (set-buffer-modified-p nil)
-        (let ((version-control 'never))
-          (save-buffer)))
+        (autoload--save-buffer))
 
       ;; In case autoload entries were added to other files because of
       ;; file-local autoload-generated-file settings.
