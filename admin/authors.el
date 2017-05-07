@@ -209,7 +209,7 @@ If REALNAME is nil, ignore that author.")
     "David O'Toole"
     "Devon Sean McCullough"
     "Dominique de Waleffe"
-    "Edward O'Connor"
+    "Theresa O'Connor"
     "Exal de Jesus Garcia Carrillo"
     "George McNinch"
     "Greg McGary"

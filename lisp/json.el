@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2006-2017 Free Software Foundation, Inc.
 
-;; Author: Edward O'Connor <ted@oconnor.cx>
+;; Author: Theresa O'Connor <ted@oconnor.cx>
 ;; Version: 1.4
 ;; Keywords: convenience
 

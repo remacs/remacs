@@ -13538,7 +13538,7 @@
 	mh-tool-bar.el, mh-xface.el.  Remove mh-customize.el, mh-init.el.
 	(mh-autoloads): Don't use comments on otherwise empty lines.
 
-2006-01-29  Edward O'Connor  <ted@oconnor.cx>
+2006-01-29  Theresa O'Connor  <ted@oconnor.cx>
 
 	* emulation/viper.el (viper-major-mode-modifier-list):
 	Add insert-state and vi-state entries for erc-mode.
@@ -18772,7 +18772,7 @@
 	(pgg-pgp5-sign-region): Use new name of pgg-add-passphrase-to-cache
 	function.
 
-2005-11-04  Edward O'Connor  <hober0@gmail.com>  (tiny change)
+2005-11-04  Theresa O'Connor  <hober0@gmail.com>  (tiny change)
 
 	* net/goto-addr.el (goto-address-url-regexp): Remove `data:' URLs
 	from goto-address-url-regexp.

@@ -236,7 +236,7 @@ Andrew Cohen wrote @file{spam-wash.el}, to decode and clean email before
 it is analyzed for spam.
 
 @item
-Edward O'Connor wrote @file{json.el}, a file for parsing and
+Theresa O'Connor wrote @file{json.el}, a file for parsing and
 generating JSON files.
 
 @item

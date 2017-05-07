@@ -1211,7 +1211,7 @@ and changed diary.el tex-mode.el holiday.el cal-chinese.el diary-ins.el
   diary-insert.el cal-persian.el cal-islamic.el calendar.texi
   list-holidays.el
 
-Edward O'Connor: wrote json.el
+Theresa O'Connor: wrote json.el
 and changed erc.el erc-viper.el erc-log.el erc-track.el viper.el
   erc-backend.el erc-chess.el erc-dcc.el erc-ezbounce.el erc-goodies.el
   erc-list.el erc-macs.el erc-match.el erc-ring.el erc-services.el

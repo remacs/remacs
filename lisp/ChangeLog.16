@@ -7343,7 +7343,7 @@
 	(js-paren-indent-offset, js-square-indent-offset)
 	(js-curly-indent-offset): Add :safe (Bug#12257).
 
-2012-08-22  Edward O'Connor  <hober0@gmail.com>
+2012-08-22  Theresa O'Connor  <hober0@gmail.com>
 
 	* json.el (json-key-format): Add error properties.
 	(json-encode-key): New function.
