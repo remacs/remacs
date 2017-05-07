@@ -252,8 +252,9 @@ Blind aliases or users from /etc/passwd are not expanded."
    (t
     (mh-alias-ali alias))))
 
-(mh-require 'crm nil t)                 ; completing-read-multiple
-(mh-require 'multi-prompt nil t)
+(eval-and-compile
+  (mh-require 'crm nil t)                 ; completing-read-multiple
+  (mh-require 'multi-prompt nil t))
 
 ;;;###mh-autoload
 (defun mh-read-address (prompt)

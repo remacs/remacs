@@ -30,11 +30,12 @@
 
 (require 'mh-e)
 
-(mh-require 'gnus-util nil t)
-(mh-require 'mm-bodies nil t)
-(mh-require 'mm-decode nil t)
-(mh-require 'mm-view nil t)
-(mh-require 'mml nil t)
+(eval-and-compile
+  (mh-require 'gnus-util nil t)
+  (mh-require 'mm-bodies nil t)
+  (mh-require 'mm-decode nil t)
+  (mh-require 'mm-view nil t)
+  (mh-require 'mml nil t))
 
 ;; Copy of function from gnus-util.el.
 ;; TODO This is not in Gnus 5.11.
@@ -170,7 +171,6 @@ PROMPT overrides the default one used to ask user for a file name."
 (provide 'mh-gnus)
 
 ;; Local Variables:
-;; no-byte-compile: t
 ;; no-update-autoloads: t
 ;; indent-tabs-mode: nil
 ;; sentence-end-double-space: nil
