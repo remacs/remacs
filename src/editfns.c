@@ -3105,6 +3105,206 @@ determines whether case is significant or ignored.  */)
   /* Same length too => they are equal.  */
   return make_number (0);
 }
+
+
+/* Set up necessary definitions for diffseq.h; see comments in
+   diffseq.h for explanation.  */
+
+#undef ELEMENT
+#undef EQUAL
+
+#define XVECREF_YVECREF_EQUAL(ctx, xoff, yoff)  \
+  buffer_chars_equal ((ctx), (xoff), (yoff))
+
+#define OFFSET ptrdiff_t
+
+#define EXTRA_CONTEXT_FIELDS                    \
+  /* Buffers to compare.  */                    \
+  struct buffer *buffer_a;                      \
+  struct buffer *buffer_b;                      \
+  /* Bit vectors recording for each character whether it was deleted
+     or inserted.  */                           \
+  unsigned char *deletions;                     \
+  unsigned char *insertions;
+
+#define NOTE_DELETE(ctx, xoff) set_bit ((ctx)->deletions, (xoff))
+#define NOTE_INSERT(ctx, yoff) set_bit ((ctx)->insertions, (yoff))
+
+struct context;
+static void set_bit (unsigned char *, OFFSET);
+static bool bit_is_set (const unsigned char *, OFFSET);
+static bool buffer_chars_equal (struct context *, OFFSET, OFFSET);
+
+#include "minmax.h"
+#include "diffseq.h"
+
+DEFUN ("replace-buffer-contents", Freplace_buffer_contents,
+       Sreplace_buffer_contents, 1, 1, "bSource buffer: ",
+       doc: /* Replace accessible portion of the current buffer with accessible portion of SOURCE.
+As far as possible the replacement is non-destructive, i.e. existing
+buffer contents, markers, properties, and overlays in the current
+buffer stay intact.  */)
+  (Lisp_Object source)
+{
+  struct buffer *a = current_buffer;
+  Lisp_Object source_buffer = Fget_buffer (source);
+  if (NILP (source_buffer))
+    nsberror (source);
+  struct buffer *b = XBUFFER (source_buffer);
+  if (! BUFFER_LIVE_P (b))
+    error ("Selecting deleted buffer");
+  if (a == b)
+    error ("Cannot replace a buffer with itself");
+
+  ptrdiff_t min_a = BEGV;
+  ptrdiff_t min_b = BUF_BEGV (b);
+  ptrdiff_t size_a = ZV - min_a;
+  ptrdiff_t size_b = BUF_ZV (b) - min_b;
+  eassume (size_a >= 0);
+  eassume (size_b >= 0);
+  bool a_empty = size_a == 0;
+  bool b_empty = size_b == 0;
+
+  /* Handle trivial cases where at least one accessible portion is
+     empty.  */
+
+  if (a_empty && b_empty)
+    return Qnil;
+
+  if (a_empty)
+    return Finsert_buffer_substring (source, Qnil, Qnil);
+
+  if (b_empty)
+    {
+      del_range_both (BEGV, BEGV_BYTE, ZV, ZV_BYTE, true);
+      return Qnil;
+    }
+
+  /* FIXME: It is not documented how to initialize the contents of the
+     context structure.  This code cargo-cults from the existing
+     caller in src/analyze.c of GNU Diffutils, which appears to
+     work.  */
+
+  ptrdiff_t diags = size_a + size_b + 3;
+  ptrdiff_t *buffer;
+  USE_SAFE_ALLOCA;
+  SAFE_NALLOCA (buffer, 2, diags);
+  /* Micro-optimization: Casting to size_t generates much better
+     code.  */
+  ptrdiff_t del_bytes = (size_t) size_a / CHAR_BIT + 1;
+  ptrdiff_t ins_bytes = (size_t) size_b / CHAR_BIT + 1;
+  struct context ctx = {
+    .buffer_a = a,
+    .buffer_b = b,
+    .deletions = SAFE_ALLOCA (del_bytes),
+    .insertions = SAFE_ALLOCA (ins_bytes),
+    .fdiag = buffer + size_b + 1,
+    .bdiag = buffer + diags + size_b + 1,
+    /* FIXME: Find a good number for .too_expensive.  */
+    .too_expensive = 1000000,
+  };
+  memclear (ctx.deletions, del_bytes);
+  memclear (ctx.insertions, ins_bytes);
+  /* compareseq requires indices to be zero-based.  We add BEGV back
+     later.  */
+  bool early_abort = compareseq (0, size_a, 0, size_b, false, &ctx);
+  /* Since we didn’t define EARLY_ABORT, we should never abort
+     early.  */
+  eassert (! early_abort);
+  SAFE_FREE ();
+
+  Fundo_boundary ();
+  ptrdiff_t count = SPECPDL_INDEX ();
+  record_unwind_protect (save_excursion_restore, save_excursion_save ());
+
+  SET_PT_BOTH (BEGV, BEGV_BYTE);
+  ptrdiff_t i = size_a;
+  ptrdiff_t j = size_b;
+  /* Walk backwards through the lists of changes.  This was also
+     cargo-culted from src/analyze.c in GNU Diffutils.  Because we
+     walk backwards, we don’t have to keep the positions in sync.  */
+  while (i >= 0 || j >= 0)
+    {
+      /* Check whether there is a change (insertion or deletion)
+         before the current position.  */
+      if ((i > 0 && bit_is_set (ctx.deletions, i - 1)) ||
+          (j > 0 && bit_is_set (ctx.insertions, j - 1)))
+	{
+          ptrdiff_t end_a = min_a + i;
+          ptrdiff_t end_b = min_b + j;
+          /* Find the beginning of the current change run.  */
+	  while (i > 0 && bit_is_set (ctx.deletions, i - 1))
+            --i;
+	  while (j > 0 && bit_is_set (ctx.insertions, j - 1))
+            --j;
+          ptrdiff_t beg_a = min_a + i;
+          ptrdiff_t beg_b = min_b + j;
+          eassert (beg_a >= BEGV);
+          eassert (beg_b >= BUF_BEGV (b));
+          eassert (beg_a <= end_a);
+          eassert (beg_b <= end_b);
+          eassert (end_a <= ZV);
+          eassert (end_b <= BUF_ZV (b));
+          eassert (beg_a < end_a || beg_b < end_b);
+          if (beg_a < end_a)
+            del_range (beg_a, end_a);
+          if (beg_b < end_b)
+            {
+              SET_PT (beg_a);
+              Finsert_buffer_substring (source, make_natnum (beg_b),
+                                        make_natnum (end_b));
+            }
+	}
+      --i;
+      --j;
+    }
+
+  return unbind_to (count, Qnil);
+}
+
+static void
+set_bit (unsigned char *a, ptrdiff_t i)
+{
+  eassert (i >= 0);
+  /* Micro-optimization: Casting to size_t generates much better
+     code.  */
+  size_t j = i;
+  a[j / CHAR_BIT] |= (1 << (j % CHAR_BIT));
+}
+
+static bool
+bit_is_set (const unsigned char *a, ptrdiff_t i)
+{
+  eassert (i >= 0);
+  /* Micro-optimization: Casting to size_t generates much better
+     code.  */
+  size_t j = i;
+  return a[j / CHAR_BIT] & (1 << (j % CHAR_BIT));
+}
+
+/* Return true if the characters at position POS_A of buffer
+   CTX->buffer_a and at position POS_B of buffer CTX->buffer_b are
+   equal.  POS_A and POS_B are zero-based.  Text properties are
+   ignored.  */
+
+static bool
+buffer_chars_equal (struct context *ctx,
+                    ptrdiff_t pos_a, ptrdiff_t pos_b)
+{
+  eassert (pos_a >= 0);
+  pos_a += BUF_BEGV (ctx->buffer_a);
+  eassert (pos_a >= BUF_BEGV (ctx->buffer_a));
+  eassert (pos_a < BUF_ZV (ctx->buffer_a));
+
+  eassert (pos_b >= 0);
+  pos_b += BUF_BEGV (ctx->buffer_b);
+  eassert (pos_b >= BUF_BEGV (ctx->buffer_b));
+  eassert (pos_b < BUF_ZV (ctx->buffer_b));
+
+  return BUF_FETCH_CHAR_AS_MULTIBYTE (ctx->buffer_a, pos_a)
+    == BUF_FETCH_CHAR_AS_MULTIBYTE (ctx->buffer_b, pos_b);
+}
+
 
 static void
 subst_char_in_region_unwind (Lisp_Object arg)
@@ -5315,6 +5515,7 @@ functions if all the text being accessed has this property.  */);
 
   defsubr (&Sinsert_buffer_substring);
   defsubr (&Scompare_buffer_substrings);
+  defsubr (&Sreplace_buffer_contents);
   defsubr (&Ssubst_char_in_region);
   defsubr (&Stranslate_region_internal);
   defsubr (&Sdelete_region);

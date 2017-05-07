@@ -412,6 +412,15 @@ extern void enlarge_buffer_text (struct buffer *, ptrdiff_t);
    ? BUF_FETCH_MULTIBYTE_CHAR ((buf), (pos))    \
    : BUF_FETCH_BYTE ((buf), (pos)))
 
+/* Return character at byte position POS in buffer BUF.  If BUF is
+   unibyte and the character is not ASCII, make the returning
+   character multibyte.  */
+
+#define BUF_FETCH_CHAR_AS_MULTIBYTE(buf, pos)           \
+  (! NILP (BVAR ((buf), enable_multibyte_characters))   \
+   ? BUF_FETCH_MULTIBYTE_CHAR ((buf), (pos))            \
+   : UNIBYTE_TO_CHAR (BUF_FETCH_BYTE ((buf), (pos))))
+
 /* Return the byte at byte position N in buffer BUF.   */
 
 #define BUF_FETCH_BYTE(buf, n) \

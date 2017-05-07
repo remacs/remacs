@@ -61,6 +61,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module crypto/sha1:
   # Code from module crypto/sha256:
   # Code from module crypto/sha512:
+  # Code from module diffseq:
   # Code from module dirent:
   # Code from module dirfd:
   # Code from module dosname:
@@ -105,6 +106,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module lstat:
   # Code from module manywarnings:
   # Code from module memrchr:
+  # Code from module minmax:
   # Code from module mkostemp:
   # Code from module mktime:
   # Code from module mktime-internal:
@@ -289,6 +291,7 @@ AC_DEFUN([gl_INIT],
     gl_PREREQ_MEMRCHR
   fi
   gl_STRING_MODULE_INDICATOR([memrchr])
+  gl_MINMAX
   gl_FUNC_MKOSTEMP
   if test $HAVE_MKOSTEMP = 0; then
     AC_LIBOBJ([mkostemp])
@@ -821,6 +824,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/count-one-bits.h
   lib/count-trailing-zeros.c
   lib/count-trailing-zeros.h
+  lib/diffseq.h
   lib/dirent.in.h
   lib/dirfd.c
   lib/dosname.h
@@ -875,6 +879,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/md5.c
   lib/md5.h
   lib/memrchr.c
+  lib/minmax.h
   lib/mkostemp.c
   lib/mktime-internal.h
   lib/mktime.c
@@ -991,6 +996,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/manywarnings.m4
   m4/md5.m4
   m4/memrchr.m4
+  m4/minmax.m4
   m4/mkostemp.m4
   m4/mktime.m4
   m4/multiarch.m4
