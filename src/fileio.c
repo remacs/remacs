@@ -5153,17 +5153,24 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
     {
       EMACS_INT nchars = (STRINGP (start) ? SCHARS (start)
 			  : XINT (end) - XINT (start));
-      AUTO_STRING (format, NUMBERP (append)
-                   ? (nchars != 1
-		      ? "Updated `%s' (%d characters)"
-		      : "Updated `%s' (%d character)")
-                   : ! NILP (append)
-		   ? (nchars != 1
-		      ? "Added to `%s' (%d characters)"
-		      : "Added to `%s' (%d character)")
-                   : (nchars != 1
-		      ? "Wrote `%s' (%d characters)"
-		      : "Wrote `%s' (%d character)"));
+      AUTO_STRING (format,
+		   (NUMBERP (append)
+		    ? (NILP (Vwrite_region_verbose)
+		       ? "Updated `%s'"
+		       : nchars == 1
+		       ? "Updated `%s' (1 character)"
+		       : "Updated `%s' (%d characters)")
+		    : ! NILP (append)
+		    ? (NILP (Vwrite_region_verbose)
+		       ? "Added to `%s'"
+		       : nchars == 1
+		       ? "Added to `%s' (1 character)"
+		       : "Added to `%s' (%d characters)")
+		    : (NILP (Vwrite_region_verbose)
+		       ? "Wrote `%s'"
+		       : nchars == 1
+		       ? "Wrote `%s' (1 character)"
+		       : "Wrote `%s' (%d characters)")));
       CALLN (Fmessage, format, visit_file, make_number (nchars));
     }
   return Qnil;
@@ -6134,6 +6141,11 @@ buffer.  The relevant buffer is current during each function call.  */);
 These are the annotations made by other annotation functions
 that were already called.  See also `write-region-annotate-functions'.  */);
   Vwrite_region_annotations_so_far = Qnil;
+
+  DEFVAR_LISP ("write-region-verbose",
+	       Vwrite_region_verbose,
+	       doc: /* If non-nil, be more verbose when writing a region.  */);
+  Vwrite_region_verbose = Qnil;
 
   DEFVAR_LISP ("inhibit-file-name-handlers", Vinhibit_file_name_handlers,
 	       doc: /* A list of file name handlers that temporarily should not be used.

@@ -1657,9 +1657,10 @@ similar to the @kbd{M-x find-file-literally} command
 copies the contents of the region into the specified file.  @kbd{M-x
 append-to-file} adds the text of the region to the end of the
 specified file.  @xref{Accumulating Text}.  When called interactively,
-these commands will print a message in the echo area giving the name
-of the file affected as well as the number of characters which were
-added.  The variable @code{write-region-inhibit-fsync} applies to
+these commands print a message in the echo area giving the name
+of the file affected; if the variable @code{write-region-verbose} is
+non-nil the message also reports the number of characters written.
+The variable @code{write-region-inhibit-fsync} applies to
 these commands, as well as saving files; see @ref{Customize Save}.
 
 @findex set-file-modes

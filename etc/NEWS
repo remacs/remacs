@@ -94,9 +94,9 @@ required capabilities are found in terminfo.  See the FAQ node
 * Changes in Emacs 26.1
 
 +++
-** The functions write-region, append-to-file, and the like now output
-the number of characters added in addition to the name of the file
-affected.
+** The functions write-region, append-to-file, and the like now also
+output the number of characters added in addition to the name of the
+file affected, if the new variable 'write-region-verbose' is non-nil.
 
 ** The variable 'emacs-version' no longer includes the build number.
 This is now stored separately in a new variable, 'emacs-build-number'.
