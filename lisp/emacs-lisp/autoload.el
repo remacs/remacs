@@ -255,30 +255,22 @@ expression, in which case we want to handle forms differently."
 ;; Those properties are now set in lisp-mode.el.
 
 (defun autoload-find-generated-file ()
-  "Visit the autoload file for the current buffer, and return its buffer.
-If a buffer is visiting the desired autoload file, return it."
+  "Visit the autoload file for the current buffer, and return its buffer."
   (let ((enable-local-variables :safe)
-	(enable-local-eval nil))
+        (enable-local-eval nil)
+        (delay-mode-hooks t)
+        (file (autoload-generated-file)))
     ;; We used to use `raw-text' to read this file, but this causes
     ;; problems when the file contains non-ASCII characters.
-    (let* ((delay-mode-hooks t)
-           (file (autoload-generated-file))
-           (file-missing (not (file-exists-p file))))
-      (when file-missing
-        (autoload-ensure-default-file file))
-      (with-current-buffer
-          (find-file-noselect
-           (autoload-ensure-file-writeable
-            file))
-        ;; block backups when the file has just been created, since
-        ;; the backups will just be the auto-generated headers.
-        ;; bug#23203
-        (when file-missing
-          (setq buffer-backed-up t)
-          (save-buffer))
-        (current-buffer)))))
+    (with-current-buffer (find-file-noselect
+                          (autoload-ensure-file-writeable file))
+      (if (zerop (buffer-size)) (insert (autoload-rubric file)))
+      (current-buffer))))
 
 (defun autoload-generated-file ()
+  "Return `generated-autoload-file' as an absolute name.
+If local to the current buffer, expand using the default directory;
+otherwise, using `source-directory'/lisp."
   (expand-file-name generated-autoload-file
                     ;; File-local settings of generated-autoload-file should
                     ;; be interpreted relative to the file's location,
@@ -391,7 +383,7 @@ not be relied upon."
 	    " ends here\n")))
 
 (defvar autoload-ensure-writable nil
-  "Non-nil means `autoload-ensure-default-file' makes existing file writable.")
+  "Non-nil means `autoload-find-generated-file' makes existing file writable.")
 ;; Just in case someone tries to get you to overwrite a file that you
 ;; don't want to.
 ;;;###autoload
@@ -401,18 +393,13 @@ not be relied upon."
   ;; Probably pointless, but replaces the old AUTOGEN_VCS in lisp/Makefile,
   ;; which was designed to handle CVSREAD=1 and equivalent.
   (and autoload-ensure-writable
+       (file-exists-p file)
        (let ((modes (file-modes file)))
          (if (zerop (logand modes #o0200))
              ;; Ignore any errors here, and let subsequent attempts
              ;; to write the file raise any real error.
              (ignore-errors (set-file-modes file (logior modes #o0200))))))
   file)
-
-(defun autoload-ensure-default-file (file)
-  "Make sure that the autoload file FILE exists, creating it if needed.
-If the file already exists and `autoload-ensure-writable' is non-nil,
-make it writable."
-  (write-region (autoload-rubric file) nil file))
 
 (defun autoload-insert-section-header (outbuf autoloads load-name file time)
   "Insert the section-header line,
