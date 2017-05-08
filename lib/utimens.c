@@ -349,11 +349,19 @@ fdutimens (int fd, char const *file, struct timespec const timespec[2])
         return 0;
       else
         {
-          #if 0
           DWORD sft_error = GetLastError ();
-          fprintf (stderr, "utime SetFileTime error 0x%x\n", (unsigned int) sft_error);
+          #if 0
+          fprintf (stderr, "fdutimens SetFileTime error 0x%x\n", (unsigned int) sft_error);
           #endif
-          errno = EINVAL;
+          switch (sft_error)
+            {
+            case ERROR_ACCESS_DENIED: /* fd was opened without O_RDWR */
+              errno = EACCES; /* not specified by POSIX */
+              break;
+            default:
+              errno = EINVAL;
+              break;
+            }
           return -1;
         }
     }
@@ -465,7 +473,9 @@ fdutimens (int fd, char const *file, struct timespec const timespec[2])
         return -1;
       }
 
-#if HAVE_WORKING_UTIMES
+#ifdef USE_SETFILETIME
+    return _gl_utimens_windows (file, ts);
+#elif HAVE_WORKING_UTIMES
     return utimes (file, t);
 #else
     {
