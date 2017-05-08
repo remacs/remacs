@@ -533,9 +533,8 @@ This regexp must match both `tramp-initial-end-of-output' and
 (defcustom tramp-password-prompt-regexp
   (format "^.*\\(%s\\).*:\^@? *"
 	  ;; `password-word-equivalents' has been introduced with Emacs 24.4.
-	  (if (boundp 'password-word-equivalents)
-	      (regexp-opt (symbol-value 'password-word-equivalents))
-	    "password\\|passphrase"))
+          (regexp-opt (or (bound-and-true-p password-word-equivalents)
+                          '("password" "passphrase"))))
   "Regexp matching password-like prompts.
 The regexp should match at end of buffer.
 
@@ -2305,7 +2304,7 @@ Add operations defined in `HANDLER-alist' to `tramp-file-name-handler'."
   "Check, whether method / user name / host name completion is active."
   (or
    ;; Signal from outside.  `non-essential' has been introduced in Emacs 24.
-   (and (boundp 'non-essential) (symbol-value 'non-essential))
+   (bound-and-true-p non-essential)
    ;; This variable has been obsoleted in Emacs 26.
    tramp-completion-mode))
 
@@ -2753,6 +2752,27 @@ User is always nil."
 
 (defvar tramp-handle-write-region-hook nil
   "Normal hook to be run at the end of `tramp-*-handle-write-region'.")
+
+(defsubst tramp-handle-write-region-message
+  (vec start end filename &optional append visit)
+  "Message to be written for `tramp-*-handle-write-region'"
+  ;; We shall also don't write when autosaving.  How to check?
+  (when (and (null noninteractive)
+             (or (eq visit t) (null visit) (stringp visit)))
+    (let ((nchars (cond ((null start) (buffer-size))
+                        ((stringp start) (length start))
+                        (t (- end start)))))
+      (tramp-message
+       vec 0 "%s `%s'%s"
+       (cond
+        ((numberp append) "Updated")
+        (append "Added to")
+        (t "Wrote"))
+       filename
+       (cond
+        ((null (bound-and-true-p write-region-verbose)) "")
+        ((= nchars 1) " (1 character)")
+        (t (format " (%d characters)" nchars)))))))
 
 (defun tramp-handle-directory-file-name (directory)
   "Like `directory-file-name' for Tramp files."

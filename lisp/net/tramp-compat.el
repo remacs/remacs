@@ -197,10 +197,7 @@ Add the extension of F, if existing."
       (tramp-compat-funcall 'delete-file filename trash)
     ;; This Emacs version does not support the TRASH flag.
     (wrong-number-of-arguments
-     (let ((delete-by-moving-to-trash
-	    (and (boundp 'delete-by-moving-to-trash)
-		 (symbol-value 'delete-by-moving-to-trash)
-		 trash)))
+     (let ((delete-by-moving-to-trash (and delete-by-moving-to-trash trash)))
        (delete-file filename)))))
 
 ;; RECURSIVE has been introduced with Emacs 23.2.  TRASH has been

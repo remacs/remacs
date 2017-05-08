@@ -652,6 +652,8 @@ But handle the case, if the \"test\" command is not available."
       (when (or (eq visit t) (stringp visit))
 	(set-visited-file-modtime))
 
+      (tramp-handle-write-region-message v start end filename append visit)
+
       (unless (equal curbuf (current-buffer))
 	(tramp-error
 	 v 'file-error

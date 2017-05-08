@@ -1521,7 +1521,8 @@ errors for shares like \"C$/\", which are common in Microsoft Windows."
 	 v 'file-error
 	 "Buffer has changed from `%s' to `%s'" curbuf (current-buffer)))
       (when (eq visit t)
-	(set-visited-file-modtime)))))
+	(set-visited-file-modtime))
+      (tramp-handle-write-region-message v start end filename append visit))))
 
 
 ;; Internal file name functions.
@@ -1945,8 +1946,7 @@ If ARGUMENT is non-nil, use it as argument for
 		(error
 		 (with-current-buffer (tramp-get-connection-buffer vec)
 		   (goto-char (point-min))
-		   (if (and (boundp 'auth-sources)
-			    (symbol-value 'auth-sources)
+		   (if (and (bound-and-true-p auth-sources)
 			    (search-forward-regexp
 			     tramp-smb-wrong-passwd-regexp nil t))
 		       ;; Disable `auth-source' and `password-cache'.

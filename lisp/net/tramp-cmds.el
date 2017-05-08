@@ -247,10 +247,9 @@ buffer in your bug report.
 	;; Pretty print the cache.
 	(set varsym (read (format "(%s)" (tramp-cache-print val))))
       ;; There are non-7bit characters to be masked.
-      (when (and (boundp 'mm-7bit-chars)
-		 (stringp val)
+      (when (and (stringp val)
 		 (string-match
-		  (concat "[^" (symbol-value 'mm-7bit-chars) "]") val))
+		  (concat "[^" (bound-and-true-p mm-7bit-chars) "]") val))
 	(with-current-buffer reporter-eval-buffer
 	  (set
 	   varsym
@@ -327,8 +326,7 @@ buffer in your bug report.
   ;; Append buffers only when we are in message mode.
   (when (and
 	 (eq major-mode 'message-mode)
-	 (boundp 'mml-mode)
-	 (symbol-value 'mml-mode))
+	 (bound-and-true-p mml-mode))
 
     (let ((tramp-buf-regexp "\\*\\(debug \\)?tramp/")
 	  (buffer-list (tramp-list-tramp-buffers))
