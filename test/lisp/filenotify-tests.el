@@ -69,7 +69,6 @@
 (defun file-notify--test-read-event ()
   "Read one event.
 There are different timeouts for local and remote file notification libraries."
-  (sit-for 0.001 'nodisp)
   (read-event
    nil nil
    (cond
@@ -405,7 +404,11 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
     (file-notify--test-cleanup))
 
   (unwind-protect
-      ;; Check, that removing watch descriptors out of order do not harm.
+      ;; Check, that removing watch descriptors out of order do not
+      ;; harm.  This fails on Cygwin because of timing issues unless a
+      ;; long `sit-for' is added before the call to
+      ;; `file-notify--test-read-event'.
+    (if (not (eq system-type 'cygwin))
       (let (results)
         (cl-flet ((first-callback (event)
                    (when (eq (nth 1 event) 'deleted) (push 1 results)))
@@ -434,7 +437,7 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
           (should (equal results (list 2)))
 
           ;; The environment shall be cleaned up.
-          (file-notify--test-cleanup-p)))
+          (file-notify--test-cleanup-p))))
 
     ;; Cleanup.
     (file-notify--test-cleanup)))
