@@ -2753,27 +2753,6 @@ User is always nil."
 (defvar tramp-handle-write-region-hook nil
   "Normal hook to be run at the end of `tramp-*-handle-write-region'.")
 
-(defsubst tramp-handle-write-region-message
-  (vec start end filename &optional append visit)
-  "Message to be written for `tramp-*-handle-write-region'"
-  ;; We shall also don't write when autosaving.  How to check?
-  (when (and (null noninteractive)
-             (or (eq visit t) (null visit) (stringp visit)))
-    (let ((nchars (cond ((null start) (buffer-size))
-                        ((stringp start) (length start))
-                        (t (- end start)))))
-      (tramp-message
-       vec 0 "%s `%s'%s"
-       (cond
-        ((numberp append) "Updated")
-        (append "Added to")
-        (t "Wrote"))
-       filename
-       (cond
-        ((null (bound-and-true-p write-region-verbose)) "")
-        ((= nchars 1) " (1 character)")
-        (t (format " (%d characters)" nchars)))))))
-
 (defun tramp-handle-directory-file-name (directory)
   "Like `directory-file-name' for Tramp files."
   ;; If localname component of filename is "/", leave it unchanged.

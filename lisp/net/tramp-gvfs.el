@@ -1224,7 +1224,8 @@ file-notify events."
 	(file-attributes filename))))
 
     ;; The end.
-    (tramp-handle-write-region-message v start end filename append visit)
+    (when (or (eq visit t) (null visit) (stringp visit))
+      (tramp-message v 0 "Wrote %s" filename))
     (run-hooks 'tramp-handle-write-region-hook)))
 
 

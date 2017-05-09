@@ -736,7 +736,7 @@ If INHIBIT is non-nil, inhibit `mm-inhibit-file-name-handlers'."
 		     inhibit-file-name-handlers)
 	   inhibit-file-name-handlers)))
     (write-region start end filename t 'no-message)
-    (message "Appended to `%s' (%d characters)" filename (- end start))))
+    (message "Appended to %s" filename)))
 
 (defun mm-write-region (start end filename &optional append visit lockname
 			      coding-system inhibit)

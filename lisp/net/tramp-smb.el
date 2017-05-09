@@ -1521,8 +1521,7 @@ errors for shares like \"C$/\", which are common in Microsoft Windows."
 	 v 'file-error
 	 "Buffer has changed from `%s' to `%s'" curbuf (current-buffer)))
       (when (eq visit t)
-	(set-visited-file-modtime))
-      (tramp-handle-write-region-message v start end filename append visit))))
+	(set-visited-file-modtime)))))
 
 
 ;; Internal file name functions.
