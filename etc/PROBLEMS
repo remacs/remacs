@@ -464,6 +464,17 @@ problem by adding this to your .cshrc file:
         stty -icrnl -onlcr -echo susp ^Z
     endif
 
+*** In Shell buffers using ksh, resizing a window inserts random characters.
+
+The characters come from the PS2 prompt, but they are not followed by
+a newline, which messes up the next command you type.  This strange
+effect is caused by Emacs 25 and later telling the shell that its
+screen size changed.
+
+To work around the problem, customize the option
+'window-adjust-process-window-size-function' to "Do not adjust process
+window sizes" (Lisp value 'ignore').
+
 *** In Inferior Python mode, input is echoed and native completion doesn't work.
 <https://debbugs.gnu.org/cgi/bugreport.cgi?bug=25753>
 
