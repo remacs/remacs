@@ -1744,12 +1744,14 @@ This checks also `file-name-as-directory', `file-name-directory',
     (let ((tmp-name (tramp--test-make-temp-name nil quoted)))
       (unwind-protect
 	  (progn
+            ;; Write buffer.
 	    (with-temp-buffer
 	      (insert "foo")
 	      (write-region nil nil tmp-name))
 	    (with-temp-buffer
 	      (insert-file-contents tmp-name)
 	      (should (string-equal (buffer-string) "foo")))
+
 	    ;; Append.
 	    (with-temp-buffer
 	      (insert "bla")
@@ -1757,11 +1759,19 @@ This checks also `file-name-as-directory', `file-name-directory',
 	    (with-temp-buffer
 	      (insert-file-contents tmp-name)
 	      (should (string-equal (buffer-string) "foobla")))
+	    (with-temp-buffer
+	      (insert "baz")
+	      (write-region nil nil tmp-name 3))
+	    (with-temp-buffer
+	      (insert-file-contents tmp-name)
+	      (should (string-equal (buffer-string) "foobaz")))
+
 	    ;; Write string.
 	    (write-region "foo" nil tmp-name)
 	    (with-temp-buffer
 	      (insert-file-contents tmp-name)
 	      (should (string-equal (buffer-string) "foo")))
+
 	    ;; Write partly.
 	    (with-temp-buffer
 	      (insert "123456789")
