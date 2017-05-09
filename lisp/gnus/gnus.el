@@ -2769,7 +2769,6 @@ gnus-registry.el will populate this if it's loaded.")
       gnus-check-reasonable-setup)
      ("gnus-dup" gnus-dup-suppress-articles gnus-dup-unsuppress-article
       gnus-dup-enter-articles)
-     ("gnus-range" gnus-copy-sequence)
      ("gnus-eform" gnus-edit-form)
      ("gnus-logic" gnus-score-advanced)
      ("gnus-undo" gnus-undo-mode gnus-undo-register)

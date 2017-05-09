@@ -1108,7 +1108,7 @@ downloadable."
                 gnus-newsgroup-cached)
         (setq articles (gnus-sorted-ndifference
 			(gnus-sorted-ndifference
-			 (gnus-copy-sequence articles)
+			 (copy-tree articles)
 			 gnus-newsgroup-downloadable)
 			gnus-newsgroup-cached)))
 
@@ -1123,7 +1123,7 @@ downloadable."
   (when gnus-newsgroup-processable
     (setq gnus-newsgroup-downloadable
           (let* ((dl gnus-newsgroup-downloadable)
-		 (processable (sort (gnus-copy-sequence gnus-newsgroup-processable) '<))
+		 (processable (sort (copy-tree gnus-newsgroup-processable) '<))
                  (gnus-newsgroup-downloadable processable))
 	    (gnus-agent-summary-fetch-group)
 
@@ -2833,7 +2833,7 @@ The following commands are available:
   "Copy the current category."
   (interactive (list (gnus-category-name) (intern (read-string "New name: "))))
   (let ((info (assq category gnus-category-alist)))
-    (push (let ((newcat (gnus-copy-sequence info)))
+    (push (let ((newcat (copy-tree info)))
             (setf (gnus-agent-cat-name newcat) to)
             (setf (gnus-agent-cat-groups newcat) nil)
             newcat)

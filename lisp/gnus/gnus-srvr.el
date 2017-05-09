@@ -609,7 +609,7 @@ The following commands are available:
     (error "%s already exists" to))
   (unless (gnus-server-to-method from)
     (error "%s: no such server" from))
-  (let ((to-entry (cons from (gnus-copy-sequence
+  (let ((to-entry (cons from (copy-tree
 			      (gnus-server-to-method from)))))
     (setcar to-entry to)
     (setcar (nthcdr 2 to-entry) to)

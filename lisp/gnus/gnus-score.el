@@ -2318,7 +2318,7 @@ score in `gnus-newsgroup-scored' by SCORE."
     (when (or (not (listp gnus-newsgroup-adaptive))
 	      (memq 'line gnus-newsgroup-adaptive))
       (save-excursion
-	(let* ((malist (gnus-copy-sequence gnus-adaptive-score-alist))
+	(let* ((malist (copy-tree gnus-adaptive-score-alist))
 	       (alist malist)
 	       (date (current-time-string))
 	       (data gnus-newsgroup-data)

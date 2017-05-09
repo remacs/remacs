@@ -3000,7 +3000,7 @@ and NEW-NAME will be prompted for."
     ;; Set the info.
     (if (not (and info new-group))
 	(gnus-group-set-info form (or new-group group) part)
-      (setq info (gnus-copy-sequence info))
+      (setq info (copy-tree info))
       (setcar info new-group)
       (unless (gnus-server-equal method "native")
 	(unless (nthcdr 3 info)
@@ -3023,7 +3023,7 @@ and NEW-NAME will be prompted for."
 	   ;; Don't use `caddr' here since macros within the `interactive'
 	   ;; form won't be expanded.
 	   (car (cddr entry)))))
-  (setq method (gnus-copy-sequence method))
+  (setq method (copy-tree method))
   (let (entry)
     (while (setq entry (memq (assq 'eval method) method))
       (setcar entry (eval (cadar entry)))))

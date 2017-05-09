@@ -3992,7 +3992,7 @@ If SELECT-ARTICLES, only select those articles from GROUP."
 	(spam-initialize))
       ;; Save the active value in effect when the group was entered.
       (setq gnus-newsgroup-active
-	    (gnus-copy-sequence
+	    (copy-tree
 	     (gnus-active gnus-newsgroup-name)))
       (setq gnus-newsgroup-highest (cdr gnus-newsgroup-active))
       ;; You can change the summary buffer in some way with this hook.
@@ -5737,7 +5737,7 @@ If SELECT-ARTICLES, only select those articles from GROUP."
 	      (mail-header-number (car gnus-newsgroup-headers))
 	      gnus-newsgroup-end
 	      (mail-header-number
-	       (gnus-last-element gnus-newsgroup-headers))))
+	       (car (last gnus-newsgroup-headers)))))
       ;; GROUP is successfully selected.
       (or gnus-newsgroup-headers t)))))
 
@@ -6076,12 +6076,12 @@ If SELECT-ARTICLES, only select those articles from GROUP."
 		 (del
 		  (gnus-list-range-intersection
 		   gnus-newsgroup-articles
-		   (gnus-remove-from-range (gnus-copy-sequence old) list)))
+		   (gnus-remove-from-range (copy-tree old) list)))
 		 (add
 		  (gnus-list-range-intersection
 		   gnus-newsgroup-articles
 		   (gnus-remove-from-range
-		    (gnus-copy-sequence list) old))))
+		    (copy-tree list) old))))
 	    (when add
 	      (push (list add 'add (list (cdr type))) delta-marks))
 	    (when del
@@ -12915,7 +12915,7 @@ returned."
 	    (mail-header-number (car gnus-newsgroup-headers))
 	    gnus-newsgroup-end
 	    (mail-header-number
-	     (gnus-last-element gnus-newsgroup-headers))))
+	     (car (last gnus-newsgroup-headers)))))
     (when gnus-use-scoring
       (gnus-possibly-score-headers))))
 
@@ -13002,7 +13002,7 @@ If ALL is a number, fetch this number of articles."
 	i new)
     (unless new-active
       (error "Couldn't fetch new data"))
-    (setq gnus-newsgroup-active (gnus-copy-sequence new-active))
+    (setq gnus-newsgroup-active (copy-tree new-active))
     (setq i (cdr gnus-newsgroup-active)
 	  gnus-newsgroup-highest i)
     (while (> i old-high)
