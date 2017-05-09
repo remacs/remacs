@@ -2797,8 +2797,17 @@ suppressed.  */)
 
       tem = Fmemq (feature, Vfeatures);
       if (NILP (tem))
-	error ("Required feature `%s' was not provided",
-	       SDATA (SYMBOL_NAME (feature)));
+        {
+          unsigned char *tem2 = SDATA (SYMBOL_NAME (feature));
+          Lisp_Object tem3 = Fcar (Fcar (Vload_history));
+
+          if (NILP (tem3))
+            error ("Required feature `%s' was not provided", tem2);
+          else
+            /* Cf autoload-do-load.  */
+            error ("Loading file %s failed to provide feature `%s'",
+                   SDATA (tem3), tem2);
+        }
 
       /* Once loading finishes, don't undo it.  */
       Vautoload_queue = Qt;
