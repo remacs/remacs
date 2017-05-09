@@ -417,14 +417,22 @@ whitespace."
   (interactive "^p")
   (unless arg (setq arg 1))
   (beginning-of-defun arg)
-  (let (nbobp)
-    (while (progn
-             (setq nbobp (zerop (forward-line -1)))
-             (and (not (looking-at "^\\s-*$"))
-                  (beginning-of-defun--in-emptyish-line-p)
-                  nbobp)))
-    (when nbobp
-      (forward-line 1))))
+  (let (first-line-p)
+    (while (let ((ppss (progn (setq first-line-p (= (forward-line -1) -1))
+                              (syntax-ppss (line-end-position)))))
+             (while (and (nth 4 ppss) ; If eol is in a line-spanning comment,
+                         (< (nth 8 ppss) (line-beginning-position)))
+               (goto-char (nth 8 ppss)) ; skip to comment start.
+               (setq ppss (syntax-ppss (line-end-position))))
+             (and (not first-line-p)
+                  (progn (skip-syntax-backward
+                          "-" (line-beginning-position))
+                         (not (bolp))) ; Check for blank line.
+                  (progn (parse-partial-sexp
+                          (line-beginning-position) (line-end-position)
+                          nil t (syntax-ppss (line-beginning-position)))
+                         (eolp))))) ; Check for non-comment text.
+    (forward-line (if first-line-p 0 1))))
 
 (defvar end-of-defun-function
   (lambda () (forward-sexp 1))
