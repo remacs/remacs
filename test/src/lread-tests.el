@@ -142,4 +142,17 @@ literals (Bug#20852)."
                            "unescaped character literals "
                            "\", (, ), ;, [, ] detected!")))))
 
+(ert-deftest lread-test-bug26837 ()
+  "Test for http://debbugs.gnu.org/26837 ."
+  (let ((load-path (cons
+                    (file-name-as-directory
+                     (expand-file-name "data" (getenv "EMACS_TEST_DIRECTORY")))
+                    load-path)))
+    (load "somelib" nil t)
+    (should (string-suffix-p "/somelib.el" (caar load-history)))
+    (load "somelib2" nil t)
+    (should (string-suffix-p "/somelib2.el" (caar load-history)))
+    (load "somelib" nil t)
+    (should (string-suffix-p "/somelib.el" (caar load-history)))))
+
 ;;; lread-tests.el ends here
