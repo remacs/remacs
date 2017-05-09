@@ -355,24 +355,32 @@ put the output in."
 (defun autoload-rubric (file &optional type feature)
   "Return a string giving the appropriate autoload rubric for FILE.
 TYPE (default \"autoloads\") is a string stating the type of
-information contained in FILE.  If FEATURE is non-nil, FILE
-will provide a feature.  FEATURE may be a string naming the
-feature, otherwise it will be based on FILE's name.
+information contained in FILE.  TYPE \"package\" acts like the default,
+but adds an extra line to the output to modify `load-path'.
+
+If FEATURE is non-nil, FILE will provide a feature.  FEATURE may
+be a string naming the feature, otherwise it will be based on
+FILE's name.
 
 At present, a feature is in fact always provided, but this should
 not be relied upon."
-  (let ((basename (file-name-nondirectory file)))
+  (let ((basename (file-name-nondirectory file))
+	(lp (if (equal type "package") (setq type "autoloads"))))
     (concat ";;; " basename
 	    " --- automatically extracted " (or type "autoloads") "\n"
 	    ";;\n"
 	    ";;; Code:\n\n"
-	    "\n"
-	    ;; This is used outside of autoload.el, eg cus-dep, finder.
-	    "(provide '"
-	    (if (stringp feature)
-		feature
-	      (file-name-sans-extension basename))
-	    ")\n"
+	    (if lp
+		;; `load-path' should contain only directory names.
+		"(add-to-list 'load-path (directory-file-name (or (file-name-directory #$) (car load-path))))\n\n"
+	      (concat
+	       ;; This is used outside of autoload.el, eg cus-dep, finder.
+	       "\n"
+	       "(provide '"
+	       (if (stringp feature)
+		   feature
+		 (file-name-sans-extension basename))
+	       ")\n"))
 	    ";; Local Variables:\n"
 	    ";; version-control: never\n"
 	    ";; no-byte-compile: t\n"

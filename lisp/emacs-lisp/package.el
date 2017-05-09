@@ -905,25 +905,13 @@ untar into a directory named DIR; otherwise, signal an error."
        nil pkg-file nil 'silent))))
 
 ;;;; Autoload
-;; From Emacs 22, but changed so it adds to load-path.
+(declare-function autoload-rubric "autoload" (file &optional type feature))
+
 (defun package-autoload-ensure-default-file (file)
   "Make sure that the autoload file FILE exists and if not create it."
   (unless (file-exists-p file)
-    (write-region
-     (concat ";;; " (file-name-nondirectory file)
-             " --- automatically extracted autoloads\n"
-             ";;\n"
-             ";;; Code:\n"
-             ;; `load-path' should contain only directory names
-             "(add-to-list 'load-path (directory-file-name (or (file-name-directory #$) (car load-path))))\n"
-             "\n;; Local Variables:\n"
-             ";; version-control: never\n"
-             ";; no-byte-compile: t\n"
-             ";; no-update-autoloads: t\n"
-             ";; End:\n"
-             ";;; " (file-name-nondirectory file)
-             " ends here\n")
-     nil file nil 'silent))
+    (require 'autoload)
+    (write-region (autoload-rubric file "package" nil) nil file nil 'silent))
   file)
 
 (defvar generated-autoload-file)
