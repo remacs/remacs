@@ -954,6 +954,10 @@ x_set_cursor_gc (struct glyph_string *s)
   if (s->font == FRAME_FONT (s->f)
       && s->face->background == FRAME_BACKGROUND_PIXEL (s->f)
       && s->face->foreground == FRAME_FOREGROUND_PIXEL (s->f)
+      /* Sometimes we are not called for each change in the default
+	 face's background color (e.g., bug#26851), so the additional
+	 test in the next line gives us a chance to resync.  */
+      && s->f->output_data.w32->cursor_gc->foreground == s->face->background
       && !s->cmp)
     s->gc = s->f->output_data.w32->cursor_gc;
   else
