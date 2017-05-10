@@ -132,6 +132,7 @@ maybe_exclude_module_tests := -name emacs-module-tests.el -prune -o
 endif
 
 ELFILES := $(shell find ${srcdir} -path "${srcdir}/manual" -prune -o \
+		-path "${srcdir}/data" -prune -o \
 		-name "*resources" -prune -o \
 		${maybe_exclude_module_tests} \
 		-name "*.el" -print)
