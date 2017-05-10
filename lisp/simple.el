@@ -6399,7 +6399,12 @@ If NOERROR, don't signal an error if we can't move that many lines."
 	       (point))))
 
 	;; Move to the desired column.
-	(line-move-to-column (truncate column))
+        (if line-move-visual
+            ;; Under line-move-visual, goal-column should be
+            ;; interpreted in units of the frame's canonical character
+            ;; width, which is exactly what vertical-motion does.
+            (vertical-motion (cons column 0))
+          (line-move-to-column (truncate column)))
 
 	;; Corner case: suppose we start out in a field boundary in
 	;; the middle of a continued line.  When we get to
