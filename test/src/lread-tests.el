@@ -147,12 +147,13 @@ literals (Bug#20852)."
   (let ((load-path (cons
                     (file-name-as-directory
                      (expand-file-name "data" (getenv "EMACS_TEST_DIRECTORY")))
-                    load-path)))
-    (load "somelib" nil t)
-    (should (string-suffix-p "/somelib.el" (caar load-history)))
-    (load "somelib2" nil t)
-    (should (string-suffix-p "/somelib2.el" (caar load-history)))
-    (load "somelib" nil t)
-    (should (string-suffix-p "/somelib.el" (caar load-history)))))
+                    load-path))
+        (fn (lambda (lib)
+              (load lib nil t)
+              (let ((str (caar load-history)))
+                (should (or (string-suffix-p (concat "/" lib ".el") str)
+                            (string-suffix-p (concat "/" lib ".elc") str)))))))
+    (dolist (lib '("somelib" "somelib2" "somelib"))
+      (funcall fn lib))))
 
 ;;; lread-tests.el ends here
