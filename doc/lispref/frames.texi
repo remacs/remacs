@@ -2239,7 +2239,7 @@ frame is redisplayed.
 This variable specifies how to compute a name for a frame when you have
 not explicitly specified one.  The variable's value is actually a mode
 line construct, just like @code{mode-line-format}, except that the
-@samp{%c} and @samp{%l} constructs are ignored.  @xref{Mode Line
+@samp{%c}, @samp{%C}, and @samp{%l} constructs are ignored.  @xref{Mode Line
 Data}.
 @end defvar
 

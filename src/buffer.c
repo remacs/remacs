@@ -5486,8 +5486,11 @@ A string is printed verbatim in the mode line except for %-constructs:
 	For a modified read-only buffer, %* gives % and %+ gives *.
   %s -- print process status.   %l -- print the current line number.
   %c -- print the current column number (this makes editing slower).
+        Columns are numbered starting from the left margin, and the
+        leftmost column is displayed as zero.
         To make the column number update correctly in all cases,
 	`column-number-mode' must be non-nil.
+  %C -- Like %c, but the leftmost column is displayed as one.
   %i -- print the size of the buffer.
   %I -- like %i, but use k, M, G, etc., to abbreviate.
   %p -- print percent of buffer above top of window, or Top, Bot or All.

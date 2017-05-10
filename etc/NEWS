@@ -342,6 +342,16 @@ suppresses display of return values from the server process.
 * Editing Changes in Emacs 26.1
 
 +++
+** New variable 'column-number-indicator-zero-based'.
+Traditionally, in Column Number mode, the displayed column number
+counts from zero starting at the left margin of the window.  This
+behavior is now controlled by 'column-number-indicator-zero-based'.
+If you would prefer for the displayed column number to count from one,
+you may set this variable to nil.  (Behind the scenes, there is now a
+new mode line construct, '%C', which operates exactly as '%c' does
+except that it counts from one.)
+
++++
 ** Two new user options 'list-matching-lines-jump-to-current-line' and
 'list-matching-lines-current-line-face' to show highlighted the current
 line in *Occur* buffer.

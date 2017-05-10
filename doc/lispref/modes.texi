@@ -2111,7 +2111,12 @@ The current buffer name, obtained with the @code{buffer-name} function.
 @xref{Buffer Names}.
 
 @item %c
-The current column number of point.
+The current column number of point, counting from zero starting at the
+left margin of the window.
+
+@item %C
+The current column number of point, counting from one starting at the
+left margin of the window.
 
 @item %e
 When Emacs is nearly out of memory for Lisp objects, a brief message
