@@ -131,9 +131,12 @@ them right the first time, so here are guidelines for formatting them:
 
 - Preferred form for several entries with the same content:
 
-	* lisp/help.el (view-lossage):
-	* lisp/kmacro.el (kmacro-edit-lossage):
-	* lisp/edmacro.el (edit-kbd-macro): Fix docstring, lossage is now 300.
+	* lisp/menu-bar.el (clipboard-yank, clipboard-kill-ring-save)
+	(clipboard-kill-region):
+	* lisp/eshell/esh-io.el (eshell-virtual-targets)
+	(eshell-clipboard-append):
+	Replace option gui-select-enable-clipboard with
+	select-enable-clipboard; renamed October 2014.  (Bug#25145)
 
   (Rather than anything involving "ditto" and suchlike.)
 
