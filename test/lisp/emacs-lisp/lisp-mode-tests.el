@@ -99,6 +99,20 @@ noindent\" 3
       (indent-sexp)
       (should (equal (buffer-string) correct)))))
 
+(ert-deftest indent-sexp-stop ()
+  "Make sure `indent-sexp' stops at the end of the sexp."
+  ;; See https://debbugs.gnu.org/cgi/bugreport.cgi?bug=26878.
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert "(a ()\n)")
+    (let ((original (buffer-string)))
+      (search-backward "a ")
+      (goto-char (match-end 0))
+      (indent-sexp)
+      ;; The final paren should not be indented, because the sexp
+      ;; we're indenting ends on the previous line.
+      (should (equal (buffer-string) original)))))
+
 (ert-deftest lisp-indent-region ()
   "Test basics of `lisp-indent-region'."
   (with-temp-buffer

@@ -1184,21 +1184,24 @@ ENDPOS is encountered."
                     ;; after point.
                     (save-excursion (forward-sexp 1) (point)))))
     (save-excursion
-      (while (< (point) endpos)
-        (let ((indent (lisp-indent-calc-next parse-state)))
-          ;; If the line contains a comment indent it now with
-          ;; `indent-for-comment'.
-          (when (nth 4 (lisp-indent-state-ppss parse-state))
-            (save-excursion
-              (goto-char (lisp-indent-state-ppss-point parse-state))
-              (indent-for-comment)
-              (setf (lisp-indent-state-ppss-point parse-state)
-                    (line-end-position))))
-          ;; But not if the line is blank, or just a comment (we
-          ;; already called `indent-for-comment' above).
-          (skip-chars-forward " \t")
-          (unless (or (eolp) (eq (char-syntax (char-after)) ?<) (not indent))
-            (indent-line-to indent)))))
+      (while (let ((indent (lisp-indent-calc-next parse-state))
+                   (ppss (lisp-indent-state-ppss parse-state)))
+               ;; If the line contains a comment indent it now with
+               ;; `indent-for-comment'.
+               (when (and (nth 4 ppss) (<= (nth 8 ppss) endpos))
+                 (save-excursion
+                   (goto-char (lisp-indent-state-ppss-point parse-state))
+                   (indent-for-comment)
+                   (setf (lisp-indent-state-ppss-point parse-state)
+                         (line-end-position))))
+               (when (< (point) endpos)
+                 ;; Indent the next line, unless it's blank, or just a
+                 ;; comment (we will `indent-for-comment' the latter).
+                 (skip-chars-forward " \t")
+                 (unless (or (eolp) (not indent)
+                             (eq (char-syntax (char-after)) ?<))
+                   (indent-line-to indent))
+                 t))))
     (move-marker endpos nil)))
 
 (defun indent-pp-sexp (&optional arg)
