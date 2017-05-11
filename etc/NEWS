@@ -676,6 +676,13 @@ replaced by the real images asynchronously, which will also now
 respect width/height HTML specs (unless they specify widths/heights
 bigger than the current window).
 
+---
+*** The 'w' command on links is now 'shr-maybe-probe-and-copy-url'.
+'shr-copy-url' now only copies the url at point; users who wish to
+avoid accidentally accessing remote links may rebind 'w' and 'u' in
+'eww-link-keymap' to it.
+
+
 ** Ido
 
 *** The commands 'find-alternate-file-other-window',
