@@ -37,7 +37,7 @@
 (defvar reporter-eval-buffer)
 (defvar reporter-prompt-for-summary-p)
 
-;;;###autoload
+;;;###tramp-autoload
 (defun tramp-change-syntax (&optional syntax)
   "Change Tramp syntax.
 SYNTAX can be one of the symbols `default' (default),

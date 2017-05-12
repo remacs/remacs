@@ -384,6 +384,12 @@ If NAME is a remote file name, the local part of NAME is unquoted."
 	((eq tramp-syntax 'sep) 'separate)
 	(t tramp-syntax)))
 
+;; Older Emacsen keep incompatible autoloaded values of `tramp-syntax'.
+(eval-after-load 'tramp
+  '(unless
+       (memq tramp-syntax (tramp-compat-funcall (quote tramp-syntax-values)))
+     (tramp-change-syntax (tramp-compat-tramp-syntax))))
+
 (provide 'tramp-compat)
 
 ;;; TODO:

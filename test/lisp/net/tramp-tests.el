@@ -45,6 +45,7 @@
 (require 'vc-git)
 (require 'vc-hg)
 
+(declare-function tramp-change-syntax "tramp-cmds")
 (declare-function tramp-find-executable "tramp-sh")
 (declare-function tramp-get-remote-path "tramp-sh")
 (declare-function tramp-get-remote-stat "tramp-sh")
