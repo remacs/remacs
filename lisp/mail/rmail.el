@@ -363,6 +363,9 @@ explicitly.")
 	  "\\|^importance:\\|^envelope-to:\\|^delivery-date\\|^openpgp:"
 	  "\\|^mbox-line:\\|^cancel-lock:"
 	  "\\|^DomainKey-Signature:\\|^dkim-signature:"
+	  "\\|^ARC-.*:"
+	  "\\|^Received-SPF:"
+	  "\\|^Authentication-Results:"
 	  "\\|^resent-face:\\|^resent-x.*:\\|^resent-organization:\\|^resent-openpgp:"
 	  "\\|^x-.*:"))
   "Regexp to match header fields that Rmail should normally hide.
