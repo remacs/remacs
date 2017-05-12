@@ -8092,8 +8092,29 @@ comment at the start of cc-engine.el for more info."
 	 ;; initializing brace lists.
 	 (let (found)
 	   (while
-	       (and (setq found (c-syntactic-re-search-forward
-				 "[;,]\\|\\s)\\|\\'\\|\\(=\\|\\s(\\)" limit t t))
+	       (and (progn
+		      ;; In the next loop, we keep searching forward whilst
+		      ;; we find ":"s which aren't single colons inside C++
+		      ;; "for" statements.
+		      (while
+			  (and
+			   (setq found
+				 (c-syntactic-re-search-forward
+				  "[;:,]\\|\\s)\\|\\'\\|\\(=\\|\\s(\\)"
+				  limit t t))
+			   (eq (char-before) ?:)
+			   (if (looking-at c-:-op-cont-regexp)
+			       (progn (goto-char (match-end 0)) t)
+			     (not
+			      (and (c-major-mode-is 'c++-mode)
+				   (save-excursion
+				     (and
+				      (c-go-up-list-backward)
+				      (eq (char-after) ?\()
+				      (progn (c-backward-syntactic-ws)
+					     (c-simple-skip-symbol-backward))
+				      (looking-at c-paren-stmt-key))))))))
+		      found)
 		    (eq (char-before) ?\[)
 		    (c-go-up-list-forward))
 	     (setq brackets-after-id t))
