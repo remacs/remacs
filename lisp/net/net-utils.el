@@ -424,7 +424,7 @@ This variable is only used if the variable
 
 ;;;###autoload
 (defun ifconfig ()
-  "Run ifconfig and display diagnostic output."
+  "Run `ifconfig-program' and display diagnostic output."
   (interactive)
   (net-utils-run-simple
    (format "*%s*" ifconfig-program)
@@ -435,7 +435,7 @@ This variable is only used if the variable
 
 ;;;###autoload
 (defun iwconfig ()
-  "Run iwconfig and display diagnostic output."
+  "Run `iwconfig-program' and display diagnostic output."
   (interactive)
   (net-utils-run-simple
    (format "*%s*" iwconfig-program)
@@ -444,7 +444,7 @@ This variable is only used if the variable
 
 ;;;###autoload
 (defun netstat ()
-  "Run netstat and display diagnostic output."
+  "Run `netstat-program' and display diagnostic output."
   (interactive)
   (net-utils-run-simple
    (format "*%s*" netstat-program)
@@ -453,7 +453,7 @@ This variable is only used if the variable
 
 ;;;###autoload
 (defun arp ()
-  "Run arp and display diagnostic output."
+  "Run `arp-program' and display diagnostic output."
   (interactive)
   (net-utils-run-simple
    (format "*%s*" arp-program)
@@ -462,7 +462,7 @@ This variable is only used if the variable
 
 ;;;###autoload
 (defun route ()
-  "Run route and display diagnostic output."
+  "Run `route-program' and display diagnostic output."
   (interactive)
   (net-utils-run-simple
    (format "*%s*" route-program)
@@ -475,7 +475,7 @@ This variable is only used if the variable
 
 ;;;###autoload
 (defun traceroute (target)
-  "Run traceroute program for TARGET."
+  "Run `traceroute-program' for TARGET."
   (interactive "sTarget: ")
   (let ((options
 	 (if traceroute-program-options
@@ -537,7 +537,7 @@ This command uses `nslookup-program' for looking up the DNS information."
 
 ;;;###autoload
 (defun nslookup ()
-  "Run nslookup program."
+  "Run `nslookup-program'."
   (interactive)
   (switch-to-buffer (make-comint "nslookup" nslookup-program))
   (nslookup-mode))
@@ -612,7 +612,7 @@ This command uses `dig-program' for looking up the DNS information."
 ;; This is a lot less than ange-ftp, but much simpler.
 ;;;###autoload
 (defun ftp (host)
-  "Run `ftp program."
+  "Run `ftp-program' to connect to HOST."
   (interactive
    (list
     (read-from-minibuffer
@@ -648,7 +648,9 @@ This command uses `dig-program' for looking up the DNS information."
 	      nil t)))
 
 (defun smbclient (host service)
-  "Connect to SERVICE on HOST via SMB."
+  "Connect to SERVICE on HOST via SMB.
+
+This command uses `smbclient-program' to connect to HOST."
   (interactive
    (list
     (read-from-minibuffer
@@ -666,7 +668,8 @@ This command uses `dig-program' for looking up the DNS information."
     (pop-to-buffer buf)))
 
 (defun smbclient-list-shares (host)
-  "List services on HOST."
+  "List services on HOST.
+This command uses `smbclient-program' to connect to HOST."
   (interactive
    (list
     (read-from-minibuffer
@@ -761,7 +764,9 @@ queries of the form USER@HOST, and wants a query containing USER only."
 ;; Finger protocol
 ;;;###autoload
 (defun finger (user host)
-  "Finger USER on HOST."
+  "Finger USER on HOST.
+This command uses `finger-X.500-host-regexps'
+and `network-connection-service-alist', which see."
   ;; One of those great interactive statements that's actually
   ;; longer than the function call! The idea is that if the user
   ;; uses a string like "pbreton@cs.umb.edu", we won't ask for the
@@ -855,7 +860,8 @@ then the server named by `whois-server-name' is used."
 (defun whois (arg search-string)
   "Send SEARCH-STRING to server defined by the `whois-server-name' variable.
 If `whois-guess-server' is non-nil, then try to deduce the correct server
-from SEARCH-STRING.  With argument, prompt for whois server."
+from SEARCH-STRING.  With argument, prompt for whois server.
+The port is deduced from `network-connection-service-alist'."
   (interactive "P\nsWhois: ")
   (let* ((whois-apropos-host (if whois-guess-server
 				 (rassoc (whois-get-tld search-string)
@@ -903,7 +909,8 @@ from SEARCH-STRING.  With argument, prompt for whois server."
 
 ;;;###autoload
 (defun network-connection-to-service (host service)
-  "Open a network connection to SERVICE on HOST."
+  "Open a network connection to SERVICE on HOST.
+This command uses `network-connection-service-alist', which see."
   (interactive
    (list
     (read-from-minibuffer "Host: " (net-utils-machine-at-point))
@@ -924,7 +931,8 @@ from SEARCH-STRING.  With argument, prompt for whois server."
   (network-service-connection host (number-to-string port)))
 
 (defun network-service-connection (host service)
-  "Open a network connection to SERVICE on HOST."
+  "Open a network connection to SERVICE on HOST.
+The port to use is determined from `network-connection-service-alist'."
   (let* ((process-name (concat "Network Connection [" host " " service "]"))
 	 (portnum (string-to-number service))
 	 (buf (get-buffer-create (concat "*" process-name "*"))))
@@ -940,7 +948,8 @@ from SEARCH-STRING.  With argument, prompt for whois server."
 (defvar comint-input-ring)
 
 (defun network-connection-reconnect  ()
-  "Reconnect a network connection, preserving the old input ring."
+  "Reconnect a network connection, preserving the old input ring.
+This command uses `network-connection-service-alist', which see."
   (interactive)
   (let ((proc (get-buffer-process (current-buffer)))
 	(old-comint-input-ring comint-input-ring)
