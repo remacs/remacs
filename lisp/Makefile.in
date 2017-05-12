@@ -68,36 +68,20 @@ BYTE_COMPILE_EXTRA_FLAGS =
 # BYTE_COMPILE_EXTRA_FLAGS = --eval '(setq byte-compile-warnings (quote (not unresolved)))'
 # The example above is just for developers, it should not be used by default.
 
-# Automatically generated autoload files, apart from lisp/loaddefs.el.
-# Note this includes only those files that need special rules to
-# build; ie it does not need to include things created via
-# generated-autoload-file (eg calc/calc-loaddefs.el).
+# Those automatically generated autoload files that need special rules
+# to build; ie not including things created via generated-autoload-file
+# (eg calc/calc-loaddefs.el).
 LOADDEFS = $(lisp)/calendar/cal-loaddefs.el \
 	$(lisp)/calendar/diary-loaddefs.el \
 	$(lisp)/calendar/hol-loaddefs.el \
 	$(lisp)/mh-e/mh-loaddefs.el \
 	$(lisp)/net/tramp-loaddefs.el
 
+# All generated autoload files.
+loaddefs = $(shell find ${srcdir} -name '*loaddefs.el')
 # Elisp files auto-generated.
-AUTOGENEL = loaddefs.el \
-	$(LOADDEFS) \
-	cus-load.el \
-	finder-inf.el \
-	subdirs.el \
-	ps-print-loaddefs.el \
-	emacs-lisp/cl-loaddefs.el \
-	calc/calc-loaddefs.el \
-	eshell/esh-groups.el \
-	cedet/semantic/loaddefs.el \
-	cedet/ede/loaddefs.el \
-	cedet/srecode/loaddefs.el \
-	org/org-loaddefs.el \
-	textmodes/reftex-loaddefs.el \
-	mail/rmail-loaddefs.el \
-	ibuffer-loaddefs.el \
-	htmlfontify-loaddefs \
-	emacs-lisp/eieio-loaddefs.el \
-	dired-loaddefs.el
+AUTOGENEL = ${loaddefs} ${srcdir}/cus-load.el ${srcdir}/finder-inf.el \
+  ${srcdir}/subdirs.el ${srcdir}/eshell/esh-groups.el
 
 # Set load-prefer-newer for the benefit of the non-bootstrappers.
 BYTE_COMPILE_FLAGS = \
@@ -470,7 +454,7 @@ $(CAL_DIR)/hol-loaddefs.el: $(CAL_SRC) $(CAL_DIR)/diary-loaddefs.el
 
 bootstrap-clean:
 	find $(lisp) -name '*.elc' $(FIND_DELETE)
-	-cd $(lisp) && rm -f $(AUTOGENEL)
+	rm -f $(AUTOGENEL)
 
 distclean:
 	-rm -f ./Makefile $(lisp)/loaddefs.el~
