@@ -199,6 +199,12 @@ This variable is only used if the variable
   :group 'net-utils
   :type  'string)
 
+(defcustom dig-program-options nil
+  "Options for the dig program."
+  :group 'net-utils
+  :type '(repeat string)
+  :version "26.1")
+
 (defcustom ftp-program "ftp"
   "Program to run to do FTP transfers."
   :group 'net-utils
@@ -507,14 +513,19 @@ If your system's ping continues until interrupted, you can try setting
 ;;   (delete-matching-lines filter))
 
 ;;;###autoload
-(defun nslookup-host (host)
-  "Lookup the DNS information for HOST."
+(defun nslookup-host (host &optional name-server)
+  "Look up the DNS information for HOST (name or IP address).
+Optional argument NAME-SERVER says which server to use for
+DNS resolution.
+Interactively, prompt for NAME-SERVER if invoked with prefix argument.
+
+This command uses `nslookup-program' for looking up the DNS information."
   (interactive
-   (list (read-from-minibuffer "Lookup host: " (net-utils-machine-at-point))))
+   (list (read-from-minibuffer "Lookup host: " (net-utils-machine-at-point))
+         (if current-prefix-arg (read-from-minibuffer "Name server: "))))
   (let ((options
-	 (if nslookup-program-options
-	     (append nslookup-program-options (list host))
-	   (list host))))
+         (append nslookup-program-options (list host)
+                 (if name-server (list name-server)))))
     (net-utils-run-program
      "Nslookup"
      (concat "** "
@@ -551,14 +562,19 @@ If your system's ping continues until interrupted, you can try setting
   (setq comint-input-autoexpand t))
 
 ;;;###autoload
-(defun dns-lookup-host (host)
-  "Lookup the DNS information for HOST (name or IP address)."
+(defun dns-lookup-host (host &optional name-server)
+  "Look up the DNS information for HOST (name or IP address).
+Optional argument NAME-SERVER says which server to use for
+DNS resolution.
+Interactively, prompt for NAME-SERVER if invoked with prefix argument.
+
+This command uses `dns-lookup-program' for looking up the DNS information."
   (interactive
-   (list (read-from-minibuffer "Lookup host: " (net-utils-machine-at-point))))
+   (list (read-from-minibuffer "Lookup host: " (net-utils-machine-at-point))
+         (if current-prefix-arg (read-from-minibuffer "Name server: "))))
   (let ((options
-	 (if dns-lookup-program-options
-	     (append dns-lookup-program-options (list host))
-	   (list host))))
+         (append dns-lookup-program-options (list host)
+                 (if name-server (list name-server)))))
     (net-utils-run-program
      (concat "DNS Lookup [" host "]")
      (concat "** "
@@ -568,15 +584,20 @@ If your system's ping continues until interrupted, you can try setting
      dns-lookup-program
      options)))
 
-(autoload 'ffap-string-at-point "ffap")
-
 ;;;###autoload
-(defun run-dig (host)
-  "Run dig program."
+(defun run-dig (host &optional name-server)
+  "Look up DNS information for HOST (name or IP address).
+Optional argument NAME-SERVER says which server to use for
+DNS resolution.
+Interactively, prompt for NAME-SERVER if invoked with prefix argument.
+
+This command uses `dig-program' for looking up the DNS information."
   (interactive
-   (list
-    (read-from-minibuffer "Lookup host: "
-                          (or (ffap-string-at-point 'machine) ""))))
+   (list (read-from-minibuffer "Lookup host: " (net-utils-machine-at-point))
+         (if current-prefix-arg (read-from-minibuffer "Name server: "))))
+  (let ((options
+         (append dig-program-options (list host)
+                 (if name-server (list (concat "@" name-server))))))
   (net-utils-run-program
    "Dig"
    (concat "** "
@@ -584,14 +605,14 @@ If your system's ping continues until interrupted, you can try setting
 		      (list "Dig" host dig-program)
 		      " ** "))
    dig-program
-   (list host)))
+   options)))
 
 (autoload 'comint-exec "comint")
 
 ;; This is a lot less than ange-ftp, but much simpler.
 ;;;###autoload
 (defun ftp (host)
-  "Run ftp program."
+  "Run `ftp program."
   (interactive
    (list
     (read-from-minibuffer

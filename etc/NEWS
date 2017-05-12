@@ -338,6 +338,12 @@ want to reverse the direction of the scroll, customize
 ** Emacsclient has a new option -u/--suppress-output.  The option
 suppresses display of return values from the server process.
 
+---
+** New user option 'dig-program-options' and extended functionality
+for DNS-querying functions 'nslookup-host', 'dns-lookup-host',
+and 'run-dig'.  Each function now accepts an optional name server
+argument interactively (with a prefix argument) and non-interactively.
+
 
 * Editing Changes in Emacs 26.1
 
