@@ -828,6 +828,8 @@ processes on exit.
 mode for *.html files.  This mode handles indentation,
 fontification, and commenting for embedded JavaScript and CSS.
 
+** New minor mode 'pixel-scroll-mode' provides smooth pixel-level scrolling.
+
 
 * Incompatible Lisp Changes in Emacs 26.1
 
