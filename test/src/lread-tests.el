@@ -140,7 +140,7 @@ literals (Bug#20852)."
     (should (equal (lread-tests--last-message)
                    (concat (format-message "Loading `%s': " file-name)
                            "unescaped character literals "
-                           "\", (, ), ;, [, ] detected!")))))
+                           "`?\"', `?(', `?)', `?;', `?[', `?]' detected!")))))
 
 (ert-deftest lread-test-bug26837 ()
   "Test for http://debbugs.gnu.org/26837 ."

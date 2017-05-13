@@ -963,9 +963,11 @@ load_warn_unescaped_character_literals (Lisp_Object file)
   AUTO_STRING (format,
                "Loading `%s': unescaped character literals %s detected!");
   AUTO_STRING (separator, ", ");
+  AUTO_STRING (inner_format, "`?%c'");
   CALLN (Fmessage,
          format, file,
-         Fmapconcat (Qstring,
+         Fmapconcat (list3 (Qlambda, list1 (Qchar),
+                            list3 (Qformat, inner_format, Qchar)),
                      Fsort (Vlread_unescaped_character_literals, Qlss),
                      separator));
 }
@@ -4855,6 +4857,8 @@ For internal use only.  */);
           "lread--unescaped-character-literals");
 
   DEFSYM (Qlss, "<");
+  DEFSYM (Qchar, "char");
+  DEFSYM (Qformat, "format");
 
   DEFVAR_BOOL ("load-prefer-newer", load_prefer_newer,
                doc: /* Non-nil means `load' prefers the newest version of a file.

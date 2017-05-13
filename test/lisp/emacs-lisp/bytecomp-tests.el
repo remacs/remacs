@@ -527,7 +527,8 @@ literals (Bug#20852)."
             (err (should-error (byte-compile-file source))))
         (should (equal (cdr err)
                        (list (concat "unescaped character literals "
-                                     "\", (, ), ;, [, ] detected!"))))))))
+                                     "`?\"', `?(', `?)', `?;', `?[', `?]' "
+                                     "detected!"))))))))
 
 ;; Local Variables:
 ;; no-byte-compile: t

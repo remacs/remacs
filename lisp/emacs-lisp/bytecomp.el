@@ -2032,7 +2032,7 @@ and will be removed soon.  See (elisp)Backquote in the manual."))
             (when lread--unescaped-character-literals
               (byte-compile-warn
                "unescaped character literals %s detected!"
-               (mapconcat #'string
+               (mapconcat (lambda (char) (format "`?%c'" char))
                           (sort lread--unescaped-character-literals #'<)
                           ", ")))
 	    (byte-compile-toplevel-file-form form)))
