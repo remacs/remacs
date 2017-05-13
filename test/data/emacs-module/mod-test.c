@@ -249,7 +249,7 @@ emacs_module_init (struct emacs_runtime *ert)
 		 env->make_function (env, amin, amax, csym, doc, data))
 
   DEFUN ("mod-test-return-t", Fmod_test_return_t, 1, 1, NULL, NULL);
-  DEFUN ("mod-test-sum", Fmod_test_sum, 2, 2, "Return A + B", NULL);
+  DEFUN ("mod-test-sum", Fmod_test_sum, 2, 2, "Return A + B\n\n(fn a b)", NULL);
   DEFUN ("mod-test-signal", Fmod_test_signal, 0, 0, NULL, NULL);
   DEFUN ("mod-test-throw", Fmod_test_throw, 0, 0, NULL, NULL);
   DEFUN ("mod-test-non-local-exit-funcall", Fmod_test_non_local_exit_funcall,

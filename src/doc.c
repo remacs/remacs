@@ -340,6 +340,8 @@ string is passed through `substitute-command-keys'.  */)
     fun = XCDR (fun);
   if (SUBRP (fun))
     doc = make_number (XSUBR (fun)->doc);
+  else if (MODULE_FUNCTIONP (fun))
+    doc = XMODULE_FUNCTION (fun)->documentation;
   else if (COMPILEDP (fun))
     {
       if (PVSIZE (fun) <= COMPILED_DOC_STRING)

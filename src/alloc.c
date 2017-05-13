@@ -3942,13 +3942,6 @@ make_user_ptr (void (*finalizer) (void *), void *p)
   uptr->p = p;
   return obj;
 }
-
-/* Create a new module function environment object.  */
-Lisp_Object
-make_module_function (void)
-{
-  return allocate_misc (Lisp_Misc_Module_Function);
-}
 #endif
 
 static void
@@ -6640,7 +6633,6 @@ mark_object (Lisp_Object arg)
 
 #ifdef HAVE_MODULES
 	case Lisp_Misc_User_Ptr:
-        case Lisp_Misc_Module_Function:
 	  XMISCANY (obj)->gcmarkbit = true;
 	  break;
 #endif

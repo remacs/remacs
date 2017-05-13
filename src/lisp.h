@@ -464,7 +464,6 @@ enum Lisp_Misc_Type
     Lisp_Misc_Save_Value,
     Lisp_Misc_Finalizer,
 #ifdef HAVE_MODULES
-    Lisp_Misc_Module_Function,
     Lisp_Misc_User_Ptr,
 #endif
     /* Currently floats are not a misc type,
@@ -885,6 +884,7 @@ enum pvec_type
   PVEC_THREAD,
   PVEC_MUTEX,
   PVEC_CONDVAR,
+  PVEC_MODULE_FUNCTION,
 
   /* These should be last, check internal_equal to see why.  */
   PVEC_COMPILED,
@@ -2386,28 +2386,6 @@ struct Lisp_User_Ptr
   void (*finalizer) (void *);
   void *p;
 };
-
-#include "emacs-module.h"
-
-/* Function prototype for the module Lisp functions.  */
-typedef emacs_value (*emacs_subr) (emacs_env *, ptrdiff_t,
-				   emacs_value [], void *);
-
-/* Function environments.  */
-
-/* A function environment is an auxiliary structure used by
-   `module_make_function' to store information about a module
-   function.  It is stored in a save pointer and retrieved by
-   `internal--module-call'.  Its members correspond to the arguments
-   given to `module_make_function'.  */
-
-struct Lisp_Module_Function
-{
-  struct Lisp_Misc_Any base;
-  ptrdiff_t min_arity, max_arity;
-  emacs_subr subr;
-  void *data;
-};
 #endif
 
 /* A finalizer sentinel.  */
@@ -2460,7 +2438,6 @@ union Lisp_Misc
     struct Lisp_Finalizer u_finalizer;
 #ifdef HAVE_MODULES
     struct Lisp_User_Ptr u_user_ptr;
-    struct Lisp_Module_Function u_module_function;
 #endif
   };
 
@@ -2508,19 +2485,6 @@ XUSER_PTR (Lisp_Object a)
 {
   eassert (USER_PTRP (a));
   return XUNTAG (a, Lisp_Misc);
-}
-
-INLINE bool
-MODULE_FUNCTIONP (Lisp_Object o)
-{
-  return MISCP (o) && XMISCTYPE (o) == Lisp_Misc_Module_Function;
-}
-
-INLINE struct Lisp_Module_Function *
-XMODULE_FUNCTION (Lisp_Object o)
-{
-  eassert (MODULE_FUNCTIONP (o));
-  return XUNTAG (o, Lisp_Misc);
 }
 #endif
 
@@ -3923,12 +3887,66 @@ extern void get_backtrace (Lisp_Object array);
 Lisp_Object backtrace_top_function (void);
 extern bool let_shadows_buffer_binding_p (struct Lisp_Symbol *symbol);
 
+#include "emacs-module.h"
+
+/* Function prototype for the module Lisp functions.  */
+typedef emacs_value (*emacs_subr) (emacs_env *, ptrdiff_t,
+				   emacs_value [], void *);
+
+/* Function environments.  */
+
+/* A function environment is an auxiliary structure used by
+   `module_make_function' to store information about a module
+   function.  It is stored in a pseudovector.  Its members correspond
+   to the arguments given to `module_make_function'.  */
+
+struct Lisp_Module_Function
+{
+  struct vectorlike_header header;
+
+  /* Fields traced by GC; these must come first.  */
+  Lisp_Object documentation;
+
+  /* Fields ignored by GC.  */
+  ptrdiff_t min_arity, max_arity;
+  emacs_subr subr;
+  void *data;
+};
+
+INLINE struct Lisp_Module_Function *
+allocate_module_function (void)
+{
+  return ALLOCATE_PSEUDOVECTOR (struct Lisp_Module_Function,
+                                /* Name of the first field to be
+                                   ignored by GC.  */
+                                min_arity,
+                                PVEC_MODULE_FUNCTION);
+}
+
+INLINE bool
+MODULE_FUNCTIONP (Lisp_Object o)
+{
+  return PSEUDOVECTORP (o, PVEC_MODULE_FUNCTION);
+}
+
+INLINE struct Lisp_Module_Function *
+XMODULE_FUNCTION (Lisp_Object o)
+{
+  eassert (MODULE_FUNCTIONP (o));
+  return XUNTAG (o, Lisp_Vectorlike);
+}
+
+#define XSET_MODULE_FUNCTION(var, ptr)                  \
+  (XSETPSEUDOVECTOR (var, ptr, PVEC_MODULE_FUNCTION))
+
 #ifdef HAVE_MODULES
 /* Defined in alloc.c.  */
 extern Lisp_Object make_user_ptr (void (*finalizer) (void *), void *p);
-extern Lisp_Object make_module_function (void);
 
 /* Defined in emacs-module.c.  */
+extern Lisp_Object funcall_module (const struct Lisp_Module_Function *,
+                                   ptrdiff_t, Lisp_Object *);
+extern Lisp_Object module_function_arity (const struct Lisp_Module_Function *);
 extern Lisp_Object module_format_fun_env (const struct Lisp_Module_Function *);
 extern void syms_of_module (void);
 #endif

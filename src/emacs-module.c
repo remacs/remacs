@@ -362,30 +362,24 @@ module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
 	     : min_arity <= max_arity)))
     xsignal2 (Qinvalid_arity, make_number (min_arity), make_number (max_arity));
 
-  Lisp_Object envobj = make_module_function ();
-  struct Lisp_Module_Function *envptr = XMODULE_FUNCTION (envobj);
+  struct Lisp_Module_Function *envptr = allocate_module_function ();
   envptr->min_arity = min_arity;
   envptr->max_arity = max_arity;
   envptr->subr = subr;
   envptr->data = data;
 
-  Lisp_Object doc = Qnil;
   if (documentation)
     {
       AUTO_STRING (unibyte_doc, documentation);
-      doc = code_convert_string_norecord (unibyte_doc, Qutf_8, false);
+      envptr->documentation =
+        code_convert_string_norecord (unibyte_doc, Qutf_8, false);
     }
 
-  /* FIXME: Use a bytecompiled object, or even better a subr.  */
-  Lisp_Object ret = list4 (Qlambda,
-                           list2 (Qand_rest, Qargs),
-                           doc,
-                           list4 (Qapply,
-                                  list2 (Qfunction, Qinternal__module_call),
-                                  envobj,
-                                  Qargs));
+  Lisp_Object envobj;
+  XSET_MODULE_FUNCTION (envobj, envptr);
+  eassert (MODULE_FUNCTIONP (envobj));
 
-  return lisp_to_value (ret);
+  return lisp_to_value (envobj);
 }
 
 static emacs_value
@@ -648,17 +642,11 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
   return Qt;
 }
 
-DEFUN ("internal--module-call", Finternal_module_call, Sinternal_module_call, 1, MANY, 0,
-       doc: /* Internal function to call a module function.
-ENVOBJ is a save pointer to a module_fun_env structure.
-ARGLIST is a list of arguments passed to SUBRPTR.
-usage: (module-call ENVOBJ &rest ARGLIST)   */)
-  (ptrdiff_t nargs, Lisp_Object *arglist)
+Lisp_Object
+funcall_module (const struct Lisp_Module_Function *const envptr,
+                ptrdiff_t nargs, Lisp_Object *arglist)
 {
-  Lisp_Object envobj = arglist[0];
-  CHECK_TYPE (MODULE_FUNCTIONP (envobj), Qmodule_function_p, envobj);
-  struct Lisp_Module_Function *envptr = XMODULE_FUNCTION (envobj);
-  EMACS_INT len = nargs - 1;
+  EMACS_INT len = nargs;
   eassume (0 <= envptr->min_arity);
   if (! (envptr->min_arity <= len
 	 && len <= (envptr->max_arity < 0 ? PTRDIFF_MAX : envptr->max_arity)))
@@ -672,12 +660,12 @@ usage: (module-call ENVOBJ &rest ARGLIST)   */)
   USE_SAFE_ALLOCA;
   emacs_value *args;
   if (plain_values)
-    args = (emacs_value *) arglist + 1;
+    args = (emacs_value *) arglist;
   else
     {
       args = SAFE_ALLOCA (len * sizeof *args);
       for (ptrdiff_t i = 0; i < len; i++)
-	args[i] = lisp_to_value (arglist[i + 1]);
+	args[i] = lisp_to_value (arglist[i]);
     }
 
   emacs_value ret = envptr->subr (&pub, len, args, envptr->data);
@@ -707,6 +695,15 @@ usage: (module-call ENVOBJ &rest ARGLIST)   */)
     default:
       eassume (false);
     }
+}
+
+Lisp_Object
+module_function_arity (const struct Lisp_Module_Function *const function)
+{
+  const short minargs = function->min_arity;
+  const short maxargs = function->max_arity;
+  return Fcons (make_number (minargs),
+		maxargs == MANY ? Qmany : make_number (maxargs));
 }
 
 
@@ -1025,7 +1022,4 @@ syms_of_module (void)
   DEFSYM (Qmodule_function_p, "module-function-p");
 
   defsubr (&Smodule_load);
-
-  DEFSYM (Qinternal__module_call, "internal--module-call");
-  defsubr (&Sinternal_module_call);
 }

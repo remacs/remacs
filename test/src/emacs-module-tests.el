@@ -57,33 +57,22 @@
                 :type 'overflow-error))
 
 (ert-deftest mod-test-sum-docstring ()
-  (should (string= (documentation 'mod-test-sum) "Return A + B")))
+  (should (string= (documentation 'mod-test-sum) "Return A + B\n\n(fn a b)")))
 
 (ert-deftest module-function-object ()
   "Extract and test the implementation of a module function.
 This test needs to be changed whenever the implementation
 changes."
   (let ((func (symbol-function #'mod-test-sum)))
-    (should (consp func))
-    (should (equal (length func) 4))
-    (should (equal (nth 0 func) 'lambda))
-    (should (equal (nth 1 func) '(&rest args)))
-    (should (equal (nth 2 func) "Return A + B"))
-    (let ((body (nth 3 func)))
-      (should (consp body))
-      (should (equal (length body) 4))
-      (should (equal (nth 0 body) #'apply))
-      (should (equal (nth 1 body) '#'internal--module-call))
-      (should (equal (nth 3 body) 'args))
-      (let ((obj (nth 2 body)))
-        (should (equal (type-of obj) 'module-function))
-        (should (string-match-p
-                 (rx "#<module function "
-                     (or "Fmod_test_sum"
-                         (and "at 0x" (+ hex-digit)))
-                     (? " from " (* nonl) "mod-test" (* nonl) )
-                     ">")
-                 (prin1-to-string obj)))))))
+    (should (module-function-p func))
+    (should (equal (type-of func) 'module-function))
+    (should (string-match-p
+             (rx bos "#<module function "
+                 (or "Fmod_test_sum"
+                     (and "at 0x" (+ hex-digit)))
+                 (? " from " (* nonl) "mod-test" (* nonl) )
+                 ">" eos)
+             (prin1-to-string func)))))
 
 ;;
 ;; Non-local exists (throw, signal).
@@ -101,9 +90,7 @@ changes."
        (mod-test-signal)))
     (should (equal debugger-args '(error (error . 56))))
     (should (string-match-p
-             (rx bol "  internal--module-call(" (+ nonl) ?\) ?\n
-                 "  apply(internal--module-call " (+ nonl) ?\) ?\n
-                 "  mod-test-signal()" eol)
+             (rx bol "  mod-test-signal()" eol)
              backtrace))))
 
 (ert-deftest mod-test-non-local-exit-throw-test ()
@@ -172,3 +159,19 @@ changes."
 
         (should (eq (mod-test-vector-fill v-test e) t))
         (should (eq (mod-test-vector-eq v-test e) eq-ref))))))
+
+(ert-deftest module--func-arity ()
+  (should (equal (func-arity #'mod-test-return-t) '(1 . 1)))
+  (should (equal (func-arity #'mod-test-sum) '(2 . 2))))
+
+(ert-deftest module--help-function-arglist ()
+  (should (equal (help-function-arglist #'mod-test-return-t :preserve-names)
+                 '(arg1)))
+  (should (equal (help-function-arglist #'mod-test-return-t)
+                 '(arg1)))
+  (should (equal (help-function-arglist #'mod-test-sum :preserve-names)
+                 '(a b)))
+  (should (equal (help-function-arglist #'mod-test-sum)
+                 '(arg1 arg2))))
+
+;;; emacs-module-tests.el ends here

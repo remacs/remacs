@@ -946,6 +946,12 @@ instead of its first.
 renamed to 'lread--old-style-backquotes'.  No user code should use
 this variable.
 
++++
+** Module functions are now implemented slightly differently; in
+particular, the function 'internal--module-call' has been removed.
+Code that depends on undocumented internals of the module system might
+break.
+
 
 * Lisp Changes in Emacs 26.1
 

@@ -233,8 +233,6 @@ for example, (type-of 1) returns `integer'.  */)
         case Lisp_Misc_Finalizer:
           return Qfinalizer;
 #ifdef HAVE_MODULES
-        case Lisp_Misc_Module_Function:
-          return Qmodule_function;
 	case Lisp_Misc_User_Ptr:
 	  return Quser_ptr;
 #endif
@@ -278,6 +276,8 @@ for example, (type-of 1) returns `integer'.  */)
             else
               return t;
           }
+        case PVEC_MODULE_FUNCTION:
+          return Qmodule_function;
         /* "Impossible" cases.  */
         case PVEC_XWIDGET:
         case PVEC_OTHER:
@@ -492,6 +492,14 @@ DEFUN ("byte-code-function-p", Fbyte_code_function_p, Sbyte_code_function_p,
   if (COMPILEDP (object))
     return Qt;
   return Qnil;
+}
+
+DEFUN ("module-function-p", Fmodule_function_p, Smodule_function_p, 1, 1, NULL,
+       doc: /* Return t if OBJECT is a function loaded from a dynamic module.  */
+       attributes: const)
+  (Lisp_Object object)
+{
+  return MODULE_FUNCTIONP (object) ? Qt : Qnil;
 }
 
 DEFUN ("char-or-string-p", Fchar_or_string_p, Schar_or_string_p, 1, 1, 0,
@@ -3793,6 +3801,7 @@ syms_of_data (void)
   defsubr (&Smarkerp);
   defsubr (&Ssubrp);
   defsubr (&Sbyte_code_function_p);
+  defsubr (&Smodule_function_p);
   defsubr (&Schar_or_string_p);
   defsubr (&Sthreadp);
   defsubr (&Smutexp);
