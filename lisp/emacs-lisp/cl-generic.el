@@ -413,12 +413,12 @@ The set of acceptable TYPEs (also called \"specializers\") is defined
   (declare (doc-string 3) (indent 2)
            (debug
             (&define                    ; this means we are defining something
-             [&or symbolp ("setf" symbolp)]
+             [&or name ("setf" name :name setf)]
              ;; ^^ This is the methods symbol
              [ &rest atom ]         ; Multiple qualifiers are allowed.
                                     ; Like in CLOS spec, we support
                                     ; any non-list values.
-             listp                      ; arguments
+             cl-generic-method-args     ; arguments
              [ &optional stringp ]      ; documentation string
              def-body)))                ; part to be debugged
   (let ((qualifiers nil))

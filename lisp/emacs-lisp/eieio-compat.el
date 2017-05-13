@@ -105,10 +105,10 @@ Summary:
   (declare (doc-string 3) (obsolete cl-defmethod "25.1")
            (debug
             (&define                    ; this means we are defining something
-             [&or symbolp ("setf" symbolp)]
+             [&or name ("setf" name :name setf)]
              ;; ^^ This is the methods symbol
              [ &optional symbolp ]                ; this is key :before etc
-             listp                                ; arguments
+             cl-generic-method-args               ; arguments
              [ &optional stringp ]                ; documentation string
              def-body                             ; part to be debugged
              )))
