@@ -25,25 +25,6 @@ struct timeval
 #define timerclear(tvp)  (tvp)->tv_sec = (tvp)->tv_usec = 0
 #endif /* _TIMEVAL_DEFINED */
 
-#ifndef _TIMEZONE_DEFINED
-#define _TIMEZONE_DEFINED
-struct timezone
-{
-  int		tz_minuteswest;	/* minutes west of Greenwich */
-  int		tz_dsttime;	/* type of dst correction */
-};
-#endif
-
-
-/* This needs to be compatible with Posix signature, in order to pass
-   the configure test for the type of the second argument; see
-   m4/gettimeofday.m4.  We use '__restrict' here, rather than
-   'restrict', for the benefit of the old nt/configure.bat build,
-   which does not force the use of -std= switch to GCC, and that
-   causes compilation errors with 'restrict', which is a C99
-   extension.  */
-int gettimeofday (struct timeval *__restrict, void *__restrict);
-
 #define ITIMER_REAL      0
 #define ITIMER_PROF      1
 
