@@ -64,42 +64,20 @@ int
 gettimeofday (struct timeval *restrict tv, void *restrict tz)
 {
 #undef gettimeofday
-#if HAVE_GETTIMEOFDAY
-# if GETTIMEOFDAY_CLOBBERS_LOCALTIME
-  /* Save and restore the contents of the buffer used for localtime's
-     result around the call to gettimeofday.  */
-  struct tm save = *localtime_buffer_addr;
-# endif
-
-# if defined timeval /* 'struct timeval' overridden by gnulib?  */
-#  undef timeval
-  struct timeval otv;
-  int result = gettimeofday (&otv, (struct timezone *) tz);
-  if (result == 0)
-    {
-      tv->tv_sec = otv.tv_sec;
-      tv->tv_usec = otv.tv_usec;
-    }
-# else
-  int result = gettimeofday (tv, (struct timezone *) tz);
-# endif
-
-# if GETTIMEOFDAY_CLOBBERS_LOCALTIME
-  *localtime_buffer_addr = save;
-# endif
-
-  return result;
-
-#else
-
-# ifdef WINDOWS_NATIVE
+#ifdef WINDOWS_NATIVE
 
   /* On native Windows, there are two ways to get the current time:
      GetSystemTimeAsFileTime
      <https://msdn.microsoft.com/en-us/library/ms724397.aspx>
      or
      GetSystemTimePreciseAsFileTime
-     <https://msdn.microsoft.com/en-us/library/hh706895.aspx>.  */
+     <https://msdn.microsoft.com/en-us/library/hh706895.aspx>.
+     GetSystemTimeAsFileTime produces values that jump by increments of
+     15.627 milliseconds (!) on average.
+     Whereas GetSystemTimePreciseAsFileTime values usually jump by 1 or 2
+     microseconds.
+     More discussion on this topic:
+     <http://www.windowstimestamp.com/description>.  */
   FILETIME current_time;
 
   if (!initialized)
@@ -122,6 +100,36 @@ gettimeofday (struct timeval *restrict tv, void *restrict tz)
   tv->tv_sec = microseconds_since_1970 / (ULONGLONG) 1000000;
   tv->tv_usec = microseconds_since_1970 % (ULONGLONG) 1000000;
 
+  return 0;
+
+#else
+
+# if HAVE_GETTIMEOFDAY
+#  if GETTIMEOFDAY_CLOBBERS_LOCALTIME
+  /* Save and restore the contents of the buffer used for localtime's
+     result around the call to gettimeofday.  */
+  struct tm save = *localtime_buffer_addr;
+#  endif
+
+#  if defined timeval /* 'struct timeval' overridden by gnulib?  */
+#   undef timeval
+  struct timeval otv;
+  int result = gettimeofday (&otv, (struct timezone *) tz);
+  if (result == 0)
+    {
+      tv->tv_sec = otv.tv_sec;
+      tv->tv_usec = otv.tv_usec;
+    }
+#  else
+  int result = gettimeofday (tv, (struct timezone *) tz);
+#  endif
+
+#  if GETTIMEOFDAY_CLOBBERS_LOCALTIME
+  *localtime_buffer_addr = save;
+#  endif
+
+  return result;
+
 # else
 
 #  if !defined OK_TO_USE_1S_CLOCK
@@ -131,9 +139,8 @@ gettimeofday (struct timeval *restrict tv, void *restrict tz)
   tv->tv_sec = time (NULL);
   tv->tv_usec = 0;
 
-# endif
-
   return 0;
 
+# endif
 #endif
 }

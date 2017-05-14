@@ -43,8 +43,8 @@ extern "C" {
    time respectively.
 
    These macros are private to stat-time.h.  */
-#if defined HAVE_STRUCT_STAT_ST_ATIM_TV_NSEC
-# ifdef TYPEOF_STRUCT_STAT_ST_ATIM_IS_STRUCT_TIMESPEC
+#if _GL_WINDOWS_STAT_TIMESPEC || defined HAVE_STRUCT_STAT_ST_ATIM_TV_NSEC
+# if _GL_WINDOWS_STAT_TIMESPEC || defined TYPEOF_STRUCT_STAT_ST_ATIM_IS_STRUCT_TIMESPEC
 #  define STAT_TIMESPEC(st, st_xtim) ((st)->st_xtim)
 # else
 #  define STAT_TIMESPEC_NS(st, st_xtim) ((st)->st_xtim.tv_nsec)

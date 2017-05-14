@@ -24,7 +24,9 @@
 
 # include <stdio.h>
 
-# include "msvc-inval.h"
+# if HAVE_MSVC_INVALID_PARAMETER_HANDLER
+#  include "msvc-inval.h"
+# endif
 
 # if HAVE_MSVC_INVALID_PARAMETER_HANDLER
 static int
@@ -44,7 +46,8 @@ _setmaxstdio_nothrow (int newmax)
 
   return result;
 }
-#  define _setmaxstdio _setmaxstdio_nothrow
+# else
+#  define _setmaxstdio_nothrow _setmaxstdio
 # endif
 
 /* Cache for the previous getdtablesize () result.  Safe to cache because
@@ -76,9 +79,9 @@ getdtablesize (void)
          freed when we call _setmaxstdio with the original value.  */
       int orig_max_stdio = _getmaxstdio ();
       unsigned int bound;
-      for (bound = 0x10000; _setmaxstdio (bound) < 0; bound = bound / 2)
+      for (bound = 0x10000; _setmaxstdio_nothrow (bound) < 0; bound = bound / 2)
         ;
-      _setmaxstdio (orig_max_stdio);
+      _setmaxstdio_nothrow (orig_max_stdio);
       dtablesize = bound;
     }
   return dtablesize;

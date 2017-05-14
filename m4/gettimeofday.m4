@@ -1,4 +1,4 @@
-# serial 22
+# serial 23
 
 # Copyright (C) 2001-2003, 2005, 2007, 2009-2017 Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
@@ -9,9 +9,10 @@ dnl From Jim Meyering.
 
 AC_DEFUN([gl_FUNC_GETTIMEOFDAY],
 [
-  AC_REQUIRE([AC_C_RESTRICT])
-  AC_REQUIRE([gl_HEADER_SYS_TIME_H])
   AC_REQUIRE([gl_HEADER_SYS_TIME_H_DEFAULTS])
+  AC_REQUIRE([AC_C_RESTRICT])
+  AC_REQUIRE([AC_CANONICAL_HOST])
+  AC_REQUIRE([gl_HEADER_SYS_TIME_H])
   AC_CHECK_FUNCS_ONCE([gettimeofday])
 
   gl_gettimeofday_timezone=void
@@ -54,6 +55,11 @@ int gettimeofday (struct timeval *restrict, struct timezone *restrict);
     if test $REPLACE_STRUCT_TIMEVAL = 1; then
       REPLACE_GETTIMEOFDAY=1
     fi
+    dnl On mingw, the original gettimeofday has only a precision of 15.6
+    dnl milliseconds. So override it.
+    case "$host_os" in
+      mingw*) REPLACE_GETTIMEOFDAY=1 ;;
+    esac
   fi
   AC_DEFINE_UNQUOTED([GETTIMEOFDAY_TIMEZONE], [$gl_gettimeofday_timezone],
     [Define this to 'void' or 'struct timezone' to match the system's

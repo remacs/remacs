@@ -44,7 +44,11 @@
 # define USE_SETFILETIME
 # define WIN32_LEAN_AND_MEAN
 # include <windows.h>
-# include "msvc-nothrow.h"
+# if GNULIB_MSVC_NOTHROW
+#  include "msvc-nothrow.h"
+# else
+#  include <io.h>
+# endif
 #endif
 
 /* Avoid recursion with rpl_futimens or rpl_utimensat.  */

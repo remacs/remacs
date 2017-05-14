@@ -35,10 +35,39 @@
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
 
-#  include "msvc-inval.h"
+#  if HAVE_MSVC_INVALID_PARAMETER_HANDLER
+#   include "msvc-inval.h"
+#  endif
 
 /* Get _get_osfhandle.  */
-#  include "msvc-nothrow.h"
+#  if GNULIB_MSVC_NOTHROW
+#   include "msvc-nothrow.h"
+#  else
+#   include <io.h>
+#  endif
+
+#  if HAVE_MSVC_INVALID_PARAMETER_HANDLER
+static int
+dup2_nothrow (int fd, int desired_fd)
+{
+  int result;
+
+  TRY_MSVC_INVAL
+    {
+      result = dup2 (fd, desired_fd);
+    }
+  CATCH_MSVC_INVAL
+    {
+      errno = EBADF;
+      result = -1;
+    }
+  DONE_MSVC_INVAL;
+
+  return result;
+}
+#  else
+#   define dup2_nothrow dup2
+#  endif
 
 static int
 ms_windows_dup2 (int fd, int desired_fd)
@@ -66,16 +95,7 @@ ms_windows_dup2 (int fd, int desired_fd)
       return -1;
     }
 
-  TRY_MSVC_INVAL
-    {
-      result = dup2 (fd, desired_fd);
-    }
-  CATCH_MSVC_INVAL
-    {
-      errno = EBADF;
-      result = -1;
-    }
-  DONE_MSVC_INVAL;
+  result = dup2_nothrow (fd, desired_fd);
 
   if (result == 0)
     result = desired_fd;

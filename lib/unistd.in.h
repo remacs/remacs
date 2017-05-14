@@ -1457,6 +1457,36 @@ _GL_WARN_ON_USE (symlinkat, "symlinkat is not portable - "
 #endif
 
 
+#if @GNULIB_TRUNCATE@
+/* Change the size of the file designated by FILENAME to become equal to LENGTH.
+   Return 0 if successful, otherwise -1 and errno set.
+   See the POSIX:2008 specification
+   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/truncate.html>.  */
+# if @REPLACE_TRUNCATE@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef truncate
+#   define truncate rpl_truncate
+#  endif
+_GL_FUNCDECL_RPL (truncate, int, (const char *filename, off_t length)
+                                 _GL_ARG_NONNULL ((1)));
+_GL_CXXALIAS_RPL (truncate, int, (const char *filename, off_t length));
+# else
+#  if !@HAVE_TRUNCATE@
+_GL_FUNCDECL_SYS (truncate, int, (const char *filename, off_t length)
+                                 _GL_ARG_NONNULL ((1)));
+#  endif
+_GL_CXXALIAS_SYS (truncate, int, (const char *filename, off_t length));
+# endif
+_GL_CXXALIASWARN (truncate);
+#elif defined GNULIB_POSIXCHECK
+# undef truncate
+# if HAVE_RAW_DECL_TRUNCATE
+_GL_WARN_ON_USE (truncate, "truncate is unportable - "
+                 "use gnulib module truncate for portability");
+# endif
+#endif
+
+
 #if @GNULIB_TTYNAME_R@
 /* Store at most BUFLEN characters of the pathname of the terminal FD is
    open on in BUF.  Return 0 on success, otherwise an error number.  */

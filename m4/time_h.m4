@@ -2,7 +2,7 @@
 
 # Copyright (C) 2000-2001, 2003-2007, 2009-2017 Free Software Foundation, Inc.
 
-# serial 10
+# serial 11
 
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -120,6 +120,8 @@ AC_DEFUN([gl_HEADER_TIME_H_DEFAULTS],
   HAVE_STRPTIME=1;                       AC_SUBST([HAVE_STRPTIME])
   HAVE_TIMEGM=1;                         AC_SUBST([HAVE_TIMEGM])
   HAVE_TZSET=1;                          AC_SUBST([HAVE_TZSET])
+  dnl Even GNU libc does not have timezone_t yet.
+  HAVE_TIMEZONE_T=0;                     AC_SUBST([HAVE_TIMEZONE_T])
   dnl If another module says to replace or to not replace, do that.
   dnl Otherwise, replace only if someone compiles with -DGNULIB_PORTCHECK;
   dnl this lets maintainers check for portability.
