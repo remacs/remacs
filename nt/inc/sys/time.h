@@ -42,7 +42,7 @@ struct timezone
    which does not force the use of -std= switch to GCC, and that
    causes compilation errors with 'restrict', which is a C99
    extension.  */
-int gettimeofday (struct timeval *__restrict, struct timezone *__restrict);
+int gettimeofday (struct timeval *__restrict, void *__restrict);
 
 #define ITIMER_REAL      0
 #define ITIMER_PROF      1

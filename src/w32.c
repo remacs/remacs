@@ -2982,7 +2982,7 @@ emacs_root_dir (void)
 
 /* Emulate gettimeofday (Ulrich Leodolter, 1/11/95).  */
 int
-gettimeofday (struct timeval *__restrict tv, struct timezone *__restrict tz)
+gettimeofday (struct timeval *__restrict tv, void *__restrict tzv)
 {
   struct _timeb tb;
   _ftime (&tb);
@@ -2995,8 +2995,10 @@ gettimeofday (struct timeval *__restrict tv, struct timezone *__restrict tz)
      GetTimeZoneInformation, but that doesn't seem necessary, since
      Emacs always calls gettimeofday with the 2nd argument NULL (see
      current_emacs_time).  */
-  if (tz)
+  if (tzv)
     {
+      struct timezone *tz = (struct timezone *)tzv;
+
       tz->tz_minuteswest = tb.timezone;	/* minutes west of Greenwich  */
       tz->tz_dsttime = tb.dstflag;	/* type of dst correction  */
     }
