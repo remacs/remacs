@@ -248,11 +248,15 @@ the same as @kbd{C-M-a} with a positive argument.
 (@code{mark-defun}), which sets the mark at the end of the current
 defun and puts point at its beginning.  @xref{Marking Objects}.  This
 is the easiest way to get ready to kill the defun in order to move it
-to a different place in the file.  If you use the command while point
-is between defuns, it uses the following defun.  If you use the
-command while the mark is already active, it sets the mark but does
-not move point; furthermore, each successive use of @kbd{C-M-h}
-extends the end of the region to include one more defun.
+to a different place in the file.  If the defun is directly preceded
+by comments (with no intervening blank lines), they are marked, too.
+If you use the command while point is between defuns, it uses the
+following defun.  If you use the command while the mark is already
+active, it extends the end of the region to include one more defun.
+With a prefix argument, it marks that many defuns or extends the
+region by the appropriate number of defuns.  With negative prefix
+argument it marks defuns in the opposite direction and also changes
+the direction of selecting for subsequent uses of @code{mark-defun}.
 
   In C mode, @kbd{C-M-h} runs the function @code{c-mark-function},
 which is almost the same as @code{mark-defun}; the difference is that
