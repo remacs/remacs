@@ -1359,6 +1359,8 @@ if it is a string, only list groups matching REGEXP."
 		       (and gnus-permanently-visible-groups
 			    (string-match gnus-permanently-visible-groups
 					  group))
+		       ;; Marked groups are always visible.
+		       (member group gnus-group-marked)
 		       (memq 'visible params)
 		       (cdr (assq 'visible params)))))))
 	  (gnus-group-insert-group-line
