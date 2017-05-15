@@ -3420,16 +3420,32 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 #ifdef HAVE_GETSOCKNAME
 	  if (p->port == 0)
 	    {
-	      struct sockaddr_in sa1;
+	      struct sockaddr_storage sa1;
 	      socklen_t len1 = sizeof (sa1);
 	      if (getsockname (s, (struct sockaddr *)&sa1, &len1) == 0)
 		{
-		  Lisp_Object service;
-		  service = make_number (ntohs (sa1.sin_port));
-		  contact = Fplist_put (contact, QCservice, service);
 		  /* Save the port number so that we can stash it in
 		     the process object later.  */
-		  ((struct sockaddr_in *)sa)->sin_port = sa1.sin_port;
+		  int port = -1;
+		  switch (family)
+		    {
+		    case AF_INET:
+		      ((struct sockaddr_in *) sa)->sin_port
+			= port = ((struct sockaddr_in *) &sa1)->sin_port;
+		      break;
+# ifdef AF_INET6
+		    case AF_INET6:
+		      ((struct sockaddr_in6 *) sa)->sin6_port
+			= port = ((struct sockaddr_in6 *) &sa1)->sin6_port;
+		      break;
+# endif
+		    }
+
+		  if (0 <= port)
+		    {
+		      Lisp_Object service = make_number (ntohs (port));
+		      contact = Fplist_put (contact, QCservice, service);
+		    }
 		}
 	    }
 #endif
@@ -3535,7 +3551,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 #ifdef HAVE_GETSOCKNAME
       if (!p->is_server)
 	{
-	  struct sockaddr_in sa1;
+	  struct sockaddr_storage sa1;
 	  socklen_t len1 = sizeof (sa1);
 	  if (getsockname (s, (struct sockaddr *)&sa1, &len1) == 0)
 	    contact = Fplist_put (contact, QClocal,
