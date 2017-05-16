@@ -2760,6 +2760,7 @@ compute_tip_xy (struct frame *f,
   EmacsView *view = FRAME_NS_VIEW (f);
   struct ns_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
   NSPoint pt;
+  NSScreen *screen;
 
   /* Start with user-specified or mouse position.  */
   left = Fcdr (Fassq (Qleft, parms));
@@ -2794,13 +2795,25 @@ compute_tip_xy (struct frame *f,
 	      - height);
     }
 
+  /* Find the screen that pt is on. */
+  for (screen in [NSScreen screens])
+#ifdef NS_IMPL_COCOA
+    if (CGRectContainsPoint ([screen frame], pt))
+#else
+    if (pt.x >= screen.frame.origin.x
+        && pt.x < screen.frame.origin.x + screen.frame.size.width
+        && pt.y >= screen.frame.origin.y
+        && pt.y < screen.frame.origin.y + screen.frame.size.height)
+#endif
+      break;
+
   /* Ensure in bounds.  (Note, screen origin = lower left.) */
   if (INTEGERP (left) || INTEGERP (right))
     *root_x = pt.x;
-  else if (pt.x + XINT (dx) <= 0)
-    *root_x = 0; /* Can happen for negative dx */
+  else if (pt.x + XINT (dx) <= screen.frame.origin.x)
+    *root_x = screen.frame.origin.x; /* Can happen for negative dx */
   else if (pt.x + XINT (dx) + width
-	   <= x_display_pixel_width (FRAME_DISPLAY_INFO (f)))
+	   <= screen.frame.origin.x + screen.frame.size.width)
     /* It fits to the right of the pointer.  */
     *root_x = pt.x + XINT (dx);
   else if (width + XINT (dx) <= pt.x)
@@ -2808,20 +2821,20 @@ compute_tip_xy (struct frame *f,
     *root_x = pt.x - width - XINT (dx);
   else
     /* Put it left justified on the screen -- it ought to fit that way.  */
-    *root_x = 0;
+    *root_x = screen.frame.origin.x;
 
   if (INTEGERP (top) || INTEGERP (bottom))
     *root_y = pt.y;
-  else if (pt.y - XINT (dy) - height >= 0)
+  else if (pt.y - XINT (dy) - height >= screen.frame.origin.y)
     /* It fits below the pointer.  */
     *root_y = pt.y - height - XINT (dy);
   else if (pt.y + XINT (dy) + height
-	   <= x_display_pixel_height (FRAME_DISPLAY_INFO (f)))
+	   <= screen.frame.origin.y + screen.frame.size.height)
     /* It fits above the pointer */
       *root_y = pt.y + XINT (dy);
   else
     /* Put it on the top.  */
-    *root_y = x_display_pixel_height (FRAME_DISPLAY_INFO (f)) - height;
+    *root_y = screen.frame.origin.y + screen.frame.size.height - height;
 }
 
 
