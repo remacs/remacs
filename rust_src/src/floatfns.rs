@@ -73,7 +73,7 @@ macro_rules! simple_float_op {
             $fname(x),
             $sname,
             $float_func,
-            1, 1,
+            1,
             $crate::std::ptr::null(),
 // explicity set signature, otherwise emacs seems to name the argument ARG1
             concat!($lisp_docs, "
@@ -130,7 +130,6 @@ defun!("isnan",
        Sisnan,
        isnan,
        1,
-       1,
        ptr::null(),
        "Return non nil if argument X is a NaN.
 
@@ -154,7 +153,6 @@ defun!("atan",
        Satan,
        atan,
        1,
-       2,
        ptr::null(),
        "Return the inverse tangent of the arguments.
 If only one argument Y is given, return the inverse tangent of Y.
@@ -188,7 +186,6 @@ defun!("log",
        Slog,
        log,
        1,
-       2,
        ptr::null(),
        "Return the natural logarithm of ARG.
 If the optional argument BASE is given, return log ARG using that base.
@@ -208,7 +205,6 @@ defun!("ftruncate",
        Fftruncate(x),
        Sftruncate,
        ftruncate,
-       1,
        1,
        ptr::null(),
        "Truncate a floating point number to an integral float value.
@@ -235,7 +231,6 @@ defun!("float",
        Ffloat(obj),
        Sfloat,
        float,
-       1,
        1,
        ptr::null(),
        "Return the floating point number equal to ARG.

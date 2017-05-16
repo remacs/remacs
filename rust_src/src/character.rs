@@ -15,7 +15,6 @@ defun!("max-char",
        Smax_char,
        max_char,
        0,
-       0,
        ptr::null(),
        "Return the character of the maximum code.");
 

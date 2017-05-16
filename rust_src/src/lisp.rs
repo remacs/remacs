@@ -375,6 +375,17 @@ impl LispObject {
     }
 }
 
+/// Return the number of arguments we are called with.
+///
+/// Does not scale well, but we only use small (<20) arguments. See
+/// https://danielkeep.github.io/tlborm/book/blk-counting.html for a
+/// discussion of performance.
+macro_rules! count_args {
+    () => (0);
+    ($arg:expr) => (1);
+    ($arg:expr, $($rest:tt)*) => (1 + count_args!($($rest)*));
+}
+
 /// Define an elisp function struct.
 ///
 /// # Example
@@ -389,7 +400,7 @@ impl LispObject {
 ///        do_nothing).
 ///        Sdo_nothing, // the name of the struct that we will define
 ///        do_nothing, // the Rust function we want to call
-///        1, 1, // min and max number of arguments
+///        1, // minimum number of arguments
 ///        ptr::null(), // our function is not interactive
 ///        // Docstring. The last line ensures that *Help* shows the
 ///        // correct calling convention
@@ -410,7 +421,6 @@ macro_rules! defun {
      $sname: ident,
      $rust_name: ident,
      $min_args:expr,
-     $max_args:expr,
      $intspec:expr,
      $docstring:expr) => {
         #[no_mangle]
@@ -430,7 +440,7 @@ macro_rules! defun {
                 },
                 function: ($fname as *const $crate::libc::c_void),
                 min_args: $min_args,
-                max_args: $max_args,
+                max_args: count_args!($($arg_name:ident),*),
                 symbol_name: ((concat!($lisp_name, "\0")).as_ptr()) as *const $crate::libc::c_char,
                 intspec: $intspec,
                 doc: (concat!($docstring, "\0").as_ptr()) as *const $crate::libc::c_char,
