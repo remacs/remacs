@@ -2005,9 +2005,9 @@ x_draw_glyphless_glyph_string_foreground (struct glyph_string *s)
 	}
       else if (glyph->u.glyphless.method == GLYPHLESS_DISPLAY_HEX_CODE)
 	{
-	  sprintf (buf, "%0*X",
-		   glyph->u.glyphless.ch < 0x10000 ? 4 : 6,
-		   glyph->u.glyphless.ch + 0u);
+	  unsigned int ch = glyph->u.glyphless.ch;
+	  eassume (ch <= MAX_CHAR);
+	  sprintf (buf, "%0*X", ch < 0x10000 ? 4 : 6, ch);
 	  str = buf;
 	}
 
@@ -8949,7 +8949,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
         {
         case MappingModifier:
           x_find_modifier_meanings (dpyinfo);
-          /* This is meant to fall through.  */
+	  FALLTHROUGH;
         case MappingKeyboard:
           XRefreshKeyboardMapping ((XMappingEvent *) &event->xmapping);
         }

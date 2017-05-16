@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2017-04-14.11}
+\def\texinfoversion{2017-05-14.14}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -9118,7 +9118,13 @@ end
     \xdef\safexrefname{#1}%
   }%
   %
-  \expandafter\gdef\csname XR\safexrefname\endcsname{#2}% remember this xref
+  \bgroup
+    \expandafter\gdef\csname XR\safexrefname\endcsname{#2}%
+  \egroup
+  % We put the \gdef inside a group to avoid the definitions building up on 
+  % TeX's save stack, which can cause it to run out of space for aux files with 
+  % thousands of lines.  \gdef doesn't use the save stack, but \csname does
+  % when it defines an unknown control sequence as \relax. 
   %
   % Was that xref control sequence that we just defined for a float?
   \expandafter\iffloat\csname XR\safexrefname\endcsname

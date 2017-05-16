@@ -690,6 +690,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
 	case 'N':     /* Prefix arg as number, else number from minibuffer.  */
 	  if (!NILP (prefix_arg))
 	    goto have_prefix_arg;
+	  FALLTHROUGH;
 	case 'n':		/* Read number from minibuffer.  */
 	  args[i] = call1 (Qread_number, callint_message);
 	  /* Passing args[i] directly stimulates compiler bug.  */

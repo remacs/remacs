@@ -921,6 +921,8 @@ AS_IF([test $gl_gcc_warnings = no],
     [gl_WARN_ADD([-Werror], [WERROR_CFLAGS])])
   AC_SUBST([WERROR_CFLAGS])
 
+  nw="$nw -Wduplicated-branches"    # Too many false alarms
+  nw="$nw -Wformat-overflow=2"      # False alarms due to GCC bug 80776
   nw="$nw -Wsystem-headers"         # Don't let system headers trigger warnings
   nw="$nw -Woverlength-strings"     # Not a problem these days
   nw="$nw -Wformat-nonliteral"      # we do this a lot

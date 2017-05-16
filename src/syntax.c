@@ -810,6 +810,7 @@ back_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
 	case Sstring_fence:
 	case Scomment_fence:
 	  c = (code == Sstring_fence ? ST_STRING_STYLE : ST_COMMENT_STYLE);
+	  FALLTHROUGH;
 	case Sstring:
 	  /* Track parity of quotes.  */
 	  if (string_style == -1)
@@ -2690,6 +2691,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 		goto lose;
 	      INC_BOTH (from, from_byte);
 	      /* Treat following character as a word constituent.  */
+	      FALLTHROUGH;
 	    case Sword:
 	    case Ssymbol:
 	      if (depth || !sexpflag) break;
@@ -2721,7 +2723,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 
 	    case Scomment_fence:
 	      comstyle = ST_COMMENT_STYLE;
-	      /* FALLTHROUGH */
+	      FALLTHROUGH;
 	    case Scomment:
 	      if (!parse_sexp_ignore_comments) break;
 	      UPDATE_SYNTAX_TABLE_FORWARD (from);
@@ -2753,7 +2755,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 		  goto close1;
 		}
 	      mathexit = 1;
-
+	      FALLTHROUGH;
 	    case Sopen:
 	      if (!++depth) goto done;
 	      break;
@@ -2909,7 +2911,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 		  goto open2;
 		}
 	      mathexit = 1;
-
+	      FALLTHROUGH;
 	    case Sclose:
 	      if (!++depth) goto done2;
 	      break;

@@ -244,6 +244,12 @@ extern int emacs_setenv_TZ (char const *);
 # define ATTRIBUTE_FORMAT(spec) /* empty */
 #endif
 
+#if GNUC_PREREQ (7, 0, 0)
+# define FALLTHROUGH __attribute__ ((__fallthrough__))
+#else
+# define FALLTHROUGH ((void) 0)
+#endif
+
 #if GNUC_PREREQ (4, 4, 0) && defined __GLIBC_MINOR__
 # define PRINTF_ARCHETYPE __gnu_printf__
 #elif GNUC_PREREQ (4, 4, 0) && defined __MINGW32__

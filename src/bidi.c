@@ -2092,7 +2092,7 @@ bidi_resolve_explicit (struct bidi_it *bidi_it)
 	  type = RLI;
 	  bidi_it->orig_type = type;
 	}
-      /* FALLTHROUGH */
+      FALLTHROUGH;
     case RLI:	/* X5a */
       if (override == NEUTRAL_DIR)
 	bidi_it->type_after_wn = type;

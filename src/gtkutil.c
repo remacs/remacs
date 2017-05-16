@@ -554,10 +554,11 @@ xg_check_special_colors (struct frame *f,
     else
       gtk_style_context_get_background_color (gsty, state, &col);
 
-    sprintf (buf, "rgb:%04x/%04x/%04x",
-             (unsigned) (col.red * 65535),
-             (unsigned) (col.green * 65535),
-             (unsigned) (col.blue * 65535));
+    unsigned short
+      r = col.red * 65535,
+      g = col.green * 65535,
+      b = col.blue * 65535;
+    sprintf (buf, "rgb:%04x/%04x/%04x", r, g, b);
     success_p = x_parse_color (f, buf, color) != 0;
 #else
     GtkStyle *gsty = gtk_widget_get_style (FRAME_GTK_WIDGET (f));
@@ -3856,7 +3857,6 @@ xg_update_scrollbar_pos (struct frame *f,
       GtkWidget *wparent = gtk_widget_get_parent (wscroll);
       gint msl;
       int scale = xg_get_gdk_scale ();
-      bool hidden;
 
       top /= scale;
       left /= scale;
@@ -3875,13 +3875,13 @@ xg_update_scrollbar_pos (struct frame *f,
       /* Move and resize to new values.  */
       gtk_fixed_move (GTK_FIXED (wfixed), wparent, left, top);
       gtk_widget_style_get (wscroll, "min-slider-length", &msl, NULL);
-      if (msl > height)
+      bool hidden = height < msl;
+      if (hidden)
         {
           /* No room.  Hide scroll bar as some themes output a warning if
              the height is less than the min size.  */
           gtk_widget_hide (wparent);
           gtk_widget_hide (wscroll);
-	  hidden = true;
         }
       else
         {

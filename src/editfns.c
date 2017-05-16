@@ -1595,10 +1595,10 @@ time_arith (Lisp_Object a, Lisp_Object b,
     {
     default:
       val = Fcons (make_number (t.ps), val);
-      /* Fall through.  */
+      FALLTHROUGH;
     case 3:
       val = Fcons (make_number (t.us), val);
-      /* Fall through.  */
+      FALLTHROUGH;
     case 2:
       val = Fcons (make_number (t.lo), val);
       val = Fcons (make_number (t.hi), val);
@@ -4072,8 +4072,8 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	    }
 
 	  /* Ignore flags when sprintf ignores them.  */
-	  space_flag &= ~ plus_flag;
-	  zero_flag &= ~ minus_flag;
+	  space_flag &= ! plus_flag;
+	  zero_flag &= ! minus_flag;
 
 	  char *num_end;
 	  uintmax_t raw_field_width = strtoumax (format, &num_end, 10);
@@ -4311,7 +4311,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  {
 		    memcpy (f, pMd, pMlen);
 		    f += pMlen;
-		    zero_flag &= ~ precision_given;
+		    zero_flag &= ! precision_given;
 		  }
 		*f++ = conversion;
 		*f = '\0';

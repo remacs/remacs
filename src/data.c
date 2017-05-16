@@ -2153,7 +2153,7 @@ If the current binding is global (the default), the value is nil.  */)
 	else if (!BUFFER_OBJFWDP (valcontents))
 	  return Qnil;
       }
-      /* FALLTHROUGH */
+      FALLTHROUGH;
     case SYMBOL_LOCALIZED:
       /* For a local variable, record both the symbol and which
 	 buffer's or frame's value we are saving.  */
