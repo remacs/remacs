@@ -2058,8 +2058,14 @@ ARGS are the arguments OPERATION has been called with."
   `(let ((debug-on-error tramp-debug-on-error))
      (tramp-compat-condition-case-unless-debug ,var ,bodyform ,@handlers)))
 
+;; This is to avoid recursive load.
+;;;###autoload(defun tramp-file-name-handler (operation &rest args)
+;;;###autoload  "Load Tramp file name handler, and perform OPERATION."
+;;;###autoload  (let ((default-directory temporary-file-directory))
+;;;###autoload    (load "tramp" nil t))
+;;;###autoload  (apply operation args))
+
 ;; Main function.
-;;;###autoload
 (defun tramp-file-name-handler (operation &rest args)
   "Invoke Tramp file name handler.
 Falls back to normal file name handler if no Tramp file name handler exists."
