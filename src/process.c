@@ -4659,7 +4659,7 @@ static EMACS_INT connect_counter = 0;
 static void
 server_accept_connection (Lisp_Object server, int channel)
 {
-  Lisp_Object proc, caller, name, buffer;
+  Lisp_Object buffer;
   Lisp_Object contact, host, service;
   struct Lisp_Process *ps = XPROCESS (server);
   struct Lisp_Process *p;
@@ -4701,49 +4701,43 @@ server_accept_connection (Lisp_Object server, int channel)
      information for this process.  */
   host = Qt;
   service = Qnil;
+  Lisp_Object args[11];
+  int nargs = 0;
+  AUTO_STRING (procname_format_in, "%s <%d.%d.%d.%d:%d>");
+  AUTO_STRING (procname_format_in6, "%s <[%x:%x:%x:%x:%x:%x:%x:%x]:%d>");
+  AUTO_STRING (procname_format_default, "%s <%d>");
   switch (saddr.sa.sa_family)
     {
     case AF_INET:
       {
+	args[nargs++] = procname_format_in;
+	nargs++;
 	unsigned char *ip = (unsigned char *)&saddr.in.sin_addr.s_addr;
-
-	AUTO_STRING (ipv4_format, "%d.%d.%d.%d");
-	host = CALLN (Fformat, ipv4_format,
-		      make_number (ip[0]), make_number (ip[1]),
-		      make_number (ip[2]), make_number (ip[3]));
 	service = make_number (ntohs (saddr.in.sin_port));
-	AUTO_STRING (caller_format, " <%s:%d>");
-	caller = CALLN (Fformat, caller_format, host, service);
+	for (int i = 0; i < 4; i++)
+	  args[nargs++] = make_number (ip[i]);
+	args[nargs++] = service;
       }
       break;
 
 #ifdef AF_INET6
     case AF_INET6:
       {
-	Lisp_Object args[9];
+	args[nargs++] = procname_format_in6;
+	nargs++;
 	uint16_t *ip6 = (uint16_t *)&saddr.in6.sin6_addr;
-	int i;
-
-	AUTO_STRING (ipv6_format, "%x:%x:%x:%x:%x:%x:%x:%x");
-	args[0] = ipv6_format;
-	for (i = 0; i < 8; i++)
-	  args[i + 1] = make_number (ntohs (ip6[i]));
-	host = CALLMANY (Fformat, args);
 	service = make_number (ntohs (saddr.in.sin_port));
-	AUTO_STRING (caller_format, " <[%s]:%d>");
-	caller = CALLN (Fformat, caller_format, host, service);
+	for (int i = 0; i < 8; i++)
+	  args[nargs++] = make_number (ip6[i]);
+	args[nargs++] = service;
       }
       break;
 #endif
 
-#ifdef HAVE_LOCAL_SOCKETS
-    case AF_LOCAL:
-#endif
     default:
-      caller = Fnumber_to_string (make_number (connect_counter));
-      AUTO_STRING (space_less_than, " <");
-      AUTO_STRING (greater_than, ">");
-      caller = concat3 (space_less_than, caller, greater_than);
+      args[nargs++] = procname_format_default;
+      nargs++;
+      args[nargs++] = make_number (connect_counter);
       break;
     }
 
@@ -4764,16 +4758,17 @@ server_accept_connection (Lisp_Object server, int channel)
 	buffer = ps->name;
       if (!NILP (buffer))
 	{
-	  buffer = concat2 (buffer, caller);
-	  buffer = Fget_buffer_create (buffer);
+	  args[1] = buffer;
+	  buffer = Fget_buffer_create (Fformat (nargs, args));
 	}
     }
 
   /* Generate a unique name for the new server process.  Combine the
      server process name with the caller identification.  */
 
-  name = concat2 (ps->name, caller);
-  proc = make_process (name);
+  args[1] = ps->name;
+  Lisp_Object name = Fformat (nargs, args);
+  Lisp_Object proc = make_process (name);
 
   chan_process[s] = proc;
 
