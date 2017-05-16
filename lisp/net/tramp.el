@@ -1996,7 +1996,7 @@ ARGS are the arguments OPERATION has been called with."
 	      file-name-case-insensitive-p))
     (if (file-name-absolute-p (nth 0 args))
 	(nth 0 args)
-      (expand-file-name (nth 0 args))))
+      default-directory))
    ;; FILE DIRECTORY resp FILE1 FILE2.
    ((member operation
 	    '(add-name-to-file copy-directory copy-file expand-file-name
@@ -2008,10 +2008,12 @@ ARGS are the arguments OPERATION has been called with."
       (cond
        ((tramp-tramp-file-p (nth 0 args)) (nth 0 args))
        ((tramp-tramp-file-p (nth 1 args)) (nth 1 args))
-       (t (buffer-file-name (current-buffer))))))
+       (t default-directory))))
    ;; START END FILE.
    ((eq operation 'write-region)
-    (nth 2 args))
+    (if (file-name-absolute-p (nth 2 args))
+	(nth 2 args)
+      default-directory))
    ;; BUFFER.
    ((member operation
 	    '(make-auto-save-file-name
@@ -2057,13 +2059,6 @@ ARGS are the arguments OPERATION has been called with."
   "Like `condition-case-unless-debug' but `tramp-debug-on-error'."
   `(let ((debug-on-error tramp-debug-on-error))
      (tramp-compat-condition-case-unless-debug ,var ,bodyform ,@handlers)))
-
-;; This is to avoid recursive load.
-;;;###autoload(defun tramp-file-name-handler (operation &rest args)
-;;;###autoload  "Load Tramp file name handler, and perform OPERATION."
-;;;###autoload  (let ((default-directory temporary-file-directory))
-;;;###autoload    (load "tramp" nil t))
-;;;###autoload  (apply operation args))
 
 ;; Main function.
 (defun tramp-file-name-handler (operation &rest args)
@@ -2193,15 +2188,23 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 	(save-match-data (apply (cdr fn) args))
       (tramp-run-real-handler operation args))))
 
-;; `tramp-file-name-handler' must be registered before evaluation of
-;; site-start and init files, because there might exist remote files
-;; already, f.e. files kept via recentf-mode.
+;;;###autoload
+(progn (defun tramp-autoload-file-name-handler (operation &rest args)
+  "Load Tramp file name handler, and perform OPERATION."
+  (let ((default-directory temporary-file-directory))
+    (load "tramp" 'noerror 'nomessage))
+  (apply operation args)))
+
+;; `tramp-autoload-file-name-handler' must be registered before
+;; evaluation of site-start and init files, because there might exist
+;; remote files already, f.e. files kept via recentf-mode.
 ;;;###autoload
 (progn (defun tramp-register-autoload-file-name-handlers ()
   "Add Tramp file name handlers to `file-name-handler-alist' during autoload."
   (add-to-list 'file-name-handler-alist
-	       (cons tramp-initial-file-name-regexp 'tramp-file-name-handler))
-  (put 'tramp-file-name-handler 'safe-magic t)
+	       (cons tramp-initial-file-name-regexp
+		     'tramp-autoload-file-name-handler))
+  (put 'tramp-autoload-file-name-handler 'safe-magic t)
 
   (add-to-list 'file-name-handler-alist
 	       (cons tramp-initial-completion-file-name-regexp
@@ -2220,7 +2223,6 @@ Falls back to normal file name handler if no Tramp file name handler exists."
   ;; if `tramp-syntax' has been changed.
   (dolist (fnh '(tramp-file-name-handler
 		 tramp-completion-file-name-handler
-		 ;; This is autoloaded in Emacs 24 & 25.
 		 tramp-autoload-file-name-handler))
     (let ((a1 (rassq fnh file-name-handler-alist)))
       (setq file-name-handler-alist (delq a1 file-name-handler-alist))))
@@ -2438,42 +2440,55 @@ They are collected by `tramp-completion-dissect-file-name1'."
 	     (tramp-postfix-ipv6-format))))
 	 ;; "/method" "/[method"
 	 (tramp-completion-file-name-structure1
-	  (list (concat (tramp-prefix-regexp) "\\(" (tramp-method-regexp) x-nil "\\)$")
-		1 nil nil nil))
+	  (list
+	   (concat
+	    (tramp-prefix-regexp)
+	    "\\(" (tramp-method-regexp) x-nil "\\)$")
+	   1 nil nil nil))
 	 ;; "/method:user" "/[method/user"
 	 (tramp-completion-file-name-structure2
-	  (list (concat (tramp-prefix-regexp)
-			"\\(" (tramp-method-regexp) "\\)" (tramp-postfix-method-regexp)
-			"\\(" tramp-user-regexp x-nil     "\\)$")
-		1 2 nil nil))
+	  (list
+	   (concat
+	    (tramp-prefix-regexp)
+	    "\\(" (tramp-method-regexp) "\\)" (tramp-postfix-method-regexp)
+	    "\\(" tramp-user-regexp x-nil     "\\)$")
+	   1 2 nil nil))
 	 ;; "/method:host" "/[method/host"
 	 (tramp-completion-file-name-structure3
-	  (list (concat (tramp-prefix-regexp)
-			"\\(" (tramp-method-regexp) "\\)" (tramp-postfix-method-regexp)
-			"\\(" tramp-host-regexp x-nil     "\\)$")
-		1 nil 2 nil))
+	  (list
+	   (concat
+	    (tramp-prefix-regexp)
+	    "\\(" (tramp-method-regexp) "\\)" (tramp-postfix-method-regexp)
+	    "\\(" tramp-host-regexp x-nil     "\\)$")
+	   1 nil 2 nil))
 	 ;; "/method:[ipv6" "/[method/ipv6"
 	 (tramp-completion-file-name-structure4
-	  (list (concat (tramp-prefix-regexp)
-			"\\(" (tramp-method-regexp) "\\)" (tramp-postfix-method-regexp)
-			(tramp-prefix-ipv6-regexp)
-			"\\(" tramp-completion-ipv6-regexp x-nil "\\)$")
-		1 nil 2 nil))
+	  (list
+	   (concat
+	    (tramp-prefix-regexp)
+	    "\\(" (tramp-method-regexp) "\\)" (tramp-postfix-method-regexp)
+	    (tramp-prefix-ipv6-regexp)
+	    "\\(" tramp-completion-ipv6-regexp x-nil "\\)$")
+	   1 nil 2 nil))
 	 ;; "/method:user@host" "/[method/user@host"
 	 (tramp-completion-file-name-structure5
-	  (list (concat (tramp-prefix-regexp)
-			"\\(" (tramp-method-regexp) "\\)" (tramp-postfix-method-regexp)
-			"\\(" tramp-user-regexp "\\)"     tramp-postfix-user-regexp
-			"\\(" tramp-host-regexp x-nil     "\\)$")
-		1 2 3 nil))
+	  (list
+	   (concat
+	    (tramp-prefix-regexp)
+	    "\\(" (tramp-method-regexp) "\\)" (tramp-postfix-method-regexp)
+	    "\\(" tramp-user-regexp "\\)"     tramp-postfix-user-regexp
+	    "\\(" tramp-host-regexp x-nil     "\\)$")
+	   1 2 3 nil))
 	 ;; "/method:user@[ipv6" "/[method/user@ipv6"
 	 (tramp-completion-file-name-structure6
-	  (list (concat (tramp-prefix-regexp)
-			"\\(" (tramp-method-regexp) "\\)" (tramp-postfix-method-regexp)
-			"\\(" tramp-user-regexp "\\)"     tramp-postfix-user-regexp
-			(tramp-prefix-ipv6-regexp)
-			"\\(" tramp-completion-ipv6-regexp x-nil "\\)$")
-		1 2 3 nil)))
+	  (list
+	   (concat
+	    (tramp-prefix-regexp)
+	    "\\(" (tramp-method-regexp) "\\)" (tramp-postfix-method-regexp)
+	    "\\(" tramp-user-regexp "\\)"     tramp-postfix-user-regexp
+	    (tramp-prefix-ipv6-regexp)
+	    "\\(" tramp-completion-ipv6-regexp x-nil "\\)$")
+	   1 2 3 nil)))
     (delq
      nil
      (mapcar
