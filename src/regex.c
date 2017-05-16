@@ -2637,8 +2637,8 @@ regex_compile (const_re_char *pattern, size_t size,
 	      || (syntax & RE_LIMITED_OPS))
 	    goto normal_char;
 	  FALLTHROUGH;
-	handle_plus:
 	case '*':
+	handle_plus:
 	  /* If there is no previous pattern...  */
 	  if (!laststart)
 	    {
