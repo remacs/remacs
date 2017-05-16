@@ -657,8 +657,11 @@ close_output_streams (void)
       _exit (EXIT_FAILURE);
     }
 
-   if (close_stream (stderr) != 0)
-     _exit (EXIT_FAILURE);
+  /* Do not close stderr if addresses are being sanitized, as the
+     sanitizer might report to stderr after this function is
+     invoked.  */
+  if (!ADDRESS_SANITIZER && close_stream (stderr) != 0)
+    _exit (EXIT_FAILURE);
 }
 
 /* ARGSUSED */
