@@ -81,10 +81,8 @@ static Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool);
 
 enum { tzeqlen = sizeof "TZ=" - 1 };
 
-/* Time zones equivalent to current local time, to wall clock time,
-   and to UTC, respectively.  */
+/* Time zones equivalent to current local time and to UTC, respectively.  */
 static timezone_t local_tz;
-static timezone_t wall_clock_tz;
 static timezone_t const utc_tz = 0;
 
 /* The cached value of Vsystem_name.  This is used only to compare it
@@ -269,7 +267,6 @@ init_editfns (bool dumping)
 
   /* Set the time zone rule now, so that the call to putenv is done
      before multiple threads are active.  */
-  wall_clock_tz = xtzalloc (0);
   tzlookup (tz ? build_string (tz) : Qwall, true);
 
   pw = getpwuid (getuid ());
