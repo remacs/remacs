@@ -302,6 +302,12 @@ extern int emacs_setenv_TZ (char const *);
 # define ATTRIBUTE_NO_SANITIZE_ADDRESS
 #endif
 
+/* gcc -fsanitize=address does not work with vfork in Fedora 25 x86-64.
+   For now, assume that this problem occurs on all platforms.  */
+#if ADDRESS_SANITIZER && !defined vfork
+# define vfork fork
+#endif
+
 /* Some versions of GNU/Linux define noinline in their headers.  */
 #ifdef noinline
 #undef noinline
