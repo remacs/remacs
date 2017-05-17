@@ -3430,11 +3430,11 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 	      /* The code below assumes the port is at the same offset
 		 and of the same width in both IPv4 and IPv6
 		 structures, but the standards don't guarantee that,
-		 so we have this assertion to make sure.  */
-	      eassert ((offsetof (struct sockaddr_in, sin_port)
-			== offsetof (struct sockaddr_in6, sin6_port))
-		       && (sizeof (sa1.sin_port)
-			   == sizeof (((struct sockaddr_in6 *) &sa1)->sin6_port)));
+		 so verify it here.  */
+	      struct sockaddr_in6 sa6;
+	      verify ((offsetof (struct sockaddr_in, sin_port)
+		       == offsetof (struct sockaddr_in6, sin6_port))
+		      && sizeof (sa1.sin_port) == sizeof (sa6.sin6_port));
 #endif
 	      if (getsockname (s, (struct sockaddr *)&sa1, &len1) == 0)
 		{
