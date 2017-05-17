@@ -237,6 +237,8 @@ commit ()
     $vcs commit -m "; Auto-commit of $type files." "$@" || return $?
 
     [ "$vcs" = "git" ] && {
+        ## In case someone else pushed something while we were working.
+        $vcs pull --rebase || return $?
         $vcs push || return $?
     }
 
