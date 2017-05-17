@@ -3418,34 +3418,31 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 	    report_file_error ("Cannot bind server socket", Qnil);
 
 #ifdef HAVE_GETSOCKNAME
-	  if (p->port == 0)
+	  if (p->port == 0
+#ifdef HAVE_LOCAL_SOCKETS
+	      && family != AF_LOCAL
+#endif
+	      )
 	    {
-	      struct sockaddr_storage sa1;
+	      struct sockaddr_in sa1;
 	      socklen_t len1 = sizeof (sa1);
+#ifdef AF_INET6
+	      /* The code below assumes the port is at the same offset
+		 and of the same width in both IPv4 and IPv6
+		 structures, but the standards don't guarantee that,
+		 so we have this assertion to make sure.  */
+	      eassert ((offsetof (struct sockaddr_in, sin_port)
+			== offsetof (struct sockaddr_in6, sin6_port))
+		       && (sizeof (sa1.sin_port)
+			   == sizeof (((struct sockaddr_in6 *) &sa1)->sin6_port)));
+#endif
 	      if (getsockname (s, (struct sockaddr *)&sa1, &len1) == 0)
 		{
+		  Lisp_Object service = make_number (ntohs (sa1.sin_port));
+		  contact = Fplist_put (contact, QCservice, service);
 		  /* Save the port number so that we can stash it in
 		     the process object later.  */
-		  int port = -1;
-		  switch (family)
-		    {
-		    case AF_INET:
-		      ((struct sockaddr_in *) sa)->sin_port
-			= port = ((struct sockaddr_in *) &sa1)->sin_port;
-		      break;
-# ifdef AF_INET6
-		    case AF_INET6:
-		      ((struct sockaddr_in6 *) sa)->sin6_port
-			= port = ((struct sockaddr_in6 *) &sa1)->sin6_port;
-		      break;
-# endif
-		    }
-
-		  if (0 <= port)
-		    {
-		      Lisp_Object service = make_number (ntohs (port));
-		      contact = Fplist_put (contact, QCservice, service);
-		    }
+		  ((struct sockaddr_in *) sa)->sin_port = sa1.sin_port;
 		}
 	    }
 #endif
