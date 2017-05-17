@@ -263,6 +263,20 @@ extern int emacs_setenv_TZ (char const *);
 #define ATTRIBUTE_CONST _GL_ATTRIBUTE_CONST
 #define ATTRIBUTE_UNUSED _GL_UNUSED
 
+#if GNUC_PREREQ (3, 3, 0)
+# define ATTRIBUTE_MAY_ALIAS __attribute__ ((__may_alias__))
+#else
+# define ATTRIBUTE_MAY_ALIAS
+#endif
+
+/* Declare NAME to be a pointer to an object of type TYPE, initialized
+   to the address ADDR, which may be of a different type.  Accesses
+   via NAME may alias with other accesses with the traditional
+   behavior, even if options like gcc -fstrict-aliasing are used.  */
+
+#define DECLARE_POINTER_ALIAS(name, type, addr) \
+  type ATTRIBUTE_MAY_ALIAS *name = (type *) (addr)
+
 #if 3 <= __GNUC__
 # define ATTRIBUTE_MALLOC __attribute__ ((__malloc__))
 #else
