@@ -264,7 +264,7 @@ expression, in which case we want to handle forms differently."
     ;; problems when the file contains non-ASCII characters.
     (with-current-buffer (find-file-noselect
                           (autoload-ensure-file-writeable file))
-      (if (zerop (buffer-size)) (insert (autoload-rubric file)))
+      (if (zerop (buffer-size)) (insert (autoload-rubric file nil t)))
       (current-buffer))))
 
 (defun autoload-generated-file ()
@@ -360,10 +360,7 @@ but adds an extra line to the output to modify `load-path'.
 
 If FEATURE is non-nil, FILE will provide a feature.  FEATURE may
 be a string naming the feature, otherwise it will be based on
-FILE's name.
-
-At present, a feature is in fact always provided, but this should
-not be relied upon."
+FILE's name."
   (let ((basename (file-name-nondirectory file))
 	(lp (if (equal type "package") (setq type "autoloads"))))
     (concat ";;; " basename
@@ -372,15 +369,14 @@ not be relied upon."
 	    ";;; Code:\n\n"
 	    (if lp
 		;; `load-path' should contain only directory names.
-		"(add-to-list 'load-path (directory-file-name (or (file-name-directory #$) (car load-path))))\n\n"
-	      (concat
-	       ;; This is used outside of autoload.el, eg cus-dep, finder.
-	       "\n"
-	       "(provide '"
-	       (if (stringp feature)
-		   feature
-		 (file-name-sans-extension basename))
-	       ")\n"))
+		"(add-to-list 'load-path (directory-file-name
+                         (or (file-name-directory #$) (car load-path))))\n\n")
+	    "\n"
+	    ;; This is used outside of autoload.el, eg cus-dep, finder.
+	    (if feature
+		(format "(provide '%s)\n"
+			(if (stringp feature) feature
+			  (file-name-sans-extension basename))))
 	    ";; Local Variables:\n"
 	    ";; version-control: never\n"
 	    ";; no-byte-compile: t\n"
