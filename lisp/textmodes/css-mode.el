@@ -1350,7 +1350,8 @@ a list of completions."
 (defun css-completion-at-point ()
   "Complete current symbol at point.
 Currently supports completion of CSS properties, property values,
-pseudo-elements, pseudo-classes, at-rules, and bang-rules."
+pseudo-elements, pseudo-classes, at-rules, bang-rules, and HTML
+tags, classes and IDs."
   (or (css--complete-bang-rule)
       (css--complete-property-value)
       (css--complete-pseudo-element-or-class)
@@ -1377,7 +1378,22 @@ pseudo-elements, pseudo-classes, at-rules, and bang-rules."
 
 ;;;###autoload
 (define-derived-mode css-mode prog-mode "CSS"
-  "Major mode to edit Cascading Style Sheets."
+  "Major mode to edit Cascading Style Sheets (CSS).
+\\<css-mode-map>
+This mode provides syntax highlighting, indentation, completion,
+and documentation lookup for CSS.
+
+Use `\\[complete-symbol]' to complete CSS properties, property values,
+pseudo-elements, pseudo-classes, at-rules, bang-rules, and HTML
+tags, classes and IDs.  Completion candidates for HTML class
+names and IDs are found by looking through open HTML mode
+buffers.
+
+Use `\\[info-lookup-symbol]' to look up documentation of CSS properties, at-rules,
+pseudo-classes, and pseudo-elements on the Mozilla Developer
+Network (MDN).
+
+\\{css-mode-map}"
   (setq-local font-lock-defaults css-font-lock-defaults)
   (setq-local comment-start "/*")
   (setq-local comment-start-skip "/\\*+[ \t]*")
