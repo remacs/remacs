@@ -1321,6 +1321,9 @@ This is in contrast to the default action on POSIX Systems, where it
 causes the receiving process to terminate with a core dump if no
 debugger has been attached to it.
 
+** `set-mouse-position' and `set-mouse-absolute-pixel-position' work
+on macOS.
+
 
 ----------------------------------------------------------------------
 This file is part of GNU Emacs.

@@ -1087,7 +1087,7 @@ struct x_output
    ? ([[FRAME_NS_VIEW (f) window] parentWindow].frame.origin.y          \
       + [[FRAME_NS_VIEW (f) window] parentWindow].frame.size.height     \
       - FRAME_NS_TITLEBAR_HEIGHT (FRAME_PARENT_FRAME (f)))              \
-   : [[[FRAME_NS_VIEW (f) window] screen] frame].size.height)
+   : [[[NSScreen screens] objectAtIndex: 0] frame].size.height)
 
 #define FRAME_NS_FONT_TABLE(f) (FRAME_DISPLAY_INFO (f)->font_table)
 

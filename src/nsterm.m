@@ -2321,14 +2321,14 @@ frame_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_y)
    -------------------------------------------------------------------------- */
 {
   NSTRACE ("frame_set_mouse_pixel_position");
-  ns_raise_frame (f);
-#if 0
-  /* FIXME: this does not work, and what about GNUstep? */
+
+  /* FIXME: what about GNUstep? */
 #ifdef NS_IMPL_COCOA
-  [FRAME_NS_VIEW (f) lockFocus];
-  PSsetmouse ((float)pix_x, (float)pix_y);
-  [FRAME_NS_VIEW (f) unlockFocus];
-#endif
+  CGPoint mouse_pos =
+    CGPointMake(f->left_pos + pix_x,
+                f->top_pos + pix_y +
+                FRAME_NS_TITLEBAR_HEIGHT(f) + FRAME_TOOLBAR_HEIGHT(f));
+  CGWarpMouseCursorPosition (mouse_pos);
 #endif
 }
 

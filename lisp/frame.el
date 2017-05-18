@@ -1465,6 +1465,7 @@ position (0, 0) of the selected frame's terminal."
      (t
       (cons 0 0)))))
 
+(declare-function ns-set-mouse-absolute-pixel-position "nsfns.m" (x y))
 (declare-function w32-set-mouse-absolute-pixel-position "w32fns.c" (x y))
 (declare-function x-set-mouse-absolute-pixel-position "xfns.c" (x y))
 
@@ -1474,6 +1475,8 @@ The coordinates X and Y are interpreted in pixels relative to a
 position (0, 0) of the selected frame's terminal."
   (let ((frame-type (framep-on-display)))
     (cond
+     ((eq frame-type 'ns)
+      (ns-set-mouse-absolute-pixel-position x y))
      ((eq frame-type 'x)
       (x-set-mouse-absolute-pixel-position x y))
      ((eq frame-type 'w32)
