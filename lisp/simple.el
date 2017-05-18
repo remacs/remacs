@@ -6399,7 +6399,8 @@ If NOERROR, don't signal an error if we can't move that many lines."
 	       (point))))
 
 	;; Move to the desired column.
-        (if line-move-visual
+        (if (and line-move-visual
+                 (not (or truncate-lines truncate-partial-width-windows)))
             ;; Under line-move-visual, goal-column should be
             ;; interpreted in units of the frame's canonical character
             ;; width, which is exactly what vertical-motion does.
