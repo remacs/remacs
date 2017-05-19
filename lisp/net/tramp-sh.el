@@ -4592,8 +4592,10 @@ Goes through the list `tramp-inline-compress-commands'."
 		(with-temp-buffer
 		  ;; We use a non-existing IP address, in order to
 		  ;; avoid useless connections, and DNS timeouts.
+		  ;; Setting ConnectTimeout is needed since OpenSSH 7.
 		  (tramp-call-process
-		   vec "ssh" nil t nil "-o" "ControlPath=%C" "0.0.0.1")
+		   vec "ssh" nil t nil
+		   "-o" "ConnectTimeout=1" "-o" "ControlPath=%C" "0.0.0.1")
 		  (goto-char (point-min))
 		  (setq tramp-ssh-controlmaster-options
 			(concat tramp-ssh-controlmaster-options
