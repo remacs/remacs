@@ -178,21 +178,27 @@ VARLIST can just be a plain tuple.
 
 (define-obsolete-function-alias 'string-reverse 'reverse "25.1")
 
-(defsubst string-trim-left (string)
-  "Remove leading whitespace from STRING."
-  (if (string-match "\\`[ \t\n\r]+" string)
+(defsubst string-trim-left (string &optional regexp)
+  "Trim STRING of leading string matching REGEXP.
+
+REGEXP defaults to \"[ \\t\\n\\r]+\"."
+  (if (string-match (concat "\\`\\(?:" (or  regexp "[ \t\n\r]+")"\\)") string)
       (replace-match "" t t string)
     string))
 
-(defsubst string-trim-right (string)
-  "Remove trailing whitespace from STRING."
-  (if (string-match "[ \t\n\r]+\\'" string)
+(defsubst string-trim-right (string &optional regexp)
+  "Trim STRING of trailing string matching REGEXP.
+
+REGEXP defaults to  \"[ \\t\\n\\r]+\"."
+  (if (string-match (concat "\\(?:" (or regexp "[ \t\n\r]+") "\\)\\'") string)
       (replace-match "" t t string)
     string))
 
-(defsubst string-trim (string)
-  "Remove leading and trailing whitespace from STRING."
-  (string-trim-left (string-trim-right string)))
+(defsubst string-trim (string &optional trim-left trim-right)
+  "Trim STRING of leading and trailing strings matching TRIM-LEFT and TRIM-RIGHT.
+
+TRIM-LEFT and TRIM-RIGHT default to \"[ \\t\\n\\r]+\"."
+  (string-trim-left (string-trim-right string trim-right) trim-left))
 
 (defsubst string-blank-p (string)
   "Check whether STRING is either empty or only whitespace."
