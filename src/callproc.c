@@ -202,10 +202,11 @@ call_process_cleanup (Lisp_Object buffer)
       message1 ("Waiting for process to die...(type C-g again to kill it instantly)");
 
       /* This will quit on C-g.  */
-      wait_for_termination (synch_process_pid, 0, 1);
-
+      bool wait_ok = wait_for_termination (synch_process_pid, NULL, true);
       synch_process_pid = 0;
-      message1 ("Waiting for process to die...done");
+      message1 (wait_ok
+		? "Waiting for process to die...done"
+		: "Waiting for process to die...internal error");
     }
 #endif	/* !MSDOS */
 }
@@ -866,9 +867,10 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	       make_number (total_read));
     }
 
+  bool wait_ok = true;
 #ifndef MSDOS
   /* Wait for it to terminate, unless it already has.  */
-  wait_for_termination (pid, &status, fd0 < 0);
+  wait_ok = wait_for_termination (pid, &status, fd0 < 0);
 #endif
 
   /* Don't kill any children that the subprocess may have left behind
@@ -877,6 +879,9 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 
   SAFE_FREE ();
   unbind_to (count, Qnil);
+
+  if (!wait_ok)
+    return build_unibyte_string ("internal error");
 
   if (WIFSIGNALED (status))
     {
