@@ -3066,9 +3066,12 @@ usage: (logxor &rest INTS-OR-MARKERS)  */)
 }
 
 static Lisp_Object
-ash_lsh_impl (register Lisp_Object value, Lisp_Object count, bool lsh)
+ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
 {
-  register Lisp_Object val;
+  /* This code assumes that signed right shifts are arithmetic.  */
+  verify ((EMACS_INT) -1 >> 1 == -1);
+
+  Lisp_Object val;
 
   CHECK_NUMBER (value);
   CHECK_NUMBER (count);
@@ -3076,12 +3079,12 @@ ash_lsh_impl (register Lisp_Object value, Lisp_Object count, bool lsh)
   if (XINT (count) >= EMACS_INT_WIDTH)
     XSETINT (val, 0);
   else if (XINT (count) > 0)
-    XSETINT (val, XUINT (value) << XFASTINT (count));
+    XSETINT (val, XUINT (value) << XINT (count));
   else if (XINT (count) <= -EMACS_INT_WIDTH)
     XSETINT (val, lsh ? 0 : XINT (value) < 0 ? -1 : 0);
   else
-    XSETINT (val, lsh ? XUINT (value) >> -XINT (count) : \
-                        XINT (value) >> -XINT (count));
+    XSETINT (val, (lsh ? XUINT (value) >> -XINT (count)
+		   : XINT (value) >> -XINT (count)));
   return val;
 }
 
