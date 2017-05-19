@@ -109,7 +109,7 @@ static void module_handle_throw (emacs_env *, Lisp_Object);
 static void module_non_local_exit_signal_1 (emacs_env *, Lisp_Object, Lisp_Object);
 static void module_non_local_exit_throw_1 (emacs_env *, Lisp_Object, Lisp_Object);
 static void module_out_of_memory (emacs_env *);
-static void module_reset_handlerlist (const int *);
+static void module_reset_handlerlist (struct handler *const *);
 
 /* We used to return NULL when emacs_value was a different type from
    Lisp_Object, but nowadays we just use Qnil instead.  Although they
@@ -160,17 +160,18 @@ static emacs_value const module_nil = 0;
 
 /* TODO: Make backtraces work if this macros is used.  */
 
-#define MODULE_SETJMP_1(handlertype, handlerfunc, retval, c, dummy)	\
+#define MODULE_SETJMP_1(handlertype, handlerfunc, retval, c0, c)	\
   if (module_non_local_exit_check (env) != emacs_funcall_exit_return)	\
     return retval;							\
-  struct handler *c = push_handler_nosignal (Qt, handlertype);		\
-  if (!c)								\
+  struct handler *c0 = push_handler_nosignal (Qt, handlertype);		\
+  if (!c0)								\
     {									\
       module_out_of_memory (env);					\
       return retval;							\
     }									\
   verify (module_has_cleanup);						\
-  int dummy __attribute__ ((cleanup (module_reset_handlerlist)));	\
+  struct handler *c __attribute__ ((cleanup (module_reset_handlerlist))) \
+    = c0;								\
   if (sys_setjmp (c->jmp))						\
     {									\
       (handlerfunc) (env, c->val);					\
@@ -919,7 +920,7 @@ finalize_environment (struct emacs_env_private *env)
    code in eval.c for details.  The macros below arrange for this
    function to be called automatically.  DUMMY is ignored.  */
 static void
-module_reset_handlerlist (const int *dummy)
+module_reset_handlerlist (struct handler *const *dummy)
 {
   handlerlist = handlerlist->next;
 }
