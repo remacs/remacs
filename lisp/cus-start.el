@@ -563,7 +563,7 @@ since it could result in memory overflow and make Emacs crash."
                                  (const :tag "Scroll the entire window"
                                         :value t)
                                  (const :tag "Scroll only the current line"
-                                        :value 'current-line))
+                                        :value current-line))
                                 "26.1")
 	     (void-text-area-pointer cursor
 				     (choice
