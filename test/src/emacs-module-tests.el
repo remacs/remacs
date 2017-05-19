@@ -78,13 +78,11 @@ changes."
       (let ((obj (nth 2 body)))
         (should (equal (type-of obj) 'module-function))
         (should (string-match-p
-                 (rx (or "#<module function Fmod_test_sum from "
-                         ;; MS-Windows doesn't allow us to get the
-                         ;; function name, only the address.
-                         (and "#<module function at 0x"
-                              (one-or-more hex-digit)
-                              " from "))
-                     (* nonl) "mod-test" (* nonl) ">")
+                 (rx "#<module function "
+                     (or "Fmod_test_sum"
+                         (and "at 0x" (+ hex-digit)))
+                     (? " from " (* nonl) "mod-test" (* nonl) )
+                     ">")
                  (prin1-to-string obj)))))))
 
 ;;
