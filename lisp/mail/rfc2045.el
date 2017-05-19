@@ -28,7 +28,7 @@
 (require 'ietf-drums)
 
 (defun rfc2045-encode-string (param value)
-  "Return and PARAM=VALUE string encoded according to RFC2045."
+  "Return a PARAM=VALUE string encoded according to RFC2045."
   (if (or (string-match (concat "[" ietf-drums-no-ws-ctl-token "]") value)
 	  (string-match (concat "[" ietf-drums-tspecials "]") value)
 	  (string-match "[ \n\t]" value)

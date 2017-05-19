@@ -851,7 +851,7 @@ Point moves to the end of the region."
     (buffer-string)))
 
 (defun rfc2047-encode-parameter (param value)
-  "Return and PARAM=VALUE string encoded in the RFC2047-like style.
+  "Return a PARAM=VALUE string encoded in the RFC2047-like style.
 This is a substitution for the `rfc2231-encode-string' function, that
 is the standard but many mailers don't support it."
   (let ((rfc2047-encoding-type 'mime)
