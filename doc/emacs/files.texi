@@ -1055,7 +1055,7 @@ non-@code{nil} value, that buffer won't be affected by
 customize the interval between auto-save operations in
 @code{auto-save-visited-mode}; by default it's five seconds.
 @code{auto-save-interval} and @code{auto-save-timeout} have no effect
-on @code{auto-save-visited-mode}.  @xref{Auto Save Control} for
+on @code{auto-save-visited-mode}.  @xref{Auto Save Control}, for
 details on these variables.
 
 @vindex delete-auto-save-files
