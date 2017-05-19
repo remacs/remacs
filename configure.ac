@@ -964,6 +964,7 @@ AS_IF([test $gl_gcc_warnings = no],
   if test $emacs_cv_clang = yes; then
     nw="$nw -Wcast-align"
     nw="$nw -Wdouble-promotion"
+    nw="$nw -Wmissing-braces"
   fi
 
   # This causes too much noise in the MinGW build
