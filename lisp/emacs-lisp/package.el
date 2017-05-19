@@ -638,7 +638,7 @@ Return the max version (as a string) if the package is held at a lower version."
           (t (error "Invalid element in `package-load-list'")))))
 
 (defun package-built-in-p (package &optional min-version)
-  "Return true if PACKAGE is built-in to Emacs.
+  "Return non-nil if PACKAGE is built-in to Emacs.
 Optional arg MIN-VERSION, if non-nil, should be a version list
 specifying the minimum acceptable version."
   (if (package-desc-p package) ;; was built-in and then was converted
@@ -1776,7 +1776,7 @@ destructively set to nil in ONLY."
 That is, any element of the returned list is guaranteed to not
 directly depend on any elements that come before it.
 
-PACKAGE-LIST is a list of package-desc objects.
+PACKAGE-LIST is a list of `package-desc' objects.
 Indirect dependencies are guaranteed to be returned in order only
 if all the in-between dependencies are also in PACKAGE-LIST."
   (let ((alist (mapcar (lambda (p) (cons (package-desc-name p) p)) package-list))
@@ -1845,11 +1845,11 @@ if all the in-between dependencies are also in PACKAGE-LIST."
                  (setf (package-desc-signed (car pkg-descs)) t))))))))))
 
 (defun package-installed-p (package &optional min-version)
-  "Return true if PACKAGE, of MIN-VERSION or newer, is installed.
+  "Return non-nil if PACKAGE, of MIN-VERSION or newer, is installed.
 If PACKAGE is a symbol, it is the package name and MIN-VERSION
 should be a version list.
 
-If PACKAGE is a package-desc object, MIN-VERSION is ignored."
+If PACKAGE is a `package-desc' object, MIN-VERSION is ignored."
   (unless package--initialized (error "package.el is not yet initialized!"))
   (if (package-desc-p package)
       (let ((dir (package-desc-dir package)))
@@ -1865,7 +1865,7 @@ If PACKAGE is a package-desc object, MIN-VERSION is ignored."
 
 (defun package-download-transaction (packages)
   "Download and install all the packages in PACKAGES.
-PACKAGES should be a list of package-desc.
+PACKAGES should be a list of `package-desc'.
 This function assumes that all package requirements in
 PACKAGES are satisfied, i.e. that PACKAGES is computed
 using `package-compute-transaction'."
@@ -1932,13 +1932,13 @@ add a call to it along with some explanatory comments."
 ;;;###autoload
 (defun package-install (pkg &optional dont-select)
   "Install the package PKG.
-PKG can be a package-desc or a symbol naming one of the available packages
+PKG can be a `package-desc' or a symbol naming one of the available packages
 in an archive in `package-archives'.  Interactively, prompt for its name.
 
 If called interactively or if DONT-SELECT nil, add PKG to
 `package-selected-packages'.
 
-If PKG is a package-desc and it is already installed, don't try
+If PKG is a `package-desc' and it is already installed, don't try
 to install it but still mark it as selected."
   (interactive
    (progn
@@ -2067,7 +2067,7 @@ If some packages are not installed propose to install them."
 
 ;;; Package Deletion
 (defun package--newest-p (pkg)
-  "Return t if PKG is the newest package with its name."
+  "Return non-nil if PKG is the newest package with its name."
   (equal (cadr (assq (package-desc-name pkg) package-alist))
          pkg))
 
@@ -2142,7 +2142,7 @@ If NOSAVE is non-nil, the package is not removed from
 ;;;###autoload
 (defun package-reinstall (pkg)
   "Reinstall package PKG.
-PKG should be either a symbol, the package name, or a package-desc
+PKG should be either a symbol, the package name, or a `package-desc'
 object."
   (interactive (list (intern (completing-read
                               "Reinstall package: "
@@ -2567,7 +2567,7 @@ package PKG-DESC, add one.  The alist is keyed with PKG-DESC."
 
 (defun package--incompatible-p (pkg &optional shallow)
   "Return non-nil if PKG has no chance of being installable.
-PKG is a package-desc object.
+PKG is a `package-desc' object.
 
 If SHALLOW is non-nil, this only checks if PKG depends on a
 higher `emacs-version' than the one being used.  Otherwise, also
@@ -2651,7 +2651,7 @@ Installed obsolete packages are always displayed.")
 
 (defun package--remove-hidden (pkg-list)
   "Filter PKG-LIST according to `package-archive-priorities'.
-PKG-LIST must be a list of package-desc objects, all with the
+PKG-LIST must be a list of `package-desc' objects, all with the
 same name, sorted by decreasing `package-desc-priority-version'.
 Return a list of packages tied for the highest priority according
 to their archives."
@@ -2905,7 +2905,7 @@ Return (PKG-DESC [NAME VERSION STATUS DOC])."
 ;;; Package menu printing
 (defun package-menu--print-info-simple (pkg)
   "Return a package entry suitable for `tabulated-list-entries'.
-PKG is a package-desc object.
+PKG is a `package-desc' object.
 Return (PKG-DESC [NAME VERSION STATUS DOC])."
   (let* ((status  (package-desc-status pkg))
          (face (pcase status
