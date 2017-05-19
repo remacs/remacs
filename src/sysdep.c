@@ -3707,14 +3707,9 @@ Lisp_Object
 system_process_attributes (Lisp_Object pid)
 {
   int proc_id;
-  int pagesize = getpagesize ();
-  unsigned long npages;
-  int fscale;
   struct passwd *pw;
   struct group  *gr;
   char *ttyname;
-  size_t len;
-  char args[MAXPATHLEN];
   struct timeval starttime;
   struct timespec t, now;
   struct rusage *rusage;
