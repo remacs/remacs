@@ -344,6 +344,14 @@ for DNS-querying functions 'nslookup-host', 'dns-lookup-host',
 and 'run-dig'.  Each function now accepts an optional name server
 argument interactively (with a prefix argument) and non-interactively.
 
++++
+** Emacsclient has a new option -T/--tramp.
+This helps with using a local Emacs session as the server for a remote
+emacsclient.  With appropriate setup, one can now set the EDITOR
+environment variable on a remote machine to emacsclient, and
+use the local Emacs to edit remote files via Tramp.  See the node
+"emacsclient Options" in the user manual for the details.
+
 
 * Editing Changes in Emacs 26.1
 

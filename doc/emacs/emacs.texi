@@ -1082,6 +1082,7 @@ Shell Command History
 
 Using Emacs as a Server
 
+* TCP Emacs server::     Listening to a TCP socket.
 * Invoking emacsclient:: Connecting to the Emacs server.
 * emacsclient Options::  Emacs client startup options.
 
