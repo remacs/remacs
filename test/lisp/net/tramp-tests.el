@@ -1622,6 +1622,13 @@ handled properly.  BODY shall not contain a timeout."
   "Check `expand-file-name'."
   ;; Mark as failed until bug has been fixed.
   :expected-result :failed
+  (skip-unless (tramp--test-enabled))
+  ;; File names with a share behave differently.
+  (when (tramp--test-afp-or-smb-p)
+    (setf (ert-test-expected-result-type
+	   (ert-get-test 'tramp-test05-expand-file-name-relative))
+	  :passed))
+
   (should
    (string-equal
     (let ((default-directory
@@ -3220,6 +3227,13 @@ This requires restrictions of file name syntax."
   (or (eq system-type 'windows-nt)
       (tramp-smb-file-name-p tramp-test-temporary-file-directory)))
 
+(defun tramp--test-afp-or-smb-p ()
+  "Check, whether the afp or smb method is used.
+This requires an additional share name."
+  (or (string-equal
+       "afp" (file-remote-p tramp-test-temporary-file-directory 'method))
+      (tramp-smb-file-name-p tramp-test-temporary-file-directory)))
+
 (defun tramp--test-check-files (&rest files)
   "Run a simple but comprehensive test over every file in FILES."
   ;; TODO: The quoted case does not work.
@@ -3708,6 +3722,8 @@ Since it unloads Tramp, it shall be the last test to run."
   ;; Mark as failed until all symbols are unbound.
   :expected-result (if (featurep 'tramp) :failed :passed)
   :tags '(:expensive-test)
+  (skip-unless noninteractive)
+
   (when (featurep 'tramp)
     (unload-feature 'tramp 'force)
     ;; No Tramp feature must be left.
