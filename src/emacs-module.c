@@ -918,10 +918,12 @@ finalize_environment (struct emacs_env_private *env)
 /* Must be called after setting up a handler immediately before
    returning from the function.  See the comments in lisp.h and the
    code in eval.c for details.  The macros below arrange for this
-   function to be called automatically.  DUMMY is ignored.  */
+   function to be called automatically.  PHANDLERLIST points to a word
+   containing the handler list, for sanity checking.  */
 static void
-module_reset_handlerlist (struct handler *const *dummy)
+module_reset_handlerlist (struct handler *const *phandlerlist)
 {
+  eassert (handlerlist == *phandlerlist);
   handlerlist = handlerlist->next;
 }
 
