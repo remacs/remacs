@@ -47,6 +47,40 @@
     (should (equal (whitespace-tests--cleanup-string "a  \n\t \n\n")
                    "a  \n"))))
 
+
+;; We cannot call whitespace-mode because it will do nothing in batch
+;; mode.  So we call its innards instead.
+(defun whitespace-tests-whitespace-mode-on ()
+  "Turn whitespace-mode on even in batch mode."
+  (whitespace-turn-on)
+  (whitespace-action-when-on)
+  (setq whitespace-mode t))
+
+(ert-deftest whitespace-tests-display-tables ()
+  "Test whitespace stores and restores the buffer display table - bug26892."
+  (with-temp-buffer
+    (whitespace-mode -1) ; turn off in case global ws mode is active
+    (let ((whitespace-style '(space-mark tab-mark newline-mark))
+          (whitespace-display-mappings '((space-mark   32 [183] [46])
+                                         (space-mark  160 [164] [95])
+                                         (newline-mark 10 [36 10])
+                                         (tab-mark      9 [187 9] [92 9])))
+          (buffer-display-table nil))
+      ;test the display table actually changes
+      (should-not (equal nil
+                         (progn (whitespace-tests-whitespace-mode-on)
+                                buffer-display-table)))
+      ;test the display table restores correctly
+      (should (equal nil
+                     (progn (whitespace-turn-off)
+                            buffer-display-table)))
+      ;test the stored display table is preserved
+      (should (equal nil
+                     (progn (whitespace-tests-whitespace-mode-on)
+                            (whitespace-tests-whitespace-mode-on)
+                            (whitespace-turn-off)
+                            buffer-display-table))))))
+
 (provide 'whitespace-tests)
 
 ;;; whitespace-tests.el ends here

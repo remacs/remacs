@@ -2373,9 +2373,10 @@ Also refontify when necessary."
     (let (vecs vec)
       ;; Remember whether a buffer has a local display table.
       (unless whitespace-display-table-was-local
-	(setq whitespace-display-table-was-local t
-	      whitespace-display-table
-	      (copy-sequence buffer-display-table))
+	(setq whitespace-display-table-was-local t)
+        (unless (or whitespace-mode global-whitespace-mode)
+	      (setq whitespace-display-table
+	      (copy-sequence buffer-display-table)))
 	;; Assure `buffer-display-table' is unique
 	;; when two or more windows are visible.
 	(setq buffer-display-table
