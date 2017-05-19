@@ -1,4 +1,4 @@
-;;; vc-hg.el --- tests for vc/vc-hg.el
+;;; vc-hg-tests.el --- tests for vc/vc-hg.el
 
 ;; Copyright (C) 2016-2017 Free Software Foundation, Inc.
 
@@ -55,4 +55,4 @@
     (save-excursion (insert "philringnalda 218075 2014-11-28 CLOBBER:"))
     (should (floatp (vc-hg-annotate-time)))))
 
-;;; vc-hg.el ends here
+;;; vc-hg-tests.el ends here

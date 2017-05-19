@@ -1,4 +1,4 @@
-;;; f90.el --- tests for progmodes/f90.el
+;;; f90-tests.el --- tests for progmodes/f90.el
 
 ;; Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
@@ -273,4 +273,4 @@ end program prog")
     (forward-line -2)
     (should (= 2 (current-indentation))))) ; class is
 
-;;; f90.el ends here
+;;; f90-tests.el ends here

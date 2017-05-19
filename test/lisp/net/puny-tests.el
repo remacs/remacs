@@ -1,4 +1,4 @@
-;;; puny.el --- tests for net/puny.el  -*- coding: utf-8; -*-
+;;; puny-tests.el --- tests for net/puny.el  -*- coding: utf-8; -*-
 
 ;; Copyright (C) 2017 Free Software Foundation, Inc.
 
@@ -38,4 +38,4 @@
   "Test puny decoding."
   (should (string= (puny-decode-string "xn--9dbdkw") "חנוך")))
 
-;;; puny.el ends here
+;;; puny-tests.el ends here

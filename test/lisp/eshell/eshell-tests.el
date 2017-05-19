@@ -1,4 +1,4 @@
-;;; tests/eshell.el --- Eshell test suite
+;;; tests/eshell-tests.el --- Eshell test suite
 
 ;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
@@ -249,4 +249,4 @@ chars"
 
 (provide 'esh-test)
 
-;;; tests/eshell.el ends here
+;;; tests/eshell-tests.el ends here
