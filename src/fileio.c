@@ -2294,10 +2294,14 @@ file_name_case_insensitive_p (const char *filename)
 		      & VOL_CAP_FMT_CASE_SENSITIVE);
 	}
     }
-  else if (DARWIN_OS_CASE_SENSITIVE_FIXME == 2)
+# if DARWIN_OS_CASE_SENSITIVE_FIXME == 2
     {
       /* The following is based on
-	 http://lists.apple.com/archives/darwin-dev/2007/Apr/msg00010.html.  */
+	 http://lists.apple.com/archives/darwin-dev/2007/Apr/msg00010.html.
+	 It is normally not even compiled, since it runs afoul of
+	 static checking.  See:
+	 http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00495.html
+         */
       struct attrlist alist;
       unsigned char buffer[sizeof (vol_capabilities_attr_t) + sizeof (size_t)];
 
@@ -2309,6 +2313,7 @@ file_name_case_insensitive_p (const char *filename)
       vol_capabilities_attr_t *vcaps = buffer;
       return !(vcaps->capabilities[0] & VOL_CAP_FMT_CASE_SENSITIVE);
     }
+# endif
 #endif	/* DARWIN_OS */
 
 #if defined CYGWIN || defined DOS_NT
