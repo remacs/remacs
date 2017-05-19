@@ -3802,9 +3802,10 @@ frame, rather than all frames, regardless of value of `ido-all-frames'."
          (lambda (item)
            (let ((name (ido-name item)))
 	     (if (and (or non-prefix-dot
-			  (if (= (aref ido-text 0) ?.)
-			      (= (aref name 0) ?.)
-			    (/= (aref name 0) ?.)))
+                          (and (> (length name) 0)
+                               (if (= (aref ido-text 0) ?.)
+                                   (= (aref name 0) ?.)
+                                 (/= (aref name 0) ?.))))
 		      (string-match re name))
 		 (cond
 		  ((and (eq ido-cur-item 'buffer)
