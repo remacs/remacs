@@ -34,11 +34,11 @@ InfoPlist.strings
 Makefile
 makefile
 !etc/refcards/Makefile
-!modules/mod-test/Makefile
+!test/data/emacs-module/Makefile
 !test/lisp/progmodes/flymake-resources/Makefile
-!test/manual/indent/Makefile
 !test/manual/etags/Makefile
 !test/manual/etags/make-src/Makefile
+!test/manual/indent/Makefile
 /*.cache
 /confdefs.h
 /config.status
@@ -132,7 +132,6 @@ src/gl-stamp
 *.o
 *.res
 *.so
-[0-9]*.core
 core
 core.*[0-9]
 gmon.out
@@ -141,12 +140,12 @@ oo-spd/
 src/*.map
 
 # Tests.
-test/indent/*.new
 test/manual/biditest.txt
 test/manual/etags/srclist
 test/manual/etags/regexfile
 test/manual/etags/ETAGS
 test/manual/etags/CTAGS
+test/manual/indent/*.new
 
 # ctags, etags.
 TAGS
@@ -244,6 +243,7 @@ gnustmp*
 # Version control and locks.
 *.orig
 *.rej
+*.swp
 *~
 .#*
 \#*\#
