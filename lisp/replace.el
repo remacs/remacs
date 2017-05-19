@@ -464,8 +464,8 @@ reference `replace-count' to get the number of replacements already made.
 If the result of TO-EXPR is not a string, it is converted to one using
 `prin1-to-string' with the NOESCAPE argument (which see).
 
-For convenience, when entering TO-EXPR interactively, you can use `\\&' or
-`\\0' to stand for whatever matched the whole of REGEXP, and `\\N' (where
+For convenience, when entering TO-EXPR interactively, you can use `\\&'
+to stand for whatever matched the whole of REGEXP, and `\\N' (where
 N is a digit) to stand for whatever matched the Nth `\\(...\\)' (1-based)
 in REGEXP.
 
