@@ -556,7 +556,15 @@ since it could result in memory overflow and make Emacs crash."
 		      (const :tag "Text-image-horiz" :value text-image-horiz)
 		      (const :tag "System default" :value nil)) "24.1")
              (tool-bar-max-label-size frames integer "24.1")
-	     (auto-hscroll-mode scrolling boolean "21.1")
+	     (auto-hscroll-mode scrolling
+                                (choice
+                                 (const :tag "Don't scroll automatically"
+                                        :value nil)
+                                 (const :tag "Scroll the entire window"
+                                        :value t)
+                                 (const :tag "Scroll only the current line"
+                                        :value 'current-line))
+                                "26.1")
 	     (void-text-area-pointer cursor
 				     (choice
 				      (const :tag "Standard (text pointer)" :value nil)
