@@ -175,6 +175,7 @@ ns_directory_from_panel (NSSavePanel *panel)
 #endif
 }
 
+#ifndef NS_IMPL_COCOA
 static Lisp_Object
 interpret_services_menu (NSMenu *menu, Lisp_Object prefix, Lisp_Object old)
 /* --------------------------------------------------------------------------
@@ -223,7 +224,7 @@ interpret_services_menu (NSMenu *menu, Lisp_Object prefix, Lisp_Object old)
     }
   return old;
 }
-
+#endif
 
 
 /* ==========================================================================
@@ -2107,9 +2108,6 @@ DEFUN ("ns-list-services", Fns_list_services, Sns_list_services, 0, 0, 0,
 #else
   Lisp_Object ret = Qnil;
   NSMenu *svcs;
-#ifdef NS_IMPL_COCOA
-  id delegate;
-#endif
 
   check_window_system (NULL);
   svcs = [[NSMenu alloc] initWithTitle: @"Services"];
@@ -2117,33 +2115,7 @@ DEFUN ("ns-list-services", Fns_list_services, Sns_list_services, 0, 0, 0,
   [NSApp registerServicesMenuSendTypes: ns_send_types
                            returnTypes: ns_return_types];
 
-/* On Tiger, services menu updating was made lazier (waits for user to
-   actually click on the menu), so we have to force things along: */
-#ifdef NS_IMPL_COCOA
-  delegate = [svcs delegate];
-  if (delegate != nil)
-    {
-      if ([delegate respondsToSelector: @selector (menuNeedsUpdate:)])
-        [delegate menuNeedsUpdate: svcs];
-      if ([delegate respondsToSelector:
-                       @selector (menu:updateItem:atIndex:shouldCancel:)])
-        {
-          int i, len = [delegate numberOfItemsInMenu: svcs];
-          for (i =0; i<len; i++)
-            [svcs addItemWithTitle: @"" action: NULL keyEquivalent: @""];
-          for (i =0; i<len; i++)
-            if (![delegate menu: svcs
-                     updateItem: (NSMenuItem *)[svcs itemAtIndex: i]
-                        atIndex: i shouldCancel: NO])
-              break;
-        }
-    }
-#endif
-
   [svcs setAutoenablesItems: NO];
-#ifdef NS_IMPL_COCOA
-  [svcs update]; /* on macOS, converts from '/' structure */
-#endif
 
   ret = interpret_services_menu (svcs, Qnil, ret);
   return ret;
