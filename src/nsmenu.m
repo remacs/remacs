@@ -750,7 +750,7 @@ x_activate_menubar (struct frame *f)
                          modifierFlags: 0
                              timestamp: [e timestamp]
                           windowNumber: [[view window] windowNumber]
-                               context: [e context]
+                               context: nil
                            eventNumber: 0/*[e eventNumber] */
                             clickCount: 1
                               pressure: 0];

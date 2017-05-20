@@ -8602,7 +8602,7 @@ not_in_argv (NSString *arg)
                                  modifierFlags: [e modifierFlags]
                                      timestamp: [e timestamp]
                                   windowNumber: [e windowNumber]
-                                       context: [e context]
+                                       context: nil
                                    eventNumber: [e eventNumber]
                                     clickCount: [e clickCount]
                                       pressure: [e pressure]];

@@ -410,8 +410,9 @@ mac_font_shape_1 (NSFont *font, NSString *string,
       /* For now we assume the direction is not changed within the
          string.  */
       [layoutManager getGlyphsInRange:(NSMakeRange (glyphIndex, 1))
-                               glyphs:NULL characterIndexes:NULL
-                    glyphInscriptions:NULL elasticBits:NULL
+                               glyphs:NULL
+                           properties:NULL
+                     characterIndexes:NULL
                            bidiLevels:&bidiLevel];
       if (bidiLevel & 1)
         permutation = xmalloc (sizeof (NSUInteger) * used);
