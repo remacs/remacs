@@ -960,10 +960,10 @@ load_warn_unescaped_character_literals (Lisp_Object file)
 {
   if (NILP (Vlread_unescaped_character_literals)) return;
   CHECK_CONS (Vlread_unescaped_character_literals);
-  AUTO_STRING (format,
-               "Loading `%s': unescaped character literals %s detected!");
-  AUTO_STRING (separator, ", ");
-  AUTO_STRING (inner_format, "`?%c'");
+  Lisp_Object format =
+    build_string ("Loading `%s': unescaped character literals %s detected!");
+  Lisp_Object separator = build_string (", ");
+  Lisp_Object inner_format = build_string ("`?%c'");
   CALLN (Fmessage,
          format, file,
          Fmapconcat (list3 (Qlambda, list1 (Qchar),
