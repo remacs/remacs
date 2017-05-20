@@ -4261,6 +4261,8 @@ ns_read_socket (struct terminal *terminal, struct input_event *hold_quit)
       q_event_ptr = NULL;
       unblock_input ();
     }
+  else
+    return -1;
 
   return nevents;
 }
