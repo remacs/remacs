@@ -271,43 +271,65 @@ TYPE should be nil to find a function, or `defvar' to find a variable."
     (cons (current-buffer) (match-beginning 0))))
 
 ;;;###autoload
-(defun find-library (library &optional other-window)
+(defun find-library (library)
   "Find the Emacs Lisp source of LIBRARY.
-LIBRARY should be a string (the name of the library).  If the
-optional OTHER-WINDOW argument (i.e., the command argument) is
-specified, pop to a different window before displaying the
-buffer."
-  (interactive
-   (let* ((dirs (or find-function-source-path load-path))
-          (suffixes (find-library-suffixes))
-          (table (apply-partially 'locate-file-completion-table
-                                  dirs suffixes))
-	  (def (if (eq (function-called-at-point) 'require)
-		   ;; `function-called-at-point' may return 'require
-		   ;; with `point' anywhere on this line.  So wrap the
-		   ;; `save-excursion' below in a `condition-case' to
-		   ;; avoid reporting a scan-error here.
-		   (condition-case nil
-		       (save-excursion
-			 (backward-up-list)
-			 (forward-char)
-			 (forward-sexp 2)
-			 (thing-at-point 'symbol))
-		     (error nil))
-		 (thing-at-point 'symbol))))
-     (when (and def (not (test-completion def table)))
-       (setq def nil))
-     (list
-      (completing-read (if def
-                           (format "Library name (default %s): " def)
-			 "Library name: ")
-		       table nil nil nil nil def)
-      current-prefix-arg)))
+
+Interactively, prompt for LIBRARY using the one at or near point."
+  (interactive (list (read-library-name)))
   (prog1
-      (funcall (if other-window
-                   'pop-to-buffer
-                 'pop-to-buffer-same-window)
-               (find-file-noselect (find-library-name library)))
+      (switch-to-buffer (find-file-noselect (find-library-name library)))
+    (run-hooks 'find-function-after-hook)))
+
+(defun read-library-name ()
+  "Read and return a library name, defaulting to the one near point.
+
+A library name is the filename of an Emacs Lisp library located
+in a directory under `load-path' (or `find-function-source-path',
+if non-nil)."
+  (let* ((dirs (or find-function-source-path load-path))
+         (suffixes (find-library-suffixes))
+         (table (apply-partially 'locate-file-completion-table
+                                 dirs suffixes))
+         (def (if (eq (function-called-at-point) 'require)
+                  ;; `function-called-at-point' may return 'require
+                  ;; with `point' anywhere on this line.  So wrap the
+                  ;; `save-excursion' below in a `condition-case' to
+                  ;; avoid reporting a scan-error here.
+                  (condition-case nil
+                      (save-excursion
+                        (backward-up-list)
+                        (forward-char)
+                        (forward-sexp 2)
+                        (thing-at-point 'symbol))
+                    (error nil))
+                (thing-at-point 'symbol))))
+    (when (and def (not (test-completion def table)))
+      (setq def nil))
+    (completing-read (if def
+                         (format "Library name (default %s): " def)
+                       "Library name: ")
+                     table nil nil nil nil def)))
+
+;;;###autoload
+(defun find-library-other-window (library)
+  "Find the Emacs Lisp source of LIBRARY in another window.
+
+See `find-library' for more details."
+  (interactive (list (read-library-name)))
+  (prog1
+      (switch-to-buffer-other-window (find-file-noselect
+                                      (find-library-name library)))
+    (run-hooks 'find-function-after-hook)))
+
+;;;###autoload
+(defun find-library-other-frame (library)
+  "Find the Emacs Lisp source of LIBRARY in another frame.
+
+See `find-library' for more details."
+  (interactive (list (read-library-name)))
+  (prog1
+      (switch-to-buffer-other-frame (find-file-noselect
+                                     (find-library-name library)))
     (run-hooks 'find-function-after-hook)))
 
 ;;;###autoload
