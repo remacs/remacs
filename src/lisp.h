@@ -3887,6 +3887,14 @@ extern void get_backtrace (Lisp_Object array);
 Lisp_Object backtrace_top_function (void);
 extern bool let_shadows_buffer_binding_p (struct Lisp_Symbol *symbol);
 
+/* Defined in unexmacosx.c.  */
+#if defined DARWIN_OS && !defined CANNOT_DUMP
+extern void unexec_init_emacs_zone (void);
+extern void *unexec_malloc (size_t);
+extern void *unexec_realloc (void *, size_t);
+extern void unexec_free (void *);
+#endif
+
 #include "emacs-module.h"
 
 /* Function prototype for the module Lisp functions.  */
