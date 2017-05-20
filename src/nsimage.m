@@ -386,7 +386,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
 
 - (void) setPixelAtX: (int)x Y: (int)y toRed: (unsigned char)r
                green: (unsigned char)g blue: (unsigned char)b
-               alpha:(unsigned char)a;
+               alpha:(unsigned char)a
 {
   if (bmRep == nil)
     return;

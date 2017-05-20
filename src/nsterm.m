@@ -1317,7 +1317,7 @@ ns_clip_to_row (struct window *w, struct glyph_row *row,
 
 @implementation EmacsBell
 
-- (id)init;
+- (id)init
 {
   NSTRACE ("[EmacsBell init]");
   if ((self = [super init]))
@@ -6529,7 +6529,7 @@ not_in_argv (NSString *arg)
   return NO;
 }
 
-- (void) updateFrameSize: (BOOL) delay;
+- (void) updateFrameSize: (BOOL) delay
 {
   NSWindow *window = [self window];
   NSRect wr = [window frame];
@@ -6847,7 +6847,7 @@ not_in_argv (NSString *arg)
 }
 
 
-- (void)setFrame:(NSRect)frameRect;
+- (void)setFrame:(NSRect)frameRect
 {
   NSTRACE ("[EmacsView setFrame:" NSTRACE_FMT_RECT "]",
            NSTRACE_ARG_RECT (frameRect));
