@@ -444,16 +444,16 @@ char const * nstrace_fullscreen_type_name (int);
    }
 
 /* AppKit-side interface */
-- menuDown: (id)sender;
-- toolbarClicked: (id)item;
-- toggleToolbar: (id)sender;
+- (instancetype)menuDown: (id)sender;
+- (instancetype)toolbarClicked: (id)item;
+- (instancetype)toggleToolbar: (id)sender;
 - (void)keyDown: (NSEvent *)theEvent;
 - (void)mouseDown: (NSEvent *)theEvent;
 - (void)mouseUp: (NSEvent *)theEvent;
-- setMiniwindowImage: (BOOL)setMini;
+- (instancetype)setMiniwindowImage: (BOOL)setMini;
 
 /* Emacs-side interface */
-- initFrameFromEmacs: (struct frame *) f;
+- (instancetype) initFrameFromEmacs: (struct frame *) f;
 - (void) createToolbar: (struct frame *)f;
 - (void) setRows: (int) r andColumns: (int) c;
 - (void) setWindowClosing: (BOOL)closing;
@@ -513,7 +513,7 @@ char const * nstrace_fullscreen_type_name (int);
   unsigned long keyEquivModMask;
 }
 
-- initWithTitle: (NSString *)title frame: (struct frame *)f;
+- (instancetype)initWithTitle: (NSString *)title frame: (struct frame *)f;
 - (void)setFrame: (struct frame *)f;
 - (void)menuNeedsUpdate: (NSMenu *)menu; /* (delegate method) */
 - (NSString *)parseKeyEquiv: (const char *)key;
@@ -547,7 +547,7 @@ char const * nstrace_fullscreen_type_name (int);
      NSArray *prevIdentifiers;
      unsigned long enablement, prevEnablement;
    }
-- initForView: (EmacsView *)view withIdentifier: (NSString *)identifier;
+- (instancetype) initForView: (EmacsView *)view withIdentifier: (NSString *)identifier;
 - (void) clearActive;
 - (void) clearAll;
 - (BOOL) changed;
@@ -582,7 +582,7 @@ char const * nstrace_fullscreen_type_name (int);
    Lisp_Object dialog_return;
    Lisp_Object *button_values;
    }
-- initFromContents: (Lisp_Object)menu isQuestion: (BOOL)isQ;
+- (instancetype)initFromContents: (Lisp_Object)menu isQuestion: (BOOL)isQ;
 - (void)process_dialog: (Lisp_Object)list;
 - (void)addButton: (char *)str value: (int)tag row: (int)row;
 - (void)addString: (char *)str row: (int)row;
@@ -601,7 +601,7 @@ char const * nstrace_fullscreen_type_name (int);
     NSTextField *textField;
     NSTimer *timer;
   }
-- init;
+- (instancetype) init;
 - (void) setText: (char *)text;
 - (void) showAtX: (int)x Y: (int)y for: (int)seconds;
 - (void) hide;
@@ -649,12 +649,12 @@ char const * nstrace_fullscreen_type_name (int);
   NSColor *stippleMask;
   unsigned long xbm_fg;
 }
-+ allocInitFromFile: (Lisp_Object)file;
++ (instancetype)allocInitFromFile: (Lisp_Object)file;
 - (void)dealloc;
-- initFromXBM: (unsigned char *)bits width: (int)w height: (int)h
+- (instancetype)initFromXBM: (unsigned char *)bits width: (int)w height: (int)h
                   fg: (unsigned long)fg bg: (unsigned long)bg;
-- setXBMColor: (NSColor *)color;
-- initForXPMWithDepth: (int)depth width: (int)width height: (int)height;
+- (instancetype)setXBMColor: (NSColor *)color;
+- (instancetype)initForXPMWithDepth: (int)depth width: (int)width height: (int)height;
 - (void)setPixmapData;
 - (unsigned long)getPixelAtX: (int)x Y: (int)y;
 - (void)setPixelAtX: (int)x Y: (int)y toRed: (unsigned char)r
@@ -693,16 +693,16 @@ char const * nstrace_fullscreen_type_name (int);
    int em_whole;
    }
 
-- initFrame: (NSRect )r window: (Lisp_Object)win;
+- (instancetype) initFrame: (NSRect )r window: (Lisp_Object)win;
 - (void)setFrame: (NSRect)r;
 
-- setPosition: (int) position portion: (int) portion whole: (int) whole;
+- (instancetype) setPosition: (int) position portion: (int) portion whole: (int) whole;
 - (int) checkSamePosition: (int)position portion: (int)portion
                     whole: (int)whole;
 - (void) sendScrollEventAtLoc: (float)loc fromEvent: (NSEvent *)e;
-- repeatScroll: (NSTimer *)sender;
-- condemn;
-- reprieve;
+- (instancetype)repeatScroll: (NSTimer *)sender;
+- (instancetype)condemn;
+- (instancetype)reprieve;
 - (bool)judge;
 + (CGFloat)scrollerWidth;
 @end
@@ -725,7 +725,7 @@ char const * nstrace_fullscreen_type_name (int);
   unsigned long maxChar, maxGlyph;
   long i, len;
 }
-- initWithCapacity: (unsigned long) c;
+- (instancetype)initWithCapacity: (unsigned long) c;
 - (void) setString: (NSString *)str font: (NSFont *)font;
 @end
 #endif	/* NS_IMPL_COCOA */

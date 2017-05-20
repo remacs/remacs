@@ -6896,7 +6896,7 @@ not_in_argv (NSString *arg)
 }
 
 
-- initFrameFromEmacs: (struct frame *)f
+- (instancetype) initFrameFromEmacs: (struct frame *)f
 {
   NSRect r, wr;
   Lisp_Object tem;
@@ -7626,7 +7626,7 @@ not_in_argv (NSString *arg)
 }
 
 
-- menuDown: sender
+- (instancetype)menuDown: sender
 {
   NSTRACE ("[EmacsView menuDown:]");
   if (context_menu_value == -1)
@@ -7651,7 +7651,7 @@ not_in_argv (NSString *arg)
 
 
 /* this gets called on toolbar button click */
-- toolbarClicked: (id)item
+- (instancetype)toolbarClicked: (id)item
 {
   NSEvent *theEvent;
   int idx = [item tag] * TOOL_BAR_ITEM_NSLOTS;
@@ -7677,7 +7677,7 @@ not_in_argv (NSString *arg)
 }
 
 
-- toggleToolbar: (id)sender
+- (instancetype)toggleToolbar: (id)sender
 {
   NSTRACE ("[EmacsView toggleToolbar:]");
 
@@ -7905,7 +7905,7 @@ not_in_argv (NSString *arg)
    (gives a miniaturized version of the window); currently we use the latter for
    frames whose active buffer doesn't correspond to any file
    (e.g., '*scratch*') */
-- setMiniwindowImage: (BOOL) setMini
+- (instancetype)setMiniwindowImage: (BOOL) setMini
 {
   id image = [[self window] miniwindowImage];
   NSTRACE ("[EmacsView setMiniwindowImage:%d]", setMini);
@@ -8257,7 +8257,7 @@ not_in_argv (NSString *arg)
   return r;
 }
 
-- initFrame: (NSRect )r window: (Lisp_Object)nwin
+- (instancetype)initFrame: (NSRect )r window: (Lisp_Object)nwin
 {
   NSTRACE ("[EmacsScroller initFrame: window:]");
 
@@ -8341,7 +8341,7 @@ not_in_argv (NSString *arg)
 }
 
 
-- condemn
+- (instancetype)condemn
 {
   NSTRACE ("[EmacsScroller condemn]");
   condemned =YES;
@@ -8349,7 +8349,7 @@ not_in_argv (NSString *arg)
 }
 
 
-- reprieve
+- (instancetype)reprieve
 {
   NSTRACE ("[EmacsScroller reprieve]");
   condemned =NO;
@@ -8404,7 +8404,7 @@ not_in_argv (NSString *arg)
 }
 
 
-- setPosition: (int)position portion: (int)portion whole: (int)whole
+- (instancetype)setPosition: (int)position portion: (int)portion whole: (int)whole
 {
   NSTRACE ("[EmacsScroller setPosition:portion:whole:]");
 
@@ -8483,7 +8483,7 @@ not_in_argv (NSString *arg)
 
 
 /* called manually thru timer to implement repeated button action w/hold-down */
-- repeatScroll: (NSTimer *)scrollEntry
+- (instancetype)repeatScroll: (NSTimer *)scrollEntry
 {
   NSEvent *e = [[self window] currentEvent];
   NSPoint p =  [[self window] mouseLocationOutsideOfEventStream];

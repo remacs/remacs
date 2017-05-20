@@ -493,7 +493,7 @@ x_activate_menubar (struct frame *f)
 @implementation EmacsMenu
 
 /* override designated initializer */
-- initWithTitle: (NSString *)title
+- (instancetype)initWithTitle: (NSString *)title
 {
   frame = 0;
   if ((self = [super initWithTitle: title]))
@@ -503,7 +503,7 @@ x_activate_menubar (struct frame *f)
 
 
 /* used for top-level */
-- initWithTitle: (NSString *)title frame: (struct frame *)f
+- (instancetype)initWithTitle: (NSString *)title frame: (struct frame *)f
 {
   [self initWithTitle: title];
   frame = f;
@@ -1146,7 +1146,7 @@ update_frame_tool_bar (struct frame *f)
 
 @implementation EmacsToolbar
 
-- initForView: (EmacsView *)view withIdentifier: (NSString *)identifier
+- (instancetype)initForView: (EmacsView *)view withIdentifier: (NSString *)identifier
 {
   NSTRACE ("[EmacsToolbar initForView: withIdentifier:]");
 
@@ -1302,7 +1302,7 @@ update_frame_tool_bar (struct frame *f)
    display. */
 @implementation EmacsTooltip
 
-- init
+- (instancetype)init
 {
   NSColor *col = [NSColor colorWithCalibratedRed: 1.0 green: 1.0
                                             blue: 0.792 alpha: 0.95];
@@ -1493,7 +1493,7 @@ ns_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
 #define TEXTHEIGHT	20.0
 #define MINCELLWIDTH	90.0
 
-- initWithContentRect: (NSRect)contentRect styleMask: (NSUInteger)aStyle
+- (instancetype)initWithContentRect: (NSRect)contentRect styleMask: (NSWindowStyleMask)aStyle
               backing: (NSBackingStoreType)backingType defer: (BOOL)flag
 {
   NSSize spacing = {SPACER, SPACER};
@@ -1697,7 +1697,7 @@ ns_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
 }
 
 
-- initFromContents: (Lisp_Object)contents isQuestion: (BOOL)isQ
+- (instancetype)initFromContents: (Lisp_Object)contents isQuestion: (BOOL)isQ
 {
   Lisp_Object head;
   [super init];
