@@ -358,8 +358,9 @@ module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
 
   if (! (0 <= min_arity
 	 && (max_arity < 0
-	     ? max_arity == emacs_variadic_function
-	     : min_arity <= max_arity)))
+	     ? (min_arity <= MOST_POSITIVE_FIXNUM
+		&& max_arity == emacs_variadic_function)
+	     : min_arity <= max_arity && max_arity <= MOST_POSITIVE_FIXNUM)))
     xsignal2 (Qinvalid_arity, make_number (min_arity), make_number (max_arity));
 
   struct Lisp_Module_Function *envptr = allocate_module_function ();
@@ -646,12 +647,11 @@ Lisp_Object
 funcall_module (const struct Lisp_Module_Function *const envptr,
                 ptrdiff_t nargs, Lisp_Object *arglist)
 {
-  EMACS_INT len = nargs;
   eassume (0 <= envptr->min_arity);
-  if (! (envptr->min_arity <= len
-	 && len <= (envptr->max_arity < 0 ? PTRDIFF_MAX : envptr->max_arity)))
+  if (! (envptr->min_arity <= nargs
+	 && (envptr->max_arity < 0 || nargs <= envptr->max_arity)))
     xsignal2 (Qwrong_number_of_arguments, module_format_fun_env (envptr),
-	      make_number (len));
+	      make_number (nargs));
 
   emacs_env pub;
   struct emacs_env_private priv;
@@ -663,12 +663,12 @@ funcall_module (const struct Lisp_Module_Function *const envptr,
     args = (emacs_value *) arglist;
   else
     {
-      args = SAFE_ALLOCA (len * sizeof *args);
-      for (ptrdiff_t i = 0; i < len; i++)
+      args = SAFE_ALLOCA (nargs * sizeof *args);
+      for (ptrdiff_t i = 0; i < nargs; i++)
 	args[i] = lisp_to_value (arglist[i]);
     }
 
-  emacs_value ret = envptr->subr (&pub, len, args, envptr->data);
+  emacs_value ret = envptr->subr (&pub, nargs, args, envptr->data);
   SAFE_FREE ();
 
   eassert (&priv == pub.private_members);
@@ -700,8 +700,8 @@ funcall_module (const struct Lisp_Module_Function *const envptr,
 Lisp_Object
 module_function_arity (const struct Lisp_Module_Function *const function)
 {
-  const short minargs = function->min_arity;
-  const short maxargs = function->max_arity;
+  ptrdiff_t minargs = function->min_arity;
+  ptrdiff_t maxargs = function->max_arity;
   return Fcons (make_number (minargs),
 		maxargs == MANY ? Qmany : make_number (maxargs));
 }
