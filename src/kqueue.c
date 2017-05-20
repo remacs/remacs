@@ -42,7 +42,7 @@ static Lisp_Object watch_list;
 
 /* Generate a list from the directory_files_internal output.
    Items are (INODE FILE-NAME LAST-MOD LAST-STATUS-MOD SIZE).  */
-Lisp_Object
+static Lisp_Object
 kqueue_directory_listing (Lisp_Object directory_files)
 {
   Lisp_Object dl, result = Qnil;
