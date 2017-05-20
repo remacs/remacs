@@ -15,7 +15,8 @@ use std::fmt::{Debug, Formatter, Error};
 use marker::{LispMarker, marker_position};
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, Lisp_Object, EMACS_INT_MAX, EMACS_INT_SIZE,
-                 EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS};
+                 EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
+                 Qnumber_or_marker_p, Qt, make_float, Lisp_String, STRING_BYTES};
 use remacs_sys::Lisp_Object as CLisp_Object;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -40,20 +41,6 @@ use remacs_sys::Lisp_Object as CLisp_Object;
 #[repr(C)]
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct LispObject(CLisp_Object);
-
-extern "C" {
-    pub fn wrong_type_argument(predicate: Lisp_Object, value: Lisp_Object) -> Lisp_Object;
-    pub fn STRING_BYTES(s: *mut LispString) -> libc::ptrdiff_t;
-    pub fn STRING_MULTIBYTE(a: Lisp_Object) -> bool;
-    pub fn SSDATA(string: Lisp_Object) -> *mut libc::c_char;
-    pub static Qt: Lisp_Object;
-    pub static Qarith_error: Lisp_Object;
-    pub static Qnumber_or_marker_p: Lisp_Object;
-    pub static Qnumberp: Lisp_Object;
-    pub static Qfloatp: Lisp_Object;
-    pub static Qstringp: Lisp_Object;
-    fn make_float(float_value: libc::c_double) -> Lisp_Object;
-}
 
 pub const Qnil: LispObject = LispObject(0);
 
@@ -371,15 +358,6 @@ impl LispObject {
 }
 
 // String support (LispType == 4)
-
-/// Represents a string value in elisp
-#[repr(C)]
-pub struct LispString {
-    pub size: libc::ptrdiff_t,
-    pub size_byte: libc::ptrdiff_t,
-    pub intervals: *mut libc::c_void, // @TODO implement
-    pub data: *mut libc::c_char,
-}
 
 impl LispObject {
     #[inline]
@@ -775,7 +753,7 @@ mod deprecated {
         assert!(NUMBERP(make_natnum(1)));
     }
 
-    pub fn XSTRING(a: LispObject) -> *mut LispString {
+    pub fn XSTRING(a: LispObject) -> *mut Lisp_String {
         debug_assert!(STRINGP(a));
         unsafe { std::mem::transmute(XUNTAG(a, LispType::Lisp_String)) }
     }

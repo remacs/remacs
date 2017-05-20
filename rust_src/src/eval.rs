@@ -10,14 +10,15 @@ extern "C" {
 /// Like `Fsignal`, but never returns. Can be used for any error
 /// except `Qquit`, which can return from `Fsignal`. See the elisp docstring
 /// for `signal` for an explanation of the arguments.
-fn xsignal(error_symbol: LispObject, data: LispObject) {
+fn xsignal(error_symbol: LispObject, data: LispObject) -> ! {
     unsafe {
         Fsignal(error_symbol.to_raw(), data.to_raw());
     }
-    panic!("Fsignal should not return in xsignal");
+
+    unreachable!();
 }
 
 /// Convenience function for calling `xsignal` with an empty list.
-pub fn xsignal0(error_symbol: LispObject) {
+pub fn xsignal0(error_symbol: LispObject) -> ! {
     xsignal(error_symbol, Qnil);
 }

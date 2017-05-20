@@ -2,9 +2,9 @@ use std::ptr;
 
 use libc;
 
-use lisp::{LispObject, Qnil, SBYTES, SSDATA, STRING_MULTIBYTE, STRINGP, CHECK_STRING};
+use lisp::{LispObject, Qnil, SBYTES, STRINGP, CHECK_STRING};
 use lists::NILP;
-use remacs_sys::{Lisp_Object, EmacsInt};
+use remacs_sys::{Lisp_Object, SSDATA, STRING_MULTIBYTE};
 
 extern "C" {
     fn make_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
@@ -159,7 +159,7 @@ defun!("base64-decode-string",
 
 fn string_bytes(string: LispObject) -> LispObject {
     CHECK_STRING(string.to_raw());
-    unsafe { LispObject::from_fixnum_unchecked(SBYTES(string) as EmacsInt) }
+    unsafe { LispObject::from_fixnum_unchecked(SBYTES(string) as ::remacs_sys::EmacsInt) }
 }
 
 defun!("string-bytes",
