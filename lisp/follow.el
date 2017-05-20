@@ -340,7 +340,7 @@ property `follow-mode-use-cache' to non-nil.")
 (defvar follow-inactive-menu nil
   "The menu visible when Follow mode is inactive.")
 
-(defvar follow-inside-post-command-hook nil
+(defvar follow-inside-post-command-hook-call nil
   "Non-nil when inside Follow modes `post-command-hook'.
 Used by `follow-window-size-change'.")
 
@@ -1277,7 +1277,7 @@ non-first windows in Follow mode."
 (defun follow-post-command-hook ()
   "Ensure that the windows in Follow mode are adjacent after each command."
   (unless (input-pending-p)
-    (let ((follow-inside-post-command-hook t)
+    (let ((follow-inside-post-command-hook-call t)
 	  (win (selected-window)))
       ;; Work in the selected window, not in the current buffer.
       (with-current-buffer (window-buffer win)
@@ -1519,14 +1519,14 @@ non-first windows in Follow mode."
 ;; Since `follow-window-size-change' can be called indirectly from
 ;; `follow-post-command-hook' we have a potential infinite loop.  To
 ;; avoid this, we simply do not do anything in this situation.  The
-;; variable `follow-inside-post-command-hook' contains information
-;; about whether the execution actually is inside the
+;; variable `follow-inside-post-command-hook-call' contains
+;; information about whether the execution actually is inside the
 ;; post-command-hook or not.
 
 (defun follow-window-size-change (frame)
   "Redraw all windows in FRAME, when in Follow mode."
   ;; Below, we call `post-command-hook'.  Avoid an infloop.
-  (unless follow-inside-post-command-hook
+  (unless follow-inside-post-command-hook-call
     (save-current-buffer
       (let ((orig-frame (selected-frame)))
         (select-frame frame)
