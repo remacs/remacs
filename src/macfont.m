@@ -284,7 +284,6 @@ mac_screen_font_get_metrics (ScreenFontRef font, CGFloat *ascent,
 
   [textStorage setFont:nsFont];
   [textContainer setLineFragmentPadding:0];
-  [layoutManager setUsesScreenFonts:YES];
 
   [layoutManager addTextContainer:textContainer];
   [textContainer release];
@@ -318,8 +317,7 @@ mac_screen_font_get_metrics (ScreenFontRef font, CGFloat *ascent,
 
 static CFIndex
 mac_font_shape_1 (NSFont *font, NSString *string,
-                  struct mac_glyph_layout *glyph_layouts, CFIndex glyph_len,
-                  BOOL screen_font_p)
+                  struct mac_glyph_layout *glyph_layouts, CFIndex glyph_len)
 {
   NSUInteger i;
   CFIndex result = 0;
@@ -339,7 +337,6 @@ mac_font_shape_1 (NSFont *font, NSString *string,
                                           initWithString:@" "] autorelease])];
   [textStorage setFont:font];
   [textContainer setLineFragmentPadding:0];
-  [layoutManager setUsesScreenFonts:screen_font_p];
 
   [layoutManager addTextContainer:textContainer];
   [textContainer release];
@@ -587,7 +584,7 @@ mac_screen_font_shape (ScreenFontRef font, CFStringRef string,
 {
   return mac_font_shape_1 ([(NSFont *)font printerFont],
                            (NSString *) string,
-                           glyph_layouts, glyph_len, YES);
+                           glyph_layouts, glyph_len);
 }
 
 static CGColorRef
