@@ -7022,7 +7022,7 @@ not_in_argv (NSString *arg)
   [self allocateGState];
 #endif
   [NSApp registerServicesMenuSendTypes: ns_send_types
-                           returnTypes: nil];
+                           returnTypes: [NSArray array]];
 
   /* macOS Sierra automatically enables tabbed windows.  We can't
      allow this to be enabled until it's available on a Free system.
