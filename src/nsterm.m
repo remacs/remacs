@@ -4247,7 +4247,6 @@ ns_read_socket (struct terminal *terminal, struct input_event *hold_quit)
         }
       else
         {
-          ptrdiff_t specpdl_count = SPECPDL_INDEX ();
           /* Run and wait for events.  We must always send one NX_APPDEFINED event
              to ourself, otherwise [NXApp run] will never exit.  */
           send_appdefined = YES;

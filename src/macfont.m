@@ -2536,8 +2536,7 @@ macfont_open (struct frame * f, Lisp_Object entity, int pixel_size)
   int size;
   CTFontRef macfont;
   CTFontSymbolicTraits sym_traits;
-  char name[256];
-  int len, i, total_width;
+  int i, total_width;
   CGGlyph glyph;
   CGFloat ascent, descent, leading;
 
