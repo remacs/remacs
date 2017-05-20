@@ -1317,7 +1317,8 @@ class B:
 class C:
    '''docstring'''
 "
-   (let ((expected-mark-beginning-position
+   (let ((transient-mark-mode t)
+         (expected-mark-beginning-position
           (progn
             (python-tests-look-at "class A:")
             (1- (point))))
@@ -1373,7 +1374,8 @@ class B:
 class C:
    '''docstring'''
 "
-   (let ((expected-mark-beginning-position
+   (let ((transient-mark-mode t)
+         (expected-mark-beginning-position
           (progn
             (python-tests-look-at "def __init__(self):")
             (1- (line-beginning-position))))
