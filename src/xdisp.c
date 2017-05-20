@@ -20671,8 +20671,11 @@ display_line (struct it *it, int cursor_vpos)
   ptrdiff_t min_pos = ZV + 1, max_pos = 0;
   ptrdiff_t min_bpos UNINIT, max_bpos UNINIT;
   bool pending_handle_line_prefix = false;
+  bool hscroll_this_line = (cursor_vpos >= 0 && it->vpos == cursor_vpos
+			    && hscrolling_current_line_p (it->w));
   int first_visible_x = it->first_visible_x;
   int last_visible_x = it->last_visible_x;
+  int x_incr = 0;
 
   /* We always start displaying at hpos zero even if hscrolled.  */
   eassert (it->hpos == 0 && it->current_x == 0);
@@ -20704,25 +20707,23 @@ display_line (struct it *it, int cursor_vpos)
 
   /* If we are going to display the cursor's line, account for the
      hscroll of that line.  */
-  if (cursor_vpos >= 0 && it->vpos == cursor_vpos
-      && hscrolling_current_line_p (it->w))
-    {
-      int x_incr =
-	window_hscroll_limited (it->w, it->f) * FRAME_COLUMN_WIDTH (it->f);
-
-      first_visible_x += x_incr;
-      last_visible_x  += x_incr;
-    }
+  if (hscroll_this_line)
+    x_incr = window_hscroll_limited (it->w, it->f) * FRAME_COLUMN_WIDTH (it->f);
 
   /* Move over display elements that are not visible because we are
      hscrolled.  This may stop at an x-position < first_visible_x
      if the first glyph is partially visible or if we hit a line end.  */
-  if (it->current_x < first_visible_x)
+  if (it->current_x < it->first_visible_x + x_incr)
     {
       enum move_it_result move_result;
 
       this_line_min_pos = row->start.pos;
-      move_result = move_it_in_display_line_to (it, ZV, first_visible_x,
+      if (hscroll_this_line)
+	{
+	  it->first_visible_x += x_incr;
+	  it->last_visible_x  += x_incr;
+	}
+      move_result = move_it_in_display_line_to (it, ZV, it->first_visible_x,
 						MOVE_TO_POS | MOVE_TO_X);
       /* If we are under a large hscroll, move_it_in_display_line_to
 	 could hit the end of the line without reaching
@@ -20730,10 +20731,10 @@ display_line (struct it *it, int cursor_vpos)
 	 especially important on a TTY, where we will call
 	 extend_face_to_end_of_line, which needs to know how many
 	 blank glyphs to produce.  */
-      if (it->current_x < first_visible_x
+      if (it->current_x < it->first_visible_x
 	  && (move_result == MOVE_NEWLINE_OR_CR
 	      || move_result == MOVE_POS_MATCH_OR_ZV))
-	it->current_x = first_visible_x;
+	it->current_x = it->first_visible_x;
 
       /* Record the smallest positions seen while we moved over
 	 display elements that are not visible.  This is needed by
@@ -20927,7 +20928,7 @@ display_line (struct it *it, int cursor_vpos)
       if (/* Not a newline.  */
 	  nglyphs > 0
 	  /* Glyphs produced fit entirely in the line.  */
-	  && it->current_x < last_visible_x)
+	  && it->current_x < it->last_visible_x)
 	{
 	  it->hpos += nglyphs;
 	  row->ascent = max (row->ascent, it->max_ascent);
@@ -20937,13 +20938,13 @@ display_line (struct it *it, int cursor_vpos)
 				  it->max_phys_ascent + it->max_phys_descent);
 	  row->extra_line_spacing = max (row->extra_line_spacing,
 					 it->max_extra_line_spacing);
-	  if (it->current_x - it->pixel_width < first_visible_x
+	  if (it->current_x - it->pixel_width < it->first_visible_x
 	      /* In R2L rows, we arrange in extend_face_to_end_of_line
 		 to add a right offset to the line, by a suitable
 		 change to the stretch glyph that is the leftmost
 		 glyph of the line.  */
 	      && !row->reversed_p)
-	    row->x = x - first_visible_x;
+	    row->x = x - it->first_visible_x;
 	  /* Record the maximum and minimum buffer positions seen so
 	     far in glyphs that will be displayed by this row.  */
 	  if (it->bidi_p)
@@ -20968,9 +20969,9 @@ display_line (struct it *it, int cursor_vpos)
 	      if (/* Lines are continued.  */
 		  it->line_wrap != TRUNCATE
 		  && (/* Glyph doesn't fit on the line.  */
-		      new_x > last_visible_x
+		      new_x > it->last_visible_x
 		      /* Or it fits exactly on a window system frame.  */
-		      || (new_x == last_visible_x
+		      || (new_x == it->last_visible_x
 			  && FRAME_WINDOW_P (it->f)
 			  && (row->reversed_p
 			      ? WINDOW_LEFT_FRINGE_WIDTH (it->w)
@@ -20979,7 +20980,7 @@ display_line (struct it *it, int cursor_vpos)
 		  /* End of a continued line.  */
 
 		  if (it->hpos == 0
-		      || (new_x == last_visible_x
+		      || (new_x == it->last_visible_x
 			  && FRAME_WINDOW_P (it->f)
 			  && (row->reversed_p
 			      ? WINDOW_LEFT_FRINGE_WIDTH (it->w)
@@ -21122,10 +21123,10 @@ display_line (struct it *it, int cursor_vpos)
 			   ? WINDOW_LEFT_FRINGE_WIDTH (it->w)
 			   : WINDOW_RIGHT_FRINGE_WIDTH (it->w)) == 0)
 			produce_special_glyphs (it, IT_CONTINUATION);
-		      it->continuation_lines_width += last_visible_x;
+		      it->continuation_lines_width += it->last_visible_x;
 		      row->ends_in_middle_of_char_p = true;
 		      row->continued_p = true;
-		      glyph->pixel_width = last_visible_x - x;
+		      glyph->pixel_width = it->last_visible_x - x;
 		      it->starts_in_middle_of_char_p = true;
 		      if (WINDOW_LEFT_MARGIN_WIDTH (it->w) > 0
 			  || WINDOW_RIGHT_MARGIN_WIDTH (it->w) > 0)
@@ -21169,7 +21170,7 @@ display_line (struct it *it, int cursor_vpos)
 
 		  break;
 		}
-	      else if (new_x > first_visible_x)
+	      else if (new_x > it->first_visible_x)
 		{
 		  /* Increment number of glyphs actually displayed.  */
 		  ++it->hpos;
@@ -21180,14 +21181,14 @@ display_line (struct it *it, int cursor_vpos)
 		  if (it->bidi_p)
 		    RECORD_MAX_MIN_POS (it);
 
-		  if (x < first_visible_x && !row->reversed_p)
+		  if (x < it->first_visible_x && !row->reversed_p)
 		    /* Glyph is partially visible, i.e. row starts at
 		       negative X position.  Don't do that in R2L
 		       rows, where we arrange to add a right offset to
 		       the line in extend_face_to_end_of_line, by a
 		       suitable change to the stretch glyph that is
 		       the leftmost glyph of the line.  */
-		    row->x = x - first_visible_x;
+		    row->x = x - it->first_visible_x;
 		  /* When the last glyph of an R2L row only fits
 		     partially on the line, we need to set row->x to a
 		     negative offset, so that the leftmost glyph is
@@ -21195,12 +21196,12 @@ display_line (struct it *it, int cursor_vpos)
 		     going to produce the truncation glyph, this will
 		     be taken care of in produce_special_glyphs.  */
 		  if (row->reversed_p
-		      && new_x > last_visible_x
+		      && new_x > it->last_visible_x
 		      && !(it->line_wrap == TRUNCATE
 			   && WINDOW_LEFT_FRINGE_WIDTH (it->w) == 0))
 		    {
 		      eassert (FRAME_WINDOW_P (it->f));
-		      row->x = last_visible_x - new_x;
+		      row->x = it->last_visible_x - new_x;
 		    }
 		}
 	      else
@@ -21210,7 +21211,7 @@ display_line (struct it *it, int cursor_vpos)
 		     move_it_in_display_line at the start of this
 		     function, unless the text display area of the
 		     window is empty.  */
-		  eassert (first_visible_x <= last_visible_x);
+		  eassert (it->first_visible_x <= it->last_visible_x);
 		}
 	    }
 	  /* Even if this display element produced no glyphs at all,
@@ -21279,8 +21280,8 @@ display_line (struct it *it, int cursor_vpos)
 		    ? WINDOW_LEFT_FRINGE_WIDTH (it->w)
 		    : WINDOW_RIGHT_FRINGE_WIDTH (it->w))
 		   || it->what == IT_IMAGE))
-	      ? (it->current_x >= last_visible_x)
-	      : (it->current_x > last_visible_x)))
+	      ? (it->current_x >= it->last_visible_x)
+	      : (it->current_x > it->last_visible_x)))
 	{
 	  /* Maybe add truncation glyphs.  */
 	  if (!FRAME_WINDOW_P (it->f)
@@ -21314,7 +21315,7 @@ display_line (struct it *it, int cursor_vpos)
 	      /* produce_special_glyphs overwrites the last glyph, so
 		 we don't want that if we want to keep that last
 		 glyph, which means it's an image.  */
-	      if (it->current_x > last_visible_x)
+	      if (it->current_x > it->last_visible_x)
 		{
 		  it->current_x = x_before;
 		  if (!FRAME_WINDOW_P (it->f))
@@ -21375,7 +21376,7 @@ display_line (struct it *it, int cursor_vpos)
 
   /* If line is not empty and hscrolled, maybe insert truncation glyphs
      at the left window margin.  */
-  if (first_visible_x
+  if (it->first_visible_x
       && IT_CHARPOS (*it) != CHARPOS (row->start.pos))
     {
       if (!FRAME_WINDOW_P (it->f)
@@ -21503,6 +21504,13 @@ display_line (struct it *it, int cursor_vpos)
      row to be used.  */
   it->current_x = it->hpos = 0;
   it->current_y += row->height;
+  /* Restore the first and last visible X if we adjusted them for
+     current-line hscrolling.  */
+  if (hscroll_this_line)
+    {
+      it->first_visible_x = first_visible_x;
+      it->last_visible_x  = last_visible_x;
+    }
   SET_TEXT_POS (it->eol_pos, 0, 0);
   ++it->vpos;
   ++it->glyph_row;
