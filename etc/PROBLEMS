@@ -2486,9 +2486,8 @@ If you do, please send it to bug-gnu-emacs@gnu.org so we can list it here.
 The implementation of that function on Mac OS X uses pathconf with the
 _PC_CASE_SENSITIVE flag.  There have been reports that this use of
 pathconf does not work reliably.  If you have a problem, please
-recompile Emacs with -D DARWIN_OS_CASE_SENSITIVE_FIXME=1 or
--D DARWIN_OS_CASE_SENSITIVE_FIXME=2, and file a bug report saying
-whether this fixed your problem.
+recompile Emacs with -D DARWIN_OS_CASE_SENSITIVE_FIXME, and file a bug
+report saying whether this fixed your problem.
 
 * Build-time problems
 

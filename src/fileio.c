@@ -2256,65 +2256,41 @@ static bool
 file_name_case_insensitive_p (const char *filename)
 {
   /* Use pathconf with _PC_CASE_INSENSITIVE or _PC_CASE_SENSITIVE if
-     those flags are available.  As of this writing (2016-11-14),
+     those flags are available.  As of this writing (2017-05-20),
      Cygwin is the only platform known to support the former (starting
-     with Cygwin-2.6.1), and Mac OS X is the only platform known to
-     support the latter.
-
-     There have been reports that pathconf with _PC_CASE_SENSITIVE
-     does not work reliably on Mac OS X.  If you have a problem,
-     please recompile Emacs with -D DARWIN_OS_CASE_SENSITIVE_FIXME=1 or
-     -D DARWIN_OS_CASE_SENSITIVE_FIXME=2, and file a bug report saying
-     whether this fixed your problem.  */
+     with Cygwin-2.6.1), and macOS is the only platform known to
+     support the latter.  */
 
 #ifdef _PC_CASE_INSENSITIVE
   int res = pathconf (filename, _PC_CASE_INSENSITIVE);
   if (res >= 0)
     return res > 0;
-#elif defined _PC_CASE_SENSITIVE && !defined DARWIN_OS_CASE_SENSITIVE_FIXME
+#elif defined _PC_CASE_SENSITIVE
   int res = pathconf (filename, _PC_CASE_SENSITIVE);
   if (res >= 0)
     return res == 0;
 #endif
 
-#ifdef DARWIN_OS
-# ifndef DARWIN_OS_CASE_SENSITIVE_FIXME
-  int DARWIN_OS_CASE_SENSITIVE_FIXME = 0;
-# endif
+  /* There have been reports that pathconf with _PC_CASE_SENSITIVE
+     does not work reliably on Mac OS X.  If you have a problem,
+     please recompile Emacs with -D DARWIN_OS_CASE_SENSITIVE_FIXME=1 or
+     -D DARWIN_OS_CASE_SENSITIVE_FIXME=2, and file a bug report saying
+     whether this fixed your problem.  */
 
-  if (DARWIN_OS_CASE_SENSITIVE_FIXME == 1)
-    {
-      /* This is based on developer.apple.com's getattrlist man page.  */
-      struct attrlist alist = {.volattr = ATTR_VOL_CAPABILITIES};
-      vol_capabilities_attr_t vcaps;
-      if (getattrlist (filename, &alist, &vcaps, sizeof vcaps, 0) == 0)
-	{
-	  if (vcaps.valid[VOL_CAPABILITIES_FORMAT] & VOL_CAP_FMT_CASE_SENSITIVE)
-	    return ! (vcaps.capabilities[VOL_CAPABILITIES_FORMAT]
-		      & VOL_CAP_FMT_CASE_SENSITIVE);
-	}
-    }
-# if DARWIN_OS_CASE_SENSITIVE_FIXME == 2
-    {
-      /* The following is based on
-	 http://lists.apple.com/archives/darwin-dev/2007/Apr/msg00010.html.
-	 It is normally not even compiled, since it runs afoul of
-	 static checking.  See:
-	 http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00495.html
-         */
-      struct attrlist alist;
-      unsigned char buffer[sizeof (vol_capabilities_attr_t) + sizeof (size_t)];
-
-      memset (&alist, 0, sizeof (alist));
-      alist.volattr = ATTR_VOL_CAPABILITIES;
-      if (getattrlist (filename, &alist, buffer, sizeof (buffer), 0)
-	  || !(alist.volattr & ATTR_VOL_CAPABILITIES))
-	return 0;
-      vol_capabilities_attr_t *vcaps = buffer;
-      return !(vcaps->capabilities[0] & VOL_CAP_FMT_CASE_SENSITIVE);
-    }
+#ifdef DARWIN_OS_CASE_SENSITIVE_FIXME
+# ifdef VOL_CAP_FMT_CASE_SENSITIVE
+  {
+    struct attrlist alist = {.bitmapcount = ATTR_BIT_MAP_COUNT,
+			     .volattr = ATTR_VOL_INFO | ATTR_VOL_CAPABILITIES};
+    struct { uint32_t len; vol_capabilities_attr_t caps; } vcaps
+      __attribute__ ((aligned (4), packed));
+    int i = VOL_CAPABILITIES_FORMAT;
+    if (getattrlist (filename, &alist, &vcaps, sizeof vcaps, 0) == 0
+	&& (vcaps.caps.valid[i] & VOL_CAP_FMT_CASE_SENSITIVE))
+      return ! (vcaps.caps.capabilities[i] & VOL_CAP_FMT_CASE_SENSITIVE);
+  }
 # endif
-#endif	/* DARWIN_OS */
+#endif
 
 #if defined CYGWIN || defined DOS_NT
   return true;
