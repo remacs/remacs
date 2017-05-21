@@ -6,7 +6,7 @@ use lisp;
 use lisp::{LispObject, XINT, make_number, CHECK_TYPE, LispType};
 use eval::xsignal0;
 use remacs_sys::{EmacsInt, Lisp_Object, Qarith_error, Qnumberp};
-
+use remacs_macros::lisp_fn;
 
 fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
     let x = lisp::check_number_coerce_marker(x);
