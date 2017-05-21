@@ -376,7 +376,7 @@ displayed in `mode-line-position', a component of the default
                  (-3 "%o"))
           (const :tag "\"%p\": Percentage offset of top of window"
                  (-3 "%p"))
-          (const :tag "\"%P\": Precentage offset of bottom of window"
+          (const :tag "\"%P\": Percentage offset of bottom of window"
                  (-3 "%P"))
           (const :tag "\"%q\": Offsets of both top and bottom of window"
                  (6 "%q")))
