@@ -631,6 +631,14 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 
   if (pid == 0)
     {
+#ifdef DARWIN_OS
+      /* Work around a macOS bug, where SIGCHLD is apparently
+	 delivered to a vforked child instead of to its parent.  See:
+	 http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00342.html
+      */
+      signal (SIGCHLD, SIG_DFL);
+#endif
+
       unblock_child_signal (&oldset);
 
 #ifdef DARWIN_OS
