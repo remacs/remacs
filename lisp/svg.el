@@ -107,8 +107,8 @@ X/Y denote the center of the ellipse."
    svg
    (dom-node 'line
 	     `((x1 . ,x1)
-	       (x2 . ,y1)
-	       (y1 . ,x2)
+	       (x2 . ,x2)
+	       (y1 . ,y1)
 	       (y2 . ,y2)
 	       ,@(svg--arguments svg args)))))
 
