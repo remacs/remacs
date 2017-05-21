@@ -2051,11 +2051,16 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 
 #ifdef DARWIN_OS
   /* Darwin doesn't let us run setsid after a vfork, so use fork when
-     necessary. */
+     necessary.  Also, reset SIGCHLD handling after a vfork, as
+     apparently macOS can mistakenly deliver SIGCHLD to the child.  */
   if (pty_flag)
     pid = fork ();
   else
-    pid = vfork ();
+    {
+      pid = vfork ();
+      if (pid == 0)
+	signal (SIGCHLD, SIG_DFL);
+    }
 #else
   pid = vfork ();
 #endif
