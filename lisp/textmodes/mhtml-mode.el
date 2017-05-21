@@ -283,14 +283,16 @@ can function properly.")
   (remove-list-of-text-properties start end
                                   '(syntax-table local-map mhtml-submode))
   (goto-char start)
-  (when (and
-         ;; Don't search in a comment or string
-         (not (syntax-ppss-context (syntax-ppss)))
-         ;; Be sure to look back one character, because START won't
-         ;; yet have been propertized.
-         (not (bobp)))
-    (when-let ((submode (get-text-property (1- (point)) 'mhtml-submode)))
-      (mhtml--syntax-propertize-submode submode end)))
+  ;; Be sure to look back one character, because START won't yet have
+  ;; been propertized.
+  (unless (bobp)
+    (let ((submode (get-text-property (1- (point)) 'mhtml-submode)))
+      (if submode
+          ;; Don't search in a comment or string
+          (unless (syntax-ppss-context (syntax-ppss))
+            (mhtml--syntax-propertize-submode submode end))
+        ;; No submode, so do what sgml-mode does.
+        (sgml-syntax-propertize-inside end))))
   (funcall
    (syntax-propertize-rules
     ("<style.*?>"
