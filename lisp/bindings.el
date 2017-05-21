@@ -365,14 +365,32 @@ zero, otherwise they start from one."
   :group 'mode-line
   :version "26.1")
 
+(defcustom mode-line-percent-position '(-3 "%p")
+  "Specification of \"percentage offset\" of window through buffer
+This option specifies both the field width and the type of offset
+displayed in `mode-line-position', a component of the default
+`mode-line-format'."
+  :type `(radio
+          (const :tag "nil:  No offset is displayed" nil)
+          (const :tag "\"%o\": Proportion of \"travel\" of the window through the buffer"
+                 (-3 "%o"))
+          (const :tag "\"%p\": Percentage offset of top of window"
+                 (-3 "%p"))
+          (const :tag "\"%P\": Precentage offset of bottom of window"
+                 (-3 "%P"))
+          (const :tag "\"%q\": Offsets of both top and bottom of window"
+                 (6 "%q")))
+  :version "26.1"
+  :group 'mode-line)
+
 (defvar mode-line-position
-  `((-3 ,(propertize
-	  "%p"
-	  'local-map mode-line-column-line-number-mode-map
-	  'mouse-face 'mode-line-highlight
-	  ;; XXX needs better description
-	  'help-echo "Size indication mode\n\
-mouse-1: Display Line and Column Mode Menu"))
+  `((:propertize
+     mode-line-percent-position
+     'local-map mode-line-column-line-number-mode-map
+     'mouse-face 'mode-line-highlight
+     ;; XXX needs better description
+     'help-echo "Size indication mode\n\
+mouse-1: Display Line and Column Mode Menu")
     (size-indication-mode
      (8 ,(propertize
 	  " of %I"

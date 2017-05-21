@@ -379,6 +379,16 @@ displayed to be horizontally scrolled when lines are truncated on
 display and point moves outside the left or right window margin.
 
 +++
+** New mode line constructs '%o' and '%q', and user option
+'mode-line-percent-position'.  '%o' displays the "degree of travel" of
+the window through the buffer.  Unlike the default '%p', this
+percentage approaches 100% as the window approaches the end of the
+buffer.  '%q' displays the percentage offsets of both the start and
+the end of the window, e.g. "5-17%".  The new option
+'mode-line-percent-position' makes it easier to switch between '%p',
+'%P', and these new constructs.
+
++++
 ** Two new user options 'list-matching-lines-jump-to-current-line' and
 'list-matching-lines-current-line-face' to show highlighted the current
 line in *Occur* buffer.

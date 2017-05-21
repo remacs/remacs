@@ -23924,6 +23924,27 @@ decode_mode_spec (struct window *w, register int c, int field_width,
 	return " Narrow";
       break;
 
+      /* Display the "degree of travel" of the window through the buffer.  */
+    case 'o':
+      {
+        ptrdiff_t toppos = marker_position (w->start);
+        ptrdiff_t botpos = BUF_Z (b) - w->window_end_pos;
+        ptrdiff_t begv = BUF_BEGV (b);
+        ptrdiff_t zv = BUF_ZV (b);
+
+        if (zv <= botpos)
+          return toppos <= begv ? "All" : "Bottom";
+        else if (toppos <= begv)
+          return "Top";
+        else
+          {
+          sprintf (decode_mode_spec_buf, "%2d%%",
+                   percent99 (toppos - begv, (toppos - begv) + (zv - botpos)));
+          return decode_mode_spec_buf;
+          }
+      }
+
+      /* Display percentage of buffer above the top of the screen.  */
     case 'p':
       {
 	ptrdiff_t pos = marker_position (w->start);
@@ -23959,6 +23980,33 @@ decode_mode_spec (struct window *w, register int c, int field_width,
 		     percent99 (botpos - begv, zv - begv));
 	    return decode_mode_spec_buf;
 	  }
+      }
+
+      /* Display percentage offsets of top and bottom of the window,
+         using "All" (but not "Top" or "Bottom") where appropriate.  */
+    case 'q':
+      {
+        ptrdiff_t toppos = marker_position (w->start);
+        ptrdiff_t botpos = BUF_Z (b) - w->window_end_pos;
+        ptrdiff_t begv = BUF_BEGV (b);
+        ptrdiff_t zv = BUF_ZV (b);
+
+        if ((toppos <= begv) && (zv <= botpos))
+          return "All   ";
+
+        if (toppos <= begv)
+          strcpy (decode_mode_spec_buf, "0-");
+        else
+          sprintf (decode_mode_spec_buf, "%d-",
+                   percent99 (toppos - begv, zv - begv));
+
+        if (zv <= botpos)
+          strcat (decode_mode_spec_buf, "100%");
+        else
+          sprintf (&decode_mode_spec_buf [strlen (decode_mode_spec_buf)],
+                   "%d%%", percent99 (botpos - begv, zv - begv));
+
+        return decode_mode_spec_buf;
       }
 
     case 's':
