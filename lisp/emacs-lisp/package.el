@@ -2128,10 +2128,15 @@ If NOSAVE is non-nil, the package is not removed from
           (t
            (add-hook 'post-command-hook #'package-menu--post-refresh)
            (delete-directory dir t t)
-           ;; Remove NAME-VERSION.signed file.
-           (let ((signed-file (concat dir ".signed")))
-             (if (file-exists-p signed-file)
-                 (delete-file signed-file)))
+           ;; Remove NAME-VERSION.signed and NAME-readme.txt files.
+           (dolist (suffix '(".signed" "readme.txt"))
+             (let* ((version (package-version-join (package-desc-version pkg-desc)))
+                    (file (concat (if (string= suffix ".signed")
+                                      dir
+                                    (substring dir 0 (- (length version))))
+                                  suffix)))
+               (when (file-exists-p file)
+                 (delete-file file))))
            ;; Update package-alist.
            (let ((pkgs (assq name package-alist)))
              (delete pkg-desc pkgs)
