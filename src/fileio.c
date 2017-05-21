@@ -2271,27 +2271,6 @@ file_name_case_insensitive_p (const char *filename)
     return res == 0;
 #endif
 
-  /* There have been reports that pathconf with _PC_CASE_SENSITIVE
-     does not work reliably on Mac OS X.  If you have a problem,
-     please recompile Emacs with -D DARWIN_OS_CASE_SENSITIVE_FIXME=1 or
-     -D DARWIN_OS_CASE_SENSITIVE_FIXME=2, and file a bug report saying
-     whether this fixed your problem.  */
-
-#ifdef DARWIN_OS_CASE_SENSITIVE_FIXME
-# ifdef VOL_CAP_FMT_CASE_SENSITIVE
-  {
-    struct attrlist alist = {.bitmapcount = ATTR_BIT_MAP_COUNT,
-			     .volattr = ATTR_VOL_INFO | ATTR_VOL_CAPABILITIES};
-    struct { uint32_t len; vol_capabilities_attr_t caps; } vcaps
-      __attribute__ ((aligned (4), packed));
-    int i = VOL_CAPABILITIES_FORMAT;
-    if (getattrlist (filename, &alist, &vcaps, sizeof vcaps, 0) == 0
-	&& (vcaps.caps.valid[i] & VOL_CAP_FMT_CASE_SENSITIVE))
-      return ! (vcaps.caps.capabilities[i] & VOL_CAP_FMT_CASE_SENSITIVE);
-  }
-# endif
-#endif
-
 #if defined CYGWIN || defined DOS_NT
   return true;
 #else
