@@ -342,12 +342,8 @@ module_non_local_exit_throw (emacs_env *env, emacs_value tag, emacs_value value)
 				   value_to_lisp (value));
 }
 
-/* A module function is lambda function that calls
-   `internal--module-call', passing the function pointer of the module
-   function along with the module emacs_env pointer as arguments.
-
-	(function (lambda (&rest arglist)
-		    (internal--module-call envobj arglist)))  */
+/* A module function is a pseudovector of subtype type
+   PVEC_MODULE_FUNCTION; see lisp.h for the definition.  */
 
 static emacs_value
 module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
@@ -363,24 +359,24 @@ module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
 	     : min_arity <= max_arity && max_arity <= MOST_POSITIVE_FIXNUM)))
     xsignal2 (Qinvalid_arity, make_number (min_arity), make_number (max_arity));
 
-  struct Lisp_Module_Function *envptr = allocate_module_function ();
-  envptr->min_arity = min_arity;
-  envptr->max_arity = max_arity;
-  envptr->subr = subr;
-  envptr->data = data;
+  struct Lisp_Module_Function *function = allocate_module_function ();
+  function->min_arity = min_arity;
+  function->max_arity = max_arity;
+  function->subr = subr;
+  function->data = data;
 
   if (documentation)
     {
       AUTO_STRING (unibyte_doc, documentation);
-      envptr->documentation =
+      function->documentation =
         code_convert_string_norecord (unibyte_doc, Qutf_8, false);
     }
 
-  Lisp_Object envobj;
-  XSET_MODULE_FUNCTION (envobj, envptr);
-  eassert (MODULE_FUNCTIONP (envobj));
+  Lisp_Object result;
+  XSET_MODULE_FUNCTION (result, function);
+  eassert (MODULE_FUNCTIONP (result));
 
-  return lisp_to_value (envobj);
+  return lisp_to_value (result);
 }
 
 static emacs_value
@@ -644,13 +640,13 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
 }
 
 Lisp_Object
-funcall_module (const struct Lisp_Module_Function *const envptr,
+funcall_module (const struct Lisp_Module_Function *const function,
                 ptrdiff_t nargs, Lisp_Object *arglist)
 {
-  eassume (0 <= envptr->min_arity);
-  if (! (envptr->min_arity <= nargs
-	 && (envptr->max_arity < 0 || nargs <= envptr->max_arity)))
-    xsignal2 (Qwrong_number_of_arguments, module_format_fun_env (envptr),
+  eassume (0 <= function->min_arity);
+  if (! (function->min_arity <= nargs
+	 && (function->max_arity < 0 || nargs <= function->max_arity)))
+    xsignal2 (Qwrong_number_of_arguments, module_format_fun_env (function),
 	      make_number (nargs));
 
   emacs_env pub;
@@ -668,7 +664,7 @@ funcall_module (const struct Lisp_Module_Function *const envptr,
 	args[i] = lisp_to_value (arglist[i]);
     }
 
-  emacs_value ret = envptr->subr (&pub, nargs, args, envptr->data);
+  emacs_value ret = function->subr (&pub, nargs, args, function->data);
   SAFE_FREE ();
 
   eassert (&priv == pub.private_members);

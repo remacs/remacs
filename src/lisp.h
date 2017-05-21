@@ -3901,9 +3901,9 @@ extern void unexec_free (void *);
 typedef emacs_value (*emacs_subr) (emacs_env *, ptrdiff_t,
 				   emacs_value [], void *);
 
-/* Function environments.  */
+/* Module function.  */
 
-/* A function environment is an auxiliary structure used by
+/* A function environment is an auxiliary structure returned by
    `module_make_function' to store information about a module
    function.  It is stored in a pseudovector.  Its members correspond
    to the arguments given to `module_make_function'.  */
