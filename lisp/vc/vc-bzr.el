@@ -98,7 +98,9 @@ If nil, use the value of `vc-annotate-switches'.  If t, use no switches."
 (defcustom vc-bzr-status-switches
   (ignore-errors
     (with-temp-buffer
-      (call-process vc-bzr-program nil t nil "help" "status")
+      (let ((process-environment (cons (format "BZR_LOG=%s" null-device)
+                                       process-environment)))
+        (call-process vc-bzr-program nil t nil "help" "status"))
       (if (search-backward "--no-classify" nil t)
           "--no-classify")))
   "String or list of strings specifying switches for bzr status under VC.
