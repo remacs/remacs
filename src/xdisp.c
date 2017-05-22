@@ -20671,7 +20671,9 @@ display_line (struct it *it, int cursor_vpos)
   ptrdiff_t min_pos = ZV + 1, max_pos = 0;
   ptrdiff_t min_bpos UNINIT, max_bpos UNINIT;
   bool pending_handle_line_prefix = false;
-  bool hscroll_this_line = (cursor_vpos >= 0 && it->vpos == cursor_vpos
+  int header_line = WINDOW_WANTS_HEADER_LINE_P (it->w);
+  bool hscroll_this_line = (cursor_vpos >= 0
+			    && it->vpos == cursor_vpos - header_line
 			    && hscrolling_current_line_p (it->w));
   int first_visible_x = it->first_visible_x;
   int last_visible_x = it->last_visible_x;
