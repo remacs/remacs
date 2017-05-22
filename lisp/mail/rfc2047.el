@@ -952,6 +952,7 @@ ENCODED-WORD)."
 	    (push (cons cs text) rest))
 	;; Don't decode encoded-word.
 	(push (cons nil (nth 3 word)) rest)))
+    (setq words nil)
     (while rest
       ;; FIXME: This looks O(N²).  Can we make it more efficient
       ;; with something like mapconcat?
