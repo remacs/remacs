@@ -1,10 +1,10 @@
-use std::ptr;
 use std::mem;
 
 use libc;
 
 use lisp::{CHECK_TYPE, LispObject, LispType, Qnil, XTYPE, XUNTAG};
 use remacs_sys::{Lisp_Object, wrong_type_argument};
+use remacs_macros::lisp_fn;
 
 extern "C" {
     static Qconsp: Lisp_Object;
@@ -17,6 +17,8 @@ pub fn CONSP(x: LispObject) -> bool {
     XTYPE(x) == LispType::Lisp_Cons
 }
 
+/// Return t if OBJECT is not a cons cell.  This includes nil.
+#[lisp_fn(name = "atom", min = "1")]
 fn atom(object: LispObject) -> LispObject {
     if CONSP(object) {
         Qnil
@@ -25,15 +27,9 @@ fn atom(object: LispObject) -> LispObject {
     }
 }
 
-defun!("atom",
-       Fatom(object),
-       Satom,
-       atom,
-       1,
-       1,
-       ptr::null(),
-       "Return t if OBJECT is not a cons cell.  This includes nil.");
-
+/// Return t if OBJECT is a cons cell.
+/// (fn OBJECT)
+#[lisp_fn(name = "consp", min = "1")]
 fn consp(object: LispObject) -> LispObject {
     if CONSP(object) {
         LispObject::constant_t()
@@ -41,17 +37,6 @@ fn consp(object: LispObject) -> LispObject {
         Qnil
     }
 }
-
-defun!("consp",
-       Fconsp(object),
-       Sconsp,
-       consp,
-       1,
-       1,
-       ptr::null(),
-       "Return t if OBJECT is a cons cell.
-
-(fn OBJECT)");
 
 /// Represents a cons cell, or GC bookkeeping for cons cells.
 ///
@@ -102,6 +87,9 @@ fn XSETCDR(c: LispObject, n: LispObject) {
     }
 }
 
+/// Set the car of CELL to be NEWCAR. Returns NEWCAR.
+/// (fn CELL NEWCAR)
+#[lisp_fn(name = "setcar", min = "2")]
 pub fn setcar(cell: LispObject, newcar: LispObject) -> LispObject {
     unsafe {
         CHECK_TYPE(CONSP(cell), LispObject::from_raw(Qconsp), cell);
@@ -112,17 +100,9 @@ pub fn setcar(cell: LispObject, newcar: LispObject) -> LispObject {
     newcar
 }
 
-defun!("setcar",
-       Fsetcar(cell, newcar),
-       Ssetcar,
-       setcar,
-       2,
-       2,
-       ptr::null(),
-       "Set the car of CELL to be NEWCAR. Returns NEWCAR.
-
-(fn CELL NEWCAR)");
-
+/// Set the cdr of CELL to be NEWCDR.  Returns NEWCDR.
+/// (fn CELL NEWCDR)
+#[lisp_fn(name = "setcdr", min = "2")]
 fn setcdr(cell: LispObject, newcar: LispObject) -> LispObject {
     unsafe {
         CHECK_TYPE(CONSP(cell), LispObject::from_raw(Qconsp), cell);
@@ -132,17 +112,6 @@ fn setcdr(cell: LispObject, newcar: LispObject) -> LispObject {
     XSETCDR(cell, newcar);
     newcar
 }
-
-defun!("setcdr",
-       Fsetcdr(cell, newcar),
-       Ssetcdr,
-       setcdr,
-       2,
-       2,
-       ptr::null(),
-       "Set the cdr of CELL to be NEWCDR.  Returns NEWCDR.
-
-(fn CELL NEWCDR)");
 
 /// Is `object` nil?
 pub fn NILP(object: LispObject) -> bool {
@@ -163,6 +132,14 @@ unsafe fn XCDR(object: LispObject) -> LispObject {
 /// # Porting Notes
 ///
 /// This is equivalent to `CAR`/`CDR` in C code.
+///
+/// # Usage
+///  Return the car of LIST.  If arg is nil, return nil.
+///  Error if arg is not nil and not a cons cell.  See also `car-safe'.
+///  See Info node `(elisp)Cons Cells' for a discussion of related basic
+///  Lisp concepts such as car, cdr, cons cell and list.
+///  (fn LIST)
+#[lisp_fn(name = "car", min = "1")]
 fn car(object: LispObject) -> LispObject {
     if CONSP(object) {
         unsafe { XCAR(object) }
@@ -173,23 +150,12 @@ fn car(object: LispObject) -> LispObject {
     }
 }
 
-defun!("car",
-       Fcar(list),
-       Scar,
-       car,
-       1,
-       1,
-       ptr::null(),
-       "Return the car of LIST.  If arg is nil, return nil.
-Error if arg is not nil and not a \
-        cons cell.  See also `car-safe'.
-
-See Info node `(elisp)Cons Cells' for a discussion of \
-        related basic
-Lisp concepts such as car, cdr, cons cell and list.
-
-(fn LIST)");
-
+/// Return the cdr of LIST.  If arg is nil, return nil.
+/// Error if arg is not nil and not a cons cell.  See also `cdr-safe'.
+/// See Info node `(elisp)Cons Cells' for a discussion of related basic
+/// Lisp concepts such as cdr, car, cons cell and list.
+/// (fn LIST)
+#[lisp_fn(name = "cdr", min = "1")]
 fn cdr(object: LispObject) -> LispObject {
     if CONSP(object) {
         unsafe { XCDR(object) }
@@ -200,23 +166,9 @@ fn cdr(object: LispObject) -> LispObject {
     }
 }
 
-defun!("cdr",
-       Fcdr(list),
-       Scdr,
-       cdr,
-       1,
-       1,
-       ptr::null(),
-       "Return the cdr of LIST.  If arg is nil, return nil.
-Error if arg is not nil and not a \
-        cons cell.  See also `cdr-safe'.
-
-See Info node `(elisp)Cons Cells' for a discussion of \
-        related basic
-Lisp concepts such as cdr, car, cons cell and list.
-
-(fn LIST)");
-
+/// return t if OBJECT is a list, that is a cons cell or nil, Otherwise, return nil.
+/// (fn OBJECT)
+#[lisp_fn(name = "listp", min = "1")]
 fn listp(object: LispObject) -> LispObject {
     if CONSP(object) || NILP(object) {
         LispObject::constant_t()
@@ -225,18 +177,9 @@ fn listp(object: LispObject) -> LispObject {
     }
 }
 
-defun!("listp",
-       Flistp(object),
-       Slistp,
-       listp,
-       1,
-       1,
-       ptr::null(),
-       "return t if OBJECT is a list, that is a cons cell or nil, Otherwise, return nil.
-
-(fn \
-        OBJECT)");
-
+/// Return t if OBJECT is not a list.  Lists include nil.
+/// (fn OBJECT)
+#[lisp_fn(name = "nlistp", min = "1")]
 fn nlistp(object: LispObject) -> LispObject {
     if CONSP(object) || NILP(object) {
         Qnil
@@ -244,14 +187,3 @@ fn nlistp(object: LispObject) -> LispObject {
         LispObject::constant_t()
     }
 }
-
-defun!("nlistp",
-       Fnlistp(object),
-       Snlistp,
-       nlistp,
-       1,
-       1,
-       ptr::null(),
-       "Return t if OBJECT is not a list.  Lists include nil.
-
-(fn OBJECT)");

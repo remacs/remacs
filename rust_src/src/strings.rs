@@ -5,6 +5,7 @@ use libc;
 use lisp::{LispObject, Qnil, SBYTES, STRINGP, CHECK_STRING};
 use lists::NILP;
 use remacs_sys::{Lisp_Object, SSDATA, STRING_MULTIBYTE};
+use remacs_macros::lisp_fn;
 
 extern "C" {
     fn make_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
@@ -25,52 +26,33 @@ extern "C" {
 
 pub static MIME_LINE_LENGTH: isize = 76;
 
+/// Return t if OBJECT is a string.
+/// (fn OBJECT)
+#[lisp_fn(name = "stringp", min = "1")]
 fn stringp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_string())
 }
 
-defun!("stringp",
-       Fstringp(object),
-       Sstringp,
-       stringp,
-       1,
-       1,
-       ptr::null(),
-       "Return t if OBJECT is a string.
-
-(fn OBJECT)");
-
+/// Return t if the two args are the same Lisp object.
+/// (fn OBJECT OBJECT)
+#[lisp_fn(name = "eq", min = "2")]
 fn eq(firstObject: LispObject, secondObject: LispObject) -> LispObject {
     LispObject::from_bool(firstObject == secondObject)
 }
 
-defun!("eq",
-       Feq(firstObject, secondObject),
-       Seq,
-       eq,
-       2,
-       2,
-       ptr::null(),
-       "Return t if the two args are the same Lisp object.
-
-(fn OBJECT OBJECT)");
-
+/// Return t if OBJECT is nil, and return nil otherwise.
+/// (fn OBJECT)
+#[lisp_fn(name = "null", min = "1")]
 fn null(object: LispObject) -> LispObject {
     LispObject::from_bool(object == Qnil)
 }
 
-defun!("null",
-       Fnull(object),
-       Snull,
-       null,
-       1,
-       1,
-       ptr::null(),
-       "Return t if OBJECT is nil, and return nil otherwise.
 
-(fn OBJECT)");
-
-
+/// Base64-encode STRING and return the result.
+/// Optional second argument NO-LINE-BREAK means do not break long lines
+/// into shorter lines.
+/// (fn STRING &optional NO-LINE-BREAK)");
+#[lisp_fn(name = "base64-encode-string", min = "1")]
 fn base64_encode_string(string: LispObject, noLineBreak: LispObject) -> LispObject {
     CHECK_STRING(string.to_raw());
 
@@ -104,19 +86,9 @@ fn base64_encode_string(string: LispObject, noLineBreak: LispObject) -> LispObje
     }
 }
 
-defun!("base64-encode-string",
-       Fbase64_encode_string(string, noLineBreak),
-       Sbase64_encode_string,
-       base64_encode_string,
-       1,
-       2,
-       ptr::null(),
-       "Base64-encode STRING and return the result.
-       Optional second argument NO-LINE-BREAK means do not break long lines
-       into shorter lines.
-
-(fn STRING &optional NO-LINE-BREAK)");
-
+/// Base64-decode STRING and return the result.
+/// (fn STRING)
+#[lisp_fn(name = "base64-decode-string", min = "1")]
 fn base64_decode_string(string: LispObject) -> LispObject {
     CHECK_STRING(string.to_raw());
 
@@ -146,30 +118,11 @@ fn base64_decode_string(string: LispObject) -> LispObject {
     }
 }
 
-defun!("base64-decode-string",
-       Fbase64_decode_string(string),
-       Sbase64_decode_string,
-       base64_decode_string,
-       1,
-       1,
-       ptr::null(),
-       "Base64-decode STRING and return the result.
-
-(fn STRING)");
-
+/// Return the number of bytes in STRING.
+/// If STRING is multibyte, this may be greater than the length of STRING.
+/// (fn STRING)
+#[lisp_fn(name = "string-bytes", min = "1")]
 fn string_bytes(string: LispObject) -> LispObject {
     CHECK_STRING(string.to_raw());
     unsafe { LispObject::from_fixnum_unchecked(SBYTES(string) as ::remacs_sys::EmacsInt) }
 }
-
-defun!("string-bytes",
-       Fstring_bytes(string),
-       Sstring_bytes,
-       string_bytes,
-       1,
-       1,
-       ptr::null(),
-       "Return the number of bytes in STRING.
-If STRING is multibyte, this may be greater than the length of STRING.
-
-(fn STRING)");
