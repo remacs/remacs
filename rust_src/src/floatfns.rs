@@ -1,7 +1,6 @@
-use std::ptr;
-
 use lisp::{LispObject, CHECK_TYPE};
 use remacs_sys::{EmacsDouble, Lisp_Object, Qnumberp, Qfloatp};
+use remacs_macros::lisp_fn;
 
 pub fn init_float_syms() {
     unsafe {
@@ -119,23 +118,22 @@ simple_float_op!("ffloor",
                  "Return the largest integer no greater than ARG, as a float.
 (Round towards -inf.)");
 
+/// Return non nil if argument X is a NaN.
+/// (fn X)
+#[lisp_fn(name = "isnan", min = "1")]
 fn isnan(x: LispObject) -> LispObject {
     check_float(x);
     let d = x.to_float().unwrap();
     LispObject::from_bool(d.is_nan())
 }
 
-defun!("isnan",
-       Fisnan(x),
-       Sisnan,
-       isnan,
-       1,
-       1,
-       ptr::null(),
-       "Return non nil if argument X is a NaN.
-
-(fn X)");
-
+/// Return the inverse tangent of the arguments.
+/// If only one argument Y is given, return the inverse tangent of Y.
+/// If two arguments Y and X are given, return the inverse tangent of Y
+/// divided by X, i.e. the angle in radians between the vector (X, Y)
+/// and the x-axis
+/// (fn Y &optional X)");
+#[lisp_fn(name = "atan", min = "1")]
 fn atan(y: LispObject, x: LispObject) -> LispObject {
     let y = extract_float(y.to_raw());
 
@@ -149,21 +147,10 @@ fn atan(y: LispObject, x: LispObject) -> LispObject {
     }
 }
 
-defun!("atan",
-       Fatan(y, x),
-       Satan,
-       atan,
-       1,
-       2,
-       ptr::null(),
-       "Return the inverse tangent of the arguments.
-If only one argument Y is given, return the inverse tangent of Y.
-If two arguments Y and X are given, return the inverse tangent of Y
-divided by X, i.e. the angle in radians between the vector (X, Y)
-and the x-axis
-
-(fn Y &optional X)");
-
+/// Return the natural logarithm of ARG.
+/// If the optional argument BASE is given, return log ARG using that base.
+/// (fn ARG &optional BASE)");
+#[lisp_fn(name = "log", min = "1")]
 fn log(arg: LispObject, base: LispObject) -> LispObject {
     let mut d = extract_float(arg.to_raw());
 
@@ -183,18 +170,11 @@ fn log(arg: LispObject, base: LispObject) -> LispObject {
     LispObject::from_float(d)
 }
 
-defun!("log",
-       Flog(arg, base),
-       Slog,
-       log,
-       1,
-       2,
-       ptr::null(),
-       "Return the natural logarithm of ARG.
-If the optional argument BASE is given, return log ARG using that base.
 
-(fn ARG &optional BASE)");
-
+/// Truncate a floating point number to an integral float value.
+/// Rounds the value toward zero.
+/// (fn ARG)
+#[lisp_fn(name = "ftruncate", min = "1")]
 fn ftruncate(x: LispObject) -> LispObject {
     let d = extract_float(x.to_raw());
     if d > 0.0 {
@@ -204,18 +184,10 @@ fn ftruncate(x: LispObject) -> LispObject {
     }
 }
 
-defun!("ftruncate",
-       Fftruncate(x),
-       Sftruncate,
-       ftruncate,
-       1,
-       1,
-       ptr::null(),
-       "Truncate a floating point number to an integral float value.
-Rounds the value toward zero.
 
-(fn ARG)");
-
+/// Return the floating point number equal to ARG.
+/// (fn ARG)
+#[lisp_fn(name = "float", min = "1")]
 fn float(obj: LispObject) -> LispObject {
     CHECK_TYPE(obj.is_number(),
                LispObject::from_raw(unsafe { Qnumberp }),
@@ -230,14 +202,3 @@ fn float(obj: LispObject) -> LispObject {
         None => unreachable!(),
     }
 }
-
-defun!("float",
-       Ffloat(obj),
-       Sfloat,
-       float,
-       1,
-       1,
-       ptr::null(),
-       "Return the floating point number equal to ARG.
-
-(fn ARG)");
