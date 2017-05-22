@@ -745,8 +745,8 @@ with open('/path/to/some/file/you/want/to/read') as file_1, \\\\
   (python-tests-with-temp-buffer
    "
 super_awful_assignment = some_calculation() and \\\\
-                         another_calculation() and \\\\
-                         some_final_calculation()
+    another_calculation() and \\\\
+    some_final_calculation()
 "
    (python-tests-look-at
     "super_awful_assignment = some_calculation() and \\\\")
@@ -755,10 +755,10 @@ super_awful_assignment = some_calculation() and \\\\
    (python-tests-look-at "another_calculation() and \\\\")
    (should (eq (car (python-indent-context))
                :after-backslash-assignment-continuation))
-   (should (= (python-indent-calculate-indentation) 25))
+   (should (= (python-indent-calculate-indentation) python-indent-offset))
    (python-tests-look-at "some_final_calculation()")
    (should (eq (car (python-indent-context)) :after-backslash))
-   (should (= (python-indent-calculate-indentation) 25))))
+   (should (= (python-indent-calculate-indentation) python-indent-offset))))
 
 (ert-deftest python-indent-after-backslash-5 ()
   "Dotted continuation bizarre example."
