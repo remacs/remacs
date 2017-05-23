@@ -837,7 +837,7 @@ Used in `tramp-make-tramp-file-name'."
 
 (defun tramp-postfix-host-regexp ()
   "Regexp matching delimiter between host names and localnames.
-nDerived from `tramp-postfix-host-format'."
+Derived from `tramp-postfix-host-format'."
   (regexp-quote (tramp-postfix-host-format)))
 
 (defconst tramp-localname-regexp ".*$"
@@ -4396,6 +4396,8 @@ Only works for Bourne-like shells."
 ;; * Use also port to distinguish connections.  This is needed for
 ;;   different hosts sitting behind a single router (distinguished by
 ;;   different port numbers).  (Tzvi Edelman)
+;;   Also needed for different systems serve SSH on different ports of
+;;   the same IP address.  (Bug#27009)
 ;;
 ;; * Refactor code from different handlers.  Start with
 ;;   *-process-file.  One idea is to generalize `tramp-send-command'

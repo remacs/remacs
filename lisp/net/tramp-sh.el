@@ -4546,7 +4546,7 @@ Goes through the list `tramp-inline-compress-commands'."
     ;; host name.
     (let* ((v (car target-alist))
 	   (method (tramp-file-name-method v))
-	   (host (tramp-file-name-host v)))
+	   (host (tramp-file-name-real-host v)))
       (unless
 	  (or
 	   ;; There are multi-hops.
