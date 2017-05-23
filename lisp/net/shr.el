@@ -30,7 +30,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 (eval-when-compile (require 'url))      ;For url-filename's setf handler.
 (require 'browse-url)
 (eval-when-compile (require 'subr-x))
@@ -1790,14 +1790,14 @@ The preference is a float determined from `shr-prefer-media-type'."
 	 (elems (or (dom-attr dom 'shr-suggested-widths)
 		    (shr-make-table dom suggested-widths nil
 				    'shr-suggested-widths)))
-	 (sketch (loop for line in elems
-		       collect (mapcar #'car line)))
-	 (natural (loop for line in elems
-			collect (mapcar #'cdr line)))
+	 (sketch (cl-loop for line in elems
+		          collect (mapcar #'car line)))
+	 (natural (cl-loop for line in elems
+			   collect (mapcar #'cdr line)))
 	 (sketch-widths (shr-table-widths sketch natural suggested-widths)))
     ;; This probably won't work very well.
-    (when (> (+ (loop for width across sketch-widths
-		      summing (1+ width))
+    (when (> (+ (cl-loop for width across sketch-widths
+		         summing (1+ width))
 		shr-indentation shr-table-separator-pixel-width)
 	     (frame-width))
       (setq truncate-lines t))
@@ -2315,13 +2315,14 @@ flags that control whether to collect or render objects."
 (defun shr-dom-max-natural-width (dom max)
   (if (eq (dom-tag dom) 'table)
       (max max (or
-		(loop for line in (dom-attr dom 'shr-suggested-widths)
-		      maximize (+
-				shr-table-separator-length
-				(loop for elem in line
-				      summing
-				      (+ (cdr elem)
-					 (* 2 shr-table-separator-length)))))
+		(cl-loop
+                 for line in (dom-attr dom 'shr-suggested-widths)
+		 maximize (+
+			   shr-table-separator-length
+			   (cl-loop for elem in line
+				    summing
+				    (+ (cdr elem)
+				       (* 2 shr-table-separator-length)))))
 		0))
     (dolist (child (dom-children dom))
       (unless (stringp child)
