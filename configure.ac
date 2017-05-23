@@ -986,6 +986,7 @@ AS_IF([test $gl_gcc_warnings = no],
 
   # More things that clang is unduly picky about.
   if test $emacs_cv_clang = yes; then
+    gl_WARN_ADD([-Wno-missing-braces])
     gl_WARN_ADD([-Wno-tautological-compare])
     gl_WARN_ADD([-Wno-tautological-constant-out-of-range-compare])
   fi
