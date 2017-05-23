@@ -492,7 +492,10 @@ name symbol."
 This is buffer-local in every such buffer.")
 
 (defvar sh-mode-syntax-table-input
-  '((sh . nil))
+  `((sh . nil)
+    ;; Treat ' as punctuation rather than a string delimiter, as RPM
+    ;; files often contain prose with apostrophes.
+    (rpm . (,sh-mode-syntax-table ?\' ".")))
   "Syntax-table used in Shell-Script mode.  See `sh-feature'.")
 
 (defvar sh-mode-map
