@@ -62,6 +62,13 @@ typedef CGFloat EmacsCGFloat;
 typedef float EmacsCGFloat;
 #endif
 
+/* FIXME: It looks as though instancetype will be supported in GNUstep
+   at some point, but I'm not sure what version. */
+#ifdef NS_IMPL_GNUSTEP
+typedef id instancetype;
+typedef int NSWindowStyleMask;
+#endif
+
 /* ==========================================================================
 
    Trace support
@@ -1290,6 +1297,7 @@ extern char gnustep_base_version[];  /* version tracking */
 #define NSWindowStyleMaskMiniaturizable    NSMiniaturizableWindowMask
 #define NSWindowStyleMaskResizable         NSResizableWindowMask
 #define NSWindowStyleMaskTitled            NSTitledWindowMask
+#define NSWindowStyleMaskUtilityWindow     NSUtilityWindowMask
 #define NSAlertStyleCritical               NSCriticalAlertStyle
 #define NSControlSizeRegular               NSRegularControlSize
 #endif

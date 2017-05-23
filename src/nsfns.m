@@ -3046,6 +3046,9 @@ The coordinates X and Y are interpreted in pixels relative to a position
 \(0, 0) of the selected frame's display.  */)
        (Lisp_Object x, Lisp_Object y)
 {
+#ifdef NS_IMPL_COCOA
+  /* GNUstep doesn't support CGWarpMouseCursorPosition, so none of
+     this will work. */
   struct frame *f = SELECTED_FRAME ();
   EmacsView *view = FRAME_NS_VIEW (f);
   NSScreen *screen = [[view window] screen];
@@ -3072,6 +3075,7 @@ The coordinates X and Y are interpreted in pixels relative to a position
 
   CGPoint mouse_pos = CGPointMake(mouse_x, mouse_y);
   CGWarpMouseCursorPosition (mouse_pos);
+#endif /* NS_IMPL_COCOA */
 
   return Qnil;
 }
