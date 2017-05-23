@@ -1302,6 +1302,7 @@ REV is the revision to check out into WORKFILE."
 
 (autoload 'vc-do-async-command "vc-dispatcher")
 (autoload 'log-view-get-marked "log-view")
+(defvar compilation-directory)
 
 (defun vc-hg--pushpull (command prompt &optional obsolete)
   "Run COMMAND (a string; either push or pull) on the current Hg branch.
