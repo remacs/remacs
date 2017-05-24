@@ -66,7 +66,7 @@ typedef float EmacsCGFloat;
    Clang don't support it, and I don't know if GCC supports it at all.
    Should this be tested for in ./configure? */
 #if defined (NS_IMPL_GNUSTEP)
-    || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
+    || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_10
 typedef id instancetype;
 typedef NSUInteger NSWindowStyleMask;
 #endif
