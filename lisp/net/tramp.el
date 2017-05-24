@@ -1394,7 +1394,7 @@ from the default one."
   "Get the connection process to be used for VEC.
 In case a second asynchronous communication has been started, it is different
 from the default one."
-  (get-process (tramp-get-connection-name vec)))
+  (and (tramp-file-name-p vec) (get-process (tramp-get-connection-name vec))))
 
 (defun tramp-set-connection-local-variables (vec)
   "Set connection-local variables in the connection buffer used for VEC.
