@@ -229,7 +229,7 @@ program."
 			  "/dev/null")))
             ;; Remove file junk (Bug#26084).
             (while (re-search-backward
-                    (concat "^" diff-file-junk-re) mark1-end t)
+                    (concat "^\\(?:" diff-file-junk-re "\\)") mark1-end t)
                 (move-marker mark2 (match-beginning 0)))
 	    (goto-char mark2-end)
 	    (if filenames
