@@ -4289,7 +4289,7 @@ sxhash_list (Lisp_Object list, int depth)
 }
 
 
-/* Return a hash for vector VECTOR.  DEPTH is the current depth in
+/* Return a hash for (pseudo)vector VECTOR.  DEPTH is the current depth in
    the Lisp structure.  */
 
 static EMACS_UINT
@@ -4298,7 +4298,7 @@ sxhash_vector (Lisp_Object vec, int depth)
   EMACS_UINT hash = ASIZE (vec);
   int i, n;
 
-  n = min (SXHASH_MAX_LEN, ASIZE (vec));
+  n = min (SXHASH_MAX_LEN, hash & PSEUDOVECTOR_FLAG ? PVSIZE (vec) : hash);
   for (i = 0; i < n; ++i)
     {
       EMACS_UINT hash2 = sxhash (AREF (vec, i), depth + 1);
@@ -4353,11 +4353,11 @@ sxhash (Lisp_Object obj, int depth)
 
       /* This can be everything from a vector to an overlay.  */
     case Lisp_Vectorlike:
-      if (VECTORP (obj))
+      if (VECTORP (obj) || RECORDP (obj))
 	/* According to the CL HyperSpec, two arrays are equal only if
 	   they are `eq', except for strings and bit-vectors.  In
 	   Emacs, this works differently.  We have to compare element
-	   by element.  */
+	   by element.  Same for records.  */
 	hash = sxhash_vector (obj, depth);
       else if (BOOL_VECTOR_P (obj))
 	hash = sxhash_bool_vector (obj);
