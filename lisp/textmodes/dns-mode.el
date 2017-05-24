@@ -147,6 +147,7 @@ manually with \\[dns-mode-soa-increment-serial]."
 (defvar dns-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c\C-s" 'dns-mode-soa-increment-serial)
+    (define-key map "\C-c\C-e" 'dns-mode-ipv6-to-nibbles)
     map)
   "Keymap for DNS master file mode.")
 
@@ -158,7 +159,8 @@ manually with \\[dns-mode-soa-increment-serial]."
 (easy-menu-define dns-mode-menu dns-mode-map
   "DNS Menu."
   '("DNS"
-    ["Increment SOA serial" dns-mode-soa-increment-serial t]))
+    ["Increment SOA serial" dns-mode-soa-increment-serial t]
+    ["Convert IPv6 address to nibbles" dns-mode-ipv6-to-nibbles t]))
 
 ;; Mode.
 
@@ -253,6 +255,101 @@ This function is run from `before-save-hook'."
     (progn (dns-mode-soa-increment-serial)
 	   ;; We return nil in case this is used in write-contents-functions.
 	   nil)))
+
+;;;###autoload
+(defun dns-mode-ipv6-to-nibbles (&optional negate-prefix)
+  "Convert an IPv6 address around or before point.
+Replace the address by its ip6.arpa-representation for use in
+reverse zone files, placing the original address in the kill ring.
+
+The address can be: a complete address (no prefix designator);
+with a normal prefix designator (e.g. /48), in which case only
+the required number of nibbles are output; or with a negative
+prefix designator (e.g. /-112), in which case only the part of
+the address *not* covered by the absolute value of the prefix
+length is output, as a relative address (without \".ip6.arpa.\" at
+the end).  This is useful when $ORIGIN is specified in the zone file.
+
+Optional prefix argument NEGATE-PREFIX negates the value of the
+detected prefix length.
+
+Examples:
+
+2001:db8::12  =>
+2.1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
+
+2001:db8::12/32  =>
+8.b.d.0.1.0.0.2.ip6.arpa.
+
+2001:db8::12/-32  =>
+2.1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0
+
+::42/112 (with prefix argument) =>
+2.4.0.0"
+  (interactive "P")
+  (skip-syntax-backward " ")
+  (skip-syntax-backward "w_.")
+  (re-search-forward "\\([[:xdigit:]:]+\\)\\(/-?[0-9]\\{2,3\\}\\)?")
+  (kill-new (match-string 0))
+  (let ((address (match-string 1))
+        (prefix-length (match-string 2)))
+    (when prefix-length
+      (setq prefix-length (string-to-number (substring prefix-length 1)))
+      (if negate-prefix
+          (setq prefix-length (- prefix-length))))
+    (replace-match
+     (save-match-data
+       (dns-mode-reverse-and-expand-ipv6 address prefix-length)))))
+
+(defun dns-mode-reverse-and-expand-ipv6 (address &optional prefix-length)
+  "Convert an IPv6 address to (parts of) an ip6.arpa nibble format.
+ADDRESS is an IPv6 address in the usual colon-separated
+format, without a prefix designator at the end.
+
+Optional PREFIX-LENGTH is a number whose absolute value is the
+length in bits of the network part of the address.  If nil,
+return an absolute address representing the full IPv6 address.
+If positive, return an absolute address representing the network
+prefix indicated.  If negative, return a relative address
+representing the host parts of the address with respect to the
+indicated network prefix.
+
+See `dns-mode-ipv6-to-nibbles' for examples."
+  (let* ((chunks (split-string address ":"))
+         (prefix-length-nibbles (if prefix-length
+                                    (ceiling (abs prefix-length) 4)
+                                  32))
+         (filler-chunks (- 8 (length (remove "" chunks))))
+         (expanded-address
+          (apply #'concat
+                 (cl-loop with filler-done = nil
+                          for chunk in chunks
+                          if (and (not filler-done)
+                                  (string= "" chunk))
+                          append (prog1
+                                     (cl-loop repeat filler-chunks
+                                              collect "0000")
+                                   (setq filler-done t))
+                          else
+                          if (not (string= "" chunk))
+                          collect (format "%04x"
+                                          (string-to-number chunk 16)))))
+         (rev-address-nibbles
+          (nreverse (if (and prefix-length
+                             (cl-minusp prefix-length))
+                        (substring expanded-address prefix-length-nibbles)
+                      (substring expanded-address 0 prefix-length-nibbles)))))
+    (with-temp-buffer
+      (cl-loop for char across rev-address-nibbles
+               do
+               (insert char)
+               (insert "."))
+      (if (and prefix-length
+               (cl-minusp prefix-length))
+          (delete-char -1)
+        (insert "ip6.arpa."))
+      (insert " ")
+      (buffer-string))))
 
 (provide 'dns-mode)
 
