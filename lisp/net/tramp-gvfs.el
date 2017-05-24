@@ -807,7 +807,8 @@ file names."
       ;; If there is a default location, expand tilde.
       (when (string-match "\\`\\(~\\)\\(/\\|\\'\\)" localname)
 	(save-match-data
-	  (tramp-gvfs-maybe-open-connection (vector method user host "/" hop)))
+	  (tramp-gvfs-maybe-open-connection
+	   (tramp-make-tramp-file-name method user domain host port "/" hop)))
 	(setq localname
 	      (replace-match
 	       (tramp-get-connection-property v "default-location" "~")
@@ -831,7 +832,7 @@ file names."
       ;; No tilde characters in file name, do normal
       ;; `expand-file-name' (this does "/./" and "/../").
       (tramp-make-tramp-file-name
-       method user host
+       method user domain host port
        (tramp-run-real-handler
 	'expand-file-name (list localname))))))
 
@@ -1249,7 +1250,7 @@ file-notify events."
 		    (concat (match-string 2 user) ";" (match-string 1 user))))
 	    (url-parse-make-urlobj
 	     method (and user (url-hexify-string user)) nil
-	     (tramp-file-name-real-host v) (tramp-file-name-port v)
+	     (tramp-file-name-host v) (tramp-file-name-port v)
 	     (and localname (url-hexify-string localname)) nil nil t))
 	(url-parse-make-urlobj
 	 "file" nil nil nil nil
@@ -1329,12 +1330,12 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	       t ;; password handled.
 	       nil ;; no abort of D-Bus.
 	       password
-	       (tramp-file-name-real-user l)
+	       (tramp-file-name-user l)
 	       domain
 	       nil ;; not anonymous.
 	       0) ;; no password save.
 	    ;; No password provided.
-	    (list nil t "" (tramp-file-name-real-user l) domain nil 0)))
+	    (list nil t "" (tramp-file-name-user l) domain nil 0)))
 
       ;; When QUIT is raised, we shall return this information to D-Bus.
       (quit (list nil t "" "" "" nil 0)))))
@@ -1420,7 +1421,7 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	(unless (zerop (length port))
 	  (setq host (concat host tramp-prefix-port-format port)))
 	(with-parsed-tramp-file-name
-	    (tramp-make-tramp-file-name method user host "") nil
+	    (tramp-make-tramp-file-name method user domain host port "") nil
 	  (tramp-message
 	   v 6 "%s %s"
 	   signal-name (tramp-gvfs-stringify-dbus-message mount-info))
@@ -1533,9 +1534,9 @@ It was \"a(say)\", but has changed to \"a{sv})\"."
 (defun tramp-gvfs-mount-spec (vec)
   "Return a mount-spec for \"org.gtk.vfs.MountTracker.mountLocation\"."
   (let* ((method (tramp-file-name-method vec))
-	 (user (tramp-file-name-real-user vec))
+	 (user (tramp-file-name-user vec))
 	 (domain (tramp-file-name-domain vec))
-	 (host (tramp-file-name-real-host vec))
+	 (host (tramp-file-name-host vec))
 	 (port (tramp-file-name-port vec))
 	 (localname (tramp-file-name-unquote-localname vec))
 	 (share (when (string-match "^/?\\([^/]+\\)" localname)
@@ -1591,7 +1592,9 @@ ID-FORMAT valid values are `string' and `integer'."
   (with-tramp-connection-property vec (format "uid-%s" id-format)
     (let ((method (tramp-file-name-method vec))
 	  (user (tramp-file-name-user vec))
+	  (domain (tramp-file-name-domain vec))
 	  (host (tramp-file-name-host vec))
+	  (port (tramp-file-name-port vec))
 	  (localname
 	   (tramp-get-connection-property vec "default-location" nil)))
       (cond
@@ -1599,7 +1602,8 @@ ID-FORMAT valid values are `string' and `integer'."
        (localname
 	(tramp-compat-file-attribute-user-id
 	 (file-attributes
-	  (tramp-make-tramp-file-name method user host localname) id-format)))
+	  (tramp-make-tramp-file-name method user domain host port localname)
+	  id-format)))
        ((equal id-format 'integer) tramp-unknown-id-integer)
        ((equal id-format 'string) tramp-unknown-id-string)))))
 
@@ -1609,14 +1613,17 @@ ID-FORMAT valid values are `string' and `integer'."
   (with-tramp-connection-property vec (format "gid-%s" id-format)
     (let ((method (tramp-file-name-method vec))
 	  (user (tramp-file-name-user vec))
+	  (domain (tramp-file-name-domain vec))
 	  (host (tramp-file-name-host vec))
+	  (port (tramp-file-name-port vec))
 	  (localname
 	   (tramp-get-connection-property vec "default-location" nil)))
       (cond
        (localname
 	(tramp-compat-file-attribute-group-id
 	 (file-attributes
-	  (tramp-make-tramp-file-name method user host localname) id-format)))
+	  (tramp-make-tramp-file-name method user domain host port localname)
+	  id-format)))
        ((equal id-format 'integer) tramp-unknown-id-integer)
        ((equal id-format 'string) tramp-unknown-id-string)))))
 
@@ -1644,11 +1651,13 @@ connection if a previous connection has died for some reason."
   (unless (tramp-gvfs-connection-mounted-p vec)
     (let* ((method (tramp-file-name-method vec))
 	   (user (tramp-file-name-user vec))
+	   (domain (tramp-file-name-domain vec))
 	   (host (tramp-file-name-host vec))
+	   (port (tramp-file-name-port vec))
 	   (localname (tramp-file-name-unquote-localname vec))
 	   (object-path
 	    (tramp-gvfs-object-path
-	     (tramp-make-tramp-file-name method user host ""))))
+	     (tramp-make-tramp-file-name method user domain host port ""))))
 
       (when (and (string-equal method "afp")
 		 (string-equal localname "/"))

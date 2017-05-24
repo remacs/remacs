@@ -85,7 +85,9 @@ When called interactively, a Tramp connection has to be selected."
 	      (tramp-make-tramp-file-name
 	       (tramp-file-name-method x)
 	       (tramp-file-name-user x)
+	       (tramp-file-name-domain x)
 	       (tramp-file-name-host x)
+	       (tramp-file-name-port x)
 	       (tramp-file-name-localname x)))
 	    (tramp-list-connections)))
 	  name)

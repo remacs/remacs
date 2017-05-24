@@ -1122,7 +1122,7 @@ target of the symlink differ."
    "%s%s"
    (with-parsed-tramp-file-name (expand-file-name filename) nil
      (tramp-make-tramp-file-name
-      method user host
+      method user domain host port
       (with-tramp-file-property v localname "file-truename"
 	(let ((result nil)			; result steps in reverse order
 	      (quoted (tramp-compat-file-name-quoted-p localname))
@@ -1174,7 +1174,7 @@ target of the symlink differ."
 			(tramp-compat-file-attribute-type
 			 (file-attributes
 			  (tramp-make-tramp-file-name
-			   method user host
+			   method user domain host port
 			   (mapconcat 'identity
 				      (append '("")
 					      (reverse result)
@@ -2335,7 +2335,7 @@ The method used must be an out-of-band method."
   (let* ((t1 (tramp-tramp-file-p filename))
 	 (t2 (tramp-tramp-file-p newname))
 	 (orig-vec (tramp-dissect-file-name (if t1 filename newname)))
-	 copy-program copy-args copy-env copy-keep-date port listener spec
+	 copy-program copy-args copy-env copy-keep-date listener spec
 	 options source target remote-copy-program remote-copy-args)
 
     (with-parsed-tramp-file-name (if t1 filename newname) nil
@@ -2368,7 +2368,7 @@ The method used must be an out-of-band method."
 	      tramp-current-user (or (tramp-file-name-user v)
 				     (tramp-get-connection-property
 				      v "login-as" nil))
-	      tramp-current-host (tramp-file-name-real-host v))
+	      tramp-current-host (tramp-file-name-host v))
 
 	;; Check which ones of source and target are Tramp files.
 	(setq source (funcall
@@ -2382,10 +2382,6 @@ The method used must be an out-of-band method."
 	      target (if t2
 			 (tramp-make-copy-program-file-name v)
 		       (tramp-unquote-shell-quote-argument newname)))
-
-	;; Check for host and port number.
-	(setq host (tramp-file-name-real-host v)
-	      port (tramp-file-name-port v))
 
 	;; Check for user.  There might be an interactive setting.
 	(setq user (or (tramp-file-name-user v)
@@ -2809,7 +2805,7 @@ the result will be a local, non-Tramp, file name."
       ;; be problems with UNC shares or Cygwin mounts.
       (let ((default-directory (tramp-compat-temporary-file-directory)))
 	(tramp-make-tramp-file-name
-	 method user host
+	 method user domain host port
 	 (tramp-drop-volume-letter
 	  (tramp-run-real-handler
 	   'expand-file-name (list localname)))
@@ -2861,7 +2857,9 @@ the result will be a local, non-Tramp, file name."
 			   (tramp-make-tramp-file-name
 			    (tramp-file-name-method v)
 			    (tramp-file-name-user v)
+			    (tramp-file-name-domain v)
 			    (tramp-file-name-host v)
+			    (tramp-file-name-port v)
 			    (tramp-file-name-localname v))
 			   tramp-initial-end-of-output))
 	   ;; We use as environment the difference to toplevel
@@ -2999,7 +2997,8 @@ the result will be a local, non-Tramp, file name."
 	    (setq input (with-parsed-tramp-file-name infile nil localname))
 	  ;; INFILE must be copied to remote host.
 	  (setq input (tramp-make-tramp-temp-file v)
-		tmpinput (tramp-make-tramp-file-name method user host input))
+		tmpinput
+		(tramp-make-tramp-file-name method user domain host port input))
 	  (copy-file infile tmpinput t)))
       (when input (setq command (format "%s <%s" command input)))
 
@@ -3033,7 +3032,7 @@ the result will be a local, non-Tramp, file name."
 	    ;; file must be deleted after execution.
 	    (setq stderr (tramp-make-tramp-temp-file v)
 		  tmpstderr (tramp-make-tramp-file-name
-			     method user host stderr))))
+			     method user domain host port stderr))))
 	 ;; stderr to be discarded.
 	 ((null (cadr destination))
 	  (setq stderr "/dev/null"))))
@@ -4546,7 +4545,7 @@ Goes through the list `tramp-inline-compress-commands'."
     ;; host name.
     (let* ((v (car target-alist))
 	   (method (tramp-file-name-method v))
-	   (host (tramp-file-name-real-host v)))
+	   (host (tramp-file-name-host v)))
       (unless
 	  (or
 	   ;; There are multi-hops.
@@ -4623,8 +4622,8 @@ connection if a previous connection has died for some reason."
     ;; If Tramp opens the same connection within a short time frame,
     ;; there is a problem.  We shall signal this.
     (unless (or (tramp-compat-process-live-p p)
-		(not (equal (butlast (append vec nil) 2)
-			    (car tramp-current-connection)))
+		(not (tramp-file-name-equal-p
+		      vec (car tramp-current-connection)))
 		(> (tramp-time-diff
 		    (current-time) (cdr tramp-current-connection))
 		   (or tramp-connection-min-time-diff 0)))
@@ -4721,8 +4720,7 @@ connection if a previous connection has died for some reason."
 		(set-process-sentinel p 'tramp-process-sentinel)
 		(process-put p 'adjust-window-size-function 'ignore)
 		(set-process-query-on-exit-flag p nil)
-		(setq tramp-current-connection
-		      (cons (butlast (append vec nil) 2) (current-time))
+		(setq tramp-current-connection (cons vec (current-time))
 		      tramp-current-host (system-name))
 
 		(tramp-message
@@ -5104,7 +5102,7 @@ Return ATTR."
   "Create a file name suitable for `scp', `pscp', or `nc' and workalikes."
   (let ((method (tramp-file-name-method vec))
 	(user (tramp-file-name-user vec))
-	(host (tramp-file-name-real-host vec))
+	(host (tramp-file-name-host vec))
 	(localname
 	 (directory-file-name (tramp-file-name-unquote-localname vec))))
     (when (string-match tramp-ipv6-regexp host)
@@ -5218,7 +5216,9 @@ Nonexistent directories are removed from spec."
 	    (tramp-make-tramp-file-name
 	     (tramp-file-name-method vec)
 	     (tramp-file-name-user vec)
+	     (tramp-file-name-domain vec)
 	     (tramp-file-name-host vec)
+	     (tramp-file-name-port vec)
 	     x))
 	   x))
 	remote-path)))))
@@ -5636,14 +5636,14 @@ function cell is returned to be applied on a buffer."
 		 (let ((coding-system-for-write 'binary)
 		       (coding-system-for-read 'binary))
 		   (apply
-		    'tramp-call-process-region ,vec (point-min) (point-max)
+		    'tramp-call-process-region ',vec (point-min) (point-max)
 		    (car (split-string ,compress)) t t nil
 		    (cdr (split-string ,compress)))))
 	    `(lambda (beg end)
 	       (let ((coding-system-for-write 'binary)
 		     (coding-system-for-read 'binary))
 		 (apply
-		  'tramp-call-process-region ,vec beg end
+		  'tramp-call-process-region ',vec beg end
 		  (car (split-string ,compress)) t t nil
 		  (cdr (split-string ,compress))))
 	       (,coding (point-min) (point-max)))))

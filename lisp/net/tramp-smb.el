@@ -53,12 +53,6 @@
       ;; Another guess.  We might implement a better check later on.
       (tramp-case-insensitive t))))
 
-;; Add a default for `tramp-default-method-alist'. Rule: If there is
-;; a domain in USER, it must be the SMB method.
-;;;###tramp-autoload
-(add-to-list 'tramp-default-method-alist
-	     `(nil ,tramp-prefix-domain-regexp ,tramp-smb-method))
-
 ;; Add a default for `tramp-default-user-alist'. Rule: For the SMB method,
 ;; the anonymous user is chosen.
 ;;;###tramp-autoload
@@ -449,15 +443,11 @@ pass to the OPERATION."
 	    (if (not (file-directory-p newname))
 		(make-directory newname parents))
 
-	    (setq tramp-current-method (tramp-file-name-method v)
-		  tramp-current-user (tramp-file-name-user v)
-		  tramp-current-host (tramp-file-name-real-host v))
+	    (setq tramp-current-method method
+		  tramp-current-user user
+		  tramp-current-host host)
 
-	    (let* ((real-user (tramp-file-name-real-user v))
-		   (real-host (tramp-file-name-real-host v))
-		   (domain    (tramp-file-name-domain v))
-		   (port      (tramp-file-name-port v))
-		   (share     (tramp-smb-get-share v))
+	    (let* ((share (tramp-smb-get-share v))
 		   (localname (file-name-as-directory
 			       (replace-regexp-in-string
 				"\\\\" "/" (tramp-smb-get-localname v))))
@@ -465,10 +455,10 @@ pass to the OPERATION."
 			       (expand-file-name
 				tramp-temp-name-prefix
 				(tramp-compat-temporary-file-directory))))
-		   (args      (list (concat "//" real-host "/" share) "-E")))
+		   (args      (list (concat "//" host "/" share) "-E")))
 
-	      (if (not (zerop (length real-user)))
-		  (setq args (append args (list "-U" real-user)))
+	      (if (not (zerop (length user)))
+		  (setq args (append args (list "-U" user)))
 		(setq args (append args (list "-N"))))
 
 	      (when domain (setq args (append args (list "-W" domain))))
@@ -708,7 +698,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	(setq localname
 	      (replace-match
 	       (if (zerop (length (match-string 1 localname)))
-		   (tramp-file-name-real-user v)
+		   user
 		 (match-string 1 localname))
 	       nil nil localname)))
       ;; Make the file name absolute.
@@ -717,7 +707,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
       ;; No tilde characters in file name, do normal
       ;; `expand-file-name' (this does "/./" and "/../").
       (tramp-make-tramp-file-name
-       method user host
+       method user domain host port
        (tramp-run-real-handler 'expand-file-name (list localname))))))
 
 (defun tramp-smb-action-get-acl (proc vec)
@@ -744,21 +734,17 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
     (with-tramp-file-property v localname "file-acl"
       (when (executable-find tramp-smb-acl-program)
 
-	(setq tramp-current-method (tramp-file-name-method v)
-	      tramp-current-user (tramp-file-name-user v)
-	      tramp-current-host (tramp-file-name-real-host v))
+	(setq tramp-current-method method
+	      tramp-current-user user
+	      tramp-current-host host)
 
-	(let* ((real-user (tramp-file-name-real-user v))
-	       (real-host (tramp-file-name-real-host v))
-	       (domain    (tramp-file-name-domain v))
-	       (port      (tramp-file-name-port v))
-	       (share     (tramp-smb-get-share v))
+	(let* ((share     (tramp-smb-get-share v))
 	       (localname (replace-regexp-in-string
 			   "\\\\" "/" (tramp-smb-get-localname v)))
-	       (args      (list (concat "//" real-host "/" share) "-E")))
+	       (args      (list (concat "//" host "/" share) "-E")))
 
-	  (if (not (zerop (length real-user)))
-	      (setq args (append args (list "-U" real-user)))
+	  (if (not (zerop (length user)))
+	      (setq args (append args (list "-U" user)))
 	    (setq args (append args (list "-N"))))
 
 	  (when domain (setq args (append args (list "-W" domain))))
@@ -1179,7 +1165,8 @@ target of the symlink differ."
 	    (setq input (with-parsed-tramp-file-name infile nil localname))
 	  ;; INFILE must be copied to remote host.
 	  (setq input (tramp-make-tramp-temp-file v)
-		tmpinput (tramp-make-tramp-file-name method user host input))
+		tmpinput
+		(tramp-make-tramp-file-name method user domain host port input))
 	  (copy-file infile tmpinput t))
 	;; Transform input into a filename powershell does understand.
 	(setq input (format "//%s%s" host input)))
@@ -1337,24 +1324,20 @@ target of the symlink differ."
   (ignore-errors
     (with-parsed-tramp-file-name filename nil
       (when (and (stringp acl-string) (executable-find tramp-smb-acl-program))
-	(setq tramp-current-method (tramp-file-name-method v)
-	      tramp-current-user (tramp-file-name-user v)
-	      tramp-current-host (tramp-file-name-real-host v))
+	(setq tramp-current-method method
+	      tramp-current-user user
+	      tramp-current-host host)
 	(tramp-set-file-property v localname "file-acl" 'undef)
 
-	(let* ((real-user (tramp-file-name-real-user v))
-	       (real-host (tramp-file-name-real-host v))
-	       (domain    (tramp-file-name-domain v))
-	       (port      (tramp-file-name-port v))
-	       (share     (tramp-smb-get-share v))
+	(let* ((share     (tramp-smb-get-share v))
 	       (localname (replace-regexp-in-string
 			   "\\\\" "/" (tramp-smb-get-localname v)))
-	       (args      (list (concat "//" real-host "/" share) "-E" "-S"
+	       (args      (list (concat "//" host "/" share) "-E" "-S"
 				(replace-regexp-in-string
 				 "\n" "," acl-string))))
 
-	  (if (not (zerop (length real-user)))
-	      (setq args (append args (list "-U" real-user)))
+	  (if (not (zerop (length user)))
+	      (setq args (append args (list "-U" user)))
 	    (setq args (append args (list "-N"))))
 
 	  (when domain (setq args (append args (list "-W" domain))))
@@ -1845,24 +1828,22 @@ If ARGUMENT is non-nil, use it as argument for
 	(when buf (with-current-buffer buf (erase-buffer)))
 	(when (and p (processp p)) (delete-process p))
 
-	(let* ((user      (tramp-file-name-user vec))
-	       (host      (tramp-file-name-host vec))
-	       (real-user (tramp-file-name-real-user vec))
-	       (real-host (tramp-file-name-real-host vec))
-	       (domain    (tramp-file-name-domain vec))
-	       (port      (tramp-file-name-port vec))
+	(let* ((user   (tramp-file-name-user vec))
+	       (host   (tramp-file-name-host vec))
+	       (domain (tramp-file-name-domain vec))
+	       (port   (tramp-file-name-port vec))
 	       args)
 
 	  (cond
 	   (argument
-	    (setq args (list (concat "//" real-host))))
+	    (setq args (list (concat "//" host))))
 	   (share
-	    (setq args (list (concat "//" real-host "/" share))))
+	    (setq args (list (concat "//" host "/" share))))
 	   (t
-	    (setq args (list "-g" "-L" real-host ))))
+	    (setq args (list "-g" "-L" host ))))
 
-	  (if (not (zerop (length real-user)))
-	      (setq args (append args (list "-U" real-user)))
+	  (if (not (zerop (length user)))
+	      (setq args (append args (list "-U" user)))
 	    (setq args (append args (list "-N"))))
 
 	  (when domain (setq args (append args (list "-W" domain))))

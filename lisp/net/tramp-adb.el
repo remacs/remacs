@@ -199,8 +199,9 @@ pass to the OPERATION."
       ;; That's why we use `start-process'.
       (let ((p (start-process
 		tramp-adb-program (current-buffer) tramp-adb-program "devices"))
-	    (v (vector tramp-adb-method tramp-current-user
-		       tramp-current-host nil nil))
+	    (v (tramp-make-tramp-file-name
+		tramp-adb-method tramp-current-user nil
+		tramp-current-host nil nil nil))
 	    result)
 	(tramp-message v 6 "%s" (mapconcat 'identity (process-command p) " "))
 	(process-put p 'adjust-window-size-function 'ignore)
@@ -242,7 +243,7 @@ pass to the OPERATION."
       ;; be problems with UNC shares or Cygwin mounts.
       (let ((default-directory (tramp-compat-temporary-file-directory)))
 	(tramp-make-tramp-file-name
-	 method user host
+	 method user domain host port
 	 (tramp-drop-volume-letter
 	  (tramp-run-real-handler
 	   'expand-file-name (list localname))))))))
@@ -261,7 +262,7 @@ pass to the OPERATION."
    "%s%s"
    (with-parsed-tramp-file-name (expand-file-name filename) nil
      (tramp-make-tramp-file-name
-      method user host
+      method user domain host port
       (with-tramp-file-property v localname "file-truename"
 	(let ((result nil))			; result steps in reverse order
 	  (tramp-message v 4 "Finding true name for `%s'" filename)
@@ -289,7 +290,7 @@ pass to the OPERATION."
 		    (tramp-compat-file-attribute-type
 		     (file-attributes
 		      (tramp-make-tramp-file-name
-		       method user host
+		       method user domain host port
 		       (mapconcat 'identity
 				  (append '("")
 					  (reverse result)
@@ -687,7 +688,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	newname (expand-file-name newname))
 
   (if (file-directory-p filename)
-      (tramp-file-name-handler 'copy-directory filename newname keep-date t)
+      (copy-directory filename newname keep-date t)
 
     (let ((t1 (tramp-tramp-file-p filename))
 	  (t2 (tramp-tramp-file-p newname)))
@@ -815,7 +816,8 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	    (setq input (with-parsed-tramp-file-name infile nil localname))
 	  ;; INFILE must be copied to remote host.
 	  (setq input (tramp-make-tramp-temp-file v)
-		tmpinput (tramp-make-tramp-file-name method user host input))
+		tmpinput (tramp-make-tramp-file-name
+			  method user domain host port input))
 	  (copy-file infile tmpinput t)))
       (when input (setq command (format "%s <%s" command input)))
 
@@ -849,7 +851,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	    ;; file must be deleted after execution.
 	    (setq stderr (tramp-make-tramp-temp-file v)
 		  tmpstderr (tramp-make-tramp-file-name
-			     method user host stderr))))
+			     method user domain host port stderr))))
 	 ;; stderr to be discarded.
 	 ((null (cadr destination))
 	  (setq stderr "/dev/null"))))
@@ -1199,8 +1201,7 @@ connection if a previous connection has died for some reason."
          (device (tramp-adb-get-device vec)))
 
     ;; Set variables for proper tracing in `tramp-adb-parse-device-names'.
-    (setq tramp-current-method (tramp-file-name-method vec)
-	  tramp-current-user   (tramp-file-name-user vec)
+    (setq tramp-current-user   (tramp-file-name-user vec)
 	  tramp-current-host   (tramp-file-name-host vec))
 
     ;; Maybe we know already that "su" is not supported.  We cannot
