@@ -2336,6 +2336,8 @@ traverse an element tree."
         (kill-buffer)
         (mm-destroy-part mime-part)))))
 
+(defvar url-http-response-status)
+
 (defun soap-fetch-xml-from-url (url wsdl)
   "Load an XML document from URL and return it.
 The previously parsed URL is read from WSDL."
@@ -2349,7 +2351,6 @@ The previously parsed URL is read from WSDL."
     (setf (soap-wsdl-current-file wsdl) current-file)
     (let ((buffer (url-retrieve-synchronously current-file)))
       (with-current-buffer buffer
-        (declare (special url-http-response-status))
         (if (> url-http-response-status 299)
             (error "Error retrieving WSDL: %s" url-http-response-status))
         (soap-parse-server-response)))))
@@ -3073,7 +3074,6 @@ OPERATION-NAME and PARAMETERS are as described in `soap-invoke'."
                        (soap-port-service-url port))))
           (condition-case err
               (with-current-buffer buffer
-                (declare (special url-http-response-status))
                 (if (null url-http-response-status)
                     (error "No HTTP response from server"))
                 (if (and soap-debug (> url-http-response-status 299))
