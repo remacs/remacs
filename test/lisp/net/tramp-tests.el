@@ -1510,7 +1510,7 @@ handled properly.  BODY shall not contain a timeout."
 (ert-deftest tramp-test03-file-name-defaults ()
   "Check default values for some methods."
   ;; Default values in tramp-adb.el.
-  (should (string-equal (file-remote-p "/adb::" 'host) ""))
+  (should (string-equal (file-remote-p "/adb::" 'host) nil))
   ;; Default values in tramp-ftp.el.
   (should (string-equal (file-remote-p "/-:ftp.host:" 'method) "ftp"))
   (dolist (u '("ftp" "anonymous"))
@@ -1529,7 +1529,6 @@ handled properly.  BODY shall not contain a timeout."
     (should
      (string-equal (file-remote-p (format "/%s::" m) 'user) (user-login-name))))
   ;; Default values in tramp-smb.el.
-  (should (string-equal (file-remote-p "/-:user%domain@host:" 'method) "smb"))
   (should (string-equal (file-remote-p "/smb::" 'user) nil)))
 
 (ert-deftest tramp-test04-substitute-in-file-name ()
@@ -2926,8 +2925,6 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 ;; This test is inspired by Bug#27009.
 (ert-deftest tramp-test29-environment-variables-and-port-numbers ()
   "Check that two connections with separate ports are different."
-  ;; Mark as failed until bug has been fixed.
-  :expected-result :failed
   (skip-unless (tramp--test-enabled))
   ;; We test it only for the mock-up connection; otherwise there might
   ;; be problems with the used ports.
@@ -2938,26 +2935,31 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
      "mock" (file-remote-p tramp-test-temporary-file-directory 'method))))
 
   ;; We force a reconnect, in order to have a clean environment.
-  (dolist (dir
-	   `(,tramp-test-temporary-file-directory
-	     "/mock:localhost#11111:" "/mock:localhost#22222:"))
+  (dolist (dir `(,tramp-test-temporary-file-directory
+		 "/mock:localhost#11111:" "/mock:localhost#22222:"))
     (tramp-cleanup-connection
      (tramp-dissect-file-name dir) 'keep-debug 'keep-password))
 
-  (dolist (port '(11111 22222))
-    (let* ((default-directory
-	     (format "/mock:localhost#%d:%s" port temporary-file-directory))
-	   (shell-file-name "/bin/sh")
-	   (envvar (concat "VAR_" (upcase (md5 (current-time-string)))))
-	   ;; We cannot use `process-environment', because this would
-	   ;; be applied in `process-file'.
-	   (tramp-remote-process-environment
-	    (cons
-	     (format "%s=%d" envvar port) tramp-remote-process-environment)))
-      (should
-       (string-equal
-	(number-to-string port)
-	(shell-command-to-string (format "echo -n $%s" envvar)))))))
+  (unwind-protect
+      (dolist (port '(11111 22222))
+	(let* ((default-directory
+		 (format "/mock:localhost#%d:%s" port temporary-file-directory))
+	       (shell-file-name "/bin/sh")
+	       (envvar (concat "VAR_" (upcase (md5 (current-time-string)))))
+	       ;; We cannot use `process-environment', because this
+	       ;; would be applied in `process-file'.
+	       (tramp-remote-process-environment
+		(cons
+		 (format "%s=%d" envvar port)
+		 tramp-remote-process-environment)))
+	  (should
+	   (string-equal
+	    (number-to-string port)
+	    (shell-command-to-string (format "echo -n $%s" envvar))))))
+
+    ;; Cleanup.
+    (dolist (dir '("/mock:localhost#11111:" "/mock:localhost#22222:"))
+      (tramp-cleanup-connection (tramp-dissect-file-name dir)))))
 
 ;; The functions were introduced in Emacs 26.1.
 (ert-deftest tramp-test30-explicit-shell-file-name ()
