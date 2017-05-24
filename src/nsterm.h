@@ -62,11 +62,13 @@ typedef CGFloat EmacsCGFloat;
 typedef float EmacsCGFloat;
 #endif
 
-/* FIXME: It looks as though instancetype will be supported in GNUstep
-   at some point, but I'm not sure what version. */
-#ifdef NS_IMPL_GNUSTEP
+/* FIXME: instancetype is a language built-in, but older versions of
+   Clang don't support it, and I don't know if GCC supports it at all.
+   Should this be tested for in ./configure? */
+#if defined (NS_IMPL_GNUSTEP)
+    || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
 typedef id instancetype;
-typedef int NSWindowStyleMask;
+typedef NSUInteger NSWindowStyleMask;
 #endif
 
 /* ==========================================================================
