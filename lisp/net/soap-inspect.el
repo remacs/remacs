@@ -296,8 +296,8 @@ entire WSDL can be inspected."
   (pp (soap-sample-value element) (current-buffer)))
 
 (defun soap-inspect-xs-attribute (attribute)
-  "Insert information about ATTRIBUTE, a soap-xs-attribute, in
-the current buffer."
+  "Insert information about ATTRIBUTE in the current buffer.
+ATTRIBUTE is a soap-xs-attribute."
   (insert "Attribute: " (soap-element-fq-name attribute))
   (insert "\nType: ")
   (soap-insert-describe-button (soap-xs-attribute-type attribute))
@@ -305,8 +305,8 @@ the current buffer."
   (pp (soap-sample-value attribute) (current-buffer)))
 
 (defun soap-inspect-xs-attribute-group (attribute-group)
-  "Insert information about ATTRIBUTE-GROUP, a
-soap-xs-attribute-group, in the current buffer."
+  "Insert information about ATTRIBUTE-GROUP in the current buffer.
+ATTRIBUTE is a soap-xs-attribute-group."
   (insert "Attribute group: " (soap-element-fq-name attribute-group))
   (insert "\nSample values:\n")
   (pp (soap-sample-value attribute-group) (current-buffer)))
