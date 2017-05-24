@@ -9,7 +9,7 @@
 ;; Keywords: soap, web-services, comm, hypermedia
 ;; Package: soap-client
 ;; Homepage: https://github.com/alex-hhh/emacs-soap-client
-;; Package-Requires: ((cl-lib "0.5"))
+;; Package-Requires: ((cl-lib "0.6.1"))
 
 ;; This file is part of GNU Emacs.
 
