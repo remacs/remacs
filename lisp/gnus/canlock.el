@@ -72,8 +72,7 @@ buffer does not look like a news message."
 
 (defun canlock-sha1 (message)
   "Make a SHA-1 digest of MESSAGE as a unibyte string of length 20 bytes."
-  (let (sha1-maximum-internal-length)
-    (sha1 message nil nil 'binary)))
+  (sha1 message nil nil 'binary))
 
 (defun canlock-make-cancel-key (message-id password)
   "Make a Cancel-Key header."
@@ -87,10 +86,7 @@ buffer does not look like a news message."
 			   (char-to-string (logxor 92 byte)))
 			 password "")))
     (base64-encode-string
-     (canlock-sha1
-      (concat opad
-	      (canlock-sha1
-	       (concat ipad (string-as-unibyte message-id))))))))
+     (canlock-sha1 (concat opad (canlock-sha1 (concat ipad message-id)))))))
 
 (defun canlock-narrow-to-header ()
   "Narrow the buffer to the head of the message."
