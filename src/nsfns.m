@@ -2729,8 +2729,6 @@ compute_tip_xy (struct frame *f,
                 int *root_y)
 {
   Lisp_Object left, top, right, bottom;
-  EmacsView *view = FRAME_NS_VIEW (f);
-  struct ns_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
   NSPoint pt;
   NSScreen *screen;
 
@@ -2742,22 +2740,7 @@ compute_tip_xy (struct frame *f,
 
   if ((!INTEGERP (left) && !INTEGERP (right))
       || (!INTEGERP (top) && !INTEGERP (bottom)))
-    {
-      pt.x = dpyinfo->last_mouse_motion_x;
-      pt.y = dpyinfo->last_mouse_motion_y;
-      /* Convert to screen coordinates */
-      pt = [view convertPoint: pt toView: nil];
-#if !defined (NS_IMPL_COCOA) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
-      pt = [[view window] convertBaseToScreen: pt];
-#else
-      {
-        NSRect r = NSMakeRect (pt.x, pt.y, 0, 0);
-        r = [[view window] convertRectToScreen: r];
-        pt.x = r.origin.x;
-        pt.y = r.origin.y;
-      }
-#endif
-    }
+    pt = [NSEvent mouseLocation];
   else
     {
       /* Absolute coordinates.  */
