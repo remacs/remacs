@@ -14,7 +14,7 @@ fn max_char() -> LispObject {
 
 /// Nonzero iff X is a character.
 pub fn CHARACTERP(x: LispObject) -> bool {
-    lisp::NATNUMP(x) && lisp::XFASTINT(x) <= MAX_CHAR
+    x.is_natnum() && lisp::XFASTINT(x) <= MAX_CHAR
 }
 
 fn characterp(object: LispObject, _ignore: LispObject) -> LispObject {
