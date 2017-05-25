@@ -16,7 +16,8 @@ use marker::{LispMarker, marker_position};
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, Lisp_Object, EMACS_INT_MAX, EMACS_INT_SIZE,
                  EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
-                 Qnumber_or_marker_p, Qt, make_float, Lisp_String, STRING_BYTES};
+                 Qnumber_or_marker_p, Qt, make_float, Lisp_String, STRING_BYTES, Qlistp,
+                 Qintegerp, Qconsp, circular_list, internal_equal, Fcons, CHECK_IMPURE};
 use remacs_sys::Lisp_Object as CLisp_Object;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -57,11 +58,7 @@ impl LispObject {
 
     #[inline]
     pub fn from_bool(v: bool) -> LispObject {
-        if v {
-            LispObject::from_raw(unsafe { Qt })
-        } else {
-            Qnil
-        }
+        if v { LispObject::constant_t() } else { Qnil }
     }
 
     #[inline]
@@ -286,8 +283,201 @@ impl LispObject {
     pub fn is_integer(self) -> bool {
         self.is_fixnum()
     }
+
+    #[inline]
+    pub fn is_natnum(self) -> bool {
+        self.is_integer() && 0 <= XINT(self)
+    }
 }
 
+// Cons support (LispType == 6 | 3)
+
+/// From FOR_EACH_TAIL_INTERNAL in lisp.h
+pub struct TailsIter {
+    list: LispObject,
+    safe: bool,
+    tail: LispObject,
+    tortoise: LispObject,
+    max: isize,
+    n: isize,
+    q: u16,
+}
+
+impl TailsIter {
+    fn new(list: LispObject, safe: bool) -> Self {
+        Self {
+            list,
+            safe,
+            tail: list,
+            tortoise: list,
+            max: 2,
+            n: 0,
+            q: 2,
+        }
+    }
+
+    fn circular(&self) -> Option<LispCons> {
+        if !self.safe {
+            unsafe {
+                circular_list(self.tail.to_raw());
+            }
+        } else {
+            return None;
+        }
+    }
+}
+
+impl Iterator for TailsIter {
+    type Item = LispCons;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.tail.as_cons() {
+            None => {
+                if !self.safe {
+                    CHECK_LIST_END(self.tail.to_raw(), self.list.to_raw());
+                }
+                return None;
+            }
+            Some(tail_cons) => {
+                self.tail = tail_cons.cdr();
+                self.q = self.q.wrapping_sub(1);
+                if self.q != 0 {
+                    if self.tail == self.tortoise {
+                        return self.circular();
+                    }
+                } else {
+                    self.n = self.n.wrapping_sub(1);
+                    if self.n > 0 {
+                        if self.tail == self.tortoise {
+                            return self.circular();
+                        }
+                    } else {
+                        self.max <<= 1;
+                        self.q = self.max as u16;
+                        self.n = self.max >> 16;
+                        self.tortoise = self.tail;
+                    }
+                }
+                Some(tail_cons)
+            }
+        }
+    }
+}
+
+impl LispObject {
+    #[inline]
+    pub fn cons(car: LispObject, cdr: LispObject) -> Self {
+        unsafe { LispObject::from_raw(Fcons(car.to_raw(), cdr.to_raw())) }
+    }
+
+    #[inline]
+    pub fn is_cons(self) -> bool {
+        self.get_type() == LispType::Lisp_Cons
+    }
+
+    #[inline]
+    pub fn as_cons(self) -> Option<LispCons> {
+        if self.is_cons() {
+            Some(LispCons(self))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_cons_or_error(self) -> LispCons {
+        if self.is_cons() {
+            LispCons(self)
+        } else {
+            unsafe { wrong_type_argument(Qconsp, self.to_raw()) }
+        }
+    }
+
+    /// Iterate over all tails of self.  self should be a list, i.e. a chain
+    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
+    /// will be signaled.
+    pub fn iter_tails(self) -> TailsIter {
+        TailsIter::new(self, false)
+    }
+
+    /// Iterate over all tails of self.  If self is not a cons-chain,
+    /// iteration will stop at the first non-cons without signaling.
+    pub fn iter_tails_safe(self) -> TailsIter {
+        TailsIter::new(self, true)
+    }
+}
+
+/// Represents a cons cell, or GC bookkeeping for cons cells.
+///
+/// A cons cell is pair of two pointers, used to build linked lists in
+/// lisp.
+///
+/// # C Porting Notes
+///
+/// The equivalent C struct is `Lisp_Cons`. Note that the second field
+/// may be used as the cdr or GC bookkeeping.
+// TODO: this should be aligned to 8 bytes.
+#[repr(C)]
+#[allow(unused_variables)]
+struct Lisp_Cons {
+    /// Car of this cons cell.
+    car: LispObject,
+    /// Cdr of this cons cell, or the chain used for the free list.
+    cdr: LispObject,
+}
+
+// alloc.c uses a union for `Lisp_Cons`, which we emulate with an
+// opaque struct.
+#[repr(C)]
+#[allow(dead_code)]
+pub struct LispConsChain {
+    chain: *const LispCons,
+}
+
+/// A newtype for objects we know are conses.
+#[derive(Clone, Copy)]
+pub struct LispCons(LispObject);
+
+impl LispCons {
+    pub fn as_obj(self) -> LispObject {
+        self.0
+    }
+
+    fn _extract(self) -> *mut Lisp_Cons {
+        unsafe { mem::transmute(XUNTAG(self.0, LispType::Lisp_Cons)) }
+    }
+
+    /// Return the car (first cell).
+    pub fn car(self) -> LispObject {
+        unsafe { (*self._extract()).car }
+    }
+
+    /// Return the cdr (second cell).
+    pub fn cdr(self) -> LispObject {
+        unsafe { (*self._extract()).cdr }
+    }
+
+    /// Set the car of the cons cell.
+    pub fn set_car(self, n: LispObject) {
+        unsafe {
+            (*self._extract()).car = n;
+        }
+    }
+
+    /// Set the car of the cons cell.
+    pub fn set_cdr(self, n: LispObject) {
+        unsafe {
+            (*self._extract()).cdr = n;
+        }
+    }
+
+    /// Check that "self" is an impure (i.e. not readonly) cons cell.
+    pub fn check_impure(self) {
+        unsafe {
+            CHECK_IMPURE(self.0.to_raw(), self._extract() as *const libc::c_void);
+        }
+    }
+}
 
 // Float support (LispType == Lisp_Float == 7 )
 
@@ -335,6 +525,7 @@ impl LispObject {
 
     #[inline]
     pub unsafe fn to_float_unchecked(self) -> LispFloatRef {
+        debug_assert!(self.is_float());
         LispFloatRef::new(mem::transmute(self.get_untaggedptr()))
     }
 
@@ -372,6 +563,37 @@ impl LispObject {
     #[inline]
     pub fn is_number(self) -> bool {
         self.is_integer() || self.is_float()
+    }
+
+    #[inline]
+    pub fn is_nil(self) -> bool {
+        self == Qnil
+    }
+
+    #[inline]
+    pub fn is_marker(self) -> bool {
+        self.is_misc() && XMISCTYPE(self) == LispMiscType::Marker
+    }
+
+    // The three Emacs Lisp comparison functions.
+
+    #[inline]
+    pub fn eq(self, other: LispObject) -> bool {
+        self == other
+    }
+
+    #[inline]
+    pub fn eql(self, other: LispObject) -> bool {
+        if self.is_float() {
+            self.equal(other)
+        } else {
+            self.eq(other)
+        }
+    }
+
+    #[inline]
+    pub fn equal(self, other: LispObject) -> bool {
+        unsafe { internal_equal(self.to_raw(), other.to_raw(), 0, false, Qnil.to_raw()) }
     }
 }
 
@@ -544,34 +766,6 @@ mod deprecated {
         assert!(XINT(boxed_5) == 5);
     }
 
-
-    /// Is this LispObject an integer?
-    #[allow(non_snake_case)]
-    #[allow(dead_code)]
-    pub fn INTEGERP(a: LispObject) -> bool {
-        a.is_integer()
-    }
-
-    #[test]
-    fn test_integerp() {
-        assert!(!INTEGERP(Qnil));
-        assert!(INTEGERP(make_number(1)));
-        assert!(INTEGERP(make_natnum(1)));
-    }
-
-    /// Is this LispObject a symbol?
-    #[allow(non_snake_case)]
-    #[allow(dead_code)]
-    pub fn SYMBOLP(a: LispObject) -> bool {
-        a.is_symbol()
-    }
-
-    #[test]
-    fn test_symbolp() {
-        assert!(SYMBOLP(Qnil));
-    }
-
-
     /// Convert a positive integer into its LispObject representation.
     ///
     /// This is also the function to use when translating `XSETFASTINT`
@@ -586,31 +780,6 @@ mod deprecated {
         make_number(n)
     }
 
-    /// Return the type of a LispObject.
-    #[allow(non_snake_case)]
-    pub fn XTYPE(a: LispObject) -> LispType {
-        a.get_type()
-    }
-
-    #[test]
-    fn test_xtype() {
-        assert!(XTYPE(Qnil) == LispType::Lisp_Symbol);
-    }
-
-    /// Is this LispObject a misc type?
-    ///
-    /// A misc type has its type bits set to 'misc', and uses additional
-    /// bits to specify what exact type it represents.
-    #[allow(non_snake_case)]
-    pub fn MISCP(a: LispObject) -> bool {
-        a.is_misc()
-    }
-
-    #[test]
-    fn test_miscp() {
-        assert!(!MISCP(Qnil));
-    }
-
     #[allow(non_snake_case)]
     pub fn XMISC(a: LispObject) -> LispMiscRef {
         unsafe { a.to_misc_unchecked() }
@@ -619,7 +788,7 @@ mod deprecated {
     #[allow(non_snake_case)]
     #[allow(dead_code)]
     pub fn XMISCANY(a: LispObject) -> *const LispMiscAny {
-        debug_assert!(MISCP(a));
+        debug_assert!(a.is_misc());
         XMISC(a).0
     }
 
@@ -630,31 +799,9 @@ mod deprecated {
         XMISC(a).ty
     }
 
-    /// Is this LispObject a float?
-    #[allow(non_snake_case)]
-    pub fn FLOATP(a: LispObject) -> bool {
-        a.is_float()
-    }
-
-    #[test]
-    fn test_floatp() {
-        assert!(!FLOATP(Qnil));
-    }
-
-    #[allow(non_snake_case)]
-    pub fn NATNUMP(a: LispObject) -> bool {
-        INTEGERP(a) && 0 <= XINT(a)
-    }
-
-    #[test]
-    fn test_natnump() {
-        assert!(!NATNUMP(Qnil));
-    }
-
     #[allow(non_snake_case)]
     #[allow(dead_code)]
     pub fn XFLOAT(a: LispObject) -> LispFloatRef {
-        debug_assert!(FLOATP(a));
         unsafe { a.to_float_unchecked() }
     }
 
@@ -664,31 +811,17 @@ mod deprecated {
         unsafe { f.get_float_data_unchecked() }
     }
 
-    /// Is this LispObject a number?
-    #[allow(non_snake_case)]
-    pub fn NUMBERP(x: LispObject) -> bool {
-        x.is_number()
-    }
-
-    /// Is this LispObject a string?
-    #[allow(non_snake_case)]
-    pub fn STRINGP(x: LispObject) -> bool {
-        x.is_string()
-    }
-
-    #[test]
-    fn test_numberp() {
-        assert!(!NUMBERP(Qnil));
-        assert!(NUMBERP(make_natnum(1)));
-    }
-
     pub fn XSTRING(a: LispObject) -> *mut Lisp_String {
-        debug_assert!(STRINGP(a));
+        debug_assert!(a.is_string());
         unsafe { std::mem::transmute(XUNTAG(a, LispType::Lisp_String)) }
     }
 
     pub fn SBYTES(string: LispObject) -> libc::ptrdiff_t {
         unsafe { STRING_BYTES(XSTRING(string)) }
+    }
+
+    pub fn SCHARS(string: LispObject) -> libc::ptrdiff_t {
+        unsafe { (*XSTRING(string)).size }
     }
 
 
@@ -723,11 +856,11 @@ pub use self::deprecated::*;
 /// `CHECK_NUMBER_OR_FLOAT_COERCE_MARKER` in Emacs C, but returns a
 /// value rather than assigning to a variable.
 pub fn check_number_coerce_marker(x: LispObject) -> LispObject {
-    if MARKERP(x) {
+    if x.is_marker() {
         make_natnum(marker_position(x) as EmacsInt)
     } else {
         unsafe {
-            CHECK_TYPE(NUMBERP(x), LispObject::from_raw(Qnumber_or_marker_p), x);
+            CHECK_TYPE(x.is_number(), LispObject::from_raw(Qnumber_or_marker_p), x);
         }
         x
     }
@@ -745,7 +878,17 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
     }
 }
 
-/// Raise an error if `x` is not lisp string.
+/// Raise an error if `x` is not a number.
+#[allow(non_snake_case)]
+#[no_mangle]
+pub extern "C" fn CHECK_NUMBER(x: Lisp_Object) {
+    let x = LispObject::from_raw(x);
+    CHECK_TYPE(x.is_integer(),
+               LispObject::from_raw(unsafe { Qintegerp }),
+               x);
+}
+
+/// Raise an error if `x` is not a lisp string.
 #[allow(non_snake_case)]
 #[no_mangle]
 pub extern "C" fn CHECK_STRING(x: Lisp_Object) {
@@ -753,18 +896,26 @@ pub extern "C" fn CHECK_STRING(x: Lisp_Object) {
     CHECK_TYPE(x.is_string(), LispObject::from_raw(unsafe { Qstringp }), x);
 }
 
+/// Raise an error if `x` is not a cons.
 #[allow(non_snake_case)]
-pub fn MARKERP(a: LispObject) -> bool {
-    MISCP(a) && XMISCTYPE(a) == LispMiscType::Marker
+#[no_mangle]
+pub extern "C" fn CHECK_CONS(x: Lisp_Object) {
+    let x = LispObject::from_raw(x);
+    CHECK_TYPE(x.is_cons(), LispObject::from_raw(unsafe { Qconsp }), x);
+}
+
+
+/// Raise an error if `x`, the final cons of the list `y`, is not nil.
+#[allow(non_snake_case)]
+#[no_mangle]
+pub extern "C" fn CHECK_LIST_END(x: Lisp_Object, y: Lisp_Object) {
+    let x = LispObject::from_raw(x);
+    let y = LispObject::from_raw(y);
+    CHECK_TYPE(x == Qnil, LispObject::from_raw(unsafe { Qlistp }), y);
 }
 
 #[allow(non_snake_case)]
 pub fn XMARKER(a: LispObject) -> *const LispMarker {
-    debug_assert!(MARKERP(a));
+    debug_assert!(a.is_marker());
     unsafe { mem::transmute(XMISC(a)) }
-}
-
-#[test]
-fn test_markerp() {
-    assert!(!MARKERP(Qnil))
 }
