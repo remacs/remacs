@@ -263,7 +263,7 @@ extern int emacs_setenv_TZ (char const *);
 #define ATTRIBUTE_CONST _GL_ATTRIBUTE_CONST
 #define ATTRIBUTE_UNUSED _GL_UNUSED
 
-#if GNUC_PREREQ (3, 3, 0)
+#if GNUC_PREREQ (3, 3, 0) && !defined __ICC
 # define ATTRIBUTE_MAY_ALIAS __attribute__ ((__may_alias__))
 #else
 # define ATTRIBUTE_MAY_ALIAS
