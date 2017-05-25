@@ -10,7 +10,10 @@ use libc::{O_CLOEXEC, O_EXCL, O_RDWR, O_CREAT, open};
 
 #[cfg(windows)]
 extern "C" {
-    fn sys_open (filename: *const libc::c_char, flags: libc::c_int, mode: libc::c_int) -> libc::c_int;
+    fn sys_open(filename: *const libc::c_char,
+                flags: libc::c_int,
+                mode: libc::c_int)
+                -> libc::c_int;
 }
 
 use libc::{EEXIST, EINVAL};
@@ -23,15 +26,9 @@ use self::rand::Rng;
 const NUM_RETRIES: usize = 50;
 
 #[no_mangle]
-pub extern "C" fn rust_make_temp(template: *mut libc::c_char,
-                                 flags: libc::c_int)
-                                 -> libc::c_int {
+pub extern "C" fn rust_make_temp(template: *mut libc::c_char, flags: libc::c_int) -> libc::c_int {
     let save_errno = errno::errno();
-    let template_string = unsafe {
-        CStr::from_ptr(template)
-            .to_string_lossy()
-            .into_owned()
-    };
+    let template_string = unsafe { CStr::from_ptr(template).to_string_lossy().into_owned() };
 
     match make_temporary_file(template_string, flags) {
         Ok(result) => {
@@ -40,23 +37,20 @@ pub extern "C" fn rust_make_temp(template: *mut libc::c_char,
             unsafe { libc::strcpy(template, name.as_ptr()) };
             result.0
         }
-        
+
         Err(error_code) => {
             errno::set_errno(errno::Errno(error_code));
             -1
         }
     }
-    
+
 }
 
-pub fn make_temporary_file(template: String,
-                           flags: i32)
-                           -> Result<(i32, String), i32> {
+pub fn make_temporary_file(template: String, flags: i32) -> Result<(i32, String), i32> {
     let mut validated_template = try!(validate_template(template));
     for _ in 0..NUM_RETRIES {
         generate_temporary_filename(&mut validated_template);
-        let attempt = try!(CString::new(validated_template.clone())
-                           .map_err(|_| EEXIST));
+        let attempt = try!(CString::new(validated_template.clone()).map_err(|_| EEXIST));
         let file_handle = match open_temporary_file(&attempt, flags) {
             Ok(file) => file,
             Err(_) => continue,
@@ -79,9 +73,7 @@ fn validate_template(template: String) -> Result<String, i32> {
 fn generate_temporary_filename(name: &mut String) {
     let len = name.len();
     assert!(len >= 6);
-    let mut name_vec = unsafe {
-        &mut name.as_mut_vec()
-    };
+    let mut name_vec = unsafe { &mut name.as_mut_vec() };
 
     let mut bytes = &mut name_vec[len - 6..len];
     rand::thread_rng().fill_bytes(bytes);
@@ -99,7 +91,7 @@ fn generate_temporary_filename(name: &mut String) {
 fn open_temporary_file(name: &CString, flags: libc::c_int) -> io::Result<libc::c_int> {
     unsafe {
         match open(name.as_ptr(),
-             O_CLOEXEC | O_EXCL | O_RDWR | O_CREAT | flags,
+                   O_CLOEXEC | O_EXCL | O_RDWR | O_CREAT | flags,
                    0o600) {
             -1 => Err(io::Error::last_os_error()),
             fd => Ok(fd),
@@ -113,9 +105,7 @@ fn open_temporary_file(name: &CString, flags: libc::c_int) -> io::Result<libc::c
     let _O_EXCL = 0x0400;
     let _O_RDWR = 0x0002;
     unsafe {
-        match sys_open(name.as_ptr(),
-             _O_CREAT | _O_EXCL | _O_RDWR | flags,
-                   0o600) {
+        match sys_open(name.as_ptr(), _O_CREAT | _O_EXCL | _O_RDWR | flags, 0o600) {
             -1 => Err(io::Error::last_os_error()),
             fd => Ok(fd),
         }
@@ -151,7 +141,8 @@ fn test_generate_temporary_filename() {
     let mut name = String::from(".emacs-XXXXXX");
     let name_copy = name.clone();
     generate_temporary_filename(&mut name);
-    assert!(name != name_copy, "Temporary filename should always mutate the name string");
+    assert!(name != name_copy,
+            "Temporary filename should always mutate the name string");
 }
 
 #[test]

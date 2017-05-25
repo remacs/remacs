@@ -11,7 +11,7 @@ fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
     let x = lisp::check_number_coerce_marker(x);
     let y = lisp::check_number_coerce_marker(y);
 
-    if lisp::FLOATP(x) || lisp::FLOATP(y) {
+    if x.is_float() || y.is_float() {
         let ret = floatfns::fmod_float(x.to_raw(), y.to_raw());
         return LispObject::from_raw(ret);
     }
@@ -102,7 +102,7 @@ fn arith_driver(code: ArithOp, args: &mut [LispObject]) -> LispObject {
 
         let coerced_val = lisp::check_number_coerce_marker(*val);
 
-        if lisp::FLOATP(coerced_val) {
+        if coerced_val.is_float() {
             let mut args: Vec<Lisp_Object> = args_clone.iter().map(|v| v.to_raw()).collect();
             let ret = unsafe {
                 float_arith_driver(ok_accum as f64,
@@ -240,7 +240,7 @@ defun_many!("*",
 fn quo(args: &mut [LispObject]) -> LispObject {
     for argnum in 2..args.len() {
         let arg = args[argnum];
-        if lisp::FLOATP(arg) {
+        if arg.is_float() {
             let mut args: Vec<::remacs_sys::Lisp_Object> =
                 args.iter().map(|arg| arg.to_raw()).collect();
             let ret = unsafe {

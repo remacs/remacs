@@ -24,6 +24,7 @@ mod eval;
 mod floatfns;
 mod math;
 mod numbers;
+mod objects;
 mod strings;
 mod symbols;
 mod character;
@@ -49,10 +50,27 @@ pub use lists::Fsetcar;
 pub use lists::Fsetcdr;
 pub use lists::Fcar;
 pub use lists::Fcdr;
+pub use lists::Fcar_safe;
+pub use lists::Fcdr_safe;
 pub use lists::Flistp;
+pub use lists::Fnthcdr;
+pub use lists::Fnth;
+pub use lists::Fmemq;
+pub use lists::Fmember;
+pub use lists::Fassq;
+pub use lists::Fassoc;
+pub use lists::Frassq;
+pub use lists::Frassoc;
+pub use lists::Fdelq;
+pub use lists::Fplist_get;
+pub use lists::Fplist_member;
+pub use lists::Fplist_put;
 pub use floatfns::extract_float;
 pub use floatfns::fmod_float;
+pub use objects::Fequal;
+pub use objects::Fequal_including_properties;
 pub use symbols::Fsymbolp;
+pub use strings::Fstring_equal;
 
 // Cryptographic functions used in the C codebase.
 pub use crypto::sha256_buffer;
@@ -72,6 +90,9 @@ pub use marker::CHECK_MARKER;
 
 // Defined in lisp.h and widely used in the C codebase.
 pub use lisp::CHECK_STRING;
+pub use lisp::CHECK_NUMBER;
+pub use lisp::CHECK_LIST_END;
+pub use lisp::CHECK_CONS;
 
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
@@ -100,18 +121,40 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*numbers::Snatnump);
         defsubr(&*numbers::Snumber_or_marker_p);
         defsubr(&*numbers::Snumberp);
+        defsubr(&*objects::Snull);
+        defsubr(&*objects::Seq);
+        defsubr(&*objects::Seql);
+        defsubr(&*objects::Sequal);
+        defsubr(&*objects::Sequal_including_properties);
         defsubr(&*symbols::Ssymbolp);
         defsubr(&*lists::Sconsp);
         defsubr(&*lists::Ssetcar);
         defsubr(&*lists::Ssetcdr);
         defsubr(&*lists::Scar);
         defsubr(&*lists::Scdr);
+        defsubr(&*lists::Scar_safe);
+        defsubr(&*lists::Scdr_safe);
+        defsubr(&*lists::Snthcdr);
+        defsubr(&*lists::Snth);
+        defsubr(&*lists::Smemq);
+        defsubr(&*lists::Smemql);
+        defsubr(&*lists::Smember);
+        defsubr(&*lists::Sassq);
+        defsubr(&*lists::Sassoc);
+        defsubr(&*lists::Srassq);
+        defsubr(&*lists::Srassoc);
+        defsubr(&*lists::Sdelq);
+        defsubr(&*lists::Splist_get);
+        defsubr(&*lists::Slax_plist_get);
+        defsubr(&*lists::Splist_member);
+        defsubr(&*lists::Splist_put);
+        defsubr(&*lists::Slax_plist_put);
+        defsubr(&*marker::Smarkerp);
         defsubr(&*strings::Sstringp);
-        defsubr(&*strings::Seq);
         defsubr(&*strings::Sbase64_encode_string);
         defsubr(&*strings::Sbase64_decode_string);
         defsubr(&*strings::Sstring_bytes);
-        defsubr(&*strings::Snull);
+        defsubr(&*strings::Sstring_equal);
         defsubr(&*character::Smax_char);
         defsubr(&*character::Scharacterp);
 

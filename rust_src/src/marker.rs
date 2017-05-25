@@ -1,7 +1,7 @@
 extern crate libc;
 
 use std::ptr;
-use lisp::{LispObject, LispMiscType, XMARKER, CHECK_TYPE, MARKERP};
+use lisp::{LispObject, LispMiscType, XMARKER, CHECK_TYPE};
 
 extern "C" {
     // defined in eval.c, where it can actually take an arbitrary
@@ -15,7 +15,7 @@ extern "C" {
 #[allow(non_snake_case)]
 #[no_mangle]
 pub extern "C" fn CHECK_MARKER(x: LispObject) {
-    CHECK_TYPE(MARKERP(x), unsafe { Qmarkerp }, x)
+    CHECK_TYPE(x.is_marker(), unsafe { Qmarkerp }, x)
 }
 
 // TODO: write a docstring based on the docs in lisp.h.
@@ -48,3 +48,18 @@ pub fn marker_position(marker: LispObject) -> libc::ptrdiff_t {
 
     m.charpos
 }
+
+fn markerp(object: LispObject) -> LispObject {
+    LispObject::from_bool(object.is_marker())
+}
+
+defun!("markerp",
+       Fmarkerp(object),
+       Smarkerp,
+       markerp,
+       1,
+       1,
+       ptr::null(),
+       "Return t if OBJECT is a marker (editor pointer).
+
+(fn OBJECT)");
