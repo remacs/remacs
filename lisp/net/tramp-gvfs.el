@@ -106,7 +106,6 @@
 
 ;; Pacify byte-compiler.
 (eval-when-compile
-  (require 'cl)
   (require 'custom))
 
 ;;;###tramp-autoload
@@ -1386,9 +1385,9 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
       ;; elements.
       (while (stringp (car elt)) (setq elt (cdr elt)))
       (let* ((fuse-mountpoint (tramp-gvfs-dbus-byte-array-to-string (cadr elt)))
-	     (mount-spec (caddr elt))
+	     (mount-spec (cl-caddr elt))
 	     (default-location (tramp-gvfs-dbus-byte-array-to-string
-				(cadddr elt)))
+				(cl-cadddr elt)))
 	     (method (tramp-gvfs-dbus-byte-array-to-string
 		      (cadr (assoc "type" (cadr mount-spec)))))
 	     (user (tramp-gvfs-dbus-byte-array-to-string
@@ -1472,9 +1471,9 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
        (while (stringp (car elt)) (setq elt (cdr elt)))
        (let* ((fuse-mountpoint (tramp-gvfs-dbus-byte-array-to-string
 				(cadr elt)))
-	      (mount-spec (caddr elt))
+	      (mount-spec (cl-caddr elt))
 	      (default-location (tramp-gvfs-dbus-byte-array-to-string
-				 (cadddr elt)))
+				 (cl-cadddr elt)))
 	      (method (tramp-gvfs-dbus-byte-array-to-string
 		       (cadr (assoc "type" (cadr mount-spec)))))
 	      (user (tramp-gvfs-dbus-byte-array-to-string

@@ -29,12 +29,9 @@
 
 ;;; Code:
 
-;; Pacify byte-compiler.
-(eval-when-compile
-  (require 'cl))
-
 (require 'auth-source)
 (require 'advice)
+(require 'cl-lib)
 (require 'custom)
 (require 'format-spec)
 (require 'parse-time)

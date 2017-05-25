@@ -29,10 +29,6 @@
 
 (require 'tramp)
 
-;; Pacify byte-compiler.
-(eval-when-compile
-  (require 'cl))
-
 ;; Define SMB method ...
 ;;;###tramp-autoload
 (defconst tramp-smb-method "smb"
@@ -1655,13 +1651,13 @@ Result is the list (LOCALNAME MODE SIZE MTIME)."
 		size 0))
 
       ;; Real listing.
-      (block nil
+      (cl-block nil
 
 	;; year.
 	(if (string-match "\\([0-9]+\\)$" line)
 	    (setq year (string-to-number (match-string 1 line))
 		  line (substring line 0 -5))
-	  (return))
+	  (cl-return))
 
 	;; time.
 	(if (string-match "\\([0-9]+\\):\\([0-9]+\\):\\([0-9]+\\)$" line)
@@ -1669,24 +1665,24 @@ Result is the list (LOCALNAME MODE SIZE MTIME)."
 		  min  (string-to-number (match-string 2 line))
 		  sec  (string-to-number (match-string 3 line))
 		  line (substring line 0 -9))
-	  (return))
+	  (cl-return))
 
 	;; day.
 	(if (string-match "\\([0-9]+\\)$" line)
 	    (setq day  (string-to-number (match-string 1 line))
 		  line (substring line 0 -3))
-	  (return))
+	  (cl-return))
 
 	;; month.
 	(if (string-match "\\(\\w+\\)$" line)
 	    (setq month (match-string 1 line)
 		  line  (substring line 0 -4))
-	  (return))
+	  (cl-return))
 
 	;; weekday.
 	(if (string-match "\\(\\w+\\)$" line)
 	    (setq line (substring line 0 -5))
-	  (return))
+	  (cl-return))
 
 	;; size.
 	(if (string-match "\\([0-9]+\\)$" line)
@@ -1695,7 +1691,7 @@ Result is the list (LOCALNAME MODE SIZE MTIME)."
 	      (when (string-match "\\([ADHRSV]+\\)" (substring line length))
 		(setq length (+ length (match-end 0))))
 	      (setq line (substring line 0 length)))
-	  (return))
+	  (cl-return))
 
 	;; mode: ARCH, DIR, HIDDEN, RONLY, SYSTEM, VOLID.
 	(if (string-match "\\([ADHRSV]+\\)?$" line)
@@ -1708,12 +1704,12 @@ Result is the list (LOCALNAME MODE SIZE MTIME)."
 		     (lambda (_x) "") "    "
 		     (concat "r" (if (string-match "R" mode) "-" "w") "x"))))
 	     line (substring line 0 -6))
-	  (return))
+	  (cl-return))
 
 	;; localname.
 	(if (string-match "^\\s-+\\(\\S-\\(.*\\S-\\)?\\)\\s-*$" line)
 	    (setq localname (match-string 1 line))
-	  (return))))
+	  (cl-return))))
 
     (when (and localname mode size)
       (setq mtime

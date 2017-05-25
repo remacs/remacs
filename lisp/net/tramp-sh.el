@@ -31,7 +31,6 @@
 
 ;; Pacify byte-compiler.
 (eval-when-compile
-  (require 'cl)
   (require 'dired))
 
 (declare-function dired-remove-file "dired-aux")
@@ -1557,7 +1556,7 @@ be non-negative integers."
 	      (gid (or (and (natnump gid) gid) (tramp-get-local-gid 'integer))))
 	  (tramp-call-process
 	   nil "chown" nil nil nil
-	   (format "%d:%d" uid gid) (tramp-shell-quote-argument filename)))))))
+	   (format "%d:%d" uid gid) (shell-quote-argument filename)))))))
 
 (defun tramp-remote-selinux-p (vec)
   "Check, whether SELINUX is enabled on the remote host."
@@ -3674,13 +3673,13 @@ file-notify events."
 	       (when file1 (concat remote-prefix file1)))))
 	(setq string (replace-match "" nil nil string))
 	;; Remove watch when file or directory to be watched is deleted.
-	(when (and (member (caadr object) '(moved deleted))
+	(when (and (member (cl-caadr object) '(moved deleted))
 		   (string-equal file (process-get proc 'watch-name)))
 	  (delete-process proc))
 	;; Usually, we would add an Emacs event now.  Unfortunately,
 	;; `unread-command-events' does not accept several events at
 	;; once.  Therefore, we apply the handler directly.
-	(when (member (caadr object) events)
+	(when (member (cl-caadr object) events)
 	  (tramp-compat-funcall
 	   'file-notify-handle-event
 	   `(file-notify ,object file-notify-callback)))))
@@ -3714,12 +3713,12 @@ file-notify events."
 	       (split-string (match-string 1 line) "," 'omit))
 	      (match-string 3 line))))
 	;; Remove watch when file or directory to be watched is deleted.
-	(when (member (caadr object) '(move-self delete-self ignored))
+	(when (member (cl-caadr object) '(move-self delete-self ignored))
 	  (delete-process proc))
 	;; Usually, we would add an Emacs event now.  Unfortunately,
 	;; `unread-command-events' does not accept several events at
 	;; once.  Therefore, we apply the handler directly.
-	(when (member (caadr object) events)
+	(when (member (cl-caadr object) events)
 	  (tramp-compat-funcall
 	   'file-notify-handle-event
 	   `(file-notify ,object file-notify-callback)))))))

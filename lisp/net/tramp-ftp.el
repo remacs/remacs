@@ -32,7 +32,6 @@
 
 ;; Pacify byte-compiler.
 (eval-when-compile
-  (require 'cl)
   (require 'custom))
 (defvar ange-ftp-ftp-name-arg)
 (defvar ange-ftp-ftp-name-res)

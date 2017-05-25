@@ -58,8 +58,7 @@
 (require 'tramp-compat)
 
 ;; Pacify byte-compiler.
-(eval-when-compile
-  (require 'cl))
+(require 'cl-lib)
 (defvar auto-save-file-name-transforms)
 (defvar eshell-path-env)
 (defvar ls-lisp-use-insert-directory-program)
@@ -1134,8 +1133,8 @@ calling HANDLER.")
 ;; internal data structure.  Convenience functions for internal
 ;; data structure.
 
-;; The basic structure for remote file names.  We use a list,
-;; otherwise the test in `tramp-cache-data' fails.
+;; The basic structure for remote file names.  We use a list :type,
+;; otherwise the persistent data are not read in tramp-cache.el.
 (cl-defstruct (tramp-file-name (:type list) :named)
   method user domain host port localname hop)
 
@@ -2588,7 +2587,7 @@ User is always nil."
       (with-temp-buffer
 	(insert-file-contents filename)
 	(goto-char (point-min))
-        (loop while (not (eobp)) collect (funcall function))))))
+        (cl-loop while (not (eobp)) collect (funcall function))))))
 
 ;;;###tramp-autoload
 (defun tramp-parse-rhosts (filename)
@@ -2640,9 +2639,10 @@ User is always nil."
   ;; `default-directory' is remote.
   (let* ((default-directory (tramp-compat-temporary-file-directory))
 	 (files (and (file-directory-p dirname) (directory-files dirname))))
-    (loop for f in files
-	  when (and (not (string-match "^\\.\\.?$" f)) (string-match regexp f))
-	  collect (list nil (match-string 1 f)))))
+    (cl-loop
+     for f in files
+     when (and (not (string-match "^\\.\\.?$" f)) (string-match regexp f))
+     collect (list nil (match-string 1 f)))))
 
 ;;;###tramp-autoload
 (defun tramp-parse-shostkeys (dirname)
@@ -2680,8 +2680,8 @@ Host is always \"localhost\"."
 	(with-temp-buffer
 	  (when (zerop (tramp-call-process nil "getent" nil t nil "passwd"))
 	    (goto-char (point-min))
-	    (loop while (not (eobp)) collect
-		  (tramp-parse-etc-group-group))))
+	    (cl-loop while (not (eobp)) collect
+		     (tramp-parse-etc-group-group))))
       (tramp-parse-file filename 'tramp-parse-passwd-group))))
 
 (defun tramp-parse-passwd-group ()
@@ -2703,8 +2703,8 @@ Host is always \"localhost\"."
 	(with-temp-buffer
 	  (when (zerop (tramp-call-process nil "getent" nil t nil "group"))
 	    (goto-char (point-min))
-	    (loop while (not (eobp)) collect
-		  (tramp-parse-etc-group-group))))
+	    (cl-loop while (not (eobp)) collect
+		     (tramp-parse-etc-group-group))))
       (tramp-parse-file filename 'tramp-parse-etc-group-group))))
 
 (defun tramp-parse-etc-group-group ()
@@ -2746,8 +2746,8 @@ User is always nil."
 	  (when (zerop (tramp-call-process
 			nil "reg" nil t nil "query" registry-or-dirname))
 	    (goto-char (point-min))
-	    (loop while (not (eobp)) collect
-		  (tramp-parse-putty-group registry-or-dirname)))))
+	    (cl-loop while (not (eobp)) collect
+		     (tramp-parse-putty-group registry-or-dirname)))))
     ;; UNIX case.
     (tramp-parse-shostkeys-sknownhosts
      registry-or-dirname (concat "^\\(" tramp-host-regexp "\\)$"))))
