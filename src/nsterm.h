@@ -62,15 +62,6 @@ typedef CGFloat EmacsCGFloat;
 typedef float EmacsCGFloat;
 #endif
 
-/* FIXME: instancetype is a language built-in, but older versions of
-   Clang don't support it, and I don't know if GCC supports it at all.
-   Should this be tested for in ./configure? */
-#if defined (NS_IMPL_GNUSTEP)
-    || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_10
-typedef id instancetype;
-typedef NSUInteger NSWindowStyleMask;
-#endif
-
 /* ==========================================================================
 
    Trace support
@@ -362,6 +353,12 @@ char const * nstrace_fullscreen_type_name (int);
 
 #ifndef NSTRACE_UNSILENCE
 #define NSTRACE_UNSILENCE()
+#endif
+
+
+/* If the compiler doesn't support instancetype, map it to id. */
+#ifndef NATIVE_OBJC_INSTANCETYPE
+typedef id instancetype;
 #endif
 
 
@@ -1302,6 +1299,11 @@ extern char gnustep_base_version[];  /* version tracking */
 #define NSWindowStyleMaskUtilityWindow     NSUtilityWindowMask
 #define NSAlertStyleCritical               NSCriticalAlertStyle
 #define NSControlSizeRegular               NSRegularControlSize
+
+/* And adds NSWindowStyleMask. */
+#ifdef __OBJC__
+typedef NSUInteger NSWindowStyleMask;
+#endif
 #endif
 
 #endif	/* HAVE_NS */
