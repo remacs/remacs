@@ -41,7 +41,21 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef IN_ONLYDIR
 # define IN_ONLYDIR 0
 #endif
-#define INOTIFY_DEFAULT_MASK (IN_ALL_EVENTS | IN_EXCL_UNLINK)
+#define INOTIFY_DEFAULT_MASK                                    \
+  (IN_ATTRIB |                                                  \
+   /* IN_ACCESS | */                                            \
+   /* IN_CLOSE_WRITE | */                                       \
+   /* IN_CLOSE_NOWRITE |  */                                    \
+   IN_CREATE |                                                  \
+   IN_DELETE |                                                  \
+   IN_DELETE_SELF |                                             \
+   IN_IGNORED |                                                 \
+   IN_MODIFY |                                                  \
+   IN_MOVE_SELF |                                               \
+   IN_MOVED_FROM |                                              \
+   IN_MOVED_TO |                                                \
+   /* IN_OPEN | */                                              \
+   IN_EXCL_UNLINK)
 
 /* File handle for inotify.  */
 static int inotifyfd = -1;
