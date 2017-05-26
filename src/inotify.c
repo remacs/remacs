@@ -41,21 +41,21 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef IN_ONLYDIR
 # define IN_ONLYDIR 0
 #endif
+
+/* Events that inotify-add-watch waits for.  This list has all the
+   events that any watcher could include, because we want to support
+   multiple watches on the same file even though inotify uses the same
+   descriptor for all watches to that file.  This list omits
+   IN_ACCESS, IN_CLOSE_WRITE, IN_CLOSE_NOWRITE, and IN_OPEN because
+   they would prevent other processes from reading; see Bug#26973.
+
+   FIXME: Explain why it is OK to omit these four bits here even
+   though a inotify-add-watch call might specify them.  */
+
 #define INOTIFY_DEFAULT_MASK                                    \
-  (IN_ATTRIB |                                                  \
-   /* IN_ACCESS | */                                            \
-   /* IN_CLOSE_WRITE | */                                       \
-   /* IN_CLOSE_NOWRITE |  */                                    \
-   IN_CREATE |                                                  \
-   IN_DELETE |                                                  \
-   IN_DELETE_SELF |                                             \
-   IN_IGNORED |                                                 \
-   IN_MODIFY |                                                  \
-   IN_MOVE_SELF |                                               \
-   IN_MOVED_FROM |                                              \
-   IN_MOVED_TO |                                                \
-   /* IN_OPEN | */                                              \
-   IN_EXCL_UNLINK)
+  (IN_ATTRIB | IN_CREATE | IN_DELETE | IN_DELETE_SELF		\
+   | IN_IGNORED | IN_MODIFY | IN_MOVE_SELF | IN_MOVED_FROM	\
+   | IN_MOVED_TO | IN_EXCL_UNLINK)
 
 /* File handle for inotify.  */
 static int inotifyfd = -1;
@@ -73,6 +73,9 @@ static int inotifyfd = -1;
    IN_MASK_ADD
    IN_ONESHOT
    IN_ONLYDIR
+
+   FIXME: Explain why IN_ONLYDIR is in the list, as it seems to be
+   in the same category as IN_DONT_FOLLOW which is allowed.
 
    Each element of this list is of the form (DESCRIPTOR . WATCHES)
    where no two DESCRIPTOR values are the same.  DESCRIPTOR represents
@@ -423,8 +426,8 @@ See inotify(7) and inotify_add_watch(2) for further information.  The
 inotify fd is managed internally and there is no corresponding
 inotify_init.  Use `inotify-rm-watch' to remove a watch.
 
-Also note, that the following inotify bit-masks can not be used, due
-to the fact that descriptors are shared across different callers.
+The following inotify bit-masks cannot be used because descriptors are
+shared across different callers.
 
 IN_EXCL_UNLINK
 IN_MASK_ADD
