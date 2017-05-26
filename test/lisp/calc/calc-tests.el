@@ -88,6 +88,7 @@ An existing calc stack is reused, otherwise a new one is created."
 
 (ert-deftest test-calc-23889 ()
   "Test for http://debbugs.gnu.org/23889 and 25652."
+  (skip-unless (>= math-bignum-digit-length 9))
   (dolist (mode '(deg rad))
     (let ((calc-angle-mode mode))
       ;; If user inputs angle units, then should ignore `calc-angle-mode'.
