@@ -206,7 +206,7 @@ pass to the OPERATION."
 	(tramp-message v 6 "%s" (mapconcat 'identity (process-command p) " "))
 	(process-put p 'adjust-window-size-function 'ignore)
 	(set-process-query-on-exit-flag p nil)
-	(while (tramp-compat-process-live-p p)
+	(while (process-live-p p)
 	  (accept-process-output p 0.1))
 	(accept-process-output p 0.1)
 	(tramp-message v 6 "\n%s" (buffer-string))
@@ -1210,7 +1210,7 @@ connection if a previous connection has died for some reason."
     (when (and user (not (tramp-get-file-property vec "" "su-command-p" t)))
       (tramp-error vec 'file-error "Cannot switch to user `%s'" user))
 
-    (unless (tramp-compat-process-live-p p)
+    (unless (process-live-p p)
       (save-match-data
 	(when (and p (processp p)) (delete-process p))
 	(if (zerop (length device))
@@ -1229,7 +1229,7 @@ connection if a previous connection has died for some reason."
 	     vec 6 "%s" (mapconcat 'identity (process-command p) " "))
 	    ;; Wait for initial prompt.
 	    (tramp-adb-wait-for-output p 30)
-	    (unless (tramp-compat-process-live-p p)
+	    (unless (process-live-p p)
 	      (tramp-error  vec 'file-error "Terminated!"))
 	    (tramp-set-connection-property p "vector" vec)
 	    (process-put p 'adjust-window-size-function 'ignore)

@@ -382,7 +382,7 @@ pass to the OPERATION."
 
 (defun tramp-smb-action-with-tar (proc vec)
   "Untar from connection buffer."
-  (if (not (tramp-compat-process-live-p proc))
+  (if (not (process-live-p proc))
       (throw 'tramp-action 'process-died)
 
     (with-current-buffer (tramp-get-connection-buffer vec)
@@ -516,7 +516,7 @@ pass to the OPERATION."
 		      (set-process-query-on-exit-flag p nil)
 		      (tramp-process-actions p v nil tramp-smb-actions-with-tar)
 
-		      (while (tramp-compat-process-live-p p)
+		      (while (process-live-p p)
 			(sit-for 0.1))
 		      (tramp-message v 6 "\n%s" (buffer-string))))
 
@@ -561,7 +561,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
       0 (format "Copying %s to %s" filename newname)
 
     (if (file-directory-p filename)
-	(tramp-compat-copy-directory
+	(copy-directory
 	 filename newname keep-date 'parents 'copy-contents)
 
       (let ((tmpfile (file-local-copy filename)))
@@ -708,7 +708,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 
 (defun tramp-smb-action-get-acl (proc vec)
   "Read ACL data from connection buffer."
-  (unless (tramp-compat-process-live-p proc)
+  (unless (process-live-p proc)
     ;; Accept pending output.
     (while (tramp-accept-process-output proc 0.1))
     (with-current-buffer (tramp-get-connection-buffer vec)
@@ -1224,7 +1224,7 @@ target of the symlink differ."
 	    (narrow-to-region (point-max) (point-max))
 	    (let ((p (tramp-get-connection-process v)))
 	      (tramp-smb-send-command v "exit $lasterrorcode")
-	      (while (tramp-compat-process-live-p p)
+	      (while (process-live-p p)
 		(sleep-for 0.1)
 		(setq ret (process-exit-status p))))
 	    (delete-region (point-min) (point-max))
@@ -1308,7 +1308,7 @@ target of the symlink differ."
 
 (defun tramp-smb-action-set-acl (proc vec)
   "Read ACL data from connection buffer."
-  (unless (tramp-compat-process-live-p proc)
+  (unless (process-live-p proc)
     ;; Accept pending output.
     (while (tramp-accept-process-output proc 0.1))
     (with-current-buffer (tramp-get-connection-buffer vec)
@@ -1724,7 +1724,7 @@ Result is the list (LOCALNAME MODE SIZE MTIME)."
 (defun tramp-smb-get-cifs-capabilities (vec)
   "Check, whether the SMB server supports POSIX commands."
   ;; When we are not logged in yet, we return nil.
-  (if (tramp-compat-process-live-p (tramp-get-connection-process vec))
+  (if (process-live-p (tramp-get-connection-process vec))
       (with-tramp-connection-property
 	  (tramp-get-connection-process vec) "cifs-capabilities"
 	(save-match-data
@@ -1742,7 +1742,7 @@ Result is the list (LOCALNAME MODE SIZE MTIME)."
   "Check, whether the SMB server supports the STAT command."
   ;; When we are not logged in yet, we return nil.
   (if (and (tramp-smb-get-share vec)
-	   (tramp-compat-process-live-p (tramp-get-connection-process vec)))
+	   (process-live-p (tramp-get-connection-process vec)))
       (with-tramp-connection-property
 	  (tramp-get-connection-process vec) "stat-capability"
 	(tramp-smb-send-command vec "stat \"/\""))))
@@ -1807,13 +1807,13 @@ If ARGUMENT is non-nil, use it as argument for
 		     (tramp-get-connection-property
 		      p "last-cmd-time" '(0 0 0)))
 		    60)
-		 (tramp-compat-process-live-p p)
+		 (process-live-p p)
 		 (re-search-forward tramp-smb-errors nil t))
 	(delete-process p)
 	(setq p nil)))
 
     ;; Check whether it is still the same share.
-    (unless (and (tramp-compat-process-live-p p)
+    (unless (and (process-live-p p)
 		 (or argument
 		     (string-equal
 		      share
@@ -1949,7 +1949,7 @@ Returns nil if an error message has appeared."
       ;; Algorithm: get waiting output.  See if last line contains
       ;; `tramp-smb-prompt' sentinel or `tramp-smb-errors' strings.
       ;; If not, wait a bit and again get waiting output.
-      (while (and (not found) (not err) (tramp-compat-process-live-p p))
+      (while (and (not found) (not err) (process-live-p p))
 
 	;; Accept pending output.
 	(tramp-accept-process-output p 0.1)
@@ -1963,7 +1963,7 @@ Returns nil if an error message has appeared."
 	(setq err (re-search-forward tramp-smb-errors nil t)))
 
       ;; When the process is still alive, read pending output.
-      (while (and (not found) (tramp-compat-process-live-p p))
+      (while (and (not found) (process-live-p p))
 
 	;; Accept pending output.
 	(tramp-accept-process-output p 0.1)
@@ -1987,7 +1987,7 @@ Returns nil if an error message has appeared."
   "Send SIGKILL to the winexe process."
   (ignore-errors
     (let ((p (get-buffer-process (current-buffer))))
-      (when (tramp-compat-process-live-p p)
+      (when (process-live-p p)
 	(signal-process (process-id p) 'SIGINT)))))
 
 (defun tramp-smb-call-winexe (vec)

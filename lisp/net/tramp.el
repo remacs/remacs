@@ -35,7 +35,7 @@
 ;; Notes:
 ;; -----
 ;;
-;; This package only works for Emacs 23.1 and higher.
+;; This package only works for Emacs 24.1 and higher.
 ;;
 ;; Also see the todo list at the bottom of this file.
 ;;
@@ -555,7 +555,8 @@ The `sudo' program appears to insert a `^@' character into the prompt."
 			"Sorry, try again."
 			"Name or service not known"
 			"Host key verification failed."
-			"No supported authentication methods left to try!") t)
+			"No supported authentication methods left to try!")
+		      t)
 	  ".*"
 	  "\\|"
 	  "^.*\\("
@@ -1502,7 +1503,6 @@ ARGUMENTS to actually emit the message (if applicable)."
 		    "^"
 		    (regexp-opt
 		     '("tramp-backtrace"
-		       "tramp-compat-condition-case-unless-debug"
 		       "tramp-compat-funcall"
 		       "tramp-compat-user-error"
 		       "tramp-condition-case-unless-debug"
@@ -1691,16 +1691,14 @@ without a visible progress reporter."
      (tramp-message ,vec ,level "%s..." ,message)
      (let ((cookie "failed")
            (tm
-            ;; We start a pulsing progress reporter after 3 seconds.  Feature
-            ;; introduced in Emacs 24.1.
+            ;; We start a pulsing progress reporter after 3 seconds.
             (when (and tramp-message-show-message
                        ;; Display only when there is a minimum level.
                        (<= ,level (min tramp-verbose 3)))
-              (ignore-errors
-                (let ((pr (make-progress-reporter ,message nil nil)))
-                  (when pr
-                    (run-at-time
-		     3 0.1 #'tramp-progress-reporter-update pr)))))))
+	      (let ((pr (make-progress-reporter ,message nil nil)))
+		(when pr
+		  (run-at-time
+		   3 0.1 #'tramp-progress-reporter-update pr))))))
        (unwind-protect
            ;; Execute the body.
            (prog1 (progn ,@body) (setq cookie "done"))
@@ -1913,7 +1911,7 @@ value of `default-file-modes', without execute permissions."
  "Replace environment variables in FILENAME.
 Return the string with the replaced variables."
  (or (ignore-errors
-       ;; Optional arg has been introduced with Emacs 24 (?).
+       ;; Optional arg has been introduced with Emacs 24.4.
        (tramp-compat-funcall 'substitute-env-vars filename 'only-defined))
      ;; We need an own implementation.
      (save-match-data
@@ -1974,22 +1972,21 @@ ARGS are the arguments OPERATION has been called with."
 	    '(access-file byte-compiler-base-file-name delete-directory
 	      delete-file diff-latest-backup-file directory-file-name
 	      directory-files directory-files-and-attributes
-	      dired-compress-file dired-uncache
+	      dired-compress-file dired-uncache file-acl
 	      file-accessible-directory-p file-attributes
 	      file-directory-p file-executable-p file-exists-p
-	      file-local-copy file-modes
-	      file-name-as-directory file-name-directory
-	      file-name-nondirectory file-name-sans-versions
+	      file-local-copy file-modes file-name-as-directory
+	      file-name-directory file-name-nondirectory
+	      file-name-sans-versions file-notify-add-watch
 	      file-ownership-preserved-p file-readable-p
-	      file-regular-p file-remote-p file-symlink-p file-truename
-	      file-writable-p find-backup-file-name find-file-noselect
-	      get-file-buffer insert-directory insert-file-contents
-	      load make-directory make-directory-internal
-	      set-file-modes set-file-times substitute-in-file-name
-	      unhandled-file-name-directory vc-registered
-	      ;; Emacs 24+ only.
-	      file-acl file-notify-add-watch file-selinux-context
-	      set-file-acl set-file-selinux-context
+	      file-regular-p file-remote-p file-selinux-context
+	      file-symlink-p file-truename file-writable-p
+	      find-backup-file-name find-file-noselect get-file-buffer
+	      insert-directory insert-file-contents load
+	      make-directory make-directory-internal set-file-acl
+	      set-file-modes set-file-selinux-context set-file-times
+	      substitute-in-file-name unhandled-file-name-directory
+	      vc-registered
 	      ;; Emacs 26+ only.
 	      file-name-case-insensitive-p))
     (if (file-name-absolute-p (nth 0 args))
@@ -1998,10 +1995,9 @@ ARGS are the arguments OPERATION has been called with."
    ;; FILE DIRECTORY resp FILE1 FILE2.
    ((member operation
 	    '(add-name-to-file copy-directory copy-file expand-file-name
+	      file-equal-p file-in-directory-p
 	      file-name-all-completions file-name-completion
-	      file-newer-than-file-p make-symbolic-link rename-file
-	      ;; Emacs 24+ only.
-	      file-equal-p file-in-directory-p))
+	      file-newer-than-file-p make-symbolic-link rename-file))
     (save-match-data
       (cond
        ((tramp-tramp-file-p (nth 0 args)) (nth 0 args))
@@ -2026,8 +2022,7 @@ ARGS are the arguments OPERATION has been called with."
     default-directory)
    ;; PROC.
    ((member operation
-	    '(;; Emacs 24+ only.
-	      file-notify-rm-watch
+	    '(file-notify-rm-watch
 	      ;; Emacs 25+ only.
 	      file-notify-valid-p))
     (when (processp (nth 0 args))
@@ -2056,7 +2051,7 @@ ARGS are the arguments OPERATION has been called with."
   (var bodyform &rest handlers)
   "Like `condition-case-unless-debug' but `tramp-debug-on-error'."
   `(let ((debug-on-error tramp-debug-on-error))
-     (tramp-compat-condition-case-unless-debug ,var ,bodyform ,@handlers)))
+     (condition-case-unless-debug ,var ,bodyform ,@handlers)))
 
 ;; Main function.
 (defun tramp-file-name-handler (operation &rest args)
@@ -2308,8 +2303,8 @@ Add operations defined in `HANDLER-alist' to `tramp-file-name-handler'."
 (defun tramp-completion-mode-p ()
   "Check, whether method / user name / host name completion is active."
   (or
-   ;; Signal from outside.  `non-essential' has been introduced in Emacs 24.
-   (bound-and-true-p non-essential)
+   ;; Signal from outside.
+   non-essential
    ;; This variable has been obsoleted in Emacs 26.
    tramp-completion-mode))
 
@@ -2320,7 +2315,7 @@ not in completion mode."
   (let (tramp-verbose)
     (and (tramp-tramp-file-p filename)
 	 (or (not (tramp-completion-mode-p))
-	     (tramp-compat-process-live-p
+	     (process-live-p
 	      (tramp-get-connection-process
 	       (tramp-dissect-file-name filename)))))))
 
@@ -2986,7 +2981,7 @@ User is always nil."
     (when (tramp-tramp-file-p filename)
       (let* ((v (tramp-dissect-file-name filename))
 	     (p (tramp-get-connection-process v))
-	     (c (and (tramp-compat-process-live-p p)
+	     (c (and (process-live-p p)
 		     (tramp-get-connection-property p "connected" nil))))
 	;; We expand the file name only, if there is already a connection.
 	(with-parsed-tramp-file-name
@@ -3399,7 +3394,7 @@ of."
 
 (defun tramp-handle-file-notify-valid-p (proc)
   "Like `file-notify-valid-p' for Tramp files."
-  (and (tramp-compat-process-live-p proc)
+  (and (process-live-p proc)
        ;; Sometimes, the process is still in status `run' when the
        ;; file or directory to be watched is deleted already.
        (with-current-buffer (process-buffer proc)
@@ -3494,14 +3489,14 @@ The terminal type can be configured with `tramp-terminal-type'."
 
 (defun tramp-action-process-alive (proc _vec)
   "Check, whether a process has finished."
-  (unless (tramp-compat-process-live-p proc)
+  (unless (process-live-p proc)
     (throw 'tramp-action 'process-died)))
 
 (defun tramp-action-out-of-band (proc vec)
   "Check, whether an out-of-band copy has finished."
   ;; There might be pending output for the exit status.
   (tramp-accept-process-output proc 0.1)
-  (cond ((and (not (tramp-compat-process-live-p proc))
+  (cond ((and (not (process-live-p proc))
 	      (zerop (process-exit-status proc)))
 	 (tramp-message	vec 3 "Process has finished.")
 	 (throw 'tramp-action 'ok))
@@ -3614,7 +3609,7 @@ for process communication also."
 		(lambda (key _value)
 		  (and (processp key)
 		       (not (string-prefix-p "*tramp/" (process-name key)))
-		       (tramp-compat-process-live-p key)
+		       (process-live-p key)
 		       (setq result t)))
 		tramp-cache-data)
 	       result))
@@ -3678,14 +3673,14 @@ nil."
 	     (with-timeout (timeout)
 	       (while (not found)
 		 (tramp-accept-process-output proc 1)
-		 (unless (tramp-compat-process-live-p proc)
+		 (unless (process-live-p proc)
 		   (tramp-error-with-buffer
 		    nil proc 'file-error "Process has died"))
 		 (setq found (tramp-check-for-regexp proc regexp)))))
 	    (t
 	     (while (not found)
 	       (tramp-accept-process-output proc 1)
-	       (unless (tramp-compat-process-live-p proc)
+	       (unless (process-live-p proc)
 		 (tramp-error-with-buffer
 		  nil proc 'file-error "Process has died"))
 	       (setq found (tramp-check-for-regexp proc regexp)))))
@@ -4221,32 +4216,25 @@ Invokes `password-read' if available, `read-passwd' else."
 	  (prog1
 	      (or
 	       ;; See if auth-sources contains something useful.
-	       ;; `auth-source-user-or-password' is an obsoleted
-	       ;; function since Emacs 24.1, it has been replaced by
-	       ;; `auth-source-search'.
 	       (ignore-errors
 		 (and (tramp-get-connection-property
 		       v "first-password-request" nil)
 		      ;; Try with Tramp's current method.
-		      (if (fboundp 'auth-source-search)
-			  (setq auth-info
-				(auth-source-search
-				 :max 1
-				 (and tramp-current-user :user)
-				      tramp-current-user
-				 :host tramp-current-host
-				 :port tramp-current-method
-				 :require
-				 (cons
-				  :secret (and tramp-current-user '(:user))))
-				auth-passwd (plist-get
-					     (nth 0 auth-info) :secret)
-				auth-passwd (if (functionp auth-passwd)
-						(funcall auth-passwd)
-					      auth-passwd))
-			(tramp-compat-funcall
-			 'auth-source-user-or-password
-			 "password" tramp-current-host tramp-current-method))))
+		      (setq auth-info
+			    (auth-source-search
+			     :max 1
+			     (and tramp-current-user :user)
+			     tramp-current-user
+			     :host tramp-current-host
+			     :port tramp-current-method
+			     :require
+			     (cons
+			      :secret (and tramp-current-user '(:user))))
+			    auth-passwd (plist-get
+					 (nth 0 auth-info) :secret)
+			    auth-passwd (if (functionp auth-passwd)
+					    (funcall auth-passwd)
+					  auth-passwd))))
 	       ;; Try the password cache.
 	       (let ((password (password-read pw-prompt key)))
 		 (password-cache-add key password)
@@ -4275,13 +4263,8 @@ Invokes `password-read' if available, `read-passwd' else."
 	 (replace-regexp-in-string
 	  (concat tramp-postfix-hop-regexp "$")
 	  (tramp-postfix-host-format) hop)))))
-    ;; `auth-source-forget-user-or-password' is an obsoleted function
-    ;; since Emacs 24.1, it has been replaced by `auth-source-forget'.
-    (if (fboundp 'auth-source-forget)
-	(auth-source-forget
-	 `(:max 1 ,(and user :user) ,user :host ,host :port ,method))
-      (tramp-compat-funcall
-       'auth-source-forget-user-or-password "password" host method))
+    (auth-source-forget
+     `(:max 1 ,(and user :user) ,user :host ,host :port ,method))
     (password-cache-remove
      (tramp-make-tramp-file-name method user domain host port ""))))
 

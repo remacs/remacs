@@ -39,7 +39,7 @@
 ;; All actions to mount a remote location, and to retrieve mount
 ;; information, are performed by D-Bus messages.  File operations
 ;; themselves are performed via the mounted filesystem in ~/.gvfs.
-;; Consequently, GNU Emacs 23.1 with enabled D-Bus bindings is a
+;; Consequently, GNU Emacs with enabled D-Bus bindings is a
 ;; precondition.
 
 ;; The GVFS D-Bus interface is said to be unstable.  There were even
@@ -158,7 +158,6 @@
 (defconst tramp-gvfs-service-daemon "org.gtk.vfs.Daemon"
   "The well known name of the GVFS daemon.")
 
-;; D-Bus integration is available since Emacs 23 on some system types.
 ;; We don't call `dbus-ping', because this would load dbus.el.
 (defconst tramp-gvfs-enabled
   (ignore-errors
@@ -666,19 +665,10 @@ file names."
 		(and t2 (not (tramp-gvfs-file-name-p newname))))
 
 	    ;; We cannot copy or rename directly.
-	    ;; PRESERVE-EXTENDED-ATTRIBUTES has been introduced with
-	    ;; Emacs 24.1 (as PRESERVE-SELINUX-CONTEXT), and renamed
-	    ;; in Emacs 24.3.
 	    (let ((tmpfile (tramp-compat-make-temp-file filename)))
-	      (cond
-	       (preserve-extended-attributes
-		(funcall
-		 file-operation
-		 filename tmpfile t keep-date preserve-uid-gid
-		 preserve-extended-attributes))
-	       (t
-		(funcall
-		 file-operation filename tmpfile t keep-date preserve-uid-gid)))
+	      (funcall
+	       file-operation filename tmpfile t keep-date preserve-uid-gid
+	       preserve-extended-attributes)
 	      (rename-file tmpfile newname ok-if-already-exists))
 
 	  ;; Direct action.
@@ -729,25 +719,16 @@ file names."
   "Like `copy-file' for Tramp files."
   (setq filename (expand-file-name filename))
   (setq newname (expand-file-name newname))
-  (cond
-   ;; At least one file a Tramp file?
-   ((or (tramp-tramp-file-p filename)
-	(tramp-tramp-file-p newname))
-    (tramp-gvfs-do-copy-or-rename-file
-     'copy filename newname ok-if-already-exists keep-date
-     preserve-uid-gid preserve-extended-attributes))
-   ;; Compat section.  PRESERVE-EXTENDED-ATTRIBUTES has been
-   ;; introduced with Emacs 24.1 (as PRESERVE-SELINUX-CONTEXT), and
-   ;; renamed in Emacs 24.3.
-   (preserve-extended-attributes
+  ;; At least one file a Tramp file?
+  (if (or (tramp-tramp-file-p filename)
+	  (tramp-tramp-file-p newname))
+      (tramp-gvfs-do-copy-or-rename-file
+       'copy filename newname ok-if-already-exists keep-date
+       preserve-uid-gid preserve-extended-attributes)
     (tramp-run-real-handler
      'copy-file
      (list filename newname ok-if-already-exists keep-date
-	   preserve-uid-gid preserve-extended-attributes)))
-   (t
-    (tramp-run-real-handler
-     'copy-file
-     (list filename newname ok-if-already-exists keep-date preserve-uid-gid)))))
+	   preserve-uid-gid preserve-extended-attributes))))
 
 (defun tramp-gvfs-handle-delete-directory (directory &optional recursive trash)
   "Like `delete-directory' for Tramp files."
@@ -756,8 +737,8 @@ file names."
 	(mapc (lambda (file)
 		(if (eq t (tramp-compat-file-attribute-type
 			   (file-attributes file)))
-		    (tramp-compat-delete-directory file recursive trash)
-		  (tramp-compat-delete-file file trash)))
+		    (delete-directory file recursive trash)
+		  (delete-file file trash)))
 	      (directory-files
 	       directory 'full directory-files-no-dot-files-regexp))
       (when (directory-files directory nil directory-files-no-dot-files-regexp)
@@ -1089,7 +1070,7 @@ file names."
 	;; There might be an error if the monitor is not supported.
 	;; Give the filter a chance to read the output.
 	(tramp-accept-process-output p 1)
-	(unless (tramp-compat-process-live-p p)
+	(unless (process-live-p p)
 	  (tramp-error
 	   v 'file-notify-error "Monitoring not supported for `%s'" file-name))
 	p))))

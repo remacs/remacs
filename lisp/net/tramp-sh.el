@@ -1303,13 +1303,7 @@ target of the symlink differ."
         (when (> (buffer-size) 0)
           (goto-char (point-min))
           ;; ... inode
-          (setq res-inode
-                (condition-case err
-                    (read (current-buffer))
-                  ;; This error happens in Emacs 23.  Starting with
-                  ;; Emacs 24, a large integer will be converted into
-                  ;; a float automatically during `read'.
-                  (overflow-error (string-to-number (cadr err)))))
+          (setq res-inode (read (current-buffer)))
           ;; ... file mode flags
           (setq res-filemodes (symbol-name (read (current-buffer))))
           ;; ... number links
@@ -1950,27 +1944,17 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
   (filename newname &optional ok-if-already-exists keep-date
    preserve-uid-gid preserve-extended-attributes)
   "Like `copy-file' for Tramp files."
-  (setq filename (expand-file-name filename))
-  (setq newname (expand-file-name newname))
-  (cond
-   ;; At least one file a Tramp file?
-   ((or (tramp-tramp-file-p filename)
-	(tramp-tramp-file-p newname))
-    (tramp-do-copy-or-rename-file
-     'copy filename newname ok-if-already-exists keep-date
-     preserve-uid-gid preserve-extended-attributes))
-   ;; Compat section.  PRESERVE-EXTENDED-ATTRIBUTES has been
-   ;; introduced with Emacs 24.1 (as PRESERVE-SELINUX-CONTEXT), and
-   ;; renamed in Emacs 24.3.
-   (preserve-extended-attributes
+  (setq filename (expand-file-name filename)
+	newname (expand-file-name newname))
+  (if (or (tramp-tramp-file-p filename)
+	  (tramp-tramp-file-p newname))
+      (tramp-do-copy-or-rename-file
+       'copy filename newname ok-if-already-exists keep-date
+       preserve-uid-gid preserve-extended-attributes)
     (tramp-run-real-handler
      'copy-file
      (list filename newname ok-if-already-exists keep-date
-	   preserve-uid-gid preserve-extended-attributes)))
-   (t
-    (tramp-run-real-handler
-     'copy-file
-     (list filename newname ok-if-already-exists keep-date preserve-uid-gid)))))
+	   preserve-uid-gid preserve-extended-attributes))))
 
 (defun tramp-sh-handle-copy-directory
   (dirname newname &optional keep-date parents copy-contents)
@@ -2814,7 +2798,7 @@ the result will be a local, non-Tramp, file name."
 
 (defun tramp-process-sentinel (proc event)
   "Flush file caches."
-  (unless (tramp-compat-process-live-p proc)
+  (unless (process-live-p proc)
     (let ((vec (tramp-get-connection-property proc "vector" nil)))
       (when vec
 	(tramp-message vec 5 "Sentinel called: `%S' `%s'" proc event)
@@ -3628,7 +3612,7 @@ Fall back to normal file name handler if no Tramp handler exists."
 	;; There might be an error if the monitor is not supported.
 	;; Give the filter a chance to read the output.
 	(tramp-accept-process-output p 1)
-	(unless (tramp-compat-process-live-p p)
+	(unless (process-live-p p)
 	  (tramp-error
 	   v 'file-notify-error "Monitoring not supported for `%s'" file-name))
 	p))))
@@ -4620,7 +4604,7 @@ connection if a previous connection has died for some reason."
 
     ;; If Tramp opens the same connection within a short time frame,
     ;; there is a problem.  We shall signal this.
-    (unless (or (tramp-compat-process-live-p p)
+    (unless (or (process-live-p p)
 		(not (tramp-file-name-equal-p
 		      vec (car tramp-current-connection)))
 		(> (tramp-time-diff
@@ -4641,9 +4625,9 @@ connection if a previous connection has died for some reason."
 		       (tramp-get-connection-property
 			p "last-cmd-time" '(0 0 0)))
 		      60)
-		   (tramp-compat-process-live-p p))
+		   (process-live-p p))
 	  (tramp-send-command vec "echo are you awake" t t)
-	  (unless (and (tramp-compat-process-live-p p)
+	  (unless (and (process-live-p p)
 		       (tramp-wait-for-output p 10))
 	    ;; The error will be caught locally.
 	    (tramp-error vec 'file-error "Awake did fail")))
@@ -4653,7 +4637,7 @@ connection if a previous connection has died for some reason."
 
     ;; New connection must be opened.
     (condition-case err
-	(unless (tramp-compat-process-live-p p)
+	(unless (process-live-p p)
 
 	  ;; During completion, don't reopen a new connection.  We
 	  ;; check this for the process related to

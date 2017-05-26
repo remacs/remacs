@@ -53,7 +53,7 @@
 	       (replace-regexp-in-string "\n" "" (buffer-string))))))))
 
 ;; Check for Emacs version.
-(let ((x (if (>= emacs-major-version 23)
+(let ((x (if (>= emacs-major-version 24)
     "ok"
   (format "Tramp 2.3.2-pre is not fit for %s"
 	  (when (string-match "^.*$" (emacs-version))

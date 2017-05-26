@@ -2553,9 +2553,8 @@ when using @value{tramp} between two hosts with different operating
 systems, such as @samp{windows-nt} and @samp{gnu/linux}.  This option
 ensures the correct name of the remote shell program.
 
-Starting with Emacs 24, when @option{explicit-shell-file-name} is
-equal to @code{nil}, calling @code{shell} interactively will prompt
-for a shell name.
+When @option{explicit-shell-file-name} is equal to @code{nil}, calling
+@code{shell} interactively will prompt for a shell name.
 
 Starting with Emacs 26, you could use connection-local variables for
 setting different values of @option{explicit-shell-file-name} for
@@ -2856,8 +2855,7 @@ Where is the latest @value{tramp}?
 @item
 Which systems does it work on?
 
-The package works successfully on Emacs 23, Emacs 24, Emacs 25, and
-Emacs 26.
+The package works successfully on Emacs 24, Emacs 25, and Emacs 26.
 
 While Unix and Unix-like systems are the primary remote targets,
 @value{tramp} has equal success connecting to other platforms, such as
