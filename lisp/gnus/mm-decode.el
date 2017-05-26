@@ -1555,6 +1555,8 @@ be determined."
 	    "xbm")
 	   ((equal type "x-portable-bitmap")
 	    "pbm")
+	   ((equal type "svg+xml")
+	    "svg")
 	   (t type)))
     (or (mm-handle-cache handle)
 	(mm-with-unibyte-buffer
