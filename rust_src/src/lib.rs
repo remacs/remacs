@@ -138,7 +138,8 @@ pub extern "C" fn rust_init_syms() {
             Snull
         },
         character = {
-            Smax_char
+            Smax_char,
+            Scharacterp
         },
         floatfns = {
             Sisnan,

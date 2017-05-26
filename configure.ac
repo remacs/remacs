@@ -5118,7 +5118,7 @@ fi
 AC_SUBST(CARGO_FLAGS)
 
 case "${opsys}" in
-  darwin) RUST_DEPS="-ldl"
+  darwin) RUST_DEPS="-ldl -lresolv"
   	  REMACSLIB_CFLAGS="-pthread" ;;
   gnu*) RUST_DEPS="-ldl -lrt"
         REMACSLIB_CFLAGS="-pthread" ;;

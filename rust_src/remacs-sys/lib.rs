@@ -637,9 +637,32 @@ pub struct emacs_globals {
     pub f_x_use_underline_position_properties: bool,
 }
 
+/// Represents a string value in elisp
+#[repr(C)]
+pub struct Lisp_String {
+    pub size: libc::ptrdiff_t,
+    pub size_byte: libc::ptrdiff_t,
+    // TODO: Use correct definition for this.
+    //
+    // Maybe use rust nightly unions?
+    pub intervals: *mut libc::c_void, // @TODO implement
+    pub data: *mut libc::c_char,
+}
+
 extern "C" {
     pub static mut globals: emacs_globals;
+    pub static Qt: Lisp_Object;
+    pub static Qarith_error: Lisp_Object;
+    pub static Qnumber_or_marker_p: Lisp_Object;
+    pub static Qnumberp: Lisp_Object;
+    pub static Qfloatp: Lisp_Object;
+    pub static Qstringp: Lisp_Object;
 
     pub fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
+    pub fn wrong_type_argument(predicate: Lisp_Object, value: Lisp_Object) -> Lisp_Object;
+    pub fn STRING_BYTES(s: *mut Lisp_String) -> libc::ptrdiff_t;
+    pub fn STRING_MULTIBYTE(a: Lisp_Object) -> bool;
+    pub fn SSDATA(string: Lisp_Object) -> *mut libc::c_char;
+    pub fn make_float(float_value: libc::c_double) -> Lisp_Object;
 
 }

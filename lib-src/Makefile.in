@@ -348,7 +348,7 @@ uninstall:
 mostlyclean:
 	rm -f core *.o *.res
 
-clean: mostlyclean
+clean: mostlyclean remacs-libclean
 	rm -f ${EXE_FILES}
 
 distclean: clean
@@ -377,6 +377,9 @@ cargo_manifest=../rust_src/remacs-lib/Cargo.toml
 $(RUST_LIB):
 	RUSTFLAGS=$(RUSTFLAGS) \
 	$(CARGO_BUILD) $(CARGO_FLAGS) --manifest-path=$(cargo_manifest)
+
+remacs-libclean:
+	$(CARGO_CLEAN) --manifest-path=$(cargo_manifest)
 
 regex.o: $(srcdir)/../src/regex.c $(srcdir)/../src/regex.h $(config_h)
 	$(AM_V_CC)$(CC) -c $(CPP_CFLAGS) $<

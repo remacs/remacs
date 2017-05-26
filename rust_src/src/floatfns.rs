@@ -1,7 +1,7 @@
 use std::ptr;
 
-use lisp::{LispObject, Qnumberp, Qfloatp, CHECK_TYPE};
-use remacs_sys::{EmacsDouble, Lisp_Object};
+use lisp::{LispObject, CHECK_TYPE};
+use remacs_sys::{EmacsDouble, Lisp_Object, Qnumberp, Qfloatp};
 
 /// Either extracts a floating point number from a lisp number (of any kind) or throws an error
 /// TODO eventually, this can hopefully go away when we have a better approach for error handling

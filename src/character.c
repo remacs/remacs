@@ -216,17 +216,6 @@ translate_char (Lisp_Object table, int c)
   return c;
 }
 
-DEFUN ("characterp", Fcharacterp, Scharacterp, 1, 2, 0,
-       doc: /* Return non-nil if OBJECT is a character.
-In Emacs Lisp, characters are represented by character codes, which
-are non-negative integers.  The function `max-char' returns the
-maximum character code.
-usage: (characterp OBJECT)  */
-       attributes: const)
-  (Lisp_Object object, Lisp_Object ignore)
-{
-  return (CHARACTERP (object) ? Qt : Qnil);
-}
 
 DEFUN ("unibyte-char-to-multibyte", Funibyte_char_to_multibyte,
        Sunibyte_char_to_multibyte, 1, 1, 0,
@@ -1051,7 +1040,6 @@ syms_of_character (void)
   staticpro (&Vchar_unify_table);
   Vchar_unify_table = Qnil;
 
-  defsubr (&Scharacterp);
   defsubr (&Sunibyte_char_to_multibyte);
   defsubr (&Smultibyte_char_to_unibyte);
   defsubr (&Schar_width);

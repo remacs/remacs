@@ -3,9 +3,9 @@ use libc::ptrdiff_t;
 
 use floatfns;
 use lisp;
-use lisp::{LispObject, Qarith_error, XINT, make_number, CHECK_TYPE, Qnumberp, LispType};
+use lisp::{LispObject, XINT, make_number, CHECK_TYPE, LispType};
 use eval::xsignal0;
-use remacs_sys::{EmacsInt, Lisp_Object};
+use remacs_sys::{EmacsInt, Lisp_Object, Qarith_error, Qnumberp};
 
 fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
     let x = lisp::check_number_coerce_marker(x);

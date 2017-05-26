@@ -1,6 +1,7 @@
 use std::ptr;
 
-use lisp::{LispObject, Qnil, Qt, INTEGERP, FLOATP, MARKERP, NATNUMP, NUMBERP};
+use lisp::{LispObject, Qnil, INTEGERP, FLOATP, MARKERP, NATNUMP, NUMBERP};
+use remacs_sys::Qt;
 
 fn floatp(object: LispObject) -> LispObject {
     if FLOATP(object) {
