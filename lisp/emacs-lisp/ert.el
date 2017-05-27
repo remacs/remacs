@@ -1458,6 +1458,12 @@ The exit status will be 0 if all test results were as expected, 1
 on unexpected results, or 2 if the tool detected an error outside
 of the tests (e.g. invalid SELECTOR or bug in the code that runs
 the tests)."
+  (or noninteractive
+      (user-error "This function is only for use in batch mode"))
+  ;; Better crash loudly than attempting to recover from undefined
+  ;; behavior.
+  (setq attempt-stack-overflow-recovery nil
+        attempt-orderly-shutdown-on-fatal-signal nil)
   (unwind-protect
       (let ((stats (ert-run-tests-batch selector)))
         (kill-emacs (if (zerop (ert-stats-completed-unexpected stats)) 0 1)))
@@ -1475,6 +1481,10 @@ The logfiles should have the `ert-run-tests-batch' format.  When finished,
 this exits Emacs, with status as per `ert-run-tests-batch-and-exit'."
   (or noninteractive
       (user-error "This function is only for use in batch mode"))
+  ;; Better crash loudly than attempting to recover from undefined
+  ;; behavior.
+  (setq attempt-stack-overflow-recovery nil
+        attempt-orderly-shutdown-on-fatal-signal nil)
   (let ((nlogs (length command-line-args-left))
         (ntests 0) (nrun 0) (nexpected 0) (nunexpected 0) (nskipped 0)
         nnotrun logfile notests badtests unexpected skipped)
