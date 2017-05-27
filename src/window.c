@@ -3342,7 +3342,7 @@ run_window_size_change_functions (Lisp_Object frame)
 /* Make WINDOW display BUFFER.  RUN_HOOKS_P means it's allowed
    to run hooks.  See make_frame for a case where it's not allowed.
    KEEP_MARGINS_P means that the current margins, fringes, and
-   scroll-bar settings of the window are not reset from the buffer's
+   scroll bar settings of the window are not reset from the buffer's
    local settings.  */
 
 void
@@ -7045,16 +7045,18 @@ DEFUN ("set-window-scroll-bars", Fset_window_scroll_bars,
 WINDOW must be a live window and defaults to the selected one.
 
 Second parameter WIDTH specifies the pixel width for the vertical scroll
-bar.  If WIDTH is nil, use the scroll-bar width of WINDOW's frame.
+bar.  If WIDTH is nil, use the scroll bar width of WINDOW's frame.
 Third parameter VERTICAL-TYPE specifies the type of the vertical scroll
-bar: left, right, or nil.  If VERTICAL-TYPE is t, this means use the
-frame's scroll-bar type.
+bar: left, right, nil or t where nil means to not display a vertical
+scroll bar on WINDOW and t means to use WINDOW frame's vertical scroll
+bar type.
 
 Fourth parameter HEIGHT specifies the pixel height for the horizontal
-scroll bar.  If HEIGHT is nil, use the scroll-bar height of WINDOW's
+scroll bar.  If HEIGHT is nil, use the scroll bar height of WINDOW's
 frame.  Fifth parameter HORIZONTAL-TYPE specifies the type of the
-horizontal scroll bar: nil, bottom, or t.  If HORIZONTAL-TYPE is t, this
-means to use the frame's horizontal scroll-bar type.
+horizontal scroll bar: bottom, nil, or t where nil means to not display
+a horizontal scroll bar on WINDOW and t means to use WINDOW frame's
+horizontal scroll bar type.
 
 Return t if scroll bars were actually changed and nil otherwise.  */)
   (Lisp_Object window, Lisp_Object width, Lisp_Object vertical_type,

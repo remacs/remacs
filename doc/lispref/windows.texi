@@ -2049,8 +2049,8 @@ signals an error.  @xref{Dedicated Windows}.
 By default, this function resets @var{window}'s position, display
 margins, fringe widths, and scroll bar settings, based on the local
 variables in the specified buffer.  However, if the optional argument
-@var{keep-margins} is non-@code{nil}, it leaves the display margins
-and fringe widths unchanged.
+@var{keep-margins} is non-@code{nil}, it leaves @var{window}'s display
+margins, fringes and scroll bar settings alone.
 
 When writing an application, you should normally use the higher-level
 functions described in @ref{Switching Buffers}, instead of calling
