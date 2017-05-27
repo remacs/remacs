@@ -2042,7 +2042,7 @@ as a @dfn{fileset}.  This lets you perform certain operations, such as
 visiting, @code{query-replace}, and shell commands on all the files at
 once.  To make use of filesets, you must first add the expression
 @code{(filesets-init)} to your init file (@pxref{Init File}).  This
-adds a @samp{Filesets} menu to the menu bar.
+adds a @samp{Filesets} sub-menu to the menu bar's @samp{File} menu.
 
 @findex filesets-add-buffer
 @findex filesets-remove-buffer
