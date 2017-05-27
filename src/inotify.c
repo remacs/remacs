@@ -215,16 +215,15 @@ inotifyevent_to_event (Lisp_Object watch, struct inotify_event const *ev)
 }
 
 /* Add a new watch to watch-descriptor WD watching FILENAME and using
-   CALLBACK.  Returns a cons (DESCRIPTOR . ID) uniquely identifying the
-   new watch.  */
+   IMASK and CALLBACK.  Return a cons (DESCRIPTOR . ID) uniquely
+   identifying the new watch.  */
 static Lisp_Object
 add_watch (int wd, Lisp_Object filename,
-	   Lisp_Object aspect, Lisp_Object callback)
+	   uint32_t imask, Lisp_Object callback)
 {
   Lisp_Object descriptor = INTEGER_TO_CONS (wd);
   Lisp_Object tail = assoc_no_quit (descriptor, watch_list);
   Lisp_Object watch, watch_id;
-  uint32_t imask = aspect_to_inotifymask (aspect);
   Lisp_Object mask = INTEGER_TO_CONS (imask);
 
   EMACS_INT id = 0;
@@ -436,12 +435,10 @@ IN_ONLYDIR  */)
      (Lisp_Object filename, Lisp_Object aspect, Lisp_Object callback)
 {
   Lisp_Object encoded_file_name;
-  bool dont_follow = (CONSP (aspect)
-		      ? ! NILP (Fmemq (Qdont_follow, aspect))
-		      : EQ (Qdont_follow, aspect));
   int wd = -1;
+  uint32_t imask = aspect_to_inotifymask (aspect);
   uint32_t mask = (INOTIFY_DEFAULT_MASK
-                   | (dont_follow ? IN_DONT_FOLLOW : 0));
+		   | (imask & IN_DONT_FOLLOW));
 
   CHECK_STRING (filename);
 
@@ -459,7 +456,7 @@ IN_ONLYDIR  */)
   if (wd < 0)
     report_file_notify_error ("Could not add watch for file", filename);
 
-  return add_watch (wd, filename, aspect, callback);
+  return add_watch (wd, filename, imask, callback);
 }
 
 static bool
