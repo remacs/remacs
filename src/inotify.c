@@ -42,21 +42,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 # define IN_ONLYDIR 0
 #endif
 
-/* Events that inotify-add-watch waits for.  This list has all the
-   events that any watcher could include, because we want to support
-   multiple watches on the same file even though inotify uses the same
-   descriptor for all watches to that file.  This list omits
-   IN_ACCESS, IN_CLOSE_WRITE, IN_CLOSE_NOWRITE, and IN_OPEN because
-   they would prevent other processes from reading; see Bug#26973.
-
-   FIXME: Explain why it is OK to omit these four bits here even
-   though a inotify-add-watch call might specify them.  */
-
-#define INOTIFY_DEFAULT_MASK                                    \
-  (IN_ATTRIB | IN_CREATE | IN_DELETE | IN_DELETE_SELF		\
-   | IN_IGNORED | IN_MODIFY | IN_MOVE_SELF | IN_MOVED_FROM	\
-   | IN_MOVED_TO | IN_EXCL_UNLINK)
-
 /* File handle for inotify.  */
 static int inotifyfd = -1;
 
@@ -436,8 +421,7 @@ IN_ONESHOT  */)
   Lisp_Object encoded_file_name;
   int wd = -1;
   uint32_t imask = aspect_to_inotifymask (aspect);
-  uint32_t mask = (INOTIFY_DEFAULT_MASK
-		   | (imask & (IN_DONT_FOLLOW | IN_ONLYDIR)));
+  uint32_t mask = imask | IN_MASK_ADD | IN_EXCL_UNLINK;
 
   CHECK_STRING (filename);
 
