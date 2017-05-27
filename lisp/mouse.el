@@ -714,12 +714,19 @@ Upon exit, point is at the far edge of the newly visible text."
 Highlight the drag area as you move the mouse.
 This must be bound to a button-down mouse event.
 In Transient Mark mode, the highlighting remains as long as the mark
-remains active.  Otherwise, it remains until the next input event."
-  (interactive "e")
-  ;; Give temporary modes such as isearch a chance to turn off.
-  (run-hooks 'mouse-leave-buffer-hook)
-  (mouse-drag-track start-event))
+remains active.  Otherwise, it remains until the next input event.
 
+When the region already exists and `mouse-drag-and-drop-region'
+is non-nil, this moves the entire region of text to where mouse
+is dragged over to."
+  (interactive "e")
+  (if (and mouse-drag-and-drop-region
+           (not (member 'triple (event-modifiers start-event)))
+           (equal (mouse-posn-property (event-start start-event) 'face) 'region))
+      (mouse-drag-and-drop-region start-event)
+    ;; Give temporary modes such as isearch a chance to turn off.
+    (run-hooks 'mouse-leave-buffer-hook)
+    (mouse-drag-track start-event)))
 
 (defun mouse-posn-property (pos property)
   "Look for a property at click position.
@@ -1937,6 +1944,84 @@ choose a font."
 		  t (called-interactively-p 'interactive)))))))))
 
 
+;; Drag and drop support.
+(defcustom mouse-drag-and-drop-region nil
+  "If non-nil, dragging the mouse drags the region, if that exists.
+If the value is a modifier, such as `control' or `shift' or `meta',
+then if that modifier key is pressed when dropping the region, region
+text is copied instead of being cut."
+  :type 'symbol
+  :version "26.1"
+  :group 'mouse)
+
+(defun mouse-drag-and-drop-region (event)
+  "Move text in the region to point where mouse is dragged to.
+The transportation of text is also referred as `drag and drop'.
+When text is dragged over to a different buffer, or if a
+modifier key was pressed when dropping, and the value of the
+variable `mouse-drag-and-drop-region' is that modifier, the text
+is copied instead of being cut."
+  (interactive "e")
+  (require 'tooltip)
+  (let ((start (region-beginning))
+        (end (region-end))
+        (point (point))
+        (buffer (current-buffer))
+        (window (selected-window))
+        value-selection)
+    (track-mouse
+      ;; When event was click instead of drag, skip loop
+      (while (progn
+               (setq event (read-event))
+               (mouse-movement-p event))
+        (unless value-selection ; initialization
+          (delete-overlay mouse-secondary-overlay)
+          (setq value-selection (buffer-substring start end))
+          (move-overlay mouse-secondary-overlay start end)) ; (deactivate-mark)
+        (ignore-errors (deactivate-mark) ; care existing region in other window
+                       (mouse-set-point event)
+                       (tooltip-show value-selection)))
+      (tooltip-hide))
+    ;; Do not modify buffer under mouse when "event was click",
+    ;;                                       "drag negligible", or
+    ;;                                       "drag to read-only".
+    (if (or (equal (mouse-posn-property (event-end event) 'face) 'region) ; "event was click"
+            (member 'secondary-selection ; "drag negligible"
+                    (mapcar (lambda (xxx) (overlay-get xxx 'face))
+                            (overlays-at (posn-point (event-end event)))))
+            buffer-read-only)
+        ;; Do not modify buffer under mouse.
+        (cond
+         ;; "drag negligible" or "drag to read-only", restore region.
+         (value-selection
+          (select-window window) ; In case miss drag to other window
+          (goto-char point)
+          (setq deactivate-mark nil)
+          (activate-mark))
+         ;; "event was click"
+         (t
+          (deactivate-mark)
+          (mouse-set-point event)))
+      ;; Modify buffer under mouse by inserting text.
+      (push-mark)
+      (insert value-selection)
+      (when (not (equal (mark) (point))) ; on success insert
+        (setq deactivate-mark nil)
+        (activate-mark)) ; have region on destination
+      ;; Take care of initial region on source.
+      (if (equal (current-buffer) buffer) ; when same buffer
+          (let (deactivate-mark) ; remove text
+            (unless (member mouse-drag-and-drop-region (event-modifiers event))
+              (kill-region (overlay-start mouse-secondary-overlay)
+                           (overlay-end mouse-secondary-overlay))))
+        (let ((window1 (selected-window))) ; when beyond buffer
+          (select-window window)
+          (goto-char point) ; restore point on source window
+          (activate-mark) ; restore region
+          (select-window window1))))
+    (delete-overlay mouse-secondary-overlay)))
+
+
 ;;; Bindings for mouse commands.
 
 (global-set-key [down-mouse-1]	'mouse-drag-region)

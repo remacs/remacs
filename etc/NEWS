@@ -169,6 +169,10 @@ keeps point at the end of the region, setting it to non-nil moves
 point to the beginning of the region.
 
 +++
+** The new user option 'mouse-drag-and-drop-region' allows to drag the
+entire region of text to another place or another buffer.
+
++++
 ** The new user option 'confirm-kill-processes' allows the user to
 skip a confirmation prompt for killing subprocesses when exiting
 Emacs.  When set to t (the default), Emacs will prompt for
