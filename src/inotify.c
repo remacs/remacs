@@ -72,10 +72,6 @@ static int inotifyfd = -1;
    IN_EXCL_UNLINK
    IN_MASK_ADD
    IN_ONESHOT
-   IN_ONLYDIR
-
-   FIXME: Explain why IN_ONLYDIR is in the list, as it seems to be
-   in the same category as IN_DONT_FOLLOW which is allowed.
 
    Each element of this list is of the form (DESCRIPTOR . WATCHES)
    where no two DESCRIPTOR values are the same.  DESCRIPTOR represents
@@ -162,6 +158,8 @@ symbol_to_inotifymask (Lisp_Object symb)
 
   else if (EQ (symb, Qdont_follow))
     return IN_DONT_FOLLOW;
+  else if (EQ (symb, Qonlydir))
+    return IN_ONLYDIR;
 
   else if (EQ (symb, Qt) || EQ (symb, Qall_events))
     return IN_ALL_EVENTS;
@@ -397,9 +395,11 @@ all-events or t
 move
 close
 
-The following symbols can also be added to a list of aspects:
+ASPECT can also contain the following symbols, which control whether
+the watch descriptor will be created:
 
 dont-follow
+onlydir
 
 Watching a directory is not recursive.  CALLBACK is passed a single argument
 EVENT which contains an event structure of the format
@@ -430,15 +430,14 @@ shared across different callers.
 
 IN_EXCL_UNLINK
 IN_MASK_ADD
-IN_ONESHOT
-IN_ONLYDIR  */)
+IN_ONESHOT  */)
      (Lisp_Object filename, Lisp_Object aspect, Lisp_Object callback)
 {
   Lisp_Object encoded_file_name;
   int wd = -1;
   uint32_t imask = aspect_to_inotifymask (aspect);
   uint32_t mask = (INOTIFY_DEFAULT_MASK
-		   | (imask & IN_DONT_FOLLOW));
+		   | (imask & (IN_DONT_FOLLOW | IN_ONLYDIR)));
 
   CHECK_STRING (filename);
 
@@ -548,6 +547,7 @@ syms_of_inotify (void)
   DEFSYM (Qclose, "close");		/* IN_CLOSE */
 
   DEFSYM (Qdont_follow, "dont-follow");	/* IN_DONT_FOLLOW */
+  DEFSYM (Qonlydir, "onlydir");		/* IN_ONLYDIR */
 
   DEFSYM (Qignored, "ignored");		/* IN_IGNORED */
   DEFSYM (Qisdir, "isdir");		/* IN_ISDIR */
