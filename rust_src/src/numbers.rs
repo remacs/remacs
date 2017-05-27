@@ -1,14 +1,10 @@
 use std::ptr;
 
-use lisp::{LispObject, Qnil, INTEGERP, FLOATP, MARKERP, NATNUMP, NUMBERP};
-use remacs_sys::Qt;
+use lisp::LispObject;
+
 
 fn floatp(object: LispObject) -> LispObject {
-    if FLOATP(object) {
-        LispObject::from_raw(unsafe { Qt })
-    } else {
-        Qnil
-    }
+    LispObject::from_bool(object.is_float())
 }
 
 defun!("floatp",
@@ -23,11 +19,7 @@ defun!("floatp",
 (fn OBJECT)");
 
 fn integerp(object: LispObject) -> LispObject {
-    if INTEGERP(object) {
-        LispObject::from_raw(unsafe { Qt })
-    } else {
-        Qnil
-    }
+    LispObject::from_bool(object.is_integer())
 }
 
 defun!("integerp",
@@ -42,11 +34,7 @@ defun!("integerp",
 (fn OBJECT)");
 
 fn integer_or_marker_p(object: LispObject) -> LispObject {
-    if MARKERP(object) || INTEGERP(object) {
-        LispObject::from_raw(unsafe { Qt })
-    } else {
-        Qnil
-    }
+    LispObject::from_bool(object.is_marker() || object.is_integer())
 }
 
 defun!("integer-or-marker-p",
@@ -61,11 +49,7 @@ defun!("integer-or-marker-p",
 (fn OBJECT)");
 
 fn natnump(object: LispObject) -> LispObject {
-    if NATNUMP(object) {
-        LispObject::from_raw(unsafe { Qt })
-    } else {
-        Qnil
-    }
+    LispObject::from_bool(object.is_natnum())
 }
 
 defun!("natnump",
@@ -80,11 +64,7 @@ defun!("natnump",
 (fn OBJECT)");
 
 fn numberp(object: LispObject) -> LispObject {
-    if NUMBERP(object) {
-        LispObject::from_raw(unsafe { Qt })
-    } else {
-        Qnil
-    }
+    LispObject::from_bool(object.is_number())
 }
 
 defun!("numberp",
@@ -99,11 +79,7 @@ defun!("numberp",
 (fn OBJECT)");
 
 fn number_or_marker_p(object: LispObject) -> LispObject {
-    if NUMBERP(object) || MARKERP(object) {
-        LispObject::from_raw(unsafe { Qt })
-    } else {
-        Qnil
-    }
+    LispObject::from_bool(object.is_number() || object.is_marker())
 }
 
 defun!("number-or-marker-p",
