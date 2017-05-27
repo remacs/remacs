@@ -7160,7 +7160,7 @@ We divide the value by 1024 to make sure it fits in a Lisp integer.  */)
 {
   Lisp_Object end;
 
-#if defined HAVE_NS || !HAVE_SBRK
+#if defined HAVE_NS || defined __APPLE__ || !HAVE_SBRK
   /* Avoid warning.  sbrk has no relation to memory allocated anyway.  */
   XSETINT (end, 0);
 #else
