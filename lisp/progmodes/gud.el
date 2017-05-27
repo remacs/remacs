@@ -157,7 +157,8 @@ Used to gray out relevant toolbar icons.")
                                 (gdb-show-run-p)))
     ([stop]	menu-item "Stop" gud-stop-subjob
 		  :visible (or (not (memq gud-minor-mode '(gdbmi pdb)))
-			       (gdb-show-stop-p)))
+			       (and (eq gud-minor-mode 'gdbmi)
+                                    (gdb-show-stop-p))))
     ([until]	menu-item "Continue to selection" gud-until
                   :enable (not gud-running)
 		  :visible (and (memq gud-minor-mode '(gdbmi gdb perldb))
