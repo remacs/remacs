@@ -58,7 +58,7 @@ It is used for TCP/IP devices."
 
 ;;;###tramp-autoload
 (defcustom tramp-adb-prompt
-  "^\\(?:[[:digit:]]*|?\\)?\\(?:[[:alnum:]\e;[]*@[[:alnum:]]*[^#\\$]*\\)?[#\\$][[:space:]]"
+  "^\\(?:[[:digit:]]*|?\\)?\\(?:[[:alnum:]\e;[]*@?[[:alnum:]]*[^#\\$]*\\)?[#\\$][[:space:]]"
   "Regexp used as prompt in almquist shell."
   :type 'string
   :version "24.4"
@@ -72,6 +72,7 @@ It is used for TCP/IP devices."
 (defconst tramp-adb-ls-toolbox-regexp
   (concat
    "^[[:space:]]*\\([-[:alpha:]]+\\)" 	; \1 permissions
+   "\\(?:[[:space:]][[:digit:]]+\\)?"	; links (Android 7/ToolBox)
    "[[:space:]]*\\([^[:space:]]+\\)"	; \2 username
    "[[:space:]]+\\([^[:space:]]+\\)"	; \3 group
    "[[:space:]]+\\([[:digit:]]+\\)"	; \4 size
@@ -441,12 +442,15 @@ pass to the OPERATION."
   "Determine `ls' command at its arguments."
   (with-tramp-connection-property vec "ls"
     (tramp-message vec 5 "Finding a suitable `ls' command")
-    (if (tramp-adb-send-command-and-check vec "ls --color=never -al /dev/null")
-	;; On CyanogenMod based system BusyBox is used and "ls" output
-	;; coloring is enabled by default.  So we try to disable it
-	;; when possible.
-	"ls --color=never"
-      "ls")))
+    (cond
+     ;; Can't disable coloring explicitly for toybox ls command
+     ((tramp-adb-send-command-and-check vec "toybox") "ls")
+     ;; On CyanogenMod based system BusyBox is used and "ls" output
+     ;; coloring is enabled by default.  So we try to disable it
+     ;; when possible.
+     ((tramp-adb-send-command-and-check vec "ls --color=never -al /dev/null")
+      "ls --color=never")
+     (t "ls"))))
 
 (defun tramp-adb--gnu-switches-to-ash (switches)
   "Almquist shell can't handle multiple arguments.
