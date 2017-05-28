@@ -2,6 +2,7 @@ extern crate libc;
 
 use std::ptr;
 use lisp::{LispObject, LispMiscType, XMARKER, CHECK_TYPE};
+use remacs_macros::lisp_fn;
 
 extern "C" {
     // defined in eval.c, where it can actually take an arbitrary
@@ -49,17 +50,9 @@ pub fn marker_position(marker: LispObject) -> libc::ptrdiff_t {
     m.charpos
 }
 
+/// Return t if OBJECT is a marker (editor pointer).
+/// (fn OBJECT)
+#[lisp_fn]
 fn markerp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_marker())
 }
-
-defun!("markerp",
-       Fmarkerp(object),
-       Smarkerp,
-       markerp,
-       1,
-       1,
-       ptr::null(),
-       "Return t if OBJECT is a marker (editor pointer).
-
-(fn OBJECT)");

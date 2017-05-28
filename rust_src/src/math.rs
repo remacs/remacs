@@ -1,4 +1,3 @@
-use std::ptr;
 use libc::ptrdiff_t;
 
 use floatfns;
@@ -8,6 +7,11 @@ use eval::xsignal0;
 use remacs_sys::{EmacsInt, Lisp_Object, Qarith_error, Qnumberp};
 use remacs_macros::lisp_fn;
 
+/// Return X modulo Y.
+/// The result falls between zero (inclusive) and Y (exclusive).
+/// Both X and Y must be numbers or markers.
+/// (fn X Y)
+#[lisp_fn(name = "mod", c_name = "mod")]
 fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
     let x = lisp::check_number_coerce_marker(x);
     let y = lisp::check_number_coerce_marker(y);
@@ -35,22 +39,6 @@ fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
 
     make_number(i1)
 }
-
-// TODO: There's some magic somewhere in core Emacs that means
-// `(fn X Y)` is added to the docstring automatically. We
-// should do something similar.
-defun!("mod",
-       Fmod(x, y),
-       Smod,
-       lisp_mod,
-       2,
-       2,
-       ptr::null(),
-       "Return X modulo Y.
-The result falls between zero (inclusive) and Y (exclusive).
-Both X and Y must be numbers or markers.
-
-(fn X Y)");
 
 #[repr(C)]
 enum ArithOp {
@@ -240,7 +228,8 @@ fn quo(args: &mut [LispObject]) -> LispObject {
 
 /// Return bitwise-and of all the arguments.
 /// Arguments may be integers, or markers, converted to integers.
-#[lisp_fn(name = "logand")]
+/// (fn &rest INTS-OR-MARKERS)
+#[lisp_fn]
 fn logand(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Logand, args)
 }
@@ -248,7 +237,7 @@ fn logand(args: &mut [LispObject]) -> LispObject {
 /// Return bitwise-or of all the arguments.
 /// Arguments may be integers, or markers converted to integers.
 /// (fn &rest INTS-OR-MARKERS)
-#[lisp_fn(name = "logior")]
+#[lisp_fn]
 fn logior(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Logior, args)
 }
@@ -256,7 +245,7 @@ fn logior(args: &mut [LispObject]) -> LispObject {
 /// Return bitwise-exclusive-or of all the arguments.
 /// Arguments may be integers, or markers converted to integers.
 /// (fn &rest INTS-OR-MARKERS)
-#[lisp_fn(name = "logxor")]
+#[lisp_fn]
 fn logxor(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Logxor, args)
 }
@@ -264,7 +253,7 @@ fn logxor(args: &mut [LispObject]) -> LispObject {
 /// Return largest of all the arguments (which must be numbers or markers).
 /// The value is always a number; markers are converted to numbers.
 /// (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
-#[lisp_fn(name = "max", min = "1")]
+#[lisp_fn(min = "1")]
 fn max(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Max, args)
 }
@@ -272,14 +261,14 @@ fn max(args: &mut [LispObject]) -> LispObject {
 /// Return smallest of all the arguments (which must be numbers or markers).
 /// The value is always a number; markers are converted to numbers.
 /// fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS
-#[lisp_fn(name = "min", min = "1")]
+#[lisp_fn(min = "1")]
 fn min(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Min, args)
 }
 
 /// Return the absolute value of ARG
 /// (fn ARG)
-#[lisp_fn(name = "abs", min = "1")]
+#[lisp_fn]
 fn abs(obj: LispObject) -> LispObject {
     CHECK_TYPE(obj.is_number(),
                LispObject::from_raw(unsafe { Qnumberp }),

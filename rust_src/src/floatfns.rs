@@ -60,67 +60,40 @@ pub extern "C" fn fmod_float(x: Lisp_Object, y: Lisp_Object) -> Lisp_Object {
 }
 
 macro_rules! simple_float_op {
-    ($lisp_name:expr, $fname:ident, $sname:ident, $float_func:ident, $lisp_docs:expr) => {
+    ($lisp_name:expr, $float_func:ident, $lisp_docs:expr) => {
+        #[doc = $lisp_docs]
+        #[lisp_fn(name = $lisp_name, c_name = $lisp_name)]
         fn $float_func(x: LispObject) -> LispObject {
             let d = extract_float(x.to_raw());
             let val = d.$float_func();
             LispObject::from_float(val)
         }
-
-        defun! (
-            $lisp_name,
-            $fname(x),
-            $sname,
-            $float_func,
-            1, 1,
-            $crate::std::ptr::null(),
-// explicity set signature, otherwise emacs seems to name the argument ARG1
-            concat!($lisp_docs, "
-
-(fn ARG)")
-        );
     }
 }
 
-simple_float_op!("acos",
-                 Facos,
-                 Sacos,
-                 acos,
-                 "Return the inverse cosine of ARG.");
-simple_float_op!("asin",
-                 Fasin,
-                 Sasin,
-                 asin,
-                 "Return the inverse sine of ARG.");
+simple_float_op!("acos", acos, "Return the inverse cosine of ARG.");
+simple_float_op!("asin", asin, "Return the inverse sine of ARG.");
 // atan is special, defined later
-simple_float_op!("cos", Fcos, Scos, cos, "Return the cosine of ARG.");
-simple_float_op!("sin", Fsin, Ssin, sin, "Return the sine of ARG.");
-simple_float_op!("tan", Ftan, Stan, tan, "Return the tangent of ARG.");
+simple_float_op!("cos", cos, "Return the cosine of ARG.");
+simple_float_op!("sin", sin, "Return the sine of ARG.");
+simple_float_op!("tan", tan, "Return the tangent of ARG.");
 
-simple_float_op!("exp",
-                 Fexp,
-                 Sexp,
-                 exp,
-                 "Return the exponential base e of ARG.");
-simple_float_op!("sqrt", Fsqrt, Ssqrt, sqrt, "Return the square root of ARG.");
+simple_float_op!("exp", exp, "Return the exponential base e of ARG.");
+simple_float_op!("sqrt", sqrt, "Return the square root of ARG.");
 
 simple_float_op!("fceiling",
-                 Ffceiling,
-                 Sfceiling,
                  ceil,
                  "Return the smallest integer no less than ARG, as a float.
 (Round toward +inf.)");
 
 simple_float_op!("ffloor",
-                 Ffloor,
-                 Sffloor,
                  floor,
                  "Return the largest integer no greater than ARG, as a float.
 (Round towards -inf.)");
 
 /// Return non nil if argument X is a NaN.
 /// (fn X)
-#[lisp_fn(name = "isnan", min = "1")]
+#[lisp_fn]
 fn isnan(x: LispObject) -> LispObject {
     check_float(x);
     let d = x.to_float().unwrap();
@@ -132,8 +105,8 @@ fn isnan(x: LispObject) -> LispObject {
 /// If two arguments Y and X are given, return the inverse tangent of Y
 /// divided by X, i.e. the angle in radians between the vector (X, Y)
 /// and the x-axis
-/// (fn Y &optional X)");
-#[lisp_fn(name = "atan", min = "1")]
+/// (fn Y &optional X)
+#[lisp_fn(min = "1")]
 fn atan(y: LispObject, x: LispObject) -> LispObject {
     let y = extract_float(y.to_raw());
 
@@ -149,8 +122,8 @@ fn atan(y: LispObject, x: LispObject) -> LispObject {
 
 /// Return the natural logarithm of ARG.
 /// If the optional argument BASE is given, return log ARG using that base.
-/// (fn ARG &optional BASE)");
-#[lisp_fn(name = "log", min = "1")]
+/// (fn ARG &optional BASE)
+#[lisp_fn(min = "1")]
 fn log(arg: LispObject, base: LispObject) -> LispObject {
     let mut d = extract_float(arg.to_raw());
 
@@ -174,7 +147,7 @@ fn log(arg: LispObject, base: LispObject) -> LispObject {
 /// Truncate a floating point number to an integral float value.
 /// Rounds the value toward zero.
 /// (fn ARG)
-#[lisp_fn(name = "ftruncate", min = "1")]
+#[lisp_fn]
 fn ftruncate(x: LispObject) -> LispObject {
     let d = extract_float(x.to_raw());
     if d > 0.0 {
@@ -187,7 +160,7 @@ fn ftruncate(x: LispObject) -> LispObject {
 
 /// Return the floating point number equal to ARG.
 /// (fn ARG)
-#[lisp_fn(name = "float", min = "1")]
+#[lisp_fn]
 fn float(obj: LispObject) -> LispObject {
     CHECK_TYPE(obj.is_number(),
                LispObject::from_raw(unsafe { Qnumberp }),
