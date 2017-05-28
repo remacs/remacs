@@ -47,4 +47,12 @@
                "\\`(#1=#s(foo 1 2 3) #1#)\\'"
                (cl-prin1-to-string (list x x)))))))
 
+(ert-deftest cl-print-circle ()
+  (let ((x '(#1=(a . #1#) #1#)))
+    (let ((print-circle nil))
+      (should (string-match "\\`((a . #[0-9]) (a . #[0-9]))\\'"
+                            (cl-prin1-to-string x))))
+    (let ((print-circle t))
+      (should (equal "(#1=(a . #1#) #1#)" (cl-prin1-to-string x))))))
+
 ;;; cl-print-tests.el ends here.

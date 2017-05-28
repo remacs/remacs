@@ -37,6 +37,7 @@
   "If non-nil, try and make sure the result can be `read'.")
 
 (defvar cl-print--number-table nil)
+(defvar cl-print--currently-printing nil)
 
 ;;;###autoload
 (cl-defgeneric cl-print-object (object stream)
@@ -59,8 +60,9 @@ call other entry points instead, such as `cl-prin1'."
       (princ "(" stream)
       (cl-print-object car stream)
       (while (and (consp object)
-                  (not (and cl-print--number-table
-                            (numberp (gethash object cl-print--number-table)))))
+                  (not (if cl-print--number-table
+                           (numberp (gethash object cl-print--number-table))
+                         (memq object cl-print--currently-printing))))
         (princ " " stream)
         (cl-print-object (pop object) stream))
       (when object
@@ -156,15 +158,26 @@ call other entry points instead, such as `cl-prin1'."
 
 (cl-defmethod cl-print-object :around (object stream)
   ;; FIXME: Only put such an :around method on types where it's relevant.
-  (let ((n (if cl-print--number-table (gethash object cl-print--number-table))))
-    (if (not (numberp n))
-        (cl-call-next-method)
-      (if (> n 0)
-          ;; Already printed.  Just print a reference.
-          (progn (princ "#" stream) (princ n stream) (princ "#" stream))
-        (puthash object (- n) cl-print--number-table)
-        (princ "#" stream) (princ (- n) stream) (princ "=" stream)
-        (cl-call-next-method)))))
+  (cond
+   (print-circle
+    (let ((n (gethash object cl-print--number-table)))
+      (if (not (numberp n))
+          (cl-call-next-method)
+        (if (> n 0)
+            ;; Already printed.  Just print a reference.
+            (progn (princ "#" stream) (princ n stream) (princ "#" stream))
+          (puthash object (- n) cl-print--number-table)
+          (princ "#" stream) (princ (- n) stream) (princ "=" stream)
+          (cl-call-next-method)))))
+   ((let ((already-printing (memq object cl-print--currently-printing)))
+      (when already-printing
+        ;; Currently printing, just print reference to avoid endless
+        ;; recursion.
+        (princ "#" stream)
+        (princ (length (cdr already-printing)) stream))))
+    (t (let ((cl-print--currently-printing
+              (cons object cl-print--currently-printing)))
+         (cl-call-next-method)))))
 
 (defvar cl-print--number-index nil)
 
