@@ -857,8 +857,9 @@ Derived from `tramp-postfix-host-format'."
            "\\("   (tramp-method-regexp) "\\)" (tramp-postfix-method-regexp)
    "\\(?:" "\\("   tramp-user-regexp     "\\)" tramp-postfix-user-regexp "\\)?"
    "\\("   "\\(?:" tramp-host-regexp     "\\|"
-	           (tramp-prefix-ipv6-regexp)  "\\(?:" tramp-ipv6-regexp "\\)?"
-                                               (tramp-postfix-ipv6-regexp) "\\)"
+	           (tramp-prefix-ipv6-regexp)
+		   "\\(?:" tramp-ipv6-regexp "\\)?"
+                   (tramp-postfix-ipv6-regexp) "\\)?"
 	   "\\(?:" tramp-prefix-port-regexp    tramp-port-regexp "\\)?" "\\)?"))
 
 (defun tramp-file-name-structure ()
@@ -1135,7 +1136,7 @@ calling HANDLER.")
 ;; data structure.
 
 ;; The basic structure for remote file names.  We use a list :type,
-;; otherwise the persistent data are not read in tramp-cache.el.
+;; in order to be compatible with Emacs 24 and 25.
 (cl-defstruct (tramp-file-name (:type list) :named)
   method user domain host port localname hop)
 
@@ -1154,6 +1155,12 @@ calling HANDLER.")
 	    (and (tramp-file-name-port vec)
 		 tramp-prefix-port-format)
 	    (tramp-file-name-port vec))))
+
+(defun tramp-file-name-port-or-default (vec)
+  "Return port component of VEC.
+If nil, return `tramp-default-port'."
+  (or (tramp-file-name-port vec)
+      (tramp-get-method-parameter vec 'tramp-default-port)))
 
 (defun tramp-file-name-equal-p (vec1 vec2)
   "Check, whether VEC1 and VEC2 denote the same `tramp-file-name'."
@@ -1294,16 +1301,9 @@ values."
 		user (tramp-find-user method user host)
 		host (tramp-find-host method user host)))
 
-	(apply
-	 'make-tramp-file-name
-	 (append
-	  (unless (zerop (length method)) `(:method ,method))
-	  (unless (zerop (length user))   `(:user ,user))
-	  (unless (zerop (length domain)) `(:domain ,domain))
-	  (unless (zerop (length host))   `(:host ,host))
-	  (unless (zerop (length port))   `(:port ,port))
-	  `(:localname ,(or localname ""))
-	  (unless (zerop (length hop))     `(:hop ,hop))))))))
+	(make-tramp-file-name
+	 :method method :user user :domain domain :host host :port port
+	 :localname (or localname "") :hop hop)))))
 
 (defun tramp-buffer-name (vec)
   "A name for the connection buffer VEC."
@@ -2878,38 +2878,42 @@ User is always nil."
      ;; There isn't. So we must check, in case there's a connection already.
      (and (tramp-connectable-p filename)
           (with-tramp-connection-property v "case-insensitive"
-            ;; The idea is to compare a file with lower case letters
-            ;; with the same file with upper case letters.
-            (let ((candidate
-		   (tramp-compat-file-name-unquote
-		    (directory-file-name filename)))
-                  tmpfile)
-              ;; Check, whether we find an existing file with lower case
-              ;; letters.  This avoids us to create a temporary file.
-              (while (and (string-match
-                           "[a-z]" (file-remote-p candidate 'localname))
-                          (not (file-exists-p candidate)))
-                (setq candidate
-                      (directory-file-name (file-name-directory candidate))))
-              ;; Nothing found, so we must use a temporary file for
-              ;; comparison.  `make-nearby-temp-file' is added to
-              ;; Emacs 26+ like `file-name-case-insensitive-p', so
-              ;; there is no compatibility problem calling it.
-              (unless
-                  (string-match "[a-z]" (file-remote-p candidate 'localname))
-                (setq tmpfile
-                      (let ((default-directory (file-name-directory filename)))
-                        (tramp-compat-funcall 'make-nearby-temp-file "tramp."))
-                      candidate tmpfile))
-              ;; Check for the existence of the same file with upper
-              ;; case letters.
-              (unwind-protect
-                  (file-exists-p
-                   (concat
-                    (file-remote-p candidate)
-                    (upcase (file-remote-p candidate 'localname))))
-                ;; Cleanup.
-                (when tmpfile (delete-file tmpfile)))))))))
+	    (with-tramp-progress-reporter v 5 "Checking case-insensitive"
+              ;; The idea is to compare a file with lower case letters
+              ;; with the same file with upper case letters.
+              (let ((candidate
+		     (tramp-compat-file-name-unquote
+		      (directory-file-name filename)))
+                    tmpfile)
+		;; Check, whether we find an existing file with lower
+		;; case letters.  This avoids us to create a temporary
+		;; file.
+		(while (and (string-match
+                             "[a-z]" (file-remote-p candidate 'localname))
+                            (not (file-exists-p candidate)))
+                  (setq candidate
+			(directory-file-name (file-name-directory candidate))))
+		;; Nothing found, so we must use a temporary file for
+		;; comparison.  `make-nearby-temp-file' is added to
+		;; Emacs 26+ like `file-name-case-insensitive-p', so
+		;; there is no compatibility problem calling it.
+		(unless
+                    (string-match "[a-z]" (file-remote-p candidate 'localname))
+                  (setq tmpfile
+			(let ((default-directory
+				(file-name-directory filename)))
+                          (tramp-compat-funcall
+			   'make-nearby-temp-file "tramp."))
+			candidate tmpfile))
+		;; Check for the existence of the same file with upper
+		;; case letters.
+		(unwind-protect
+                    (file-exists-p
+                     (concat
+                      (file-remote-p candidate)
+                      (upcase (file-remote-p candidate 'localname))))
+                  ;; Cleanup.
+                  (when tmpfile (delete-file tmpfile))))))))))
 
 (defun tramp-handle-file-name-completion
   (filename directory &optional predicate)
@@ -4131,9 +4135,10 @@ PROGRAM is nil is trapped also, returning 1.  Furthermore, traces
 are written with verbosity of 6."
   (let ((default-directory  (tramp-compat-temporary-file-directory))
 	(v (or vec
-	       (tramp-make-tramp-file-name
-		tramp-current-method tramp-current-user tramp-current-domain
-		tramp-current-host tramp-current-port nil nil)))
+	       (make-tramp-file-name
+		:method tramp-current-method :user tramp-current-user
+		:domain tramp-current-domain :host tramp-current-host
+		:port tramp-current-port)))
 	(destination (if (eq destination t) (current-buffer) destination))
 	output error result)
     (tramp-message
@@ -4167,9 +4172,10 @@ PROGRAM is nil is trapped also, returning 1.  Furthermore, traces
 are written with verbosity of 6."
   (let ((default-directory  (tramp-compat-temporary-file-directory))
 	(v (or vec
-	       (tramp-make-tramp-file-name
-		tramp-current-method tramp-current-user tramp-current-domain
-		tramp-current-host tramp-current-port nil nil)))
+	       (make-tramp-file-name
+		:method tramp-current-method :user tramp-current-user
+		:domain tramp-current-domain :host tramp-current-host
+		:port tramp-current-port)))
 	(buffer (if (eq buffer t) (current-buffer) buffer))
 	result)
     (tramp-message

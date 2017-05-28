@@ -1510,7 +1510,7 @@ handled properly.  BODY shall not contain a timeout."
 (ert-deftest tramp-test03-file-name-defaults ()
   "Check default values for some methods."
   ;; Default values in tramp-adb.el.
-  (should (string-equal (file-remote-p "/adb::" 'host) nil))
+  (should (string-equal (file-remote-p "/adb::" 'host) ""))
   ;; Default values in tramp-ftp.el.
   (should (string-equal (file-remote-p "/-:ftp.host:" 'method) "ftp"))
   (dolist (u '("ftp" "anonymous"))
@@ -1626,7 +1626,7 @@ handled properly.  BODY shall not contain a timeout."
   :expected-result :failed
   (skip-unless (tramp--test-enabled))
   ;; File names with a share behave differently.
-  (when (tramp--test-afp-or-smb-p)
+  (when (or (tramp--test-adb-p) (tramp--test-afp-or-smb-p))
     (setf (ert-test-expected-result-type
 	   (ert-get-test 'tramp-test05-expand-file-name-relative))
 	  :passed))

@@ -326,8 +326,8 @@ used to cache connection properties of the local machine."
 	   ;; 	     (substring-no-properties
 	   ;; 	      (cl-struct-slot-value 'tramp-file-name slot key))))))
 	   (dotimes (i (length key))
-	     (when (stringp (aref key i))
-	       (aset key i (substring-no-properties (aref key i))))))
+	     (when (stringp (elt key i))
+	       (setf (elt key i) (substring-no-properties (elt key i))))))
 	 (when (stringp key)
 	   (setq key (substring-no-properties key)))
 	 (when (stringp value)
@@ -373,12 +373,15 @@ used to cache connection properties of the local machine."
 	;; Remove temporary data.  If there is the key "login-as", we
 	;; don't save either, because all other properties might
 	;; depend on the login name, and we want to give the
-	;; possibility to use another login name later on.
+	;; possibility to use another login name later on.  Key
+	;; "started" exists for the "ftp" method only, which must be
+	;; be kept persistent.
 	(maphash
 	 (lambda (key value)
-	   (if (and (tramp-file-name-p key)
+	   (if (and (tramp-file-name-p key) value
 		    (not (tramp-file-name-localname key))
-		    (not (gethash "login-as" value)))
+		    (not (gethash "login-as" value))
+		    (not (gethash "started" value)))
 	       (progn
 		 (remhash "process-name" value)
 		 (remhash "process-buffer" value)

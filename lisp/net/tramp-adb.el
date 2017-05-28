@@ -200,9 +200,9 @@ pass to the OPERATION."
       ;; That's why we use `start-process'.
       (let ((p (start-process
 		tramp-adb-program (current-buffer) tramp-adb-program "devices"))
-	    (v (tramp-make-tramp-file-name
-		tramp-adb-method tramp-current-user nil
-		tramp-current-host nil nil nil))
+	    (v (make-tramp-file-name
+		:method tramp-adb-method :user tramp-current-user
+		:host tramp-current-host))
 	    result)
 	(tramp-message v 6 "%s" (mapconcat 'identity (process-command p) " "))
 	(process-put p 'adjust-window-size-function 'ignore)
@@ -1069,7 +1069,7 @@ E.g. a host name \"192.168.1.1#5555\" returns \"192.168.1.1:5555\"
   (tramp-flush-connection-property nil)
   (with-tramp-connection-property (tramp-get-connection-process vec) "device"
     (let* ((host (tramp-file-name-host vec))
-	   (port (tramp-file-name-port vec))
+	   (port (tramp-file-name-port-or-default vec))
 	   (devices (mapcar 'cadr (tramp-adb-parse-device-names nil))))
       (replace-regexp-in-string
        tramp-prefix-port-format ":"
@@ -1170,7 +1170,9 @@ FMT and ARGS are passed to `error'."
     (delete-process proc)
     (tramp-error proc 'file-error "Process `%s' not available, try again" proc))
   (with-current-buffer (process-buffer proc)
-    (if (tramp-wait-for-regexp proc timeout tramp-adb-prompt)
+    (if (tramp-wait-for-regexp
+	 proc timeout
+	 (tramp-get-connection-property proc "prompt" tramp-adb-prompt))
 	(let (buffer-read-only)
 	  (goto-char (point-min))
 	  ;; ADB terminal sends "^H" sequences.
@@ -1179,20 +1181,25 @@ FMT and ARGS are passed to `error'."
 	    (delete-region (point-min) (point)))
 	  ;; Delete the prompt.
          (goto-char (point-min))
-         (when (re-search-forward tramp-adb-prompt (point-at-eol) t)
+         (when (re-search-forward
+		(tramp-get-connection-property proc "prompt" tramp-adb-prompt)
+		(point-at-eol) t)
            (forward-line 1)
            (delete-region (point-min) (point)))
 	  (goto-char (point-max))
-	  (re-search-backward tramp-adb-prompt nil t)
+	  (re-search-backward
+	   (tramp-get-connection-property proc "prompt" tramp-adb-prompt) nil t)
 	  (delete-region (point) (point-max)))
       (if timeout
 	  (tramp-error
 	   proc 'file-error
 	   "[[Remote adb prompt `%s' not found in %d secs]]"
-	   tramp-adb-prompt timeout)
+	   (tramp-get-connection-property proc "prompt" tramp-adb-prompt)
+	   timeout)
 	(tramp-error
 	 proc 'file-error
-	 "[[Remote prompt `%s' not found]]" tramp-adb-prompt)))))
+	 "[[Remote prompt `%s' not found]]"
+	 (tramp-get-connection-property proc "prompt" tramp-adb-prompt))))))
 
 (defun tramp-adb-maybe-open-connection (vec)
   "Maybe open a connection VEC.
@@ -1228,7 +1235,9 @@ connection if a previous connection has died for some reason."
 		 (p (let ((default-directory
 			    (tramp-compat-temporary-file-directory)))
 		      (apply 'start-process (tramp-get-connection-name vec) buf
-			     tramp-adb-program args))))
+			     tramp-adb-program args)))
+		 (prompt (md5 (concat (prin1-to-string process-environment)
+				      (current-time-string)))))
 	    (tramp-message
 	     vec 6 "%s" (mapconcat 'identity (process-command p) " "))
 	    ;; Wait for initial prompt.
@@ -1238,6 +1247,12 @@ connection if a previous connection has died for some reason."
 	    (tramp-set-connection-property p "vector" vec)
 	    (process-put p 'adjust-window-size-function 'ignore)
 	    (set-process-query-on-exit-flag p nil)
+
+	    ;; Change prompt.
+	    (tramp-set-connection-property
+	     p "prompt" (regexp-quote (format "///%s#$" prompt)))
+	    (tramp-adb-send-command
+	     vec (format "PS1=\"///\"\"%s\"\"#$\"" prompt))
 
 	    ;; Check whether the properties have been changed.  If
 	    ;; yes, this is a strong indication that we must expire all

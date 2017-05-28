@@ -788,7 +788,9 @@ file names."
       (when (string-match "\\`\\(~\\)\\(/\\|\\'\\)" localname)
 	(save-match-data
 	  (tramp-gvfs-maybe-open-connection
-	   (tramp-make-tramp-file-name method user domain host port "/" hop)))
+	   (make-tramp-file-name
+	    :method method :user user :domain domain
+	    :host host :port port :localname "/" :hop hop)))
 	(setq localname
 	      (replace-match
 	       (tramp-get-connection-property v "default-location" "~")
