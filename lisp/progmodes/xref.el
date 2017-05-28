@@ -929,14 +929,16 @@ IGNORES is a list of glob patterns."
                                        ignores))
          (buf (get-buffer-create " *xref-grep*"))
          (grep-re (caar grep-regexp-alist))
+         status
          hits)
     (with-current-buffer buf
       (erase-buffer)
-      (call-process-shell-command command nil t)
-      ;; FIXME: What to do when the call fails?
-      ;; "find: ‘xyzgrep’: No such file or directory\n"
-      ;; The problem is, find-grep can exit with a nonzero code even
-      ;; when there are some matches in the output.
+      (setq status
+            (call-process-shell-command command nil t))
+      (when (and (not (zerop status))
+                 ;; Nonzero status can mean "no matches found".
+                 (/= (point-min) (point-max)))
+        (user-error "Search failed with status %d: %s" status (buffer-string)))
       (goto-char (point-min))
       (while (re-search-forward grep-re nil t)
         (push (list (string-to-number (match-string 2))
