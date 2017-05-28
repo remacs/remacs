@@ -11,6 +11,7 @@ version = "0.1.0"
 lazy_static = "0.2.2"
 remacs-sys = { version = "0.1.0", path = "remacs-sys/" }
 remacs-lib = { version = "0.1.0", path = "remacs-lib/" }
+remacs-macros = { version = "0.1.0", path = "remacs-macros" }
 libc = "0.2"
 rustc-serialize = "0.3"
 sha1 = "0.2.0"

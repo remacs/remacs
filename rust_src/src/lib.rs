@@ -1,7 +1,7 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #![allow(private_no_mangle_fns)]
-
+#![feature(proc_macro)]
 #![cfg_attr(feature = "strict", deny(warnings))]
 
 // Wilfred/remacs#38 : Need to override the allocator for legacy unexec support on Mac.
@@ -13,6 +13,7 @@ extern crate lazy_static;
 
 extern crate remacs_sys;
 extern crate remacs_lib;
+extern crate remacs_macros;
 extern crate libc;
 extern crate sha1;
 extern crate sha2;
