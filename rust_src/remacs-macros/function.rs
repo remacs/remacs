@@ -2,24 +2,31 @@ use syn;
 
 type Result<T> = ::std::result::Result<T, &'static str>;
 
+pub enum LispFnType {
+    /// A normal function with given max. number of arguments
+    Normal(i16),
+    /// A function taking an arbitrary amount of arguments as a slice
+    Many,
+}
+
 pub struct Function {
     /// The function name
     pub name: syn::Ident,
 
-    /// The function header
-    pub decl: Box<syn::FnDecl>,
+    /// The argument type
+    pub fntype: LispFnType,
 
-    /// The function contents
-    pub block: Box<syn::Block>,
+    /// The function header
+    pub args: Vec<syn::Ident>,
 }
 
-pub fn parse(item: syn::Item) -> Result<Function> {
+pub fn parse(item: &syn::Item) -> Result<Function> {
     match item.node {
-        syn::ItemKind::Fn(decl, unsafety, constness, abi, _, block) => {
+        syn::ItemKind::Fn(ref decl, unsafety, constness, ref abi, _, _) => {
             if is_unsafe(unsafety) {
                 return Err("lisp functions cannot be `unsafe`");
             }
-            
+
             if is_const(constness) {
                 return Err("lisp functions cannot be `const`");
             }
@@ -28,10 +35,12 @@ pub fn parse(item: syn::Item) -> Result<Function> {
                 return Err("lisp functions can only use \"Rust\" ABI");
             }
 
+            let args = decl.inputs.iter().map(get_fn_arg_ident).collect::<Result<_>>()?;
+
             Ok(Function {
-                name: item.ident,
-                decl: decl,
-                block: block,
+                name: item.ident.clone(),
+                fntype: parse_function_type(&decl)?,
+                args: args,
             })
         },
         _ => Err("`lisp_fn` attribute can only be used on functions"),
@@ -52,10 +61,10 @@ fn is_const(constness: syn::Constness) -> bool {
     }
 }
 
-fn is_rust_abi(abi: Option<syn::Abi>) -> bool {
-    match abi {
-        Some(abi) => {
-            match abi {
+fn is_rust_abi(abi: &Option<syn::Abi>) -> bool {
+    match *abi {
+        Some(ref abi) => {
+            match *abi {
                 syn::Abi::Named(_) => false,
                 syn::Abi::Rust => true,
             }
@@ -64,7 +73,7 @@ fn is_rust_abi(abi: Option<syn::Abi>) -> bool {
     }
 }
 
-pub fn get_fn_arg_ident(fn_arg: &syn::FnArg) -> Result<syn::Ident> {
+fn get_fn_arg_ident(fn_arg: &syn::FnArg) -> Result<syn::Ident> {
     match *fn_arg {
         syn::FnArg::Captured(ref pat, _) => {
             match *pat {
@@ -78,81 +87,29 @@ pub fn get_fn_arg_ident(fn_arg: &syn::FnArg) -> Result<syn::Ident> {
     }
 }
 
-pub enum LispFnType {
-    Normal,
-    Many,
-}
-
-pub fn parse_function_type(function: &Function) -> Result<LispFnType> {
-    let fndecl = function.decl.clone();
-
-    if fndecl.inputs.len() == 0 {
-        return Ok(LispFnType::Normal);
-    }
-
-    if fndecl.inputs.len() == 1 {
-        match fndecl.inputs[0] {
-            syn::FnArg::Captured(_, ref ty) => {
-                match parse_arg_type(ty) {
-                    ArgType::LispObject => {
-                        return Ok(LispFnType::Normal);
-                    },
-                    ArgType::LispObjectSlice => {
-                        return Ok(LispFnType::Many);
-                    },
-                    ArgType::Other => {
-                        return Err("lisp functions should contain only `LispObject`s");
-                    },
-                }
-            },
+fn parse_function_type(fndecl: &syn::FnDecl) -> Result<LispFnType> {
+    let nargs = fndecl.inputs.len() as i16;
+    for fnarg in &fndecl.inputs {
+        match *fnarg {
+            syn::FnArg::Captured(_, ref ty) |
             syn::FnArg::Ignored(ref ty) => {
                 match parse_arg_type(ty) {
-                    ArgType::LispObject => {
-                        return Ok(LispFnType::Normal);
-                    },
+                    ArgType::LispObject => {},
                     ArgType::LispObjectSlice => {
+                        if fndecl.inputs.len() != 1 {
+                            return Err("`LispObject` and `[LispObject]` cannot be mixed");
+                        }
                         return Ok(LispFnType::Many);
                     },
                     ArgType::Other => {
-                        return Err("lisp functions should contain only `LispObject`s");
+                        return Err("lisp functions should only have `LispObject` args");
                     },
                 }
             },
             _ => return Err("lisp functions cannot have `self` arguments"),
         }
     }
-
-    if fndecl.inputs.len() > 1 {
-        for fnarg in fndecl.inputs {
-            match fnarg {
-                syn::FnArg::Captured(_, ref ty) => {
-                    match parse_arg_type(ty) {
-                        ArgType::LispObject => (),
-                        ArgType::LispObjectSlice => {
-                            return Err("`LispObject` and `[LispObject]` cannot be mixed");
-                        },
-                        ArgType::Other => {
-                            return Err("lisp functions should contain only `LispObject`s");
-                        },
-                    }
-                },
-                syn::FnArg::Ignored(ref ty) => {
-                    match parse_arg_type(ty) {
-                        ArgType::LispObject => (),
-                        ArgType::LispObjectSlice => {
-                            return Err("`LispObject` and `[LispObject]` cannot be mixed");
-                        },
-                        ArgType::Other => {
-                            return Err("lisp functions should contain only `LispObject`s");
-                        },
-                    }
-                },
-                _ => return Err("lisp functions cannot have `self` arguments"),
-            }
-        }
-    }
-
-    Ok(LispFnType::Normal)
+    Ok(LispFnType::Normal(nargs))
 }
 
 enum ArgType {
@@ -208,37 +165,9 @@ fn parse_arg_type(fn_arg: &syn::Ty) -> ArgType {
     }
 }
 
-macro_rules! make_path {
-    (:: $($i:ident)::*) => {
-        $crate::syn::Path {
-            global: true,
-            segments: vec![
-                $(
-                    $crate::syn::PathSegment {
-                        ident: $crate::syn::Ident::new(stringify!($i)),
-                        parameters: syn::PathParameters::none(),
-                    }
-                ),*
-            ],
-        }
-    };
-    ($($i:ident)::*) => {
-        $crate::syn::Path {
-            global: false,
-            segments: vec![
-                $(
-                    $crate::syn::PathSegment {
-                        ident: $crate::syn::Ident::new(stringify!($i)),
-                        parameters: syn::PathParameters::none(),
-                    }
-                ),*
-            ],
-        }
-    }
-}
-
 fn is_lisp_object(path: &syn::Path) -> bool {
-    *path == make_path!(::lisp::LispObject) ||
-    *path == make_path!(lisp::LispObject) ||
-    *path == make_path!(LispObject)
+    let str_path = format!("{}", quote!(#path));
+    str_path == "LispObject" ||
+        str_path == "lisp :: LispObject" ||
+        str_path == ":: lisp :: LispObject"
 }

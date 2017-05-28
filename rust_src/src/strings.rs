@@ -27,13 +27,17 @@ pub static MIME_LINE_LENGTH: isize = 76;
 
 /// Return t if OBJECT is a string.
 /// (fn OBJECT)
-#[lisp_fn(name = "stringp", min = "1")]
+#[lisp_fn]
 fn stringp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_string())
 }
 
-#[lisp_fn(name = "base64-encode-string", min = "1")]
-fn base64_encode_string(string: LispObject, noLineBreak: LispObject) -> LispObject {
+/// Base64-encode STRING and return the result.
+/// Optional second argument NO-LINE-BREAK means do not break long lines
+/// into shorter lines.
+/// (fn STRING &optional NO-LINE-BREAK)
+#[lisp_fn(min = "1")]
+fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispObject {
     CHECK_STRING(string.to_raw());
 
     // We need to allocate enough room for the encoded text
@@ -51,7 +55,7 @@ fn base64_encode_string(string: LispObject, noLineBreak: LispObject) -> LispObje
         let encodedLength = base64_encode_1(SSDATA(string.to_raw()),
                                             encoded,
                                             length,
-                                            noLineBreak.is_nil(),
+                                            no_line_break.is_nil(),
                                             STRING_MULTIBYTE(string.to_raw()));
 
         if encodedLength > allength {
@@ -68,7 +72,7 @@ fn base64_encode_string(string: LispObject, noLineBreak: LispObject) -> LispObje
 
 /// Base64-decode STRING and return the result.
 /// (fn STRING)
-#[lisp_fn(name = "base64-decode-string", min = "1")]
+#[lisp_fn]
 fn base64_decode_string(string: LispObject) -> LispObject {
     CHECK_STRING(string.to_raw());
 
@@ -101,12 +105,17 @@ fn base64_decode_string(string: LispObject) -> LispObject {
 /// Return the number of bytes in STRING.
 /// If STRING is multibyte, this may be greater than the length of STRING.
 /// (fn STRING)
-#[lisp_fn(name = "string-bytes", min = "1")]
+#[lisp_fn]
 fn string_bytes(string: LispObject) -> LispObject {
     CHECK_STRING(string.to_raw());
     unsafe { LispObject::from_fixnum_unchecked(SBYTES(string) as ::remacs_sys::EmacsInt) }
 }
 
+/// Return t if two strings have identical contents.
+/// Case is significant, but text properties are ignored.
+/// Symbols are also allowed; their print names are used instead.
+/// (fn S1 S2)
+#[lisp_fn]
 fn string_equal(mut s1: LispObject, mut s2: LispObject) -> LispObject {
     if s1.is_symbol() {
         s1 = LispObject::from_raw(unsafe { SYMBOL_NAME(s1.to_raw()) });
@@ -124,16 +133,3 @@ fn string_equal(mut s1: LispObject, mut s2: LispObject) -> LispObject {
                                            SBYTES(s1) as usize) == 0
                           })
 }
-
-defun!("string-equal",
-       Fstring_equal(s1, s2),
-       Sstring_equal,
-       string_equal,
-       2,
-       2,
-       ptr::null(),
-       "Return t if two strings have identical contents.
-Case is significant, but text properties are ignored.
-Symbols are also allowed; their print names are used instead.
-
-(fn S1 S2)");

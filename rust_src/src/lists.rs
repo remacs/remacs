@@ -1,55 +1,40 @@
-use std::ptr;
+//! Operations on lists.
 
 use lisp::{CHECK_NUMBER, CHECK_LIST_END, LispObject, LispCons, Qnil};
 use remacs_macros::lisp_fn;
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
-#[lisp_fn(name = "atom", min = "1")]
+/// (fn OBJECT)
+#[lisp_fn]
 fn atom(object: LispObject) -> LispObject {
     LispObject::from_bool(!object.is_cons())
 }
 
 /// Return t if OBJECT is a cons cell.
 /// (fn OBJECT)
-#[lisp_fn(name = "consp", min = "1")]
+#[lisp_fn]
 fn consp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_cons())
 }
 
+/// Return t if OBJECT is a list, that is, a cons cell or nil.
+/// Otherwise, return nil.
+/// (fn OBJECT)
+#[lisp_fn]
 fn listp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_cons() || object.is_nil())
 }
 
-defun!("listp",
-       Flistp(object),
-       Slistp,
-       listp,
-       1,
-       1,
-       ptr::null(),
-       "Return t if OBJECT is a list, that is, a cons cell or nil.
-Otherwise, return nil.
-
-(fn OBJECT)");
-
+/// Return t if OBJECT is not a list.  Lists include nil.
+/// (fn OBJECT)
+#[lisp_fn]
 fn nlistp(object: LispObject) -> LispObject {
     LispObject::from_bool(!(object.is_cons() || object.is_nil()))
 }
 
-defun!("nlistp",
-       Fnlistp(object),
-       Snlistp,
-       nlistp,
-       1,
-       1,
-       ptr::null(),
-       "Return t if OBJECT is not a list.  Lists include nil.
-
-(fn OBJECT)");
-
 /// Set the car of CELL to be NEWCAR. Returns NEWCAR.
 /// (fn CELL NEWCAR)
-#[lisp_fn(name = "setcar", min = "2")]
+#[lisp_fn]
 pub fn setcar(cell: LispObject, newcar: LispObject) -> LispObject {
     let cell = cell.as_cons_or_error();
     cell.check_impure();
@@ -59,7 +44,7 @@ pub fn setcar(cell: LispObject, newcar: LispObject) -> LispObject {
 
 /// Set the cdr of CELL to be NEWCDR.  Returns NEWCDR.
 /// (fn CELL NEWCDR)
-#[lisp_fn(name = "setcdr", min = "2")]
+#[lisp_fn]
 fn setcdr(cell: LispObject, newcdr: LispObject) -> LispObject {
     let cell = cell.as_cons_or_error();
     cell.check_impure();
@@ -70,17 +55,10 @@ fn setcdr(cell: LispObject, newcdr: LispObject) -> LispObject {
 /// Take the car/cdr of a cons cell, or signal an error if it's a
 /// different type.
 ///
-/// # Porting Notes
-///
-/// This is equivalent to `CAR`/`CDR` in C code.
-///
-/// # Usage
-///  Return the car of LIST.  If arg is nil, return nil.
-///  Error if arg is not nil and not a cons cell.  See also `car-safe'.
-///  See Info node `(elisp)Cons Cells' for a discussion of related basic
-///  Lisp concepts such as car, cdr, cons cell and list.
-///  (fn LIST)
-#[lisp_fn(name = "car", min = "1")]
+/// See Info node `(elisp)Cons Cells' for a discussion of related basic
+/// Lisp concepts such as car, cdr, cons cell and list.
+/// (fn LIST)
+#[lisp_fn]
 fn car(object: LispObject) -> LispObject {
     if object.is_nil() {
         Qnil
@@ -94,7 +72,7 @@ fn car(object: LispObject) -> LispObject {
 /// See Info node `(elisp)Cons Cells' for a discussion of related basic
 /// Lisp concepts such as cdr, car, cons cell and list.
 /// (fn LIST)
-#[lisp_fn(name = "cdr", min = "1")]
+#[lisp_fn]
 fn cdr(object: LispObject) -> LispObject {
     if object.is_nil() {
         Qnil
@@ -103,36 +81,23 @@ fn cdr(object: LispObject) -> LispObject {
     }
 }
 
+/// Return the car of OBJECT if it is a cons cell, or else nil.
+/// (fn OBJECT)
+#[lisp_fn]
 fn car_safe(object: LispObject) -> LispObject {
     object.as_cons().map_or(Qnil, |cons| cons.car())
 }
 
-defun!("car-safe",
-       Fcar_safe(list),
-       Scar_safe,
-       car_safe,
-       1,
-       1,
-       ptr::null(),
-       "Return the car of OBJECT if it is a cons cell, or else nil.
-
-(fn OBJECT)");
-
+/// Return the cdr of OBJECT if it is a cons cell, or else nil.
+/// (fn OBJECT)
+#[lisp_fn]
 fn cdr_safe(object: LispObject) -> LispObject {
     object.as_cons().map_or(Qnil, |cons| cons.cdr())
 }
 
-defun!("cdr-safe",
-       Fcdr_safe(list),
-       Scdr_safe,
-       cdr_safe,
-       1,
-       1,
-       ptr::null(),
-       "Return the cdr of OBJECT if it is a cons cell, or else nil.
-
-(fn OBJECT)");
-
+/// Take cdr N times on LIST, return the result.
+/// (fn N LIST)
+#[lisp_fn]
 fn nthcdr(n: LispObject, list: LispObject) -> LispObject {
     CHECK_NUMBER(n.to_raw());
     let mut tail = list;
@@ -149,33 +114,18 @@ fn nthcdr(n: LispObject, list: LispObject) -> LispObject {
     tail
 }
 
-defun!("nthcdr",
-       Fnthcdr(n, list),
-       Snthcdr,
-       nthcdr,
-       2,
-       2,
-       ptr::null(),
-       "Take cdr N times on LIST, return the result.
-
-(fn N LIST)");
-
+/// Return the Nth element of LIST.
+/// N counts from zero.  If LIST is not that long, nil is returned.
+/// (fn N LIST)
+#[lisp_fn]
 fn nth(n: LispObject, list: LispObject) -> LispObject {
     car(nthcdr(n, list))
 }
 
-defun!("nth",
-       Fnth(n, list),
-       Snth,
-       nth,
-       2,
-       2,
-       ptr::null(),
-       "Return the Nth element of LIST.
-N counts from zero.  If LIST is not that long, nil is returned.
-
-(fn N LIST)");
-
+/// Return non-nil if ELT is an element of LIST.  Comparison done with `eq'.
+/// The value is actually the tail of LIST whose car is ELT.
+/// (fn ELT LIST)
+#[lisp_fn]
 fn memq(elt: LispObject, list: LispObject) -> LispObject {
     for tail in list.iter_tails() {
         if elt.eq(tail.car()) {
@@ -185,18 +135,10 @@ fn memq(elt: LispObject, list: LispObject) -> LispObject {
     Qnil
 }
 
-defun!("memq",
-       Fmemq(elt, list),
-       Smemq,
-       memq,
-       2,
-       2,
-       ptr::null(),
-       "Return non-nil if ELT is an element of LIST.  Comparison done with `eq'.
-The value is actually the tail of LIST whose car is ELT.
-
-(fn ELT LIST)");
-
+/// Return non-nil if ELT is an element of LIST.  Comparison done with `eql'.
+/// The value is actually the tail of LIST whose car is ELT.
+/// (fn ELT LIST)
+#[lisp_fn]
 fn memql(elt: LispObject, list: LispObject) -> LispObject {
     if !elt.is_float() {
         return memq(elt, list);
@@ -209,18 +151,10 @@ fn memql(elt: LispObject, list: LispObject) -> LispObject {
     Qnil
 }
 
-defun!("memql",
-       Fmemql(elt, list),
-       Smemql,
-       memql,
-       2,
-       2,
-       ptr::null(),
-       "Return non-nil if ELT is an element of LIST.  Comparison done with `eql'.
-The value is actually the tail of LIST whose car is ELT.
-
-(fn ELT LIST)");
-
+/// Return non-nil if ELT is an element of LIST.  Comparison done with `equal'.
+/// The value is actually the tail of LIST whose car is ELT.
+/// (fn ELT LIST)
+#[lisp_fn]
 fn member(elt: LispObject, list: LispObject) -> LispObject {
     for tail in list.iter_tails() {
         if elt.equal(tail.car()) {
@@ -230,18 +164,11 @@ fn member(elt: LispObject, list: LispObject) -> LispObject {
     Qnil
 }
 
-defun!("member",
-       Fmember(elt, list),
-       Smember,
-       member,
-       2,
-       2,
-       ptr::null(),
-       "Return non-nil if ELT is an element of LIST.  Comparison done with `equal'.
-The value is actually the tail of LIST whose car is ELT.
-
-(fn ELT LIST)");
-
+/// Return non-nil if KEY is `eq' to the car of an element of LIST.
+/// The value is actually the first element of LIST whose car is KEY.
+/// Elements of LIST that are not conses are ignored.
+/// (fn KEY LIST)
+#[lisp_fn]
 fn assq(key: LispObject, list: LispObject) -> LispObject {
     for tail in list.iter_tails() {
         let item = tail.car();
@@ -254,19 +181,10 @@ fn assq(key: LispObject, list: LispObject) -> LispObject {
     Qnil
 }
 
-defun!("assq",
-       Fassq(key, list),
-       Sassq,
-       assq,
-       2,
-       2,
-       ptr::null(),
-       "Return non-nil if KEY is `eq' to the car of an element of LIST.
-The value is actually the first element of LIST whose car is KEY.
-Elements of LIST that are not conses are ignored.
-
-(fn KEY LIST)");
-
+/// Return non-nil if KEY is `equal' to the car of an element of LIST.
+/// The value is actually the first element of LIST whose car equals KEY.
+/// (fn KEY LIST)
+#[lisp_fn]
 fn assoc(key: LispObject, list: LispObject) -> LispObject {
     for tail in list.iter_tails() {
         let item = tail.car();
@@ -279,18 +197,10 @@ fn assoc(key: LispObject, list: LispObject) -> LispObject {
     Qnil
 }
 
-defun!("assoc",
-       Fassoc(key, list),
-       Sassoc,
-       assoc,
-       2,
-       2,
-       ptr::null(),
-       "Return non-nil if KEY is `equal' to the car of an element of LIST.
-The value is actually the first element of LIST whose car equals KEY.
-
-(fn KEY LIST)");
-
+/// Return non-nil if KEY is `eq' to the cdr of an element of LIST.
+/// The value is actually the first element of LIST whose cdr is KEY.
+/// (fn KEY LIST)
+#[lisp_fn]
 fn rassq(key: LispObject, list: LispObject) -> LispObject {
     for tail in list.iter_tails() {
         let item = tail.car();
@@ -303,18 +213,10 @@ fn rassq(key: LispObject, list: LispObject) -> LispObject {
     Qnil
 }
 
-defun!("rassq",
-       Frassq(key, list),
-       Srassq,
-       rassq,
-       2,
-       2,
-       ptr::null(),
-       "Return non-nil if KEY is `eq' to the cdr of an element of LIST.
-The value is actually the first element of LIST whose cdr is KEY.
-
-(fn KEY LIST)");
-
+/// Return non-nil if KEY is `equal' to the cdr of an element of LIST.
+/// The value is actually the first element of LIST whose cdr equals KEY.
+/// (fn KEY LIST)
+#[lisp_fn]
 fn rassoc(key: LispObject, list: LispObject) -> LispObject {
     for tail in list.iter_tails() {
         let item = tail.car();
@@ -327,18 +229,17 @@ fn rassoc(key: LispObject, list: LispObject) -> LispObject {
     Qnil
 }
 
-defun!("rassoc",
-       Frassoc(key, list),
-       Srassoc,
-       rassoc,
-       2,
-       2,
-       ptr::null(),
-       "Return non-nil if KEY is `equal' to the cdr of an element of LIST.
-The value is actually the first element of LIST whose cdr equals KEY.
-
-(fn KEY LIST)");
-
+/// Delete members of LIST which are `eq' to ELT, and return the result.
+/// More precisely, this function skips any members `eq' to ELT at the
+/// front of LIST, then removes members `eq' to ELT from the remaining
+/// sublist by modifying its list structure, then returns the resulting
+/// list.
+///
+/// Write `(setq foo (delq element foo))' to be sure of correctly changing
+/// the value of a list `foo'.  See also `remq', which does not modify the
+/// argument.
+/// (fn ELT LIST)
+#[lisp_fn]
 fn delq(elt: LispObject, mut list: LispObject) -> LispObject {
     let mut prev = Qnil;
     for tail in list.iter_tails() {
@@ -356,25 +257,6 @@ fn delq(elt: LispObject, mut list: LispObject) -> LispObject {
     }
     list
 }
-
-defun!("delq",
-       Fdelq(elt, list),
-       Sdelq,
-       delq,
-       2,
-       2,
-       ptr::null(),
-       "Delete members of LIST which are `eq' to ELT, and return the result.
-More precisely, this function skips any members `eq' to ELT at the
-front of LIST, then removes members `eq' to ELT from the remaining
-sublist by modifying its list structure, then returns the resulting
-list.
-
-Write `(setq foo (delq element foo))' to be sure of correctly changing
-the value of a list `foo'.  See also `remq', which does not modify the
-argument.
-
-(fn ELT LIST)");
 
 
 fn internal_plist_get<F, I>(mut iter: I, prop: LispObject, cmp: F) -> LispObject
@@ -398,44 +280,36 @@ fn internal_plist_get<F, I>(mut iter: I, prop: LispObject, cmp: F) -> LispObject
     Qnil
 }
 
+/// Extract a value from a property list.
+/// PLIST is a property list, which is a list of the form
+/// \(PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
+/// corresponding to the given PROP, or nil if PROP is not one of the
+/// properties on the list.  This function never signals an error.
+/// (fn PLIST PROP)
+#[lisp_fn]
 fn plist_get(plist: LispObject, prop: LispObject) -> LispObject {
     internal_plist_get(plist.iter_tails_safe(), prop, LispObject::eq)
 }
 
-defun!("plist-get",
-       Fplist_get(plist, prop),
-       Splist_get,
-       plist_get,
-       2,
-       2,
-       ptr::null(),
-       "Extract a value from a property list.
-PLIST is a property list, which is a list of the form
-\\(PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
-corresponding to the given PROP, or nil if PROP is not one of the
-properties on the list.  This function never signals an error.
-
-(fn PLIST PROP)");
-
+/// Extract a value from a property list, comparing with `equal'.
+/// PLIST is a property list, which is a list of the form
+/// \(PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
+/// corresponding to the given PROP, or nil if PROP is not
+/// one of the properties on the list.
+/// (fn PLIST PROP)
+#[lisp_fn]
 fn lax_plist_get(plist: LispObject, prop: LispObject) -> LispObject {
     internal_plist_get(plist.iter_tails(), prop, LispObject::equal)
 }
 
-defun!("lax-plist-get",
-       Flax_plist_get(plist, prop),
-       Slax_plist_get,
-       lax_plist_get,
-       2,
-       2,
-       ptr::null(),
-       "Extract a value from a property list, comparing with `equal'.
-PLIST is a property list, which is a list of the form
-\\(PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
-corresponding to the given PROP, or nil if PROP is not
-one of the properties on the list.
-
-(fn PLIST PROP)");
-
+/// Return non-nil if PLIST has the property PROP.
+/// PLIST is a property list, which is a list of the form
+/// \(PROP1 VALUE1 PROP2 VALUE2 ...).  PROP is a symbol.
+/// Unlike `plist-get', this allows you to distinguish between a missing
+/// property and a property with the value nil.
+/// The value is actually the tail of PLIST whose car is PROP.
+/// (fn PLIST PROP)
+#[lisp_fn]
 fn plist_member(plist: LispObject, prop: LispObject) -> LispObject {
     let mut prop_item = true;
     for tail in plist.iter_tails() {
@@ -446,22 +320,6 @@ fn plist_member(plist: LispObject, prop: LispObject) -> LispObject {
     }
     Qnil
 }
-
-defun!("plist-member",
-       Fplist_member(plist, prop),
-       Splist_member,
-       plist_member,
-       2,
-       2,
-       ptr::null(),
-       "Return non-nil if PLIST has the property PROP.
-PLIST is a property list, which is a list of the form
-\\(PROP1 VALUE1 PROP2 VALUE2 ...).  PROP is a symbol.
-Unlike `plist-get', this allows you to distinguish between a missing
-property and a property with the value nil.
-The value is actually the tail of PLIST whose car is PROP.
-
-(fn PLIST PROP)");
 
 fn internal_plist_put<F>(plist: LispObject, prop: LispObject, val: LispObject, cmp: F) -> LispObject
     where F: Fn(LispObject, LispObject) -> bool
@@ -499,44 +357,28 @@ fn internal_plist_put<F>(plist: LispObject, prop: LispObject, val: LispObject, c
     }
 }
 
+/// Change value in PLIST of PROP to VAL.
+/// PLIST is a property list, which is a list of the form
+/// \(PROP1 VALUE1 PROP2 VALUE2 ...).  PROP is a symbol and VAL is any object.
+/// If PROP is already a property on the list, its value is set to VAL,
+/// otherwise the new PROP VAL pair is added.  The new plist is returned;
+/// use `(setq x (plist-put x prop val))' to be sure to use the new value.
+/// The PLIST is modified by side effects.
+/// (fn PLIST PROP VAL)
+#[lisp_fn]
 fn plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispObject {
     internal_plist_put(plist, prop, val, LispObject::eq)
 }
 
-defun!("plist-put",
-       Fplist_put(plist, prop, val),
-       Splist_put,
-       plist_put,
-       3,
-       3,
-       ptr::null(),
-       "Change value in PLIST of PROP to VAL.
-PLIST is a property list, which is a list of the form
-\\(PROP1 VALUE1 PROP2 VALUE2 ...).  PROP is a symbol and VAL is any object.
-If PROP is already a property on the list, its value is set to VAL,
-otherwise the new PROP VAL pair is added.  The new plist is returned;
-use `(setq x (plist-put x prop val))' to be sure to use the new value.
-The PLIST is modified by side effects.
-
-(fn PLIST PROP VAL)");
-
+/// Change value in PLIST of PROP to VAL, comparing with `equal'.
+/// PLIST is a property list, which is a list of the form
+/// \(PROP1 VALUE1 PROP2 VALUE2 ...).  PROP and VAL are any objects.
+/// If PROP is already a property on the list, its value is set to VAL,
+/// otherwise the new PROP VAL pair is added.  The new plist is returned;
+/// use `(setq x (lax-plist-put x prop val))' to be sure to use the new value.
+/// The PLIST is modified by side effects.
+/// (fn PLIST PROP VAL)
+#[lisp_fn]
 fn lax_plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispObject {
     internal_plist_put(plist, prop, val, LispObject::equal)
 }
-
-defun!("lax-plist-put",
-       Flax_plist_put(plist, prop, val),
-       Slax_plist_put,
-       lax_plist_put,
-       3,
-       3,
-       ptr::null(),
-       "Change value in PLIST of PROP to VAL, comparing with `equal'.
-PLIST is a property list, which is a list of the form
-\\(PROP1 VALUE1 PROP2 VALUE2 ...).  PROP and VAL are any objects.
-If PROP is already a property on the list, its value is set to VAL,
-otherwise the new PROP VAL pair is added.  The new plist is returned;
-use `(setq x (lax-plist-put x prop val))' to be sure to use the new value.
-The PLIST is modified by side effects.
-
-(fn PLIST PROP VAL)");
