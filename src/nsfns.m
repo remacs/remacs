@@ -2753,7 +2753,7 @@ compute_tip_xy (struct frame *f,
   /* Find the screen that pt is on. */
   for (screen in [NSScreen screens])
 #ifdef NS_IMPL_COCOA
-    if (CGRectContainsPoint ([screen frame], pt))
+    if (CGRectContainsPoint ((CGRect)[screen frame], (CGPoint)pt))
 #else
     if (pt.x >= screen.frame.origin.x
         && pt.x < screen.frame.origin.x + screen.frame.size.width
