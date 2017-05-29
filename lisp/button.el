@@ -194,6 +194,8 @@ changes to a supertype are not reflected in its subtypes)."
 	((button--area-button-p button)
 	 (get-text-property (cdr button)
 			    prop (button--area-button-string button)))
+	((markerp button)
+	 (get-text-property button prop (marker-buffer button)))
 	(t ; Must be a text-property button.
 	 (get-text-property button prop))))
 
