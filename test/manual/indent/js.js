@@ -128,6 +128,13 @@ if (x > 72 &&
 let x = svg.mumble()
     .zzz;
 
+// https://github.com/mooz/js2-mode/issues/405
+if (1) {
+  isSet
+    ? (isEmpty ? 2 : 3)
+    : 4
+}
+
 // Local Variables:
 // indent-tabs-mode: nil
 // js-indent-level: 2

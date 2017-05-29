@@ -695,7 +695,8 @@ with completion and history."
   (setq regexp (hi-lock--hashcons regexp))
   (let ((pattern (list regexp (list 0 (list 'quote face) 'prepend))))
     ;; Refuse to highlight a text that is already highlighted.
-    (unless (assoc regexp hi-lock-interactive-patterns)
+    (if (assoc regexp hi-lock-interactive-patterns)
+        (add-to-list 'hi-lock--unused-faces (face-name face))
       (push pattern hi-lock-interactive-patterns)
       (if (and font-lock-mode (font-lock-specified-p major-mode))
 	  (progn

@@ -489,7 +489,7 @@ select_window (Lisp_Object window, Lisp_Object norecord,
        record_buffer before returning here.  */
     goto record_and_return;
 
-  if (NILP (norecord))
+  if (NILP (norecord) || EQ (norecord, Qmark_for_redisplay))
     { /* Mark the window for redisplay since the selected-window has
 	 a different mode-line.  */
       wset_redisplay (XWINDOW (selected_window));
@@ -568,7 +568,8 @@ Return WINDOW.
 
 Optional second arg NORECORD non-nil means do not put this buffer at the
 front of the buffer list and do not make this window the most recently
-selected one.
+selected one.  Also, do not mark WINDOW for redisplay unless NORECORD
+equals the special symbol `mark-for-redisplay'.
 
 Run `buffer-list-update-hook' unless NORECORD is non-nil.  Note that
 applications and internal routines often select a window temporarily for
@@ -3311,6 +3312,9 @@ run_window_size_change_functions (Lisp_Object frame)
   Lisp_Object functions = Vwindow_size_change_functions;
 
   if (FRAME_WINDOW_CONFIGURATION_CHANGED (f)
+      /* Here we implicitly exclude the possibility that the height of
+	 FRAME and its minibuffer window both change leaving the height
+	 of FRAME's root window alone.  */
       || window_size_changed (r))
     {
       while (CONSP (functions))
@@ -3321,6 +3325,12 @@ run_window_size_change_functions (Lisp_Object frame)
 	}
 
       window_set_before_size_change_sizes (r);
+
+      if (FRAME_HAS_MINIBUF_P (f) && !FRAME_MINIBUF_ONLY_P (f))
+	/* Record size of FRAME's minibuffer window too.  */
+	window_set_before_size_change_sizes
+	  (XWINDOW (FRAME_MINIBUF_WINDOW (f)));
+
       FRAME_WINDOW_CONFIGURATION_CHANGED (f) = false;
     }
 }
@@ -3329,7 +3339,7 @@ run_window_size_change_functions (Lisp_Object frame)
 /* Make WINDOW display BUFFER.  RUN_HOOKS_P means it's allowed
    to run hooks.  See make_frame for a case where it's not allowed.
    KEEP_MARGINS_P means that the current margins, fringes, and
-   scroll-bar settings of the window are not reset from the buffer's
+   scroll bar settings of the window are not reset from the buffer's
    local settings.  */
 
 void
@@ -7032,16 +7042,18 @@ DEFUN ("set-window-scroll-bars", Fset_window_scroll_bars,
 WINDOW must be a live window and defaults to the selected one.
 
 Second parameter WIDTH specifies the pixel width for the vertical scroll
-bar.  If WIDTH is nil, use the scroll-bar width of WINDOW's frame.
+bar.  If WIDTH is nil, use the scroll bar width of WINDOW's frame.
 Third parameter VERTICAL-TYPE specifies the type of the vertical scroll
-bar: left, right, or nil.  If VERTICAL-TYPE is t, this means use the
-frame's scroll-bar type.
+bar: left, right, nil or t where nil means to not display a vertical
+scroll bar on WINDOW and t means to use WINDOW frame's vertical scroll
+bar type.
 
 Fourth parameter HEIGHT specifies the pixel height for the horizontal
-scroll bar.  If HEIGHT is nil, use the scroll-bar height of WINDOW's
+scroll bar.  If HEIGHT is nil, use the scroll bar height of WINDOW's
 frame.  Fifth parameter HORIZONTAL-TYPE specifies the type of the
-horizontal scroll bar: nil, bottom, or t.  If HORIZONTAL-TYPE is t, this
-means to use the frame's horizontal scroll-bar type.
+horizontal scroll bar: bottom, nil, or t where nil means to not display
+a horizontal scroll bar on WINDOW and t means to use WINDOW frame's
+horizontal scroll bar type.
 
 Return t if scroll bars were actually changed and nil otherwise.  */)
   (Lisp_Object window, Lisp_Object width, Lisp_Object vertical_type,
@@ -7338,6 +7350,7 @@ syms_of_window (void)
   DEFSYM (Qclone_of, "clone-of");
   DEFSYM (Qfloor, "floor");
   DEFSYM (Qceiling, "ceiling");
+  DEFSYM (Qmark_for_redisplay, "mark-for-redisplay");
 
   staticpro (&Vwindow_list);
 
@@ -7454,9 +7467,14 @@ nil means splitting a window will create a new parent window only if the
     `window-height' or `window-width' entry in the alist used by
     `display-buffer'.  Otherwise, this value is handled like nil.
 
+`temp-buffer-resize' means that splitting a window for displaying a
+    temporary buffer via `with-temp-buffer-window' makes a new parent
+    window only if `temp-buffer-resize-mode' is enabled.  Otherwise,
+    this value is handled like nil.
+
 `temp-buffer' means that splitting a window for displaying a temporary
-    buffer always makes a new parent window.  Otherwise, this value is
-    handled like nil.
+    buffer via `with-temp-buffer-window' always makes a new parent
+    window.  Otherwise, this value is handled like nil.
 
 `display-buffer' means that splitting a window for displaying a buffer
     always makes a new parent window.  Since temporary buffers are
@@ -7469,7 +7487,8 @@ t means that splitting a window always creates a new parent window.  If
     tree and every window but the frame's root window has exactly one
     sibling.
 
-Other values are reserved for future use.  */);
+The default value is `window-size'.  Other values are reserved for
+future use.  */);
   Vwindow_combination_limit = Qwindow_size;
 
   DEFVAR_LISP ("window-persistent-parameters", Vwindow_persistent_parameters,

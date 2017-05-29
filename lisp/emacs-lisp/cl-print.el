@@ -1,4 +1,4 @@
-;;; cl-print.el --- CL-style generic printer facilies  -*- lexical-binding: t; -*-
+;;; cl-print.el --- CL-style generic printing  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2017  Free Software Foundation, Inc.
 
@@ -74,10 +74,45 @@ call other entry points instead, such as `cl-prin1'."
     (cl-print-object (aref object i) stream))
   (princ "]" stream))
 
+(defvar cl-print-compiled nil
+  "Control how to print byte-compiled functions.  Can be:
+- `static' to print the vector of constants.
+- `disassemble' to print the disassembly of the code.
+- nil to skip printing any details about the code.")
+
 (cl-defmethod cl-print-object ((object compiled-function) stream)
-  (princ "#<compiled-function " stream)
-  (prin1 (help-function-arglist object 'preserve-names) stream)
-  (princ " #<bytecode> >" stream))
+  ;; We use "#f(...)" rather than "#<...>" so that pp.el gives better results.
+  (princ "#f(compiled-function " stream)
+  (let ((args (help-function-arglist object 'preserve-names)))
+    (if args
+        (prin1 args stream)
+      (princ "()" stream)))
+  (let ((doc (documentation object 'raw)))
+    (when doc
+      (princ " " stream)
+      (prin1 doc stream)))
+  (let ((inter (interactive-form object)))
+    (when inter
+      (princ " " stream)
+      (cl-print-object
+       (if (eq 'byte-code (car-safe (cadr inter)))
+           `(interactive ,(make-byte-code nil (nth 1 (cadr inter))
+                                          (nth 2 (cadr inter))
+                                          (nth 3 (cadr inter))))
+         inter)
+       stream)))
+  (if (eq cl-print-compiled 'disassemble)
+      (princ
+       (with-temp-buffer
+         (insert "\n")
+         (disassemble-1 object 0)
+         (buffer-string))
+       stream)
+    (princ " #<bytecode>" stream)
+    (when (eq cl-print-compiled 'static)
+      (princ " " stream)
+      (cl-print-object (aref object 2) stream)))
+  (princ ")" stream))
 
 ;; This belongs in nadvice.el, of course, but some load-ordering issues make it
 ;; complicated: cl-generic uses macros from cl-macs and cl-macs uses advice-add
@@ -87,7 +122,7 @@ call other entry points instead, such as `cl-prin1'."
               ((object compiled-function) stream)
   (if (not (advice--p object))
       (cl-call-next-method)
-    (princ "#<advice-wrapper " stream)
+    (princ "#f(advice-wrapper " stream)
     (when (fboundp 'advice--where)
       (princ (advice--where object) stream)
       (princ " " stream))
@@ -98,11 +133,11 @@ call other entry points instead, such as `cl-prin1'."
       (when props
         (princ " " stream)
         (cl-print-object props stream)))
-    (princ ">" stream)))
+    (princ ")" stream)))
 
 (cl-defmethod cl-print-object ((object cl-structure-object) stream)
   (princ "#s(" stream)
-  (let* ((class (symbol-value (aref object 0)))
+  (let* ((class (cl-find-class (type-of object)))
          (slots (cl--struct-class-slots class)))
     (princ (cl--struct-class-name class) stream)
     (dotimes (i (length slots))

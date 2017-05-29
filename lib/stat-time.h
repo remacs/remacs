@@ -31,6 +31,10 @@ _GL_INLINE_HEADER_BEGIN
 # define _GL_STAT_TIME_INLINE _GL_INLINE
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* STAT_TIMESPEC (ST, ST_XTIM) is the ST_XTIM member for *ST of type
    struct timespec, if available.  If not, then STAT_TIMESPEC_NS (ST,
    ST_XTIM) is the nanosecond component of the ST_XTIM member for *ST,
@@ -39,8 +43,8 @@ _GL_INLINE_HEADER_BEGIN
    time respectively.
 
    These macros are private to stat-time.h.  */
-#if defined HAVE_STRUCT_STAT_ST_ATIM_TV_NSEC
-# ifdef TYPEOF_STRUCT_STAT_ST_ATIM_IS_STRUCT_TIMESPEC
+#if _GL_WINDOWS_STAT_TIMESPEC || defined HAVE_STRUCT_STAT_ST_ATIM_TV_NSEC
+# if _GL_WINDOWS_STAT_TIMESPEC || defined TYPEOF_STRUCT_STAT_ST_ATIM_IS_STRUCT_TIMESPEC
 #  define STAT_TIMESPEC(st, st_xtim) ((st)->st_xtim)
 # else
 #  define STAT_TIMESPEC_NS(st, st_xtim) ((st)->st_xtim.tv_nsec)
@@ -165,9 +169,13 @@ get_stat_birthtime (struct stat const *st)
 #elif (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
   /* Native Windows platforms (but not Cygwin) put the "file creation
      time" in st_ctime (!).  See
-     <http://msdn2.microsoft.com/de-de/library/14h5k7ff(VS.80).aspx>.  */
+     <https://msdn.microsoft.com/en-us/library/14h5k7ff(VS.80).aspx>.  */
+# if _GL_WINDOWS_STAT_TIMESPEC
+  t = st->st_ctim;
+# else
   t.tv_sec = st->st_ctime;
   t.tv_nsec = 0;
+# endif
 #else
   /* Birth time is not supported.  */
   t.tv_sec = -1;
@@ -193,6 +201,10 @@ get_stat_birthtime (struct stat const *st)
 
   return t;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 _GL_INLINE_HEADER_END
 

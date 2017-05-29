@@ -914,16 +914,20 @@ fontification of code blocks see `org-src-fontify-block' and
 	  (with-current-buffer
 	      (get-buffer-create
 	       (concat " org-src-fontification:" (symbol-name lang-mode)))
-	    (delete-region (point-min) (point-max))
-	    (insert string " ") ;; so there's a final property change
-	    (unless (eq major-mode lang-mode) (funcall lang-mode))
+            ;; Make sure that modification hooks are not inhibited in
+            ;; the org-src-fontification buffer in case we're called
+            ;; from `jit-lock-function' (Bug#25132).
+            (let ((inhibit-modification-hooks nil))
+              (delete-region (point-min) (point-max))
+              (insert string " ")) ;; so there's a final property change
+            (unless (eq major-mode lang-mode) (funcall lang-mode))
             (org-font-lock-ensure)
-	    (setq pos (point-min))
-	    (while (setq next (next-single-property-change pos 'face))
-	      (put-text-property
-	       (+ start (1- pos)) (1- (+ start next)) 'face
-	       (get-text-property pos 'face) org-buffer)
-	      (setq pos next)))
+            (setq pos (point-min))
+            (while (setq next (next-single-property-change pos 'face))
+              (put-text-property
+               (+ start (1- pos)) (1- (+ start next)) 'face
+               (get-text-property pos 'face) org-buffer)
+              (setq pos next)))
 	  (add-text-properties
 	   start end
 	   '(font-lock-fontified t fontified t font-lock-multiline t))

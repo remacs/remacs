@@ -487,8 +487,8 @@ Each alist element, which looks like (ELEMENT ...), is passed to
 
 Elements might be (?\\=` ?\\=` _ \"\\='\\='\"), (?\\( ?  _ \" )\") or (?{ \\n > _ \\n ?} >).")
 
-(defvar skeleton-pair-default-alist '((?( _ ?)) (?\))
-				      (?[ _ ?]) (?\])
+(defvar skeleton-pair-default-alist '((?\( _ ?\)) (?\))
+				      (?\[ _ ?\]) (?\])
 				      (?{ _ ?}) (?\})
 				      (?< _ ?>) (?\>)
 				      (?« _ ?») (?\»)

@@ -925,6 +925,7 @@ position_indentation (ptrdiff_t pos_byte)
 	case 0240:
 	  if (! NILP (BVAR (current_buffer, enable_multibyte_characters)))
 	    return column;
+	  FALLTHROUGH;
 	case ' ':
 	  column++;
 	  break;

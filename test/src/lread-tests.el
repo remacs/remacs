@@ -112,4 +112,56 @@
   (should-error (read "#24r") :type 'invalid-read-syntax)
   (should-error (read "#") :type 'invalid-read-syntax))
 
+(ert-deftest lread-record-1 ()
+  (should (equal '(#s(foo) #s(foo))
+                 (read "(#1=#s(foo) #1#)"))))
+
+(defmacro lread-tests--with-temp-file (file-name-var &rest body)
+  (declare (indent 1))
+  (cl-check-type file-name-var symbol)
+  `(let ((,file-name-var (make-temp-file "emacs")))
+     (unwind-protect
+         (progn ,@body)
+       (delete-file ,file-name-var))))
+
+(defun lread-tests--last-message ()
+  (with-current-buffer "*Messages*"
+    (save-excursion
+      (goto-char (point-max))
+      (skip-chars-backward "\n")
+      (buffer-substring (line-beginning-position) (point)))))
+
+(ert-deftest lread-tests--unescaped-char-literals ()
+  "Check that loading warns about unescaped character
+literals (Bug#20852)."
+  (lread-tests--with-temp-file file-name
+    (write-region "?) ?( ?; ?\" ?[ ?]" nil file-name)
+    (should (equal (load file-name nil :nomessage :nosuffix) t))
+    (should (equal (lread-tests--last-message)
+                   (concat (format-message "Loading `%s': " file-name)
+                           "unescaped character literals "
+                           "`?\"', `?(', `?)', `?;', `?[', `?]' detected!")))))
+
+(ert-deftest lread-test-bug26837 ()
+  "Test for http://debbugs.gnu.org/26837 ."
+  (let ((load-path (cons
+                    (file-name-as-directory
+                     (expand-file-name "data" (getenv "EMACS_TEST_DIRECTORY")))
+                    load-path)))
+    (load "somelib" nil t)
+    (should (string-suffix-p "/somelib.el" (caar load-history)))
+    (load "somelib2" nil t)
+    (should (string-suffix-p "/somelib2.el" (caar load-history)))
+    (load "somelib" nil t)
+    (should (string-suffix-p "/somelib.el" (caar load-history)))))
+
+(ert-deftest lread-tests--old-style-backquotes ()
+  "Check that loading warns about old-style backquotes."
+  (lread-tests--with-temp-file file-name
+    (write-region "(` (a b))" nil file-name)
+    (should (equal (load file-name nil :nomessage :nosuffix) t))
+    (should (equal (lread-tests--last-message)
+                   (concat (format-message "Loading `%s': " file-name)
+                           "old-style backquotes detected!")))))
+
 ;;; lread-tests.el ends here

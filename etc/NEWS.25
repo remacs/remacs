@@ -17,38 +17,37 @@ with a prefix argument or by typing C-u C-h C-n.
 
 
 * Changes in Emacs 25.2
-This is a bug-fix release with (almost) no new features.
 
----
+This is mainly a bug-fix release, but there are some other changes.
+
 ** 'find-library', 'help-function-def' and 'help-variable-def' now run
 'find-function-after-hook'.
 
-+++
 ** New basic face 'fixed-pitch-serif', for a fixed-width font with serifs.
-The 'Info-quoted' and 'tex-verbatim' faces now default to inheriting
-from it.
+The 'Info-quoted' and 'tex-verbatim' faces inherit from it by default.
 
----
-** New variable 'use-default-font-for-symbols' for backward compatibility.
-This variable allows to get back pre-Emacs 25 behavior whereby the
+** New variable 'use-default-font-for-symbols', for backward compatibility.
+This variable allows you to get back pre-Emacs 25 behavior where the
 font for displaying symbol and punctuation characters was always
-selected according to your fontset setup.  Emacs 25 by default tries
-to use the default face's font for such characters, disregarding the
-fontsets if the default font supports these characters.  Set this
-variable to nil to disable the new behavior and get back the old
-behavior.
+selected according to your fontset setup.  By default, Emacs 25 tries
+to use the default face's font for such characters, if it supports
+them, disregarding the fontsets.  Set this variable to nil to disable
+this and get back the old behavior.
 
-+++
 ** 'electric-quote-mode' is no longer suppressed in a buffer whose
-whose coding system cannot represent curved quote characters.
+coding system cannot represent curved quote characters.
 Instead, users can deal with the unrepresentable characters in the
 usual way when they save the buffer.
 
----
 ** New variable 'inhibit-compacting-font-caches'.
 Set this variable to a non-nil value to speed up display of characters
-using large fonts, at the price of a larger memory footprint of the
-Emacs session.
+using large fonts, at the price of a larger memory footprint.
+
+** The version number of CC Mode has been changed from 5.33 to
+5.32.99, although the software itself hasn't changed.  This aims to
+reduce confusion with the standalone CC Mode 5.33 (available from
+http://cc-mode.sourceforge.net), which is a more mature version than
+the one included in Emacs 25.2.
 
 
 * Installation Changes in Emacs 25.1

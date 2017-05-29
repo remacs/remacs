@@ -362,11 +362,13 @@
     (math-gammap1-raw '(float -25 -2))))
 
 (defun math-factorial-iter (count n f)
-  (if (= (% n 5) 1)
-      (math-working (format "factorial(%d)" (1- n)) f))
-  (if (> count 0)
-      (math-factorial-iter (1- count) (1+ n) (math-mul n f))
-    f))
+  (while (> count 0)
+    (if (= (% n 5) 1)
+	(math-working (format "factorial(%d)" (1- n)) f))
+    (setq count (1- count)
+	  f (math-mul n f)
+	  n (1+ n)))
+  f)
 
 (defun calcFunc-dfact (n)   ; [I I] [F F] [Public]
   (cond ((Math-integer-negp n)

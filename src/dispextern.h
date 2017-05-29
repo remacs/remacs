@@ -1780,6 +1780,7 @@ enum face_id
   WINDOW_DIVIDER_FACE_ID,
   WINDOW_DIVIDER_FIRST_PIXEL_FACE_ID,
   WINDOW_DIVIDER_LAST_PIXEL_FACE_ID,
+  INTERNAL_BORDER_FACE_ID,
   BASIC_FACE_ID_SENTINEL
 };
 
@@ -3289,6 +3290,7 @@ extern void dump_glyph_string (struct glyph_string *) EXTERNALLY_VISIBLE;
 
 extern void x_get_glyph_overhangs (struct glyph *, struct frame *,
                                    int *, int *);
+extern struct font *font_for_underline_metrics (struct glyph_string *);
 extern void x_produce_glyphs (struct it *);
 
 extern void x_write_glyphs (struct window *, struct glyph_row *,

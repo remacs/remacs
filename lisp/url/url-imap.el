@@ -50,7 +50,7 @@
 			  (nnimap-authenticator ,authenticator)))))
 
 (defun url-imap (url)
-  (unless (vectorp url)
+  (unless (url-p url)
     (signal 'wrong-type-error (list "Need a pre-parsed URL." url)))
   (with-current-buffer (generate-new-buffer " *url-imap*")
     (mm-disable-multibyte)

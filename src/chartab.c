@@ -185,7 +185,7 @@ Lisp_Object
 copy_char_table (Lisp_Object table)
 {
   Lisp_Object copy;
-  int size = XCHAR_TABLE (table)->header.size & PSEUDOVECTOR_SIZE_MASK;
+  int size = PVSIZE (table);
   int i;
 
   copy = Fmake_vector (make_number (size), Qnil);

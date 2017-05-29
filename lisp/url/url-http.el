@@ -1243,7 +1243,7 @@ Optional arg GATEWAY-METHOD specifies the gateway to be used,
 overriding the value of `url-gateway-method'.
 
 The return value of this function is the retrieval buffer."
-  (cl-check-type url vector "Need a pre-parsed URL.")
+  (cl-check-type url url "Need a pre-parsed URL.")
   (let* (;; (host (url-host (or url-using-proxy url)))
 	 ;; (port (url-port (or url-using-proxy url)))
 	 (nsm-noninteractive (or url-request-noninteractive

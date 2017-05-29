@@ -280,7 +280,13 @@
                          (while l
                            a (setq l nil))
                          'correct)
-                        (t 'incorrect))))
+                        (t 'incorrect)))
+    (let ((a))
+      (cond ((eq a 'foo) 'incorrect)
+            (t)))
+    (let ((a))
+      (cond ((eq a 'foo) 'incorrect)
+            ('correct))))
   "List of expression for test.
 Each element will be executed by interpreter and with
 bytecompiled code, and their results compared.")
@@ -499,6 +505,45 @@ bytecompiled code, and their results compared.")
   "Test the Emacs byte compiler lexbind handling."
   (dolist (pat bytecomp-lexbind-tests)
     (should (bytecomp-lexbind-check-1 pat))))
+
+(defmacro bytecomp-tests--with-temp-file (file-name-var &rest body)
+  (declare (indent 1))
+  (cl-check-type file-name-var symbol)
+  `(let ((,file-name-var (make-temp-file "emacs")))
+     (unwind-protect
+         (progn ,@body)
+       (delete-file ,file-name-var))))
+
+(ert-deftest bytecomp-tests--unescaped-char-literals ()
+  "Check that byte compiling warns about unescaped character
+literals (Bug#20852)."
+  (should (boundp 'lread--unescaped-character-literals))
+  (bytecomp-tests--with-temp-file source
+    (write-region "(list ?) ?( ?; ?\" ?[ ?])" nil source)
+    (bytecomp-tests--with-temp-file destination
+      (let* ((byte-compile-dest-file-function (lambda (_) destination))
+            (byte-compile-error-on-warn t)
+            (byte-compile-debug t)
+            (err (should-error (byte-compile-file source))))
+        (should (equal (cdr err)
+                       (list (concat "unescaped character literals "
+                                     "`?\"', `?(', `?)', `?;', `?[', `?]' "
+                                     "detected!"))))))))
+
+(ert-deftest bytecomp-tests--old-style-backquotes ()
+  "Check that byte compiling warns about old-style backquotes."
+  (should (boundp 'lread--old-style-backquotes))
+  (bytecomp-tests--with-temp-file source
+    (write-region "(` (a b))" nil source)
+    (bytecomp-tests--with-temp-file destination
+      (let* ((byte-compile-dest-file-function (lambda (_) destination))
+            (byte-compile-error-on-warn t)
+            (byte-compile-debug t)
+            (err (should-error (byte-compile-file source))))
+        (should (equal (cdr err)
+                       (list "!! The file uses old-style backquotes !!
+This functionality has been obsolete for more than 10 years already
+and will be removed soon.  See (elisp)Backquote in the manual.")))))))
 
 ;; Local Variables:
 ;; no-byte-compile: t

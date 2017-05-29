@@ -276,7 +276,8 @@ DATA is displayed to the user and should state the reason for skipping."
 (defun ert--expand-should-1 (whole form inner-expander)
   "Helper function for the `should' macro and its variants."
   (let ((form
-         (macroexpand form (append byte-compile-macro-environment
+         (macroexpand form (append (bound-and-true-p
+                                    byte-compile-macro-environment)
                                    (cond
                                     ((boundp 'macroexpand-all-environment)
                                      macroexpand-all-environment)
@@ -1236,7 +1237,7 @@ SELECTOR is the selector that was used to select TESTS."
         (funcall listener 'test-ended stats test result))
       (setf (ert--stats-current-test stats) nil))))
 
-(defun ert-run-tests (selector listener)
+(defun ert-run-tests (selector listener &optional interactively)
   "Run the tests specified by SELECTOR, sending progress updates to LISTENER."
   (let* ((tests (ert-select-tests selector t))
          (stats (ert--make-stats tests selector)))
@@ -1247,10 +1248,14 @@ SELECTOR is the selector that was used to select TESTS."
           (let ((ert--current-run-stats stats))
             (force-mode-line-update)
             (unwind-protect
-                (progn
-                  (cl-loop for test in tests do
-                           (ert-run-or-rerun-test stats test listener))
-                  (setq abortedp nil))
+		(cl-loop for test in tests do
+			 (ert-run-or-rerun-test stats test listener)
+			 (when (and interactively
+				    (ert-test-quit-p
+				     (ert-test-most-recent-result test))
+				    (y-or-n-p "Abort testing? "))
+			   (cl-return))
+			 finally (setq abortedp nil))
               (setf (ert--stats-aborted-p stats) abortedp)
               (setf (ert--stats-end-time stats) (current-time))
               (funcall listener 'run-ended stats abortedp)))
@@ -1442,7 +1447,8 @@ Returns the stats object."
                                                  (ert-test-result-expected-p
                                                   test result))
                      (1+ (ert--stats-test-pos stats test))
-                     (ert-test-name test)))))))))
+                     (ert-test-name test)))))))
+   nil))
 
 ;;;###autoload
 (defun ert-run-tests-batch-and-exit (&optional selector)
@@ -1452,6 +1458,12 @@ The exit status will be 0 if all test results were as expected, 1
 on unexpected results, or 2 if the tool detected an error outside
 of the tests (e.g. invalid SELECTOR or bug in the code that runs
 the tests)."
+  (or noninteractive
+      (user-error "This function is only for use in batch mode"))
+  ;; Better crash loudly than attempting to recover from undefined
+  ;; behavior.
+  (setq attempt-stack-overflow-recovery nil
+        attempt-orderly-shutdown-on-fatal-signal nil)
   (unwind-protect
       (let ((stats (ert-run-tests-batch selector)))
         (kill-emacs (if (zerop (ert-stats-completed-unexpected stats)) 0 1)))
@@ -1469,6 +1481,10 @@ The logfiles should have the `ert-run-tests-batch' format.  When finished,
 this exits Emacs, with status as per `ert-run-tests-batch-and-exit'."
   (or noninteractive
       (user-error "This function is only for use in batch mode"))
+  ;; Better crash loudly than attempting to recover from undefined
+  ;; behavior.
+  (setq attempt-stack-overflow-recovery nil
+        attempt-orderly-shutdown-on-fatal-signal nil)
   (let ((nlogs (length command-line-args-left))
         (ntests 0) (nrun 0) (nexpected 0) (nunexpected 0) (nskipped 0)
         nnotrun logfile notests badtests unexpected skipped)
@@ -1597,7 +1613,7 @@ Signals an error if no test name was read."
     (let ((sym (intern-soft input)))
       (if (ert-test-boundp sym)
           sym
-        (error "Input does not name a test")))))
+        (user-error "Input does not name a test")))))
 
 (defun ert-read-test-name-at-point (prompt)
   "Read the name of a test and return it as a symbol.
@@ -1623,7 +1639,7 @@ Nothing more than an interactive interface to `ert-make-test-unbound'."
   (interactive)
   (when (called-interactively-p 'any)
     (unless (y-or-n-p "Delete all tests? ")
-      (error "Aborted")))
+      (user-error "Aborted")))
   ;; We can't use `ert-select-tests' here since that gives us only
   ;; test objects, and going from them back to the test name symbols
   ;; can fail if the `ert-test' defstruct has been redefined.
@@ -2033,9 +2049,8 @@ and how to display message."
                                                       test result)))
                      (ert--results-update-stats-display-maybe ewoc stats)
                      (ewoc-invalidate ewoc node))))))))
-    (ert-run-tests
-     selector
-     listener)))
+    (ert-run-tests selector listener t)))
+
 ;;;###autoload
 (defalias 'ert 'ert-run-tests-interactively)
 
@@ -2079,14 +2094,23 @@ and how to display message."
   '("ERT Results"
     ["Re-run all tests" ert-results-rerun-all-tests]
     "--"
-    ["Re-run test" ert-results-rerun-test-at-point]
-    ["Debug test" ert-results-rerun-test-at-point-debugging-errors]
-    ["Show test definition" ert-results-find-test-at-point-other-window]
+    ;; FIXME?  Why are there (at least) 3 different ways to decide if
+    ;; there is a test at point?
+    ["Re-run test" ert-results-rerun-test-at-point
+     :active (car (ert--results-test-at-point-allow-redefinition))]
+    ["Debug test" ert-results-rerun-test-at-point-debugging-errors
+     :active (car (ert--results-test-at-point-allow-redefinition))]
+    ["Show test definition" ert-results-find-test-at-point-other-window
+     :active (ert-test-at-point)]
     "--"
-    ["Show backtrace" ert-results-pop-to-backtrace-for-test-at-point]
-    ["Show messages" ert-results-pop-to-messages-for-test-at-point]
-    ["Show `should' forms" ert-results-pop-to-should-forms-for-test-at-point]
-    ["Describe test" ert-results-describe-test-at-point]
+    ["Show backtrace" ert-results-pop-to-backtrace-for-test-at-point
+     :active (ert--results-test-at-point-no-redefinition)]
+    ["Show messages" ert-results-pop-to-messages-for-test-at-point
+     :active (ert--results-test-at-point-no-redefinition)]
+    ["Show `should' forms" ert-results-pop-to-should-forms-for-test-at-point
+     :active (ert--results-test-at-point-no-redefinition)]
+    ["Describe test" ert-results-describe-test-at-point
+     :active (ert--results-test-at-point-no-redefinition)]
     "--"
     ["Delete test" ert-delete-test]
     "--"
@@ -2128,7 +2152,7 @@ To be used in the ERT results buffer."
 
 To be used in the ERT results buffer."
   (or (ert--results-test-node-or-null-at-point)
-      (error "No test at point")))
+      (user-error "No test at point")))
 
 (defun ert-results-next-test ()
   "Move point to the next test.
@@ -2178,7 +2202,7 @@ To be used in the ERT results buffer."
   (interactive)
   (let ((name (ert-test-at-point)))
     (unless name
-      (error "No test at point"))
+      (user-error "No test at point"))
     (ert-find-test-other-window name)))
 
 (defun ert--test-name-button-action (button)
@@ -2237,22 +2261,24 @@ To be used in the ERT results buffer."
         (and (ert-test-boundp sym)
              sym))))
 
-(defun ert--results-test-at-point-no-redefinition ()
+(defun ert--results-test-at-point-no-redefinition (&optional error)
   "Return the test at point, or nil.
-
+If optional argument ERROR is non-nil, signal an error rather than return nil.
 To be used in the ERT results buffer."
   (cl-assert (eql major-mode 'ert-results-mode))
-  (if (ert--results-test-node-or-null-at-point)
-      (let* ((node (ert--results-test-node-at-point))
-             (test (ert--ewoc-entry-test (ewoc-data node))))
-        test)
-    (let ((progress-bar-begin ert--results-progress-bar-button-begin))
-      (when (and (<= progress-bar-begin (point))
-                 (< (point) (button-end (button-at progress-bar-begin))))
-        (let* ((test-index (- (point) progress-bar-begin))
-               (test (aref (ert--stats-tests ert--results-stats)
+  (or
+   (if (ert--results-test-node-or-null-at-point)
+       (let* ((node (ert--results-test-node-at-point))
+              (test (ert--ewoc-entry-test (ewoc-data node))))
+         test)
+     (let ((progress-bar-begin ert--results-progress-bar-button-begin))
+       (when (and (<= progress-bar-begin (point))
+                  (< (point) (button-end (button-at progress-bar-begin))))
+         (let* ((test-index (- (point) progress-bar-begin))
+                (test (aref (ert--stats-tests ert--results-stats)
                            test-index)))
-          test)))))
+           test))))
+   (if error (user-error "No test at point"))))
 
 (defun ert--results-test-at-point-allow-redefinition ()
   "Look up the test at point, and check whether it has been redefined.
@@ -2337,7 +2363,7 @@ To be used in the ERT results buffer."
   (cl-destructuring-bind (test redefinition-state)
       (ert--results-test-at-point-allow-redefinition)
     (when (null test)
-      (error "No test at point"))
+      (user-error "No test at point"))
     (let* ((stats ert--results-stats)
            (progress-message (format "Running %stest %S"
                                      (cl-ecase redefinition-state
@@ -2377,7 +2403,7 @@ To be used in the ERT results buffer."
 
 To be used in the ERT results buffer."
   (interactive)
-  (let* ((test (ert--results-test-at-point-no-redefinition))
+  (let* ((test (ert--results-test-at-point-no-redefinition t))
          (stats ert--results-stats)
          (pos (ert--stats-test-pos stats test))
          (result (aref (ert--stats-test-results stats) pos)))
@@ -2406,7 +2432,7 @@ To be used in the ERT results buffer."
 
 To be used in the ERT results buffer."
   (interactive)
-  (let* ((test (ert--results-test-at-point-no-redefinition))
+  (let* ((test (ert--results-test-at-point-no-redefinition t))
          (stats ert--results-stats)
          (pos (ert--stats-test-pos stats test))
          (result (aref (ert--stats-test-results stats) pos)))
@@ -2427,7 +2453,7 @@ To be used in the ERT results buffer."
 
 To be used in the ERT results buffer."
   (interactive)
-  (let* ((test (ert--results-test-at-point-no-redefinition))
+  (let* ((test (ert--results-test-at-point-no-redefinition t))
          (stats ert--results-stats)
          (pos (ert--stats-test-pos stats test))
          (result (aref (ert--stats-test-results stats) pos)))
@@ -2510,7 +2536,7 @@ To be used in the ERT results buffer."
   "Display the documentation for TEST-OR-TEST-NAME (a symbol or ert-test)."
   (interactive (list (ert-read-test-name-at-point "Describe test")))
   (when (< emacs-major-version 24)
-    (error "Requires Emacs 24"))
+    (user-error "Requires Emacs 24 or later"))
   (let (test-name
         test-definition)
     (cl-etypecase test-or-test-name
@@ -2554,7 +2580,7 @@ To be used in the ERT results buffer."
 
 To be used in the ERT results buffer."
   (interactive)
-  (ert-describe-test (ert--results-test-at-point-no-redefinition)))
+  (ert-describe-test (ert--results-test-at-point-no-redefinition t)))
 
 
 ;;; Actions on load/unload.

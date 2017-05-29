@@ -427,8 +427,6 @@ the following argument.  It returns @code{t} if so, @code{nil} otherwise.
 
 @defun max number-or-marker &rest numbers-or-markers
 This function returns the largest of its arguments.
-If any of the arguments is floating point, the value is returned
-as floating point, even if it was given as an integer.
 
 @example
 (max 20)
@@ -436,14 +434,12 @@ as floating point, even if it was given as an integer.
 (max 1 2.5)
      @result{} 2.5
 (max 1 3 2.5)
-     @result{} 3.0
+     @result{} 3
 @end example
 @end defun
 
 @defun min number-or-marker &rest numbers-or-markers
 This function returns the smallest of its arguments.
-If any of the arguments is floating point, the value is returned
-as floating point, even if it was given as an integer.
 
 @example
 (min -4 1)

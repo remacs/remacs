@@ -1110,32 +1110,67 @@ The arguments CHARS, BEG and END are handled as described in
 
 (defun ffap-string-at-point (&optional mode)
   "Return a string of characters from around point.
+
 MODE (defaults to value of `major-mode') is a symbol used to look up
 string syntax parameters in `ffap-string-at-point-mode-alist'.
+
 If MODE is not found, we use `file' instead of MODE.
+
 If the region is active, return a string from the region.
-Set the variable `ffap-string-at-point' and the variable
+
+If the point is in a comment, ensure that the returned string does not
+contain the comment start characters (especially for major modes that
+have '//' as comment start characters).
+
+Set the variables `ffap-string-at-point' and
 `ffap-string-at-point-region'.
+
 When the region is active and larger than `ffap-max-region-length',
 return an empty string, and set `ffap-string-at-point-region' to '(1 1)."
   (let* ((args
 	  (cdr
 	   (or (assq (or mode major-mode) ffap-string-at-point-mode-alist)
 	       (assq 'file ffap-string-at-point-mode-alist))))
+         (region-selected (use-region-p))
 	 (pt (point))
-	 (beg (if (use-region-p)
+         (beg (if region-selected
 		  (region-beginning)
 		(save-excursion
 		  (skip-chars-backward (car args))
 		  (skip-chars-forward (nth 1 args) pt)
 		  (point))))
-	 (end (if (use-region-p)
+         (end (if region-selected
 		  (region-end)
 		(save-excursion
 		  (skip-chars-forward (car args))
 		  (skip-chars-backward (nth 2 args) pt)
 		  (point))))
          (region-len (- (max beg end) (min beg end))))
+
+    ;; If the initial characters of the to-be-returned string are the
+    ;; current major mode's comment starter characters, *and* are
+    ;; not part of a comment, remove those from the returned string
+    ;; (Bug#24057).
+    ;; Example comments in `c-mode' (which considers lines beginning
+    ;; with "//" as comments):
+    ;;  //tmp - This is a comment. It does not contain any path reference.
+    ;;  ///tmp - This is a comment. The "/tmp" portion in that is a path.
+    ;;  ////tmp - This is a comment. The "//tmp" portion in that is a path.
+    (when (and
+           ;; Proceed if no region is selected by the user.
+           (null region-selected)
+           ;; Check if END character is part of a comment.
+           (save-excursion
+             (nth 4 (syntax-ppss end))))
+      ;; Move BEG to beginning of comment (after the comment start
+      ;; characters), or END, whichever comes first.
+      (save-excursion
+        (let ((state (syntax-ppss beg)))
+          ;; (nth 4 (syntax-ppss)) will be nil for comment start chars.
+          (unless (nth 4 state)
+            (parse-partial-sexp beg end nil nil state :commentstop)
+            (setq beg (point))))))
+
     (if (and (natnump ffap-max-region-length)
              (< region-len ffap-max-region-length)) ; Bug#25243.
         (setf ffap-string-at-point-region (list beg end)
@@ -1733,14 +1768,9 @@ Return value:
   "Like `ffap', but put buffer in another window.
 Only intended for interactive use."
   (interactive)
-  (let (value)
-    (switch-to-buffer-other-window
-     (save-window-excursion
-       (setq value (call-interactively 'ffap))
-       (unless (or (bufferp value) (bufferp (car-safe value)))
-	 (setq value (current-buffer)))
-       (current-buffer)))
-    value))
+  (pcase (save-window-excursion (call-interactively 'ffap))
+    ((or (and (pred bufferp) b) `(,(and (pred bufferp) b) . ,_))
+     (switch-to-buffer-other-window b))))
 
 (defun ffap-other-frame ()
   "Like `ffap', but put buffer in another frame.

@@ -43,7 +43,7 @@
 ;;; Code:
 
 (require 'info)
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 
 (defgroup info-lookup nil
   "Major mode sensitive help agent."

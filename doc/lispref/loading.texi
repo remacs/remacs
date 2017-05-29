@@ -900,8 +900,7 @@ if loading the file fails.  Normally, @code{require} returns
 @var{feature}.
 
 If loading the file succeeds but does not provide @var{feature},
-@code{require} signals an error, @samp{Required feature @var{feature}
-was not provided}.
+@code{require} signals an error about the missing feature.
 @end defun
 
 @defun featurep feature &optional subfeature

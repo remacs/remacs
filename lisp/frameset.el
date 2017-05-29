@@ -446,6 +446,7 @@ DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")
      (buffer-list        . :never)
      (buffer-predicate   . :never)
      (buried-buffer-list . :never)
+     (delete-before      . :never)
      (font               . frameset-filter-shelve-param)
      (foreground-color   . frameset-filter-sanitize-color)
      (fullscreen         . frameset-filter-shelve-param)
@@ -455,7 +456,9 @@ DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")
      (GUI:width          . frameset-filter-unshelve-param)
      (height             . frameset-filter-shelve-param)
      (outer-window-id    . :never)
+     (parent-frame       . :never)
      (parent-id          . :never)
+     (mouse-wheel-frame  . :never)
      (tty                . frameset-filter-tty-to-GUI)
      (tty-type           . frameset-filter-tty-to-GUI)
      (width              . frameset-filter-shelve-param)
@@ -717,9 +720,18 @@ If nil, check all live frames."
 
 ;; Saving framesets
 
-(defun frameset--record-minibuffer-relationships (frame-list)
-  "Process FRAME-LIST and record minibuffer relationships.
-FRAME-LIST is a list of frames.  Internal use only."
+(defun frameset--record-relationships (frame-list)
+  "Process FRAME-LIST and record relationships.
+FRAME-LIST is a list of frames.
+
+The relationships recorded for each frame are
+
+- `minibuffer' via `frameset--mini'
+- `delete-before' via `frameset--delete-before'
+- `parent-frame' via `frameset--parent-frame'
+- `mouse-wheel-frame' via `frameset--mouse-wheel-frame'
+
+Internal use only."
   ;; Record frames with their own minibuffer
   (dolist (frame (minibuffer-frame-list))
     (when (memq frame frame-list)
@@ -730,22 +742,41 @@ FRAME-LIST is a list of frames.  Internal use only."
       (set-frame-parameter frame
 			   'frameset--mini
 			   (cons t (eq frame default-minibuffer-frame)))))
-  ;; Now link minibufferless frames with their minibuffer frames
+  ;; Now link minibufferless frames with their minibuffer frames and
+  ;; store `parent-frame', `delete-before' and `mouse-wheel-frame'
+  ;; relationships in a similar way.
   (dolist (frame frame-list)
-    (unless (frame-parameter frame 'frameset--mini)
-      (frameset--set-id frame)
-      (let ((mb-frame (window-frame (minibuffer-window frame))))
-	;; For minibufferless frames, frameset--mini is a cons
-	;; (nil . FRAME-ID), where FRAME-ID is the frameset--id of
-	;; the frame containing its minibuffer window.
-	;; FRAME-ID can be set to nil, if FRAME-LIST doesn't contain
-	;; the minibuffer frame of a minibufferless frame; we allow
-	;; it without trying to second-guess the user.
-	(set-frame-parameter frame
-			     'frameset--mini
-			     (cons nil
-				   (and mb-frame
-					(frameset-frame-id mb-frame))))))))
+    (let ((parent-frame (frame-parent frame))
+          (delete-before (frame-parameter frame 'delete-before))
+          (mouse-wheel-frame (frame-parameter frame 'mouse-wheel-frame))
+          (nomini (not (frame-parameter frame 'frameset--mini))))
+      (when (or nomini parent-frame delete-before mouse-wheel-frame)
+        (when nomini
+          (frameset--set-id frame))
+        (when parent-frame
+          (set-frame-parameter
+           frame 'frameset--parent-frame (frameset-frame-id parent-frame)))
+        (when delete-before
+          (set-frame-parameter
+           frame 'frameset--delete-before (frameset-frame-id delete-before)))
+        (when mouse-wheel-frame
+          (set-frame-parameter
+           frame 'frameset--mouse-wheel-frame
+           (frameset-frame-id mouse-wheel-frame)))
+        (when nomini
+          (let ((mb-frame (window-frame (minibuffer-window frame))))
+            ;; For minibufferless frames, frameset--mini is a cons
+            ;; (nil . FRAME-ID), where FRAME-ID is the frameset--id of
+            ;; the frame containing its minibuffer window.
+            ;; FRAME-ID can be set to nil, if FRAME-LIST doesn't contain
+            ;; the minibuffer frame of a minibufferless frame; we allow
+            ;; it without trying to second-guess the user.
+            (set-frame-parameter
+             frame
+             'frameset--mini
+             (cons nil
+                   (and mb-frame
+                        (frameset-frame-id mb-frame))))))))))
 
 ;;;###autoload
 (cl-defun frameset-save (frame-list
@@ -768,7 +799,7 @@ PROPERTIES is a user-defined property list to add to the frameset."
 				       (cl-delete-if-not predicate list)
 				     list)))
 	 fs)
-    (frameset--record-minibuffer-relationships frames)
+    (frameset--record-relationships frames)
     (setq fs (frameset--make
 	      :app app
 	      :name name
@@ -993,6 +1024,14 @@ Internal use only."
 					       (frameset--initial-params filtered-cfg))))
       (puthash frame :created frameset--action-map))
 
+    ;; Try to assign parent-frame right here - it will improve things
+    ;; for minibuffer-less child frames.
+    (let* ((frame-id (frame-parameter frame 'frameset--parent-frame))
+           (parent-frame
+            (and frame-id (frameset-frame-with-id frame-id))))
+      (when (frame-live-p parent-frame)
+        (set-frame-parameter frame 'parent-frame parent-frame)))
+
     (modify-frame-parameters frame
 			     (if (eq (frame-parameter frame 'fullscreen) fullscreen)
 				 ;; Workaround for bug#14949
@@ -1204,6 +1243,29 @@ All keyword parameters default to nil."
 		  (when default (setq default-minibuffer-frame frame))))
 	    (error
 	     (delay-warning 'frameset (error-message-string err) :error))))))
+
+    ;; Setting the parent frame after the frame has been created is a
+    ;; pain because one can see the frame move on the screen.  Ideally,
+    ;; we would restore minibuffer equipped child frames after their
+    ;; respective parents have been made but this might interfere with
+    ;; the reordering of minibuffer frames.  Left to the experts ...
+    (dolist (frame (frame-list))
+      (let* ((frame-id (frame-parameter frame 'frameset--parent-frame))
+             (parent-frame
+              (and frame-id (frameset-frame-with-id frame-id))))
+        (when (and (not (eq (frame-parameter frame 'parent-frame) parent-frame))
+                   (frame-live-p parent-frame))
+          (set-frame-parameter frame 'parent-frame parent-frame)))
+      (let* ((frame-id (frame-parameter frame 'frameset--delete-before))
+             (delete-before
+              (and frame-id (frameset-frame-with-id frame-id))))
+        (when (frame-live-p delete-before)
+          (set-frame-parameter frame 'delete-before delete-before)))
+      (let* ((frame-id (frame-parameter frame 'frameset--mouse-wheel-frame))
+             (mouse-wheel-frame
+              (and frame-id (frameset-frame-with-id frame-id))))
+        (when (frame-live-p mouse-wheel-frame)
+          (set-frame-parameter frame 'mouse-wheel-frame mouse-wheel-frame))))
 
     ;; In case we try to delete the initial frame, we want to make sure that
     ;; other frames are already visible (discussed in thread for bug#14841).

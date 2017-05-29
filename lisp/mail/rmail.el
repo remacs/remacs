@@ -363,6 +363,9 @@ explicitly.")
 	  "\\|^importance:\\|^envelope-to:\\|^delivery-date\\|^openpgp:"
 	  "\\|^mbox-line:\\|^cancel-lock:"
 	  "\\|^DomainKey-Signature:\\|^dkim-signature:"
+	  "\\|^ARC-.*:"
+	  "\\|^Received-SPF:"
+	  "\\|^Authentication-Results:"
 	  "\\|^resent-face:\\|^resent-x.*:\\|^resent-organization:\\|^resent-openpgp:"
 	  "\\|^x-.*:"))
   "Regexp to match header fields that Rmail should normally hide.
@@ -1884,14 +1887,19 @@ not be a new one).  It returns non-nil if it got any new messages."
 	(setq result (> new-messages 0))
 	result))))
 
+(defun rmail-remote-proto-p (proto)
+  "Return non-nil if string PROTO refers to a remote mailbox protocol."
+  (string-match-p "^\\(imap\\|pop\\)s?$" proto))
+
 (defun rmail-parse-url (file)
-  "Parse the supplied URL. Return (list MAILBOX-NAME REMOTE PASSWORD GOT-PASSWORD)
-WHERE MAILBOX-NAME is the name of the mailbox suitable as argument to the
-actual version of `movemail', REMOTE is non-nil if MAILBOX-NAME refers to
-a remote mailbox, PASSWORD is the password if it should be
-supplied as a separate argument to `movemail' or nil otherwise, GOT-PASSWORD
-is non-nil if the user has supplied the password interactively.
-"
+  "Parse a mailbox URL string FILE.
+Return (MAILBOX-NAME PROTO PASSWORD GOT-PASSWORD), where MAILBOX-NAME is
+the name of the mailbox suitable as argument to the actual version of
+`movemail', PROTO is the movemail protocol (use `rmail-remote-proto-p'
+to see if it refers to a remote mailbox), PASSWORD is the password if it
+should be supplied as a separate argument to `movemail' or nil otherwise,
+and GOT-PASSWORD is non-nil if the user has supplied the password
+interactively."
   (cond
    ((string-match "^\\([^:]+\\)://\\(\\([^:@]+\\)\\(:\\([^@]+\\)\\)?@\\)?.*" file)
       (let (got-password supplied-password
@@ -1901,24 +1909,26 @@ is non-nil if the user has supplied the password interactively.
 	    (host  (substring file (or (match-end 2)
 				       (+ 3 (match-end 1))))))
 
-	(if (not pass)
-	    (when rmail-remote-password-required
-	      (setq got-password (not (rmail-have-password)))
-	      (setq supplied-password (rmail-get-remote-password
-				       (string-equal proto "imap"))))
-	  ;; The password is embedded.  Strip it out since movemail
-	  ;; does not really like it, in spite of the movemail spec.
-	  (setq file (concat proto "://" user "@" host)))
+	(if (rmail-remote-proto-p proto)
+	    (if (not pass)
+		(when rmail-remote-password-required
+		  (setq got-password (not (rmail-have-password)))
+		  (setq supplied-password (rmail-get-remote-password
+					   (string-match "^imaps?" proto))))
+	      ;; FIXME
+	      ;; The password is embedded.  Strip it out since movemail
+	      ;; does not really like it, in spite of the movemail spec.
+	      (setq file (concat proto "://" user "@" host))))
 
 	(if (rmail-movemail-variant-p 'emacs)
 	    (if (string-equal proto "pop")
 		(list (concat "po:" user ":" host)
-		      t
+		      proto
 		      (or pass supplied-password)
 		      got-password)
 	      (error "Emacs movemail does not support %s protocol" proto))
 	  (list file
-		(or (string-equal proto "pop") (string-equal proto "imap"))
+		proto
 		(or supplied-password pass)
 		got-password))))
 
@@ -1981,18 +1991,18 @@ Value is the size of the newly read mail after conversion."
     size))
 
 (defun rmail-insert-inbox-text (files renamep)
-  (let (file tofile delete-files popmail got-password password)
+  (let (file tofile delete-files proto got-password password)
     (while files
       ;; Handle remote mailbox names specially; don't expand as filenames
       ;; in case the userid contains a directory separator.
       (setq file (car files))
       (let ((url-data (rmail-parse-url file)))
 	(setq file (nth 0 url-data))
-	(setq popmail (nth 1 url-data))
+	(setq proto (nth 1 url-data))
 	(setq password (nth 2 url-data))
 	(setq got-password (nth 3 url-data)))
 
-      (if popmail
+      (if proto
 	  (setq renamep t)
 	(setq file (file-truename
 		    (substitute-in-file-name (expand-file-name file)))))
@@ -2013,14 +2023,17 @@ Value is the size of the newly read mail after conversion."
 		     (expand-file-name buffer-file-name))))
       ;; Always use movemail to rename the file,
       ;; since there can be mailboxes in various directories.
-      (when (not popmail)
+      (when (not proto)
 	;; On some systems, /usr/spool/mail/foo is a directory
 	;; and the actual inbox is /usr/spool/mail/foo/foo.
 	(if (file-directory-p file)
 	    (setq file (expand-file-name (user-login-name)
 					 file))))
-      (cond (popmail
-	     (message "Getting mail from the remote server ..."))
+      (cond (proto
+	     (message "Getting mail from %s..."
+		      (if (rmail-remote-proto-p proto)
+			  "the remote server"
+			proto)))
 	    ((and (file-exists-p tofile)
 		  (/= 0 (nth 7 (file-attributes tofile))))
 	     (message "Getting mail from %s..." tofile))
@@ -2031,7 +2044,7 @@ Value is the size of the newly read mail after conversion."
       ;; rename or copy the file FILE to TOFILE if and as appropriate.
       (cond ((not renamep)
 	     (setq tofile file))
-	    ((or (file-exists-p tofile) (and (not popmail)
+	    ((or (file-exists-p tofile) (and (not proto)
 					     (not (file-exists-p file))))
 	     nil)
 	    (t
@@ -2066,9 +2079,10 @@ Value is the size of the newly read mail after conversion."
 		   ;; If we just read the password, most likely it is
 		   ;; wrong.  Otherwise, see if there is a specific
 		   ;; reason to think that the problem is a wrong passwd.
-		   (if (or got-password
-			   (re-search-forward rmail-remote-password-error
-					      nil t))
+		   (if (and (rmail-remote-proto-p proto)
+			    (or got-password
+				(re-search-forward rmail-remote-password-error
+						   nil t)))
 		       (rmail-set-remote-password nil))
 
 		   ;; If using Mailutils, remove initial error code

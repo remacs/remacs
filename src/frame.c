@@ -320,11 +320,51 @@ DEFUN ("frame-windows-min-size", Fframe_windows_min_size,
   return make_number (0);
 }
 
+/**
+ * frame_windows_min_size:
+ *
+ * Return the minimum number of lines (columns if HORIZONTAL is non-nil)
+ * of FRAME.  If PIXELWISE is non-nil, return the minimum height (width)
+ * in pixels.
+ *
+ * This value is calculated by the function `frame-windows-min-size' in
+ * window.el unless the `min-height' (`min-width' if HORIZONTAL is
+ * non-nil) parameter of FRAME is non-nil thus explicitly specifying the
+ * value to be returned.  In that latter case IGNORE is ignored.
+ *
+ * If `frame-windows-min-size' is called, it will make sure that the
+ * return value accommodates all windows of FRAME respecting the values
+ * of `window-min-height' (`window-min-width' if HORIZONTAL is non-nil).
+ * With IGNORE non-nil the values of these variables are ignored.
+ *
+ * In either case never return a value less than 1.
+ */
 static int
 frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal,
 			Lisp_Object ignore, Lisp_Object pixelwise)
 {
-  return XINT (call4 (Qframe_windows_min_size, frame, horizontal,
+  struct frame *f = XFRAME (frame);
+  Lisp_Object par_size;
+
+  if ((!NILP (horizontal)
+       && NUMBERP (par_size = get_frame_param (f, Qmin_width)))
+      || (NILP (horizontal)
+	  && NUMBERP (par_size = get_frame_param (f, Qmin_height))))
+    {
+      int min_size = XINT (par_size);
+
+      /* Don't allow phantom frames.  */
+      if (min_size < 1)
+	min_size = 1;
+
+      return (NILP (pixelwise)
+	      ? min_size
+	      : min_size * (NILP (horizontal)
+			    ? FRAME_LINE_HEIGHT (f)
+			    : FRAME_COLUMN_WIDTH (f)));
+    }
+  else
+    return XINT (call4 (Qframe_windows_min_size, frame, horizontal,
 		      ignore, pixelwise));
 }
 
@@ -625,6 +665,14 @@ make_frame (bool mini_p)
   f->vertical_scroll_bar_type = vertical_scroll_bar_none;
   f->horizontal_scroll_bars = false;
   f->want_fullscreen = FULLSCREEN_NONE;
+  f->undecorated = false;
+#ifndef HAVE_NTGUI
+  f->override_redirect = false;
+#endif
+  f->skip_taskbar = false;
+  f->no_focus_on_map = false;
+  f->no_accept_focus = false;
+  f->z_group = z_group_none;
 #if ! defined (USE_GTK) && ! defined (HAVE_NS)
   f->last_tool_bar_item = -1;
 #endif
@@ -1065,7 +1113,7 @@ affects all frames on the same terminal device.  */)
 Lisp_Object
 do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object norecord)
 {
-  struct frame *sf = SELECTED_FRAME ();
+  struct frame *sf = SELECTED_FRAME (), *f;
 
   /* If FRAME is a switch-frame event, extract the frame we should
      switch to.  */
@@ -1078,10 +1126,10 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
      a switch-frame event to arrive after a frame is no longer live,
      especially when deleting the initial frame during startup.  */
   CHECK_FRAME (frame);
-  if (! FRAME_LIVE_P (XFRAME (frame)))
+  f = XFRAME (frame);
+  if (!FRAME_LIVE_P (f))
     return Qnil;
-
-  if (sf == XFRAME (frame))
+  else if (f == sf)
     return frame;
 
   /* If a frame's focus has been redirected toward the currently
@@ -1114,11 +1162,11 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
 #else /* ! 0 */
   /* Instead, apply it only to the frame we're pointing to.  */
 #ifdef HAVE_WINDOW_SYSTEM
-  if (track && FRAME_WINDOW_P (XFRAME (frame)))
+  if (track && FRAME_WINDOW_P (f))
     {
       Lisp_Object focus, xfocus;
 
-      xfocus = x_get_focus_frame (XFRAME (frame));
+      xfocus = x_get_focus_frame (f);
       if (FRAMEP (xfocus))
 	{
 	  focus = FRAME_FOCUS_FRAME (XFRAME (xfocus));
@@ -1126,8 +1174,7 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
 	      /* Redirect frame focus also when FRAME has its minibuffer
 		 window on the selected frame (see Bug#24500).  */
 	      || (NILP (focus)
-		  && EQ (FRAME_MINIBUF_WINDOW (XFRAME (frame)),
-			 sf->selected_window)))
+		  && EQ (FRAME_MINIBUF_WINDOW (f), sf->selected_window)))
 	    Fredirect_frame_focus (xfocus, frame);
 	}
     }
@@ -1137,9 +1184,8 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
   if (!for_deletion && FRAME_HAS_MINIBUF_P (sf))
     resize_mini_window (XWINDOW (FRAME_MINIBUF_WINDOW (sf)), 1);
 
-  if (FRAME_TERMCAP_P (XFRAME (frame)))
+  if (FRAME_TERMCAP_P (f))
     {
-      struct frame *f = XFRAME (frame);
       struct tty_display_info *tty = FRAME_TTY (f);
       Lisp_Object top_frame = tty->top_frame;
 
@@ -1167,7 +1213,7 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
   if (! FRAME_MINIBUF_ONLY_P (XFRAME (selected_frame)))
     last_nonminibuf_frame = XFRAME (selected_frame);
 
-  Fselect_window (XFRAME (frame)->selected_window, norecord);
+  Fselect_window (f->selected_window, norecord);
 
   /* We want to make sure that the next event generates a frame-switch
      event to the appropriate frame.  This seems kludgy to me, but
@@ -1175,7 +1221,10 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
      (select-window (frame-root-window (new-frame))) doesn't end up
      with your typing being interpreted in the new frame instead of
      the one you're actually typing in.  */
-  internal_last_event_frame = Qnil;
+#ifdef HAVE_WINDOW_SYSTEM
+  if (!frame_ancestor_p (f, sf))
+#endif
+    internal_last_event_frame = Qnil;
 
   return frame;
 }
@@ -1211,12 +1260,15 @@ If EVENT is frame object, handle it as if it were a switch-frame event
 to that frame.  */)
   (Lisp_Object event)
 {
+  Lisp_Object value;
+
   /* Preserve prefix arg that the command loop just cleared.  */
   kset_prefix_arg (current_kboard, Vcurrent_prefix_arg);
   run_hook (Qmouse_leave_buffer_hook);
   /* `switch-frame' implies a focus in.  */
+  value = do_switch_frame (event, 0, 0, Qnil);
   call1 (intern ("handle-focus-in"), event);
-  return do_switch_frame (event, 0, 0, Qnil);
+  return value;
 }
 
 DEFUN ("selected-frame", Fselected_frame, Sselected_frame, 0, 0, 0,
@@ -1240,6 +1292,72 @@ DEFUN ("frame-list", Fframe_list, Sframe_list,
   return frames;
 }
 
+DEFUN ("frame-parent", Fframe_parent, Sframe_parent,
+       0, 1, 0,
+       doc: /* Return the parent frame of FRAME.
+The parent frame of FRAME is the Emacs frame whose window-system window
+is the parent window of FRAME's window-system window.  When such a frame
+exists, FRAME is considered a child frame of that frame.
+
+Return nil if FRAME has no parent frame.  This means that FRAME's
+window-system window is either a "top-level" window (a window whose
+parent window is the window-system's root window) or an embedded window
+\(a window whose parent window is owned by some other application).  */)
+     (Lisp_Object frame)
+{
+  struct frame *f = decode_live_frame (frame);
+  struct frame *p = FRAME_PARENT_FRAME (f);
+  Lisp_Object parent;
+
+  /* Can't return f->parent_frame directly since it might not be defined
+     for this platform.  */
+  if (p)
+    {
+      XSETFRAME (parent, p);
+
+      return parent;
+    }
+  else
+    return Qnil;
+}
+
+#ifdef HAVE_WINDOW_SYSTEM
+bool
+frame_ancestor_p (struct frame *af, struct frame *df)
+{
+  struct frame *pf = FRAME_PARENT_FRAME (df);
+
+  while (pf)
+    {
+      if (pf == af)
+	return true;
+      else
+	pf = FRAME_PARENT_FRAME (pf);
+    }
+
+  return false;
+}
+#endif
+
+DEFUN ("frame-ancestor-p", Fframe_ancestor_p, Sframe_ancestor_p,
+       2, 2, 0,
+       doc: /* Return non-nil if ANCESTOR is an ancestor of DESCENDANT.
+ANCESTOR is an ancestor of DESCENDANT when it is either DESCENDANT's
+parent frame or it is an ancestor of DESCENDANT's parent frame.  Both,
+ANCESTOR and DESCENDANT must be live frames and default to the selected
+frame.  */)
+     (Lisp_Object ancestor, Lisp_Object descendant)
+{
+#ifdef HAVE_WINDOW_SYSTEM
+  struct frame *af = decode_live_frame (ancestor);
+  struct frame *df = decode_live_frame (descendant);
+
+  return frame_ancestor_p (af, df) ? Qt : Qnil;
+#else
+  return Qnil;
+#endif
+  }
+
 /* Return CANDIDATE if it can be used as 'other-than-FRAME' frame on the
    same tty (for tty frames) or among frames which uses FRAME's keyboard.
    If MINIBUF is nil, do not consider minibuffer-only candidate.
@@ -1260,7 +1378,9 @@ candidate_frame (Lisp_Object candidate, Lisp_Object frame, Lisp_Object minibuf)
       || (FRAME_TERMCAP_P (c) && FRAME_TERMCAP_P (f)
 	  && FRAME_TTY (c) == FRAME_TTY (f)))
     {
-      if (NILP (minibuf))
+      if (!NILP (get_frame_param (c, Qno_other_frame)))
+	return Qnil;
+      else if (NILP (minibuf))
 	{
 	  if (!FRAME_MINIBUF_ONLY_P (c))
 	    return candidate;
@@ -1297,9 +1417,6 @@ next_frame (Lisp_Object frame, Lisp_Object minibuf)
   Lisp_Object f, tail;
   int passed = 0;
 
-  /* There must always be at least one frame in Vframe_list.  */
-  eassert (CONSP (Vframe_list));
-
   while (passed < 2)
     FOR_EACH_FRAME (tail, f)
       {
@@ -1321,9 +1438,6 @@ static Lisp_Object
 prev_frame (Lisp_Object frame, Lisp_Object minibuf)
 {
   Lisp_Object f, tail, prev = Qnil;
-
-  /* There must always be at least one frame in Vframe_list.  */
-  eassert (CONSP (Vframe_list));
 
   FOR_EACH_FRAME (tail, f)
     {
@@ -1398,35 +1512,63 @@ DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,
   return frame;
 }
 
-/* Return 1 if it is ok to delete frame F;
-   0 if all frames aside from F are invisible.
-   (Exception: if F is the terminal frame, and we are using X, return 1.)  */
-
-static int
-other_visible_frames (struct frame *f)
+/**
+ * other_frames:
+ *
+ * Return true if there exists at least one visible or iconified frame
+ * but F.  Return false otherwise.
+ *
+ * INVISIBLE true means we are called from make_frame_invisible where
+ * such a frame must be visible or iconified.  INVISIBLE nil means we
+ * are called from delete_frame.  In that case FORCE true means that the
+ * visibility status of such a frame can be ignored.
+ *
+ * If F is the terminal frame and we are using X, return true if at
+ * least one X frame exists.
+ */
+static bool
+other_frames (struct frame *f, bool invisible, bool force)
 {
-  Lisp_Object frames, this;
+  Lisp_Object frames, frame, frame1;
+  struct frame *f1;
+  Lisp_Object minibuffer_window = FRAME_MINIBUF_WINDOW (f);
 
-  FOR_EACH_FRAME (frames, this)
+  XSETFRAME (frame, f);
+  if (WINDOWP (minibuffer_window)
+      && !EQ (frame, WINDOW_FRAME (XWINDOW (minibuffer_window))))
+    minibuffer_window = Qnil;
+
+  FOR_EACH_FRAME (frames, frame1)
     {
-      if (f == XFRAME (this))
-	continue;
-
-      /* Verify that we can still talk to the frame's X window,
-	 and note any recent change in visibility.  */
+      f1 = XFRAME (frame1);
+      if (f != f1)
+	{
+	  /* Verify that we can still talk to the frame's X window, and
+	     note any recent change in visibility.  */
 #ifdef HAVE_X_WINDOWS
-      if (FRAME_WINDOW_P (XFRAME (this)))
-	x_sync (XFRAME (this));
+	  if (FRAME_WINDOW_P (f1))
+	    x_sync (f1);
 #endif
-
-      if (FRAME_VISIBLE_P (XFRAME (this))
-	  || FRAME_ICONIFIED_P (XFRAME (this))
-	  /* Allow deleting the terminal frame when at least one X
-	     frame exists.  */
-	  || (FRAME_WINDOW_P (XFRAME (this)) && !FRAME_WINDOW_P (f)))
-	return 1;
+	  if (NILP (Fframe_parameter (frame1, Qtooltip))
+	      /* Tooltips and child frames count neither for
+		 invisibility nor for deletions.  */
+	      && !FRAME_PARENT_FRAME (f1)
+	      /* Frames with a non-nil `delete-before' parameter don't
+		 count for deletions.  */
+	      && (invisible || NILP (get_frame_param (f1, Qdelete_before)))
+	      /* For invisibility and normal deletions, at least one
+		 visible or iconified frame must remain (Bug#26682).  */
+	      && (FRAME_VISIBLE_P (f1) || FRAME_ICONIFIED_P (f1)
+		  || (!invisible
+		      && (force
+			  /* Allow deleting the terminal frame when at
+			     least one X frame exists.  */
+			  || (FRAME_WINDOW_P (f1) && !FRAME_WINDOW_P (f))))))
+	    return true;
+	}
     }
-  return 0;
+
+  return false;
 }
 
 /* Make sure that minibuf_window doesn't refer to FRAME's minibuffer
@@ -1475,53 +1617,65 @@ check_minibuf_window (Lisp_Object frame, int select)
 }
 
 
-/* Delete FRAME.  When FORCE equals Qnoelisp, delete FRAME
-  unconditionally.  x_connection_closed and delete_terminal use
-  this.  Any other value of FORCE implements the semantics
-  described for Fdelete_frame.  */
+/**
+ * delete_frame:
+ *
+ * Delete FRAME.  When FORCE equals Qnoelisp, delete FRAME
+ * unconditionally.  x_connection_closed and delete_terminal use this.
+ * Any other value of FORCE implements the semantics described for
+ * Fdelete_frame.  */
 Lisp_Object
 delete_frame (Lisp_Object frame, Lisp_Object force)
 {
   struct frame *f = decode_any_frame (frame);
   struct frame *sf;
   struct kboard *kb;
-
+  Lisp_Object frames, frame1;
   int minibuffer_selected, is_tooltip_frame;
+  bool nochild = !FRAME_PARENT_FRAME (f);
 
-  if (! FRAME_LIVE_P (f))
+  if (!FRAME_LIVE_P (f))
     return Qnil;
-
-  if (NILP (force) && !other_visible_frames (f))
-    error ("Attempt to delete the sole visible or iconified frame");
-
-  /* x_connection_closed must have set FORCE to `noelisp' in order
-     to delete the last frame, if it is gone.  */
-  if (NILP (XCDR (Vframe_list)) && !EQ (force, Qnoelisp))
-    error ("Attempt to delete the only frame");
+  else if (!EQ (force, Qnoelisp) && !other_frames (f, false, !NILP (force)))
+    {
+      if (NILP (force))
+	error ("Attempt to delete the sole visible or iconified frame");
+      else
+	error ("Attempt to delete the only frame");
+    }
 
   XSETFRAME (frame, f);
+
+  /* Softly delete all frames with this frame as their parent frame or
+     as their `delete-before' frame parameter value.  */
+  FOR_EACH_FRAME (frames, frame1)
+    if (FRAME_PARENT_FRAME (XFRAME (frame1)) == f
+	/* Process `delete-before' parameter iff FRAME is not a child
+	   frame.  This avoids that we enter an infinite chain of mixed
+	   dependencies.  */
+	|| (nochild
+	    && EQ (get_frame_param (XFRAME (frame1), Qdelete_before), frame)))
+      delete_frame (frame1, Qnil);
 
   /* Does this frame have a minibuffer, and is it the surrogate
      minibuffer for any other frame?  */
   if (FRAME_HAS_MINIBUF_P (f))
     {
-      Lisp_Object frames, this;
-
-      FOR_EACH_FRAME (frames, this)
+      FOR_EACH_FRAME (frames, frame1)
 	{
 	  Lisp_Object fminiw;
 
-	  if (EQ (this, frame))
+	  if (EQ (frame1, frame))
 	    continue;
 
-	  fminiw = FRAME_MINIBUF_WINDOW (XFRAME (this));
+	  fminiw = FRAME_MINIBUF_WINDOW (XFRAME (frame1));
 
 	  if (WINDOWP (fminiw) && EQ (frame, WINDOW_FRAME (XWINDOW (fminiw))))
 	    {
 	      /* If we MUST delete this frame, delete the other first.
 		 But do this only if FORCE equals `noelisp'.  */
 	      if (EQ (force, Qnoelisp))
-		delete_frame (this, Qnoelisp);
+		delete_frame (frame1, Qnoelisp);
 	      else
 		error ("Attempt to delete a surrogate minibuffer frame");
 	    }
@@ -1550,20 +1704,26 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
       safe_call2 (Qrun_hook_with_args, Qdelete_frame_functions, frame);
     }
 
-  /* The hook may sometimes (indirectly) cause the frame to be deleted.  */
-  if (! FRAME_LIVE_P (f))
+  /* delete_frame_functions may have deleted any frame, including this
+     one.  */
+  if (!FRAME_LIVE_P (f))
     return Qnil;
+  else if (!EQ (force, Qnoelisp) && !other_frames (f, false, !NILP (force)))
+    {
+      if (NILP (force))
+	error ("Attempt to delete the sole visible or iconified frame");
+      else
+	error ("Attempt to delete the only frame");
+    }
 
   /* At this point, we are committed to deleting the frame.
      There is no more chance for errors to prevent it.  */
-
   minibuffer_selected = EQ (minibuf_window, selected_window);
   sf = SELECTED_FRAME ();
   /* Don't let the frame remain selected.  */
   if (f == sf)
     {
       Lisp_Object tail;
-      Lisp_Object frame1 = Qnil;
 
       /* Look for another visible frame on the same terminal.
 	 Do not call next_frame here because it may loop forever.
@@ -1667,8 +1827,6 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
      promise that the terminal of the frame must be valid until we
      have called the window-system-dependent frame destruction
      routine.  */
-
-
   {
     struct terminal *terminal;
     block_input ();
@@ -1705,16 +1863,15 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
      another one.  */
   if (f == last_nonminibuf_frame)
     {
-      Lisp_Object frames, this;
-
       last_nonminibuf_frame = 0;
 
-      FOR_EACH_FRAME (frames, this)
+      FOR_EACH_FRAME (frames, frame1)
 	{
-	  f = XFRAME (this);
-	  if (!FRAME_MINIBUF_ONLY_P (f))
+	  struct frame *f1 = XFRAME (frame1);
+
+	  if (!FRAME_MINIBUF_ONLY_P (f1))
 	    {
-	      last_nonminibuf_frame = f;
+	      last_nonminibuf_frame = f1;
 	      break;
 	    }
 	}
@@ -1724,13 +1881,12 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
      single-kboard state if we're in it for this kboard.  */
   if (kb != NULL)
     {
-      Lisp_Object frames, this;
       /* Some frame we found on the same kboard, or nil if there are none.  */
       Lisp_Object frame_on_same_kboard = Qnil;
 
-      FOR_EACH_FRAME (frames, this)
-	if (kb == FRAME_KBOARD (XFRAME (this)))
-	  frame_on_same_kboard = this;
+      FOR_EACH_FRAME (frames, frame1)
+	if (kb == FRAME_KBOARD (XFRAME (frame1)))
+	  frame_on_same_kboard = frame1;
 
       if (NILP (frame_on_same_kboard))
 	not_single_kboard_state (kb);
@@ -1742,29 +1898,27 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
      frames with other windows.  */
   if (kb != NULL && EQ (frame, KVAR (kb, Vdefault_minibuffer_frame)))
     {
-      Lisp_Object frames, this;
-
       /* The last frame we saw with a minibuffer, minibuffer-only or not.  */
       Lisp_Object frame_with_minibuf = Qnil;
       /* Some frame we found on the same kboard, or nil if there are none.  */
       Lisp_Object frame_on_same_kboard = Qnil;
 
-      FOR_EACH_FRAME (frames, this)
+      FOR_EACH_FRAME (frames, frame1)
 	{
-	  struct frame *f1 = XFRAME (this);
+	  struct frame *f1 = XFRAME (frame1);
 
 	  /* Consider only frames on the same kboard
 	     and only those with minibuffers.  */
 	  if (kb == FRAME_KBOARD (f1)
 	      && FRAME_HAS_MINIBUF_P (f1))
 	    {
-	      frame_with_minibuf = this;
+	      frame_with_minibuf = frame1;
 	      if (FRAME_MINIBUF_ONLY_P (f1))
 		break;
 	    }
 
 	  if (kb == FRAME_KBOARD (f1))
-	    frame_on_same_kboard = this;
+	    frame_on_same_kboard = frame1;
 	}
 
       if (!NILP (frame_on_same_kboard))
@@ -2061,7 +2215,7 @@ displayed in the terminal.  */)
 {
   struct frame *f = decode_live_frame (frame);
 
-  if (NILP (force) && !other_visible_frames (f))
+  if (NILP (force) && !other_frames (f, true, false))
     error ("Attempt to make invisible the sole visible or iconified frame");
 
   /* Don't allow minibuf_window to remain on an invisible frame.  */
@@ -2234,14 +2388,16 @@ See `redirect-frame-focus'.  */)
   return FRAME_FOCUS_FRAME (decode_live_frame (frame));
 }
 
-DEFUN ("x-focus-frame", Fx_focus_frame, Sx_focus_frame, 1, 1, 0,
+DEFUN ("x-focus-frame", Fx_focus_frame, Sx_focus_frame, 1, 2, 0,
        doc: /* Set the input focus to FRAME.
-FRAME nil means use the selected frame.
+FRAME nil means use the selected frame.  Optional argument NOACTIVATE
+means do not activate FRAME.
+
 If there is no window system support, this function does nothing.  */)
-  (Lisp_Object frame)
+     (Lisp_Object frame, Lisp_Object noactivate)
 {
 #ifdef HAVE_WINDOW_SYSTEM
-  x_focus_frame (decode_window_system_frame (frame));
+  x_focus_frame (decode_window_system_frame (frame), !NILP (noactivate));
 #endif
   return Qnil;
 }
@@ -2396,9 +2552,39 @@ store_frame_param (struct frame *f, Lisp_Object prop, Lisp_Object val)
 	}
     }
 
+  /* Check each parent-frame and delete-before parameter for a
+     circular dependency.  Do not check between parameters, so you can
+     still create circular dependencies with different properties, for
+     example a chain of frames F1->F2->...Fn such that F1 is an ancestor
+     frame of Fn and thus cannot be deleted before Fn and a second chain
+     Fn->Fn-1->...F1 such that Fn cannot be deleted before F1.  */
+  else if (EQ (prop, Qparent_frame) || EQ (prop, Qdelete_before))
+    {
+      Lisp_Object oldval = Fcdr (Fassq (prop, f->param_alist));
+
+      if (!EQ (oldval, val) && !NILP (val))
+	{
+	  Lisp_Object frame;
+	  Lisp_Object frame1 = val;
+
+	  if (!FRAMEP (frame1) || !FRAME_LIVE_P (XFRAME (frame1)))
+	    error ("Invalid `%s' frame parameter",
+		   SSDATA (SYMBOL_NAME (prop)));
+
+	  XSETFRAME (frame, f);
+
+	  while (FRAMEP (frame1) && FRAME_LIVE_P (XFRAME (frame1)))
+	    if (EQ (frame1, frame))
+	      error ("Circular specification of `%s' frame parameter",
+		     SSDATA (SYMBOL_NAME (prop)));
+	    else
+	      frame1 = get_frame_param (XFRAME (frame1), prop);
+	}
+    }
+
   /* The buffer-list parameters are stored in a special place and not
      in the alist.  All buffers must be live.  */
-  if (EQ (prop, Qbuffer_list))
+  else if (EQ (prop, Qbuffer_list))
     {
       Lisp_Object list = Qnil;
       for (; CONSP (val); val = XCDR (val))
@@ -2407,7 +2593,7 @@ store_frame_param (struct frame *f, Lisp_Object prop, Lisp_Object val)
       fset_buffer_list (f, Fnreverse (list));
       return;
     }
-  if (EQ (prop, Qburied_buffer_list))
+  else if (EQ (prop, Qburied_buffer_list))
     {
       Lisp_Object list = Qnil;
       for (; CONSP (val); val = XCDR (val))
@@ -3031,6 +3217,13 @@ static const struct frame_parm_table frame_parms[] =
   {"sticky",			SYMBOL_INDEX (Qsticky)},
   {"tool-bar-position",		SYMBOL_INDEX (Qtool_bar_position)},
   {"inhibit-double-buffering",  SYMBOL_INDEX (Qinhibit_double_buffering)},
+  {"undecorated",		SYMBOL_INDEX (Qundecorated)},
+  {"parent-frame",		SYMBOL_INDEX (Qparent_frame)},
+  {"skip-taskbar",		SYMBOL_INDEX (Qskip_taskbar)},
+  {"no-focus-on-map",		SYMBOL_INDEX (Qno_focus_on_map)},
+  {"no-accept-focus",		SYMBOL_INDEX (Qno_accept_focus)},
+  {"z-group",			SYMBOL_INDEX (Qz_group)},
+  {"override-redirect",		SYMBOL_INDEX (Qoverride_redirect)},
 };
 
 #ifdef HAVE_WINDOW_SYSTEM
@@ -3925,7 +4118,7 @@ x_set_alpha (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
       else if (INTEGERP (item))
 	{
 	  EMACS_INT ialpha = XINT (item);
-	  if (! (0 <= ialpha && alpha <= 100))
+	  if (! (0 <= ialpha && ialpha <= 100))
 	    args_out_of_range (make_number (0), make_number (100));
 	  alpha = ialpha / 100.0;
 	}
@@ -4818,6 +5011,14 @@ syms_of_frame (void)
   DEFSYM (Qheight, "height");
   DEFSYM (Qicon, "icon");
   DEFSYM (Qminibuffer, "minibuffer");
+  DEFSYM (Qundecorated, "undecorated");
+  DEFSYM (Qparent_frame, "parent-frame");
+  DEFSYM (Qskip_taskbar, "skip-taskbar");
+  DEFSYM (Qno_focus_on_map, "no-focus-on-map");
+  DEFSYM (Qno_accept_focus, "no-accept-focus");
+  DEFSYM (Qz_group, "z-group");
+  DEFSYM (Qoverride_redirect, "override-redirect");
+  DEFSYM (Qdelete_before, "delete-before");
   DEFSYM (Qmodeline, "modeline");
   DEFSYM (Qonly, "only");
   DEFSYM (Qnone, "none");
@@ -4857,8 +5058,6 @@ syms_of_frame (void)
   DEFSYM (Qmaximized, "maximized");
   DEFSYM (Qx_resource_name, "x-resource-name");
   DEFSYM (Qx_frame_parameter, "x-frame-parameter");
-
-  DEFSYM (Qterminal, "terminal");
 
   DEFSYM (Qworkarea, "workarea");
   DEFSYM (Qmm_size, "mm-size");
@@ -4916,6 +5115,7 @@ syms_of_frame (void)
   DEFSYM (Qauto_raise, "auto-raise");
   DEFSYM (Qborder_color, "border-color");
   DEFSYM (Qborder_width, "border-width");
+  DEFSYM (Qouter_border_width, "outer-border-width");
   DEFSYM (Qbottom_divider_width, "bottom-divider-width");
   DEFSYM (Qcursor_color, "cursor-color");
   DEFSYM (Qcursor_type, "cursor-type");
@@ -4949,6 +5149,12 @@ syms_of_frame (void)
   DEFSYM (Qvisibility, "visibility");
   DEFSYM (Qwait_for_wm, "wait-for-wm");
   DEFSYM (Qinhibit_double_buffering, "inhibit-double-buffering");
+  DEFSYM (Qno_other_frame, "no-other-frame");
+  DEFSYM (Qbelow, "below");
+  DEFSYM (Qabove_suspended, "above-suspended");
+  DEFSYM (Qmin_width, "min-width");
+  DEFSYM (Qmin_height, "min-height");
+  DEFSYM (Qmouse_wheel_frame, "mouse-wheel-frame");
 
   {
     int i;
@@ -5058,12 +5264,18 @@ The pointer becomes visible again when the mouse is moved.  */);
   Vmake_pointer_invisible = Qt;
 
   DEFVAR_LISP ("focus-in-hook", Vfocus_in_hook,
-               doc: /* Normal hook run when a frame gains input focus.  */);
+               doc: /* Normal hook run when a frame gains input focus.
+The frame gaining focus is selected at the time this hook is run.  */);
   Vfocus_in_hook = Qnil;
 
   DEFVAR_LISP ("focus-out-hook", Vfocus_out_hook,
-               doc: /* Normal hook run when a frame loses input focus.  */);
+               doc: /* Normal hook run when all frames lost input focus.  */);
   Vfocus_out_hook = Qnil;
+
+  DEFVAR_LISP ("move-frame-functions", Vmove_frame_functions,
+               doc: /* Functions run after a frame was moved.
+The functions are run with one arg, the frame that moved.  */);
+  Vmove_frame_functions = Qnil;
 
   DEFVAR_LISP ("delete-frame-functions", Vdelete_frame_functions,
 	       doc: /* Functions run before deleting a frame.
@@ -5111,12 +5323,51 @@ displayed.
 
 This variable is local to the current terminal and cannot be buffer-local.  */);
 
-  DEFVAR_BOOL ("focus-follows-mouse", focus_follows_mouse,
+  DEFVAR_LISP ("focus-follows-mouse", focus_follows_mouse,
 	       doc: /* Non-nil if window system changes focus when you move the mouse.
 You should set this variable to tell Emacs how your window manager
 handles focus, since there is no way in general for Emacs to find out
-automatically.  See also `mouse-autoselect-window'.  */);
-  focus_follows_mouse = 0;
+automatically.
+
+There are three meaningful values:
+
+- The default nil should be used when your window manager follows a
+  "click-to-focus" policy where you have to click the mouse inside of a
+  frame in order for that frame to get focus.
+
+- The value t should be used when your window manager has the focus
+  automatically follow the position of the mouse pointer but a window
+  that gains focus is not raised automatically.
+
+- The value `auto-raise' should be used when your window manager has the
+  focus automatically follow the position of the mouse pointer and a
+  window that gains focus is raised automatically.
+
+If this option is non-nil, Emacs moves the mouse pointer to the frame
+selected by `select-frame-set-input-focus'.  This function is used by a
+number of commands like, for example, `other-frame' and `pop-to-buffer'.
+If this option is nil and your focus follows mouse window manager does
+not autonomously move the mouse pointer to the newly selected frame, the
+previously selected window manager window might get reselected instead
+immediately.
+
+The distinction between the values t and `auto-raise' is not needed for
+"normal" frames because the window manager takes care of raising them.
+Setting this to `auto-raise' will, however, override the standard
+behavior of a window manager that does not automatically raise the frame
+that gets focus.  Setting this to `auto-raise' is also necessary to
+automatically raise child frames which are usually left alone by the
+window manager.
+
+Note that this option does not distinguish "sloppy" focus (where the
+frame that previously had focus retains focus as long as the mouse
+pointer does not move into another window manager window) from "strict"
+focus (where a frame immediately loses focus when it's left by the mouse
+pointer).
+
+In order to extend a "focus follows mouse" policy to individual Emacs
+windows, customize the variable `mouse-autoselect-window'.  */);
+  focus_follows_mouse = Qnil;
 
   DEFVAR_BOOL ("frame-resize-pixelwise", frame_resize_pixelwise,
 	       doc: /* Non-nil means resize frames pixelwise.
@@ -5218,6 +5469,8 @@ Gtk+ tooltips are not used) and on Windows.  */);
   defsubr (&Sselect_frame);
   defsubr (&Sselected_frame);
   defsubr (&Sframe_list);
+  defsubr (&Sframe_parent);
+  defsubr (&Sframe_ancestor_p);
   defsubr (&Snext_frame);
   defsubr (&Sprevious_frame);
   defsubr (&Slast_nonminibuf_frame);

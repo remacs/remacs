@@ -235,14 +235,27 @@ displays the buffer specified by BUFFER-OR-NAME before running BODY."
 			 (vquit-function quit-function))
       `(let* ((,buffer (temp-buffer-window-setup ,vbuffer-or-name))
 	      (standard-output ,buffer)
+              ;; If a 'window-height' entry specifies a function,
+              ;; remember it here in order to call it below but replace
+              ;; the entry so `window--try-to-split-window' will bind
+              ;; `window-combination-limit' to t and the function does
+              ;; not resize any other window but the one we split this
+              ;; one off (Bug#25055, Bug#25179).
+              (vheight-function
+               (let ((window-height (assq 'window-height (cdr ,vaction))))
+                 (when (functionp (cdr window-height))
+                   (cdr window-height))))
+              (vaction-copied
+               (when vheight-function
+                 (cons (car , vaction)
+                       (cons
+                        '(window-height . t)
+                        (assq-delete-all
+                         'window-height (cdr (copy-sequence ,vaction)))))))
 	      ,window ,value)
 	 (with-current-buffer ,buffer
 	   (setq ,window (temp-buffer-window-show
-			  ,buffer
-			  ;; Remove window-height when it's handled below.
-			  (if (functionp (cdr (assq 'window-height (cdr ,vaction))))
-			      (assq-delete-all 'window-height (copy-sequence ,vaction))
-			    ,vaction))))
+                          ,buffer (or vaction-copied ,vaction))))
 
 	 (let ((inhibit-read-only t)
 	       (inhibit-modification-hooks t))
@@ -250,9 +263,10 @@ displays the buffer specified by BUFFER-OR-NAME before running BODY."
 
 	 (set-window-point ,window (point-min))
 
-	 (when (functionp (cdr (assq 'window-height (cdr ,vaction))))
+	 (when vheight-function
 	   (ignore-errors
-	     (funcall (cdr (assq 'window-height (cdr ,vaction))) ,window)))
+	     (set-window-parameter ,window 'preserve-size nil)
+             (funcall vheight-function ,window)))
 
 	 (when (consp (cdr (assq 'preserve-size (cdr ,vaction))))
 	   (window-preserve-size
@@ -1533,7 +1547,7 @@ return the minimum pixel-size of WINDOW."
    (window-normalize-window window) horizontal ignore pixelwise))
 
 (defun window--min-size-ignore-p (window ignore)
-  "Return non-nil if IGNORE says to ignore height restrictions for WINDOW."
+  "Return non-nil if IGNORE says to ignore size restrictions for WINDOW."
   (if (window-valid-p ignore)
       (eq window ignore)
     (not (memq ignore '(nil preserved)))))
@@ -6643,11 +6657,11 @@ live."
     (display-buffer-record-window type window buffer)
     (unless (eq buffer (window-buffer window))
       (set-window-dedicated-p window nil)
-      (set-window-buffer window buffer)
-      (when dedicated
-	(set-window-dedicated-p window dedicated))
-      (when (memq type '(window frame))
-	(set-window-prev-buffers window nil)))
+      (set-window-buffer window buffer))
+    (when dedicated
+      (set-window-dedicated-p window dedicated))
+    (when (memq type '(window frame))
+      (set-window-prev-buffers window nil))
     (let ((quit-restore (window-parameter window 'quit-restore))
 	  (height (cdr (assq 'window-height alist)))
 	  (width (cdr (assq 'window-width alist)))
@@ -8152,12 +8166,12 @@ accessible position."
 		  (min
 		   (+ total-height
 		      (window-max-delta
-		       window nil window nil nil nil pixelwise))
+		       window nil window nil t nil pixelwise))
 		   (if pixelwise
 		       (* char-height max-height)
 		     max-height))
 		(+ total-height (window-max-delta
-				 window nil window nil nil nil pixelwise))))
+				 window nil window nil t nil pixelwise))))
 	     height)
 	(cond
 	 ;; If WINDOW is vertically combined, try to resize it
@@ -8209,12 +8223,12 @@ accessible position."
 		  (if (numberp max-width)
 		      (min (+ total-width
 			      (window-max-delta
-			       window t window nil nil nil pixelwise))
+			       window t window nil t nil pixelwise))
 			   (if pixelwise
 			       (* char-width max-width)
 			     max-width))
 		    (+ total-width (window-max-delta
-				    window t window nil nil nil pixelwise))))
+				    window t window nil t nil pixelwise))))
 		 ;; When fitting horizontally, assume that WINDOW's
 		 ;; start position remains unaltered.  WINDOW can't get
 		 ;; wider than its frame's pixel width, its height
@@ -8735,13 +8749,14 @@ means suspend autoselection."
 If the mouse position has stabilized in a non-selected window, select
 that window.  The minibuffer window is selected only if the minibuffer
 is active.  This function is run by `mouse-autoselect-window-timer'."
-  (ignore-errors
-   (let* ((mouse-position (mouse-position))
-	  (window
-	   (ignore-errors
-	    (window-at (cadr mouse-position) (cddr mouse-position)
-		       (car mouse-position)))))
-     (cond
+  (let* ((mouse-position (mouse-position))
+         (mouse-x (and (numberp (cadr mouse-position))
+                       (cadr mouse-position)))
+         (mouse-y (and (numberp (cddr mouse-position))
+                       (cddr mouse-position)))
+         (frame (and mouse-x mouse-y (car mouse-position)))
+         (window (and frame (window-at mouse-x mouse-y frame))))
+    (cond
       ((or (and (fboundp 'menu-or-popup-active-p) (menu-or-popup-active-p))
 	   (and window
 		(let ((coords (coordinates-in-window-p
@@ -8752,72 +8767,63 @@ is active.  This function is run by `mouse-autoselect-window-timer'."
        ;; text region of WINDOW: Suspend autoselection temporarily.
        (mouse-autoselect-window-start mouse-position nil t))
       ((or (eq mouse-autoselect-window-state 'suspend)
-	   ;; When the mouse is at its first recorded position, restart
-	   ;; delayed autoselection.  This works around a scenario with
-	   ;; two two-window frames with identical dimensions: select the
-	   ;; first window of the first frame, switch to the second
-	   ;; frame, move the mouse to its second window, minimize the
-	   ;; second frame.  Now the second window of the first frame
-	   ;; gets selected although the mouse never really "moved" into
-	   ;; that window.
-	   (and (numberp mouse-autoselect-window)
-		(equal (mouse-position) mouse-autoselect-window-position-1)))
-       ;; Delayed autoselection was temporarily suspended, reenable it.
-       (mouse-autoselect-window-start mouse-position))
-      ((and window (not (eq window (selected-window)))
-	    (or (not (numberp mouse-autoselect-window))
-		(and (>= mouse-autoselect-window 0)
-		     ;; If `mouse-autoselect-window' is non-negative,
-		     ;; select window if it's the same as before.
-		     (eq window mouse-autoselect-window-window))
-		;; Otherwise select window iff the mouse is at the same
-		;; position as before.  Observe that the first test
-		;; after starting autoselection usually fails since the
-		;; value of `mouse-autoselect-window-position' recorded
-		;; there is the position where the mouse has entered the
-		;; new window and not necessarily where the mouse has
-		;; stopped moving.
-		(equal mouse-position mouse-autoselect-window-position))
-	    ;; The minibuffer is a candidate window if it's active.
-	    (or (not (window-minibuffer-p window))
-		(eq window (active-minibuffer-window))))
-       ;; Mouse position has stabilized in non-selected window: Cancel
-       ;; delayed autoselection and try to select that window.
-       (mouse-autoselect-window-cancel t)
-       ;; Select window where mouse appears unless the selected window is the
-       ;; minibuffer.  Use `unread-command-events' in order to execute pre-
-       ;; and post-command hooks and trigger idle timers.  To avoid delaying
-       ;; autoselection again, set `mouse-autoselect-window-state'."
-       (unless (window-minibuffer-p)
-	 (setq mouse-autoselect-window-state 'select)
-	 (setq unread-command-events
-	       (cons (list 'select-window (list window))
-		     unread-command-events))))
-      ((or (and window (eq window (selected-window)))
-	   (not (numberp mouse-autoselect-window))
-	   (equal mouse-position mouse-autoselect-window-position))
-       ;; Mouse position has either stabilized in the selected window or at
-       ;; `mouse-autoselect-window-position': Cancel delayed autoselection.
-       (mouse-autoselect-window-cancel t))
-      (t
-       ;; Mouse position has not stabilized yet, resume delayed
-       ;; autoselection.
-       (mouse-autoselect-window-start mouse-position window))))))
+          ;; When the mouse is at its first recorded position, restart
+          ;; delayed autoselection.  This works around a scenario with
+          ;; two two-window frames with identical dimensions: select the
+          ;; first window of the first frame, switch to the second
+          ;; frame, move the mouse to its second window, minimize the
+          ;; second frame.  Now the second window of the first frame
+          ;; gets selected although the mouse never really "moved" into
+          ;; that window.
+          (and (numberp mouse-autoselect-window)
+               (equal (mouse-position) mouse-autoselect-window-position-1)))
+      ;; Delayed autoselection was temporarily suspended, reenable it.
+      (mouse-autoselect-window-start mouse-position))
+     ((and window
+           (or (not (numberp mouse-autoselect-window))
+               (and (>= mouse-autoselect-window 0)
+                    ;; If `mouse-autoselect-window' is non-negative,
+                    ;; select window if it's the same as before.
+                    (eq window mouse-autoselect-window-window))
+               ;; Otherwise select window iff the mouse is at the same
+               ;; position as before.  Observe that the first test
+               ;; after starting autoselection usually fails since the
+               ;; value of `mouse-autoselect-window-position' recorded
+               ;; there is the position where the mouse has entered the
+               ;; new window and not necessarily where the mouse has
+               ;; stopped moving.
+               (equal mouse-position mouse-autoselect-window-position))
+           ;; The minibuffer is a candidate window if it's active.
+           (or (not (window-minibuffer-p window))
+               (eq window (active-minibuffer-window))))
+      ;; Mouse position has stabilized in non-selected window: Cancel
+      ;; delayed autoselection and try to select that window.
+      (mouse-autoselect-window-cancel t)
+      ;; Use `unread-command-events' in order to execute pre- and
+      ;; post-command hooks and trigger idle timers.  To avoid delaying
+      ;; autoselection again, set `mouse-autoselect-window-state'."
+      (setq mouse-autoselect-window-state 'select)
+      (setq unread-command-events
+            (cons (list 'select-window (list window))
+                  unread-command-events)))
+     ((or (not (numberp mouse-autoselect-window))
+          (equal mouse-position mouse-autoselect-window-position))
+      ;; Mouse position has stabilized at
+      ;; `mouse-autoselect-window-position': Cancel delayed
+      ;; autoselection.
+     (mouse-autoselect-window-cancel t))
+    (window
+     ;; Mouse position has not stabilized yet, resume delayed
+     ;; autoselection.
+     (mouse-autoselect-window-start mouse-position window)))))
 
 (defun handle-select-window (event)
   "Handle select-window events."
   (interactive "^e")
-  (let ((window (posn-window (event-start event))))
+  (let* ((window (posn-window (event-start event)))
+         (frame (and (window-live-p window) (window-frame window)))
+         (old-frame (selected-frame)))
     (unless (or (not (window-live-p window))
-		;; Don't switch if we're currently in the minibuffer.
-		;; This tries to work around problems where the
-		;; minibuffer gets unselected unexpectedly, and where
-		;; you then have to move your mouse all the way down to
-		;; the minibuffer to select it.
-		(window-minibuffer-p)
-		;; Don't switch to minibuffer window unless it's active.
-		(and (window-minibuffer-p window)
-		     (not (minibuffer-window-active-p window)))
 		;; Don't switch when autoselection shall be delayed.
 		(and (numberp mouse-autoselect-window)
 		     (not (eq mouse-autoselect-window-state 'select))
@@ -8830,15 +8836,40 @@ is active.  This function is run by `mouse-autoselect-window-timer'."
 		       (mouse-autoselect-window-start position window)
 		       ;; Executing a command cancels delayed autoselection.
 		       (add-hook
-			'pre-command-hook 'mouse-autoselect-window-cancel))))
-      (when mouse-autoselect-window
-	;; Reset state of delayed autoselection.
-	(setq mouse-autoselect-window-state nil)
-	;; Run `mouse-leave-buffer-hook' when autoselecting window.
-	(run-hooks 'mouse-leave-buffer-hook))
+			'pre-command-hook 'mouse-autoselect-window-cancel)))
+                ;; Don't switch to a `no-accept-focus' frame unless it's
+                ;; already selected.
+                (and (not (eq frame (selected-frame)))
+                     (frame-parameter frame 'no-accept-focus))
+                ;; Don't switch to minibuffer window unless it's active.
+                (and (window-minibuffer-p window)
+                     (not (minibuffer-window-active-p window))))
+      ;; Reset state of delayed autoselection.
+      (setq mouse-autoselect-window-state nil)
+      ;; Run `mouse-leave-buffer-hook' when autoselecting window.
+      (run-hooks 'mouse-leave-buffer-hook)
       ;; Clear echo area.
       (message nil)
-      (select-window window))))
+      ;; Select the window before giving the frame focus since otherwise
+      ;; we might get two windows with an active cursor.
+      (select-window window)
+      (cond
+       ((or (not (memq (window-system frame) '(x w32 ns)))
+            (not focus-follows-mouse)
+            ;; Focus FRAME if it's either a child frame or an ancestor
+            ;; of the frame switched from.
+            (and (not (frame-parameter frame 'parent-frame))
+                 (not (frame-ancestor-p frame old-frame)))))
+       ((eq focus-follows-mouse 'auto-raise)
+        ;; Focus and auto-raise frame.
+        (x-focus-frame frame)
+        ;; This doesn't seem to work when we move from a normal frame
+        ;; right into the child frame of another frame - we should raise
+        ;; that child frame's ancestor frame first ...
+        (raise-frame frame))
+       (t
+        ;; Just focus frame.
+        (x-focus-frame frame t))))))
 
 (defun truncated-partial-width-window-p (&optional window)
   "Return non-nil if lines in WINDOW are specifically truncated due to its width.

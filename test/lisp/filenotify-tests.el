@@ -150,6 +150,9 @@ Return nil when any other file notification watch is still active."
       (tramp-cleanup-connection
        (tramp-dissect-file-name temporary-file-directory) nil 'keep-password)))
 
+  (when (hash-table-p file-notify-descriptors)
+    (clrhash file-notify-descriptors))
+
   (setq file-notify--test-tmpfile nil
         file-notify--test-tmpfile1 nil
         file-notify--test-desc nil
@@ -291,13 +294,20 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
                (file-notify-add-watch
                 temporary-file-directory '(change attribute-change) #'ignore)))
         (file-notify-rm-watch file-notify--test-desc)
-        (write-region "any text" nil file-notify--test-tmpfile nil 'no-message)
+
+        ;; File monitors like kqueue insist, that the watched file
+        ;; exists.  Directory monitors are not bound to this
+        ;; restriction.
+        (when (string-equal (file-notify--test-library) "kqueue")
+          (write-region
+           "any text" nil file-notify--test-tmpfile nil 'no-message))
         (should
          (setq file-notify--test-desc
                (file-notify-add-watch
                 file-notify--test-tmpfile '(change attribute-change) #'ignore)))
         (file-notify-rm-watch file-notify--test-desc)
-        (delete-file file-notify--test-tmpfile)
+        (when (string-equal (file-notify--test-library) "kqueue")
+          (delete-file file-notify--test-tmpfile))
 
         ;; Check error handling.
         (should-error (file-notify-add-watch 1 2 3 4)
@@ -331,6 +341,109 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
 
 (file-notify--deftest-remote file-notify-test01-add-watch
   "Check `file-notify-add-watch' for remote files.")
+
+(defun file-notify--test-make-temp-name ()
+  "Create a temporary file name for test."
+  (expand-file-name
+   (make-temp-name "file-notify-test") temporary-file-directory))
+
+;; This test is inspired by Bug#26126 and Bug#26127.
+(ert-deftest file-notify-test02-rm-watch ()
+  "Check `file-notify-rm-watch'."
+  (skip-unless (file-notify--test-local-enabled))
+
+  (unwind-protect
+      ;; Check, that `file-notify-rm-watch' works.
+      (progn
+        (should
+         (setq file-notify--test-desc
+               (file-notify-add-watch
+                temporary-file-directory '(change) #'ignore)))
+        (file-notify-rm-watch file-notify--test-desc)
+        ;; Check, that any parameter is accepted.
+        (condition-case err
+            (progn
+              (file-notify-rm-watch nil)
+              (file-notify-rm-watch 0)
+              (file-notify-rm-watch "foo")
+              (file-notify-rm-watch 'foo))
+          (error (ert-fail err)))
+
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
+
+    ;; Cleanup.
+    (file-notify--test-cleanup))
+
+  (unwind-protect
+      ;; Check, that no error is returned removing a watch descriptor twice.
+      (progn
+        (setq file-notify--test-tmpfile (file-notify--test-make-temp-name)
+              file-notify--test-tmpfile1 (file-notify--test-make-temp-name))
+        (write-region "any text" nil file-notify--test-tmpfile nil 'no-message)
+        (write-region "any text" nil file-notify--test-tmpfile1 nil 'no-message)
+        (should
+         (setq file-notify--test-desc
+               (file-notify-add-watch
+                file-notify--test-tmpfile '(change) #'ignore)))
+        (should
+         (setq file-notify--test-desc1
+               (file-notify-add-watch
+                file-notify--test-tmpfile1 '(change) #'ignore)))
+        ;; Remove `file-notify--test-desc' twice.
+        (file-notify-rm-watch file-notify--test-desc)
+        (file-notify-rm-watch file-notify--test-desc)
+        (file-notify-rm-watch file-notify--test-desc1)
+        (delete-file file-notify--test-tmpfile)
+        (delete-file file-notify--test-tmpfile1)
+
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
+
+    ;; Cleanup.
+    (file-notify--test-cleanup))
+
+  (unwind-protect
+      ;; Check, that removing watch descriptors out of order do not
+      ;; harm.  This fails on Cygwin because of timing issues unless a
+      ;; long `sit-for' is added before the call to
+      ;; `file-notify--test-read-event'.
+    (if (not (eq system-type 'cygwin))
+      (let (results)
+        (cl-flet ((first-callback (event)
+                   (when (eq (nth 1 event) 'deleted) (push 1 results)))
+                  (second-callback (event)
+                   (when (eq (nth 1 event) 'deleted) (push 2 results))))
+          (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
+          (write-region
+           "any text" nil file-notify--test-tmpfile nil 'no-message)
+          (should
+           (setq file-notify--test-desc
+                 (file-notify-add-watch
+                  file-notify--test-tmpfile
+                  '(change) #'first-callback)))
+          (should
+           (setq file-notify--test-desc1
+                 (file-notify-add-watch
+                  file-notify--test-tmpfile
+                  '(change) #'second-callback)))
+          ;; Remove first watch.
+          (file-notify-rm-watch file-notify--test-desc)
+          ;; Only the second callback shall run.
+	  (file-notify--test-read-event)
+          (delete-file file-notify--test-tmpfile)
+          (file-notify--wait-for-events
+           (file-notify--test-timeout) results)
+          (should (equal results (list 2)))
+
+          ;; The environment shall be cleaned up.
+          (file-notify--test-cleanup-p))))
+
+    ;; Cleanup.
+    (file-notify--test-cleanup)))
+
+(file-notify--deftest-remote file-notify-test02-rm-watch
+  "Check `file-notify-rm-watch' for remote files.")
 
 (defun file-notify--test-event-test ()
   "Ert test function to be called by `file-notify--test-event-handler'.
@@ -367,11 +480,6 @@ and the event to `file-notify--test-events'."
 	    (append file-notify--test-events `(,file-notify--test-event))
 	    file-notify--test-results
 	    (append file-notify--test-results `(,result))))))
-
-(defun file-notify--test-make-temp-name ()
-  "Create a temporary file name for test."
-  (expand-file-name
-   (make-temp-name "file-notify-test") temporary-file-directory))
 
 (defun file-notify--test-with-events-check (events)
   "Check whether received events match one of the EVENTS alternatives."
@@ -436,7 +544,7 @@ delivered."
      ;; One of the possible event sequences shall match.
      (should (file-notify--test-with-events-check events))))
 
-(ert-deftest file-notify-test02-events ()
+(ert-deftest file-notify-test03-events ()
   "Check file creation/change/removal notifications."
   (skip-unless (file-notify--test-local-enabled))
 
@@ -658,7 +766,7 @@ delivered."
     ;; Cleanup.
     (file-notify--test-cleanup)))
 
-(file-notify--deftest-remote file-notify-test02-events
+(file-notify--deftest-remote file-notify-test03-events
   "Check file creation/change/removal notifications for remote files.")
 
 (require 'autorevert)
@@ -666,7 +774,7 @@ delivered."
       auto-revert-remote-files t
       auto-revert-stop-on-user-input nil)
 
-(ert-deftest file-notify-test03-autorevert ()
+(ert-deftest file-notify-test04-autorevert ()
   "Check autorevert via file notification."
   (skip-unless (file-notify--test-local-enabled))
 
@@ -752,10 +860,10 @@ delivered."
       (ignore-errors (kill-buffer buf))
       (file-notify--test-cleanup))))
 
-(file-notify--deftest-remote file-notify-test03-autorevert
+(file-notify--deftest-remote file-notify-test04-autorevert
   "Check autorevert via file notification for remote files.")
 
-(ert-deftest file-notify-test04-file-validity ()
+(ert-deftest file-notify-test05-file-validity ()
   "Check `file-notify-valid-p' for files."
   (skip-unless (file-notify--test-local-enabled))
 
@@ -850,7 +958,7 @@ delivered."
 	;; After deleting the parent directory, the descriptor must
 	;; not be valid anymore.
 	(should-not (file-notify-valid-p file-notify--test-desc))
-        ;; w32notify doesn't generate 'stopped' events when the parent
+        ;; w32notify doesn't generate `stopped' events when the parent
         ;; directory is deleted, which doesn't provide a chance for
         ;; filenotify.el to remove the descriptor from the internal
         ;; hash table it maintains.  So we must remove the descriptor
@@ -864,10 +972,10 @@ delivered."
     ;; Cleanup.
     (file-notify--test-cleanup)))
 
-(file-notify--deftest-remote file-notify-test04-file-validity
+(file-notify--deftest-remote file-notify-test05-file-validity
   "Check `file-notify-valid-p' via file notification for remote files.")
 
-(ert-deftest file-notify-test05-dir-validity ()
+(ert-deftest file-notify-test06-dir-validity ()
   "Check `file-notify-valid-p' for directories."
   (skip-unless (file-notify--test-local-enabled))
 
@@ -922,10 +1030,10 @@ delivered."
     ;; Cleanup.
     (file-notify--test-cleanup)))
 
-(file-notify--deftest-remote file-notify-test05-dir-validity
+(file-notify--deftest-remote file-notify-test06-dir-validity
   "Check `file-notify-valid-p' via file notification for remote directories.")
 
-(ert-deftest file-notify-test06-many-events ()
+(ert-deftest file-notify-test07-many-events ()
   "Check that events are not dropped."
   :tags '(:expensive-test)
   (skip-unless (file-notify--test-local-enabled))
@@ -993,10 +1101,10 @@ delivered."
     ;; Cleanup.
     (file-notify--test-cleanup)))
 
-(file-notify--deftest-remote file-notify-test06-many-events
+(file-notify--deftest-remote file-notify-test07-many-events
    "Check that events are not dropped for remote directories.")
 
-(ert-deftest file-notify-test07-backup ()
+(ert-deftest file-notify-test08-backup ()
   "Check that backup keeps file notification."
   (skip-unless (file-notify--test-local-enabled))
 
@@ -1072,10 +1180,10 @@ delivered."
     ;; Cleanup.
     (file-notify--test-cleanup)))
 
-(file-notify--deftest-remote file-notify-test07-backup
+(file-notify--deftest-remote file-notify-test08-backup
   "Check that backup keeps file notification for remote files.")
 
-(ert-deftest file-notify-test08-watched-file-in-watched-dir ()
+(ert-deftest file-notify-test09-watched-file-in-watched-dir ()
   "Watches a directory and a file in that directory separately.
 Checks that the callbacks are only called with events with
 descriptors that were issued when registering the watches.  This
@@ -1205,10 +1313,10 @@ the file watch."
     ;; Cleanup.
     (file-notify--test-cleanup)))
 
-(file-notify--deftest-remote file-notify-test08-watched-file-in-watched-dir
-  "Check `file-notify-test08-watched-file-in-watched-dir' for remote files.")
+(file-notify--deftest-remote file-notify-test09-watched-file-in-watched-dir
+  "Check `file-notify-test09-watched-file-in-watched-dir' for remote files.")
 
-(ert-deftest file-notify-test09-sufficient-resources ()
+(ert-deftest file-notify-test10-sufficient-resources ()
   "Check that file notification does not use too many resources."
   :tags '(:expensive-test)
   (skip-unless (file-notify--test-local-enabled))
@@ -1249,8 +1357,8 @@ the file watch."
     ;; Cleanup.
     (file-notify--test-cleanup)))
 
-(file-notify--deftest-remote file-notify-test09-sufficient-resources
-  "Check `file-notify-test09-sufficient-resources' for remote files.")
+(file-notify--deftest-remote file-notify-test10-sufficient-resources
+  "Check `file-notify-test10-sufficient-resources' for remote files.")
 
 (defun file-notify-test-all (&optional interactive)
   "Run all tests for \\[file-notify]."

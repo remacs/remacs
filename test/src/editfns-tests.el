@@ -133,4 +133,48 @@
     (should (string= (buffer-string) "éä\"ba÷"))
     (should (equal (transpose-test-get-byte-positions 7) '(1 3 5 6 7 8 10)))))
 
+(ert-deftest format-c-float ()
+  (should-error (format "%c" 0.5)))
+
+;;; Check format-time-string with various TZ settings.
+;;; Use only POSIX-compatible TZ values, since the tests should work
+;;; even if tzdb is not in use.
+(ert-deftest format-time-string-with-zone ()
+  ;; Don’t use (0 0 0 0) as the test case, as there are too many bugs
+  ;; in MS-Windows (and presumably other) C libraries when formatting
+  ;; time stamps near the Epoch of 1970-01-01 00:00:00 UTC, and this
+  ;; test is for GNU Emacs, not for C runtimes.  Instead, look before
+  ;; you leap: "look" is the timestamp just before the first leap
+  ;; second on 1972-06-30 23:59:60 UTC, so it should format to the
+  ;; same string regardless of whether the underlying C library
+  ;; ignores leap seconds, while avoiding circa-1970 glitches.
+  ;;
+  ;; Similarly, stick to the limited set of time zones that are
+  ;; supported by both POSIX and MS-Windows: exactly 3 ASCII letters
+  ;; in the abbreviation, and no DST.
+  (let ((look '(1202 22527 999999 999999))
+        (format "%Y-%m-%d %H:%M:%S.%3N %z (%Z)"))
+    ;; UTC.
+    (should (string-equal
+             (format-time-string "%Y-%m-%d %H:%M:%S.%3N %z" look t)
+             "1972-06-30 23:59:59.999 +0000"))
+    ;; "UTC0".
+    (should (string-equal
+             (format-time-string format look "UTC0")
+             "1972-06-30 23:59:59.999 +0000 (UTC)"))
+    ;; Negative UTC offset, as a Lisp list.
+    (should (string-equal
+             (format-time-string format look '(-28800 "PST"))
+             "1972-06-30 15:59:59.999 -0800 (PST)"))
+    ;; Positive UTC offset that is not an hour multiple, as a string.
+    (should (string-equal
+             (format-time-string format look "IST-5:30")
+             "1972-07-01 05:29:59.999 +0530 (IST)"))))
+
+;;; This should not dump core.
+(ert-deftest format-time-string-with-outlandish-zone ()
+  (should (stringp
+           (format-time-string "%Y-%m-%d %H:%M:%S.%3N %z" nil
+                               (concat (make-string 2048 ?X) "0")))))
+
 ;;; editfns-tests.el ends here

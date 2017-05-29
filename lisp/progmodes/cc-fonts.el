@@ -900,7 +900,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
     (when (memq prop '(c-decl-id-start c-decl-type-start))
       (c-forward-syntactic-ws limit)
       (c-font-lock-declarators limit t (eq prop 'c-decl-type-start)
-			       (c-bs-at-toplevel-p (point)))))
+			       (not (c-bs-at-toplevel-p (point))))))
 
   (setq c-font-lock-context ;; (c-guess-font-lock-context)
 	(save-excursion
@@ -1117,6 +1117,124 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  (setq pos (point))))))     ; acts to make the `while' form continue.
   nil)
 
+(defun c-get-fontification-context (match-pos not-front-decl &optional toplev)
+  ;; Return a cons (CONTEXT . RESTRICTED-<>-ARGLISTS) for MATCH-POS.
+  ;; NOT-FRONT-DECL is non-nil when a declaration later in the buffer than
+  ;; MATCH-POS has already been parsed.  TOPLEV is non-nil when MATCH-POS is
+  ;; known to be at "top level", i.e. outside any braces, or directly inside a
+  ;; namespace, class, etc.
+  ;;
+  ;; CONTEXT is the fontification context of MATCH-POS, and is one of the
+  ;; following:
+  ;; 'decl     In a comma-separated declaration context (typically
+  ;;           inside a function declaration arglist).
+  ;; '<>       In an angle bracket arglist.
+  ;; 'arglist  Some other type of arglist.
+  ;; 'top      Some other context and point is at the top-level (either
+  ;;           outside any braces or directly inside a class or namespace,
+  ;;           etc.)
+  ;; nil       Some other context or unknown context.  Includes
+  ;;           within the parens of an if, for, ... construct.
+  ;; 'not-decl Definitely not in a declaration.
+  ;;
+  ;; RESTRICTED-<>-ARGLISTS is non-nil when a scan of template/generic
+  ;; arguments lists (i.e. lists enclosed by <...>) is more strict about what
+  ;; characters it allows within the list.
+  (let ((type (and (> match-pos (point-min))
+		   (c-get-char-property (1- match-pos) 'c-type))))
+    (cond ((not (memq (char-before match-pos) '(?\( ?, ?\[ ?< ?{)))
+	   (cons (and toplev 'top) nil))
+	  ;; A control flow expression or a decltype
+	  ((and (eq (char-before match-pos) ?\()
+		(save-excursion
+		  (goto-char match-pos)
+		  (backward-char)
+		  (c-backward-token-2)
+		  (or (looking-at c-block-stmt-2-key)
+		      (looking-at c-block-stmt-1-2-key)
+		      (looking-at c-typeof-key))))
+	   (cons nil t))
+	  ;; Near BOB.
+	  ((<= match-pos (point-min))
+	   (cons 'arglist t))
+	  ;; Got a cached hit in a declaration arglist.
+	  ((eq type 'c-decl-arg-start)
+	   (cons 'decl nil))
+	  ;; We're inside (probably) a brace list.
+	  ((eq type 'c-not-decl)
+	   (cons 'not-decl nil))
+	  ;; Inside a C++11 lambda function arglist.
+	  ((and (c-major-mode-is 'c++-mode)
+		(eq (char-before match-pos) ?\()
+		(save-excursion
+		  (goto-char match-pos)
+		  (c-backward-token-2)
+		  (and
+		   (c-safe (goto-char (scan-sexps (point) -1)))
+		   (c-looking-at-c++-lambda-capture-list))))
+	   (c-put-char-property (1- match-pos) 'c-type
+				'c-decl-arg-start)
+	   (cons 'decl nil))
+	  ;; We're inside a brace list.
+	  ((and (eq (char-before match-pos) ?{)
+		(save-excursion
+		  (goto-char (1- match-pos))
+		  (consp
+		   (c-looking-at-or-maybe-in-bracelist))))
+	   (c-put-char-property (1- match-pos) 'c-type
+				'c-not-decl)
+	   (cons 'not-decl nil))
+	  ;; We're inside an "ordinary" open brace.
+	  ((eq (char-before match-pos) ?{)
+	   (cons (and toplev 'top) nil))
+	  ;; Inside an angle bracket arglist.
+	  ((or (eq type 'c-<>-arg-sep)
+	       (eq (char-before match-pos) ?<))
+	   (cons '<> nil))
+	  ;; Got a cached hit in some other type of arglist.
+	  (type
+	   (cons 'arglist t))
+	  (not-front-decl
+	   ;; The point is within the range of a previously
+	   ;; encountered type decl expression, so the arglist
+	   ;; is probably one that contains declarations.
+	   ;; However, if `c-recognize-paren-inits' is set it
+	   ;; might also be an initializer arglist.
+	   ;;
+	   ;; The result of this check is cached with a char
+	   ;; property on the match token, so that we can look
+	   ;; it up again when refontifying single lines in a
+	   ;; multiline declaration.
+	   (c-put-char-property (1- match-pos)
+				'c-type 'c-decl-arg-start)
+	   (cons 'decl nil))
+	  ;; Got an open paren preceded by an arith operator.
+	  ((and (eq (char-before match-pos) ?\()
+		(save-excursion
+		  (and (zerop (c-backward-token-2 2))
+		       (looking-at c-arithmetic-op-regexp))))
+	   (cons nil nil))
+	  ;; At start of a declaration inside a declaration paren.
+	  ((save-excursion
+	     (and (memq (char-before match-pos) '(?\( ?\,))
+		  (c-go-up-list-backward match-pos)
+		  (eq (char-after) ?\()
+		  (let ((type (c-get-char-property (point) 'c-type)))
+		    (or (memq type '(c-decl-arg-start c-decl-type-start))
+			(and
+			 (progn (c-backward-syntactic-ws) t)
+			 (c-back-over-compound-identifier)
+			 (progn
+			   (c-backward-syntactic-ws)
+			   (or (bobp)
+			       (progn
+				 (setq type (c-get-char-property (1- (point))
+								 'c-type))
+				 (memq type '(c-decl-arg-start
+					      c-decl-type-start))))))))))
+	   (cons 'decl nil))
+	  (t (cons 'arglist t)))))
+
 (defun c-font-lock-declarations (limit)
   ;; Fontify all the declarations, casts and labels from the point to LIMIT.
   ;; Assumes that strings and comments have been fontified already.
@@ -1231,95 +1349,15 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	    ;; "<" for the sake of C++-style template arglists.
 	    ;; Ignore "(" when it's part of a control flow construct
 	    ;; (e.g. "for (").
-	    (let ((type (and (> match-pos (point-min))
-			     (c-get-char-property (1- match-pos) 'c-type))))
-	      (cond ((not (memq (char-before match-pos) '(?\( ?, ?\[ ?< ?{)))
-		     (setq context (and toplev 'top)
-			   c-restricted-<>-arglists nil))
-		    ;; A control flow expression or a decltype
-		    ((and (eq (char-before match-pos) ?\()
-			  (save-excursion
-			    (goto-char match-pos)
-			    (backward-char)
-			    (c-backward-token-2)
-			    (or (looking-at c-block-stmt-2-key)
-				(looking-at c-block-stmt-1-2-key)
-				(looking-at c-typeof-key))))
-		     (setq context nil
-			   c-restricted-<>-arglists t))
-		    ;; Near BOB.
-		    ((<= match-pos (point-min))
-		     (setq context 'arglist
-			   c-restricted-<>-arglists t))
-		    ;; Got a cached hit in a declaration arglist.
-		    ((eq type 'c-decl-arg-start)
-		     (setq context 'decl
-			   c-restricted-<>-arglists nil))
-		    ;; We're inside (probably) a brace list.
-		    ((eq type 'c-not-decl)
-		     (setq context 'not-decl
-			   c-restricted-<>-arglists nil))
-		    ;; Inside a C++11 lambda function arglist.
-		    ((and (c-major-mode-is 'c++-mode)
-			  (eq (char-before match-pos) ?\()
-			  (save-excursion
-			    (goto-char match-pos)
-			    (c-backward-token-2)
-			    (and
-			     (c-safe (goto-char (scan-sexps (point) -1)))
-			     (c-looking-at-c++-lambda-capture-list))))
-		     (setq context 'decl
-			   c-restricted-<>-arglists nil)
-		     (c-put-char-property (1- match-pos) 'c-type
-					  'c-decl-arg-start))
-		    ;; We're inside a brace list.
-		    ((and (eq (char-before match-pos) ?{)
-			  (save-excursion
-			    (goto-char (1- match-pos))
-			    (consp
-			     (c-looking-at-or-maybe-in-bracelist))))
-		     (setq context 'not-decl
-			   c-restricted-<>-arglists nil)
-		     (c-put-char-property (1- match-pos) 'c-type
-					  'c-not-decl))
-		    ;; We're inside an "ordinary" open brace.
-		    ((eq (char-before match-pos) ?{)
-		     (setq context (and toplev 'top)
-			   c-restricted-<>-arglists nil))
-		    ;; Inside an angle bracket arglist.
-		    ((or (eq type 'c-<>-arg-sep)
-			 (eq (char-before match-pos) ?<))
-		     (setq context '<>
-			   c-restricted-<>-arglists nil))
-		    ;; Got a cached hit in some other type of arglist.
-		    (type
-		     (setq context 'arglist
-			   c-restricted-<>-arglists t))
-		    ((if inside-macro
-			 (< match-pos max-type-decl-end-before-token)
-		       (< match-pos max-type-decl-end))
-		     ;; The point is within the range of a previously
-		     ;; encountered type decl expression, so the arglist
-		     ;; is probably one that contains declarations.
-		     ;; However, if `c-recognize-paren-inits' is set it
-		     ;; might also be an initializer arglist.
-		     (setq context 'decl
-			   c-restricted-<>-arglists nil)
-		     ;; The result of this check is cached with a char
-		     ;; property on the match token, so that we can look
-		     ;; it up again when refontifying single lines in a
-		     ;; multiline declaration.
-		     (c-put-char-property (1- match-pos)
-					  'c-type 'c-decl-arg-start))
-		    ;; Got an open paren preceded by an arith operator.
-		    ((and (eq (char-before match-pos) ?\()
-			  (save-excursion
-			    (and (zerop (c-backward-token-2 2))
-				 (looking-at c-arithmetic-op-regexp))))
-		     (setq context nil
-			   c-restricted-<>-arglists nil))
-		    (t (setq context 'arglist
-			     c-restricted-<>-arglists t))))
+	    (let ((got-context
+		   (c-get-fontification-context
+		    match-pos
+		    (< match-pos (if inside-macro
+				     max-type-decl-end-before-token
+				   max-type-decl-end))
+		    toplev)))
+	      (setq context (car got-context)
+		    c-restricted-<>-arglists (cdr got-context)))
 
 	    ;; Check we haven't missed a preceding "typedef".
 	    (when (not (looking-at c-typedef-key))

@@ -58,7 +58,7 @@
 
   ;; Check that the `color' property doesn't cause infinite recursion
   ;; because it refers to the value class of the same name.
-  (should (= (length (css--property-values "color")) 147)))
+  (should (= (length (css--property-values "color")) 152)))
 
 (ert-deftest css-test-property-value-cache ()
   "Test that `css--property-value-cache' is in use."
@@ -233,6 +233,50 @@
       (insert (nth 0 item))
       (save-excursion (insert (nth 1 item)))
       (should (equal (nth 2 item) (css--mdn-find-symbol))))))
+
+(ert-deftest css-test-rgb-parser ()
+  (with-temp-buffer
+    (css-mode)
+    (dolist (input '("255, 0, 127"
+                     "255, /* comment */ 0, 127"
+                     "255 0 127"
+                     "255, 0, 127, 0.75"
+                     "255 0 127 / 0.75"
+                     "100%, 0%, 50%"
+                     "100%, 0%, 50%, 0.115"
+                     "100% 0% 50%"
+                     "100% 0% 50% / 0.115"))
+      (erase-buffer)
+      (save-excursion
+        (insert input ")"))
+      (should (equal (css--rgb-color) "#ff007f")))))
+
+(ert-deftest css-test-hsl-parser ()
+  (with-temp-buffer
+    (css-mode)
+    (dolist (input '("0, 100%, 50%"
+                     "0 100% 50%"
+                     "0 /* two */ /* comments */100% 50%"
+                     "0, 100%, 50%, 0.75"
+                     "0 100% 50% / 0.75"
+                     "0deg 100% 50%"
+                     "360deg 100% 50%"
+                     "0rad, 100%, 50%, 0.115"
+                     "0grad, 100%, 50%, 0.115"
+                     "1turn 100% 50% / 0.115"))
+      (erase-buffer)
+      (save-excursion
+        (insert input ")"))
+      (should (equal (css--hsl-color) "#ff0000")))))
+
+(ert-deftest css-test-named-color ()
+  (dolist (text '("@mixin black" "@include black"))
+    (with-temp-buffer
+      (insert text)
+      (should-not (css--named-color (save-excursion
+                                      (backward-word)
+                                      (point))
+                                    "black")))))
 
 (provide 'css-mode-tests)
 ;;; css-mode-tests.el ends here

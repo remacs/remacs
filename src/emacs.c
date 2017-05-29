@@ -124,18 +124,12 @@ Lisp_Object Vlibrary_cache;
    on subsequent starts.  */
 bool initialized;
 
-bool generating_ldefs_boot;
-
 #ifndef CANNOT_DUMP
 /* Set to true if this instance of Emacs might dump.  */
 # ifndef DOUG_LEA_MALLOC
 static
 # endif
 bool might_dump;
-#endif
-
-#ifdef DARWIN_OS
-extern void unexec_init_emacs_zone (void);
 #endif
 
 /* If true, Emacs should not attempt to use a window-specific code,
@@ -637,8 +631,11 @@ close_output_streams (void)
       _exit (EXIT_FAILURE);
     }
 
-   if (close_stream (stderr) != 0)
-     _exit (EXIT_FAILURE);
+  /* Do not close stderr if addresses are being sanitized, as the
+     sanitizer might report to stderr after this function is
+     invoked.  */
+  if (!ADDRESS_SANITIZER && close_stream (stderr) != 0)
+    _exit (EXIT_FAILURE);
 }
 
 /* ARGSUSED */
@@ -663,11 +660,12 @@ main (int argc, char **argv)
   /* Record (approximately) where the stack begins.  */
   stack_bottom = &stack_bottom_variable;
 
+#ifndef CANNOT_DUMP
   dumping = !initialized && (strcmp (argv[argc - 1], "dump") == 0
-			     || strcmp (argv[argc - 1], "bootstrap") == 0 );
-
-  generating_ldefs_boot = !!getenv ("GENERATE_LDEFS_BOOT");
-
+			     || strcmp (argv[argc - 1], "bootstrap") == 0);
+#else
+  dumping = false;
+#endif
 
   /* True if address randomization interferes with memory allocation.  */
 # ifdef __PPC64__
@@ -725,7 +723,7 @@ main (int argc, char **argv)
 #endif
 
 /* If using unexmacosx.c (set by s/darwin.h), we must do this. */
-#ifdef DARWIN_OS
+#if defined DARWIN_OS && !defined CANNOT_DUMP
   if (!initialized)
     unexec_init_emacs_zone ();
 #endif

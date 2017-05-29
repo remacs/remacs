@@ -21,13 +21,6 @@ Temporary note:
 --- means no change in the manuals is needed.
 When you add a new item, use the appropriate mark if you are sure it applies,
 
-+++
-** The version number of CC Mode has been changed from 5.33 to
-5.32.99, although the software itself hasn't changed.  This aims to
-reduce confusion with the standalone CC Mode 5.33 (available from
-http://cc-mode.sourceforge.net), which is a more mature version than
-the one in Emacs 25.2.
-
 
 * Installation Changes in Emacs 26.1
 
@@ -37,11 +30,20 @@ Use 'configure --with-gnutls=no' to build even when GnuTLS is missing.
 ** GnuTLS version 2.12.2 or later is now required, instead of merely
 version 2.6.6 or later.
 
+** The new option 'configure --with-mailutils' causes Emacs to rely on
+GNU Mailutils 'movemail' to retrieve email.  By default, the Emacs
+build procedure continues to build and install a limited and insecure
+'movemail' substitute.  Although --with-mailutils is recommended, it
+is not yet the default due to backward-compatibility concerns.
+
 ** The new option 'configure --enable-gcc-warnings=warn-only' causes
 GCC to issue warnings without stopping the build.  This behavior is
 now the default in developer builds.  As before, use
 '--disable-gcc-warnings' to suppress GCC's warnings, and
 '--enable-gcc-warnings' to stop the build if GCC issues warnings.
+
+** When GCC warnings are enabled, '--enable-check-lisp-object-type' is
+now enabled by default when configuring.
 
 +++
 ** The Emacs server now has socket-launching support.  This allows
@@ -64,6 +66,11 @@ Deterministic builds omit the build date from the output of the
 emacs-version and erc-cmd-SV functions, and the leave the following
 variables nil: emacs-build-system, emacs-build-time,
 erc-emacs-build-time.
+
+** The configure option '--with-gameuser' now defaults to 'no',
+as this appears to be the most common configuration in practice.
+When it is 'no', the shared game directory and the auxiliary program
+update-game-score are no longer needed and are not installed.
 
 ** Emacs no longer works on IRIX.  We expect that Emacs users are not
 affected by this, as SGI stopped supporting IRIX in December 2013.
@@ -131,8 +138,8 @@ you can disable the feature by adding
 
   '(inhibit-double-buffering . t)
 
-to default-frame-parameters.  Or inject this parameter into the
-selected frame by evaluating this form:
+to default-frame-alist.  Or inject this parameter into the selected
+frame by evaluating this form:
 
   (modify-frame-parameters nil '((inhibit-double-buffering . t)))
 
@@ -160,6 +167,10 @@ controls the position of point when double-clicking mouse-1 on the end
 of a parenthetical grouping or string-delimiter: the default value nil
 keeps point at the end of the region, setting it to non-nil moves
 point to the beginning of the region.
+
++++
+** The new user option 'mouse-drag-and-drop-region' allows to drag the
+entire region of text to another place or another buffer.
 
 +++
 ** The new user option 'confirm-kill-processes' allows the user to
@@ -322,11 +333,64 @@ settings of 'scroll-margin' up to half the window size, instead of
 always restricting the margin to a quarter of the window.
 
 +++
+** Emacs can scroll horizontally using mouse, touchpad, and trackbar.
+You can enable this by customizing 'mwheel-tilt-scroll-p'.  If you
+want to reverse the direction of the scroll, customize
+'mwheel-flip-direction'.
+
++++
 ** Emacsclient has a new option -u/--suppress-output.  The option
 suppresses display of return values from the server process.
 
+---
+** New user option 'dig-program-options' and extended functionality
+for DNS-querying functions 'nslookup-host', 'dns-lookup-host',
+and 'run-dig'.  Each function now accepts an optional name server
+argument interactively (with a prefix argument) and non-interactively.
+
++++
+** Emacsclient has a new option -T/--tramp.
+This helps with using a local Emacs session as the server for a remote
+emacsclient.  With appropriate setup, one can now set the EDITOR
+environment variable on a remote machine to emacsclient, and
+use the local Emacs to edit remote files via Tramp.  See the node
+"emacsclient Options" in the user manual for the details.
+
++++
+** The new variable 'eval-expression-print-maximum-character' prevents
+large integers from being displayed as characters.
+
+** Two new commands for finding the source code of Emacs Lisp
+libraries: 'find-library-other-window' and 'find-library-other-frame'.
+
 
 * Editing Changes in Emacs 26.1
+
++++
+** New variable 'column-number-indicator-zero-based'.
+Traditionally, in Column Number mode, the displayed column number
+counts from zero starting at the left margin of the window.  This
+behavior is now controlled by 'column-number-indicator-zero-based'.
+If you would prefer for the displayed column number to count from one,
+you may set this variable to nil.  (Behind the scenes, there is now a
+new mode line construct, '%C', which operates exactly as '%c' does
+except that it counts from one.)
+
+** New single-line horizontal scrolling mode.
+The 'auto-hscroll-mode' variable can now have a new special value,
+'current-line', which causes only the line where the cursor is
+displayed to be horizontally scrolled when lines are truncated on
+display and point moves outside the left or right window margin.
+
++++
+** New mode line constructs '%o' and '%q', and user option
+'mode-line-percent-position'.  '%o' displays the "degree of travel" of
+the window through the buffer.  Unlike the default '%p', this
+percentage approaches 100% as the window approaches the end of the
+buffer.  '%q' displays the percentage offsets of both the start and
+the end of the window, e.g. "5-17%".  The new option
+'mode-line-percent-position' makes it easier to switch between '%p',
+'%P', and these new constructs.
 
 +++
 ** Two new user options 'list-matching-lines-jump-to-current-line' and
@@ -351,15 +415,51 @@ same as in modes where the character is not whitespace.
 Instead of only checking the modification time, Emacs now also checks
 the file's actual content before prompting the user.
 
-** Title case characters are properly converted to upper case.
-'upcase', 'upcase-region' et al. convert title case characters (such
-as the single character "ǲ") into their upper case form (such as "Ǳ").
-As a downside, 'capitalize' and 'upcase-initials' produce awkward
-words where first character is upper rather than title case, e.g.,
-"Ǆungla" instead of "ǅungla".
+** Various casing improvements.
+
+*** 'upcase', 'upcase-region' et al. convert title case characters
+(such as ǲ) into their upper case form (such as Ǳ).
+
+*** 'capitalize', 'upcase-initials' et al. make use of title-case forms
+of initial characters (correctly producing for example ǅungla instead
+of incorrect Ǆungla).
+
+*** Characters which turn into multiple ones when cased are correctly handled.
+For example, ﬁ ligature is converted to FI when upper cased.
+
+*** Greek small sigma is correctly handled when at the end of the word.
+Strings such as ΌΣΟΣ are now correctly converted to Όσος when
+capitalized instead of incorrect Όσοσ (compare lowercase sigma at the
+end of the word).
+
+** Emacs can now auto-save buffers to visited files in a more robust
+manner via the new mode 'auto-save-visited-mode'.  Unlike
+'auto-save-visited-file-name', this mode uses the normal saving
+procedure and therefore obeys saving hooks.
+'auto-save-visited-file-name' is now obsolete.
+
++++
+** New behavior of 'mark-defun' implemented
+Prefix argument selects that many (or that many more) defuns.
+Negative prefix arg flips the direction of selection.  Also,
+'mark-defun' between defuns correctly selects N following defuns (or
+-N previous for negative arguments).  Finally, comments preceding the
+defun are selected unless they are separated from the defun by a blank
+line.
 
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
+
+*** smerge-refine-regions can refine regions in separate buffers
+
+*** Info menu and index completion uses substring completion by default.
+This can be customized via the info-menu category in
+completion-category-override.
+
++++
+*** The ancestor buffer is shown by default in 3way merges.
+A new option ediff-show-ancestor and a new toggle
+ediff-toggle-show-ancestor.
 
 ** TeX: Add luatex and xetex as alternatives to pdftex
 
@@ -462,8 +562,6 @@ where to place point after C-c M-r and C-c M-s.
 ---
 *** Messages from CMake are now recognized.
 
-** Dired
-
 +++
 *** A new option 'dired-always-read-filesystem' default to nil.
 If non-nil, buffers visiting files are reverted before search them;
@@ -522,6 +620,13 @@ customize the 'shr-use-colors' variable.
 replaced by the real images asynchronously, which will also now
 respect width/height HTML specs (unless they specify widths/heights
 bigger than the current window).
+
+** Ido
+
+*** The commands 'find-alternate-file-other-window',
+'dired-other-window', 'dired-other-frame', and
+'display-buffer-other-window' are now remapped to Ido equivalents if
+Ido mode is active.
 
 ** Images
 
@@ -622,7 +727,26 @@ In 'visual-line-mode' it will look for the true beginning of a header
 while in non-'visual-line-mode' it will move the point to the indented
 header's value.
 
+** Package
+
++++
+*** The new variable 'package-gnupghome-dir' has been added to control
+where the GnuPG home directory (used for signature verification) is
+located and whether GnuPG's option "--homedir" is used or not.
+
 ** Tramp
+
++++
+*** The method part of remote file names is mandatory now.  A valid
+remote file name starts with "/method:host:" or "/method:user@host:".
+
++++
+*** The new pseudo method "-" is a marker for the default method.
+"/-::" is the shortest remote file name then.
+
++++
+*** The command 'tramp-change-syntax' allows to choose an alternative
+remote file name syntax.
 
 +++
 *** New connection method "sg", which supports editing files under a
@@ -667,6 +791,11 @@ information about a CSS construct (an at-rule, property, pseudo-class,
 pseudo-element, with the default being guessed from context).  By
 default the information is looked up on the Mozilla Developer Network,
 but this can be customized using 'css-lookup-url-format'.
+
+---
+*** CSS colors are fontified using the color they represent as the
+background.  For instance, #ff0000 would be fontified with a red
+background.
 
 +++
 ** Emacs now supports character name escape sequences in character and
@@ -725,6 +854,10 @@ This is done with the help of 'c-or-c++-mode' function which analyses
 contents of the buffer to determine whether it's a C or C++ source
 file.
 
+---
+** New DNS mode command 'dns-mode-ipv6-to-nibbles' to convert IPv6 addresses
+to a format suitable for reverse lookup zone files.
+
 ** Flymake
 
 +++
@@ -738,12 +871,28 @@ processes on exit.
 
 ** New library 'xdg' with utilities for some XDG standards and specs.
 
+** HTML
+
++++
+*** A new submode of 'html-mode', 'mhtml-mode', is now the default
+mode for *.html files.  This mode handles indentation,
+fontification, and commenting for embedded JavaScript and CSS.
+
+** New minor mode 'pixel-scroll-mode' provides smooth pixel-level scrolling.
+
 
 * Incompatible Lisp Changes in Emacs 26.1
 
 +++
-** Resizing a frame no longer runs 'window-configuration-change-hook'.
-Put your function on 'window-size-change-functions' instead.
+*** Command 'dired-mark-extension' now automatically prepends a '.' to the
+extension when not present.  The new command 'dired-mark-suffix' behaves
+similarly but it doesn't prepend a '.'.
+
++++
+** Certain cond/pcase/cl-case forms are now compiled using a faster jump
+table implementation. This uses a new bytecode op 'switch', which isn't
+compatible with previous Emacs versions. This functionality can be disabled
+by setting 'byte-compile-cond-use-jump-table' to nil.
 
 ** 'C-up', 'C-down', 'C-left' and 'C-right' are now defined in term
 mode to send the same escape sequences that xterm does.  This makes
@@ -803,8 +952,35 @@ Unicode horizontal whitespace as defined in the Unicode Technical
 Standard #18.  If you only want to match space and tab, use [ \t]
 instead.
 
++++
+** 'min' and 'max' no longer round their results.  Formerly, they
+returned a floating-point value if any argument was floating-point,
+which was sometimes numerically incorrect.  For example, on a 64-bit
+host (max 1e16 10000000000000001) now returns its second argument
+instead of its first.
+
++++
+** The variable 'old-style-backquotes' has been made internal and
+renamed to 'lread--old-style-backquotes'.  No user code should use
+this variable.
+
++++
+** Module functions are now implemented slightly differently; in
+particular, the function 'internal--module-call' has been removed.
+Code that depends on undocumented internals of the module system might
+break.
+
 
 * Lisp Changes in Emacs 26.1
+
+** New function 'seq-set-equal-p' to check if SEQUENCE1 and SEQUENCE2
+contain the same elements, regardless of the order.
+
++++
+** Emacs now supports records for user-defined types, via the new
+functions 'make-record', 'record', and 'recordp'.  Records are now
+used internally to represent cl-defstruct and defclass instances, for
+example.
 
 +++
 ** 'save-some-buffers' now uses 'save-some-buffers-default-predicate'
@@ -842,21 +1018,6 @@ If no insurmountable problems before next release, it can stay that way.
 ---
 ** 'gnutls-boot' now takes a parameter ':complete-negotiation' that
 says that negotiation should complete even on non-blocking sockets.
-
-+++
-** New functions 'window-pixel-width-before-size-change' and
-'window-pixel-height-before-size-change' support detecting which
-window changed size when 'window-size-change-functions' are run.
-
-+++
-** New function 'display-buffer-reuse-mode-window' is an action function
-suitable for use in 'display-buffer-alist'. For example, to avoid creating
-a new window when opening man pages when there's already one, use
-(add-to-list 'display-buffer-alist
-     '("\\`\\*Man .*\\*\\'" .
-       (display-buffer-reuse-mode-window
-        (inhibit-same-window . nil)
-        (mode . Man-mode))))
 
 ---
 ** There is now a new variable 'flyspell-sort-corrections-function'
@@ -901,6 +1062,30 @@ other than GNU/Linux.
 interpreting consecutive runs of numerical characters as numbers, and
 compares their numerical values.  According to this predicate,
 "foo2.png" is smaller than "foo12.png".
+
+---
+** Numeric comparisons and 'logb' no longer return incorrect answers
+due to internal rounding errors.  For example, (< most-positive-fixnum
+(+ 1.0 most-positive-fixnum)) now correctly returns t on 64-bit hosts.
+
+---
+** The functions 'ffloor', 'fceiling', 'ftruncate' and 'fround' now
+accept only floating-point arguments, as per their documentation.
+Formerly, they quietly accepted integer arguments and sometimes
+returned nonsensical answers, e.g., (< N (ffloor N)) could return t.
+
+---
+** On hosts like GNU/Linux x86-64 where a 'long double' fraction
+contains at least EMACS_INT_WIDTH - 3 bits, 'format' no longer returns
+incorrect answers due to internal rounding errors when formatting
+Emacs integers with %e, %f, or %g conversions.  For example, on these
+hosts (eql N (string-to-number (format "%.0f" N))) now returns t for
+all Emacs integers N.
+
+---
+** Calls that accept floating-point integers (for use on hosts with
+limited integer range) now signal an error if arguments are not
+integral.  For example (decode-char 'ascii 0.5) now signals an error.
 
 +++
 ** The new function 'char-from-name' converts a Unicode name string
@@ -973,7 +1158,99 @@ that does not exist.
 operating recursively and when some other process deletes the directory
 or its files before 'delete-directory' gets to them.
 
++++
+*** New error type 'user-search-failed' like 'search-failed' but
+avoids debugger like 'user-error'.
+
 ** Changes in Frame- and Window- Handling
+
++++
+*** Resizing a frame no longer runs 'window-configuration-change-hook'.
+'window-size-change-functions' should be used instead.
+
++++
+*** The new function 'frame-size-changed-p' can tell whether a frame has
+been resized since the last time 'window-size-change-functions' has been
+run.
+
++++
+*** The function 'frame-geometry' now also returns the width of a
+frame's outer border.
+
++++
+*** New frame parameters
+
++++
+**** 'z-group' positions a frame above or below all others.
+
++++
+**** 'min-width' and 'min-height' specify the absolute minimum size of a
+frame.
+
++++
+**** 'parent-frame' makes a frame the child frame of another Emacs
+frame.  The section "Child Frames" in the Elisp manual describes the
+intrinsics of that relationship.
+
++++
+**** 'delete-before' triggers deletion of one frame before that of
+another.
+
++++
+**** 'mouse-wheel-frame' specifies another frame whose windows shall be
+scrolled instead.
+
++++
+**** 'no-other-frame' has 'next-frame' and 'previous-frame' skip this
+frame.
+
++++
+**** 'skip-taskbar' removes a frame's icon from the taskbar and has
+Alt-<TAB> skip this frame.
+
++++
+**** 'no-focus-on-map' avoids that a frame gets input focus when mapped.
+
++++
+**** 'no-accept-focus' means that a frame does not want to get input
+focus via the mouse.
+
++++
+**** 'undecorated' removes the window manager decorations from a frame.
+
++++
+**** 'override-redirect' tells the window manager to disregard this
+frame.
+
++++
+*** The 'width' and 'height' frame parameters allow to specify pixel
+values now.
+
++++
+*** The new function 'frame-list-z-order' returns a list of all frames
+in Z (stacking) order.
+
++++
+*** The function 'x-focus-frame' optionally tries to not activate its
+frame.
+
++++
+*** The variable 'focus-follows-mouse' has a third meaningful value
+'auto-raise' to indicate that the window manager automatically raises a
+frame when the mouse pointer enters it.
+
++++
+*** The new function 'frame-restack' puts a frame above or below
+another on the display.
+
++++
+*** The new face 'internal-border' specifies the background of a frame's
+internal border.
+
++++
+*** The NORECORD argument of 'select-window' now has a meaningful value
+'mark-for-redisplay' which is like any other non-nil value but marks
+WINDOW for redisplay.
 
 +++
 *** Support for side windows is now official.  The display action
@@ -994,6 +1271,16 @@ section "Atomic Windows" in the Elisp manual.
 assign window parameters to the window used for displaying the buffer.
 
 +++
+*** New function 'display-buffer-reuse-mode-window' is an action function
+suitable for use in 'display-buffer-alist'. For example, to avoid creating
+a new window when opening man pages when there's already one, use
+(add-to-list 'display-buffer-alist
+     '("\\`\\*Man .*\\*\\'" .
+       (display-buffer-reuse-mode-window
+        (inhibit-same-window . nil)
+        (mode . Man-mode))))
+
++++
 *** New window parameter 'no-delete-other-window' prevents that
 its window gets deleted by 'delete-other-windows'.
 
@@ -1001,6 +1288,15 @@ its window gets deleted by 'delete-other-windows'.
 *** New command 'window-swap-states' swaps the states of two live
 windows.
 
++++
+*** New functions 'window-pixel-width-before-size-change' and
+'window-pixel-height-before-size-change' support detecting which
+window changed size when 'window-size-change-functions' are run.
+
++++
+*** The semantics of 'mouse-autoselect-window' has changed slightly.
+For details see the section "Mouse Window Auto-selection" in the Elisp
+manual.
 
 * Changes in Emacs 26.1 on Non-Free Operating Systems
 
@@ -1042,6 +1338,9 @@ attached to the receiving process, the call is typically ignored.
 This is in contrast to the default action on POSIX Systems, where it
 causes the receiving process to terminate with a core dump if no
 debugger has been attached to it.
+
+** `set-mouse-position' and `set-mouse-absolute-pixel-position' work
+on macOS.
 
 
 ----------------------------------------------------------------------

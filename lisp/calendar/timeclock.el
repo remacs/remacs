@@ -656,9 +656,9 @@ that variable's documentation."
     (setq timeclock-mode-string
           (propertize
            (format " %c%s%c "
-                   (if last-in ?< ?[)
+                   (if last-in ?< ?\[)
  		   (timeclock-seconds-to-string remainder nil t)
-		   (if last-in ?> ?]))
+		   (if last-in ?> ?\]))
            'help-echo "timeclock: time remaining"))))
 
 (put 'timeclock-mode-string 'risky-local-variable t)

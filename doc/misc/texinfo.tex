@@ -3,11 +3,11 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2017-01-14.15}
+\def\texinfoversion{2017-05-14.14}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-% 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016
+% 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017
 % Free Software Foundation, Inc.
 %
 % This texinfo.tex file is free software: you can redistribute it and/or
@@ -5888,8 +5888,8 @@ end
     \divide\doublecolumnhsize by 2
   \hsize = \doublecolumnhsize
   %
-  % Double the \vsize as well.  (We don't need a separate register here,
-  % since nobody clobbers \vsize.)
+  % Double the \vsize as well.
+  \advance\vsize by -\ht\partialpage
   \vsize = 2\vsize
   %
   % For the benefit of balancing columns
@@ -5907,12 +5907,12 @@ end
   % previous page.
   \dimen@ = \vsize
   \divide\dimen@ by 2
-  \advance\dimen@ by -\ht\partialpage
   %
   % box0 will be the left-hand column, box2 the right.
-  \setbox0=\vsplit255 to\dimen@ \setbox2=\vsplit255 to\dimen@
+  \setbox0=\vsplit\PAGE to\dimen@ \setbox2=\vsplit\PAGE to\dimen@
+  \global\advance\vsize by 2\ht\partialpage
   \onepageout\pagesofar
-  \unvbox255
+  \unvbox\PAGE
   \penalty\outputpenalty
 }
 %
@@ -5976,9 +5976,9 @@ end
   %
   % \pagegoal was set to the doubled \vsize above, since we restarted
   % the current page.  We're now back to normal single-column
-  % typesetting, so reset \pagegoal to the normal \vsize (after the
-  % \endgroup where \vsize got restored).
-  \pagegoal = \vsize
+  % typesetting, so reset \pagegoal to the normal \vsize.
+  \global\vsize = \txipageheight %
+  \pagegoal = \txipageheight %
 }
 \newbox\balancedcolumns
 \setbox\balancedcolumns=\vbox{shouldnt see this}%
@@ -5986,7 +5986,7 @@ end
 % Only called for the last of the double column material.  \doublecolumnout 
 % does the others.
 \def\balancecolumns{%
-  \setbox0 = \vbox{\unvbox255}% like \box255 but more efficient, see p.120.
+  \setbox0 = \vbox{\unvbox\PAGE}% like \box255 but more efficient, see p.120.
   \dimen@ = \ht0
   \advance\dimen@ by \topskip
   \advance\dimen@ by-\baselineskip
@@ -9118,7 +9118,13 @@ end
     \xdef\safexrefname{#1}%
   }%
   %
-  \expandafter\gdef\csname XR\safexrefname\endcsname{#2}% remember this xref
+  \bgroup
+    \expandafter\gdef\csname XR\safexrefname\endcsname{#2}%
+  \egroup
+  % We put the \gdef inside a group to avoid the definitions building up on 
+  % TeX's save stack, which can cause it to run out of space for aux files with 
+  % thousands of lines.  \gdef doesn't use the save stack, but \csname does
+  % when it defines an unknown control sequence as \relax. 
   %
   % Was that xref control sequence that we just defined for a float?
   \expandafter\iffloat\csname XR\safexrefname\endcsname
@@ -11274,6 +11280,7 @@ directory should work if nowhere else does.}
     \pdfvorigin = 1 true in
   \else
     \ifx\XeTeXrevision\thisisundefined
+      \special{papersize=#8,#7}%
     \else
       \pdfpageheight #7\relax
       \pdfpagewidth #8\relax
@@ -11311,7 +11318,6 @@ directory should work if nowhere else does.}
   %
   \lispnarrowing = 0.3in
   \tolerance = 700
-  \hfuzz = 1pt
   \contentsrightmargin = 0pt
   \defbodyindent = .5cm
 }}
@@ -11329,7 +11335,6 @@ directory should work if nowhere else does.}
   %
   \lispnarrowing = 0.25in
   \tolerance = 700
-  \hfuzz = 1pt
   \contentsrightmargin = 0pt
   \defbodyindent = .4cm
 }}
@@ -11355,7 +11360,6 @@ directory should work if nowhere else does.}
                     {297mm}{210mm}%
   %
   \tolerance = 700
-  \hfuzz = 1pt
   \contentsrightmargin = 0pt
   \defbodyindent = 5mm
 }}
@@ -11374,7 +11378,6 @@ directory should work if nowhere else does.}
   %
   \lispnarrowing = 0.2in
   \tolerance = 800
-  \hfuzz = 1.2pt
   \contentsrightmargin = 0pt
   \defbodyindent = 2mm
   \tableindent = 12mm
@@ -11429,6 +11432,9 @@ directory should work if nowhere else does.}
 % Set default to letter.
 %
 \letterpaper
+
+% Default value of \hfuzz, for suppressing warnings about overfull hboxes.
+\hfuzz = 1pt
 
 
 \message{and turning on texinfo input format.}
@@ -11595,6 +11601,9 @@ directory should work if nowhere else does.}
   @def ^^M{@let^^M@secondlinenl}%
   % Definition for a newline in the main Texinfo file.
   @gdef @secondlinenl{@fixbackslash}%
+  % In case the first line has a whole-line command on it
+  @let@originalparsearg@parsearg
+  @def@parsearg{@fixbackslash@originalparsearg}
 }}
 
 {@catcode`@^=7 @catcode`@^^M=13%
@@ -11615,6 +11624,7 @@ directory should work if nowhere else does.}
   @catcode13=5 % regular end of line
   @enableemergencynewline
   @let@c=@texinfoc
+  @let@parsearg@originalparsearg
   % Also turn back on active characters that might appear in the input
   % file name, in case not using a pre-dumped format.
   @catcode`+=@active

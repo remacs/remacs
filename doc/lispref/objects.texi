@@ -25,9 +25,10 @@ but not for @emph{the} type of an object.
 which all other types are constructed, are called @dfn{primitive types}.
 Each object belongs to one and only one primitive type.  These types
 include @dfn{integer}, @dfn{float}, @dfn{cons}, @dfn{symbol},
-@dfn{string}, @dfn{vector}, @dfn{hash-table}, @dfn{subr}, and
-@dfn{byte-code function}, plus several special types, such as
-@dfn{buffer}, that are related to editing.  (@xref{Editing Types}.)
+@dfn{string}, @dfn{vector}, @dfn{hash-table}, @dfn{subr},
+@dfn{byte-code function}, and @dfn{record}, plus several special
+types, such as @dfn{buffer}, that are related to editing.
+(@xref{Editing Types}.)
 
   Each primitive type has a corresponding Lisp function that checks
 whether an object is a member of that type.
@@ -154,6 +155,8 @@ latter are unique to Emacs Lisp.
                           expression, more fundamental but less pretty.
 * Primitive Function Type::     A function written in C, callable from Lisp.
 * Byte-Code Type::      A function written in Lisp, then compiled.
+* Record Type::         Compound objects with programmer-defined types.
+* Type Descriptors::    Objects holding information about types.
 * Autoload Type::       A type used for automatically loading seldom-used
                         functions.
 * Finalizer Type::      Runs code when no longer reachable.
@@ -1347,6 +1350,28 @@ The printed representation and read syntax for a byte-code function
 object is like that for a vector, with an additional @samp{#} before the
 opening @samp{[}.
 
+@node Record Type
+@subsection Record Type
+
+  A @dfn{record} is much like a @code{vector}.  However, the first
+element is used to hold its type as returned by @code{type-of}.  The
+purpose of records is to allow programmers to create objects with new
+types that are not built into Emacs.
+
+  @xref{Records}, for functions that work with records.
+
+@node Type Descriptors
+@subsection Type Descriptors
+
+  A @dfn{type descriptor} is a @code{record} which holds information
+about a type.  Slot 1 in the record must be a symbol naming the type, and
+@code{type-of} relies on this to return the type of @code{record}
+objects.  No other type descriptor slot is used by Emacs; they are
+free for use by Lisp extensions.
+
+An example of a type descriptor is any instance of
+@code{cl-structure-class}.
+
 @node Autoload Type
 @subsection Autoload Type
 
@@ -1959,6 +1984,9 @@ with references to further information.
 @item processp
 @xref{Processes, processp}.
 
+@item recordp
+@xref{Record Type, recordp}.
+
 @item sequencep
 @xref{Sequence Functions, sequencep}.
 
@@ -2022,6 +2050,8 @@ This function returns a symbol naming the primitive type of
 @code{marker}, @code{mutex}, @code{overlay}, @code{process},
 @code{string}, @code{subr}, @code{symbol}, @code{thread},
 @code{vector}, @code{window}, or @code{window-configuration}.
+However, if @var{object} is a record, the type specified by its first
+slot is returned; @ref{Records}.
 
 @example
 (type-of 1)
@@ -2033,6 +2063,8 @@ This function returns a symbol naming the primitive type of
      @result{} symbol
 (type-of '(x))
      @result{} cons
+(type-of (record 'foo))
+     @result{} foo
 @end group
 @end example
 @end defun

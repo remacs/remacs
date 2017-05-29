@@ -24,7 +24,6 @@ admin/charsets/mapfiles/PTCP154 whitespace=cr-at-eol
 leim/MISC-DIC/cangjie-table.b5 whitespace=cr-at-eol
 leim/MISC-DIC/cangjie-table.cns whitespace=cr-at-eol
 leim/MISC-DIC/pinyin.map whitespace=cr-at-eol
-lib-src/update-game-score.exe.manifest whitespace=cr-at-eol
 nt/nmake.defs whitespace=cr-at-eol
 test/etags/c-src/dostorture.c whitespace=cr-at-eol
 test/etags/cp-src/c.C whitespace=cr-at-eol

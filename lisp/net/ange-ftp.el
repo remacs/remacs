@@ -4125,15 +4125,15 @@ directory, so that Emacs will know its current contents."
 	    (ange-ftp-add-file-entry dir t))
 	(ange-ftp-real-make-directory dir)))))
 
-(defun ange-ftp-delete-directory (dir &optional recursive)
+(defun ange-ftp-delete-directory (dir &optional recursive trash)
   (if (file-directory-p dir)
       (let ((parsed (ange-ftp-ftp-name dir)))
 	(if recursive
 	    (mapc
 	     (lambda (file)
 	       (if (file-directory-p file)
-		   (ange-ftp-delete-directory file recursive)
-		 (delete-file file)))
+		   (ange-ftp-delete-directory file recursive trash)
+		 (delete-file file trash)))
 	     ;; We do not want to delete "." and "..".
 	     (directory-files
 	      dir 'full "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*")))
@@ -4167,7 +4167,7 @@ directory, so that Emacs will know its current contents."
 					  dir
 					  (cdr result))))
 	      (ange-ftp-delete-file-entry dir t))
-	  (ange-ftp-real-delete-directory dir recursive)))
+	  (ange-ftp-real-delete-directory dir recursive trash)))
     (error "Not a directory: %s" dir)))
 
 ;; Make a local copy of FILE and return its name.

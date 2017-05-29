@@ -32,14 +32,10 @@
 
 ## Tools we need:
 ## Note that we respect the values of AUTOCONF etc, like autoreconf does.
-progs="autoconf automake"
+progs="autoconf"
 
 ## Minimum versions we need:
 autoconf_min=`sed -n 's/^ *AC_PREREQ(\([0-9\.]*\)).*/\1/p' configure.ac`
-
-## This will need improving if more options are ever added to the
-## AM_INIT_AUTOMAKE call.
-automake_min=`sed -n 's/^ *AM_INIT_AUTOMAKE(\([0-9\.]*\)).*/\1/p' configure.ac`
 
 
 ## $1 = program, eg "autoconf".
@@ -75,7 +71,7 @@ minor_version ()
 ## Return 3 for unexpected error (eg failed to parse version).
 check_version ()
 {
-    ## Respect eg $AUTOMAKE if it is set, like autoreconf does.
+    ## Respect, e.g., $AUTOCONF if it is set, like autoreconf does.
     uprog=`echo $1 | sed -e 's/-/_/g' -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
 
     eval uprog=\$${uprog}
@@ -131,7 +127,7 @@ case $do_autoconf,$do_git in
     do_autoconf=true;;
 esac
 
-# Generate Autoconf and Automake related files, if requested.
+# Generate Autoconf-related files, if requested.
 
 if $do_autoconf; then
 
@@ -229,77 +225,24 @@ Please report any problems with this script to bug-gnu-emacs@gnu.org .'
 
   fi                            # do_check
 
-  ## Create nt/gnulib.mk if it doesn't exist, as autoreconf will need it.
-  if test ! -f nt/gnulib.mk; then
-      echo 'Inferring nt/gnulib.mk from lib/gnulib.mk ...'
-      metascript='/^[^#]/s|^.*$|/^## begin  *gnulib module &/,/^## end  *gnulib module &/d|p'
-      script=`sed -n "$metascript" nt/gnulib-modules-to-delete.cfg` || exit
-      sed "$script" lib/gnulib.mk > nt/gnulib.mk || exit
-  fi
+  # Build aclocal.m4 here so that autoreconf need not use aclocal.
+  # aclocal is part of Automake and might not be installed, and
+  # autoreconf skips aclocal if aclocal.m4 is already supplied.
+  ls m4/*.m4 | LC_ALL=C sort | sed 's,.*\.m4$,m4_include([&]),' \
+    > aclocal.m4.tmp || exit
+  if cmp -s aclocal.m4.tmp aclocal.m4; then
+    rm -f aclocal.m4.tmp
+  else
+    echo "Building aclocal.m4 ..."
+    mv aclocal.m4.tmp aclocal.m4
+  fi || exit
 
   echo "Running 'autoreconf -fi -I m4' ..."
 
   ## Let autoreconf figure out what, if anything, needs doing.
   ## Use autoreconf's -f option in case autoreconf itself has changed.
-  autoreconf -fi -I m4 || exit $?
-
-  ## Create a timestamp, so that './autogen.sh; make' doesn't
-  ## cause 'make' to needlessly run 'autoheader'.
-  echo timestamp > src/stamp-h.in || exit
+  autoreconf -fi -I m4 || exit
 fi
-
-
-# True if the Git setup was OK before autogen.sh was run.
-
-git_was_ok=true
-
-if $do_git; then
-    case `cp --help 2>/dev/null` in
-      *--backup*--verbose*)
-	cp_options='--backup=numbered --verbose';;
-      *)
-	cp_options='-f';;
-    esac
-fi
-
-
-# Like 'git config NAME VALUE' but verbose on change and exiting on failure.
-# Also, do not configure unless requested.
-
-git_config ()
-{
-    name=$1
-    value=$2
-
-    ovalue=`git config --get "$name"` && test "$ovalue" = "$value" || {
-	if $do_git; then
-	    if $git_was_ok; then
-		echo 'Configuring local git repository...'
-		case $cp_options in
-		  --backup=*)
-		    config=$git_common_dir/config
-		    cp $cp_options --force -- "$config" "$config" || exit;;
-		esac
-	    fi
-	    echo "git config $name '$value'"
-	    git config "$name" "$value" || exit
-	fi
-	git_was_ok=false
-    }
-}
-
-## Configure Git, if requested.
-
-# Get location of Git's common configuration directory.  For older Git
-# versions this is just '.git'.  Newer Git versions support worktrees.
-
-{ test -e .git &&
-  git_common_dir=`git rev-parse --no-flags --git-common-dir 2>/dev/null` &&
-  test -n "$git_common_dir"
-} || git_common_dir=.git
-hooks=$git_common_dir/hooks
-
-# Check hashes when transferring objects among repositories.
 
 echo "You can now run './configure'."
 

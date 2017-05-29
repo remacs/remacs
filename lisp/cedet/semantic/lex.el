@@ -1,4 +1,4 @@
-;;; semantic/lex.el --- Lexical Analyzer builder
+;;; semantic/lex.el --- Lexical Analyzer builder  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
@@ -190,7 +190,7 @@
   "Call function FUN on every symbol in TABLE.
 If optional PROPERTY is non-nil, call FUN only on every symbol which
 as a PROPERTY value.  FUN receives a symbol as argument."
-  (if (arrayp table)
+  (if (obarrayp table)
       (mapatoms
        #'(lambda (symbol)
            (if (or (null property) (get symbol property))
@@ -213,7 +213,7 @@ These keywords are matched explicitly, and converted into special symbols.")
 
 (defsubst semantic-lex-keyword-symbol (name)
   "Return keyword symbol with NAME or nil if not found."
-  (and (arrayp semantic-flex-keywords-obarray)
+  (and (obarrayp semantic-flex-keywords-obarray)
        (stringp name)
        (intern-soft name semantic-flex-keywords-obarray)))
 
@@ -337,13 +337,13 @@ so that analysis can continue, if possible."
   "Buffer local types obarray for the lexical analyzer.")
 (make-variable-buffer-local 'semantic-lex-types-obarray)
 
-(defmacro semantic-lex-type-invalid (type)
+(defun semantic-lex-type-invalid (type)
   "Signal that TYPE is an invalid lexical type name."
-  `(signal 'wrong-type-argument '(semantic-lex-type-p ,type)))
+  (signal 'wrong-type-argument `(semantic-lex-type-p ,type)))
 
 (defsubst semantic-lex-type-symbol (type)
   "Return symbol with TYPE or nil if not found."
-  (and (arrayp semantic-lex-types-obarray)
+  (and (obarrayp semantic-lex-types-obarray)
        (stringp type)
        (intern-soft type semantic-lex-types-obarray)))
 
@@ -635,7 +635,7 @@ This specifies how many lists to create tokens in.")
 (make-variable-buffer-local 'semantic-lex-depth)
 
 (defvar semantic-lex-unterminated-syntax-end-function
-  (lambda (syntax syntax-start lex-end) lex-end)
+  (lambda (_syntax _syntax-start lex-end) lex-end)
   "Function called when unterminated syntax is encountered.
 This should be set to one function.  That function should take three
 parameters.  The SYNTAX, or type of syntax which is unterminated.
@@ -1779,7 +1779,7 @@ If there is no error, then the last value of FORMS is returned."
 See variable `semantic-lex-tokens'.")
 
 (defvar semantic-flex-unterminated-syntax-end-function
-  (lambda (syntax syntax-start flex-end) flex-end)
+  (lambda (_syntax _syntax-start flex-end) flex-end)
   "Function called when unterminated syntax is encountered.
 This should be set to one function.  That function should take three
 parameters.  The SYNTAX, or type of syntax which is unterminated.

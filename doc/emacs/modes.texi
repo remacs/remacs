@@ -66,7 +66,10 @@ process (@pxref{Interactive Shell}).
 first visit a file or create a buffer (@pxref{Choosing Modes}).  You
 can explicitly select a new major mode by using an @kbd{M-x} command.
 Take the name of the mode and add @code{-mode} to get the name of the
-command to select that mode (e.g., @kbd{M-x lisp-mode} enters Lisp mode).
+command to select that mode (e.g., @kbd{M-x lisp-mode} enters Lisp
+mode).  Since every buffer has exactly one major mode, there is no way
+to ``turn off'' a major mode; instead you must switch to a different
+one.
 
 @vindex major-mode
   The value of the buffer-local variable @code{major-mode} is a symbol

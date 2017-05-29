@@ -115,15 +115,16 @@ appended when the minibuffer frame is created."
 (defun handle-delete-frame (event)
   "Handle delete-frame events from the X server."
   (interactive "e")
-  (let ((frame (posn-window (event-start event)))
-	(i 0)
-	(tail (frame-list)))
-    (while tail
-      (and (frame-visible-p (car tail))
-	   (not (eq (car tail) frame))
-	  (setq i (1+ i)))
-      (setq tail (cdr tail)))
-    (if (> i 0)
+  (let* ((frame (posn-window (event-start event))))
+    (if (catch 'other-frame
+          (dolist (frame-1 (frame-list))
+            ;; A valid "other" frame is visible, has its `delete-before'
+            ;; parameter unset and is not a child frame.
+            (when (and (not (eq frame-1 frame))
+                       (frame-visible-p frame-1)
+                       (not (frame-parent frame-1))
+                       (not (frame-parameter frame-1 'delete-before)))
+              (throw 'other-frame t))))
 	(delete-frame frame t)
       ;; Gildea@x.org says it is ok to ask questions before terminating.
       (save-buffers-kill-emacs))))
@@ -144,6 +145,13 @@ Focus-out events occur when no frame has focus.
 This function runs the hook `focus-out-hook'."
   (interactive "e")
   (run-hooks 'focus-out-hook))
+
+(defun handle-move-frame (event)
+  "Handle a move-frame event.
+This function runs the abnormal hook `move-frame-functions'."
+  (interactive "e")
+  (let ((frame (posn-window (event-start event))))
+    (run-hook-with-args 'move-frame-functions frame)))
 
 ;;;; Arrangement of frames at startup
 
@@ -827,21 +835,24 @@ All frames are arranged in a cyclic order.
 This command selects the frame ARG steps away in that order.
 A negative ARG moves in the opposite order.
 
-To make this command work properly, you must tell Emacs
-how the system (or the window manager) generally handles
-focus-switching between windows.  If moving the mouse onto a window
-selects it (gives it focus), set `focus-follows-mouse' to t.
-Otherwise, that variable should be nil."
+To make this command work properly, you must tell Emacs how the
+system (or the window manager) generally handles focus-switching
+between windows.  If moving the mouse onto a window selects
+it (gives it focus), set `focus-follows-mouse' to t.  Otherwise,
+that variable should be nil."
   (interactive "p")
-  (let ((frame (selected-frame)))
+  (let ((sframe (selected-frame))
+        (frame (selected-frame)))
     (while (> arg 0)
       (setq frame (next-frame frame))
-      (while (not (eq (frame-visible-p frame) t))
+      (while (and (not (eq frame sframe))
+                  (not (eq (frame-visible-p frame) t)))
 	(setq frame (next-frame frame)))
       (setq arg (1- arg)))
     (while (< arg 0)
       (setq frame (previous-frame frame))
-      (while (not (eq (frame-visible-p frame) t))
+      (while (and (not (eq frame sframe))
+                  (not (eq (frame-visible-p frame) t)))
 	(setq frame (previous-frame frame)))
       (setq arg (1+ arg)))
     (select-frame-set-input-focus frame)))
@@ -1373,6 +1384,7 @@ and width values are in pixels.
        '(outer-position 0 . 0)
        (cons 'outer-size (cons (frame-width frame) (frame-height frame)))
        '(external-border-size 0 . 0)
+       '(outer-border-width . 0)
        '(title-bar-size 0 . 0)
        '(menu-bar-external . nil)
        (let ((menu-bar-lines (frame-parameter frame 'menu-bar-lines)))
@@ -1453,6 +1465,7 @@ position (0, 0) of the selected frame's terminal."
      (t
       (cons 0 0)))))
 
+(declare-function ns-set-mouse-absolute-pixel-position "nsfns.m" (x y))
 (declare-function w32-set-mouse-absolute-pixel-position "w32fns.c" (x y))
 (declare-function x-set-mouse-absolute-pixel-position "xfns.c" (x y))
 
@@ -1462,6 +1475,8 @@ The coordinates X and Y are interpreted in pixels relative to a
 position (0, 0) of the selected frame's terminal."
   (let ((frame-type (framep-on-display)))
     (cond
+     ((eq frame-type 'ns)
+      (ns-set-mouse-absolute-pixel-position x y))
      ((eq frame-type 'x)
       (x-set-mouse-absolute-pixel-position x y))
      ((eq frame-type 'w32)
@@ -1483,6 +1498,88 @@ keys and their meanings."
 	   for frames = (cdr (assq 'frames attributes))
 	   if (memq frame frames) return attributes))
 
+(declare-function x-frame-list-z-order "xfns.c" (&optional display))
+(declare-function w32-frame-list-z-order "w32fns.c" (&optional display))
+(declare-function ns-frame-list-z-order "nsfns.m" (&optional display))
+
+(defun frame-list-z-order (&optional display)
+  "Return list of Emacs' frames, in Z (stacking) order.
+The optional argument DISPLAY specifies which display to poll.
+DISPLAY should be either a frame or a display name (a string).
+If omitted or nil, that stands for the selected frame's display.
+
+Frames are listed from topmost (first) to bottommost (last).  As
+a special case, if DISPLAY is non-nil and specifies a live frame,
+return the child frames of that frame in Z (stacking) order.
+
+Return nil if DISPLAY contains no Emacs frame."
+  (let ((frame-type (framep-on-display display)))
+    (cond
+     ((eq frame-type 'x)
+      (x-frame-list-z-order display))
+     ((eq frame-type 'w32)
+      (w32-frame-list-z-order display))
+     ((eq frame-type 'ns)
+      (ns-frame-list-z-order display)))))
+
+(declare-function x-frame-restack "xfns.c" (frame1 frame2 &optional above))
+(declare-function w32-frame-restack "w32fns.c" (frame1 frame2 &optional above))
+(declare-function ns-frame-restack "nsfns.m" (frame1 frame2 &optional above))
+
+(defun frame-restack (frame1 frame2 &optional above)
+  "Restack FRAME1 below FRAME2.
+This implies that if both frames are visible and the display
+areas of these frames overlap, FRAME2 will (partially) obscure
+FRAME1.  If the optional third argument ABOVE is non-nil, restack
+FRAME1 above FRAME2.  This means that if both frames are visible
+and the display areas of these frames overlap, FRAME1 will
+\(partially) obscure FRAME2.
+
+This may be thought of as an atomic action performed in two
+steps: The first step removes FRAME1's window-system window from
+the display.  The second step reinserts FRAME1's window
+below (above if ABOVE is true) that of FRAME2.  Hence the
+position of FRAME2 in its display's Z (stacking) order relative
+to all other frames excluding FRAME1 remains unaltered.
+
+Some window managers may refuse to restack windows. "
+  (if (and (frame-live-p frame1)
+           (frame-live-p frame2)
+           (equal (frame-parameter frame1 'display)
+                  (frame-parameter frame2 'display)))
+      (let ((frame-type (framep-on-display frame1)))
+        (cond
+         ((eq frame-type 'x)
+          (x-frame-restack frame1 frame2 above))
+         ((eq frame-type 'w32)
+          (w32-frame-restack frame1 frame2 above))
+         ((eq frame-type 'ns)
+          (ns-frame-restack frame1 frame2 above))))
+    (error "Cannot restack frames")))
+
+(defun frame-size-changed-p (&optional frame)
+  "Return non-nil when the size of FRAME has changed.
+More precisely, return non-nil when the inner width or height of
+FRAME has changed since `window-size-change-functions' was run
+for FRAME."
+  (let* ((frame (window-normalize-frame frame))
+         (root (frame-root-window frame))
+         (mini (minibuffer-window frame))
+         (mini-height-before-size-change 0)
+         (mini-height 0))
+    ;; FRAME's minibuffer window counts iff it's on FRAME and FRAME is
+    ;; not a minibuffer-only frame.
+    (when (and (eq (window-frame mini) frame) (not (eq mini root)))
+      (setq mini-height-before-size-change
+            (window-pixel-height-before-size-change mini))
+      (setq mini-height (window-pixel-height mini)))
+    ;; Return non-nil when either the width of the root or the sum of
+    ;; the heights of root and minibuffer window changed.
+    (or (/= (window-pixel-width-before-size-change root)
+            (window-pixel-width root))
+        (/= (+ (window-pixel-height-before-size-change root)
+               mini-height-before-size-change)
+            (+ (window-pixel-height root) mini-height)))))
 
 ;;;; Frame/display capabilities.
 
@@ -1856,7 +1953,7 @@ A geometry specification equivalent to SPEC for FRAME is returned,
 where the value is a cons with car `+', not numeric.
 SPEC is a frame geometry spec: (left . VALUE) or (top . VALUE).
 If VALUE is a number, then it is converted to a cons value, perhaps
-   relative to the opposite frame edge from that in the original spec.
+relative to the opposite frame edge from that in the original spec.
 FRAME defaults to the selected frame.
 
 Examples (measures in pixels) -
@@ -1877,24 +1974,36 @@ the opposite frame edge from the edge indicated in the input spec."
 (defun delete-other-frames (&optional frame)
   "Delete all frames on FRAME's terminal, except FRAME.
 If FRAME uses another frame's minibuffer, the minibuffer frame is
-left untouched.  FRAME must be a live frame and defaults to the
-selected one."
+left untouched.  Do not delete any of FRAME's child frames.  If
+FRAME is a child frame, delete its siblings only.  FRAME must be
+a live frame and defaults to the selected one."
   (interactive)
   (setq frame (window-normalize-frame frame))
   (let ((minibuffer-frame (window-frame (minibuffer-window frame)))
         (this (next-frame frame t))
+        (parent (frame-parent frame))
         next)
     ;; In a first round consider minibuffer-less frames only.
     (while (not (eq this frame))
       (setq next (next-frame this t))
-      (unless (eq (window-frame (minibuffer-window this)) this)
+      (unless (or (eq (window-frame (minibuffer-window this)) this)
+                  ;; When FRAME is a child frame, delete its siblings
+                  ;; only.
+                  (and parent (not (eq (frame-parent this) parent)))
+                  ;; Do not delete a child frame of FRAME.
+                  (eq (frame-parent this) frame))
         (delete-frame this))
       (setq this next))
     ;; In a second round consider all remaining frames.
     (setq this (next-frame frame t))
     (while (not (eq this frame))
       (setq next (next-frame this t))
-      (unless (eq this minibuffer-frame)
+      (unless (or (eq this minibuffer-frame)
+                  ;; When FRAME is a child frame, delete its siblings
+                  ;; only.
+                  (and parent (not (eq (frame-parent this) parent)))
+                  ;; Do not delete a child frame of FRAME.
+                  (eq (frame-parent this) frame))
         (delete-frame this))
       (setq this next))))
 

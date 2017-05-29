@@ -20,6 +20,7 @@
 ;;; Code:
 
 (require 'ert)
+(eval-when-compile (require 'cl-lib))
 
 (defmacro simple-test--dummy-buffer (&rest body)
   (declare (indent 0)
@@ -35,6 +36,8 @@
              (buffer-substring (point) (point-max))))))
 
 
+
+;;; `transpose-sexps'
 (defmacro simple-test--transpositions (&rest body)
   (declare (indent 0)
            (debug t))
@@ -45,6 +48,13 @@
      ,@body
      (cons (buffer-substring (point-min) (point))
            (buffer-substring (point) (point-max)))))
+
+;;; Transposition with negative args (bug#20698, bug#21885)
+(ert-deftest simple-transpose-subr ()
+  (should (equal (simple-test--transpositions (transpose-sexps -1))
+                 '("(s1) (s2) (s4)" . " (s3) (s5)")))
+  (should (equal (simple-test--transpositions (transpose-sexps -2))
+                 '("(s1) (s4)" . " (s2) (s3) (s5)"))))
 
 
 ;;; `newline'
@@ -239,8 +249,8 @@
       (should (equal ?\s (char-syntax ?\f)))
       (should (equal ?\s (char-syntax ?\n))))))
 
-
-;;; auto-boundary tests
+
+;;; undo auto-boundary tests
 (ert-deftest undo-auto-boundary-timer ()
   (should
    undo-auto-current-boundary-timer))
@@ -268,14 +278,6 @@
      (setq buffer-undo-list nil)
      (insert "hello")
      (undo-auto--boundaries 'test))))
-
-;;; Transposition with negative args (bug#20698, bug#21885)
-(ert-deftest simple-transpose-subr ()
-  (should (equal (simple-test--transpositions (transpose-sexps -1))
-                 '("(s1) (s2) (s4)" . " (s3) (s5)")))
-  (should (equal (simple-test--transpositions (transpose-sexps -2))
-                 '("(s1) (s4)" . " (s2) (s3) (s5)"))))
-
 
 ;; Test for a regression introduced by undo-auto--boundaries changes.
 ;; https://lists.gnu.org/archive/html/emacs-devel/2015-11/msg01652.html
@@ -373,6 +375,78 @@ See Bug#21722."
        (undo-boundary)
        (undo)
        (point)))))
+
+
+;;; `eval-expression'
+
+(ert-deftest eval-expression-print-format-sym ()
+  (with-temp-buffer
+    (cl-letf (((symbol-function 'read--expression) (lambda (&rest _) t)))
+      (let ((current-prefix-arg '(4)))
+        (call-interactively #'eval-expression)
+        (should (equal (buffer-string) "t"))))))
+
+(ert-deftest eval-expression-print-format-sym-echo ()
+  ;; We can only check the echo area when running interactive.
+  (skip-unless (not noninteractive))
+  (with-temp-buffer
+    (cl-letf (((symbol-function 'read--expression) (lambda (&rest _) t)))
+      (let ((current-prefix-arg nil))
+        (message nil)
+        (call-interactively #'eval-expression)
+        (should (equal (current-message) "t"))))))
+
+(ert-deftest eval-expression-print-format-small-int ()
+  (with-temp-buffer
+    (cl-letf (((symbol-function 'read--expression) (lambda (&rest _) ?A)))
+      (let ((current-prefix-arg '(4)))
+        (erase-buffer)
+        (call-interactively #'eval-expression)
+        (should (equal (buffer-string) "65")))
+      (let ((current-prefix-arg 0))
+        (erase-buffer)
+        (call-interactively #'eval-expression)
+        (should (equal (buffer-string) "65 (#o101, #x41, ?A)"))))))
+
+(ert-deftest eval-expression-print-format-small-int-echo ()
+  (skip-unless (not noninteractive))
+  (with-temp-buffer
+    (cl-letf (((symbol-function 'read--expression) (lambda (&rest _) ?A)))
+      (let ((current-prefix-arg nil))
+        (message nil)
+        (call-interactively #'eval-expression)
+        (should (equal (current-message) "65 (#o101, #x41, ?A)"))))))
+
+(ert-deftest eval-expression-print-format-large-int ()
+  (with-temp-buffer
+    (cl-letf (((symbol-function 'read--expression) (lambda (&rest _) ?B))
+              (eval-expression-print-maximum-character ?A))
+      (let ((current-prefix-arg '(4)))
+        (erase-buffer)
+        (call-interactively #'eval-expression)
+        (should (equal (buffer-string) "66")))
+      (let ((current-prefix-arg 0))
+        (erase-buffer)
+        (call-interactively #'eval-expression)
+        (should (equal (buffer-string) "66 (#o102, #x42)")))
+      (let ((current-prefix-arg -1))
+        (erase-buffer)
+        (call-interactively #'eval-expression)
+        (should (equal (buffer-string) "66 (#o102, #x42, ?B)"))))))
+
+(ert-deftest eval-expression-print-format-large-int-echo ()
+  (skip-unless (not noninteractive))
+  (with-temp-buffer
+    (cl-letf (((symbol-function 'read--expression) (lambda (&rest _) ?B))
+              (eval-expression-print-maximum-character ?A))
+      (let ((current-prefix-arg nil))
+        (message nil)
+        (call-interactively #'eval-expression)
+        (should (equal (current-message) "66 (#o102, #x42)")))
+      (let ((current-prefix-arg '-))
+        (message nil)
+        (call-interactively #'eval-expression)
+        (should (equal (current-message) "66 (#o102, #x42, ?B)"))))))
 
 (provide 'simple-test)
 ;;; simple-test.el ends here

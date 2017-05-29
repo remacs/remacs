@@ -67,8 +67,6 @@ done
 AC_CONFIG_HEADERS(src/config.h:src/config.in)
 AC_CONFIG_SRCDIR(src/lisp.h)
 AC_CONFIG_AUX_DIR(build-aux)
-dnl automake 1.13 and later understand this, making -I m4 unnecessary.
-dnl With older versions this is a no-op.
 AC_CONFIG_MACRO_DIR(m4)
 
 xcsdkdir=
@@ -86,13 +84,7 @@ if test -n "$XCRUN"; then
   fi
 fi
 
-dnl GNU Make is required, so don't test for its individual features.
-am_cv_make_support_nested_variables=yes
-AC_DEFUN([AC_PROG_MAKE_SET],
-  [SET_MAKE=
-   AC_SUBST([SET_MAKE])])
-
-dnl Check for GNU Make and possibly set MAKE before running AM_INIT_AUTOMAKE.
+dnl Check for GNU Make and possibly set MAKE.
 [emacs_check_gnu_make ()
 {
   emacs_makeout=`($1 --version) 2>/dev/null` &&
@@ -131,9 +123,6 @@ For example, run '$0 MAKE=gnu-make'.]])
 }
 MAKE=$ac_cv_path_MAKE
 export MAKE
-
-dnl Fairly arbitrary, older versions might work too.
-AM_INIT_AUTOMAKE(1.11)
 
 dnl Canonicalize the configuration name.
 AC_CANONICAL_HOST
@@ -240,7 +229,21 @@ AC_DEFUN([OPTION_DEFAULT_ON], [dnl
    m4_bpatsubst([with_$1], [[^0-9a-z]], [_])=$with_features])dnl
 ])dnl
 
-OPTION_DEFAULT_ON([pop],[don't support POP mail retrieval with movemail])
+# FIXME: The default options '--without-mailutils --with-pop' result
+# in a movemail implementation that supports only unencrypted POP3
+# connections.  Encrypted connections should be the default.
+
+OPTION_DEFAULT_OFF([mailutils],
+  [rely on GNU Mailutils, so that the --without-pop through --with-mailhost
+   options are irrelevant])
+if test "$with_mailutils" = no; then
+  with_mailutils=
+fi
+AC_SUBST([with_mailutils])
+
+OPTION_DEFAULT_ON([pop],
+  [don't support POP mail retrieval with movemail (--without-pop or
+   --with-mailutils is recommended, as movemail POP is insecure)])
 if test "$with_pop" = yes; then
    AC_DEFINE(MAIL_USE_POP)
 fi
@@ -384,9 +387,6 @@ OPTION_DEFAULT_OFF([xwidgets],
 dnl http://lists.gnu.org/archive/html/emacs-devel/2008-04/msg01844.html
 OPTION_DEFAULT_ON([makeinfo],[don't require makeinfo for building manuals])
 
-## This might be a 'configure' arg.
-AC_SUBST([ACLOCAL_PATH])
-
 ## Makefile.in needs the cache file name.
 AC_SUBST(cache_file)
 
@@ -402,12 +402,9 @@ AC_ARG_WITH(gameuser,dnl
 		An argument prefixed by ':' specifies a group instead.])])
 gameuser=
 gamegroup=
-# We don't test if we can actually chown/chgrp here, because configure
-# may run without root privileges.  lib-src/Makefile.in will handle
-# any errors due to missing user/group gracefully.
 case ${with_gameuser} in
-  no) ;;
-  "" | yes) gamegroup=games ;;
+  '' | no) ;;
+  yes) gamegroup=games ;;
   :*) gamegroup=${with_gameuser#:} ;;
   *) gameuser=${with_gameuser} ;;
 esac
@@ -755,13 +752,11 @@ fi
 dnl Emacs needs C99 or later.
 gl_PROG_CC_C99
 
-AM_PROG_CC_C_O
+AC_PROG_CC_C_O
 
 if test x$GCC = xyes; then
   test "x$GCC_TEST_OPTIONS" != x && CC="$CC $GCC_TEST_OPTIONS"
 fi
-
-AM_CONDITIONAL([BUILDING_FOR_WINDOWSNT], [test "x$opsys" = "xmingw32"])
 
 # Avoid gnulib's tests for -lcrypto, so that there's no static dependency on it.
 AC_DEFUN([gl_CRYPTO_CHECK])
@@ -872,9 +867,18 @@ AC_ARG_ENABLE([gcc-warnings],
    # just a release imported into Git for patch management.
    gl_gcc_warnings=no
    if test -e "$srcdir"/.git && test ! -f "$srcdir"/.tarball-version; then
-     gl_GCC_VERSION_IFELSE([5], [3], [gl_gcc_warnings=warn-only])]
-   fi
-)
+     gl_GCC_VERSION_IFELSE([5], [3], [gl_gcc_warnings=warn-only])
+   fi])
+
+AC_ARG_ENABLE([check-lisp-object-type],
+  [AS_HELP_STRING([--enable-check-lisp-object-type],
+     [Enable compile-time checks for the Lisp_Object data type,
+      which can catch some bugs during development.
+      The default is "no" if --enable-gcc-warnings is "no".])])
+if test "${enable_check_lisp_object_type-$gl_gcc_warnings}" != "no"; then
+  AC_DEFINE([CHECK_LISP_OBJECT_TYPE], 1,
+    [Define to enable compile-time checks for the Lisp_Object data type.])
+fi
 
 # clang is unduly picky about some things.
 AC_CACHE_CHECK([whether the compiler is clang], [emacs_cv_clang],
@@ -917,6 +921,8 @@ AS_IF([test $gl_gcc_warnings = no],
     [gl_WARN_ADD([-Werror], [WERROR_CFLAGS])])
   AC_SUBST([WERROR_CFLAGS])
 
+  nw="$nw -Wduplicated-branches"    # Too many false alarms
+  nw="$nw -Wformat-overflow=2"      # False alarms due to GCC bug 80776
   nw="$nw -Wsystem-headers"         # Don't let system headers trigger warnings
   nw="$nw -Woverlength-strings"     # Not a problem these days
   nw="$nw -Wformat-nonliteral"      # we do this a lot
@@ -957,6 +963,8 @@ AS_IF([test $gl_gcc_warnings = no],
 
   if test $emacs_cv_clang = yes; then
     nw="$nw -Wcast-align"
+    nw="$nw -Wdouble-promotion"
+    nw="$nw -Wmissing-braces"
   fi
 
   # This causes too much noise in the MinGW build
@@ -978,6 +986,7 @@ AS_IF([test $gl_gcc_warnings = no],
 
   # More things that clang is unduly picky about.
   if test $emacs_cv_clang = yes; then
+    gl_WARN_ADD([-Wno-missing-braces])
     gl_WARN_ADD([-Wno-tautological-compare])
     gl_WARN_ADD([-Wno-tautological-constant-out-of-range-compare])
   fi
@@ -1070,22 +1079,35 @@ if test "${enableval}" != "no"; then
    fi
 fi)
 
+
+dnl Automake replacements.
+AC_DEFUN([AM_CONDITIONAL],
+  [$2 && $1=1 || $1=
+   AC_SUBST([$1])])
+
 dnl Prefer silent make output.  For verbose output, use
 dnl 'configure --disable-silent-rules' or 'make V=1' .
-AM_SILENT_RULES([yes])
-dnl Port to Automake 1.11.
-dnl This section can be removed once we assume Automake 1.14 or later.
-: ${AM_V=$AM_DEFAULT_VERBOSITY}
-: ${AM_DEFAULT_V=$AM_DEFAULT_VERBOSITY}
+dnl This code is adapted from Automake.
+dnl Although it can be simplified now that GNU Make is assumed,
+dnl the simplification hasn't been done yet.
+AC_ARG_ENABLE([silent-rules],
+  [AS_HELP_STRING(
+     [--disable-silent-rules],
+     [verbose build output (undo: "make V=0")])])
+if test "$enable_silent_rules" = no; then
+  AM_DEFAULT_VERBOSITY=1
+else
+  AM_DEFAULT_VERBOSITY=0
+fi
+AM_V='$(V)'
+AM_DEFAULT_V='$(AM_DEFAULT_VERBOSITY)'
 AC_SUBST([AM_V])
-AM_SUBST_NOTMAKE([AM_V])
 AC_SUBST([AM_DEFAULT_V])
-AM_SUBST_NOTMAKE([AM_DEFAULT_V])
 AC_SUBST([AM_DEFAULT_VERBOSITY])
 
 dnl Some other nice autoconf tests.
+AC_PROG_INSTALL
 dnl These are commented out, since gl_EARLY and/or Autoconf already does them.
-dnl AC_PROG_INSTALL
 dnl AC_PROG_MKDIR_P
 dnl if test "x$RANLIB" = x; then
 dnl   AC_PROG_RANLIB
@@ -1160,6 +1182,16 @@ AC_PATH_PROG(GZIP_PROG, gzip)
 test $with_compress_install != yes && test -n "$GZIP_PROG" && \
    GZIP_PROG=" # $GZIP_PROG # (disabled by configure --without-compress-install)"
 
+AC_CACHE_CHECK([for 'find' args to delete a file],
+  [emacs_cv_find_delete],
+  [if touch conftest.tmp && find conftest.tmp -delete 2>/dev/null &&
+      test ! -f conftest.tmp
+   then emacs_cv_find_delete="-delete"
+   else emacs_cv_find_delete="-exec rm -f {} ';'"
+   fi])
+FIND_DELETE=$emacs_cv_find_delete
+AC_SUBST([FIND_DELETE])
+
 PAXCTL_dumped=
 PAXCTL_notdumped=
 if test $opsys = gnu-linux; then
@@ -1210,10 +1242,7 @@ AC_SUBST([PAXCTL_dumped])
 AC_SUBST([PAXCTL_notdumped])
 
 ## Require makeinfo >= 4.13 (last of the 4.x series) to build the manuals.
-if test "$MAKEINFO" != "no"; then
-  if test "$MAKEINFO" = "${am_missing_run}makeinfo"; then
-    MAKEINFO=makeinfo
-  fi
+if test "${MAKEINFO:=makeinfo}" != "no"; then
   case `($MAKEINFO --version) 2>/dev/null` in
     *' (GNU texinfo) '4.1[[3-9]]* | \
     *' (GNU texinfo) '[[5-9]]* | \
@@ -1244,6 +1273,7 @@ Either install a suitable version of makeinfo, or re-run configure
 with the '--without-makeinfo' option to build without the manuals.] )
   fi
 fi
+AC_SUBST([MAKEINFO])
 AC_SUBST(HAVE_MAKEINFO)
 
 if test $opsys = mingw32; then
@@ -1530,6 +1560,7 @@ esac
 AC_SUBST(LIB_MATH)
 AC_DEFINE_UNQUOTED(SYSTEM_TYPE, "$SYSTEM_TYPE",
   [The type of system you are compiling for; sets 'system-type'.])
+AC_SUBST([SYSTEM_TYPE])
 
 
 pre_PKG_CONFIG_CFLAGS=$CFLAGS
@@ -1714,6 +1745,7 @@ dnl AC_C_BIGENDIAN is done by gnulib.
 dnl check for Make feature
 
 AUTO_DEPEND=no
+AUTODEPEND_PARENTS='lib src'
 dnl check if we have GCC and autodepend is on.
 if test "$GCC" = yes && test "$ac_enable_autodepend" = yes; then
    AC_MSG_CHECKING([whether gcc understands -MMD -MF])
@@ -1947,6 +1979,25 @@ AC_SUBST(ns_self_contained)
 AC_SUBST(NS_OBJ)
 AC_SUBST(NS_OBJC_OBJ)
 
+if test "${HAVE_NS}" = yes; then
+  AC_CACHE_CHECK(
+    [if the Objective C compiler supports instancetype],
+    [emacs_cv_objc_instancetype],
+    [AC_LANG_PUSH([Objective C])
+     AC_COMPILE_IFELSE(
+       [AC_LANG_SOURCE([[@interface Test
+                          + (instancetype)test;
+                          @end]])],
+       emacs_cv_objc_instancetype=yes,
+       emacs_cv_objc_instancetype=no)
+     AC_LANG_POP([Objective C])])
+
+  if test x$emacs_cv_objc_instancetype = xyes ; then
+    AC_DEFINE(NATIVE_OBJC_INSTANCETYPE, 1,
+              [Define if ObjC compiler supports instancetype natively.])
+  fi
+fi
+
 HAVE_W32=no
 W32_OBJ=
 W32_LIBS=
@@ -1955,7 +2006,6 @@ CLIENTRES=
 CLIENTW=
 W32_RES_LINK=
 EMACS_MANIFEST=
-UPDATE_MANIFEST=
 if test "${with_w32}" != no; then
   case "${opsys}" in
     cygwin)
@@ -2023,7 +2073,6 @@ if test "${HAVE_W32}" = "yes"; then
     # the rc file), not a linker script.
     W32_RES_LINK="-Wl,emacs.res"
   else
-    UPDATE_MANIFEST=update-game-score.exe.manifest
     W32_OBJ="$W32_OBJ w32.o w32console.o w32heap.o w32inevt.o w32proc.o"
     W32_LIBS="$W32_LIBS -lwinmm -lgdi32 -lcomdlg32"
     W32_LIBS="$W32_LIBS -lmpr -lwinspool -lole32 -lcomctl32 -lusp10"
@@ -2043,7 +2092,6 @@ AC_SUBST(W32_OBJ)
 AC_SUBST(W32_LIBS)
 AC_SUBST(EMACSRES)
 AC_SUBST(EMACS_MANIFEST)
-AC_SUBST(UPDATE_MANIFEST)
 AC_SUBST(CLIENTRES)
 AC_SUBST(CLIENTW)
 AC_SUBST(W32_RES_LINK)
@@ -2196,7 +2244,6 @@ else
   fi
 fi
 AC_SUBST([HYBRID_MALLOC])
-AM_CONDITIONAL([HYBRID_MALLOC_LIB], [test -n "$HYBRID_MALLOC"])
 AC_SUBST(GMALLOC_OBJ)
 AC_SUBST(VMLIMIT_OBJ)
 
@@ -3451,6 +3498,8 @@ if test "${HAVE_MODULES}" = yes; then
 fi
 AC_SUBST(MODULES_OBJ)
 AC_SUBST(LIBMODULES)
+AC_SUBST(HAVE_MODULES)
+AC_SUBST(MODULES_SUFFIX)
 
 ### Use -lpng if available, unless '--with-png=no'.
 HAVE_PNG=no
@@ -3784,100 +3833,104 @@ fi
 AC_SUBST(LIBXML2_LIBS)
 AC_SUBST(LIBXML2_CFLAGS)
 
-# Check for mail-locking functions in a "mail" library.  Probably this should
-# have the same check as for liblockfile below.
-AC_CHECK_LIB(mail, maillock, have_mail=yes, have_mail=no)
-if test $have_mail = yes; then
-  LIBS_MAIL=-lmail
-  AC_DEFINE(HAVE_LIBMAIL, 1, [Define to 1 if you have the 'mail' library (-lmail).])
+BLESSMAIL_TARGET=
+LIBS_MAIL=
+if test ! "$with_mailutils"; then
+  # Check for mail-locking functions in a "mail" library.  Probably this should
+  # have the same check as for liblockfile below.
+  AC_CHECK_LIB([mail], [maillock], [have_mail=yes], [have_mail=no])
+  if test $have_mail = yes; then
+    LIBS_MAIL=-lmail
+    AC_DEFINE([HAVE_LIBMAIL], [1],
+      [Define to 1 if you have the 'mail' library (-lmail).])
 
-  OLD_LIBS=$LIBS
-  LIBS="$LIBS_MAIL $LIBS"
-  AC_CHECK_FUNCS(touchlock)
-  LIBS=$OLD_LIBS
-else
-  LIBS_MAIL=
-fi
-dnl Debian, at least:
-AC_CHECK_LIB(lockfile, maillock, have_lockfile=yes, have_lockfile=no)
-if test $have_lockfile = yes; then
-   LIBS_MAIL=-llockfile
-   AC_DEFINE(HAVE_LIBLOCKFILE, 1, [Define to 1 if you have the 'lockfile' library (-llockfile).])
-else
-# If we have the shared liblockfile, assume we must use it for mail
-# locking (e.g. Debian).  If we couldn't link against liblockfile
-# (no liblockfile.a installed), ensure that we don't need to.
-  dnl This works for files generally, not just executables.
-  dnl Should we look elsewhere for it?  Maybe examine /etc/ld.so.conf?
-  AC_CHECK_PROG(liblockfile, liblockfile.so, yes, no,
-                /usr/lib:/lib:/usr/local/lib:$LD_LIBRARY_PATH)
-  if test $ac_cv_prog_liblockfile = yes; then
-    AC_MSG_ERROR([Shared liblockfile found but can't link against it.
+    OLD_LIBS=$LIBS
+    LIBS="$LIBS_MAIL $LIBS"
+    AC_CHECK_FUNCS([touchlock])
+    LIBS=$OLD_LIBS
+  fi
+  dnl Debian, at least:
+  AC_CHECK_LIB([lockfile], [maillock], [have_lockfile=yes], [have_lockfile=no])
+  if test $have_lockfile = yes; then
+     LIBS_MAIL=-llockfile
+     AC_DEFINE([HAVE_LIBLOCKFILE], [1],
+       [Define to 1 if you have the 'lockfile' library (-llockfile).])
+  else
+    # If we have the shared liblockfile, assume we must use it for mail
+    # locking (e.g. Debian).  If we couldn't link against liblockfile
+    # (no liblockfile.a installed), ensure that we don't need to.
+    dnl This works for files generally, not just executables.
+    dnl Should we look elsewhere for it?  Maybe examine /etc/ld.so.conf?
+    AC_CHECK_PROG([liblockfile], [liblockfile.so], [yes], [no],
+		  [/usr/lib:/lib:/usr/local/lib:$LD_LIBRARY_PATH])
+    if test "$ac_cv_prog_liblockfile" = yes; then
+      AC_MSG_ERROR([Shared liblockfile found but can't link against it.
 This probably means that movemail could lose mail.
 There may be a 'development' package to install containing liblockfile.])
-  fi
-fi
-AC_CHECK_HEADERS_ONCE(maillock.h)
-AC_SUBST(LIBS_MAIL)
-
-## Define MAIL_USE_FLOCK (or LOCKF) if the mailer uses flock (or lockf) to
-## interlock access to the mail spool.  The alternative is a lock file named
-## /usr/spool/mail/$USER.lock.
-mail_lock=no
-case "$opsys" in
-  aix4-2) mail_lock="lockf" ;;
-
-  gnu|freebsd|dragonfly|netbsd|openbsd|darwin) mail_lock="flock" ;;
-
-  ## On GNU/Linux systems, both methods are used by various mail programs.
-  ## I assume most people are using newer mailers that have heard of flock.
-  ## Change this if you need to.
-  ## Debian contains a patch which says: "On Debian/GNU/Linux systems,
-  ## configure gets the right answers, and that means *NOT* using flock.
-  ## Using flock is guaranteed to be the wrong thing. See Debian Policy
-  ## for details." and then uses '#ifdef DEBIAN'.  Unfortunately the
-  ## Debian maintainer hasn't provided a clean fix for Emacs.
-  ## movemail.c will use 'maillock' when MAILDIR, HAVE_LIBMAIL and
-  ## HAVE_MAILLOCK_H are defined, so the following appears to be the
-  ## correct logic.  -- fx
-  ## We must check for HAVE_LIBLOCKFILE too, as movemail does.
-  ## liblockfile is a Free Software replacement for libmail, used on
-  ## Debian systems and elsewhere. -rfr.
-  gnu-*)
-    mail_lock="flock"
-    if test $have_mail = yes || test $have_lockfile = yes; then
-      test $ac_cv_header_maillock_h = yes && mail_lock=no
     fi
-    ;;
+  fi
+  AC_CHECK_HEADERS([maillock.h])
 
-  mingw32)
-    mail_lock="none-needed" ;;
-esac
+  ## Define MAIL_USE_FLOCK (or LOCKF) if the mailer uses flock (or lockf) to
+  ## interlock access to the mail spool.  The alternative is a lock file named
+  ## /usr/spool/mail/$USER.lock.
+  mail_lock=no
+  case $opsys in
+    aix4-2) mail_lock="lockf" ;;
 
-BLESSMAIL_TARGET=
-case "$mail_lock" in
-  flock) AC_DEFINE(MAIL_USE_FLOCK, 1, [Define if the mailer uses flock to interlock the mail spool.]) ;;
+    gnu|freebsd|dragonfly|netbsd|openbsd|darwin) mail_lock="flock" ;;
 
-  lockf) AC_DEFINE(MAIL_USE_LOCKF, 1, [Define if the mailer uses lockf to interlock the mail spool.]) ;;
+    ## On GNU/Linux systems, both methods are used by various mail programs.
+    ## I assume most people are using newer mailers that have heard of flock.
+    ## Change this if you need to.
+    ## Debian contains a patch which says: "On Debian/GNU/Linux systems,
+    ## configure gets the right answers, and that means *NOT* using flock.
+    ## Using flock is guaranteed to be the wrong thing. See Debian Policy
+    ## for details." and then uses '#ifdef DEBIAN'.  Unfortunately the
+    ## Debian maintainer hasn't provided a clean fix for Emacs.
+    ## movemail.c will use 'maillock' when MAILDIR, HAVE_LIBMAIL and
+    ## HAVE_MAILLOCK_H are defined, so the following appears to be the
+    ## correct logic.  -- fx
+    ## We must check for HAVE_LIBLOCKFILE too, as movemail does.
+    ## liblockfile is a Free Software replacement for libmail, used on
+    ## Debian systems and elsewhere. -rfr.
+    gnu-*)
+      mail_lock="flock"
+      if test $have_mail = yes || test $have_lockfile = yes; then
+	test $ac_cv_header_maillock_h = yes && mail_lock=no
+      fi ;;
 
-  none-needed) ;;
+    mingw32)
+      mail_lock="none-needed" ;;
+  esac
 
-  *) BLESSMAIL_TARGET="need-blessmail" ;;
-esac
-AC_SUBST(BLESSMAIL_TARGET)
+  case $mail_lock in
+    flock) AC_DEFINE([MAIL_USE_FLOCK], [1],
+	     [Define if the mailer uses flock to interlock the mail spool.]);;
+
+    lockf) AC_DEFINE([MAIL_USE_LOCKF], [1],
+	     [Define if the mailer uses lockf to interlock the mail spool.]);;
+
+    none-needed) ;;
+
+    *) BLESSMAIL_TARGET="need-blessmail" ;;
+  esac
+fi
+AC_SUBST([BLESSMAIL_TARGET])
+AC_SUBST([LIBS_MAIL])
 
 OLD_LIBS=$LIBS
 LIBS="$LIB_PTHREAD $LIB_MATH $LIBS"
 AC_CHECK_FUNCS(accept4 fchdir gethostname \
 getrusage get_current_dir_name \
-lrand48 random rint \
+lrand48 random rint trunc \
 select getpagesize setlocale newlocale \
 getrlimit setrlimit shutdown \
 pthread_sigmask strsignal setitimer \
 sendto recvfrom getsockname getifaddrs freeifaddrs \
 gai_strerror sync \
 getpwent endpwent getgrent endgrent \
-cfmakeraw cfsetspeed copysign __executable_start log2 prctl)
+cfmakeraw cfsetspeed __executable_start log2 prctl)
 LIBS=$OLD_LIBS
 
 dnl No need to check for posix_memalign if aligned_alloc works.
@@ -4164,7 +4217,7 @@ AC_CHECK_HEADERS(valgrind/valgrind.h)
 
 AC_CHECK_MEMBERS([struct unipair.unicode], [], [], [[#include <linux/kd.h>]])
 
-AC_CHECK_FUNCS_ONCE([sbrk tzset])
+AC_CHECK_FUNCS_ONCE([sbrk])
 
 ok_so_far=yes
 AC_CHECK_FUNC(socket, , ok_so_far=no)
@@ -4989,12 +5042,16 @@ else
 fi
 AC_SUBST(LIBX_OTHER)
 
+HAVE_OLDXMENU=no
 if test "$HAVE_GTK" = yes || test "$HAVE_X11" != yes; then
   LIBXMENU=
 elif test "$USE_X_TOOLKIT" = none; then
+  HAVE_OLDXMENU=yes
   LIBXMENU='$(oldXMenudir)/libXMenu11.a'
+  AUTODEPEND_PARENTS="$AUTODEPEND_PARENTS oldXMenu"
 else
   LIBXMENU='$(lwlibdir)/liblw.a'
+  AUTODEPEND_PARENTS="$AUTODEPEND_PARENTS lwlib"
 fi
 AC_SUBST(LIBXMENU)
 
@@ -5312,7 +5369,7 @@ optsep=
 emacs_config_features=
 for opt in XAW3D XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
   GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
-  LIBOTF XFT ZLIB TOOLKIT_SCROLL_BARS X_TOOLKIT X11 NS MODULES \
+  LIBOTF XFT ZLIB TOOLKIT_SCROLL_BARS X_TOOLKIT OLDXMENU X11 NS MODULES \
   XWIDGETS LIBSYSTEMD CANNOT_DUMP; do
 
     case $opt in
@@ -5422,23 +5479,15 @@ if test "$HAVE_NS" = "yes"; then
   AC_SUBST(ns_check_file)
 fi
 
+AC_CONFIG_FILES([Makefile lib/gnulib.mk])
+
 dnl config.status treats $srcdir specially, so I think this is ok...
 AC_CONFIG_FILES([$srcdir/doc/man/emacs.1])
 
-dnl Obviously there is duplication here wrt $SUBDIR_MAKEFILES.
-dnl You _can_ use that variable in AC_CONFIG_FILES, so long as any directory
-dnl using automake (ie lib/) is explicitly listed and not "hidden" in a variable
-dnl (else you get "no 'Makefile.am' found for any configure output").
-dnl This will work, but you get a config.status that is not quite right
-dnl (see http://lists.gnu.org/archive/html/bug-autoconf/2008-08/msg00028.html).
-dnl That doesn't have any obvious consequences for Emacs, but on the whole
-dnl it seems better to just live with the duplication.
-SUBDIR_MAKEFILES="lib/Makefile lib-src/Makefile oldXMenu/Makefile doc/emacs/Makefile doc/misc/Makefile doc/lispintro/Makefile doc/lispref/Makefile src/Makefile lwlib/Makefile lisp/Makefile leim/Makefile nextstep/Makefile nt/Makefile"
-
-AC_CONFIG_FILES([Makefile lib/Makefile lib-src/Makefile oldXMenu/Makefile \
-       doc/emacs/Makefile doc/misc/Makefile doc/lispintro/Makefile \
-       doc/lispref/Makefile src/Makefile lwlib/Makefile lisp/Makefile \
-       leim/Makefile nextstep/Makefile nt/Makefile])
+m4_define([subdir_makefiles],
+  [lib/Makefile lib-src/Makefile oldXMenu/Makefile doc/emacs/Makefile doc/misc/Makefile doc/lispintro/Makefile doc/lispref/Makefile src/Makefile lwlib/Makefile lisp/Makefile leim/Makefile nextstep/Makefile nt/Makefile])
+SUBDIR_MAKEFILES="subdir_makefiles"
+AC_CONFIG_FILES(subdir_makefiles)
 
 dnl test/ is not present in release tarfiles.
 opt_makefile=test/Makefile
@@ -5467,7 +5516,7 @@ AC_SUBST(SUBDIR_MAKEFILES_IN)
 dnl You might wonder (I did) why epaths.h is generated by running make,
 dnl rather than just letting configure generate it from epaths.in.
 dnl One reason is that the various paths are not fully expanded (see above);
-dnl eg gamedir=${prefix}/var/games/emacs.
+dnl e.g., gamedir='${localstatedir}/games/emacs'.
 dnl Secondly, the GNU Coding standards require that one should be able
 dnl to run 'make prefix=/some/where/else' and override the values set
 dnl by configure.  This also explains the 'move-if-change' test and
@@ -5508,6 +5557,34 @@ ${MAKE-make} -s MAKEFILE_NAME=do-not-make-Makefile etc-emacsver || \
 AC_MSG_ERROR(['etc/refcards/emacsver.tex' could not be made.])
 ])
 
+if test $AUTO_DEPEND = yes; then
+   for dir in $AUTODEPEND_PARENTS; do
+     AS_MKDIR_P([$dir/deps])
+   done
+fi
+
 AC_OUTPUT
+
+if test ! "$with_mailutils"; then
+  if test "$with_pop" = yes; then
+    AC_MSG_WARN([This configuration installs a 'movemail' program
+that retrieves POP3 email via only insecure channels.
+To omit insecure POP3, you can use '$0 --without-pop'.])
+  fi
+
+  case $opsys in
+    mingw32)
+      # Don't suggest GNU Mailutils, as it hasn't been ported.
+      ;;
+    *)
+      emacs_fix_movemail="use '$0 --with-mailutils'"
+      case `(movemail --version) 2>/dev/null` in
+	*Mailutils*) ;;
+	*) emacs_fix_movemail="install GNU Mailutils
+<http://mailutils.org> and $emacs_fix_movemail";;
+      esac
+      AC_MSG_NOTICE([You might want to $emacs_fix_movemail.]);;
+  esac
+fi
 
 test "$MAKE" = make || AC_MSG_NOTICE([Now you can run '$MAKE'.])

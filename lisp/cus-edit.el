@@ -1334,7 +1334,7 @@ suggest to customize that face, if it's customizable."
       (if (get face 'face-alias)
 	  (setq face (get face 'face-alias)))
       (unless (facep face)
-	(error "Invalid face %S" face))
+	(user-error "Invalid face %S" face))
       (funcall display-fun
 	       (list (list face 'custom-face))
 	       (format "*Customize Face: %s*"
@@ -3246,10 +3246,6 @@ Only match the specified window systems.")
 					   :sibling-args (:help-echo "\
 The X11 Window System.")
 					   x)
-				    (const :format "PM "
-					   :sibling-args (:help-echo "\
-OS/2 Presentation Manager.")
-					   pm)
 				    (const :format "W32 "
 					   :sibling-args (:help-echo "\
 MS Windows.")
@@ -4849,8 +4845,6 @@ if that value is non-nil."
 (put 'Custom-mode 'mode-class 'special)
 
 (define-obsolete-function-alias 'custom-mode 'Custom-mode "23.1")
-
-(add-to-list 'debug-ignored-errors "^Invalid face:? ")
 
 ;;; The End.
 

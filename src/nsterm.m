@@ -411,6 +411,23 @@ static CGPoint menu_mouse_point;
       ns_send_appdefined (-1);                                          \
     }
 
+
+/* GNUstep always shows decorations if the window is resizable,
+   miniaturizable or closable, but Cocoa does strange things in native
+   fullscreen mode if you don't have at least resizable enabled.
+
+   These flags will be OR'd or XOR'd with the NSWindow's styleMask
+   property depending on what we're doing. */
+#ifdef NS_IMPL_COCOA
+#define FRAME_DECORATED_FLAGS NSWindowStyleMaskTitled
+#else
+#define FRAME_DECORATED_FLAGS (NSWindowStyleMaskTitled              \
+                               | NSWindowStyleMaskResizable         \
+                               | NSWindowStyleMaskMiniaturizable    \
+                               | NSWindowStyleMaskClosable)
+#endif
+#define FRAME_UNDECORATED_FLAGS NSWindowStyleMaskBorderless
+
 /* TODO: get rid of need for these forward declarations */
 static void ns_condemn_scroll_bars (struct frame *f);
 static void ns_judge_scroll_bars (struct frame *f);
@@ -1300,7 +1317,7 @@ ns_clip_to_row (struct window *w, struct glyph_row *row,
 
 @implementation EmacsBell
 
-- (id)init;
+- (id)init
 {
   NSTRACE ("[EmacsBell init]");
   if ((self = [super init]))
@@ -1668,6 +1685,17 @@ x_destroy_window (struct frame *f)
    -------------------------------------------------------------------------- */
 {
   NSTRACE ("x_destroy_window");
+
+  /* If this frame has a parent window, detach it as not doing so can
+     cause a crash in GNUStep. */
+  if (FRAME_PARENT_FRAME (f) != NULL)
+    {
+      NSWindow *child = [FRAME_NS_VIEW (f) window];
+      NSWindow *parent = [FRAME_NS_VIEW (FRAME_PARENT_FRAME (f)) window];
+
+      [parent removeChildWindow: child];
+    }
+
   check_window_system (f);
   x_free_frame_resources (f);
   ns_window_num--;
@@ -1706,14 +1734,18 @@ x_set_offset (struct frame *f, int xoff, int yoff, int change_grav)
            - FRAME_TOOLBAR_HEIGHT (f))
         : f->top_pos;
 #ifdef NS_IMPL_GNUSTEP
-      if (f->left_pos < 100)
-        f->left_pos = 100;  /* don't overlap menu */
+      if (FRAME_PARENT_FRAME (f) == NULL)
+	{
+	  if (f->left_pos < 100)
+	    f->left_pos = 100;  /* don't overlap menu */
+	}
 #endif
       /* Constrain the setFrameTopLeftPoint so we don't move behind the
          menu bar.  */
-      NSPoint pt = NSMakePoint (SCREENMAXBOUND (f->left_pos),
-                                SCREENMAXBOUND ([fscreen frame].size.height
-                                                - NS_TOP_POS (f)));
+      NSPoint pt = NSMakePoint (SCREENMAXBOUND (f->left_pos
+                                                + NS_PARENT_WINDOW_LEFT_POS (f)),
+                                SCREENMAXBOUND (NS_PARENT_WINDOW_TOP_POS (f)
+                                                - f->top_pos));
       NSTRACE_POINT ("setFrameTopLeftPoint", pt);
       [[view window] setFrameTopLeftPoint: pt];
       f->size_hint_flags &= ~(XNegative|YNegative);
@@ -1738,7 +1770,6 @@ x_set_window_size (struct frame *f,
   EmacsView *view = FRAME_NS_VIEW (f);
   NSWindow *window = [view window];
   NSRect wr = [window frame];
-  int tb = FRAME_EXTERNAL_TOOL_BAR (f);
   int pixelwidth, pixelheight;
   int orig_height = wr.size.height;
 
@@ -1763,25 +1794,6 @@ x_set_window_size (struct frame *f,
       pixelwidth =  FRAME_TEXT_COLS_TO_PIXEL_WIDTH   (f, width);
       pixelheight = FRAME_TEXT_LINES_TO_PIXEL_HEIGHT (f, height);
     }
-
-  /* If we have a toolbar, take its height into account. */
-  if (tb && ! [view isFullscreen])
-    {
-    /* NOTE: previously this would generate wrong result if toolbar not
-             yet displayed and fixing toolbar_height=32 helped, but
-             now (200903) seems no longer needed */
-    FRAME_TOOLBAR_HEIGHT (f) =
-      NSHeight ([window frameRectForContentRect: NSMakeRect (0, 0, 0, 0)])
-        - FRAME_NS_TITLEBAR_HEIGHT (f);
-#if 0
-      /* Only breaks things here, removed by martin 2015-09-30.  */
-#ifdef NS_IMPL_GNUSTEP
-      FRAME_TOOLBAR_HEIGHT (f) -= 3;
-#endif
-#endif
-    }
-  else
-    FRAME_TOOLBAR_HEIGHT (f) = 0;
 
   wr.size.width = pixelwidth + f->border_width;
   wr.size.height = pixelheight;
@@ -1811,6 +1823,166 @@ x_set_window_size (struct frame *f,
   unblock_input ();
 }
 
+#ifdef NS_IMPL_COCOA
+void
+x_set_undecorated (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+/* --------------------------------------------------------------------------
+     Set frame F's `undecorated' parameter.  If non-nil, F's window-system
+     window is drawn without decorations, title, minimize/maximize boxes
+     and external borders.  This usually means that the window cannot be
+     dragged, resized, iconified, maximized or deleted with the mouse.  If
+     nil, draw the frame with all the elements listed above unless these
+     have been suspended via window manager settings.
+
+     GNUStep cannot change an existing window's style.
+   -------------------------------------------------------------------------- */
+{
+  EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
+  NSWindow *window = [view window];
+
+  NSTRACE ("x_set_undecorated");
+
+  if (!EQ (new_value, old_value))
+    {
+      block_input ();
+
+      if (NILP (new_value))
+        {
+          FRAME_UNDECORATED (f) = false;
+          [window setStyleMask: ((window.styleMask | FRAME_DECORATED_FLAGS)
+                                  ^ FRAME_UNDECORATED_FLAGS)];
+
+          [view createToolbar: f];
+        }
+      else
+        {
+          [window setToolbar: nil];
+          /* Do I need to release the toolbar here? */
+
+          FRAME_UNDECORATED (f) = true;
+          [window setStyleMask: ((window.styleMask | FRAME_UNDECORATED_FLAGS)
+                                 ^ FRAME_DECORATED_FLAGS)];
+        }
+
+      /* At this point it seems we don't have an active NSResponder,
+         so some key presses (TAB) are swallowed by the system. */
+      [window makeFirstResponder: view];
+
+      [view updateFrameSize: NO];
+      unblock_input ();
+    }
+}
+#endif /* NS_IMPL_COCOA */
+
+void
+x_set_parent_frame (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+/* --------------------------------------------------------------------------
+     Set frame F's `parent-frame' parameter.  If non-nil, make F a child
+     frame of the frame specified by that parameter.  Technically, this
+     makes F's window-system window a child window of the parent frame's
+     window-system window.  If nil, make F's window-system window a
+     top-level window--a child of its display's root window.
+
+     A child frame's `left' and `top' parameters specify positions
+     relative to the top-left corner of its parent frame's native
+     rectangle.  On macOS moving a parent frame moves all its child
+     frames too, keeping their position relative to the parent
+     unaltered.  When a parent frame is iconified or made invisible, its
+     child frames are made invisible.  When a parent frame is deleted,
+     its child frames are deleted too.
+
+     Whether a child frame has a tool bar may be window-system or window
+     manager dependent.  It's advisable to disable it via the frame
+     parameter settings.
+
+     Some window managers may not honor this parameter.
+   -------------------------------------------------------------------------- */
+{
+  struct frame *p = NULL;
+  NSWindow *parent, *child;
+
+  NSTRACE ("x_set_parent_frame");
+
+  if (!NILP (new_value)
+      && (!FRAMEP (new_value)
+	  || !FRAME_LIVE_P (p = XFRAME (new_value))
+	  || !FRAME_X_P (p)))
+    {
+      store_frame_param (f, Qparent_frame, old_value);
+      error ("Invalid specification of `parent-frame'");
+    }
+
+  if (p != FRAME_PARENT_FRAME (f))
+    {
+      parent = [FRAME_NS_VIEW (p) window];
+      child = [FRAME_NS_VIEW (f) window];
+
+      block_input ();
+      [parent addChildWindow: child
+                     ordered: NSWindowAbove];
+      unblock_input ();
+
+      fset_parent_frame (f, new_value);
+    }
+}
+
+void
+x_set_no_accept_focus (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+/*  Set frame F's `no-accept-focus' parameter which, if non-nil, hints
+ * that F's window-system window does not want to receive input focus
+ * via mouse clicks or by moving the mouse into it.
+ *
+ * If non-nil, this may have the unwanted side-effect that a user cannot
+ * scroll a non-selected frame with the mouse.
+ *
+ * Some window managers may not honor this parameter. */
+{
+  NSTRACE ("x_set_no_accept_focus");
+
+  if (!EQ (new_value, old_value))
+    FRAME_NO_ACCEPT_FOCUS (f) = !NILP (new_value);
+}
+
+void
+x_set_z_group (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+/* Set frame F's `z-group' parameter.  If `above', F's window-system
+   window is displayed above all windows that do not have the `above'
+   property set.  If nil, F's window is shown below all windows that
+   have the `above' property set and above all windows that have the
+   `below' property set.  If `below', F's window is displayed below
+   all windows that do.
+
+   Some window managers may not honor this parameter. */
+{
+  EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
+  NSWindow *window = [view window];
+
+  NSTRACE ("x_set_z_group");
+
+  if (NILP (new_value))
+    {
+      window.level = NSNormalWindowLevel;
+      FRAME_Z_GROUP (f) = z_group_none;
+    }
+  else if (EQ (new_value, Qabove))
+    {
+      window.level = NSNormalWindowLevel + 1;
+      FRAME_Z_GROUP (f) = z_group_above;
+    }
+  else if (EQ (new_value, Qabove_suspended))
+    {
+      /* Not sure what level this should be. */
+      window.level = NSNormalWindowLevel + 1;
+      FRAME_Z_GROUP (f) = z_group_above_suspended;
+    }
+  else if (EQ (new_value, Qbelow))
+    {
+      window.level = NSNormalWindowLevel - 1;
+      FRAME_Z_GROUP (f) = z_group_below;
+    }
+  else
+    error ("Invalid z-group specification");
+}
 
 static void
 ns_fullscreen_hook (struct frame *f)
@@ -2149,14 +2321,14 @@ frame_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_y)
    -------------------------------------------------------------------------- */
 {
   NSTRACE ("frame_set_mouse_pixel_position");
-  ns_raise_frame (f);
-#if 0
-  /* FIXME: this does not work, and what about GNUstep? */
+
+  /* FIXME: what about GNUstep? */
 #ifdef NS_IMPL_COCOA
-  [FRAME_NS_VIEW (f) lockFocus];
-  PSsetmouse ((float)pix_x, (float)pix_y);
-  [FRAME_NS_VIEW (f) unlockFocus];
-#endif
+  CGPoint mouse_pos =
+    CGPointMake(f->left_pos + pix_x,
+                f->top_pos + pix_y +
+                FRAME_NS_TITLEBAR_HEIGHT(f) + FRAME_TOOLBAR_HEIGHT(f));
+  CGWarpMouseCursorPosition (mouse_pos);
 #endif
 }
 
@@ -3043,11 +3215,8 @@ ns_draw_text_decoration (struct glyph_string *s, struct face *face,
             }
           else
             {
-              struct font *font;
-              unsigned long descent;
-
-              font=s->font;
-              descent = s->y + s->height - s->ybase;
+	      struct font *font = font_for_underline_metrics (s);
+              unsigned long descent = s->y + s->height - s->ybase;
 
               /* Use underline thickness of font, defaulting to 1. */
               thickness = (font && font->underline_thickness > 0)
@@ -3107,10 +3276,19 @@ ns_draw_text_decoration (struct glyph_string *s, struct face *face,
   if (face->strike_through_p)
     {
       NSRect r;
+      /* Y-coordinate and height of the glyph string's first glyph.
+	 We cannot use s->y and s->height because those could be
+	 larger if there are taller display elements (e.g., characters
+	 displayed with a larger font) in the same glyph row.  */
+      int glyph_y = s->ybase - s->first_glyph->ascent;
+      int glyph_height = s->first_glyph->ascent + s->first_glyph->descent;
+      /* Strike-through width and offset from the glyph string's
+	 top edge.  */
+      unsigned long h = 1;
       unsigned long dy;
 
-      dy = lrint ((s->height - 1) / 2);
-      r = NSMakeRect (x, s->y + dy, width, 1);
+      dy = lrint ((glyph_height - h) / 2);
+      r = NSMakeRect (x, glyph_y + dy, width, 1);
 
       if (face->strike_through_color_defaulted_p)
         [defaultCol set];
@@ -4069,7 +4247,6 @@ ns_read_socket (struct terminal *terminal, struct input_event *hold_quit)
         }
       else
         {
-          ptrdiff_t specpdl_count = SPECPDL_INDEX ();
           /* Run and wait for events.  We must always send one NX_APPDEFINED event
              to ourself, otherwise [NXApp run] will never exit.  */
           send_appdefined = YES;
@@ -4084,6 +4261,8 @@ ns_read_socket (struct terminal *terminal, struct input_event *hold_quit)
       q_event_ptr = NULL;
       unblock_input ();
     }
+  else
+    return -1;
 
   return nevents;
 }
@@ -4805,7 +4984,7 @@ ns_term_init (Lisp_Object display_name)
       /* this is a standard variable */
       ns_default ("AppleAntiAliasingThreshold", &tmp,
                  make_float (10.0), make_float (6.0), YES, NO);
-      ns_antialias_threshold = NILP (tmp) ? 10.0 : XFLOATINT (tmp);
+      ns_antialias_threshold = NILP (tmp) ? 10.0 : extract_float (tmp);
     }
 
   NSTRACE_MSG ("Colors");
@@ -5928,31 +6107,6 @@ not_in_argv (NSString *arg)
 }
 
 
-#ifdef NS_IMPL_COCOA
-/* Needed to pick up Ctrl-tab and possibly other events that Mac OS X
-   decided not to send key-down for.
-   See http://osdir.com/ml/editors.vim.mac/2007-10/msg00141.html
-   This only applies on Tiger and earlier.
-   If it matches one of these, send it on to keyDown. */
--(void)keyUp: (NSEvent *)theEvent
-{
-  int flags = [theEvent modifierFlags];
-  int code = [theEvent keyCode];
-
-  NSTRACE ("[EmacsView keyUp:]");
-
-  if (floor (NSAppKitVersionNumber) <= 824 /*NSAppKitVersionNumber10_4*/ &&
-      code == 0x30 && (flags & NSEventModifierFlagControl) && !(flags & NSEventModifierFlagCommand))
-    {
-      if (NS_KEYLOG)
-        fprintf (stderr, "keyUp: passed test");
-      ns_fake_keydown = YES;
-      [self keyDown: theEvent];
-    }
-}
-#endif
-
-
 /* <NSTextInput> implementation (called through super interpretKeyEvents:]). */
 
 
@@ -6307,7 +6461,7 @@ not_in_argv (NSString *arg)
       if (WINDOWP (window)
           && !EQ (window, last_mouse_window)
           && !EQ (window, selected_window)
-          && (focus_follows_mouse
+          && (!NILP (focus_follows_mouse)
               || (EQ (XWINDOW (window)->frame,
                       XWINDOW (selected_window)->frame))))
         {
@@ -6376,7 +6530,7 @@ not_in_argv (NSString *arg)
   return NO;
 }
 
-- (void) updateFrameSize: (BOOL) delay;
+- (void) updateFrameSize: (BOOL) delay
 {
   NSWindow *window = [self window];
   NSRect wr = [window frame];
@@ -6418,7 +6572,8 @@ not_in_argv (NSString *arg)
   newh = (int)wr.size.height - extra;
 
   NSTRACE_SIZE ("New size", NSMakeSize (neww, newh));
-  NSTRACE_MSG ("tool_bar_height: %d", emacsframe->tool_bar_height);
+  NSTRACE_MSG ("FRAME_TOOLBAR_HEIGHT: %d", FRAME_TOOLBAR_HEIGHT (emacsframe));
+  NSTRACE_MSG ("FRAME_NS_TITLEBAR_HEIGHT: %d", FRAME_NS_TITLEBAR_HEIGHT (emacsframe));
 
   cols = FRAME_PIXEL_WIDTH_TO_TEXT_COLS (emacsframe, neww);
   rows = FRAME_PIXEL_HEIGHT_TO_TEXT_LINES (emacsframe, newh);
@@ -6443,9 +6598,11 @@ not_in_argv (NSString *arg)
       SET_FRAME_GARBAGED (emacsframe);
       cancel_mouse_face (emacsframe);
 
-      wr = NSMakeRect (0, 0, neww, newh);
+      /* The next two lines appear to be setting the frame to the same
+         size as it already is.  Why are they there? */
+      // wr = NSMakeRect (0, 0, neww, newh);
 
-      [view setFrame: wr];
+      // [view setFrame: wr];
 
       // to do: consider using [NSNotificationCenter postNotificationName:].
       [self windowDidMove: // Update top/left.
@@ -6508,7 +6665,8 @@ not_in_argv (NSString *arg)
             old_title = 0;
           }
       }
-    else if (fs_state == FULLSCREEN_NONE && ! maximizing_resize)
+    else if (fs_state == FULLSCREEN_NONE && ! maximizing_resize
+             && [[self window] title] != NULL)
       {
         char *size_title;
         NSWindow *window = [self window];
@@ -6690,7 +6848,7 @@ not_in_argv (NSString *arg)
 }
 
 
-- (void)setFrame:(NSRect)frameRect;
+- (void)setFrame:(NSRect)frameRect
 {
   NSTRACE ("[EmacsView setFrame:" NSTRACE_FMT_RECT "]",
            NSTRACE_ARG_RECT (frameRect));
@@ -6711,7 +6869,35 @@ not_in_argv (NSString *arg)
 }
 
 
-- initFrameFromEmacs: (struct frame *)f
+- (void)createToolbar: (struct frame *)f
+{
+  EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
+  NSWindow *window = [view window];
+
+  toolbar = [[EmacsToolbar alloc] initForView: self withIdentifier:
+                   [NSString stringWithFormat: @"Emacs Frame %d",
+                             ns_window_num]];
+  [toolbar setVisible: NO];
+  [window setToolbar: toolbar];
+
+  /* Don't set frame garbaged until tool bar is up to date?
+     This avoids an extra clear and redraw (flicker) at frame creation.  */
+  if (FRAME_EXTERNAL_TOOL_BAR (f)) wait_for_tool_bar = YES;
+  else wait_for_tool_bar = NO;
+
+
+#ifdef NS_IMPL_COCOA
+  {
+    NSButton *toggleButton;
+    toggleButton = [window standardWindowButton: NSWindowToolbarButton];
+    [toggleButton setTarget: self];
+    [toggleButton setAction: @selector (toggleToolbar: )];
+  }
+#endif
+}
+
+
+- (instancetype) initFrameFromEmacs: (struct frame *)f
 {
   NSRect r, wr;
   Lisp_Object tem;
@@ -6750,12 +6936,15 @@ not_in_argv (NSString *arg)
 
   win = [[EmacsWindow alloc]
             initWithContentRect: r
-                      styleMask: (NSWindowStyleMaskResizable |
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
-                                  NSWindowStyleMaskTitled |
+                      styleMask: (FRAME_UNDECORATED (f)
+                                  ? FRAME_UNDECORATED_FLAGS
+                                  : FRAME_DECORATED_FLAGS
+#ifdef NS_IMPL_COCOA
+                                  | NSWindowStyleMaskResizable
+                                  | NSWindowStyleMaskMiniaturizable
+                                  | NSWindowStyleMaskClosable
 #endif
-                                  NSWindowStyleMaskMiniaturizable |
-                                  NSWindowStyleMaskClosable)
+                                  )
                         backing: NSBackingStoreBuffered
                           defer: YES];
 
@@ -6765,7 +6954,6 @@ not_in_argv (NSString *arg)
 
   wr = [win frame];
   bwidth = f->border_width = wr.size.width - r.size.width;
-  tibar_height = FRAME_NS_TITLEBAR_HEIGHT (f) = wr.size.height - r.size.height;
 
   [win setAcceptsMouseMovedEvents: YES];
   [win setDelegate: self];
@@ -6785,32 +6973,24 @@ not_in_argv (NSString *arg)
   [win setTitle: name];
 
   /* toolbar support */
-  toolbar = [[EmacsToolbar alloc] initForView: self withIdentifier:
-                         [NSString stringWithFormat: @"Emacs Frame %d",
-                                   ns_window_num]];
-  [win setToolbar: toolbar];
-  [toolbar setVisible: NO];
-
-  /* Don't set frame garbaged until tool bar is up to date?
-     This avoids an extra clear and redraw (flicker) at frame creation.  */
-  if (FRAME_EXTERNAL_TOOL_BAR (f)) wait_for_tool_bar = YES;
-  else wait_for_tool_bar = NO;
-
-
-#ifdef NS_IMPL_COCOA
-  {
-    NSButton *toggleButton;
-  toggleButton = [win standardWindowButton: NSWindowToolbarButton];
-  [toggleButton setTarget: self];
-  [toggleButton setAction: @selector (toggleToolbar: )];
-  }
-#endif
-  FRAME_TOOLBAR_HEIGHT (f) = 0;
+  if (! FRAME_UNDECORATED (f))
+    [self createToolbar: f];
 
   tem = f->icon_name;
   if (!NILP (tem))
     [win setMiniwindowTitle:
            [NSString stringWithUTF8String: SSDATA (tem)]];
+
+  if (FRAME_PARENT_FRAME (f) != NULL)
+    {
+      NSWindow *parent = [FRAME_NS_VIEW (FRAME_PARENT_FRAME (f)) window];
+      [parent addChildWindow: win
+                     ordered: NSWindowAbove];
+    }
+
+  if (FRAME_Z_GROUP (f) != z_group_none)
+      win.level = NSNormalWindowLevel
+        + (FRAME_Z_GROUP_BELOW (f) ? -1 : 1);
 
   {
     NSScreen *screen = [win screen];
@@ -6818,9 +6998,11 @@ not_in_argv (NSString *arg)
     if (screen != 0)
       {
         NSPoint pt = NSMakePoint
-          (IN_BOUND (-SCREENMAX, f->left_pos, SCREENMAX),
+          (IN_BOUND (-SCREENMAX, f->left_pos
+                     + NS_PARENT_WINDOW_LEFT_POS (f), SCREENMAX),
            IN_BOUND (-SCREENMAX,
-                     [screen frame].size.height - NS_TOP_POS (f), SCREENMAX));
+                     NS_PARENT_WINDOW_TOP_POS (f) - f->top_pos,
+                     SCREENMAX));
 
         [win setFrameTopLeftPoint: pt];
 
@@ -6842,7 +7024,15 @@ not_in_argv (NSString *arg)
   [self allocateGState];
 #endif
   [NSApp registerServicesMenuSendTypes: ns_send_types
-                           returnTypes: nil];
+                           returnTypes: [NSArray array]];
+
+  /* macOS Sierra automatically enables tabbed windows.  We can't
+     allow this to be enabled until it's available on a Free system.
+     Currently it only happens by accident and is buggy anyway. */
+#if defined (NS_IMPL_COCOA) && \
+  MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_12
+  [win setTabbingMode: NSWindowTabbingModeDisallowed];
+#endif
 
   ns_window_num++;
   return self;
@@ -6862,9 +7052,15 @@ not_in_argv (NSString *arg)
     return;
   if (screen != nil)
     {
-      emacsframe->left_pos = r.origin.x;
+      emacsframe->left_pos = r.origin.x - NS_PARENT_WINDOW_LEFT_POS (emacsframe);
       emacsframe->top_pos =
-        [screen frame].size.height - (r.origin.y + r.size.height);
+        NS_PARENT_WINDOW_TOP_POS (emacsframe) - (r.origin.y + r.size.height);
+
+      if (emacs_event)
+        {
+          emacs_event->kind = MOVE_FRAME_EVENT;
+          EV_TRAILER ((id)nil);
+        }
     }
 }
 
@@ -7281,9 +7477,6 @@ not_in_argv (NSString *arg)
         [fw setOpaque: NO];
 
       f->border_width = 0;
-      FRAME_NS_TITLEBAR_HEIGHT (f) = 0;
-      tobar_height = FRAME_TOOLBAR_HEIGHT (f);
-      FRAME_TOOLBAR_HEIGHT (f) = 0;
 
       nonfs_window = w;
 
@@ -7317,9 +7510,6 @@ not_in_argv (NSString *arg)
         [w setOpaque: NO];
 
       f->border_width = bwidth;
-      FRAME_NS_TITLEBAR_HEIGHT (f) = tibar_height;
-      if (FRAME_EXTERNAL_TOOL_BAR (f))
-        FRAME_TOOLBAR_HEIGHT (f) = tobar_height;
 
       // to do: consider using [NSNotificationCenter postNotificationName:] to send notifications.
 
@@ -7437,7 +7627,7 @@ not_in_argv (NSString *arg)
 }
 
 
-- menuDown: sender
+- (instancetype)menuDown: sender
 {
   NSTRACE ("[EmacsView menuDown:]");
   if (context_menu_value == -1)
@@ -7462,7 +7652,7 @@ not_in_argv (NSString *arg)
 
 
 /* this gets called on toolbar button click */
-- toolbarClicked: (id)item
+- (instancetype)toolbarClicked: (id)item
 {
   NSEvent *theEvent;
   int idx = [item tag] * TOOL_BAR_ITEM_NSLOTS;
@@ -7488,7 +7678,7 @@ not_in_argv (NSString *arg)
 }
 
 
-- toggleToolbar: (id)sender
+- (instancetype)toggleToolbar: (id)sender
 {
   NSTRACE ("[EmacsView toggleToolbar:]");
 
@@ -7716,7 +7906,7 @@ not_in_argv (NSString *arg)
    (gives a miniaturized version of the window); currently we use the latter for
    frames whose active buffer doesn't correspond to any file
    (e.g., '*scratch*') */
-- setMiniwindowImage: (BOOL) setMini
+- (instancetype)setMiniwindowImage: (BOOL) setMini
 {
   id image = [[self window] miniwindowImage];
   NSTRACE ("[EmacsView setMiniwindowImage:%d]", setMini);
@@ -7851,7 +8041,40 @@ not_in_argv (NSString *arg)
       NSTRACE_RETURN_RECT (frameRect);
       return frameRect;
     }
-#endif
+  else
+#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9 */
+    // Check that the proposed frameRect is visible in at least one
+    // screen.  If it is not, ask the system to reposition it (only
+    // for non-child windows).
+
+    if (!FRAME_PARENT_FRAME (((EmacsView *)[self delegate])->emacsframe))
+    {
+      NSArray *screens = [NSScreen screens];
+      NSUInteger nr_screens = [screens count];
+
+      int i;
+      BOOL frame_on_screen = NO;
+
+      for (i = 0; i < nr_screens; ++i)
+        {
+          NSScreen *s = [screens objectAtIndex: i];
+          NSRect scrRect = [s frame];
+
+          if (NSIntersectsRect(frameRect, scrRect))
+            {
+              frame_on_screen = YES;
+              break;
+            }
+        }
+
+      if (!frame_on_screen)
+        {
+          NSTRACE_MSG ("Frame outside screens; constraining");
+          frameRect = [super constrainFrameRect:frameRect toScreen:screen];
+          NSTRACE_RETURN_RECT (frameRect);
+          return frameRect;
+        }
+    }
 #endif
 
   return constrain_frame_rect(frameRect,
@@ -7985,6 +8208,11 @@ not_in_argv (NSString *arg)
 
   [super setFrameTopLeftPoint:point];
 }
+
+- (BOOL)canBecomeKeyWindow
+{
+  return !FRAME_NO_ACCEPT_FOCUS (((EmacsView *)[self delegate])->emacsframe);
+}
 @end /* EmacsWindow */
 
 
@@ -8030,7 +8258,7 @@ not_in_argv (NSString *arg)
   return r;
 }
 
-- initFrame: (NSRect )r window: (Lisp_Object)nwin
+- (instancetype)initFrame: (NSRect )r window: (Lisp_Object)nwin
 {
   NSTRACE ("[EmacsScroller initFrame: window:]");
 
@@ -8114,7 +8342,7 @@ not_in_argv (NSString *arg)
 }
 
 
-- condemn
+- (instancetype)condemn
 {
   NSTRACE ("[EmacsScroller condemn]");
   condemned =YES;
@@ -8122,7 +8350,7 @@ not_in_argv (NSString *arg)
 }
 
 
-- reprieve
+- (instancetype)reprieve
 {
   NSTRACE ("[EmacsScroller reprieve]");
   condemned =NO;
@@ -8177,7 +8405,7 @@ not_in_argv (NSString *arg)
 }
 
 
-- setPosition: (int)position portion: (int)portion whole: (int)whole
+- (instancetype)setPosition: (int)position portion: (int)portion whole: (int)whole
 {
   NSTRACE ("[EmacsScroller setPosition:portion:whole:]");
 
@@ -8256,7 +8484,7 @@ not_in_argv (NSString *arg)
 
 
 /* called manually thru timer to implement repeated button action w/hold-down */
-- repeatScroll: (NSTimer *)scrollEntry
+- (instancetype)repeatScroll: (NSTimer *)scrollEntry
 {
   NSEvent *e = [[self window] currentEvent];
   NSPoint p =  [[self window] mouseLocationOutsideOfEventStream];
@@ -8316,7 +8544,7 @@ not_in_argv (NSString *arg)
     case NSScrollerKnobSlot:  /* GNUstep-only */
       last_hit_part = scroll_bar_move_ratio; break;
     default:  /* NSScrollerNoPart? */
-      fprintf (stderr, "EmacsScoller-mouseDown: unexpected part %ld\n",
+      fprintf (stderr, "EmacsScroller-mouseDown: unexpected part %ld\n",
                (long) part);
       return;
     }
@@ -8375,7 +8603,7 @@ not_in_argv (NSString *arg)
                                  modifierFlags: [e modifierFlags]
                                      timestamp: [e timestamp]
                                   windowNumber: [e windowNumber]
-                                       context: [e context]
+                                       context: nil
                                    eventNumber: [e eventNumber]
                                     clickCount: [e clickCount]
                                       pressure: [e pressure]];

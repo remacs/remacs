@@ -25,6 +25,8 @@
 ;;; Code:
 
 
+(require 'diff-mode) ; For `diff-file-junk-re'.
+
 (provide 'ediff-ptch)
 
 (defgroup ediff-ptch nil
@@ -225,14 +227,11 @@ program."
 			(if (and beg2 end2)
 			    (buffer-substring beg2 end2)
 			  "/dev/null")))
-	    ;; check for any `Index:' or `Prereq:' lines, but don't use them
-	    (if (re-search-backward "^Index:" mark1-end 'noerror)
-		(move-marker mark2 (match-beginning 0)))
-	    (if (re-search-backward "^Prereq:" mark1-end 'noerror)
-		(move-marker mark2 (match-beginning 0)))
-
+            ;; Remove file junk (Bug#26084).
+            (while (re-search-backward
+                    (concat "^\\(?:" diff-file-junk-re "\\)") mark1-end t)
+                (move-marker mark2 (match-beginning 0)))
 	    (goto-char mark2-end)
-
 	    (if filenames
 		(setq patch-map
 		      (cons (ediff-make-new-meta-list-element
@@ -767,7 +766,7 @@ you can still examine the changes via M-x ediff-files"
 		(select-window aux-wind)
 		(goto-char (point-max))))
 	  (switch-to-buffer-other-window patch-diagnostics)
-	  (error "Patch appears to have failed")))
+	  (user-error "Patch appears to have failed")))
 
     ;; If black magic is involved, apply patch to a temp copy of the
     ;; file.  Otherwise, apply patch to the orig copy.  If patch is applied

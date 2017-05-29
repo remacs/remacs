@@ -246,6 +246,7 @@ extern void x_set_internal_border_width (struct frame *f,
 					 Lisp_Object value,
 					 Lisp_Object oldval);
 extern void initialize_frame_menubar (struct frame *);
+extern void w32_dialog_in_progress (Lisp_Object in_progress);
 
 /* w32inevt.c */
 extern int w32_kbd_patch_key (KEY_EVENT_RECORD *event, int cpId);
@@ -706,7 +707,7 @@ extern BOOL parse_button (int, int, int *, int *);
 
 extern void w32_sys_ring_bell (struct frame *f);
 extern void x_delete_display (struct w32_display_info *dpyinfo);
-
+extern void x_clear_under_internal_border (struct frame *f);
 extern void x_query_color (struct frame *, XColor *);
 
 #define FILE_NOTIFICATIONS_SIZE 16384

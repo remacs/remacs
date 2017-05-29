@@ -115,11 +115,11 @@
 (defun url-ldap (url)
   "Perform an LDAP search specified by URL.
 The return value is a buffer displaying the search results in HTML.
-URL can be a URL string, or a URL vector of the type returned by
+URL can be a URL string, or a URL record of the type returned by
 `url-generic-parse-url'."
   (if (stringp url)
       (setq url (url-generic-parse-url (url-unhex-string url)))
-    (if (not (vectorp url))
+    (if (not (url-p url))
         (error "Argument is not a valid URL")))
   (with-current-buffer (generate-new-buffer " *url-ldap*")
     (setq url-current-object url)

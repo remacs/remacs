@@ -62,10 +62,6 @@ enum
 /* Function prototype for the module init function.  */
 typedef int (*emacs_init_function) (struct emacs_runtime *);
 
-/* Function prototype for the module Lisp functions.  */
-typedef emacs_value (*emacs_subr) (emacs_env *, ptrdiff_t,
-				   emacs_value [], void *);
-
 /* Function prototype for module user-pointer finalizers.  These
    should not throw C++ exceptions, so emacs-module.h declares the
    corresponding interfaces with EMACS_NOEXCEPT.  There is only C code
@@ -102,7 +98,6 @@ struct emacs_runtime_private
 
 struct module_fun_env;
 
-static Lisp_Object module_format_fun_env (const struct module_fun_env *);
 static Lisp_Object value_to_lisp (emacs_value);
 static emacs_value lisp_to_value (Lisp_Object);
 static enum emacs_funcall_exit module_non_local_exit_check (emacs_env *);
@@ -114,7 +109,7 @@ static void module_handle_throw (emacs_env *, Lisp_Object);
 static void module_non_local_exit_signal_1 (emacs_env *, Lisp_Object, Lisp_Object);
 static void module_non_local_exit_throw_1 (emacs_env *, Lisp_Object, Lisp_Object);
 static void module_out_of_memory (emacs_env *);
-static void module_reset_handlerlist (const int *);
+static void module_reset_handlerlist (struct handler *const *);
 
 /* We used to return NULL when emacs_value was a different type from
    Lisp_Object, but nowadays we just use Qnil instead.  Although they
@@ -165,39 +160,24 @@ static emacs_value const module_nil = 0;
 
 /* TODO: Make backtraces work if this macros is used.  */
 
-#define MODULE_SETJMP_1(handlertype, handlerfunc, retval, c, dummy)	\
+#define MODULE_SETJMP_1(handlertype, handlerfunc, retval, c0, c)	\
   if (module_non_local_exit_check (env) != emacs_funcall_exit_return)	\
     return retval;							\
-  struct handler *c = push_handler_nosignal (Qt, handlertype);		\
-  if (!c)								\
+  struct handler *c0 = push_handler_nosignal (Qt, handlertype);		\
+  if (!c0)								\
     {									\
       module_out_of_memory (env);					\
       return retval;							\
     }									\
   verify (module_has_cleanup);						\
-  int dummy __attribute__ ((cleanup (module_reset_handlerlist)));	\
+  struct handler *c __attribute__ ((cleanup (module_reset_handlerlist))) \
+    = c0;								\
   if (sys_setjmp (c->jmp))						\
     {									\
       (handlerfunc) (env, c->val);					\
       return retval;							\
     }									\
   do { } while (false)
-
-
-/* Function environments.  */
-
-/* A function environment is an auxiliary structure used by
-   `module_make_function' to store information about a module
-   function.  It is stored in a save pointer and retrieved by
-   `internal--module-call'.  Its members correspond to the arguments
-   given to `module_make_function'.  */
-
-struct module_fun_env
-{
-  ptrdiff_t min_arity, max_arity;
-  emacs_subr subr;
-  void *data;
-};
 
 
 /* Implementation of runtime and environment functions.
@@ -362,12 +342,8 @@ module_non_local_exit_throw (emacs_env *env, emacs_value tag, emacs_value value)
 				   value_to_lisp (value));
 }
 
-/* A module function is lambda function that calls
-   `internal--module-call', passing the function pointer of the module
-   function along with the module emacs_env pointer as arguments.
-
-	(function (lambda (&rest arglist)
-		    (internal--module-call envobj arglist)))  */
+/* A module function is a pseudovector of subtype type
+   PVEC_MODULE_FUNCTION; see lisp.h for the definition.  */
 
 static emacs_value
 module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
@@ -378,35 +354,29 @@ module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
 
   if (! (0 <= min_arity
 	 && (max_arity < 0
-	     ? max_arity == emacs_variadic_function
-	     : min_arity <= max_arity)))
+	     ? (min_arity <= MOST_POSITIVE_FIXNUM
+		&& max_arity == emacs_variadic_function)
+	     : min_arity <= max_arity && max_arity <= MOST_POSITIVE_FIXNUM)))
     xsignal2 (Qinvalid_arity, make_number (min_arity), make_number (max_arity));
 
-  /* FIXME: This should be freed when envobj is GC'd.  */
-  struct module_fun_env *envptr = xmalloc (sizeof *envptr);
-  envptr->min_arity = min_arity;
-  envptr->max_arity = max_arity;
-  envptr->subr = subr;
-  envptr->data = data;
+  struct Lisp_Module_Function *function = allocate_module_function ();
+  function->min_arity = min_arity;
+  function->max_arity = max_arity;
+  function->subr = subr;
+  function->data = data;
 
-  Lisp_Object envobj = make_save_ptr (envptr);
-  Lisp_Object doc = Qnil;
   if (documentation)
     {
       AUTO_STRING (unibyte_doc, documentation);
-      doc = code_convert_string_norecord (unibyte_doc, Qutf_8, false);
+      function->documentation =
+        code_convert_string_norecord (unibyte_doc, Qutf_8, false);
     }
 
-  /* FIXME: Use a bytecompiled object, or even better a subr.  */
-  Lisp_Object ret = list4 (Qlambda,
-                           list2 (Qand_rest, Qargs),
-                           doc,
-                           list4 (Qapply,
-                                  list2 (Qfunction, Qinternal__module_call),
-                                  envobj,
-                                  Qargs));
+  Lisp_Object result;
+  XSET_MODULE_FUNCTION (result, function);
+  eassert (MODULE_FUNCTIONP (result));
 
-  return lisp_to_value (ret);
+  return lisp_to_value (result);
 }
 
 static emacs_value
@@ -669,31 +639,15 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
   return Qt;
 }
 
-DEFUN ("internal--module-call", Finternal_module_call, Sinternal_module_call, 1, MANY, 0,
-       doc: /* Internal function to call a module function.
-ENVOBJ is a save pointer to a module_fun_env structure.
-ARGLIST is a list of arguments passed to SUBRPTR.
-usage: (module-call ENVOBJ &rest ARGLIST)   */)
-  (ptrdiff_t nargs, Lisp_Object *arglist)
+Lisp_Object
+funcall_module (const struct Lisp_Module_Function *const function,
+                ptrdiff_t nargs, Lisp_Object *arglist)
 {
-  Lisp_Object envobj = arglist[0];
-  /* FIXME: Rather than use a save_value, we should create a new object type.
-     Making save_value visible to Lisp is wrong.  */
-  CHECK_TYPE (SAVE_VALUEP (envobj), Qsave_value_p, envobj);
-  struct Lisp_Save_Value *save_value = XSAVE_VALUE (envobj);
-  CHECK_TYPE (save_type (save_value, 0) == SAVE_POINTER, Qsave_pointer_p, envobj);
-  /* FIXME: We have no reason to believe that XSAVE_POINTER (envobj, 0)
-     is a module_fun_env pointer.  If some other part of Emacs also
-     exports save_value objects to Elisp, than we may be getting here this
-     other kind of save_value which will likely hold something completely
-     different in this field.  */
-  struct module_fun_env *envptr = XSAVE_POINTER (envobj, 0);
-  EMACS_INT len = nargs - 1;
-  eassume (0 <= envptr->min_arity);
-  if (! (envptr->min_arity <= len
-	 && len <= (envptr->max_arity < 0 ? PTRDIFF_MAX : envptr->max_arity)))
-    xsignal2 (Qwrong_number_of_arguments, module_format_fun_env (envptr),
-	      make_number (len));
+  eassume (0 <= function->min_arity);
+  if (! (function->min_arity <= nargs
+	 && (function->max_arity < 0 || nargs <= function->max_arity)))
+    xsignal2 (Qwrong_number_of_arguments, module_format_fun_env (function),
+	      make_number (nargs));
 
   emacs_env pub;
   struct emacs_env_private priv;
@@ -702,15 +656,15 @@ usage: (module-call ENVOBJ &rest ARGLIST)   */)
   USE_SAFE_ALLOCA;
   emacs_value *args;
   if (plain_values)
-    args = (emacs_value *) arglist + 1;
+    args = (emacs_value *) arglist;
   else
     {
-      args = SAFE_ALLOCA (len * sizeof *args);
-      for (ptrdiff_t i = 0; i < len; i++)
-	args[i] = lisp_to_value (arglist[i + 1]);
+      args = SAFE_ALLOCA (nargs * sizeof *args);
+      for (ptrdiff_t i = 0; i < nargs; i++)
+	args[i] = lisp_to_value (arglist[i]);
     }
 
-  emacs_value ret = envptr->subr (&pub, len, args, envptr->data);
+  emacs_value ret = function->subr (&pub, nargs, args, function->data);
   SAFE_FREE ();
 
   eassert (&priv == pub.private_members);
@@ -737,6 +691,15 @@ usage: (module-call ENVOBJ &rest ARGLIST)   */)
     default:
       eassume (false);
     }
+}
+
+Lisp_Object
+module_function_arity (const struct Lisp_Module_Function *const function)
+{
+  ptrdiff_t minargs = function->min_arity;
+  ptrdiff_t maxargs = function->max_arity;
+  return Fcons (make_number (minargs),
+		maxargs == MANY ? Qmany : make_number (maxargs));
 }
 
 
@@ -948,10 +911,12 @@ finalize_environment (struct emacs_env_private *env)
 /* Must be called after setting up a handler immediately before
    returning from the function.  See the comments in lisp.h and the
    code in eval.c for details.  The macros below arrange for this
-   function to be called automatically.  DUMMY is ignored.  */
+   function to be called automatically.  PHANDLERLIST points to a word
+   containing the handler list, for sanity checking.  */
 static void
-module_reset_handlerlist (const int *dummy)
+module_reset_handlerlist (struct handler *const *phandlerlist)
 {
+  eassert (handlerlist == *phandlerlist);
   handlerlist = handlerlist->next;
 }
 
@@ -976,10 +941,12 @@ module_handle_throw (emacs_env *env, Lisp_Object tag_val)
 
 /* Return a string object that contains a user-friendly
    representation of the function environment.  */
-static Lisp_Object
-module_format_fun_env (const struct module_fun_env *env)
+Lisp_Object
+module_format_fun_env (const struct Lisp_Module_Function *env)
 {
   /* Try to print a function name if possible.  */
+  /* FIXME: Move this function into print.c, then use prin1-to-string
+     above.  */
   const char *path, *sym;
   static char const noaddr_format[] = "#<module function at %p>";
   char buffer[sizeof noaddr_format + INT_STRLEN_BOUND (intptr_t) + 256];
@@ -1048,11 +1015,7 @@ syms_of_module (void)
      code or modules should not access it.  */
   Funintern (Qmodule_refs_hash, Qnil);
 
-  DEFSYM (Qsave_value_p, "save-value-p");
-  DEFSYM (Qsave_pointer_p, "save-pointer-p");
+  DEFSYM (Qmodule_function_p, "module-function-p");
 
   defsubr (&Smodule_load);
-
-  DEFSYM (Qinternal__module_call, "internal--module-call");
-  defsubr (&Sinternal_module_call);
 }

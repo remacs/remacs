@@ -1338,12 +1338,18 @@ indicate what it is.
 @cindex mode, Column Number
 @findex column-number-mode
   Similarly, you can display the current column number by turning on
-Column number mode with @kbd{M-x column-number-mode}.  The column
+Column Number mode with @kbd{M-x column-number-mode}.  The column
 number is indicated by the letter @samp{C}.  However, when both of
 these modes are enabled, the line and column numbers are displayed in
 parentheses, the line number first, rather than with @samp{L} and
 @samp{C}.  For example: @samp{(561,2)}.  @xref{Minor Modes}, for more
 information about minor modes and about how to use these commands.
+
+@vindex column-number-indicator-zero-based
+  In Column Number mode, the displayed column number counts from zero
+starting at the left margin of the window.  If you would prefer for
+the displayed column number to count from one, you may set
+@code{column-number-indicator-zero-based} to @code{nil}.
 
 @cindex narrowing, and line number display
   If you have narrowed the buffer (@pxref{Narrowing}), the displayed

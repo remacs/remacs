@@ -3057,8 +3057,7 @@ class_definition (struct sym *containing, int tag, int flags, int nested)
                  MATCH until we see something like `;' or `{'.  */
               while (!LOOKING_AT3 (';', YYEOF, '{'))
                 MATCH ();
-	      done = 1;
-
+	      FALLTHROUGH;
             case '{':
               done = 1;
 	      break;
@@ -3182,7 +3181,7 @@ declaration (int flags)
 	      free (id);
 	      return;
 	    }
-
+	  FALLTHROUGH;
         case '=':
           /* Assumed to be the start of an initialization in this
 	     context.  */

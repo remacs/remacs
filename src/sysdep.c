@@ -357,8 +357,8 @@ init_baud_rate (int fd)
    Use waitpid-style OPTIONS when waiting.
    If INTERRUPTIBLE, this function is interruptible by a signal.
 
-   Return CHILD if successful, 0 if no status is available;
-   the latter is possible only when options & NOHANG.  */
+   Return CHILD if successful, 0 if no status is available, and a
+   negative value (setting errno) if waitpid is buggy.  */
 static pid_t
 get_child_status (pid_t child, int *status, int options, bool interruptible)
 {
@@ -381,13 +381,14 @@ get_child_status (pid_t child, int *status, int options, bool interruptible)
       pid = waitpid (child, status, options);
       if (0 <= pid)
 	break;
-
-      /* Check that CHILD is a child process that has not been reaped,
-	 and that STATUS and OPTIONS are valid.  Otherwise abort,
-	 as continuing after this internal error could cause Emacs to
-	 become confused and kill innocent-victim processes.  */
       if (errno != EINTR)
-	emacs_abort ();
+	{
+	  /* Most likely, waitpid is buggy and the operating system
+	     lost track of the child somehow.  Return -1 and let the
+	     caller try to figure things out.  Possibly the bug could
+	     cause Emacs to kill the wrong process.  Oh well.  */
+	  return pid;
+	}
     }
 
   /* If successful and status is requested, tell wait_reading_process_output
@@ -402,11 +403,13 @@ get_child_status (pid_t child, int *status, int options, bool interruptible)
    CHILD must be a child process that has not been reaped.
    If STATUS is non-null, store the waitpid-style exit status into *STATUS
    and tell wait_reading_process_output that it needs to look around.
-   If INTERRUPTIBLE, this function is interruptible by a signal.  */
-void
+   If INTERRUPTIBLE, this function is interruptible by a signal.
+   Return true if successful, false (setting errno) if CHILD cannot be
+   waited for because waitpid is buggy.  */
+bool
 wait_for_termination (pid_t child, int *status, bool interruptible)
 {
-  get_child_status (child, status, 0, interruptible);
+  return 0 <= get_child_status (child, status, 0, interruptible);
 }
 
 /* Report whether the subprocess with process id CHILD has changed status.
@@ -3644,14 +3647,9 @@ Lisp_Object
 system_process_attributes (Lisp_Object pid)
 {
   int proc_id;
-  int pagesize = getpagesize ();
-  unsigned long npages;
-  int fscale;
   struct passwd *pw;
   struct group  *gr;
   char *ttyname;
-  size_t len;
-  char args[MAXPATHLEN];
   struct timeval starttime;
   struct timespec t, now;
   struct rusage *rusage;

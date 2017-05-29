@@ -8077,7 +8077,7 @@ compute_image_size (size_t width, size_t height,
 
   value = image_spec_value (spec, QCscale, NULL);
   if (NUMBERP (value))
-    scale = extract_float (value);
+    scale = XFLOATINT (value);
 
   /* If width and/or height is set in the display spec assume we want
      to scale to those values.  If either h or w is unspecified, the
@@ -8684,7 +8684,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
   value = image_spec_value (img->spec, QCrotation, NULL);
   if (FLOATP (value))
     {
-      rotation = extract_float (value);
+      rotation = XFLOAT_DATA (value);
       status = MagickRotateImage (image_wand, bg_wand, rotation);
       if (status == MagickFalse)
         {

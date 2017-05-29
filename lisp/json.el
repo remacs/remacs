@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2006-2017 Free Software Foundation, Inc.
 
-;; Author: Edward O'Connor <ted@oconnor.cx>
+;; Author: Theresa O'Connor <ted@oconnor.cx>
 ;; Version: 1.4
 ;; Keywords: convenience
 
@@ -206,7 +206,11 @@ Unlike `reverse', this keeps the property-value pairs intact."
 
 (defun json-skip-whitespace ()
   "Skip past the whitespace at point."
-  (skip-chars-forward "\t\r\n\f\b "))
+  ;; See
+  ;; https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf
+  ;; or https://tools.ietf.org/html/rfc7159#section-2 for the
+  ;; definition of whitespace in JSON.
+  (skip-chars-forward "\t\r\n "))
 
 
 

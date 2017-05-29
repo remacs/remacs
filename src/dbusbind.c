@@ -526,7 +526,7 @@ xd_extract_signed (Lisp_Object x, intmax_t lo, intmax_t hi)
   else
     {
       double d = XFLOAT_DATA (x);
-      if (lo <= d && d <= hi)
+      if (lo <= d && d < 1.0 + hi)
 	{
 	  intmax_t n = d;
 	  if (n == d)
@@ -554,7 +554,7 @@ xd_extract_unsigned (Lisp_Object x, uintmax_t hi)
   else
     {
       double d = XFLOAT_DATA (x);
-      if (0 <= d && d <= hi)
+      if (0 <= d && d < 1.0 + hi)
 	{
 	  uintmax_t n = d;
 	  if (n == d)

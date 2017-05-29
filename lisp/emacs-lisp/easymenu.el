@@ -489,7 +489,7 @@ To implement dynamic menus, either call this from
 
 ;; XEmacs needs the following two functions to add and remove menus.
 ;; In Emacs this is done automatically when switching keymaps, so
-;; here easy-menu-remove is a noop.
+;; here easy-menu-remove and easy-menu-add are a noops.
 (defalias 'easy-menu-remove 'ignore
   "Remove MENU from the current menu bar.
 Contrary to XEmacs, this is a nop on Emacs since menus are automatically
@@ -497,15 +497,16 @@ Contrary to XEmacs, this is a nop on Emacs since menus are automatically
 
 \(fn MENU)")
 
-(defun easy-menu-add (_menu &optional _map)
+(defalias 'easy-menu-add #'ignore
   "Add the menu to the menubar.
-On Emacs, menus are already automatically activated when the
-corresponding keymap is activated.  On XEmacs this is needed to
-actually add the menu to the current menubar.
+On Emacs this is a nop, because menus are already automatically
+activated when the corresponding keymap is activated.  On XEmacs
+this is needed to actually add the menu to the current menubar.
 
 You should call this once the menu and keybindings are set up
-completely and menu filter functions can be expected to work."
-  )
+completely and menu filter functions can be expected to work.
+
+\(fn MENU &optional MAP)")
 
 (defun add-submenu (menu-path submenu &optional before in-menu)
   "Add submenu SUBMENU in the menu at MENU-PATH.
