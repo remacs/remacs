@@ -935,11 +935,14 @@ IGNORES is a list of glob patterns."
       (erase-buffer)
       (setq status
             (call-process-shell-command command nil t))
-      (when (and (not (zerop status))
-                 ;; Nonzero status can mean "no matches found".
-                 (/= (point-min) (point-max)))
-        (user-error "Search failed with status %d: %s" status (buffer-string)))
       (goto-char (point-min))
+      ;; Can't use the exit status: Grep exits with 1 to mean "no
+      ;; matches found".  Find exits with 1 if any of the invocations
+      ;; exit with non-zero. "No matches" and "Grep program not found"
+      ;; are all the same to it.
+      (when (and (/= (point-min) (point-max))
+                 (not (looking-at grep-re)))
+        (user-error "Search failed with status %d: %s" status (buffer-string)))
       (while (re-search-forward grep-re nil t)
         (push (list (string-to-number (match-string 2))
                     (match-string 1)
