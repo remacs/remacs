@@ -23,7 +23,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <byteswap.h>
 #include <count-one-bits.h>
-#include <count-trailing-zeros.h>
 #include <intprops.h>
 
 #include "lisp.h"
@@ -34,6 +33,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "process.h"
 #include "frame.h"
 #include "keymap.h"
+#include "remacs-lib.h"
 
 static void swap_in_symval_forwarding (struct Lisp_Symbol *,
 				       struct Lisp_Buffer_Local_Value *);
@@ -2712,8 +2712,8 @@ enum { ULL_WIDTH = ULLONG_WIDTH };
 #else
 enum { ULL_WIDTH = ULONG_WIDTH };
 # define ULL_MAX ULONG_MAX
-# define count_one_bits_ll count_one_bits_l
-# define count_trailing_zeros_ll count_trailing_zeros_l
+# define rust_count_one_bits_ll rust_count_one_bits_l
+# define rust_count_trailing_zeros_ll rust_count_trailing_zeros_l
 #endif
 
 /* Shift VAL right by the width of an unsigned long long.
@@ -2733,13 +2733,13 @@ static int
 count_one_bits_word (bits_word w)
 {
   if (BITS_WORD_MAX <= UINT_MAX)
-    return count_one_bits (w);
+    return rust_count_one_bits (w);
   else if (BITS_WORD_MAX <= ULONG_MAX)
-    return count_one_bits_l (w);
+    return rust_count_one_bits_l (w);
   else
     {
       int i = 0, count = 0;
-      while (count += count_one_bits_ll (w),
+      while (count += rust_count_one_bits_ll (w),
 	     (i += ULL_WIDTH) < BITS_PER_BITS_WORD)
 	w = shift_right_ull (w);
       return count;
@@ -2868,19 +2868,19 @@ static int
 count_trailing_zero_bits (bits_word val)
 {
   if (BITS_WORD_MAX == UINT_MAX)
-    return count_trailing_zeros (val);
+    return rust_count_trailing_zeros (val);
   if (BITS_WORD_MAX == ULONG_MAX)
-    return count_trailing_zeros_l (val);
+    return rust_count_trailing_zeros_l (val);
   if (BITS_WORD_MAX == ULL_MAX)
-    return count_trailing_zeros_ll (val);
+    return rust_count_trailing_zeros_ll (val);
 
   /* The rest of this code is for the unlikely platform where bits_word differs
      in width from unsigned int, unsigned long, and unsigned long long.  */
   val |= ~ BITS_WORD_MAX;
   if (BITS_WORD_MAX <= UINT_MAX)
-    return count_trailing_zeros (val);
+    return rust_count_trailing_zeros (val);
   if (BITS_WORD_MAX <= ULONG_MAX)
-    return count_trailing_zeros_l (val);
+    return rust_count_trailing_zeros_l (val);
   else
     {
       int count;
@@ -2889,7 +2889,7 @@ count_trailing_zero_bits (bits_word val)
 	   count += ULL_WIDTH)
 	{
 	  if (val & ULL_MAX)
-	    return count + count_trailing_zeros_ll (val);
+	    return count + rust_count_trailing_zeros_ll (val);
 	  val = shift_right_ull (val);
 	}
 
@@ -2897,7 +2897,7 @@ count_trailing_zero_bits (bits_word val)
 	  && BITS_WORD_MAX == (bits_word) -1)
 	val |= (bits_word) 1 << pre_value (ULONG_MAX < BITS_WORD_MAX,
 					   BITS_PER_BITS_WORD % ULL_WIDTH);
-      return count + count_trailing_zeros_ll (val);
+      return count + rust_count_trailing_zeros_ll (val);
     }
 }
 
