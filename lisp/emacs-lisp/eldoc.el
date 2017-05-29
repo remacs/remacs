@@ -187,7 +187,8 @@ expression point is on."
   (setq eldoc-last-message nil)
   (cond
    ((memq eldoc-documentation-function '(nil ignore))
-    (message "There is no ElDoc support in this buffer")
+    (when (called-interactively-p 'any)
+      (message "There is no ElDoc support in this buffer"))
     (setq eldoc-mode nil))
    (eldoc-mode
     (when eldoc-print-after-edit
@@ -203,29 +204,17 @@ expression point is on."
       (setq eldoc-timer nil)))))
 
 ;;;###autoload
-(define-minor-mode global-eldoc-mode
-  "Toggle Global Eldoc mode on or off.
-With a prefix argument ARG, enable Global Eldoc mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil, and toggle it if ARG is ‘toggle’.
-
-If Global Eldoc mode is on, `eldoc-mode' will be enabled in all
-buffers where it's applicable.  These are buffers that have modes
-that have enabled eldoc support.  See `eldoc-documentation-function'."
+(define-globalized-minor-mode global-eldoc-mode eldoc-mode turn-on-eldoc-mode
   :group 'eldoc
-  :global t
   :initialize 'custom-initialize-delay
-  :init-value t
-  (setq eldoc-last-message nil)
-  (if global-eldoc-mode
-      (progn
-	(add-hook 'post-command-hook #'eldoc-schedule-timer)
-	(add-hook 'pre-command-hook #'eldoc-pre-command-refresh-echo-area))
-    (remove-hook 'post-command-hook #'eldoc-schedule-timer)
-    (remove-hook 'pre-command-hook #'eldoc-pre-command-refresh-echo-area)))
+  :init-value t)
 
 ;;;###autoload
-(define-obsolete-function-alias 'turn-on-eldoc-mode 'eldoc-mode "24.4")
+(defun turn-on-eldoc-mode ()
+  "Turn on `eldoc-mode' if the buffer has eldoc support enabled.
+See `eldoc-documentation-function' for more detail."
+  (unless (memq eldoc-documentation-function '(nil ignore))
+    (eldoc-mode 1)))
 
 
 (defun eldoc-schedule-timer ()
