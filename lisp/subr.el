@@ -4649,7 +4649,10 @@ called from a keyboard macro or in batch mode?
 To test whether your function was called with `call-interactively',
 either (i) add an extra optional argument and give it an `interactive'
 spec that specifies non-nil unconditionally (such as \"p\"); or (ii)
-use `called-interactively-p'."
+use `called-interactively-p'.
+
+To test whether a function can be called interactively, use
+`commandp'."
   (declare (obsolete called-interactively-p "23.2"))
   (called-interactively-p 'interactive))
 
