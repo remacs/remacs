@@ -1,0 +1,12 @@
+(("testcat1" . [2 0 0 1]) ("testcat2" . [1 0 0 1]))
+--==-- testcat1
+[May 29, 2017] testcat1 item3
+		has more than one line
+		to test item highlighting
+[May 26, 2017] testcat1 item2
+
+==--== DONE 
+--==-- testcat2
+[May 28, 2017] testcat2 item2
+
+==--== DONE 

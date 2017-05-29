@@ -29,6 +29,11 @@ test/etags/c-src/dostorture.c whitespace=cr-at-eol
 test/etags/cp-src/c.C whitespace=cr-at-eol
 test/etags/html-src/algrthms.html whitespace=cr-at-eol
 
+# The todo-mode file format includes trailing whitespace, so the test
+# data files cannot avoid it.
+test/lisp/calendar/todo-mode-resources/todo-test-1.toda -whitespace=blank-at-eol
+test/lisp/calendar/todo-mode-resources/todo-test-1.todo -whitespace=blank-at-eol
+
 # The upstream maintainer does not want to remove trailing whitespace.
 doc/misc/texinfo.tex -whitespace=blank-at-eol
 
