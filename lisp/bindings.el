@@ -382,14 +382,15 @@ displayed in `mode-line-position', a component of the default
                  (6 "%q")))
   :version "26.1"
   :group 'mode-line)
+(put 'mode-line-percent-position 'risky-local-variable t)
 
 (defvar mode-line-position
   `((:propertize
      mode-line-percent-position
-     'local-map mode-line-column-line-number-mode-map
-     'mouse-face 'mode-line-highlight
+     local-map ,mode-line-column-line-number-mode-map
+     mouse-face mode-line-highlight
      ;; XXX needs better description
-     'help-echo "Size indication mode\n\
+     help-echo "Size indication mode\n\
 mouse-1: Display Line and Column Mode Menu")
     (size-indication-mode
      (8 ,(propertize
