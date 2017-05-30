@@ -23992,21 +23992,18 @@ decode_mode_spec (struct window *w, register int c, int field_width,
         ptrdiff_t botpos = BUF_Z (b) - w->window_end_pos;
         ptrdiff_t begv = BUF_BEGV (b);
         ptrdiff_t zv = BUF_ZV (b);
+        int top_perc, bot_perc;
 
         if ((toppos <= begv) && (zv <= botpos))
           return "All   ";
 
-        if (toppos <= begv)
-          strcpy (decode_mode_spec_buf, "0-");
-        else
-          sprintf (decode_mode_spec_buf, "%d-",
-                   percent99 (toppos - begv, zv - begv));
+        top_perc = toppos <= begv ? 0 : percent99 (toppos - begv, zv - begv);
+        bot_perc = zv <= botpos ? 100 : percent99 (botpos - begv, zv - begv);
 
-        if (zv <= botpos)
-          strcat (decode_mode_spec_buf, "100%");
+        if (top_perc == bot_perc)
+          sprintf (decode_mode_spec_buf, "%d%%", top_perc);
         else
-          sprintf (&decode_mode_spec_buf [strlen (decode_mode_spec_buf)],
-                   "%d%%", percent99 (botpos - begv, zv - begv));
+          sprintf (decode_mode_spec_buf, "%d-%d%%", top_perc, bot_perc);
 
         return decode_mode_spec_buf;
       }
