@@ -53,6 +53,9 @@ EMACSOPT = -batch --no-site-file --no-site-lisp -L "$(SEPCHAR)$(srcdir)" $(EMACS
 # Prevent any settings in the user environment causing problems.
 unexport EMACSDATA EMACSDOC EMACSPATH GREP_OPTIONS
 
+# Prevent tests using or changing anything in HOME.
+export HOME = /nonexistent
+
 ## To run tests under a debugger, set this to eg: "gdb --args".
 GDB =
 
