@@ -53,9 +53,6 @@ EMACSOPT = -batch --no-site-file --no-site-lisp -L "$(SEPCHAR)$(srcdir)" $(EMACS
 # Prevent any settings in the user environment causing problems.
 unexport EMACSDATA EMACSDOC EMACSPATH GREP_OPTIONS
 
-# Prevent tests using or changing anything in HOME.
-export HOME = /nonexistent
-
 ## To run tests under a debugger, set this to eg: "gdb --args".
 GDB =
 
@@ -125,7 +122,7 @@ endif
 	echo Testing $$loadfile; \
 	stat=OK ; \
 	${MKDIR_P} $(dir $@) ; \
-	$(emacs) -l ert -l $$loadfile \
+	HOME=/nonexistent $(emacs) -l ert -l $$loadfile \
 	  --eval "(ert-run-tests-batch-and-exit ${SELECTOR_ACTUAL})" ${WRITE_LOG}
 
 ifeq (@HAVE_MODULES@, yes)
