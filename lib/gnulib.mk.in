@@ -1135,43 +1135,11 @@ EXTRA_DIST += gl_openssl.h md5.h
 endif
 ## end   gnulib module crypto/md5
 
-<<<<<<< HEAD:lib/gnulib.mk
 ## begin crypto in rust
-=======
-## begin gnulib module crypto/sha1
-ifeq (,$(OMIT_GNULIB_MODULE_crypto/sha1))
->>>>>>> 443f37163634319a730133efe9e21933c23dc3c6:lib/gnulib.mk.in
 
 EXTRA_DIST += sha1.h gl_openssl.h sha256.h
 
-<<<<<<< HEAD:lib/gnulib.mk
 ## end   crypto in rust
-=======
-EXTRA_DIST += gl_openssl.h sha1.h
-
-endif
-## end   gnulib module crypto/sha1
-
-## begin gnulib module crypto/sha256
-ifeq (,$(OMIT_GNULIB_MODULE_crypto/sha256))
-
-libgnu_a_SOURCES += sha256.c
-
-EXTRA_DIST += gl_openssl.h sha256.h
-
-endif
-## end   gnulib module crypto/sha256
-
-## begin gnulib module crypto/sha512
-ifeq (,$(OMIT_GNULIB_MODULE_crypto/sha512))
-
-libgnu_a_SOURCES += sha512.c
-
-EXTRA_DIST += gl_openssl.h sha512.h
-
-endif
-## end   gnulib module crypto/sha512
->>>>>>> 443f37163634319a730133efe9e21933c23dc3c6:lib/gnulib.mk.in
 
 ## begin gnulib module dirent
 ifeq (,$(OMIT_GNULIB_MODULE_dirent))
@@ -1894,20 +1862,6 @@ EXTRA_libgnu_a_SOURCES += secure_getenv.c
 endif
 ## end   gnulib module secure_getenv
 
-<<<<<<< HEAD:lib/gnulib.mk
-=======
-## begin gnulib module sig2str
-ifeq (,$(OMIT_GNULIB_MODULE_sig2str))
-
-
-EXTRA_DIST += sig2str.c sig2str.h
-
-EXTRA_libgnu_a_SOURCES += sig2str.c
-
-endif
-## end   gnulib module sig2str
-
->>>>>>> 443f37163634319a730133efe9e21933c23dc3c6:lib/gnulib.mk.in
 ## begin gnulib module signal-h
 ifeq (,$(OMIT_GNULIB_MODULE_signal-h))
 
