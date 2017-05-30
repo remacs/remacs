@@ -78,7 +78,7 @@ LOADDEFS = $(lisp)/calendar/cal-loaddefs.el \
 	$(lisp)/net/tramp-loaddefs.el
 
 # All generated autoload files.
-loaddefs = $(shell find ${srcdir} -name '*loaddefs.el')
+loaddefs = $(shell find ${srcdir} -name '*loaddefs.el' ! -name '.*')
 # Elisp files auto-generated.
 AUTOGENEL = ${loaddefs} ${srcdir}/cus-load.el ${srcdir}/finder-inf.el \
   ${srcdir}/subdirs.el ${srcdir}/eshell/esh-groups.el
@@ -243,8 +243,8 @@ update-gnus-news:
 FORCE:
 .PHONY: FORCE
 
-tagsfiles = $(shell find ${srcdir} -name '*.el')
-tagsfiles := $(filter-out ${srcdir}/%loaddefs.el,${tagsfiles})
+tagsfiles = $(shell find ${srcdir} -name '*.el' \
+	        ! -name '.*' ! -name '*loaddefs.el')
 tagsfiles := $(filter-out ${srcdir}/ldefs-boot.el,${tagsfiles})
 tagsfiles := $(filter-out ${srcdir}/eshell/esh-groups.el,${tagsfiles})
 
@@ -470,7 +470,7 @@ check-declare:
 ## This finds a lot of duplicates between foo.el and obsolete/foo.el.
 check-defun-dups:
 	sed -n -e '/^(defun /s/\(.\)(.*/\1/p' \
-	  $$(find . -name '*.el' -print | \
+	  $$(find . -name '*.el' ! -name '.*' -print | \
 	  grep -Ev '(loaddefs|ldefs-boot)\.el|obsolete') | sort | uniq -d
 
 # Dependencies

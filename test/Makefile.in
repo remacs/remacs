@@ -138,7 +138,7 @@ ELFILES := $(shell find ${srcdir} -path "${srcdir}/manual" -prune -o \
 		-path "${srcdir}/data" -prune -o \
 		-name "*resources" -prune -o \
 		${maybe_exclude_module_tests} \
-		-name "*.el" -print)
+		-name "*.el" ! -name ".*" -print)
 ## .log files may be in a different directory for out of source builds
 LOGFILES := $(patsubst %.el,%.log, \
 		$(patsubst $(srcdir)/%,%,$(ELFILES)))
