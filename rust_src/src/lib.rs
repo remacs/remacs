@@ -86,15 +86,6 @@ pub use crypto::sha1_ctx::sha1_finish_ctx;
 // Used in process.c
 pub use str2sig::str2sig;
 
-// These need to be exported as marker.c depends upon them.
-pub use marker::CHECK_MARKER;
-
-// Defined in lisp.h and widely used in the C codebase.
-pub use lisp::CHECK_STRING;
-pub use lisp::CHECK_NUMBER;
-pub use lisp::CHECK_LIST_END;
-pub use lisp::CHECK_CONS;
-
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
 }

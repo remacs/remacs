@@ -1,23 +1,9 @@
 extern crate libc;
 
 use std::ptr;
-use lisp::{LispObject, LispMiscType, XMARKER, CHECK_TYPE};
+use lisp::{LispObject, LispMiscType};
+use remacs_sys::error;
 use remacs_macros::lisp_fn;
-
-extern "C" {
-    // defined in eval.c, where it can actually take an arbitrary
-    // number of arguments.
-    // TODO: define a Rust version of this that uses Rust strings.
-    fn error(m: *const u8, ...);
-    pub static Qmarkerp: LispObject;
-}
-
-/// Raise an error if `x` is not marker.
-#[allow(non_snake_case)]
-#[no_mangle]
-pub extern "C" fn CHECK_MARKER(x: LispObject) {
-    CHECK_TYPE(x.is_marker(), unsafe { Qmarkerp }, x)
-}
 
 // TODO: write a docstring based on the docs in lisp.h.
 #[repr(C)]
@@ -34,8 +20,7 @@ pub struct LispMarker {
 }
 
 /// Return the char position of marker MARKER, as a C integer.
-pub fn marker_position(marker: LispObject) -> libc::ptrdiff_t {
-    let m_ptr = XMARKER(marker);
+pub fn marker_position(m_ptr: *const LispMarker) -> libc::ptrdiff_t {
     let m = unsafe { ptr::read(m_ptr) };
 
     let buf = m.buffer;

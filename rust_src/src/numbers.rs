@@ -1,3 +1,5 @@
+//! Functions operating on numbers.
+
 use lisp::LispObject;
 use remacs_macros::lisp_fn;
 
@@ -8,7 +10,6 @@ use remacs_macros::lisp_fn;
 fn floatp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_float())
 }
-
 
 /// Return t if OBJECT is an integer.
 /// (fn OBJECT)
@@ -30,7 +31,6 @@ fn integer_or_marker_p(object: LispObject) -> LispObject {
 fn natnump(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_natnum())
 }
-
 
 /// Return t if OBJECT is a number (floating point or integer).
 /// (fn OBJECT)
