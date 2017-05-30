@@ -1,4 +1,4 @@
-/// Convert between signal names and numbers.
+//! Convert between signal names and numbers.
 
 use libc::{self, c_char, c_int};
 use std::ffi::CStr;

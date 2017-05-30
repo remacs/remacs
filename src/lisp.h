@@ -1124,8 +1124,11 @@ INLINE bool
   return lisp_h_CONSP (x);
 }
 
-/* exported from rust code (lisp.rs) */
-void CHECK_CONS (Lisp_Object x);
+INLINE void
+CHECK_CONS (Lisp_Object x)
+{
+  CHECK_TYPE (CONSP (x), Qconsp, x);
+}
 
 INLINE struct Lisp_Cons *
 (XCONS) (Lisp_Object a)
@@ -1218,6 +1221,7 @@ Lisp_Object Fsetcdr(Lisp_Object, Lisp_Object);
 Lisp_Object Fcar(Lisp_Object);
 Lisp_Object Fcdr(Lisp_Object);
 Lisp_Object Fcar_safe(Lisp_Object);
+Lisp_Object Fcdr_safe(Lisp_Object);
 Lisp_Object Flistp(Lisp_Object);
 Lisp_Object Fatom(Lisp_Object);
 Lisp_Object Fnthcdr(Lisp_Object, Lisp_Object);
@@ -1251,6 +1255,12 @@ INLINE bool
 STRINGP (Lisp_Object x)
 {
   return XTYPE (x) == Lisp_String;
+}
+
+INLINE void
+CHECK_STRING (Lisp_Object x)
+{
+  CHECK_TYPE (STRINGP (x), Qstringp, x);
 }
 
 INLINE struct Lisp_String *
@@ -2724,14 +2734,17 @@ CHECK_LIST (Lisp_Object x)
   CHECK_TYPE (CONSP (x) || NILP (x), Qlistp, x);
 }
 
-/* exported from rust code (lisp.rs) */
-void CHECK_LIST_END (Lisp_Object x, Lisp_Object y);
+INLINE void
+CHECK_LIST_END (Lisp_Object x, Lisp_Object y)
+{
+  CHECK_TYPE (NILP (x), Qlistp, y);
+}
 
-/* exported from rust code (lisp.rs) */
-void CHECK_NUMBER (Lisp_Object x);
-
-/* exported from rust code (lisp.rs) */
-void CHECK_STRING (Lisp_Object x);
+INLINE void
+(CHECK_NUMBER) (Lisp_Object x)
+{
+  lisp_h_CHECK_NUMBER (x);
+}
 
 INLINE void
 CHECK_STRING_CAR (Lisp_Object x)

@@ -1,5 +1,7 @@
-use lisp::{LispObject, CHECK_TYPE};
-use remacs_sys::{EmacsDouble, Lisp_Object, Qnumberp, Qfloatp};
+//! Functions operating on float numbers.
+
+use lisp::LispObject;
+use remacs_sys::{EmacsDouble, Lisp_Object, Qnumberp, wrong_type_argument};
 use remacs_macros::lisp_fn;
 
 pub fn init_float_syms() {
@@ -27,20 +29,7 @@ pub fn init_float_syms() {
 #[no_mangle]
 pub extern "C" fn extract_float(f: Lisp_Object) -> EmacsDouble {
     let f = LispObject::from_raw(f);
-    let d = f.extract_float();
-    CHECK_TYPE(d.is_some(), LispObject::from_raw(unsafe { Qnumberp }), f);
-    match d {
-        Some(d) => d,
-        None => unreachable!(), // CHECK_TYPE never returns on failure
-    }
-}
-
-/// checks if the argument is a float, if not, throws an error
-/// TODO eventually, this can hopefully go away when we have a better approach for error handling
-fn check_float(x: LispObject) {
-    CHECK_TYPE(x.to_float().is_some(),
-               LispObject::from_raw(unsafe { Qfloatp }),
-               x);
+    f.any_to_float_or_error()
 }
 
 /// Calculate the modulus of two elisp floats.
@@ -95,8 +84,7 @@ simple_float_op!("ffloor",
 /// (fn X)
 #[lisp_fn]
 fn isnan(x: LispObject) -> LispObject {
-    check_float(x);
-    let d = x.to_float().unwrap();
+    let d = x.as_float_or_error();
     LispObject::from_bool(d.is_nan())
 }
 
@@ -143,7 +131,6 @@ fn log(arg: LispObject, base: LispObject) -> LispObject {
     LispObject::from_float(d)
 }
 
-
 /// Truncate a floating point number to an integral float value.
 /// Rounds the value toward zero.
 /// (fn ARG)
@@ -157,20 +144,21 @@ fn ftruncate(x: LispObject) -> LispObject {
     }
 }
 
-
 /// Return the floating point number equal to ARG.
 /// (fn ARG)
 #[lisp_fn]
 fn float(obj: LispObject) -> LispObject {
-    CHECK_TYPE(obj.is_number(),
-               LispObject::from_raw(unsafe { Qnumberp }),
-               obj); // does not return on failure
+    if !obj.is_number() {
+        unsafe {
+            wrong_type_argument(Qnumberp, obj.to_raw());
+        }
+    }
 
     if obj.is_float() {
         return obj;
     }
 
-    match obj.to_fixnum() {
+    match obj.as_fixnum() {
         Some(int) => LispObject::from_float(int as EmacsDouble),
         None => unreachable!(),
     }

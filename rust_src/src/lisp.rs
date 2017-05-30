@@ -13,11 +13,12 @@ use std::ops::Deref;
 use std::fmt::{Debug, Formatter, Error};
 
 use marker::{LispMarker, marker_position};
+use character::MAX_CHAR;
 
-use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, Lisp_Object, EMACS_INT_MAX, EMACS_INT_SIZE,
+use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, EMACS_INT_MAX, EMACS_INT_SIZE,
                  EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
-                 Qnumber_or_marker_p, Qt, make_float, Lisp_String, STRING_BYTES, Qlistp,
-                 Qintegerp, Qconsp, circular_list, internal_equal, Fcons, CHECK_IMPURE};
+                 Qnumber_or_marker_p, Qt, make_float, Lisp_String, Qlistp, Qintegerp, Qconsp,
+                 circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp};
 use remacs_sys::Lisp_Object as CLisp_Object;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -187,6 +188,7 @@ impl<T> ExternalPtr<T> {
         ExternalPtr(p)
     }
 
+    #[allow(dead_code)]
     pub fn as_ptr(&self) -> *const T {
         self.0
     }
@@ -217,16 +219,22 @@ fn test_lisp_misc_any_size() {
 }
 
 impl LispObject {
+    #[inline]
     pub fn is_misc(self) -> bool {
         self.get_type() == LispType::Lisp_Misc
     }
 
-    pub unsafe fn to_misc_unchecked(self) -> LispMiscRef {
-        LispMiscRef::new(mem::transmute(self.get_untaggedptr()))
+    #[inline]
+    pub fn as_misc(self) -> Option<LispMiscRef> {
+        if self.is_misc() {
+            unsafe { Some(self.to_misc_unchecked()) }
+        } else {
+            None
+        }
     }
 
-    pub unsafe fn get_misc_type_unchecked(self) -> LispMiscType {
-        self.to_misc_unchecked().ty
+    unsafe fn to_misc_unchecked(self) -> LispMiscRef {
+        LispMiscRef::new(mem::transmute(self.get_untaggedptr()))
     }
 }
 
@@ -248,7 +256,8 @@ pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
 
 impl LispObject {
     #[inline]
-    pub unsafe fn from_fixnum_unchecked(n: EmacsInt) -> LispObject {
+    pub fn from_fixnum(n: EmacsInt) -> LispObject {
+        debug_assert!(MOST_NEGATIVE_FIXNUM <= n && n <= MOST_POSITIVE_FIXNUM);
         let o = if USE_LSB_TAG {
             (n << INTTYPEBITS) as EmacsUint + LispType::Lisp_Int0 as EmacsUint
         } else {
@@ -257,17 +266,28 @@ impl LispObject {
         LispObject::from_raw(o as EmacsInt)
     }
 
+    /// Convert a positive integer into its LispObject representation.
+    ///
+    /// This is also the function to use when translating `XSETFASTINT`
+    /// from Emacs C.
+    // TODO: the C claims that make_natnum is faster, but it does the same
+    // thing as make_number when USE_LSB_TAG is 1, which it is for us. We
+    // should remove this in favour of make_number.
+    //
+    // TODO: it would be clearer if this function took a u64 or libc::c_int.
     #[inline]
-    pub fn to_fixnum(self) -> Option<EmacsInt> {
-        if self.is_fixnum() {
-            let raw = self.to_raw();
-            if !USE_LSB_TAG {
-                Some(raw & INTMASK)
-            } else {
-                Some(raw >> INTTYPEBITS)
-            }
+    pub fn from_natnum(n: EmacsInt) -> LispObject {
+        debug_assert!(0 <= n && n <= MOST_POSITIVE_FIXNUM);
+        LispObject::from_fixnum(n)
+    }
+
+    #[inline]
+    unsafe fn to_fixnum_unchecked(self) -> EmacsInt {
+        let raw = self.to_raw();
+        if !USE_LSB_TAG {
+            raw & INTMASK
         } else {
-            None
+            raw >> INTTYPEBITS
         }
     }
 
@@ -278,6 +298,24 @@ impl LispObject {
         LispType::Lisp_Int0 as u8
     }
 
+    #[inline]
+    pub fn as_fixnum(self) -> Option<EmacsInt> {
+        if self.is_fixnum() {
+            Some(unsafe { self.to_fixnum_unchecked() })
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_fixnum_or_error(self) -> EmacsInt {
+        if self.is_fixnum() {
+            unsafe { self.to_fixnum_unchecked() }
+        } else {
+            unsafe { wrong_type_argument(Qintegerp, self.to_raw()) }
+        }
+    }
+
     /// TODO: Bignum support? (Current Emacs doesn't have it)
     #[inline]
     pub fn is_integer(self) -> bool {
@@ -286,7 +324,7 @@ impl LispObject {
 
     #[inline]
     pub fn is_natnum(self) -> bool {
-        self.is_integer() && 0 <= XINT(self)
+        self.as_fixnum().map_or(false, |i| i >= 0)
     }
 }
 
@@ -334,7 +372,9 @@ impl Iterator for TailsIter {
         match self.tail.as_cons() {
             None => {
                 if !self.safe {
-                    CHECK_LIST_END(self.tail.to_raw(), self.list.to_raw());
+                    if self.tail != Qnil {
+                        unsafe { wrong_type_argument(Qlistp, self.list.to_raw()) }
+                    }
                 }
                 return None;
             }
@@ -444,7 +484,7 @@ impl LispCons {
     }
 
     fn _extract(self) -> *mut Lisp_Cons {
-        unsafe { mem::transmute(XUNTAG(self.0, LispType::Lisp_Cons)) }
+        unsafe { mem::transmute(self.0.get_untaggedptr()) }
     }
 
     /// Return the car (first cell).
@@ -495,15 +535,9 @@ pub struct LispFloat {
     data: [u8; EMACS_FLOAT_SIZE as usize],
 }
 
-#[repr(C)]
-pub struct LispFloatChainRepr(*const LispFloat);
-
 impl LispFloat {
     pub fn as_data(&self) -> &EmacsDouble {
         unsafe { &*(self.data.as_ptr() as *const EmacsDouble) }
-    }
-    pub fn as_chain(&self) -> &LispFloatChainRepr {
-        unsafe { &*(self.data.as_ptr() as *const LispFloatChainRepr) }
     }
 }
 
@@ -524,16 +558,16 @@ impl LispObject {
     }
 
     #[inline]
-    pub unsafe fn to_float_unchecked(self) -> LispFloatRef {
+    unsafe fn to_float_unchecked(self) -> LispFloatRef {
         debug_assert!(self.is_float());
         LispFloatRef::new(mem::transmute(self.get_untaggedptr()))
     }
 
-    pub unsafe fn get_float_data_unchecked(self) -> EmacsDouble {
+    unsafe fn get_float_data_unchecked(self) -> EmacsDouble {
         *self.to_float_unchecked().as_data()
     }
 
-    pub fn to_float(self) -> Option<EmacsDouble> {
+    pub fn as_float(self) -> Option<EmacsDouble> {
         if self.is_float() {
             Some(unsafe { self.get_float_data_unchecked() })
         } else {
@@ -541,19 +575,80 @@ impl LispObject {
         }
     }
 
+    pub fn as_float_or_error(self) -> EmacsDouble {
+        if self.is_float() {
+            unsafe { self.get_float_data_unchecked() }
+        } else {
+            unsafe { wrong_type_argument(Qfloatp, self.to_raw()) }
+        }
+    }
+
     /// If the LispObject is a number (of any kind), get a floating point value for it
-    pub fn extract_float(self) -> Option<EmacsDouble> {
-        let d = self.to_float();
-        d.or(self.to_fixnum().map(|i| i as EmacsDouble))
+    #[allow(dead_code)]
+    pub fn any_to_float(self) -> Option<EmacsDouble> {
+        self.as_float()
+            .or_else(|| self.as_fixnum().map(|i| i as EmacsDouble))
+    }
+
+    pub fn any_to_float_or_error(self) -> EmacsDouble {
+        self.as_float()
+            .unwrap_or_else(|| {
+                self.as_fixnum()
+                    .unwrap_or_else(|| unsafe { wrong_type_argument(Qnumberp, self.to_raw()) }) as
+                EmacsDouble
+            })
     }
 }
 
 // String support (LispType == 4)
 
+type LispStringRef = ExternalPtr<Lisp_String>;
+
+impl LispStringRef {
+    pub fn len_bytes(&self) -> libc::ptrdiff_t {
+        if self.size_byte < 0 {
+            self.size
+        } else {
+            self.size_byte
+        }
+    }
+
+    pub fn len_chars(&self) -> libc::ptrdiff_t {
+        self.size
+    }
+
+    pub fn is_multibyte(&self) -> bool {
+        self.size_byte >= 0
+    }
+
+    pub fn data_ptr(&mut self) -> *mut libc::c_char {
+        self.data
+    }
+}
+
 impl LispObject {
     #[inline]
     pub fn is_string(self) -> bool {
         self.get_type() == LispType::Lisp_String
+    }
+
+    #[inline]
+    #[allow(dead_code)]
+    pub fn as_string(self) -> Option<LispStringRef> {
+        if self.is_string() {
+            Some(LispStringRef::new(unsafe { mem::transmute(self.get_untaggedptr()) }))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_string_or_error(self) -> LispStringRef {
+        if self.is_string() {
+            LispStringRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
+        } else {
+            unsafe { wrong_type_argument(Qstringp, self.to_raw()) }
+        }
     }
 }
 
@@ -572,7 +667,23 @@ impl LispObject {
 
     #[inline]
     pub fn is_marker(self) -> bool {
-        self.is_misc() && XMISCTYPE(self) == LispMiscType::Marker
+        self.as_misc()
+            .map_or(false, |m| m.ty == LispMiscType::Marker)
+    }
+
+    #[inline]
+    pub fn as_marker(self) -> Option<*mut LispMarker> {
+        self.as_misc()
+            .and_then(|m| if m.ty == LispMiscType::Marker {
+                          unsafe { Some(mem::transmute(m)) }
+                      } else {
+                          None
+                      })
+    }
+
+    /// Nonzero iff X is a character.
+    pub fn is_character(self) -> bool {
+        self.as_fixnum().map_or(false, |i| 0 <= i && i <= MAX_CHAR)
     }
 
     // The three Emacs Lisp comparison functions.
@@ -643,147 +754,6 @@ impl Debug for LispObject {
     }
 }
 
-/// # Porting Notes
-///
-/// This module contains some functions that is originally contained in Emacs C code
-/// as macros and global functions, which does not conforms to Rust naming rules well
-/// and lacks unsafe marks. However we'll keep them during the porting process to make
-/// the porting easy, we should be able to remove once the relevant functionality is Rust-only.
-mod deprecated {
-    use super::*;
-    use libc;
-    use std;
-    use remacs_sys::EmacsInt;
-
-    /// Convert a LispObject to an EmacsInt.
-    #[allow(non_snake_case)]
-    #[allow(dead_code)]
-    pub fn XLI(o: LispObject) -> EmacsInt {
-        o.to_raw()
-    }
-
-    /// Convert an EmacsInt to an LispObject.
-    #[allow(non_snake_case)]
-    #[allow(dead_code)]
-    pub fn XIL(i: EmacsInt) -> LispObject {
-        // Note that CHECK_LISP_OBJECT_TYPE is 0 (false) in our build.
-        LispObject::from_raw(i)
-    }
-
-    #[test]
-    fn test_xil_xli_inverse() {
-        assert!(XLI(XIL(0)) == 0);
-    }
-
-    /// Convert an integer to an elisp object representing that number.
-    ///
-    /// # Porting from C
-    ///
-    /// This function is a direct replacement for the C function
-    /// `make_number`.
-    ///
-    /// The C macro `XSETINT` should also be replaced with this when
-    /// porting. For example, `XSETINT(x, y)` should be written as `x =
-    /// make_number(y)`.
-    pub fn make_number(n: EmacsInt) -> LispObject {
-        unsafe { LispObject::from_fixnum_unchecked(n) }
-    }
-
-    /// Extract the integer value from an elisp object representing an
-    /// integer.
-    #[allow(non_snake_case)]
-    pub fn XINT(a: LispObject) -> EmacsInt {
-        a.to_fixnum().unwrap()
-    }
-
-    #[test]
-    fn test_xint() {
-        let boxed_5 = make_number(5);
-        assert!(XINT(boxed_5) == 5);
-    }
-
-    /// Convert a positive integer into its LispObject representation.
-    ///
-    /// This is also the function to use when translating `XSETFASTINT`
-    /// from Emacs C.
-    // TODO: the C claims that make_natnum is faster, but it does the same
-    // thing as make_number when USE_LSB_TAG is 1, which it is for us. We
-    // should remove this in favour of make_number.
-    //
-    // TODO: it would be clearer if this function took a u64 or libc::c_int.
-    pub fn make_natnum(n: EmacsInt) -> LispObject {
-        debug_assert!(0 <= n && n <= MOST_POSITIVE_FIXNUM);
-        make_number(n)
-    }
-
-    #[allow(non_snake_case)]
-    pub fn XMISC(a: LispObject) -> LispMiscRef {
-        unsafe { a.to_misc_unchecked() }
-    }
-
-    #[allow(non_snake_case)]
-    #[allow(dead_code)]
-    pub fn XMISCANY(a: LispObject) -> *const LispMiscAny {
-        debug_assert!(a.is_misc());
-        XMISC(a).0
-    }
-
-    // TODO: we should do some sanity checking, because we're currently
-    // exposing a safe API that dereferences raw pointers.
-    #[allow(non_snake_case)]
-    pub fn XMISCTYPE(a: LispObject) -> LispMiscType {
-        XMISC(a).ty
-    }
-
-    #[allow(non_snake_case)]
-    #[allow(dead_code)]
-    pub fn XFLOAT(a: LispObject) -> LispFloatRef {
-        unsafe { a.to_float_unchecked() }
-    }
-
-    #[allow(non_snake_case)]
-    #[allow(dead_code)]
-    pub fn XFLOAT_DATA(f: LispObject) -> f64 {
-        unsafe { f.get_float_data_unchecked() }
-    }
-
-    pub fn XSTRING(a: LispObject) -> *mut Lisp_String {
-        debug_assert!(a.is_string());
-        unsafe { std::mem::transmute(XUNTAG(a, LispType::Lisp_String)) }
-    }
-
-    pub fn SBYTES(string: LispObject) -> libc::ptrdiff_t {
-        unsafe { STRING_BYTES(XSTRING(string)) }
-    }
-
-    pub fn SCHARS(string: LispObject) -> libc::ptrdiff_t {
-        unsafe { (*XSTRING(string)).size }
-    }
-
-
-    /// Convert a tagged pointer to a normal C pointer.
-    ///
-    /// See the docstring for `LispType` for more information on tagging.
-    #[allow(non_snake_case)]
-    pub fn XUNTAG(a: LispObject, _: LispType) -> *const libc::c_void {
-        a.get_untaggedptr()
-    }
-
-    // Implementation of the XFASTINT depends on the USE_LSB_TAG
-    // in Emacs C. But we selected this implementation as in our
-    // build that value is 1.
-    // A must be nonnegative.
-    #[allow(dead_code)]
-    #[allow(non_snake_case)]
-    pub fn XFASTINT(a: LispObject) -> EmacsInt {
-        let n: EmacsInt = XINT(a);
-        debug_assert!(0 <= n);
-        n
-    }
-}
-
-pub use self::deprecated::*;
-
 /// Check that `x` is an integer or float, coercing markers to integers.
 ///
 /// If `x` has a different type, raise an elisp error.
@@ -792,66 +762,15 @@ pub use self::deprecated::*;
 /// `CHECK_NUMBER_OR_FLOAT_COERCE_MARKER` in Emacs C, but returns a
 /// value rather than assigning to a variable.
 pub fn check_number_coerce_marker(x: LispObject) -> LispObject {
-    if x.is_marker() {
-        make_natnum(marker_position(x) as EmacsInt)
-    } else {
-        unsafe {
-            CHECK_TYPE(x.is_number(), LispObject::from_raw(Qnumber_or_marker_p), x);
-        }
-        x
-    }
-}
-
-/// Raise an error if `x` is the wrong type. `ok` should be a Rust/C
-/// expression that evaluates if the type is correct. `predicate` is
-/// the elisp-level equivalent predicate that failed.
-#[allow(non_snake_case)]
-pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
-    if !ok {
-        unsafe {
-            wrong_type_argument(predicate.to_raw(), x.to_raw());
+    match x.as_marker() {
+        Some(m) => LispObject::from_natnum(marker_position(m) as EmacsInt),
+        None => {
+            if !x.is_number() {
+                unsafe {
+                    wrong_type_argument(Qnumber_or_marker_p, x.to_raw());
+                }
+            }
+            x
         }
     }
-}
-
-/// Raise an error if `x` is not a number.
-#[allow(non_snake_case)]
-#[no_mangle]
-pub extern "C" fn CHECK_NUMBER(x: Lisp_Object) {
-    let x = LispObject::from_raw(x);
-    CHECK_TYPE(x.is_integer(),
-               LispObject::from_raw(unsafe { Qintegerp }),
-               x);
-}
-
-/// Raise an error if `x` is not a lisp string.
-#[allow(non_snake_case)]
-#[no_mangle]
-pub extern "C" fn CHECK_STRING(x: Lisp_Object) {
-    let x = LispObject::from_raw(x);
-    CHECK_TYPE(x.is_string(), LispObject::from_raw(unsafe { Qstringp }), x);
-}
-
-/// Raise an error if `x` is not a cons.
-#[allow(non_snake_case)]
-#[no_mangle]
-pub extern "C" fn CHECK_CONS(x: Lisp_Object) {
-    let x = LispObject::from_raw(x);
-    CHECK_TYPE(x.is_cons(), LispObject::from_raw(unsafe { Qconsp }), x);
-}
-
-
-/// Raise an error if `x`, the final cons of the list `y`, is not nil.
-#[allow(non_snake_case)]
-#[no_mangle]
-pub extern "C" fn CHECK_LIST_END(x: Lisp_Object, y: Lisp_Object) {
-    let x = LispObject::from_raw(x);
-    let y = LispObject::from_raw(y);
-    CHECK_TYPE(x == Qnil, LispObject::from_raw(unsafe { Qlistp }), y);
-}
-
-#[allow(non_snake_case)]
-pub fn XMARKER(a: LispObject) -> *const LispMarker {
-    debug_assert!(a.is_marker());
-    unsafe { mem::transmute(XMISC(a)) }
 }

@@ -1,27 +1,12 @@
+//! Functions operating on strings.
+
 use std::ptr;
 
 use libc;
 
-use lisp::{LispObject, SBYTES, SCHARS, CHECK_STRING};
-use remacs_sys::{Lisp_Object, SDATA, SSDATA, STRING_MULTIBYTE, SYMBOL_NAME};
+use lisp::LispObject;
+use remacs_sys::{SYMBOL_NAME, EmacsInt, error, base64_encode_1, base64_decode_1, make_string};
 use remacs_macros::lisp_fn;
-
-extern "C" {
-    fn make_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
-    fn base64_encode_1(from: *const libc::c_char,
-                       to: *mut libc::c_char,
-                       length: libc::ptrdiff_t,
-                       line_break: bool,
-                       multibyte: bool)
-                       -> libc::ptrdiff_t;
-    fn base64_decode_1(from: *const libc::c_char,
-                       to: *mut libc::c_char,
-                       length: libc::ptrdiff_t,
-                       multibyte: bool,
-                       nchars_return: *mut libc::ptrdiff_t)
-                       -> libc::ptrdiff_t;
-    fn error(m: *const u8, ...);
-}
 
 pub static MIME_LINE_LENGTH: isize = 76;
 
@@ -38,12 +23,12 @@ fn stringp(object: LispObject) -> LispObject {
 /// (fn STRING &optional NO-LINE-BREAK)
 #[lisp_fn(min = "1")]
 fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispObject {
-    CHECK_STRING(string.to_raw());
+    let mut string = string.as_string_or_error();
 
     // We need to allocate enough room for the encoded text
     // We will need 33 1/3% more space, plus a newline every 76 characters(MIME_LINE_LENGTH)
     // and then round up
-    let length = SBYTES(string);
+    let length = string.len_bytes();
     let mut allength: libc::ptrdiff_t = length + length / 3 + 1;
     allength += allength / MIME_LINE_LENGTH + 1 + 6;
 
@@ -52,11 +37,11 @@ fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispOb
     let mut buffer: Vec<libc::c_char> = Vec::with_capacity(allength as usize);
     unsafe {
         let encoded = buffer.as_mut_ptr();
-        let encodedLength = base64_encode_1(SSDATA(string.to_raw()),
+        let encodedLength = base64_encode_1(string.data_ptr(),
                                             encoded,
                                             length,
                                             no_line_break.is_nil(),
-                                            STRING_MULTIBYTE(string.to_raw()));
+                                            string.is_multibyte());
 
         if encodedLength > allength {
             panic!("base64 encoded length is larger then allocated buffer");
@@ -74,19 +59,16 @@ fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispOb
 /// (fn STRING)
 #[lisp_fn]
 fn base64_decode_string(string: LispObject) -> LispObject {
-    CHECK_STRING(string.to_raw());
+    let mut string = string.as_string_or_error();
 
-    let length = SBYTES(string);
+    let length = string.len_bytes();
     let mut buffer: Vec<libc::c_char> = Vec::with_capacity(length as usize);
     let mut decoded_string: LispObject = LispObject::constant_nil();
 
     unsafe {
         let decoded = buffer.as_mut_ptr();
-        let decoded_length = base64_decode_1(SSDATA(string.to_raw()),
-                                             decoded,
-                                             length,
-                                             false,
-                                             ptr::null_mut());
+        let decoded_length =
+            base64_decode_1(string.data_ptr(), decoded, length, false, ptr::null_mut());
 
         if decoded_length > length {
             panic!("Decoded length is above length");
@@ -107,8 +89,8 @@ fn base64_decode_string(string: LispObject) -> LispObject {
 /// (fn STRING)
 #[lisp_fn]
 fn string_bytes(string: LispObject) -> LispObject {
-    CHECK_STRING(string.to_raw());
-    unsafe { LispObject::from_fixnum_unchecked(SBYTES(string) as ::remacs_sys::EmacsInt) }
+    let string = string.as_string_or_error();
+    LispObject::from_natnum(string.len_bytes() as EmacsInt)
 }
 
 /// Return t if two strings have identical contents.
@@ -123,13 +105,14 @@ fn string_equal(mut s1: LispObject, mut s2: LispObject) -> LispObject {
     if s2.is_symbol() {
         s2 = LispObject::from_raw(unsafe { SYMBOL_NAME(s2.to_raw()) });
     }
-    CHECK_STRING(s1.to_raw());
-    CHECK_STRING(s2.to_raw());
+    let mut s1 = s1.as_string_or_error();
+    let mut s2 = s2.as_string_or_error();
 
-    LispObject::from_bool(SCHARS(s1) == SCHARS(s2) && SBYTES(s1) == SBYTES(s2) &&
+    LispObject::from_bool(s1.len_chars() == s2.len_chars() && s1.len_bytes() == s2.len_bytes() &&
                           unsafe {
-                              libc::memcmp(SDATA(s1.to_raw()) as *mut libc::c_void,
-                                           SDATA(s2.to_raw()) as *mut libc::c_void,
-                                           SBYTES(s1) as usize) == 0
+                              libc::memcmp(s1.data_ptr() as *mut libc::c_void,
+                                           s2.data_ptr() as *mut libc::c_void,
+                                           s1.len_bytes() as usize) ==
+                              0
                           })
 }

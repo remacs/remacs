@@ -660,16 +660,14 @@ extern "C" {
     pub static Qfloatp: Lisp_Object;
     pub static Qstringp: Lisp_Object;
     pub static Qlistp: Lisp_Object;
+    pub static Qmarkerp: Lisp_Object;
 
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
 
+    pub fn make_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
     pub fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
     pub fn wrong_type_argument(predicate: Lisp_Object, value: Lisp_Object) -> !;
     pub fn SYMBOL_NAME(s: Lisp_Object) -> Lisp_Object;
-    pub fn STRING_BYTES(s: *mut Lisp_String) -> libc::ptrdiff_t;
-    pub fn STRING_MULTIBYTE(a: Lisp_Object) -> bool;
-    pub fn SDATA(string: Lisp_Object) -> *mut libc::c_uchar;
-    pub fn SSDATA(string: Lisp_Object) -> *mut libc::c_char;
     pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const libc::c_void);
     pub fn make_float(float_value: libc::c_double) -> Lisp_Object;
     pub fn circular_list(tail: Lisp_Object) -> !;
@@ -679,4 +677,21 @@ extern "C" {
                           props: bool,
                           ht: Lisp_Object)
                           -> bool;
+    // defined in eval.c, where it can actually take an arbitrary
+    // number of arguments.
+    // TODO: define a Rust version of this that uses Rust strings.
+    pub fn error(m: *const u8, ...);
+
+    pub fn base64_encode_1(from: *const libc::c_char,
+                           to: *mut libc::c_char,
+                           length: libc::ptrdiff_t,
+                           line_break: bool,
+                           multibyte: bool)
+                           -> libc::ptrdiff_t;
+    pub fn base64_decode_1(from: *const libc::c_char,
+                           to: *mut libc::c_char,
+                           length: libc::ptrdiff_t,
+                           multibyte: bool,
+                           nchars_return: *mut libc::ptrdiff_t)
+                           -> libc::ptrdiff_t;
 }

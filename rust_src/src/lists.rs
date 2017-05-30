@@ -1,6 +1,7 @@
 //! Operations on lists.
 
-use lisp::{CHECK_NUMBER, CHECK_LIST_END, LispObject, LispCons, Qnil};
+use lisp::{LispObject, LispCons, Qnil};
+use remacs_sys::{wrong_type_argument, Qlistp};
 use remacs_macros::lisp_fn;
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
@@ -52,8 +53,8 @@ fn setcdr(cell: LispObject, newcdr: LispObject) -> LispObject {
     newcdr
 }
 
-/// Take the car/cdr of a cons cell, or signal an error if it's a
-/// different type.
+/// Return the car of LIST.  If arg is nil, return nil.
+/// Error if arg is not nil and not a cons cell.  See also `car-safe`.
 ///
 /// See Info node `(elisp)Cons Cells' for a discussion of related basic
 /// Lisp concepts such as car, cdr, cons cell and list.
@@ -69,6 +70,7 @@ fn car(object: LispObject) -> LispObject {
 
 /// Return the cdr of LIST.  If arg is nil, return nil.
 /// Error if arg is not nil and not a cons cell.  See also `cdr-safe'.
+///
 /// See Info node `(elisp)Cons Cells' for a discussion of related basic
 /// Lisp concepts such as cdr, car, cons cell and list.
 /// (fn LIST)
@@ -99,13 +101,14 @@ fn cdr_safe(object: LispObject) -> LispObject {
 /// (fn N LIST)
 #[lisp_fn]
 fn nthcdr(n: LispObject, list: LispObject) -> LispObject {
-    CHECK_NUMBER(n.to_raw());
+    let num = n.as_fixnum_or_error();
     let mut tail = list;
-    let num = n.to_fixnum().unwrap();
     for _ in 0..num {
         match tail.as_cons() {
             None => {
-                CHECK_LIST_END(tail.to_raw(), list.to_raw());
+                if tail != Qnil {
+                    unsafe { wrong_type_argument(Qlistp, list.to_raw()) }
+                }
                 return Qnil;
             }
             Some(tail_cons) => tail = tail_cons.cdr(),
@@ -332,7 +335,9 @@ fn internal_plist_put<F>(plist: LispObject, prop: LispObject, val: LispObject, c
                 None => {
                     // need an extra call to CHECK_LIST_END here to catch odd-length lists
                     // (like Emacs we signal the somewhat confusing `wrong-type-argument')
-                    CHECK_LIST_END(tail.as_obj().to_raw(), plist.to_raw());
+                    if tail.as_obj() != Qnil {
+                        unsafe { wrong_type_argument(Qlistp, plist.to_raw()) }
+                    }
                     break;
                 }
                 Some(tail_cdr_cons) => {
