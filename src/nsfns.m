@@ -2752,15 +2752,18 @@ compute_tip_xy (struct frame *f,
 
   /* Find the screen that pt is on. */
   for (screen in [NSScreen screens])
-#ifdef NS_IMPL_COCOA
-    if (CGRectContainsPoint ((CGRect)[screen frame], (CGPoint)pt))
-#else
     if (pt.x >= screen.frame.origin.x
         && pt.x < screen.frame.origin.x + screen.frame.size.width
         && pt.y >= screen.frame.origin.y
         && pt.y < screen.frame.origin.y + screen.frame.size.height)
-#endif
       break;
+
+  /* We could use this instead of the if above:
+
+         if (CGRectContainsPoint ([screen frame], pt))
+
+     which would be neater, but it causes problems building on old
+     versions of macOS and in GNUstep. */
 
   /* Ensure in bounds.  (Note, screen origin = lower left.) */
   if (INTEGERP (left) || INTEGERP (right))
