@@ -219,8 +219,8 @@ Initialization options:\n\
     "\
 --batch                     do not do interactive display; implies -q\n\
 --chdir DIR                 change to directory DIR\n\
---daemon, --old-daemon[=NAME] start a (named) server in the background\n\
---new-daemon[=NAME]         start a (named) server in the foreground\n\
+--daemon, --bg-daemon[=NAME] start a (named) server in the background\n\
+--fg-daemon[=NAME]          start a (named) server in the foreground\n\
 --debug-init                enable Emacs Lisp debugger for init file\n\
 --display, -d DISPLAY       use X server DISPLAY\n\
 ",
@@ -991,15 +991,15 @@ main (int argc, char **argv)
 
   int sockfd = -1;
 
-  if (argmatch (argv, argc, "-new-daemon", "--new-daemon", 10, NULL, &skip_args)
-      || argmatch (argv, argc, "-new-daemon", "--new-daemon", 10, &dname_arg, &skip_args))
+  if (argmatch (argv, argc, "-fg-daemon", "--fg-daemon", 10, NULL, &skip_args)
+      || argmatch (argv, argc, "-fg-daemon", "--fg-daemon", 10, &dname_arg, &skip_args))
     {
       daemon_type = 1;           /* foreground */
     }
   else if (argmatch (argv, argc, "-daemon", "--daemon", 5, NULL, &skip_args)
       || argmatch (argv, argc, "-daemon", "--daemon", 5, &dname_arg, &skip_args)
-      || argmatch (argv, argc, "-old-daemon", "--old-daemon", 10, NULL, &skip_args)
-      || argmatch (argv, argc, "-old-daemon", "--old-daemon", 10, &dname_arg, &skip_args))
+      || argmatch (argv, argc, "-bg-daemon", "--bg-daemon", 10, NULL, &skip_args)
+      || argmatch (argv, argc, "-bg-daemon", "--bg-daemon", 10, &dname_arg, &skip_args))
     {
       daemon_type = 2;          /* background */
     }
@@ -1114,7 +1114,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
                 char fdStr[80];
                 int fdStrlen =
                   snprintf (fdStr, sizeof fdStr,
-                            "--old-daemon=\n%d,%d\n%s", daemon_pipe[0],
+                            "--bg-daemon=\n%d,%d\n%s", daemon_pipe[0],
                             daemon_pipe[1], dname_arg ? dname_arg : "");
 
                 if (! (0 <= fdStrlen && fdStrlen < sizeof fdStr))
@@ -1711,8 +1711,8 @@ static const struct standard_args standard_args[] =
   { "-batch", "--batch", 100, 0 },
   { "-script", "--script", 100, 1 },
   { "-daemon", "--daemon", 99, 0 },
-  { "-old-daemon", "--old-daemon", 99, 0 },
-  { "-new-daemon", "--new-daemon", 99, 0 },
+  { "-bg-daemon", "--bg-daemon", 99, 0 },
+  { "-fg-daemon", "--fg-daemon", 99, 0 },
   { "-help", "--help", 90, 0 },
   { "-nl", "--no-loadup", 70, 0 },
   { "-nsl", "--no-site-lisp", 65, 0 },

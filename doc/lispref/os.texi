@@ -337,10 +337,10 @@ Do not display a splash screen.
 Run without an interactive terminal.  @xref{Batch Mode}.
 
 @item --daemon
-@itemx --old-daemon
-@itemx --new-daemon
+@itemx --bg-daemon
+@itemx --fg-daemon
 Do not initialize any display; just start a server.
-(An ``old-style'' daemon automatically runs in the background.)
+(A ``background'' daemon automatically runs in the background.)
 
 @item --no-init-file
 @itemx -q

@@ -336,16 +336,16 @@ setting @code{inhibit-x-resources} to @code{t} (@pxref{Resources}).
 @opindex -daemon
 @itemx --daemon[=@var{name}]
 @opindex --daemon
-@itemx --old-daemon[=@var{name}]
-@itemx --new-daemon[=@var{name}]
+@itemx --bg-daemon[=@var{name}]
+@itemx --fg-daemon[=@var{name}]
 Start Emacs as a daemon---after Emacs starts up, it starts the Emacs
 server without opening any frames.
 (Optionally, you can specify an explicit @var{name} for the server.)
 You can then use the @command{emacsclient} command to connect to Emacs
 for editing.  @xref{Emacs Server}, for information about using Emacs
-as a daemon.  An ``old-style'' daemon disconnects from the terminal
+as a daemon.  A ``background'' daemon disconnects from the terminal
 and runs in the background (@samp{--daemon} is an alias for
-@samp{--old-daemon}).
+@samp{--bg-daemon}).
 
 @item --no-desktop
 @opindex --no-desktop

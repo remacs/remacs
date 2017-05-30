@@ -78,10 +78,11 @@ affected by this, as SGI stopped supporting IRIX in December 2013.
 
 * Startup Changes in Emacs 26.1
 
-** New option '--new-daemon'.  This is the same as '--daemon', except
++++
+** New option '--fg-daemon'.  This is the same as '--daemon', except
 it runs in the foreground and does not fork.  This is intended for
 modern init systems such as systemd, which manage many of the traditional
-aspects of daemon behavior themselves.  '--old-daemon' is now an alias
+aspects of daemon behavior themselves.  '--bg-daemon' is now an alias
 for '--daemon'.
 
 +++

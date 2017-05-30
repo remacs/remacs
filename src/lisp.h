@@ -4167,7 +4167,7 @@ extern bool no_site_lisp;
 extern bool build_details;
 
 #ifndef WINDOWSNT
-/* 0 not a daemon, 1 new-style (foreground), 2 old-style (background).  */
+/* 0 not a daemon, 1 foreground daemon, 2 background daemon.  */
 extern int daemon_type;
 #define IS_DAEMON (daemon_type != 0)
 #define DAEMON_RUNNING (daemon_type >= 0)
