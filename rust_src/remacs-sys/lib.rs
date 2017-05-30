@@ -654,15 +654,29 @@ extern "C" {
     pub static Qt: Lisp_Object;
     pub static Qarith_error: Lisp_Object;
     pub static Qnumber_or_marker_p: Lisp_Object;
+    pub static Qconsp: Lisp_Object;
     pub static Qnumberp: Lisp_Object;
+    pub static Qintegerp: Lisp_Object;
     pub static Qfloatp: Lisp_Object;
     pub static Qstringp: Lisp_Object;
+    pub static Qlistp: Lisp_Object;
+
+    pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
 
     pub fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
-    pub fn wrong_type_argument(predicate: Lisp_Object, value: Lisp_Object) -> Lisp_Object;
+    pub fn wrong_type_argument(predicate: Lisp_Object, value: Lisp_Object) -> !;
+    pub fn SYMBOL_NAME(s: Lisp_Object) -> Lisp_Object;
     pub fn STRING_BYTES(s: *mut Lisp_String) -> libc::ptrdiff_t;
     pub fn STRING_MULTIBYTE(a: Lisp_Object) -> bool;
+    pub fn SDATA(string: Lisp_Object) -> *mut libc::c_uchar;
     pub fn SSDATA(string: Lisp_Object) -> *mut libc::c_char;
+    pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const libc::c_void);
     pub fn make_float(float_value: libc::c_double) -> Lisp_Object;
-
+    pub fn circular_list(tail: Lisp_Object) -> !;
+    pub fn internal_equal(o1: Lisp_Object,
+                          o2: Lisp_Object,
+                          depth: libc::c_int,
+                          props: bool,
+                          ht: Lisp_Object)
+                          -> bool;
 }
