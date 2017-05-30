@@ -1,4 +1,4 @@
-extern crate libc;
+use libc;
 
 // Macro used to generate a c function that wraps functionality provided by the Rust stdlib
 // for u32 and other unsigned types.
