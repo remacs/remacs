@@ -186,7 +186,7 @@ expression point is on."
   :group 'eldoc :lighter eldoc-minor-mode-string
   (setq eldoc-last-message nil)
   (cond
-   ((memq eldoc-documentation-function '(nil ignore))
+   ((not (eldoc--supported-p))
     (when (called-interactively-p 'any)
       (message "There is no ElDoc support in this buffer"))
     (setq eldoc-mode nil))
@@ -213,8 +213,11 @@ expression point is on."
 (defun turn-on-eldoc-mode ()
   "Turn on `eldoc-mode' if the buffer has eldoc support enabled.
 See `eldoc-documentation-function' for more detail."
-  (unless (memq eldoc-documentation-function '(nil ignore))
+  (when (eldoc--supported-p)
     (eldoc-mode 1)))
+
+(defun eldoc--supported-p ()
+  (not (memq eldoc-documentation-function '(nil ignore))))
 
 
 (defun eldoc-schedule-timer ()
