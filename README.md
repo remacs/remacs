@@ -143,21 +143,21 @@ more Emacs-y.
 
 1. You will need [Rust installed](https://www.rust-lang.org/en-US/install.html). If you're on macOS, you will need Rust
    nightly.
-   
+
 2. You will need a C compiler and toolchain. On Linux, you can do
    something like `apt-get install build-essential automake`. On
    macOS, you'll need Xcode.
-   
+
 3. You will need some C libraries. On Linux, you can install
    everything you need with:
-   
+
         apt-get install texinfo libjpeg-dev libtiff-dev \
           libgif-dev libxpm-dev libgtk-3-dev libgnutls-dev \
           libncurses5-dev libxml2-dev
-          
+
     On macOS, you'll need libxml2 (via `xcode-select --install`) and
     gnutls (via `brew install gnutls`).
-    
+
 ### Building Remacs
 
 ```
@@ -246,9 +246,9 @@ $ gcc -Ilib -E src/dummy.c > dummy_exp.c
 This gives us a file that ends with:
 
 ``` c
-static struct Lisp_Subr 
+static struct Lisp_Subr
 # 3 "src/dummy.c" 3 4
-_Alignas 
+_Alignas
 # 3 "src/dummy.c"
 (8) Snumberp = { { PVEC_SUBR << PSEUDOVECTOR_AREA_BITS }, { .a1 = Fnumberp }, 1, 1, "numberp", 0, 0}; Lisp_Object Fnumberp
 
@@ -263,35 +263,37 @@ _Alignas
 ```
 
 We can see we need to define a `Snumberp` and a `Fnumberp`. We define
-a `numberp` function that does the actual work, then `defun!` handles
+a `numberp` function that does the actual work, then use an attribute
+(implemented as a procedural macro) named `lisp_fn` that handles
 these definitions for us:
 
 ``` rust
-// This is the function that gets called when 
+// This is the function that gets called when
 // we call numberp in elisp.
-fn numberp(object: LispObject) -> LispObject {
-    if lisp::NUMBERP(object) {
-        LispObject::constant_t()
-    } else {
-        LispObject::constant_nil()
-    }
-}
-
-// defun! defines a wrapper function that calls numberp with
+//
+// `lisp_fn` defines a wrapper function that calls numberp with
 // LispObject values. It also declares a struct that we can pass to
-// defsubr so the elisp interpreter knows about our function.
-defun!("numberp", // the name of our primitive function inside elisp
-       Fnumberp(object), // the signature of the wrapper function
-       Snumberp, // the name of the struct that describes our function
-       numberp, // the rust function we want to call
-       1, 1, // min and max number of arguments
-       ptr::null(), // our function is not interactive
-       // docstring, the last line ensures that *Help* shows the
-       // correct calling convention
-       "Return t if OBJECT is a number (floating point or integer).
+// defsubr so the elisp interpreter knows about this function.
 
-(fn OBJECT)");
+/// Return t if OBJECT is a number.
+#[lisp_fn]
+fn numberp(object: LispObject) -> LispObject {
+    LispObject::from_bool(object.is_number())
+}
 ```
+
+The elisp name of the function is derived from the Rust name, with
+underscores replaced by hyphens.  If that is not possible (like for
+the function `+`), you can give an elisp name as an argument to
+`lisp\_fn`, like `#[lisp_fn(name = "+")]`.
+
+Optional arguments are also possible: to make the minimum number of
+arguments from elisp different from the number of Rust arguments,
+pass a `min = "n"` argument.
+
+The docstring of the function should be the same as the docstring
+in the C code.  (Don't wonder about it being a comment there, Emacs
+has some magic that extracts it into a separate file.)
 
 Finally, we need to delete the old C definition and call `defsubr`
 inside `rust_init_syms`:
