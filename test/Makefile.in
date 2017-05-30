@@ -38,6 +38,26 @@ MKDIR_P = @MKDIR_P@
 
 SEPCHAR = @SEPCHAR@
 
+
+# 'make' verbosity.
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+
+AM_V_ELC = $(am__v_ELC_@AM_V@)
+am__v_ELC_ = $(am__v_ELC_@AM_DEFAULT_V@)
+am__v_ELC_0 = @echo "  ELC     " $@;
+am__v_ELC_1 =
+
+AM_V_GEN = $(am__v_GEN_@AM_V@)
+am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+am__v_GEN_0 = @echo "  GEN     " $@;
+am__v_GEN_1 =
+
+AM_V_at = $(am__v_at_@AM_V@)
+am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
+am__v_at_0 = @
+am__v_at_1 =
+
+
 # We never change directory before running Emacs, so a relative file
 # name is fine, and makes life easier.  If we need to change
 # directory, we can use emacs --chdir.
@@ -72,8 +92,7 @@ emacs = EMACSLOADPATH= LC_ALL=$(TEST_LOCALE) \
 all: check
 
 %.elc: %.el
-	@echo Compiling $<
-	@$(emacs) -f batch-byte-compile $<
+	$(AM_V_ELC)$(emacs) -f batch-byte-compile $<
 
 ## Ignore any test errors so we can continue to test other files.
 ## But compilation errors are always fatal.
@@ -114,15 +133,10 @@ endif
 
 ## Beware: it approximates 'no-byte-compile', so watch out for false-positives!
 %.log: %.el
-	elc=$<c; \
-	if ! grep '^;.*no-byte-compile: t' $< > /dev/null; then \
-	  ${MAKE} $$elc; \
-	fi; \
-	loadfile=$<; \
-	echo Testing $$loadfile; \
-	stat=OK ; \
-	${MKDIR_P} $(dir $@) ; \
-	HOME=/nonexistent $(emacs) -l ert -l $$loadfile \
+	$(AM_V_at)grep '^;.*no-byte-compile: t' $< > /dev/null || ${MAKE} $<c
+	$(AM_V_at)${MKDIR_P} $(dir $@)
+	$(AM_V_GEN)stat=OK ; \
+	HOME=/nonexistent $(emacs) -l ert -l $< \
 	  --eval "(ert-run-tests-batch-and-exit ${SELECTOR_ACTUAL})" ${WRITE_LOG}
 
 ifeq (@HAVE_MODULES@, yes)
