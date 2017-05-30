@@ -53,9 +53,6 @@ EMACSOPT = -batch --no-site-file --no-site-lisp -L "$(SEPCHAR)$(srcdir)" $(EMACS
 # Prevent any settings in the user environment causing problems.
 unexport EMACSDATA EMACSDOC EMACSPATH GREP_OPTIONS
 
-# Prevent tests using or changing anything in HOME.
-export HOME = /nonexistent
-
 ## To run tests under a debugger, set this to eg: "gdb --args".
 GDB =
 
@@ -125,7 +122,7 @@ endif
 	echo Testing $$loadfile; \
 	stat=OK ; \
 	${MKDIR_P} $(dir $@) ; \
-	$(emacs) -l ert -l $$loadfile \
+	HOME=/nonexistent $(emacs) -l ert -l $$loadfile \
 	  --eval "(ert-run-tests-batch-and-exit ${SELECTOR_ACTUAL})" ${WRITE_LOG}
 
 ifeq (@HAVE_MODULES@, yes)
@@ -138,7 +135,7 @@ ELFILES := $(shell find ${srcdir} -path "${srcdir}/manual" -prune -o \
 		-path "${srcdir}/data" -prune -o \
 		-name "*resources" -prune -o \
 		${maybe_exclude_module_tests} \
-		-name "*.el" -print)
+		-name "*.el" ! -name ".*" -print)
 ## .log files may be in a different directory for out of source builds
 LOGFILES := $(patsubst %.el,%.log, \
 		$(patsubst $(srcdir)/%,%,$(ELFILES)))
