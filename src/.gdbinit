@@ -1300,18 +1300,52 @@ if hasattr(gdb, 'printing'):
 
     def to_string (self):
       "Yield a string that can be fed back into GDB."
+
+      # This implementation should work regardless of C compiler, and
+      # it should not attempt to run any code in the inferior.
+      EMACS_INT_WIDTH = int(gdb.lookup_symbol("EMACS_INT_WIDTH")[0].value())
+      USE_LSB_TAG = int(gdb.lookup_symbol("USE_LSB_TAG")[0].value())
+      GCTYPEBITS = 3
+      VALBITS = EMACS_INT_WIDTH - GCTYPEBITS
+      Lisp_Int0 = 2
+      Lisp_Int1 = 6 if USE_LSB_TAG else 3
+
+      # Unpack the Lisp value from its containing structure, if necessary.
       val = self.val
       basic_type = gdb.types.get_basic_type (val.type)
       if (basic_type.code == gdb.TYPE_CODE_STRUCT
           and gdb.types.has_field (basic_type, "i")):
         val = val["i"]
-      # Yield "XIL(N)", where N is a C integer.  This helps humans
-      # distinguish Lisp_Object values from ordinary integers even
-      # when Lisp_Object is an integer.  Perhaps some day the
-      # pretty-printing could be fancier.
+
+      # For nil, yield "XIL(0)", which is easier to read than "XIL(0x0)".
       if not val:
-        return "XIL(0)" # Easier to read than "XIL(0x0)".
-      return "XIL(0x%x)" % int(val)
+        return "XIL(0)"
+
+      # Extract the integer representation of the value and its Lisp type.
+      ival = int(val)
+      itype = ival >> (0 if USE_LSB_TAG else VALBITS)
+      itype = itype & ((1 << GCTYPEBITS) - 1)
+
+      # For a Lisp integer N, yield "make_number(N)".
+      if itype == Lisp_Int0 or itype == Lisp_Int1:
+        if USE_LSB_TAG:
+          ival = ival >> (GCTYPEBITS - 1)
+        elif (ival >> VALBITS) & 1:
+          ival = ival | (-1 << VALBITS)
+        else:
+          ival = ival & ((1 << VALBITS) - 1)
+        return "make_number(%d)" % ival
+
+      # For non-integers other than nil yield "XIL(N)", where N is a C integer.
+      # This helps humans distinguish Lisp_Object values from ordinary
+      # integers even when Lisp_Object is an integer.
+      # Perhaps some day the pretty-printing could be fancier.
+      # Prefer the unsigned representation to negative values, converting
+      # by hand as val.cast(gdb.lookup_type("EMACS_UINT") does not work in
+      # GDB 7.12.1; see <http://patchwork.sourceware.org/patch/11557/>.
+      if ival < 0:
+        ival = ival + (1 << EMACS_INT_WIDTH)
+      return "XIL(0x%x)" % ival
 
   def build_pretty_printer ():
     pp = Emacs_Pretty_Printers ("Emacs")
@@ -1321,3 +1355,8 @@ if hasattr(gdb, 'printing'):
   gdb.printing.register_pretty_printer (gdb.current_objfile (),
                                         build_pretty_printer (), True)
 end
+
+# GDB mishandles indentation with leading tabs when feeding it to Python.
+# Local Variables:
+# indent-tabs-mode: nil
+# End:
