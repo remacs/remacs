@@ -4249,6 +4249,13 @@ scrolling value explicitly.  The value you specify serves as a lower
 bound for automatic scrolling, i.e., automatic scrolling will not
 scroll a window to a column less than the specified one.
 
+  The default value of @code{auto-hscroll-mode} is @code{t}; setting
+it to @code{current-line} activates a variant of automatic horizontal
+scrolling whereby only the line showing the cursor is horizontally
+scrolled to make point visible, the rest of the window is left either
+unscrolled, or at the minimum scroll amount set by @code{scroll-left}
+and @code{scroll-right}, see below.
+
 @deffn Command scroll-left &optional count set-minimum
 This function scrolls the selected window @var{count} columns to the
 left (or to the right if @var{count} is negative).  The default
