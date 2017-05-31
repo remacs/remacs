@@ -150,6 +150,9 @@ TESTS := $(LOGFILES:.log=)
 ## see what the problem was.
 .PRECIOUS: %.log
 
+## Stop make deleting these as intermediate files.
+.SECONDARY: ${ELFILES:.el=.elc}
+
 .PHONY: ${TESTS}
 
 define test_template
