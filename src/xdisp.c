@@ -13648,6 +13648,14 @@ redisplay_internal (void)
   enum { MAX_HSCROLL_RETRIES = 16 };
   int hscroll_retries = 0;
 
+  /* Limit the number of retries for when frame(s) become garbaged as
+     result of redisplaying them.  Some packages set various redisplay
+     hooks, such as window-scroll-functions, to run Lisp that always
+     calls APIs which cause the frame's garbaged flag to become set,
+     so we loop indefinitely.  */
+  enum {MAX_GARBAGED_FRAME_RETRIES = 2 };
+  int garbaged_frame_retries = 0;
+
   /* True means redisplay has to consider all windows on all
      frames.  False, only selected_window is considered.  */
   bool consider_all_windows_p;
@@ -14194,7 +14202,8 @@ redisplay_internal (void)
                      garbage.  We have to start over.  These cases
                      should be rare, so going all the way back to the
                      top of redisplay should be good enough.  */
-                  if (FRAME_GARBAGED_P (f))
+                  if (FRAME_GARBAGED_P (f)
+		      && garbaged_frame_retries++ < MAX_GARBAGED_FRAME_RETRIES)
                     goto retry;
 
 #if defined (HAVE_WINDOW_SYSTEM) && !defined (HAVE_NS)
