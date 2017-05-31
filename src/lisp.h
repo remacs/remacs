@@ -1236,6 +1236,8 @@ Lisp_Object Fdelq(Lisp_Object, Lisp_Object);
 Lisp_Object Fplist_get(Lisp_Object, Lisp_Object);
 Lisp_Object Fplist_member(Lisp_Object, Lisp_Object);
 Lisp_Object Fplist_put(Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object Flist(ptrdiff_t, Lisp_Object *);
+Lisp_Object Fmake_list(Lisp_Object, Lisp_Object);
 Lisp_Object Fequal(Lisp_Object, Lisp_Object);
 Lisp_Object Fequal_including_properties(Lisp_Object, Lisp_Object);
 Lisp_Object Fsymbolp(Lisp_Object);

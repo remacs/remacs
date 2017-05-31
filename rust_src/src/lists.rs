@@ -387,3 +387,19 @@ fn plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispObject
 fn lax_plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispObject {
     internal_plist_put(plist, prop, val, LispObject::equal)
 }
+
+/// Return a newly created list with specified arguments as elements.
+/// Any number of arguments, even zero arguments, are allowed.
+/// usage: (list &rest OBJECTS)
+#[lisp_fn]
+fn list(args: &mut [LispObject]) -> LispObject {
+    args.iter().rev().fold(Qnil, |list, &arg| LispObject::cons(arg, list))
+}
+
+/// Return a newly created list of length LENGTH, with each element being INIT.
+/// (fn LENGTH INIT)
+#[lisp_fn]
+fn make_list(length: LispObject, init: LispObject) -> LispObject {
+    let length = length.as_natnum_or_error();
+    (0..length).fold(Qnil, |list, _| LispObject::cons(init, list))
+}
