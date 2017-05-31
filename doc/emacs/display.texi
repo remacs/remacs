@@ -308,7 +308,11 @@ displayed.  When the text in a window is scrolled horizontally, text
 lines are truncated rather than continued (@pxref{Line Truncation}).
 If a window shows truncated lines, Emacs performs automatic horizontal
 scrolling whenever point moves off the left or right edge of the
-screen.  To disable automatic horizontal scrolling, set the variable
+screen.  By default, all the lines in the window are scrolled
+horizontally together, but if you set the variable
+@code{auto-hscroll-mode} to the special value of @code{current-line},
+only the line showing the cursor will be scrolled.  To disable
+automatic horizontal scrolling entirely, set the variable
 @code{auto-hscroll-mode} to @code{nil}.  Note that when the automatic
 horizontal scrolling is turned off, if point moves off the edge of the
 screen, the cursor disappears to indicate that.  (On text terminals,
@@ -366,7 +370,10 @@ sufficiently large argument will restore the normal display.
   If you use those commands to scroll a window horizontally, that sets
 a lower bound for automatic horizontal scrolling.  Automatic scrolling
 will continue to scroll the window, but never farther to the right
-than the amount you previously set by @code{scroll-left}.
+than the amount you previously set by @code{scroll-left}.  When
+@code{auto-hscroll-mode} is set to @code{current-line}, all the lines
+other than the one showing the cursor will be scrolled by that minimal
+amount.
 
 @node Narrowing
 @section Narrowing

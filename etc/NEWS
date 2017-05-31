@@ -377,6 +377,7 @@ you may set this variable to nil.  (Behind the scenes, there is now a
 new mode line construct, '%C', which operates exactly as '%c' does
 except that it counts from one.)
 
++++
 ** New single-line horizontal scrolling mode.
 The 'auto-hscroll-mode' variable can now have a new special value,
 'current-line', which causes only the line where the cursor is

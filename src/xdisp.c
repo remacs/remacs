@@ -2890,8 +2890,19 @@ init_iterator (struct it *it, struct window *w,
     }
   else
     {
+      /* When hscrolling only the current line, don't apply the
+	 hscroll here, it will be applied by display_line when it gets
+	 to laying out the line showing point.  However, if the
+	 window's min_hscroll is positive, the user specified a lower
+	 bound for automatic hscrolling, so they expect the
+	 non-current lines to obey that hscroll amount.  */
       if (hscrolling_current_line_p (w))
-	it->first_visible_x = 0;
+	{
+	  if (w->min_hscroll > 0)
+	    it->first_visible_x = w->min_hscroll * FRAME_COLUMN_WIDTH (it->f);
+	  else
+	    it->first_visible_x = 0;
+	}
       else
 	it->first_visible_x =
 	  window_hscroll_limited (w, it->f) * FRAME_COLUMN_WIDTH (it->f);
@@ -13099,7 +13110,9 @@ hscroll_window_tree (Lisp_Object window)
 		     that doesn't need to be hscrolled.  If we omit
 		     this condition, the line from which we move will
 		     remain hscrolled.  */
-		  || (hscl && w->hscroll && !cursor_row->truncated_on_left_p)))
+		  || (hscl
+		      && w->hscroll != w->min_hscroll
+		      && !cursor_row->truncated_on_left_p)))
 	    {
 	      struct it it;
 	      ptrdiff_t hscroll;
@@ -20717,9 +20730,12 @@ display_line (struct it *it, int cursor_vpos)
   recenter_overlay_lists (current_buffer, IT_CHARPOS (*it));
 
   /* If we are going to display the cursor's line, account for the
-     hscroll of that line.  */
+     hscroll of that line.  We subtract the window's min_hscroll,
+     because that was already accounted for in init_iterator.  */
   if (hscroll_this_line)
-    x_incr = window_hscroll_limited (it->w, it->f) * FRAME_COLUMN_WIDTH (it->f);
+    x_incr =
+      (window_hscroll_limited (it->w, it->f) - it->w->min_hscroll)
+      * FRAME_COLUMN_WIDTH (it->f);
 
   /* Move over display elements that are not visible because we are
      hscrolled.  This may stop at an x-position < first_visible_x
