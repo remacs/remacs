@@ -3734,11 +3734,10 @@ In batch mode, the message is printed to the standard error stream,
 followed by a newline.
 
 The first argument is a format control string, and the rest are data
-to be formatted under control of the string.  See `format-message' for
-details.
-
-Note: (message "%s" VALUE) displays the string VALUE without
-interpreting format characters like `%', `\\=`', and `\\=''.
+to be formatted under control of the string.  Percent sign (%), grave
+accent (\\=`) and apostrophe (\\=') are special in the format; see
+`format-message' for details.  To display STRING without special
+treatment, use (message "%s" STRING).
 
 If the first argument is nil or the empty string, the function clears
 any existing message; this lets the minibuffer contents show.  See
