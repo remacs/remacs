@@ -18,7 +18,8 @@ use character::MAX_CHAR;
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, EMACS_INT_MAX, EMACS_INT_SIZE,
                  EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
                  Qnumber_or_marker_p, Qt, make_float, Lisp_String, Qlistp, Qintegerp, Qconsp,
-                 circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp};
+                 circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp,
+                 Qwholenump};
 use remacs_sys::Lisp_Object as CLisp_Object;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -330,6 +331,15 @@ impl LispObject {
     #[inline]
     pub fn is_natnum(self) -> bool {
         self.as_fixnum().map_or(false, |i| i >= 0)
+    }
+
+    #[inline]
+    pub fn as_natnum_or_error(self) -> EmacsInt {
+        if self.is_natnum() {
+            unsafe { self.to_fixnum_unchecked() }
+        } else {
+            unsafe { wrong_type_argument(Qwholenump, self.to_raw()) }
+        }
     }
 }
 
