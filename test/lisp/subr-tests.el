@@ -298,7 +298,8 @@ cf. Bug#25477."
 (cl-defmethod subr-tests--generic ((x integer))
   (message "%s is a number" x))
 (cl-defgeneric subr-tests--generic-without-methods (x y))
-(defvar subr-tests--this-file (or load-file-name buffer-file-name))
+(defvar subr-tests--this-file
+  (file-truename (or load-file-name buffer-file-name)))
 
 (ert-deftest subr-tests--method-files--finds-methods ()
   "`method-files' returns a list of files and methods for a generic function."
