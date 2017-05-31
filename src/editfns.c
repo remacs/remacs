@@ -2139,7 +2139,7 @@ the epoch.  The obsolete form (HIGH . LOW) is also still accepted.
 The optional ZONE is omitted or nil for Emacs local time, t for
 Universal Time, `wall' for system wall clock time, or a string as in
 the TZ environment variable.  It can also be a list (as from
-`current-time-zone') or an integer (as from `decode-time') applied
+`current-time-zone') or an integer (the UTC offset in seconds) applied
 without consideration for daylight saving time.
 
 The list has the following nine members: SEC is an integer between 0
