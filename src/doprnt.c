@@ -438,7 +438,9 @@ doprnt (char *buffer, ptrdiff_t bufsize, const char *format,
 	      }
 
 	    case '%':
-	      fmt--;    /* Drop thru and this % will be treated as normal */
+	      /* Treat this '%' as normal.  */
+	      fmt0 = fmt - 1;
+	      break;
 	    }
 	}
 
