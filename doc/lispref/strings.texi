@@ -864,7 +864,8 @@ below, as the first argument, and the string as the second, like this:
   (format "%s" @var{arbitrary-string})
 @end example
 
-  If @var{string} contains more than one format specification, the
+  If @var{string} contains more than one format specification and none
+of the format specifications contain an explicit field number, the
 format specifications correspond to successive values from
 @var{objects}.  Thus, the first format specification in @var{string}
 uses the first such value, the second format specification uses the
@@ -961,6 +962,25 @@ operation} error.
 @end group
 @end example
 
+@cindex field numbers in format spec
+  A specification can have a @dfn{field number}, which is a decimal
+number after the initial @samp{%}, followed by a literal dollar sign
+@samp{$}.  If you provide a field number, then the argument to be
+printed corresponds to the given field number instead of the next
+argument.  Field numbers start at 1.
+
+You can mix specifications with and without field numbers.  A
+specification without a field number that follows a specification with
+a field number will convert the argument after the one specified by
+the field number:
+
+@example
+(format "First argument %2$s, then %s, then %1$s" 1 2 3)
+     @result{} "First argument 2, then 3, then 1"
+@end example
+
+You can't use field numbers in a @samp{%%} specification.
+
 @cindex field width
 @cindex padding
   A specification can have a @dfn{width}, which is a decimal number
@@ -996,9 +1016,14 @@ is not truncated.
 @end group
 @end example
 
+If you want to use both a field number and a width, place the field
+number before the width.  For example, in @samp{%2$7s}, @samp{2} is
+the field number and @samp{7} is the width.
+
 @cindex flags in format specifications
-  Immediately after the @samp{%} and before the optional width
-specifier, you can also put certain @dfn{flag characters}.
+  After the @samp{%} and before the optional width specifier, you can
+also put certain @dfn{flag characters}.  The flag characters need to
+come directly after a potential field number.
 
   The flag @samp{+} inserts a plus sign before a positive number, so
 that it always has a sign.  A space character as flag inserts a space

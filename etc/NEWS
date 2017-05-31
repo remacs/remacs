@@ -368,6 +368,9 @@ libraries: 'find-library-other-window' and 'find-library-other-frame'.
 ** The new variable 'display-raw-bytes-as-hex' allows to change the
 display of raw bytes from octal to hex.
 
+** You can now provide explicit field numbers in format specifiers.
+For example, '(format "%2$s %1$s" 1 2)' produces "2 1".
+
 
 * Editing Changes in Emacs 26.1
 

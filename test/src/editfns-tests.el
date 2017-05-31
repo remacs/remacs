@@ -177,4 +177,22 @@
            (format-time-string "%Y-%m-%d %H:%M:%S.%3N %z" nil
                                (concat (make-string 2048 ?X) "0")))))
 
+(ert-deftest format-with-field ()
+  (should (equal (format "First argument %2$s, then %s, then %1$s" 1 2 3)
+                 "First argument 2, then 3, then 1"))
+  (should (equal (format "a %2$s %d %1$d %2$S %d %d b" 11 "22" 33 44)
+                 "a 22 33 11 \"22\" 33 44 b"))
+  (should (equal (format "a %08$s %s b" 1 2 3 4 5 6 7 8 9) "a 8 9 b"))
+  (should (equal (should-error (format "a %999999$s b" 11))
+                 '(error "Not enough arguments for format string")))
+  (should (equal (should-error (format "a %$s b" 11))
+                 ;; FIXME: there shouldn't be two % in the error
+                 ;; string!
+                 '(error "Invalid format operation %%$")))
+  (should (equal (should-error (format "a %0$s b" 11))
+                 '(error "Invalid field number `0'")))
+  (should (equal
+           (should-error (format "a %1$% %s b" 11))
+           '(error "Field number specified together with `%' conversion"))))
+
 ;;; editfns-tests.el ends here

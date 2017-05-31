@@ -48,6 +48,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <float.h>
 #include <limits.h>
 
+#include <c-ctype.h>
 #include <intprops.h>
 #include <stdlib.h>
 #include <strftime.h>
@@ -3856,7 +3857,7 @@ The first argument is a format control string.
 The other arguments are substituted into it to make the result, a string.
 
 The format control string may contain %-sequences meaning to substitute
-the next available argument:
+the next available argument, or the argument explicitly specified:
 
 %s means print a string argument.  Actually, prints any object, with `princ'.
 %d means print as signed number in decimal.
@@ -3873,13 +3874,17 @@ the next available argument:
 The argument used for %d, %o, %x, %e, %f, %g or %c must be a number.
 Use %% to put a single % into the output.
 
-A %-sequence may contain optional flag, width, and precision
-specifiers, as follows:
+A %-sequence may contain optional field number, flag, width, and
+precision specifiers, as follows:
 
-  %<flags><width><precision>character
+  %<field><flags><width><precision>character
 
-where flags is [+ #-0]+, width is [0-9]+, and precision is a literal
-period "." followed by [0-9]+
+where field is [0-9]+ followed by a literal dollar "$", flags is
+[+ #-0]+, width is [0-9]+, and precision is a literal period "."
+followed by [0-9]+.
+
+If field is given, it must be a one-based argument number; the given
+argument is substituted instead of the next one.
 
 The + flag character inserts a + before any positive number, while a
 space inserts a space before any positive number; these flags only
@@ -4032,13 +4037,18 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	{
 	  /* General format specifications look like
 
-	     '%' [flags] [field-width] [precision] format
+	     '%' [field-number] [flags] [field-width] [precision] format
 
 	     where
 
+             field-number ::= [0-9]+ '$'
 	     flags ::= [-+0# ]+
 	     field-width ::= [0-9]+
 	     precision ::= '.' [0-9]*
+
+             If a field-number is specified, it specifies the argument
+             number to substitute.  Otherwise, the next argument is
+             taken.
 
 	     If a field-width is specified, it specifies to which width
 	     the output should be padded with blanks, if the output
@@ -4047,6 +4057,29 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	     If precision is specified, it specifies the number of
 	     digits to print after the '.' for floats, or the max.
 	     number of chars to print from a string.  */
+
+          char *field_end;
+          uintmax_t raw_field = strtoumax (format, &field_end, 10);
+          bool has_field = false;
+          if (c_isdigit (*format) && *field_end == '$')
+            {
+              if (raw_field < 1 || raw_field >= PTRDIFF_MAX)
+                {
+                  /* doprnt doesn't support %.*s, so we need to copy
+                     the field number string.  */
+                  ptrdiff_t length = field_end - format;
+                  eassert (length > 0);
+                  eassert (length < PTRDIFF_MAX);
+                  char *field = SAFE_ALLOCA (length + 1);
+                  memcpy (field, format, length);
+                  field[length] = '\0';
+                  error ("Invalid field number `%s'", field);
+                }
+              has_field = true;
+              /* n is incremented below.  */
+              n = raw_field - 1;
+              format = field_end + 1;
+            }
 
 	  bool minus_flag = false;
 	  bool  plus_flag = false;
@@ -4090,7 +4123,13 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	  memset (&discarded[format0 - format_start], 1,
 		  format - format0 - (conversion == '%'));
 	  if (conversion == '%')
-	    goto copy_char;
+            {
+              if (has_field)
+                /* FIXME: `error' doesn't appear to support `%%'.  */
+                error ("Field number specified together with `%c' conversion",
+                       '%');
+              goto copy_char;
+            }
 
 	  ++n;
 	  if (! (n < nargs))
