@@ -1032,63 +1032,6 @@ If STRING is multibyte and contains a character of charset
   return string;
 }
 
-DEFUN ("string-as-multibyte", Fstring_as_multibyte, Sstring_as_multibyte,
-       1, 1, 0,
-       doc: /* Return a multibyte string with the same individual bytes as STRING.
-If STRING is multibyte, the result is STRING itself.
-Otherwise it is a newly created string, with no text properties.
-
-If STRING is unibyte and contains an individual 8-bit byte (i.e. not
-part of a correct utf-8 sequence), it is converted to the corresponding
-multibyte character of charset `eight-bit'.
-See also `string-to-multibyte'.
-
-Beware, this often doesn't really do what you think it does.
-It is similar to (decode-coding-string STRING \\='utf-8-emacs).
-If you're not sure, whether to use `string-as-multibyte' or
-`string-to-multibyte', use `string-to-multibyte'.  */)
-  (Lisp_Object string)
-{
-  CHECK_STRING (string);
-
-  if (! STRING_MULTIBYTE (string))
-    {
-      Lisp_Object new_string;
-      ptrdiff_t nchars, nbytes;
-
-      parse_str_as_multibyte (SDATA (string),
-			      SBYTES (string),
-			      &nchars, &nbytes);
-      new_string = make_uninit_multibyte_string (nchars, nbytes);
-      memcpy (SDATA (new_string), SDATA (string), SBYTES (string));
-      if (nbytes != SBYTES (string))
-	str_as_multibyte (SDATA (new_string), nbytes,
-			  SBYTES (string), NULL);
-      string = new_string;
-      set_string_intervals (string, NULL);
-    }
-  return string;
-}
-
-DEFUN ("string-to-multibyte", Fstring_to_multibyte, Sstring_to_multibyte,
-       1, 1, 0,
-       doc: /* Return a multibyte string with the same individual chars as STRING.
-If STRING is multibyte, the result is STRING itself.
-Otherwise it is a newly created string, with no text properties.
-
-If STRING is unibyte and contains an 8-bit byte, it is converted to
-the corresponding multibyte character of charset `eight-bit'.
-
-This differs from `string-as-multibyte' by converting each byte of a correct
-utf-8 sequence to an eight-bit character, not just bytes that don't form a
-correct sequence.  */)
-  (Lisp_Object string)
-{
-  CHECK_STRING (string);
-
-  return string_to_multibyte (string);
-}
-
 DEFUN ("string-to-unibyte", Fstring_to_unibyte, Sstring_to_unibyte,
        1, 1, 0,
        doc: /* Return a unibyte string with the same individual chars as STRING.
@@ -4387,9 +4330,7 @@ this variable.  */);
   defsubr (&Scopy_sequence);
   defsubr (&Sstring_make_multibyte);
   defsubr (&Sstring_make_unibyte);
-  defsubr (&Sstring_as_multibyte);
   defsubr (&Sstring_as_unibyte);
-  defsubr (&Sstring_to_multibyte);
   defsubr (&Sstring_to_unibyte);
   defsubr (&Scopy_alist);
   defsubr (&Ssubstring);

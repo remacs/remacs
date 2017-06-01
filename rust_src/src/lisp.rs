@@ -13,13 +13,12 @@ use std::ops::Deref;
 use std::fmt::{Debug, Formatter, Error};
 
 use marker::{LispMarker, marker_position};
-use character::MAX_CHAR;
+use multibyte::{LispStringRef, MAX_CHAR};
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, EMACS_INT_MAX, EMACS_INT_SIZE,
                  EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
-                 Qnumber_or_marker_p, Qt, make_float, Lisp_String, Qlistp, Qintegerp, Qconsp,
-                 circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp,
-                 Qwholenump};
+                 Qnumber_or_marker_p, Qt, make_float, Qlistp, Qintegerp, Qconsp, circular_list,
+                 internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp, Qwholenump};
 use remacs_sys::Lisp_Object as CLisp_Object;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -617,30 +616,6 @@ impl LispObject {
 
 // String support (LispType == 4)
 
-type LispStringRef = ExternalPtr<Lisp_String>;
-
-impl LispStringRef {
-    pub fn len_bytes(&self) -> libc::ptrdiff_t {
-        if self.size_byte < 0 {
-            self.size
-        } else {
-            self.size_byte
-        }
-    }
-
-    pub fn len_chars(&self) -> libc::ptrdiff_t {
-        self.size
-    }
-
-    pub fn is_multibyte(&self) -> bool {
-        self.size_byte >= 0
-    }
-
-    pub fn data_ptr(&mut self) -> *mut libc::c_char {
-        self.data
-    }
-}
-
 impl LispObject {
     #[inline]
     pub fn is_string(self) -> bool {
@@ -698,7 +673,8 @@ impl LispObject {
 
     /// Nonzero iff X is a character.
     pub fn is_character(self) -> bool {
-        self.as_fixnum().map_or(false, |i| 0 <= i && i <= MAX_CHAR)
+        self.as_fixnum()
+            .map_or(false, |i| 0 <= i && i <= MAX_CHAR as EmacsInt)
     }
 
     // The three Emacs Lisp comparison functions.

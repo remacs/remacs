@@ -1,17 +1,15 @@
 //! Operations on characters.
 
 use lisp::LispObject;
+use multibyte::MAX_CHAR;
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, CHARACTERBITS};
-
-/// Maximum character code
-pub const MAX_CHAR: EmacsInt = (1 << CHARACTERBITS as EmacsInt) - 1;
+use remacs_sys::EmacsInt;
 
 /// Return the character of the maximum code.
 /// (fn)
 #[lisp_fn]
 fn max_char() -> LispObject {
-    LispObject::from_fixnum(MAX_CHAR)
+    LispObject::from_fixnum(MAX_CHAR as EmacsInt)
 }
 
 /// Return non-nil if OBJECT is a character.

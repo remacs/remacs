@@ -5,7 +5,9 @@ use std::ptr;
 use libc;
 
 use lisp::LispObject;
-use remacs_sys::{SYMBOL_NAME, EmacsInt, error, base64_encode_1, base64_decode_1, make_string};
+use multibyte;
+use remacs_sys::{SYMBOL_NAME, EmacsInt, error, base64_encode_1, base64_decode_1, make_string,
+                 make_uninit_multibyte_string, string_to_multibyte as c_string_to_multibyte};
 use remacs_macros::lisp_fn;
 
 pub static MIME_LINE_LENGTH: isize = 76;
@@ -37,7 +39,7 @@ fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispOb
     let mut buffer: Vec<libc::c_char> = Vec::with_capacity(allength as usize);
     unsafe {
         let encoded = buffer.as_mut_ptr();
-        let encodedLength = base64_encode_1(string.data_ptr(),
+        let encodedLength = base64_encode_1(string.sdata_ptr(),
                                             encoded,
                                             length,
                                             no_line_break.is_nil(),
@@ -68,7 +70,7 @@ fn base64_decode_string(string: LispObject) -> LispObject {
     unsafe {
         let decoded = buffer.as_mut_ptr();
         let decoded_length =
-            base64_decode_1(string.data_ptr(), decoded, length, false, ptr::null_mut());
+            base64_decode_1(string.sdata_ptr(), decoded, length, false, ptr::null_mut());
 
         if decoded_length > length {
             panic!("Decoded length is above length");
@@ -115,4 +117,57 @@ fn string_equal(mut s1: LispObject, mut s2: LispObject) -> LispObject {
                                            s1.len_bytes() as usize) ==
                               0
                           })
+}
+
+/// Return a multibyte string with the same individual bytes as STRING.
+/// If STRING is multibyte, the result is STRING itself.
+/// Otherwise it is a newly created string, with no text properties.
+///
+/// If STRING is unibyte and contains an individual 8-bit byte (i.e. not
+/// part of a correct utf-8 sequence), it is converted to the corresponding
+/// multibyte character of charset `eight-bit'.
+/// See also `string-to-multibyte'.
+///
+/// Beware, this often doesn't really do what you think it does.
+/// It is similar to (decode-coding-string STRING \\='utf-8-emacs).
+/// If you're not sure, whether to use `string-as-multibyte' or
+/// `string-to-multibyte', use `string-to-multibyte'.
+/// (fn STRING)
+#[lisp_fn]
+fn string_as_multibyte(string: LispObject) -> LispObject {
+    let mut s = string.as_string_or_error();
+    if s.is_multibyte() {
+        return string;
+    }
+    let mut nchars = 0;
+    let mut nbytes = 0;
+    multibyte::parse_str_as_multibyte(s.data_ptr(), s.len_bytes(), &mut nchars, &mut nbytes);
+    let new_string =
+        unsafe { make_uninit_multibyte_string(nchars as EmacsInt, nbytes as EmacsInt) };
+    let new_string = LispObject::from_raw(new_string);
+    let mut new_s = new_string.as_string().unwrap();
+    unsafe {
+        ptr::copy_nonoverlapping(s.data_ptr(), new_s.data_ptr(), s.len_bytes() as usize);
+    }
+    if nbytes != s.len_bytes() {
+        multibyte::str_as_multibyte(new_s.data_ptr(), nbytes, s.len_bytes(), ptr::null_mut());
+    }
+    new_string
+}
+
+/// Return a multibyte string with the same individual chars as STRING.
+/// If STRING is multibyte, the result is STRING itself.
+/// Otherwise it is a newly created string, with no text properties.
+///
+/// If STRING is unibyte and contains an 8-bit byte, it is converted to
+/// the corresponding multibyte character of charset `eight-bit'.
+///
+/// This differs from `string-as-multibyte' by converting each byte of a correct
+/// utf-8 sequence to an eight-bit character, not just bytes that don't form a
+/// correct sequence.
+/// (fn STRING)
+#[lisp_fn]
+fn string_to_multibyte(string: LispObject) -> LispObject {
+    let _ = string.as_string_or_error();
+    unsafe { LispObject::from_raw(c_string_to_multibyte(string.to_raw())) }
 }
