@@ -1,4 +1,4 @@
-;;; loaddefs.tmp --- automatically extracted autoloads
+;;; loaddefs.el --- automatically extracted autoloads
 ;;
 ;;; Code:
 
@@ -4899,15 +4899,6 @@ printer proceeds to the next function on the list.
 This variable is not used at present, but it is defined in hopes that
 a future Emacs interpreter will be able to use it.")
 
-(autoload 'cl-mapcar "cl-lib" "\
-Apply FUNCTION to each element of SEQ, and make a list of the results.
-If there are several SEQs, FUNCTION is called with that many arguments,
-and mapping stops as soon as the shortest list runs out.  With just one
-SEQ, this is like `mapcar'.  With several, it is like the Common Lisp
-`mapcar' function extended to arbitrary sequence types.
-
-\(fn FUNCTION SEQ...)" nil nil)
-
 (defvar cl-old-struct-compat-mode nil "\
 Non-nil if Cl-Old-Struct-Compat mode is enabled.
 See the `cl-old-struct-compat-mode' command
@@ -5878,7 +5869,22 @@ with empty strings removed.
 ;;; Generated autoloads from textmodes/css-mode.el
 
 (autoload 'css-mode "css-mode" "\
-Major mode to edit Cascading Style Sheets.
+Major mode to edit Cascading Style Sheets (CSS).
+\\<css-mode-map>
+This mode provides syntax highlighting, indentation, completion,
+and documentation lookup for CSS.
+
+Use `\\[complete-symbol]' to complete CSS properties, property values,
+pseudo-elements, pseudo-classes, at-rules, bang-rules, and HTML
+tags, classes and IDs.  Completion candidates for HTML class
+names and IDs are found by looking through open HTML mode
+buffers.
+
+Use `\\[info-lookup-symbol]' to look up documentation of CSS properties, at-rules,
+pseudo-classes, and pseudo-elements on the Mozilla Developer
+Network (MDN).
+
+\\{css-mode-map}
 
 \(fn)" t nil)
  (add-to-list 'auto-mode-alist '("\\.scss\\'" . scss-mode))
@@ -12721,12 +12727,24 @@ Visit the file you click on in another window.
 
 (autoload 'find-library "find-func" "\
 Find the Emacs Lisp source of LIBRARY.
-LIBRARY should be a string (the name of the library).  If the
-optional OTHER-WINDOW argument (i.e., the command argument) is
-specified, pop to a different window before displaying the
-buffer.
 
-\(fn LIBRARY &optional OTHER-WINDOW)" t nil)
+Interactively, prompt for LIBRARY using the one at or near point.
+
+\(fn LIBRARY)" t nil)
+
+(autoload 'find-library-other-window "find-func" "\
+Find the Emacs Lisp source of LIBRARY in another window.
+
+See `find-library' for more details.
+
+\(fn LIBRARY)" t nil)
+
+(autoload 'find-library-other-frame "find-func" "\
+Find the Emacs Lisp source of LIBRARY in another frame.
+
+See `find-library' for more details.
+
+\(fn LIBRARY)" t nil)
 
 (autoload 'find-function-search-for-symbol "find-func" "\
 Search for SYMBOL's definition of type TYPE in LIBRARY.
@@ -12887,7 +12905,7 @@ Define some key bindings for the find-function family of functions.
 
 \(fn)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "find-func" '("find-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "find-func" '("find-" "read-library-name")))
 
 ;;;***
 
@@ -15886,6 +15904,14 @@ This discards the buffer's undo information.
 \(fn)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "hexl" '("hexl-" "dehexlify-buffer")))
+
+;;;***
+
+;;;### (autoloads "actual autoloads are elsewhere" "hfy-cmap" "hfy-cmap.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from hfy-cmap.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "hfy-cmap" '("hfy-" "htmlfontify-unload-rgb-file")))
 
 ;;;***
 
@@ -21971,32 +21997,32 @@ QUALITY can be:
 ;;; Generated autoloads from net/net-utils.el
 
 (autoload 'ifconfig "net-utils" "\
-Run ifconfig and display diagnostic output.
+Run `ifconfig-program' and display diagnostic output.
 
 \(fn)" t nil)
 
 (autoload 'iwconfig "net-utils" "\
-Run iwconfig and display diagnostic output.
+Run `iwconfig-program' and display diagnostic output.
 
 \(fn)" t nil)
 
 (autoload 'netstat "net-utils" "\
-Run netstat and display diagnostic output.
+Run `netstat-program' and display diagnostic output.
 
 \(fn)" t nil)
 
 (autoload 'arp "net-utils" "\
-Run arp and display diagnostic output.
+Run `arp-program' and display diagnostic output.
 
 \(fn)" t nil)
 
 (autoload 'route "net-utils" "\
-Run route and display diagnostic output.
+Run `route-program' and display diagnostic output.
 
 \(fn)" t nil)
 
 (autoload 'traceroute "net-utils" "\
-Run traceroute program for TARGET.
+Run `traceroute-program' for TARGET.
 
 \(fn TARGET)" t nil)
 
@@ -22008,32 +22034,49 @@ If your system's ping continues until interrupted, you can try setting
 \(fn HOST)" t nil)
 
 (autoload 'nslookup-host "net-utils" "\
-Lookup the DNS information for HOST.
+Look up the DNS information for HOST (name or IP address).
+Optional argument NAME-SERVER says which server to use for
+DNS resolution.
+Interactively, prompt for NAME-SERVER if invoked with prefix argument.
 
-\(fn HOST)" t nil)
+This command uses `nslookup-program' for looking up the DNS information.
+
+\(fn HOST &optional NAME-SERVER)" t nil)
 
 (autoload 'nslookup "net-utils" "\
-Run nslookup program.
+Run `nslookup-program'.
 
 \(fn)" t nil)
 
 (autoload 'dns-lookup-host "net-utils" "\
-Lookup the DNS information for HOST (name or IP address).
+Look up the DNS information for HOST (name or IP address).
+Optional argument NAME-SERVER says which server to use for
+DNS resolution.
+Interactively, prompt for NAME-SERVER if invoked with prefix argument.
 
-\(fn HOST)" t nil)
+This command uses `dns-lookup-program' for looking up the DNS information.
+
+\(fn HOST &optional NAME-SERVER)" t nil)
 
 (autoload 'run-dig "net-utils" "\
-Run dig program.
+Look up DNS information for HOST (name or IP address).
+Optional argument NAME-SERVER says which server to use for
+DNS resolution.
+Interactively, prompt for NAME-SERVER if invoked with prefix argument.
 
-\(fn HOST)" t nil)
+This command uses `dig-program' for looking up the DNS information.
+
+\(fn HOST &optional NAME-SERVER)" t nil)
 
 (autoload 'ftp "net-utils" "\
-Run ftp program.
+Run `ftp-program' to connect to HOST.
 
 \(fn HOST)" t nil)
 
 (autoload 'finger "net-utils" "\
 Finger USER on HOST.
+This command uses `finger-X.500-host-regexps'
+and `network-connection-service-alist', which see.
 
 \(fn USER HOST)" t nil)
 
@@ -22041,6 +22084,7 @@ Finger USER on HOST.
 Send SEARCH-STRING to server defined by the `whois-server-name' variable.
 If `whois-guess-server' is non-nil, then try to deduce the correct server
 from SEARCH-STRING.  With argument, prompt for whois server.
+The port is deduced from `network-connection-service-alist'.
 
 \(fn ARG SEARCH-STRING)" t nil)
 
@@ -22051,6 +22095,7 @@ from SEARCH-STRING.  With argument, prompt for whois server.
 
 (autoload 'network-connection-to-service "net-utils" "\
 Open a network connection to SERVICE on HOST.
+This command uses `network-connection-service-alist', which see.
 
 \(fn HOST SERVICE)" t nil)
 
@@ -24195,13 +24240,13 @@ downloads in the background.
 
 (autoload 'package-install "package" "\
 Install the package PKG.
-PKG can be a package-desc or a symbol naming one of the available packages
+PKG can be a `package-desc' or a symbol naming one of the available packages
 in an archive in `package-archives'.  Interactively, prompt for its name.
 
 If called interactively or if DONT-SELECT nil, add PKG to
 `package-selected-packages'.
 
-If PKG is a package-desc and it is already installed, don't try
+If PKG is a `package-desc' and it is already installed, don't try
 to install it but still mark it as selected.
 
 \(fn PKG &optional DONT-SELECT)" t nil)
@@ -24235,7 +24280,7 @@ If some packages are not installed propose to install them.
 
 (autoload 'package-reinstall "package" "\
 Reinstall package PKG.
-PKG should be either a symbol, the package name, or a package-desc
+PKG should be either a symbol, the package name, or a `package-desc'
 object.
 
 \(fn PKG)" t nil)
@@ -25021,6 +25066,31 @@ will not be shown.
 \(fn &optional QUIET)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "pinentry" '("pinentry-")))
+
+;;;***
+
+;;;### (autoloads nil "pixel-scroll" "pixel-scroll.el" (0 0 0 0))
+;;; Generated autoloads from pixel-scroll.el
+
+(defvar pixel-scroll-mode nil "\
+Non-nil if Pixel-Scroll mode is enabled.
+See the `pixel-scroll-mode' command
+for a description of this minor mode.
+Setting this variable directly does not take effect;
+either customize it (see the info node `Easy Customization')
+or call the function `pixel-scroll-mode'.")
+
+(custom-autoload 'pixel-scroll-mode "pixel-scroll" nil)
+
+(autoload 'pixel-scroll-mode "pixel-scroll" "\
+A minor mode to scroll text pixel-by-pixel.
+With a prefix argument ARG, enable Pixel Scroll mode if ARG is positive,
+and disable it otherwise.  If called from Lisp, enable Pixel Scroll mode
+if ARG is omitted or nil.
+
+\(fn &optional ARG)" t nil)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "pixel-scroll" '("pixel-")))
 
 ;;;***
 
@@ -27460,7 +27530,7 @@ explicitly.")
 
 (make-obsolete-variable 'rmail-default-dont-reply-to-names 'mail-dont-reply-to-names "24.1")
 
-(defvar rmail-ignored-headers (purecopy (concat "^via:\\|^mail-from:\\|^origin:\\|^references:\\|^sender:" "\\|^status:\\|^received:\\|^x400-originator:\\|^x400-recipients:" "\\|^x400-received:\\|^x400-mts-identifier:\\|^x400-content-type:" "\\|^\\(resent-\\|\\)message-id:\\|^summary-line:\\|^resent-date:" "\\|^nntp-posting-host:\\|^path:\\|^x-char.*:\\|^x-face:\\|^face:" "\\|^x-mailer:\\|^delivered-to:\\|^lines:" "\\|^content-transfer-encoding:\\|^x-coding-system:" "\\|^return-path:\\|^errors-to:\\|^return-receipt-to:" "\\|^precedence:\\|^mime-version:" "\\|^list-owner:\\|^list-help:\\|^list-post:\\|^list-subscribe:" "\\|^list-id:\\|^list-unsubscribe:\\|^list-archive:" "\\|^content-length:\\|^nntp-posting-date:\\|^user-agent" "\\|^importance:\\|^envelope-to:\\|^delivery-date\\|^openpgp:" "\\|^mbox-line:\\|^cancel-lock:" "\\|^DomainKey-Signature:\\|^dkim-signature:" "\\|^resent-face:\\|^resent-x.*:\\|^resent-organization:\\|^resent-openpgp:" "\\|^x-.*:")) "\
+(defvar rmail-ignored-headers (purecopy (concat "^via:\\|^mail-from:\\|^origin:\\|^references:\\|^sender:" "\\|^status:\\|^received:\\|^x400-originator:\\|^x400-recipients:" "\\|^x400-received:\\|^x400-mts-identifier:\\|^x400-content-type:" "\\|^\\(resent-\\|\\)message-id:\\|^summary-line:\\|^resent-date:" "\\|^nntp-posting-host:\\|^path:\\|^x-char.*:\\|^x-face:\\|^face:" "\\|^x-mailer:\\|^delivered-to:\\|^lines:" "\\|^content-transfer-encoding:\\|^x-coding-system:" "\\|^return-path:\\|^errors-to:\\|^return-receipt-to:" "\\|^precedence:\\|^mime-version:" "\\|^list-owner:\\|^list-help:\\|^list-post:\\|^list-subscribe:" "\\|^list-id:\\|^list-unsubscribe:\\|^list-archive:" "\\|^content-length:\\|^nntp-posting-date:\\|^user-agent" "\\|^importance:\\|^envelope-to:\\|^delivery-date\\|^openpgp:" "\\|^mbox-line:\\|^cancel-lock:" "\\|^DomainKey-Signature:\\|^dkim-signature:" "\\|^ARC-.*:" "\\|^Received-SPF:" "\\|^Authentication-Results:" "\\|^resent-face:\\|^resent-x.*:\\|^resent-organization:\\|^resent-openpgp:" "\\|^x-.*:")) "\
 Regexp to match header fields that Rmail should normally hide.
 \(See also `rmail-nonignored-headers', which overrides this regexp.)
 This variable is used for reformatting the message header,
@@ -29519,7 +29589,7 @@ Like `mail' command, but display mail buffer in another frame.
 
 ;;;### (autoloads nil "seq" "emacs-lisp/seq.el" (0 0 0 0))
 ;;; Generated autoloads from emacs-lisp/seq.el
-(push (purecopy '(seq 2 19)) package--builtin-versions)
+(push (purecopy '(seq 2 20)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "seq" '("seq-")))
 
@@ -30178,6 +30248,23 @@ twice for the others.
 ;;;### (autoloads nil "smerge-mode" "vc/smerge-mode.el" (0 0 0 0))
 ;;; Generated autoloads from vc/smerge-mode.el
 
+(autoload 'smerge-refine-regions "smerge-mode" "\
+Show fine differences in the two regions BEG1..END1 and BEG2..END2.
+PROPS-C is an alist of properties to put (via overlays) on the changes.
+PROPS-R is an alist of properties to put on removed characters.
+PROPS-A is an alist of properties to put on added characters.
+If PROPS-R and PROPS-A are nil, put PROPS-C on all changes.
+If PROPS-C is nil, but PROPS-R and PROPS-A are non-nil,
+put PROPS-A on added characters, PROPS-R on removed characters.
+If PROPS-C, PROPS-R and PROPS-A are non-nil, put PROPS-C on changed characters,
+PROPS-A on added characters, and PROPS-R on removed characters.
+
+If non-nil, PREPROC is called with no argument in a buffer that contains
+a copy of a region, just before preparing it to for `diff'.  It can be
+used to replace chars to try and eliminate some spurious differences.
+
+\(fn BEG1 END1 BEG2 END2 PROPS-C &optional PREPROC PROPS-R PROPS-A)" nil nil)
+
 (autoload 'smerge-ediff "smerge-mode" "\
 Invoke ediff to resolve the conflicts.
 NAME-UPPER, NAME-LOWER, and NAME-BASE, if non-nil, are used for the
@@ -30312,7 +30399,7 @@ then `snmpv2-mode-hook'.
 
 ;;;### (autoloads nil "soap-client" "net/soap-client.el" (0 0 0 0))
 ;;; Generated autoloads from net/soap-client.el
-(push (purecopy '(soap-client 3 1 1)) package--builtin-versions)
+(push (purecopy '(soap-client 3 1 2)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "soap-client" '("soap-")))
 
@@ -33976,20 +34063,17 @@ Used for file names matching `tramp-completion-file-name-regexp'.
 Operations not mentioned here will be handled by Tramp's file
 name handler functions, or the normal Emacs functions.")
 
-(autoload 'tramp-file-name-handler "tramp" "\
-Invoke Tramp file name handler.
-Falls back to normal file name handler if no Tramp file name handler exists.
-
-\(fn OPERATION &rest ARGS)" nil nil)
-
 (autoload 'tramp-completion-file-name-handler "tramp" "\
 Invoke Tramp file name completion handler.
 Falls back to normal file name handler if no Tramp file name handler exists.
 
 \(fn OPERATION &rest ARGS)" nil nil)
 
+(defun tramp-autoload-file-name-handler (operation &rest args) "\
+Load Tramp file name handler, and perform OPERATION." (let ((default-directory temporary-file-directory)) (load "tramp" (quote noerror) (quote nomessage))) (apply operation args))
+
 (defun tramp-register-autoload-file-name-handlers nil "\
-Add Tramp file name handlers to `file-name-handler-alist' during autoload." (add-to-list (quote file-name-handler-alist) (cons tramp-initial-file-name-regexp (quote tramp-file-name-handler))) (put (quote tramp-file-name-handler) (quote safe-magic) t) (put (quote tramp-file-name-handler) (quote operations) (quote (file-name-all-completions file-name-completion file-remote-p))) (add-to-list (quote file-name-handler-alist) (cons tramp-initial-completion-file-name-regexp (quote tramp-completion-file-name-handler))) (put (quote tramp-completion-file-name-handler) (quote safe-magic) t) (put (quote tramp-completion-file-name-handler) (quote operations) (mapcar (quote car) tramp-completion-file-name-handler-alist)))
+Add Tramp file name handlers to `file-name-handler-alist' during autoload." (add-to-list (quote file-name-handler-alist) (cons tramp-initial-file-name-regexp (quote tramp-autoload-file-name-handler))) (put (quote tramp-autoload-file-name-handler) (quote safe-magic) t) (add-to-list (quote file-name-handler-alist) (cons tramp-initial-completion-file-name-regexp (quote tramp-completion-file-name-handler))) (put (quote tramp-completion-file-name-handler) (quote safe-magic) t) (put (quote tramp-completion-file-name-handler) (quote operations) (mapcar (quote car) tramp-completion-file-name-handler-alist)))
 
 (tramp-register-autoload-file-name-handlers)
 
@@ -34026,13 +34110,6 @@ Discard Tramp from loading remote files.
 
 ;;;### (autoloads nil "tramp-cmds" "net/tramp-cmds.el" (0 0 0 0))
 ;;; Generated autoloads from net/tramp-cmds.el
-
-(autoload 'tramp-change-syntax "tramp-cmds" "\
-Change Tramp syntax.
-SYNTAX can be one of the symbols `default' (default),
-`simplified' (ange-ftp like) or `separate' (XEmacs like).
-
-\(fn &optional SYNTAX)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tramp-cmds" '("tramp-")))
 
@@ -38161,9 +38238,9 @@ Zone out, completely.
 ;;;;;;  "eshell/em-term.el" "eshell/em-tramp.el" "eshell/em-unix.el"
 ;;;;;;  "eshell/em-xtra.el" "facemenu.el" "faces.el" "files.el" "font-core.el"
 ;;;;;;  "font-lock.el" "format.el" "frame.el" "help.el" "hfy-cmap.el"
-;;;;;;  "htmlfontify-loaddefs.el" "ibuf-ext.el" "indent.el" "international/characters.el"
-;;;;;;  "international/charprop.el" "international/charscript.el"
-;;;;;;  "international/cp51932.el" "international/eucjp-ms.el" "international/mule-cmds.el"
+;;;;;;  "ibuf-ext.el" "indent.el" "international/characters.el" "international/charprop.el"
+;;;;;;  "international/charscript.el" "international/cp51932.el"
+;;;;;;  "international/eucjp-ms.el" "international/mule-cmds.el"
 ;;;;;;  "international/mule-conf.el" "international/mule.el" "international/uni-bidi.el"
 ;;;;;;  "international/uni-brackets.el" "international/uni-category.el"
 ;;;;;;  "international/uni-combining.el" "international/uni-comment.el"
@@ -38233,4 +38310,4 @@ Zone out, completely.
 ;; no-update-autoloads: t
 ;; coding: utf-8
 ;; End:
-;;; loaddefs.tmp ends here
+;;; loaddefs.el ends here
