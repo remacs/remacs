@@ -208,7 +208,7 @@ char *get_current_dir_name (void);
 /* Return the current working directory.  Returns NULL on errors.
    Any other returned value must be freed with free.  This is used
    only when get_current_dir_name is not defined on the system.  */
-char*
+char *
 get_current_dir_name (void)
 {
   char *buf;
@@ -1702,6 +1702,7 @@ main (int argc, char **argv)
   if (tramp_prefix)
     quote_argument (emacs_socket, tramp_prefix);
   quote_argument (emacs_socket, cwd);
+  free (cwd);
   send_to_emacs (emacs_socket, "/");
   send_to_emacs (emacs_socket, " ");
 
@@ -1944,8 +1945,6 @@ main (int argc, char **argv)
 
   if (rl < 0)
     exit_status = EXIT_FAILURE;
-
-  free (cwd);                   /* Keep leak checkers happy.  */
 
   CLOSE_SOCKET (emacs_socket);
   return exit_status;
