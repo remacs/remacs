@@ -186,13 +186,9 @@
   (should (equal (should-error (format "a %999999$s b" 11))
                  '(error "Not enough arguments for format string")))
   (should (equal (should-error (format "a %$s b" 11))
-                 ;; FIXME: there shouldn't be two % in the error
-                 ;; string!
-                 '(error "Invalid format operation %%$")))
+                 '(error "Invalid format operation %$")))
   (should (equal (should-error (format "a %0$s b" 11))
-                 '(error "Invalid field number `0'")))
-  (should (equal
-           (should-error (format "a %1$% %s b" 11))
-           '(error "Field number specified together with `%' conversion"))))
+                 '(error "Invalid format field number 0")))
+  (should (equal (format "a %1$% %s b" 11) "a % 11 b")))
 
 ;;; editfns-tests.el ends here

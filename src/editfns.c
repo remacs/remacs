@@ -4046,9 +4046,8 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	     field-width ::= [0-9]+
 	     precision ::= '.' [0-9]*
 
-             If a field-number is specified, it specifies the argument
-             number to substitute.  Otherwise, the next argument is
-             taken.
+	     If present, a field-number specifies the argument number
+	     to substitute.  Otherwise, the next argument is taken.
 
 	     If a field-width is specified, it specifies to which width
 	     the output should be padded with blanks, if the output
@@ -4058,28 +4057,20 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	     digits to print after the '.' for floats, or the max.
 	     number of chars to print from a string.  */
 
-          char *field_end;
-          uintmax_t raw_field = strtoumax (format, &field_end, 10);
-          bool has_field = false;
-          if (c_isdigit (*format) && *field_end == '$')
-            {
-              if (raw_field < 1 || raw_field >= PTRDIFF_MAX)
-                {
-                  /* doprnt doesn't support %.*s, so we need to copy
-                     the field number string.  */
-                  ptrdiff_t length = field_end - format;
-                  eassert (length > 0);
-                  eassert (length < PTRDIFF_MAX);
-                  char *field = SAFE_ALLOCA (length + 1);
-                  memcpy (field, format, length);
-                  field[length] = '\0';
-                  error ("Invalid field number `%s'", field);
-                }
-              has_field = true;
-              /* n is incremented below.  */
-              n = raw_field - 1;
-              format = field_end + 1;
-            }
+	  uintmax_t num;
+	  char *num_end;
+	  if (c_isdigit (*format))
+	    {
+	      num = strtoumax (format, &num_end, 10);
+	      if (*num_end == '$')
+		{
+		  if (num == 0)
+		    error ("Invalid format field number 0");
+		  n = min (num, PTRDIFF_MAX);
+		  n--;
+		  format = num_end + 1;
+		}
+	    }
 
 	  bool minus_flag = false;
 	  bool  plus_flag = false;
@@ -4104,11 +4095,10 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	  space_flag &= ! plus_flag;
 	  zero_flag &= ! minus_flag;
 
-	  char *num_end;
-	  uintmax_t raw_field_width = strtoumax (format, &num_end, 10);
-	  if (max_bufsize <= raw_field_width)
+	  num = strtoumax (format, &num_end, 10);
+	  if (max_bufsize <= num)
 	    string_overflow ();
-	  ptrdiff_t field_width = raw_field_width;
+	  ptrdiff_t field_width = num;
 
 	  bool precision_given = *num_end == '.';
 	  uintmax_t precision = (precision_given
@@ -4123,13 +4113,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	  memset (&discarded[format0 - format_start], 1,
 		  format - format0 - (conversion == '%'));
 	  if (conversion == '%')
-            {
-              if (has_field)
-                /* FIXME: `error' doesn't appear to support `%%'.  */
-                error ("Field number specified together with `%c' conversion",
-                       '%');
-              goto copy_char;
-            }
+	    goto copy_char;
 
 	  ++n;
 	  if (! (n < nargs))

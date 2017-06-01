@@ -864,15 +864,6 @@ below, as the first argument, and the string as the second, like this:
   (format "%s" @var{arbitrary-string})
 @end example
 
-  If @var{string} contains more than one format specification and none
-of the format specifications contain an explicit field number, the
-format specifications correspond to successive values from
-@var{objects}.  Thus, the first format specification in @var{string}
-uses the first such value, the second format specification uses the
-second such value, and so on.  Any extra format specifications (those
-for which there are no corresponding values) cause an error.  Any
-extra values to be formatted are ignored.
-
   Certain format specifications require values of particular types.  If
 you supply a value that doesn't fit the requirements, an error is
 signaled.
@@ -962,33 +953,84 @@ operation} error.
 @end group
 @end example
 
-@cindex field numbers in format spec
-  A specification can have a @dfn{field number}, which is a decimal
-number after the initial @samp{%}, followed by a literal dollar sign
-@samp{$}.  If you provide a field number, then the argument to be
-printed corresponds to the given field number instead of the next
-argument.  Field numbers start at 1.
+  By default, format specifications correspond to successive values from
+@var{objects}.  Thus, the first format specification in @var{string}
+uses the first such value, the second format specification uses the
+second such value, and so on.  Any extra format specifications (those
+for which there are no corresponding values) cause an error.  Any
+extra values to be formatted are ignored.
 
-You can mix specifications with and without field numbers.  A
+@cindex field numbers in format spec
+  A format specification can have a @dfn{field number}, which is a
+decimal number immediately after the initial @samp{%}, followed by a
+literal dollar sign @samp{$}.  It causes the format specification to
+convert the argument with the given number instead of the next
+argument.  Argument 1 is the argument just after the format.
+
+  You can mix specifications with and without field numbers.  A
 specification without a field number that follows a specification with
 a field number will convert the argument after the one specified by
 the field number:
 
 @example
-(format "First argument %2$s, then %s, then %1$s" 1 2 3)
-     @result{} "First argument 2, then 3, then 1"
+(format "Argument %2$s, then %s, then %1$s" "x" "y" "z")
+     @result{} "Argument y, then z, then x"
 @end example
 
-You can't use field numbers in a @samp{%%} specification.
+@cindex flags in format specifications
+  After the @samp{%} and any field number, you can put certain
+@dfn{flag characters}.
+
+  The flag @samp{+} inserts a plus sign before a positive number, so
+that it always has a sign.  A space character as flag inserts a space
+before a positive number.  (Otherwise, positive numbers start with the
+first digit.)  These flags are useful for ensuring that positive
+numbers and negative numbers use the same number of columns.  They are
+ignored except for @samp{%d}, @samp{%e}, @samp{%f}, @samp{%g}, and if
+both flags are used, @samp{+} takes precedence.
+
+  The flag @samp{#} specifies an alternate form which depends on
+the format in use.  For @samp{%o}, it ensures that the result begins
+with a @samp{0}.  For @samp{%x} and @samp{%X}, it prefixes the result
+with @samp{0x} or @samp{0X}.  For @samp{%e} and @samp{%f}, the
+@samp{#} flag means include a decimal point even if the precision is
+zero.  For @samp{%g}, it always includes a decimal point, and also
+forces any trailing zeros after the decimal point to be left in place
+where they would otherwise be removed.
+
+  The flag @samp{0} ensures that the padding consists of @samp{0}
+characters instead of spaces.  This flag is ignored for non-numerical
+specification characters like @samp{%s}, @samp{%S} and @samp{%c}.
+These specification characters accept the @samp{0} flag, but still pad
+with @emph{spaces}.
+
+  The flag @samp{-} causes any padding inserted by the width,
+if specified, to be inserted on the right rather than the left.
+If both @samp{-} and @samp{0} are present, the @samp{0} flag is
+ignored.
+
+@example
+@group
+(format "%06d is padded on the left with zeros" 123)
+     @result{} "000123 is padded on the left with zeros"
+
+(format "'%-6d' is padded on the right" 123)
+     @result{} "'123   ' is padded on the right"
+
+(format "The word '%-7s' actually has %d letters in it."
+        "foo" (length "foo"))
+     @result{} "The word 'foo    ' actually has 3 letters in it."
+@end group
+@end example
 
 @cindex field width
 @cindex padding
   A specification can have a @dfn{width}, which is a decimal number
-between the @samp{%} and the specification character.  If the printed
+that appears after any field number and flags.  If the printed
 representation of the object contains fewer characters than this
-width, @code{format} extends it with padding.  The width specifier is
+width, @code{format} extends it with padding.  The width is
 ignored for the @samp{%%} specification.  Any padding introduced by
-the width specifier normally consists of spaces inserted on the left:
+the width normally consists of spaces inserted on the left:
 
 @example
 (format "%5d is padded on the left with spaces" 123)
@@ -1016,60 +1058,9 @@ is not truncated.
 @end group
 @end example
 
-If you want to use both a field number and a width, place the field
-number before the width.  For example, in @samp{%2$7s}, @samp{2} is
-the field number and @samp{7} is the width.
-
-@cindex flags in format specifications
-  After the @samp{%} and before the optional width specifier, you can
-also put certain @dfn{flag characters}.  The flag characters need to
-come directly after a potential field number.
-
-  The flag @samp{+} inserts a plus sign before a positive number, so
-that it always has a sign.  A space character as flag inserts a space
-before a positive number.  (Otherwise, positive numbers start with the
-first digit.)  These flags are useful for ensuring that positive
-numbers and negative numbers use the same number of columns.  They are
-ignored except for @samp{%d}, @samp{%e}, @samp{%f}, @samp{%g}, and if
-both flags are used, @samp{+} takes precedence.
-
-  The flag @samp{#} specifies an alternate form which depends on
-the format in use.  For @samp{%o}, it ensures that the result begins
-with a @samp{0}.  For @samp{%x} and @samp{%X}, it prefixes the result
-with @samp{0x} or @samp{0X}.  For @samp{%e} and @samp{%f}, the
-@samp{#} flag means include a decimal point even if the precision is
-zero.  For @samp{%g}, it always includes a decimal point, and also
-forces any trailing zeros after the decimal point to be left in place
-where they would otherwise be removed.
-
-  The flag @samp{0} ensures that the padding consists of @samp{0}
-characters instead of spaces.  This flag is ignored for non-numerical
-specification characters like @samp{%s}, @samp{%S} and @samp{%c}.
-These specification characters accept the @samp{0} flag, but still pad
-with @emph{spaces}.
-
-  The flag @samp{-} causes the padding inserted by the width
-specifier, if any, to be inserted on the right rather than the left.
-If both @samp{-} and @samp{0} are present, the @samp{0} flag is
-ignored.
-
-@example
-@group
-(format "%06d is padded on the left with zeros" 123)
-     @result{} "000123 is padded on the left with zeros"
-
-(format "'%-6d' is padded on the right" 123)
-     @result{} "'123   ' is padded on the right"
-
-(format "The word '%-7s' actually has %d letters in it."
-        "foo" (length "foo"))
-     @result{} "The word 'foo    ' actually has 3 letters in it."
-@end group
-@end example
-
 @cindex precision in format specifications
   All the specification characters allow an optional @dfn{precision}
-before the character (after the width, if present).  The precision is
+after the field number, flags and width, if present.  The precision is
 a decimal-point @samp{.} followed by a digit-string.  For the
 floating-point specifications (@samp{%e} and @samp{%f}), the
 precision specifies how many digits following the decimal point to
