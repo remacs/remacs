@@ -32,6 +32,7 @@ mod character;
 mod base64;
 mod crypto;
 mod str2sig;
+mod multibyte;
 
 use remacs_sys::Lisp_Subr;
 
@@ -74,6 +75,8 @@ pub use objects::Fequal;
 pub use objects::Fequal_including_properties;
 pub use symbols::Fsymbolp;
 pub use strings::Fstring_equal;
+pub use strings::Fstring_as_multibyte;
+pub use strings::Fstring_to_multibyte;
 
 // Cryptographic functions used in the C codebase.
 pub use crypto::sha256_buffer;
@@ -87,6 +90,18 @@ pub use crypto::sha1_ctx::sha1_finish_ctx;
 
 // Used in process.c
 pub use str2sig::str2sig;
+
+// Used in character.c
+pub use multibyte::char_resolve_modifier_mask;
+pub use multibyte::char_string;
+pub use multibyte::string_char;
+pub use multibyte::count_size_as_multibyte;
+pub use multibyte::multibyte_chars_in_text;
+pub use multibyte::parse_str_as_multibyte;
+pub use multibyte::str_as_multibyte;
+pub use multibyte::str_to_multibyte;
+pub use multibyte::str_as_unibyte;
+pub use multibyte::str_to_unibyte;
 
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
@@ -151,6 +166,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*strings::Sbase64_decode_string);
         defsubr(&*strings::Sstring_bytes);
         defsubr(&*strings::Sstring_equal);
+        defsubr(&*strings::Sstring_as_multibyte);
+        defsubr(&*strings::Sstring_to_multibyte);
         defsubr(&*character::Smax_char);
         defsubr(&*character::Scharacterp);
 

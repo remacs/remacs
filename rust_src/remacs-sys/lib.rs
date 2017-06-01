@@ -668,20 +668,27 @@ extern "C" {
     pub fn make_float(float_value: libc::c_double) -> Lisp_Object;
     pub fn make_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
     pub fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
-    pub fn wrong_type_argument(predicate: Lisp_Object, value: Lisp_Object) -> !;
+    pub fn make_uninit_multibyte_string(nchars: EmacsInt, nbytes: EmacsInt) -> Lisp_Object;
+    pub fn string_to_multibyte(string: Lisp_Object) -> Lisp_Object;
+
     pub fn SYMBOL_NAME(s: Lisp_Object) -> Lisp_Object;
     pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const libc::c_void);
-    pub fn circular_list(tail: Lisp_Object) -> !;
     pub fn internal_equal(o1: Lisp_Object,
                           o2: Lisp_Object,
                           depth: libc::c_int,
                           props: bool,
                           ht: Lisp_Object)
                           -> bool;
+
+    // These signal an error, therefore are marked as non-returning.
+    pub fn circular_list(tail: Lisp_Object) -> !;
+    pub fn wrong_type_argument(predicate: Lisp_Object, value: Lisp_Object) -> !;
     // defined in eval.c, where it can actually take an arbitrary
     // number of arguments.
     // TODO: define a Rust version of this that uses Rust strings.
-    pub fn error(m: *const u8, ...);
+    pub fn error(m: *const u8, ...) -> !;
+
+    pub fn emacs_abort() -> !;
 
     pub fn base64_encode_1(from: *const libc::c_char,
                            to: *mut libc::c_char,

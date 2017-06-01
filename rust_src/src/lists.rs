@@ -393,7 +393,9 @@ fn lax_plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispOb
 /// usage: (list &rest OBJECTS)
 #[lisp_fn]
 fn list(args: &mut [LispObject]) -> LispObject {
-    args.iter().rev().fold(Qnil, |list, &arg| LispObject::cons(arg, list))
+    args.iter()
+        .rev()
+        .fold(Qnil, |list, &arg| LispObject::cons(arg, list))
 }
 
 /// Return a newly created list of length LENGTH, with each element being INIT.
