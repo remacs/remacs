@@ -583,6 +583,7 @@ since it could result in memory overflow and make Emacs crash."
 		       (const :tag "Fit (t)" :value t)
 		       (const :tag "Grow only" :value grow-only))
 	      "25.1")
+	     (display-raw-bytes-as-hex display boolean "26.1")
 	     ;; xfaces.c
 	     (scalable-fonts-allowed display boolean "22.1")
 	     ;; xfns.c

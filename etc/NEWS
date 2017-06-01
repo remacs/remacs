@@ -364,6 +364,10 @@ large integers from being displayed as characters.
 ** Two new commands for finding the source code of Emacs Lisp
 libraries: 'find-library-other-window' and 'find-library-other-frame'.
 
++++
+** The new variable 'display-raw-bytes-as-hex' allows to change the
+display of raw bytes from octal to hex.
+
 
 * Editing Changes in Emacs 26.1
 
