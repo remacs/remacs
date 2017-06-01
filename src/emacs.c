@@ -463,6 +463,9 @@ init_cmdargs (int argc, char **argv, int skip_args, char *original_pwd)
 
   if (!NILP (Vinvocation_directory))
     {
+      if (NILP (Vpurify_flag) && !NILP (Ffboundp (Qfile_truename)))
+        Vinvocation_directory = call1 (Qfile_truename, Vinvocation_directory);
+
       dir = Vinvocation_directory;
 #ifdef WINDOWSNT
       /* If we are running from the build directory, set DIR to the

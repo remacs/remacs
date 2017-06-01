@@ -4482,6 +4482,9 @@ load_path_default (void)
 void
 init_lread (void)
 {
+  if (NILP (Vpurify_flag) && !NILP (Ffboundp (Qfile_truename)))
+    Vsource_directory = call1 (Qfile_truename, Vsource_directory);
+
   /* First, set Vload_path.  */
 
   /* Ignore EMACSLOADPATH when dumping.  */
