@@ -3900,8 +3900,10 @@ where field is [0-9]+ followed by a literal dollar "$", flags is
 [+ #-0]+, width is [0-9]+, and precision is a literal period "."
 followed by [0-9]+.
 
-If field is given, it must be a one-based argument number; the given
-argument is substituted instead of the next one.
+If a %-sequence is numbered with a field with positive value N, the
+Nth argument is substituted instead of the next one.  A format can
+contain either numbered or unnumbered %-sequences but not both, except
+that %% can be mixed with numbered %-sequences.
 
 The + flag character inserts a + before any positive number, while a
 space inserts a space before any positive number; these flags only
@@ -4081,8 +4083,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      num = str2num (format, &num_end);
 	      if (*num_end == '$')
 		{
-		  if (num == 0)
-		    error ("Invalid format field number 0");
 		  n = num - 1;
 		  format = num_end + 1;
 		}

@@ -965,16 +965,13 @@ extra values to be formatted are ignored.
 decimal number immediately after the initial @samp{%}, followed by a
 literal dollar sign @samp{$}.  It causes the format specification to
 convert the argument with the given number instead of the next
-argument.  Argument 1 is the argument just after the format.
-
-  You can mix specifications with and without field numbers.  A
-specification without a field number that follows a specification with
-a field number will convert the argument after the one specified by
-the field number:
+argument.  Field numbers start at 1.  A format can contain either
+numbered or unnumbered format specifications but not both, except that
+@samp{%%} can be mixed with numbered specifications.
 
 @example
-(format "Argument %2$s, then %s, then %1$s" "x" "y" "z")
-     @result{} "Argument y, then z, then x"
+(format "%2$s, %3$s, %%, %1$s" "x" "y" "z")
+     @result{} "y, z, %, x"
 @end example
 
 @cindex flags in format specifications
