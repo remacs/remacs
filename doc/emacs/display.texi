@@ -1763,3 +1763,9 @@ itself, in pixels; the default is 2.
 in text that is hard to read.  Call the function
 @code{tty-suppress-bold-inverse-default-colors} with a non-@code{nil}
 argument to suppress the effect of bold-face in this case.
+
+@vindex display-raw-bytes-as-hex
+  Raw bytes are displayed in octal format by default, for example a
+byte with a decimal value of 128 is displayed as @code{\200}.  To
+change display to the hexadecimal format of @code{\x80}, set the
+variable @code{display-raw-bytes-as-hex} to @code{t}.
