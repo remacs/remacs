@@ -290,7 +290,10 @@ to (xref-elisp-test-descr-to-target xref)."
 ;; `load-path' has the correct case, so this causes the expected test
 ;; values to have the wrong case). This is handled in
 ;; `xref-elisp-test-run'.
-(defconst emacs-test-dir (downcase (file-name-directory (or load-file-name (buffer-file-name)))))
+(defconst emacs-test-dir
+  (downcase
+   (file-truename (file-name-directory
+		   (or load-file-name (buffer-file-name))))))
 
 
 ;; alphabetical by test name
