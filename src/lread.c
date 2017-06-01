@@ -3495,25 +3495,18 @@ substitute_in_interval (INTERVAL interval, Lisp_Object arg)
 }
 
 
-#define LEAD_INT 1
-#define DOT_CHAR 2
-#define TRAIL_INT 4
-#define E_EXP 16
-
-
-/* Convert STRING to a number, assuming base BASE.  Return a fixnum if CP has
-   integer syntax and fits in a fixnum, else return the nearest float if CP has
-   either floating point or integer syntax and BASE is 10, else return nil.  If
-   IGNORE_TRAILING, consider just the longest prefix of CP that has
-   valid floating point syntax.  Signal an overflow if BASE is not 10 and the
-   number has integer syntax but does not fit.  */
+/* Convert STRING to a number, assuming base BASE.  Return a fixnum if
+   STRING has integer syntax and fits in a fixnum, else return the
+   nearest float if STRING has either floating point or integer syntax
+   and BASE is 10, else return nil.  If IGNORE_TRAILING, consider just
+   the longest prefix of STRING that has valid floating point syntax.
+   Signal an overflow if BASE is not 10 and the number has integer
+   syntax but does not fit.  */
 
 Lisp_Object
 string_to_number (char const *string, int base, bool ignore_trailing)
 {
-  int state;
   char const *cp = string;
-  int leading_digit;
   bool float_syntax = 0;
   double value = 0;
 
@@ -3525,15 +3518,23 @@ string_to_number (char const *string, int base, bool ignore_trailing)
   bool signedp = negative || *cp == '+';
   cp += signedp;
 
-  state = 0;
-
-  leading_digit = digit_to_number (*cp, base);
+  enum { INTOVERFLOW = 1, LEAD_INT = 2, DOT_CHAR = 4, TRAIL_INT = 8,
+	 E_EXP = 16 };
+  int state = 0;
+  int leading_digit = digit_to_number (*cp, base);
+  uintmax_t n = leading_digit;
   if (leading_digit >= 0)
     {
       state |= LEAD_INT;
-      do
-	++cp;
-      while (digit_to_number (*cp, base) >= 0);
+      for (int digit; 0 <= (digit = digit_to_number (*++cp, base)); )
+	{
+	  if (INT_MULTIPLY_OVERFLOW (n, base))
+	    state |= INTOVERFLOW;
+	  n *= base;
+	  if (INT_ADD_OVERFLOW (n, digit))
+	    state |= INTOVERFLOW;
+	  n += digit;
+	}
     }
   if (*cp == '.')
     {
@@ -3583,32 +3584,22 @@ string_to_number (char const *string, int base, bool ignore_trailing)
 	}
 
       float_syntax = ((state & (DOT_CHAR|TRAIL_INT)) == (DOT_CHAR|TRAIL_INT)
-		      || state == (LEAD_INT|E_EXP));
+		      || (state & ~INTOVERFLOW) == (LEAD_INT|E_EXP));
     }
 
   /* Return nil if the number uses invalid syntax.  If IGNORE_TRAILING, accept
      any prefix that matches.  Otherwise, the entire string must match.  */
   if (! (ignore_trailing
 	 ? ((state & LEAD_INT) != 0 || float_syntax)
-	 : (!*cp && ((state & ~DOT_CHAR) == LEAD_INT || float_syntax))))
+	 : (!*cp && ((state & ~(INTOVERFLOW | DOT_CHAR)) == LEAD_INT
+		     || float_syntax))))
     return Qnil;
 
   /* If the number uses integer and not float syntax, and is in C-language
      range, use its value, preferably as a fixnum.  */
   if (leading_digit >= 0 && ! float_syntax)
     {
-      uintmax_t n;
-
-      /* Fast special case for single-digit integers.  This also avoids a
-	 glitch when BASE is 16 and IGNORE_TRAILING, because in that
-	 case some versions of strtoumax accept numbers like "0x1" that Emacs
-	 does not allow.  */
-      if (digit_to_number (string[signedp + 1], base) < 0)
-	return make_number (negative ? -leading_digit : leading_digit);
-
-      errno = 0;
-      n = strtoumax (string + signedp, NULL, base);
-      if (errno == ERANGE)
+      if (state & INTOVERFLOW)
 	{
 	  /* Unfortunately there's no simple and accurate way to convert
 	     non-base-10 numbers that are out of C-language range.  */

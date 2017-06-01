@@ -140,8 +140,6 @@ AC_DEFUN([gl_EARLY],
   # Code from module string:
   # Code from module strtoimax:
   # Code from module strtoll:
-  # Code from module strtoull:
-  # Code from module strtoumax:
   # Code from module symlink:
   # Code from module sys_select:
   # Code from module sys_stat:
@@ -364,12 +362,6 @@ AC_DEFUN([gl_INIT],
     gl_PREREQ_STRTOIMAX
   fi
   gl_INTTYPES_MODULE_INDICATOR([strtoimax])
-  gl_FUNC_STRTOUMAX
-  if test $HAVE_DECL_STRTOUMAX = 0 || test $REPLACE_STRTOUMAX = 1; then
-    AC_LIBOBJ([strtoumax])
-    gl_PREREQ_STRTOUMAX
-  fi
-  gl_INTTYPES_MODULE_INDICATOR([strtoumax])
   gl_FUNC_SYMLINK
   if test $HAVE_SYMLINK = 0 || test $REPLACE_SYMLINK = 1; then
     AC_LIBOBJ([symlink])
@@ -420,7 +412,6 @@ AC_DEFUN([gl_INIT],
   gl_gnulib_enabled_6099e9737f757db36c47fa9d9f02e88c=false
   gl_gnulib_enabled_secure_getenv=false
   gl_gnulib_enabled_strtoll=false
-  gl_gnulib_enabled_strtoull=false
   gl_gnulib_enabled_tempname=false
   gl_gnulib_enabled_682e609604ccaac6be382e4ee3a4eaec=false
   func_gl_gnulib_m4code_260941c0e5dc67ec9e87d1fb321c300b ()
@@ -569,18 +560,6 @@ AC_DEFUN([gl_INIT],
       gl_gnulib_enabled_strtoll=true
     fi
   }
-  func_gl_gnulib_m4code_strtoull ()
-  {
-    if ! $gl_gnulib_enabled_strtoull; then
-      gl_FUNC_STRTOULL
-      if test $HAVE_STRTOULL = 0; then
-        AC_LIBOBJ([strtoull])
-        gl_PREREQ_STRTOULL
-      fi
-      gl_STDLIB_MODULE_INDICATOR([strtoull])
-      gl_gnulib_enabled_strtoull=true
-    fi
-  }
   func_gl_gnulib_m4code_tempname ()
   {
     if ! $gl_gnulib_enabled_tempname; then
@@ -649,9 +628,6 @@ AC_DEFUN([gl_INIT],
   if { test $HAVE_DECL_STRTOIMAX = 0 || test $REPLACE_STRTOIMAX = 1; } && test $ac_cv_type_long_long_int = yes; then
     func_gl_gnulib_m4code_strtoll
   fi
-  if { test $HAVE_DECL_STRTOUMAX = 0 || test $REPLACE_STRTOUMAX = 1; } && test $ac_cv_type_unsigned_long_long_int = yes; then
-    func_gl_gnulib_m4code_strtoull
-  fi
   if test $HAVE_TIMEGM = 0 || test $REPLACE_TIMEGM = 1; then
     func_gl_gnulib_m4code_5264294aa0a5557541b53c8c741f7f31
   fi
@@ -670,7 +646,6 @@ AC_DEFUN([gl_INIT],
   AM_CONDITIONAL([gl_GNULIB_ENABLED_6099e9737f757db36c47fa9d9f02e88c], [$gl_gnulib_enabled_6099e9737f757db36c47fa9d9f02e88c])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_secure_getenv], [$gl_gnulib_enabled_secure_getenv])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_strtoll], [$gl_gnulib_enabled_strtoll])
-  AM_CONDITIONAL([gl_GNULIB_ENABLED_strtoull], [$gl_gnulib_enabled_strtoull])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_tempname], [$gl_gnulib_enabled_tempname])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_682e609604ccaac6be382e4ee3a4eaec], [$gl_gnulib_enabled_682e609604ccaac6be382e4ee3a4eaec])
   # End of code from modules
@@ -940,9 +915,6 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/strtoimax.c
   lib/strtol.c
   lib/strtoll.c
-  lib/strtoul.c
-  lib/strtoull.c
-  lib/strtoumax.c
   lib/symlink.c
   lib/sys_select.in.h
   lib/sys_stat.in.h
@@ -1051,8 +1023,6 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/string_h.m4
   m4/strtoimax.m4
   m4/strtoll.m4
-  m4/strtoull.m4
-  m4/strtoumax.m4
   m4/symlink.m4
   m4/sys_select_h.m4
   m4/sys_socket_h.m4

@@ -3851,6 +3851,23 @@ usage: (propertize STRING &rest PROPERTIES)  */)
   return string;
 }
 
+/* Convert the prefix of STR from ASCII decimal digits to a number.
+   Set *STR_END to the address of the first non-digit.  Return the
+   number, or PTRDIFF_MAX on overflow.  Return 0 if there is no number.
+   This is like strtol for ptrdiff_t and base 10 and C locale,
+   except without negative numbers or errno.  */
+
+static ptrdiff_t
+str2num (char *str, char **str_end)
+{
+  ptrdiff_t n = 0;
+  for (; c_isdigit (*str); str++)
+    if (INT_MULTIPLY_WRAPV (n, 10, &n) || INT_ADD_WRAPV (n, *str - '0', &n))
+      n = PTRDIFF_MAX;
+  *str_end = str;
+  return n;
+}
+
 DEFUN ("format", Fformat, Sformat, 1, MANY, 0,
        doc: /* Format a string out of a format-string and arguments.
 The first argument is a format control string.
@@ -4057,17 +4074,16 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	     digits to print after the '.' for floats, or the max.
 	     number of chars to print from a string.  */
 
-	  uintmax_t num;
+	  ptrdiff_t num;
 	  char *num_end;
 	  if (c_isdigit (*format))
 	    {
-	      num = strtoumax (format, &num_end, 10);
+	      num = str2num (format, &num_end);
 	      if (*num_end == '$')
 		{
 		  if (num == 0)
 		    error ("Invalid format field number 0");
-		  n = min (num, PTRDIFF_MAX);
-		  n--;
+		  n = num - 1;
 		  format = num_end + 1;
 		}
 	    }
@@ -4095,15 +4111,15 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	  space_flag &= ! plus_flag;
 	  zero_flag &= ! minus_flag;
 
-	  num = strtoumax (format, &num_end, 10);
+	  num = str2num (format, &num_end);
 	  if (max_bufsize <= num)
 	    string_overflow ();
 	  ptrdiff_t field_width = num;
 
 	  bool precision_given = *num_end == '.';
-	  uintmax_t precision = (precision_given
-				 ? strtoumax (num_end + 1, &num_end, 10)
-				 : UINTMAX_MAX);
+	  ptrdiff_t precision = (precision_given
+				 ? str2num (num_end + 1, &num_end)
+				 : PTRDIFF_MAX);
 	  format = num_end;
 
 	  if (format == end)
@@ -4176,7 +4192,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      /* handle case (precision[n] >= 0) */
 
 	      ptrdiff_t prec = -1;
-	      if (precision_given && precision <= TYPE_MAXIMUM (ptrdiff_t))
+	      if (precision_given)
 		prec = precision;
 
 	      /* lisp_string_width ignores a precision of 0, but GNU
@@ -4424,8 +4440,9 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		 padding and excess precision.  Deal with excess precision
 		 first.  This happens only when the format specifies
 		 ridiculously large precision.  */
-	      uintmax_t excess_precision = precision - prec;
-	      uintmax_t leading_zeros = 0, trailing_zeros = 0;
+	      ptrdiff_t excess_precision
+		= precision_given ? precision - prec : 0;
+	      ptrdiff_t leading_zeros = 0, trailing_zeros = 0;
 	      if (excess_precision)
 		{
 		  if (float_conversion)
@@ -4451,7 +4468,9 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 
 	      /* Compute the total bytes needed for this item, including
 		 excess precision and padding.  */
-	      uintmax_t numwidth = sprintf_bytes + excess_precision;
+	      ptrdiff_t numwidth;
+	      if (INT_ADD_WRAPV (sprintf_bytes, excess_precision, &numwidth))
+		numwidth = PTRDIFF_MAX;
 	      ptrdiff_t padding
 		= numwidth < field_width ? field_width - numwidth : 0;
 	      if (max_bufsize - sprintf_bytes <= excess_precision
