@@ -424,7 +424,7 @@ differences in behavior.")
   (let (failures
         basic icase notbol noteol)
     (regex-tests-generic-line
-     ?; "BOOST.tests" regex-tests-BOOST-whitelist
+     ?\; "BOOST.tests" regex-tests-BOOST-whitelist
      (if (save-excursion (re-search-forward "^-" nil t))
          (setq basic   (save-excursion (re-search-forward "REG_BASIC" nil t))
                icase   (save-excursion (re-search-forward "REG_ICASE" nil t))

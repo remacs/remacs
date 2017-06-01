@@ -338,19 +338,19 @@ comparing the subr with a much slower lisp implementation."
 
 (ert-deftest binding-test-set-constant-t ()
   "Test setting the constant t"
-  (should-error (setq t 'bob) :type 'setting-constant))
+  (with-no-warnings (should-error (setq t 'bob) :type 'setting-constant)))
 
 (ert-deftest binding-test-set-constant-nil ()
   "Test setting the constant nil"
-  (should-error (setq nil 'bob) :type 'setting-constant))
+  (with-no-warnings (should-error (setq nil 'bob) :type 'setting-constant)))
 
 (ert-deftest binding-test-set-constant-keyword ()
   "Test setting a keyword constant"
-  (should-error (setq :keyword 'bob) :type 'setting-constant))
+  (with-no-warnings (should-error (setq :keyword 'bob) :type 'setting-constant)))
 
 (ert-deftest binding-test-set-constant-nil ()
   "Test setting a keyword to itself"
-  (should (setq :keyword :keyword)))
+  (with-no-warnings (should (setq :keyword :keyword))))
 
 ;; More tests to write -
 ;; kill-local-variable
