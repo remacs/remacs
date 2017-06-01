@@ -22,11 +22,6 @@
 
 ;;; Commentary:
 
-;; FIXME:
-;; In its current form this file changes global variables defined in
-;; todo-mode.el, so to avoid problems, these tests should not be run
-;; if todo-mode.el is already loaded.
-
 ;;; Code:
 
 (require 'ert)
@@ -47,12 +42,28 @@
                                               todo-test-data-dir)
   "Todo Archive mode test file.")
 
-;; (setq todo-directory-orig todo-directory)
+(defmacro with-todo-test (&rest body)
+  "Set up an isolated todo-mode test environment."
+  `(let* ((todo-test-home (make-temp-file "todo-test-home-"))
+          (process-environment (cons (format "HOME=%s" todo-test-home)
+                                     process-environment))
+          (todo-directory todo-test-data-dir)
+          (todo-default-todo-file (todo-short-file-name
+				   (car (funcall todo-files-function)))))
+     ,@body))
 
-(setq todo-directory todo-test-data-dir)
+;; (defun todo-test-show (num &optional archive)
+;;   "Display category NUM of test todo file.
+;; With non-nil ARCHIVE argument, display test archive file category."
+;;   (let* ((file (if archive todo-test-archive-1 todo-test-file-1))
+;;          (buf (find-file-noselect file)))
+;;     (set-buffer buf)
+;;     (if archive (todo-archive-mode) (todo-mode))
+;;     (setq todo-category-number num)
+;;     (todo-category-select)))
 
 (defun todo-test-get-archive (num)
-  "Make buffer displaying archive category NUM current."
+  "Display category NUM of todo archive test file."
   (let ((archive-buf (find-file-noselect todo-test-archive-1)))
     (set-buffer archive-buf)
     (todo-archive-mode)
@@ -71,58 +82,55 @@ corresponding todo-mode category current, if it exits, otherwise
 the current todo-mode category.  Quitting todo-mode without an
 intermediate buffer switch should not make the archive buffer
 current again."
-  (todo-test-get-archive 2)
-  (let ((cat-name (todo-current-category)))
-    (todo-quit)
-    (should (todo-test-is-current-buffer todo-test-file-1))
-    (should (equal (todo-current-category) cat-name))
-    (todo-test-get-archive 1)
-    (setq cat-name (todo-current-category))
-    (todo-quit)
-    (should (todo-test-is-current-buffer todo-test-file-1))
-    (should (equal todo-category-number 1))
-    (todo-forward-category)             ; Category 2 in todo file now current.
-    (todo-test-get-archive 3)           ; No corresponding category in todo file.
-    (setq cat-name (todo-current-category))
-    (todo-quit)
-    (should (todo-test-is-current-buffer todo-test-file-1))
-    (should (equal todo-category-number 2))
-    (todo-quit)
-    (should-not (todo-test-is-current-buffer todo-test-archive-1))))
+  (with-todo-test
+   (todo-test-get-archive 2)
+   (let ((cat-name (todo-current-category)))
+     (todo-quit)
+     (should (todo-test-is-current-buffer todo-test-file-1))
+     (should (equal (todo-current-category) cat-name))
+     (todo-test-get-archive 1)
+     (setq cat-name (todo-current-category))
+     (todo-quit)
+     (should (todo-test-is-current-buffer todo-test-file-1))
+     (should (equal todo-category-number 1))
+     (todo-forward-category)         ; Category 2 in todo file now current.
+     (todo-test-get-archive 3)       ; No corresponding category in todo file.
+     (setq cat-name (todo-current-category))
+     (todo-quit)
+     (should (todo-test-is-current-buffer todo-test-file-1))
+     (should (equal todo-category-number 2))
+     (todo-quit)
+     (should-not (todo-test-is-current-buffer todo-test-archive-1)))))
 
 (ert-deftest todo-test-todo-quit02 () ; bug#27121
   "Test the behavior of todo-quit with todo and non-todo buffers.
 If the buffer made current by invoking todo-quit in a todo-mode
 buffer is buried by quit-window, the todo-mode buffer should not
 become current."
-  (todo-test-get-archive 2)
-  (todo-show)
-  (should (todo-test-is-current-buffer todo-test-file-1))
-  (let ((dir (dired default-directory)))
-    (todo-show)
-    (todo-quit)
-    (should (equal (current-buffer) dir))
-    (quit-window)
-    (should-not (todo-test-is-current-buffer todo-test-file-1))))
+  (with-todo-test
+   (todo-show)
+   (should (todo-test-is-current-buffer todo-test-file-1))
+   (let ((dir (dired default-directory)))
+     (todo-show)
+     (todo-quit)
+     (should (equal (current-buffer) dir))
+     (quit-window)
+     (should-not (todo-test-is-current-buffer todo-test-file-1)))))
 
 (ert-deftest todo-test-item-highlighting () ; bug#27133
   "Test whether `todo-toggle-item-highlighting' highlights whole item.
 In particular, all lines of a multiline item should be highlighted."
-  (todo-test-get-archive 2)
-  (todo-show)
-  (todo-jump-to-category nil "testcat1") ; For test rerun.
-  (todo-toggle-item-highlighting)
-  (let ((end (1- (todo-item-end)))
-        (beg (todo-item-start)))
-    (should (eq (get-char-property beg 'face) 'hl-line))
-    (should (eq (get-char-property end 'face) 'hl-line))
-    (should (> (count-lines beg end) 1))
-    (should (eq (next-single-char-property-change beg 'face) (1+ end))))
-  (todo-toggle-item-highlighting))      ; Turn off highlighting (for test rerun).
-
-
-;; FIXME: must do this only after running all tests!
-;; (setq todo-directory todo-directory-orig)
+  (with-todo-test
+   (todo-show)
+   (todo-jump-to-category nil "testcat1") ; For test rerun.
+   (todo-toggle-item-highlighting)
+   (let ((end (1- (todo-item-end)))
+         (beg (todo-item-start)))
+     (should (eq (get-char-property beg 'face) 'hl-line))
+     (should (eq (get-char-property end 'face) 'hl-line))
+     (should (> (count-lines beg end) 1))
+     (should (eq (next-single-char-property-change beg 'face) (1+ end))))
+   (todo-toggle-item-highlighting)))   ; Turn off highlighting (for test rerun).
 
 (provide 'todo-mode-tests)
 ;;; todo-mode-tests.el ends here
