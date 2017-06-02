@@ -12,6 +12,7 @@ write that in full each time, we'll use the following abbreviations:
 
 Important note: to end the Emacs session, type C-x C-c.  (Two characters.)
 To quit a partially entered command, type C-g.
+To stop the tutorial, type C-x k, then <Return> at the prompt.
 The characters ">>" at the left margin indicate directions for you to
 try using a command.  For instance:
 <<Blank lines inserted around following line by help-with-tutorial>>
