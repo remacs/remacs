@@ -44,13 +44,15 @@
 
 (defmacro with-todo-test (&rest body)
   "Set up an isolated todo-mode test environment."
-  `(let* ((todo-test-home (make-temp-file "todo-test-home-"))
+  `(let* ((todo-test-home (make-temp-file "todo-test-home-" t))
           (process-environment (cons (format "HOME=%s" todo-test-home)
                                      process-environment))
           (todo-directory todo-test-data-dir)
           (todo-default-todo-file (todo-short-file-name
 				   (car (funcall todo-files-function)))))
-     ,@body))
+     (unwind-protect
+         (progn ,@body)
+       (delete-directory todo-test-home t))))
 
 ;; (defun todo-test-show (num &optional archive)
 ;;   "Display category NUM of test todo file.
