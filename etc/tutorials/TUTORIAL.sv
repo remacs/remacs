@@ -12,6 +12,8 @@ ALT eller EDIT). Vi använder här följande förkortningar:
 
 Viktigt: För att avsluta Emacs trycker du C-x C-c (två tecken).
 För att avsluta kommandon som inte skrivits in fullt, tryck C-g.
+För att avsluta användarhandledningen, tryck C-x k och sedan <Return>
+vid prompten.
 Tecknen ">>" i vänstermarginalen anger att du kan prova ett
 kommando. Till exempel:
 <<Tomma rader sätts in runt nästa rad när help-with-tutorial aktiveras>>
