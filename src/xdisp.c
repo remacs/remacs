@@ -28793,7 +28793,6 @@ display_and_set_cursor (struct window *w, bool on,
      be in the midst of changing its size, and x and y may be off the
      window.  */
   if (! FRAME_VISIBLE_P (f)
-      || FRAME_GARBAGED_P (f)
       || vpos >= w->current_matrix->nrows
       || hpos >= w->current_matrix->matrix_w)
     return;
@@ -28808,6 +28807,26 @@ display_and_set_cursor (struct window *w, bool on,
   if (!glyph_row->enabled_p)
     {
       w->phys_cursor_on_p = false;
+      return;
+    }
+
+  /* A frame might be marked garbaged even though its cursor position
+     is correct, and will not change upon subsequent redisplay.  This
+     happens in some rare situations, like toggling the sort order in
+     Dired windows.  We've already established that VPOS is valid, so
+     it shouldn't do any harm to record the cursor position, as we are
+     going to return without acting on it anyway.  Otherwise, expose
+     events might come in and call update_window_cursor, which will
+     blindly use outdated values in w->phys_cursor.  */
+  if (FRAME_GARBAGED_P (f))
+    {
+      if (on)
+	{
+	  w->phys_cursor.x = x;
+	  w->phys_cursor.y = glyph_row->y;
+	  w->phys_cursor.hpos = hpos;
+	  w->phys_cursor.vpos = vpos;
+	}
       return;
     }
 
