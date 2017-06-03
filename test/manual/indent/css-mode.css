@@ -65,8 +65,15 @@ div::before {
         5.0, 6.0
     );
 }
+
 @font-face {
     src: url("Sans-Regular.eot") format("eot"),
          url("Sans-Regular.woff") format("woff"),
          url("Sans-Regular.ttf") format("truetype");
+}
+
+@font-face {
+    src:
+        url("Sans-Regular.eot") format("eot"),
+        url("Sans-Regular.woff") format("woff");
 }

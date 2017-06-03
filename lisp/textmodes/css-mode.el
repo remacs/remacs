@@ -1208,7 +1208,10 @@ for determining whether point is within a selector."
        (smie-backward-sexp ";")
        (smie-indent-virtual)))
     (`(:before . ,(or "{" "("))
-     (if (smie-rule-hanging-p) (smie-rule-parent 0)))))
+     (if (smie-rule-hanging-p) (smie-rule-parent 0)))
+    (`(:after . ":-property")
+     (when (smie-rule-hanging-p)
+       css-indent-offset))))
 
 ;;; Completion
 
