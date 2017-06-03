@@ -205,6 +205,7 @@
   (should (equal (should-error (format "a %$s b" 11))
                  '(error "Invalid format operation %$")))
   (should (equal (should-error (format "a %-1$s b" 11))
-                 '(error "Invalid format operation %$"))))
+                 '(error "Invalid format operation %$")))
+  (should (equal (format "%1$c %1$s" ?±) "± 177")))
 
 ;;; editfns-tests.el ends here

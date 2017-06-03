@@ -3980,12 +3980,14 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
   bool arg_intervals = false;
   USE_SAFE_ALLOCA;
 
-  /* Each element records, for one argument,
+  /* Each element records, for one field,
+     the corresponding argument,
      the start and end bytepos in the output string,
      whether the argument has been converted to string (e.g., due to "%S"),
      and whether the argument is a string with intervals.  */
   struct info
   {
+    Lisp_Object argument;
     ptrdiff_t start, end;
     bool_bf converted_to_string : 1;
     bool_bf intervals : 1;
@@ -3995,9 +3997,16 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
   char *format_start = SSDATA (args[0]);
   ptrdiff_t formatlen = SBYTES (args[0]);
 
+  /* The number of percent characters is a safe upper bound for the
+     number of format fields.  */
+  ptrdiff_t num_percent = 0;
+  for (ptrdiff_t i = 0; i < formatlen; ++i)
+    if (format_start[i] == '%')
+      ++num_percent;
+
   /* Allocate the info and discarded tables.  */
   ptrdiff_t alloca_size;
-  if (INT_MULTIPLY_WRAPV (nargs, sizeof *info, &alloca_size)
+  if (INT_MULTIPLY_WRAPV (num_percent, sizeof *info, &alloca_size)
       || INT_ADD_WRAPV (sizeof *info, alloca_size, &alloca_size)
       || INT_ADD_WRAPV (formatlen, alloca_size, &alloca_size)
       || SIZE_MAX < alloca_size)
@@ -4005,12 +4014,15 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
   /* info[0] is unused.  Unused elements have -1 for start.  */
   info = SAFE_ALLOCA (alloca_size);
   memset (info, 0, alloca_size);
-  for (ptrdiff_t i = 0; i < nargs + 1; i++)
-    info[i].start = -1;
+  for (ptrdiff_t i = 0; i < num_percent + 1; i++)
+    {
+      info[i].argument = Qunbound;
+      info[i].start = -1;
+    }
   /* discarded[I] is 1 if byte I of the format
      string was not copied into the output.
      It is 2 if byte I was not the first byte of its character.  */
-  char *discarded = (char *) &info[nargs + 1];
+  char *discarded = (char *) &info[num_percent + 1];
 
   /* Try to determine whether the result should be multibyte.
      This is not always right; sometimes the result needs to be multibyte
@@ -4029,13 +4041,18 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 
   int quoting_style = message ? text_quoting_style () : -1;
 
+  ptrdiff_t ispec;
+
   /* If we start out planning a unibyte result,
      then discover it has to be multibyte, we jump back to retry.  */
  retry:
 
   p = buf;
   nchars = 0;
+
+  /* N is the argument index, ISPEC is the specification index.  */
   n = 0;
+  ispec = 0;
 
   /* Scan the format and store result in BUF.  */
   format = format_start;
@@ -4044,8 +4061,10 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 
   while (format != end)
     {
-      /* The values of N and FORMAT when the loop body is entered.  */
+      /* The values of N, ISPEC, and FORMAT when the loop body is
+         entered.  */
       ptrdiff_t n0 = n;
+      ptrdiff_t ispec0 = ispec;
       char *format0 = format;
       char const *convsrc = format;
       unsigned char format_char = *format++;
@@ -4136,20 +4155,28 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	  if (! (n < nargs))
 	    error ("Not enough arguments for format string");
 
+          eassert (ispec < num_percent);
+          ++ispec;
+
+          if (EQ (info[ispec].argument, Qunbound))
+            info[ispec].argument = args[n];
+
 	  /* For 'S', prin1 the argument, and then treat like 's'.
 	     For 's', princ any argument that is not a string or
 	     symbol.  But don't do this conversion twice, which might
 	     happen after retrying.  */
 	  if ((conversion == 'S'
 	       || (conversion == 's'
-		   && ! STRINGP (args[n]) && ! SYMBOLP (args[n]))))
+		   && ! STRINGP (info[ispec].argument)
+                   && ! SYMBOLP (info[ispec].argument))))
 	    {
-	      if (! info[n].converted_to_string)
+	      if (! info[ispec].converted_to_string)
 		{
 		  Lisp_Object noescape = conversion == 'S' ? Qnil : Qt;
-		  args[n] = Fprin1_to_string (args[n], noescape);
-		  info[n].converted_to_string = true;
-		  if (STRING_MULTIBYTE (args[n]) && ! multibyte)
+		  info[ispec].argument =
+                    Fprin1_to_string (info[ispec].argument, noescape);
+		  info[ispec].converted_to_string = true;
+		  if (STRING_MULTIBYTE (info[ispec].argument) && ! multibyte)
 		    {
 		      multibyte = true;
 		      goto retry;
@@ -4159,26 +4186,29 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	    }
 	  else if (conversion == 'c')
 	    {
-	      if (INTEGERP (args[n]) && ! ASCII_CHAR_P (XINT (args[n])))
+	      if (INTEGERP (info[ispec].argument)
+                  && ! ASCII_CHAR_P (XINT (info[ispec].argument)))
 		{
 		  if (!multibyte)
 		    {
 		      multibyte = true;
 		      goto retry;
 		    }
-		  args[n] = Fchar_to_string (args[n]);
-		  info[n].converted_to_string = true;
+		  info[ispec].argument =
+                    Fchar_to_string (info[ispec].argument);
+		  info[ispec].converted_to_string = true;
 		}
 
-	      if (info[n].converted_to_string)
+	      if (info[ispec].converted_to_string)
 		conversion = 's';
 	      zero_flag = false;
 	    }
 
-	  if (SYMBOLP (args[n]))
+	  if (SYMBOLP (info[ispec].argument))
 	    {
-	      args[n] = SYMBOL_NAME (args[n]);
-	      if (STRING_MULTIBYTE (args[n]) && ! multibyte)
+	      info[ispec].argument =
+                SYMBOL_NAME (info[ispec].argument);
+	      if (STRING_MULTIBYTE (info[ispec].argument) && ! multibyte)
 		{
 		  multibyte = true;
 		  goto retry;
@@ -4209,11 +4239,12 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      else
 		{
 		  ptrdiff_t nch, nby;
-		  width = lisp_string_width (args[n], prec, &nch, &nby);
+		  width = lisp_string_width (info[ispec].argument,
+                                             prec, &nch, &nby);
 		  if (prec < 0)
 		    {
-		      nchars_string = SCHARS (args[n]);
-		      nbytes = SBYTES (args[n]);
+		      nchars_string = SCHARS (info[ispec].argument);
+		      nbytes = SBYTES (info[ispec].argument);
 		    }
 		  else
 		    {
@@ -4223,8 +4254,11 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		}
 
 	      convbytes = nbytes;
-	      if (convbytes && multibyte && ! STRING_MULTIBYTE (args[n]))
-		convbytes = count_size_as_multibyte (SDATA (args[n]), nbytes);
+	      if (convbytes && multibyte &&
+                  ! STRING_MULTIBYTE (info[ispec].argument))
+		convbytes =
+                  count_size_as_multibyte (SDATA (info[ispec].argument),
+                                           nbytes);
 
 	      ptrdiff_t padding
 		= width < field_width ? field_width - width : 0;
@@ -4240,18 +4274,20 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		      p += padding;
 		      nchars += padding;
 		    }
-                  info[n].start = nchars;
+                  info[ispec].start = nchars;
 
 		  if (p > buf
 		      && multibyte
 		      && !ASCII_CHAR_P (*((unsigned char *) p - 1))
-		      && STRING_MULTIBYTE (args[n])
-		      && !CHAR_HEAD_P (SREF (args[n], 0)))
+		      && STRING_MULTIBYTE (info[ispec].argument)
+		      && !CHAR_HEAD_P (SREF (info[ispec].argument, 0)))
 		    maybe_combine_byte = true;
 
-		  p += copy_text (SDATA (args[n]), (unsigned char *) p,
+		  p += copy_text (SDATA (info[ispec].argument),
+                                  (unsigned char *) p,
 				  nbytes,
-				  STRING_MULTIBYTE (args[n]), multibyte);
+				  STRING_MULTIBYTE (info[ispec].argument),
+                                  multibyte);
 
 		  nchars += nchars_string;
 
@@ -4261,12 +4297,12 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		      p += padding;
 		      nchars += padding;
 		    }
-		  info[n].end = nchars;
+		  info[ispec].end = nchars;
 
 		  /* If this argument has text properties, record where
 		     in the result string it appears.  */
-		  if (string_intervals (args[n]))
-		    info[n].intervals = arg_intervals = true;
+		  if (string_intervals (info[ispec].argument))
+		    info[ispec].intervals = arg_intervals = true;
 
 		  continue;
 		}
@@ -4277,8 +4313,8 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		      || conversion == 'X'))
 	    error ("Invalid format operation %%%c",
 		   STRING_CHAR ((unsigned char *) format - 1));
-	  else if (! (INTEGERP (args[n])
-		      || (FLOATP (args[n]) && conversion != 'c')))
+	  else if (! (INTEGERP (info[ispec].argument)
+		      || (FLOATP (info[ispec].argument) && conversion != 'c')))
 	    error ("Format specifier doesn't match argument type");
 	  else
 	    {
@@ -4340,7 +4376,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		    if (INT_AS_LDBL)
 		      {
 			*f = 'L';
-			f += INTEGERP (args[n]);
+			f += INTEGERP (info[ispec].argument);
 		      }
 		  }
 		else if (conversion != 'c')
@@ -4372,22 +4408,22 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      ptrdiff_t sprintf_bytes;
 	      if (float_conversion)
 		{
-		  if (INT_AS_LDBL && INTEGERP (args[n]))
+		  if (INT_AS_LDBL && INTEGERP (info[ispec].argument))
 		    {
 		      /* Although long double may have a rounding error if
 			 DIG_BITS_LBOUND * LDBL_MANT_DIG < FIXNUM_BITS - 1,
 			 it is more accurate than plain 'double'.  */
-		      long double x = XINT (args[n]);
+		      long double x = XINT (info[ispec].argument);
 		      sprintf_bytes = sprintf (sprintf_buf, convspec, prec, x);
 		    }
 		  else
 		    sprintf_bytes = sprintf (sprintf_buf, convspec, prec,
-					     XFLOATINT (args[n]));
+					     XFLOATINT (info[ispec].argument));
 		}
 	      else if (conversion == 'c')
 		{
 		  /* Don't use sprintf here, as it might mishandle prec.  */
-		  sprintf_buf[0] = XINT (args[n]);
+		  sprintf_buf[0] = XINT (info[ispec].argument);
 		  sprintf_bytes = prec != 0;
 		}
 	      else if (conversion == 'd' || conversion == 'i')
@@ -4396,11 +4432,11 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		     instead so it also works for values outside
 		     the integer range.  */
 		  printmax_t x;
-		  if (INTEGERP (args[n]))
-		    x = XINT (args[n]);
+		  if (INTEGERP (info[ispec].argument))
+		    x = XINT (info[ispec].argument);
 		  else
 		    {
-		      double d = XFLOAT_DATA (args[n]);
+		      double d = XFLOAT_DATA (info[ispec].argument);
 		      if (d < 0)
 			{
 			  x = TYPE_MINIMUM (printmax_t);
@@ -4420,11 +4456,11 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		{
 		  /* Don't sign-extend for octal or hex printing.  */
 		  uprintmax_t x;
-		  if (INTEGERP (args[n]))
-		    x = XUINT (args[n]);
+		  if (INTEGERP (info[ispec].argument))
+		    x = XUINT (info[ispec].argument);
 		  else
 		    {
-		      double d = XFLOAT_DATA (args[n]);
+		      double d = XFLOAT_DATA (info[ispec].argument);
 		      if (d < 0)
 			x = 0;
 		      else
@@ -4505,7 +4541,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 			exponent_bytes = src + sprintf_bytes - e;
 		    }
 
-                  info[n].start = nchars;
+                  info[ispec].start = nchars;
 		  if (! minus_flag)
 		    {
 		      memset (p, ' ', padding);
@@ -4536,7 +4572,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		      p += padding;
 		      nchars += padding;
 		    }
-		  info[n].end = nchars;
+		  info[ispec].end = nchars;
 
 		  continue;
 		}
@@ -4622,6 +4658,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
       p = buf + used;
       format = format0;
       n = n0;
+      ispec = ispec0;
     }
 
   if (bufsize < p - buf)
@@ -4644,7 +4681,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
       if (CONSP (props))
 	{
 	  ptrdiff_t bytepos = 0, position = 0, translated = 0;
-	  ptrdiff_t argn = 1;
+	  ptrdiff_t fieldn = 1;
 
 	  /* Adjust the bounds of each text property
 	     to the proper start and end in the output string.  */
@@ -4674,10 +4711,10 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  else if (discarded[bytepos] == 1)
 		    {
 		      position++;
-		      if (translated == info[argn].start)
+		      if (translated == info[fieldn].start)
 			{
-			  translated += info[argn].end - info[argn].start;
-			  argn++;
+			  translated += info[fieldn].end - info[fieldn].start;
+			  fieldn++;
 			}
 		    }
 		}
@@ -4694,10 +4731,10 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  else if (discarded[bytepos] == 1)
 		    {
 		      position++;
-		      if (translated == info[argn].start)
+		      if (translated == info[fieldn].start)
 			{
-			  translated += info[argn].end - info[argn].start;
-			  argn++;
+			  translated += info[fieldn].end - info[fieldn].start;
+			  fieldn++;
 			}
 		    }
 		}
@@ -4710,12 +4747,13 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 
       /* Add text properties from arguments.  */
       if (arg_intervals)
-	for (ptrdiff_t i = 1; i < nargs; i++)
+	for (ptrdiff_t i = 1; i < num_percent; i++)
 	  if (info[i].intervals)
 	    {
-	      len = make_number (SCHARS (args[i]));
+	      len = make_number (SCHARS (info[i].argument));
 	      Lisp_Object new_len = make_number (info[i].end - info[i].start);
-	      props = text_property_list (args[i], make_number (0), len, Qnil);
+	      props = text_property_list (info[i].argument,
+                                          make_number (0), len, Qnil);
 	      props = extend_property_ranges (props, len, new_len);
 	      /* If successive arguments have properties, be sure that
 		 the value of `composition' property be the copy.  */
