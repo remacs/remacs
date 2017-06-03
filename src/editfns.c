@@ -4747,7 +4747,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 
       /* Add text properties from arguments.  */
       if (arg_intervals)
-	for (ptrdiff_t i = 1; i < num_percent; i++)
+	for (ptrdiff_t i = 1; i <= num_percent; i++)
 	  if (info[i].intervals)
 	    {
 	      len = make_number (SCHARS (info[i].argument));
