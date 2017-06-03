@@ -965,9 +965,10 @@ extra values to be formatted are ignored.
 decimal number immediately after the initial @samp{%}, followed by a
 literal dollar sign @samp{$}.  It causes the format specification to
 convert the argument with the given number instead of the next
-argument.  Field numbers start at 1.  A format can contain either
-numbered or unnumbered format specifications but not both, except that
-@samp{%%} can be mixed with numbered specifications.
+argument.  Field numbers start at 1.  A field number should differ
+from the other field numbers in the same format.  A format can contain
+either numbered or unnumbered format specifications but not both,
+except that @samp{%%} can be mixed with numbered specifications.
 
 @example
 (format "%2$s, %3$s, %%, %1$s" "x" "y" "z")

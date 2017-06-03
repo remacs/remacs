@@ -3901,9 +3901,10 @@ where field is [0-9]+ followed by a literal dollar "$", flags is
 followed by [0-9]+.
 
 If a %-sequence is numbered with a field with positive value N, the
-Nth argument is substituted instead of the next one.  A format can
-contain either numbered or unnumbered %-sequences but not both, except
-that %% can be mixed with numbered %-sequences.
+Nth argument is substituted instead of the next one.  A field number
+should differ from the other field numbers in the same format.  A
+format can contain either numbered or unnumbered %-sequences but not
+both, except that %% can be mixed with numbered %-sequences.
 
 The + flag character inserts a + before any positive number, while a
 space inserts a space before any positive number; these flags only
