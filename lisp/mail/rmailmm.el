@@ -817,12 +817,13 @@ directly."
 	 (bulk-data (aref tagline 1))
 	 (body (rmail-mime-entity-body entity))
 	 ;; Find the default directory for this media type.
-	 (directory (catch 'directory
-		      (dolist (entry rmail-mime-attachment-dirs-alist)
-			(when (string-match (car entry) (car content-type))
-			  (dolist (dir (cdr entry))
-			    (when (file-directory-p dir)
-			      (throw 'directory dir)))))))
+	 (directory (or (catch 'directory
+			  (dolist (entry rmail-mime-attachment-dirs-alist)
+			    (when (string-match (car entry) (car content-type))
+			      (dolist (dir (cdr entry))
+				(when (file-directory-p dir)
+				  (throw 'directory dir))))))
+			"~"))
 	 (filename (or (cdr (assq 'name (cdr content-type)))
 		       (cdr (assq 'filename (cdr content-disposition)))
 		       "noname"))
