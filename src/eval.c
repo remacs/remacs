@@ -2952,7 +2952,7 @@ funcall_lambda (Lisp_Object fun, ptrdiff_t nargs,
     }
 #ifdef HAVE_MODULES
   else if (MODULE_FUNCTIONP (fun))
-    return funcall_module (XMODULE_FUNCTION (fun), nargs, arg_vector);
+    return funcall_module (fun, nargs, arg_vector);
 #endif
   else
     emacs_abort ();

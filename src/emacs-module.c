@@ -645,14 +645,13 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
 }
 
 Lisp_Object
-funcall_module (const struct Lisp_Module_Function *const function,
-                ptrdiff_t nargs, Lisp_Object *arglist)
+funcall_module (Lisp_Object function, ptrdiff_t nargs, Lisp_Object *arglist)
 {
-  eassume (0 <= function->min_arity);
-  if (! (function->min_arity <= nargs
-	 && (function->max_arity < 0 || nargs <= function->max_arity)))
-    xsignal2 (Qwrong_number_of_arguments, module_format_fun_env (function),
-	      make_number (nargs));
+  const struct Lisp_Module_Function *func = XMODULE_FUNCTION (function);
+  eassume (0 <= func->min_arity);
+  if (! (func->min_arity <= nargs
+	 && (func->max_arity < 0 || nargs <= func->max_arity)))
+    xsignal2 (Qwrong_number_of_arguments, function, make_natnum (nargs));
 
   emacs_env pub;
   struct emacs_env_private priv;
@@ -669,7 +668,7 @@ funcall_module (const struct Lisp_Module_Function *const function,
 	args[i] = lisp_to_value (arglist[i]);
     }
 
-  emacs_value ret = function->subr (&pub, nargs, args, function->data);
+  emacs_value ret = func->subr (&pub, nargs, args, func->data);
   SAFE_FREE ();
 
   eassert (&priv == pub.private_members);
@@ -939,35 +938,6 @@ static void
 module_handle_throw (emacs_env *env, Lisp_Object tag_val)
 {
   module_non_local_exit_throw_1 (env, XCAR (tag_val), XCDR (tag_val));
-}
-
-
-/* Function environments.  */
-
-/* Return a string object that contains a user-friendly
-   representation of the function environment.  */
-Lisp_Object
-module_format_fun_env (const struct Lisp_Module_Function *env)
-{
-  /* Try to print a function name if possible.  */
-  /* FIXME: Move this function into print.c, then use prin1-to-string
-     above.  */
-  const char *path, *sym;
-  static char const noaddr_format[] = "#<module function at %p>";
-  char buffer[sizeof noaddr_format + INT_STRLEN_BOUND (intptr_t) + 256];
-  char *buf = buffer;
-  ptrdiff_t bufsize = sizeof buffer;
-  ptrdiff_t size
-    = (dynlib_addr (env->subr, &path, &sym)
-       ? exprintf (&buf, &bufsize, buffer, -1,
-		   "#<module function %s from %s>", sym, path)
-       : sprintf (buffer, noaddr_format, env->subr));
-  AUTO_STRING_WITH_LEN (unibyte_result, buffer, size);
-  Lisp_Object result = code_convert_string_norecord (unibyte_result,
-						     Qutf_8, false);
-  if (buf != buffer)
-    xfree (buf);
-  return result;
 }
 
 
