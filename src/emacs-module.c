@@ -504,8 +504,6 @@ module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
       return true;
     }
 
-  eassert (*length >= 0);
-
   if (*length < required_buf_size)
     {
       *length = required_buf_size;
