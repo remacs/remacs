@@ -226,7 +226,7 @@ static emacs_value const module_nil = 0;
 
 /* Use MODULE_FUNCTION_BEGIN to implement steps 2 through 4 for most
    environment functions.  On error it will return its argument, which
-   should be a sentinel value.  */
+   can be a sentinel value.  */
 
 #define MODULE_FUNCTION_BEGIN(error_retval)      \
   MODULE_FUNCTION_BEGIN_NO_CATCH (error_retval); \
