@@ -1372,7 +1372,7 @@ or elsewhere, return a 1-line docstring."
 				(condition-case nil (documentation sym t)
 				  (invalid-function nil))
 				sym))
-		     (car doc))
+		     (substitute-command-keys (car doc)))
 		    (t (help-function-arglist sym)))))
              ;; Stringify, and store before highlighting, downcasing, etc.
 	     (elisp--last-data-store sym (elisp-function-argstring args)
