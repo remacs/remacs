@@ -351,7 +351,7 @@ module_non_local_exit_throw (emacs_env *env, emacs_value tag, emacs_value value)
 				   value_to_lisp (value));
 }
 
-/* A module function is a pseudovector of subtype type
+/* A module function is a pseudovector of subtype
    PVEC_MODULE_FUNCTION; see lisp.h for the definition.  */
 
 static emacs_value
