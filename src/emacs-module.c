@@ -28,6 +28,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "dynlib.h"
 #include "coding.h"
+#include "keyboard.h"
 #include "syssignal.h"
 
 #include <intprops.h>
@@ -612,6 +613,15 @@ module_vec_size (emacs_env *env, emacs_value vec)
   return ASIZE (lvec);
 }
 
+/* This function should return true if and only if maybe_quit would do
+   anything.  */
+static bool
+module_should_quit (emacs_env *env)
+{
+  MODULE_FUNCTION_BEGIN_NO_CATCH (false);
+  return (! NILP (Vquit_flag) && NILP (Vinhibit_quit)) || pending_signals;
+}
+
 
 /* Subroutines.  */
 
@@ -686,6 +696,10 @@ funcall_module (Lisp_Object function, ptrdiff_t nargs, Lisp_Object *arglist)
   SAFE_FREE ();
 
   eassert (&priv == pub.private_members);
+
+  /* Process the quit flag first, so that quitting doesn't get
+     overridden by other non-local exits.  */
+  maybe_quit ();
 
   switch (priv.pending_non_local_exit)
     {
@@ -916,6 +930,7 @@ initialize_environment (emacs_env *env, struct emacs_env_private *priv)
   env->vec_set = module_vec_set;
   env->vec_get = module_vec_get;
   env->vec_size = module_vec_size;
+  env->should_quit = module_should_quit;
   Vmodule_environments = Fcons (make_save_ptr (env), Vmodule_environments);
 }
 

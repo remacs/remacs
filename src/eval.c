@@ -1474,7 +1474,10 @@ process_quit_flag (void)
    If quit-flag is set to `kill-emacs' the SIGINT handler has received
    a request to exit Emacs when it is safe to do.
 
-   When not quitting, process any pending signals.  */
+   When not quitting, process any pending signals.
+
+   If you change this function, also adapt module_should_quit in
+   emacs-module.c.  */
 
 void
 maybe_quit (void)
