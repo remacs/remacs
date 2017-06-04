@@ -626,15 +626,15 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
   CHECK_STRING (file);
   handle = dynlib_open (SSDATA (file));
   if (!handle)
-    error ("Cannot load file %s: %s", SDATA (file), dynlib_error ());
+    xsignal2 (Qmodule_open_failed, file, build_string (dynlib_error ()));
 
   gpl_sym = dynlib_sym (handle, "plugin_is_GPL_compatible");
   if (!gpl_sym)
-    error ("Module %s is not GPL compatible", SDATA (file));
+    xsignal1 (Qmodule_not_gpl_compatible, file);
 
   module_init = (emacs_init_function) dynlib_func (handle, "emacs_module_init");
   if (!module_init)
-    error ("Module %s does not have an init function.", SDATA (file));
+    xsignal1 (Qmissing_module_init_function, file);
 
   struct emacs_runtime_private rt; /* Includes the public emacs_env.  */
   struct emacs_env_private priv;
@@ -652,7 +652,7 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
     {
       if (FIXNUM_OVERFLOW_P (r))
         xsignal0 (Qoverflow_error);
-      xsignal2 (Qmodule_load_failed, file, make_number (r));
+      xsignal2 (Qmodule_init_failed, file, make_number (r));
     }
 
   return Qt;
@@ -999,6 +999,34 @@ syms_of_module (void)
         listn (CONSTYPE_PURE, 2, Qinvalid_module_call, Qerror));
   Fput (Qinvalid_module_call, Qerror_message,
         build_pure_c_string ("Invalid module call"));
+  DEFSYM (Qmodule_open_failed, "module-open-failed");
+  Fput (Qmodule_open_failed, Qerror_conditions,
+        listn (CONSTYPE_PURE, 3,
+               Qmodule_open_failed, Qmodule_load_failed, Qerror));
+  Fput (Qmodule_open_failed, Qerror_message,
+        build_pure_c_string ("Module could not be opened"));
+
+  DEFSYM (Qmodule_not_gpl_compatible, "module-not-gpl-compatible");
+  Fput (Qmodule_not_gpl_compatible, Qerror_conditions,
+        listn (CONSTYPE_PURE, 3,
+               Qmodule_not_gpl_compatible, Qmodule_load_failed, Qerror));
+  Fput (Qmodule_not_gpl_compatible, Qerror_message,
+        build_pure_c_string ("Module is not GPL compatible"));
+
+  DEFSYM (Qmissing_module_init_function, "missing-module-init-function");
+  Fput (Qmissing_module_init_function, Qerror_conditions,
+        listn (CONSTYPE_PURE, 3,
+               Qmissing_module_init_function, Qmodule_load_failed, Qerror));
+  Fput (Qmissing_module_init_function, Qerror_message,
+        build_pure_c_string ("Module does not export an "
+                             "initialization function"));
+
+  DEFSYM (Qmodule_init_failed, "module-init-failed");
+  Fput (Qmodule_init_failed, Qerror_conditions,
+        listn (CONSTYPE_PURE, 3,
+               Qmodule_init_failed, Qmodule_load_failed, Qerror));
+  Fput (Qmodule_init_failed, Qerror_message,
+        build_pure_c_string ("Module initialization failed"));
 
   DEFSYM (Qinvalid_arity, "invalid-arity");
   Fput (Qinvalid_arity, Qerror_conditions,
