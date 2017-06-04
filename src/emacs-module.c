@@ -658,7 +658,7 @@ funcall_module (Lisp_Object function, ptrdiff_t nargs, Lisp_Object *arglist)
   initialize_environment (&pub, &priv);
 
   USE_SAFE_ALLOCA;
-  emacs_value *args;
+  ATTRIBUTE_MAY_ALIAS emacs_value *args;
   if (plain_values)
     args = (emacs_value *) arglist;
   else
