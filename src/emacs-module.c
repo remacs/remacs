@@ -448,6 +448,8 @@ module_eq (emacs_env *env, emacs_value a, emacs_value b)
 static intmax_t
 module_extract_integer (emacs_env *env, emacs_value n)
 {
+  verify (MOST_NEGATIVE_FIXNUM >= INTMAX_MIN);
+  verify (MOST_POSITIVE_FIXNUM <= INTMAX_MAX);
   MODULE_FUNCTION_BEGIN (0);
   Lisp_Object l = value_to_lisp (n);
   CHECK_NUMBER (l);
@@ -489,7 +491,9 @@ module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
 
   Lisp_Object lisp_str_utf8 = ENCODE_UTF_8 (lisp_str);
   ptrdiff_t raw_size = SBYTES (lisp_str_utf8);
-  ptrdiff_t required_buf_size = raw_size + 1;
+  ptrdiff_t required_buf_size;
+  if (INT_ADD_WRAPV (raw_size, 1, &required_buf_size))
+    xsignal0 (Qoverflow_error);
   eassert (required_buf_size > 0);
 
   eassert (length != NULL);
@@ -520,6 +524,8 @@ module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
 {
   MODULE_FUNCTION_BEGIN (module_nil);
   eassert (str != NULL);
+  if (length < 0 || length > MOST_POSITIVE_FIXNUM)
+    xsignal0 (Qoverflow_error);
   AUTO_STRING_WITH_LEN (lstr, str, length);
   return lisp_to_value (code_convert_string_norecord (lstr, Qutf_8, false));
 }
