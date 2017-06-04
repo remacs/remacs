@@ -27,8 +27,11 @@ dynlib_handle_ptr dynlib_open (const char *path);
 void *dynlib_sym (dynlib_handle_ptr h, const char *sym);
 typedef struct dynlib_function_ptr_nonce *(*dynlib_function_ptr) (void);
 dynlib_function_ptr dynlib_func (dynlib_handle_ptr h, const char *sym);
-bool dynlib_addr (void *ptr, const char **path, const char **sym);
 const char *dynlib_error (void);
 int dynlib_close (dynlib_handle_ptr h);
+/* Sets *FILE to the file name from which PTR was loaded, and *SYM to
+   its symbol name.  If the file or symbol name could not be
+   determined, set the corresponding argument to NULL.  */
+void dynlib_addr (void *ptr, const char **file, const char **sym);
 
 #endif /* DYNLIB_H */
