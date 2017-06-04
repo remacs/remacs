@@ -798,14 +798,15 @@ It is based on `log-edit-mode', and has Git-specific extensions.")
           ;; message.  Handle also remote files.
           (if (eq system-type 'windows-nt)
               (let ((default-directory (file-name-directory file1)))
-                (file-local-name (make-nearby-temp-file "git-msg"))))))
+                (make-nearby-temp-file "git-msg")))))
     (cl-flet ((boolean-arg-fn
                (argument)
                (lambda (value) (when (equal value "yes") (list argument)))))
       ;; When operating on the whole tree, better pass "-a" than ".", since "."
       ;; fails when we're committing a merge.
       (apply 'vc-git-command nil 0 (if only files)
-             (nconc (if msg-file (list "commit" "-F" msg-file)
+             (nconc (if msg-file (list "commit" "-F"
+                                       (file-local-name msg-file))
                       (list "commit" "-m"))
                     (let ((args
                            (log-edit-extract-headers
