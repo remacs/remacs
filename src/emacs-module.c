@@ -307,6 +307,7 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
 static enum emacs_funcall_exit
 module_non_local_exit_check (emacs_env *env)
 {
+  eassert (env != NULL);
   check_main_thread ();
   return env->private_members->pending_non_local_exit;
 }
@@ -314,6 +315,7 @@ module_non_local_exit_check (emacs_env *env)
 static void
 module_non_local_exit_clear (emacs_env *env)
 {
+  eassert (env != NULL);
   check_main_thread ();
   env->private_members->pending_non_local_exit = emacs_funcall_exit_return;
 }
@@ -321,6 +323,9 @@ module_non_local_exit_clear (emacs_env *env)
 static enum emacs_funcall_exit
 module_non_local_exit_get (emacs_env *env, emacs_value *sym, emacs_value *data)
 {
+  eassert (env != NULL);
+  eassert (sym != NULL);
+  eassert (data != NULL);
   check_main_thread ();
   struct emacs_env_private *p = env->private_members;
   if (p->pending_non_local_exit != emacs_funcall_exit_return)
@@ -336,6 +341,7 @@ module_non_local_exit_get (emacs_env *env, emacs_value *sym, emacs_value *data)
 static void
 module_non_local_exit_signal (emacs_env *env, emacs_value sym, emacs_value data)
 {
+  eassert (env != NULL);
   check_main_thread ();
   if (module_non_local_exit_check (env) == emacs_funcall_exit_return)
     module_non_local_exit_signal_1 (env, value_to_lisp (sym),
@@ -345,6 +351,7 @@ module_non_local_exit_signal (emacs_env *env, emacs_value sym, emacs_value data)
 static void
 module_non_local_exit_throw (emacs_env *env, emacs_value tag, emacs_value value)
 {
+  eassert (env != NULL);
   check_main_thread ();
   if (module_non_local_exit_check (env) == emacs_funcall_exit_return)
     module_non_local_exit_throw_1 (env, value_to_lisp (tag),
@@ -483,6 +490,7 @@ module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
   Lisp_Object lisp_str_utf8 = ENCODE_UTF_8 (lisp_str);
   ptrdiff_t raw_size = SBYTES (lisp_str_utf8);
   ptrdiff_t required_buf_size = raw_size + 1;
+  eassert (required_buf_size > 0);
 
   eassert (length != NULL);
 
@@ -501,6 +509,7 @@ module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
     }
 
   *length = required_buf_size;
+  eassert (SREF (lisp_str_utf8, raw_size) == '\0');
   memcpy (buffer, SDATA (lisp_str_utf8), raw_size + 1);
 
   return true;
@@ -510,6 +519,7 @@ static emacs_value
 module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
 {
   MODULE_FUNCTION_BEGIN (module_nil);
+  eassert (str != NULL);
   AUTO_STRING_WITH_LEN (lstr, str, length);
   return lisp_to_value (code_convert_string_norecord (lstr, Qutf_8, false));
 }
@@ -701,7 +711,11 @@ Lisp_Object
 module_function_arity (const struct Lisp_Module_Function *const function)
 {
   ptrdiff_t minargs = function->min_arity;
+  eassert (minargs >= 0);
+  eassert (minargs <= MOST_POSITIVE_FIXNUM);
   ptrdiff_t maxargs = function->max_arity;
+  eassert (maxargs >= minargs || maxargs == MANY);
+  eassert (maxargs <= MOST_POSITIVE_FIXNUM);
   return Fcons (make_number (minargs),
 		maxargs == MANY ? Qmany : make_number (maxargs));
 }
@@ -906,6 +920,8 @@ initialize_environment (emacs_env *env, struct emacs_env_private *priv)
 static void
 finalize_environment (emacs_env *env, struct emacs_env_private *priv)
 {
+  eassert (env->private_members == priv);
+  eassert (XSAVE_POINTER (XCAR (Vmodule_environments), 0) == env);
   Vmodule_environments = XCDR (Vmodule_environments);
 }
 
