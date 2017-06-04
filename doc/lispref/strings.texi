@@ -926,7 +926,8 @@ digit.
 
 @item %%
 Replace the specification with a single @samp{%}.  This format
-specification is unusual in that it does not use a value.  For example,
+specification is unusual in that its only form is plain
+@samp{%%} and that it does not use a value.  For example,
 @code{(format "%% %d" 30)} returns @code{"% 30"}.
 @end table
 
@@ -965,10 +966,9 @@ extra values to be formatted are ignored.
 decimal number immediately after the initial @samp{%}, followed by a
 literal dollar sign @samp{$}.  It causes the format specification to
 convert the argument with the given number instead of the next
-argument.  Field numbers start at 1.  A field number should differ
-from the other field numbers in the same format.  A format can contain
-either numbered or unnumbered format specifications but not both,
-except that @samp{%%} can be mixed with numbered specifications.
+argument.  Field numbers start at 1.  A format can contain either
+numbered or unnumbered format specifications but not both, except that
+@samp{%%} can be mixed with numbered specifications.
 
 @example
 (format "%2$s, %3$s, %%, %1$s" "x" "y" "z")
@@ -1026,8 +1026,7 @@ ignored.
   A specification can have a @dfn{width}, which is a decimal number
 that appears after any field number and flags.  If the printed
 representation of the object contains fewer characters than this
-width, @code{format} extends it with padding.  The width is
-ignored for the @samp{%%} specification.  Any padding introduced by
+width, @code{format} extends it with padding.  Any padding introduced by
 the width normally consists of spaces inserted on the left:
 
 @example
