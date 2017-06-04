@@ -88,8 +88,6 @@ struct emacs_env_private
    environment.  */
 struct emacs_runtime_private
 {
-  /* FIXME: Ideally, we would just define "struct emacs_runtime_private"
-     as a synonym of "emacs_env", but I don't know how to do that in C.  */
   emacs_env pub;
 };
 
