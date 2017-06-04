@@ -211,14 +211,25 @@ static emacs_value const module_nil = 0;
       instead of reporting the error back to Lisp, and also because
       'eassert' is compiled to nothing in the release version.  */
 
+/* Use MODULE_FUNCTION_BEGIN_NO_CATCH to implement steps 2 and 3 for
+   environment functions that are known to never exit non-locally.  On
+   error it will return its argument, which can be a sentinel
+   value.  */
+
+#define MODULE_FUNCTION_BEGIN_NO_CATCH(error_retval)                    \
+  do {                                                                  \
+    eassert (env != NULL);                                              \
+    check_main_thread ();                                               \
+    if (module_non_local_exit_check (env) != emacs_funcall_exit_return) \
+      return error_retval;                                              \
+  } while (false)
+
 /* Use MODULE_FUNCTION_BEGIN to implement steps 2 through 4 for most
    environment functions.  On error it will return its argument, which
    should be a sentinel value.  */
 
-#define MODULE_FUNCTION_BEGIN(error_retval)                             \
-  check_main_thread ();                                                 \
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)   \
-    return error_retval;                                                \
+#define MODULE_FUNCTION_BEGIN(error_retval)      \
+  MODULE_FUNCTION_BEGIN_NO_CATCH (error_retval); \
   MODULE_HANDLE_NONLOCAL_EXIT (error_retval)
 
 static void
@@ -416,18 +427,14 @@ module_type_of (emacs_env *env, emacs_value value)
 static bool
 module_is_not_nil (emacs_env *env, emacs_value value)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return false;
+  MODULE_FUNCTION_BEGIN_NO_CATCH (false);
   return ! NILP (value_to_lisp (value));
 }
 
 static bool
 module_eq (emacs_env *env, emacs_value a, emacs_value b)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return false;
+  MODULE_FUNCTION_BEGIN_NO_CATCH (false);
   return EQ (value_to_lisp (a), value_to_lisp (b));
 }
 
