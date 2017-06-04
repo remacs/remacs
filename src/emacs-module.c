@@ -1009,11 +1009,6 @@ syms_of_module (void)
   Fput (Qmodule_load_failed, Qerror_message,
         build_pure_c_string ("Module load failed"));
 
-  DEFSYM (Qinvalid_module_call, "invalid-module-call");
-  Fput (Qinvalid_module_call, Qerror_conditions,
-        listn (CONSTYPE_PURE, 2, Qinvalid_module_call, Qerror));
-  Fput (Qinvalid_module_call, Qerror_message,
-        build_pure_c_string ("Invalid module call"));
   DEFSYM (Qmodule_open_failed, "module-open-failed");
   Fput (Qmodule_open_failed, Qerror_conditions,
         listn (CONSTYPE_PURE, 3,
