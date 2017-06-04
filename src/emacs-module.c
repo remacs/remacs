@@ -100,8 +100,8 @@ static Lisp_Object value_to_lisp (emacs_value);
 static emacs_value lisp_to_value (Lisp_Object);
 static enum emacs_funcall_exit module_non_local_exit_check (emacs_env *);
 static void check_main_thread (void);
-static void finalize_environment (struct emacs_env_private *);
-static void initialize_environment (emacs_env *, struct emacs_env_private *priv);
+static void initialize_environment (emacs_env *, struct emacs_env_private *);
+static void finalize_environment (emacs_env *, struct emacs_env_private *);
 static void module_handle_signal (emacs_env *, Lisp_Object);
 static void module_handle_throw (emacs_env *, Lisp_Object);
 static void module_non_local_exit_signal_1 (emacs_env *, Lisp_Object, Lisp_Object);
@@ -632,7 +632,7 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
       .get_environment = module_get_environment
     };
   int r = module_init (&pub);
-  finalize_environment (&priv);
+  finalize_environment (&rt.pub, &priv);
 
   if (r != 0)
     {
@@ -676,20 +676,20 @@ funcall_module (Lisp_Object function, ptrdiff_t nargs, Lisp_Object *arglist)
   switch (priv.pending_non_local_exit)
     {
     case emacs_funcall_exit_return:
-      finalize_environment (&priv);
+      finalize_environment (&pub, &priv);
       return value_to_lisp (ret);
     case emacs_funcall_exit_signal:
       {
         Lisp_Object symbol = priv.non_local_exit_symbol;
         Lisp_Object data = priv.non_local_exit_data;
-        finalize_environment (&priv);
+        finalize_environment (&pub, &priv);
         xsignal (symbol, data);
       }
     case emacs_funcall_exit_throw:
       {
         Lisp_Object tag = priv.non_local_exit_symbol;
         Lisp_Object value = priv.non_local_exit_data;
-        finalize_environment (&priv);
+        finalize_environment (&pub, &priv);
         Fthrow (tag, value);
       }
     default:
@@ -904,7 +904,7 @@ initialize_environment (emacs_env *env, struct emacs_env_private *priv)
 /* Must be called before the lifetime of the environment object
    ends.  */
 static void
-finalize_environment (struct emacs_env_private *env)
+finalize_environment (emacs_env *env, struct emacs_env_private *priv)
 {
   Vmodule_environments = XCDR (Vmodule_environments);
 }
