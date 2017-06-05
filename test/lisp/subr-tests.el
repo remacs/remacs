@@ -28,6 +28,7 @@
 ;;; Code:
 
 (require 'ert)
+(eval-when-compile (require 'cl-lib))
 
 (ert-deftest let-when-compile ()
   ;; good case
@@ -315,6 +316,15 @@ cf. Bug#25477."
   "`method-files' returns nil if asked to find a method which doesn't exist."
   (should-not (method-files 'subr-tests--undefined-generic))
   (should-not (method-files 'subr-tests--generic-without-methods)))
+
+(ert-deftest subr-tests-bug22027 ()
+  "Test for http://debbugs.gnu.org/22027 ."
+  (let ((default "foo") res)
+    (cl-letf (((symbol-function 'read-string)
+               (lambda (_prompt _init _hist def) def)))
+      (setq res (read-passwd "pass: " 'confirm (mapconcat #'string default "")))
+      (should (string= default res)))))
+
 
 (provide 'subr-tests)
 ;;; subr-tests.el ends here
