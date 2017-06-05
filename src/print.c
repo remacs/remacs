@@ -1709,7 +1709,7 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 
         if (symbol == NULL)
           {
-            print_c_string (" at ", printcharfun);
+            print_c_string ("at ", printcharfun);
             enum { pointer_bufsize = sizeof ptr * 16 / CHAR_BIT + 2 + 1 };
             char buffer[pointer_bufsize];
             int needed = snprintf (buffer, sizeof buffer, "%p", ptr);
