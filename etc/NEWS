@@ -85,6 +85,12 @@ modern init systems such as systemd, which manage many of the traditional
 aspects of daemon behavior themselves.  '--bg-daemon' is now an alias
 for '--daemon'.
 
+** New option '--module-assertions'.  If the user supplies this
+option, Emacs will perform expensive correctness checks when dealing
+with dynamic modules.  This is intended for module authors that wish
+to verify that their module conforms to the module requirements.  The
+option makes Emacs abort if a module-related assertion triggers.
+
 +++
 ** Emacs now supports 24-bit colors on capable text terminals
 Terminal is automatically initialized to use 24-bit colors if the

@@ -213,6 +213,28 @@ Fmod_test_vector_eq (emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   return env->intern (env, "t");
 }
 
+static emacs_value invalid_stored_value;
+
+/* The next two functions perform a possibly-invalid operation: they
+   store a value in a static variable and load it.  This causes
+   undefined behavior if the environment that the value was created
+   from is no longer live.  The module assertions check for this
+   error.  */
+
+static emacs_value
+Fmod_test_invalid_store (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
+                         void *data)
+{
+  return invalid_stored_value = env->make_integer (env, 123);
+}
+
+static emacs_value
+Fmod_test_invalid_load (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
+                        void *data)
+{
+  return invalid_stored_value;
+}
+
 
 /* Lisp utilities for easier readability (simple wrappers).  */
 
@@ -260,6 +282,8 @@ emacs_module_init (struct emacs_runtime *ert)
   DEFUN ("mod-test-userptr-get", Fmod_test_userptr_get, 1, 1, NULL, NULL);
   DEFUN ("mod-test-vector-fill", Fmod_test_vector_fill, 2, 2, NULL, NULL);
   DEFUN ("mod-test-vector-eq", Fmod_test_vector_eq, 2, 2, NULL, NULL);
+  DEFUN ("mod-test-invalid-store", Fmod_test_invalid_store, 0, 0, NULL, NULL);
+  DEFUN ("mod-test-invalid-load", Fmod_test_invalid_load, 0, 0, NULL, NULL);
 
 #undef DEFUN
 

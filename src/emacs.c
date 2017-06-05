@@ -223,6 +223,7 @@ Initialization options:\n\
 --fg-daemon[=NAME]          start a (named) server in the foreground\n\
 --debug-init                enable Emacs Lisp debugger for init file\n\
 --display, -d DISPLAY       use X server DISPLAY\n\
+--module-assertions         assert behavior of dynamic modules\n\
 ",
     "\
 --no-build-details          do not add build details such as time stamps\n\
@@ -1263,6 +1264,18 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
   build_details = ! argmatch (argv, argc, "-no-build-details",
 			      "--no-build-details", 7, NULL, &skip_args);
 
+#ifdef HAVE_MODULES
+  bool module_assertions
+    = argmatch (argv, argc, "-module-assertions", "--module-assertions", 15,
+                NULL, &skip_args);
+  if (dumping && module_assertions)
+    {
+      fputs ("Module assertions are not supported during dumping\n", stderr);
+      exit (1);
+    }
+  init_module_assertions (module_assertions);
+#endif
+
 #ifdef HAVE_NS
   ns_pool = ns_alloc_autorelease_pool ();
 #ifdef NS_IMPL_GNUSTEP
@@ -1720,6 +1733,7 @@ static const struct standard_args standard_args[] =
   { "-nl", "--no-loadup", 70, 0 },
   { "-nsl", "--no-site-lisp", 65, 0 },
   { "-no-build-details", "--no-build-details", 63, 0 },
+  { "-module-assertions", "--module-assertions", 62, 0 },
   /* -d must come last before the options handled in startup.el.  */
   { "-d", "--display", 60, 1 },
   { "-display", 0, 60, 1 },

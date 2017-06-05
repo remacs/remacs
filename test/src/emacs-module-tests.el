@@ -19,9 +19,17 @@
 
 (require 'ert)
 
-(require 'mod-test
-         (expand-file-name "data/emacs-module/mod-test"
-                           (getenv "EMACS_TEST_DIRECTORY")))
+(defconst mod-test-emacs
+  (expand-file-name invocation-name invocation-directory)
+  "File name of the Emacs binary currently running.")
+
+(eval-and-compile
+  (defconst mod-test-file
+    (substitute-in-file-name
+     "$EMACS_TEST_DIRECTORY/data/emacs-module/mod-test")
+    "File name of the module test file."))
+
+(require 'mod-test mod-test-file)
 
 ;;
 ;; Basic tests.
@@ -173,5 +181,31 @@ changes."
                  '(a b)))
   (should (equal (help-function-arglist #'mod-test-sum)
                  '(arg1 arg2))))
+
+(ert-deftest module--test-assertions ()
+  "Check that -module-assertions work."
+  (skip-unless (file-executable-p mod-test-emacs))
+  ;; This doesn’t yet cause undefined behavior.
+  (should (eq (mod-test-invalid-store) 123))
+  (with-temp-buffer
+    (should (equal (call-process mod-test-emacs nil t nil
+                                 "-batch" "-Q" "-module-assertions" "-eval"
+                                 (prin1-to-string
+                                  `(progn
+                                     (require 'mod-test ,mod-test-file)
+                                     ;; Storing and reloading a local
+                                     ;; value causes undefined
+                                     ;; behavior, which should be
+                                     ;; detected by the module
+                                     ;; assertions.
+                                     (mod-test-invalid-store)
+                                     (mod-test-invalid-load))))
+                   ;; FIXME: This string is probably different on
+                   ;; Windows and Linux.
+                   "Abort trap: 6"))
+    (re-search-backward (rx bos "Emacs module assertion: "
+                            "Emacs value not found in "
+                            (+ digit) " values of "
+                            (+ digit) " environments" ?\n eos))))
 
 ;;; emacs-module-tests.el ends here
