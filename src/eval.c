@@ -3613,8 +3613,12 @@ returns nil.  */)
 
   while (backtrace_p (pdl))
     {
+      ptrdiff_t i = pdl - specpdl;
       backtrace_frame_apply (function, pdl);
-      pdl = backtrace_next (pdl);
+      /* Beware! PDL is no longer valid here because FUNCTION might
+         have caused grow_specpdl to reallocate pdlvec.  We must use
+         the saved index, cf. Bug#27258.  */
+      pdl = backtrace_next (&specpdl[i]);
     }
 
   return Qnil;
