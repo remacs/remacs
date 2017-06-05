@@ -185,6 +185,9 @@ struct emacs_env_25
 		   emacs_value val);
 
   ptrdiff_t (*vec_size) (emacs_env *env, emacs_value vec);
+
+  /* Returns whether a quit is pending.  */
+  bool (*should_quit) (emacs_env *env);
 };
 
 /* Every module should define a function as follows.  */

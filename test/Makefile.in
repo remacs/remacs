@@ -182,7 +182,7 @@ test_module_dir := $(srcdir)/data/emacs-module
 test_module_name := mod-test@MODULES_SUFFIX@
 test_module := $(test_module_dir)/$(test_module_name)
 $(srcdir)/src/emacs-module-tests.log: $(test_module)
-$(test_module): $(srcdir)/../src/emacs-module.[ch]
+$(test_module): $(srcdir)/../src/emacs-module.[ch] $(test_module_dir)/mod-test.c
 	$(MAKE) -C $(test_module_dir) $(test_module_name) SO=@MODULES_SUFFIX@
 endif
 

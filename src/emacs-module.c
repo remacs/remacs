@@ -28,6 +28,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "dynlib.h"
 #include "coding.h"
+#include "keyboard.h"
 #include "syssignal.h"
 
 #include <intprops.h>
@@ -35,12 +36,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
 /* Feature tests.  */
-
-#if __has_attribute (cleanup)
-enum { module_has_cleanup = true };
-#else
-enum { module_has_cleanup = false };
-#endif
 
 #ifdef WINDOWSNT
 #include <windows.h>
@@ -88,8 +83,6 @@ struct emacs_env_private
    environment.  */
 struct emacs_runtime_private
 {
-  /* FIXME: Ideally, we would just define "struct emacs_runtime_private"
-     as a synonym of "emacs_env", but I don't know how to do that in C.  */
   emacs_env pub;
 };
 
@@ -102,8 +95,8 @@ static Lisp_Object value_to_lisp (emacs_value);
 static emacs_value lisp_to_value (Lisp_Object);
 static enum emacs_funcall_exit module_non_local_exit_check (emacs_env *);
 static void check_main_thread (void);
-static void finalize_environment (struct emacs_env_private *);
-static void initialize_environment (emacs_env *, struct emacs_env_private *priv);
+static void initialize_environment (emacs_env *, struct emacs_env_private *);
+static void finalize_environment (emacs_env *, struct emacs_env_private *);
 static void module_handle_signal (emacs_env *, Lisp_Object);
 static void module_handle_throw (emacs_env *, Lisp_Object);
 static void module_non_local_exit_signal_1 (emacs_env *, Lisp_Object, Lisp_Object);
@@ -169,7 +162,7 @@ static emacs_value const module_nil = 0;
       module_out_of_memory (env);					\
       return retval;							\
     }									\
-  verify (module_has_cleanup);						\
+  verify (__has_attribute (cleanup));                                   \
   struct handler *c __attribute__ ((cleanup (module_reset_handlerlist))) \
     = c0;								\
   if (sys_setjmp (c->jmp))						\
@@ -213,14 +206,24 @@ static emacs_value const module_nil = 0;
       instead of reporting the error back to Lisp, and also because
       'eassert' is compiled to nothing in the release version.  */
 
+/* Use MODULE_FUNCTION_BEGIN_NO_CATCH to implement steps 2 and 3 for
+   environment functions that are known to never exit non-locally.  On
+   error it will return its argument, which can be a sentinel
+   value.  */
+
+#define MODULE_FUNCTION_BEGIN_NO_CATCH(error_retval)                    \
+  do {                                                                  \
+    check_main_thread ();                                               \
+    if (module_non_local_exit_check (env) != emacs_funcall_exit_return) \
+      return error_retval;                                              \
+  } while (false)
+
 /* Use MODULE_FUNCTION_BEGIN to implement steps 2 through 4 for most
    environment functions.  On error it will return its argument, which
-   should be a sentinel value.  */
+   can be a sentinel value.  */
 
-#define MODULE_FUNCTION_BEGIN(error_retval)                             \
-  check_main_thread ();                                                 \
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)   \
-    return error_retval;                                                \
+#define MODULE_FUNCTION_BEGIN(error_retval)      \
+  MODULE_FUNCTION_BEGIN_NO_CATCH (error_retval); \
   MODULE_HANDLE_NONLOCAL_EXIT (error_retval)
 
 static void
@@ -342,7 +345,7 @@ module_non_local_exit_throw (emacs_env *env, emacs_value tag, emacs_value value)
 				   value_to_lisp (value));
 }
 
-/* A module function is a pseudovector of subtype type
+/* A module function is a pseudovector of subtype
    PVEC_MODULE_FUNCTION; see lisp.h for the definition.  */
 
 static emacs_value
@@ -418,18 +421,14 @@ module_type_of (emacs_env *env, emacs_value value)
 static bool
 module_is_not_nil (emacs_env *env, emacs_value value)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return false;
+  MODULE_FUNCTION_BEGIN_NO_CATCH (false);
   return ! NILP (value_to_lisp (value));
 }
 
 static bool
 module_eq (emacs_env *env, emacs_value a, emacs_value b)
 {
-  check_main_thread ();
-  if (module_non_local_exit_check (env) != emacs_funcall_exit_return)
-    return false;
+  MODULE_FUNCTION_BEGIN_NO_CATCH (false);
   return EQ (value_to_lisp (a), value_to_lisp (b));
 }
 
@@ -487,8 +486,6 @@ module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
       return true;
     }
 
-  eassert (*length >= 0);
-
   if (*length < required_buf_size)
     {
       *length = required_buf_size;
@@ -505,6 +502,8 @@ static emacs_value
 module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
 {
   MODULE_FUNCTION_BEGIN (module_nil);
+  if (! (0 <= length && length <= STRING_BYTES_BOUND))
+    xsignal0 (Qoverflow_error);
   AUTO_STRING_WITH_LEN (lstr, str, length);
   return lisp_to_value (code_convert_string_norecord (lstr, Qutf_8, false));
 }
@@ -593,6 +592,15 @@ module_vec_size (emacs_env *env, emacs_value vec)
   return ASIZE (lvec);
 }
 
+/* This function should return true if and only if maybe_quit would do
+   anything.  */
+static bool
+module_should_quit (emacs_env *env)
+{
+  MODULE_FUNCTION_BEGIN_NO_CATCH (false);
+  return (! NILP (Vquit_flag) && NILP (Vinhibit_quit)) || pending_signals;
+}
+
 
 /* Subroutines.  */
 
@@ -607,15 +615,15 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
   CHECK_STRING (file);
   handle = dynlib_open (SSDATA (file));
   if (!handle)
-    error ("Cannot load file %s: %s", SDATA (file), dynlib_error ());
+    xsignal2 (Qmodule_open_failed, file, build_string (dynlib_error ()));
 
   gpl_sym = dynlib_sym (handle, "plugin_is_GPL_compatible");
   if (!gpl_sym)
-    error ("Module %s is not GPL compatible", SDATA (file));
+    xsignal1 (Qmodule_not_gpl_compatible, file);
 
   module_init = (emacs_init_function) dynlib_func (handle, "emacs_module_init");
   if (!module_init)
-    error ("Module %s does not have an init function.", SDATA (file));
+    xsignal1 (Qmissing_module_init_function, file);
 
   struct emacs_runtime_private rt; /* Includes the public emacs_env.  */
   struct emacs_env_private priv;
@@ -627,34 +635,33 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
       .get_environment = module_get_environment
     };
   int r = module_init (&pub);
-  finalize_environment (&priv);
+  finalize_environment (&rt.pub, &priv);
 
   if (r != 0)
     {
       if (FIXNUM_OVERFLOW_P (r))
         xsignal0 (Qoverflow_error);
-      xsignal2 (Qmodule_load_failed, file, make_number (r));
+      xsignal2 (Qmodule_init_failed, file, make_number (r));
     }
 
   return Qt;
 }
 
 Lisp_Object
-funcall_module (const struct Lisp_Module_Function *const function,
-                ptrdiff_t nargs, Lisp_Object *arglist)
+funcall_module (Lisp_Object function, ptrdiff_t nargs, Lisp_Object *arglist)
 {
-  eassume (0 <= function->min_arity);
-  if (! (function->min_arity <= nargs
-	 && (function->max_arity < 0 || nargs <= function->max_arity)))
-    xsignal2 (Qwrong_number_of_arguments, module_format_fun_env (function),
-	      make_number (nargs));
+  const struct Lisp_Module_Function *func = XMODULE_FUNCTION (function);
+  eassume (0 <= func->min_arity);
+  if (! (func->min_arity <= nargs
+	 && (func->max_arity < 0 || nargs <= func->max_arity)))
+    xsignal2 (Qwrong_number_of_arguments, function, make_number (nargs));
 
   emacs_env pub;
   struct emacs_env_private priv;
   initialize_environment (&pub, &priv);
 
   USE_SAFE_ALLOCA;
-  emacs_value *args;
+  ATTRIBUTE_MAY_ALIAS emacs_value *args;
   if (plain_values)
     args = (emacs_value *) arglist;
   else
@@ -664,28 +671,32 @@ funcall_module (const struct Lisp_Module_Function *const function,
 	args[i] = lisp_to_value (arglist[i]);
     }
 
-  emacs_value ret = function->subr (&pub, nargs, args, function->data);
+  emacs_value ret = func->subr (&pub, nargs, args, func->data);
   SAFE_FREE ();
 
   eassert (&priv == pub.private_members);
 
+  /* Process the quit flag first, so that quitting doesn't get
+     overridden by other non-local exits.  */
+  maybe_quit ();
+
   switch (priv.pending_non_local_exit)
     {
     case emacs_funcall_exit_return:
-      finalize_environment (&priv);
+      finalize_environment (&pub, &priv);
       return value_to_lisp (ret);
     case emacs_funcall_exit_signal:
       {
         Lisp_Object symbol = priv.non_local_exit_symbol;
         Lisp_Object data = priv.non_local_exit_data;
-        finalize_environment (&priv);
+        finalize_environment (&pub, &priv);
         xsignal (symbol, data);
       }
     case emacs_funcall_exit_throw:
       {
         Lisp_Object tag = priv.non_local_exit_symbol;
         Lisp_Object value = priv.non_local_exit_data;
-        finalize_environment (&priv);
+        finalize_environment (&pub, &priv);
         Fthrow (tag, value);
       }
     default:
@@ -894,14 +905,17 @@ initialize_environment (emacs_env *env, struct emacs_env_private *priv)
   env->vec_set = module_vec_set;
   env->vec_get = module_vec_get;
   env->vec_size = module_vec_size;
+  env->should_quit = module_should_quit;
   Vmodule_environments = Fcons (make_save_ptr (env), Vmodule_environments);
 }
 
 /* Must be called before the lifetime of the environment object
    ends.  */
 static void
-finalize_environment (struct emacs_env_private *env)
+finalize_environment (emacs_env *env, struct emacs_env_private *priv)
 {
+  eassert (env->private_members == priv);
+  eassert (XSAVE_POINTER (XCAR (Vmodule_environments), 0) == env);
   Vmodule_environments = XCDR (Vmodule_environments);
 }
 
@@ -934,35 +948,6 @@ static void
 module_handle_throw (emacs_env *env, Lisp_Object tag_val)
 {
   module_non_local_exit_throw_1 (env, XCAR (tag_val), XCDR (tag_val));
-}
-
-
-/* Function environments.  */
-
-/* Return a string object that contains a user-friendly
-   representation of the function environment.  */
-Lisp_Object
-module_format_fun_env (const struct Lisp_Module_Function *env)
-{
-  /* Try to print a function name if possible.  */
-  /* FIXME: Move this function into print.c, then use prin1-to-string
-     above.  */
-  const char *path, *sym;
-  static char const noaddr_format[] = "#<module function at %p>";
-  char buffer[sizeof noaddr_format + INT_STRLEN_BOUND (intptr_t) + 256];
-  char *buf = buffer;
-  ptrdiff_t bufsize = sizeof buffer;
-  ptrdiff_t size
-    = (dynlib_addr (env->subr, &path, &sym)
-       ? exprintf (&buf, &bufsize, buffer, -1,
-		   "#<module function %s from %s>", sym, path)
-       : sprintf (buffer, noaddr_format, env->subr));
-  AUTO_STRING_WITH_LEN (unibyte_result, buffer, size);
-  Lisp_Object result = code_convert_string_norecord (unibyte_result,
-						     Qutf_8, false);
-  if (buf != buffer)
-    xfree (buf);
-  return result;
 }
 
 
@@ -999,11 +984,34 @@ syms_of_module (void)
   Fput (Qmodule_load_failed, Qerror_message,
         build_pure_c_string ("Module load failed"));
 
-  DEFSYM (Qinvalid_module_call, "invalid-module-call");
-  Fput (Qinvalid_module_call, Qerror_conditions,
-        listn (CONSTYPE_PURE, 2, Qinvalid_module_call, Qerror));
-  Fput (Qinvalid_module_call, Qerror_message,
-        build_pure_c_string ("Invalid module call"));
+  DEFSYM (Qmodule_open_failed, "module-open-failed");
+  Fput (Qmodule_open_failed, Qerror_conditions,
+        listn (CONSTYPE_PURE, 3,
+               Qmodule_open_failed, Qmodule_load_failed, Qerror));
+  Fput (Qmodule_open_failed, Qerror_message,
+        build_pure_c_string ("Module could not be opened"));
+
+  DEFSYM (Qmodule_not_gpl_compatible, "module-not-gpl-compatible");
+  Fput (Qmodule_not_gpl_compatible, Qerror_conditions,
+        listn (CONSTYPE_PURE, 3,
+               Qmodule_not_gpl_compatible, Qmodule_load_failed, Qerror));
+  Fput (Qmodule_not_gpl_compatible, Qerror_message,
+        build_pure_c_string ("Module is not GPL compatible"));
+
+  DEFSYM (Qmissing_module_init_function, "missing-module-init-function");
+  Fput (Qmissing_module_init_function, Qerror_conditions,
+        listn (CONSTYPE_PURE, 3,
+               Qmissing_module_init_function, Qmodule_load_failed, Qerror));
+  Fput (Qmissing_module_init_function, Qerror_message,
+        build_pure_c_string ("Module does not export an "
+                             "initialization function"));
+
+  DEFSYM (Qmodule_init_failed, "module-init-failed");
+  Fput (Qmodule_init_failed, Qerror_conditions,
+        listn (CONSTYPE_PURE, 3,
+               Qmodule_init_failed, Qmodule_load_failed, Qerror));
+  Fput (Qmodule_init_failed, Qerror_message,
+        build_pure_c_string ("Module initialization failed"));
 
   DEFSYM (Qinvalid_arity, "invalid-arity");
   Fput (Qinvalid_arity, Qerror_conditions,

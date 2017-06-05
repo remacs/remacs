@@ -112,7 +112,16 @@ Linum mode is a buffer-local minor mode."
 (define-globalized-minor-mode global-linum-mode linum-mode linum-on)
 
 (defun linum-on ()
-  (unless (minibufferp)
+  (unless (or (minibufferp)
+              ;; Turning linum-mode in the daemon's initial frame
+              ;; could significantly slow down startup, if the buffer
+              ;; in which this is done is large, because Emacs thinks
+              ;; the "window" spans the entire buffer then.  This
+              ;; could happen when restoring session via desktop.el,
+              ;; if some large buffer was under linum-mode when
+              ;; desktop was saved.  So we disable linum-mode for
+              ;; non-client frames in a daemon session.
+              (and (daemonp) (null (frame-parameter nil 'client))))
     (linum-mode 1)))
 
 (defun linum-delete-overlays ()

@@ -1346,7 +1346,9 @@ SSET (Lisp_Object string, ptrdiff_t index, unsigned char new)
 INLINE ptrdiff_t
 SCHARS (Lisp_Object string)
 {
-  return XSTRING (string)->size;
+  ptrdiff_t nchars = XSTRING (string)->size;
+  eassume (0 <= nchars);
+  return nchars;
 }
 
 #ifdef GC_CHECK_STRING_BYTES
@@ -1356,10 +1358,12 @@ INLINE ptrdiff_t
 STRING_BYTES (struct Lisp_String *s)
 {
 #ifdef GC_CHECK_STRING_BYTES
-  return string_bytes (s);
+  ptrdiff_t nbytes = string_bytes (s);
 #else
-  return s->size_byte < 0 ? s->size : s->size_byte;
+  ptrdiff_t nbytes = s->size_byte < 0 ? s->size : s->size_byte;
 #endif
+  eassume (0 <= nbytes);
+  return nbytes;
 }
 
 INLINE ptrdiff_t
@@ -1373,7 +1377,7 @@ STRING_SET_CHARS (Lisp_Object string, ptrdiff_t newsize)
   /* This function cannot change the size of data allocated for the
      string when it was created.  */
   eassert (STRING_MULTIBYTE (string)
-	   ? newsize <= SBYTES (string)
+	   ? 0 <= newsize && newsize <= SBYTES (string)
 	   : newsize == SCHARS (string));
   XSTRING (string)->size = newsize;
 }
@@ -3952,10 +3956,8 @@ XMODULE_FUNCTION (Lisp_Object o)
 extern Lisp_Object make_user_ptr (void (*finalizer) (void *), void *p);
 
 /* Defined in emacs-module.c.  */
-extern Lisp_Object funcall_module (const struct Lisp_Module_Function *,
-                                   ptrdiff_t, Lisp_Object *);
+extern Lisp_Object funcall_module (Lisp_Object, ptrdiff_t, Lisp_Object *);
 extern Lisp_Object module_function_arity (const struct Lisp_Module_Function *);
-extern Lisp_Object module_format_fun_env (const struct Lisp_Module_Function *);
 extern void syms_of_module (void);
 #endif
 
