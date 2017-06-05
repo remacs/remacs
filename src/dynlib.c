@@ -126,7 +126,6 @@ void
 dynlib_addr (void *addr, const char **fname, const char **symname)
 {
   static char dll_filename[MAX_UTF8_PATH];
-  static char addr_str[22];
   static GetModuleHandleExA_Proc s_pfn_Get_Module_HandleExA = NULL;
   char *dll_fn = NULL;
   HMODULE hm_kernel32 = NULL;
@@ -216,8 +215,9 @@ dynlib_addr (void *addr, const char **fname, const char **symname)
      of the module functions will be unexported, and probably even
      static, which means the symbols can be obtained only if we link
      against libbfd (and the DLL can be stripped anyway).  So we just
-     show the address and the file name; they can use that with
-     addr2line or GDB to recover the symbolic name.  */
+     show the address and the file name (see print_vectorlike in
+     print.c); they can use that with addr2line or GDB to recover the
+     symbolic name.  */
   *symname = NULL;
 }
 

@@ -1701,31 +1701,36 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 #ifdef HAVE_MODULES
     case PVEC_MODULE_FUNCTION:
       {
-        print_c_string ("#<module function ", printcharfun);
-        void *ptr = XMODULE_FUNCTION (obj)->subr;
-        const char *file = NULL;
-        const char *symbol = NULL;
-        dynlib_addr (ptr, &file, &symbol);
+	print_c_string ("#<module function ", printcharfun);
+	void *ptr = XMODULE_FUNCTION (obj)->subr;
+	const char *file = NULL;
+	const char *symbol = NULL;
+	dynlib_addr (ptr, &file, &symbol);
 
-        if (symbol == NULL)
-          {
-            print_c_string ("at ", printcharfun);
-            enum { pointer_bufsize = sizeof ptr * 16 / CHAR_BIT + 2 + 1 };
-            char buffer[pointer_bufsize];
-            int needed = snprintf (buffer, sizeof buffer, "%p", ptr);
-            eassert (needed <= sizeof buffer);
-            print_c_string (buffer, printcharfun);
-          }
-        else
-          print_c_string (symbol, printcharfun);
+	if (symbol == NULL)
+	  {
+	    print_c_string ("at ", printcharfun);
+	    enum { pointer_bufsize = sizeof ptr * 16 / CHAR_BIT + 2 + 1 };
+	    char buffer[pointer_bufsize];
+	    int needed = snprintf (buffer, sizeof buffer, "%p", ptr);
+	    const char p0x[] = "0x";
+	    eassert (needed <= sizeof buffer);
+	    /* ANSI C doesn't guarantee that %p produces a string that
+	       begins with a "0x".  */
+	    if (c_strncasecmp (buffer, p0x, sizeof (p0x) - 1) != 0)
+	      print_c_string (p0x, printcharfun);
+	    print_c_string (buffer, printcharfun);
+	  }
+	else
+	  print_c_string (symbol, printcharfun);
 
-        if (file != NULL)
-          {
-            print_c_string (" from ", printcharfun);
-            print_c_string (file, printcharfun);
-          }
+	if (file != NULL)
+	  {
+	    print_c_string (" from ", printcharfun);
+	    print_c_string (file, printcharfun);
+	  }
 
-        printchar ('>', printcharfun);
+	printchar ('>', printcharfun);
       }
       break;
 #endif
