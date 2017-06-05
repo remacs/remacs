@@ -1625,8 +1625,9 @@ handled properly.  BODY shall not contain a timeout."
   ;; Mark as failed until bug has been fixed.
   :expected-result :failed
   (skip-unless (tramp--test-enabled))
-  ;; File names with a share behave differently.
-  (when (or (tramp--test-adb-p) (tramp--test-afp-or-smb-p))
+  ;; These are the methods the test doesn't fail.
+  (when (or (tramp--test-adb-p) (tramp--test-gvfs-p)
+	    (tramp-smb-file-name-p tramp-test-temporary-file-directory))
     (setf (ert-test-expected-result-type
 	   (ert-get-test 'tramp-test05-expand-file-name-relative))
 	  :passed))
@@ -2502,7 +2503,10 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
           (orig-syntax tramp-syntax))
 
       (unwind-protect
-          (dolist (syntax (tramp-syntax-values))
+          (dolist
+	      (syntax
+	       (if tramp--test-expensive-test
+		   (tramp-syntax-values) `(,orig-syntax)))
             (tramp-change-syntax syntax)
             (let ;; This is needed for the `simplified' syntax.
                 ((method-marker
@@ -2518,9 +2522,12 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		  (concat prefix-format method (tramp-postfix-method-format))
 		  (file-name-all-completions
                    (concat prefix-format (substring method 0 1)) "/"))))
-              ;; Complete host name for default method.
-	      (unless (zerop (length host))
-	        (let ((tramp-default-method (or method tramp-default-method)))
+              ;; Complete host name for default method.  With gvfs
+              ;; based methods, host name will be determined as
+              ;; host.local, so we omit the test.
+	      (let ((tramp-default-method (or method tramp-default-method)))
+		(unless (or (zerop (length host))
+			    (tramp--test-gvfs-p tramp-default-method))
 		  (should
 		   (member
 		    (concat
@@ -2534,7 +2541,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
               ;; Complete host name.
 	      (unless (or (zerop (length method))
                           (zerop (length (tramp-method-regexp)))
-                          (zerop (length host)))
+                          (zerop (length host))
+			  (tramp--test-gvfs-p method))
 	        (should
 	         (member
 		  (concat
@@ -3224,10 +3232,11 @@ This does not support globbing characters in file names (yet)."
   (string-match
    "ftp$" (file-remote-p tramp-test-temporary-file-directory 'method)))
 
-(defun tramp--test-gvfs-p ()
+(defun tramp--test-gvfs-p (&optional method)
   "Check, whether the remote host runs a GVFS based method.
 This requires restrictions of file name syntax."
-  (tramp-gvfs-file-name-p tramp-test-temporary-file-directory))
+  (or (member method tramp-gvfs-methods)
+      (tramp-gvfs-file-name-p tramp-test-temporary-file-directory)))
 
 (defun tramp--test-hpux-p ()
   "Check, whether the remote host runs HP-UX.
@@ -3266,13 +3275,6 @@ This does not support utf8 based file transfer."
   "Check, whether the locale or remote host runs MS Windows.
 This requires restrictions of file name syntax."
   (or (eq system-type 'windows-nt)
-      (tramp-smb-file-name-p tramp-test-temporary-file-directory)))
-
-(defun tramp--test-afp-or-smb-p ()
-  "Check, whether the afp or smb method is used.
-This requires an additional share name."
-  (or (string-equal
-       "afp" (file-remote-p tramp-test-temporary-file-directory 'method))
       (tramp-smb-file-name-p tramp-test-temporary-file-directory)))
 
 (defun tramp--test-check-files (&rest files)
