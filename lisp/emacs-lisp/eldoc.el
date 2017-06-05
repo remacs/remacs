@@ -418,7 +418,7 @@ return any documentation.")
  "down-list" "end-of-" "exchange-point-and-mark" "forward-" "goto-"
  "handle-select-window" "indent-for-tab-command" "left-" "mark-page"
  "mark-paragraph" "mouse-set-point" "move-" "move-beginning-of-"
- "move-end-of-" "next-" "other-window" "pop-global-mark" "previous-"
+ "move-end-of-" "newline" "next-" "other-window" "pop-global-mark" "previous-"
  "recenter" "right-" "scroll-" "self-insert-command" "split-window-"
  "up-list")
 
