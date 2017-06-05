@@ -1,7 +1,7 @@
 //! Operations on lists.
 
 use lisp::{LispObject, LispCons, Qnil};
-use remacs_sys::{wrong_type_argument, Qlistp};
+use remacs_sys::{wrong_type_argument, Qlistp, EmacsInt, call2};
 use remacs_macros::lisp_fn;
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
@@ -404,4 +404,75 @@ fn list(args: &mut [LispObject]) -> LispObject {
 fn make_list(length: LispObject, init: LispObject) -> LispObject {
     let length = length.as_natnum_or_error();
     (0..length).fold(Qnil, |list, _| LispObject::cons(init, list))
+}
+
+/// Return the length of a list, but avoid error or infinite loop.
+/// This function never gets an error.  If LIST is not really a list,
+/// it returns 0.  If LIST is circular, it returns a finite value
+/// which is at least the number of distinct elements.
+#[lisp_fn]
+fn safe_length(list: LispObject) -> LispObject {
+    LispObject::int_or_float_from_fixnum(list.iter_tails_safe().count() as EmacsInt)
+}
+
+// Used by sort() in vectors.rs.
+
+pub fn sort_list(list: LispObject, pred: LispObject) -> LispObject {
+    let length = list.iter_tails().count();
+    if length < 2 {
+        return list;
+    }
+
+    let item = nthcdr(LispObject::from_fixnum((length / 2 - 1) as EmacsInt), list);
+    let back = cdr(item);
+    setcdr(item, Qnil);
+
+    let front = sort_list(list, pred);
+    let back = sort_list(back, pred);
+    merge(front, back, pred)
+}
+
+// also needed by vectors.rs
+pub fn inorder(pred: LispObject, a: LispObject, b: LispObject) -> bool {
+    let res = unsafe { call2(pred.to_raw(), b.to_raw(), a.to_raw()) };
+    LispObject::from_raw(res).is_nil()
+}
+
+/// Merge step of linked-list sorting.
+#[no_mangle]
+pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispObject {
+    let mut tail = Qnil;
+    let mut value = Qnil;
+
+    loop {
+        if l1.is_nil() {
+            if tail.is_nil() {
+                return l2;
+            }
+            setcdr(tail, l2);
+            return value;
+        }
+        if l2.is_nil() {
+            if tail.is_nil() {
+                return l1;
+            }
+            setcdr(tail, l1);
+            return value;
+        }
+
+        let item;
+        if inorder(pred, car(l1), car(l2)) {
+            item = l1;
+            l1 = cdr(l1);
+        } else {
+            item = l2;
+            l2 = cdr(l2);
+        }
+        if tail.is_nil() {
+            value = item;
+        } else {
+            setcdr(tail, item);
+        }
+        tail = item;
+    }
 }

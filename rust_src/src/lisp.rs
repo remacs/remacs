@@ -9,16 +9,19 @@ extern crate libc;
 #[cfg(test)]
 use std::cmp::max;
 use std::mem;
+use std::slice;
 use std::ops::Deref;
 use std::fmt::{Debug, Formatter, Error};
 
 use marker::{LispMarker, marker_position};
 use multibyte::{LispStringRef, MAX_CHAR};
+use vectors::LispVectorlikeRef;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, EMACS_INT_MAX, EMACS_INT_SIZE,
                  EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
                  Qnumber_or_marker_p, Qt, make_float, Qlistp, Qintegerp, Qconsp, circular_list,
-                 internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp, Qwholenump};
+                 internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp, Qwholenump, Qvectorp,
+                 SYMBOL_NAME};
 use remacs_sys::Lisp_Object as CLisp_Object;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -180,8 +183,16 @@ pub enum LispMiscType {
 // If needed, we can calculate all variants size and allocate properly.
 
 #[repr(C)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Debug)]
 pub struct ExternalPtr<T>(*mut T);
+
+impl<T> Clone for ExternalPtr<T> {
+    fn clone(&self) -> Self {
+        ExternalPtr::new(self.0)
+    }
+}
+
+impl<T> Copy for ExternalPtr<T> {}
 
 impl<T> ExternalPtr<T> {
     pub fn new(p: *mut T) -> ExternalPtr<T> {
@@ -287,6 +298,15 @@ impl LispObject {
     }
 
     #[inline]
+    pub fn int_or_float_from_fixnum(n: EmacsInt) -> LispObject {
+        if n < MOST_NEGATIVE_FIXNUM || n > MOST_POSITIVE_FIXNUM {
+            Self::from_float(n as f64)
+        } else {
+            Self::from_fixnum(n)
+        }
+    }
+
+    #[inline]
     unsafe fn to_fixnum_unchecked(self) -> EmacsInt {
         let raw = self.to_raw();
         if !USE_LSB_TAG {
@@ -338,6 +358,37 @@ impl LispObject {
             unsafe { self.to_fixnum_unchecked() }
         } else {
             unsafe { wrong_type_argument(Qwholenump, self.to_raw()) }
+        }
+    }
+}
+
+// Vectorlike support (LispType == 5)
+
+impl LispObject {
+    pub fn is_vectorlike(self) -> bool {
+        self.get_type() == LispType::Lisp_Vectorlike
+    }
+
+    pub fn is_vector(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| v.is_vector())
+    }
+
+    #[inline]
+    #[allow(dead_code)]
+    pub fn as_vectorlike(self) -> Option<LispVectorlikeRef> {
+        if self.is_vectorlike() {
+            Some(LispVectorlikeRef::new(unsafe { mem::transmute(self.get_untaggedptr()) }))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_vectorlike_or_error(self) -> LispVectorlikeRef {
+        if self.is_vectorlike() {
+            LispVectorlikeRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
+        } else {
+            unsafe { wrong_type_argument(Qvectorp, self.to_raw()) }
         }
     }
 }
@@ -703,6 +754,13 @@ impl LispObject {
 /// of arguments.
 pub const MANY: i16 = -2;
 
+/// Internal function to get a displayable string out of a Lisp string.
+fn display_string(obj: LispObject) -> String {
+    let mut s = obj.as_string().unwrap();
+    let slice = unsafe { slice::from_raw_parts(s.data_ptr(), s.len_bytes() as usize) };
+    String::from_utf8_lossy(slice).into_owned()
+}
+
 impl Debug for LispObject {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         let ty = self.get_type();
@@ -714,31 +772,54 @@ impl Debug for LispObject {
                    self.to_raw())?;
             return Ok(());
         }
+        if self == &Qnil {
+            return write!(f, "nil");
+        }
         match ty {
             LispType::Lisp_Symbol => {
-                write!(f, "#<SYMBOL @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+                let name = LispObject::from_raw(unsafe { SYMBOL_NAME(self.to_raw()) });
+                write!(f, "'{}", display_string(name))?;
             }
             LispType::Lisp_Cons => {
-                write!(f, "#<CONS @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+                let mut cdr = *self;
+                write!(f, "'(")?;
+                while let Some(cons) = cdr.as_cons() {
+                    write!(f, "{:?} ", cons.car())?;
+                    cdr = cons.cdr();
+                }
+                if cdr == Qnil {
+                    write!(f, ")")?;
+                } else {
+                    write!(f, ". {:?}", cdr)?;
+                }
             }
             LispType::Lisp_Float => {
-                write!(f, "#<FLOAT @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+                write!(f, "{}", self.as_float().unwrap())?;
             }
             LispType::Lisp_Vectorlike => {
-                write!(f,
-                       "#<VECTOR-LIKE @ {:#X}: VAL({:#X})>",
-                       self_ptr,
-                       self.to_raw())?;
+                let vl = self.as_vectorlike().unwrap();
+                if vl.is_vector() {
+                    write!(f, "[")?;
+                    for el in vl.as_vector().unwrap().as_slice() {
+                        write!(f, "{:?} ", el)?;
+                    }
+                    write!(f, "]")?;
+                } else {
+                    write!(f,
+                           "#<VECTOR-LIKE @ {:#X}: VAL({:#X})>",
+                           self_ptr,
+                           self.to_raw())?;
+                }
             }
             LispType::Lisp_Int0 |
             LispType::Lisp_Int1 => {
-                write!(f, "#<INT @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+                write!(f, "{}", self.as_fixnum().unwrap())?;
             }
             LispType::Lisp_Misc => {
                 write!(f, "#<MISC @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
             }
             LispType::Lisp_String => {
-                write!(f, "#<STRING @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+                write!(f, "{:?}", display_string(*self))?;
             }
         }
         Ok(())

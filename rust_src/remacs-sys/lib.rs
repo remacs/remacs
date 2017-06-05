@@ -17,6 +17,8 @@
 
 extern crate libc;
 
+use std::isize;
+
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
 
 pub type Lisp_Object = EmacsInt;
@@ -33,39 +35,53 @@ pub const CHAR_MODIFIER_MASK: char_bits =
     CHAR_ALT | CHAR_SUPER | CHAR_HYPER | CHAR_SHIFT | CHAR_CTL | CHAR_META;
 pub const CHARACTERBITS: char_bits = 22;
 
-pub const PSEUDOVECTOR_SIZE_BITS: libc::c_int = 12;
-pub const PSEUDOVECTOR_SIZE_MASK: libc::c_int = (1 << PSEUDOVECTOR_SIZE_BITS) - 1;
-pub const PSEUDOVECTOR_REST_BITS: libc::c_int = 12;
-pub const PSEUDOVECTOR_REST_MASK: libc::c_int = (((1 << PSEUDOVECTOR_REST_BITS) - 1) <<
-                                                 PSEUDOVECTOR_SIZE_BITS);
-pub const PSEUDOVECTOR_AREA_BITS: libc::c_int = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS;
-pub const PVEC_TYPE_MASK: libc::c_int = 0x3f << PSEUDOVECTOR_AREA_BITS;
+pub const PSEUDOVECTOR_FLAG: libc::ptrdiff_t = std::isize::MAX - std::isize::MAX / 2;
+pub const PSEUDOVECTOR_SIZE_BITS: libc::ptrdiff_t = 12;
+pub const PSEUDOVECTOR_SIZE_MASK: libc::ptrdiff_t = (1 << PSEUDOVECTOR_SIZE_BITS) - 1;
+pub const PSEUDOVECTOR_REST_BITS: libc::ptrdiff_t = 12;
+pub const PSEUDOVECTOR_REST_MASK: libc::ptrdiff_t = (((1 << PSEUDOVECTOR_REST_BITS) - 1) <<
+                                                     PSEUDOVECTOR_SIZE_BITS);
+pub const PSEUDOVECTOR_AREA_BITS: libc::ptrdiff_t = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS;
+pub const PVEC_TYPE_MASK: libc::ptrdiff_t = 0x3f << PSEUDOVECTOR_AREA_BITS;
 
-pub type pvec_type = libc::c_int;
-pub const PVEC_NORMAL_VECTOR: pvec_type = 0;
-pub const PVEC_FREE: pvec_type = 1;
-pub const PVEC_PROCESS: pvec_type = 2;
-pub const PVEC_FRAME: pvec_type = 3;
-pub const PVEC_WINDOW: pvec_type = 4;
-pub const PVEC_BOOL_VECTOR: pvec_type = 5;
-pub const PVEC_BUFFER: pvec_type = 6;
-pub const PVEC_HASH_TABLE: pvec_type = 7;
-pub const PVEC_TERMINAL: pvec_type = 8;
-pub const PVEC_WINDOW_CONFIGURATION: pvec_type = 9;
-pub const PVEC_SUBR: pvec_type = 10;
-pub const PVEC_OTHER: pvec_type = 11;
-pub const PVEC_XWIDGET: pvec_type = 12;
-pub const PVEC_XWIDGET_VIEW: pvec_type = 13;
-pub const PVEC_COMPILED: pvec_type = 14;
-pub const PVEC_CHAR_TABLE: pvec_type = 15;
-pub const PVEC_SUB_CHAR_TABLE: pvec_type = 16;
-pub const PVEC_FONT: pvec_type = 17;
+#[repr(isize)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
+#[allow(dead_code)]
+#[allow(non_camel_case_types)]
+pub enum PseudovecType {
+    PVEC_NORMAL_VECTOR = 0,
+    PVEC_FREE,
+    PVEC_PROCESS,
+    PVEC_FRAME,
+    PVEC_WINDOW,
+    PVEC_BOOL_VECTOR,
+    PVEC_BUFFER,
+    PVEC_HASH_TABLE,
+    PVEC_TERMINAL,
+    PVEC_WINDOW_CONFIGURATION,
+    PVEC_SUBR,
+    PVEC_OTHER,
+    PVEC_XWIDGET,
+    PVEC_XWIDGET_VIEW,
+    PVEC_THREAD,
+    PVEC_MUTEX,
+    PVEC_CONDVAR,
+
+    /* These should be last, check internal_equal to see why.  */
+    PVEC_COMPILED,
+    PVEC_CHAR_TABLE,
+    PVEC_SUB_CHAR_TABLE,
+    PVEC_FONT, /* Should be last because it's used for range checking.  */
+}
 
 #[derive(Debug)]
 #[repr(C)]
 pub struct vectorlike_header {
     pub size: libc::ptrdiff_t,
 }
+
+// XXX: this can also be char on some archs
+pub type bits_word = libc::size_t;
 
 /// Representation of an Emacs Lisp function symbol.
 #[derive(Debug)]
@@ -662,6 +678,8 @@ extern "C" {
     pub static Qlistp: Lisp_Object;
     pub static Qmarkerp: Lisp_Object;
     pub static Qwholenump: Lisp_Object;
+    pub static Qvectorp: Lisp_Object;
+    pub static Qsequencep: Lisp_Object;
 
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
 
@@ -679,6 +697,7 @@ extern "C" {
                           props: bool,
                           ht: Lisp_Object)
                           -> bool;
+    pub fn call2(fn_: Lisp_Object, arg1: Lisp_Object, arg2: Lisp_Object) -> Lisp_Object;
 
     // These signal an error, therefore are marked as non-returning.
     pub fn circular_list(tail: Lisp_Object) -> !;

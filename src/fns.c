@@ -36,8 +36,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "window.h"
 #include "puresize.h"
 
-static void sort_vector_copy (Lisp_Object, ptrdiff_t,
-			      Lisp_Object *restrict, Lisp_Object *restrict);
 bool internal_equal (Lisp_Object, Lisp_Object, int, bool, Lisp_Object);
 
 DEFUN ("identity", Fidentity, Sidentity, 1, 1, 0,
@@ -85,57 +83,6 @@ See Info node `(elisp)Random Numbers' for more details.  */)
 }
 
 /* Random data-structure functions.  */
-
-DEFUN ("length", Flength, Slength, 1, 1, 0,
-       doc: /* Return the length of vector, list or string SEQUENCE.
-A byte-code function object is also allowed.
-If the string contains multibyte characters, this is not necessarily
-the number of bytes in the string; it is the number of characters.
-To get the number of bytes, use `string-bytes'.  */)
-  (register Lisp_Object sequence)
-{
-  register Lisp_Object val;
-
-  if (STRINGP (sequence))
-    XSETFASTINT (val, SCHARS (sequence));
-  else if (VECTORP (sequence))
-    XSETFASTINT (val, ASIZE (sequence));
-  else if (CHAR_TABLE_P (sequence))
-    XSETFASTINT (val, MAX_CHAR);
-  else if (BOOL_VECTOR_P (sequence))
-    XSETFASTINT (val, bool_vector_size (sequence));
-  else if (COMPILEDP (sequence))
-    XSETFASTINT (val, ASIZE (sequence) & PSEUDOVECTOR_SIZE_MASK);
-  else if (CONSP (sequence))
-    {
-      intptr_t i = 0;
-      FOR_EACH_TAIL (sequence)
-	i++;
-      CHECK_LIST_END (sequence, sequence);
-      if (MOST_POSITIVE_FIXNUM < i)
-	error ("List too long");
-      val = make_number (i);
-    }
-  else if (NILP (sequence))
-    XSETFASTINT (val, 0);
-  else
-    wrong_type_argument (Qsequencep, sequence);
-
-  return val;
-}
-
-DEFUN ("safe-length", Fsafe_length, Ssafe_length, 1, 1, 0,
-       doc: /* Return the length of a list, but avoid error or infinite loop.
-This function never gets an error.  If LIST is not really a list,
-it returns 0.  If LIST is circular, it returns a finite value
-which is at least the number of distinct elements.  */)
-  (Lisp_Object list)
-{
-  intptr_t len = 0;
-  FOR_EACH_TAIL_SAFE (list)
-    len++;
-  return make_fixnum_or_float (len);
-}
 
 DEFUN ("compare-strings", Fcompare_strings, Scompare_strings, 6, 7, 0,
        doc: /* Compare the contents of two strings, converting to multibyte if needed.
@@ -1497,196 +1444,6 @@ See also the function `nreverse', which is used more often.  */)
     wrong_type_argument (Qsequencep, seq);
   return new;
 }
-
-/* Sort LIST using PREDICATE, preserving original order of elements
-   considered as equal.  */
-
-static Lisp_Object
-sort_list (Lisp_Object list, Lisp_Object predicate)
-{
-  Lisp_Object front, back;
-  Lisp_Object len, tem;
-  EMACS_INT length;
-
-  front = list;
-  len = Flength (list);
-  length = XINT (len);
-  if (length < 2)
-    return list;
-
-  XSETINT (len, (length / 2) - 1);
-  tem = Fnthcdr (len, list);
-  back = Fcdr (tem);
-  Fsetcdr (tem, Qnil);
-
-  front = Fsort (front, predicate);
-  back = Fsort (back, predicate);
-  return merge (front, back, predicate);
-}
-
-/* Using PRED to compare, return whether A and B are in order.
-   Compare stably when A appeared before B in the input.  */
-static bool
-inorder (Lisp_Object pred, Lisp_Object a, Lisp_Object b)
-{
-  return NILP (call2 (pred, b, a));
-}
-
-/* Using PRED to compare, merge from ALEN-length A and BLEN-length B
-   into DEST.  Argument arrays must be nonempty and must not overlap,
-   except that B might be the last part of DEST.  */
-static void
-merge_vectors (Lisp_Object pred,
-	       ptrdiff_t alen, Lisp_Object const a[restrict VLA_ELEMS (alen)],
-	       ptrdiff_t blen, Lisp_Object const b[VLA_ELEMS (blen)],
-	       Lisp_Object dest[VLA_ELEMS (alen + blen)])
-{
-  eassume (0 < alen && 0 < blen);
-  Lisp_Object const *alim = a + alen;
-  Lisp_Object const *blim = b + blen;
-
-  while (true)
-    {
-      if (inorder (pred, a[0], b[0]))
-	{
-	  *dest++ = *a++;
-	  if (a == alim)
-	    {
-	      if (dest != b)
-		memcpy (dest, b, (blim - b) * sizeof *dest);
-	      return;
-	    }
-	}
-      else
-	{
-	  *dest++ = *b++;
-	  if (b == blim)
-	    {
-	      memcpy (dest, a, (alim - a) * sizeof *dest);
-	      return;
-	    }
-	}
-    }
-}
-
-/* Using PRED to compare, sort LEN-length VEC in place, using TMP for
-   temporary storage.  LEN must be at least 2.  */
-static void
-sort_vector_inplace (Lisp_Object pred, ptrdiff_t len,
-		     Lisp_Object vec[restrict VLA_ELEMS (len)],
-		     Lisp_Object tmp[restrict VLA_ELEMS (len >> 1)])
-{
-  eassume (2 <= len);
-  ptrdiff_t halflen = len >> 1;
-  sort_vector_copy (pred, halflen, vec, tmp);
-  if (1 < len - halflen)
-    sort_vector_inplace (pred, len - halflen, vec + halflen, vec);
-  merge_vectors (pred, halflen, tmp, len - halflen, vec + halflen, vec);
-}
-
-/* Using PRED to compare, sort from LEN-length SRC into DST.
-   Len must be positive.  */
-static void
-sort_vector_copy (Lisp_Object pred, ptrdiff_t len,
-		  Lisp_Object src[restrict VLA_ELEMS (len)],
-		  Lisp_Object dest[restrict VLA_ELEMS (len)])
-{
-  eassume (0 < len);
-  ptrdiff_t halflen = len >> 1;
-  if (halflen < 1)
-    dest[0] = src[0];
-  else
-    {
-      if (1 < halflen)
-	sort_vector_inplace (pred, halflen, src, dest);
-      if (1 < len - halflen)
-	sort_vector_inplace (pred, len - halflen, src + halflen, dest);
-      merge_vectors (pred, halflen, src, len - halflen, src + halflen, dest);
-    }
-}
-
-/* Sort VECTOR in place using PREDICATE, preserving original order of
-   elements considered as equal.  */
-
-static void
-sort_vector (Lisp_Object vector, Lisp_Object predicate)
-{
-  ptrdiff_t len = ASIZE (vector);
-  if (len < 2)
-    return;
-  ptrdiff_t halflen = len >> 1;
-  Lisp_Object *tmp;
-  USE_SAFE_ALLOCA;
-  SAFE_ALLOCA_LISP (tmp, halflen);
-  for (ptrdiff_t i = 0; i < halflen; i++)
-    tmp[i] = make_number (0);
-  sort_vector_inplace (predicate, len, XVECTOR (vector)->contents, tmp);
-  SAFE_FREE ();
-}
-
-DEFUN ("sort", Fsort, Ssort, 2, 2, 0,
-       doc: /* Sort SEQ, stably, comparing elements using PREDICATE.
-Returns the sorted sequence.  SEQ should be a list or vector.  SEQ is
-modified by side effects.  PREDICATE is called with two elements of
-SEQ, and should return non-nil if the first element should sort before
-the second.  */)
-  (Lisp_Object seq, Lisp_Object predicate)
-{
-  if (CONSP (seq))
-    seq = sort_list (seq, predicate);
-  else if (VECTORP (seq))
-    sort_vector (seq, predicate);
-  else if (!NILP (seq))
-    wrong_type_argument (Qsequencep, seq);
-  return seq;
-}
-
-Lisp_Object
-merge (Lisp_Object org_l1, Lisp_Object org_l2, Lisp_Object pred)
-{
-  Lisp_Object l1 = org_l1;
-  Lisp_Object l2 = org_l2;
-  Lisp_Object tail = Qnil;
-  Lisp_Object value = Qnil;
-
-  while (1)
-    {
-      if (NILP (l1))
-	{
-	  if (NILP (tail))
-	    return l2;
-	  Fsetcdr (tail, l2);
-	  return value;
-	}
-      if (NILP (l2))
-	{
-	  if (NILP (tail))
-	    return l1;
-	  Fsetcdr (tail, l1);
-	  return value;
-	}
-
-      Lisp_Object tem;
-      if (inorder (pred, Fcar (l1), Fcar (l2)))
-	{
-	  tem = l1;
-	  l1 = Fcdr (l1);
-	  org_l1 = l1;
-	}
-      else
-	{
-	  tem = l2;
-	  l2 = Fcdr (l2);
-	  org_l2 = l2;
-	}
-      if (NILP (tail))
-	value = tem;
-      else
-	Fsetcdr (tail, tem);
-      tail = tem;
-    }
-}
-
 
 
 DEFUN ("get", Fget, Sget, 2, 2, 0,
@@ -4317,8 +4074,6 @@ this variable.  */);
 
   defsubr (&Sidentity);
   defsubr (&Srandom);
-  defsubr (&Slength);
-  defsubr (&Ssafe_length);
   defsubr (&Scompare_strings);
   defsubr (&Sstring_lessp);
   defsubr (&Sstring_version_lessp);
@@ -4339,7 +4094,6 @@ this variable.  */);
   defsubr (&Sdelete);
   defsubr (&Snreverse);
   defsubr (&Sreverse);
-  defsubr (&Ssort);
   defsubr (&Sget);
   defsubr (&Sput);
   defsubr (&Sfillarray);
