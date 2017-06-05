@@ -96,7 +96,9 @@ static emacs_value lisp_to_value (Lisp_Object);
 static enum emacs_funcall_exit module_non_local_exit_check (emacs_env *);
 static void check_main_thread (void);
 static void initialize_environment (emacs_env *, struct emacs_env_private *);
-static void finalize_environment (emacs_env *, struct emacs_env_private *);
+static void finalize_environment (emacs_env *);
+static void finalize_environment_unwind (void *);
+static void finalize_runtime_unwind (void *);
 static void module_handle_signal (emacs_env *, Lisp_Object);
 static void module_handle_throw (emacs_env *, Lisp_Object);
 static void module_non_local_exit_signal_1 (emacs_env *, Lisp_Object, Lisp_Object);
@@ -634,8 +636,10 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
       .private_members = &rt,
       .get_environment = module_get_environment
     };
+  ptrdiff_t count = SPECPDL_INDEX ();
+  record_unwind_protect_ptr (finalize_runtime_unwind, &pub);
+
   int r = module_init (&pub);
-  finalize_environment (&rt.pub, &priv);
 
   if (r != 0)
     {
@@ -644,7 +648,7 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
       xsignal2 (Qmodule_init_failed, file, make_number (r));
     }
 
-  return Qt;
+  return unbind_to (count, Qt);
 }
 
 Lisp_Object
@@ -659,6 +663,8 @@ funcall_module (Lisp_Object function, ptrdiff_t nargs, Lisp_Object *arglist)
   emacs_env pub;
   struct emacs_env_private priv;
   initialize_environment (&pub, &priv);
+  ptrdiff_t count = SPECPDL_INDEX ();
+  record_unwind_protect_ptr (finalize_environment_unwind, &pub);
 
   USE_SAFE_ALLOCA;
   ATTRIBUTE_MAY_ALIAS emacs_value *args;
@@ -683,22 +689,11 @@ funcall_module (Lisp_Object function, ptrdiff_t nargs, Lisp_Object *arglist)
   switch (priv.pending_non_local_exit)
     {
     case emacs_funcall_exit_return:
-      finalize_environment (&pub, &priv);
-      return value_to_lisp (ret);
+      return unbind_to (count, value_to_lisp (ret));
     case emacs_funcall_exit_signal:
-      {
-        Lisp_Object symbol = priv.non_local_exit_symbol;
-        Lisp_Object data = priv.non_local_exit_data;
-        finalize_environment (&pub, &priv);
-        xsignal (symbol, data);
-      }
+      xsignal (priv.non_local_exit_symbol, priv.non_local_exit_data);
     case emacs_funcall_exit_throw:
-      {
-        Lisp_Object tag = priv.non_local_exit_symbol;
-        Lisp_Object value = priv.non_local_exit_data;
-        finalize_environment (&pub, &priv);
-        Fthrow (tag, value);
-      }
+      Fthrow (priv.non_local_exit_symbol, priv.non_local_exit_data);
     default:
       eassume (false);
     }
@@ -912,11 +907,23 @@ initialize_environment (emacs_env *env, struct emacs_env_private *priv)
 /* Must be called before the lifetime of the environment object
    ends.  */
 static void
-finalize_environment (emacs_env *env, struct emacs_env_private *priv)
+finalize_environment (emacs_env *env)
 {
-  eassert (env->private_members == priv);
   eassert (XSAVE_POINTER (XCAR (Vmodule_environments), 0) == env);
   Vmodule_environments = XCDR (Vmodule_environments);
+}
+
+static void
+finalize_environment_unwind (void *env)
+{
+  finalize_environment (env);
+}
+
+static void
+finalize_runtime_unwind (void* raw_ert)
+{
+  struct emacs_runtime *ert = raw_ert;
+  finalize_environment (&ert->private_members->pub);
 }
 
 
