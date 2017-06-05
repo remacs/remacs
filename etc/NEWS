@@ -932,6 +932,7 @@ of not providing replacement pairs via the history.
 *** make-variable-frame-local.  Variables cannot be frame-local any more.
 *** From subr.el: window-dot, set-window-dot, read-input, show-buffer,
 eval-current-buffer, string-to-int
+*** icomplete-prospects-length.
 *** All the default-FOO variables that hold the default value of the
 FOO variable.  Use 'default-value' and 'setq-default' to access and
 change FOO, respectively.  The exhaustive list of removed variables is:
