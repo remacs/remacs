@@ -733,6 +733,10 @@ if different)."
 	(condition-case err
 	    (unless (or (eq frame this)
 			(eq frame mini)
+                        ;; Don't delete daemon's initial frame, or
+                        ;; we'll never be able to close the last
+                        ;; client's frame (Bug#26912).
+                        (if (daemonp) (not (frame-parameter frame 'client)))
 			(frame-parameter frame 'desktop-dont-clear))
 	      (delete-frame frame))
 	  (error
