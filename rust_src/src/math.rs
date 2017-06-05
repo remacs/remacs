@@ -3,8 +3,7 @@
 use libc::ptrdiff_t;
 
 use floatfns;
-use lisp;
-use lisp::{LispObject, LispType};
+use lisp::{LispObject, check_number_coerce_marker};
 use eval::xsignal0;
 use remacs_sys::{EmacsInt, Lisp_Object, Qarith_error, Qnumberp, wrong_type_argument};
 use remacs_macros::lisp_fn;
@@ -15,8 +14,8 @@ use remacs_macros::lisp_fn;
 /// (fn X Y)
 #[lisp_fn(name = "mod", c_name = "mod")]
 fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
-    let x = lisp::check_number_coerce_marker(x);
-    let y = lisp::check_number_coerce_marker(y);
+    let x = check_number_coerce_marker(x);
+    let y = check_number_coerce_marker(y);
 
     if x.is_float() || y.is_float() {
         let ret = floatfns::fmod_float(x.to_raw(), y.to_raw());
@@ -92,7 +91,7 @@ fn arith_driver(code: ArithOp, args: &mut [LispObject]) -> LispObject {
             ok_accum = accum;
         }
 
-        let coerced_val = lisp::check_number_coerce_marker(*val);
+        let coerced_val = check_number_coerce_marker(*val);
 
         if coerced_val.is_float() {
             let mut args: Vec<Lisp_Object> = args_clone.iter().map(|v| v.to_raw()).collect();
@@ -179,7 +178,7 @@ fn arith_driver(code: ArithOp, args: &mut [LispObject]) -> LispObject {
         }
     }
 
-    LispObject::from_fixnum(accum)
+    LispObject::from_fixnum_truncated(accum)
 }
 
 /// Return sum of any number of arguments, which are numbers or markers.
@@ -280,8 +279,11 @@ fn abs(obj: LispObject) -> LispObject {
         }
     }
 
-    match obj.get_type() {
-        LispType::Lisp_Float => LispObject::from_float(obj.as_float().unwrap().abs()),
-        _ => LispObject::from_fixnum(obj.as_fixnum().unwrap().abs() as EmacsInt),
+    match obj.as_float() {
+        Some(f) => LispObject::from_float(f.abs()),
+        _ => {
+            let n = obj.as_fixnum().unwrap();
+            LispObject::from_fixnum(n.abs())
+        }
     }
 }
