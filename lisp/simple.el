@@ -1484,6 +1484,7 @@ display the result of expression evaluation."
           ;; FIXME: call emacs-lisp-mode?
           (add-function :before-until (local 'eldoc-documentation-function)
                         #'elisp-eldoc-documentation-function)
+          (eldoc-mode 1)
           (add-hook 'completion-at-point-functions
                     #'elisp-completion-at-point nil t)
           (run-hooks 'eval-expression-minibuffer-setup-hook))
