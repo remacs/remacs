@@ -682,10 +682,13 @@ extern "C" {
     pub static Qsequencep: Lisp_Object;
 
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
+    pub fn Fcurrent_buffer() -> Lisp_Object;
+    pub fn Fget_buffer(buffer_or_name: Lisp_Object) -> Lisp_Object;
 
     pub fn make_float(float_value: libc::c_double) -> Lisp_Object;
     pub fn make_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
     pub fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
+    pub fn make_uninit_string(length: EmacsInt) -> Lisp_Object;
     pub fn make_uninit_multibyte_string(nchars: EmacsInt, nbytes: EmacsInt) -> Lisp_Object;
     pub fn string_to_multibyte(string: Lisp_Object) -> Lisp_Object;
 
@@ -706,6 +709,7 @@ extern "C" {
     // number of arguments.
     // TODO: define a Rust version of this that uses Rust strings.
     pub fn error(m: *const u8, ...) -> !;
+    pub fn nsberror(spec: Lisp_Object) -> !;
 
     pub fn emacs_abort() -> !;
 

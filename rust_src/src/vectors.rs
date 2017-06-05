@@ -10,6 +10,7 @@ use libc::ptrdiff_t;
 use lisp::{ExternalPtr, LispObject, MOST_POSITIVE_FIXNUM};
 use multibyte::MAX_CHAR;
 use lists::{sort_list, inorder};
+use buffers::LispBufferRef;
 use remacs_sys::{Lisp_Object, Qsequencep, EmacsInt, wrong_type_argument, error, bits_word,
                  PSEUDOVECTOR_FLAG, PVEC_TYPE_MASK, PSEUDOVECTOR_AREA_BITS,
                  PSEUDOVECTOR_SIZE_MASK, PseudovecType};
@@ -35,11 +36,13 @@ use remacs_macros::lisp_fn;
   Current layout limits the pseudovectors to 63 PVEC_xxx subtypes,
   4095 Lisp_Objects in GC-ed area and 4095 word-sized other slots.  */
 
+#[repr(C)]
 #[allow(non_camel_case_types)]
-struct Lisp_Vectorlike_Header {
+pub struct Lisp_Vectorlike_Header {
     size: ptrdiff_t,
 }
 
+#[repr(C)]
 #[allow(non_camel_case_types)]
 pub struct Lisp_Vectorlike {
     header: Lisp_Vectorlike_Header,
@@ -48,6 +51,7 @@ pub struct Lisp_Vectorlike {
 
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
 
+#[repr(C)]
 #[allow(non_camel_case_types)]
 pub struct Lisp_Vector {
     header: Lisp_Vectorlike_Header,
@@ -57,6 +61,7 @@ pub struct Lisp_Vector {
 
 pub type LispVectorRef = ExternalPtr<Lisp_Vector>;
 
+#[repr(C)]
 #[allow(non_camel_case_types)]
 pub struct Lisp_Bool_Vector {
     _header: Lisp_Vectorlike_Header,
@@ -92,6 +97,15 @@ impl LispVectorlikeRef {
     pub fn as_bool_vector(&self) -> Option<LispBoolVecRef> {
         if self.is_pseudovector(PseudovecType::PVEC_BOOL_VECTOR) {
             Some(unsafe { mem::transmute::<_, LispBoolVecRef>(*self) })
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_buffer(&self) -> Option<LispBufferRef> {
+        if self.is_pseudovector(PseudovecType::PVEC_BUFFER) {
+            Some(unsafe { mem::transmute(*self) })
         } else {
             None
         }

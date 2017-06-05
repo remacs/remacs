@@ -34,6 +34,7 @@ mod base64;
 mod crypto;
 mod str2sig;
 mod multibyte;
+mod buffers;
 
 use remacs_sys::Lisp_Subr;
 
@@ -83,14 +84,11 @@ pub use vectors::Fsort;
 pub use lists::merge;
 
 // Cryptographic functions used in the C codebase.
-pub use crypto::sha256_buffer;
 pub use crypto::sha1_buffer;
+pub use crypto::sha224_buffer;
+pub use crypto::sha256_buffer;
 pub use crypto::sha384_buffer;
 pub use crypto::sha512_buffer;
-pub use crypto::sha224_buffer;
-pub use crypto::sha1_ctx::sha1_ctx_new;
-pub use crypto::sha1_ctx::sha1_process_bytes;
-pub use crypto::sha1_ctx::sha1_finish_ctx;
 
 // Used in process.c
 pub use str2sig::str2sig;
@@ -177,6 +175,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*character::Scharacterp);
         defsubr(&*vectors::Slength);
         defsubr(&*vectors::Ssort);
+        defsubr(&*crypto::Sbuffer_hash);
 
         floatfns::init_float_syms();
     }

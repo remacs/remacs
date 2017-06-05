@@ -86,6 +86,16 @@ impl LispStringRef {
     pub fn sdata_ptr(&mut self) -> *mut c_char {
         self.data as *mut c_char
     }
+
+    #[inline]
+    pub fn as_slice(&self) -> &[u8] {
+        unsafe { slice::from_raw_parts(self.data as *const u8, self.len_bytes() as usize) }
+    }
+
+    #[inline]
+    pub fn as_mut_slice(&self) -> &mut [u8] {
+        unsafe { slice::from_raw_parts_mut(self.data as *mut u8, self.len_bytes() as usize) }
+    }
 }
 
 fn string_overflow() -> ! {
