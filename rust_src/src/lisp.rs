@@ -258,6 +258,11 @@ impl LispObject {
     #[inline]
     pub fn from_fixnum(n: EmacsInt) -> LispObject {
         debug_assert!(MOST_NEGATIVE_FIXNUM <= n && n <= MOST_POSITIVE_FIXNUM);
+        Self::from_fixnum_truncated(n)
+    }
+
+    #[inline]
+    pub fn from_fixnum_truncated(n: EmacsInt) -> LispObject {
         let o = if USE_LSB_TAG {
             (n << INTTYPEBITS) as EmacsUint + LispType::Lisp_Int0 as EmacsUint
         } else {
@@ -278,7 +283,7 @@ impl LispObject {
     #[inline]
     pub fn from_natnum(n: EmacsInt) -> LispObject {
         debug_assert!(0 <= n && n <= MOST_POSITIVE_FIXNUM);
-        LispObject::from_fixnum(n)
+        LispObject::from_fixnum_truncated(n)
     }
 
     #[inline]
