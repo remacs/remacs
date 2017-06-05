@@ -3938,45 +3938,6 @@ If BINARY is non-nil, returns a string in binary form.  */)
   return secure_hash (algorithm, object, start, end, Qnil, Qnil, binary);
 }
 
-DEFUN ("buffer-hash", Fbuffer_hash, Sbuffer_hash, 0, 1, 0,
-       doc: /* Return a hash of the contents of BUFFER-OR-NAME.
-This hash is performed on the raw internal format of the buffer,
-disregarding any coding systems.
-If nil, use the current buffer." */ )
-  (Lisp_Object buffer_or_name)
-{
-  Lisp_Object buffer;
-  struct buffer *b;
-  struct sha1_ctx *ctx;
-
-  if (NILP (buffer_or_name))
-    buffer = Fcurrent_buffer ();
-  else
-    buffer = Fget_buffer (buffer_or_name);
-  if (NILP (buffer))
-    nsberror (buffer_or_name);
-
-  b = XBUFFER (buffer);
-  ctx = sha1_ctx_new();
-
-  /* Process the first part of the buffer. */
-  sha1_process_bytes (BUF_BEG_ADDR (b),
-		      BUF_GPT_BYTE (b) - BUF_BEG_BYTE (b),
-		      ctx);
-
-  /* If the gap is before the end of the buffer, process the last half
-     of the buffer. */
-  if (BUF_GPT_BYTE (b) < BUF_Z_BYTE (b))
-    sha1_process_bytes (BUF_GAP_END_ADDR (b),
-			BUF_Z_ADDR (b) - BUF_GAP_END_ADDR (b),
-			ctx);
-
-  Lisp_Object digest = make_uninit_string (SHA1_DIGEST_SIZE * 2);
-  sha1_finish_ctx (ctx, SSDATA (digest));
-  return make_digest_string (digest, SHA1_DIGEST_SIZE);
-}
-
-
 void
 syms_of_fns (void)
 {
@@ -4115,6 +4076,5 @@ this variable.  */);
   defsubr (&Sbase64_decode_region);
   defsubr (&Smd5);
   defsubr (&Ssecure_hash);
-  defsubr (&Sbuffer_hash);
   defsubr (&Slocale_info);
 }
