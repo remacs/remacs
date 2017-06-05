@@ -1346,7 +1346,9 @@ SSET (Lisp_Object string, ptrdiff_t index, unsigned char new)
 INLINE ptrdiff_t
 SCHARS (Lisp_Object string)
 {
-  return XSTRING (string)->size;
+  ptrdiff_t nchars = XSTRING (string)->size;
+  eassume (0 <= nchars);
+  return nchars;
 }
 
 #ifdef GC_CHECK_STRING_BYTES
@@ -1356,10 +1358,12 @@ INLINE ptrdiff_t
 STRING_BYTES (struct Lisp_String *s)
 {
 #ifdef GC_CHECK_STRING_BYTES
-  return string_bytes (s);
+  ptrdiff_t nbytes = string_bytes (s);
 #else
-  return s->size_byte < 0 ? s->size : s->size_byte;
+  ptrdiff_t nbytes = s->size_byte < 0 ? s->size : s->size_byte;
 #endif
+  eassume (0 <= nbytes);
+  return nbytes;
 }
 
 INLINE ptrdiff_t
@@ -1373,7 +1377,7 @@ STRING_SET_CHARS (Lisp_Object string, ptrdiff_t newsize)
   /* This function cannot change the size of data allocated for the
      string when it was created.  */
   eassert (STRING_MULTIBYTE (string)
-	   ? newsize <= SBYTES (string)
+	   ? 0 <= newsize && newsize <= SBYTES (string)
 	   : newsize == SCHARS (string));
   XSTRING (string)->size = newsize;
 }
