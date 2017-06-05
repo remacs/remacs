@@ -37,12 +37,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Feature tests.  */
 
-#if __has_attribute (cleanup)
-enum { module_has_cleanup = true };
-#else
-enum { module_has_cleanup = false };
-#endif
-
 #ifdef WINDOWSNT
 #include <windows.h>
 #include "w32term.h"
@@ -168,7 +162,7 @@ static emacs_value const module_nil = 0;
       module_out_of_memory (env);					\
       return retval;							\
     }									\
-  verify (module_has_cleanup);						\
+  verify (__has_attribute (cleanup));                                   \
   struct handler *c __attribute__ ((cleanup (module_reset_handlerlist))) \
     = c0;								\
   if (sys_setjmp (c->jmp))						\
