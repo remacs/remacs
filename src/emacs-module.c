@@ -492,10 +492,7 @@ module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
 
   Lisp_Object lisp_str_utf8 = ENCODE_UTF_8 (lisp_str);
   ptrdiff_t raw_size = SBYTES (lisp_str_utf8);
-  ptrdiff_t required_buf_size;
-  if (INT_ADD_WRAPV (raw_size, 1, &required_buf_size))
-    xsignal0 (Qoverflow_error);
-  eassert (required_buf_size > 0);
+  ptrdiff_t required_buf_size = raw_size + 1;
 
   eassert (length != NULL);
 
@@ -523,7 +520,7 @@ module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
 {
   MODULE_FUNCTION_BEGIN (module_nil);
   eassert (str != NULL);
-  if (length < 0 || length > MOST_POSITIVE_FIXNUM)
+  if (! (0 <= length && length <= STRING_BYTES_BOUND))
     xsignal0 (Qoverflow_error);
   AUTO_STRING_WITH_LEN (lstr, str, length);
   return lisp_to_value (code_convert_string_norecord (lstr, Qutf_8, false));
@@ -675,7 +672,7 @@ funcall_module (Lisp_Object function, ptrdiff_t nargs, Lisp_Object *arglist)
   eassume (0 <= func->min_arity);
   if (! (func->min_arity <= nargs
 	 && (func->max_arity < 0 || nargs <= func->max_arity)))
-    xsignal2 (Qwrong_number_of_arguments, function, make_natnum (nargs));
+    xsignal2 (Qwrong_number_of_arguments, function, make_number (nargs));
 
   emacs_env pub;
   struct emacs_env_private priv;
