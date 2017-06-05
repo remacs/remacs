@@ -36,7 +36,6 @@ pub fn marker_position(m_ptr: *const LispMarker) -> libc::ptrdiff_t {
 }
 
 /// Return t if OBJECT is a marker (editor pointer).
-/// (fn OBJECT)
 #[lisp_fn]
 fn markerp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_marker())

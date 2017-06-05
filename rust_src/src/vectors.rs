@@ -157,7 +157,6 @@ impl LispBoolVecRef {
 /// If the string contains multibyte characters, this is not necessarily
 /// the number of bytes in the string; it is the number of characters.
 /// To get the number of bytes, use `string-bytes'.
-/// (fn SEQUENCE)
 #[lisp_fn]
 fn length(sequence: LispObject) -> LispObject {
     if let Some(s) = sequence.as_string() {
@@ -191,7 +190,6 @@ fn length(sequence: LispObject) -> LispObject {
 /// modified by side effects.  PREDICATE is called with two elements of
 /// SEQ, and should return non-nil if the first element should sort before
 /// the second.
-/// (fn SEQ PREDICATE)
 #[lisp_fn]
 fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
     if seq.is_cons() {

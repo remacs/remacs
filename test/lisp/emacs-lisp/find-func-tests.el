@@ -46,18 +46,18 @@ BODY forms will be executed after point has been repositioned."
 
 (ert-deftest find-func-tests-finds-function-def-in-rust-source-file ()
   "Check that the definition location can be found for Rust functions."
-  (find-func-tests-set-up-point-for-buf "cons.rs"
-    (let* ((result (find-function-search-for-symbol 'setcar nil "rust_src/src/cons.rs"))
+  (find-func-tests-set-up-point-for-buf "lists.rs"
+    (let* ((result (find-function-search-for-symbol 'setcar nil "rust_src/src/lists.rs"))
            (buffer (car result))
            (location (cdr result)))
 
-      (should (equal "cons.rs" (buffer-name buffer)))
+      (should (equal "lists.rs" (buffer-name buffer)))
       (should (numberp location))
 
       (with-current-buffer buffer
         (goto-char location)
         (let ((line (buffer-substring-no-properties (point) (line-end-position))))
-          (should (string-match-p (rx bol "defun!(\"setcar\"") line)))))))
+          (should (string-match-p (rx bol "fn setcar") line)))))))
 
 (ert-deftest find-func-tests-finds-function-def-in-C-source-file ()
   "Check that the definition location can be found for C functions.

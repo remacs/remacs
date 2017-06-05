@@ -13,7 +13,6 @@ use remacs_macros::lisp_fn;
 pub static MIME_LINE_LENGTH: isize = 76;
 
 /// Return t if OBJECT is a string.
-/// (fn OBJECT)
 #[lisp_fn]
 fn stringp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_string())
@@ -22,7 +21,6 @@ fn stringp(object: LispObject) -> LispObject {
 /// Base64-encode STRING and return the result.
 /// Optional second argument NO-LINE-BREAK means do not break long lines
 /// into shorter lines.
-/// (fn STRING &optional NO-LINE-BREAK)
 #[lisp_fn(min = "1")]
 fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispObject {
     let mut string = string.as_string_or_error();
@@ -58,7 +56,6 @@ fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispOb
 }
 
 /// Base64-decode STRING and return the result.
-/// (fn STRING)
 #[lisp_fn]
 fn base64_decode_string(string: LispObject) -> LispObject {
     let mut string = string.as_string_or_error();
@@ -88,7 +85,6 @@ fn base64_decode_string(string: LispObject) -> LispObject {
 
 /// Return the number of bytes in STRING.
 /// If STRING is multibyte, this may be greater than the length of STRING.
-/// (fn STRING)
 #[lisp_fn]
 fn string_bytes(string: LispObject) -> LispObject {
     let string = string.as_string_or_error();
@@ -98,7 +94,6 @@ fn string_bytes(string: LispObject) -> LispObject {
 /// Return t if two strings have identical contents.
 /// Case is significant, but text properties are ignored.
 /// Symbols are also allowed; their print names are used instead.
-/// (fn S1 S2)
 #[lisp_fn]
 fn string_equal(mut s1: LispObject, mut s2: LispObject) -> LispObject {
     if s1.is_symbol() {
@@ -132,7 +127,6 @@ fn string_equal(mut s1: LispObject, mut s2: LispObject) -> LispObject {
 /// It is similar to (decode-coding-string STRING \\='utf-8-emacs).
 /// If you're not sure, whether to use `string-as-multibyte' or
 /// `string-to-multibyte', use `string-to-multibyte'.
-/// (fn STRING)
 #[lisp_fn]
 fn string_as_multibyte(string: LispObject) -> LispObject {
     let mut s = string.as_string_or_error();
@@ -165,7 +159,6 @@ fn string_as_multibyte(string: LispObject) -> LispObject {
 /// This differs from `string-as-multibyte' by converting each byte of a correct
 /// utf-8 sequence to an eight-bit character, not just bytes that don't form a
 /// correct sequence.
-/// (fn STRING)
 #[lisp_fn]
 fn string_to_multibyte(string: LispObject) -> LispObject {
     let _ = string.as_string_or_error();

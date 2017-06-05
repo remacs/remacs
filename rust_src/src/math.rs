@@ -182,7 +182,7 @@ fn arith_driver(code: ArithOp, args: &mut [LispObject]) -> LispObject {
 }
 
 /// Return sum of any number of arguments, which are numbers or markers.
-/// (fn &rest NUMBERS-OR-MARKERS)")]
+/// usage: (fn &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "+")]
 fn plus(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Add, args)
@@ -191,14 +191,14 @@ fn plus(args: &mut [LispObject]) -> LispObject {
 /// Negate number or subtract numbers or markers and return the result.
 /// With one arg, negates it.  With more than one arg,
 /// subtracts all but the first from the first.
-/// (fn &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)
+/// usage: (fn &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "-")]
 fn minus(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Sub, args)
 }
 
 /// Return product of any number of arguments, which are numbers or markers.
-/// (fn &rest NUMBER-OR-MARKERS)
+/// usage: (fn &rest NUMBER-OR-MARKERS)
 #[lisp_fn(name = "*")]
 fn times(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Mult, args)
@@ -208,7 +208,7 @@ fn times(args: &mut [LispObject]) -> LispObject {
 /// With two or more arguments, return first argument divided by the rest.
 /// With one argument, return 1 divided by te argument.
 /// The arguments must be numbers or markers.
-/// (fn NUMBER &rest DIVISORS)
+/// usage: (fn NUMBER &rest DIVISORS)
 #[lisp_fn(name = "/", min = "1")]
 fn quo(args: &mut [LispObject]) -> LispObject {
     for argnum in 2..args.len() {
@@ -231,7 +231,7 @@ fn quo(args: &mut [LispObject]) -> LispObject {
 
 /// Return bitwise-and of all the arguments.
 /// Arguments may be integers, or markers, converted to integers.
-/// (fn &rest INTS-OR-MARKERS)
+/// usage: (fn &rest INTS-OR-MARKERS)
 #[lisp_fn]
 fn logand(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Logand, args)
@@ -239,7 +239,7 @@ fn logand(args: &mut [LispObject]) -> LispObject {
 
 /// Return bitwise-or of all the arguments.
 /// Arguments may be integers, or markers converted to integers.
-/// (fn &rest INTS-OR-MARKERS)
+/// usage: (fn &rest INTS-OR-MARKERS)
 #[lisp_fn]
 fn logior(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Logior, args)
@@ -247,7 +247,7 @@ fn logior(args: &mut [LispObject]) -> LispObject {
 
 /// Return bitwise-exclusive-or of all the arguments.
 /// Arguments may be integers, or markers converted to integers.
-/// (fn &rest INTS-OR-MARKERS)
+/// usage: (fn &rest INTS-OR-MARKERS)
 #[lisp_fn]
 fn logxor(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Logxor, args)
@@ -255,7 +255,7 @@ fn logxor(args: &mut [LispObject]) -> LispObject {
 
 /// Return largest of all the arguments (which must be numbers or markers).
 /// The value is always a number; markers are converted to numbers.
-/// (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
+/// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(min = "1")]
 fn max(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Max, args)
@@ -263,26 +263,25 @@ fn max(args: &mut [LispObject]) -> LispObject {
 
 /// Return smallest of all the arguments (which must be numbers or markers).
 /// The value is always a number; markers are converted to numbers.
-/// fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS
+/// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(min = "1")]
 fn min(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Min, args)
 }
 
 /// Return the absolute value of ARG.
-/// (fn ARG)
 #[lisp_fn]
-fn abs(obj: LispObject) -> LispObject {
-    if !obj.is_number() {
+fn abs(arg: LispObject) -> LispObject {
+    if !arg.is_number() {
         unsafe {
-            wrong_type_argument(Qnumberp, obj.to_raw());
+            wrong_type_argument(Qnumberp, arg.to_raw());
         }
     }
 
-    match obj.as_float() {
+    match arg.as_float() {
         Some(f) => LispObject::from_float(f.abs()),
         _ => {
-            let n = obj.as_fixnum().unwrap();
+            let n = arg.as_fixnum().unwrap();
             LispObject::from_fixnum(n.abs())
         }
     }

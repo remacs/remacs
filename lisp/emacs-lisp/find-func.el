@@ -318,8 +318,10 @@ TYPE should be nil to find a function, or `defvar' to find a variable."
                     (find-function-advised-original
                      (indirect-function
                       (find-function-advised-original identifier))))))
+           (rust-fname (replace-regexp-in-string "-" "_" fname))
+           ;; XXX: also find #[lisp_fn(name = "fname")]
            (regex (rx-to-string
-                   `(and "defun!" (* space) "(" (* space) "\"" ,fname "\""))))
+                   `(and "fn" (+ space) ,rust-fname "("))))
       (with-current-buffer (find-file-noselect file)
         (goto-char (point-min))
         (unless (re-search-forward regex nil t)

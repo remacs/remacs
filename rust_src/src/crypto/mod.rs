@@ -74,7 +74,6 @@ pub unsafe extern "C" fn sha512_buffer(buffer: *const c_char,
 /// This hash is performed on the raw internal format of the buffer,
 /// disregarding any coding systems.
 /// If nil, use the current buffer.
-/// (fn &optional BUFFER_OR_NAME)
 #[lisp_fn(min = "0")]
 fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
     let buffer = LispObject::from_raw(if buffer_or_name.is_nil() {

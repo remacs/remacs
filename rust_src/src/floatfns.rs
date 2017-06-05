@@ -81,7 +81,6 @@ simple_float_op!("ffloor",
 (Round towards -inf.)");
 
 /// Return non nil if argument X is a NaN.
-/// (fn X)
 #[lisp_fn]
 fn isnan(x: LispObject) -> LispObject {
     let d = x.as_float_or_error();
@@ -93,7 +92,6 @@ fn isnan(x: LispObject) -> LispObject {
 /// If two arguments Y and X are given, return the inverse tangent of Y
 /// divided by X, i.e. the angle in radians between the vector (X, Y)
 /// and the x-axis
-/// (fn Y &optional X)
 #[lisp_fn(min = "1")]
 fn atan(y: LispObject, x: LispObject) -> LispObject {
     let y = extract_float(y.to_raw());
@@ -110,7 +108,6 @@ fn atan(y: LispObject, x: LispObject) -> LispObject {
 
 /// Return the natural logarithm of ARG.
 /// If the optional argument BASE is given, return log ARG using that base.
-/// (fn ARG &optional BASE)
 #[lisp_fn(min = "1")]
 fn log(arg: LispObject, base: LispObject) -> LispObject {
     let mut d = extract_float(arg.to_raw());
@@ -133,10 +130,9 @@ fn log(arg: LispObject, base: LispObject) -> LispObject {
 
 /// Truncate a floating point number to an integral float value.
 /// Rounds the value toward zero.
-/// (fn ARG)
 #[lisp_fn]
-fn ftruncate(x: LispObject) -> LispObject {
-    let d = extract_float(x.to_raw());
+fn ftruncate(arg: LispObject) -> LispObject {
+    let d = extract_float(arg.to_raw());
     if d > 0.0 {
         return LispObject::from_float(d.floor());
     } else {
@@ -145,21 +141,20 @@ fn ftruncate(x: LispObject) -> LispObject {
 }
 
 /// Return the floating point number equal to ARG.
-/// (fn ARG)
 #[lisp_fn]
-fn float(obj: LispObject) -> LispObject {
-    if !obj.is_number() {
+fn float(arg: LispObject) -> LispObject {
+    if !arg.is_number() {
         unsafe {
-            wrong_type_argument(Qnumberp, obj.to_raw());
+            wrong_type_argument(Qnumberp, arg.to_raw());
         }
     }
 
-    if obj.is_float() {
-        return obj;
+    if arg.is_float() {
+        return arg;
     }
 
-    match obj.as_fixnum() {
-        Some(int) => LispObject::from_float(int as EmacsDouble),
+    match arg.as_fixnum() {
+        Some(i) => LispObject::from_float(i as EmacsDouble),
         None => unreachable!(),
     }
 }
