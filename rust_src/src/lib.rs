@@ -28,6 +28,7 @@ mod numbers;
 mod objects;
 mod strings;
 mod symbols;
+mod vectors;
 mod character;
 mod base64;
 mod crypto;
@@ -77,6 +78,9 @@ pub use symbols::Fsymbolp;
 pub use strings::Fstring_equal;
 pub use strings::Fstring_as_multibyte;
 pub use strings::Fstring_to_multibyte;
+pub use vectors::Flength;
+pub use vectors::Fsort;
+pub use lists::merge;
 
 // Cryptographic functions used in the C codebase.
 pub use crypto::sha256_buffer;
@@ -160,6 +164,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*lists::Slax_plist_put);
         defsubr(&*lists::Slist);
         defsubr(&*lists::Smake_list);
+        defsubr(&*lists::Ssafe_length);
         defsubr(&*marker::Smarkerp);
         defsubr(&*strings::Sstringp);
         defsubr(&*strings::Sbase64_encode_string);
@@ -170,6 +175,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*strings::Sstring_to_multibyte);
         defsubr(&*character::Smax_char);
         defsubr(&*character::Scharacterp);
+        defsubr(&*vectors::Slength);
+        defsubr(&*vectors::Ssort);
 
         floatfns::init_float_syms();
     }
