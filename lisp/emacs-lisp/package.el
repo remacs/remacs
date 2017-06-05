@@ -1529,7 +1529,7 @@ similar to an entry in `package-alist'.  Save the cached copy to
       (when (listp (read-from-string content))
         (make-directory dir t)
         (if (or (not package-check-signature)
-                (member archive package-unsigned-archives))
+                (member name package-unsigned-archives))
             ;; If we don't care about the signature, save the file and
             ;; we're done.
             (progn (write-region content nil local-file nil 'silent)
