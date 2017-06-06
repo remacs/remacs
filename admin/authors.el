@@ -266,7 +266,7 @@ If REALNAME is nil, ignore that author.")
     "test/etags/"
     "indent/"
     "-resources/"
-    "admin/unidata/[BINSU]"
+    "unidata/.*\\.txt\\'"
     ;; TODO lib/? Matches other things?
     "build-aux/" "m4/" "Emacs.xcodeproj" "mapfiles" "\\.map\\'"
     "preferences\\.\\(nib\\|gorm\\)"
