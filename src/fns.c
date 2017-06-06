@@ -36,9 +36,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "window.h"
 #include "puresize.h"
 
-static void sort_vector_copy (Lisp_Object, ptrdiff_t,
-			      Lisp_Object *restrict, Lisp_Object *restrict);
-static bool internal_equal (Lisp_Object, Lisp_Object, int, bool, Lisp_Object);
+bool internal_equal (Lisp_Object, Lisp_Object, int, bool, Lisp_Object);
 
 DEFUN ("identity", Fidentity, Sidentity, 1, 1, 0,
        doc: /* Return the argument unchanged.  */
@@ -85,77 +83,6 @@ See Info node `(elisp)Random Numbers' for more details.  */)
 }
 
 /* Random data-structure functions.  */
-
-DEFUN ("length", Flength, Slength, 1, 1, 0,
-       doc: /* Return the length of vector, list or string SEQUENCE.
-A byte-code function object is also allowed.
-If the string contains multibyte characters, this is not necessarily
-the number of bytes in the string; it is the number of characters.
-To get the number of bytes, use `string-bytes'.  */)
-  (register Lisp_Object sequence)
-{
-  register Lisp_Object val;
-
-  if (STRINGP (sequence))
-    XSETFASTINT (val, SCHARS (sequence));
-  else if (VECTORP (sequence))
-    XSETFASTINT (val, ASIZE (sequence));
-  else if (CHAR_TABLE_P (sequence))
-    XSETFASTINT (val, MAX_CHAR);
-  else if (BOOL_VECTOR_P (sequence))
-    XSETFASTINT (val, bool_vector_size (sequence));
-  else if (COMPILEDP (sequence))
-    XSETFASTINT (val, ASIZE (sequence) & PSEUDOVECTOR_SIZE_MASK);
-  else if (CONSP (sequence))
-    {
-      intptr_t i = 0;
-      FOR_EACH_TAIL (sequence)
-	i++;
-      CHECK_LIST_END (sequence, sequence);
-      if (MOST_POSITIVE_FIXNUM < i)
-	error ("List too long");
-      val = make_number (i);
-    }
-  else if (NILP (sequence))
-    XSETFASTINT (val, 0);
-  else
-    wrong_type_argument (Qsequencep, sequence);
-
-  return val;
-}
-
-DEFUN ("safe-length", Fsafe_length, Ssafe_length, 1, 1, 0,
-       doc: /* Return the length of a list, but avoid error or infinite loop.
-This function never gets an error.  If LIST is not really a list,
-it returns 0.  If LIST is circular, it returns a finite value
-which is at least the number of distinct elements.  */)
-  (Lisp_Object list)
-{
-  intptr_t len = 0;
-  FOR_EACH_TAIL_SAFE (list)
-    len++;
-  return make_fixnum_or_float (len);
-}
-
-DEFUN ("string-equal", Fstring_equal, Sstring_equal, 2, 2, 0,
-       doc: /* Return t if two strings have identical contents.
-Case is significant, but text properties are ignored.
-Symbols are also allowed; their print names are used instead.  */)
-  (register Lisp_Object s1, Lisp_Object s2)
-{
-  if (SYMBOLP (s1))
-    s1 = SYMBOL_NAME (s1);
-  if (SYMBOLP (s2))
-    s2 = SYMBOL_NAME (s2);
-  CHECK_STRING (s1);
-  CHECK_STRING (s2);
-
-  if (SCHARS (s1) != SCHARS (s2)
-      || SBYTES (s1) != SBYTES (s2)
-      || memcmp (SDATA (s1), SDATA (s2), SBYTES (s1)))
-    return Qnil;
-  return Qt;
-}
 
 DEFUN ("compare-strings", Fcompare_strings, Scompare_strings, 6, 7, 0,
        doc: /* Compare the contents of two strings, converting to multibyte if needed.
@@ -1052,63 +979,6 @@ If STRING is multibyte and contains a character of charset
   return string;
 }
 
-DEFUN ("string-as-multibyte", Fstring_as_multibyte, Sstring_as_multibyte,
-       1, 1, 0,
-       doc: /* Return a multibyte string with the same individual bytes as STRING.
-If STRING is multibyte, the result is STRING itself.
-Otherwise it is a newly created string, with no text properties.
-
-If STRING is unibyte and contains an individual 8-bit byte (i.e. not
-part of a correct utf-8 sequence), it is converted to the corresponding
-multibyte character of charset `eight-bit'.
-See also `string-to-multibyte'.
-
-Beware, this often doesn't really do what you think it does.
-It is similar to (decode-coding-string STRING \\='utf-8-emacs).
-If you're not sure, whether to use `string-as-multibyte' or
-`string-to-multibyte', use `string-to-multibyte'.  */)
-  (Lisp_Object string)
-{
-  CHECK_STRING (string);
-
-  if (! STRING_MULTIBYTE (string))
-    {
-      Lisp_Object new_string;
-      ptrdiff_t nchars, nbytes;
-
-      parse_str_as_multibyte (SDATA (string),
-			      SBYTES (string),
-			      &nchars, &nbytes);
-      new_string = make_uninit_multibyte_string (nchars, nbytes);
-      memcpy (SDATA (new_string), SDATA (string), SBYTES (string));
-      if (nbytes != SBYTES (string))
-	str_as_multibyte (SDATA (new_string), nbytes,
-			  SBYTES (string), NULL);
-      string = new_string;
-      set_string_intervals (string, NULL);
-    }
-  return string;
-}
-
-DEFUN ("string-to-multibyte", Fstring_to_multibyte, Sstring_to_multibyte,
-       1, 1, 0,
-       doc: /* Return a multibyte string with the same individual chars as STRING.
-If STRING is multibyte, the result is STRING itself.
-Otherwise it is a newly created string, with no text properties.
-
-If STRING is unibyte and contains an 8-bit byte, it is converted to
-the corresponding multibyte character of charset `eight-bit'.
-
-This differs from `string-as-multibyte' by converting each byte of a correct
-utf-8 sequence to an eight-bit character, not just bytes that don't form a
-correct sequence.  */)
-  (Lisp_Object string)
-{
-  CHECK_STRING (string);
-
-  return string_to_multibyte (string);
-}
-
 DEFUN ("string-to-unibyte", Fstring_to_unibyte, Sstring_to_unibyte,
        1, 1, 0,
        doc: /* Return a unibyte string with the same individual chars as STRING.
@@ -1289,33 +1159,6 @@ substring_both (Lisp_Object string, ptrdiff_t from, ptrdiff_t from_byte,
 
   return res;
 }
-
-DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
-       doc: /* Take cdr N times on LIST, return the result.  */)
-  (Lisp_Object n, Lisp_Object list)
-{
-  CHECK_NUMBER (n);
-  Lisp_Object tail = list;
-  for (EMACS_INT num = XINT (n); 0 < num; num--)
-    {
-      if (! CONSP (tail))
-	{
-	  CHECK_LIST_END (tail, list);
-	  return Qnil;
-	}
-      tail = XCDR (tail);
-      rarely_quit (num);
-    }
-  return tail;
-}
-
-DEFUN ("nth", Fnth, Snth, 2, 2, 0,
-       doc: /* Return the Nth element of LIST.
-N counts from zero.  If LIST is not that long, nil is returned.  */)
-  (Lisp_Object n, Lisp_Object list)
-{
-  return Fcar (Fnthcdr (n, list));
-}
 
 DEFUN ("elt", Felt, Selt, 2, 2, 0,
        doc: /* Return element of SEQUENCE at index N.  */)
@@ -1330,65 +1173,6 @@ DEFUN ("elt", Felt, Selt, 2, 2, 0,
   return Faref (sequence, n);
 }
 
-DEFUN ("member", Fmember, Smember, 2, 2, 0,
-       doc: /* Return non-nil if ELT is an element of LIST.  Comparison done with `equal'.
-The value is actually the tail of LIST whose car is ELT.  */)
-  (Lisp_Object elt, Lisp_Object list)
-{
-  Lisp_Object tail = list;
-  FOR_EACH_TAIL (tail)
-    if (! NILP (Fequal (elt, XCAR (tail))))
-      return tail;
-  CHECK_LIST_END (tail, list);
-  return Qnil;
-}
-
-DEFUN ("memq", Fmemq, Smemq, 2, 2, 0,
-       doc: /* Return non-nil if ELT is an element of LIST.  Comparison done with `eq'.
-The value is actually the tail of LIST whose car is ELT.  */)
-  (Lisp_Object elt, Lisp_Object list)
-{
-  Lisp_Object tail = list;
-  FOR_EACH_TAIL (tail)
-    if (EQ (XCAR (tail), elt))
-      return tail;
-  CHECK_LIST_END (tail, list);
-  return Qnil;
-}
-
-DEFUN ("memql", Fmemql, Smemql, 2, 2, 0,
-       doc: /* Return non-nil if ELT is an element of LIST.  Comparison done with `eql'.
-The value is actually the tail of LIST whose car is ELT.  */)
-  (Lisp_Object elt, Lisp_Object list)
-{
-  if (!FLOATP (elt))
-    return Fmemq (elt, list);
-
-  Lisp_Object tail = list;
-  FOR_EACH_TAIL (tail)
-    {
-      Lisp_Object tem = XCAR (tail);
-      if (FLOATP (tem) && internal_equal (elt, tem, 0, 0, Qnil))
-	return tail;
-    }
-  CHECK_LIST_END (tail, list);
-  return Qnil;
-}
-
-DEFUN ("assq", Fassq, Sassq, 2, 2, 0,
-       doc: /* Return non-nil if KEY is `eq' to the car of an element of LIST.
-The value is actually the first element of LIST whose car is KEY.
-Elements of LIST that are not conses are ignored.  */)
-  (Lisp_Object key, Lisp_Object list)
-{
-  Lisp_Object tail = list;
-  FOR_EACH_TAIL (tail)
-    if (CONSP (XCAR (tail)) && EQ (XCAR (XCAR (tail)), key))
-      return XCAR (tail);
-  CHECK_LIST_END (tail, list);
-  return Qnil;
-}
-
 /* Like Fassq but never report an error and do not allow quits.
    Use only on objects known to be non-circular lists.  */
 
@@ -1398,23 +1182,6 @@ assq_no_quit (Lisp_Object key, Lisp_Object list)
   for (; ! NILP (list); list = XCDR (list))
     if (CONSP (XCAR (list)) && EQ (XCAR (XCAR (list)), key))
       return XCAR (list);
-  return Qnil;
-}
-
-DEFUN ("assoc", Fassoc, Sassoc, 2, 2, 0,
-       doc: /* Return non-nil if KEY is `equal' to the car of an element of LIST.
-The value is actually the first element of LIST whose car equals KEY.  */)
-  (Lisp_Object key, Lisp_Object list)
-{
-  Lisp_Object tail = list;
-  FOR_EACH_TAIL (tail)
-    {
-      Lisp_Object car = XCAR (tail);
-      if (CONSP (car)
-	  && (EQ (XCAR (car), key) || !NILP (Fequal (XCAR (car), key))))
-	return car;
-    }
-  CHECK_LIST_END (tail, list);
   return Qnil;
 }
 
@@ -1432,67 +1199,6 @@ assoc_no_quit (Lisp_Object key, Lisp_Object list)
 	return car;
     }
   return Qnil;
-}
-
-DEFUN ("rassq", Frassq, Srassq, 2, 2, 0,
-       doc: /* Return non-nil if KEY is `eq' to the cdr of an element of LIST.
-The value is actually the first element of LIST whose cdr is KEY.  */)
-  (Lisp_Object key, Lisp_Object list)
-{
-  Lisp_Object tail = list;
-  FOR_EACH_TAIL (tail)
-    if (CONSP (XCAR (tail)) && EQ (XCDR (XCAR (tail)), key))
-      return XCAR (tail);
-  CHECK_LIST_END (tail, list);
-  return Qnil;
-}
-
-DEFUN ("rassoc", Frassoc, Srassoc, 2, 2, 0,
-       doc: /* Return non-nil if KEY is `equal' to the cdr of an element of LIST.
-The value is actually the first element of LIST whose cdr equals KEY.  */)
-  (Lisp_Object key, Lisp_Object list)
-{
-  Lisp_Object tail = list;
-  FOR_EACH_TAIL (tail)
-    {
-      Lisp_Object car = XCAR (tail);
-      if (CONSP (car)
-	  && (EQ (XCDR (car), key) || !NILP (Fequal (XCDR (car), key))))
-	return car;
-    }
-  CHECK_LIST_END (tail, list);
-  return Qnil;
-}
-
-DEFUN ("delq", Fdelq, Sdelq, 2, 2, 0,
-       doc: /* Delete members of LIST which are `eq' to ELT, and return the result.
-More precisely, this function skips any members `eq' to ELT at the
-front of LIST, then removes members `eq' to ELT from the remaining
-sublist by modifying its list structure, then returns the resulting
-list.
-
-Write `(setq foo (delq element foo))' to be sure of correctly changing
-the value of a list `foo'.  See also `remq', which does not modify the
-argument.  */)
-  (Lisp_Object elt, Lisp_Object list)
-{
-  Lisp_Object prev = Qnil, tail = list;
-
-  FOR_EACH_TAIL (tail)
-    {
-      Lisp_Object tem = XCAR (tail);
-      if (EQ (elt, tem))
-	{
-	  if (NILP (prev))
-	    list = XCDR (tail);
-	  else
-	    Fsetcdr (prev, XCDR (tail));
-	}
-      else
-	prev = tail;
-    }
-  CHECK_LIST_END (tail, list);
-  return list;
 }
 
 DEFUN ("delete", Fdelete, Sdelete, 2, 2, 0,
@@ -1738,221 +1444,7 @@ See also the function `nreverse', which is used more often.  */)
     wrong_type_argument (Qsequencep, seq);
   return new;
 }
-
-/* Sort LIST using PREDICATE, preserving original order of elements
-   considered as equal.  */
-
-static Lisp_Object
-sort_list (Lisp_Object list, Lisp_Object predicate)
-{
-  Lisp_Object front, back;
-  Lisp_Object len, tem;
-  EMACS_INT length;
-
-  front = list;
-  len = Flength (list);
-  length = XINT (len);
-  if (length < 2)
-    return list;
-
-  XSETINT (len, (length / 2) - 1);
-  tem = Fnthcdr (len, list);
-  back = Fcdr (tem);
-  Fsetcdr (tem, Qnil);
-
-  front = Fsort (front, predicate);
-  back = Fsort (back, predicate);
-  return merge (front, back, predicate);
-}
-
-/* Using PRED to compare, return whether A and B are in order.
-   Compare stably when A appeared before B in the input.  */
-static bool
-inorder (Lisp_Object pred, Lisp_Object a, Lisp_Object b)
-{
-  return NILP (call2 (pred, b, a));
-}
-
-/* Using PRED to compare, merge from ALEN-length A and BLEN-length B
-   into DEST.  Argument arrays must be nonempty and must not overlap,
-   except that B might be the last part of DEST.  */
-static void
-merge_vectors (Lisp_Object pred,
-	       ptrdiff_t alen, Lisp_Object const a[restrict VLA_ELEMS (alen)],
-	       ptrdiff_t blen, Lisp_Object const b[VLA_ELEMS (blen)],
-	       Lisp_Object dest[VLA_ELEMS (alen + blen)])
-{
-  eassume (0 < alen && 0 < blen);
-  Lisp_Object const *alim = a + alen;
-  Lisp_Object const *blim = b + blen;
-
-  while (true)
-    {
-      if (inorder (pred, a[0], b[0]))
-	{
-	  *dest++ = *a++;
-	  if (a == alim)
-	    {
-	      if (dest != b)
-		memcpy (dest, b, (blim - b) * sizeof *dest);
-	      return;
-	    }
-	}
-      else
-	{
-	  *dest++ = *b++;
-	  if (b == blim)
-	    {
-	      memcpy (dest, a, (alim - a) * sizeof *dest);
-	      return;
-	    }
-	}
-    }
-}
-
-/* Using PRED to compare, sort LEN-length VEC in place, using TMP for
-   temporary storage.  LEN must be at least 2.  */
-static void
-sort_vector_inplace (Lisp_Object pred, ptrdiff_t len,
-		     Lisp_Object vec[restrict VLA_ELEMS (len)],
-		     Lisp_Object tmp[restrict VLA_ELEMS (len >> 1)])
-{
-  eassume (2 <= len);
-  ptrdiff_t halflen = len >> 1;
-  sort_vector_copy (pred, halflen, vec, tmp);
-  if (1 < len - halflen)
-    sort_vector_inplace (pred, len - halflen, vec + halflen, vec);
-  merge_vectors (pred, halflen, tmp, len - halflen, vec + halflen, vec);
-}
-
-/* Using PRED to compare, sort from LEN-length SRC into DST.
-   Len must be positive.  */
-static void
-sort_vector_copy (Lisp_Object pred, ptrdiff_t len,
-		  Lisp_Object src[restrict VLA_ELEMS (len)],
-		  Lisp_Object dest[restrict VLA_ELEMS (len)])
-{
-  eassume (0 < len);
-  ptrdiff_t halflen = len >> 1;
-  if (halflen < 1)
-    dest[0] = src[0];
-  else
-    {
-      if (1 < halflen)
-	sort_vector_inplace (pred, halflen, src, dest);
-      if (1 < len - halflen)
-	sort_vector_inplace (pred, len - halflen, src + halflen, dest);
-      merge_vectors (pred, halflen, src, len - halflen, src + halflen, dest);
-    }
-}
-
-/* Sort VECTOR in place using PREDICATE, preserving original order of
-   elements considered as equal.  */
-
-static void
-sort_vector (Lisp_Object vector, Lisp_Object predicate)
-{
-  ptrdiff_t len = ASIZE (vector);
-  if (len < 2)
-    return;
-  ptrdiff_t halflen = len >> 1;
-  Lisp_Object *tmp;
-  USE_SAFE_ALLOCA;
-  SAFE_ALLOCA_LISP (tmp, halflen);
-  for (ptrdiff_t i = 0; i < halflen; i++)
-    tmp[i] = make_number (0);
-  sort_vector_inplace (predicate, len, XVECTOR (vector)->contents, tmp);
-  SAFE_FREE ();
-}
-
-DEFUN ("sort", Fsort, Ssort, 2, 2, 0,
-       doc: /* Sort SEQ, stably, comparing elements using PREDICATE.
-Returns the sorted sequence.  SEQ should be a list or vector.  SEQ is
-modified by side effects.  PREDICATE is called with two elements of
-SEQ, and should return non-nil if the first element should sort before
-the second.  */)
-  (Lisp_Object seq, Lisp_Object predicate)
-{
-  if (CONSP (seq))
-    seq = sort_list (seq, predicate);
-  else if (VECTORP (seq))
-    sort_vector (seq, predicate);
-  else if (!NILP (seq))
-    wrong_type_argument (Qsequencep, seq);
-  return seq;
-}
-
-Lisp_Object
-merge (Lisp_Object org_l1, Lisp_Object org_l2, Lisp_Object pred)
-{
-  Lisp_Object l1 = org_l1;
-  Lisp_Object l2 = org_l2;
-  Lisp_Object tail = Qnil;
-  Lisp_Object value = Qnil;
-
-  while (1)
-    {
-      if (NILP (l1))
-	{
-	  if (NILP (tail))
-	    return l2;
-	  Fsetcdr (tail, l2);
-	  return value;
-	}
-      if (NILP (l2))
-	{
-	  if (NILP (tail))
-	    return l1;
-	  Fsetcdr (tail, l1);
-	  return value;
-	}
-
-      Lisp_Object tem;
-      if (inorder (pred, Fcar (l1), Fcar (l2)))
-	{
-	  tem = l1;
-	  l1 = Fcdr (l1);
-	  org_l1 = l1;
-	}
-      else
-	{
-	  tem = l2;
-	  l2 = Fcdr (l2);
-	  org_l2 = l2;
-	}
-      if (NILP (tail))
-	value = tem;
-      else
-	Fsetcdr (tail, tem);
-      tail = tem;
-    }
-}
-
 
-/* This does not check for quits.  That is safe since it must terminate.  */
-
-DEFUN ("plist-get", Fplist_get, Splist_get, 2, 2, 0,
-       doc: /* Extract a value from a property list.
-PLIST is a property list, which is a list of the form
-\(PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
-corresponding to the given PROP, or nil if PROP is not one of the
-properties on the list.  This function never signals an error.  */)
-  (Lisp_Object plist, Lisp_Object prop)
-{
-  Lisp_Object tail = plist;
-  FOR_EACH_TAIL_SAFE (tail)
-    {
-      if (! CONSP (XCDR (tail)))
-	break;
-      if (EQ (prop, XCAR (tail)))
-	return XCAR (XCDR (tail));
-      tail = XCDR (tail);
-      if (EQ (tail, li.tortoise))
-	break;
-    }
-
-  return Qnil;
-}
 
 DEFUN ("get", Fget, Sget, 2, 2, 0,
        doc: /* Return the value of SYMBOL's PROPNAME property.
@@ -1961,42 +1453,6 @@ This is the last value stored with `(put SYMBOL PROPNAME VALUE)'.  */)
 {
   CHECK_SYMBOL (symbol);
   return Fplist_get (XSYMBOL (symbol)->plist, propname);
-}
-
-DEFUN ("plist-put", Fplist_put, Splist_put, 3, 3, 0,
-       doc: /* Change value in PLIST of PROP to VAL.
-PLIST is a property list, which is a list of the form
-\(PROP1 VALUE1 PROP2 VALUE2 ...).  PROP is a symbol and VAL is any object.
-If PROP is already a property on the list, its value is set to VAL,
-otherwise the new PROP VAL pair is added.  The new plist is returned;
-use `(setq x (plist-put x prop val))' to be sure to use the new value.
-The PLIST is modified by side effects.  */)
-  (Lisp_Object plist, Lisp_Object prop, Lisp_Object val)
-{
-  Lisp_Object prev = Qnil, tail = plist;
-  FOR_EACH_TAIL (tail)
-    {
-      if (! CONSP (XCDR (tail)))
-	break;
-
-      if (EQ (prop, XCAR (tail)))
-	{
-	  Fsetcar (XCDR (tail), val);
-	  return plist;
-	}
-
-      prev = tail;
-      tail = XCDR (tail);
-      if (EQ (tail, li.tortoise))
-	circular_list (plist);
-    }
-  CHECK_LIST_END (tail, plist);
-  Lisp_Object newcell
-    = Fcons (prop, Fcons (val, NILP (prev) ? plist : XCDR (XCDR (prev))));
-  if (NILP (prev))
-    return newcell;
-  Fsetcdr (XCDR (prev), newcell);
-  return plist;
 }
 
 DEFUN ("put", Fput, Sput, 3, 3, 0,
@@ -2009,105 +1465,13 @@ It can be retrieved with `(get SYMBOL PROPNAME)'.  */)
     (symbol, Fplist_put (XSYMBOL (symbol)->plist, propname, value));
   return value;
 }
-
-DEFUN ("lax-plist-get", Flax_plist_get, Slax_plist_get, 2, 2, 0,
-       doc: /* Extract a value from a property list, comparing with `equal'.
-PLIST is a property list, which is a list of the form
-\(PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
-corresponding to the given PROP, or nil if PROP is not
-one of the properties on the list.  */)
-  (Lisp_Object plist, Lisp_Object prop)
-{
-  Lisp_Object tail = plist;
-  FOR_EACH_TAIL (tail)
-    {
-      if (! CONSP (XCDR (tail)))
-	break;
-      if (! NILP (Fequal (prop, XCAR (tail))))
-	return XCAR (XCDR (tail));
-      tail = XCDR (tail);
-      if (EQ (tail, li.tortoise))
-	circular_list (plist);
-    }
-
-  CHECK_LIST_END (tail, plist);
-
-  return Qnil;
-}
-
-DEFUN ("lax-plist-put", Flax_plist_put, Slax_plist_put, 3, 3, 0,
-       doc: /* Change value in PLIST of PROP to VAL, comparing with `equal'.
-PLIST is a property list, which is a list of the form
-\(PROP1 VALUE1 PROP2 VALUE2 ...).  PROP and VAL are any objects.
-If PROP is already a property on the list, its value is set to VAL,
-otherwise the new PROP VAL pair is added.  The new plist is returned;
-use `(setq x (lax-plist-put x prop val))' to be sure to use the new value.
-The PLIST is modified by side effects.  */)
-  (Lisp_Object plist, Lisp_Object prop, Lisp_Object val)
-{
-  Lisp_Object prev = Qnil, tail = plist;
-  FOR_EACH_TAIL (tail)
-    {
-      if (! CONSP (XCDR (tail)))
-	break;
-
-      if (! NILP (Fequal (prop, XCAR (tail))))
-	{
-	  Fsetcar (XCDR (tail), val);
-	  return plist;
-	}
-
-      prev = tail;
-      tail = XCDR (tail);
-      if (EQ (tail, li.tortoise))
-	circular_list (plist);
-    }
-  CHECK_LIST_END (tail, plist);
-  Lisp_Object newcell = list2 (prop, val);
-  if (NILP (prev))
-    return newcell;
-  Fsetcdr (XCDR (prev), newcell);
-  return plist;
-}
-
-DEFUN ("eql", Feql, Seql, 2, 2, 0,
-       doc: /* Return t if the two args are the same Lisp object.
-Floating-point numbers of equal value are `eql', but they may not be `eq'.  */)
-  (Lisp_Object obj1, Lisp_Object obj2)
-{
-  if (FLOATP (obj1))
-    return internal_equal (obj1, obj2, 0, 0, Qnil) ? Qt : Qnil;
-  else
-    return EQ (obj1, obj2) ? Qt : Qnil;
-}
-
-DEFUN ("equal", Fequal, Sequal, 2, 2, 0,
-       doc: /* Return t if two Lisp objects have similar structure and contents.
-They must have the same data type.
-Conses are compared by comparing the cars and the cdrs.
-Vectors and strings are compared element by element.
-Numbers are compared by value, but integers cannot equal floats.
- (Use `=' if you want integers and floats to be able to be equal.)
-Symbols must match exactly.  */)
-  (register Lisp_Object o1, Lisp_Object o2)
-{
-  return internal_equal (o1, o2, 0, 0, Qnil) ? Qt : Qnil;
-}
-
-DEFUN ("equal-including-properties", Fequal_including_properties, Sequal_including_properties, 2, 2, 0,
-       doc: /* Return t if two Lisp objects have similar structure and contents.
-This is like `equal' except that it compares the text properties
-of strings.  (`equal' ignores text properties.)  */)
-  (register Lisp_Object o1, Lisp_Object o2)
-{
-  return internal_equal (o1, o2, 0, 1, Qnil) ? Qt : Qnil;
-}
 
 /* DEPTH is current depth of recursion.  Signal an error if it
    gets too deep.
    PROPS means compare string text properties too.  */
 
-static bool
+/* NOTE: made this non-static to call it from Rust. */
+bool
 internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 		Lisp_Object ht)
 {
@@ -2765,30 +2129,6 @@ suppressed.  */)
    out that some functions in the widget library (wid-edit.el) are the
    bottleneck of Widget operation.  Here is their translation to C,
    for the sole reason of efficiency.  */
-
-DEFUN ("plist-member", Fplist_member, Splist_member, 2, 2, 0,
-       doc: /* Return non-nil if PLIST has the property PROP.
-PLIST is a property list, which is a list of the form
-\(PROP1 VALUE1 PROP2 VALUE2 ...).  PROP is a symbol.
-Unlike `plist-get', this allows you to distinguish between a missing
-property and a property with the value nil.
-The value is actually the tail of PLIST whose car is PROP.  */)
-  (Lisp_Object plist, Lisp_Object prop)
-{
-  Lisp_Object tail = plist;
-  FOR_EACH_TAIL (tail)
-    {
-      if (EQ (XCAR (tail), prop))
-	return tail;
-      tail = XCDR (tail);
-      if (! CONSP (tail))
-	break;
-      if (EQ (tail, li.tortoise))
-	circular_list (tail);
-    }
-  CHECK_LIST_END (tail, plist);
-  return Qnil;
-}
 
 DEFUN ("widget-put", Fwidget_put, Swidget_put, 3, 3, 0,
        doc: /* In WIDGET, set PROPERTY to VALUE.
@@ -4598,45 +3938,6 @@ If BINARY is non-nil, returns a string in binary form.  */)
   return secure_hash (algorithm, object, start, end, Qnil, Qnil, binary);
 }
 
-DEFUN ("buffer-hash", Fbuffer_hash, Sbuffer_hash, 0, 1, 0,
-       doc: /* Return a hash of the contents of BUFFER-OR-NAME.
-This hash is performed on the raw internal format of the buffer,
-disregarding any coding systems.
-If nil, use the current buffer." */ )
-  (Lisp_Object buffer_or_name)
-{
-  Lisp_Object buffer;
-  struct buffer *b;
-  struct sha1_ctx *ctx;
-
-  if (NILP (buffer_or_name))
-    buffer = Fcurrent_buffer ();
-  else
-    buffer = Fget_buffer (buffer_or_name);
-  if (NILP (buffer))
-    nsberror (buffer_or_name);
-
-  b = XBUFFER (buffer);
-  ctx = sha1_ctx_new();
-
-  /* Process the first part of the buffer. */
-  sha1_process_bytes (BUF_BEG_ADDR (b),
-		      BUF_GPT_BYTE (b) - BUF_BEG_BYTE (b),
-		      ctx);
-
-  /* If the gap is before the end of the buffer, process the last half
-     of the buffer. */
-  if (BUF_GPT_BYTE (b) < BUF_Z_BYTE (b))
-    sha1_process_bytes (BUF_GAP_END_ADDR (b),
-			BUF_Z_ADDR (b) - BUF_GAP_END_ADDR (b),
-			ctx);
-
-  Lisp_Object digest = make_uninit_string (SHA1_DIGEST_SIZE * 2);
-  sha1_finish_ctx (ctx, SSDATA (digest));
-  return make_digest_string (digest, SHA1_DIGEST_SIZE);
-}
-
-
 void
 syms_of_fns (void)
 {
@@ -4734,9 +4035,6 @@ this variable.  */);
 
   defsubr (&Sidentity);
   defsubr (&Srandom);
-  defsubr (&Slength);
-  defsubr (&Ssafe_length);
-  defsubr (&Sstring_equal);
   defsubr (&Scompare_strings);
   defsubr (&Sstring_lessp);
   defsubr (&Sstring_version_lessp);
@@ -4748,37 +4046,17 @@ this variable.  */);
   defsubr (&Scopy_sequence);
   defsubr (&Sstring_make_multibyte);
   defsubr (&Sstring_make_unibyte);
-  defsubr (&Sstring_as_multibyte);
   defsubr (&Sstring_as_unibyte);
-  defsubr (&Sstring_to_multibyte);
   defsubr (&Sstring_to_unibyte);
   defsubr (&Scopy_alist);
   defsubr (&Ssubstring);
   defsubr (&Ssubstring_no_properties);
-  defsubr (&Snthcdr);
-  defsubr (&Snth);
   defsubr (&Selt);
-  defsubr (&Smember);
-  defsubr (&Smemq);
-  defsubr (&Smemql);
-  defsubr (&Sassq);
-  defsubr (&Sassoc);
-  defsubr (&Srassq);
-  defsubr (&Srassoc);
-  defsubr (&Sdelq);
   defsubr (&Sdelete);
   defsubr (&Snreverse);
   defsubr (&Sreverse);
-  defsubr (&Ssort);
-  defsubr (&Splist_get);
   defsubr (&Sget);
-  defsubr (&Splist_put);
   defsubr (&Sput);
-  defsubr (&Slax_plist_get);
-  defsubr (&Slax_plist_put);
-  defsubr (&Seql);
-  defsubr (&Sequal);
-  defsubr (&Sequal_including_properties);
   defsubr (&Sfillarray);
   defsubr (&Sclear_string);
   defsubr (&Snconc);
@@ -4791,7 +4069,6 @@ this variable.  */);
   defsubr (&Sfeaturep);
   defsubr (&Srequire);
   defsubr (&Sprovide);
-  defsubr (&Splist_member);
   defsubr (&Swidget_put);
   defsubr (&Swidget_get);
   defsubr (&Swidget_apply);
@@ -4799,6 +4076,5 @@ this variable.  */);
   defsubr (&Sbase64_decode_region);
   defsubr (&Smd5);
   defsubr (&Ssecure_hash);
-  defsubr (&Sbuffer_hash);
   defsubr (&Slocale_info);
 }

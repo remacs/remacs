@@ -17,6 +17,8 @@
 
 extern crate libc;
 
+use std::isize;
+
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
 
 pub type Lisp_Object = EmacsInt;
@@ -33,39 +35,53 @@ pub const CHAR_MODIFIER_MASK: char_bits =
     CHAR_ALT | CHAR_SUPER | CHAR_HYPER | CHAR_SHIFT | CHAR_CTL | CHAR_META;
 pub const CHARACTERBITS: char_bits = 22;
 
-pub const PSEUDOVECTOR_SIZE_BITS: libc::c_int = 12;
-pub const PSEUDOVECTOR_SIZE_MASK: libc::c_int = (1 << PSEUDOVECTOR_SIZE_BITS) - 1;
-pub const PSEUDOVECTOR_REST_BITS: libc::c_int = 12;
-pub const PSEUDOVECTOR_REST_MASK: libc::c_int = (((1 << PSEUDOVECTOR_REST_BITS) - 1) <<
-                                                 PSEUDOVECTOR_SIZE_BITS);
-pub const PSEUDOVECTOR_AREA_BITS: libc::c_int = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS;
-pub const PVEC_TYPE_MASK: libc::c_int = 0x3f << PSEUDOVECTOR_AREA_BITS;
+pub const PSEUDOVECTOR_FLAG: libc::ptrdiff_t = std::isize::MAX - std::isize::MAX / 2;
+pub const PSEUDOVECTOR_SIZE_BITS: libc::ptrdiff_t = 12;
+pub const PSEUDOVECTOR_SIZE_MASK: libc::ptrdiff_t = (1 << PSEUDOVECTOR_SIZE_BITS) - 1;
+pub const PSEUDOVECTOR_REST_BITS: libc::ptrdiff_t = 12;
+pub const PSEUDOVECTOR_REST_MASK: libc::ptrdiff_t = (((1 << PSEUDOVECTOR_REST_BITS) - 1) <<
+                                                     PSEUDOVECTOR_SIZE_BITS);
+pub const PSEUDOVECTOR_AREA_BITS: libc::ptrdiff_t = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS;
+pub const PVEC_TYPE_MASK: libc::ptrdiff_t = 0x3f << PSEUDOVECTOR_AREA_BITS;
 
-pub type pvec_type = libc::c_int;
-pub const PVEC_NORMAL_VECTOR: pvec_type = 0;
-pub const PVEC_FREE: pvec_type = 1;
-pub const PVEC_PROCESS: pvec_type = 2;
-pub const PVEC_FRAME: pvec_type = 3;
-pub const PVEC_WINDOW: pvec_type = 4;
-pub const PVEC_BOOL_VECTOR: pvec_type = 5;
-pub const PVEC_BUFFER: pvec_type = 6;
-pub const PVEC_HASH_TABLE: pvec_type = 7;
-pub const PVEC_TERMINAL: pvec_type = 8;
-pub const PVEC_WINDOW_CONFIGURATION: pvec_type = 9;
-pub const PVEC_SUBR: pvec_type = 10;
-pub const PVEC_OTHER: pvec_type = 11;
-pub const PVEC_XWIDGET: pvec_type = 12;
-pub const PVEC_XWIDGET_VIEW: pvec_type = 13;
-pub const PVEC_COMPILED: pvec_type = 14;
-pub const PVEC_CHAR_TABLE: pvec_type = 15;
-pub const PVEC_SUB_CHAR_TABLE: pvec_type = 16;
-pub const PVEC_FONT: pvec_type = 17;
+#[repr(isize)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
+#[allow(dead_code)]
+#[allow(non_camel_case_types)]
+pub enum PseudovecType {
+    PVEC_NORMAL_VECTOR = 0,
+    PVEC_FREE,
+    PVEC_PROCESS,
+    PVEC_FRAME,
+    PVEC_WINDOW,
+    PVEC_BOOL_VECTOR,
+    PVEC_BUFFER,
+    PVEC_HASH_TABLE,
+    PVEC_TERMINAL,
+    PVEC_WINDOW_CONFIGURATION,
+    PVEC_SUBR,
+    PVEC_OTHER,
+    PVEC_XWIDGET,
+    PVEC_XWIDGET_VIEW,
+    PVEC_THREAD,
+    PVEC_MUTEX,
+    PVEC_CONDVAR,
+
+    /* These should be last, check internal_equal to see why.  */
+    PVEC_COMPILED,
+    PVEC_CHAR_TABLE,
+    PVEC_SUB_CHAR_TABLE,
+    PVEC_FONT, /* Should be last because it's used for range checking.  */
+}
 
 #[derive(Debug)]
 #[repr(C)]
 pub struct vectorlike_header {
     pub size: libc::ptrdiff_t,
 }
+
+// XXX: this can also be char on some archs
+pub type bits_word = libc::size_t;
 
 /// Representation of an Emacs Lisp function symbol.
 #[derive(Debug)]
@@ -654,15 +670,59 @@ extern "C" {
     pub static Qt: Lisp_Object;
     pub static Qarith_error: Lisp_Object;
     pub static Qnumber_or_marker_p: Lisp_Object;
+    pub static Qconsp: Lisp_Object;
     pub static Qnumberp: Lisp_Object;
+    pub static Qintegerp: Lisp_Object;
     pub static Qfloatp: Lisp_Object;
     pub static Qstringp: Lisp_Object;
+    pub static Qlistp: Lisp_Object;
+    pub static Qmarkerp: Lisp_Object;
+    pub static Qwholenump: Lisp_Object;
+    pub static Qvectorp: Lisp_Object;
+    pub static Qsequencep: Lisp_Object;
 
-    pub fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
-    pub fn wrong_type_argument(predicate: Lisp_Object, value: Lisp_Object) -> Lisp_Object;
-    pub fn STRING_BYTES(s: *mut Lisp_String) -> libc::ptrdiff_t;
-    pub fn STRING_MULTIBYTE(a: Lisp_Object) -> bool;
-    pub fn SSDATA(string: Lisp_Object) -> *mut libc::c_char;
+    pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
+    pub fn Fcurrent_buffer() -> Lisp_Object;
+    pub fn Fget_buffer(buffer_or_name: Lisp_Object) -> Lisp_Object;
+
     pub fn make_float(float_value: libc::c_double) -> Lisp_Object;
+    pub fn make_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
+    pub fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
+    pub fn make_uninit_string(length: EmacsInt) -> Lisp_Object;
+    pub fn make_uninit_multibyte_string(nchars: EmacsInt, nbytes: EmacsInt) -> Lisp_Object;
+    pub fn string_to_multibyte(string: Lisp_Object) -> Lisp_Object;
 
+    pub fn SYMBOL_NAME(s: Lisp_Object) -> Lisp_Object;
+    pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const libc::c_void);
+    pub fn internal_equal(o1: Lisp_Object,
+                          o2: Lisp_Object,
+                          depth: libc::c_int,
+                          props: bool,
+                          ht: Lisp_Object)
+                          -> bool;
+    pub fn call2(fn_: Lisp_Object, arg1: Lisp_Object, arg2: Lisp_Object) -> Lisp_Object;
+
+    // These signal an error, therefore are marked as non-returning.
+    pub fn circular_list(tail: Lisp_Object) -> !;
+    pub fn wrong_type_argument(predicate: Lisp_Object, value: Lisp_Object) -> !;
+    // defined in eval.c, where it can actually take an arbitrary
+    // number of arguments.
+    // TODO: define a Rust version of this that uses Rust strings.
+    pub fn error(m: *const u8, ...) -> !;
+    pub fn nsberror(spec: Lisp_Object) -> !;
+
+    pub fn emacs_abort() -> !;
+
+    pub fn base64_encode_1(from: *const libc::c_char,
+                           to: *mut libc::c_char,
+                           length: libc::ptrdiff_t,
+                           line_break: bool,
+                           multibyte: bool)
+                           -> libc::ptrdiff_t;
+    pub fn base64_decode_1(from: *const libc::c_char,
+                           to: *mut libc::c_char,
+                           length: libc::ptrdiff_t,
+                           multibyte: bool,
+                           nchars_return: *mut libc::ptrdiff_t)
+                           -> libc::ptrdiff_t;
 }

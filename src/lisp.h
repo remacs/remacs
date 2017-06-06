@@ -1223,12 +1223,37 @@ CDR_SAFE (Lisp_Object c)
   return CONSP (c) ? XCDR (c) : Qnil;
 }
 
+/* Defined in Rust. */
 Lisp_Object Fsetcar(Lisp_Object, Lisp_Object);
 Lisp_Object Fsetcdr(Lisp_Object, Lisp_Object);
 Lisp_Object Fcar(Lisp_Object);
 Lisp_Object Fcdr(Lisp_Object);
+Lisp_Object Fcar_safe(Lisp_Object);
+Lisp_Object Fcdr_safe(Lisp_Object);
 Lisp_Object Flistp(Lisp_Object);
 Lisp_Object Fatom(Lisp_Object);
+Lisp_Object Fnthcdr(Lisp_Object, Lisp_Object);
+Lisp_Object Fnth(Lisp_Object, Lisp_Object);
+Lisp_Object Fmemq(Lisp_Object, Lisp_Object);
+Lisp_Object Fmember(Lisp_Object, Lisp_Object);
+Lisp_Object Fassq(Lisp_Object, Lisp_Object);
+Lisp_Object Fassoc(Lisp_Object, Lisp_Object);
+Lisp_Object Frassq(Lisp_Object, Lisp_Object);
+Lisp_Object Frassoc(Lisp_Object, Lisp_Object);
+Lisp_Object Fdelq(Lisp_Object, Lisp_Object);
+Lisp_Object Fplist_get(Lisp_Object, Lisp_Object);
+Lisp_Object Fplist_member(Lisp_Object, Lisp_Object);
+Lisp_Object Fplist_put(Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object Flist(ptrdiff_t, Lisp_Object *);
+Lisp_Object Fmake_list(Lisp_Object, Lisp_Object);
+Lisp_Object Flength(Lisp_Object);
+Lisp_Object Fequal(Lisp_Object, Lisp_Object);
+Lisp_Object Fequal_including_properties(Lisp_Object, Lisp_Object);
+Lisp_Object Fsymbolp(Lisp_Object);
+Lisp_Object Fstring_equal(Lisp_Object, Lisp_Object);
+Lisp_Object Fstring_as_multibyte(Lisp_Object);
+Lisp_Object Fstring_to_multibyte(Lisp_Object);
+Lisp_Object Fsort(Lisp_Object, Lisp_Object);
 
 /* In a string or vector, the sign bit of the `size' is the gc mark bit.  */
 
@@ -1244,6 +1269,12 @@ INLINE bool
 STRINGP (Lisp_Object x)
 {
   return XTYPE (x) == Lisp_String;
+}
+
+INLINE void
+CHECK_STRING (Lisp_Object x)
+{
+  CHECK_TYPE (STRINGP (x), Qstringp, x);
 }
 
 INLINE struct Lisp_String *
@@ -2728,9 +2759,6 @@ INLINE void
 {
   lisp_h_CHECK_NUMBER (x);
 }
-
-/* exported from rust code (lisp.rs) */
-void CHECK_STRING (Lisp_Object x);
 
 INLINE void
 CHECK_STRING_CAR (Lisp_Object x)
