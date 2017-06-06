@@ -263,10 +263,12 @@ If REALNAME is nil, ignore that author.")
     "\\.arch-inventory$"
     "ChangeLog\\(\\.[0-9]+\\)?\\'"
     "\\(automated\\|test\\)/data/"	; not interesting
+    "cedet/tests/"
     "test/etags/"
-    "indent/"
+    "\\`\\(indent\\|automated\\)\\'" "indent/" "mod-test/"
     "-resources/"
     "unidata/.*\\.txt\\'"
+    "BidiCharacterTest.txt"
     ;; TODO lib/? Matches other things?
     "build-aux/" "m4/" "Emacs.xcodeproj" "mapfiles" "\\.map\\'"
     "preferences\\.\\(nib\\|gorm\\)"
@@ -744,8 +746,9 @@ Changes to files in this list are not listed.")
     "gnus-gl.el" "gnus.sum.el" "proto-stream.el" "color.el" "color-lab.el"
     "eww.el" "shr-color.el" "shr.el" "earcon.el" "gnus-audio.el" "encrypt.el"
     "format-spec.el" "gnus-move.el" "gnus-sync.el"
-    "auth-source.el" "mailcap.el" "pop3.el" "qp.el" "registry.el"
-    "rfc2231.el" "sieve.el" "sieve-mode.el"
+    "auth-source.el" "ecomplete.el" "gravatar.el" "mailcap.el" "plstore.el"
+    "pop3.el" "qp.el" "registry.el" "rfc2231.el" "rtree.el"
+    "sieve.el" "sieve-mode.el"
     ;; doc
     "getopt.c" "texindex.c" "news.texi" "vc.texi" "vc2-xtra.texi"
     "back.texi" "vol1.texi" "vol2.texi" "elisp-covers.texi" "two.el"
@@ -785,6 +788,11 @@ Changes to files in this list are not listed.")
     "nxml-glyph.el"
     "tramp-gw.el"
     "webmail.el"
+    "biditest.el"
+    "redisplay-testsuite.el"
+    "cedet-utests.el" "ede-tests.el" "semantic-ia-utest.el"
+    "semantic-tests.el" "semantic-utest-c.el" "semantic-utest.el"
+    "srecode-tests.el"
     )
   "File names which are valid, but no longer exist (or cannot be found)
 in the repository.")
@@ -896,6 +904,8 @@ in the repository.")
     ;; From lisp/ to etc/nxml.
     ("nxml/test.invalid.xml" . "test-invalid.xml")
     ("nxml/test.valid.xml" . "test-valid.xml")
+    ("automated/Makefile.in" . "test/Makefile.in")
+    ("rmailmm.el" . "test/rmailmm.el")
     ;; The one in lisp is eshell/eshell.el.
     ("eshell.el" . "eshell-tests.el")
     ("automated/eshell.el" . "eshell-tests.el")
@@ -1061,9 +1071,13 @@ ediff\\|emerge\\|log-edit\\|log-view\\|pcvs\\|smerge-mode\\|vc\\)\\.el\\'"
     ;; From test/ to test/automated/.
     ("comint-testsuite.el" "automated/\\&")
     ("\\`\\(bytecomp\\|font-parse\\|icalendar\\|occur\\|newsticker\\)\
--testsuite\\.el" "automated/\\1-tests.el")
+-testsuite\\.el" "\\1-tests.el")
     ("automated/flymake/warnpred/\\(Makefile\\|test\\.\\(?:c\\|pl\\)\\)\\'"
      "automated/data/flymake/\\1")
+    ;; More complicated than this, but we only use the basename of the RHS.
+    ("automated/\\([^/]*-test[^/]*\\.el\\)\\'" "\\1")
+    ;; Maybe not the exact new name, but disambiguates from lisp/.
+    ("automated/\\([^/]*\\)\\.el\\'" "\\1-tests.el")
     ;; NB lax rules should come last.
     ("^m/m-\\(.*\\.h\\)$" "m/\\1" t)
     ("^m-\\(.*\\.h\\)$" "\\1" t)
