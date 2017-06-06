@@ -1,257 +1,407 @@
-use std::ptr;
-use std::mem;
+//! Operations on lists.
 
-use libc;
+use lisp::{LispObject, LispCons, Qnil};
+use remacs_sys::{wrong_type_argument, Qlistp};
+use remacs_macros::lisp_fn;
 
-use lisp::{CHECK_TYPE, LispObject, LispType, Qnil, XTYPE, XUNTAG};
-use remacs_sys::{Lisp_Object, wrong_type_argument};
-
-extern "C" {
-    static Qconsp: Lisp_Object;
-    fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const libc::c_void);
-    static Qlistp: Lisp_Object;
-}
-
-
-pub fn CONSP(x: LispObject) -> bool {
-    XTYPE(x) == LispType::Lisp_Cons
-}
-
+/// Return t if OBJECT is not a cons cell.  This includes nil.
+/// (fn OBJECT)
+#[lisp_fn]
 fn atom(object: LispObject) -> LispObject {
-    if CONSP(object) {
-        Qnil
-    } else {
-        LispObject::constant_t()
-    }
+    LispObject::from_bool(!object.is_cons())
 }
 
-defun!("atom",
-       Fatom(object),
-       Satom,
-       atom,
-       1,
-       1,
-       ptr::null(),
-       "Return t if OBJECT is not a cons cell.  This includes nil.");
-
+/// Return t if OBJECT is a cons cell.
+/// (fn OBJECT)
+#[lisp_fn]
 fn consp(object: LispObject) -> LispObject {
-    if CONSP(object) {
-        LispObject::constant_t()
-    } else {
-        Qnil
-    }
+    LispObject::from_bool(object.is_cons())
 }
 
-defun!("consp",
-       Fconsp(object),
-       Sconsp,
-       consp,
-       1,
-       1,
-       ptr::null(),
-       "Return t if OBJECT is a cons cell.
-
-(fn OBJECT)");
-
-/// Represents a cons cell, or GC bookkeeping for cons cells.
-///
-/// A cons cell is pair of two pointers, used to build linked lists in
-/// lisp.
-///
-/// # C Porting Notes
-///
-/// The equivalent C struct is `Lisp_Cons`. Note that the second field
-/// may be used as the cdr or GC bookkeeping.
-// TODO: this should be aligned to 8 bytes.
-#[repr(C)]
-#[allow(unused_variables)]
-struct LispCons {
-    /// Car of this cons cell.
-    car: LispObject,
-    /// Cdr of this cons cell, or the chain used for the free list.
-    cdr: LispObject,
-}
-
-// alloc.c uses a union for `Lisp_Cons`, which we emulate with an
-// opaque struct.
-#[repr(C)]
-#[allow(dead_code)]
-pub struct LispConsChain {
-    chain: *const LispCons,
-}
-
-/// Extract the LispCons data from an elisp value.
-fn XCONS(a: LispObject) -> *mut LispCons {
-    debug_assert!(CONSP(a));
-    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_Cons)) }
-}
-
-/// Set the car of a cons cell.
-fn XSETCAR(c: LispObject, n: LispObject) {
-    let cons_cell = XCONS(c);
-    unsafe {
-        (*cons_cell).car = n;
-    }
-}
-
-/// Set the cdr of a cons cell.
-fn XSETCDR(c: LispObject, n: LispObject) {
-    let cons_cell = XCONS(c);
-    unsafe {
-        (*cons_cell).cdr = n;
-    }
-}
-
-pub fn setcar(cell: LispObject, newcar: LispObject) -> LispObject {
-    unsafe {
-        CHECK_TYPE(CONSP(cell), LispObject::from_raw(Qconsp), cell);
-        CHECK_IMPURE(cell.to_raw(), XCONS(cell) as *const libc::c_void);
-    }
-
-    XSETCAR(cell, newcar);
-    newcar
-}
-
-defun!("setcar",
-       Fsetcar(cell, newcar),
-       Ssetcar,
-       setcar,
-       2,
-       2,
-       ptr::null(),
-       "Set the car of CELL to be NEWCAR. Returns NEWCAR.
-
-(fn CELL NEWCAR)");
-
-fn setcdr(cell: LispObject, newcar: LispObject) -> LispObject {
-    unsafe {
-        CHECK_TYPE(CONSP(cell), LispObject::from_raw(Qconsp), cell);
-        CHECK_IMPURE(cell.to_raw(), XCONS(cell) as *const libc::c_void);
-    }
-
-    XSETCDR(cell, newcar);
-    newcar
-}
-
-defun!("setcdr",
-       Fsetcdr(cell, newcar),
-       Ssetcdr,
-       setcdr,
-       2,
-       2,
-       ptr::null(),
-       "Set the cdr of CELL to be NEWCDR.  Returns NEWCDR.
-
-(fn CELL NEWCDR)");
-
-/// Is `object` nil?
-pub fn NILP(object: LispObject) -> bool {
-    object == Qnil
-}
-
-unsafe fn XCAR(object: LispObject) -> LispObject {
-    (*XCONS(object)).car
-}
-
-unsafe fn XCDR(object: LispObject) -> LispObject {
-    (*XCONS(object)).cdr
-}
-
-/// Take the car/cdr of a cons cell, or signal an error if it's a
-/// different type.
-///
-/// # Porting Notes
-///
-/// This is equivalent to `CAR`/`CDR` in C code.
-fn car(object: LispObject) -> LispObject {
-    if CONSP(object) {
-        unsafe { XCAR(object) }
-    } else if NILP(object) {
-        Qnil
-    } else {
-        LispObject::from_raw(unsafe { wrong_type_argument(Qlistp, object.to_raw()) })
-    }
-}
-
-defun!("car",
-       Fcar(list),
-       Scar,
-       car,
-       1,
-       1,
-       ptr::null(),
-       "Return the car of LIST.  If arg is nil, return nil.
-Error if arg is not nil and not a \
-        cons cell.  See also `car-safe'.
-
-See Info node `(elisp)Cons Cells' for a discussion of \
-        related basic
-Lisp concepts such as car, cdr, cons cell and list.
-
-(fn LIST)");
-
-fn cdr(object: LispObject) -> LispObject {
-    if CONSP(object) {
-        unsafe { XCDR(object) }
-    } else if NILP(object) {
-        Qnil
-    } else {
-        LispObject::from_raw(unsafe { wrong_type_argument(Qlistp, object.to_raw()) })
-    }
-}
-
-defun!("cdr",
-       Fcdr(list),
-       Scdr,
-       cdr,
-       1,
-       1,
-       ptr::null(),
-       "Return the cdr of LIST.  If arg is nil, return nil.
-Error if arg is not nil and not a \
-        cons cell.  See also `cdr-safe'.
-
-See Info node `(elisp)Cons Cells' for a discussion of \
-        related basic
-Lisp concepts such as cdr, car, cons cell and list.
-
-(fn LIST)");
-
+/// Return t if OBJECT is a list, that is, a cons cell or nil.
+/// Otherwise, return nil.
+/// (fn OBJECT)
+#[lisp_fn]
 fn listp(object: LispObject) -> LispObject {
-    if CONSP(object) || NILP(object) {
-        LispObject::constant_t()
-    } else {
-        Qnil
-    }
+    LispObject::from_bool(object.is_cons() || object.is_nil())
 }
 
-defun!("listp",
-       Flistp(object),
-       Slistp,
-       listp,
-       1,
-       1,
-       ptr::null(),
-       "return t if OBJECT is a list, that is a cons cell or nil, Otherwise, return nil.
-
-(fn \
-        OBJECT)");
-
+/// Return t if OBJECT is not a list.  Lists include nil.
+/// (fn OBJECT)
+#[lisp_fn]
 fn nlistp(object: LispObject) -> LispObject {
-    if CONSP(object) || NILP(object) {
+    LispObject::from_bool(!(object.is_cons() || object.is_nil()))
+}
+
+/// Set the car of CELL to be NEWCAR. Returns NEWCAR.
+/// (fn CELL NEWCAR)
+#[lisp_fn]
+pub fn setcar(cell: LispObject, newcar: LispObject) -> LispObject {
+    let cell = cell.as_cons_or_error();
+    cell.check_impure();
+    cell.set_car(newcar);
+    newcar
+}
+
+/// Set the cdr of CELL to be NEWCDR.  Returns NEWCDR.
+/// (fn CELL NEWCDR)
+#[lisp_fn]
+fn setcdr(cell: LispObject, newcdr: LispObject) -> LispObject {
+    let cell = cell.as_cons_or_error();
+    cell.check_impure();
+    cell.set_cdr(newcdr);
+    newcdr
+}
+
+/// Return the car of LIST.  If arg is nil, return nil.
+/// Error if arg is not nil and not a cons cell.  See also `car-safe`.
+///
+/// See Info node `(elisp)Cons Cells' for a discussion of related basic
+/// Lisp concepts such as car, cdr, cons cell and list.
+/// (fn LIST)
+#[lisp_fn]
+fn car(object: LispObject) -> LispObject {
+    if object.is_nil() {
         Qnil
     } else {
-        LispObject::constant_t()
+        object.as_cons_or_error().car()
     }
 }
 
-defun!("nlistp",
-       Fnlistp(object),
-       Snlistp,
-       nlistp,
-       1,
-       1,
-       ptr::null(),
-       "Return t if OBJECT is not a list.  Lists include nil.
+/// Return the cdr of LIST.  If arg is nil, return nil.
+/// Error if arg is not nil and not a cons cell.  See also `cdr-safe'.
+///
+/// See Info node `(elisp)Cons Cells' for a discussion of related basic
+/// Lisp concepts such as cdr, car, cons cell and list.
+/// (fn LIST)
+#[lisp_fn]
+fn cdr(object: LispObject) -> LispObject {
+    if object.is_nil() {
+        Qnil
+    } else {
+        object.as_cons_or_error().cdr()
+    }
+}
 
-(fn OBJECT)");
+/// Return the car of OBJECT if it is a cons cell, or else nil.
+/// (fn OBJECT)
+#[lisp_fn]
+fn car_safe(object: LispObject) -> LispObject {
+    object.as_cons().map_or(Qnil, |cons| cons.car())
+}
+
+/// Return the cdr of OBJECT if it is a cons cell, or else nil.
+/// (fn OBJECT)
+#[lisp_fn]
+fn cdr_safe(object: LispObject) -> LispObject {
+    object.as_cons().map_or(Qnil, |cons| cons.cdr())
+}
+
+/// Take cdr N times on LIST, return the result.
+/// (fn N LIST)
+#[lisp_fn]
+fn nthcdr(n: LispObject, list: LispObject) -> LispObject {
+    let num = n.as_fixnum_or_error();
+    let mut tail = list;
+    for _ in 0..num {
+        match tail.as_cons() {
+            None => {
+                if tail != Qnil {
+                    unsafe { wrong_type_argument(Qlistp, list.to_raw()) }
+                }
+                return Qnil;
+            }
+            Some(tail_cons) => tail = tail_cons.cdr(),
+        }
+    }
+    tail
+}
+
+/// Return the Nth element of LIST.
+/// N counts from zero.  If LIST is not that long, nil is returned.
+/// (fn N LIST)
+#[lisp_fn]
+fn nth(n: LispObject, list: LispObject) -> LispObject {
+    car(nthcdr(n, list))
+}
+
+/// Return non-nil if ELT is an element of LIST.  Comparison done with `eq'.
+/// The value is actually the tail of LIST whose car is ELT.
+/// (fn ELT LIST)
+#[lisp_fn]
+fn memq(elt: LispObject, list: LispObject) -> LispObject {
+    for tail in list.iter_tails() {
+        if elt.eq(tail.car()) {
+            return tail.as_obj();
+        }
+    }
+    Qnil
+}
+
+/// Return non-nil if ELT is an element of LIST.  Comparison done with `eql'.
+/// The value is actually the tail of LIST whose car is ELT.
+/// (fn ELT LIST)
+#[lisp_fn]
+fn memql(elt: LispObject, list: LispObject) -> LispObject {
+    if !elt.is_float() {
+        return memq(elt, list);
+    }
+    for tail in list.iter_tails() {
+        if elt.eql(tail.car()) {
+            return tail.as_obj();
+        }
+    }
+    Qnil
+}
+
+/// Return non-nil if ELT is an element of LIST.  Comparison done with `equal'.
+/// The value is actually the tail of LIST whose car is ELT.
+/// (fn ELT LIST)
+#[lisp_fn]
+fn member(elt: LispObject, list: LispObject) -> LispObject {
+    for tail in list.iter_tails() {
+        if elt.equal(tail.car()) {
+            return tail.as_obj();
+        }
+    }
+    Qnil
+}
+
+/// Return non-nil if KEY is `eq' to the car of an element of LIST.
+/// The value is actually the first element of LIST whose car is KEY.
+/// Elements of LIST that are not conses are ignored.
+/// (fn KEY LIST)
+#[lisp_fn]
+fn assq(key: LispObject, list: LispObject) -> LispObject {
+    for tail in list.iter_tails() {
+        let item = tail.car();
+        if let Some(item_cons) = item.as_cons() {
+            if key.eq(item_cons.car()) {
+                return item;
+            }
+        }
+    }
+    Qnil
+}
+
+/// Return non-nil if KEY is `equal' to the car of an element of LIST.
+/// The value is actually the first element of LIST whose car equals KEY.
+/// (fn KEY LIST)
+#[lisp_fn]
+fn assoc(key: LispObject, list: LispObject) -> LispObject {
+    for tail in list.iter_tails() {
+        let item = tail.car();
+        if let Some(item_cons) = item.as_cons() {
+            if key.eq(item_cons.car()) || key.equal(item_cons.car()) {
+                return item;
+            }
+        }
+    }
+    Qnil
+}
+
+/// Return non-nil if KEY is `eq' to the cdr of an element of LIST.
+/// The value is actually the first element of LIST whose cdr is KEY.
+/// (fn KEY LIST)
+#[lisp_fn]
+fn rassq(key: LispObject, list: LispObject) -> LispObject {
+    for tail in list.iter_tails() {
+        let item = tail.car();
+        if let Some(item_cons) = item.as_cons() {
+            if key.eq(item_cons.cdr()) {
+                return item;
+            }
+        }
+    }
+    Qnil
+}
+
+/// Return non-nil if KEY is `equal' to the cdr of an element of LIST.
+/// The value is actually the first element of LIST whose cdr equals KEY.
+/// (fn KEY LIST)
+#[lisp_fn]
+fn rassoc(key: LispObject, list: LispObject) -> LispObject {
+    for tail in list.iter_tails() {
+        let item = tail.car();
+        if let Some(item_cons) = item.as_cons() {
+            if key.eq(item_cons.cdr()) || key.equal(item_cons.cdr()) {
+                return item;
+            }
+        }
+    }
+    Qnil
+}
+
+/// Delete members of LIST which are `eq' to ELT, and return the result.
+/// More precisely, this function skips any members `eq' to ELT at the
+/// front of LIST, then removes members `eq' to ELT from the remaining
+/// sublist by modifying its list structure, then returns the resulting
+/// list.
+///
+/// Write `(setq foo (delq element foo))' to be sure of correctly changing
+/// the value of a list `foo'.  See also `remq', which does not modify the
+/// argument.
+/// (fn ELT LIST)
+#[lisp_fn]
+fn delq(elt: LispObject, mut list: LispObject) -> LispObject {
+    let mut prev = Qnil;
+    for tail in list.iter_tails() {
+        let item = tail.car();
+        if elt.eq(item) {
+            let rest = tail.cdr();
+            if prev.is_nil() {
+                list = rest;
+            } else {
+                setcdr(prev, rest);
+            }
+        } else {
+            prev = tail.as_obj();
+        }
+    }
+    list
+}
+
+
+fn internal_plist_get<F, I>(mut iter: I, prop: LispObject, cmp: F) -> LispObject
+    where I: Iterator<Item = LispCons>,
+          F: Fn(LispObject, LispObject) -> bool
+{
+    let mut prop_item = true;
+    for tail in &mut iter {
+        match tail.cdr().as_cons() {
+            None => break,
+            Some(tail_cdr_cons) => {
+                if prop_item && cmp(tail.car(), prop) {
+                    return tail_cdr_cons.car();
+                }
+            }
+        }
+        prop_item = !prop_item;
+    }
+    // exhaust the iterator to get the list-end check if necessary
+    iter.count();
+    Qnil
+}
+
+/// Extract a value from a property list.
+/// PLIST is a property list, which is a list of the form
+/// \(PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
+/// corresponding to the given PROP, or nil if PROP is not one of the
+/// properties on the list.  This function never signals an error.
+/// (fn PLIST PROP)
+#[lisp_fn]
+fn plist_get(plist: LispObject, prop: LispObject) -> LispObject {
+    internal_plist_get(plist.iter_tails_safe(), prop, LispObject::eq)
+}
+
+/// Extract a value from a property list, comparing with `equal'.
+/// PLIST is a property list, which is a list of the form
+/// \(PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
+/// corresponding to the given PROP, or nil if PROP is not
+/// one of the properties on the list.
+/// (fn PLIST PROP)
+#[lisp_fn]
+fn lax_plist_get(plist: LispObject, prop: LispObject) -> LispObject {
+    internal_plist_get(plist.iter_tails(), prop, LispObject::equal)
+}
+
+/// Return non-nil if PLIST has the property PROP.
+/// PLIST is a property list, which is a list of the form
+/// \(PROP1 VALUE1 PROP2 VALUE2 ...).  PROP is a symbol.
+/// Unlike `plist-get', this allows you to distinguish between a missing
+/// property and a property with the value nil.
+/// The value is actually the tail of PLIST whose car is PROP.
+/// (fn PLIST PROP)
+#[lisp_fn]
+fn plist_member(plist: LispObject, prop: LispObject) -> LispObject {
+    let mut prop_item = true;
+    for tail in plist.iter_tails() {
+        if prop_item && prop.eq(tail.car()) {
+            return tail.as_obj();
+        }
+        prop_item = !prop_item;
+    }
+    Qnil
+}
+
+fn internal_plist_put<F>(plist: LispObject, prop: LispObject, val: LispObject, cmp: F) -> LispObject
+    where F: Fn(LispObject, LispObject) -> bool
+{
+    let mut prop_item = true;
+    let mut last_cons = None;
+    for tail in plist.iter_tails() {
+        if prop_item {
+            match tail.cdr().as_cons() {
+                None => {
+                    // need an extra call to CHECK_LIST_END here to catch odd-length lists
+                    // (like Emacs we signal the somewhat confusing `wrong-type-argument')
+                    if tail.as_obj() != Qnil {
+                        unsafe { wrong_type_argument(Qlistp, plist.to_raw()) }
+                    }
+                    break;
+                }
+                Some(tail_cdr_cons) => {
+                    if cmp(tail.car(), prop) {
+                        tail_cdr_cons.set_car(val);
+                        return plist;
+                    }
+                    last_cons = Some(tail);
+                }
+            }
+        }
+        prop_item = !prop_item;
+    }
+    match last_cons {
+        None => LispObject::cons(prop, LispObject::cons(val, Qnil)),
+        Some(last_cons) => {
+            let last_cons_cdr = last_cons.cdr().as_cons_or_error();
+            let newcell = LispObject::cons(prop, LispObject::cons(val, last_cons_cdr.cdr()));
+            last_cons_cdr.set_cdr(newcell);
+            plist
+        }
+    }
+}
+
+/// Change value in PLIST of PROP to VAL.
+/// PLIST is a property list, which is a list of the form
+/// \(PROP1 VALUE1 PROP2 VALUE2 ...).  PROP is a symbol and VAL is any object.
+/// If PROP is already a property on the list, its value is set to VAL,
+/// otherwise the new PROP VAL pair is added.  The new plist is returned;
+/// use `(setq x (plist-put x prop val))' to be sure to use the new value.
+/// The PLIST is modified by side effects.
+/// (fn PLIST PROP VAL)
+#[lisp_fn]
+fn plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispObject {
+    internal_plist_put(plist, prop, val, LispObject::eq)
+}
+
+/// Change value in PLIST of PROP to VAL, comparing with `equal'.
+/// PLIST is a property list, which is a list of the form
+/// \(PROP1 VALUE1 PROP2 VALUE2 ...).  PROP and VAL are any objects.
+/// If PROP is already a property on the list, its value is set to VAL,
+/// otherwise the new PROP VAL pair is added.  The new plist is returned;
+/// use `(setq x (lax-plist-put x prop val))' to be sure to use the new value.
+/// The PLIST is modified by side effects.
+/// (fn PLIST PROP VAL)
+#[lisp_fn]
+fn lax_plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispObject {
+    internal_plist_put(plist, prop, val, LispObject::equal)
+}
+
+/// Return a newly created list with specified arguments as elements.
+/// Any number of arguments, even zero arguments, are allowed.
+/// usage: (list &rest OBJECTS)
+#[lisp_fn]
+fn list(args: &mut [LispObject]) -> LispObject {
+    args.iter()
+        .rev()
+        .fold(Qnil, |list, &arg| LispObject::cons(arg, list))
+}
+
+/// Return a newly created list of length LENGTH, with each element being INIT.
+/// (fn LENGTH INIT)
+#[lisp_fn]
+fn make_list(length: LispObject, init: LispObject) -> LispObject {
+    let length = length.as_natnum_or_error();
+    (0..length).fold(Qnil, |list, _| LispObject::cons(init, list))
+}

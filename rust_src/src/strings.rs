@@ -1,83 +1,36 @@
+//! Functions operating on strings.
+
 use std::ptr;
 
 use libc;
 
-use lisp::{LispObject, Qnil, SBYTES, STRINGP, CHECK_STRING};
-use lists::NILP;
-use remacs_sys::{Lisp_Object, SSDATA, STRING_MULTIBYTE};
-
-extern "C" {
-    fn make_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
-    fn base64_encode_1(from: *const libc::c_char,
-                       to: *mut libc::c_char,
-                       length: libc::ptrdiff_t,
-                       line_break: bool,
-                       multibyte: bool)
-                       -> libc::ptrdiff_t;
-    fn base64_decode_1(from: *const libc::c_char,
-                       to: *mut libc::c_char,
-                       length: libc::ptrdiff_t,
-                       multibyte: bool,
-                       nchars_return: *mut libc::ptrdiff_t)
-                       -> libc::ptrdiff_t;
-    fn error(m: *const u8, ...);
-}
+use lisp::LispObject;
+use multibyte;
+use remacs_sys::{SYMBOL_NAME, EmacsInt, error, base64_encode_1, base64_decode_1, make_string,
+                 make_uninit_multibyte_string, string_to_multibyte as c_string_to_multibyte};
+use remacs_macros::lisp_fn;
 
 pub static MIME_LINE_LENGTH: isize = 76;
 
+/// Return t if OBJECT is a string.
+/// (fn OBJECT)
+#[lisp_fn]
 fn stringp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_string())
 }
 
-defun!("stringp",
-       Fstringp(object),
-       Sstringp,
-       stringp,
-       1,
-       1,
-       ptr::null(),
-       "Return t if OBJECT is a string.
-
-(fn OBJECT)");
-
-fn eq(firstObject: LispObject, secondObject: LispObject) -> LispObject {
-    LispObject::from_bool(firstObject == secondObject)
-}
-
-defun!("eq",
-       Feq(firstObject, secondObject),
-       Seq,
-       eq,
-       2,
-       2,
-       ptr::null(),
-       "Return t if the two args are the same Lisp object.
-
-(fn OBJECT OBJECT)");
-
-fn null(object: LispObject) -> LispObject {
-    LispObject::from_bool(object == Qnil)
-}
-
-defun!("null",
-       Fnull(object),
-       Snull,
-       null,
-       1,
-       1,
-       ptr::null(),
-       "Return t if OBJECT is nil, and return nil otherwise.
-
-(fn OBJECT)");
-
-
-fn base64_encode_string(string: LispObject, noLineBreak: LispObject) -> LispObject {
-    CHECK_STRING(string.to_raw());
+/// Base64-encode STRING and return the result.
+/// Optional second argument NO-LINE-BREAK means do not break long lines
+/// into shorter lines.
+/// (fn STRING &optional NO-LINE-BREAK)
+#[lisp_fn(min = "1")]
+fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispObject {
+    let mut string = string.as_string_or_error();
 
     // We need to allocate enough room for the encoded text
     // We will need 33 1/3% more space, plus a newline every 76 characters(MIME_LINE_LENGTH)
     // and then round up
-    let length = SBYTES(string);
+    let length = string.len_bytes();
     let mut allength: libc::ptrdiff_t = length + length / 3 + 1;
     allength += allength / MIME_LINE_LENGTH + 1 + 6;
 
@@ -86,11 +39,11 @@ fn base64_encode_string(string: LispObject, noLineBreak: LispObject) -> LispObje
     let mut buffer: Vec<libc::c_char> = Vec::with_capacity(allength as usize);
     unsafe {
         let encoded = buffer.as_mut_ptr();
-        let encodedLength = base64_encode_1(SSDATA(string.to_raw()),
+        let encodedLength = base64_encode_1(string.sdata_ptr(),
                                             encoded,
                                             length,
-                                            NILP(noLineBreak),
-                                            STRING_MULTIBYTE(string.to_raw()));
+                                            no_line_break.is_nil(),
+                                            string.is_multibyte());
 
         if encodedLength > allength {
             panic!("base64 encoded length is larger then allocated buffer");
@@ -104,33 +57,20 @@ fn base64_encode_string(string: LispObject, noLineBreak: LispObject) -> LispObje
     }
 }
 
-defun!("base64-encode-string",
-       Fbase64_encode_string(string, noLineBreak),
-       Sbase64_encode_string,
-       base64_encode_string,
-       1,
-       2,
-       ptr::null(),
-       "Base64-encode STRING and return the result.
-       Optional second argument NO-LINE-BREAK means do not break long lines
-       into shorter lines.
-
-(fn STRING &optional NO-LINE-BREAK)");
-
+/// Base64-decode STRING and return the result.
+/// (fn STRING)
+#[lisp_fn]
 fn base64_decode_string(string: LispObject) -> LispObject {
-    CHECK_STRING(string.to_raw());
+    let mut string = string.as_string_or_error();
 
-    let length = SBYTES(string);
+    let length = string.len_bytes();
     let mut buffer: Vec<libc::c_char> = Vec::with_capacity(length as usize);
     let mut decoded_string: LispObject = LispObject::constant_nil();
 
     unsafe {
         let decoded = buffer.as_mut_ptr();
-        let decoded_length = base64_decode_1(SSDATA(string.to_raw()),
-                                             decoded,
-                                             length,
-                                             false,
-                                             ptr::null_mut());
+        let decoded_length =
+            base64_decode_1(string.sdata_ptr(), decoded, length, false, ptr::null_mut());
 
         if decoded_length > length {
             panic!("Decoded length is above length");
@@ -138,7 +78,7 @@ fn base64_decode_string(string: LispObject) -> LispObject {
             decoded_string = LispObject::from_raw(make_string(decoded, decoded_length));
         }
 
-        if !STRINGP(decoded_string) {
+        if !decoded_string.is_string() {
             error("Invalid base64 data\0".as_ptr());
         }
 
@@ -146,30 +86,88 @@ fn base64_decode_string(string: LispObject) -> LispObject {
     }
 }
 
-defun!("base64-decode-string",
-       Fbase64_decode_string(string),
-       Sbase64_decode_string,
-       base64_decode_string,
-       1,
-       1,
-       ptr::null(),
-       "Base64-decode STRING and return the result.
-
-(fn STRING)");
-
+/// Return the number of bytes in STRING.
+/// If STRING is multibyte, this may be greater than the length of STRING.
+/// (fn STRING)
+#[lisp_fn]
 fn string_bytes(string: LispObject) -> LispObject {
-    CHECK_STRING(string.to_raw());
-    unsafe { LispObject::from_fixnum_unchecked(SBYTES(string) as ::remacs_sys::EmacsInt) }
+    let string = string.as_string_or_error();
+    LispObject::from_natnum(string.len_bytes() as EmacsInt)
 }
 
-defun!("string-bytes",
-       Fstring_bytes(string),
-       Sstring_bytes,
-       string_bytes,
-       1,
-       1,
-       ptr::null(),
-       "Return the number of bytes in STRING.
-If STRING is multibyte, this may be greater than the length of STRING.
+/// Return t if two strings have identical contents.
+/// Case is significant, but text properties are ignored.
+/// Symbols are also allowed; their print names are used instead.
+/// (fn S1 S2)
+#[lisp_fn]
+fn string_equal(mut s1: LispObject, mut s2: LispObject) -> LispObject {
+    if s1.is_symbol() {
+        s1 = LispObject::from_raw(unsafe { SYMBOL_NAME(s1.to_raw()) });
+    }
+    if s2.is_symbol() {
+        s2 = LispObject::from_raw(unsafe { SYMBOL_NAME(s2.to_raw()) });
+    }
+    let mut s1 = s1.as_string_or_error();
+    let mut s2 = s2.as_string_or_error();
 
-(fn STRING)");
+    LispObject::from_bool(s1.len_chars() == s2.len_chars() && s1.len_bytes() == s2.len_bytes() &&
+                          unsafe {
+                              libc::memcmp(s1.data_ptr() as *mut libc::c_void,
+                                           s2.data_ptr() as *mut libc::c_void,
+                                           s1.len_bytes() as usize) ==
+                              0
+                          })
+}
+
+/// Return a multibyte string with the same individual bytes as STRING.
+/// If STRING is multibyte, the result is STRING itself.
+/// Otherwise it is a newly created string, with no text properties.
+///
+/// If STRING is unibyte and contains an individual 8-bit byte (i.e. not
+/// part of a correct utf-8 sequence), it is converted to the corresponding
+/// multibyte character of charset `eight-bit'.
+/// See also `string-to-multibyte'.
+///
+/// Beware, this often doesn't really do what you think it does.
+/// It is similar to (decode-coding-string STRING \\='utf-8-emacs).
+/// If you're not sure, whether to use `string-as-multibyte' or
+/// `string-to-multibyte', use `string-to-multibyte'.
+/// (fn STRING)
+#[lisp_fn]
+fn string_as_multibyte(string: LispObject) -> LispObject {
+    let mut s = string.as_string_or_error();
+    if s.is_multibyte() {
+        return string;
+    }
+    let mut nchars = 0;
+    let mut nbytes = 0;
+    multibyte::parse_str_as_multibyte(s.data_ptr(), s.len_bytes(), &mut nchars, &mut nbytes);
+    let new_string =
+        unsafe { make_uninit_multibyte_string(nchars as EmacsInt, nbytes as EmacsInt) };
+    let new_string = LispObject::from_raw(new_string);
+    let mut new_s = new_string.as_string().unwrap();
+    unsafe {
+        ptr::copy_nonoverlapping(s.data_ptr(), new_s.data_ptr(), s.len_bytes() as usize);
+    }
+    if nbytes != s.len_bytes() {
+        multibyte::str_as_multibyte(new_s.data_ptr(), nbytes, s.len_bytes(), ptr::null_mut());
+    }
+    new_string
+}
+
+/// Return a multibyte string with the same individual chars as STRING.
+/// If STRING is multibyte, the result is STRING itself.
+/// Otherwise it is a newly created string, with no text properties.
+///
+/// If STRING is unibyte and contains an 8-bit byte, it is converted to
+/// the corresponding multibyte character of charset `eight-bit'.
+///
+/// This differs from `string-as-multibyte' by converting each byte of a correct
+/// utf-8 sequence to an eight-bit character, not just bytes that don't form a
+/// correct sequence.
+/// (fn STRING)
+#[lisp_fn]
+fn string_to_multibyte(string: LispObject) -> LispObject {
+    let _ = string.as_string_or_error();
+    unsafe { LispObject::from_raw(c_string_to_multibyte(string.to_raw())) }
+}
