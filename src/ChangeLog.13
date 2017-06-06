@@ -17504,7 +17504,7 @@
 	* casetab.c (init_casetab_once): Don't abuse the ascii eqv table for
 	the upcase table.
 
-2013-03-27  rzl24ozi  <rzl24ozi@gmail.com>  (tiny changes)
+2013-03-27  rzl24ozi  <rzl24ozi@gmail.com>  (tiny change)
 
 	* image.c [WINDOWSNT]: Fix calls to DEF_IMGLIB_FN for SVG function.
 

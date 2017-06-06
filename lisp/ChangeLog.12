@@ -14350,7 +14350,7 @@
 	* progmodes/ld-script.el (auto-mode-alist): Recognize linker
 	scripts whose file-name extensions are "\.x[bdsru]?[cn]?$".
 
-2006-01-01  Michael Ernst  <mernst@alum.mit.edu>  (tiny changes)
+2006-01-01  Michael Ernst  <mernst@alum.mit.edu>  (tiny change)
 
 	* textmodes/tildify.el: Fix typos (misspellings) in the commentary.
 
@@ -30895,7 +30895,7 @@
 	* textmodes/tex-mode.el (tex-view): If tex-shell process is not
 	running, restart it.
 
-2005-03-19  Yoichi NAKAYAMA  <yoichi@geiin.org>  (tiny changes)
+2005-03-19  Yoichi NAKAYAMA  <yoichi@geiin.org>  (tiny change)
 
 	* finder.el (finder-current-item): Throw an error on an empty line.
 
