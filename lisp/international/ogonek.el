@@ -4,7 +4,7 @@
 
 ;; Author: Włodek Bzyl
 ;;	   Ryszard Kubiak
-;; Maintainer: Ryszard Kubiak <rysiek@ipipan.gda.pl>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: i18n
 
 ;; This file is part of GNU Emacs.

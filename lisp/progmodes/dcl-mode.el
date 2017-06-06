@@ -3,7 +3,7 @@
 ;; Copyright (C) 1997, 2001-2017 Free Software Foundation, Inc.
 
 ;; Author: Odd Gripenstam <gripenstamol@decus.se>
-;; Maintainer: Odd Gripenstam <gripenstamol@decus.se>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: DCL editing major-mode languages
 
 ;; This file is part of GNU Emacs.
