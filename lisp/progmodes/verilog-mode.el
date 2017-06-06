@@ -4,8 +4,8 @@
 
 ;; Author: Michael McNamara <mac@verilog.com>
 ;;    Wilson Snyder <wsnyder@wsnyder.org>
-;;    http://www.verilog.com
-;;    http://www.veripool.org
+;; X-URL: http://www.verilog.com
+;; X-URL: http://www.veripool.org
 ;; Created: 3 Jan 1996
 ;; Keywords: languages
 

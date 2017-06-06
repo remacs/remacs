@@ -2,16 +2,16 @@
 
 ;; Copyright (C) 1991-2017 Free Software Foundation, Inc.
 
-;; Author: (The PCL-CVS Trust) pcl-cvs@cyclic.com
-;;	(Per Cederqvist) ceder@lysator.liu.se
-;;	(Greg A. Woods) woods@weird.com
-;;	(Jim Blandy) jimb@cyclic.com
-;;	(Karl Fogel) kfogel@floss.red-bean.com
-;;	(Jim Kingdon) kingdon@cyclic.com
-;;	(Stefan Monnier) monnier@cs.yale.edu
-;;	(Greg Klanderman) greg@alphatech.com
-;;	(Jari Aalto+mail.emacs) jari.aalto@poboxes.com
-;; Maintainer: (Stefan Monnier) monnier@gnu.org
+;; Author: The PCL-CVS Trust <pcl-cvs@cyclic.com>
+;;	Per Cederqvist <ceder@lysator.liu.se>
+;;	Greg A. Woods <woods@weird.com>
+;;	Jim Blandy <jimb@cyclic.com>
+;;	Karl Fogel <kfogel@floss.red-bean.com>
+;;	Jim Kingdon <kingdon@cyclic.com>
+;;	Stefan Monnier <monnier@cs.yale.edu>
+;;	Greg Klanderman <greg@alphatech.com>
+;;	Jari Aalto+mail.emacs <jari.aalto@poboxes.com>
+;; Maintainer: Stefan Monnier <monnier@gnu.org>
 ;; Keywords: CVS, vc, release management
 
 ;; This file is part of GNU Emacs.
