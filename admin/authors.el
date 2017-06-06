@@ -3,7 +3,7 @@
 ;; Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
 ;; Author: Gerd Moellmann <gerd@gnu.org>
-;; Maintainer: Kim F. Storm <storm@cua.dk>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: maint
 ;; Package: emacs
 
@@ -26,9 +26,6 @@
 
 ;; Use M-x authors RET to create an *Authors* buffer that can used as
 ;; or merged with Emacs's AUTHORS file.
-
-;; FIXME: This needs to modernized in the light of current practice,
-;; which generates a single top-level ChangeLog file from commit logs.
 
 ;;; Code:
 
@@ -81,6 +78,7 @@ files.")
     ("François Pinard" "Francois Pinard")
     ("Francesco Potortì" "Francesco Potorti" "Francesco Potorti`")
     ("Frederic Pierresteguy" "Fred Pierresteguy")
+    (nil "FSF")
     ("Gerd Möllmann" "Gerd Moellmann")
     ("Hallvard B. Furuseth" "Hallvard B Furuseth" "Hallvard Furuseth")
     ("Hrvoje Nikšić" "Hrvoje Niksic")
@@ -141,6 +139,7 @@ files.")
     ("Peter J. Weisberg" "PJ Weisberg")
     ("Peter S. Galbraith" "Peter S Galbraith" "Peter Galbraith")
     ("Peter Runestig" "Peter 'luna' Runestig")
+    ("Philipp Stephani" "Philipp .*phst@google")
     ("Piotr Zieliński" "Piotr Zielinski")
     ("Przemysław Wojnowski" "Przemyslaw Wojnowski")
     ("Rainer Schöpf" "Rainer Schoepf")
@@ -171,6 +170,7 @@ files.")
     ("Takaaki Ota" "Tak Ota")
     ("Takahashi Naoto" "Naoto Takahashi")
     ("Teodor Zlatanov" "Ted Zlatanov")
+    (nil "The PCL-CVS Trust")
     ("Thomas Dye" "Tom Dye")
     ("Thomas Horsley" "Tom Horsley")	; FIXME ?
     ("Thomas Wurgler" "Tom Wurgler")
