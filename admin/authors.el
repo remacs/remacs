@@ -1077,6 +1077,7 @@ Additionally, for these logs we apply the `lax' elements of
 
 (defvar authors-checked-files-alist)
 (defvar authors-invalid-file-names)
+(defvar authors-ignored-names)
 
 ;; This has become rather yucky. :(
 (defun authors-disambiguate-file-name (fullname)
@@ -1219,7 +1220,7 @@ author and what he did in hash table TABLE.  See the description of
 	  (nconc entry (list (cons action 1))))))))
 
 
-(defun authors-canonical-author-name (author)
+(defun authors-canonical-author-name (author file pos)
   "Return a canonicalized form of AUTHOR, an author name.
 If AUTHOR has an entry in `authors-aliases', use that.  Remove
 email addresses.  Capitalize words in the author's name, unless
@@ -1243,6 +1244,9 @@ it is found in `authors-fixed-case'."
     (setq author (replace-regexp-in-string "[ \t]+" " " author))
     ;; NB this ignores the first name only case.
     (unless (string-match "[-, \t]" author)
+      (push (format-message "%s:%d: ignored `%s'"
+			    file (1+ (count-lines (point-min) pos)) author)
+	    authors-ignored-names)
       (setq author ""))
     (or (car (member author authors-fixed-case))
 	(capitalize author))))
@@ -1284,7 +1288,7 @@ with the file and the number of each action:
 Suggested\\|Trivial\\|Version\\|Originally\\|From:\\|Patch[ \t]+[Bb]y\\)")))
 		   (push (authors-canonical-author-name
 			  (buffer-substring-no-properties
-			   (point) (line-end-position))) authors)
+			   (point) (line-end-position)) log-file pos) authors)
 		   (forward-line 1)))
 		((looking-at "^[ \t]+\\*")
 		 (let ((line (buffer-substring-no-properties
@@ -1317,7 +1321,7 @@ TABLE is a hash table to add author information to."
 	 (enable-local-variables :safe)	; for find-file, hence let*
 	 (enable-local-eval nil)
 	 (buffer (find-file-noselect file)))
-    (setq file (authors-disambiguate-file-name (expand-file-name file)))
+    (setq file (expand-file-name file))
     (with-current-buffer buffer
       (save-restriction
 	(widen)
@@ -1334,7 +1338,8 @@ TABLE is a hash table to add author information to."
 	      (skip-chars-forward "-0-9 \t")
 	      (push (authors-canonical-author-name
 		     (buffer-substring-no-properties
-		      (point) (line-end-position))) authors)
+		      (point) (line-end-position))
+		     file (line-beginning-position)) authors)
 	      ;; tips.texi says the continuation line should begin
 	      ;; with a tab, but often spaces are used.
 	      (setq continue
@@ -1345,7 +1350,9 @@ TABLE is a hash table to add author information to."
 	    (and (> (length authors) 1)
 		 (setq action :cowrote))
 	    (mapc (lambda (author)
-		    (authors-add author file action table))
+		    (authors-add
+		     author
+		     (authors-disambiguate-file-name file) action table))
 		  authors)))))
     (unless existing-buffer
       (kill-buffer buffer))))
@@ -1436,7 +1443,8 @@ and a buffer *Authors Errors* containing references to unknown files."
 	(table (make-hash-table :test 'equal))
 	(buffer-name "*Authors*")
 	authors-checked-files-alist
-	authors-invalid-file-names)
+	authors-invalid-file-names
+	authors-ignored-names)
     (authors-add-fixed-entries table)
     (dolist (log logs)
       (when (string-match "ChangeLog\\(.[0-9]+\\)?$" log)
@@ -1500,14 +1508,20 @@ list of their contributions.\n")
 	    (symbol-name authors-coding-system) "\nEnd:\n")
     (message "Generating buffer %s... done" buffer-name)
     (unless noninteractive
-      (when authors-invalid-file-names
+      (when (or authors-invalid-file-names authors-ignored-names)
 	(with-current-buffer (get-buffer-create "*Authors Errors*")
 	  (setq buffer-read-only nil)
 	  (erase-buffer)
 	  (set-buffer-file-coding-system authors-coding-system)
-	  (insert "Unrecognized file entries found:\n\n")
-	  (mapc (lambda (f) (if (not (string-match "^[A-Za-z]+$" f)) (insert f "\n")))
-		(sort authors-invalid-file-names 'string-lessp))
+	  (when authors-invalid-file-names
+	    (insert "Unrecognized file entries found:\n\n")
+	    (mapc (lambda (f) (if (not (string-match "^[A-Za-z]+$" f)) (insert f "\n")))
+		  (sort authors-invalid-file-names 'string-lessp)))
+	  (when authors-ignored-names
+	    (insert "\n\nThese authors were ignored:\n\n"
+		    (mapconcat
+		     'identity
+		     (sort authors-ignored-names 'string-lessp) "\n")))
 	  (goto-char (point-min))
 	  (compilation-mode)
 	  (message "Errors were found.  See buffer %s" (buffer-name))))
