@@ -112,19 +112,11 @@ enum {  BOOL_VECTOR_BITS_PER_CHAR =
 };
 
 /* An unsigned integer type representing a fixed-length bit sequence,
-   suitable for bool vector words, GC mark bits, etc.  Normally it is size_t
-   for speed, but on weird platforms it is unsigned char and not all
-   its bits are used.  */
-#if BOOL_VECTOR_BITS_PER_CHAR == CHAR_BIT
+   suitable for bool vector words, GC mark bits, etc. */
+
 typedef size_t bits_word;
 # define BITS_WORD_MAX SIZE_MAX
 enum { BITS_PER_BITS_WORD = SIZE_WIDTH };
-#else
-typedef unsigned char bits_word;
-# define BITS_WORD_MAX ((1u << BOOL_VECTOR_BITS_PER_CHAR) - 1)
-enum { BITS_PER_BITS_WORD = BOOL_VECTOR_BITS_PER_CHAR };
-#endif
-verify (BITS_WORD_MAX >> (BITS_PER_BITS_WORD - 1) == 1);
 
 /* printmax_t and uprintmax_t are types for printing large integers.
    These are the widest integers that are supported for printing.
