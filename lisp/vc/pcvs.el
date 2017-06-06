@@ -10,7 +10,7 @@
 ;;	Jim Kingdon <kingdon@cyclic.com>
 ;;	Stefan Monnier <monnier@cs.yale.edu>
 ;;	Greg Klanderman <greg@alphatech.com>
-;;	Jari Aalto+mail.emacs <jari.aalto@poboxes.com>
+;;	Jari Aalto <jari.aalto@poboxes.com>
 ;; Maintainer: Stefan Monnier <monnier@gnu.org>
 ;; Keywords: CVS, vc, release management
 

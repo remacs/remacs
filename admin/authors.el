@@ -78,7 +78,7 @@ files.")
     ("François Pinard" "Francois Pinard")
     ("Francesco Potortì" "Francesco Potorti" "Francesco Potorti`")
     ("Frederic Pierresteguy" "Fred Pierresteguy")
-    (nil "FSF")
+    (nil "^FSF")
     ("Gerd Möllmann" "Gerd Moellmann")
     ("Hallvard B. Furuseth" "Hallvard B Furuseth" "Hallvard Furuseth")
     ("Hrvoje Nikšić" "Hrvoje Niksic")
@@ -262,7 +262,11 @@ If REALNAME is nil, ignore that author.")
     "\\.\\(bzr\\|cvs\\|git\\)ignore$"		; obsolete or uninteresting
     "\\.arch-inventory$"
     "ChangeLog\\(\\.[0-9]+\\)?\\'"
-    "automated/data/"		   ; not interesting
+    "\\(automated\\|test\\)/data/"	; not interesting
+    "test/etags/"
+    "indent/"
+    "-resources/"
+    "admin/unidata/[BINSU]"
     ;; TODO lib/? Matches other things?
     "build-aux/" "m4/" "Emacs.xcodeproj" "mapfiles" "\\.map\\'"
     "preferences\\.\\(nib\\|gorm\\)"
@@ -274,7 +278,8 @@ Changes to files matching one of the regexps in this list are not listed.")
 
 (defconst authors-no-scan-regexps
   '("etc/nxml/"
-    "automated/data/")
+    "test/data/"
+    "test/.*-resources/")
   "Lists of regexps matching files not to scan for authorship.")
 
 (defconst authors-ignored-files
@@ -389,6 +394,7 @@ Changes to files matching one of the regexps in this list are not listed.")
     "admin/unidata/makefile.w32-in"
     "unidata/makefile.w32-in"
     "lib/makefile.w32-in"
+    "lib-src/makefile.w32-in"
     "leim/makefile.w32-in"
     "lisp/makefile.w32-in"
     "src/makefile.w32-in"
@@ -402,12 +408,13 @@ Changes to files matching one of the regexps in this list are not listed.")
     "src/paths.h"
     "envadd.bat"
     "multi-install-info.bat"
-    "INSTALL.OLD"
+    "INSTALL.OLD" "nt/INSTALL.OLD"
     "nt/src/paths.h"
     "nmake.defs"
     "gmake.defs"
     "zipdist.bat"
     "nt/makefile.w32-in"
+    "nt/subdirs.el"
     "config.nt"
     "nextstep/WISHLIST"
     )
@@ -653,7 +660,9 @@ Changes to files in this list are not listed.")
     "configure" "config.h"
     "is_exec.c" "sigaction.c"
     ;; nt/
-    "ebuild.bat" "install.bat" "fast-install.bat"
+    "config.nt" "gmake.defs" "gnulib.mk" "nmake.defs"
+    "ebuild.bat" "envadd.bat" "fast-install.bat" "install.bat"
+    "multi-install-info.bat" "zipdist.bat"
     "debug.bat.in" "emacs.bat.in" "addsection.c"
     "inc/sys/dir.h" "inc/gettext.h"
     "time.h"
@@ -734,7 +743,9 @@ Changes to files in this list are not listed.")
     "dns-mode.el" "run-at-time.el" "gnus-encrypt.el" "sha1-el.el"
     "gnus-gl.el" "gnus.sum.el" "proto-stream.el" "color.el" "color-lab.el"
     "eww.el" "shr-color.el" "shr.el" "earcon.el" "gnus-audio.el" "encrypt.el"
-    "format-spec.el" "gnus-move.el"
+    "format-spec.el" "gnus-move.el" "gnus-sync.el"
+    "auth-source.el" "mailcap.el" "pop3.el" "qp.el" "registry.el"
+    "rfc2231.el" "sieve.el" "sieve-mode.el"
     ;; doc
     "getopt.c" "texindex.c" "news.texi" "vc.texi" "vc2-xtra.texi"
     "back.texi" "vol1.texi" "vol2.texi" "elisp-covers.texi" "two.el"
@@ -764,10 +775,15 @@ Changes to files in this list are not listed.")
     "emacsclient.c" "etags.c" "hexl.c" "make-docfile.c" "movemail.c"
     "test-distrib.c" "testfile"
     "tpu-edt.doc"			; see below
+    "lisp/obsolete/vc-mcvs.el"
     "obsolete/vc-mcvs.el"
     "nnwarchive.el"
     "nnultimate.el"
     "nnslashdot.el"
+    "keyswap.el"
+    "mouse-sel.el"
+    "nxml-glyph.el"
+    "tramp-gw.el"
     "webmail.el"
     )
   "File names which are valid, but no longer exist (or cannot be found)
@@ -881,10 +897,13 @@ in the repository.")
     ("nxml/test.invalid.xml" . "test-invalid.xml")
     ("nxml/test.valid.xml" . "test-valid.xml")
     ;; The one in lisp is eshell/eshell.el.
-    ("eshell.el" . "automated/eshell.el")
-    ("eshell/esh-test.el" . "automated/eshell.el")
-    ("automated/cl-lib.el" . "automated/cl-lib-tests.el")
-    ("automated/package-x-test.el" . "automated/package-test.el")
+    ("eshell.el" . "eshell-tests.el")
+    ("automated/eshell.el" . "eshell-tests.el")
+    ("eshell/esh-test.el" . "eshell-tests.el")
+    ("automated/cl-lib.el" . "cl-lib-tests.el")
+    ("automated/cl-lib-tests.el" . "cl-lib-tests.el")
+    ("automated/package-x-test.el" . "package-tests.el")
+    ("automated/package-test.el" . "package-tests.el")
     ("indent/js-indent-first-initialiser-t.js" . "indent/js-indent-init-t.js")
     ("indent/js-indent-first-initialiser-dynamic.js" .
      "indent/js-indent-init-dynamic.js")
@@ -931,7 +950,8 @@ in the repository.")
     ("GNU.JOKES" . "JOKES")
     ("CHARACTERS" . "TODO")
     ("lisp/character-fold.el" . "lisp/char-fold.el")
-    ("test/automated/character-fold-tests.el" . "test/automated/char-fold-tests.el")
+    ("test/automated/character-fold-tests.el" . "char-fold-tests.el")
+    ("test/automated/char-fold-tests.el" . "char-fold-tests.el")
     ("images/gnus/mail_send.xpm" . "mail-send.xpm") ; still in images/gnus
     ("schema/xhtml-basic-form.rnc" . "xhtml-bform.rnc" )
     ("schema/xhtml-basic-table.rnc" . "xhtml-btable.rnc")

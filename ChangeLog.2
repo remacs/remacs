@@ -13551,7 +13551,7 @@
 	to window primitives (e.g. window-start) with a GROUP argument by calls to
 	new functions (e.g. window-group-start).
 
-	* lisp/ispell.el (ispell-command-loop): Replace call to
+	* lisp/textmodes/ispell.el (ispell-command-loop): Replace call to
 	pos-visible-in-window-p with pos-visible-in-window-group-p.
 
 	* lisp/window.el (window-group-start, window-group-end)
@@ -17568,7 +17568,7 @@
 
 2015-11-09  Michael Sperber  <mike@xemacs.org>
 
-	* lisp/gnus-sum.el (gnus-summary-backend-map): Bind B-backspace to
+	* lisp/gnus/gnus-sum.el (gnus-summary-backend-map): Bind B-backspace to
 	`gnus-summary-delete-article` in a way that also works on XEmacs.
 
 2015-11-08  Simen Heggestøyl  <simenheg@gmail.com>
@@ -26978,7 +26978,7 @@
 	both cases.  This has been regularized.  Error signaling behavior
 	has been explicitly added to the doc string.
 
-	* lisp/cl-extra.el (cl-subseq): Defers to (seq-subseq) and is
+	* lisp/emacs-lisp/cl-extra.el (cl-subseq): Defers to (seq-subseq) and is
 	therefore also impacted by this change.  Update the doc string
 	to reflect this.
 
@@ -28839,7 +28839,7 @@
 
 2015-06-29  Wolfgang Jenkner  <wjenkner@inode.at>
 
-	* lisp/calc-store.el (calc-insert-permanent-variable): Heed case.
+	* lisp/calc/calc-store.el (calc-insert-permanent-variable): Heed case.
 	Otherwise `s p' of f and F will stomp on each other's value.
 	(Bug#20916)
 
