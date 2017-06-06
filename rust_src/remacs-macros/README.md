@@ -57,7 +57,7 @@ DEFUN ("numberp", Fnumberp, Snumberp, 1, 1, 0,
 }
 ```
 
-Looking at it when can gather some information of it, for example it's name is "numberp" and defines a `Fnumberp` function and a static structure `Snumberp`, plus the function only takes one argument `object`. With that in mind we can rewrite now in Rust. With that in mind we can rewrite it now in Rust:
+Looking at it when can gather some information of it, for example it's name is "numberp" and defines a `Fnumberp` function and a static structure `Snumberp`, plus the function only takes one argument `object`. With that in mind we can rewrite it now in Rust:
 
 ```rust
 /// Return t if OBJECT is a number (floating point or integer).
