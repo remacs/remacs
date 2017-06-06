@@ -1225,28 +1225,6 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
 #endif  /* not WINDOWSNT */
 }
 
-#ifndef WINDOWSNT
-/* Move the file descriptor FD so that its number is not less than MINFD.
-   If the file descriptor is moved at all, the original is closed on MSDOS,
-   but not elsewhere as the caller will close it anyway.  */
-static int
-relocate_fd (int fd, int minfd)
-{
-  if (fd >= minfd)
-    return fd;
-  else
-    {
-      int new = fcntl (fd, F_DUPFD_CLOEXEC, minfd);
-      if (new == -1)
-	{
-	  emacs_perror ("while setting up child");
-	  _exit (EXIT_CANCELED);
-	}
-      return new;
-    }
-}
-#endif /* not WINDOWSNT */
-
 static bool
 getenv_internal_1 (const char *var, ptrdiff_t varlen, char **value,
 		   ptrdiff_t *valuelen, Lisp_Object env)
