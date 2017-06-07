@@ -16417,7 +16417,7 @@
 	* net/tramp.el (tramp-advice-file-expand-wildcards): Don't rely on
 	`ad-do-it'.
 
-2009-11-08  Andr  <m00naticus@gmail.com>  (tiny change)
+2009-11-08  Andrey Kotlarski  <m00naticus@gmail.com>  (tiny change)
 
 	* net/tramp.el (tramp-handle-write-region): Copy but rename temp file,
 	in order to keep context in SELinux.

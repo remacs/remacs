@@ -323,6 +323,7 @@ Changes to files matching one of the regexps in this list are not listed.")
     "*.el"
     ;; Autogen:
     "cus-load.el" "finder-inf.el" "ldefs-boot.el" "loaddefs-boot.el"
+    "lisp/ldefs-boot-manual.el" "lisp/ldefs-boot-auto.el"
     "compile" "config.guess" "config.sub" "depcomp"
     "autogen/compile" "autogen/config.guess" "autogen/config.in"
     "autogen/config.sub" "autogen/depcomp" "autogen/install-sh"
@@ -392,6 +393,7 @@ Changes to files matching one of the regexps in this list are not listed.")
     ;; Not in gnulib anymore
     "lib/qset-acl.c" "lib/qcopy-acl.c" "lib/file-has-acl.c"
     ;; files from old MS Windows build procedures
+    "nt/gnulib-modules-to-delete.cfg"
     "makefile.w32-in"
     "admin/unidata/makefile.w32-in"
     "unidata/makefile.w32-in"
@@ -666,7 +668,7 @@ Changes to files in this list are not listed.")
     "ebuild.bat" "envadd.bat" "fast-install.bat" "install.bat"
     "multi-install-info.bat" "zipdist.bat"
     "debug.bat.in" "emacs.bat.in" "addsection.c"
-    "inc/sys/dir.h" "inc/gettext.h"
+    "inc/sys/dir.h" "inc/gettext.h" "nt/inc/socket.h"
     "time.h"
     ".gdbinit-union"
     "alloca.s"
@@ -705,6 +707,7 @@ Changes to files in this list are not listed.")
     "images/gnus/reverse-smile.xpm"
     "notes/commits" "notes/changelogs"
     "revdiff"				; admin/
+    "admin/ldefs-clean.el"
     "vcdiff" "rcs-checkin" "tindex.pl"
     "mainmake" "sed1.inp" "sed2.inp" "sed3.inp" ; msdos/
     "mac-fix-env.m"
@@ -762,7 +765,11 @@ Changes to files in this list are not listed.")
     ;; lib/
     "lib/stdio.c" "lib/gl_openssl.h" "lib/sigprocmask.c"
     "lib/pthread_sigprocmask.c" "lib/ldtoastr.c" "lib/dummy.c"
-    "lib/ignore-value.h"
+    "lib/ignore-value.h" "lib/Makefile.am"
+    "lib/pathmax.h" "lib/stat.c" "lib/strtoul.c" "lib/strtoull.c"
+    "lib/strtoumax.c" "lib/unsetenv.c"
+    "lib/getopt_cdefs.in.h" "lib/getopt_core.h" "lib/getopt_ext.h"
+    "lib/getopt_pfx_core.h" "lib/getopt_pfx_ext.h"
     ;; lib-src/
     "cvtmail.c" "digest-doc.c" "emacsserver.c" "emacstool.c" "env.c"
     "etags-vmslib.c" "fakemail.c" "getdate.c" "getopt.h" "getopt1.c"
@@ -778,6 +785,7 @@ Changes to files in this list are not listed.")
     "emacsclient.c" "etags.c" "hexl.c" "make-docfile.c" "movemail.c"
     "test-distrib.c" "testfile"
     "tpu-edt.doc"			; see below
+    "iso-swed.el"
     "lisp/obsolete/vc-mcvs.el"
     "obsolete/vc-mcvs.el"
     "nnwarchive.el"
@@ -792,7 +800,7 @@ Changes to files in this list are not listed.")
     "redisplay-testsuite.el"
     "cedet-utests.el" "ede-tests.el" "semantic-ia-utest.el"
     "semantic-tests.el" "semantic-utest-c.el" "semantic-utest.el"
-    "srecode-tests.el"
+    "srecode-tests.el" "make-test-deps.emacs-lisp"
     )
   "File names which are valid, but no longer exist (or cannot be found)
 in the repository.")
@@ -962,6 +970,18 @@ in the repository.")
     ("lisp/character-fold.el" . "lisp/char-fold.el")
     ("test/automated/character-fold-tests.el" . "char-fold-tests.el")
     ("test/automated/char-fold-tests.el" . "char-fold-tests.el")
+    ("test/lisp/character-fold-tests.el" . "char-fold-tests.el")
+    ("test/manual/cycle-tests.el" . "fns-tests.el")
+    ("test/manual/cyclic-tests.el" . "fns-tests.el")
+    ("test/lisp/dns-mode-tests.el" . "dns-mode-tests.el")
+    ("test/lisp/legacy/core-elisp-tests.el" . "lisp-tests.el")
+    ("test/lisp/legacy/decoder-test.el" . "coding-tests.el")
+    ("test/lisp/legacy/files-tests.el" . "files-tests.el")
+    ("test/lisp/legacy/font-parse-tests.el" . "font-tests.el")
+    ("test/lisp/legacy/lexbind-tests.el" . "bytecomp-test.el")
+    ("test/lisp/legacy/occur-tests.el" . "replace-tests.el")
+    ("test/lisp/legacy/syntax-tests.el" . "syntax-tests.el")
+    ("test/file-organisation.org" . "file-organization.org")
     ("images/gnus/mail_send.xpm" . "mail-send.xpm") ; still in images/gnus
     ("schema/xhtml-basic-form.rnc" . "xhtml-bform.rnc" )
     ("schema/xhtml-basic-table.rnc" . "xhtml-btable.rnc")
@@ -981,6 +1001,7 @@ in the repository.")
     ("icons/emacs21.ico" . "emacs21.ico")
     ("ja-dic" . "leim/ja-dic")
     ("quail" . "leim/quail")
+    ("admin/notes/triage" . "bug-triage")
     ;; Moved from autogen/ to admin/.
     ("autogen/update_autogen" . "update_autogen")
     ;; Moved from etc/ to admin/.
