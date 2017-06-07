@@ -297,6 +297,21 @@ if [ $check = yes ]; then
       make --question info || error=yes
   fi
 
+  ## Is this a release?
+  case $version in
+      [1-9][0-9].[0-9])
+          if [ -e ChangeLog ]; then
+              if ! grep -q "Version $version released" ChangeLog; then
+                  echo "No release notice in ChangeLog"
+                  error=yes
+              fi
+          else
+              echo "A release must have a ChangeLog"
+              error=yes
+          fi
+      ;;
+  esac
+
   if [ $error = yes ]; then
       echo "Failed checks" >&2
       exit 1
