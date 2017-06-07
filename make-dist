@@ -392,7 +392,7 @@ for subdir in site-lisp \
 	      nt nt/inc nt/inc/sys nt/inc/arpa nt/inc/netinet nt/icons \
 	      `find etc lisp admin test -type d` \
 	      doc doc/emacs doc/misc doc/man doc/lispref doc/lispintro \
-	      info m4 modules modules/mod-test msdos \
+	      info m4 modules msdos \
 	      nextstep nextstep/templates \
 	      nextstep/Cocoa nextstep/Cocoa/Emacs.base \
 	      nextstep/Cocoa/Emacs.base/Contents \
@@ -404,7 +404,7 @@ do
 
   if [ "$with_tests" != "yes" ]; then
     case $subdir in
-        test*|*/mod-test*) continue ;;
+        test*) continue ;;
     esac
   fi
 
@@ -483,14 +483,6 @@ echo "Making links to 'm4'"
 echo "Making links to 'modules'"
 (cd modules
  ln *.py ../${tempdir}/modules
- if [ "$with_tests" = "yes" ]; then
-   for f in `find mod-test -type f`; do
-       case $f in
-           *.log|*.o|*.so) continue ;;
-       esac
-       ln $f ../$tempdir/modules/$f
-   done
- fi
 )
 
 echo "Making links to 'nt'"
