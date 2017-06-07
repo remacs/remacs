@@ -1154,6 +1154,10 @@ instead of its first.
 renamed to 'lread--old-style-backquotes'.  No user code should use
 this variable.
 
+** To avoid confusion caused by "smart quotes", the reader no longer
+accepts Lisp symbols which begin with the following quotation
+characters: ‘’‛“”‟〞＂＇, unless they are escaped with backslash.
+
 +++
 ** Module functions are now implemented slightly differently; in
 particular, the function 'internal--module-call' has been removed.
