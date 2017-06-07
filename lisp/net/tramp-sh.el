@@ -4720,7 +4720,7 @@ connection if a previous connection has died for some reason."
 			 (l-method (tramp-file-name-method hop))
 			 (l-user (tramp-file-name-user hop))
 			 (l-host (tramp-file-name-host hop))
-			 (l-port nil)
+			 (l-port (tramp-file-name-port hop))
 			 (login-program
 			  (tramp-get-method-parameter hop 'tramp-login-program))
 			 (login-args
@@ -4754,12 +4754,6 @@ connection if a previous connection has died for some reason."
 		    ;; Add arguments for asynchronous processes.
 		    (when (and process-name async-args)
 		      (setq login-args (append async-args login-args)))
-
-		    ;; Check for port number.  Until now, there's no
-		    ;; need for handling like method, user, host.
-		    (when (string-match tramp-host-with-port-regexp l-host)
-		      (setq l-port (match-string 2 l-host)
-			    l-host (match-string 1 l-host)))
 
 		    ;; Check, whether there is a restricted shell.
 		    (dolist (elt tramp-restricted-shell-hosts-alist)
