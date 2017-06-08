@@ -871,6 +871,7 @@ static void
 initialize_environment (emacs_env *env, struct emacs_env_private *priv)
 {
   priv->pending_non_local_exit = emacs_funcall_exit_return;
+  priv->non_local_exit_symbol = priv->non_local_exit_data = Qnil;
   env->size = sizeof *env;
   env->private_members = priv;
   env->make_global_ref = module_make_global_ref;
@@ -924,6 +925,19 @@ finalize_runtime_unwind (void* raw_ert)
 {
   struct emacs_runtime *ert = raw_ert;
   finalize_environment (&ert->private_members->pub);
+}
+
+void
+mark_modules (void)
+{
+  Lisp_Object tail = Vmodule_environments;
+  FOR_EACH_TAIL_SAFE (tail)
+  {
+    emacs_env *env = XSAVE_POINTER (XCAR (tail), 0);
+    struct emacs_env_private *priv = env->private_members;
+    mark_object (priv->non_local_exit_symbol);
+    mark_object (priv->non_local_exit_data);
+  }
 }
 
 

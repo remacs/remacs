@@ -5942,6 +5942,10 @@ garbage_collect_1 (void *end)
   mark_fringe_data ();
 #endif
 
+#ifdef HAVE_MODULES
+  mark_modules ();
+#endif
+
   /* Everything is now marked, except for the data in font caches,
      undo lists, and finalizers.  The first two are compacted by
      removing an items which aren't reachable otherwise.  */
