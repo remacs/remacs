@@ -6560,7 +6560,10 @@ not_in_argv (NSString *arg)
 
   if (wait_for_tool_bar)
     {
-      if (FRAME_TOOLBAR_HEIGHT (emacsframe) == 0)
+      /* The toolbar height is always 0 in fullscreen, so don't wait
+         for it to become available. */
+      if (FRAME_TOOLBAR_HEIGHT (emacsframe) == 0
+          && ! [self isFullscreen])
         {
           NSTRACE_MSG ("Waiting for toolbar");
           return;
