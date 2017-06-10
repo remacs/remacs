@@ -1535,7 +1535,7 @@ FRAME can be a frame name, a terminal name, or a frame.
 If FRAME is omitted or nil, use the currently selected frame.
 
 By default, the current monitor is said to be the physical
-monitor dominating teh selected frame.  A frame is dominated by
+monitor dominating the selected frame.  A frame is dominated by
 a physical monitor when either the largest area of the frame resides
 in the monitor, or the monitor is the closest to the frame if the
 frame does not intersect any physical monitors.
