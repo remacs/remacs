@@ -2126,7 +2126,16 @@ directory in another window."
   (interactive)
   ;; Bind `find-file-run-dired' so that the command works on directories
   ;; too, independent of the user's setting.
-  (let ((find-file-run-dired t))
+  (let ((find-file-run-dired t)
+        ;; This binding prevents problems with preserving point in
+        ;; windows displaying Dired buffers, because reverting a Dired
+        ;; buffer empties it, which changes the places where the
+        ;; markers used by switch-to-buffer-preserve-window-point
+        ;; point.
+        (switch-to-buffer-preserve-window-point
+         (if dired-auto-revert-buffer
+             nil
+           switch-to-buffer-preserve-window-point)))
     (find-file (dired-get-file-for-visit))))
 
 (defun dired-find-alternate-file ()
