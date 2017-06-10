@@ -185,6 +185,19 @@ Test indentation in emacs-lisp-mode\"
       (indent-region (point) (point-max))
       (should (equal (buffer-string) correct)))))
 
+(ert-deftest lisp-indent-region-after-string-literal ()
+  (with-temp-buffer
+    (insert "\
+\(user-error \"Unexpected initialization file: `%s'
+Expected initialization file: `%s'\"
+            (abbreviate-file-name user-init-file)
+            (abbreviate-file-name this-init-file))")
+    (let ((indent-tabs-mode nil)
+          (correct (buffer-string)))
+      (emacs-lisp-mode)
+      (indent-region (point-min) (point-max))
+      (should (equal (buffer-string) correct)))))
+
 
 (provide 'lisp-mode-tests)
 ;;; lisp-mode-tests.el ends here

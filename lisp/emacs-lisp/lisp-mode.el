@@ -773,11 +773,9 @@ complete sexp in the innermost containing list at position
                (:constructor lisp-indent-initial-state
                              (&aux (ppss (lisp-ppss))
                                    (ppss-point (point))
-                                   (depth (car ppss))
-                                   (stack (make-list (1+ depth) nil)))))
+                                   (stack (make-list (1+ (car ppss)) nil)))))
   stack ;; Cached indentation, per depth.
   ppss
-  depth
   ppss-point)
 
 (defun lisp-indent-calc-next (state)
@@ -785,9 +783,11 @@ complete sexp in the innermost containing list at position
 STATE is updated by side effect, the first state should be
 created by `lisp-indent-initial-state'.  This function may move
 by more than one line to cross a string literal."
-  (pcase-let (((cl-struct lisp-indent-state
-                          (stack indent-stack) ppss depth ppss-point)
-               state))
+  (pcase-let* (((cl-struct lisp-indent-state
+                           (stack indent-stack) ppss ppss-point)
+                state)
+               (indent-depth (car ppss)) ; Corresponding to indent-stack.
+               (depth indent-depth))
     ;; Parse this line so we can learn the state to indent the
     ;; next line.
     (while (let ((last-sexp (nth 2 ppss)))
@@ -799,22 +799,22 @@ by more than one line to cross a string literal."
              (if (and (not (nth 2 ppss)) (= depth (car ppss)))
                  (setf (nth 2 ppss) last-sexp)
                (setq last-sexp (nth 2 ppss)))
+             (setq depth (car ppss))
              ;; Skip over newlines within strings.
              (nth 3 ppss))
       (let ((string-start (nth 8 ppss)))
-       (setq ppss (parse-partial-sexp (point) (point-max)
-                                      nil nil ppss 'syntax-table))
-       (setf (nth 2 ppss) string-start)) ; Finished a complete string.
+        (setq ppss (parse-partial-sexp (point) (point-max)
+                                       nil nil ppss 'syntax-table))
+        (setf (nth 2 ppss) string-start) ; Finished a complete string.
+        (setq depth (car ppss)))
       (setq ppss-point (point)))
     (setq ppss-point (point))
-    (let* ((next-depth (car ppss))
-           (depth-delta (- next-depth depth)))
+    (let* ((depth-delta (- depth indent-depth)))
       (cond ((< depth-delta 0)
              (setq indent-stack (nthcdr (- depth-delta) indent-stack)))
             ((> depth-delta 0)
              (setq indent-stack (nconc (make-list depth-delta nil)
-                                       indent-stack))))
-      (setq depth next-depth))
+                                       indent-stack)))))
     (prog1
         (let (indent)
           (cond ((= (forward-line 1) 1) nil)
@@ -826,7 +826,6 @@ by more than one line to cross a string literal."
                 ;; This only happens if we're in a string.
                 (t (error "This shouldn't happen"))))
       (setf (lisp-indent-state-stack state) indent-stack)
-      (setf (lisp-indent-state-depth state) depth)
       (setf (lisp-indent-state-ppss-point state) ppss-point)
       (setf (lisp-indent-state-ppss state) ppss))))
 
