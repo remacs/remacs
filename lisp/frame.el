@@ -1498,6 +1498,75 @@ keys and their meanings."
 	   for frames = (cdr (assq 'frames attributes))
 	   if (memq frame frames) return attributes))
 
+(defun frame-monitor-attribute (attribute &optional frame x y)
+  "Return the value of ATTRIBUTE on FRAME's monitor.
+If FRAME is omitted or nil, use currently selected frame.
+
+By default, the current monitor is the physical monitor
+dominating the selected frame.  A frame is dominated by a
+physical monitor when either the largest area of the frame
+resides in the monitor, or the monitor is the closest to the
+frame if the frame does not intersect any physical monitors.
+
+If X and Y are both numbers, then ignore the value of FRAME; the
+monitor is determined to be the physical monitor that contains
+the pixel coordinate (X, Y).
+
+See `display-monitor-attributes-list' for the list of attribute
+keys and their meanings."
+  (if (and (numberp x)
+           (numberp y))
+      (cl-loop for monitor in (display-monitor-attributes-list)
+               for geometry = (alist-get 'geometry monitor)
+               for min-x = (pop geometry)
+               for min-y = (pop geometry)
+               for max-x = (+ min-x (pop geometry))
+               for max-y = (+ min-y (car geometry))
+               when (and (<= min-x x)
+                         (< x max-x)
+                         (<= min-y y)
+                         (< y max-y))
+               return (alist-get attribute monitor))
+    (alist-get attribute (frame-monitor-attributes frame))))
+
+(defun frame-monitor-geometry (&optional frame x y)
+    "Return the geometry of FRAME's monitor.
+FRAME can be a frame name, a terminal name, or a frame.
+If FRAME is omitted or nil, use the currently selected frame.
+
+By default, the current monitor is said to be the physical
+monitor dominating teh selected frame.  A frame is dominated by
+a physical monitor when either the largest area of the frame resides
+in the monitor, or the monitor is the closest to the frame if the
+frame does not intersect any physical monitors.
+
+If X and Y are both numbers, then ignore the value of FRAME; the
+monitor is determined to be the physical monitor that contains
+the pixel coordinate (X, Y).
+
+See `display-monitor-attributes-list' for information on the
+geometry attribute."
+  (frame-monitor-attribute 'geometry frame x y))
+
+(defun frame-monitor-workarea (&optional frame x y)
+  "Return the workarea of FRAME's monitor.
+FRAME can be a frame name, a terminal name, or a frame.
+If FRAME is omitted or nil, use currently selected frame.
+
+By default, the current monitor is said to be the physical
+monitor dominating the selected frame.  A frame is dominated by
+a physical monitor when either the largest area of the frame resides
+in the monitor, or the monitor is the closest to the frame if the
+frame does not intersect any physical monitors.
+
+If X and Y are both numbers, then ignore the value of FRAME; the
+monitor is determined to be the physical monitor that contains
+the pixel coordinate (X, Y).
+
+See `display-monitor-attributes-list' for information on the
+workarea attribute."
+  (frame-monitor-attribute 'workarea frame x y))
+
 (declare-function x-frame-list-z-order "xfns.c" (&optional display))
 (declare-function w32-frame-list-z-order "w32fns.c" (&optional display))
 (declare-function ns-frame-list-z-order "nsfns.m" (&optional display))
