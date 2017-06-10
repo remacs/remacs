@@ -1594,6 +1594,7 @@ If FRAME is nil, the current FRAME is used."
 (defun face-spec-choose (spec &optional frame no-match-retval)
   "Return the proper attributes for FRAME, out of SPEC.
 
+Value is a plist of face attributes in the form of attribute-value pairs.
 If no match is found or SPEC is nil, return nil, unless NO-MATCH-RETVAL
 is given, in which case return its value instead."
   (unless frame
@@ -1734,32 +1735,34 @@ The following sources are applied in this order:
   ;; `theme-face' records.
   (let ((theme-faces (get face 'theme-face))
 	(no-match-found 0)
-	spec theme-face-applied)
+	face-attrs theme-face-applied)
     (if theme-faces
 	(dolist (elt (reverse theme-faces))
-	  (setq spec (face-spec-choose (cadr elt) frame no-match-found))
-	  (unless (eq spec no-match-found)
-	    (face-spec-set-2 face frame spec)
+	  (setq face-attrs (face-spec-choose (cadr elt) frame no-match-found))
+	  (unless (eq face-attrs no-match-found)
+	    (face-spec-set-2 face frame face-attrs)
 	    (setq theme-face-applied t))))
     ;; If there was a spec applicable to FRAME, that overrides the
     ;; defface spec entirely (rather than inheriting from it).  If
     ;; there was no spec applicable to FRAME, apply the defface spec
     ;; as well as any applicable X resources.
     (unless theme-face-applied
-      (setq spec (face-spec-choose (face-default-spec face) frame))
-      (face-spec-set-2 face frame spec)
+      (setq face-attrs (face-spec-choose (face-default-spec face) frame))
+      (face-spec-set-2 face frame face-attrs)
       (make-face-x-resource-internal face frame))
-    (setq spec (face-spec-choose (get face 'face-override-spec) frame))
-    (face-spec-set-2 face frame spec)))
+    (setq face-attrs (face-spec-choose (get face 'face-override-spec) frame))
+    (face-spec-set-2 face frame face-attrs)))
 
-(defun face-spec-set-2 (face frame spec)
-  "Set the face attributes of FACE on FRAME according to SPEC."
+(defun face-spec-set-2 (face frame face-attrs)
+  "Set the face attributes of FACE on FRAME according to FACE-ATTRS.
+FACE-ATTRS is a plist of face attributes in the form of attribute-value
+pairs."
   (let (attrs)
-    (while spec
-      (when (assq (car spec) face-x-resources)
-	(push (car spec) attrs)
-	(push (cadr spec) attrs))
-      (setq spec (cddr spec)))
+    (while face-attrs
+      (when (assq (car face-attrs) face-x-resources)
+	(push (car face-attrs) attrs)
+	(push (cadr face-attrs) attrs))
+      (setq face-attrs (cddr face-attrs)))
     (apply 'set-face-attribute face frame (nreverse attrs))))
 
 (defun face-attr-match-p (face attrs &optional frame)
