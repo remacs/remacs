@@ -562,14 +562,16 @@ pass to the OPERATION."
        (concat string (string 0)) string)))
 
 (defun tramp-gvfs-dbus-byte-array-to-string (byte-array)
-  "Like `dbus-byte-array-to-string' but remove trailing \\0 if exists."
+  "Like `dbus-byte-array-to-string' but remove trailing \\0 if exists.
+Return nil for null BYTE-ARRAY."
   ;; The byte array could be a variant.  Take care.
   (let ((byte-array
 	 (if (and (consp byte-array) (atom (car byte-array)))
 	     byte-array (car byte-array))))
-    (dbus-byte-array-to-string
-     (if (and (consp byte-array) (zerop (car (last byte-array))))
-	 (butlast byte-array) byte-array))))
+    (and byte-array
+	 (dbus-byte-array-to-string
+	  (if (and (consp byte-array) (zerop (car (last byte-array))))
+	      (butlast byte-array) byte-array)))))
 
 (defun tramp-gvfs-stringify-dbus-message (message)
   "Convert a D-Bus message into readable UTF8 strings, used for traces."
@@ -815,8 +817,7 @@ file names."
       ;; `expand-file-name' (this does "/./" and "/../").
       (tramp-make-tramp-file-name
        method user domain host port
-       (tramp-run-real-handler
-	'expand-file-name (list localname))))))
+       (tramp-run-real-handler 'expand-file-name (list localname))))))
 
 (defun tramp-gvfs-get-directory-attributes (directory)
   "Return GVFS attributes association list of all files in DIRECTORY."
@@ -1227,12 +1228,11 @@ file-notify events."
 	  (with-parsed-tramp-file-name filename nil
 	    (when (string-equal "gdrive" method)
 	      (setq method "google-drive"))
-	    (when (and user (string-match tramp-user-with-domain-regexp user))
-	      (setq user
-		    (concat (match-string 2 user) ";" (match-string 1 user))))
+	    (when (and user domain)
+	      (setq user (concat domain ";" user)))
 	    (url-parse-make-urlobj
-	     method (and user (url-hexify-string user)) nil
-	     (tramp-file-name-host v) (tramp-file-name-port v)
+	     method (and user (url-hexify-string user)) nil host
+	     (if (stringp port) (string-to-number port) port)
 	     (and localname (url-hexify-string localname)) nil nil t))
 	(url-parse-make-urlobj
 	 "file" nil nil nil nil
@@ -1398,10 +1398,6 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	  (setq method "davs"))
 	(when (string-equal "google-drive" method)
 	  (setq method "gdrive"))
-	(unless (zerop (length domain))
-	  (setq user (concat user tramp-prefix-domain-format domain)))
-	(unless (zerop (length port))
-	  (setq host (concat host tramp-prefix-port-format port)))
 	(with-parsed-tramp-file-name
 	    (tramp-make-tramp-file-name method user domain host port "") nil
 	  (tramp-message
@@ -1487,14 +1483,12 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	   (setq method "gdrive"))
 	 (when (and (string-equal "synce" method) (zerop (length user)))
 	   (setq user (or (tramp-file-name-user vec) "")))
-	 (unless (zerop (length domain))
-	   (setq user (concat user tramp-prefix-domain-format domain)))
-	 (unless (zerop (length port))
-	   (setq host (concat host tramp-prefix-port-format port)))
 	 (when (and
 		(string-equal method (tramp-file-name-method vec))
-		(string-equal user (or (tramp-file-name-user vec) ""))
+		(string-equal user (tramp-file-name-user vec))
+		(string-equal domain (tramp-file-name-domain vec))
 		(string-equal host (tramp-file-name-host vec))
+		(string-equal port (tramp-file-name-port vec))
 		(string-match (concat "^" (regexp-quote prefix))
 			      (tramp-file-name-unquote-localname vec)))
 	   ;; Set prefix, mountpoint and location.
@@ -1554,8 +1548,7 @@ It was \"a(say)\", but has changed to \"a{sv})\"."
             ,@(when domain
                 (list (tramp-gvfs-mount-spec-entry "domain" domain)))
             ,@(when port
-                (list (tramp-gvfs-mount-spec-entry
-		       "port" (number-to-string port))))))
+                (list (tramp-gvfs-mount-spec-entry "port" port)))))
 	 (mount-pref
           (if (and (string-match "\\`dav" method)
                    (string-match "^/?[^/]+" localname))
