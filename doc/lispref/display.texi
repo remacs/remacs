@@ -2531,16 +2531,20 @@ This function also defines @var{face} as a valid face name if it is
 not already one, and (re)calculates its attributes on existing frames.
 
 @cindex override spec @r{(for a face)}
-The argument @var{spec-type} determines which spec to set.  If it is
-@code{nil} or @code{face-override-spec}, this function sets the
-@dfn{override spec}, which overrides over all other face specs on
-@var{face}.  If it is @code{customized-face} or @code{saved-face},
-this function sets the customized spec or the saved custom spec.  If
-it is @code{face-defface-spec}, this function sets the default face
-spec (the same one set by @code{defface}).  If it is @code{reset},
-this function clears out all customization specs and override specs
-from @var{face} (in this case, the value of @var{spec} is ignored).
-Any other value of @var{spec-type} is reserved for internal use.
+The optional argument @var{spec-type} determines which spec to set.
+If it is omitted or @code{nil} or @code{face-override-spec}, this
+function sets the @dfn{override spec}, which overrides face specs on
+@var{face} of all the other types mentioned below.  This is useful
+when calling this function outside of Custom code.  If @var{spec-type}
+is @code{customized-face} or @code{saved-face}, this function sets the
+customized spec or the saved custom spec, respectively.  If it is
+@code{face-defface-spec}, this function sets the default face spec
+(the same one set by @code{defface}).  If it is @code{reset}, this
+function clears out all customization specs and override specs from
+@var{face} (in this case, the value of @var{spec} is ignored).  The
+effect of any other value of @var{spec-type} on the face specs is
+reserved for internal use, but the function will still define
+@var{face} itself and recalculate its attributes, as described above.
 @end defun
 
 @node Attribute Functions

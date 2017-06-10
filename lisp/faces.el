@@ -1667,7 +1667,7 @@ is given, in which case return its value instead."
            face--attributes-unspecified)))
 
 (defun face-spec-set (face spec &optional spec-type)
-  "Set the face spec SPEC for FACE.
+  "Set the FACE's spec SPEC, define FACE, and recalculate its attributes.
 See `defface' for the format of SPEC.
 
 The appearance of each face is controlled by its specs (set via
@@ -1678,10 +1678,11 @@ This function also defines FACE as a valid face name if it is not
 already one, and (re)calculates its attributes on existing
 frames.
 
-The argument SPEC-TYPE determines which spec to set:
-  nil or `face-override-spec' means the override spec (which is
-    usually what you want if calling this function outside of
-    Custom code);
+The optional argument SPEC-TYPE determines which spec to set:
+  nil, omitted or `face-override-spec' means the override spec,
+    which overrides all the other types of spec mentioned below
+    (this is usually what you want if calling this function
+    outside of Custom code);
   `customized-face' or `saved-face' means the customized spec or
     the saved custom spec;
   `face-defface-spec' means the default spec
@@ -1689,7 +1690,7 @@ The argument SPEC-TYPE determines which spec to set:
   `reset' means to ignore SPEC, but clear the `customized-face'
     and `face-override-spec' specs;
 Any other value means not to set any spec, but to run the
-function for its other effects."
+function for defining FACE and recalculating its attributes."
   (if (get face 'face-alias)
       (setq face (get face 'face-alias)))
   ;; Save SPEC to the relevant symbol property.
