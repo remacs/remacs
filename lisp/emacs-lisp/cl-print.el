@@ -33,6 +33,8 @@
 
 ;;; Code:
 
+(require 'button)
+
 (defvar cl-print-readably nil
   "If non-nil, try and make sure the result can be `read'.")
 
@@ -76,13 +78,27 @@ call other entry points instead, such as `cl-prin1'."
     (cl-print-object (aref object i) stream))
   (princ "]" stream))
 
+(define-button-type 'help-byte-code
+  'follow-link t
+  'action (lambda (button)
+            (disassemble (button-get button 'byte-code-function)))
+  'help-echo (purecopy "mouse-2, RET: disassemble this function"))
+
 (defvar cl-print-compiled nil
   "Control how to print byte-compiled functions.  Can be:
 - `static' to print the vector of constants.
 - `disassemble' to print the disassembly of the code.
 - nil to skip printing any details about the code.")
 
+(defvar cl-print-compiled-button nil
+  "Control how to print byte-compiled functions into buffers.
+When the stream is a buffer, make the bytecode part of the output
+into a button whose action shows the function's disassembly.")
+
+(autoload 'disassemble-1 "disass")
+
 (cl-defmethod cl-print-object ((object compiled-function) stream)
+  (unless stream (setq stream standard-output))
   ;; We use "#f(...)" rather than "#<...>" so that pp.el gives better results.
   (princ "#f(compiled-function " stream)
   (let ((args (help-function-arglist object 'preserve-names)))
@@ -110,10 +126,19 @@ call other entry points instead, such as `cl-prin1'."
          (disassemble-1 object 0)
          (buffer-string))
        stream)
-    (princ " #<bytecode>" stream)
-    (when (eq cl-print-compiled 'static)
-      (princ " " stream)
-      (cl-print-object (aref object 2) stream)))
+    (princ " " stream)
+    (let ((button-start (and cl-print-compiled-button
+                             (bufferp stream)
+                             (with-current-buffer stream (point)))))
+      (princ "#<bytecode>" stream)
+      (when (eq cl-print-compiled 'static)
+        (princ " " stream)
+        (cl-print-object (aref object 2) stream))
+      (when button-start
+        (with-current-buffer stream
+          (make-text-button button-start (point)
+                            :type 'help-byte-code
+                            'byte-code-function object)))))
   (princ ")" stream))
 
 ;; This belongs in nadvice.el, of course, but some load-ordering issues make it
