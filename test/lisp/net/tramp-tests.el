@@ -2501,6 +2501,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
     (let ((method (file-remote-p tramp-test-temporary-file-directory 'method))
 	  (host (file-remote-p tramp-test-temporary-file-directory 'host))
           (orig-syntax tramp-syntax))
+      (when (and (stringp host) (string-match tramp-host-with-port-regexp host))
+	(setq host (match-string 1 host)))
 
       (unwind-protect
           (dolist
