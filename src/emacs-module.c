@@ -606,6 +606,22 @@ module_should_quit (emacs_env *env)
 
 /* Subroutines.  */
 
+static void
+module_signal_or_throw (struct emacs_env_private *env)
+{
+  switch (env->pending_non_local_exit)
+    {
+    case emacs_funcall_exit_return:
+      return;
+    case emacs_funcall_exit_signal:
+      xsignal (env->non_local_exit_symbol, env->non_local_exit_data);
+    case emacs_funcall_exit_throw:
+      Fthrow (env->non_local_exit_symbol, env->non_local_exit_data);
+    default:
+      eassume (false);
+    }
+}
+
 DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
        doc: /* Load module FILE.  */)
   (Lisp_Object file)
@@ -641,6 +657,10 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
 
   int r = module_init (&pub);
 
+  /* Process the quit flag first, so that quitting doesn't get
+     overridden by other non-local exits.  */
+  maybe_quit ();
+
   if (r != 0)
     {
       if (FIXNUM_OVERFLOW_P (r))
@@ -648,6 +668,7 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
       xsignal2 (Qmodule_init_failed, file, make_number (r));
     }
 
+  module_signal_or_throw (&priv);
   return unbind_to (count, Qt);
 }
 
@@ -686,17 +707,8 @@ funcall_module (Lisp_Object function, ptrdiff_t nargs, Lisp_Object *arglist)
      overridden by other non-local exits.  */
   maybe_quit ();
 
-  switch (priv.pending_non_local_exit)
-    {
-    case emacs_funcall_exit_return:
-      return unbind_to (count, value_to_lisp (ret));
-    case emacs_funcall_exit_signal:
-      xsignal (priv.non_local_exit_symbol, priv.non_local_exit_data);
-    case emacs_funcall_exit_throw:
-      Fthrow (priv.non_local_exit_symbol, priv.non_local_exit_data);
-    default:
-      eassume (false);
-    }
+  module_signal_or_throw (&priv);
+  return unbind_to (count, value_to_lisp (ret));
 }
 
 Lisp_Object
