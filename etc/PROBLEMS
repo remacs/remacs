@@ -2467,6 +2467,10 @@ middle button press.  In such cases, setting the wheel press to
 "scroll" sometimes works if you press the button twice.  Trying a
 generic mouse driver might help.
 
+One particular situation where this happens is when you have
+"Microsoft Intellipoint" installed, which runs the program
+ipoint.exe.  The fix is reportedly to uninstall this software.
+
 ** Scrolling the mouse wheel on MS-Windows always scrolls the top window.
 
 This is another common problem with mouse drivers.  Instead of
