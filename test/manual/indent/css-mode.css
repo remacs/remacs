@@ -77,3 +77,8 @@ div::before {
         url("Sans-Regular.eot") format("eot"),
         url("Sans-Regular.woff") format("woff");
 }
+
+.foo-bar--baz {
+    --foo-variable: 5px;
+    margin: var(--foo-variable);
+}

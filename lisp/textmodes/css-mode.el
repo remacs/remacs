@@ -852,8 +852,6 @@ cannot be completed sensibly: `custom-ident',
     ;; Since "An at-rule consists of everything up to and including the next
     ;; semicolon (;) or the next block, whichever comes first."
     (,(concat "@" css-ident-re) (0 font-lock-builtin-face))
-    ;; Variables.
-    (,(concat "--" css-ident-re) (0 font-lock-variable-name-face))
     ;; Selectors.
     ;; Allow plain ":root" as a selector.
     ("^[ \t]*\\(:root\\)\\(?:[\n \t]*\\)*{" (1 'css-selector keep))
@@ -898,6 +896,8 @@ cannot be completed sensibly: `custom-ident',
                                         'font-lock-multiline t)
                      ;; No face.
                      nil)))
+    ;; Variables.
+    (,(concat "--" css-ident-re) (0 font-lock-variable-name-face))
     ;; Properties.  Again, we don't limit ourselves to css-property-ids.
     (,(concat "\\(?:[{;]\\|^\\)[ \t]*\\("
               "\\(?:\\(" css-proprietary-nmstart-re "\\)\\|"
