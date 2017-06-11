@@ -1,0 +1,12 @@
+version: '2'
+
+services:
+  remacs:
+    build: .
+    image: remacs-build:latest
+    working_dir: ${PWD}
+    tty: true
+    # Unfortunately dumping doesn't work without this
+    privileged: true
+    volumes:
+      - .:${PWD}

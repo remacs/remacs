@@ -143,21 +143,35 @@ more Emacs-y.
 
 1. You will need [Rust installed](https://www.rust-lang.org/en-US/install.html). If you're on macOS, you will need Rust
    nightly.
-   
+
 2. You will need a C compiler and toolchain. On Linux, you can do
    something like `apt-get install build-essential automake`. On
    macOS, you'll need Xcode.
-   
+
 3. You will need some C libraries. On Linux, you can install
    everything you need with:
-   
+
         apt-get install texinfo libjpeg-dev libtiff-dev \
           libgif-dev libxpm-dev libgtk-3-dev libgnutls-dev \
           libncurses5-dev libxml2-dev
-          
+
     On macOS, you'll need libxml2 (via `xcode-select --install`) and
     gnutls (via `brew install gnutls`).
-    
+
+#### Dockerized development environment
+
+If you don't want to bother with the above setup you can use the provided docker environment.  Make sure you have [docker](https://www.docker.com/) 1.12+ and [docker-compose](https://github.com/docker/compose) 1.8+ available.
+
+To spin up the environment run
+
+``` shell
+docker-compose up -d
+```
+
+First time you run this command docker will build the image.  After that any subsequent startups will happen in less than a second.
+
+The working directory with remacs will be mount under the same path in the container so editing the files on your host machine will automatically be reflected inside the container.   To build remacs use the steps from [Building Remacs](#building-remacs) prefixed with `docker-compose exec remacs`, this will ensure the commands are executed inside the container.
+
 ### Building Remacs
 
 ```
@@ -246,9 +260,9 @@ $ gcc -Ilib -E src/dummy.c > dummy_exp.c
 This gives us a file that ends with:
 
 ``` c
-static struct Lisp_Subr 
+static struct Lisp_Subr
 # 3 "src/dummy.c" 3 4
-_Alignas 
+_Alignas
 # 3 "src/dummy.c"
 (8) Snumberp = { { PVEC_SUBR << PSEUDOVECTOR_AREA_BITS }, { .a1 = Fnumberp }, 1, 1, "numberp", 0, 0}; Lisp_Object Fnumberp
 
@@ -267,7 +281,7 @@ a `numberp` function that does the actual work, then `defun!` handles
 these definitions for us:
 
 ``` rust
-// This is the function that gets called when 
+// This is the function that gets called when
 // we call numberp in elisp.
 fn numberp(object: LispObject) -> LispObject {
     if lisp::NUMBERP(object) {
