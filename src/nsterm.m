@@ -1463,9 +1463,9 @@ hide_bell (void)
 
 
 static void
-ns_raise_frame (struct frame *f)
+ns_raise_frame (struct frame *f, BOOL make_key)
 /* --------------------------------------------------------------------------
-     Bring window to foreground and make it active
+     Bring window to foreground and if make_key is YES, give it focus.
    -------------------------------------------------------------------------- */
 {
   NSView *view;
@@ -1474,7 +1474,12 @@ ns_raise_frame (struct frame *f)
   view = FRAME_NS_VIEW (f);
   block_input ();
   if (FRAME_VISIBLE_P (f))
-    [[view window] makeKeyAndOrderFront: NSApp];
+    {
+      if (make_key)
+        [[view window] makeKeyAndOrderFront: NSApp];
+      else
+        [[view window] orderFront: NSApp];
+    }
   unblock_input ();
 }
 
@@ -1504,7 +1509,7 @@ ns_frame_raise_lower (struct frame *f, bool raise)
   NSTRACE ("ns_frame_raise_lower");
 
   if (raise)
-    ns_raise_frame (f);
+    ns_raise_frame (f, YES);
   else
     ns_lower_frame (f);
 }
@@ -1567,7 +1572,7 @@ x_make_frame_visible (struct frame *f)
       EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
 
       SET_FRAME_VISIBLE (f, 1);
-      ns_raise_frame (f);
+      ns_raise_frame (f, ! FRAME_NO_FOCUS_ON_MAP (f));
 
       /* Making a new frame from a fullscreen frame will make the new frame
          fullscreen also.  So skip handleFS as this will print an error.  */
@@ -1923,6 +1928,24 @@ x_set_parent_frame (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
       unblock_input ();
 
       fset_parent_frame (f, new_value);
+    }
+}
+
+void
+x_set_no_focus_on_map (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+/* Set frame F's `no-focus-on-map' parameter which, if non-nil, means
+ * that F's window-system window does not want to receive input focus
+ * when it is mapped.  (A frame's window is mapped when the frame is
+ * displayed for the first time and when the frame changes its state
+ * from `iconified' or `invisible' to `visible'.)
+ *
+ * Some window managers may not honor this parameter. */
+{
+  NSTRACE ("x_set_no_focus_on_map");
+
+  if (!EQ (new_value, old_value))
+    {
+      FRAME_NO_FOCUS_ON_MAP (f) = !NILP (new_value);
     }
 }
 

@@ -980,7 +980,7 @@ frame_parm_handler ns_frame_parm_handlers[] =
 #endif
   x_set_parent_frame,
   0, /* x_set_skip_taskbar */
-  0, /* x_set_no_focus_on_map */
+  x_set_no_focus_on_map,
   x_set_no_accept_focus,
   x_set_z_group, /* x_set_z_group */
   0, /* x_set_override_redirect */
@@ -1288,6 +1288,8 @@ This function is an internal primitive--use `make-frame' instead.  */)
   store_frame_param (f, Qparent_frame, parent_frame);
 
   x_default_parameter (f, parms, Qz_group, Qnil, NULL, NULL, RES_TYPE_SYMBOL);
+  x_default_parameter (f, parms, Qno_focus_on_map, Qnil,
+		       NULL, NULL, RES_TYPE_BOOLEAN);
   x_default_parameter (f, parms, Qno_accept_focus, Qnil,
                        NULL, NULL, RES_TYPE_BOOLEAN);
 
