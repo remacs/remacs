@@ -205,11 +205,14 @@ changes."
                                        ;; module assertions.
                                        (mod-test-invalid-store)
                                        (mod-test-invalid-load)))))))
-          ;; FIXME a failure here gives an uninformative error.
-          (re-search-backward (rx bos "Emacs module assertion: "
-                                  "Emacs value not found in "
-                                  (+ digit) " values of "
-                                  (+ digit) " environments" ?\n eos)))
+          (search-backward "Emacs module assertion:")
+          (should (string-match-p (rx bos "Emacs module assertion: "
+                                      "Emacs value not found in "
+                                      (+ digit) " values of "
+                                      (+ digit) " environments" eos)
+                                  (buffer-substring-no-properties
+                                   (line-beginning-position)
+                                   (line-end-position)))))
       (delete-directory tempdir t))))
 
 ;;; emacs-module-tests.el ends here
