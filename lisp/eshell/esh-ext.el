@@ -39,7 +39,9 @@
   (require 'cl-lib)
   (require 'esh-io)
   (require 'esh-cmd))
+(require 'esh-arg)
 (require 'esh-opt)
+(require 'esh-proc)
 
 (defgroup eshell-ext nil
   "External commands are invoked when operating system executables are
